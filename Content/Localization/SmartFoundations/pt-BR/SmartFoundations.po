@@ -1,0 +1,972 @@
+# Smart! Foundations - Portuguese Brazilian (Português do Brasil)
+# Copyright (c) 2024-2026 SmartFoundations Mod. All Rights Reserved.
+# Language: Portuguese Brazilian (pt-BR)
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: SmartFoundations\n"
+"POT-Creation-Date: 2026-02-26 12:00+0000\n"
+"PO-Revision-Date: 2026-02-26 12:00+0000\n"
+"Language: pt-BR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+msgctxt "SmartFoundations,ArrowLabel_X"
+msgid "X"
+msgstr "X"
+
+msgctxt "SmartFoundations,ArrowLabel_Y"
+msgid "Y"
+msgstr "Y"
+
+msgctxt "SmartFoundations,ArrowLabel_Z"
+msgid "Z"
+msgstr "Z"
+
+msgctxt "SmartFoundations,Panel_Title"
+msgid "Smart! Panel"
+msgstr "Smart! Painel"
+
+msgctxt "SmartFoundations,Panel_Title_Extend"
+msgid "Smart! Extend"
+msgstr "Smart! Extensão"
+
+msgctxt "SmartFoundations,Panel_AutoConnectHeader"
+msgid "Auto-Connect"
+msgstr "Autoconexão"
+
+msgctxt "SmartFoundations,Panel_RecipeHeader"
+msgid "Recipes"
+msgstr "Receitas"
+
+msgctxt "SmartFoundations,Panel_GridTotal"
+msgid "Grid Total: {0} holograms"
+msgstr "Total da grade: {0} hologramas"
+
+msgctxt "SmartFoundations,Panel_GridWarning_Danger"
+msgid "* Extreme grid - high risk of freeze/crash"
+msgstr "* Grade extrema — alto risco de travamento/erro"
+
+msgctxt "SmartFoundations,Panel_GridWarning_Warning"
+msgid "* Very large grid - may cause temporary freeze"
+msgstr "* Grade muito grande — pode causar travamento temporário"
+
+msgctxt "SmartFoundations,Panel_GridWarning_Caution"
+msgid "* Large grid"
+msgstr "* Grade grande"
+
+msgctxt "SmartFoundations,UpgradeRow_WallOutlet"
+msgid "Wall Outlet Mk.{0}"
+msgstr "Distribuidor de parede Mk.{0}"
+
+msgctxt "SmartFoundations,UpgradeRow_DoubleWallOutlet"
+msgid "Double Wall Outlet Mk.{0}"
+msgstr "Distribuidor de parede duplo Mk.{0}"
+
+msgctxt "SmartFoundations,UpgradeRow_FamilyTier"
+msgid "{0} Mk.{1}"
+msgstr "{0} Mk.{1}"
+
+msgctxt "SmartFoundations,UpgradeRow_Upgradeable"
+msgid "({0} upgradeable)"
+msgstr "({0} atualizáveis)"
+
+msgctxt "SmartFoundations,Upgrade_Ready"
+msgid "Ready"
+msgstr "Pronto"
+
+msgctxt "SmartFoundations,Upgrade_SelectFamily"
+msgid "Select a family to see costs"
+msgstr "Selecione uma família para ver custos"
+
+msgctxt "SmartFoundations,Upgrade_TraversalHint"
+msgid "Aim at a belt, pipe, or pole to scan its network"
+msgstr "Aponte para uma esteira, tubo ou poste para escanear sua rede"
+
+msgctxt "SmartFoundations,Upgrade_ScanCosts"
+msgid "Scan network to see costs"
+msgstr "Escanear rede para ver custos"
+
+msgctxt "SmartFoundations,Upgrade_NoAudit"
+msgid "No audit snapshot. Press Scan to start."
+msgstr "Sem dados de auditoria. Pressione Escanear para iniciar."
+
+msgctxt "SmartFoundations,Upgrade_PressScan"
+msgid "Press Scan to find upgradeable items"
+msgstr "Pressione Escanear para encontrar itens atualizáveis"
+
+msgctxt "SmartFoundations,Upgrade_NoFamily"
+msgid "No family selected - scan first"
+msgstr "Nenhuma família selecionada — escaneie primeiro"
+
+msgctxt "SmartFoundations,Upgrade_SelectRow"
+msgid "Select a row first to upgrade"
+msgstr "Selecione uma linha primeiro para atualizar"
+
+msgctxt "SmartFoundations,Upgrade_ErrSubsystem"
+msgid "Error: Subsystem not available"
+msgstr "Erro: subsistema não disponível"
+
+msgctxt "SmartFoundations,Upgrade_ErrExecution"
+msgid "Error: Execution service not available"
+msgstr "Erro: serviço de execução não disponível"
+
+msgctxt "SmartFoundations,Upgrade_SelectTier"
+msgid "Select a target tier from the dropdown"
+msgstr "Selecione um nível alvo no menu suspenso"
+
+msgctxt "SmartFoundations,Upgrade_AuditFailed"
+msgid "Audit failed or was canceled."
+msgstr "Auditoria falhou ou foi cancelada."
+
+msgctxt "SmartFoundations,Upgrade_Separator"
+msgid " x "
+msgstr " x "
+
+msgctxt "SmartFoundations,Upgrade_UpgradeableCount"
+msgid "({0} upgradeable)"
+msgstr "({0} atualizáveis)"
+
+msgctxt "SmartFoundations,Upgrade_NoPlayerLoc"
+msgid "Cannot find player location"
+msgstr "Não foi possível encontrar a localização do jogador"
+
+msgctxt "SmartFoundations,Upgrade_NoInstances"
+msgid "No instances found (entries not stored)"
+msgstr "Nenhuma instância encontrada (registros não armazenados)"
+
+msgctxt "SmartFoundations,Upgrade_SelectTargetTier"
+msgid "Select target tier"
+msgstr "Selecione o nível alvo"
+
+#. HUD display strings
+
+msgctxt "SmartFoundations,Upgrade_NoItems"
+msgid "No items to upgrade"
+msgstr "Nenhum item para atualizar"
+
+msgctxt "SmartFoundations,HUD_Header"
+msgid "SMART!"
+msgstr "SMART!"
+
+msgctxt "SmartFoundations,HUD_ZoopActive"
+msgid "*Zoop Active - Scaling Disabled"
+msgstr "*Zoop ativo — Escalonamento desativado"
+
+msgctxt "SmartFoundations,HUD_SmartDisabled"
+msgid "*Smart Disabled (double-tap to re-enable)"
+msgstr "*Smart desativado (toque duplo para reativar)"
+
+msgctxt "SmartFoundations,HUD_AutoConnectDisabled"
+msgid "*Auto-Connect Disabled (double-tap to re-enable)"
+msgstr "*Autoconexão desativada (toque duplo para reativar)"
+
+msgctxt "SmartFoundations,HUD_ExtendDisabled"
+msgid "*Extend Disabled"
+msgstr "*Extensão desativada"
+
+msgctxt "SmartFoundations,HUD_ExtendActive"
+msgid "*Extend Active"
+msgstr "*Extensão ativa"
+
+msgctxt "SmartFoundations,HUD_ExtendScaled"
+msgid "*Extend: {0}x{1}"
+msgstr "*Extensão: {0}x{1}"
+
+msgctxt "SmartFoundations,HUD_Invalid"
+msgid "[INVALID]"
+msgstr "[INVÁLIDO]"
+
+msgctxt "SmartFoundations,HUD_LiftHeight"
+msgid "Lift: ↕ {0}m  ⇓ {1}m"
+msgstr "Elevador: ↕ {0}m  ⇓ {1}m"
+
+msgctxt "SmartFoundations,HUD_GridDefault"
+msgid "Grid: 1x1x1"
+msgstr "Grade: 1x1x1"
+
+msgctxt "SmartFoundations,HUD_Recipe"
+msgid "Recipe {0}/{1}: {2}"
+msgstr "Receita {0}/{1}: {2}"
+
+msgctxt "SmartFoundations,HUD_RecipeActive"
+msgid "Recipe* {0}/{1}: {2}"
+msgstr "Receita* {0}/{1}: {2}"
+
+msgctxt "SmartFoundations,HUD_SpacingX"
+msgid "Spacing [X]{0}: {1}m"
+msgstr "Espaçamento [X]{0}: {1}m"
+
+msgctxt "SmartFoundations,HUD_SpacingY"
+msgid "Spacing [Y]{0}: {1}m"
+msgstr "Espaçamento [Y]{0}: {1}m"
+
+msgctxt "SmartFoundations,HUD_SpacingZ"
+msgid "Spacing [Z]{0}: {1}m"
+msgstr "Espaçamento [Z]{0}: {1}m"
+
+msgctxt "SmartFoundations,HUD_SpacingDefault"
+msgid "Spacing*: 0.0m"
+msgstr "Espaçamento*: 0.0m"
+
+msgctxt "SmartFoundations,HUD_StepsX"
+msgid "Steps [X]{0}: {1}m columns"
+msgstr "Degraus [X]{0}: {1}m colunas"
+
+msgctxt "SmartFoundations,HUD_StepsY"
+msgid "Steps [Y]{0}: {1}m rows"
+msgstr "Degraus [Y]{0}: {1}m fileiras"
+
+msgctxt "SmartFoundations,HUD_StepsDefault"
+msgid "Steps*: 0.0m"
+msgstr "Degraus*: 0.0m"
+
+msgctxt "SmartFoundations,HUD_StaggerX"
+msgid "Stagger [X]{0}: {1}m sideways"
+msgstr "Defasagem [X]{0}: {1}m lateral"
+
+msgctxt "SmartFoundations,HUD_StaggerY"
+msgid "Stagger [Y]{0}: {1}m forward"
+msgstr "Defasagem [Y]{0}: {1}m frente"
+
+msgctxt "SmartFoundations,HUD_StaggerZX"
+msgid "Stagger [ZX]{0}: {1}m shift forward"
+msgstr "Defasagem [ZX]{0}: {1}m deslocamento frente"
+
+msgctxt "SmartFoundations,HUD_StaggerZY"
+msgid "Stagger [ZY]{0}: {1}m shift sideways"
+msgstr "Defasagem [ZY]{0}: {1}m deslocamento lateral"
+
+msgctxt "SmartFoundations,HUD_StaggerDefault"
+msgid "Stagger*: 0.0m"
+msgstr "Defasagem*: 0.0m"
+
+msgctxt "SmartFoundations,HUD_RotationZFull"
+msgid "Rotation [Z]{0}: {1}° (R={2}m, {3}/circle)"
+msgstr "Rotação [Z]{0}: {1}° (R={2}m, {3}/círculo)"
+
+msgctxt "SmartFoundations,HUD_RotationZ"
+msgid "Rotation [Z]{0}: {1}°"
+msgstr "Rotação [Z]{0}: {1}°"
+
+#. Grid/Settings/Family display name strings
+
+msgctxt "SmartFoundations,HUD_RotationDefault"
+msgid "Rotation*: 0.0°"
+msgstr "Rotação*: 0.0°"
+
+msgctxt "SmartFoundations,HUD_Grid"
+msgid "Grid: {0}x{1}x{2} ({3})"
+msgstr "Grade: {0}x{1}x{2} ({3})"
+
+msgctxt "SmartFoundations,HUD_SettingsActive"
+msgid "Settings: {0}{1}"
+msgstr "Configurações: {0}{1}"
+
+msgctxt "SmartFoundations,HUD_SettingsCurrent"
+msgid "Settings: {0}*"
+msgstr "Configurações: {0}*"
+
+msgctxt "SmartFoundations,HUD_Settings"
+msgid "Settings: {0}"
+msgstr "Configurações: {0}"
+
+msgctxt "SmartFoundations,Family_Belt"
+msgid "Conveyor Belts"
+msgstr "Esteiras transportadoras"
+
+msgctxt "SmartFoundations,Family_Lift"
+msgid "Conveyor Lifts"
+msgstr "Elevadores de esteira"
+
+msgctxt "SmartFoundations,Family_Pipe"
+msgid "Pipelines"
+msgstr "Tubulações"
+
+msgctxt "SmartFoundations,Family_Pump"
+msgid "Pipeline Pumps"
+msgstr "Bombas de tubulação"
+
+msgctxt "SmartFoundations,Family_PowerPole"
+msgid "Power Poles"
+msgstr "Postes elétricos"
+
+msgctxt "SmartFoundations,Family_WallOutletSingle"
+msgid "Wall Outlets (Single)"
+msgstr "Distribuidores de parede (simples)"
+
+msgctxt "SmartFoundations,Family_WallOutletDouble"
+msgid "Wall Outlets (Double)"
+msgstr "Distribuidores de parede (duplo)"
+
+msgctxt "SmartFoundations,Family_Tower"
+msgid "Power Towers"
+msgstr "Torres elétricas"
+
+#. Config menu DisplayName and ToolTip strings
+
+msgctxt "SmartFoundations,Family_Unknown"
+msgid "Unknown"
+msgstr "Desconhecido"
+
+msgctxt "SmartFoundations,Config_RootDisplayName"
+msgid "Smart! Configuration"
+msgstr "Smart! Configuração"
+
+msgctxt "SmartFoundations,Config_RootTooltip"
+msgid "Core Smart! Foundations settings for HUD display and default scale values"
+msgstr "Core Smart! Foundations settings for HUD display and default scale values"
+
+msgctxt "SmartFoundations,Config_AutoConnectEnabled"
+msgid "Belt Auto-Connect:"
+msgstr "Autoconexão de esteiras:"
+
+msgctxt "SmartFoundations,Config_AutoConnectEnabled_TT"
+msgid "Enable automatic belt connections between distributors and buildings"
+msgstr "Enable automatic belt connections between distributors and buildings"
+
+msgctxt "SmartFoundations,Config_ManifoldLaneBelts"
+msgid "Use Manifold Lane Belts:"
+msgstr "Usar esteiras de distribuidor:"
+
+msgctxt "SmartFoundations,Config_ManifoldLaneBelts_TT"
+msgid "Automatically chain distributors together using the Manifold Lane Belt tier"
+msgstr "Automatically chain distributors together using the Manifold Lane Belt tier"
+
+msgctxt "SmartFoundations,Config_ManifoldLaneBelt"
+msgid "Manifold Lane Belt:"
+msgstr "Esteira de distribuidor:"
+
+msgctxt "SmartFoundations,Config_ManifoldLaneBelt_TT"
+msgid "Belt tier for distributor-to-distributor (manifold) connections (0=Auto)"
+msgstr "Belt tier for distributor-to-distributor (manifold) connections (0=Auto)"
+
+msgctxt "SmartFoundations,Config_FactoryBelt"
+msgid "Factory Belt:"
+msgstr "Esteira de fábrica:"
+
+msgctxt "SmartFoundations,Config_FactoryBelt_TT"
+msgid "Belt tier for distributor-to-building connections (0=Auto)"
+msgstr "Belt tier for distributor-to-building connections (0=Auto)"
+
+msgctxt "SmartFoundations,Config_BeltRoutingMode"
+msgid "Belt Routing Mode:"
+msgstr "Modo de roteamento de esteira:"
+
+msgctxt "SmartFoundations,Config_BeltRoutingMode_TT"
+msgid "0=Default, 1=Curve, 2=Straight"
+msgstr "0=Default, 1=Curve, 2=Straight"
+
+msgctxt "SmartFoundations,Config_StackableBelt"
+msgid "Stackable Belt Auto-Connect"
+msgstr "Autoconexão de esteiras empilháveis"
+
+msgctxt "SmartFoundations,Config_StackableBelt_TT"
+msgid "Enable automatic belt connections between stackable conveyor poles"
+msgstr "Enable automatic belt connections between stackable conveyor poles"
+
+msgctxt "SmartFoundations,Config_PipeAutoConnect"
+msgid "Pipe Auto-Connect:"
+msgstr "Autoconexão de tubos:"
+
+msgctxt "SmartFoundations,Config_PipeAutoConnect_TT"
+msgid "Enable automatic pipe connections between junctions and buildings"
+msgstr "Enable automatic pipe connections between junctions and buildings"
+
+msgctxt "SmartFoundations,Config_PipeMainTier"
+msgid "Main Tier:"
+msgstr "Nível principal:"
+
+msgctxt "SmartFoundations,Config_PipeMainTier_TT"
+msgid "Pipe tier for junction-to-junction (manifold) connections (0=Auto)"
+msgstr "Pipe tier for junction-to-junction (manifold) connections (0=Auto)"
+
+msgctxt "SmartFoundations,Config_PipeToBuilding"
+msgid "To Building:"
+msgstr "Para o edifício:"
+
+msgctxt "SmartFoundations,Config_PipeToBuilding_TT"
+msgid "Pipe tier for junction-to-building connections (0=Auto)"
+msgstr "Pipe tier for junction-to-building connections (0=Auto)"
+
+msgctxt "SmartFoundations,Config_PipeRoutingMode"
+msgid "Pipe Routing Mode:"
+msgstr "Modo de roteamento de tubos:"
+
+msgctxt "SmartFoundations,Config_PipeRoutingMode_TT"
+msgid "0=Auto, 1=Auto2D, 2=Straight, 3=Curve, 4=Noodle, 5=Horiz→Vert"
+msgstr "0=Auto, 1=Auto2D, 2=Straight, 3=Curve, 4=Noodle, 5=Horiz→Vert"
+
+msgctxt "SmartFoundations,Config_FlowIndicator"
+msgid "Flow Indicator:"
+msgstr "Indicador de fluxo:"
+
+msgctxt "SmartFoundations,Config_FlowIndicator_TT"
+msgid "Show flow direction indicator on pipes (off = \"Clean\" style)"
+msgstr "Show flow direction indicator on pipes (off = \"Clean\" style)"
+
+msgctxt "SmartFoundations,Config_PowerAutoConnect"
+msgid "Power Auto-Connect:"
+msgstr "Autoconexão de energia:"
+
+msgctxt "SmartFoundations,Config_PowerAutoConnect_TT"
+msgid "Enable automatic power connections between poles and buildings"
+msgstr "Enable automatic power connections between poles and buildings"
+
+msgctxt "SmartFoundations,Config_PowerGridAxis"
+msgid "Grid Axis:"
+msgstr "Eixo da grade:"
+
+msgctxt "SmartFoundations,Config_PowerGridAxis_TT"
+msgid "Direction power poles connect to each other (Auto/X only/Y only/X+Y)"
+msgstr "Direction power poles connect to each other (Auto/X only/Y only/X+Y)"
+
+msgctxt "SmartFoundations,Config_PowerRange"
+msgid "Connection Range:"
+msgstr "Alcance de conexão:"
+
+msgctxt "SmartFoundations,Config_PowerRange_TT"
+msgid "Maximum distance to search for buildings to connect (in meters)"
+msgstr "Maximum distance to search for buildings to connect (in meters)"
+
+msgctxt "SmartFoundations,Config_PowerReserved"
+msgid "# of Connections to Keep Free:"
+msgstr "Conexões a reservar:"
+
+msgctxt "SmartFoundations,Config_PowerReserved_TT"
+msgid "Reserve this many connections on each power pole for manual wiring"
+msgstr "Reserve this many connections on each power pole for manual wiring"
+
+msgctxt "SmartFoundations,Config_ExtendEnabled"
+msgid "Extend Enabled:"
+msgstr "Extensão ativada:"
+
+msgctxt "SmartFoundations,Config_ExtendEnabled_TT"
+msgid "Enable the Extend feature (auto-clone manifolds when placing near existing buildings). Disable to prevent Extend from activating."
+msgstr "Enable the Extend feature (auto-clone manifolds when placing near existing buildings). Disable to prevent Extend from activating."
+
+msgctxt "SmartFoundations,Config_ExtendPower"
+msgid "Extend Power Poles:"
+msgstr "Estender postes elétricos:"
+
+msgctxt "SmartFoundations,Config_ExtendPower_TT"
+msgid "Include power poles when using Extend to duplicate factory buildings"
+msgstr "Include power poles when using Extend to duplicate factory buildings"
+
+msgctxt "SmartFoundations,Config_AutoHold"
+msgid "Auto-Hold on Grid Change:"
+msgstr "Bloqueio automático ao alterar grade:"
+
+msgctxt "SmartFoundations,Config_AutoHold_TT"
+msgid "Automatically lock hologram position after any grid modification (X/Y/Z > 1). Press Hold key to manually release. No world reload required."
+msgstr "Automatically lock hologram position after any grid modification (X/Y/Z > 1). Press Hold key to manually release. No world reload required."
+
+msgctxt "SmartFoundations,Config_ApplyImmediate"
+msgid "Apply Immediately"
+msgstr "Aplicar imediatamente"
+
+msgctxt "SmartFoundations,Config_ApplyImmediate_TT"
+msgid "Apply Smart Panel settings immediately without clicking Apply button"
+msgstr "Apply Smart Panel settings immediately without clicking Apply button"
+
+msgctxt "SmartFoundations,Config_ShowHUD"
+msgid "Show HUD Overlay"
+msgstr "Mostrar HUD"
+
+msgctxt "SmartFoundations,Config_ShowHUD_TT"
+msgid "Display the Smart! HUD with scale counters"
+msgstr "Display the Smart! HUD with scale counters"
+
+msgctxt "SmartFoundations,Config_HUDScale"
+msgid "HUD Scale"
+msgstr "Escala do HUD"
+
+msgctxt "SmartFoundations,Config_HUDScale_TT"
+msgid "Scale of the HUD overlay (0.5 to 2.0)"
+msgstr "Scale of the HUD overlay (0.5 to 2.0)"
+
+msgctxt "SmartFoundations,Config_HUDPosX"
+msgid "HUD Position X"
+msgstr "Posição X do HUD"
+
+msgctxt "SmartFoundations,Config_HUDPosX_TT"
+msgid "Horizontal position of HUD (0.0 = left, 1.0 = right). Default: 0.02"
+msgstr "Horizontal position of HUD (0.0 = left, 1.0 = right). Default: 0.02"
+
+msgctxt "SmartFoundations,Config_HUDPosY"
+msgid "HUD Position Y"
+msgstr "Posição Y do HUD"
+
+msgctxt "SmartFoundations,Config_HUDPosY_TT"
+msgid "Vertical position of HUD (0.0 = top, 1.0 = bottom). Default: 0.25"
+msgstr "Vertical position of HUD (0.0 = top, 1.0 = bottom). Default: 0.25"
+
+msgctxt "SmartFoundations,Config_HUDTheme"
+msgid "HUD Theme:"
+msgstr "Tema do HUD:"
+
+msgctxt "SmartFoundations,Config_HUDTheme_TT"
+msgid "Color theme for the Smart! HUD overlay (Default=FICSIT Orange, Dark=Muted grays, Classic=Green terminal, High Contrast=Bright white, Minimal=No border, Monochrome=White on black)"
+msgstr "Color theme for the Smart! HUD overlay (Default=FICSIT Orange, Dark=Muted grays, Classic=Green terminal, High Contrast=Bright white, Minimal=No border, Monochrome=White on black)"
+
+msgctxt "SmartFoundations,Config_ShowArrows"
+msgid "Show Direction Arrows (can be overridden)"
+msgstr "Mostrar setas de direção"
+
+msgctxt "SmartFoundations,Config_ShowArrows_TT"
+msgid "Display directional arrows on holograms - This setting is reflected whenever you load into the game."
+msgstr "Display directional arrows on holograms - This setting is reflected whenever you load into the game."
+
+msgctxt "SmartFoundations,Config_ArrowOrbit"
+msgid "Arrow Orbit Animation:"
+msgstr "Animação orbital das setas:"
+
+msgctxt "SmartFoundations,Config_ArrowOrbit_TT"
+msgid "Enable animated orbiting of directional arrows around the hologram. Disable for static arrows that still track player position."
+msgstr "Enable animated orbiting of directional arrows around the hologram. Disable for static arrows that still track player position."
+
+msgctxt "SmartFoundations,Config_ArrowLabels"
+msgid "Arrow Axis Labels:"
+msgstr "Rótulos de eixo nas setas:"
+
+#. Smart Panel & Upgrade Panel labels (auto-generated)
+
+msgctxt "SmartFoundations,Config_ArrowLabels_TT"
+msgid "Show X/Y/Z text labels on directional arrows. Disable for cleaner arrow visuals without text."
+msgstr "Show X/Y/Z text labels on directional arrows. Disable for cleaner arrow visuals without text."
+
+msgctxt "SmartFoundations,Panel_Btn_Apply"
+msgid "Apply"
+msgstr "Aplicar"
+
+msgctxt "SmartFoundations,Panel_Btn_Reset"
+msgid "Reset"
+msgstr "Redefinir"
+
+msgctxt "SmartFoundations,Panel_Btn_Close"
+msgid "Close"
+msgstr "Fechar"
+
+msgctxt "SmartFoundations,Panel_Btn_ClearRecipe"
+msgid "Clear"
+msgstr "Limpar"
+
+msgctxt "SmartFoundations,Panel_Btn_Continue"
+msgid "Continue"
+msgstr "Continuar"
+
+msgctxt "SmartFoundations,Panel_Btn_Cancel"
+msgid "Cancel"
+msgstr "Cancelar"
+
+msgctxt "SmartFoundations,Panel_ApplyImmediately"
+msgid "Apply Immediately:"
+msgstr "Aplicar imediatamente:"
+
+msgctxt "SmartFoundations,Panel_Section_Grid"
+msgid "Grid"
+msgstr "Grade"
+
+msgctxt "SmartFoundations,Panel_Section_Spacing"
+msgid "Spacing"
+msgstr "Espaçamento"
+
+msgctxt "SmartFoundations,Panel_Section_Steps"
+msgid "Steps"
+msgstr "Degraus"
+
+msgctxt "SmartFoundations,Panel_Section_Stagger"
+msgid "Stagger"
+msgstr "Escalonamento"
+
+msgctxt "SmartFoundations,Panel_Section_Rotation"
+msgid "Rotation"
+msgstr "Rotação"
+
+msgctxt "SmartFoundations,Panel_GridX"
+msgid "Grid [X]:"
+msgstr "Grade [X]:"
+
+msgctxt "SmartFoundations,Panel_GridY"
+msgid "Grid [Y]:"
+msgstr "Grade [Y]:"
+
+msgctxt "SmartFoundations,Panel_GridZ"
+msgid "Grid [Z]:"
+msgstr "Grade [Z]:"
+
+msgctxt "SmartFoundations,Panel_SpacingX"
+msgid "Spacing [X]:"
+msgstr "Espaçamento [X]:"
+
+msgctxt "SmartFoundations,Panel_SpacingY"
+msgid "Spacing [Y]:"
+msgstr "Espaçamento [Y]:"
+
+msgctxt "SmartFoundations,Panel_SpacingZ"
+msgid "Spacing [Z]:"
+msgstr "Espaçamento [Z]:"
+
+msgctxt "SmartFoundations,Panel_StepsX"
+msgid "Steps [X]:"
+msgstr "Degraus [X]:"
+
+msgctxt "SmartFoundations,Panel_StepsY"
+msgid "Steps [Y]:"
+msgstr "Degraus [Y]:"
+
+msgctxt "SmartFoundations,Panel_StaggerX"
+msgid "Stagger [X]:"
+msgstr "Escalonamento [X]:"
+
+msgctxt "SmartFoundations,Panel_StaggerY"
+msgid "Stagger [Y]:"
+msgstr "Escalonamento [Y]:"
+
+msgctxt "SmartFoundations,Panel_StaggerZX"
+msgid "Stagger [ZX]:"
+msgstr "Escalonamento [ZX]:"
+
+msgctxt "SmartFoundations,Panel_StaggerZY"
+msgid "Stagger [ZY]:"
+msgstr "Escalonamento [ZY]:"
+
+msgctxt "SmartFoundations,Panel_Unit_Meters"
+msgid "m"
+msgstr "m"
+
+msgctxt "SmartFoundations,Panel_Unit_Degrees"
+msgid "°"
+msgstr "°"
+
+msgctxt "SmartFoundations,Panel_RotationZ"
+msgid "Rotation [Z]:"
+msgstr "Rotação [Z]:"
+
+msgctxt "SmartFoundations,Panel_AC_BeltEnabled"
+msgid "Belt Auto-Connect:"
+msgstr "Auto-conexão de esteiras:"
+
+msgctxt "SmartFoundations,Panel_AC_MainTier"
+msgid "Main Tier:"
+msgstr "Nível principal:"
+
+msgctxt "SmartFoundations,Panel_AC_ToBuilding"
+msgid "To Building:"
+msgstr "Para o prédio:"
+
+msgctxt "SmartFoundations,Panel_AC_Chain"
+msgid "Chain:"
+msgstr "Cadeia:"
+
+msgctxt "SmartFoundations,Panel_AC_Direction"
+msgid "Direction:"
+msgstr "Direção:"
+
+msgctxt "SmartFoundations,Panel_AC_Routing"
+msgid "Routing:"
+msgstr "Roteamento:"
+
+msgctxt "SmartFoundations,Panel_AC_PipeEnabled"
+msgid "Pipe Auto-Connect:"
+msgstr "Auto-conexão de tubos:"
+
+msgctxt "SmartFoundations,Panel_AC_FlowIndicator"
+msgid "Flow Indicator:"
+msgstr "Indicador de fluxo:"
+
+msgctxt "SmartFoundations,Panel_AC_PowerEnabled"
+msgid "Power Auto-Connect:"
+msgstr "Auto-conexão de energia:"
+
+msgctxt "SmartFoundations,Panel_AC_GridAxis"
+msgid "Grid Axis:"
+msgstr "Eixo da grade:"
+
+msgctxt "SmartFoundations,Panel_AC_Reserved"
+msgid "Reserved:"
+msgstr "Reservadas:"
+
+msgctxt "SmartFoundations,Panel_Recipe_NoneSelected"
+msgid "None Selected"
+msgstr "Nenhuma selecionada"
+
+msgctxt "SmartFoundations,Panel_Recipe_Active"
+msgid "Recipe* {0}/{1}: {2}"
+msgstr "Receita* {0}/{1}: {2}"
+
+msgctxt "SmartFoundations,Panel_Recipe"
+msgid "Recipe {0}/{1}: {2}"
+msgstr "Receita {0}/{1}: {2}"
+
+msgctxt "SmartFoundations,Panel_Recipe_NoneSelected_Count"
+msgid "No recipe selected ({0} available)"
+msgstr "Nenhuma receita selecionada ({0} disponíveis)"
+
+msgctxt "SmartFoundations,Panel_Recipe_NoCompatible"
+msgid "No compatible recipes"
+msgstr "Sem receitas compatíveis"
+
+msgctxt "SmartFoundations,Panel_Recipe_OutputLiquid"
+msgid "→ Output: {0} x{1} m³ ({2}/min) (Grid Total: {3}/min)"
+msgstr "→ Saída: {0} x{1} m³ ({2}/min) (Total da grade: {3}/min)"
+
+msgctxt "SmartFoundations,Panel_Recipe_Output"
+msgid "→ Output: {0} x{1} ({2}/min) (Grid Total: {3}/min)"
+msgstr "→ Saída: {0} x{1} ({2}/min) (Total da grade: {3}/min)"
+
+msgctxt "SmartFoundations,Panel_Recipe_InputLiquid"
+msgid "← Input: {0} x{1} m³ ({2}/min) (Grid Total: {3}/min)"
+msgstr "← Entrada: {0} x{1} m³ ({2}/min) (Total da grade: {3}/min)"
+
+msgctxt "SmartFoundations,Panel_Recipe_Input"
+msgid "← Input: {0} x{1} ({2}/min) (Grid Total: {3}/min)"
+msgstr "← Entrada: {0} x{1} ({2}/min) (Total da grade: {3}/min)"
+
+msgctxt "SmartFoundations,Panel_Confirm_ExtremeTitle"
+msgid "EXTREME GRID WARNING!"
+msgstr "AVISO DE GRADE EXTREMA!"
+
+msgctxt "SmartFoundations,Panel_Confirm_ExtremeMsg"
+msgid "You are about to generate {0} holograms.\n\nThis will likely cause a significant freeze and may crash the game.\n\nAre you sure you want to continue?"
+msgstr "Você está prestes a gerar {0} hologramas.\n\nIsso provavelmente causará um congelamento significativo e pode travar o jogo.\n\nTem certeza de que deseja continuar?"
+
+msgctxt "SmartFoundations,Panel_Confirm_LargeTitle"
+msgid "Large Grid Warning"
+msgstr "Aviso de grade grande"
+
+msgctxt "SmartFoundations,Panel_Confirm_LargeMsg"
+msgid "You are about to generate {0} holograms.\n\nThis may cause a temporary freeze.\n\nContinue?"
+msgstr "Você está prestes a gerar {0} hologramas.\n\nIsso pode causar um congelamento temporário.\n\nContinuar?"
+
+msgctxt "SmartFoundations,Upgrade_Title"
+msgid "Smart! Upgrade Panel"
+msgstr "Smart! Painel de melhoria"
+
+msgctxt "SmartFoundations,Upgrade_Tab_Radius"
+msgid "Radius"
+msgstr "Raio"
+
+msgctxt "SmartFoundations,Upgrade_Tab_Network"
+msgid "Network"
+msgstr "Rede"
+
+msgctxt "SmartFoundations,Upgrade_RadiusLabel"
+msgid "Radius (m):"
+msgstr "Raio (m):"
+
+msgctxt "SmartFoundations,Upgrade_Btn_Scan"
+msgid "Scan"
+msgstr "Escanear"
+
+msgctxt "SmartFoundations,Upgrade_Btn_EntireMap"
+msgid "Entire Map"
+msgstr "Mapa inteiro"
+
+msgctxt "SmartFoundations,Upgrade_TargetTier"
+msgid "Target Tier:"
+msgstr "Nível alvo:"
+
+msgctxt "SmartFoundations,Upgrade_EstimatedCost"
+msgid "Estimated Cost"
+msgstr "Custo estimado"
+
+msgctxt "SmartFoundations,Upgrade_Btn_ScanNetwork"
+msgid "Scan Network"
+msgstr "Escanear rede"
+
+msgctxt "SmartFoundations,Upgrade_CrossSplitters"
+msgid "Cross Splitters/Mergers"
+msgstr "Cruzar divisores/fusionadores"
+
+msgctxt "SmartFoundations,Upgrade_CrossStorage"
+msgid "Cross Storage Containers"
+msgstr "Cruzar contêineres"
+
+msgctxt "SmartFoundations,Upgrade_CrossTrains"
+msgid "Cross Train Platforms"
+msgstr "Cruzar plataformas de trem"
+
+msgctxt "SmartFoundations,Upgrade_Btn_Upgrade"
+msgid "UPGRADE"
+msgstr "MELHORAR"
+
+msgctxt "SmartFoundations,Upgrade_Btn_Cancel"
+msgid "Cancel"
+msgstr "Cancelar"
+
+msgctxt "SmartFoundations,Upgrade_Btn_Close"
+msgid "Close"
+msgstr "Fechar"
+
+msgctxt "SmartFoundations,Upgrade_Btn_X"
+msgid "X"
+msgstr "X"
+
+msgctxt "SmartFoundations,Upgrade_AuditProgress"
+msgid "Auditing world... {0}% ({1} scanned)"
+msgstr "Auditando mundo... {0}% ({1} escaneados)"
+
+msgctxt "SmartFoundations,Upgrade_AuditComplete"
+msgid "Audit Complete: {0} upgradeable found across {1} structures."
+msgstr "Auditoria concluída: {0} melhoráveis encontrados em {1} estruturas."
+
+msgctxt "SmartFoundations,Upgrade_Upgrading"
+msgid "Upgrading {0} Mk.{1} → Mk.{2}..."
+msgstr "Melhorando {0} Mk.{1} → Mk.{2}..."
+
+msgctxt "SmartFoundations,Upgrade_NoValidTarget"
+msgid "{0} Mk.{1}: No valid upgrade target selected"
+msgstr "{0} Mk.{1}: Nenhum alvo de melhoria válido selecionado"
+
+msgctxt "SmartFoundations,Upgrade_ClickToSelect"
+msgid "Click to select {0} for upgrade"
+msgstr "Clique para selecionar {0} para melhoria"
+
+msgctxt "SmartFoundations,Upgrade_Nearest"
+msgid "Nearest {0}: {1}m {2}"
+msgstr "Mais próximo {0}: {1}m {2}"
+
+msgctxt "SmartFoundations,Upgrade_ProgressCount"
+msgid "Upgrading... {0}/{1} ({2}%)"
+msgstr "Melhorando... {0}/{1} ({2}%)"
+
+msgctxt "SmartFoundations,Upgrade_Complete"
+msgid "Upgrade complete: {0} success, {1} failed, {2} skipped"
+msgstr "Melhoria concluída: {0} sucesso, {1} falha, {2} ignorados"
+
+msgctxt "SmartFoundations,Upgrade_Cancelled"
+msgid "Upgrade cancelled: {0}/{1} completed"
+msgstr "Melhoria cancelada: {0}/{1} concluídos"
+
+msgctxt "SmartFoundations,Upgrade_NoNetCost"
+msgid "(No net cost)"
+msgstr "(Sem custo líquido)"
+
+msgctxt "SmartFoundations,Upgrade_CostItems"
+msgid "{0} items → Mk.{1}\n"
+msgstr "{0} itens → Mk.{1}\n"
+
+msgctxt "SmartFoundations,Upgrade_CostUnavailable"
+msgid "{0} × {1} Mk.{2} → Mk.{3}\n(Cost unavailable)"
+msgstr "{0} × {1} Mk.{2} → Mk.{3}\n(Custo indisponível)"
+
+msgctxt "SmartFoundations,Upgrade_CostHeader"
+msgid "{0} × {1} Mk.{2} → Mk.{3}\n"
+msgstr "{0} × {1} Mk.{2} → Mk.{3}\n"
+
+msgctxt "SmartFoundations,Upgrade_SetRadiusScan"
+msgid "Set radius and press Scan to find items"
+msgstr "Defina o raio e pressione Escanear"
+
+msgctxt "SmartFoundations,Upgrade_AimAndScan"
+msgid "Aim at a buildable and press Scan Network"
+msgstr "Mire em um construível e pressione Escanear rede"
+
+msgctxt "SmartFoundations,Upgrade_ErrNoPlayer"
+msgid "Error: No player controller"
+msgstr "Erro: Sem controlador de jogador"
+
+msgctxt "SmartFoundations,Upgrade_AimAtTarget"
+msgid "Aim at a belt, pipe, or power pole to scan its network"
+msgstr "Mire em uma esteira, tubo ou poste elétrico para escanear sua rede"
+
+msgctxt "SmartFoundations,Upgrade_NoTarget"
+msgid "No target - aim at a buildable"
+msgstr "Sem alvo — mire em um construível"
+
+msgctxt "SmartFoundations,Upgrade_NotUpgradeable"
+msgid "Target is not upgradeable - aim at a belt, pipe, or power pole"
+msgstr "Alvo não é melhorável — mire em uma esteira, tubo ou poste"
+
+msgctxt "SmartFoundations,Upgrade_Invalid"
+msgid "Invalid: {0}"
+msgstr "Inválido: {0}"
+
+msgctxt "SmartFoundations,Upgrade_Anchor"
+msgid "Anchor: {0} (Mk{1})"
+msgstr "Âncora: {0} (Mk{1})"
+
+msgctxt "SmartFoundations,Upgrade_Scanning"
+msgid "Scanning network..."
+msgstr "Escaneando rede..."
+
+msgctxt "SmartFoundations,Upgrade_ScanFailed"
+msgid "Scan failed: {0}"
+msgstr "Escaneamento falhou: {0}"
+
+msgctxt "SmartFoundations,Upgrade_FoundItems"
+msgid "Found {0} items ({1} upgradeable)"
+msgstr "{0} itens encontrados ({1} melhoráveis)"
+
+msgctxt "SmartFoundations,Upgrade_FoundItemsLimit"
+msgid "{0} [LIMIT HIT]"
+msgstr "{0} [LIMITE ATINGIDO]"
+
+
+#. Smart Upgrade triage strings - English fallback pending translation
+msgctxt "SmartFoundations,Upgrade_Tab_Triage"
+msgid "Triage"
+msgstr "Triagem"
+
+msgctxt "SmartFoundations,Triage_Warning"
+msgid "These tools diagnose conveyor chain issues after mass upgrades or save/load. Repair purges zombie chains, rebuilds split chains, and re-registers orphaned conveyor tick groups after load. Save before repair; after repair, save, reload, and run Detect again."
+msgstr "Estas ferramentas diagnosticam problemas de cadeias de esteiras apos upgrades em massa ou salvar/carregar. Reparar remove cadeias zumbi, reconstrói cadeias divididas e registra novamente grupos de tick de esteiras orfas apos o carregamento. Salve antes de reparar; depois salve, recarregue e execute Detectar novamente."
+
+msgctxt "SmartFoundations,Triage_Btn_Detect"
+msgid "Detect Issues"
+msgstr "Detectar problemas"
+
+msgctxt "SmartFoundations,Triage_Btn_Repair"
+msgid "Repair All Issues"
+msgstr "Reparar todos os problemas"
+
+msgctxt "SmartFoundations,Triage_Ready"
+msgid "Use Detect to scan for chain issues"
+msgstr "Use Detectar para procurar problemas nas cadeias"
+
+msgctxt "SmartFoundations,Triage_Detecting"
+msgid "Scanning map for chain issues..."
+msgstr "Escaneando o mapa em busca de problemas nas cadeias..."
+
+msgctxt "SmartFoundations,Triage_NoIssues"
+msgid "No issues detected. Your conveyor chains are healthy."
+msgstr "Nenhum problema detectado. Suas cadeias de esteiras estão saudáveis."
+
+msgctxt "SmartFoundations,Triage_IssuesFound"
+msgid "Found {0} zombie chain(s), {1} split chain group(s), {2} chain=NONE belt(s), and {3} orphaned tick group(s) ({4} empty, {5} live belt/lift entries, {6} connected candidate group(s)).\nRepair will purge zombies, rebuild split chains, and re-register live conveyors from orphaned tick groups. After repair, save, reload, and run Detect again."
+msgstr "Encontradas {0} cadeia(s) zumbi, {1} grupo(s) de cadeias divididas, {2} esteira(s) chain=NONE e {3} grupo(s) de tick orfaos ({4} vazios, {5} entradas ativas de esteira/elevador, {6} grupo(s) candidato(s) conectado(s)).\nReparar removera zumbis, reconstruira cadeias divididas e registrara novamente transportadores ativos de grupos de tick orfaos. Depois salve, recarregue e execute Detectar novamente."
+
+msgctxt "SmartFoundations,Triage_IssuesSummary"
+msgid "Issues found - Repair handles zombies, splits, and orphaned tick groups"
+msgstr "Problemas encontrados - Reparar lida com zumbis, divisoes e grupos de tick orfaos"
+
+msgctxt "SmartFoundations,Triage_AllClear"
+msgid "All clear — no chain issues found"
+msgstr "Tudo certo — nenhum problema de cadeia encontrado"
+
+msgctxt "SmartFoundations,Triage_Repairing"
+msgid "Repairing chain issues..."
+msgstr "Reparando problemas nas cadeias..."
+
+msgctxt "SmartFoundations,Triage_RepairDone"
+msgid "Repair complete. Removed {0} zombie chain(s), rebuilt {1} split group(s), and re-registered {6} live conveyor(s) from {3} orphaned tick group(s), including {4} empty group(s) and {5} live belt(s). Save, reload, and run Detect again."
+msgstr "Reparo concluido. Removidas {0} cadeia(s) zumbi, reconstruidos {1} grupo(s) dividido(s) e registrados novamente {6} transportador(es) ativo(s) de {3} grupo(s) de tick orfaos, incluindo {4} grupo(s) vazio(s) e {5} esteira(s) ativa(s). Salve, recarregue e execute Detectar novamente."
+
+msgctxt "SmartFoundations,Triage_RepairDoneWithReport"
+msgid "Repair complete. Removed {0} zombie chain(s), rebuilt {1} split group(s), and re-registered {7} live conveyor(s) from {3} orphaned tick group(s), including {4} empty group(s) and {5} live belt(s). A diagnostic report was written to: {6}"
+msgstr "Reparo concluido. Removidas {0} cadeia(s) zumbi, reconstruidos {1} grupo(s) dividido(s) e registrados novamente {7} transportador(es) ativo(s) de {3} grupo(s) de tick orfaos, incluindo {4} grupo(s) vazio(s) e {5} esteira(s) ativa(s). Relatorio de diagnostico: {6}"
+
+msgctxt "SmartFoundations,Triage_RepairNone"
+msgid "Repair complete. Nothing needed fixing."
+msgstr "Reparo concluído. Nada precisava ser corrigido."
+
+msgctxt "SmartFoundations,Triage_RepairComplete"
+msgid "Chain repair complete"
+msgstr "Reparo de cadeias concluído"
+
+msgctxt "SmartFoundations,Triage_RepairCompleteWithOrphans"
+msgid "Chain repair complete — save, reload, and run Detect again"
+msgstr "Reparo de cadeias concluido — salve, recarregue e execute Detectar novamente"

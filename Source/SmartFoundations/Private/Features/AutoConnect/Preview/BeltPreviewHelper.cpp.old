@@ -1,0 +1,731 @@
+#include "Features/AutoConnect/Preview/BeltPreviewHelper.h"
+#include "Engine/World.h"
+#include "Kismet/KismetMathLibrary.h"
+#include "Logging/LogMacros.h"
+#include "Components/SplineMeshComponent.h"
+#include "FGRecipe.h"
+#include "FGRecipeManager.h"
+#include "FGBuildingDescriptor.h"
+#include "Subsystem/SFSubsystem.h"
+#include "Holograms/Logistics/SFConveyorBeltHologram.h"
+#include "Subsystem/SFHologramDataService.h"
+
+// Define log category for belt preview helper
+DEFINE_LOG_CATEGORY_STATIC(LogBeltPreview, Log, All);
+
+namespace
+{
+// Get belt buildable class for a given tier using subsystem's belt registry
+static TSubclassOf<AFGBuildable> GetBeltBuildClassForTier(int32 Tier, USFSubsystem* Subsystem)
+{
+    if (!Subsystem)
+    {
+        return nullptr;
+    }
+    
+    // Use subsystem's existing belt class getter which has correct paths
+    return Subsystem->GetBeltClassForTier(Tier);
+}
+}
+
+FBeltPreviewHelper::FBeltPreviewHelper(UWorld* InWorld, int32 BeltTier, AFGHologram* ParentHolo)
+    : World(InWorld)
+    , ParentDistributor(ParentHolo)
+    , BeltTierToUse(FMath::Clamp(BeltTier, 1, 6))  // Clamp to Mk1-Mk6
+{
+    UE_LOG(LogBeltPreview, VeryVerbose, TEXT("FBeltPreviewHelper created with Mk%d belt tier, parent=%s"), 
+        BeltTierToUse, ParentHolo ? *ParentHolo->GetName() : TEXT("None"));
+}
+
+FBeltPreviewHelper::~FBeltPreviewHelper()
+{
+    DestroyPreview();
+    UE_LOG(LogBeltPreview, VeryVerbose, TEXT("FBeltPreviewHelper destroyed"));
+}
+
+void FBeltPreviewHelper::EnsureSpawned(const FVector& SpawnLocation, UFGFactoryConnectionComponent* Output, UFGFactoryConnectionComponent* Input)
+{
+    if (!World.IsValid() || !Output || !Input)
+    {
+        UE_LOG(LogBeltPreview, Warning, TEXT("Cannot spawn belt hologram - invalid world or connectors"));
+        return;
+    }
+
+    if (!BeltHologram.IsValid())
+    {
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🎯 SPAWNING BELT CHILD: Configuring spline BEFORE validation at %s"), *SpawnLocation.ToString());
+        
+        if (!ParentDistributor.IsValid())
+        {
+            UE_LOG(LogSmartFoundations, Error, TEXT("❌ No parent distributor - cannot spawn belt child"));
+            return;
+        }
+        
+        // Get subsystem to access belt class registry
+        USFSubsystem* Subsystem = USFSubsystem::Get(World.Get());
+        if (!Subsystem)
+        {
+            UE_LOG(LogSmartFoundations, Error, TEXT("❌ No subsystem - cannot get belt class"));
+            return;
+        }
+        
+        // Get belt buildable class from subsystem for desired tier
+        const TSubclassOf<AFGBuildable> BeltBuildClass = GetBeltBuildClassForTier(BeltTierToUse, Subsystem);
+        if (!BeltBuildClass)
+        {
+            UE_LOG(LogSmartFoundations, Error, TEXT("❌ Failed to get Mk%d belt buildable class from subsystem"), BeltTierToUse);
+            return;
+        }
+
+        // Generate unique name for belt child
+        static int32 AutoConnectBeltChildCounter = 0;
+        const FName ChildName(*FString::Printf(TEXT("AutoConnectBelt_%d"), AutoConnectBeltChildCounter++));
+
+        // Spawn belt hologram using SpawnActor (matching stackable pattern)
+        FActorSpawnParameters SpawnParams;
+        SpawnParams.Name = ChildName;
+        SpawnParams.Owner = ParentDistributor->GetOwner();
+        SpawnParams.bDeferConstruction = true;
+        SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+        
+        ASFConveyorBeltHologram* SpawnedChild = World->SpawnActor<ASFConveyorBeltHologram>(
+            ASFConveyorBeltHologram::StaticClass(),
+            SpawnLocation,
+            FRotator::ZeroRotator,
+            SpawnParams);
+        
+        if (!SpawnedChild)
+        {
+            UE_LOG(LogSmartFoundations, Error, TEXT("❌ Failed to spawn belt hologram actor"));
+            return;
+        }
+
+        // Configure the belt hologram BEFORE finishing spawn
+        SpawnedChild->SetBuildClass(BeltBuildClass);
+        
+        // Get belt recipe for this tier - CRITICAL for cost aggregation
+        TSubclassOf<UFGRecipe> BeltRecipe = Subsystem->GetBeltRecipeForTier(BeltTierToUse);
+        if (BeltRecipe)
+        {
+            SpawnedChild->SetRecipe(BeltRecipe);
+            UE_LOG(LogSmartFoundations, Log, TEXT("✅ Set recipe on belt child for Mk%d"), BeltTierToUse);
+        }
+        else
+        {
+            UE_LOG(LogSmartFoundations, Warning, TEXT("⚠️ No recipe found for Mk%d belt - cost aggregation may fail"), BeltTierToUse);
+        }
+        
+        // Tag as auto-connect child
+        SpawnedChild->Tags.AddUnique(FName(TEXT("SF_BeltAutoConnectChild")));
+        
+        // Disable validation and mark as child (matches stackable pattern)
+        USFHologramDataService::DisableValidation(SpawnedChild);
+        USFHologramDataService::MarkAsChild(SpawnedChild, ParentDistributor.Get(), ESFChildHologramType::AutoConnect);
+        
+        // Finish spawning the actor
+        SpawnedChild->FinishSpawning(FTransform(SpawnLocation));
+        
+        // Set snapped connections to prevent child pole spawning (matches stackable pattern)
+        SpawnedChild->SetSnappedConnections(Output, Input);
+        
+        // Get connector positions and normals for spline routing
+        // NOTE: Connector normals point OUTWARD from the connector:
+        // - OUTPUT normal: points in direction items flow OUT (belt should leave this direction)
+        // - INPUT normal: points in direction items come FROM (belt should approach from this direction)
+        // Do NOT negate EndNormal - it already points in the correct approach direction
+        FVector StartPos = Output->GetComponentLocation();
+        FVector EndPos = Input->GetComponentLocation();
+        FVector StartNormal = Output->GetConnectorNormal();
+        FVector EndNormal = Input->GetConnectorNormal();  // NOT negated - points toward belt approach direction
+        
+        // Set routing mode from settings
+        if (USFSubsystem* SmartSubsystem = USFSubsystem::Get(ParentDistributor->GetWorld()))
+        {
+            const auto& Settings = SmartSubsystem->GetAutoConnectRuntimeSettings();
+            SpawnedChild->SetRoutingMode(Settings.BeltRoutingMode);
+        }
+        
+        // Try using build mode for automatic spline routing, fallback to custom routing
+        if (!SpawnedChild->TryUseBuildModeRouting(StartPos, StartNormal, EndPos, EndNormal))
+        {
+            // Build mode not available, use custom routing
+            SpawnedChild->AutoRouteSplineWithNormals(StartPos, StartNormal, EndPos, EndNormal);
+        }
+        
+        // Configure visibility and collision (matches stackable pattern)
+        SpawnedChild->SetActorHiddenInGame(false);
+        SpawnedChild->SetActorEnableCollision(false);
+        SpawnedChild->SetActorTickEnabled(false);
+        SpawnedChild->RegisterAllComponents();
+        SpawnedChild->SetPlacementMaterialState(EHologramMaterialState::HMS_OK);
+        
+        // Add as child to parent distributor for vanilla cost aggregation
+        ParentDistributor->AddChild(SpawnedChild, ChildName);
+        
+        // CRITICAL: Generate mesh AFTER AddChild (matches stackable pattern exactly)
+        // PostHologramPlacement is skipped for SF_BeltAutoConnectChild tag
+        SpawnedChild->TriggerMeshGeneration();
+        SpawnedChild->ForceApplyHologramMaterial();
+
+        BeltHologram = SpawnedChild;
+
+        if (!BeltHologram.IsValid())
+        {
+            UE_LOG(LogSmartFoundations, Error, TEXT("❌ SpawnChildHologram failed for auto-connect belt"));
+            return;
+        }
+
+        BeltHologram->SetActorLocation(SpawnLocation);
+        BeltHologram->SetActorHiddenInGame(true);
+        BeltHologram->SetReplicates(false);
+
+        if (USceneComponent* BeltRoot = BeltHologram->GetRootComponent())
+        {
+            BeltRoot->SetMobility(EComponentMobility::Movable);
+        }
+
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("✅ VALID BELT: %s (Mk%d) spawned via SpawnChildHologram"),
+            *BeltHologram->GetName(), BeltTierToUse);
+    }
+    else
+    {
+        UE_LOG(LogBeltPreview, VeryVerbose, TEXT("🔧 DEBUG: Belt hologram already exists at %s"), *BeltHologram->GetActorLocation().ToString());
+    }
+}
+
+void FBeltPreviewHelper::UpdatePreview(UFGFactoryConnectionComponent* Output, UFGFactoryConnectionComponent* Input)
+{
+    if (!World.IsValid() || !Output || !Input)
+    {
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 DEBUG: UpdatePreview called with invalid parameters"));
+        HidePreview();
+        return;
+    }
+
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 DEBUG: Updating belt preview between %s and %s"), 
+        *Output->GetName(), *Input->GetName());
+
+    OutputConnector = Output;
+    InputConnector = Input;
+
+    // CRITICAL: Calculate spawn location BEFORE spawning so components are created at correct location
+    FVector SpawnLocation = Output->GetComponentLocation();
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 DEBUG: Belt preview will spawn at: %s"), *SpawnLocation.ToString());
+
+    // Pass connectors to EnsureSpawned so spline can be configured BEFORE validation
+    EnsureSpawned(SpawnLocation, Output, Input);
+    if (!BeltHologram.IsValid())
+    {
+        UE_LOG(LogSmartFoundations, Error, TEXT("🔧 DEBUG: Cannot update preview - belt hologram is invalid"));
+        return;
+    }
+
+    // Check if belt hologram is stuck at origin before updating
+    FVector CurrentLocation = BeltHologram->GetActorLocation();
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 DEBUG: Belt hologram current location: %s"), *CurrentLocation.ToString());
+    
+    if (CurrentLocation.IsNearlyZero(1.0f))
+    {
+        UE_LOG(LogSmartFoundations, Verbose, TEXT("🔧 DEBUG: Belt hologram is at origin before update - will attempt to fix"));
+    }
+
+    // FIX: Always update spline endpoints for existing belts when parent moves
+    // EnsureSpawned only does initial routing - we need to update when connectors change position
+    // This matches the stackable pipe pattern which always updates existing children
+    UpdateSplineEndpoints(Output, Input);
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 DEBUG: Updated belt spline endpoints"));
+    
+    // Make visible and try to force update
+    BeltHologram->SetActorHiddenInGame(false);
+    BeltHologram->SetActorEnableCollision(false);
+    
+    // CRITICAL: Force tick enabled so our Tick override can guard position continuously
+    BeltHologram->SetActorTickEnabled(true);
+    BeltHologram->PrimaryActorTick.bCanEverTick = true;
+    BeltHologram->PrimaryActorTick.SetTickFunctionEnable(true);
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 TICK ENABLED: Belt hologram tick forced on for continuous position correction"));
+
+    // Force render state on spline meshes to ensure immediate visibility
+    TArray<USplineMeshComponent*> SplineMeshes;
+    BeltHologram->GetComponents<USplineMeshComponent>(SplineMeshes);
+    for (USplineMeshComponent* MeshComp : SplineMeshes)
+    {
+        if (!MeshComp) continue;
+        MeshComp->SetVisibility(true, true);
+        MeshComp->MarkRenderStateDirty();
+    }
+
+    // Try to call belt hologram specific update methods
+    if (AFGConveyorBeltHologram* ConveyorBelt = Cast<AFGConveyorBeltHologram>(BeltHologram.Get()))
+    {
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 DEBUG: Cast to AFGConveyorBeltHologram successful"));
+        
+        // Try to call belt-specific methods if they exist
+        // These might need AccessTransformers if they're private
+        // Public methods that might help
+    }
+    else
+    {
+        UE_LOG(LogSmartFoundations, Error, TEXT("🔧 DEBUG: Failed to cast to AFGConveyorBeltHologram"));
+    }
+    
+    UE_LOG(LogSmartFoundations, Verbose, TEXT("✅ DEBUG: Belt preview updated and made visible"));
+}
+
+bool FBeltPreviewHelper::ValidatePlacementAndRegisterAsChild()
+{
+    if (!BeltHologram.IsValid())
+    {
+        return false;
+    }
+
+    if (ASFConveyorBeltHologram* SmartBeltHolo = Cast<ASFConveyorBeltHologram>(BeltHologram.Get()))
+    {
+        SmartBeltHolo->CheckValidPlacement();
+
+        if (!SmartBeltHolo->GetLastVanillaPlacementValid())
+        {
+            DestroyPreview();
+            return false;
+        }
+    }
+
+    return IsPreviewValid();
+}
+
+bool FBeltPreviewHelper::RegisterAsChild()
+{
+    if (bRegisteredAsChild)
+    {
+        return true;
+    }
+
+    if (!ParentDistributor.IsValid() || !BeltHologram.IsValid())
+    {
+        return false;
+    }
+
+    bRegisteredAsChild = true;
+    return true;
+}
+
+void FBeltPreviewHelper::UpdateBeltTier(int32 NewTier)
+{
+    int32 ClampedTier = FMath::Clamp(NewTier, 1, 6);
+    if (ClampedTier != BeltTierToUse)
+    {
+        BeltTierToUse = ClampedTier;
+        UE_LOG(LogBeltPreview, VeryVerbose, TEXT("Belt tier updated to Mk%d - destroying existing hologram to force recreation"), BeltTierToUse);
+        
+        // Destroy existing hologram so it gets recreated with new tier on next UpdatePreview
+        DestroyPreview();
+    }
+}
+
+void FBeltPreviewHelper::HidePreview()
+{
+    if (BeltHologram.IsValid())
+    {
+        BeltHologram->SetActorHiddenInGame(true);
+        UE_LOG(LogBeltPreview, VeryVerbose, TEXT("Belt preview hidden"));
+    }
+}
+
+void FBeltPreviewHelper::DestroyPreview()
+{
+    if (BeltHologram.IsValid())
+    {
+        UE_LOG(LogBeltPreview, VeryVerbose, TEXT("Destroying belt hologram preview via HologramHelperService"));
+        
+        // Stop continuous correction timer before destroying
+        if (ASFConveyorBeltHologram* SmartBeltHolo = Cast<ASFConveyorBeltHologram>(BeltHologram.Get()))
+        {
+            SmartBeltHolo->StopContinuousPositionCorrection();
+        }
+        
+        // Prefer the centralized Smart! helper service to manage child destruction
+        // This keeps the parent's mChildren array in sync and avoids races with
+        // build gun validation (ResetConstructDisqualifiers, etc.).
+        if (World.IsValid())
+        {
+            if (USFSubsystem* Subsystem = USFSubsystem::Get(World.Get()))
+            {
+                if (FSFHologramHelperService* Helper = Subsystem->GetHologramHelper())
+                {
+                    Helper->QueueChildForDestroy(BeltHologram.Get());
+                }
+                else
+                {
+                    // Fallback: direct destroy if helper not available
+                    BeltHologram->Destroy();
+                }
+            }
+            else
+            {
+                // Fallback: direct destroy if subsystem not available
+                BeltHologram->Destroy();
+            }
+        }
+        else
+        {
+            // Fallback: no valid world context, destroy directly
+            BeltHologram->Destroy();
+        }
+        
+        BeltHologram = nullptr;
+    }
+}
+
+void FBeltPreviewHelper::UpdateSplineEndpoints(UFGFactoryConnectionComponent* Output, UFGFactoryConnectionComponent* Input)
+{
+    if (!BeltHologram.IsValid())
+        return;
+
+    UE_LOG(LogBeltPreview, VeryVerbose, TEXT("Updating spline endpoints"));
+
+    // Get connection component transforms
+    const FTransform Start = Output->GetComponentTransform();
+    const FTransform End = Input->GetComponentTransform();
+
+    FVector StartLoc = Start.GetLocation();
+    FVector EndLoc = End.GetLocation();
+
+    UE_LOG(LogBeltPreview, VeryVerbose, TEXT("🔧 DEBUG: Start: %s, End: %s"), 
+        *StartLoc.ToString(), *EndLoc.ToString());
+
+    // CRITICAL: Use SetupBeltSpline method which properly sets mSplineData array
+    // This is the correct way to update AFGConveyorBeltHologram's spline geometry
+    
+    // DIAGNOSTIC: Check what class this belt actually is
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔍 DIAGNOSTIC: Belt class = %s"), BeltHologram.IsValid() ? *BeltHologram->GetClass()->GetName() : TEXT("NULL"));
+    
+    if (ASFConveyorBeltHologram* SmartBeltHolo = Cast<ASFConveyorBeltHologram>(BeltHologram.Get()))
+    {
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("✅ DIAGNOSTIC: Cast to ASFConveyorBeltHologram succeeded - using stackable belt pattern"));
+        
+        // CRITICAL: Temporarily unlock child before updating (from pipe/power line pattern)
+        // Parent lock blocks child transform updates - must unlock, update, then re-lock
+        bool bWasLocked = SmartBeltHolo->IsHologramLocked();
+        if (bWasLocked)
+        {
+            SmartBeltHolo->LockHologramPosition(false);
+            UE_LOG(LogBeltPreview, VeryVerbose, TEXT("🔓 Temporarily unlocked belt child for update"));
+        }
+        
+        // Get connector positions and normals
+        FVector StartPos = Output->GetComponentLocation();
+        FVector EndPos = Input->GetComponentLocation();
+        FVector StartNormal = Output->GetConnectorNormal();
+        FVector EndNormal = Input->GetConnectorNormal();
+        
+        // Set snapped connections (same as stackable belts)
+        SmartBeltHolo->SetSnappedConnections(Output, Input);
+        
+        // STACKABLE BELT PATTERN: Use vanilla-compatible spline routing
+        // This is the same pattern used by stackable pole auto-connect (SFAutoConnectService.cpp:4389-4392)
+        // which creates valid belt geometry that vanilla accepts
+        if (!SmartBeltHolo->TryUseBuildModeRouting(StartPos, StartNormal, EndPos, EndNormal))
+        {
+            // Build mode not available, use custom routing (still vanilla-compatible)
+            SmartBeltHolo->AutoRouteSplineWithNormals(StartPos, StartNormal, EndPos, EndNormal);
+        }
+        
+        // Trigger mesh generation to make the belt visible
+        SmartBeltHolo->TriggerMeshGeneration();
+        SmartBeltHolo->ForceApplyHologramMaterial();
+        
+        // CRITICAL: Re-lock child if it was locked (from pipe/power line pattern)
+        // Children must match parent's lock state for visibility
+        if (bWasLocked)
+        {
+            SmartBeltHolo->LockHologramPosition(true);
+            UE_LOG(LogBeltPreview, VeryVerbose, TEXT("🔒 Re-locked belt child after update"));
+        }
+        
+        UE_LOG(LogBeltPreview, VeryVerbose, TEXT("✅ DEBUG: Stackable belt pattern routing completed (wasLocked=%d)"), bWasLocked ? 1 : 0);
+    }
+    else
+    {
+        UE_LOG(LogBeltPreview, Warning, TEXT("❌ DEBUG: Failed to cast to ASFConveyorBeltHologram"));
+    }
+
+    // DO NOT manually position the actor here - TriggerMeshGeneration() already positioned it correctly
+    // Moving it again would shift the spline away from the connectors
+
+    // Ensure visibility and position persistence with delayed check
+    if (UWorld* LocalWorld = BeltHologram->GetWorld())
+    {
+        TWeakObjectPtr<AActor> WeakBeltActor = BeltHologram.Get();
+        TWeakObjectPtr<UFGFactoryConnectionComponent> WeakOutput = Output;
+        TWeakObjectPtr<UFGFactoryConnectionComponent> WeakInput = Input;
+
+        // Immediate additional positioning attempt
+        FVector CurrentLoc = BeltHologram->GetActorLocation();
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 IMMEDIATE CHECK: Belt actor location after TriggerMeshGeneration: %s"), *CurrentLoc.ToString());
+        
+        // If still at origin after TriggerMeshGeneration, this belt preview is useless
+        if (CurrentLoc.IsNearlyZero(1.0f))
+        {
+            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("❌ CRITICAL: Belt hologram stuck at origin after TriggerMeshGeneration - preview will be invisible!"));
+        }
+
+        FTimerDelegate D;
+        D.BindLambda([WeakBeltActor, WeakOutput, WeakInput]()
+        {
+            if (WeakBeltActor.IsValid())
+            {
+                // Ensure visibility
+                WeakBeltActor->SetActorHiddenInGame(false);
+
+                // Final position check - if still at origin, try to fix it
+                FVector ActorLoc = WeakBeltActor->GetActorLocation();
+                UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 DELAYED CHECK: Belt actor location on next tick: %s"), *ActorLoc.ToString());
+
+                if (ActorLoc.IsNearlyZero(1.0f))
+                {
+                    FVector CorrectLoc(0.0f, 0.0f, 0.0f);
+                    bool bHasValidCorrectLoc = false;
+
+                    if (ASFConveyorBeltHologram* BeltHolo = Cast<ASFConveyorBeltHologram>(WeakBeltActor.Get()))
+                    {
+                        if (USplineComponent* SplineComp = BeltHolo->GetSplineComponent())
+                        {
+                            if (SplineComp->GetNumberOfSplinePoints() > 0)
+                            {
+                                FVector SplineLoc = SplineComp->GetLocationAtSplinePoint(0, ESplineCoordinateSpace::World);
+                                if (!SplineLoc.IsNearlyZero(1.0f))
+                                {
+                                    CorrectLoc = SplineLoc;
+                                    bHasValidCorrectLoc = true;
+                                }
+                            }
+                        }
+                    }
+
+                    // Fallback: use connector locations if spline world position is also at origin
+                    if (!bHasValidCorrectLoc)
+                    {
+                        if (WeakOutput.IsValid())
+                        {
+                            CorrectLoc = WeakOutput->GetComponentLocation();
+                            bHasValidCorrectLoc = true;
+                        }
+                        else if (WeakInput.IsValid())
+                        {
+                            CorrectLoc = WeakInput->GetComponentLocation();
+                            bHasValidCorrectLoc = true;
+                        }
+                    }
+
+                    if (bHasValidCorrectLoc)
+                    {
+                        // SetActorLocation has proven unreliable here; update root component world location directly
+                        if (USceneComponent* RootComp = WeakBeltActor->GetRootComponent())
+                        {
+                            RootComp->SetWorldLocation(CorrectLoc, false, nullptr, ETeleportType::TeleportPhysics);
+                        }
+                        else
+                        {
+                            WeakBeltActor->SetActorLocation(CorrectLoc);
+                        }
+
+                        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 DELAYED FIX: Belt actor repositioned from origin to %s"), *CorrectLoc.ToString());
+
+                        // Force another visibility update after positioning
+                        WeakBeltActor->SetActorHiddenInGame(false);
+                        if (USceneComponent* RootComp = WeakBeltActor->GetRootComponent())
+                        {
+                            RootComp->MarkRenderStateDirty();
+                        }
+                    }
+                    else
+                    {
+                        UE_LOG(LogSmartFoundations, Error, TEXT("❌ DELAYED FIX: Unable to determine correct belt actor position (no valid spline or connector data)"));
+                    }
+                }
+                else
+                {
+                    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("✅ DELAYED CHECK: Belt actor position is correct: %s"), *ActorLoc.ToString());
+                }
+            }
+        });
+        LocalWorld->GetTimerManager().SetTimerForNextTick(D);
+    }
+}
+
+bool FBeltPreviewHelper::IsPreviewValid() const
+{
+    if (!BeltHologram.IsValid())
+    {
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔍 VALIDATION: Belt hologram is invalid"));
+        return false;
+    }
+    
+    FVector ActorLocation = BeltHologram->GetActorLocation();
+    bool bAtOrigin = ActorLocation.IsNearlyZero(1.0f);
+    bool bHidden = BeltHologram->IsHidden();
+    
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔍 VALIDATION: Belt hologram %s - Location: %s, Hidden: %s"), 
+        *BeltHologram->GetName(), 
+        *ActorLocation.ToString(), 
+        bHidden ? TEXT("YES") : TEXT("NO"));
+    
+    if (bAtOrigin)
+    {
+        UE_LOG(LogSmartFoundations, Error, TEXT("❌ VALIDATION FAILED: Belt preview stuck at origin - INVISIBLE AND USELESS"));
+        return false;
+    }
+    
+    if (bHidden)
+    {
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⚠️ VALIDATION WARNING: Belt preview is hidden"));
+        return false;
+    }
+    
+    // Check if spline component has valid data
+    if (ASFConveyorBeltHologram* SmartBelt = Cast<ASFConveyorBeltHologram>(BeltHologram.Get()))
+    {
+        if (USplineComponent* SplineComp = SmartBelt->GetSplineComponent())
+        {
+            int32 PointCount = SplineComp->GetNumberOfSplinePoints();
+            float SplineLength = SplineComp->GetSplineLength();
+            
+            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔍 VALIDATION: Spline has %d points, %.1f cm length"), PointCount, SplineLength);
+            
+            if (PointCount < 2 || SplineLength < 50.0f)
+            {
+                UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("❌ VALIDATION FAILED: Invalid spline data - %d points, %.1f cm length"), PointCount, SplineLength);
+                return false;
+            }
+        }
+        else
+        {
+            UE_LOG(LogSmartFoundations, Error, TEXT("❌ VALIDATION FAILED: No spline component found"));
+            return false;
+        }
+    }
+    
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("✅ VALIDATION PASSED: Belt preview is properly positioned and configured"));
+    return true;
+}
+
+// Continuous recreation removed - no longer needed with SpawnChildHologramFromRecipe approach
+
+float FBeltPreviewHelper::GetBeltLength() const
+{
+    if (!BeltHologram.IsValid())
+    {
+        return 0.0f;
+    }
+    
+    if (ASFConveyorBeltHologram* SmartBelt = Cast<ASFConveyorBeltHologram>(BeltHologram.Get()))
+    {
+        if (USplineComponent* SplineComp = SmartBelt->GetSplineComponent())
+        {
+            return SplineComp->GetSplineLength();
+        }
+    }
+    
+    return 0.0f;
+}
+
+TArray<FItemAmount> FBeltPreviewHelper::GetPreviewCost() const
+{
+    TArray<FItemAmount> TotalCost;
+    
+    if (!BeltHologram.IsValid())
+    {
+        UE_LOG(LogSmartFoundations, Warning, TEXT("💰 GetPreviewCost: BeltHologram is invalid"));
+        return TotalCost;
+    }
+    
+    // Calculate cost based on belt length
+    // Satisfactory belt recipes produce 1 meter of belt
+    // Length is in cm, so divide by 100 to get meters
+    float LengthMeters = GetBeltLength() / 100.0f;
+    
+    // Multiply by length (rounded up to nearest meter)
+    int32 Multiplier = FMath::CeilToInt(LengthMeters);
+    
+    if (Multiplier <= 0)
+    {
+        UE_LOG(LogSmartFoundations, Warning, TEXT("💰 GetPreviewCost: Invalid belt length (%.1f cm = %.1f m)"), GetBeltLength(), LengthMeters);
+        return TotalCost;
+    }
+    
+    // DYNAMIC BELT COST CALCULATION using Recipe Manager
+    // This mirrors the approach in ASFConveyorBeltHologram::GetCost()
+    
+    if (!World.IsValid())
+    {
+        UE_LOG(LogSmartFoundations, Warning, TEXT("💰 GetPreviewCost: World is invalid for recipe lookup"));
+        return TotalCost;
+    }
+    
+    // Get belt class from subsystem
+    USFSubsystem* Subsystem = USFSubsystem::Get(World.Get());
+    if (!Subsystem)
+    {
+        UE_LOG(LogSmartFoundations, Warning, TEXT("💰 GetPreviewCost: Subsystem is null"));
+        return TotalCost;
+    }
+    
+    TSubclassOf<AFGBuildable> BeltClass = Subsystem->GetBeltClassForTier(BeltTierToUse);
+    if (!BeltClass)
+    {
+        UE_LOG(LogSmartFoundations, Warning, TEXT("💰 GetPreviewCost: BeltClass is null for tier %d"), BeltTierToUse);
+        return TotalCost;
+    }
+    
+    // Look up recipe using Recipe Manager
+    AFGRecipeManager* RecipeManager = AFGRecipeManager::Get(World.Get());
+    if (!RecipeManager)
+    {
+        UE_LOG(LogSmartFoundations, Warning, TEXT("💰 GetPreviewCost: RecipeManager is null"));
+        return TotalCost;
+    }
+    
+    TSubclassOf<UFGBuildingDescriptor> Descriptor = RecipeManager->FindBuildingDescriptorByClass(BeltClass);
+    if (!Descriptor)
+    {
+        UE_LOG(LogSmartFoundations, Warning, TEXT("💰 GetPreviewCost: No descriptor found for belt class"));
+        return TotalCost;
+    }
+    
+    TArray<TSubclassOf<UFGRecipe>> Recipes = RecipeManager->FindRecipesByProduct(Descriptor, false, true);
+    if (Recipes.Num() == 0)
+    {
+        UE_LOG(LogSmartFoundations, Warning, TEXT("💰 GetPreviewCost: No recipe found for Mk%d belt"), BeltTierToUse);
+        return TotalCost;
+    }
+    
+    const UFGRecipe* RecipeCDO = Recipes[0]->GetDefaultObject<UFGRecipe>();
+    if (!RecipeCDO)
+    {
+        UE_LOG(LogSmartFoundations, Warning, TEXT("💰 GetPreviewCost: Recipe CDO is null"));
+        return TotalCost;
+    }
+    
+    const TArray<FItemAmount>& BaseCost = RecipeCDO->GetIngredients();
+    
+    // Calculate actual cost: 0.5 materials per meter
+    // Recipe ingredients represent cost for 2 meters of belt
+    for (const FItemAmount& Cost : RecipeCDO->GetIngredients())
+    {
+        FItemAmount ScaledCost = Cost;
+        // Recipe: 1 ingredient provides 2m of belt
+        // Use exact division and round, matching vanilla's cost calculation
+        // This ensures charge matches what vanilla will return on dismantle
+        float ExactSets = LengthMeters / 2.0f;
+        int32 SetsNeeded = FMath::RoundToInt(ExactSets);
+        ScaledCost.Amount = SetsNeeded * Cost.Amount;
+        TotalCost.Add(ScaledCost);
+        
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("💰 GetPreviewCost: Belt tier=%d, Material=%s, Base=%d, Length=%.2fm, ExactSets=%.2f, Rounded=%d, Cost=%d"), 
+            BeltTierToUse, *GetNameSafe(Cost.ItemClass), Cost.Amount, LengthMeters, ExactSets, SetsNeeded, ScaledCost.Amount);
+    }
+    
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("💰 GetPreviewCost: Returning %d cost entries"), TotalCost.Num());
+    
+    return TotalCost;
+}

@@ -1,0 +1,41 @@
+{
+	"AcceptsAnyRemoteVersion": true,
+	"FileVersion": 3,
+	"Version": 29,
+	"VersionName": "29.2.4",
+	"FriendlyName": "Smart!",
+	"Description": "Advanced hologram control for precision building - Completely rebuilt for Satisfactory 1.1+",
+	"Category": "Modding",
+	"CreatedBy": "Finalomega",
+	"PluginIconPath": "Resources/Icon128.png",
+	"CreatedByURL": "",
+	"DocsURL": "",
+	"MarketplaceURL": "https://ficsit.app/mod/SmartFoundations",
+	"SupportURL": "https://github.com/SmartFoundations/SmartIssueTracker/issues",
+	"CanContainContent": true,
+	"IsBetaVersion": false,
+	"IsExperimentalVersion": false,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "SmartFoundations",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		}
+	],
+	"Plugins": [
+		{
+			"Name": "SML",
+			"Enabled": true,
+			"SemVersion": "^3.11.3"
+		}
+	],
+	"SemVersion": "29.2.4",
+	"GameVersion": ">=416835",
+	"LocalizationTargets": [
+		{
+			"Name": "SmartFoundations",
+			"LoadingPolicy": "Always"
+		}
+	]
+}

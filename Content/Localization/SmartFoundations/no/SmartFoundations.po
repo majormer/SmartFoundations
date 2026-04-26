@@ -1,0 +1,881 @@
+# Smart! Foundations - Norwegian
+# Copyright (c) 2024-2026 SmartFoundations Mod. All Rights Reserved.
+# Language: Norwegian (no)
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: SmartFoundations\n"
+"POT-Creation-Date: 2026-02-26 12:00+0000\n"
+"PO-Revision-Date: 2026-02-26 12:00+0000\n"
+"Language: no\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#. Arrow axis labels
+msgctxt "SmartFoundations,ArrowLabel_X"
+msgid "X"
+msgstr ""
+
+msgctxt "SmartFoundations,ArrowLabel_Y"
+msgid "Y"
+msgstr ""
+
+msgctxt "SmartFoundations,ArrowLabel_Z"
+msgid "Z"
+msgstr ""
+
+#. Smart Panel titles
+msgctxt "SmartFoundations,Panel_Title"
+msgid "Smart! Panel"
+msgstr "Smart! Panel"
+
+msgctxt "SmartFoundations,Panel_Title_Extend"
+msgid "Smart! Extend"
+msgstr "Smart! Utvidelse"
+
+#. Smart Panel section headers
+msgctxt "SmartFoundations,Panel_AutoConnectHeader"
+msgid "Auto-Connect"
+msgstr "Auto-tilkobling"
+
+msgctxt "SmartFoundations,Panel_RecipeHeader"
+msgid "Recipes"
+msgstr "Oppskrifter"
+
+#. Smart Panel grid warnings
+msgctxt "SmartFoundations,Panel_GridTotal"
+msgid "Grid Total: {0} holograms"
+msgstr "Rutenett totalt: {0} hologrammer"
+
+msgctxt "SmartFoundations,Panel_GridWarning_Danger"
+msgid "* Extreme grid - high risk of freeze/crash"
+msgstr "* Ekstremt rutenett - høy risiko for frysing/krasj"
+
+msgctxt "SmartFoundations,Panel_GridWarning_Warning"
+msgid "* Very large grid - may cause temporary freeze"
+msgstr "* Veldig stort rutenett - kan forårsake midlertidig frysing"
+
+msgctxt "SmartFoundations,Panel_GridWarning_Caution"
+msgid "* Large grid"
+msgstr "* Stort rutenett"
+
+#. Upgrade panel - result row
+msgctxt "SmartFoundations,UpgradeRow_WallOutlet"
+msgid "Wall Outlet Mk.{0}"
+msgstr "Vegguttak Mk.{0}"
+
+msgctxt "SmartFoundations,UpgradeRow_DoubleWallOutlet"
+msgid "Double Wall Outlet Mk.{0}"
+msgstr "Dobbelt vegguttak Mk.{0}"
+
+msgctxt "SmartFoundations,UpgradeRow_FamilyTier"
+msgid "{0} Mk.{1}"
+msgstr "{0} Mk.{1}"
+
+msgctxt "SmartFoundations,UpgradeRow_Upgradeable"
+msgid "({0} upgradeable)"
+msgstr "({0} oppgraderbare)"
+
+#. Upgrade panel - status messages
+msgctxt "SmartFoundations,Upgrade_Ready"
+msgid "Ready"
+msgstr "Klar"
+
+msgctxt "SmartFoundations,Upgrade_SelectFamily"
+msgid "Select a family to see costs"
+msgstr "Velg en familie for å se kostnader"
+
+msgctxt "SmartFoundations,Upgrade_TraversalHint"
+msgid "Aim at a belt, pipe, or pole to scan its network"
+msgstr "Sikt på et bånd, rør eller stolpe for å skanne nettverket"
+
+msgctxt "SmartFoundations,Upgrade_ScanCosts"
+msgid "Scan network to see costs"
+msgstr "Skann nettverket for å se kostnader"
+
+msgctxt "SmartFoundations,Upgrade_NoAudit"
+msgid "No audit snapshot. Press Scan to start."
+msgstr "Ingen revisjonsbilde. Trykk Skann for å starte."
+
+msgctxt "SmartFoundations,Upgrade_PressScan"
+msgid "Press Scan to find upgradeable items"
+msgstr "Trykk Skann for å finne oppgraderbare elementer"
+
+msgctxt "SmartFoundations,Upgrade_NoFamily"
+msgid "No family selected - scan first"
+msgstr "Ingen familie valgt - skann først"
+
+msgctxt "SmartFoundations,Upgrade_SelectRow"
+msgid "Select a row first to upgrade"
+msgstr "Velg en rad først for å oppgradere"
+
+msgctxt "SmartFoundations,Upgrade_ErrSubsystem"
+msgid "Error: Subsystem not available"
+msgstr "Feil: Delsystemet er ikke tilgjengelig"
+
+msgctxt "SmartFoundations,Upgrade_ErrExecution"
+msgid "Error: Execution service not available"
+msgstr "Feil: Utførelsestjenesten er ikke tilgjengelig"
+
+msgctxt "SmartFoundations,Upgrade_SelectTier"
+msgid "Select a target tier from the dropdown"
+msgstr "Velg et målnivå fra nedtrekkslisten"
+
+msgctxt "SmartFoundations,Upgrade_AuditFailed"
+msgid "Audit failed or was canceled."
+msgstr "Revisjon mislyktes eller ble avbrutt."
+
+msgctxt "SmartFoundations,Upgrade_Separator"
+msgid " x "
+msgstr " x "
+
+msgctxt "SmartFoundations,Upgrade_UpgradeableCount"
+msgid "({0} upgradeable)"
+msgstr "({0} oppgraderbare)"
+
+msgctxt "SmartFoundations,Upgrade_NoPlayerLoc"
+msgid "Cannot find player location"
+msgstr "Kan ikke finne spillerposisjon"
+
+msgctxt "SmartFoundations,Upgrade_NoInstances"
+msgid "No instances found (entries not stored)"
+msgstr "Ingen instanser funnet (oppføringer ikke lagret)"
+
+msgctxt "SmartFoundations,Upgrade_SelectTargetTier"
+msgid "Select target tier"
+msgstr "Velg målnivå"
+
+msgctxt "SmartFoundations,Upgrade_NoItems"
+msgid "No items to upgrade"
+msgstr "Ingen elementer å oppgradere"
+
+msgctxt "SmartFoundations,HUD_Header"
+msgid "SMART!"
+msgstr "SMART!"
+
+msgctxt "SmartFoundations,HUD_ZoopActive"
+msgid "*Zoop Active - Scaling Disabled"
+msgstr "*Zoop aktiv - Skalering deaktivert"
+
+msgctxt "SmartFoundations,HUD_SmartDisabled"
+msgid "*Smart Disabled (double-tap to re-enable)"
+msgstr "*Smart deaktivert (dobbelttrykk for å aktivere)"
+
+msgctxt "SmartFoundations,HUD_AutoConnectDisabled"
+msgid "*Auto-Connect Disabled (double-tap to re-enable)"
+msgstr "*Auto-tilkobling deaktivert (dobbelttrykk for å aktivere)"
+
+msgctxt "SmartFoundations,HUD_ExtendDisabled"
+msgid "*Extend Disabled"
+msgstr "*Utvidelse deaktivert"
+
+msgctxt "SmartFoundations,HUD_ExtendActive"
+msgid "*Extend Active"
+msgstr "*Utvidelse aktiv"
+
+msgctxt "SmartFoundations,HUD_ExtendScaled"
+msgid "*Extend: {0}x{1}"
+msgstr "*Utvidelse: {0}x{1}"
+
+msgctxt "SmartFoundations,HUD_Invalid"
+msgid "[INVALID]"
+msgstr "[UGYLDIG]"
+
+msgctxt "SmartFoundations,HUD_LiftHeight"
+msgid "Lift: ↕ {0}m  ⇓ {1}m"
+msgstr "Løft: ↕ {0}m  ⇓ {1}m"
+
+msgctxt "SmartFoundations,HUD_GridDefault"
+msgid "Grid: 1x1x1"
+msgstr "Rutenett: 1x1x1"
+
+msgctxt "SmartFoundations,HUD_Recipe"
+msgid "Recipe {0}/{1}: {2}"
+msgstr "Oppskrift {0}/{1}: {2}"
+
+msgctxt "SmartFoundations,HUD_RecipeActive"
+msgid "Recipe* {0}/{1}: {2}"
+msgstr "Oppskrift* {0}/{1}: {2}"
+
+msgctxt "SmartFoundations,HUD_SpacingX"
+msgid "Spacing [X]{0}: {1}m"
+msgstr "Avstand [X]{0}: {1}m"
+
+msgctxt "SmartFoundations,HUD_SpacingY"
+msgid "Spacing [Y]{0}: {1}m"
+msgstr "Avstand [Y]{0}: {1}m"
+
+msgctxt "SmartFoundations,HUD_SpacingZ"
+msgid "Spacing [Z]{0}: {1}m"
+msgstr "Avstand [Z]{0}: {1}m"
+
+msgctxt "SmartFoundations,HUD_SpacingDefault"
+msgid "Spacing*: 0.0m"
+msgstr "Avstand*: 0.0m"
+
+msgctxt "SmartFoundations,HUD_StepsX"
+msgid "Steps [X]{0}: {1}m columns"
+msgstr "Trinn [X]{0}: {1}m kolonner"
+
+msgctxt "SmartFoundations,HUD_StepsY"
+msgid "Steps [Y]{0}: {1}m rows"
+msgstr "Trinn [Y]{0}: {1}m rader"
+
+msgctxt "SmartFoundations,HUD_StepsDefault"
+msgid "Steps*: 0.0m"
+msgstr "Trinn*: 0.0m"
+
+msgctxt "SmartFoundations,HUD_StaggerX"
+msgid "Stagger [X]{0}: {1}m sideways"
+msgstr "Forskyvning [X]{0}: {1}m sideveis"
+
+msgctxt "SmartFoundations,HUD_StaggerY"
+msgid "Stagger [Y]{0}: {1}m forward"
+msgstr "Forskyvning [Y]{0}: {1}m fremover"
+
+msgctxt "SmartFoundations,HUD_StaggerZX"
+msgid "Stagger [ZX]{0}: {1}m shift forward"
+msgstr "Forskyvning [ZX]{0}: {1}m forskyvning fremover"
+
+msgctxt "SmartFoundations,HUD_StaggerZY"
+msgid "Stagger [ZY]{0}: {1}m shift sideways"
+msgstr "Forskyvning [ZY]{0}: {1}m forskyvning sideveis"
+
+msgctxt "SmartFoundations,HUD_StaggerDefault"
+msgid "Stagger*: 0.0m"
+msgstr "Forskyvning*: 0.0m"
+
+msgctxt "SmartFoundations,HUD_RotationZFull"
+msgid "Rotation [Z]{0}: {1}° (R={2}m, {3}/circle)"
+msgstr "Rotasjon [Z]{0}: {1}° (R={2}m, {3}/sirkel)"
+
+msgctxt "SmartFoundations,HUD_RotationZ"
+msgid "Rotation [Z]{0}: {1}°"
+msgstr "Rotasjon [Z]{0}: {1}°"
+
+msgctxt "SmartFoundations,HUD_RotationDefault"
+msgid "Rotation*: 0.0°"
+msgstr "Rotasjon*: 0.0°"
+
+msgctxt "SmartFoundations,HUD_Grid"
+msgid "Grid: {0}x{1}x{2} ({3})"
+msgstr "Rutenett: {0}x{1}x{2} ({3})"
+
+msgctxt "SmartFoundations,HUD_SettingsActive"
+msgid "Settings: {0}{1}"
+msgstr "Innstillinger: {0}{1}"
+
+msgctxt "SmartFoundations,HUD_SettingsCurrent"
+msgid "Settings: {0}*"
+msgstr "Innstillinger: {0}*"
+
+msgctxt "SmartFoundations,HUD_Settings"
+msgid "Settings: {0}"
+msgstr "Innstillinger: {0}"
+
+msgctxt "SmartFoundations,Family_Belt"
+msgid "Conveyor Belts"
+msgstr "Transportbånd"
+
+msgctxt "SmartFoundations,Family_Lift"
+msgid "Conveyor Lifts"
+msgstr "Transportheiser"
+
+msgctxt "SmartFoundations,Family_Pipe"
+msgid "Pipelines"
+msgstr "Rørledninger"
+
+msgctxt "SmartFoundations,Family_Pump"
+msgid "Pipeline Pumps"
+msgstr "Rørpumper"
+
+msgctxt "SmartFoundations,Family_PowerPole"
+msgid "Power Poles"
+msgstr "Strømstolper"
+
+msgctxt "SmartFoundations,Family_WallOutletSingle"
+msgid "Wall Outlets (Single)"
+msgstr "Vegguttak (enkle)"
+
+msgctxt "SmartFoundations,Family_WallOutletDouble"
+msgid "Wall Outlets (Double)"
+msgstr "Vegguttak (doble)"
+
+msgctxt "SmartFoundations,Family_Tower"
+msgid "Power Towers"
+msgstr "Strømtårn"
+
+msgctxt "SmartFoundations,Family_Unknown"
+msgid "Unknown"
+msgstr "Ukjent"
+
+msgctxt "SmartFoundations,Config_RootDisplayName"
+msgid "Smart! Configuration"
+msgstr "Smart! Konfigurasjon"
+
+msgctxt "SmartFoundations,Config_RootTooltip"
+msgid "Core Smart! Foundations settings for HUD display and default scale values"
+msgstr "Grunninnstillinger for Smart! HUD-visning og standard skalaverdier"
+
+msgctxt "SmartFoundations,Config_AutoConnectEnabled"
+msgid "Belt Auto-Connect:"
+msgstr "Bånd auto-tilkobling:"
+
+msgctxt "SmartFoundations,Config_AutoConnectEnabled_TT"
+msgid "Enable automatic belt connections between distributors and buildings"
+msgstr ""
+
+msgctxt "SmartFoundations,Config_ManifoldLaneBelts"
+msgid "Use Manifold Lane Belts:"
+msgstr "Bruk manifoldbånd:"
+
+msgctxt "SmartFoundations,Config_ManifoldLaneBelts_TT"
+msgid "Automatically chain distributors together using the Manifold Lane Belt tier"
+msgstr ""
+
+msgctxt "SmartFoundations,Config_ManifoldLaneBelt"
+msgid "Manifold Lane Belt:"
+msgstr "Manifoldbånd:"
+
+msgctxt "SmartFoundations,Config_ManifoldLaneBelt_TT"
+msgid "Belt tier for distributor-to-distributor (manifold) connections (0=Auto)"
+msgstr ""
+
+msgctxt "SmartFoundations,Config_FactoryBelt"
+msgid "Factory Belt:"
+msgstr "Fabrikkbånd:"
+
+msgctxt "SmartFoundations,Config_FactoryBelt_TT"
+msgid "Belt tier for distributor-to-building connections (0=Auto)"
+msgstr ""
+
+msgctxt "SmartFoundations,Config_BeltRoutingMode"
+msgid "Belt Routing Mode:"
+msgstr "Bånd rutingsmodus:"
+
+msgctxt "SmartFoundations,Config_BeltRoutingMode_TT"
+msgid "0=Default, 1=Curve, 2=Straight"
+msgstr ""
+
+msgctxt "SmartFoundations,Config_StackableBelt"
+msgid "Stackable Belt Auto-Connect"
+msgstr "Stablebar bånd auto-tilkobling"
+
+msgctxt "SmartFoundations,Config_StackableBelt_TT"
+msgid "Enable automatic belt connections between stackable conveyor poles"
+msgstr ""
+
+msgctxt "SmartFoundations,Config_PipeAutoConnect"
+msgid "Pipe Auto-Connect:"
+msgstr "Rør auto-tilkobling:"
+
+msgctxt "SmartFoundations,Config_PipeAutoConnect_TT"
+msgid "Enable automatic pipe connections between junctions and buildings"
+msgstr ""
+
+msgctxt "SmartFoundations,Config_PipeMainTier"
+msgid "Main Tier:"
+msgstr "Hovednivå:"
+
+msgctxt "SmartFoundations,Config_PipeMainTier_TT"
+msgid "Pipe tier for junction-to-junction (manifold) connections (0=Auto)"
+msgstr ""
+
+msgctxt "SmartFoundations,Config_PipeToBuilding"
+msgid "To Building:"
+msgstr "Til bygning:"
+
+msgctxt "SmartFoundations,Config_PipeToBuilding_TT"
+msgid "Pipe tier for junction-to-building connections (0=Auto)"
+msgstr ""
+
+msgctxt "SmartFoundations,Config_PipeRoutingMode"
+msgid "Pipe Routing Mode:"
+msgstr "Rør rutingsmodus:"
+
+msgctxt "SmartFoundations,Config_PipeRoutingMode_TT"
+msgid "0=Auto, 1=Auto2D, 2=Straight, 3=Curve, 4=Noodle, 5=Horiz→Vert"
+msgstr ""
+
+msgctxt "SmartFoundations,Config_FlowIndicator"
+msgid "Flow Indicator:"
+msgstr "Strømningsindikator:"
+
+msgctxt "SmartFoundations,Config_FlowIndicator_TT"
+msgid "Show flow direction indicator on pipes (off = \"
+msgstr ""
+
+msgctxt "SmartFoundations,Config_PowerAutoConnect"
+msgid "Power Auto-Connect:"
+msgstr "Strøm auto-tilkobling:"
+
+msgctxt "SmartFoundations,Config_PowerAutoConnect_TT"
+msgid "Enable automatic power connections between poles and buildings"
+msgstr ""
+
+msgctxt "SmartFoundations,Config_PowerGridAxis"
+msgid "Grid Axis:"
+msgstr "Rutenettakse:"
+
+msgctxt "SmartFoundations,Config_PowerGridAxis_TT"
+msgid "Direction power poles connect to each other (Auto/X only/Y only/X+Y)"
+msgstr ""
+
+msgctxt "SmartFoundations,Config_PowerRange"
+msgid "Connection Range:"
+msgstr "Tilkoblingsrekkevidde:"
+
+msgctxt "SmartFoundations,Config_PowerRange_TT"
+msgid "Maximum distance to search for buildings to connect (in meters)"
+msgstr ""
+
+msgctxt "SmartFoundations,Config_PowerReserved"
+msgid "# of Connections to Keep Free:"
+msgstr "# Reserverte tilkoblinger:"
+
+msgctxt "SmartFoundations,Config_PowerReserved_TT"
+msgid "Reserve this many connections on each power pole for manual wiring"
+msgstr ""
+
+msgctxt "SmartFoundations,Config_ExtendEnabled"
+msgid "Extend Enabled:"
+msgstr "Utvidelse aktivert:"
+
+msgctxt "SmartFoundations,Config_ExtendEnabled_TT"
+msgid "Enable the Extend feature (auto-clone manifolds when placing near existing buildings). Disable to prevent Extend from activating."
+msgstr ""
+
+msgctxt "SmartFoundations,Config_ExtendPower"
+msgid "Extend Power Poles:"
+msgstr "Utvid strømstolper:"
+
+msgctxt "SmartFoundations,Config_ExtendPower_TT"
+msgid "Include power poles when using Extend to duplicate factory buildings"
+msgstr ""
+
+msgctxt "SmartFoundations,Config_AutoHold"
+msgid "Auto-Hold on Grid Change:"
+msgstr "Auto-hold ved rutenettendring:"
+
+msgctxt "SmartFoundations,Config_AutoHold_TT"
+msgid "Automatically lock hologram position after any grid modification (X/Y/Z > 1). Press Hold key to manually release. No world reload required."
+msgstr ""
+
+msgctxt "SmartFoundations,Config_ApplyImmediate"
+msgid "Apply Immediately"
+msgstr "Bruk umiddelbart"
+
+msgctxt "SmartFoundations,Config_ApplyImmediate_TT"
+msgid "Apply Smart Panel settings immediately without clicking Apply button"
+msgstr ""
+
+msgctxt "SmartFoundations,Config_ShowHUD"
+msgid "Show HUD Overlay"
+msgstr "Vis HUD-overlegg"
+
+msgctxt "SmartFoundations,Config_ShowHUD_TT"
+msgid "Display the Smart! HUD with scale counters"
+msgstr "Vis Smart! HUD med skaleringstellerne"
+
+msgctxt "SmartFoundations,Config_HUDScale"
+msgid "HUD Scale"
+msgstr "HUD-skala"
+
+msgctxt "SmartFoundations,Config_HUDScale_TT"
+msgid "Scale of the HUD overlay (0.5 to 2.0)"
+msgstr ""
+
+msgctxt "SmartFoundations,Config_HUDPosX"
+msgid "HUD Position X"
+msgstr "HUD-posisjon X"
+
+msgctxt "SmartFoundations,Config_HUDPosX_TT"
+msgid "Horizontal position of HUD (0.0 = left, 1.0 = right). Default: 0.02"
+msgstr ""
+
+msgctxt "SmartFoundations,Config_HUDPosY"
+msgid "HUD Position Y"
+msgstr "HUD-posisjon Y"
+
+msgctxt "SmartFoundations,Config_HUDPosY_TT"
+msgid "Vertical position of HUD (0.0 = top, 1.0 = bottom). Default: 0.25"
+msgstr ""
+
+msgctxt "SmartFoundations,Config_HUDTheme"
+msgid "HUD Theme:"
+msgstr "HUD-tema:"
+
+msgctxt "SmartFoundations,Config_HUDTheme_TT"
+msgid "Color theme for the Smart! HUD overlay (Default=FICSIT Orange, Dark=Muted grays, Classic=Green terminal, High Contrast=Bright white, Minimal=No border, Monochrome=White on black)"
+msgstr "Fargetema for Smart! HUD (Standard=FICSIT Oransje, Mørk=Dempede gråtoner, Klassisk=Grønn terminal, Høy kontrast=Klar hvit, Minimal=Ingen kant, Monochrome=Hvit på svart)"
+
+msgctxt "SmartFoundations,Config_ShowArrows"
+msgid "Show Direction Arrows (can be overridden)"
+msgstr "Vis retningspiler (kan overstyres)"
+
+msgctxt "SmartFoundations,Config_ShowArrows_TT"
+msgid "Display directional arrows on holograms - This setting is reflected whenever you load into the game."
+msgstr ""
+
+msgctxt "SmartFoundations,Config_ArrowOrbit"
+msgid "Arrow Orbit Animation:"
+msgstr "Pilorbitsanimasjon:"
+
+msgctxt "SmartFoundations,Config_ArrowOrbit_TT"
+msgid "Enable animated orbiting of directional arrows around the hologram. Disable for static arrows that still track player position."
+msgstr ""
+
+msgctxt "SmartFoundations,Config_ArrowLabels"
+msgid "Arrow Axis Labels:"
+msgstr "Pilakseetiketter:"
+
+msgctxt "SmartFoundations,Config_ArrowLabels_TT"
+msgid "Show X/Y/Z text labels on directional arrows. Disable for cleaner arrow visuals without text."
+msgstr ""
+
+msgctxt "SmartFoundations,Panel_Btn_Apply"
+msgid "Apply"
+msgstr "Bruk"
+
+msgctxt "SmartFoundations,Panel_Btn_Reset"
+msgid "Reset"
+msgstr "Tilbakestill"
+
+msgctxt "SmartFoundations,Panel_Btn_Close"
+msgid "Close"
+msgstr "Lukk"
+
+msgctxt "SmartFoundations,Panel_Btn_ClearRecipe"
+msgid "Clear"
+msgstr "Tøm"
+
+msgctxt "SmartFoundations,Panel_Btn_Continue"
+msgid "Continue"
+msgstr "Fortsett"
+
+msgctxt "SmartFoundations,Panel_Btn_Cancel"
+msgid "Cancel"
+msgstr "Avbryt"
+
+msgctxt "SmartFoundations,Panel_ApplyImmediately"
+msgid "Apply Immediately:"
+msgstr "Bruk umiddelbart:"
+
+msgctxt "SmartFoundations,Panel_Section_Grid"
+msgid "Grid"
+msgstr "Rutenett"
+
+msgctxt "SmartFoundations,Panel_Section_Spacing"
+msgid "Spacing"
+msgstr "Avstand"
+
+msgctxt "SmartFoundations,Panel_Section_Steps"
+msgid "Steps"
+msgstr "Trinn"
+
+msgctxt "SmartFoundations,Panel_Section_Stagger"
+msgid "Stagger"
+msgstr "Forskyvning"
+
+msgctxt "SmartFoundations,Panel_Section_Rotation"
+msgid "Rotation"
+msgstr "Rotasjon"
+
+msgctxt "SmartFoundations,Panel_GridX"
+msgid "Grid [X]:"
+msgstr "Rutenett [X]:"
+
+msgctxt "SmartFoundations,Panel_GridY"
+msgid "Grid [Y]:"
+msgstr "Rutenett [Y]:"
+
+msgctxt "SmartFoundations,Panel_GridZ"
+msgid "Grid [Z]:"
+msgstr "Rutenett [Z]:"
+
+msgctxt "SmartFoundations,Panel_SpacingX"
+msgid "Spacing [X]:"
+msgstr "Avstand [X]:"
+
+msgctxt "SmartFoundations,Panel_SpacingY"
+msgid "Spacing [Y]:"
+msgstr "Avstand [Y]:"
+
+msgctxt "SmartFoundations,Panel_SpacingZ"
+msgid "Spacing [Z]:"
+msgstr "Avstand [Z]:"
+
+msgctxt "SmartFoundations,Panel_StepsX"
+msgid "Steps [X]:"
+msgstr "Trinn [X]:"
+
+msgctxt "SmartFoundations,Panel_StepsY"
+msgid "Steps [Y]:"
+msgstr "Trinn [Y]:"
+
+msgctxt "SmartFoundations,Panel_StaggerX"
+msgid "Stagger [X]:"
+msgstr "Forskyvning [X]:"
+
+msgctxt "SmartFoundations,Panel_StaggerY"
+msgid "Stagger [Y]:"
+msgstr "Forskyvning [Y]:"
+
+msgctxt "SmartFoundations,Panel_StaggerZX"
+msgid "Stagger [ZX]:"
+msgstr "Forskyvning [ZX]:"
+
+msgctxt "SmartFoundations,Panel_StaggerZY"
+msgid "Stagger [ZY]:"
+msgstr "Forskyvning [ZY]:"
+
+msgctxt "SmartFoundations,Panel_Unit_Meters"
+msgid "m"
+msgstr ""
+
+msgctxt "SmartFoundations,Panel_Unit_Degrees"
+msgid "°"
+msgstr ""
+
+msgctxt "SmartFoundations,Panel_RotationZ"
+msgid "Rotation [Z]:"
+msgstr "Rotasjon [Z]:"
+
+msgctxt "SmartFoundations,Panel_AC_BeltEnabled"
+msgid "Belt Auto-Connect:"
+msgstr "Bånd auto-tilkobling:"
+
+msgctxt "SmartFoundations,Panel_AC_MainTier"
+msgid "Main Tier:"
+msgstr "Hovednivå:"
+
+msgctxt "SmartFoundations,Panel_AC_ToBuilding"
+msgid "To Building:"
+msgstr "Til bygning:"
+
+msgctxt "SmartFoundations,Panel_AC_Chain"
+msgid "Chain:"
+msgstr "Kjede:"
+
+msgctxt "SmartFoundations,Panel_AC_Direction"
+msgid "Direction:"
+msgstr "Retning:"
+
+msgctxt "SmartFoundations,Panel_AC_Routing"
+msgid "Routing:"
+msgstr "Ruting:"
+
+msgctxt "SmartFoundations,Panel_AC_PipeEnabled"
+msgid "Pipe Auto-Connect:"
+msgstr "Rør auto-tilkobling:"
+
+msgctxt "SmartFoundations,Panel_AC_FlowIndicator"
+msgid "Flow Indicator:"
+msgstr "Strømningsindikator:"
+
+msgctxt "SmartFoundations,Panel_AC_PowerEnabled"
+msgid "Power Auto-Connect:"
+msgstr "Strøm auto-tilkobling:"
+
+msgctxt "SmartFoundations,Panel_AC_GridAxis"
+msgid "Grid Axis:"
+msgstr "Rutenettakse:"
+
+msgctxt "SmartFoundations,Panel_AC_Reserved"
+msgid "Reserved:"
+msgstr "Reservert:"
+
+msgctxt "SmartFoundations,Panel_Recipe_NoneSelected"
+msgid "None Selected"
+msgstr "Ingen valgt"
+
+msgctxt "SmartFoundations,Panel_Recipe_Active"
+msgid "Recipe* {0}/{1}: {2}"
+msgstr "Oppskrift* {0}/{1}: {2}"
+
+msgctxt "SmartFoundations,Panel_Recipe"
+msgid "Recipe {0}/{1}: {2}"
+msgstr "Oppskrift {0}/{1}: {2}"
+
+msgctxt "SmartFoundations,Panel_Recipe_NoneSelected_Count"
+msgid "No recipe selected ({0} available)"
+msgstr "Ingen oppskrift valgt ({0} tilgjengelige)"
+
+msgctxt "SmartFoundations,Panel_Recipe_NoCompatible"
+msgid "No compatible recipes"
+msgstr "Ingen kompatible oppskrifter"
+
+msgctxt "SmartFoundations,Panel_Recipe_OutputLiquid"
+msgid "→ Output: {0} x{1} m³ ({2}/min) (Grid Total: {3}/min)"
+msgstr "→ Utgang: {0} x{1} m³ ({2}/min) (Totalt: {3}/min)"
+
+msgctxt "SmartFoundations,Panel_Recipe_Output"
+msgid "→ Output: {0} x{1} ({2}/min) (Grid Total: {3}/min)"
+msgstr "→ Utgang: {0} x{1} ({2}/min) (Totalt: {3}/min)"
+
+msgctxt "SmartFoundations,Panel_Recipe_InputLiquid"
+msgid "← Input: {0} x{1} m³ ({2}/min) (Grid Total: {3}/min)"
+msgstr "← Inngang: {0} x{1} m³ ({2}/min) (Totalt: {3}/min)"
+
+msgctxt "SmartFoundations,Panel_Recipe_Input"
+msgid "← Input: {0} x{1} ({2}/min) (Grid Total: {3}/min)"
+msgstr "← Inngang: {0} x{1} ({2}/min) (Totalt: {3}/min)"
+
+msgctxt "SmartFoundations,Panel_Confirm_ExtremeTitle"
+msgid "EXTREME GRID WARNING!"
+msgstr "EKSTREM RUTENETT-ADVARSEL!"
+
+msgctxt "SmartFoundations,Panel_Confirm_ExtremeMsg"
+msgid "You are about to generate {0} holograms.\n\nThis will likely cause a significant freeze and may crash the game.\n\nAre you sure you want to continue?"
+msgstr "Du er i ferd med å generere {0} hologrammer.\n\nDette vil sannsynligvis forårsake betydelig frysing og kan krasje spillet.\n\nEr du sikker?"
+
+msgctxt "SmartFoundations,Panel_Confirm_LargeTitle"
+msgid "Large Grid Warning"
+msgstr "Stort rutenett-advarsel"
+
+msgctxt "SmartFoundations,Panel_Confirm_LargeMsg"
+msgid "You are about to generate {0} holograms.\n\nThis may cause a temporary freeze.\n\nContinue?"
+msgstr "Du er i ferd med å generere {0} hologrammer.\n\nDette kan forårsake midlertidig frysing.\n\nFortsette?"
+
+msgctxt "SmartFoundations,Upgrade_Title"
+msgid "Smart! Upgrade Panel"
+msgstr "Smart! Oppgraderingspanel"
+
+msgctxt "SmartFoundations,Upgrade_Tab_Radius"
+msgid "Radius"
+msgstr "Radius"
+
+msgctxt "SmartFoundations,Upgrade_Tab_Network"
+msgid "Network"
+msgstr "Nettverk"
+
+msgctxt "SmartFoundations,Upgrade_RadiusLabel"
+msgid "Radius (m):"
+msgstr "Radius (m):"
+
+msgctxt "SmartFoundations,Upgrade_Btn_Scan"
+msgid "Scan"
+msgstr "Skann"
+
+msgctxt "SmartFoundations,Upgrade_Btn_EntireMap"
+msgid "Entire Map"
+msgstr "Hele kartet"
+
+msgctxt "SmartFoundations,Upgrade_TargetTier"
+msgid "Target Tier:"
+msgstr "Målnivå:"
+
+msgctxt "SmartFoundations,Upgrade_EstimatedCost"
+msgid "Estimated Cost"
+msgstr "Estimert kostnad"
+
+msgctxt "SmartFoundations,Upgrade_Btn_ScanNetwork"
+msgid "Scan Network"
+msgstr "Skann nettverk"
+
+msgctxt "SmartFoundations,Upgrade_CrossSplitters"
+msgid "Cross Splitters/Mergers"
+msgstr "Kryss splittere/sammenslåere"
+
+msgctxt "SmartFoundations,Upgrade_CrossStorage"
+msgid "Cross Storage Containers"
+msgstr "Kryss lagerbeholdere"
+
+msgctxt "SmartFoundations,Upgrade_CrossTrains"
+msgid "Cross Train Platforms"
+msgstr "Kryss togplattformer"
+
+msgctxt "SmartFoundations,Upgrade_Btn_Upgrade"
+msgid "UPGRADE"
+msgstr "OPPGRADER"
+
+msgctxt "SmartFoundations,Upgrade_Btn_Cancel"
+msgid "Cancel"
+msgstr "Avbryt"
+
+msgctxt "SmartFoundations,Upgrade_Btn_Close"
+msgid "Close"
+msgstr "Lukk"
+
+msgctxt "SmartFoundations,Upgrade_Btn_X"
+msgid "X"
+msgstr "X"
+
+msgctxt "SmartFoundations,Upgrade_AuditProgress"
+msgid "Auditing world... {0}% ({1} scanned)"
+msgstr "Reviderer verden... {0}% ({1} skannet)"
+
+msgctxt "SmartFoundations,Upgrade_AuditComplete"
+msgid "Audit Complete: {0} upgradeable found across {1} structures."
+msgstr "Revisjon fullført: {0} oppgraderbare blant {1} strukturer."
+
+msgctxt "SmartFoundations,Upgrade_Upgrading"
+msgid "Upgrading {0} Mk.{1} → Mk.{2}..."
+msgstr "Oppgraderer {0} Mk.{1} → Mk.{2}..."
+
+#. Smart Upgrade triage strings - English fallback pending translation
+msgctxt "SmartFoundations,Upgrade_Tab_Triage"
+msgid "Triage"
+msgstr "Triagering"
+
+msgctxt "SmartFoundations,Triage_Warning"
+msgid "These tools diagnose conveyor chain issues after mass upgrades or save/load. Repair purges zombie chains, rebuilds split chains, and re-registers orphaned conveyor tick groups after load. Save before repair; after repair, save, reload, and run Detect again."
+msgstr "Disse verktoyene diagnostiserer problemer med transportbandkjeder etter masseoppgraderinger eller lagring/lasting. Reparer fjerner zombiekjeder, bygger splittede kjeder pa nytt og registrerer foreldreløse transportband-tickgrupper pa nytt etter lasting. Lagre for reparasjon; etter reparasjon, lagre, last inn pa nytt og kjor Oppdag igjen."
+
+msgctxt "SmartFoundations,Triage_Btn_Detect"
+msgid "Detect Issues"
+msgstr "Finn problemer"
+
+msgctxt "SmartFoundations,Triage_Btn_Repair"
+msgid "Repair All Issues"
+msgstr "Reparer alle problemer"
+
+msgctxt "SmartFoundations,Triage_Ready"
+msgid "Use Detect to scan for chain issues"
+msgstr "Bruk Finn for å skanne etter kjedeproblemer"
+
+msgctxt "SmartFoundations,Triage_Detecting"
+msgid "Scanning map for chain issues..."
+msgstr "Skanner kartet etter kjedeproblemer..."
+
+msgctxt "SmartFoundations,Triage_NoIssues"
+msgid "No issues detected. Your conveyor chains are healthy."
+msgstr "Ingen problemer funnet. Transportbåndkjedene dine er friske."
+
+msgctxt "SmartFoundations,Triage_IssuesFound"
+msgid "Found {0} zombie chain(s), {1} split chain group(s), {2} chain=NONE belt(s), and {3} orphaned tick group(s) ({4} empty, {5} live belt/lift entries, {6} connected candidate group(s)).\nRepair will purge zombies, rebuild split chains, and re-register live conveyors from orphaned tick groups. After repair, save, reload, and run Detect again."
+msgstr "Fant {0} zombiekjede(r), {1} splittet kjedegruppe(r), {2} chain=NONE-band og {3} foreldreløse tickgruppe(r) ({4} tomme, {5} aktive band-/heisoppforinger, {6} tilkoblede kandidatgruppe(r)).\nReparer vil fjerne zombier, bygge splittede kjeder pa nytt og registrere aktive transportorer fra foreldreløse tickgrupper pa nytt. Etterpa lagrer du, laster inn pa nytt og kjorer Oppdag igjen."
+
+msgctxt "SmartFoundations,Triage_IssuesSummary"
+msgid "Issues found - Repair handles zombies, splits, and orphaned tick groups"
+msgstr "Problemer funnet - Reparer handterer zombier, splitter og foreldreløse tickgrupper"
+
+msgctxt "SmartFoundations,Triage_AllClear"
+msgid "All clear — no chain issues found"
+msgstr "Alt klart — ingen kjedeproblemer funnet"
+
+msgctxt "SmartFoundations,Triage_Repairing"
+msgid "Repairing chain issues..."
+msgstr "Reparerer kjedeproblemer..."
+
+msgctxt "SmartFoundations,Triage_RepairDone"
+msgid "Repair complete. Removed {0} zombie chain(s), rebuilt {1} split group(s), and re-registered {6} live conveyor(s) from {3} orphaned tick group(s), including {4} empty group(s) and {5} live belt(s). Save, reload, and run Detect again."
+msgstr "Reparasjon fullfort. Fjernet {0} zombiekjede(r), bygget {1} splittet gruppe(r) pa nytt og registrerte {6} aktive transportorer fra {3} foreldreløse tickgruppe(r), inkludert {4} tomme gruppe(r) og {5} aktive band. Lagre, last inn pa nytt og kjor Oppdag igjen."
+
+msgctxt "SmartFoundations,Triage_RepairDoneWithReport"
+msgid "Repair complete. Removed {0} zombie chain(s), rebuilt {1} split group(s), and re-registered {7} live conveyor(s) from {3} orphaned tick group(s), including {4} empty group(s) and {5} live belt(s). A diagnostic report was written to: {6}"
+msgstr "Reparasjon fullfort. Fjernet {0} zombiekjede(r), bygget {1} splittet gruppe(r) pa nytt og registrerte {7} aktive transportorer fra {3} foreldreløse tickgruppe(r), inkludert {4} tomme gruppe(r) og {5} aktive band. Diagnoserapport: {6}"
+
+msgctxt "SmartFoundations,Triage_RepairNone"
+msgid "Repair complete. Nothing needed fixing."
+msgstr "Reparasjon fullført. Ingenting trengte reparasjon."
+
+msgctxt "SmartFoundations,Triage_RepairComplete"
+msgid "Chain repair complete"
+msgstr "Kjedreparasjon fullført"
+
+msgctxt "SmartFoundations,Triage_RepairCompleteWithOrphans"
+msgid "Chain repair complete — save, reload, and run Detect again"
+msgstr "Kjedereparasjon fullfort — lagre, last inn pa nytt og kjor Oppdag igjen"

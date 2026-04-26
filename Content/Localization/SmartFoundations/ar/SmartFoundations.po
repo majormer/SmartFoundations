@@ -1,0 +1,816 @@
+# Smart! Foundations - Arabic
+# Copyright (c) 2024-2026 SmartFoundations Mod. All Rights Reserved.
+# Language: Arabic (ar)
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: SmartFoundations\n"
+"POT-Creation-Date: 2026-02-26 12:00+0000\n"
+"PO-Revision-Date: 2026-02-26 12:00+0000\n"
+"Language: ar\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5);\n"
+
+#. Arrow axis labels
+msgctxt "SmartFoundations,ArrowLabel_X"
+msgid "X"
+msgstr ""
+
+msgctxt "SmartFoundations,ArrowLabel_Y"
+msgid "Y"
+msgstr ""
+
+msgctxt "SmartFoundations,ArrowLabel_Z"
+msgid "Z"
+msgstr ""
+
+#. Smart Panel titles
+msgctxt "SmartFoundations,Panel_Title"
+msgid "Smart! Panel"
+msgstr "Smart! لوحة"
+
+msgctxt "SmartFoundations,Panel_Title_Extend"
+msgid "Smart! Extend"
+msgstr "Smart! تمديد"
+
+#. Smart Panel section headers
+msgctxt "SmartFoundations,Panel_AutoConnectHeader"
+msgid "Auto-Connect"
+msgstr "توصيل تلقائي"
+
+msgctxt "SmartFoundations,Panel_RecipeHeader"
+msgid "Recipes"
+msgstr "الوصفات"
+
+#. Smart Panel grid warnings
+msgctxt "SmartFoundations,Panel_GridTotal"
+msgid "Grid Total: {0} holograms"
+msgstr "إجمالي الشبكة: {0} هولوغرام"
+
+msgctxt "SmartFoundations,Panel_GridWarning_Danger"
+msgid "* Extreme grid - high risk of freeze/crash"
+msgstr "* شبكة ضخمة - خطر عالي للتجمد/الانهيار"
+
+msgctxt "SmartFoundations,Panel_GridWarning_Warning"
+msgid "* Very large grid - may cause temporary freeze"
+msgstr "* شبكة كبيرة جداً - قد تسبب تجمداً مؤقتاً"
+
+msgctxt "SmartFoundations,Panel_GridWarning_Caution"
+msgid "* Large grid"
+msgstr "* شبكة كبيرة"
+
+#. Upgrade panel - result row
+msgctxt "SmartFoundations,UpgradeRow_WallOutlet"
+msgid "Wall Outlet Mk.{0}"
+msgstr "مقبس حائط Mk.{0}"
+
+msgctxt "SmartFoundations,UpgradeRow_DoubleWallOutlet"
+msgid "Double Wall Outlet Mk.{0}"
+msgstr "مقبس حائط مزدوج Mk.{0}"
+
+msgctxt "SmartFoundations,UpgradeRow_FamilyTier"
+msgid "{0} Mk.{1}"
+msgstr "{0} Mk.{1}"
+
+msgctxt "SmartFoundations,UpgradeRow_Upgradeable"
+msgid "({0} upgradeable)"
+msgstr "({0} قابل للترقية)"
+
+#. Upgrade panel - status messages
+msgctxt "SmartFoundations,Upgrade_Ready"
+msgid "Ready"
+msgstr "جاهز"
+
+msgctxt "SmartFoundations,Upgrade_SelectFamily"
+msgid "Select a family to see costs"
+msgstr "اختر فئة لعرض التكاليف"
+
+msgctxt "SmartFoundations,Upgrade_TraversalHint"
+msgid "Aim at a belt, pipe, or pole to scan its network"
+msgstr "صوّب على حزام أو أنبوب أو عمود لمسح شبكته"
+
+msgctxt "SmartFoundations,Upgrade_ScanCosts"
+msgid "Scan network to see costs"
+msgstr "امسح الشبكة لعرض التكاليف"
+
+msgctxt "SmartFoundations,Upgrade_NoAudit"
+msgid "No audit snapshot. Press Scan to start."
+msgstr "لا توجد لقطة تدقيق. اضغط مسح للبدء."
+
+msgctxt "SmartFoundations,Upgrade_PressScan"
+msgid "Press Scan to find upgradeable items"
+msgstr "اضغط مسح للعثور على العناصر القابلة للترقية"
+
+msgctxt "SmartFoundations,Upgrade_NoFamily"
+msgid "No family selected - scan first"
+msgstr "لم يتم اختيار فئة - امسح أولاً"
+
+msgctxt "SmartFoundations,Upgrade_SelectRow"
+msgid "Select a row first to upgrade"
+msgstr "اختر صفاً أولاً للترقية"
+
+msgctxt "SmartFoundations,Upgrade_ErrSubsystem"
+msgid "Error: Subsystem not available"
+msgstr "خطأ: النظام الفرعي غير متاح"
+
+msgctxt "SmartFoundations,Upgrade_ErrExecution"
+msgid "Error: Execution service not available"
+msgstr "خطأ: خدمة التنفيذ غير متاحة"
+
+msgctxt "SmartFoundations,Upgrade_SelectTier"
+msgid "Select a target tier from the dropdown"
+msgstr "اختر المستوى المستهدف من القائمة"
+
+msgctxt "SmartFoundations,Upgrade_AuditFailed"
+msgid "Audit failed or was canceled."
+msgstr "فشل التدقيق أو تم إلغاؤه."
+
+msgctxt "SmartFoundations,Upgrade_Separator"
+msgid " x "
+msgstr ""
+
+msgctxt "SmartFoundations,Upgrade_UpgradeableCount"
+msgid "({0} upgradeable)"
+msgstr "({0} قابل للترقية)"
+
+msgctxt "SmartFoundations,Upgrade_NoPlayerLoc"
+msgid "Cannot find player location"
+msgstr "تعذر العثور على موقع اللاعب"
+
+msgctxt "SmartFoundations,Upgrade_NoInstances"
+msgid "No instances found (entries not stored)"
+msgstr "لم يتم العثور على نسخ (الإدخالات غير مخزنة)"
+
+msgctxt "SmartFoundations,Upgrade_SelectTargetTier"
+msgid "Select target tier"
+msgstr "اختر المستوى المستهدف"
+
+msgctxt "SmartFoundations,Upgrade_NoItems"
+msgid "No items to upgrade"
+msgstr "لا توجد عناصر للترقية"
+
+msgctxt "SmartFoundations,HUD_Header"
+msgid "SMART!"
+msgstr ""
+
+msgctxt "SmartFoundations,HUD_ZoopActive"
+msgid "*Zoop Active - Scaling Disabled"
+msgstr "*Zoop نشط - القياس معطل"
+
+msgctxt "SmartFoundations,HUD_SmartDisabled"
+msgid "*Smart Disabled (double-tap to re-enable)"
+msgstr "*Smart معطل (انقر مرتين لإعادة التفعيل)"
+
+msgctxt "SmartFoundations,HUD_AutoConnectDisabled"
+msgid "*Auto-Connect Disabled (double-tap to re-enable)"
+msgstr "*التوصيل التلقائي معطل (انقر مرتين لإعادة التفعيل)"
+
+msgctxt "SmartFoundations,HUD_ExtendDisabled"
+msgid "*Extend Disabled"
+msgstr "*التمديد معطل"
+
+msgctxt "SmartFoundations,HUD_ExtendActive"
+msgid "*Extend Active"
+msgstr "*التمديد نشط"
+
+msgctxt "SmartFoundations,HUD_ExtendScaled"
+msgid "*Extend: {0}x{1}"
+msgstr "*تمديد: {0}x{1}"
+
+msgctxt "SmartFoundations,HUD_Invalid"
+msgid "[INVALID]"
+msgstr "[غير صالح]"
+
+msgctxt "SmartFoundations,HUD_LiftHeight"
+msgid "Lift: ↕ {0}m  ⇓ {1}m"
+msgstr "رفع: ↕ {0}م  ⇓ {1}م"
+
+msgctxt "SmartFoundations,HUD_GridDefault"
+msgid "Grid: 1x1x1"
+msgstr "شبكة: 1x1x1"
+
+msgctxt "SmartFoundations,HUD_Recipe"
+msgid "Recipe {0}/{1}: {2}"
+msgstr "وصفة {0}/{1}: {2}"
+
+msgctxt "SmartFoundations,HUD_RecipeActive"
+msgid "Recipe* {0}/{1}: {2}"
+msgstr "وصفة* {0}/{1}: {2}"
+
+msgctxt "SmartFoundations,HUD_SpacingX"
+msgid "Spacing [X]{0}: {1}m"
+msgstr "تباعد [X]{0}: {1}م"
+
+msgctxt "SmartFoundations,HUD_SpacingY"
+msgid "Spacing [Y]{0}: {1}m"
+msgstr "تباعد [Y]{0}: {1}م"
+
+msgctxt "SmartFoundations,HUD_SpacingZ"
+msgid "Spacing [Z]{0}: {1}m"
+msgstr "تباعد [Z]{0}: {1}م"
+
+msgctxt "SmartFoundations,HUD_SpacingDefault"
+msgid "Spacing*: 0.0m"
+msgstr "تباعد*: 0.0م"
+
+msgctxt "SmartFoundations,HUD_StepsX"
+msgid "Steps [X]{0}: {1}m columns"
+msgstr "خطوات [X]{0}: {1}م أعمدة"
+
+msgctxt "SmartFoundations,HUD_StepsY"
+msgid "Steps [Y]{0}: {1}m rows"
+msgstr "خطوات [Y]{0}: {1}م صفوف"
+
+msgctxt "SmartFoundations,HUD_StepsDefault"
+msgid "Steps*: 0.0m"
+msgstr "خطوات*: 0.0م"
+
+msgctxt "SmartFoundations,HUD_StaggerX"
+msgid "Stagger [X]{0}: {1}m sideways"
+msgstr "تداخل [X]{0}: {1}م جانبي"
+
+msgctxt "SmartFoundations,HUD_StaggerY"
+msgid "Stagger [Y]{0}: {1}m forward"
+msgstr "تداخل [Y]{0}: {1}م أمامي"
+
+msgctxt "SmartFoundations,HUD_StaggerZX"
+msgid "Stagger [ZX]{0}: {1}m shift forward"
+msgstr "تداخل [ZX]{0}: {1}م إزاحة أمامية"
+
+msgctxt "SmartFoundations,HUD_StaggerZY"
+msgid "Stagger [ZY]{0}: {1}m shift sideways"
+msgstr "تداخل [ZY]{0}: {1}م إزاحة جانبية"
+
+msgctxt "SmartFoundations,HUD_StaggerDefault"
+msgid "Stagger*: 0.0m"
+msgstr "تداخل*: 0.0م"
+
+msgctxt "SmartFoundations,HUD_RotationZFull"
+msgid "Rotation [Z]{0}: {1}° (R={2}m, {3}/circle)"
+msgstr "دوران [Z]{0}: {1}° (نق={2}م، {3}/دائرة)"
+
+msgctxt "SmartFoundations,HUD_RotationZ"
+msgid "Rotation [Z]{0}: {1}°"
+msgstr "دوران [Z]{0}: {1}°"
+
+msgctxt "SmartFoundations,HUD_RotationDefault"
+msgid "Rotation*: 0.0°"
+msgstr "دوران*: 0.0°"
+
+msgctxt "SmartFoundations,HUD_Grid"
+msgid "Grid: {0}x{1}x{2} ({3})"
+msgstr "شبكة: {0}x{1}x{2} ({3})"
+
+msgctxt "SmartFoundations,HUD_SettingsActive"
+msgid "Settings: {0}{1}"
+msgstr "إعدادات: {0}{1}"
+
+msgctxt "SmartFoundations,HUD_SettingsCurrent"
+msgid "Settings: {0}*"
+msgstr "إعدادات: {0}*"
+
+msgctxt "SmartFoundations,HUD_Settings"
+msgid "Settings: {0}"
+msgstr "إعدادات: {0}"
+
+msgctxt "SmartFoundations,Family_Belt"
+msgid "Conveyor Belts"
+msgstr "أحزمة ناقلة"
+
+msgctxt "SmartFoundations,Family_Lift"
+msgid "Conveyor Lifts"
+msgstr "مصاعد ناقلة"
+
+msgctxt "SmartFoundations,Family_Pipe"
+msgid "Pipelines"
+msgstr "أنابيب"
+
+msgctxt "SmartFoundations,Family_Pump"
+msgid "Pipeline Pumps"
+msgstr "مضخات أنابيب"
+
+msgctxt "SmartFoundations,Family_PowerPole"
+msgid "Power Poles"
+msgstr "أعمدة كهرباء"
+
+msgctxt "SmartFoundations,Family_WallOutletSingle"
+msgid "Wall Outlets (Single)"
+msgstr "مقابس حائط (مفردة)"
+
+msgctxt "SmartFoundations,Family_WallOutletDouble"
+msgid "Wall Outlets (Double)"
+msgstr "مقابس حائط (مزدوجة)"
+
+msgctxt "SmartFoundations,Family_Tower"
+msgid "Power Towers"
+msgstr "أبراج كهرباء"
+
+msgctxt "SmartFoundations,Family_Unknown"
+msgid "Unknown"
+msgstr "غير معروف"
+
+msgctxt "SmartFoundations,Config_RootDisplayName"
+msgid "Smart! Configuration"
+msgstr "Smart! إعدادات"
+
+msgctxt "SmartFoundations,Config_RootTooltip"
+msgid "Core Smart! Foundations settings for HUD display and default scale values"
+msgstr "إعدادات Smart! الأساسية لعرض الواجهة وقيم المقياس الافتراضية"
+
+msgctxt "SmartFoundations,Config_AutoConnectEnabled"
+msgid "Belt Auto-Connect:"
+msgstr "توصيل أحزمة تلقائي:"
+
+msgctxt "SmartFoundations,Config_AutoConnectEnabled_TT"
+msgid "Enable automatic belt connections between distributors and buildings"
+msgstr ""
+
+msgctxt "SmartFoundations,Config_ManifoldLaneBelts"
+msgid "Use Manifold Lane Belts:"
+msgstr "استخدام أحزمة المسار:"
+
+msgctxt "SmartFoundations,Config_ManifoldLaneBelts_TT"
+msgid "Automatically chain distributors together using the Manifold Lane Belt tier"
+msgstr ""
+
+msgctxt "SmartFoundations,Config_ManifoldLaneBelt"
+msgid "Manifold Lane Belt:"
+msgstr "حزام المسار:"
+
+msgctxt "SmartFoundations,Config_ManifoldLaneBelt_TT"
+msgid "Belt tier for distributor-to-distributor (manifold) connections (0=Auto)"
+msgstr ""
+
+msgctxt "SmartFoundations,Config_FactoryBelt"
+msgid "Factory Belt:"
+msgstr "حزام المصنع:"
+
+msgctxt "SmartFoundations,Config_FactoryBelt_TT"
+msgid "Belt tier for distributor-to-building connections (0=Auto)"
+msgstr ""
+
+msgctxt "SmartFoundations,Config_BeltRoutingMode"
+msgid "Belt Routing Mode:"
+msgstr "وضع توجيه الحزام:"
+
+msgctxt "SmartFoundations,Config_BeltRoutingMode_TT"
+msgid "0=Default, 1=Curve, 2=Straight"
+msgstr ""
+
+msgctxt "SmartFoundations,Config_StackableBelt"
+msgid "Stackable Belt Auto-Connect"
+msgstr "توصيل أحزمة قابلة للتكديس"
+
+msgctxt "SmartFoundations,Config_StackableBelt_TT"
+msgid "Enable automatic belt connections between stackable conveyor poles"
+msgstr ""
+
+msgctxt "SmartFoundations,Config_PipeAutoConnect"
+msgid "Pipe Auto-Connect:"
+msgstr "توصيل أنابيب تلقائي:"
+
+msgctxt "SmartFoundations,Config_PipeAutoConnect_TT"
+msgid "Enable automatic pipe connections between junctions and buildings"
+msgstr ""
+
+msgctxt "SmartFoundations,Config_PipeMainTier"
+msgid "Main Tier:"
+msgstr "المستوى الرئيسي:"
+
+msgctxt "SmartFoundations,Config_PipeMainTier_TT"
+msgid "Pipe tier for junction-to-junction (manifold) connections (0=Auto)"
+msgstr ""
+
+msgctxt "SmartFoundations,Config_PipeToBuilding"
+msgid "To Building:"
+msgstr "إلى المبنى:"
+
+msgctxt "SmartFoundations,Config_PipeToBuilding_TT"
+msgid "Pipe tier for junction-to-building connections (0=Auto)"
+msgstr ""
+
+msgctxt "SmartFoundations,Config_PipeRoutingMode"
+msgid "Pipe Routing Mode:"
+msgstr "وضع توجيه الأنبوب:"
+
+msgctxt "SmartFoundations,Config_PipeRoutingMode_TT"
+msgid "0=Auto, 1=Auto2D, 2=Straight, 3=Curve, 4=Noodle, 5=Horiz→Vert"
+msgstr ""
+
+msgctxt "SmartFoundations,Config_FlowIndicator"
+msgid "Flow Indicator:"
+msgstr "مؤشر التدفق:"
+
+msgctxt "SmartFoundations,Config_FlowIndicator_TT"
+msgid "Show flow direction indicator on pipes (off = \"
+msgstr ""
+
+msgctxt "SmartFoundations,Config_PowerAutoConnect"
+msgid "Power Auto-Connect:"
+msgstr "توصيل كهرباء تلقائي:"
+
+msgctxt "SmartFoundations,Config_PowerAutoConnect_TT"
+msgid "Enable automatic power connections between poles and buildings"
+msgstr ""
+
+msgctxt "SmartFoundations,Config_PowerGridAxis"
+msgid "Grid Axis:"
+msgstr "محور الشبكة:"
+
+msgctxt "SmartFoundations,Config_PowerGridAxis_TT"
+msgid "Direction power poles connect to each other (Auto/X only/Y only/X+Y)"
+msgstr ""
+
+msgctxt "SmartFoundations,Config_PowerRange"
+msgid "Connection Range:"
+msgstr "نطاق التوصيل:"
+
+msgctxt "SmartFoundations,Config_PowerRange_TT"
+msgid "Maximum distance to search for buildings to connect (in meters)"
+msgstr ""
+
+msgctxt "SmartFoundations,Config_PowerReserved"
+msgid "# of Connections to Keep Free:"
+msgstr "# التوصيلات المحجوزة:"
+
+msgctxt "SmartFoundations,Config_PowerReserved_TT"
+msgid "Reserve this many connections on each power pole for manual wiring"
+msgstr ""
+
+msgctxt "SmartFoundations,Config_ExtendEnabled"
+msgid "Extend Enabled:"
+msgstr "تمكين التمديد:"
+
+msgctxt "SmartFoundations,Config_ExtendEnabled_TT"
+msgid "Enable the Extend feature (auto-clone manifolds when placing near existing buildings). Disable to prevent Extend from activating."
+msgstr ""
+
+msgctxt "SmartFoundations,Config_ExtendPower"
+msgid "Extend Power Poles:"
+msgstr "تمديد أعمدة الكهرباء:"
+
+msgctxt "SmartFoundations,Config_ExtendPower_TT"
+msgid "Include power poles when using Extend to duplicate factory buildings"
+msgstr ""
+
+msgctxt "SmartFoundations,Config_AutoHold"
+msgid "Auto-Hold on Grid Change:"
+msgstr "تثبيت تلقائي عند تغيير الشبكة:"
+
+msgctxt "SmartFoundations,Config_AutoHold_TT"
+msgid "Automatically lock hologram position after any grid modification (X/Y/Z > 1). Press Hold key to manually release. No world reload required."
+msgstr ""
+
+msgctxt "SmartFoundations,Config_ApplyImmediate"
+msgid "Apply Immediately"
+msgstr "تطبيق فوري"
+
+msgctxt "SmartFoundations,Config_ApplyImmediate_TT"
+msgid "Apply Smart Panel settings immediately without clicking Apply button"
+msgstr ""
+
+msgctxt "SmartFoundations,Config_ShowHUD"
+msgid "Show HUD Overlay"
+msgstr "إظهار HUD"
+
+msgctxt "SmartFoundations,Config_ShowHUD_TT"
+msgid "Display the Smart! HUD with scale counters"
+msgstr ""
+
+msgctxt "SmartFoundations,Config_HUDScale"
+msgid "HUD Scale"
+msgstr "مقياس HUD"
+
+msgctxt "SmartFoundations,Config_HUDScale_TT"
+msgid "Scale of the HUD overlay (0.5 to 2.0)"
+msgstr ""
+
+msgctxt "SmartFoundations,Config_HUDPosX"
+msgid "HUD Position X"
+msgstr "موضع HUD أفقي"
+
+msgctxt "SmartFoundations,Config_HUDPosX_TT"
+msgid "Horizontal position of HUD (0.0 = left, 1.0 = right). Default: 0.02"
+msgstr ""
+
+msgctxt "SmartFoundations,Config_HUDPosY"
+msgid "HUD Position Y"
+msgstr "موضع HUD عمودي"
+
+msgctxt "SmartFoundations,Config_HUDPosY_TT"
+msgid "Vertical position of HUD (0.0 = top, 1.0 = bottom). Default: 0.25"
+msgstr ""
+
+msgctxt "SmartFoundations,Config_HUDTheme"
+msgid "HUD Theme:"
+msgstr "سمة HUD:"
+
+msgctxt "SmartFoundations,Config_HUDTheme_TT"
+msgid "Color theme for the Smart! HUD overlay (Default=FICSIT Orange, Dark=Muted grays, Classic=Green terminal, High Contrast=Bright white, Minimal=No border, Monochrome=White on black)"
+msgstr ""
+
+msgctxt "SmartFoundations,Config_ShowArrows"
+msgid "Show Direction Arrows (can be overridden)"
+msgstr "إظهار أسهم الاتجاه (قابل للتغيير)"
+
+msgctxt "SmartFoundations,Config_ShowArrows_TT"
+msgid "Display directional arrows on holograms - This setting is reflected whenever you load into the game."
+msgstr ""
+
+msgctxt "SmartFoundations,Config_ArrowOrbit"
+msgid "Arrow Orbit Animation:"
+msgstr "حركة دوران الأسهم:"
+
+msgctxt "SmartFoundations,Config_ArrowOrbit_TT"
+msgid "Enable animated orbiting of directional arrows around the hologram. Disable for static arrows that still track player position."
+msgstr ""
+
+msgctxt "SmartFoundations,Config_ArrowLabels"
+msgid "Arrow Axis Labels:"
+msgstr "تسميات محاور الأسهم:"
+
+msgctxt "SmartFoundations,Config_ArrowLabels_TT"
+msgid "Show X/Y/Z text labels on directional arrows. Disable for cleaner arrow visuals without text."
+msgstr ""
+
+msgctxt "SmartFoundations,Panel_Btn_Apply"
+msgid "Apply"
+msgstr "تطبيق"
+
+msgctxt "SmartFoundations,Panel_Btn_Reset"
+msgid "Reset"
+msgstr "إعادة تعيين"
+
+msgctxt "SmartFoundations,Panel_Btn_Close"
+msgid "Close"
+msgstr "إغلاق"
+
+msgctxt "SmartFoundations,Panel_Btn_ClearRecipe"
+msgid "Clear"
+msgstr "مسح"
+
+msgctxt "SmartFoundations,Panel_Btn_Continue"
+msgid "Continue"
+msgstr "متابعة"
+
+msgctxt "SmartFoundations,Panel_Btn_Cancel"
+msgid "Cancel"
+msgstr "إلغاء"
+
+msgctxt "SmartFoundations,Panel_ApplyImmediately"
+msgid "Apply Immediately:"
+msgstr "تطبيق فوري:"
+
+msgctxt "SmartFoundations,Panel_Section_Grid"
+msgid "Grid"
+msgstr "شبكة"
+
+msgctxt "SmartFoundations,Panel_Section_Spacing"
+msgid "Spacing"
+msgstr "تباعد"
+
+msgctxt "SmartFoundations,Panel_Section_Steps"
+msgid "Steps"
+msgstr "خطوات"
+
+msgctxt "SmartFoundations,Panel_Section_Stagger"
+msgid "Stagger"
+msgstr "تداخل"
+
+msgctxt "SmartFoundations,Panel_Section_Rotation"
+msgid "Rotation"
+msgstr "دوران"
+
+msgctxt "SmartFoundations,Panel_GridX"
+msgid "Grid [X]:"
+msgstr "شبكة [X]:"
+
+msgctxt "SmartFoundations,Panel_GridY"
+msgid "Grid [Y]:"
+msgstr "شبكة [Y]:"
+
+msgctxt "SmartFoundations,Panel_GridZ"
+msgid "Grid [Z]:"
+msgstr "شبكة [Z]:"
+
+msgctxt "SmartFoundations,Panel_SpacingX"
+msgid "Spacing [X]:"
+msgstr "تباعد [X]:"
+
+msgctxt "SmartFoundations,Panel_SpacingY"
+msgid "Spacing [Y]:"
+msgstr "تباعد [Y]:"
+
+msgctxt "SmartFoundations,Panel_SpacingZ"
+msgid "Spacing [Z]:"
+msgstr "تباعد [Z]:"
+
+msgctxt "SmartFoundations,Panel_StepsX"
+msgid "Steps [X]:"
+msgstr "خطوات [X]:"
+
+msgctxt "SmartFoundations,Panel_StepsY"
+msgid "Steps [Y]:"
+msgstr "خطوات [Y]:"
+
+msgctxt "SmartFoundations,Panel_StaggerX"
+msgid "Stagger [X]:"
+msgstr "تداخل [X]:"
+
+msgctxt "SmartFoundations,Panel_StaggerY"
+msgid "Stagger [Y]:"
+msgstr "تداخل [Y]:"
+
+msgctxt "SmartFoundations,Panel_StaggerZX"
+msgid "Stagger [ZX]:"
+msgstr "تداخل [ZX]:"
+
+msgctxt "SmartFoundations,Panel_StaggerZY"
+msgid "Stagger [ZY]:"
+msgstr "تداخل [ZY]:"
+
+msgctxt "SmartFoundations,Panel_Unit_Meters"
+msgid "m"
+msgstr ""
+
+msgctxt "SmartFoundations,Panel_Unit_Degrees"
+msgid "°"
+msgstr ""
+
+msgctxt "SmartFoundations,Panel_RotationZ"
+msgid "Rotation [Z]:"
+msgstr "دوران [Z]:"
+
+msgctxt "SmartFoundations,Panel_AC_BeltEnabled"
+msgid "Belt Auto-Connect:"
+msgstr "توصيل أحزمة تلقائي:"
+
+msgctxt "SmartFoundations,Panel_AC_MainTier"
+msgid "Main Tier:"
+msgstr "المستوى الرئيسي:"
+
+msgctxt "SmartFoundations,Panel_AC_ToBuilding"
+msgid "To Building:"
+msgstr "إلى المبنى:"
+
+msgctxt "SmartFoundations,Panel_AC_Chain"
+msgid "Chain:"
+msgstr "سلسلة:"
+
+msgctxt "SmartFoundations,Panel_AC_Direction"
+msgid "Direction:"
+msgstr "اتجاه:"
+
+msgctxt "SmartFoundations,Panel_AC_Routing"
+msgid "Routing:"
+msgstr "توجيه:"
+
+msgctxt "SmartFoundations,Panel_AC_PipeEnabled"
+msgid "Pipe Auto-Connect:"
+msgstr "توصيل أنابيب تلقائي:"
+
+msgctxt "SmartFoundations,Panel_AC_FlowIndicator"
+msgid "Flow Indicator:"
+msgstr "مؤشر التدفق:"
+
+msgctxt "SmartFoundations,Panel_AC_PowerEnabled"
+msgid "Power Auto-Connect:"
+msgstr "توصيل كهرباء تلقائي:"
+
+msgctxt "SmartFoundations,Panel_AC_GridAxis"
+msgid "Grid Axis:"
+msgstr "محور الشبكة:"
+
+msgctxt "SmartFoundations,Panel_AC_Reserved"
+msgid "Reserved:"
+msgstr "محجوز:"
+
+msgctxt "SmartFoundations,Panel_Recipe_NoneSelected"
+msgid "None Selected"
+msgstr "لم يتم الاختيار"
+
+msgctxt "SmartFoundations,Panel_Recipe_Active"
+msgid "Recipe* {0}/{1}: {2}"
+msgstr "وصفة* {0}/{1}: {2}"
+
+msgctxt "SmartFoundations,Panel_Recipe"
+msgid "Recipe {0}/{1}: {2}"
+msgstr "وصفة {0}/{1}: {2}"
+
+msgctxt "SmartFoundations,Panel_Recipe_NoneSelected_Count"
+msgid "No recipe selected ({0} available)"
+msgstr "لم يتم اختيار وصفة ({0} متاحة)"
+
+msgctxt "SmartFoundations,Panel_Recipe_NoCompatible"
+msgid "No compatible recipes"
+msgstr "لا توجد وصفات متوافقة"
+
+msgctxt "SmartFoundations,Panel_Recipe_OutputLiquid"
+msgid "→ Output: {0} x{1} m³ ({2}/min) (Grid Total: {3}/min)"
+msgstr "→ مخرج: {0} x{1} م³ ({2}/دقيقة) (إجمالي: {3}/دقيقة)"
+
+msgctxt "SmartFoundations,Panel_Recipe_Output"
+msgid "→ Output: {0} x{1} ({2}/min) (Grid Total: {3}/min)"
+msgstr "→ مخرج: {0} x{1} ({2}/دقيقة) (إجمالي: {3}/دقيقة)"
+
+msgctxt "SmartFoundations,Panel_Recipe_InputLiquid"
+msgid "← Input: {0} x{1} m³ ({2}/min) (Grid Total: {3}/min)"
+msgstr "← مدخل: {0} x{1} م³ ({2}/دقيقة) (إجمالي: {3}/دقيقة)"
+
+msgctxt "SmartFoundations,Panel_Recipe_Input"
+msgid "← Input: {0} x{1} ({2}/min) (Grid Total: {3}/min)"
+msgstr "← مدخل: {0} x{1} ({2}/دقيقة) (إجمالي: {3}/دقيقة)"
+
+msgctxt "SmartFoundations,Panel_Confirm_ExtremeTitle"
+msgid "EXTREME GRID WARNING!"
+msgstr "تحذير شبكة ضخمة!"
+
+msgctxt "SmartFoundations,Panel_Confirm_ExtremeMsg"
+msgid "You are about to generate {0} holograms.\n\nThis will likely cause a significant freeze and may crash the game.\n\nAre you sure you want to continue?"
+msgstr "أنت على وشك إنشاء {0} هولوغرام.\n\nمن المحتمل أن يسبب تجمداً كبيراً وقد يؤدي لانهيار اللعبة.\n\nهل تريد المتابعة؟"
+
+msgctxt "SmartFoundations,Panel_Confirm_LargeTitle"
+msgid "Large Grid Warning"
+msgstr "تحذير شبكة كبيرة"
+
+msgctxt "SmartFoundations,Panel_Confirm_LargeMsg"
+msgid "You are about to generate {0} holograms.\n\nThis may cause a temporary freeze.\n\nContinue?"
+msgstr "أنت على وشك إنشاء {0} هولوغرام.\n\nقد يسبب تجمداً مؤقتاً.\n\nمتابعة؟"
+
+msgctxt "SmartFoundations,Upgrade_Title"
+msgid "Smart! Upgrade Panel"
+msgstr "Smart! لوحة الترقية"
+
+msgctxt "SmartFoundations,Upgrade_Tab_Radius"
+msgid "Radius"
+msgstr "نصف القطر"
+
+msgctxt "SmartFoundations,Upgrade_Tab_Network"
+msgid "Network"
+msgstr "الشبكة"
+
+msgctxt "SmartFoundations,Upgrade_RadiusLabel"
+msgid "Radius (m):"
+msgstr "نصف القطر (م):"
+
+msgctxt "SmartFoundations,Upgrade_Btn_Scan"
+msgid "Scan"
+msgstr "مسح"
+
+msgctxt "SmartFoundations,Upgrade_Btn_EntireMap"
+msgid "Entire Map"
+msgstr "الخريطة كاملة"
+
+msgctxt "SmartFoundations,Upgrade_TargetTier"
+msgid "Target Tier:"
+msgstr "المستوى المستهدف:"
+
+msgctxt "SmartFoundations,Upgrade_EstimatedCost"
+msgid "Estimated Cost"
+msgstr "التكلفة المقدرة"
+
+msgctxt "SmartFoundations,Upgrade_Btn_ScanNetwork"
+msgid "Scan Network"
+msgstr "مسح الشبكة"
+
+msgctxt "SmartFoundations,Upgrade_CrossSplitters"
+msgid "Cross Splitters/Mergers"
+msgstr "عبر المقسمات/الدامجات"
+
+msgctxt "SmartFoundations,Upgrade_CrossStorage"
+msgid "Cross Storage Containers"
+msgstr "عبر حاويات التخزين"
+
+msgctxt "SmartFoundations,Upgrade_CrossTrains"
+msgid "Cross Train Platforms"
+msgstr "عبر منصات القطارات"
+
+msgctxt "SmartFoundations,Upgrade_Btn_Upgrade"
+msgid "UPGRADE"
+msgstr "ترقية"
+
+msgctxt "SmartFoundations,Upgrade_Btn_Cancel"
+msgid "Cancel"
+msgstr "إلغاء"
+
+msgctxt "SmartFoundations,Upgrade_Btn_Close"
+msgid "Close"
+msgstr "إغلاق"
+
+msgctxt "SmartFoundations,Upgrade_Btn_X"
+msgid "X"
+msgstr ""
+
+msgctxt "SmartFoundations,Upgrade_AuditProgress"
+msgid "Auditing world... {0}% ({1} scanned)"
+msgstr "تدقيق العالم... {0}% ({1} تم المسح)"
+
+msgctxt "SmartFoundations,Upgrade_AuditComplete"
+msgid "Audit Complete: {0} upgradeable found across {1} structures."
+msgstr "اكتمل التدقيق: {0} قابل للترقية من {1} هيكل."
+
+msgctxt "SmartFoundations,Upgrade_Upgrading"
+msgid "Upgrading {0} Mk.{1} → Mk.{2}..."
+msgstr "جاري ترقية {0} Mk.{1} → Mk.{2}..."

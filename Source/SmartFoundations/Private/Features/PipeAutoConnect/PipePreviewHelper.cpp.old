@@ -1,0 +1,494 @@
+#include "PipePreviewHelper.h"
+#include "SmartFoundations.h"
+#include "Engine/World.h"
+#include "Hologram/FGSplineHologram.h"
+#include "../../Holograms/Logistics/SFPipelineHologram.h"
+#include "Buildables/FGBuildablePipeline.h"
+#include "FGPipeConnectionComponent.h"
+#include "Subsystem/SFSubsystem.h"
+#include "Subsystem/SFHologramHelperService.h"
+#include "Subsystem/SFHologramDataService.h"
+#include "Components/SplineComponent.h"
+#include "DrawDebugHelpers.h"
+#include "FGRecipeManager.h"
+#include "FGRecipe.h"
+#include "FGBuildingDescriptor.h"
+#include "ItemAmount.h"
+
+DEFINE_LOG_CATEGORY_STATIC(LogPipePreview, Log, All);
+
+FPipePreviewHelper::FPipePreviewHelper(UWorld* InWorld, int32 PipeTier, bool bWithIndicator, AFGHologram* ParentJunction)
+	: World(InWorld)
+	, ParentJunction(ParentJunction)
+	, PipeTierToUse(FMath::Clamp(PipeTier, 0, 2))  // Clamp to 0 (Auto), 1 (Mk1), 2 (Mk2)
+	, bPipeWithIndicator(bWithIndicator)
+{
+	const TCHAR* TierDisplay = (PipeTierToUse == 0) ? TEXT("Auto") : *FString::Printf(TEXT("Mk%d"), PipeTierToUse);
+	UE_LOG(LogPipePreview, VeryVerbose, TEXT("FPipePreviewHelper created with %s pipe tier (%s), parent=%s"), 
+		TierDisplay, bPipeWithIndicator ? TEXT("Normal") : TEXT("Clean"), ParentJunction ? *ParentJunction->GetName() : TEXT("None"));
+}
+
+FPipePreviewHelper::~FPipePreviewHelper()
+{
+	DestroyPreview();
+	UE_LOG(LogPipePreview, VeryVerbose, TEXT("FPipePreviewHelper destroyed"));
+}
+
+void FPipePreviewHelper::EnsureSpawned(const FVector& SpawnLocation, UFGPipeConnectionComponent* Start, UFGPipeConnectionComponent* End)
+{
+	if (!World.IsValid() || !Start || !End)
+	{
+		UE_LOG(LogPipePreview, Warning, TEXT("Cannot spawn pipe hologram - invalid world or connections"));
+		return;
+	}
+
+	if (!PipeHologram.IsValid())
+	{
+		UE_LOG(LogPipePreview, VeryVerbose, TEXT("Spawning pipe preview hologram at %s"), *SpawnLocation.ToString());
+
+		// Get subsystem to access pipe class retrieval
+		USFSubsystem* Subsystem = USFSubsystem::Get(World.Get());
+		if (!Subsystem)
+		{
+			UE_LOG(LogPipePreview, Error, TEXT("Failed to get subsystem - cannot determine pipe class"));
+			return;
+		}
+		
+		// Get player controller to check unlocked tiers for Auto mode
+		AFGPlayerController* PlayerController = Cast<AFGPlayerController>(World->GetFirstPlayerController());
+		
+		// Get correct pipe class based on tier and style (handles "Auto" mode resolution)
+		UClass* PipeBuildClass = Subsystem->GetPipeClassFromConfig(PipeTierToUse, bPipeWithIndicator, PlayerController);
+		if (!PipeBuildClass)
+		{
+			UE_LOG(LogPipePreview, Error, TEXT("Failed to get pipe class for tier=%d (%s) - tier may be unavailable or not unlocked"), 
+				PipeTierToUse, bPipeWithIndicator ? TEXT("Normal") : TEXT("Clean"));
+			return;
+		}
+
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.bDeferConstruction = true;
+		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+		ASFPipelineHologram* SpawnedPipe = World->SpawnActor<ASFPipelineHologram>(
+			ASFPipelineHologram::StaticClass(),
+			SpawnLocation,
+			FRotator::ZeroRotator,
+			SpawnParams);
+
+		if (!SpawnedPipe)
+		{
+			UE_LOG(LogPipePreview, Error, TEXT("Failed to spawn pipe hologram actor"));
+			return;
+		}
+
+		// Configure with correct build class based on tier and style
+		SpawnedPipe->SetBuildClass(PipeBuildClass);
+
+		// Get start position for actor positioning
+		FVector StartLocation = Start ? Start->GetConnectorLocation() : SpawnLocation;
+
+		// Mark as child hologram via data service
+		if (FSFHologramData* Data = USFHologramDataService::GetOrCreateData(SpawnedPipe))
+		{
+			Data->bIsChildHologram = true;
+			Data->ParentHologram = ParentJunction.Get();
+			Data->ChildType = ESFChildHologramType::AutoConnect;
+			Data->bIgnoreLocationUpdates = true;
+		}
+
+		// CRITICAL: Finish spawning FIRST to position the actor
+		SpawnedPipe->FinishSpawning(FTransform(StartLocation));
+
+		// Setup pipe spline AFTER FinishSpawning so local space conversion is correct
+		if (Start && End)
+		{
+			SpawnedPipe->SetupPipeSpline(Start, End);
+		}
+
+		PipeHologram = SpawnedPipe;
+
+		if (!PipeHologram.IsValid())
+		{
+			UE_LOG(LogPipePreview, Error, TEXT("Pipe hologram invalid after spawn"));
+			return;
+		}
+
+		// NOTE: Do NOT call SetActorLocation here - FinishSpawning already positioned it correctly!
+		PipeHologram->SetActorHiddenInGame(true);
+		PipeHologram->SetReplicates(false);
+
+		if (USceneComponent* Root = PipeHologram->GetRootComponent())
+		{
+			Root->SetMobility(EComponentMobility::Movable);
+		}
+
+		UE_LOG(LogPipePreview, VeryVerbose, TEXT("Pipe hologram spawned: %s"), *PipeHologram->GetName());
+		UE_LOG(LogSmartFoundations, Log, TEXT("🔧 PIPE PREVIEW SPAWNED: %s at %s (hidden=%s)"),
+			*PipeHologram->GetName(),
+			*PipeHologram->GetActorLocation().ToString(),
+			PipeHologram->IsHidden() ? TEXT("YES") : TEXT("NO"));
+	}
+}
+
+void FPipePreviewHelper::UpdatePreview(UFGPipeConnectionComponent* Start, UFGPipeConnectionComponent* End)
+{
+	if (!World.IsValid() || !Start || !End)
+	{
+		UE_LOG(LogPipePreview, VeryVerbose, TEXT("UpdatePreview called with invalid parameters"));
+		HidePreview();
+		return;
+	}
+
+	UE_LOG(LogPipePreview, VeryVerbose, TEXT("Updating pipe preview between %s and %s"), 
+		*Start->GetName(), *End->GetName());
+
+	StartConnection = Start;
+	EndConnection = End;
+
+	// Calculate spawn location from start connection
+	FVector SpawnLocation = Start->GetConnectorLocation();
+	UE_LOG(LogPipePreview, VeryVerbose, TEXT("Pipe preview spawn location: %s"), *SpawnLocation.ToString());
+
+	// Ensure hologram exists
+	EnsureSpawned(SpawnLocation, Start, End);
+	if (!PipeHologram.IsValid())
+	{
+		UE_LOG(LogPipePreview, Error, TEXT("Cannot update preview - pipe hologram is invalid"));
+		return;
+	}
+
+	// Log actor state before spline update
+	UE_LOG(LogSmartFoundations, Log, TEXT("🔧 PIPE PREVIEW UPDATE: Actor=%s Loc=%s Hidden=%s"),
+		*PipeHologram->GetName(),
+		*PipeHologram->GetActorLocation().ToString(),
+		PipeHologram->IsHidden() ? TEXT("YES") : TEXT("NO"));
+
+	// Update spline endpoints via Smart pipeline hologram when available
+	if (ASFPipelineHologram* SmartPipe = Cast<ASFPipelineHologram>(PipeHologram.Get()))
+	{
+		SmartPipe->SetupPipeSpline(Start, End);
+		SmartPipe->TriggerMeshGeneration();
+	}
+	else
+	{
+		UpdateSplineEndpoints(Start, End);
+	}
+
+	// Make visible
+	UE_LOG(LogSmartFoundations, Log, TEXT("🔧 PIPE: Setting visible (before=%s)"), PipeHologram->IsHidden() ? TEXT("Hidden") : TEXT("Visible"));
+	PipeHologram->SetActorHiddenInGame(false);
+	PipeHologram->SetActorEnableCollision(false);
+	
+	// Force all scene components visible
+	TArray<USceneComponent*> SceneComps;
+	PipeHologram->GetComponents<USceneComponent>(SceneComps);
+	for (USceneComponent* Comp : SceneComps)
+	{
+		if (Comp)
+		{
+			Comp->SetVisibility(true, true);  // Propagate to children
+		}
+	}
+	
+	UE_LOG(LogSmartFoundations, Log, TEXT("🔧 PIPE: Visibility set (after=%s, %d components forced visible)"), 
+		PipeHologram->IsHidden() ? TEXT("STILL HIDDEN!") : TEXT("Now Visible"),
+		SceneComps.Num());
+}
+
+void FPipePreviewHelper::UpdatePipeTier(int32 NewTier, bool bWithIndicator)
+{
+	int32 ClampedTier = FMath::Clamp(NewTier, 0, 2);  // Allow 0 (Auto), 1 (Mk1), 2 (Mk2)
+	if (ClampedTier != PipeTierToUse || bWithIndicator != bPipeWithIndicator)
+	{
+		PipeTierToUse = ClampedTier;
+		bPipeWithIndicator = bWithIndicator;
+		const TCHAR* TierDisplay = (PipeTierToUse == 0) ? TEXT("Auto") : *FString::Printf(TEXT("Mk%d"), PipeTierToUse);
+		UE_LOG(LogPipePreview, VeryVerbose, TEXT("Pipe tier/style updated to %s (%s) - destroying existing hologram"), 
+			TierDisplay, bPipeWithIndicator ? TEXT("Normal") : TEXT("Clean"));
+		
+		// Destroy existing hologram so it gets recreated with new tier and style
+		DestroyPreview();
+	}
+}
+
+void FPipePreviewHelper::HidePreview()
+{
+	if (PipeHologram.IsValid())
+	{
+		PipeHologram->SetActorHiddenInGame(true);
+		UE_LOG(LogPipePreview, VeryVerbose, TEXT("Pipe preview hidden"));
+	}
+}
+
+void FPipePreviewHelper::DestroyPreview()
+{
+	if (PipeHologram.IsValid())
+	{
+		UE_LOG(LogPipePreview, VeryVerbose, TEXT("Destroying pipe hologram preview"));
+		
+		// Use centralized helper service for safe destruction
+		if (World.IsValid())
+		{
+			if (USFSubsystem* Subsystem = USFSubsystem::Get(World.Get()))
+			{
+				if (FSFHologramHelperService* Helper = Subsystem->GetHologramHelper())
+				{
+					Helper->QueueChildForDestroy(PipeHologram.Get());
+				}
+				else
+				{
+					PipeHologram->Destroy();
+				}
+			}
+			else
+			{
+				PipeHologram->Destroy();
+			}
+		}
+		else
+		{
+			PipeHologram->Destroy();
+		}
+		
+		PipeHologram = nullptr;
+	}
+}
+
+void FPipePreviewHelper::UpdateSplineEndpoints(UFGPipeConnectionComponent* Start, UFGPipeConnectionComponent* End)
+{
+	if (!PipeHologram.IsValid())
+		return;
+
+	UE_LOG(LogPipePreview, VeryVerbose, TEXT("Updating pipe spline endpoints"));
+	UE_LOG(LogSmartFoundations, Log, TEXT("🔧 PIPE PREVIEW SPLINE UPDATE"));
+
+	// Get connection transforms
+	const FVector StartLoc = Start->GetConnectorLocation();
+	const FVector EndLoc = End->GetConnectorLocation();
+	const FVector StartNormal = Start->GetConnectorNormal();
+	const FVector EndNormal = End->GetConnectorNormal();
+
+	// Calculate distance and direction
+	const float Distance = FVector::Dist(StartLoc, EndLoc);
+	const FVector Direction = (EndLoc - StartLoc).GetSafeNormal();
+
+	UE_LOG(LogPipePreview, VeryVerbose, TEXT("🔧 Pipe distance: %.1f cm, Start=%s, End=%s"), 
+		Distance, *StartLoc.ToString(), *EndLoc.ToString());
+
+	// Draw a bright cyan debug line so we always see something, even if the hologram mesh fails
+	if (UWorld* LocalWorld = World.Get())
+	{
+		DrawDebugLine(LocalWorld, StartLoc, EndLoc, FColor::Cyan, false, 0.1f, 0, 8.0f);
+	}
+
+	// CRITICAL: Position hologram at start location BEFORE setting up spline
+	// This ensures spline points are relative to the correct origin
+	PipeHologram->SetActorLocation(StartLoc);
+	UE_LOG(LogPipePreview, VeryVerbose, TEXT("🔧 Positioned preview hologram at: %s"), *StartLoc.ToString());
+
+	// Get or create spline component
+	USplineComponent* SplineComp = PipeHologram->FindComponentByClass<USplineComponent>();
+	if (!SplineComp)
+	{
+		UE_LOG(LogPipePreview, Warning, TEXT("No spline component found on pipe hologram"));
+		return;
+	}
+	
+	// Position spline component at the same location as hologram
+	SplineComp->SetWorldLocation(StartLoc);
+
+	// Clear existing points
+	SplineComp->ClearSplinePoints(false);
+
+	// VANILLA 6-POINT SPLINE: Matches exact vanilla structure from analyzer
+	// Analysis from vanilla 21.1m pipe: 919cm tangent = 43.5%, 147cm offset = 7.0%, 100cm flat = 4.7%
+	const float SmallTangent = 50.0f;                    // Fixed at connectors and flat sections
+	const float LargeTangent = Distance * 0.435f;        // 43.5% of distance
+	const float FlatSectionLength = Distance * 0.047f;   // 4.7% of distance
+	const float TransitionOffset = Distance * 0.070f;    // 7.0% of distance
+	
+	// Direction is already defined at line 272
+	
+	// Point 0: Start connector
+	SplineComp->AddSplinePoint(StartLoc, ESplineCoordinateSpace::World, false);
+	SplineComp->SetTangentsAtSplinePoint(0, StartNormal * SmallTangent, StartNormal * SmallTangent, ESplineCoordinateSpace::World, false);
+	
+	// Point 1: Flat section near start
+	FVector FlatStart = StartLoc + StartNormal * FlatSectionLength;
+	SplineComp->AddSplinePoint(FlatStart, ESplineCoordinateSpace::World, false);
+	SplineComp->SetTangentsAtSplinePoint(1, StartNormal * SmallTangent, StartNormal * (SmallTangent * 0.99f), ESplineCoordinateSpace::World, false);
+	
+	// Point 2: Transition point near start
+	FVector TransitionStart = StartLoc + StartNormal * TransitionOffset;
+	SplineComp->AddSplinePoint(TransitionStart, ESplineCoordinateSpace::World, false);
+	SplineComp->SetTangentsAtSplinePoint(2, StartNormal * SmallTangent, Direction * LargeTangent, ESplineCoordinateSpace::World, false);
+	
+	// Point 3: Middle curve point (back from end toward start)
+	FVector TransitionEnd = EndLoc + EndNormal * TransitionOffset;
+	SplineComp->AddSplinePoint(TransitionEnd, ESplineCoordinateSpace::World, false);
+	SplineComp->SetTangentsAtSplinePoint(3, Direction * LargeTangent, -EndNormal * SmallTangent, ESplineCoordinateSpace::World, false);
+	
+	// Point 4: Flat section (back from end toward start)
+	FVector FlatEnd = EndLoc + EndNormal * FlatSectionLength;
+	SplineComp->AddSplinePoint(FlatEnd, ESplineCoordinateSpace::World, false);
+	SplineComp->SetTangentsAtSplinePoint(4, -EndNormal * (SmallTangent * 0.99f), -EndNormal * SmallTangent, ESplineCoordinateSpace::World, false);
+	
+	// Point 5: End connector
+	SplineComp->AddSplinePoint(EndLoc, ESplineCoordinateSpace::World, false);
+	SplineComp->SetTangentsAtSplinePoint(5, -EndNormal * SmallTangent, -EndNormal * SmallTangent, ESplineCoordinateSpace::World, false);
+	
+	UE_LOG(LogPipePreview, VeryVerbose, TEXT("🔧 Vanilla 6-point pipe preview: flat sections (100cm), transitions (147cm), large tangents (919cm), length=%.1f cm"), Distance);
+
+	// Update spline to finalize the curve
+	SplineComp->UpdateSpline();
+
+	const int32 PointCount = SplineComp->GetNumberOfSplinePoints();
+	const float SplineLength = SplineComp->GetSplineLength();
+	UE_LOG(LogPipePreview, VeryVerbose, TEXT("Pipe spline updated: Distance=%.1fcm, Points=%d, Length=%.1fcm"), 
+		Distance, PointCount, SplineLength);
+	UE_LOG(LogSmartFoundations, Log, TEXT("🔍 PIPE SPLINE DATA: Points=%d Length=%.1fcm"), PointCount, SplineLength);
+}
+
+bool FPipePreviewHelper::IsPreviewVisible() const
+{
+	return PipeHologram.IsValid() && !PipeHologram->IsHidden();
+}
+
+bool FPipePreviewHelper::IsPreviewValid() const
+{
+	if (!PipeHologram.IsValid())
+	{
+		return false;
+	}
+
+	// Check if spline component has valid data
+	if (USplineComponent* SplineComp = PipeHologram->FindComponentByClass<USplineComponent>())
+	{
+		int32 PointCount = SplineComp->GetNumberOfSplinePoints();
+		float SplineLength = SplineComp->GetSplineLength();
+		
+		if (PointCount < 2 || SplineLength < 50.0f)  // Min 50cm
+		{
+			return false;
+		}
+	}
+	else
+	{
+		return false;
+	}
+
+	return true;
+}
+
+float FPipePreviewHelper::GetPipeLength() const
+{
+	if (!PipeHologram.IsValid())
+	{
+		return 0.0f;
+	}
+
+	if (USplineComponent* SplineComp = PipeHologram->FindComponentByClass<USplineComponent>())
+	{
+		return SplineComp->GetSplineLength();
+	}
+
+	return 0.0f;
+}
+
+TArray<FItemAmount> FPipePreviewHelper::GetPreviewCost() const
+{
+	TArray<FItemAmount> TotalCost;
+
+	if (!PipeHologram.IsValid())
+	{
+		UE_LOG(LogPipePreview, Warning, TEXT("💰 GetPreviewCost: PipeHologram is invalid"));
+		return TotalCost;
+	}
+
+	// Calculate cost based on pipe length
+	// Pipes are charged per 4m segment (vanilla behavior)
+	float LengthMeters = GetPipeLength() / 100.0f;
+	int32 Segments = FMath::CeilToInt(LengthMeters / 4.0f);
+
+	if (Segments <= 0)
+	{
+		UE_LOG(LogPipePreview, Warning, TEXT("💰 GetPreviewCost: Invalid pipe length (%.1f cm = %.1f m = %d segments)"), 
+			GetPipeLength(), LengthMeters, Segments);
+		return TotalCost;
+	}
+
+	// Get world and subsystem for recipe lookup
+	UWorld* LocalWorld = World.Get();
+	if (!LocalWorld)
+	{
+		UE_LOG(LogPipePreview, Warning, TEXT("💰 GetPreviewCost: World is invalid for recipe lookup"));
+		return TotalCost;
+	}
+
+	USFSubsystem* Subsystem = USFSubsystem::Get(LocalWorld);
+	if (!Subsystem)
+	{
+		UE_LOG(LogPipePreview, Warning, TEXT("💰 GetPreviewCost: Subsystem is null"));
+		return TotalCost;
+	}
+
+	// Get pipe class for cost lookup (use configured tier and style)
+	AFGPlayerController* PlayerController = Cast<AFGPlayerController>(LocalWorld->GetFirstPlayerController());
+	UClass* PipeClass = Subsystem->GetPipeClassFromConfig(PipeTierToUse, bPipeWithIndicator, PlayerController);
+	if (!PipeClass)
+	{
+		UE_LOG(LogPipePreview, Warning, TEXT("💰 GetPreviewCost: PipeClass is null for tier %d (%s)"), 
+			PipeTierToUse, bPipeWithIndicator ? TEXT("Normal") : TEXT("Clean"));
+		return TotalCost;
+	}
+
+	// Get recipe manager to find pipe recipe
+	AFGRecipeManager* RecipeManager = AFGRecipeManager::Get(LocalWorld);
+	if (!RecipeManager)
+	{
+		UE_LOG(LogPipePreview, Warning, TEXT("💰 GetPreviewCost: RecipeManager is null"));
+		return TotalCost;
+	}
+
+	TSubclassOf<UFGBuildingDescriptor> Descriptor = RecipeManager->FindBuildingDescriptorByClass(PipeClass);
+	if (!Descriptor)
+	{
+		UE_LOG(LogPipePreview, Warning, TEXT("💰 GetPreviewCost: No descriptor found for pipe class"));
+		return TotalCost;
+	}
+
+	TArray<TSubclassOf<UFGRecipe>> Recipes = RecipeManager->FindRecipesByProduct(Descriptor, false, true);
+	if (Recipes.Num() == 0)
+	{
+		UE_LOG(LogPipePreview, Warning, TEXT("💰 GetPreviewCost: No recipe found for Mk%d pipe (%s)"), 
+			PipeTierToUse, bPipeWithIndicator ? TEXT("Normal") : TEXT("Clean"));
+		return TotalCost;
+	}
+
+	const UFGRecipe* RecipeCDO = Recipes[0]->GetDefaultObject<UFGRecipe>();
+	if (!RecipeCDO)
+	{
+		UE_LOG(LogPipePreview, Warning, TEXT("💰 GetPreviewCost: Recipe CDO is null"));
+		return TotalCost;
+	}
+
+	// Get base cost from recipe (cost is per 4m segment)
+	const TArray<FItemAmount>& BaseCost = RecipeCDO->GetIngredients();
+
+	// Calculate total cost = base cost × number of segments
+	for (const FItemAmount& Cost : BaseCost)
+	{
+		FItemAmount ScaledCost = Cost;
+		ScaledCost.Amount = Segments * Cost.Amount;
+		TotalCost.Add(ScaledCost);
+
+		UE_LOG(LogPipePreview, VeryVerbose, TEXT("💰 GetPreviewCost: Pipe tier=%d (%s), Material=%s, Base=%d, Length=%.2fm, Segments=%d, Cost=%d"), 
+			PipeTierToUse, bPipeWithIndicator ? TEXT("Normal") : TEXT("Clean"), 
+			*GetNameSafe(Cost.ItemClass), Cost.Amount, LengthMeters, Segments, ScaledCost.Amount);
+	}
+
+	UE_LOG(LogPipePreview, VeryVerbose, TEXT("💰 GetPreviewCost: Returning %d cost entries"), TotalCost.Num());
+
+	return TotalCost;
+}
