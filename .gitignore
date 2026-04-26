@@ -56,8 +56,8 @@ open_issues.json
 open_issues_summary.txt
 message*.txt
 
-# External reference trees do not belong in this repository
-Reference/
+# External reference trees do not belong in this repository (top-level only)
+/Reference/
 
 # Internal planning documents — not for publication
 MIGRATION_PLAN.md
