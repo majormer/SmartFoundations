@@ -38,6 +38,18 @@ The only official releases of Smart! are those published by the copyright holder
 
 Any release from any other source is unauthorized.
 
+## Project Dormancy
+
+If the official repository (https://github.com/majormer/SmartFoundations) has had **no merged commits and no maintainer activity for a continuous period of 18 months**, the restrictions in the Restrictions section above are automatically lifted. After that period, the Software is licensed under the terms of the [MIT License](https://opensource.org/licenses/MIT) as if the following text were the full license:
+
+> Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files, to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions: The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+**What counts as activity:** A merged pull request, a direct commit to the main branch, or a published release on ficsit.app resets the 18-month period. Issue comments, Stars, and forks do not count.
+
+**What does not trigger dormancy:** Satisfactory game updates that break the mod while the maintainer is aware and intends to fix it do not constitute abandonment, provided a public statement of intent is posted within 90 days of the breaking update.
+
+This clause is irrevocable. The maintainer cannot remove or narrow it retroactively after it has been published in a commit.
+
 ## No Warranty
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT. IN NO EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY ARISING FROM THE USE OF OR INABILITY TO USE THE SOFTWARE.
