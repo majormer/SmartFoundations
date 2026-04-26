@@ -58,3 +58,6 @@ message*.txt
 
 # External reference trees do not belong in this repository
 Reference/
+
+# Internal planning documents — not for publication
+MIGRATION_PLAN.md
