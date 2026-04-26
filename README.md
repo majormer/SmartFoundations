@@ -2,7 +2,9 @@
 
 **Smart!** is a building-assist mod for [Satisfactory](https://www.satisfactorygame.com/) that adds grid scaling, spacing, steps, stagger, auto-connect, extend (chain placement), levitation, nudge, camera modes, directional arrows, and more.
 
-[Install on ficsit.app](https://ficsit.app/mod/SmartFoundations) • [Discord](https://discord.gg/SgXY4CwXYw) • [Report Issues](https://github.com/majormer/SmartFoundations/issues) • [Changelog](CHANGELOG.md)
+[Install on ficsit.app](https://ficsit.app/mod/SmartFoundations) • [Discord](https://discord.gg/SgXY4CwXYw) • [Report Issues](https://github.com/majormer/SmartFoundations/issues) • [Changelog](CHANGELOG.md) • [AI Disclosure](AI_DISCLOSURE.md)
+
+![AI Assisted Development Used](https://img.shields.io/badge/AI%20Assisted%20Development%20Used-See%20AI__DISCLOSURE.md-blue)
 
 ---
 
@@ -120,6 +122,12 @@ The Smart! name, logo, and mod identity are not licensed for reuse in other proj
 ## Security
 
 For crashes that affect save files or other stability issues, please follow the private reporting process in [SECURITY.md](SECURITY.md) rather than opening a public issue.
+
+---
+
+## AI-Assisted Development
+
+Smart! is built with extensive AI assistance for implementation, architecture, documentation, and debugging. Final decisions, in-game testing, and releases are the responsibility of the maintainer. See [AI_DISCLOSURE.md](AI_DISCLOSURE.md) for full details.
 
 ---
 
