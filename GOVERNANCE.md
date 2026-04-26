@@ -2,7 +2,7 @@
 
 ## Project Owner
 
-Smart! is developed and maintained by **Finalomega**. The maintainer has final authority over all aspects of the project, including:
+Smart! is developed and maintained by **Finalomega** (GitHub: [`majormer`](https://github.com/majormer)). These refer to the same person — Finalomega is the mod author identity, majormer is the GitHub account. The maintainer has final authority over all aspects of the project, including:
 
 - Roadmap and feature direction
 - Architecture and design decisions

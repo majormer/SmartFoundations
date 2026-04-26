@@ -34,7 +34,7 @@ By submitting a contribution to this repository (including but not limited to pu
 The only official releases of Smart! are those published by the copyright holder through:
 
 - [ficsit.app/mod/SmartFoundations](https://ficsit.app/mod/SmartFoundations)
-- The official GitHub repository under the Finalomega account
+- The official GitHub repository under the `majormer` GitHub account (Finalomega)
 
 Any release from any other source is unauthorized.
 

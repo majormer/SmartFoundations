@@ -1,0 +1,39 @@
+# Default: normalize line endings to LF in the repo, check out as CRLF on Windows
+* text=auto eol=lf
+
+# C++ source and headers — LF in repo, CRLF on Windows checkout
+*.h text eol=lf
+*.cpp text eol=lf
+*.inl text eol=lf
+*.cs text eol=lf
+
+# Config and data files
+*.ini text eol=lf
+*.json text eol=lf
+*.uplugin text eol=lf
+*.uproject text eol=lf
+
+# Scripts
+*.ps1 text eol=crlf
+*.py text eol=lf
+*.bat text eol=crlf
+*.sh text eol=lf
+
+# Localization
+*.po text eol=lf
+*.csv text eol=lf
+
+# Markdown and docs
+*.md text eol=lf
+
+# Binary assets — no line ending normalization
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.uasset binary
+*.umap binary
+*.locres binary
+*.locmeta binary
+*.archive binary
