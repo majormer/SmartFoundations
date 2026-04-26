@@ -1,0 +1,60 @@
+# Unreal / Satisfactory Mod Loader build outputs
+Binaries/
+Build/
+Intermediate/
+Saved/
+DerivedDataCache/
+
+# Local-only workspace/editor state
+.vs/
+.vscode/
+.idea/
+*.sln
+*.suo
+*.opensdf
+*.sdf
+*.VC.db
+*.VC.opendb
+*.xcodeproj
+*.xcworkspace
+*.code-workspace
+
+# Local config and secrets
+.env
+.env.*
+!.env.example
+.local/
+
+# Logs and temporary files
+*.log
+logs/
+compile_log.txt
+gather_log.txt
+crash_log.xml
+*.tmp
+*.temp
+*.bak
+*.backup
+*~
+
+# Packaged artifacts
+*.zip
+*.pak
+*.paket
+
+# OS-generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Generated issue snapshots and message drafts
+open_issues.json
+open_issues_summary.txt
+message*.txt
+
+# External reference trees do not belong in this repository
+Reference/
