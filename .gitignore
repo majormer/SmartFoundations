@@ -83,6 +83,9 @@ venv/
 ENV/
 env/
 
+# GitHub-specific configuration (issue templates, workflows, etc.)
+.github/
+
 # IDE-specific workspace settings (keep .gitignore, ignore rest)
 .vscode/*.code-workspace
 .vscode/settings.json
