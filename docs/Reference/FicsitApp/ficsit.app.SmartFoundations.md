@@ -4,7 +4,7 @@
 
 > **Multiplayer note:** Smart! is primarily developed for single-player. Multiplayer is under active testing with partial success, but is not currently considered fully supported.
 
-**Quick links:** [Watch videos](#-watch-smart-in-action) • [How Smart works](#-how-smart-changes-building) • [First-time setup](#-first-time-setup) • [Extend explained](#-extend-explained-copy-an-existing-manifold) • [Supported buildings](#-supported-buildings) • [Discord](https://discord.gg/SgXY4CwXYw) • [Report bugs](https://github.com/SmartFoundations/SmartIssueTracker/issues) • [User's Guide](https://github.com/SmartFoundations/SmartIssueTracker/wiki)
+**Quick links:** [Watch videos](#-watch-smart-in-action) • [How Smart works](#-how-smart-changes-building) • [First-time setup](#-first-time-setup) • [Extend explained](#-extend-explained-copy-an-existing-manifold) • [Supported buildings](#-supported-buildings) • [Discord](https://discord.gg/SgXY4CwXYw) • [Report bugs](https://github.com/majormer/SmartFoundations/issues) • [Source](https://github.com/majormer/SmartFoundations)
 
 ---
 
@@ -519,8 +519,8 @@ Join the Smart! Discord for support, examples, testing updates, and feature disc
 [![Discord](https://img.shields.io/discord/799091523173613589?color=7289da&label=Discord&logo=discord&logoColor=white)](https://discord.gg/SgXY4CwXYw)
 
 - **Discord:** https://discord.gg/SgXY4CwXYw
-- **Bug reports:** https://github.com/SmartFoundations/SmartIssueTracker/issues
-- **User guide:** https://github.com/SmartFoundations/SmartIssueTracker/wiki
+- **Bug reports:** https://github.com/majormer/SmartFoundations/issues
+- **Source:** https://github.com/majormer/SmartFoundations
 
 When asking for help, include:
 

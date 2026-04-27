@@ -1266,7 +1266,7 @@ Smart! v22 is developed and maintained by **Finalomega** with guidance and permi
 
 **Support:** https://ko-fi.com/finalomega
 **Discord:** https://discord.gg/SgXY4CwXYw
-**Issues:** https://github.com/SmartFoundations/SmartIssueTracker/issues
+**Issues:** https://github.com/majormer/SmartFoundations/issues
 **SMR Page:** https://ficsit.app/mod/SmartFoundations
 ### Phase 2: Autoconnect (Planned)
 - Automatic belt and pipe connections between buildings
