@@ -62,6 +62,9 @@ message*.txt
 # Internal planning documents — not for publication
 MIGRATION_PLAN.md
 
+# AI agent instructions — development-only
+AGENTS.md
+
 # =============================================================================
 # AI/IDE Workflow Files (Development-Only)
 # =============================================================================
