@@ -61,3 +61,49 @@ message*.txt
 
 # Internal planning documents — not for publication
 MIGRATION_PLAN.md
+
+# =============================================================================
+# AI/IDE Workflow Files (Development-Only)
+# =============================================================================
+
+# Windsurf AI assistant configuration and cache
+.windsurf/
+.windsurf/cache/
+.windsurf/temp/
+.windsurf/investigations/
+.windsurf/skills/
+
+# MCP server configurations and cache
+.playwright-mcp/
+mcp.json
+
+# Python virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# IDE-specific workspace settings (keep .gitignore, ignore rest)
+.vscode/*.code-workspace
+.vscode/settings.json
+.vscode/mcp.json
+.vscode/*.json.tmp
+
+# AI assistant cache directories
+.claude/
+.gemini/
+.cascade/
+.taskmaster/
+
+# Generated issue snapshots and tracking data (development artifacts)
+all_issues_snapshot.json
+missing_issues_snapshot.json
+issue_number_map.json
+issue_number_map_complete.json
+open_issues.json
+open_issues_summary.txt
+
+# Session-specific notes and drafts
+*.session.md
+session-notes/
+message*.txt
