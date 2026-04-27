@@ -4,7 +4,7 @@
 
 [Install on ficsit.app](https://ficsit.app/mod/SmartFoundations) • [Discord](https://discord.gg/SgXY4CwXYw) • [Report Issues](https://github.com/majormer/SmartFoundations/issues) • [Changelog](CHANGELOG.md) • [AI Disclosure](AI_DISCLOSURE.md)
 
-[![AI Assisted Development Used](https://img.shields.io/badge/AI%20Assisted%20Development%20Used-See%20AI__DISCLOSURE.md-blue)](https://github.com/majormer/SmartFoundations/blob/main/AI_DISCLOSURE.md)
+[![AI Assisted Development Used](https://img.shields.io/badge/AI%20Assisted%20Development%20Used-See%20AI__DISCLOSURE.md-blue)](AI_DISCLOSURE.md)
 
 ---
 
