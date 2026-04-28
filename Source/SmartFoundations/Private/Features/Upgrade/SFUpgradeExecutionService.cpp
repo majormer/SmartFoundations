@@ -692,7 +692,7 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 	// SKIP if buildable is already the target class (no upgrade needed)
 	if (Buildable->GetClass() == NewBuildableClass)
 	{
-		UE_LOG(LogSmartFoundations, Display, TEXT("UpgradeExecutionService: Skipping %s - already target tier"),
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("UpgradeExecutionService: Skipping %s - already target tier"),
 			*Buildable->GetName());
 		return 1;  // Return 1 to count as "handled" not failed
 	}
@@ -726,18 +726,18 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 	// Key: TryUpgrade + DoMultiStepPlacement + GenerateAndUpdateSpline + PreUpgrade/Upgrade_Implementation
 	if (AFGBuildableConveyorBelt* OldBelt = Cast<AFGBuildableConveyorBelt>(Buildable))
 	{
-		UE_LOG(LogSmartFoundations, Display, TEXT("UpgradeExecutionService: Upgrading belt %s (bucket=%d)"),
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("UpgradeExecutionService: Upgrading belt %s (bucket=%d)"),
 			*OldBelt->GetName(), OldBelt->GetConveyorBucketID());
 
 		// Skip if already target class
 		if (OldBelt->GetClass() == NewBuildableClass)
 		{
-			UE_LOG(LogSmartFoundations, Display, TEXT("UpgradeExecutionService: Belt already target class, skipping"));
+			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("UpgradeExecutionService: Belt already target class, skipping"));
 			return 1;
 		}
 
 		// STEP 1: Spawn hologram using vanilla factory method (exactly like MassUpgrade)
-		UE_LOG(LogSmartFoundations, Display, TEXT("⚙️ STEP 1: Spawning hologram via SpawnHologramFromRecipe..."));
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⚙️ STEP 1: Spawning hologram via SpawnHologramFromRecipe..."));
 		AFGHologram* Hologram = AFGHologram::SpawnHologramFromRecipe(
 			ActualTargetRecipe,
 			BuildGun,
@@ -750,13 +750,13 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 			UE_LOG(LogSmartFoundations, Warning, TEXT("UpgradeExecutionService: SpawnHologramFromRecipe failed"));
 			return 0;
 		}
-		UE_LOG(LogSmartFoundations, Display, TEXT("⚙️ STEP 1: Hologram spawned: %s"), *Hologram->GetName());
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⚙️ STEP 1: Hologram spawned: %s"), *Hologram->GetName());
 
 		// STEP 2: Set blueprint designer context if applicable
 		Hologram->SetInsideBlueprintDesigner(OldBelt->GetBlueprintDesigner());
 
 		// STEP 3: Create hit result and call TryUpgrade (NOT SetupUpgradeTarget!)
-		UE_LOG(LogSmartFoundations, Display, TEXT("⚙️ STEP 2: Calling TryUpgrade..."));
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⚙️ STEP 2: Calling TryUpgrade..."));
 		FHitResult HitResult(
 			OldBelt,
 			Hologram->GetComponentByClass<UPrimitiveComponent>(),
@@ -770,7 +770,7 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 			Hologram->Destroy();
 			return 0;
 		}
-		UE_LOG(LogSmartFoundations, Display, TEXT("⚙️ STEP 2: TryUpgrade succeeded"));
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⚙️ STEP 2: TryUpgrade succeeded"));
 
 		// STEP 4: Validate placement
 		UFGInventoryComponent* PlayerInventory = PlayerChar->GetInventory();
@@ -782,15 +782,15 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 			Hologram->Destroy();
 			return 0;
 		}
-		UE_LOG(LogSmartFoundations, Display, TEXT("⚙️ STEP 3: ValidatePlacementAndCost passed, IsUpgrade=true"));
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⚙️ STEP 3: ValidatePlacementAndCost passed, IsUpgrade=true"));
 
 		// STEP 5: Run multi-step placement loop (critical for spline buildables!)
-		UE_LOG(LogSmartFoundations, Display, TEXT("⚙️ STEP 4: Running DoMultiStepPlacement loop..."));
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⚙️ STEP 4: Running DoMultiStepPlacement loop..."));
 		while (Hologram->CanTakeNextBuildStep() && !Hologram->DoMultiStepPlacement(true))
 		{
 			// Loop until placement is complete
 		}
-		UE_LOG(LogSmartFoundations, Display, TEXT("⚙️ STEP 4: DoMultiStepPlacement complete"));
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⚙️ STEP 4: DoMultiStepPlacement complete"));
 
 		// STEP 5.5: Check affordability and deduct costs per-item
 		bool bNoCost = PlayerInventory->GetNoBuildCost();
@@ -801,13 +801,13 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 
 			// Get cost from hologram (length-aware for belts)
 			TArray<FItemAmount> BaseCost = Hologram->GetBaseCost();
-			UE_LOG(LogSmartFoundations, Log, TEXT("Belt upgrade cost: Hologram->GetBaseCost() returned %d items"), BaseCost.Num());
+			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Belt upgrade cost: Hologram->GetBaseCost() returned %d items"), BaseCost.Num());
 			for (const FItemAmount& ItemAmount : BaseCost)
 			{
 				if (ItemAmount.ItemClass)
 				{
 					ItemCost.FindOrAdd(ItemAmount.ItemClass) += ItemAmount.Amount;
-					UE_LOG(LogSmartFoundations, Log, TEXT("  New belt cost: +%d %s"),
+					UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("  New belt cost: +%d %s"),
 						ItemAmount.Amount, *UFGItemDescriptor::GetItemName(ItemAmount.ItemClass).ToString());
 				}
 			}
@@ -815,13 +815,13 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 			// Get refund from old buildable
 			TArray<FInventoryStack> Refunds;
 			OldBelt->GetDismantleRefundReturns(Refunds);
-			UE_LOG(LogSmartFoundations, Log, TEXT("Belt upgrade refund: GetDismantleRefundReturns() returned %d items"), Refunds.Num());
+			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Belt upgrade refund: GetDismantleRefundReturns() returned %d items"), Refunds.Num());
 			for (const FInventoryStack& Stack : Refunds)
 			{
 				if (Stack.Item.GetItemClass())
 				{
 					ItemCost.FindOrAdd(Stack.Item.GetItemClass()) -= Stack.NumItems;
-					UE_LOG(LogSmartFoundations, Log, TEXT("  Old belt refund: -%d %s"),
+					UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("  Old belt refund: -%d %s"),
 						Stack.NumItems, *UFGItemDescriptor::GetItemName(Stack.Item.GetItemClass()).ToString());
 				}
 			}
@@ -831,7 +831,7 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 			{
 				if (Entry.Key)
 				{
-					UE_LOG(LogSmartFoundations, Log, TEXT("  Net cost: %d %s"),
+					UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("  Net cost: %d %s"),
 						Entry.Value, *UFGItemDescriptor::GetItemName(Entry.Key).ToString());
 				}
 			}
@@ -869,7 +869,7 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 				{
 					UFGInventoryLibrary::GrabItemsFromInventoryAndCentralStorage(
 						PlayerInventory, CentralStorage, bTakeFromInventoryFirst, Entry.Key, Entry.Value);
-					UE_LOG(LogSmartFoundations, Log, TEXT("Belt upgrade: Deducted %d %s"),
+					UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Belt upgrade: Deducted %d %s"),
 						Entry.Value, *UFGItemDescriptor::GetItemName(Entry.Key).ToString());
 				}
 				else if (Entry.Value < 0 && Entry.Key)
@@ -885,7 +885,7 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 					}
 					else
 					{
-						UE_LOG(LogSmartFoundations, Log, TEXT("Belt upgrade: Refunded %d %s"),
+						UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Belt upgrade: Refunded %d %s"),
 							RefundAmount, *UFGItemDescriptor::GetItemName(Entry.Key).ToString());
 					}
 				}
@@ -896,9 +896,9 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 		// Friend access granted via AccessTransformers.ini
 		if (AFGConveyorBeltHologram* BeltHologram = Cast<AFGConveyorBeltHologram>(Hologram))
 		{
-			UE_LOG(LogSmartFoundations, Display, TEXT("⚙️ STEP 5: Calling GenerateAndUpdateSpline..."));
+			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⚙️ STEP 5: Calling GenerateAndUpdateSpline..."));
 			BeltHologram->GenerateAndUpdateSpline(HitResult);
-			UE_LOG(LogSmartFoundations, Display, TEXT("⚙️ STEP 5: GenerateAndUpdateSpline complete"));
+			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⚙️ STEP 5: GenerateAndUpdateSpline complete"));
 		}
 
 		// Capture chain actor from old belt before PreUpgrade clears upgrade-sensitive state.
@@ -910,11 +910,11 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 		// STEP 7: Let vanilla prepare the old belt for upgrade before constructing the replacement.
 		// PreUpgrade is documented as the hook that clears connections/state that can interfere
 		// with upgrades; calling it after Construct leaves the replacement born into stale chain state.
-		UE_LOG(LogSmartFoundations, Display, TEXT("⚙️ STEP 6a: Calling PreUpgrade_Implementation before Construct..."));
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⚙️ STEP 6a: Calling PreUpgrade_Implementation before Construct..."));
 		OldBelt->PreUpgrade_Implementation();
 
 		// STEP 8: Construct the new belt
-		UE_LOG(LogSmartFoundations, Display, TEXT("⚙️ STEP 6: Calling Construct()..."));
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⚙️ STEP 6: Calling Construct()..."));
 		TArray<AActor*> ConstructedChildren;
 		FNetConstructionID ConstructionID = BuildableSubsystem ? BuildableSubsystem->GetNewNetConstructionID() : FNetConstructionID();
 		AActor* ConstructedActor = Hologram->Construct(ConstructedChildren, ConstructionID);
@@ -927,25 +927,25 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 			UE_LOG(LogSmartFoundations, Warning, TEXT("UpgradeExecutionService: Construct failed for %s"), *OldBelt->GetName());
 			return 0;
 		}
-		UE_LOG(LogSmartFoundations, Display, TEXT("⚙️ STEP 6: Construct() created new belt: %s"), *NewBelt->GetName());
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⚙️ STEP 6: Construct() created new belt: %s"), *NewBelt->GetName());
 
 		// STEP 9: Call upgrade interface method on OLD belt (critical for chain transfer!)
-		UE_LOG(LogSmartFoundations, Display, TEXT("⚙️ STEP 7: Calling Upgrade_Implementation..."));
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⚙️ STEP 7: Calling Upgrade_Implementation..."));
 		OldBelt->Upgrade_Implementation(NewBelt);
-		UE_LOG(LogSmartFoundations, Display, TEXT("⚙️ STEP 7: Upgrade interface method complete"));
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⚙️ STEP 7: Upgrade interface method complete"));
 
 		// STEP 10: Check connections. The upgrade hologram plus PreUpgrade/Upgrade should
 		// transfer them; this prototype intentionally avoids manual ClearConnection/
 		// SetConnection after Construct because that can leave chain actors with stale
 		// segment state.
-		UE_LOG(LogSmartFoundations, Display, TEXT("⚙️ STEP 8: Checking connections..."));
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⚙️ STEP 8: Checking connections..."));
 		UFGFactoryConnectionComponent* OldConn0 = OldBelt->GetConnection0();
 		UFGFactoryConnectionComponent* OldConn1 = OldBelt->GetConnection1();
 		UFGFactoryConnectionComponent* NewConn0 = NewBelt->GetConnection0();
 		UFGFactoryConnectionComponent* NewConn1 = NewBelt->GetConnection1();
 
 		// Log chain actor state after Construct for diagnostics
-		UE_LOG(LogSmartFoundations, Log, TEXT("⚙️ STEP 8: NewBelt chain=%s, NewConn0 connected=%s, NewConn1 connected=%s"),
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⚙️ STEP 8: NewBelt chain=%s, NewConn0 connected=%s, NewConn1 connected=%s"),
 			NewBelt->GetConveyorChainActor() ? *NewBelt->GetConveyorChainActor()->GetName() : TEXT("null"),
 			NewConn0 && NewConn0->IsConnected() ? TEXT("yes") : TEXT("no"),
 			NewConn1 && NewConn1->IsConnected() ? TEXT("yes") : TEXT("no"));
@@ -956,7 +956,7 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 			{
 				if (NewConn0->IsConnected() && NewConn0->GetConnection() == Partner0)
 				{
-					UE_LOG(LogSmartFoundations, Display, TEXT("⚙️ STEP 8a: Conn0 already connected to %s by vanilla upgrade flow"),
+					UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⚙️ STEP 8a: Conn0 already connected to %s by vanilla upgrade flow"),
 						*Partner0->GetOwner()->GetName());
 				}
 				else
@@ -973,7 +973,7 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 			{
 				if (NewConn1->IsConnected() && NewConn1->GetConnection() == Partner1)
 				{
-					UE_LOG(LogSmartFoundations, Display, TEXT("⚙️ STEP 8b: Conn1 already connected to %s by vanilla upgrade flow"),
+					UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⚙️ STEP 8b: Conn1 already connected to %s by vanilla upgrade flow"),
 						*Partner1->GetOwner()->GetName());
 				}
 				else
@@ -983,10 +983,10 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 				}
 			}
 		}
-		UE_LOG(LogSmartFoundations, Display, TEXT("⚙️ STEP 8: Connections complete"));
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⚙️ STEP 8: Connections complete"));
 
 		// STEP 11: Destroy old belt and children
-		UE_LOG(LogSmartFoundations, Display, TEXT("⚙️ STEP 9: Destroying old belt..."));
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⚙️ STEP 9: Destroying old belt..."));
 		TArray<AActor*> ChildDismantleActors;
 		OldBelt->GetChildDismantleActors_Implementation(ChildDismantleActors);
 		for (AActor* ChildActor : ChildDismantleActors)
@@ -997,7 +997,7 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 			}
 		}
 		OldBelt->Destroy();
-		UE_LOG(LogSmartFoundations, Display, TEXT("⚙️ STEP 9: Old belt destroyed"));
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⚙️ STEP 9: Old belt destroyed"));
 
 		// Track upgraded conveyor
 		UpgradedConveyors.Add(NewBelt);
@@ -1006,7 +1006,7 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 		OldToNewConveyorMap.Add(OldBelt, NewBelt);
 		OldToNewBuildableMap.Add(OldBelt, NewBelt);
 
-		UE_LOG(LogSmartFoundations, Display, TEXT("⚙️ UPGRADE COMPLETE: %s → %s"),
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⚙️ UPGRADE COMPLETE: %s → %s"),
 			*Buildable->GetName(), *NewBelt->GetClass()->GetName());
 		return 1;
 	}
@@ -1030,7 +1030,7 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 		{
 			NewBuildableClass = TSubclassOf<AFGBuildable>(StyleClass);
 		}
-		UE_LOG(LogSmartFoundations, Display,
+		UE_LOG(LogSmartFoundations, VeryVerbose,
 			TEXT("UpgradeExecutionService: Pipe upgrade preserving indicator style (source=%s, bWithIndicator=%s, target class=%s)"),
 			*OldPipeClassName, bWithIndicator ? TEXT("true") : TEXT("false"),
 			NewBuildableClass ? *NewBuildableClass->GetName() : TEXT("null"));
@@ -1043,7 +1043,7 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 			return 0;
 		}
 
-		UE_LOG(LogSmartFoundations, Display, TEXT("UpgradeExecutionService: Old pipe %s with %d spline points"),
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("UpgradeExecutionService: Old pipe %s with %d spline points"),
 			*OldPipe->GetName(), SplineData.Num());
 
 		// Spawn our Smart hologram with deferred construction
@@ -1135,7 +1135,7 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 				{
 					UFGInventoryLibrary::GrabItemsFromInventoryAndCentralStorage(
 						PipePlayerInventory, PipeCentralStorage, bPipeTakeFromInventoryFirst, Entry.Key, Entry.Value);
-					UE_LOG(LogSmartFoundations, Log, TEXT("Pipe upgrade: Deducted %d %s"),
+					UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Pipe upgrade: Deducted %d %s"),
 						Entry.Value, *UFGItemDescriptor::GetItemName(Entry.Key).ToString());
 				}
 				else if (Entry.Value < 0 && Entry.Key)
@@ -1151,7 +1151,7 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 					}
 					else
 					{
-						UE_LOG(LogSmartFoundations, Log, TEXT("Pipe upgrade: Refunded %d %s"),
+						UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Pipe upgrade: Refunded %d %s"),
 							RefundAmount, *UFGItemDescriptor::GetItemName(Entry.Key).ToString());
 					}
 				}
@@ -1200,7 +1200,7 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 		// Track old->new mapping for post-upgrade validation / pipe batch fix
 		OldToNewBuildableMap.Add(OldPipe, NewPipe);
 
-		UE_LOG(LogSmartFoundations, Display, TEXT("UpgradeExecutionService: Successfully upgraded pipe %s to %s"),
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("UpgradeExecutionService: Successfully upgraded pipe %s to %s"),
 			*Buildable->GetName(), *NewPipe->GetClass()->GetName());
 		return 1;
 	}
@@ -1208,7 +1208,7 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 	// Handle Conveyor Lifts using vanilla upgrade flow (SpawnHologramFromRecipe pattern)
 	if (AFGBuildableConveyorLift* OldLift = Cast<AFGBuildableConveyorLift>(Buildable))
 	{
-		UE_LOG(LogSmartFoundations, Display, TEXT("UpgradeExecutionService: Upgrading lift %s"),
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("UpgradeExecutionService: Upgrading lift %s"),
 			*OldLift->GetName());
 
 		// Log connection info for debugging floor hole issues
@@ -1362,7 +1362,7 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 		}
 
 		// Let vanilla prepare the old lift for upgrade before constructing the replacement.
-		UE_LOG(LogSmartFoundations, Display, TEXT("UpgradeExecutionService: Calling lift PreUpgrade before Construct"));
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("UpgradeExecutionService: Calling lift PreUpgrade before Construct"));
 		OldLift->PreUpgrade_Implementation();
 
 		// Construct the new lift
@@ -1444,7 +1444,7 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 		OldToNewConveyorMap.Add(OldLift, NewLift);
 		OldToNewBuildableMap.Add(OldLift, NewLift);
 
-		UE_LOG(LogSmartFoundations, Display, TEXT("UpgradeExecutionService: Successfully upgraded lift %s to %s"),
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("UpgradeExecutionService: Successfully upgraded lift %s to %s"),
 			*Buildable->GetName(), *NewLift->GetClass()->GetName());
 		return 1;
 	}
@@ -1452,7 +1452,7 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 	// Handle Power Poles and Wall Outlets (simple buildables - no spline data)
 	if (AFGBuildablePowerPole* OldPole = Cast<AFGBuildablePowerPole>(Buildable))
 	{
-		UE_LOG(LogSmartFoundations, Display, TEXT("UpgradeExecutionService: Upgrading power pole/outlet %s (class=%s) Family=%d TargetTier=%d"),
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("UpgradeExecutionService: Upgrading power pole/outlet %s (class=%s) Family=%d TargetTier=%d"),
 			*OldPole->GetName(), *OldPole->GetClass()->GetName(),
 			static_cast<int32>(ActualFamily), CurrentParams.TargetTier);
 
@@ -1536,7 +1536,7 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 					}
 					else
 					{
-						UE_LOG(LogSmartFoundations, Log, TEXT("Pole upgrade: Refunded %d %s"),
+						UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Pole upgrade: Refunded %d %s"),
 							RefundAmount, *UFGItemDescriptor::GetItemName(Entry.Key).ToString());
 					}
 				}
@@ -1544,7 +1544,7 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 		}
 
 		// Spawn new pole using vanilla hologram (MassUpgrade pattern)
-		UE_LOG(LogSmartFoundations, Display, TEXT("UpgradeExecutionService: Spawning hologram from recipe %s for %s"),
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("UpgradeExecutionService: Spawning hologram from recipe %s for %s"),
 			*GetNameSafe(ActualTargetRecipe), *OldPole->GetName());
 		AFGHologram* PoleHologram = AFGHologram::SpawnHologramFromRecipe(
 			ActualTargetRecipe,
@@ -1559,7 +1559,7 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 				*GetNameSafe(ActualTargetRecipe));
 			return 0;
 		}
-		UE_LOG(LogSmartFoundations, Display, TEXT("UpgradeExecutionService: Spawned hologram %s (class=%s)"),
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("UpgradeExecutionService: Spawned hologram %s (class=%s)"),
 			*PoleHologram->GetName(), *PoleHologram->GetClass()->GetName());
 
 		// Set blueprint designer (like MassUpgrade)
@@ -1575,7 +1575,7 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 			PoleHologram->Destroy();
 			return 0;
 		}
-		UE_LOG(LogSmartFoundations, Display, TEXT("UpgradeExecutionService: TryUpgrade succeeded for %s"), *OldPole->GetName());
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("UpgradeExecutionService: TryUpgrade succeeded for %s"), *OldPole->GetName());
 
 		// Construct the new pole
 		TArray<AActor*> ConstructedChildren;
@@ -1610,7 +1610,7 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 		// Track old->new mapping for post-upgrade validation
 		OldToNewBuildableMap.Add(OldPole, NewPole);
 
-		UE_LOG(LogSmartFoundations, Display, TEXT("UpgradeExecutionService: Successfully upgraded pole %s to %s"),
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("UpgradeExecutionService: Successfully upgraded pole %s to %s"),
 			*Buildable->GetName(), *NewPole->GetClass()->GetName());
 		return 1;
 	}
@@ -1640,7 +1640,7 @@ void USFUpgradeExecutionService::CompleteUpgrade()
 	if (UpgradedConveyors.Num() > 0 && ChainService)
 	{
 		PreRepairQueuedGroups = ChainService->InvalidateAndQueueVanillaRebuildForBelts(UpgradedConveyors, PreDestroyChainActors);
-		UE_LOG(LogSmartFoundations, Display,
+		UE_LOG(LogSmartFoundations, VeryVerbose,
 			TEXT("ChainActorService: pre-repair conveyor invalidation queued %d group(s) before connection repair"),
 			PreRepairQueuedGroups);
 	}
@@ -1661,7 +1661,7 @@ void USFUpgradeExecutionService::CompleteUpgrade()
 		if (ChainService)
 		{
 			PostRepairQueuedGroups = ChainService->ReRegisterAndQueueVanillaRebuildForBelts(UpgradedConveyors, PreDestroyChainActors);
-			UE_LOG(LogSmartFoundations, Display,
+			UE_LOG(LogSmartFoundations, VeryVerbose,
 				TEXT("⚙️ Upgrade batch complete - %d conveyors upgraded, chain groups queued pre-repair=%d post-reregister=%d"),
 				UpgradedConveyors.Num(), PreRepairQueuedGroups, PostRepairQueuedGroups);
 
@@ -1695,7 +1695,7 @@ void USFUpgradeExecutionService::CompleteUpgrade()
 				if (Entry.Key && Entry.Value > 0)
 				{
 					Stacks.Add(FInventoryStack(Entry.Value, Entry.Key));
-					UE_LOG(LogSmartFoundations, Log, TEXT("UpgradeExecutionService: Adding %d %s to overflow crate"),
+					UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("UpgradeExecutionService: Adding %d %s to overflow crate"),
 						Entry.Value, *UFGItemDescriptor::GetItemName(Entry.Key).ToString());
 				}
 			}
@@ -1711,7 +1711,7 @@ void USFUpgradeExecutionService::CompleteUpgrade()
 					OutCrate,
 					EFGCrateType::CT_DismantleCrate
 				);
-				UE_LOG(LogSmartFoundations, Log, TEXT("UpgradeExecutionService: Spawned overflow crate with %d item types"),
+				UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("UpgradeExecutionService: Spawned overflow crate with %d item types"),
 					Stacks.Num());
 			}
 		}
@@ -2291,7 +2291,7 @@ void USFUpgradeExecutionService::FixBatchConnectionReferences()
 
 	if (FixedCount > 0)
 	{
-		UE_LOG(LogSmartFoundations, Display, TEXT("FixBatchConnectionReferences: Fixed %d inter-connected references"), FixedCount);
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("FixBatchConnectionReferences: Fixed %d inter-connected references"), FixedCount);
 
 		// NOTE: Do NOT call RemoveConveyor/AddConveyor here.
 		// The vanilla hologram upgrade path (TryUpgrade → ConfigureComponents → AddConveyor)
@@ -2443,7 +2443,7 @@ void USFUpgradeExecutionService::FixBatchPipeConnectionReferences()
 
 	if (FixedCount > 0)
 	{
-		UE_LOG(LogSmartFoundations, Display, TEXT("FixBatchPipeConnectionReferences: Fixed %d inter-connected pipe references"), FixedCount);
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("FixBatchPipeConnectionReferences: Fixed %d inter-connected pipe references"), FixedCount);
 	}
 }
 
@@ -2623,7 +2623,7 @@ void USFUpgradeExecutionService::ValidateAndRepairConnections()
 					if (LocalConn->GetConnection() == PartnerConn)
 					{
 						Repaired++;
-						UE_LOG(LogSmartFoundations, Display,
+						UE_LOG(LogSmartFoundations, VeryVerbose,
 							TEXT("ValidateAndRepairConnections: REPAIRED factory %s.%s <-> %s.%s"),
 							*NewLocal->GetName(), *Edge.LocalConnectorName.ToString(),
 							*PartnerNew->GetName(), *Edge.PartnerConnectorName.ToString());
@@ -2665,7 +2665,7 @@ void USFUpgradeExecutionService::ValidateAndRepairConnections()
 					if (LocalConn->GetConnection() == PartnerConn)
 					{
 						Repaired++;
-						UE_LOG(LogSmartFoundations, Display,
+						UE_LOG(LogSmartFoundations, VeryVerbose,
 							TEXT("ValidateAndRepairConnections: REPAIRED pipe %s.%s <-> %s.%s"),
 							*NewLocal->GetName(), *Edge.LocalConnectorName.ToString(),
 							*PartnerNew->GetName(), *Edge.PartnerConnectorName.ToString());
@@ -2725,7 +2725,7 @@ void USFUpgradeExecutionService::ValidateAndRepairConnections()
 	WorkingResult.RepairedConnectionCount = Repaired;
 	WorkingResult.BrokenConnectionCount = Broken;
 
-	UE_LOG(LogSmartFoundations, Display,
+	UE_LOG(LogSmartFoundations, VeryVerbose,
 		TEXT("ValidateAndRepairConnections: validated=%d repaired=%d broken=%d"),
 		Validated, Repaired, Broken);
 }

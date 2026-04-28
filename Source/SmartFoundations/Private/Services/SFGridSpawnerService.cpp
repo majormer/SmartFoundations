@@ -61,7 +61,7 @@ void USFGridSpawnerService::RegenerateChildHologramGrid()
             FSFCounterState NewState = SS->GetCounterState();
             NewState.GridCounters = SS->GetGridCounters();
             SS->UpdateCounterState(NewState);
-            
+
             // CRITICAL: Update positions AFTER grid sync so CounterState has correct dimensions
             UpdateChildPositions();
 
@@ -142,12 +142,12 @@ void USFGridSpawnerService::UpdateChildPositions()
         UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("UpdateChildPositions: Early return - No active hologram"));
         return;
     }
-    
+
     // CRITICAL: Even if there are no children, we must trigger the orchestrator to clean up orphaned previews
     if (SpawnedChildren.Num() == 0)
     {
         UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("UpdateChildPositions: No children - triggering orchestrator for cleanup"));
-        
+
         if (AFGHologram* Parent = SS->GetActiveHologram())
         {
             if (USFAutoConnectOrchestrator* Orchestrator = SS->GetOrCreateOrchestrator(Parent))
@@ -229,7 +229,7 @@ void USFGridSpawnerService::UpdateChildPositions()
     FVector ParentLocation = ParentHologram->GetActorLocation();
     FRotator ParentRotation = ParentHologram->GetActorRotation();
     FVector ParentNudgeOffset = ParentHologram->GetHologramNudgeOffset();
-    
+
     // DEBUG: Log parent state including nudge offset
     FVector ParentAnchorOffset = SS->GetCachedAnchorOffset();
     UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   🔍 PARENT STATE: Location=%s, NudgeOffset=%s, AnchorOffset=%s"),
@@ -241,7 +241,7 @@ void USFGridSpawnerService::UpdateChildPositions()
     if (!ItemSize.Equals(SS->GetLastLoggedItemSize(), 0.5f))
     {
         SS->SetLastLoggedItemSize(ItemSize);
-        UE_LOG(LogSmartFoundations, Display, TEXT("ITEM SIZE USED FOR SPACING: %s (CachedBuildingSize=%s)"),
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("ITEM SIZE USED FOR SPACING: %s (CachedBuildingSize=%s)"),
             *ItemSize.ToString(), *SS->GetCachedBuildingSize().ToString());
     }
 
@@ -331,7 +331,7 @@ void USFGridSpawnerService::UpdateChildPositions()
             GridIndex.ChildArrayIndex, GridIndex.X, GridIndex.Y, GridIndex.Z);
 
         // CRITICAL FIX: DO NOT pass AnchorOffset to CalculateChildPosition
-        // 
+        //
         // DISCOVERY: CalculateChildPosition adds AnchorOffset to the returned position,
         // but SetHologramLocationAndRotation() ALSO applies AnchorOffset compensation.
         // Passing AnchorOffset to both causes double-compensation.
@@ -344,7 +344,7 @@ void USFGridSpawnerService::UpdateChildPositions()
         // SOLUTION: Pass FVector::ZeroVector to CalculateChildPosition and let
         // SetHologramLocationAndRotation handle the AnchorOffset compensation.
         // We then counteract the API's behavior in the AdjustedPosition calculation above.
-        
+
         // Calculate position using PositionCalculator (NO AnchorOffset - handled by hologram API)
         FVector ChildPosition = ParentLocation;
         if (FSFPositionCalculator* PosCalc = SS->GetPositionCalculator())
@@ -366,12 +366,12 @@ void USFGridSpawnerService::UpdateChildPositions()
         FVector OldPosition = ChildHologram->GetActorLocation();
         const bool bParentWasLocked = ParentHologram->IsHologramLocked();
         const bool bChildWasLocked = ChildHologram->IsHologramLocked();
-        
+
         UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   ╔═══ CHILD %d POSITIONING START ═══"), GridIndex.ChildArrayIndex);
         UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   ║ OldPos: %s"), *OldPosition.ToString());
         UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   ║ CalcPos: %s (from PositionCalculator)"), *ChildPosition.ToString());
         UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   ║ ParentLocked: %d  ChildLocked: %d"), bParentWasLocked ? 1 : 0, bChildWasLocked ? 1 : 0);
-        
+
         // Get AnchorOffset for diagnostics
         FVector ChildAnchorOffset = FVector::ZeroVector;
         if (AFGBuildableHologram* BuildableChild = Cast<AFGBuildableHologram>(ChildHologram))
@@ -384,7 +384,7 @@ void USFGridSpawnerService::UpdateChildPositions()
                 UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   ║ ChildAnchorOffset: %s (from registry)"), *ChildAnchorOffset.ToString());
             }
         }
-        
+
         // Delegate lock management to HologramHelperService
         HologramHelper->TemporarilyUnlockChild(ChildHologram, bParentWasLocked);
         const bool bChildUnlockedByHelper = !ChildHologram->IsHologramLocked() && bChildWasLocked;
@@ -402,7 +402,7 @@ void USFGridSpawnerService::UpdateChildPositions()
         // SetActorLocation doesn't apply AnchorOffset (the old compensation was specifically
         // to counteract SetHologramLocationAndRotation's implicit AnchorOffset addition).
         ChildHologram->SetActorLocation(ChildPosition);
-        
+
         // Calculate child rotation - includes arc rotation if radial transform is active
         FRotator ChildRotation = ParentRotation;
         const FSFCounterState& Counter = SS->GetCounterState();
@@ -413,22 +413,22 @@ void USFGridSpawnerService::UpdateChildPositions()
             // The rotation matches the arc direction - positive RotationZ = clockwise arc = clockwise building rotation
             float ChildYawOffset = GridIndex.X * Counter.RotationZ;
             ChildRotation.Yaw += ChildYawOffset;
-            
-            UE_LOG(LogSmartFoundations, Verbose, 
+
+            UE_LOG(LogSmartFoundations, Verbose,
                 TEXT("🔄 Spawn Child[%d] X=%d: ParentYaw=%.1f° + Offset=%.1f° = FinalYaw=%.1f°"),
                 GridIndex.ChildArrayIndex, GridIndex.X, ParentRotation.Yaw, ChildYawOffset, ChildRotation.Yaw);
         }
         ChildHologram->SetActorRotation(ChildRotation);
-        
+
         // Check position AFTER API call
         FVector NewPosition = ChildHologram->GetActorLocation();
         float DeltaZ = NewPosition.Z - OldPosition.Z;
         float OffsetFromCalc = NewPosition.Z - ChildPosition.Z;
-        
+
         UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   ║ NewPos: %s (after SetHologramLocationAndRotation)"), *NewPosition.ToString());
         UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   ║ Delta Z: %.1f cm (NewPos - OldPos)"), DeltaZ);
         UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   ║ Offset from CalcPos: %.1f cm (NewPos - CalcPos)"), OffsetFromCalc);
-        
+
         // Check if offset matches AnchorOffset
         if (FMath::Abs(OffsetFromCalc - ChildAnchorOffset.Z) < 1.0f)
         {
@@ -442,7 +442,7 @@ void USFGridSpawnerService::UpdateChildPositions()
         {
             UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   ║ ❓ UNEXPECTED OFFSET - Doesn't match AnchorOffset or zero."));
         }
-        
+
         UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   ╚═══════════════════════════════════"));
 
         // Delegate floor validation to ValidationService
@@ -492,7 +492,7 @@ void USFGridSpawnerService::UpdateChildPositions()
         // Special logging for water extractors
         if (ChildHologram->IsA(ASFWaterPumpChildHologram::StaticClass()))
         {
-            UE_LOG(LogSmartFoundations, Display, TEXT("  [WATER EXTRACTOR] Child %s moved from %s to %s (Grid[%d,%d,%d])"),
+            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("  [WATER EXTRACTOR] Child %s moved from %s to %s (Grid[%d,%d,%d])"),
                 *ChildHologram->GetName(), *OldPosition.ToString(), *ChildPosition.ToString(),
                 GridIndex.X, GridIndex.Y, GridIndex.Z);
         }
@@ -547,7 +547,7 @@ void USFGridSpawnerService::UpdateChildPositions()
                 {
                     Orchestrator->OnFloorHolePipesChanged();
                 }
-                
+
                 UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   🎯 Orchestrator: Grid updates triggered in CompletionCallback"));
             }
         }
@@ -670,7 +670,7 @@ void USFGridSpawnerService::UpdateChildrenForCurrentTransform()
                         {
                             Orchestrator->OnFloorHolePipesChanged();
                         }
-                        
+
                         UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   🎯 Orchestrator: Movement updates triggered (next tick)"));
                     }
                 }

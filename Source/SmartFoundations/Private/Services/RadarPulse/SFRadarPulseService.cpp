@@ -130,7 +130,7 @@ FSFRadarPulseSnapshot USFRadarPulseService::CaptureSnapshotAtLocationFiltered(co
 
         // Pre-categorize to check filter before full capture
         FString Category = CategorizeActor(Actor);
-        
+
         // Skip if not in filter (when filter is active)
         if (bHasFilter && !FilterSet.Contains(Category))
         {
@@ -856,38 +856,38 @@ void USFRadarPulseService::InspectHologram(AFGHologram* Hologram, const FString&
         return;
     }
 
-    UE_LOG(LogSmartFoundations, Display, TEXT(""));
-    UE_LOG(LogSmartFoundations, Display, TEXT("╔═══════════════════════════════════════════════════════════════════════════════"));
-    UE_LOG(LogSmartFoundations, Display, TEXT("║ 📡 HOLOGRAM INSPECTION: %s"), *DebugLabel);
-    UE_LOG(LogSmartFoundations, Display, TEXT("╠═══════════════════════════════════════════════════════════════════════════════"));
-    UE_LOG(LogSmartFoundations, Display, TEXT("║ Name: %s"), *Hologram->GetName());
-    UE_LOG(LogSmartFoundations, Display, TEXT("║ Class: %s"), *Hologram->GetClass()->GetName());
-    UE_LOG(LogSmartFoundations, Display, TEXT("║ Location: %s"), *Hologram->GetActorLocation().ToString());
-    UE_LOG(LogSmartFoundations, Display, TEXT("║ Rotation: %s"), *Hologram->GetActorRotation().ToString());
-    UE_LOG(LogSmartFoundations, Display, TEXT("║ Hidden: %d | TickEnabled: %d | BegunPlay: %d"),
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT(""));
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("╔═══════════════════════════════════════════════════════════════════════════════"));
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║ 📡 HOLOGRAM INSPECTION: %s"), *DebugLabel);
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("╠═══════════════════════════════════════════════════════════════════════════════"));
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║ Name: %s"), *Hologram->GetName());
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║ Class: %s"), *Hologram->GetClass()->GetName());
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║ Location: %s"), *Hologram->GetActorLocation().ToString());
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║ Rotation: %s"), *Hologram->GetActorRotation().ToString());
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║ Hidden: %d | TickEnabled: %d | BegunPlay: %d"),
         Hologram->IsHidden(), Hologram->PrimaryActorTick.bCanEverTick, Hologram->HasActorBegunPlay());
-    
+
     // Get material state
     EHologramMaterialState MatState = Hologram->GetHologramMaterialState();
-    UE_LOG(LogSmartFoundations, Display, TEXT("║ MaterialState: %d (0=OK, 1=Warning, 2=Error)"), (int32)MatState);
-    
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║ MaterialState: %d (0=OK, 1=Warning, 2=Error)"), (int32)MatState);
+
     // Note: mValidPlacementMaterial and mInvalidPlacementMaterial are protected members
     // We can inspect them indirectly through the materials applied to mesh components
-    
+
     // Check if it's a spline hologram (belt/pipe)
     if (AFGSplineHologram* SplineHologram = Cast<AFGSplineHologram>(Hologram))
     {
-        UE_LOG(LogSmartFoundations, Display, TEXT("╠═══════════════════════════════════════════════════════════════════════════════"));
-        UE_LOG(LogSmartFoundations, Display, TEXT("║ ═══ SPLINE HOLOGRAM DATA ═══"));
-        
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("╠═══════════════════════════════════════════════════════════════════════════════"));
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║ ═══ SPLINE HOLOGRAM DATA ═══"));
+
         // Find spline component via FindComponentByClass (mSplineComponent is protected)
         if (USplineComponent* SplineComp = Hologram->FindComponentByClass<USplineComponent>())
         {
             int32 NumPoints = SplineComp->GetNumberOfSplinePoints();
             float SplineLength = SplineComp->GetSplineLength();
-            UE_LOG(LogSmartFoundations, Display, TEXT("║ SplineComponent: %d points, Length=%.1f cm"), NumPoints, SplineLength);
-            UE_LOG(LogSmartFoundations, Display, TEXT("║ SplineComponent World Location: %s"), *SplineComp->GetComponentLocation().ToString());
-            
+            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║ SplineComponent: %d points, Length=%.1f cm"), NumPoints, SplineLength);
+            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║ SplineComponent World Location: %s"), *SplineComp->GetComponentLocation().ToString());
+
             // Log each spline point
             for (int32 i = 0; i < NumPoints; i++)
             {
@@ -895,53 +895,53 @@ void USFRadarPulseService::InspectHologram(AFGHologram* Hologram, const FString&
                 FVector WorldLocation = SplineComp->GetLocationAtSplinePoint(i, ESplineCoordinateSpace::World);
                 FVector ArriveTangent = SplineComp->GetArriveTangentAtSplinePoint(i, ESplineCoordinateSpace::Local);
                 FVector LeaveTangent = SplineComp->GetLeaveTangentAtSplinePoint(i, ESplineCoordinateSpace::Local);
-                
-                UE_LOG(LogSmartFoundations, Display, TEXT("║   Point[%d] Local=%s World=%s"),
+
+                UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║   Point[%d] Local=%s World=%s"),
                     i, *PointLocation.ToString(), *WorldLocation.ToString());
-                UE_LOG(LogSmartFoundations, Display, TEXT("║            ArriveTangent=%s LeaveTangent=%s"),
+                UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║            ArriveTangent=%s LeaveTangent=%s"),
                     *ArriveTangent.ToString(), *LeaveTangent.ToString());
             }
         }
         else
         {
-            UE_LOG(LogSmartFoundations, Display, TEXT("║ SplineComponent: NULL (not found via FindComponentByClass)"));
+            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║ SplineComponent: NULL (not found via FindComponentByClass)"));
         }
-        
+
         // Check for belt hologram specific data
         if (AFGConveyorBeltHologram* BeltHologram = Cast<AFGConveyorBeltHologram>(SplineHologram))
         {
-            UE_LOG(LogSmartFoundations, Display, TEXT("╠═══════════════════════════════════════════════════════════════════════════════"));
-            UE_LOG(LogSmartFoundations, Display, TEXT("║ ═══ BELT HOLOGRAM SPECIFIC ═══"));
-            
-            UE_LOG(LogSmartFoundations, Display, TEXT("║ BuildClass: %s"),
+            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("╠═══════════════════════════════════════════════════════════════════════════════"));
+            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║ ═══ BELT HOLOGRAM SPECIFIC ═══"));
+
+            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║ BuildClass: %s"),
                 BeltHologram->GetBuildClass() ? *BeltHologram->GetBuildClass()->GetName() : TEXT("NULL"));
-            UE_LOG(LogSmartFoundations, Display, TEXT("║ BuildClassPath: %s"),
+            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║ BuildClassPath: %s"),
                 BeltHologram->GetBuildClass() ? *BeltHologram->GetBuildClass()->GetPathName() : TEXT("NULL"));
-            
+
             // Check for snapped connections
-            UE_LOG(LogSmartFoundations, Display, TEXT("║ IsHologramLocked: %d"), BeltHologram->IsHologramLocked() ? 1 : 0);
+            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║ IsHologramLocked: %d"), BeltHologram->IsHologramLocked() ? 1 : 0);
         }
-        
+
         // Check for pipeline hologram specific data
         if (AFGPipelineHologram* PipeHologram = Cast<AFGPipelineHologram>(SplineHologram))
         {
-            UE_LOG(LogSmartFoundations, Display, TEXT("╠═══════════════════════════════════════════════════════════════════════════════"));
-            UE_LOG(LogSmartFoundations, Display, TEXT("║ ═══ PIPE HOLOGRAM SPECIFIC ═══"));
-            
-            UE_LOG(LogSmartFoundations, Display, TEXT("║ BuildClass: %s"),
+            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("╠═══════════════════════════════════════════════════════════════════════════════"));
+            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║ ═══ PIPE HOLOGRAM SPECIFIC ═══"));
+
+            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║ BuildClass: %s"),
                 PipeHologram->GetBuildClass() ? *PipeHologram->GetBuildClass()->GetName() : TEXT("NULL"));
-            UE_LOG(LogSmartFoundations, Display, TEXT("║ BuildClassPath: %s"),
+            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║ BuildClassPath: %s"),
                 PipeHologram->GetBuildClass() ? *PipeHologram->GetBuildClass()->GetPathName() : TEXT("NULL"));
-            UE_LOG(LogSmartFoundations, Display, TEXT("║ IsHologramLocked: %d"), PipeHologram->IsHologramLocked() ? 1 : 0);
+            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║ IsHologramLocked: %d"), PipeHologram->IsHologramLocked() ? 1 : 0);
         }
-        
+
         // CRITICAL: Log SplineMeshComponents and their meshes - this is what we need for EXTEND
         TArray<USplineMeshComponent*> SplineMeshes;
         Hologram->GetComponents<USplineMeshComponent>(SplineMeshes);
         if (SplineMeshes.Num() > 0)
         {
-            UE_LOG(LogSmartFoundations, Display, TEXT("╠═══════════════════════════════════════════════════════════════════════════════"));
-            UE_LOG(LogSmartFoundations, Display, TEXT("║ ═══ SPLINE MESH COMPONENTS (%d) ═══"), SplineMeshes.Num());
+            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("╠═══════════════════════════════════════════════════════════════════════════════"));
+            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║ ═══ SPLINE MESH COMPONENTS (%d) ═══"), SplineMeshes.Num());
             for (int32 i = 0; i < SplineMeshes.Num(); i++)
             {
                 USplineMeshComponent* MeshComp = SplineMeshes[i];
@@ -950,99 +950,99 @@ void USFRadarPulseService::InspectHologram(AFGHologram* Hologram, const FString&
                     UStaticMesh* Mesh = MeshComp->GetStaticMesh();
                     FString MeshPath = Mesh ? Mesh->GetPathName() : TEXT("NULL");
                     FString MeshName = Mesh ? Mesh->GetName() : TEXT("NULL");
-                    
-                    UE_LOG(LogSmartFoundations, Display, TEXT("║   [%d] Visible=%d Mesh=%s"), 
+
+                    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║   [%d] Visible=%d Mesh=%s"),
                         i, MeshComp->IsVisible() ? 1 : 0, *MeshName);
-                    UE_LOG(LogSmartFoundations, Display, TEXT("║       MeshPath: %s"), *MeshPath);
-                    
+                    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║       MeshPath: %s"), *MeshPath);
+
                     // Log material info with full paths and material instance details
                     int32 NumMaterials = MeshComp->GetNumMaterials();
                     for (int32 MatIdx = 0; MatIdx < NumMaterials; MatIdx++)
                     {
                         UMaterialInterface* Mat = MeshComp->GetMaterial(MatIdx);
-                        UE_LOG(LogSmartFoundations, Display, TEXT("║       Material[%d]: %s"), 
+                        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║       Material[%d]: %s"),
                             MatIdx, Mat ? *Mat->GetName() : TEXT("NULL"));
                         if (Mat)
                         {
-                            UE_LOG(LogSmartFoundations, Display, TEXT("║           Path: %s"), *Mat->GetPathName());
-                            UE_LOG(LogSmartFoundations, Display, TEXT("║           Class: %s"), *Mat->GetClass()->GetName());
-                            
+                            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║           Path: %s"), *Mat->GetPathName());
+                            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║           Class: %s"), *Mat->GetClass()->GetName());
+
                             // Check if it's a material instance (dynamic or constant)
                             if (UMaterialInstanceDynamic* DynMat = Cast<UMaterialInstanceDynamic>(Mat))
                             {
-                                UE_LOG(LogSmartFoundations, Display, TEXT("║           IsDynamic: YES"));
+                                UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║           IsDynamic: YES"));
                                 if (DynMat->Parent)
                                 {
-                                    UE_LOG(LogSmartFoundations, Display, TEXT("║           Parent: %s"), *DynMat->Parent->GetPathName());
+                                    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║           Parent: %s"), *DynMat->Parent->GetPathName());
                                 }
                             }
                             else if (UMaterialInstanceConstant* ConstMat = Cast<UMaterialInstanceConstant>(Mat))
                             {
-                                UE_LOG(LogSmartFoundations, Display, TEXT("║           IsConstant: YES"));
+                                UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║           IsConstant: YES"));
                                 if (ConstMat->Parent)
                                 {
-                                    UE_LOG(LogSmartFoundations, Display, TEXT("║           Parent: %s"), *ConstMat->Parent->GetPathName());
+                                    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║           Parent: %s"), *ConstMat->Parent->GetPathName());
                                 }
                             }
-                            
+
                             // Get base material for animation info
                             UMaterial* BaseMat = Mat->GetMaterial();
                             if (BaseMat)
                             {
-                                UE_LOG(LogSmartFoundations, Display, TEXT("║           BaseMaterial: %s"), *BaseMat->GetPathName());
+                                UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║           BaseMaterial: %s"), *BaseMat->GetPathName());
                             }
                         }
                     }
-                    
+
                     // Log forward axis (important for belt direction)
                     ESplineMeshAxis::Type ForwardAxis = MeshComp->GetForwardAxis();
-                    UE_LOG(LogSmartFoundations, Display, TEXT("║       ForwardAxis: %d (0=X, 1=Y, 2=Z)"), (int32)ForwardAxis);
-                    
+                    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║       ForwardAxis: %d (0=X, 1=Y, 2=Z)"), (int32)ForwardAxis);
+
                     // Log spline mesh geometry - use individual getters
                     FVector StartPos = MeshComp->GetStartPosition();
                     FVector EndPos = MeshComp->GetEndPosition();
                     FVector StartTangent = MeshComp->GetStartTangent();
                     FVector EndTangent = MeshComp->GetEndTangent();
-                    UE_LOG(LogSmartFoundations, Display, TEXT("║       Start=%s End=%s"), 
+                    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║       Start=%s End=%s"),
                         *StartPos.ToString(), *EndPos.ToString());
-                    UE_LOG(LogSmartFoundations, Display, TEXT("║       StartTangent=%s EndTangent=%s"), 
+                    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║       StartTangent=%s EndTangent=%s"),
                         *StartTangent.ToString(), *EndTangent.ToString());
-                    
+
                     // Log render settings (custom depth stencil for hologram effect)
-                    UE_LOG(LogSmartFoundations, Display, TEXT("║       RenderCustomDepth=%d StencilValue=%d StencilWriteMask=%d"),
+                    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║       RenderCustomDepth=%d StencilValue=%d StencilWriteMask=%d"),
                         MeshComp->bRenderCustomDepth ? 1 : 0,
                         MeshComp->CustomDepthStencilValue,
                         (int32)MeshComp->CustomDepthStencilWriteMask);
-                    UE_LOG(LogSmartFoundations, Display, TEXT("║       HiddenInGame=%d CastShadow=%d"),
+                    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║       HiddenInGame=%d CastShadow=%d"),
                         MeshComp->bHiddenInGame ? 1 : 0,
                         MeshComp->CastShadow ? 1 : 0);
                 }
             }
         }
     }
-    
+
     // Check for lift hologram specific data
     if (AFGConveyorLiftHologram* LiftHologram = Cast<AFGConveyorLiftHologram>(Hologram))
     {
-        UE_LOG(LogSmartFoundations, Display, TEXT("╠═══════════════════════════════════════════════════════════════════════════════"));
-        UE_LOG(LogSmartFoundations, Display, TEXT("║ ═══ LIFT HOLOGRAM SPECIFIC ═══"));
-        
-        UE_LOG(LogSmartFoundations, Display, TEXT("║ BuildClass: %s"),
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("╠═══════════════════════════════════════════════════════════════════════════════"));
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║ ═══ LIFT HOLOGRAM SPECIFIC ═══"));
+
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║ BuildClass: %s"),
             LiftHologram->GetBuildClass() ? *LiftHologram->GetBuildClass()->GetName() : TEXT("NULL"));
-        UE_LOG(LogSmartFoundations, Display, TEXT("║ BuildClassPath: %s"),
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║ BuildClassPath: %s"),
             LiftHologram->GetBuildClass() ? *LiftHologram->GetBuildClass()->GetPathName() : TEXT("NULL"));
-        UE_LOG(LogSmartFoundations, Display, TEXT("║ IsHologramLocked: %d"), LiftHologram->IsHologramLocked() ? 1 : 0);
-        
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║ IsHologramLocked: %d"), LiftHologram->IsHologramLocked() ? 1 : 0);
+
         // Note: Lift height and other properties are protected, but we can inspect components
     }
-    
+
     // ALL STATIC MESH COMPONENTS - captures lift meshes and any other static meshes
     TArray<UStaticMeshComponent*> StaticMeshes;
     Hologram->GetComponents<UStaticMeshComponent>(StaticMeshes);
     if (StaticMeshes.Num() > 0)
     {
-        UE_LOG(LogSmartFoundations, Display, TEXT("╠═══════════════════════════════════════════════════════════════════════════════"));
-        UE_LOG(LogSmartFoundations, Display, TEXT("║ ═══ ALL STATIC MESH COMPONENTS (%d) ═══"), StaticMeshes.Num());
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("╠═══════════════════════════════════════════════════════════════════════════════"));
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║ ═══ ALL STATIC MESH COMPONENTS (%d) ═══"), StaticMeshes.Num());
         for (int32 i = 0; i < StaticMeshes.Num(); i++)
         {
             UStaticMeshComponent* MeshComp = StaticMeshes[i];
@@ -1053,111 +1053,111 @@ void USFRadarPulseService::InspectHologram(AFGHologram* Hologram, const FString&
                 FString MeshName = Mesh ? Mesh->GetName() : TEXT("NULL");
                 FString CompName = MeshComp->GetName();
                 FString CompClass = MeshComp->GetClass()->GetName();
-                
-                UE_LOG(LogSmartFoundations, Display, TEXT("║   [%d] %s (%s)"), i, *CompName, *CompClass);
-                UE_LOG(LogSmartFoundations, Display, TEXT("║       Visible=%d Mesh=%s"), 
+
+                UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║   [%d] %s (%s)"), i, *CompName, *CompClass);
+                UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║       Visible=%d Mesh=%s"),
                     MeshComp->IsVisible() ? 1 : 0, *MeshName);
-                UE_LOG(LogSmartFoundations, Display, TEXT("║       MeshPath: %s"), *MeshPath);
-                UE_LOG(LogSmartFoundations, Display, TEXT("║       RelativeLocation: %s"), *MeshComp->GetRelativeLocation().ToString());
-                UE_LOG(LogSmartFoundations, Display, TEXT("║       WorldLocation: %s"), *MeshComp->GetComponentLocation().ToString());
-                
+                UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║       MeshPath: %s"), *MeshPath);
+                UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║       RelativeLocation: %s"), *MeshComp->GetRelativeLocation().ToString());
+                UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║       WorldLocation: %s"), *MeshComp->GetComponentLocation().ToString());
+
                 // Log materials with paths
                 int32 NumMaterials = MeshComp->GetNumMaterials();
                 for (int32 MatIdx = 0; MatIdx < NumMaterials && MatIdx < 3; MatIdx++)
                 {
                     UMaterialInterface* Mat = MeshComp->GetMaterial(MatIdx);
-                    UE_LOG(LogSmartFoundations, Display, TEXT("║       Material[%d]: %s"), 
+                    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║       Material[%d]: %s"),
                         MatIdx, Mat ? *Mat->GetName() : TEXT("NULL"));
                     if (Mat)
                     {
-                        UE_LOG(LogSmartFoundations, Display, TEXT("║           Path: %s"), *Mat->GetPathName());
+                        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║           Path: %s"), *Mat->GetPathName());
                     }
                 }
                 if (NumMaterials > 3)
                 {
-                    UE_LOG(LogSmartFoundations, Display, TEXT("║       ... and %d more materials"), NumMaterials - 3);
+                    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║       ... and %d more materials"), NumMaterials - 3);
                 }
-                
+
                 // Log render settings (custom depth stencil for hologram effect)
-                UE_LOG(LogSmartFoundations, Display, TEXT("║       RenderCustomDepth=%d StencilValue=%d StencilWriteMask=%d"),
+                UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║       RenderCustomDepth=%d StencilValue=%d StencilWriteMask=%d"),
                     MeshComp->bRenderCustomDepth ? 1 : 0,
                     MeshComp->CustomDepthStencilValue,
                     (int32)MeshComp->CustomDepthStencilWriteMask);
-                UE_LOG(LogSmartFoundations, Display, TEXT("║       HiddenInGame=%d CastShadow=%d"),
+                UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║       HiddenInGame=%d CastShadow=%d"),
                     MeshComp->bHiddenInGame ? 1 : 0,
                     MeshComp->CastShadow ? 1 : 0);
             }
         }
     }
-    
+
     // ALL SCENE COMPONENTS - for understanding hierarchy
     TArray<USceneComponent*> AllSceneComps;
     Hologram->GetComponents<USceneComponent>(AllSceneComps);
-    UE_LOG(LogSmartFoundations, Display, TEXT("╠═══════════════════════════════════════════════════════════════════════════════"));
-    UE_LOG(LogSmartFoundations, Display, TEXT("║ ═══ COMPONENT HIERARCHY (%d scene components) ═══"), AllSceneComps.Num());
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("╠═══════════════════════════════════════════════════════════════════════════════"));
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║ ═══ COMPONENT HIERARCHY (%d scene components) ═══"), AllSceneComps.Num());
     for (USceneComponent* Comp : AllSceneComps)
     {
         if (Comp)
         {
             FString ParentName = Comp->GetAttachParent() ? Comp->GetAttachParent()->GetName() : TEXT("ROOT");
-            UE_LOG(LogSmartFoundations, Display, TEXT("║   %s (%s) -> Parent: %s"),
+            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║   %s (%s) -> Parent: %s"),
                 *Comp->GetName(), *Comp->GetClass()->GetName(), *ParentName);
         }
     }
-    
+
     // Hologram children (mChildren array)
     const TArray<AFGHologram*>& HologramChildren = Hologram->GetHologramChildren();
     if (HologramChildren.Num() > 0)
     {
-        UE_LOG(LogSmartFoundations, Display, TEXT("╠═══════════════════════════════════════════════════════════════════════════════"));
-        UE_LOG(LogSmartFoundations, Display, TEXT("║ ═══ HOLOGRAM CHILDREN (mChildren: %d) ═══"), HologramChildren.Num());
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("╠═══════════════════════════════════════════════════════════════════════════════"));
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║ ═══ HOLOGRAM CHILDREN (mChildren: %d) ═══"), HologramChildren.Num());
         for (int32 i = 0; i < HologramChildren.Num(); i++)
         {
             AFGHologram* Child = HologramChildren[i];
             if (IsValid(Child))
             {
-                UE_LOG(LogSmartFoundations, Display, TEXT("║   [%d] %s (%s) at %s"),
+                UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║   [%d] %s (%s) at %s"),
                     i, *Child->GetName(), *Child->GetClass()->GetName(), *Child->GetActorLocation().ToString());
-                UE_LOG(LogSmartFoundations, Display, TEXT("║       MaterialState: %d | Hidden: %d"),
+                UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║       MaterialState: %d | Hidden: %d"),
                     (int32)Child->GetHologramMaterialState(), Child->IsHidden() ? 1 : 0);
             }
             else
             {
-                UE_LOG(LogSmartFoundations, Display, TEXT("║   [%d] INVALID/NULL"), i);
+                UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║   [%d] INVALID/NULL"), i);
             }
         }
     }
-    
+
     // Attached actors (different from mChildren)
     TArray<AActor*> AttachedActors;
     Hologram->GetAttachedActors(AttachedActors);
     if (AttachedActors.Num() > 0)
     {
-        UE_LOG(LogSmartFoundations, Display, TEXT("╠═══════════════════════════════════════════════════════════════════════════════"));
-        UE_LOG(LogSmartFoundations, Display, TEXT("║ ═══ ATTACHED ACTORS (%d) ═══"), AttachedActors.Num());
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("╠═══════════════════════════════════════════════════════════════════════════════"));
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║ ═══ ATTACHED ACTORS (%d) ═══"), AttachedActors.Num());
         for (AActor* Child : AttachedActors)
         {
             if (IsValid(Child))
             {
-                UE_LOG(LogSmartFoundations, Display, TEXT("║   %s (%s) at %s"),
+                UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║   %s (%s) at %s"),
                     *Child->GetName(), *Child->GetClass()->GetName(), *Child->GetActorLocation().ToString());
             }
         }
     }
-    
+
     // Actor tags
     if (Hologram->Tags.Num() > 0)
     {
-        UE_LOG(LogSmartFoundations, Display, TEXT("╠═══════════════════════════════════════════════════════════════════════════════"));
-        UE_LOG(LogSmartFoundations, Display, TEXT("║ ═══ ACTOR TAGS (%d) ═══"), Hologram->Tags.Num());
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("╠═══════════════════════════════════════════════════════════════════════════════"));
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║ ═══ ACTOR TAGS (%d) ═══"), Hologram->Tags.Num());
         for (const FName& Tag : Hologram->Tags)
         {
-            UE_LOG(LogSmartFoundations, Display, TEXT("║   %s"), *Tag.ToString());
+            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║   %s"), *Tag.ToString());
         }
     }
-    
-    UE_LOG(LogSmartFoundations, Display, TEXT("╚═══════════════════════════════════════════════════════════════════════════════"));
-    UE_LOG(LogSmartFoundations, Display, TEXT(""));
+
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("╚═══════════════════════════════════════════════════════════════════════════════"));
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT(""));
 }
 
 void USFRadarPulseService::InspectAllHologramsInRadius(float Radius)
@@ -1169,7 +1169,7 @@ void USFRadarPulseService::InspectAllHologramsInRadius(float Radius)
     }
 
     UWorld* World = Subsystem->GetWorld();
-    
+
     // Get player location
     APlayerController* PC = World->GetFirstPlayerController();
     if (!PC || !PC->GetPawn())
@@ -1179,11 +1179,11 @@ void USFRadarPulseService::InspectAllHologramsInRadius(float Radius)
     }
 
     FVector PlayerLocation = PC->GetPawn()->GetActorLocation();
-    
+
     // Get all holograms in range
     TArray<AActor*> AllHolograms;
     UGameplayStatics::GetAllActorsOfClass(World, AFGHologram::StaticClass(), AllHolograms);
-    
+
     // Filter by distance
     TArray<AFGHologram*> NearbyHolograms;
     for (AActor* Actor : AllHolograms)
@@ -1201,15 +1201,15 @@ void USFRadarPulseService::InspectAllHologramsInRadius(float Radius)
         }
     }
 
-    UE_LOG(LogSmartFoundations, Display, TEXT(""));
-    UE_LOG(LogSmartFoundations, Display, TEXT("╔═══════════════════════════════════════════════════════════════════════════════"));
-    UE_LOG(LogSmartFoundations, Display, TEXT("║ 📡 HOLOGRAM RADIUS SCAN - Found %d holograms within %.0fm"), NearbyHolograms.Num(), Radius / 100.0f);
-    UE_LOG(LogSmartFoundations, Display, TEXT("║ Player Location: %s"), *PlayerLocation.ToString());
-    UE_LOG(LogSmartFoundations, Display, TEXT("╚═══════════════════════════════════════════════════════════════════════════════"));
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT(""));
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("╔═══════════════════════════════════════════════════════════════════════════════"));
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║ 📡 HOLOGRAM RADIUS SCAN - Found %d holograms within %.0fm"), NearbyHolograms.Num(), Radius / 100.0f);
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║ Player Location: %s"), *PlayerLocation.ToString());
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("╚═══════════════════════════════════════════════════════════════════════════════"));
 
     if (NearbyHolograms.Num() == 0)
     {
-        UE_LOG(LogSmartFoundations, Display, TEXT("  No holograms found in range."));
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("  No holograms found in range."));
         return;
     }
 
@@ -1228,8 +1228,8 @@ void USFRadarPulseService::InspectAllHologramsInRadius(float Radius)
         InspectHologram(Hologram, Label);
     }
 
-    UE_LOG(LogSmartFoundations, Display, TEXT(""));
-    UE_LOG(LogSmartFoundations, Display, TEXT("📡 Hologram scan complete - inspected %d holograms"), NearbyHolograms.Num());
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT(""));
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("📡 Hologram scan complete - inspected %d holograms"), NearbyHolograms.Num());
 }
 
 // ==================== LOGGING ====================
@@ -1243,17 +1243,17 @@ void USFRadarPulseService::LogSnapshotFiltered(const FSFRadarPulseSnapshot& Snap
 {
     LogSummaryHeader(FString::Printf(TEXT("RADAR PULSE SNAPSHOT: %s"), *Snapshot.SnapshotLabel));
 
-    UE_LOG(LogSmartFoundations, Display, TEXT("║ Capture Time: %s"), *Snapshot.CaptureTime.ToString());
-    UE_LOG(LogSmartFoundations, Display, TEXT("║ Origin: X=%.0f Y=%.0f Z=%.0f"),
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║ Capture Time: %s"), *Snapshot.CaptureTime.ToString());
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║ Origin: X=%.0f Y=%.0f Z=%.0f"),
         Snapshot.CaptureOrigin.X, Snapshot.CaptureOrigin.Y, Snapshot.CaptureOrigin.Z);
-    UE_LOG(LogSmartFoundations, Display, TEXT("║ Radius: %.0fm (%.0f cm)"),
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║ Radius: %.0fm (%.0f cm)"),
         Snapshot.CaptureRadius / 100.0f, Snapshot.CaptureRadius);
-    UE_LOG(LogSmartFoundations, Display, TEXT("║ Total Objects: %d"), Snapshot.TotalObjects);
-    UE_LOG(LogSmartFoundations, Display, TEXT("╠═══════════════════════════════════════════════════════════════════╣"));
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║ Total Objects: %d"), Snapshot.TotalObjects);
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("╠═══════════════════════════════════════════════════════════════════╣"));
 
     LogCategorySummary(Snapshot.CountByCategory, Snapshot.ExtendSourceCount);
 
-    UE_LOG(LogSmartFoundations, Display, TEXT("╚═══════════════════════════════════════════════════════════════════╝"));
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("╚═══════════════════════════════════════════════════════════════════╝"));
 
     if (bVerbose)
     {
@@ -1279,24 +1279,24 @@ void USFRadarPulseService::LogSnapshotFiltered(const FSFRadarPulseSnapshot& Snap
             EnumerateCount = Snapshot.Objects.Num();
         }
 
-        UE_LOG(LogSmartFoundations, Display, TEXT(""));
-        UE_LOG(LogSmartFoundations, Display, TEXT("╔═══════════════════════════════════════════════════════════════════╗"));
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT(""));
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("╔═══════════════════════════════════════════════════════════════════╗"));
         if (bHasFilter)
         {
-            UE_LOG(LogSmartFoundations, Display, TEXT("║       ENUMERATION: FILTERED OBJECTS (%d of %d total)          ║"), 
+            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║       ENUMERATION: FILTERED OBJECTS (%d of %d total)          ║"),
                 EnumerateCount, Snapshot.TotalObjects);
         }
         else
         {
-            UE_LOG(LogSmartFoundations, Display, TEXT("║            FULL ENUMERATION: ALL OBJECTS (%d total)            ║"), Snapshot.TotalObjects);
+            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║            FULL ENUMERATION: ALL OBJECTS (%d total)            ║"), Snapshot.TotalObjects);
         }
-        UE_LOG(LogSmartFoundations, Display, TEXT("╚═══════════════════════════════════════════════════════════════════╝"));
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("╚═══════════════════════════════════════════════════════════════════╝"));
 
         int32 DisplayIndex = 0;
         for (int32 i = 0; i < Snapshot.Objects.Num(); ++i)
         {
             const FSFPulseCapturedObject& Obj = Snapshot.Objects[i];
-            
+
             // Skip if not in filter (when filter is active)
             if (bHasFilter && !FilterSet.Contains(Obj.Category))
             {
@@ -1317,11 +1317,11 @@ void USFRadarPulseService::LogDiffFiltered(const FSFSnapshotDiff& Diff, bool bVe
 {
     LogSummaryHeader(TEXT("RADAR PULSE DIFF"));
 
-    UE_LOG(LogSmartFoundations, Display, TEXT("║ Before: %s (%d objects)"), *Diff.BeforeLabel, Diff.BeforeTotal);
-    UE_LOG(LogSmartFoundations, Display, TEXT("║ After:  %s (%d objects)"), *Diff.AfterLabel, Diff.AfterTotal);
-    UE_LOG(LogSmartFoundations, Display, TEXT("╠═══════════════════════════════════════════════════════════════════╣"));
-    UE_LOG(LogSmartFoundations, Display, TEXT("║ Category        │ Before │ After  │ New    │ Removed │ Modified  ║"));
-    UE_LOG(LogSmartFoundations, Display, TEXT("╟─────────────────┼────────┼────────┼────────┼─────────┼───────────╢"));
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║ Before: %s (%d objects)"), *Diff.BeforeLabel, Diff.BeforeTotal);
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║ After:  %s (%d objects)"), *Diff.AfterLabel, Diff.AfterTotal);
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("╠═══════════════════════════════════════════════════════════════════╣"));
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║ Category        │ Before │ After  │ New    │ Removed │ Modified  ║"));
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("╟─────────────────┼────────┼────────┼────────┼─────────┼───────────╢"));
 
     // Collect all categories
     TSet<FString> AllCategories;
@@ -1335,14 +1335,14 @@ void USFRadarPulseService::LogDiffFiltered(const FSFSnapshotDiff& Diff, bool bVe
         int32 RemovedCount = Diff.RemovedByCategory.Contains(Category) ? Diff.RemovedByCategory[Category] : 0;
         int32 ModifiedCount = Diff.ModifiedByCategory.Contains(Category) ? Diff.ModifiedByCategory[Category] : 0;
 
-        UE_LOG(LogSmartFoundations, Display, TEXT("║ %-15s │ %6s │ %6s │ %6d │ %7d │ %9d ║"),
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║ %-15s │ %6s │ %6s │ %6d │ %7d │ %9d ║"),
             *Category, TEXT("-"), TEXT("-"), NewCount, RemovedCount, ModifiedCount);
     }
 
-    UE_LOG(LogSmartFoundations, Display, TEXT("╠═══════════════════════════════════════════════════════════════════╣"));
-    UE_LOG(LogSmartFoundations, Display, TEXT("║ TOTAL           │ %6d │ %6d │ %6d │ %7d │ %9d ║"),
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("╠═══════════════════════════════════════════════════════════════════╣"));
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║ TOTAL           │ %6d │ %6d │ %6d │ %7d │ %9d ║"),
         Diff.BeforeTotal, Diff.AfterTotal, Diff.NewObjects.Num(), Diff.RemovedObjects.Num(), Diff.ModifiedObjects.Num());
-    UE_LOG(LogSmartFoundations, Display, TEXT("╚═══════════════════════════════════════════════════════════════════╝"));
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("╚═══════════════════════════════════════════════════════════════════╝"));
 
     // Build filter set for enumeration (empty = no filtering)
     TSet<FString> FilterSet;
@@ -1366,17 +1366,17 @@ void USFRadarPulseService::LogDiffFiltered(const FSFSnapshotDiff& Diff, bool bVe
 
         if (FilteredCount > 0)
         {
-            UE_LOG(LogSmartFoundations, Display, TEXT(""));
-            UE_LOG(LogSmartFoundations, Display, TEXT("╔═══════════════════════════════════════════════════════════════════╗"));
+            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT(""));
+            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("╔═══════════════════════════════════════════════════════════════════╗"));
             if (bHasFilter)
             {
-                UE_LOG(LogSmartFoundations, Display, TEXT("║       ENUMERATION: NEW OBJECTS (%d of %d filtered)           ║"), FilteredCount, Diff.NewObjects.Num());
+                UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║       ENUMERATION: NEW OBJECTS (%d of %d filtered)           ║"), FilteredCount, Diff.NewObjects.Num());
             }
             else
             {
-                UE_LOG(LogSmartFoundations, Display, TEXT("║            FULL ENUMERATION: NEW OBJECTS (%d total)            ║"), Diff.NewObjects.Num());
+                UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║            FULL ENUMERATION: NEW OBJECTS (%d total)            ║"), Diff.NewObjects.Num());
             }
-            UE_LOG(LogSmartFoundations, Display, TEXT("╚═══════════════════════════════════════════════════════════════════╝"));
+            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("╚═══════════════════════════════════════════════════════════════════╝"));
 
             int32 DisplayIndex = 0;
             for (int32 i = 0; i < Diff.NewObjects.Num(); ++i)
@@ -1397,17 +1397,17 @@ void USFRadarPulseService::LogDiffFiltered(const FSFSnapshotDiff& Diff, bool bVe
 
         if (FilteredCount > 0)
         {
-            UE_LOG(LogSmartFoundations, Display, TEXT(""));
-            UE_LOG(LogSmartFoundations, Display, TEXT("╔═══════════════════════════════════════════════════════════════════╗"));
+            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT(""));
+            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("╔═══════════════════════════════════════════════════════════════════╗"));
             if (bHasFilter)
             {
-                UE_LOG(LogSmartFoundations, Display, TEXT("║     ENUMERATION: REMOVED OBJECTS (%d of %d filtered)          ║"), FilteredCount, Diff.RemovedObjects.Num());
+                UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║     ENUMERATION: REMOVED OBJECTS (%d of %d filtered)          ║"), FilteredCount, Diff.RemovedObjects.Num());
             }
             else
             {
-                UE_LOG(LogSmartFoundations, Display, TEXT("║          FULL ENUMERATION: REMOVED OBJECTS (%d total)          ║"), Diff.RemovedObjects.Num());
+                UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║          FULL ENUMERATION: REMOVED OBJECTS (%d total)          ║"), Diff.RemovedObjects.Num());
             }
-            UE_LOG(LogSmartFoundations, Display, TEXT("╚═══════════════════════════════════════════════════════════════════╝"));
+            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("╚═══════════════════════════════════════════════════════════════════╝"));
 
             int32 DisplayIndex = 0;
             for (int32 i = 0; i < Diff.RemovedObjects.Num(); ++i)
@@ -1422,21 +1422,21 @@ void USFRadarPulseService::LogDiffFiltered(const FSFSnapshotDiff& Diff, bool bVe
 
     if (bVerbose && Diff.ModifiedObjects.Num() > 0)
     {
-        UE_LOG(LogSmartFoundations, Display, TEXT(""));
-        UE_LOG(LogSmartFoundations, Display, TEXT("╔═══════════════════════════════════════════════════════════════════╗"));
-        UE_LOG(LogSmartFoundations, Display, TEXT("║         FULL ENUMERATION: MODIFIED OBJECTS (%d total)          ║"), Diff.ModifiedObjects.Num());
-        UE_LOG(LogSmartFoundations, Display, TEXT("╚═══════════════════════════════════════════════════════════════════╝"));
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT(""));
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("╔═══════════════════════════════════════════════════════════════════╗"));
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║         FULL ENUMERATION: MODIFIED OBJECTS (%d total)          ║"), Diff.ModifiedObjects.Num());
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("╚═══════════════════════════════════════════════════════════════════╝"));
 
         for (int32 i = 0; i < Diff.ModifiedObjects.Num(); ++i)
         {
             const FSFObjectModification& Mod = Diff.ModifiedObjects[i];
             // Note: Modified objects don't store Category, so we can't filter them
-            UE_LOG(LogSmartFoundations, Display, TEXT(""));
-            UE_LOG(LogSmartFoundations, Display, TEXT("┌─────────────────────────────────────────────────────────────────────"));
-            UE_LOG(LogSmartFoundations, Display, TEXT("│ [%d] %s (MODIFIED)"), i, *Mod.ActorName);
-            UE_LOG(LogSmartFoundations, Display, TEXT("├─────────────────────────────────────────────────────────────────────"));
-            UE_LOG(LogSmartFoundations, Display, TEXT("│ Changed: %s"), *FString::Join(Mod.ChangedProperties, TEXT(", ")));
-            UE_LOG(LogSmartFoundations, Display, TEXT("└─────────────────────────────────────────────────────────────────────"));
+            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT(""));
+            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("┌─────────────────────────────────────────────────────────────────────"));
+            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("│ [%d] %s (MODIFIED)"), i, *Mod.ActorName);
+            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("├─────────────────────────────────────────────────────────────────────"));
+            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("│ Changed: %s"), *FString::Join(Mod.ChangedProperties, TEXT(", ")));
+            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("└─────────────────────────────────────────────────────────────────────"));
         }
     }
 }
@@ -1464,7 +1464,7 @@ void USFRadarPulseService::LogFlaggedObjects(const FSFRadarPulseSnapshot& Snapsh
         }
     }
 
-    UE_LOG(LogSmartFoundations, Display, TEXT(""));
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT(""));
     LogSummaryHeader(FString::Printf(TEXT("FLAGGED OBJECTS: %s (%d)"), *FlagName, FlaggedObjects.Num()));
 
     // Group by role if EXTEND
@@ -1479,16 +1479,16 @@ void USFRadarPulseService::LogFlaggedObjects(const FSFRadarPulseSnapshot& Snapsh
 
         for (const auto& Pair : ByRole)
         {
-            UE_LOG(LogSmartFoundations, Display, TEXT("║   %-20s: %3d"), *Pair.Key, Pair.Value);
+            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║   %-20s: %3d"), *Pair.Key, Pair.Value);
         }
     }
 
-    UE_LOG(LogSmartFoundations, Display, TEXT("╚═══════════════════════════════════════════════════════════════════╝"));
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("╚═══════════════════════════════════════════════════════════════════╝"));
 
     if (bVerbose)
     {
-        UE_LOG(LogSmartFoundations, Display, TEXT(""));
-        UE_LOG(LogSmartFoundations, Display, TEXT("📊 %s DETAILS:"), *FlagName.ToUpper());
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT(""));
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("📊 %s DETAILS:"), *FlagName.ToUpper());
 
         for (int32 i = 0; i < FlaggedObjects.Num(); ++i)
         {
@@ -1499,46 +1499,46 @@ void USFRadarPulseService::LogFlaggedObjects(const FSFRadarPulseSnapshot& Snapsh
 
 void USFRadarPulseService::LogObjectDetails(const FSFPulseCapturedObject& Object, int32 Index)
 {
-    UE_LOG(LogSmartFoundations, Display, TEXT(""));
-    UE_LOG(LogSmartFoundations, Display, TEXT("┌─────────────────────────────────────────────────────────────────────"));
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT(""));
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("┌─────────────────────────────────────────────────────────────────────"));
 
     // Header with EXTEND badge if applicable
     if (Object.bIsExtendSource)
     {
-        UE_LOG(LogSmartFoundations, Display, TEXT("│ [%d] %s ★ [%s]"), Index, *Object.ActorName, *Object.ExtendRole);
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("│ [%d] %s ★ [%s]"), Index, *Object.ActorName, *Object.ExtendRole);
     }
     else
     {
-        UE_LOG(LogSmartFoundations, Display, TEXT("│ [%d] %s"), Index, *Object.ActorName);
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("│ [%d] %s"), Index, *Object.ActorName);
     }
 
-    UE_LOG(LogSmartFoundations, Display, TEXT("├─────────────────────────────────────────────────────────────────────"));
-    UE_LOG(LogSmartFoundations, Display, TEXT("│ Category: %s | Class: %s"), *Object.Category, *Object.ClassName);
-    UE_LOG(LogSmartFoundations, Display, TEXT("│ Location: X=%.3f Y=%.3f Z=%.3f"), Object.Location.X, Object.Location.Y, Object.Location.Z);
-    UE_LOG(LogSmartFoundations, Display, TEXT("│ Rotation: P=%.3f Y=%.3f R=%.3f"), Object.Rotation.Pitch, Object.Rotation.Yaw, Object.Rotation.Roll);
-    UE_LOG(LogSmartFoundations, Display, TEXT("│ Scale: X=%.3f Y=%.3f Z=%.3f"), Object.Scale.X, Object.Scale.Y, Object.Scale.Z);
-    UE_LOG(LogSmartFoundations, Display, TEXT("│ Bounds: Min=(%.1f,%.1f,%.1f) Max=(%.1f,%.1f,%.1f)"),
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("├─────────────────────────────────────────────────────────────────────"));
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("│ Category: %s | Class: %s"), *Object.Category, *Object.ClassName);
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("│ Location: X=%.3f Y=%.3f Z=%.3f"), Object.Location.X, Object.Location.Y, Object.Location.Z);
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("│ Rotation: P=%.3f Y=%.3f R=%.3f"), Object.Rotation.Pitch, Object.Rotation.Yaw, Object.Rotation.Roll);
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("│ Scale: X=%.3f Y=%.3f Z=%.3f"), Object.Scale.X, Object.Scale.Y, Object.Scale.Z);
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("│ Bounds: Min=(%.1f,%.1f,%.1f) Max=(%.1f,%.1f,%.1f)"),
         Object.BoundsMin.X, Object.BoundsMin.Y, Object.BoundsMin.Z,
         Object.BoundsMax.X, Object.BoundsMax.Y, Object.BoundsMax.Z);
-    UE_LOG(LogSmartFoundations, Display, TEXT("│ State: Hidden=%d PendingKill=%d BegunPlay=%d"),
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("│ State: Hidden=%d PendingKill=%d BegunPlay=%d"),
         Object.bIsHidden, Object.bIsPendingKill, Object.bHasBegunPlay);
 
     // Factory connections
     if (Object.FactoryConnections.Num() > 0)
     {
-        UE_LOG(LogSmartFoundations, Display, TEXT("│ ═══ FACTORY CONNECTIONS (%d) ═══"), Object.FactoryConnections.Num());
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("│ ═══ FACTORY CONNECTIONS (%d) ═══"), Object.FactoryConnections.Num());
         for (const FSFPulseCapturedConnection& Conn : Object.FactoryConnections)
         {
             if (Conn.bIsConnected)
             {
-                UE_LOG(LogSmartFoundations, Display, TEXT("│   %s [Dir=%d] @ (%.1f,%.1f,%.1f) -> %s.%s"),
+                UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("│   %s [Dir=%d] @ (%.1f,%.1f,%.1f) -> %s.%s"),
                     *Conn.ConnectorName, Conn.ConnectionDirection,
                     Conn.WorldLocation.X, Conn.WorldLocation.Y, Conn.WorldLocation.Z,
                     *Conn.ConnectedToActor, *Conn.ConnectedToConnector);
             }
             else
             {
-                UE_LOG(LogSmartFoundations, Display, TEXT("│   %s [Dir=%d] @ (%.1f,%.1f,%.1f) (not connected)"),
+                UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("│   %s [Dir=%d] @ (%.1f,%.1f,%.1f) (not connected)"),
                     *Conn.ConnectorName, Conn.ConnectionDirection,
                     Conn.WorldLocation.X, Conn.WorldLocation.Y, Conn.WorldLocation.Z);
             }
@@ -1548,19 +1548,19 @@ void USFRadarPulseService::LogObjectDetails(const FSFPulseCapturedObject& Object
     // Pipe connections
     if (Object.PipeConnections.Num() > 0)
     {
-        UE_LOG(LogSmartFoundations, Display, TEXT("│ ═══ PIPE CONNECTIONS (%d) ═══"), Object.PipeConnections.Num());
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("│ ═══ PIPE CONNECTIONS (%d) ═══"), Object.PipeConnections.Num());
         for (const FSFPulseCapturedConnection& Conn : Object.PipeConnections)
         {
             if (Conn.bIsConnected)
             {
-                UE_LOG(LogSmartFoundations, Display, TEXT("│   %s [Type=%d] @ (%.1f,%.1f,%.1f) -> %s.%s"),
+                UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("│   %s [Type=%d] @ (%.1f,%.1f,%.1f) -> %s.%s"),
                     *Conn.ConnectorName, Conn.PipeConnectionType,
                     Conn.WorldLocation.X, Conn.WorldLocation.Y, Conn.WorldLocation.Z,
                     *Conn.ConnectedToActor, *Conn.ConnectedToConnector);
             }
             else
             {
-                UE_LOG(LogSmartFoundations, Display, TEXT("│   %s [Type=%d] @ (%.1f,%.1f,%.1f) (not connected)"),
+                UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("│   %s [Type=%d] @ (%.1f,%.1f,%.1f) (not connected)"),
                     *Conn.ConnectorName, Conn.PipeConnectionType,
                     Conn.WorldLocation.X, Conn.WorldLocation.Y, Conn.WorldLocation.Z);
             }
@@ -1570,12 +1570,12 @@ void USFRadarPulseService::LogObjectDetails(const FSFPulseCapturedObject& Object
     // Belt data
     if (Object.Category == TEXT("Belt") && Object.SplinePoints.Num() > 0)
     {
-        UE_LOG(LogSmartFoundations, Display, TEXT("│ ═══ BELT DATA ═══"));
-        UE_LOG(LogSmartFoundations, Display, TEXT("│ Speed: %.1f | SplineLength: %.1fcm | SplinePoints: %d"),
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("│ ═══ BELT DATA ═══"));
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("│ Speed: %.1f | SplineLength: %.1fcm | SplinePoints: %d"),
             Object.BeltSpeed, Object.SplineLength, Object.SplinePoints.Num());
         for (const FSFPulseCapturedSplinePoint& SP : Object.SplinePoints)
         {
-            UE_LOG(LogSmartFoundations, Display, TEXT("│   [Point %d] Local=(%.1f,%.1f,%.1f) World=(%.1f,%.1f,%.1f)"),
+            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("│   [Point %d] Local=(%.1f,%.1f,%.1f) World=(%.1f,%.1f,%.1f)"),
                 SP.PointIndex, SP.LocalPosition.X, SP.LocalPosition.Y, SP.LocalPosition.Z,
                 SP.WorldPosition.X, SP.WorldPosition.Y, SP.WorldPosition.Z);
         }
@@ -1584,9 +1584,9 @@ void USFRadarPulseService::LogObjectDetails(const FSFPulseCapturedObject& Object
     // Lift data
     if (Object.Category == TEXT("Lift"))
     {
-        UE_LOG(LogSmartFoundations, Display, TEXT("│ ═══ LIFT DATA ═══"));
-        UE_LOG(LogSmartFoundations, Display, TEXT("│ Height: %.1fcm | Reversed: %d"), Object.LiftHeight, Object.bLiftIsReversed);
-        UE_LOG(LogSmartFoundations, Display, TEXT("│ Bottom: (%.1f,%.1f,%.1f) Top: (%.1f,%.1f,%.1f)"),
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("│ ═══ LIFT DATA ═══"));
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("│ Height: %.1fcm | Reversed: %d"), Object.LiftHeight, Object.bLiftIsReversed);
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("│ Bottom: (%.1f,%.1f,%.1f) Top: (%.1f,%.1f,%.1f)"),
             Object.LiftBottomLocation.X, Object.LiftBottomLocation.Y, Object.LiftBottomLocation.Z,
             Object.LiftTopLocation.X, Object.LiftTopLocation.Y, Object.LiftTopLocation.Z);
     }
@@ -1594,11 +1594,11 @@ void USFRadarPulseService::LogObjectDetails(const FSFPulseCapturedObject& Object
     // Pipe data
     if (Object.Category == TEXT("Pipe") && Object.SplinePoints.Num() > 0)
     {
-        UE_LOG(LogSmartFoundations, Display, TEXT("│ ═══ PIPE DATA ═══"));
-        UE_LOG(LogSmartFoundations, Display, TEXT("│ SplineLength: %.1fcm | SplinePoints: %d"), Object.SplineLength, Object.SplinePoints.Num());
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("│ ═══ PIPE DATA ═══"));
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("│ SplineLength: %.1fcm | SplinePoints: %d"), Object.SplineLength, Object.SplinePoints.Num());
         for (const FSFPulseCapturedSplinePoint& SP : Object.SplinePoints)
         {
-            UE_LOG(LogSmartFoundations, Display, TEXT("│   [Point %d] Local=(%.1f,%.1f,%.1f) World=(%.1f,%.1f,%.1f)"),
+            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("│   [Point %d] Local=(%.1f,%.1f,%.1f) World=(%.1f,%.1f,%.1f)"),
                 SP.PointIndex, SP.LocalPosition.X, SP.LocalPosition.Y, SP.LocalPosition.Z,
                 SP.WorldPosition.X, SP.WorldPosition.Y, SP.WorldPosition.Z);
         }
@@ -1607,56 +1607,56 @@ void USFRadarPulseService::LogObjectDetails(const FSFPulseCapturedObject& Object
     // Factory data
     if (Object.Category == TEXT("Factory") && !Object.CurrentRecipe.IsEmpty())
     {
-        UE_LOG(LogSmartFoundations, Display, TEXT("│ ═══ FACTORY DATA ═══"));
-        UE_LOG(LogSmartFoundations, Display, TEXT("│ Recipe: %s | Progress: %.1f%% | Producing: %d | Paused: %d"),
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("│ ═══ FACTORY DATA ═══"));
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("│ Recipe: %s | Progress: %.1f%% | Producing: %d | Paused: %d"),
             *Object.CurrentRecipe, Object.ProductionProgress * 100.0f, Object.bIsProducing, Object.bIsPaused);
     }
 
     // Stackable pole data
     if (Object.Category == TEXT("StackablePipePole") || Object.Category == TEXT("StackableBeltPole"))
     {
-        UE_LOG(LogSmartFoundations, Display, TEXT("│ ═══ STACKABLE POLE DATA ═══"));
-        UE_LOG(LogSmartFoundations, Display, TEXT("│ Type: %s"), 
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("│ ═══ STACKABLE POLE DATA ═══"));
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("│ Type: %s"),
             Object.Category == TEXT("StackablePipePole") ? TEXT("Pipeline Support") : TEXT("Conveyor Pole"));
-        UE_LOG(LogSmartFoundations, Display, TEXT("│ PipeConnections: %d | FactoryConnections: %d"),
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("│ PipeConnections: %d | FactoryConnections: %d"),
             Object.PipeConnections.Num(), Object.FactoryConnections.Num());
     }
 
     // Custom properties
     if (Object.Properties.Num() > 0)
     {
-        UE_LOG(LogSmartFoundations, Display, TEXT("│ ═══ PROPERTIES (%d) ═══"), Object.Properties.Num());
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("│ ═══ PROPERTIES (%d) ═══"), Object.Properties.Num());
         for (const auto& Pair : Object.Properties)
         {
-            UE_LOG(LogSmartFoundations, Display, TEXT("│   %s: %s"), *Pair.Key, *Pair.Value);
+            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("│   %s: %s"), *Pair.Key, *Pair.Value);
         }
     }
 
-    UE_LOG(LogSmartFoundations, Display, TEXT("└─────────────────────────────────────────────────────────────────────"));
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("└─────────────────────────────────────────────────────────────────────"));
 }
 
 void USFRadarPulseService::LogSummaryHeader(const FString& Title)
 {
-    UE_LOG(LogSmartFoundations, Display, TEXT(""));
-    UE_LOG(LogSmartFoundations, Display, TEXT("╔═══════════════════════════════════════════════════════════════════╗"));
-    UE_LOG(LogSmartFoundations, Display, TEXT("║ %s"), *Title.Left(65).RightPad(65));
-    UE_LOG(LogSmartFoundations, Display, TEXT("╠═══════════════════════════════════════════════════════════════════╣"));
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT(""));
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("╔═══════════════════════════════════════════════════════════════════╗"));
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║ %s"), *Title.Left(65).RightPad(65));
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("╠═══════════════════════════════════════════════════════════════════╣"));
 }
 
 void USFRadarPulseService::LogCategorySummary(const TMap<FString, int32>& CountByCategory, int32 ExtendSourceCount)
 {
-    UE_LOG(LogSmartFoundations, Display, TEXT("║ Category        │ Count  │ ExtendSource │"));
-    UE_LOG(LogSmartFoundations, Display, TEXT("╟─────────────────┼────────┼──────────────┼"));
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║ Category        │ Count  │ ExtendSource │"));
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("╟─────────────────┼────────┼──────────────┼"));
 
     int32 Total = 0;
     for (const auto& Pair : CountByCategory)
     {
         Total += Pair.Value;
-        UE_LOG(LogSmartFoundations, Display, TEXT("║ %-15s │ %6d │              │"), *Pair.Key, Pair.Value);
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║ %-15s │ %6d │              │"), *Pair.Key, Pair.Value);
     }
 
-    UE_LOG(LogSmartFoundations, Display, TEXT("╟─────────────────┼────────┼──────────────┼"));
-    UE_LOG(LogSmartFoundations, Display, TEXT("║ TOTAL           │ %6d │ %12d │"), Total, ExtendSourceCount);
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("╟─────────────────┼────────┼──────────────┼"));
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║ TOTAL           │ %6d │ %12d │"), Total, ExtendSourceCount);
 }
 
 // ==================== CHAIN ACTOR SCANNING ====================
@@ -1670,7 +1670,7 @@ void USFRadarPulseService::ScanChainActors(float Radius)
     }
 
     UWorld* World = Subsystem->GetWorld();
-    
+
     // Get player location
     APlayerController* PC = World->GetFirstPlayerController();
     if (!PC || !PC->GetPawn())
@@ -1678,14 +1678,14 @@ void USFRadarPulseService::ScanChainActors(float Radius)
         UE_LOG(LogSmartFoundations, Warning, TEXT("📡 ScanChainActors: Cannot scan - no valid player"));
         return;
     }
-    
+
     FVector PlayerLocation = PC->GetPawn()->GetActorLocation();
-    
+
     // Find all conveyors (belts and lifts) in radius
     TArray<AFGBuildableConveyorBase*> Conveyors;
     TArray<AActor*> AllConveyors;
     UGameplayStatics::GetAllActorsOfClass(World, AFGBuildableConveyorBase::StaticClass(), AllConveyors);
-    
+
     for (AActor* Actor : AllConveyors)
     {
         if (!IsValid(Actor)) continue;
@@ -1698,11 +1698,11 @@ void USFRadarPulseService::ScanChainActors(float Radius)
             }
         }
     }
-    
+
     // Collect unique chain actors and their members
     TMap<AFGConveyorChainActor*, TArray<AFGBuildableConveyorBase*>> ChainToConveyors;
     int32 NullChainCount = 0;
-    
+
     for (AFGBuildableConveyorBase* Conveyor : Conveyors)
     {
         AFGConveyorChainActor* ChainActor = Conveyor->GetConveyorChainActor();
@@ -1715,35 +1715,35 @@ void USFRadarPulseService::ScanChainActors(float Radius)
             NullChainCount++;
         }
     }
-    
+
     // Log results
     LogSummaryHeader(FString::Printf(TEXT("CHAIN ACTOR SCAN (%.0fm radius)"), Radius / 100.0f));
-    
-    UE_LOG(LogSmartFoundations, Display, TEXT("║ Found %d conveyors, %d unique chain actors, %d with NULL chain"),
+
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║ Found %d conveyors, %d unique chain actors, %d with NULL chain"),
         Conveyors.Num(), ChainToConveyors.Num(), NullChainCount);
-    UE_LOG(LogSmartFoundations, Display, TEXT("╠═══════════════════════════════════════════════════════════════════╣"));
-    
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("╠═══════════════════════════════════════════════════════════════════╣"));
+
     int32 ChainIndex = 0;
     for (auto& Pair : ChainToConveyors)
     {
         AFGConveyorChainActor* Chain = Pair.Key;
         TArray<AFGBuildableConveyorBase*>& Members = Pair.Value;
-        
-        UE_LOG(LogSmartFoundations, Display, TEXT("║"));
-        UE_LOG(LogSmartFoundations, Display, TEXT("║ ═══ CHAIN[%d]: %s (ptr=0x%p) ═══"), 
+
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║"));
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║ ═══ CHAIN[%d]: %s (ptr=0x%p) ═══"),
             ChainIndex, *Chain->GetName(), Chain);
-        UE_LOG(LogSmartFoundations, Display, TEXT("║   Members in radius: %d, Total segments: %d"), 
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║   Members in radius: %d, Total segments: %d"),
             Members.Num(), Chain->GetNumChainSegments());
-        
+
         // Log each member with connection info
         for (AFGBuildableConveyorBase* Member : Members)
         {
             UFGFactoryConnectionComponent* Conn0 = Member->GetConnection0();
             UFGFactoryConnectionComponent* Conn1 = Member->GetConnection1();
-            
+
             FString Conn0Info = TEXT("unconnected");
             FString Conn1Info = TEXT("unconnected");
-            
+
             if (Conn0 && Conn0->IsConnected())
             {
                 UFGFactoryConnectionComponent* Connected = Cast<UFGFactoryConnectionComponent>(Conn0->GetConnection());
@@ -1756,7 +1756,7 @@ void USFRadarPulseService::ScanChainActors(float Radius)
                     Conn0Info = TEXT("→ (connected but null ref)");
                 }
             }
-            
+
             if (Conn1 && Conn1->IsConnected())
             {
                 UFGFactoryConnectionComponent* Connected = Cast<UFGFactoryConnectionComponent>(Conn1->GetConnection());
@@ -1769,37 +1769,37 @@ void USFRadarPulseService::ScanChainActors(float Radius)
                     Conn1Info = TEXT("→ (connected but null ref)");
                 }
             }
-            
+
             // Determine type
             FString TypeStr = TEXT("Belt");
             if (Cast<AFGBuildableConveyorLift>(Member))
             {
                 TypeStr = TEXT("Lift");
             }
-            
-            UE_LOG(LogSmartFoundations, Display, TEXT("║   • %s %s"),
+
+            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║   • %s %s"),
                 *TypeStr, *Member->GetName());
-            UE_LOG(LogSmartFoundations, Display, TEXT("║       Conn0: %s"), *Conn0Info);
-            UE_LOG(LogSmartFoundations, Display, TEXT("║       Conn1: %s"), *Conn1Info);
+            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║       Conn0: %s"), *Conn0Info);
+            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║       Conn1: %s"), *Conn1Info);
         }
-        
+
         ChainIndex++;
     }
-    
+
     // Log conveyors with NULL chain actors
     if (NullChainCount > 0)
     {
-        UE_LOG(LogSmartFoundations, Display, TEXT("║"));
-        UE_LOG(LogSmartFoundations, Display, TEXT("║ ═══ CONVEYORS WITH NULL CHAIN ACTOR (%d) ═══"), NullChainCount);
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║"));
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║ ═══ CONVEYORS WITH NULL CHAIN ACTOR (%d) ═══"), NullChainCount);
         for (AFGBuildableConveyorBase* Conveyor : Conveyors)
         {
             if (!Conveyor->GetConveyorChainActor())
             {
                 FString TypeStr = Cast<AFGBuildableConveyorLift>(Conveyor) ? TEXT("Lift") : TEXT("Belt");
-                UE_LOG(LogSmartFoundations, Display, TEXT("║   • %s %s"), *TypeStr, *Conveyor->GetName());
+                UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("║   • %s %s"), *TypeStr, *Conveyor->GetName());
             }
         }
     }
-    
-    UE_LOG(LogSmartFoundations, Display, TEXT("╚═══════════════════════════════════════════════════════════════════╝"));
+
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("╚═══════════════════════════════════════════════════════════════════╝"));
 }

@@ -46,7 +46,7 @@ void ASFWaterPumpChildHologram::ConfigureActor(AFGBuildable* inBuildable) const
 
 AActor* ASFWaterPumpChildHologram::Construct(TArray<AActor*>& out_children, FNetConstructionID constructionID)
 {
-	UE_LOG(LogSmartFoundations, Display, TEXT("WaterPump Construct: %s at %s"), 
+	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("WaterPump Construct: %s at %s"), 
 		*GetName(), *GetActorLocation().ToString());
 	return Super::Construct(out_children, constructionID);
 }
@@ -139,7 +139,7 @@ bool ASFWaterPumpChildHologram::ValidateWaterPosition() const
 				// the sky and the water at this point — a player couldn't aim here.
 				if (SkyHit.ImpactPoint.Z > ChildLocation.Z + SkyAccessTolerance)
 				{
-					UE_LOG(LogSmartFoundations, Log, TEXT("WaterPump %s: Sky access blocked at offset (%.0f,%.0f) — terrain Z=%.1f above waterline Z=%.1f"),
+					UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("WaterPump %s: Sky access blocked at offset (%.0f,%.0f) — terrain Z=%.1f above waterline Z=%.1f"),
 						*GetName(), Offset.X, Offset.Y, SkyHit.ImpactPoint.Z, ChildLocation.Z);
 					return false;
 				}
@@ -165,7 +165,7 @@ bool ASFWaterPumpChildHologram::ValidateWaterPosition() const
 	
 	if (!ContainingVolume)
 	{
-		UE_LOG(LogSmartFoundations, Log, TEXT("WaterPump %s: Position %s is NOT in any water volume"),
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("WaterPump %s: Position %s is NOT in any water volume"),
 			*GetName(), *ChildLocation.ToString());
 		return false;
 	}
@@ -190,7 +190,7 @@ bool ASFWaterPumpChildHologram::ValidateWaterPosition() const
 		
 		if (DepthBelowChild < MinimumWaterDepth)
 		{
-			UE_LOG(LogSmartFoundations, Log, TEXT("WaterPump %s: Too shallow %.1f cm at %s"),
+			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("WaterPump %s: Too shallow %.1f cm at %s"),
 				*GetName(), DepthBelowChild, *ChildLocation.ToString());
 			return false;
 		}
@@ -198,7 +198,7 @@ bool ASFWaterPumpChildHologram::ValidateWaterPosition() const
 		// Terrain hit must be inside the water volume — if outside, we're at a bank/cliff edge
 		if (!ContainingVolume->EncompassesPoint(TerrainPoint))
 		{
-			UE_LOG(LogSmartFoundations, Log, TEXT("WaterPump %s: Terrain hit outside water volume at %s — bank/cliff edge"),
+			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("WaterPump %s: Terrain hit outside water volume at %s — bank/cliff edge"),
 				*GetName(), *ChildLocation.ToString());
 			return false;
 		}

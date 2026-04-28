@@ -2,21 +2,21 @@
 
 /**
  * SFExtendService - EXTEND Feature Service
- * 
+ *
  * Enables cloning of factory infrastructure (belts, lifts, pipes, distributors, junctions)
  * when placing a matching factory hologram over an existing factory building.
- * 
+ *
  * Architecture (as of Dec 2025):
  * - Topology capture via WalkTopology() builds FSFExtendTopology
  * - JSON-based spawning via FSFCloneTopology::SpawnChildHolograms()
  * - Child holograms added to parent via AddChild() for vanilla cost aggregation
  * - Post-build wiring via FSFWiringManifest after factory construction
- * 
+ *
  * Key Files:
  * - SFExtendService.h/.cpp - Main service (topology, previews, diagnostics)
  * - SFManifoldJSON.h/.cpp - JSON schema for topology capture/clone/spawn
  * - SFWiringManifest.h/.cpp - Post-build connection wiring
- * 
+ *
  * Legacy systems removed (Dec 2025 cleanup):
  * - Deferred build system (PendingBuilds arrays, BuildPending* functions)
  * - Manual spawning functions (SpawnExtend*Child, SpawnManifold*Child)
@@ -83,7 +83,7 @@ struct FSFCapturedConnection
     bool bIsConnected = false;
     FString ConnectedToActor;
     FString ConnectedToConnector;
-    
+
     FSFCapturedConnection() = default;
 };
 
@@ -101,7 +101,7 @@ struct FSFCapturedSplinePoint
     FVector ArriveTangent = FVector::ZeroVector;
     FVector LeaveTangent = FVector::ZeroVector;
     FRotator Rotation = FRotator::ZeroRotator;
-    
+
     FSFCapturedSplinePoint() = default;
 };
 
@@ -119,57 +119,57 @@ struct FSFCapturedBuildable
     FString Name;
     FString ClassName;
     FString Category;
-    
+
     // === Transform ===
     FVector Location = FVector::ZeroVector;
     FRotator Rotation = FRotator::ZeroRotator;
     FVector Scale = FVector::OneVector;
     FVector BoundsMin = FVector::ZeroVector;
     FVector BoundsMax = FVector::ZeroVector;
-    
+
     // === State ===
     bool bIsHidden = false;
     bool bIsPendingKill = false;
     bool bHasBegunPlay = false;
-    
+
     // === Connections (Belts/Distributors/Factories) ===
     TArray<FSFCapturedConnection> FactoryConnections;
-    
+
     // === Pipe Connections ===
     TArray<FSFCapturedConnection> PipeConnections;
-    
+
     // === Spline Data (Belts/Pipes) ===
     TArray<FSFCapturedSplinePoint> SplinePoints;
     float SplineLength = 0.0f;
     int32 SplinePointCount = 0;
-    
+
     // === Belt-specific ===
     float BeltSpeed = 0.0f;
-    
+
     // === Lift-specific ===
     float LiftHeight = 0.0f;
     bool bLiftIsReversed = false;
     FVector LiftTopLocation = FVector::ZeroVector;
     FVector LiftBottomLocation = FVector::ZeroVector;
-    
+
     // === All Properties (raw dump) ===
     TArray<FString> AllProperties;
-    
+
     // === EXTEND Topology Flags ===
     /** Is this buildable part of the source EXTEND topology? */
     bool bIsExtendSource = false;
-    
+
     /** Specific role in the EXTEND topology (if applicable) */
     FString ExtendRole;  // "SourceFactory", "InputBelt", "OutputBelt", "InputLift", "OutputLift",
                          // "InputPipe", "OutputPipe", "Splitter", "Merger", "Junction",
                          // "Pole" (future), "LiftFloorHole" (future), "PipelinePump" (future)
-    
+
     /** Chain ID this buildable belongs to (-1 if not part of a chain) */
     int32 ExtendChainId = -1;
-    
+
     /** Index within the chain (-1 if not applicable) */
     int32 ExtendChainIndex = -1;
-    
+
     FSFCapturedBuildable() = default;
 };
 
@@ -206,7 +206,7 @@ struct FSFBuildableSnapshot
 /**
  * Service for managing EXTEND feature - clones factory buildings with their
  * connected infrastructure (belts, distributors, pipes, junctions).
- * 
+ *
  * EXTEND performs 1:1 topology cloning, duplicating the exact infrastructure
  * layout rather than discovering new connections like auto-connect.
  */
@@ -300,7 +300,7 @@ public:
     /** Get the list of valid directions for the current target */
     UFUNCTION(BlueprintCallable, Category = "Smart|Extend")
     TArray<ESFExtendDirection> GetValidDirections() const;
-    
+
     /** Get the detection service (for direct access if needed) */
     UFUNCTION(BlueprintCallable, Category = "Smart|Extend")
     USFExtendDetectionService* GetDetectionService() const { return DetectionService; }
@@ -318,23 +318,23 @@ public:
     /** Clear cached topology data */
     UFUNCTION(BlueprintCallable, Category = "Smart|Extend")
     void ClearTopology();
-    
+
     /** Get the topology service (for direct access if needed) */
     UFUNCTION(BlueprintCallable, Category = "Smart|Extend")
     USFExtendTopologyService* GetTopologyService() const { return TopologyService; }
-    
+
     /** Get the hologram service (for direct access if needed) */
     UFUNCTION(BlueprintCallable, Category = "Smart|Extend")
     USFExtendHologramService* GetHologramService() const { return HologramService; }
-    
+
     /** Get the wiring service (for direct access if needed) */
     UFUNCTION(BlueprintCallable, Category = "Smart|Extend")
     USFExtendWiringService* GetWiringService() const { return WiringService; }
 
     // ==================== Extension Execution ====================
 
-    /** 
-     * Attempt to extend from a hit building 
+    /**
+     * Attempt to extend from a hit building
      * Called from TryUpgrade hook when EXTEND mode is active
      * @return true if extension preview was created
      */
@@ -344,7 +344,7 @@ public:
     /** Refresh extension previews (called during hologram update) */
     UFUNCTION(BlueprintCallable, Category = "Smart|Extend")
     void RefreshExtension(AFGHologram* SourceHologram, bool bForceRefresh = false);
-    
+
     /** Clean up all extension child holograms */
     UFUNCTION(BlueprintCallable, Category = "Smart|Extend")
     void CleanupExtension(AFGHologram* SourceHologram);
@@ -376,7 +376,9 @@ public:
      */
     UFUNCTION(BlueprintCallable, Category = "Smart|Extend")
     void WireBuiltChildConnections(AFGBuildableFactory* NewFactory);
-    
+
+    bool HasPendingPostBuildWiring() const;
+
     /**
      * Generate wiring manifest from stored clone topology and execute all connections.
      * This is Phase 5/6 of the EXTEND workflow - called in deferred tick after build.
@@ -504,7 +506,7 @@ public:
      * @param CloneChainId The chain ID to find the clone junction
      */
     void WireManifoldPipe(AFGBuildablePipeline* BuiltPipe, UFGPipeConnectionComponentBase* SourceConnector, int32 CloneChainId);
-    
+
     /**
      * Wire a manifold belt to its source and clone distributors after building.
      * Called from SFConveyorBeltHologram::Construct() for manifold belts.
@@ -517,12 +519,12 @@ public:
     // ==================== Utility Functions ====================
 
 public:
-    
+
     /** Provide a valid floor hit result to a hologram to prevent "Surface is too uneven" errors */
     void ProvideFloorHitResult(AFGHologram* Hologram, const FVector& Location);
 
     // ==================== Build Gun Hologram Swapping ====================
-    
+
     /**
      * Swap the build gun's active hologram to our custom ASFFactoryHologram.
      * This gives us control over SetHologramLocationAndRotation for EXTEND positioning.
@@ -530,20 +532,20 @@ public:
      * @return The swapped custom hologram, or nullptr if swap failed
      */
     ASFFactoryHologram* SwapToSmartFactoryHologram(AFGHologram* VanillaHologram);
-    
+
     /**
      * Restore the original hologram when EXTEND mode ends.
      * Called from ClearExtendState.
      */
     void RestoreOriginalHologram();
-    
+
 protected:
     /** Check if a building is a valid factory for extension (delegates to DetectionService) */
     bool IsValidExtendTarget(AFGBuildable* Building) const;
-    
+
     /** Get the player's build gun */
     AFGBuildGun* GetPlayerBuildGun() const;
-    
+
     /** Get the build gun's build state */
     UFGBuildGunStateBuild* GetBuildGunBuildState(AFGBuildGun* BuildGun) const;
 
@@ -575,7 +577,7 @@ private:
     /** Building we're currently extending from */
     UPROPERTY()
     TWeakObjectPtr<AFGBuildable> CurrentExtendTarget;
-    
+
     /** Our custom hologram that replaced the vanilla one (for cleanup) */
     UPROPERTY()
     TWeakObjectPtr<ASFFactoryHologram> SwappedHologram;
@@ -587,17 +589,17 @@ private:
     /** Child hologram previews for belt connections (these BUILD but may be invisible) */
     UPROPERTY()
     TArray<AFGHologram*> BeltPreviewHolograms;
-    
+
     /** Intended world positions for child holograms (engine resets them to origin, we force them back) */
     TMap<AFGHologram*, FVector> ChildIntendedPositions;
-    
+
     /** Intended world rotations for child holograms */
     TMap<AFGHologram*, FRotator> ChildIntendedRotations;
-    
+
     /** The hologram we've initialized for EXTEND (to detect when build gun creates a new one) */
     UPROPERTY()
     TWeakObjectPtr<AFGHologram> CurrentExtendHologram;
-    
+
     /** Counters for unique child hologram naming (NEVER reset - engine uses name TMap that persists) */
     int32 ExtendDistributorCounter = 0;
     int32 ExtendMergerCounter = 0;
@@ -606,87 +608,87 @@ private:
     int32 ExtendJunctionCounter = 0;
     int32 ExtendInputPipeCounter = 0;
     int32 ExtendOutputPipeCounter = 0;
-    
+
     /** Counter for unique lift hologram naming */
     int32 ExtendInputLiftCounter = 0;
     int32 ExtendOutputLiftCounter = 0;
-    
+
     /** Temporary storage for built chain elements - used by ConnectAllChainElements */
     /** Key: ChainId, Value: Map of ChainIndex to built conveyor (belt or lift) */
     TMap<int32, TMap<int32, AFGBuildableConveyorBase*>> BuiltChainElements;
-    
+
     /** Track which chains are input vs output for connection direction */
     TMap<int32, bool> ChainIsInputMap;
-    
+
     // ==================== Hologram Connection Wiring (prevents child pole spawning) ====================
-    
+
     /** Map from source buildable (pipe, junction) to its cloned hologram */
     TMap<AActor*, AFGHologram*> SourceToHologramMap;
-    
+
     /** Per-chain tracking of pipe holograms in spawn order (ChainId → array of pipe holograms) */
     TMap<int32, TArray<ASFPipelineHologram*>> PipeChainHologramMap;
-    
+
     /** Junction hologram for each pipe chain (ChainId → junction hologram) */
     TMap<int32, class ASFPipelineJunctionChildHologram*> PipeChainJunctionMap;
-    
+
     /** Per-chain tracking of belt holograms in spawn order (ChainId → array of belt holograms) */
     TMap<int32, TArray<class ASFConveyorBeltHologram*>> BeltChainHologramMap;
-    
+
     /** Per-chain tracking of lift holograms in spawn order (ChainId → array of lift holograms) */
     TMap<int32, TArray<class ASFConveyorLiftHologram*>> LiftChainHologramMap;
-    
+
     /** Unified chain map for all conveyors (belts + lifts) indexed by position (ChainId → ChainIndex → Hologram) */
     TMap<int32, TMap<int32, AFGHologram*>> UnifiedConveyorChainMap;
-    
+
     /** Distributor hologram for each belt chain (ChainId → distributor hologram) */
     TMap<int32, AFGHologram*> BeltChainDistributorMap;
-    
+
     /** Manifold belt hologram for each chain (ChainId → manifold belt hologram) */
     TMap<int32, ASFConveyorBeltHologram*> ManifoldBeltHolograms;
-    
+
     /** Built conveyor buildables per chain, indexed by position (ChainId → (Index → Conveyor)) */
     TMap<int32, TMap<int32, AFGBuildableConveyorBase*>> BuiltConveyorsByChain;
-    
+
     /** Built distributor buildables per chain (populated during Construct(), used by WireBuiltChildConnections) */
     TMap<int32, AFGBuildable*> BuiltDistributorsByChain;
-    
+
     /** Built junction buildables per pipe chain (populated during Construct(), used by WireBuiltChildConnections) */
     TMap<int32, AFGBuildable*> BuiltJunctionsByChain;
-    
+
     /** Built pipe buildables per chain, indexed by position (ChainId → (Index → Pipe)) */
     TMap<int32, TMap<int32, AFGBuildablePipeline*>> BuiltPipesByChain;
-    
+
     /** Track chain direction for built chains (true = input chain, false = output chain) */
     TMap<int32, bool> BuiltChainIsInputMap;
-    
+
     /** Track pipe chain direction separately (true = input chain, false = output chain) */
     TMap<int32, bool> BuiltPipeChainIsInputMap;
-    
+
     /** Source (original) distributors per chain - for manifold connections (ChainId → source distributor) */
     TMap<int32, AFGBuildable*> SourceDistributorsByChain;
-    
+
     /** Source (original) junctions per pipe chain - for manifold connections (ChainId → source junction) */
     TMap<int32, AFGBuildable*> SourceJunctionsByChain;
-    
+
     /** Distributor connector name per chain (ChainId → ConnectorName like "Output1", "Output2") */
     /** Used during Construct() to find the correct output on the cloned distributor */
     TMap<int32, FName> DistributorConnectorNameByChain;
-    
+
     /** Wire up pipe hologram connections after all holograms in a chain are spawned */
     void WirePipeChainConnections(int32 ChainId, AFGHologram* ParentHologram, bool bIsInputChain);
-    
+
     /** Wire up belt hologram connections after all holograms in a chain are spawned */
     void WireBeltChainConnections(int32 ChainId, AFGHologram* ParentHologram, bool bIsInputChain);
-    
+
     /** Find a pipe connection component on a hologram by index (0 or 1) */
     UFGPipeConnectionComponentBase* FindPipeConnectionByIndex(AFGHologram* Hologram, int32 Index) const;
-    
+
     /** Find a factory connection component on a hologram by index (0 or 1) */
     UFGFactoryConnectionComponent* FindFactoryConnectionByIndex(AFGHologram* Hologram, int32 Index) const;
-    
+
     /** Clear all connection wiring tracking maps */
     void ClearConnectionWiringMaps();
-    
+
     /** Building we just built from - prevents immediate re-activation on same building after build */
     UPROPERTY()
     TWeakObjectPtr<AFGBuildable> LastBuiltFromBuilding;
@@ -727,7 +729,7 @@ private:
 
     /** Validate belt/pipe constraints between consecutive clones */
     bool ValidateScaledExtendConstraints();
-    
+
     /**
      * Issue #288: Validate cloned power pole capacity for pump wiring.
      * For each clone pole, sum the connections we're planning to make:
@@ -737,33 +739,33 @@ private:
      * and scaled Extend.
      */
     bool ValidatePowerCapacity();
-    
+
     /** Flag indicating EXTEND was active and needs final cleanup when build gun leaves build mode */
     bool bNeedsFinalCleanup = false;
-    
+
     /** Whether the user has committed to Extend by performing a scale action.
      *  Before committing, looking away deactivates Extend normally (allows middle-click sampling).
      *  After committing, sticky extend keeps Extend alive when looking away. */
     bool bExtendCommitted = false;
-    
+
     /** Counter snapshot taken when Extend activates.
      *  Restored when Extend deactivates so normal scaling isn't polluted with Extend's counters. */
     FSFCounterState PreExtendCounterSnapshot;
     bool bHasCounterSnapshot = false;
-    
+
     // ==================== JSON-Based Wiring (Phase 5/6) ====================
-    
+
     /** Stored clone topology for post-build wiring (Phase 5) */
     TSharedPtr<FSFCloneTopology> StoredCloneTopology;
-    
+
     /** Map of clone_id -> spawned hologram for post-build wiring (cleared after build) */
     TMap<FString, AFGHologram*> JsonSpawnedHolograms;
-    
+
     /** Map of clone_id -> built actor (populated during Construct(), used for wiring) */
     TMap<FString, AActor*> JsonBuiltActors;
-    
+
     // ==================== Power Extend Tracking (Issue #229) ====================
-    
+
     /** Source power pole data for post-build wiring, keyed by clone_id (e.g., "power_pole_0") */
     struct FSFSourcePoleWiringData
     {
@@ -773,36 +775,36 @@ private:
         int32 MaxConnections = 4;
     };
     TMap<FString, FSFSourcePoleWiringData> PowerPoleWiringData;
-    
+
 public:
     /** Register a built actor with its clone_id (called from hologram Construct()) */
     void RegisterJsonBuiltActor(const FString& CloneId, AActor* BuiltActor);
-    
+
     /** Get a built actor by its clone_id (for pre-tick wiring in ConfigureComponents) */
     AFGBuildable* GetBuiltActorByCloneId(const FString& CloneId) const;
-    
+
     /** Get a source buildable by its actor name (for lane segments connecting to existing buildables) */
     AFGBuildable* GetSourceBuildableByName(const FString& ActorName) const;
-    
+
 public:
     // ==================== Diagnostic Capture ====================
-    
+
     /** Capture all buildables within radius of player for diagnostic comparison */
     FSFBuildableSnapshot CaptureNearbyBuildables(float Radius = 15000.0f);  // 150m default
-    
+
     /** Capture the "before" snapshot when preview phase starts */
     void CapturePreviewSnapshot();
-    
+
     /** Capture the "after" snapshot and log diff when all builds complete */
     void CapturePostBuildSnapshotAndLogDiff();
-    
+
     /** Log comparison between two snapshots */
     void LogSnapshotDiff(const FSFBuildableSnapshot& Before, const FSFBuildableSnapshot& After);
 
 private:
     /** Snapshot captured during preview phase */
     FSFBuildableSnapshot PreviewSnapshot;
-    
+
     /** Whether preview snapshot has been captured */
     bool bHasPreviewSnapshot = false;
 };

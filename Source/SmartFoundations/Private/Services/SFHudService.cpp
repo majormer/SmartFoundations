@@ -152,7 +152,7 @@ void USFHudService::CreateHudWidget()
     if (HudWidget)
     {
         HudWidget->SetVisibility(ESlateVisibility::Collapsed);
-        UE_LOG(LogSmartFoundations, Log, TEXT("SFHudService: Created UMG HUD widget"));
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("SFHudService: Created UMG HUD widget"));
     }
 }
 
@@ -218,7 +218,7 @@ void USFHudService::EnsureHUDBinding()
 void USFHudService::CleanupWidgets()
 {
 	DestroyHudWidget();
-	
+
 	if (AHUD* HUD = CachedHUD.Get())
 	{
 		HUD->OnHUDPostRender.RemoveAll(this);
@@ -249,7 +249,7 @@ TPair<FString, FString> USFHudService::BuildCounterDisplayLines() const
 			Lines.Add(LOCTEXT("HUD_ZoopActive", "*Zoop Active - Scaling Disabled").ToString());
 		}
 	}
-	
+
 	// Issue #198 + #257: Smart disable warning display
 	if (Subsystem->IsSmartDisabledForCurrentAction() || Subsystem->IsExtendDisabled())
 	{
@@ -285,7 +285,7 @@ TPair<FString, FString> USFHudService::BuildCounterDisplayLines() const
 		{
 			int32 CloneCount = ExtendSvc->GetExtendCloneCount();
 			int32 RowCount = ExtendSvc->GetExtendRowCount();
-			
+
 			if (CloneCount > 0 || RowCount > 1)
 			{
 				// Show Scaled Extend mode with clone count
@@ -352,7 +352,7 @@ TPair<FString, FString> USFHudService::BuildCounterDisplayLines() const
 		int32 TotalRecipes = 0;
 		Subsystem->GetRecipeDisplayInfo(CurrentIndex, TotalRecipes);
 		TSubclassOf<UFGRecipe> ActiveRecipe = Subsystem->GetActiveRecipe();
-		
+
 		// CRITICAL FIX: Only show recipe if it is compatible with the CURRENT hologram
 		// This prevents stale recipes from persisting on the HUD when switching between incompatible buildings
 		bool bIsCompatible = true;
@@ -384,21 +384,21 @@ TPair<FString, FString> USFHudService::BuildCounterDisplayLines() const
 	// Only show settings if the current hologram supports auto-connect
 	{
 		const bool bAutoConnectActive = Subsystem->IsAutoConnectSettingsModeActive();
-		
+
 		// Only fetch and display dirty settings if we're in settings mode OR
 		// if the current hologram is an auto-connect type (distributor, pipe junction, power pole, stackable support)
 		// This prevents stale settings from showing on non-auto-connect holograms
 		const bool bIsAutoConnectHologram = Subsystem->IsCurrentHologramAutoConnectCapable();
-		
+
 		if (bIsAutoConnectHologram)
 		{
 			const TArray<FString> DirtySettings = Subsystem->GetDirtyAutoConnectSettings();
-			
+
 			if (bAutoConnectActive)
 			{
 				const FString CurrentSetting = Subsystem->GetAutoConnectSettingDisplayString();
 				bool bRenderedCurrentInDirtyList = false;
-				
+
 				// First, render all dirty settings, highlighting the active one
 				for (const FString& Setting : DirtySettings)
 				{
@@ -410,7 +410,7 @@ TPair<FString, FString> USFHudService::BuildCounterDisplayLines() const
 					Lines.Add(FText::Format(LOCTEXT("HUD_SettingsActive", "Settings: {0}{1}"),
 						FText::FromString(Setting), FText::FromString(bIsCurrent ? TEXT("*") : TEXT(""))).ToString());
 				}
-				
+
 				// If the current setting is not dirty (matches config), still show it as active
 				if (!bRenderedCurrentInDirtyList)
 				{
@@ -550,17 +550,17 @@ TPair<FString, FString> USFHudService::BuildCounterDisplayLines() const
 	if (bShowRotationZ)
 	{
 		const bool bIsActive = (bRotationActive && RotationAxis == ESFScaleAxis::Z);
-		
+
 		// DESIGN DECISION: Show degrees + abbreviated calculated info
 		// Calculate radius and buildings-per-circle for user reference
 		float RotationStepRad = FMath::Abs(FMath::DegreesToRadians(State.RotationZ));
-		float Radius = (RotationStepRad > KINDA_SMALL_NUMBER) 
+		float Radius = (RotationStepRad > KINDA_SMALL_NUMBER)
 			? (State.SpacingX / RotationStepRad) / 100.0f  // Convert cm to m
 			: 0.0f;
 		int32 BuildingsPerCircle = (FMath::Abs(State.RotationZ) > KINDA_SMALL_NUMBER)
 			? FMath::RoundToInt(360.0f / FMath::Abs(State.RotationZ))
 			: 0;
-		
+
 		if (Radius > 0.0f && BuildingsPerCircle > 0)
 		{
 			Lines.Add(FText::Format(LOCTEXT("HUD_RotationZFull", "Rotation [Z]{0}: {1}\u00B0 (R={2}m, {3}/circle)"),
@@ -645,18 +645,18 @@ void USFHudService::ResetState()
 	CurrentBeltCostText.Empty();
 	CurrentPipeCostText.Empty();
 	CurrentPowerCostText.Empty();
-	
+
 	// Clear all cached cost arrays
 	CachedBeltAvailability.Empty();
 	CachedPipeCosts.Empty();
 	CachedPipeAvailability.Empty();
 	CachedPowerCosts.Empty();
 	CachedPowerAvailability.Empty();
-	
+
 	// Clear lift height
 	CachedLiftHeight = 0.0f;
 	CachedWorldHeight = 0.0f;
-	
+
 	UE_LOG(LogSmartFoundations, Log, TEXT("HUD state reset for new hologram"));
 }
 
