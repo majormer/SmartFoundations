@@ -221,7 +221,7 @@ void USFHudWidget::BuildWidgetTree()
 		UE_LOG(LogSmartFoundations, Warning, TEXT("SFHudWidget::BuildWidgetTree: WidgetTree is null!"));
 		return;
 	}
-	UE_LOG(LogSmartFoundations, Log, TEXT("SFHudWidget::BuildWidgetTree: Starting (scale=%.1f)"), CachedScale);
+	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("SFHudWidget::BuildWidgetTree: Starting (scale=%.1f)"), CachedScale);
 
 	// Clear existing content
 	TextPool.Empty();
@@ -254,7 +254,7 @@ void USFHudWidget::BuildWidgetTree()
 	WidgetTree->RootWidget = OuterBorder;
 	OuterBorder->AddChild(InnerBorder);
 	InnerBorder->AddChild(ContentBox);
-	UE_LOG(LogSmartFoundations, Log, TEXT("SFHudWidget::BuildWidgetTree: Root=%s, ContentBox=%s"),
+	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("SFHudWidget::BuildWidgetTree: Root=%s, ContentBox=%s"),
 		OuterBorder ? TEXT("OK") : TEXT("NULL"),
 		ContentBox ? TEXT("OK") : TEXT("NULL"));
 

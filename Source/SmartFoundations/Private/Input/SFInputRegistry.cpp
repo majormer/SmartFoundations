@@ -29,7 +29,7 @@ USFInputRegistry::USFInputRegistry()
 void USFInputRegistry::InitializeSmartInputSystem()
 {
 	UE_LOG(LogSmartFoundations, Log, TEXT("Smart! Enhanced Input system initialization - SML 3.11.x Blueprint approach"));
-	
+
 	UE_LOG(LogSmartFoundations, Log, TEXT("📋 Smart! Gameplay Tags ready for Blueprint binding:"));
 	UE_LOG(LogSmartFoundations, Log, TEXT("  - %s (Num8 - Scale Forward)"), *TAG_SCALE_X_POSITIVE);
 	UE_LOG(LogSmartFoundations, Log, TEXT("  - %s (Num5 - Scale Backward)"), *TAG_SCALE_X_NEGATIVE);
@@ -75,7 +75,7 @@ void USFInputRegistry::ClearInputCache()
 {
 	if (GSmartInputMappingContextCache)
 	{
-		UE_LOG(LogSmartFoundations, Log, TEXT("Clearing Smart! Input Mapping Context cache (world cleanup)"));
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Clearing Smart! Input Mapping Context cache (world cleanup)"));
 		GSmartInputMappingContextCache = nullptr;
 	}
 }
@@ -86,27 +86,27 @@ UFGInputMappingContext* USFInputRegistry::GetSmartInputMappingContext()
 	{
 		// Mapping context renamed to reflect broader input scope (not just numpad)
 		const FSoftObjectPath CorrectPath(TEXT("/SmartFoundations/SmartFoundations/Input/Contexts/MC_Smart_BuildGunBuild.MC_Smart_BuildGunBuild"));
-		
-		UE_LOG(LogSmartFoundations, Log, TEXT("🔍 Loading Smart! Input Mapping Context from: %s"), *CorrectPath.ToString());
-		
+
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔍 Loading Smart! Input Mapping Context from: %s"), *CorrectPath.ToString());
+
 		// Try multiple loading methods
 		UObject* LoadedObject = CorrectPath.TryLoad();
-		
+
 		if (!LoadedObject)
 		{
 			LoadedObject = LoadObject<UFGInputMappingContext>(nullptr, *CorrectPath.ToString());
 		}
-		
+
 		if (!LoadedObject)
 		{
 			LoadedObject = StaticLoadObject(UFGInputMappingContext::StaticClass(), nullptr, *CorrectPath.ToString());
 		}
-		
+
 		GSmartInputMappingContextCache = Cast<UFGInputMappingContext>(LoadedObject);
-		
+
 		if (GSmartInputMappingContextCache)
 		{
-			UE_LOG(LogSmartFoundations, Log, TEXT("✅ Smart! Input Mapping Context loaded successfully"));
+			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("✅ Smart! Input Mapping Context loaded successfully"));
 		}
 		else
 		{
@@ -115,7 +115,7 @@ UFGInputMappingContext* USFInputRegistry::GetSmartInputMappingContext()
 			UE_LOG(LogSmartFoundations, Error, TEXT("❌ Verify Blueprint asset exists in Unreal Editor"));
 		}
 	}
-	
+
 	return GSmartInputMappingContextCache;
 }
 
@@ -127,7 +127,7 @@ void USFInputRegistry::BindInputActionsToSubsystem(USFSubsystem* Subsystem, UFGE
 		return;
 	}
 
-	UE_LOG(LogSmartFoundations, Log, TEXT("Binding NEW Smart! Axis1D input actions to subsystem"));
+	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Binding NEW Smart! Axis1D input actions to subsystem"));
 
 	// Helper to load Input Action assets
 	auto LoadIA = [](const TCHAR* Path) -> UInputAction*
@@ -144,11 +144,11 @@ void USFInputRegistry::BindInputActionsToSubsystem(USFSubsystem* Subsystem, UFGE
 	// NOTE: Using Started event for NumPad keys (InputTriggerPressed)
 	//   - NumPad keys: InputTriggerPressed → Started event
 	//   - MouseWheel: Requires manual check (parent context consumes input first)
-	
+
 	if (UInputAction* IA_ScaleX = LoadIA(TEXT("/SmartFoundations/SmartFoundations/Input/Actions/IA_Smart_ScaleX.IA_Smart_ScaleX")))
 	{
 		InputComponent->BindAction(IA_ScaleX, ETriggerEvent::Started, Subsystem, &USFSubsystem::OnScaleXChanged);
-		UE_LOG(LogSmartFoundations, Log, TEXT("✅ Bound: Scale X (Axis1D) - Started event"));
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("✅ Bound: Scale X (Axis1D) - Started event"));
 		++BoundCount;
 	}
 	else
@@ -159,7 +159,7 @@ void USFInputRegistry::BindInputActionsToSubsystem(USFSubsystem* Subsystem, UFGE
 	if (UInputAction* IA_ScaleY = LoadIA(TEXT("/SmartFoundations/SmartFoundations/Input/Actions/IA_Smart_ScaleY.IA_Smart_ScaleY")))
 	{
 		InputComponent->BindAction(IA_ScaleY, ETriggerEvent::Started, Subsystem, &USFSubsystem::OnScaleYChanged);
-		UE_LOG(LogSmartFoundations, Log, TEXT("✅ Bound: Scale Y (Axis1D) - Started event"));
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("✅ Bound: Scale Y (Axis1D) - Started event"));
 		++BoundCount;
 	}
 	else
@@ -170,7 +170,7 @@ void USFInputRegistry::BindInputActionsToSubsystem(USFSubsystem* Subsystem, UFGE
 	if (UInputAction* IA_ScaleZ = LoadIA(TEXT("/SmartFoundations/SmartFoundations/Input/Actions/IA_Smart_ScaleZ.IA_Smart_ScaleZ")))
 	{
 		InputComponent->BindAction(IA_ScaleZ, ETriggerEvent::Started, Subsystem, &USFSubsystem::OnScaleZChanged);
-		UE_LOG(LogSmartFoundations, Log, TEXT("✅ Bound: Scale Z (Axis1D) - Started event"));
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("✅ Bound: Scale Z (Axis1D) - Started event"));
 		++BoundCount;
 	}
 	else
@@ -179,11 +179,11 @@ void USFInputRegistry::BindInputActionsToSubsystem(USFSubsystem* Subsystem, UFGE
 	}
 
 	// === Mouse Wheel (Unified context-aware handler) ===
-	
+
 	if (UInputAction* IA_MouseWheel = LoadIA(TEXT("/SmartFoundations/SmartFoundations/Input/Actions/IA_Smart_MouseWheel.IA_Smart_MouseWheel")))
 	{
 		InputComponent->BindAction(IA_MouseWheel, ETriggerEvent::Triggered, Subsystem, &USFSubsystem::OnMouseWheelChanged);
-		UE_LOG(LogSmartFoundations, Log, TEXT("✅ Bound: Mouse Wheel (Axis1D - context-aware) - Triggered event"));
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("✅ Bound: Mouse Wheel (Axis1D - context-aware) - Triggered event"));
 		++BoundCount;
 	}
 	else
@@ -192,12 +192,12 @@ void USFInputRegistry::BindInputActionsToSubsystem(USFSubsystem* Subsystem, UFGE
 	}
 
 	// === Modifier Actions (Boolean) ===
-	
+
 	if (UInputAction* IA_ModScaleX = LoadIA(TEXT("/SmartFoundations/SmartFoundations/Input/Actions/IA_Smart_Modifier_ScaleX.IA_Smart_Modifier_ScaleX")))
 	{
 		InputComponent->BindAction(IA_ModScaleX, ETriggerEvent::Started, Subsystem, &USFSubsystem::OnModifierScaleXPressed);
 		InputComponent->BindAction(IA_ModScaleX, ETriggerEvent::Completed, Subsystem, &USFSubsystem::OnModifierScaleXReleased);
-		UE_LOG(LogSmartFoundations, Log, TEXT("✅ Bound: Modifier Scale X (Boolean - Started+Completed)"));
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("✅ Bound: Modifier Scale X (Boolean - Started+Completed)"));
 		BoundCount += 2;
 	}
 
@@ -205,27 +205,27 @@ void USFInputRegistry::BindInputActionsToSubsystem(USFSubsystem* Subsystem, UFGE
 	{
 		InputComponent->BindAction(IA_ModScaleY, ETriggerEvent::Started, Subsystem, &USFSubsystem::OnModifierScaleYPressed);
 		InputComponent->BindAction(IA_ModScaleY, ETriggerEvent::Completed, Subsystem, &USFSubsystem::OnModifierScaleYReleased);
-		UE_LOG(LogSmartFoundations, Log, TEXT("✅ Bound: Modifier Scale Y (Boolean - Started+Completed)"));
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("✅ Bound: Modifier Scale Y (Boolean - Started+Completed)"));
 		BoundCount += 2;
 	}
 
 	// === Spacing Actions ===
-	
+
 	if (UInputAction* IA_SpacingMode = LoadIA(TEXT("/SmartFoundations/SmartFoundations/Input/Actions/IA_Smart_Spacing_Mode.IA_Smart_Spacing_Mode")))
 	{
 		InputComponent->BindAction(IA_SpacingMode, ETriggerEvent::Started, Subsystem, &USFSubsystem::OnSpacingModeChanged);
 		InputComponent->BindAction(IA_SpacingMode, ETriggerEvent::Completed, Subsystem, &USFSubsystem::OnSpacingModeChanged);
-		UE_LOG(LogSmartFoundations, Log, TEXT("✅ Bound: Spacing Mode (Boolean)"));
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("✅ Bound: Spacing Mode (Boolean)"));
 		BoundCount += 2;
 	}
 
 	// === Recipe Actions ===
-	
+
 	if (UInputAction* IA_RecipeMode = LoadIA(TEXT("/SmartFoundations/SmartFoundations/Input/Actions/IA_Smart_RecipeMode.IA_Smart_RecipeMode")))
 	{
 		InputComponent->BindAction(IA_RecipeMode, ETriggerEvent::Started, Subsystem, &USFSubsystem::OnRecipeModeChanged);
 		InputComponent->BindAction(IA_RecipeMode, ETriggerEvent::Completed, Subsystem, &USFSubsystem::OnRecipeModeChanged);
-		UE_LOG(LogSmartFoundations, Log, TEXT("✅ Bound: Recipe Mode (Boolean)"));
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("✅ Bound: Recipe Mode (Boolean)"));
 		BoundCount += 2;
 	}
 	else
@@ -234,11 +234,11 @@ void USFInputRegistry::BindInputActionsToSubsystem(USFSubsystem* Subsystem, UFGE
 	}
 
 	// === UNIFIED VALUE ADJUSTMENT (replaces individual Spacing/Steps/Stagger adjust actions) ===
-	
+
 	if (UInputAction* IA_IncreaseValue = LoadIA(TEXT("/SmartFoundations/SmartFoundations/Input/Actions/IA_Smart_IncreaseValue.IA_Smart_IncreaseValue")))
 	{
 		InputComponent->BindAction(IA_IncreaseValue, ETriggerEvent::Started, Subsystem, &USFSubsystem::OnValueIncreased);
-		UE_LOG(LogSmartFoundations, Log, TEXT("✅ Bound: Increase Value (Axis1D - context-aware) - Started event"));
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("✅ Bound: Increase Value (Axis1D - context-aware) - Started event"));
 		++BoundCount;
 	}
 	else
@@ -249,7 +249,7 @@ void USFInputRegistry::BindInputActionsToSubsystem(USFSubsystem* Subsystem, UFGE
 	if (UInputAction* IA_DecreaseValue = LoadIA(TEXT("/SmartFoundations/SmartFoundations/Input/Actions/IA_Smart_DecreaseValue.IA_Smart_DecreaseValue")))
 	{
 		InputComponent->BindAction(IA_DecreaseValue, ETriggerEvent::Started, Subsystem, &USFSubsystem::OnValueDecreased);
-		UE_LOG(LogSmartFoundations, Log, TEXT("✅ Bound: Decrease Value (Axis1D - context-aware) - Started event"));
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("✅ Bound: Decrease Value (Axis1D - context-aware) - Started event"));
 		++BoundCount;
 	}
 	else
@@ -261,55 +261,55 @@ void USFInputRegistry::BindInputActionsToSubsystem(USFSubsystem* Subsystem, UFGE
 	if (UInputAction* IA_CycleAxis = LoadIA(TEXT("/SmartFoundations/SmartFoundations/Input/Actions/IA_Smart_CycleAxis.IA_Smart_CycleAxis")))
 	{
 		InputComponent->BindAction(IA_CycleAxis, ETriggerEvent::Started, Subsystem, &USFSubsystem::OnCycleAxis);
-		UE_LOG(LogSmartFoundations, Log, TEXT("✅ Bound: Cycle Axis (Boolean - context-aware)"));
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("✅ Bound: Cycle Axis (Boolean - context-aware)"));
 		++BoundCount;
 	}
 
 	// === Steps Actions ===
-	
+
 	if (UInputAction* IA_StepsMode = LoadIA(TEXT("/SmartFoundations/SmartFoundations/Input/Actions/IA_Smart_Steps_Mode.IA_Smart_Steps_Mode")))
 	{
 		InputComponent->BindAction(IA_StepsMode, ETriggerEvent::Started, Subsystem, &USFSubsystem::OnStepsModeChanged);
 		InputComponent->BindAction(IA_StepsMode, ETriggerEvent::Completed, Subsystem, &USFSubsystem::OnStepsModeChanged);
-		UE_LOG(LogSmartFoundations, Log, TEXT("✅ Bound: Steps Mode (Boolean)"));
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("✅ Bound: Steps Mode (Boolean)"));
 		BoundCount += 2;
 	}
 
 	// === Stagger Actions (lateral grid offset) ===
-	
+
 	if (UInputAction* IA_StaggerMode = LoadIA(TEXT("/SmartFoundations/SmartFoundations/Input/Actions/IA_Smart_Stagger_Mode.IA_Smart_Stagger_Mode")))
 	{
 		InputComponent->BindAction(IA_StaggerMode, ETriggerEvent::Started, Subsystem, &USFSubsystem::OnStaggerModeChanged);
 		InputComponent->BindAction(IA_StaggerMode, ETriggerEvent::Completed, Subsystem, &USFSubsystem::OnStaggerModeChanged);
-		UE_LOG(LogSmartFoundations, Log, TEXT("✅ Bound: Stagger Mode (Boolean) - lateral grid offset"));
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("✅ Bound: Stagger Mode (Boolean) - lateral grid offset"));
 		BoundCount += 2;
 	}
 
 	// === Rotation Actions (radial/arc placement) ===
-	
+
 	if (UInputAction* IA_RotationMode = LoadIA(TEXT("/SmartFoundations/SmartFoundations/Input/Actions/IA_Smart_Rotation_Mode.IA_Smart_Rotation_Mode")))
 	{
 		InputComponent->BindAction(IA_RotationMode, ETriggerEvent::Started, Subsystem, &USFSubsystem::OnRotationModeChanged);
 		InputComponent->BindAction(IA_RotationMode, ETriggerEvent::Completed, Subsystem, &USFSubsystem::OnRotationModeChanged);
-		UE_LOG(LogSmartFoundations, Log, TEXT("✅ Bound: Rotation Mode (Boolean) - radial/arc placement"));
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("✅ Bound: Rotation Mode (Boolean) - radial/arc placement"));
 		BoundCount += 2;
 	}
 
 	// === Toggle Arrows (Unchanged) ===
-	
+
 	if (UInputAction* IA_ToggleArrows = LoadIA(TEXT("/SmartFoundations/SmartFoundations/Input/Actions/IA_Smart_ToggleArrows.IA_Smart_ToggleArrows")))
 	{
 		InputComponent->BindAction(IA_ToggleArrows, ETriggerEvent::Started, Subsystem, &USFSubsystem::OnToggleArrows);
-		UE_LOG(LogSmartFoundations, Log, TEXT("✅ Bound: Toggle Arrows (Boolean)"));
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("✅ Bound: Toggle Arrows (Boolean)"));
 		++BoundCount;
 	}
 
 	// === Settings Form Interface (Phase 0 Validation) ===
-	
+
 	if (UInputAction* IA_ToggleSettingsForm = LoadIA(TEXT("/SmartFoundations/SmartFoundations/Input/Actions/IA_Smart_ToggleSettingsForm.IA_Smart_ToggleSettingsForm")))
 	{
 		InputComponent->BindAction(IA_ToggleSettingsForm, ETriggerEvent::Started, Subsystem, &USFSubsystem::OnToggleSettingsForm);
-		UE_LOG(LogSmartFoundations, Log, TEXT("✅ Bound: Toggle Settings Form (Boolean) - Phase 0 validation"));
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("✅ Bound: Toggle Settings Form (Boolean) - Phase 0 validation"));
 		++BoundCount;
 	}
 	else
@@ -317,5 +317,5 @@ void USFInputRegistry::BindInputActionsToSubsystem(USFSubsystem* Subsystem, UFGE
 		UE_LOG(LogSmartFoundations, Error, TEXT("❌ Failed to load: IA_Smart_ToggleSettingsForm"));
 	}
 
-	UE_LOG(LogSmartFoundations, Log, TEXT("Smart! NEW input binding complete - %d action bindings registered"), BoundCount);
+	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Smart! NEW input binding complete - %d action bindings registered"), BoundCount);
 }

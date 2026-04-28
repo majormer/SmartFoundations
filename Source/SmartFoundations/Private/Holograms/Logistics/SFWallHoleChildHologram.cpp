@@ -32,7 +32,7 @@ void ASFWallHoleChildHologram::CheckValidPlacement()
 
 AActor* ASFWallHoleChildHologram::Construct(TArray<AActor*>& out_children, FNetConstructionID constructionID)
 {
-    UE_LOG(LogSmartFoundations, Log, TEXT("🧱 WALL HOLE CHILD: Construct() called for %s"), *GetName());
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🧱 WALL HOLE CHILD: Construct() called for %s"), *GetName());
 
     // Delegate to vanilla wall-attachment construction — spawns the AFGBuildable, triggers
     // snap-point consumption on the underlying wall, registers with the buildable subsystem.
@@ -54,7 +54,7 @@ AActor* ASFWallHoleChildHologram::Construct(TArray<AActor*>& out_children, FNetC
             }
         }
 
-        UE_LOG(LogSmartFoundations, Log, TEXT("🧱 WALL HOLE CHILD: Successfully built %s -> %s (CloneId=%s)"),
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🧱 WALL HOLE CHILD: Successfully built %s -> %s (CloneId=%s)"),
             *GetName(), *BuiltActor->GetName(),
             HoloData ? *HoloData->JsonCloneId : TEXT("none"));
     }

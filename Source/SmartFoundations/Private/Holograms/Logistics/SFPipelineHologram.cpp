@@ -79,7 +79,7 @@ AActor* ASFPipelineHologram::Construct(TArray<AActor*>& out_children, FNetConstr
 	// IMPORTANT: Return the previously built actor, NOT nullptr - vanilla crashes on nullptr!
 	if (bHasBeenConstructed)
 	{
-		UE_LOG(LogSmartFoundations, Log, TEXT("🔧 PIPE: Skipping duplicate Construct() for %s (already built, returning cached actor)"), *GetName());
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 PIPE: Skipping duplicate Construct() for %s (already built, returning cached actor)"), *GetName());
 		return ConstructedActor.Get();
 	}
 	bHasBeenConstructed = true;
@@ -91,7 +91,7 @@ AActor* ASFPipelineHologram::Construct(TArray<AActor*>& out_children, FNetConstr
 	
 	if (bIsExtendChild || bIsStackableChild || bIsPipeAutoConnectChild)
 	{
-		UE_LOG(LogSmartFoundations, Log, TEXT("🔧 %s: Pipe hologram %s Construct() called - building as child"), 
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 %s: Pipe hologram %s Construct() called - building as child"), 
 			bIsPipeAutoConnectChild ? TEXT("PIPE AUTO-CONNECT") : (bIsStackableChild ? TEXT("STACKABLE") : TEXT("EXTEND")), *GetName());
 		
 		// IMPORTANT: For EXTEND children, we need to build the pipe directly without
@@ -135,7 +135,7 @@ AActor* ASFPipelineHologram::Construct(TArray<AActor*>& out_children, FNetConstr
 			}
 			
 			// Log the mapping for debugging
-			UE_LOG(LogSmartFoundations, Log, TEXT("🔧 %s: ✅ Pipe hologram %s → Buildable %s (ID: %u), discarded %d child actors"), 
+			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 %s: ✅ Pipe hologram %s → Buildable %s (ID: %u), discarded %d child actors"), 
 				bIsStackableChild ? TEXT("STACKABLE") : (bIsPipeAutoConnectChild ? TEXT("PIPE AUTO-CONNECT") : TEXT("EXTEND")),
 				*GetName(), *BuiltActor->GetName(), BuiltActor->GetUniqueID(), DiscardedChildren.Num());
 			
@@ -165,7 +165,8 @@ AActor* ASFPipelineHologram::Construct(TArray<AActor*>& out_children, FNetConstr
 						if (NeighborConn && !NeighborConn->IsConnected() && NeighborConn->GetOwner() != Pipe)
 						{
 							Conn0->SetConnection(NeighborConn);
-							UE_LOG(LogSmartFoundations, Log, TEXT("🔧 STACKABLE: Wired Conn0 to neighbor pipe %s.%s"), 
+							UE_LOG(LogSmartFoundations, VeryVerbose, TEXT(" %s: Wired Conn0 to neighbor pipe %s.%s"), 
+								bIsStackableChild ? TEXT("STACKABLE") : (bIsPipeAutoConnectChild ? TEXT("PIPE AUTO-CONNECT") : TEXT("EXTEND")),
 								*NeighborConn->GetOwner()->GetName(), *NeighborConn->GetName());
 						}
 					}
@@ -180,7 +181,7 @@ AActor* ASFPipelineHologram::Construct(TArray<AActor*>& out_children, FNetConstr
 						if (NeighborConn && !NeighborConn->IsConnected() && NeighborConn->GetOwner() != Pipe)
 						{
 							Conn1->SetConnection(NeighborConn);
-							UE_LOG(LogSmartFoundations, Log, TEXT("🔧 STACKABLE: Wired Conn1 to neighbor pipe %s.%s"), 
+							UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 STACKABLE: Wired Conn1 to neighbor pipe %s.%s"), 
 								*NeighborConn->GetOwner()->GetName(), *NeighborConn->GetName());
 						}
 					}

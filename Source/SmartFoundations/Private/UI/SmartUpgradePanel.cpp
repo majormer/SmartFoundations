@@ -400,25 +400,25 @@ void USmartUpgradePanel::NativeConstruct()
 
 void USmartUpgradePanel::OnCloseButtonClicked()
 {
-	UE_LOG(LogSmartFoundations, Log, TEXT("Upgrade Panel: Close button clicked"));
+	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Upgrade Panel: Close button clicked"));
 	ClosePanel();
 }
 
 void USmartUpgradePanel::OnRefreshButtonClicked()
 {
-	UE_LOG(LogSmartFoundations, Log, TEXT("Upgrade Panel: Refresh button clicked"));
+	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Upgrade Panel: Refresh button clicked"));
 	RefreshAudit();
 }
 
 void USmartUpgradePanel::OnCancelButtonClicked()
 {
-	UE_LOG(LogSmartFoundations, Log, TEXT("Upgrade Panel: Cancel button clicked"));
+	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Upgrade Panel: Cancel button clicked"));
 	CancelAudit();
 }
 
 void USmartUpgradePanel::OnEntireMapButtonClicked()
 {
-	UE_LOG(LogSmartFoundations, Log, TEXT("Upgrade Panel: Entire Map button clicked - scanning with no radius limit"));
+	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Upgrade Panel: Entire Map button clicked - scanning with no radius limit"));
 	CurrentRadiusMeters = 0.0f;
 
 	// Update spinbox to show 0 (visual indicator that "entire map" is active)
@@ -450,12 +450,12 @@ void USmartUpgradePanel::OnRadiusValueChanged(float NewValue)
 		RadiusSpinBox->SetValue(CurrentRadiusMeters);
 	}
 
-	UE_LOG(LogSmartFoundations, Log, TEXT("Upgrade Panel: Radius changed to %.0fm"), CurrentRadiusMeters);
+	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Upgrade Panel: Radius changed to %.0fm"), CurrentRadiusMeters);
 }
 
 void USmartUpgradePanel::OnUpgradeButtonClicked()
 {
-	UE_LOG(LogSmartFoundations, Log, TEXT("Upgrade Panel: Upgrade button clicked - Family=%d Tier=%d IsRadiusTab=%d"),
+	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Upgrade Panel: Upgrade button clicked - Family=%d Tier=%d IsRadiusTab=%d"),
 		static_cast<int32>(SelectedFamily), SelectedTier, (ActiveTab == ESmartUpgradeTab::Radius) ? 1 : 0);
 
 	// In traversal mode, we may have items at multiple tiers - don't require SelectedTier
@@ -511,15 +511,15 @@ void USmartUpgradePanel::OnUpgradeButtonClicked()
 
 	// Get target tier from dropdown (or use cached value)
 	int32 TargetTier = GetSelectedTargetTier();
-	UE_LOG(LogSmartFoundations, Log, TEXT("Upgrade Panel: GetSelectedTargetTier returned %d, CachedTargetTier=%d"), TargetTier, CachedTargetTier);
+	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Upgrade Panel: GetSelectedTargetTier returned %d, CachedTargetTier=%d"), TargetTier, CachedTargetTier);
 	if (TargetTier == 0)
 	{
 		// No target selected - use max unlocked tier
 		TargetTier = CachedTargetTier;
-		UE_LOG(LogSmartFoundations, Log, TEXT("Upgrade Panel: Using CachedTargetTier=%d as fallback"), TargetTier);
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Upgrade Panel: Using CachedTargetTier=%d as fallback"), TargetTier);
 	}
 
-	UE_LOG(LogSmartFoundations, Log, TEXT("Upgrade Panel: Starting upgrade - SourceTier=%d TargetTier=%d TraversalMode=%d"),
+	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Upgrade Panel: Starting upgrade - SourceTier=%d TargetTier=%d TraversalMode=%d"),
 		SelectedTier, TargetTier, bIsTraversalMode);
 
 	// Validate target tier
@@ -565,7 +565,7 @@ void USmartUpgradePanel::OnUpgradeButtonClicked()
 				Params.SpecificBuildables.Add(Entry.Buildable);
 			}
 		}
-		UE_LOG(LogSmartFoundations, Log, TEXT("Upgrade Panel: Using %d buildables from traversal scan"), Params.SpecificBuildables.Num());
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Upgrade Panel: Using %d buildables from traversal scan"), Params.SpecificBuildables.Num());
 	}
 	else
 	{
@@ -590,7 +590,7 @@ void USmartUpgradePanel::OnUpgradeButtonClicked()
 
 void USmartUpgradePanel::RefreshAudit()
 {
-	UE_LOG(LogSmartFoundations, Log, TEXT("Upgrade Panel: RefreshAudit() requested"));
+	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Upgrade Panel: RefreshAudit() requested"));
 
 	if (USFSubsystem* Subsystem = USFSubsystem::Get(this))
 	{
@@ -604,7 +604,7 @@ void USmartUpgradePanel::RefreshAudit()
 			Params.Radius = CurrentRadiusMeters * 100.0f;  // Convert meters to cm
 			Params.bStoreEntries = true;
 
-			UE_LOG(LogSmartFoundations, Log, TEXT("Upgrade Panel: Starting audit with radius %.0fm (%.0f cm)"),
+			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Upgrade Panel: Starting audit with radius %.0fm (%.0f cm)"),
 				CurrentRadiusMeters, Params.Radius);
 
 			// Trigger via RCO if we're a client, otherwise direct call
@@ -620,7 +620,7 @@ void USmartUpgradePanel::RefreshAudit()
 						if (RCO->GetOuter() == PC)
 						{
 							RCO->Server_StartUpgradeAudit(Params);
-							UE_LOG(LogSmartFoundations, Log, TEXT("Upgrade Panel: Sent Refresh request via SFRCO"));
+							UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Upgrade Panel: Sent Refresh request via SFRCO"));
 							return;
 						}
 					}
@@ -641,7 +641,7 @@ void USmartUpgradePanel::RefreshAudit()
 
 void USmartUpgradePanel::CancelAudit()
 {
-	UE_LOG(LogSmartFoundations, Log, TEXT("Upgrade Panel: CancelAudit() requested"));
+	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Upgrade Panel: CancelAudit() requested"));
 
 	if (USFSubsystem* Subsystem = USFSubsystem::Get(this))
 	{
@@ -662,7 +662,7 @@ void USmartUpgradePanel::CancelAudit()
 						if (RCO->GetOuter() == PC)
 						{
 							RCO->Server_CancelUpgradeAudit();
-							UE_LOG(LogSmartFoundations, Log, TEXT("Upgrade Panel: Sent Cancel request via SFRCO"));
+							UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Upgrade Panel: Sent Cancel request via SFRCO"));
 							return;
 						}
 					}
@@ -925,7 +925,7 @@ void USmartUpgradePanel::UpdateAuditUI(const FSFUpgradeAuditResult& Result)
 
 void USmartUpgradePanel::ClosePanel()
 {
-	UE_LOG(LogSmartFoundations, Log, TEXT("Upgrade Panel: ClosePanel() called"));
+	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Upgrade Panel: ClosePanel() called"));
 
 	// Get player controller
 	APlayerController* PC = GetOwningPlayer();
@@ -956,7 +956,7 @@ void USmartUpgradePanel::ClosePanel()
 		Subsystem->ClearUpgradePanelWidget();
 	}
 
-	UE_LOG(LogSmartFoundations, Log, TEXT("Upgrade Panel: Closed and input restored"));
+	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Upgrade Panel: Closed and input restored"));
 }
 
 FReply USmartUpgradePanel::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent)
@@ -964,7 +964,7 @@ FReply USmartUpgradePanel::NativeOnKeyDown(const FGeometry& InGeometry, const FK
 	// Handle ESC key to close panel
 	if (InKeyEvent.GetKey() == EKeys::Escape)
 	{
-		UE_LOG(LogSmartFoundations, Log, TEXT("Upgrade Panel: ESC key pressed - closing"));
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Upgrade Panel: ESC key pressed - closing"));
 		ClosePanel();
 		return FReply::Handled();
 	}
@@ -1043,7 +1043,7 @@ FReply USmartUpgradePanel::NativeOnMouseMove(const FGeometry& InGeometry, const 
 
 void USmartUpgradePanel::OnRowSelected(ESFUpgradeFamily Family, int32 Tier)
 {
-	UE_LOG(LogSmartFoundations, Log, TEXT("Upgrade Panel: Row selected - Family=%d Tier=%d"), static_cast<int32>(Family), Tier);
+	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Upgrade Panel: Row selected - Family=%d Tier=%d"), static_cast<int32>(Family), Tier);
 
 	// Get player location
 	APlayerController* PC = GetOwningPlayer();
@@ -1158,7 +1158,7 @@ void USmartUpgradePanel::OnRowSelected(ESFUpgradeFamily Family, int32 Tier)
 		UpgradeButton->SetIsEnabled(true);
 	}
 
-	UE_LOG(LogSmartFoundations, Log, TEXT("Upgrade Panel: Nearest %s is %.0fm %s at %s"),
+	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Upgrade Panel: Nearest %s is %.0fm %s at %s"),
 		*DisplayName, DistanceMeters, *Direction, *ClosestLocation.ToString());
 }
 
@@ -1236,7 +1236,7 @@ void USmartUpgradePanel::OnUpgradeCompleted(const FSFUpgradeExecutionResult& Res
 
 void USmartUpgradePanel::OnTargetTierChanged(FString SelectedItem, ESelectInfo::Type SelectionType)
 {
-	UE_LOG(LogSmartFoundations, Log, TEXT("Upgrade Panel: Target tier changed to: %s"), *SelectedItem);
+	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Upgrade Panel: Target tier changed to: %s"), *SelectedItem);
 
 	// Parse tier from selection (e.g., "Mk.4" -> 4)
 	CachedTargetTier = 0;
@@ -1354,7 +1354,7 @@ void USmartUpgradePanel::PopulateTargetTierDropdown()
 		ActiveComboBox->SetVisibility(ESlateVisibility::Collapsed);
 	}
 
-	UE_LOG(LogSmartFoundations, Log, TEXT("Upgrade Panel: Populated tier dropdown - Source=%d Max=%d Options=%d"),
+	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Upgrade Panel: Populated tier dropdown - Source=%d Max=%d Options=%d"),
 		SelectedTier, MaxTier, bHasOptions ? (MaxTier - SelectedTier) : 0);
 }
 
@@ -1719,19 +1719,19 @@ bool USmartUpgradePanel::CalculateUpgradeCost(ESFUpgradeFamily Family, int32 Sou
 
 void USmartUpgradePanel::OnRadiusTabClicked()
 {
-	UE_LOG(LogSmartFoundations, Log, TEXT("Upgrade Panel: Radius tab clicked"));
+	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Upgrade Panel: Radius tab clicked"));
 	SwitchToTab(ESmartUpgradeTab::Radius);
 }
 
 void USmartUpgradePanel::OnTraversalTabClicked()
 {
-	UE_LOG(LogSmartFoundations, Log, TEXT("Upgrade Panel: Traversal tab clicked"));
+	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Upgrade Panel: Traversal tab clicked"));
 	SwitchToTab(ESmartUpgradeTab::Traversal);
 }
 
 void USmartUpgradePanel::OnTriageTabClicked()
 {
-	UE_LOG(LogSmartFoundations, Log, TEXT("Upgrade Panel: Triage tab clicked"));
+	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Upgrade Panel: Triage tab clicked"));
 	SwitchToTab(ESmartUpgradeTab::Triage);
 }
 
@@ -1822,13 +1822,13 @@ void USmartUpgradePanel::SwitchToTab(ESmartUpgradeTab NewTab)
 		UpgradeButton->SetIsEnabled(false);
 	}
 
-	UE_LOG(LogSmartFoundations, Log, TEXT("Upgrade Panel: Switched to %s tab"),
+	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Upgrade Panel: Switched to %s tab"),
 		bRadiusTab ? TEXT("Radius") : bTraversalTab ? TEXT("Traversal") : TEXT("Triage"));
 }
 
 void USmartUpgradePanel::OnTriageDetectClicked()
 {
-	UE_LOG(LogSmartFoundations, Log, TEXT("Upgrade Panel: Triage Detect clicked"));
+	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Upgrade Panel: Triage Detect clicked"));
 
 	USFSubsystem* Subsystem = USFSubsystem::Get(this);
 	if (!Subsystem)
@@ -1892,7 +1892,7 @@ void USmartUpgradePanel::OnTriageDetectClicked()
 
 void USmartUpgradePanel::OnTriageRepairClicked()
 {
-	UE_LOG(LogSmartFoundations, Log, TEXT("Upgrade Panel: Triage Repair clicked"));
+	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Upgrade Panel: Triage Repair clicked"));
 
 	USFSubsystem* Subsystem = USFSubsystem::Get(this);
 	if (!Subsystem)
@@ -1966,7 +1966,7 @@ void USmartUpgradePanel::OnTriageRepairClicked()
 
 void USmartUpgradePanel::OnTraversalScanClicked()
 {
-	UE_LOG(LogSmartFoundations, Log, TEXT("Upgrade Panel: Traversal Scan clicked"));
+	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Upgrade Panel: Traversal Scan clicked"));
 
 	// Get player controller and build gun
 	AFGPlayerController* PC = Cast<AFGPlayerController>(GetOwningPlayer());
@@ -2002,7 +2002,7 @@ void USmartUpgradePanel::OnTraversalScanClicked()
 
 				if (AnchorBuildable)
 				{
-					UE_LOG(LogSmartFoundations, Log, TEXT("Upgrade Panel: Got upgrade target from hologram: %s"),
+					UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Upgrade Panel: Got upgrade target from hologram: %s"),
 						*AnchorBuildable->GetClass()->GetName());
 				}
 			}
@@ -2049,7 +2049,7 @@ void USmartUpgradePanel::OnTraversalScanClicked()
 
 			if (AnchorBuildable)
 			{
-				UE_LOG(LogSmartFoundations, Log, TEXT("Upgrade Panel: Found buildable near aim point: %s (dist: %.1f)"),
+				UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Upgrade Panel: Found buildable near aim point: %s (dist: %.1f)"),
 					*AnchorBuildable->GetClass()->GetName(), ClosestDist);
 			}
 		}
@@ -2070,7 +2070,7 @@ void USmartUpgradePanel::OnTraversalScanClicked()
 
 	// Check if it's an upgradeable type
 	ESFUpgradeFamily Family = USFUpgradeTraversalService::GetUpgradeFamily(AnchorBuildable);
-	UE_LOG(LogSmartFoundations, Log, TEXT("Upgrade Panel: GetUpgradeFamily for %s returned %d"),
+	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Upgrade Panel: GetUpgradeFamily for %s returned %d"),
 		*AnchorBuildable->GetClass()->GetName(), (int32)Family);
 
 	if (Family == ESFUpgradeFamily::None)
@@ -2195,7 +2195,7 @@ void USmartUpgradePanel::UpdateTraversalUI(const FSFTraversalResult& Result)
 		}
 	}
 
-	UE_LOG(LogSmartFoundations, Log, TEXT("Upgrade Panel: Traversal scan complete - %d items, %d upgradeable"),
+	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Upgrade Panel: Traversal scan complete - %d items, %d upgradeable"),
 		Result.TotalCount, Result.UpgradeableCount);
 }
 

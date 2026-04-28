@@ -60,13 +60,13 @@ void USFRecipeManagementService::Cleanup()
 void USFRecipeManagementService::ActivateRecipeMode()
 {
 	bRecipeModeActive = true;
-	UE_LOG(LogSmartFoundations, Log, TEXT("🍽️ Recipe mode activated"));
+	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🍽️ Recipe mode activated"));
 }
 
 void USFRecipeManagementService::DeactivateRecipeMode()
 {
 	bRecipeModeActive = false;
-	UE_LOG(LogSmartFoundations, Log, TEXT("🍽️ Recipe mode deactivated"));
+	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🍽️ Recipe mode deactivated"));
 }
 
 // ========================================
@@ -197,7 +197,7 @@ void USFRecipeManagementService::SetActiveRecipeByIndex(int32 Index)
 					0.2f,  // 200ms debounce
 					false
 				);
-				UE_LOG(LogSmartFoundations, Log, TEXT("🍽️ Recipe changed - scheduled child regeneration in 200ms"));
+				UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🍽️ Recipe changed - scheduled child regeneration in 200ms"));
 			}
 		}
 	}
@@ -207,7 +207,7 @@ void USFRecipeManagementService::SetActiveRecipeByIndex(int32 Index)
 		Subsystem->UpdateCounterDisplay();
 	}
 	
-	UE_LOG(LogSmartFoundations, Log, TEXT("🍽️ Active recipe set: %s [%d/%d]"), 
+	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🍽️ Active recipe set: %s [%d/%d]"), 
 		*StoredRecipeDisplayName, Index + 1, SortedFilteredRecipes.Num());
 }
 
@@ -220,7 +220,7 @@ void USFRecipeManagementService::AddRecipeToUnlocked(TSubclassOf<UFGRecipe> Reci
 	
 	// Add to unlocked recipes
 	UnlockedRecipes.Add(Recipe);
-	UE_LOG(LogSmartFoundations, Log, TEXT("🍽️ Recipe unlocked: %s (%d total)"), 
+	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🍽️ Recipe unlocked: %s (%d total)"), 
 		*GetRecipeDisplayName(Recipe), UnlockedRecipes.Num());
 }
 
@@ -228,7 +228,7 @@ TArray<TSubclassOf<UFGRecipe>> USFRecipeManagementService::GetFilteredRecipesFor
 {
 	if (!Subsystem || !Subsystem->GetActiveHologram()) 
 	{
-		UE_LOG(LogSmartFoundations, Log, TEXT("🍽️ No active hologram for recipe filtering"));
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🍽️ No active hologram for recipe filtering"));
 		SortedFilteredRecipes.Empty();
 		return TArray<TSubclassOf<UFGRecipe>>();
 	}
@@ -295,7 +295,7 @@ void USFRecipeManagementService::ClearAllRecipes()
 		Subsystem->UpdateCounterDisplay();
 	}
 	
-	UE_LOG(LogSmartFoundations, Log, TEXT("🍽️ All recipes and unlocked list cleared"));
+	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🍽️ All recipes and unlocked list cleared"));
 }
 
 // ========================================
@@ -316,7 +316,7 @@ void USFRecipeManagementService::StoreProductionRecipeFromBuilding(AFGBuildable*
 	// Check if this is a production building that supports recipes
 	if (!IsProductionBuilding(SourceBuilding))
 	{
-		UE_LOG(LogSmartFoundations, Log, TEXT("🍽️ Building is not a production building, skipping recipe storage"));
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🍽️ Building is not a production building, skipping recipe storage"));
 		return;
 	}
 	
@@ -363,11 +363,11 @@ void USFRecipeManagementService::StoreProductionRecipeFromBuilding(AFGBuildable*
 			Subsystem->UpdateCounterDisplay();
 		}
 		
-		UE_LOG(LogSmartFoundations, Log, TEXT("🍽️ Stored recipe from building: %s"), *StoredRecipeDisplayName);
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🍽️ Stored recipe from building: %s"), *StoredRecipeDisplayName);
 	}
 	else
 	{
-		UE_LOG(LogSmartFoundations, Log, TEXT("🍽️ Building %s has no recipe set"), *SourceBuilding->GetName());
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🍽️ Building %s has no recipe set"), *SourceBuilding->GetName());
 	}
 	
 	// Issue #208/#209: Capture Power Shard and Somersloop state from source building
@@ -399,12 +399,12 @@ void USFRecipeManagementService::StoreProductionRecipeFromBuilding(AFGBuildable*
 						StoredOverclockShardClass = ShardClass;
 					}
 					StoredOverclockShardCount += Stack.NumItems;
-					UE_LOG(LogSmartFoundations, Log, TEXT("⚡ Captured overclock shard: %s x%d (total: %d)"), *ShardClass->GetName(), Stack.NumItems, StoredOverclockShardCount);
+					UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⚡ Captured overclock shard: %s x%d (total: %d)"), *ShardClass->GetName(), Stack.NumItems, StoredOverclockShardCount);
 				}
 				else if (ShardType == EPowerShardType::PST_ProductionBoost && !StoredProductionBoostShardClass)
 				{
 					StoredProductionBoostShardClass = ShardClass;
-					UE_LOG(LogSmartFoundations, Log, TEXT("🔮 Captured production boost shard class: %s"), *ShardClass->GetName());
+					UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔮 Captured production boost shard class: %s"), *ShardClass->GetName());
 				}
 			}
 		}
@@ -414,7 +414,7 @@ void USFRecipeManagementService::StoreProductionRecipeFromBuilding(AFGBuildable*
 		{
 			StoredPotential = SourcePotential;
 			bHasStoredPotential = true;
-			UE_LOG(LogSmartFoundations, Log, TEXT("⚡ Stored overclock potential: %.0f%% from %s (shard class: %s)"), 
+			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⚡ Stored overclock potential: %.0f%% from %s (shard class: %s)"), 
 				SourcePotential * 100.0f, *SourceBuilding->GetName(), *StoredOverclockShardClass->GetName());
 		}
 		else
@@ -428,7 +428,7 @@ void USFRecipeManagementService::StoreProductionRecipeFromBuilding(AFGBuildable*
 		{
 			StoredProductionBoost = SourceBoost;
 			bHasStoredProductionBoost = true;
-			UE_LOG(LogSmartFoundations, Log, TEXT("🔮 Stored production boost: %.0f%% from %s (shard class: %s)"), 
+			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔮 Stored production boost: %.0f%% from %s (shard class: %s)"), 
 				SourceBoost * 100.0f, *SourceBuilding->GetName(), *StoredProductionBoostShardClass->GetName());
 		}
 		else
@@ -445,7 +445,7 @@ void USFRecipeManagementService::StoreProductionRecipeFromBuilding(AFGBuildable*
 			++CurrentBuildSessionId;
 			ShardSessionId = CurrentBuildSessionId;
 			ShardSourceBuildClass = SourceBuilding->GetClass();
-			UE_LOG(LogSmartFoundations, Log, TEXT("🏷️ Tagged shard state with session ID=%d, source class=%s"), 
+			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🏷️ Tagged shard state with session ID=%d, source class=%s"), 
 				ShardSessionId, *GetNameSafe(ShardSourceBuildClass));
 		}
 	}
@@ -456,7 +456,7 @@ void USFRecipeManagementService::OnRecipeModeChanged(const FInputActionValue& Va
 	// Toggle recipe mode state
 	bRecipeModeActive = Value.Get<bool>();
 	
-	UE_LOG(LogSmartFoundations, Log, TEXT("🍽️ Recipe mode %s"), 
+	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🍽️ Recipe mode %s"), 
 		bRecipeModeActive ? TEXT("activated") : TEXT("deactivated"));
 }
 
@@ -477,7 +477,7 @@ void USFRecipeManagementService::ApplyStoredProductionRecipeToBuilding(AFGBuilda
 	if (Manufacturer)
 	{
 		Manufacturer->SetRecipe(StoredProductionRecipe);
-		UE_LOG(LogSmartFoundations, Log, TEXT("🍽️ Applied stored recipe %s to building %s"), 
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🍽️ Applied stored recipe %s to building %s"), 
 			*StoredRecipeDisplayName, *TargetBuilding->GetName());
 	}
 }
@@ -527,7 +527,7 @@ void USFRecipeManagementService::OnBuildGunRecipeSampled(TSubclassOf<UFGRecipe> 
 
 void USFRecipeManagementService::ClearStoredProductionRecipe()
 {
-	UE_LOG(LogSmartFoundations, Log, TEXT("🧹 ClearStoredProductionRecipe: bHasStoredPotential=%s, bHasStoredProductionBoost=%s, ShardCount=%d"),
+	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🧹 ClearStoredProductionRecipe: bHasStoredPotential=%s, bHasStoredProductionBoost=%s, ShardCount=%d"),
 		bHasStoredPotential ? TEXT("true") : TEXT("false"),
 		bHasStoredProductionBoost ? TEXT("true") : TEXT("false"),
 		StoredOverclockShardCount);
@@ -582,7 +582,7 @@ void USFRecipeManagementService::ClearStoredProductionRecipe()
 		Subsystem->UpdateCounterDisplay();
 	}
 	
-	UE_LOG(LogSmartFoundations, Log, TEXT("🍽️ Cleared stored production recipe"));
+	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🍽️ Cleared stored production recipe"));
 }
 
 // ========================================
@@ -622,12 +622,12 @@ void USFRecipeManagementService::ApplyRecipeToParentHologram()
 		
 		if (ActiveRecipe != nullptr)
 		{
-			UE_LOG(LogSmartFoundations, Log, TEXT("🍽️ Updated parent hologram %s data registry with recipe %s"), 
+			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🍽️ Updated parent hologram %s data registry with recipe %s"), 
 				*ParentHologram->GetName(), *GetRecipeDisplayName(ActiveRecipe));
 		}
 		else
 		{
-			UE_LOG(LogSmartFoundations, Log, TEXT("🍽️ Cleared parent hologram %s data registry (recipe cleared)"), 
+			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🍽️ Cleared parent hologram %s data registry (recipe cleared)"), 
 				*ParentHologram->GetName());
 		}
 	}

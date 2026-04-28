@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [29.2.5] - 2026-04-27
+
+### Changed
+- **First release in the new public repository** - Smart! is now published as source-available code on GitHub at https://github.com/majormer/SmartFoundations. The source is available for community transparency, code review, and pull request contributions. See LICENSE.md for the full source-available license terms.
+
+### Fixed
+- **A massive amount of logging spam removed** - Smart! was generating over 500,000 log entries during normal gameplay from per-frame input diagnostics, hologram construction events, recipe service activity, and child hologram spawning during grid placement. These high-frequency logs have been moved to verbose logging, eliminating the log flood while keeping diagnostics available for troubleshooting.
+- **Extend no longer runs post-build wiring during world load** - Loading a save could make Smart! run Extend's post-build wiring checks against ordinary factory buildings before you had used Extend at all. This produced confusing Extend chain-fix messages during login and did unnecessary work on restored buildings. Extend post-build wiring now only runs when there is actual pending Extend build state to process.
+- **Scaled Extend pump wiring now follows the cloned topology** - When extending refinery or pump setups with multiple cloned groups, cloned pumps now connect to the power pole cloned with their own group instead of all later pumps incorrectly wiring back to the first cloned pole.
+
+---
+
 ## [29.2.4] - 2026-04-26
 
 ### Fixed

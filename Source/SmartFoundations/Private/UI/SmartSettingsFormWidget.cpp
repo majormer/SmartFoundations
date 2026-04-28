@@ -30,7 +30,7 @@
 void USmartSettingsFormWidget::NativeConstruct()
 {
     Super::NativeConstruct();
-    
+
     UE_LOG(LogSmartFoundations, Log, TEXT("Settings Form: NativeConstruct called"));
 
     // Check if Blueprint widgets are bound
@@ -39,19 +39,19 @@ void USmartSettingsFormWidget::NativeConstruct()
         UE_LOG(LogSmartFoundations, Error, TEXT("Settings Form: BackgroundPanel not bound from Blueprint"));
         return;
     }
-    
+
     if (!TitleText)
     {
         UE_LOG(LogSmartFoundations, Error, TEXT("Settings Form: TitleText not bound from Blueprint"));
         return;
     }
-    
+
     if (!ContentContainer)
     {
         UE_LOG(LogSmartFoundations, Error, TEXT("Settings Form: ContentContainer not bound from Blueprint"));
         return;
     }
-    
+
     if (!CloseButton)
     {
         UE_LOG(LogSmartFoundations, Error, TEXT("Settings Form: CloseButton not bound from Blueprint"));
@@ -60,18 +60,18 @@ void USmartSettingsFormWidget::NativeConstruct()
 
     // Set up button handlers
     CloseButton->OnClicked.AddDynamic(this, &USmartSettingsFormWidget::OnCloseButtonClicked);
-    
+
     if (ApplyBtn)
     {
         ApplyBtn->OnClicked.AddDynamic(this, &USmartSettingsFormWidget::OnApplyButtonClicked);
     }
-    
+
     // Issue #165: Reset button - zeros spacing, steps, stagger, and rotation
     if (ResetBtn)
     {
         ResetBtn->OnClicked.AddDynamic(this, &USmartSettingsFormWidget::OnResetButtonClicked);
     }
-    
+
     // Set up confirmation dialog button handlers
     if (ConfirmYesButton)
     {
@@ -81,16 +81,16 @@ void USmartSettingsFormWidget::NativeConstruct()
     {
         ConfirmNoButton->OnClicked.AddDynamic(this, &USmartSettingsFormWidget::OnConfirmNoClicked);
     }
-    
+
     // Hide confirmation dialog by default
     if (ConfirmationSizeBox)
     {
         ConfirmationSizeBox->SetVisibility(ESlateVisibility::Collapsed);
     }
-    
+
     // Set default title
     TitleText->SetText(LOCTEXT("Panel_Title", "Smart! Panel"));
-    
+
     // Configure widget to block all mouse input
     SetIsFocusable(true);
 
@@ -109,17 +109,17 @@ void USmartSettingsFormWidget::NativeConstruct()
             SpinBox->SetMinFractionalDigits(0);
             SpinBox->SetMaxFractionalDigits(0);
             SpinBox->SetMinDesiredWidth(400.0f);  // Wider for easier interaction
-            
+
             // Increase font size for readability
             FSlateFontInfo FontInfo = SpinBox->GetFont();
             FontInfo.Size = 18;
             SpinBox->SetFont(FontInfo);
-            
+
             SpinBox->OnValueCommitted.AddDynamic(this, &USmartSettingsFormWidget::OnSpinBoxValueCommitted);
             SpinBox->OnValueChanged.AddDynamic(this, &USmartSettingsFormWidget::OnGridSpinBoxValueChanged);
         }
     };
-    
+
     // Configure Spacing/Steps/Stagger SpinBox inputs (allow negative, float values)
     auto ConfigureFloatSpinBox = [this](USpinBox* SpinBox)
     {
@@ -134,12 +134,12 @@ void USmartSettingsFormWidget::NativeConstruct()
             SpinBox->SetMinFractionalDigits(1);
             SpinBox->SetMaxFractionalDigits(1);
             SpinBox->SetMinDesiredWidth(400.0f);  // Wider for easier interaction
-            
+
             // Increase font size for readability
             FSlateFontInfo FontInfo = SpinBox->GetFont();
             FontInfo.Size = 18;
             SpinBox->SetFont(FontInfo);
-            
+
             SpinBox->OnValueCommitted.AddDynamic(this, &USmartSettingsFormWidget::OnSpinBoxValueCommitted);
             SpinBox->OnValueChanged.AddDynamic(this, &USmartSettingsFormWidget::OnSpinBoxValueChanged);
         }
@@ -149,7 +149,7 @@ void USmartSettingsFormWidget::NativeConstruct()
     ConfigureGridSpinBox(GridXInput);
     ConfigureGridSpinBox(GridYInput);
     ConfigureGridSpinBox(GridZInput);
-    
+
     // Spacing/Steps/Stagger inputs: minimum 0, float values in meters
     ConfigureFloatSpinBox(SpacingXInput);
     ConfigureFloatSpinBox(SpacingYInput);
@@ -160,7 +160,7 @@ void USmartSettingsFormWidget::NativeConstruct()
     ConfigureFloatSpinBox(StaggerYInput);
     ConfigureFloatSpinBox(StaggerZXInput);
     ConfigureFloatSpinBox(StaggerZYInput);
-    
+
     // Configure Rotation SpinBox (degrees, not meters)
     auto ConfigureRotationSpinBox = [this](USpinBox* SpinBox)
     {
@@ -175,17 +175,17 @@ void USmartSettingsFormWidget::NativeConstruct()
             SpinBox->SetMinFractionalDigits(1);
             SpinBox->SetMaxFractionalDigits(1);
             SpinBox->SetMinDesiredWidth(400.0f);
-            
+
             FSlateFontInfo FontInfo = SpinBox->GetFont();
             FontInfo.Size = 18;
             SpinBox->SetFont(FontInfo);
-            
+
             SpinBox->OnValueCommitted.AddDynamic(this, &USmartSettingsFormWidget::OnSpinBoxValueCommitted);
             SpinBox->OnValueChanged.AddDynamic(this, &USmartSettingsFormWidget::OnSpinBoxValueChanged);
         }
     };
     ConfigureRotationSpinBox(RotationZInput);
-    
+
     // Configure SizeBox widths for all SpinBoxes (override blueprint constraints)
     auto ConfigureSizeBox = [](USizeBox* SizeBox)
     {
@@ -194,7 +194,7 @@ void USmartSettingsFormWidget::NativeConstruct()
             SizeBox->SetWidthOverride(150.0f);
         }
     };
-    
+
     ConfigureSizeBox(GridXInputSizeBox);
     ConfigureSizeBox(GridYInputSizeBox);
     ConfigureSizeBox(GridZInputSizeBox);
@@ -208,22 +208,22 @@ void USmartSettingsFormWidget::NativeConstruct()
     ConfigureSizeBox(StaggerZXInputSizeBox);
     ConfigureSizeBox(StaggerZYInputSizeBox);
     ConfigureSizeBox(RotationZInputSizeBox);
-    
+
     // Configure ComboBox styles to use standard Box instead of RoundedBox
     // Also copies the WidgetStyle (button appearance) from a reference ComboBox
     auto ConfigureComboBoxStyle = [](UComboBoxString* ComboBox, UComboBoxString* ReferenceComboBox = nullptr)
     {
         if (!ComboBox) return;
-        
+
         // Copy WidgetStyle from reference if provided (for consistent button appearance)
         if (ReferenceComboBox)
         {
             ComboBox->SetWidgetStyle(ReferenceComboBox->GetWidgetStyle());
         }
-        
+
         // Get the current item style and modify the brushes to use Box instead of RoundedBox
         FTableRowStyle ItemStyle = ComboBox->GetItemStyle();
-        
+
         // Change active/inactive brushes from RoundedBox to Box
         ItemStyle.ActiveBrush.DrawAs = ESlateBrushDrawType::Box;
         ItemStyle.ActiveHoveredBrush.DrawAs = ESlateBrushDrawType::Box;
@@ -233,10 +233,10 @@ void USmartSettingsFormWidget::NativeConstruct()
         ItemStyle.EvenRowBackgroundHoveredBrush.DrawAs = ESlateBrushDrawType::Box;
         ItemStyle.OddRowBackgroundBrush.DrawAs = ESlateBrushDrawType::Box;
         ItemStyle.OddRowBackgroundHoveredBrush.DrawAs = ESlateBrushDrawType::Box;
-        
+
         ComboBox->SetItemStyle(ItemStyle);
     };
-    
+
     ConfigureComboBoxStyle(RecipeComboBox);
     ConfigureComboBoxStyle(BeltTierMainComboBox);
     ConfigureComboBoxStyle(BeltTierToBuildingComboBox);
@@ -247,7 +247,7 @@ void USmartSettingsFormWidget::NativeConstruct()
     ConfigureComboBoxStyle(BeltRoutingModeComboBox, PipeRoutingModeComboBox);  // Copy style from Pipe Routing Mode
     ConfigureComboBoxStyle(PowerGridAxisComboBox);
     ConfigureComboBoxStyle(PowerReservedComboBox);
-    
+
     // Bind Apply Immediately checkbox
     // NOTE: Do NOT set checkbox state here - PopulateFromCounterState() is called BEFORE NativeConstruct
     // and correctly initializes bApplyImmediately from global config. Setting it here would reset to false.
@@ -280,13 +280,13 @@ void USmartSettingsFormWidget::NativeConstruct()
     {
         RecipeComboBox->OnSelectionChanged.AddDynamic(this, &USmartSettingsFormWidget::OnRecipeSelectionChanged);
     }
-    
+
     // Bind clear recipe button
     if (ClearRecipeButton)
     {
         ClearRecipeButton->OnClicked.AddDynamic(this, &USmartSettingsFormWidget::OnClearRecipeButtonClicked);
     }
-    
+
     // Bind belt auto-connect controls
     if (BeltEnabledCheckBox)
     {
@@ -312,7 +312,7 @@ void USmartSettingsFormWidget::NativeConstruct()
     {
         BeltRoutingModeComboBox->OnSelectionChanged.AddDynamic(this, &USmartSettingsFormWidget::OnBeltRoutingModeChanged);
     }
-    
+
     // Bind pipe auto-connect controls
     if (PipeEnabledCheckBox)
     {
@@ -334,7 +334,7 @@ void USmartSettingsFormWidget::NativeConstruct()
     {
         PipeRoutingModeComboBox->OnSelectionChanged.AddDynamic(this, &USmartSettingsFormWidget::OnPipeRoutingModeChanged);
     }
-    
+
     // Bind power auto-connect controls
     if (PowerEnabledCheckBox)
     {
@@ -387,21 +387,21 @@ void USmartSettingsFormWidget::NativeConstruct()
             LogoOffset = SmartLogoSlot->GetPosition() - BackgroundPos;
         }
     }
-    
+
     // ========== DARK THEME STYLING ==========
-    
+
     // Dark background on BackgroundPanel
     if (BackgroundPanel)
     {
         BackgroundPanel->SetBrushColor(FLinearColor(0.02f, 0.02f, 0.04f, 0.92f));
     }
-    
+
     // Orange accent on title
     if (TitleText)
     {
         TitleText->SetColorAndOpacity(FSlateColor(FLinearColor(1.0f, 0.6f, 0.2f, 1.0f)));
     }
-    
+
     // Orange accent on existing section headers
     if (AutoConnectHeaderText)
     {
@@ -411,22 +411,22 @@ void USmartSettingsFormWidget::NativeConstruct()
     {
         RecipeHeaderText->SetColorAndOpacity(FSlateColor(FLinearColor(1.0f, 0.6f, 0.2f, 1.0f)));
     }
-    
+
     // Set all TextBlocks in ContentContainer to light gray for dark background
     if (ContentContainer)
     {
         const FSlateColor LightTextColor(FLinearColor(0.9f, 0.9f, 0.9f, 1.0f));
-        
+
         // Recursive lambda to set text color on all UTextBlock descendants
         TFunction<void(UWidget*)> SetTextColors = [&](UWidget* Parent)
         {
             if (!Parent) return;
-            
+
             if (UTextBlock* TextBlock = Cast<UTextBlock>(Parent))
             {
                 TextBlock->SetColorAndOpacity(LightTextColor);
             }
-            
+
             if (UPanelWidget* Panel = Cast<UPanelWidget>(Parent))
             {
                 for (int32 i = 0; i < Panel->GetChildrenCount(); i++)
@@ -435,9 +435,9 @@ void USmartSettingsFormWidget::NativeConstruct()
                 }
             }
         };
-        
+
         SetTextColors(ContentContainer);
-        
+
         // Re-apply orange accent on headers (overridden by recursive pass)
         if (AutoConnectHeaderText)
         {
@@ -452,9 +452,9 @@ void USmartSettingsFormWidget::NativeConstruct()
             GridWarningText->SetColorAndOpacity(FSlateColor(FLinearColor(1.0f, 0.3f, 0.3f, 1.0f)));
         }
     }
-    
+
     UE_LOG(LogSmartFoundations, Log, TEXT("Settings Form: Blueprint widgets bound successfully"));
-    
+
     // === Localize Blueprint Labels ===
     // Override default text set in the Widget Blueprint with LOCTEXT for runtime localization.
     // Uses GetWidgetFromName() to find TextBlock widgets by their Blueprint name.
@@ -466,7 +466,7 @@ void USmartSettingsFormWidget::NativeConstruct()
                 TB->SetText(Text);
             }
         };
-        
+
         // Button labels
         SetLabel(TEXT("ApplyBtnText"), LOCTEXT("Panel_Btn_Apply", "Apply"));
         SetLabel(TEXT("ResetBtnText"), LOCTEXT("Panel_Btn_Reset", "Reset"));
@@ -474,56 +474,56 @@ void USmartSettingsFormWidget::NativeConstruct()
         SetLabel(TEXT("ClearRecipeButtonText"), LOCTEXT("Panel_Btn_ClearRecipe", "Clear"));
         SetLabel(TEXT("ConfirmYesText"), LOCTEXT("Panel_Btn_Continue", "Continue"));
         SetLabel(TEXT("ConfirmNoText"), LOCTEXT("Panel_Btn_Cancel", "Cancel"));
-        
+
         // Apply Immediately label
         SetLabel(TEXT("ApplyImmediatelyLabel"), LOCTEXT("Panel_ApplyImmediately", "Apply Immediately:"));
-        
+
         // Section headers
         SetLabel(TEXT("GridSectionHeader"), LOCTEXT("Panel_Section_Grid", "Grid"));
         SetLabel(TEXT("SpacingSectionHeader"), LOCTEXT("Panel_Section_Spacing", "Spacing"));
         SetLabel(TEXT("StepsSectionHeader"), LOCTEXT("Panel_Section_Steps", "Steps"));
         SetLabel(TEXT("StaggerSectionHeader"), LOCTEXT("Panel_Section_Stagger", "Stagger"));
         SetLabel(TEXT("RotationSectionHeader"), LOCTEXT("Panel_Section_Rotation", "Rotation"));
-        
+
         // Grid row labels
         SetLabel(TEXT("GridXLabel"), LOCTEXT("Panel_GridX", "Grid [X]:"));
         SetLabel(TEXT("GridYLabel"), LOCTEXT("Panel_GridY", "Grid [Y]:"));
         SetLabel(TEXT("GridZLabel"), LOCTEXT("Panel_GridZ", "Grid [Z]:"));
-        
+
         // Spacing row labels
         SetLabel(TEXT("SpacingXLabel"), LOCTEXT("Panel_SpacingX", "Spacing [X]:"));
         SetLabel(TEXT("SpacingYLabel"), LOCTEXT("Panel_SpacingY", "Spacing [Y]:"));
         SetLabel(TEXT("SpacingZLabel"), LOCTEXT("Panel_SpacingZ", "Spacing [Z]:"));
-        
+
         // Spacing unit labels
         SetLabel(TEXT("SpacingXUnit"), LOCTEXT("Panel_Unit_Meters", "m"));
         SetLabel(TEXT("SpacingYUnit"), LOCTEXT("Panel_Unit_Meters", "m"));
         SetLabel(TEXT("SpacingZUnit"), LOCTEXT("Panel_Unit_Meters", "m"));
-        
+
         // Steps row labels
         SetLabel(TEXT("StepsXLabel"), LOCTEXT("Panel_StepsX", "Steps [X]:"));
         SetLabel(TEXT("StepsYLabel"), LOCTEXT("Panel_StepsY", "Steps [Y]:"));
-        
+
         // Steps unit labels
         SetLabel(TEXT("StepsXUnit"), LOCTEXT("Panel_Unit_Meters", "m"));
         SetLabel(TEXT("StepsYUnit"), LOCTEXT("Panel_Unit_Meters", "m"));
-        
+
         // Stagger row labels
         SetLabel(TEXT("StaggerXLabel"), LOCTEXT("Panel_StaggerX", "Stagger [X]:"));
         SetLabel(TEXT("StaggerYLabel"), LOCTEXT("Panel_StaggerY", "Stagger [Y]:"));
         SetLabel(TEXT("StaggerZXLabel"), LOCTEXT("Panel_StaggerZX", "Stagger [ZX]:"));
         SetLabel(TEXT("StaggerZYLabel"), LOCTEXT("Panel_StaggerZY", "Stagger [ZY]:"));
-        
+
         // Stagger unit labels
         SetLabel(TEXT("StaggerXUnit"), LOCTEXT("Panel_Unit_Meters", "m"));
         SetLabel(TEXT("StaggerYUnit"), LOCTEXT("Panel_Unit_Meters", "m"));
         SetLabel(TEXT("StaggerZXUnit"), LOCTEXT("Panel_Unit_Meters", "m"));
         SetLabel(TEXT("StaggerZYUnit"), LOCTEXT("Panel_Unit_Meters", "m"));
-        
+
         // Rotation row label and unit
         SetLabel(TEXT("RotationZLabel"), LOCTEXT("Panel_RotationZ", "Rotation [Z]:"));
         SetLabel(TEXT("RotationZUnit"), LOCTEXT("Panel_Unit_Degrees", "\u00B0"));
-        
+
         // Belt auto-connect labels
         SetLabel(TEXT("BeltEnabledLabel"), LOCTEXT("Panel_AC_BeltEnabled", "Belt Auto-Connect:"));
         SetLabel(TEXT("BeltTierMainLabel"), LOCTEXT("Panel_AC_MainTier", "Main Tier:"));
@@ -531,20 +531,20 @@ void USmartSettingsFormWidget::NativeConstruct()
         SetLabel(TEXT("BeltChainLabel"), LOCTEXT("Panel_AC_Chain", "Chain:"));
         SetLabel(TEXT("StackableBeltDirectionLabel"), LOCTEXT("Panel_AC_Direction", "Direction:"));
         SetLabel(TEXT("BeltRoutingModeLabel"), LOCTEXT("Panel_AC_Routing", "Routing:"));
-        
+
         // Pipe auto-connect labels
         SetLabel(TEXT("PipeEnabledLabel"), LOCTEXT("Panel_AC_PipeEnabled", "Pipe Auto-Connect:"));
         SetLabel(TEXT("PipeTierMainLabel"), LOCTEXT("Panel_AC_MainTier", "Main Tier:"));
         SetLabel(TEXT("PipeTierToBuildingLabel"), LOCTEXT("Panel_AC_ToBuilding", "To Building:"));
         SetLabel(TEXT("PipeIndicatorLabel"), LOCTEXT("Panel_AC_FlowIndicator", "Flow Indicator:"));
         SetLabel(TEXT("PipeRoutingModeLabel"), LOCTEXT("Panel_AC_Routing", "Routing:"));
-        
+
         // Power auto-connect labels
         SetLabel(TEXT("PowerEnabledLabel"), LOCTEXT("Panel_AC_PowerEnabled", "Power Auto-Connect:"));
         SetLabel(TEXT("PowerGridAxisLabel"), LOCTEXT("Panel_AC_GridAxis", "Grid Axis:"));
         SetLabel(TEXT("PowerReservedLabel"), LOCTEXT("Panel_AC_Reserved", "Reserved:"));
     }
-    
+
     // === Extend Mode Overrides ===
     // Applied AFTER default setup since PopulateFromCounterState runs before NativeConstruct.
     // Hides unsupported transforms: Grid Z, Spacing Z, all Stagger.
@@ -555,7 +555,7 @@ void USmartSettingsFormWidget::NativeConstruct()
         {
             TitleText->SetText(LOCTEXT("Panel_Title_Extend", "Smart! Extend"));
         }
-        
+
         // Helper to collapse a named widget in the tree
         auto CollapseByName = [this](const TCHAR* WidgetName)
         {
@@ -564,21 +564,21 @@ void USmartSettingsFormWidget::NativeConstruct()
                 W->SetVisibility(ESlateVisibility::Collapsed);
             }
         };
-        
+
         // Hide Grid Z row (not used in Extend)
         CollapseByName(TEXT("GridZRow"));
-        
+
         // Hide Spacing Z row (not used in Extend)
         CollapseByName(TEXT("SpacingZRow"));
-        
+
         // Hide entire Stagger section (blocked during Extend)
         CollapseByName(TEXT("StaggerSectionHeader"));
         CollapseByName(TEXT("StaggerXRow"));
         CollapseByName(TEXT("StaggerYRow"));
         CollapseByName(TEXT("StaggerZXRow"));
         CollapseByName(TEXT("StaggerZYRow"));
-        
-        UE_LOG(LogSmartFoundations, Log, TEXT("Settings Form: Extend mode overrides applied - title, Grid Z, Spacing Z, Stagger hidden"));
+
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Extend mode overrides applied - title, Grid Z, Spacing Z, Stagger hidden"));
     }
 }
 
@@ -589,10 +589,10 @@ void USmartSettingsFormWidget::PopulateFromCounterState(USFSubsystem* Subsystem)
         UE_LOG(LogSmartFoundations, Error, TEXT("Settings Form: Cannot populate - Subsystem is null"));
         return;
     }
-    
+
     // Cache subsystem reference for apply button
     CachedSubsystem = Subsystem;
-    
+
     // Initialize Apply Immediately from global config
     const FSmart_ConfigStruct& Config = Subsystem->GetCachedConfig();
     bApplyImmediately = Config.bApplyImmediately;
@@ -600,24 +600,24 @@ void USmartSettingsFormWidget::PopulateFromCounterState(USFSubsystem* Subsystem)
     {
         ApplyImmediatelyCheckBox->SetIsChecked(bApplyImmediately);
     }
-    
+
     // Get current counter state
     const FSFCounterState& State = Subsystem->GetCounterState();
-    
+
     // Cache the initial state for cancel/revert on Escape
     LastAppliedState = State;
-    
+
     // Populate Grid values (show absolute value, track direction separately)
     // Direction is determined by sign: positive = true, negative = false
     bGridXPositive = State.GridCounters.X >= 0;
     bGridYPositive = State.GridCounters.Y >= 0;
     bGridZPositive = State.GridCounters.Z >= 0;
-    
+
     // Cache direction state for cancel/revert
     bLastAppliedGridXPositive = bGridXPositive;
     bLastAppliedGridYPositive = bGridYPositive;
     bLastAppliedGridZPositive = bGridZPositive;
-    
+
     // Populate Grid values using SpinBox SetValue (absolute count)
     if (GridXInput)
     {
@@ -631,12 +631,12 @@ void USmartSettingsFormWidget::PopulateFromCounterState(USFSubsystem* Subsystem)
     {
         GridZInput->SetValue(static_cast<float>(FMath::Abs(State.GridCounters.Z)));
     }
-    
+
     // Update direction toggle labels
     UpdateGridDirectionLabel(GridXDirLabel, bGridXPositive);
     UpdateGridDirectionLabel(GridYDirLabel, bGridYPositive);
     UpdateGridDirectionLabel(GridZDirLabel, bGridZPositive);
-    
+
     // Populate Spacing values (display in meters, internal state is centimeters)
     if (SpacingXInput)
     {
@@ -650,7 +650,7 @@ void USmartSettingsFormWidget::PopulateFromCounterState(USFSubsystem* Subsystem)
     {
         SpacingZInput->SetValue(State.SpacingZ / 100.0f);
     }
-    
+
     // Populate Steps values (display in meters, internal state is centimeters)
     if (StepsXInput)
     {
@@ -660,7 +660,7 @@ void USmartSettingsFormWidget::PopulateFromCounterState(USFSubsystem* Subsystem)
     {
         StepsYInput->SetValue(State.StepsY / 100.0f);
     }
-    
+
     // Populate Stagger values (display in meters, internal state is centimeters)
     if (StaggerXInput)
     {
@@ -678,22 +678,22 @@ void USmartSettingsFormWidget::PopulateFromCounterState(USFSubsystem* Subsystem)
     {
         StaggerZYInput->SetValue(State.StaggerZY / 100.0f);
     }
-    
+
     // Rotation (degrees, not cm - no conversion needed)
     if (RotationZInput)
     {
         RotationZInput->SetValue(State.RotationZ);
     }
-    
-    UE_LOG(LogSmartFoundations, Log, TEXT("Settings Form: Populated from CounterState - Grid[%d,%d,%d] Spacing[%d,%d,%d] Steps[%d,%d] Stagger[%d,%d,%d,%d] Rotation[%.1f]"),
+
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Populated from CounterState - Grid[%d,%d,%d] Spacing[%d,%d,%d] Steps[%d,%d] Stagger[%d,%d,%d,%d] Rotation[%.1f]"),
         State.GridCounters.X, State.GridCounters.Y, State.GridCounters.Z,
         State.SpacingX, State.SpacingY, State.SpacingZ,
         State.StepsX, State.StepsY,
         State.StaggerX, State.StaggerY, State.StaggerZX, State.StaggerZY,
         State.RotationZ);
-    
+
     // Log widget binding status
-    UE_LOG(LogSmartFoundations, Log, TEXT("Settings Form: Widget bindings - GridX=%d SpacingX=%d StepsX=%d StaggerX=%d"),
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Widget bindings - GridX=%d SpacingX=%d StepsX=%d StaggerX=%d"),
         GridXInput != nullptr, SpacingXInput != nullptr, StepsXInput != nullptr, StaggerXInput != nullptr);
 
     // Save Extend mode flag — actual UI overrides applied in NativeConstruct (after default setup)
@@ -750,7 +750,7 @@ void USmartSettingsFormWidget::PopulateFromCounterState(USFSubsystem* Subsystem)
     // Recipe is determined by the source building, and auto-connect is handled by Extend wiring.
     if (bIsExtendMode)
     {
-        UE_LOG(LogSmartFoundations, Log, TEXT("Settings Form: Extend mode - skipping auto-connect and recipe sections"));
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Extend mode - skipping auto-connect and recipe sections"));
         return;
     }
 
@@ -788,7 +788,7 @@ void USmartSettingsFormWidget::PopulateFromCounterState(USFSubsystem* Subsystem)
     FString AutoConnectLines;
     bool bHasAnyAutoConnectContext = false;
 
-    UE_LOG(LogSmartFoundations, Log, TEXT("Settings Form: Checking auto-connect context..."));
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Checking auto-connect context..."));
 
     if (USFAutoConnectService* AutoConnectService = SubsystemPtr->GetAutoConnectService())
     {
@@ -803,13 +803,13 @@ void USmartSettingsFormWidget::PopulateFromCounterState(USFSubsystem* Subsystem)
             const bool bIsStackablePipeSupport = AutoConnectService->IsStackablePipelineSupportHologram(ActiveHologram);
             const bool bIsPassthroughPipe = USFAutoConnectService::IsPassthroughPipeHologram(ActiveHologram);
 
-            UE_LOG(LogSmartFoundations, Log, TEXT("Settings Form: Hologram=%s, IsDistributor=%d, IsPipeJunction=%d, IsPowerPole=%d, IsBeltSupport=%d, IsStackablePipeSupport=%d, IsPassthroughPipe=%d"),
+            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Hologram=%s, IsDistributor=%d, IsPipeJunction=%d, IsPowerPole=%d, IsBeltSupport=%d, IsStackablePipeSupport=%d, IsPassthroughPipe=%d"),
                 *ActiveHologram->GetClass()->GetName(), bIsDistributor, bIsPipeJunction, bIsPowerPole, bIsStackableConveyorPole, bIsStackablePipeSupport, bIsPassthroughPipe);
 
             if (bIsDistributor)
             {
                 bHasAnyAutoConnectContext = true;
-                
+
                 // Show belt auto-connect controls instead of summary text
                 if (BeltAutoConnectContainer)
                 {
@@ -832,7 +832,7 @@ void USmartSettingsFormWidget::PopulateFromCounterState(USFSubsystem* Subsystem)
             if (bIsPipeJunction)
             {
                 bHasAnyAutoConnectContext = true;
-                
+
                 // Show pipe auto-connect controls instead of summary text
                 if (PipeAutoConnectContainer)
                 {
@@ -859,7 +859,7 @@ void USmartSettingsFormWidget::PopulateFromCounterState(USFSubsystem* Subsystem)
             if (bIsPowerPole)
             {
                 bHasAnyAutoConnectContext = true;
-                
+
                 // Show power auto-connect controls instead of summary text
                 if (PowerAutoConnectContainer)
                 {
@@ -885,7 +885,7 @@ void USmartSettingsFormWidget::PopulateFromCounterState(USFSubsystem* Subsystem)
             if (bIsStackableConveyorPole)
             {
                 bHasAnyAutoConnectContext = true;
-                
+
                 // Show stackable conveyor pole auto-connect controls
                 if (BeltAutoConnectContainer)
                 {
@@ -911,7 +911,7 @@ void USmartSettingsFormWidget::PopulateFromCounterState(USFSubsystem* Subsystem)
             if (bIsStackablePipeSupport || bIsPassthroughPipe)
             {
                 bHasAnyAutoConnectContext = true;
-                
+
                 // Show pipe auto-connect controls (shared for stackable pipe supports and floor holes)
                 if (PipeAutoConnectContainer)
                 {
@@ -958,7 +958,7 @@ void USmartSettingsFormWidget::PopulateFromCounterState(USFSubsystem* Subsystem)
     SubsystemPtr->GetRecipeDisplayInfo(CurrentIndex, TotalRecipes);
     TSubclassOf<UFGRecipe> ActiveRecipe = SubsystemPtr->GetActiveRecipe();
 
-    UE_LOG(LogSmartFoundations, Log, TEXT("Settings Form: Recipe check - ActiveRecipe=%s, TotalRecipes=%d"),
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Recipe check - ActiveRecipe=%s, TotalRecipes=%d"),
         ActiveRecipe ? *ActiveRecipe->GetName() : TEXT("null"), TotalRecipes);
 
     bool bIsProductionBuilding = false;
@@ -970,19 +970,19 @@ void USmartSettingsFormWidget::PopulateFromCounterState(USFSubsystem* Subsystem)
             // Check if this is a production building by checking class hierarchy
             // BUT exclude auto-connect holograms (distributors, pipe junctions, power poles)
             // which may inherit from AFGBuildableFactory but don't use recipes
-            bIsProductionBuilding = HologramClass->IsChildOf(AFGBuildableFactory::StaticClass()) 
+            bIsProductionBuilding = HologramClass->IsChildOf(AFGBuildableFactory::StaticClass())
                                     && !bHasAnyAutoConnectContext;
             if (ActiveRecipe)
             {
                 bIsCompatible = SubsystemPtr->IsRecipeCompatibleWithHologram(ActiveRecipe, HologramClass);
             }
-            UE_LOG(LogSmartFoundations, Log, TEXT("Settings Form: Recipe compatibility check - HologramClass=%s, bIsProductionBuilding=%d, bIsCompatible=%d, bHasAutoConnectContext=%d"),
+            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Recipe compatibility check - HologramClass=%s, bIsProductionBuilding=%d, bIsCompatible=%d, bHasAutoConnectContext=%d"),
                 *HologramClass->GetName(), bIsProductionBuilding, bIsCompatible, bHasAnyAutoConnectContext);
         }
     }
     else
     {
-        UE_LOG(LogSmartFoundations, Log, TEXT("Settings Form: No active hologram for recipe check"));
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: No active hologram for recipe check"));
     }
 
     // Show recipe section for production buildings (excludes auto-connect holograms)
@@ -1015,14 +1015,14 @@ void USmartSettingsFormWidget::PopulateFromCounterState(USFSubsystem* Subsystem)
             RecipeHeaderText->SetText(LOCTEXT("Panel_RecipeHeader", "Recipes"));
             RecipeHeaderText->SetVisibility(ESlateVisibility::Visible);
         }
-        
+
         // Populate recipe details container with icons
         if (RecipeDetailsContainer)
         {
             PopulateRecipeDetails(ActiveRecipe);
             RecipeDetailsContainer->SetVisibility(ESlateVisibility::Visible);
         }
-        
+
         // Populate recipe ComboBox if available
         if (RecipeComboBox && bIsProductionBuilding)
         {
@@ -1030,45 +1030,45 @@ void USmartSettingsFormWidget::PopulateFromCounterState(USFSubsystem* Subsystem)
             {
                 RecipeComboBox->ClearOptions();
                 CachedRecipeList.Empty();
-                
+
                 // Add "None Selected" as first option (index 0)
                 // CachedRecipeList[0] will be nullptr to represent no selection
                 RecipeComboBox->AddOption(LOCTEXT("Panel_Recipe_NoneSelected", "None Selected").ToString());
                 CachedRecipeList.Add(nullptr);
-                
+
                 const TArray<TSubclassOf<UFGRecipe>>& Recipes = RecipeService->GetSortedFilteredRecipes();
                 int32 SelectedIndex = 0;  // Default to "None Selected"
-                
+
                 for (int32 i = 0; i < Recipes.Num(); i++)
                 {
                     TSubclassOf<UFGRecipe> Recipe = Recipes[i];
                     FString Label = RecipeService->GetRecipeComboBoxLabel(Recipe);
                     RecipeComboBox->AddOption(Label);
                     CachedRecipeList.Add(Recipe);
-                    
+
                     // Track which one is currently active (offset by 1 for "None Selected")
                     if (Recipe == ActiveRecipe)
                     {
                         SelectedIndex = i + 1;
                     }
                 }
-                
+
                 // Set current selection
                 RecipeComboBox->SetSelectedIndex(SelectedIndex);
-                
+
                 RecipeComboBox->SetVisibility(ESlateVisibility::Visible);
-                
+
                 // Show Clear button alongside recipe controls
                 if (ClearRecipeButton)
                 {
                     ClearRecipeButton->SetVisibility(ESlateVisibility::Visible);
                 }
-                
-                UE_LOG(LogSmartFoundations, Log, TEXT("Settings Form: Populated RecipeComboBox with %d recipes (+None), selected index=%d"),
+
+                UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Populated RecipeComboBox with %d recipes (+None), selected index=%d"),
                     Recipes.Num(), SelectedIndex);
             }
         }
-        
+
         // Update recipe icon for currently active recipe
         UpdateRecipeIcon(ActiveRecipe);
     }
@@ -1089,20 +1089,20 @@ void USmartSettingsFormWidget::PopulateFromCounterState(USFSubsystem* Subsystem)
             RecipeDetailsContainer->SetVisibility(ESlateVisibility::Collapsed);
         }
     }
-    
+
     // Initialize grid warning display based on current values
     UpdateGridWarningDisplay();
 }
 
 void USmartSettingsFormWidget::OnCloseButtonClicked()
 {
-    UE_LOG(LogSmartFoundations, Log, TEXT("Settings Form: Close button clicked"));
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Close button clicked"));
     CloseForm();
 }
 
 void USmartSettingsFormWidget::CancelAndClose()
 {
-    UE_LOG(LogSmartFoundations, Log, TEXT("Settings Form: Cancel and close (toggle key or escape)"));
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Cancel and close (toggle key or escape)"));
     RevertToLastAppliedState();
     CloseForm();
 }
@@ -1117,7 +1117,7 @@ void USmartSettingsFormWidget::CloseForm()
             HudService->SetHUDSuppressed(false);
         }
     }
-    
+
     // Restore game input mode and hide cursor
     APlayerController* PC = GetOwningPlayer();
     if (PC)
@@ -1126,30 +1126,30 @@ void USmartSettingsFormWidget::CloseForm()
         FInputModeGameOnly InputMode;
         PC->SetInputMode(InputMode);
     }
-    
+
     // Remove widget from viewport
     RemoveFromParent();
-    
-    UE_LOG(LogSmartFoundations, Log, TEXT("Settings Form: Closed and input restored"));
+
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Closed and input restored"));
 }
 
 void USmartSettingsFormWidget::OnApplyButtonClicked()
 {
-    UE_LOG(LogSmartFoundations, Log, TEXT("Settings Form: Apply button clicked"));
-    
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Apply button clicked"));
+
     // Don't process if we're already waiting for confirmation
     if (bWaitingForConfirmation)
     {
-        UE_LOG(LogSmartFoundations, Log, TEXT("Settings Form: Already waiting for confirmation, ignoring apply"));
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Already waiting for confirmation, ignoring apply"));
         return;
     }
-    
+
     if (!CachedSubsystem.IsValid())
     {
         UE_LOG(LogSmartFoundations, Error, TEXT("Settings Form: No cached subsystem reference"));
         return;
     }
-    
+
     // Check if confirmation is required for large grids
     if (RequiresApplyConfirmation())
     {
@@ -1161,33 +1161,33 @@ void USmartSettingsFormWidget::OnApplyButtonClicked()
         });
         return;
     }
-    
+
     // No confirmation needed, apply directly
     ApplyCurrentValues();
 }
 
 void USmartSettingsFormWidget::OnResetButtonClicked()
 {
-    UE_LOG(LogSmartFoundations, Log, TEXT("Settings Form: Reset button clicked - zeroing spacing, steps, stagger, and rotation"));
-    
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Reset button clicked - zeroing spacing, steps, stagger, and rotation"));
+
     // Zero out spacing SpinBoxes
     if (SpacingXInput) SpacingXInput->SetValue(0.0f);
     if (SpacingYInput) SpacingYInput->SetValue(0.0f);
     if (SpacingZInput) SpacingZInput->SetValue(0.0f);
-    
+
     // Zero out steps SpinBoxes
     if (StepsXInput) StepsXInput->SetValue(0.0f);
     if (StepsYInput) StepsYInput->SetValue(0.0f);
-    
+
     // Zero out stagger SpinBoxes
     if (StaggerXInput) StaggerXInput->SetValue(0.0f);
     if (StaggerYInput) StaggerYInput->SetValue(0.0f);
     if (StaggerZXInput) StaggerZXInput->SetValue(0.0f);
     if (StaggerZYInput) StaggerZYInput->SetValue(0.0f);
-    
+
     // Zero out rotation SpinBox
     if (RotationZInput) RotationZInput->SetValue(0.0f);
-    
+
     // Apply the reset values immediately (regardless of Apply Immediately mode)
     OnApplyButtonClicked();
 }
@@ -1199,10 +1199,10 @@ void USmartSettingsFormWidget::ApplyCurrentValues()
         UE_LOG(LogSmartFoundations, Error, TEXT("Settings Form: No cached subsystem reference"));
         return;
     }
-    
+
     // Parse values from editable text inputs
     FSFCounterState NewState = CachedSubsystem->GetCounterState();
-    
+
     // Read Grid values from SpinBox (absolute count, apply direction from toggle state)
     if (GridXInput)
     {
@@ -1219,7 +1219,7 @@ void USmartSettingsFormWidget::ApplyCurrentValues()
         int32 Count = FMath::Max(1, FMath::RoundToInt(GridZInput->GetValue()));
         NewState.GridCounters.Z = bGridZPositive ? Count : -Count;
     }
-    
+
     // Read Spacing values from SpinBox (meters in UI -> centimeters in state)
     if (SpacingXInput)
     {
@@ -1233,7 +1233,7 @@ void USmartSettingsFormWidget::ApplyCurrentValues()
     {
         NewState.SpacingZ = FMath::RoundToInt(SpacingZInput->GetValue() * 100.0f);
     }
-    
+
     // Read Steps values from SpinBox (meters in UI -> centimeters in state)
     if (StepsXInput)
     {
@@ -1243,7 +1243,7 @@ void USmartSettingsFormWidget::ApplyCurrentValues()
     {
         NewState.StepsY = FMath::RoundToInt(StepsYInput->GetValue() * 100.0f);
     }
-    
+
     // Read Stagger values from SpinBox (meters in UI -> centimeters in state)
     if (StaggerXInput)
     {
@@ -1261,31 +1261,31 @@ void USmartSettingsFormWidget::ApplyCurrentValues()
     {
         NewState.StaggerZY = FMath::RoundToInt(StaggerZYInput->GetValue() * 100.0f);
     }
-    
+
     // Read Rotation value from SpinBox (degrees - no conversion needed)
     if (RotationZInput)
     {
         NewState.RotationZ = RotationZInput->GetValue();
     }
-    
+
     // Log parsed values before applying
-    UE_LOG(LogSmartFoundations, Log, TEXT("Settings Form: Parsed values - Grid[%d,%d,%d] Spacing[%d,%d,%d] Steps[%d,%d] Stagger[%d,%d,%d,%d] Rotation[%.1f]"),
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Parsed values - Grid[%d,%d,%d] Spacing[%d,%d,%d] Steps[%d,%d] Stagger[%d,%d,%d,%d] Rotation[%.1f]"),
         NewState.GridCounters.X, NewState.GridCounters.Y, NewState.GridCounters.Z,
         NewState.SpacingX, NewState.SpacingY, NewState.SpacingZ,
         NewState.StepsX, NewState.StepsY,
         NewState.StaggerX, NewState.StaggerY, NewState.StaggerZX, NewState.StaggerZY,
         NewState.RotationZ);
-    
+
     // Apply the new state (updates GridStateService, local CounterState, and triggers HUD refresh)
     CachedSubsystem->UpdateCounterState(NewState);
-    
+
     // Regenerate child holograms to reflect new grid counts and reposition with new spacing/steps/stagger
     // During Extend mode, UpdateCounterState already triggers OnScaledExtendStateChanged which handles regeneration
     if (!CachedSubsystem->IsExtendModeActive())
     {
         CachedSubsystem->RegenerateChildHologramGrid();
     }
-    
+
     // Refresh recipe details to update grid totals with new grid size
     if (RecipeDetailsContainer && RecipeComboBox)
     {
@@ -1300,11 +1300,11 @@ void USmartSettingsFormWidget::ApplyCurrentValues()
             }
         }
     }
-    
+
     // Cache the applied state for cancel/revert
     CacheCurrentStateAsApplied();
-    
-    UE_LOG(LogSmartFoundations, Log, TEXT("Settings Form: State applied and grid regenerated"));
+
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: State applied and grid regenerated"));
 }
 
 FReply USmartSettingsFormWidget::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
@@ -1373,59 +1373,59 @@ void USmartSettingsFormWidget::OnRecipeSelectionChanged(FString SelectedItem, ES
     {
         return;
     }
-    
+
     if (!CachedSubsystem.IsValid() || !RecipeComboBox)
     {
         return;
     }
-    
+
     int32 SelectedIndex = RecipeComboBox->GetSelectedIndex();
     if (SelectedIndex < 0 || SelectedIndex >= CachedRecipeList.Num())
     {
         UE_LOG(LogSmartFoundations, Warning, TEXT("Settings Form: Invalid recipe selection index %d"), SelectedIndex);
         return;
     }
-    
+
     TSubclassOf<UFGRecipe> SelectedRecipe = CachedRecipeList[SelectedIndex];
-    
-    UE_LOG(LogSmartFoundations, Log, TEXT("Settings Form: Recipe selected - Index=%d, Recipe=%s"),
+
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Recipe selected - Index=%d, Recipe=%s"),
         SelectedIndex, SelectedRecipe ? *SelectedRecipe->GetName() : TEXT("None"));
-    
+
     // Check if "None Selected" was chosen (index 0, nullptr recipe)
     if (SelectedIndex == 0 || !SelectedRecipe)
     {
         // Clear the recipe - same as clicking Clear button
         CachedSubsystem->ClearAllRecipes();
         CachedSubsystem->ApplyRecipeToParentHologram();
-        
+
         // Clear the recipe details
         if (RecipeDetailsContainer)
         {
             RecipeDetailsContainer->ClearChildren();
         }
-        
+
         // Hide the recipe icon
         if (RecipeIcon)
         {
             RecipeIcon->SetVisibility(ESlateVisibility::Collapsed);
         }
-        
-        UE_LOG(LogSmartFoundations, Log, TEXT("Settings Form: Recipe cleared via 'None Selected'"));
+
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Recipe cleared via 'None Selected'"));
         return;
     }
-    
+
     // Apply the recipe selection via subsystem
     // Note: SelectedIndex includes the "None Selected" offset, so subtract 1 for actual recipe index
     if (USFRecipeManagementService* RecipeService = CachedSubsystem->GetRecipeManagementService())
     {
         RecipeService->SetActiveRecipeByIndex(SelectedIndex - 1);
-        
+
         // Update the recipe details container with icons
         if (RecipeDetailsContainer)
         {
             PopulateRecipeDetails(SelectedRecipe);
         }
-        
+
         // Update recipe icon
         UpdateRecipeIcon(SelectedRecipe);
     }
@@ -1433,39 +1433,39 @@ void USmartSettingsFormWidget::OnRecipeSelectionChanged(FString SelectedItem, ES
 
 void USmartSettingsFormWidget::OnClearRecipeButtonClicked()
 {
-    UE_LOG(LogSmartFoundations, Log, TEXT("Settings Form: Clear Recipe button clicked"));
-    
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Clear Recipe button clicked"));
+
     if (!CachedSubsystem.IsValid())
     {
         return;
     }
-    
+
     // Use the existing ClearAllRecipes method on the subsystem
     // This is the same logic triggered by Num0 when in Recipe mode (U held)
     CachedSubsystem->ClearAllRecipes();
-    
+
     // Apply the clear to the parent hologram and trigger child regeneration
     CachedSubsystem->ApplyRecipeToParentHologram();
-    
+
     // Clear the ComboBox selection
     if (RecipeComboBox)
     {
         RecipeComboBox->ClearSelection();
     }
-    
+
     // Clear the recipe details
     if (RecipeDetailsContainer)
     {
         RecipeDetailsContainer->ClearChildren();
     }
-    
+
     // Hide the recipe icon
     if (RecipeIcon)
     {
         RecipeIcon->SetVisibility(ESlateVisibility::Collapsed);
     }
-    
-    UE_LOG(LogSmartFoundations, Log, TEXT("Settings Form: Recipe cleared via ClearAllRecipes"));
+
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Recipe cleared via ClearAllRecipes"));
 }
 
 void USmartSettingsFormWidget::UpdateRecipeIcon(TSubclassOf<UFGRecipe> Recipe)
@@ -1474,18 +1474,18 @@ void USmartSettingsFormWidget::UpdateRecipeIcon(TSubclassOf<UFGRecipe> Recipe)
     {
         return;
     }
-    
+
     if (!Recipe)
     {
         RecipeIcon->SetVisibility(ESlateVisibility::Collapsed);
         return;
     }
-    
+
     if (!CachedSubsystem.IsValid())
     {
         return;
     }
-    
+
     if (USFRecipeManagementService* RecipeService = CachedSubsystem->GetRecipeManagementService())
     {
         UTexture2D* IconTexture = RecipeService->GetRecipePrimaryProductIcon(Recipe);
@@ -1509,30 +1509,30 @@ void USmartSettingsFormWidget::PopulateRecipeDetails(TSubclassOf<UFGRecipe> Reci
     {
         return;
     }
-    
+
     // Clear existing children
     RecipeDetailsContainer->ClearChildren();
-    
+
     if (!Recipe || !CachedSubsystem.IsValid())
     {
         return;
     }
-    
+
     UFGRecipe* RecipeCDO = Recipe->GetDefaultObject<UFGRecipe>();
     if (!RecipeCDO)
     {
         return;
     }
-    
+
     // Colors matching HUD style
     const FLinearColor OutputColor(0.7f, 0.9f, 0.7f, 1.0f);   // Light green for outputs
     const FLinearColor InputColor(0.9f, 0.8f, 0.7f, 1.0f);    // Light tan for inputs
-    
+
     // Get manufacturing duration to calculate per-minute rates
     // Duration is in seconds, so items per minute = (Amount / Duration) * 60
     const float ManufacturingDuration = UFGRecipe::GetManufacturingDuration(Recipe);
     const float CyclesPerMinute = (ManufacturingDuration > 0.0f) ? (60.0f / ManufacturingDuration) : 0.0f;
-    
+
     // Get grid size to calculate total output for the entire grid
     // Grid total = GridX * GridY * GridZ buildings
     // Note: Grid values can be negative (direction), so use Abs() to get the count
@@ -1541,29 +1541,29 @@ void USmartSettingsFormWidget::PopulateRecipeDetails(TSubclassOf<UFGRecipe> Reci
     {
         FSFCounterState CounterState = CachedSubsystem->GetCounterState();
         // GridCounters is an FIntVector with X, Y, Z components - use absolute values since sign indicates direction
-        GridTotal = FMath::Max(1, FMath::Abs(CounterState.GridCounters.X)) * 
-                    FMath::Max(1, FMath::Abs(CounterState.GridCounters.Y)) * 
+        GridTotal = FMath::Max(1, FMath::Abs(CounterState.GridCounters.X)) *
+                    FMath::Max(1, FMath::Abs(CounterState.GridCounters.Y)) *
                     FMath::Max(1, FMath::Abs(CounterState.GridCounters.Z));
     }
-    
+
     // No header row needed - the ComboBox provides recipe selection
     // Go directly to output/input rows with icons
     TArray<FItemAmount> Products = RecipeCDO->GetProducts();
-    
+
     // Add output rows with icons
     for (int32 i = 0; i < Products.Num(); i++)
     {
         TSubclassOf<UFGItemDescriptor> ItemClass = Products[i].ItemClass;
         int32 Amount = Products[i].Amount;
         FString ItemName = UFGItemDescriptor::GetItemName(ItemClass).ToString();
-        
+
         // Get item icon
         UTexture2D* ItemIcon = UFGItemDescriptor::GetSmallIcon(ItemClass);
-        
+
         // Calculate per-minute rate (single building) and grid total
         float PerMinute = Amount * CyclesPerMinute;
         float GridTotalPerMinute = PerMinute * GridTotal;
-        
+
         // Format amount with per-minute rate and grid total (liquids have amounts >= 1000)
         FString AmountText;
         if (Amount >= 1000)
@@ -1578,14 +1578,14 @@ void USmartSettingsFormWidget::PopulateRecipeDetails(TSubclassOf<UFGRecipe> Reci
         {
             AmountText = FText::Format(LOCTEXT("Panel_Recipe_Output", "\u2192 Output: {0} x{1} ({2}/min) (Grid Total: {3}/min)"), FText::FromString(ItemName), FText::AsNumber(Amount), FText::AsNumber(PerMinute), FText::AsNumber(GridTotalPerMinute)).ToString();
         }
-        
+
         UWidget* OutputRow = CreateRecipeDetailRow(ItemIcon, AmountText, OutputColor);
         if (OutputRow)
         {
             RecipeDetailsContainer->AddChild(OutputRow);
         }
     }
-    
+
     // Add input rows with icons
     TArray<FItemAmount> Ingredients = RecipeCDO->GetIngredients();
     for (int32 i = 0; i < Ingredients.Num(); i++)
@@ -1593,14 +1593,14 @@ void USmartSettingsFormWidget::PopulateRecipeDetails(TSubclassOf<UFGRecipe> Reci
         TSubclassOf<UFGItemDescriptor> ItemClass = Ingredients[i].ItemClass;
         int32 Amount = Ingredients[i].Amount;
         FString ItemName = UFGItemDescriptor::GetItemName(ItemClass).ToString();
-        
+
         // Get item icon
         UTexture2D* ItemIcon = UFGItemDescriptor::GetSmallIcon(ItemClass);
-        
+
         // Calculate per-minute rate (single building) and grid total
         float PerMinute = Amount * CyclesPerMinute;
         float GridTotalPerMinute = PerMinute * GridTotal;
-        
+
         // Format amount with per-minute rate and grid total (liquids have amounts >= 1000)
         FString AmountText;
         if (Amount >= 1000)
@@ -1615,7 +1615,7 @@ void USmartSettingsFormWidget::PopulateRecipeDetails(TSubclassOf<UFGRecipe> Reci
         {
             AmountText = FText::Format(LOCTEXT("Panel_Recipe_Input", "\u2190 Input: {0} x{1} ({2}/min) (Grid Total: {3}/min)"), FText::FromString(ItemName), FText::AsNumber(Amount), FText::AsNumber(PerMinute), FText::AsNumber(GridTotalPerMinute)).ToString();
         }
-        
+
         UWidget* InputRow = CreateRecipeDetailRow(ItemIcon, AmountText, InputColor);
         if (InputRow)
         {
@@ -1632,7 +1632,7 @@ UWidget* USmartSettingsFormWidget::CreateRecipeDetailRow(UTexture2D* Icon, const
     {
         return nullptr;
     }
-    
+
     // Add icon if provided
     if (Icon)
     {
@@ -1641,14 +1641,14 @@ UWidget* USmartSettingsFormWidget::CreateRecipeDetailRow(UTexture2D* Icon, const
         {
             IconSizeBox->SetWidthOverride(24.0f);
             IconSizeBox->SetHeightOverride(24.0f);
-            
+
             UImage* IconImage = NewObject<UImage>(this);
             if (IconImage)
             {
                 IconImage->SetBrushFromTexture(Icon);
                 IconSizeBox->AddChild(IconImage);
             }
-            
+
             UHorizontalBoxSlot* IconSlot = Row->AddChildToHorizontalBox(IconSizeBox);
             if (IconSlot)
             {
@@ -1657,26 +1657,26 @@ UWidget* USmartSettingsFormWidget::CreateRecipeDetailRow(UTexture2D* Icon, const
             }
         }
     }
-    
+
     // Add text
     UTextBlock* TextWidget = NewObject<UTextBlock>(this);
     if (TextWidget)
     {
         TextWidget->SetText(FText::FromString(Text));
         TextWidget->SetColorAndOpacity(FSlateColor(TextColor));
-        
+
         // Set font to match HUD style
         FSlateFontInfo FontInfo = TextWidget->GetFont();
         FontInfo.Size = 14;
         TextWidget->SetFont(FontInfo);
-        
+
         UHorizontalBoxSlot* TextSlot = Row->AddChildToHorizontalBox(TextWidget);
         if (TextSlot)
         {
             TextSlot->SetVerticalAlignment(VAlign_Center);
         }
     }
-    
+
     return Row;
 }
 
@@ -1706,14 +1706,14 @@ int32 USmartSettingsFormWidget::DisplayStringToBeltTier(const FString& DisplaySt
     {
         return 0;
     }
-    
+
     // Parse "Mk1", "Mk2", etc.
     if (DisplayString.StartsWith(TEXT("Mk")))
     {
         FString TierStr = DisplayString.RightChop(2);
         return FCString::Atoi(*TierStr);
     }
-    
+
     return 0;
 }
 
@@ -1723,11 +1723,11 @@ void USmartSettingsFormWidget::PopulateBeltTierComboBoxes()
     {
         return;
     }
-    
+
     // Get highest unlocked belt tier
     AFGPlayerController* PC = Cast<AFGPlayerController>(GetOwningPlayer());
     int32 HighestUnlocked = CachedSubsystem->GetHighestUnlockedBeltTier(PC);
-    
+
     // Build list of available tiers: Auto (0), then Mk1 through highest unlocked
     CachedBeltTiers.Empty();
     CachedBeltTiers.Add(0);  // Auto
@@ -1735,7 +1735,7 @@ void USmartSettingsFormWidget::PopulateBeltTierComboBoxes()
     {
         CachedBeltTiers.Add(Tier);
     }
-    
+
     // Populate Main tier ComboBox
     if (BeltTierMainComboBox)
     {
@@ -1745,7 +1745,7 @@ void USmartSettingsFormWidget::PopulateBeltTierComboBoxes()
             BeltTierMainComboBox->AddOption(BeltTierToDisplayString(Tier));
         }
     }
-    
+
     // Populate To Building tier ComboBox
     if (BeltTierToBuildingComboBox)
     {
@@ -1755,8 +1755,8 @@ void USmartSettingsFormWidget::PopulateBeltTierComboBoxes()
             BeltTierToBuildingComboBox->AddOption(BeltTierToDisplayString(Tier));
         }
     }
-    
-    UE_LOG(LogSmartFoundations, Log, TEXT("Settings Form: Populated belt tier ComboBoxes with %d options (highest unlocked: Mk%d)"),
+
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Populated belt tier ComboBoxes with %d options (highest unlocked: Mk%d)"),
         CachedBeltTiers.Num(), HighestUnlocked);
 }
 
@@ -1766,15 +1766,15 @@ void USmartSettingsFormWidget::UpdateBeltAutoConnectControls()
     {
         return;
     }
-    
+
     const auto& Settings = CachedSubsystem->GetAutoConnectRuntimeSettings();
-    
+
     // Update Enabled checkbox
     if (BeltEnabledCheckBox)
     {
         BeltEnabledCheckBox->SetIsChecked(Settings.bEnabled);
     }
-    
+
     // Update Main tier ComboBox
     if (BeltTierMainComboBox)
     {
@@ -1785,14 +1785,14 @@ void USmartSettingsFormWidget::UpdateBeltAutoConnectControls()
         }
         BeltTierMainComboBox->SetSelectedIndex(Index);
     }
-    
+
     // Update To Building tier ComboBox
     if (BeltTierToBuildingComboBox)
     {
         // Restore original event binding (in case it was repurposed for stackable poles)
         BeltTierToBuildingComboBox->OnSelectionChanged.Clear();
         BeltTierToBuildingComboBox->OnSelectionChanged.AddDynamic(this, &USmartSettingsFormWidget::OnBeltTierToBuildingChanged);
-        
+
         int32 Index = CachedBeltTiers.Find(Settings.BeltTierToBuilding);
         if (Index == INDEX_NONE)
         {
@@ -1800,14 +1800,14 @@ void USmartSettingsFormWidget::UpdateBeltAutoConnectControls()
         }
         BeltTierToBuildingComboBox->SetSelectedIndex(Index);
     }
-    
+
     // Update Chain checkbox
     if (BeltChainCheckBox)
     {
         BeltChainCheckBox->SetIsChecked(Settings.bChainDistributors);
         BeltChainCheckBox->SetVisibility(ESlateVisibility::Visible);
     }
-    
+
     // Restore visibility for regular belt controls, hide stackable-only controls
     if (BeltTierToBuildingLabel)
     {
@@ -1825,7 +1825,7 @@ void USmartSettingsFormWidget::UpdateBeltAutoConnectControls()
     {
         BeltChainLabel->SetVisibility(ESlateVisibility::Visible);
     }
-    
+
     // Update Routing Mode ComboBox
     if (BeltRoutingModeComboBox)
     {
@@ -1833,7 +1833,7 @@ void USmartSettingsFormWidget::UpdateBeltAutoConnectControls()
         BeltRoutingModeComboBox->AddOption(TEXT("Default"));
         BeltRoutingModeComboBox->AddOption(TEXT("Curve"));
         BeltRoutingModeComboBox->AddOption(TEXT("Straight"));
-        
+
         int32 ModeIndex = FMath::Clamp(Settings.BeltRoutingMode, 0, 2);
         BeltRoutingModeComboBox->SetSelectedIndex(ModeIndex);
     }
@@ -1841,8 +1841,8 @@ void USmartSettingsFormWidget::UpdateBeltAutoConnectControls()
     {
         BeltRoutingModeRow->SetVisibility(ESlateVisibility::Visible);
     }
-    
-    UE_LOG(LogSmartFoundations, Log, TEXT("Settings Form: Updated belt controls - Enabled=%d, Main=%d, ToBuilding=%d, Chain=%d, RoutingMode=%d"),
+
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Updated belt controls - Enabled=%d, Main=%d, ToBuilding=%d, Chain=%d, RoutingMode=%d"),
         Settings.bEnabled, Settings.BeltTierMain, Settings.BeltTierToBuilding, Settings.bChainDistributors, Settings.BeltRoutingMode);
 }
 
@@ -1852,10 +1852,10 @@ void USmartSettingsFormWidget::OnBeltEnabledChanged(bool bIsChecked)
     {
         return;
     }
-    
+
     CachedSubsystem->SetAutoConnectBeltEnabled(bIsChecked);
-    UE_LOG(LogSmartFoundations, Log, TEXT("Settings Form: Belt auto-connect enabled changed to %d"), bIsChecked);
-    
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Belt auto-connect enabled changed to %d"), bIsChecked);
+
     if (bApplyImmediately)
     {
         CachedSubsystem->TriggerAutoConnectRefresh();
@@ -1868,16 +1868,16 @@ void USmartSettingsFormWidget::OnBeltTierMainChanged(FString SelectedItem, ESele
     {
         return;  // Ignore programmatic changes
     }
-    
+
     if (!CachedSubsystem.IsValid())
     {
         return;
     }
-    
+
     int32 Tier = DisplayStringToBeltTier(SelectedItem);
     CachedSubsystem->SetAutoConnectBeltTierMain(Tier);
-    UE_LOG(LogSmartFoundations, Log, TEXT("Settings Form: Belt tier main changed to %d (%s)"), Tier, *SelectedItem);
-    
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Belt tier main changed to %d (%s)"), Tier, *SelectedItem);
+
     if (bApplyImmediately)
     {
         CachedSubsystem->TriggerAutoConnectRefresh();
@@ -1890,16 +1890,16 @@ void USmartSettingsFormWidget::OnBeltTierToBuildingChanged(FString SelectedItem,
     {
         return;  // Ignore programmatic changes
     }
-    
+
     if (!CachedSubsystem.IsValid())
     {
         return;
     }
-    
+
     int32 Tier = DisplayStringToBeltTier(SelectedItem);
     CachedSubsystem->SetAutoConnectBeltTierToBuilding(Tier);
-    UE_LOG(LogSmartFoundations, Log, TEXT("Settings Form: Belt tier to building changed to %d (%s)"), Tier, *SelectedItem);
-    
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Belt tier to building changed to %d (%s)"), Tier, *SelectedItem);
+
     if (bApplyImmediately)
     {
         CachedSubsystem->TriggerAutoConnectRefresh();
@@ -1912,9 +1912,9 @@ void USmartSettingsFormWidget::OnBeltChainChanged(bool bIsChecked)
     {
         return;
     }
-    
+
     CachedSubsystem->SetAutoConnectBeltChain(bIsChecked);
-    UE_LOG(LogSmartFoundations, Log, TEXT("Settings Form: Belt chain changed to %d"), bIsChecked);
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Belt chain changed to %d"), bIsChecked);
 }
 
 void USmartSettingsFormWidget::OnStackableBeltDirectionChanged(FString SelectedItem, ESelectInfo::Type SelectionType)
@@ -1923,22 +1923,22 @@ void USmartSettingsFormWidget::OnStackableBeltDirectionChanged(FString SelectedI
     {
         return;  // Ignore programmatic changes
     }
-    
+
     if (!CachedSubsystem.IsValid())
     {
         return;
     }
-    
+
     // Convert "Forward"/"Backward" to 0/1
     int32 Direction = 0;  // Default to Forward
     if (SelectedItem == TEXT("Backward"))
     {
         Direction = 1;
     }
-    
+
     CachedSubsystem->SetAutoConnectStackableBeltDirection(Direction);
-    UE_LOG(LogSmartFoundations, Log, TEXT("Settings Form: Stackable belt direction changed to %d (%s)"), Direction, *SelectedItem);
-    
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Stackable belt direction changed to %d (%s)"), Direction, *SelectedItem);
+
     if (bApplyImmediately)
     {
         CachedSubsystem->TriggerAutoConnectRefresh();
@@ -1951,20 +1951,20 @@ void USmartSettingsFormWidget::OnBeltRoutingModeChanged(FString SelectedItem, ES
     {
         return;  // Ignore programmatic changes
     }
-    
+
     if (!CachedSubsystem.IsValid())
     {
         return;
     }
-    
+
     // Convert display string to routing mode index
     int32 RoutingMode = 0;  // Default
     if (SelectedItem == TEXT("Curve")) RoutingMode = 1;
     else if (SelectedItem == TEXT("Straight")) RoutingMode = 2;
-    
+
     CachedSubsystem->SetAutoConnectBeltRoutingMode(RoutingMode);
-    UE_LOG(LogSmartFoundations, Log, TEXT("Settings Form: Belt routing mode changed to %d (%s)"), RoutingMode, *SelectedItem);
-    
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Belt routing mode changed to %d (%s)"), RoutingMode, *SelectedItem);
+
     if (bApplyImmediately)
     {
         CachedSubsystem->TriggerAutoConnectRefresh();
@@ -1997,14 +1997,14 @@ int32 USmartSettingsFormWidget::DisplayStringToPipeTier(const FString& DisplaySt
     {
         return 0;
     }
-    
+
     // Parse "Mk1", "Mk2"
     if (DisplayString.StartsWith(TEXT("Mk")))
     {
         FString TierStr = DisplayString.RightChop(2);
         return FCString::Atoi(*TierStr);
     }
-    
+
     return 0;
 }
 
@@ -2014,11 +2014,11 @@ void USmartSettingsFormWidget::PopulatePipeTierComboBoxes()
     {
         return;
     }
-    
+
     // Get highest unlocked pipe tier
     AFGPlayerController* PC = Cast<AFGPlayerController>(GetOwningPlayer());
     int32 HighestUnlocked = CachedSubsystem->GetHighestUnlockedPipeTier(PC);
-    
+
     // Build list of available tiers: Auto (0), then Mk1 through highest unlocked
     CachedPipeTiers.Empty();
     CachedPipeTiers.Add(0);  // Auto
@@ -2026,7 +2026,7 @@ void USmartSettingsFormWidget::PopulatePipeTierComboBoxes()
     {
         CachedPipeTiers.Add(Tier);
     }
-    
+
     // Populate Main tier ComboBox
     if (PipeTierMainComboBox)
     {
@@ -2036,7 +2036,7 @@ void USmartSettingsFormWidget::PopulatePipeTierComboBoxes()
             PipeTierMainComboBox->AddOption(PipeTierToDisplayString(Tier));
         }
     }
-    
+
     // Populate To Building tier ComboBox
     if (PipeTierToBuildingComboBox)
     {
@@ -2046,8 +2046,8 @@ void USmartSettingsFormWidget::PopulatePipeTierComboBoxes()
             PipeTierToBuildingComboBox->AddOption(PipeTierToDisplayString(Tier));
         }
     }
-    
-    UE_LOG(LogSmartFoundations, Log, TEXT("Settings Form: Populated pipe tier ComboBoxes with %d options (highest unlocked: Mk%d)"),
+
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Populated pipe tier ComboBoxes with %d options (highest unlocked: Mk%d)"),
         CachedPipeTiers.Num(), HighestUnlocked);
 }
 
@@ -2057,15 +2057,15 @@ void USmartSettingsFormWidget::UpdatePipeAutoConnectControls()
     {
         return;
     }
-    
+
     const auto& Settings = CachedSubsystem->GetAutoConnectRuntimeSettings();
-    
+
     // Update Enabled checkbox
     if (PipeEnabledCheckBox)
     {
         PipeEnabledCheckBox->SetIsChecked(Settings.bPipeAutoConnectEnabled);
     }
-    
+
     // Update Main tier ComboBox
     if (PipeTierMainComboBox)
     {
@@ -2076,7 +2076,7 @@ void USmartSettingsFormWidget::UpdatePipeAutoConnectControls()
         }
         PipeTierMainComboBox->SetSelectedIndex(Index);
     }
-    
+
     // Update To Building tier ComboBox
     if (PipeTierToBuildingComboBox)
     {
@@ -2087,21 +2087,21 @@ void USmartSettingsFormWidget::UpdatePipeAutoConnectControls()
         }
         PipeTierToBuildingComboBox->SetSelectedIndex(Index);
     }
-    
+
     // Ensure both rows are visible for standard pipe junctions
     if (PipeTierMainRow) PipeTierMainRow->SetVisibility(ESlateVisibility::Visible);
     if (PipeTierToBuildingRow) PipeTierToBuildingRow->SetVisibility(ESlateVisibility::Visible);
-    
+
     // Update Flow Indicator checkbox and row visibility
     // Only show if clean pipes are unlocked - otherwise flow indicators are implicit
     AFGPlayerController* PC = Cast<AFGPlayerController>(GetOwningPlayer());
     bool bCleanPipesUnlocked = CachedSubsystem->AreCleanPipesUnlocked(PC);
-    
+
     if (PipeIndicatorRow)
     {
         PipeIndicatorRow->SetVisibility(bCleanPipesUnlocked ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
     }
-    
+
     if (PipeIndicatorCheckBox)
     {
         // If clean pipes not unlocked, force to true (with indicators)
@@ -2114,7 +2114,7 @@ void USmartSettingsFormWidget::UpdatePipeAutoConnectControls()
             PipeIndicatorCheckBox->SetIsChecked(Settings.bPipeIndicator);
         }
     }
-    
+
     // Update Routing Mode ComboBox
     if (PipeRoutingModeComboBox)
     {
@@ -2125,12 +2125,12 @@ void USmartSettingsFormWidget::UpdatePipeAutoConnectControls()
         PipeRoutingModeComboBox->AddOption(TEXT("Curve"));
         PipeRoutingModeComboBox->AddOption(TEXT("Noodle"));
         PipeRoutingModeComboBox->AddOption(TEXT("Horiz→Vert"));
-        
+
         int32 ModeIndex = FMath::Clamp(Settings.PipeRoutingMode, 0, 5);
         PipeRoutingModeComboBox->SetSelectedIndex(ModeIndex);
     }
-    
-    UE_LOG(LogSmartFoundations, Log, TEXT("Settings Form: Updated pipe controls - Enabled=%d, Main=%d, ToBuilding=%d, Indicator=%d, RoutingMode=%d, CleanUnlocked=%d"),
+
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Updated pipe controls - Enabled=%d, Main=%d, ToBuilding=%d, Indicator=%d, RoutingMode=%d, CleanUnlocked=%d"),
         Settings.bPipeAutoConnectEnabled, Settings.PipeTierMain, Settings.PipeTierToBuilding, Settings.bPipeIndicator, Settings.PipeRoutingMode, bCleanPipesUnlocked);
 }
 
@@ -2140,10 +2140,10 @@ void USmartSettingsFormWidget::OnPipeEnabledChanged(bool bIsChecked)
     {
         return;
     }
-    
+
     CachedSubsystem->SetAutoConnectPipeEnabled(bIsChecked);
-    UE_LOG(LogSmartFoundations, Log, TEXT("Settings Form: Pipe auto-connect enabled changed to %d"), bIsChecked);
-    
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Pipe auto-connect enabled changed to %d"), bIsChecked);
+
     if (bApplyImmediately)
     {
         CachedSubsystem->TriggerAutoConnectRefresh();
@@ -2156,16 +2156,16 @@ void USmartSettingsFormWidget::OnPipeTierMainChanged(FString SelectedItem, ESele
     {
         return;  // Ignore programmatic changes
     }
-    
+
     if (!CachedSubsystem.IsValid())
     {
         return;
     }
-    
+
     int32 Tier = DisplayStringToPipeTier(SelectedItem);
     CachedSubsystem->SetAutoConnectPipeTierMain(Tier);
-    UE_LOG(LogSmartFoundations, Log, TEXT("Settings Form: Pipe tier main changed to %d (%s)"), Tier, *SelectedItem);
-    
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Pipe tier main changed to %d (%s)"), Tier, *SelectedItem);
+
     if (bApplyImmediately)
     {
         CachedSubsystem->TriggerAutoConnectRefresh();
@@ -2178,16 +2178,16 @@ void USmartSettingsFormWidget::OnPipeTierToBuildingChanged(FString SelectedItem,
     {
         return;  // Ignore programmatic changes
     }
-    
+
     if (!CachedSubsystem.IsValid())
     {
         return;
     }
-    
+
     int32 Tier = DisplayStringToPipeTier(SelectedItem);
     CachedSubsystem->SetAutoConnectPipeTierToBuilding(Tier);
-    UE_LOG(LogSmartFoundations, Log, TEXT("Settings Form: Pipe tier to building changed to %d (%s)"), Tier, *SelectedItem);
-    
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Pipe tier to building changed to %d (%s)"), Tier, *SelectedItem);
+
     if (bApplyImmediately)
     {
         CachedSubsystem->TriggerAutoConnectRefresh();
@@ -2200,9 +2200,9 @@ void USmartSettingsFormWidget::OnPipeIndicatorChanged(bool bIsChecked)
     {
         return;
     }
-    
+
     CachedSubsystem->SetAutoConnectPipeIndicator(bIsChecked);
-    UE_LOG(LogSmartFoundations, Log, TEXT("Settings Form: Pipe indicator changed to %d (%s)"), bIsChecked, bIsChecked ? TEXT("Normal") : TEXT("Clean"));
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Pipe indicator changed to %d (%s)"), bIsChecked, bIsChecked ? TEXT("Normal") : TEXT("Clean"));
 }
 
 void USmartSettingsFormWidget::OnPipeRoutingModeChanged(FString SelectedItem, ESelectInfo::Type SelectionType)
@@ -2211,12 +2211,12 @@ void USmartSettingsFormWidget::OnPipeRoutingModeChanged(FString SelectedItem, ES
     {
         return;  // Ignore programmatic changes
     }
-    
+
     if (!CachedSubsystem.IsValid())
     {
         return;
     }
-    
+
     // Convert display string to routing mode index
     int32 RoutingMode = 0;
     if (SelectedItem == TEXT("Auto")) RoutingMode = 0;
@@ -2225,10 +2225,10 @@ void USmartSettingsFormWidget::OnPipeRoutingModeChanged(FString SelectedItem, ES
     else if (SelectedItem == TEXT("Curve")) RoutingMode = 3;
     else if (SelectedItem == TEXT("Noodle")) RoutingMode = 4;
     else if (SelectedItem == TEXT("Horiz→Vert")) RoutingMode = 5;
-    
+
     CachedSubsystem->SetAutoConnectPipeRoutingMode(RoutingMode);
-    UE_LOG(LogSmartFoundations, Log, TEXT("Settings Form: Pipe routing mode changed to %d (%s)"), RoutingMode, *SelectedItem);
-    
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Pipe routing mode changed to %d (%s)"), RoutingMode, *SelectedItem);
+
     if (bApplyImmediately)
     {
         CachedSubsystem->TriggerAutoConnectRefresh();
@@ -2271,7 +2271,7 @@ void USmartSettingsFormWidget::PopulatePowerComboBoxes()
         PowerGridAxisComboBox->AddOption(TEXT("Y"));
         PowerGridAxisComboBox->AddOption(TEXT("X+Y"));
     }
-    
+
     // Populate Reserved Slots ComboBox (0-5)
     if (PowerReservedComboBox)
     {
@@ -2281,8 +2281,8 @@ void USmartSettingsFormWidget::PopulatePowerComboBoxes()
             PowerReservedComboBox->AddOption(FString::Printf(TEXT("%d"), i));
         }
     }
-    
-    UE_LOG(LogSmartFoundations, Log, TEXT("Settings Form: Populated power ComboBoxes"));
+
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Populated power ComboBoxes"));
 }
 
 void USmartSettingsFormWidget::UpdatePowerAutoConnectControls()
@@ -2291,28 +2291,28 @@ void USmartSettingsFormWidget::UpdatePowerAutoConnectControls()
     {
         return;
     }
-    
+
     const auto& Settings = CachedSubsystem->GetAutoConnectRuntimeSettings();
-    
+
     // Update Enabled checkbox
     if (PowerEnabledCheckBox)
     {
         PowerEnabledCheckBox->SetIsChecked(Settings.bConnectPower);
     }
-    
+
     // Update Grid Axis ComboBox
     if (PowerGridAxisComboBox)
     {
         PowerGridAxisComboBox->SetSelectedOption(PowerGridAxisToDisplayString(Settings.PowerGridAxis));
     }
-    
+
     // Update Reserved Slots ComboBox
     if (PowerReservedComboBox)
     {
         PowerReservedComboBox->SetSelectedOption(FString::Printf(TEXT("%d"), Settings.PowerReserved));
     }
-    
-    UE_LOG(LogSmartFoundations, Log, TEXT("Settings Form: Updated power controls - Enabled=%d, GridAxis=%d, Reserved=%d"),
+
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Updated power controls - Enabled=%d, GridAxis=%d, Reserved=%d"),
         Settings.bConnectPower, Settings.PowerGridAxis, Settings.PowerReserved);
 }
 
@@ -2322,10 +2322,10 @@ void USmartSettingsFormWidget::OnPowerEnabledChanged(bool bIsChecked)
     {
         return;
     }
-    
+
     CachedSubsystem->SetAutoConnectPowerEnabled(bIsChecked);
-    UE_LOG(LogSmartFoundations, Log, TEXT("Settings Form: Power auto-connect enabled changed to %d"), bIsChecked);
-    
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Power auto-connect enabled changed to %d"), bIsChecked);
+
     if (bApplyImmediately)
     {
         CachedSubsystem->TriggerAutoConnectRefresh();
@@ -2338,16 +2338,16 @@ void USmartSettingsFormWidget::OnPowerGridAxisChanged(FString SelectedItem, ESel
     {
         return;  // Ignore programmatic changes
     }
-    
+
     if (!CachedSubsystem.IsValid())
     {
         return;
     }
-    
+
     int32 Axis = DisplayStringToPowerGridAxis(SelectedItem);
     CachedSubsystem->SetAutoConnectPowerGridAxis(Axis);
-    UE_LOG(LogSmartFoundations, Log, TEXT("Settings Form: Power grid axis changed to %d (%s)"), Axis, *SelectedItem);
-    
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Power grid axis changed to %d (%s)"), Axis, *SelectedItem);
+
     if (bApplyImmediately)
     {
         CachedSubsystem->TriggerAutoConnectRefresh();
@@ -2360,16 +2360,16 @@ void USmartSettingsFormWidget::OnPowerReservedChanged(FString SelectedItem, ESel
     {
         return;  // Ignore programmatic changes
     }
-    
+
     if (!CachedSubsystem.IsValid())
     {
         return;
     }
-    
+
     int32 Reserved = FCString::Atoi(*SelectedItem);
     CachedSubsystem->SetAutoConnectPowerReserved(Reserved);
-    UE_LOG(LogSmartFoundations, Log, TEXT("Settings Form: Power reserved slots changed to %d"), Reserved);
-    
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Power reserved slots changed to %d"), Reserved);
+
     if (bApplyImmediately)
     {
         CachedSubsystem->TriggerAutoConnectRefresh();
@@ -2384,21 +2384,21 @@ void USmartSettingsFormWidget::OnGridXDirToggleClicked()
 {
     bGridXPositive = !bGridXPositive;
     UpdateGridDirectionLabel(GridXDirLabel, bGridXPositive);
-    UE_LOG(LogSmartFoundations, Log, TEXT("Settings Form: Grid X direction toggled to %s"), bGridXPositive ? TEXT("+") : TEXT("-"));
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Grid X direction toggled to %s"), bGridXPositive ? TEXT("+") : TEXT("-"));
 }
 
 void USmartSettingsFormWidget::OnGridYDirToggleClicked()
 {
     bGridYPositive = !bGridYPositive;
     UpdateGridDirectionLabel(GridYDirLabel, bGridYPositive);
-    UE_LOG(LogSmartFoundations, Log, TEXT("Settings Form: Grid Y direction toggled to %s"), bGridYPositive ? TEXT("+") : TEXT("-"));
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Grid Y direction toggled to %s"), bGridYPositive ? TEXT("+") : TEXT("-"));
 }
 
 void USmartSettingsFormWidget::OnGridZDirToggleClicked()
 {
     bGridZPositive = !bGridZPositive;
     UpdateGridDirectionLabel(GridZDirLabel, bGridZPositive);
-    UE_LOG(LogSmartFoundations, Log, TEXT("Settings Form: Grid Z direction toggled to %s"), bGridZPositive ? TEXT("+") : TEXT("-"));
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Grid Z direction toggled to %s"), bGridZPositive ? TEXT("+") : TEXT("-"));
 }
 
 void USmartSettingsFormWidget::UpdateGridDirectionLabel(UTextBlock* Label, bool bPositive)
@@ -2426,26 +2426,26 @@ FReply USmartSettingsFormWidget::NativeOnKeyDown(const FGeometry& InGeometry, co
         // If confirmation dialog is open, dismiss it
         if (bWaitingForConfirmation)
         {
-            UE_LOG(LogSmartFoundations, Log, TEXT("Settings Form: Escape pressed - dismissing confirmation dialog"));
+            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Escape pressed - dismissing confirmation dialog"));
             OnConfirmNoClicked();
             return FReply::Handled();
         }
-        
+
         // Otherwise, cancel unapplied changes and close form
-        UE_LOG(LogSmartFoundations, Log, TEXT("Settings Form: Escape pressed - reverting and closing"));
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Escape pressed - reverting and closing"));
         RevertToLastAppliedState();
         CloseForm();
         return FReply::Handled();
     }
-    
+
     // Enter key applies changes (only when a SpinBox has focus)
     if (InKeyEvent.GetKey() == EKeys::Enter && IsAnyTextInputFocused())
     {
-        UE_LOG(LogSmartFoundations, Log, TEXT("Settings Form: Enter pressed with SpinBox focused - applying"));
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Enter pressed with SpinBox focused - applying"));
         OnApplyButtonClicked();
         return FReply::Handled();
     }
-    
+
     // Issue #212: Tab/Shift+Tab navigates between SpinBox fields in logical order
     if (InKeyEvent.GetKey() == EKeys::Tab && IsAnyTextInputFocused())
     {
@@ -2464,7 +2464,7 @@ FReply USmartSettingsFormWidget::NativeOnKeyDown(const FGeometry& InGeometry, co
         if (StaggerZXInput) TabOrder.Add(StaggerZXInput);
         if (StaggerZYInput) TabOrder.Add(StaggerZYInput);
         if (RotationZInput) TabOrder.Add(RotationZInput);
-        
+
         // Find currently focused SpinBox
         int32 CurrentIndex = INDEX_NONE;
         for (int32 i = 0; i < TabOrder.Num(); ++i)
@@ -2475,7 +2475,7 @@ FReply USmartSettingsFormWidget::NativeOnKeyDown(const FGeometry& InGeometry, co
                 break;
             }
         }
-        
+
         if (CurrentIndex != INDEX_NONE && TabOrder.Num() > 1)
         {
             int32 NextIndex;
@@ -2489,13 +2489,13 @@ FReply USmartSettingsFormWidget::NativeOnKeyDown(const FGeometry& InGeometry, co
                 // Tab: go forward (wrap around)
                 NextIndex = (CurrentIndex + 1) % TabOrder.Num();
             }
-            
+
             TabOrder[NextIndex]->SetKeyboardFocus();
             UE_LOG(LogSmartFoundations, Verbose, TEXT("Settings Form: Tab navigation %d -> %d"), CurrentIndex, NextIndex);
             return FReply::Handled();
         }
     }
-    
+
     return Super::NativeOnKeyDown(InGeometry, InKeyEvent);
 }
 
@@ -2517,7 +2517,7 @@ void USmartSettingsFormWidget::OnGridSpinBoxValueChanged(float Value)
 {
     // Update warning display whenever grid values change
     UpdateGridWarningDisplay();
-    
+
     // Also handle immediate mode apply (if still enabled - will be auto-disabled for large grids)
     if (bApplyImmediately)
     {
@@ -2530,11 +2530,11 @@ void USmartSettingsFormWidget::OnSpinBoxValueCommitted(float Value, ETextCommit:
 {
     // Enter key is now handled globally in NativeOnKeyDown to avoid false triggers
     // from SpinBox button clicks which also fire OnEnter
-    
+
     // Only apply on focus loss in immediate mode
     if (bApplyImmediately && (CommitMethod == ETextCommit::Default || CommitMethod == ETextCommit::OnUserMovedFocus))
     {
-        UE_LOG(LogSmartFoundations, Log, TEXT("Settings Form: SpinBox focus lost (immediate mode) - applying"));
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: SpinBox focus lost (immediate mode) - applying"));
         OnApplyButtonClicked();
     }
 }
@@ -2546,7 +2546,7 @@ void USmartSettingsFormWidget::OnSpinBoxValueCommitted(float Value, ETextCommit:
 void USmartSettingsFormWidget::OnApplyImmediatelyChanged(bool bIsChecked)
 {
     bApplyImmediately = bIsChecked;
-    UE_LOG(LogSmartFoundations, Log, TEXT("Settings Form: Apply immediately mode changed to %d"), bIsChecked);
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Apply immediately mode changed to %d"), bIsChecked);
 }
 
 // ========================================
@@ -2570,17 +2570,17 @@ void USmartSettingsFormWidget::RevertToLastAppliedState()
     {
         return;
     }
-    
+
     // Restore the last applied state
     CachedSubsystem->UpdateCounterState(LastAppliedState);
     CachedSubsystem->RegenerateChildHologramGrid();
-    
+
     // Restore direction state
     bGridXPositive = bLastAppliedGridXPositive;
     bGridYPositive = bLastAppliedGridYPositive;
     bGridZPositive = bLastAppliedGridZPositive;
-    
-    UE_LOG(LogSmartFoundations, Log, TEXT("Settings Form: Reverted to last applied state"));
+
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Reverted to last applied state"));
 }
 
 bool USmartSettingsFormWidget::IsAnyTextInputFocused() const
@@ -2589,7 +2589,7 @@ bool USmartSettingsFormWidget::IsAnyTextInputFocused() const
     {
         return SpinBox && SpinBox->HasKeyboardFocus();
     };
-    
+
     return IsSpinBoxFocused(GridXInput) ||
            IsSpinBoxFocused(GridYInput) ||
            IsSpinBoxFocused(GridZInput) ||
@@ -2614,19 +2614,19 @@ int32 USmartSettingsFormWidget::CalculateGridTotal() const
     int32 GridX = GridXInput ? FMath::Max(1, FMath::RoundToInt(GridXInput->GetValue())) : 1;
     int32 GridY = GridYInput ? FMath::Max(1, FMath::RoundToInt(GridYInput->GetValue())) : 1;
     int32 GridZ = GridZInput ? FMath::Max(1, FMath::RoundToInt(GridZInput->GetValue())) : 1;
-    
+
     return GridX * GridY * GridZ;
 }
 
 void USmartSettingsFormWidget::UpdateGridWarningDisplay()
 {
     int32 GridTotal = CalculateGridTotal();
-    
+
     // Update Grid Total text
     if (GridTotalText)
     {
         GridTotalText->SetText(FText::Format(LOCTEXT("Panel_GridTotal", "Grid Total: {0} holograms"), FText::AsNumber(GridTotal)));
-        
+
         // Set color based on warning level
         FLinearColor TextColor;
         if (GridTotal >= GRID_WARNING_THRESHOLD_DANGER)
@@ -2647,7 +2647,7 @@ void USmartSettingsFormWidget::UpdateGridWarningDisplay()
         }
         GridTotalText->SetColorAndOpacity(FSlateColor(TextColor));
     }
-    
+
     // Update warning text (avoid Unicode symbols - game font doesn't support them)
     if (GridWarningText)
     {
@@ -2674,7 +2674,7 @@ void USmartSettingsFormWidget::UpdateGridWarningDisplay()
             GridWarningText->SetVisibility(ESlateVisibility::Collapsed);
         }
     }
-    
+
     // Update Apply Immediately state based on grid size
     UpdateApplyImmediatelyState();
 }
@@ -2687,7 +2687,7 @@ bool USmartSettingsFormWidget::RequiresApplyConfirmation() const
 void USmartSettingsFormWidget::UpdateApplyImmediatelyState()
 {
     int32 GridTotal = CalculateGridTotal();
-    
+
     if (GridTotal >= GRID_WARNING_THRESHOLD_WARNING)
     {
         // Auto-disable Apply Immediately for large grids
@@ -2695,14 +2695,14 @@ void USmartSettingsFormWidget::UpdateApplyImmediatelyState()
         {
             bApplyImmediatelyWasEnabled = true;
             bApplyImmediately = false;
-            
+
             if (ApplyImmediatelyCheckBox)
             {
                 ApplyImmediatelyCheckBox->SetIsChecked(false);
                 ApplyImmediatelyCheckBox->SetIsEnabled(false);
             }
-            
-            UE_LOG(LogSmartFoundations, Log, TEXT("Settings Form: Apply Immediately auto-disabled for large grid (%d objects)"), GridTotal);
+
+            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Apply Immediately auto-disabled for large grid (%d objects)"), GridTotal);
         }
         else if (ApplyImmediatelyCheckBox)
         {
@@ -2717,19 +2717,19 @@ void USmartSettingsFormWidget::UpdateApplyImmediatelyState()
         {
             ApplyImmediatelyCheckBox->SetIsEnabled(true);
         }
-        
+
         // Restore previous state if it was auto-disabled
         if (bApplyImmediatelyWasEnabled)
         {
             bApplyImmediately = true;
             bApplyImmediatelyWasEnabled = false;
-            
+
             if (ApplyImmediatelyCheckBox)
             {
                 ApplyImmediatelyCheckBox->SetIsChecked(true);
             }
-            
-            UE_LOG(LogSmartFoundations, Log, TEXT("Settings Form: Apply Immediately restored (grid now %d objects)"), GridTotal);
+
+            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Apply Immediately restored (grid now %d objects)"), GridTotal);
         }
     }
 }
@@ -2737,16 +2737,16 @@ void USmartSettingsFormWidget::UpdateApplyImmediatelyState()
 void USmartSettingsFormWidget::ShowLargeGridConfirmation(TFunction<void()> OnConfirmed)
 {
     int32 GridTotal = CalculateGridTotal();
-    
+
     // Store callback for when user confirms
     PendingConfirmCallback = OnConfirmed;
     bWaitingForConfirmation = true;
-    
+
     // Determine warning level and message
     FString Title;
     FString Message;
     FLinearColor TitleColor;
-    
+
     if (GridTotal >= GRID_WARNING_THRESHOLD_DANGER)
     {
         Title = LOCTEXT("Panel_Confirm_ExtremeTitle", "EXTREME GRID WARNING!").ToString();
@@ -2771,7 +2771,7 @@ void USmartSettingsFormWidget::ShowLargeGridConfirmation(TFunction<void()> OnCon
         }
         return;
     }
-    
+
     // Show the confirmation dialog
     ShowConfirmationDialog(Title, Message, TitleColor);
 }
@@ -2789,22 +2789,22 @@ void USmartSettingsFormWidget::ShowConfirmationDialog(const FString& Title, cons
         bWaitingForConfirmation = false;
         return;
     }
-    
+
     // Set dialog content
     if (ConfirmationTitle)
     {
         ConfirmationTitle->SetText(FText::FromString(Title));
         ConfirmationTitle->SetColorAndOpacity(FSlateColor(TitleColor));
     }
-    
+
     if (ConfirmationMessage)
     {
         ConfirmationMessage->SetText(FText::FromString(Message));
     }
-    
+
     // Show the dialog (use SizeBox for visibility control)
     ConfirmationSizeBox->SetVisibility(ESlateVisibility::Visible);
-    
+
     // Focus the Cancel button by default (safer option)
     if (ConfirmNoButton)
     {
@@ -2823,10 +2823,10 @@ void USmartSettingsFormWidget::HideConfirmationDialog()
 
 void USmartSettingsFormWidget::OnConfirmYesClicked()
 {
-    UE_LOG(LogSmartFoundations, Log, TEXT("Settings Form: User confirmed large grid operation"));
-    
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: User confirmed large grid operation"));
+
     HideConfirmationDialog();
-    
+
     // Execute the pending callback
     if (PendingConfirmCallback)
     {
@@ -2837,8 +2837,8 @@ void USmartSettingsFormWidget::OnConfirmYesClicked()
 
 void USmartSettingsFormWidget::OnConfirmNoClicked()
 {
-    UE_LOG(LogSmartFoundations, Log, TEXT("Settings Form: User cancelled large grid operation"));
-    
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: User cancelled large grid operation"));
+
     HideConfirmationDialog();
     PendingConfirmCallback = nullptr;
 }
@@ -2853,21 +2853,21 @@ void USmartSettingsFormWidget::UpdateStackableBeltAutoConnectControls()
     {
         return;
     }
-    
+
     const auto& Settings = CachedSubsystem->GetAutoConnectRuntimeSettings();
-    
+
     // Log widget availability for debugging
-    UE_LOG(LogSmartFoundations, Log, TEXT("Stackable Belt Widget Status: Direction=%s, TierToBuilding=%s, Chain=%s"),
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Stackable Belt Widget Status: Direction=%s, TierToBuilding=%s, Chain=%s"),
         StackableBeltDirectionComboBox ? TEXT("Valid") : TEXT("NULL"),
         BeltTierToBuildingComboBox ? TEXT("Valid") : TEXT("NULL"),
         BeltChainCheckBox ? TEXT("Valid") : TEXT("NULL"));
-    
+
     // Update Enabled checkbox
     if (BeltEnabledCheckBox)
     {
         BeltEnabledCheckBox->SetIsChecked(Settings.bStackableBeltEnabled);
     }
-    
+
     // Update Tier ComboBox (reuse main belt tier)
     if (BeltTierMainComboBox)
     {
@@ -2878,18 +2878,18 @@ void USmartSettingsFormWidget::UpdateStackableBeltAutoConnectControls()
         }
         BeltTierMainComboBox->SetSelectedIndex(Index);
     }
-    
+
     // Use dedicated StackableBeltDirectionComboBox for direction selection
     if (StackableBeltDirectionComboBox)
     {
         StackableBeltDirectionComboBox->ClearOptions();
         StackableBeltDirectionComboBox->AddOption(TEXT("Forward"));
         StackableBeltDirectionComboBox->AddOption(TEXT("Backward"));
-        
+
         int32 DirectionIndex = Settings.StackableBeltDirection;
         StackableBeltDirectionComboBox->SetSelectedIndex(DirectionIndex);
     }
-    
+
     // Show direction row, hide irrelevant rows for stackable poles
     if (StackableBeltDirectionRow)
     {
@@ -2911,8 +2911,8 @@ void USmartSettingsFormWidget::UpdateStackableBeltAutoConnectControls()
     {
         BeltChainLabel->SetVisibility(ESlateVisibility::Collapsed);
     }
-    
-    UE_LOG(LogSmartFoundations, Log, TEXT("Settings Form: Updated stackable belt controls - Enabled=%d, Tier=%d, Direction=%d"),
+
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Updated stackable belt controls - Enabled=%d, Tier=%d, Direction=%d"),
         Settings.bStackableBeltEnabled, Settings.BeltTierMain, Settings.StackableBeltDirection);
 }
 
@@ -2922,15 +2922,15 @@ void USmartSettingsFormWidget::UpdateStackablePipeAutoConnectControls()
     {
         return;
     }
-    
+
     const auto& Settings = CachedSubsystem->GetAutoConnectRuntimeSettings();
-    
+
     // Update Enabled checkbox
     if (PipeEnabledCheckBox)
     {
         PipeEnabledCheckBox->SetIsChecked(Settings.bPipeAutoConnectEnabled);
     }
-    
+
     // Update To Building tier ComboBox (Stackable and Floor holes use this per user request)
     if (PipeTierToBuildingComboBox)
     {
@@ -2941,21 +2941,21 @@ void USmartSettingsFormWidget::UpdateStackablePipeAutoConnectControls()
         }
         PipeTierToBuildingComboBox->SetSelectedIndex(Index);
     }
-    
+
     // Hide irrelevant controls for stackable pipe supports
     if (PipeTierMainRow) PipeTierMainRow->SetVisibility(ESlateVisibility::Collapsed);
     if (PipeTierToBuildingRow) PipeTierToBuildingRow->SetVisibility(ESlateVisibility::Visible);
-    
+
     // Update Flow Indicator checkbox and row visibility
     // Only show if clean pipes are unlocked - otherwise flow indicators are implicit
     AFGPlayerController* PC = Cast<AFGPlayerController>(GetOwningPlayer());
     bool bCleanPipesUnlocked = CachedSubsystem->AreCleanPipesUnlocked(PC);
-    
+
     if (PipeIndicatorRow)
     {
         PipeIndicatorRow->SetVisibility(bCleanPipesUnlocked ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
     }
-    
+
     if (PipeIndicatorCheckBox)
     {
         // If clean pipes not unlocked, force to true (with indicators)
@@ -2968,7 +2968,7 @@ void USmartSettingsFormWidget::UpdateStackablePipeAutoConnectControls()
             PipeIndicatorCheckBox->SetIsChecked(Settings.bPipeIndicator);
         }
     }
-    
+
     // Update Routing Mode ComboBox (same as regular pipe controls)
     if (PipeRoutingModeComboBox)
     {
@@ -2979,12 +2979,12 @@ void USmartSettingsFormWidget::UpdateStackablePipeAutoConnectControls()
         PipeRoutingModeComboBox->AddOption(TEXT("Curve"));
         PipeRoutingModeComboBox->AddOption(TEXT("Noodle"));
         PipeRoutingModeComboBox->AddOption(TEXT("Horiz→Vert"));
-        
+
         int32 ModeIndex = FMath::Clamp(Settings.PipeRoutingMode, 0, 5);
         PipeRoutingModeComboBox->SetSelectedIndex(ModeIndex);
     }
-    
-    UE_LOG(LogSmartFoundations, Log, TEXT("Settings Form: Updated stackable/floor hole pipe controls - Enabled=%d, Tier=%d, Indicator=%d, RoutingMode=%d, CleanUnlocked=%d"),
+
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Updated stackable/floor hole pipe controls - Enabled=%d, Tier=%d, Indicator=%d, RoutingMode=%d, CleanUnlocked=%d"),
         Settings.bPipeAutoConnectEnabled, Settings.PipeTierToBuilding, Settings.bPipeIndicator, Settings.PipeRoutingMode, bCleanPipesUnlocked);
 }
 

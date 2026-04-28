@@ -1,6 +1,6 @@
 # <img src="https://github.com/SmartFoundations/SmartIssueTracker/blob/main/images/Smart-Logo.png?raw=true" width="150" alt="Smart! Logo"> Smart! Mod
 
-![Status](https://img.shields.io/badge/Status-Released-brightgreen) ![Version](https://img.shields.io/badge/Version-29.2.4-blue) ![Engine](https://img.shields.io/badge/Engine-UE%205.3-blue) ![SML](https://img.shields.io/badge/SML-3.11.x-blue) ![Multiplayer](https://img.shields.io/badge/Multiplayer-Testing-orange) ![AI Assisted Development Used](https://img.shields.io/badge/AI%20Assisted%20Development%20Used-Disclosure%20Below-blue)
+![Status](https://img.shields.io/badge/Status-Released-brightgreen) ![Version](https://img.shields.io/badge/Version-29.2.5-blue) ![Engine](https://img.shields.io/badge/Engine-UE%205.3-blue) ![SML](https://img.shields.io/badge/SML-3.11.x-blue) ![Multiplayer](https://img.shields.io/badge/Multiplayer-Testing-orange) ![AI Assisted Development Used](https://img.shields.io/badge/AI%20Assisted%20Development%20Used-Disclosure%20Below-blue)
 
 > **Multiplayer note:** Smart! is primarily developed for single-player. Multiplayer is under active testing with partial success, but is not currently considered fully supported.
 
@@ -73,6 +73,22 @@ Smart! is useful if you enjoy designing factories but do not enjoy repeating the
 - A fully supported multiplayer experience today.
 - Perfect compatibility with every modded buildable or every other building-assist mod.
 
+### Source Availability
+
+Smart! is **source-available**, not open source. The source code is published to support community transparency, code review, and pull request contributions. It is **not** published for reuse in other projects or redistribution of modified builds.
+
+**What you can do:**
+- View and study the source code for learning
+- Submit contributions via pull requests
+- Build locally for testing contributions
+
+**What requires permission:**
+- Redistribution of modified builds
+- Reuse in other mods or projects
+- Publication of derivative Smart!-like mods
+
+See [LICENSE.md](https://github.com/majormer/SmartFoundations/blob/main/LICENSE.md) for the full terms. Source available as of April 26, 2026.
+
 ---
 
 ## ⚡ The 60-Second Version
@@ -85,21 +101,17 @@ Smart! is useful if you enjoy designing factories but do not enjoy repeating the
 
 ---
 
-## 📰 What's New in v29.2.4
+## 📰 What's New in v29
 
-**Current Release:** v29.2.4 — Smart Upgrade Conveyor Repair and Triage Recovery
+**Current Release:** v29.2.5 — See [full changelog](https://github.com/majormer/SmartFoundations/blob/main/CHANGELOG.md) for all patch details
 
-### Smart Upgrade Fixes
+### Major Feature: Scaled Extend
 
-- **Large conveyor upgrades are safer.** Belt and lift mass upgrades on dense factories no longer leave connected-looking conveyors that stop moving items after a save/reload. The fix was validated through a clean pre-upgrade save, full mass upgrade, immediate item flow, clean diagnostics, save, reload, preserved item flow, and clean post-load diagnostics. (Issue #303)
-- **Belts and lifts upgrade as connected conveyor runs.** Smart Upgrade now treats connected belts and lifts as one conveyor domain for selection and cost handling, reducing partial upgrades where one piece of a run changes tier while the rest stays behind.
-- **Triage can repair loadable bad saves.** The Smart Upgrade Triage panel can now repair loaded saves with broken conveyor chain state. Save before using Repair, then save, reload, and run Detect again.
-- **Cleanup timing is safer.** Smart! avoids risky automatic deep repair immediately after upgrades while the game is still settling conveyor state. Deeper repair is explicit through Triage after load.
+The defining feature of version 29 is **Scaled Extend** — the fusion of Scaling and Extending for rapid factory duplication. Scale Extend across multiple clones and rows, with automatic lane segments chaining between adjacent clones' distributors. This represents a fundamental transformation of what Smart! can do.
 
-### Documentation and Onboarding
+### Recent Patch Updates
 
-- The Smart! ficsit.app page has been refreshed with a clearer first-time onboarding flow.
-- Internal Smart Upgrade and Chain Actor documentation was updated so future conveyor fixes follow the validated repair path.
+For detailed information about recent fixes and improvements in v29.2.5 and earlier patch releases, see the [full changelog](https://github.com/majormer/SmartFoundations/blob/main/CHANGELOG.md).
 
 ---
 

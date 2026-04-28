@@ -31,7 +31,7 @@ void FSFInputHandler::Shutdown()
 	OwnerSubsystem.Reset();
 	LastController.Reset();
 	bInputSetupCompleted = false;
-	
+
 	UE_LOG(LogSmartFoundations, Log, TEXT("InputHandler: Shutdown complete"));
 }
 
@@ -50,7 +50,7 @@ void FSFInputHandler::SetupPlayerInput(AFGPlayerController* PlayerController)
 		return;
 	}
 
-	UE_LOG(LogSmartFoundations, Log, TEXT("Setting up Smart! Enhanced Input system for player controller"));
+	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Setting up Smart! Enhanced Input system for player controller"));
 	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 Player controller: %s"), *PlayerController->GetName());
 
 	// Ensure input is enabled on the controller (some contexts require this for non-actor receivers)
@@ -76,15 +76,15 @@ void FSFInputHandler::SetupPlayerInput(AFGPlayerController* PlayerController)
 		// BUG FIX (Issue #148): Cache is cleared during world cleanup, ensuring fresh load for new worlds
 		if (UFGInputMappingContext* SmartContext = USFInputRegistry::GetSmartInputMappingContext())
 		{
-			UE_LOG(LogSmartFoundations, Log, TEXT("✅ Smart! Mapping Context loaded: %s"), *SmartContext->GetName());
-			
+			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("✅ Smart! Mapping Context loaded: %s"), *SmartContext->GetName());
+
 			// Get the Enhanced Input Subsystem to add our mapping context
 			if (UEnhancedInputLocalPlayerSubsystem* InputSubsystem = PlayerController->GetLocalPlayer()->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>())
 			{
 				// Add with HIGH priority (100) to ensure we consume input before base game
 				// This is critical for input consumption to work (prevents wheel from rotating hologram)
 				InputSubsystem->AddMappingContext(SmartContext, 100);
-				UE_LOG(LogSmartFoundations, Log, TEXT("Smart! Input Mapping Context added to Enhanced Input Subsystem (Priority: 100)"));
+				UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Smart! Input Mapping Context added to Enhanced Input Subsystem (Priority: 100)"));
 			}
 			else
 			{
@@ -101,7 +101,7 @@ void FSFInputHandler::SetupPlayerInput(AFGPlayerController* PlayerController)
 	{
 		UE_LOG(LogSmartFoundations, Error, TEXT("Player controller does not have UFGEnhancedInputComponent"));
 	}
-	
+
 	bInputSetupCompleted = true;
 }
 
@@ -126,7 +126,7 @@ void FSFInputHandler::CheckForPlayerController()
 		{
 			if (AFGPlayerController* FGController = Cast<AFGPlayerController>(PC))
 			{
-				UE_LOG(LogSmartFoundations, Log, TEXT("Player controller found! Setting up Smart! input system..."));
+				UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Player controller found! Setting up Smart! input system..."));
 				SetupPlayerInput(FGController);
 			}
 		}
@@ -160,7 +160,7 @@ void FSFInputHandler::RebindAfterDelay()
 			EnhancedInputComp->BindAction(IA, ETriggerEvent::Started, Subsystem, &USFSubsystem::OnDebugPrimaryFire);
 			EnhancedInputComp->BindAction(IA, ETriggerEvent::Triggered, Subsystem, &USFSubsystem::OnDebugPrimaryFire);
 			EnhancedInputComp->BindAction(IA, ETriggerEvent::Completed, Subsystem, &USFSubsystem::OnDebugPrimaryFire);
-			UE_LOG(LogSmartFoundations, Log, TEXT("Deferred rebind: Bound base action PrimaryFire -> %s"), *IA->GetPathName());
+			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Deferred rebind: Bound base action PrimaryFire -> %s"), *IA->GetPathName());
 		}
 		else
 		{
@@ -252,7 +252,7 @@ void FSFInputHandler::DisableVanillaBuildGunContext()
 	// Try standard path
 	FSoftObjectPath VanillaBuildGunPath(TEXT("/Game/FactoryGame/Inputs/Equipment/Buildgun/Build/MC_BuildGunBuild.MC_BuildGunBuild"));
 	UFGInputMappingContext* VanillaContext = Cast<UFGInputMappingContext>(VanillaBuildGunPath.TryLoad());
-	
+
 	if (!VanillaContext)
 	{
 		// Try alternative path (just in case)
@@ -269,7 +269,7 @@ void FSFInputHandler::DisableVanillaBuildGunContext()
 			CachedVanillaContextPriority = FoundPriority;
 			bVanillaContextRemoved = true;
 			InputSubsystem->RemoveMappingContext(VanillaContext);
-			UE_LOG(LogSmartFoundations, Log, TEXT("🚫 Disabled vanilla Build Gun context (priority=%d, prevents rotation while Smart! active) - %s"), FoundPriority, *VanillaContext->GetName());
+			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🚫 Disabled vanilla Build Gun context (priority=%d, prevents rotation while Smart! active) - %s"), FoundPriority, *VanillaContext->GetName());
 		}
 		else
 		{
@@ -305,7 +305,7 @@ void FSFInputHandler::EnableVanillaBuildGunContext()
 	// Re-add vanilla Build Gun context at its normal priority
 	FSoftObjectPath VanillaBuildGunPath(TEXT("/Game/FactoryGame/Inputs/Equipment/Buildgun/Build/MC_BuildGunBuild.MC_BuildGunBuild"));
 	UFGInputMappingContext* VanillaContext = Cast<UFGInputMappingContext>(VanillaBuildGunPath.TryLoad());
-	
+
 	if (!VanillaContext)
 	{
 		VanillaBuildGunPath = FSoftObjectPath(TEXT("/Game/FactoryGame/Inputs/Equipment/Buildgun/MC_BuildGun.MC_BuildGun"));
@@ -322,7 +322,7 @@ void FSFInputHandler::EnableVanillaBuildGunContext()
 			const int32 RestorePriority = (bVanillaContextRemoved && CachedVanillaContextPriority >= 0) ? CachedVanillaContextPriority : 0;
 			InputSubsystem->AddMappingContext(VanillaContext, RestorePriority);
 			bVanillaContextRemoved = false;
-			UE_LOG(LogSmartFoundations, Log, TEXT("✅ Re-enabled vanilla Build Gun context (priority=%d, rotation restored) - %s"), RestorePriority, *VanillaContext->GetName());
+			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("✅ Re-enabled vanilla Build Gun context (priority=%d, rotation restored) - %s"), RestorePriority, *VanillaContext->GetName());
 		}
 	}
 	else
@@ -400,8 +400,8 @@ void FSFInputHandler::OnSpacingModeChanged(const FInputActionValue& Value)
 {
 	bool bPressed = Value.Get<bool>();
 	bSpacingModeActive = bPressed;
-	
-	UE_LOG(LogSmartFoundations, Log, TEXT("InputHandler: Spacing mode %s"), 
+
+	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("InputHandler: Spacing mode %s"),
 		bPressed ? TEXT("activated") : TEXT("deactivated"));
 	if (USFSubsystem* Subsystem = OwnerSubsystem.Get())
 	{
@@ -420,8 +420,8 @@ void FSFInputHandler::OnStepsModeChanged(const FInputActionValue& Value)
 {
 	bool bPressed = Value.Get<bool>();
 	bStepsModeActive = bPressed;
-	
-	UE_LOG(LogSmartFoundations, Log, TEXT("InputHandler: Steps mode %s"), 
+
+	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("InputHandler: Steps mode %s"),
 		bPressed ? TEXT("activated") : TEXT("deactivated"));
 	if (USFSubsystem* Subsystem = OwnerSubsystem.Get())
 	{
@@ -440,8 +440,8 @@ void FSFInputHandler::OnStaggerModeChanged(const FInputActionValue& Value)
 {
 	bool bPressed = Value.Get<bool>();
 	bStaggerModeActive = bPressed;
-	
-	UE_LOG(LogSmartFoundations, Log, TEXT("InputHandler: Stagger mode %s"), 
+
+	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("InputHandler: Stagger mode %s"),
 		bPressed ? TEXT("activated") : TEXT("deactivated"));
 	if (USFSubsystem* Subsystem = OwnerSubsystem.Get())
 	{
@@ -453,8 +453,8 @@ void FSFInputHandler::OnRotationModeChanged(const FInputActionValue& Value)
 {
 	bool bPressed = Value.Get<bool>();
 	bRotationModeActive = bPressed;
-	
-	UE_LOG(LogSmartFoundations, Log, TEXT("InputHandler: Rotation mode %s"), 
+
+	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("InputHandler: Rotation mode %s"),
 		bPressed ? TEXT("activated") : TEXT("deactivated"));
 	if (USFSubsystem* Subsystem = OwnerSubsystem.Get())
 	{

@@ -25,14 +25,14 @@ void USFRCO::Server_ApplyScaling_Implementation(
 	int32 NewCounter
 )
 {
-	UE_LOG(LogSmartFoundations, Log, 
+	UE_LOG(LogSmartFoundations, VeryVerbose,
 		TEXT("[SFRCO] Server_ApplyScaling: Axis=%d, Delta=%d, Counter=%d, Hologram=%s"),
 		Axis, Delta, NewCounter, *GetNameSafe(HologramActor));
 
 	// Validate hologram exists
 	if (!IsValid(HologramActor))
 	{
-		UE_LOG(LogSmartFoundations, Warning, 
+		UE_LOG(LogSmartFoundations, Warning,
 			TEXT("[SFRCO] Server_ApplyScaling: Invalid hologram actor"));
 		return;
 	}
@@ -40,7 +40,7 @@ void USFRCO::Server_ApplyScaling_Implementation(
 	// Additional validation checks
 	if (!ValidateScalingRequest(HologramActor, Axis, Delta, NewCounter))
 	{
-		UE_LOG(LogSmartFoundations, Warning, 
+		UE_LOG(LogSmartFoundations, Warning,
 			TEXT("[SFRCO] Server_ApplyScaling: Validation failed"));
 		return;
 	}
@@ -49,7 +49,7 @@ void USFRCO::Server_ApplyScaling_Implementation(
 	USFSubsystem* Subsystem = USFSubsystem::Get(this);
 	if (!IsValid(Subsystem))
 	{
-		UE_LOG(LogSmartFoundations, Error, 
+		UE_LOG(LogSmartFoundations, Error,
 			TEXT("[SFRCO] Server_ApplyScaling: Failed to get SFSubsystem"));
 		return;
 	}
@@ -57,7 +57,7 @@ void USFRCO::Server_ApplyScaling_Implementation(
 	// Forward to subsystem's scaling logic
 	Subsystem->ApplyScalingFromRPC(HologramActor, Axis, Delta, NewCounter);
 
-	UE_LOG(LogSmartFoundations, Display, 
+	UE_LOG(LogSmartFoundations, VeryVerbose,
 		TEXT("[SFRCO] Server_ApplyScaling: SUCCESS - Forwarded to subsystem"));
 }
 
@@ -71,14 +71,14 @@ bool USFRCO::Server_ApplyScaling_Validate(
 	// Basic parameter validation
 	if (Axis > 2) // X=0, Y=1, Z=2
 	{
-		UE_LOG(LogSmartFoundations, Warning, 
+		UE_LOG(LogSmartFoundations, Warning,
 			TEXT("[SFRCO] Server_ApplyScaling_Validate: Invalid axis %d"), Axis);
 		return false;
 	}
 
 	if (FMath::Abs(Delta) != 1)
 	{
-		UE_LOG(LogSmartFoundations, Warning, 
+		UE_LOG(LogSmartFoundations, Warning,
 			TEXT("[SFRCO] Server_ApplyScaling_Validate: Invalid delta %d (must be ±1)"), Delta);
 		return false;
 	}
@@ -87,7 +87,7 @@ bool USFRCO::Server_ApplyScaling_Validate(
 	const int32 ClampedCounter = ClampCounter(NewCounter);
 	if (ClampedCounter != NewCounter)
 	{
-		UE_LOG(LogSmartFoundations, Warning, 
+		UE_LOG(LogSmartFoundations, Warning,
 			TEXT("[SFRCO] Server_ApplyScaling_Validate: Counter %d out of range"), NewCounter);
 		return false;
 	}
@@ -97,12 +97,12 @@ bool USFRCO::Server_ApplyScaling_Validate(
 
 void USFRCO::Server_ResetScaling_Implementation(AFGHologram* HologramActor)
 {
-	UE_LOG(LogSmartFoundations, Log, 
+	UE_LOG(LogSmartFoundations, VeryVerbose,
 		TEXT("[SFRCO] Server_ResetScaling: Hologram=%s"), *GetNameSafe(HologramActor));
 
 	if (!IsValid(HologramActor))
 	{
-		UE_LOG(LogSmartFoundations, Warning, 
+		UE_LOG(LogSmartFoundations, Warning,
 			TEXT("[SFRCO] Server_ResetScaling: Invalid hologram actor"));
 		return;
 	}
@@ -110,7 +110,7 @@ void USFRCO::Server_ResetScaling_Implementation(AFGHologram* HologramActor)
 	USFSubsystem* Subsystem = USFSubsystem::Get(this);
 	if (!IsValid(Subsystem))
 	{
-		UE_LOG(LogSmartFoundations, Error, 
+		UE_LOG(LogSmartFoundations, Error,
 			TEXT("[SFRCO] Server_ResetScaling: Failed to get SFSubsystem"));
 		return;
 	}
@@ -118,7 +118,7 @@ void USFRCO::Server_ResetScaling_Implementation(AFGHologram* HologramActor)
 	// Forward to subsystem
 	Subsystem->ResetScalingFromRPC(HologramActor);
 
-	UE_LOG(LogSmartFoundations, Display, 
+	UE_LOG(LogSmartFoundations, VeryVerbose,
 		TEXT("[SFRCO] Server_ResetScaling: SUCCESS - Forwarded to subsystem"));
 }
 
@@ -134,13 +134,13 @@ bool USFRCO::Server_ResetScaling_Validate(AFGHologram* HologramActor)
 
 void USFRCO::Server_SetSpacingMode_Implementation(ESFSpacingMode NewMode)
 {
-	UE_LOG(LogSmartFoundations, Log, 
+	UE_LOG(LogSmartFoundations, VeryVerbose,
 		TEXT("[SFRCO] Server_SetSpacingMode: NewMode=%d"), static_cast<uint8>(NewMode));
 
 	USFSubsystem* Subsystem = USFSubsystem::Get(this);
 	if (!IsValid(Subsystem))
 	{
-		UE_LOG(LogSmartFoundations, Error, 
+		UE_LOG(LogSmartFoundations, Error,
 			TEXT("[SFRCO] Server_SetSpacingMode: Failed to get SFSubsystem"));
 		return;
 	}
@@ -148,7 +148,7 @@ void USFRCO::Server_SetSpacingMode_Implementation(ESFSpacingMode NewMode)
 	// Forward to subsystem spacing logic
 	Subsystem->SetSpacingModeFromRPC(NewMode);
 
-	UE_LOG(LogSmartFoundations, Display, 
+	UE_LOG(LogSmartFoundations, VeryVerbose,
 		TEXT("[SFRCO] Server_SetSpacingMode: SUCCESS - Forwarded to subsystem"));
 }
 
@@ -165,13 +165,13 @@ bool USFRCO::Server_SetSpacingMode_Validate(ESFSpacingMode NewMode)
 
 void USFRCO::Server_ToggleArrows_Implementation(bool bVisible)
 {
-	UE_LOG(LogSmartFoundations, Log, 
+	UE_LOG(LogSmartFoundations, VeryVerbose,
 		TEXT("[SFRCO] Server_ToggleArrows: Visible=%d"), bVisible);
 
 	USFSubsystem* Subsystem = USFSubsystem::Get(this);
 	if (!IsValid(Subsystem))
 	{
-		UE_LOG(LogSmartFoundations, Error, 
+		UE_LOG(LogSmartFoundations, Error,
 			TEXT("[SFRCO] Server_ToggleArrows: Failed to get SFSubsystem"));
 		return;
 	}
@@ -179,7 +179,7 @@ void USFRCO::Server_ToggleArrows_Implementation(bool bVisible)
 	// Forward to subsystem arrow manager
 	Subsystem->SetArrowVisibilityFromRPC(bVisible);
 
-	UE_LOG(LogSmartFoundations, Display, 
+	UE_LOG(LogSmartFoundations, VeryVerbose,
 		TEXT("[SFRCO] Server_ToggleArrows: SUCCESS - Forwarded to subsystem"));
 }
 
@@ -195,7 +195,7 @@ bool USFRCO::Server_ToggleArrows_Validate(bool bVisible)
 
 void USFRCO::Server_StartUpgradeAudit_Implementation(FSFUpgradeAuditParams Params)
 {
-	UE_LOG(LogSmartFoundations, Log, TEXT("[SFRCO] Server_StartUpgradeAudit: Radius=%f"), Params.Radius);
+	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("[SFRCO] Server_StartUpgradeAudit: Radius=%f"), Params.Radius);
 
 	USFSubsystem* Subsystem = USFSubsystem::Get(this);
 	if (!IsValid(Subsystem))
@@ -226,7 +226,7 @@ bool USFRCO::Server_StartUpgradeAudit_Validate(FSFUpgradeAuditParams Params)
 
 void USFRCO::Server_CancelUpgradeAudit_Implementation()
 {
-	UE_LOG(LogSmartFoundations, Log, TEXT("[SFRCO] Server_CancelUpgradeAudit"));
+	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("[SFRCO] Server_CancelUpgradeAudit"));
 
 	USFSubsystem* Subsystem = USFSubsystem::Get(this);
 	if (IsValid(Subsystem))
@@ -245,7 +245,7 @@ bool USFRCO::Server_CancelUpgradeAudit_Validate()
 
 void USFRCO::Client_ReceiveAuditResult_Implementation(FSFUpgradeAuditResult Result)
 {
-	UE_LOG(LogSmartFoundations, Log, TEXT("[SFRCO] Client_ReceiveAuditResult: Success=%d, TotalScanned=%d"), Result.bSuccess, Result.TotalScanned);
+	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("[SFRCO] Client_ReceiveAuditResult: Success=%d, TotalScanned=%d"), Result.bSuccess, Result.TotalScanned);
 
 	// Results are received on the client and injected into the local audit service
 	USFSubsystem* Subsystem = USFSubsystem::Get(this);
@@ -272,7 +272,7 @@ bool USFRCO::ValidateScalingRequest(
 	// Check hologram authority
 	if (!HasHologramAuthority(HologramActor))
 	{
-		UE_LOG(LogSmartFoundations, Warning, 
+		UE_LOG(LogSmartFoundations, Warning,
 			TEXT("[SFRCO] ValidateScalingRequest: Caller lacks hologram authority"));
 		return false;
 	}
@@ -280,7 +280,7 @@ bool USFRCO::ValidateScalingRequest(
 	// Check rate limiting
 	if (!CheckRateLimit())
 	{
-		UE_LOG(LogSmartFoundations, Warning, 
+		UE_LOG(LogSmartFoundations, Warning,
 			TEXT("[SFRCO] ValidateScalingRequest: Rate limit exceeded"));
 		return false;
 	}
@@ -316,7 +316,7 @@ bool USFRCO::CheckRateLimit() const
 {
 	// TODO Task #22: Implement proper rate limiting
 	// Max 20 requests/second with exponential backoff
-	
+
 	// Placeholder: always allow for now
 	return true;
 }
