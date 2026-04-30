@@ -121,14 +121,17 @@ FSFRestorePreset USFRestoreService::CaptureCurrentState(
 		TSubclassOf<UFGRecipe> ActiveRecipe = Subsystem->GetActiveRecipe();
 		if (ActiveRecipe)
 		{
-			// Get filtered recipes for current hologram to find the production recipe
-			TArray<TSubclassOf<UFGRecipe>> FilteredRecipes = Subsystem->GetFilteredRecipesForCurrentHologram();
-			for (const TSubclassOf<UFGRecipe>& Recipe : FilteredRecipes)
+			// Use read-only accessor to avoid rebuilding the cache (which resets CurrentRecipeIndex)
+			if (USFRecipeManagementService* RecipeSvc = Subsystem->GetRecipeManagementService())
 			{
-				if (Recipe == ActiveRecipe)
+				const TArray<TSubclassOf<UFGRecipe>>& FilteredRecipes = RecipeSvc->GetSortedFilteredRecipes();
+				for (const TSubclassOf<UFGRecipe>& Recipe : FilteredRecipes)
 				{
-					Preset.RecipeClassName = ActiveRecipe->GetName();
-					break;
+					if (Recipe == ActiveRecipe)
+					{
+						Preset.RecipeClassName = ActiveRecipe->GetName();
+						break;
+					}
 				}
 			}
 		}
