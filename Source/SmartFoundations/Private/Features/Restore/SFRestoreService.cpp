@@ -12,6 +12,9 @@
 #include "FGRecipeManager.h"
 #include "Buildables/FGBuildableFactory.h"
 #include "Buildables/FGBuildableManufacturer.h"
+#include "FGCharacterPlayer.h"
+#include "Equipment/FGBuildGun.h"
+#include "Equipment/FGBuildGunBuild.h"
 
 // Engine includes
 #include "Misc/FileHelper.h"
@@ -55,15 +58,26 @@ FSFRestorePreset USFRestoreService::CaptureCurrentState(
 		return Preset;
 	}
 
-	// Building class — always captured from the active hologram's recipe
-	if (USFRecipeManagementService* RecipeSvc = Subsystem->GetRecipeManagementService())
+	// Building class — captured from the build gun's active recipe (not the production recipe).
+	// The build gun recipe (e.g. "Recipe_Constructor_C") determines what building to place,
+	// while the production recipe (e.g. "Recipe_Screw_C") determines what the building crafts.
 	{
-		TSubclassOf<UFGRecipe> CurrentRecipe = Subsystem->GetActiveRecipe();
-		if (CurrentRecipe)
+		UWorld* World = Subsystem->GetWorld();
+		APlayerController* PC = World ? World->GetFirstPlayerController() : nullptr;
+		AFGCharacterPlayer* Character = PC ? Cast<AFGCharacterPlayer>(PC->GetPawn()) : nullptr;
+		AFGBuildGun* BuildGun = Character ? Character->GetBuildGun() : nullptr;
+		if (BuildGun)
 		{
-			// Store the recipe's class name — this identifies the building to place.
-			// The build gun uses recipes (not building classes directly) to select what to build.
-			Preset.BuildingClassName = CurrentRecipe->GetName();
+			UFGBuildGunStateBuild* BuildState = Cast<UFGBuildGunStateBuild>(
+				BuildGun->GetBuildGunStateFor(EBuildGunState::BGS_BUILD));
+			if (BuildState)
+			{
+				UClass* BuildRecipe = BuildState->GetActiveRecipe();
+				if (BuildRecipe)
+				{
+					Preset.BuildingClassName = BuildRecipe->GetName();
+				}
+			}
 		}
 	}
 
@@ -733,11 +747,48 @@ FSFRestorePreset USFRestoreService::ImportFromLastExtend(
 	// Start with a normal capture of current state
 	FSFRestorePreset Preset = CaptureCurrentState(Name, CaptureFlags);
 
-	// Override building class from the Extend source building
+	// Override building class — find the build-gun recipe that produces this building type.
+	// BuildingClassName must be a recipe class name (e.g. "Recipe_Constructor_C"), not a
+	// building UClass name (e.g. "Build_ConstructorMk1_C"), because ApplyPreset passes it
+	// to SetBuildGunByRecipeName which searches available recipes by name.
 	AFGBuildable* SourceBuilding = Topology.SourceBuilding.Get();
 	if (SourceBuilding)
 	{
-		Preset.BuildingClassName = SourceBuilding->GetClass()->GetName();
+		// Clear the BuildingClassName captured from the current build gun — we want
+		// the Extend source building's recipe instead
+		Preset.BuildingClassName.Empty();
+
+		UClass* BuildingClass = SourceBuilding->GetClass();
+		UWorld* World = Subsystem->GetWorld();
+		AFGRecipeManager* RecipeManager = World ? AFGRecipeManager::Get(World) : nullptr;
+		if (RecipeManager)
+		{
+			TArray<TSubclassOf<UFGRecipe>> AllRecipes;
+			RecipeManager->GetAllAvailableRecipes(AllRecipes);
+			for (const TSubclassOf<UFGRecipe>& Recipe : AllRecipes)
+			{
+				if (!Recipe) continue;
+				for (const FItemAmount& Product : UFGRecipe::GetProducts(Recipe))
+				{
+					if (Product.ItemClass && Product.ItemClass == BuildingClass)
+					{
+						Preset.BuildingClassName = Recipe->GetName();
+						break;
+					}
+				}
+				if (!Preset.BuildingClassName.IsEmpty())
+				{
+					break;
+				}
+			}
+		}
+
+		if (Preset.BuildingClassName.IsEmpty())
+		{
+			UE_LOG(LogSmartFoundations, Warning,
+				TEXT("[SmartRestore] ImportFromLastExtend: Could not find recipe for building '%s'"),
+				*GetNameSafe(SourceBuilding));
+		}
 	}
 
 	// Override recipe from the source factory's production recipe (if applicable)
