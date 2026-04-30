@@ -220,21 +220,76 @@ bool USFRestoreService::ApplyPreset(const FSFRestorePreset& Preset)
 	Subsystem->UpdateCounterState(State);
 
 	// 3. Apply production recipe
+	// NOTE: We cannot use GetFilteredRecipesForCurrentHologram() here because
+	// the hologram is updated asynchronously via PollForActiveHologram (100ms timer).
+	// After SetBuildGunByRecipeName above, the old hologram is still active.
+	// Instead, find the building class from the preset's build gun recipe and
+	// check recipe compatibility directly via GetProducedIn.
 	if (Preset.CaptureFlags.bRecipe && !Preset.RecipeClassName.IsEmpty())
 	{
 		if (USFRecipeManagementService* RecipeSvc = Subsystem->GetRecipeManagementService())
 		{
-			// Find the recipe by class name in the filtered list
-			TArray<TSubclassOf<UFGRecipe>> FilteredRecipes = Subsystem->GetFilteredRecipesForCurrentHologram();
-			for (int32 i = 0; i < FilteredRecipes.Num(); ++i)
+			UWorld* World = Subsystem->GetWorld();
+			AFGRecipeManager* RecipeManager = World ? AFGRecipeManager::Get(World) : nullptr;
+			if (RecipeManager)
 			{
-				if (FilteredRecipes[i] && FilteredRecipes[i]->GetName() == Preset.RecipeClassName)
+				// Find the building class produced by the preset's build gun recipe
+				UClass* TargetBuildingClass = nullptr;
 				{
-					RecipeSvc->SetActiveRecipeByIndex(i);
-					UE_LOG(LogSmartFoundations, Display,
-						TEXT("[SmartRestore] Applied recipe '%s' at index %d"),
-						*Preset.RecipeClassName, i);
-					break;
+					TArray<TSubclassOf<UFGRecipe>> AllRecipes;
+					RecipeManager->GetAllAvailableRecipes(AllRecipes);
+					for (const TSubclassOf<UFGRecipe>& Recipe : AllRecipes)
+					{
+						if (Recipe && Recipe->GetName() == Preset.BuildingClassName)
+						{
+							for (const FItemAmount& Product : UFGRecipe::GetProducts(Recipe))
+							{
+								if (Product.ItemClass && Product.ItemClass->IsChildOf(AFGBuildable::StaticClass()))
+								{
+									TargetBuildingClass = Product.ItemClass;
+									break;
+								}
+							}
+							break;
+						}
+					}
+				}
+
+				// Find all production recipes compatible with this building class
+				if (TargetBuildingClass)
+				{
+					TArray<TSubclassOf<UFGRecipe>> AllRecipes;
+					RecipeManager->GetAllAvailableRecipes(AllRecipes);
+					TArray<TSubclassOf<UFGRecipe>> CompatibleRecipes;
+					for (const TSubclassOf<UFGRecipe>& Recipe : AllRecipes)
+					{
+						if (!Recipe) continue;
+						UFGRecipe* RecipeCDO = Recipe->GetDefaultObject<UFGRecipe>();
+						if (!RecipeCDO) continue;
+						TArray<TSubclassOf<UObject>> ProducedIn;
+						RecipeCDO->GetProducedIn(ProducedIn);
+						for (const TSubclassOf<UObject>& ProducerClass : ProducedIn)
+						{
+							if (ProducerClass && TargetBuildingClass->IsChildOf(ProducerClass))
+							{
+								CompatibleRecipes.Add(Recipe);
+								break;
+							}
+						}
+					}
+
+					// Find the target production recipe by name in the compatible list
+					for (int32 i = 0; i < CompatibleRecipes.Num(); ++i)
+					{
+						if (CompatibleRecipes[i]->GetName() == Preset.RecipeClassName)
+						{
+							RecipeSvc->SetActiveRecipeByIndex(i);
+							UE_LOG(LogSmartFoundations, Display,
+								TEXT("[SmartRestore] Applied recipe '%s' at index %d"),
+								*Preset.RecipeClassName, i);
+							break;
+						}
+					}
 				}
 			}
 		}
@@ -478,8 +533,30 @@ bool USFRestoreService::SavePreset(const FSFRestorePreset& Preset)
 	const FString FilePath = GetPresetFilePath(MutablePreset.Name);
 	const FString Dir = FPaths::GetPath(FilePath);
 
-	// Ensure directory exists
+	// Check for filename collisions — different preset names can map to the same file
 	IPlatformFile& PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
+	if (PlatformFile.FileExists(*FilePath))
+	{
+		FString ExistingJson;
+		if (FFileHelper::LoadFileToString(ExistingJson, *FilePath))
+		{
+			TSharedPtr<FJsonObject> ExistingObj;
+			TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(ExistingJson);
+			if (FJsonSerializer::Deserialize(Reader, ExistingObj) && ExistingObj.IsValid())
+			{
+				FString ExistingName = ExistingObj->GetStringField(TEXT("name"));
+				if (ExistingName != MutablePreset.Name)
+				{
+					UE_LOG(LogSmartFoundations, Warning,
+						TEXT("[SmartRestore] SavePreset: Name collision — '%s' would overwrite '%s' at %s"),
+						*MutablePreset.Name, *ExistingName, *FilePath);
+					return false;
+				}
+			}
+		}
+	}
+
+	// Ensure directory exists
 	if (!PlatformFile.DirectoryExists(*Dir))
 	{
 		PlatformFile.CreateDirectoryTree(*Dir);
@@ -802,6 +879,14 @@ FSFRestorePreset USFRestoreService::ImportFromLastExtend(
 				Preset.RecipeClassName = FactoryRecipe->GetName();
 			}
 		}
+	}
+
+	if (Preset.BuildingClassName.IsEmpty())
+	{
+		UE_LOG(LogSmartFoundations, Warning,
+			TEXT("[SmartRestore] ImportFromLastExtend: Failed — no building recipe found for '%s'"),
+			*GetNameSafe(SourceBuilding));
+		return Preset;
 	}
 
 	bOutSuccess = true;
