@@ -26,6 +26,7 @@ When these documents conflict with older archive notes, trust the current source
 | SmartDismantle | [SmartDismantle/IMPL_SmartDismantle_CurrentFlow.md](SmartDismantle/IMPL_SmartDismantle_CurrentFlow.md) | Active, limited scope |
 | SmartPanel | [SmartPanel/IMPL_SmartPanel_CurrentFlow.md](SmartPanel/IMPL_SmartPanel_CurrentFlow.md) | Active, split widgets |
 | SmartRestore | [SmartRestore/PLAN_SmartRestore_Enhanced.md](SmartRestore/PLAN_SmartRestore_Enhanced.md) | WIP, feature specification |
+| SmartRestore (impl) | [SmartRestore/IMPL_SmartRestore_ImplementationPlan.md](SmartRestore/IMPL_SmartRestore_ImplementationPlan.md) | Draft, implementation plan |
 
 ## Cleanup Notes
 
