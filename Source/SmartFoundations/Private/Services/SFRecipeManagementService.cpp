@@ -215,11 +215,11 @@ bool USFRecipeManagementService::SetActiveRecipeByClass(TSubclassOf<UFGRecipe> R
 {
 	if (!RecipeClass) return false;
 
-	// Ensure SortedFilteredRecipes is populated
-	if (SortedFilteredRecipes.Num() == 0)
-	{
-		SortedFilteredRecipes = GetFilteredRecipesForCurrentHologram();
-	}
+	// Force-rebuild the recipe cache since this is typically called after a
+	// build gun switch where the cached list is stale (old hologram's recipes).
+	// The index reset from rebuilding is acceptable here because we look up
+	// by class, not by index.
+	SortedFilteredRecipes = GetFilteredRecipesForCurrentHologram();
 
 	// Find the recipe in SortedFilteredRecipes by class
 	for (int32 i = 0; i < SortedFilteredRecipes.Num(); ++i)

@@ -400,33 +400,37 @@ bool USFRestoreService::JsonToPreset(const TSharedPtr<FJsonObject>& JsonObj, FSF
 	const TSharedPtr<FJsonObject>* GridObj = nullptr;
 	if (OutPreset.CaptureFlags.bGrid && JsonObj->TryGetObjectField(TEXT("grid"), GridObj) && GridObj)
 	{
-		OutPreset.GridCounters.X = static_cast<int32>((*GridObj)->GetNumberField(TEXT("x")));
-		OutPreset.GridCounters.Y = static_cast<int32>((*GridObj)->GetNumberField(TEXT("y")));
-		OutPreset.GridCounters.Z = static_cast<int32>((*GridObj)->GetNumberField(TEXT("z")));
+		double Val;
+		if ((*GridObj)->TryGetNumberField(TEXT("x"), Val)) OutPreset.GridCounters.X = static_cast<int32>(Val);
+		if ((*GridObj)->TryGetNumberField(TEXT("y"), Val)) OutPreset.GridCounters.Y = static_cast<int32>(Val);
+		if ((*GridObj)->TryGetNumberField(TEXT("z"), Val)) OutPreset.GridCounters.Z = static_cast<int32>(Val);
 	}
 
 	const TSharedPtr<FJsonObject>* SpacingObj = nullptr;
 	if (OutPreset.CaptureFlags.bSpacing && JsonObj->TryGetObjectField(TEXT("spacing"), SpacingObj) && SpacingObj)
 	{
-		OutPreset.SpacingX = static_cast<int32>((*SpacingObj)->GetNumberField(TEXT("x")));
-		OutPreset.SpacingY = static_cast<int32>((*SpacingObj)->GetNumberField(TEXT("y")));
-		OutPreset.SpacingZ = static_cast<int32>((*SpacingObj)->GetNumberField(TEXT("z")));
+		double Val;
+		if ((*SpacingObj)->TryGetNumberField(TEXT("x"), Val)) OutPreset.SpacingX = static_cast<int32>(Val);
+		if ((*SpacingObj)->TryGetNumberField(TEXT("y"), Val)) OutPreset.SpacingY = static_cast<int32>(Val);
+		if ((*SpacingObj)->TryGetNumberField(TEXT("z"), Val)) OutPreset.SpacingZ = static_cast<int32>(Val);
 	}
 
 	const TSharedPtr<FJsonObject>* StepsObj = nullptr;
 	if (OutPreset.CaptureFlags.bSteps && JsonObj->TryGetObjectField(TEXT("steps"), StepsObj) && StepsObj)
 	{
-		OutPreset.StepsX = static_cast<int32>((*StepsObj)->GetNumberField(TEXT("x")));
-		OutPreset.StepsY = static_cast<int32>((*StepsObj)->GetNumberField(TEXT("y")));
+		double Val;
+		if ((*StepsObj)->TryGetNumberField(TEXT("x"), Val)) OutPreset.StepsX = static_cast<int32>(Val);
+		if ((*StepsObj)->TryGetNumberField(TEXT("y"), Val)) OutPreset.StepsY = static_cast<int32>(Val);
 	}
 
 	const TSharedPtr<FJsonObject>* StaggerObj = nullptr;
 	if (OutPreset.CaptureFlags.bStagger && JsonObj->TryGetObjectField(TEXT("stagger"), StaggerObj) && StaggerObj)
 	{
-		OutPreset.StaggerX = static_cast<int32>((*StaggerObj)->GetNumberField(TEXT("x")));
-		OutPreset.StaggerY = static_cast<int32>((*StaggerObj)->GetNumberField(TEXT("y")));
-		OutPreset.StaggerZX = static_cast<int32>((*StaggerObj)->GetNumberField(TEXT("zx")));
-		OutPreset.StaggerZY = static_cast<int32>((*StaggerObj)->GetNumberField(TEXT("zy")));
+		double Val;
+		if ((*StaggerObj)->TryGetNumberField(TEXT("x"), Val)) OutPreset.StaggerX = static_cast<int32>(Val);
+		if ((*StaggerObj)->TryGetNumberField(TEXT("y"), Val)) OutPreset.StaggerY = static_cast<int32>(Val);
+		if ((*StaggerObj)->TryGetNumberField(TEXT("zx"), Val)) OutPreset.StaggerZX = static_cast<int32>(Val);
+		if ((*StaggerObj)->TryGetNumberField(TEXT("zy"), Val)) OutPreset.StaggerZY = static_cast<int32>(Val);
 	}
 
 	if (OutPreset.CaptureFlags.bRotation)
@@ -442,19 +446,20 @@ bool USFRestoreService::JsonToPreset(const TSharedPtr<FJsonObject>& JsonObj, FSF
 	const TSharedPtr<FJsonObject>* ACObj = nullptr;
 	if (OutPreset.CaptureFlags.bAutoConnect && JsonObj->TryGetObjectField(TEXT("autoConnect"), ACObj) && ACObj)
 	{
+		double Val;
 		(*ACObj)->TryGetBoolField(TEXT("beltEnabled"), OutPreset.AutoConnect.bBeltEnabled);
-		OutPreset.AutoConnect.BeltTierMain = static_cast<int32>((*ACObj)->GetNumberField(TEXT("beltTierMain")));
-		OutPreset.AutoConnect.BeltTierToBuilding = static_cast<int32>((*ACObj)->GetNumberField(TEXT("beltTierToBuilding")));
+		if ((*ACObj)->TryGetNumberField(TEXT("beltTierMain"), Val)) OutPreset.AutoConnect.BeltTierMain = static_cast<int32>(Val);
+		if ((*ACObj)->TryGetNumberField(TEXT("beltTierToBuilding"), Val)) OutPreset.AutoConnect.BeltTierToBuilding = static_cast<int32>(Val);
 		(*ACObj)->TryGetBoolField(TEXT("chainDistributors"), OutPreset.AutoConnect.bChainDistributors);
-		OutPreset.AutoConnect.BeltRoutingMode = static_cast<int32>((*ACObj)->GetNumberField(TEXT("beltRoutingMode")));
+		if ((*ACObj)->TryGetNumberField(TEXT("beltRoutingMode"), Val)) OutPreset.AutoConnect.BeltRoutingMode = static_cast<int32>(Val);
 		(*ACObj)->TryGetBoolField(TEXT("pipeEnabled"), OutPreset.AutoConnect.bPipeEnabled);
-		OutPreset.AutoConnect.PipeTierMain = static_cast<int32>((*ACObj)->GetNumberField(TEXT("pipeTierMain")));
-		OutPreset.AutoConnect.PipeTierToBuilding = static_cast<int32>((*ACObj)->GetNumberField(TEXT("pipeTierToBuilding")));
+		if ((*ACObj)->TryGetNumberField(TEXT("pipeTierMain"), Val)) OutPreset.AutoConnect.PipeTierMain = static_cast<int32>(Val);
+		if ((*ACObj)->TryGetNumberField(TEXT("pipeTierToBuilding"), Val)) OutPreset.AutoConnect.PipeTierToBuilding = static_cast<int32>(Val);
 		(*ACObj)->TryGetBoolField(TEXT("pipeIndicator"), OutPreset.AutoConnect.bPipeIndicator);
-		OutPreset.AutoConnect.PipeRoutingMode = static_cast<int32>((*ACObj)->GetNumberField(TEXT("pipeRoutingMode")));
+		if ((*ACObj)->TryGetNumberField(TEXT("pipeRoutingMode"), Val)) OutPreset.AutoConnect.PipeRoutingMode = static_cast<int32>(Val);
 		(*ACObj)->TryGetBoolField(TEXT("powerEnabled"), OutPreset.AutoConnect.bPowerEnabled);
-		OutPreset.AutoConnect.PowerGridAxis = static_cast<int32>((*ACObj)->GetNumberField(TEXT("powerGridAxis")));
-		OutPreset.AutoConnect.PowerReserved = static_cast<int32>((*ACObj)->GetNumberField(TEXT("powerReserved")));
+		if ((*ACObj)->TryGetNumberField(TEXT("powerGridAxis"), Val)) OutPreset.AutoConnect.PowerGridAxis = static_cast<int32>(Val);
+		if ((*ACObj)->TryGetNumberField(TEXT("powerReserved"), Val)) OutPreset.AutoConnect.PowerReserved = static_cast<int32>(Val);
 	}
 
 	return true;
@@ -660,6 +665,22 @@ TArray<FString> USFRestoreService::GetPresetNames() const
 
 	for (const FString& FileName : FoundFiles)
 	{
+		const FString FilePath = FPaths::Combine(Dir, FileName);
+		FString JsonString;
+		if (FFileHelper::LoadFileToString(JsonString, *FilePath))
+		{
+			TSharedPtr<FJsonObject> JsonObj;
+			TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(JsonString);
+			if (FJsonSerializer::Deserialize(Reader, JsonObj) && JsonObj.IsValid())
+			{
+				FString PresetName;
+				if (JsonObj->TryGetStringField(TEXT("name"), PresetName) && !PresetName.IsEmpty())
+				{
+					Names.Add(PresetName);
+					continue;
+				}
+			}
+		}
 		Names.Add(FPaths::GetBaseFilename(FileName));
 	}
 
