@@ -44,15 +44,24 @@ class SmartRestorePreset
 {
     string Name;
 
-    // Core identity
+    // Core identity — always captured
     string BuildingClass; // e.g. /Game/FactoryGame/Buildable/Factory/Constructor/Build_Constructor.Build_Constructor_C
 
-    // Grid configuration
+    // Capture flags — user selects which fields to include when saving
+    bool CaptureGrid;
+    bool CaptureSpacing;
+    bool CaptureSteps;
+    bool CaptureStagger;
+    bool CaptureRotation;
+    bool CaptureRecipe;
+    bool CaptureAutoConnect;
+
+    // Grid configuration (stored when CaptureGrid is true)
     int GridX;
     int GridY;
     int GridZ;
 
-    // Transform configuration
+    // Transform configuration (each group stored when its flag is true)
     float SpacingX;
     float SpacingY;
     float SpacingZ;
@@ -67,9 +76,8 @@ class SmartRestorePreset
 
     float RotationDegrees;
 
-    // Optional functional settings
+    // Optional functional settings (stored when their flag is true)
     string Recipe; // Recipe class path or identifier
-    bool HasRecipeOverride;
 
     AutoConnectSettings AutoConnect;
 
@@ -106,13 +114,32 @@ class AutoConnectSettings
 
 Triggered from the Smart Panel.
 
-Capture current state:
+The save flow presents a **capture checklist** so the user selects which parameters to include in the preset. Not every field needs to be saved every time — for example, a user may want to save spacing and steps but not rotation or recipe.
 
-- Active hologram building class.
-- Grid dimensions: X, Y, and Z.
-- Transform state: spacing, steps, stagger, and rotation.
-- Recipe, when applicable.
-- Auto-connect settings, when the preset elects to override them.
+Capture checklist:
+
+| Field group | Always captured | User-selectable |
+|-------------|-----------------|------------------|
+| Building class | Yes | — |
+| Grid (X, Y, Z) | — | Yes |
+| Spacing | — | Yes |
+| Steps | — | Yes |
+| Stagger | — | Yes |
+| Rotation | — | Yes |
+| Recipe | — | Yes (see recipe rules below) |
+| Auto-connect settings | — | Yes |
+
+### Recipe Capture Rules
+
+Recipe is only eligible for capture when:
+
+- The active building is a production building that supports recipes.
+- A recipe is currently set on the hologram.
+- The recipe is compatible with the stored `BuildingClass`.
+
+If the user selects recipe capture but the current building does not support recipes, the save flow should warn and skip the recipe field rather than blocking the save.
+
+When a preset with a stored recipe is loaded, the recipe is only applied if the target building class is compatible. If the user later loads the preset while holding a different (incompatible) building, the recipe field is silently skipped.
 
 Prompt for:
 
@@ -123,12 +150,13 @@ Prompt for:
 
 When the user selects and applies a preset:
 
-1. Set the active build gun to the stored `BuildingClass`.
-2. Apply grid settings.
-3. Apply transform settings and rotation.
-4. Apply recipe override if the stored recipe is valid for the restored building.
-5. Apply auto-connect overrides if `HasOverrides` is true.
-6. Refresh or respawn the hologram preview so the panel state and build gun preview agree.
+1. **Auto-switch the build gun** to the stored `BuildingClass`. No confirmation prompt — the preset is deterministic and the user chose to apply it.
+2. Apply grid settings (if `CaptureGrid` was true when saved).
+3. Apply spacing, steps, stagger, and rotation (each only if its capture flag was true).
+4. Apply recipe if the stored recipe is valid for the restored building (if `CaptureRecipe` was true).
+5. Apply auto-connect overrides (if `CaptureAutoConnect` was true).
+6. Fields that were not captured in the preset leave the current Smart Panel state untouched.
+7. Refresh or respawn the hologram preview so the panel state and build gun preview agree.
 
 ## Smart Panel Integration
 
@@ -191,12 +219,19 @@ Candidate location:
 /Smart/Presets/*.json
 ```
 
-Open storage decision:
+### Storage Strategy
 
-- Config folder: easier for users to inspect, share, and back up.
-- SaveGame storage: closer to world-specific unlock and recipe context.
+Support both global config storage and world-specific SaveGame storage. Global config is the primary location for user-managed presets (easy to inspect, share, back up). World-specific storage can reference or import from global presets.
 
-The first implementation should prefer a location that supports export/import without depending on arbitrary world state.
+### Backward Compatibility
+
+Presets from older saves or older Smart! versions should be importable into newer versions. The version field in each preset enables migration:
+
+- On load, check the preset version against the current Smart! version.
+- If the version is older, run migration logic (e.g., renamed class paths, changed parameter ranges, new fields with defaults).
+- If a stored `BuildingClass` path changed between Satisfactory versions, attempt to map it to the current equivalent.
+- If migration fails for a specific field, warn and skip that field rather than rejecting the entire preset.
+- Recipes are the highest-risk field for cross-version breakage. A recipe valid in one Satisfactory version may not exist in another. Recipe restore should always validate availability before applying.
 
 ## Example Presets
 
@@ -253,13 +288,21 @@ Potential hybrid with Extend:
 3. Composable: restore should work with Scaling, Transforms, AutoConnect, and future Extend flows.
 4. Fail-safe: invalid fields should degrade gracefully without corrupting panel or hologram state.
 
+## Resolved Design Decisions
+
+| Question | Decision | Notes |
+|----------|----------|-------|
+| Should presets auto-switch the build gun? | **Yes, auto-switch.** | No confirmation prompt. The preset is deterministic and the user chose to apply it. |
+| Should recipes be optional per preset? | **Yes, user-selectable via capture checklist.** | Recipe capture requires a compatible production building. The save UI presents a checklist of all capturable fields. |
+| Should presets support hotkeys? | **Not initially.** | Selection via Smart Panel dropdown. Hotkey support can be added later. |
+| Should presets be shared/exportable? | **Yes.** | Support explicit import/export. Consider a compact string encoding for easy sharing (e.g., clipboard-friendly encoded preset). |
+| Should storage be global or world-specific? | **Both.** | Global config is primary (easy to share/back up). World-specific storage can reference global presets. Backward compatibility via version migration. |
+
 ## Open Questions
 
-- Should presets auto-switch the build gun, or require confirmation first?
-- Should recipes be optional per preset or always stored?
-- Should presets support hotkeys like the original Restore behavior?
-- Should presets be shared/exportable through explicit import/export UI?
-- Should storage be global config, world-specific SaveGame, or both?
+- Should Smart Restore be its own tab in the Smart Panel, or extend the main panel with a Restore/Presets section?
+- What is the best compact string encoding format for shareable presets?
+- Should the capture checklist default to all fields selected, or remember the user's last selection?
 
 ## Implementation Notes
 
