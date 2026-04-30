@@ -25,7 +25,7 @@ When these documents conflict with older archive notes, trust the current source
 | SmartUpgrade | [SmartUpgrade/IMPL_SmartUpgrade_CurrentFlow.md](SmartUpgrade/IMPL_SmartUpgrade_CurrentFlow.md) | Active |
 | SmartDismantle | [SmartDismantle/IMPL_SmartDismantle_CurrentFlow.md](SmartDismantle/IMPL_SmartDismantle_CurrentFlow.md) | Active, limited scope |
 | SmartPanel | [SmartPanel/IMPL_SmartPanel_CurrentFlow.md](SmartPanel/IMPL_SmartPanel_CurrentFlow.md) | Active, split widgets |
-| SmartRestore | *Not yet documented* | WIP, implementation seed |
+| SmartRestore | [SmartRestore/PLAN_SmartRestore_Enhanced.md](SmartRestore/PLAN_SmartRestore_Enhanced.md) | WIP, feature specification |
 
 ## Cleanup Notes
 
