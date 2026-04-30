@@ -33,6 +33,8 @@
 #include "Features/Arrows/SFArrowModule_StaticMesh.h"
 #include "Features/PipeAutoConnect/SFPipeAutoConnectManager.h"
 #include "Features/PowerAutoConnect/SFPowerAutoConnectManager.h"
+#include "Features/Restore/SFRestoreService.h"
+#include "Features/Restore/SFRestoreTypes.h"
 #include "Logging/SFLogMacros.h"
 #include "Hologram/FGFactoryBuildingHologram.h"  // Issue #160: Zoop detection
 #include "SFHologramPerformanceProfiler.h"
@@ -244,6 +246,13 @@ USFSubsystem::USFSubsystem() : Super()
 	if (GridTransformService)
 	{
 		GridTransformService->Initialize(this);
+	}
+
+	// Create Restore service as default subobject (Smart Restore Enhanced)
+	RestoreService = CreateDefaultSubobject<USFRestoreService>(TEXT("RestoreService"));
+	if (RestoreService)
+	{
+		RestoreService->Initialize(this);
 	}
 
 	UE_LOG(LogSmartFoundations, Log, TEXT("SFSubsystem: Phase 0 modules and recipe service initialized"));
@@ -4654,6 +4663,113 @@ void USFSubsystem::SetActiveRecipeByIndex(int32 Index)
 	{
 		RecipeManagementService->SetActiveRecipeByIndex(Index);
 	}
+}
+
+// ========================================
+// Smart Restore Enhanced — New Subsystem Methods
+// ========================================
+
+void USFSubsystem::SetAutoConnectRuntimeSettingsFromPreset(const FSFRestoreAutoConnectState& PresetState)
+{
+	AutoConnectRuntimeSettings.bEnabled = PresetState.bBeltEnabled;
+	AutoConnectRuntimeSettings.BeltTierMain = PresetState.BeltTierMain;
+	AutoConnectRuntimeSettings.BeltTierToBuilding = PresetState.BeltTierToBuilding;
+	AutoConnectRuntimeSettings.bChainDistributors = PresetState.bChainDistributors;
+	AutoConnectRuntimeSettings.BeltRoutingMode = PresetState.BeltRoutingMode;
+	AutoConnectRuntimeSettings.bPipeAutoConnectEnabled = PresetState.bPipeEnabled;
+	AutoConnectRuntimeSettings.PipeTierMain = PresetState.PipeTierMain;
+	AutoConnectRuntimeSettings.PipeTierToBuilding = PresetState.PipeTierToBuilding;
+	AutoConnectRuntimeSettings.bPipeIndicator = PresetState.bPipeIndicator;
+	AutoConnectRuntimeSettings.PipeRoutingMode = PresetState.PipeRoutingMode;
+	AutoConnectRuntimeSettings.bConnectPower = PresetState.bPowerEnabled;
+	AutoConnectRuntimeSettings.PowerGridAxis = PresetState.PowerGridAxis;
+	AutoConnectRuntimeSettings.PowerReserved = PresetState.PowerReserved;
+	AutoConnectRuntimeSettings.bInitialized = true;
+
+	UE_LOG(LogSmartFoundations, Display,
+		TEXT("[SmartRestore] Applied auto-connect settings from preset"));
+}
+
+bool USFSubsystem::SetBuildGunByRecipeName(const FString& RecipeClassName)
+{
+	if (RecipeClassName.IsEmpty())
+	{
+		return false;
+	}
+
+	UWorld* World = GetWorld();
+	if (!World)
+	{
+		return false;
+	}
+
+	// Find the recipe by class name in available recipes
+	AFGRecipeManager* RecipeManager = AFGRecipeManager::Get(World);
+	if (!RecipeManager)
+	{
+		UE_LOG(LogSmartFoundations, Warning,
+			TEXT("[SmartRestore] SetBuildGunByRecipeName: No recipe manager"));
+		return false;
+	}
+
+	TArray<TSubclassOf<UFGRecipe>> AllRecipes;
+	RecipeManager->GetAllAvailableRecipes(AllRecipes);
+
+	TSubclassOf<UFGRecipe> TargetRecipe = nullptr;
+	for (const TSubclassOf<UFGRecipe>& Recipe : AllRecipes)
+	{
+		if (Recipe && Recipe->GetName() == RecipeClassName)
+		{
+			TargetRecipe = Recipe;
+			break;
+		}
+	}
+
+	if (!TargetRecipe)
+	{
+		UE_LOG(LogSmartFoundations, Warning,
+			TEXT("[SmartRestore] SetBuildGunByRecipeName: Recipe '%s' not found in available recipes"),
+			*RecipeClassName);
+		return false;
+	}
+
+	// Get the player's build gun and set the recipe
+	APlayerController* PC = World->GetFirstPlayerController();
+	if (!PC)
+	{
+		return false;
+	}
+
+	AFGCharacterPlayer* Character = Cast<AFGCharacterPlayer>(PC->GetPawn());
+	if (!Character)
+	{
+		return false;
+	}
+
+	// The build gun is equipment — get it from the character
+	AFGBuildGun* BuildGun = Character->GetBuildGun();
+	if (!BuildGun)
+	{
+		UE_LOG(LogSmartFoundations, Warning,
+			TEXT("[SmartRestore] SetBuildGunByRecipeName: No build gun found"));
+		return false;
+	}
+
+	// Set the active recipe on the build gun's build state
+	UFGBuildGunStateBuild* BuildState = Cast<UFGBuildGunStateBuild>(
+		BuildGun->GetBuildGunStateFor(EBuildGunState::BGS_BUILD));
+	if (!BuildState)
+	{
+		UE_LOG(LogSmartFoundations, Warning,
+			TEXT("[SmartRestore] SetBuildGunByRecipeName: No build gun build state"));
+		return false;
+	}
+
+	BuildState->SetActiveRecipe(TargetRecipe);
+
+	UE_LOG(LogSmartFoundations, Display,
+		TEXT("[SmartRestore] Switched build gun to recipe '%s'"), *RecipeClassName);
+	return true;
 }
 
 void USFSubsystem::ApplyRecipeToParentHologram()
