@@ -100,6 +100,9 @@ public:
 	/** Set active recipe by index in filtered list */
 	void SetActiveRecipeByIndex(int32 Index);
 
+	/** Set active recipe by class reference — finds the correct index in SortedFilteredRecipes */
+	bool SetActiveRecipeByClass(TSubclassOf<UFGRecipe> RecipeClass);
+
 	/** Add a recipe to the unlocked recipes list */
 	void AddRecipeToUnlocked(TSubclassOf<UFGRecipe> Recipe);
 

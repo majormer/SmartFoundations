@@ -211,6 +211,29 @@ void USFRecipeManagementService::SetActiveRecipeByIndex(int32 Index)
 		*StoredRecipeDisplayName, Index + 1, SortedFilteredRecipes.Num());
 }
 
+bool USFRecipeManagementService::SetActiveRecipeByClass(TSubclassOf<UFGRecipe> RecipeClass)
+{
+	if (!RecipeClass) return false;
+
+	// Ensure SortedFilteredRecipes is populated
+	if (SortedFilteredRecipes.Num() == 0)
+	{
+		SortedFilteredRecipes = GetFilteredRecipesForCurrentHologram();
+	}
+
+	// Find the recipe in SortedFilteredRecipes by class
+	for (int32 i = 0; i < SortedFilteredRecipes.Num(); ++i)
+	{
+		if (SortedFilteredRecipes[i] == RecipeClass)
+		{
+			SetActiveRecipeByIndex(i);
+			return true;
+		}
+	}
+
+	return false;
+}
+
 void USFRecipeManagementService::AddRecipeToUnlocked(TSubclassOf<UFGRecipe> Recipe)
 {
 	if (!Recipe) return;

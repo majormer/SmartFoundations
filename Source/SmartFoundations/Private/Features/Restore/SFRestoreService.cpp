@@ -220,11 +220,8 @@ bool USFRestoreService::ApplyPreset(const FSFRestorePreset& Preset)
 	Subsystem->UpdateCounterState(State);
 
 	// 3. Apply production recipe
-	// NOTE: We cannot use GetFilteredRecipesForCurrentHologram() here because
-	// the hologram is updated asynchronously via PollForActiveHologram (100ms timer).
-	// After SetBuildGunByRecipeName above, the old hologram is still active.
-	// Instead, find the building class from the preset's build gun recipe and
-	// check recipe compatibility directly via GetProducedIn.
+	// Find the recipe class by name and use SetActiveRecipeByClass, which
+	// resolves the correct index in SortedFilteredRecipes internally.
 	if (Preset.CaptureFlags.bRecipe && !Preset.RecipeClassName.IsEmpty())
 	{
 		if (USFRecipeManagementService* RecipeSvc = Subsystem->GetRecipeManagementService())
@@ -233,62 +230,31 @@ bool USFRestoreService::ApplyPreset(const FSFRestorePreset& Preset)
 			AFGRecipeManager* RecipeManager = World ? AFGRecipeManager::Get(World) : nullptr;
 			if (RecipeManager)
 			{
-				// Find the building class produced by the preset's build gun recipe
-				UClass* TargetBuildingClass = nullptr;
+				TArray<TSubclassOf<UFGRecipe>> AllRecipes;
+				RecipeManager->GetAllAvailableRecipes(AllRecipes);
+				TSubclassOf<UFGRecipe> TargetRecipe = nullptr;
+				for (const TSubclassOf<UFGRecipe>& Recipe : AllRecipes)
 				{
-					TArray<TSubclassOf<UFGRecipe>> AllRecipes;
-					RecipeManager->GetAllAvailableRecipes(AllRecipes);
-					for (const TSubclassOf<UFGRecipe>& Recipe : AllRecipes)
+					if (Recipe && Recipe->GetName() == Preset.RecipeClassName)
 					{
-						if (Recipe && Recipe->GetName() == Preset.BuildingClassName)
-						{
-							for (const FItemAmount& Product : UFGRecipe::GetProducts(Recipe))
-							{
-								if (Product.ItemClass && Product.ItemClass->IsChildOf(AFGBuildable::StaticClass()))
-								{
-									TargetBuildingClass = Product.ItemClass;
-									break;
-								}
-							}
-							break;
-						}
+						TargetRecipe = Recipe;
+						break;
 					}
 				}
 
-				// Find all production recipes compatible with this building class
-				if (TargetBuildingClass)
+				if (TargetRecipe)
 				{
-					TArray<TSubclassOf<UFGRecipe>> AllRecipes;
-					RecipeManager->GetAllAvailableRecipes(AllRecipes);
-					TArray<TSubclassOf<UFGRecipe>> CompatibleRecipes;
-					for (const TSubclassOf<UFGRecipe>& Recipe : AllRecipes)
+					if (RecipeSvc->SetActiveRecipeByClass(TargetRecipe))
 					{
-						if (!Recipe) continue;
-						UFGRecipe* RecipeCDO = Recipe->GetDefaultObject<UFGRecipe>();
-						if (!RecipeCDO) continue;
-						TArray<TSubclassOf<UObject>> ProducedIn;
-						RecipeCDO->GetProducedIn(ProducedIn);
-						for (const TSubclassOf<UObject>& ProducerClass : ProducedIn)
-						{
-							if (ProducerClass && TargetBuildingClass->IsChildOf(ProducerClass))
-							{
-								CompatibleRecipes.Add(Recipe);
-								break;
-							}
-						}
+						UE_LOG(LogSmartFoundations, Display,
+							TEXT("[SmartRestore] Applied production recipe '%s'"),
+							*Preset.RecipeClassName);
 					}
-
-					// Find the target production recipe by name in the compatible list
-					for (int32 i = 0; i < CompatibleRecipes.Num(); ++i)
+					else
 					{
-						if (CompatibleRecipes[i]->GetName() == Preset.RecipeClassName)
-						{
-							RecipeSvc->SetActiveRecipeByIndex(i);
-							UE_LOG(LogSmartFoundations, Display,
-								TEXT("[SmartRestore] Applied recipe '%s' at index %d"),
-								*Preset.RecipeClassName, i);
-							break;
-						}
+						UE_LOG(LogSmartFoundations, Warning,
+							TEXT("[SmartRestore] Recipe '%s' found but not in filtered list for current building"),
+							*Preset.RecipeClassName);
 					}
 				}
 			}
