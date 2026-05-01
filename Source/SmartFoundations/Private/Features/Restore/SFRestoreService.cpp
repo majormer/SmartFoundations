@@ -15,6 +15,7 @@
 #include "Buildables/FGBuildableManufacturer.h"
 #include "Hologram/FGHologram.h"
 #include "FGCharacterPlayer.h"
+#include "FGPlayerController.h"
 #include "Equipment/FGBuildGun.h"
 #include "Equipment/FGBuildGunBuild.h"
 
@@ -85,6 +86,49 @@ namespace
 		}
 
 		return true;
+	}
+
+	UClass* FindBuildableClassByName(const FString& BuildClassName)
+	{
+		if (BuildClassName.IsEmpty())
+		{
+			return nullptr;
+		}
+
+		UClass* FoundClass = FindFirstObject<UClass>(*BuildClassName, EFindFirstObjectOptions::ExactClass);
+		if (!FoundClass)
+		{
+			FoundClass = FindFirstObject<UClass>(*BuildClassName, EFindFirstObjectOptions::None);
+		}
+
+		return FoundClass && FoundClass->IsChildOf(AFGBuildable::StaticClass()) ? FoundClass : nullptr;
+	}
+
+	UClass* GetFirstBuildableProductClass(TSubclassOf<UFGRecipe> Recipe)
+	{
+		if (!Recipe)
+		{
+			return nullptr;
+		}
+
+		for (const FItemAmount& Product : UFGRecipe::GetProducts(Recipe))
+		{
+			UClass* ProductItemClass = Product.ItemClass.Get();
+			if (!ProductItemClass || !ProductItemClass->IsChildOf(UFGBuildDescriptor::StaticClass()))
+			{
+				continue;
+			}
+
+			TSubclassOf<UFGBuildDescriptor> BuildDescriptorClass(ProductItemClass);
+			TSubclassOf<AActor> ProductBuildClass = UFGBuildDescriptor::GetBuildClass(BuildDescriptorClass);
+			UClass* BuildClass = ProductBuildClass.Get();
+			if (BuildClass && BuildClass->IsChildOf(AFGBuildable::StaticClass()))
+			{
+				return BuildClass;
+			}
+		}
+
+		return nullptr;
 	}
 
 	TSharedPtr<FJsonObject> VecToJson(const FSFVec3& Vec)
@@ -537,6 +581,16 @@ bool USFRestoreService::ApplyPreset(const FSFRestorePreset& Preset)
 		return false;
 	}
 
+	FString UnlockFailureReason;
+	if (!ValidatePresetUnlocks(Preset, UnlockFailureReason))
+	{
+		UE_LOG(LogSmartFoundations, Warning,
+			TEXT("[SmartRestore] ApplyPreset blocked for preset '%s': %s"),
+			*Preset.Name,
+			*UnlockFailureReason);
+		return false;
+	}
+
 	ActiveRestorePresetName = Preset.Name;
 	bRestoreSessionActive = Preset.bHasExtendTopology;
 
@@ -612,6 +666,226 @@ bool USFRestoreService::ApplyPreset(const FSFRestorePreset& Preset)
 
 	UE_LOG(LogSmartFoundations, Log, TEXT("[SmartRestore] Applied preset '%s'"), *Preset.Name);
 	return true;
+}
+
+bool USFRestoreService::ValidatePresetUnlocks(const FSFRestorePreset& Preset, FString& OutFailureReason) const
+{
+	OutFailureReason.Empty();
+
+	if (!Subsystem.IsValid())
+	{
+		OutFailureReason = TEXT("Smart subsystem is unavailable");
+		return false;
+	}
+
+	UWorld* World = Subsystem->GetWorld();
+	AFGRecipeManager* RecipeManager = World ? AFGRecipeManager::Get(World) : nullptr;
+	if (!RecipeManager)
+	{
+		OutFailureReason = TEXT("Recipe manager is unavailable");
+		return false;
+	}
+
+	TArray<TSubclassOf<UFGRecipe>> AvailableRecipes;
+	RecipeManager->GetAllAvailableRecipes(AvailableRecipes);
+
+	TMap<FString, TSubclassOf<UFGRecipe>> AvailableRecipesByName;
+	for (const TSubclassOf<UFGRecipe>& Recipe : AvailableRecipes)
+	{
+		if (Recipe)
+		{
+			AvailableRecipesByName.Add(Recipe->GetName(), Recipe);
+		}
+	}
+
+	TArray<FString> Failures;
+	auto AddFailure = [&Failures](const FString& Failure)
+	{
+		if (!Failures.Contains(Failure))
+		{
+			Failures.Add(Failure);
+		}
+	};
+
+	auto FindAvailableRecipe = [&](const FString& RecipeClassName, const FString& Context) -> TSubclassOf<UFGRecipe>
+	{
+		if (RecipeClassName.IsEmpty())
+		{
+			return nullptr;
+		}
+
+		if (TSubclassOf<UFGRecipe>* FoundRecipe = AvailableRecipesByName.Find(RecipeClassName))
+		{
+			return *FoundRecipe;
+		}
+
+		AddFailure(FString::Printf(TEXT("%s recipe '%s' is not unlocked"), *Context, *RecipeClassName));
+		return nullptr;
+	};
+
+	auto ValidateBuildClass = [&](const FString& BuildClassName, const FString& Context, TSubclassOf<UFGRecipe> RelatedRecipe = nullptr)
+	{
+		if (BuildClassName.IsEmpty())
+		{
+			return;
+		}
+
+		UClass* BuildClass = FindBuildableClassByName(BuildClassName);
+		if (!BuildClass && RelatedRecipe)
+		{
+			UClass* ProductBuildClass = GetFirstBuildableProductClass(RelatedRecipe);
+			if (ProductBuildClass && ProductBuildClass->GetName() == BuildClassName)
+			{
+				BuildClass = ProductBuildClass;
+			}
+		}
+
+		if (!BuildClass)
+		{
+			AddFailure(FString::Printf(TEXT("%s buildable '%s' could not be resolved"), *Context, *BuildClassName));
+			return;
+		}
+
+		TSubclassOf<AFGBuildable> BuildableClass(BuildClass);
+		if (!RecipeManager->IsBuildingAvailable(BuildableClass))
+		{
+			AddFailure(FString::Printf(TEXT("%s buildable '%s' is not unlocked"), *Context, *BuildClassName));
+		}
+	};
+
+	auto ValidateRecipeProductBuildable = [&](TSubclassOf<UFGRecipe> Recipe, const FString& Context)
+	{
+		UClass* BuildClass = GetFirstBuildableProductClass(Recipe);
+		if (!BuildClass)
+		{
+			return;
+		}
+
+		TSubclassOf<AFGBuildable> BuildableClass(BuildClass);
+		if (!RecipeManager->IsBuildingAvailable(BuildableClass))
+		{
+			AddFailure(FString::Printf(TEXT("%s buildable '%s' is not unlocked"), *Context, *BuildClass->GetName()));
+		}
+	};
+
+	UClass* PresetBuildClass = nullptr;
+	if (!Preset.BuildingClassName.IsEmpty())
+	{
+		TSubclassOf<UFGRecipe> BuildRecipe = FindAvailableRecipe(Preset.BuildingClassName, TEXT("Preset building"));
+		ValidateRecipeProductBuildable(BuildRecipe, TEXT("Preset building"));
+		PresetBuildClass = GetFirstBuildableProductClass(BuildRecipe);
+	}
+
+	if (Preset.CaptureFlags.bRecipe && !Preset.RecipeClassName.IsEmpty())
+	{
+		TSubclassOf<UFGRecipe> ProductionRecipe = FindAvailableRecipe(Preset.RecipeClassName, TEXT("Production"));
+		if (ProductionRecipe && PresetBuildClass)
+		{
+			UFGRecipe* RecipeCDO = ProductionRecipe->GetDefaultObject<UFGRecipe>();
+			TArray<TSubclassOf<UObject>> ProducedIn;
+			if (RecipeCDO)
+			{
+				RecipeCDO->GetProducedIn(ProducedIn);
+			}
+
+			bool bCompatible = false;
+			for (const TSubclassOf<UObject>& ProducerClass : ProducedIn)
+			{
+				if (ProducerClass && PresetBuildClass->IsChildOf(ProducerClass))
+				{
+					bCompatible = true;
+					break;
+				}
+			}
+
+			if (!bCompatible)
+			{
+				AddFailure(FString::Printf(TEXT("Production recipe '%s' is not valid for buildable '%s'"),
+					*Preset.RecipeClassName,
+					*PresetBuildClass->GetName()));
+			}
+		}
+	}
+
+	if (Preset.CaptureFlags.bAutoConnect)
+	{
+		AFGPlayerController* PlayerController = World ? World->GetFirstPlayerController<AFGPlayerController>() : nullptr;
+		auto ValidateBeltTier = [&](int32 Tier, const TCHAR* Context)
+		{
+			if (Tier <= 0)
+			{
+				return;
+			}
+
+			if (!PlayerController || !Subsystem->GetBeltClassForTier(Tier, PlayerController))
+			{
+				AddFailure(FString::Printf(TEXT("Auto-connect %s belt tier Mk%d is not unlocked"), Context, Tier));
+			}
+		};
+		auto ValidatePipeTier = [&](int32 Tier, const TCHAR* Context)
+		{
+			if (Tier <= 0)
+			{
+				return;
+			}
+
+			if (!PlayerController || !Subsystem->GetPipeClassForTier(Tier, Preset.AutoConnect.bPipeIndicator, PlayerController))
+			{
+				AddFailure(FString::Printf(TEXT("Auto-connect %s pipe tier Mk%d is not unlocked"), Context, Tier));
+			}
+		};
+
+		if (Preset.AutoConnect.bBeltEnabled)
+		{
+			ValidateBeltTier(Preset.AutoConnect.BeltTierMain, TEXT("main"));
+			ValidateBeltTier(Preset.AutoConnect.BeltTierToBuilding, TEXT("to-building"));
+		}
+		if (Preset.AutoConnect.bPipeEnabled)
+		{
+			ValidatePipeTier(Preset.AutoConnect.PipeTierMain, TEXT("main"));
+			ValidatePipeTier(Preset.AutoConnect.PipeTierToBuilding, TEXT("to-building"));
+		}
+	}
+
+	if (Preset.bHasExtendTopology)
+	{
+		for (const FSFCloneHologram& Child : Preset.ExtendCloneTopology.ChildHolograms)
+		{
+			const FString Context = FString::Printf(TEXT("Extend %s '%s'"),
+				Child.Role.IsEmpty() ? TEXT("component") : *Child.Role,
+				*Child.HologramId);
+			TSubclassOf<UFGRecipe> ChildRecipe = FindAvailableRecipe(Child.RecipeClass, Context);
+			ValidateRecipeProductBuildable(ChildRecipe, Context);
+			ValidateBuildClass(Child.BuildClass, Context, ChildRecipe);
+		}
+	}
+
+	if (Failures.Num() == 0)
+	{
+		UE_LOG(LogSmartFoundations, Log,
+			TEXT("[SmartRestore] Preset unlock validation passed: preset='%s' children=%d"),
+			*Preset.Name,
+			Preset.bHasExtendTopology ? Preset.ExtendCloneTopology.ChildHolograms.Num() : 0);
+		return true;
+	}
+
+	TArray<FString> ReportedFailures;
+	const int32 MaxReportedFailures = 8;
+	for (int32 Index = 0; Index < FMath::Min(Failures.Num(), MaxReportedFailures); ++Index)
+	{
+		ReportedFailures.Add(Failures[Index]);
+	}
+	if (Failures.Num() > MaxReportedFailures)
+	{
+		ReportedFailures.Add(FString::Printf(TEXT("and %d more"), Failures.Num() - MaxReportedFailures));
+	}
+
+	OutFailureReason = FString::Join(ReportedFailures, TEXT("; "));
+	UE_LOG(LogSmartFoundations, Warning,
+		TEXT("[SmartRestore] Preset unlock validation failed: preset='%s' failures=%s"),
+		*Preset.Name,
+		*OutFailureReason);
+	return false;
 }
 
 void USFRestoreService::ClearActiveRestoreSession(const TCHAR* Reason)
@@ -1263,6 +1537,17 @@ FSFRestorePreset USFRestoreService::ImportFromString(const FString& Encoded, boo
 
 	if (bOutSuccess)
 	{
+		FString UnlockFailureReason;
+		if (!ValidatePresetUnlocks(Preset, UnlockFailureReason))
+		{
+			UE_LOG(LogSmartFoundations, Warning,
+				TEXT("[SmartRestore] ImportFromString rejected preset '%s': %s"),
+				*Preset.Name,
+				*UnlockFailureReason);
+			bOutSuccess = false;
+			return FSFRestorePreset();
+		}
+
 		// Set fresh timestamps for imported presets
 		const FDateTime Now = FDateTime::UtcNow();
 		Preset.CreatedAt = Now.ToIso8601();
@@ -1444,6 +1729,16 @@ FSFRestorePreset USFRestoreService::ImportFromLastExtend(
 	{
 		UE_LOG(LogSmartFoundations, Warning,
 			TEXT("[SmartRestore] ImportFromLastExtend: No clone topology available to capture"));
+		return FSFRestorePreset();
+	}
+
+	FString UnlockFailureReason;
+	if (!ValidatePresetUnlocks(Preset, UnlockFailureReason))
+	{
+		UE_LOG(LogSmartFoundations, Warning,
+			TEXT("[SmartRestore] ImportFromLastExtend rejected preset '%s': %s"),
+			*Name,
+			*UnlockFailureReason);
 		return FSFRestorePreset();
 	}
 
