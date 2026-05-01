@@ -136,8 +136,14 @@ public:
 		const FSFRestoreCaptureFlags& CaptureFlags,
 		bool& bOutSuccess) const;
 
+	bool IsRestoreSessionActive() const { return bRestoreSessionActive; }
+	const FString& GetActiveRestorePresetName() const { return ActiveRestorePresetName; }
+	void ClearActiveRestoreSession(const TCHAR* Reason);
+
 private:
 	TWeakObjectPtr<USFSubsystem> Subsystem;
+	bool bRestoreSessionActive = false;
+	FString ActiveRestorePresetName;
 
 	/** Get or create the preset storage directory */
 	FString GetPresetsDir() const;
@@ -153,4 +159,6 @@ private:
 
 	/** Get the full file path for a preset by name */
 	FString GetPresetFilePath(const FString& Name) const;
+
+	void ReplayExtendTopologyWhenHologramReady(const FSFRestorePreset& Preset, int32 AttemptsRemaining, int32 SettleTicksRemaining);
 };

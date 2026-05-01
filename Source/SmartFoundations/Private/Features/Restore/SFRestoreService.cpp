@@ -10,8 +10,10 @@
 // Satisfactory includes
 #include "FGRecipe.h"
 #include "FGRecipeManager.h"
+#include "Resources/FGBuildDescriptor.h"
 #include "Buildables/FGBuildableFactory.h"
 #include "Buildables/FGBuildableManufacturer.h"
+#include "Hologram/FGHologram.h"
 #include "FGCharacterPlayer.h"
 #include "Equipment/FGBuildGun.h"
 #include "Equipment/FGBuildGunBuild.h"
@@ -24,6 +26,350 @@
 #include "Serialization/JsonWriter.h"
 #include "Dom/JsonObject.h"
 #include "HAL/PlatformFileManager.h"
+#include "TimerManager.h"
+
+namespace
+{
+	FSFCounterState BuildCounterStateFromPreset(const FSFCounterState& CurrentState, const FSFRestorePreset& Preset)
+	{
+		FSFCounterState State = CurrentState;
+
+		if (Preset.CaptureFlags.bGrid)
+		{
+			State.GridCounters = Preset.GridCounters;
+		}
+
+		if (Preset.CaptureFlags.bSpacing)
+		{
+			State.SpacingX = Preset.SpacingX;
+			State.SpacingY = Preset.SpacingY;
+			State.SpacingZ = Preset.SpacingZ;
+		}
+
+		if (Preset.CaptureFlags.bSteps)
+		{
+			State.StepsX = Preset.StepsX;
+			State.StepsY = Preset.StepsY;
+		}
+
+		if (Preset.CaptureFlags.bStagger)
+		{
+			State.StaggerX = Preset.StaggerX;
+			State.StaggerY = Preset.StaggerY;
+			State.StaggerZX = Preset.StaggerZX;
+			State.StaggerZY = Preset.StaggerZY;
+		}
+
+		if (Preset.CaptureFlags.bRotation)
+		{
+			State.RotationZ = Preset.RotationZ;
+		}
+
+		return State;
+	}
+
+	bool IsActiveHologramReadyForPreset(AFGHologram* ActiveHologram, const FSFRestorePreset& Preset)
+	{
+		if (!ActiveHologram || !IsValid(ActiveHologram) || !ActiveHologram->GetBuildClass())
+		{
+			return false;
+		}
+
+		if (!Preset.BuildingClassName.IsEmpty())
+		{
+			UClass* ActiveRecipe = ActiveHologram->GetRecipe();
+			if (!ActiveRecipe || ActiveRecipe->GetName() != Preset.BuildingClassName)
+			{
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	TSharedPtr<FJsonObject> VecToJson(const FSFVec3& Vec)
+	{
+		TSharedPtr<FJsonObject> Obj = MakeShared<FJsonObject>();
+		Obj->SetNumberField(TEXT("x"), Vec.X);
+		Obj->SetNumberField(TEXT("y"), Vec.Y);
+		Obj->SetNumberField(TEXT("z"), Vec.Z);
+		return Obj;
+	}
+
+	void JsonToVec(const TSharedPtr<FJsonObject>& Obj, FSFVec3& OutVec)
+	{
+		if (!Obj.IsValid()) return;
+		double Val = 0.0;
+		if (Obj->TryGetNumberField(TEXT("x"), Val)) OutVec.X = static_cast<float>(Val);
+		if (Obj->TryGetNumberField(TEXT("y"), Val)) OutVec.Y = static_cast<float>(Val);
+		if (Obj->TryGetNumberField(TEXT("z"), Val)) OutVec.Z = static_cast<float>(Val);
+	}
+
+	TSharedPtr<FJsonObject> RotToJson(const FSFRot3& Rot)
+	{
+		TSharedPtr<FJsonObject> Obj = MakeShared<FJsonObject>();
+		Obj->SetNumberField(TEXT("pitch"), Rot.Pitch);
+		Obj->SetNumberField(TEXT("yaw"), Rot.Yaw);
+		Obj->SetNumberField(TEXT("roll"), Rot.Roll);
+		return Obj;
+	}
+
+	void JsonToRot(const TSharedPtr<FJsonObject>& Obj, FSFRot3& OutRot)
+	{
+		if (!Obj.IsValid()) return;
+		double Val = 0.0;
+		if (Obj->TryGetNumberField(TEXT("pitch"), Val)) OutRot.Pitch = static_cast<float>(Val);
+		if (Obj->TryGetNumberField(TEXT("yaw"), Val)) OutRot.Yaw = static_cast<float>(Val);
+		if (Obj->TryGetNumberField(TEXT("roll"), Val)) OutRot.Roll = static_cast<float>(Val);
+	}
+
+	TSharedPtr<FJsonObject> TransformToJson(const FSFTransform& Transform)
+	{
+		TSharedPtr<FJsonObject> Obj = MakeShared<FJsonObject>();
+		Obj->SetObjectField(TEXT("location"), VecToJson(Transform.Location));
+		Obj->SetObjectField(TEXT("rotation"), RotToJson(Transform.Rotation));
+		return Obj;
+	}
+
+	void JsonToTransform(const TSharedPtr<FJsonObject>& Obj, FSFTransform& OutTransform)
+	{
+		if (!Obj.IsValid()) return;
+		const TSharedPtr<FJsonObject>* Child = nullptr;
+		if (Obj->TryGetObjectField(TEXT("location"), Child) && Child) JsonToVec(*Child, OutTransform.Location);
+		if (Obj->TryGetObjectField(TEXT("rotation"), Child) && Child) JsonToRot(*Child, OutTransform.Rotation);
+	}
+
+	TSharedPtr<FJsonObject> ConnectionRefToJson(const FSFConnectionRef& Ref)
+	{
+		TSharedPtr<FJsonObject> Obj = MakeShared<FJsonObject>();
+		Obj->SetStringField(TEXT("target"), Ref.Target);
+		Obj->SetStringField(TEXT("connector"), Ref.Connector);
+		return Obj;
+	}
+
+	void JsonToConnectionRef(const TSharedPtr<FJsonObject>& Obj, FSFConnectionRef& OutRef)
+	{
+		if (!Obj.IsValid()) return;
+		Obj->TryGetStringField(TEXT("target"), OutRef.Target);
+		Obj->TryGetStringField(TEXT("connector"), OutRef.Connector);
+	}
+
+	TSharedPtr<FJsonObject> ConnectionsToJson(const FSFConnections& Connections)
+	{
+		TSharedPtr<FJsonObject> Obj = MakeShared<FJsonObject>();
+		Obj->SetObjectField(TEXT("conveyorAny0"), ConnectionRefToJson(Connections.ConveyorAny0));
+		Obj->SetObjectField(TEXT("conveyorAny1"), ConnectionRefToJson(Connections.ConveyorAny1));
+		return Obj;
+	}
+
+	void JsonToConnections(const TSharedPtr<FJsonObject>& Obj, FSFConnections& OutConnections)
+	{
+		if (!Obj.IsValid()) return;
+		const TSharedPtr<FJsonObject>* Child = nullptr;
+		if (Obj->TryGetObjectField(TEXT("conveyorAny0"), Child) && Child) JsonToConnectionRef(*Child, OutConnections.ConveyorAny0);
+		if (Obj->TryGetObjectField(TEXT("conveyorAny1"), Child) && Child) JsonToConnectionRef(*Child, OutConnections.ConveyorAny1);
+	}
+
+	TSharedPtr<FJsonObject> SplinePointToJson(const FSFSplinePoint& Point)
+	{
+		TSharedPtr<FJsonObject> Obj = MakeShared<FJsonObject>();
+		Obj->SetObjectField(TEXT("local"), VecToJson(Point.Local));
+		Obj->SetObjectField(TEXT("world"), VecToJson(Point.World));
+		Obj->SetObjectField(TEXT("arriveTangent"), VecToJson(Point.ArriveTangent));
+		Obj->SetObjectField(TEXT("leaveTangent"), VecToJson(Point.LeaveTangent));
+		return Obj;
+	}
+
+	void JsonToSplinePoint(const TSharedPtr<FJsonObject>& Obj, FSFSplinePoint& OutPoint)
+	{
+		if (!Obj.IsValid()) return;
+		const TSharedPtr<FJsonObject>* Child = nullptr;
+		if (Obj->TryGetObjectField(TEXT("local"), Child) && Child) JsonToVec(*Child, OutPoint.Local);
+		if (Obj->TryGetObjectField(TEXT("world"), Child) && Child) JsonToVec(*Child, OutPoint.World);
+		if (Obj->TryGetObjectField(TEXT("arriveTangent"), Child) && Child) JsonToVec(*Child, OutPoint.ArriveTangent);
+		if (Obj->TryGetObjectField(TEXT("leaveTangent"), Child) && Child) JsonToVec(*Child, OutPoint.LeaveTangent);
+	}
+
+	TSharedPtr<FJsonObject> SplineDataToJson(const FSFSplineData& Spline)
+	{
+		TSharedPtr<FJsonObject> Obj = MakeShared<FJsonObject>();
+		Obj->SetNumberField(TEXT("length"), Spline.Length);
+		TArray<TSharedPtr<FJsonValue>> Points;
+		for (const FSFSplinePoint& Point : Spline.Points)
+		{
+			Points.Add(MakeShared<FJsonValueObject>(SplinePointToJson(Point)));
+		}
+		Obj->SetArrayField(TEXT("points"), Points);
+		return Obj;
+	}
+
+	void JsonToSplineData(const TSharedPtr<FJsonObject>& Obj, FSFSplineData& OutSpline)
+	{
+		if (!Obj.IsValid()) return;
+		double Val = 0.0;
+		if (Obj->TryGetNumberField(TEXT("length"), Val)) OutSpline.Length = static_cast<float>(Val);
+		OutSpline.Points.Reset();
+		const TArray<TSharedPtr<FJsonValue>>* Points = nullptr;
+		if (Obj->TryGetArrayField(TEXT("points"), Points) && Points)
+		{
+			for (const TSharedPtr<FJsonValue>& Value : *Points)
+			{
+				FSFSplinePoint Point;
+				JsonToSplinePoint(Value.IsValid() ? Value->AsObject() : nullptr, Point);
+				OutSpline.Points.Add(Point);
+			}
+		}
+	}
+
+	TSharedPtr<FJsonObject> LiftDataToJson(const FSFLiftData& Lift)
+	{
+		TSharedPtr<FJsonObject> Obj = MakeShared<FJsonObject>();
+		Obj->SetNumberField(TEXT("height"), Lift.Height);
+		Obj->SetBoolField(TEXT("isReversed"), Lift.bIsReversed);
+		Obj->SetObjectField(TEXT("topTransform"), TransformToJson(Lift.TopTransform));
+		Obj->SetObjectField(TEXT("bottomTransform"), TransformToJson(Lift.BottomTransform));
+		TArray<TSharedPtr<FJsonValue>> Passthroughs;
+		for (const FString& CloneId : Lift.PassthroughCloneIds)
+		{
+			Passthroughs.Add(MakeShared<FJsonValueString>(CloneId));
+		}
+		Obj->SetArrayField(TEXT("passthroughCloneIds"), Passthroughs);
+		return Obj;
+	}
+
+	void JsonToLiftData(const TSharedPtr<FJsonObject>& Obj, FSFLiftData& OutLift)
+	{
+		if (!Obj.IsValid()) return;
+		double Val = 0.0;
+		if (Obj->TryGetNumberField(TEXT("height"), Val)) OutLift.Height = static_cast<float>(Val);
+		Obj->TryGetBoolField(TEXT("isReversed"), OutLift.bIsReversed);
+		const TSharedPtr<FJsonObject>* Child = nullptr;
+		if (Obj->TryGetObjectField(TEXT("topTransform"), Child) && Child) JsonToTransform(*Child, OutLift.TopTransform);
+		if (Obj->TryGetObjectField(TEXT("bottomTransform"), Child) && Child) JsonToTransform(*Child, OutLift.BottomTransform);
+		OutLift.PassthroughCloneIds.Reset();
+		const TArray<TSharedPtr<FJsonValue>>* Passthroughs = nullptr;
+		if (Obj->TryGetArrayField(TEXT("passthroughCloneIds"), Passthroughs) && Passthroughs)
+		{
+			for (const TSharedPtr<FJsonValue>& Value : *Passthroughs)
+			{
+				OutLift.PassthroughCloneIds.Add(Value.IsValid() ? Value->AsString() : FString());
+			}
+		}
+	}
+
+	TSharedPtr<FJsonObject> CloneHologramToJson(const FSFCloneHologram& Holo)
+	{
+		TSharedPtr<FJsonObject> Obj = MakeShared<FJsonObject>();
+		Obj->SetStringField(TEXT("hologramId"), Holo.HologramId);
+		Obj->SetStringField(TEXT("role"), Holo.Role);
+		Obj->SetStringField(TEXT("sourceId"), Holo.SourceId);
+		Obj->SetStringField(TEXT("sourceClass"), Holo.SourceClass);
+		Obj->SetStringField(TEXT("sourceChain"), Holo.SourceChain);
+		Obj->SetNumberField(TEXT("sourceSegmentIndex"), Holo.SourceSegmentIndex);
+		Obj->SetStringField(TEXT("hologramClass"), Holo.HologramClass);
+		Obj->SetStringField(TEXT("buildClass"), Holo.BuildClass);
+		Obj->SetStringField(TEXT("recipeClass"), Holo.RecipeClass);
+		Obj->SetObjectField(TEXT("transform"), TransformToJson(Holo.Transform));
+		Obj->SetObjectField(TEXT("splineData"), SplineDataToJson(Holo.SplineData));
+		Obj->SetObjectField(TEXT("liftData"), LiftDataToJson(Holo.LiftData));
+		Obj->SetBoolField(TEXT("hasSplineData"), Holo.bHasSplineData);
+		Obj->SetBoolField(TEXT("hasLiftData"), Holo.bHasLiftData);
+		Obj->SetObjectField(TEXT("sourceConnections"), ConnectionsToJson(Holo.SourceConnections));
+		Obj->SetObjectField(TEXT("cloneConnections"), ConnectionsToJson(Holo.CloneConnections));
+		Obj->SetBoolField(TEXT("constructible"), Holo.bConstructible);
+		Obj->SetBoolField(TEXT("previewOnly"), Holo.bPreviewOnly);
+		Obj->SetNumberField(TEXT("thickness"), Holo.Thickness);
+		Obj->SetNumberField(TEXT("userFlowLimit"), Holo.UserFlowLimit);
+		Obj->SetStringField(TEXT("connectedPowerPoleHologramId"), Holo.ConnectedPowerPoleHologramId);
+		Obj->SetNumberField(TEXT("powerPoleMaxConnections"), Holo.PowerPoleMaxConnections);
+		Obj->SetBoolField(TEXT("isLaneSegment"), Holo.bIsLaneSegment);
+		Obj->SetStringField(TEXT("laneFromDistributorId"), Holo.LaneFromDistributorId);
+		Obj->SetStringField(TEXT("laneFromConnector"), Holo.LaneFromConnector);
+		Obj->SetStringField(TEXT("laneToDistributorId"), Holo.LaneToDistributorId);
+		Obj->SetStringField(TEXT("laneToConnector"), Holo.LaneToConnector);
+		Obj->SetStringField(TEXT("laneSegmentType"), Holo.LaneSegmentType);
+		Obj->SetObjectField(TEXT("laneStartNormal"), VecToJson(Holo.LaneStartNormal));
+		Obj->SetObjectField(TEXT("laneEndNormal"), VecToJson(Holo.LaneEndNormal));
+		return Obj;
+	}
+
+	void JsonToCloneHologram(const TSharedPtr<FJsonObject>& Obj, FSFCloneHologram& OutHolo)
+	{
+		if (!Obj.IsValid()) return;
+		double Val = 0.0;
+		Obj->TryGetStringField(TEXT("hologramId"), OutHolo.HologramId);
+		Obj->TryGetStringField(TEXT("role"), OutHolo.Role);
+		Obj->TryGetStringField(TEXT("sourceId"), OutHolo.SourceId);
+		Obj->TryGetStringField(TEXT("sourceClass"), OutHolo.SourceClass);
+		Obj->TryGetStringField(TEXT("sourceChain"), OutHolo.SourceChain);
+		if (Obj->TryGetNumberField(TEXT("sourceSegmentIndex"), Val)) OutHolo.SourceSegmentIndex = static_cast<int32>(Val);
+		Obj->TryGetStringField(TEXT("hologramClass"), OutHolo.HologramClass);
+		Obj->TryGetStringField(TEXT("buildClass"), OutHolo.BuildClass);
+		Obj->TryGetStringField(TEXT("recipeClass"), OutHolo.RecipeClass);
+		const TSharedPtr<FJsonObject>* Child = nullptr;
+		if (Obj->TryGetObjectField(TEXT("transform"), Child) && Child) JsonToTransform(*Child, OutHolo.Transform);
+		if (Obj->TryGetObjectField(TEXT("splineData"), Child) && Child) JsonToSplineData(*Child, OutHolo.SplineData);
+		if (Obj->TryGetObjectField(TEXT("liftData"), Child) && Child) JsonToLiftData(*Child, OutHolo.LiftData);
+		Obj->TryGetBoolField(TEXT("hasSplineData"), OutHolo.bHasSplineData);
+		Obj->TryGetBoolField(TEXT("hasLiftData"), OutHolo.bHasLiftData);
+		if (Obj->TryGetObjectField(TEXT("sourceConnections"), Child) && Child) JsonToConnections(*Child, OutHolo.SourceConnections);
+		if (Obj->TryGetObjectField(TEXT("cloneConnections"), Child) && Child) JsonToConnections(*Child, OutHolo.CloneConnections);
+		Obj->TryGetBoolField(TEXT("constructible"), OutHolo.bConstructible);
+		Obj->TryGetBoolField(TEXT("previewOnly"), OutHolo.bPreviewOnly);
+		if (Obj->TryGetNumberField(TEXT("thickness"), Val)) OutHolo.Thickness = static_cast<float>(Val);
+		if (Obj->TryGetNumberField(TEXT("userFlowLimit"), Val)) OutHolo.UserFlowLimit = static_cast<float>(Val);
+		Obj->TryGetStringField(TEXT("connectedPowerPoleHologramId"), OutHolo.ConnectedPowerPoleHologramId);
+		if (Obj->TryGetNumberField(TEXT("powerPoleMaxConnections"), Val)) OutHolo.PowerPoleMaxConnections = static_cast<int32>(Val);
+		Obj->TryGetBoolField(TEXT("isLaneSegment"), OutHolo.bIsLaneSegment);
+		Obj->TryGetStringField(TEXT("laneFromDistributorId"), OutHolo.LaneFromDistributorId);
+		Obj->TryGetStringField(TEXT("laneFromConnector"), OutHolo.LaneFromConnector);
+		Obj->TryGetStringField(TEXT("laneToDistributorId"), OutHolo.LaneToDistributorId);
+		Obj->TryGetStringField(TEXT("laneToConnector"), OutHolo.LaneToConnector);
+		Obj->TryGetStringField(TEXT("laneSegmentType"), OutHolo.LaneSegmentType);
+		if (Obj->TryGetObjectField(TEXT("laneStartNormal"), Child) && Child) JsonToVec(*Child, OutHolo.LaneStartNormal);
+		if (Obj->TryGetObjectField(TEXT("laneEndNormal"), Child) && Child) JsonToVec(*Child, OutHolo.LaneEndNormal);
+	}
+
+	TSharedPtr<FJsonObject> CloneTopologyToJson(const FSFCloneTopology& Topology)
+	{
+		TSharedPtr<FJsonObject> Obj = MakeShared<FJsonObject>();
+		Obj->SetStringField(TEXT("schemaVersion"), Topology.SchemaVersion);
+		Obj->SetObjectField(TEXT("worldOffset"), VecToJson(Topology.WorldOffset));
+		Obj->SetStringField(TEXT("sourceFactoryId"), Topology.SourceFactoryId);
+		Obj->SetStringField(TEXT("parentBuildClass"), Topology.ParentBuildClass);
+		Obj->SetObjectField(TEXT("parentTransform"), TransformToJson(Topology.ParentTransform));
+		TArray<TSharedPtr<FJsonValue>> Children;
+		for (const FSFCloneHologram& Holo : Topology.ChildHolograms)
+		{
+			Children.Add(MakeShared<FJsonValueObject>(CloneHologramToJson(Holo)));
+		}
+		Obj->SetArrayField(TEXT("childHolograms"), Children);
+		return Obj;
+	}
+
+	bool JsonToCloneTopology(const TSharedPtr<FJsonObject>& Obj, FSFCloneTopology& OutTopology)
+	{
+		if (!Obj.IsValid()) return false;
+		OutTopology = FSFCloneTopology();
+		Obj->TryGetStringField(TEXT("schemaVersion"), OutTopology.SchemaVersion);
+		Obj->TryGetStringField(TEXT("sourceFactoryId"), OutTopology.SourceFactoryId);
+		Obj->TryGetStringField(TEXT("parentBuildClass"), OutTopology.ParentBuildClass);
+		const TSharedPtr<FJsonObject>* Child = nullptr;
+		if (Obj->TryGetObjectField(TEXT("worldOffset"), Child) && Child) JsonToVec(*Child, OutTopology.WorldOffset);
+		if (Obj->TryGetObjectField(TEXT("parentTransform"), Child) && Child) JsonToTransform(*Child, OutTopology.ParentTransform);
+		const TArray<TSharedPtr<FJsonValue>>* Children = nullptr;
+		if (Obj->TryGetArrayField(TEXT("childHolograms"), Children) && Children)
+		{
+			for (const TSharedPtr<FJsonValue>& Value : *Children)
+			{
+				FSFCloneHologram Holo;
+				JsonToCloneHologram(Value.IsValid() ? Value->AsObject() : nullptr, Holo);
+				OutTopology.ChildHolograms.Add(Holo);
+			}
+		}
+		return OutTopology.ChildHolograms.Num() > 0;
+	}
+}
 
 // ============================================================================
 // Initialization
@@ -156,6 +502,23 @@ FSFRestorePreset USFRestoreService::CaptureCurrentState(
 		Preset.AutoConnect.PowerReserved = AC.PowerReserved;
 	}
 
+	if (USFExtendService* ExtendSvc = Subsystem->GetExtendService())
+	{
+		if (ExtendSvc->IsRestoredCloneTopologyActive())
+		{
+			TSharedPtr<FSFCloneTopology> CloneTopology = ExtendSvc->GetLastCloneTopology();
+			if (CloneTopology.IsValid() && CloneTopology->ChildHolograms.Num() > 0)
+			{
+				Preset.bHasExtendTopology = true;
+				Preset.ExtendCloneTopology = *CloneTopology;
+				UE_LOG(LogSmartFoundations, Log,
+					TEXT("[SmartRestore] CaptureCurrentState included staged Extend topology: preset='%s' childHolograms=%d"),
+					*Name,
+					Preset.ExtendCloneTopology.ChildHolograms.Num());
+			}
+		}
+	}
+
 	UE_LOG(LogSmartFoundations, Log, TEXT("[SmartRestore] Captured preset '%s' (building: %s)"),
 		*Name, *Preset.BuildingClassName);
 
@@ -174,6 +537,9 @@ bool USFRestoreService::ApplyPreset(const FSFRestorePreset& Preset)
 		return false;
 	}
 
+	ActiveRestorePresetName = Preset.Name;
+	bRestoreSessionActive = Preset.bHasExtendTopology;
+
 	// 1. Switch build gun to the preset's building
 	if (!Preset.BuildingClassName.IsEmpty())
 	{
@@ -187,38 +553,7 @@ bool USFRestoreService::ApplyPreset(const FSFRestorePreset& Preset)
 	}
 
 	// 2. Apply counter state fields (only those with capture flag set)
-	FSFCounterState State = Subsystem->GetCounterState();
-
-	if (Preset.CaptureFlags.bGrid)
-	{
-		State.GridCounters = Preset.GridCounters;
-	}
-
-	if (Preset.CaptureFlags.bSpacing)
-	{
-		State.SpacingX = Preset.SpacingX;
-		State.SpacingY = Preset.SpacingY;
-		State.SpacingZ = Preset.SpacingZ;
-	}
-
-	if (Preset.CaptureFlags.bSteps)
-	{
-		State.StepsX = Preset.StepsX;
-		State.StepsY = Preset.StepsY;
-	}
-
-	if (Preset.CaptureFlags.bStagger)
-	{
-		State.StaggerX = Preset.StaggerX;
-		State.StaggerY = Preset.StaggerY;
-		State.StaggerZX = Preset.StaggerZX;
-		State.StaggerZY = Preset.StaggerZY;
-	}
-
-	if (Preset.CaptureFlags.bRotation)
-	{
-		State.RotationZ = Preset.RotationZ;
-	}
+	FSFCounterState State = BuildCounterStateFromPreset(Subsystem->GetCounterState(), Preset);
 
 	Subsystem->UpdateCounterState(State);
 
@@ -270,8 +605,136 @@ bool USFRestoreService::ApplyPreset(const FSFRestorePreset& Preset)
 		Subsystem->SetAutoConnectRuntimeSettingsFromPreset(Preset.AutoConnect);
 	}
 
+	if (Preset.bHasExtendTopology)
+	{
+		ReplayExtendTopologyWhenHologramReady(Preset, 12, 2);
+	}
+
 	UE_LOG(LogSmartFoundations, Log, TEXT("[SmartRestore] Applied preset '%s'"), *Preset.Name);
 	return true;
+}
+
+void USFRestoreService::ClearActiveRestoreSession(const TCHAR* Reason)
+{
+	if (!bRestoreSessionActive && ActiveRestorePresetName.IsEmpty())
+	{
+		return;
+	}
+
+	UE_LOG(LogSmartFoundations, Log,
+		TEXT("[SmartRestore] Cleared active restore session: preset='%s' reason=%s"),
+		*ActiveRestorePresetName,
+		Reason ? Reason : TEXT("Unknown"));
+
+	bRestoreSessionActive = false;
+	ActiveRestorePresetName.Empty();
+}
+
+void USFRestoreService::ReplayExtendTopologyWhenHologramReady(const FSFRestorePreset& Preset, int32 AttemptsRemaining, int32 SettleTicksRemaining)
+{
+	if (!bRestoreSessionActive || ActiveRestorePresetName != Preset.Name)
+	{
+		UE_LOG(LogSmartFoundations, Log,
+			TEXT("[SmartRestore] ReplayExtendTopologyWhenHologramReady aborted: preset='%s' activePreset='%s' active=%d"),
+			*Preset.Name,
+			*ActiveRestorePresetName,
+			bRestoreSessionActive ? 1 : 0);
+		return;
+	}
+
+	if (!Subsystem.IsValid())
+	{
+		UE_LOG(LogSmartFoundations, Warning,
+			TEXT("[SmartRestore] ReplayExtendTopologyWhenHologramReady: Subsystem invalid for preset '%s'"),
+			*Preset.Name);
+		return;
+	}
+
+	Subsystem->PollForActiveHologram();
+
+	USFExtendService* ExtendSvc = Subsystem->GetExtendService();
+	AFGHologram* ActiveHologram = Subsystem->GetActiveHologram();
+	if (ExtendSvc && IsActiveHologramReadyForPreset(ActiveHologram, Preset))
+	{
+		if (SettleTicksRemaining > 0)
+		{
+			UWorld* World = Subsystem->GetWorld();
+			if (!World)
+			{
+				UE_LOG(LogSmartFoundations, Warning,
+					TEXT("[SmartRestore] ReplayExtendTopologyWhenHologramReady: World null while settling preset '%s'"),
+					*Preset.Name);
+				return;
+			}
+
+			TWeakObjectPtr<USFRestoreService> WeakThis(this);
+			FTimerDelegate SettleDelegate;
+			SettleDelegate.BindLambda([WeakThis, Preset, AttemptsRemaining, SettleTicksRemaining]()
+			{
+				if (WeakThis.IsValid())
+				{
+					WeakThis->ReplayExtendTopologyWhenHologramReady(Preset, AttemptsRemaining, SettleTicksRemaining - 1);
+				}
+			});
+			World->GetTimerManager().SetTimerForNextTick(SettleDelegate);
+			UE_LOG(LogSmartFoundations, Log,
+				TEXT("[SmartRestore] ReplayExtendTopologyWhenHologramReady: Settling active hologram for preset '%s' ticksRemaining=%d activeHologram=%s recipe=%s"),
+				*Preset.Name,
+				SettleTicksRemaining,
+				*GetNameSafe(ActiveHologram),
+				*GetNameSafe(ActiveHologram ? ActiveHologram->GetRecipe() : nullptr));
+			return;
+		}
+
+		Subsystem->UpdateCounterState(BuildCounterStateFromPreset(Subsystem->GetCounterState(), Preset));
+		const bool bReplaySucceeded = ExtendSvc->ReplayRestoreCloneTopology(ActiveHologram, Preset.ExtendCloneTopology);
+		UE_LOG(LogSmartFoundations, Log,
+			TEXT("[SmartRestore] ReplayExtendTopologyWhenHologramReady: preset='%s' success=%d activeHologram=%s recipe=%s childHolograms=%d"),
+			*Preset.Name,
+			bReplaySucceeded ? 1 : 0,
+			*GetNameSafe(ActiveHologram),
+			*GetNameSafe(ActiveHologram ? ActiveHologram->GetRecipe() : nullptr),
+			Preset.ExtendCloneTopology.ChildHolograms.Num());
+		return;
+	}
+
+	if (AttemptsRemaining <= 0)
+	{
+		UE_LOG(LogSmartFoundations, Warning,
+			TEXT("[SmartRestore] ReplayExtendTopologyWhenHologramReady: Gave up for preset '%s' (ExtendSvc=%s, ActiveHologram=%s)"),
+			*Preset.Name,
+			ExtendSvc ? TEXT("valid") : TEXT("null"),
+			ActiveHologram ? TEXT("valid") : TEXT("null"));
+		return;
+	}
+
+	UWorld* World = Subsystem->GetWorld();
+	if (!World)
+	{
+		UE_LOG(LogSmartFoundations, Warning,
+			TEXT("[SmartRestore] ReplayExtendTopologyWhenHologramReady: World null for preset '%s'"),
+			*Preset.Name);
+		return;
+	}
+
+	UE_LOG(LogSmartFoundations, Log,
+		TEXT("[SmartRestore] ReplayExtendTopologyWhenHologramReady: Waiting for matching active hologram for preset '%s' attemptsRemaining=%d activeHologram=%s recipe=%s expectedRecipe=%s"),
+		*Preset.Name,
+		AttemptsRemaining,
+		*GetNameSafe(ActiveHologram),
+		*GetNameSafe(ActiveHologram ? ActiveHologram->GetRecipe() : nullptr),
+		*Preset.BuildingClassName);
+
+	TWeakObjectPtr<USFRestoreService> WeakThis(this);
+	FTimerDelegate RetryDelegate;
+	RetryDelegate.BindLambda([WeakThis, Preset, AttemptsRemaining, SettleTicksRemaining]()
+	{
+		if (WeakThis.IsValid())
+		{
+			WeakThis->ReplayExtendTopologyWhenHologramReady(Preset, AttemptsRemaining - 1, SettleTicksRemaining);
+		}
+	});
+	World->GetTimerManager().SetTimerForNextTick(RetryDelegate);
 }
 
 // ============================================================================
@@ -285,8 +748,15 @@ TSharedPtr<FJsonObject> USFRestoreService::PresetToJson(const FSFRestorePreset& 
 	Root->SetStringField(TEXT("name"), Preset.Name);
 	Root->SetStringField(TEXT("buildingClassName"), Preset.BuildingClassName);
 	Root->SetNumberField(TEXT("version"), Preset.Version);
+	Root->SetStringField(TEXT("description"), Preset.Description);
 	Root->SetStringField(TEXT("createdAt"), Preset.CreatedAt);
 	Root->SetStringField(TEXT("updatedAt"), Preset.UpdatedAt);
+
+	TSharedPtr<FJsonObject> Metadata = MakeShared<FJsonObject>();
+	Metadata->SetStringField(TEXT("description"), Preset.Description);
+	Metadata->SetStringField(TEXT("createdAt"), Preset.CreatedAt);
+	Metadata->SetStringField(TEXT("updatedAt"), Preset.UpdatedAt);
+	Root->SetObjectField(TEXT("metadata"), Metadata);
 
 	// Capture flags
 	TSharedPtr<FJsonObject> Flags = MakeShared<FJsonObject>();
@@ -365,6 +835,11 @@ TSharedPtr<FJsonObject> USFRestoreService::PresetToJson(const FSFRestorePreset& 
 		Root->SetObjectField(TEXT("autoConnect"), AC);
 	}
 
+	if (Preset.bHasExtendTopology)
+	{
+		Root->SetObjectField(TEXT("extendCloneTopology"), CloneTopologyToJson(Preset.ExtendCloneTopology));
+	}
+
 	return Root;
 }
 
@@ -380,8 +855,16 @@ bool USFRestoreService::JsonToPreset(const TSharedPtr<FJsonObject>& JsonObj, FSF
 	OutPreset.Name = JsonObj->GetStringField(TEXT("name"));
 	OutPreset.BuildingClassName = JsonObj->GetStringField(TEXT("buildingClassName"));
 	OutPreset.Version = static_cast<int32>(JsonObj->GetNumberField(TEXT("version")));
+	JsonObj->TryGetStringField(TEXT("description"), OutPreset.Description);
 	JsonObj->TryGetStringField(TEXT("createdAt"), OutPreset.CreatedAt);
 	JsonObj->TryGetStringField(TEXT("updatedAt"), OutPreset.UpdatedAt);
+	const TSharedPtr<FJsonObject>* MetadataObj = nullptr;
+	if (JsonObj->TryGetObjectField(TEXT("metadata"), MetadataObj) && MetadataObj && (*MetadataObj).IsValid())
+	{
+		(*MetadataObj)->TryGetStringField(TEXT("description"), OutPreset.Description);
+		(*MetadataObj)->TryGetStringField(TEXT("createdAt"), OutPreset.CreatedAt);
+		(*MetadataObj)->TryGetStringField(TEXT("updatedAt"), OutPreset.UpdatedAt);
+	}
 
 	// Capture flags
 	const TSharedPtr<FJsonObject>* FlagsObj = nullptr;
@@ -435,7 +918,8 @@ bool USFRestoreService::JsonToPreset(const TSharedPtr<FJsonObject>& JsonObj, FSF
 
 	if (OutPreset.CaptureFlags.bRotation)
 	{
-		JsonObj->TryGetNumberField(TEXT("rotationZ"), OutPreset.RotationZ);
+		double Val = 0.0;
+		if (JsonObj->TryGetNumberField(TEXT("rotationZ"), Val)) OutPreset.RotationZ = static_cast<float>(Val);
 	}
 
 	if (OutPreset.CaptureFlags.bRecipe)
@@ -460,6 +944,12 @@ bool USFRestoreService::JsonToPreset(const TSharedPtr<FJsonObject>& JsonObj, FSF
 		(*ACObj)->TryGetBoolField(TEXT("powerEnabled"), OutPreset.AutoConnect.bPowerEnabled);
 		if ((*ACObj)->TryGetNumberField(TEXT("powerGridAxis"), Val)) OutPreset.AutoConnect.PowerGridAxis = static_cast<int32>(Val);
 		if ((*ACObj)->TryGetNumberField(TEXT("powerReserved"), Val)) OutPreset.AutoConnect.PowerReserved = static_cast<int32>(Val);
+	}
+
+	const TSharedPtr<FJsonObject>* ExtendTopologyObj = nullptr;
+	if (JsonObj->TryGetObjectField(TEXT("extendCloneTopology"), ExtendTopologyObj) && ExtendTopologyObj)
+	{
+		OutPreset.bHasExtendTopology = JsonToCloneTopology(*ExtendTopologyObj, OutPreset.ExtendCloneTopology);
 	}
 
 	return true;
@@ -502,7 +992,13 @@ bool USFRestoreService::SavePreset(const FSFRestorePreset& Preset)
 {
 	// Update timestamp
 	FSFRestorePreset MutablePreset = Preset;
-	MutablePreset.UpdatedAt = FDateTime::UtcNow().ToIso8601();
+	MutablePreset.Version = SF_RESTORE_PRESET_VERSION;
+	const FString NowIso = FDateTime::UtcNow().ToIso8601();
+	if (MutablePreset.CreatedAt.IsEmpty())
+	{
+		MutablePreset.CreatedAt = NowIso;
+	}
+	MutablePreset.UpdatedAt = NowIso;
 
 	const FString FilePath = GetPresetFilePath(MutablePreset.Name);
 	const FString Dir = FPaths::GetPath(FilePath);
@@ -525,6 +1021,19 @@ bool USFRestoreService::SavePreset(const FSFRestorePreset& Preset)
 						TEXT("[SmartRestore] SavePreset: Name collision — '%s' would overwrite '%s' at %s"),
 						*MutablePreset.Name, *ExistingName, *FilePath);
 					return false;
+				}
+
+				FSFRestorePreset ExistingPreset;
+				if (JsonToPreset(ExistingObj, ExistingPreset))
+				{
+					if (!ExistingPreset.CreatedAt.IsEmpty())
+					{
+						MutablePreset.CreatedAt = ExistingPreset.CreatedAt;
+					}
+					if (MutablePreset.Description.IsEmpty() && !ExistingPreset.Description.IsEmpty())
+					{
+						MutablePreset.Description = ExistingPreset.Description;
+					}
 				}
 			}
 		}
@@ -702,9 +1211,10 @@ FString USFRestoreService::ExportToString(const FSFRestorePreset& Preset) const
 {
 	TSharedPtr<FJsonObject> JsonObj = PresetToJson(Preset);
 
-	// Strip metadata fields for compact sharing
+	// Strip volatile timestamp metadata for compact sharing; keep description.
 	JsonObj->RemoveField(TEXT("createdAt"));
 	JsonObj->RemoveField(TEXT("updatedAt"));
+	JsonObj->RemoveField(TEXT("metadata"));
 
 	FString JsonString;
 	TSharedRef<TJsonWriter<TCHAR, TCondensedJsonPrintPolicy<TCHAR>>> Writer =
@@ -770,17 +1280,33 @@ bool USFRestoreService::IsLastExtendAvailable() const
 {
 	if (!Subsystem.IsValid())
 	{
+		UE_LOG(LogSmartFoundations, Log,
+			TEXT("[SmartRestore] IsLastExtendAvailable: Subsystem invalid"));
 		return false;
 	}
 
 	USFExtendService* ExtendSvc = Subsystem->GetExtendService();
 	if (!ExtendSvc)
 	{
+		UE_LOG(LogSmartFoundations, Log,
+			TEXT("[SmartRestore] IsLastExtendAvailable: Extend service null"));
 		return false;
 	}
 
-	const FSFExtendTopology& Topology = ExtendSvc->GetCurrentTopology();
-	return Topology.bIsValid && Topology.SourceBuilding.IsValid();
+	const FSFExtendTopology& Topology = ExtendSvc->GetLastExtendTopology();
+	TSharedPtr<FSFCloneTopology> CloneTopology = ExtendSvc->GetLastCloneTopology();
+	const bool bAvailable = Topology.bIsValid
+		&& Topology.SourceBuilding.IsValid()
+		&& CloneTopology.IsValid()
+		&& CloneTopology->ChildHolograms.Num() > 0;
+	UE_LOG(LogSmartFoundations, Log,
+		TEXT("[SmartRestore] IsLastExtendAvailable: available=%d sourceTopologyValid=%d sourceBuilding=%s cloneTopologyValid=%d cloneChildren=%d"),
+		bAvailable ? 1 : 0,
+		Topology.bIsValid ? 1 : 0,
+		*GetNameSafe(Topology.SourceBuilding.Get()),
+		CloneTopology.IsValid() ? 1 : 0,
+		CloneTopology.IsValid() ? CloneTopology->ChildHolograms.Num() : 0);
+	return bAvailable;
 }
 
 FSFRestorePreset USFRestoreService::ImportFromLastExtend(
@@ -803,7 +1329,22 @@ FSFRestorePreset USFRestoreService::ImportFromLastExtend(
 		return FSFRestorePreset();
 	}
 
-	const FSFExtendTopology& Topology = ExtendSvc->GetCurrentTopology();
+	const FSFExtendTopology& Topology = ExtendSvc->GetLastExtendTopology();
+	TSharedPtr<FSFCloneTopology> InitialCloneTopology = ExtendSvc->GetLastCloneTopology();
+	UE_LOG(LogSmartFoundations, Log,
+		TEXT("[SmartRestore] ImportFromLastExtend start: name='%s' sourceTopologyValid=%d sourceBuilding=%s cloneTopologyValid=%d cloneChildren=%d flags(grid=%d spacing=%d steps=%d stagger=%d rotation=%d recipe=%d autoConnect=%d)"),
+		*Name,
+		Topology.bIsValid ? 1 : 0,
+		*GetNameSafe(Topology.SourceBuilding.Get()),
+		InitialCloneTopology.IsValid() ? 1 : 0,
+		InitialCloneTopology.IsValid() ? InitialCloneTopology->ChildHolograms.Num() : 0,
+		CaptureFlags.bGrid ? 1 : 0,
+		CaptureFlags.bSpacing ? 1 : 0,
+		CaptureFlags.bSteps ? 1 : 0,
+		CaptureFlags.bStagger ? 1 : 0,
+		CaptureFlags.bRotation ? 1 : 0,
+		CaptureFlags.bRecipe ? 1 : 0,
+		CaptureFlags.bAutoConnect ? 1 : 0);
 	if (!Topology.bIsValid || !Topology.SourceBuilding.IsValid())
 	{
 		UE_LOG(LogSmartFoundations, Warning,
@@ -837,9 +1378,20 @@ FSFRestorePreset USFRestoreService::ImportFromLastExtend(
 				if (!Recipe) continue;
 				for (const FItemAmount& Product : UFGRecipe::GetProducts(Recipe))
 				{
-					if (Product.ItemClass && Product.ItemClass == BuildingClass)
+					TSubclassOf<UFGBuildDescriptor> BuildDescriptorClass = Product.ItemClass
+						? TSubclassOf<UFGBuildDescriptor>(Product.ItemClass)
+						: nullptr;
+					TSubclassOf<AActor> ProductBuildClass = BuildDescriptorClass
+						? UFGBuildDescriptor::GetBuildClass(BuildDescriptorClass)
+						: nullptr;
+					if (ProductBuildClass && BuildingClass->IsChildOf(ProductBuildClass))
 					{
 						Preset.BuildingClassName = Recipe->GetName();
+						UE_LOG(LogSmartFoundations, Log,
+							TEXT("[SmartRestore] ImportFromLastExtend: Matched source building '%s' to build recipe '%s' via descriptor '%s'"),
+							*GetNameSafe(SourceBuilding),
+							*Preset.BuildingClassName,
+							*GetNameSafe(Product.ItemClass));
 						break;
 					}
 				}
@@ -876,12 +1428,31 @@ FSFRestorePreset USFRestoreService::ImportFromLastExtend(
 		UE_LOG(LogSmartFoundations, Warning,
 			TEXT("[SmartRestore] ImportFromLastExtend: Failed — no building recipe found for '%s'"),
 			*GetNameSafe(SourceBuilding));
-		return Preset;
+		return FSFRestorePreset();
 	}
 
-	bOutSuccess = true;
+	TSharedPtr<FSFCloneTopology> CloneTopology = ExtendSvc->GetLastCloneTopology();
+	if (CloneTopology.IsValid() && CloneTopology->ChildHolograms.Num() > 0)
+	{
+		Preset.bHasExtendTopology = true;
+		Preset.ExtendCloneTopology = *CloneTopology;
+		UE_LOG(LogSmartFoundations, Log,
+			TEXT("[SmartRestore] Captured Extend clone topology with %d child holograms"),
+			Preset.ExtendCloneTopology.ChildHolograms.Num());
+	}
+	else
+	{
+		UE_LOG(LogSmartFoundations, Warning,
+			TEXT("[SmartRestore] ImportFromLastExtend: No clone topology available to capture"));
+		return FSFRestorePreset();
+	}
+
 	UE_LOG(LogSmartFoundations, Log,
-		TEXT("[SmartRestore] Imported preset '%s' from Extend source '%s'"),
-		*Name, *GetNameSafe(SourceBuilding));
+		TEXT("[SmartRestore] ImportFromLastExtend success: preset='%s' buildingRecipe='%s' productionRecipe='%s' childHolograms=%d"),
+		*Name,
+		*Preset.BuildingClassName,
+		*Preset.RecipeClassName,
+		Preset.ExtendCloneTopology.ChildHolograms.Num());
+	bOutSuccess = true;
 	return Preset;
 }

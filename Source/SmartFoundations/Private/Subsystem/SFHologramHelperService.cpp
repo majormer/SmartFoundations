@@ -298,6 +298,25 @@ void FSFHologramHelperService::RegenerateChildHologramGrid(
 
 	// Resync from parent if our list diverges (e.g., after rapid input bursts or missed callbacks)
 	{
+		auto IsNormalGridChild = [](AFGHologram* Candidate) -> bool
+		{
+			if (!IsValid(Candidate))
+			{
+				return false;
+			}
+
+			const FSFHologramData* Data = USFHologramDataRegistry::GetData(Candidate);
+			const bool bIsExtendChild = Candidate->Tags.Contains(FName(TEXT("SF_ExtendChild")))
+				|| (Data && Data->ChildType == ESFChildHologramType::ExtendClone);
+			if (bIsExtendChild)
+			{
+				return false;
+			}
+
+			return Candidate->ActorHasTag(FName(TEXT("SF_GridChild")))
+				|| (Data && Data->ChildType == ESFChildHologramType::ScalingGrid);
+		};
+
 		const TArray<AFGHologram*> ParentChildrenNow = ParentHologram->GetHologramChildren();
 		TSet<AFGHologram*> OurSet;
 		for (const TWeakObjectPtr<AFGHologram>& W : SpawnedChildren)
@@ -308,13 +327,10 @@ void FSFHologramHelperService::RegenerateChildHologramGrid(
 		bool NeedResync = false;
 		for (AFGHologram* P : ParentChildrenNow)
 		{
-			if (IsValid(P))
+			if (IsNormalGridChild(P))
 			{
-				// Only consider Smart-owned children (tagged or delegate-bound) and not pending removal
-				const bool bMarkedSmart = (P->ActorHasTag(FName(TEXT("SF_GridChild"))) ||
-					P->OnDestroyed.IsBound());
 				const bool bPendingRemoval = P->ActorHasTag(FName(TEXT("SF_GridChild_PendingDestroy")));
-				if (bMarkedSmart && !bPendingRemoval)
+				if (!bPendingRemoval)
 				{
 					ParentAlive++;
 					if (!OurSet.Contains(P))
@@ -333,12 +349,10 @@ void FSFHologramHelperService::RegenerateChildHologramGrid(
 			SpawnedChildren.Empty();
 			for (AFGHologram* P : ParentChildrenNow)
 			{
-				if (IsValid(P))
+				if (IsNormalGridChild(P))
 				{
-					const bool bMarkedSmart = (P->ActorHasTag(FName(TEXT("SF_GridChild"))) ||
-						P->OnDestroyed.IsBound());
 					const bool bPendingRemoval = P->ActorHasTag(FName(TEXT("SF_GridChild_PendingDestroy")));
-					if (!bMarkedSmart || bPendingRemoval) { continue; }
+					if (bPendingRemoval) { continue; }
 
 					SpawnedChildren.Add(P);
 				}

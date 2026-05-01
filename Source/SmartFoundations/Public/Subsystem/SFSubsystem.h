@@ -394,6 +394,9 @@ public:
   bool IsRecipeModeActive() const { return bRecipeModeActive; }
   bool IsAutoConnectSettingsModeActive() const { return bAutoConnectSettingsModeActive; }
   bool IsExtendModeActive() const;
+	bool IsRestoredExtendModeActive() const;
+	bool ShouldSuppressNormalGridChildren() const;
+	void ClearNormalGridChildrenForExtendSuppression(const TCHAR* Context);
 
   // Note: EXTEND mode is AUTOMATIC - no toggle needed!
   // Activates when pointing at a compatible building of the same type
@@ -1360,6 +1363,9 @@ private:
 
 	/** Clean up state during world transitions and save loads */
 	void CleanupStateForWorldTransition();
+
+	/** Abort any active Smart Restore topology/session without relying on hologram unregister semantics. */
+	bool AbortRestoreSession(const TCHAR* Reason);
 
 	/** Create and initialize HUD widgets */
 	void InitializeWidgets();

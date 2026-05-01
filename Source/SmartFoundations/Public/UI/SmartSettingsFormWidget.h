@@ -17,6 +17,7 @@
 #include "Input/Reply.h"
 #include "Input/Events.h"
 #include "HUD/SFHUDTypes.h"
+#include "Features/Restore/SFRestoreTypes.h"
 #include "SmartSettingsFormWidget.generated.h"
 
 // Forward declarations
@@ -316,6 +317,74 @@ protected:
     // Clear recipe button
     UPROPERTY(meta = (BindWidgetOptional))
     UButton* ClearRecipeButton;
+
+    // === Smart Restore Controls ===
+
+    // Restore section container (collapsible)
+    UPROPERTY(meta = (BindWidgetOptional))
+    UVerticalBox* RestoreContainer;
+
+    UPROPERTY(meta = (BindWidgetOptional))
+    UBorder* RestoreSidePanel;
+
+    // Preset dropdown — populated from GetPresetNames()
+    UPROPERTY(meta = (BindWidgetOptional))
+    UComboBoxString* PresetDropdown;
+
+    // Preset name input for saving
+    UPROPERTY(meta = (BindWidgetOptional))
+    UEditableTextBox* PresetNameInput;
+
+    // Action buttons
+    UPROPERTY(meta = (BindWidgetOptional))
+    UButton* ApplyPresetBtn;
+
+    UPROPERTY(meta = (BindWidgetOptional))
+    UButton* SavePresetBtn;
+
+    UPROPERTY(meta = (BindWidgetOptional))
+    UButton* DeletePresetBtn;
+
+    UPROPERTY(meta = (BindWidgetOptional))
+    UButton* UpdatePresetBtn;
+
+    UPROPERTY(meta = (BindWidgetOptional))
+    UButton* ExportPresetBtn;
+
+    UPROPERTY(meta = (BindWidgetOptional))
+    UButton* ImportPresetBtn;
+
+    UPROPERTY(meta = (BindWidgetOptional))
+    UButton* ImportFromExtendBtn;
+
+    // Capture checklist checkboxes
+    UPROPERTY(meta = (BindWidgetOptional))
+    UCheckBox* CaptureGridCheckBox;
+
+    UPROPERTY(meta = (BindWidgetOptional))
+    UCheckBox* CaptureSpacingCheckBox;
+
+    UPROPERTY(meta = (BindWidgetOptional))
+    UCheckBox* CaptureStepsCheckBox;
+
+    UPROPERTY(meta = (BindWidgetOptional))
+    UCheckBox* CaptureStaggerCheckBox;
+
+    UPROPERTY(meta = (BindWidgetOptional))
+    UCheckBox* CaptureRotationCheckBox;
+
+    UPROPERTY(meta = (BindWidgetOptional))
+    UCheckBox* CaptureRecipeCheckBox;
+
+    UPROPERTY(meta = (BindWidgetOptional))
+    UCheckBox* CaptureAutoConnectCheckBox;
+
+    // Section toggle for collapsible Restore section
+    UPROPERTY(meta = (BindWidgetOptional))
+    UButton* RestoreSectionToggle;
+
+    UPROPERTY(meta = (BindWidgetOptional))
+    UTextBlock* RestoreSectionHeader;
     
     // === Confirmation Dialog Widgets ===
     
@@ -361,6 +430,7 @@ private:
 
     // Dragging support
     bool bIsDragging = false;
+    bool bIsDraggingRestorePanel = false;
     FVector2D DragOffset = FVector2D::ZeroVector;
 
     // Cached canvas slots for moving the whole panel together
@@ -371,6 +441,7 @@ private:
     UCanvasPanelSlot* ResetButtonSlot = nullptr;
     UCanvasPanelSlot* CloseButtonSlot = nullptr;
     UCanvasPanelSlot* SmartLogoSlot = nullptr;
+    UCanvasPanelSlot* RestoreSidePanelSlot = nullptr;
 
     // Relative offsets from the background panel for header/content widgets
     FVector2D TitleOffset = FVector2D::ZeroVector;
@@ -434,6 +505,44 @@ private:
     // Clear recipe button handler
     UFUNCTION()
     void OnClearRecipeButtonClicked();
+
+    // === Smart Restore Handlers ===
+
+    UFUNCTION()
+    void OnApplyPresetClicked();
+
+    UFUNCTION()
+    void OnSavePresetClicked();
+
+    UFUNCTION()
+    void OnDeletePresetClicked();
+
+    UFUNCTION()
+    void OnUpdatePresetClicked();
+
+    UFUNCTION()
+    void OnExportPresetClicked();
+
+    UFUNCTION()
+    void OnImportPresetClicked();
+
+    UFUNCTION()
+    void OnImportFromExtendClicked();
+
+    UFUNCTION()
+    void OnPresetSelectionChanged(FString SelectedItem, ESelectInfo::Type SelectionType);
+
+    UFUNCTION()
+    void OnRestoreSectionToggleClicked();
+
+    // Refresh the preset dropdown from disk
+    void RefreshPresetDropdown();
+
+    // Build capture flags from checkbox state
+    FSFRestoreCaptureFlags GetCaptureFlags() const;
+
+    // Update Import from Extend button enabled state
+    void UpdateExtendImportButtonState();
     
     // === Grid Direction Toggle Handlers ===
     

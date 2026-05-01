@@ -45,7 +45,7 @@ void USFExtendHologramService::TrackChildHologram(AFGHologram* Child, const FVec
         return;
     }
     
-    TrackedChildren.Add(Child);
+    TrackedChildren.AddUnique(Child);
     ChildIntendedPositions.Add(Child, IntendedPosition);
     ChildIntendedRotations.Add(Child, IntendedRotation);
 }
@@ -110,16 +110,24 @@ void USFExtendHologramService::CreateBeltPreviews(AFGHologram* ParentHologram)
     SourceJSON.SaveToFile(LogDir / TEXT("ExtendSourceTopology.json"));
     CloneJSON.SaveToFile(LogDir / TEXT("ExtendClonedTopology.json"));
     
-    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 EXTEND JSON: Saved new schema files - Source: %d chains, Clone: %d holograms"),
+    UE_LOG(LogSmartFoundations, Log, TEXT("[SmartRestore][ExtendHologram] Clone JSON generated: sourceChains=%d cloneHolograms=%d offset=(%.1f, %.1f, %.1f) parent=%s source=%s"),
         SourceJSON.BeltInputChains.Num() + SourceJSON.BeltOutputChains.Num() + 
         SourceJSON.PipeInputChains.Num() + SourceJSON.PipeOutputChains.Num(),
-        CloneJSON.ChildHolograms.Num());
+        CloneJSON.ChildHolograms.Num(),
+        CloneOffset.X,
+        CloneOffset.Y,
+        CloneOffset.Z,
+        *GetNameSafe(ParentHologram),
+        *GetNameSafe(Topology.SourceBuilding.Get()));
 
     // Spawn holograms from JSON
     TMap<FString, AFGHologram*> SpawnedHolograms;
     int32 SpawnedCount = CloneJSON.SpawnChildHolograms(ParentHologram, ExtendService, SpawnedHolograms);
     
-    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 EXTEND JSON SPAWN: Spawned %d holograms from JSON"), SpawnedCount);
+    UE_LOG(LogSmartFoundations, Log,
+        TEXT("[SmartRestore][ExtendHologram] SpawnChildHolograms result: spawned=%d cloneChildren=%d"),
+        SpawnedCount,
+        CloneJSON.ChildHolograms.Num());
     
     // Wire connections between spawned holograms (lifts only - belts/pipes skip due to spline issues)
     int32 WiredCount = CloneJSON.WireChildHologramConnections(SpawnedHolograms, ParentHologram);
@@ -129,8 +137,10 @@ void USFExtendHologramService::CreateBeltPreviews(AFGHologram* ParentHologram)
     StoredCloneTopology = MakeShared<FSFCloneTopology>(CloneJSON);
     JsonSpawnedHolograms = SpawnedHolograms;
     
-    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 EXTEND JSON: Stored topology with %d holograms for post-build wiring"),
-        StoredCloneTopology->ChildHolograms.Num());
+    UE_LOG(LogSmartFoundations, Log,
+        TEXT("[SmartRestore][ExtendHologram] Stored clone topology: children=%d spawnedMap=%d"),
+        StoredCloneTopology->ChildHolograms.Num(),
+        JsonSpawnedHolograms.Num());
     
     // Track spawned holograms for position refresh
     for (auto& Pair : SpawnedHolograms)
@@ -142,7 +152,9 @@ void USFExtendHologramService::CreateBeltPreviews(AFGHologram* ParentHologram)
         }
     }
     
-    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 EXTEND JSON SPAWN: Tracked %d holograms for refresh"), TrackedChildren.Num());
+    UE_LOG(LogSmartFoundations, Log,
+        TEXT("[SmartRestore][ExtendHologram] Tracked clone holograms: tracked=%d"),
+        TrackedChildren.Num());
 }
 
 void USFExtendHologramService::ClearBeltPreviews()

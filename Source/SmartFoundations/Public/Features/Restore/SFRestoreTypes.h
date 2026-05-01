@@ -15,10 +15,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Features/Extend/SFManifoldJSON.h"
 #include "SFRestoreTypes.generated.h"
 
 /** Current preset format version. Increment when fields are added/changed. */
-static constexpr int32 SF_RESTORE_PRESET_VERSION = 1;
+static constexpr int32 SF_RESTORE_PRESET_VERSION = 2;
 
 /** Compact sharing format prefix */
 static const FString SF_RESTORE_EXPORT_PREFIX = TEXT("SR1:");
@@ -156,9 +157,15 @@ struct FSFRestorePreset
 
 	UPROPERTY() FSFRestoreAutoConnectState AutoConnect;
 
+	// === Extend topology (stored for presets imported from Extend) ===
+
+	UPROPERTY() bool bHasExtendTopology = false;
+	UPROPERTY() FSFCloneTopology ExtendCloneTopology;
+
 	// === Metadata ===
 
 	UPROPERTY() int32 Version = SF_RESTORE_PRESET_VERSION;
+	UPROPERTY() FString Description;
 	UPROPERTY() FString CreatedAt;
 	UPROPERTY() FString UpdatedAt;
 };

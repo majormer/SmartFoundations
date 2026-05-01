@@ -13,6 +13,7 @@
 #include "Features/Extend/SFExtendWiringService.h"
 #include "Features/Extend/SFManifoldJSON.h"
 #include "Features/Extend/SFWiringManifest.h"
+#include "Features/Restore/SFRestoreService.h"
 #include "Subsystem/SFSubsystem.h"
 #include "Subsystem/SFHologramDataService.h"
 // NOTE: SFRecipeCostInjector.h removed - child holograms automatically aggregate costs via GetCost()
@@ -64,6 +65,203 @@
 #include "Kismet/GameplayStatics.h"
 #include "EngineUtils.h"  // For TActorIterator
 #include "Components/BoxComponent.h"  // For clearance disabling on child factory holograms
+
+namespace
+{
+    struct FRestoredScaledClonePlacement
+    {
+        FVector WorldOffset = FVector::ZeroVector;
+        FRotator RotationOffset = FRotator::ZeroRotator;
+    };
+
+    FRestoredScaledClonePlacement CalculateRestoredScaledClonePlacement(
+        const AFGHologram* ParentHologram,
+        const FSFCloneTopology* TemplateTopology,
+        const FSFCounterState& State,
+        int32 GridX,
+        int32 GridY)
+    {
+        FRestoredScaledClonePlacement Placement;
+        if (!ParentHologram)
+        {
+            return Placement;
+        }
+
+        USFBuildableSizeRegistry::Initialize();
+        FVector BuildingSize(800.0f, 800.0f, 400.0f);
+        if (UClass* BuildClass = ParentHologram->GetBuildClass())
+        {
+            BuildingSize = USFBuildableSizeRegistry::GetProfile(BuildClass).DefaultSize;
+        }
+
+        const FRotator ParentRotation = ParentHologram->GetActorRotation();
+        float XDirectionSign = State.GridCounters.X < 0 ? -1.0f : 1.0f;
+
+        if (TemplateTopology)
+        {
+            const FRotator OriginalParentRotation = TemplateTopology->ParentTransform.Rotation.ToFRotator();
+            const FRotator RotationDelta = ParentRotation - OriginalParentRotation;
+            const FVector CapturedStep = RotationDelta.RotateVector(TemplateTopology->WorldOffset.ToFVector());
+            const FVector CapturedLocalStep = ParentRotation.UnrotateVector(CapturedStep);
+            if (!FMath::IsNearlyZero(CapturedLocalStep.X))
+            {
+                XDirectionSign *= FMath::Sign(CapturedLocalStep.X);
+            }
+        }
+
+        const float StepDistance = FMath::Max(1.0f, BuildingSize.X + static_cast<float>(State.SpacingX));
+        FVector LocalOffset = FVector::ZeroVector;
+
+        if (!FMath::IsNearlyZero(State.RotationZ))
+        {
+            const float StepRadians = FMath::Abs(FMath::DegreesToRadians(State.RotationZ));
+            const float Radius = (StepRadians > KINDA_SMALL_NUMBER) ? StepDistance / StepRadians : 0.0f;
+            const float SignRotation = (State.RotationZ >= 0.0f) ? 1.0f : -1.0f;
+
+            auto OffsetAtCloneIndex = [&](int32 CloneIndex) -> FVector
+            {
+                const float AngleDeg = static_cast<float>(CloneIndex) * State.RotationZ;
+                const float AbsAngleRad = FMath::Abs(FMath::DegreesToRadians(AngleDeg));
+
+                FVector Offset;
+                Offset.X = XDirectionSign * Radius * FMath::Sin(AbsAngleRad);
+                Offset.Y = SignRotation * (Radius - Radius * FMath::Cos(AbsAngleRad));
+                Offset.Z = static_cast<float>(State.StepsX * CloneIndex);
+                return Offset;
+            };
+
+            const FVector ParentCloneOffset = OffsetAtCloneIndex(1);
+            const FVector TargetCloneOffset = OffsetAtCloneIndex(GridX + 1);
+            LocalOffset = TargetCloneOffset - ParentCloneOffset;
+            Placement.RotationOffset = FRotator(0.0f, State.RotationZ * XDirectionSign * static_cast<float>(GridX), 0.0f);
+        }
+        else
+        {
+            LocalOffset.X = XDirectionSign * StepDistance * static_cast<float>(GridX);
+            LocalOffset.Z = static_cast<float>(State.StepsX * GridX);
+        }
+
+        if (GridY != 0)
+        {
+            const float YSign = State.GridCounters.Y < 0 ? -1.0f : 1.0f;
+            const float RowDistance = FMath::Max(1.0f, BuildingSize.Y + static_cast<float>(State.SpacingY));
+            LocalOffset.Y += RowDistance * static_cast<float>(GridY) * YSign;
+            LocalOffset.Z += static_cast<float>(State.StepsY * GridY);
+        }
+
+        Placement.WorldOffset = ParentRotation.RotateVector(FVector(LocalOffset.X, LocalOffset.Y, 0.0f));
+        Placement.WorldOffset.Z += LocalOffset.Z;
+        return Placement;
+    }
+
+    uint8 AlignRestoredLaneNormals(FSFCloneHologram& Holo, const FVector& Start, const FVector& End)
+    {
+        if (!Holo.bIsLaneSegment || (Holo.LaneSegmentType != TEXT("belt") && Holo.LaneSegmentType != TEXT("pipe")))
+        {
+            return 0;
+        }
+
+        const FVector LaneDirection = (End - Start).GetSafeNormal();
+        if (LaneDirection.IsNearlyZero())
+        {
+            return 0;
+        }
+
+        uint8 FlippedMask = 0;
+        const FVector StartNormal = Holo.LaneStartNormal.ToFVector();
+        if (!StartNormal.IsNearlyZero() && FVector::DotProduct(StartNormal.GetSafeNormal(), LaneDirection) < -0.01f)
+        {
+            Holo.LaneStartNormal = FSFVec3(-StartNormal);
+            FlippedMask |= 1;
+        }
+
+        const FVector EndNormal = Holo.LaneEndNormal.ToFVector();
+        if (!EndNormal.IsNearlyZero() && FVector::DotProduct(EndNormal.GetSafeNormal(), -LaneDirection) < -0.01f)
+        {
+            Holo.LaneEndNormal = FSFVec3(-EndNormal);
+            FlippedMask |= 2;
+        }
+
+        return FlippedMask;
+    }
+
+    void KickRestoredPreviewParent(AFGHologram* ParentHologram)
+    {
+        if (!IsValid(ParentHologram))
+        {
+            return;
+        }
+
+        const FVector Location = ParentHologram->GetActorLocation();
+        const FRotator Rotation = ParentHologram->GetActorRotation();
+        const bool bWasLocked = ParentHologram->IsHologramLocked();
+
+        FHitResult SyntheticHit;
+        SyntheticHit.bBlockingHit = true;
+        SyntheticHit.Location = Location;
+        SyntheticHit.ImpactPoint = Location;
+        SyntheticHit.ImpactNormal = FVector::UpVector;
+        SyntheticHit.Normal = FVector::UpVector;
+        SyntheticHit.TraceStart = Location + FVector(0.0f, 0.0f, 100.0f);
+        SyntheticHit.TraceEnd = Location - FVector(0.0f, 0.0f, 100.0f);
+        SyntheticHit.Distance = 100.0f;
+        ParentHologram->SetHologramLocationAndRotation(SyntheticHit);
+
+        ParentHologram->SetActorLocation(Location);
+        ParentHologram->SetActorRotation(Rotation);
+        if (USceneComponent* Root = ParentHologram->GetRootComponent())
+        {
+            Root->SetWorldLocation(Location);
+            Root->SetWorldRotation(Rotation);
+            Root->MarkRenderStateDirty();
+        }
+
+        ParentHologram->SetActorHiddenInGame(false);
+        ParentHologram->UpdateComponentTransforms();
+
+        ParentHologram->LockHologramPosition(!bWasLocked);
+        ParentHologram->LockHologramPosition(bWasLocked);
+    }
+
+    void ScrubInvalidHologramChildren(AFGHologram* ParentHologram, const TCHAR* Context)
+    {
+        if (!IsValid(ParentHologram))
+        {
+            return;
+        }
+
+        FArrayProperty* ChildrenProp = FindFProperty<FArrayProperty>(AFGHologram::StaticClass(), TEXT("mChildren"));
+        if (!ChildrenProp)
+        {
+            return;
+        }
+
+        TArray<AFGHologram*>* ChildrenArray = ChildrenProp->ContainerPtrToValuePtr<TArray<AFGHologram*>>(ParentHologram);
+        if (!ChildrenArray)
+        {
+            return;
+        }
+
+        int32 RemovedCount = 0;
+        for (int32 Index = ChildrenArray->Num() - 1; Index >= 0; --Index)
+        {
+            if (!(*ChildrenArray)[Index] || !IsValid((*ChildrenArray)[Index]))
+            {
+                ChildrenArray->RemoveAt(Index);
+                RemovedCount++;
+            }
+        }
+
+        if (RemovedCount > 0)
+        {
+            UE_LOG(LogSmartFoundations, Warning,
+                TEXT("[SmartRestore][Extend] Scrubbed %d null/invalid parent children: context=%s parent=%s"),
+                RemovedCount,
+                Context ? Context : TEXT("Unknown"),
+                *GetNameSafe(ParentHologram));
+        }
+    }
+}
 
 USFExtendService::USFExtendService()
 {
@@ -385,7 +583,12 @@ bool USFExtendService::WalkTopology(AFGBuildable* SourceBuilding)
 {
     if (TopologyService)
     {
-        return TopologyService->WalkTopology(SourceBuilding);
+        const bool bWalked = TopologyService->WalkTopology(SourceBuilding);
+        if (bWalked)
+        {
+            LastExtendTopology = TopologyService->GetCurrentTopology();
+        }
+        return bWalked;
     }
 
     UE_LOG(LogSmartFoundations, Warning, TEXT("Smart!: WalkTopology called but TopologyService not initialized"));
@@ -402,6 +605,831 @@ const FSFExtendTopology& USFExtendService::GetCurrentTopology() const
     // Return empty topology if service not initialized
     static FSFExtendTopology EmptyTopology;
     return EmptyTopology;
+}
+
+const FSFExtendTopology& USFExtendService::GetLastExtendTopology() const
+{
+    const FSFExtendTopology& CurrentTopology = GetCurrentTopology();
+    if (CurrentTopology.bIsValid && CurrentTopology.SourceBuilding.IsValid())
+    {
+        return CurrentTopology;
+    }
+
+    return LastExtendTopology;
+}
+
+TSharedPtr<FSFCloneTopology> USFExtendService::GetLastCloneTopology() const
+{
+    if (bRestoredCloneTopologyActive && RestoredCloneTopologyTemplate.IsValid())
+    {
+        UE_LOG(LogSmartFoundations, Log,
+            TEXT("[SmartRestore][Extend] GetLastCloneTopology: returning restored template topology children=%d"),
+            RestoredCloneTopologyTemplate->ChildHolograms.Num());
+        return MakeShared<FSFCloneTopology>(*RestoredCloneTopologyTemplate);
+    }
+
+    if (StoredCloneTopology.IsValid())
+    {
+        UE_LOG(LogSmartFoundations, Log,
+            TEXT("[SmartRestore][Extend] GetLastCloneTopology: returning StoredCloneTopology children=%d"),
+            StoredCloneTopology->ChildHolograms.Num());
+        return MakeShared<FSFCloneTopology>(*StoredCloneTopology);
+    }
+
+    if (LastCloneTopology.IsValid())
+    {
+        UE_LOG(LogSmartFoundations, Log,
+            TEXT("[SmartRestore][Extend] GetLastCloneTopology: returning LastCloneTopology children=%d"),
+            LastCloneTopology->ChildHolograms.Num());
+        return MakeShared<FSFCloneTopology>(*LastCloneTopology);
+    }
+
+    UE_LOG(LogSmartFoundations, Log,
+        TEXT("[SmartRestore][Extend] GetLastCloneTopology: no clone topology cached"));
+    return nullptr;
+}
+
+bool USFExtendService::IsHologramCompatibleWithRestoredCloneTopology(AFGHologram* ParentHologram) const
+{
+    if (!bRestoredCloneTopologyActive || !RestoredCloneTopologyTemplate.IsValid())
+    {
+        return true;
+    }
+
+    if (!IsValid(ParentHologram))
+    {
+        return false;
+    }
+
+    const FString& ExpectedBuildClass = RestoredCloneTopologyTemplate->ParentBuildClass;
+    if (ExpectedBuildClass.IsEmpty())
+    {
+        return true;
+    }
+
+    UClass* ActiveBuildClass = ParentHologram->GetBuildClass();
+    const FString ActiveBuildClassName = ActiveBuildClass ? ActiveBuildClass->GetName() : FString();
+    const bool bCompatible = ActiveBuildClassName == ExpectedBuildClass;
+    if (!bCompatible)
+    {
+        UE_LOG(LogSmartFoundations, Log,
+            TEXT("[SmartRestore][Extend] Restored topology build-class mismatch: expected=%s active=%s parent=%s"),
+            *ExpectedBuildClass,
+            ActiveBuildClassName.IsEmpty() ? TEXT("<none>") : *ActiveBuildClassName,
+            *GetNameSafe(ParentHologram));
+    }
+
+    return bCompatible;
+}
+
+void USFExtendService::ClearRestoredCloneTopologySession(const TCHAR* Reason)
+{
+    const int32 TemplateChildCount = RestoredCloneTopologyTemplate.IsValid()
+        ? RestoredCloneTopologyTemplate->ChildHolograms.Num()
+        : 0;
+
+    ClearRestoredCloneTopologyPreview();
+    RestoredCloneParentHologram.Reset();
+    RestoredCloneTopologyTemplate.Reset();
+    RestoredCloneBaseTopology.Reset();
+    LastCloneTopology.Reset();
+    RestoredCloneLastParentLocation = FVector::ZeroVector;
+    RestoredCloneLastParentRotation = FRotator::ZeroRotator;
+    bRestoredCloneTopologyActive = false;
+
+    UE_LOG(LogSmartFoundations, Log,
+        TEXT("[SmartRestore][Extend] Cleared restored topology session: reason=%s templateChildren=%d"),
+        Reason ? Reason : TEXT("Unknown"),
+        TemplateChildCount);
+}
+
+bool USFExtendService::ReplayRestoreCloneTopology(AFGHologram* ParentHologram, const FSFCloneTopology& CloneTopology)
+{
+    if (!ParentHologram)
+    {
+        return false;
+    }
+
+    if (!CloneTopology.ParentBuildClass.IsEmpty())
+    {
+        UClass* ActiveBuildClass = ParentHologram->GetBuildClass();
+        const FString ActiveBuildClassName = ActiveBuildClass ? ActiveBuildClass->GetName() : FString();
+        if (ActiveBuildClassName != CloneTopology.ParentBuildClass)
+        {
+            UE_LOG(LogSmartFoundations, Log,
+                TEXT("[SmartRestore][Extend] Replay skipped for mismatched build class: expected=%s active=%s parent=%s"),
+                *CloneTopology.ParentBuildClass,
+                ActiveBuildClassName.IsEmpty() ? TEXT("<none>") : *ActiveBuildClassName,
+                *GetNameSafe(ParentHologram));
+            return false;
+        }
+    }
+
+    ClearRestoredCloneTopologyPreview();
+    RestoredCloneParentHologram = ParentHologram;
+    RestoredCloneTopologyTemplate = MakeShared<FSFCloneTopology>(CloneTopology);
+    RestoredCloneBaseTopology = MakeShared<FSFCloneTopology>(CloneTopology);
+    RestoredCloneLastParentLocation = ParentHologram->GetActorLocation();
+    RestoredCloneLastParentRotation = ParentHologram->GetActorRotation();
+    bRestoredCloneTopologyActive = true;
+    if (Subsystem.IsValid())
+    {
+        Subsystem->ClearNormalGridChildrenForExtendSuppression(TEXT("ReplayRestoreCloneTopology"));
+    }
+    KickRestoredPreviewParent(ParentHologram);
+
+    FSFCloneTopology ReplayTopology = BuildRestoredCloneTopologyForCurrentState(ParentHologram);
+    UE_LOG(LogSmartFoundations, Log,
+        TEXT("[SmartRestore][Extend] Replay restored scaled topology: parent=%s templateChildren=%d replayChildren=%d"),
+        *GetNameSafe(ParentHologram),
+        CloneTopology.ChildHolograms.Num(),
+        ReplayTopology.ChildHolograms.Num());
+    return SpawnRestoredCloneTopology(ParentHologram, ReplayTopology);
+}
+
+void USFExtendService::TickRestoredCloneTopology(float DeltaTime)
+{
+    if (!bRestoredCloneTopologyActive || !HologramService)
+    {
+        return;
+    }
+
+    if (!RestoredCloneParentHologram.IsValid())
+    {
+        if (HologramService && JsonSpawnedHolograms.Num() > 0)
+        {
+            HologramService->ClearBeltPreviews();
+        }
+        JsonSpawnedHolograms.Empty();
+        StoredCloneTopology.Reset();
+        return;
+    }
+
+    AFGHologram* ParentHologram = RestoredCloneParentHologram.Get();
+    if (!IsHologramCompatibleWithRestoredCloneTopology(ParentHologram))
+    {
+        ClearRestoredCloneTopologySession(TEXT("TickRestoredCloneTopology build class mismatch"));
+        if (Subsystem.IsValid())
+        {
+            if (USFRestoreService* RestoreSvc = Subsystem->GetRestoreService())
+            {
+                RestoreSvc->ClearActiveRestoreSession(TEXT("Restored Extend parent build class mismatch"));
+            }
+        }
+        return;
+    }
+
+    const FVector ParentLocation = ParentHologram->GetActorLocation();
+    const FRotator ParentRotation = ParentHologram->GetActorRotation();
+    if (!ParentLocation.Equals(RestoredCloneLastParentLocation, 0.1f) || !ParentRotation.Equals(RestoredCloneLastParentRotation, 0.1f))
+    {
+        KickRestoredPreviewParent(ParentHologram);
+        FSFCloneTopology ReplayTopology = BuildRestoredCloneTopologyForCurrentState(ParentHologram);
+        TMap<FString, FVector> IntendedPositions;
+        TMap<FString, FRotator> IntendedRotations;
+        for (const FSFCloneHologram& Holo : ReplayTopology.ChildHolograms)
+        {
+            IntendedPositions.Add(Holo.HologramId, Holo.Transform.Location.ToFVector());
+            IntendedRotations.Add(Holo.HologramId, Holo.Transform.Rotation.ToFRotator());
+        }
+        if (Subsystem.IsValid())
+        {
+            const FSFCounterState& State = Subsystem->GetCounterState();
+            const int32 XCount = FMath::Max(1, FMath::Abs(State.GridCounters.X));
+            const int32 YCount = FMath::Max(1, FMath::Abs(State.GridCounters.Y));
+            if (XCount > 1 || YCount > 1)
+            {
+                const FSFCloneTopology* TemplateTopology = RestoredCloneTopologyTemplate.IsValid()
+                    ? RestoredCloneTopologyTemplate.Get()
+                    : nullptr;
+                for (int32 Y = 0; Y < YCount; ++Y)
+                {
+                    for (int32 X = 0; X < XCount; ++X)
+                    {
+                        if (X == 0 && Y == 0)
+                        {
+                            continue;
+                        }
+
+                        const FRestoredScaledClonePlacement Placement = CalculateRestoredScaledClonePlacement(ParentHologram, TemplateTopology, State, X, Y);
+                        const FString FactoryId = FString::Printf(TEXT("rr_%d_%d_factory"), X, Y);
+                        IntendedPositions.Add(FactoryId, ParentLocation + Placement.WorldOffset);
+                        IntendedRotations.Add(FactoryId, ParentRotation + Placement.RotationOffset);
+                    }
+                }
+            }
+        }
+
+        for (const auto& Pair : JsonSpawnedHolograms)
+        {
+            AFGHologram* Child = Pair.Value;
+            if (!IsValid(Child))
+            {
+                continue;
+            }
+
+            FVector IntendedPos = Child->GetActorLocation();
+            FRotator IntendedRot = Child->GetActorRotation();
+            if (FVector* FoundPos = IntendedPositions.Find(Pair.Key))
+            {
+                IntendedPos = *FoundPos;
+            }
+            if (FRotator* FoundRot = IntendedRotations.Find(Pair.Key))
+            {
+                IntendedRot = *FoundRot;
+            }
+
+            Child->SetActorLocation(IntendedPos);
+            Child->SetActorRotation(IntendedRot);
+            if (USceneComponent* Root = Child->GetRootComponent())
+            {
+                Root->SetWorldLocation(IntendedPos);
+                Root->SetWorldRotation(IntendedRot);
+                Root->MarkRenderStateDirty();
+            }
+            HologramService->TrackChildHologram(Child, IntendedPos, IntendedRot);
+        }
+
+        StoredCloneTopology = MakeShared<FSFCloneTopology>(ReplayTopology);
+        LastCloneTopology = MakeShared<FSFCloneTopology>(ReplayTopology);
+        RestoredCloneLastParentLocation = ParentLocation;
+        RestoredCloneLastParentRotation = ParentRotation;
+    }
+
+    HologramService->RefreshChildPositions();
+}
+
+void USFExtendService::OnRestoredCloneTopologyStateChanged()
+{
+    if (!bRestoredCloneTopologyActive || !RestoredCloneParentHologram.IsValid())
+    {
+        return;
+    }
+
+    AFGHologram* ParentHologram = RestoredCloneParentHologram.Get();
+    FSFCloneTopology ReplayTopology = BuildRestoredCloneTopologyForCurrentState(ParentHologram);
+    ClearRestoredCloneTopologyPreview();
+    RestoredCloneParentHologram = ParentHologram;
+    bRestoredCloneTopologyActive = true;
+    if (Subsystem.IsValid())
+    {
+        Subsystem->ClearNormalGridChildrenForExtendSuppression(TEXT("OnRestoredCloneTopologyStateChanged"));
+    }
+    UE_LOG(LogSmartFoundations, Log,
+        TEXT("[SmartRestore][Extend] Restored scaled state changed: parent=%s replayChildren=%d"),
+        *GetNameSafe(ParentHologram),
+        ReplayTopology.ChildHolograms.Num());
+    SpawnRestoredCloneTopology(ParentHologram, ReplayTopology);
+}
+
+FSFCloneTopology USFExtendService::BuildRestoredCloneTopologyForCurrentState(AFGHologram* ParentHologram) const
+{
+    FSFCloneTopology ReplayTopology = RestoredCloneTopologyTemplate.IsValid()
+        ? *RestoredCloneTopologyTemplate
+        : FSFCloneTopology();
+    const FVector OriginalParentLocation = ReplayTopology.ParentTransform.Location.ToFVector();
+    const FRotator OriginalParentRotation = ReplayTopology.ParentTransform.Rotation.ToFRotator();
+    const FVector NewParentLocation = ParentHologram->GetActorLocation();
+    const FRotator NewParentRotation = ParentHologram->GetActorRotation();
+    const FRotator RotationDelta = NewParentRotation - OriginalParentRotation;
+
+    auto TransformLocation = [&](const FVector& Location) -> FVector
+    {
+        const FVector Relative = Location - OriginalParentLocation;
+        return NewParentLocation + RotationDelta.RotateVector(Relative);
+    };
+
+    auto TransformRotation = [&](const FRotator& Rotation) -> FRotator
+    {
+        return Rotation + RotationDelta;
+    };
+
+    ReplayTopology.ParentTransform = FSFTransform(NewParentLocation, NewParentRotation);
+
+    for (FSFCloneHologram& Holo : ReplayTopology.ChildHolograms)
+    {
+        Holo.Transform = FSFTransform(
+            TransformLocation(Holo.Transform.Location.ToFVector()),
+            TransformRotation(Holo.Transform.Rotation.ToFRotator()));
+
+        if (Holo.bHasSplineData)
+        {
+            for (FSFSplinePoint& Point : Holo.SplineData.Points)
+            {
+                Point.World = FSFVec3(TransformLocation(Point.World.ToFVector()));
+            }
+        }
+
+        if (Holo.bHasLiftData)
+        {
+            // TopTransform is actor-local; only the world-space bottom transform follows the parent.
+            Holo.LiftData.BottomTransform = FSFTransform(
+                TransformLocation(Holo.LiftData.BottomTransform.Location.ToFVector()),
+                TransformRotation(Holo.LiftData.BottomTransform.Rotation.ToFRotator()));
+        }
+
+        if (Holo.bIsLaneSegment)
+        {
+            Holo.LaneStartNormal = FSFVec3(RotationDelta.RotateVector(Holo.LaneStartNormal.ToFVector()));
+            Holo.LaneEndNormal = FSFVec3(RotationDelta.RotateVector(Holo.LaneEndNormal.ToFVector()));
+        }
+    }
+
+    const TArray<FSFCloneHologram> SourceChildHolograms = ReplayTopology.ChildHolograms;
+    ReplayTopology.ChildHolograms.RemoveAll([](const FSFCloneHologram& Holo)
+    {
+        return Holo.bIsLaneSegment
+            || Holo.HologramId.StartsWith(TEXT("wire_source_"))
+            || Holo.CloneConnections.ConveyorAny0.Target.StartsWith(TEXT("source:"))
+            || Holo.CloneConnections.ConveyorAny1.Target.StartsWith(TEXT("source:"));
+    });
+
+    if (Subsystem.IsValid() && SourceChildHolograms.Num() > 0)
+    {
+        const FSFCounterState& State = Subsystem->GetCounterState();
+        const int32 XCount = FMath::Max(1, FMath::Abs(State.GridCounters.X));
+        const int32 YCount = FMath::Max(1, FMath::Abs(State.GridCounters.Y));
+        if (XCount > 1 || YCount > 1)
+        {
+            TArray<FSFCloneHologram> ExpandedChildHolograms = ReplayTopology.ChildHolograms;
+            const FSFCloneTopology* TemplateTopology = RestoredCloneTopologyTemplate.IsValid()
+                ? RestoredCloneTopologyTemplate.Get()
+                : nullptr;
+            FVector RestoredSourceFactoryLocation = ParentHologram->GetActorLocation();
+            if (TemplateTopology)
+            {
+                const FRotator TemplateParentRotation = TemplateTopology->ParentTransform.Rotation.ToFRotator();
+                const FRotator TemplateRotationDelta = ParentHologram->GetActorRotation() - TemplateParentRotation;
+                RestoredSourceFactoryLocation -= TemplateRotationDelta.RotateVector(TemplateTopology->WorldOffset.ToFVector());
+            }
+            auto PrefixInternalTarget = [](const FString& InPrefix, const FString& Target) -> FString
+            {
+                if (!Target.IsEmpty()
+                    && Target != TEXT("parent")
+                    && Target != TEXT("external")
+                    && !Target.StartsWith(TEXT("source:")))
+                {
+                    return InPrefix + Target;
+                }
+                return Target;
+            };
+            for (int32 Y = 0; Y < YCount; ++Y)
+            {
+                for (int32 X = 0; X < XCount; ++X)
+                {
+                    if (X == 0 && Y == 0)
+                    {
+                        continue;
+                    }
+
+                    const FString Prefix = FString::Printf(TEXT("rr_%d_%d_"), X, Y);
+                    const FString FactoryId = Prefix + TEXT("factory");
+                    const FString PreviousPrefix = ((X - 1) == 0 && Y == 0)
+                        ? FString()
+                        : FString::Printf(TEXT("rr_%d_%d_"), X - 1, Y);
+                    auto ResolveTargetForCurrentClone = [&](const FString& Target) -> FString
+                    {
+                        if (Target == TEXT("parent"))
+                        {
+                            return FactoryId;
+                        }
+                        return PrefixInternalTarget(Prefix, Target);
+                    };
+                    const FRestoredScaledClonePlacement Placement = CalculateRestoredScaledClonePlacement(ParentHologram, TemplateTopology, State, X, Y);
+                    const FRestoredScaledClonePlacement PreviousPlacement = (X - 1 == 0 && Y == 0)
+                        ? FRestoredScaledClonePlacement()
+                        : CalculateRestoredScaledClonePlacement(ParentHologram, TemplateTopology, State, X - 1, Y);
+                    const FVector ParentLocation = ParentHologram->GetActorLocation();
+                    const FVector CurrentFactoryCenter = ParentLocation + Placement.WorldOffset;
+                    const FVector PreviousFactoryCenter = ParentLocation + PreviousPlacement.WorldOffset;
+
+                    for (FSFCloneHologram Holo : SourceChildHolograms)
+                    {
+                        if (Holo.HologramId.StartsWith(TEXT("wire_source_")))
+                        {
+                            continue;
+                        }
+                        if (Holo.bIsLaneSegment && X == 0)
+                        {
+                            continue;
+                        }
+
+                        const FString OriginalC0Target = Holo.CloneConnections.ConveyorAny0.Target;
+                        const FString OriginalC1Target = Holo.CloneConnections.ConveyorAny1.Target;
+                        if (!Holo.bIsLaneSegment
+                            && (OriginalC0Target.StartsWith(TEXT("source:")) || OriginalC1Target.StartsWith(TEXT("source:"))))
+                        {
+                            continue;
+                        }
+                        Holo.HologramId = Prefix + Holo.HologramId;
+                        if (Holo.bIsLaneSegment && OriginalC0Target.StartsWith(TEXT("source:")))
+                        {
+                            Holo.CloneConnections.ConveyorAny0.Target = PrefixInternalTarget(PreviousPrefix, OriginalC1Target);
+                            Holo.CloneConnections.ConveyorAny1.Target = PrefixInternalTarget(Prefix, OriginalC1Target);
+                            Holo.LaneFromDistributorId = Holo.CloneConnections.ConveyorAny0.Target;
+                            Holo.LaneToDistributorId = Holo.CloneConnections.ConveyorAny1.Target;
+                        }
+                        else if (Holo.bIsLaneSegment && OriginalC1Target.StartsWith(TEXT("source:")))
+                        {
+                            Holo.CloneConnections.ConveyorAny0.Target = PrefixInternalTarget(Prefix, OriginalC0Target);
+                            Holo.CloneConnections.ConveyorAny1.Target = PrefixInternalTarget(PreviousPrefix, OriginalC0Target);
+                            Holo.LaneFromDistributorId = Holo.CloneConnections.ConveyorAny0.Target;
+                            Holo.LaneToDistributorId = Holo.CloneConnections.ConveyorAny1.Target;
+                        }
+                        else
+                        {
+                            Holo.CloneConnections.ConveyorAny0.Target = ResolveTargetForCurrentClone(OriginalC0Target);
+                            Holo.CloneConnections.ConveyorAny1.Target = ResolveTargetForCurrentClone(OriginalC1Target);
+                        }
+                        Holo.ConnectedPowerPoleHologramId = PrefixInternalTarget(Prefix, Holo.ConnectedPowerPoleHologramId);
+                        if (Holo.bHasLiftData)
+                        {
+                            for (FString& PassthroughCloneId : Holo.LiftData.PassthroughCloneIds)
+                            {
+                                PassthroughCloneId = PrefixInternalTarget(Prefix, PassthroughCloneId);
+                            }
+                        }
+                        if (Holo.bIsLaneSegment && Holo.bHasSplineData && Holo.SplineData.Points.Num() >= 2)
+                        {
+                            const bool bSourceAtStart = OriginalC0Target.StartsWith(TEXT("source:"));
+                            const bool bSourceAtEnd = OriginalC1Target.StartsWith(TEXT("source:"));
+                            const FVector BaseStart = Holo.SplineData.Points[0].World.ToFVector();
+                            const FVector BaseEnd = Holo.SplineData.Points.Last().World.ToFVector();
+
+                            auto MoveSourceEndpointToPreviousClone = [&](const FVector& SourceEndpoint) -> FVector
+                            {
+                                const FVector RelativeToSourceFactory = SourceEndpoint - RestoredSourceFactoryLocation;
+                                return PreviousFactoryCenter + PreviousPlacement.RotationOffset.RotateVector(RelativeToSourceFactory);
+                            };
+                            auto MoveCloneEndpointToCurrentClone = [&](const FVector& CloneEndpoint) -> FVector
+                            {
+                                const FVector RelativeToParentFactory = CloneEndpoint - ParentLocation;
+                                return CurrentFactoryCenter + Placement.RotationOffset.RotateVector(RelativeToParentFactory);
+                            };
+
+                            FVector NewStart = BaseStart;
+                            FVector NewEnd = BaseEnd;
+                            if (bSourceAtStart)
+                            {
+                                NewStart = MoveSourceEndpointToPreviousClone(BaseStart);
+                                NewEnd = MoveCloneEndpointToCurrentClone(BaseEnd);
+                                Holo.LaneStartNormal = FSFVec3(PreviousPlacement.RotationOffset.RotateVector(Holo.LaneStartNormal.ToFVector()));
+                                Holo.LaneEndNormal = FSFVec3(Placement.RotationOffset.RotateVector(Holo.LaneEndNormal.ToFVector()));
+                            }
+                            else if (bSourceAtEnd)
+                            {
+                                NewStart = MoveCloneEndpointToCurrentClone(BaseStart);
+                                NewEnd = MoveSourceEndpointToPreviousClone(BaseEnd);
+                                Holo.LaneStartNormal = FSFVec3(Placement.RotationOffset.RotateVector(Holo.LaneStartNormal.ToFVector()));
+                                Holo.LaneEndNormal = FSFVec3(PreviousPlacement.RotationOffset.RotateVector(Holo.LaneEndNormal.ToFVector()));
+                            }
+                            else
+                            {
+                                NewStart = MoveCloneEndpointToCurrentClone(BaseStart);
+                                NewEnd = MoveCloneEndpointToCurrentClone(BaseEnd);
+                                Holo.LaneStartNormal = FSFVec3(Placement.RotationOffset.RotateVector(Holo.LaneStartNormal.ToFVector()));
+                                Holo.LaneEndNormal = FSFVec3(Placement.RotationOffset.RotateVector(Holo.LaneEndNormal.ToFVector()));
+                            }
+
+                            const uint8 FlippedLaneNormalMask = AlignRestoredLaneNormals(Holo, NewStart, NewEnd);
+                            const float NewLength = FVector::Dist(NewStart, NewEnd);
+                            Holo.Transform = FSFTransform(NewStart, (NewEnd - NewStart).Rotation());
+                            Holo.SplineData.Length = NewLength;
+                            Holo.SplineData.Points[0].World = FSFVec3(NewStart);
+                            Holo.SplineData.Points[0].Local = FSFVec3(FVector::ZeroVector);
+                            Holo.SplineData.Points.Last().World = FSFVec3(NewEnd);
+                            Holo.SplineData.Points.Last().Local = FSFVec3(FVector(NewLength, 0.0f, 0.0f));
+
+                            UE_LOG(LogSmartFoundations, Log,
+                                TEXT("[SmartRestore][Extend] Restored lane chained: id=%s grid=(%d,%d) sourceSide=%s prev=%s current=%s length=%.0f"),
+                                *Holo.HologramId,
+                                X,
+                                Y,
+                                bSourceAtStart ? TEXT("start") : (bSourceAtEnd ? TEXT("end") : TEXT("unknown")),
+                                *PreviousPrefix,
+                                *Prefix,
+                                NewLength);
+                            if (FlippedLaneNormalMask != 0)
+                            {
+                                UE_LOG(LogSmartFoundations, Log,
+                                    TEXT("[SmartRestore][Extend] Restored lane normals aligned: id=%s type=%s grid=(%d,%d) flipMask=%d"),
+                                    *Holo.HologramId,
+                                    *Holo.LaneSegmentType,
+                                    X,
+                                    Y,
+                                    static_cast<int32>(FlippedLaneNormalMask));
+                            }
+                        }
+                        else
+                        {
+                            const FVector RelativeHoloLocation = Holo.Transform.Location.ToFVector() - ParentLocation;
+                            Holo.Transform.Location = FSFVec3(CurrentFactoryCenter + Placement.RotationOffset.RotateVector(RelativeHoloLocation));
+                            Holo.Transform.Rotation = FSFRot3(Holo.Transform.Rotation.ToFRotator() + Placement.RotationOffset);
+                        }
+                        if (!Holo.bIsLaneSegment && Holo.bHasSplineData)
+                        {
+                            for (FSFSplinePoint& Point : Holo.SplineData.Points)
+                            {
+                                const FVector RelativePointLocation = Point.World.ToFVector() - ParentLocation;
+                                Point.World = FSFVec3(CurrentFactoryCenter + Placement.RotationOffset.RotateVector(RelativePointLocation));
+                            }
+                        }
+                        if (!Holo.bIsLaneSegment && Holo.bHasLiftData)
+                        {
+                            const FVector RelativeBottomLocation = Holo.LiftData.BottomTransform.Location.ToFVector() - ParentLocation;
+                            Holo.LiftData.BottomTransform.Location = FSFVec3(CurrentFactoryCenter + Placement.RotationOffset.RotateVector(RelativeBottomLocation));
+                            Holo.LiftData.BottomTransform.Rotation = FSFRot3(Holo.LiftData.BottomTransform.Rotation.ToFRotator() + Placement.RotationOffset);
+                        }
+                        if (Holo.bIsLaneSegment && (!Holo.bHasSplineData || Holo.SplineData.Points.Num() < 2))
+                        {
+                            Holo.LaneStartNormal = FSFVec3(Placement.RotationOffset.RotateVector(Holo.LaneStartNormal.ToFVector()));
+                            Holo.LaneEndNormal = FSFVec3(Placement.RotationOffset.RotateVector(Holo.LaneEndNormal.ToFVector()));
+                        }
+                        ExpandedChildHolograms.Add(Holo);
+                    }
+                }
+            }
+            ReplayTopology.ChildHolograms = ExpandedChildHolograms;
+            UE_LOG(LogSmartFoundations, Log,
+                TEXT("[SmartRestore][Extend] Restored scaled topology expanded: grid=(%d,%d) children=%d baseChildren=%d"),
+                State.GridCounters.X,
+                State.GridCounters.Y,
+                ReplayTopology.ChildHolograms.Num(),
+                ExpandedChildHolograms.Num() / FMath::Max(1, XCount * YCount));
+        }
+    }
+
+    return ReplayTopology;
+}
+
+void USFExtendService::ClearRestoredCloneTopologyPreview()
+{
+    if (HologramService)
+    {
+        if (RestoredCloneParentHologram.IsValid())
+        {
+            HologramService->SetCurrentParentHologram(RestoredCloneParentHologram.Get());
+        }
+        HologramService->ClearBeltPreviews();
+    }
+    JsonSpawnedHolograms.Empty();
+    StoredCloneTopology.Reset();
+    bRestoredCloneTopologyActive = false;
+}
+
+int32 USFExtendService::SpawnRestoredScaledFactoryHolograms(AFGHologram* ParentHologram, TMap<FString, AFGHologram*>& OutSpawnedHolograms)
+{
+    if (!ParentHologram || !Subsystem.IsValid())
+    {
+        return 0;
+    }
+
+    if (FSFHologramData* ParentData = USFHologramDataService::GetOrCreateData(ParentHologram))
+    {
+        ParentData->JsonCloneId = TEXT("parent");
+    }
+
+    const FSFCounterState& State = Subsystem->GetCounterState();
+    const int32 XCount = FMath::Max(1, FMath::Abs(State.GridCounters.X));
+    const int32 YCount = FMath::Max(1, FMath::Abs(State.GridCounters.Y));
+    if (XCount <= 1 && YCount <= 1)
+    {
+        UE_LOG(LogSmartFoundations, Log,
+            TEXT("[SmartRestore][Extend] Restored scaled factories: base parent only parent=%s"),
+            *GetNameSafe(ParentHologram));
+        return 0;
+    }
+
+    const FVector ParentLocation = ParentHologram->GetActorLocation();
+    const FRotator ParentRotation = ParentHologram->GetActorRotation();
+    const FSFCloneTopology* TemplateTopology = RestoredCloneTopologyTemplate.IsValid()
+        ? RestoredCloneTopologyTemplate.Get()
+        : nullptr;
+    int32 SpawnedFactories = 0;
+
+    for (int32 Y = 0; Y < YCount; ++Y)
+    {
+        for (int32 X = 0; X < XCount; ++X)
+        {
+            if (X == 0 && Y == 0)
+            {
+                continue;
+            }
+
+            const FRestoredScaledClonePlacement Placement = CalculateRestoredScaledClonePlacement(ParentHologram, TemplateTopology, State, X, Y);
+            const FVector FactoryLocation = ParentLocation + Placement.WorldOffset;
+            const FString FactoryId = FString::Printf(TEXT("rr_%d_%d_factory"), X, Y);
+            static int32 RestoredScaledFactoryCounter = 0;
+            const FName ChildName(*FString::Printf(TEXT("RestoredFactory_%d_%d_%d"), X, Y, RestoredScaledFactoryCounter++));
+
+            AFGHologram* FactoryHologram = AFGHologram::SpawnChildHologramFromRecipe(
+                ParentHologram,
+                ChildName,
+                ParentHologram->GetRecipe(),
+                ParentHologram->GetOwner() ? ParentHologram->GetOwner() : ParentHologram,
+                FactoryLocation,
+                nullptr);
+
+            if (!FactoryHologram)
+            {
+                UE_LOG(LogSmartFoundations, Warning,
+                    TEXT("[SmartRestore][Extend] Restored scaled factory spawn failed: id=%s grid=(%d,%d) parent=%s"),
+                    *FactoryId,
+                    X,
+                    Y,
+                    *GetNameSafe(ParentHologram));
+                continue;
+            }
+
+            FactoryHologram->SetActorLocation(FactoryLocation);
+            FactoryHologram->SetActorRotation(ParentRotation + Placement.RotationOffset);
+            FactoryHologram->SetActorHiddenInGame(false);
+            if (USceneComponent* Root = FactoryHologram->GetRootComponent())
+            {
+                Root->SetWorldLocation(FactoryLocation);
+                Root->SetWorldRotation(ParentRotation + Placement.RotationOffset);
+                Root->MarkRenderStateDirty();
+            }
+            FactoryHologram->UpdateComponentTransforms();
+            FactoryHologram->Tags.AddUnique(FName(TEXT("SF_ExtendChild")));
+            USFHologramDataService::DisableValidation(FactoryHologram);
+            USFHologramDataService::MarkAsChild(FactoryHologram, ParentHologram, ESFChildHologramType::ExtendClone);
+
+            if (Subsystem->bHasStoredProductionRecipe)
+            {
+                USFHologramDataService::StoreRecipe(FactoryHologram, Subsystem->StoredProductionRecipe);
+            }
+
+            if (FSFHologramData* FactoryData = USFHologramDataService::GetOrCreateData(FactoryHologram))
+            {
+                FactoryData->JsonCloneId = FactoryId;
+            }
+
+            TArray<UBoxComponent*> BoxComponents;
+            FactoryHologram->GetComponents<UBoxComponent>(BoxComponents);
+            for (UBoxComponent* Box : BoxComponents)
+            {
+                Box->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+                Box->SetGenerateOverlapEvents(false);
+            }
+
+            FactoryHologram->SetPlacementMaterialState(EHologramMaterialState::HMS_OK);
+            FactoryHologram->SetActorTickEnabled(false);
+            OutSpawnedHolograms.Add(FactoryId, FactoryHologram);
+            SpawnedFactories++;
+
+            UE_LOG(LogSmartFoundations, Log,
+                TEXT("[SmartRestore][Extend] Restored scaled factory spawned: id=%s grid=(%d,%d) loc=%s"),
+                *FactoryId,
+                X,
+                Y,
+                *FactoryLocation.ToString());
+        }
+    }
+
+    UE_LOG(LogSmartFoundations, Log,
+        TEXT("[SmartRestore][Extend] Restored scaled factories spawned: count=%d grid=(%d,%d) parent=%s"),
+        SpawnedFactories,
+        State.GridCounters.X,
+        State.GridCounters.Y,
+        *GetNameSafe(ParentHologram));
+    return SpawnedFactories;
+}
+
+bool USFExtendService::SpawnRestoredCloneTopology(AFGHologram* ParentHologram, const FSFCloneTopology& CloneTopology)
+{
+    TMap<FString, AFGHologram*> SpawnedHolograms;
+    const int32 SpawnedFactoryCount = SpawnRestoredScaledFactoryHolograms(ParentHologram, SpawnedHolograms);
+    const int32 SpawnedCount = CloneTopology.SpawnChildHolograms(ParentHologram, this, SpawnedHolograms);
+    ScrubInvalidHologramChildren(ParentHologram, TEXT("SpawnRestoredCloneTopology"));
+    if (SpawnedCount <= 0)
+    {
+        UE_LOG(LogSmartFoundations, Warning,
+            TEXT("[SmartRestore][Extend] ReplayRestoreCloneTopology failed: spawned=%d factories=%d inputChildren=%d parent=%s"),
+            SpawnedCount,
+            SpawnedFactoryCount,
+            CloneTopology.ChildHolograms.Num(),
+            *GetNameSafe(ParentHologram));
+        return false;
+    }
+
+    CloneTopology.WireChildHologramConnections(SpawnedHolograms, ParentHologram);
+    StoredCloneTopology = MakeShared<FSFCloneTopology>(CloneTopology);
+    LastCloneTopology = MakeShared<FSFCloneTopology>(CloneTopology);
+    JsonSpawnedHolograms = SpawnedHolograms;
+    if (HologramService)
+    {
+        HologramService->SetCurrentParentHologram(ParentHologram);
+        HologramService->StoreCloneTopology(StoredCloneTopology);
+        HologramService->StoreJsonSpawnedHolograms(SpawnedHolograms);
+        TMap<FString, FVector> IntendedPositions;
+        TMap<FString, FRotator> IntendedRotations;
+        TMap<FString, const FSFCloneHologram*> HologramDataMap;
+        for (const FSFCloneHologram& Holo : CloneTopology.ChildHolograms)
+        {
+            IntendedPositions.Add(Holo.HologramId, Holo.Transform.Location.ToFVector());
+            IntendedRotations.Add(Holo.HologramId, Holo.Transform.Rotation.ToFRotator());
+            HologramDataMap.Add(Holo.HologramId, &Holo);
+        }
+        for (const auto& Pair : SpawnedHolograms)
+        {
+            if (AFGHologram* Child = Pair.Value)
+            {
+                FVector IntendedPos = Child->GetActorLocation();
+                FRotator IntendedRot = Child->GetActorRotation();
+                if (FVector* FoundPos = IntendedPositions.Find(Pair.Key))
+                {
+                    IntendedPos = *FoundPos;
+                }
+                if (FRotator* FoundRot = IntendedRotations.Find(Pair.Key))
+                {
+                    IntendedRot = *FoundRot;
+                }
+                Child->SetActorLocation(IntendedPos);
+                Child->SetActorRotation(IntendedRot);
+                if (USceneComponent* Root = Child->GetRootComponent())
+                {
+                    Root->SetWorldLocation(IntendedPos);
+                    Root->SetWorldRotation(IntendedRot);
+                }
+                Child->UpdateComponentTransforms();
+                if (const FSFCloneHologram** HoloDataPtr = HologramDataMap.Find(Pair.Key))
+                {
+                    const FSFCloneHologram& HoloData = **HoloDataPtr;
+                    if (ASFConveyorBeltHologram* Belt = Cast<ASFConveyorBeltHologram>(Child))
+                    {
+                        if (HoloData.bIsLaneSegment && HoloData.bHasSplineData && HoloData.SplineData.Points.Num() >= 2)
+                        {
+                            const FVector StartPos = HoloData.SplineData.Points[0].World.ToFVector();
+                            const FVector EndPos = HoloData.SplineData.Points.Last().World.ToFVector();
+                            const FVector StartNormal = HoloData.LaneStartNormal.ToFVector();
+                            const FVector EndNormal = HoloData.LaneEndNormal.ToFVector();
+                            Belt->AutoRouteSplineWithNormals(StartPos, StartNormal, EndPos, EndNormal);
+                            Belt->TriggerMeshGeneration();
+                            Belt->ForceApplyHologramMaterial();
+                        }
+                        else if (HoloData.bHasSplineData)
+                        {
+                            TArray<FSplinePointData> SplinePoints;
+                            for (const FSFSplinePoint& Point : HoloData.SplineData.Points)
+                            {
+                                FSplinePointData PointData;
+                                PointData.Location = Point.Local.ToFVector();
+                                PointData.ArriveTangent = Point.ArriveTangent.ToFVector();
+                                PointData.LeaveTangent = Point.LeaveTangent.ToFVector();
+                                SplinePoints.Add(PointData);
+                            }
+                            Belt->SetSplineDataAndUpdate(SplinePoints);
+                            Belt->TriggerMeshGeneration();
+                            Belt->ForceApplyHologramMaterial();
+                        }
+                    }
+                    else if (ASFPipelineHologram* Pipe = Cast<ASFPipelineHologram>(Child))
+                    {
+                        if (HoloData.bIsLaneSegment && HoloData.bHasSplineData && HoloData.SplineData.Points.Num() >= 2)
+                        {
+                            const FVector StartPos = HoloData.SplineData.Points[0].World.ToFVector();
+                            const FVector EndPos = HoloData.SplineData.Points.Last().World.ToFVector();
+                            const FVector StartNormal = HoloData.LaneStartNormal.ToFVector();
+                            const FVector EndNormal = HoloData.LaneEndNormal.ToFVector();
+                            Pipe->TryUseBuildModeRouting(StartPos, StartNormal, EndPos, EndNormal);
+                            Pipe->TriggerMeshGeneration();
+                            Pipe->ForceApplyHologramMaterial();
+                        }
+                        else if (HoloData.bHasSplineData)
+                        {
+                            TArray<FSplinePointData> SplinePoints;
+                            for (const FSFSplinePoint& Point : HoloData.SplineData.Points)
+                            {
+                                FSplinePointData PointData;
+                                PointData.Location = Point.Local.ToFVector();
+                                PointData.ArriveTangent = Point.ArriveTangent.ToFVector();
+                                PointData.LeaveTangent = Point.LeaveTangent.ToFVector();
+                                SplinePoints.Add(PointData);
+                            }
+                            Pipe->SetSplineDataAndUpdate(SplinePoints);
+                            Pipe->TriggerMeshGeneration();
+                            Pipe->ForceApplyHologramMaterial();
+                        }
+                    }
+                }
+                HologramService->TrackChildHologram(Child, IntendedPos, IntendedRot);
+            }
+        }
+        KickRestoredPreviewParent(ParentHologram);
+        HologramService->RefreshChildPositions();
+    }
+
+    RestoredCloneLastParentLocation = ParentHologram->GetActorLocation();
+    RestoredCloneLastParentRotation = ParentHologram->GetActorRotation();
+
+    UE_LOG(LogSmartFoundations, Log,
+        TEXT("[SmartRestore][Extend] Replayed Extend topology: infra=%d factories=%d tracked=%d parent=%s"),
+        SpawnedCount,
+        SpawnedFactoryCount,
+        HologramService ? HologramService->GetTrackedChildren().Num() : 0,
+        *GetNameSafe(ParentHologram));
+    return true;
 }
 
 void USFExtendService::ClearTopology()
@@ -618,6 +1646,23 @@ bool USFExtendService::TryExtendFromBuilding(AFGBuildable* HitBuilding, AFGHolog
             LastTopoLog = Now;
         }
         return false;
+    }
+
+    if (bRestoredCloneTopologyActive)
+    {
+        ClearRestoredCloneTopologySession(TEXT("Normal Extend activation"));
+        if (Subsystem.IsValid())
+        {
+            if (USFRestoreService* RestoreSvc = Subsystem->GetRestoreService())
+            {
+                RestoreSvc->ClearActiveRestoreSession(TEXT("Normal Extend activation"));
+            }
+            Subsystem->ResetCounters();
+        }
+        UE_LOG(LogSmartFoundations, Log,
+            TEXT("[SmartRestore][Extend] Aborted restored topology so normal Extend can activate: target=%s parent=%s"),
+            *GetNameSafe(HitBuilding),
+            *GetNameSafe(SourceHologram));
     }
 
     CurrentExtendTarget = HitBuilding;
@@ -1005,6 +2050,21 @@ void USFExtendService::CleanupExtension(AFGHologram* SourceHologram)
     UE_LOG(LogSmartFoundations, Log, TEXT("🔧 EXTEND: CleanupExtension called for %s"),
         SourceHologram ? *SourceHologram->GetName() : TEXT("nullptr"));
 
+    if (bRestoredCloneTopologyActive)
+    {
+        ClearScaledExtendClones();
+        ClearBeltPreviews();
+        CurrentExtendTarget.Reset();
+        CurrentExtendHologram.Reset();
+        bHasValidTarget = false;
+        bExtendCommitted = false;
+        bHasCounterSnapshot = false;
+
+        UE_LOG(LogSmartFoundations, Log,
+            TEXT("[SmartRestore][Extend] CleanupExtension preserved staged restored topology and counters"));
+        return;
+    }
+
     // Restore pre-Extend counter snapshot so normal scaling isn't polluted
     if (bHasCounterSnapshot && Subsystem.IsValid())
     {
@@ -1266,6 +2326,12 @@ void USFExtendService::CreateBeltPreviews(AFGHologram* ParentHologram)
 {
     if (!ParentHologram || !GetCurrentTopology().bIsValid || !GetCurrentTopology().SourceBuilding.IsValid())
     {
+        const FSFExtendTopology& Topology = GetCurrentTopology();
+        UE_LOG(LogSmartFoundations, Log,
+            TEXT("[SmartRestore][Extend] CreateBeltPreviews skipped: parent=%s topologyValid=%d sourceBuilding=%s"),
+            *GetNameSafe(ParentHologram),
+            Topology.bIsValid ? 1 : 0,
+            *GetNameSafe(Topology.SourceBuilding.Get()));
         return;
     }
 
@@ -1284,6 +2350,24 @@ void USFExtendService::CreateBeltPreviews(AFGHologram* ParentHologram)
         // Copy references for backwards compatibility with existing code
         StoredCloneTopology = HologramService->GetStoredCloneTopology();
         JsonSpawnedHolograms = HologramService->GetJsonSpawnedHolograms();
+        if (StoredCloneTopology.IsValid())
+        {
+            LastCloneTopology = MakeShared<FSFCloneTopology>(*StoredCloneTopology);
+            UE_LOG(LogSmartFoundations, Log,
+                TEXT("[SmartRestore][Extend] CreateBeltPreviews cached clone topology: storedChildren=%d spawnedHolograms=%d trackedChildren=%d parent=%s"),
+                StoredCloneTopology->ChildHolograms.Num(),
+                JsonSpawnedHolograms.Num(),
+                HologramService->GetTrackedChildren().Num(),
+                *GetNameSafe(ParentHologram));
+        }
+        else
+        {
+            UE_LOG(LogSmartFoundations, Warning,
+                TEXT("[SmartRestore][Extend] CreateBeltPreviews did not receive StoredCloneTopology: spawnedHolograms=%d trackedChildren=%d parent=%s"),
+                JsonSpawnedHolograms.Num(),
+                HologramService->GetTrackedChildren().Num(),
+                *GetNameSafe(ParentHologram));
+        }
 
         // Issue #288: Validate cloned power pole capacity for pump wiring. Runs
         // for the single-clone Extend preview; the scaled-extend path re-runs
@@ -5725,6 +6809,216 @@ int32 USFExtendService::GenerateAndExecuteWiring(AFGBuildableFactory* NewFactory
     }
     WiredCount += PowerWiredCount;
 
+    // Restored Extend topology does not have live PowerPoleWiringData or ScaledExtendClones,
+    // so wire its JSON-restored power poles directly from the expanded topology ids.
+    if (WireClass && PowerPoleWiringData.Num() == 0 && StoredCloneTopology.IsValid())
+    {
+        struct FRestoredPowerPoleEntry
+        {
+            FString CloneId;
+            FString PoleKey;
+            FString Prefix;
+            FString SourcePoleId;
+            int32 SortOrder = 0;
+            AFGBuildablePowerPole* Pole = nullptr;
+        };
+
+        auto GetFirstCircuitConnection = [](AActor* Actor) -> UFGCircuitConnectionComponent*
+        {
+            if (!IsValid(Actor))
+            {
+                return nullptr;
+            }
+
+            TArray<UFGCircuitConnectionComponent*> CircuitConnections;
+            Actor->GetComponents<UFGCircuitConnectionComponent>(CircuitConnections);
+            return CircuitConnections.Num() > 0 ? CircuitConnections[0] : nullptr;
+        };
+
+        auto AreCircuitConnectionsLinked = [](UFGCircuitConnectionComponent* A, UFGCircuitConnectionComponent* B) -> bool
+        {
+            if (!A || !B)
+            {
+                return false;
+            }
+
+            TArray<UFGCircuitConnectionComponent*> ExistingConnections;
+            A->GetConnections(ExistingConnections);
+            return ExistingConnections.Contains(B);
+        };
+
+        auto ConnectPowerEndpoints = [&](UFGCircuitConnectionComponent* A, UFGCircuitConnectionComponent* B, const TCHAR* Context) -> bool
+        {
+            if (!A || !B || AreCircuitConnectionsLinked(A, B))
+            {
+                return false;
+            }
+
+            if (A->GetNumConnections() >= A->GetMaxNumConnections()
+                || B->GetNumConnections() >= B->GetMaxNumConnections())
+            {
+                UE_LOG(LogSmartFoundations, Log,
+                    TEXT("[SmartRestore][Extend] Power wiring skipped for %s: capacity A=%d/%d B=%d/%d"),
+                    Context ? Context : TEXT("Unknown"),
+                    A->GetNumConnections(), A->GetMaxNumConnections(),
+                    B->GetNumConnections(), B->GetMaxNumConnections());
+                return false;
+            }
+
+            FActorSpawnParameters SpawnParams;
+            SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+            const FVector SpawnLocation = A->GetOwner() ? A->GetOwner()->GetActorLocation() : FVector::ZeroVector;
+            AFGBuildableWire* NewWire = GetWorld()->SpawnActor<AFGBuildableWire>(
+                WireClass, SpawnLocation, FRotator::ZeroRotator, SpawnParams);
+            if (!NewWire)
+            {
+                return false;
+            }
+
+            if (NewWire->Connect(A, B))
+            {
+                return true;
+            }
+
+            NewWire->Destroy();
+            UE_LOG(LogSmartFoundations, Warning,
+                TEXT("[SmartRestore][Extend] Power wiring failed for %s"),
+                Context ? Context : TEXT("Unknown"));
+            return false;
+        };
+
+        auto TryParseRestoredPrefixOrder = [](const FString& Prefix, int32& OutSortOrder) -> bool
+        {
+            if (Prefix.IsEmpty())
+            {
+                OutSortOrder = 0;
+                return true;
+            }
+
+            if (!Prefix.StartsWith(TEXT("rr_")) || !Prefix.EndsWith(TEXT("_")))
+            {
+                return false;
+            }
+
+            FString GridText = Prefix.Mid(3, Prefix.Len() - 4);
+            TArray<FString> Parts;
+            GridText.ParseIntoArray(Parts, TEXT("_"), true);
+            if (Parts.Num() != 2)
+            {
+                return false;
+            }
+
+            const int32 GridX = FCString::Atoi(*Parts[0]);
+            const int32 GridY = FCString::Atoi(*Parts[1]);
+            OutSortOrder = 1 + (GridY * 10000) + GridX;
+            return true;
+        };
+
+        TMap<FString, TArray<FRestoredPowerPoleEntry>> RestoredPolesByKey;
+        for (const FSFCloneHologram& Holo : StoredCloneTopology->ChildHolograms)
+        {
+            if (Holo.Role != TEXT("power_pole"))
+            {
+                continue;
+            }
+
+            const int32 PowerPoleMarkerIndex = Holo.HologramId.Find(TEXT("power_pole_"), ESearchCase::CaseSensitive);
+            if (PowerPoleMarkerIndex == INDEX_NONE)
+            {
+                continue;
+            }
+
+            const FString Prefix = Holo.HologramId.Left(PowerPoleMarkerIndex);
+            int32 SortOrder = 0;
+            if (!TryParseRestoredPrefixOrder(Prefix, SortOrder))
+            {
+                continue;
+            }
+
+            AActor* const* BuiltPoleActor = CloneIdToBuildable.Find(Holo.HologramId);
+            AFGBuildablePowerPole* BuiltPole = BuiltPoleActor ? Cast<AFGBuildablePowerPole>(*BuiltPoleActor) : nullptr;
+            if (!BuiltPole)
+            {
+                continue;
+            }
+
+            FRestoredPowerPoleEntry Entry;
+            Entry.CloneId = Holo.HologramId;
+            Entry.PoleKey = Holo.HologramId.Mid(PowerPoleMarkerIndex);
+            Entry.Prefix = Prefix;
+            Entry.SourcePoleId = Holo.SourceId;
+            Entry.SortOrder = SortOrder;
+            Entry.Pole = BuiltPole;
+            RestoredPolesByKey.FindOrAdd(Entry.PoleKey).Add(Entry);
+        }
+
+        int32 RestoredPowerWiredCount = 0;
+        for (TPair<FString, TArray<FRestoredPowerPoleEntry>>& PoleGroup : RestoredPolesByKey)
+        {
+            PoleGroup.Value.Sort([](const FRestoredPowerPoleEntry& A, const FRestoredPowerPoleEntry& B)
+            {
+                return A.SortOrder < B.SortOrder;
+            });
+
+            for (const FRestoredPowerPoleEntry& Entry : PoleGroup.Value)
+            {
+                const FString FactoryId = Entry.Prefix.IsEmpty() ? TEXT("parent") : Entry.Prefix + TEXT("factory");
+                AActor* FactoryActor = CloneIdToBuildable.FindRef(FactoryId);
+                AFGBuildableFactory* Factory = Cast<AFGBuildableFactory>(FactoryActor);
+                UFGCircuitConnectionComponent* FactoryConn = GetFirstCircuitConnection(Factory);
+                UFGCircuitConnectionComponent* PoleConn = GetFirstCircuitConnection(Entry.Pole);
+                if (ConnectPowerEndpoints(FactoryConn, PoleConn, TEXT("restored factory to cloned pole")))
+                {
+                    RestoredPowerWiredCount++;
+                    UE_LOG(LogSmartFoundations, Log,
+                        TEXT("[SmartRestore][Extend] Connected restored factory '%s' to power pole '%s'"),
+                        *GetNameSafe(Factory),
+                        *GetNameSafe(Entry.Pole));
+                }
+            }
+
+            if (PoleGroup.Value.Num() > 0)
+            {
+                const FRestoredPowerPoleEntry& FirstEntry = PoleGroup.Value[0];
+                AFGBuildablePowerPole* SourcePole = Cast<AFGBuildablePowerPole>(GetSourceBuildableByName(FirstEntry.SourcePoleId));
+                UFGCircuitConnectionComponent* SourceConn = GetFirstCircuitConnection(SourcePole);
+                UFGCircuitConnectionComponent* FirstCloneConn = GetFirstCircuitConnection(FirstEntry.Pole);
+                if (ConnectPowerEndpoints(SourceConn, FirstCloneConn, TEXT("restored source pole to cloned pole")))
+                {
+                    RestoredPowerWiredCount++;
+                    UE_LOG(LogSmartFoundations, Log,
+                        TEXT("[SmartRestore][Extend] Connected source power pole '%s' to restored pole '%s'"),
+                        *GetNameSafe(SourcePole),
+                        *GetNameSafe(FirstEntry.Pole));
+                }
+            }
+
+            for (int32 Index = 0; Index < PoleGroup.Value.Num() - 1; ++Index)
+            {
+                UFGCircuitConnectionComponent* ConnA = GetFirstCircuitConnection(PoleGroup.Value[Index].Pole);
+                UFGCircuitConnectionComponent* ConnB = GetFirstCircuitConnection(PoleGroup.Value[Index + 1].Pole);
+                if (ConnectPowerEndpoints(ConnA, ConnB, TEXT("restored cloned pole chain")))
+                {
+                    RestoredPowerWiredCount++;
+                    UE_LOG(LogSmartFoundations, Log,
+                        TEXT("[SmartRestore][Extend] Chained restored power poles '%s' to '%s'"),
+                        *GetNameSafe(PoleGroup.Value[Index].Pole),
+                        *GetNameSafe(PoleGroup.Value[Index + 1].Pole));
+                }
+            }
+        }
+
+        if (RestoredPowerWiredCount > 0)
+        {
+            WiredCount += RestoredPowerWiredCount;
+            UE_LOG(LogSmartFoundations, Display,
+                TEXT("[SmartRestore][Extend] Restored power wiring complete: %d connections across %d pole group(s)"),
+                RestoredPowerWiredCount,
+                RestoredPolesByKey.Num());
+        }
+    }
+
     // Capture built factory topology for comparison with source
     FSFSourceTopology BuiltTopology = FSFSourceTopology::CaptureFromBuiltFactory(NewFactory);
     BuiltTopology.SaveToFile(LogDir / TEXT("ManifoldBuilt.json"));
@@ -6380,11 +7674,6 @@ void USFExtendService::OnScaledExtendStateChanged()
                 // Rotate lift data
                 if (Holo.bHasLiftData)
                 {
-                    FVector TopPos = Holo.LiftData.TopTransform.Location.ToFVector();
-                    FVector TopRel = TopPos - FactoryCenter;
-                    Holo.LiftData.TopTransform.Location = FSFVec3(FactoryCenter + Clone1RotOffset.RotateVector(TopRel));
-                    Holo.LiftData.TopTransform.Rotation = FSFRot3(Holo.LiftData.TopTransform.Rotation.ToFRotator() + Clone1RotOffset);
-
                     FVector BotPos = Holo.LiftData.BottomTransform.Location.ToFVector();
                     FVector BotRel = BotPos - FactoryCenter;
                     Holo.LiftData.BottomTransform.Location = FSFVec3(FactoryCenter + Clone1RotOffset.RotateVector(BotRel));
