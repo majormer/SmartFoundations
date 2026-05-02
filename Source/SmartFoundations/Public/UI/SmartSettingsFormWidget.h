@@ -335,6 +335,13 @@ protected:
     UPROPERTY(meta = (BindWidgetOptional))
     UEditableTextBox* PresetNameInput;
 
+    // Preset description/metadata display
+    UPROPERTY(meta = (BindWidgetOptional))
+    UEditableTextBox* PresetDescriptionInput;
+
+    UPROPERTY(meta = (BindWidgetOptional))
+    UTextBlock* PresetCreatedAtValue;
+
     // Action buttons
     UPROPERTY(meta = (BindWidgetOptional))
     UButton* ApplyPresetBtn;
@@ -536,13 +543,25 @@ private:
     void OnRestoreSectionToggleClicked();
 
     // Refresh the preset dropdown from disk
-    void RefreshPresetDropdown();
+    void RefreshPresetDropdown(const FString& PreferredSelection = FString());
+
+    // Update description/timestamp display for the selected preset
+    void UpdateRestorePresetDetails(const FString& PresetName);
+
+    // Read optional description text from the Restore panel
+    FString GetPresetDescriptionText() const;
+
+    // Format saved UTC timestamps for compact local display
+    FString FormatPresetTimestampForDisplay(const FString& IsoTimestamp) const;
 
     // Build capture flags from checkbox state
     FSFRestoreCaptureFlags GetCaptureFlags() const;
 
     // Update Import from Extend button enabled state
     void UpdateExtendImportButtonState();
+
+    // Keep Restore action text readable on light button backgrounds
+    void UpdateRestoreButtonTextColors();
     
     // === Grid Direction Toggle Handlers ===
     

@@ -9,6 +9,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [30.0.0] - 2026-05-01
+
+### Added
+- **Smart! Restore Enhanced** - Smart! now has a preset system for saving, applying, sharing, and replaying Smart Panel setups. A preset can store grid size, spacing, steps, stagger, rotation, production recipe, auto-connect settings, and restored Extend topology.
+- **Restore panel in the Smart Panel** - Open the Smart Panel and use the `Presets >>` button at the top, above the grid controls, to open the Smart Restore panel. The panel includes a selected preset dropdown, a new preset name field, an editable description, a read-only created timestamp, capture checkboxes, and Save/Apply/Update/Delete/Export/Import actions.
+- **Capture options** - Before saving or updating a preset, choose which parts of the current setup should be captured: Grid, Spacing, Steps, Stagger, Rotation, Recipe, and Auto-Connect. This lets you save a full factory setup or a smaller reusable adjustment.
+- **Restore preset metadata** - Presets now save a description and creation timestamp. Newly saved and imported presets are selected in the dropdown immediately, so you can review or apply the preset you just created.
+- **Clipboard sharing** - Presets can be exported to a compact clipboard string and imported on another save or by another player. Imported presets get a fresh local creation timestamp while keeping the shared name, description, and setup.
+- **Progression-safe imports and applies** - Shared presets are checked against your current unlocks before they can be imported or applied. If a preset needs a locked building, production recipe, belt tier, pipe tier, power component, lift, splitter, merger, or other Extend component, Smart! rejects it instead of creating an illegal preview.
+- **Import from Last Extend** - After building with Extend, Smart Restore can capture the last Extend layout as an editable preset draft. This includes the source building, production recipe when available, factories, belts, conveyor lifts, pipes, distributors, power poles, and the cloned connection layout.
+- **Restored Extend topology replay** - Applying a preset captured from Extend replays the saved topology as the active build preview. The restored layout can be scaled from the Smart Panel, and Smart! owns that topology while the Restore session is active so normal Smart grid children are not spawned on top of it.
+- **Restore HUD indicator** - When a restored Extend topology is active, the Smart HUD shows the active Restore preset name so you can tell that the preview is being driven by Smart Restore.
+
+### How to Use Smart Restore Enhanced
+- **Save a normal Smart Panel preset** - Equip the build gun, set up Smart! the way you want, open the Smart Panel, press `Presets >>`, enter a new preset name and optional description, choose the capture checkboxes, then press Save Current.
+- **Apply a saved preset** - Open `Presets >>`, choose a preset from Selected Preset, then press Apply Selected. Smart! switches the build gun to the saved building when possible, restores the captured Smart Panel values, restores the saved production recipe when it still applies, and reapplies saved auto-connect settings.
+- **Update an existing preset** - Select a preset, adjust your current Smart Panel setup, edit the description if needed, choose the capture checkboxes, then press Update Selected. The original created timestamp is preserved.
+- **Share a preset** - Select a preset and press Export Selected to copy the preset string to your clipboard. Send that string to another player. To receive one, copy the shared string, open `Presets >>`, and press Import Clipboard. If every required building, recipe, and logistics part is unlocked, the preset is saved and selected automatically.
+- **Create a preset from Extend** - Use Extend to create the layout you want, then open the Smart Panel, enter a preset name or let Smart! generate one, and press Import from Last Extend. Smart! stages that Extend layout as a 1x1 editable Restore preview. Adjust grid, spacing, steps, stagger, rotation, recipe, or auto-connect settings as desired, then press Save Current to keep it as a reusable preset.
+- **Cancel or leave a restored Extend preview** - Canceling the build gun, switching to a different build action, or starting a normal Extend action clears the active Restore session so the saved topology is not reused unexpectedly.
+
+---
+
 ## [29.2.5] - 2026-04-27
 
 ### Changed

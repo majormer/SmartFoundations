@@ -97,6 +97,14 @@ void USmartSettingsFormWidget::NativeConstruct()
         PresetNameInput->SetMinDesiredWidth(220.0f);
         PresetNameInput->SynchronizeProperties();
     }
+    if (PresetDescriptionInput)
+    {
+        PresetDescriptionInput->WidgetStyle.TextStyle.Font.Size = 10;
+        PresetDescriptionInput->WidgetStyle.TextStyle.ColorAndOpacity = FSlateColor(FLinearColor::Black);
+        PresetDescriptionInput->WidgetStyle.ForegroundColor = FSlateColor(FLinearColor::Black);
+        PresetDescriptionInput->SetMinDesiredWidth(220.0f);
+        PresetDescriptionInput->SynchronizeProperties();
+    }
 
     // Set default title
     TitleText->SetText(LOCTEXT("Panel_Title", "Smart! Panel"));
@@ -510,7 +518,7 @@ void USmartSettingsFormWidget::NativeConstruct()
         }
         if (RestoreSectionHeader)
         {
-            RestoreSectionHeader->SetColorAndOpacity(FSlateColor(FLinearColor(1.0f, 0.6f, 0.2f, 1.0f)));
+            RestoreSectionHeader->SetColorAndOpacity(FSlateColor(FLinearColor::Black));
         }
     }
 
@@ -591,9 +599,11 @@ void USmartSettingsFormWidget::NativeConstruct()
         // Rotation row label and unit
         SetLabel(TEXT("RotationZLabel"), LOCTEXT("Panel_RotationZ", "Rotation [Z]:"));
         SetLabel(TEXT("RotationZUnit"), LOCTEXT("Panel_Unit_Degrees", "\u00B0"));
-        SetLabel(TEXT("RestoreSectionHeader"), LOCTEXT("Panel_Section_Presets", "Presets"));
-        SetLabel(TEXT("PresetDropdownLabel"), LOCTEXT("Panel_Restore_SelectPreset", "Select Preset:"));
-        SetLabel(TEXT("PresetNameInputLabel"), LOCTEXT("Panel_Restore_PresetName", "Preset Name:"));
+        SetLabel(TEXT("RestoreSectionHeader"), LOCTEXT("Panel_Section_Presets", "Smart Restore"));
+        SetLabel(TEXT("PresetDropdownLabel"), LOCTEXT("Panel_Restore_SelectPreset", "Selected Preset:"));
+        SetLabel(TEXT("PresetNameInputLabel"), LOCTEXT("Panel_Restore_PresetName", "New Preset Name:"));
+        SetLabel(TEXT("PresetDescriptionLabel"), LOCTEXT("Panel_Restore_Description", "Description:"));
+        SetLabel(TEXT("PresetCreatedAtLabel"), LOCTEXT("Panel_Restore_CreatedAt", "Created:"));
         SetLabel(TEXT("CaptureLabel"), LOCTEXT("Panel_Restore_Capture", "Capture:"));
         SetLabel(TEXT("CaptureGridLabel"), LOCTEXT("Panel_Restore_CaptureGrid", "Grid"));
         SetLabel(TEXT("CaptureSpacingLabel"), LOCTEXT("Panel_Restore_CaptureSpacing", "Spacing"));
@@ -623,6 +633,9 @@ void USmartSettingsFormWidget::NativeConstruct()
         SetLabel(TEXT("PowerGridAxisLabel"), LOCTEXT("Panel_AC_GridAxis", "Grid Axis:"));
         SetLabel(TEXT("PowerReservedLabel"), LOCTEXT("Panel_AC_Reserved", "Reserved:"));
     }
+
+    UpdateRestoreButtonTextColors();
+    UpdateExtendImportButtonState();
 
     // === Extend Mode Overrides ===
     // Applied AFTER default setup since PopulateFromCounterState runs before NativeConstruct.
@@ -1259,9 +1272,12 @@ void USmartSettingsFormWidget::OnSavePresetClicked()
                 return;
             }
 
-            const FSFRestorePreset Preset = Svc->CaptureCurrentState(Name, GetCaptureFlags());
-            Svc->SavePreset(Preset);
-            RefreshPresetDropdown();
+            FSFRestorePreset Preset = Svc->CaptureCurrentState(Name, GetCaptureFlags());
+            Preset.Description = GetPresetDescriptionText();
+            if (Svc->SavePreset(Preset))
+            {
+                RefreshPresetDropdown(Name);
+            }
         };
         bWaitingForConfirmation = true;
         ShowConfirmationDialog(
@@ -1271,9 +1287,12 @@ void USmartSettingsFormWidget::OnSavePresetClicked()
         return;
     }
 
-    const FSFRestorePreset Preset = RestoreSvc->CaptureCurrentState(Name, GetCaptureFlags());
-    RestoreSvc->SavePreset(Preset);
-    RefreshPresetDropdown();
+    FSFRestorePreset Preset = RestoreSvc->CaptureCurrentState(Name, GetCaptureFlags());
+    Preset.Description = GetPresetDescriptionText();
+    if (RestoreSvc->SavePreset(Preset))
+    {
+        RefreshPresetDropdown(Name);
+    }
 }
 
 void USmartSettingsFormWidget::OnDeletePresetClicked()
@@ -1297,8 +1316,10 @@ void USmartSettingsFormWidget::OnDeletePresetClicked()
             return;
         }
 
-        Svc->DeletePreset(SelectedName);
-        RefreshPresetDropdown();
+        if (Svc->DeletePreset(SelectedName))
+        {
+            RefreshPresetDropdown();
+        }
     };
     bWaitingForConfirmation = true;
     ShowConfirmationDialog(
@@ -1326,9 +1347,12 @@ void USmartSettingsFormWidget::OnUpdatePresetClicked()
         return;
     }
 
-    const FSFRestorePreset Preset = RestoreSvc->CaptureCurrentState(SelectedName, GetCaptureFlags());
-    RestoreSvc->SavePreset(Preset);
-    RefreshPresetDropdown();
+    FSFRestorePreset Preset = RestoreSvc->CaptureCurrentState(SelectedName, GetCaptureFlags());
+    Preset.Description = GetPresetDescriptionText();
+    if (RestoreSvc->SavePreset(Preset))
+    {
+        RefreshPresetDropdown(SelectedName);
+    }
 }
 
 void USmartSettingsFormWidget::OnExportPresetClicked()
@@ -1388,8 +1412,10 @@ void USmartSettingsFormWidget::OnImportPresetClicked()
         return;
     }
 
-    RestoreSvc->SavePreset(Preset);
-    RefreshPresetDropdown();
+    if (RestoreSvc->SavePreset(Preset))
+    {
+        RefreshPresetDropdown(Preset.Name);
+    }
 }
 
 void USmartSettingsFormWidget::OnImportFromExtendClicked()
@@ -1434,6 +1460,7 @@ void USmartSettingsFormWidget::OnImportFromExtendClicked()
 
     Preset.CaptureFlags.bGrid = true;
     Preset.GridCounters = FIntVector(1, 1, 1);
+    Preset.Description = GetPresetDescriptionText();
 
     const bool bApplied = RestoreSvc->ApplyPreset(Preset);
     UE_LOG(LogSmartFoundations, Log,
@@ -1463,10 +1490,7 @@ void USmartSettingsFormWidget::OnImportFromExtendClicked()
 
 void USmartSettingsFormWidget::OnPresetSelectionChanged(FString SelectedItem, ESelectInfo::Type SelectionType)
 {
-    if (PresetNameInput && !SelectedItem.IsEmpty())
-    {
-        PresetNameInput->SetText(FText::FromString(SelectedItem));
-    }
+    UpdateRestorePresetDetails(SelectedItem);
 }
 
 void USmartSettingsFormWidget::OnRestoreSectionToggleClicked()
@@ -1481,7 +1505,7 @@ void USmartSettingsFormWidget::OnRestoreSectionToggleClicked()
     RestorePanel->SetVisibility(bVisible ? ESlateVisibility::Collapsed : ESlateVisibility::Visible);
 }
 
-void USmartSettingsFormWidget::RefreshPresetDropdown()
+void USmartSettingsFormWidget::RefreshPresetDropdown(const FString& PreferredSelection)
 {
     if (!PresetDropdown || !CachedSubsystem.IsValid())
     {
@@ -1503,14 +1527,98 @@ void USmartSettingsFormWidget::RefreshPresetDropdown()
         PresetDropdown->AddOption(Name);
     }
 
-    if (!PreviousSelection.IsEmpty() && Names.Contains(PreviousSelection))
+    FString SelectionToApply;
+    if (!PreferredSelection.IsEmpty() && Names.Contains(PreferredSelection))
     {
-        PresetDropdown->SetSelectedOption(PreviousSelection);
+        SelectionToApply = PreferredSelection;
+    }
+    else if (!PreviousSelection.IsEmpty() && Names.Contains(PreviousSelection))
+    {
+        SelectionToApply = PreviousSelection;
+    }
+
+    if (!SelectionToApply.IsEmpty())
+    {
+        PresetDropdown->SetSelectedOption(SelectionToApply);
+        UpdateRestorePresetDetails(SelectionToApply);
     }
     else if (Names.Num() > 0)
     {
         PresetDropdown->SetSelectedIndex(0);
+        UpdateRestorePresetDetails(Names[0]);
     }
+    else
+    {
+        UpdateRestorePresetDetails(FString());
+    }
+}
+
+void USmartSettingsFormWidget::UpdateRestorePresetDetails(const FString& PresetName)
+{
+    if (!CachedSubsystem.IsValid())
+    {
+        return;
+    }
+
+    if (PresetName.IsEmpty())
+    {
+        if (PresetDescriptionInput)
+        {
+            PresetDescriptionInput->SetText(FText::GetEmpty());
+        }
+        if (PresetCreatedAtValue)
+        {
+            PresetCreatedAtValue->SetText(LOCTEXT("Panel_Restore_NotSaved", "Not saved"));
+        }
+        return;
+    }
+
+    USFRestoreService* RestoreSvc = CachedSubsystem->GetRestoreService();
+    if (!RestoreSvc)
+    {
+        return;
+    }
+
+    bool bFound = false;
+    const FSFRestorePreset Preset = RestoreSvc->LoadPreset(PresetName, bFound);
+    if (!bFound)
+    {
+        return;
+    }
+
+    if (PresetDescriptionInput)
+    {
+        PresetDescriptionInput->SetText(FText::FromString(Preset.Description));
+    }
+    if (PresetCreatedAtValue)
+    {
+        PresetCreatedAtValue->SetText(FText::FromString(FormatPresetTimestampForDisplay(Preset.CreatedAt)));
+    }
+}
+
+FString USmartSettingsFormWidget::GetPresetDescriptionText() const
+{
+    return PresetDescriptionInput
+        ? PresetDescriptionInput->GetText().ToString().TrimStartAndEnd()
+        : FString();
+}
+
+FString USmartSettingsFormWidget::FormatPresetTimestampForDisplay(const FString& IsoTimestamp) const
+{
+    if (IsoTimestamp.IsEmpty())
+    {
+        return LOCTEXT("Panel_Restore_NotSaved", "Not saved").ToString();
+    }
+
+    FDateTime UtcTimestamp;
+    if (!FDateTime::ParseIso8601(*IsoTimestamp, UtcTimestamp))
+    {
+        return IsoTimestamp;
+    }
+
+    const FTimespan LocalOffset = FDateTime::Now() - FDateTime::UtcNow();
+    const FDateTime LocalTimestamp = UtcTimestamp + LocalOffset;
+    return LocalTimestamp.ToString(TEXT("%Y-%m-%d %H:%M Local"));
 }
 
 FSFRestoreCaptureFlags USmartSettingsFormWidget::GetCaptureFlags() const
@@ -1535,6 +1643,31 @@ void USmartSettingsFormWidget::UpdateExtendImportButtonState()
 
     USFRestoreService* RestoreSvc = CachedSubsystem.IsValid() ? CachedSubsystem->GetRestoreService() : nullptr;
     ImportFromExtendBtn->SetIsEnabled(RestoreSvc && RestoreSvc->IsLastExtendAvailable());
+    UpdateRestoreButtonTextColors();
+}
+
+void USmartSettingsFormWidget::UpdateRestoreButtonTextColors()
+{
+    const FSlateColor BlackText(FLinearColor::Black);
+    const FSlateColor DisabledImportText(FLinearColor(0.55f, 0.55f, 0.55f, 1.0f));
+
+    auto SetTextColor = [this](const TCHAR* WidgetName, const FSlateColor& Color)
+    {
+        if (UTextBlock* TextBlock = Cast<UTextBlock>(GetWidgetFromName(FName(WidgetName))))
+        {
+            TextBlock->SetColorAndOpacity(Color);
+        }
+    };
+
+    SetTextColor(TEXT("RestoreSectionHeader"), BlackText);
+    SetTextColor(TEXT("ApplyPresetBtnText"), BlackText);
+    SetTextColor(TEXT("SavePresetBtnText"), BlackText);
+    SetTextColor(TEXT("DeletePresetBtnText"), BlackText);
+    SetTextColor(TEXT("UpdatePresetBtnText"), BlackText);
+    SetTextColor(TEXT("ExportPresetBtnText"), BlackText);
+    SetTextColor(TEXT("ImportPresetBtnText"), BlackText);
+    SetTextColor(TEXT("ImportFromExtendBtnText"),
+        ImportFromExtendBtn && ImportFromExtendBtn->GetIsEnabled() ? BlackText : DisabledImportText);
 }
 
 void USmartSettingsFormWidget::CloseForm()

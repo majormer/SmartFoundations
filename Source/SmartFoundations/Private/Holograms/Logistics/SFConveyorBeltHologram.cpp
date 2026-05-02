@@ -255,13 +255,18 @@ void ASFConveyorBeltHologram::PostHologramPlacement(const FHitResult& hitResult,
         }
         
         bPostHologramPlacementCalled = true;
+
+        const FSFHologramData* HoloData = USFHologramDataRegistry::GetData(this);
+        const bool bHasSmartManagedSpline = mSplineData.Num() >= 2 ||
+            (HoloData && HoloData->bHasBackupSplineData && HoloData->BackupSplineData.Num() >= 2);
         
-        // LANE SEGMENTS: Skip Super entirely — their splines are configured by
-        // AutoRouteSplineWithNormals and must NOT be overwritten by vanilla's
-        // spline recalculation (which uses snapped connections/hit results).
-        if (Tags.Contains(FName(TEXT("SF_LaneSegment"))))
+        // Smart-managed Extend belts have their spline and wiring configured by
+        // Smart before construction. Vanilla post-placement tries to rebuild the
+        // spline from placement hit data and can dereference missing spline mesh
+        // generation inputs for JSON/restored belt segments.
+        if (Tags.Contains(FName(TEXT("SF_LaneSegment"))) || bHasSmartManagedSpline)
         {
-            UE_LOG(LogSmartFoundations, Log, TEXT("🎯 BELT PostHologramPlacement: Lane segment %s - skipping Super (spline already routed)"), *GetName());
+            UE_LOG(LogSmartFoundations, Log, TEXT("BELT PostHologramPlacement: Extend child %s - skipping vanilla post-placement (Smart-managed spline)"), *GetName());
             return;
         }
         
