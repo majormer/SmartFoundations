@@ -65,6 +65,8 @@ class USFGridStateService;
 class USFGridSpawnerService;
 class USFGridTransformService;
 class USFChainActorService;
+class USFRestoreService;
+struct FSFRestoreAutoConnectState;
 
 // Smart! hologram forward declarations
 class ASFBuildableHologram;
@@ -392,6 +394,9 @@ public:
   bool IsRecipeModeActive() const { return bRecipeModeActive; }
   bool IsAutoConnectSettingsModeActive() const { return bAutoConnectSettingsModeActive; }
   bool IsExtendModeActive() const;
+	bool IsRestoredExtendModeActive() const;
+	bool ShouldSuppressNormalGridChildren() const;
+	void ClearNormalGridChildrenForExtendSuppression(const TCHAR* Context);
 
   // Note: EXTEND mode is AUTOMATIC - no toggle needed!
   // Activates when pointing at a compatible building of the same type
@@ -437,6 +442,9 @@ public:
 
 	/** Get upgrade execution service */
 	USFUpgradeExecutionService* GetUpgradeExecutionService() const { return UpgradeExecutionService; }
+
+	/** Get restore service (Smart Restore Enhanced) */
+	USFRestoreService* GetRestoreService() const { return RestoreService; }
 
 	/** Get or create orchestrator for a parent distributor hologram */
 	USFAutoConnectOrchestrator* GetOrCreateOrchestrator(AFGHologram* ParentHologram);
@@ -703,6 +711,10 @@ protected:
     /** Recipe management service - Factory crafting recipe selection and application */
     UPROPERTY()
     USFRecipeManagementService* RecipeManagementService;
+
+    /** Restore service - Smart Restore Enhanced preset system */
+    UPROPERTY()
+    USFRestoreService* RestoreService;
 
     /** Upgrade audit service - Scans world for upgradeable buildables */
     UPROPERTY()
@@ -1111,6 +1123,14 @@ public:
 	
 	/** Reset runtime settings to match config (called when hologram changes) */
 	void ResetAutoConnectRuntimeSettings();
+
+	/** Set auto-connect runtime settings from a restore preset */
+	void SetAutoConnectRuntimeSettingsFromPreset(const FSFRestoreAutoConnectState& PresetState);
+
+	/** Switch build gun to a building identified by recipe class name.
+	 *  Used by Smart Restore to auto-switch to the preset's building.
+	 *  @return true if recipe was found and set, false if unavailable */
+	bool SetBuildGunByRecipeName(const FString& RecipeClassName);
 	
 	// ========================================
 	// One-Shot Smart Disable (Issue #198)
@@ -1343,6 +1363,9 @@ private:
 
 	/** Clean up state during world transitions and save loads */
 	void CleanupStateForWorldTransition();
+
+	/** Abort any active Smart Restore topology/session without relying on hologram unregister semantics. */
+	bool AbortRestoreSession(const TCHAR* Reason);
 
 	/** Create and initialize HUD widgets */
 	void InitializeWidgets();

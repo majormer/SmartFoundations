@@ -21,6 +21,38 @@
 #include "FGInventoryComponent.h"
 #include "Features/Arrows/SFArrowModule_StaticMesh.h"
 
+namespace
+{
+    bool SuppressExtendOwnedGridOperation(USFSubsystem* Subsystem, const TCHAR* Context, bool bWarnOnSuppressedRegen)
+    {
+        if (!Subsystem || !Subsystem->ShouldSuppressNormalGridChildren())
+        {
+            return false;
+        }
+
+        const bool bRestoredExtendActive = Subsystem->IsRestoredExtendModeActive();
+        if (bWarnOnSuppressedRegen && bRestoredExtendActive)
+        {
+            UE_LOG(LogSmartFoundations, Warning,
+                TEXT("[SmartRestore][Extend] WARNING normal grid regeneration while restored topology active: context=%s parent=%s"),
+                Context,
+                *GetNameSafe(Subsystem->GetActiveHologram()));
+        }
+        else
+        {
+            UE_LOG(LogSmartFoundations, Log,
+                TEXT("[SmartRestore][Extend] Suppressing normal Smart grid spawn/update: context=%s parent=%s liveExtend=%d restoredExtend=%d"),
+                Context,
+                *GetNameSafe(Subsystem->GetActiveHologram()),
+                Subsystem->IsExtendModeActive() ? 1 : 0,
+                bRestoredExtendActive ? 1 : 0);
+        }
+
+        Subsystem->ClearNormalGridChildrenForExtendSuppression(Context);
+        return true;
+    }
+}
+
 void USFGridSpawnerService::Initialize(USFSubsystem* InSubsystem)
 {
     Subsystem = InSubsystem;
@@ -31,6 +63,11 @@ void USFGridSpawnerService::RegenerateChildHologramGrid()
     if (!Subsystem.IsValid()) return;
     USFSubsystem* SS = Subsystem.Get();
     if (!SS) return;
+
+    if (SuppressExtendOwnedGridOperation(SS, TEXT("RegenerateChildHologramGrid"), true))
+    {
+        return;
+    }
 
     if (AFGHologram* ParentHologram = SS->GetActiveHologram())
     {
@@ -129,6 +166,11 @@ void USFGridSpawnerService::UpdateChildPositions()
     if (!Subsystem.IsValid()) return;
     USFSubsystem* SS = Subsystem.Get();
     if (!SS) return;
+
+    if (SuppressExtendOwnedGridOperation(SS, TEXT("UpdateChildPositions"), false))
+    {
+        return;
+    }
 
     // Phase 2: Get children from HologramHelper (now owns SpawnedChildren tracking)
     TArray<TWeakObjectPtr<AFGHologram>> SpawnedChildren;
@@ -591,6 +633,11 @@ void USFGridSpawnerService::UpdateChildrenForCurrentTransform()
     if (!Subsystem.IsValid()) return;
     USFSubsystem* SS = Subsystem.Get();
     if (!SS) return;
+
+    if (SuppressExtendOwnedGridOperation(SS, TEXT("UpdateChildrenForCurrentTransform"), false))
+    {
+        return;
+    }
 
     if (!SS->GetActiveHologram() || !SS->GetHologramHelper())
     {

@@ -33,6 +33,8 @@
 #include "Features/Arrows/SFArrowModule_StaticMesh.h"
 #include "Features/PipeAutoConnect/SFPipeAutoConnectManager.h"
 #include "Features/PowerAutoConnect/SFPowerAutoConnectManager.h"
+#include "Features/Restore/SFRestoreService.h"
+#include "Features/Restore/SFRestoreTypes.h"
 #include "Logging/SFLogMacros.h"
 #include "Hologram/FGFactoryBuildingHologram.h"  // Issue #160: Zoop detection
 #include "SFHologramPerformanceProfiler.h"
@@ -246,6 +248,13 @@ USFSubsystem::USFSubsystem() : Super()
 		GridTransformService->Initialize(this);
 	}
 
+	// Create Restore service as default subobject (Smart Restore Enhanced)
+	RestoreService = CreateDefaultSubobject<USFRestoreService>(TEXT("RestoreService"));
+	if (RestoreService)
+	{
+		RestoreService->Initialize(this);
+	}
+
 	UE_LOG(LogSmartFoundations, Log, TEXT("SFSubsystem: Phase 0 modules and recipe service initialized"));
 }
 
@@ -302,6 +311,82 @@ bool USFSubsystem::IsExtendModeActive() const
 		return ExtendService->IsExtendModeActive();
 	}
 	return false;
+}
+
+bool USFSubsystem::IsRestoredExtendModeActive() const
+{
+	if (ExtendService)
+	{
+		return ExtendService->IsRestoredCloneTopologyActive();
+	}
+	return false;
+}
+
+bool USFSubsystem::ShouldSuppressNormalGridChildren() const
+{
+	return IsExtendModeActive() || IsRestoredExtendModeActive();
+}
+
+void USFSubsystem::ClearNormalGridChildrenForExtendSuppression(const TCHAR* Context)
+{
+	if (!HologramHelper)
+	{
+		return;
+	}
+
+	const TArray<TWeakObjectPtr<AFGHologram>> CurrentChildren = HologramHelper->GetSpawnedChildren();
+	if (CurrentChildren.Num() == 0)
+	{
+		return;
+	}
+
+	int32 QueuedGridChildren = 0;
+	int32 PreservedExtendChildren = 0;
+	int32 SkippedOtherChildren = 0;
+	for (const TWeakObjectPtr<AFGHologram>& Child : CurrentChildren)
+	{
+		if (!Child.IsValid())
+		{
+			SkippedOtherChildren++;
+			continue;
+		}
+
+		const FSFHologramData* ChildData = USFHologramDataRegistry::GetData(Child.Get());
+		const bool bIsExtendChild = Child->Tags.Contains(FName(TEXT("SF_ExtendChild")))
+			|| (ChildData && ChildData->ChildType == ESFChildHologramType::ExtendClone);
+		if (bIsExtendChild)
+		{
+			PreservedExtendChildren++;
+			continue;
+		}
+
+		const bool bIsScalingGridChild = Child->ActorHasTag(FName(TEXT("SF_GridChild")))
+			|| (ChildData && ChildData->ChildType == ESFChildHologramType::ScalingGrid);
+		if (!bIsScalingGridChild)
+		{
+			SkippedOtherChildren++;
+			continue;
+		}
+
+		QueueChildForDestroy(Child.Get());
+		QueuedGridChildren++;
+	}
+
+	UE_LOG(LogSmartFoundations, Log,
+		TEXT("[SmartRestore][Extend] Suppressing normal Smart grid spawn/update: context=%s parent=%s helperChildren=%d queuedGrid=%d preservedExtend=%d skippedOther=%d liveExtend=%d restoredExtend=%d"),
+		Context ? Context : TEXT("Unknown"),
+		*GetNameSafe(GetActiveHologram()),
+		CurrentChildren.Num(),
+		QueuedGridChildren,
+		PreservedExtendChildren,
+		SkippedOtherChildren,
+		IsExtendModeActive() ? 1 : 0,
+		IsRestoredExtendModeActive() ? 1 : 0);
+
+	if (QueuedGridChildren > 0)
+	{
+		FlushPendingDestroy();
+	}
 }
 
 bool USFSubsystem::IsModifierScaleXActive() const
@@ -479,6 +564,10 @@ void USFSubsystem::UpdateCounterState(const FSFCounterState& NewState)
 	if (IsExtendModeActive() && ExtendService)
 	{
 		ExtendService->OnScaledExtendStateChanged();
+	}
+	else if (ExtendService)
+	{
+		ExtendService->OnRestoredCloneTopologyStateChanged();
 	}
 
 	// Ensure grid children reposition immediately on counter updates
@@ -828,6 +917,11 @@ void USFSubsystem::Tick(float DeltaTime)
 		UpgradeExecutionService->Tick(DeltaTime);
 	}
 
+	if (ExtendService)
+	{
+		ExtendService->TickRestoredCloneTopology(DeltaTime);
+	}
+
 	// Issue #160: Continuous Zoop detection
 	// When Zoop is activated mid-placement (click-and-drag), we need to detect it
 	// and force grid to 1x1x1 even if no Smart! scaling input occurred.
@@ -1073,10 +1167,16 @@ void USFSubsystem::ApplyAxisScaling(ESFScaleAxis Axis, int32 StepDelta, const TC
 
 	// Scaled Extend (Issue #265): When extend is active, don't apply normal grid scaling.
 	// UpdateCounterState (below) will notify ExtendService->OnScaledExtendStateChanged().
-	if (IsExtendModeActive())
+	const bool bRestoredExtendActive = IsRestoredExtendModeActive();
+	if (ShouldSuppressNormalGridChildren())
 	{
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⚡ SCALED EXTEND: %s axis changed, grid=[%d,%d,%d]"), DebugLabel,
-			CounterState.GridCounters.X, CounterState.GridCounters.Y, CounterState.GridCounters.Z);
+		UE_LOG(LogSmartFoundations, Log, TEXT("[SmartRestore][Extend] %s axis changed, grid=[%d,%d,%d], liveExtend=%d restoredExtend=%d"),
+			DebugLabel,
+			CounterState.GridCounters.X,
+			CounterState.GridCounters.Y,
+			CounterState.GridCounters.Z,
+			IsExtendModeActive() ? 1 : 0,
+			bRestoredExtendActive ? 1 : 0);
 	}
 	else if (HologramHelper)
 	{
@@ -1126,7 +1226,7 @@ void USFSubsystem::ApplyAxisScaling(ESFScaleAxis Axis, int32 StepDelta, const TC
 	// Each new grid change resets the override flag and re-engages auto-hold.
 	{
 		FSmart_ConfigStruct Config = FSmart_ConfigStruct::GetActiveConfig(this);
-		if (Config.bAutoHoldOnGridChange && ActiveHologram.IsValid() && !IsExtendModeActive())
+		if (Config.bAutoHoldOnGridChange && ActiveHologram.IsValid() && !IsExtendModeActive() && !bRestoredExtendActive)
 		{
 			const FIntVector& Grid = CounterState.GridCounters;
 			const bool bGridExpanded = (FMath::Abs(Grid.X) > 1 || FMath::Abs(Grid.Y) > 1 || FMath::Abs(Grid.Z) > 1);
@@ -2582,6 +2682,8 @@ void USFSubsystem::RegisterActiveHologram(AFGHologram* Hologram)
 		return;
 	}
 
+	bool bRestoredExtendActiveAtRegister = IsRestoredExtendModeActive();
+
 	// Lazy initialization on first hologram registration (Task #58)
 	if (!bSubsystemInitialized)
 	{
@@ -2628,6 +2730,21 @@ void USFSubsystem::RegisterActiveHologram(AFGHologram* Hologram)
 
 			bSubsystemInitialized = true;
 		}
+	}
+
+	if (bRestoredExtendActiveAtRegister && ExtendService && !ExtendService->IsHologramCompatibleWithRestoredCloneTopology(Hologram))
+	{
+		ExtendService->ClearRestoredCloneTopologySession(TEXT("RegisterActiveHologram build class mismatch"));
+		if (RestoreService)
+		{
+			RestoreService->ClearActiveRestoreSession(TEXT("Active buildable changed away from restored Extend source"));
+		}
+		bRestoredExtendActiveAtRegister = false;
+
+		UE_LOG(LogSmartFoundations, Log,
+			TEXT("[SmartRestore][Extend] Dropped restored topology for incompatible active hologram: hologram=%s buildClass=%s"),
+			*GetNameSafe(Hologram),
+			*GetNameSafe(Hologram->GetBuildClass()));
 	}
 
 	// Reset auto-connect runtime settings when hologram changes
@@ -2710,13 +2827,41 @@ void USFSubsystem::RegisterActiveHologram(AFGHologram* Hologram)
 		World->GetTimerManager().ClearTimer(RecipeRegenerationTimer);
 	}
 
-	// Reset all counters for new hologram (centralized - Task 51)
-	ResetCounters();
+	// Reset all counters for new hologram (centralized - Task 51).
+	// Restored Extend presets are edited as a sticky staged graph; vanilla may recreate
+	// the parent hologram while aiming, so preserve Smart transform state across that swap.
+	if (!bRestoredExtendActiveAtRegister)
+	{
+		ResetCounters();
+	}
+	else
+	{
+		if (GridStateService)
+		{
+			GridStateService->UpdateCounterState(CounterState);
+		}
+		UpdateCounterDisplay();
+		UE_LOG(LogSmartFoundations, Log,
+			TEXT("[SmartRestore][Extend] Preserved staged counters across hologram registration: grid=[%d,%d,%d] spacing=(%d,%d,%d) steps=(%d,%d) rotation=%.1f"),
+			CounterState.GridCounters.X,
+			CounterState.GridCounters.Y,
+			CounterState.GridCounters.Z,
+			CounterState.SpacingX,
+			CounterState.SpacingY,
+			CounterState.SpacingZ,
+			CounterState.StepsX,
+			CounterState.StepsY,
+			CounterState.RotationZ);
+	}
 
 	// Reset HUD state to prevent stale display from previous hologram
 	if (HudService)
 	{
 		HudService->ResetState();
+	}
+	if (bRestoredExtendActiveAtRegister)
+	{
+		UpdateCounterDisplay();
 	}
 
 	// Reset Zoop flag in HologramHelper (Issue #160)
@@ -3053,6 +3198,19 @@ void USFSubsystem::RegisterActiveHologram(AFGHologram* Hologram)
 	}
 	ActiveHologram = Hologram;
 
+	if (bRestoredExtendActiveAtRegister && ExtendService)
+	{
+		TSharedPtr<FSFCloneTopology> RestoredTemplate = ExtendService->GetLastCloneTopology();
+		if (RestoredTemplate.IsValid() && RestoredTemplate->ChildHolograms.Num() > 0)
+		{
+			ExtendService->ReplayRestoreCloneTopology(Hologram, *RestoredTemplate);
+			UE_LOG(LogSmartFoundations, Log,
+				TEXT("[SmartRestore][Extend] Reattached staged topology to new active hologram: parent=%s templateChildren=%d"),
+				*GetNameSafe(Hologram),
+				RestoredTemplate->ChildHolograms.Num());
+		}
+	}
+
 	// Issue #208/#209: Notify recipe service of build class change
 	// OnNewBuildSession will bump session ID only if the build class differs from the shard source
 	if (RecipeManagementService)
@@ -3162,8 +3320,21 @@ void USFSubsystem::UnregisterActiveHologram(AFGHologram* Hologram)
 		}
 #endif
 
-		// Reset all counters (fixes persistence bug - Task 51)
-		ResetCounters();
+		// Reset all counters (fixes persistence bug - Task 51), except while a
+		// restored Extend topology is staged for editing across transient aim gaps.
+		if (!IsRestoredExtendModeActive())
+		{
+			ResetCounters();
+		}
+		else
+		{
+			UpdateCounterDisplay();
+			UE_LOG(LogSmartFoundations, Log,
+				TEXT("[SmartRestore][Extend] Preserved staged counters across hologram unregister: grid=[%d,%d,%d]"),
+				CounterState.GridCounters.X,
+				CounterState.GridCounters.Y,
+				CounterState.GridCounters.Z);
+		}
 
 		// CRITICAL FIX: Reset auto-connect runtime settings so next build session loads from global config
 		// Without this, runtime settings persist between build sessions, ignoring global config changes
@@ -3211,10 +3382,16 @@ void USFSubsystem::PollForActiveHologram()
 	AFGCharacterPlayer* Character = Cast<AFGCharacterPlayer>(PC->GetPawn());
 	if (!Character)
 	{
+		const bool bAbortedRestore = AbortRestoreSession(TEXT("Player character unavailable"));
+
 		// Clear hologram if character is not available
 		if (ActiveHologram.IsValid())
 		{
 			UnregisterActiveHologram(ActiveHologram.Get());
+		}
+		else if (bAbortedRestore)
+		{
+			ResetCounters();
 		}
 		return;
 	}
@@ -3223,6 +3400,15 @@ void USFSubsystem::PollForActiveHologram()
 	AFGBuildGun* BuildGun = Character->GetBuildGun();
 	if (!BuildGun)
 	{
+		const bool bAbortedRestore = AbortRestoreSession(TEXT("Build gun unavailable"));
+		if (ActiveHologram.IsValid())
+		{
+			UnregisterActiveHologram(ActiveHologram.Get());
+		}
+		else if (bAbortedRestore)
+		{
+			ResetCounters();
+		}
 		return;
 	}
 
@@ -3241,11 +3427,17 @@ void USFSubsystem::PollForActiveHologram()
 	// Check if we're in build state
 	if (!BuildGun->IsInState(EBuildGunState::BGS_BUILD))
 	{
+		const bool bAbortedRestore = AbortRestoreSession(TEXT("Build gun left build state"));
+
 		// Clear hologram if not in build state
 		if (ActiveHologram.IsValid())
 		{
 			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Clearing hologram: Build gun not in build state"));
 			UnregisterActiveHologram(ActiveHologram.Get());
+		}
+		else if (bAbortedRestore)
+		{
+			ResetCounters();
 		}
 
 		// CRITICAL: Final cleanup for EXTEND when build gun leaves build mode
@@ -3265,15 +3457,21 @@ void USFSubsystem::PollForActiveHologram()
 		return;
 	}
 
+	UClass* CurrentRecipe = BuildState->GetActiveRecipe();
+	bool bAbortedRestoreForRecipeClear = false;
+	if (!CurrentRecipe)
+	{
+		bAbortedRestoreForRecipeClear = AbortRestoreSession(TEXT("Build gun active recipe cleared"));
+	}
+
 	// Log recipe changes (identify what we're trying to build)
 	{
-		UClass* CurrentRecipe = BuildState->GetActiveRecipe();
 		if (CurrentRecipe != LastLoggedRecipeClass)
 		{
 			LastLoggedRecipeClass = CurrentRecipe;
 			AFGHologram* H = BuildState->GetHologram();
 			UClass* InnerBuildClass = H ? H->GetBuildClass() : nullptr;
-			const FText FriendlyName = UFGItemDescriptor::GetItemName(CurrentRecipe);
+			const FText FriendlyName = CurrentRecipe ? UFGItemDescriptor::GetItemName(CurrentRecipe) : FText::GetEmpty();
 			const FBox HoloBox = H ? H->GetComponentsBoundingBox(/*bNonColliding=*/true) : FBox(ForceInit);
 			const FString HoloSizeStr = (H && HoloBox.IsValid) ? HoloBox.GetSize().ToString() : FString(TEXT("<n/a>"));
 			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("BUILD RECIPE CHANGED: Recipe=%s Name=\"%s\" BuildClass=%s Hologram=%s HoloSize=%s"),
@@ -3283,6 +3481,10 @@ void USFSubsystem::PollForActiveHologram()
 
 	// Get the hologram from the build state
 	AFGHologram* CurrentHologram = BuildState->GetHologram();
+	if (bAbortedRestoreForRecipeClear)
+	{
+		ResetCounters();
+	}
 
 	// Update registration if hologram changed
 	if (CurrentHologram != ActiveHologram.Get())
@@ -3666,6 +3868,8 @@ void USFSubsystem::OnBuildGunEquipped()
 void USFSubsystem::OnBuildGunUnequipped()
 {
 	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT(" BUILD GUN UNEQUIPPED - Smart! build context deactivated"));
+
+	AbortRestoreSession(TEXT("Build gun unequipped"));
 
 	// Reset recipe sampling subscription flag
 	bHasSubscribedToRecipeSampled = false;
@@ -4328,6 +4532,35 @@ void USFSubsystem::CleanupStateForWorldTransition()
 	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("CleanupStateForWorldTransition: Recipe inheritance state reset complete"));
 }
 
+bool USFSubsystem::AbortRestoreSession(const TCHAR* Reason)
+{
+	const bool bHadRestoredTopology = ExtendService && ExtendService->IsRestoredCloneTopologyActive();
+	const bool bHadRestoreSession = RestoreService && RestoreService->IsRestoreSessionActive();
+	if (!bHadRestoredTopology && !bHadRestoreSession)
+	{
+		return false;
+	}
+
+	if (bHadRestoredTopology)
+	{
+		ExtendService->ClearRestoredCloneTopologySession(Reason);
+	}
+
+	if (bHadRestoreSession)
+	{
+		RestoreService->ClearActiveRestoreSession(Reason);
+	}
+
+	UE_LOG(LogSmartFoundations, Log,
+		TEXT("[SmartRestore] Aborted restore session: reason=%s topology=%d session=%d"),
+		Reason ? Reason : TEXT("Unknown"),
+		bHadRestoredTopology ? 1 : 0,
+		bHadRestoreSession ? 1 : 0);
+
+	UpdateCounterDisplay();
+	return true;
+}
+
 void USFSubsystem::InitializeHologramCleanup()
 {
 	if (UWorld* World = GetWorld())
@@ -4654,6 +4887,113 @@ void USFSubsystem::SetActiveRecipeByIndex(int32 Index)
 	{
 		RecipeManagementService->SetActiveRecipeByIndex(Index);
 	}
+}
+
+// ========================================
+// Smart Restore Enhanced — New Subsystem Methods
+// ========================================
+
+void USFSubsystem::SetAutoConnectRuntimeSettingsFromPreset(const FSFRestoreAutoConnectState& PresetState)
+{
+	AutoConnectRuntimeSettings.bEnabled = PresetState.bBeltEnabled;
+	AutoConnectRuntimeSettings.BeltTierMain = PresetState.BeltTierMain;
+	AutoConnectRuntimeSettings.BeltTierToBuilding = PresetState.BeltTierToBuilding;
+	AutoConnectRuntimeSettings.bChainDistributors = PresetState.bChainDistributors;
+	AutoConnectRuntimeSettings.BeltRoutingMode = PresetState.BeltRoutingMode;
+	AutoConnectRuntimeSettings.bPipeAutoConnectEnabled = PresetState.bPipeEnabled;
+	AutoConnectRuntimeSettings.PipeTierMain = PresetState.PipeTierMain;
+	AutoConnectRuntimeSettings.PipeTierToBuilding = PresetState.PipeTierToBuilding;
+	AutoConnectRuntimeSettings.bPipeIndicator = PresetState.bPipeIndicator;
+	AutoConnectRuntimeSettings.PipeRoutingMode = PresetState.PipeRoutingMode;
+	AutoConnectRuntimeSettings.bConnectPower = PresetState.bPowerEnabled;
+	AutoConnectRuntimeSettings.PowerGridAxis = PresetState.PowerGridAxis;
+	AutoConnectRuntimeSettings.PowerReserved = PresetState.PowerReserved;
+	AutoConnectRuntimeSettings.bInitialized = true;
+
+	UE_LOG(LogSmartFoundations, Display,
+		TEXT("[SmartRestore] Applied auto-connect settings from preset"));
+}
+
+bool USFSubsystem::SetBuildGunByRecipeName(const FString& RecipeClassName)
+{
+	if (RecipeClassName.IsEmpty())
+	{
+		return false;
+	}
+
+	UWorld* World = GetWorld();
+	if (!World)
+	{
+		return false;
+	}
+
+	// Find the recipe by class name in available recipes
+	AFGRecipeManager* RecipeManager = AFGRecipeManager::Get(World);
+	if (!RecipeManager)
+	{
+		UE_LOG(LogSmartFoundations, Warning,
+			TEXT("[SmartRestore] SetBuildGunByRecipeName: No recipe manager"));
+		return false;
+	}
+
+	TArray<TSubclassOf<UFGRecipe>> AllRecipes;
+	RecipeManager->GetAllAvailableRecipes(AllRecipes);
+
+	TSubclassOf<UFGRecipe> TargetRecipe = nullptr;
+	for (const TSubclassOf<UFGRecipe>& Recipe : AllRecipes)
+	{
+		if (Recipe && Recipe->GetName() == RecipeClassName)
+		{
+			TargetRecipe = Recipe;
+			break;
+		}
+	}
+
+	if (!TargetRecipe)
+	{
+		UE_LOG(LogSmartFoundations, Warning,
+			TEXT("[SmartRestore] SetBuildGunByRecipeName: Recipe '%s' not found in available recipes"),
+			*RecipeClassName);
+		return false;
+	}
+
+	// Get the player's build gun and set the recipe
+	APlayerController* PC = World->GetFirstPlayerController();
+	if (!PC)
+	{
+		return false;
+	}
+
+	AFGCharacterPlayer* Character = Cast<AFGCharacterPlayer>(PC->GetPawn());
+	if (!Character)
+	{
+		return false;
+	}
+
+	// The build gun is equipment — get it from the character
+	AFGBuildGun* BuildGun = Character->GetBuildGun();
+	if (!BuildGun)
+	{
+		UE_LOG(LogSmartFoundations, Warning,
+			TEXT("[SmartRestore] SetBuildGunByRecipeName: No build gun found"));
+		return false;
+	}
+
+	// Set the active recipe on the build gun's build state
+	UFGBuildGunStateBuild* BuildState = Cast<UFGBuildGunStateBuild>(
+		BuildGun->GetBuildGunStateFor(EBuildGunState::BGS_BUILD));
+	if (!BuildState)
+	{
+		UE_LOG(LogSmartFoundations, Warning,
+			TEXT("[SmartRestore] SetBuildGunByRecipeName: No build gun build state"));
+		return false;
+	}
+
+	BuildState->SetActiveRecipe(TargetRecipe);
+
+	UE_LOG(LogSmartFoundations, Display,
+		TEXT("[SmartRestore] Switched build gun to recipe '%s'"), *RecipeClassName);
+	return true;
 }
 
 void USFSubsystem::ApplyRecipeToParentHologram()

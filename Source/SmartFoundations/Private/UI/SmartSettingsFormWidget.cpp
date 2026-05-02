@@ -18,12 +18,15 @@
 
 #include "Features/AutoConnect/SFAutoConnectService.h"
 #include "Services/SFRecipeManagementService.h"
+#include "Features/Restore/SFRestoreService.h"
+#include "Features/Restore/SFRestoreTypes.h"
 #include "Hologram/FGHologram.h"
 #include "Services/SFHudService.h"
 #include "Buildables/FGBuildableFactory.h"
 #include "FGRecipe.h"
 #include "Resources/FGItemDescriptor.h"
 #include "FGPlayerController.h"
+#include "HAL/PlatformApplicationMisc.h"
 
 #define LOCTEXT_NAMESPACE "SmartFoundations"
 
@@ -86,6 +89,21 @@ void USmartSettingsFormWidget::NativeConstruct()
     if (ConfirmationSizeBox)
     {
         ConfirmationSizeBox->SetVisibility(ESlateVisibility::Collapsed);
+    }
+
+    if (PresetNameInput)
+    {
+        PresetNameInput->WidgetStyle.TextStyle.Font.Size = 10;
+        PresetNameInput->SetMinDesiredWidth(220.0f);
+        PresetNameInput->SynchronizeProperties();
+    }
+    if (PresetDescriptionInput)
+    {
+        PresetDescriptionInput->WidgetStyle.TextStyle.Font.Size = 10;
+        PresetDescriptionInput->WidgetStyle.TextStyle.ColorAndOpacity = FSlateColor(FLinearColor::Black);
+        PresetDescriptionInput->WidgetStyle.ForegroundColor = FSlateColor(FLinearColor::Black);
+        PresetDescriptionInput->SetMinDesiredWidth(220.0f);
+        PresetDescriptionInput->SynchronizeProperties();
     }
 
     // Set default title
@@ -247,6 +265,7 @@ void USmartSettingsFormWidget::NativeConstruct()
     ConfigureComboBoxStyle(BeltRoutingModeComboBox, PipeRoutingModeComboBox);  // Copy style from Pipe Routing Mode
     ConfigureComboBoxStyle(PowerGridAxisComboBox);
     ConfigureComboBoxStyle(PowerReservedComboBox);
+    ConfigureComboBoxStyle(PresetDropdown, BeltTierMainComboBox);
 
     // Bind Apply Immediately checkbox
     // NOTE: Do NOT set checkbox state here - PopulateFromCounterState() is called BEFORE NativeConstruct
@@ -285,6 +304,43 @@ void USmartSettingsFormWidget::NativeConstruct()
     if (ClearRecipeButton)
     {
         ClearRecipeButton->OnClicked.AddDynamic(this, &USmartSettingsFormWidget::OnClearRecipeButtonClicked);
+    }
+
+    if (ApplyPresetBtn)
+    {
+        ApplyPresetBtn->OnClicked.AddDynamic(this, &USmartSettingsFormWidget::OnApplyPresetClicked);
+    }
+    if (SavePresetBtn)
+    {
+        SavePresetBtn->OnClicked.AddDynamic(this, &USmartSettingsFormWidget::OnSavePresetClicked);
+    }
+    if (DeletePresetBtn)
+    {
+        DeletePresetBtn->OnClicked.AddDynamic(this, &USmartSettingsFormWidget::OnDeletePresetClicked);
+    }
+    if (UpdatePresetBtn)
+    {
+        UpdatePresetBtn->OnClicked.AddDynamic(this, &USmartSettingsFormWidget::OnUpdatePresetClicked);
+    }
+    if (ExportPresetBtn)
+    {
+        ExportPresetBtn->OnClicked.AddDynamic(this, &USmartSettingsFormWidget::OnExportPresetClicked);
+    }
+    if (ImportPresetBtn)
+    {
+        ImportPresetBtn->OnClicked.AddDynamic(this, &USmartSettingsFormWidget::OnImportPresetClicked);
+    }
+    if (ImportFromExtendBtn)
+    {
+        ImportFromExtendBtn->OnClicked.AddDynamic(this, &USmartSettingsFormWidget::OnImportFromExtendClicked);
+    }
+    if (PresetDropdown)
+    {
+        PresetDropdown->OnSelectionChanged.AddDynamic(this, &USmartSettingsFormWidget::OnPresetSelectionChanged);
+    }
+    if (RestoreSectionToggle)
+    {
+        RestoreSectionToggle->OnClicked.AddDynamic(this, &USmartSettingsFormWidget::OnRestoreSectionToggleClicked);
     }
 
     // Bind belt auto-connect controls
@@ -357,6 +413,7 @@ void USmartSettingsFormWidget::NativeConstruct()
     ResetButtonSlot         = ResetBtn ? Cast<UCanvasPanelSlot>(ResetBtn->Slot) : nullptr;
     CloseButtonSlot         = CloseButton ? Cast<UCanvasPanelSlot>(CloseButton->Slot) : nullptr;
     SmartLogoSlot           = SmartLogoImage ? Cast<UCanvasPanelSlot>(SmartLogoImage->Slot) : nullptr;
+    RestoreSidePanelSlot    = RestoreSidePanel ? Cast<UCanvasPanelSlot>(RestoreSidePanel->Slot) : nullptr;
 
     if (BackgroundPanelSlot)
     {
@@ -395,6 +452,10 @@ void USmartSettingsFormWidget::NativeConstruct()
     {
         BackgroundPanel->SetBrushColor(FLinearColor(0.02f, 0.02f, 0.04f, 0.92f));
     }
+    if (RestoreSidePanel)
+    {
+        RestoreSidePanel->SetBrushColor(FLinearColor(0.02f, 0.02f, 0.04f, 0.92f));
+    }
 
     // Orange accent on title
     if (TitleText)
@@ -410,6 +471,10 @@ void USmartSettingsFormWidget::NativeConstruct()
     if (RecipeHeaderText)
     {
         RecipeHeaderText->SetColorAndOpacity(FSlateColor(FLinearColor(1.0f, 0.6f, 0.2f, 1.0f)));
+    }
+    if (RestoreSectionHeader)
+    {
+        RestoreSectionHeader->SetColorAndOpacity(FSlateColor(FLinearColor(1.0f, 0.6f, 0.2f, 1.0f)));
     }
 
     // Set all TextBlocks in ContentContainer to light gray for dark background
@@ -451,6 +516,10 @@ void USmartSettingsFormWidget::NativeConstruct()
         {
             GridWarningText->SetColorAndOpacity(FSlateColor(FLinearColor(1.0f, 0.3f, 0.3f, 1.0f)));
         }
+        if (RestoreSectionHeader)
+        {
+            RestoreSectionHeader->SetColorAndOpacity(FSlateColor(FLinearColor::Black));
+        }
     }
 
     UE_LOG(LogSmartFoundations, Log, TEXT("Settings Form: Blueprint widgets bound successfully"));
@@ -474,6 +543,13 @@ void USmartSettingsFormWidget::NativeConstruct()
         SetLabel(TEXT("ClearRecipeButtonText"), LOCTEXT("Panel_Btn_ClearRecipe", "Clear"));
         SetLabel(TEXT("ConfirmYesText"), LOCTEXT("Panel_Btn_Continue", "Continue"));
         SetLabel(TEXT("ConfirmNoText"), LOCTEXT("Panel_Btn_Cancel", "Cancel"));
+        SetLabel(TEXT("ApplyPresetBtnText"), LOCTEXT("Panel_Btn_ApplyPreset", "Apply"));
+        SetLabel(TEXT("SavePresetBtnText"), LOCTEXT("Panel_Btn_SavePreset", "Save Current"));
+        SetLabel(TEXT("DeletePresetBtnText"), LOCTEXT("Panel_Btn_DeletePreset", "Delete"));
+        SetLabel(TEXT("UpdatePresetBtnText"), LOCTEXT("Panel_Btn_UpdatePreset", "Update"));
+        SetLabel(TEXT("ExportPresetBtnText"), LOCTEXT("Panel_Btn_ExportPreset", "Export to Clipboard"));
+        SetLabel(TEXT("ImportPresetBtnText"), LOCTEXT("Panel_Btn_ImportPreset", "Import from Clipboard"));
+        SetLabel(TEXT("ImportFromExtendBtnText"), LOCTEXT("Panel_Btn_ImportFromExtend", "Import from Last Extend"));
 
         // Apply Immediately label
         SetLabel(TEXT("ApplyImmediatelyLabel"), LOCTEXT("Panel_ApplyImmediately", "Apply Immediately:"));
@@ -523,6 +599,19 @@ void USmartSettingsFormWidget::NativeConstruct()
         // Rotation row label and unit
         SetLabel(TEXT("RotationZLabel"), LOCTEXT("Panel_RotationZ", "Rotation [Z]:"));
         SetLabel(TEXT("RotationZUnit"), LOCTEXT("Panel_Unit_Degrees", "\u00B0"));
+        SetLabel(TEXT("RestoreSectionHeader"), LOCTEXT("Panel_Section_Presets", "Smart Restore"));
+        SetLabel(TEXT("PresetDropdownLabel"), LOCTEXT("Panel_Restore_SelectPreset", "Selected Preset:"));
+        SetLabel(TEXT("PresetNameInputLabel"), LOCTEXT("Panel_Restore_PresetName", "New Preset Name:"));
+        SetLabel(TEXT("PresetDescriptionLabel"), LOCTEXT("Panel_Restore_Description", "Description:"));
+        SetLabel(TEXT("PresetCreatedAtLabel"), LOCTEXT("Panel_Restore_CreatedAt", "Created:"));
+        SetLabel(TEXT("CaptureLabel"), LOCTEXT("Panel_Restore_Capture", "Capture:"));
+        SetLabel(TEXT("CaptureGridLabel"), LOCTEXT("Panel_Restore_CaptureGrid", "Grid"));
+        SetLabel(TEXT("CaptureSpacingLabel"), LOCTEXT("Panel_Restore_CaptureSpacing", "Spacing"));
+        SetLabel(TEXT("CaptureStepsLabel"), LOCTEXT("Panel_Restore_CaptureSteps", "Steps"));
+        SetLabel(TEXT("CaptureStaggerLabel"), LOCTEXT("Panel_Restore_CaptureStagger", "Stagger"));
+        SetLabel(TEXT("CaptureRotationLabel"), LOCTEXT("Panel_Restore_CaptureRotation", "Rotation"));
+        SetLabel(TEXT("CaptureRecipeLabel"), LOCTEXT("Panel_Restore_CaptureRecipe", "Recipe"));
+        SetLabel(TEXT("CaptureAutoConnectLabel"), LOCTEXT("Panel_Restore_CaptureAutoConnect", "Auto-Connect"));
 
         // Belt auto-connect labels
         SetLabel(TEXT("BeltEnabledLabel"), LOCTEXT("Panel_AC_BeltEnabled", "Belt Auto-Connect:"));
@@ -544,6 +633,9 @@ void USmartSettingsFormWidget::NativeConstruct()
         SetLabel(TEXT("PowerGridAxisLabel"), LOCTEXT("Panel_AC_GridAxis", "Grid Axis:"));
         SetLabel(TEXT("PowerReservedLabel"), LOCTEXT("Panel_AC_Reserved", "Reserved:"));
     }
+
+    UpdateRestoreButtonTextColors();
+    UpdateExtendImportButtonState();
 
     // === Extend Mode Overrides ===
     // Applied AFTER default setup since PopulateFromCounterState runs before NativeConstruct.
@@ -740,6 +832,9 @@ void USmartSettingsFormWidget::PopulateFromCounterState(USFSubsystem* Subsystem)
     {
         ClearRecipeButton->SetVisibility(ESlateVisibility::Collapsed);
     }
+
+    RefreshPresetDropdown();
+    UpdateExtendImportButtonState();
 
     if (!CachedSubsystem.IsValid())
     {
@@ -1107,6 +1202,474 @@ void USmartSettingsFormWidget::CancelAndClose()
     CloseForm();
 }
 
+void USmartSettingsFormWidget::OnApplyPresetClicked()
+{
+    if (!CachedSubsystem.IsValid() || !PresetDropdown)
+    {
+        return;
+    }
+
+    USFRestoreService* RestoreSvc = CachedSubsystem->GetRestoreService();
+    if (!RestoreSvc)
+    {
+        return;
+    }
+
+    const FString SelectedName = PresetDropdown->GetSelectedOption();
+    if (SelectedName.IsEmpty())
+    {
+        return;
+    }
+
+    bool bFound = false;
+    const FSFRestorePreset Preset = RestoreSvc->LoadPreset(SelectedName, bFound);
+    if (!bFound)
+    {
+        return;
+    }
+
+    if (RestoreSvc->ApplyPreset(Preset))
+    {
+        const bool bWasApplyImmediately = bApplyImmediately;
+        const bool bWasApplyImmediatelyEnabled = ApplyImmediatelyCheckBox ? ApplyImmediatelyCheckBox->GetIsEnabled() : true;
+        PopulateFromCounterState(CachedSubsystem.Get());
+        bApplyImmediately = bWasApplyImmediately;
+        if (ApplyImmediatelyCheckBox)
+        {
+            ApplyImmediatelyCheckBox->SetIsChecked(bApplyImmediately);
+            ApplyImmediatelyCheckBox->SetIsEnabled(bWasApplyImmediatelyEnabled);
+        }
+        CacheCurrentStateAsApplied();
+    }
+}
+
+void USmartSettingsFormWidget::OnSavePresetClicked()
+{
+    if (!CachedSubsystem.IsValid() || !PresetNameInput)
+    {
+        return;
+    }
+
+    USFRestoreService* RestoreSvc = CachedSubsystem->GetRestoreService();
+    if (!RestoreSvc)
+    {
+        return;
+    }
+
+    const FString Name = PresetNameInput->GetText().ToString().TrimStartAndEnd();
+    if (Name.IsEmpty())
+    {
+        return;
+    }
+
+    if (RestoreSvc->PresetExists(Name))
+    {
+        PendingConfirmCallback = [this, Name]()
+        {
+            USFRestoreService* Svc = CachedSubsystem.IsValid() ? CachedSubsystem->GetRestoreService() : nullptr;
+            if (!Svc)
+            {
+                return;
+            }
+
+            FSFRestorePreset Preset = Svc->CaptureCurrentState(Name, GetCaptureFlags());
+            Preset.Description = GetPresetDescriptionText();
+            if (Svc->SavePreset(Preset))
+            {
+                RefreshPresetDropdown(Name);
+            }
+        };
+        bWaitingForConfirmation = true;
+        ShowConfirmationDialog(
+            LOCTEXT("Panel_Restore_OverwriteTitle", "Overwrite Preset").ToString(),
+            FText::Format(LOCTEXT("Panel_Restore_OverwriteMessage", "A preset named '{0}' already exists. Overwrite?"), FText::FromString(Name)).ToString(),
+            FLinearColor(1.0f, 0.6f, 0.0f, 1.0f));
+        return;
+    }
+
+    FSFRestorePreset Preset = RestoreSvc->CaptureCurrentState(Name, GetCaptureFlags());
+    Preset.Description = GetPresetDescriptionText();
+    if (RestoreSvc->SavePreset(Preset))
+    {
+        RefreshPresetDropdown(Name);
+    }
+}
+
+void USmartSettingsFormWidget::OnDeletePresetClicked()
+{
+    if (!CachedSubsystem.IsValid() || !PresetDropdown)
+    {
+        return;
+    }
+
+    const FString SelectedName = PresetDropdown->GetSelectedOption();
+    if (SelectedName.IsEmpty())
+    {
+        return;
+    }
+
+    PendingConfirmCallback = [this, SelectedName]()
+    {
+        USFRestoreService* Svc = CachedSubsystem.IsValid() ? CachedSubsystem->GetRestoreService() : nullptr;
+        if (!Svc)
+        {
+            return;
+        }
+
+        if (Svc->DeletePreset(SelectedName))
+        {
+            RefreshPresetDropdown();
+        }
+    };
+    bWaitingForConfirmation = true;
+    ShowConfirmationDialog(
+        LOCTEXT("Panel_Restore_DeleteTitle", "Delete Preset").ToString(),
+        FText::Format(LOCTEXT("Panel_Restore_DeleteMessage", "Delete preset '{0}'?"), FText::FromString(SelectedName)).ToString(),
+        FLinearColor(1.0f, 0.3f, 0.3f, 1.0f));
+}
+
+void USmartSettingsFormWidget::OnUpdatePresetClicked()
+{
+    if (!CachedSubsystem.IsValid() || !PresetDropdown)
+    {
+        return;
+    }
+
+    USFRestoreService* RestoreSvc = CachedSubsystem->GetRestoreService();
+    if (!RestoreSvc)
+    {
+        return;
+    }
+
+    const FString SelectedName = PresetDropdown->GetSelectedOption();
+    if (SelectedName.IsEmpty())
+    {
+        return;
+    }
+
+    FSFRestorePreset Preset = RestoreSvc->CaptureCurrentState(SelectedName, GetCaptureFlags());
+    Preset.Description = GetPresetDescriptionText();
+    if (RestoreSvc->SavePreset(Preset))
+    {
+        RefreshPresetDropdown(SelectedName);
+    }
+}
+
+void USmartSettingsFormWidget::OnExportPresetClicked()
+{
+    if (!CachedSubsystem.IsValid() || !PresetDropdown)
+    {
+        return;
+    }
+
+    USFRestoreService* RestoreSvc = CachedSubsystem->GetRestoreService();
+    if (!RestoreSvc)
+    {
+        return;
+    }
+
+    const FString SelectedName = PresetDropdown->GetSelectedOption();
+    if (SelectedName.IsEmpty())
+    {
+        return;
+    }
+
+    bool bFound = false;
+    const FSFRestorePreset Preset = RestoreSvc->LoadPreset(SelectedName, bFound);
+    if (!bFound)
+    {
+        return;
+    }
+
+    const FString Encoded = RestoreSvc->ExportToString(Preset);
+    FPlatformApplicationMisc::ClipboardCopy(*Encoded);
+}
+
+void USmartSettingsFormWidget::OnImportPresetClicked()
+{
+    if (!CachedSubsystem.IsValid())
+    {
+        return;
+    }
+
+    USFRestoreService* RestoreSvc = CachedSubsystem->GetRestoreService();
+    if (!RestoreSvc)
+    {
+        return;
+    }
+
+    FString ClipboardText;
+    FPlatformApplicationMisc::ClipboardPaste(ClipboardText);
+    if (ClipboardText.IsEmpty())
+    {
+        return;
+    }
+
+    bool bSuccess = false;
+    const FSFRestorePreset Preset = RestoreSvc->ImportFromString(ClipboardText, bSuccess);
+    if (!bSuccess)
+    {
+        return;
+    }
+
+    if (RestoreSvc->SavePreset(Preset))
+    {
+        RefreshPresetDropdown(Preset.Name);
+    }
+}
+
+void USmartSettingsFormWidget::OnImportFromExtendClicked()
+{
+    UpdateExtendImportButtonState();
+
+    if (!CachedSubsystem.IsValid() || !PresetNameInput)
+    {
+        UE_LOG(LogSmartFoundations, Warning,
+            TEXT("[SmartRestore][UI] ImportFromExtend clicked but widget state is invalid: CachedSubsystem=%d PresetNameInput=%d"),
+            CachedSubsystem.IsValid() ? 1 : 0,
+            PresetNameInput ? 1 : 0);
+        return;
+    }
+
+    USFRestoreService* RestoreSvc = CachedSubsystem->GetRestoreService();
+    if (!RestoreSvc || !RestoreSvc->IsLastExtendAvailable())
+    {
+        UE_LOG(LogSmartFoundations, Warning,
+            TEXT("[SmartRestore][UI] ImportFromExtend unavailable: RestoreSvc=%s LastExtendAvailable=%d"),
+            RestoreSvc ? TEXT("valid") : TEXT("null"),
+            RestoreSvc ? (RestoreSvc->IsLastExtendAvailable() ? 1 : 0) : 0);
+        return;
+    }
+
+    FString Name = PresetNameInput->GetText().ToString().TrimStartAndEnd();
+    if (Name.IsEmpty())
+    {
+        Name = FString::Printf(TEXT("Extend Source %s"), *FDateTime::Now().ToString(TEXT("%Y%m%d-%H%M%S")));
+        PresetNameInput->SetText(FText::FromString(Name));
+    }
+
+    bool bSuccess = false;
+    FSFRestorePreset Preset = RestoreSvc->ImportFromLastExtend(Name, GetCaptureFlags(), bSuccess);
+    if (!bSuccess)
+    {
+        UE_LOG(LogSmartFoundations, Warning,
+            TEXT("[SmartRestore][UI] ImportFromLastExtend failed for preset '%s'"),
+            *Name);
+        return;
+    }
+
+    Preset.CaptureFlags.bGrid = true;
+    Preset.GridCounters = FIntVector(1, 1, 1);
+    Preset.Description = GetPresetDescriptionText();
+
+    const bool bApplied = RestoreSvc->ApplyPreset(Preset);
+    UE_LOG(LogSmartFoundations, Log,
+        TEXT("[SmartRestore][UI] ImportFromExtend staged for editing: preset='%s' applied=%d hasTopology=%d childHolograms=%d grid=(%d,%d,%d)"),
+        *Name,
+        bApplied ? 1 : 0,
+        Preset.bHasExtendTopology ? 1 : 0,
+        Preset.ExtendCloneTopology.ChildHolograms.Num(),
+        Preset.GridCounters.X,
+        Preset.GridCounters.Y,
+        Preset.GridCounters.Z);
+
+    if (bApplied)
+    {
+        const bool bWasApplyImmediately = bApplyImmediately;
+        const bool bWasApplyImmediatelyEnabled = ApplyImmediatelyCheckBox ? ApplyImmediatelyCheckBox->GetIsEnabled() : true;
+        PopulateFromCounterState(CachedSubsystem.Get());
+        bApplyImmediately = bWasApplyImmediately;
+        if (ApplyImmediatelyCheckBox)
+        {
+            ApplyImmediatelyCheckBox->SetIsChecked(bApplyImmediately);
+            ApplyImmediatelyCheckBox->SetIsEnabled(bWasApplyImmediatelyEnabled);
+        }
+        CacheCurrentStateAsApplied();
+    }
+}
+
+void USmartSettingsFormWidget::OnPresetSelectionChanged(FString SelectedItem, ESelectInfo::Type SelectionType)
+{
+    UpdateRestorePresetDetails(SelectedItem);
+}
+
+void USmartSettingsFormWidget::OnRestoreSectionToggleClicked()
+{
+    UWidget* RestorePanel = RestoreSidePanel ? Cast<UWidget>(RestoreSidePanel) : Cast<UWidget>(RestoreContainer);
+    if (!RestorePanel)
+    {
+        return;
+    }
+
+    const bool bVisible = RestorePanel->GetVisibility() != ESlateVisibility::Collapsed;
+    RestorePanel->SetVisibility(bVisible ? ESlateVisibility::Collapsed : ESlateVisibility::Visible);
+}
+
+void USmartSettingsFormWidget::RefreshPresetDropdown(const FString& PreferredSelection)
+{
+    if (!PresetDropdown || !CachedSubsystem.IsValid())
+    {
+        return;
+    }
+
+    USFRestoreService* RestoreSvc = CachedSubsystem->GetRestoreService();
+    if (!RestoreSvc)
+    {
+        return;
+    }
+
+    const FString PreviousSelection = PresetDropdown->GetSelectedOption();
+    PresetDropdown->ClearOptions();
+
+    const TArray<FString> Names = RestoreSvc->GetPresetNames();
+    for (const FString& Name : Names)
+    {
+        PresetDropdown->AddOption(Name);
+    }
+
+    FString SelectionToApply;
+    if (!PreferredSelection.IsEmpty() && Names.Contains(PreferredSelection))
+    {
+        SelectionToApply = PreferredSelection;
+    }
+    else if (!PreviousSelection.IsEmpty() && Names.Contains(PreviousSelection))
+    {
+        SelectionToApply = PreviousSelection;
+    }
+
+    if (!SelectionToApply.IsEmpty())
+    {
+        PresetDropdown->SetSelectedOption(SelectionToApply);
+        UpdateRestorePresetDetails(SelectionToApply);
+    }
+    else if (Names.Num() > 0)
+    {
+        PresetDropdown->SetSelectedIndex(0);
+        UpdateRestorePresetDetails(Names[0]);
+    }
+    else
+    {
+        UpdateRestorePresetDetails(FString());
+    }
+}
+
+void USmartSettingsFormWidget::UpdateRestorePresetDetails(const FString& PresetName)
+{
+    if (!CachedSubsystem.IsValid())
+    {
+        return;
+    }
+
+    if (PresetName.IsEmpty())
+    {
+        if (PresetDescriptionInput)
+        {
+            PresetDescriptionInput->SetText(FText::GetEmpty());
+        }
+        if (PresetCreatedAtValue)
+        {
+            PresetCreatedAtValue->SetText(LOCTEXT("Panel_Restore_NotSaved", "Not saved"));
+        }
+        return;
+    }
+
+    USFRestoreService* RestoreSvc = CachedSubsystem->GetRestoreService();
+    if (!RestoreSvc)
+    {
+        return;
+    }
+
+    bool bFound = false;
+    const FSFRestorePreset Preset = RestoreSvc->LoadPreset(PresetName, bFound);
+    if (!bFound)
+    {
+        return;
+    }
+
+    if (PresetDescriptionInput)
+    {
+        PresetDescriptionInput->SetText(FText::FromString(Preset.Description));
+    }
+    if (PresetCreatedAtValue)
+    {
+        PresetCreatedAtValue->SetText(FText::FromString(FormatPresetTimestampForDisplay(Preset.CreatedAt)));
+    }
+}
+
+FString USmartSettingsFormWidget::GetPresetDescriptionText() const
+{
+    return PresetDescriptionInput
+        ? PresetDescriptionInput->GetText().ToString().TrimStartAndEnd()
+        : FString();
+}
+
+FString USmartSettingsFormWidget::FormatPresetTimestampForDisplay(const FString& IsoTimestamp) const
+{
+    if (IsoTimestamp.IsEmpty())
+    {
+        return LOCTEXT("Panel_Restore_NotSaved", "Not saved").ToString();
+    }
+
+    FDateTime UtcTimestamp;
+    if (!FDateTime::ParseIso8601(*IsoTimestamp, UtcTimestamp))
+    {
+        return IsoTimestamp;
+    }
+
+    const FTimespan LocalOffset = FDateTime::Now() - FDateTime::UtcNow();
+    const FDateTime LocalTimestamp = UtcTimestamp + LocalOffset;
+    return LocalTimestamp.ToString(TEXT("%Y-%m-%d %H:%M Local"));
+}
+
+FSFRestoreCaptureFlags USmartSettingsFormWidget::GetCaptureFlags() const
+{
+    FSFRestoreCaptureFlags Flags;
+    Flags.bGrid = CaptureGridCheckBox ? CaptureGridCheckBox->IsChecked() : true;
+    Flags.bSpacing = CaptureSpacingCheckBox ? CaptureSpacingCheckBox->IsChecked() : true;
+    Flags.bSteps = CaptureStepsCheckBox ? CaptureStepsCheckBox->IsChecked() : true;
+    Flags.bStagger = CaptureStaggerCheckBox ? CaptureStaggerCheckBox->IsChecked() : true;
+    Flags.bRotation = CaptureRotationCheckBox ? CaptureRotationCheckBox->IsChecked() : true;
+    Flags.bRecipe = CaptureRecipeCheckBox ? CaptureRecipeCheckBox->IsChecked() : true;
+    Flags.bAutoConnect = CaptureAutoConnectCheckBox ? CaptureAutoConnectCheckBox->IsChecked() : true;
+    return Flags;
+}
+
+void USmartSettingsFormWidget::UpdateExtendImportButtonState()
+{
+    if (!ImportFromExtendBtn)
+    {
+        return;
+    }
+
+    USFRestoreService* RestoreSvc = CachedSubsystem.IsValid() ? CachedSubsystem->GetRestoreService() : nullptr;
+    ImportFromExtendBtn->SetIsEnabled(RestoreSvc && RestoreSvc->IsLastExtendAvailable());
+    UpdateRestoreButtonTextColors();
+}
+
+void USmartSettingsFormWidget::UpdateRestoreButtonTextColors()
+{
+    const FSlateColor BlackText(FLinearColor::Black);
+    const FSlateColor DisabledImportText(FLinearColor(0.55f, 0.55f, 0.55f, 1.0f));
+
+    auto SetTextColor = [this](const TCHAR* WidgetName, const FSlateColor& Color)
+    {
+        if (UTextBlock* TextBlock = Cast<UTextBlock>(GetWidgetFromName(FName(WidgetName))))
+        {
+            TextBlock->SetColorAndOpacity(Color);
+        }
+    };
+
+    SetTextColor(TEXT("RestoreSectionHeader"), BlackText);
+    SetTextColor(TEXT("ApplyPresetBtnText"), BlackText);
+    SetTextColor(TEXT("SavePresetBtnText"), BlackText);
+    SetTextColor(TEXT("DeletePresetBtnText"), BlackText);
+    SetTextColor(TEXT("UpdatePresetBtnText"), BlackText);
+    SetTextColor(TEXT("ExportPresetBtnText"), BlackText);
+    SetTextColor(TEXT("ImportPresetBtnText"), BlackText);
+    SetTextColor(TEXT("ImportFromExtendBtnText"),
+        ImportFromExtendBtn && ImportFromExtendBtn->GetIsEnabled() ? BlackText : DisabledImportText);
+}
+
 void USmartSettingsFormWidget::CloseForm()
 {
     // Restore HUD visibility
@@ -1309,11 +1872,32 @@ void USmartSettingsFormWidget::ApplyCurrentValues()
 
 FReply USmartSettingsFormWidget::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
 {
-    if (InMouseEvent.GetEffectingButton() == EKeys::RightMouseButton && BackgroundPanelSlot)
+    if (InMouseEvent.GetEffectingButton() == EKeys::RightMouseButton)
     {
-        bIsDragging = true;
         const FVector2D LocalMouse = InGeometry.AbsoluteToLocal(InMouseEvent.GetScreenSpacePosition());
-        DragOffset = LocalMouse - BackgroundPanelSlot->GetPosition();
+
+        if (RestoreSidePanelSlot && RestoreSidePanel && RestoreSidePanel->GetVisibility() != ESlateVisibility::Collapsed)
+        {
+            const FVector2D RestorePos = RestoreSidePanelSlot->GetPosition();
+            const FVector2D RestoreSize = RestoreSidePanelSlot->GetSize();
+            const bool bMouseOverRestorePanel =
+                LocalMouse.X >= RestorePos.X && LocalMouse.X <= RestorePos.X + RestoreSize.X &&
+                LocalMouse.Y >= RestorePos.Y && LocalMouse.Y <= RestorePos.Y + RestoreSize.Y;
+
+            if (bMouseOverRestorePanel)
+            {
+                bIsDraggingRestorePanel = true;
+                DragOffset = LocalMouse - RestorePos;
+                return FReply::Handled();
+            }
+        }
+
+        if (BackgroundPanelSlot)
+        {
+            bIsDragging = true;
+            DragOffset = LocalMouse - BackgroundPanelSlot->GetPosition();
+            return FReply::Handled();
+        }
     }
 
     return Super::NativeOnMouseButtonDown(InGeometry, InMouseEvent);
@@ -1324,6 +1908,7 @@ FReply USmartSettingsFormWidget::NativeOnMouseButtonUp(const FGeometry& InGeomet
     if (InMouseEvent.GetEffectingButton() == EKeys::RightMouseButton)
     {
         bIsDragging = false;
+        bIsDraggingRestorePanel = false;
     }
 
     return Super::NativeOnMouseButtonUp(InGeometry, InMouseEvent);
@@ -1331,6 +1916,13 @@ FReply USmartSettingsFormWidget::NativeOnMouseButtonUp(const FGeometry& InGeomet
 
 FReply USmartSettingsFormWidget::NativeOnMouseMove(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
 {
+    if (bIsDraggingRestorePanel && RestoreSidePanelSlot)
+    {
+        const FVector2D LocalMouse = InGeometry.AbsoluteToLocal(InMouseEvent.GetScreenSpacePosition());
+        RestoreSidePanelSlot->SetPosition(LocalMouse - DragOffset);
+        return FReply::Handled();
+    }
+
     if (bIsDragging && BackgroundPanelSlot)
     {
         const FVector2D LocalMouse = InGeometry.AbsoluteToLocal(InMouseEvent.GetScreenSpacePosition());

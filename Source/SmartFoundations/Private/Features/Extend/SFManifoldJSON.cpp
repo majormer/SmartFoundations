@@ -3083,7 +3083,7 @@ int32 FSFCloneTopology::SpawnChildHolograms(
                 }
                 if (!LiftBuildClass)
                 {
-                    LiftBuildClass = FindBuildClassByName(TEXT("Build_ConveyorLiftMk5_C"));
+                    LiftBuildClass = FindBuildClassByName(TEXT("Build_ConveyorLiftMk1_C"));
                 }
                 
                 ASFConveyorLiftHologram* LiftLane = World->SpawnActor<ASFConveyorLiftHologram>(

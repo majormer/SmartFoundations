@@ -2,6 +2,7 @@
 // NOTE: SFDeferredCostService removed - child holograms automatically aggregate costs via GetCost()
 #include "Subsystem/SFSubsystem.h"
 #include "Features/Extend/SFExtendService.h"
+#include "Features/Restore/SFRestoreService.h"
 #include "SmartFoundations.h"
 #include "HUD/SFHUDTypes.h"
 #include "HUD/SFHudWidget.h"
@@ -265,6 +266,17 @@ TPair<FString, FString> USFHudService::BuildCounterDisplayLines() const
 		{
 			Lines.Add(LOCTEXT("HUD_ExtendDisabled", "*Extend Disabled").ToString());
 		}
+	}
+
+	if (Subsystem->IsRestoredExtendModeActive())
+	{
+		USFRestoreService* RestoreSvc = Subsystem->GetRestoreService();
+		const FString PresetName = (RestoreSvc && RestoreSvc->IsRestoreSessionActive())
+			? RestoreSvc->GetActiveRestorePresetName()
+			: FString();
+		Lines.Add(PresetName.IsEmpty()
+			? LOCTEXT("HUD_RestoreActive", "*Restore Active").ToString()
+			: FText::Format(LOCTEXT("HUD_RestorePreset", "*Restore: {0}"), FText::FromString(PresetName)).ToString());
 	}
 
 	// Lift height display (for conveyor lifts and pipe lifts)

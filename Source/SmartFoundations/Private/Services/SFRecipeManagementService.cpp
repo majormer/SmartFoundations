@@ -211,6 +211,29 @@ void USFRecipeManagementService::SetActiveRecipeByIndex(int32 Index)
 		*StoredRecipeDisplayName, Index + 1, SortedFilteredRecipes.Num());
 }
 
+bool USFRecipeManagementService::SetActiveRecipeByClass(TSubclassOf<UFGRecipe> RecipeClass)
+{
+	if (!RecipeClass) return false;
+
+	// Force-rebuild the recipe cache since this is typically called after a
+	// build gun switch where the cached list is stale (old hologram's recipes).
+	// The index reset from rebuilding is acceptable here because we look up
+	// by class, not by index.
+	SortedFilteredRecipes = GetFilteredRecipesForCurrentHologram();
+
+	// Find the recipe in SortedFilteredRecipes by class
+	for (int32 i = 0; i < SortedFilteredRecipes.Num(); ++i)
+	{
+		if (SortedFilteredRecipes[i] == RecipeClass)
+		{
+			SetActiveRecipeByIndex(i);
+			return true;
+		}
+	}
+
+	return false;
+}
+
 void USFRecipeManagementService::AddRecipeToUnlocked(TSubclassOf<UFGRecipe> Recipe)
 {
 	if (!Recipe) return;
