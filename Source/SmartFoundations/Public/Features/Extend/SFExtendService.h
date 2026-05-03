@@ -315,6 +315,17 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Smart|Extend")
     const FSFExtendTopology& GetCurrentTopology() const;
 
+    UFUNCTION(BlueprintCallable, Category = "Smart|Extend")
+    const FSFExtendTopology& GetLastExtendTopology() const;
+
+    TSharedPtr<FSFCloneTopology> GetLastCloneTopology() const;
+    bool ReplayRestoreCloneTopology(AFGHologram* ParentHologram, const FSFCloneTopology& CloneTopology);
+    void TickRestoredCloneTopology(float DeltaTime);
+    void OnRestoredCloneTopologyStateChanged();
+    bool IsRestoredCloneTopologyActive() const { return bRestoredCloneTopologyActive; }
+    bool IsHologramCompatibleWithRestoredCloneTopology(AFGHologram* ParentHologram) const;
+    void ClearRestoredCloneTopologySession(const TCHAR* Reason);
+
     /** Clear cached topology data */
     UFUNCTION(BlueprintCallable, Category = "Smart|Extend")
     void ClearTopology();
@@ -693,6 +704,11 @@ private:
     UPROPERTY()
     TWeakObjectPtr<AFGBuildable> LastBuiltFromBuilding;
 
+    UPROPERTY()
+    FSFExtendTopology LastExtendTopology;
+
+    TSharedPtr<FSFCloneTopology> LastCloneTopology;
+
     // ==================== Scaled Extend State (Issue #265) ====================
 
     /** Whether the current scaled extend configuration is valid for placement */
@@ -763,6 +779,24 @@ private:
 
     /** Map of clone_id -> built actor (populated during Construct(), used for wiring) */
     TMap<FString, AActor*> JsonBuiltActors;
+
+    /** Cached preview locations for restored scaled factories; hologram pointers are often invalid by post-build wiring time. */
+    TMap<FString, FVector> RestoredScaledFactoryPreviewLocations;
+
+    bool bRestoredCloneTopologyActive = false;
+    TWeakObjectPtr<AFGHologram> RestoredCloneParentHologram;
+    TSharedPtr<FSFCloneTopology> RestoredCloneTopologyTemplate;
+    TSharedPtr<FSFCloneTopology> RestoredCloneBaseTopology;
+    FVector RestoredCloneLastParentLocation = FVector::ZeroVector;
+    FRotator RestoredCloneLastParentRotation = FRotator::ZeroRotator;
+    bool bRestoredScaledWiringDeferred = false;
+    bool bRestoredScaledWiringRetryScheduled = false;
+    int32 RestoredScaledWiringRetryAttempts = 0;
+
+    FSFCloneTopology BuildRestoredCloneTopologyForCurrentState(AFGHologram* ParentHologram) const;
+    void ClearRestoredCloneTopologyPreview();
+    int32 SpawnRestoredScaledFactoryHolograms(AFGHologram* ParentHologram, TMap<FString, AFGHologram*>& OutSpawnedHolograms);
+    bool SpawnRestoredCloneTopology(AFGHologram* ParentHologram, const FSFCloneTopology& CloneTopology);
 
     // ==================== Power Extend Tracking (Issue #229) ====================
 

@@ -17,6 +17,7 @@ public class SmartFoundations : ModuleRules
 			"Core", "CoreUObject",
 			"Engine",
 			"DeveloperSettings",
+			"ApplicationCore",
 			"PhysicsCore",
 			"InputCore",
 			//"OnlineSubsystem", "OnlineSubsystemUtils", "OnlineSubsystemNull",

@@ -368,7 +368,7 @@ AActor* ASFPipelineHologram::Construct(TArray<AActor*>& out_children, FNetConstr
 		}
 		else
 		{
-			UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND: ❌ Pipe Construct returned nullptr!"));
+			SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND: ❌ Pipe Construct returned nullptr!"));
 		}
 		
 		return BuiltActor;
@@ -472,7 +472,7 @@ void ASFPipelineHologram::SetSnappedConnections(UFGPipeConnectionComponentBase* 
 	}
 	else
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND: Failed to find mSnappedConnectionComponents property on %s"), *GetName());
+		SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND: Failed to find mSnappedConnectionComponents property on %s"), *GetName());
 	}
 }
 

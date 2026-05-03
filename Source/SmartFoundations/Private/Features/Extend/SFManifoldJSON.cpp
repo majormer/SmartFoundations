@@ -359,7 +359,7 @@ FSFCloneTopology FSFCloneTopology::FromSource(const FSFSourceTopology& Source, c
         // Belt chains must terminate at a splitter/merger, pipe chains at a junction
         if (Chain.Distributor.Id.IsEmpty())
         {
-            UE_LOG(LogSmartFoundations, Log, TEXT("\u26a0\ufe0f EXTEND: Skipping chain '%s' - no physical distributor (terminates directly at factory)"), *Chain.ChainId);
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("\u26a0\ufe0f EXTEND: Skipping chain '%s' - no physical distributor (terminates directly at factory)"), *Chain.ChainId);
             return;
         }
         
@@ -367,7 +367,7 @@ FSFCloneTopology FSFCloneTopology::FromSource(const FSFSourceTopology& Source, c
         // A distributor with both lane connectors used by factory connections can't form a manifold lane
         if (IsBeltDistributorLaneBlocked(Chain))
         {
-            UE_LOG(LogSmartFoundations, Log, TEXT("\u26a0\ufe0f EXTEND: Skipping chain '%s' - distributor '%s' has both lane connectors (Output1/Input1) occupied"), *Chain.ChainId, *Chain.Distributor.Id);
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("\u26a0\ufe0f EXTEND: Skipping chain '%s' - distributor '%s' has both lane connectors (Output1/Input1) occupied"), *Chain.ChainId, *Chain.Distributor.Id);
             return;
         }
         
@@ -893,7 +893,7 @@ FSFCloneTopology FSFCloneTopology::FromSource(const FSFSourceTopology& Source, c
             // If no valid source connectors available, skip this junction's lane segment
             if (ValidSourceConnectors.Num() == 0)
             {
-                UE_LOG(LogSmartFoundations, Warning, TEXT("🛤️ PIPE LANE: No available connectors on source junction %s (factory=%s, connected=%d) - skipping lane segment"),
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🛤️ PIPE LANE: No available connectors on source junction %s (factory=%s, connected=%d) - skipping lane segment"),
                     *DistributorId, *FactoryConnector, Distributor.ConnectedConnectors.Num());
                 continue;  // CRITICAL: Skip to next distributor to avoid garbage lane data
             }
@@ -942,7 +942,7 @@ FSFCloneTopology FSFCloneTopology::FromSource(const FSFSourceTopology& Source, c
             // Safety check: if no valid connector pair was found, skip this lane segment
             if (BestSourceConn.IsEmpty() || BestCloneConn.IsEmpty())
             {
-                UE_LOG(LogSmartFoundations, Warning, TEXT("🛤️ PIPE LANE: No valid connector pair found for junction %s - skipping lane segment"),
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🛤️ PIPE LANE: No valid connector pair found for junction %s - skipping lane segment"),
                     *DistributorId);
                 continue;
             }
@@ -1024,7 +1024,7 @@ FSFCloneTopology FSFCloneTopology::FromSource(const FSFSourceTopology& Source, c
             // If neither option is valid, skip this distributor's lane segment
             if (!bOption1Valid && !bOption2Valid)
             {
-                UE_LOG(LogSmartFoundations, Log, TEXT("🛤️ BELT LANE: Skipping %s - both Output1 (connected=%d) and Input1 (connected=%d) unavailable"),
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("🛤️ BELT LANE: Skipping %s - both Output1 (connected=%d) and Input1 (connected=%d) unavailable"),
                     *DistributorId, bSourceOutput1Connected, bSourceInput1Connected);
                 continue;  // Skip to next distributor
             }
@@ -1316,7 +1316,7 @@ namespace CaptureHelpers
                     }
                 }
                 
-                UE_LOG(LogSmartFoundations, Log, TEXT("📋 CAPTURE: Lift %s has %d passthroughs: [%s]"),
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("📋 CAPTURE: Lift %s has %d passthroughs: [%s]"),
                     *Lift->GetName(), Result.PassthroughCloneIds.Num(),
                     *FString::Join(Result.PassthroughCloneIds, TEXT(", ")));
             }
@@ -1542,7 +1542,7 @@ namespace CaptureHelpers
             
             Result.Segments.Add(PassSeg);
             
-            UE_LOG(LogSmartFoundations, Log, TEXT("🔧 EXTEND CAPTURE: Pipe passthrough %s at %s"),
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("🔧 EXTEND CAPTURE: Pipe passthrough %s at %s"),
                 *PassSeg.Id, *Passthrough->GetActorLocation().ToString());
         }
         
@@ -1591,7 +1591,7 @@ namespace CaptureHelpers
             
             Result.Segments.Add(AttSeg);
             
-            UE_LOG(LogSmartFoundations, Log, TEXT("🔧 EXTEND CAPTURE: Pipe attachment %s (class=%s) UserFlowLimit=%.3f PowerPole=%s at %s"),
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("🔧 EXTEND CAPTURE: Pipe attachment %s (class=%s) UserFlowLimit=%.3f PowerPole=%s at %s"),
                 *AttSeg.Id, *AttSeg.Class, AttSeg.UserFlowLimit,
                 AttSeg.ConnectedPowerPoleSourceId.IsEmpty() ? TEXT("<none>") : *AttSeg.ConnectedPowerPoleSourceId,
                 *Attachment->GetActorLocation().ToString());
@@ -1693,7 +1693,7 @@ FSFSourceTopology FSFSourceTopology::CaptureFromTopology(const FSFExtendTopology
         
         Result.PipePassthroughs.Add(PassSeg);
         
-        UE_LOG(LogSmartFoundations, Log, TEXT("🔧 EXTEND CAPTURE: Passthrough %s (class=%s, thickness=%.0f) at %s"),
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("🔧 EXTEND CAPTURE: Passthrough %s (class=%s, thickness=%.0f) at %s"),
             *PassSeg.Id, *PassSeg.Class, PassSeg.Thickness, *Passthrough->GetActorLocation().ToString());
     }
 
@@ -1715,7 +1715,7 @@ FSFSourceTopology FSFSourceTopology::CaptureFromTopology(const FSFExtendTopology
 
         Result.WallHoles.Add(WallSeg);
 
-        UE_LOG(LogSmartFoundations, Log, TEXT("🔧 EXTEND CAPTURE: Wall hole %s (class=%s) at %s"),
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("🔧 EXTEND CAPTURE: Wall hole %s (class=%s) at %s"),
             *WallSeg.Id, *WallSeg.Class, *WallHole->GetActorLocation().ToString());
     }
 
@@ -1732,7 +1732,7 @@ FSFSourceTopology FSFSourceTopology::CaptureFromBuiltFactory(AFGBuildableFactory
     
     if (!Factory)
     {
-        UE_LOG(LogSmartFoundations, Warning, TEXT("📋 CaptureFromBuiltFactory: No factory provided"));
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("📋 CaptureFromBuiltFactory: No factory provided"));
         return Result;
     }
     
@@ -1741,7 +1741,7 @@ FSFSourceTopology FSFSourceTopology::CaptureFromBuiltFactory(AFGBuildableFactory
     Result.Factory.Class = Factory->GetClass()->GetName();
     Result.Factory.Transform = FSFTransform(Factory->GetActorLocation(), Factory->GetActorRotation());
     
-    UE_LOG(LogSmartFoundations, Log, TEXT("📋 CaptureFromBuiltFactory: Capturing topology for %s"), *Factory->GetName());
+    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("📋 CaptureFromBuiltFactory: Capturing topology for %s"), *Factory->GetName());
     
     // Walk belt connections from factory
     TArray<UFGFactoryConnectionComponent*> FactoryConnections;
@@ -2088,7 +2088,7 @@ FSFSourceTopology FSFSourceTopology::CaptureFromBuiltFactory(AFGBuildableFactory
         }
     }
     
-    UE_LOG(LogSmartFoundations, Log, TEXT("📋 CaptureFromBuiltFactory: Captured %d belt input, %d belt output, %d pipe input, %d pipe output chains"),
+    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("📋 CaptureFromBuiltFactory: Captured %d belt input, %d belt output, %d pipe input, %d pipe output chains"),
         Result.BeltInputChains.Num(), Result.BeltOutputChains.Num(),
         Result.PipeInputChains.Num(), Result.PipeOutputChains.Num());
     
@@ -2180,14 +2180,14 @@ int32 FSFCloneTopology::SpawnChildHolograms(
     
     if (!ParentHologram || !ExtendService)
     {
-        UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 JSON SPAWN: Invalid parent hologram or extend service"));
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔧 JSON SPAWN: Invalid parent hologram or extend service"));
         return 0;
     }
     
     UWorld* World = ParentHologram->GetWorld();
     if (!World)
     {
-        UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 JSON SPAWN: No world available"));
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔧 JSON SPAWN: No world available"));
         return 0;
     }
     
@@ -2228,7 +2228,7 @@ int32 FSFCloneTopology::SpawnChildHolograms(
     {
         if (PoleNode.PowerPole.IsValid()) CaptureCustomization(Cast<AFGBuildable>(PoleNode.PowerPole.Get()));
     }
-    UE_LOG(LogSmartFoundations, Log, TEXT("🎨 JSON SPAWN: Captured customization data from %d source actors"), SourceCustomizationMap.Num());
+    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("🎨 JSON SPAWN: Captured customization data from %d source actors"), SourceCustomizationMap.Num());
     
     // Build lane segment color lookup: distributor name → customization from the first belt/pipe
     // on the "other side" of the distributor (away from factory). Lane segments should inherit
@@ -2275,7 +2275,7 @@ int32 FSFCloneTopology::SpawnChildHolograms(
             }
         }
     }
-    UE_LOG(LogSmartFoundations, Log, TEXT("🎨 JSON SPAWN: Built lane color map from %d distributors with existing infrastructure"), LaneColorMap.Num());
+    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("🎨 JSON SPAWN: Built lane color map from %d distributors with existing infrastructure"), LaneColorMap.Num());
     
     UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 JSON SPAWN: Starting spawn of %d child holograms"), ChildHolograms.Num());
     
@@ -2298,7 +2298,7 @@ int32 FSFCloneTopology::SpawnChildHolograms(
             // Spawn distributor child hologram
             if (!Recipe || !BuildClass)
             {
-                UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 JSON SPAWN: Missing recipe/build class for distributor %s"), *ChildData.HologramId);
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔧 JSON SPAWN: Missing recipe/build class for distributor %s"), *ChildData.HologramId);
                 continue;
             }
             
@@ -2373,7 +2373,7 @@ int32 FSFCloneTopology::SpawnChildHolograms(
             
             if (!BuildClass)
             {
-                UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 JSON SPAWN: Missing build class for belt %s"), *ChildData.HologramId);
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔧 JSON SPAWN: Missing build class for belt %s"), *ChildData.HologramId);
                 continue;
             }
             
@@ -2424,7 +2424,7 @@ int32 FSFCloneTopology::SpawnChildHolograms(
                 }
                 else
                 {
-                    UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 JSON SPAWN: bHasSplineData=FALSE for belt %s - NO SPLINE DATA!"), 
+                    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔧 JSON SPAWN: bHasSplineData=FALSE for belt %s - NO SPLINE DATA!"),
                         *ChildName.ToString());
                 }
                 
@@ -2471,7 +2471,7 @@ int32 FSFCloneTopology::SpawnChildHolograms(
             // Spawn lift child hologram
             if (!BuildClass)
             {
-                UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 JSON SPAWN: Missing build class for lift %s"), *ChildData.HologramId);
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔧 JSON SPAWN: Missing build class for lift %s"), *ChildData.HologramId);
                 continue;
             }
             
@@ -2587,7 +2587,7 @@ int32 FSFCloneTopology::SpawnChildHolograms(
             // Spawn pipe child hologram
             if (!BuildClass)
             {
-                UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 JSON SPAWN: Missing build class for pipe %s"), *ChildData.HologramId);
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔧 JSON SPAWN: Missing build class for pipe %s"), *ChildData.HologramId);
                 continue;
             }
             
@@ -2669,7 +2669,7 @@ int32 FSFCloneTopology::SpawnChildHolograms(
             // auto-created by conveyor lift construction)
             if (!Recipe || !BuildClass)
             {
-                UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 JSON SPAWN: Missing recipe/build class for passthrough %s"), *ChildData.HologramId);
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔧 JSON SPAWN: Missing recipe/build class for passthrough %s"), *ChildData.HologramId);
                 continue;
             }
             
@@ -2733,7 +2733,7 @@ int32 FSFCloneTopology::SpawnChildHolograms(
                 SpawnedHologram = PassChild;
                 SpawnedCount++;
                 
-                UE_LOG(LogSmartFoundations, Log, TEXT("🔧 JSON SPAWN: Spawned passthrough %s at %s"), 
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("🔧 JSON SPAWN: Spawned passthrough %s at %s"),
                     *ChildData.HologramId, *Location.ToString());
             }
         }
@@ -2746,7 +2746,7 @@ int32 FSFCloneTopology::SpawnChildHolograms(
             // on the hologram registry data).
             if (!Recipe || !BuildClass)
             {
-                UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 JSON SPAWN: Missing recipe/build class for pipe attachment %s (recipe=%s, build=%s)"),
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔧 JSON SPAWN: Missing recipe/build class for pipe attachment %s (recipe=%s, build=%s)"),
                     *ChildData.HologramId, *ChildData.RecipeClass, *ChildData.BuildClass);
                 continue;
             }
@@ -2811,7 +2811,7 @@ int32 FSFCloneTopology::SpawnChildHolograms(
                 SpawnedHologram = AttChild;
                 SpawnedCount++;
                 
-                UE_LOG(LogSmartFoundations, Log, TEXT("🔧 JSON SPAWN: Spawned pipe attachment %s (class=%s) UserFlowLimit=%.3f at %s"),
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("🔧 JSON SPAWN: Spawned pipe attachment %s (class=%s) UserFlowLimit=%.3f at %s"),
                     *ChildData.HologramId, *ChildData.BuildClass, ChildData.UserFlowLimit, *Location.ToString());
             }
         }
@@ -2820,7 +2820,7 @@ int32 FSFCloneTopology::SpawnChildHolograms(
             // Issue #229: Spawn power pole child hologram for extend
             if (!Recipe || !BuildClass)
             {
-                UE_LOG(LogSmartFoundations, Warning, TEXT("⚡ JSON SPAWN: Missing recipe/build class for power pole %s (recipe=%s, build=%s)"), 
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("⚡ JSON SPAWN: Missing recipe/build class for power pole %s (recipe=%s, build=%s)"),
                     *ChildData.HologramId, *ChildData.RecipeClass, *ChildData.BuildClass);
                 continue;
             }
@@ -2890,7 +2890,7 @@ int32 FSFCloneTopology::SpawnChildHolograms(
                 SpawnedHologram = PoleChild;
                 SpawnedCount++;
                 
-                UE_LOG(LogSmartFoundations, Log, TEXT("⚡ JSON SPAWN: Spawned power pole %s at %s"), 
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("⚡ JSON SPAWN: Spawned power pole %s at %s"),
                     *ChildData.HologramId, *Location.ToString());
             }
         }
@@ -2963,21 +2963,21 @@ int32 FSFCloneTopology::SpawnChildHolograms(
                 SpawnedCount++;
                 
                 int32 CableCount = FMath::Max(1, FMath::CeilToInt((WireDistance / 100.0f) / 25.0f));
-                UE_LOG(LogSmartFoundations, Log, TEXT("⚡ JSON SPAWN: Spawned wire %s (distance=%.0fcm, cables=%d)"), 
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("⚡ JSON SPAWN: Spawned wire %s (distance=%.0fcm, cables=%d)"),
                     *ChildData.HologramId, WireDistance, CableCount);
             }
         }
         else if (ChildData.Role == TEXT("lane_segment"))
         {
             // Spawn lane segment - generated belt/lift/pipe connecting adjacent clones' distributors
-            UE_LOG(LogSmartFoundations, Log, TEXT("🛤️ LANE SPAWN: %s type=%s at (%.0f,%.0f,%.0f) rot=(%.0f)"),
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("🛤️ LANE SPAWN: %s type=%s at (%.0f,%.0f,%.0f) rot=(%.0f)"),
                 *ChildData.HologramId, *ChildData.LaneSegmentType,
                 Location.X, Location.Y, Location.Z, Rotation.Yaw);
             if (ChildData.bHasSplineData && ChildData.SplineData.Points.Num() >= 2)
             {
                 FVector StartW = ChildData.SplineData.Points[0].World.ToFVector();
                 FVector EndW = ChildData.SplineData.Points.Last().World.ToFVector();
-                UE_LOG(LogSmartFoundations, Log, TEXT("🛤️ LANE SPAWN: %s spline Start(%.0f,%.0f,%.0f)→End(%.0f,%.0f,%.0f) len=%.0f"),
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("🛤️ LANE SPAWN: %s spline Start(%.0f,%.0f,%.0f)→End(%.0f,%.0f,%.0f) len=%.0f"),
                     *ChildData.HologramId,
                     StartW.X, StartW.Y, StartW.Z, EndW.X, EndW.Y, EndW.Z,
                     ChildData.SplineData.Length);
@@ -3083,7 +3083,7 @@ int32 FSFCloneTopology::SpawnChildHolograms(
                 }
                 if (!LiftBuildClass)
                 {
-                    LiftBuildClass = FindBuildClassByName(TEXT("Build_ConveyorLiftMk5_C"));
+                    LiftBuildClass = FindBuildClassByName(TEXT("Build_ConveyorLiftMk1_C"));
                 }
                 
                 ASFConveyorLiftHologram* LiftLane = World->SpawnActor<ASFConveyorLiftHologram>(
@@ -3204,7 +3204,7 @@ int32 FSFCloneTopology::SpawnChildHolograms(
             // any "*WallHole_C" variants). Pattern mirrors the passthrough handler above.
             if (!Recipe || !BuildClass)
             {
-                UE_LOG(LogSmartFoundations, Warning, TEXT("🧱 JSON SPAWN: Missing recipe/build class for wall hole %s (recipe=%s, build=%s)"),
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🧱 JSON SPAWN: Missing recipe/build class for wall hole %s (recipe=%s, build=%s)"),
                     *ChildData.HologramId, *ChildData.RecipeClass, *ChildData.BuildClass);
                 continue;
             }
@@ -3259,12 +3259,12 @@ int32 FSFCloneTopology::SpawnChildHolograms(
                 SpawnedHologram = WallChild;
                 SpawnedCount++;
 
-                UE_LOG(LogSmartFoundations, Log, TEXT("🧱 JSON SPAWN: Spawned wall hole %s (class=%s) at %s"),
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("🧱 JSON SPAWN: Spawned wall hole %s (class=%s) at %s"),
                     *ChildData.HologramId, *ChildData.BuildClass, *Location.ToString());
             }
             else
             {
-                UE_LOG(LogSmartFoundations, Warning, TEXT("🧱 JSON SPAWN: Failed to spawn ASFWallHoleChildHologram for %s"),
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🧱 JSON SPAWN: Failed to spawn ASFWallHoleChildHologram for %s"),
                     *ChildData.HologramId);
             }
         }
@@ -3294,7 +3294,7 @@ int32 FSFCloneTopology::SpawnChildHolograms(
                     if (const FFactoryCustomizationData* LaneCustom = LaneColorMap.Find(SourceDistName))
                     {
                         BuildableHolo->SetCustomizationData(*LaneCustom);
-                        UE_LOG(LogSmartFoundations, Log, TEXT("🎨 LANE COLOR: %s inherits color from belt/pipe near distributor %s"),
+                        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("🎨 LANE COLOR: %s inherits color from belt/pipe near distributor %s"),
                             *ChildData.HologramId, *SourceDistName);
                     }
                     else
@@ -3302,7 +3302,7 @@ int32 FSFCloneTopology::SpawnChildHolograms(
                         // No existing infrastructure to sample — use default customization
                         // (explicitly reset so lane doesn't inherit factory building's color)
                         BuildableHolo->SetCustomizationData(FFactoryCustomizationData());
-                        UE_LOG(LogSmartFoundations, Log, TEXT("🎨 LANE COLOR: %s using defaults (no infrastructure near distributor %s)"),
+                        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("🎨 LANE COLOR: %s using defaults (no infrastructure near distributor %s)"),
                             *ChildData.HologramId, *SourceDistName);
                     }
                 }
@@ -3428,7 +3428,7 @@ int32 FSFCloneTopology::SpawnChildHolograms(
                         *HoloPassthroughs = PassthroughActors;
                         LiftsLinked++;
                         
-                        UE_LOG(LogSmartFoundations, Warning, TEXT("🔗 JSON SPAWN PASS 2: Linked %d passthroughs to lift %s (bottom=%s, top=%s)"),
+                        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔗 JSON SPAWN PASS 2: Linked %d passthroughs to lift %s (bottom=%s, top=%s)"),
                             ValidCount, *ChildData.HologramId,
                             PassthroughActors[0] ? *PassthroughActors[0]->GetName() : TEXT("none"),
                             PassthroughActors[1] ? *PassthroughActors[1]->GetName() : TEXT("none"));
@@ -3440,7 +3440,7 @@ int32 FSFCloneTopology::SpawnChildHolograms(
     
     if (LiftsLinked > 0)
     {
-        UE_LOG(LogSmartFoundations, Warning, TEXT("🔗 JSON SPAWN PASS 2: Linked %d lifts to passthroughs"), LiftsLinked);
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔗 JSON SPAWN PASS 2: Linked %d lifts to passthroughs"), LiftsLinked);
     }
     
     return SpawnedCount;
@@ -3458,7 +3458,7 @@ int32 FSFCloneTopology::WireChildHologramConnections(
     
     if (!ParentHologram)
     {
-        UE_LOG(LogSmartFoundations, Warning, TEXT("🔌 WIRE: No parent hologram provided"));
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔌 WIRE: No parent hologram provided"));
         return 0;
     }
     
@@ -3560,7 +3560,7 @@ int32 FSFCloneTopology::WireChildHologramConnections(
         AFGHologram* const* FoundHologram = SpawnedHolograms.Find(ChildData.HologramId);
         if (!FoundHologram || !*FoundHologram)
         {
-            UE_LOG(LogSmartFoundations, Warning, TEXT("🔌 WIRE: Hologram %s not found in spawned map"), *ChildData.HologramId);
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔌 WIRE: Hologram %s not found in spawned map"), *ChildData.HologramId);
             continue;
         }
         

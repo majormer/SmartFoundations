@@ -255,17 +255,18 @@ void ASFConveyorBeltHologram::PostHologramPlacement(const FHitResult& hitResult,
         }
         
         bPostHologramPlacementCalled = true;
-        
-        // LANE SEGMENTS: Skip Super entirely — their splines are configured by
-        // AutoRouteSplineWithNormals and must NOT be overwritten by vanilla's
-        // spline recalculation (which uses snapped connections/hit results).
+
+        // Lane segments have their route authored entirely by Smart. Calling vanilla
+        // post-placement on them can overwrite the lane route, but ordinary cloned
+        // Extend belts need the one vanilla call so snapped connections are committed
+        // before ConfigureComponents and chain registration run.
         if (Tags.Contains(FName(TEXT("SF_LaneSegment"))))
         {
-            UE_LOG(LogSmartFoundations, Log, TEXT("🎯 BELT PostHologramPlacement: Lane segment %s - skipping Super (spline already routed)"), *GetName());
+            UE_LOG(LogSmartFoundations, Log, TEXT("BELT PostHologramPlacement: Lane segment %s - skipping vanilla post-placement (Smart-managed route)"), *GetName());
             return;
         }
         
-        UE_LOG(LogSmartFoundations, Log, TEXT("🎯 BELT PostHologramPlacement: Extend child %s - calling Super once for connection wiring"), *GetName());
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("🎯 BELT PostHologramPlacement: Extend child %s - calling Super once for connection wiring"), *GetName());
         Super::PostHologramPlacement(hitResult, callForChildren);
         return;
     }
@@ -480,7 +481,7 @@ AActor* ASFConveyorBeltHologram::Construct(TArray<AActor*>& out_children, FNetCo
         }
         else
         {
-            UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND: ❌ Belt Construct returned nullptr!"));
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND: ❌ Belt Construct returned nullptr!"));
         }
         
         return BuiltActor;
@@ -2180,6 +2181,6 @@ void ASFConveyorBeltHologram::SetSnappedConnections(UFGFactoryConnectionComponen
     }
     else
     {
-        UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND Belt: Failed to find mSnappedConnectionComponents property on %s"), *GetName());
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND Belt: Failed to find mSnappedConnectionComponents property on %s"), *GetName());
     }
 }

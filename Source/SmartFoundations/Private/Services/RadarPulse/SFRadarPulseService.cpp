@@ -677,7 +677,7 @@ void USFRadarPulseService::FlagExtendSourceObjects(
         }
     }
 
-    UE_LOG(LogSmartFoundations, Log, TEXT("📡 RadarPulse: Flagged %d EXTEND source objects"), Snapshot.ExtendSourceCount);
+    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("📡 RadarPulse: Flagged %d EXTEND source objects"), Snapshot.ExtendSourceCount);
 }
 
 void USFRadarPulseService::FlagObjectsMatching(

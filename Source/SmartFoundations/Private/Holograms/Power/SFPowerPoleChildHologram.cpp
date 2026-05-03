@@ -42,7 +42,7 @@ AActor* ASFPowerPoleChildHologram::Construct(TArray<AActor*>& out_children, FNet
                 {
                     ExtendService->RegisterJsonBuiltActor(HoloData->JsonCloneId, BuiltActor);
                     
-                    UE_LOG(LogSmartFoundations, Log, TEXT("⚡ EXTEND: Power pole %s registered in Construct() with JsonCloneId=%s"),
+                    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("⚡ EXTEND: Power pole %s registered in Construct() with JsonCloneId=%s"),
                         *BuiltActor->GetName(), *HoloData->JsonCloneId);
                 }
             }

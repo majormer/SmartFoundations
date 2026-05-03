@@ -7,6 +7,16 @@
 
 DECLARE_LOG_CATEGORY_EXTERN(LogSmartFoundations, Log, All);
 
+#ifndef SF_RESTORE_DIAGNOSTIC_LOG
+#define SF_RESTORE_DIAGNOSTIC_LOG(Category, Verbosity, Format, ...) \
+	UE_LOG(Category, Verbose, Format, ##__VA_ARGS__)
+#endif
+
+#ifndef SF_EXTEND_DIAGNOSTIC_LOG
+#define SF_EXTEND_DIAGNOSTIC_LOG(Category, Verbosity, Format, ...) \
+	UE_LOG(Category, Verbose, Format, ##__VA_ARGS__)
+#endif
+
 class FSmartFoundationsModule : public IModuleInterface
 {
 public:
