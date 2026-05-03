@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [30.0.0] - 2026-05-01
+## [30.0.0] - 2026-05-03
 
 ### Added
 - **Smart! Restore Enhanced** - Smart! now has a preset system for saving, applying, sharing, and replaying Smart Panel setups. A preset can store grid size, spacing, steps, stagger, rotation, production recipe, auto-connect settings, and restored Extend topology.
@@ -21,6 +21,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Import from Last Extend** - After building with Extend, Smart Restore can capture the last Extend layout as an editable preset draft. This includes the source building, production recipe when available, factories, belts, conveyor lifts, pipes, distributors, power poles, and the cloned connection layout.
 - **Restored Extend topology replay** - Applying a preset captured from Extend replays the saved topology as the active build preview. The restored layout can be scaled from the Smart Panel, and Smart! owns that topology while the Restore session is active so normal Smart grid children are not spawned on top of it.
 - **Restore HUD indicator** - When a restored Extend topology is active, the Smart HUD shows the active Restore preset name so you can tell that the preview is being driven by Smart Restore.
+
+### Changed
+- **Quieter Restore and Extend diagnostics** - Restore and Extend troubleshooting messages now stay behind verbose logging so normal gameplay logs remain readable. Smart! still logs its normal service initialization lines.
 
 ### How to Use Smart Restore Enhanced
 - **Save a normal Smart Panel preset** - Equip the build gun, set up Smart! the way you want, open the Smart Panel, press `Presets >>`, enter a new preset name and optional description, choose the capture checkboxes, then press Save Current.

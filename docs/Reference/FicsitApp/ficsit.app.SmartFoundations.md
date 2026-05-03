@@ -1,6 +1,6 @@
 # <img src="https://github.com/SmartFoundations/SmartIssueTracker/blob/main/images/Smart-Logo.png?raw=true" width="150" alt="Smart! Logo"> Smart! Mod
 
-![Status](https://img.shields.io/badge/Status-Released-brightgreen) ![Version](https://img.shields.io/badge/Version-29.2.5-blue) ![Engine](https://img.shields.io/badge/Engine-UE%205.3-blue) ![SML](https://img.shields.io/badge/SML-3.11.x-blue) ![Multiplayer](https://img.shields.io/badge/Multiplayer-Testing-orange) ![AI Assisted Development Used](https://img.shields.io/badge/AI%20Assisted%20Development%20Used-Disclosure%20Below-blue)
+![Status](https://img.shields.io/badge/Status-Released-brightgreen) ![Version](https://img.shields.io/badge/Version-30.0.0-blue) ![Engine](https://img.shields.io/badge/Engine-UE%205.3-blue) ![SML](https://img.shields.io/badge/SML-3.11.x-blue) ![Multiplayer](https://img.shields.io/badge/Multiplayer-Testing-orange) ![AI Assisted Development Used](https://img.shields.io/badge/AI%20Assisted%20Development%20Used-Disclosure%20Below-blue)
 
 > **Multiplayer note:** Smart! is primarily developed for single-player. Multiplayer is under active testing with partial success, but is not currently considered fully supported.
 
@@ -101,17 +101,19 @@ See [LICENSE.md](https://github.com/majormer/SmartFoundations/blob/main/LICENSE.
 
 ---
 
-## 📰 What's New in v29
+## 📰 What's New in v30
 
-**Current Release:** v29.2.5 — See [full changelog](https://github.com/majormer/SmartFoundations/blob/main/CHANGELOG.md) for all patch details
+**Current Release:** v30.0.0 — See [full changelog](https://github.com/majormer/SmartFoundations/blob/main/CHANGELOG.md) for all release details
 
-### Major Feature: Scaled Extend
+### Major Feature: Smart Restore Enhanced
 
-The defining feature of version 29 is **Scaled Extend** — the fusion of Scaling and Extending for rapid factory duplication. Scale Extend across multiple clones and rows, with automatic lane segments chaining between adjacent clones' distributors. This represents a fundamental transformation of what Smart! can do.
+The defining feature of version 30 is **Smart Restore Enhanced** — a preset system for saving, applying, sharing, and replaying Smart Panel setups. Presets can capture grid size, spacing, steps, stagger, rotation, production recipe, auto-connect settings, and restored Extend topology.
+
+Use the Smart Panel's `Presets >>` button to save your current setup, apply a saved setup later, export a preset to the clipboard, import a shared preset, or turn the last Extend layout you built into a reusable preset. Shared presets are checked against your current unlocks before they can be imported or applied.
 
 ### Recent Patch Updates
 
-For detailed information about recent fixes and improvements in v29.2.5 and earlier patch releases, see the [full changelog](https://github.com/majormer/SmartFoundations/blob/main/CHANGELOG.md).
+For detailed information about Smart Restore Enhanced and recent fixes, see the [full changelog](https://github.com/majormer/SmartFoundations/blob/main/CHANGELOG.md).
 
 ---
 
