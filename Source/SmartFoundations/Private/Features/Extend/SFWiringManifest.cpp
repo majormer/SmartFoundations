@@ -112,7 +112,7 @@ FSFWiringManifest FSFWiringManifest::Generate(
         AActor* const* SourceBuildablePtr = CloneIdToBuildable.Find(ChildData.HologramId);
         if (!SourceBuildablePtr || !*SourceBuildablePtr)
         {
-            UE_LOG(LogSmartFoundations, Warning, TEXT("🔌 WIRING MANIFEST: Clone %s not found in buildable map"),
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔌 WIRING MANIFEST: Clone %s not found in buildable map"),
                 *ChildData.HologramId);
             continue;
         }
@@ -508,7 +508,7 @@ bool FSFWiringManifest::WireBeltConnection(const FSFWiringConnection& Connection
 
     if (!SourceActor || !TargetActor)
     {
-        UE_LOG(LogSmartFoundations, Warning, TEXT("🔌 WIRE BELT: Failed - actors not resolved for %s"),
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔌 WIRE BELT: Failed - actors not resolved for %s"),
             *Connection.Description);
         return false;
     }
@@ -518,14 +518,14 @@ bool FSFWiringManifest::WireBeltConnection(const FSFWiringConnection& Connection
 
     if (!SourceConn)
     {
-        UE_LOG(LogSmartFoundations, Warning, TEXT("🔌 WIRE BELT: Source connector %s not found on %s"),
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔌 WIRE BELT: Source connector %s not found on %s"),
             *Connection.Source.Connector, *SourceActor->GetName());
         return false;
     }
 
     if (!TargetConn)
     {
-        UE_LOG(LogSmartFoundations, Warning, TEXT("🔌 WIRE BELT: Target connector %s not found on %s"),
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔌 WIRE BELT: Target connector %s not found on %s"),
             *Connection.Target.Connector, *TargetActor->GetName());
         return false;
     }
@@ -541,7 +541,7 @@ bool FSFWiringManifest::WireBeltConnection(const FSFWiringConnection& Connection
     // Check compatibility
     if (!SourceConn->CanConnectTo(TargetConn))
     {
-        UE_LOG(LogSmartFoundations, Warning, TEXT("🔌 WIRE BELT: Cannot connect %s - incompatible"),
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔌 WIRE BELT: Cannot connect %s - incompatible"),
             *Connection.Description);
         return false;
     }
@@ -652,7 +652,7 @@ int32 FSFWiringManifest::ExecuteWiring(UWorld* World)
     AFGBuildableSubsystem* BuildableSubsystem = AFGBuildableSubsystem::Get(World);
     if (!BuildableSubsystem)
     {
-        UE_LOG(LogSmartFoundations, Error, TEXT("🔌 EXECUTE WIRING: Failed to get BuildableSubsystem!"));
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Error, TEXT("🔌 EXECUTE WIRING: Failed to get BuildableSubsystem!"));
         return 0;
     }
 
@@ -667,7 +667,7 @@ int32 FSFWiringManifest::ExecuteWiring(UWorld* World)
 
         if (!SourceActor || !TargetActor)
         {
-            UE_LOG(LogSmartFoundations, Warning, TEXT("🔌 BATCH: Skipping %s - actors not resolved"), *Conn.Description);
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔌 BATCH: Skipping %s - actors not resolved"), *Conn.Description);
             FailCount++;
             continue;
         }
@@ -677,7 +677,7 @@ int32 FSFWiringManifest::ExecuteWiring(UWorld* World)
 
         if (!SourceConn || !TargetConn)
         {
-            UE_LOG(LogSmartFoundations, Warning, TEXT("🔌 BATCH: Skipping %s - connectors not found"), *Conn.Description);
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔌 BATCH: Skipping %s - connectors not found"), *Conn.Description);
             FailCount++;
             continue;
         }
@@ -797,14 +797,14 @@ int32 FSFWiringManifest::CreateChainActors(UWorld* World, const TMap<FString, AA
 
     if (!World)
     {
-        UE_LOG(LogSmartFoundations, Warning, TEXT("⛓️ CHAIN REBUILD: No world context"));
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("⛓️ CHAIN REBUILD: No world context"));
         return 0;
     }
 
     AFGBuildableSubsystem* BuildableSubsystem = AFGBuildableSubsystem::Get(World);
     if (!BuildableSubsystem)
     {
-        UE_LOG(LogSmartFoundations, Warning, TEXT("⛓️ CHAIN REBUILD: No buildable subsystem"));
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("⛓️ CHAIN REBUILD: No buildable subsystem"));
         return 0;
     }
 
@@ -871,14 +871,14 @@ int32 FSFWiringManifest::CreateChainActors(UWorld* World, const TMap<FString, AA
         }
     }
 
-    UE_LOG(LogSmartFoundations, Log, TEXT("⛓️ CHAIN REBUILD: %d conveyors, %d affected chains to rebuild"),
+    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("⛓️ CHAIN REBUILD: %d conveyors, %d affected chains to rebuild"),
         AllConveyors.Num(), AffectedChains.Num());
 
     USFSubsystem* Subsystem = USFSubsystem::Get(World);
     USFChainActorService* ChainService = Subsystem ? Subsystem->GetChainActorService() : nullptr;
     if (!ChainService)
     {
-        UE_LOG(LogSmartFoundations, Warning,
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning,
             TEXT("⛓️ CHAIN REBUILD: USFChainActorService unavailable — falling back to RemoveConveyorChainActor (vanilla rebuilds next frame; save-timing window not closed)"));
         int32 RemovedCount = 0;
         for (AFGConveyorChainActor* Chain : AffectedChains)
@@ -893,7 +893,7 @@ int32 FSFWiringManifest::CreateChainActors(UWorld* World, const TMap<FString, AA
     }
 
     const int32 MigratedCount = ChainService->InvalidateAndRebuildChains(AffectedChains);
-    UE_LOG(LogSmartFoundations, Log, TEXT("⛓️ CHAIN REBUILD: rebuilt %d chain group(s) synchronously"), MigratedCount);
+    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("⛓️ CHAIN REBUILD: rebuilt %d chain group(s) synchronously"), MigratedCount);
 
     return MigratedCount;
 }
@@ -906,14 +906,14 @@ int32 FSFWiringManifest::RebuildPipeNetworks(UWorld* World, const TMap<FString, 
 {
     if (!World)
     {
-        UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 PIPE NETWORKS: No world context"));
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔧 PIPE NETWORKS: No world context"));
         return 0;
     }
 
     AFGPipeSubsystem* PipeSubsystem = AFGPipeSubsystem::Get(World);
     if (!PipeSubsystem)
     {
-        UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 PIPE NETWORKS: No pipe subsystem"));
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔧 PIPE NETWORKS: No pipe subsystem"));
         return 0;
     }
 
@@ -1133,7 +1133,7 @@ bool FSFWiringManifest::WireSingleBeltAndVerify(const FSFWiringConnection& Conne
 
     if (!SourceActor || !TargetActor)
     {
-        UE_LOG(LogSmartFoundations, Warning, TEXT("⛓️ WIRE SINGLE: Failed - actors not resolved for %s"),
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("⛓️ WIRE SINGLE: Failed - actors not resolved for %s"),
             *Connection.Description);
         return false;
     }
@@ -1143,7 +1143,7 @@ bool FSFWiringManifest::WireSingleBeltAndVerify(const FSFWiringConnection& Conne
 
     if (!SourceConn || !TargetConn)
     {
-        UE_LOG(LogSmartFoundations, Warning, TEXT("⛓️ WIRE SINGLE: Connectors not found for %s"),
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("⛓️ WIRE SINGLE: Connectors not found for %s"),
             *Connection.Description);
         return false;
     }
@@ -1197,7 +1197,7 @@ bool FSFWiringManifest::WireSingleBeltAndVerify(const FSFWiringConnection& Conne
         }
         else
         {
-            UE_LOG(LogSmartFoundations, Warning, TEXT("⛓️ WIRE SINGLE: ⚠️ FRAGMENTED - different chains! Source=%s, Target=%s"),
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("⛓️ WIRE SINGLE: ⚠️ FRAGMENTED - different chains! Source=%s, Target=%s"),
                 *SourceChain->GetName(), *TargetChain->GetName());
             OutChainActor = SourceChain; // Return one of them
         }
@@ -1260,7 +1260,7 @@ void FSFWiringManifest::ScheduleDeferredChainRebuild(UWorld* World, const TArray
 
         if (ValidConveyors.Num() == 0)
         {
-            UE_LOG(LogSmartFoundations, Warning, TEXT("⛓️ DEFERRED: No valid conveyors remaining!"));
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("⛓️ DEFERRED: No valid conveyors remaining!"));
             return;
         }
 

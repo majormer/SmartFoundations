@@ -110,7 +110,7 @@ void USFExtendHologramService::CreateBeltPreviews(AFGHologram* ParentHologram)
     SourceJSON.SaveToFile(LogDir / TEXT("ExtendSourceTopology.json"));
     CloneJSON.SaveToFile(LogDir / TEXT("ExtendClonedTopology.json"));
     
-    UE_LOG(LogSmartFoundations, Log, TEXT("[SmartRestore][ExtendHologram] Clone JSON generated: sourceChains=%d cloneHolograms=%d offset=(%.1f, %.1f, %.1f) parent=%s source=%s"),
+    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("[SmartRestore][ExtendHologram] Clone JSON generated: sourceChains=%d cloneHolograms=%d offset=(%.1f, %.1f, %.1f) parent=%s source=%s"),
         SourceJSON.BeltInputChains.Num() + SourceJSON.BeltOutputChains.Num() + 
         SourceJSON.PipeInputChains.Num() + SourceJSON.PipeOutputChains.Num(),
         CloneJSON.ChildHolograms.Num(),
@@ -124,7 +124,7 @@ void USFExtendHologramService::CreateBeltPreviews(AFGHologram* ParentHologram)
     TMap<FString, AFGHologram*> SpawnedHolograms;
     int32 SpawnedCount = CloneJSON.SpawnChildHolograms(ParentHologram, ExtendService, SpawnedHolograms);
     
-    UE_LOG(LogSmartFoundations, Log,
+    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
         TEXT("[SmartRestore][ExtendHologram] SpawnChildHolograms result: spawned=%d cloneChildren=%d"),
         SpawnedCount,
         CloneJSON.ChildHolograms.Num());
@@ -137,7 +137,7 @@ void USFExtendHologramService::CreateBeltPreviews(AFGHologram* ParentHologram)
     StoredCloneTopology = MakeShared<FSFCloneTopology>(CloneJSON);
     JsonSpawnedHolograms = SpawnedHolograms;
     
-    UE_LOG(LogSmartFoundations, Log,
+    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
         TEXT("[SmartRestore][ExtendHologram] Stored clone topology: children=%d spawnedMap=%d"),
         StoredCloneTopology->ChildHolograms.Num(),
         JsonSpawnedHolograms.Num());
@@ -152,7 +152,7 @@ void USFExtendHologramService::CreateBeltPreviews(AFGHologram* ParentHologram)
         }
     }
     
-    UE_LOG(LogSmartFoundations, Log,
+    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
         TEXT("[SmartRestore][ExtendHologram] Tracked clone holograms: tracked=%d"),
         TrackedChildren.Num());
 }
@@ -253,7 +253,7 @@ ASFFactoryHologram* USFExtendHologramService::SwapToSmartFactoryHologram(AFGHolo
 {
     if (!VanillaHologram || !VanillaHologram->IsValidLowLevel())
     {
-        UE_LOG(LogSmartFoundations, Warning, TEXT("🔄 EXTEND SWAP: Invalid vanilla hologram"));
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔄 EXTEND SWAP: Invalid vanilla hologram"));
         return nullptr;
     }
     
@@ -261,7 +261,7 @@ ASFFactoryHologram* USFExtendHologramService::SwapToSmartFactoryHologram(AFGHolo
     AFGFactoryHologram* FactoryHolo = Cast<AFGFactoryHologram>(VanillaHologram);
     if (!FactoryHolo)
     {
-        UE_LOG(LogSmartFoundations, Warning, TEXT("🔄 EXTEND SWAP: Not a factory hologram - %s"), 
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔄 EXTEND SWAP: Not a factory hologram - %s"),
             *VanillaHologram->GetClass()->GetName());
         return nullptr;
     }
@@ -270,14 +270,14 @@ ASFFactoryHologram* USFExtendHologramService::SwapToSmartFactoryHologram(AFGHolo
     AFGBuildGun* BuildGun = GetPlayerBuildGun();
     if (!BuildGun)
     {
-        UE_LOG(LogSmartFoundations, Warning, TEXT("🔄 EXTEND SWAP: Could not get build gun"));
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔄 EXTEND SWAP: Could not get build gun"));
         return nullptr;
     }
     
     UFGBuildGunStateBuild* BuildState = GetBuildGunBuildState(BuildGun);
     if (!BuildState)
     {
-        UE_LOG(LogSmartFoundations, Warning, TEXT("🔄 EXTEND SWAP: Could not get build state"));
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔄 EXTEND SWAP: Could not get build state"));
         return nullptr;
     }
     
@@ -285,14 +285,14 @@ ASFFactoryHologram* USFExtendHologramService::SwapToSmartFactoryHologram(AFGHolo
     UWorld* World = VanillaHologram->GetWorld();
     if (!World)
     {
-        UE_LOG(LogSmartFoundations, Warning, TEXT("🔄 EXTEND SWAP: No world"));
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔄 EXTEND SWAP: No world"));
         return nullptr;
     }
     
     // Verify the vanilla hologram has a build class
     if (!VanillaHologram->GetBuildClass())
     {
-        UE_LOG(LogSmartFoundations, Error, TEXT("🔄 EXTEND SWAP: Vanilla hologram has no BuildClass"));
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Error, TEXT("🔄 EXTEND SWAP: Vanilla hologram has no BuildClass"));
         return nullptr;
     }
     
@@ -307,7 +307,7 @@ ASFFactoryHologram* USFExtendHologramService::SwapToSmartFactoryHologram(AFGHolo
     
     if (!CustomHologram)
     {
-        UE_LOG(LogSmartFoundations, Error, TEXT("🔄 EXTEND SWAP: Failed to spawn deferred custom hologram"));
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Error, TEXT("🔄 EXTEND SWAP: Failed to spawn deferred custom hologram"));
         return nullptr;
     }
     
@@ -334,7 +334,7 @@ ASFFactoryHologram* USFExtendHologramService::SwapToSmartFactoryHologram(AFGHolo
     }
     else
     {
-        UE_LOG(LogSmartFoundations, Error, TEXT("🔄 EXTEND SWAP: Could not find mHologram property"));
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Error, TEXT("🔄 EXTEND SWAP: Could not find mHologram property"));
         CustomHologram->Destroy();
         return nullptr;
     }

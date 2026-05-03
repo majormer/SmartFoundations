@@ -1353,7 +1353,7 @@ void USmartSettingsFormWidget::OnImportFromExtendClicked()
 
     if (!CachedSubsystem.IsValid() || !PresetNameInput)
     {
-        UE_LOG(LogSmartFoundations, Warning,
+        SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Warning,
             TEXT("[SmartRestore][UI] ImportFromExtend clicked but widget state is invalid: CachedSubsystem=%d PresetNameInput=%d"),
             CachedSubsystem.IsValid() ? 1 : 0,
             PresetNameInput ? 1 : 0);
@@ -1363,7 +1363,7 @@ void USmartSettingsFormWidget::OnImportFromExtendClicked()
     USFRestoreService* RestoreSvc = CachedSubsystem->GetRestoreService();
     if (!RestoreSvc || !RestoreSvc->IsLastExtendAvailable())
     {
-        UE_LOG(LogSmartFoundations, Warning,
+        SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Warning,
             TEXT("[SmartRestore][UI] ImportFromExtend unavailable: RestoreSvc=%s LastExtendAvailable=%d"),
             RestoreSvc ? TEXT("valid") : TEXT("null"),
             RestoreSvc ? (RestoreSvc->IsLastExtendAvailable() ? 1 : 0) : 0);
@@ -1381,7 +1381,7 @@ void USmartSettingsFormWidget::OnImportFromExtendClicked()
     FSFRestorePreset Preset = RestoreSvc->ImportFromLastExtend(Name, GetCaptureFlags(), bSuccess);
     if (!bSuccess)
     {
-        UE_LOG(LogSmartFoundations, Warning,
+        SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Warning,
             TEXT("[SmartRestore][UI] ImportFromLastExtend failed for preset '%s'"),
             *Name);
         return;
@@ -1392,7 +1392,7 @@ void USmartSettingsFormWidget::OnImportFromExtendClicked()
     Preset.Description = GetPresetDescriptionText();
 
     const bool bApplied = RestoreSvc->ApplyPreset(Preset);
-    UE_LOG(LogSmartFoundations, Log,
+    SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
         TEXT("[SmartRestore][UI] ImportFromExtend staged for editing: preset='%s' applied=%d hasTopology=%d childHolograms=%d grid=(%d,%d,%d)"),
         *Name,
         bApplied ? 1 : 0,
@@ -1552,7 +1552,7 @@ void USmartSettingsFormWidget::PopulateSmartPanelFromPreset(const FSFRestorePres
 
     const FSFCounterState PendingState = BuildPendingCounterStateFromPreset(Preset);
     PopulateCounterInputsFromState(PendingState);
-    UE_LOG(LogSmartFoundations, Log,
+    SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
         TEXT("[SmartRestore][UI] Loaded preset '%s' into Smart Panel pending values: grid=%d spacing=%d steps=%d stagger=%d rotation=%d"),
         *Preset.Name,
         Preset.CaptureFlags.bGrid ? 1 : 0,

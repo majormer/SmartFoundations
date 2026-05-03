@@ -446,7 +446,7 @@ FSFRestorePreset USFRestoreService::CaptureCurrentState(
 
 	if (!Subsystem.IsValid())
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("[SmartRestore] CaptureCurrentState: No subsystem"));
+		SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("[SmartRestore] CaptureCurrentState: No subsystem"));
 		return Preset;
 	}
 
@@ -557,7 +557,7 @@ FSFRestorePreset USFRestoreService::CaptureCurrentState(
 			{
 				Preset.bHasExtendTopology = true;
 				Preset.ExtendCloneTopology = *CloneTopology;
-				UE_LOG(LogSmartFoundations, Log,
+				SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
 					TEXT("[SmartRestore] CaptureCurrentState included staged Extend topology: preset='%s' childHolograms=%d"),
 					*Name,
 					Preset.ExtendCloneTopology.ChildHolograms.Num());
@@ -565,7 +565,7 @@ FSFRestorePreset USFRestoreService::CaptureCurrentState(
 		}
 	}
 
-	UE_LOG(LogSmartFoundations, Log, TEXT("[SmartRestore] Captured preset '%s' (building: %s)"),
+	SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("[SmartRestore] Captured preset '%s' (building: %s)"),
 		*Name, *Preset.BuildingClassName);
 
 	return Preset;
@@ -579,14 +579,14 @@ bool USFRestoreService::ApplyPreset(const FSFRestorePreset& Preset)
 {
 	if (!Subsystem.IsValid())
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("[SmartRestore] ApplyPreset: No subsystem"));
+		SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("[SmartRestore] ApplyPreset: No subsystem"));
 		return false;
 	}
 
 	FString UnlockFailureReason;
 	if (!ValidatePresetUnlocks(Preset, UnlockFailureReason))
 	{
-		UE_LOG(LogSmartFoundations, Warning,
+		SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Warning,
 			TEXT("[SmartRestore] ApplyPreset blocked for preset '%s': %s"),
 			*Preset.Name,
 			*UnlockFailureReason);
@@ -601,7 +601,7 @@ bool USFRestoreService::ApplyPreset(const FSFRestorePreset& Preset)
 	{
 		if (!Subsystem->SetBuildGunByRecipeName(Preset.BuildingClassName))
 		{
-			UE_LOG(LogSmartFoundations, Warning,
+			SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Warning,
 				TEXT("[SmartRestore] ApplyPreset: Failed to switch build gun to '%s'"),
 				*Preset.BuildingClassName);
 			return false;
@@ -640,19 +640,19 @@ bool USFRestoreService::ApplyPreset(const FSFRestorePreset& Preset)
 				{
 					if (RecipeSvc->SetActiveRecipeByClass(TargetRecipe))
 					{
-						UE_LOG(LogSmartFoundations, Display,
+						SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Display,
 							TEXT("[SmartRestore] Applied production recipe '%s'"),
 							*Preset.RecipeClassName);
 					}
 					else if (RecipeSvc->StoreProductionRecipeClass(TargetRecipe, ESFRecipeSource::Copied))
 					{
-						UE_LOG(LogSmartFoundations, Display,
+						SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Display,
 							TEXT("[SmartRestore] Stored production recipe '%s' directly while filtered recipe list settles"),
 							*Preset.RecipeClassName);
 					}
 					else
 					{
-						UE_LOG(LogSmartFoundations, Warning,
+						SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Warning,
 							TEXT("[SmartRestore] Recipe '%s' found but not in filtered list for current building"),
 							*Preset.RecipeClassName);
 					}
@@ -673,7 +673,7 @@ bool USFRestoreService::ApplyPreset(const FSFRestorePreset& Preset)
 		ReplayExtendTopologyWhenHologramReady(PresetRef, 12, 2);
 	}
 
-	UE_LOG(LogSmartFoundations, Log, TEXT("[SmartRestore] Applied preset '%s'"), *Preset.Name);
+	SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("[SmartRestore] Applied preset '%s'"), *Preset.Name);
 	return true;
 }
 
@@ -871,7 +871,7 @@ bool USFRestoreService::ValidatePresetUnlocks(const FSFRestorePreset& Preset, FS
 
 	if (Failures.Num() == 0)
 	{
-		UE_LOG(LogSmartFoundations, Log,
+		SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
 			TEXT("[SmartRestore] Preset unlock validation passed: preset='%s' children=%d"),
 			*Preset.Name,
 			Preset.bHasExtendTopology ? Preset.ExtendCloneTopology.ChildHolograms.Num() : 0);
@@ -890,7 +890,7 @@ bool USFRestoreService::ValidatePresetUnlocks(const FSFRestorePreset& Preset, FS
 	}
 
 	OutFailureReason = FString::Join(ReportedFailures, TEXT("; "));
-	UE_LOG(LogSmartFoundations, Warning,
+	SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Warning,
 		TEXT("[SmartRestore] Preset unlock validation failed: preset='%s' failures=%s"),
 		*Preset.Name,
 		*OutFailureReason);
@@ -904,7 +904,7 @@ void USFRestoreService::ClearActiveRestoreSession(const TCHAR* Reason)
 		return;
 	}
 
-	UE_LOG(LogSmartFoundations, Log,
+	SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
 		TEXT("[SmartRestore] Cleared active restore session: preset='%s' reason=%s"),
 		*ActiveRestorePresetName,
 		Reason ? Reason : TEXT("Unknown"));
@@ -917,7 +917,7 @@ void USFRestoreService::ReplayExtendTopologyWhenHologramReady(TSharedRef<const F
 {
 	if (!bRestoreSessionActive || ActiveRestorePresetName != Preset->Name)
 	{
-		UE_LOG(LogSmartFoundations, Log,
+		SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
 			TEXT("[SmartRestore] ReplayExtendTopologyWhenHologramReady aborted: preset='%s' activePreset='%s' active=%d"),
 			*Preset->Name,
 			*ActiveRestorePresetName,
@@ -927,7 +927,7 @@ void USFRestoreService::ReplayExtendTopologyWhenHologramReady(TSharedRef<const F
 
 	if (!Subsystem.IsValid())
 	{
-		UE_LOG(LogSmartFoundations, Warning,
+		SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Warning,
 			TEXT("[SmartRestore] ReplayExtendTopologyWhenHologramReady: Subsystem invalid for preset '%s'"),
 			*Preset->Name);
 		return;
@@ -944,7 +944,7 @@ void USFRestoreService::ReplayExtendTopologyWhenHologramReady(TSharedRef<const F
 			UWorld* World = Subsystem->GetWorld();
 			if (!World)
 			{
-				UE_LOG(LogSmartFoundations, Warning,
+				SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Warning,
 					TEXT("[SmartRestore] ReplayExtendTopologyWhenHologramReady: World null while settling preset '%s'"),
 					*Preset->Name);
 				return;
@@ -960,7 +960,7 @@ void USFRestoreService::ReplayExtendTopologyWhenHologramReady(TSharedRef<const F
 				}
 			});
 			World->GetTimerManager().SetTimerForNextTick(SettleDelegate);
-			UE_LOG(LogSmartFoundations, Log,
+			SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
 				TEXT("[SmartRestore] ReplayExtendTopologyWhenHologramReady: Settling active hologram for preset '%s' ticksRemaining=%d activeHologram=%s recipe=%s"),
 				*Preset->Name,
 				SettleTicksRemaining,
@@ -971,7 +971,7 @@ void USFRestoreService::ReplayExtendTopologyWhenHologramReady(TSharedRef<const F
 
 		Subsystem->UpdateCounterState(BuildCounterStateFromPreset(Subsystem->GetCounterState(), *Preset));
 		const bool bReplaySucceeded = ExtendSvc->ReplayRestoreCloneTopology(ActiveHologram, Preset->ExtendCloneTopology);
-		UE_LOG(LogSmartFoundations, Log,
+		SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
 			TEXT("[SmartRestore] ReplayExtendTopologyWhenHologramReady: preset='%s' success=%d activeHologram=%s recipe=%s childHolograms=%d"),
 			*Preset->Name,
 			bReplaySucceeded ? 1 : 0,
@@ -983,7 +983,7 @@ void USFRestoreService::ReplayExtendTopologyWhenHologramReady(TSharedRef<const F
 
 	if (AttemptsRemaining <= 0)
 	{
-		UE_LOG(LogSmartFoundations, Warning,
+		SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Warning,
 			TEXT("[SmartRestore] ReplayExtendTopologyWhenHologramReady: Gave up for preset '%s' (ExtendSvc=%s, ActiveHologram=%s)"),
 			*Preset->Name,
 			ExtendSvc ? TEXT("valid") : TEXT("null"),
@@ -994,13 +994,13 @@ void USFRestoreService::ReplayExtendTopologyWhenHologramReady(TSharedRef<const F
 	UWorld* World = Subsystem->GetWorld();
 	if (!World)
 	{
-		UE_LOG(LogSmartFoundations, Warning,
+		SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Warning,
 			TEXT("[SmartRestore] ReplayExtendTopologyWhenHologramReady: World null for preset '%s'"),
 			*Preset->Name);
 		return;
 	}
 
-	UE_LOG(LogSmartFoundations, Log,
+	SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
 		TEXT("[SmartRestore] ReplayExtendTopologyWhenHologramReady: Waiting for matching active hologram for preset '%s' attemptsRemaining=%d activeHologram=%s recipe=%s expectedRecipe=%s"),
 		*Preset->Name,
 		AttemptsRemaining,
@@ -1140,7 +1140,7 @@ bool USFRestoreService::JsonToPreset(const TSharedPtr<FJsonObject>& JsonObj, FSF
 	double VersionValue = 0.0;
 	if (!JsonObj->TryGetNumberField(TEXT("version"), VersionValue))
 	{
-		UE_LOG(LogSmartFoundations, Warning,
+		SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Warning,
 			TEXT("[SmartRestore] JsonToPreset rejected preset '%s': missing version"),
 			*OutPreset.Name);
 		return false;
@@ -1149,7 +1149,7 @@ bool USFRestoreService::JsonToPreset(const TSharedPtr<FJsonObject>& JsonObj, FSF
 	OutPreset.Version = static_cast<int32>(VersionValue);
 	if (OutPreset.Version < SF_RESTORE_MIN_SUPPORTED_PRESET_VERSION || OutPreset.Version > SF_RESTORE_PRESET_VERSION)
 	{
-		UE_LOG(LogSmartFoundations, Warning,
+		SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Warning,
 			TEXT("[SmartRestore] JsonToPreset rejected preset '%s': unsupported version %d (supported %d-%d)"),
 			*OutPreset.Name,
 			OutPreset.Version,
@@ -1319,7 +1319,7 @@ bool USFRestoreService::SavePreset(const FSFRestorePreset& Preset)
 				FString ExistingName = ExistingObj->GetStringField(TEXT("name"));
 				if (ExistingName != MutablePreset.Name)
 				{
-					UE_LOG(LogSmartFoundations, Warning,
+					SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Warning,
 						TEXT("[SmartRestore] SavePreset: Name collision — '%s' would overwrite '%s' at %s"),
 						*MutablePreset.Name, *ExistingName, *FilePath);
 					return false;
@@ -1356,13 +1356,13 @@ bool USFRestoreService::SavePreset(const FSFRestorePreset& Preset)
 	// Write to file
 	if (!FFileHelper::SaveStringToFile(JsonString, *FilePath))
 	{
-		UE_LOG(LogSmartFoundations, Warning,
+		SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Warning,
 			TEXT("[SmartRestore] Failed to save preset '%s' to %s"),
 			*MutablePreset.Name, *FilePath);
 		return false;
 	}
 
-	UE_LOG(LogSmartFoundations, Log,
+	SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
 		TEXT("[SmartRestore] Saved preset '%s' to %s"),
 		*MutablePreset.Name, *FilePath);
 	return true;
@@ -1375,19 +1375,19 @@ bool USFRestoreService::DeletePreset(const FString& Name)
 	IPlatformFile& PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
 	if (!PlatformFile.FileExists(*FilePath))
 	{
-		UE_LOG(LogSmartFoundations, Warning,
+		SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Warning,
 			TEXT("[SmartRestore] Preset '%s' not found at %s"), *Name, *FilePath);
 		return false;
 	}
 
 	if (!PlatformFile.DeleteFile(*FilePath))
 	{
-		UE_LOG(LogSmartFoundations, Warning,
+		SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Warning,
 			TEXT("[SmartRestore] Failed to delete preset '%s' at %s"), *Name, *FilePath);
 		return false;
 	}
 
-	UE_LOG(LogSmartFoundations, Log, TEXT("[SmartRestore] Deleted preset '%s'"), *Name);
+	SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("[SmartRestore] Deleted preset '%s'"), *Name);
 	return true;
 }
 
@@ -1411,7 +1411,7 @@ TArray<FSFRestorePreset> USFRestoreService::LoadAllPresets() const
 		FString JsonString;
 		if (!FFileHelper::LoadFileToString(JsonString, *FilePath))
 		{
-			UE_LOG(LogSmartFoundations, Warning,
+			SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Warning,
 				TEXT("[SmartRestore] Failed to read preset file %s"), *FilePath);
 			continue;
 		}
@@ -1420,7 +1420,7 @@ TArray<FSFRestorePreset> USFRestoreService::LoadAllPresets() const
 		TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(JsonString);
 		if (!FJsonSerializer::Deserialize(Reader, JsonObj) || !JsonObj.IsValid())
 		{
-			UE_LOG(LogSmartFoundations, Warning,
+			SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Warning,
 				TEXT("[SmartRestore] Failed to parse preset file %s"), *FilePath);
 			continue;
 		}
@@ -1432,7 +1432,7 @@ TArray<FSFRestorePreset> USFRestoreService::LoadAllPresets() const
 		}
 	}
 
-	UE_LOG(LogSmartFoundations, Log,
+	SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
 		TEXT("[SmartRestore] Loaded %d presets from %s"), Presets.Num(), *Dir);
 	return Presets;
 }
@@ -1535,7 +1535,7 @@ FSFRestorePreset USFRestoreService::ImportFromString(const FString& Encoded, boo
 
 	if (!Encoded.StartsWith(SF_RESTORE_EXPORT_PREFIX))
 	{
-		UE_LOG(LogSmartFoundations, Warning,
+		SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Warning,
 			TEXT("[SmartRestore] ImportFromString: Unknown format prefix"));
 		return FSFRestorePreset();
 	}
@@ -1545,7 +1545,7 @@ FSFRestorePreset USFRestoreService::ImportFromString(const FString& Encoded, boo
 	FString JsonString;
 	if (!FBase64::Decode(Base64Part, JsonString))
 	{
-		UE_LOG(LogSmartFoundations, Warning,
+		SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Warning,
 			TEXT("[SmartRestore] ImportFromString: Base64 decode failed"));
 		return FSFRestorePreset();
 	}
@@ -1555,7 +1555,7 @@ FSFRestorePreset USFRestoreService::ImportFromString(const FString& Encoded, boo
 	TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(JsonString);
 	if (!FJsonSerializer::Deserialize(Reader, JsonObj) || !JsonObj.IsValid())
 	{
-		UE_LOG(LogSmartFoundations, Warning,
+		SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Warning,
 			TEXT("[SmartRestore] ImportFromString: JSON parse failed"));
 		return FSFRestorePreset();
 	}
@@ -1568,7 +1568,7 @@ FSFRestorePreset USFRestoreService::ImportFromString(const FString& Encoded, boo
 		FString UnlockFailureReason;
 		if (!ValidatePresetUnlocks(Preset, UnlockFailureReason))
 		{
-			UE_LOG(LogSmartFoundations, Warning,
+			SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Warning,
 				TEXT("[SmartRestore] ImportFromString rejected preset '%s': %s"),
 				*Preset.Name,
 				*UnlockFailureReason);
@@ -1593,7 +1593,7 @@ bool USFRestoreService::IsLastExtendAvailable() const
 {
 	if (!Subsystem.IsValid())
 	{
-		UE_LOG(LogSmartFoundations, Log,
+		SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
 			TEXT("[SmartRestore] IsLastExtendAvailable: Subsystem invalid"));
 		return false;
 	}
@@ -1601,13 +1601,13 @@ bool USFRestoreService::IsLastExtendAvailable() const
 	USFExtendService* ExtendSvc = Subsystem->GetExtendService();
 	if (!ExtendSvc)
 	{
-		UE_LOG(LogSmartFoundations, Log,
+		SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
 			TEXT("[SmartRestore] IsLastExtendAvailable: Extend service null"));
 		return false;
 	}
 	if (ExtendSvc->IsRestoredCloneTopologyActive())
 	{
-		UE_LOG(LogSmartFoundations, Log,
+		SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
 			TEXT("[SmartRestore] IsLastExtendAvailable: false because a restored Extend topology is already active"));
 		return false;
 	}
@@ -1618,7 +1618,7 @@ bool USFRestoreService::IsLastExtendAvailable() const
 		&& Topology.SourceBuilding.IsValid()
 		&& CloneTopology.IsValid()
 		&& CloneTopology->ChildHolograms.Num() > 0;
-	UE_LOG(LogSmartFoundations, Log,
+	SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
 		TEXT("[SmartRestore] IsLastExtendAvailable: available=%d sourceTopologyValid=%d sourceBuilding=%s cloneTopologyValid=%d cloneChildren=%d"),
 		bAvailable ? 1 : 0,
 		Topology.bIsValid ? 1 : 0,
@@ -1643,20 +1643,20 @@ FSFRestorePreset USFRestoreService::ImportFromLastExtend(
 	USFExtendService* ExtendSvc = Subsystem->GetExtendService();
 	if (!ExtendSvc)
 	{
-		UE_LOG(LogSmartFoundations, Warning,
+		SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Warning,
 			TEXT("[SmartRestore] ImportFromLastExtend: No Extend service"));
 		return FSFRestorePreset();
 	}
 	if (ExtendSvc->IsRestoredCloneTopologyActive())
 	{
-		UE_LOG(LogSmartFoundations, Warning,
+		SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Warning,
 			TEXT("[SmartRestore] ImportFromLastExtend skipped: restored Extend topology is active; not self-capturing Restore replay as a new Extend preset"));
 		return FSFRestorePreset();
 	}
 
 	const FSFExtendTopology& Topology = ExtendSvc->GetLastExtendTopology();
 	TSharedPtr<FSFCloneTopology> InitialCloneTopology = ExtendSvc->GetLastCloneTopology();
-	UE_LOG(LogSmartFoundations, Log,
+	SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
 		TEXT("[SmartRestore] ImportFromLastExtend start: name='%s' sourceTopologyValid=%d sourceBuilding=%s cloneTopologyValid=%d cloneChildren=%d flags(grid=%d spacing=%d steps=%d stagger=%d rotation=%d recipe=%d autoConnect=%d)"),
 		*Name,
 		Topology.bIsValid ? 1 : 0,
@@ -1672,7 +1672,7 @@ FSFRestorePreset USFRestoreService::ImportFromLastExtend(
 		CaptureFlags.bAutoConnect ? 1 : 0);
 	if (!Topology.bIsValid || !Topology.SourceBuilding.IsValid())
 	{
-		UE_LOG(LogSmartFoundations, Warning,
+		SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Warning,
 			TEXT("[SmartRestore] ImportFromLastExtend: No valid Extend topology cached"));
 		return FSFRestorePreset();
 	}
@@ -1712,7 +1712,7 @@ FSFRestorePreset USFRestoreService::ImportFromLastExtend(
 					if (ProductBuildClass && BuildingClass->IsChildOf(ProductBuildClass))
 					{
 						Preset.BuildingClassName = Recipe->GetName();
-						UE_LOG(LogSmartFoundations, Log,
+						SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
 							TEXT("[SmartRestore] ImportFromLastExtend: Matched source building '%s' to build recipe '%s' via descriptor '%s'"),
 							*GetNameSafe(SourceBuilding),
 							*Preset.BuildingClassName,
@@ -1729,7 +1729,7 @@ FSFRestorePreset USFRestoreService::ImportFromLastExtend(
 
 		if (Preset.BuildingClassName.IsEmpty())
 		{
-			UE_LOG(LogSmartFoundations, Warning,
+			SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Warning,
 				TEXT("[SmartRestore] ImportFromLastExtend: Could not find recipe for building '%s'"),
 				*GetNameSafe(SourceBuilding));
 		}
@@ -1750,7 +1750,7 @@ FSFRestorePreset USFRestoreService::ImportFromLastExtend(
 
 	if (Preset.BuildingClassName.IsEmpty())
 	{
-		UE_LOG(LogSmartFoundations, Warning,
+		SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Warning,
 			TEXT("[SmartRestore] ImportFromLastExtend: Failed — no building recipe found for '%s'"),
 			*GetNameSafe(SourceBuilding));
 		return FSFRestorePreset();
@@ -1761,13 +1761,13 @@ FSFRestorePreset USFRestoreService::ImportFromLastExtend(
 	{
 		Preset.bHasExtendTopology = true;
 		Preset.ExtendCloneTopology = *CloneTopology;
-		UE_LOG(LogSmartFoundations, Log,
+		SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
 			TEXT("[SmartRestore] Captured Extend clone topology with %d child holograms"),
 			Preset.ExtendCloneTopology.ChildHolograms.Num());
 	}
 	else
 	{
-		UE_LOG(LogSmartFoundations, Warning,
+		SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Warning,
 			TEXT("[SmartRestore] ImportFromLastExtend: No clone topology available to capture"));
 		return FSFRestorePreset();
 	}
@@ -1775,14 +1775,14 @@ FSFRestorePreset USFRestoreService::ImportFromLastExtend(
 	FString UnlockFailureReason;
 	if (!ValidatePresetUnlocks(Preset, UnlockFailureReason))
 	{
-		UE_LOG(LogSmartFoundations, Warning,
+		SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Warning,
 			TEXT("[SmartRestore] ImportFromLastExtend rejected preset '%s': %s"),
 			*Name,
 			*UnlockFailureReason);
 		return FSFRestorePreset();
 	}
 
-	UE_LOG(LogSmartFoundations, Log,
+	SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
 		TEXT("[SmartRestore] ImportFromLastExtend success: preset='%s' buildingRecipe='%s' productionRecipe='%s' childHolograms=%d"),
 		*Name,
 		*Preset.BuildingClassName,

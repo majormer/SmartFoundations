@@ -137,7 +137,7 @@ void ASFConveyorLiftHologram::SetSnappedConnections(UFGFactoryConnectionComponen
     }
     else
     {
-        UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND Lift: Failed to find mSnappedConnectionComponents property on %s"), *GetName());
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND Lift: Failed to find mSnappedConnectionComponents property on %s"), *GetName());
     }
 }
 
@@ -146,7 +146,7 @@ AActor* ASFConveyorLiftHologram::Construct(TArray<AActor*>& out_children, FNetCo
     // Check if this is an EXTEND child hologram
     if (Tags.Contains(FName(TEXT("SF_ExtendChild"))))
     {
-        UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND LIFT CONSTRUCT: %s entering EXTEND path (JsonCloneId will be set by spawn)"), 
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND LIFT CONSTRUCT: %s entering EXTEND path (JsonCloneId will be set by spawn)"),
             *GetName());
         
         // ============================================================
@@ -246,7 +246,7 @@ AActor* ASFConveyorLiftHologram::Construct(TArray<AActor*>& out_children, FNetCo
         }
         else
         {
-            UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND: ❌ Lift Construct returned nullptr!"));
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND: ❌ Lift Construct returned nullptr!"));
         }
 
         return BuiltActor;
@@ -442,7 +442,7 @@ void ASFConveyorLiftHologram::ConfigureComponents(AFGBuildable* inBuildable) con
     
     if (bIsExtendLift)
     {
-        UE_LOG(LogSmartFoundations, Log, TEXT("⛓️ LIFT ConfigureComponents: %s - EXTEND lift (skipping AddConveyor — chain rebuild handles registration)"),
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("⛓️ LIFT ConfigureComponents: %s - EXTEND lift (skipping AddConveyor — chain rebuild handles registration)"),
             *Conveyor->GetName());
     }
     else if (bMadeConnection)

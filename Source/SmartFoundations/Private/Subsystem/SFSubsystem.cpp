@@ -372,7 +372,7 @@ void USFSubsystem::ClearNormalGridChildrenForExtendSuppression(const TCHAR* Cont
 		QueuedGridChildren++;
 	}
 
-	UE_LOG(LogSmartFoundations, Log,
+	SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
 		TEXT("[SmartRestore][Extend] Suppressing normal Smart grid spawn/update: context=%s parent=%s helperChildren=%d queuedGrid=%d preservedExtend=%d skippedOther=%d liveExtend=%d restoredExtend=%d"),
 		Context ? Context : TEXT("Unknown"),
 		*GetNameSafe(GetActiveHologram()),
@@ -1016,7 +1016,7 @@ void USFSubsystem::Tick(float DeltaTime)
 			double CurrentTime = FPlatformTime::Seconds();
 			if (CurrentTime - LastWarnTime > 5.0)  // Log every 5 seconds max
 			{
-				UE_LOG(LogSmartFoundations, Warning, TEXT("🔄 EXTEND: No PlayerController available for line trace"));
+				SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔄 EXTEND: No PlayerController available for line trace"));
 				LastWarnTime = CurrentTime;
 			}
 		}
@@ -1170,7 +1170,7 @@ void USFSubsystem::ApplyAxisScaling(ESFScaleAxis Axis, int32 StepDelta, const TC
 	const bool bRestoredExtendActive = IsRestoredExtendModeActive();
 	if (ShouldSuppressNormalGridChildren())
 	{
-		UE_LOG(LogSmartFoundations, Log, TEXT("[SmartRestore][Extend] %s axis changed, grid=[%d,%d,%d], liveExtend=%d restoredExtend=%d"),
+		SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("[SmartRestore][Extend] %s axis changed, grid=[%d,%d,%d], liveExtend=%d restoredExtend=%d"),
 			DebugLabel,
 			CounterState.GridCounters.X,
 			CounterState.GridCounters.Y,
@@ -2158,7 +2158,7 @@ void USFSubsystem::OnCycleAxis()
 
 				if (bDisableSmartForNextAction)
 				{
-					UE_LOG(LogSmartFoundations, Warning, TEXT("⏸️ Smart! DISABLED for session (Auto-Connect + Extend) (double-tap detected)"));
+					SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("⏸️ Smart! DISABLED for session (Auto-Connect + Extend) (double-tap detected)"));
 
 					// Issue #198: Immediately clear all auto-connect previews when disabling
 					if (ActiveHologram.IsValid() && AutoConnectService)
@@ -2741,7 +2741,7 @@ void USFSubsystem::RegisterActiveHologram(AFGHologram* Hologram)
 		}
 		bRestoredExtendActiveAtRegister = false;
 
-		UE_LOG(LogSmartFoundations, Log,
+		SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
 			TEXT("[SmartRestore][Extend] Dropped restored topology for incompatible active hologram: hologram=%s buildClass=%s"),
 			*GetNameSafe(Hologram),
 			*GetNameSafe(Hologram->GetBuildClass()));
@@ -2841,7 +2841,7 @@ void USFSubsystem::RegisterActiveHologram(AFGHologram* Hologram)
 			GridStateService->UpdateCounterState(CounterState);
 		}
 		UpdateCounterDisplay();
-		UE_LOG(LogSmartFoundations, Log,
+		SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
 			TEXT("[SmartRestore][Extend] Preserved staged counters across hologram registration: grid=[%d,%d,%d] spacing=(%d,%d,%d) steps=(%d,%d) rotation=%.1f"),
 			CounterState.GridCounters.X,
 			CounterState.GridCounters.Y,
@@ -3204,7 +3204,7 @@ void USFSubsystem::RegisterActiveHologram(AFGHologram* Hologram)
 		if (RestoredTemplate.IsValid() && RestoredTemplate->ChildHolograms.Num() > 0)
 		{
 			ExtendService->ReplayRestoreCloneTopology(Hologram, *RestoredTemplate);
-			UE_LOG(LogSmartFoundations, Log,
+			SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
 				TEXT("[SmartRestore][Extend] Reattached staged topology to new active hologram: parent=%s templateChildren=%d"),
 				*GetNameSafe(Hologram),
 				RestoredTemplate->ChildHolograms.Num());
@@ -3329,7 +3329,7 @@ void USFSubsystem::UnregisterActiveHologram(AFGHologram* Hologram)
 		else
 		{
 			UpdateCounterDisplay();
-			UE_LOG(LogSmartFoundations, Log,
+			SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
 				TEXT("[SmartRestore][Extend] Preserved staged counters across hologram unregister: grid=[%d,%d,%d]"),
 				CounterState.GridCounters.X,
 				CounterState.GridCounters.Y,
@@ -4551,7 +4551,7 @@ bool USFSubsystem::AbortRestoreSession(const TCHAR* Reason)
 		RestoreService->ClearActiveRestoreSession(Reason);
 	}
 
-	UE_LOG(LogSmartFoundations, Log,
+	SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
 		TEXT("[SmartRestore] Aborted restore session: reason=%s topology=%d session=%d"),
 		Reason ? Reason : TEXT("Unknown"),
 		bHadRestoredTopology ? 1 : 0,
@@ -4910,7 +4910,7 @@ void USFSubsystem::SetAutoConnectRuntimeSettingsFromPreset(const FSFRestoreAutoC
 	AutoConnectRuntimeSettings.PowerReserved = PresetState.PowerReserved;
 	AutoConnectRuntimeSettings.bInitialized = true;
 
-	UE_LOG(LogSmartFoundations, Display,
+	SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Display,
 		TEXT("[SmartRestore] Applied auto-connect settings from preset"));
 }
 
@@ -4931,7 +4931,7 @@ bool USFSubsystem::SetBuildGunByRecipeName(const FString& RecipeClassName)
 	AFGRecipeManager* RecipeManager = AFGRecipeManager::Get(World);
 	if (!RecipeManager)
 	{
-		UE_LOG(LogSmartFoundations, Warning,
+		SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Warning,
 			TEXT("[SmartRestore] SetBuildGunByRecipeName: No recipe manager"));
 		return false;
 	}
@@ -4951,7 +4951,7 @@ bool USFSubsystem::SetBuildGunByRecipeName(const FString& RecipeClassName)
 
 	if (!TargetRecipe)
 	{
-		UE_LOG(LogSmartFoundations, Warning,
+		SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Warning,
 			TEXT("[SmartRestore] SetBuildGunByRecipeName: Recipe '%s' not found in available recipes"),
 			*RecipeClassName);
 		return false;
@@ -4974,7 +4974,7 @@ bool USFSubsystem::SetBuildGunByRecipeName(const FString& RecipeClassName)
 	AFGBuildGun* BuildGun = Character->GetBuildGun();
 	if (!BuildGun)
 	{
-		UE_LOG(LogSmartFoundations, Warning,
+		SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Warning,
 			TEXT("[SmartRestore] SetBuildGunByRecipeName: No build gun found"));
 		return false;
 	}
@@ -4984,14 +4984,14 @@ bool USFSubsystem::SetBuildGunByRecipeName(const FString& RecipeClassName)
 		BuildGun->GetBuildGunStateFor(EBuildGunState::BGS_BUILD));
 	if (!BuildState)
 	{
-		UE_LOG(LogSmartFoundations, Warning,
+		SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Warning,
 			TEXT("[SmartRestore] SetBuildGunByRecipeName: No build gun build state"));
 		return false;
 	}
 
 	BuildState->SetActiveRecipe(TargetRecipe);
 
-	UE_LOG(LogSmartFoundations, Display,
+	SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Display,
 		TEXT("[SmartRestore] Switched build gun to recipe '%s'"), *RecipeClassName);
 	return true;
 }
@@ -7135,7 +7135,7 @@ void USFSubsystem::OnActorSpawned(AActor* SpawnedActor)
 					}
 					else
 					{
-						UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND: Deferred connection wiring cancelled - factory or service no longer valid"));
+						SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND: Deferred connection wiring cancelled - factory or service no longer valid"));
 					}
 				});
 			}

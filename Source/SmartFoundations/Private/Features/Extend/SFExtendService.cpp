@@ -257,7 +257,7 @@ namespace
 
         if (RemovedCount > 0)
         {
-            UE_LOG(LogSmartFoundations, Warning,
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning,
                 TEXT("[SmartRestore][Extend] Scrubbed %d null/invalid parent children: context=%s parent=%s"),
                 RemovedCount,
                 Context ? Context : TEXT("Unknown"),
@@ -307,7 +307,7 @@ void USFExtendService::ClearExtendState()
         if (CurrentExtendHologram.IsValid())
         {
             CurrentExtendHologram->LockHologramPosition(false);
-            UE_LOG(LogSmartFoundations, Log, TEXT("🔄 EXTEND: Unlocked CurrentExtendHologram"));
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("🔄 EXTEND: Unlocked CurrentExtendHologram"));
         }
 
         // Restore the original hologram (cleans up swapped hologram tracking)
@@ -332,7 +332,7 @@ void USFExtendService::ClearExtendState()
         // Now safe to restore pre-Extend counter snapshot
         if (bHasCounterSnapshot && Subsystem.IsValid())
         {
-            UE_LOG(LogSmartFoundations, Log, TEXT("🔄 EXTEND: Restoring pre-Extend counters (X=%d, Y=%d, Spacing=%d)"),
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("🔄 EXTEND: Restoring pre-Extend counters (X=%d, Y=%d, Spacing=%d)"),
                 PreExtendCounterSnapshot.GridCounters.X, PreExtendCounterSnapshot.GridCounters.Y,
                 PreExtendCounterSnapshot.SpacingX);
             Subsystem->UpdateCounterState(PreExtendCounterSnapshot);
@@ -344,7 +344,7 @@ void USFExtendService::ClearExtendState()
         ClearTopology();
         CurrentExtendTarget.Reset();
         CurrentExtendHologram.Reset();
-        UE_LOG(LogSmartFoundations, Log, TEXT("Smart!: EXTEND state cleared"));
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("Smart!: EXTEND state cleared"));
     }
 }
 
@@ -381,7 +381,7 @@ void USFExtendService::Shutdown()
     }
 
     Subsystem.Reset();
-    UE_LOG(LogSmartFoundations, Log, TEXT("Smart!: SFExtendService shutdown"));
+    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("Smart!: SFExtendService shutdown"));
 }
 
 // ==================== Direction Cycling ====================
@@ -400,7 +400,7 @@ void USFExtendService::CycleExtendDirection(int32 Delta)
     // Only cycle if we have a valid target (automatic mode)
     if (!bHasValidTarget || !DetectionService)
     {
-        UE_LOG(LogSmartFoundations, Warning, TEXT(" EXTEND: CycleDirection called but no valid target or no detection service"));
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT(" EXTEND: CycleDirection called but no valid target or no detection service"));
         return;
     }
 
@@ -410,7 +410,7 @@ void USFExtendService::CycleExtendDirection(int32 Delta)
 
     if (ValidDirs.Num() == 0)
     {
-        UE_LOG(LogSmartFoundations, Warning, TEXT(" EXTEND: No valid directions available - both sides blocked"));
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT(" EXTEND: No valid directions available - both sides blocked"));
         return;
     }
 
@@ -425,7 +425,7 @@ void USFExtendService::CycleExtendDirection(int32 Delta)
         }
         else
         {
-            UE_LOG(LogSmartFoundations, Log, TEXT(" EXTEND: Cannot cycle - only one valid direction (%s)"),
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT(" EXTEND: Cannot cycle - only one valid direction (%s)"),
                 CurrentDir == ESFExtendDirection::Right ? TEXT("Right") : TEXT("Left"));
         }
         return;
@@ -440,7 +440,7 @@ void USFExtendService::CycleExtendDirection(int32 Delta)
     // Verify the new direction is valid
     if (!IsDirectionValid(NewDirection))
     {
-        UE_LOG(LogSmartFoundations, Log, TEXT(" EXTEND: Cannot cycle to %s - direction blocked"),
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT(" EXTEND: Cannot cycle to %s - direction blocked"),
             NewDirection == ESFExtendDirection::Right ? TEXT("Right") : TEXT("Left"));
         return;
     }
@@ -552,7 +552,7 @@ bool USFExtendService::IsDirectionValid(ESFExtendDirection Direction) const
             {
                 if (AFGBuildableFactory* Factory = Cast<AFGBuildableFactory>(HitActor))
                 {
-                    UE_LOG(LogSmartFoundations, Log, TEXT(" EXTEND: Direction %s blocked by %s"),
+                    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT(" EXTEND: Direction %s blocked by %s"),
                         Direction == ESFExtendDirection::Right ? TEXT("Right") : TEXT("Left"),
                         *Factory->GetName());
                     return false;
@@ -594,7 +594,7 @@ bool USFExtendService::WalkTopology(AFGBuildable* SourceBuilding)
         return bWalked;
     }
 
-    UE_LOG(LogSmartFoundations, Warning, TEXT("Smart!: WalkTopology called but TopologyService not initialized"));
+    UE_LOG(LogSmartFoundations, Verbose, TEXT("Smart!: WalkTopology called but TopologyService not initialized"));
     return false;
 }
 
@@ -625,7 +625,7 @@ TSharedPtr<FSFCloneTopology> USFExtendService::GetLastCloneTopology() const
 {
     if (bRestoredCloneTopologyActive && RestoredCloneTopologyTemplate.IsValid())
     {
-        UE_LOG(LogSmartFoundations, Log,
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
             TEXT("[SmartRestore][Extend] GetLastCloneTopology: returning restored template topology children=%d"),
             RestoredCloneTopologyTemplate->ChildHolograms.Num());
         return MakeShared<FSFCloneTopology>(*RestoredCloneTopologyTemplate);
@@ -633,7 +633,7 @@ TSharedPtr<FSFCloneTopology> USFExtendService::GetLastCloneTopology() const
 
     if (StoredCloneTopology.IsValid())
     {
-        UE_LOG(LogSmartFoundations, Log,
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
             TEXT("[SmartRestore][Extend] GetLastCloneTopology: returning StoredCloneTopology children=%d"),
             StoredCloneTopology->ChildHolograms.Num());
         return MakeShared<FSFCloneTopology>(*StoredCloneTopology);
@@ -641,13 +641,13 @@ TSharedPtr<FSFCloneTopology> USFExtendService::GetLastCloneTopology() const
 
     if (LastCloneTopology.IsValid())
     {
-        UE_LOG(LogSmartFoundations, Log,
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
             TEXT("[SmartRestore][Extend] GetLastCloneTopology: returning LastCloneTopology children=%d"),
             LastCloneTopology->ChildHolograms.Num());
         return MakeShared<FSFCloneTopology>(*LastCloneTopology);
     }
 
-    UE_LOG(LogSmartFoundations, Log,
+    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
         TEXT("[SmartRestore][Extend] GetLastCloneTopology: no clone topology cached"));
     return nullptr;
 }
@@ -675,7 +675,7 @@ bool USFExtendService::IsHologramCompatibleWithRestoredCloneTopology(AFGHologram
     const bool bCompatible = ActiveBuildClassName == ExpectedBuildClass;
     if (!bCompatible)
     {
-        UE_LOG(LogSmartFoundations, Log,
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
             TEXT("[SmartRestore][Extend] Restored topology build-class mismatch: expected=%s active=%s parent=%s"),
             *ExpectedBuildClass,
             ActiveBuildClassName.IsEmpty() ? TEXT("<none>") : *ActiveBuildClassName,
@@ -700,7 +700,7 @@ void USFExtendService::ClearRestoredCloneTopologySession(const TCHAR* Reason)
     RestoredCloneLastParentRotation = FRotator::ZeroRotator;
     bRestoredCloneTopologyActive = false;
 
-    UE_LOG(LogSmartFoundations, Log,
+    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
         TEXT("[SmartRestore][Extend] Cleared restored topology session: reason=%s templateChildren=%d"),
         Reason ? Reason : TEXT("Unknown"),
         TemplateChildCount);
@@ -719,7 +719,7 @@ bool USFExtendService::ReplayRestoreCloneTopology(AFGHologram* ParentHologram, c
         const FString ActiveBuildClassName = ActiveBuildClass ? ActiveBuildClass->GetName() : FString();
         if (ActiveBuildClassName != CloneTopology.ParentBuildClass)
         {
-            UE_LOG(LogSmartFoundations, Log,
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
                 TEXT("[SmartRestore][Extend] Replay skipped for mismatched build class: expected=%s active=%s parent=%s"),
                 *CloneTopology.ParentBuildClass,
                 ActiveBuildClassName.IsEmpty() ? TEXT("<none>") : *ActiveBuildClassName,
@@ -731,7 +731,7 @@ bool USFExtendService::ReplayRestoreCloneTopology(AFGHologram* ParentHologram, c
     ClearRestoredCloneTopologyPreview();
     if (ScaledExtendClones.Num() > 0)
     {
-        UE_LOG(LogSmartFoundations, Log,
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
             TEXT("[SmartRestore][Extend] Clearing %d normal Scaled Extend clone record(s) before Restore replay owns the topology"),
             ScaledExtendClones.Num());
         ScaledExtendClones.Empty();
@@ -749,7 +749,7 @@ bool USFExtendService::ReplayRestoreCloneTopology(AFGHologram* ParentHologram, c
     KickRestoredPreviewParent(ParentHologram);
 
     FSFCloneTopology ReplayTopology = BuildRestoredCloneTopologyForCurrentState(ParentHologram);
-    UE_LOG(LogSmartFoundations, Log,
+    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
         TEXT("[SmartRestore][Extend] Replay restored scaled topology: parent=%s templateChildren=%d replayChildren=%d"),
         *GetNameSafe(ParentHologram),
         CloneTopology.ChildHolograms.Num(),
@@ -774,7 +774,7 @@ void USFExtendService::TickRestoredCloneTopology(float DeltaTime)
             && (bRestoredScaledWiringRetryScheduled || RestoredScaledWiringRetryAttempts < 5);
         if (bCanStillFinishPostBuildWiring)
         {
-            UE_LOG(LogSmartFoundations, Log,
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
                 TEXT("[SmartRestore][Extend] Parent hologram invalid while post-build wiring is pending; retaining restored topology (storedChildren=%d, jsonBuilt=%d, jsonSpawned=%d, previewFactories=%d, retry=%d/%d)"),
                 StoredCloneTopology.IsValid() ? StoredCloneTopology->ChildHolograms.Num() : 0,
                 JsonBuiltActors.Num(),
@@ -905,7 +905,7 @@ void USFExtendService::OnRestoredCloneTopologyStateChanged()
     {
         Subsystem->ClearNormalGridChildrenForExtendSuppression(TEXT("OnRestoredCloneTopologyStateChanged"));
     }
-    UE_LOG(LogSmartFoundations, Log,
+    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
         TEXT("[SmartRestore][Extend] Restored scaled state changed: parent=%s replayChildren=%d"),
         *GetNameSafe(ParentHologram),
         ReplayTopology.ChildHolograms.Num());
@@ -1130,7 +1130,7 @@ FSFCloneTopology USFExtendService::BuildRestoredCloneTopologyForCurrentState(AFG
                             Holo.SplineData.Points.Last().World = FSFVec3(NewEnd);
                             Holo.SplineData.Points.Last().Local = FSFVec3(FVector(NewLength, 0.0f, 0.0f));
 
-                            UE_LOG(LogSmartFoundations, Log,
+                            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
                                 TEXT("[SmartRestore][Extend] Restored lane chained: id=%s grid=(%d,%d) sourceSide=%s prev=%s current=%s length=%.0f"),
                                 *Holo.HologramId,
                                 X,
@@ -1141,7 +1141,7 @@ FSFCloneTopology USFExtendService::BuildRestoredCloneTopologyForCurrentState(AFG
                                 NewLength);
                             if (FlippedLaneNormalMask != 0)
                             {
-                                UE_LOG(LogSmartFoundations, Log,
+                                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
                                     TEXT("[SmartRestore][Extend] Restored lane normals aligned: id=%s type=%s grid=(%d,%d) flipMask=%d"),
                                     *Holo.HologramId,
                                     *Holo.LaneSegmentType,
@@ -1180,7 +1180,7 @@ FSFCloneTopology USFExtendService::BuildRestoredCloneTopologyForCurrentState(AFG
                 }
             }
             ReplayTopology.ChildHolograms = ExpandedChildHolograms;
-            UE_LOG(LogSmartFoundations, Log,
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
                 TEXT("[SmartRestore][Extend] Restored scaled topology expanded: grid=(%d,%d) children=%d baseChildren=%d"),
                 State.GridCounters.X,
                 State.GridCounters.Y,
@@ -1229,7 +1229,7 @@ int32 USFExtendService::SpawnRestoredScaledFactoryHolograms(AFGHologram* ParentH
     RestoredScaledFactoryPreviewLocations.Empty();
     if (XCount <= 1 && YCount <= 1)
     {
-        UE_LOG(LogSmartFoundations, Log,
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
             TEXT("[SmartRestore][Extend] Restored scaled factories: base parent only parent=%s"),
             *GetNameSafe(ParentHologram));
         return 0;
@@ -1267,7 +1267,7 @@ int32 USFExtendService::SpawnRestoredScaledFactoryHolograms(AFGHologram* ParentH
 
             if (!FactoryHologram)
             {
-                UE_LOG(LogSmartFoundations, Warning,
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning,
                     TEXT("[SmartRestore][Extend] Restored scaled factory spawn failed: id=%s grid=(%d,%d) parent=%s"),
                     *FactoryId,
                     X,
@@ -1317,7 +1317,7 @@ int32 USFExtendService::SpawnRestoredScaledFactoryHolograms(AFGHologram* ParentH
             RestoredScaledFactoryPreviewLocations.Add(FactoryId, FactoryLocation);
             SpawnedFactories++;
 
-            UE_LOG(LogSmartFoundations, Log,
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
                 TEXT("[SmartRestore][Extend] Restored scaled factory spawned: id=%s grid=(%d,%d) loc=%s"),
                 *FactoryId,
                 X,
@@ -1326,7 +1326,7 @@ int32 USFExtendService::SpawnRestoredScaledFactoryHolograms(AFGHologram* ParentH
         }
     }
 
-    UE_LOG(LogSmartFoundations, Log,
+    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
         TEXT("[SmartRestore][Extend] Restored scaled factories spawned: count=%d grid=(%d,%d) parent=%s"),
         SpawnedFactories,
         State.GridCounters.X,
@@ -1343,7 +1343,7 @@ bool USFExtendService::SpawnRestoredCloneTopology(AFGHologram* ParentHologram, c
     ScrubInvalidHologramChildren(ParentHologram, TEXT("SpawnRestoredCloneTopology"));
     if (SpawnedCount <= 0)
     {
-        UE_LOG(LogSmartFoundations, Warning,
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning,
             TEXT("[SmartRestore][Extend] ReplayRestoreCloneTopology failed: spawned=%d factories=%d inputChildren=%d parent=%s"),
             SpawnedCount,
             SpawnedFactoryCount,
@@ -1461,7 +1461,7 @@ bool USFExtendService::SpawnRestoredCloneTopology(AFGHologram* ParentHologram, c
     RestoredCloneLastParentLocation = ParentHologram->GetActorLocation();
     RestoredCloneLastParentRotation = ParentHologram->GetActorRotation();
 
-    UE_LOG(LogSmartFoundations, Log,
+    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
         TEXT("[SmartRestore][Extend] Replayed Extend topology: infra=%d factories=%d tracked=%d parent=%s"),
         SpawnedCount,
         SpawnedFactoryCount,
@@ -1567,7 +1567,7 @@ bool USFExtendService::TryExtendFromBuilding(AFGBuildable* HitBuilding, AFGHolog
             else
             {
                 // Not committed — deactivate Extend so user can sample/build elsewhere
-                UE_LOG(LogSmartFoundations, Log, TEXT("🔄 EXTEND: Deactivating (not committed, looked away)"));
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("🔄 EXTEND: Deactivating (not committed, looked away)"));
                 ClearExtendState();
                 return false;
             }
@@ -1662,7 +1662,7 @@ bool USFExtendService::TryExtendFromBuilding(AFGBuildable* HitBuilding, AFGHolog
     // User is pointing at a different building - clear the cooldown
     if (LastBuiltFromBuilding.IsValid() && LastBuiltFromBuilding.Get() != HitBuilding)
     {
-        UE_LOG(LogSmartFoundations, Log, TEXT("🔄 EXTEND: User looked away from last built building - cooldown cleared"));
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("🔄 EXTEND: User looked away from last built building - cooldown cleared"));
         LastBuiltFromBuilding.Reset();
     }
 
@@ -1697,7 +1697,7 @@ bool USFExtendService::TryExtendFromBuilding(AFGBuildable* HitBuilding, AFGHolog
             }
             Subsystem->ResetCounters();
         }
-        UE_LOG(LogSmartFoundations, Log,
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
             TEXT("[SmartRestore][Extend] Aborted restored topology so normal Extend can activate: target=%s parent=%s"),
             *GetNameSafe(HitBuilding),
             *GetNameSafe(SourceHologram));
@@ -1713,7 +1713,7 @@ bool USFExtendService::TryExtendFromBuilding(AFGBuildable* HitBuilding, AFGHolog
     {
         PreExtendCounterSnapshot = Subsystem->GetCounterState();
         bHasCounterSnapshot = true;
-        UE_LOG(LogSmartFoundations, Log, TEXT("🔄 EXTEND: Snapshot pre-Extend counters (X=%d, Y=%d, Spacing=%d)"),
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("🔄 EXTEND: Snapshot pre-Extend counters (X=%d, Y=%d, Spacing=%d)"),
             PreExtendCounterSnapshot.GridCounters.X, PreExtendCounterSnapshot.GridCounters.Y,
             PreExtendCounterSnapshot.SpacingX);
     }
@@ -1723,7 +1723,7 @@ bool USFExtendService::TryExtendFromBuilding(AFGBuildable* HitBuilding, AFGHolog
     if (ValidDirs.Num() == 0)
     {
         // No valid directions - both sides blocked, can't extend
-        UE_LOG(LogSmartFoundations, Warning, TEXT("🔄 EXTEND: Cannot activate - both directions blocked by existing buildings"));
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔄 EXTEND: Cannot activate - both directions blocked by existing buildings"));
         CurrentExtendTarget.Reset();
         bHasValidTarget = false;
         return false;
@@ -1757,7 +1757,7 @@ bool USFExtendService::TryExtendFromBuilding(AFGBuildable* HitBuilding, AFGHolog
     {
         // Swap failed — fall back to vanilla hologram
         ActiveHologram = SourceHologram;
-        UE_LOG(LogSmartFoundations, Warning, TEXT("🔄 EXTEND: Hologram swap failed, using vanilla hologram"));
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔄 EXTEND: Hologram swap failed, using vanilla hologram"));
     }
 
     // Track which hologram we've set up for EXTEND
@@ -2085,7 +2085,7 @@ void USFExtendService::RefreshExtension(AFGHologram* SourceHologram, bool bForce
 
 void USFExtendService::CleanupExtension(AFGHologram* SourceHologram)
 {
-    UE_LOG(LogSmartFoundations, Log, TEXT("🔧 EXTEND: CleanupExtension called for %s"),
+    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("🔧 EXTEND: CleanupExtension called for %s"),
         SourceHologram ? *SourceHologram->GetName() : TEXT("nullptr"));
 
     if (bRestoredCloneTopologyActive)
@@ -2098,7 +2098,7 @@ void USFExtendService::CleanupExtension(AFGHologram* SourceHologram)
         bExtendCommitted = false;
         bHasCounterSnapshot = false;
 
-        UE_LOG(LogSmartFoundations, Log,
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
             TEXT("[SmartRestore][Extend] CleanupExtension preserved staged restored topology and counters"));
         return;
     }
@@ -2106,7 +2106,7 @@ void USFExtendService::CleanupExtension(AFGHologram* SourceHologram)
     // Restore pre-Extend counter snapshot so normal scaling isn't polluted
     if (bHasCounterSnapshot && Subsystem.IsValid())
     {
-        UE_LOG(LogSmartFoundations, Log, TEXT("🔧 EXTEND: Restoring pre-Extend counters (X=%d, Y=%d, Spacing=%d)"),
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("🔧 EXTEND: Restoring pre-Extend counters (X=%d, Y=%d, Spacing=%d)"),
             PreExtendCounterSnapshot.GridCounters.X, PreExtendCounterSnapshot.GridCounters.Y,
             PreExtendCounterSnapshot.SpacingX);
         Subsystem->UpdateCounterState(PreExtendCounterSnapshot);
@@ -2129,7 +2129,7 @@ void USFExtendService::CleanupExtension(AFGHologram* SourceHologram)
     if (CurrentExtendTarget.IsValid())
     {
         LastBuiltFromBuilding = CurrentExtendTarget.Get();
-        UE_LOG(LogSmartFoundations, Log, TEXT("🔧 EXTEND: Set cooldown on %s to prevent immediate re-activation"),
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("🔧 EXTEND: Set cooldown on %s to prevent immediate re-activation"),
             *CurrentExtendTarget->GetName());
     }
 
@@ -2141,7 +2141,7 @@ void USFExtendService::CleanupExtension(AFGHologram* SourceHologram)
     bHasValidTarget = false;
     bExtendCommitted = false;
 
-    UE_LOG(LogSmartFoundations, Log, TEXT("🔧 EXTEND: State fully cleared (bHasValidTarget=false, pending belts preserved for deferred build)"));
+    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("🔧 EXTEND: State fully cleared (bHasValidTarget=false, pending belts preserved for deferred build)"));
 }
 
 void USFExtendService::CheckAndPerformFinalCleanup()
@@ -2151,7 +2151,7 @@ void USFExtendService::CheckAndPerformFinalCleanup()
         return;
     }
 
-    UE_LOG(LogSmartFoundations, Log, TEXT("🔧 EXTEND: Performing final cleanup (build gun left build mode)"));
+    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("🔧 EXTEND: Performing final cleanup (build gun left build mode)"));
 
     // Force destroy any remaining preview holograms
     ClearScaledExtendClones();  // Issue #265: Clean up scaled extend clones
@@ -2167,7 +2167,7 @@ void USFExtendService::CheckAndPerformFinalCleanup()
     // Clear the flag
     bNeedsFinalCleanup = false;
 
-    UE_LOG(LogSmartFoundations, Log, TEXT("🔧 EXTEND: Final cleanup complete"));
+    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("🔧 EXTEND: Final cleanup complete"));
 }
 
 // ==================== Build Gun Hologram Swapping ====================
@@ -2218,7 +2218,7 @@ ASFFactoryHologram* USFExtendService::SwapToSmartFactoryHologram(AFGHologram* Va
 {
     if (!VanillaHologram || !VanillaHologram->IsValidLowLevel())
     {
-        UE_LOG(LogSmartFoundations, Warning, TEXT("🔄 EXTEND SWAP: Invalid vanilla hologram"));
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔄 EXTEND SWAP: Invalid vanilla hologram"));
         return nullptr;
     }
 
@@ -2226,7 +2226,7 @@ ASFFactoryHologram* USFExtendService::SwapToSmartFactoryHologram(AFGHologram* Va
     AFGFactoryHologram* FactoryHolo = Cast<AFGFactoryHologram>(VanillaHologram);
     if (!FactoryHolo)
     {
-        UE_LOG(LogSmartFoundations, Warning, TEXT("🔄 EXTEND SWAP: Not a factory hologram - %s"),
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔄 EXTEND SWAP: Not a factory hologram - %s"),
             *VanillaHologram->GetClass()->GetName());
         return nullptr;
     }
@@ -2235,14 +2235,14 @@ ASFFactoryHologram* USFExtendService::SwapToSmartFactoryHologram(AFGHologram* Va
     AFGBuildGun* BuildGun = GetPlayerBuildGun();
     if (!BuildGun)
     {
-        UE_LOG(LogSmartFoundations, Warning, TEXT("🔄 EXTEND SWAP: Could not get build gun"));
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔄 EXTEND SWAP: Could not get build gun"));
         return nullptr;
     }
 
     UFGBuildGunStateBuild* BuildState = GetBuildGunBuildState(BuildGun);
     if (!BuildState)
     {
-        UE_LOG(LogSmartFoundations, Warning, TEXT("🔄 EXTEND SWAP: Could not get build state"));
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔄 EXTEND SWAP: Could not get build state"));
         return nullptr;
     }
 
@@ -2250,14 +2250,14 @@ ASFFactoryHologram* USFExtendService::SwapToSmartFactoryHologram(AFGHologram* Va
     UWorld* World = VanillaHologram->GetWorld();
     if (!World)
     {
-        UE_LOG(LogSmartFoundations, Warning, TEXT("🔄 EXTEND SWAP: No world"));
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔄 EXTEND SWAP: No world"));
         return nullptr;
     }
 
     // Verify the vanilla hologram has a build class
     if (!VanillaHologram->GetBuildClass())
     {
-        UE_LOG(LogSmartFoundations, Error, TEXT("🔄 EXTEND SWAP: Vanilla hologram has no BuildClass"));
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Error, TEXT("🔄 EXTEND SWAP: Vanilla hologram has no BuildClass"));
         return nullptr;
     }
 
@@ -2272,7 +2272,7 @@ ASFFactoryHologram* USFExtendService::SwapToSmartFactoryHologram(AFGHologram* Va
 
     if (!CustomHologram)
     {
-        UE_LOG(LogSmartFoundations, Error, TEXT("🔄 EXTEND SWAP: Failed to spawn deferred custom hologram"));
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Error, TEXT("🔄 EXTEND SWAP: Failed to spawn deferred custom hologram"));
         return nullptr;
     }
 
@@ -2306,13 +2306,13 @@ ASFFactoryHologram* USFExtendService::SwapToSmartFactoryHologram(AFGHologram* Va
             if (ObjProp)
             {
                 ObjProp->SetObjectPropertyValue(ValuePtr, CustomHologram);
-                UE_LOG(LogSmartFoundations, Log, TEXT("🔄 EXTEND SWAP: ✅ Set mHologram via reflection"));
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("🔄 EXTEND SWAP: ✅ Set mHologram via reflection"));
             }
         }
     }
     else
     {
-        UE_LOG(LogSmartFoundations, Error, TEXT("🔄 EXTEND SWAP: Could not find mHologram property"));
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Error, TEXT("🔄 EXTEND SWAP: Could not find mHologram property"));
         CustomHologram->Destroy();
         return nullptr;
     }
@@ -2324,7 +2324,7 @@ ASFFactoryHologram* USFExtendService::SwapToSmartFactoryHologram(AFGHologram* Va
     SwappedHologram = CustomHologram;
     bHasSwappedHologram = true;
 
-    UE_LOG(LogSmartFoundations, Log, TEXT("🔄 EXTEND SWAP: ✅ Successfully swapped to ASFFactoryHologram"));
+    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("🔄 EXTEND SWAP: ✅ Successfully swapped to ASFFactoryHologram"));
 
     return CustomHologram;
 }
@@ -2355,7 +2355,7 @@ void USFExtendService::RestoreOriginalHologram()
         HologramService->RestoreOriginalHologram();
     }
 
-    UE_LOG(LogSmartFoundations, Log, TEXT("🔄 EXTEND SWAP: Hologram swap state cleared"));
+    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("🔄 EXTEND SWAP: Hologram swap state cleared"));
 }
 
 // ==================== Phase 2: Infrastructure Cloning (delegates to HologramService) ====================
@@ -2365,7 +2365,7 @@ void USFExtendService::CreateBeltPreviews(AFGHologram* ParentHologram)
     if (!ParentHologram || !GetCurrentTopology().bIsValid || !GetCurrentTopology().SourceBuilding.IsValid())
     {
         const FSFExtendTopology& Topology = GetCurrentTopology();
-        UE_LOG(LogSmartFoundations, Log,
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
             TEXT("[SmartRestore][Extend] CreateBeltPreviews skipped: parent=%s topologyValid=%d sourceBuilding=%s"),
             *GetNameSafe(ParentHologram),
             Topology.bIsValid ? 1 : 0,
@@ -2391,7 +2391,7 @@ void USFExtendService::CreateBeltPreviews(AFGHologram* ParentHologram)
         if (StoredCloneTopology.IsValid())
         {
             LastCloneTopology = MakeShared<FSFCloneTopology>(*StoredCloneTopology);
-            UE_LOG(LogSmartFoundations, Log,
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
                 TEXT("[SmartRestore][Extend] CreateBeltPreviews cached clone topology: storedChildren=%d spawnedHolograms=%d trackedChildren=%d parent=%s"),
                 StoredCloneTopology->ChildHolograms.Num(),
                 JsonSpawnedHolograms.Num(),
@@ -2400,7 +2400,7 @@ void USFExtendService::CreateBeltPreviews(AFGHologram* ParentHologram)
         }
         else
         {
-            UE_LOG(LogSmartFoundations, Warning,
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning,
                 TEXT("[SmartRestore][Extend] CreateBeltPreviews did not receive StoredCloneTopology: spawnedHolograms=%d trackedChildren=%d parent=%s"),
                 JsonSpawnedHolograms.Num(),
                 HologramService->GetTrackedChildren().Num(),
@@ -2434,7 +2434,7 @@ void USFExtendService::CreateBeltPreviews(AFGHologram* ParentHologram)
                     WiringData.MaxConnections = PowerNode.MaxConnections;
                     PowerPoleWiringData.Add(CloneId, WiringData);
 
-                    UE_LOG(LogSmartFoundations, Log, TEXT("⚡ EXTEND: Stored power pole wiring data for %s (source=%s, free=%d)"),
+                    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("⚡ EXTEND: Stored power pole wiring data for %s (source=%s, free=%d)"),
                         *CloneId, *PowerNode.PowerPole->GetName(), PowerNode.SourceFreeConnections);
                 }
             }
@@ -2557,7 +2557,7 @@ void USFExtendService::WirePipeChainConnections(int32 ChainId, AFGHologram* Pare
     TArray<ASFPipelineHologram*>* PipeHolograms = PipeChainHologramMap.Find(ChainId);
     if (!PipeHolograms || PipeHolograms->Num() == 0)
     {
-        UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND Wire: No pipe holograms found for chain %d"), ChainId);
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND Wire: No pipe holograms found for chain %d"), ChainId);
         return;
     }
 
@@ -2620,7 +2620,7 @@ void USFExtendService::WirePipeChainConnections(int32 ChainId, AFGHologram* Pare
             }
             else
             {
-                UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND Wire: Pipe[%d] %s - Factory connection (no pipe connections found on parent!)"),
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND Wire: Pipe[%d] %s - Factory connection (no pipe connections found on parent!)"),
                     i, *PipeHolo->GetName());
             }
         }
@@ -2722,7 +2722,7 @@ void USFExtendService::WirePipeChainConnections(int32 ChainId, AFGHologram* Pare
         }
         else
         {
-            UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND Wire: ⚠️ Both connections null for %s - this will cause pole spawning!"),
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND Wire: ⚠️ Both connections null for %s - this will cause pole spawning!"),
                 *PipeHolo->GetName());
         }
     }
@@ -2777,14 +2777,14 @@ UFGFactoryConnectionComponent* USFExtendService::FindFactoryConnectionByIndex(AF
 
 void USFExtendService::WireBeltChainConnections(int32 ChainId, AFGHologram* ParentHologram, bool bIsInputChain)
 {
-    UE_LOG(LogSmartFoundations, Warning, TEXT("🔌 WIRING CHAIN %d (%s) ============================"),
+    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔌 WIRING CHAIN %d (%s) ============================"),
         ChainId, bIsInputChain ? TEXT("INPUT") : TEXT("OUTPUT"));
 
     // Get the unified conveyor chain (belts + lifts) for this chain
     TMap<int32, AFGHologram*>* UnifiedChainPtr = UnifiedConveyorChainMap.Find(ChainId);
     if (!UnifiedChainPtr || UnifiedChainPtr->Num() == 0)
     {
-        UE_LOG(LogSmartFoundations, Warning, TEXT("🔌 WIRING: No conveyor holograms found for chain %d"), ChainId);
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔌 WIRING: No conveyor holograms found for chain %d"), ChainId);
         return;
     }
 
@@ -2794,7 +2794,7 @@ void USFExtendService::WireBeltChainConnections(int32 ChainId, AFGHologram* Pare
     AFGHologram** DistributorPtr = BeltChainDistributorMap.Find(ChainId);
     AFGHologram* DistributorHologram = DistributorPtr ? *DistributorPtr : nullptr;
 
-    UE_LOG(LogSmartFoundations, Warning, TEXT("🔌 WIRING: Chain has %d elements, Distributor=%s"),
+    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔌 WIRING: Chain has %d elements, Distributor=%s"),
         UnifiedChain.Num(), DistributorHologram ? *DistributorHologram->GetName() : TEXT("NONE"));
 
     // Get factory connections from parent factory hologram
@@ -2845,7 +2845,7 @@ void USFExtendService::WireBeltChainConnections(int32 ChainId, AFGHologram* Pare
         FSFHologramData* HoloData = USFHologramDataRegistry::GetData(BeltHolo);
         if (!HoloData)
         {
-            UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND Wire: Belt %s has no hologram data!"), *BeltHolo->GetName());
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND Wire: Belt %s has no hologram data!"), *BeltHolo->GetName());
             continue;
         }
 
@@ -2943,23 +2943,23 @@ void USFExtendService::WireBeltChainConnections(int32 ChainId, AFGHologram* Pare
         // Apply snapped connections
         BeltHolo->SetSnappedConnections(Conn0Target, Conn1Target);
 
-        UE_LOG(LogSmartFoundations, Warning, TEXT("🔌 WIRING [%d/%d] %s:"),
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔌 WIRING [%d/%d] %s:"),
             ChainIndex, ChainLength, *BeltHolo->GetName());
-        UE_LOG(LogSmartFoundations, Warning, TEXT("🔌   Conn0 ← %s"),
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔌   Conn0 ← %s"),
             Conn0Target ? *FString::Printf(TEXT("%s on %s"), *Conn0Target->GetName(),
                 Conn0Target->GetOwner() ? *Conn0Target->GetOwner()->GetName() : TEXT("null")) : TEXT("NONE"));
-        UE_LOG(LogSmartFoundations, Warning, TEXT("🔌   Conn1 → %s"),
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔌   Conn1 → %s"),
             Conn1Target ? *FString::Printf(TEXT("%s on %s"), *Conn1Target->GetName(),
                 Conn1Target->GetOwner() ? *Conn1Target->GetOwner()->GetName() : TEXT("null")) : TEXT("NONE"));
 
         if (!Conn0Target && !Conn1Target)
         {
-            UE_LOG(LogSmartFoundations, Warning, TEXT("🔌 ⚠️ BOTH CONNECTIONS NULL for %s - will get isolated chain!"),
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔌 ⚠️ BOTH CONNECTIONS NULL for %s - will get isolated chain!"),
                 *BeltHolo->GetName());
         }
     }
 
-    UE_LOG(LogSmartFoundations, Warning, TEXT("🔌 WIRING CHAIN %d COMPLETE ============================"), ChainId);
+    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔌 WIRING CHAIN %d COMPLETE ============================"), ChainId);
 }
 
 void USFExtendService::ProvideFloorHitResult(AFGHologram* Hologram, const FVector& Location)
@@ -2989,7 +2989,7 @@ void USFExtendService::ConnectAllChainElements(AFGBuildableFactory* NewFactory)
 {
     if (!NewFactory)
     {
-        UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND Phase 3.7: ConnectAllChainElements called with null factory"));
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND Phase 3.7: ConnectAllChainElements called with null factory"));
         BuiltChainElements.Empty();
         ChainIsInputMap.Empty();
         return;
@@ -3034,7 +3034,7 @@ void USFExtendService::ConnectAllChainElements(AFGBuildableFactory* NewFactory)
 
             if (!Current || !Next)
             {
-                UE_LOG(LogSmartFoundations, Warning, TEXT("   ⚠️ Null element at index %d or %d"), CurrentIndex, NextIndex);
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("   ⚠️ Null element at index %d or %d"), CurrentIndex, NextIndex);
                 FailedConnections++;
                 continue;
             }
@@ -3072,7 +3072,7 @@ void USFExtendService::ConnectAllChainElements(AFGBuildableFactory* NewFactory)
             else
             {
                 FailedConnections++;
-                UE_LOG(LogSmartFoundations, Warning, TEXT("   ⚠️ Could not connect %s (idx %d) to %s (idx %d) - Curr0=%d, Curr1=%d, Next0=%d, Next1=%d"),
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("   ⚠️ Could not connect %s (idx %d) to %s (idx %d) - Curr0=%d, Curr1=%d, Next0=%d, Next1=%d"),
                     *Current->GetName(), CurrentIndex, *Next->GetName(), NextIndex,
                     CurrentConn ? CurrentConn->IsConnected() : -1,
                     Current->GetConnection1() ? Current->GetConnection1()->IsConnected() : -1,
@@ -3300,7 +3300,7 @@ int32 USFExtendService::CopyDistributorConfigurations()
                 CloneSmart->SetSortRules(SourceRules);
                 CopiedSmartCount++;
 
-                UE_LOG(LogSmartFoundations, Log,
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
                     TEXT("🔧 EXTEND Config Copy: Copied %d sort rule(s) from Smart Splitter %s → %s (%s)"),
                     SourceRules.Num(), *SourceSmart->GetName(), *CloneSmart->GetName(), *Context);
                 return true;
@@ -3326,13 +3326,13 @@ int32 USFExtendService::CopyDistributorConfigurations()
                     ClonePriority->SetInputPriorities(SourcePriorities);
                     CopiedPriorityCount++;
 
-                    UE_LOG(LogSmartFoundations, Log,
+                    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
                         TEXT("🔧 EXTEND Config Copy: Copied %d input priority value(s) from Priority Merger %s → %s (%s)"),
                         SourcePriorities.Num(), *SourcePriority->GetName(), *ClonePriority->GetName(), *Context);
                 }
                 else
                 {
-                    UE_LOG(LogSmartFoundations, Warning,
+                    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning,
                         TEXT("🔧 EXTEND Config Copy: Priority Merger input count mismatch (source=%d, clone=%d) on %s → %s — skipping"),
                         SourcePriorities.Num(), CloneInputCount, *SourcePriority->GetName(), *ClonePriority->GetName());
                 }
@@ -3434,7 +3434,7 @@ int32 USFExtendService::CopyDistributorConfigurations()
     const int32 TotalCopied = CopiedSmartCount + CopiedPriorityCount;
     if (TotalCopied > 0 || SkippedNonConfigurable > 0 || SkippedUnresolved > 0)
     {
-        UE_LOG(LogSmartFoundations, Log,
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
             TEXT("🔧 EXTEND Config Copy: %d Smart Splitter + %d Priority Merger clone(s) received source configuration (%d non-configurable, %d unresolved)"),
             CopiedSmartCount, CopiedPriorityCount, SkippedNonConfigurable, SkippedUnresolved);
     }
@@ -3446,7 +3446,7 @@ void USFExtendService::WireBuiltChildConnections(AFGBuildableFactory* NewFactory
 {
     if (!NewFactory)
     {
-        UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND Phase 3.8: WireBuiltChildConnections called with null factory"));
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND Phase 3.8: WireBuiltChildConnections called with null factory"));
         return;
     }
 
@@ -3457,7 +3457,7 @@ void USFExtendService::WireBuiltChildConnections(AFGBuildableFactory* NewFactory
 
     if (bRestoredCloneTopologyActive || bRestoredScaledWiringDeferred)
     {
-        UE_LOG(LogSmartFoundations, Log,
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
             TEXT("[SmartRestore][Extend] Post-build wiring start: factory=%s storedChildren=%d jsonBuilt=%d jsonSpawned=%d previewFactories=%d parentValid=%d retry=%d/%d deferred=%d"),
             *NewFactory->GetName(),
             StoredCloneTopology.IsValid() ? StoredCloneTopology->ChildHolograms.Num() : 0,
@@ -3598,7 +3598,7 @@ void USFExtendService::WireBuiltChildConnections(AFGBuildableFactory* NewFactory
             if (PoleConn->GetNumConnections() >= PoleConn->GetMaxNumConnections())
             {
                 ++PumpsSkipped;
-                UE_LOG(LogSmartFoundations, Warning,
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning,
                     TEXT("⚡ EXTEND Phase 3.8b (#288): clone pole %s reached capacity (%d/%d) — skipping pump %s"),
                     *ClonePole->GetName(), PoleConn->GetNumConnections(), PoleConn->GetMaxNumConnections(),
                     *ClonePump->GetName());
@@ -3608,7 +3608,7 @@ void USFExtendService::WireBuiltChildConnections(AFGBuildableFactory* NewFactory
             if (!PumpWireClass)
             {
                 ++PumpsSkipped;
-                UE_LOG(LogSmartFoundations, Warning, TEXT("⚡ EXTEND Phase 3.8b (#288): Build_PowerLine_C class not loadable — skipping pump %s"), *ClonePump->GetName());
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("⚡ EXTEND Phase 3.8b (#288): Build_PowerLine_C class not loadable — skipping pump %s"), *ClonePump->GetName());
                 continue;
             }
 
@@ -3633,7 +3633,7 @@ void USFExtendService::WireBuiltChildConnections(AFGBuildableFactory* NewFactory
             {
                 ++PumpsSkipped;
                 NewWire->Destroy();
-                UE_LOG(LogSmartFoundations, Warning, TEXT("⚡ EXTEND Phase 3.8b (#288): Wire->Connect() failed for pump %s → pole %s"),
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("⚡ EXTEND Phase 3.8b (#288): Wire->Connect() failed for pump %s → pole %s"),
                     *ClonePump->GetName(), *ClonePole->GetName());
             }
         }
@@ -3654,7 +3654,7 @@ void USFExtendService::WireBuiltChildConnections(AFGBuildableFactory* NewFactory
     int32 JsonWiredCount = GenerateAndExecuteWiring(NewFactory);
     if (bRestoredScaledWiringDeferred)
     {
-        UE_LOG(LogSmartFoundations, Log,
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
             TEXT("[SmartRestore][Extend] JSON wiring deferred; leaving post-build tracking intact for retry (jsonBuilt=%d, jsonSpawned=%d, storedChildren=%d)"),
             JsonBuiltActors.Num(),
             JsonSpawnedHolograms.Num(),
@@ -3805,7 +3805,7 @@ void USFExtendService::WireBuiltChildConnections(AFGBuildableFactory* NewFactory
                 }
                 else
                 {
-                    UE_LOG(LogSmartFoundations, Warning, TEXT("   ⚠️ No factory %s connector found within 300cm of %s.%s"),
+                    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("   ⚠️ No factory %s connector found within 300cm of %s.%s"),
                         bIsInputChain ? TEXT("INPUT") : TEXT("OUTPUT"),
                         *FactoryConveyor->GetName(), bIsInputChain ? TEXT("Conn1") : TEXT("Conn0"));
                 }
@@ -3862,7 +3862,7 @@ void USFExtendService::WireBuiltChildConnections(AFGBuildableFactory* NewFactory
                     }
                     else
                     {
-                        UE_LOG(LogSmartFoundations, Warning, TEXT("   ⚠️ No distributor %s connector found within 300cm of %s.%s"),
+                        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("   ⚠️ No distributor %s connector found within 300cm of %s.%s"),
                             bIsInputChain ? TEXT("OUTPUT") : TEXT("INPUT"),
                             *DistributorConveyor->GetName(), bIsInputChain ? TEXT("Conn0") : TEXT("Conn1"));
                     }
@@ -3870,7 +3870,7 @@ void USFExtendService::WireBuiltChildConnections(AFGBuildableFactory* NewFactory
             }
             else
             {
-                UE_LOG(LogSmartFoundations, Warning, TEXT("   ⚠️ No built distributor found for chain %d"), ChainId);
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("   ⚠️ No built distributor found for chain %d"), ChainId);
             }
         }
     }
@@ -3934,7 +3934,7 @@ void USFExtendService::WireBuiltChildConnections(AFGBuildableFactory* NewFactory
                 else
                 {
                     FailedConnections++;
-                    UE_LOG(LogSmartFoundations, Warning, TEXT("   ⚠️ Could not connect %s.Conn1 → %s.Conn0 (From.Connected=%d, To.Connected=%d)"),
+                    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("   ⚠️ Could not connect %s.Conn1 → %s.Conn0 (From.Connected=%d, To.Connected=%d)"),
                         *CurrentPipe->GetName(), *NextPipe->GetName(),
                         FromConn ? FromConn->IsConnected() : -1,
                         ToConn ? ToConn->IsConnected() : -1);
@@ -3981,7 +3981,7 @@ void USFExtendService::WireBuiltChildConnections(AFGBuildableFactory* NewFactory
                     }
                 }
 
-                UE_LOG(LogSmartFoundations, Log, TEXT("   🔍 Factory wiring: %s chain %d, Pipe=%s, TargetConnector=%s"),
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("   🔍 Factory wiring: %s chain %d, Pipe=%s, TargetConnector=%s"),
                     bIsInputChain ? TEXT("INPUT") : TEXT("OUTPUT"), PipeChainId,
                     *FactoryPipe->GetName(), *SourceFactoryConnectorName.ToString());
 
@@ -3998,7 +3998,7 @@ void USFExtendService::WireBuiltChildConnections(AFGBuildableFactory* NewFactory
 
                     PipeConn = (Dist0 < Dist1) ? Conn0 : Conn1;
 
-                    UE_LOG(LogSmartFoundations, Log, TEXT("   🔍 Pipe Conn0 dist=%.1f cm, Conn1 dist=%.1f cm, using %s"),
+                    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("   🔍 Pipe Conn0 dist=%.1f cm, Conn1 dist=%.1f cm, using %s"),
                         Dist0, Dist1, (Dist0 < Dist1) ? TEXT("Conn0") : TEXT("Conn1"));
                 }
 
@@ -4013,16 +4013,16 @@ void USFExtendService::WireBuiltChildConnections(AFGBuildableFactory* NewFactory
                 else if (!TargetFactoryConn)
                 {
                     FailedConnections++;
-                    UE_LOG(LogSmartFoundations, Warning, TEXT("   ⚠️ Could not find factory connector '%s' on clone factory"),
+                    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("   ⚠️ Could not find factory connector '%s' on clone factory"),
                         *SourceFactoryConnectorName.ToString());
                 }
                 else if (PipeConn && PipeConn->IsConnected())
                 {
-                    UE_LOG(LogSmartFoundations, Log, TEXT("   ℹ️ Pipe connector already connected, skipping factory wiring"));
+                    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("   ℹ️ Pipe connector already connected, skipping factory wiring"));
                 }
                 else if (TargetFactoryConn && TargetFactoryConn->IsConnected())
                 {
-                    UE_LOG(LogSmartFoundations, Log, TEXT("   ℹ️ Factory connector '%s' already connected, skipping"),
+                    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("   ℹ️ Factory connector '%s' already connected, skipping"),
                         *TargetFactoryConn->GetName());
                 }
             }
@@ -4075,7 +4075,7 @@ void USFExtendService::WireBuiltChildConnections(AFGBuildableFactory* NewFactory
                         }
                     }
 
-                    UE_LOG(LogSmartFoundations, Log, TEXT("   🔍 Junction wiring: %s chain %d, Pipe=%s, Junction=%s (CLONE), TargetConnector=%s"),
+                    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("   🔍 Junction wiring: %s chain %d, Pipe=%s, Junction=%s (CLONE), TargetConnector=%s"),
                         bIsInputChain ? TEXT("INPUT") : TEXT("OUTPUT"), PipeChainId,
                         *JunctionPipe->GetName(), *CloneJunction->GetName(),
                         *SourceJunctionConnectorName.ToString());
@@ -4093,9 +4093,9 @@ void USFExtendService::WireBuiltChildConnections(AFGBuildableFactory* NewFactory
 
                         PipeConn = (Dist0 < Dist1) ? Conn0 : Conn1;
 
-                        UE_LOG(LogSmartFoundations, Log, TEXT("   🔍 Target junction connector %s @ (%.1f, %.1f, %.1f)"),
+                        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("   🔍 Target junction connector %s @ (%.1f, %.1f, %.1f)"),
                             *SourceJunctionConnectorName.ToString(), TargetLoc.X, TargetLoc.Y, TargetLoc.Z);
-                        UE_LOG(LogSmartFoundations, Log, TEXT("   🔍 Pipe Conn0 dist=%.1f cm, Conn1 dist=%.1f cm, using %s"),
+                        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("   🔍 Pipe Conn0 dist=%.1f cm, Conn1 dist=%.1f cm, using %s"),
                             Dist0, Dist1, (Dist0 < Dist1) ? TEXT("Conn0") : TEXT("Conn1"));
                     }
 
@@ -4111,22 +4111,22 @@ void USFExtendService::WireBuiltChildConnections(AFGBuildableFactory* NewFactory
                     else if (!TargetJunctionConn)
                     {
                         FailedConnections++;
-                        UE_LOG(LogSmartFoundations, Warning, TEXT("   ⚠️ Could not find junction connector '%s' on clone junction"),
+                        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("   ⚠️ Could not find junction connector '%s' on clone junction"),
                             *SourceJunctionConnectorName.ToString());
                     }
                     else if (PipeConn && PipeConn->IsConnected())
                     {
-                        UE_LOG(LogSmartFoundations, Log, TEXT("   ℹ️ Pipe connector already connected, skipping junction wiring"));
+                        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("   ℹ️ Pipe connector already connected, skipping junction wiring"));
                     }
                     else if (TargetJunctionConn && TargetJunctionConn->IsConnected())
                     {
-                        UE_LOG(LogSmartFoundations, Log, TEXT("   ℹ️ Junction connector '%s' already connected, skipping"),
+                        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("   ℹ️ Junction connector '%s' already connected, skipping"),
                             *TargetJunctionConn->GetName());
                     }
                 }
                 else
                 {
-                    UE_LOG(LogSmartFoundations, Warning, TEXT("   ⚠️ No built junction found for pipe chain %d"), PipeChainId);
+                    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("   ⚠️ No built junction found for pipe chain %d"), PipeChainId);
                 }
             }
         }
@@ -4245,7 +4245,7 @@ void USFExtendService::WireBuiltChildConnections(AFGBuildableFactory* NewFactory
 
         if (!SourceChain || SourceChain->Conveyors.Num() == 0)
         {
-            UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND Chain %d: No source chain found in topology, skipping respawn"),
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND Chain %d: No source chain found in topology, skipping respawn"),
                 ChainId);
             continue;
         }
@@ -4386,7 +4386,7 @@ void USFExtendService::WireBuiltChildConnections(AFGBuildableFactory* NewFactory
             AFGBuildableConveyorBase* SourceConveyor = SourceChain->Conveyors[i].Get();
             if (!SourceConveyor)
             {
-                UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND   [%d] Source conveyor is null, skipping"), i);
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND   [%d] Source conveyor is null, skipping"), i);
                 continue;
             }
 
@@ -4516,7 +4516,7 @@ void USFExtendService::WireBuiltChildConnections(AFGBuildableFactory* NewFactory
                 }
                 else
                 {
-                    UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND   [%d] SpawnActorDeferred FAILED"), i);
+                    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND   [%d] SpawnActorDeferred FAILED"), i);
                 }
             }
             else if (SourceBelt)
@@ -4690,7 +4690,7 @@ void USFExtendService::WireBuiltChildConnections(AFGBuildableFactory* NewFactory
             }
         }
 
-        UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND Chain %d: Respawn complete - %d conveyors now have %d chain actor(s)"),
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND Chain %d: Respawn complete - %d conveyors now have %d chain actor(s)"),
             ChainId, ConveyorMap.Num(), FinalChains.Num());
     }
 
@@ -4715,7 +4715,7 @@ void USFExtendService::WireManifoldConnections(AFGBuildableFactory* SourceFactor
 {
     if (!SourceFactory || !CloneFactory)
     {
-        UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND Manifold: Invalid factory pointers"));
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND Manifold: Invalid factory pointers"));
         return;
     }
 
@@ -4734,7 +4734,7 @@ void USFExtendService::WireManifoldConnections(AFGBuildableFactory* SourceFactor
 
         if (!SourceDistributor || !CloneDistPtr || !*CloneDistPtr)
         {
-            UE_LOG(LogSmartFoundations, Warning, TEXT("   ⚠️ Missing distributor for chain %d"), ChainId);
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("   ⚠️ Missing distributor for chain %d"), ChainId);
             continue;
         }
 
@@ -4784,14 +4784,14 @@ void USFExtendService::WireManifoldConnections(AFGBuildableFactory* SourceFactor
             if (CreateManifoldBelt(BestFrom, BestTo))
             {
                 BeltManifolds++;
-                UE_LOG(LogSmartFoundations, Log, TEXT("   ✅ Belt manifold: %s.%s → %s.%s (%.1f cm)"),
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("   ✅ Belt manifold: %s.%s → %s.%s (%.1f cm)"),
                     *FromDistributor->GetName(), *BestFrom->GetName(),
                     *ToDistributor->GetName(), *BestTo->GetName(), BestDistance);
             }
         }
         else
         {
-            UE_LOG(LogSmartFoundations, Warning, TEXT("   ⚠️ No available connectors for manifold on chain %d"), ChainId);
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("   ⚠️ No available connectors for manifold on chain %d"), ChainId);
         }
     }
 
@@ -4804,7 +4804,7 @@ void USFExtendService::WireManifoldConnections(AFGBuildableFactory* SourceFactor
 
         if (!SourceJunction || !CloneJunctionPtr || !*CloneJunctionPtr)
         {
-            UE_LOG(LogSmartFoundations, Warning, TEXT("   ⚠️ Missing junction for pipe chain %d"), ChainId);
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("   ⚠️ Missing junction for pipe chain %d"), ChainId);
             continue;
         }
 
@@ -4850,14 +4850,14 @@ void USFExtendService::WireManifoldConnections(AFGBuildableFactory* SourceFactor
             if (CreateManifoldPipe(BestFrom, BestTo))
             {
                 PipeManifolds++;
-                UE_LOG(LogSmartFoundations, Log, TEXT("   ✅ Pipe manifold: %s.%s → %s.%s (%.1f cm)"),
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("   ✅ Pipe manifold: %s.%s → %s.%s (%.1f cm)"),
                     *FromJunction->GetName(), *BestFrom->GetName(),
                     *ToJunction->GetName(), *BestTo->GetName(), BestDistance);
             }
         }
         else
         {
-            UE_LOG(LogSmartFoundations, Warning, TEXT("   ⚠️ No available connectors for pipe manifold on chain %d"), ChainId);
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("   ⚠️ No available connectors for pipe manifold on chain %d"), ChainId);
         }
     }
 
@@ -4873,7 +4873,7 @@ void USFExtendService::WireManifoldPipe(AFGBuildablePipeline* BuiltPipe, UFGPipe
 {
     if (!BuiltPipe || !SourceConnector)
     {
-        UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND Manifold Pipe Wire: Invalid parameters"));
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND Manifold Pipe Wire: Invalid parameters"));
         return;
     }
 
@@ -4883,7 +4883,7 @@ void USFExtendService::WireManifoldPipe(AFGBuildablePipeline* BuiltPipe, UFGPipe
 
     if (!PipeConn0 || !PipeConn1)
     {
-        UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND Manifold Pipe Wire: Pipe %s missing connectors"), *BuiltPipe->GetName());
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND Manifold Pipe Wire: Pipe %s missing connectors"), *BuiltPipe->GetName());
         return;
     }
 
@@ -4904,7 +4904,7 @@ void USFExtendService::WireManifoldPipe(AFGBuildablePipeline* BuiltPipe, UFGPipe
     }
     else
     {
-        UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND Manifold Pipe Wire: Source connection failed (PipeConnected=%d, SourceConnected=%d)"),
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND Manifold Pipe Wire: Source connection failed (PipeConnected=%d, SourceConnected=%d)"),
             PipeToSource->IsConnected(), SourceConnector->IsConnected());
     }
 
@@ -4912,7 +4912,7 @@ void USFExtendService::WireManifoldPipe(AFGBuildablePipeline* BuiltPipe, UFGPipe
     AFGBuildable** CloneJunctionPtr = BuiltJunctionsByChain.Find(CloneChainId);
     if (!CloneJunctionPtr || !*CloneJunctionPtr)
     {
-        UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND Manifold Pipe Wire: Clone junction not found for chain %d"), CloneChainId);
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND Manifold Pipe Wire: Clone junction not found for chain %d"), CloneChainId);
         return;
     }
 
@@ -4967,7 +4967,7 @@ void USFExtendService::WireManifoldPipe(AFGBuildablePipeline* BuiltPipe, UFGPipe
     }
     else
     {
-        UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND Manifold Pipe Wire: Clone connection failed (NoCloneConnector=%d, PipeConnected=%d)"),
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND Manifold Pipe Wire: Clone connection failed (NoCloneConnector=%d, PipeConnected=%d)"),
             BestCloneConnector == nullptr, PipeToClone->IsConnected());
     }
 
@@ -5029,7 +5029,7 @@ void USFExtendService::WireManifoldBelt(AFGBuildableConveyorBelt* BuiltBelt, UFG
 {
     if (!BuiltBelt || !SourceConnector)
     {
-        UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND Manifold Belt Wire: Invalid parameters"));
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND Manifold Belt Wire: Invalid parameters"));
         return;
     }
 
@@ -5039,7 +5039,7 @@ void USFExtendService::WireManifoldBelt(AFGBuildableConveyorBelt* BuiltBelt, UFG
 
     if (!BeltConn0 || !BeltConn1)
     {
-        UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND Manifold Belt Wire: Belt %s missing connectors"), *BuiltBelt->GetName());
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND Manifold Belt Wire: Belt %s missing connectors"), *BuiltBelt->GetName());
         return;
     }
 
@@ -5064,7 +5064,7 @@ void USFExtendService::WireManifoldBelt(AFGBuildableConveyorBelt* BuiltBelt, UFG
     AFGBuildable** CloneDistributorPtr = BuiltDistributorsByChain.Find(CloneChainId);
     if (!CloneDistributorPtr || !*CloneDistributorPtr)
     {
-        UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND Manifold Belt Wire: Clone distributor not found for chain %d"), CloneChainId);
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND Manifold Belt Wire: Clone distributor not found for chain %d"), CloneChainId);
         return;
     }
 
@@ -5102,13 +5102,13 @@ void USFExtendService::WireManifoldBelt(AFGBuildableConveyorBelt* BuiltBelt, UFG
         }
         else
         {
-            UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND Manifold Belt Wire: CanConnectTo failed for source (BeltDir=%d, SourceDir=%d)"),
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND Manifold Belt Wire: CanConnectTo failed for source (BeltDir=%d, SourceDir=%d)"),
                 (int32)BeltToSource->GetDirection(), (int32)SourceConnector->GetDirection());
         }
     }
     else
     {
-        UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND Manifold Belt Wire: Source connection failed (BeltConnected=%d, SourceConnected=%d)"),
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND Manifold Belt Wire: Source connection failed (BeltConnected=%d, SourceConnected=%d)"),
             BeltToSource->IsConnected(), SourceConnector->IsConnected());
     }
 
@@ -5160,13 +5160,13 @@ void USFExtendService::WireManifoldBelt(AFGBuildableConveyorBelt* BuiltBelt, UFG
         }
         else
         {
-            UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND Manifold Belt Wire: CanConnectTo failed for clone (SourceDir=%d, NeededDir=%d, CloneDir=%d)"),
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND Manifold Belt Wire: CanConnectTo failed for clone (SourceDir=%d, NeededDir=%d, CloneDir=%d)"),
                 (int32)SourceDir, (int32)NeededDir, (int32)BestCloneConnector->GetDirection());
         }
     }
     else
     {
-        UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND Manifold Belt Wire: Clone connection failed (NoCloneConnector=%d, BeltConnected=%d, NeededDir=%d)"),
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND Manifold Belt Wire: Clone connection failed (NoCloneConnector=%d, BeltConnected=%d, NeededDir=%d)"),
             BestCloneConnector == nullptr, BeltToClone->IsConnected(), (int32)NeededDir);
     }
 
@@ -5258,7 +5258,7 @@ void USFExtendService::WireManifoldBelt(AFGBuildableConveyorBelt* BuiltBelt, UFG
     // possibly by calling AFGBuildableSubsystem::MigrateConveyorGroupToChainActor
     // or by building the belt with connections already set.
 
-    UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND Manifold Belt Wire: Manifold belt %s has ChainActor=%s, BucketID=%d - chain integration pending"),
+    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND Manifold Belt Wire: Manifold belt %s has ChainActor=%s, BucketID=%d - chain integration pending"),
         *BuiltBelt->GetName(),
         BuiltBelt->GetConveyorChainActor() ? *BuiltBelt->GetConveyorChainActor()->GetName() : TEXT("NULL"),
         BuiltBelt->GetConveyorBucketID());
@@ -5291,7 +5291,7 @@ bool USFExtendService::CreateManifoldBelt(UFGFactoryConnectionComponent* FromCon
     UClass* BeltClass = LoadObject<UClass>(nullptr, *BeltPath);
     if (!BeltClass)
     {
-        UE_LOG(LogSmartFoundations, Warning, TEXT("   ⚠️ Failed to load belt class: %s"), *BeltPath);
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("   ⚠️ Failed to load belt class: %s"), *BeltPath);
         return false;
     }
 
@@ -5322,7 +5322,7 @@ bool USFExtendService::CreateManifoldBelt(UFGFactoryConnectionComponent* FromCon
     AFGBuildableConveyorBelt* Belt = World->SpawnActor<AFGBuildableConveyorBelt>(BeltClass, StartPos, FRotator::ZeroRotator, SpawnParams);
     if (!Belt)
     {
-        UE_LOG(LogSmartFoundations, Warning, TEXT("   ⚠️ Failed to spawn manifold belt"));
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("   ⚠️ Failed to spawn manifold belt"));
         return false;
     }
 
@@ -5364,10 +5364,10 @@ bool USFExtendService::CreateManifoldBelt(UFGFactoryConnectionComponent* FromCon
     }
     else
     {
-        UE_LOG(LogSmartFoundations, Warning, TEXT("CreateManifoldBelt: No BuildableSubsystem - belt will have no chain actor!"));
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("CreateManifoldBelt: No BuildableSubsystem - belt will have no chain actor!"));
     }
 
-    UE_LOG(LogSmartFoundations, Log, TEXT("   🔧 Created manifold belt Mk%d between distributors"), BeltTier);
+    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("   🔧 Created manifold belt Mk%d between distributors"), BeltTier);
     return true;
 }
 
@@ -5393,7 +5393,7 @@ bool USFExtendService::CreateManifoldPipe(UFGPipeConnectionComponentBase* FromCo
     UClass* PipeClass = LoadObject<UClass>(nullptr, *PipePath);
     if (!PipeClass)
     {
-        UE_LOG(LogSmartFoundations, Warning, TEXT("   ⚠️ Failed to load pipe class: %s"), *PipePath);
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("   ⚠️ Failed to load pipe class: %s"), *PipePath);
         return false;
     }
 
@@ -5424,7 +5424,7 @@ bool USFExtendService::CreateManifoldPipe(UFGPipeConnectionComponentBase* FromCo
     AFGBuildablePipeline* Pipe = World->SpawnActor<AFGBuildablePipeline>(PipeClass, StartPos, FRotator::ZeroRotator, SpawnParams);
     if (!Pipe)
     {
-        UE_LOG(LogSmartFoundations, Warning, TEXT("   ⚠️ Failed to spawn manifold pipe"));
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("   ⚠️ Failed to spawn manifold pipe"));
         return false;
     }
 
@@ -5432,7 +5432,7 @@ bool USFExtendService::CreateManifoldPipe(UFGPipeConnectionComponentBase* FromCo
     TArray<FSplinePointData>* MutableSpline = Pipe->GetMutableSplinePointData();
     if (!MutableSpline)
     {
-        UE_LOG(LogSmartFoundations, Warning, TEXT("   ⚠️ Cannot get mutable spline data for manifold pipe"));
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("   ⚠️ Cannot get mutable spline data for manifold pipe"));
         Pipe->Destroy();
         return false;
     }
@@ -5470,7 +5470,7 @@ bool USFExtendService::CreateManifoldPipe(UFGPipeConnectionComponentBase* FromCo
         }
     }
 
-    UE_LOG(LogSmartFoundations, Log, TEXT("   🔧 Created manifold pipe Mk%d between junctions"), PipeTier);
+    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("   🔧 Created manifold pipe Mk%d between junctions"), PipeTier);
     return true;
 }
 
@@ -5493,7 +5493,7 @@ FSFBuildableSnapshot USFExtendService::CaptureNearbyBuildables(float Radius)
 
     if (!Subsystem.IsValid())
     {
-        UE_LOG(LogSmartFoundations, Warning, TEXT("📊 DIAG: Cannot capture - no subsystem"));
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("📊 DIAG: Cannot capture - no subsystem"));
         return Snapshot;
     }
 
@@ -5501,7 +5501,7 @@ FSFBuildableSnapshot USFExtendService::CaptureNearbyBuildables(float Radius)
     APlayerController* PC = Subsystem->GetWorld()->GetFirstPlayerController();
     if (!PC || !PC->GetPawn())
     {
-        UE_LOG(LogSmartFoundations, Warning, TEXT("📊 DIAG: Cannot capture - no player"));
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("📊 DIAG: Cannot capture - no player"));
         return Snapshot;
     }
 
@@ -5911,7 +5911,7 @@ void USFExtendService::CapturePreviewSnapshot()
         // RadarPulse->LogFlaggedObjects(PulseSnapshot, TEXT("ExtendSource"), true);  // DISABLED: Too verbose (~2000 lines)
 
         bHasPreviewSnapshot = true;
-        UE_LOG(LogSmartFoundations, Log, TEXT("📡 RadarPulse: EXTEND preview snapshot captured (%d objects, %d EXTEND sources)"),
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("📡 RadarPulse: EXTEND preview snapshot captured (%d objects, %d EXTEND sources)"),
             PulseSnapshot.TotalObjects, PulseSnapshot.ExtendSourceCount);
         return;
     }
@@ -5948,51 +5948,51 @@ void USFExtendService::CapturePreviewSnapshot()
         // DISABLED: Source topology box logging - generates ~30+ lines per Extend
         // Re-enable for debugging by uncommenting the block below
         /*
-        UE_LOG(LogSmartFoundations, Display, TEXT(""));
-        UE_LOG(LogSmartFoundations, Display, TEXT("╔═══════════════════════════════════════════════════════════════════╗"));
-        UE_LOG(LogSmartFoundations, Display, TEXT("║           EXTEND SOURCE TOPOLOGY (%d members)                      ║"), SourceCount);
-        UE_LOG(LogSmartFoundations, Display, TEXT("╠═══════════════════════════════════════════════════════════════════╣"));
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display, TEXT(""));
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display, TEXT("╔═══════════════════════════════════════════════════════════════════╗"));
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display, TEXT("║           EXTEND SOURCE TOPOLOGY (%d members)                      ║"), SourceCount);
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display, TEXT("╠═══════════════════════════════════════════════════════════════════╣"));
 
         for (const auto& Pair : SourceByRole)
         {
-            UE_LOG(LogSmartFoundations, Display, TEXT("║   %-20s: %3d                                       ║"), *Pair.Key, Pair.Value);
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display, TEXT("║   %-20s: %3d                                       ║"), *Pair.Key, Pair.Value);
         }
 
-        UE_LOG(LogSmartFoundations, Display, TEXT("╚═══════════════════════════════════════════════════════════════════╝"));
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display, TEXT("╚═══════════════════════════════════════════════════════════════════╝"));
         */
 
         // DISABLED: Detailed source topology logging generates ~1500 lines per Extend
         // Re-enable for debugging by uncommenting the block below
         /*
         // Log full details of SOURCE topology members
-        UE_LOG(LogSmartFoundations, Display, TEXT(""));
-        UE_LOG(LogSmartFoundations, Display, TEXT("📊 EXTEND SOURCE DETAILS:"));
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display, TEXT(""));
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display, TEXT("📊 EXTEND SOURCE DETAILS:"));
 
         for (const FSFCapturedBuildable& B : PreviewSnapshot.Buildables)
         {
             if (B.bIsExtendSource)
             {
-                UE_LOG(LogSmartFoundations, Display, TEXT(""));
-                UE_LOG(LogSmartFoundations, Display, TEXT("┌─────────────────────────────────────────────────────────────────────"));
-                UE_LOG(LogSmartFoundations, Display, TEXT("│ ★ %s [%s] - Chain %d, Index %d"),
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display, TEXT(""));
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display, TEXT("┌─────────────────────────────────────────────────────────────────────"));
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display, TEXT("│ ★ %s [%s] - Chain %d, Index %d"),
                     *B.ExtendRole, *B.Name, B.ExtendChainId, B.ExtendChainIndex);
-                UE_LOG(LogSmartFoundations, Display, TEXT("├─────────────────────────────────────────────────────────────────────"));
-                UE_LOG(LogSmartFoundations, Display, TEXT("│ Category: %s | Class: %s"), *B.Category, *B.ClassName);
-                UE_LOG(LogSmartFoundations, Display, TEXT("│ Location: X=%.3f Y=%.3f Z=%.3f"), B.Location.X, B.Location.Y, B.Location.Z);
-                UE_LOG(LogSmartFoundations, Display, TEXT("│ Rotation: P=%.3f Y=%.3f R=%.3f"), B.Rotation.Pitch, B.Rotation.Yaw, B.Rotation.Roll);
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display, TEXT("├─────────────────────────────────────────────────────────────────────"));
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display, TEXT("│ Category: %s | Class: %s"), *B.Category, *B.ClassName);
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display, TEXT("│ Location: X=%.3f Y=%.3f Z=%.3f"), B.Location.X, B.Location.Y, B.Location.Z);
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display, TEXT("│ Rotation: P=%.3f Y=%.3f R=%.3f"), B.Rotation.Pitch, B.Rotation.Yaw, B.Rotation.Roll);
 
                 // Belt-specific data
                 if (B.Category == TEXT("Belt"))
                 {
-                    UE_LOG(LogSmartFoundations, Display, TEXT("│ ═══ BELT DATA ═══"));
-                    UE_LOG(LogSmartFoundations, Display, TEXT("│ Speed: %.1f | SplineLength: %.1fcm | SplinePoints: %d"),
+                    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display, TEXT("│ ═══ BELT DATA ═══"));
+                    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display, TEXT("│ Speed: %.1f | SplineLength: %.1fcm | SplinePoints: %d"),
                         B.BeltSpeed, B.SplineLength, B.SplinePointCount);
 
                     for (const FSFCapturedSplinePoint& SP : B.SplinePoints)
                     {
-                        UE_LOG(LogSmartFoundations, Display, TEXT("│   [Point %d] World=(%.1f,%.1f,%.1f)"),
+                        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display, TEXT("│   [Point %d] World=(%.1f,%.1f,%.1f)"),
                             SP.Index, SP.WorldLocation.X, SP.WorldLocation.Y, SP.WorldLocation.Z);
-                        UE_LOG(LogSmartFoundations, Display, TEXT("│             Arrive=(%.1f,%.1f,%.1f) Leave=(%.1f,%.1f,%.1f)"),
+                        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display, TEXT("│             Arrive=(%.1f,%.1f,%.1f) Leave=(%.1f,%.1f,%.1f)"),
                             SP.ArriveTangent.X, SP.ArriveTangent.Y, SP.ArriveTangent.Z,
                             SP.LeaveTangent.X, SP.LeaveTangent.Y, SP.LeaveTangent.Z);
                     }
@@ -6001,9 +6001,9 @@ void USFExtendService::CapturePreviewSnapshot()
                 // Lift-specific data
                 if (B.Category == TEXT("Lift"))
                 {
-                    UE_LOG(LogSmartFoundations, Display, TEXT("│ ═══ LIFT DATA ═══"));
-                    UE_LOG(LogSmartFoundations, Display, TEXT("│ Height: %.1fcm | Reversed: %d"), B.LiftHeight, B.bLiftIsReversed);
-                    UE_LOG(LogSmartFoundations, Display, TEXT("│ Bottom: (%.1f,%.1f,%.1f) Top: (%.1f,%.1f,%.1f)"),
+                    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display, TEXT("│ ═══ LIFT DATA ═══"));
+                    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display, TEXT("│ Height: %.1fcm | Reversed: %d"), B.LiftHeight, B.bLiftIsReversed);
+                    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display, TEXT("│ Bottom: (%.1f,%.1f,%.1f) Top: (%.1f,%.1f,%.1f)"),
                         B.LiftBottomLocation.X, B.LiftBottomLocation.Y, B.LiftBottomLocation.Z,
                         B.LiftTopLocation.X, B.LiftTopLocation.Y, B.LiftTopLocation.Z);
                 }
@@ -6011,12 +6011,12 @@ void USFExtendService::CapturePreviewSnapshot()
                 // Pipe-specific data
                 if (B.Category == TEXT("Pipe"))
                 {
-                    UE_LOG(LogSmartFoundations, Display, TEXT("│ ═══ PIPE DATA ═══"));
-                    UE_LOG(LogSmartFoundations, Display, TEXT("│ SplineLength: %.1fcm | SplinePoints: %d"), B.SplineLength, B.SplinePointCount);
+                    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display, TEXT("│ ═══ PIPE DATA ═══"));
+                    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display, TEXT("│ SplineLength: %.1fcm | SplinePoints: %d"), B.SplineLength, B.SplinePointCount);
 
                     for (const FSFCapturedSplinePoint& SP : B.SplinePoints)
                     {
-                        UE_LOG(LogSmartFoundations, Display, TEXT("│   [Point %d] World=(%.1f,%.1f,%.1f)"),
+                        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display, TEXT("│   [Point %d] World=(%.1f,%.1f,%.1f)"),
                             SP.Index, SP.WorldLocation.X, SP.WorldLocation.Y, SP.WorldLocation.Z);
                     }
                 }
@@ -6024,13 +6024,13 @@ void USFExtendService::CapturePreviewSnapshot()
                 // Factory connections
                 if (B.FactoryConnections.Num() > 0)
                 {
-                    UE_LOG(LogSmartFoundations, Display, TEXT("│ ═══ FACTORY CONNECTIONS (%d) ═══"), B.FactoryConnections.Num());
+                    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display, TEXT("│ ═══ FACTORY CONNECTIONS (%d) ═══"), B.FactoryConnections.Num());
                     for (const FSFCapturedConnection& Conn : B.FactoryConnections)
                     {
                         FString ConnStatus = Conn.bIsConnected
                             ? FString::Printf(TEXT("-> %s.%s"), *Conn.ConnectedToActor, *Conn.ConnectedToConnector)
                             : TEXT("(not connected)");
-                        UE_LOG(LogSmartFoundations, Display, TEXT("│   %s [Dir=%d] @ (%.1f,%.1f,%.1f) %s"),
+                        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display, TEXT("│   %s [Dir=%d] @ (%.1f,%.1f,%.1f) %s"),
                             *Conn.ConnectorName, Conn.Direction,
                             Conn.WorldLocation.X, Conn.WorldLocation.Y, Conn.WorldLocation.Z,
                             *ConnStatus);
@@ -6040,20 +6040,20 @@ void USFExtendService::CapturePreviewSnapshot()
                 // Pipe connections
                 if (B.PipeConnections.Num() > 0)
                 {
-                    UE_LOG(LogSmartFoundations, Display, TEXT("│ ═══ PIPE CONNECTIONS (%d) ═══"), B.PipeConnections.Num());
+                    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display, TEXT("│ ═══ PIPE CONNECTIONS (%d) ═══"), B.PipeConnections.Num());
                     for (const FSFCapturedConnection& Conn : B.PipeConnections)
                     {
                         FString ConnStatus = Conn.bIsConnected
                             ? FString::Printf(TEXT("-> %s.%s"), *Conn.ConnectedToActor, *Conn.ConnectedToConnector)
                             : TEXT("(not connected)");
-                        UE_LOG(LogSmartFoundations, Display, TEXT("│   %s [Type=%d] @ (%.1f,%.1f,%.1f) %s"),
+                        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display, TEXT("│   %s [Type=%d] @ (%.1f,%.1f,%.1f) %s"),
                             *Conn.ConnectorName, Conn.Direction,
                             Conn.WorldLocation.X, Conn.WorldLocation.Y, Conn.WorldLocation.Z,
                             *ConnStatus);
                     }
                 }
 
-                UE_LOG(LogSmartFoundations, Display, TEXT("└─────────────────────────────────────────────────────────────────────"));
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display, TEXT("└─────────────────────────────────────────────────────────────────────"));
             }
         }
         */
@@ -6086,7 +6086,7 @@ void USFExtendService::CapturePostBuildSnapshotAndLogDiff()
             FSFSnapshotDiff Diff = RadarPulse->CompareSnapshots(PreSnapshot, PostSnapshot);
             RadarPulse->LogDiff(Diff, true);  // Verbose output
 
-            UE_LOG(LogSmartFoundations, Log, TEXT("📡 RadarPulse: EXTEND build diff - %d new, %d removed, %d modified"),
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("📡 RadarPulse: EXTEND build diff - %d new, %d removed, %d modified"),
                 Diff.NewObjects.Num(), Diff.RemovedObjects.Num(), Diff.ModifiedObjects.Num());
         }
         else
@@ -6120,13 +6120,13 @@ void USFExtendService::LogSnapshotDiff(const FSFBuildableSnapshot& Before, const
     // DISABLED: BUILD DIFF SUMMARY box logging - generates ~20+ lines per Extend
     // Re-enable for debugging by uncommenting the block below
     /*
-    UE_LOG(LogSmartFoundations, Display, TEXT(""));
-    UE_LOG(LogSmartFoundations, Display, TEXT("╔═══════════════════════════════════════════════════════════════════╗"));
-    UE_LOG(LogSmartFoundations, Display, TEXT("║               EXTEND DIAGNOSTIC: BUILD DIFF SUMMARY               ║"));
-    UE_LOG(LogSmartFoundations, Display, TEXT("╠═══════════════════════════════════════════════════════════════════╣"));
-    UE_LOG(LogSmartFoundations, Display, TEXT("║ Capture Radius: 150m | Before: %4d buildables | After: %4d        ║"),
+    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display, TEXT(""));
+    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display, TEXT("╔═══════════════════════════════════════════════════════════════════╗"));
+    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display, TEXT("║               EXTEND DIAGNOSTIC: BUILD DIFF SUMMARY               ║"));
+    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display, TEXT("╠═══════════════════════════════════════════════════════════════════╣"));
+    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display, TEXT("║ Capture Radius: 150m | Before: %4d buildables | After: %4d        ║"),
         Before.Buildables.Num(), After.Buildables.Num());
-    UE_LOG(LogSmartFoundations, Display, TEXT("╠═══════════════════════════════════════════════════════════════════╣"));
+    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display, TEXT("╠═══════════════════════════════════════════════════════════════════╣"));
 
     // Build set of existing names for quick lookup
     TSet<FString> BeforeNames;
@@ -6178,8 +6178,8 @@ void USFExtendService::LogSnapshotDiff(const FSFBuildableSnapshot& Before, const
     }
 
     // Log category summary
-    UE_LOG(LogSmartFoundations, Display, TEXT("║ Category        │ Before │ After  │ New    │ Removed │ Delta   ║"));
-    UE_LOG(LogSmartFoundations, Display, TEXT("╟─────────────────┼────────┼────────┼────────┼─────────┼─────────╢"));
+    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display, TEXT("║ Category        │ Before │ After  │ New    │ Removed │ Delta   ║"));
+    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display, TEXT("╟─────────────────┼────────┼────────┼────────┼─────────┼─────────╢"));
 
     // Collect all categories
     TSet<FString> AllCategories;
@@ -6196,16 +6196,16 @@ void USFExtendService::LogSnapshotDiff(const FSFBuildableSnapshot& Before, const
 
         FString DeltaStr = Delta > 0 ? FString::Printf(TEXT("+%d"), Delta) : FString::Printf(TEXT("%d"), Delta);
 
-        UE_LOG(LogSmartFoundations, Display, TEXT("║ %-15s │ %6d │ %6d │ %6d │ %7d │ %7s ║"),
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display, TEXT("║ %-15s │ %6d │ %6d │ %6d │ %7d │ %7s ║"),
             *Category, BeforeCount, AfterCount, NewCount, RemovedCount, *DeltaStr);
     }
 
-    UE_LOG(LogSmartFoundations, Display, TEXT("╠═══════════════════════════════════════════════════════════════════╣"));
-    UE_LOG(LogSmartFoundations, Display, TEXT("║ TOTAL           │ %6d │ %6d │ %6d │ %7d │ %+7d ║"),
+    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display, TEXT("╠═══════════════════════════════════════════════════════════════════╣"));
+    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display, TEXT("║ TOTAL           │ %6d │ %6d │ %6d │ %7d │ %+7d ║"),
         Before.Buildables.Num(), After.Buildables.Num(),
         NewBuildables.Num(), RemovedBuildables.Num(),
         After.Buildables.Num() - Before.Buildables.Num());
-    UE_LOG(LogSmartFoundations, Display, TEXT("╚═══════════════════════════════════════════════════════════════════╝"));
+    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display, TEXT("╚═══════════════════════════════════════════════════════════════════╝"));
     */
 
     // DISABLED: Detailed buildable enumeration generates ~1000 lines per Extend
@@ -6214,53 +6214,53 @@ void USFExtendService::LogSnapshotDiff(const FSFBuildableSnapshot& Before, const
     // Log FULL details of ALL new buildables
     if (NewBuildables.Num() > 0)
     {
-        UE_LOG(LogSmartFoundations, Display, TEXT(""));
-        UE_LOG(LogSmartFoundations, Display, TEXT("╔═══════════════════════════════════════════════════════════════════╗"));
-        UE_LOG(LogSmartFoundations, Display, TEXT("║            FULL ENUMERATION: NEW BUILDABLES (%d total)            ║"), NewBuildables.Num());
-        UE_LOG(LogSmartFoundations, Display, TEXT("╚═══════════════════════════════════════════════════════════════════╝"));
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display, TEXT(""));
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display, TEXT("╔═══════════════════════════════════════════════════════════════════╗"));
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display, TEXT("║            FULL ENUMERATION: NEW BUILDABLES (%d total)            ║"), NewBuildables.Num());
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display, TEXT("╚═══════════════════════════════════════════════════════════════════╝"));
 
         for (int32 i = 0; i < NewBuildables.Num(); ++i)
         {
             const FSFCapturedBuildable& N = NewBuildables[i];
 
-            UE_LOG(LogSmartFoundations, Display, TEXT(""));
-            UE_LOG(LogSmartFoundations, Display, TEXT("┌─────────────────────────────────────────────────────────────────────"));
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display, TEXT(""));
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display, TEXT("┌─────────────────────────────────────────────────────────────────────"));
 
             // Show EXTEND source badge prominently
             if (N.bIsExtendSource)
             {
-                UE_LOG(LogSmartFoundations, Display, TEXT("│ [%d] ★ EXTEND SOURCE ★ %s"), i, *N.Name);
-                UE_LOG(LogSmartFoundations, Display, TEXT("│     Role: %s | Chain: %d | Index: %d"),
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display, TEXT("│ [%d] ★ EXTEND SOURCE ★ %s"), i, *N.Name);
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display, TEXT("│     Role: %s | Chain: %d | Index: %d"),
                     *N.ExtendRole, N.ExtendChainId, N.ExtendChainIndex);
             }
             else
             {
-                UE_LOG(LogSmartFoundations, Display, TEXT("│ [%d] %s"), i, *N.Name);
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display, TEXT("│ [%d] %s"), i, *N.Name);
             }
 
-            UE_LOG(LogSmartFoundations, Display, TEXT("├─────────────────────────────────────────────────────────────────────"));
-            UE_LOG(LogSmartFoundations, Display, TEXT("│ Category: %s | Class: %s"), *N.Category, *N.ClassName);
-            UE_LOG(LogSmartFoundations, Display, TEXT("│ Location: X=%.3f Y=%.3f Z=%.3f"), N.Location.X, N.Location.Y, N.Location.Z);
-            UE_LOG(LogSmartFoundations, Display, TEXT("│ Rotation: P=%.3f Y=%.3f R=%.3f"), N.Rotation.Pitch, N.Rotation.Yaw, N.Rotation.Roll);
-            UE_LOG(LogSmartFoundations, Display, TEXT("│ Scale: X=%.3f Y=%.3f Z=%.3f"), N.Scale.X, N.Scale.Y, N.Scale.Z);
-            UE_LOG(LogSmartFoundations, Display, TEXT("│ Bounds: Min=(%.1f,%.1f,%.1f) Max=(%.1f,%.1f,%.1f)"),
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display, TEXT("├─────────────────────────────────────────────────────────────────────"));
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display, TEXT("│ Category: %s | Class: %s"), *N.Category, *N.ClassName);
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display, TEXT("│ Location: X=%.3f Y=%.3f Z=%.3f"), N.Location.X, N.Location.Y, N.Location.Z);
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display, TEXT("│ Rotation: P=%.3f Y=%.3f R=%.3f"), N.Rotation.Pitch, N.Rotation.Yaw, N.Rotation.Roll);
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display, TEXT("│ Scale: X=%.3f Y=%.3f Z=%.3f"), N.Scale.X, N.Scale.Y, N.Scale.Z);
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display, TEXT("│ Bounds: Min=(%.1f,%.1f,%.1f) Max=(%.1f,%.1f,%.1f)"),
                 N.BoundsMin.X, N.BoundsMin.Y, N.BoundsMin.Z, N.BoundsMax.X, N.BoundsMax.Y, N.BoundsMax.Z);
-            UE_LOG(LogSmartFoundations, Display, TEXT("│ State: Hidden=%d PendingKill=%d BegunPlay=%d"),
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display, TEXT("│ State: Hidden=%d PendingKill=%d BegunPlay=%d"),
                 N.bIsHidden, N.bIsPendingKill, N.bHasBegunPlay);
 
             // Belt-specific data
             if (N.Category == TEXT("Belt"))
             {
-                UE_LOG(LogSmartFoundations, Display, TEXT("│ ═══ BELT DATA ═══"));
-                UE_LOG(LogSmartFoundations, Display, TEXT("│ Speed: %.1f | SplineLength: %.1fcm | SplinePoints: %d"),
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display, TEXT("│ ═══ BELT DATA ═══"));
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display, TEXT("│ Speed: %.1f | SplineLength: %.1fcm | SplinePoints: %d"),
                     N.BeltSpeed, N.SplineLength, N.SplinePointCount);
 
                 for (const FSFCapturedSplinePoint& SP : N.SplinePoints)
                 {
-                    UE_LOG(LogSmartFoundations, Display, TEXT("│   [Point %d] Local=(%.1f,%.1f,%.1f) World=(%.1f,%.1f,%.1f)"),
+                    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display, TEXT("│   [Point %d] Local=(%.1f,%.1f,%.1f) World=(%.1f,%.1f,%.1f)"),
                         SP.Index, SP.Location.X, SP.Location.Y, SP.Location.Z,
                         SP.WorldLocation.X, SP.WorldLocation.Y, SP.WorldLocation.Z);
-                    UE_LOG(LogSmartFoundations, Display, TEXT("│             Arrive=(%.1f,%.1f,%.1f) Leave=(%.1f,%.1f,%.1f)"),
+                    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display, TEXT("│             Arrive=(%.1f,%.1f,%.1f) Leave=(%.1f,%.1f,%.1f)"),
                         SP.ArriveTangent.X, SP.ArriveTangent.Y, SP.ArriveTangent.Z,
                         SP.LeaveTangent.X, SP.LeaveTangent.Y, SP.LeaveTangent.Z);
                 }
@@ -6269,9 +6269,9 @@ void USFExtendService::LogSnapshotDiff(const FSFBuildableSnapshot& Before, const
             // Lift-specific data
             if (N.Category == TEXT("Lift"))
             {
-                UE_LOG(LogSmartFoundations, Display, TEXT("│ ═══ LIFT DATA ═══"));
-                UE_LOG(LogSmartFoundations, Display, TEXT("│ Height: %.1fcm | Reversed: %d"), N.LiftHeight, N.bLiftIsReversed);
-                UE_LOG(LogSmartFoundations, Display, TEXT("│ Bottom: (%.1f,%.1f,%.1f) Top: (%.1f,%.1f,%.1f)"),
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display, TEXT("│ ═══ LIFT DATA ═══"));
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display, TEXT("│ Height: %.1fcm | Reversed: %d"), N.LiftHeight, N.bLiftIsReversed);
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display, TEXT("│ Bottom: (%.1f,%.1f,%.1f) Top: (%.1f,%.1f,%.1f)"),
                     N.LiftBottomLocation.X, N.LiftBottomLocation.Y, N.LiftBottomLocation.Z,
                     N.LiftTopLocation.X, N.LiftTopLocation.Y, N.LiftTopLocation.Z);
             }
@@ -6279,12 +6279,12 @@ void USFExtendService::LogSnapshotDiff(const FSFBuildableSnapshot& Before, const
             // Pipe-specific data
             if (N.Category == TEXT("Pipe"))
             {
-                UE_LOG(LogSmartFoundations, Display, TEXT("│ ═══ PIPE DATA ═══"));
-                UE_LOG(LogSmartFoundations, Display, TEXT("│ SplineLength: %.1fcm | SplinePoints: %d"), N.SplineLength, N.SplinePointCount);
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display, TEXT("│ ═══ PIPE DATA ═══"));
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display, TEXT("│ SplineLength: %.1fcm | SplinePoints: %d"), N.SplineLength, N.SplinePointCount);
 
                 for (const FSFCapturedSplinePoint& SP : N.SplinePoints)
                 {
-                    UE_LOG(LogSmartFoundations, Display, TEXT("│   [Point %d] Local=(%.1f,%.1f,%.1f) World=(%.1f,%.1f,%.1f)"),
+                    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display, TEXT("│   [Point %d] Local=(%.1f,%.1f,%.1f) World=(%.1f,%.1f,%.1f)"),
                         SP.Index, SP.Location.X, SP.Location.Y, SP.Location.Z,
                         SP.WorldLocation.X, SP.WorldLocation.Y, SP.WorldLocation.Z);
                 }
@@ -6293,13 +6293,13 @@ void USFExtendService::LogSnapshotDiff(const FSFBuildableSnapshot& Before, const
             // Factory connections
             if (N.FactoryConnections.Num() > 0)
             {
-                UE_LOG(LogSmartFoundations, Display, TEXT("│ ═══ FACTORY CONNECTIONS (%d) ═══"), N.FactoryConnections.Num());
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display, TEXT("│ ═══ FACTORY CONNECTIONS (%d) ═══"), N.FactoryConnections.Num());
                 for (const FSFCapturedConnection& Conn : N.FactoryConnections)
                 {
                     FString ConnStatus = Conn.bIsConnected
                         ? FString::Printf(TEXT("-> %s.%s"), *Conn.ConnectedToActor, *Conn.ConnectedToConnector)
                         : TEXT("(not connected)");
-                    UE_LOG(LogSmartFoundations, Display, TEXT("│   %s [Dir=%d] @ (%.1f,%.1f,%.1f) %s"),
+                    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display, TEXT("│   %s [Dir=%d] @ (%.1f,%.1f,%.1f) %s"),
                         *Conn.ConnectorName, Conn.Direction,
                         Conn.WorldLocation.X, Conn.WorldLocation.Y, Conn.WorldLocation.Z,
                         *ConnStatus);
@@ -6309,35 +6309,35 @@ void USFExtendService::LogSnapshotDiff(const FSFBuildableSnapshot& Before, const
             // Pipe connections
             if (N.PipeConnections.Num() > 0)
             {
-                UE_LOG(LogSmartFoundations, Display, TEXT("│ ═══ PIPE CONNECTIONS (%d) ═══"), N.PipeConnections.Num());
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display, TEXT("│ ═══ PIPE CONNECTIONS (%d) ═══"), N.PipeConnections.Num());
                 for (const FSFCapturedConnection& Conn : N.PipeConnections)
                 {
                     FString ConnStatus = Conn.bIsConnected
                         ? FString::Printf(TEXT("-> %s.%s"), *Conn.ConnectedToActor, *Conn.ConnectedToConnector)
                         : TEXT("(not connected)");
-                    UE_LOG(LogSmartFoundations, Display, TEXT("│   %s [Type=%d] @ (%.1f,%.1f,%.1f) %s"),
+                    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display, TEXT("│   %s [Type=%d] @ (%.1f,%.1f,%.1f) %s"),
                         *Conn.ConnectorName, Conn.Direction,
                         Conn.WorldLocation.X, Conn.WorldLocation.Y, Conn.WorldLocation.Z,
                         *ConnStatus);
                 }
             }
 
-            UE_LOG(LogSmartFoundations, Display, TEXT("└─────────────────────────────────────────────────────────────────────"));
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display, TEXT("└─────────────────────────────────────────────────────────────────────"));
         }
     }
 
     // Log FULL details of removed buildables
     if (RemovedBuildables.Num() > 0)
     {
-        UE_LOG(LogSmartFoundations, Warning, TEXT(""));
-        UE_LOG(LogSmartFoundations, Warning, TEXT("╔═══════════════════════════════════════════════════════════════════╗"));
-        UE_LOG(LogSmartFoundations, Warning, TEXT("║          FULL ENUMERATION: REMOVED BUILDABLES (%d total)          ║"), RemovedBuildables.Num());
-        UE_LOG(LogSmartFoundations, Warning, TEXT("╚═══════════════════════════════════════════════════════════════════╝"));
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT(""));
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("╔═══════════════════════════════════════════════════════════════════╗"));
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("║          FULL ENUMERATION: REMOVED BUILDABLES (%d total)          ║"), RemovedBuildables.Num());
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("╚═══════════════════════════════════════════════════════════════════╝"));
 
         for (int32 i = 0; i < RemovedBuildables.Num(); ++i)
         {
             const FSFCapturedBuildable& R = RemovedBuildables[i];
-            UE_LOG(LogSmartFoundations, Warning, TEXT("   [%d] [%s] %s @ (%.0f, %.0f, %.0f)"),
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("   [%d] [%s] %s @ (%.0f, %.0f, %.0f)"),
                 i, *R.Category, *R.Name, R.Location.X, R.Location.Y, R.Location.Z);
         }
     }
@@ -6352,7 +6352,7 @@ int32 USFExtendService::GenerateAndExecuteWiring(AFGBuildableFactory* NewFactory
 
     if (!NewFactory)
     {
-        UE_LOG(LogSmartFoundations, Warning, TEXT("🔌 EXTEND Phase 5/6: GenerateAndExecuteWiring called with null factory"));
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔌 EXTEND Phase 5/6: GenerateAndExecuteWiring called with null factory"));
         return 0;
     }
 
@@ -6363,7 +6363,7 @@ int32 USFExtendService::GenerateAndExecuteWiring(AFGBuildableFactory* NewFactory
         return 0;
     }
 
-    UE_LOG(LogSmartFoundations, Log, TEXT("🔌 EXTEND Phase 5/6: Generating wiring manifest from %d child holograms, %d registered built actors"),
+    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("🔌 EXTEND Phase 5/6: Generating wiring manifest from %d child holograms, %d registered built actors"),
         StoredCloneTopology->ChildHolograms.Num(), JsonBuiltActors.Num());
 
     // Build clone_id -> buildable mapping from JsonBuiltActors (populated during Construct())
@@ -6387,7 +6387,7 @@ int32 USFExtendService::GenerateAndExecuteWiring(AFGBuildableFactory* NewFactory
         }
         else
         {
-            UE_LOG(LogSmartFoundations, Warning, TEXT("🔌 EXTEND Phase 5/6: Registered actor for %s is no longer valid"), *CloneId);
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔌 EXTEND Phase 5/6: Registered actor for %s is no longer valid"), *CloneId);
         }
     }
 
@@ -6408,7 +6408,7 @@ int32 USFExtendService::GenerateAndExecuteWiring(AFGBuildableFactory* NewFactory
                     if (SourceBuildable)
                     {
                         CloneIdToBuildable.Add(Target, SourceBuildable);
-                        UE_LOG(LogSmartFoundations, Log, TEXT("🔌 EXTEND Phase 5/6: Pre-resolved source target '%s' → %s"),
+                        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("🔌 EXTEND Phase 5/6: Pre-resolved source target '%s' → %s"),
                             *Target, *SourceBuildable->GetName());
                     }
                 }
@@ -6479,7 +6479,7 @@ int32 USFExtendService::GenerateAndExecuteWiring(AFGBuildableFactory* NewFactory
         int32 MissingRestoredFactoryCount = 0;
         int32 ResolvedRestoredFactoryCount = 0;
 
-        UE_LOG(LogSmartFoundations, Log,
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
             TEXT("[SmartRestore][Extend] Restored scaled factory resolution: required=%d previewLocations=%d spawnedHolograms=%d builtActors=%d parentValid=%d"),
             RequiredFactoryIds.Num(),
             RestoredScaledFactoryPreviewLocations.Num(),
@@ -6498,14 +6498,14 @@ int32 USFExtendService::GenerateAndExecuteWiring(AFGBuildableFactory* NewFactory
             if (RecipeSvc && RecipeSvc->HasStoredProductionRecipe() && RecipeSvc->GetStoredProductionRecipe())
             {
                 RecipeSvc->ApplyStoredProductionRecipeToBuilding(Factory);
-                UE_LOG(LogSmartFoundations, Log,
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
                     TEXT("[SmartRestore][Extend] Applied stored recipe %s to restored scaled factory %s"),
                     *RecipeSvc->GetStoredProductionRecipe()->GetName(),
                     *Factory->GetName());
             }
             else
             {
-                UE_LOG(LogSmartFoundations, Log,
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
                     TEXT("[SmartRestore][Extend] No stored recipe available for restored scaled factory %s (service=%d, subsystemHas=%d)"),
                     *Factory->GetName(),
                     RecipeSvc ? 1 : 0,
@@ -6589,7 +6589,7 @@ int32 USFExtendService::GenerateAndExecuteWiring(AFGBuildableFactory* NewFactory
                 if (ParentMatchDistSq <= FactoryMatchRadiusSq)
                 {
                     UsedRestoredFactoryActors.Add(ParentFactory);
-                    UE_LOG(LogSmartFoundations, Log,
+                    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
                         TEXT("[SmartRestore][Extend] Reserved restored parent factory %s (dist=%.0fcm via %s)"),
                         *ParentFactory->GetName(),
                         FMath::Sqrt(ParentMatchDistSq),
@@ -6704,7 +6704,7 @@ int32 USFExtendService::GenerateAndExecuteWiring(AFGBuildableFactory* NewFactory
             {
                 ExpectedLocation = *CachedPreviewLocation;
                 bHasExpectedLocation = true;
-                UE_LOG(LogSmartFoundations, Log,
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
                     TEXT("[SmartRestore][Extend] Using cached preview location for restored scaled factory %s: %s"),
                     *FactoryId,
                     *ExpectedLocation.ToString());
@@ -6717,7 +6717,7 @@ int32 USFExtendService::GenerateAndExecuteWiring(AFGBuildableFactory* NewFactory
                     {
                         ExpectedLocation = (*SpawnedFactoryHologram)->GetActorLocation();
                         bHasExpectedLocation = true;
-                        UE_LOG(LogSmartFoundations, Log,
+                        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
                             TEXT("[SmartRestore][Extend] Using live hologram location for restored scaled factory %s: %s"),
                             *FactoryId,
                             *ExpectedLocation.ToString());
@@ -6728,7 +6728,7 @@ int32 USFExtendService::GenerateAndExecuteWiring(AFGBuildableFactory* NewFactory
             {
                 ExpectedLocation = ExistingMappedActor->GetActorLocation();
                 bHasExpectedLocation = true;
-                UE_LOG(LogSmartFoundations, Log,
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
                     TEXT("[SmartRestore][Extend] Using existing mapped actor location for restored scaled factory %s: %s"),
                     *FactoryId,
                     *ExpectedLocation.ToString());
@@ -6750,7 +6750,7 @@ int32 USFExtendService::GenerateAndExecuteWiring(AFGBuildableFactory* NewFactory
                         GridY);
                     ExpectedLocation = RestoredCloneParentHologram->GetActorLocation() + Placement.WorldOffset;
                     bHasExpectedLocation = true;
-                    UE_LOG(LogSmartFoundations, Log,
+                    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
                         TEXT("[SmartRestore][Extend] Recomputed restored scaled factory location for %s from live parent: %s"),
                         *FactoryId,
                         *ExpectedLocation.ToString());
@@ -6764,7 +6764,7 @@ int32 USFExtendService::GenerateAndExecuteWiring(AFGBuildableFactory* NewFactory
                     && TryCalculateFactoryLocationFromStoredTopology(GridX, GridY, ExpectedLocation))
                 {
                     bHasExpectedLocation = true;
-                    UE_LOG(LogSmartFoundations, Log,
+                    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
                         TEXT("[SmartRestore][Extend] Recomputed restored scaled factory location for %s from stored topology: %s"),
                         *FactoryId,
                         *ExpectedLocation.ToString());
@@ -6780,7 +6780,7 @@ int32 USFExtendService::GenerateAndExecuteWiring(AFGBuildableFactory* NewFactory
             {
                 ApplyRecipeToRestoredFactory(Cast<AFGBuildableFactory>(ExistingMappedActor));
                 UsedRestoredFactoryActors.Add(ExistingMappedActor);
-                UE_LOG(LogSmartFoundations, Log,
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
                     TEXT("[SmartRestore][Extend] Restored scaled factory %s already mapped to %s%s%s"),
                     *FactoryId,
                     *ExistingMappedActor->GetName(),
@@ -6791,7 +6791,7 @@ int32 USFExtendService::GenerateAndExecuteWiring(AFGBuildableFactory* NewFactory
 
             if (!bHasExpectedLocation)
             {
-                UE_LOG(LogSmartFoundations, Warning,
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning,
                     TEXT("[SmartRestore][Extend] Missing restored scaled factory mapping for %s and no location was available (stored=%d, previewLocations=%d, parentValid=%d, subsystem=%d)"),
                     *FactoryId,
                     StoredCloneTopology.IsValid() ? 1 : 0,
@@ -6838,7 +6838,7 @@ int32 USFExtendService::GenerateAndExecuteWiring(AFGBuildableFactory* NewFactory
                 UsedRestoredFactoryActors.Add(BestFactory);
                 ApplyRecipeToRestoredFactory(BestFactory);
                 ResolvedRestoredFactoryCount++;
-                UE_LOG(LogSmartFoundations, Log,
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
                     TEXT("[SmartRestore][Extend] Resolved restored scaled factory %s -> %s (dist=%.0fcm via %s)"),
                     *FactoryId,
                     *BestFactory->GetName(),
@@ -6847,7 +6847,7 @@ int32 USFExtendService::GenerateAndExecuteWiring(AFGBuildableFactory* NewFactory
             }
             else
             {
-                UE_LOG(LogSmartFoundations, Warning,
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning,
                     TEXT("[SmartRestore][Extend] Could not resolve restored scaled factory %s near %s"),
                     *FactoryId,
                     *ExpectedLocation.ToString());
@@ -6858,7 +6858,7 @@ int32 USFExtendService::GenerateAndExecuteWiring(AFGBuildableFactory* NewFactory
         if (MissingRestoredFactoryCount > 0)
         {
             bRestoredScaledWiringDeferred = true;
-            UE_LOG(LogSmartFoundations, Log,
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
                 TEXT("[SmartRestore][Extend] Waiting for %d restored scaled factor%s before JSON wiring (resolved now=%d, required=%d)"),
                 MissingRestoredFactoryCount,
                 MissingRestoredFactoryCount == 1 ? TEXT("y") : TEXT("ies"),
@@ -6880,7 +6880,7 @@ int32 USFExtendService::GenerateAndExecuteWiring(AFGBuildableFactory* NewFactory
                     WeakThis->bRestoredScaledWiringRetryScheduled = false;
                     if (WeakFactory.IsValid() && WeakThis->HasPendingPostBuildWiring())
                     {
-                        UE_LOG(LogSmartFoundations, Log,
+                        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
                             TEXT("[SmartRestore][Extend] Retrying restored scaled JSON wiring after deferred factory wait"));
                         WeakThis->WireBuiltChildConnections(WeakFactory.Get());
                     }
@@ -6888,7 +6888,7 @@ int32 USFExtendService::GenerateAndExecuteWiring(AFGBuildableFactory* NewFactory
             }
             else
             {
-                UE_LOG(LogSmartFoundations, Warning,
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning,
                     TEXT("[SmartRestore][Extend] Restored scaled JSON wiring deferred without scheduling retry (scheduled=%d, attempts=%d, factory=%s, world=%d)"),
                     bRestoredScaledWiringRetryScheduled ? 1 : 0,
                     RestoredScaledWiringRetryAttempts,
@@ -6903,7 +6903,7 @@ int32 USFExtendService::GenerateAndExecuteWiring(AFGBuildableFactory* NewFactory
         RestoredScaledWiringRetryAttempts = 0;
     }
 
-    UE_LOG(LogSmartFoundations, Log, TEXT("🔌 EXTEND Phase 5/6: Mapped %d buildables (including parent + source targets)"), CloneIdToBuildable.Num());
+    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("🔌 EXTEND Phase 5/6: Mapped %d buildables (including parent + source targets)"), CloneIdToBuildable.Num());
 
     // Generate wiring manifest
     FSFWiringManifest WiringManifest = FSFWiringManifest::Generate(
@@ -6932,7 +6932,7 @@ int32 USFExtendService::GenerateAndExecuteWiring(AFGBuildableFactory* NewFactory
                 }
                 else
                 {
-                    UE_LOG(LogSmartFoundations, Warning, TEXT("🔌 EXTEND Phase 5/6: Failed to resolve source buildable '%s'"),
+                    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔌 EXTEND Phase 5/6: Failed to resolve source buildable '%s'"),
                         *SourceActorName);
                 }
             }
@@ -6943,13 +6943,13 @@ int32 USFExtendService::GenerateAndExecuteWiring(AFGBuildableFactory* NewFactory
     FString LogDir = FPaths::ProjectLogDir();
     WiringManifest.SaveToFile(LogDir / TEXT("WiringManifest.json"));
 
-    UE_LOG(LogSmartFoundations, Log, TEXT("🔌 EXTEND Phase 5/6: Generated manifest - %d belt connections, %d pipe connections"),
+    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("🔌 EXTEND Phase 5/6: Generated manifest - %d belt connections, %d pipe connections"),
         WiringManifest.BeltConnections.Num(), WiringManifest.PipeConnections.Num());
 
     // Execute all wiring in single tick
     int32 WiredCount = WiringManifest.ExecuteWiring(GetWorld());
 
-    UE_LOG(LogSmartFoundations, Log, TEXT("🔌 EXTEND Phase 5/6: Wiring complete - %d connections established"), WiredCount);
+    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("🔌 EXTEND Phase 5/6: Wiring complete - %d connections established"), WiredCount);
 
     // Create chain actors for wired belts (prevents crash in Factory_UpdateRadioactivity)
     // Pass JsonBuiltActors to include lane segments that were wired in ConfigureComponents
@@ -6978,7 +6978,7 @@ int32 USFExtendService::GenerateAndExecuteWiring(AFGBuildableFactory* NewFactory
             }
         }
 
-        UE_LOG(LogSmartFoundations, Warning, TEXT("🔗 PASSTHROUGH LINK: Found %d built lifts in JsonBuiltActors (%d total entries)"),
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔗 PASSTHROUGH LINK: Found %d built lifts in JsonBuiltActors (%d total entries)"),
             BuiltLifts.Num(), JsonBuiltActors.Num());
 
         if (BuiltLifts.Num() > 0)
@@ -6996,12 +6996,12 @@ int32 USFExtendService::GenerateAndExecuteWiring(AFGBuildableFactory* NewFactory
                 }
             }
 
-            UE_LOG(LogSmartFoundations, Warning, TEXT("🔗 PASSTHROUGH LINK: Found %d passthroughs within 100m of factory at %s"),
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔗 PASSTHROUGH LINK: Found %d passthroughs within 100m of factory at %s"),
                 NearbyPassthroughs.Num(), *BuildCenter.ToString());
 
             // Step 3: Get reflection property
             FProperty* SnappedProp = AFGBuildableConveyorLift::StaticClass()->FindPropertyByName(TEXT("mSnappedPassthroughs"));
-            UE_LOG(LogSmartFoundations, Warning, TEXT("🔗 PASSTHROUGH LINK: mSnappedPassthroughs property %s"),
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔗 PASSTHROUGH LINK: mSnappedPassthroughs property %s"),
                 SnappedProp ? TEXT("FOUND") : TEXT("NOT FOUND"));
 
             // Step 4: For each lift, find closest passthrough at bottom or top position
@@ -7016,7 +7016,7 @@ int32 USFExtendService::GenerateAndExecuteWiring(AFGBuildableFactory* NewFactory
                 FTransform TopXform = Lift->GetTopTransform();
                 FVector LiftTop = Lift->GetActorTransform().TransformPosition(TopXform.GetTranslation());
 
-                UE_LOG(LogSmartFoundations, Warning, TEXT("🔗 PASSTHROUGH LINK: Lift %s bottom=(%s) top=(%s)"),
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔗 PASSTHROUGH LINK: Lift %s bottom=(%s) top=(%s)"),
                     *Lift->GetName(), *LiftLoc.ToString(), *LiftTop.ToString());
 
                 AFGBuildablePassthrough* BottomPT = nullptr;
@@ -7057,14 +7057,14 @@ int32 USFExtendService::GenerateAndExecuteWiring(AFGBuildableFactory* NewFactory
                         {
                             (*PassthroughArray)[0] = BottomPT;
                             BottomPT->SetTopSnappedConnection(Lift->GetConnection0());
-                            UE_LOG(LogSmartFoundations, Warning, TEXT("🔗   → bottom=%s (dist=%.1f)"),
+                            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔗   → bottom=%s (dist=%.1f)"),
                                 *BottomPT->GetName(), BestBottomDist);
                         }
                         if (TopPT)
                         {
                             (*PassthroughArray)[1] = TopPT;
                             TopPT->SetBottomSnappedConnection(Lift->GetConnection1());
-                            UE_LOG(LogSmartFoundations, Warning, TEXT("🔗   → top=%s (dist=%.1f)"),
+                            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔗   → top=%s (dist=%.1f)"),
                                 *TopPT->GetName(), BestTopDist);
                         }
 
@@ -7073,27 +7073,27 @@ int32 USFExtendService::GenerateAndExecuteWiring(AFGBuildableFactory* NewFactory
                         if (OnRepFunc)
                         {
                             Lift->ProcessEvent(OnRepFunc, nullptr);
-                            UE_LOG(LogSmartFoundations, Warning, TEXT("🔗   → OnRep fired ✅"));
+                            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔗   → OnRep fired ✅"));
                         }
                         else
                         {
-                            UE_LOG(LogSmartFoundations, Warning, TEXT("🔗   → OnRep_SnappedPassthroughs NOT FOUND as UFunction"));
+                            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔗   → OnRep_SnappedPassthroughs NOT FOUND as UFunction"));
                         }
 
                         LinkedCount++;
                     }
                     else
                     {
-                        UE_LOG(LogSmartFoundations, Warning, TEXT("🔗   → ContainerPtrToValuePtr returned null!"));
+                        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔗   → ContainerPtrToValuePtr returned null!"));
                     }
                 }
                 else
                 {
-                    UE_LOG(LogSmartFoundations, Warning, TEXT("🔗   → no passthrough within %.0fcm"), SnapDistance);
+                    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔗   → no passthrough within %.0fcm"), SnapDistance);
                 }
             }
 
-            UE_LOG(LogSmartFoundations, Warning, TEXT("🔗 PASSTHROUGH LINK: Linked %d/%d lifts to passthroughs"),
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔗 PASSTHROUGH LINK: Linked %d/%d lifts to passthroughs"),
                 LinkedCount, BuiltLifts.Num());
         }
     }
@@ -7166,7 +7166,7 @@ int32 USFExtendService::GenerateAndExecuteWiring(AFGBuildableFactory* NewFactory
                                 else
                                     PT->SetBottomSnappedConnection(ConnBase);
                                 PipeLinkedCount++;
-                                UE_LOG(LogSmartFoundations, Log, TEXT("🔗 PIPE PASSTHROUGH LINK: %s.Conn0 → %s Set%sSnappedConnection"),
+                                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("🔗 PIPE PASSTHROUGH LINK: %s.Conn0 → %s Set%sSnappedConnection"),
                                     *Pipe->GetName(), *PT->GetName(), bIsTop ? TEXT("Top") : TEXT("Bottom"));
                             }
                         }
@@ -7188,7 +7188,7 @@ int32 USFExtendService::GenerateAndExecuteWiring(AFGBuildableFactory* NewFactory
                                 else
                                     PT->SetBottomSnappedConnection(ConnBase);
                                 PipeLinkedCount++;
-                                UE_LOG(LogSmartFoundations, Log, TEXT("🔗 PIPE PASSTHROUGH LINK: %s.Conn1 → %s Set%sSnappedConnection"),
+                                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("🔗 PIPE PASSTHROUGH LINK: %s.Conn1 → %s Set%sSnappedConnection"),
                                     *Pipe->GetName(), *PT->GetName(), bIsTop ? TEXT("Top") : TEXT("Bottom"));
                             }
                         }
@@ -7198,7 +7198,7 @@ int32 USFExtendService::GenerateAndExecuteWiring(AFGBuildableFactory* NewFactory
 
             if (PipeLinkedCount > 0)
             {
-                UE_LOG(LogSmartFoundations, Log, TEXT("🔗 PIPE PASSTHROUGH LINK: Linked %d pipe connections to %d pipe floor holes"),
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("🔗 PIPE PASSTHROUGH LINK: Linked %d pipe connections to %d pipe floor holes"),
                     PipeLinkedCount, NearbyPipePassthroughs.Num());
             }
         }
@@ -7222,7 +7222,7 @@ int32 USFExtendService::GenerateAndExecuteWiring(AFGBuildableFactory* NewFactory
             else
             {
                 NullChains++;
-                UE_LOG(LogSmartFoundations, Error, TEXT("⛓️ VERIFY: ❌ %s -> ChainActor=NULL (CRASH RISK!)"),
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Error, TEXT("⛓️ VERIFY: ❌ %s -> ChainActor=NULL (CRASH RISK!)"),
                     *Conveyor->GetName());
             }
         }
@@ -7243,18 +7243,18 @@ int32 USFExtendService::GenerateAndExecuteWiring(AFGBuildableFactory* NewFactory
         AActor* const* BuiltPoleActor = CloneIdToBuildable.Find(CloneId);
         if (!BuiltPoleActor || !IsValid(*BuiltPoleActor))
         {
-            UE_LOG(LogSmartFoundations, Warning, TEXT("⚡ EXTEND Power Wire: Clone pole %s not found in built actors"), *CloneId);
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("⚡ EXTEND Power Wire: Clone pole %s not found in built actors"), *CloneId);
             continue;
         }
 
         AFGBuildablePowerPole* ClonePole = Cast<AFGBuildablePowerPole>(*BuiltPoleActor);
         if (!ClonePole)
         {
-            UE_LOG(LogSmartFoundations, Warning, TEXT("⚡ EXTEND Power Wire: Built actor %s is not a power pole"), *CloneId);
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("⚡ EXTEND Power Wire: Built actor %s is not a power pole"), *CloneId);
             continue;
         }
 
-        UE_LOG(LogSmartFoundations, Log, TEXT("⚡ EXTEND Power Wire: Processing %s -> %s"), *CloneId, *ClonePole->GetName());
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("⚡ EXTEND Power Wire: Processing %s -> %s"), *CloneId, *ClonePole->GetName());
 
         // --- Wire 1: Clone Factory ↔ Clone Pole ---
         if (WireClass && IsValid(NewFactory))
@@ -7267,7 +7267,7 @@ int32 USFExtendService::GenerateAndExecuteWiring(AFGBuildableFactory* NewFactory
             TArray<UFGCircuitConnectionComponent*> PoleCircuitConns;
             ClonePole->GetComponents<UFGCircuitConnectionComponent>(PoleCircuitConns);
 
-            UE_LOG(LogSmartFoundations, Log, TEXT("⚡ EXTEND Power Wire: Factory %s has %d circuit conns, Pole %s has %d circuit conns"),
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("⚡ EXTEND Power Wire: Factory %s has %d circuit conns, Pole %s has %d circuit conns"),
                 *NewFactory->GetName(), FactoryCircuitConns.Num(), *ClonePole->GetName(), PoleCircuitConns.Num());
 
             if (FactoryCircuitConns.Num() > 0 && PoleCircuitConns.Num() > 0)
@@ -7287,19 +7287,19 @@ int32 USFExtendService::GenerateAndExecuteWiring(AFGBuildableFactory* NewFactory
                     if (bConnected)
                     {
                         PowerWiredCount++;
-                        UE_LOG(LogSmartFoundations, Log, TEXT("⚡ EXTEND Power Wire: Connected clone factory %s ↔ clone pole %s"),
+                        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("⚡ EXTEND Power Wire: Connected clone factory %s ↔ clone pole %s"),
                             *NewFactory->GetName(), *ClonePole->GetName());
                     }
                     else
                     {
-                        UE_LOG(LogSmartFoundations, Warning, TEXT("⚡ EXTEND Power Wire: Wire Connect() failed for factory ↔ pole - destroying wire"));
+                        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("⚡ EXTEND Power Wire: Wire Connect() failed for factory ↔ pole - destroying wire"));
                         NewWire->Destroy();
                     }
                 }
             }
             else
             {
-                UE_LOG(LogSmartFoundations, Warning, TEXT("⚡ EXTEND Power Wire: Missing connections - factory %s has %d circuit conns, pole has %d circuit conns"),
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("⚡ EXTEND Power Wire: Missing connections - factory %s has %d circuit conns, pole has %d circuit conns"),
                     *NewFactory->GetClass()->GetName(), FactoryCircuitConns.Num(), PoleCircuitConns.Num());
             }
         }
@@ -7333,12 +7333,12 @@ int32 USFExtendService::GenerateAndExecuteWiring(AFGBuildableFactory* NewFactory
                     if (bConnected)
                     {
                         PowerWiredCount++;
-                        UE_LOG(LogSmartFoundations, Log, TEXT("⚡ EXTEND Power Wire: Connected source pole %s ↔ clone pole %s"),
+                        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("⚡ EXTEND Power Wire: Connected source pole %s ↔ clone pole %s"),
                             *SourcePole->GetName(), *ClonePole->GetName());
                     }
                     else
                     {
-                        UE_LOG(LogSmartFoundations, Warning, TEXT("⚡ EXTEND Power Wire: Wire Connect() failed for source ↔ clone pole - destroying wire"));
+                        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("⚡ EXTEND Power Wire: Wire Connect() failed for source ↔ clone pole - destroying wire"));
                         NewWire->Destroy();
                     }
                 }
@@ -7346,14 +7346,14 @@ int32 USFExtendService::GenerateAndExecuteWiring(AFGBuildableFactory* NewFactory
         }
         else if (SourceData.SourcePole.IsValid() && !SourceData.bSourceHasFreeConnections)
         {
-            UE_LOG(LogSmartFoundations, Log, TEXT("⚡ EXTEND Power Wire: Source pole %s has no free connections - skipping source↔clone wire (subsequent extends will chain)"),
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("⚡ EXTEND Power Wire: Source pole %s has no free connections - skipping source↔clone wire (subsequent extends will chain)"),
                 *SourceData.SourcePole->GetName());
         }
     }
 
     if (PowerWiredCount > 0)
     {
-        UE_LOG(LogSmartFoundations, Log, TEXT("⚡ EXTEND Power Wire: Complete - %d power connections established"), PowerWiredCount);
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("⚡ EXTEND Power Wire: Complete - %d power connections established"), PowerWiredCount);
     }
     WiredCount += PowerWiredCount;
 
@@ -7405,7 +7405,7 @@ int32 USFExtendService::GenerateAndExecuteWiring(AFGBuildableFactory* NewFactory
             if (A->GetNumConnections() >= A->GetMaxNumConnections()
                 || B->GetNumConnections() >= B->GetMaxNumConnections())
             {
-                UE_LOG(LogSmartFoundations, Log,
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
                     TEXT("[SmartRestore][Extend] Power wiring skipped for %s: capacity A=%d/%d B=%d/%d"),
                     Context ? Context : TEXT("Unknown"),
                     A->GetNumConnections(), A->GetMaxNumConnections(),
@@ -7430,7 +7430,7 @@ int32 USFExtendService::GenerateAndExecuteWiring(AFGBuildableFactory* NewFactory
             }
 
             NewWire->Destroy();
-            UE_LOG(LogSmartFoundations, Warning,
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning,
                 TEXT("[SmartRestore][Extend] Power wiring failed for %s"),
                 Context ? Context : TEXT("Unknown"));
             return false;
@@ -7519,7 +7519,7 @@ int32 USFExtendService::GenerateAndExecuteWiring(AFGBuildableFactory* NewFactory
                 if (ConnectPowerEndpoints(FactoryConn, PoleConn, TEXT("restored factory to cloned pole")))
                 {
                     RestoredPowerWiredCount++;
-                    UE_LOG(LogSmartFoundations, Log,
+                    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
                         TEXT("[SmartRestore][Extend] Connected restored factory '%s' to power pole '%s'"),
                         *GetNameSafe(Factory),
                         *GetNameSafe(Entry.Pole));
@@ -7533,7 +7533,7 @@ int32 USFExtendService::GenerateAndExecuteWiring(AFGBuildableFactory* NewFactory
                 if (ConnectPowerEndpoints(ConnA, ConnB, TEXT("restored cloned pole chain")))
                 {
                     RestoredPowerWiredCount++;
-                    UE_LOG(LogSmartFoundations, Log,
+                    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
                         TEXT("[SmartRestore][Extend] Chained restored power poles '%s' to '%s'"),
                         *GetNameSafe(PoleGroup.Value[Index].Pole),
                         *GetNameSafe(PoleGroup.Value[Index + 1].Pole));
@@ -7544,7 +7544,7 @@ int32 USFExtendService::GenerateAndExecuteWiring(AFGBuildableFactory* NewFactory
         if (RestoredPowerWiredCount > 0)
         {
             WiredCount += RestoredPowerWiredCount;
-            UE_LOG(LogSmartFoundations, Display,
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display,
                 TEXT("[SmartRestore][Extend] Restored power wiring complete: %d connections across %d pole group(s)"),
                 RestoredPowerWiredCount,
                 RestoredPolesByKey.Num());
@@ -7606,7 +7606,7 @@ int32 USFExtendService::GenerateAndExecuteWiring(AFGBuildableFactory* NewFactory
 
         if (!CloneFactory)
         {
-            UE_LOG(LogSmartFoundations, Warning, TEXT("⚡ SCALED EXTEND Wire: Could not find built factory for Clone[%d] at expected position"), CloneIdx);
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("⚡ SCALED EXTEND Wire: Could not find built factory for Clone[%d] at expected position"), CloneIdx);
             continue;
         }
 
@@ -7626,7 +7626,7 @@ int32 USFExtendService::GenerateAndExecuteWiring(AFGBuildableFactory* NewFactory
             }
         }
 
-        UE_LOG(LogSmartFoundations, Log, TEXT("⚡ SCALED EXTEND Wire: Clone[%d] - %d built actors mapped (factory=%s)"),
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("⚡ SCALED EXTEND Wire: Clone[%d] - %d built actors mapped (factory=%s)"),
             CloneIdx, CloneBuiltActors.Num(), *CloneFactory->GetName());
 
         // Generate and execute wiring for this clone
@@ -7793,7 +7793,7 @@ int32 USFExtendService::GenerateAndExecuteWiring(AFGBuildableFactory* NewFactory
                         if (bConnected)
                         {
                             ClonePowerWired++;
-                            UE_LOG(LogSmartFoundations, Log, TEXT("⚡ SCALED EXTEND Power: Connected %s ↔ %s"),
+                            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("⚡ SCALED EXTEND Power: Connected %s ↔ %s"),
                                 *CloneFactory->GetName(), *ClonePole->GetName());
                         }
                         else
@@ -7860,7 +7860,7 @@ int32 USFExtendService::GenerateAndExecuteWiring(AFGBuildableFactory* NewFactory
 
             if (PoleConn->GetNumConnections() >= PoleConn->GetMaxNumConnections())
             {
-                UE_LOG(LogSmartFoundations, Warning, TEXT("⚡ SCALED EXTEND Pump Power: Clone[%d] pole %s reached capacity (%d/%d) — skipping pump %s"),
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("⚡ SCALED EXTEND Pump Power: Clone[%d] pole %s reached capacity (%d/%d) — skipping pump %s"),
                     CloneIdx, *ClonePole->GetName(), PoleConn->GetNumConnections(), PoleConn->GetMaxNumConnections(), *ClonePump->GetName());
                 continue;
             }
@@ -7883,20 +7883,20 @@ int32 USFExtendService::GenerateAndExecuteWiring(AFGBuildableFactory* NewFactory
             else
             {
                 NewWire->Destroy();
-                UE_LOG(LogSmartFoundations, Warning, TEXT("⚡ SCALED EXTEND Pump Power: Clone[%d] Wire Connect() failed for pump %s ↔ pole %s"),
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("⚡ SCALED EXTEND Pump Power: Clone[%d] Wire Connect() failed for pump %s ↔ pole %s"),
                     CloneIdx, *ClonePump->GetName(), *ClonePole->GetName());
             }
         }
 
         ScaledExtendWiredCount += CloneWired + ClonePowerWired;
 
-        UE_LOG(LogSmartFoundations, Log, TEXT("⚡ SCALED EXTEND Wire: Clone[%d] - %d belt/pipe, %d power, %d chains, %d pipe networks%s"),
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("⚡ SCALED EXTEND Wire: Clone[%d] - %d belt/pipe, %d power, %d chains, %d pipe networks%s"),
             CloneIdx, CloneWired, ClonePowerWired, CloneChains, ClonePipes, Clone.bIsSeed ? TEXT(" [SEED]") : TEXT(""));
     }
 
     if (ScaledExtendWiredCount > 0)
     {
-        UE_LOG(LogSmartFoundations, Display, TEXT("⚡ SCALED EXTEND Wire: Total %d additional connections across %d clones"),
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display, TEXT("⚡ SCALED EXTEND Wire: Total %d additional connections across %d clones"),
             ScaledExtendWiredCount, ScaledExtendClones.Num());
         WiredCount += ScaledExtendWiredCount;
     }
@@ -7968,7 +7968,7 @@ int32 USFExtendService::GenerateAndExecuteWiring(AFGBuildableFactory* NewFactory
                         if (bConnected)
                         {
                             ChainWiredCount++;
-                            UE_LOG(LogSmartFoundations, Log, TEXT("⚡ POWER CHAIN: Connected %s ↔ %s (pole_%d, link %d)"),
+                            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("⚡ POWER CHAIN: Connected %s ↔ %s (pole_%d, link %d)"),
                                 *PoleA->GetName(), *PoleB->GetName(), PoleIdx, j);
                         }
                         else
@@ -7982,7 +7982,7 @@ int32 USFExtendService::GenerateAndExecuteWiring(AFGBuildableFactory* NewFactory
 
         if (ChainWiredCount > 0)
         {
-            UE_LOG(LogSmartFoundations, Display, TEXT("⚡ POWER CHAIN: %d pole-to-pole connections across %d pole indices"),
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display, TEXT("⚡ POWER CHAIN: %d pole-to-pole connections across %d pole indices"),
                 ChainWiredCount, PoleIndices.Num());
             WiredCount += ChainWiredCount;
         }
@@ -8052,7 +8052,7 @@ AFGBuildable* USFExtendService::GetSourceBuildableByName(const FString& ActorNam
         }
     }
 
-    UE_LOG(LogSmartFoundations, Warning, TEXT("🛤️ LANE: Source buildable '%s' not found in world"), *ActorName);
+    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🛤️ LANE: Source buildable '%s' not found in world"), *ActorName);
     return nullptr;
 }
 
@@ -8100,13 +8100,13 @@ void USFExtendService::OnScaledExtendStateChanged()
     if (!bExtendCommitted)
     {
         bExtendCommitted = true;
-        UE_LOG(LogSmartFoundations, Log, TEXT("⚡ SCALED EXTEND: Committed (first scale action)"));
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("⚡ SCALED EXTEND: Committed (first scale action)"));
     }
 
     int32 CloneCount = GetExtendCloneCount();
     int32 RowCount = GetExtendRowCount();
 
-    UE_LOG(LogSmartFoundations, Log, TEXT("⚡ SCALED EXTEND: State changed - X=%d (clones=%d), Y=%d (rows=%d)"),
+    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("⚡ SCALED EXTEND: State changed - X=%d (clones=%d), Y=%d (rows=%d)"),
         CloneCount + 1, CloneCount, RowCount, RowCount);
 
     // Clear all existing previews (both primary clone infrastructure and scaled extend clones)
@@ -8328,7 +8328,7 @@ void USFExtendService::OnScaledExtendStateChanged()
                 }
             }
 
-            UE_LOG(LogSmartFoundations, Log, TEXT("⚡ SCALED EXTEND: Applied rigid rotation (%.1f°) to clone 1 topology + repositioned %d holograms"),
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("⚡ SCALED EXTEND: Applied rigid rotation (%.1f°) to clone 1 topology + repositioned %d holograms"),
                 State.RotationZ, JsonSpawnedHolograms.Num());
 
             // CRITICAL: Disable clearance detection on the parent hologram when rotation is active.
@@ -8379,19 +8379,19 @@ void USFExtendService::OnScaledExtendStateChanged()
                         }
                     }
                 }
-                UE_LOG(LogSmartFoundations, Log, TEXT("⚡ SCALED EXTEND Phase 6: Merged %d holograms from %d clones into StoredCloneTopology (total: %d)"),
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("⚡ SCALED EXTEND Phase 6: Merged %d holograms from %d clones into StoredCloneTopology (total: %d)"),
                     MergedCount, ScaledExtendClones.Num(), StoredCloneTopology->ChildHolograms.Num());
             }
         }
         else
         {
-            UE_LOG(LogSmartFoundations, Warning, TEXT("⚡ SCALED EXTEND: Configuration invalid - %s"), *ScaledExtendInvalidReason);
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("⚡ SCALED EXTEND: Configuration invalid - %s"), *ScaledExtendInvalidReason);
 
             // Phase 7: Invalidate the grid - set hologram material to red/error
             if (CurrentExtendHologram.IsValid())
             {
                 CurrentExtendHologram->SetPlacementMaterialState(EHologramMaterialState::HMS_ERROR);
-                UE_LOG(LogSmartFoundations, Log, TEXT("⚡ SCALED EXTEND: Hologram set to ERROR state - %s"), *ScaledExtendInvalidReason);
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("⚡ SCALED EXTEND: Hologram set to ERROR state - %s"), *ScaledExtendInvalidReason);
             }
         }
     }
@@ -8451,7 +8451,7 @@ void USFExtendService::CalculateScaledExtendPositions()
 
         if (TopologyYExtent > BuildingSize.Y)
         {
-            UE_LOG(LogSmartFoundations, Log, TEXT("⚡ SCALED EXTEND: Topology Y extent (%.0f) > BuildingSize.Y (%.0f) — using topology extent for row spacing"),
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("⚡ SCALED EXTEND: Topology Y extent (%.0f) > BuildingSize.Y (%.0f) — using topology extent for row spacing"),
                 TopologyYExtent, BuildingSize.Y);
         }
     }
@@ -8565,7 +8565,7 @@ void USFExtendService::CalculateScaledExtendPositions()
         }
     }
 
-    UE_LOG(LogSmartFoundations, Log, TEXT("⚡ SCALED EXTEND: Calculated %d clone positions (Clones=%d, Rows=%d)"),
+    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("⚡ SCALED EXTEND: Calculated %d clone positions (Clones=%d, Rows=%d)"),
         ScaledExtendClones.Num(), CloneCount, RowCount);
 }
 
@@ -8683,13 +8683,13 @@ void USFExtendService::SpawnScaledExtendPreviews()
 
             TotalHologramsSpawned++;
 
-            UE_LOG(LogSmartFoundations, Log, TEXT("⚡ SCALED EXTEND: Spawned factory hologram for Clone[%d] (%d,%d) at (%+.0f, %+.0f, %+.0f)%s"),
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("⚡ SCALED EXTEND: Spawned factory hologram for Clone[%d] (%d,%d) at (%+.0f, %+.0f, %+.0f)%s"),
                 i, Clone.GridX, Clone.GridY, CloneWorldPos.X, CloneWorldPos.Y, CloneWorldPos.Z,
                 Clone.bIsSeed ? TEXT(" [SEED]") : TEXT(""));
         }
         else
         {
-            UE_LOG(LogSmartFoundations, Error, TEXT("⚡ SCALED EXTEND: Failed to spawn factory hologram for Clone[%d]"), i);
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Error, TEXT("⚡ SCALED EXTEND: Failed to spawn factory hologram for Clone[%d]"), i);
             continue;
         }
 
@@ -8778,7 +8778,7 @@ void USFExtendService::SpawnScaledExtendPreviews()
                 }
             }
 
-            UE_LOG(LogSmartFoundations, Log, TEXT("⚡ RIGID ROTATION: Clone[%d] rotated %d holograms by (%.0f,%.0f,%.0f) around factory center"),
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("⚡ RIGID ROTATION: Clone[%d] rotated %d holograms by (%.0f,%.0f,%.0f) around factory center"),
                 i, Clone.CloneTopology->ChildHolograms.Num(), Clone.RotationOffset.Pitch, Clone.RotationOffset.Yaw, Clone.RotationOffset.Roll);
         }
 
@@ -8793,7 +8793,7 @@ void USFExtendService::SpawnScaledExtendPreviews()
             if (Clone.bIsSeed)
             {
                 Clone.CloneTopology->ChildHolograms.RemoveAll([](const FSFCloneHologram& H) { return H.bIsLaneSegment; });
-                UE_LOG(LogSmartFoundations, Log, TEXT("⚡ CHAIN: Seed clone - removed lane segments (source already has manifold)"));
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("⚡ CHAIN: Seed clone - removed lane segments (source already has manifold)"));
             }
             else
             {
@@ -8898,7 +8898,7 @@ void USFExtendService::SpawnScaledExtendPreviews()
                     Holo.SplineData.Points.Last().World = FSFVec3(NewEndWorld);
                     Holo.SplineData.Points.Last().Local = FSFVec3(FVector(NewLength, 0, 0));
 
-                    UE_LOG(LogSmartFoundations, Log, TEXT("⚡ CHAIN: Clone[%d] lane %s: %s shifted by PrevOffset(%.0f,%.0f,%.0f), length %.0f→%.0f"),
+                    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("⚡ CHAIN: Clone[%d] lane %s: %s shifted by PrevOffset(%.0f,%.0f,%.0f), length %.0f→%.0f"),
                         i, *Holo.HologramId, bSourceAtStart ? TEXT("START") : TEXT("END"),
                         PrevCloneOffset.X, PrevCloneOffset.Y, PrevCloneOffset.Z,
                         FVector::Dist(OldStartWorld, OldEndWorld), NewLength);
@@ -9113,11 +9113,11 @@ void USFExtendService::SpawnScaledExtendPreviews()
             }
         }
 
-        UE_LOG(LogSmartFoundations, Log, TEXT("⚡ SCALED EXTEND: Clone[%d] (%d,%d) - factory + %d infrastructure holograms%s"),
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("⚡ SCALED EXTEND: Clone[%d] (%d,%d) - factory + %d infrastructure holograms%s"),
             i, Clone.GridX, Clone.GridY, InfraSpawned, Clone.bIsSeed ? TEXT(" [SEED]") : TEXT(""));
     }
 
-    UE_LOG(LogSmartFoundations, Display, TEXT("⚡ SCALED EXTEND: Total %d holograms spawned across %d additional clone sets"),
+    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Display, TEXT("⚡ SCALED EXTEND: Total %d holograms spawned across %d additional clone sets"),
         TotalHologramsSpawned, ScaledExtendClones.Num());
 
     // CRITICAL: Scrub nulls from parent's mChildren array.
@@ -9143,7 +9143,7 @@ void USFExtendService::SpawnScaledExtendPreviews()
                 }
                 if (NullsRemoved > 0)
                 {
-                    UE_LOG(LogSmartFoundations, Warning, TEXT("⚡ SCALED EXTEND: Scrubbed %d null/invalid entries from parent mChildren"), NullsRemoved);
+                    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("⚡ SCALED EXTEND: Scrubbed %d null/invalid entries from parent mChildren"), NullsRemoved);
                 }
             }
         }
@@ -9157,7 +9157,7 @@ void USFExtendService::ClearScaledExtendClones()
         return;
     }
 
-    UE_LOG(LogSmartFoundations, Log, TEXT("⚡ SCALED EXTEND: Clearing %d clone sets"), ScaledExtendClones.Num());
+    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("⚡ SCALED EXTEND: Clearing %d clone sets"), ScaledExtendClones.Num());
 
     // CRITICAL: Remove all scaled extend children from parent hologram's mChildren array
     // BEFORE destroying them. Without this, destroyed holograms leave dangling pointers
@@ -9196,7 +9196,7 @@ void USFExtendService::ClearScaledExtendClones()
 
                 if (RemovedCount > 0)
                 {
-                    UE_LOG(LogSmartFoundations, Log, TEXT("⚡ SCALED EXTEND: Removed %d children from parent mChildren"), RemovedCount);
+                    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("⚡ SCALED EXTEND: Removed %d children from parent mChildren"), RemovedCount);
                 }
             }
         }
@@ -9293,7 +9293,7 @@ bool USFExtendService::ValidateScaledExtendConstraints()
                 ScaledExtendInvalidReason = FString::Printf(
                     TEXT("%s lane too short (%.1fm < %.1fm minimum)"),
                     TypeName, SegmentLength / 100.0f, MinLength / 100.0f);
-                UE_LOG(LogSmartFoundations, Warning, TEXT("⚡ SCALED EXTEND: INVALID - %s"), *ScaledExtendInvalidReason);
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("⚡ SCALED EXTEND: INVALID - %s"), *ScaledExtendInvalidReason);
                 return false;
             }
 
@@ -9302,7 +9302,7 @@ bool USFExtendService::ValidateScaledExtendConstraints()
                 ScaledExtendInvalidReason = FString::Printf(
                     TEXT("%s lane too long (%.1fm > %.0fm maximum)"),
                     TypeName, SegmentLength / 100.0f, MaxLength / 100.0f);
-                UE_LOG(LogSmartFoundations, Warning, TEXT("⚡ SCALED EXTEND: INVALID - %s"), *ScaledExtendInvalidReason);
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("⚡ SCALED EXTEND: INVALID - %s"), *ScaledExtendInvalidReason);
                 return false;
             }
 
@@ -9323,7 +9323,7 @@ bool USFExtendService::ValidateScaledExtendConstraints()
                 ScaledExtendInvalidReason = FString::Printf(
                     TEXT("%s lane angle too steep (%.0f°/%.0f° > %.0f° max)"),
                     TypeName, AngleStart, AngleEnd, MaxAngle);
-                UE_LOG(LogSmartFoundations, Warning, TEXT("⚡ SCALED EXTEND: INVALID - %s"), *ScaledExtendInvalidReason);
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("⚡ SCALED EXTEND: INVALID - %s"), *ScaledExtendInvalidReason);
                 return false;
             }
 
@@ -9384,7 +9384,7 @@ bool USFExtendService::ValidatePowerCapacity()
             ScaledExtendInvalidReason = FString::Printf(
                 TEXT("Clone %s needs %d/%d connections (factory + inter-pole + %d pump%s) — upgrade the source pole, or move a pump to another pole"),
                 *Tier, Projected, Holo.PowerPoleMaxConnections, PumpCount, (PumpCount == 1 ? TEXT("") : TEXT("s")));
-            UE_LOG(LogSmartFoundations, Warning, TEXT("⚡ EXTEND POWER (#288): INVALID — %s"), *ScaledExtendInvalidReason);
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("⚡ EXTEND POWER (#288): INVALID — %s"), *ScaledExtendInvalidReason);
             return false;
         }
     }

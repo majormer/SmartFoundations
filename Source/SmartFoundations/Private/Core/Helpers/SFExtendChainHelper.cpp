@@ -58,7 +58,7 @@ FSFExtendChainHelper::FChainConnectionTargets FSFExtendChainHelper::ResolveChain
 		}
 		else
 		{
-			UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND Chain REVERSE: %s[%d] - NextConveyor[%d] not found!"),
+			SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND Chain REVERSE: %s[%d] - NextConveyor[%d] not found!"),
 				*ConveyorTypeName, ChainIndex, ChainIndex + 1);
 		}
 	}
@@ -93,7 +93,7 @@ FSFExtendChainHelper::FChainConnectionTargets FSFExtendChainHelper::ResolveChain
 					}
 					else
 					{
-						UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND Chain REVERSE: %s[%d] Conn1 → Distributor.%s (fallback - name '%s' not found)"),
+						SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND Chain REVERSE: %s[%d] Conn1 → Distributor.%s (fallback - name '%s' not found)"),
 							*ConveyorTypeName, ChainIndex, *Result.Conn1Target->GetName(), *ConnectorName.ToString());
 					}
 				}
@@ -126,7 +126,7 @@ FSFExtendChainHelper::FChainConnectionTargets FSFExtendChainHelper::ResolveChain
 					}
 					else
 					{
-						UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND Chain REVERSE: %s[0] Conn0 ← Distributor.%s (fallback - name '%s' not found)"),
+						SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND Chain REVERSE: %s[0] Conn0 ← Distributor.%s (fallback - name '%s' not found)"),
 							*ConveyorTypeName, *Result.Conn0Target->GetName(), *ConnectorName.ToString());
 					}
 				}

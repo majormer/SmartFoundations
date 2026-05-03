@@ -276,7 +276,7 @@ bool USFRecipeManagementService::StoreProductionRecipeClass(TSubclassOf<UFGRecip
 		Subsystem->UpdateCounterDisplay();
 	}
 
-	UE_LOG(LogSmartFoundations, Log,
+	SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
 		TEXT("[SmartRestore] Stored production recipe class directly: %s (source=%d, filteredIndex=%d, filteredCount=%d)"),
 		*RecipeClass->GetName(),
 		static_cast<int32>(Source),

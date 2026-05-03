@@ -33,14 +33,14 @@ namespace
         const bool bRestoredExtendActive = Subsystem->IsRestoredExtendModeActive();
         if (bWarnOnSuppressedRegen && bRestoredExtendActive)
         {
-            UE_LOG(LogSmartFoundations, Warning,
+            SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Warning,
                 TEXT("[SmartRestore][Extend] WARNING normal grid regeneration while restored topology active: context=%s parent=%s"),
                 Context,
                 *GetNameSafe(Subsystem->GetActiveHologram()));
         }
         else
         {
-            UE_LOG(LogSmartFoundations, Log,
+            SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
                 TEXT("[SmartRestore][Extend] Suppressing normal Smart grid spawn/update: context=%s parent=%s liveExtend=%d restoredExtend=%d"),
                 Context,
                 *GetNameSafe(Subsystem->GetActiveHologram()),

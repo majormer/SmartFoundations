@@ -266,7 +266,7 @@ void ASFConveyorBeltHologram::PostHologramPlacement(const FHitResult& hitResult,
             return;
         }
         
-        UE_LOG(LogSmartFoundations, Log, TEXT("🎯 BELT PostHologramPlacement: Extend child %s - calling Super once for connection wiring"), *GetName());
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("🎯 BELT PostHologramPlacement: Extend child %s - calling Super once for connection wiring"), *GetName());
         Super::PostHologramPlacement(hitResult, callForChildren);
         return;
     }
@@ -481,7 +481,7 @@ AActor* ASFConveyorBeltHologram::Construct(TArray<AActor*>& out_children, FNetCo
         }
         else
         {
-            UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND: ❌ Belt Construct returned nullptr!"));
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND: ❌ Belt Construct returned nullptr!"));
         }
         
         return BuiltActor;
@@ -2181,6 +2181,6 @@ void ASFConveyorBeltHologram::SetSnappedConnections(UFGFactoryConnectionComponen
     }
     else
     {
-        UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND Belt: Failed to find mSnappedConnectionComponents property on %s"), *GetName());
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND Belt: Failed to find mSnappedConnectionComponents property on %s"), *GetName());
     }
 }

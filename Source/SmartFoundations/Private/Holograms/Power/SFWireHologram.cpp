@@ -78,7 +78,7 @@ AActor* ASFWireHologram::Construct(TArray<AActor*>& out_children, FNetConstructi
 			}
 		}
 		
-		UE_LOG(LogSmartFoundations, Error, TEXT(" SFWireHologram::Construct - Failed to spawn extend wire!"));
+		SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Error, TEXT(" SFWireHologram::Construct - Failed to spawn extend wire!"));
 		// Fallback: must not return nullptr or vanilla crashes
 	}
 	
