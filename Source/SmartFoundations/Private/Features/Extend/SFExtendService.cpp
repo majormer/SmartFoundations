@@ -69,6 +69,8 @@
 
 namespace
 {
+    constexpr float SF_RESTORED_PARENT_TRANSFORM_TOLERANCE = 0.1f;
+
     struct FRestoredScaledClonePlacement
     {
         FVector WorldOffset = FVector::ZeroVector;
@@ -810,7 +812,7 @@ void USFExtendService::TickRestoredCloneTopology(float DeltaTime)
 
     const FVector ParentLocation = ParentHologram->GetActorLocation();
     const FRotator ParentRotation = ParentHologram->GetActorRotation();
-    if (!ParentLocation.Equals(RestoredCloneLastParentLocation, 0.1f) || !ParentRotation.Equals(RestoredCloneLastParentRotation, 0.1f))
+    if (!ParentLocation.Equals(RestoredCloneLastParentLocation, SF_RESTORED_PARENT_TRANSFORM_TOLERANCE) || !ParentRotation.Equals(RestoredCloneLastParentRotation, SF_RESTORED_PARENT_TRANSFORM_TOLERANCE))
     {
         KickRestoredPreviewParent(ParentHologram);
         FSFCloneTopology ReplayTopology = BuildRestoredCloneTopologyForCurrentState(ParentHologram);

@@ -163,5 +163,5 @@ private:
 	/** Validate that all preset recipes/buildables are unlocked in the current game state. */
 	bool ValidatePresetUnlocks(const FSFRestorePreset& Preset, FString& OutFailureReason) const;
 
-	void ReplayExtendTopologyWhenHologramReady(const FSFRestorePreset& Preset, int32 AttemptsRemaining, int32 SettleTicksRemaining);
+	void ReplayExtendTopologyWhenHologramReady(TSharedRef<const FSFRestorePreset> Preset, int32 AttemptsRemaining, int32 SettleTicksRemaining);
 };

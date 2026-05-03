@@ -31,6 +31,8 @@
 
 namespace
 {
+	constexpr int32 SF_RESTORE_MIN_SUPPORTED_PRESET_VERSION = 1;
+
 	FSFCounterState BuildCounterStateFromPreset(const FSFCounterState& CurrentState, const FSFRestorePreset& Preset)
 	{
 		FSFCounterState State = CurrentState;
@@ -667,7 +669,8 @@ bool USFRestoreService::ApplyPreset(const FSFRestorePreset& Preset)
 
 	if (Preset.bHasExtendTopology)
 	{
-		ReplayExtendTopologyWhenHologramReady(Preset, 12, 2);
+		TSharedRef<const FSFRestorePreset> PresetRef = MakeShared<FSFRestorePreset>(Preset);
+		ReplayExtendTopologyWhenHologramReady(PresetRef, 12, 2);
 	}
 
 	UE_LOG(LogSmartFoundations, Log, TEXT("[SmartRestore] Applied preset '%s'"), *Preset.Name);
@@ -910,13 +913,13 @@ void USFRestoreService::ClearActiveRestoreSession(const TCHAR* Reason)
 	ActiveRestorePresetName.Empty();
 }
 
-void USFRestoreService::ReplayExtendTopologyWhenHologramReady(const FSFRestorePreset& Preset, int32 AttemptsRemaining, int32 SettleTicksRemaining)
+void USFRestoreService::ReplayExtendTopologyWhenHologramReady(TSharedRef<const FSFRestorePreset> Preset, int32 AttemptsRemaining, int32 SettleTicksRemaining)
 {
-	if (!bRestoreSessionActive || ActiveRestorePresetName != Preset.Name)
+	if (!bRestoreSessionActive || ActiveRestorePresetName != Preset->Name)
 	{
 		UE_LOG(LogSmartFoundations, Log,
 			TEXT("[SmartRestore] ReplayExtendTopologyWhenHologramReady aborted: preset='%s' activePreset='%s' active=%d"),
-			*Preset.Name,
+			*Preset->Name,
 			*ActiveRestorePresetName,
 			bRestoreSessionActive ? 1 : 0);
 		return;
@@ -926,7 +929,7 @@ void USFRestoreService::ReplayExtendTopologyWhenHologramReady(const FSFRestorePr
 	{
 		UE_LOG(LogSmartFoundations, Warning,
 			TEXT("[SmartRestore] ReplayExtendTopologyWhenHologramReady: Subsystem invalid for preset '%s'"),
-			*Preset.Name);
+			*Preset->Name);
 		return;
 	}
 
@@ -934,7 +937,7 @@ void USFRestoreService::ReplayExtendTopologyWhenHologramReady(const FSFRestorePr
 
 	USFExtendService* ExtendSvc = Subsystem->GetExtendService();
 	AFGHologram* ActiveHologram = Subsystem->GetActiveHologram();
-	if (ExtendSvc && IsActiveHologramReadyForPreset(ActiveHologram, Preset))
+	if (ExtendSvc && IsActiveHologramReadyForPreset(ActiveHologram, *Preset))
 	{
 		if (SettleTicksRemaining > 0)
 		{
@@ -943,7 +946,7 @@ void USFRestoreService::ReplayExtendTopologyWhenHologramReady(const FSFRestorePr
 			{
 				UE_LOG(LogSmartFoundations, Warning,
 					TEXT("[SmartRestore] ReplayExtendTopologyWhenHologramReady: World null while settling preset '%s'"),
-					*Preset.Name);
+					*Preset->Name);
 				return;
 			}
 
@@ -959,22 +962,22 @@ void USFRestoreService::ReplayExtendTopologyWhenHologramReady(const FSFRestorePr
 			World->GetTimerManager().SetTimerForNextTick(SettleDelegate);
 			UE_LOG(LogSmartFoundations, Log,
 				TEXT("[SmartRestore] ReplayExtendTopologyWhenHologramReady: Settling active hologram for preset '%s' ticksRemaining=%d activeHologram=%s recipe=%s"),
-				*Preset.Name,
+				*Preset->Name,
 				SettleTicksRemaining,
 				*GetNameSafe(ActiveHologram),
 				*GetNameSafe(ActiveHologram ? ActiveHologram->GetRecipe() : nullptr));
 			return;
 		}
 
-		Subsystem->UpdateCounterState(BuildCounterStateFromPreset(Subsystem->GetCounterState(), Preset));
-		const bool bReplaySucceeded = ExtendSvc->ReplayRestoreCloneTopology(ActiveHologram, Preset.ExtendCloneTopology);
+		Subsystem->UpdateCounterState(BuildCounterStateFromPreset(Subsystem->GetCounterState(), *Preset));
+		const bool bReplaySucceeded = ExtendSvc->ReplayRestoreCloneTopology(ActiveHologram, Preset->ExtendCloneTopology);
 		UE_LOG(LogSmartFoundations, Log,
 			TEXT("[SmartRestore] ReplayExtendTopologyWhenHologramReady: preset='%s' success=%d activeHologram=%s recipe=%s childHolograms=%d"),
-			*Preset.Name,
+			*Preset->Name,
 			bReplaySucceeded ? 1 : 0,
 			*GetNameSafe(ActiveHologram),
 			*GetNameSafe(ActiveHologram ? ActiveHologram->GetRecipe() : nullptr),
-			Preset.ExtendCloneTopology.ChildHolograms.Num());
+			Preset->ExtendCloneTopology.ChildHolograms.Num());
 		return;
 	}
 
@@ -982,7 +985,7 @@ void USFRestoreService::ReplayExtendTopologyWhenHologramReady(const FSFRestorePr
 	{
 		UE_LOG(LogSmartFoundations, Warning,
 			TEXT("[SmartRestore] ReplayExtendTopologyWhenHologramReady: Gave up for preset '%s' (ExtendSvc=%s, ActiveHologram=%s)"),
-			*Preset.Name,
+			*Preset->Name,
 			ExtendSvc ? TEXT("valid") : TEXT("null"),
 			ActiveHologram ? TEXT("valid") : TEXT("null"));
 		return;
@@ -993,17 +996,17 @@ void USFRestoreService::ReplayExtendTopologyWhenHologramReady(const FSFRestorePr
 	{
 		UE_LOG(LogSmartFoundations, Warning,
 			TEXT("[SmartRestore] ReplayExtendTopologyWhenHologramReady: World null for preset '%s'"),
-			*Preset.Name);
+			*Preset->Name);
 		return;
 	}
 
 	UE_LOG(LogSmartFoundations, Log,
 		TEXT("[SmartRestore] ReplayExtendTopologyWhenHologramReady: Waiting for matching active hologram for preset '%s' attemptsRemaining=%d activeHologram=%s recipe=%s expectedRecipe=%s"),
-		*Preset.Name,
+		*Preset->Name,
 		AttemptsRemaining,
 		*GetNameSafe(ActiveHologram),
 		*GetNameSafe(ActiveHologram ? ActiveHologram->GetRecipe() : nullptr),
-		*Preset.BuildingClassName);
+		*Preset->BuildingClassName);
 
 	TWeakObjectPtr<USFRestoreService> WeakThis(this);
 	FTimerDelegate RetryDelegate;
@@ -1134,7 +1137,26 @@ bool USFRestoreService::JsonToPreset(const TSharedPtr<FJsonObject>& JsonObj, FSF
 
 	OutPreset.Name = JsonObj->GetStringField(TEXT("name"));
 	OutPreset.BuildingClassName = JsonObj->GetStringField(TEXT("buildingClassName"));
-	OutPreset.Version = static_cast<int32>(JsonObj->GetNumberField(TEXT("version")));
+	double VersionValue = 0.0;
+	if (!JsonObj->TryGetNumberField(TEXT("version"), VersionValue))
+	{
+		UE_LOG(LogSmartFoundations, Warning,
+			TEXT("[SmartRestore] JsonToPreset rejected preset '%s': missing version"),
+			*OutPreset.Name);
+		return false;
+	}
+
+	OutPreset.Version = static_cast<int32>(VersionValue);
+	if (OutPreset.Version < SF_RESTORE_MIN_SUPPORTED_PRESET_VERSION || OutPreset.Version > SF_RESTORE_PRESET_VERSION)
+	{
+		UE_LOG(LogSmartFoundations, Warning,
+			TEXT("[SmartRestore] JsonToPreset rejected preset '%s': unsupported version %d (supported %d-%d)"),
+			*OutPreset.Name,
+			OutPreset.Version,
+			SF_RESTORE_MIN_SUPPORTED_PRESET_VERSION,
+			SF_RESTORE_PRESET_VERSION);
+		return false;
+	}
 	JsonObj->TryGetStringField(TEXT("description"), OutPreset.Description);
 	JsonObj->TryGetStringField(TEXT("createdAt"), OutPreset.CreatedAt);
 	JsonObj->TryGetStringField(TEXT("updatedAt"), OutPreset.UpdatedAt);
