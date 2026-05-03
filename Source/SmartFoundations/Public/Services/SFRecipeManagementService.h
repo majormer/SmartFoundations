@@ -103,6 +103,9 @@ public:
 	/** Set active recipe by class reference — finds the correct index in SortedFilteredRecipes */
 	bool SetActiveRecipeByClass(TSubclassOf<UFGRecipe> RecipeClass);
 
+	/** Store a production recipe directly when the filtered hologram list is not settled yet. */
+	bool StoreProductionRecipeClass(TSubclassOf<UFGRecipe> RecipeClass, ESFRecipeSource Source = ESFRecipeSource::Copied);
+
 	/** Add a recipe to the unlocked recipes list */
 	void AddRecipeToUnlocked(TSubclassOf<UFGRecipe> Recipe);
 
@@ -229,6 +232,9 @@ private:
 
 	/** Find recipe for spawned building using fuzzy matching (class + spatial proximity) */
 	TSubclassOf<UFGRecipe> FindRecipeForSpawnedBuilding(AFGBuildableManufacturer* SpawnedBuilding);
+
+	/** Mirror recipe service state into legacy subsystem fields used by older placement paths. */
+	void SyncSubsystemRecipeState() const;
 
 	
 	// ========================================

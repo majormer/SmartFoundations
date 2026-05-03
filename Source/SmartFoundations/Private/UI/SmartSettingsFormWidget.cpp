@@ -699,83 +699,12 @@ void USmartSettingsFormWidget::PopulateFromCounterState(USFSubsystem* Subsystem)
     // Cache the initial state for cancel/revert on Escape
     LastAppliedState = State;
 
-    // Populate Grid values (show absolute value, track direction separately)
-    // Direction is determined by sign: positive = true, negative = false
-    bGridXPositive = State.GridCounters.X >= 0;
-    bGridYPositive = State.GridCounters.Y >= 0;
-    bGridZPositive = State.GridCounters.Z >= 0;
+    PopulateCounterInputsFromState(State);
 
     // Cache direction state for cancel/revert
     bLastAppliedGridXPositive = bGridXPositive;
     bLastAppliedGridYPositive = bGridYPositive;
     bLastAppliedGridZPositive = bGridZPositive;
-
-    // Populate Grid values using SpinBox SetValue (absolute count)
-    if (GridXInput)
-    {
-        GridXInput->SetValue(static_cast<float>(FMath::Abs(State.GridCounters.X)));
-    }
-    if (GridYInput)
-    {
-        GridYInput->SetValue(static_cast<float>(FMath::Abs(State.GridCounters.Y)));
-    }
-    if (GridZInput)
-    {
-        GridZInput->SetValue(static_cast<float>(FMath::Abs(State.GridCounters.Z)));
-    }
-
-    // Update direction toggle labels
-    UpdateGridDirectionLabel(GridXDirLabel, bGridXPositive);
-    UpdateGridDirectionLabel(GridYDirLabel, bGridYPositive);
-    UpdateGridDirectionLabel(GridZDirLabel, bGridZPositive);
-
-    // Populate Spacing values (display in meters, internal state is centimeters)
-    if (SpacingXInput)
-    {
-        SpacingXInput->SetValue(State.SpacingX / 100.0f);
-    }
-    if (SpacingYInput)
-    {
-        SpacingYInput->SetValue(State.SpacingY / 100.0f);
-    }
-    if (SpacingZInput)
-    {
-        SpacingZInput->SetValue(State.SpacingZ / 100.0f);
-    }
-
-    // Populate Steps values (display in meters, internal state is centimeters)
-    if (StepsXInput)
-    {
-        StepsXInput->SetValue(State.StepsX / 100.0f);
-    }
-    if (StepsYInput)
-    {
-        StepsYInput->SetValue(State.StepsY / 100.0f);
-    }
-
-    // Populate Stagger values (display in meters, internal state is centimeters)
-    if (StaggerXInput)
-    {
-        StaggerXInput->SetValue(State.StaggerX / 100.0f);
-    }
-    if (StaggerYInput)
-    {
-        StaggerYInput->SetValue(State.StaggerY / 100.0f);
-    }
-    if (StaggerZXInput)
-    {
-        StaggerZXInput->SetValue(State.StaggerZX / 100.0f);
-    }
-    if (StaggerZYInput)
-    {
-        StaggerZYInput->SetValue(State.StaggerZY / 100.0f);
-    }
-
-    // Rotation (degrees, not cm - no conversion needed)
-    if (RotationZInput)
-    {
-        RotationZInput->SetValue(State.RotationZ);
-    }
 
     UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Populated from CounterState - Grid[%d,%d,%d] Spacing[%d,%d,%d] Steps[%d,%d] Stagger[%d,%d,%d,%d] Rotation[%.1f]"),
         State.GridCounters.X, State.GridCounters.Y, State.GridCounters.Z,
@@ -1491,6 +1420,24 @@ void USmartSettingsFormWidget::OnImportFromExtendClicked()
 void USmartSettingsFormWidget::OnPresetSelectionChanged(FString SelectedItem, ESelectInfo::Type SelectionType)
 {
     UpdateRestorePresetDetails(SelectedItem);
+
+    if (SelectionType == ESelectInfo::Direct || !CachedSubsystem.IsValid() || SelectedItem.IsEmpty())
+    {
+        return;
+    }
+
+    USFRestoreService* RestoreSvc = CachedSubsystem->GetRestoreService();
+    if (!RestoreSvc)
+    {
+        return;
+    }
+
+    bool bFound = false;
+    const FSFRestorePreset Preset = RestoreSvc->LoadPreset(SelectedItem, bFound);
+    if (bFound)
+    {
+        PopulateSmartPanelFromPreset(Preset);
+    }
 }
 
 void USmartSettingsFormWidget::OnRestoreSectionToggleClicked()
@@ -1594,6 +1541,135 @@ void USmartSettingsFormWidget::UpdateRestorePresetDetails(const FString& PresetN
     {
         PresetCreatedAtValue->SetText(FText::FromString(FormatPresetTimestampForDisplay(Preset.CreatedAt)));
     }
+}
+
+void USmartSettingsFormWidget::PopulateSmartPanelFromPreset(const FSFRestorePreset& Preset)
+{
+    if (!CachedSubsystem.IsValid())
+    {
+        return;
+    }
+
+    const FSFCounterState PendingState = BuildPendingCounterStateFromPreset(Preset);
+    PopulateCounterInputsFromState(PendingState);
+    UE_LOG(LogSmartFoundations, Log,
+        TEXT("[SmartRestore][UI] Loaded preset '%s' into Smart Panel pending values: grid=%d spacing=%d steps=%d stagger=%d rotation=%d"),
+        *Preset.Name,
+        Preset.CaptureFlags.bGrid ? 1 : 0,
+        Preset.CaptureFlags.bSpacing ? 1 : 0,
+        Preset.CaptureFlags.bSteps ? 1 : 0,
+        Preset.CaptureFlags.bStagger ? 1 : 0,
+        Preset.CaptureFlags.bRotation ? 1 : 0);
+}
+
+FSFCounterState USmartSettingsFormWidget::BuildPendingCounterStateFromPreset(const FSFRestorePreset& Preset) const
+{
+    FSFCounterState State = CachedSubsystem.IsValid()
+        ? CachedSubsystem->GetCounterState()
+        : FSFCounterState();
+
+    if (Preset.CaptureFlags.bGrid)
+    {
+        State.GridCounters = Preset.GridCounters;
+    }
+    if (Preset.CaptureFlags.bSpacing)
+    {
+        State.SpacingX = Preset.SpacingX;
+        State.SpacingY = Preset.SpacingY;
+        State.SpacingZ = Preset.SpacingZ;
+    }
+    if (Preset.CaptureFlags.bSteps)
+    {
+        State.StepsX = Preset.StepsX;
+        State.StepsY = Preset.StepsY;
+    }
+    if (Preset.CaptureFlags.bStagger)
+    {
+        State.StaggerX = Preset.StaggerX;
+        State.StaggerY = Preset.StaggerY;
+        State.StaggerZX = Preset.StaggerZX;
+        State.StaggerZY = Preset.StaggerZY;
+    }
+    if (Preset.CaptureFlags.bRotation)
+    {
+        State.RotationZ = Preset.RotationZ;
+    }
+
+    return State;
+}
+
+void USmartSettingsFormWidget::PopulateCounterInputsFromState(const FSFCounterState& State)
+{
+    const bool bWasApplyImmediately = bApplyImmediately;
+    bApplyImmediately = false;
+
+    bGridXPositive = State.GridCounters.X >= 0;
+    bGridYPositive = State.GridCounters.Y >= 0;
+    bGridZPositive = State.GridCounters.Z >= 0;
+
+    if (GridXInput)
+    {
+        GridXInput->SetValue(static_cast<float>(FMath::Abs(State.GridCounters.X)));
+    }
+    if (GridYInput)
+    {
+        GridYInput->SetValue(static_cast<float>(FMath::Abs(State.GridCounters.Y)));
+    }
+    if (GridZInput)
+    {
+        GridZInput->SetValue(static_cast<float>(FMath::Abs(State.GridCounters.Z)));
+    }
+
+    UpdateGridDirectionLabel(GridXDirLabel, bGridXPositive);
+    UpdateGridDirectionLabel(GridYDirLabel, bGridYPositive);
+    UpdateGridDirectionLabel(GridZDirLabel, bGridZPositive);
+
+    if (SpacingXInput)
+    {
+        SpacingXInput->SetValue(State.SpacingX / 100.0f);
+    }
+    if (SpacingYInput)
+    {
+        SpacingYInput->SetValue(State.SpacingY / 100.0f);
+    }
+    if (SpacingZInput)
+    {
+        SpacingZInput->SetValue(State.SpacingZ / 100.0f);
+    }
+
+    if (StepsXInput)
+    {
+        StepsXInput->SetValue(State.StepsX / 100.0f);
+    }
+    if (StepsYInput)
+    {
+        StepsYInput->SetValue(State.StepsY / 100.0f);
+    }
+
+    if (StaggerXInput)
+    {
+        StaggerXInput->SetValue(State.StaggerX / 100.0f);
+    }
+    if (StaggerYInput)
+    {
+        StaggerYInput->SetValue(State.StaggerY / 100.0f);
+    }
+    if (StaggerZXInput)
+    {
+        StaggerZXInput->SetValue(State.StaggerZX / 100.0f);
+    }
+    if (StaggerZYInput)
+    {
+        StaggerZYInput->SetValue(State.StaggerZY / 100.0f);
+    }
+
+    if (RotationZInput)
+    {
+        RotationZInput->SetValue(State.RotationZ);
+    }
+
+    bApplyImmediately = bWasApplyImmediately;
+    UpdateGridWarningDisplay();
 }
 
 FString USmartSettingsFormWidget::GetPresetDescriptionText() const

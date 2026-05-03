@@ -548,6 +548,15 @@ private:
     // Update description/timestamp display for the selected preset
     void UpdateRestorePresetDetails(const FString& PresetName);
 
+    // Populate the main Smart Panel counter inputs from a selected Restore preset without applying them yet
+    void PopulateSmartPanelFromPreset(const FSFRestorePreset& Preset);
+
+    // Build the counter state the preset would apply, preserving current state for uncaptured groups
+    FSFCounterState BuildPendingCounterStateFromPreset(const FSFRestorePreset& Preset) const;
+
+    // Update counter input widgets from a state snapshot without triggering Apply Immediately
+    void PopulateCounterInputsFromState(const FSFCounterState& State);
+
     // Read optional description text from the Restore panel
     FString GetPresetDescriptionText() const;
 

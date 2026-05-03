@@ -14,6 +14,7 @@
 #include "Features/Extend/SFManifoldJSON.h"
 #include "Features/Extend/SFWiringManifest.h"
 #include "Features/Restore/SFRestoreService.h"
+#include "Services/SFRecipeManagementService.h"
 #include "Subsystem/SFSubsystem.h"
 #include "Subsystem/SFHologramDataService.h"
 // NOTE: SFRecipeCostInjector.h removed - child holograms automatically aggregate costs via GetCost()
@@ -726,6 +727,13 @@ bool USFExtendService::ReplayRestoreCloneTopology(AFGHologram* ParentHologram, c
     }
 
     ClearRestoredCloneTopologyPreview();
+    if (ScaledExtendClones.Num() > 0)
+    {
+        UE_LOG(LogSmartFoundations, Log,
+            TEXT("[SmartRestore][Extend] Clearing %d normal Scaled Extend clone record(s) before Restore replay owns the topology"),
+            ScaledExtendClones.Num());
+        ScaledExtendClones.Empty();
+    }
     RestoredCloneParentHologram = ParentHologram;
     RestoredCloneTopologyTemplate = MakeShared<FSFCloneTopology>(CloneTopology);
     RestoredCloneBaseTopology = MakeShared<FSFCloneTopology>(CloneTopology);
@@ -756,12 +764,33 @@ void USFExtendService::TickRestoredCloneTopology(float DeltaTime)
 
     if (!RestoredCloneParentHologram.IsValid())
     {
-        if (HologramService && JsonSpawnedHolograms.Num() > 0)
+        const bool bHasPostBuildActorsOrRetry = JsonBuiltActors.Num() > 0
+            || bRestoredScaledWiringDeferred
+            || bRestoredScaledWiringRetryScheduled;
+        const bool bCanStillFinishPostBuildWiring = bHasPostBuildActorsOrRetry
+            && HasPendingPostBuildWiring()
+            && (bRestoredScaledWiringRetryScheduled || RestoredScaledWiringRetryAttempts < 5);
+        if (bCanStillFinishPostBuildWiring)
         {
-            HologramService->ClearBeltPreviews();
+            UE_LOG(LogSmartFoundations, Log,
+                TEXT("[SmartRestore][Extend] Parent hologram invalid while post-build wiring is pending; retaining restored topology (storedChildren=%d, jsonBuilt=%d, jsonSpawned=%d, previewFactories=%d, retry=%d/%d)"),
+                StoredCloneTopology.IsValid() ? StoredCloneTopology->ChildHolograms.Num() : 0,
+                JsonBuiltActors.Num(),
+                JsonSpawnedHolograms.Num(),
+                RestoredScaledFactoryPreviewLocations.Num(),
+                RestoredScaledWiringRetryAttempts,
+                5);
+            return;
         }
-        JsonSpawnedHolograms.Empty();
-        StoredCloneTopology.Reset();
+
+        ClearRestoredCloneTopologySession(TEXT("TickRestoredCloneTopology parent invalid"));
+        if (Subsystem.IsValid())
+        {
+            if (USFRestoreService* RestoreSvc = Subsystem->GetRestoreService())
+            {
+                RestoreSvc->ClearActiveRestoreSession(TEXT("Restored Extend parent invalid"));
+            }
+        }
         return;
     }
 
@@ -851,7 +880,6 @@ void USFExtendService::TickRestoredCloneTopology(float DeltaTime)
         }
 
         StoredCloneTopology = MakeShared<FSFCloneTopology>(ReplayTopology);
-        LastCloneTopology = MakeShared<FSFCloneTopology>(ReplayTopology);
         RestoredCloneLastParentLocation = ParentLocation;
         RestoredCloneLastParentRotation = ParentRotation;
     }
@@ -1173,8 +1201,12 @@ void USFExtendService::ClearRestoredCloneTopologyPreview()
         HologramService->ClearBeltPreviews();
     }
     JsonSpawnedHolograms.Empty();
+    RestoredScaledFactoryPreviewLocations.Empty();
     StoredCloneTopology.Reset();
     bRestoredCloneTopologyActive = false;
+    bRestoredScaledWiringDeferred = false;
+    bRestoredScaledWiringRetryScheduled = false;
+    RestoredScaledWiringRetryAttempts = 0;
 }
 
 int32 USFExtendService::SpawnRestoredScaledFactoryHolograms(AFGHologram* ParentHologram, TMap<FString, AFGHologram*>& OutSpawnedHolograms)
@@ -1192,6 +1224,7 @@ int32 USFExtendService::SpawnRestoredScaledFactoryHolograms(AFGHologram* ParentH
     const FSFCounterState& State = Subsystem->GetCounterState();
     const int32 XCount = FMath::Max(1, FMath::Abs(State.GridCounters.X));
     const int32 YCount = FMath::Max(1, FMath::Abs(State.GridCounters.Y));
+    RestoredScaledFactoryPreviewLocations.Empty();
     if (XCount <= 1 && YCount <= 1)
     {
         UE_LOG(LogSmartFoundations, Log,
@@ -1255,9 +1288,12 @@ int32 USFExtendService::SpawnRestoredScaledFactoryHolograms(AFGHologram* ParentH
             USFHologramDataService::DisableValidation(FactoryHologram);
             USFHologramDataService::MarkAsChild(FactoryHologram, ParentHologram, ESFChildHologramType::ExtendClone);
 
-            if (Subsystem->bHasStoredProductionRecipe)
+            if (USFRecipeManagementService* RecipeSvc = Subsystem->GetRecipeManagementService())
             {
-                USFHologramDataService::StoreRecipe(FactoryHologram, Subsystem->StoredProductionRecipe);
+                if (RecipeSvc->HasStoredProductionRecipe() && RecipeSvc->GetStoredProductionRecipe())
+                {
+                    USFHologramDataService::StoreRecipe(FactoryHologram, RecipeSvc->GetStoredProductionRecipe());
+                }
             }
 
             if (FSFHologramData* FactoryData = USFHologramDataService::GetOrCreateData(FactoryHologram))
@@ -1276,6 +1312,7 @@ int32 USFExtendService::SpawnRestoredScaledFactoryHolograms(AFGHologram* ParentH
             FactoryHologram->SetPlacementMaterialState(EHologramMaterialState::HMS_OK);
             FactoryHologram->SetActorTickEnabled(false);
             OutSpawnedHolograms.Add(FactoryId, FactoryHologram);
+            RestoredScaledFactoryPreviewLocations.Add(FactoryId, FactoryLocation);
             SpawnedFactories++;
 
             UE_LOG(LogSmartFoundations, Log,
@@ -1315,7 +1352,6 @@ bool USFExtendService::SpawnRestoredCloneTopology(AFGHologram* ParentHologram, c
 
     CloneTopology.WireChildHologramConnections(SpawnedHolograms, ParentHologram);
     StoredCloneTopology = MakeShared<FSFCloneTopology>(CloneTopology);
-    LastCloneTopology = MakeShared<FSFCloneTopology>(CloneTopology);
     JsonSpawnedHolograms = SpawnedHolograms;
     if (HologramService)
     {
@@ -3417,6 +3453,21 @@ void USFExtendService::WireBuiltChildConnections(AFGBuildableFactory* NewFactory
         (StoredCloneTopology.IsValid() && StoredCloneTopology->ChildHolograms.Num() > 0) ? TEXT("VALID") : TEXT("INVALID"),
         JsonBuiltActors.Num());
 
+    if (bRestoredCloneTopologyActive || bRestoredScaledWiringDeferred)
+    {
+        UE_LOG(LogSmartFoundations, Log,
+            TEXT("[SmartRestore][Extend] Post-build wiring start: factory=%s storedChildren=%d jsonBuilt=%d jsonSpawned=%d previewFactories=%d parentValid=%d retry=%d/%d deferred=%d"),
+            *NewFactory->GetName(),
+            StoredCloneTopology.IsValid() ? StoredCloneTopology->ChildHolograms.Num() : 0,
+            JsonBuiltActors.Num(),
+            JsonSpawnedHolograms.Num(),
+            RestoredScaledFactoryPreviewLocations.Num(),
+            RestoredCloneParentHologram.IsValid() ? 1 : 0,
+            RestoredScaledWiringRetryAttempts,
+            5,
+            bRestoredScaledWiringDeferred ? 1 : 0);
+    }
+
     // Issues #298, #299: Copy Smart/Programmable Splitter filter configuration from every
     // source distributor to its cloned counterpart before wiring brings belts online. Done
     // here (rather than at individual Construct() time) so the source → clone pairing has
@@ -3599,6 +3650,15 @@ void USFExtendService::WireBuiltChildConnections(AFGBuildableFactory* NewFactory
     // NOTE: GenerateAndExecuteWiring resets StoredCloneTopology and JsonBuiltActors
     // at its end — phases 3.8a/3.8b above must run before this call.
     int32 JsonWiredCount = GenerateAndExecuteWiring(NewFactory);
+    if (bRestoredScaledWiringDeferred)
+    {
+        UE_LOG(LogSmartFoundations, Log,
+            TEXT("[SmartRestore][Extend] JSON wiring deferred; leaving post-build tracking intact for retry (jsonBuilt=%d, jsonSpawned=%d, storedChildren=%d)"),
+            JsonBuiltActors.Num(),
+            JsonSpawnedHolograms.Num(),
+            StoredCloneTopology.IsValid() ? StoredCloneTopology->ChildHolograms.Num() : 0);
+        return;
+    }
     if (JsonWiredCount > 0)
     {
         UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 EXTEND Phase 5/6: JSON-based wiring completed - %d connections"), JsonWiredCount);
@@ -6286,6 +6346,8 @@ void USFExtendService::LogSnapshotDiff(const FSFBuildableSnapshot& Before, const
 
 int32 USFExtendService::GenerateAndExecuteWiring(AFGBuildableFactory* NewFactory)
 {
+    bRestoredScaledWiringDeferred = false;
+
     if (!NewFactory)
     {
         UE_LOG(LogSmartFoundations, Warning, TEXT("🔌 EXTEND Phase 5/6: GenerateAndExecuteWiring called with null factory"));
@@ -6353,6 +6415,490 @@ int32 USFExtendService::GenerateAndExecuteWiring(AFGBuildableFactory* NewFactory
             ResolveSourceTarget(Holo.CloneConnections.ConveyorAny0.Target);
             ResolveSourceTarget(Holo.CloneConnections.ConveyorAny1.Target);
         }
+    }
+
+    // Restored scaled replay uses synthetic factory ids (rr_X_Y_factory) for
+    // child factory targets. Those child factories are vanilla factory holograms,
+    // so they can miss JsonBuiltActors self-registration. Resolve them here before
+    // the manifest decides which belt/pipe endpoints are wireable.
+    if (bRestoredCloneTopologyActive && StoredCloneTopology.IsValid())
+    {
+        auto TryParseRestoredScaledFactoryId = [](const FString& CloneId, int32& OutX, int32& OutY) -> bool
+        {
+            if (!CloneId.StartsWith(TEXT("rr_")) || !CloneId.EndsWith(TEXT("_factory")))
+            {
+                return false;
+            }
+
+            FString GridText = CloneId.LeftChop(8).Mid(3);
+            TArray<FString> Parts;
+            GridText.ParseIntoArray(Parts, TEXT("_"), true);
+            if (Parts.Num() != 2)
+            {
+                return false;
+            }
+
+            OutX = FCString::Atoi(*Parts[0]);
+            OutY = FCString::Atoi(*Parts[1]);
+            return true;
+        };
+
+        auto IsRestoredScaledFactoryId = [&](const FString& CloneId) -> bool
+        {
+            int32 UnusedX = 0;
+            int32 UnusedY = 0;
+            return TryParseRestoredScaledFactoryId(CloneId, UnusedX, UnusedY);
+        };
+
+        TSet<FString> RequiredFactoryIds;
+        for (const auto& SpawnedPair : JsonSpawnedHolograms)
+        {
+            if (IsRestoredScaledFactoryId(SpawnedPair.Key))
+            {
+                RequiredFactoryIds.Add(SpawnedPair.Key);
+            }
+        }
+        for (const FSFCloneHologram& Holo : StoredCloneTopology->ChildHolograms)
+        {
+            if (IsRestoredScaledFactoryId(Holo.CloneConnections.ConveyorAny0.Target))
+            {
+                RequiredFactoryIds.Add(Holo.CloneConnections.ConveyorAny0.Target);
+            }
+            if (IsRestoredScaledFactoryId(Holo.CloneConnections.ConveyorAny1.Target))
+            {
+                RequiredFactoryIds.Add(Holo.CloneConnections.ConveyorAny1.Target);
+            }
+        }
+
+        constexpr float ExistingFactoryMatchRadiusCm = 3000.0f;
+        constexpr float ExistingFactoryMatchRadiusSq = ExistingFactoryMatchRadiusCm * ExistingFactoryMatchRadiusCm;
+        constexpr float FactoryMatchRadiusCm = 3000.0f;
+        constexpr float FactoryMatchRadiusSq = FactoryMatchRadiusCm * FactoryMatchRadiusCm;
+        int32 MissingRestoredFactoryCount = 0;
+        int32 ResolvedRestoredFactoryCount = 0;
+
+        UE_LOG(LogSmartFoundations, Log,
+            TEXT("[SmartRestore][Extend] Restored scaled factory resolution: required=%d previewLocations=%d spawnedHolograms=%d builtActors=%d parentValid=%d"),
+            RequiredFactoryIds.Num(),
+            RestoredScaledFactoryPreviewLocations.Num(),
+            JsonSpawnedHolograms.Num(),
+            JsonBuiltActors.Num(),
+            RestoredCloneParentHologram.IsValid() ? 1 : 0);
+
+        auto ApplyRecipeToRestoredFactory = [&](AFGBuildableFactory* Factory)
+        {
+            if (!Factory || !Subsystem.IsValid())
+            {
+                return;
+            }
+
+            USFRecipeManagementService* RecipeSvc = Subsystem->GetRecipeManagementService();
+            if (RecipeSvc && RecipeSvc->HasStoredProductionRecipe() && RecipeSvc->GetStoredProductionRecipe())
+            {
+                RecipeSvc->ApplyStoredProductionRecipeToBuilding(Factory);
+                UE_LOG(LogSmartFoundations, Log,
+                    TEXT("[SmartRestore][Extend] Applied stored recipe %s to restored scaled factory %s"),
+                    *RecipeSvc->GetStoredProductionRecipe()->GetName(),
+                    *Factory->GetName());
+            }
+            else
+            {
+                UE_LOG(LogSmartFoundations, Log,
+                    TEXT("[SmartRestore][Extend] No stored recipe available for restored scaled factory %s (service=%d, subsystemHas=%d)"),
+                    *Factory->GetName(),
+                    RecipeSvc ? 1 : 0,
+                    Subsystem->bHasStoredProductionRecipe ? 1 : 0);
+            }
+        };
+
+        auto MeasureFactoryMatch = [](AFGBuildableFactory* Candidate, const FVector& ExpectedLocation, FString& OutBasis) -> float
+        {
+            if (!IsValid(Candidate))
+            {
+                OutBasis = TEXT("invalid");
+                return FLT_MAX;
+            }
+
+            float BestDistSq = FVector::DistSquared(Candidate->GetActorLocation(), ExpectedLocation);
+            OutBasis = TEXT("actor");
+
+            TArray<UFGFactoryConnectionComponent*> FactoryConnectors;
+            Candidate->GetComponents<UFGFactoryConnectionComponent>(FactoryConnectors);
+            for (UFGFactoryConnectionComponent* Connector : FactoryConnectors)
+            {
+                if (!Connector)
+                {
+                    continue;
+                }
+
+                const float DistSq = FVector::DistSquared(Connector->GetComponentLocation(), ExpectedLocation);
+                if (DistSq < BestDistSq)
+                {
+                    BestDistSq = DistSq;
+                    OutBasis = FString::Printf(TEXT("factory connector %s"), *Connector->GetName());
+                }
+            }
+
+            TArray<UFGPipeConnectionComponentBase*> PipeConnectors;
+            Candidate->GetComponents<UFGPipeConnectionComponentBase>(PipeConnectors);
+            for (UFGPipeConnectionComponentBase* Connector : PipeConnectors)
+            {
+                if (!Connector)
+                {
+                    continue;
+                }
+
+                const float DistSq = FVector::DistSquared(Connector->GetComponentLocation(), ExpectedLocation);
+                if (DistSq < BestDistSq)
+                {
+                    BestDistSq = DistSq;
+                    OutBasis = FString::Printf(TEXT("pipe connector %s"), *Connector->GetName());
+                }
+            }
+
+            return BestDistSq;
+        };
+
+        const FString ExpectedRestoredFactoryClassName = StoredCloneTopology.IsValid()
+            ? StoredCloneTopology->ParentBuildClass
+            : FString();
+        auto IsExpectedRestoredFactoryClass = [&](AFGBuildableFactory* Candidate) -> bool
+        {
+            if (!IsValid(Candidate))
+            {
+                return false;
+            }
+            if (!ExpectedRestoredFactoryClassName.IsEmpty())
+            {
+                return Candidate->GetClass() && Candidate->GetClass()->GetName() == ExpectedRestoredFactoryClassName;
+            }
+            return !NewFactory || Candidate->GetClass() == NewFactory->GetClass();
+        };
+
+        TSet<AActor*> UsedRestoredFactoryActors;
+        if (AActor* const* ParentActor = CloneIdToBuildable.Find(TEXT("parent")))
+        {
+            AFGBuildableFactory* ParentFactory = Cast<AFGBuildableFactory>(*ParentActor);
+            if (IsExpectedRestoredFactoryClass(ParentFactory) && StoredCloneTopology.IsValid())
+            {
+                FString ParentMatchBasis;
+                const FVector ExpectedParentLocation = StoredCloneTopology->ParentTransform.Location.ToFVector();
+                const float ParentMatchDistSq = MeasureFactoryMatch(ParentFactory, ExpectedParentLocation, ParentMatchBasis);
+                if (ParentMatchDistSq <= FactoryMatchRadiusSq)
+                {
+                    UsedRestoredFactoryActors.Add(ParentFactory);
+                    UE_LOG(LogSmartFoundations, Log,
+                        TEXT("[SmartRestore][Extend] Reserved restored parent factory %s (dist=%.0fcm via %s)"),
+                        *ParentFactory->GetName(),
+                        FMath::Sqrt(ParentMatchDistSq),
+                        *ParentMatchBasis);
+                }
+            }
+            else if (IsExpectedRestoredFactoryClass(ParentFactory))
+            {
+                UsedRestoredFactoryActors.Add(*ParentActor);
+            }
+        }
+
+        TArray<FString> SortedRequiredFactoryIds = RequiredFactoryIds.Array();
+        SortedRequiredFactoryIds.Sort([](const FString& A, const FString& B)
+        {
+            return A < B;
+        });
+
+        auto TryCalculateFactoryLocationFromStoredTopology = [&](int32 GridX, int32 GridY, FVector& OutLocation) -> bool
+        {
+            if (!StoredCloneTopology.IsValid() || !Subsystem.IsValid())
+            {
+                return false;
+            }
+
+            USFBuildableSizeRegistry::Initialize();
+            FVector BuildingSize(800.0f, 800.0f, 400.0f);
+            if (NewFactory)
+            {
+                BuildingSize = USFBuildableSizeRegistry::GetProfile(NewFactory->GetClass()).DefaultSize;
+            }
+            else if (RestoredCloneParentHologram.IsValid() && RestoredCloneParentHologram->GetBuildClass())
+            {
+                BuildingSize = USFBuildableSizeRegistry::GetProfile(RestoredCloneParentHologram->GetBuildClass()).DefaultSize;
+            }
+
+            const FSFCounterState& State = Subsystem->GetCounterState();
+            const FVector ParentLocation = StoredCloneTopology->ParentTransform.Location.ToFVector();
+            const FRotator ParentRotation = StoredCloneTopology->ParentTransform.Rotation.ToFRotator();
+            float XDirectionSign = State.GridCounters.X < 0 ? -1.0f : 1.0f;
+
+            const FSFCloneTopology* TemplateTopology = RestoredCloneTopologyTemplate.IsValid()
+                ? RestoredCloneTopologyTemplate.Get()
+                : nullptr;
+            if (TemplateTopology)
+            {
+                const FRotator OriginalParentRotation = TemplateTopology->ParentTransform.Rotation.ToFRotator();
+                const FRotator RotationDelta = ParentRotation - OriginalParentRotation;
+                const FVector CapturedStep = RotationDelta.RotateVector(TemplateTopology->WorldOffset.ToFVector());
+                const FVector CapturedLocalStep = ParentRotation.UnrotateVector(CapturedStep);
+                if (!FMath::IsNearlyZero(CapturedLocalStep.X))
+                {
+                    XDirectionSign *= FMath::Sign(CapturedLocalStep.X);
+                }
+            }
+
+            const float StepDistance = FMath::Max(1.0f, BuildingSize.X + static_cast<float>(State.SpacingX));
+            FVector LocalOffset = FVector::ZeroVector;
+
+            if (!FMath::IsNearlyZero(State.RotationZ))
+            {
+                const float StepRadians = FMath::Abs(FMath::DegreesToRadians(State.RotationZ));
+                const float Radius = (StepRadians > KINDA_SMALL_NUMBER) ? StepDistance / StepRadians : 0.0f;
+                const float SignRotation = (State.RotationZ >= 0.0f) ? 1.0f : -1.0f;
+
+                auto OffsetAtCloneIndex = [&](int32 CloneIndex) -> FVector
+                {
+                    const float AngleDeg = static_cast<float>(CloneIndex) * State.RotationZ;
+                    const float AbsAngleRad = FMath::Abs(FMath::DegreesToRadians(AngleDeg));
+
+                    FVector Offset;
+                    Offset.X = XDirectionSign * Radius * FMath::Sin(AbsAngleRad);
+                    Offset.Y = SignRotation * (Radius - Radius * FMath::Cos(AbsAngleRad));
+                    Offset.Z = static_cast<float>(State.StepsX * CloneIndex);
+                    return Offset;
+                };
+
+                const FVector ParentCloneOffset = OffsetAtCloneIndex(1);
+                const FVector TargetCloneOffset = OffsetAtCloneIndex(GridX + 1);
+                LocalOffset = TargetCloneOffset - ParentCloneOffset;
+            }
+            else
+            {
+                LocalOffset.X = XDirectionSign * StepDistance * static_cast<float>(GridX);
+                LocalOffset.Z = static_cast<float>(State.StepsX * GridX);
+            }
+
+            if (GridY != 0)
+            {
+                const float YSign = State.GridCounters.Y < 0 ? -1.0f : 1.0f;
+                const float RowDistance = FMath::Max(1.0f, BuildingSize.Y + static_cast<float>(State.SpacingY));
+                LocalOffset.Y += RowDistance * static_cast<float>(GridY) * YSign;
+                LocalOffset.Z += static_cast<float>(State.StepsY * GridY);
+            }
+
+            OutLocation = ParentLocation + ParentRotation.RotateVector(FVector(LocalOffset.X, LocalOffset.Y, 0.0f));
+            OutLocation.Z += LocalOffset.Z;
+            return true;
+        };
+
+        for (const FString& FactoryId : SortedRequiredFactoryIds)
+        {
+            AActor* ExistingMappedActor = nullptr;
+            if (AActor** FoundMappedActor = CloneIdToBuildable.Find(FactoryId))
+            {
+                ExistingMappedActor = *FoundMappedActor;
+            }
+
+            FVector ExpectedLocation = FVector::ZeroVector;
+            bool bHasExpectedLocation = false;
+            if (const FVector* CachedPreviewLocation = RestoredScaledFactoryPreviewLocations.Find(FactoryId))
+            {
+                ExpectedLocation = *CachedPreviewLocation;
+                bHasExpectedLocation = true;
+                UE_LOG(LogSmartFoundations, Log,
+                    TEXT("[SmartRestore][Extend] Using cached preview location for restored scaled factory %s: %s"),
+                    *FactoryId,
+                    *ExpectedLocation.ToString());
+            }
+            if (!bHasExpectedLocation)
+            {
+                if (AFGHologram* const* SpawnedFactoryHologram = JsonSpawnedHolograms.Find(FactoryId))
+                {
+                    if (IsValid(*SpawnedFactoryHologram))
+                    {
+                        ExpectedLocation = (*SpawnedFactoryHologram)->GetActorLocation();
+                        bHasExpectedLocation = true;
+                        UE_LOG(LogSmartFoundations, Log,
+                            TEXT("[SmartRestore][Extend] Using live hologram location for restored scaled factory %s: %s"),
+                            *FactoryId,
+                            *ExpectedLocation.ToString());
+                    }
+                }
+            }
+            if (!bHasExpectedLocation && IsValid(ExistingMappedActor))
+            {
+                ExpectedLocation = ExistingMappedActor->GetActorLocation();
+                bHasExpectedLocation = true;
+                UE_LOG(LogSmartFoundations, Log,
+                    TEXT("[SmartRestore][Extend] Using existing mapped actor location for restored scaled factory %s: %s"),
+                    *FactoryId,
+                    *ExpectedLocation.ToString());
+            }
+            if (!bHasExpectedLocation && RestoredCloneParentHologram.IsValid() && Subsystem.IsValid())
+            {
+                int32 GridX = 0;
+                int32 GridY = 0;
+                if (TryParseRestoredScaledFactoryId(FactoryId, GridX, GridY))
+                {
+                    const FSFCloneTopology* TemplateTopology = RestoredCloneTopologyTemplate.IsValid()
+                        ? RestoredCloneTopologyTemplate.Get()
+                        : nullptr;
+                    const FRestoredScaledClonePlacement Placement = CalculateRestoredScaledClonePlacement(
+                        RestoredCloneParentHologram.Get(),
+                        TemplateTopology,
+                        Subsystem->GetCounterState(),
+                        GridX,
+                        GridY);
+                    ExpectedLocation = RestoredCloneParentHologram->GetActorLocation() + Placement.WorldOffset;
+                    bHasExpectedLocation = true;
+                    UE_LOG(LogSmartFoundations, Log,
+                        TEXT("[SmartRestore][Extend] Recomputed restored scaled factory location for %s from live parent: %s"),
+                        *FactoryId,
+                        *ExpectedLocation.ToString());
+                }
+            }
+            if (!bHasExpectedLocation && Subsystem.IsValid())
+            {
+                int32 GridX = 0;
+                int32 GridY = 0;
+                if (TryParseRestoredScaledFactoryId(FactoryId, GridX, GridY)
+                    && TryCalculateFactoryLocationFromStoredTopology(GridX, GridY, ExpectedLocation))
+                {
+                    bHasExpectedLocation = true;
+                    UE_LOG(LogSmartFoundations, Log,
+                        TEXT("[SmartRestore][Extend] Recomputed restored scaled factory location for %s from stored topology: %s"),
+                        *FactoryId,
+                        *ExpectedLocation.ToString());
+                }
+            }
+
+            const bool bExistingIsFactory = IsExpectedRestoredFactoryClass(Cast<AFGBuildableFactory>(ExistingMappedActor));
+            FString ExistingMatchBasis;
+            const float ExistingMatchDistSq = bExistingIsFactory && bHasExpectedLocation
+                ? MeasureFactoryMatch(Cast<AFGBuildableFactory>(ExistingMappedActor), ExpectedLocation, ExistingMatchBasis)
+                : 0.0f;
+            if (bExistingIsFactory && (!bHasExpectedLocation || ExistingMatchDistSq <= ExistingFactoryMatchRadiusSq))
+            {
+                ApplyRecipeToRestoredFactory(Cast<AFGBuildableFactory>(ExistingMappedActor));
+                UsedRestoredFactoryActors.Add(ExistingMappedActor);
+                UE_LOG(LogSmartFoundations, Log,
+                    TEXT("[SmartRestore][Extend] Restored scaled factory %s already mapped to %s%s%s"),
+                    *FactoryId,
+                    *ExistingMappedActor->GetName(),
+                    bHasExpectedLocation ? TEXT(" via ") : TEXT(""),
+                    bHasExpectedLocation ? *ExistingMatchBasis : TEXT(""));
+                continue;
+            }
+
+            if (!bHasExpectedLocation)
+            {
+                UE_LOG(LogSmartFoundations, Warning,
+                    TEXT("[SmartRestore][Extend] Missing restored scaled factory mapping for %s and no location was available (stored=%d, previewLocations=%d, parentValid=%d, subsystem=%d)"),
+                    *FactoryId,
+                    StoredCloneTopology.IsValid() ? 1 : 0,
+                    RestoredScaledFactoryPreviewLocations.Num(),
+                    RestoredCloneParentHologram.IsValid() ? 1 : 0,
+                    Subsystem.IsValid() ? 1 : 0);
+                MissingRestoredFactoryCount++;
+                continue;
+            }
+
+            AFGBuildableFactory* BestFactory = nullptr;
+            FString BestMatchBasis;
+            float BestDistSq = FactoryMatchRadiusSq;
+            for (TActorIterator<AFGBuildableFactory> It(GetWorld()); It; ++It)
+            {
+                AFGBuildableFactory* Candidate = *It;
+                if (!IsValid(Candidate))
+                {
+                    continue;
+                }
+                if (!IsExpectedRestoredFactoryClass(Candidate))
+                {
+                    continue;
+                }
+                if (UsedRestoredFactoryActors.Contains(Candidate))
+                {
+                    continue;
+                }
+
+                FString MatchBasis;
+                const float DistSq = MeasureFactoryMatch(Candidate, ExpectedLocation, MatchBasis);
+                if (DistSq < BestDistSq)
+                {
+                    BestDistSq = DistSq;
+                    BestFactory = Candidate;
+                    BestMatchBasis = MatchBasis;
+                }
+            }
+
+            if (BestFactory)
+            {
+                CloneIdToBuildable.Add(FactoryId, BestFactory);
+                JsonBuiltActors.Add(FactoryId, BestFactory);
+                UsedRestoredFactoryActors.Add(BestFactory);
+                ApplyRecipeToRestoredFactory(BestFactory);
+                ResolvedRestoredFactoryCount++;
+                UE_LOG(LogSmartFoundations, Log,
+                    TEXT("[SmartRestore][Extend] Resolved restored scaled factory %s -> %s (dist=%.0fcm via %s)"),
+                    *FactoryId,
+                    *BestFactory->GetName(),
+                    FMath::Sqrt(BestDistSq),
+                    *BestMatchBasis);
+            }
+            else
+            {
+                UE_LOG(LogSmartFoundations, Warning,
+                    TEXT("[SmartRestore][Extend] Could not resolve restored scaled factory %s near %s"),
+                    *FactoryId,
+                    *ExpectedLocation.ToString());
+                MissingRestoredFactoryCount++;
+            }
+        }
+
+        if (MissingRestoredFactoryCount > 0)
+        {
+            bRestoredScaledWiringDeferred = true;
+            UE_LOG(LogSmartFoundations, Log,
+                TEXT("[SmartRestore][Extend] Waiting for %d restored scaled factor%s before JSON wiring (resolved now=%d, required=%d)"),
+                MissingRestoredFactoryCount,
+                MissingRestoredFactoryCount == 1 ? TEXT("y") : TEXT("ies"),
+                ResolvedRestoredFactoryCount,
+                RequiredFactoryIds.Num());
+            if (!bRestoredScaledWiringRetryScheduled && RestoredScaledWiringRetryAttempts < 5 && NewFactory && GetWorld())
+            {
+                bRestoredScaledWiringRetryScheduled = true;
+                RestoredScaledWiringRetryAttempts++;
+                TWeakObjectPtr<USFExtendService> WeakThis(this);
+                TWeakObjectPtr<AFGBuildableFactory> WeakFactory(NewFactory);
+                GetWorld()->GetTimerManager().SetTimerForNextTick([WeakThis, WeakFactory]()
+                {
+                    if (!WeakThis.IsValid())
+                    {
+                        return;
+                    }
+
+                    WeakThis->bRestoredScaledWiringRetryScheduled = false;
+                    if (WeakFactory.IsValid() && WeakThis->HasPendingPostBuildWiring())
+                    {
+                        UE_LOG(LogSmartFoundations, Log,
+                            TEXT("[SmartRestore][Extend] Retrying restored scaled JSON wiring after deferred factory wait"));
+                        WeakThis->WireBuiltChildConnections(WeakFactory.Get());
+                    }
+                });
+            }
+            else
+            {
+                UE_LOG(LogSmartFoundations, Warning,
+                    TEXT("[SmartRestore][Extend] Restored scaled JSON wiring deferred without scheduling retry (scheduled=%d, attempts=%d, factory=%s, world=%d)"),
+                    bRestoredScaledWiringRetryScheduled ? 1 : 0,
+                    RestoredScaledWiringRetryAttempts,
+                    *GetNameSafe(NewFactory),
+                    GetWorld() ? 1 : 0);
+            }
+            return 0;
+        }
+
+        bRestoredScaledWiringDeferred = false;
+        bRestoredScaledWiringRetryScheduled = false;
+        RestoredScaledWiringRetryAttempts = 0;
     }
 
     UE_LOG(LogSmartFoundations, Log, TEXT("🔌 EXTEND Phase 5/6: Mapped %d buildables (including parent + source targets)"), CloneIdToBuildable.Num());
@@ -6811,7 +7357,7 @@ int32 USFExtendService::GenerateAndExecuteWiring(AFGBuildableFactory* NewFactory
 
     // Restored Extend topology does not have live PowerPoleWiringData or ScaledExtendClones,
     // so wire its JSON-restored power poles directly from the expanded topology ids.
-    if (WireClass && PowerPoleWiringData.Num() == 0 && StoredCloneTopology.IsValid())
+    if (bRestoredCloneTopologyActive && WireClass && PowerPoleWiringData.Num() == 0 && StoredCloneTopology.IsValid())
     {
         struct FRestoredPowerPoleEntry
         {
@@ -6975,22 +7521,6 @@ int32 USFExtendService::GenerateAndExecuteWiring(AFGBuildableFactory* NewFactory
                         TEXT("[SmartRestore][Extend] Connected restored factory '%s' to power pole '%s'"),
                         *GetNameSafe(Factory),
                         *GetNameSafe(Entry.Pole));
-                }
-            }
-
-            if (PoleGroup.Value.Num() > 0)
-            {
-                const FRestoredPowerPoleEntry& FirstEntry = PoleGroup.Value[0];
-                AFGBuildablePowerPole* SourcePole = Cast<AFGBuildablePowerPole>(GetSourceBuildableByName(FirstEntry.SourcePoleId));
-                UFGCircuitConnectionComponent* SourceConn = GetFirstCircuitConnection(SourcePole);
-                UFGCircuitConnectionComponent* FirstCloneConn = GetFirstCircuitConnection(FirstEntry.Pole);
-                if (ConnectPowerEndpoints(SourceConn, FirstCloneConn, TEXT("restored source pole to cloned pole")))
-                {
-                    RestoredPowerWiredCount++;
-                    UE_LOG(LogSmartFoundations, Log,
-                        TEXT("[SmartRestore][Extend] Connected source power pole '%s' to restored pole '%s'"),
-                        *GetNameSafe(SourcePole),
-                        *GetNameSafe(FirstEntry.Pole));
                 }
             }
 

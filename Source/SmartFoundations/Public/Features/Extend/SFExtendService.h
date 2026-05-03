@@ -780,12 +780,18 @@ private:
     /** Map of clone_id -> built actor (populated during Construct(), used for wiring) */
     TMap<FString, AActor*> JsonBuiltActors;
 
+    /** Cached preview locations for restored scaled factories; hologram pointers are often invalid by post-build wiring time. */
+    TMap<FString, FVector> RestoredScaledFactoryPreviewLocations;
+
     bool bRestoredCloneTopologyActive = false;
     TWeakObjectPtr<AFGHologram> RestoredCloneParentHologram;
     TSharedPtr<FSFCloneTopology> RestoredCloneTopologyTemplate;
     TSharedPtr<FSFCloneTopology> RestoredCloneBaseTopology;
     FVector RestoredCloneLastParentLocation = FVector::ZeroVector;
     FRotator RestoredCloneLastParentRotation = FRotator::ZeroRotator;
+    bool bRestoredScaledWiringDeferred = false;
+    bool bRestoredScaledWiringRetryScheduled = false;
+    int32 RestoredScaledWiringRetryAttempts = 0;
 
     FSFCloneTopology BuildRestoredCloneTopologyForCurrentState(AFGHologram* ParentHologram) const;
     void ClearRestoredCloneTopologyPreview();

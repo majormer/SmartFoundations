@@ -40,6 +40,18 @@ void USFRecipeManagementService::Initialize(USFSubsystem* InSubsystem)
 	UE_LOG(LogSmartFoundations, Log, TEXT("Recipe Management Service: Initialized"));
 }
 
+void USFRecipeManagementService::SyncSubsystemRecipeState() const
+{
+	if (!Subsystem)
+	{
+		return;
+	}
+
+	Subsystem->StoredProductionRecipe = StoredProductionRecipe;
+	Subsystem->StoredRecipeDisplayName = StoredRecipeDisplayName;
+	Subsystem->bHasStoredProductionRecipe = bHasStoredProductionRecipe;
+}
+
 void USFRecipeManagementService::Cleanup()
 {
 	ClearAllRecipes();
@@ -172,6 +184,7 @@ void USFRecipeManagementService::SetActiveRecipeByIndex(int32 Index)
 	StoredProductionRecipe = ActiveRecipe;
 	StoredRecipeDisplayName = GetRecipeDisplayName(ActiveRecipe);
 	bHasStoredProductionRecipe = (ActiveRecipe != nullptr);
+	SyncSubsystemRecipeState();
 	
 	// Apply recipe to parent hologram if available
 	ApplyRecipeToParentHologram();
@@ -232,6 +245,44 @@ bool USFRecipeManagementService::SetActiveRecipeByClass(TSubclassOf<UFGRecipe> R
 	}
 
 	return false;
+}
+
+bool USFRecipeManagementService::StoreProductionRecipeClass(TSubclassOf<UFGRecipe> RecipeClass, ESFRecipeSource Source)
+{
+	if (!RecipeClass)
+	{
+		return false;
+	}
+
+	ActiveRecipe = RecipeClass;
+	ActiveRecipeSource = Source;
+	StoredProductionRecipe = RecipeClass;
+	StoredRecipeDisplayName = GetRecipeDisplayName(RecipeClass);
+	bHasStoredProductionRecipe = true;
+
+	AddRecipeToUnlocked(RecipeClass);
+	SortedFilteredRecipes = GetFilteredRecipesForCurrentHologram();
+	CurrentRecipeIndex = SortedFilteredRecipes.IndexOfByKey(RecipeClass);
+	if (CurrentRecipeIndex == INDEX_NONE)
+	{
+		CurrentRecipeIndex = 0;
+	}
+
+	SyncSubsystemRecipeState();
+	ApplyRecipeToParentHologram();
+
+	if (Subsystem)
+	{
+		Subsystem->UpdateCounterDisplay();
+	}
+
+	UE_LOG(LogSmartFoundations, Log,
+		TEXT("[SmartRestore] Stored production recipe class directly: %s (source=%d, filteredIndex=%d, filteredCount=%d)"),
+		*RecipeClass->GetName(),
+		static_cast<int32>(Source),
+		CurrentRecipeIndex,
+		SortedFilteredRecipes.Num());
+	return true;
 }
 
 void USFRecipeManagementService::AddRecipeToUnlocked(TSubclassOf<UFGRecipe> Recipe)
@@ -308,6 +359,7 @@ void USFRecipeManagementService::ClearAllRecipes()
 	StoredProductionRecipe = nullptr;
 	StoredRecipeDisplayName = TEXT("");
 	bHasStoredProductionRecipe = false;
+	SyncSubsystemRecipeState();
 	
 	// Clear unlocked recipes
 	UnlockedRecipes.Empty();
@@ -361,6 +413,7 @@ void USFRecipeManagementService::StoreProductionRecipeFromBuilding(AFGBuildable*
 		StoredProductionRecipe = ProductionRecipe;
 		StoredRecipeDisplayName = GetRecipeDisplayName(ProductionRecipe);
 		bHasStoredProductionRecipe = true;
+		SyncSubsystemRecipeState();
 		
 		// Add to unlocked recipes
 		AddRecipeToUnlocked(ProductionRecipe);
@@ -564,6 +617,7 @@ void USFRecipeManagementService::ClearStoredProductionRecipe()
 	StoredProductionRecipe = nullptr;
 	StoredRecipeDisplayName = TEXT("");
 	bHasStoredProductionRecipe = false;
+	SyncSubsystemRecipeState();
 	
 	// Clear stored overclock and boost states
 	StoredPotential = 1.0f;

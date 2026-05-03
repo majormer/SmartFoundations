@@ -642,6 +642,12 @@ bool USFRestoreService::ApplyPreset(const FSFRestorePreset& Preset)
 							TEXT("[SmartRestore] Applied production recipe '%s'"),
 							*Preset.RecipeClassName);
 					}
+					else if (RecipeSvc->StoreProductionRecipeClass(TargetRecipe, ESFRecipeSource::Copied))
+					{
+						UE_LOG(LogSmartFoundations, Display,
+							TEXT("[SmartRestore] Stored production recipe '%s' directly while filtered recipe list settles"),
+							*Preset.RecipeClassName);
+					}
 					else
 					{
 						UE_LOG(LogSmartFoundations, Warning,
@@ -1577,6 +1583,12 @@ bool USFRestoreService::IsLastExtendAvailable() const
 			TEXT("[SmartRestore] IsLastExtendAvailable: Extend service null"));
 		return false;
 	}
+	if (ExtendSvc->IsRestoredCloneTopologyActive())
+	{
+		UE_LOG(LogSmartFoundations, Log,
+			TEXT("[SmartRestore] IsLastExtendAvailable: false because a restored Extend topology is already active"));
+		return false;
+	}
 
 	const FSFExtendTopology& Topology = ExtendSvc->GetLastExtendTopology();
 	TSharedPtr<FSFCloneTopology> CloneTopology = ExtendSvc->GetLastCloneTopology();
@@ -1611,6 +1623,12 @@ FSFRestorePreset USFRestoreService::ImportFromLastExtend(
 	{
 		UE_LOG(LogSmartFoundations, Warning,
 			TEXT("[SmartRestore] ImportFromLastExtend: No Extend service"));
+		return FSFRestorePreset();
+	}
+	if (ExtendSvc->IsRestoredCloneTopologyActive())
+	{
+		UE_LOG(LogSmartFoundations, Warning,
+			TEXT("[SmartRestore] ImportFromLastExtend skipped: restored Extend topology is active; not self-capturing Restore replay as a new Extend preset"));
 		return FSFRestorePreset();
 	}
 
