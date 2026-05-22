@@ -35,6 +35,7 @@ Start here:
 - [Compatibility and Multiplayer](Compatibility-and-Multiplayer)
 - [Frequently Asked Questions](FAQ)
 - [History and Credits](History-and-Credits)
+- [Support Development](Support-Development)
 - [Screenshot Checklist](Screenshot-Checklist)
 
 ## Current Note

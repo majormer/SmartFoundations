@@ -23,5 +23,6 @@
 - [Compatibility and Multiplayer](Compatibility-and-Multiplayer)
 - [FAQ](FAQ)
 - [History and Credits](History-and-Credits)
+- [Support Development](Support-Development)
 - [Troubleshooting](Troubleshooting)
 - [Screenshot Checklist](Screenshot-Checklist)
