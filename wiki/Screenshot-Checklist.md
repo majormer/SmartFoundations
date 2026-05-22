@@ -8,6 +8,7 @@ This page tracks the screenshots needed to replace wiki placeholders. Keep scree
 |------|-------------------|
 | Home | Smart! logo or clean in-game shot showing a Smart grid preview with HUD visible |
 | Quick Start | Smart Panel open on a simple foundation hologram with grid values set to `3 x 3 x 1` |
+| Videos and Tutorials | Two thumbnail-style cards for the current Smart! overview videos |
 | Controls | Satisfactory Options > Controls > Mods showing Smart! keybinds |
 
 ## UI
@@ -33,6 +34,8 @@ This page tracks the screenshots needed to replace wiki placeholders. Keep scree
 | Smart Upgrade | Upgrade Panel showing scan results for belts, lifts, pipes, and power poles |
 | Smart Upgrade | Traversal scan from a belt showing connected network results |
 | Smart Dismantle | Vanilla Blueprint Dismantle mode highlighting a Smart-placed multi-building group |
+| Smart Camera | PiP viewport showing the far end of a long Smart! foundation grid |
+| Smart Camera | Comparison strip showing Top Down, Front 45, and Periscope modes |
 
 ## Capture Notes
 
@@ -41,4 +44,3 @@ This page tracks the screenshots needed to replace wiki placeholders. Keep scree
 - Use current keybinds and current UI labels.
 - Crop enough context to show the feature, not just the panel.
 - When showing material costs or upgrades, use a small test factory so the counts are readable.
-

@@ -13,6 +13,7 @@ Smart! still uses normal Satisfactory buildings and normal material costs. It is
 Start here:
 
 - [Quick Start](Quick-Start)
+- [Videos and Tutorials](Videos-and-Tutorials)
 - [Controls](Controls)
 - [Smart Panel and HUD](Smart-Panel-and-HUD)
 - [Troubleshooting](Troubleshooting)
@@ -25,11 +26,13 @@ Start here:
 - [Extend](Extend): copy an existing working factory module.
 - [Smart Upgrade](Smart-Upgrade): upgrade existing belts, lifts, pipes, and power poles in batches.
 - [Smart Dismantle](Smart-Dismantle): dismantle Smart-built groups through vanilla Blueprint Dismantle.
+- [Smart Camera](Smart-Camera): companion picture-in-picture camera for precision building.
 
 ## Useful References
 
 - [Settings Reference](Settings-Reference)
 - [Compatibility and Multiplayer](Compatibility-and-Multiplayer)
+- [History and Credits](History-and-Credits)
 - [Screenshot Checklist](Screenshot-Checklist)
 
 ## Current Note
