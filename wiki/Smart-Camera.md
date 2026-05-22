@@ -53,6 +53,8 @@ Smart Camera has these modes:
 | `]` | Hold zoom modifier |
 | `]` + mouse wheel | Zoom the PiP camera |
 
+The Smart Camera input mapping directly binds `[` and `]`. Mouse wheel zoom is handled by Smart!'s shared mouse wheel input while `]` is held.
+
 Zoom range is currently 5m to 50m.
 
 Holding the zoom modifier asks Smart! to lock the hologram so zooming does not accidentally rotate the build preview.
@@ -67,9 +69,10 @@ Smart Camera has settings for:
 - Camera viewport horizontal position.
 - Camera viewport vertical position.
 
+The PiP widget is hit-test invisible, so it should not block normal mouse clicks while you build.
+
 ## Current Caveats
 
 - Smart Camera is a separate companion mod, not part of the main Smart! package today.
 - It relies on Smart! for hologram/grid tracking.
 - Some UI and source-publication details may change if it is merged into Smart! or released as its own source-available repo.
-
