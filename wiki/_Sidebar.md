@@ -5,6 +5,7 @@
 - [Videos and Tutorials](Videos-and-Tutorials)
 - [Controls](Controls)
 - [Smart Panel and HUD](Smart-Panel-and-HUD)
+- [FAQ](FAQ)
 
 ## Features
 
@@ -20,6 +21,7 @@
 
 - [Settings Reference](Settings-Reference)
 - [Compatibility and Multiplayer](Compatibility-and-Multiplayer)
+- [FAQ](FAQ)
 - [History and Credits](History-and-Credits)
 - [Troubleshooting](Troubleshooting)
 - [Screenshot Checklist](Screenshot-Checklist)

@@ -16,6 +16,7 @@ Start here:
 - [Videos and Tutorials](Videos-and-Tutorials)
 - [Controls](Controls)
 - [Smart Panel and HUD](Smart-Panel-and-HUD)
+- [Frequently Asked Questions](FAQ)
 - [Troubleshooting](Troubleshooting)
 
 ## Main Features
@@ -32,6 +33,7 @@ Start here:
 
 - [Settings Reference](Settings-Reference)
 - [Compatibility and Multiplayer](Compatibility-and-Multiplayer)
+- [Frequently Asked Questions](FAQ)
 - [History and Credits](History-and-Credits)
 - [Screenshot Checklist](Screenshot-Checklist)
 

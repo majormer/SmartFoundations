@@ -1,5 +1,7 @@
 # Troubleshooting
 
+For broader common questions from Discord and release history, see the [FAQ](FAQ).
+
 ## Smart! Controls Do Nothing
 
 Check:
