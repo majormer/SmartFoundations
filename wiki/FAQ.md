@@ -8,6 +8,8 @@ Smart! was rebuilt in phases. If you remember a feature being missing in late 20
 
 Yes. The original Smart feature set is back, but it returned piece by piece during the rebuild.
 
+Those features were not simply copied forward. As each feature came back, it was reviewed, rebuilt for the current Satisfactory/Unreal version, and often enhanced. For example, Auto-Connect no longer just recreates the old straight-line belt behavior: Smart! now generates proper belt splines, and the Auto-Connect family has grown to include pipe and power auto-connect.
+
 - October 21, 2025: Smart! returned with grid scaling, spacing, steps, stagger, HUD, arrows, and keybind support.
 - November 18, 2025: Belt Auto-Connect returned.
 - November 22-25, 2025: Pipe and Power Auto-Connect followed.
