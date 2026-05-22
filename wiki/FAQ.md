@@ -18,16 +18,17 @@ Mostly, but it came back piece by piece.
 
 If an old comment says "Smart does not have Extend yet" or "pipes are not supported yet," check the date. That was true during part of the rebuild, but not for the current release.
 
-## What Is Not Back Yet?
+## Is Anything From The Original Smart Still Missing?
 
-The big factory-building loop is back, but a few things are still not old-Smart parity:
+As far as the original Smart feature set goes, the current Smart! has restored the major features players remember: scaling, transforms, auto-connect, Extend, Scaled Extend, Restore-style presets, and companion camera support.
 
-- Full multiplayer and dedicated server support is not back yet. Some host-side use may work, but Smart! is still treated as primarily single-player.
-- The old Smart nudge-style workflow is not back as a full Smart feature. Current Smart! works with Satisfactory's build gun nudge state, but Infinite Nudge-style behavior is still a compatibility concern.
-- Smart Camera is not part of the main Smart! package today. It is a separate companion mod.
-- Blueprint scaling is intentionally not supported. Smart! disables scaling for vanilla blueprint placement so it does not interfere with the game's blueprint system.
-- Some special buildables remain unsupported or limited, including miners/resource extractors, vehicles, the Space Elevator, jump pads, and other buildables with special placement rules.
-- Some polish items are still limited. For example, floor and ceiling signs can scale, but their support poles/stands are a known vanilla-hologram limitation.
+There are still current-version limitations, but they are not really "old Smart features that have not returned":
+
+- Multiplayer and dedicated server support are not fully supported yet.
+- Smart! uses Satisfactory's current built-in nudge system instead of bringing back the old Smart nudge implementation. That old feature was effectively replaced by the base game.
+- Smart Camera is currently a companion mod rather than part of the main Smart! package.
+- Blueprint scaling is intentionally not supported. Blueprints did not exist in the original Smart era, and Smart! disables scaling for vanilla blueprint placement so it does not interfere with the game's blueprint system.
+- Some newer or special buildables have limits because they use special placement rules that did not exist in the original Smart feature set.
 
 ## Is Smart! A Cheat Mod?
 
