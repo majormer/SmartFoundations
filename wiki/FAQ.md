@@ -6,7 +6,7 @@ Smart! was rebuilt in phases. If you remember a feature being missing in late 20
 
 ## Is Smart! Back To The Old Smart?
 
-Yes. The original Smart feature set is back, but it returned piece by piece during the rebuild.
+Yes. The original Smart feature set is back, but it returned piece by piece during the rebuild. Some later releases also added new features that original Smart never had.
 
 Those features were not simply copied forward. As each feature came back, it was reviewed, rebuilt for the current Satisfactory/Unreal version, and often enhanced. For example, Auto-Connect no longer just recreates the old straight-line belt behavior: Smart! now generates proper belt splines, and the Auto-Connect family has grown to include pipe and power auto-connect.
 
@@ -14,15 +14,17 @@ Those features were not simply copied forward. As each feature came back, it was
 - November 18, 2025: Belt Auto-Connect returned.
 - November 22-25, 2025: Pipe and Power Auto-Connect followed.
 - December 13, 2025: Extend returned.
-- February 21, 2026: Smart Upgrade and Smart Dismantle returned.
-- February 23, 2026: Scaled Extend returned.
+- February 21, 2026: Smart Upgrade and Smart Dismantle were added as new features.
+- February 23, 2026: Scaled Extend was added as a new feature, combining scaling and Extend in a way original Smart did not support.
 - May 3, 2026: Smart Restore Enhanced added shareable presets and Extend topology restore.
 
 If an old comment says "Smart does not have Extend yet" or "pipes are not supported yet," check the date. That was true during part of the rebuild, but not for the current release.
 
 ## Is Anything From The Original Smart Still Missing?
 
-As far as the original Smart feature set goes, the current Smart! has restored the major features players remember: scaling, transforms, auto-connect, Extend, Scaled Extend, Restore-style presets, and companion camera support.
+As far as the original Smart feature set goes, the current Smart! has restored the major features players remember: scaling, transforms, auto-connect, Extend, Restore-style presets, and companion camera support.
+
+Some current Smart! features are net-new, not restored original features. Smart Upgrade, Smart Dismantle, and Scaled Extend were added during the rebuild. Scaled Extend had been requested often, but original Smart did not support scaling an Extend layout.
 
 There are still current-version limitations, but they are not really "old Smart features that have not returned":
 
