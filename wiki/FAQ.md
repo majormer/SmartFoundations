@@ -26,13 +26,7 @@ As far as the original Smart feature set goes, the current Smart! has restored t
 
 Some current Smart! features are net-new, not restored original features. Smart Upgrade, Smart Dismantle, and Scaled Extend were added during the rebuild. Scaled Extend had been requested often, but original Smart did not support scaling an Extend layout.
 
-There are still current-version limitations, but they are not really "old Smart features that have not returned":
-
-- Multiplayer and dedicated server support are not fully supported yet.
-- Smart! uses Satisfactory's current built-in nudge system instead of bringing back the old Smart nudge implementation. That old feature was effectively replaced by the base game.
-- Smart Camera is currently a companion mod rather than part of the main Smart! package.
-- Blueprint scaling is intentionally not supported. Blueprints did not exist in the original Smart era, and Smart! disables scaling for vanilla blueprint placement so it does not interfere with the game's blueprint system.
-- Some newer or special buildables have limits because they use special placement rules that did not exist in the original Smart feature set.
+The main feature still pending is full multiplayer and dedicated server support.
 
 ## Is Smart! A Cheat Mod?
 
