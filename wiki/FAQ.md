@@ -22,9 +22,7 @@ If an old comment says "Smart does not have Extend yet" or "pipes are not suppor
 
 ## Is Anything From The Original Smart Still Missing?
 
-As far as the original Smart feature set goes, the current Smart! has restored the major features players remember: scaling, transforms, auto-connect, Extend, Restore-style presets, and companion camera support.
-
-Some current Smart! features are net-new, not restored original features. Smart Upgrade, Smart Dismantle, and Scaled Extend were added during the rebuild. Scaled Extend had been requested often, but original Smart did not support scaling an Extend layout.
+No. As far as the original Smart feature set goes, the current Smart! has restored the major features players remember: scaling, transforms, auto-connect, Extend, Restore-style presets, and companion camera support.
 
 The main feature still pending is full multiplayer and dedicated server support.
 
