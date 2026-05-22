@@ -74,7 +74,9 @@ You can also use the Smart Panel with `K` if you prefer visible controls.
 
 Smart! uses `K` for panel-style controls, but the panel depends on what you are holding.
 
-When you are placing a normal Smart-supported building, `K` opens the Smart Panel. When you are holding an upgradeable item such as a belt, lift, pipe, wire, or power pole, `K` opens Smart Upgrade.
+When you are placing a normal Smart-supported building, `K` opens the Smart Panel. When you are holding a belt, lift, pipe, or wire/power line, `K` opens Smart Upgrade.
+
+Power poles and wall outlets intentionally keep opening the Smart Panel so you can scale them. To upgrade power poles or wall outlets, open Smart Upgrade from a wire/power line or use the panel's scan modes.
 
 ## What Is The Infinite Nudge Issue?
 
@@ -89,7 +91,7 @@ Auto-Connect only builds connections it believes are valid.
 Common reasons it skips a connection:
 
 - Auto-Connect is disabled globally or for that connection type.
-- The one-shot disable was triggered with the double-tap `Num 0` behavior.
+- The session disable was triggered with the double-tap `Num 0` behavior.
 - The selected tier is locked, unavailable, or not what you expected.
 - The connector is too far away.
 - The angle is invalid for vanilla belt, pipe, or wire placement.
@@ -119,11 +121,13 @@ Yes. Scaled Extend returned on February 23, 2026.
 
 Activate Extend on a valid source, then use X/Y scaling to add copies and rows. Z scaling, Z spacing, and stagger are hidden while Scaled Extend is active because they do not apply to that topology.
 
-## Why Are Miners, Extractors, Or Some Special Buildables Unsupported?
+## Why Are Miners Or Some Special Buildables Unsupported?
 
 Smart! focuses on things that can be safely multiplied without changing the rules of the game.
 
-Resource extractors, some multi-step items, and some special buildables are restricted because their placement depends on world resources, snap points, or vanilla behaviors that are not safe to clone like normal factory buildings.
+Resource extractors such as miners are restricted because their placement depends on fixed world resource nodes.
+
+Water extractors are a special case: Smart! can scale them in X/Y and spacing when the child placements still validate over water, but vertical scaling is disabled. Some other special buildables are restricted when their placement depends on snap points, world state, or vanilla behaviors that are not safe to clone like normal factory buildings.
 
 ## Is Smart Upgrade Safe?
 

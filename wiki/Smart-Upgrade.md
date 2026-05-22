@@ -15,17 +15,19 @@ Use it when you want to upgrade many belts, lifts, pipes, or power poles without
 | Pipes | Yes, Mk1-Mk2 |
 | Power poles | Yes, Mk1-Mk3 |
 | Wall outlets | Yes, Mk1-Mk3 |
-| Pipeline pumps | Scan/traversal context only |
+| Pipeline pumps | No |
 | Power towers | Scan/traversal context only |
 
 ## Basic Flow
 
-1. Open the Smart Upgrade Panel.
+1. Open the Smart Upgrade Panel with `K` while holding a belt, lift, pipe, or wire/power line.
 2. Choose a scan mode.
 3. Scan nearby items or a connected network.
 4. Pick the family and target tier.
 5. Review the material cost.
 6. Run the upgrade.
+
+Power poles and wall outlets still open the normal Smart Panel when held so they can be scaled. To upgrade them, open Smart Upgrade from a wire/power line or use scan modes.
 
 > Screenshot placeholder: traversal scan from a belt showing connected belt/lift results.
 
