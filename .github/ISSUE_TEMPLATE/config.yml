@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Smart! Wiki
+    url: https://github.com/majormer/SmartFoundations/wiki
+    about: Read guides and feature notes before opening a question-style issue.
+  - name: Smart! on ficsit.app
+    url: https://ficsit.app/mod/SmartFoundations
+    about: Download the current public release and view the public mod page.
+  - name: Smart! Discord Support
+    url: https://discord.gg/SgXY4CwXYw
+    about: Ask quick usage questions, share screenshots, or get help collecting logs.

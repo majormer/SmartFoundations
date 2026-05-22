@@ -1,0 +1,104 @@
+name: Crash report
+description: Report a crash, freeze, or save-load crash involving Smart!.
+title: "[Crash]: "
+labels:
+  - bug
+  - crash
+  - high-priority
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Crash reports need logs. If you can, attach `FactoryGame.log` and the crash reporter text.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I searched existing crash issues.
+          required: true
+        - label: I will attach or paste logs/crash text if available.
+          required: true
+  - type: dropdown
+    id: timing
+    attributes:
+      label: When did the crash happen?
+      multiple: true
+      options:
+        - On game launch
+        - Loading a save
+        - Saving the game
+        - Equipping the build gun
+        - Placing with Smart!
+        - Using Extend
+        - Using Smart Upgrade
+        - Using Smart Dismantle
+        - Opening or using the Smart Panel
+        - Inside Blueprint Designer
+        - Multiplayer or dedicated server
+        - Other / not sure
+    validations:
+      required: true
+  - type: textarea
+    id: summary
+    attributes:
+      label: What were you doing?
+      description: Describe the last actions before the crash.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Can you reproduce it?
+      placeholder: |
+        Always / sometimes / only happened once.
+
+        If reproducible:
+        1. ...
+        2. ...
+    validations:
+      required: true
+  - type: input
+    id: smart_version
+    attributes:
+      label: Smart! version
+      placeholder: "Example: 30.0.0"
+    validations:
+      required: true
+  - type: input
+    id: game_version
+    attributes:
+      label: Satisfactory version and branch
+      placeholder: "Example: CL#416835 Stable, or 1.2 Experimental"
+    validations:
+      required: true
+  - type: input
+    id: sml_version
+    attributes:
+      label: SML version
+      placeholder: "Example: 3.11.3"
+    validations:
+      required: true
+  - type: textarea
+    id: crash_text
+    attributes:
+      label: Crash reporter text
+      description: Paste the crash reporter output or assertion text.
+      render: text
+  - type: textarea
+    id: logs
+    attributes:
+      label: FactoryGame.log
+      description: Paste the relevant log section or attach the full file.
+      render: text
+  - type: textarea
+    id: mods
+    attributes:
+      label: Other mods
+      description: Paste the full mod list, or say "Only Smart! and required dependencies".
+    validations:
+      required: true
+  - type: textarea
+    id: attachments
+    attributes:
+      label: Save file, screenshots, videos, or extra context

@@ -1,0 +1,89 @@
+name: Blueprint Designer issue
+description: Report Smart! behavior inside or around Blueprint Designers.
+title: "[Blueprint]: "
+labels:
+  - bug
+  - blueprints
+  - needs-discussion
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Blueprint Designer behavior is a known Smart! pain point. This form helps separate Blueprint-specific bugs from normal world placement issues.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I searched existing Blueprint issues, including #168 and #312.
+          required: true
+        - label: I can explain whether this happens while building in the designer, after saving the blueprint, or after placing the blueprint.
+          required: true
+  - type: dropdown
+    id: phase
+    attributes:
+      label: Where does the problem happen?
+      multiple: true
+      options:
+        - Inside the Blueprint Designer while placing with Smart!
+        - When saving the blueprint
+        - When loading/opening the blueprint later
+        - When placing a finished blueprint in the world
+        - After saving and reloading the game
+        - Not sure
+    validations:
+      required: true
+  - type: textarea
+    id: summary
+    attributes:
+      label: What happened?
+      placeholder: "Example: Smart-placed belts look visible in the designer but are missing from the saved blueprint."
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open Blueprint Designer Mk...
+        2. Select ...
+        3. Use Smart! to ...
+        4. Save/place/reload ...
+    validations:
+      required: true
+  - type: dropdown
+    id: buildables
+    attributes:
+      label: What did Smart! place?
+      multiple: true
+      options:
+        - Foundations / architecture
+        - Machines
+        - Belts
+        - Conveyor lifts
+        - Splitters / mergers
+        - Pipes
+        - Power poles / wires
+        - Signs / billboards
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: smart_version
+    attributes:
+      label: Smart! version
+      placeholder: "Example: 30.0.0"
+    validations:
+      required: true
+  - type: input
+    id: game_version
+    attributes:
+      label: Satisfactory version and branch
+      placeholder: "Example: CL#416835 Stable, or 1.2 Experimental"
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs, screenshots, video, or blueprint file
+      description: Attach anything that shows what disappeared, saved incorrectly, or behaved differently after placement.

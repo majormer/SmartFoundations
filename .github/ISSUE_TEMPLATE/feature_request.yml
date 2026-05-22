@@ -1,0 +1,80 @@
+name: Feature request
+description: Suggest a Smart! feature, building support, or workflow improvement.
+title: "[Feature]: "
+labels:
+  - enhancement
+  - needs-discussion
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Smart! is vanilla-neutral: it should only help you build things you could build manually in vanilla Satisfactory, and it should not make saves depend on Smart! to load.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I searched existing issues and did not find this request.
+          required: true
+        - label: This request fits Smart!'s vanilla-neutral building-assist scope.
+          required: true
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      placeholder: What would you like Smart! to do?
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Feature area
+      multiple: true
+      options:
+        - Scaling / spacing / steps / stagger
+        - Auto-Connect: belts
+        - Auto-Connect: pipes
+        - Auto-Connect: power
+        - Extend
+        - Smart Upgrade
+        - Smart Dismantle
+        - Restore / presets
+        - Smart Panel / UI
+        - Keybinds / input
+        - Blueprint Designer
+        - New building support
+        - Multiplayer / dedicated server
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem it solves
+      description: What building task is currently tedious, error-prone, or unsupported?
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed behavior
+      description: Describe how it should work, including controls or UI if relevant.
+    validations:
+      required: true
+  - type: textarea
+    id: vanilla
+    attributes:
+      label: Vanilla-neutral reasoning
+      description: Explain how this stays within things the player could build manually in vanilla Satisfactory.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives or workarounds
+      description: What do you currently do instead?
+  - type: textarea
+    id: examples
+    attributes:
+      label: Screenshots, videos, examples, or related mods
+      description: Add visual examples or links if they help explain the request.
