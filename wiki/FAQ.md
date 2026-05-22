@@ -6,7 +6,7 @@ Smart! was rebuilt in phases. If you remember a feature being missing in late 20
 
 ## Is Smart! Back To The Old Smart?
 
-Mostly, but it came back piece by piece.
+Yes. The original Smart feature set is back, but it returned piece by piece during the rebuild.
 
 - October 21, 2025: Smart! returned with grid scaling, spacing, steps, stagger, HUD, arrows, and keybind support.
 - November 18, 2025: Belt Auto-Connect returned.
