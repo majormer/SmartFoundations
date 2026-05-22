@@ -1,0 +1,86 @@
+name: Compatibility issue
+description: Report conflicts with another mod or support for a modded building.
+title: "[Compatibility]: "
+labels:
+  - compatibility
+  - needs-discussion
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this for conflicts with other mods, modded buildings Smart! should support, or behavior that only happens with another mod installed.
+  - type: dropdown
+    id: compatibility_type
+    attributes:
+      label: What kind of compatibility issue is this?
+      options:
+        - Conflict with another mod
+        - Modded building does not scale correctly
+        - Modded building should be opted into Smart! support
+        - Smart! should disable itself for this mod/buildable
+        - Not sure
+    validations:
+      required: true
+  - type: input
+    id: other_mod
+    attributes:
+      label: Other mod name and version
+      placeholder: "Example: Infinite Nudge 2.5.10"
+    validations:
+      required: true
+  - type: input
+    id: other_mod_link
+    attributes:
+      label: Link to the other mod
+      placeholder: "https://ficsit.app/mod/..."
+  - type: textarea
+    id: summary
+    attributes:
+      label: What happens?
+      placeholder: Describe the conflict or unsupported buildable behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: isolation
+    attributes:
+      label: Isolation testing
+      description: Tell us whether this reproduces with only Smart!, SML, and the other mod enabled.
+      placeholder: |
+        Reproduces with only Smart! + SML + <mod>: yes/no/not tested
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Enable ...
+        2. Select ...
+        3. Use Smart! to ...
+    validations:
+      required: true
+  - type: input
+    id: smart_version
+    attributes:
+      label: Smart! version
+      placeholder: "Example: 30.0.0"
+    validations:
+      required: true
+  - type: input
+    id: game_version
+    attributes:
+      label: Satisfactory version and branch
+      placeholder: "Example: CL#416835 Stable, or 1.2 Experimental"
+    validations:
+      required: true
+  - type: textarea
+    id: mods
+    attributes:
+      label: Full mod list
+      description: Paste the full mod list if this may involve more than one compatibility interaction.
+    validations:
+      required: true
+  - type: textarea
+    id: attachments
+    attributes:
+      label: Logs, screenshots, videos, or extra context

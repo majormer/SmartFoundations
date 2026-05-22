@@ -1,0 +1,142 @@
+name: Bug report
+description: Report incorrect behavior, broken placement, or an unexpected result.
+title: "[Bug]: "
+labels:
+  - bug
+  - needs-discussion
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve Smart!.
+
+        Please include enough detail for the issue to be reproduced. If the bug is a crash, use the crash report form instead.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I searched existing issues and did not find a matching report.
+          required: true
+        - label: I tested with the latest available Smart! version, or I explain below why I could not.
+          required: true
+  - type: textarea
+    id: summary
+    attributes:
+      label: What happened?
+      description: Describe the bug in plain language.
+      placeholder: Smart! did X when I expected Y.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: List the shortest sequence that triggers the problem.
+      placeholder: |
+        1. Equip the build gun
+        2. Select ...
+        3. Enable ...
+        4. Place ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      placeholder: What should Smart! have done instead?
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      placeholder: What did Smart! or Satisfactory actually do?
+    validations:
+      required: true
+  - type: dropdown
+    id: feature
+    attributes:
+      label: Smart! feature area
+      multiple: true
+      options:
+        - Scaling / spacing / steps / stagger
+        - Auto-Connect: belts
+        - Auto-Connect: pipes
+        - Auto-Connect: power
+        - Extend
+        - Smart Upgrade
+        - Smart Dismantle
+        - Restore / presets
+        - Smart Panel / UI
+        - Keybinds / input
+        - Blueprint Designer
+        - Other / not sure
+    validations:
+      required: true
+  - type: input
+    id: smart_version
+    attributes:
+      label: Smart! version
+      placeholder: "Example: 30.0.0"
+    validations:
+      required: true
+  - type: input
+    id: game_version
+    attributes:
+      label: Satisfactory version and branch
+      placeholder: "Example: CL#416835 Stable, or 1.2 Experimental"
+    validations:
+      required: true
+  - type: input
+    id: sml_version
+    attributes:
+      label: SML version
+      placeholder: "Example: 3.11.3"
+    validations:
+      required: true
+  - type: dropdown
+    id: session_type
+    attributes:
+      label: Session type
+      options:
+        - Single-player
+        - Multiplayer host
+        - Multiplayer client
+        - Dedicated server
+        - Not sure
+    validations:
+      required: true
+  - type: dropdown
+    id: save_type
+    attributes:
+      label: Save type
+      options:
+        - New save
+        - Existing save
+        - Blueprint Designer
+        - Reproduces in multiple saves
+        - Not sure
+    validations:
+      required: true
+  - type: textarea
+    id: mods
+    attributes:
+      label: Other mods
+      description: Paste your mod list, or say "Only Smart! and required dependencies".
+      placeholder: |
+        Only Smart! and required dependencies
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Paste relevant `FactoryGame.log` lines, especially `SmartFoundations` entries or errors.
+      render: text
+      placeholder: Paste log lines here.
+  - type: textarea
+    id: attachments
+    attributes:
+      label: Screenshots, videos, saves, or extra context
+      description: Drag files here, link videos, or add anything else that helps explain the issue.

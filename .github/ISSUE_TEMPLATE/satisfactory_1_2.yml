@@ -1,0 +1,88 @@
+name: Satisfactory 1.2 report
+description: Report a Smart! issue seen on the Satisfactory 1.2 branch or port.
+title: "[1.2]: "
+labels:
+  - satisfactory-1.2
+  - validation
+  - needs-discussion
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this for Satisfactory 1.2-specific validation, compatibility, or port issues.
+
+        If the issue is not specific to 1.2, please use the normal bug, crash, Blueprint, or compatibility form.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I checked the Satisfactory 1.2 milestone for an existing tracking issue.
+          required: true
+        - label: This behavior happens on the Satisfactory 1.2 branch or while testing the 1.2 port.
+          required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: 1.2 area
+      multiple: true
+      options:
+        - UE / SML / FactoryGame API port
+        - Conveyor chain actors
+        - New or changed buildables
+        - Fluid Truck Station
+        - Pipeline T-Junction
+        - Power daisy-chain connectors
+        - Game Mode cost multipliers
+        - Creative Mode / Advanced Game Settings
+        - Randomized worlds
+        - Extractors / shallow water
+        - Hologram rotation modes
+        - Controller input
+        - HUD prompts
+        - Sign zooping
+        - Blueprint Designer
+        - Multiplayer / dedicated server
+        - Other / not sure
+    validations:
+      required: true
+  - type: textarea
+    id: summary
+    attributes:
+      label: What happened?
+      placeholder: Describe the 1.2-specific behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce or validate
+      placeholder: |
+        1. ...
+        2. ...
+        3. ...
+    validations:
+      required: true
+  - type: input
+    id: smart_version
+    attributes:
+      label: Smart! version or commit
+      placeholder: "Example: 30.0.0 or commit SHA"
+    validations:
+      required: true
+  - type: input
+    id: game_version
+    attributes:
+      label: Satisfactory 1.2 build
+      placeholder: "Example: Experimental CL#..."
+    validations:
+      required: true
+  - type: input
+    id: sml_version
+    attributes:
+      label: SML version or branch
+      placeholder: "Example: 1.2-compatible SML branch/version"
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs, screenshots, video, or extra context
