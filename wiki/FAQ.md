@@ -18,6 +18,17 @@ Mostly, but it came back piece by piece.
 
 If an old comment says "Smart does not have Extend yet" or "pipes are not supported yet," check the date. That was true during part of the rebuild, but not for the current release.
 
+## What Is Not Back Yet?
+
+The big factory-building loop is back, but a few things are still not old-Smart parity:
+
+- Full multiplayer and dedicated server support is not back yet. Some host-side use may work, but Smart! is still treated as primarily single-player.
+- The old Smart nudge-style workflow is not back as a full Smart feature. Current Smart! works with Satisfactory's build gun nudge state, but Infinite Nudge-style behavior is still a compatibility concern.
+- Smart Camera is not part of the main Smart! package today. It is a separate companion mod.
+- Blueprint scaling is intentionally not supported. Smart! disables scaling for vanilla blueprint placement so it does not interfere with the game's blueprint system.
+- Some special buildables remain unsupported or limited, including miners/resource extractors, vehicles, the Space Elevator, jump pads, and other buildables with special placement rules.
+- Some polish items are still limited. For example, floor and ceiling signs can scale, but their support poles/stands are a known vanilla-hologram limitation.
+
 ## Is Smart! A Cheat Mod?
 
 No. Smart! uses normal Satisfactory buildings and normal material costs.
@@ -82,7 +93,7 @@ Power poles and wall outlets intentionally keep opening the Smart Panel so you c
 
 Infinite Nudge is a common compatibility topic.
 
-If Smart! controls, placement, or nudging behave strangely, test with Infinite Nudge and Infinite Zoop disabled. Smart! has its own nudge and placement logic while the build gun is active, so overlapping build-gun mods can interfere with each other.
+If Smart! controls, placement, or nudging behave strangely, test with Infinite Nudge and Infinite Zoop disabled. Smart! watches the build gun's nudge/placement state while managing its own previews, so overlapping build-gun mods can interfere with each other.
 
 ## Why Did Auto-Connect Skip Belts, Pipes, Or Power?
 
