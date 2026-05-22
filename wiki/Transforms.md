@@ -1,71 +1,70 @@
 # Transforms
 
-Transforms modify where scaled child holograms appear. They are not separate placement systems; they layer on top of [Grid Scaling](Grid-Scaling) and are reused by Scaled Extend.
+Transforms change the shape of a scaled grid. They are what turn a plain row or rectangle into something with gaps, height changes, offsets, or arcs.
 
-The current implemented transform set is:
-
-- Spacing
-- Steps
-- Stagger
-- Z-axis Rotation
-
-> Screenshot placeholder: one comparison image with four small labeled examples: spacing gap, stepped row, staggered row, and rotation arc.
+> Screenshot placeholder: one comparison image showing spacing, steps, stagger, and rotation.
 
 ## Spacing
 
-Spacing adds extra separation between cells without changing the base buildable size. The base cell size still comes from the buildable size registry; spacing is an additional offset.
+Spacing adds extra distance between each copy.
 
-Spacing can be adjusted on X, Y, and Z.
+Use it for:
 
-Default controls:
+- Machine rows that need belt space.
+- Foundations with deliberate gaps.
+- Cleaner production layouts.
 
-- Hold `;` for Spacing mode.
-- Use `Num 8`, `Num 5`, or mouse wheel to adjust.
-- Press `Num 0` to cycle X, Y, Z.
+Controls:
+
+- Hold `;`.
+- Use `Num 8`, `Num 5`, or mouse wheel.
+- Press `Num 0` to switch between X, Y, and Z spacing.
 
 ## Steps
 
-Steps create stair-like elevation. X steps add height as X index changes. Y steps add height as Y index changes. Steps follow the active hologram orientation rather than a fixed world axis.
+Steps raise or lower each row or column.
 
-Default controls:
+Use it for:
 
-- Hold `I` for Steps mode.
-- Use `Num 8`, `Num 5`, or mouse wheel to adjust.
-- Press `Num 0` to toggle X/Y.
+- Stair-step foundation layouts.
+- Terraced factories.
+- Ramps and decorative structure work.
+
+Controls:
+
+- Hold `I`.
+- Use `Num 8`, `Num 5`, or mouse wheel.
+- Press `Num 0` to switch between X and Y stepping.
 
 ## Stagger
 
-Stagger offsets rows and layers:
+Stagger offsets rows or layers.
 
-- X/Y stagger creates horizontal offsets across the grid.
-- ZX/ZY stagger creates vertical-layer offsets for leaning or angled multi-layer layouts.
+Use it for:
 
-Default controls:
+- Diagonal-looking patterns.
+- Offset machine rows.
+- Leaning or angled multi-layer layouts.
 
-- Hold `Y` for Stagger mode.
-- Use `Num 8`, `Num 5`, or mouse wheel to adjust.
-- Press `Num 0` to cycle X, Y, ZX, ZY.
+Controls:
+
+- Hold `Y`.
+- Use `Num 8`, `Num 5`, or mouse wheel.
+- Press `Num 0` to cycle X, Y, ZX, and ZY.
 
 ## Rotation
 
-Rotation currently uses Z-axis yaw only. It places child holograms along a horizontal arc or radial pattern. X and Y rotation axes are not implemented in current source and should not be treated as active features.
+Rotation places copies around a horizontal arc.
 
-Default controls:
+Use it for:
 
-- Hold `,` for Rotation mode.
-- Use `Num 8`, `Num 5`, or mouse wheel to adjust.
+- Curved walls.
+- Circular foundation patterns.
+- Decorative arcs.
 
-## Adjustment Units
+Controls:
 
-Current implementation notes:
+- Hold `,`.
+- Use `Num 8`, `Num 5`, or mouse wheel.
 
-- Spacing, Steps, and Stagger adjust in 50 Unreal-unit increments through the unified value adjustment path.
-- Rotation adjusts in 5 degree increments.
-
-## Verified From
-
-- `docs/Features/Transforms/IMPL_Transforms_CurrentFlow.md`
-- `Source/SmartFoundations/Private/Subsystem/SFPositionCalculator.cpp`
-- `Source/SmartFoundations/Public/Services/SFGridStateService.h`
-- `Source/SmartFoundations/Private/Subsystem/SFSubsystem.cpp`
-
+Current Smart! builds support Z-axis rotation for horizontal arcs. Vertical arch rotation is not currently an active feature.

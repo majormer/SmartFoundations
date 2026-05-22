@@ -1,44 +1,29 @@
 # Smart Dismantle
 
-Smart Dismantle is a compatibility layer around Satisfactory's vanilla Blueprint Dismantle grouping.
+Smart Dismantle lets Smart-built groups work with Satisfactory's vanilla Blueprint Dismantle mode.
 
-It is not a custom Smart dismantle panel and it is not a separate radius/network dismantle scanner.
+It is not a separate Smart dismantle tool. You still use the game's dismantle system.
 
-> Screenshot placeholder: vanilla Blueprint Dismantle mode highlighting a Smart-placed multi-building group.
+> Screenshot placeholder: vanilla Blueprint Dismantle highlighting a Smart-built grid.
 
-## What It Does
+## What Gets Grouped
 
-Smart! groups multi-building placements under a vanilla blueprint proxy so Satisfactory can dismantle the group through its existing Blueprint Dismantle path.
+Smart! groups:
 
-Grouping is active for:
-
-- Scaled grid placements with more than one cell.
+- Multi-building grid placements.
 - Extend placements.
 
-Single vanilla placements are intentionally not grouped.
+Single normal placements are not grouped.
 
-## Why Use Vanilla Blueprint Proxy
+## How To Use It
 
-Satisfactory already knows how to:
+1. Build a Smart! grid or Extend clone.
+2. Switch to vanilla dismantle mode.
+3. Use Blueprint Dismantle mode.
+4. Select the Smart-built group.
 
-- Highlight buildables owned by a blueprint proxy.
-- Calculate group dismantle refunds.
-- Dismantle registered buildables through the vanilla path.
-- Preserve proxy references on buildables.
-
-Smart! uses that path instead of inventing a separate dismantle system.
+The game handles highlighting, refund calculation, and dismantling through its normal blueprint grouping behavior.
 
 ## Caveats
 
-- The proxy is dynamically spawned for the current build session.
-- Save/load behavior should be retested whenever this path changes.
-- Supporting actors spawned outside the active hologram/proxy window may not join the group.
-- There is no Smart-specific refund UI or confirmation panel for dismantling.
-
-## Verified From
-
-- `docs/Features/SmartDismantle/IMPL_SmartDismantle_CurrentFlow.md`
-- `Source/SmartFoundations/Private/Subsystem/SFSubsystem.cpp`
-- `Reference/FactoryGame/Public/FGBlueprintProxy.h`
-- `Reference/FactoryGame/Public/Buildables/FGBuildable.h`
-
+Some supporting objects may not be grouped if they spawn outside the active Smart build session. If a group does not dismantle exactly how you expect, dismantle the remaining pieces manually.

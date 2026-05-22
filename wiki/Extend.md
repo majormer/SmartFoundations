@@ -1,63 +1,52 @@
 # Extend
 
-Extend copies an existing layout from a source building into a new adjacent placement. Use it when one factory module already works and you want Smart! to continue it.
+Extend is for copying something that already works.
 
-Extend is automatic: Smart! looks for a compatible source while you aim the current hologram at an existing building.
+Instead of building another blank row, you aim at an existing factory module and Smart! previews the next copy of that module.
 
-> Screenshot placeholder: one completed constructor module beside a preview clone created by Extend.
+> Screenshot placeholder: one completed constructor module beside an Extend preview clone.
 
-## What Extend Can Capture
+## When To Use Extend
 
-Current implementation can capture topology around a source and clone supported parts of it, including:
+Use Extend when you already built:
 
-- The source building.
-- Connected distributors.
-- Belts and lifts.
-- Pipes and junctions.
-- Supported attachments.
-- Recipes where code has explicit support.
-- Power wiring where source topology and capacity allow it.
+- One constructor with belts and power.
+- One smelter line segment.
+- One manifold module.
+- One pipe-connected production block.
 
-## Basic Flow
+Then let Smart! continue the pattern.
 
-1. Aim at a compatible source building while holding a matching hologram.
-2. Smart! validates the source and available direction.
-3. Smart! captures topology around the source.
-4. It generates a clone topology offset from the source.
-5. Child holograms preview the clone.
-6. Vanilla construction builds the parent and children.
-7. Smart! performs post-build wiring and stabilization.
+## Basic Use
+
+1. Build one working module manually.
+2. Equip the same type of building in the build gun.
+3. Aim the hologram at the source building.
+4. Move until Smart! finds a valid extension direction.
+5. Check the preview.
+6. Build the clone.
+
+Extend is automatic when it finds a compatible source. There is no separate "start Extend" button.
+
+## Changing Direction
+
+When Extend is active, mouse wheel cycles the extension direction as long as no other Smart mode key is held.
 
 ## Scaled Extend
 
-Scaled Extend layers [Grid Scaling](Grid-Scaling) on top of Extend. It uses the same transform state for clone and row offsets.
+Scaled Extend combines Extend with grid controls. Use it when you want several copies or several rows of the same module.
 
-Implemented transform inputs for Scaled Extend include:
+Transforms such as spacing, steps, stagger, and horizontal rotation can affect Scaled Extend layouts in supported cases.
 
-- Spacing.
-- Steps.
-- Stagger where allowed by current mode checks.
-- Z rotation.
+## What Extend Copies
 
-X/Y rotation axes are not implemented in the current transform pipeline.
+Depending on the source module and current support, Extend may copy:
 
-## Direction Cycling
+- Buildings.
+- Belts and lifts.
+- Splitters and mergers.
+- Pipes and junctions.
+- Recipes.
+- Power connections.
 
-When Extend is active and no modal mode or modifier is active, mouse wheel cycles Extend direction.
-
-## Caveats
-
-- The held hologram must match the intended source class or family.
-- Post-build wiring is deferred because many vanilla components are not ready at actor-spawn time.
-- Large or dense belt clones share the same chain actor fragility as other conveyor-heavy operations.
-- Floor holes, pumps, valves, and passthrough behavior should be trusted from current topology code, not old tracker notes.
-
-## Verified From
-
-- `docs/Features/Extend/IMPL_Extend_CurrentFlow.md`
-- `Source/SmartFoundations/Public/Features/Extend/SFExtendService.h`
-- `Source/SmartFoundations/Public/Features/Extend/SFExtendTopologyService.h`
-- `Source/SmartFoundations/Public/Features/Extend/SFManifoldJSON.h`
-- `Source/SmartFoundations/Public/Features/Extend/SFWiringManifest.h`
-- `Source/SmartFoundations/Private/Subsystem/SFSubsystem.cpp`
-
+Always check the preview before building. Complex factory modules can still need manual cleanup.

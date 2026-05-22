@@ -1,66 +1,75 @@
 # Troubleshooting
 
-## Smart! Does Not Respond To Controls
+## Smart! Controls Do Nothing
 
 Check:
 
 - You are holding the build gun.
-- A buildable hologram is active.
-- Keybinds are still assigned under Satisfactory Options > Controls > Mods.
-- You are not in a modal state that routes controls to a different feature.
+- You have an active buildable hologram.
+- Smart! controls are still bound under Options > Controls > Mods.
+- You are not typing in a search box or another UI.
+- The Smart! mod is enabled.
 
-Default Smart Panel key: `K`.
+Default panel key: `K`.
 
-> Screenshot placeholder: Controls menu with Smart! mod controls visible.
+> Screenshot placeholder: Smart! controls in the Satisfactory controls menu.
 
 ## Mouse Wheel Rotates Instead Of Scaling
 
-With no Smart mode active, mouse wheel is left to vanilla unless a Smart scale modifier is held.
+That is expected when no Smart mode is active. Smart! leaves mouse wheel to vanilla rotation unless you are holding a Smart modifier or mode key.
 
-To use mouse wheel for Smart scaling:
+To scale with mouse wheel:
 
-- Hold `X` to adjust X.
-- Hold `Z` to adjust Y.
-- Hold `X + Z` to adjust Z.
+- Hold `X` for X.
+- Hold `Z` for Y.
+- Hold `X + Z` for Z.
 
-To use mouse wheel for transforms, hold the relevant modal key:
+To adjust transforms with mouse wheel:
 
-- `;` for Spacing.
-- `I` for Steps.
-- `Y` for Stagger.
-- `,` for Rotation.
+- Hold `;` for Spacing.
+- Hold `I` for Steps.
+- Hold `Y` for Stagger.
+- Hold `,` for Rotation.
 
-## Auto-Connect Did Not Create A Belt, Pipe, Or Wire
+## Auto-Connect Skipped Something
 
-Auto-Connect is intentionally conservative. It may skip a connection if:
+Auto-Connect skips connections when it cannot safely make them.
 
-- The target connector is not compatible.
-- The distance is invalid.
-- The angle or route is invalid.
-- A pole is at capacity or reserved slots would be exceeded.
-- The selected tier or routing mode cannot make a valid connection.
+Common reasons:
 
-Use the Smart Panel to verify Auto-Connect settings and tiers.
+- Auto-Connect is disabled.
+- The tier setting is not right.
+- The connector is too far away.
+- The angle is not valid.
+- The connector direction is incompatible.
+- The power pole has no free connection slots.
 
-## Extend Does Not Activate
+Try placing a smaller test layout to see which part is confusing the preview.
+
+## Extend Does Not Start
 
 Check:
 
-- Extend is enabled in settings.
-- You are aiming at a compatible source building.
-- The held hologram matches the source class or family.
-- Smart! has not been disabled for the current session by double-tapping `Num 0`.
+- Extend is enabled.
+- You are aiming at an existing source building.
+- You are holding a matching buildable.
+- There is room in the direction Smart! is trying to extend.
+- You did not double-tap `Num 0` to disable Smart Auto-Connect and Extend for the session.
 
-## Smart Upgrade Reports Chain Issues
+## Smart Upgrade Feels Stuck Or Risky
 
-Large conveyor upgrades can leave chain actors settling for a while. Current chain triage is intentionally cautious, and some orphan repair paths are diagnostic-only because in-game repair variants were crash-prone during investigation.
+For large belt and lift upgrades, wait a moment after the upgrade finishes. Conveyor networks can take time to settle.
 
-If a very large conveyor upgrade still reports chain issues after settling, save/reload may be safer than forcing in-game repair.
+If diagnostics still look bad after a very large upgrade, save and reload before trying more repair actions.
 
-## Verified From
+## Reporting Issues
 
-- `docs/Features/AutoConnect/IMPL_AutoConnect_CurrentFlow.md`
-- `docs/Features/Extend/IMPL_Extend_CurrentFlow.md`
-- `docs/Features/SmartUpgrade/IMPL_SmartUpgrade_CurrentFlow.md`
-- `Source/SmartFoundations/Private/Subsystem/SFSubsystem.cpp`
+When reporting an issue, include:
 
+- What you were trying to build.
+- The buildable name.
+- The grid size.
+- Which Smart feature was active.
+- Whether Auto-Connect or Extend was involved.
+- Single-player or multiplayer.
+- Host or client, if multiplayer.

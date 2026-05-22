@@ -1,54 +1,41 @@
 # Grid Scaling
 
-Grid Scaling is Smart!'s core placement feature. It turns the active build-gun hologram into the parent of an X/Y/Z grid and creates child holograms for the additional buildables.
+Grid Scaling is the main Smart! feature. It lets one build-gun preview become many buildables.
 
-The preview is shown before placement. When you build, Satisfactory constructs the parent and child holograms through the normal build path, including normal material costs.
+Use it for:
 
-> Screenshot placeholder: `5 x 3 x 1` foundation grid preview, with HUD counters visible.
+- Big foundation pads.
+- Rows of machines.
+- Storage walls.
+- Repeated walls, ramps, barriers, and other simple buildables.
 
-## Axes
+> Screenshot placeholder: `5 x 3 x 1` foundation grid preview with HUD counters visible.
 
-| Axis | Meaning |
-|------|---------|
-| X | Width/count along the active hologram's local X axis |
-| Y | Depth/count along the active hologram's local Y axis |
-| Z | Vertical layer count |
+## How To Use It
 
-Grid counters can use negative values to place in the opposite direction. The mutation path skips invalid no-copy states so the grid does not collapse into zero-size placement.
+1. Equip a buildable.
+2. Aim where you want the first buildable to go.
+3. Increase X, Y, or Z until the preview matches the layout you want.
+4. Click once to build the whole grid.
+
+Smart! shows the full preview before you commit. Every copied buildable costs materials.
+
+## Understanding X, Y, And Z
+
+| Axis | In plain language |
+|------|-------------------|
+| X | Forward/back from the starting buildable |
+| Y | Left/right from the starting buildable |
+| Z | Up/down layers |
+
+The exact direction follows the buildable's rotation. If you rotate the hologram, the grid rotates with it.
+
+## Negative Values
+
+Smart! can grow a grid in the opposite direction by using negative values. This is useful when the starting point is on the far side of a layout and you want the grid to grow back toward you.
 
 ## Supported Buildables
 
-Smart! uses the buildable size registry to decide dimensions and scaling eligibility. The registry stores:
+Smart! works best with standard buildables that have a known size and normal placement behavior. Some special Satisfactory holograms are more complicated and may need dedicated Smart! support.
 
-- Default buildable size.
-- Whether dimensions swap on 90 degree rotation.
-- Placement anchor offset.
-- Whether scaling is supported.
-- Whether the profile was manually validated.
-
-Unknown or modded buildables may fall back to conservative behavior, but the safest documentation claim is that verified support comes from the registry and active hologram adapters.
-
-## How It Works
-
-1. Smart! detects the active build-gun hologram.
-2. It resolves the buildable's size and support profile.
-3. Scaling input changes X/Y/Z counters.
-4. Smart! regenerates child holograms to match the requested grid.
-5. The transform pipeline positions every child.
-6. Vanilla construction builds the parent and children.
-
-## Caveats
-
-- Scaling is active for supported single-click buildables.
-- Multi-step, drag, spline, or specialized vanilla holograms may be unsupported or handled by specialized Smart code.
-- Very large grids can be limited by performance, validation, and material availability.
-- Transforms change positions; they do not make an unsupported buildable scalable by themselves.
-
-## Verified From
-
-- `docs/Features/Scaling/IMPL_Scaling_CurrentFlow.md`
-- `Source/SmartFoundations/Public/Services/SFGridStateService.h`
-- `Source/SmartFoundations/Public/Services/SFGridSpawnerService.h`
-- `Source/SmartFoundations/Public/Data/SFBuildableSizeRegistry.h`
-- `Source/SmartFoundations/Private/Subsystem/SFSubsystem.cpp`
-
+If a buildable does not scale correctly, try a smaller test first and report the buildable name in an issue.

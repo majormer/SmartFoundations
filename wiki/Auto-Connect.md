@@ -1,68 +1,56 @@
 # Auto-Connect
 
-Auto-Connect creates preview connections for belts, pipes, and power when Smart! can safely infer the intended layout.
+Auto-Connect tries to create belts, pipes, and power lines for a Smart! preview when the connection is obvious.
 
-Auto-Connect is conservative. If a connection pair, angle, distance, tier, or capacity does not look valid, Smart! should skip the connection rather than create a broken layout.
+It is intentionally cautious. If Smart! is not sure the connection is valid, it skips it instead of building a messy or broken layout.
 
-> Screenshot placeholder: row of splitters or machines with Smart belt previews visible before placement.
+> Screenshot placeholder: splitter row preview with belts connecting into machines.
 
 ## Belt Auto-Connect
 
-Belt Auto-Connect handles distributors, conveyor attachments, and stackable support workflows.
+Use Belt Auto-Connect when scaling:
 
-Current behavior:
+- Splitters.
+- Mergers.
+- Conveyor supports.
+- Machine rows with nearby inputs or outputs.
 
-- Distributor-to-distributor connections can form chains.
-- Distributor-to-building connections fill compatible nearby inputs and outputs.
-- Stackable conveyor poles can create horizontal belt previews between adjacent supports.
-- Belt tier and routing settings come from Smart settings.
-- Chain actor stabilization may run after build where topology changes need it.
+Smart! can preview belts between compatible distributors and from distributors to nearby machines.
 
-> Screenshot placeholder: scaled splitter row preview with belts connecting into a row of constructors.
+> Screenshot placeholder: row of splitters feeding a row of constructors.
 
 ## Pipe Auto-Connect
 
-Pipe Auto-Connect scans pipe junction holograms and compatible pipe connectors, then creates pipe previews. It also handles floor-hole pipe previews and support layouts where implemented.
+Use Pipe Auto-Connect when scaling:
 
-Current behavior:
+- Pipe junctions.
+- Pipe supports.
+- Fluid machines.
+- Fluid buffers.
 
-- Pipe tier and pipe indicator style come from Smart settings.
-- Junction chains use connector pairing logic.
-- Pipe networks may need rebuild/stabilization after built connections so fluid simulation sees the final topology.
+Smart! can preview pipe connections where the pipe endpoints are compatible.
 
-> Screenshot placeholder: pipe junction grid with preview pipes connecting to nearby machines or buffers.
+> Screenshot placeholder: pipe junction grid with preview pipes.
 
 ## Power Auto-Connect
 
-Power Auto-Connect processes scaled power poles, connects poles to neighbor poles, and can wire powered buildings to available pole capacity.
+Use Power Auto-Connect when scaling:
 
-Current behavior:
+- Power poles.
+- Rows of powered machines.
 
-- Power-line previews are tracked by the power preview helper.
-- Pole capacity and reserved connection slots are tracked to avoid overbooking.
-- Cable cost is derived from line length.
-- Power range and reserved-slot settings are exposed through Smart settings.
+Smart! can connect poles to nearby poles and, depending on settings and capacity, connect machines to poles.
 
-> Screenshot placeholder: row of power poles with cable previews and nearby machines connected.
+> Screenshot placeholder: power poles with cable previews connected to machines.
 
-## Settings
+## If A Connection Is Missing
 
-Auto-Connect settings are exposed in the Smart Settings Form and backed by config fields for:
+Check:
 
-- Belt Auto-Connect.
-- Pipe Auto-Connect.
-- Power Auto-Connect.
-- Belt and pipe tier choices.
-- Belt and pipe routing modes.
-- Power range, reserved slots, and pole capacity.
+- Auto-Connect is enabled in the Smart Panel.
+- The belt, pipe, or power tier is available.
+- The distance is reasonable.
+- The connectors face compatible directions.
+- Power poles still have free connection slots.
 
-See [Settings Reference](Settings-Reference).
-
-## Verified From
-
-- `docs/Features/AutoConnect/IMPL_AutoConnect_CurrentFlow.md`
-- `Source/SmartFoundations/Public/Features/AutoConnect/SFAutoConnectService.h`
-- `Source/SmartFoundations/Public/Features/PipeAutoConnect/SFPipeAutoConnectManager.h`
-- `Source/SmartFoundations/Public/Features/PowerAutoConnect/SFPowerAutoConnectManager.h`
-- `Source/SmartFoundations/Public/Config/Smart_ConfigStruct.h`
-
+Some layouts still need a manual connection afterward. That is normal.

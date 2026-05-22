@@ -1,38 +1,29 @@
 # Compatibility and Multiplayer
 
-Smart! is designed to remain vanilla-save neutral. It places normal Satisfactory buildables, charges normal material costs, and avoids making save files depend on Smart-only buildable classes for the placed factory.
-
-## Compatibility
-
-Smart! works best with vanilla buildables and mods that use standard Satisfactory placement systems.
-
-Practical rules:
-
-- Verified support comes from current hologram adapters and the buildable size registry.
-- Unknown or modded buildables may fall back to conservative behavior.
-- Specialized vanilla holograms may require dedicated support.
-- Transforms do not make unsupported buildables scalable by themselves.
+Smart! is designed to be save-friendly. It places normal Satisfactory buildings and charges normal material costs.
 
 ## Save Safety
 
-Removing Smart! should not prevent the save from loading because Smart! places standard Satisfactory buildables. Smart-only convenience behavior is unavailable without the mod, but placed buildings should remain normal game objects.
+If you remove Smart!, the buildings it placed should remain normal Satisfactory buildings. You lose Smart!'s convenience tools, but the factory should still be loadable.
+
+## Other Mods
+
+Smart! works best with:
+
+- Vanilla buildables.
+- Modded buildables that behave like normal Satisfactory buildables.
+- Standard placement and hologram behavior.
+
+Some modded or unusual buildables may not scale correctly until Smart! has explicit support for them.
 
 ## Multiplayer
 
-Smart! is primarily developed for single-player. Multiplayer is under active testing with partial success, but should not be described as fully supported.
+Smart! is primarily developed for single-player.
 
-Current planning guidance:
+Multiplayer is under active testing with partial success, but it should not be treated as fully supported yet. If you use Smart! in multiplayer, test carefully and keep backups.
 
-- Local input, HUD, arrows, and temporary previews should remain local unless shared preview behavior is deliberately designed.
-- Build commits must be server-authoritative.
-- Client-originated world mutations should go through validated server paths.
-- Remote Call Objects are appropriate for client-to-server requests when an owned RPC object is needed.
-- Multicast/shared state should live on replicated subsystems or appropriate replicated actors, not on RCOs.
+Good multiplayer habits:
 
-## Verified From
-
-- `README.md`
-- `docs/Features/Multiplayer/PLAN_MultiplayerSupport_Matrix.md`
-- `Source/SmartFoundations/Public/Core/Helpers/SFNetworkHelper.h`
-- `Source/SmartFoundations/Public/SFRCO.h`
-
+- Start with small foundation or machine grids.
+- Avoid huge Auto-Connect or Smart Upgrade operations until you know the session is stable.
+- Report what you were building, who hosted, and whether the issue happened on host or client.

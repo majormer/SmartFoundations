@@ -1,61 +1,56 @@
 # Controls
 
-Smart! uses Satisfactory's Enhanced Input system and registers controls under the mod controls menu. These defaults were verified from the current `MC_Smart_BuildGunBuild` input mapping context in Unreal Editor.
+Smart! controls are available in Satisfactory's controls menu under Mods, so you can rebind them.
 
-Keybinds can be changed in Satisfactory's controls menu under Mods.
+> Screenshot placeholder: Satisfactory Options > Controls > Mods showing Smart! keybinds.
 
-> Screenshot placeholder: Satisfactory Options > Controls > Mods section showing the Smart! keybinds.
+## Default Keys
 
-## Default Controls
-
-| Key | Action |
-|-----|--------|
-| `K` | Toggle Smart Settings Form |
-| `Num 8` | Increase active value |
-| `Num 5` | Decrease active value |
+| Key | What it does |
+|-----|--------------|
+| `K` | Open or close the Smart Panel |
+| `Num 8` | Increase the active value |
+| `Num 5` | Decrease the active value |
 | `Num 6` | Increase Y grid count |
 | `Num 4` | Decrease Y grid count |
 | `Num 9` | Increase Z grid count |
 | `Num 3` | Decrease Z grid count |
-| `Mouse Wheel` | Adjust the active Smart mode; with no Smart mode active it is left to vanilla unless a Smart modifier is held |
-| `X` | Hold X modifier |
-| `Z` | Hold Y modifier |
-| `X + Z` | Hold both modifiers to adjust Z through the unified scale path |
+| `X` | Hold to adjust X with the shared controls or mouse wheel |
+| `Z` | Hold to adjust Y with the shared controls or mouse wheel |
+| `X + Z` | Hold both to adjust Z with the shared controls or mouse wheel |
 | `;` | Hold Spacing mode |
 | `I` | Hold Steps mode |
 | `Y` | Hold Stagger mode |
 | `,` | Hold Rotation mode |
-| `Num 0` | Cycle the active mode's axis; double-tap with no mode active to toggle Smart Auto-Connect and Extend for the session |
-| `U` | Recipe mode / clear active recipe selection |
-| `Num 1` | Toggle directional arrows |
+| `Num 0` | Cycle the active mode's axis |
+| `U` | Recipe mode / clear selected recipe |
+| `Num 1` | Toggle direction arrows |
+| `Mouse Wheel` | Adjust the active Smart mode, or vanilla rotate when no Smart mode is active |
 
-## Scaling Behavior
+## Basic Scaling
 
-With no modal mode active:
+When you are just scaling a grid:
 
-- `Num 8` / `Num 5` adjust X scaling.
-- `Num 6` / `Num 4` adjust Y scaling.
-- `Num 9` / `Num 3` adjust Z scaling.
-- Holding `X` makes the unified increase/decrease or mouse wheel adjust X.
-- Holding `Z` makes the unified increase/decrease or mouse wheel adjust Y.
-- Holding `X + Z` makes the unified increase/decrease or mouse wheel adjust Z.
+- `Num 8` / `Num 5` changes X.
+- `Num 6` / `Num 4` changes Y.
+- `Num 9` / `Num 3` changes Z.
 
-## Modal Modes
+For mouse wheel scaling, hold `X`, `Z`, or both.
 
-Modal modes temporarily route `Num 8`, `Num 5`, mouse wheel, and `Num 0` to a feature instead of default scaling.
+## Mode Keys
 
-| Mode key | Mode | `Num 8` / `Num 5` / wheel | `Num 0` |
-|----------|------|----------------------------|---------|
-| `;` | Spacing | Adjust selected spacing axis | Cycle X, Y, Z |
-| `I` | Steps | Adjust selected step axis | Toggle X/Y |
-| `Y` | Stagger | Adjust selected stagger axis | Cycle X, Y, ZX, ZY |
-| `,` | Rotation | Adjust Z rotation | Reserved for future axes; current code is Z only |
-| `U` | Recipe | Cycle recipe selection | Clear recipe selection |
+Some keys are held to temporarily change what the increase/decrease controls do.
 
-## Verified From
+| Hold | Mode | Use it for |
+|------|------|------------|
+| `;` | Spacing | Adding or removing gaps |
+| `I` | Steps | Raising each row or column |
+| `Y` | Stagger | Offsetting rows or layers |
+| `,` | Rotation | Making a horizontal arc |
+| `U` | Recipe | Choosing or clearing a recipe |
 
-- Unreal Editor asset: `/SmartFoundations/SmartFoundations/Input/Contexts/MC_Smart_BuildGunBuild`
-- Unreal Editor assets under `/SmartFoundations/SmartFoundations/Input/Actions/`
-- `Source/SmartFoundations/Private/Input/SFInputRegistry.cpp`
-- `Source/SmartFoundations/Private/Subsystem/SFSubsystem.cpp`
+While holding one of these modes, use `Num 8`, `Num 5`, or mouse wheel to adjust the value. Press `Num 0` to cycle which axis or option the mode is editing.
 
+## Double-Tap Num 0
+
+Double-tapping `Num 0` with no mode key held toggles Smart Auto-Connect and Extend for the current session. This is useful when Smart! is trying to help but you want one normal placement.

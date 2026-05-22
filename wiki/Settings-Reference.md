@@ -1,84 +1,62 @@
 # Settings Reference
 
-Smart! settings are exposed through the Smart Settings Form and SML mod configuration assets. This page lists the current config fields from source.
+This page explains what the Smart! settings are for. Names may vary slightly between versions.
 
-> Screenshot placeholder: Smart Settings Form with each major section visible, or a collage of Belt, Pipe, Power, HUD, and Arrows sections.
+> Screenshot placeholder: Smart Settings Form showing the major settings sections.
 
 ## Belt Auto-Connect
 
-| Setting field | Purpose |
-|---------------|---------|
-| `bAutoConnectEnabled` | Enable belt Auto-Connect |
-| `bAutoConnectDistributors` | Auto-connect distributor-style logistics |
-| `AutoConnectMode` | Belt Auto-Connect mode enum value |
-| `BeltLevelMain` | Main belt tier setting |
-| `BeltLevelToBuilding` | Belt tier for machine/building connections |
-| `BeltRoutingMode` | `0=Default`, `1=Curve`, `2=Straight` |
-| `bStackableBeltEnabled` | Enable stackable belt support behavior |
+Use these settings to control belt previews.
+
+- Enable or disable belt Auto-Connect.
+- Include distributor-style logistics such as splitters and mergers.
+- Choose main belt tier.
+- Choose belt tier for machine connections.
+- Choose routing style: default, curve, or straight.
+- Enable stackable belt support behavior.
 
 ## Pipe Auto-Connect
 
-| Setting field | Purpose |
-|---------------|---------|
-| `bPipeAutoConnectEnabled` | Enable pipe Auto-Connect |
-| `PipeLevelMain` | Main pipe tier setting |
-| `PipeLevelToBuilding` | Pipe tier for machine/building connections |
-| `PipeRoutingMode` | `0=Auto`, `1=Auto2D`, `2=Straight`, `3=Curve`, `4=Noodle`, `5=HorizontalToVertical` |
-| `PipeIndicator` | Pipe indicator/no-indicator style setting |
+Use these settings to control pipe previews.
+
+- Enable or disable pipe Auto-Connect.
+- Choose main pipe tier.
+- Choose pipe tier for machine connections.
+- Choose routing style: auto, 2D auto, straight, curve, noodle, or horizontal-to-vertical.
+- Choose pipe indicator style where available.
 
 ## Power Auto-Connect
 
-| Setting field | Purpose |
-|---------------|---------|
-| `bPowerAutoConnectEnabled` | Enable power Auto-Connect |
-| `PowerConnectMode` | Power connection mode enum value |
-| `PowerConnectRange` | Power Auto-Connect range |
-| `PowerConnectReserved` | Reserved pole connections |
-| `PowerPoleMk1MaxConnections` | Mk1 pole max connection setting |
-| `PowerPoleMk2MaxConnections` | Mk2 pole max connection setting |
-| `PowerPoleMk3MaxConnections` | Mk3 pole max connection setting |
-| `PowerPoleMk4MaxConnections` | Mk4 pole max connection setting |
+Use these settings to control power cable previews.
+
+- Enable or disable power Auto-Connect.
+- Choose connection mode.
+- Set connection range.
+- Reserve pole connections so Smart! does not fill every slot.
+- Set max connection behavior for pole tiers.
 
 ## Extend
 
-| Setting field | Purpose |
-|---------------|---------|
-| `bExtendEnabled` | Enable Extend feature |
-| `bExtendPowerEnabled` | Include power poles/wiring when using Extend where supported |
+- Enable or disable Extend.
+- Enable or disable power copying during Extend where supported.
 
 ## Scaling
 
-| Setting field | Purpose |
-|---------------|---------|
-| `bAutoHoldOnGridChange` | Automatically lock hologram position after grid modification |
+- Auto-Hold on grid change locks the hologram after you modify the grid. This helps keep a large preview from moving accidentally.
 
 ## Smart Panel
 
-| Setting field | Purpose |
-|---------------|---------|
-| `bApplyImmediately` | Apply panel changes immediately without clicking Apply |
+- Apply Immediately controls whether panel changes take effect as you edit or wait for the Apply button.
 
 ## HUD
 
-| Setting field | Purpose |
-|---------------|---------|
-| `bShowHUD` | Show Smart HUD |
-| `HUDScale` | HUD scale |
-| `HUDPositionX` | Normalized X position; source default is `0.02` |
-| `HUDPositionY` | Normalized Y position; source default is `0.25` |
-| `HUDTheme` | `0=Default/FICSIT Orange`, `1=Dark`, `2=Classic`, `3=High Contrast`, `4=Minimal`, `5=Monochrome` |
+- Show or hide the HUD.
+- Change HUD scale.
+- Change HUD position.
+- Choose a HUD theme.
 
 ## Arrows
 
-| Setting field | Purpose |
-|---------------|---------|
-| `bShowArrows` | Show directional arrows by default |
-| `bShowArrowOrbit` | Enable animated orbiting of directional arrows |
-| `bShowArrowLabels` | Show X/Y/Z text labels on directional arrows |
-
-## Verified From
-
-- `Source/SmartFoundations/Public/Config/Smart_ConfigStruct.h`
-- Unreal Editor assets under `/SmartFoundations/SmartFoundations/Config/`
-- `docs/Features/SmartPanel/IMPL_SmartPanel_CurrentFlow.md`
-
+- Show or hide direction arrows.
+- Enable orbit animation.
+- Show or hide X/Y/Z labels.

@@ -1,38 +1,43 @@
 # Quick Start
 
-1. Install Smart! from ficsit.app through Satisfactory Mod Manager.
-2. Equip a buildable in the build gun.
-3. Press `K` to open the Smart Panel.
-4. Set a small grid, such as `3 x 3 x 1`.
-5. Preview the layout.
-6. Click once to place the whole layout.
+This is the fastest way to make sure Smart! is working.
 
-Smart! charges normal material costs for every buildable it places. It uses normal Satisfactory buildables, so removing the mod should not make the save unloadable.
+## Place Your First Smart Grid
 
-> Screenshot placeholder: Smart Panel open on a simple foundation hologram with grid values set to `3 x 3 x 1`.
+1. Equip a 4m foundation in the build gun.
+2. Press `K` to open the Smart Panel.
+3. Set the grid to `3 x 3 x 1`.
+4. Close or apply the panel.
+5. Check the preview in the world.
+6. Click once to build the full grid.
 
-## First Safe Test
+Smart! will charge the normal material cost for all 9 foundations.
 
-Start with foundations:
+> Screenshot placeholder: Smart Panel open with a `3 x 3 x 1` foundation grid preview.
 
-1. Select a 4m foundation.
-2. Set X and Y to `3`.
-3. Leave Z at `1`.
-4. Place the grid.
-5. Use vanilla dismantle if you want to remove it.
+## Try The Keyboard Flow
 
-This tests the core scaling path without belts, pipes, power, or recipes.
+With a buildable hologram active:
 
-## What To Try Next
+- Press `Num 8` to increase X.
+- Press `Num 5` to decrease X.
+- Press `Num 6` or `Num 4` to adjust Y.
+- Press `Num 9` or `Num 3` to adjust Z.
 
-- Use [Transforms](Transforms) to add spacing, steps, stagger, or Z rotation.
-- Use [Auto-Connect](Auto-Connect) with rows of splitters, belts, pipes, or power poles.
-- Use [Extend](Extend) when you already have one working production module and want another copy.
-- Use [Smart Upgrade](Smart-Upgrade) after unlocking higher-tier belts, lifts, pipes, or power poles.
+If you prefer mouse wheel control, hold a Smart modifier:
 
-## Verified From
+- Hold `X` and scroll to adjust X.
+- Hold `Z` and scroll to adjust Y.
+- Hold `X + Z` and scroll to adjust Z.
 
-- `README.md`
-- `docs/Features/Scaling/IMPL_Scaling_CurrentFlow.md`
-- `docs/Features/SmartPanel/IMPL_SmartPanel_CurrentFlow.md`
+## Good First Experiments
 
+- Make a `10 x 10` foundation pad.
+- Build a row of constructors with extra spacing.
+- Use Steps to make a ramp-like foundation pattern.
+- Use Auto-Connect with a small row of splitters and machines.
+- Use Extend after you have one working production module.
+
+## What Smart! Does Not Do
+
+Smart! does not create free buildings or resources. If you do not have enough materials, the build will fail just like a normal Satisfactory build.
