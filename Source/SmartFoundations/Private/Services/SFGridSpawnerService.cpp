@@ -287,8 +287,23 @@ void USFGridSpawnerService::UpdateChildPositions()
             *ItemSize.ToString(), *SS->GetCachedBuildingSize().ToString());
     }
 
-    // Calculate grid dimensions from authoritative CounterState
-    const FIntVector& GridCounters = SS->GetCounterState().GridCounters;
+    // Use a single live grid snapshot for this whole positioning pass. The helper
+    // mutates the legacy grid reference while rebuilding children, and CounterState
+    // can lag behind during the same scale input tick.
+    const FIntVector GridCounters = SS->GetGridCounters();
+    const FIntVector CounterStateGrid = SS->GetCounterState().GridCounters;
+    FSFCounterState PositionCounterState = SS->GetCounterState();
+    PositionCounterState.GridCounters = GridCounters;
+
+    if (CounterStateGrid != GridCounters)
+    {
+        UE_LOG(LogSmartFoundations, Warning,
+            TEXT("UpdateChildPositions: CounterState grid [%d,%d,%d] differs from live grid [%d,%d,%d]; using live grid for child transforms."),
+            CounterStateGrid.X, CounterStateGrid.Y, CounterStateGrid.Z,
+            GridCounters.X, GridCounters.Y, GridCounters.Z);
+    }
+
+    // Calculate grid dimensions from the live grid snapshot
     int32 XCount = FMath::Abs(GridCounters.X);
     int32 YCount = FMath::Abs(GridCounters.Y);
     int32 ZCount = FMath::Abs(GridCounters.Z);
@@ -338,14 +353,28 @@ void USFGridSpawnerService::UpdateChildPositions()
     }
 
     UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   Pre-computed %d grid indices for progressive batch"), GridIndices.Num());
+    if (GridIndices.Num() == 0 && SpawnedChildren.Num() > 0)
+    {
+        UE_LOG(LogSmartFoundations, Warning,
+            TEXT("UpdateChildPositions: Computed zero grid indices for %d children. Live grid is [%d,%d,%d]. Children will remain at spawn locations."),
+            SpawnedChildren.Num(), GridCounters.X, GridCounters.Y, GridCounters.Z);
+    }
 
     // Create update callback (called once per child during batch processing)
-    auto UpdateCallback = [SS, SpawnedChildren, ParentHologram, ParentLocation, ParentRotation, ItemSize](int32 IndexInBatch) -> void
+    auto UpdateCallback = [SS, SpawnedChildren, GridIndices, ParentHologram, ParentLocation, ParentRotation, ItemSize, PositionCounterState](int32 IndexInBatch) -> void
     {
+        if (!GridIndices.IsValidIndex(IndexInBatch))
+        {
+            UE_LOG(LogSmartFoundations, Warning,
+                TEXT("UpdateChildPositions: Invalid batch index %d for %d grid indices"),
+                IndexInBatch, GridIndices.Num());
+            return;
+        }
+
         FSFHologramHelperService* HologramHelper = SS->GetHologramHelper();
         if (!HologramHelper) return;
 
-        const FSFHologramHelperService::FGridIndex& GridIndex = HologramHelper->GetBatchGridIndex(IndexInBatch);
+        const FSFHologramHelperService::FGridIndex& GridIndex = GridIndices[IndexInBatch];
         const TWeakObjectPtr<AFGHologram>& Child = SpawnedChildren[GridIndex.ChildArrayIndex];
 
         if (!Child.IsValid())
@@ -398,7 +427,7 @@ void USFGridSpawnerService::UpdateChildPositions()
                 ParentLocation,
                 ParentRotation,
                 ItemSize,
-                SS->GetCounterState(),
+                PositionCounterState,
                 GridIndex.ChildArrayIndex,
                 FVector::ZeroVector  // ZERO - Prevent double-compensation with SetHologramLocationAndRotation
             );
@@ -407,12 +436,11 @@ void USFGridSpawnerService::UpdateChildPositions()
         // === COMPREHENSIVE DIAGNOSTIC LOGGING ===
         FVector OldPosition = ChildHologram->GetActorLocation();
         const bool bParentWasLocked = ParentHologram->IsHologramLocked();
-        const bool bChildWasLocked = ChildHologram->IsHologramLocked();
 
         UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   ╔═══ CHILD %d POSITIONING START ═══"), GridIndex.ChildArrayIndex);
         UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   ║ OldPos: %s"), *OldPosition.ToString());
         UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   ║ CalcPos: %s (from PositionCalculator)"), *ChildPosition.ToString());
-        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   ║ ParentLocked: %d  ChildLocked: %d"), bParentWasLocked ? 1 : 0, bChildWasLocked ? 1 : 0);
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   ║ ParentLocked: %d"), bParentWasLocked ? 1 : 0);
 
         // Get AnchorOffset for diagnostics
         FVector ChildAnchorOffset = FVector::ZeroVector;
@@ -427,27 +455,9 @@ void USFGridSpawnerService::UpdateChildPositions()
             }
         }
 
-        // Delegate lock management to HologramHelperService
-        HologramHelper->TemporarilyUnlockChild(ChildHologram, bParentWasLocked);
-        const bool bChildUnlockedByHelper = !ChildHologram->IsHologramLocked() && bChildWasLocked;
-        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   ║ ChildUnlockedByHelper: %d"), bChildUnlockedByHelper ? 1 : 0);
-
-        // Issue #171: Use SetActorLocation for ALL children instead of SetHologramLocationAndRotation.
-        //
-        // SetHologramLocationAndRotation does internal floor tracing/snapping which causes
-        // children over foundations to snap to the foundation surface (different Z) while
-        // children beyond the foundation edge stay at the calculated Z. This creates
-        // inconsistent heights across the grid — some children 100cm higher than others.
-        //
-        // By using SetActorLocation directly, children are placed at the exact grid-calculated
-        // position relative to the parent. No AnchorOffset compensation is needed since
-        // SetActorLocation doesn't apply AnchorOffset (the old compensation was specifically
-        // to counteract SetHologramLocationAndRotation's implicit AnchorOffset addition).
-        ChildHologram->SetActorLocation(ChildPosition);
-
         // Calculate child rotation - includes arc rotation if radial transform is active
         FRotator ChildRotation = ParentRotation;
-        const FSFCounterState& Counter = SS->GetCounterState();
+        const FSFCounterState& Counter = PositionCounterState;
         if (!FMath::IsNearlyZero(Counter.RotationZ))
         {
             // ROTATION MODE: Each child rotates progressively along the arc
@@ -460,7 +470,15 @@ void USFGridSpawnerService::UpdateChildPositions()
                 TEXT("🔄 Spawn Child[%d] X=%d: ParentYaw=%.1f° + Offset=%.1f° = FinalYaw=%.1f°"),
                 GridIndex.ChildArrayIndex, GridIndex.X, ParentRotation.Yaw, ChildYawOffset, ChildRotation.Yaw);
         }
-        ChildHologram->SetActorRotation(ChildRotation);
+        // Issue #171: Use actor/root transforms directly for ALL children instead of
+        // SetHologramLocationAndRotation, which floor-traces/snaps and applies offsets.
+        ChildHologram->SetActorLocationAndRotation(ChildPosition, ChildRotation);
+        if (USceneComponent* Root = ChildHologram->GetRootComponent())
+        {
+            Root->SetWorldLocationAndRotation(ChildPosition, ChildRotation);
+        }
+        ChildHologram->UpdateComponentTransforms();
+        HologramHelper->TrackScalingChildTransform(ChildHologram, ChildPosition, ChildRotation);
 
         // Check position AFTER API call
         FVector NewPosition = ChildHologram->GetActorLocation();
@@ -492,7 +510,7 @@ void USFGridSpawnerService::UpdateChildPositions()
         {
             if (FSFValidationService* Validation = SS->GetValidationService())
             {
-                const auto& CurrentCounter = SS->GetCounterState();
+                const FSFCounterState& CurrentCounter = PositionCounterState;
                 const bool bStepsActive = (FMath::Abs(CurrentCounter.StepsX) > 0.1f || FMath::Abs(CurrentCounter.StepsY) > 0.1f);
                 const bool bNeedsFloorValidation = Validation->ShouldEnableFloorValidation(
                     ParentHologram,
@@ -500,7 +518,10 @@ void USFGridSpawnerService::UpdateChildPositions()
                     bStepsActive
                 );
 
-                BuildableChild->SetNeedsValidFloor(bNeedsFloorValidation);
+                if (BuildableChild->GetNeedsValidFloor() != bNeedsFloorValidation)
+                {
+                    BuildableChild->SetNeedsValidFloor(bNeedsFloorValidation);
+                }
             }
         }
 
@@ -515,17 +536,29 @@ void USFGridSpawnerService::UpdateChildPositions()
         {
             ChildHologram->SetActorTickEnabled(false);
             ChildHologram->ResetConstructDisqualifiers();
-            ChildHologram->SetPlacementMaterialState(EHologramMaterialState::HMS_OK);
+            if (ChildHologram->GetHologramMaterialState() != EHologramMaterialState::HMS_OK)
+            {
+                ChildHologram->SetPlacementMaterialState(EHologramMaterialState::HMS_OK);
+            }
         }
 
         // Ensure child visibility and material state match parent
         ChildHologram->SetActorHiddenInGame(false);
+        if (bParentWasLocked)
+        {
+            ChildHologram->SetActorTickEnabled(false);
+            ChildHologram->ResetConstructDisqualifiers();
+        }
         // Issue #197: Water pump children run their own CheckValidPlacement() to validate
         // water position. Don't override their material state — let validation determine it.
         const bool bHasOwnValidation = ChildHologram->IsA(ASFWaterPumpChildHologram::StaticClass());
         if (!bNeedsPlacementBypass && !bHasOwnValidation)
         {
-            ChildHologram->SetPlacementMaterialState(ParentHologram->GetHologramMaterialState());
+            EHologramMaterialState DesiredState = ParentHologram->GetHologramMaterialState();
+            if (ChildHologram->GetHologramMaterialState() != DesiredState)
+            {
+                ChildHologram->SetPlacementMaterialState(DesiredState);
+            }
         }
 
         // Restore lock state via HologramHelperService
@@ -547,6 +580,7 @@ void USFGridSpawnerService::UpdateChildPositions()
 
         if (AFGHologram* Parent = SS->GetActiveHologram())
         {
+            /*
             if (AFGPlayerController* PC = SS->GetLastController())
             {
                 if (AFGCharacterPlayer* Character = Cast<AFGCharacterPlayer>(PC->GetPawn()))
@@ -558,8 +592,10 @@ void USFGridSpawnerService::UpdateChildPositions()
                     }
                 }
             }
+            */
 
             // Now that children are definitively positioned, trigger debounced evaluation via public API
+            /*
             if (USFAutoConnectOrchestrator* Orchestrator = SS->GetOrCreateOrchestrator(Parent))
             {
                 // Phase 4: Type-safe grid updates
@@ -592,6 +628,7 @@ void USFGridSpawnerService::UpdateChildPositions()
 
                 UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   🎯 Orchestrator: Grid updates triggered in CompletionCallback"));
             }
+            */
         }
 
 #if SMART_ARROWS_ENABLED
@@ -726,5 +763,3 @@ void USFGridSpawnerService::UpdateChildrenForCurrentTransform()
         }
     }
 }
-
-

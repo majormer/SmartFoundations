@@ -6,6 +6,7 @@
 #include "FactoryGame/Public/Hologram/FGBuildableHologram.h"
 #include "Hologram/FGPassthroughHologram.h"
 #include "Components/BoxComponent.h"
+#include "Components/PrimitiveComponent.h"
 #include "Holograms/Core/SFSmartChildHologram.h"
 #include "Holograms/Core/SFSmartFactoryChildHologram.h"
 #include "Holograms/Core/SFSmartLogisticsChildHologram.h"
@@ -65,6 +66,29 @@
 #include "Hologram/FGFactoryBuildingHologram.h"  // Issue #160: Zoop detection
 #include "Hologram/FGWheeledVehicleHologram.h"
 #include "Hologram/FGSpaceElevatorHologram.h"
+
+namespace
+{
+	void RefreshHologramVisibility(AFGHologram* Hologram)
+	{
+		if (!IsValid(Hologram))
+		{
+			return;
+		}
+
+		Hologram->SetActorHiddenInGame(false);
+		Hologram->UpdateComponentTransforms();
+
+		if (USceneComponent* Root = Hologram->GetRootComponent())
+		{
+			Root->MarkRenderStateDirty();
+		}
+
+		// Do not recursively force component visibility here. Vanilla holograms carry
+		// clearance/bounds primitives that are intentionally hidden; propagating visibility
+		// from the root exposes the red wireframe boundary boxes during Smart scaling.
+	}
+}
 
 FSFHologramHelperService::FSFHologramHelperService()
 {
@@ -138,6 +162,72 @@ void FSFHologramHelperService::PollForActiveHologram()
 {
 	// TODO: Extract from SFSubsystem::PollForActiveHologram
 	// This is called periodically to auto-detect active holograms
+}
+
+void FSFHologramHelperService::TrackScalingChildTransform(AFGHologram* ChildHologram, const FVector& IntendedLocation, const FRotator& IntendedRotation)
+{
+	if (!ChildHologram || !IsValid(ChildHologram))
+	{
+		return;
+	}
+
+	ScalingChildIntendedTransforms.FindOrAdd(ChildHologram) = FTransform(IntendedRotation, IntendedLocation);
+}
+
+void FSFHologramHelperService::RefreshTrackedScalingChildTransforms(AFGHologram* ParentHologram)
+{
+	if (!ParentHologram || !IsValid(ParentHologram) || ScalingChildIntendedTransforms.Num() == 0)
+	{
+		return;
+	}
+
+	const bool bParentLocked = ParentHologram->IsHologramLocked();
+	const TSet<AFGHologram*> SpawnedChildSet = [this]()
+	{
+		TSet<AFGHologram*> Result;
+		for (const TWeakObjectPtr<AFGHologram>& ChildPtr : SpawnedChildren)
+		{
+			if (ChildPtr.IsValid())
+			{
+				Result.Add(ChildPtr.Get());
+			}
+		}
+		return Result;
+	}();
+
+	for (auto It = ScalingChildIntendedTransforms.CreateIterator(); It; ++It)
+	{
+		AFGHologram* Child = It.Key();
+		if (!IsValid(Child) || !SpawnedChildSet.Contains(Child))
+		{
+			It.RemoveCurrent();
+			continue;
+		}
+
+		if (!bParentLocked)
+		{
+			continue;
+		}
+
+		const FTransform& IntendedTransform = It.Value();
+		const FVector IntendedLocation = IntendedTransform.GetLocation();
+		const FRotator IntendedRotation = IntendedTransform.Rotator();
+		const bool bLocationDrifted = !Child->GetActorLocation().Equals(IntendedLocation, 0.5f);
+		const bool bRotationDrifted = !Child->GetActorRotation().Equals(IntendedRotation, 0.1f);
+		if (!bLocationDrifted && !bRotationDrifted)
+		{
+			continue;
+		}
+
+		Child->SetActorLocationAndRotation(IntendedLocation, IntendedRotation);
+		if (USceneComponent* Root = Child->GetRootComponent())
+		{
+			Root->SetWorldLocationAndRotation(IntendedLocation, IntendedRotation);
+			Root->MarkRenderStateDirty();
+		}
+		Child->UpdateComponentTransforms();
+		RefreshHologramVisibility(Child);
+	}
 }
 
 void FSFHologramHelperService::RegenerateChildHologramGrid(
@@ -959,9 +1049,9 @@ void FSFHologramHelperService::RegenerateChildHologramGrid(
 		UpdateChildPositionsCallback();
 	}
 
-	// CRITICAL: Force visibility when parent is locked
-	// When parent is locked, engine may hide children automatically
-	// Explicitly unlock children to make them visible
+	// CRITICAL: Force visibility when parent is locked.
+	// Avoid LockHologramPosition() here: it creates UI widgets. Refresh render state
+	// directly so children snap visible without driving the lock UI path.
 	if (bParentLocked)
 	{
 		for (const TWeakObjectPtr<AFGHologram>& ChildPtr : SpawnedChildren)
@@ -969,19 +1059,21 @@ void FSFHologramHelperService::RegenerateChildHologramGrid(
 			if (ChildPtr.IsValid())
 			{
 				AFGHologram* Child = ChildPtr.Get();
-				// Force unlock to ensure visibility
-				if (Child->IsHologramLocked())
-				{
-					Child->LockHologramPosition(false);
-				}
-				Child->SetActorHiddenInGame(false);
+				Child->SetActorTickEnabled(false);
+				Child->ResetConstructDisqualifiers();
+				SetChildLockStateWithoutWidgets(Child, true);
+				RefreshHologramVisibility(Child);
 
 				// Phase 4 FIX: DO NOT re-enable ticking when parent is locked!
 				// Ticking is disabled during spawn (line 306) to eliminate per-frame validation overhead
 				// Re-enabling here would undo the performance fix and cause 3-4 FPS with large grids
 				// Child->SetActorTickEnabled(true);  // REMOVED - causes massive FPS drop
 
-				Child->SetPlacementMaterialState(ParentHologram->GetHologramMaterialState());
+				const EHologramMaterialState DesiredState = ParentHologram->GetHologramMaterialState();
+				if (Child->GetHologramMaterialState() != DesiredState)
+				{
+					Child->SetPlacementMaterialState(DesiredState);
+				}
 			}
 		}
 	}
@@ -1069,6 +1161,20 @@ void FSFHologramHelperService::RegenerateChildHologramGrid(
 				ClearedChildren);
 		}
 	}
+
+	const int32 ParentChildCount = ParentHologram->GetHologramChildren().Num();
+	const int32 TotalUObjects = GUObjectArray.GetObjectArrayNum();
+	UE_LOG(LogSmartFoundations, Warning,
+		TEXT("[SF_SCALE_REGEN] grid=%dx%dx%d total=%d neededChildren=%d spawnedChildren=%d parentChildren=%d pendingDestroy=%d trackedTransforms=%d locked=%d uobjects=%d"),
+		GridCounters.X, GridCounters.Y, GridCounters.Z,
+		TotalItems,
+		ChildrenNeeded,
+		SpawnedChildren.Num(),
+		ParentChildCount,
+		PendingDestroyChildren.Num(),
+		ScalingChildIntendedTransforms.Num(),
+		bParentLocked ? 1 : 0,
+		TotalUObjects);
 }
 
 void FSFHologramHelperService::ApplyScalingDelta(
@@ -1130,6 +1236,7 @@ void FSFHologramHelperService::QueueChildForDestroy(AFGHologram* Child)
 
 	// Remove from active children tracking
 	SpawnedChildren.Remove(Child);
+	ScalingChildIntendedTransforms.Remove(Child);
 
 	// CRITICAL: Remove from parent's mChildren array IMMEDIATELY (not deferred)
 	// This prevents desync between HologramHelper and parent's array
@@ -1194,6 +1301,7 @@ void FSFHologramHelperService::FlushPendingDestroy()
 		{
 			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("[Frame=%llu t=%.3f] Destroying queued child: %s"),
 				(unsigned long long)GFrameCounter, TS, *H->GetName());
+			ScalingChildIntendedTransforms.Remove(H);
 
 			// NOTE: Child already removed from parent's mChildren in QueueChildForDestroy
 			// This Remove call is redundant but harmless (TArray::Remove handles not-found gracefully)
@@ -1264,6 +1372,7 @@ void FSFHologramHelperService::ForceDestroyPendingChildren()
 		AFGHologram* H = Entry.Get();
 		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("[Frame=%llu t=%.3f] Force-destroying pending child: %s"),
 			(unsigned long long)GFrameCounter, TS, *H->GetName());
+		ScalingChildIntendedTransforms.Remove(H);
 
 		// CRITICAL: Remove from parent's mChildren array before destroying
 		if (AFGHologram* Parent = H->GetParentHologram())
@@ -1292,14 +1401,15 @@ void FSFHologramHelperService::ForceDestroyPendingChildren()
 
 bool FSFHologramHelperService::CanSafelyDestroyChildren() const
 {
-	// Conservative: only destroy when no active hologram is present
-	return !ActiveHologram.IsValid();
+	// It is safe to destroy queued children on the next tick since they have already been
+	// removed from parent arrays and tracking, preventing UObject accumulation/leaks during active scaling.
+	return true;
 }
 
 bool FSFHologramHelperService::CanSafelyDestroyChildren(const AFGHologram* HologramToCheck) const
 {
-	// Conservative: only destroy when no active hologram is present
-	return !HologramToCheck || !IsValid(HologramToCheck);
+	(void)HologramToCheck;
+	return true;
 }
 
 bool FSFHologramHelperService::OnChildHologramDestroyed(AActor* DestroyedActor, TFunction<void()> UpdateChildrenCallback)
@@ -1317,6 +1427,7 @@ bool FSFHologramHelperService::OnChildHologramDestroyed(AActor* DestroyedActor, 
 	{
 		return !Child.IsValid() || Child.Get() == DestroyedHologram;
 	});
+	ScalingChildIntendedTransforms.Remove(DestroyedHologram);
 
 	// CRITICAL FIX: Persistent mass destruction detection
 	// Once we detect large grid destruction (100+ children), suppress updates
@@ -1402,6 +1513,7 @@ void FSFHologramHelperService::OnParentHologramDestroyed(AActor* DestroyedActor)
 
 		// Clean up all children without calling UnregisterActiveHologram to avoid accessing destroyed hologram
 		SpawnedChildren.Empty();
+		ScalingChildIntendedTransforms.Empty();
 
 		// Re-enable updates and clear mass destruction flag
 		bSuppressChildUpdates = false;
@@ -1604,55 +1716,35 @@ TSharedPtr<ISFHologramAdapter> FSFHologramHelperService::CreateHologramAdapter(A
 
 bool FSFHologramHelperService::TemporarilyUnlockChild(AFGHologram* ChildHologram, bool bParentWasLocked)
 {
-	// Extracted from SFSubsystem.cpp lines 2076-2080 (Phase 1 extraction)
-	// CRITICAL FIX for Task 38: Temporarily unlock children during positioning
-	// Parent lock blocks child transform updates, causing "move away and back" requirement
-	// Unlock child, position it, then restore parent's lock state to children
-	//
-	// CRITICAL FIX for UObject exhaustion: Skip locking during mass updates
-	// LockHologramPosition() creates UI widgets. With 700+ children, each lock
-	// creates widgets, hitting UObject limit. Only lock when not suppressed.
-
-	if (!ChildHologram || !IsValid(ChildHologram))
-	{
-		return false;
-	}
-
-	// Only unlock if:
-	// 1. Parent is locked (lock state needs management)
-	// 2. Child updates not suppressed (avoid UI widget creation)
-	// 3. Child is currently locked (needs unlocking)
-	if (!bSuppressChildUpdates && bParentWasLocked && ChildHologram->IsHologramLocked())
-	{
-		ChildHologram->LockHologramPosition(false);
-		return true;  // Unlocked - needs restore later
-	}
-
-	return false;  // Not unlocked - no restore needed
+	(void)bParentWasLocked;
+	// Bypassed: With SetActorLocation/SetActorRotation used for positioning,
+	// children do not need to be unlocked during movement. This avoids creating UI widgets
+	// and UObjects on every position update tick.
+	SetChildLockStateWithoutWidgets(ChildHologram, false);
+	return false;
 }
 
 void FSFHologramHelperService::RestoreChildLock(AFGHologram* ChildHologram, bool bParentWasLocked, bool bSuppressUpdates)
 {
-	// Extracted from SFSubsystem.cpp lines 2113-2117 (Phase 1 extraction)
-	// Restore lock state if parent is locked (skip if suppressed)
+	(void)bSuppressUpdates;
+	// Bypassed with TemporarilyUnlockChild(): calling LockHologramPosition() for
+	// scaling children creates build-gun UI widgets and drives UObject growth.
+	// Use direct private-field access so locked-parent children keep vanilla's expected
+	// lock inheritance without entering the UI/widget code path.
+	SetChildLockStateWithoutWidgets(ChildHologram, bParentWasLocked);
+}
 
+void FSFHologramHelperService::SetChildLockStateWithoutWidgets(AFGHologram* ChildHologram, bool bLocked) const
+{
 	if (!ChildHologram || !IsValid(ChildHologram))
 	{
 		return;
 	}
 
-	// CRITICAL FIX: Children MUST match parent's lock state for visibility.
-	// Empirical testing shows Satisfactory hides children whose lock state differs from
-	// their parent. Do not remove this call unless the engine behavior changes and the
-	// documentation in docs/Architecture/CRITICAL_Child_Lock_Inheritance_REQUIRED.md is
-	// updated to match.
-	//
-	// Only restore lock if:
-	// 1. Child updates not suppressed (avoid cascading updates during mass operations)
-	// 2. Parent is locked (children should inherit lock state for rendering)
-	if (!bSuppressUpdates && bParentWasLocked)
+	ChildHologram->mHologramIsLocked = bLocked;
+	if (bLocked)
 	{
-		ChildHologram->LockHologramPosition(true);
+		ChildHologram->mHologramLockLocation = ChildHologram->GetActorLocation();
 	}
 }
 
@@ -1797,7 +1889,7 @@ void FSFHologramHelperService::CancelProgressiveBatchReposition()
 		return;
 	}
 
-	UE_LOG(LogSmartFoundations, VeryVerbose,
+	UE_LOG(LogSmartFoundations, Warning,
 		TEXT("❌ ProgressiveBatchReposition CANCELLED at %d/%d children (frame %d)"),
 		BatchState.CurrentIndex, BatchState.TotalChildren, BatchState.FrameCount);
 
@@ -1818,6 +1910,16 @@ void FSFHologramHelperService::CompleteBatchReposition()
 	UE_LOG(LogSmartFoundations, VeryVerbose,
 		TEXT("✅ ProgressiveBatchReposition COMPLETE: %d children in %.2f ms across %d frames (%.2f ms/frame avg, %.3f ms/child)"),
 		BatchState.TotalChildren, ElapsedMs, BatchState.FrameCount, MsPerFrame, MsPerChild);
+
+	UE_LOG(LogSmartFoundations, Warning,
+		TEXT("[SF_SCALE_BATCH] complete children=%d elapsedMs=%.2f frames=%d msPerFrame=%.2f msPerChild=%.3f trackedTransforms=%d uobjects=%d"),
+		BatchState.TotalChildren,
+		ElapsedMs,
+		BatchState.FrameCount,
+		MsPerFrame,
+		MsPerChild,
+		ScalingChildIntendedTransforms.Num(),
+		GUObjectArray.GetObjectArrayNum());
 
 	// Fire completion callback
 	if (BatchState.CompletionCallback)
@@ -2088,6 +2190,7 @@ void FSFHologramHelperService::DestroyAllChildren()
 
 	SpawnedChildren.Empty();
 	PendingDestroyChildren.Empty();
+	ScalingChildIntendedTransforms.Empty();
 
 	bInMassDestruction = false;
 	bSuppressChildUpdates = false;

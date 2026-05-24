@@ -204,6 +204,12 @@ public:
 	/** Get array of spawned child holograms */
 	const TArray<TWeakObjectPtr<AFGHologram>>& GetSpawnedChildren() const { return SpawnedChildren; }
 
+	/** Track the intended transform for a scaling child so vanilla child ticks cannot reset it to origin. */
+	void TrackScalingChildTransform(AFGHologram* ChildHologram, const FVector& IntendedLocation, const FRotator& IntendedRotation);
+
+	/** Refresh tracked scaling child transforms, primarily for locked-parent previews. */
+	void RefreshTrackedScalingChildTransforms(AFGHologram* ParentHologram);
+
 	/** Get current child spawn counter (for unique naming) */
 	int32 GetChildSpawnCounter() const { return ChildSpawnCounter; }
 
@@ -218,22 +224,24 @@ public:
 	// ========================================
 
 	/**
-	 * Temporarily unlock a child hologram for positioning updates
-	 * Should be called before SetActorLocation/Rotation on locked children
+	 * Legacy no-op retained for callers that still route through the helper.
+	 * Position updates use SetActorLocation/Rotation directly and should not
+	 * unlock children because LockHologramPosition creates UI widgets.
 	 * 
-	 * @param ChildHologram Child to unlock
+	 * @param ChildHologram Child that would previously be unlocked
 	 * @param bParentWasLocked Whether parent hologram is currently locked
-	 * @return true if child was unlocked (and needs restore later)
+	 * @return false; children are no longer unlocked for positioning
 	 */
 	bool TemporarilyUnlockChild(AFGHologram* ChildHologram, bool bParentWasLocked);
 
 	/**
-	 * Restore lock state to child hologram after positioning
-	 * Should be called after positioning updates complete
+	 * Restore child lock inheritance without calling LockHologramPosition().
+	 * The direct path avoids build-gun widget churn while keeping locked-parent
+	 * children in the state vanilla rendering expects.
 	 * 
-	 * @param ChildHologram Child to restore lock on
+	 * @param ChildHologram Child that should inherit parent lock state
 	 * @param bParentWasLocked Whether parent hologram is currently locked
-	 * @param bSuppressUpdates Whether child updates are suppressed (skip locking if true)
+	 * @param bSuppressUpdates Whether child updates are suppressed
 	 */
 	void RestoreChildLock(AFGHologram* ChildHologram, bool bParentWasLocked, bool bSuppressUpdates);
 
@@ -402,6 +410,9 @@ private:
 	/** Pending children to destroy safely on next tick */
 	TArray<TWeakObjectPtr<AFGHologram>> PendingDestroyChildren;
 
+	/** Intended transforms for scaling children; used to counter vanilla child reset behavior while locked. */
+	TMap<AFGHologram*, FTransform> ScalingChildIntendedTransforms;
+
 	/** Global counter for unique child names (prevents name collisions) */
 	int32 ChildSpawnCounter = 0;
 
@@ -496,6 +507,12 @@ public:
 	void ClearZoopState() { bZoopActive = false; }
 
 private:
+
+	/**
+	 * Set child lock state directly without calling AFGHologram::LockHologramPosition().
+	 * Requires AccessTransformers friend access on AFGHologram.
+	 */
+	void SetChildLockStateWithoutWidgets(AFGHologram* ChildHologram, bool bLocked) const;
 
 	/**
 	 * Complete progressive batch reposition
