@@ -99,11 +99,9 @@ void USFGridSpawnerService::RegenerateChildHologramGrid()
             NewState.GridCounters = SS->GetGridCounters();
             SS->UpdateCounterState(NewState);
 
-            // CRITICAL: Update positions AFTER grid sync so CounterState has correct dimensions
-            UpdateChildPositions();
-
-            // NOTE: Orchestrator evaluation is now triggered in the progressive batch CompletionCallback
-            // to ensure it runs strictly after all children are positioned.
+            // The helper invokes UpdateCallback after child count changes. Calling
+            // UpdateChildPositions() again here cancels/restarts the same progressive
+            // batch and doubles the work during rapid scaling.
         }
     }
 }
@@ -287,8 +285,23 @@ void USFGridSpawnerService::UpdateChildPositions()
             *ItemSize.ToString(), *SS->GetCachedBuildingSize().ToString());
     }
 
-    // Calculate grid dimensions from authoritative CounterState
-    const FIntVector& GridCounters = SS->GetCounterState().GridCounters;
+    // Use a single live grid snapshot for this whole positioning pass. The helper
+    // mutates the legacy grid reference while rebuilding children, and CounterState
+    // can lag behind during the same scale input tick.
+    const FIntVector GridCounters = SS->GetGridCounters();
+    const FIntVector CounterStateGrid = SS->GetCounterState().GridCounters;
+    FSFCounterState PositionCounterState = SS->GetCounterState();
+    PositionCounterState.GridCounters = GridCounters;
+
+    if (CounterStateGrid != GridCounters)
+    {
+        UE_LOG(LogSmartFoundations, Log,
+            TEXT("UpdateChildPositions: CounterState grid [%d,%d,%d] differs from live grid [%d,%d,%d]; using live grid for child transforms."),
+            CounterStateGrid.X, CounterStateGrid.Y, CounterStateGrid.Z,
+            GridCounters.X, GridCounters.Y, GridCounters.Z);
+    }
+
+    // Calculate grid dimensions from the live grid snapshot
     int32 XCount = FMath::Abs(GridCounters.X);
     int32 YCount = FMath::Abs(GridCounters.Y);
     int32 ZCount = FMath::Abs(GridCounters.Z);
@@ -338,14 +351,28 @@ void USFGridSpawnerService::UpdateChildPositions()
     }
 
     UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   Pre-computed %d grid indices for progressive batch"), GridIndices.Num());
+    if (GridIndices.Num() == 0 && SpawnedChildren.Num() > 0)
+    {
+        UE_LOG(LogSmartFoundations, Warning,
+            TEXT("UpdateChildPositions: Computed zero grid indices for %d children. Live grid is [%d,%d,%d]. Children will remain at spawn locations."),
+            SpawnedChildren.Num(), GridCounters.X, GridCounters.Y, GridCounters.Z);
+    }
 
     // Create update callback (called once per child during batch processing)
-    auto UpdateCallback = [SS, SpawnedChildren, ParentHologram, ParentLocation, ParentRotation, ItemSize](int32 IndexInBatch) -> void
+    auto UpdateCallback = [SS, SpawnedChildren, GridIndices, ParentHologram, ParentLocation, ParentRotation, ItemSize, PositionCounterState](int32 IndexInBatch) -> void
     {
+        if (!GridIndices.IsValidIndex(IndexInBatch))
+        {
+            UE_LOG(LogSmartFoundations, Warning,
+                TEXT("UpdateChildPositions: Invalid batch index %d for %d grid indices"),
+                IndexInBatch, GridIndices.Num());
+            return;
+        }
+
         FSFHologramHelperService* HologramHelper = SS->GetHologramHelper();
         if (!HologramHelper) return;
 
-        const FSFHologramHelperService::FGridIndex& GridIndex = HologramHelper->GetBatchGridIndex(IndexInBatch);
+        const FSFHologramHelperService::FGridIndex& GridIndex = GridIndices[IndexInBatch];
         const TWeakObjectPtr<AFGHologram>& Child = SpawnedChildren[GridIndex.ChildArrayIndex];
 
         if (!Child.IsValid())
@@ -361,7 +388,7 @@ void USFGridSpawnerService::UpdateChildPositions()
 
         if (ASFConveyorBeltHologram* BeltChild = Cast<ASFConveyorBeltHologram>(ChildHologram))
         {
-            UE_LOG(LogSmartFoundations, Warning,
+            UE_LOG(LogSmartFoundations, VeryVerbose,
                 TEXT("GRID POSITIONER touching belt child %s (parent=%s) grid=[%d,%d,%d] loc=%s"),
                 *BeltChild->GetName(),
                 *GetNameSafe(ParentHologram),
@@ -374,20 +401,20 @@ void USFGridSpawnerService::UpdateChildPositions()
 
         // CRITICAL FIX: DO NOT pass AnchorOffset to CalculateChildPosition
         //
-        // DISCOVERY: CalculateChildPosition adds AnchorOffset to the returned position,
-        // but SetHologramLocationAndRotation() ALSO applies AnchorOffset compensation.
-        // Passing AnchorOffset to both causes double-compensation.
+        // DISCOVERY: CalculateChildPosition can add AnchorOffset to the returned position,
+        // but the direct actor transform path expects the final world position.
+        // Passing AnchorOffset here would still pre-offset children before placement.
         //
         // EXAMPLE: Splitter with AnchorOffset.Z = -100cm
         // - CalculateChildPosition with AnchorOffset: returns Z=8699.990 + (-100) = 8599.990
-        // - SetHologramLocationAndRotation adds AnchorOffset: 8599.990 + (-100) = 8499.990
-        // - Result: 200cm too low (double application)
+        // - Direct actor placement uses that already-offset position
+        // - Result: 100cm too low
         //
         // SOLUTION: Pass FVector::ZeroVector to CalculateChildPosition and let
-        // SetHologramLocationAndRotation handle the AnchorOffset compensation.
-        // We then counteract the API's behavior in the AdjustedPosition calculation above.
+        // the direct actor transform path place the child without hologram API tracing/snapping.
+        // This prevents AnchorOffset from being applied a second time.
 
-        // Calculate position using PositionCalculator (NO AnchorOffset - handled by hologram API)
+        // Calculate position using PositionCalculator (NO AnchorOffset - direct actor transform path)
         FVector ChildPosition = ParentLocation;
         if (FSFPositionCalculator* PosCalc = SS->GetPositionCalculator())
         {
@@ -398,21 +425,20 @@ void USFGridSpawnerService::UpdateChildPositions()
                 ParentLocation,
                 ParentRotation,
                 ItemSize,
-                SS->GetCounterState(),
+                PositionCounterState,
                 GridIndex.ChildArrayIndex,
-                FVector::ZeroVector  // ZERO - Prevent double-compensation with SetHologramLocationAndRotation
+                FVector::ZeroVector  // ZERO - Prevent double-compensation with the direct actor transform path
             );
         }
 
         // === COMPREHENSIVE DIAGNOSTIC LOGGING ===
         FVector OldPosition = ChildHologram->GetActorLocation();
         const bool bParentWasLocked = ParentHologram->IsHologramLocked();
-        const bool bChildWasLocked = ChildHologram->IsHologramLocked();
 
         UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   ╔═══ CHILD %d POSITIONING START ═══"), GridIndex.ChildArrayIndex);
         UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   ║ OldPos: %s"), *OldPosition.ToString());
         UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   ║ CalcPos: %s (from PositionCalculator)"), *ChildPosition.ToString());
-        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   ║ ParentLocked: %d  ChildLocked: %d"), bParentWasLocked ? 1 : 0, bChildWasLocked ? 1 : 0);
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   ║ ParentLocked: %d"), bParentWasLocked ? 1 : 0);
 
         // Get AnchorOffset for diagnostics
         FVector ChildAnchorOffset = FVector::ZeroVector;
@@ -427,27 +453,9 @@ void USFGridSpawnerService::UpdateChildPositions()
             }
         }
 
-        // Delegate lock management to HologramHelperService
-        HologramHelper->TemporarilyUnlockChild(ChildHologram, bParentWasLocked);
-        const bool bChildUnlockedByHelper = !ChildHologram->IsHologramLocked() && bChildWasLocked;
-        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   ║ ChildUnlockedByHelper: %d"), bChildUnlockedByHelper ? 1 : 0);
-
-        // Issue #171: Use SetActorLocation for ALL children instead of SetHologramLocationAndRotation.
-        //
-        // SetHologramLocationAndRotation does internal floor tracing/snapping which causes
-        // children over foundations to snap to the foundation surface (different Z) while
-        // children beyond the foundation edge stay at the calculated Z. This creates
-        // inconsistent heights across the grid — some children 100cm higher than others.
-        //
-        // By using SetActorLocation directly, children are placed at the exact grid-calculated
-        // position relative to the parent. No AnchorOffset compensation is needed since
-        // SetActorLocation doesn't apply AnchorOffset (the old compensation was specifically
-        // to counteract SetHologramLocationAndRotation's implicit AnchorOffset addition).
-        ChildHologram->SetActorLocation(ChildPosition);
-
         // Calculate child rotation - includes arc rotation if radial transform is active
         FRotator ChildRotation = ParentRotation;
-        const FSFCounterState& Counter = SS->GetCounterState();
+        const FSFCounterState& Counter = PositionCounterState;
         if (!FMath::IsNearlyZero(Counter.RotationZ))
         {
             // ROTATION MODE: Each child rotates progressively along the arc
@@ -460,14 +468,17 @@ void USFGridSpawnerService::UpdateChildPositions()
                 TEXT("🔄 Spawn Child[%d] X=%d: ParentYaw=%.1f° + Offset=%.1f° = FinalYaw=%.1f°"),
                 GridIndex.ChildArrayIndex, GridIndex.X, ParentRotation.Yaw, ChildYawOffset, ChildRotation.Yaw);
         }
-        ChildHologram->SetActorRotation(ChildRotation);
+        // Issue #171: Use actor transforms directly for ALL children instead of
+        // SetHologramLocationAndRotation, which floor-traces/snaps and applies offsets.
+        ChildHologram->SetActorLocationAndRotation(ChildPosition, ChildRotation);
+        HologramHelper->TrackScalingChildTransform(ChildHologram, ChildPosition, ChildRotation);
 
         // Check position AFTER API call
         FVector NewPosition = ChildHologram->GetActorLocation();
         float DeltaZ = NewPosition.Z - OldPosition.Z;
         float OffsetFromCalc = NewPosition.Z - ChildPosition.Z;
 
-        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   ║ NewPos: %s (after SetHologramLocationAndRotation)"), *NewPosition.ToString());
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   ║ NewPos: %s (after SetActorLocationAndRotation)"), *NewPosition.ToString());
         UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   ║ Delta Z: %.1f cm (NewPos - OldPos)"), DeltaZ);
         UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   ║ Offset from CalcPos: %.1f cm (NewPos - CalcPos)"), OffsetFromCalc);
 
@@ -492,7 +503,7 @@ void USFGridSpawnerService::UpdateChildPositions()
         {
             if (FSFValidationService* Validation = SS->GetValidationService())
             {
-                const auto& CurrentCounter = SS->GetCounterState();
+                const FSFCounterState& CurrentCounter = PositionCounterState;
                 const bool bStepsActive = (FMath::Abs(CurrentCounter.StepsX) > 0.1f || FMath::Abs(CurrentCounter.StepsY) > 0.1f);
                 const bool bNeedsFloorValidation = Validation->ShouldEnableFloorValidation(
                     ParentHologram,
@@ -500,7 +511,10 @@ void USFGridSpawnerService::UpdateChildPositions()
                     bStepsActive
                 );
 
-                BuildableChild->SetNeedsValidFloor(bNeedsFloorValidation);
+                if (BuildableChild->GetNeedsValidFloor() != bNeedsFloorValidation)
+                {
+                    BuildableChild->SetNeedsValidFloor(bNeedsFloorValidation);
+                }
             }
         }
 
@@ -515,21 +529,33 @@ void USFGridSpawnerService::UpdateChildPositions()
         {
             ChildHologram->SetActorTickEnabled(false);
             ChildHologram->ResetConstructDisqualifiers();
-            ChildHologram->SetPlacementMaterialState(EHologramMaterialState::HMS_OK);
+            if (ChildHologram->GetHologramMaterialState() != EHologramMaterialState::HMS_OK)
+            {
+                ChildHologram->SetPlacementMaterialState(EHologramMaterialState::HMS_OK);
+            }
         }
 
         // Ensure child visibility and material state match parent
         ChildHologram->SetActorHiddenInGame(false);
+        if (bParentWasLocked)
+        {
+            ChildHologram->SetActorTickEnabled(false);
+            ChildHologram->ResetConstructDisqualifiers();
+        }
         // Issue #197: Water pump children run their own CheckValidPlacement() to validate
         // water position. Don't override their material state — let validation determine it.
         const bool bHasOwnValidation = ChildHologram->IsA(ASFWaterPumpChildHologram::StaticClass());
         if (!bNeedsPlacementBypass && !bHasOwnValidation)
         {
-            ChildHologram->SetPlacementMaterialState(ParentHologram->GetHologramMaterialState());
+            EHologramMaterialState DesiredState = ParentHologram->GetHologramMaterialState();
+            if (ChildHologram->GetHologramMaterialState() != DesiredState)
+            {
+                ChildHologram->SetPlacementMaterialState(DesiredState);
+            }
         }
 
         // Restore lock state via HologramHelperService
-        HologramHelper->RestoreChildLock(ChildHologram, bParentWasLocked, SS->IsSuppressChildUpdates());
+        HologramHelper->RestoreChildLock(ChildHologram, bParentWasLocked);
 
         // Special logging for water extractors
         if (ChildHologram->IsA(ASFWaterPumpChildHologram::StaticClass()))
@@ -726,5 +752,3 @@ void USFGridSpawnerService::UpdateChildrenForCurrentTransform()
         }
     }
 }
-
-

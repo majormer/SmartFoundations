@@ -903,6 +903,10 @@ void USFSubsystem::Tick(float DeltaTime)
 	if (HologramHelper)
 	{
 		HologramHelper->TickProgressiveBatchReposition(DeltaTime);
+		if (!HologramHelper->IsProgressiveBatchActive() && ActiveHologram.IsValid())
+		{
+			HologramHelper->TickTrackedScalingChildTransformRefresh(ActiveHologram.Get());
+		}
 	}
 
 	// Tick the upgrade audit service for batch processing

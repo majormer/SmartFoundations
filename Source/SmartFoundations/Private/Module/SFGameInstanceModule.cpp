@@ -3,6 +3,7 @@
 #include "SmartFoundations.h"
 
 // Force UHT to parse these classes so AccessTransformers apply
+#include "FactoryGame/Public/Hologram/FGHologram.h"
 #include "FactoryGame/Public/Hologram/FGConveyorBeltHologram.h"
 #include "FactoryGame/Public/Hologram/FGConveyorAttachmentHologram.h"
 #include "FactoryGame/Public/Hologram/FGSplineHologram.h"
@@ -29,6 +30,7 @@
 // Tiny linker anchor to ensure StaticClass() is referenced
 static void SF_ForceUHT_SeeFGHolograms()
 {
+    (void)AFGHologram::StaticClass();
     (void)AFGConveyorBeltHologram::StaticClass();
     (void)AFGSplineHologram::StaticClass();
 }
