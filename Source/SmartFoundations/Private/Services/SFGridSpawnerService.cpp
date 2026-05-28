@@ -401,20 +401,20 @@ void USFGridSpawnerService::UpdateChildPositions()
 
         // CRITICAL FIX: DO NOT pass AnchorOffset to CalculateChildPosition
         //
-        // DISCOVERY: CalculateChildPosition adds AnchorOffset to the returned position,
-        // but SetHologramLocationAndRotation() ALSO applies AnchorOffset compensation.
-        // Passing AnchorOffset to both causes double-compensation.
+        // DISCOVERY: CalculateChildPosition can add AnchorOffset to the returned position,
+        // but the direct actor transform path expects the final world position.
+        // Passing AnchorOffset here would still pre-offset children before placement.
         //
         // EXAMPLE: Splitter with AnchorOffset.Z = -100cm
         // - CalculateChildPosition with AnchorOffset: returns Z=8699.990 + (-100) = 8599.990
-        // - SetHologramLocationAndRotation adds AnchorOffset: 8599.990 + (-100) = 8499.990
-        // - Result: 200cm too low (double application)
+        // - Direct actor placement uses that already-offset position
+        // - Result: 100cm too low
         //
         // SOLUTION: Pass FVector::ZeroVector to CalculateChildPosition and let
-        // SetHologramLocationAndRotation handle the AnchorOffset compensation.
-        // We then counteract the API's behavior in the AdjustedPosition calculation above.
+        // the direct actor transform path place the child without hologram API tracing/snapping.
+        // This prevents AnchorOffset from being applied a second time.
 
-        // Calculate position using PositionCalculator (NO AnchorOffset - handled by hologram API)
+        // Calculate position using PositionCalculator (NO AnchorOffset - direct actor transform path)
         FVector ChildPosition = ParentLocation;
         if (FSFPositionCalculator* PosCalc = SS->GetPositionCalculator())
         {
@@ -427,7 +427,7 @@ void USFGridSpawnerService::UpdateChildPositions()
                 ItemSize,
                 PositionCounterState,
                 GridIndex.ChildArrayIndex,
-                FVector::ZeroVector  // ZERO - Prevent double-compensation with SetHologramLocationAndRotation
+                FVector::ZeroVector  // ZERO - Prevent double-compensation with the direct actor transform path
             );
         }
 
@@ -468,14 +468,9 @@ void USFGridSpawnerService::UpdateChildPositions()
                 TEXT("🔄 Spawn Child[%d] X=%d: ParentYaw=%.1f° + Offset=%.1f° = FinalYaw=%.1f°"),
                 GridIndex.ChildArrayIndex, GridIndex.X, ParentRotation.Yaw, ChildYawOffset, ChildRotation.Yaw);
         }
-        // Issue #171: Use actor/root transforms directly for ALL children instead of
+        // Issue #171: Use actor transforms directly for ALL children instead of
         // SetHologramLocationAndRotation, which floor-traces/snaps and applies offsets.
         ChildHologram->SetActorLocationAndRotation(ChildPosition, ChildRotation);
-        if (USceneComponent* Root = ChildHologram->GetRootComponent())
-        {
-            Root->SetWorldLocationAndRotation(ChildPosition, ChildRotation);
-        }
-        ChildHologram->UpdateComponentTransforms();
         HologramHelper->TrackScalingChildTransform(ChildHologram, ChildPosition, ChildRotation);
 
         // Check position AFTER API call
@@ -483,7 +478,7 @@ void USFGridSpawnerService::UpdateChildPositions()
         float DeltaZ = NewPosition.Z - OldPosition.Z;
         float OffsetFromCalc = NewPosition.Z - ChildPosition.Z;
 
-        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   ║ NewPos: %s (after SetHologramLocationAndRotation)"), *NewPosition.ToString());
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   ║ NewPos: %s (after SetActorLocationAndRotation)"), *NewPosition.ToString());
         UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   ║ Delta Z: %.1f cm (NewPos - OldPos)"), DeltaZ);
         UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   ║ Offset from CalcPos: %.1f cm (NewPos - CalcPos)"), OffsetFromCalc);
 

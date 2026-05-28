@@ -212,11 +212,6 @@ void FSFHologramHelperService::RefreshTrackedScalingChildTransforms(AFGHologram*
 		}
 
 		Child->SetActorLocationAndRotation(IntendedLocation, IntendedRotation);
-		if (USceneComponent* Root = Child->GetRootComponent())
-		{
-			Root->SetWorldLocationAndRotation(IntendedLocation, IntendedRotation);
-			Root->MarkRenderStateDirty();
-		}
 		RefreshHologramVisibility(Child);
 	}
 }
