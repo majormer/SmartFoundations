@@ -182,6 +182,11 @@ void FSFHologramHelperService::RefreshTrackedScalingChildTransforms(AFGHologram*
 	}
 
 	const bool bParentLocked = ParentHologram->IsHologramLocked();
+	if (!bParentLocked)
+	{
+		return;
+	}
+
 	const TSet<AFGHologram*> SpawnedChildSet = [this]()
 	{
 		TSet<AFGHologram*> Result;
@@ -939,7 +944,7 @@ void FSFHologramHelperService::RegenerateChildHologramGrid(
 				}
 				else
 				{
-					UE_LOG(LogSmartFoundations, Verbose, TEXT("  Spawned child %s | Parent Locked=%s, Child Locked=%s, Child CanLock=%s"),
+					UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("  Spawned child %s | Parent Locked=%s, Child Locked=%s, Child CanLock=%s"),
 						*ChildName.ToString(),
 						bParentLocked ? TEXT("YES") : TEXT("NO"),
 						bChildLocked ? TEXT("YES") : TEXT("NO"),
@@ -1049,33 +1054,14 @@ void FSFHologramHelperService::RegenerateChildHologramGrid(
 		UpdateChildPositionsCallback();
 	}
 
-	// CRITICAL: Force visibility when parent is locked.
-	// Avoid LockHologramPosition() here: it creates UI widgets. Refresh render state
-	// directly so children snap visible without driving the lock UI path.
+	// The progressive positioning callback handles locked child tick/material/visibility
+	// as each child is placed. Avoid sweeping every child here; large grids were paying
+	// for this O(n) pass immediately after spawning, before the batch had settled.
 	if (bParentLocked)
 	{
-		for (const TWeakObjectPtr<AFGHologram>& ChildPtr : SpawnedChildren)
-		{
-			if (ChildPtr.IsValid())
-			{
-				AFGHologram* Child = ChildPtr.Get();
-				Child->SetActorTickEnabled(false);
-				Child->ResetConstructDisqualifiers();
-				SetChildLockStateWithoutWidgets(Child, true);
-				RefreshHologramVisibility(Child);
-
-				// Phase 4 FIX: DO NOT re-enable ticking when parent is locked!
-				// Ticking is disabled during spawn (line 306) to eliminate per-frame validation overhead
-				// Re-enabling here would undo the performance fix and cause 3-4 FPS with large grids
-				// Child->SetActorTickEnabled(true);  // REMOVED - causes massive FPS drop
-
-				const EHologramMaterialState DesiredState = ParentHologram->GetHologramMaterialState();
-				if (Child->GetHologramMaterialState() != DesiredState)
-				{
-					Child->SetPlacementMaterialState(DesiredState);
-				}
-			}
-		}
+		UE_LOG(LogSmartFoundations, VeryVerbose,
+			TEXT("RegenerateChildHologramGrid: locked parent; skipping immediate full child visibility sweep for %d children"),
+			SpawnedChildren.Num());
 	}
 	else
 	{
@@ -1105,8 +1091,10 @@ void FSFHologramHelperService::RegenerateChildHologramGrid(
 		}
 	}
 
-	// Force a placement/cost/material refresh now that children exist
-	if (LastController && IsValid(LastController))
+	// Force a placement/cost/material refresh only when no progressive
+	// positioning is pending. Active batches validate in their completion callback,
+	// after every child has reached its final transform.
+	if (!bProgressiveBatchActive && LastController && IsValid(LastController))
 	{
 		if (AFGCharacterPlayer* Character = Cast<AFGCharacterPlayer>(LastController->GetPawn()))
 		{
@@ -1164,7 +1152,7 @@ void FSFHologramHelperService::RegenerateChildHologramGrid(
 
 	const int32 ParentChildCount = ParentHologram->GetHologramChildren().Num();
 	const int32 TotalUObjects = GUObjectArray.GetObjectArrayNum();
-	UE_LOG(LogSmartFoundations, Warning,
+	UE_LOG(LogSmartFoundations, Log,
 		TEXT("[SF_SCALE_REGEN] grid=%dx%dx%d total=%d neededChildren=%d spawnedChildren=%d parentChildren=%d pendingDestroy=%d trackedTransforms=%d locked=%d uobjects=%d"),
 		GridCounters.X, GridCounters.Y, GridCounters.Z,
 		TotalItems,
@@ -1808,6 +1796,16 @@ void FSFHologramHelperService::BeginProgressiveBatchReposition(
 		CancelProgressiveBatchReposition();
 	}
 
+	if (GridIndices.Num() == 0)
+	{
+		UE_LOG(LogSmartFoundations, Log, TEXT("BeginProgressiveBatchReposition: No children to position; running completion callback immediately"));
+		if (CompletionCallback)
+		{
+			CompletionCallback();
+		}
+		return;
+	}
+
 	// Initialize batch state
 	BatchState.Reset();
 	BatchState.GridIndices = GridIndices;
@@ -1889,7 +1887,7 @@ void FSFHologramHelperService::CancelProgressiveBatchReposition()
 		return;
 	}
 
-	UE_LOG(LogSmartFoundations, Warning,
+	UE_LOG(LogSmartFoundations, Log,
 		TEXT("❌ ProgressiveBatchReposition CANCELLED at %d/%d children (frame %d)"),
 		BatchState.CurrentIndex, BatchState.TotalChildren, BatchState.FrameCount);
 
@@ -1911,7 +1909,7 @@ void FSFHologramHelperService::CompleteBatchReposition()
 		TEXT("✅ ProgressiveBatchReposition COMPLETE: %d children in %.2f ms across %d frames (%.2f ms/frame avg, %.3f ms/child)"),
 		BatchState.TotalChildren, ElapsedMs, BatchState.FrameCount, MsPerFrame, MsPerChild);
 
-	UE_LOG(LogSmartFoundations, Warning,
+	UE_LOG(LogSmartFoundations, Log,
 		TEXT("[SF_SCALE_BATCH] complete children=%d elapsedMs=%.2f frames=%d msPerFrame=%.2f msPerChild=%.3f trackedTransforms=%d uobjects=%d"),
 		BatchState.TotalChildren,
 		ElapsedMs,

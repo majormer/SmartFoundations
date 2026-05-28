@@ -99,11 +99,9 @@ void USFGridSpawnerService::RegenerateChildHologramGrid()
             NewState.GridCounters = SS->GetGridCounters();
             SS->UpdateCounterState(NewState);
 
-            // CRITICAL: Update positions AFTER grid sync so CounterState has correct dimensions
-            UpdateChildPositions();
-
-            // NOTE: Orchestrator evaluation is now triggered in the progressive batch CompletionCallback
-            // to ensure it runs strictly after all children are positioned.
+            // The helper invokes UpdateCallback after child count changes. Calling
+            // UpdateChildPositions() again here cancels/restarts the same progressive
+            // batch and doubles the work during rapid scaling.
         }
     }
 }
@@ -297,7 +295,7 @@ void USFGridSpawnerService::UpdateChildPositions()
 
     if (CounterStateGrid != GridCounters)
     {
-        UE_LOG(LogSmartFoundations, Warning,
+        UE_LOG(LogSmartFoundations, Log,
             TEXT("UpdateChildPositions: CounterState grid [%d,%d,%d] differs from live grid [%d,%d,%d]; using live grid for child transforms."),
             CounterStateGrid.X, CounterStateGrid.Y, CounterStateGrid.Z,
             GridCounters.X, GridCounters.Y, GridCounters.Z);
@@ -390,7 +388,7 @@ void USFGridSpawnerService::UpdateChildPositions()
 
         if (ASFConveyorBeltHologram* BeltChild = Cast<ASFConveyorBeltHologram>(ChildHologram))
         {
-            UE_LOG(LogSmartFoundations, Warning,
+            UE_LOG(LogSmartFoundations, VeryVerbose,
                 TEXT("GRID POSITIONER touching belt child %s (parent=%s) grid=[%d,%d,%d] loc=%s"),
                 *BeltChild->GetName(),
                 *GetNameSafe(ParentHologram),
@@ -580,7 +578,6 @@ void USFGridSpawnerService::UpdateChildPositions()
 
         if (AFGHologram* Parent = SS->GetActiveHologram())
         {
-            /*
             if (AFGPlayerController* PC = SS->GetLastController())
             {
                 if (AFGCharacterPlayer* Character = Cast<AFGCharacterPlayer>(PC->GetPawn()))
@@ -592,10 +589,8 @@ void USFGridSpawnerService::UpdateChildPositions()
                     }
                 }
             }
-            */
 
             // Now that children are definitively positioned, trigger debounced evaluation via public API
-            /*
             if (USFAutoConnectOrchestrator* Orchestrator = SS->GetOrCreateOrchestrator(Parent))
             {
                 // Phase 4: Type-safe grid updates
@@ -628,7 +623,6 @@ void USFGridSpawnerService::UpdateChildPositions()
 
                 UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   🎯 Orchestrator: Grid updates triggered in CompletionCallback"));
             }
-            */
         }
 
 #if SMART_ARROWS_ENABLED
