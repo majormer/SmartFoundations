@@ -560,7 +560,7 @@ void USFGridSpawnerService::UpdateChildPositions()
         }
 
         // Restore lock state via HologramHelperService
-        HologramHelper->RestoreChildLock(ChildHologram, bParentWasLocked, SS->IsSuppressChildUpdates());
+        HologramHelper->RestoreChildLock(ChildHologram, bParentWasLocked);
 
         // Special logging for water extractors
         if (ChildHologram->IsA(ASFWaterPumpChildHologram::StaticClass()))

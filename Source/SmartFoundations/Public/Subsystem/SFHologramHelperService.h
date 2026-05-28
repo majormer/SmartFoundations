@@ -134,15 +134,16 @@ public:
 	void ForceDestroyPendingChildren();
 
 	/**
-	 * Check if it's safe to destroy children using service state
+	 * Compatibility query for callers that still check destroy safety.
+	 * Queued scaling children are detached from parent/tracking before the next-tick flush.
 	 */
 	bool CanSafelyDestroyChildren() const;
 
 	/**
-	 * Check if it's safe to destroy children without racing build gun validation
+	 * Compatibility query for callers that still check destroy safety.
 	 * 
 	 * @param ActiveHologram Currently active parent hologram
-	 * @return true if destruction can proceed safely
+	 * @return true; queued scaling children are always detached before destruction
 	 */
 	bool CanSafelyDestroyChildren(const AFGHologram* ActiveHologram) const;
 
@@ -210,6 +211,9 @@ public:
 	/** Refresh tracked scaling child transforms, primarily for locked-parent previews. */
 	void RefreshTrackedScalingChildTransforms(AFGHologram* ParentHologram);
 
+	/** Run any pending post-batch locked-preview transform refresh. */
+	void TickTrackedScalingChildTransformRefresh(AFGHologram* ParentHologram);
+
 	/** Get current child spawn counter (for unique naming) */
 	int32 GetChildSpawnCounter() const { return ChildSpawnCounter; }
 
@@ -241,9 +245,8 @@ public:
 	 * 
 	 * @param ChildHologram Child that should inherit parent lock state
 	 * @param bParentWasLocked Whether parent hologram is currently locked
-	 * @param bSuppressUpdates Whether child updates are suppressed
 	 */
-	void RestoreChildLock(AFGHologram* ChildHologram, bool bParentWasLocked, bool bSuppressUpdates);
+	void RestoreChildLock(AFGHologram* ChildHologram, bool bParentWasLocked);
 
 	// ========================================
 	// Performance Optimization (Phase 2)
@@ -412,6 +415,9 @@ private:
 
 	/** Intended transforms for scaling children; used to counter vanilla child reset behavior while locked. */
 	TMap<AFGHologram*, FTransform> ScalingChildIntendedTransforms;
+
+	/** Remaining post-batch ticks that should re-apply locked child transforms. */
+	int32 PendingTrackedScalingChildTransformRefreshTicks = 0;
 
 	/** Global counter for unique child names (prevents name collisions) */
 	int32 ChildSpawnCounter = 0;

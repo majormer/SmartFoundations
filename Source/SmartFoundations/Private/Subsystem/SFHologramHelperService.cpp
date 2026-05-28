@@ -187,36 +187,23 @@ void FSFHologramHelperService::RefreshTrackedScalingChildTransforms(AFGHologram*
 		return;
 	}
 
-	const TSet<AFGHologram*> SpawnedChildSet = [this]()
+	for (int32 ChildIndex = SpawnedChildren.Num() - 1; ChildIndex >= 0; --ChildIndex)
 	{
-		TSet<AFGHologram*> Result;
-		for (const TWeakObjectPtr<AFGHologram>& ChildPtr : SpawnedChildren)
+		if (!SpawnedChildren[ChildIndex].IsValid())
 		{
-			if (ChildPtr.IsValid())
-			{
-				Result.Add(ChildPtr.Get());
-			}
-		}
-		return Result;
-	}();
-
-	for (auto It = ScalingChildIntendedTransforms.CreateIterator(); It; ++It)
-	{
-		AFGHologram* Child = It.Key();
-		if (!IsValid(Child) || !SpawnedChildSet.Contains(Child))
-		{
-			It.RemoveCurrent();
+			SpawnedChildren.RemoveAtSwap(ChildIndex);
 			continue;
 		}
 
-		if (!bParentLocked)
+		AFGHologram* Child = SpawnedChildren[ChildIndex].Get();
+		const FTransform* IntendedTransform = ScalingChildIntendedTransforms.Find(Child);
+		if (!IntendedTransform)
 		{
 			continue;
 		}
 
-		const FTransform& IntendedTransform = It.Value();
-		const FVector IntendedLocation = IntendedTransform.GetLocation();
-		const FRotator IntendedRotation = IntendedTransform.Rotator();
+		const FVector IntendedLocation = IntendedTransform->GetLocation();
+		const FRotator IntendedRotation = IntendedTransform->Rotator();
 		const bool bLocationDrifted = !Child->GetActorLocation().Equals(IntendedLocation, 0.5f);
 		const bool bRotationDrifted = !Child->GetActorRotation().Equals(IntendedRotation, 0.1f);
 		if (!bLocationDrifted && !bRotationDrifted)
@@ -230,9 +217,25 @@ void FSFHologramHelperService::RefreshTrackedScalingChildTransforms(AFGHologram*
 			Root->SetWorldLocationAndRotation(IntendedLocation, IntendedRotation);
 			Root->MarkRenderStateDirty();
 		}
-		Child->UpdateComponentTransforms();
 		RefreshHologramVisibility(Child);
 	}
+}
+
+void FSFHologramHelperService::TickTrackedScalingChildTransformRefresh(AFGHologram* ParentHologram)
+{
+	if (PendingTrackedScalingChildTransformRefreshTicks <= 0)
+	{
+		return;
+	}
+
+	if (!ParentHologram || !IsValid(ParentHologram) || !ParentHologram->IsHologramLocked() || ScalingChildIntendedTransforms.Num() == 0)
+	{
+		PendingTrackedScalingChildTransformRefreshTicks = 0;
+		return;
+	}
+
+	RefreshTrackedScalingChildTransforms(ParentHologram);
+	PendingTrackedScalingChildTransformRefreshTicks--;
 }
 
 void FSFHologramHelperService::RegenerateChildHologramGrid(
@@ -1150,19 +1153,16 @@ void FSFHologramHelperService::RegenerateChildHologramGrid(
 		}
 	}
 
-	const int32 ParentChildCount = ParentHologram->GetHologramChildren().Num();
-	const int32 TotalUObjects = GUObjectArray.GetObjectArrayNum();
-	UE_LOG(LogSmartFoundations, Log,
-		TEXT("[SF_SCALE_REGEN] grid=%dx%dx%d total=%d neededChildren=%d spawnedChildren=%d parentChildren=%d pendingDestroy=%d trackedTransforms=%d locked=%d uobjects=%d"),
+	UE_LOG(LogSmartFoundations, VeryVerbose,
+		TEXT("[SF_SCALE_REGEN] grid=%dx%dx%d total=%d neededChildren=%d spawnedChildren=%d parentChildren=%d pendingDestroy=%d trackedTransforms=%d locked=%d"),
 		GridCounters.X, GridCounters.Y, GridCounters.Z,
 		TotalItems,
 		ChildrenNeeded,
 		SpawnedChildren.Num(),
-		ParentChildCount,
+		ParentHologram->GetHologramChildren().Num(),
 		PendingDestroyChildren.Num(),
 		ScalingChildIntendedTransforms.Num(),
-		bParentLocked ? 1 : 0,
-		TotalUObjects);
+		bParentLocked ? 1 : 0);
 }
 
 void FSFHologramHelperService::ApplyScalingDelta(
@@ -1271,9 +1271,6 @@ void FSFHologramHelperService::FlushPendingDestroy()
 	const UWorld* World = WorldContext.IsValid() ? WorldContext.Get() : nullptr;
 	const double TS = World ? World->GetTimeSeconds() : 0.0;
 	int32 DestroyedCount = 0;
-	int32 DeferredCount = 0;
-
-	const bool bSafeNow = CanSafelyDestroyChildren();
 
 	for (int32 i = PendingDestroyChildren.Num() - 1; i >= 0; --i)
 	{
@@ -1285,51 +1282,34 @@ void FSFHologramHelperService::FlushPendingDestroy()
 		}
 
 		AFGHologram* H = Entry.Get();
-		if (bSafeNow)
-		{
-			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("[Frame=%llu t=%.3f] Destroying queued child: %s"),
-				(unsigned long long)GFrameCounter, TS, *H->GetName());
-			ScalingChildIntendedTransforms.Remove(H);
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("[Frame=%llu t=%.3f] Destroying queued child: %s"),
+			(unsigned long long)GFrameCounter, TS, *H->GetName());
+		ScalingChildIntendedTransforms.Remove(H);
 
-			// NOTE: Child already removed from parent's mChildren in QueueChildForDestroy
-			// This Remove call is redundant but harmless (TArray::Remove handles not-found gracefully)
-			// Kept for safety in case child was added back to parent's array somehow
-			if (AFGHologram* Parent = H->GetParentHologram())
+		// NOTE: Child already removed from parent's mChildren in QueueChildForDestroy
+		// This Remove call is redundant but harmless (TArray::Remove handles not-found gracefully)
+		// Kept for safety in case child was added back to parent's array somehow
+		if (AFGHologram* Parent = H->GetParentHologram())
+		{
+			if (FArrayProperty* ChildrenProp = FindFProperty<FArrayProperty>(AFGHologram::StaticClass(), TEXT("mChildren")))
 			{
-				if (FArrayProperty* ChildrenProp = FindFProperty<FArrayProperty>(AFGHologram::StaticClass(), TEXT("mChildren")))
+				TArray<AFGHologram*>* ChildrenArray = ChildrenProp->ContainerPtrToValuePtr<TArray<AFGHologram*>>(Parent);
+				if (ChildrenArray)
 				{
-					TArray<AFGHologram*>* ChildrenArray = ChildrenProp->ContainerPtrToValuePtr<TArray<AFGHologram*>>(Parent);
-					if (ChildrenArray)
-					{
-						ChildrenArray->Remove(H);  // Safe even if already removed
-					}
+					ChildrenArray->Remove(H);  // Safe even if already removed
 				}
 			}
+		}
 
-			H->Destroy();
-			DestroyedCount++;
-			PendingDestroyChildren.RemoveAtSwap(i);
-		}
-		else
-		{
-			// Defer actual destruction; make it inert and invisible in the meantime
-			H->SetDisabled(true);
-			H->SetActorHiddenInGame(true);
-			H->SetActorEnableCollision(false);
-			DeferredCount++;
-			// Keep it in the queue for later ForceDestroy
-		}
+		H->Destroy();
+		DestroyedCount++;
+		PendingDestroyChildren.RemoveAtSwap(i);
 	}
 
 	if (DestroyedCount > 0)
 	{
 		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Flushed queued destroys: %d"), DestroyedCount);
 	}
-	if (DeferredCount > 0)
-	{
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Deferred destroys due to active hologram: %d"), DeferredCount);
-	}
-
 	// PERFORMANCE PROFILING: End destroy tracking
 	if (PendingCount > 0 && DestroyedCount > 0)
 	{
@@ -1704,17 +1684,16 @@ TSharedPtr<ISFHologramAdapter> FSFHologramHelperService::CreateHologramAdapter(A
 
 bool FSFHologramHelperService::TemporarilyUnlockChild(AFGHologram* ChildHologram, bool bParentWasLocked)
 {
+	(void)ChildHologram;
 	(void)bParentWasLocked;
 	// Bypassed: With SetActorLocation/SetActorRotation used for positioning,
 	// children do not need to be unlocked during movement. This avoids creating UI widgets
 	// and UObjects on every position update tick.
-	SetChildLockStateWithoutWidgets(ChildHologram, false);
 	return false;
 }
 
-void FSFHologramHelperService::RestoreChildLock(AFGHologram* ChildHologram, bool bParentWasLocked, bool bSuppressUpdates)
+void FSFHologramHelperService::RestoreChildLock(AFGHologram* ChildHologram, bool bParentWasLocked)
 {
-	(void)bSuppressUpdates;
 	// Bypassed with TemporarilyUnlockChild(): calling LockHologramPosition() for
 	// scaling children creates build-gun UI widgets and drives UObject growth.
 	// Use direct private-field access so locked-parent children keep vanilla's expected
@@ -1887,10 +1866,11 @@ void FSFHologramHelperService::CancelProgressiveBatchReposition()
 		return;
 	}
 
-	UE_LOG(LogSmartFoundations, Log,
+	UE_LOG(LogSmartFoundations, VeryVerbose,
 		TEXT("❌ ProgressiveBatchReposition CANCELLED at %d/%d children (frame %d)"),
 		BatchState.CurrentIndex, BatchState.TotalChildren, BatchState.FrameCount);
 
+	PendingTrackedScalingChildTransformRefreshTicks = 0;
 	bProgressiveBatchActive = false;
 	BatchState.Reset();
 }
@@ -1909,20 +1889,24 @@ void FSFHologramHelperService::CompleteBatchReposition()
 		TEXT("✅ ProgressiveBatchReposition COMPLETE: %d children in %.2f ms across %d frames (%.2f ms/frame avg, %.3f ms/child)"),
 		BatchState.TotalChildren, ElapsedMs, BatchState.FrameCount, MsPerFrame, MsPerChild);
 
-	UE_LOG(LogSmartFoundations, Log,
-		TEXT("[SF_SCALE_BATCH] complete children=%d elapsedMs=%.2f frames=%d msPerFrame=%.2f msPerChild=%.3f trackedTransforms=%d uobjects=%d"),
+	UE_LOG(LogSmartFoundations, VeryVerbose,
+		TEXT("[SF_SCALE_BATCH] complete children=%d elapsedMs=%.2f frames=%d msPerFrame=%.2f msPerChild=%.3f trackedTransforms=%d"),
 		BatchState.TotalChildren,
 		ElapsedMs,
 		BatchState.FrameCount,
 		MsPerFrame,
 		MsPerChild,
-		ScalingChildIntendedTransforms.Num(),
-		GUObjectArray.GetObjectArrayNum());
+		ScalingChildIntendedTransforms.Num());
 
 	// Fire completion callback
 	if (BatchState.CompletionCallback)
 	{
 		BatchState.CompletionCallback();
+	}
+
+	if (BatchState.ParentHologram.IsValid() && BatchState.ParentHologram->IsHologramLocked() && ScalingChildIntendedTransforms.Num() > 0)
+	{
+		PendingTrackedScalingChildTransformRefreshTicks = 3;
 	}
 
 	// Cleanup

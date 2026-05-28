@@ -903,9 +903,9 @@ void USFSubsystem::Tick(float DeltaTime)
 	if (HologramHelper)
 	{
 		HologramHelper->TickProgressiveBatchReposition(DeltaTime);
-		if (!HologramHelper->IsProgressiveBatchActive() && ActiveHologram.IsValid() && ActiveHologram->IsHologramLocked())
+		if (!HologramHelper->IsProgressiveBatchActive() && ActiveHologram.IsValid())
 		{
-			HologramHelper->RefreshTrackedScalingChildTransforms(ActiveHologram.Get());
+			HologramHelper->TickTrackedScalingChildTransformRefresh(ActiveHologram.Get());
 		}
 	}
 
