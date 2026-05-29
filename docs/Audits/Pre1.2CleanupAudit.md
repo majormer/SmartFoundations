@@ -55,6 +55,8 @@ Status: baseline audit complete for pre-1.2 cleanup planning, not a cleanup plan
 - 2026-05-29: Cleanup batches 1-3 committed as `b1eca6f` (pre-1.2 cleanup: deletions + trims for F001/F002/F009/F010/F018/F019/F021/F023/F026/F028/F033/F037/F045/F047). The Extend affordability/preview fix committed separately as `60d1b05` (not an audit finding). Working tree is now clean except untracked `HANDOFF.md`.
 - 2026-05-29: Cleanup batch 4 committed as `1a22d61` (F042 empty hologram subclasses + `Public/Holograms/README.md` rewrite; F022 `USFUpgradeResultRow`/`RowWidgetClass`). Re-verified safe against the editor side via SMLMCP before deletion: no widget or actor Blueprint derives from any removed class, and no Smart asset references them. This completes every `remove now` / safe-1.1 cleanup candidate on the code side. The only deferred remove-now sub-item is the orphaned `WBP_UpgradeResultRow.uasset` (editor-side content deletion).
 - 2026-05-29: Merge-scope note. Several `doc mismatch` / workflow findings target files that are gitignored and therefore never merge to `main`: F031/F041 (and the `.windsurf/` parts of F032), `MIGRATION_PLAN.md` (F044), and `AGENTS.md`. These do not block the merge; fix them in the working copies as convenient. Tracked documentation fixes that do affect the merge: F005, F007, F008, F013, F036, F040 (plus any non-`.windsurf` portions of F032).
+- 2026-05-29: Tracked doc-mismatch fixes committed as `20051fc` (F005, F007, F008, F013, F036, F040). F036 dropped pumps from the Smart Upgrade entry list; F007 corrected the grid-size cap comment; F008 fixed two runtime input-warning logs + a wrong doc path + dead `@see` refs; F013 marked SmartRestore implemented; F040 documented Power AutoConnect direct wire spawn; F005 corrected the RepairOrphanedBelts "diagnostic-only" claim to "explicit triage that re-registers conveyors".
+- 2026-05-29: Verification-gated investigation pass. Removed (committed `e3c3f45`) after caller analysis + SMLMCP: F012 (`FSFScalingModule`, `FSFGridArray`; kept live `FSFSpacingModule`), F014 (`FSFSmartFactoryAdapter`, `FSFSmartFoundationAdapter`; kept live `FSFSmartLogisticsAdapter`/`FSFSmartBuildableAdapter`), F020 (`FSFArrowModule` DrawDebug), F027 (`FSFConveyorConnectionHelper`), plus the stale includes they left in `SFSubsystem.cpp`. F004 (`USFValidationService`) confirmed LIVE (active callers) and kept. `FSFGridArrayTypes.h` is now unreferenced but left in place (harmless standalone reflected header). Still gated pending human/runtime/compile evidence: F006, F016, F017, F030, F034.
 
 ## Current Recommendation Summary
 
@@ -65,13 +67,15 @@ Safe 1.1 cleanup candidates — ALL REMEDIATED on the code side (committed in cl
 - `F001`, `F009`, `F010`, `F018`, `F019`, `F021`, `F022`, `F023`, `F026`, `F028`, `F033`, `F037`, `F042`, `F045`, `F047`
 - Only deferred sub-item: delete the orphaned `WBP_UpgradeResultRow.uasset` in the editor (F022 content tail).
 
-Documentation-only fixes that can be handled before 1.2 without behavior changes:
+Documentation-only fixes (no behavior change):
 
-- `F002`, `F005`, `F007`, `F008`, `F013`, `F031`, `F032`, `F036`, `F040`, `F041`, `F044`
+- Tracked + DONE (committed `20051fc`): `F002` (earlier), `F005`, `F007`, `F008`, `F013`, `F036`, `F040`.
+- Gitignored files — never merge to `main`, fix in working copies as convenient: `F031`, `F041`, `MIGRATION_PLAN.md` (`F044`), and the `.windsurf/` parts of `F032`.
 
-Verification-gated items. Do not delete until Unreal reflection/content/config checks are complete:
+Verification-gated items:
 
-- `F004`, `F006`, `F012`, `F014`, `F016`, `F017`, `F020`, `F027`, `F030`, `F034`
+- RESOLVED this pass (committed `e3c3f45`, code-caller + SMLMCP verified): `F012`, `F014`, `F020`, `F027` removed. `F004` confirmed LIVE and KEPT (`ShouldEnableFloorValidation` / `ValidateAndAdjustGridSize` have active callers).
+- STILL gated — need interactive-editor / in-game / SML / compile evidence, not safe to auto-resolve: `F006` (upgrade-panel Blueprint widget-tree binding inspection), `F016` (confirm SML 3.11/1.2 AccessTransformer mechanism before touching the C# file), `F017` (in-game Options > Controls > Mods action check), `F030` (maintainer decision on `ar`/`fa`/`th` localization), `F034` (Build.cs dependency trim needs compile validation).
 
 Defer until Satisfactory 1.2/SML compile and runtime triage:
 
