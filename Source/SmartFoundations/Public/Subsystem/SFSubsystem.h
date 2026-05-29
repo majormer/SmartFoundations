@@ -559,12 +559,6 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Smart! Config")
 	float ScaleStepSize = 50.0f;
 
-    /** Are axis arrows currently visible (DEPRECATED - use bArrowsRuntimeVisible instead)
-     * @deprecated Use bArrowsRuntimeVisible for runtime visibility state
-     */
-    UPROPERTY(BlueprintReadOnly, Category = "Smart! Features", meta = (DeprecatedProperty, DeprecationMessage = "Use bArrowsRuntimeVisible instead"))
-    bool bArrowsVisible = true;
-
 	/** Has input been set up for the current player */
 	UPROPERTY()
 	bool bInputSetupCompleted = false;
@@ -763,9 +757,6 @@ protected:
 
     /** Baseline height when children were first spawned (for tracking vertical nudge delta) */
     float BaselineHeightZ = 0.0f;
-
-    /** Flag to track if blueprint proxy was spawned recently (for blueprint building detection) */
-    bool bBlueprintProxyRecentlySpawned = false;
 
     /** Blueprint proxy for the current Smart! grid placement session.
      * Groups all buildings placed in a single grid operation so they can be
@@ -1411,27 +1402,6 @@ private:
 	
 	/** Replace original hologram with custom one in build gun system */
 	bool ReplaceHologramInBuildGun(AFGHologram* OriginalHologram, AFGHologram* CustomHologram);
-
-	// ========================================
-	// Auto-Connect Service Integration
-	// ========================================
-	// Note: Belt preview helpers are now managed by SFAutoConnectService
-
-	/** Charge player inventory for belt construction cost based on belt length
-	 * @param BeltClass Belt class to get cost for
-	 * @param PlayerController Player to charge
-	 * @param BeltLengthCm Length of the belt in centimeters (UE units)
-	 * @return true if cost was successfully charged, false if player can't afford or error
-	 */
-	bool ChargePlayerForBelt(UClass* BeltClass, AFGPlayerController* PlayerController, float BeltLengthCm);
-
-	/** Charge player inventory for pipe construction cost based on pipe length
-	 * @param PipeClass Pipe class to get cost for
-	 * @param PlayerController Player to charge
-	 * @param PipeLengthCm Length of the pipe in centimeters (UE units)
-	 * @return true if cost was successfully charged, false if player can't afford or error
-	 */
-	bool ChargePlayerForPipe(UClass* PipeClass, AFGPlayerController* PlayerController, float PipeLengthCm);
 
 	// ========================================
 	// Debug Tools

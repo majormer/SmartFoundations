@@ -76,34 +76,7 @@ void USFGameInstanceModule::DispatchLifecycleEvent(ELifecyclePhase Phase)
 		// Register SML hook for blueprint construct (chain actor rebuilding like AutoLink)
 		RegisterBlueprintConstructHook();
 
-		// Widget hooks will be registered here once Blueprint widget is created
 	}
-}
-
-void USFGameInstanceModule::RegisterWidgetHooks()
-{
-	UE_LOG(LogSmartFoundations, Display, TEXT("Smart! GameInstanceModule: RegisterWidgetHooks called"));
-
-	// Widget Blueprint Hooks require:
-	// 1. A Blueprint widget asset in Content/SmartFoundations/UI/
-	// 2. Target widget path (e.g., /Game/FactoryGame/Interface/UI/InGame/FGGameUI.FGGameUI_C)
-	// 3. Named slot in target widget to inject into
-
-	// Example implementation (once Blueprint widget exists):
-	/*
-	if (CounterWidgetClass)
-	{
-		UWidgetBlueprintLibrary::RegisterWidgetBlueprintHook(
-			FSoftClassPath("/Game/FactoryGame/Interface/UI/InGame/FGGameUI.FGGameUI_C"),
-			FName("CounterOverlaySlot"),
-			CounterWidgetClass
-		);
-		UE_LOG(LogSmartFoundations, Display, TEXT("Registered counter widget hook into game HUD"));
-	}
-	*/
-
-	UE_LOG(LogSmartFoundations, Warning,
-		TEXT("Widget Blueprint Hooks require Blueprint asset - placeholder ready for future implementation"));
 }
 
 void USFGameInstanceModule::RegisterCostAggregationHook()

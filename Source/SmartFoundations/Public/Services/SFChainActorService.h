@@ -327,18 +327,4 @@ private:
 
 	/** Handle for the deferred post-upgrade zombie purge timer. */
 	FTimerHandle DeferredPurgeTimerHandle;
-
-	/**
-	 * Disabled orphan-bounce compatibility queue.
-	 *
-	 * Retained only so old object layouts/calls remain harmless while the in-game bounce
-	 * path is disabled. The queue is never populated; ProcessNextPendingBounce clears it.
-	 */
-	UPROPERTY()
-	TArray<TWeakObjectPtr<AFGBuildableConveyorBase>> PendingBounceQueue;
-
-	FTimerHandle BounceTimerHandle;
-
-	/** Disabled timer callback retained as a safety stub; it never bounces belts. */
-	void ProcessNextPendingBounce();
 };

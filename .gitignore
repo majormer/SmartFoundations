@@ -79,6 +79,11 @@ AGENTS.md
 # MCP server configurations and cache
 .playwright-mcp/
 mcp.json
+.mcp.json
+.cursor/
+.aider*
+.continue/
+.codeium/
 
 # Python virtual environments
 .venv/

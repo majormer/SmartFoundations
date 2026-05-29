@@ -30,24 +30,6 @@ public:
     // Update HUD text (owned by this service)
     void UpdateWidgetDisplay(const FString& FirstLine, const FString& SecondLine);
     
-    // Update belt cost display (for auto-connect preview)
-    void UpdateBeltCosts(const TArray<struct FItemAmount>& BeltCosts, const TArray<struct FItemAmount>& DistributorCosts, class UFGInventoryComponent* PlayerInventory = nullptr, class AFGCentralStorageSubsystem* CentralStorage = nullptr);
-    
-    // Clear belt cost display
-    void ClearBeltCosts();
-
-    // Update pipe cost display (for auto-connect preview)
-    void UpdatePipeCosts(const TArray<struct FItemAmount>& PipeCosts, class UFGInventoryComponent* PlayerInventory = nullptr, class AFGCentralStorageSubsystem* CentralStorage = nullptr);
-    
-    // Clear pipe cost display
-    void ClearPipeCosts();
-
-    // Update power line cost display (for auto-connect preview)
-    void UpdatePowerCosts(const TArray<struct FItemAmount>& PowerCosts, class UFGInventoryComponent* PlayerInventory = nullptr, class AFGCentralStorageSubsystem* CentralStorage = nullptr);
-    
-    // Clear power line cost display
-    void ClearPowerCosts();
-
     // Update lift height display (for conveyor lifts and pipe lifts)
     void UpdateLiftHeight(float LiftHeight, float WorldHeight);
     
@@ -83,30 +65,6 @@ private:
     // Cached current counter text (multi-line)
     FString CurrentCounterText;
     
-    // Cached belt cost text (separate section)
-    FString CurrentBeltCostText;
-    
-    // Cached belt availability (for color rendering)
-    TArray<int32> CachedBeltAvailability;
-
-    // Cached pipe cost text (separate section)
-    FString CurrentPipeCostText;
-    
-    // Cached pipe cost items (for icon rendering)
-    TArray<FItemAmount> CachedPipeCosts;
-    
-    // Cached pipe availability (for color rendering)
-    TArray<int32> CachedPipeAvailability;
-
-    // Cached power line cost text (separate section)
-    FString CurrentPowerCostText;
-    
-    // Cached power line cost items (for icon rendering)
-    TArray<FItemAmount> CachedPowerCosts;
-    
-    // Cached power line availability (for color rendering)
-    TArray<int32> CachedPowerAvailability;
-
     // Cached lift height values (for conveyor/pipe lifts)
     float CachedLiftHeight = 0.0f;
     float CachedWorldHeight = 0.0f;

@@ -45,7 +45,7 @@ class USFSubsystem;
  *     GetWorld(),
  *     HologramTransform,
  *     CurrentLastAxis,
- *     bArrowsVisible
+ *     bArrowsRuntimeVisible
  * );
  * 
  * // On destroy:

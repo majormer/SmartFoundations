@@ -44,7 +44,7 @@
  *     GetWorld(),
  *     HologramTransform,
  *     CurrentLastAxis,
- *     bArrowsVisible
+ *     bArrowsRuntimeVisible
  * );
  * 
  * // On axis input (e.g., Numpad 8):

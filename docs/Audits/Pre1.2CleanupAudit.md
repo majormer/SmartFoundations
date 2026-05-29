@@ -13,6 +13,9 @@ Status: baseline audit complete for pre-1.2 cleanup planning, not a cleanup plan
 ## Audit Log
 
 - 2026-05-29: Recorded this committed audit baseline as the pre-remediation rollback/compare anchor before starting cleanup implementation batches. Use this commit if a cleanup introduces build, editor, or runtime issues. The previous code-only anchor was `352f547915abf9c722b8c92afc35eab826d286b8`.
+- 2026-05-29: Cleanup batch 1 removed native-only stubs/inert artifacts for F001/F002/F009/F010/F026/F033/F047. Added static and manual validation notes to each remediated entry. Maintainer build and smoke tests passed for foundations, constructors, splitters, auto-connect, pipe/power checks, Blueprint proxy grouping, HUD sanity, and Smart Upgrade triage.
+- 2026-05-29: Cleanup batch 2 removed source-only reflected/content-verified cleanup items for F018/F019/F021/F023. Maintainer build and smoke tests passed for Smart input, arrows, mod configuration registration, and HUD display. Player-relative controls were confirmed as not implemented/active, matching the removed detached service evidence. Left binary/content and larger behavior-sensitive cleanup items for later batches.
+- 2026-05-29: Cleanup batch 3 removed dead cost/build-result helpers for F028/F037/F045. Current authoritative cost behavior remains child-hologram/vanilla cost aggregation for placement and inline per-item Smart Upgrade affordability/deduction.
 - 2026-05-28: Source/config/docs discovery pass using `rg` over `Source`, `Config`, `docs`, `.windsurf`, and `CHANGELOG.md`. Created initial deduplicated findings.
 - 2026-05-28: Targeted follow-up pass for tracked backup files, misleading disabled names, pure helper modules, and SmartRestore doc status. Added F010-F013 and expanded F008 instead of duplicating missing-doc findings.
 - 2026-05-28: Migration-risk marker pass over TODO/deprecated/legacy/RPC terms. Added F014-F015; grouped adapter stubs together and kept multiplayer replication separate from RCO validation placeholders.
@@ -83,8 +86,10 @@ Keep:
 - Evidence checked: `rg` found only declarations and definitions. Implementations return `false`/no-op and point to missing `docs/Future_Features_Analysis.md`.
 - Risk/impact: Low direct behavior risk if truly uncalled, but public helper API may be retained accidentally.
 - Classification: `remove now`
-- Remediation Status: Not started.
-- Recommended next action: In cleanup phase, remove these stubs or mark `do not touch` only if an external/reflection caller is found.
+- Remediation Status: Remediated in cleanup batch 1; removed the helper declarations and definitions after confirming no callers.
+- Test/verification note: Static check `rg "CanAutoConnect|ApplyAutoConnect|CanExtend|ApplyExtend" Source\SmartFoundations` should return no helper-stub hits. Manual smoke: retest scaled foundation placement, Auto-Connect belt placement, and Extend chain placement to confirm the dedicated services still drive behavior.
+- Validation result: Maintainer build and smoke tests passed on 2026-05-29.
+- Recommended next action: Run the listed smoke tests before committing this cleanup batch.
 
 ### F002 - Missing referenced future-features document
 
@@ -93,8 +98,10 @@ Keep:
 - Evidence checked: `Test-Path docs/Future_Features_Analysis.md` returned false; `rg --files docs | rg "Future|future|Analysis"` found no replacement.
 - Risk/impact: Misleads future maintainers during cleanup or 1.2 port triage.
 - Classification: `doc mismatch`
-- Remediation Status: Not started.
-- Recommended next action: Remove the references when handling F001, or replace with current Auto-Connect/Extend service docs if stubs remain.
+- Remediation Status: Remediated in cleanup batch 1 through F001 removal; the stale source references to `docs/Future_Features_Analysis.md` were removed with the stubs.
+- Test/verification note: Static check `rg "Future_Features_Analysis" Source\SmartFoundations` should return no live source references.
+- Validation result: Static/source cleanup covered by the passing cleanup batch 1 build on 2026-05-29.
+- Recommended next action: No further action unless a new stale reference appears in a later docs pass.
 
 ### F003 - SFRCO authority and rate-limit checks are placeholders
 
@@ -163,8 +170,10 @@ Keep:
 - Evidence checked: `rg` found no callers for `UpdateBeltCosts`, `ClearBeltCosts`, `UpdatePipeCosts`, `ClearPipeCosts`, `UpdatePowerCosts`, or `ClearPowerCosts` outside definitions. Cached cost fields only appear in the header and `ResetState`.
 - Risk/impact: Low if strictly native-only; higher if external modules or Blueprint-facing paths were expected, though the service methods are not marked `UFUNCTION`.
 - Classification: `remove now`
-- Remediation Status: Not started.
-- Recommended next action: In cleanup phase, remove no-op cost methods and unused cached cost fields after one final caller/content check.
+- Remediation Status: Remediated in cleanup batch 1; removed the no-op HUD cost methods and unused cached cost fields.
+- Test/verification note: Static check `rg "UpdateBeltCosts|ClearBeltCosts|UpdatePipeCosts|ClearPipeCosts|UpdatePowerCosts|ClearPowerCosts" Source\SmartFoundations` should only show unrelated live names such as `ClearBeltCostsForDistributor`. Manual smoke: place foundations, constructors, splitters, belt auto-connect, pipe auto-connect, and power auto-connect while confirming HUD counters/lift height still render and build costs still come from child hologram cost aggregation.
+- Validation result: Maintainer build and smoke tests passed on 2026-05-29.
+- Recommended next action: Run the listed HUD and cost smoke tests before committing this cleanup batch.
 
 ### F010 - Tracked `.cpp.old` backup files under Source
 
@@ -173,8 +182,10 @@ Keep:
 - Evidence checked: `git ls-files "*.old"` returns only these files. `rg` found no references to either `.cpp.old` file or `.cpp.old` generally.
 - Risk/impact: Low. The files are not normal C++ build inputs and appear to be stale backups, but should receive one final content/history check before deletion.
 - Classification: `remove now`
-- Remediation Status: Not started.
-- Recommended next action: In cleanup phase, remove both tracked backup files if no maintainer-specific archive purpose exists.
+- Remediation Status: Remediated in cleanup batch 1; removed both tracked `.cpp.old` backup files.
+- Test/verification note: Static check `rg --files Source\SmartFoundations | rg "\.cpp\.old$"` should return no files. No runtime smoke specific to this item is required because these were not build inputs.
+- Validation result: Maintainer build passed on 2026-05-29.
+- Recommended next action: No further action unless another tracked backup artifact appears.
 
 ### F011 - Architecture disabled registry file is live despite name
 
@@ -253,8 +264,10 @@ Keep:
 - Evidence checked: `rg USFInputActions|SFInputActions|InputActionTagBindings` found only the class declaration/implementation and old config names; no subsystem/service code loads or references a `USFInputActions` asset. Targeted binary scan of `Content/` found current `InputAction`/`FGInputMappingContext` assets but no obvious `USFInputActions`/`SFInputActions` asset reference. SMLMCP editor asset inventory found 20 current `InputAction` assets and one `FGInputMappingContext`, and an asset-registry dependency scan found no Smart asset references to `USFInputActions`, `SFInputActions`, or `InputActions`.
 - Risk/impact: Low/medium. The class is reflected, but current source and editor asset registry evidence both show no active user. Coordinate cleanup with F017 so stale config and the old wrapper do not leave confusing partial input paths.
 - Classification: `remove now`
-- Remediation Status: Not started.
-- Recommended next action: In cleanup phase, remove `USFInputActions` and its implementation, then resolve F017's old config/action-name mismatch separately.
+- Remediation Status: Remediated in cleanup batch 2; removed `USFInputActions` and its implementation.
+- Test/verification note: Static check `rg "USFInputActions|SFInputActions|InputActionTagBindings" Source\SmartFoundations` should return no results. Manual smoke: verify Smart input still binds and appears in-game for scaling, spacing, nudge, and mouse wheel behavior; F017 still tracks stale config/action-name cleanup separately.
+- Validation result: Maintainer build and Smart input smoke tests passed on 2026-05-29.
+- Recommended next action: Run the listed input smoke tests before committing this cleanup batch.
 
 ### F019 - Axis label and direction translation services appear detached from active UI/control flow
 
@@ -263,8 +276,10 @@ Keep:
 - Evidence checked: `rg` found `USFAxisLabelProvider`/`USFDirectionTranslationService` references only in their headers/implementations plus `AGENTS.md`. UI/HUD code formats axis labels directly and current control flow uses `ESFScaleAxis`/counter state rather than these services. SMLMCP asset-registry dependency scan over Smart content found no references to `SFAxisLabelProvider` or `SFDirectionTranslationService`.
 - Risk/impact: Low. Both classes are reflected, but source and editor-visible content checks now agree that they are detached. Docs currently overstate their role in active service ownership.
 - Classification: `remove now`
-- Remediation Status: Not started.
-- Recommended next action: In cleanup phase, remove or archive the helpers and update architecture docs/agent instructions so they no longer appear as live services.
+- Remediation Status: Remediated in cleanup batch 2; removed the detached axis label and direction translation service classes and updated agent architecture notes.
+- Test/verification note: Static check `rg "USFAxisLabelProvider|SFAxisLabelProvider|USFDirectionTranslationService|SFDirectionTranslationService|EPlayerDirection|FSFAxisMapping|FSFDirectionMappingSet" Source\SmartFoundations AGENTS.md` should return no results. Manual smoke: toggle player-relative/hologram-relative controls if available and confirm HUD/control labels still reflect the current active formatting path.
+- Validation result: Maintainer build passed on 2026-05-29. Player-relative controls were confirmed not implemented/active, so no runtime toggle path was required.
+- Recommended next action: Run the listed HUD/control-label smoke tests before committing this cleanup batch.
 
 ### F020 - Legacy DrawDebug arrow module appears replaced by static mesh module
 
@@ -283,8 +298,10 @@ Keep:
 - Evidence checked: `rg bArrowsVisible|bArrowsRuntimeVisible` found the deprecated reflected property, sync writes in `ToggleArrows` and `SetArrowVisibilityFromRPC`, config restore writes to `bArrowsRuntimeVisible`, and comments/examples in both arrow module headers. Native logic otherwise reads `bArrowsRuntimeVisible`. Binary text scan of `Content/` found no obvious references. SMLMCP asset-registry dependency scan found no Smart content references to `bArrowsVisible`.
 - Risk/impact: Low/medium. Removing a reflected property can break external Blueprint users, but no repo-owned content references it and the runtime state has already moved to `bArrowsRuntimeVisible`.
 - Classification: `remove now`
-- Remediation Status: Not started.
-- Recommended next action: In cleanup phase, remove the deprecated mirror/sync writes and update arrow examples. Keep this as a scoped compatibility cleanup rather than mixing it with the static-mesh arrow module cleanup in F020.
+- Remediation Status: Remediated in cleanup batch 2; removed the deprecated reflected mirror/sync writes and updated arrow examples to `bArrowsRuntimeVisible`.
+- Test/verification note: Static check `rg "bArrowsVisible" Source\SmartFoundations` should return no results. Manual smoke: toggle arrows on/off, trigger axis highlights, and verify arrows still follow `bArrowsRuntimeVisible`.
+- Validation result: Maintainer build and arrow smoke tests passed on 2026-05-29.
+- Recommended next action: Run the listed arrow visibility smoke tests before committing this cleanup batch.
 
 ### F022 - Smart Upgrade result row widget class appears bypassed by current generated rows
 
@@ -303,8 +320,10 @@ Keep:
 - Evidence checked: `rg RegisterWidgetHooks|CounterWidgetClass` found only the declaration, commented example body, property, and method definition. `DispatchLifecycleEvent` registers config, cost aggregation, and blueprint construct hooks but does not call `RegisterWidgetHooks`. Binary text scan of `SFGameInstanceModule_BP.uasset` shows the Blueprint is parented to `SFGameInstanceModule` and serializes `SmartConfigClass` to `Smart_Config_C`. SMLMCP `get_class_defaults` confirms `CounterWidgetClass = null`, `SmartConfigClass = Smart_Config_C`, `bRootModule = true`, and both `WidgetBlueprintHooks` and `BlueprintHooks` are empty.
 - Risk/impact: Low. The active module Blueprint path is live for config registration, but the widget hook/property is editor-proven unset and inactive.
 - Classification: `remove now`
-- Remediation Status: Not started.
-- Recommended next action: In cleanup phase, remove the placeholder hook/property while keeping `SmartConfigClass` and root module registration intact.
+- Remediation Status: Remediated in cleanup batch 2; removed the placeholder widget hook and unset `CounterWidgetClass` while preserving `SmartConfigClass` and lifecycle hook registration.
+- Test/verification note: Static check `rg "RegisterWidgetHooks|CounterWidgetClass" Source\SmartFoundations` should return no results. Manual smoke: open the mod configuration menu and confirm Smart configuration still registers; confirm HUD still appears through `USFHudService`.
+- Validation result: Maintainer build, mod configuration, and HUD smoke tests passed on 2026-05-29.
+- Recommended next action: Run the listed config/HUD smoke tests before committing this cleanup batch.
 
 ### F024 - AccessTransformer UHT anchor path is 1.2-sensitive and partly self-contradictory
 
@@ -333,8 +352,10 @@ Keep:
 - Evidence checked: `rg FSFPipeChainResolver|PipeChainResolver|EvaluateJunctionManifolds|Task 75` found the class declaration, implementation, and an include in `SFPipeAutoConnectManager.cpp`; no call sites. The implementation only logs readiness and TODOs for grouping/chaining.
 - Risk/impact: Low. Native-only helper with no behavior. The include may also be stale if the manager no longer uses it.
 - Classification: `remove now`
-- Remediation Status: Not started.
-- Recommended next action: Remove the resolver and unused include in cleanup, unless a current 1.2 pipe-junction design explicitly needs this exact placeholder retained.
+- Remediation Status: Remediated in cleanup batch 1; removed the placeholder resolver header/source and stale include.
+- Test/verification note: Static check `rg "FSFPipeChainResolver|PipeChainResolver|EvaluateJunctionManifolds" Source\SmartFoundations` should return no results. Manual smoke: place pipe junctions with pipe auto-connect enabled and confirm previews/builds still route through the current `SFPipeAutoConnectManager` path.
+- Validation result: Maintainer build and pipe auto-connect smoke tests passed on 2026-05-29.
+- Recommended next action: Run the listed pipe junction auto-connect smoke test before committing this cleanup batch.
 
 ### F027 - Conveyor connection helper appears superseded by current Extend/wiring paths
 
@@ -353,8 +374,9 @@ Keep:
 - Evidence checked: `rg ChargePlayerForBelt|ChargePlayerForPipe` found only declarations and definitions. The pipe junction auto-connect block logs "using vanilla child hologram system" then returns before the legacy deferred construction code. Module startup now hooks `AFGHologram::GetCost` for preview cost aggregation.
 - Risk/impact: Medium/high if accidentally reactivated, especially for 1.2 cost multipliers and central-storage rules. Low current runtime impact if truly uncalled/unreachable.
 - Classification: `remove now`
-- Remediation Status: Not started.
-- Recommended next action: In cleanup, remove the manual charge helpers and unreachable deferred pipe construction block after one final caller check. Keep current `GetCost`/child-hologram cost path documented as authoritative.
+- Remediation Status: Remediated in cleanup batch 3; removed manual belt/pipe charge helpers and the unreachable legacy pipe deferred-build tail after the active vanilla child-hologram branch.
+- Test/verification note: Static check `rg "ChargePlayerForBelt|ChargePlayerForPipe|FPipeBuildData|PendingPipeData" Source\SmartFoundations` should return no results except any unrelated historical docs. Manual smoke: place belt and pipe auto-connect builds with normal costs and insufficient materials, confirming vanilla child hologram cost aggregation still charges/blocks correctly.
+- Recommended next action: Run the listed belt/pipe auto-connect affordability smoke tests before committing this cleanup batch.
 
 ### F029 - Network helper exists without active callers
 
@@ -403,8 +425,10 @@ Keep:
 - Evidence checked: `rg bBlueprintProxyRecentlySpawned` found the subsystem field declaration only in `SFSubsystem.h`. The service initializes, sets, clears, reads, and exposes its own field through `IsBlueprintProxyRecentlySpawned`. `USFSubsystem::ClearBlueprintProxyFlag` delegates to `RecipeManagementService->ClearBlueprintProxyFlag()` and does not use the subsystem field.
 - Risk/impact: Low. The subsystem field is not reflected and appears to be stale extraction residue, but the active service flag is behavior-sensitive for recipe application around blueprint proxy spawns.
 - Classification: `remove now`
-- Remediation Status: Not started.
-- Recommended next action: In cleanup phase, remove only the unused subsystem member. Do not remove or alter the service-level flag without retesting blueprint proxy recipe behavior.
+- Remediation Status: Remediated in cleanup batch 1; removed only the unused `USFSubsystem` member and left the active `USFRecipeManagementService` flag intact.
+- Test/verification note: Static check `rg "bBlueprintProxyRecentlySpawned" Source\SmartFoundations` should show only `SFRecipeManagementService` references. Manual smoke: place a scaled grid that creates a Blueprint proxy, then verify recipe restoration/Smart Dismantle proxy grouping still works.
+- Validation result: Maintainer build and Blueprint proxy smoke tests passed on 2026-05-29.
+- Recommended next action: Run the listed Blueprint proxy recipe/grouping smoke test before committing this cleanup batch. Continue to preserve the service-level flag.
 
 ### F034 - Build.cs still carries broad starter dependency ballast
 
@@ -443,8 +467,9 @@ Keep:
 - Evidence checked: `rg CalculateTotalUpgradeCost|CanAffordUpgrade|DeductUpgradeCosts` found only declarations and definitions. The live belt/pipe/lift/pole upgrade branches calculate net cost inline from hologram/recipe cost plus dismantle refunds, then call inventory/central-storage APIs directly.
 - Risk/impact: Low code risk if removed later; medium maintenance risk while kept because these helpers encode a different deduction order/refund model than the live path.
 - Classification: `remove now`
-- Remediation Status: Not started.
-- Recommended next action: Remove the unused helper declarations/definitions in cleanup after one final caller check. Do not use these helpers as the basis for 1.2 cost migration.
+- Remediation Status: Remediated in cleanup batch 3; removed unused Smart Upgrade batch cost helper declarations/definitions.
+- Test/verification note: Static check `rg "CalculateTotalUpgradeCost|CanAffordUpgrade|DeductUpgradeCosts" Source\SmartFoundations` should return no results. Manual smoke: run Smart Upgrade audit, verify displayed/previewed costs, test an affordability failure if practical, then perform at least one successful upgrade.
+- Recommended next action: Run the listed Smart Upgrade audit/cost/affordability smoke tests before committing this cleanup batch.
 
 ### F038 - Smart Upgrade cost/refund handling is duplicated across live family paths
 
@@ -523,8 +548,9 @@ Keep:
 - Evidence checked: `rg` found `GetBuiltBuildable` and `WasBuilt` only in their declarations/definitions. `bWasBuilt` and `CreatedActor` are written in `SFConveyorBeltHologram.cpp`, `SFConveyorLiftHologram.cpp`, and `SFPipelineHologram.cpp`; no active caller reads those fields outside the unused registry helpers. Binary text scan of `Content/` found no obvious references to the field/helper names.
 - Risk/impact: Low if caller checks confirm no plugin/content dependency, but the fields are `UPROPERTY` members inside a reflected struct, so cleanup should still be deliberate.
 - Classification: `remove now`
-- Remediation Status: Not started.
-- Recommended next action: In cleanup phase, remove the unused registry helpers and write-only build-result fields, then recheck logistics post-build wiring paths to confirm no intended future reader was lost.
+- Remediation Status: Remediated in cleanup batch 3; removed unused registry readers and write-only build-result fields/writes from belt, lift, and pipe hologram construct paths.
+- Test/verification note: Static check `rg "GetBuiltBuildable|WasBuilt|bWasBuilt|CreatedActor" Source\SmartFoundations` should return no results. Manual smoke: place belts, lifts, and pipes through normal, Extend, stackable, and auto-connect paths where practical; confirm post-build wiring still registers through active Extend/pipe metadata.
+- Recommended next action: Run the listed logistics post-build wiring smoke tests before committing this cleanup batch.
 
 ### F046 - 1.2 conveyor-chain subsystem may replace private chain workarounds
 
@@ -543,8 +569,10 @@ Keep:
 - Evidence checked: `SFChainActorService.h` labels the queue and timer callback disabled and says the queue is never populated. `rg PendingBounce|BounceTimerHandle|ProcessNextPendingBounce` found only the member declarations and callback implementation. `ProcessNextPendingBounce` resets the queue and clears its timer. Live orphan repair now uses `RepairOrphanedBelts` with `ReRegisterAndQueueVanillaRebuildForBelts`, and Smart Upgrade current-flow docs already list stale bounce queue cleanup as a maintainability item.
 - Risk/impact: Low. Removing it later should not affect current repair behavior, but keep the historical crash comments around `RepairOrphanedBelts` so the unsafe bounce approach is not reintroduced.
 - Classification: `remove now`
-- Remediation Status: Not started.
-- Recommended next action: In cleanup phase, remove the disabled queue/timer/callback and update Smart Upgrade docs to say the bounce path was removed, while preserving the "do not restore bounce repair" warning near the active triage repair code.
+- Remediation Status: Remediated in cleanup batch 1; removed the disabled queue, timer handle, and callback while leaving the active triage repair path unchanged.
+- Test/verification note: Static check `rg "PendingBounceQueue|BounceTimerHandle|ProcessNextPendingBounce" Source\SmartFoundations` should return no results. Manual smoke: use Smart Upgrade triage/repair on belts and confirm orphan repair still re-registers through `RepairOrphanedBelts` without reintroducing bounce behavior.
+- Validation result: Maintainer build and Smart Upgrade triage smoke tests passed on 2026-05-29.
+- Recommended next action: Run the listed Smart Upgrade triage/repair smoke test before committing this cleanup batch, and preserve the "do not restore bounce repair" warning near the active triage repair code.
 
 ## Checked False Positives
 

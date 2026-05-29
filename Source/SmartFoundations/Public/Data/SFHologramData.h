@@ -6,7 +6,6 @@
 
 // Forward declarations
 class AFGHologram;
-class AFGBuildable;
 class UFGRecipe;
 class UFGPipeConnectionComponentBase;
 class UFGFactoryConnectionComponent;
@@ -42,13 +41,6 @@ struct SMARTFOUNDATIONS_API FSFHologramData {
     
     UPROPERTY()
     bool bIsChildHologram = false;
-    
-    // Construction tracking
-    UPROPERTY()
-    bool bWasBuilt = false;
-    
-    UPROPERTY()
-    AFGBuildable* CreatedActor = nullptr;
     
     // Recipe copying support
     UPROPERTY()

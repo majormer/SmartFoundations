@@ -359,47 +359,6 @@ public:
 	 */
 	const FGridIndex& GetBatchGridIndex(int32 IndexInBatch) const;
 
-	// ========================================
-	// Future Feature Integration Points
-	// (Stubs for Auto-Connect and Extend features)
-	// ========================================
-
-	/**
-	 * Check if two holograms can be auto-connected
-	 * STUB - To be implemented for Auto-Connect feature
-	 * 
-	 * @param Source Source hologram
-	 * @param Target Target hologram
-	 * @return true if auto-connect is possible
-	 */
-	bool CanAutoConnect(const AFGHologram* Source, const AFGHologram* Target) const;
-
-	/**
-	 * Apply auto-connection between two holograms
-	 * STUB - To be implemented for Auto-Connect feature
-	 * 
-	 * @param Source Source hologram
-	 * @param Target Target hologram
-	 */
-	void ApplyAutoConnect(AFGHologram* Source, AFGHologram* Target);
-
-	/**
-	 * Check if hologram can be extended
-	 * STUB - To be implemented for Extend feature
-	 * 
-	 * @param Hologram Hologram to check
-	 * @return true if extend is possible
-	 */
-	bool CanExtend(const AFGHologram* Hologram) const;
-
-	/**
-	 * Apply extend operation to hologram
-	 * STUB - To be implemented for Extend feature
-	 * 
-	 * @param Hologram Hologram to extend
-	 */
-	void ApplyExtend(AFGHologram* Hologram);
-
 private:
 	/** World context */
 	TWeakObjectPtr<UWorld> WorldContext;

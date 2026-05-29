@@ -599,45 +599,6 @@ TPair<FString, FString> USFHudService::BuildCounterDisplayLines() const
 	return TPair<FString, FString>(FirstLine, SecondLine);
 }
 
-void USFHudService::UpdateBeltCosts(const TArray<FItemAmount>& BeltCosts, const TArray<FItemAmount>& DistributorCosts, UFGInventoryComponent* PlayerInventory, AFGCentralStorageSubsystem* CentralStorage)
-{
-	// DEPRECATED: Child holograms now aggregate costs automatically via GetCost()
-	// This method is kept for API compatibility but does nothing
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("💰 HUD: UpdateBeltCosts called (deprecated - child holograms handle costs)"));
-}
-
-void USFHudService::ClearBeltCosts()
-{
-	// DEPRECATED: Child holograms now aggregate costs automatically via GetCost()
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("💰 HUD: ClearBeltCosts called (deprecated - child holograms handle costs)"));
-}
-
-void USFHudService::UpdatePipeCosts(const TArray<FItemAmount>& PipeCosts, UFGInventoryComponent* PlayerInventory, AFGCentralStorageSubsystem* CentralStorage)
-{
-	// DEPRECATED: Child holograms now aggregate costs automatically via GetCost()
-	// This method is kept for API compatibility but does nothing
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("💰 HUD: UpdatePipeCosts called (deprecated - child holograms handle costs)"));
-}
-
-void USFHudService::ClearPipeCosts()
-{
-	// DEPRECATED: Child holograms now aggregate costs automatically via GetCost()
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("💰 HUD: ClearPipeCosts called (deprecated - child holograms handle costs)"));
-}
-
-void USFHudService::UpdatePowerCosts(const TArray<FItemAmount>& PowerCosts, UFGInventoryComponent* PlayerInventory, AFGCentralStorageSubsystem* CentralStorage)
-{
-	// DEPRECATED: Child holograms now aggregate costs automatically via GetCost()
-	// This method is kept for API compatibility but does nothing
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("💰 HUD: UpdatePowerCosts called (deprecated - child holograms handle costs)"));
-}
-
-void USFHudService::ClearPowerCosts()
-{
-	// DEPRECATED: Child holograms now aggregate costs automatically via GetCost()
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("💰 HUD: ClearPowerCosts called (deprecated - child holograms handle costs)"));
-}
-
 void USFHudService::UpdateLiftHeight(float LiftHeight, float WorldHeight)
 {
 	CachedLiftHeight = LiftHeight;
@@ -654,16 +615,6 @@ void USFHudService::ResetState()
 {
 	// Clear all cached display text
 	CurrentCounterText.Empty();
-	CurrentBeltCostText.Empty();
-	CurrentPipeCostText.Empty();
-	CurrentPowerCostText.Empty();
-
-	// Clear all cached cost arrays
-	CachedBeltAvailability.Empty();
-	CachedPipeCosts.Empty();
-	CachedPipeAvailability.Empty();
-	CachedPowerCosts.Empty();
-	CachedPowerAvailability.Empty();
 
 	// Clear lift height
 	CachedLiftHeight = 0.0f;

@@ -1011,19 +1011,6 @@ int32 USFChainActorService::RepairOrphanedBelts(FSFChainRepairResult* OutResult)
 	return ReRegisteredBelts;
 }
 
-void USFChainActorService::ProcessNextPendingBounce()
-{
-	// Retained for ABI stability; bounce queue is never populated in diagnostic mode.
-	PendingBounceQueue.Reset();
-	if (USFSubsystem* Sub = Subsystem.Get())
-	{
-		if (UWorld* World = Sub->GetWorld())
-		{
-			World->GetTimerManager().ClearTimer(BounceTimerHandle);
-		}
-	}
-}
-
 void USFChainActorService::RunPostLoadRepair()
 {
 	const FSFChainDiagnosticResult Result = DetectChainActorIssues();

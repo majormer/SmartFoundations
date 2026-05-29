@@ -37,12 +37,6 @@ public:
     // Cleanup dead weak pointers (call periodically)
     static void CleanupDeadEntries();
     
-    // Get the built buildable from a hologram (returns nullptr if not built or invalid)
-    static AFGBuildable* GetBuiltBuildable(AFGHologram* Hologram);
-    
-    // Check if a hologram was successfully built
-    static bool WasBuilt(AFGHologram* Hologram);
-    
 private:
     // Map of weak hologram pointers to data structures (deterministic safety)
     static TMap<TWeakObjectPtr<AFGHologram>, FSFHologramData> HologramDataMap;
