@@ -15,7 +15,7 @@ import re
 import sys
 
 BASE = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "Content", "Localization", "SmartFoundations"))
-LANGS = ["de","es","fr","it","ja","ko","pl","pt-BR","ru","zh-Hans","zh-Hant","tr","bg","hu","no","uk","vi"]
+LANGS = ["de","es","fr","it","ja","ko","pl","pt-BR","ru","zh-Hans","zh-Hant","tr","bg","hu","no","uk","vi","ar","fa","th"]
 
 def parse_po(path):
     """Parse .po file into dict of {key: msgstr}."""

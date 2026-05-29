@@ -291,7 +291,7 @@ msgstr "Pipelinepumpen"
 
 msgctxt "SmartFoundations,Family_PowerPole"
 msgid "Power Poles"
-msgstr "Strommasten"
+msgstr "Strommast"
 
 msgctxt "SmartFoundations,Family_WallOutletSingle"
 msgid "Wall Outlets (Single)"
@@ -303,7 +303,7 @@ msgstr "Wandstromverteiler (zweiseitig)"
 
 msgctxt "SmartFoundations,Family_Tower"
 msgid "Power Towers"
-msgstr "Stromturmmasten"
+msgstr "Hochspannungsmast"
 
 #. Config menu DisplayName and ToolTip strings
 

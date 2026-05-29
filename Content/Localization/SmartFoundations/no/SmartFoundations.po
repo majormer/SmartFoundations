@@ -281,7 +281,7 @@ msgstr "Transportbånd"
 
 msgctxt "SmartFoundations,Family_Lift"
 msgid "Conveyor Lifts"
-msgstr "Transportheiser"
+msgstr "Transportbåndheiser"
 
 msgctxt "SmartFoundations,Family_Pipe"
 msgid "Pipelines"
@@ -293,19 +293,19 @@ msgstr "Rørpumper"
 
 msgctxt "SmartFoundations,Family_PowerPole"
 msgid "Power Poles"
-msgstr "Strømstolper"
+msgstr "Strømstolpe"
 
 msgctxt "SmartFoundations,Family_WallOutletSingle"
 msgid "Wall Outlets (Single)"
-msgstr "Vegguttak (enkle)"
+msgstr "Veggpoler (enkle)"
 
 msgctxt "SmartFoundations,Family_WallOutletDouble"
 msgid "Wall Outlets (Double)"
-msgstr "Vegguttak (doble)"
+msgstr "Veggpoler (doble)"
 
 msgctxt "SmartFoundations,Family_Tower"
 msgid "Power Towers"
-msgstr "Strømtårn"
+msgstr "Kraftmast"
 
 msgctxt "SmartFoundations,Family_Unknown"
 msgid "Unknown"

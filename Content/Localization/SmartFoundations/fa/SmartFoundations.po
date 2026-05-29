@@ -277,15 +277,15 @@ msgstr "تنظیمات: {0}"
 
 msgctxt "SmartFoundations,Family_Belt"
 msgid "Conveyor Belts"
-msgstr "نوارهای نقاله"
+msgstr "تسمه نقاله ها"
 
 msgctxt "SmartFoundations,Family_Lift"
 msgid "Conveyor Lifts"
-msgstr "بالابرهای نقاله"
+msgstr "آسانسور های نقاله ایی"
 
 msgctxt "SmartFoundations,Family_Pipe"
 msgid "Pipelines"
-msgstr "لوله‌ها"
+msgstr "خطوط لوله"
 
 msgctxt "SmartFoundations,Family_Pump"
 msgid "Pipeline Pumps"
@@ -293,19 +293,19 @@ msgstr "پمپ‌های لوله"
 
 msgctxt "SmartFoundations,Family_PowerPole"
 msgid "Power Poles"
-msgstr "تیرهای برق"
+msgstr "تیر برق"
 
 msgctxt "SmartFoundations,Family_WallOutletSingle"
 msgid "Wall Outlets (Single)"
-msgstr "پریزهای دیواری (تکی)"
+msgstr "پریز های برق (تکی)"
 
 msgctxt "SmartFoundations,Family_WallOutletDouble"
 msgid "Wall Outlets (Double)"
-msgstr "پریزهای دیواری (دوتایی)"
+msgstr "پریز های برق (دوتایی)"
 
 msgctxt "SmartFoundations,Family_Tower"
 msgid "Power Towers"
-msgstr "برج‌های برق"
+msgstr "دکل برق"
 
 msgctxt "SmartFoundations,Family_Unknown"
 msgid "Unknown"

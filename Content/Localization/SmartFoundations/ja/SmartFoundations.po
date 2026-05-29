@@ -275,11 +275,11 @@ msgstr "設定: {0}"
 
 msgctxt "SmartFoundations,Family_Belt"
 msgid "Conveyor Belts"
-msgstr "コンベアベルト"
+msgstr "コンベア・ベルト"
 
 msgctxt "SmartFoundations,Family_Lift"
 msgid "Conveyor Lifts"
-msgstr "コンベアリフト"
+msgstr "コンベア・リフト"
 
 msgctxt "SmartFoundations,Family_Pipe"
 msgid "Pipelines"
@@ -295,11 +295,11 @@ msgstr "電柱"
 
 msgctxt "SmartFoundations,Family_WallOutletSingle"
 msgid "Wall Outlets (Single)"
-msgstr "壁掛け配電器（片面）"
+msgstr "壁用電源差込口（片面）"
 
 msgctxt "SmartFoundations,Family_WallOutletDouble"
 msgid "Wall Outlets (Double)"
-msgstr "壁掛け配電器（両面）"
+msgstr "壁用電源差込口（両面）"
 
 msgctxt "SmartFoundations,Family_Tower"
 msgid "Power Towers"

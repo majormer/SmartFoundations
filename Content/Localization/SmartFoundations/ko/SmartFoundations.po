@@ -295,11 +295,11 @@ msgstr "전신주"
 
 msgctxt "SmartFoundations,Family_WallOutletSingle"
 msgid "Wall Outlets (Single)"
-msgstr "벽면 배전기 (단면)"
+msgstr "벽 부착형 전신주 (단면)"
 
 msgctxt "SmartFoundations,Family_WallOutletDouble"
 msgid "Wall Outlets (Double)"
-msgstr "벽면 배전기 (양면)"
+msgstr "벽 부착형 전신주 (양면)"
 
 msgctxt "SmartFoundations,Family_Tower"
 msgid "Power Towers"

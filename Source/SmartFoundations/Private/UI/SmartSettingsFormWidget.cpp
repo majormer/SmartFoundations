@@ -14,6 +14,7 @@
 #include "Styling/SlateTypes.h"
 #include "InputCoreTypes.h"
 #include "SmartFoundations.h"
+#include "UI/SFFontLibrary.h"
 #include "Subsystem/SFSubsystem.h"
 
 #include "Features/AutoConnect/SFAutoConnectService.h"
@@ -35,6 +36,9 @@ void USmartSettingsFormWidget::NativeConstruct()
     Super::NativeConstruct();
 
     UE_LOG(LogSmartFoundations, Log, TEXT("Settings Form: NativeConstruct called"));
+
+    // Switch designer-placed (and localized) labels/fields to the in-game multi-script font.
+    SFFont::ApplyToWidgetTree(WidgetTree);
 
     // Check if Blueprint widgets are bound
     if (!BackgroundPanel)
@@ -129,9 +133,7 @@ void USmartSettingsFormWidget::NativeConstruct()
             SpinBox->SetMinDesiredWidth(400.0f);  // Wider for easier interaction
 
             // Increase font size for readability
-            FSlateFontInfo FontInfo = SpinBox->GetFont();
-            FontInfo.Size = 18;
-            SpinBox->SetFont(FontInfo);
+            SpinBox->SetFont(SFFont::Get(18));
 
             SpinBox->OnValueCommitted.AddDynamic(this, &USmartSettingsFormWidget::OnSpinBoxValueCommitted);
             SpinBox->OnValueChanged.AddDynamic(this, &USmartSettingsFormWidget::OnGridSpinBoxValueChanged);
@@ -154,9 +156,7 @@ void USmartSettingsFormWidget::NativeConstruct()
             SpinBox->SetMinDesiredWidth(400.0f);  // Wider for easier interaction
 
             // Increase font size for readability
-            FSlateFontInfo FontInfo = SpinBox->GetFont();
-            FontInfo.Size = 18;
-            SpinBox->SetFont(FontInfo);
+            SpinBox->SetFont(SFFont::Get(18));
 
             SpinBox->OnValueCommitted.AddDynamic(this, &USmartSettingsFormWidget::OnSpinBoxValueCommitted);
             SpinBox->OnValueChanged.AddDynamic(this, &USmartSettingsFormWidget::OnSpinBoxValueChanged);
@@ -194,9 +194,7 @@ void USmartSettingsFormWidget::NativeConstruct()
             SpinBox->SetMaxFractionalDigits(1);
             SpinBox->SetMinDesiredWidth(400.0f);
 
-            FSlateFontInfo FontInfo = SpinBox->GetFont();
-            FontInfo.Size = 18;
-            SpinBox->SetFont(FontInfo);
+            SpinBox->SetFont(SFFont::Get(18));
 
             SpinBox->OnValueCommitted.AddDynamic(this, &USmartSettingsFormWidget::OnSpinBoxValueCommitted);
             SpinBox->OnValueChanged.AddDynamic(this, &USmartSettingsFormWidget::OnSpinBoxValueChanged);
@@ -2333,10 +2331,8 @@ UWidget* USmartSettingsFormWidget::CreateRecipeDetailRow(UTexture2D* Icon, const
         TextWidget->SetText(FText::FromString(Text));
         TextWidget->SetColorAndOpacity(FSlateColor(TextColor));
 
-        // Set font to match HUD style
-        FSlateFontInfo FontInfo = TextWidget->GetFont();
-        FontInfo.Size = 14;
-        TextWidget->SetFont(FontInfo);
+        // Set font to match HUD style (in-game multi-script font)
+        TextWidget->SetFont(SFFont::Get(14));
 
         UHorizontalBoxSlot* TextSlot = Row->AddChildToHorizontalBox(TextWidget);
         if (TextSlot)

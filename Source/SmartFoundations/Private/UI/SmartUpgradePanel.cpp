@@ -1,5 +1,6 @@
 #include "UI/SmartUpgradePanel.h"
 #include "SmartFoundations.h"
+#include "UI/SFFontLibrary.h"
 #include "FGPlayerController.h"
 #include "Subsystem/SFSubsystem.h"
 #include "Services/SFHudService.h"
@@ -49,6 +50,10 @@ void USmartUpgradePanel::NativeConstruct()
 	Super::NativeConstruct();
 
 	UE_LOG(LogSmartFoundations, Log, TEXT("Upgrade Panel: NativeConstruct"));
+
+	// Switch designer-placed (and localized) labels to the in-game multi-script font so
+	// Arabic/Persian/Thai/CJK render correctly. Runtime-built rows route through SFFont::Get below.
+	SFFont::ApplyToWidgetTree(WidgetTree);
 
 	// ========== BACKGROUND & HEADER LAYOUT ==========
 
@@ -796,10 +801,8 @@ void USmartUpgradePanel::UpdateAuditUI(const FSFUpgradeAuditResult& Result)
 
 			UTextBlock* SectionHeader = NewObject<UTextBlock>(this);
 			SectionHeader->SetText(FText::FromString(SectionName));
-			FSlateFontInfo HeaderFont = SectionHeader->GetFont();
-			HeaderFont.Size = 12;
-			HeaderFont.TypefaceFontName = FName("Bold");
-			SectionHeader->SetFont(HeaderFont);
+			// FactoryFont is a single-face font (no Bold weight); the orange color distinguishes the header.
+			SectionHeader->SetFont(SFFont::Get(12));
 			SectionHeader->SetColorAndOpacity(FSlateColor(FLinearColor(0.886f, 0.498f, 0.118f, 1.0f))); // Orange
 
 			UVerticalBoxSlot* HeaderSlot = ActiveResultsContainer->AddChildToVerticalBox(SectionHeader);
@@ -856,8 +859,7 @@ void USmartUpgradePanel::UpdateAuditUI(const FSFUpgradeAuditResult& Result)
 					// Column 1: Count (right-aligned, fixed width)
 					UTextBlock* CountText = NewObject<UTextBlock>(this);
 					CountText->SetText(FText::FromString(FString::Printf(TEXT("%d"), Bucket.Count)));
-					FSlateFontInfo RowFont = CountText->GetFont();
-					RowFont.Size = 11;
+					FSlateFontInfo RowFont = SFFont::Get(11);
 					CountText->SetFont(RowFont);
 					CountText->SetColorAndOpacity(FSlateColor(RowTextColor));
 					CountText->SetJustification(ETextJustify::Right);
@@ -2160,10 +2162,7 @@ void USmartUpgradePanel::UpdateTraversalUI(const FSFTraversalResult& Result)
 
 			UTextBlock* TierText = NewObject<UTextBlock>(this);
 			TierText->SetText(FText::FromString(FString::Printf(TEXT("  Mk%d: %d"), Tier, Count)));
-
-			FSlateFontInfo FontInfo = TierText->GetFont();
-			FontInfo.Size = 12;
-			TierText->SetFont(FontInfo);
+			TierText->SetFont(SFFont::Get(12));
 			TierText->SetColorAndOpacity(FSlateColor(FLinearColor::White));
 
 			TraversalResultsContainer->AddChild(TierText);

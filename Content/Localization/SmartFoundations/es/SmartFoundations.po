@@ -279,7 +279,7 @@ msgstr "Cintas transportadoras"
 
 msgctxt "SmartFoundations,Family_Lift"
 msgid "Conveyor Lifts"
-msgstr "Elevadores de cinta"
+msgstr "Cintas elevadoras"
 
 msgctxt "SmartFoundations,Family_Pipe"
 msgid "Pipelines"
@@ -291,19 +291,19 @@ msgstr "Bombas de tubería"
 
 msgctxt "SmartFoundations,Family_PowerPole"
 msgid "Power Poles"
-msgstr "Postes eléctricos"
+msgstr "Poste de electricidad"
 
 msgctxt "SmartFoundations,Family_WallOutletSingle"
 msgid "Wall Outlets (Single)"
-msgstr "Distribuidores de pared (simple)"
+msgstr "Tomas de corriente de pared (simple)"
 
 msgctxt "SmartFoundations,Family_WallOutletDouble"
 msgid "Wall Outlets (Double)"
-msgstr "Distribuidores de pared (doble)"
+msgstr "Tomas de corriente de pared (doble)"
 
 msgctxt "SmartFoundations,Family_Tower"
 msgid "Power Towers"
-msgstr "Torres eléctricas"
+msgstr "Torre de energía"
 
 #. Config menu DisplayName and ToolTip strings
 

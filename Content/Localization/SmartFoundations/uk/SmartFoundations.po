@@ -281,7 +281,7 @@ msgstr "Конвеєрні стрічки"
 
 msgctxt "SmartFoundations,Family_Lift"
 msgid "Conveyor Lifts"
-msgstr "Конвеєрні ліфти"
+msgstr "Конвеєрні підіймачі"
 
 msgctxt "SmartFoundations,Family_Pipe"
 msgid "Pipelines"
@@ -293,19 +293,19 @@ msgstr "Трубні насоси"
 
 msgctxt "SmartFoundations,Family_PowerPole"
 msgid "Power Poles"
-msgstr "Електричні стовпи"
+msgstr "Електростовп"
 
 msgctxt "SmartFoundations,Family_WallOutletSingle"
 msgid "Wall Outlets (Single)"
-msgstr "Настінні розетки (одинарні)"
+msgstr "Розетки (одинарні)"
 
 msgctxt "SmartFoundations,Family_WallOutletDouble"
 msgid "Wall Outlets (Double)"
-msgstr "Настінні розетки (подвійні)"
+msgstr "Розетки (подвійні)"
 
 msgctxt "SmartFoundations,Family_Tower"
 msgid "Power Towers"
-msgstr "Електричні вежі"
+msgstr "Опора ЛЕП"
 
 msgctxt "SmartFoundations,Family_Unknown"
 msgid "Unknown"

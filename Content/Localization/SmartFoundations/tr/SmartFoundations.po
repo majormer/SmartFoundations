@@ -275,11 +275,11 @@ msgstr "Ayarlar: {0}"
 
 msgctxt "SmartFoundations,Family_Belt"
 msgid "Conveyor Belts"
-msgstr "Konveyör Bantları"
+msgstr "Taşıma Bantları"
 
 msgctxt "SmartFoundations,Family_Lift"
 msgid "Conveyor Lifts"
-msgstr "Konveyör Asansörleri"
+msgstr "Taşıma Asansörleri"
 
 msgctxt "SmartFoundations,Family_Pipe"
 msgid "Pipelines"
@@ -291,19 +291,19 @@ msgstr "Boru Hattı Pompaları"
 
 msgctxt "SmartFoundations,Family_PowerPole"
 msgid "Power Poles"
-msgstr "Elektrik Direkleri"
+msgstr "Elektrik Direği"
 
 msgctxt "SmartFoundations,Family_WallOutletSingle"
 msgid "Wall Outlets (Single)"
-msgstr "Duvar Dağıtıcıları (Tek)"
+msgstr "Duvar Prizleri (Tek)"
 
 msgctxt "SmartFoundations,Family_WallOutletDouble"
 msgid "Wall Outlets (Double)"
-msgstr "Duvar Dağıtıcıları (Çift)"
+msgstr "Duvar Prizleri (Çift)"
 
 msgctxt "SmartFoundations,Family_Tower"
 msgid "Power Towers"
-msgstr "Elektrik Kuleleri"
+msgstr "Enerji Kulesi"
 
 #. Config menu DisplayName and ToolTip strings
 

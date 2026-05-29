@@ -275,11 +275,11 @@ msgstr "Ustawienia: {0}"
 
 msgctxt "SmartFoundations,Family_Belt"
 msgid "Conveyor Belts"
-msgstr "Taśmy transportowe"
+msgstr "Taśmociągi"
 
 msgctxt "SmartFoundations,Family_Lift"
 msgid "Conveyor Lifts"
-msgstr "Windy taśmowe"
+msgstr "Podnośniki taśmowe"
 
 msgctxt "SmartFoundations,Family_Pipe"
 msgid "Pipelines"
@@ -291,19 +291,19 @@ msgstr "Pompy rurociągowe"
 
 msgctxt "SmartFoundations,Family_PowerPole"
 msgid "Power Poles"
-msgstr "Słupy energetyczne"
+msgstr "Słup energetyczny"
 
 msgctxt "SmartFoundations,Family_WallOutletSingle"
 msgid "Wall Outlets (Single)"
-msgstr "Ścienne rozdzielacze (jednostronne)"
+msgstr "Gniazda ścienne (jednostronne)"
 
 msgctxt "SmartFoundations,Family_WallOutletDouble"
 msgid "Wall Outlets (Double)"
-msgstr "Ścienne rozdzielacze (dwustronne)"
+msgstr "Gniazda ścienne (dwustronne)"
 
 msgctxt "SmartFoundations,Family_Tower"
 msgid "Power Towers"
-msgstr "Wieże energetyczne"
+msgstr "Wieża energetyczna"
 
 #. Config menu DisplayName and ToolTip strings
 

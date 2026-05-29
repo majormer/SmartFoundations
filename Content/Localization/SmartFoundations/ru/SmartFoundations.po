@@ -291,19 +291,19 @@ msgstr "Насосы"
 
 msgctxt "SmartFoundations,Family_PowerPole"
 msgid "Power Poles"
-msgstr "Электростолбы"
+msgstr "Электростолб"
 
 msgctxt "SmartFoundations,Family_WallOutletSingle"
 msgid "Wall Outlets (Single)"
-msgstr "Настенные распределители (односторонние)"
+msgstr "Розетки (односторонние)"
 
 msgctxt "SmartFoundations,Family_WallOutletDouble"
 msgid "Wall Outlets (Double)"
-msgstr "Настенные распределители (двусторонние)"
+msgstr "Розетки (двусторонние)"
 
 msgctxt "SmartFoundations,Family_Tower"
 msgid "Power Towers"
-msgstr "Электровышки"
+msgstr "Опора ЛЭП"
 
 #. Config menu DisplayName and ToolTip strings
 

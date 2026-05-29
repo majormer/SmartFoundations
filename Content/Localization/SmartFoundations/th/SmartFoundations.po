@@ -281,7 +281,7 @@ msgstr "สายพานลำเลียง"
 
 msgctxt "SmartFoundations,Family_Lift"
 msgid "Conveyor Lifts"
-msgstr "ลิฟต์สายพาน"
+msgstr "ระบบลิฟต์ลำเลียง"
 
 msgctxt "SmartFoundations,Family_Pipe"
 msgid "Pipelines"
@@ -297,15 +297,15 @@ msgstr "เสาไฟฟ้า"
 
 msgctxt "SmartFoundations,Family_WallOutletSingle"
 msgid "Wall Outlets (Single)"
-msgstr "เต้ารับผนัง (เดี่ยว)"
+msgstr "ขั้วต่อสายไฟ (เดี่ยว)"
 
 msgctxt "SmartFoundations,Family_WallOutletDouble"
 msgid "Wall Outlets (Double)"
-msgstr "เต้ารับผนัง (คู่)"
+msgstr "ขั้วต่อสายไฟ (คู่)"
 
 msgctxt "SmartFoundations,Family_Tower"
 msgid "Power Towers"
-msgstr "หอไฟฟ้า"
+msgstr "เสาไฟฟ้าแรงสูง"
 
 msgctxt "SmartFoundations,Family_Unknown"
 msgid "Unknown"

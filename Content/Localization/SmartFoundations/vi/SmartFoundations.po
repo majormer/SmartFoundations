@@ -277,15 +277,15 @@ msgstr "Cài đặt: {0}"
 
 msgctxt "SmartFoundations,Family_Belt"
 msgid "Conveyor Belts"
-msgstr "Băng chuyền"
+msgstr "Băng Tải"
 
 msgctxt "SmartFoundations,Family_Lift"
 msgid "Conveyor Lifts"
-msgstr "Thang nâng băng chuyền"
+msgstr "Thang Máy Băng Tải"
 
 msgctxt "SmartFoundations,Family_Pipe"
 msgid "Pipelines"
-msgstr "Đường ống"
+msgstr "Đường Ống"
 
 msgctxt "SmartFoundations,Family_Pump"
 msgid "Pipeline Pumps"
@@ -293,19 +293,19 @@ msgstr "Bơm ống"
 
 msgctxt "SmartFoundations,Family_PowerPole"
 msgid "Power Poles"
-msgstr "Cột điện"
+msgstr "Cột Điện"
 
 msgctxt "SmartFoundations,Family_WallOutletSingle"
 msgid "Wall Outlets (Single)"
-msgstr "Ổ cắm tường (đơn)"
+msgstr "Ổ Cắm Tường (đơn)"
 
 msgctxt "SmartFoundations,Family_WallOutletDouble"
 msgid "Wall Outlets (Double)"
-msgstr "Ổ cắm tường (đôi)"
+msgstr "Ổ Cắm Tường (đôi)"
 
 msgctxt "SmartFoundations,Family_Tower"
 msgid "Power Towers"
-msgstr "Tháp điện"
+msgstr "Cột Điện Cao Thế"
 
 msgctxt "SmartFoundations,Family_Unknown"
 msgid "Unknown"
