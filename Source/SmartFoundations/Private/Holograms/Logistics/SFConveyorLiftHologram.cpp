@@ -10,6 +10,7 @@
 #include "Features/Extend/SFExtendService.h"
 #include "Services/SFHudService.h"
 #include "Subsystem/SFSubsystem.h"
+#include "FGConstructDisqualifier.h"
 
 ASFConveyorLiftHologram::ASFConveyorLiftHologram()
 {
@@ -103,8 +104,20 @@ void ASFConveyorLiftHologram::CheckValidPlacement()
     
     if (bShouldSkipValidation)
     {
-        // Force valid placement state - don't call Super which would add disqualifiers
-        SetPlacementMaterialState(EHologramMaterialState::HMS_OK);
+        // Child previews don't add their own disqualifiers, but still mirror the Extend
+        // preview's authoritative state so insufficient-materials red propagates here.
+        // Reading the parent directly can still see HMS_OK before the build gun applies
+        // the parent's red this frame; the service flag is frame-order independent.
+        // The build gun derives preview red/cyan from construct disqualifiers, not from
+        // SetPlacementMaterialState. Carry the parent's "unaffordable" disqualifier when broke.
+        const EHologramMaterialState ChildState = USFExtendService::ResolveChildPreviewMaterialState(this);
+        ResetConstructDisqualifiers();
+        if (ChildState == EHologramMaterialState::HMS_ERROR)
+        {
+            AddConstructDisqualifier(UFGCDUnaffordable::StaticClass());
+        }
+        SetPlacementMaterialState(ChildState);
+        ForceApplyHologramMaterial();
         return;
     }
     
@@ -191,9 +204,6 @@ AActor* ASFConveyorLiftHologram::Construct(TArray<AActor*>& out_children, FNetCo
             }
             if (HoloData)
             {
-                HoloData->bWasBuilt = true;
-                HoloData->CreatedActor = Cast<AFGBuildable>(BuiltActor);
-
                 // Register with ExtendService for post-build wiring using shared helper
                 if (AFGBuildableConveyorBase* ConveyorBase = Cast<AFGBuildableConveyorBase>(BuiltActor))
                 {

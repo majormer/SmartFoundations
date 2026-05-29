@@ -4,6 +4,7 @@
 #include "Data/SFHologramData.h"
 #include "Features/Extend/SFExtendService.h"
 #include "Subsystem/SFSubsystem.h"
+#include "FGConstructDisqualifier.h"
 
 ASFPowerPoleChildHologram::ASFPowerPoleChildHologram()
 {
@@ -17,7 +18,14 @@ void ASFPowerPoleChildHologram::CheckValidPlacement()
     
     if (bShouldSkip)
     {
-        SetPlacementMaterialState(EHologramMaterialState::HMS_OK);
+        // Build gun paints previews from construct disqualifiers; carry the parent's when unaffordable.
+        const EHologramMaterialState ChildState = USFExtendService::ResolveChildPreviewMaterialState(this);
+        ResetConstructDisqualifiers();
+        if (ChildState == EHologramMaterialState::HMS_ERROR)
+        {
+            AddConstructDisqualifier(UFGCDUnaffordable::StaticClass());
+        }
+        SetPlacementMaterialState(ChildState);
         return;
     }
     

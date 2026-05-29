@@ -4,6 +4,7 @@
 #include "Data/SFHologramData.h"
 #include "Features/Extend/SFExtendService.h"
 #include "Subsystem/SFSubsystem.h"
+#include "FGConstructDisqualifier.h"
 #include "Logging/LogMacros.h"
 
 ASFConveyorAttachmentChildHologram::ASFConveyorAttachmentChildHologram()
@@ -20,9 +21,18 @@ void ASFConveyorAttachmentChildHologram::CheckValidPlacement()
     
     if (bShouldSkip)
     {
-        // CRITICAL: Force HMS_OK when skipping validation
-        SetPlacementMaterialState(EHologramMaterialState::HMS_OK);
-        return; // Skip validation - always valid
+        // The build gun derives a preview's red/cyan from its construct disqualifiers, NOT from
+        // SetPlacementMaterialState (GetHologramMaterialState reflects disqualifiers). Mirror the
+        // extend's authoritative state by carrying the same "unaffordable" disqualifier the parent
+        // does; cleared when affordable so the preview returns to cyan.
+        const EHologramMaterialState ChildState = USFExtendService::ResolveChildPreviewMaterialState(this);
+        ResetConstructDisqualifiers();
+        if (ChildState == EHologramMaterialState::HMS_ERROR)
+        {
+            AddConstructDisqualifier(UFGCDUnaffordable::StaticClass());
+        }
+        SetPlacementMaterialState(ChildState);
+        return; // Skip own validation - state mirrors the extend parent
     }
     
     // Normal validation

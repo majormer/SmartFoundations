@@ -9,6 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [30.0.1] - Unreleased
+
+> *Draft entry — collects all changes since the v30.0.0 release.*
+
+### Fixed
+- **Extend previews now show affordability correctly, and honor the Dimensional Depot** - When Extending a factory with auto-connected belts, pipes, and lifts, running short on materials turned the factory red but left the attached belts and pipes cyan, making it look like part of the placement was affordable. Now the whole Extend preview - factory, belts, pipes, lifts, distributors, poles, and wires - turns red together when you genuinely can't afford it, and returns to cyan the moment it's buildable again. The affordability check also counts materials in your Dimensional Depot, so an Extend you can build from the Depot is no longer incorrectly shown as unaffordable.
+- **Corrected the Rotation Mode control description** - The Rotation Mode entry under Options > Controls > Mods showed an inaccurate description; it now reads correctly.
+
+### Improved
+- **Smoother grid scaling** - Reworked how Smart! spawns and refreshes grid preview holograms while scaling, improving stability and performance on large grid layouts.
+
+### Technical
+- **Pre-1.2 cleanup pass** - Removed dead and orphaned code ahead of the Satisfactory 1.2 port: unused services (axis-label provider, direction-translation service), legacy input-action definitions, the obsolete pipe chain resolver, and stale backup files; trimmed the core subsystem and upgrade service (~3,400 lines removed). No intended gameplay change.
+- **Extend child-state propagation refactor** - Child preview holograms now read an authoritative material state from the Extend service rather than each inferring it from the parent, resolving the frame-ordering issue behind the insufficient-materials fix above.
+- **Satisfactory 1.2 readiness** - Added the 1.2 porting plan, a multiplayer support planning matrix, and structured GitHub issue forms.
+- **Documentation & project** - New GitHub wiki content, a player FAQ, Smart Camera control docs, and refreshed ficsit.app support metadata.
+
+---
+
 ## [30.0.0] - 2026-05-03
 
 ### Added

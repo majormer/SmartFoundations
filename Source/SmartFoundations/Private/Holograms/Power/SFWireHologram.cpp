@@ -1,5 +1,7 @@
 #include "Holograms/Power/SFWireHologram.h"
 #include "SmartFoundations.h"
+#include "Features/Extend/SFExtendService.h"  // ResolveChildPreviewMaterialState
+#include "FGConstructDisqualifier.h"
 #include "Buildables/FGBuildableWire.h"
 #include "Buildables/FGBuildablePowerPole.h"
 #include "Hologram/FGHologram.h"
@@ -92,6 +94,14 @@ void ASFWireHologram::CheckValidPlacement()
 	if (GetParentHologram())
 	{
 		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT(" Wire child preview - skipping placement validation"));
+		// Build gun paints previews from construct disqualifiers; carry the parent's when unaffordable.
+		const EHologramMaterialState ChildState = USFExtendService::ResolveChildPreviewMaterialState(this);
+		ResetConstructDisqualifiers();
+		if (ChildState == EHologramMaterialState::HMS_ERROR)
+		{
+			AddConstructDisqualifier(UFGCDUnaffordable::StaticClass());
+		}
+		SetPlacementMaterialState(ChildState);
 		return;
 	}
 

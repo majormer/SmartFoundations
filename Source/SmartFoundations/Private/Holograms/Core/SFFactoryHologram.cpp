@@ -7,6 +7,9 @@
 #include "Subsystem/SFSubsystem.h"
 #include "Data/SFHologramDataRegistry.h"
 #include "Features/Extend/SFExtendService.h"
+#include "Holograms/Logistics/SFConveyorBeltHologram.h"
+#include "Holograms/Logistics/SFConveyorLiftHologram.h"
+#include "Holograms/Logistics/SFPipelineHologram.h"
 #include "Logging/SFLogMacros.h"
 
 ASFFactoryHologram::ASFFactoryHologram()
@@ -178,6 +181,67 @@ void ASFFactoryHologram::CheckValidPlacement()
     
     // Normal mode — use vanilla clearance checks
     Super::CheckValidPlacement();
+}
+
+void ASFFactoryHologram::CheckCanAfford(UFGInventoryComponent* inventory)
+{
+    // Vanilla CheckCanAfford ignores the Dimensional Depot, so an extend that is buildable only
+    // from the depot would be flagged FGCDUnaffordable (red). During extend, defer to the extend
+    // service's depot-aware affordability so the preview matches what construction will actually do.
+    if (USFSubsystem* SmartSubsystem = USFSubsystem::Get(this))
+    {
+        if (SmartSubsystem->IsExtendModeActive())
+        {
+            if (USFExtendService* ExtendSvc = SmartSubsystem->GetExtendService())
+            {
+                if (ExtendSvc->CanAffordExtendCost(this, inventory))
+                {
+                    return;  // Affordable via inventory + Dimensional Depot - add no disqualifier.
+                }
+                AddConstructDisqualifier(UFGCDUnaffordable::StaticClass());
+                return;
+            }
+        }
+    }
+
+    Super::CheckCanAfford(inventory);
+}
+
+void ASFFactoryHologram::SetPlacementMaterialState(EHologramMaterialState materialState)
+{
+    Super::SetPlacementMaterialState(materialState);
+
+    for (AFGHologram* Child : mChildren)
+    {
+        if (!IsValid(Child))
+        {
+            continue;
+        }
+
+        const bool bIsSmartChild =
+            Child->Tags.Contains(FName(TEXT("SF_ExtendChild"))) ||
+            Child->GetFName().ToString().StartsWith(TEXT("Json"));
+
+        if (!bIsSmartChild)
+        {
+            continue;
+        }
+
+        Child->SetPlacementMaterialState(materialState);
+
+        if (ASFConveyorLiftHologram* LiftChild = Cast<ASFConveyorLiftHologram>(Child))
+        {
+            LiftChild->ForceApplyHologramMaterial();
+        }
+        else if (ASFConveyorBeltHologram* BeltChild = Cast<ASFConveyorBeltHologram>(Child))
+        {
+            BeltChild->ForceApplyHologramMaterial();
+        }
+        else if (ASFPipelineHologram* PipeChild = Cast<ASFPipelineHologram>(Child))
+        {
+            PipeChild->ForceApplyHologramMaterial();
+        }
+    }
 }
 
 void ASFFactoryHologram::ApplyStoredRecipe(AActor* Building) const

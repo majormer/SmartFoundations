@@ -9,6 +9,7 @@
 #include "Data/SFHologramDataRegistry.h"
 #include "Features/Extend/SFExtendService.h"
 #include "Subsystem/SFSubsystem.h"
+#include "FGConstructDisqualifier.h"
 #include "Kismet/GameplayStatics.h"
 #include "FGBuildable.h"
 #include "Buildables/FGBuildablePassthrough.h"
@@ -65,6 +66,16 @@ void ASFPipelineHologram::CheckValidPlacement()
 	if (GetParentHologram())
 	{
 		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Pipe child preview - skipping placement validation"));
+		// The build gun derives preview red/cyan from construct disqualifiers, not from
+		// SetPlacementMaterialState. Carry the parent's "unaffordable" disqualifier so the
+		// pipe preview turns red; cleared when affordable so it returns to cyan.
+		const EHologramMaterialState ChildState = USFExtendService::ResolveChildPreviewMaterialState(this);
+		ResetConstructDisqualifiers();
+		if (ChildState == EHologramMaterialState::HMS_ERROR)
+		{
+			AddConstructDisqualifier(UFGCDUnaffordable::StaticClass());
+		}
+		SetPlacementMaterialState(ChildState);
 		return;
 	}
 
@@ -126,13 +137,7 @@ AActor* ASFPipelineHologram::Construct(TArray<AActor*>& out_children, FNetConstr
 				BuiltActor->Tags.AddUnique(FName(TEXT("SF_ExtendChild")));
 			}
 			
-			// Register hologram → buildable mapping for post-build wiring
 			FSFHologramData* HoloData = USFHologramDataRegistry::GetData(this);
-			if (HoloData)
-			{
-				HoloData->bWasBuilt = true;
-				HoloData->CreatedActor = Cast<AFGBuildable>(BuiltActor);
-			}
 			
 			// Log the mapping for debugging
 			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 %s: ✅ Pipe hologram %s → Buildable %s (ID: %u), discarded %d child actors"), 
@@ -547,11 +552,11 @@ bool ASFPipelineHologram::TryUseBuildModeRouting(
 
 void ASFPipelineHologram::SetPlacementMaterialState(EHologramMaterialState materialState)
 {
-	// Configure spline mesh components for hologram rendering
-	// CRITICAL: Vanilla pipe holograms use the NATIVE pipe material (not hologram material)
-	// The hologram effect comes from custom depth stencil settings, not material override
+	Super::SetPlacementMaterialState(materialState);
+
 	TArray<USplineMeshComponent*> MeshComps;
 	GetComponents<USplineMeshComponent>(MeshComps);
+	const uint8 StencilValue = GetStencilForHologramMaterialState(materialState);
 	
 	// If no spline meshes are present, skip the rest to avoid log spam
 	if (MeshComps.Num() == 0)
@@ -563,11 +568,8 @@ void ASFPipelineHologram::SetPlacementMaterialState(EHologramMaterialState mater
 	{
 		if (Mesh)
 		{
-			// CRITICAL: Set custom depth stencil to match vanilla hologram rendering
-			// Vanilla uses StencilValue=5, StencilWriteMask=0 (NOT 1 and 255)
-			// This creates the hologram glow effect while keeping the native material
 			Mesh->SetRenderCustomDepth(true);
-			Mesh->SetCustomDepthStencilValue(5);
+			Mesh->SetCustomDepthStencilValue(StencilValue);
 			Mesh->SetCustomDepthStencilWriteMask(ERendererStencilMask::ERSM_Default);
 			
 			// Force render state update
@@ -577,9 +579,10 @@ void ASFPipelineHologram::SetPlacementMaterialState(EHologramMaterialState mater
 		}
 	}
 	
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🎨 PIPE SetPlacementMaterialState: State=%d, SplineMeshes=%d (using native material with StencilValue=5)"),
+	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🎨 PIPE SetPlacementMaterialState: State=%d, SplineMeshes=%d, Stencil=%d"),
 		(int32)materialState,
-		MeshComps.Num());
+		MeshComps.Num(),
+		(int32)StencilValue);
 }
 
 void ASFPipelineHologram::SetupPipeSpline(UFGPipeConnectionComponentBase* StartConnector, UFGPipeConnectionComponentBase* EndConnector)
@@ -966,13 +969,13 @@ void ASFPipelineHologram::SetSplineDataAndUpdate(const TArray<FSplinePointData>&
 
 void ASFPipelineHologram::ForceApplyHologramMaterial()
 {
-	// Configure spline mesh components for hologram rendering
-	// CRITICAL: Vanilla pipe holograms use the NATIVE pipe material (not hologram material)
-	// The hologram effect comes from custom depth stencil settings, not material override
+	SetPlacementMaterialState(GetHologramMaterialState());
+
 	TArray<USplineMeshComponent*> SplineMeshes;
 	GetComponents<USplineMeshComponent>(SplineMeshes);
 	
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🎨 PIPE ForceApplyHologramMaterial: Configuring %d spline meshes (using native material with StencilValue=5)"), 
+	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🎨 PIPE ForceApplyHologramMaterial: Applied state %d to %d spline meshes"),
+		(int32)GetHologramMaterialState(),
 		SplineMeshes.Num());
 	
 	for (int32 i = 0; i < SplineMeshes.Num(); i++)
@@ -980,14 +983,6 @@ void ASFPipelineHologram::ForceApplyHologramMaterial()
 		USplineMeshComponent* SplineMesh = SplineMeshes[i];
 		if (SplineMesh)
 		{
-			// CRITICAL: Set custom depth stencil to match vanilla hologram rendering
-			// Vanilla uses StencilValue=5, StencilWriteMask=0 (NOT 1 and 255)
-			// This creates the hologram glow effect while keeping the native material
-			SplineMesh->SetRenderCustomDepth(true);
-			SplineMesh->SetCustomDepthStencilValue(5);
-			SplineMesh->SetCustomDepthStencilWriteMask(ERendererStencilMask::ERSM_Default);
-			SplineMesh->MarkRenderStateDirty();
-			
 			UStaticMesh* Mesh = SplineMesh->GetStaticMesh();
 			UMaterialInterface* Mat = SplineMesh->GetMaterial(0);
 			
@@ -1104,6 +1099,7 @@ void ASFPipelineHologram::TriggerMeshGeneration()
 			NewMesh->SetStaticMesh(PipeMesh);
 			NewMesh->SetMobility(EComponentMobility::Movable);
 			NewMesh->SetForwardAxis(ESplineMeshAxis::X);
+			NewMesh->ComponentTags.AddUnique(AFGHologram::HOLOGRAM_MESH_TAG);
 			
 			// Apply tier-specific material from CDO (e.g., MI_PipeMK2 for Mk2 pipes)
 			if (PipeMaterial)
@@ -1116,6 +1112,21 @@ void ASFPipelineHologram::TriggerMeshGeneration()
 			NewMesh->SetVisibility(true, true);
 			
 			MeshComps.Add(NewMesh);
+		}
+	}
+
+	if (FArrayProperty* SplineMeshesProp = FindFProperty<FArrayProperty>(AFGPipelineHologram::StaticClass(), TEXT("mSplineMeshes")))
+	{
+		if (TArray<USplineMeshComponent*>* NativeSplineMeshes = SplineMeshesProp->ContainerPtrToValuePtr<TArray<USplineMeshComponent*>>(this))
+		{
+			NativeSplineMeshes->Reset();
+			for (USplineMeshComponent* MeshComp : MeshComps)
+			{
+				if (MeshComp)
+				{
+					NativeSplineMeshes->Add(MeshComp);
+				}
+			}
 		}
 	}
 	
@@ -1159,9 +1170,8 @@ void ASFPipelineHologram::TriggerMeshGeneration()
 	UE_LOG(LogSmartFoundations, Log, TEXT("🔧 PIPE TriggerMeshGeneration: Created %d segments of %.1f cm each"), 
 		MeshComps.Num(), SegmentLength);
 	
-	// CRITICAL: Apply hologram material to newly created mesh components
-	// Without this, the meshes render with default black material
-	SetPlacementMaterialState(EHologramMaterialState::HMS_OK);
+	// Apply the current hologram material state to newly created mesh components.
+	SetPlacementMaterialState(GetHologramMaterialState());
 	
 	// Check actor position
 	FVector ActorLoc = GetActorLocation();

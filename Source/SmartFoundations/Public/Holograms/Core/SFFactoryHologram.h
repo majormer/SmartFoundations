@@ -29,6 +29,13 @@ public:
     // Without this, vanilla's clearance detection adds encroachment disqualifiers
     // that prevent building, especially with rotation.
     virtual void CheckValidPlacement() override;
+
+    /** Depot-aware affordability during Extend: vanilla CheckCanAfford ignores the Dimensional
+     *  Depot, which would flag an extend buildable only from the depot as unaffordable (red). */
+    virtual void CheckCanAfford(class UFGInventoryComponent* inventory) override;
+
+    /** Propagate parent placement material changes to Smart-owned child previews. */
+    virtual void SetPlacementMaterialState(EHologramMaterialState materialState) override;
     
     /**
      * Initialize this hologram with the build class from another hologram.
