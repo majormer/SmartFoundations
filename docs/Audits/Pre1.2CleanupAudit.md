@@ -52,14 +52,18 @@ Status: baseline audit complete for pre-1.2 cleanup planning, not a cleanup plan
 - 2026-05-28: Final curation pass over finding IDs, required fields, recommendation buckets, false positives, and dedup notes. No new actionable findings; confirmed 47 unique findings and the summary split below.
 - 2026-05-28: SMLMCP editor verification pass. `validate_mod` reported 36 Smart assets, 0 errors, and 0 warnings. Editor input summary confirmed 20 current `InputAction` assets and one `FGInputMappingContext`. Asset registry/CDO checks found no Smart content references for `USFInputActions`, axis/direction helper services, deprecated `bArrowsVisible`, `USFUpgradeResultRow`/`RowWidgetClass`, module `CounterWidgetClass`, or the trivial specialized hologram subclasses. Reclassified F018/F019/F021/F022/F023/F042 from `needs verification` to `remove now`.
 - 2026-05-29: SmartCamera sibling-mod integration check. SmartCamera depends on SmartFoundations and consumes `USFSubsystem::Get`, `OnHologramCreated`, `OnHologramDestroyed`, `TryAcquireHologramLock`, `TryReleaseHologramLock`, `GetFurthestTopHologramPosition`, and the current `/SmartFoundations/.../IA_Smart_MouseWheel` asset. No `remove now` finding targets these integration surfaces; refined F017 caution to avoid deleting current input assets while cleaning stale config names.
+- 2026-05-29: Cleanup batches 1-3 committed as `b1eca6f` (pre-1.2 cleanup: deletions + trims for F001/F002/F009/F010/F018/F019/F021/F023/F026/F028/F033/F037/F045/F047). The Extend affordability/preview fix committed separately as `60d1b05` (not an audit finding). Working tree is now clean except untracked `HANDOFF.md`.
+- 2026-05-29: Cleanup batch 4 committed as `1a22d61` (F042 empty hologram subclasses + `Public/Holograms/README.md` rewrite; F022 `USFUpgradeResultRow`/`RowWidgetClass`). Re-verified safe against the editor side via SMLMCP before deletion: no widget or actor Blueprint derives from any removed class, and no Smart asset references them. This completes every `remove now` / safe-1.1 cleanup candidate on the code side. The only deferred remove-now sub-item is the orphaned `WBP_UpgradeResultRow.uasset` (editor-side content deletion).
+- 2026-05-29: Merge-scope note. Several `doc mismatch` / workflow findings target files that are gitignored and therefore never merge to `main`: F031/F041 (and the `.windsurf/` parts of F032), `MIGRATION_PLAN.md` (F044), and `AGENTS.md`. These do not block the merge; fix them in the working copies as convenient. Tracked documentation fixes that do affect the merge: F005, F007, F008, F013, F036, F040 (plus any non-`.windsurf` portions of F032).
 
 ## Current Recommendation Summary
 
 Current count: 47 findings. Classification split: 15 `remove now`, 11 `doc mismatch`, 10 `needs verification`, 10 `defer to 1.2`, 1 `do not touch`.
 
-Safe 1.1 cleanup candidates after final caller/content checks:
+Safe 1.1 cleanup candidates — ALL REMEDIATED on the code side (committed in cleanup batches 1-4: `b1eca6f`, `1a22d61`):
 
 - `F001`, `F009`, `F010`, `F018`, `F019`, `F021`, `F022`, `F023`, `F026`, `F028`, `F033`, `F037`, `F042`, `F045`, `F047`
+- Only deferred sub-item: delete the orphaned `WBP_UpgradeResultRow.uasset` in the editor (F022 content tail).
 
 Documentation-only fixes that can be handled before 1.2 without behavior changes:
 
@@ -310,8 +314,9 @@ Keep:
 - Evidence checked: `rg USFUpgradeResultRow|RowWidgetClass|SetupRow` found `RowWidgetClass` declared on the panel and `USFUpgradeResultRow::SetupRow`, but no native `CreateWidget<USFUpgradeResultRow>` or `SetupRow` caller. `UpdateAuditUI` populates `RadiusAuditResultsContainer`/`AuditResultsContainer` with generated Slate widget objects. `Content/SmartFoundations/UI/WBP_UpgradeResultRow.uasset` still exists. SMLMCP `get_asset` confirms `WBP_UpgradeResultRow` is parented to `/Script/UMG.UserWidget`, not `USFUpgradeResultRow`; `list_dependencies` reports no referencers; `Smart_UpgradePanel_Widget` CDO has `RowWidgetClass = None`; asset-registry scan found no Smart content references to `USFUpgradeResultRow` or `RowWidgetClass`.
 - Risk/impact: Low. Both source and editor content evidence indicate the native row class/property and the row widget asset are detached from current UI generation.
 - Classification: `remove now`
-- Remediation Status: Not started.
-- Recommended next action: In cleanup phase, remove `USFUpgradeResultRow`, `RowWidgetClass`, and the stale row Blueprint asset, then rerun a widget/reference check.
+- Remediation Status: Remediated in cleanup batch 4 (commit `1a22d61`); removed `USFUpgradeResultRow` (`.h`/`.cpp`) and the unused `RowWidgetClass` property. The stale `WBP_UpgradeResultRow.uasset` is intentionally left for a separate editor-side content cleanup; it is a plain `UserWidget`, so it does not break when the C++ class is removed.
+- Test/verification note: `rg "USFUpgradeResultRow|RowWidgetClass" Source\SmartFoundations` returns no results. SMLMCP re-verification (2026-05-29): `WBP_UpgradeResultRow` and `Smart_UpgradePanel_Widget` CDOs are `isUserWidget=True`/`isUSFUpgradeResultRow=False`; no Smart asset dependency references `UpgradeResultRow`.
+- Recommended next action: Delete the orphaned `WBP_UpgradeResultRow.uasset` in the editor during a content-cleanup pass, then rerun a reference check.
 
 ### F023 - GameInstance widget hook placeholder appears inactive
 
@@ -518,8 +523,9 @@ Keep:
 - Evidence checked: Targeted `rg` for all production variants, `SFFoundationHologram_Standard`, `SFStorageHologram`, `SFPowerHologram`, `SFTransportHologram`, and `SFSpecialHologram` found only class declarations, `.cpp` self-includes, and `Public/Holograms/README.md` entries. Current spawn paths use shared classes such as `ASFFactoryHologram`, `ASFFoundationHologram`, and `ASFLogisticsHologram`. Binary text scan of `Content/` found no obvious references. SMLMCP asset-registry scan over all 36 Smart assets found no dependencies on `ASFFactoryHologram_Assembler`, `ASFFactoryHologram_Blender`, `ASFFactoryHologram_Constructor`, `ASFFactoryHologram_Converter`, `ASFFactoryHologram_Foundry`, `ASFFactoryHologram_HadronCollider`, `ASFFactoryHologram_Manufacturer`, `ASFFactoryHologram_Packager`, `ASFFactoryHologram_QuantumEncoder`, `ASFFactoryHologram_Refinery`, `ASFFactoryHologram_Smelter`, `ASFFoundationHologram_Standard`, `ASFStorageHologram`, `ASFPowerHologram`, `ASFTransportHologram`, or `ASFSpecialHologram`.
 - Risk/impact: Low/medium. These reflected classes now have both native and editor-content evidence against active use, but remove them as one focused cleanup so generated-code fallout is easy to review.
 - Classification: `remove now`
-- Remediation Status: Not started.
-- Recommended next action: In cleanup phase, remove the empty subclasses and update `Public/Holograms/README.md`; then rerun asset registry/reference checks.
+- Remediation Status: Remediated in cleanup batch 4 (commit `1a22d61`); deleted all 32 empty subclass files (16 `.h`/`.cpp` pairs) and rewrote `Public/Holograms/README.md` to describe the current adapter-based structure.
+- Test/verification note: `git grep` finds no source references to the removed classes outside the rewritten README. SMLMCP re-verification (2026-05-29): all 16 classes exposed, and 0/5 Smart content Blueprints derive from any of them.
+- Recommended next action: None; rerun an asset/reference check after the maintainer rebuild to confirm no generated-code fallout.
 
 ### F043 - Recipe and unlock checks are duplicated and 1.2 API-sensitive
 
