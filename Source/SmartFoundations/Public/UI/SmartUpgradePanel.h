@@ -212,10 +212,6 @@ protected:
 	UFUNCTION()
 	void UpdateAuditProgress(float ProgressPercent, int32 ScannedCount);
 
-	/** Row widget class for result list */
-	UPROPERTY(EditDefaultsOnly, Category = "SmartFoundations|Upgrade")
-	TSubclassOf<class USFUpgradeResultRow> RowWidgetClass;
-
 	/** Handle row selection - find closest instance */
 	void OnRowSelected(ESFUpgradeFamily Family, int32 Tier);
 
