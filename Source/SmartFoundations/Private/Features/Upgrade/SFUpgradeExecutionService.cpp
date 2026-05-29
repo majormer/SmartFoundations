@@ -2127,7 +2127,6 @@ void USFUpgradeExecutionService::FixBatchConnectionReferences()
 
 // =============================================================================
 // Option A (Pipe extension) + Option B (Expected-vs-Actual validation)
-// See docs/Open_Issues/_pending_issue_upgrade_incomplete_connections.md
 // =============================================================================
 
 static UFGFactoryConnectionComponent* FindFactoryConnectorByName(AFGBuildable* Buildable, FName Name)

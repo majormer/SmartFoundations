@@ -8,9 +8,6 @@
 /**
  * Smart! Input Registry - SML 3.11.x Enhanced Input + Gameplay Tags approach
  * Creates Input Actions and Mapping Context using modern Satisfactory input system
- * 
- * DOCUMENTATION: See docs/Input/SMART_INPUT_SYSTEM.md for complete input documentation
- * CRITICAL: Update docs when making ANY input changes
  */
 UCLASS(BlueprintType, Blueprintable)
 class SMARTFOUNDATIONS_API USFInputRegistry : public UObject

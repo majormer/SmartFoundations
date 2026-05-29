@@ -94,8 +94,6 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSFHologramLifecycleEvent, class A
 /**
  * Smart! World Subsystem - Modern SML 3.11.x approach
  * Handles hologram scaling, input management, and Smart! features
- * 
- * INPUT DOCUMENTATION: See docs/Input/SMART_INPUT_SYSTEM.md for complete input reference
  */
 UCLASS(BlueprintType, Blueprintable)
 class SMARTFOUNDATIONS_API USFSubsystem : public UWorldSubsystem, public FTickableGameObject

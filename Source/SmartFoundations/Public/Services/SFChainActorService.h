@@ -162,7 +162,7 @@ struct SMARTFOUNDATIONS_API FSFChainRepairResult
  *     Migrate twice on the same FConveyorTickGroup corrupts state.
  *
  * CRASH HISTORY: see the "HISTORY — do not regress" comment in SFUpgradeExecutionService.cpp
- * and docs/Features/Upgrade/IMPL_SmartUpgrade_CurrentFlow.md.
+ * and docs/Features/SmartUpgrade/IMPL_SmartUpgrade_CurrentFlow.md.
  *
  * FRIEND ACCESS: this service is declared `Friend` on AFGBuildableSubsystem via
  * Config/AccessTransformers.ini so it can reach `mConveyorTickGroup`,

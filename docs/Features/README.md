@@ -25,8 +25,8 @@ When these documents conflict with older archive notes, trust the current source
 | SmartUpgrade | [SmartUpgrade/IMPL_SmartUpgrade_CurrentFlow.md](SmartUpgrade/IMPL_SmartUpgrade_CurrentFlow.md) | Active |
 | SmartDismantle | [SmartDismantle/IMPL_SmartDismantle_CurrentFlow.md](SmartDismantle/IMPL_SmartDismantle_CurrentFlow.md) | Active, limited scope |
 | SmartPanel | [SmartPanel/IMPL_SmartPanel_CurrentFlow.md](SmartPanel/IMPL_SmartPanel_CurrentFlow.md) | Active, split widgets |
-| SmartRestore | [SmartRestore/PLAN_SmartRestore_Enhanced.md](SmartRestore/PLAN_SmartRestore_Enhanced.md) | WIP, feature specification |
-| SmartRestore (impl) | [SmartRestore/IMPL_SmartRestore_ImplementationPlan.md](SmartRestore/IMPL_SmartRestore_ImplementationPlan.md) | Draft, implementation plan |
+| SmartRestore | [SmartRestore/PLAN_SmartRestore_Enhanced.md](SmartRestore/PLAN_SmartRestore_Enhanced.md) | Implemented (shipped in v30.0.0); plan doc kept for history |
+| SmartRestore (impl) | [SmartRestore/IMPL_SmartRestore_ImplementationPlan.md](SmartRestore/IMPL_SmartRestore_ImplementationPlan.md) | Implemented; plan predates final wiring — see live code for current flow |
 | Multiplayer | [Multiplayer/PLAN_MultiplayerSupport_Matrix.md](Multiplayer/PLAN_MultiplayerSupport_Matrix.md) | Exploratory, feature support matrix |
 
 ## Cleanup Notes

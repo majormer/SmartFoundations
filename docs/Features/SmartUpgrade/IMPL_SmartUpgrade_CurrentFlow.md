@@ -402,7 +402,7 @@ For detailed investigation findings, crash analysis, and SmartMCP procedures, se
 
 1. Purges zombie chain actors.
 2. Repairs split-chain pairs via `RepairSplitChains`.
-3. Calls `RepairOrphanedBelts` — **diagnostic-only in the current build**. It counts orphaned TGs, empty TGs, live belts, and orphan candidates, then logs without mutating vanilla state. `OrphanedBeltCandidates` is the primary result field; `OrphanedBeltsRequeued` remains only as a deprecated compatibility alias.
+3. Calls `RepairOrphanedBelts` — **explicit triage repair (it mutates state)**. It counts orphaned TGs, empty TGs, live belts, and orphan candidates, then **re-registers the orphaned live conveyors through vanilla** via `ReRegisterAndQueueVanillaRebuildForBelts`. It runs only from the explicit Triage/Repair UI action, never automatically after an upgrade. `OrphanedBeltCandidates` is the primary result field; `OrphanedBeltsRequeued` remains only as a deprecated compatibility alias. (The separate in-game orphan-*bounce* repair is the disabled/diagnostic path; its dead queue was removed — audit F047.)
 4. Purges zombies again.
 
 ---
@@ -521,7 +521,7 @@ Recommended extraction:
 
 ### Low-Risk Cleanup Order
 
-1. Update `SFChainActorService.h` comments to match diagnostic-only orphan behavior.
+1. Keep `SFChainActorService.h` comments aligned with the explicit triage repair behavior — `RepairOrphanedBelts` re-registers orphaned conveyors through vanilla; it is not diagnostic-only.
 2. Rename result field or UI label for orphan repair candidates.
 3. Remove or quarantine stale bounce queue members if no in-game bounce path is planned.
 4. Extract repeated cost/refund helpers without changing behavior.

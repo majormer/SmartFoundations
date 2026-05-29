@@ -72,9 +72,11 @@ FSFValidationService::FValidationResult FSFValidationService::ValidateGridSize(c
 		return FValidationResult::Failure(TEXT("Grid size must be positive"));
 	}
 	
-	// CRITICAL: Hard cap to prevent UObject exhaustion (Satisfactory's limit is 2,162,688)
-	// Each child + locked state creates multiple UObjects (widgets, components, delegates, etc.)
-	// Capping at 1500 children leaves plenty of headroom for the rest of the game
+	// Grid-size policy (see SFValidationService.h): SMART_MAX_GRID_SIZE is intentionally
+	// INT_MAX here, so this validation step does NOT cap the grid — it only rejects
+	// non-positive/overflow sizes. The real protection against UObject exhaustion is the
+	// GRID_CHILDREN_HARD_CAP (2000) critical downscale in USFHologramHelperService, plus its
+	// UObject warning thresholds. Keep this comparison as an overflow guard only.
 	if (TotalSize > SMART_MAX_GRID_SIZE + 1)  // +1 for parent
 	{
 		FString ErrorMsg = FString::Printf(

@@ -12,8 +12,6 @@
  * Handles client→server RPC calls for scaling, spacing, and arrow visibility.
  * Registered via SML's Remote Call Object Registry during module startup.
  * 
- * @see Task #12 in tasks/tasks.json
- * @see docs/SMART_ARCHITECTURE_PHILOSOPHY.md for architectural overview
  */
 UCLASS(Within = FGPlayerController)
 class SMARTFOUNDATIONS_API USFRCO : public UFGRemoteCallObject

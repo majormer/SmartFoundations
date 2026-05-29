@@ -22,7 +22,7 @@ AutoConnect creates preview and child holograms that connect scaled logistics an
 | Pipe AutoConnect | Active | Creates pipe previews for junctions, storage, pumps, floor holes, and compatible pipe connectors. |
 | Power AutoConnect | Active | Creates power-line previews between poles and to powered buildings while respecting connection capacity. |
 
-AutoConnect is coordinated through the active hologram and child-hologram system. It does not place free-standing built actors outside the normal build commit path.
+AutoConnect for belts and pipes is coordinated through the active hologram and child-hologram system. Power AutoConnect is the exception: it directly spawns `AFGBuildableWire` actors (with its own cable cost deduction) after pole/building construction, so not all AutoConnect output flows through child-hologram construction. See the construction-order migration note (audit F039) before changing these paths for 1.2.
 
 ## Primary Code Files
 
