@@ -21,7 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Smoother grid scaling** - Reworked how Smart! spawns and refreshes grid preview holograms while scaling, improving stability and performance on large grid layouts.
 
 ### Technical
-- **Pre-1.2 cleanup pass** - Removed dead and orphaned code ahead of the Satisfactory 1.2 port: unused services (axis-label provider, direction-translation service), legacy input-action definitions, the obsolete pipe chain resolver, and stale backup files; trimmed the core subsystem and upgrade service (~3,400 lines removed). No intended gameplay change.
+- **Pre-1.2 cleanup pass** - Removed a large amount of dead and orphaned code ahead of the Satisfactory 1.2 port: unused services (axis-label provider, direction-translation service), legacy input-action definitions, the obsolete pipe chain resolver, stale backup files, empty per-building hologram subclasses, unused hologram adapters, dead scaling/arrow/conveyor helper modules, and a bypassed upgrade result-row widget class; trimmed the core subsystem and upgrade service (~5,000+ lines removed across ~80 files). No intended gameplay change. (Verified against editor content via SMLMCP before removal.)
 - **Extend child-state propagation refactor** - Child preview holograms now read an authoritative material state from the Extend service rather than each inferring it from the parent, resolving the frame-ordering issue behind the insufficient-materials fix above.
 - **Satisfactory 1.2 readiness** - Added the 1.2 porting plan, a multiplayer support planning matrix, and structured GitHub issue forms.
 - **Documentation & project** - New GitHub wiki content, a player FAQ, Smart Camera control docs, and refreshed ficsit.app support metadata.
