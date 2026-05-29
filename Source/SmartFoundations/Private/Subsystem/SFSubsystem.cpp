@@ -92,9 +92,7 @@ static bool bProcessingGridPlacement = false;
 
 // Smart custom hologram adapters (Phase 3)
 #include "Holograms/Adapters/SFSmartBuildableAdapter.h"
-#include "Holograms/Adapters/SFSmartFactoryAdapter.h"
 #include "Holograms/Adapters/SFSmartLogisticsAdapter.h"
-#include "Holograms/Adapters/SFSmartFoundationAdapter.h"
 
 // Vanilla hologram adapters (fallback)
 #include "Holograms/Adapters/SFGenericAdapter.h"
@@ -117,7 +115,6 @@ static bool bProcessingGridPlacement = false;
 #include "Input/SFInputRegistry.h"
 
 // Feature modules
-#include "Features/Scaling/SFScalingModule.h"
 #include "Features/Arrows/SFArrowModule_StaticMesh.h"
 #include "Features/Spacing/SFSpacingModule.h"
 #include "Features/PipeAutoConnect/SFPipeAutoConnectManager.h"
