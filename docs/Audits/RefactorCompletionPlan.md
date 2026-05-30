@@ -606,6 +606,47 @@ idioms — most live inside the T1 files, so fold into those slices rather than 
 
 ---
 
+## Blueprint Validation (SMLMCP live editor, 2026-05-30)
+
+Validated the plan against the Blueprint side via the SMLMCP Python API (AssetRegistry referencer
+query on `/Script/SmartFoundations`). **Result: only 3 Blueprint assets reference the entire C++
+module:**
+
+| Blueprint asset | Native parent (from `NativeParentClass` tag) | Refactor impact |
+|-----------------|----------------------------------------------|-----------------|
+| `Smart_SettingsForm_Widget` | `USmartSettingsFormWidget` | **T5 / U1** — only BP-coupled target |
+| `Smart_UpgradePanel_Widget` | `USmartUpgradePanel` | **T5 / U2** — only BP-coupled target |
+| `SFGameInstanceModule_BP` | `USFGameInstanceModule` | out of refactor scope (Module/, MP-deferred) |
+
+**Implication — most of the refactor has ZERO Blueprint risk.** Nothing in `SFExtendService`,
+`SFSubsystem`, `SFAutoConnectService`, `SFPipeAutoConnectManager`, the holograms
+(`ASFConveyorBeltHologram`/`ASFPipelineHologram`), or `SFUpgradeExecutionService` is referenced by
+ANY Blueprint asset — confirmed by the registry (holograms are spawned/swapped purely in C++; no
+asset references them). So **T1a, T1b, T1c, T8, UP1 are pure-C++ and cannot break a Blueprint.** The
+`F`-type helpers (`FSFHologramHelperService`, `FSFPipeAutoConnectManager`) aren't even reflected as
+UClasses → not BP-visible at all.
+
+**The only BP-coupled slices are U1 / U2** (the two T5 widgets). Their BP subclasses depend on:
+- **Class being `Blueprintable`** (the BP subclasses it) — preserved (impl-split keeps the class).
+- **`BindWidget` members** — `SmartSettingsFormWidget`: **4 required + 102 optional**;
+  `SmartUpgradePanel`: **4 required + 32 optional**. These live in the `.h`; the BP widget tree
+  must keep matching-named widgets. (Required `BindWidget` = hard contract; missing one fails BP
+  compile.)
+- **`BlueprintCallable` functions** the BP graph may call — `SmartUpgradePanel` exposes 3
+  (`ClosePanel`, `RefreshAudit`, `CancelAudit`); `SmartSettingsFormWidget` exposes 0.
+- **No `BlueprintImplementableEvent`/`BlueprintNativeEvent`** on either (0 each) — the BPs do NOT
+  override C++ logic, only supply the widget tree + graph wiring. Lower risk.
+
+**GUARDRAIL for U1 / U2 (added):** the impl-split must keep each widget's **`.h` byte-identical**
+(class decl, all `BindWidget`/`BindWidgetOptional` UPROPERTYs, the 3 `BlueprintCallable`
+signatures) — move ONLY `.cpp` bodies across files. After the split, **recompile both widget BPs
+in-editor** (or `unreal`-compile + check for BindWidget/compile errors) to confirm the contract
+holds. This is the single Blueprint-verification step in the whole refactor.
+
+**GUARDRAIL (general, defensive):** when a slice moves a `BlueprintCallable` method off
+`USFExtendService`/`USFSubsystem`, keep the forwarder `BlueprintCallable` too. No current BP calls
+them (registry-proven), but it preserves the exposed API for runtime/external callers at zero cost.
+
 ## Entanglement Ledger
 
 Every cross-unit shared-state coupling and non-obvious/hidden helper found during the audit,
