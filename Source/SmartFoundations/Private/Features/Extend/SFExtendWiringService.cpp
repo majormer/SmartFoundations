@@ -2,7 +2,7 @@
 
 #include "Features/Extend/SFExtendWiringService.h"
 #include "Features/Extend/SFExtendWiringService.h"
-#include "SmartFoundations.h"  // For LogSmartFoundations
+#include "SmartFoundations.h"  // For LogSmartExtend
 
 USFExtendWiringService::USFExtendWiringService()
 {
@@ -12,12 +12,12 @@ void USFExtendWiringService::Initialize(USFSubsystem* InSubsystem, USFExtendServ
 {
     Subsystem = InSubsystem;
     ExtendService = InExtendService;
-    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("SFExtendWiringService initialized"));
+    UE_LOG(LogSmartExtend, VeryVerbose, TEXT("SFExtendWiringService initialized"));
 }
 
 void USFExtendWiringService::Shutdown()
 {
     ExtendService = nullptr;
     Subsystem.Reset();
-    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("SFExtendWiringService shutdown"));
+    UE_LOG(LogSmartExtend, VeryVerbose, TEXT("SFExtendWiringService shutdown"));
 }

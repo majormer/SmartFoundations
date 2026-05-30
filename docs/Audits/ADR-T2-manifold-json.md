@@ -1,6 +1,6 @@
 # ADR — T2: `SFManifoldJSON.cpp` (3,694 lines)
 
-Status: **Proposed** — premise corrected after reading the file. Awaiting maintainer direction.
+Status: **Accepted and implemented** — Option A selected by maintainer and executed.
 Charter: [`Simplification-GOAL.md`](Simplification-GOAL.md) · Tracker: [`SimplificationAudit.md`](SimplificationAudit.md)
 
 ## Context — the survey premise was WRONG
@@ -69,4 +69,22 @@ so each is independently revertable and the risky split is isolated. If you want
   before renaming the file (rename the file, keep struct names, to be safe).
 
 ## Decision
-Pending maintainer choice of A / B / C.
+Option A.
+
+Implemented changes:
+
+- Removed the debug-only source/clone topology `SaveToFile()` methods and the built-factory comparison capture.
+- Removed the always-written `ExtendSourceTopology.json`, `ExtendClonedTopology.json`, and `ManifoldBuilt.json` dump call sites.
+- Renamed `SFManifoldJSON.*` to `SFExtendCloneTopology.*`.
+- Split `FSFCloneTopology::SpawnChildHolograms` and its helpers into `SFExtendCloneSpawner.cpp`.
+- Removed the unused `JsonUtilities` module dependency; `Json` remains because Restore and `SFWiringManifest` still use it.
+
+Post-change shape:
+
+| File | Role |
+|------|------|
+| `SFExtendCloneTopology.h` | Source/clone topology structs and public operations |
+| `SFExtendCloneTopology.cpp` | Source capture, source-to-clone transform, preview-time connection wiring |
+| `SFExtendCloneSpawner.cpp` | Child hologram spawning from clone topology entries |
+
+Build/package validation remains maintainer-gated per project rules; required smoke is Extend preview/build, Scaled Extend, and pump/power wiring.

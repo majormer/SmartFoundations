@@ -15,7 +15,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Features/Extend/SFManifoldJSON.h"
+#include "Features/Extend/SFExtendCloneTopology.h"
 #include "SFRestoreTypes.generated.h"
 
 /** Current preset format version. Increment when fields are added/changed. */

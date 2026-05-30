@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "SFManifoldJSON.generated.h"
+#include "SFExtendCloneTopology.generated.h"
 
 // Forward declarations
 class AFGBuildable;
@@ -14,7 +14,7 @@ class UFGFactoryConnectionComponent;
 class UFGPipeConnectionComponent;
 
 /**
- * JSON-serializable 3D vector matching schema: { "x": 0, "y": 0, "z": 0 }
+ * Lightweight vector value used by clone topology structs.
  */
 USTRUCT(BlueprintType)
 struct FSFVec3
@@ -35,7 +35,7 @@ struct FSFVec3
 };
 
 /**
- * JSON-serializable rotator matching schema: { "pitch": 0, "yaw": 0, "roll": 0 }
+ * Lightweight rotator value used by clone topology structs.
  */
 USTRUCT(BlueprintType)
 struct FSFRot3
@@ -53,7 +53,7 @@ struct FSFRot3
 };
 
 /**
- * Transform matching schema: { "location": {...}, "rotation": {...} }
+ * Transform value used by captured source and emitted clone topology.
  */
 USTRUCT(BlueprintType)
 struct FSFTransform
@@ -178,7 +178,7 @@ struct FSFConnections
 };
 
 // ============================================================================
-// SOURCE JSON STRUCTURES (Capture from world)
+// SOURCE TOPOLOGY STRUCTURES (Capture from world)
 // ============================================================================
 
 /**
@@ -287,7 +287,7 @@ struct FSFSourcePowerPole
 };
 
 /**
- * Complete source topology JSON (captured from world)
+ * Complete source topology captured from world state.
  */
 USTRUCT(BlueprintType)
 struct FSFSourceTopology
@@ -309,12 +309,6 @@ struct FSFSourceTopology
     /** Capture topology from existing CachedTopology struct */
     static FSFSourceTopology CaptureFromTopology(const struct FSFExtendTopology& Topology);
     
-    /** Capture topology from built factory (for verification against source) */
-    static FSFSourceTopology CaptureFromBuiltFactory(class AFGBuildableFactory* Factory);
-    
-    /** Optional: Save to file for debugging */
-    bool SaveToFile(const FString& FilePath) const;
-    
     /** Check if topology has any chains */
     bool IsValid() const 
     { 
@@ -324,7 +318,7 @@ struct FSFSourceTopology
 };
 
 // ============================================================================
-// CLONE JSON STRUCTURES (For hologram spawning)
+// CLONE TOPOLOGY STRUCTURES (For hologram spawning)
 // ============================================================================
 
 /**
@@ -417,9 +411,6 @@ struct FSFCloneTopology
     
     /** Generate from source topology with offset */
     static FSFCloneTopology FromSource(const FSFSourceTopology& Source, const FVector& Offset);
-    
-    /** Optional: Save to file for debugging */
-    bool SaveToFile(const FString& FilePath) const;
     
     /**
      * Spawn child holograms from this clone topology

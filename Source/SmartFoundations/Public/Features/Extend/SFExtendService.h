@@ -14,7 +14,7 @@
  *
  * Key Files:
  * - SFExtendService.h/.cpp - Main service (topology, previews, diagnostics)
- * - SFManifoldJSON.h/.cpp - JSON schema for topology capture/clone/spawn
+ * - SFExtendCloneTopology.h/.cpp - clone topology capture/transform/spawn
  * - SFWiringManifest.h/.cpp - Post-build connection wiring
  *
  * Legacy systems removed (Dec 2025 cleanup):

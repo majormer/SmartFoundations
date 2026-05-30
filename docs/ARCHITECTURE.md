@@ -30,7 +30,7 @@ UE split: `Public/` (headers other code includes) and `Private/` (implementation
 
 - **`Subsystem/`** — `USFSubsystem` (the central facade/owner) plus low-level helpers (input handling, validation, grid spawning, hologram helpers). *This is the largest, most overloaded area — the #1 decomposition target (T1).*
 - **`Features/<Feature>/`** — self-contained feature services, each owned by the subsystem:
-  - `Extend/` — clone/extend factories: detection, topology walk, hologram preview, wiring, and `SFManifoldJSON` (preset (de)serialization). *Largest feature; T1/T2 targets.*
+  - `Extend/` — clone/extend factories: detection, topology walk, clone-topology transform, hologram preview, and post-build wiring. *Largest feature; T1 targets remain after T2 split.*
   - `AutoConnect/`, `PipeAutoConnect/`, `PowerAutoConnect/` — auto-route belts / pipes / power between placed buildings.
   - `Upgrade/` — Smart Upgrade (radius/network audit, traversal, execution, chain-actor repair).
   - `Restore/` — preset save/apply/share (Smart Restore Enhanced).
@@ -59,4 +59,4 @@ UE split: `Public/` (headers other code includes) and `Private/` (implementation
 - A feature → its `Features/<Feature>/` folder (the service header documents intent).
 - Placement behavior → the relevant `Holograms/` subclass.
 - Panel/HUD → `UI/` + `HUD/`.
-- The big, hard files (today): `SFSubsystem.cpp`, `SFExtendService.cpp`, `SFManifoldJSON.cpp` — being decomposed under the simplification charter.
+- The big, hard files (today): `SFSubsystem.cpp` and `SFExtendService.cpp` — being decomposed under the simplification charter.

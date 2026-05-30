@@ -14,22 +14,21 @@ Charter: [`Simplification-GOAL.md`](Simplification-GOAL.md) · Tracker: [`Simpli
 | 1 | 10-minute architecture map | ✅ done (`docs/ARCHITECTURE.md`) |
 | 2 | basic smoke-test safety net | ✅ done (`scripts/smoke_test.py`) |
 | 3 | one edit point for **asset paths** | ✅ done (`SFAssetPaths.h`) |
-| 3b | one edit point for **building sizes** | ⬜ T3 (designed in ADR, not executed) |
+| 3b | one edit point for **building sizes** | ✅ done (`Content/Data/BuildableSizes.csv`) |
 | 4 | per-feature log categories live | ✅ done (~1,900 sites; Extend/Subsystem fold into T1/T2) |
-| 5 | no file >~2k lines | ⬜ needs T1/T2/T5/T8 |
+| 5 | no file >~2k lines | ⬜ needs T1/T5/T8 |
 | 6 | no god-object >3k | ⬜ needs T1 |
 
-**4 of 6 met.** The two open criteria (#5, #6) require the NEEDS-CARE god-object epics.
+**5 of 6 met.** The remaining open criteria (#5, #6) require the NEEDS-CARE god-object/UI/hologram epics.
 
 ## Current largest files (live `wc -l`, the targets for #5/#6)
 
 | Lines | File | Epic |
 |------:|------|------|
-| 9519 | `Features/Extend/SFExtendService.cpp` | T1 + T2 |
+| 9515 | `Features/Extend/SFExtendService.cpp` | T1 |
 | 9227 | `Subsystem/SFSubsystem.cpp` | T1 |
 | 4771 | `Features/AutoConnect/SFAutoConnectService.cpp` | T1 (scope add) |
 | 3746 | `UI/SmartSettingsFormWidget.cpp` | T5 |
-| 3694 | `Features/Extend/SFManifoldJSON.cpp` | T2 |
 | 2788 | `Features/PipeAutoConnect/SFPipeAutoConnectManager.cpp` | T1 (scope add) |
 | 2537 | `Features/Upgrade/SFUpgradeExecutionService.cpp` | T1/review |
 | 2220 | `Holograms/Logistics/SFConveyorBeltHologram.cpp` | T8 |
@@ -39,8 +38,8 @@ Charter: [`Simplification-GOAL.md`](Simplification-GOAL.md) · Tracker: [`Simpli
 | 1852 | `Features/PowerAutoConnect/SFPowerAutoConnectManager.cpp` | T1 (scope add) |
 | 1481 | `Holograms/Logistics/SFPipelineHologram.cpp` | T8 |
 
-(Counts are live `wc -l` at HEAD `1e1ae90`. There are **12 files >2k lines** — that's the size of
-criterion #5. `SFHologramHelperService.cpp` (2,144) is a newly-surfaced >2k file to fold into T1.)
+(Counts refreshed during T2. There are **9 files >2k lines**; `SFExtendCloneTopology.cpp` (~1,671)
+and `SFExtendCloneSpawner.cpp` (~1,400) are now below the threshold.)
 
 ## The hard constraint (why the rest is collaborative)
 
@@ -59,19 +58,12 @@ at `ExitCode=0` = the DLL-lock deploy failure, not a code error.)
 
 ## Remaining epics (recommended order)
 
-### T3 — Size registry → CSV (NEXT; lowest-risk NEEDS-CARE)
-Fully designed in the ADR. Executes the "single edit point for building sizes" criterion.
-- Steps: write `scripts/extract_size_registry.py` (parse the 14 `RegisterProfile(...)` files →
-  `Config/BuildableSizes.csv`, round-trip count check) → implement CSV load in
-  `RegisterDefaultProfiles()` → delete the 14 `SFBuildableSizeRegistry_*.cpp` + their decls →
-  compile-validate → **smoke:** place foundation 8x4 / 8x1 / wall / ramp / a rotation-swap building,
-  confirm spacing unchanged.
-- Net: −~5,500 lines; satisfies criterion #3b. Risk: data-accuracy (mitigated by round-trip + smoke).
-
-### T2 — Collapse Extend serialization (`SFManifoldJSON.cpp` 3,645)
-~99% hand-rolled JSON parse/serialize. Replace with `FArchive`/struct serialization or walk-once-in-
-memory. Best size-payoff per effort among the big files. Needs an ADR (serialization format) +
-Extend/Restore smoke (capture preset → apply → build). Folds in the deferred Extend log migration.
+### T2 — Clone topology split (build-validated; smoke pending)
+The original "hand-rolled JSON" premise was corrected in `ADR-T2-manifold-json.md`: the file was the
+clone-topology engine plus debug dumps. Option A removed the debug dumps, renamed the file to
+`SFExtendCloneTopology.*`, and split child spawning into `SFExtendCloneSpawner.cpp`. The
+`FactoryEditor Win64 Development` compile passes. Extend smoke is still required: capture a manifold →
+Extend preview → build, Scaled Extend (2×), and pump/power wiring.
 
 ### T1 — Decompose god-objects (the headline)
 The only path to criteria #5 **and** #6. One cohesive slice per PR, pure-move first.
@@ -107,7 +99,8 @@ Needs an ADR (DI context). Enables isolation testing later.
   Extend/Subsystem, so fold into T1 rather than touch those files twice.
 - **T7 tail:** `SFFactoryHologram.cpp` (`SF_HOLOGRAM_LOG` hardcoded wrapper) + `SFRecipeManagementService`
   + `SFRadarPulseService` remain on the catch-all `LogSmartFoundations` (no fitting category, or
-  wrapper needs a body edit). Extend/Subsystem log sites migrate with their T1/T2 rewrites.
+  wrapper needs a body edit). Extend feature logs are now code-complete on `LogSmartExtend`; subsystem
+  Extend-adjacent log sites remain with T1.
 - **Reusable tooling already in place:** `scripts/migrate_log_category.py` (guarded log-category
   swapper), `scripts/smoke_test.py`. `SmartFoundations.h` includes `SFLogMacros.h` so categories
   resolve module-wide.

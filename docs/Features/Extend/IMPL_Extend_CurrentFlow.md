@@ -16,7 +16,7 @@ Extend clones an existing layout from a source building into a new adjacent plac
 
 ## Current Status
 
-Extend and Scaled Extend are active. The current implementation is JSON/topology driven: it captures a source topology, generates clone topologies with offsets, spawns child holograms for preview/build, then performs post-build wiring and chain/pipe stabilization.
+Extend and Scaled Extend are active. The current implementation is clone-topology driven: it captures a source topology, generates clone topologies with offsets, spawns child holograms for preview/build, then performs post-build wiring and chain/pipe stabilization.
 
 ## Primary Code Files
 
@@ -30,8 +30,9 @@ Extend and Scaled Extend are active. The current implementation is JSON/topology
 | `Source/SmartFoundations/Private/Features/Extend/SFExtendTopologyService.cpp` | Belt, lift, pipe, distributor, and junction topology walking |
 | `Source/SmartFoundations/Public/Features/Extend/SFExtendHologramService.h` | Preview/child hologram management |
 | `Source/SmartFoundations/Private/Features/Extend/SFExtendHologramService.cpp` | Child spawning, tracking, and refresh |
-| `Source/SmartFoundations/Public/Features/Extend/SFManifoldJSON.h` | Serializable source/clone topology schema |
-| `Source/SmartFoundations/Private/Features/Extend/SFManifoldJSON.cpp` | Topology capture, clone generation, child spawning, transform storage |
+| `Source/SmartFoundations/Public/Features/Extend/SFExtendCloneTopology.h` | Source/clone topology schema |
+| `Source/SmartFoundations/Private/Features/Extend/SFExtendCloneTopology.cpp` | Topology capture, clone generation, transform storage, and preview-time connection wiring |
+| `Source/SmartFoundations/Private/Features/Extend/SFExtendCloneSpawner.cpp` | Child hologram spawning from clone topology entries |
 | `Source/SmartFoundations/Public/Features/Extend/SFWiringManifest.h` | Post-build wiring manifest |
 | `Source/SmartFoundations/Private/Features/Extend/SFWiringManifest.cpp` | Belt, pipe, and power connection execution after build |
 
@@ -40,7 +41,7 @@ Extend and Scaled Extend are active. The current implementation is JSON/topology
 1. `USFSubsystem::Tick` line-traces from the player and calls `USFExtendService::TryExtendFromBuilding` when the player is aiming at a candidate source.
 2. `SFExtendDetectionService` validates that the aimed building can be extended by the currently held hologram.
 3. `SFExtendTopologyService` walks the connected logistics and pipe topology around the source.
-4. `FSFSourceTopology` captures the source topology into the JSON schema.
+4. `FSFSourceTopology` captures the source topology into clone-topology structs.
 5. `FSFCloneTopology::FromSource` generates clone positions from source data and the active offset.
 6. `SFExtendHologramService` spawns child holograms and refreshes them while Extend stays active.
 7. Vanilla build constructs the parent and child holograms.

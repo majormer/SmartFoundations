@@ -3,7 +3,7 @@
 #include "Features/Extend/SFExtendTopologyService.h"
 #include "Features/Extend/SFExtendTopologyService.h"
 #include "Features/Extend/SFExtendDetectionService.h"
-#include "SmartFoundations.h"  // For LogSmartFoundations
+#include "SmartFoundations.h"  // For LogSmartExtend
 #include "Subsystem/SFSubsystem.h"
 #include "FGBuildable.h"
 #include "FGBuildableFactory.h"
@@ -36,7 +36,7 @@ void USFExtendTopologyService::Initialize(USFSubsystem* InSubsystem, USFExtendDe
 {
     Subsystem = InSubsystem;
     DetectionService = InDetectionService;
-    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("SFExtendTopologyService initialized"));
+    UE_LOG(LogSmartExtend, VeryVerbose, TEXT("SFExtendTopologyService initialized"));
 }
 
 void USFExtendTopologyService::Shutdown()
@@ -44,7 +44,7 @@ void USFExtendTopologyService::Shutdown()
     ClearTopology();
     DetectionService = nullptr;
     Subsystem.Reset();
-    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("SFExtendTopologyService shutdown"));
+    UE_LOG(LogSmartExtend, VeryVerbose, TEXT("SFExtendTopologyService shutdown"));
 }
 
 // ==================== Topology Walking ====================
@@ -55,14 +55,14 @@ bool USFExtendTopologyService::WalkTopology(AFGBuildable* SourceBuilding)
 
     if (!IsValid(SourceBuilding))
     {
-        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("Smart!: WalkTopology called with invalid building"));
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Warning, TEXT("Smart!: WalkTopology called with invalid building"));
         return false;
     }
 
     // Use detection service for target validation if available
     if (DetectionService && !DetectionService->IsValidExtendTarget(SourceBuilding))
     {
-        UE_LOG(LogSmartFoundations, Verbose, TEXT("Smart!: Building %s is not a valid extend target"), 
+        UE_LOG(LogSmartExtend, Verbose, TEXT("Smart!: Building %s is not a valid extend target"),
             *SourceBuilding->GetName());
         return false;
     }
@@ -73,7 +73,7 @@ bool USFExtendTopologyService::WalkTopology(AFGBuildable* SourceBuilding)
     TArray<UFGFactoryConnectionComponent*> Connections;
     SourceBuilding->GetComponents<UFGFactoryConnectionComponent>(Connections);
 
-    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("Smart!: Walking topology for %s with %d connections"),
+    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("Smart!: Walking topology for %s with %d connections"),
         *SourceBuilding->GetName(), Connections.Num());
 
     for (UFGFactoryConnectionComponent* Connector : Connections)
@@ -97,7 +97,7 @@ bool USFExtendTopologyService::WalkTopology(AFGBuildable* SourceBuilding)
             if (Connector->GetDirection() == EFactoryConnectionDirection::FCD_OUTPUT)
             {
                 CachedTopology.OutputChains.Add(Node);
-                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("Smart!: Found output chain to %s (%d conveyors, %d poles)"),
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("Smart!: Found output chain to %s (%d conveyors, %d poles)"),
                     Node.Distributor.IsValid() ? *Node.Distributor->GetName() : TEXT("null"),
                     Node.Conveyors.Num(),
                     Node.SupportPoles.Num());
@@ -105,7 +105,7 @@ bool USFExtendTopologyService::WalkTopology(AFGBuildable* SourceBuilding)
             else if (Connector->GetDirection() == EFactoryConnectionDirection::FCD_INPUT)
             {
                 CachedTopology.InputChains.Add(Node);
-                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("Smart!: Found input chain from %s (%d conveyors, %d poles)"),
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("Smart!: Found input chain from %s (%d conveyors, %d poles)"),
                     Node.Distributor.IsValid() ? *Node.Distributor->GetName() : TEXT("null"),
                     Node.Conveyors.Num(),
                     Node.SupportPoles.Num());
@@ -118,7 +118,7 @@ bool USFExtendTopologyService::WalkTopology(AFGBuildable* SourceBuilding)
     TArray<UFGPipeConnectionComponent*> PipeConnections;
     SourceBuilding->GetComponents<UFGPipeConnectionComponent>(PipeConnections);
 
-    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("Smart!: Walking pipe topology for %s with %d pipe connections"),
+    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("Smart!: Walking pipe topology for %s with %d pipe connections"),
         *SourceBuilding->GetName(), PipeConnections.Num());
 
     for (UFGPipeConnectionComponent* PipeConnector : PipeConnections)
@@ -129,21 +129,21 @@ bool USFExtendTopologyService::WalkTopology(AFGBuildable* SourceBuilding)
         }
 
         EPipeConnectionType PipeType = PipeConnector->GetPipeConnectionType();
-        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("Smart!:   Pipe connector %s - Type=%d (%s)"),
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("Smart!:   Pipe connector %s - Type=%d (%s)"),
             *PipeConnector->GetName(),
             (int32)PipeType,
-            PipeType == EPipeConnectionType::PCT_PRODUCER ? TEXT("PRODUCER") : 
+            PipeType == EPipeConnectionType::PCT_PRODUCER ? TEXT("PRODUCER") :
             (PipeType == EPipeConnectionType::PCT_CONSUMER ? TEXT("CONSUMER") : TEXT("ANY")));
 
         // Check if this connector is connected to something
         UFGPipeConnectionComponent* ConnectedTo = Cast<UFGPipeConnectionComponent>(PipeConnector->GetConnection());
         if (!IsValid(ConnectedTo))
         {
-            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("Smart!:     -> Not connected"));
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("Smart!:     -> Not connected"));
             continue;
         }
 
-        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("Smart!:     -> Connected to %s on %s"),
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("Smart!:     -> Connected to %s on %s"),
             *ConnectedTo->GetName(),
             ConnectedTo->GetOwner() ? *ConnectedTo->GetOwner()->GetName() : TEXT("null"));
 
@@ -157,7 +157,7 @@ bool USFExtendTopologyService::WalkTopology(AFGBuildable* SourceBuilding)
             if (PipeType == EPipeConnectionType::PCT_PRODUCER)
             {
                 CachedTopology.PipeOutputChains.Add(PipeNode);
-                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("Smart!:     -> Added as OUTPUT chain (Junction=%s, Pipelines=%d, Poles=%d)"),
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("Smart!:     -> Added as OUTPUT chain (Junction=%s, Pipelines=%d, Poles=%d)"),
                     PipeNode.Junction.IsValid() ? *PipeNode.Junction->GetName() : TEXT("null"),
                     PipeNode.Pipelines.Num(),
                     PipeNode.SupportPoles.Num());
@@ -165,7 +165,7 @@ bool USFExtendTopologyService::WalkTopology(AFGBuildable* SourceBuilding)
             else // PCT_CONSUMER or PCT_ANY
             {
                 CachedTopology.PipeInputChains.Add(PipeNode);
-                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("Smart!:     -> Added as INPUT chain (Junction=%s, Pipelines=%d, Poles=%d)"),
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("Smart!:     -> Added as INPUT chain (Junction=%s, Pipelines=%d, Poles=%d)"),
                     PipeNode.Junction.IsValid() ? *PipeNode.Junction->GetName() : TEXT("null"),
                     PipeNode.Pipelines.Num(),
                     PipeNode.SupportPoles.Num());
@@ -173,7 +173,7 @@ bool USFExtendTopologyService::WalkTopology(AFGBuildable* SourceBuilding)
         }
         else
         {
-            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("Smart!:     -> WalkPipeConnectionChain returned false"));
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("Smart!:     -> WalkPipeConnectionChain returned false"));
         }
     }
 
@@ -184,7 +184,7 @@ bool USFExtendTopologyService::WalkTopology(AFGBuildable* SourceBuilding)
     // Must be called AFTER belt/pipe topology is captured so CalculateManifoldBounds() works
     // Gated by bExtendPower runtime setting
     bool bExtendPowerEnabled = Subsystem.IsValid() && Subsystem->GetAutoConnectRuntimeSettings().bExtendPower;
-    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("Smart!: Power walk gate: bIsValid=%d, SubsystemValid=%d, bExtendPower=%d"),
+    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("Smart!: Power walk gate: bIsValid=%d, SubsystemValid=%d, bExtendPower=%d"),
         CachedTopology.bIsValid, Subsystem.IsValid(), bExtendPowerEnabled);
     if (CachedTopology.bIsValid && bExtendPowerEnabled)
     {
@@ -200,7 +200,7 @@ bool USFExtendTopologyService::WalkTopology(AFGBuildable* SourceBuilding)
         DiscoverWallPassthroughs(SourceBuilding);
     }
 
-    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("Smart!: Topology walk complete. Belt Inputs: %d, Belt Outputs: %d, Pipe Inputs: %d, Pipe Outputs: %d, Power Poles: %d, Pipe Passthroughs: %d, Wall Passthroughs: %d, Valid: %s"),
+    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("Smart!: Topology walk complete. Belt Inputs: %d, Belt Outputs: %d, Pipe Inputs: %d, Pipe Outputs: %d, Power Poles: %d, Pipe Passthroughs: %d, Wall Passthroughs: %d, Valid: %s"),
         CachedTopology.InputChains.Num(),
         CachedTopology.OutputChains.Num(),
         CachedTopology.PipeInputChains.Num(),
@@ -232,7 +232,7 @@ bool USFExtendTopologyService::WalkConnectionChain(UFGFactoryConnectionComponent
     // The connected component should be on a conveyor belt
     AActor* ConnectedActor = ConnectedTo->GetOwner();
     AFGBuildableConveyorBase* Conveyor = Cast<AFGBuildableConveyorBase>(ConnectedActor);
-    
+
     if (!IsValid(Conveyor))
     {
         // Might be directly connected to a distributor (no belt)
@@ -251,29 +251,29 @@ bool USFExtendTopologyService::WalkConnectionChain(UFGFactoryConnectionComponent
     TSet<AFGBuildableConveyorBase*> VisitedConveyors;
     UFGFactoryConnectionComponent* CurrentConnector = ConnectedTo;
     AFGBuildableConveyorBase* CurrentConveyor = Conveyor;
-    
+
     constexpr int32 MaxIterations = 100; // Safety limit to prevent infinite loops
     int32 Iterations = 0;
-    
+
     while (IsValid(CurrentConveyor) && Iterations < MaxIterations)
     {
         Iterations++;
-        
+
         // Prevent infinite loops
         if (VisitedConveyors.Contains(CurrentConveyor))
         {
-            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND: Belt chain loop detected, stopping walk"));
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Warning, TEXT("🔧 EXTEND: Belt chain loop detected, stopping walk"));
             break;
         }
         VisitedConveyors.Add(CurrentConveyor);
-        
+
         // Add this conveyor to the chain
         OutNode.Conveyors.Add(CurrentConveyor);
-        
+
         // Find the other end of the current conveyor
         UFGFactoryConnectionComponent* Connection0 = nullptr;
         UFGFactoryConnectionComponent* Connection1 = nullptr;
-        
+
         // Handle both belts and lifts
         if (AFGBuildableConveyorBelt* Belt = Cast<AFGBuildableConveyorBelt>(CurrentConveyor))
         {
@@ -286,10 +286,10 @@ bool USFExtendTopologyService::WalkConnectionChain(UFGFactoryConnectionComponent
             Connection0 = Lift->GetConnection0();
             Connection1 = Lift->GetConnection1();
         }
-        
+
         if (!IsValid(Connection0) || !IsValid(Connection1))
         {
-            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 EXTEND: Belt chain ended - conveyor missing connections"));
+            UE_LOG(LogSmartExtend, VeryVerbose, TEXT("🔧 EXTEND: Belt chain ended - conveyor missing connections"));
             break;
         }
 
@@ -312,7 +312,7 @@ bool USFExtendTopologyService::WalkConnectionChain(UFGFactoryConnectionComponent
         if (!IsValid(OtherEnd) || !OtherEnd->IsConnected())
         {
             // Dead end - no distributor found
-            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 EXTEND: Belt chain ended at dead end (no connection at other end)"));
+            UE_LOG(LogSmartExtend, VeryVerbose, TEXT("🔧 EXTEND: Belt chain ended at dead end (no connection at other end)"));
             break;
         }
 
@@ -323,17 +323,17 @@ bool USFExtendTopologyService::WalkConnectionChain(UFGFactoryConnectionComponent
         }
 
         AActor* NextActor = NextConnector->GetOwner();
-        
+
         // Check if we've reached a distributor (terminal)
         if (IsDistributor(Cast<AFGBuildable>(NextActor)))
         {
             OutNode.Distributor = Cast<AFGBuildable>(NextActor);
             OutNode.DistributorConnector = NextConnector;
-            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 EXTEND: Belt chain found distributor %s after %d conveyors"), 
+            UE_LOG(LogSmartExtend, VeryVerbose, TEXT("🔧 EXTEND: Belt chain found distributor %s after %d conveyors"),
                 *NextActor->GetName(), VisitedConveyors.Num());
             return true;
         }
-        
+
         // Check if it's another conveyor (belt or lift) - continue walking
         AFGBuildableConveyorBase* NextConveyor = Cast<AFGBuildableConveyorBase>(NextActor);
         if (IsValid(NextConveyor))
@@ -342,19 +342,19 @@ bool USFExtendTopologyService::WalkConnectionChain(UFGFactoryConnectionComponent
             CurrentConnector = NextConnector;
             continue;
         }
-        
+
         // Issue #260: Check if it's a passthrough (floor hole) - traverse through it
         AFGBuildablePassthrough* Passthrough = Cast<AFGBuildablePassthrough>(NextActor);
         if (IsValid(Passthrough))
         {
             OutNode.Passthroughs.Add(Passthrough);
-            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("🔧 EXTEND: Belt chain traversing through floor hole %s"),
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("🔧 EXTEND: Belt chain traversing through floor hole %s"),
                 *Passthrough->GetName());
-            
+
             // Find the other factory connection on the passthrough (not the one we came from)
             TArray<UFGFactoryConnectionComponent*> PassthroughConnections;
             Passthrough->GetComponents<UFGFactoryConnectionComponent>(PassthroughConnections);
-            
+
             UFGFactoryConnectionComponent* OtherPassthroughConn = nullptr;
             for (UFGFactoryConnectionComponent* PassConn : PassthroughConnections)
             {
@@ -364,14 +364,14 @@ bool USFExtendTopologyService::WalkConnectionChain(UFGFactoryConnectionComponent
                     break;
                 }
             }
-            
+
             if (IsValid(OtherPassthroughConn))
             {
                 UFGFactoryConnectionComponent* AfterPassthrough = OtherPassthroughConn->GetConnection();
                 if (IsValid(AfterPassthrough))
                 {
                     AActor* AfterActor = AfterPassthrough->GetOwner();
-                    
+
                     // Check if what's after the passthrough is a conveyor
                     AFGBuildableConveyorBase* AfterConveyor = Cast<AFGBuildableConveyorBase>(AfterActor);
                     if (IsValid(AfterConveyor))
@@ -380,21 +380,21 @@ bool USFExtendTopologyService::WalkConnectionChain(UFGFactoryConnectionComponent
                         CurrentConnector = AfterPassthrough;
                         continue;
                     }
-                    
+
                     // Or a distributor
                     if (IsDistributor(Cast<AFGBuildable>(AfterActor)))
                     {
                         OutNode.Distributor = Cast<AFGBuildable>(AfterActor);
                         OutNode.DistributorConnector = AfterPassthrough;
-                        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("🔧 EXTEND: Found distributor %s after floor hole"),
+                        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("🔧 EXTEND: Found distributor %s after floor hole"),
                             *AfterActor->GetName());
                         return true;
                     }
                 }
             }
-            
+
             // Passthrough has no other connected side - stop here
-            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("🔧 EXTEND: Floor hole %s has no connection on other side"),
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("🔧 EXTEND: Floor hole %s has no connection on other side"),
                 *Passthrough->GetName());
             break;
         }
@@ -405,13 +405,13 @@ bool USFExtendTopologyService::WalkConnectionChain(UFGFactoryConnectionComponent
         // Wall-hole cloning is handled purely by spatial discovery (see DiscoverWallPassthroughs).
 
         // It's something else (factory, pole, etc.) - stop here
-        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 EXTEND: Belt chain ended at non-belt/non-distributor: %s"), 
+        UE_LOG(LogSmartExtend, VeryVerbose, TEXT("🔧 EXTEND: Belt chain ended at non-belt/non-distributor: %s"),
             *NextActor->GetClass()->GetName());
         break;
     }
 
     // Conveyor(s) found but no valid distributor at the end
-    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 EXTEND: Belt chain walked %d conveyors, no distributor found"), VisitedConveyors.Num());
+    UE_LOG(LogSmartExtend, VeryVerbose, TEXT("🔧 EXTEND: Belt chain walked %d conveyors, no distributor found"), VisitedConveyors.Num());
     return OutNode.Conveyors.Num() > 0;
 }
 
@@ -434,7 +434,7 @@ bool USFExtendTopologyService::WalkPipeConnectionChain(UFGPipeConnectionComponen
     // The connected component should be on a pipeline
     AActor* ConnectedActor = ConnectedTo->GetOwner();
     AFGBuildablePipeline* Pipeline = Cast<AFGBuildablePipeline>(ConnectedActor);
-    
+
     if (!IsValid(Pipeline))
     {
         // Might be directly connected to a junction (no pipe)
@@ -446,20 +446,20 @@ bool USFExtendTopologyService::WalkPipeConnectionChain(UFGPipeConnectionComponen
             // No pipeline in this chain
             return true;
         }
-        
+
         // Issue #260: Might be directly connected to a passthrough (pipe floor hole)
         // Chain: factory → passthrough → pipe → ... → junction
         AFGBuildablePassthrough* DirectPassthrough = Cast<AFGBuildablePassthrough>(ConnectedActor);
         if (IsValid(DirectPassthrough))
         {
             OutNode.Passthroughs.Add(DirectPassthrough);
-            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("🔧 EXTEND: Pipe chain starts with floor hole %s"),
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("🔧 EXTEND: Pipe chain starts with floor hole %s"),
                 *DirectPassthrough->GetName());
-            
+
             // Find the other pipe connection on the passthrough
             TArray<UFGPipeConnectionComponent*> PassPipeConns;
             DirectPassthrough->GetComponents<UFGPipeConnectionComponent>(PassPipeConns);
-            
+
             for (UFGPipeConnectionComponent* PassConn : PassPipeConns)
             {
                 if (PassConn && PassConn != ConnectedTo && PassConn->IsConnected())
@@ -485,10 +485,10 @@ bool USFExtendTopologyService::WalkPipeConnectionChain(UFGPipeConnectionComponen
                     }
                 }
             }
-            
+
             if (!IsValid(Pipeline))
             {
-                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("🔧 EXTEND: Pipe floor hole %s has no pipe on other side"),
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("🔧 EXTEND: Pipe floor hole %s has no pipe on other side"),
                     *DirectPassthrough->GetName());
                 return false;
             }
@@ -503,25 +503,25 @@ bool USFExtendTopologyService::WalkPipeConnectionChain(UFGPipeConnectionComponen
     TSet<AFGBuildablePipeline*> VisitedPipes;
     UFGPipeConnectionComponent* CurrentConnector = ConnectedTo;
     AFGBuildablePipeline* CurrentPipe = Pipeline;
-    
+
     constexpr int32 MaxIterations = 100; // Safety limit to prevent infinite loops
     int32 Iterations = 0;
-    
+
     while (IsValid(CurrentPipe) && Iterations < MaxIterations)
     {
         Iterations++;
-        
+
         // Prevent infinite loops
         if (VisitedPipes.Contains(CurrentPipe))
         {
-            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND: Pipe chain loop detected, stopping walk"));
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Warning, TEXT("🔧 EXTEND: Pipe chain loop detected, stopping walk"));
             break;
         }
         VisitedPipes.Add(CurrentPipe);
-        
+
         // Add this pipeline to the chain
         OutNode.Pipelines.Add(CurrentPipe);
-        
+
         // Find the other end of the current pipeline
         UFGPipeConnectionComponent* Connection0 = CurrentPipe->GetPipeConnection0();
         UFGPipeConnectionComponent* Connection1 = CurrentPipe->GetPipeConnection1();
@@ -545,7 +545,7 @@ bool USFExtendTopologyService::WalkPipeConnectionChain(UFGPipeConnectionComponen
         if (!IsValid(OtherEnd) || !OtherEnd->IsConnected())
         {
             // Dead end - no junction found
-            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 EXTEND: Pipe chain ended at dead end (no connection at other end)"));
+            UE_LOG(LogSmartExtend, VeryVerbose, TEXT("🔧 EXTEND: Pipe chain ended at dead end (no connection at other end)"));
             break;
         }
 
@@ -556,18 +556,18 @@ bool USFExtendTopologyService::WalkPipeConnectionChain(UFGPipeConnectionComponen
         }
 
         AActor* NextActor = NextConnector->GetOwner();
-        
+
         // Check if we've reached a junction (terminal)
         AFGBuildablePipelineJunction* Junction = Cast<AFGBuildablePipelineJunction>(NextActor);
         if (IsValid(Junction))
         {
             OutNode.Junction = Junction;
             OutNode.JunctionConnector = NextConnector;
-            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 EXTEND: Pipe chain found junction %s after %d pipes"), 
+            UE_LOG(LogSmartExtend, VeryVerbose, TEXT("🔧 EXTEND: Pipe chain found junction %s after %d pipes"),
                 *Junction->GetName(), VisitedPipes.Num());
             return true;
         }
-        
+
         // Check if it's another pipeline - continue walking
         AFGBuildablePipeline* NextPipe = Cast<AFGBuildablePipeline>(NextActor);
         if (IsValid(NextPipe))
@@ -576,19 +576,19 @@ bool USFExtendTopologyService::WalkPipeConnectionChain(UFGPipeConnectionComponen
             CurrentConnector = NextConnector;
             continue;
         }
-        
+
         // Issue #260: Check if it's a passthrough (pipe floor hole) - traverse through it
         AFGBuildablePassthrough* Passthrough = Cast<AFGBuildablePassthrough>(NextActor);
         if (IsValid(Passthrough))
         {
             OutNode.Passthroughs.Add(Passthrough);
-            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("🔧 EXTEND: Pipe chain traversing through floor hole %s"),
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("🔧 EXTEND: Pipe chain traversing through floor hole %s"),
                 *Passthrough->GetName());
-            
+
             // Find the other pipe connection on the passthrough (not the one we came from)
             TArray<UFGPipeConnectionComponent*> PassthroughPipeConns;
             Passthrough->GetComponents<UFGPipeConnectionComponent>(PassthroughPipeConns);
-            
+
             UFGPipeConnectionComponent* OtherPassthroughConn = nullptr;
             for (UFGPipeConnectionComponent* PassConn : PassthroughPipeConns)
             {
@@ -598,14 +598,14 @@ bool USFExtendTopologyService::WalkPipeConnectionChain(UFGPipeConnectionComponen
                     break;
                 }
             }
-            
+
             if (IsValid(OtherPassthroughConn))
             {
                 UFGPipeConnectionComponent* AfterPassthrough = Cast<UFGPipeConnectionComponent>(OtherPassthroughConn->GetConnection());
                 if (IsValid(AfterPassthrough))
                 {
                     AActor* AfterActor = AfterPassthrough->GetOwner();
-                    
+
                     // Check if what's after the passthrough is a pipeline
                     AFGBuildablePipeline* AfterPipe = Cast<AFGBuildablePipeline>(AfterActor);
                     if (IsValid(AfterPipe))
@@ -614,22 +614,22 @@ bool USFExtendTopologyService::WalkPipeConnectionChain(UFGPipeConnectionComponen
                         CurrentConnector = AfterPassthrough;
                         continue;
                     }
-                    
+
                     // Check if it's a junction (terminal)
                     AFGBuildablePipelineJunction* AfterJunction = Cast<AFGBuildablePipelineJunction>(AfterActor);
                     if (IsValid(AfterJunction))
                     {
                         OutNode.Junction = AfterJunction;
                         OutNode.JunctionConnector = AfterPassthrough;
-                        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("🔧 EXTEND: Found junction %s after pipe floor hole"),
+                        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("🔧 EXTEND: Found junction %s after pipe floor hole"),
                             *AfterActor->GetName());
                         return true;
                     }
                 }
             }
-            
+
             // Passthrough has no other connected side - stop here
-            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("🔧 EXTEND: Pipe floor hole %s has no connection on other side"),
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("🔧 EXTEND: Pipe floor hole %s has no connection on other side"),
                 *Passthrough->GetName());
             break;
         }
@@ -649,7 +649,7 @@ bool USFExtendTopologyService::WalkPipeConnectionChain(UFGPipeConnectionComponen
         if (AFGBuildablePipelinePump* Attachment = Cast<AFGBuildablePipelinePump>(NextActor))
         {
             OutNode.PipeAttachments.Add(Attachment);
-            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("🔧 EXTEND: Pipe chain traversing through pump/valve %s (class=%s)"),
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("🔧 EXTEND: Pipe chain traversing through pump/valve %s (class=%s)"),
                 *Attachment->GetName(), *Attachment->GetClass()->GetName());
 
             TArray<UFGPipeConnectionComponent*> AttachmentPipeConns;
@@ -683,7 +683,7 @@ bool USFExtendTopologyService::WalkPipeConnectionChain(UFGPipeConnectionComponen
                     {
                         OutNode.Junction = AfterJunction;
                         OutNode.JunctionConnector = AfterAttachment;
-                        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("🔧 EXTEND: Found junction %s after pump/valve %s"),
+                        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("🔧 EXTEND: Found junction %s after pump/valve %s"),
                             *AfterActor->GetName(), *Attachment->GetName());
                         return true;
                     }
@@ -696,19 +696,19 @@ bool USFExtendTopologyService::WalkPipeConnectionChain(UFGPipeConnectionComponen
                 }
             }
 
-            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("🔧 EXTEND: Pump/valve %s has no usable connector on the other side — stopping walk"),
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("🔧 EXTEND: Pump/valve %s has no usable connector on the other side — stopping walk"),
                 *Attachment->GetName());
             break;
         }
 
         // It's something else (factory, other attachment, etc.) - stop here
-        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 EXTEND: Pipe chain ended at non-pipe/non-junction/non-attachment: %s"), 
+        UE_LOG(LogSmartExtend, VeryVerbose, TEXT("🔧 EXTEND: Pipe chain ended at non-pipe/non-junction/non-attachment: %s"),
             *NextActor->GetClass()->GetName());
         break;
     }
 
     // Pipeline(s) found but no valid junction at the end
-    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 EXTEND: Pipe chain walked %d pipes, no junction found"), VisitedPipes.Num());
+    UE_LOG(LogSmartExtend, VeryVerbose, TEXT("🔧 EXTEND: Pipe chain walked %d pipes, no junction found"), VisitedPipes.Num());
     return OutNode.Pipelines.Num() > 0;
 }
 
@@ -765,13 +765,13 @@ bool USFExtendTopologyService::IsPipeJunction(AFGBuildable* Building) const
 FBox USFExtendTopologyService::CalculateManifoldBounds(float Padding) const
 {
     FBox Bounds(ForceInit);
-    
+
     // Include source factory
     if (CachedTopology.SourceBuilding.IsValid())
     {
         Bounds += CachedTopology.SourceBuilding->GetActorLocation();
     }
-    
+
     // Include all belt chain infrastructure
     for (const FSFConnectionChainNode& Chain : CachedTopology.InputChains)
     {
@@ -801,7 +801,7 @@ FBox USFExtendTopologyService::CalculateManifoldBounds(float Padding) const
             Bounds += Chain.Distributor->GetActorLocation();
         }
     }
-    
+
     // Include all pipe chain infrastructure
     for (const FSFPipeConnectionChainNode& Chain : CachedTopology.PipeInputChains)
     {
@@ -831,13 +831,13 @@ FBox USFExtendTopologyService::CalculateManifoldBounds(float Padding) const
             Bounds += Chain.Junction->GetActorLocation();
         }
     }
-    
+
     // Apply padding
     if (Bounds.IsValid)
     {
         Bounds = Bounds.ExpandBy(Padding);
     }
-    
+
     return Bounds;
 }
 
@@ -847,77 +847,77 @@ void USFExtendTopologyService::WalkPowerConnections(AFGBuildable* SourceBuilding
     {
         return;
     }
-    
+
     // Calculate the manifold bounding box from already-captured belt/pipe topology
     FBox ManifoldBounds = CalculateManifoldBounds(2000.0f); // 20m padding
-    
+
     if (!ManifoldBounds.IsValid)
     {
-        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("Smart!: Power walk skipped - no valid manifold bounds"));
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("Smart!: Power walk skipped - no valid manifold bounds"));
         return;
     }
-    
-    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("Smart!: Walking power connections for %s (bounds: min=(%.0f,%.0f,%.0f) max=(%.0f,%.0f,%.0f))"),
+
+    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("Smart!: Walking power connections for %s (bounds: min=(%.0f,%.0f,%.0f) max=(%.0f,%.0f,%.0f))"),
         *SourceBuilding->GetName(),
         ManifoldBounds.Min.X, ManifoldBounds.Min.Y, ManifoldBounds.Min.Z,
         ManifoldBounds.Max.X, ManifoldBounds.Max.Y, ManifoldBounds.Max.Z);
-    
+
     // Get power connection components on the factory
     TArray<UFGPowerConnectionComponent*> PowerConnections;
     SourceBuilding->GetComponents<UFGPowerConnectionComponent>(PowerConnections);
-    
+
     if (PowerConnections.Num() == 0)
     {
-        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("Smart!: No power connections on factory - skipping power walk"));
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("Smart!: No power connections on factory - skipping power walk"));
         return;
     }
-    
-    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("Smart!: Factory has %d power connection(s)"), PowerConnections.Num());
-    
+
+    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("Smart!: Factory has %d power connection(s)"), PowerConnections.Num());
+
     for (UFGPowerConnectionComponent* FactoryPowerConn : PowerConnections)
     {
         if (!IsValid(FactoryPowerConn))
         {
             continue;
         }
-        
+
         // Get wires connected to this power connection
         TArray<AFGBuildableWire*> Wires;
         FactoryPowerConn->GetWires(Wires);
-        
+
         for (AFGBuildableWire* Wire : Wires)
         {
             if (!IsValid(Wire))
             {
                 continue;
             }
-            
+
             // Find the other end of the wire
             UFGCircuitConnectionComponent* Conn0 = Wire->GetConnection(0);
             UFGCircuitConnectionComponent* Conn1 = Wire->GetConnection(1);
-            
+
             UFGCircuitConnectionComponent* OtherConn = (Conn0 == FactoryPowerConn) ? Conn1 : Conn0;
             if (!IsValid(OtherConn))
             {
                 continue;
             }
-            
+
             AActor* OtherActor = OtherConn->GetOwner();
             AFGBuildablePowerPole* PowerPole = Cast<AFGBuildablePowerPole>(OtherActor);
             if (!IsValid(PowerPole))
             {
                 continue;
             }
-            
+
             // Check if power pole is within the manifold bounding box
             FVector PoleLocation = PowerPole->GetActorLocation();
             if (!ManifoldBounds.IsInsideOrOn(PoleLocation))
             {
-                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("Smart!:   Power pole %s at (%.0f,%.0f,%.0f) is OUTSIDE manifold bounds - skipped"),
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("Smart!:   Power pole %s at (%.0f,%.0f,%.0f) is OUTSIDE manifold bounds - skipped"),
                     *PowerPole->GetName(), PoleLocation.X, PoleLocation.Y, PoleLocation.Z);
                 continue;
             }
-            
+
             // Power pole is within bounds - capture it
             FSFPowerChainNode PowerNode;
             PowerNode.PowerPole = PowerPole;
@@ -925,7 +925,7 @@ void USFExtendTopologyService::WalkPowerConnections(AFGBuildable* SourceBuilding
             PowerNode.FactoryConnector = FactoryPowerConn;
             PowerNode.PoleConnector = OtherConn;
             PowerNode.RelativeOffset = PoleLocation - SourceBuilding->GetActorLocation();
-            
+
             // Determine pole tier (max connections) and count current connections
             // in one pass over the pole's circuit connectors. Reading the live
             // value via GetMaxNumConnections() is authoritative and automatically
@@ -953,16 +953,16 @@ void USFExtendTopologyService::WalkPowerConnections(AFGBuildable* SourceBuilding
             PowerNode.MaxConnections = MaxConnectionsOnPole;
             PowerNode.SourceFreeConnections = PowerNode.MaxConnections - ConnectedCount;
             PowerNode.bSourceHasFreeConnections = (PowerNode.SourceFreeConnections > 0);
-            
+
             CachedTopology.PowerPoles.Add(PowerNode);
-            
-            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("Smart!:   Power pole %s at (%.0f,%.0f,%.0f) INSIDE bounds - captured (tier max=%d, used=%d, free=%d)"),
+
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("Smart!:   Power pole %s at (%.0f,%.0f,%.0f) INSIDE bounds - captured (tier max=%d, used=%d, free=%d)"),
                 *PowerPole->GetName(), PoleLocation.X, PoleLocation.Y, PoleLocation.Z,
                 PowerNode.MaxConnections, ConnectedCount, PowerNode.SourceFreeConnections);
         }
     }
-    
-    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("Smart!: Power walk complete - found %d power pole(s) within manifold bounds"),
+
+    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("Smart!: Power walk complete - found %d power pole(s) within manifold bounds"),
         CachedTopology.PowerPoles.Num());
 }
 
@@ -972,22 +972,22 @@ void USFExtendTopologyService::DiscoverPipePassthroughs(AFGBuildable* SourceBuil
     {
         return;
     }
-    
+
     UWorld* World = SourceBuilding->GetWorld();
     if (!World)
     {
         return;
     }
-    
+
     // Use manifold bounds to define search area (same as power pole discovery)
     FBox ManifoldBounds = CalculateManifoldBounds(500.0f); // 5m padding
     if (!ManifoldBounds.IsValid)
     {
-        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("🔧 EXTEND: Passthrough discovery skipped - no valid manifold bounds"));
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("🔧 EXTEND: Passthrough discovery skipped - no valid manifold bounds"));
         return;
     }
-    
-    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("🔧 EXTEND: Discovering passthroughs near factory (bounds: min=(%.0f,%.0f,%.0f) max=(%.0f,%.0f,%.0f))"),
+
+    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("🔧 EXTEND: Discovering passthroughs near factory (bounds: min=(%.0f,%.0f,%.0f) max=(%.0f,%.0f,%.0f))"),
         ManifoldBounds.Min.X, ManifoldBounds.Min.Y, ManifoldBounds.Min.Z,
         ManifoldBounds.Max.X, ManifoldBounds.Max.Y, ManifoldBounds.Max.Z);
 
@@ -1043,9 +1043,9 @@ void USFExtendTopologyService::DiscoverPipePassthroughs(AFGBuildable* SourceBuil
         {
             continue;
         }
-        
+
         FVector PassLocation = Passthrough->GetActorLocation();
-        
+
         // Check if within manifold bounds
         if (!ManifoldBounds.IsInside(PassLocation))
         {
@@ -1068,7 +1068,7 @@ void USFExtendTopologyService::DiscoverPipePassthroughs(AFGBuildable* SourceBuil
         if (!bTopOwnedByChain && !bBottomOwnedByChain)
         {
             SkippedForeign++;
-            UE_LOG(LogSmartFoundations, Verbose,
+            UE_LOG(LogSmartExtend, Verbose,
                 TEXT("🔧 EXTEND: Skipping foreign passthrough %s at (%.0f,%.0f,%.0f) — snapped to %s/%s, neither in current chains (#283)"),
                 *Passthrough->GetName(), PassLocation.X, PassLocation.Y, PassLocation.Z,
                 TopOwner ? *TopOwner->GetName() : TEXT("none"),
@@ -1077,13 +1077,13 @@ void USFExtendTopologyService::DiscoverPipePassthroughs(AFGBuildable* SourceBuil
         }
 
         CachedTopology.PipePassthroughs.Add(Passthrough);
-        
-        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("🔧 EXTEND: Discovered passthrough %s (class=%s) at (%.0f,%.0f,%.0f)"),
+
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("🔧 EXTEND: Discovered passthrough %s (class=%s) at (%.0f,%.0f,%.0f)"),
             *Passthrough->GetName(), *Passthrough->GetClass()->GetName(),
             PassLocation.X, PassLocation.Y, PassLocation.Z);
     }
-    
-    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("🔧 EXTEND: Passthrough discovery complete - found %d floor hole(s) (skipped %d foreign passthrough(s) not owned by current manifold, #283)"),
+
+    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("🔧 EXTEND: Passthrough discovery complete - found %d floor hole(s) (skipped %d foreign passthrough(s) not owned by current manifold, #283)"),
         CachedTopology.PipePassthroughs.Num(), SkippedForeign);
 }
 
@@ -1108,11 +1108,11 @@ void USFExtendTopologyService::DiscoverWallPassthroughs(AFGBuildable* SourceBuil
     FBox ManifoldBounds = CalculateManifoldBounds(500.0f); // 5m padding
     if (!ManifoldBounds.IsValid)
     {
-        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("🔧 EXTEND: Wall hole discovery skipped - no valid manifold bounds"));
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("🔧 EXTEND: Wall hole discovery skipped - no valid manifold bounds"));
         return;
     }
 
-    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("🔧 EXTEND: Discovering wall holes near factory (bounds: min=(%.0f,%.0f,%.0f) max=(%.0f,%.0f,%.0f))"),
+    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("🔧 EXTEND: Discovering wall holes near factory (bounds: min=(%.0f,%.0f,%.0f) max=(%.0f,%.0f,%.0f))"),
         ManifoldBounds.Min.X, ManifoldBounds.Min.Y, ManifoldBounds.Min.Z,
         ManifoldBounds.Max.X, ManifoldBounds.Max.Y, ManifoldBounds.Max.Z);
 
@@ -1179,11 +1179,11 @@ void USFExtendTopologyService::DiscoverWallPassthroughs(AFGBuildable* SourceBuil
 
     if (JunctionPoints.Num() == 0)
     {
-        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("🔧 EXTEND: Wall hole discovery skipped - no chain connectors to probe"));
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("🔧 EXTEND: Wall hole discovery skipped - no chain connectors to probe"));
         return;
     }
 
-    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("🔧 EXTEND: Probing %d chain connector(s) for adjacent wall holes"),
+    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("🔧 EXTEND: Probing %d chain connector(s) for adjacent wall holes"),
         JunctionPoints.Num());
 
     // Step 2: Single world sweep to collect wall-hole candidates inside the manifold bounds.
@@ -1215,7 +1215,7 @@ void USFExtendTopologyService::DiscoverWallPassthroughs(AFGBuildable* SourceBuil
 
     if (Candidates.Num() == 0)
     {
-        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("🔧 EXTEND: Wall hole discovery complete - no wall-hole candidates in manifold bounds (scanned %d buildables)"),
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("🔧 EXTEND: Wall hole discovery complete - no wall-hole candidates in manifold bounds (scanned %d buildables)"),
             Scanned);
         return;
     }
@@ -1245,7 +1245,7 @@ void USFExtendTopologyService::DiscoverWallPassthroughs(AFGBuildable* SourceBuil
         if (BestDistSq > ProbeRadiusSqCm)
         {
             SkippedNoConnector++;
-            UE_LOG(LogSmartFoundations, Verbose,
+            UE_LOG(LogSmartExtend, Verbose,
                 TEXT("🔧 EXTEND: Skipping wall hole %s (class=%s) at (%.0f,%.0f,%.0f) — nearest chain connector %.0fcm away (> %.0fcm)"),
                 *Candidate->GetName(), *Candidate->GetClass()->GetName(),
                 WallLoc.X, WallLoc.Y, WallLoc.Z,
@@ -1255,11 +1255,11 @@ void USFExtendTopologyService::DiscoverWallPassthroughs(AFGBuildable* SourceBuil
 
         CachedTopology.WallPassthroughs.Add(Candidate);
 
-        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("🔧 EXTEND: Discovered wall hole %s (class=%s) at (%.0f,%.0f,%.0f) — nearest connector %.0fcm away"),
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("🔧 EXTEND: Discovered wall hole %s (class=%s) at (%.0f,%.0f,%.0f) — nearest connector %.0fcm away"),
             *Candidate->GetName(), *Candidate->GetClass()->GetName(),
             WallLoc.X, WallLoc.Y, WallLoc.Z, FMath::Sqrt(BestDistSq));
     }
 
-    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("🔧 EXTEND: Wall hole discovery complete - found %d wall hole(s) (scanned %d buildables, %d candidates in bounds, skipped %d without nearby connector)"),
+    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("🔧 EXTEND: Wall hole discovery complete - found %d wall hole(s) (scanned %d buildables, %d candidates in bounds, skipped %d without nearby connector)"),
         CachedTopology.WallPassthroughs.Num(), Scanned, Candidates.Num(), SkippedNoConnector);
 }

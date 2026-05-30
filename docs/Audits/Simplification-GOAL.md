@@ -10,7 +10,7 @@ Review **every file** under `Source/SmartFoundations/` (also `Config/`, `docs/`,
 
 ## Themes (epics → PR-sized slices)
 - **T1 Decompose god-objects** (H/H): `SFSubsystem.cpp` (9.2k) & `SFExtendService.cpp` (9.5k) → focused services + thin orchestrators; one cohesive slice per PR.
-- **T2 Collapse Extend topology/serialization** (H/M): `SFManifoldJSON.cpp` (3.7k, ~99% hand-rolled JSON) + topology/manifest → walk-once / `FArchive`. Best payoff-to-effort of the big files.
+- **T2 Collapse Extend topology/serialization** (H/M): originally scoped as `SFManifoldJSON.cpp` (3.7k, ~99% hand-rolled JSON) + topology/manifest → walk-once / `FArchive`; corrected by ADR after audit showed it was actually the clone-topology engine plus debug dumps.
 - **T3 Table-drive size registry** (M/L): 14 `SFBuildableSizeRegistry_*.cpp` (~5.5k) → one DataTable/CSV. Easy early confidence-builder.
 - **T4 Centralize duplicated lookups** (H/L): `SFAssetPaths.h`; `SFPlayerHelpers::GetFGPlayerController()` (13 files, 3 idioms); `GetExtendServiceSafe()`; shared clone-ID registration.
 - **T5 Thin UI widgets** (M/M): split `SmartSettingsFormWidget` & `SmartUpgradePanel` into model / presenter / event-binder.

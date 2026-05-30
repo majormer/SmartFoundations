@@ -17,8 +17,8 @@ Charter: [`Simplification-GOAL.md`](Simplification-GOAL.md). This is the living 
 | ID | Theme | Impact/Effort | Lane | Status |
 |----|-------|---------------|------|--------|
 | T1 | Decompose god-objects (`SFSubsystem`, `SFExtendService`) | H/H | NEEDS-CARE | not started |
-| T2 | Collapse Extend topology/serialization (`SFManifoldJSON` etc.) | H/M | NEEDS-CARE | not started |
-| T3 | Table-drive the 14-file size registry | M/L | NEEDS-CARE (data-accuracy) | **code-complete, build-validated; in-game smoke pending** |
+| T2 | Collapse Extend topology/serialization (`SFExtendCloneTopology` / spawner split) | H/M | NEEDS-CARE | **build-validated; in-game smoke pending** |
+| T3 | Table-drive the 14-file size registry | M/L | NEEDS-CARE (data-accuracy) | **complete; build-validated and in-game smoked** |
 | T4 | Centralize duplicated lookups/asset paths/PC helpers | H/L | SAFE-NOW | partial (T4.1/T4.2 done; PC-helper folds into T1) |
 | T5 | Thin the UI widgets (model/presenter/binder) | M/M | NEEDS-CARE | not started |
 | T6 | Inject a service context; explicit init phases | M/H | NEEDS-CARE | not started |
@@ -47,7 +47,7 @@ Each Source area mapped to its primary theme(s), risk lane, and status. Per-exac
 | Area | Largest files (lines) | Theme(s) | Lane | Status |
 |------|-----------------------|----------|------|--------|
 | `Subsystem/` | `SFSubsystem.cpp` 9,227 (`.h` 1,483) | T1, T4, T6 | NEEDS-CARE | god-object; central decomposition target. Asset-path/PC dedup folds into the T1 split (don't touch twice). |
-| `Features/Extend/` | `SFExtendService.cpp` 9,519; `SFManifoldJSON.cpp` 3,694; `SFWiringManifest.cpp` 1,317; `SFExtendTopologyService.cpp` 1,265 | T1, T2 | NEEDS-CARE | largest feature; serialization collapse (T2) + service split (T1). Deferred PowerLine-path dedup lives here. |
+| `Features/Extend/` | `SFExtendService.cpp` 9,515; `SFExtendCloneTopology.cpp` 1,671; `SFExtendCloneSpawner.cpp` 1,400; `SFWiringManifest.cpp` 1,317; `SFExtendTopologyService.cpp` 1,265 | T1, T2 | NEEDS-CARE | largest feature; T2 split is code-complete pending build/smoke; service split (T1) remains. Deferred PowerLine-path dedup lives here. |
 | `Features/PowerAutoConnect/` | `SFPowerAutoConnectManager.cpp` | T4 (done), power-state | partly done | T4.1 power-path dedup landed; consolidate power-connection state here (beyond-scope item). |
 | `Features/AutoConnect/`, `PipeAutoConnect/` | `SFAutoConnectService.cpp` | T4 | mixed | shared lookup/asset/PC patterns. |
 | `Features/Upgrade/` | `SFUpgradeExecutionService.cpp` | T4.2, review | mixed | recipe-path arrays duplicated with `SmartUpgradePanel` → shared table (T4.2). |
@@ -64,7 +64,7 @@ Each Source area mapped to its primary theme(s), risk lane, and status. Per-exac
 | Slice | Files | Lane | Build | Commit |
 |-------|-------|------|-------|--------|
 | T4.1 PowerLine path → `SFAssetPaths::PowerLineBuildClass` | `SFAssetPaths.h` (new) + `SFWireHologram`, `PowerLinePreviewHelper`, `SFPowerAutoConnectManager` (4 sites) | SAFE-NOW | pass | committed |
-| T4.1b PowerLine path in Extend giants (deferred) | `SFExtendService` (×2), `SFManifoldJSON` (×1) | SAFE-NOW | — | fold into T1/T2 |
+| T4.1b PowerLine path in Extend giants | `SFExtendService` (×2), `SFExtendCloneSpawner` (×1) | SAFE-NOW | pass | pending |
 | T4.2 upgrade recipe-path arrays → `SFAssetPaths::UpgradeRecipes` | `SFAssetPaths.h` + `SmartUpgradePanel.cpp` (4 arrays), `SFUpgradeExecutionService.cpp` (4 arrays) | SAFE-NOW | pass | committed |
 | T4.2b PowerPole/Pipe build paths in `SFSubsystem` (deferred) | `SFSubsystem.cpp` | SAFE-NOW | — | fold into T1 |
 | T7.1 per-feature log categories (`SFLogMacros.h`) | `SFLogMacros.h` (new) + `SmartFoundations.cpp` | SAFE-NOW | pass | committed |
@@ -72,8 +72,15 @@ Each Source area mapped to its primary theme(s), risk lane, and status. Per-exac
 | T7.2a Upgrade feature → `LogSmartUpgrade` (170 sites) | `SFUpgradeExecutionService`, `SFUpgradeAuditService`, `SFUpgradeTraversalService` | SAFE-NOW | pass | committed |
 | T7.2b AutoConnect feature → `LogSmartAutoConnect` (350 sites) | `SFAutoConnectOrchestrator`, `SFAutoConnectService` | SAFE-NOW | pass | committed |
 
+| T2 Option A debug JSON removal + rename + spawner split | `SFExtendCloneTopology.h/.cpp` + `SFExtendCloneSpawner.cpp`, Extend call sites | NEEDS-CARE | pass | pending |
+| T7.2g Extend feature → `LogSmartExtend` (675 sites) | `Features/Extend/*.cpp` | SAFE-NOW | pass | pending |
+
 - 2026-05-30: T7.2 log migration substantially complete (solo session, each slice package-build-validated). Reliable method established: (a) `SmartFoundations.h` includes `SFLogMacros.h` so categories resolve everywhere — migration is now pure category swaps; (b) `scripts/migrate_log_category.py`, a guarded swapper that auto-skips category-declaring / wrapper-macro-defining files. Migrated to feature categories: Holograms (23 files, 232 → LogSmartHologram); Services (GridSpawner→Grid, Hud/HintBar→UI, ChainActor→Upgrade); Pipe/Power AutoConnect (238 → LogSmartAutoConnect); Arrows (48 → new LogSmartArrows). Commits 6feb2bf, ad5a739, 6f3d8c2. Deferred on purpose: Extend (669) + Subsystem (670) fold into T1/T2; SFFactoryHologram (SF_HOLOGRAM_LOG hardcoded wrapper) + Recipe/RadarPulse (no fitting category) stay on catch-all. Headline criteria (no file >2k/3k) still require the NEEDS-CARE epics T1/T2/T3/T5/T6/T8 — gated on in-game SmartMCP smoke (maintainer + game running) which cannot proceed solo.
 
 - 2026-05-30: T3 executed (commits 2ef6481, 173b5ce, 9c5f3fd). Chosen format: CSV source + generated .cpp (NOT runtime CSV — Stage-A build proved Alpakit does not package loose Content/*.csv). `Content/Data/BuildableSizes.csv` (300 profiles) is the canonical human-editable table; `scripts/gen_size_registry.py` regenerates `SFBuildableSizeRegistry_Data.cpp` (compiled-in RegisterDefaultProfiles). Deleted the 14 SFBuildableSizeRegistry_*.cpp files (−~5,500 lines). `scripts/extract_size_registry.py` round-trip proved the extraction lossless (300/300) before deletion. Build SUCCESSFUL; behavior-preserving by construction; **in-game scaling smoke pending** (foundation 8x4/8x1, wall, ramp, rotation-swap building). Bonus: fixed 3 latent missing-include bugs (SFExtendService, SFPipeAutoConnectManager, SFRCO used AFGPlayerController via transitive unity-build includes only — now self-sufficient). Satisfies the "single edit point for building sizes" charter criterion. Per-slice ledger and the largest-file table in Simplification-RemainingWork.md should be refreshed after the smoke passes (12 files >2k → 11; the registry split removed a cluster but the giant files are untouched — those are T1/T2).
 
 - 2026-05-30: T3 IN-GAME SMOKE PASSED (maintainer). Placed Smart-grid foundation 8x4 + 8x1, wall, ramp, and a rotation-swap building — all scale/space identically to refactor-baseline, no fallback regressions. T3 COMPLETE: the size registry is now one human-editable CSV (Content/Data/BuildableSizes.csv) + a generated data file, −~5,500 lines across 14 deleted files, single edit point for building sizes (charter criterion ✅). First fully-validated NEEDS-CARE epic.
+
+- 2026-05-30: T2 Option A build-validated (maintainer chose delete debug JSON + rename + split). Corrected the original premise via ADR: `SFManifoldJSON` was the clone-topology engine, not live JSON serialization. Removed debug-only `ExtendSourceTopology.json`, `ExtendClonedTopology.json`, and `ManifoldBuilt.json` dump paths plus `CaptureFromBuiltFactory`; renamed `SFManifoldJSON.*` to `SFExtendCloneTopology.*`; split `FSFCloneTopology::SpawnChildHolograms` into `SFExtendCloneSpawner.cpp`; removed unused `JsonUtilities` dependency. Resulting files: `SFExtendCloneTopology.cpp` ~1,671 lines, `SFExtendCloneSpawner.cpp` ~1,400. `FactoryEditor Win64 Development` compile passed after closing Live Coding; in-game Extend smoke pending.
+
+- 2026-05-30: T4/T7 Extend tails build-validated. Routed the three deferred Extend PowerLine build-class loads through `SFAssetPaths::PowerLineBuildClass` (`SFExtendService` pump/pole wiring and `SFExtendCloneSpawner` preview wire), leaving the hard-coded FactoryGame path only in `SFAssetPaths.h`. Migrated 675 Extend feature log call sites to `LogSmartExtend` with `scripts/migrate_log_category.py`; subsystem and hologram wrapper logs were intentionally left in their current categories. `FactoryEditor Win64 Development` compile passed; in-game Extend smoke pending.
