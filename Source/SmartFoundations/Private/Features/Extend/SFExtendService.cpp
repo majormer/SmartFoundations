@@ -60,6 +60,7 @@
 #include "Equipment/FGBuildGun.h"
 #include "Equipment/FGBuildGunBuild.h"
 #include "FGCharacterPlayer.h"
+#include "FGPlayerController.h"  // AFGPlayerController (was transitively included via the size-registry files removed in T3)
 #include "FGConstructDisqualifier.h"
 #include "FGInventoryComponent.h"
 #include "FGCentralStorageSubsystem.h"  // Extend affordability: Dimensional Depot stock

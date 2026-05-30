@@ -54,73 +54,9 @@ void USFBuildableSizeRegistry::Initialize()
 	SF_LOG_ADAPTER(Normal, TEXT("✅ Buildable Size Registry initialized with %d profiles"), KnownProfiles.Num());
 }
 
-void USFBuildableSizeRegistry::RegisterDefaultProfiles()
-{
-	RegisterFoundations();
-	RegisterRamps();
-	RegisterWalls();
-	RegisterWalkways();
-	RegisterBarriers();
-	RegisterArchitectureDisabled();
-	RegisterStorage();
-	RegisterOrganization();
-	RegisterProduction();
-	RegisterExtractors();
-	RegisterSpecial();
-	RegisterPower();
-	RegisterLogistics();
-	RegisterTransport();
-	
-	// ===================================
-	// RAMPS & STAIRS
-	// ===================================
-	// MOVED TO SFBuildableSizeRegistry_Ramps.cpp
-	
-	// ===================================
-	// WALLS
-	// ===================================
-	// MOVED TO SFBuildableSizeRegistry_Walls.cpp
-	
-	// ===================================
-	// WALKWAYS & CATWALKS
-	// ===================================
-	// MOVED TO SFBuildableSizeRegistry_Walkways.cpp
-	
-	// ===================================
-	// ARCHITECTURE (DISABLED)
-	// ===================================
-	// MOVED TO SFBuildableSizeRegistry_Architecture_Disabled.cpp
-	
-	// ===================================
-	// PRODUCTION BUILDINGS
-	// ===================================
-	// MOVED TO SFBuildableSizeRegistry_Production.cpp
-	
-	// ===================================
-	// RESOURCE EXTRACTORS (NO SCALING)
-	// ===================================
-	// MOVED TO SFBuildableSizeRegistry_Extractors.cpp
-	
-	// ===================================
-	// SPECIAL BUILDINGS
-	// ===================================
-	// MOVED TO SFBuildableSizeRegistry_Special.cpp
-	
-	// ===================================
-	// POWER BUILDINGS
-	// ===================================
-	// MOVED TO SFBuildableSizeRegistry_Power.cpp
-	
-	// ===================================
-	// LOGISTICS
-	// ===================================
-	// MOVED TO SFBuildableSizeRegistry_Logistics.cpp
-
-	// ===================================
-	// TRANSPORT
-	// ===================================
-	// MOVED TO SFBuildableSizeRegistry_Transport.cpp
-}
+// RegisterDefaultProfiles() is generated from Content/Data/BuildableSizes.csv into
+// SFBuildableSizeRegistry_Data.cpp (regenerate with scripts/gen_size_registry.py). It replaced
+// the former 14 hand-maintained SFBuildableSizeRegistry_*.cpp category files.
 
 void USFBuildableSizeRegistry::RegisterProfile(
 	const FString& ClassName,
