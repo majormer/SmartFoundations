@@ -22,7 +22,7 @@ Then propose the next step and wait for my go-ahead before editing.
 
 ## Where things stand (2026-05-30)
 
-- Branch `refactor/simplification-audit`, ~30 commits ahead of `origin/main` (`15fe368`), tree clean
+- Branch `refactor/simplification-audit`, ~43 commits ahead of `origin/main` (`15fe368`), tree clean
   (only untracked: two `scripts/loc_*.txt` reports — ignore them). Run `git log -1` for the exact HEAD;
   local `main` may be stale, so compare against `origin/main`. Rollback tag: `refactor-baseline` at `9b15ecc`.
 - **5 of 6 charter criteria met.** Done: architecture map, smoke-test harness (`scripts/smoke_test.py`),

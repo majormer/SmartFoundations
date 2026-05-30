@@ -1,7 +1,7 @@
 # Code-Simplicity Refactor — Remaining Work
 
 Resume/handoff doc for the simplification effort. Branch: `refactor/simplification-audit`
-(~30 commits ahead of `origin/main` at `15fe368`; tree clean; rollback tag `refactor-baseline` at
+(~43 commits ahead of `origin/main` at `15fe368`; tree clean; rollback tag `refactor-baseline` at
 `9b15ecc`). HEAD is the branch tip — run `git log -1` for the exact commit. (Note: local `main` may
 be stale; compare against `origin/main`.)
 Charter: [`Simplification-GOAL.md`](Simplification-GOAL.md) · Tracker: [`SimplificationAudit.md`](SimplificationAudit.md)

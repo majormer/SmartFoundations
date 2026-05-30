@@ -46,14 +46,14 @@ Each Source area mapped to its primary theme(s), risk lane, and status. Per-exac
 
 | Area | Largest files (lines) | Theme(s) | Lane | Status |
 |------|-----------------------|----------|------|--------|
-| `Subsystem/` | `SFSubsystem.cpp` 9,227 (`.h` 1,483) | T1, T4, T6 | NEEDS-CARE | god-object; central decomposition target. Asset-path/PC dedup folds into the T1 split (don't touch twice). |
-| `Features/Extend/` | `SFExtendService.cpp` 9,515; `SFExtendCloneTopology.cpp` 1,671; `SFExtendCloneSpawner.cpp` 1,400; `SFWiringManifest.cpp` 1,317; `SFExtendTopologyService.cpp` 1,265 | T1, T2 | NEEDS-CARE | largest feature; T2 split is code-complete pending build/smoke; service split (T1) remains. Deferred PowerLine-path dedup lives here. |
+| `Subsystem/` | `SFSubsystem.cpp` 9,227 (`.h` 1,483); `SFHologramHelperService.cpp` 2,144 | T1, T4, T6 | NEEDS-CARE | god-object; central decomposition target (not started). T1b plan: input→`FSFInputHandler`, lifecycle+creation→`FSFHologramHelperService` (stubs exist), power→`SFPowerAutoConnectManager` — 7 slices S1–S7, see [`RefactorCompletionPlan.md`](RefactorCompletionPlan.md). Asset-path/PC dedup folds into the T1 split. |
+| `Features/Extend/` | `SFExtendService.cpp` **7,718** (round 1 done); `SFExtendRestoreReplayService.cpp` 1,103; `SFExtendDiagnosticsService.cpp` 916; `SFExtendCloneTopology.cpp` 1,671; `SFExtendCloneSpawner.cpp` 1,400; `SFWiringManifest.cpp` 1,317; `SFExtendTopologyService.cpp` 1,265 | T1, T2 | NEEDS-CARE | T2 **complete** (smoked); T1 round 1 **complete** (smoked, `fd27261`: Diagnostics + Restore-replay split out). Remaining units F/G/I/J + Scaled → see [`RefactorCompletionPlan.md`](RefactorCompletionPlan.md) (slices E1/E2). |
 | `Features/PowerAutoConnect/` | `SFPowerAutoConnectManager.cpp` | T4 (done), power-state | partly done | T4.1 power-path dedup landed; consolidate power-connection state here (beyond-scope item). |
 | `Features/AutoConnect/`, `PipeAutoConnect/` | `SFAutoConnectService.cpp` | T4 | mixed | shared lookup/asset/PC patterns. |
 | `Features/Upgrade/` | `SFUpgradeExecutionService.cpp` | T4.2, review | mixed | recipe-path arrays duplicated with `SmartUpgradePanel` → shared table (T4.2). |
 | `Features/Restore/` | `SFRestoreService.cpp` | T6-adjacent | NEEDS-CARE | couples to Extend; review with T6. |
 | `Holograms/` | `SFConveyorBeltHologram.cpp` 2,220; `SFPipelineHologram.cpp` 1,481 | T8 | NEEDS-CARE | Smart-vs-vanilla split; child-hologram patterns shareable. |
-| `UI/`, `HUD/` | `SmartSettingsFormWidget.cpp` 3,746; `SmartUpgradePanel.cpp` 2,155 | T5, T4 | NEEDS-CARE | widget model/presenter/binder split; `SFFontLibrary` done. |
+| `UI/`, `HUD/` | `SmartSettingsFormWidget.cpp` 3,746; `SmartUpgradePanel.cpp` 2,138 | T5, T4 | NEEDS-CARE | widget model/presenter/binder split (UMG: impl-split across `.cpp` per [`RefactorCompletionPlan.md`](RefactorCompletionPlan.md) slices U1/U2); `SFFontLibrary` done. |
 | `Data/` | 14× `SFBuildableSizeRegistry_*` (~5,500); `SFHologramDataRegistry` | T3 | NEEDS-CARE (data) | registry → DataTable/CSV. |
 | `Services/` | `SFChainActorService`, `SFHudService`, `SFRecipeManagementService` | review | mixed | mostly cohesive; classify individually. |
 | `Constants/` | `SFAssetPaths.h` (new) | T4 | SAFE-NOW | grow as paths are centralized. |
