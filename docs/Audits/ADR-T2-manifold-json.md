@@ -1,6 +1,6 @@
 # ADR — T2: `SFManifoldJSON.cpp` (3,694 lines)
 
-Status: **Accepted and implemented** — Option A selected by maintainer and executed.
+Status: **Done** — Option A implemented, build-validated, and in-game smoke-passed (2026-05-30, commit `9d58c9d`).
 Charter: [`Simplification-GOAL.md`](Simplification-GOAL.md) · Tracker: [`SimplificationAudit.md`](SimplificationAudit.md)
 
 ## Context — the survey premise was WRONG

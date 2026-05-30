@@ -1,7 +1,7 @@
 # Code-Simplicity Refactor — Remaining Work
 
 Resume/handoff doc for the simplification effort. Branch: `refactor/simplification-audit`
-(18 commits ahead of `main`, HEAD `9056fc6`, tree clean, rollback tag `refactor-baseline`).
+(27 commits ahead of `main`, HEAD `9d58c9d`, tree clean, rollback tag `refactor-baseline`).
 Charter: [`Simplification-GOAL.md`](Simplification-GOAL.md) · Tracker: [`SimplificationAudit.md`](SimplificationAudit.md)
 · T3 design: [`ADR-T3-size-registry-format.md`](ADR-T3-size-registry-format.md).
 
@@ -58,12 +58,13 @@ at `ExitCode=0` = the DLL-lock deploy failure, not a code error.)
 
 ## Remaining epics (recommended order)
 
-### T2 — Clone topology split (build-validated; smoke pending)
+### T2 — Clone topology split ✅ DONE (commit `9d58c9d`, smoke-passed 2026-05-30)
 The original "hand-rolled JSON" premise was corrected in `ADR-T2-manifold-json.md`: the file was the
 clone-topology engine plus debug dumps. Option A removed the debug dumps, renamed the file to
-`SFExtendCloneTopology.*`, and split child spawning into `SFExtendCloneSpawner.cpp`. The
-`FactoryEditor Win64 Development` compile passes. Extend smoke is still required: capture a manifold →
-Extend preview → build, Scaled Extend (2×), and pump/power wiring.
+`SFExtendCloneTopology.*`, and split child spawning into `SFExtendCloneSpawner.cpp`. Shipping
+`PackagePlugin` compile + cook clean. Smoke passed: Extend with pipes/belts/lifts/power all spawn +
+wire; scaled buildings + auto-connect works; Restore from preset works (validates the
+`SFRestoreTypes.h` include change).
 
 ### T1 — Decompose god-objects (the headline)
 The only path to criteria #5 **and** #6. One cohesive slice per PR, pure-move first.
