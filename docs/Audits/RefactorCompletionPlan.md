@@ -238,13 +238,137 @@ After J + the wiring cluster, residual `SFExtendService.cpp` ≈ orchestration +
 shell + thin delegators ≈ **~1,786 lines (<2k, criterion #5 met for this file)**. A/C/D need no
 further split. `[VERIFY in self-review: function-by-function coverage sums to 7,718.]`
 
-## T1b — `SFSubsystem.cpp` (9,227) — the second god-object
+## T1b — `SFSubsystem.cpp` (live 9,227) — advances criterion #6 (get <3k) + #5
 
-`[AUDIT PENDING]` — Unit Map + Slice Cards. Known candidate units from the charter: input
-binding, grid/scaling state, recipe state, child-hologram lifecycle, the 10-way
-`CreateHologramAdapter()` switch (→ registry), power-connection state (→
-`SFPowerAutoConnectManager`). Must audit the `GetExtendServiceSafe()` / sibling reach-back
-pattern and the init-order coupling (feeds T6).
+183 functions. **Banner sections are MISLABELED** (audit caught this): "Static Access" (717)
+and "Hologram Lock Ownership" (1,802) are mostly **input handlers** + **active-hologram
+lifecycle**, not what their names say. Real units (line ranges from live grep):
+
+| Real unit | Lines (approx, from grep) | ~Size | Destination |
+|-----------|---------------------------|------:|-------------|
+| **Input handling** — `SetupPlayerInput`,`CheckForPlayerController`,`ApplyAxisScaling`, `OnScaleX/Y/Z`,`OnValue±`,`OnMouseWheel`,`OnModifierScaleX/Y±` (1049–1751) + `OnSpacing/Steps/Stagger/Rotation`,`OnToggleArrows/SettingsForm/UpgradePanel` (1929–2676) | scattered | **~1,300** | → `FSFInputHandler` (stub exists) |
+| **Active-hologram lifecycle** — `RegisterActiveHologram` (2677–3228, ~551), `UnregisterActiveHologram` (3229–3356), `PollForActiveHologram` (3357–3553), `TryAcquire/ReleaseHologramLock`,`IsAnyModalFeatureActive`,`GetFurthestTopHologramPosition` (1756–1928) | 1756–3553 | **~1,100** | → `FSFHologramHelperService` (stub exists) |
+| **Hologram creation + adapter + tier lookups** — `CreateCustom{Foundation,Factory,Logistics}Hologram`,`CopyHologramProperties`,`ReplaceHologramInBuildGun`,`GetBeltClassForTier`,`GetHighestUnlocked*Tier`,`OnActorSpawned`,`FindRecipeForSpawnedBuilding`,`ApplyRecipeDelayed` (6289–8372) | 6289–8372 | **2,083** | → `FSFHologramHelperService` (`CreateHologramAdapter` stub exists) |
+| **Multi-Step Property Sync** (Issue #200) | 3554–4260 | 706 | → new hologram-sync helper or HologramHelper |
+| **Pipe Tier Config** | 5034–5997 | 963 | → config helper / `SFPipeAutoConnectManager` |
+| **Power Connection Mgmt** (PIMPL) | 423–1035 | 612 | → `SFPowerAutoConnectManager` (charter "also consider") |
+| **Static accessors / Get() / RPC / Config / Recipe-copy / setters / registry / debug / chain-rebuild / restore-enh** | scattered | residual | STAYS on subsystem (facade) |
+
+**KEY FINDING — destinations already stubbed.** `SFInputHandler.cpp` has
+`FSFInputHandler::SetupPlayerInput`; `SFHologramHelperService.cpp:121/142/1595` have
+`RegisterActiveHologram`/`UnregisterActiveHologram`/`CreateHologramAdapter` each marked
+`// TODO: Extract from SFSubsystem::X`. The maintainer pre-built the homes. Both are **`F`-type
+plain classes** (PIMPL), owned by the subsystem — extraction is "fill the stub + delete the
+original", not new UObject wiring. **`GetCurrentAdapter()` is called externally** by
+`SFGridSpawnerService.cpp:91,624,630`, so `CurrentAdapter` stays on the subsystem (or moves to
+HologramHelper with an accessor) — audit at slice time.
+
+### Cross-section coupling matrix (field c — from live grep, this effort)
+
+```
+ActiveHologram     142  SPINE  HoloLock=35 PipeTier=31 HoloCreate=26 StaticAccess=18 RecipeCopy=11 PowerConn=10
+CounterState        70  SPINE  HoloLock=44 StaticAccess=17 RPC=4 PowerConn=2 DistribLife=2
+CurrentAdapter      14         HoloLock=9 PowerConn=2 StaticAccess=2 PropSync=1   (external: GridSpawner)
+Planned/CommittedBuildingConnections, Planned/DeferredPoleConnections  shared PowerConn<->HoloCreate
+GridStateService    37  reach  HoloLock=14 StaticAccess=13 DistribLife=3 ...   (already a separate svc)
+GridTransformService 11 reach  HoloLock=6 PropSync=2 ...
+HudService          27  reach  HoloLock=14 BuildHUD=6 RPC=4 ...
+ExtendService       42  reach  PowerConn=14 HoloLock=14 StaticAccess=5 ...
+AutoConnectService  81  reach  PipeTier=26 HoloCreate=14 HoloLock=12 PowerConn=8 Config=7 ...
+CurrentBuildProxy   12         HoloCreate=9 HoloLock=3
+```
+
+**`ActiveHologram` (142) + `CounterState` (70) are the spine** — read by every unit; they STAY
+on the subsystem and extracted helpers access them via the owner back-ref (the `F`-helpers
+already take a subsystem pointer). The feature-service pointers (ExtendService 42,
+AutoConnectService 81, GridStateService 37, HudService 27 …) are the **sibling reach-back** the
+T6 DI context formalizes — T1b uses the existing back-ref; T6 replaces it later.
+
+### Slice Cards
+
+#### SFSubsystem — Slice S1: Input handling → `FSFInputHandler`   [lane: NEEDS-CARE]
+- Moves: `SetupPlayerInput`,`CheckForPlayerController`,`ApplyAxisScaling`,`OnScaleX/Y/Z`,
+  `OnValue±`,`OnMouseWheel`,`OnModifierScaleX/Y±` (1049–1751 minus `Get()`), `OnSpacing/Steps/
+  Stagger/RotationModeChanged`,`OnSpacingCycleAxis`,`OnCycleAxis`,`OnToggleArrows/SettingsForm/
+  UpgradePanel`,`OnUpgradePanelCloseClicked` (1929–2676). ~1,300 lines.
+- Call-site audit: input handlers are bound via Enhanced Input inside `SetupPlayerInput`
+  (internal delegates) — **not** called cross-file; `SetupPlayerInput` invoked from
+  `SFInputHandler.cpp:130` (already) + subsystem init. → minimal external surface.
+- Shared state: writes `CounterState` (StaticAccess=17 of the 70), `bModifierScaleX/YActive`,
+  `bSpacing/Steps/Stagger/RotationModeActive`; reads `ActiveHologram`, calls GridState/
+  GridTransform/Extend/HudService. All via owner back-ref (stub already holds it).
+- Extraction approach: fill the `FSFInputHandler` stub; methods take `Owner->` for CounterState
+  + services (F-helper already has `Owner`). Delete originals; subsystem forwards
+  `SetupPlayerInput`. No UObject wiring.
+- Hidden helpers: `[VERIFY]` grep anon-namespace in 1049–2676 (input-curve/step math may have
+  file-local statics).
+- Runtime coupling (SMOKE-CRITICAL): input fires per-frame during placement; `OnScale*` mutate
+  CounterState which drives grid spawn + Extend `OnScaledExtendStateChanged` (see round-1
+  ClearExtendState comment — counter restore re-triggers extend). Init-order: input must bind
+  after services construct. Smoke: scale X/Y/Z, modifiers, mouse-wheel, spacing/steps/stagger/
+  rotation cycles, toggle arrows/settings/upgrade — all from the build gun.
+- Size delta: −~1,300; SFSubsystem.cpp → ~7,927.
+- Depends on: none (good first SFSubsystem slice — input is the most self-contained).
+
+#### SFSubsystem — Slice S2: Active-hologram lifecycle → `FSFHologramHelperService`   [lane: NEEDS-CARE]
+- Moves: `RegisterActiveHologram` (2677–3228), `UnregisterActiveHologram` (3229–3356),
+  `PollForActiveHologram` (3357–3553), `TryAcquire/ReleaseHologramLock`,
+  `IsAnyModalFeatureActive`,`GetFurthestTopHologramPosition` (1756–1928). ~1,100 lines.
+- Call-site audit: `RegisterActiveHologram` referenced by Arrows + RecipeMgmt comments;
+  primarily called internally by `PollForActiveHologram` + build-gun hooks → forwarders.
+  `GetCurrentAdapter` external (GridSpawner ×3) → keep accessor.
+- Shared state: heavy `ActiveHologram` (HoloLock=35), `CounterState` (44), `CurrentAdapter` (9),
+  `SortedFilteredRecipes`/`CurrentRecipeIndex` (recipe cycling lives here too — note overlap with
+  recipe state), GridState/Transform/Hud reach-backs. → owner back-ref.
+- Extraction approach: fill the HologramHelper stubs; **split HologramHelper impl across `.cpp`
+  files** because the file is already 2,144 lines and S2+S3 add ~3,200 → see T1d below.
+- Hidden helpers: `[VERIFY]` `RegisterActiveHologram` is 551 lines — grep for file-local statics
+  + check it doesn't inline child-spawn logic that belongs to GridSpawnerService.
+- Runtime coupling (SMOKE-CRITICAL): THE init-order epicenter — Register/Unregister fire on every
+  hologram change; `PollForActiveHologram` runs on tick; adapter created lazily. Re-entrancy with
+  Extend's hologram swap (round-1 `SwapToSmartFactoryHologram`). Smoke: every build-gun hologram
+  type, switch rapidly, Extend swap, upgrade-panel open/close.
+- Size delta: −~1,100 from subsystem.
+- Depends on: S1 (do input first — cleaner) is preferred but not strictly required.
+
+#### SFSubsystem — Slice S3: Hologram creation + adapter + tier lookups → `FSFHologramHelperService`   [lane: NEEDS-CARE]
+- Moves: `CreateCustom{Foundation,Factory,Logistics}Hologram`,`CopyHologramProperties`,
+  `ReplaceHologramInBuildGun`,`GetBeltClassForTier`,`GetHighestUnlocked{Belt,PowerPole,WallOutlet}Tier`,
+  `GetBeltClassFromConfig`,`OnActorSpawned`,`FindRecipeForSpawnedBuilding`,`ApplyRecipeDelayed`
+  (6289–8372). 2,083 lines. **Fold the 10-way create switch into the adapter registry** (charter
+  "also consider").
+- Call-site audit: `[VERIFY]` grep external callers of `CreateCustom*Hologram` / `OnActorSpawned`
+  (OnActorSpawned is an engine delegate bound in init).
+- Shared state: power-connection maps (Planned/Committed/PoleConnections — shared with PowerConn
+  slice S5 → sequence: extract these maps' owner first or use accessors), `CurrentBuildProxy` (9),
+  `AutoConnectService` (14). 
+- Extraction approach: fill `CreateHologramAdapter` stub + move creation fns; split across `.cpp`.
+- Runtime coupling (SMOKE-CRITICAL): `OnActorSpawned` is an engine spawn callback (fires for every
+  actor); adapter creation is lazy on first use. Smoke: place foundation/factory/logistics, verify
+  tier selection + recipe copy on spawned manufacturers.
+- Size delta: −2,083 from subsystem.
+- Depends on: S5 (power maps) ordering OR accessors.
+
+#### SFSubsystem — Slices S4/S5: Property Sync (706) + Power Connection (612)   [lane: NEEDS-CARE]
+- S4 Property Sync (3554–4260) → hologram-sync helper. Shared: ActiveHologram, GridTransform.
+  `[VERIFY external callers]`. Runtime: multi-step sync across frames (Issue #200) — smoke-critical.
+- S5 Power Connection (423–1035) → consolidate into `SFPowerAutoConnectManager`. Shared maps
+  with HoloCreate (S3) — **the one true cross-slice coupling in the subsystem**; handle by moving
+  the maps' ownership to the power manager and giving S3 accessors. Runtime: deferred pole wiring,
+  cost-deduction once-per-cycle flag. Smoke: power auto-connect + Extend power poles.
+
+**Coverage:** S1(~1,300)+S2(~1,100)+S3(2,083)+S4(706)+S5(612) = ~5,801 removed → subsystem
+~3,426. **Still >3k** — S4 or the Pipe Tier (963, → S6 into a config/pipe helper) must also move
+to clear #6. Plan: also extract **Pipe Tier Config (5034–5997, 963)** → resulting subsystem
+~2,463 (<3k ✓). `[Self-review will confirm the residual function-by-function.]`
+
+## T1d — `SFHologramHelperService.cpp` (live 2,144) — MERGES with T1b S2/S3
+
+This file is both a criterion-#5 target AND the destination for SFSubsystem S2+S3 (~3,200 lines
+incoming). Net it would be ~5,300 lines → **must split its impl across ≥3 `.cpp` files** (one
+class, many TUs, same pattern as the Extend wiring cluster): e.g. `SFHologramHelperService.cpp`
+(existing helpers), `_Lifecycle.cpp` (Register/Unregister/Poll), `_Creation.cpp` (Create*/tier/
+adapter). `[AUDIT PENDING: current 2,144-line content map — next turn.]`
 
 ## T1c — AutoConnect family
 
