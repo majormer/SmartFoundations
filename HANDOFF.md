@@ -34,17 +34,19 @@ Then propose the next step and wait for my go-ahead before editing.
 ## Next: T1 — decompose the god-objects
 
 The only path to the last two criteria. Targets (live `wc -l`):
-- `Features/Extend/SFExtendService.cpp` — 9,515
-- `Subsystem/SFSubsystem.cpp` — 9,227
+- `Features/Extend/SFExtendService.cpp` — 7,718 (**round 1 DONE + smoked**, `fd27261`: Diagnostics +
+  Restore-replay split out; units F/G/I/J remain)
+- `Subsystem/SFSubsystem.cpp` — 9,227 (not started)
 - Scope-adds also >2k: `SFAutoConnectService.cpp` (4,771), `SFPipeAutoConnectManager.cpp` (2,789),
   `SFHologramHelperService.cpp` (2,144). (There are 9 `.cpp` files >2k total; full list in
   `Simplification-RemainingWork.md`.)
 
-**Recommended first action:** a read-only audit of `SFExtendService.cpp` to map it into cohesive,
-separable units (likely: topology walk, wiring orchestration, scaled-clone planning, diagnostics),
-then propose the smallest safe **pure-move** first slice. This needs no build and no running game —
-do it first and bring back a slice proposal. (Starting with Extend keeps context warm from the T2 split,
-which already proved the extraction pattern there. `SFSubsystem.cpp` is the alternative first target.)
+**Current state (2026-05-30):** T1 round 1 on Extend is complete and in-game-smoked. The full,
+audited per-slice decomposition plan for ALL remaining targets is being built in
+[`docs/Audits/RefactorCompletionPlan.md`](docs/Audits/RefactorCompletionPlan.md) under a `/goal`
+planning loop (read-only audit; each slice pre-audits call sites + cross-unit shared state + runtime
+coupling, to prevent the mid-flight surprises hit in slice B). **Resume code work from that plan once
+it's complete.**
 
 ## How T1 work proceeds (the rules)
 

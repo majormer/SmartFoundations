@@ -27,8 +27,8 @@ Charter: [`Simplification-GOAL.md`](Simplification-GOAL.md) · Tracker: [`Simpli
 
 | Lines | File | Epic |
 |------:|------|------|
-| 9515 | `Features/Extend/SFExtendService.cpp` | T1 |
 | 9227 | `Subsystem/SFSubsystem.cpp` | T1 |
+| 7718 | `Features/Extend/SFExtendService.cpp` | T1 (round 1 done: H+B; F/G/I/J remain) |
 | 4771 | `Features/AutoConnect/SFAutoConnectService.cpp` | T1 (scope add) |
 | 3746 | `UI/SmartSettingsFormWidget.cpp` | T5 |
 | 2789 | `Features/PipeAutoConnect/SFPipeAutoConnectManager.cpp` | T1 (scope add) |
@@ -40,10 +40,12 @@ Charter: [`Simplification-GOAL.md`](Simplification-GOAL.md) · Tracker: [`Simpli
 | 1852 | `Features/PowerAutoConnect/SFPowerAutoConnectManager.cpp` | T1 (scope add) |
 | 1805 | `Services/RadarPulse/SFRadarPulseService.cpp` | review |
 
-(Counts refreshed 2026-05-30 after T2, from `wc -l`. There are **9 `.cpp` files >2k lines** — the
-nine rows at/above `SmartUpgradePanel.cpp` (2,138). The T2 split files `SFExtendCloneTopology.cpp`
-(~1,671) and `SFExtendCloneSpawner.cpp` (~1,400) are below the threshold, as is
-`SFPipelineHologram.cpp` (~1,481).)
+(Counts refreshed 2026-05-30 after T1 round 1, from live `wc -l`. Still **9 `.cpp` files >2k lines**
+— the nine rows at/above `SmartUpgradePanel.cpp` (2,138); `SFExtendService.cpp` dropped 9,515→7,718
+after the H+B split but is still >2k, so the count is unchanged. The round-1 split files
+`SFExtendDiagnosticsService.cpp` (~916) and `SFExtendRestoreReplayService.cpp` (~1,103) are below
+the threshold, as are the T2 split files. The full decomposition plan for the remaining 9 files lives
+in [`RefactorCompletionPlan.md`](RefactorCompletionPlan.md).)
 
 ## The hard constraint (why the rest is collaborative)
 
@@ -71,14 +73,19 @@ wire; scaled buildings + auto-connect works; Restore from preset works (validate
 `SFRestoreTypes.h` include change).
 
 ### T1 — Decompose god-objects (the headline)
-The only path to criteria #5 **and** #6. One cohesive slice per PR, pure-move first.
-- `SFSubsystem.cpp` (7,991): extract e.g. input binding, grid/scaling state, recipe state,
-  child-hologram lifecycle, the 10-way hologram-adapter `CreateHologramAdapter()` switch
-  (→ registry, see "also consider"), and power-connection state (→ `SFPowerAutoConnectManager`).
-- `SFExtendService.cpp` (8,357): topology walk / wiring orchestration / scaled-clone planning /
-  diagnostics into focused units behind a thin orchestrator.
-- Scope add (survey under-weighted): `SFAutoConnectService.cpp` (4,509),
-  `SFPipeAutoConnectManager.cpp` (2,738) are also >2k and belong here.
+The only path to criteria #5 **and** #6. One cohesive slice per PR, pure-move first. **Full
+per-slice plan (audited call sites + cross-unit coupling + runtime coupling) lives in
+[`RefactorCompletionPlan.md`](RefactorCompletionPlan.md).**
+- `SFExtendService.cpp` (live 7,718): **round 1 DONE + smoked** (`fd27261`) — Diagnostics →
+  `SFExtendDiagnosticsService`, Restore-replay → `SFExtendRestoreReplayService`. Remaining
+  units: post-build wiring (`WireBuiltChildConnections`), `GenerateAndExecuteWiring` + JSON
+  registry, Scaled-Extend, Manifold — behind a thin orchestrator.
+- `SFSubsystem.cpp` (live 9,227): not started — extract e.g. input binding, grid/scaling state,
+  recipe state, child-hologram lifecycle, the 10-way hologram-adapter `CreateHologramAdapter()`
+  switch (→ registry, see "also consider"), and power-connection state (→ `SFPowerAutoConnectManager`).
+- Scope add (survey under-weighted): `SFAutoConnectService.cpp` (live 4,771),
+  `SFPipeAutoConnectManager.cpp` (live 2,789), `SFHologramHelperService.cpp` (live 2,144) are
+  also >2k and belong here.
 - Each slice: compile-validate + full smoke (grid, auto-connect, extend, upgrade).
 
 ### T5 — Thin UI widgets
