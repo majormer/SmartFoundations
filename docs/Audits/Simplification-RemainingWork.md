@@ -25,17 +25,22 @@ Charter: [`Simplification-GOAL.md`](Simplification-GOAL.md) · Tracker: [`Simpli
 
 | Lines | File | Epic |
 |------:|------|------|
-| 8357 | `Features/Extend/SFExtendService.cpp` | T1 + T2 |
-| 7991 | `Subsystem/SFSubsystem.cpp` | T1 |
-| 4509 | `Features/AutoConnect/SFAutoConnectService.cpp` | T1 (scope add) |
-| 3645 | `Features/Extend/SFManifoldJSON.cpp` | T2 |
-| 3242 | `UI/SmartSettingsFormWidget.cpp` | T5 |
-| 2738 | `Features/PipeAutoConnect/SFPipeAutoConnectManager.cpp` | T1 (scope add) |
-| 2253 | `Features/Upgrade/SFUpgradeExecutionService.cpp` | T1/review |
+| 9519 | `Features/Extend/SFExtendService.cpp` | T1 + T2 |
+| 9227 | `Subsystem/SFSubsystem.cpp` | T1 |
+| 4771 | `Features/AutoConnect/SFAutoConnectService.cpp` | T1 (scope add) |
+| 3746 | `UI/SmartSettingsFormWidget.cpp` | T5 |
+| 3694 | `Features/Extend/SFManifoldJSON.cpp` | T2 |
+| 2788 | `Features/PipeAutoConnect/SFPipeAutoConnectManager.cpp` | T1 (scope add) |
+| 2537 | `Features/Upgrade/SFUpgradeExecutionService.cpp` | T1/review |
 | 2220 | `Holograms/Logistics/SFConveyorBeltHologram.cpp` | T8 |
-| 2155 | `UI/SmartUpgradePanel.cpp` | T5 |
-| 2151 | `Subsystem/SFSubsystem.h` | T1 |
+| 2144 | `Subsystem/SFHologramHelperService.cpp` | T1 (scope add) |
+| 2138 | `UI/SmartUpgradePanel.cpp` | T5 |
+| 1949 | `Services/SFChainActorService.cpp` | review |
+| 1852 | `Features/PowerAutoConnect/SFPowerAutoConnectManager.cpp` | T1 (scope add) |
 | 1481 | `Holograms/Logistics/SFPipelineHologram.cpp` | T8 |
+
+(Counts are live `wc -l` at HEAD `1e1ae90`. There are **12 files >2k lines** — that's the size of
+criterion #5. `SFHologramHelperService.cpp` (2,144) is a newly-surfaced >2k file to fold into T1.)
 
 ## The hard constraint (why the rest is collaborative)
 
