@@ -11,10 +11,12 @@ Charter: [`Simplification-GOAL.md`](Simplification-GOAL.md) · Tracker:
 [`SimplificationAudit.md`](SimplificationAudit.md) · Status:
 [`Simplification-RemainingWork.md`](Simplification-RemainingWork.md).
 
-> Status: **IN PROGRESS (planning effort)**. Sections marked `[AUDIT PENDING]` are filled by
-> the planning pass. Every count/claim must be backed by live `wc -l` / Grep / Read output
-> captured during this effort — when a prior doc disagrees with live `wc -l`, the live count
-> wins and the discrepancy is noted here.
+> Status: **COMPLETE (2026-05-30)**. All 9 files >2k + both god-objects audited with full Slice
+> Cards; coverage proven GAP=0; consolidated Entanglement Ledger + Global Sequencing done. Every
+> count/claim is backed by live `wc -l` / Grep / Read output captured during this effort. Remaining
+> `[VERIFY]` markers are narrow slice-time confirmations (anon-namespace sweeps, internal-caller
+> lists for impl-splits) enumerated in the Ledger's "`[VERIFY]` debt" note — not open structural
+> questions. Resume code work from the Global Sequencing table.
 
 ## How to use this doc
 
@@ -594,11 +596,13 @@ Fn map (live): lifecycle/timer (Init/Cleanup/Tick/`ProcessUpgradeTimer`/`StartUp
 - Depends on: none. `ProcessSingleUpgrade` (977) stays but file is now <2k; optional later
   internal decomposition.
 
-## Tails
+## Tails (post-criteria, NOT #5/#6 blockers — sequenced last)
 
-`[AUDIT PENDING]` — T4 PC-helper (`SFPlayerHelpers::GetFGPlayerController`, ~28 sites);
-T7 remaining (`SFFactoryHologram` `SF_HOLOGRAM_LOG`, `SFRecipeManagementService`,
-`SFRadarPulseService`).
+These do not gate criteria #5/#6 (no file >2k touched) and are scheduled in Global Sequencing's
+post-criteria block: **T4 PC-helper** (`SFPlayerHelpers::GetFGPlayerController`, ~28 sites in 3
+idioms — most live inside the T1 files, so fold into those slices rather than touch twice);
+**T7 remaining** (`SFFactoryHologram` hardcoded `SF_HOLOGRAM_LOG` wrapper, `SFRecipeManagementService`,
+`SFRadarPulseService` still on catch-all `LogSmartFoundations`). SAFE-NOW, solo-compile-validate.
 
 ---
 
@@ -608,21 +612,97 @@ Every cross-unit shared-state coupling and non-obvious/hidden helper found durin
 with `file:line` evidence and how the plan handles it. (The thing that surprises us lives
 here — keep it exhaustive.)
 
-- **[Extend] `StoredCloneTopology` + `LastCloneTopology`** — written by the normal-extend /
-  JSON-wiring path AND the Restore-replay path; read by `GetLastCloneTopology`. Round-1
-  handling: kept on `USFExtendService`, restore-replay sub-service accesses via `friend
-  Owner->`. (Confirmed `SFExtendService.cpp` round-1 audit.)
-- **[Extend] `CalculateRestoredScaledClonePlacement`** — anon-namespace helper shared between
-  restore-replay and `GenerateAndExecuteWiring` (unit I). Round-1 handling: promoted to a free
-  function in `SFExtendRestoreReplayService.h`. Lesson: **grep every anon-namespace/file-local
-  helper across the whole file before assuming a unit owns it.**
-- `[AUDIT PENDING]` — populate for every remaining target.
+Consolidated from every per-file matrix surfaced this effort (all grep-grounded). Format:
+**coupling — units/files involved — evidence — handling.**
+
+**Intra-`SFExtendService.cpp` (wiring cluster):**
+1. `StoredCloneTopology` (63 refs: F=18,I=18,J=18,E=5,Topo=4) + `LastCloneTopology` — shared by
+   F/I/J/E + RestoreReplay. → stays canonical on `USFExtendService`; sub-services use `friend
+   Owner->` (round-1 precedent).
+2. ~19 wiring registry maps (`BuiltConveyorsByChain` F=10/E=1, `BuiltDistributorsByChain`
+   F=10/G=3/E=1, `BuiltJunctions/PipesByChain`, `Source*ByChain` G/E/F, `DistributorConnectorNameByChain`
+   F=2/E=1, …) — shared E/F/G. → **migrate INTO `USFExtendWiringService` as members** (become
+   local; the cluster moves together so they stop being cross-unit).
+3. `JsonBuiltActors` (I=25,F=19,J=1), `JsonSpawnedHolograms` (I=5,E=3,F=3,J=2,C=1),
+   `RestoredScaledFactoryPreviewLocations` (I=3,F=1), `PowerPoleWiringData` (I=4,E=3,F=1) — →
+   migrate with the wiring cluster.
+4. `ScaledExtendClones` (J=20,I=7,C=1,F=1) — → ScaledService owns; expose accessor for I's 7 refs
+   (**sequence J before the wiring cluster**).
+5. `HologramService` (E=15,J=8,orch=6,C=5,D=5) — pervasive; stays on orchestrator, accessor.
+6. `CalculateRestoredScaledClonePlacement` anon helper — shared RestoreReplay + I. **Round-1: already
+   promoted** to a free fn in `SFExtendRestoreReplayService.h`.
+
+**Cross-file (Extend ↔ holograms):**
+7. Spline-router helpers (`AutoRouteSplineWithNormals`/`TriggerMeshGeneration`/`SetSplineDataAndUpdate`/
+   `TryUseBuildModeRouting`) — called by `SFExtendRestoreReplayService.cpp:~1423–1468` AND by
+   `ASFConveyorBeltHologram`/`ASFPipelineHologram`. → T8a extracts to a shared helper; **keep
+   signatures stable** so the Extend callers still resolve (sequence T8a aware of E2).
+
+**Intra-`SFSubsystem.cpp`:**
+8. `ActiveHologram` (142) + `CounterState` (70) — the spine, read by every section. → STAY on
+   subsystem; extracted `F`-helpers access via the owner back-ref they already hold.
+9. Power-connection maps (`Planned/Committed BuildingConnections`, `Planned/Deferred PoleConnections`)
+   — shared `PowerConn`(S5) ↔ `HoloCreate`(S3). → S5 owns (in `SFPowerAutoConnectManager`); S3 gets
+   accessors (**sequence S5 before S3**).
+10. `CurrentAdapter` (14) — external caller `SFGridSpawnerService.cpp:91,624,630`. → stays on
+    subsystem with `GetCurrentAdapter()` accessor.
+11. Feature-service pointers (`AutoConnectService` 81, `ExtendService` 42, `GridStateService` 37,
+    `HudService` 27, `GridTransformService` 11 …) — sibling reach-back across all sections. → the
+    **T6 DI seam**; T1b uses the existing back-ref, T6 formalizes later.
+
+**Cross-file (AutoConnect / UI / Upgrade):**
+12. `IsX...Hologram` predicates — shared by belt/pipe/stackable/power blocks in `SFAutoConnectService`.
+    → promote to a shared `SFHologramClassifiers` header (Slice AC0, prereq).
+13. AutoConnect power-pole grid (AC2) ↔ subsystem power state (S5) — both manage power connections.
+    → consolidate both into `SFPowerAutoConnectManager`; coordinate AC2 + S5.
+14. `SmartSettingsFormWidget` ↔ subsystem `Settings` config struct (`SFSubsystem.h:1042–1064`) via the
+    AC-setter sections — UI writes config the AC services read. → cross-file by design; the setters
+    are the API; no change, just note the contract.
+15. `SmartUpgradePanel::CalculateUpgradeCost` ↔ `SFUpgradeExecutionService::GetUpgradeRecipe` — both
+    use `SFAssetPaths::UpgradeRecipes`. **Already centralized (T4.2)** — no further action.
+
+**`[VERIFY]` debt carried to slice-time** (the only unknowns left, all narrow): anon-namespace
+sweeps in each target's body (flagged per card); exact external-caller lists for the impl-split
+files (UI, PipeManager) where most callers are internal; the pipe-tier (S6) fn-level destination
+decision (open question #6); whether `ASFLogisticsHologram` is the shared base for T8a.
 
 ## Global Sequencing
 
-`[AUDIT PENDING]` — recommended slice order across all epics; inter-slice dependencies;
-which slices are solo-compile-validate vs need maintainer smoke; how slices batch into
-build+smoke cycles.
+Principle: lowest-coupling / highest-confidence first; respect dependencies; batch each file's
+slices so one file clears <2k per build+smoke cycle. **Lane:** *solo* = pure impl-split (one class
+across `.cpp`, no behavior change) → compile-validate + light smoke; *smoke* = state migration /
+careful move → full maintainer smoke.
+
+| # | Slice | File(s) cleared | Depends on | Lane |
+|---|-------|-----------------|------------|------|
+| 1 | **E1** Scaled Extend → `USFExtendScaledService` | — | — | smoke |
+| 2 | **E2** Wiring cluster (F+G+I+E-chain) → `USFExtendWiringService` (4 `.cpp`) | **SFExtendService.cpp ✓** | E1 (ScaledClones accessor) | smoke |
+| 3 | **T8a** belt/pipe spline-router + cost → shared helpers | **SFConveyorBeltHologram.cpp ✓** | coordinate w/ E2 (helper sigs) | smoke |
+| 4 | **AC0** shared `IsX` predicates → classifier header | — | — | solo |
+| 5 | **AC1** stackable supports → service | — | AC0 | smoke |
+| 6 | **AC2** power-pole grid → `SFPowerAutoConnectManager` | — | coordinate w/ S5 | smoke |
+| 7 | **AC3** belt-distributor core impl-split | **SFAutoConnectService.cpp ✓** | AC0, AC1, AC2 | solo |
+| 8 | **PM** `SFPipeAutoConnectManager` impl-split (2 `.cpp`) | **SFPipeAutoConnectManager.cpp ✓** | — | solo |
+| 9 | **S5** subsystem power → `SFPowerAutoConnectManager` | — | coordinate w/ AC2 | smoke |
+| 10 | **S1** input → `FSFInputHandler` | — | — | smoke |
+| 11 | **S2** holo-lifecycle → `FSFHologramHelperService` | — | — | smoke |
+| 12 | **S3** holo-create/adapter → `FSFHologramHelperService` | — | S5 (power-map accessors) | smoke |
+| 13 | **S4** property-sync → helper | — | — | smoke |
+| 14 | **S6** pipe-tier → config/pipe helper | — | open-Q #6 | smoke |
+| 15 | **S7** Debug + Chain-rebuild → helper / `SFChainActorService` | **SFSubsystem.cpp ✓ (<2k)** | S1–S6 | solo |
+| 16 | **T1d** split `FSFHologramHelperService` impl (≥3 `.cpp`) | **SFHologramHelperService.cpp ✓** | S2, S3 | solo |
+| 17 | **U1** `SmartSettingsFormWidget` impl-split (4 `.cpp`) | **SmartSettingsFormWidget.cpp ✓** | — | solo |
+| 18 | **U2** `SmartUpgradePanel` impl-split (3 `.cpp`) | **SmartUpgradePanel.cpp ✓** | — | solo |
+| 19 | **UP1** batch connection-repair → `FSFUpgradeConnectionRepair` | **SFUpgradeExecutionService.cpp ✓** | — | smoke |
+
+After slice 19, **all 9 files <2k (#5) and both god-objects <3k (#6)** — charter criteria #5 & #6
+met. Independent tracks that can interleave to batch build/smoke cycles: Extend (1–3),
+AutoConnect (4–8), Subsystem (9–16), UI (17–18), Upgrade (19). The *solo* slices (4,7,8,15,16,17,18)
+can land between maintainer-smoke sessions with just compile-validate + a light targeted smoke.
+
+**Post-criteria (optional, separate epics, NOT required for #5/#6):** T6 service-context DI
+(formalize the reach-back seam from coupling #11), T8 full hologram MVP, T4 PC-helper
+(`SFPlayerHelpers::GetFGPlayerController`), T7 log-category tails.
 
 ## Self-Review — coverage proof
 
