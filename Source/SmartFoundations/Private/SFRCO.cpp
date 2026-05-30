@@ -2,6 +2,7 @@
 #include "SmartFoundations.h"
 #include "Hologram/FGHologram.h"
 #include "Subsystem/SFSubsystem.h"
+#include "FGPlayerController.h"  // AFGPlayerController (don't rely on transitive unity-build includes)
 #include "Net/UnrealNetwork.h"
 
 // ========================================

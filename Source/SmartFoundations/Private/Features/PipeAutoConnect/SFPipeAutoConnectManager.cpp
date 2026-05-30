@@ -2,6 +2,7 @@
 
 #include "SmartFoundations.h"
 #include "Subsystem/SFSubsystem.h"
+#include "FGPlayerController.h"  // AFGPlayerController (don't rely on transitive unity-build includes)
 #include "Subsystem/SFHologramHelperService.h"
 #include "Features/AutoConnect/SFAutoConnectService.h"
 #include "Features/PipeAutoConnect/SFPipeConnectorFinder.h"
