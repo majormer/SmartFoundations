@@ -523,10 +523,76 @@ Triage (`OnTriageDetect/RepairClicked` 1768–1905); Traversal (`OnTraversalScan
 explicit CONSTRUCT/INITIALIZE/LAZY phases. Needs an ADR. Audit every `GetXService()`
 reach-back and init-order dependency surfaced in T1b.
 
-## T8 — Hologram split
+## T8 — Hologram split — advances criterion #5 (`SFConveyorBeltHologram` only)
 
-`[AUDIT PENDING]` — `SFConveyorBeltHologram.cpp` (2,220) + `SFPipelineHologram.cpp` (1,481)
-→ grid adapters / junction spawners / shared `FSFHologramCostCalculator`.
+Live `wc -l`: `SFConveyorBeltHologram.cpp` **2,220** (>2k target), `SFPipelineHologram.cpp`
+**1,481** (<2k — not a #5 target; included for the shared-dedup win). **Finding: belt & pipe
+holograms have PARALLEL duplicated logic** — both have `Setup*Spline`, `TryUseBuildModeRouting`,
+`SetSplineDataAndUpdate`, `TriggerMeshGeneration`, `ConfigureActor`, `ConfigureComponents`,
+`GetCost`. T8's charter goal (shared `FSFHologramCostCalculator` + extracted adapters) = dedup
+both into shared helpers, which shrinks the belt past <2k.
+
+Belt fn map (live): ctor/BeginPlay/Tick/CheckValidPlacement/PostHologramPlacement/
+SetPlacementMaterialState (27–362); `Construct` (363–620, 257); `GetCost` (632–773, 141);
+`TriggerMeshGeneration` (774–975, 201); `ConfigureActor` (976–1294, 318); `ConfigureComponents`
+(1295–1652, 357); `SetupBeltSpline` (1653–1836, 183); `AutoRouteSplineWithNormals` (1837–1920);
+`TryUseBuildModeRouting` (1921–2026); `SetSplineDataAndUpdate` (2027–2071); position-correction
++ upgrade/snap (2072–2220).
+
+#### SFConveyorBeltHologram — Slice T8a: shared spline-routing + cost → helpers   [lane: NEEDS-CARE]
+- Moves: `GetCost` (632–773) → shared `FSFHologramCostCalculator`; `SetupBeltSpline`+
+  `AutoRouteSplineWithNormals`+`TryUseBuildModeRouting`+`SetSplineDataAndUpdate`+
+  `TriggerMeshGeneration` (~620) → shared `FSFHologramSplineRouter` (belt+pipe). ~760 removed.
+- Call-site audit: `AutoRouteSplineWithNormals`/`TriggerMeshGeneration`/`SetSplineDataAndUpdate`/
+  `TryUseBuildModeRouting` called by Extend restore-replay (`SFExtendRestoreReplayService.cpp`
+  ~1423–1468 from round 1) + the clone spawner; `GetCost` called by vanilla cost aggregation +
+  Extend `GetCost(true)`. `[VERIFY full external grep of AutoRouteSplineWithNormals|TriggerMeshGeneration]`.
+- Shared state: these are mostly self-contained spline/mesh ops on the hologram's own components;
+  the dedup target is the duplication BETWEEN belt & pipe, not shared mutable state. Likely home:
+  a shared base (`ASFLogisticsHologram` exists — `[VERIFY]`) or free-function helpers taking the
+  hologram + connectors.
+- Extraction approach: extract to shared helper (free functions / shared base methods); belt & pipe
+  both call them. Dedup, not move-behind-forwarder; verify byte-identical behavior for both.
+- Hidden helpers: `[VERIFY]` anon-namespace in both hologram files (spline math likely file-local).
+- Runtime coupling (SMOKE-CRITICAL): `Construct`/`ConfigureComponents` run at build; spline routing
+  during preview + restore-replay; `TriggerMeshGeneration` regenerates mesh (render-state). These
+  holograms are spawned as Extend/AutoConnect CHILDREN — coupling to those systems' Construct-time
+  Register* calls. Smoke: place belts & pipes (straight/curved/build-modes), Extend with belts+pipes,
+  auto-connect belts+pipes, restore-from-preset (exercises the routing helpers).
+- Size delta: −~760; SFConveyorBeltHologram.cpp → ~1,460 (<2k ✓). SFPipelineHologram also shrinks
+  (~−500 → ~980) via the shared helpers.
+- Depends on: none, BUT touches the same spline-router helpers Extend restore-replay calls —
+  coordinate so helper signatures match existing callers (ledger).
+
+## SFUpgradeExecutionService.cpp (live 2,537) — advances criterion #5
+
+Fn map (live): lifecycle/timer (Init/Cleanup/Tick/`ProcessUpgradeTimer`/`StartUpgrade` 116–250/
+`CancelUpgrade`); target-gather (`GatherUpgradeTargets` 276–441, `NormalizeConveyorUpgradeTargets`
+442–539, `CollectConnectedConveyorCohort`, `ConveyorIntersectsRadius`, `ConveyorFullyInsideRadius`
+540–647); `GetTargetRecipeForBuildable` (623); **`ProcessSingleUpgrade` (648–1625, 977!)**;
+`CompleteUpgrade` (1626–1741); `GetUpgradeRecipe` (1742–1830)/`GetBuildableClass` (1831–1940);
+**batch connection repair** (`SaveBatchConnectionPairs` 1941, `FixBatchConnectionReferences` 2010,
+`SaveBatchPipeConnectionPairs` 2151, `FixBatchPipeConnectionReferences` 2203,
+`CaptureExpectedConnectionManifests` 2256, `ValidateAndRepairConnections` 2348–2537, ~600).
+
+#### SFUpgradeExecutionService — Slice UP1: batch connection repair → `FSFUpgradeConnectionRepair`   [lane: NEEDS-CARE]
+- Moves: the batch-repair block (1941–2537, ~600).
+- Call-site audit: `SaveBatch*`/`FixBatch*`/`Capture*`/`ValidateAndRepair*` called from
+  `ProcessSingleUpgrade`/`CompleteUpgrade` (internal). `[VERIFY grep external — likely none]`.
+- Shared state: operates on the service's batch-upgrade target list + connection manifests
+  (member state). `[VERIFY]` exclusive to upgrade-execution. `GetUpgradeRecipe`/`GetBuildableClass`
+  use `SFAssetPaths::UpgradeRecipes` (T4.2 — shared with `SmartUpgradePanel::CalculateUpgradeCost`;
+  ledger).
+- Extraction approach: careful move; helper takes back-ref to the service (for the target list) or
+  the manifests pass by value. Forwarders on the service.
+- Hidden helpers: `[VERIFY]` anon-namespace.
+- Runtime coupling (SMOKE-CRITICAL): the WHOLE point of batch-repair is FRAME-ORDER — save
+  connection refs BEFORE buildables are destroyed, fix AFTER respawn (across the upgrade timer
+  ticks in `ProcessUpgradeTimer`). Extremely tick-order sensitive. Smoke: upgrade a connected
+  belt+pipe network (radius + entire-map), verify all connections survive the destroy/respawn.
+- Size delta: −~600; SFUpgradeExecutionService.cpp → ~1,937 (<2k ✓).
+- Depends on: none. `ProcessSingleUpgrade` (977) stays but file is now <2k; optional later
+  internal decomposition.
 
 ## Tails
 
