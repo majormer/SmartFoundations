@@ -370,10 +370,83 @@ class, many TUs, same pattern as the Extend wiring cluster): e.g. `SFHologramHel
 (existing helpers), `_Lifecycle.cpp` (Register/Unregister/Poll), `_Creation.cpp` (Create*/tier/
 adapter). `[AUDIT PENDING: current 2,144-line content map — next turn.]`
 
-## T1c — AutoConnect family
+## T1c — AutoConnect family — advances criterion #5
 
-`[AUDIT PENDING]` — `SFAutoConnectService.cpp` (4,771), `SFPipeAutoConnectManager.cpp`
-(2,789), `SFAutoConnectOrchestrator.cpp` (1,781), `SFPowerAutoConnectManager.cpp` (1,852).
+Live `wc -l` this effort: `SFAutoConnectService.cpp` **4,771**, `SFPipeAutoConnectManager.cpp`
+**2,789** (both >2k targets); `SFAutoConnectOrchestrator.cpp` 1,781, `SFPowerAutoConnectManager.cpp`
+1,852 (<2k — receive extracted logic, not split-targets).
+
+### `SFAutoConnectService.cpp` (4,771) — FOUR bundled features (from live fn map)
+
+| Sub-feature | Functions (line ranges) | ~Size |
+|-------------|-------------------------|------:|
+| **Belt-distributor core** | `OnDistributorHologramUpdated`(95), `ProcessSingleDistributor`(177–1054, **877**), `CreateOrUpdateBeltPreview`(1055), `ConnectAnyConnectors`(1185), `BuildBeltFromPreview`(1247), `BuildBeltsForDistributor`(1361), Find*/Get* connector helpers (1558–2243), preview/cost storage (2339–2699) | ~2,600 |
+| **Pipe delegation (thin)** | `UpdatePipePreviews`(2700)…`GetPipePreviewsCost`(2834–2909) | ~210 |
+| **Stackable supports** | `ProcessFloorHolePipes`(3048), `ProcessStackableConveyorPoles`(3093), `ProcessStackablePipelineSupports`(3342), `MakePolePairKey`,`UpdateOrCreatePipeForPolePair`(3662–4011), `RemoveOrphanedPipes`,`CleanupAllStackablePipes`,`FinalizeBeltChildrenVisibility`,`UpdateOrCreateBeltForPolePair`(4437–4685),`RemoveOrphanedBelts`,`CleanupAllStackableBelts` | ~1,500 |
+| **Power-pole grid** | `ProcessPowerPoles`(4146),`ClearAllPowerPreviews`,`GetPowerManager`,`AnalyzeGridTopology`(4240),`AreGridAxisNeighbors`,`CalculateCableCost` | ~290 |
+| **Type predicates** (shared classifiers) | `IsDistributor/Splitter/Merger/PowerPole/Stackable*/Wall*/Belt*Hologram` (1558–1623, 2910–3046) | ~150 |
+
+#### SFAutoConnectService — Slice AC1: Stackable supports → `SFStackableSupportService`   [NEEDS-CARE]
+- Moves: the ~1,500-line Stackable block (3048–3647, 3648–4145, 4437–4771).
+- Call-site audit: `[VERIFY]` — `ProcessStackable*`/`ProcessFloorHolePipes` called from the
+  AutoConnect orchestrator + grid-spawn path; grep `ProcessStackableConveyorPoles|ProcessFloorHolePipes`
+  external callers (orchestrator `SFAutoConnectOrchestrator.cpp` is the likely sole caller).
+- Shared state: per-pole-pair pipe/belt maps (keyed by `MakePolePairKey` uint64) — exclusive to
+  stackable block (`[VERIFY grep]`). Uses type predicates (→ shared classifier helper) + Subsystem
+  config (`StackableBelt*`). Reads grid axis info.
+- Extraction approach: new service or fold into a stackable helper; back-ref to Subsystem +
+  AutoConnectService (for predicates). Forwarder on AutoConnectService.
+- Hidden helpers: `[VERIFY]` anon-namespace in 3048–4771.
+- Runtime coupling (SMOKE-CRITICAL): processes on parent-hologram update (per-frame) + cleanup on
+  orphan; pole-pair keying must stay stable across frames. Smoke: place stackable conveyor poles
+  + pipeline supports in a grid, confirm auto belts/pipes between pole pairs + orphan cleanup.
+- Size delta: −~1,500; SFAutoConnectService.cpp → ~3,271.
+- Depends on: AC0 (extract shared type-predicates first, below).
+
+#### SFAutoConnectService — Slice AC2: Power-pole grid → `SFPowerAutoConnectManager`   [NEEDS-CARE]
+- Moves: power-pole block (4146–4436) into the existing `SFPowerAutoConnectManager` (1,852, has room).
+- Shared state: `GetPowerManager` per-pole map; `AnalyzeGridTopology` grid math. Coordinates with
+  Subsystem power-connection state (overlaps SFSubsystem S5 — note in ledger).
+- Runtime coupling (SMOKE-CRITICAL): power grid analyzed across all poles each update; consolidating
+  with SFSubsystem S5 power state must keep the deferred-wiring + cost-once-per-cycle invariant.
+  Smoke: power auto-connect grid (X/Y/X+Y axes), Extend power poles.
+- Size delta: −~290; → ~2,981.
+
+#### SFAutoConnectService — Slice AC3: Belt-distributor core split   [NEEDS-CARE]
+- After AC1/AC2 the core is ~2,981 — still >2k. Split the ONE class impl across 2 `.cpp`:
+  `SFAutoConnectService.cpp` (orchestration + storage + predicates, ~1,200) +
+  `SFAutoConnectService_Belt.cpp` (`ProcessSingleDistributor` 877 + belt preview/build +
+  connector-finding, ~1,800). Both <2k.
+- Shared state: per-distributor maps (connector pairs, belt previews, costs) stay members of the
+  one class → no cross-service sharing.
+- Runtime coupling (SMOKE-CRITICAL): `OnDistributorHologramUpdated` per-frame; `BuildBeltsForDistributor`
+  from distributor `Construct()` (post-build). Smoke: place splitter/merger near buildings, confirm
+  auto-belt preview + cost + build.
+- Size delta: 0 net (impl split); resulting files each <2k. **Criterion #5 met for this file.**
+
+#### SFAutoConnectService — Slice AC0 (prereq): shared type-predicates → small classifier helper
+- The `IsXHologram` predicates are used by belt/pipe/stackable/power blocks → move to a shared
+  `SFHologramClassifiers` free-function/static header so all post-split units share them (promote,
+  don't duplicate). `[VERIFY grep usage spread]`.
+
+### `SFPipeAutoConnectManager.cpp` (2,789) — one `F`-class, split impl across `.cpp`   [NEEDS-CARE]
+- Units (live fn map): `ProcessAllJunctions`(39), `ProcessPipeJunctions`(368–1260, **892**),
+  `EvaluatePipeConnections`(1552–1881, ~330), connector-index helpers (1882–2020),
+  `FindAvailableManifoldConnector`/`FindBestManifoldConnectorPair`(1945–2180), `SpawnPipeChild`(2181)/
+  `SpawnPipeChildAtPosition`(2398)/`RemovePipeChild`(2576), `ProcessFloorHolePipes`(2604–2778),
+  preview helpers (`CreatePipePreviewBetweenConnectors`,`CleanupOrphanedPreviews`,`ClearPipePreviews`).
+- Call-site audit: owned by `SFAutoConnectService` (per-junction map, `GetPipeManager`); methods
+  called from AutoConnectService pipe-delegation block. → internal to the AutoConnect cluster.
+- Shared state: back-refs `Subsystem` + `AutoConnectService` (ctor `Initialize`). Per-junction
+  preview state is member-local. EXCLUSIVE — no other unit writes it (`[VERIFY grep]`).
+- Extraction approach: NOT a move — **split the existing class's impl across `.cpp`**:
+  `SFPipeAutoConnectManager.cpp` (process/evaluate, ~1,400) + `_Spawn.cpp` (SpawnPipeChild* +
+  manifold-connector + floor-hole, ~1,389). One header, both <2k. No state changes.
+- Hidden helpers: `[VERIFY]` anon-namespace at 311/1039 banners.
+- Runtime coupling (SMOKE-CRITICAL): junction processing per-frame; child spawn during preview;
+  floor-hole pipes special-cased. Smoke: place pipeline junctions + floor holes, confirm manifold
+  pipe preview + spawn + orphan cleanup.
+- Size delta: 0 net (impl split); each file <2k. **Criterion #5 met.**
 
 ## T1d — `SFHologramHelperService.cpp` (2,144) + `SFUpgradeExecutionService.cpp` (2,537)
 
