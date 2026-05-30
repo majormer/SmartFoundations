@@ -3,6 +3,7 @@
 #include "Features/Upgrade/SFUpgradeAuditService.h"
 #include "Features/Upgrade/SFUpgradeTraversalService.h"
 #include "SmartFoundations.h"
+#include "SFLogMacros.h"
 #include "Subsystem/SFSubsystem.h"
 
 #include "FGPlayerController.h"
@@ -50,7 +51,7 @@ const FSFUpgradeFamilyResult* FSFUpgradeAuditResult::GetFamilyResult(ESFUpgradeF
 void USFUpgradeAuditService::Initialize(USFSubsystem* InSubsystem)
 {
 	Subsystem = InSubsystem;
-	UE_LOG(LogSmartFoundations, Log, TEXT("USFUpgradeAuditService: Initialized"));
+	UE_LOG(LogSmartUpgrade, Log, TEXT("USFUpgradeAuditService: Initialized"));
 }
 
 void USFUpgradeAuditService::Cleanup()
@@ -58,7 +59,7 @@ void USFUpgradeAuditService::Cleanup()
 	CancelAudit();
 	ClearResults();
 	Subsystem = nullptr;
-	UE_LOG(LogSmartFoundations, Log, TEXT("USFUpgradeAuditService: Cleaned up"));
+	UE_LOG(LogSmartUpgrade, Log, TEXT("USFUpgradeAuditService: Cleaned up"));
 }
 
 void USFUpgradeAuditService::Tick(float DeltaTime)
@@ -77,7 +78,7 @@ bool USFUpgradeAuditService::StartAudit(const FSFUpgradeAuditParams& Params)
 {
 	if (bAuditInProgress)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("USFUpgradeAuditService: Audit already in progress, canceling previous"));
+		UE_LOG(LogSmartUpgrade, Warning, TEXT("USFUpgradeAuditService: Audit already in progress, canceling previous"));
 		CancelAudit();
 	}
 
@@ -107,7 +108,7 @@ bool USFUpgradeAuditService::StartAudit(const FSFUpgradeAuditParams& Params)
 
 	if (PendingBuildables.Num() == 0)
 	{
-		UE_LOG(LogSmartFoundations, Log, TEXT("USFUpgradeAuditService: No buildables to scan"));
+		UE_LOG(LogSmartUpgrade, Log, TEXT("USFUpgradeAuditService: No buildables to scan"));
 		WorkingResult.bSuccess = true;
 		WorkingResult.bInProgress = false;
 		WorkingResult.CompletionTime = FDateTime::Now();
@@ -119,7 +120,7 @@ bool USFUpgradeAuditService::StartAudit(const FSFUpgradeAuditParams& Params)
 	bAuditInProgress = true;
 	CurrentScanIndex = 0;
 
-	UE_LOG(LogSmartFoundations, Log, TEXT("USFUpgradeAuditService: Started audit - %d buildables to scan (Radius: %.0f)"),
+	UE_LOG(LogSmartUpgrade, Log, TEXT("USFUpgradeAuditService: Started audit - %d buildables to scan (Radius: %.0f)"),
 		PendingBuildables.Num(), Params.Radius);
 
 	return true;
@@ -156,7 +157,7 @@ void USFUpgradeAuditService::CancelAudit()
 	PendingBuildables.Empty();
 	CurrentScanIndex = 0;
 	
-	UE_LOG(LogSmartFoundations, Log, TEXT("USFUpgradeAuditService: Audit canceled"));
+	UE_LOG(LogSmartUpgrade, Log, TEXT("USFUpgradeAuditService: Audit canceled"));
 }
 
 void USFUpgradeAuditService::ClearResults()
@@ -280,12 +281,12 @@ int32 USFUpgradeAuditService::GetBuildableTier(AFGBuildable* Buildable)
 		FString TierPattern = FString::Printf(TEXT("Mk%d"), Tier);
 		if (ClassName.Contains(TierPattern))
 		{
-			UE_LOG(LogSmartFoundations, Verbose, TEXT("GetBuildableTier: %s matched pattern %s -> Tier %d"), *ClassName, *TierPattern, Tier);
+			UE_LOG(LogSmartUpgrade, Verbose, TEXT("GetBuildableTier: %s matched pattern %s -> Tier %d"), *ClassName, *TierPattern, Tier);
 			return Tier;
 		}
 	}
 	
-	UE_LOG(LogSmartFoundations, Warning, TEXT("GetBuildableTier: %s did not match any Mk pattern, falling back"), *ClassName);
+	UE_LOG(LogSmartUpgrade, Warning, TEXT("GetBuildableTier: %s did not match any Mk pattern, falling back"), *ClassName);
 
 	// Check for numeric suffixes (_01, _02, etc.)
 	for (int32 Tier = 6; Tier >= 1; --Tier)
@@ -387,7 +388,7 @@ void USFUpgradeAuditService::GatherBuildablesToScan()
 	UWorld* World = Subsystem ? Subsystem->GetWorld() : nullptr;
 	if (!World)
 	{
-		UE_LOG(LogSmartFoundations, Error, TEXT("USFUpgradeAuditService: No valid world for scanning"));
+		UE_LOG(LogSmartUpgrade, Error, TEXT("USFUpgradeAuditService: No valid world for scanning"));
 		return;
 	}
 
@@ -429,7 +430,7 @@ void USFUpgradeAuditService::GatherBuildablesToScan()
 		PendingBuildables.Add(Buildable);
 	}
 
-	UE_LOG(LogSmartFoundations, Log, TEXT("USFUpgradeAuditService: Gathered %d buildables to scan"), PendingBuildables.Num());
+	UE_LOG(LogSmartUpgrade, Log, TEXT("USFUpgradeAuditService: Gathered %d buildables to scan"), PendingBuildables.Num());
 }
 
 void USFUpgradeAuditService::ProcessScanBatch()
@@ -484,7 +485,7 @@ void USFUpgradeAuditService::ProcessScanBatch()
 
 void USFUpgradeAuditService::InjectAuditResult(const FSFUpgradeAuditResult& Result)
 {
-	UE_LOG(LogSmartFoundations, Log, TEXT("USFUpgradeAuditService: Injected audit result from server - Scanned: %d"), Result.TotalScanned);
+	UE_LOG(LogSmartUpgrade, Log, TEXT("USFUpgradeAuditService: Injected audit result from server - Scanned: %d"), Result.TotalScanned);
 	
 	// Stop any local scan if one is running
 	if (bAuditInProgress)
@@ -531,14 +532,14 @@ void USFUpgradeAuditService::FinalizeAudit()
 	// Calculate scan duration
 	FTimespan Duration = WorkingResult.CompletionTime - WorkingResult.StartTime;
 
-	UE_LOG(LogSmartFoundations, Log, 
+	UE_LOG(LogSmartUpgrade, Log, 
 		TEXT("USFUpgradeAuditService: Audit complete - Scanned: %d, Upgradeable: %d, Duration: %.2fs"),
 		LastResult.TotalScanned, LastResult.TotalUpgradeable, Duration.GetTotalSeconds());
 
 	// Log family breakdown
 	for (const FSFUpgradeFamilyResult& FamilyResult : LastResult.FamilyResults)
 	{
-		UE_LOG(LogSmartFoundations, Log, TEXT("  %s: %d total, %d upgradeable"),
+		UE_LOG(LogSmartUpgrade, Log, TEXT("  %s: %d total, %d upgradeable"),
 			*FamilyResult.GetFamilyDisplayName(), FamilyResult.TotalCount, FamilyResult.UpgradeableCount);
 	}
 
@@ -560,7 +561,7 @@ void USFUpgradeAuditService::FinalizeAudit()
 					if (RCO->GetOuter() == PC)
 					{
 						RCO->Client_ReceiveAuditResult(LastResult);
-						UE_LOG(LogSmartFoundations, Log, TEXT("USFUpgradeAuditService: Sent audit result to client via RCO"));
+						UE_LOG(LogSmartUpgrade, Log, TEXT("USFUpgradeAuditService: Sent audit result to client via RCO"));
 						break;
 					}
 				}
