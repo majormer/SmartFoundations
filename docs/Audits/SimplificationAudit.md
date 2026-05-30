@@ -18,11 +18,11 @@ Charter: [`Simplification-GOAL.md`](Simplification-GOAL.md). This is the living 
 |----|-------|---------------|------|--------|
 | T1 | Decompose god-objects (`SFSubsystem`, `SFExtendService`) | H/H | NEEDS-CARE | not started |
 | T2 | Collapse Extend topology/serialization (`SFManifoldJSON` etc.) | H/M | NEEDS-CARE | not started |
-| T3 | Table-drive the 14-file size registry | M/L | NEEDS-CARE (data-accuracy) | not started |
-| T4 | Centralize duplicated lookups/asset paths/PC helpers | H/L | SAFE-NOW | in progress |
+| T3 | Table-drive the 14-file size registry | M/L | NEEDS-CARE (data-accuracy) | **code-complete, build-validated; in-game smoke pending** |
+| T4 | Centralize duplicated lookups/asset paths/PC helpers | H/L | SAFE-NOW | partial (T4.1/T4.2 done; PC-helper folds into T1) |
 | T5 | Thin the UI widgets (model/presenter/binder) | M/M | NEEDS-CARE | not started |
 | T6 | Inject a service context; explicit init phases | M/H | NEEDS-CARE | not started |
-| T7 | Named log categories; prune VeryVerbose | M/M | SAFE-NOW (mostly) | not started |
+| T7 | Named log categories; prune VeryVerbose | M/M | SAFE-NOW (mostly) | substantially done (Extend/Subsystem fold into T1/T2) |
 | T8 | Split Smart-vs-vanilla hologram logic | M/M | NEEDS-CARE | not started |
 
 Also tracked (beyond split/dedupe): SmartMCP smoke-test harness (DONE — `scripts/smoke_test.py`); hologram-adapter registry; consolidate power-connection state into `SFPowerAutoConnectManager`; const-correctness (hot-path `const_cast`); committed `ARCHITECTURE.md` (DONE) / `CONTRIBUTING.md` (pre-existing).
@@ -73,3 +73,5 @@ Each Source area mapped to its primary theme(s), risk lane, and status. Per-exac
 | T7.2b AutoConnect feature → `LogSmartAutoConnect` (350 sites) | `SFAutoConnectOrchestrator`, `SFAutoConnectService` | SAFE-NOW | pass | committed |
 
 - 2026-05-30: T7.2 log migration substantially complete (solo session, each slice package-build-validated). Reliable method established: (a) `SmartFoundations.h` includes `SFLogMacros.h` so categories resolve everywhere — migration is now pure category swaps; (b) `scripts/migrate_log_category.py`, a guarded swapper that auto-skips category-declaring / wrapper-macro-defining files. Migrated to feature categories: Holograms (23 files, 232 → LogSmartHologram); Services (GridSpawner→Grid, Hud/HintBar→UI, ChainActor→Upgrade); Pipe/Power AutoConnect (238 → LogSmartAutoConnect); Arrows (48 → new LogSmartArrows). Commits 6feb2bf, ad5a739, 6f3d8c2. Deferred on purpose: Extend (669) + Subsystem (670) fold into T1/T2; SFFactoryHologram (SF_HOLOGRAM_LOG hardcoded wrapper) + Recipe/RadarPulse (no fitting category) stay on catch-all. Headline criteria (no file >2k/3k) still require the NEEDS-CARE epics T1/T2/T3/T5/T6/T8 — gated on in-game SmartMCP smoke (maintainer + game running) which cannot proceed solo.
+
+- 2026-05-30: T3 executed (commits 2ef6481, 173b5ce, 9c5f3fd). Chosen format: CSV source + generated .cpp (NOT runtime CSV — Stage-A build proved Alpakit does not package loose Content/*.csv). `Content/Data/BuildableSizes.csv` (300 profiles) is the canonical human-editable table; `scripts/gen_size_registry.py` regenerates `SFBuildableSizeRegistry_Data.cpp` (compiled-in RegisterDefaultProfiles). Deleted the 14 SFBuildableSizeRegistry_*.cpp files (−~5,500 lines). `scripts/extract_size_registry.py` round-trip proved the extraction lossless (300/300) before deletion. Build SUCCESSFUL; behavior-preserving by construction; **in-game scaling smoke pending** (foundation 8x4/8x1, wall, ramp, rotation-swap building). Bonus: fixed 3 latent missing-include bugs (SFExtendService, SFPipeAutoConnectManager, SFRCO used AFGPlayerController via transitive unity-build includes only — now self-sufficient). Satisfies the "single edit point for building sizes" charter criterion. Per-slice ledger and the largest-file table in Simplification-RemainingWork.md should be refreshed after the smoke passes (12 files >2k → 11; the registry split removed a cluster but the giant files are untouched — those are T1/T2).
