@@ -1,7 +1,7 @@
 # Code-Simplicity Refactor — Remaining Work
 
 Resume/handoff doc for the simplification effort. Branch: `refactor/simplification-audit`
-(27 commits ahead of `main`, HEAD `9d58c9d`, tree clean, rollback tag `refactor-baseline`).
+(29 commits ahead of `main`, HEAD `ac164f0`, tree clean, rollback tag `refactor-baseline`).
 Charter: [`Simplification-GOAL.md`](Simplification-GOAL.md) · Tracker: [`SimplificationAudit.md`](SimplificationAudit.md)
 · T3 design: [`ADR-T3-size-registry-format.md`](ADR-T3-size-registry-format.md).
 
@@ -25,21 +25,22 @@ Charter: [`Simplification-GOAL.md`](Simplification-GOAL.md) · Tracker: [`Simpli
 
 | Lines | File | Epic |
 |------:|------|------|
-| 9515 | `Features/Extend/SFExtendService.cpp` | T1 |
-| 9227 | `Subsystem/SFSubsystem.cpp` | T1 |
-| 4771 | `Features/AutoConnect/SFAutoConnectService.cpp` | T1 (scope add) |
+| 9519 | `Features/Extend/SFExtendService.cpp` | T1 |
+| 8847 | `Subsystem/SFSubsystem.cpp` | T1 |
+| 4773 | `Features/AutoConnect/SFAutoConnectService.cpp` | T1 (scope add) |
 | 3746 | `UI/SmartSettingsFormWidget.cpp` | T5 |
-| 2788 | `Features/PipeAutoConnect/SFPipeAutoConnectManager.cpp` | T1 (scope add) |
+| 2871 | `Features/PipeAutoConnect/SFPipeAutoConnectManager.cpp` | T1 (scope add) |
 | 2537 | `Features/Upgrade/SFUpgradeExecutionService.cpp` | T1/review |
 | 2220 | `Holograms/Logistics/SFConveyorBeltHologram.cpp` | T8 |
-| 2144 | `Subsystem/SFHologramHelperService.cpp` | T1 (scope add) |
+| 2148 | `Subsystem/SFHologramHelperService.cpp` | T1 (scope add) |
 | 2138 | `UI/SmartUpgradePanel.cpp` | T5 |
-| 1949 | `Services/SFChainActorService.cpp` | review |
-| 1852 | `Features/PowerAutoConnect/SFPowerAutoConnectManager.cpp` | T1 (scope add) |
-| 1481 | `Holograms/Logistics/SFPipelineHologram.cpp` | T8 |
+| 2092 | `Features/Subsystem/SFSubsystemInputService.cpp` | T1 (scope add) |
+| 2075 | `Services/SFChainActorService.cpp` | review |
+| 1949 | `Features/Extend/SFExtendDetectionService.cpp` | T1-adjacent |
 
-(Counts refreshed during T2. There are **9 files >2k lines**; `SFExtendCloneTopology.cpp` (~1,671)
-and `SFExtendCloneSpawner.cpp` (~1,400) are now below the threshold.)
+(Counts refreshed 2026-05-30 after T2. There are **11 `.cpp` files >2k lines**; the T2 split files
+`SFExtendCloneTopology.cpp` (~1,671) and `SFExtendCloneSpawner.cpp` (~1,400) are now below the
+threshold. `SFPipelineHologram.cpp` (~1,481) also dropped below 2k.)
 
 ## The hard constraint (why the rest is collaborative)
 
