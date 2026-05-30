@@ -3,6 +3,7 @@
 #include "Features/AutoConnect/SFAutoConnectOrchestrator.h"
 #include "Features/AutoConnect/SFAutoConnectService.h"
 #include "SmartFoundations.h"
+#include "SFLogMacros.h"
 #include "Subsystem/SFSubsystem.h"
 #include "Subsystem/SFHologramHelperService.h"
 #include "Data/SFBuildableSizeRegistry.h"
@@ -21,7 +22,7 @@ void USFAutoConnectOrchestrator::Initialize(AFGHologram* InParentHologram, USFAu
 	bContextSpacingApplied = false;
 	LastTargetBuildingClass.Reset();
 
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🎯 Auto-Connect Orchestrator initialized for %s"), 
+	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🎯 Auto-Connect Orchestrator initialized for %s"), 
 		*InParentHologram->GetName());
 }
 
@@ -29,7 +30,7 @@ void USFAutoConnectOrchestrator::EvaluateGrid(bool bForceRecreate)
 {
 	if (!ParentHologram.IsValid() || !AutoConnectService)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("🎯 Orchestrator: Cannot evaluate - invalid parent or service"));
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("🎯 Orchestrator: Cannot evaluate - invalid parent or service"));
 		return;
 	}
 	
@@ -39,7 +40,7 @@ void USFAutoConnectOrchestrator::EvaluateGrid(bool bForceRecreate)
 		if (Subsystem->IsSmartDisabledForCurrentAction())
 		{
 			ClearAllPreviews();
-			UE_LOG(LogSmartFoundations, Log, TEXT("🎯 Orchestrator: EvaluateGrid skipped - Smart disabled for current action"));
+			UE_LOG(LogSmartAutoConnect, Log, TEXT("🎯 Orchestrator: EvaluateGrid skipped - Smart disabled for current action"));
 			return;
 		}
 	}
@@ -49,14 +50,14 @@ void USFAutoConnectOrchestrator::EvaluateGrid(bool bForceRecreate)
 	{
 		// Issue #269: Don't silently drop - flag for re-evaluation when cooldown clears
 		bPendingBeltReevaluation = true;
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🎯 Orchestrator: Evaluation deferred (cooldown active, pending re-eval flagged)"));
+		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🎯 Orchestrator: Evaluation deferred (cooldown active, pending re-eval flagged)"));
 		return;
 	}
 
 	// Set evaluation flag
 	bIsEvaluatingBelts = true;
 
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🎯 Orchestrator: Evaluating grid (ForceRecreate=%s)"), 
+	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🎯 Orchestrator: Evaluating grid (ForceRecreate=%s)"), 
 		bForceRecreate ? TEXT("YES") : TEXT("NO"));
 
 	// Clear all previews if forcing recreation
@@ -91,14 +92,14 @@ void USFAutoConnectOrchestrator::EvaluateGrid(bool bForceRecreate)
 
 void USFAutoConnectOrchestrator::OnGridChanged()
 {
-	UE_LOG(LogSmartFoundations, Log, TEXT("🎯 Orchestrator: Grid changed - scheduling re-evaluation"));
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("🎯 Orchestrator: Grid changed - scheduling re-evaluation"));
 	
 	// CRITICAL FIX: Clear evaluation flag for grid changes to prevent race condition
 	// When children are spawned shortly after parent creation, the initial evaluation's
 	// 100ms cooldown can block the child evaluation, leaving children without belt previews
 	if (bIsEvaluatingBelts)
 	{
-		UE_LOG(LogSmartFoundations, Log, TEXT("   🔓 Clearing evaluation flag for grid change (was blocking)"));
+		UE_LOG(LogSmartAutoConnect, Log, TEXT("   🔓 Clearing evaluation flag for grid change (was blocking)"));
 		bIsEvaluatingBelts = false;
 		
 		// Also clear the cooldown timer since we're forcing a new evaluation anyway
@@ -120,7 +121,7 @@ void USFAutoConnectOrchestrator::OnDistributorsMoved()
 	// ScheduleEvaluation already handles debouncing - if an evaluation is already scheduled,
 	// it will just return early. The guard in EvaluateGrid() prevents actual recursive evaluation.
 
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🎯 Orchestrator: Distributors moved - scheduling update"));
+	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🎯 Orchestrator: Distributors moved - scheduling update"));
 	
 	// Distributors moved - update previews, debounced
 	ScheduleEvaluation(false);
@@ -132,7 +133,7 @@ void USFAutoConnectOrchestrator::OnPipeJunctionsMoved()
 	// The cooldown period was blocking movement updates during free movement.
 	// SchedulePipeEvaluation handles debouncing, and RunScheduledPipeEvaluation guards against recursion.
 
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🎯 Orchestrator: Pipe junctions moved - scheduling update"));
+	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🎯 Orchestrator: Pipe junctions moved - scheduling update"));
 	
 	// REFACTOR: Use debounced scheduling like belts (prevents multiple updates per frame)
 	SchedulePipeEvaluation(false);
@@ -140,12 +141,12 @@ void USFAutoConnectOrchestrator::OnPipeJunctionsMoved()
 
 void USFAutoConnectOrchestrator::OnPipeGridChanged()
 {
-	UE_LOG(LogSmartFoundations, Log, TEXT("🎯 Orchestrator: Pipe grid changed - scheduling re-evaluation"));
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("🎯 Orchestrator: Pipe grid changed - scheduling re-evaluation"));
 	
 	// CRITICAL FIX: Clear evaluation flag for grid changes (same as belt fix above)
 	if (bIsEvaluatingPipes)
 	{
-		UE_LOG(LogSmartFoundations, Log, TEXT("   🔓 Clearing evaluation flag for pipe grid change (was blocking)"));
+		UE_LOG(LogSmartAutoConnect, Log, TEXT("   🔓 Clearing evaluation flag for pipe grid change (was blocking)"));
 		bIsEvaluatingPipes = false;
 		
 		// Also clear the cooldown timer since we're forcing a new evaluation anyway
@@ -166,7 +167,7 @@ void USFAutoConnectOrchestrator::OnPowerPolesMoved()
 	// The cooldown period was blocking movement updates during free movement.
 	// SchedulePowerEvaluation handles debouncing, and RunScheduledPowerEvaluation guards against recursion.
 
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🎯 Orchestrator: Power poles moved - scheduling update"));
+	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🎯 Orchestrator: Power poles moved - scheduling update"));
 	
 	// Use debounced scheduling
 	SchedulePowerEvaluation(false);
@@ -174,12 +175,12 @@ void USFAutoConnectOrchestrator::OnPowerPolesMoved()
 
 void USFAutoConnectOrchestrator::OnPowerGridChanged()
 {
-	UE_LOG(LogSmartFoundations, Log, TEXT("🎯 Orchestrator: Power grid changed - scheduling re-evaluation"));
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("🎯 Orchestrator: Power grid changed - scheduling re-evaluation"));
 	
 	// CRITICAL FIX: Clear evaluation flag for grid changes (same as belt/pipe fix)
 	if (bIsEvaluatingPower)
 	{
-		UE_LOG(LogSmartFoundations, Log, TEXT("   🔓 Clearing evaluation flag for power grid change (was blocking)"));
+		UE_LOG(LogSmartAutoConnect, Log, TEXT("   🔓 Clearing evaluation flag for power grid change (was blocking)"));
 		bIsEvaluatingPower = false;
 		
 		// Also clear the cooldown timer since we're forcing a new evaluation anyway
@@ -195,7 +196,7 @@ void USFAutoConnectOrchestrator::OnPowerGridChanged()
 
 void USFAutoConnectOrchestrator::ForceRefresh()
 {
-	UE_LOG(LogSmartFoundations, Log, TEXT("🎯 Orchestrator: Force refresh triggered from settings change"));
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("🎯 Orchestrator: Force refresh triggered from settings change"));
 	
 	// Trigger re-evaluation of all connection types with force recreate
 	// This ensures previews are updated with new settings (tier, routing mode, etc.)
@@ -209,7 +210,7 @@ void USFAutoConnectOrchestrator::ForceRefresh()
 
 void USFAutoConnectOrchestrator::Cleanup()
 {
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🎯 Orchestrator: Cleaning up all previews"));
+	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🎯 Orchestrator: Cleaning up all previews"));
 	
 	ClearAllPreviews();
 	ReservedInputs.Empty();
@@ -245,27 +246,27 @@ void USFAutoConnectOrchestrator::Cleanup()
 
 void USFAutoConnectOrchestrator::ClearBeltEvaluationFlag()
 {
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🎯 Orchestrator: Clearing belt evaluation flag after cooldown"));
+	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🎯 Orchestrator: Clearing belt evaluation flag after cooldown"));
 	bIsEvaluatingBelts = false;
 	
 	// Issue #269: If evaluation was requested during cooldown, re-schedule now
 	if (bPendingBeltReevaluation)
 	{
 		bPendingBeltReevaluation = false;
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🎯 Orchestrator: Pending belt re-evaluation detected, scheduling now"));
+		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🎯 Orchestrator: Pending belt re-evaluation detected, scheduling now"));
 		ScheduleEvaluation(false);
 	}
 }
 
 void USFAutoConnectOrchestrator::ClearPipeEvaluationFlag()
 {
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🎯 Orchestrator: Clearing pipe evaluation flag after cooldown"));
+	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🎯 Orchestrator: Clearing pipe evaluation flag after cooldown"));
 	bIsEvaluatingPipes = false;
 }
 
 void USFAutoConnectOrchestrator::ClearPowerEvaluationFlag()
 {
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🎯 Orchestrator: Clearing power evaluation flag after cooldown"));
+	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🎯 Orchestrator: Clearing power evaluation flag after cooldown"));
 	bIsEvaluatingPower = false;
 }
 
@@ -274,13 +275,13 @@ void USFAutoConnectOrchestrator::ScheduleEvaluation(bool bForceRecreate)
 	bForceRecreatePending = bForceRecreatePending || bForceRecreate;
 	if (bEvalScheduled)
 	{
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🎯 Orchestrator: Evaluation already scheduled (force=%d,pendingForce=%d)"), bForceRecreate ? 1 : 0, bForceRecreatePending ? 1 : 0);
+		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🎯 Orchestrator: Evaluation already scheduled (force=%d,pendingForce=%d)"), bForceRecreate ? 1 : 0, bForceRecreatePending ? 1 : 0);
 		return;
 	}
 
 	if (!ParentHologram.IsValid() || !ParentHologram->GetWorld())
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("🎯 Orchestrator: Cannot schedule evaluation - no world"));
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("🎯 Orchestrator: Cannot schedule evaluation - no world"));
 		// Fallback: run immediately
 		RunScheduledEvaluation();
 		return;
@@ -292,7 +293,7 @@ void USFAutoConnectOrchestrator::ScheduleEvaluation(bool bForceRecreate)
 	D.BindUObject(this, &USFAutoConnectOrchestrator::RunScheduledEvaluation);
 	// Use a short delay to ensure child BeginPlay/attachment complete before evaluation
 	World->GetTimerManager().SetTimer(EvalTimerHandle, D, 0.02f, /*bLoop=*/false);
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🎯 Orchestrator: Evaluation scheduled in 0.02s (force pending=%d)"), bForceRecreatePending ? 1 : 0);
+	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🎯 Orchestrator: Evaluation scheduled in 0.02s (force pending=%d)"), bForceRecreatePending ? 1 : 0);
 }
 
 void USFAutoConnectOrchestrator::RunScheduledEvaluation()
@@ -300,7 +301,7 @@ void USFAutoConnectOrchestrator::RunScheduledEvaluation()
 	bEvalScheduled = false;
 	const bool bForce = bForceRecreatePending;
 	bForceRecreatePending = false;
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🎯 Orchestrator: Running scheduled evaluation (ForceRecreate=%d)"), bForce ? 1 : 0);
+	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🎯 Orchestrator: Running scheduled evaluation (ForceRecreate=%d)"), bForce ? 1 : 0);
 	EvaluateGrid(bForce);
 }
 
@@ -309,14 +310,14 @@ void USFAutoConnectOrchestrator::SchedulePipeEvaluation(bool bForceRecreate)
 	bPipeForceRecreatePending = bPipeForceRecreatePending || bForceRecreate;
 	if (bPipeEvalScheduled)
 	{
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🎯 Orchestrator: Pipe evaluation already scheduled (force=%d,pendingForce=%d)"), 
+		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🎯 Orchestrator: Pipe evaluation already scheduled (force=%d,pendingForce=%d)"), 
 			bForceRecreate ? 1 : 0, bPipeForceRecreatePending ? 1 : 0);
 		return;
 	}
 
 	if (!ParentHologram.IsValid() || !ParentHologram->GetWorld())
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("🎯 Orchestrator: Cannot schedule pipe evaluation - no world"));
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("🎯 Orchestrator: Cannot schedule pipe evaluation - no world"));
 		// Fallback: run immediately
 		RunScheduledPipeEvaluation();
 		return;
@@ -328,7 +329,7 @@ void USFAutoConnectOrchestrator::SchedulePipeEvaluation(bool bForceRecreate)
 	D.BindUObject(this, &USFAutoConnectOrchestrator::RunScheduledPipeEvaluation);
 	// Use same 20ms delay as belts to ensure child BeginPlay/attachment complete
 	World->GetTimerManager().SetTimer(PipeEvalTimerHandle, D, 0.02f, /*bLoop=*/false);
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🎯 Orchestrator: Pipe evaluation scheduled in 0.02s (force pending=%d)"), 
+	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🎯 Orchestrator: Pipe evaluation scheduled in 0.02s (force pending=%d)"), 
 		bPipeForceRecreatePending ? 1 : 0);
 }
 
@@ -337,7 +338,7 @@ void USFAutoConnectOrchestrator::RunScheduledPipeEvaluation()
 	bPipeEvalScheduled = false;
 	const bool bForce = bPipeForceRecreatePending;
 	bPipeForceRecreatePending = false;
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🎯 Orchestrator: Running scheduled pipe evaluation (ForceRecreate=%d)"), bForce ? 1 : 0);
+	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🎯 Orchestrator: Running scheduled pipe evaluation (ForceRecreate=%d)"), bForce ? 1 : 0);
 	
 	// Issue #198: Skip if Smart is disabled for current action (double-tap)
 	if (AutoConnectService)
@@ -347,7 +348,7 @@ void USFAutoConnectOrchestrator::RunScheduledPipeEvaluation()
 			if (Subsystem->IsSmartDisabledForCurrentAction())
 			{
 				AutoConnectService->ClearPipePreviews(ParentHologram.Get());
-				UE_LOG(LogSmartFoundations, Log, TEXT("🎯 Orchestrator: Pipe evaluation skipped - Smart disabled for current action"));
+				UE_LOG(LogSmartAutoConnect, Log, TEXT("🎯 Orchestrator: Pipe evaluation skipped - Smart disabled for current action"));
 				return;
 			}
 		}
@@ -365,7 +366,7 @@ void USFAutoConnectOrchestrator::RunScheduledPipeEvaluation()
 			if (bForce)
 			{
 				AutoConnectService->ClearPipePreviews(ParentHologram.Get());
-				UE_LOG(LogSmartFoundations, Log, TEXT("🎯 Orchestrator: Force cleared all pipe previews for settings change"));
+				UE_LOG(LogSmartAutoConnect, Log, TEXT("🎯 Orchestrator: Force cleared all pipe previews for settings change"));
 			}
 			
 			// Update pipe previews (will create new previews with current settings)
@@ -396,14 +397,14 @@ void USFAutoConnectOrchestrator::SchedulePowerEvaluation(bool bForceRecreate)
 	bPowerForceRecreatePending = bPowerForceRecreatePending || bForceRecreate;
 	if (bPowerEvalScheduled)
 	{
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🎯 Orchestrator: Power evaluation already scheduled (force=%d,pendingForce=%d)"), 
+		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🎯 Orchestrator: Power evaluation already scheduled (force=%d,pendingForce=%d)"), 
 			bForceRecreate ? 1 : 0, bPowerForceRecreatePending ? 1 : 0);
 		return;
 	}
 
 	if (!ParentHologram.IsValid() || !ParentHologram->GetWorld())
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("🎯 Orchestrator: Cannot schedule power evaluation - no world"));
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("🎯 Orchestrator: Cannot schedule power evaluation - no world"));
 		// Fallback: run immediately
 		RunScheduledPowerEvaluation();
 		return;
@@ -415,7 +416,7 @@ void USFAutoConnectOrchestrator::SchedulePowerEvaluation(bool bForceRecreate)
 	D.BindUObject(this, &USFAutoConnectOrchestrator::RunScheduledPowerEvaluation);
 	// Use same 20ms delay as belts/pipes
 	World->GetTimerManager().SetTimer(PowerEvalTimerHandle, D, 0.02f, /*bLoop=*/false);
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🎯 Orchestrator: Power evaluation scheduled in 0.02s (force pending=%d)"), 
+	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🎯 Orchestrator: Power evaluation scheduled in 0.02s (force pending=%d)"), 
 		bPowerForceRecreatePending ? 1 : 0);
 }
 
@@ -424,7 +425,7 @@ void USFAutoConnectOrchestrator::RunScheduledPowerEvaluation()
 	bPowerEvalScheduled = false;
 	const bool bForce = bPowerForceRecreatePending;
 	bPowerForceRecreatePending = false;
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🎯 Orchestrator: Running scheduled power evaluation (ForceRecreate=%d)"), bForce ? 1 : 0);
+	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🎯 Orchestrator: Running scheduled power evaluation (ForceRecreate=%d)"), bForce ? 1 : 0);
 	
 	// Set evaluation flag to prevent recursion
 	bIsEvaluatingPower = true;
@@ -449,7 +450,7 @@ void USFAutoConnectOrchestrator::RunScheduledPowerEvaluation()
 					}
 				}
 				
-				UE_LOG(LogSmartFoundations, Log, TEXT("🎯 Orchestrator: Force cleared all power previews for settings change"));
+				UE_LOG(LogSmartAutoConnect, Log, TEXT("🎯 Orchestrator: Force cleared all power previews for settings change"));
 			}
 			
 			// Update power previews
@@ -512,11 +513,11 @@ void USFAutoConnectOrchestrator::RunScheduledStackableBeltEvaluation()
 {
 	bStackableBeltEvalScheduled = false;
 	
-	UE_LOG(LogSmartFoundations, Log, TEXT("🚧 Orchestrator: Stackable conveyor poles changed - processing auto-connect"));
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("🚧 Orchestrator: Stackable conveyor poles changed - processing auto-connect"));
 	
 	if (!AutoConnectService || !ParentHologram.IsValid())
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("🚧 Orchestrator: Missing service or parent hologram"));
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("🚧 Orchestrator: Missing service or parent hologram"));
 		return;
 	}
 	
@@ -648,12 +649,12 @@ void USFAutoConnectOrchestrator::CollectDistributors(TArray<AFGHologram*>& OutDi
 	// Only log at normal verbosity if we found distributors
 	if (OutDistributors.Num() > 0)
 	{
-		UE_LOG(LogSmartFoundations, Log, TEXT("🎯 Orchestrator: Collected %d distributors from entire grid"), 
+		UE_LOG(LogSmartAutoConnect, Log, TEXT("🎯 Orchestrator: Collected %d distributors from entire grid"), 
 			OutDistributors.Num());
 	}
 	else
 	{
-		UE_LOG(LogSmartFoundations, Log, TEXT("🎯 Orchestrator: Collected 0 distributors from grid"));
+		UE_LOG(LogSmartAutoConnect, Log, TEXT("🎯 Orchestrator: Collected 0 distributors from grid"));
 	}
 }
 
@@ -670,7 +671,7 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 	{
 		if (!Subsystem->GetAutoConnectRuntimeSettings().bEnabled)
 		{
-			UE_LOG(LogSmartFoundations, Log, TEXT("🎯 Orchestrator: EvaluateConnections skipped - Belt auto-connect disabled"));
+			UE_LOG(LogSmartAutoConnect, Log, TEXT("🎯 Orchestrator: EvaluateConnections skipped - Belt auto-connect disabled"));
 			return;
 		}
 	}
@@ -687,7 +688,7 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 
 	const FTransform ParentTransform = ParentHologram.IsValid() ? ParentHologram->GetActorTransform() : FTransform::Identity;
 
-	UE_LOG(LogSmartFoundations, Log, TEXT("🎯 Orchestrator: Evaluating connections for %d distributors using GLOBAL SCORING"), 
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("🎯 Orchestrator: Evaluating connections for %d distributors using GLOBAL SCORING"), 
 		Distributors.Num());
 
 	// ========================================
@@ -698,7 +699,7 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 	
 	if (AllConnections.Num() == 0)
 	{
-		UE_LOG(LogSmartFoundations, Log, TEXT("   ⚠️ No potential connections found"));
+		UE_LOG(LogSmartAutoConnect, Log, TEXT("   ⚠️ No potential connections found"));
 		return;
 	}
 
@@ -707,13 +708,13 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 	// ========================================
 	AllConnections.Sort();
 	
-	UE_LOG(LogSmartFoundations, Log, TEXT("🎯 GLOBAL SCORING: Sorted %d connections by score"), AllConnections.Num());
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("🎯 GLOBAL SCORING: Sorted %d connections by score"), AllConnections.Num());
 	
 	// Log top candidates for debugging
 	for (int32 i = 0; i < FMath::Min(10, AllConnections.Num()); i++)
 	{
 		const FPotentialConnection& Conn = AllConnections[i];
-		UE_LOG(LogSmartFoundations, Log, TEXT("   [%d] Score=%.0f | %s (lane %d) -> %s (idx %d)"),
+		UE_LOG(LogSmartAutoConnect, Log, TEXT("   [%d] Score=%.0f | %s (lane %d) -> %s (idx %d)"),
 			i, Conn.Score, 
 			*Conn.Distributor->GetName(), Conn.DistributorLaneIndex,
 			*Conn.BuildingConnector->GetName(), Conn.BuildingInputIndex);
@@ -755,13 +756,13 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 		
 		TotalAssignments++;
 		
-		UE_LOG(LogSmartFoundations, Log, TEXT("   ✅ ASSIGNED: %s (lane %d) -> %s (idx %d) | Score=%.0f"),
+		UE_LOG(LogSmartAutoConnect, Log, TEXT("   ✅ ASSIGNED: %s (lane %d) -> %s (idx %d) | Score=%.0f"),
 			*Conn.Distributor->GetName(), Conn.DistributorLaneIndex,
 			*Conn.BuildingConnector->GetName(), Conn.BuildingInputIndex,
 			Conn.Score);
 	}
 	
-	UE_LOG(LogSmartFoundations, Log, TEXT("🎯 GLOBAL SCORING: Made %d optimal assignments"), TotalAssignments);
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("🎯 GLOBAL SCORING: Made %d optimal assignments"), TotalAssignments);
 
 	// ========================================
 	// PHASE 4: Create belt previews for assigned connections
@@ -811,12 +812,12 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 				
 				Previews.Add(ExistingPreview);
 				TotalPreviewsCreated++;
-				UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   ♻️ UPDATED & REUSING BELT: %s -> %s (Dist: %s)"),
+				UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   ♻️ UPDATED & REUSING BELT: %s -> %s (Dist: %s)"),
 					*GetNameSafe(OutputConnector), *GetNameSafe(InputConnector), *Distributor->GetName());
 				continue;
 			}
 			
-			UE_LOG(LogSmartFoundations, Log, TEXT("   🔧 BUILDING BELT: %s -> %s (Dist: %s)"),
+			UE_LOG(LogSmartAutoConnect, Log, TEXT("   🔧 BUILDING BELT: %s -> %s (Dist: %s)"),
 				*GetNameSafe(OutputConnector), *GetNameSafe(InputConnector), *Distributor->GetName());
 			
 			// Use the service to create the actual belt preview
@@ -834,11 +835,11 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 			{
 				Previews.Add(Preview);
 				TotalPreviewsCreated++;
-				UE_LOG(LogSmartFoundations, Log, TEXT("      ✅ BUILDING BELT SUCCESS"));
+				UE_LOG(LogSmartAutoConnect, Log, TEXT("      ✅ BUILDING BELT SUCCESS"));
 			}
 			else
 			{
-				UE_LOG(LogSmartFoundations, Log, TEXT("      ❌ BUILDING BELT FAILED: bSuccess=%d, Preview=%s"),
+				UE_LOG(LogSmartAutoConnect, Log, TEXT("      ❌ BUILDING BELT FAILED: bSuccess=%d, Preview=%s"),
 					bSuccess, Preview.IsValid() ? TEXT("Valid") : TEXT("Invalid"));
 			}
 		}
@@ -848,7 +849,7 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 		
 		if (Previews.Num() > 0)
 		{
-			UE_LOG(LogSmartFoundations, Log, TEXT("   ✅ [%s] Created %d belt(s)"), 
+			UE_LOG(LogSmartAutoConnect, Log, TEXT("   ✅ [%s] Created %d belt(s)"), 
 				*Distributor->GetName(), Previews.Num());
 			
 			// CONTEXT-AWARE SPACING: Apply for parent distributor
@@ -863,12 +864,12 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 					if (!bContextSpacingApplied)
 					{
 						bShouldApply = true;
-						UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   🎯 CONTEXT-AWARE SPACING: First connection detected"));
+						UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   🎯 CONTEXT-AWARE SPACING: First connection detected"));
 					}
 					else if (LastTargetBuildingClass.IsValid() && LastTargetBuildingClass.Get() != CurrentBuildingClass)
 					{
 						bShouldApply = true;
-						UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   🎯 CONTEXT-AWARE SPACING: Target building changed"));
+						UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   🎯 CONTEXT-AWARE SPACING: Target building changed"));
 					}
 					
 					if (bShouldApply)
@@ -889,7 +890,7 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 								bContextSpacingApplied = true;
 								LastTargetBuildingClass = CurrentBuildingClass;
 								
-								UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   🎯 CONTEXT-AWARE SPACING: Auto-adjusted to %.1fm"),
+								UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   🎯 CONTEXT-AWARE SPACING: Auto-adjusted to %.1fm"),
 									BuildingWidth / 100.0f);
 							}
 						}
@@ -914,12 +915,12 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 	}
 
 	// Summary log
-	UE_LOG(LogSmartFoundations, Log, TEXT("🎯 EVALUATION COMPLETE: %d belts for %d distributors | Reservations: %d"), 
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("🎯 EVALUATION COMPLETE: %d belts for %d distributors | Reservations: %d"), 
 		TotalPreviewsCreated, Distributors.Num(), ReservedInputs.Num());
 	
 	if (TotalPreviewsCreated == 0)
 	{
-		UE_LOG(LogSmartFoundations, Log, TEXT("   ⚠️ No belts created - check logs above for rejection reasons"));
+		UE_LOG(LogSmartAutoConnect, Log, TEXT("   ⚠️ No belts created - check logs above for rejection reasons"));
 	}
 
 	// ========================================
@@ -929,12 +930,12 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 	{
 		if (!Subsystem->GetAutoConnectRuntimeSettings().bChainDistributors)
 		{
-			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🎯 Orchestrator: Skipping manifold connections (bChainDistributors=false)"));
+			UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🎯 Orchestrator: Skipping manifold connections (bChainDistributors=false)"));
 			return; // Skip manifold connections when disabled
 		}
 	}
 	
-	UE_LOG(LogSmartFoundations, Log, TEXT("🔗 Manifold Detection: Evaluating %d distributors for chaining"), Distributors.Num());
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("🔗 Manifold Detection: Evaluating %d distributors for chaining"), Distributors.Num());
 
 	// Build lanes per input index from BUILDING reservations
 	TMap<int32, TArray<AFGHologram*>> DistributorsByInputIndex;
@@ -969,7 +970,7 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 	ManifoldReservedInputs.Empty();
 	ManifoldReservedOutputs.Empty();
 	
-	UE_LOG(LogSmartFoundations, Log, TEXT("   📊 Found %d input index groups for manifold chaining"), DistributorsByInputIndex.Num());
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("   📊 Found %d input index groups for manifold chaining"), DistributorsByInputIndex.Num());
 	
 	// Get parent transform for spatial sorting
 	const FTransform SortTransform = ParentHologram.IsValid() ? ParentHologram->GetActorTransform() : FTransform::Identity;
@@ -982,7 +983,7 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 		
 		if (SplittersInLane.Num() < 2)
 		{
-			UE_LOG(LogSmartFoundations, Log, TEXT("   ⏭️ Input%d lane: Only %d splitter(s) - skipping manifold"), 
+			UE_LOG(LogSmartAutoConnect, Log, TEXT("   ⏭️ Input%d lane: Only %d splitter(s) - skipping manifold"), 
 				InputIndex, SplittersInLane.Num());
 			continue; // Need at least 2 splitters to connect
 		}
@@ -1021,7 +1022,7 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 			});
 		}
 		
-		UE_LOG(LogSmartFoundations, Log, TEXT("   🔗 Input%d lane: Connecting %d splitters in manifold (sorted spatially)"), 
+		UE_LOG(LogSmartAutoConnect, Log, TEXT("   🔗 Input%d lane: Connecting %d splitters in manifold (sorted spatially)"), 
 			InputIndex, SplittersInLane.Num());
 		
 		// Connect each splitter to the next one in the lane
@@ -1035,12 +1036,12 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 			UFGFactoryConnectionComponent* B_MiddleOut = AutoConnectService->FindMiddleConnector(TargetDistributor);
 			if (!A_MiddleOut || A_MiddleOut->GetDirection() != EFactoryConnectionDirection::FCD_OUTPUT)
 			{
-				UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("      ❌ %s has no middle output"), *SourceDistributor->GetName());
+				UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      ❌ %s has no middle output"), *SourceDistributor->GetName());
 				continue;
 			}
 			if (!B_MiddleOut || B_MiddleOut->GetDirection() != EFactoryConnectionDirection::FCD_OUTPUT)
 			{
-				UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("      ℹ️ %s has no middle output (may be merger)"), *TargetDistributor->GetName());
+				UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      ℹ️ %s has no middle output (may be merger)"), *TargetDistributor->GetName());
 			}
 
 			// Get BACK inputs for both distributors (inputs facing opposite actor forward)
@@ -1070,7 +1071,7 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 			UFGFactoryConnectionComponent* B_BackIn = GetBackInput(TargetDistributor);
 			if (!B_BackIn)
 			{
-				UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("      ❌ Target %s has no back input"), *TargetDistributor->GetName());
+				UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      ❌ Target %s has no back input"), *TargetDistributor->GetName());
 				continue;
 			}
 
@@ -1101,21 +1102,21 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 			{
 				if (Opt.Dot < 0.2f)
 				{
-					UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("      ⏭️ Skipping option: poor facing alignment (dot=%.2f)"), Opt.Dot);
+					UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      ⏭️ Skipping option: poor facing alignment (dot=%.2f)"), Opt.Dot);
 					continue;
 				}
 				if (ManifoldReservedInputs.Contains(Opt.In))
 				{
-					UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("      ⏭️ Manifold target input already reserved - skip option"));
+					UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      ⏭️ Manifold target input already reserved - skip option"));
 					continue;
 				}
 				if (ManifoldReservedOutputs.Contains(Opt.Out))
 				{
-					UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("      ⏭️ Manifold source output already reserved - skip option"));
+					UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      ⏭️ Manifold source output already reserved - skip option"));
 					continue;
 				}
 
-				UE_LOG(LogSmartFoundations, Log, TEXT("      🔗 MANIFOLD BELT: %s.%s → %s.%s [Input%d lane] (dot=%.2f)"),
+				UE_LOG(LogSmartAutoConnect, Log, TEXT("      🔗 MANIFOLD BELT: %s.%s → %s.%s [Input%d lane] (dot=%.2f)"),
 					*Opt.StoreOn->GetName(),
 					*Opt.Out->GetName(),
 					*Cast<AFGHologram>(Opt.In->GetOwner())->GetName(),
@@ -1135,7 +1136,7 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 
 			if (!bLinked)
 			{
-				UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("      ℹ️ No valid manifold orientation found for this pair"));
+				UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      ℹ️ No valid manifold orientation found for this pair"));
 			}
 		}
 	}
@@ -1176,7 +1177,7 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 		}
 	}
 	
-	UE_LOG(LogSmartFoundations, Log, TEXT("   📊 Found %d merger output index groups for manifold chaining"), MergersByOutputIndex.Num());
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("   📊 Found %d merger output index groups for manifold chaining"), MergersByOutputIndex.Num());
 	
 	// For each output index group, SORT spatially then connect the mergers sequentially
 	for (auto& IndexGroup : MergersByOutputIndex)
@@ -1186,7 +1187,7 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 		
 		if (MergersInLane.Num() < 2)
 		{
-			UE_LOG(LogSmartFoundations, Log, TEXT("   ⏭️ Output%d lane: Only %d merger(s) - skipping manifold"), 
+			UE_LOG(LogSmartAutoConnect, Log, TEXT("   ⏭️ Output%d lane: Only %d merger(s) - skipping manifold"), 
 				OutputIndex, MergersInLane.Num());
 			continue;
 		}
@@ -1224,7 +1225,7 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 			});
 		}
 		
-		UE_LOG(LogSmartFoundations, Log, TEXT("   🔗 Output%d lane: Connecting %d mergers in manifold (sorted spatially)"), 
+		UE_LOG(LogSmartAutoConnect, Log, TEXT("   🔗 Output%d lane: Connecting %d mergers in manifold (sorted spatially)"), 
 			OutputIndex, MergersInLane.Num());
 		
 		// Connect each pair of adjacent mergers in the lane
@@ -1271,12 +1272,12 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 			
 			if (!A_MiddleOut)
 			{
-				UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("      ❌ Source %s has no middle output"), *SourceMerger->GetName());
+				UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      ❌ Source %s has no middle output"), *SourceMerger->GetName());
 				continue;
 			}
 			if (!B_BackIn)
 			{
-				UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("      ❌ Target %s has no back input"), *TargetMerger->GetName());
+				UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      ❌ Target %s has no back input"), *TargetMerger->GetName());
 				continue;
 			}
 
@@ -1307,21 +1308,21 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 			{
 				if (Opt.Dot < 0.2f)
 				{
-					UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("      ⏭️ Skipping option: poor facing alignment (dot=%.2f)"), Opt.Dot);
+					UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      ⏭️ Skipping option: poor facing alignment (dot=%.2f)"), Opt.Dot);
 					continue;
 				}
 				if (ManifoldReservedInputs.Contains(Opt.In))
 				{
-					UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("      ⏭️ Manifold target input already reserved - skip option"));
+					UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      ⏭️ Manifold target input already reserved - skip option"));
 					continue;
 				}
 				if (ManifoldReservedOutputs.Contains(Opt.Out))
 				{
-					UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("      ⏭️ Manifold source output already reserved - skip option"));
+					UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      ⏭️ Manifold source output already reserved - skip option"));
 					continue;
 				}
 
-				UE_LOG(LogSmartFoundations, Verbose, TEXT("      🔗 MERGER MANIFOLD: %s → %s [Output%d lane] (dot=%.2f)"),
+				UE_LOG(LogSmartAutoConnect, Verbose, TEXT("      🔗 MERGER MANIFOLD: %s → %s [Output%d lane] (dot=%.2f)"),
 					*Opt.StoreOn->GetName(),
 					*Cast<AFGHologram>(Opt.In->GetOwner())->GetName(),
 					OutputIndex,
@@ -1339,12 +1340,12 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 
 			if (!bLinked)
 			{
-				UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("      ℹ️ No valid manifold orientation found for this pair"));
+				UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      ℹ️ No valid manifold orientation found for this pair"));
 			}
 		}
 	}
 	
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🎯 Orchestrator: Manifold evaluation complete"));
+	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🎯 Orchestrator: Manifold evaluation complete"));
 
 	// Build connection pairings map from BUILDING reservation data only
 	ConnectionPairings.Empty();
@@ -1377,12 +1378,12 @@ void USFAutoConnectOrchestrator::LogConnectionPairings() const
 {
 	if (ConnectionPairings.Num() == 0)
 	{
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🎯 CONNECTION PAIRINGS (BUILDINGS): None (no connections established)"));
+		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🎯 CONNECTION PAIRINGS (BUILDINGS): None (no connections established)"));
 		return;
 	}
 
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🎯 ========== CONNECTION PAIRINGS (BUILDINGS) =========="));
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🎯 Total Distributors Connected: %d"), ConnectionPairings.Num());
+	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🎯 ========== CONNECTION PAIRINGS (BUILDINGS) =========="));
+	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🎯 Total Distributors Connected: %d"), ConnectionPairings.Num());
 	
 	int32 TotalConnections = 0;
 	for (const auto& Pair : ConnectionPairings)
@@ -1393,7 +1394,7 @@ void USFAutoConnectOrchestrator::LogConnectionPairings() const
 		bool bIsParent = (Distributor == ParentHologram.Get());
 		FString DistributorType = bIsParent ? TEXT("PARENT") : TEXT("CHILD");
 		
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🎯 [%s] %s → %d building(s)"), 
+		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🎯 [%s] %s → %d building(s)"), 
 			*DistributorType, *Distributor->GetName(), BuildingInputs.Num());
 		
 		for (int32 i = 0; i < BuildingInputs.Num(); i++)
@@ -1402,26 +1403,26 @@ void USFAutoConnectOrchestrator::LogConnectionPairings() const
 			AActor* BuildingOwner = BuildingInput ? BuildingInput->GetOwner() : nullptr;
 			FString BuildingName = BuildingOwner ? BuildingOwner->GetName() : TEXT("Unknown");
 			
-			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🎯    → Building %d: %s (Input: %s)"), 
+			UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🎯    → Building %d: %s (Input: %s)"), 
 				i + 1, *BuildingName, *BuildingInput->GetName());
 			
 			TotalConnections++;
 		}
 	}
 	
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🎯 Total Connections: %d"), TotalConnections);
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🎯 =========================================="));
+	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🎯 Total Connections: %d"), TotalConnections);
+	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🎯 =========================================="));
 }
 
 void USFAutoConnectOrchestrator::LogManifoldPairings() const
 {
 	if (ManifoldReservedInputs.Num() == 0)
 	{
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🎯 MANIFOLD PAIRINGS: None"));
+		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🎯 MANIFOLD PAIRINGS: None"));
 		return;
 	}
 
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🎯 ========== MANIFOLD PAIRINGS =========="));
+	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🎯 ========== MANIFOLD PAIRINGS =========="));
 	int32 Count = 0;
 	for (const auto& Pair : ManifoldReservedInputs)
 	{
@@ -1430,11 +1431,11 @@ void USFAutoConnectOrchestrator::LogManifoldPairings() const
 		AFGHologram* TargetDistributor = TargetInput ? Cast<AFGHologram>(TargetInput->GetOwner()) : nullptr;
 		FString TargetName = TargetDistributor ? TargetDistributor->GetName() : TEXT("UnknownTarget");
 		FString SourceName = SourceDistributor ? SourceDistributor->GetName() : TEXT("UnknownSource");
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🎯    %s → %s (Input: %s)"), *SourceName, *TargetName, *TargetInput->GetName());
+		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🎯    %s → %s (Input: %s)"), *SourceName, *TargetName, *TargetInput->GetName());
 		Count++;
 	}
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🎯 Total Manifold Links: %d"), Count);
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🎯 =========================================="));
+	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🎯 Total Manifold Links: %d"), Count);
+	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🎯 =========================================="));
 }
 
 void USFAutoConnectOrchestrator::ClearAllPreviews()
@@ -1448,7 +1449,7 @@ void USFAutoConnectOrchestrator::ClearAllPreviews()
 	TArray<AFGHologram*> Distributors;
 	CollectDistributors(Distributors);
 
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🎯 Orchestrator: Clearing belt previews for %d distributors"), 
+	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🎯 Orchestrator: Clearing belt previews for %d distributors"), 
 		Distributors.Num());
 
 	// Clean up belt previews for each distributor
@@ -1461,7 +1462,7 @@ void USFAutoConnectOrchestrator::ClearAllPreviews()
 	// This ensures pipe previews are destroyed when build is cancelled/recipe changed
 	if (ParentHologram.IsValid() && USFAutoConnectService::IsPipelineJunctionHologram(ParentHologram.Get()))
 	{
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🎯 Orchestrator: Clearing pipe previews for junction %s"), 
+		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🎯 Orchestrator: Clearing pipe previews for junction %s"), 
 			*ParentHologram->GetName());
 		AutoConnectService->ClearPipePreviews(ParentHologram.Get());
 	}
@@ -1469,7 +1470,7 @@ void USFAutoConnectOrchestrator::ClearAllPreviews()
 	// Clear power previews if parent is a power pole
 	if (ParentHologram.IsValid() && USFAutoConnectService::IsPowerPoleHologram(ParentHologram.Get()))
 	{
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🎯 Orchestrator: Clearing power previews for pole %s"), 
+		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🎯 Orchestrator: Clearing power previews for pole %s"), 
 			*ParentHologram->GetName());
 		AutoConnectService->ClearAllPowerPreviews();
 	}
@@ -1574,7 +1575,7 @@ void USFAutoConnectOrchestrator::CollectPotentialConnections(
 		return;
 	}
 	
-	UE_LOG(LogSmartFoundations, Log, TEXT("🎯 GLOBAL SCORING: Collecting potential connections from %d distributors"), Distributors.Num());
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("🎯 GLOBAL SCORING: Collecting potential connections from %d distributors"), Distributors.Num());
 	
 	int32 TotalBuildingsFound = 0;
 	int32 TotalSideConnectorsFound = 0;
@@ -1598,7 +1599,7 @@ void USFAutoConnectOrchestrator::CollectPotentialConnections(
 		
 		if (!bIsSplitter && !bIsMerger)
 		{
-			UE_LOG(LogSmartFoundations, Log, TEXT("   ⏭️ %s is neither splitter nor merger"), *Distributor->GetName());
+			UE_LOG(LogSmartAutoConnect, Log, TEXT("   ⏭️ %s is neither splitter nor merger"), *Distributor->GetName());
 			continue;
 		}
 		
@@ -1615,7 +1616,7 @@ void USFAutoConnectOrchestrator::CollectPotentialConnections(
 		
 		if (SideConnectors.Num() == 0)
 		{
-			UE_LOG(LogSmartFoundations, Log, TEXT("   ⏭️ %s has 0 side connectors"), *Distributor->GetName());
+			UE_LOG(LogSmartAutoConnect, Log, TEXT("   ⏭️ %s has 0 side connectors"), *Distributor->GetName());
 			continue;
 		}
 		
@@ -1701,7 +1702,7 @@ void USFAutoConnectOrchestrator::CollectPotentialConnections(
 					float AngleCosine = FVector::DotProduct(DistConnectorNormal, ToBuilding);
 					float AngleDegrees = FMath::RadiansToDegrees(FMath::Acos(FMath::Clamp(AngleCosine, -1.0f, 1.0f)));
 					
-					UE_LOG(LogSmartFoundations, Log, TEXT("      📐 %s: Normal=(%.2f,%.2f,%.2f) ToBuilding=(%.2f,%.2f,%.2f) Angle=%.1f° Dist=%.0f"),
+					UE_LOG(LogSmartAutoConnect, Log, TEXT("      📐 %s: Normal=(%.2f,%.2f,%.2f) ToBuilding=(%.2f,%.2f,%.2f) Angle=%.1f° Dist=%.0f"),
 						*DistConnector->GetName(),
 						DistConnectorNormal.X, DistConnectorNormal.Y, DistConnectorNormal.Z,
 						ToBuilding.X, ToBuilding.Y, ToBuilding.Z,
@@ -1752,7 +1753,7 @@ void USFAutoConnectOrchestrator::CollectPotentialConnections(
 					float Score = AngleDegrees * 100.0f + ActualDistance * 0.1f;
 					
 					// Log for debugging
-					UE_LOG(LogSmartFoundations, VeryVerbose, 
+					UE_LOG(LogSmartAutoConnect, VeryVerbose, 
 						TEXT("   📐 %s -> %s: Angle=%.1f° Dist=%.0fcm Score=%.0f"),
 						*BestSideConnector->GetName(), *BuildingConnector->GetName(),
 						AngleDegrees, ActualDistance, Score);
@@ -1774,7 +1775,7 @@ void USFAutoConnectOrchestrator::CollectPotentialConnections(
 		}
 	}
 	
-	UE_LOG(LogSmartFoundations, Log, TEXT("🎯 GLOBAL SCORING: Collected %d potential connections"), OutConnections.Num());
-	UE_LOG(LogSmartFoundations, Log, TEXT("   📊 DIAGNOSTICS: Buildings=%d, SideConnectors=%d, BuildingConnectors=%d, ValidationsFailed=%d"),
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("🎯 GLOBAL SCORING: Collected %d potential connections"), OutConnections.Num());
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("   📊 DIAGNOSTICS: Buildings=%d, SideConnectors=%d, BuildingConnectors=%d, ValidationsFailed=%d"),
 		TotalBuildingsFound, TotalSideConnectorsFound, TotalBuildingConnectorsFound, TotalValidationsFailed);
 }

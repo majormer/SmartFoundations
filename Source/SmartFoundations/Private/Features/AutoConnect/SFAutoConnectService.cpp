@@ -1,5 +1,6 @@
 #include "Features/AutoConnect/SFAutoConnectService.h"
 #include "SmartFoundations.h"
+#include "SFLogMacros.h"
 #include "Subsystem/SFSubsystem.h"
 #include "Subsystem/SFHologramHelperService.h"
 // NOTE: SFDeferredCostService removed - child holograms automatically aggregate costs via GetCost()
@@ -42,17 +43,17 @@ void USFAutoConnectService::Init(USFSubsystem* InSubsystem)
 {
 	if (!InSubsystem)
 	{
-		UE_LOG(LogSmartFoundations, Error, TEXT("SFAutoConnectService::Init: Subsystem is null"));
+		UE_LOG(LogSmartAutoConnect, Error, TEXT("SFAutoConnectService::Init: Subsystem is null"));
 		return;
 	}
 	
 	Subsystem = InSubsystem;
-	UE_LOG(LogSmartFoundations, Log, TEXT("Auto-Connect Service initialized with BUILDING_SEARCH_RADIUS=%.0f cm"), BUILDING_SEARCH_RADIUS);
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("Auto-Connect Service initialized with BUILDING_SEARCH_RADIUS=%.0f cm"), BUILDING_SEARCH_RADIUS);
 }
 
 void USFAutoConnectService::Shutdown()
 {
-	UE_LOG(LogSmartFoundations, Log, TEXT("SFAutoConnectService shutting down"));
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("SFAutoConnectService shutting down"));
 	ClearBeltPreviewHelpers();
 	Subsystem = nullptr;
 }
@@ -64,7 +65,7 @@ void USFAutoConnectService::ClearBeltPreviewHelpers()
 		return;
 	}
 
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🗑️ Clearing all belt preview helpers (%d distributors)"), 
+	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🗑️ Clearing all belt preview helpers (%d distributors)"), 
 		DistributorBeltPreviews.Num());
 
 	// Iterate through all distributors and destroy their preview helpers
@@ -84,7 +85,7 @@ void USFAutoConnectService::ClearBeltPreviewHelpers()
 	DistributorBeltPreviews.Empty();
 	StoredConnectorPairs.Empty();
 	
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("✅ All belt preview helpers cleared"));
+	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("✅ All belt preview helpers cleared"));
 }
 
 // ========================================
@@ -95,19 +96,19 @@ void USFAutoConnectService::OnDistributorHologramUpdated(AFGHologram* ParentHolo
 {
 	if (!ParentHologram)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("OnDistributorHologramUpdated: ParentHologram is null"));
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("OnDistributorHologramUpdated: ParentHologram is null"));
 		return;
 	}
 	
 	// PARENT HOLOGRAM CHECK: Only process actual distributors (splitters/mergers)
 	if (!IsDistributorHologram(ParentHologram))
 	{
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⏭️ Skipping non-distributor hologram: %s"), 
+		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("⏭️ Skipping non-distributor hologram: %s"), 
 			*ParentHologram->GetName());
 		return;
 	}
 	
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔄 Parent hologram updated: %s - processing distributors"), *ParentHologram->GetName());
+	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🔄 Parent hologram updated: %s - processing distributors"), *ParentHologram->GetName());
 	
 	// Process the distributor and get its belt previews
 	// NOTE: Children are processed separately in ProcessChildDistributors (called from completion callback)
@@ -147,7 +148,7 @@ void USFAutoConnectService::OnDistributorHologramUpdated(AFGHologram* ParentHolo
 			}
 		}
 	
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT(" Distributor update complete for %s (locked=%d)"), 
+		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT(" Distributor update complete for %s (locked=%d)"), 
 			*ParentHologram->GetName(), bParentLocked ? 1 : 0);
 	}
 	else
@@ -164,7 +165,7 @@ void USFAutoConnectService::OnDistributorHologramUpdated(AFGHologram* ParentHolo
 			}
 		}
 		DistributorBeltPreviews.Remove(ParentHologram);
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🗑️ No belt previews created - removed distributor %s from map"), 
+		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🗑️ No belt previews created - removed distributor %s from map"), 
 			*ParentHologram->GetName());
 	}
 	
@@ -179,14 +180,14 @@ TArray<TSharedPtr<FBeltPreviewHelper>> USFAutoConnectService::ProcessSingleDistr
 {
 	if (!DistributorHologram)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("ProcessSingleDistributor: DistributorHologram is null"));
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("ProcessSingleDistributor: DistributorHologram is null"));
 		return TArray<TSharedPtr<FBeltPreviewHelper>>();
 	}
 	
 	// Get runtime settings from subsystem
 	if (!Subsystem)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("ProcessSingleDistributor: Subsystem is null"));
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("ProcessSingleDistributor: Subsystem is null"));
 		return TArray<TSharedPtr<FBeltPreviewHelper>>();
 	}
 	
@@ -195,11 +196,11 @@ TArray<TSharedPtr<FBeltPreviewHelper>> USFAutoConnectService::ProcessSingleDistr
 	// Check if auto-connect is enabled
 	if (!RuntimeSettings.bEnabled)
 	{
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("ProcessSingleDistributor: Auto-connect disabled in runtime settings"));
+		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("ProcessSingleDistributor: Auto-connect disabled in runtime settings"));
 		return TArray<TSharedPtr<FBeltPreviewHelper>>();
 	}
 	
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT(" Processing distributor: %s%s"), 
+	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT(" Processing distributor: %s%s"), 
 		*DistributorHologram->GetName(),
 		ReservedInputs ? TEXT(" (with input reservation)") : TEXT(""));
 	
@@ -218,7 +219,7 @@ TArray<TSharedPtr<FBeltPreviewHelper>> USFAutoConnectService::ProcessSingleDistr
 	UClass* BuildClass = DistributorHologram->GetBuildClass();
 	if (!BuildClass)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("ProcessSingleDistributor: BuildClass is null"));
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("ProcessSingleDistributor: BuildClass is null"));
 		return BeltPreviewHelpers;
 	}
 	
@@ -227,7 +228,7 @@ TArray<TSharedPtr<FBeltPreviewHelper>> USFAutoConnectService::ProcessSingleDistr
 	bool bIsSplitter = BuildClassName.Contains(TEXT("Splitter"));
 	bool bIsMerger = BuildClassName.Contains(TEXT("Merger"));
 	
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   📋 Build class: %s | IsSplitter=%d | IsMerger=%d"), 
+	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   📋 Build class: %s | IsSplitter=%d | IsMerger=%d"), 
 		*BuildClassName, bIsSplitter, bIsMerger);
 	
 	// Find distributor chains for manifold connections
@@ -238,12 +239,12 @@ TArray<TSharedPtr<FBeltPreviewHelper>> USFAutoConnectService::ProcessSingleDistr
 	TArray<AFGBuildable*> CompatibleBuildings;
 	FindCompatibleBuildingsForDistributor(DistributorHologram, CompatibleBuildings);
 	
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   🏭 Found %d compatible buildings nearby"), CompatibleBuildings.Num());
+	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   🏭 Found %d compatible buildings nearby"), CompatibleBuildings.Num());
 	
 	// If no buildings or chains found, clean up existing previews and return empty array
 	if (CompatibleBuildings.Num() == 0 && DistributorChains.Num() == 0)
 	{
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   ⚠️ No compatible buildings or chains found - cleaning up existing belt previews"));
+		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   ⚠️ No compatible buildings or chains found - cleaning up existing belt previews"));
 		
 		// Clean up all existing belt previews (out of range)
 		if (BeltPreviewHelpers.Num() > 0)
@@ -255,7 +256,7 @@ TArray<TSharedPtr<FBeltPreviewHelper>> USFAutoConnectService::ProcessSingleDistr
 					Helper->DestroyPreview();
 				}
 			}
-			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   🧹 Cleaned up %d belt previews (all buildings out of range)"), 
+			UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   🧹 Cleaned up %d belt previews (all buildings out of range)"), 
 				BeltPreviewHelpers.Num());
 			BeltPreviewHelpers.Empty();
 		}
@@ -266,11 +267,11 @@ TArray<TSharedPtr<FBeltPreviewHelper>> USFAutoConnectService::ProcessSingleDistr
 	// If no existing belt previews, create them (first time)
 	if (BeltPreviewHelpers.Num() == 0)
 	{
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   📋 No existing belt previews - creating new ones"));
+		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   📋 No existing belt previews - creating new ones"));
 	}
 	else
 	{
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   📋 Updating %d existing belt previews"), BeltPreviewHelpers.Num());
+		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   📋 Updating %d existing belt previews"), BeltPreviewHelpers.Num());
 	}
 	
 	// Get distributor hologram's output connectors
@@ -302,19 +303,19 @@ TArray<TSharedPtr<FBeltPreviewHelper>> USFAutoConnectService::ProcessSingleDistr
 	UClass* DistributorBuildClass = DistributorHologram->GetBuildClass();
 	if (DistributorBuildClass)
 	{
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   🔍 Distributor hologram class: %s"), *DistributorBuildClass->GetName());
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   📋 Found %d inputs and %d outputs from hologram connectors"), 
+		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   🔍 Distributor hologram class: %s"), *DistributorBuildClass->GetName());
+		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   📋 Found %d inputs and %d outputs from hologram connectors"), 
 			DistributorInputs.Num(), DistributorOutputs.Num());
 	}
 	else
 	{
-		UE_LOG(LogSmartFoundations, Error, TEXT("   ❌ Failed to get build class from distributor hologram"));
+		UE_LOG(LogSmartAutoConnect, Error, TEXT("   ❌ Failed to get build class from distributor hologram"));
 	}
 	
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   Distributor has %d inputs and %d outputs available"), 
+	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   Distributor has %d inputs and %d outputs available"), 
 		DistributorInputs.Num(), DistributorOutputs.Num());
 	
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   🏷️ Distributor type: %s"), 
+	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   🏷️ Distributor type: %s"), 
 		bIsSplitter ? TEXT("Splitter") : bIsMerger ? TEXT("Merger") : TEXT("Unknown"));
 	
 	// Count available side connectors (middle is reserved for manifold chaining)
@@ -323,11 +324,11 @@ TArray<TSharedPtr<FBeltPreviewHelper>> USFAutoConnectService::ProcessSingleDistr
 		SideConnectorCount = 0;
 	
 	const TCHAR* ConnectorType = bIsSplitter ? TEXT("outputs") : TEXT("inputs");
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   🔗 MANIFOLD: Reserved middle connector for chaining, using %d side %s for buildings"), 
+	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   🔗 MANIFOLD: Reserved middle connector for chaining, using %d side %s for buildings"), 
 		SideConnectorCount, ConnectorType);
 	
 	// NEW: Process distributor chains first (priority 1 for manifold chaining)
-	UE_LOG(LogSmartFoundations, Log, TEXT("   Processing distributor chains for manifold connections"));
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("   Processing distributor chains for manifold connections"));
 	
 	// Create belt previews for distributor-to-distributor chains
 	if (RuntimeSettings.bChainDistributors && DistributorChains.Num() > 0)
@@ -338,11 +339,11 @@ TArray<TSharedPtr<FBeltPreviewHelper>> USFAutoConnectService::ProcessSingleDistr
 				continue;
 			if (ChainTarget == DistributorHologram)
 			{
-				UE_LOG(LogSmartFoundations, Warning, TEXT("   ⚠️ Skipping distributor chain to self: %s"), *DistributorHologram->GetName());
+				UE_LOG(LogSmartAutoConnect, Warning, TEXT("   ⚠️ Skipping distributor chain to self: %s"), *DistributorHologram->GetName());
 				continue;
 			}
 				
-			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   🔗 Creating distributor chain belt preview: %s -> %s"), 
+			UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   🔗 Creating distributor chain belt preview: %s -> %s"), 
 				*DistributorHologram->GetName(), *ChainTarget->GetName());
 			
 			// Get connectors for manifold chaining
@@ -368,7 +369,7 @@ TArray<TSharedPtr<FBeltPreviewHelper>> USFAutoConnectService::ProcessSingleDistr
 			{
 				if (SourceConnector == TargetConnector)
 				{
-					UE_LOG(LogSmartFoundations, Error,
+					UE_LOG(LogSmartAutoConnect, Error,
 						TEXT("      ❌ Distributor chain produced self-connection (%s on %s, ptr=%p) - skipping"),
 						*SourceConnector->GetName(),
 						*GetNameSafe(SourceConnector->GetOwner()),
@@ -386,7 +387,7 @@ TArray<TSharedPtr<FBeltPreviewHelper>> USFAutoConnectService::ProcessSingleDistr
 						ExistingHelper->GetInputConnector() == TargetConnector)
 					{
 						bAlreadyExists = true;
-						UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("      ⏭️ Manifold belt already exists for this connection - skipping"));
+						UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      ⏭️ Manifold belt already exists for this connection - skipping"));
 						break;
 					}
 				}
@@ -411,7 +412,7 @@ TArray<TSharedPtr<FBeltPreviewHelper>> USFAutoConnectService::ProcessSingleDistr
 				TSharedPtr<FBeltPreviewHelper> BeltHelper = MakeShared<FBeltPreviewHelper>(GetWorld(), BeltTier, ParentDistributor);
 				if (BeltHelper.IsValid())
 				{
-					UE_LOG(LogSmartFoundations, VeryVerbose,
+					UE_LOG(LogSmartAutoConnect, VeryVerbose,
 						TEXT("      Connecting distributor chain: %s on %s (ptr=%p) -> %s on %s (ptr=%p)"),
 						*SourceConnector->GetName(),
 						*GetNameSafe(SourceConnector->GetOwner()),
@@ -426,16 +427,16 @@ TArray<TSharedPtr<FBeltPreviewHelper>> USFAutoConnectService::ProcessSingleDistr
 					// Store helper for cleanup
 					BeltPreviewHelpers.Add(BeltHelper);
 					
-					UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("      ✅ Distributor chain belt preview created"));
+					UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      ✅ Distributor chain belt preview created"));
 				}
 				else
 				{
-					UE_LOG(LogSmartFoundations, Error, TEXT("      Failed to create distributor chain belt preview helper"));
+					UE_LOG(LogSmartAutoConnect, Error, TEXT("      Failed to create distributor chain belt preview helper"));
 				}
 			}
 			else
 			{
-				UE_LOG(LogSmartFoundations, Warning, TEXT("      No compatible connectors for distributor chain (%s -> %s)"),
+				UE_LOG(LogSmartAutoConnect, Warning, TEXT("      No compatible connectors for distributor chain (%s -> %s)"),
 				*DistributorHologram->GetName(), *GetNameSafe(ChainTarget));
 			}
 		}
@@ -470,14 +471,14 @@ TArray<TSharedPtr<FBeltPreviewHelper>> USFAutoConnectService::ProcessSingleDistr
 	});
 	
 	// Log sorted order with distances for debugging
-	UE_LOG(LogSmartFoundations, Log, TEXT("   🔢 Sorted %d buildings by distance from splitter at %s:"), 
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("   🔢 Sorted %d buildings by distance from splitter at %s:"), 
 		SortedBuildings.Num(), *SplitterPos.ToString());
 	for (int32 i = 0; i < SortedBuildings.Num(); i++)
 	{
 		if (SortedBuildings[i])
 		{
 			float Dist = FVector::Dist2D(SplitterPos, SortedBuildings[i]->GetActorLocation());
-			UE_LOG(LogSmartFoundations, Log, TEXT("      [%d] %s @ %.0f cm"), 
+			UE_LOG(LogSmartAutoConnect, Log, TEXT("      [%d] %s @ %.0f cm"), 
 				i, *SortedBuildings[i]->GetName(), Dist);
 		}
 	}
@@ -499,7 +500,7 @@ TArray<TSharedPtr<FBeltPreviewHelper>> USFAutoConnectService::ProcessSingleDistr
 	// ORCHESTRATOR REFACTOR: Building connections are now handled by USFAutoConnectOrchestrator::EvaluateConnections()
 	// which uses global scoring to prevent crossovers. Skip building connections here to avoid duplicate belts.
 	// Only manifold chains (distributor-to-distributor) are still handled below.
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   ⏭️ Skipping building connections - handled by Orchestrator"));
+	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   ⏭️ Skipping building connections - handled by Orchestrator"));
 	
 	// Skip to manifold chain section (building connections disabled)
 	// The for loop below is kept but will be skipped via this goto-equivalent pattern
@@ -512,18 +513,18 @@ TArray<TSharedPtr<FBeltPreviewHelper>> USFAutoConnectService::ProcessSingleDistr
 	// (No separate toggle needed - controlled by RuntimeSettings.bEnabled)
 	for (AFGBuildable* Building : SortedBuildings)
 		{
-		UE_LOG(LogSmartFoundations, Log, TEXT("   🏭 [%s] Processing building %d: %s"), 
+		UE_LOG(LogSmartAutoConnect, Log, TEXT("   🏭 [%s] Processing building %d: %s"), 
 			*DistributorHologram->GetName(), HelperIndex, *Building->GetName());
 		
 		bool bIsUpdatingExisting = (HelperIndex < BeltPreviewHelpers.Num());
 		
 		if (bIsUpdatingExisting)
 		{
-			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("      🔄 Updating existing belt preview"));
+			UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      🔄 Updating existing belt preview"));
 		}
 		else
 		{
-			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("      ✨ Creating new belt preview"));
+			UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      ✨ Creating new belt preview"));
 		}
 		
 		// Get building connectors based on distributor type
@@ -570,7 +571,7 @@ TArray<TSharedPtr<FBeltPreviewHelper>> USFAutoConnectService::ProcessSingleDistr
 					{
 						// This input is already reserved - skip it entirely
 						AFGHologram* ReservedBy = ReservedInputs->FindRef(BuildingInput);
-						UE_LOG(LogSmartFoundations, Log, 
+						UE_LOG(LogSmartAutoConnect, Log, 
 							TEXT("      ⏭️ [%s] SKIP input %s - RESERVED by %s"),
 							*DistributorHologram->GetName(), *BuildingInput->GetName(), *GetNameSafe(ReservedBy));
 						continue;
@@ -595,7 +596,7 @@ TArray<TSharedPtr<FBeltPreviewHelper>> USFAutoConnectService::ProcessSingleDistr
 					// This prevents "crossing" to incorrect inputs that are closer but at weird angles
 					if (MaxAlignment < MIN_ANGLE_ALIGNMENT)
 					{
-						UE_LOG(LogSmartFoundations, Log,
+						UE_LOG(LogSmartAutoConnect, Log,
 							TEXT("      ⏭️ [%s] SKIP input %s - ALIGNMENT too low (%.2f < %.3f)"),
 							*DistributorHologram->GetName(), *BuildingInput->GetName(), MaxAlignment, MIN_ANGLE_ALIGNMENT);
 						continue;
@@ -617,7 +618,7 @@ TArray<TSharedPtr<FBeltPreviewHelper>> USFAutoConnectService::ProcessSingleDistr
 				
 				if (!ClosestBuildingInput)
 				{
-					UE_LOG(LogSmartFoundations, Log, TEXT("      ❌ [%s] NO VALID INPUTS found for building %s (all reserved or misaligned)"), 
+					UE_LOG(LogSmartAutoConnect, Log, TEXT("      ❌ [%s] NO VALID INPUTS found for building %s (all reserved or misaligned)"), 
 						*DistributorHologram->GetName(), *Building->GetName());
 					continue;
 				}
@@ -634,12 +635,12 @@ TArray<TSharedPtr<FBeltPreviewHelper>> USFAutoConnectService::ProcessSingleDistr
 				if (InputSideAlignment > 0.0f)
 				{
 					// Splitter is BEHIND the input (wrong side) - belt would clip through building
-					UE_LOG(LogSmartFoundations, Log, TEXT("      ❌ [%s] WRONG SIDE - splitter behind input %s (alignment %.2f > 0)"), 
+					UE_LOG(LogSmartAutoConnect, Log, TEXT("      ❌ [%s] WRONG SIDE - splitter behind input %s (alignment %.2f > 0)"), 
 						*DistributorHologram->GetName(), *BuildingConnector->GetName(), InputSideAlignment);
 					continue;
 				}
 				
-				UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("      Selected closest building input: %s (Score: %.0f, side alignment: %.2f)"), 
+				UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      Selected closest building input: %s (Score: %.0f, side alignment: %.2f)"), 
 					*BuildingConnector->GetName(), ClosestBuildingInputDistance, InputSideAlignment);
 				
 				// Get all side outputs (sorted left-to-right, excluding middle)
@@ -655,7 +656,7 @@ TArray<TSharedPtr<FBeltPreviewHelper>> USFAutoConnectService::ProcessSingleDistr
 					// Skip outputs that have already been assigned to another building
 					if (AssignedOutputs.Contains(Output))
 					{
-						UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("      Skipping already assigned output: %s"), *Output->GetName());
+						UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      Skipping already assigned output: %s"), *Output->GetName());
 						continue;
 					}
 					
@@ -670,7 +671,7 @@ TArray<TSharedPtr<FBeltPreviewHelper>> USFAutoConnectService::ProcessSingleDistr
 					// Output normal must point toward building (within ~60 degrees, cos(60) = 0.5)
 					if (OutputFacingAlignment < 0.5f)
 					{
-						UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("      ❌ Output %s does NOT face building (alignment: %.2f < 0.5)"), 
+						UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      ❌ Output %s does NOT face building (alignment: %.2f < 0.5)"), 
 							*Output->GetName(), OutputFacingAlignment);
 						continue;
 					}
@@ -689,7 +690,7 @@ TArray<TSharedPtr<FBeltPreviewHelper>> USFAutoConnectService::ProcessSingleDistr
 					if (DirectionAlignment <= 0.0f)
 					{
 						// Building is on the wrong side of the splitter for this output - skip it
-						UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("      Skipping output %s for building - wrong side (alignment: %.2f)"), 
+						UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      Skipping output %s for building - wrong side (alignment: %.2f)"), 
 							*Output->GetName(), DirectionAlignment);
 						continue;
 					}
@@ -703,7 +704,7 @@ TArray<TSharedPtr<FBeltPreviewHelper>> USFAutoConnectService::ProcessSingleDistr
 					{
 						ClosestDistance = Score;
 						ClosestConnector = Output;
-						UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("      Better match: output %s, distance %.0f, alignment %.2f, score %.2f"), 
+						UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      Better match: output %s, distance %.0f, alignment %.2f, score %.2f"), 
 							*Output->GetName(), Distance, DirectionAlignment, Score);
 					}
 				}
@@ -711,7 +712,7 @@ TArray<TSharedPtr<FBeltPreviewHelper>> USFAutoConnectService::ProcessSingleDistr
 				// If no unassigned outputs available, skip this building
 				if (!ClosestConnector)
 				{
-					UE_LOG(LogSmartFoundations, Log, TEXT("      ❌ [%s] NO UNASSIGNED OUTPUTS available for building %s"), 
+					UE_LOG(LogSmartAutoConnect, Log, TEXT("      ❌ [%s] NO UNASSIGNED OUTPUTS available for building %s"), 
 						*DistributorHologram->GetName(), *Building->GetName());
 					continue;
 				}
@@ -736,7 +737,7 @@ TArray<TSharedPtr<FBeltPreviewHelper>> USFAutoConnectService::ProcessSingleDistr
 					if (ReservedInputs && ReservedInputs->Contains(BuildingOutput))
 					{
 						AFGHologram* ReservedBy = ReservedInputs->FindRef(BuildingOutput);
-						UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("      SKIPPING building output %s - already reserved by %s"), 
+						UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      SKIPPING building output %s - already reserved by %s"), 
 							*BuildingOutput->GetName(), *GetNameSafe(ReservedBy));
 						continue;
 					}
@@ -772,7 +773,7 @@ TArray<TSharedPtr<FBeltPreviewHelper>> USFAutoConnectService::ProcessSingleDistr
 				
 				if (!ClosestBuildingOutput)
 				{
-					UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("      ⚠️ No building outputs found for %s"), *Building->GetName());
+					UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      ⚠️ No building outputs found for %s"), *Building->GetName());
 					continue;
 				}
 				
@@ -809,7 +810,7 @@ TArray<TSharedPtr<FBeltPreviewHelper>> USFAutoConnectService::ProcessSingleDistr
 					// Input normal must point toward building (within ~60 degrees, cos(60) = 0.5)
 					if (InputFacingAlignment < 0.5f)
 					{
-						UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("      ❌ Input %s does NOT face building (alignment: %.2f < 0.5)"), 
+						UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      ❌ Input %s does NOT face building (alignment: %.2f < 0.5)"), 
 							*MergerInput->GetName(), InputFacingAlignment);
 						continue;
 					}
@@ -846,7 +847,7 @@ TArray<TSharedPtr<FBeltPreviewHelper>> USFAutoConnectService::ProcessSingleDistr
 				// If no unassigned inputs available, skip this building
 				if (!ClosestConnector)
 				{
-					UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("      ⚠️ No unassigned inputs available for building %s"), *Building->GetName());
+					UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      ⚠️ No unassigned inputs available for building %s"), *Building->GetName());
 					continue;
 				}
 				
@@ -859,17 +860,17 @@ TArray<TSharedPtr<FBeltPreviewHelper>> USFAutoConnectService::ProcessSingleDistr
 				if (OutputSideAlignment > 0.0f)
 				{
 					// Merger is BEHIND the output (wrong side) - belt would clip through building
-					UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("      ⚠️ Skipping building %s - merger is on wrong side of output (would clip through building)"), 
+					UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      ⚠️ Skipping building %s - merger is on wrong side of output (would clip through building)"), 
 						*Building->GetName());
 					continue;
 				}
 				
-				UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("      Selected closest building output: %s (Score: %.0f, side alignment: %.2f)"), 
+				UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      Selected closest building output: %s (Score: %.0f, side alignment: %.2f)"), 
 					*BuildingConnector->GetName(), ClosestBuildingOutputDistance, OutputSideAlignment);
 				
 				// For merger inputs, we'll check angle at the merger input (not building output)
 				// since merger inputs naturally have ~180° angle relative to building outputs
-				UE_LOG(LogSmartFoundations, Log, TEXT("      📐 Merger input connection - angle check will be done at merger input"));
+				UE_LOG(LogSmartAutoConnect, Log, TEXT("      📐 Merger input connection - angle check will be done at merger input"));
 			}
 			
 			if (ClosestConnector && BuildingConnector)
@@ -893,12 +894,12 @@ TArray<TSharedPtr<FBeltPreviewHelper>> USFAutoConnectService::ProcessSingleDistr
 						if (BeltPreviewHelpers[HelperIndex]->GetBeltTier() != DesiredTier)
 						{
 							BeltPreviewHelpers[HelperIndex]->UpdateBeltTier(DesiredTier);
-							UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("      🔧 Updated reused helper to Mk%d for building connection"), DesiredTier);
+							UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      🔧 Updated reused helper to Mk%d for building connection"), DesiredTier);
 						}
 						
 						if (bIsSplitter)
 						{
-							UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("      🔄 Updating splitter connection: %s (splitter output, %.0f cm away) → %s (building input)"), 
+							UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      🔄 Updating splitter connection: %s (splitter output, %.0f cm away) → %s (building input)"), 
 								*ClosestConnector->GetName(), ClosestDistance, *BuildingConnector->GetName());
 							
 							// Use unified function: splitter output → building input
@@ -910,19 +911,19 @@ TArray<TSharedPtr<FBeltPreviewHelper>> USFAutoConnectService::ProcessSingleDistr
 							
 							// MANIFOLD FIX: Mark splitter output as assigned
 							AssignedOutputs.Add(ClosestConnector);
-							UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("      🔒 Assigned output %s to prevent duplicates"), *ClosestConnector->GetName());
+							UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      🔒 Assigned output %s to prevent duplicates"), *ClosestConnector->GetName());
 							
 							// INPUT RESERVATION: Reserve this building input for this distributor
 							if (ReservedInputs)
 							{
 								ReservedInputs->Add(BuildingConnector, DistributorHologram);
-								UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("      🎯 Reserved input %s for %s"), 
+								UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      🎯 Reserved input %s for %s"), 
 									*BuildingConnector->GetName(), *DistributorHologram->GetName());
 							}
 						}
 						else if (bIsMerger)
 						{
-							UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("      🔄 Updating merger connection: %s (building output, %.0f cm away) → %s (merger input)"), 
+							UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      🔄 Updating merger connection: %s (building output, %.0f cm away) → %s (merger input)"), 
 								*BuildingConnector->GetName(), ClosestDistance, *ClosestConnector->GetName());
 							
 							// Use unified function: building output → merger input
@@ -934,13 +935,13 @@ TArray<TSharedPtr<FBeltPreviewHelper>> USFAutoConnectService::ProcessSingleDistr
 							
 							// MANIFOLD FIX: Mark merger input as assigned
 							AssignedOutputs.Add(ClosestConnector);
-							UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("      🔒 Assigned input %s to prevent duplicates"), *ClosestConnector->GetName());
+							UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      🔒 Assigned input %s to prevent duplicates"), *ClosestConnector->GetName());
 							
 							// OUTPUT RESERVATION: Reserve this building output for this merger
 							if (ReservedInputs)
 							{
 								ReservedInputs->Add(BuildingConnector, DistributorHologram);
-								UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("      🎯 Reserved building output %s for merger %s"), 
+								UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      🎯 Reserved building output %s for merger %s"), 
 									*BuildingConnector->GetName(), *DistributorHologram->GetName());
 							}
 						}
@@ -948,7 +949,7 @@ TArray<TSharedPtr<FBeltPreviewHelper>> USFAutoConnectService::ProcessSingleDistr
 						// Mark this helper as updated (building is still in range)
 						HelperUpdated[HelperIndex] = true;
 						
-						UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("      ✅ Belt preview updated"));
+						UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      ✅ Belt preview updated"));
 					}
 				}
 				else
@@ -956,7 +957,7 @@ TArray<TSharedPtr<FBeltPreviewHelper>> USFAutoConnectService::ProcessSingleDistr
 					// Create new helper
 					if (bIsSplitter)
 					{
-						UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("      ✨ Creating splitter connection: %s (splitter output, %.0f cm away) → %s (building input)"), 
+						UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      ✨ Creating splitter connection: %s (splitter output, %.0f cm away) → %s (building input)"), 
 							*ClosestConnector->GetName(), ClosestDistance, *BuildingConnector->GetName());
 						
 						// Use unified function: splitter output → building input
@@ -969,13 +970,13 @@ TArray<TSharedPtr<FBeltPreviewHelper>> USFAutoConnectService::ProcessSingleDistr
 						
 						// MANIFOLD FIX: Mark splitter output as assigned
 						AssignedOutputs.Add(ClosestConnector);
-						UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("      🔒 Assigned output %s to prevent duplicates"), *ClosestConnector->GetName());
+						UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      🔒 Assigned output %s to prevent duplicates"), *ClosestConnector->GetName());
 						
 						// INPUT RESERVATION: Reserve this building input for this distributor
 						if (ReservedInputs)
 						{
 							ReservedInputs->Add(BuildingConnector, DistributorHologram);
-							UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("      🎯 RESERVED input %s for %s"), 
+							UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      🎯 RESERVED input %s for %s"), 
 								*BuildingConnector->GetName(), *DistributorHologram->GetName());
 						}
 						
@@ -984,7 +985,7 @@ TArray<TSharedPtr<FBeltPreviewHelper>> USFAutoConnectService::ProcessSingleDistr
 					}
 					else if (bIsMerger)
 					{
-						UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("      ✨ Creating merger connection: %s (building output, %.0f cm away) → %s (merger input)"), 
+						UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      ✨ Creating merger connection: %s (building output, %.0f cm away) → %s (merger input)"), 
 							*BuildingConnector->GetName(), ClosestDistance, *ClosestConnector->GetName());
 						
 						// Use unified function: building output → merger input
@@ -997,13 +998,13 @@ TArray<TSharedPtr<FBeltPreviewHelper>> USFAutoConnectService::ProcessSingleDistr
 						
 						// MANIFOLD FIX: Mark merger input as assigned
 						AssignedOutputs.Add(ClosestConnector);
-						UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("      🔒 Assigned input %s to prevent duplicates"), *ClosestConnector->GetName());
+						UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      🔒 Assigned input %s to prevent duplicates"), *ClosestConnector->GetName());
 						
 						// OUTPUT RESERVATION: Reserve this building output for this merger
 						if (ReservedInputs)
 						{
 							ReservedInputs->Add(BuildingConnector, DistributorHologram);
-							UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("      🎯 RESERVED building output %s for merger %s"), 
+							UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      🎯 RESERVED building output %s for merger %s"), 
 								*BuildingConnector->GetName(), *DistributorHologram->GetName());
 						}
 						
@@ -1015,7 +1016,7 @@ TArray<TSharedPtr<FBeltPreviewHelper>> USFAutoConnectService::ProcessSingleDistr
 		}
 		else
 		{
-			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("      ⚠️ No available connectors for connection"));
+			UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      ⚠️ No available connectors for connection"));
 		}
 		
 		HelperIndex++;
@@ -1034,7 +1035,7 @@ SkipBuildingConnections:
 				if (BeltPreviewHelpers[i].IsValid())
 				{
 					BeltPreviewHelpers[i]->DestroyPreview();
-					UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🧹 AUTO-CONNECT CLEANUP: Removed belt preview for building that went out of range (helper index %d)"), i);
+					UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🧹 AUTO-CONNECT CLEANUP: Removed belt preview for building that went out of range (helper index %d)"), i);
 				}
 				BeltPreviewHelpers.RemoveAt(i);
 				RemovedCount++;
@@ -1043,11 +1044,11 @@ SkipBuildingConnections:
 		
 		if (RemovedCount > 0)
 		{
-			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🧹 AUTO-CONNECT CLEANUP: Removed %d belt previews for out-of-range buildings"), RemovedCount);
+			UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🧹 AUTO-CONNECT CLEANUP: Removed %d belt previews for out-of-range buildings"), RemovedCount);
 		}
 	}
 	
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   ✅ Auto-connect complete: %d belt previews created"), BeltPreviewHelpers.Num());
+	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   ✅ Auto-connect complete: %d belt previews created"), BeltPreviewHelpers.Num());
 	return BeltPreviewHelpers;
 }
 
@@ -1061,7 +1062,7 @@ bool USFAutoConnectService::CreateOrUpdateBeltPreview(
 {
     if (!OutputConnector || !InputConnector)
     {
-        UE_LOG(LogSmartFoundations, Warning, TEXT("CreateOrUpdateBeltPreview: Invalid connectors"));
+        UE_LOG(LogSmartAutoConnect, Warning, TEXT("CreateOrUpdateBeltPreview: Invalid connectors"));
         return false;
     }
 
@@ -1074,7 +1075,7 @@ bool USFAutoConnectService::CreateOrUpdateBeltPreview(
     const FVector BeltDirOut  = (InputPos - OutputPos).GetSafeNormal();  // direction AT output (to input)
 
     // Log connector normals for debugging
-    UE_LOG(LogSmartFoundations, Verbose,
+    UE_LOG(LogSmartAutoConnect, Verbose,
         TEXT("   📐 Connector normals: OUT=(%.2f,%.2f,%.2f) IN=(%.2f,%.2f,%.2f) | BeltDir=(%.2f,%.2f,%.2f)"),
         OutputNormal.X, OutputNormal.Y, OutputNormal.Z,
         InputNormal.X, InputNormal.Y, InputNormal.Z,
@@ -1086,7 +1087,7 @@ bool USFAutoConnectService::CreateOrUpdateBeltPreview(
     
     if (BeltLength < MinBeltLength)
     {
-        UE_LOG(LogSmartFoundations, Log,
+        UE_LOG(LogSmartAutoConnect, Log,
             TEXT("   ❌ BELT REJECTED - TOO SHORT: %.1f cm < %.1f cm minimum (%s → %s)"),
             BeltLength, MinBeltLength, *OutputConnector->GetName(), *InputConnector->GetName());
         
@@ -1095,7 +1096,7 @@ bool USFAutoConnectService::CreateOrUpdateBeltPreview(
         {
             BeltHelper->DestroyPreview();
             BeltHelper.Reset();
-            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   🗑️ Destroyed existing preview (belt too short)"));
+            UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   🗑️ Destroyed existing preview (belt too short)"));
         }
         return false;
     }
@@ -1111,14 +1112,14 @@ bool USFAutoConnectService::CreateOrUpdateBeltPreview(
         AngleIn = FMath::RadiansToDegrees(FMath::Acos(FMath::Clamp(DotIn,  -1.f, 1.f)));
         AngleOut= FMath::RadiansToDegrees(FMath::Acos(FMath::Clamp(DotOut, -1.f, 1.f)));
 
-        UE_LOG(LogSmartFoundations, VeryVerbose,
+        UE_LOG(LogSmartAutoConnect, VeryVerbose,
             TEXT("   Belt angle check: %s → %s | In=%.1f° Out=%.1f° (limit %.1f°)"),
             *OutputConnector->GetName(), *InputConnector->GetName(),
             AngleIn, AngleOut, MaxAngleDegrees);
 
         if (AngleIn > MaxAngleDegrees || AngleOut > MaxAngleDegrees)
         {
-            UE_LOG(LogSmartFoundations, Log,
+            UE_LOG(LogSmartAutoConnect, Log,
                 TEXT("   BELT REJECTED - BAD ANGLE: %s → %s (In %.1f° / Out %.1f° > %.1f°)"),
                 *OutputConnector->GetName(), *InputConnector->GetName(),
                 AngleIn, AngleOut, MaxAngleDegrees);
@@ -1128,14 +1129,14 @@ bool USFAutoConnectService::CreateOrUpdateBeltPreview(
             {
                 BeltHelper->DestroyPreview();
                 BeltHelper.Reset();
-                UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   Destroyed existing preview (bad angle)"));
+                UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   Destroyed existing preview (bad angle)"));
             }
             return false;
         }
     }
     else
     {
-        UE_LOG(LogSmartFoundations, VeryVerbose,
+        UE_LOG(LogSmartAutoConnect, VeryVerbose,
             TEXT("   Manifold connection - angle validation skipped"));
     }
 
@@ -1157,23 +1158,23 @@ bool USFAutoConnectService::CreateOrUpdateBeltPreview(
         BeltHelper = MakeShared<FBeltPreviewHelper>(GetWorld(), BeltTier, ParentDistributor);
         if (!BeltHelper.IsValid())
         {
-            UE_LOG(LogSmartFoundations, Error, TEXT("   ❌ Failed to create belt preview helper"));
+            UE_LOG(LogSmartAutoConnect, Error, TEXT("   ❌ Failed to create belt preview helper"));
             return false;
         }
-        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   ✨ Created new belt preview helper"));
+        UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   ✨ Created new belt preview helper"));
     }
 
     BeltHelper->UpdatePreview(OutputConnector, InputConnector);
     if (!BeltHelper->ValidatePlacementAndRegisterAsChild())
     {
-        UE_LOG(LogSmartFoundations, Log,
+        UE_LOG(LogSmartAutoConnect, Log,
             TEXT("   ❌ BELT REJECTED - VANILLA: %s → %s"),
             *OutputConnector->GetName(), *InputConnector->GetName());
         BeltHelper.Reset();
         return false;
     }
 
-    UE_LOG(LogSmartFoundations, Log,
+    UE_LOG(LogSmartAutoConnect, Log,
         TEXT("   ✅ BELT CREATED: %s → %s (Length: %.1f cm, In %.1f° / Out %.1f° ≤ %.1f°)"),
         *OutputConnector->GetName(), *InputConnector->GetName(),
         BeltLength, AngleIn, AngleOut, MaxAngleDegrees);
@@ -1189,7 +1190,7 @@ bool USFAutoConnectService::ConnectAnyConnectors(
 {
     if (!OutputConnector || !InputConnector || !StorageHologram)
     {
-        UE_LOG(LogSmartFoundations, Warning, TEXT("ConnectAnyConnectors: Invalid parameters"));
+        UE_LOG(LogSmartAutoConnect, Warning, TEXT("ConnectAnyConnectors: Invalid parameters"));
         return false;
     }
 
@@ -1233,12 +1234,12 @@ bool USFAutoConnectService::ConnectAnyConnectors(
 		UpdatedPreviews.Add(NewPreview);
 		StoreBeltPreviews(StorageHologram, UpdatedPreviews);
 		
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   ✅ Connected %s → %s (stored on %s)"),
+		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   ✅ Connected %s → %s (stored on %s)"),
 			*OutputConnector->GetName(), *InputConnector->GetName(), *StorageHologram->GetName());
 		return true;
 	}
 
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   ❌ Failed to create connection %s → %s"),
+	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   ❌ Failed to create connection %s → %s"),
 		*OutputConnector->GetName(), *InputConnector->GetName());
 	return false;
 }
@@ -1254,16 +1255,16 @@ bool USFAutoConnectService::BuildBeltFromPreview(const TSharedPtr<FBeltPreviewHe
 	UFGFactoryConnectionComponent* InputConnector = Preview->GetInputConnector();
 	if (!OutputConnector || !InputConnector)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("BuildBeltFromPreview: Missing connectors"));
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("BuildBeltFromPreview: Missing connectors"));
 		return false;
 	}
 
-	UE_LOG(LogSmartFoundations, Log, TEXT("BuildBeltFromPreview: Attempting belt from %s to %s"),
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("BuildBeltFromPreview: Attempting belt from %s to %s"),
 		*GetNameSafe(OutputConnector), *GetNameSafe(InputConnector));
 
 	if (OutputConnector->IsConnected() || InputConnector->IsConnected())
 	{
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("BuildBeltFromPreview: Connectors already connected, skipping"));
+		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("BuildBeltFromPreview: Connectors already connected, skipping"));
 		return false;
 	}
 
@@ -1271,21 +1272,21 @@ bool USFAutoConnectService::BuildBeltFromPreview(const TSharedPtr<FBeltPreviewHe
 	ASFConveyorBeltHologram* SmartHolo = Cast<ASFConveyorBeltHologram>(BaseHolo);
 	if (!SmartHolo)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("BuildBeltFromPreview: Preview hologram is not a conveyor belt hologram"));
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("BuildBeltFromPreview: Preview hologram is not a conveyor belt hologram"));
 		return false;
 	}
 
 	const TArray<FSplinePointData>& SplineData = SmartHolo->GetSplineData();
 	if (SplineData.Num() == 0)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("BuildBeltFromPreview: Preview hologram has no spline data"));
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("BuildBeltFromPreview: Preview hologram has no spline data"));
 		return false;
 	}
 
 	UWorld* World = OutputConnector->GetWorld();
 	if (!World)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("BuildBeltFromPreview: World is null"));
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("BuildBeltFromPreview: World is null"));
 		return false;
 	}
 
@@ -1295,11 +1296,11 @@ bool USFAutoConnectService::BuildBeltFromPreview(const TSharedPtr<FBeltPreviewHe
 	UClass* BeltClass = LoadObject<UClass>(nullptr, *BeltPath);
 	if (!BeltClass)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("BuildBeltFromPreview: Failed to load Mk%d belt class from %s"), BeltTier, *BeltPath);
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("BuildBeltFromPreview: Failed to load Mk%d belt class from %s"), BeltTier, *BeltPath);
 		return false;
 	}
 	
-	UE_LOG(LogSmartFoundations, Log, TEXT("BuildBeltFromPreview: Building Mk%d belt"), BeltTier);
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("BuildBeltFromPreview: Building Mk%d belt"), BeltTier);
 
 	FVector SpawnPos = SmartHolo->GetActorLocation();
 	AFGBuildableConveyorBelt* Belt = World->SpawnActor<AFGBuildableConveyorBelt>(
@@ -1308,14 +1309,14 @@ bool USFAutoConnectService::BuildBeltFromPreview(const TSharedPtr<FBeltPreviewHe
 		FRotator::ZeroRotator);
 	if (!Belt)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("BuildBeltFromPreview: Failed to spawn belt"));
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("BuildBeltFromPreview: Failed to spawn belt"));
 		return false;
 	}
 
 	AFGBuildableConveyorBelt* Resplined = AFGBuildableConveyorBelt::Respline(Belt, SplineData);
 	if (!Resplined)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("BuildBeltFromPreview: Respline failed"));
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("BuildBeltFromPreview: Respline failed"));
 		Belt->Destroy();
 		return false;
 	}
@@ -1327,7 +1328,7 @@ bool USFAutoConnectService::BuildBeltFromPreview(const TSharedPtr<FBeltPreviewHe
 	UFGFactoryConnectionComponent* BeltConnection1 = Belt->GetConnection1();
 	if (!BeltConnection0 || !BeltConnection1)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("BuildBeltFromPreview: Belt missing connection components"));
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("BuildBeltFromPreview: Belt missing connection components"));
 		Belt->Destroy();
 		return false;
 	}
@@ -1343,15 +1344,15 @@ bool USFAutoConnectService::BuildBeltFromPreview(const TSharedPtr<FBeltPreviewHe
 	if (BuildableSubsystem)
 	{
 		BuildableSubsystem->AddConveyor(Belt);
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("BuildBeltFromPreview: Registered belt with subsystem (ChainActor=%s)"),
+		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("BuildBeltFromPreview: Registered belt with subsystem (ChainActor=%s)"),
 			Belt->GetConveyorChainActor() ? *Belt->GetConveyorChainActor()->GetName() : TEXT("pending"));
 	}
 	else
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("BuildBeltFromPreview: No BuildableSubsystem - belt will have no chain actor!"));
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("BuildBeltFromPreview: No BuildableSubsystem - belt will have no chain actor!"));
 	}
 
-	UE_LOG(LogSmartFoundations, Log, TEXT("BuildBeltFromPreview: Built belt %s → %s"),
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("BuildBeltFromPreview: Built belt %s → %s"),
 		*OutputConnector->GetName(), *InputConnector->GetName());
 
 	return true;
@@ -1361,7 +1362,7 @@ bool USFAutoConnectService::BuildBeltsForDistributor(AFGHologram* DistributorHol
 {
 	if (!DistributorHologram || !BuiltDistributor)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("BuildBeltsForDistributor: Invalid args (Holo=%s Built=%s)"),
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("BuildBeltsForDistributor: Invalid args (Holo=%s Built=%s)"),
 			*GetNameSafe(DistributorHologram), *GetNameSafe(BuiltDistributor));
 		return false;
 	}
@@ -1370,12 +1371,12 @@ bool USFAutoConnectService::BuildBeltsForDistributor(AFGHologram* DistributorHol
 	TArray<TPair<UFGFactoryConnectionComponent*, UFGFactoryConnectionComponent*>>* ConnectorPairs = GetConnectorPairs(DistributorHologram);
 	if (!ConnectorPairs || ConnectorPairs->Num() == 0)
 	{
-		UE_LOG(LogSmartFoundations, Log, TEXT("BuildBeltsForDistributor: No connector pairs stored for %s"),
+		UE_LOG(LogSmartAutoConnect, Log, TEXT("BuildBeltsForDistributor: No connector pairs stored for %s"),
 			*GetNameSafe(DistributorHologram));
 		return false;
 	}
 
-	UE_LOG(LogSmartFoundations, Log, TEXT("BuildBeltsForDistributor: Found %d stored connector pairs for hologram %s"),
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("BuildBeltsForDistributor: Found %d stored connector pairs for hologram %s"),
 		ConnectorPairs->Num(), *GetNameSafe(DistributorHologram));
 
 	// Check if this is the parent distributor (not a child)
@@ -1399,7 +1400,7 @@ bool USFAutoConnectService::BuildBeltsForDistributor(AFGHologram* DistributorHol
 	// Deduct belt costs ONLY for parent distributor (covers entire grid)
 	if (bIsParentDistributor)
 	{
-		UE_LOG(LogSmartFoundations, Log, TEXT(" Parent distributor - deducting belt costs for entire grid"));
+		UE_LOG(LogSmartAutoConnect, Log, TEXT(" Parent distributor - deducting belt costs for entire grid"));
 		
 		if (UWorld* World = BuiltDistributor->GetWorld())
 		{
@@ -1411,7 +1412,7 @@ bool USFAutoConnectService::BuildBeltsForDistributor(AFGHologram* DistributorHol
 					AFGGameState* GameState = World->GetGameState<AFGGameState>();
 					if (GameState && GameState->GetCheatNoCost())
 					{
-						UE_LOG(LogSmartFoundations, Log, TEXT(" No Build Cost cheat enabled - skipping belt cost deduction"));
+						UE_LOG(LogSmartAutoConnect, Log, TEXT(" No Build Cost cheat enabled - skipping belt cost deduction"));
 						// Skip deduction but allow belts to build (HUD still shows costs)
 					}
 					else
@@ -1426,10 +1427,10 @@ bool USFAutoConnectService::BuildBeltsForDistributor(AFGHologram* DistributorHol
 	}
 	else
 	{
-		UE_LOG(LogSmartFoundations, Log, TEXT(" Child distributor - belt costs already deducted by parent"));
+		UE_LOG(LogSmartAutoConnect, Log, TEXT(" Child distributor - belt costs already deducted by parent"));
 	}
 
-	UE_LOG(LogSmartFoundations, Log, TEXT("BuildBeltsForDistributor: Building %d belts for %s → %s"),
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("BuildBeltsForDistributor: Building %d belts for %s → %s"),
 		ConnectorPairs->Num(), *GetNameSafe(DistributorHologram), *GetNameSafe(BuiltDistributor));
 
 	// Get built distributor connectors for mapping
@@ -1447,7 +1448,7 @@ bool USFAutoConnectService::BuildBeltsForDistributor(AFGHologram* DistributorHol
 
 		if (!HologramConnector || !BuildingConnector)
 		{
-			UE_LOG(LogSmartFoundations, Warning, TEXT("BuildBeltsForDistributor: Invalid connector pair"));
+			UE_LOG(LogSmartAutoConnect, Warning, TEXT("BuildBeltsForDistributor: Invalid connector pair"));
 			continue;
 		}
 
@@ -1457,7 +1458,7 @@ bool USFAutoConnectService::BuildBeltsForDistributor(AFGHologram* DistributorHol
 
 		if (HologramOwner != DistributorHologram && BuildingOwner != DistributorHologram)
 		{
-			UE_LOG(LogSmartFoundations, Warning, TEXT("BuildBeltsForDistributor: Pair doesn't involve distributor hologram"));
+			UE_LOG(LogSmartAutoConnect, Warning, TEXT("BuildBeltsForDistributor: Pair doesn't involve distributor hologram"));
 			continue;
 		}
 
@@ -1467,7 +1468,7 @@ bool USFAutoConnectService::BuildBeltsForDistributor(AFGHologram* DistributorHol
 
 		if (!bHoloIsOutput && !bHoloIsInput)
 		{
-			UE_LOG(LogSmartFoundations, Warning, TEXT("BuildBeltsForDistributor: Hologram connector has no direction"));
+			UE_LOG(LogSmartAutoConnect, Warning, TEXT("BuildBeltsForDistributor: Hologram connector has no direction"));
 			continue;
 		}
 
@@ -1477,7 +1478,7 @@ bool USFAutoConnectService::BuildBeltsForDistributor(AFGHologram* DistributorHol
 
 		if (!BuiltDistributorConnector)
 		{
-			UE_LOG(LogSmartFoundations, Warning, TEXT("BuildBeltsForDistributor: No matching built connector for %s"), *GetNameSafe(HologramConnector));
+			UE_LOG(LogSmartAutoConnect, Warning, TEXT("BuildBeltsForDistributor: No matching built connector for %s"), *GetNameSafe(HologramConnector));
 			continue;
 		}
 
@@ -1500,14 +1501,14 @@ bool USFAutoConnectService::BuildBeltsForDistributor(AFGHologram* DistributorHol
 
 		if (!OutputConnector || !InputConnector)
 		{
-			UE_LOG(LogSmartFoundations, Warning, TEXT("BuildBeltsForDistributor: Failed to determine connection direction"));
+			UE_LOG(LogSmartAutoConnect, Warning, TEXT("BuildBeltsForDistributor: Failed to determine connection direction"));
 			continue;
 		}
 
 		// Check if connectors are already connected
 		if (OutputConnector->IsConnected() || InputConnector->IsConnected())
 		{
-			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("BuildBeltsForDistributor: Connectors already connected, skipping"));
+			UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("BuildBeltsForDistributor: Connectors already connected, skipping"));
 			continue;
 		}
 
@@ -1516,12 +1517,12 @@ bool USFAutoConnectService::BuildBeltsForDistributor(AFGHologram* DistributorHol
 		{
 			OutputConnector->SetConnection(InputConnector);
 			SuccessCount++;
-			UE_LOG(LogSmartFoundations, Log, TEXT("BuildBeltsForDistributor: Connected %s → %s"),
+			UE_LOG(LogSmartAutoConnect, Log, TEXT("BuildBeltsForDistributor: Connected %s → %s"),
 				*GetNameSafe(OutputConnector), *GetNameSafe(InputConnector));
 		}
 		else
 		{
-			UE_LOG(LogSmartFoundations, Warning, TEXT("BuildBeltsForDistributor: Cannot connect %s → %s"),
+			UE_LOG(LogSmartAutoConnect, Warning, TEXT("BuildBeltsForDistributor: Cannot connect %s → %s"),
 				*GetNameSafe(OutputConnector), *GetNameSafe(InputConnector));
 		}
 	}
@@ -1544,7 +1545,7 @@ bool USFAutoConnectService::BuildBeltsForDistributor(AFGHologram* DistributorHol
 	// Clear stored connector pairs
 	ClearConnectorPairs(DistributorHologram);
 
-	UE_LOG(LogSmartFoundations, Log, TEXT("BuildBeltsForDistributor: Complete - %d/%d belts built successfully"),
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("BuildBeltsForDistributor: Complete - %d/%d belts built successfully"),
 		SuccessCount, ConnectorPairs->Num());
 
 	return SuccessCount > 0;
@@ -1570,17 +1571,17 @@ bool USFAutoConnectService::IsDistributorHologram(AFGHologram* Hologram)
 	}
 	
 	FString BuildClassName = BuildClass->GetFName().ToString();
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("IsDistributorHologram: Checking '%s'"), *BuildClassName);
+	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("IsDistributorHologram: Checking '%s'"), *BuildClassName);
 	
 	// TODO: Consider using class-based hierarchy checks instead of string matching
 	if (BuildClassName.Contains(TEXT("Splitter")) || 
 		BuildClassName.Contains(TEXT("Merger")))
 	{
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("✅ Distributor detected: %s"), *BuildClassName);
+		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("✅ Distributor detected: %s"), *BuildClassName);
 		return true;
 	}
 	
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("❌ Not a distributor: %s"), *BuildClassName);
+	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("❌ Not a distributor: %s"), *BuildClassName);
 	return false;
 }
 
@@ -1624,7 +1625,7 @@ void USFAutoConnectService::FindDistributorChains(AFGHologram* DistributorHologr
 {
 	if (!DistributorHologram || !Subsystem)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("FindDistributorChains: DistributorHologram or Subsystem is null"));
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("FindDistributorChains: DistributorHologram or Subsystem is null"));
 		return;
 	}
 	
@@ -1632,7 +1633,7 @@ void USFAutoConnectService::FindDistributorChains(AFGHologram* DistributorHologr
 	FSFHologramHelperService* HologramHelper = Subsystem->GetHologramHelper();
 	if (!HologramHelper)
 	{
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   No HologramHelper available - no chain detection"));
+		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   No HologramHelper available - no chain detection"));
 		return;
 	}
 	
@@ -1646,12 +1647,12 @@ void USFAutoConnectService::FindDistributorChains(AFGHologram* DistributorHologr
 	
 	TArray<TWeakObjectPtr<AFGHologram>> SpawnedChildren = HologramHelper->GetSpawnedChildren();
 	
-	UE_LOG(LogSmartFoundations, Log, TEXT("🔗 Manifold Detection: Current=%s, Parent=%s, SpawnedChildren=%d"), 
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("🔗 Manifold Detection: Current=%s, Parent=%s, SpawnedChildren=%d"), 
 		*DistributorHologram->GetName(), *ParentHologram->GetName(), SpawnedChildren.Num());
 	
 	if (SpawnedChildren.Num() == 0)
 	{
-		UE_LOG(LogSmartFoundations, Log, TEXT("   No spawned children - single distributor, no chaining"));
+		UE_LOG(LogSmartAutoConnect, Log, TEXT("   No spawned children - single distributor, no chaining"));
 		return;
 	}
 	
@@ -1673,11 +1674,11 @@ void USFAutoConnectService::FindDistributorChains(AFGHologram* DistributorHologr
 		}
 	}
 	
-	UE_LOG(LogSmartFoundations, Log, TEXT("🔗 Manifold Detection: Found %d distributors in grid"), AllDistributors.Num());
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("🔗 Manifold Detection: Found %d distributors in grid"), AllDistributors.Num());
 	
 	if (AllDistributors.Num() < 2)
 	{
-		UE_LOG(LogSmartFoundations, Log, TEXT("   Need at least 2 distributors for chaining"));
+		UE_LOG(LogSmartAutoConnect, Log, TEXT("   Need at least 2 distributors for chaining"));
 		return;
 	}
 	
@@ -1727,7 +1728,7 @@ void USFAutoConnectService::FindDistributorChains(AFGHologram* DistributorHologr
 	
 	if (CurrentIndex == -1)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("   Current distributor not found in array"));
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("   Current distributor not found in array"));
 		return;
 	}
 	
@@ -1743,7 +1744,7 @@ void USFAutoConnectService::FindDistributorChains(AFGHologram* DistributorHologr
 		{
 			AFGHologram* NextDistributor = AllDistributors[CurrentIndex + 1];
 			OutChainTargets.Add(NextDistributor);
-			UE_LOG(LogSmartFoundations, Log, TEXT("   🔗 Splitter chain: %s -> %s"), 
+			UE_LOG(LogSmartAutoConnect, Log, TEXT("   🔗 Splitter chain: %s -> %s"), 
 				*DistributorHologram->GetName(), *NextDistributor->GetName());
 		}
 	}
@@ -1754,12 +1755,12 @@ void USFAutoConnectService::FindDistributorChains(AFGHologram* DistributorHologr
 		{
 			AFGHologram* PreviousDistributor = AllDistributors[CurrentIndex - 1];
 			OutChainTargets.Add(PreviousDistributor);
-			UE_LOG(LogSmartFoundations, Log, TEXT("   🔗 Merger chain: %s -> %s"), 
+			UE_LOG(LogSmartAutoConnect, Log, TEXT("   🔗 Merger chain: %s -> %s"), 
 				*PreviousDistributor->GetName(), *DistributorHologram->GetName());
 		}
 	}
 	
-	UE_LOG(LogSmartFoundations, Log, TEXT("   ✅ Found %d distributor chain targets for %s"), 
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("   ✅ Found %d distributor chain targets for %s"), 
 		OutChainTargets.Num(), *DistributorHologram->GetName());
 }
 
@@ -1771,16 +1772,16 @@ void USFAutoConnectService::FindCompatibleBuildingsForDistributor(AFGHologram* D
 {
 	if (!DistributorHologram || !Subsystem)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("FindCompatibleBuildingsForDistributor: DistributorHologram or Subsystem is null"));
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("FindCompatibleBuildingsForDistributor: DistributorHologram or Subsystem is null"));
 		return;
 	}
 	
 	// Search for nearby buildings
 	FVector DistributorLocation = DistributorHologram->GetActorLocation();
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   🔍 Searching for buildings within %.0f cm radius"), BUILDING_SEARCH_RADIUS);
+	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   🔍 Searching for buildings within %.0f cm radius"), BUILDING_SEARCH_RADIUS);
 	TArray<AFGBuildable*> NearbyBuildings = Subsystem->FindNearbyBuildings(DistributorLocation, BUILDING_SEARCH_RADIUS);
 	
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   Found %d nearby buildings"), NearbyBuildings.Num());
+	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   Found %d nearby buildings"), NearbyBuildings.Num());
 	
 	// Filter for compatible buildings - ONLY production/manufacturing buildings
 	// Must exclude: storage containers, train stations, drones, vehicles, etc.
@@ -1793,7 +1794,7 @@ void USFAutoConnectService::FindCompatibleBuildingsForDistributor(AFGHologram* D
 		// Storage containers are AFGBuildableFactory, so they pass the factory check below.
 		if (Building->IsA(AFGBuildableStorage::StaticClass()))
 		{
-			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   ⏭️ Skipping %s - storage building"), *Building->GetName());
+			UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   ⏭️ Skipping %s - storage building"), *Building->GetName());
 			continue;
 		}
 			
@@ -1801,7 +1802,7 @@ void USFAutoConnectService::FindCompatibleBuildingsForDistributor(AFGHologram* D
 		// This prevents connecting to storage, stations, vehicles, etc.
 		if (!Building->IsA(AFGBuildableFactory::StaticClass()))
 		{
-			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   ⏭️ Skipping %s - not a factory building"), *Building->GetName());
+			UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   ⏭️ Skipping %s - not a factory building"), *Building->GetName());
 			continue;
 		}
 		
@@ -1809,12 +1810,12 @@ void USFAutoConnectService::FindCompatibleBuildingsForDistributor(AFGHologram* D
 		FString BuildingClassName = Building->GetClass()->GetFName().ToString();
 		if (BuildingClassName.Contains(TEXT("Splitter")) || BuildingClassName.Contains(TEXT("Merger")))
 		{
-			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   ⏭️ Skipping %s - distributor (handled by manifold logic)"), *Building->GetName());
+			UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   ⏭️ Skipping %s - distributor (handled by manifold logic)"), *Building->GetName());
 			continue;
 		}
 		
 		OutCompatibleBuildings.Add(Building);
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   ✅ Found compatible factory building: %s (%s)"), *Building->GetName(), *BuildingClassName);
+		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   ✅ Found compatible factory building: %s (%s)"), *Building->GetName(), *BuildingClassName);
 	}
 }
 
@@ -1829,7 +1830,7 @@ void USFAutoConnectService::GetBuildingConnectors(AFGBuildable* Building, TArray
 {
 	if (!Building)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("GetBuildingConnectors: Building is null"));
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("GetBuildingConnectors: Building is null"));
 		return;
 	}
 
@@ -1842,7 +1843,7 @@ void USFAutoConnectService::GetBuildingConnectors(AFGBuildable* Building, TArray
 
 	if (AllConnectors.Num() == 0)
 	{
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("GetBuildingConnectors: Building %s has NO UFGFactoryConnectionComponent components; falling back to overlap search"),
+		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("GetBuildingConnectors: Building %s has NO UFGFactoryConnectionComponent components; falling back to overlap search"),
 			*Building->GetName());
 	}
 	else
@@ -1857,7 +1858,7 @@ void USFAutoConnectService::GetBuildingConnectors(AFGBuildable* Building, TArray
 			// Skip connectors that are already connected
 			if (Connector->IsConnected())
 			{
-				UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("GetBuildingConnectors: Skipping %s connector %s (already connected)"),
+				UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("GetBuildingConnectors: Skipping %s connector %s (already connected)"),
 					*Building->GetName(), *Connector->GetName());
 				continue;
 			}
@@ -1879,7 +1880,7 @@ void USFAutoConnectService::GetBuildingConnectors(AFGBuildable* Building, TArray
 				OutOutputs.Add(Connector);
 			}
 
-			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("GetBuildingConnectors: %s connector %s direction=%d"),
+			UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("GetBuildingConnectors: %s connector %s direction=%d"),
 				*Building->GetName(), *Connector->GetName(), static_cast<int32>(Dir));
 		}
 	}
@@ -1901,7 +1902,7 @@ void USFAutoConnectService::GetBuildingConnectors(AFGBuildable* Building, TArray
 				EFactoryConnectionConnector::FCC_CONVEYOR,
 				EFactoryConnectionDirection::FCD_ANY);
 
-			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("GetBuildingConnectors: Overlap search around %s found %d potential connectors"),
+			UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("GetBuildingConnectors: Overlap search around %s found %d potential connectors"),
 				*Building->GetName(), FoundCount);
 
 			for (UFGFactoryConnectionComponent* Connector : Nearby)
@@ -1914,7 +1915,7 @@ void USFAutoConnectService::GetBuildingConnectors(AFGBuildable* Building, TArray
 				// Skip connectors that are already connected
 				if (Connector->IsConnected())
 				{
-					UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("GetBuildingConnectors(overlap): Skipping %s connector %s (already connected)"),
+					UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("GetBuildingConnectors(overlap): Skipping %s connector %s (already connected)"),
 						*Building->GetName(), *Connector->GetName());
 					continue;
 				}
@@ -1934,13 +1935,13 @@ void USFAutoConnectService::GetBuildingConnectors(AFGBuildable* Building, TArray
 					OutOutputs.Add(Connector);
 				}
 
-				UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("GetBuildingConnectors(overlap): %s connector %s direction=%d"),
+				UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("GetBuildingConnectors(overlap): %s connector %s direction=%d"),
 					*Building->GetName(), *Connector->GetName(), static_cast<int32>(Dir));
 			}
 		}
 	}
 
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("GetBuildingConnectors: Building %s has %d inputs, %d outputs"),
+	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("GetBuildingConnectors: Building %s has %d inputs, %d outputs"),
 		*Building->GetName(), OutInputs.Num(), OutOutputs.Num());
 }
 
@@ -1985,7 +1986,7 @@ UFGFactoryConnectionComponent* USFAutoConnectService::FindMiddleConnector(AFGHol
 {
 	if (!Distributor)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("FindMiddleConnector: Distributor is null"));
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("FindMiddleConnector: Distributor is null"));
 		return nullptr;
 	}
 
@@ -1993,7 +1994,7 @@ UFGFactoryConnectionComponent* USFAutoConnectService::FindMiddleConnector(AFGHol
 	const bool bIsMerger   = IsMergerHologram(Distributor);
 	if (!bIsSplitter && !bIsMerger)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("FindMiddleConnector: %s is not a splitter or merger"), *Distributor->GetName());
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("FindMiddleConnector: %s is not a splitter or merger"), *Distributor->GetName());
 		return nullptr;
 	}
 
@@ -2035,13 +2036,13 @@ UFGFactoryConnectionComponent* USFAutoConnectService::FindMiddleConnector(AFGHol
 	if (Best)
 	{
 		const TCHAR* Type = bIsSplitter ? TEXT("output") : TEXT("input");
-		UE_LOG(LogSmartFoundations, Log, TEXT("   FindMiddleConnector: %s middle %s = %s (alignment=%.2f)"), 
+		UE_LOG(LogSmartAutoConnect, Log, TEXT("   FindMiddleConnector: %s middle %s = %s (alignment=%.2f)"), 
 			*Distributor->GetName(), Type, *Best->GetName(), BestAlignment);
 	}
 	else
 	{
 		const TCHAR* Type = bIsSplitter ? TEXT("outputs") : TEXT("inputs");
-		UE_LOG(LogSmartFoundations, Warning, TEXT("FindMiddleConnector: No %s found on %s"), Type, *Distributor->GetName());
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("FindMiddleConnector: No %s found on %s"), Type, *Distributor->GetName());
 	}
 
 	return Best;
@@ -2054,7 +2055,7 @@ UFGFactoryConnectionComponent* USFAutoConnectService::FindConnectorFacingTarget(
 {
 	if (!SourceDistributor || !TargetDistributor)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("FindConnectorFacingTarget: Source or Target is null"));
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("FindConnectorFacingTarget: Source or Target is null"));
 		return nullptr;
 	}
 
@@ -2088,12 +2089,12 @@ UFGFactoryConnectionComponent* USFAutoConnectService::FindConnectorFacingTarget(
 	if (Best)
 	{
 		const TCHAR* DirName = (Direction == EFactoryConnectionDirection::FCD_OUTPUT) ? TEXT("output") : TEXT("input");
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   Found %s facing target (alignment=%.2f): %s"),
+		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   Found %s facing target (alignment=%.2f): %s"),
 			DirName, BestAlignment, *Best->GetName());
 	}
 	else
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("FindConnectorFacingTarget: No connector facing target found"));
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("FindConnectorFacingTarget: No connector facing target found"));
 	}
 
 	return Best;
@@ -2103,7 +2104,7 @@ UFGFactoryConnectionComponent* USFAutoConnectService::FindSideConnector(AFGHolog
 {
 	if (!Distributor)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("FindSideConnector: Distributor is null"));
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("FindSideConnector: Distributor is null"));
 		return nullptr;
 	}
 
@@ -2113,7 +2114,7 @@ UFGFactoryConnectionComponent* USFAutoConnectService::FindSideConnector(AFGHolog
 
 	if (!bIsSplitter && !bIsMerger)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("FindSideConnector: %s is not a splitter or merger"), *Distributor->GetName());
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("FindSideConnector: %s is not a splitter or merger"), *Distributor->GetName());
 		return nullptr;
 	}
 
@@ -2162,12 +2163,12 @@ UFGFactoryConnectionComponent* USFAutoConnectService::FindSideConnector(AFGHolog
 	if (SideConnectors.IsValidIndex(Index))
 	{
 		const TCHAR* ConnectorType = bIsSplitter ? TEXT("output") : TEXT("input");
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   Found side %s %d: %s"), ConnectorType, Index, *SideConnectors[Index]->GetName());
+		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   Found side %s %d: %s"), ConnectorType, Index, *SideConnectors[Index]->GetName());
 		return SideConnectors[Index];
 	}
 
 	const TCHAR* ConnectorType = bIsSplitter ? TEXT("output") : TEXT("input");
-	UE_LOG(LogSmartFoundations, Warning, TEXT("FindSideConnector: Side %s %d not found on %s (has %d sides)"), 
+	UE_LOG(LogSmartAutoConnect, Warning, TEXT("FindSideConnector: Side %s %d not found on %s (has %d sides)"), 
 		ConnectorType, Index, *Distributor->GetName(), SideConnectors.Num());
 	return nullptr;
 }
@@ -2178,7 +2179,7 @@ void USFAutoConnectService::GetAllSideConnectors(AFGHologram* Distributor, TArra
 
 	if (!Distributor)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("GetAllSideConnectors: Distributor is null"));
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("GetAllSideConnectors: Distributor is null"));
 		return;
 	}
 
@@ -2188,7 +2189,7 @@ void USFAutoConnectService::GetAllSideConnectors(AFGHologram* Distributor, TArra
 
 	if (!bIsSplitter && !bIsMerger)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("GetAllSideConnectors: %s is not a splitter or merger"), *Distributor->GetName());
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("GetAllSideConnectors: %s is not a splitter or merger"), *Distributor->GetName());
 		return;
 	}
 
@@ -2236,7 +2237,7 @@ void USFAutoConnectService::GetAllSideConnectors(AFGHologram* Distributor, TArra
 	}
 
 	const TCHAR* ConnectorType = bIsSplitter ? TEXT("outputs") : TEXT("inputs");
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   Found %d side %s (sorted left-to-right)"), 
+	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   Found %d side %s (sorted left-to-right)"), 
 		OutSideConnectors.Num(), ConnectorType);
 }
 
@@ -2255,7 +2256,7 @@ void USFAutoConnectService::ProcessChildDistributors(AFGHologram* ParentHologram
 		return; // No children to process
 	}
 	
-	UE_LOG(LogSmartFoundations, Log, TEXT("👶 Processing %d child holograms for parent %s"), 
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("👶 Processing %d child holograms for parent %s"), 
 		Children.Num(), *ParentHologram->GetName());
 	
 	// Create shared input reservation map for parent + all children
@@ -2281,7 +2282,7 @@ void USFAutoConnectService::ProcessChildDistributors(AFGHologram* ParentHologram
 		// Recreating them would leave orphaned previews after the child is destroyed
 		if (Child->Tags.Contains(FName(TEXT("SF_GridChild_PendingDestroy"))))
 		{
-			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   ⏭️ Skipping pending-destroy child: %s"), 
+			UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   ⏭️ Skipping pending-destroy child: %s"), 
 				*Child->GetName());
 			continue;
 		}
@@ -2289,7 +2290,7 @@ void USFAutoConnectService::ProcessChildDistributors(AFGHologram* ParentHologram
 		AllDistributors.Add(Child);
 	}
 	
-	UE_LOG(LogSmartFoundations, Log, TEXT("   🎯 Processing %d total distributors (parent + children) with shared input reservation"), 
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("   🎯 Processing %d total distributors (parent + children) with shared input reservation"), 
 		AllDistributors.Num());
 	
 	// Process each distributor with shared reservation map
@@ -2298,7 +2299,7 @@ void USFAutoConnectService::ProcessChildDistributors(AFGHologram* ParentHologram
 		AFGHologram* Distributor = AllDistributors[i];
 		
 		bool bIsParent = (Distributor == ParentHologram);
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   %s Processing distributor %d/%d: %s"), 
+		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   %s Processing distributor %d/%d: %s"), 
 			bIsParent ? TEXT("🎯") : TEXT("👶"),
 			i + 1, AllDistributors.Num(), *Distributor->GetName());
 		
@@ -2309,7 +2310,7 @@ void USFAutoConnectService::ProcessChildDistributors(AFGHologram* ParentHologram
 		if (Previews.Num() > 0)
 		{
 			DistributorBeltPreviews.Emplace(Distributor, Previews);
-			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("      ✅ Stored %d belt previews for %s"), 
+			UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      ✅ Stored %d belt previews for %s"), 
 				Previews.Num(), *Distributor->GetName());
 		}
 		else
@@ -2326,12 +2327,12 @@ void USFAutoConnectService::ProcessChildDistributors(AFGHologram* ParentHologram
 				}
 			}
 			DistributorBeltPreviews.Remove(Distributor);
-			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("      🗑️ No belt previews for %s"), 
+			UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      🗑️ No belt previews for %s"), 
 				*Distributor->GetName());
 		}
 	}
 	
-	UE_LOG(LogSmartFoundations, Log, TEXT("✅ Finished processing %d distributors (%d inputs reserved)"), 
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("✅ Finished processing %d distributors (%d inputs reserved)"), 
 		AllDistributors.Num(), ReservedInputs.Num());
 }
 
@@ -2351,7 +2352,7 @@ void USFAutoConnectService::CleanupDistributorPreviews(AFGHologram* DistributorH
 		return;
 	}
 	
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🗑️ Cleaning up %d belt previews for distributor: %s"), 
+	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🗑️ Cleaning up %d belt previews for distributor: %s"), 
 		Previews->Num(), *DistributorHologram->GetName());
 	
 	// Destroy all belt preview holograms
@@ -2366,7 +2367,7 @@ void USFAutoConnectService::CleanupDistributorPreviews(AFGHologram* DistributorH
 	// Remove from map
 	DistributorBeltPreviews.Remove(DistributorHologram);
 	
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("✅ Cleaned up belt previews for %s"), 
+	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("✅ Cleaned up belt previews for %s"), 
 		*DistributorHologram->GetName());
 }
 
@@ -2374,7 +2375,7 @@ void USFAutoConnectService::StoreConnectorPair(AFGHologram* DistributorHologram,
 {
 	if (!DistributorHologram || !HologramConnector || !BuildingConnector)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("StoreConnectorPair: Invalid parameters"));
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("StoreConnectorPair: Invalid parameters"));
 		return;
 	}
 
@@ -2386,7 +2387,7 @@ void USFAutoConnectService::StoreConnectorPair(AFGHologram* DistributorHologram,
 	TPair<UFGFactoryConnectionComponent*, UFGFactoryConnectionComponent*> Pair(HologramConnector, BuildingConnector);
 	StoredConnectorPairs[DistributorHologram].Add(Pair);
 
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("StoreConnectorPair: Stored %s → %s for %s"),
+	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("StoreConnectorPair: Stored %s → %s for %s"),
 		*GetNameSafe(HologramConnector), *GetNameSafe(BuildingConnector), *GetNameSafe(DistributorHologram));
 }
 
@@ -2396,7 +2397,7 @@ void USFAutoConnectService::ClearConnectorPairs(AFGHologram* DistributorHologram
 	{
 		int32 Count = StoredConnectorPairs[DistributorHologram].Num();
 		StoredConnectorPairs.Remove(DistributorHologram);
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("ClearConnectorPairs: Cleared %d pairs for %s"), Count, *GetNameSafe(DistributorHologram));
+		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("ClearConnectorPairs: Cleared %d pairs for %s"), Count, *GetNameSafe(DistributorHologram));
 	}
 }
 
@@ -2419,7 +2420,7 @@ void USFAutoConnectService::StoreBeltPreviews(AFGHologram* DistributorHologram, 
 	if (Previews.Num() > 0)
 	{
 		DistributorBeltPreviews.Emplace(DistributorHologram, Previews);
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("📦 Stored %d belt previews for %s"), 
+		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("📦 Stored %d belt previews for %s"), 
 		Previews.Num(), *DistributorHologram->GetName());
 		
 		// CRITICAL: Calculate and cache belt costs NOW for GetCost() hook
@@ -2456,7 +2457,7 @@ void USFAutoConnectService::StoreBeltPreviews(AFGHologram* DistributorHologram, 
 			TotalCost.Add(ItemCost);
 		}
 		
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("💰 Calculated belt costs: %d item types from %d/%d valid previews for %s"), 
+		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("💰 Calculated belt costs: %d item types from %d/%d valid previews for %s"), 
 			TotalCost.Num(), ValidPreviews, TotalPreviews, *DistributorHologram->GetName());
 		
 		// Check if this distributor is a child (has a parent) or the root parent
@@ -2468,12 +2469,12 @@ void USFAutoConnectService::StoreBeltPreviews(AFGHologram* DistributorHologram, 
 		
 		if (bIsChildDistributor)
 		{
-			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("💰 Child distributor (parent=%s) - cached costs, will trigger parent re-aggregation"), 
+			UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("💰 Child distributor (parent=%s) - cached costs, will trigger parent re-aggregation"), 
 				*GetNameSafe(ParentHologramPtr));
 		}
 		else
 		{
-			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("💰 Root/Parent distributor - aggregating grid costs and updating HUD"));
+			UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("💰 Root/Parent distributor - aggregating grid costs and updating HUD"));
 		}
 		
 		// Update Smart! HUD with belt costs (bypasses vanilla UI caching issues)
@@ -2570,7 +2571,7 @@ void USFAutoConnectService::StoreBeltPreviews(AFGHologram* DistributorHologram, 
 						if (RemainingAfterDistributors < BeltCost.Amount)
 						{
 							bCanAffordBelts = false;
-							UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("💰 Cannot afford belt materials AFTER distributor costs: %s - Have: %d, Distributors: %d, Remaining: %d, Belts need: %d"), 
+							UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("💰 Cannot afford belt materials AFTER distributor costs: %s - Have: %d, Distributors: %d, Remaining: %d, Belts need: %d"), 
 								*GetNameSafe(BeltCost.ItemClass), TotalAvailable, DistributorConsumption, RemainingAfterDistributors, BeltCost.Amount);
 							break;
 						}
@@ -2580,13 +2581,13 @@ void USFAutoConnectService::StoreBeltPreviews(AFGHologram* DistributorHologram, 
 					if (!bCanAffordBelts)
 					{
 						DistributorHologram->AddConstructDisqualifier(UFGCDUnaffordable::StaticClass());
-						UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("💰 Hologram marked INVALID - cannot afford belt materials"));
+						UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("💰 Hologram marked INVALID - cannot afford belt materials"));
 					}
 					else
 					{
 						// Player can afford - ensure vanilla validation runs normally
 						DistributorHologram->ValidatePlacementAndCost(Inventory);
-						UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("💰 Hologram validated - player can afford belt materials"));
+						UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("💰 Hologram validated - player can afford belt materials"));
 					}
 				}
 			}
@@ -2600,7 +2601,7 @@ void USFAutoConnectService::StoreBeltPreviews(AFGHologram* DistributorHologram, 
 		// NOTE: DeferredCostService removed - child holograms automatically aggregate costs via GetCost()
 		// Vanilla ValidatePlacementAndCost will automatically re-validate affordability
 		
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🗑️ Cleared belt previews for %s"), 
+		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🗑️ Cleared belt previews for %s"), 
 			*DistributorHologram->GetName());
 	}
 }
@@ -2632,7 +2633,7 @@ TArray<FItemAmount> USFAutoConnectService::GetBeltPreviewsCost(const AFGHologram
 
 	if (!DistributorHologram)
 	{
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("💰 GetBeltPreviewsCost: null hologram"));
+		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("💰 GetBeltPreviewsCost: null hologram"));
 		return TotalCost;
 	}
 
@@ -2640,7 +2641,7 @@ TArray<FItemAmount> USFAutoConnectService::GetBeltPreviewsCost(const AFGHologram
 	const TArray<TSharedPtr<FBeltPreviewHelper>>* Previews = GetBeltPreviews(DistributorHologram);
 	if (!Previews)
 	{
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("💰 GetBeltPreviewsCost: No belt previews found for %s"), 
+		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("💰 GetBeltPreviewsCost: No belt previews found for %s"), 
 			*DistributorHologram->GetName());
 		return TotalCost;
 	}
@@ -2677,7 +2678,7 @@ TArray<FItemAmount> USFAutoConnectService::GetBeltPreviewsCost(const AFGHologram
 		TotalCost.Add(ItemCost);
 	}
 	
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("💰 GetBeltPreviewsCost: Calculated %d item types from %d valid previews for %s"), 
+	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("💰 GetBeltPreviewsCost: Calculated %d item types from %d valid previews for %s"), 
 		TotalCost.Num(), ValidCount, *DistributorHologram->GetName());
 	
 	return TotalCost;
@@ -2700,7 +2701,7 @@ void USFAutoConnectService::UpdatePipePreviews(AFGHologram* JunctionHologram)
 {
 	if (!JunctionHologram || !Subsystem)
 	{
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("UpdatePipePreviews: Missing junction or subsystem"));
+		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("UpdatePipePreviews: Missing junction or subsystem"));
 		return;
 	}
 
@@ -2710,19 +2711,19 @@ void USFAutoConnectService::UpdatePipePreviews(AFGHologram* JunctionHologram)
 	// Check if pipe auto-connect is enabled
 	if (!RuntimeSettings.bPipeAutoConnectEnabled)
 	{
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("UpdatePipePreviews: Pipe auto-connect disabled in runtime settings"));
+		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("UpdatePipePreviews: Pipe auto-connect disabled in runtime settings"));
 		return;
 	}
 
 	// Get or create the pipe auto-connect manager for this junction
 	TSharedPtr<FSFPipeAutoConnectManager>* ManagerPtr = PipeAutoConnectManagers.Find(JunctionHologram);
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 PIPE MANAGER LOOKUP: Junction=%s (ptr=%p), Found=%s, TotalManagers=%d"), 
+	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🔧 PIPE MANAGER LOOKUP: Junction=%s (ptr=%p), Found=%s, TotalManagers=%d"), 
 		*JunctionHologram->GetName(), JunctionHologram, ManagerPtr ? TEXT("YES") : TEXT("NO"), PipeAutoConnectManagers.Num());
 	
 	if (!ManagerPtr || !ManagerPtr->IsValid())
 	{
 		// Create new manager for this junction
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 PIPE: Creating NEW manager for junction %s (reason: %s)"), 
+		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🔧 PIPE: Creating NEW manager for junction %s (reason: %s)"), 
 			*JunctionHologram->GetName(), !ManagerPtr ? TEXT("not found") : TEXT("invalid"));
 		TSharedPtr<FSFPipeAutoConnectManager> NewManager = MakeShared<FSFPipeAutoConnectManager>();
 		NewManager->Initialize(Subsystem, this);
@@ -2731,13 +2732,13 @@ void USFAutoConnectService::UpdatePipePreviews(AFGHologram* JunctionHologram)
 	}
 	else
 	{
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 PIPE: Reusing EXISTING manager for junction %s"), 
+		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🔧 PIPE: Reusing EXISTING manager for junction %s"), 
 			*JunctionHologram->GetName());
 	}
 
 	if (ManagerPtr && ManagerPtr->IsValid())
 	{
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 Updating pipe previews for junction %s"), *JunctionHologram->GetName());
+		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🔧 Updating pipe previews for junction %s"), *JunctionHologram->GetName());
 		(*ManagerPtr)->ProcessAllJunctions(JunctionHologram);
 
 		// NOTE: DeferredCostService removed - child holograms automatically aggregate costs via GetCost()
@@ -2757,7 +2758,7 @@ void USFAutoConnectService::ClearPipePreviews(AFGHologram* JunctionHologram)
 	TSharedPtr<FSFPipeAutoConnectManager>* ManagerPtr = PipeAutoConnectManagers.Find(JunctionHologram);
 	if (ManagerPtr && ManagerPtr->IsValid())
 	{
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 Clearing pipe previews for junction %s (keeping manager)"), *JunctionHologram->GetName());
+		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🔧 Clearing pipe previews for junction %s (keeping manager)"), *JunctionHologram->GetName());
 		(*ManagerPtr)->ClearPipePreviews();
 		// DON'T remove from map - keep the manager alive for reuse
 		// NOTE: DeferredCostService removed - child holograms automatically aggregate costs via GetCost()
@@ -2778,7 +2779,7 @@ bool USFAutoConnectService::IsPipelineJunctionHologram(const AFGHologram* Hologr
 
 void USFAutoConnectService::ClearAllPipeManagers()
 {
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 Clearing all pipe managers (%d total)"), PipeAutoConnectManagers.Num());
+	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🔧 Clearing all pipe managers (%d total)"), PipeAutoConnectManagers.Num());
 	
 	// Clear all pipes from all managers
 	for (auto& Pair : PipeAutoConnectManagers)
@@ -2836,7 +2837,7 @@ TArray<FItemAmount> USFAutoConnectService::GetPipePreviewsCost(const AFGHologram
 
 	if (!JunctionHologram)
 	{
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("💰 GetPipePreviewsCost: null hologram"));
+		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("💰 GetPipePreviewsCost: null hologram"));
 		return TotalCost;
 	}
 
@@ -2844,7 +2845,7 @@ TArray<FItemAmount> USFAutoConnectService::GetPipePreviewsCost(const AFGHologram
 	const FSFPipeAutoConnectManager* Manager = GetPipeManager(JunctionHologram);
 	if (!Manager)
 	{
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("💰 GetPipePreviewsCost: No pipe manager found for %s"), 
+		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("💰 GetPipePreviewsCost: No pipe manager found for %s"), 
 			*JunctionHologram->GetName());
 		return TotalCost;
 	}
@@ -2896,7 +2897,7 @@ TArray<FItemAmount> USFAutoConnectService::GetPipePreviewsCost(const AFGHologram
 		TotalCost.Add(ItemCost);
 	}
 	
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("💰 GetPipePreviewsCost: Calculated %d item types from %d valid previews for %s"),  
+	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("💰 GetPipePreviewsCost: Calculated %d item types from %d valid previews for %s"),  
 		TotalCost.Num(), ValidCount, *JunctionHologram->GetName());
 	
 	return TotalCost;
@@ -3093,7 +3094,7 @@ void USFAutoConnectService::ProcessStackableConveyorPoles(AFGHologram* ParentHol
 {
 	if (!ParentHologram || !Subsystem)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("🚧 ProcessStackableConveyorPoles: null parent hologram or subsystem"));
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("🚧 ProcessStackableConveyorPoles: null parent hologram or subsystem"));
 		return;
 	}
 	
@@ -3101,7 +3102,7 @@ void USFAutoConnectService::ProcessStackableConveyorPoles(AFGHologram* ParentHol
 	if (Subsystem->IsSmartDisabledForCurrentAction())
 	{
 		CleanupAllStackableBelts(ParentHologram);
-		UE_LOG(LogSmartFoundations, Log, TEXT("🚧 ProcessStackableConveyorPoles: Skipped - Smart disabled for current action"));
+		UE_LOG(LogSmartAutoConnect, Log, TEXT("🚧 ProcessStackableConveyorPoles: Skipped - Smart disabled for current action"));
 		return;
 	}
 
@@ -3109,7 +3110,7 @@ void USFAutoConnectService::ProcessStackableConveyorPoles(AFGHologram* ParentHol
 	const auto& RuntimeSettings = Subsystem->GetAutoConnectRuntimeSettings();
 	if (!RuntimeSettings.bEnabled || !RuntimeSettings.bStackableBeltEnabled)
 	{
-		UE_LOG(LogSmartFoundations, Log, TEXT("🚧 ProcessStackableConveyorPoles: Auto-connect disabled (global=%d, stackable belt=%d) - clearing belt children"),
+		UE_LOG(LogSmartAutoConnect, Log, TEXT("🚧 ProcessStackableConveyorPoles: Auto-connect disabled (global=%d, stackable belt=%d) - clearing belt children"),
 			RuntimeSettings.bEnabled, RuntimeSettings.bStackableBeltEnabled);
 		
 		// Clear all existing stackable belt children when disabled
@@ -3139,7 +3140,7 @@ void USFAutoConnectService::ProcessStackableConveyorPoles(AFGHologram* ParentHol
 	FSFHologramHelperService* HologramHelper = Subsystem->GetHologramHelper();
 	if (!HologramHelper)
 	{
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🚧 No HologramHelper available"));
+		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🚧 No HologramHelper available"));
 		return;
 	}
 
@@ -3167,7 +3168,7 @@ void USFAutoConnectService::ProcessStackableConveyorPoles(AFGHologram* ParentHol
 		return;
 	}
 	
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🚧 Found %d belt support poles (parent + %d children), Grid[%d,%d,%d]"), 
+	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🚧 Found %d belt support poles (parent + %d children), Grid[%d,%d,%d]"), 
 		AllPoles.Num(), AllPoles.Num() - 1, XCount, YCount, ZCount);
 
 	// Get belt tier from settings
@@ -3219,7 +3220,7 @@ void USFAutoConnectService::ProcessStackableConveyorPoles(AFGHologram* ParentHol
 		}
 	}
 	
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🚧 Mapped %d conveyor poles to grid positions"), GridToHologram.Num());
+	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🚧 Mapped %d conveyor poles to grid positions"), GridToHologram.Num());
 
 	// Connect neighbors along the primary axis:
 	// - Most belt supports: X-neighbors ([X,Y,Z] -> [X+1,Y,Z])
@@ -3257,7 +3258,7 @@ void USFAutoConnectService::ProcessStackableConveyorPoles(AFGHologram* ParentHol
 				// Distance restriction: >56m is too far (game engine limit)
 				if (Distance > MAX_PIPE_LENGTH)
 				{
-					UE_LOG(LogSmartFoundations, Log, TEXT("🚧 Belt skipped: distance %.1f cm > 56m between [%d,%d,%d] and [%d,%d,%d]"),
+					UE_LOG(LogSmartAutoConnect, Log, TEXT("🚧 Belt skipped: distance %.1f cm > 56m between [%d,%d,%d] and [%d,%d,%d]"),
 						Distance, X, Y, Z, X + 1, Y, Z);
 					continue;
 				}
@@ -3268,7 +3269,7 @@ void USFAutoConnectService::ProcessStackableConveyorPoles(AFGHologram* ParentHol
 				float AngleDegrees = FMath::RadiansToDegrees(FMath::Asin(VerticalComponent));
 				if (AngleDegrees > 30.0f)
 				{
-					UE_LOG(LogSmartFoundations, Log, TEXT("🚧 Belt skipped: angle %.1f° > 30° between [%d,%d,%d] and [%d,%d,%d]"),
+					UE_LOG(LogSmartAutoConnect, Log, TEXT("🚧 Belt skipped: angle %.1f° > 30° between [%d,%d,%d] and [%d,%d,%d]"),
 						AngleDegrees, X, Y, Z, X + 1, Y, Z);
 					continue;
 				}
@@ -3306,7 +3307,7 @@ void USFAutoConnectService::ProcessStackableConveyorPoles(AFGHologram* ParentHol
 				
 				if (!BeltChild)
 				{
-					UE_LOG(LogSmartFoundations, Warning, TEXT("🚧 ⚠️ Failed to create belt for grid [%d,%d,%d] -> [%d,%d,%d]"),
+					UE_LOG(LogSmartAutoConnect, Warning, TEXT("🚧 ⚠️ Failed to create belt for grid [%d,%d,%d] -> [%d,%d,%d]"),
 						X, Y, Z, X + 1, Y, Z);
 				}
 			}
@@ -3342,7 +3343,7 @@ void USFAutoConnectService::ProcessStackablePipelineSupports(AFGHologram* Parent
 {
 	if (!ParentHologram || !Subsystem)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 ProcessStackablePipelineSupports: null parent hologram or subsystem"));
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("🔧 ProcessStackablePipelineSupports: null parent hologram or subsystem"));
 		return;
 	}
 	
@@ -3350,7 +3351,7 @@ void USFAutoConnectService::ProcessStackablePipelineSupports(AFGHologram* Parent
 	if (Subsystem->IsSmartDisabledForCurrentAction())
 	{
 		CleanupAllStackablePipes(ParentHologram);
-		UE_LOG(LogSmartFoundations, Log, TEXT("🔧 ProcessStackablePipelineSupports: Skipped - Smart disabled for current action"));
+		UE_LOG(LogSmartAutoConnect, Log, TEXT("🔧 ProcessStackablePipelineSupports: Skipped - Smart disabled for current action"));
 		return;
 	}
 
@@ -3358,7 +3359,7 @@ void USFAutoConnectService::ProcessStackablePipelineSupports(AFGHologram* Parent
 	const auto& RuntimeSettings = Subsystem->GetAutoConnectRuntimeSettings();
 	if (!RuntimeSettings.bEnabled || !RuntimeSettings.bPipeAutoConnectEnabled)
 	{
-		UE_LOG(LogSmartFoundations, Log, TEXT("🔧 ProcessStackablePipelineSupports: Auto-connect disabled (global=%d, pipe=%d) - clearing pipe children"),
+		UE_LOG(LogSmartAutoConnect, Log, TEXT("🔧 ProcessStackablePipelineSupports: Auto-connect disabled (global=%d, pipe=%d) - clearing pipe children"),
 			RuntimeSettings.bEnabled, RuntimeSettings.bPipeAutoConnectEnabled);
 		
 		// Clear all existing stackable pipe children when disabled
@@ -3369,7 +3370,7 @@ void USFAutoConnectService::ProcessStackablePipelineSupports(AFGHologram* Parent
 	// Track active pole pairs for orphan removal at end
 	TSet<uint64> ActivePolePairs;
 
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 ProcessStackablePipelineSupports: Starting pipeline support analysis for %s"), 
+	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🔧 ProcessStackablePipelineSupports: Starting pipeline support analysis for %s"), 
 		*ParentHologram->GetName());
 
 	// ========================================================================
@@ -3412,7 +3413,7 @@ void USFAutoConnectService::ProcessStackablePipelineSupports(AFGHologram* Parent
 	FSFHologramHelperService* HologramHelper = Subsystem->GetHologramHelper();
 	if (!HologramHelper)
 	{
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 No HologramHelper available"));
+		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🔧 No HologramHelper available"));
 		return;
 	}
 
@@ -3446,7 +3447,7 @@ void USFAutoConnectService::ProcessStackablePipelineSupports(AFGHologram* Parent
 		return;
 	}
 	
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 Found %d stackable pipeline supports (parent + %d children), Grid[%d,%d,%d]"), 
+	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🔧 Found %d stackable pipeline supports (parent + %d children), Grid[%d,%d,%d]"), 
 		AllSupports.Num(), AllSupports.Num() - 1, XCount, YCount, ZCount);
 	
 	// ========================================================================
@@ -3475,7 +3476,7 @@ void USFAutoConnectService::ProcessStackablePipelineSupports(AFGHologram* Parent
 			ParentHologram->GetConstructionInstigator()->GetController());
 		PipeTier = Subsystem->GetHighestUnlockedPipeTier(PlayerController);
 		if (PipeTier == 0) PipeTier = 2; // Default to Mk2 if detection fails
-		UE_LOG(LogSmartFoundations, Log, TEXT("🔧 STACKABLE PIPE: Auto tier resolved to Mk%d"), PipeTier);
+		UE_LOG(LogSmartAutoConnect, Log, TEXT("🔧 STACKABLE PIPE: Auto tier resolved to Mk%d"), PipeTier);
 	}
 
 	// Build a map from grid position [X,Y,Z] to hologram for fast neighbor lookup
@@ -3513,7 +3514,7 @@ void USFAutoConnectService::ProcessStackablePipelineSupports(AFGHologram* Parent
 		}
 	}
 	
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 Mapped %d supports to grid positions"), GridToHologram.Num());
+	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🔧 Mapped %d supports to grid positions"), GridToHologram.Num());
 
 	// Connect X-neighbors: for each grid position, connect to X+1 if it exists
 	int32 PipeIndex = 0;
@@ -3542,7 +3543,7 @@ void USFAutoConnectService::ProcessStackablePipelineSupports(AFGHologram* Parent
 				// Distance restriction: >56m is too far (game engine limit)
 				if (Distance > MAX_PIPE_LENGTH)
 				{
-					UE_LOG(LogSmartFoundations, Log, TEXT("🔧 Pipe skipped: distance %.1f cm > 56m between [%d,%d,%d] and [%d,%d,%d]"),
+					UE_LOG(LogSmartAutoConnect, Log, TEXT("🔧 Pipe skipped: distance %.1f cm > 56m between [%d,%d,%d] and [%d,%d,%d]"),
 						Distance, X, Y, Z, X + 1, Y, Z);
 					continue;
 				}
@@ -3553,7 +3554,7 @@ void USFAutoConnectService::ProcessStackablePipelineSupports(AFGHologram* Parent
 				float AngleDegrees = FMath::RadiansToDegrees(FMath::Asin(VerticalComponent));
 				if (AngleDegrees > 30.0f)
 				{
-					UE_LOG(LogSmartFoundations, Log, TEXT("🔧 Pipe skipped: angle %.1f° > 30° between [%d,%d,%d] and [%d,%d,%d]"),
+					UE_LOG(LogSmartAutoConnect, Log, TEXT("🔧 Pipe skipped: angle %.1f° > 30° between [%d,%d,%d] and [%d,%d,%d]"),
 						AngleDegrees, X, Y, Z, X + 1, Y, Z);
 					continue;
 				}
@@ -3705,9 +3706,9 @@ AFGHologram* USFAutoConnectService::UpdateOrCreatePipeForPolePair(
 	}
 	
 	// DEBUG: Log positions to diagnose pipe placement issue
-	UE_LOG(LogSmartFoundations, Log, TEXT("🔧 PIPE POSITIONS [%d]: SourcePole=%s @ %s, TargetPole=%s @ %s"),
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("🔧 PIPE POSITIONS [%d]: SourcePole=%s @ %s, TargetPole=%s @ %s"),
 		PipeIndex, *SourcePole->GetName(), *SourcePolePos.ToString(), *TargetPole->GetName(), *TargetPolePos.ToString());
-	UE_LOG(LogSmartFoundations, Log, TEXT("🔧 PIPE ENDPOINTS [%d]: Start=%s, End=%s, Dist=%.1f"),
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("🔧 PIPE ENDPOINTS [%d]: Start=%s, End=%s, Dist=%.1f"),
 		PipeIndex, *StartPos.ToString(), *EndPos.ToString(), FVector::Dist(StartPos, EndPos));
 	
 	// Issue #291 (pipe variant): route straight toward the partner pole in 3D. Pole forward vector
@@ -3729,7 +3730,7 @@ AFGHologram* USFAutoConnectService::UpdateOrCreatePipeForPolePair(
 		EndNormal = TargetPole ? (-TargetPole->GetActorForwardVector()).GetSafeNormal() : -FVector::ForwardVector;
 	}
 	
-	UE_LOG(LogSmartFoundations, Log, TEXT("🔧 STACKABLE PIPE: Routing endpoints StartN=%s EndN=%s"), *StartNormal.ToString(), *EndNormal.ToString());
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("🔧 STACKABLE PIPE: Routing endpoints StartN=%s EndN=%s"), *StartNormal.ToString(), *EndNormal.ToString());
 	
 	// ========================================================================
 	// BUILD 6-POINT SPLINE WITH 50CM STRAIGHT SECTIONS AT EACH END
@@ -3743,7 +3744,7 @@ AFGHologram* USFAutoConnectService::UpdateOrCreatePipeForPolePair(
 	// Skip if too long (game engine limit)
 	if (Distance > MAX_PIPE_LENGTH)
 	{
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 STACKABLE PIPE: Skipping pipe %d - distance %.1f exceeds max %.1f"),
+		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🔧 STACKABLE PIPE: Skipping pipe %d - distance %.1f exceeds max %.1f"),
 			PipeIndex, Distance, MAX_PIPE_LENGTH);
 		return nullptr;
 	}
@@ -3817,7 +3818,7 @@ AFGHologram* USFAutoConnectService::UpdateOrCreatePipeForPolePair(
 	Point5.LeaveTangent = HorizontalDir * HorizontalTangent;
 	SplinePoints.Add(Point5);
 	
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 STACKABLE PIPE: 6-point spline (dist=%.1f, curve=%.1f)"), Distance, CurveLength);
+	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🔧 STACKABLE PIPE: 6-point spline (dist=%.1f, curve=%.1f)"), Distance, CurveLength);
 	
 	// Check if we already have a pipe for this pole pair
 	TWeakObjectPtr<AFGHologram>* ExistingPipePtr = State.PipesByPolePair.Find(PairKey);
@@ -3833,7 +3834,7 @@ AFGHologram* USFAutoConnectService::UpdateOrCreatePipeForPolePair(
 			if (DesiredBuildClass && CurrentBuildClass != DesiredBuildClass)
 			{
 				// Tier or indicator changed - destroy existing pipe and create new one below
-				UE_LOG(LogSmartFoundations, Log, TEXT("🔧 STACKABLE PIPE: Tier/indicator changed for pair 0x%016llX - recreating pipe"), PairKey);
+				UE_LOG(LogSmartAutoConnect, Log, TEXT("🔧 STACKABLE PIPE: Tier/indicator changed for pair 0x%016llX - recreating pipe"), PairKey);
 				
 				// Remove from parent's mChildren array
 				FArrayProperty* ChildrenProp = FindFProperty<FArrayProperty>(AFGHologram::StaticClass(), TEXT("mChildren"));
@@ -3892,7 +3893,7 @@ AFGHologram* USFAutoConnectService::UpdateOrCreatePipeForPolePair(
 				ExistingPipe->LockHologramPosition(true);
 			}
 			
-			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 STACKABLE PIPE: Updated existing pipe %s for pair 0x%016llX (locked=%d)"), 
+			UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🔧 STACKABLE PIPE: Updated existing pipe %s for pair 0x%016llX (locked=%d)"), 
 				*ExistingPipe->GetName(), PairKey, bParentLocked ? 1 : 0);
 			
 			return ExistingPipe;
@@ -3904,7 +3905,7 @@ AFGHologram* USFAutoConnectService::UpdateOrCreatePipeForPolePair(
 	UClass* PipeBuildClass = Subsystem->GetPipeClassFromConfig(PipeTier, bWithIndicator, nullptr);
 	if (!PipeBuildClass)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 STACKABLE PIPE: No pipe build class for tier %d"), PipeTier);
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("🔧 STACKABLE PIPE: No pipe build class for tier %d"), PipeTier);
 		return nullptr;
 	}
 	
@@ -3932,7 +3933,7 @@ AFGHologram* USFAutoConnectService::UpdateOrCreatePipeForPolePair(
 	
 	if (!PipeChild)
 	{
-		UE_LOG(LogSmartFoundations, Error, TEXT("🔧 STACKABLE PIPE: SpawnActor returned null"));
+		UE_LOG(LogSmartAutoConnect, Error, TEXT("🔧 STACKABLE PIPE: SpawnActor returned null"));
 		return nullptr;
 	}
 	
@@ -4002,7 +4003,7 @@ AFGHologram* USFAutoConnectService::UpdateOrCreatePipeForPolePair(
 	// Track by pole-pair key
 	State.PipesByPolePair.Add(PairKey, PipeChild);
 	
-	UE_LOG(LogSmartFoundations, Log, TEXT("🔧 STACKABLE PIPE: Created new pipe %s for pair 0x%016llX (dist=%.1f)"), 
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("🔧 STACKABLE PIPE: Created new pipe %s for pair 0x%016llX (dist=%.1f)"), 
 		*ChildName.ToString(), PairKey, Distance);
 	
 	return PipeChild;
@@ -4044,7 +4045,7 @@ void USFAutoConnectService::RemoveOrphanedPipes(AFGHologram* ParentHologram, con
 				{
 					ParentChildrenArray->Remove(Pipe);
 				}
-				UE_LOG(LogSmartFoundations, Log, TEXT("🔧 STACKABLE PIPE: Removing orphaned pipe %s (pair 0x%016llX)"), 
+				UE_LOG(LogSmartAutoConnect, Log, TEXT("🔧 STACKABLE PIPE: Removing orphaned pipe %s (pair 0x%016llX)"), 
 					*Pipe->GetName(), Pair.Key);
 				Pipe->Destroy();
 			}
@@ -4070,7 +4071,7 @@ void USFAutoConnectService::CleanupAllStackablePipes(AFGHologram* ParentHologram
 		return;
 	}
 	
-	UE_LOG(LogSmartFoundations, Log, TEXT("🔧 STACKABLE PIPE CLEANUP: Removing all %d pipes for %s"), 
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("🔧 STACKABLE PIPE CLEANUP: Removing all %d pipes for %s"), 
 		State->PipesByPolePair.Num(), *ParentHologram->GetName());
 	
 	// Get parent's mChildren array for removal
@@ -4138,7 +4139,7 @@ void USFAutoConnectService::FinalizeBeltChildrenVisibility(AFGHologram* ParentHo
 		}
 	}
 	
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("✅ Finalized visibility for %d belt children of %s (locked=%d)"), 
+	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("✅ Finalized visibility for %d belt children of %s (locked=%d)"), 
 		Previews->Num(), *ParentHologram->GetName(), bParentLocked ? 1 : 0);
 }
 
@@ -4146,7 +4147,7 @@ void USFAutoConnectService::ProcessPowerPoles(AFGHologram* ParentHologram)
 {
 	if (!ParentHologram)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("⚡ ProcessPowerPoles: null parent hologram"));
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("⚡ ProcessPowerPoles: null parent hologram"));
 		return;
 	}
 	
@@ -4155,11 +4156,11 @@ void USFAutoConnectService::ProcessPowerPoles(AFGHologram* ParentHologram)
 	{
 		// Clear any existing previews since we're disabled
 		ClearAllPowerPreviews();
-		UE_LOG(LogSmartFoundations, Log, TEXT("⚡ ProcessPowerPoles: Skipped - Smart disabled for current action"));
+		UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ ProcessPowerPoles: Skipped - Smart disabled for current action"));
 		return;
 	}
 
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⚡ ProcessPowerPoles: Starting power pole analysis for %s"), 
+	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("⚡ ProcessPowerPoles: Starting power pole analysis for %s"), 
 		*ParentHologram->GetName());
 
 	// Get or create power manager for this parent hologram
@@ -4173,7 +4174,7 @@ void USFAutoConnectService::ProcessPowerPoles(AFGHologram* ParentHologram)
 		PowerAutoConnectManagers.Add(ParentHologram, NewManager);
 		ManagerPtr = &PowerAutoConnectManagers[ParentHologram];
 		
-		UE_LOG(LogSmartFoundations, Log, TEXT("⚡ ProcessPowerPoles: Created new power manager"));
+		UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ ProcessPowerPoles: Created new power manager"));
 	}
 
 	// Process all power poles through the manager
@@ -4188,7 +4189,7 @@ void USFAutoConnectService::ProcessPowerPoles(AFGHologram* ParentHologram)
 
 void USFAutoConnectService::ClearAllPowerPreviews()
 {
-	UE_LOG(LogSmartFoundations, Log, TEXT("⚡ ClearAllPowerPreviews: Clearing all power line previews (%d managers)"), 
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ ClearAllPowerPreviews: Clearing all power line previews (%d managers)"), 
 		PowerAutoConnectManagers.Num());
 	
 	// CRITICAL: Commit planned connections BEFORE clearing anything!
@@ -4240,7 +4241,7 @@ TArray<FPowerPoleGridNode> USFAutoConnectService::AnalyzeGridTopology(const TArr
 {
 	TArray<FPowerPoleGridNode> GridNodes;
 	
-	UE_LOG(LogSmartFoundations, Log, TEXT("⚡ AnalyzeGridTopology: Analyzing %d poles"), AllPoles.Num());
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ AnalyzeGridTopology: Analyzing %d poles"), AllPoles.Num());
 	
 	if (AllPoles.Num() == 0)
 	{
@@ -4256,7 +4257,7 @@ TArray<FPowerPoleGridNode> USFAutoConnectService::AnalyzeGridTopology(const TArr
 	USFSubsystem* SmartSubsystem = USFSubsystem::Get(AllPoles[0]->GetWorld());
 	if (!SmartSubsystem)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("⚡ AnalyzeGridTopology: No subsystem - falling back to empty"));
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("⚡ AnalyzeGridTopology: No subsystem - falling back to empty"));
 		return GridNodes;
 	}
 	
@@ -4268,7 +4269,7 @@ TArray<FPowerPoleGridNode> USFAutoConnectService::AnalyzeGridTopology(const TArr
 	int32 YDir = CounterState.GridCounters.Y >= 0 ? 1 : -1;
 	int32 ZDir = CounterState.GridCounters.Z >= 0 ? 1 : -1;
 	
-	UE_LOG(LogSmartFoundations, Log, TEXT("⚡ AnalyzeGridTopology: Grid dimensions %dx%dx%d, dirs [%d,%d,%d]"),
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ AnalyzeGridTopology: Grid dimensions %dx%dx%d, dirs [%d,%d,%d]"),
 		XCount, YCount, ZCount, XDir, YDir, ZDir);
 	
 	// Build a map from grid position to pole hologram
@@ -4317,7 +4318,7 @@ TArray<FPowerPoleGridNode> USFAutoConnectService::AnalyzeGridTopology(const TArr
 		}
 	}
 	
-	UE_LOG(LogSmartFoundations, Log, TEXT("⚡ AnalyzeGridTopology: Mapped %d poles to grid positions"), PoleToGridPosition.Num());
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ AnalyzeGridTopology: Mapped %d poles to grid positions"), PoleToGridPosition.Num());
 	
 	// Now find neighbors by grid position (adjacent = differ by 1 in exactly one axis)
 	for (AFGHologram* Pole : AllPoles)
@@ -4365,7 +4366,7 @@ TArray<FPowerPoleGridNode> USFAutoConnectService::AnalyzeGridTopology(const TArr
 			Node.YAxisNeighbors.Add(*YNegPtr);
 		}
 		
-		UE_LOG(LogSmartFoundations, Log, TEXT("⚡ Pole %s at grid[%d,%d,%d]: %d X-neighbors, %d Y-neighbors"),
+		UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ Pole %s at grid[%d,%d,%d]: %d X-neighbors, %d Y-neighbors"),
 			*Pole->GetName(), GridPos.X, GridPos.Y, GridPos.Z,
 			Node.XAxisNeighbors.Num(), Node.YAxisNeighbors.Num());
 		
@@ -4509,7 +4510,7 @@ AFGHologram* USFAutoConnectService::UpdateOrCreateBeltForPolePair(
 		EndNormal = TargetPole ? (-TargetPole->GetActorForwardVector()).GetSafeNormal() : -FVector::ForwardVector;
 	}
 	
-	UE_LOG(LogSmartFoundations, Log, TEXT("🚧 STACKABLE BELT: Routing from %s to %s, StartN=%s EndN=%s, Dist=%.1f"),
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("🚧 STACKABLE BELT: Routing from %s to %s, StartN=%s EndN=%s, Dist=%.1f"),
 		*StartPos.ToString(),
 		*EndPos.ToString(),
 		*StartNormal.ToString(),
@@ -4530,7 +4531,7 @@ AFGHologram* USFAutoConnectService::UpdateOrCreateBeltForPolePair(
 			if (DesiredBuildClass && CurrentBuildClass != DesiredBuildClass)
 			{
 				// Tier changed - destroy existing belt and create new one below
-				UE_LOG(LogSmartFoundations, Log, TEXT("🚧 STACKABLE BELT: Tier changed for pair 0x%016llX - recreating belt"), PairKey);
+				UE_LOG(LogSmartAutoConnect, Log, TEXT("🚧 STACKABLE BELT: Tier changed for pair 0x%016llX - recreating belt"), PairKey);
 				
 				FArrayProperty* ChildrenProp = FindFProperty<FArrayProperty>(AFGHologram::StaticClass(), TEXT("mChildren"));
 				if (ChildrenProp)
@@ -4581,7 +4582,7 @@ AFGHologram* USFAutoConnectService::UpdateOrCreateBeltForPolePair(
 					ExistingBelt->LockHologramPosition(true);
 				}
 				
-				UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🚧 STACKABLE BELT: Updated existing belt %s for pair 0x%016llX"), 
+				UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🚧 STACKABLE BELT: Updated existing belt %s for pair 0x%016llX"), 
 					*ExistingBelt->GetName(), PairKey);
 				
 				return ExistingBelt;
@@ -4593,7 +4594,7 @@ AFGHologram* USFAutoConnectService::UpdateOrCreateBeltForPolePair(
 	UClass* BeltBuildClass = Subsystem->GetBeltClassForTier(BeltTier, nullptr);
 	if (!BeltBuildClass)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("🚧 STACKABLE BELT: No belt build class for tier %d"), BeltTier);
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("🚧 STACKABLE BELT: No belt build class for tier %d"), BeltTier);
 		return nullptr;
 	}
 	
@@ -4621,7 +4622,7 @@ AFGHologram* USFAutoConnectService::UpdateOrCreateBeltForPolePair(
 	
 	if (!BeltChild)
 	{
-		UE_LOG(LogSmartFoundations, Error, TEXT("🚧 STACKABLE BELT: SpawnActor returned null"));
+		UE_LOG(LogSmartAutoConnect, Error, TEXT("🚧 STACKABLE BELT: SpawnActor returned null"));
 		return nullptr;
 	}
 	
@@ -4676,7 +4677,7 @@ AFGHologram* USFAutoConnectService::UpdateOrCreateBeltForPolePair(
 	// Track by pole-pair key
 	State.BeltsByPolePair.Add(PairKey, BeltChild);
 	
-	UE_LOG(LogSmartFoundations, Log, TEXT("🚧 STACKABLE BELT: Created new belt %s for pair 0x%016llX"), 
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("🚧 STACKABLE BELT: Created new belt %s for pair 0x%016llX"), 
 		*ChildName.ToString(), PairKey);
 	
 	return BeltChild;
@@ -4716,7 +4717,7 @@ void USFAutoConnectService::RemoveOrphanedBelts(AFGHologram* ParentHologram, con
 				{
 					ParentChildrenArray->Remove(Belt);
 				}
-				UE_LOG(LogSmartFoundations, Log, TEXT("🚧 STACKABLE BELT: Removing orphaned belt %s (pair 0x%016llX)"), 
+				UE_LOG(LogSmartAutoConnect, Log, TEXT("🚧 STACKABLE BELT: Removing orphaned belt %s (pair 0x%016llX)"), 
 					*Belt->GetName(), Pair.Key);
 				Belt->Destroy();
 			}
@@ -4742,7 +4743,7 @@ void USFAutoConnectService::CleanupAllStackableBelts(AFGHologram* ParentHologram
 		return;
 	}
 	
-	UE_LOG(LogSmartFoundations, Log, TEXT("🚧 CleanupAllStackableBelts: Cleaning up %d belt children for %s"),
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("🚧 CleanupAllStackableBelts: Cleaning up %d belt children for %s"),
 		State->BeltsByPolePair.Num(), *ParentHologram->GetName());
 	
 	FArrayProperty* ChildrenProp = FindFProperty<FArrayProperty>(AFGHologram::StaticClass(), TEXT("mChildren"));
