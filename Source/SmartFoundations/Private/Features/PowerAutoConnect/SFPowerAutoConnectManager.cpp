@@ -9,6 +9,7 @@
 #include "Buildables/FGBuildableWire.h"
 #include "FGCircuitConnectionComponent.h"
 #include "SmartFoundations.h"  // For LogSmartFoundations
+#include "Constants/SFAssetPaths.h"
 #include "FGPlayerController.h"
 #include "FGCharacterPlayer.h"
 #include "FGInventoryComponent.h"
@@ -1233,7 +1234,7 @@ void FSFPowerAutoConnectManager::OnPowerPoleBuilt(AFGBuildablePowerPole* BuiltPo
 		// The child wire holograms exist for cost calculation but don't create persistent wires
 		// because unconnected wires are destroyed by the game. Now that both poles are built,
 		// we spawn the wire directly and connect it.
-		UClass* WireClass = LoadClass<AFGBuildableWire>(nullptr, TEXT("/Game/FactoryGame/Buildable/Factory/PowerLine/Build_PowerLine.Build_PowerLine_C"));
+		UClass* WireClass = LoadClass<AFGBuildableWire>(nullptr, SFAssetPaths::PowerLineBuildClass);
 		if (WireClass)
 		{
 			FActorSpawnParameters SpawnParams;
@@ -1449,7 +1450,7 @@ void FSFPowerAutoConnectManager::OnPowerPoleBuilt(AFGBuildablePowerPole* BuiltPo
 		}
 		
 		// Create the connection
-		UClass* PowerLineClass = LoadObject<UClass>(nullptr, TEXT("/Game/FactoryGame/Buildable/Factory/PowerLine/Build_PowerLine.Build_PowerLine_C"));
+		UClass* PowerLineClass = LoadObject<UClass>(nullptr, SFAssetPaths::PowerLineBuildClass);
 		if (!PowerLineClass)
 		{
 			UE_LOG(LogSmartFoundations, Error, TEXT("⚡ OnPowerPoleBuilt: Failed to load PowerLine class for building connection"));

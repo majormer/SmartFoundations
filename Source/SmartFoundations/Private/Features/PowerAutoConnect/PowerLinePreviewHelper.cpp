@@ -6,6 +6,7 @@
 #include "Subsystem/SFSubsystem.h"
 #include "Subsystem/SFHologramHelperService.h"
 #include "SmartFoundations.h"
+#include "Constants/SFAssetPaths.h"
 
 static int32 GSFPowerWireChildCounter = 0;
 
@@ -114,7 +115,7 @@ void FPowerLinePreviewHelper::EnsureSpawned(const FVector& SpawnLocation, UFGPow
 	if (NewHologram)
 	{
 		// Set build class BEFORE finishing construction
-		UClass* PowerLineClass = LoadObject<UClass>(nullptr, TEXT("/Game/FactoryGame/Buildable/Factory/PowerLine/Build_PowerLine.Build_PowerLine_C"));
+		UClass* PowerLineClass = LoadObject<UClass>(nullptr, SFAssetPaths::PowerLineBuildClass);
 		if (PowerLineClass)
 		{
 			NewHologram->SetBuildClass(PowerLineClass);

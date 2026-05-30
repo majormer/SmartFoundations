@@ -1,5 +1,6 @@
 #include "Holograms/Power/SFWireHologram.h"
 #include "SmartFoundations.h"
+#include "Constants/SFAssetPaths.h"
 #include "Features/Extend/SFExtendService.h"  // ResolveChildPreviewMaterialState
 #include "FGConstructDisqualifier.h"
 #include "Buildables/FGBuildableWire.h"
@@ -62,8 +63,7 @@ AActor* ASFWireHologram::Construct(TArray<AActor*>& out_children, FNetConstructi
 	// post-build wiring in SFExtendService::GenerateAndExecuteWiring() connects it.
 	if (Tags.Contains(FName(TEXT("SF_ExtendChild"))))
 	{
-		UClass* WireClass = LoadClass<AFGBuildableWire>(nullptr,
-			TEXT("/Game/FactoryGame/Buildable/Factory/PowerLine/Build_PowerLine.Build_PowerLine_C"));
+		UClass* WireClass = LoadClass<AFGBuildableWire>(nullptr, SFAssetPaths::PowerLineBuildClass);
 		if (WireClass)
 		{
 			FActorSpawnParameters SpawnParams;

@@ -30,9 +30,11 @@ Also tracked (beyond split/dedupe): SmartMCP smoke-test harness; hologram-adapte
 ## Work log
 
 - 2026-05-29: Charter committed (`9b15ecc`). Audit tracker created; `refactor-baseline` tag set. Starting T4 (SAFE-NOW): centralize hardcoded asset paths into `SFAssetPaths.h`, then the player-controller/subsystem lookup helpers.
+- 2026-05-29: T4.1 landed — added `SFAssetPaths.h` and routed the 4 power-feature PowerLine call sites (`SFWireHologram`, `PowerLinePreviewHelper`, `SFPowerAutoConnectManager`) through `SFAssetPaths::PowerLineBuildClass`. Package build SUCCESSFUL (0 errors). Deferred the 3 PowerLine sites in the two giant Extend files (`SFExtendService` 9.5k, `SFManifoldJSON` 3.7k) to fold into their T1/T2 rewrites rather than touch those files twice.
 
 ## Per-slice ledger
 
 | Slice | Files | Lane | Build | Commit |
 |-------|-------|------|-------|--------|
-| T4.1 asset-path constants (`SFAssetPaths.h`) | TBD | SAFE-NOW | pending | pending |
+| T4.1 PowerLine path → `SFAssetPaths::PowerLineBuildClass` | `SFAssetPaths.h` (new) + `SFWireHologram`, `PowerLinePreviewHelper`, `SFPowerAutoConnectManager` (4 sites) | SAFE-NOW | pass | committed |
+| T4.1b PowerLine path in Extend giants (deferred) | `SFExtendService` (×2), `SFManifoldJSON` (×1) | SAFE-NOW | — | fold into T1/T2 |
