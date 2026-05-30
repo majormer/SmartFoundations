@@ -1,6 +1,7 @@
 #include "UI/SmartUpgradePanel.h"
 #include "SmartFoundations.h"
 #include "UI/SFFontLibrary.h"
+#include "Constants/SFAssetPaths.h"
 #include "FGPlayerController.h"
 #include "Subsystem/SFSubsystem.h"
 #include "Services/SFHudService.h"
@@ -1560,21 +1561,14 @@ bool USmartUpgradePanel::CalculateUpgradeCost(ESFUpgradeFamily Family, int32 Sou
 			break;
 		case ESFUpgradeFamily::Lift:
 		{
-			static const TCHAR* LiftRecipeNames[] = {
-				TEXT("/Game/FactoryGame/Recipes/Buildings/Recipe_ConveyorLiftMk1.Recipe_ConveyorLiftMk1_C"),
-				TEXT("/Game/FactoryGame/Recipes/Buildings/Recipe_ConveyorLiftMk2.Recipe_ConveyorLiftMk2_C"),
-				TEXT("/Game/FactoryGame/Recipes/Buildings/Recipe_ConveyorLiftMk3.Recipe_ConveyorLiftMk3_C"),
-				TEXT("/Game/FactoryGame/Recipes/Buildings/Recipe_ConveyorLiftMk4.Recipe_ConveyorLiftMk4_C"),
-				TEXT("/Game/FactoryGame/Recipes/Buildings/Recipe_ConveyorLiftMk5.Recipe_ConveyorLiftMk5_C"),
-				TEXT("/Game/FactoryGame/Recipes/Buildings/Recipe_ConveyorLiftMk6.Recipe_ConveyorLiftMk6_C"),
-			};
+			using namespace SFAssetPaths::UpgradeRecipes;
 			if (SourceTier >= 1 && SourceTier <= 6)
 			{
-				SourceRecipe = LoadClass<UFGRecipe>(nullptr, LiftRecipeNames[SourceTier - 1]);
+				SourceRecipe = LoadClass<UFGRecipe>(nullptr, ConveyorLift[SourceTier - 1]);
 			}
 			if (TargetTier >= 1 && TargetTier <= 6)
 			{
-				TargetRecipe = LoadClass<UFGRecipe>(nullptr, LiftRecipeNames[TargetTier - 1]);
+				TargetRecipe = LoadClass<UFGRecipe>(nullptr, ConveyorLift[TargetTier - 1]);
 			}
 			break;
 		}
@@ -1584,52 +1578,40 @@ bool USmartUpgradePanel::CalculateUpgradeCost(ESFUpgradeFamily Family, int32 Sou
 			break;
 		case ESFUpgradeFamily::PowerPole:
 		{
-			static const TCHAR* PoleRecipeNames[] = {
-				TEXT("/Game/FactoryGame/Recipes/Buildings/Recipe_PowerPoleMk1.Recipe_PowerPoleMk1_C"),
-				TEXT("/Game/FactoryGame/Recipes/Buildings/Recipe_PowerPoleMk2.Recipe_PowerPoleMk2_C"),
-				TEXT("/Game/FactoryGame/Recipes/Buildings/Recipe_PowerPoleMk3.Recipe_PowerPoleMk3_C"),
-			};
+			using namespace SFAssetPaths::UpgradeRecipes;
 			if (SourceTier >= 1 && SourceTier <= 3)
 			{
-				SourceRecipe = LoadClass<UFGRecipe>(nullptr, PoleRecipeNames[SourceTier - 1]);
+				SourceRecipe = LoadClass<UFGRecipe>(nullptr, PowerPole[SourceTier - 1]);
 			}
 			if (TargetTier >= 1 && TargetTier <= 3)
 			{
-				TargetRecipe = LoadClass<UFGRecipe>(nullptr, PoleRecipeNames[TargetTier - 1]);
+				TargetRecipe = LoadClass<UFGRecipe>(nullptr, PowerPole[TargetTier - 1]);
 			}
 			break;
 		}
 		case ESFUpgradeFamily::WallOutletSingle:
 		{
-			static const TCHAR* WallOutletSingleRecipeNames[] = {
-				TEXT("/Game/FactoryGame/Recipes/Buildings/Recipe_PowerPoleWall.Recipe_PowerPoleWall_C"),
-				TEXT("/Game/FactoryGame/Recipes/Buildings/Recipe_PowerPoleWallMk2.Recipe_PowerPoleWallMk2_C"),
-				TEXT("/Game/FactoryGame/Recipes/Buildings/Recipe_PowerPoleWallMk3.Recipe_PowerPoleWallMk3_C"),
-			};
+			using namespace SFAssetPaths::UpgradeRecipes;
 			if (SourceTier >= 1 && SourceTier <= 3)
 			{
-				SourceRecipe = LoadClass<UFGRecipe>(nullptr, WallOutletSingleRecipeNames[SourceTier - 1]);
+				SourceRecipe = LoadClass<UFGRecipe>(nullptr, WallOutletSingle[SourceTier - 1]);
 			}
 			if (TargetTier >= 1 && TargetTier <= 3)
 			{
-				TargetRecipe = LoadClass<UFGRecipe>(nullptr, WallOutletSingleRecipeNames[TargetTier - 1]);
+				TargetRecipe = LoadClass<UFGRecipe>(nullptr, WallOutletSingle[TargetTier - 1]);
 			}
 			break;
 		}
 		case ESFUpgradeFamily::WallOutletDouble:
 		{
-			static const TCHAR* WallOutletDoubleRecipeNames[] = {
-				TEXT("/Game/FactoryGame/Recipes/Buildings/Recipe_PowerPoleWallDouble.Recipe_PowerPoleWallDouble_C"),
-				TEXT("/Game/FactoryGame/Recipes/Buildings/Recipe_PowerPoleWallDoubleMk2.Recipe_PowerPoleWallDoubleMk2_C"),
-				TEXT("/Game/FactoryGame/Recipes/Buildings/Recipe_PowerPoleWallDoubleMk3.Recipe_PowerPoleWallDoubleMk3_C"),
-			};
+			using namespace SFAssetPaths::UpgradeRecipes;
 			if (SourceTier >= 1 && SourceTier <= 3)
 			{
-				SourceRecipe = LoadClass<UFGRecipe>(nullptr, WallOutletDoubleRecipeNames[SourceTier - 1]);
+				SourceRecipe = LoadClass<UFGRecipe>(nullptr, WallOutletDouble[SourceTier - 1]);
 			}
 			if (TargetTier >= 1 && TargetTier <= 3)
 			{
-				TargetRecipe = LoadClass<UFGRecipe>(nullptr, WallOutletDoubleRecipeNames[TargetTier - 1]);
+				TargetRecipe = LoadClass<UFGRecipe>(nullptr, WallOutletDouble[TargetTier - 1]);
 			}
 			break;
 		}

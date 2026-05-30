@@ -1,6 +1,7 @@
 #include "Features/Upgrade/SFUpgradeExecutionService.h"
 #include "Features/Upgrade/SFUpgradeTraversalService.h"
 #include "SmartFoundations.h"
+#include "Constants/SFAssetPaths.h"
 #include "Subsystem/SFSubsystem.h"
 #include "Services/SFChainActorService.h"
 #include "FGBuildableSubsystem.h"
@@ -1756,17 +1757,10 @@ TSubclassOf<UFGRecipe> USFUpgradeExecutionService::GetUpgradeRecipe(ESFUpgradeFa
 		case ESFUpgradeFamily::Lift:
 		{
 			// Conveyor lift recipes: Recipe_ConveyorLiftMk1_C through Recipe_ConveyorLiftMk6_C
-			static const TCHAR* LiftRecipeNames[] = {
-				TEXT("/Game/FactoryGame/Recipes/Buildings/Recipe_ConveyorLiftMk1.Recipe_ConveyorLiftMk1_C"),
-				TEXT("/Game/FactoryGame/Recipes/Buildings/Recipe_ConveyorLiftMk2.Recipe_ConveyorLiftMk2_C"),
-				TEXT("/Game/FactoryGame/Recipes/Buildings/Recipe_ConveyorLiftMk3.Recipe_ConveyorLiftMk3_C"),
-				TEXT("/Game/FactoryGame/Recipes/Buildings/Recipe_ConveyorLiftMk4.Recipe_ConveyorLiftMk4_C"),
-				TEXT("/Game/FactoryGame/Recipes/Buildings/Recipe_ConveyorLiftMk5.Recipe_ConveyorLiftMk5_C"),
-				TEXT("/Game/FactoryGame/Recipes/Buildings/Recipe_ConveyorLiftMk6.Recipe_ConveyorLiftMk6_C"),
-			};
+			using namespace SFAssetPaths::UpgradeRecipes;
 			if (TargetTier >= 1 && TargetTier <= 6)
 			{
-				UClass* RecipeClass = LoadClass<UFGRecipe>(nullptr, LiftRecipeNames[TargetTier - 1]);
+				UClass* RecipeClass = LoadClass<UFGRecipe>(nullptr, ConveyorLift[TargetTier - 1]);
 				if (RecipeClass)
 				{
 					return TSubclassOf<UFGRecipe>(RecipeClass);
@@ -1778,14 +1772,10 @@ TSubclassOf<UFGRecipe> USFUpgradeExecutionService::GetUpgradeRecipe(ESFUpgradeFa
 		case ESFUpgradeFamily::PowerPole:
 		{
 			// Power pole recipes: Recipe_PowerPoleMk1_C, Recipe_PowerPoleMk2_C, Recipe_PowerPoleMk3_C
-			static const TCHAR* PoleRecipeNames[] = {
-				TEXT("/Game/FactoryGame/Recipes/Buildings/Recipe_PowerPoleMk1.Recipe_PowerPoleMk1_C"),
-				TEXT("/Game/FactoryGame/Recipes/Buildings/Recipe_PowerPoleMk2.Recipe_PowerPoleMk2_C"),
-				TEXT("/Game/FactoryGame/Recipes/Buildings/Recipe_PowerPoleMk3.Recipe_PowerPoleMk3_C"),
-			};
+			using namespace SFAssetPaths::UpgradeRecipes;
 			if (TargetTier >= 1 && TargetTier <= 3)
 			{
-				UClass* RecipeClass = LoadClass<UFGRecipe>(nullptr, PoleRecipeNames[TargetTier - 1]);
+				UClass* RecipeClass = LoadClass<UFGRecipe>(nullptr, PowerPole[TargetTier - 1]);
 				if (RecipeClass)
 				{
 					return TSubclassOf<UFGRecipe>(RecipeClass);
@@ -1797,14 +1787,10 @@ TSubclassOf<UFGRecipe> USFUpgradeExecutionService::GetUpgradeRecipe(ESFUpgradeFa
 		case ESFUpgradeFamily::WallOutletSingle:
 		{
 			// Single-sided wall outlets Mk1-Mk3 (some via MAM/FICSIT shop)
-			static const TCHAR* WallOutletSingleRecipeNames[] = {
-				TEXT("/Game/FactoryGame/Recipes/Buildings/Recipe_PowerPoleWall.Recipe_PowerPoleWall_C"),
-				TEXT("/Game/FactoryGame/Recipes/Buildings/Recipe_PowerPoleWallMk2.Recipe_PowerPoleWallMk2_C"),
-				TEXT("/Game/FactoryGame/Recipes/Buildings/Recipe_PowerPoleWallMk3.Recipe_PowerPoleWallMk3_C"),
-			};
+			using namespace SFAssetPaths::UpgradeRecipes;
 			if (TargetTier >= 1 && TargetTier <= 3)
 			{
-				UClass* RecipeClass = LoadClass<UFGRecipe>(nullptr, WallOutletSingleRecipeNames[TargetTier - 1]);
+				UClass* RecipeClass = LoadClass<UFGRecipe>(nullptr, WallOutletSingle[TargetTier - 1]);
 				if (RecipeClass)
 				{
 					return TSubclassOf<UFGRecipe>(RecipeClass);
@@ -1816,14 +1802,10 @@ TSubclassOf<UFGRecipe> USFUpgradeExecutionService::GetUpgradeRecipe(ESFUpgradeFa
 		case ESFUpgradeFamily::WallOutletDouble:
 		{
 			// Double-sided wall outlets Mk1-Mk3 (some via MAM/FICSIT shop)
-			static const TCHAR* WallOutletDoubleRecipeNames[] = {
-				TEXT("/Game/FactoryGame/Recipes/Buildings/Recipe_PowerPoleWallDouble.Recipe_PowerPoleWallDouble_C"),
-				TEXT("/Game/FactoryGame/Recipes/Buildings/Recipe_PowerPoleWallDoubleMk2.Recipe_PowerPoleWallDoubleMk2_C"),
-				TEXT("/Game/FactoryGame/Recipes/Buildings/Recipe_PowerPoleWallDoubleMk3.Recipe_PowerPoleWallDoubleMk3_C"),
-			};
+			using namespace SFAssetPaths::UpgradeRecipes;
 			if (TargetTier >= 1 && TargetTier <= 3)
 			{
-				UClass* RecipeClass = LoadClass<UFGRecipe>(nullptr, WallOutletDoubleRecipeNames[TargetTier - 1]);
+				UClass* RecipeClass = LoadClass<UFGRecipe>(nullptr, WallOutletDouble[TargetTier - 1]);
 				if (RecipeClass)
 				{
 					return TSubclassOf<UFGRecipe>(RecipeClass);
