@@ -71,7 +71,7 @@ Extend copies an existing factory module instead of creating a blank grid. Aim t
 
 ### Smart Upgrade
 
-Smart Upgrade helps replace infrastructure after you unlock better tiers. Open it while holding a belt, lift, pipe, pump, power line, or wall outlet. Scan by radius or follow a connected network, preview the material cost, and upgrade many items at once.
+Smart Upgrade helps replace infrastructure after you unlock better tiers. Open it while holding a belt, lift, pipe, power line, or wall outlet. Scan by radius or follow a connected network, preview the material cost, and upgrade many items at once.
 
 ---
 

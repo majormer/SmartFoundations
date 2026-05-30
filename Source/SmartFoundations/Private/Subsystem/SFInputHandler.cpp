@@ -94,7 +94,7 @@ void FSFInputHandler::SetupPlayerInput(AFGPlayerController* PlayerController)
 		else
 		{
 			UE_LOG(LogSmartFoundations, Error, TEXT("❌ Smart! Input Mapping Context not loaded - Blueprint assets required"));
-			UE_LOG(LogSmartFoundations, Error, TEXT("📖 Create assets in Unreal Editor per docs/Input/SMART_INPUT_SYSTEM.md"));
+			UE_LOG(LogSmartFoundations, Error, TEXT("📖 Create the Smart! input action assets in the Unreal Editor"));
 		}
 	}
 	else

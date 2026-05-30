@@ -275,15 +275,15 @@ msgstr "設定: {0}"
 
 msgctxt "SmartFoundations,Family_Belt"
 msgid "Conveyor Belts"
-msgstr "傳送帶"
+msgstr "輸送帶"
 
 msgctxt "SmartFoundations,Family_Lift"
 msgid "Conveyor Lifts"
-msgstr "傳送升降機"
+msgstr "輸送梯"
 
 msgctxt "SmartFoundations,Family_Pipe"
 msgid "Pipelines"
-msgstr "管道"
+msgstr "管線"
 
 msgctxt "SmartFoundations,Family_Pump"
 msgid "Pipeline Pumps"
@@ -295,15 +295,15 @@ msgstr "電線桿"
 
 msgctxt "SmartFoundations,Family_WallOutletSingle"
 msgid "Wall Outlets (Single)"
-msgstr "牆壁配電器（單面）"
+msgstr "牆面電接頭（單面）"
 
 msgctxt "SmartFoundations,Family_WallOutletDouble"
 msgid "Wall Outlets (Double)"
-msgstr "牆壁配電器（雙面）"
+msgstr "牆面電接頭（雙面）"
 
 msgctxt "SmartFoundations,Family_Tower"
 msgid "Power Towers"
-msgstr "輸電塔"
+msgstr "電塔"
 
 #. Config menu DisplayName and ToolTip strings
 

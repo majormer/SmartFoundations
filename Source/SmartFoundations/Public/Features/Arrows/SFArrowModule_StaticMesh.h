@@ -32,7 +32,6 @@ class USFSubsystem;
  * - Arrow Shaft: /Engine/BasicShapes/Cylinder (shaft)
  * - Text Labels: UTextRenderComponent with billboard behavior
  * 
- * @see docs/Features/Scaling/ARROW_SYSTEM_ANALYSIS.md
  * @see Task #17 in tasks/tasks.json
  * 
  * USAGE:
@@ -45,7 +44,7 @@ class USFSubsystem;
  *     GetWorld(),
  *     HologramTransform,
  *     CurrentLastAxis,
- *     bArrowsVisible
+ *     bArrowsRuntimeVisible
  * );
  * 
  * // On destroy:

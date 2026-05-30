@@ -279,7 +279,7 @@ msgstr "Nastri trasportatori"
 
 msgctxt "SmartFoundations,Family_Lift"
 msgid "Conveyor Lifts"
-msgstr "Elevatori a nastro"
+msgstr "Trasportatori verticali"
 
 msgctxt "SmartFoundations,Family_Pipe"
 msgid "Pipelines"
@@ -291,19 +291,19 @@ msgstr "Pompe per condutture"
 
 msgctxt "SmartFoundations,Family_PowerPole"
 msgid "Power Poles"
-msgstr "Pali elettrici"
+msgstr "Palo elettrico"
 
 msgctxt "SmartFoundations,Family_WallOutletSingle"
 msgid "Wall Outlets (Single)"
-msgstr "Distributori a muro (singolo)"
+msgstr "Prese da parete (singolo)"
 
 msgctxt "SmartFoundations,Family_WallOutletDouble"
 msgid "Wall Outlets (Double)"
-msgstr "Distributori a muro (doppio)"
+msgstr "Prese da parete (doppio)"
 
 msgctxt "SmartFoundations,Family_Tower"
 msgid "Power Towers"
-msgstr "Torri elettriche"
+msgstr "Traliccio"
 
 #. Config menu DisplayName and ToolTip strings
 

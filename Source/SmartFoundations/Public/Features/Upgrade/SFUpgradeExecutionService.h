@@ -179,24 +179,6 @@ private:
 	/** Resolve the correct target recipe for a specific buildable in a mixed batch. */
 	TSubclassOf<class UFGRecipe> GetTargetRecipeForBuildable(AFGBuildable* Buildable, TSubclassOf<class UFGRecipe> FallbackRecipe) const;
 
-	/** Calculate total upgrade cost for all pending items
-	 * @param OutNetCost - Output map of item class to net amount needed
-	 * @return true if calculation succeeded
-	 */
-	bool CalculateTotalUpgradeCost(TMap<TSubclassOf<class UFGItemDescriptor>, int32>& OutNetCost) const;
-
-	/** Check if player can afford the upgrade costs
-	 * @param NetCost - Map of item class to net amount needed
-	 * @return true if player has enough materials
-	 */
-	bool CanAffordUpgrade(const TMap<TSubclassOf<class UFGItemDescriptor>, int32>& NetCost) const;
-
-	/** Deduct upgrade costs from player inventory
-	 * @param NetCost - Map of item class to net amount to deduct
-	 * @return true if deduction succeeded
-	 */
-	bool DeductUpgradeCosts(const TMap<TSubclassOf<class UFGItemDescriptor>, int32>& NetCost);
-
 	/** Complete the upgrade batch */
 	void CompleteUpgrade();
 

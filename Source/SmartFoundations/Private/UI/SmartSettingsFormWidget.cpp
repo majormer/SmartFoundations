@@ -14,7 +14,10 @@
 #include "Styling/SlateTypes.h"
 #include "InputCoreTypes.h"
 #include "SmartFoundations.h"
+#include "UI/SFFontLibrary.h"
 #include "Subsystem/SFSubsystem.h"
+#include "Engine/World.h"
+#include "TimerManager.h"
 
 #include "Features/AutoConnect/SFAutoConnectService.h"
 #include "Services/SFRecipeManagementService.h"
@@ -35,6 +38,18 @@ void USmartSettingsFormWidget::NativeConstruct()
     Super::NativeConstruct();
 
     UE_LOG(LogSmartFoundations, Log, TEXT("Settings Form: NativeConstruct called"));
+
+    // Switch designer-placed (and localized) labels/fields to the in-game multi-script font.
+    SFFont::ApplyToWidgetTree(WidgetTree);
+
+    // The Apply/Reset/Close header buttons are fixed-width in the designer (sized for English),
+    // so longer localized labels (e.g. Arabic) get clipped. Fit them to content next tick, once
+    // the localized labels, font, and first layout pass are all in place.
+    if (UWorld* World = GetWorld())
+    {
+        World->GetTimerManager().SetTimerForNextTick(
+            FTimerDelegate::CreateUObject(this, &USmartSettingsFormWidget::FitHeaderButtonRow));
+    }
 
     // Check if Blueprint widgets are bound
     if (!BackgroundPanel)
@@ -129,9 +144,7 @@ void USmartSettingsFormWidget::NativeConstruct()
             SpinBox->SetMinDesiredWidth(400.0f);  // Wider for easier interaction
 
             // Increase font size for readability
-            FSlateFontInfo FontInfo = SpinBox->GetFont();
-            FontInfo.Size = 18;
-            SpinBox->SetFont(FontInfo);
+            SpinBox->SetFont(SFFont::Get(18));
 
             SpinBox->OnValueCommitted.AddDynamic(this, &USmartSettingsFormWidget::OnSpinBoxValueCommitted);
             SpinBox->OnValueChanged.AddDynamic(this, &USmartSettingsFormWidget::OnGridSpinBoxValueChanged);
@@ -154,9 +167,7 @@ void USmartSettingsFormWidget::NativeConstruct()
             SpinBox->SetMinDesiredWidth(400.0f);  // Wider for easier interaction
 
             // Increase font size for readability
-            FSlateFontInfo FontInfo = SpinBox->GetFont();
-            FontInfo.Size = 18;
-            SpinBox->SetFont(FontInfo);
+            SpinBox->SetFont(SFFont::Get(18));
 
             SpinBox->OnValueCommitted.AddDynamic(this, &USmartSettingsFormWidget::OnSpinBoxValueCommitted);
             SpinBox->OnValueChanged.AddDynamic(this, &USmartSettingsFormWidget::OnSpinBoxValueChanged);
@@ -194,9 +205,7 @@ void USmartSettingsFormWidget::NativeConstruct()
             SpinBox->SetMaxFractionalDigits(1);
             SpinBox->SetMinDesiredWidth(400.0f);
 
-            FSlateFontInfo FontInfo = SpinBox->GetFont();
-            FontInfo.Size = 18;
-            SpinBox->SetFont(FontInfo);
+            SpinBox->SetFont(SFFont::Get(18));
 
             SpinBox->OnValueCommitted.AddDynamic(this, &USmartSettingsFormWidget::OnSpinBoxValueCommitted);
             SpinBox->OnValueChanged.AddDynamic(this, &USmartSettingsFormWidget::OnSpinBoxValueChanged);
@@ -1116,6 +1125,86 @@ void USmartSettingsFormWidget::PopulateFromCounterState(USFSubsystem* Subsystem)
 
     // Initialize grid warning display based on current values
     UpdateGridWarningDisplay();
+}
+
+void USmartSettingsFormWidget::FitHeaderButtonRow()
+{
+    if (!ApplyButtonSlot || !ResetButtonSlot || !CloseButtonSlot)
+    {
+        return;
+    }
+
+    // The Apply/Reset/Close buttons sit in a narrow header band to the RIGHT of the Smart! logo
+    // (the logo ends ~x295; the content column runs to ~x632; the collapsible Smart Restore panel
+    // begins ~x592). Keep the row's left edge at the designer's leftmost button (clears the logo)
+    // and extend it to the right edge of the content column, then split into equal thirds. The
+    // band is tight, so each label is shrunk to fit its button width below.
+    TArray<UCanvasPanelSlot*> Row = { ApplyButtonSlot, CloseButtonSlot, ResetButtonSlot };
+    Row.Sort([](const UCanvasPanelSlot& A, const UCanvasPanelSlot& B)
+    {
+        return A.GetPosition().X < B.GetPosition().X;   // preserve designer left-to-right order
+    });
+
+    const float Left = Row[0]->GetPosition().X;          // designer leftmost button: clears the logo
+    float Right = Left + 280.0f;                          // fallback span if content size unknown
+    if (ContentContainerSlot && ContentContainerSlot->GetSize().X > 1.0f)
+    {
+        // Inset from the content's right edge so the row doesn't touch the panel border.
+        Right = ContentContainerSlot->GetPosition().X + ContentContainerSlot->GetSize().X - 44.0f;
+    }
+    if (RestoreSidePanelSlot)
+    {
+        // Keep clear of the (collapsible) Smart Restore panel, which sits to the right.
+        Right = FMath::Min(Right, RestoreSidePanelSlot->GetPosition().X - 8.0f);
+    }
+
+    const float Gap = 8.0f;
+    const float Height = 44.0f;                           // taller, comfortably tappable
+    const float RowY = Row[0]->GetPosition().Y;           // keep the designed vertical position
+    const float ButtonWidth = FMath::Max(60.0f, (Right - Left - 2.0f * Gap) / 3.0f);
+
+    float X = Left;
+    for (UCanvasPanelSlot* ButtonSlot : Row)
+    {
+        ButtonSlot->SetAutoSize(false);
+        ButtonSlot->SetSize(FVector2D(ButtonWidth, Height));
+        ButtonSlot->SetPosition(FVector2D(X, RowY));
+        X += ButtonWidth + Gap;
+    }
+
+    // Shrink each label until it fits its button so no language is clipped in this tight band.
+    const float LabelAvail = ButtonWidth - 16.0f;
+    auto FitLabel = [this, LabelAvail](const TCHAR* WidgetName)
+    {
+        UTextBlock* Label = Cast<UTextBlock>(GetWidgetFromName(FName(WidgetName)));
+        if (!Label)
+        {
+            return;
+        }
+        FSlateFontInfo Font = Label->GetFont();
+        for (int32 Guard = 0; Guard < 16; ++Guard)
+        {
+            Label->ForceLayoutPrepass();
+            if (Label->GetDesiredSize().X <= LabelAvail || Font.Size <= 9.0f)
+            {
+                break;
+            }
+            Font.Size -= 1.0f;
+            Label->SetFont(Font);
+        }
+    };
+    FitLabel(TEXT("ApplyBtnText"));
+    FitLabel(TEXT("ResetBtnText"));
+    FitLabel(TEXT("CloseButtonText"));
+
+    // Keep the panel-drag offsets in sync with the new positions.
+    if (BackgroundPanelSlot)
+    {
+        const FVector2D BgPos = BackgroundPanelSlot->GetPosition();
+        ApplyOffset = ApplyButtonSlot->GetPosition() - BgPos;
+        ResetOffset = ResetButtonSlot->GetPosition() - BgPos;
+        CloseOffset = CloseButtonSlot->GetPosition() - BgPos;
+    }
 }
 
 void USmartSettingsFormWidget::OnCloseButtonClicked()
@@ -2333,10 +2422,8 @@ UWidget* USmartSettingsFormWidget::CreateRecipeDetailRow(UTexture2D* Icon, const
         TextWidget->SetText(FText::FromString(Text));
         TextWidget->SetColorAndOpacity(FSlateColor(TextColor));
 
-        // Set font to match HUD style
-        FSlateFontInfo FontInfo = TextWidget->GetFont();
-        FontInfo.Size = 14;
-        TextWidget->SetFont(FontInfo);
+        // Set font to match HUD style (in-game multi-script font)
+        TextWidget->SetFont(SFFont::Get(14));
 
         UHorizontalBoxSlot* TextSlot = Row->AddChildToHorizontalBox(TextWidget);
         if (TextSlot)

@@ -2018,36 +2018,6 @@ FSFHologramHelperService::EUObjectWarningLevel FSFHologramHelperService::CheckUO
 }
 
 // ========================================
-// Future Feature Stubs (Auto-Connect/Extend)
-// ========================================
-
-bool FSFHologramHelperService::CanAutoConnect(const AFGHologram* Source, const AFGHologram* Target) const
-{
-	// STUB: To be implemented for Auto-Connect feature
-	// See docs/Future_Features_Analysis.md for design details
-	return false;
-}
-
-void FSFHologramHelperService::ApplyAutoConnect(AFGHologram* Source, AFGHologram* Target)
-{
-	// STUB: To be implemented for Auto-Connect feature
-	// See docs/Future_Features_Analysis.md for design details
-}
-
-bool FSFHologramHelperService::CanExtend(const AFGHologram* Hologram) const
-{
-	// STUB: To be implemented for Extend feature
-	// See docs/Future_Features_Analysis.md for design details
-	return false;
-}
-
-void FSFHologramHelperService::ApplyExtend(AFGHologram* Hologram)
-{
-	// STUB: To be implemented for Extend feature
-	// See docs/Future_Features_Analysis.md for design details
-}
-
-// ========================================
 // Private Helpers
 // ========================================
 

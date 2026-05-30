@@ -30,6 +30,7 @@
 #include "UObject/NoExportTypes.h"
 #include "FGFactoryConnectionComponent.h"
 #include "FGPipeConnectionComponent.h"
+#include "Hologram/FGHologram.h"  // For EHologramMaterialState
 #include "ItemAmount.h"  // For FItemAmount
 #include "HUD/SFHUDTypes.h"  // For FSFCounterState
 #include "Features/Extend/SFExtendTypes.h"  // For FSFExtendTopology, FSFConnectionChainNode, FSFPipeConnectionChainNode
@@ -278,6 +279,35 @@ public:
      */
     UFUNCTION(BlueprintCallable, Category = "Smart|Extend")
     bool IsScaledExtendValid() const { return bScaledExtendValid; }
+
+    /** Material state Extend child previews should mirror (recomputed each RefreshExtension). */
+    EHologramMaterialState GetExtendChildMaterialState() const { return ExtendChildMaterialState; }
+
+    /**
+     * Depot-aware affordability for the whole extend. Compares the aggregated extend cost
+     * (GetCost(true), which includes belt/pipe/lift child costs via the GetCost hook) against the
+     * player inventory PLUS the Dimensional Depot (central storage). Vanilla's own CheckCanAfford
+     * ignores the depot, so ASFFactoryHologram::CheckCanAfford uses this to keep the preview's
+     * FGCDUnaffordable disqualifier correct, and RefreshExtension uses it to drive ExtendMaterialState.
+     * Returns true when the cost cannot be evaluated (null args) so it never blocks spuriously.
+     */
+    bool CanAffordExtendCost(class AFGHologram* Hologram, class UFGInventoryComponent* Inventory) const;
+
+    /**
+     * Resolve the material state an Extend child preview hologram should display.
+     *
+     * Child holograms (belts/pipes/lifts/distributors/etc.) re-run CheckValidPlacement
+     * every frame via the build gun's validation cascade, which fires AFTER our
+     * RefreshExtension propagation and would otherwise reset them to HMS_OK (or read a
+     * stale HMS_OK from the parent before the build gun applies the parent's
+     * insufficient-materials red). Reading this authoritative, frame-order-independent
+     * value instead keeps child previews in sync with the extend's real state.
+     *
+     * Returns the last computed extend child state while Extend mode is active, otherwise
+     * HMS_OK so non-Extend uses of these hologram classes are unaffected. Safe to call
+     * from any child hologram's CheckValidPlacement.
+     */
+    static EHologramMaterialState ResolveChildPreviewMaterialState(const UObject* WorldContext);
 
     // ==================== Direction Cycling (delegates to DetectionService) ====================
 
@@ -713,6 +743,9 @@ private:
 
     /** Whether the current scaled extend configuration is valid for placement */
     bool bScaledExtendValid = true;
+
+    /** Authoritative material state for Extend child previews; set each RefreshExtension. */
+    EHologramMaterialState ExtendChildMaterialState = EHologramMaterialState::HMS_OK;
 
     /** Reason why current configuration is invalid (empty if valid) */
     FString ScaledExtendInvalidReason;

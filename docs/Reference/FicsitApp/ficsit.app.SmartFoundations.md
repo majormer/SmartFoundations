@@ -205,7 +205,7 @@ Extend is one of Smart!'s most powerful features, but it needs a valid source la
 
 Smart Upgrade helps replace infrastructure after you unlock better tiers.
 
-Open it while holding a belt, lift, pipe, pump, power line, or wall outlet. You can scan by radius or follow a connected network, preview the material cost, and upgrade many items at once.
+Open it while holding a belt, lift, pipe, power line, or wall outlet. You can scan by radius or follow a connected network, preview the material cost, and upgrade many items at once.
 
 Supported upgrade families include:
 
@@ -433,7 +433,7 @@ Use the Smart! Panel when you prefer visual controls instead of keybinds.
 
 **K is context-sensitive:**
 
-- Holding a **belt, lift, pipe, pump, power line, or wall outlet** opens the **Smart Upgrade Panel**.
+- Holding a **belt, lift, pipe, power line, or wall outlet** opens the **Smart Upgrade Panel**.
 - Holding most other buildables opens the **Smart! Panel** for grid, spacing, recipe, and Auto-Connect settings.
 
 > **Power note:** To upgrade a power grid, aim while holding a **Power Line** instead of a Power Pole. This keeps `K` available for scaling power poles through the Smart! Panel.
@@ -459,7 +459,7 @@ Use Rotation Transform for arcs, curved roads, spiral-like ramps, and radial lay
 
 Use Smart Upgrade when you want to replace existing infrastructure with a different tier.
 
-1. Hold a belt, lift, pipe, pump, power line, or wall outlet hologram.
+1. Hold a belt, lift, pipe, power line, or wall outlet hologram.
 2. Press `K` to open the Smart Upgrade Panel.
 3. Choose radius mode or network traversal mode.
 4. Select the target tier or family.

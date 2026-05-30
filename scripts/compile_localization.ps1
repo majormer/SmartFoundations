@@ -180,7 +180,10 @@ if (-not $CompileOk) { exit 1 }
 
 Write-Host ""
 Write-Host "Phase 4: Removing .locres files for disabled languages..." -ForegroundColor Cyan
-$DisabledLanguages = @("ar", "fa", "th")
+# ar/fa/th were disabled only because the old Roboto UI font rendered them as tofu.
+# The switch to FactoryFont (renders Arabic/Persian/Thai) removed that blocker, so they
+# are now enabled. Leave this list empty unless a language must be disabled again.
+$DisabledLanguages = @()
 
 foreach ($Language in $DisabledLanguages) {
     $LocresFile = Join-Path $LocalizationRoot "$Language\SmartFoundations.locres"

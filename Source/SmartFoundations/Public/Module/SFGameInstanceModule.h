@@ -8,7 +8,7 @@
 
 /**
  * Smart! Foundations Game Instance Module
- * Registers widget blueprint hooks and mod-wide initialization
+ * Registers mod-wide initialization hooks
  */
 UCLASS(Abstract)
 class SMARTFOUNDATIONS_API USFGameInstanceModule : public UGameInstanceModule
@@ -18,22 +18,15 @@ class SMARTFOUNDATIONS_API USFGameInstanceModule : public UGameInstanceModule
 public:
 	USFGameInstanceModule();
 
-	/** Override lifecycle event to register widget hooks */
+	/** Override lifecycle event to register module hooks */
 	virtual void DispatchLifecycleEvent(ELifecyclePhase Phase) override;
 
 protected:
-	/** Register widget blueprint hooks for HUD overlay */
-	void RegisterWidgetHooks();
-	
 	/** Register SML hook for cost aggregation (belt preview costs in distributor tooltip) */
 	void RegisterCostAggregationHook();
 	
 	/** Register SML hook for blueprint construct to handle chain actor rebuilding (like AutoLink) */
 	void RegisterBlueprintConstructHook();
-
-	/** Widget class to inject into game HUD */
-	UPROPERTY(EditDefaultsOnly, Category = "Smart! UI")
-	TSubclassOf<UUserWidget> CounterWidgetClass;
 
 	/** Smart! Configuration blueprint - registered with SML for in-game menu access */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Smart! Configuration")

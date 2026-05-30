@@ -15,6 +15,7 @@
 #include "FGConstructDisqualifier.h"
 #include "Features/Extend/SFExtendService.h"
 #include "Subsystem/SFSubsystem.h"
+#include "FGConstructDisqualifier.h"
 #include "FGBuildableSubsystem.h"
 #include "FGConveyorChainActor.h"
 #include "EngineUtils.h"  // For TActorIterator
@@ -207,8 +208,20 @@ void ASFConveyorBeltHologram::CheckValidPlacement()
                 *GetName(), *DisqualifierNames, RealDisqualifierCount);
         }
 
+        EHologramMaterialState DesiredState = bLastVanillaPlacementValid
+            ? EHologramMaterialState::HMS_OK
+            : EHologramMaterialState::HMS_ERROR;
+
+        if (AFGHologram* Parent = GetParentHologram())
+        {
+            if (Parent->GetHologramMaterialState() == EHologramMaterialState::HMS_ERROR)
+            {
+                DesiredState = EHologramMaterialState::HMS_ERROR;
+            }
+        }
+
         ResetConstructDisqualifiers();
-        SetPlacementMaterialState(EHologramMaterialState::HMS_OK);
+        SetPlacementMaterialState(DesiredState);
         return;
     }
 
@@ -217,7 +230,24 @@ void ASFConveyorBeltHologram::CheckValidPlacement()
     if (GetParentHologram())
     {
         UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Belt child preview (has parent) - skipping validation"));
-        return; // Don't call Super - prevents disqualifiers
+        // Mirror the Extend preview's authoritative state (frame-order independent), so the
+        // child turns red on insufficient materials and back to cyan when affordable again.
+        // Reading the parent directly can still see HMS_OK before the build gun applies the
+        // parent's red this frame. Keep a parent-ERROR fallback for non-Extend parented previews.
+        EHologramMaterialState DesiredState = USFExtendService::ResolveChildPreviewMaterialState(this);
+        if (DesiredState != EHologramMaterialState::HMS_ERROR
+            && GetParentHologram()->GetHologramMaterialState() == EHologramMaterialState::HMS_ERROR)
+        {
+            DesiredState = EHologramMaterialState::HMS_ERROR;
+        }
+        // The build gun paints previews from construct disqualifiers, not SetPlacementMaterialState.
+        ResetConstructDisqualifiers();
+        if (DesiredState == EHologramMaterialState::HMS_ERROR)
+        {
+            AddConstructDisqualifier(UFGCDUnaffordable::StaticClass());
+        }
+        SetPlacementMaterialState(DesiredState);
+        return; // Don't call Super - prevents vanilla placement disqualifiers
     }
     
     // Also check data registry for validation control (used by EXTEND before AddChild is called)
@@ -299,11 +329,9 @@ void ASFConveyorBeltHologram::SetPlacementMaterialState(EHologramMaterialState m
     // Let the base class update stencil/render depth
     Super::SetPlacementMaterialState(materialState);
 
-    // Configure spline mesh components for hologram rendering
-    // CRITICAL: Vanilla belt holograms use the NATIVE belt material (not hologram material)
-    // The hologram effect comes from custom depth stencil settings, not material override
     TArray<USplineMeshComponent*> MeshComps;
     GetComponents<USplineMeshComponent>(MeshComps);
+    const uint8 StencilValue = GetStencilForHologramMaterialState(materialState);
 
     // If no spline meshes are present, skip the rest to avoid log spam
     if (MeshComps.Num() == 0)
@@ -315,11 +343,8 @@ void ASFConveyorBeltHologram::SetPlacementMaterialState(EHologramMaterialState m
     {
         if (Mesh)
         {
-            // CRITICAL: Set custom depth stencil to match vanilla hologram rendering
-            // Vanilla uses StencilValue=5, StencilWriteMask=0 (NOT 1 and 255)
-            // This creates the hologram glow effect while keeping the native material
             Mesh->SetRenderCustomDepth(true);
-            Mesh->SetCustomDepthStencilValue(5);
+            Mesh->SetCustomDepthStencilValue(StencilValue);
             Mesh->SetCustomDepthStencilWriteMask(ERendererStencilMask::ERSM_Default);
             
             // Force render state update
@@ -329,9 +354,10 @@ void ASFConveyorBeltHologram::SetPlacementMaterialState(EHologramMaterialState m
         }
     }
 
-    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🎨 BELT SetPlacementMaterialState: State=%d, SplineMeshes=%d (using native material with StencilValue=5)"),
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🎨 BELT SetPlacementMaterialState: State=%d, SplineMeshes=%d, Stencil=%d"),
         (int32)materialState,
-        MeshComps.Num());
+        MeshComps.Num(),
+        (int32)StencilValue);
 }
 
 AActor* ASFConveyorBeltHologram::Construct(TArray<AActor*>& out_children, FNetConstructionID constructionID)
@@ -397,9 +423,6 @@ AActor* ASFConveyorBeltHologram::Construct(TArray<AActor*>& out_children, FNetCo
             }
             if (HoloData)
             {
-                HoloData->bWasBuilt = true;
-                HoloData->CreatedActor = Cast<AFGBuildable>(BuiltActor);
-
                 // Register with ExtendService for post-build wiring
                 if (FSFExtendChainHelper::IsExtendChainMember(HoloData))
                 {
@@ -880,12 +903,28 @@ void ASFConveyorBeltHologram::TriggerMeshGeneration()
             NewMesh->SetStaticMesh(BeltMesh);
             NewMesh->SetMobility(EComponentMobility::Movable);
             NewMesh->SetForwardAxis(ESplineMeshAxis::X);
+            NewMesh->ComponentTags.AddUnique(AFGHologram::HOLOGRAM_MESH_TAG);
             
             NewMesh->RegisterComponent();
             NewMesh->AttachToComponent(mSplineComponent, FAttachmentTransformRules::SnapToTargetIncludingScale);
             NewMesh->SetVisibility(true, true);
             
             MeshComps.Add(NewMesh);
+        }
+    }
+
+    if (FArrayProperty* SplineMeshesProp = FindFProperty<FArrayProperty>(AFGConveyorBeltHologram::StaticClass(), TEXT("mSplineMeshes")))
+    {
+        if (TArray<USplineMeshComponent*>* NativeSplineMeshes = SplineMeshesProp->ContainerPtrToValuePtr<TArray<USplineMeshComponent*>>(this))
+        {
+            NativeSplineMeshes->Reset();
+            for (USplineMeshComponent* MeshComp : MeshComps)
+            {
+                if (MeshComp)
+                {
+                    NativeSplineMeshes->Add(MeshComp);
+                }
+            }
         }
     }
     
@@ -929,9 +968,8 @@ void ASFConveyorBeltHologram::TriggerMeshGeneration()
     UE_LOG(LogSmartFoundations, Log, TEXT("🎯 BELT TriggerMeshGeneration: Created %d segments of %.1f cm each"), 
         MeshComps.Num(), SegmentLength);
     
-    // Apply hologram material
-    UE_LOG(LogSmartFoundations, Log, TEXT("🎯 BELT TriggerMeshGeneration: Calling SetPlacementMaterialState(HMS_OK)"));
-    SetPlacementMaterialState(EHologramMaterialState::HMS_OK);
+    // Apply the current hologram material state to newly generated meshes.
+    SetPlacementMaterialState(GetHologramMaterialState());
 }
 
 // Override ConfigureActor to let parent class handle mesh initialization
@@ -2100,11 +2138,7 @@ void ASFConveyorBeltHologram::StopContinuousPositionCorrection()
 
 void ASFConveyorBeltHologram::ForceApplyHologramMaterial()
 {
-    // CRITICAL: Always use HMS_OK for child belt holograms.
-    // GetHologramMaterialState() may return HMS_ERROR because the hologram hasn't
-    // passed validation checks (it's a child hologram managed by Smart, not vanilla).
-    // We want the belt preview to always be visible with the valid hologram material.
-    EHologramMaterialState CurrentState = EHologramMaterialState::HMS_OK;
+    EHologramMaterialState CurrentState = GetHologramMaterialState();
     
     // Call our overridden SetPlacementMaterialState which properly applies
     // hologram materials to dynamically created spline mesh components.

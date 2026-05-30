@@ -277,15 +277,15 @@ msgstr "Beállítások: {0}"
 
 msgctxt "SmartFoundations,Family_Belt"
 msgid "Conveyor Belts"
-msgstr "Szállítószalagok"
+msgstr "Futószalagok"
 
 msgctxt "SmartFoundations,Family_Lift"
 msgid "Conveyor Lifts"
-msgstr "Szállítóliftek"
+msgstr "Futószalag liftek"
 
 msgctxt "SmartFoundations,Family_Pipe"
 msgid "Pipelines"
-msgstr "Csővezetékek"
+msgstr "Csövek"
 
 msgctxt "SmartFoundations,Family_Pump"
 msgid "Pipeline Pumps"
@@ -293,19 +293,19 @@ msgstr "Csőszivattyúk"
 
 msgctxt "SmartFoundations,Family_PowerPole"
 msgid "Power Poles"
-msgstr "Villanyoszlopok"
+msgstr "Villanypózna"
 
 msgctxt "SmartFoundations,Family_WallOutletSingle"
 msgid "Wall Outlets (Single)"
-msgstr "Fali csatlakozók (egyes)"
+msgstr "Fali elosztók (egyes)"
 
 msgctxt "SmartFoundations,Family_WallOutletDouble"
 msgid "Wall Outlets (Double)"
-msgstr "Fali csatlakozók (dupla)"
+msgstr "Fali elosztók (dupla)"
 
 msgctxt "SmartFoundations,Family_Tower"
 msgid "Power Towers"
-msgstr "Villanytornyok"
+msgstr "Távvezeték oszlop"
 
 msgctxt "SmartFoundations,Family_Unknown"
 msgid "Unknown"

@@ -162,7 +162,7 @@ struct SMARTFOUNDATIONS_API FSFChainRepairResult
  *     Migrate twice on the same FConveyorTickGroup corrupts state.
  *
  * CRASH HISTORY: see the "HISTORY — do not regress" comment in SFUpgradeExecutionService.cpp
- * and docs/Features/Upgrade/IMPL_SmartUpgrade_CurrentFlow.md.
+ * and docs/Features/SmartUpgrade/IMPL_SmartUpgrade_CurrentFlow.md.
  *
  * FRIEND ACCESS: this service is declared `Friend` on AFGBuildableSubsystem via
  * Config/AccessTransformers.ini so it can reach `mConveyorTickGroup`,
@@ -327,18 +327,4 @@ private:
 
 	/** Handle for the deferred post-upgrade zombie purge timer. */
 	FTimerHandle DeferredPurgeTimerHandle;
-
-	/**
-	 * Disabled orphan-bounce compatibility queue.
-	 *
-	 * Retained only so old object layouts/calls remain harmless while the in-game bounce
-	 * path is disabled. The queue is never populated; ProcessNextPendingBounce clears it.
-	 */
-	UPROPERTY()
-	TArray<TWeakObjectPtr<AFGBuildableConveyorBase>> PendingBounceQueue;
-
-	FTimerHandle BounceTimerHandle;
-
-	/** Disabled timer callback retained as a safety stub; it never bounces belts. */
-	void ProcessNextPendingBounce();
 };

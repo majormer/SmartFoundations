@@ -64,8 +64,7 @@ void USFInputRegistry::InitializeSmartInputSystem()
 	EnsureTag(TAG_TOGGLE_ARROWS, TEXT("Smart! arrow visibility toggle"));
 	EnsureTag(TAG_RESET_SCALING, TEXT("Smart! reset hologram scaling"));
 
-	UE_LOG(LogSmartFoundations, Warning, TEXT("⚠️ REQUIRED: Create Blueprint Input Actions in Unreal Editor"));
-	UE_LOG(LogSmartFoundations, Warning, TEXT("📖 See docs/Input/SMART_INPUT_SYSTEM.md for step-by-step guide"));
+	UE_LOG(LogSmartFoundations, Warning, TEXT("⚠️ REQUIRED: Create the Smart! Enhanced Input action assets in the Unreal Editor"));
 }
 
 // Static cache - shared across all calls

@@ -5,7 +5,6 @@
 #include "Subsystem/SFHologramHelperService.h"
 #include "Features/AutoConnect/SFAutoConnectService.h"
 #include "Features/PipeAutoConnect/SFPipeConnectorFinder.h"
-#include "Features/PipeAutoConnect/SFPipeChainResolver.h"
 #include "Data/SFBuildableSizeRegistry.h"
 #include "Buildables/FGBuildable.h"
 #include "Buildables/FGBuildableFactory.h"

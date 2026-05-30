@@ -1,5 +1,6 @@
 #include "UI/SmartUpgradePanel.h"
 #include "SmartFoundations.h"
+#include "UI/SFFontLibrary.h"
 #include "FGPlayerController.h"
 #include "Subsystem/SFSubsystem.h"
 #include "Services/SFHudService.h"
@@ -49,6 +50,10 @@ void USmartUpgradePanel::NativeConstruct()
 	Super::NativeConstruct();
 
 	UE_LOG(LogSmartFoundations, Log, TEXT("Upgrade Panel: NativeConstruct"));
+
+	// Switch designer-placed (and localized) labels to the in-game multi-script font so
+	// Arabic/Persian/Thai/CJK render correctly. Runtime-built rows route through SFFont::Get below.
+	SFFont::ApplyToWidgetTree(WidgetTree);
 
 	// ========== BACKGROUND & HEADER LAYOUT ==========
 
@@ -338,38 +343,6 @@ void USmartUpgradePanel::NativeConstruct()
 		CancelButton->OnClicked.AddDynamic(this, &USmartUpgradePanel::OnCancelButtonClicked);
 	}
 
-	// Configure legacy radius spinbox
-	if (RadiusSpinBox)
-	{
-		RadiusSpinBox->SetMinValue(4.0f);
-		RadiusSpinBox->SetMinSliderValue(4.0f);
-		RadiusSpinBox->SetMaxValue(10000.0f);
-		RadiusSpinBox->SetMaxSliderValue(1000.0f);
-		RadiusSpinBox->SetValue(CurrentRadiusMeters);
-		RadiusSpinBox->SetDelta(4.0f);
-		RadiusSpinBox->OnValueChanged.AddDynamic(this, &USmartUpgradePanel::OnRadiusValueChanged);
-	}
-
-	// Bind legacy upgrade button click event
-	if (UpgradeButton)
-	{
-		UpgradeButton->OnClicked.AddDynamic(this, &USmartUpgradePanel::OnUpgradeButtonClicked);
-		UpgradeButton->SetIsEnabled(false);
-	}
-
-	// Bind legacy target tier combo box change event
-	if (TargetTierComboBox)
-	{
-		TargetTierComboBox->OnSelectionChanged.AddDynamic(this, &USmartUpgradePanel::OnTargetTierChanged);
-		TargetTierComboBox->SetVisibility(ESlateVisibility::Collapsed);
-	}
-
-	// Initialize legacy cost display
-	if (CostDetailsText)
-	{
-		CostDetailsText->SetText(LOCTEXT("Upgrade_SelectFamily", "Select a family to see costs"));
-	}
-
 	// Subscribe to audit service events
 	if (USFSubsystem* Subsystem = USFSubsystem::Get(this))
 	{
@@ -442,12 +415,6 @@ void USmartUpgradePanel::OnRadiusValueChanged(float NewValue)
 	{
 		CurrentRadiusMeters = FMath::RoundToFloat(NewValue / 4.0f) * 4.0f;
 		CurrentRadiusMeters = FMath::Clamp(CurrentRadiusMeters, 4.0f, 10000.0f);
-	}
-
-	// Update spinbox if snapped value differs
-	if (RadiusSpinBox && FMath::Abs(RadiusSpinBox->GetValue() - CurrentRadiusMeters) > 0.1f)
-	{
-		RadiusSpinBox->SetValue(CurrentRadiusMeters);
 	}
 
 	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Upgrade Panel: Radius changed to %.0fm"), CurrentRadiusMeters);
@@ -721,7 +688,7 @@ void USmartUpgradePanel::UpdateAuditUI(const FSFUpgradeAuditResult& Result)
 	RowDataMap.Empty();
 
 	// Get the active results container (new tabbed UI or legacy)
-	UVerticalBox* ActiveResultsContainer = RadiusAuditResultsContainer ? RadiusAuditResultsContainer : AuditResultsContainer;
+	UVerticalBox* ActiveResultsContainer = RadiusAuditResultsContainer;
 
 	// Clear existing results
 	if (ActiveResultsContainer)
@@ -796,10 +763,8 @@ void USmartUpgradePanel::UpdateAuditUI(const FSFUpgradeAuditResult& Result)
 
 			UTextBlock* SectionHeader = NewObject<UTextBlock>(this);
 			SectionHeader->SetText(FText::FromString(SectionName));
-			FSlateFontInfo HeaderFont = SectionHeader->GetFont();
-			HeaderFont.Size = 12;
-			HeaderFont.TypefaceFontName = FName("Bold");
-			SectionHeader->SetFont(HeaderFont);
+			// FactoryFont is a single-face font (no Bold weight); the orange color distinguishes the header.
+			SectionHeader->SetFont(SFFont::Get(12));
 			SectionHeader->SetColorAndOpacity(FSlateColor(FLinearColor(0.886f, 0.498f, 0.118f, 1.0f))); // Orange
 
 			UVerticalBoxSlot* HeaderSlot = ActiveResultsContainer->AddChildToVerticalBox(SectionHeader);
@@ -856,8 +821,7 @@ void USmartUpgradePanel::UpdateAuditUI(const FSFUpgradeAuditResult& Result)
 					// Column 1: Count (right-aligned, fixed width)
 					UTextBlock* CountText = NewObject<UTextBlock>(this);
 					CountText->SetText(FText::FromString(FString::Printf(TEXT("%d"), Bucket.Count)));
-					FSlateFontInfo RowFont = CountText->GetFont();
-					RowFont.Size = 11;
+					FSlateFontInfo RowFont = SFFont::Get(11);
 					CountText->SetFont(RowFont);
 					CountText->SetColorAndOpacity(FSlateColor(RowTextColor));
 					CountText->SetJustification(ETextJustify::Right);
@@ -1153,10 +1117,6 @@ void USmartUpgradePanel::OnRowSelected(ESFUpgradeFamily Family, int32 Tier)
 	{
 		SharedUpgradeButton->SetIsEnabled(true);
 	}
-	if (UpgradeButton)
-	{
-		UpgradeButton->SetIsEnabled(true);
-	}
 
 	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Upgrade Panel: Nearest %s is %.0fm %s at %s"),
 		*DisplayName, DistanceMeters, *Direction, *ClosestLocation.ToString());
@@ -1257,12 +1217,12 @@ void USmartUpgradePanel::PopulateTargetTierDropdown()
 
 	if (ActiveTab == ESmartUpgradeTab::Radius)
 	{
-		ActiveComboBox = RadiusTargetTierComboBox ? RadiusTargetTierComboBox : TargetTierComboBox;
+		ActiveComboBox = RadiusTargetTierComboBox;
 	}
 	else
 	{
 		// Traversal tab - use traversal dropdown
-		ActiveComboBox = TraversalTargetTierComboBox ? TraversalTargetTierComboBox : TargetTierComboBox;
+		ActiveComboBox = TraversalTargetTierComboBox;
 	}
 
 	if (!ActiveComboBox)
@@ -1364,11 +1324,11 @@ void USmartUpgradePanel::UpdateCostDisplay()
 	UTextBlock* ActiveCostText = nullptr;
 	if (ActiveTab == ESmartUpgradeTab::Radius)
 	{
-		ActiveCostText = RadiusCostDetailsText ? RadiusCostDetailsText : CostDetailsText;
+		ActiveCostText = RadiusCostDetailsText;
 	}
 	else
 	{
-		ActiveCostText = TraversalCostDetailsText ? TraversalCostDetailsText : CostDetailsText;
+		ActiveCostText = TraversalCostDetailsText;
 	}
 
 	if (!ActiveCostText)
@@ -1551,12 +1511,12 @@ int32 USmartUpgradePanel::GetSelectedTargetTier() const
 
 	if (ActiveTab == ESmartUpgradeTab::Radius)
 	{
-		ActiveComboBox = RadiusTargetTierComboBox ? RadiusTargetTierComboBox : TargetTierComboBox;
+		ActiveComboBox = RadiusTargetTierComboBox;
 	}
 	else
 	{
 		// Traversal tab - use traversal dropdown
-		ActiveComboBox = TraversalTargetTierComboBox ? TraversalTargetTierComboBox : TargetTierComboBox;
+		ActiveComboBox = TraversalTargetTierComboBox;
 	}
 
 	if (!ActiveComboBox)
@@ -1816,10 +1776,6 @@ void USmartUpgradePanel::SwitchToTab(ESmartUpgradeTab NewTab)
 	if (SharedUpgradeButton)
 	{
 		SharedUpgradeButton->SetIsEnabled(false);
-	}
-	if (UpgradeButton)
-	{
-		UpgradeButton->SetIsEnabled(false);
 	}
 
 	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Upgrade Panel: Switched to %s tab"),
@@ -2160,10 +2116,7 @@ void USmartUpgradePanel::UpdateTraversalUI(const FSFTraversalResult& Result)
 
 			UTextBlock* TierText = NewObject<UTextBlock>(this);
 			TierText->SetText(FText::FromString(FString::Printf(TEXT("  Mk%d: %d"), Tier, Count)));
-
-			FSlateFontInfo FontInfo = TierText->GetFont();
-			FontInfo.Size = 12;
-			TierText->SetFont(FontInfo);
+			TierText->SetFont(SFFont::Get(12));
 			TierText->SetColorAndOpacity(FSlateColor(FLinearColor::White));
 
 			TraversalResultsContainer->AddChild(TierText);

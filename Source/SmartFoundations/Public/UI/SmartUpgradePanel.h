@@ -73,10 +73,6 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* ContextHeaderText;
 
-	/** Audit results container bound from Blueprint (legacy - now using RadiusAuditResultsContainer) */
-	UPROPERTY(meta = (BindWidgetOptional))
-	class UVerticalBox* AuditResultsContainer;
-
 	/** Refresh button bound from Blueprint */
 	UPROPERTY(meta = (BindWidget))
 	class UButton* RefreshButton;
@@ -85,25 +81,9 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	class UButton* CancelButton;
 
-	/** Close button bound from Blueprint (legacy - now using SharedCloseButton) */
+	/** Header close button (the X in the panel header). SharedCloseButton is the bottom-row close. */
 	UPROPERTY(meta = (BindWidgetOptional))
 	class UButton* CloseButton;
-
-	/** Radius spinbox for area-based upgrade scope (legacy - now using RadiusSliderSpinBox) */
-	UPROPERTY(meta = (BindWidgetOptional))
-	USpinBox* RadiusSpinBox;
-
-	/** Upgrade button bound from Blueprint (legacy - now using SharedUpgradeButton) */
-	UPROPERTY(meta = (BindWidgetOptional))
-	class UButton* UpgradeButton;
-
-	/** Target tier combo box bound from Blueprint (legacy - now using RadiusTargetTierComboBox) */
-	UPROPERTY(meta = (BindWidgetOptional))
-	UComboBoxString* TargetTierComboBox;
-
-	/** Cost details text bound from Blueprint (legacy - now using RadiusCostDetailsText) */
-	UPROPERTY(meta = (BindWidgetOptional))
-	class UTextBlock* CostDetailsText;
 
 	// ========== NEW TABBED UI WIDGETS ==========
 
@@ -211,10 +191,6 @@ protected:
 	/** Update audit progress */
 	UFUNCTION()
 	void UpdateAuditProgress(float ProgressPercent, int32 ScannedCount);
-
-	/** Row widget class for result list */
-	UPROPERTY(EditDefaultsOnly, Category = "SmartFoundations|Upgrade")
-	TSubclassOf<class USFUpgradeResultRow> RowWidgetClass;
 
 	/** Handle row selection - find closest instance */
 	void OnRowSelected(ESFUpgradeFamily Family, int32 Tier);

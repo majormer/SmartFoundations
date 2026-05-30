@@ -279,7 +279,7 @@ msgstr "传送带"
 
 msgctxt "SmartFoundations,Family_Lift"
 msgid "Conveyor Lifts"
-msgstr "传送升降机"
+msgstr "垂直传送带"
 
 msgctxt "SmartFoundations,Family_Pipe"
 msgid "Pipelines"
@@ -295,11 +295,11 @@ msgstr "电线杆"
 
 msgctxt "SmartFoundations,Family_WallOutletSingle"
 msgid "Wall Outlets (Single)"
-msgstr "墙壁配电器（单面）"
+msgstr "墙壁接电桩（单面）"
 
 msgctxt "SmartFoundations,Family_WallOutletDouble"
 msgid "Wall Outlets (Double)"
-msgstr "墙壁配电器（双面）"
+msgstr "墙壁接电桩（双面）"
 
 msgctxt "SmartFoundations,Family_Tower"
 msgid "Power Towers"

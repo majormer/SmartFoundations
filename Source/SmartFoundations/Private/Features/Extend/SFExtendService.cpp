@@ -60,6 +60,10 @@
 #include "Equipment/FGBuildGun.h"
 #include "Equipment/FGBuildGunBuild.h"
 #include "FGCharacterPlayer.h"
+#include "FGConstructDisqualifier.h"
+#include "FGInventoryComponent.h"
+#include "FGCentralStorageSubsystem.h"  // Extend affordability: Dimensional Depot stock
+#include "Resources/FGItemDescriptor.h"  // Extend affordability: item names for diagnostics
 #include "FGRecipe.h"
 #include "FGRecipeManager.h"
 #include "Resources/FGBuildingDescriptor.h"
@@ -1816,6 +1820,49 @@ bool USFExtendService::TryExtendFromBuilding(AFGBuildable* HitBuilding, AFGHolog
     return true;
 }
 
+bool USFExtendService::CanAffordExtendCost(AFGHologram* Hologram, UFGInventoryComponent* Inventory) const
+{
+    if (!IsValid(Hologram) || !Inventory)
+    {
+        return true;  // Can't evaluate -> never block.
+    }
+
+    AFGCentralStorageSubsystem* CentralStorage = AFGCentralStorageSubsystem::Get(Hologram->GetWorld());
+    const TArray<FItemAmount> TotalCost = Hologram->GetCost(/*includeChildren=*/true);
+    for (const FItemAmount& Item : TotalCost)
+    {
+        if (!Item.ItemClass || Item.Amount <= 0)
+        {
+            continue;
+        }
+        int32 Available = Inventory->GetNumItems(Item.ItemClass);
+        if (CentralStorage)
+        {
+            Available += CentralStorage->GetNumItemsFromCentralStorage(Item.ItemClass);
+        }
+        if (Available < Item.Amount)
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+EHologramMaterialState USFExtendService::ResolveChildPreviewMaterialState(const UObject* WorldContext)
+{
+    if (USFSubsystem* SmartSubsystem = USFSubsystem::Get(WorldContext))
+    {
+        if (SmartSubsystem->IsExtendModeActive())
+        {
+            if (USFExtendService* ExtendService = SmartSubsystem->GetExtendService())
+            {
+                return ExtendService->GetExtendChildMaterialState();
+            }
+        }
+    }
+    return EHologramMaterialState::HMS_OK;
+}
+
 void USFExtendService::RefreshExtension(AFGHologram* SourceHologram, bool bForceRefresh)
 {
     if (!bHasValidTarget || !CurrentExtendTarget.IsValid())
@@ -1940,16 +1987,65 @@ void USFExtendService::RefreshExtension(AFGHologram* SourceHologram, bool bForce
     // Force parent hologram to valid/invalid state based on scaled extend validation.
     // Our ASFFactoryHologram::CheckValidPlacement override skips vanilla's clearance
     // checks during extend mode, so no encroachment disqualifiers get added.
+    EHologramMaterialState ExtendMaterialState = EHologramMaterialState::HMS_OK;
     if (!bScaledExtendValid)
     {
         // Lane segment validation failed — keep hologram red and block building
         ActiveHologram->SetPlacementMaterialState(EHologramMaterialState::HMS_ERROR);
+        ExtendMaterialState = EHologramMaterialState::HMS_ERROR;
     }
     else
     {
         ActiveHologram->ResetConstructDisqualifiers();
-        ActiveHologram->SetPlacementMaterialState(EHologramMaterialState::HMS_OK);
+
+        UFGInventoryComponent* PlayerInventory = nullptr;
+        if (Subsystem.IsValid())
+        {
+            if (AFGPlayerController* PlayerController = Subsystem->GetLastController())
+            {
+                if (AFGCharacterPlayer* Character = Cast<AFGCharacterPlayer>(PlayerController->GetPawn()))
+                {
+                    PlayerInventory = Character->GetInventory();
+                }
+            }
+        }
+
+        if (PlayerInventory)
+        {
+            ActiveHologram->ValidatePlacementAndCost(PlayerInventory);
+        }
+        else
+        {
+            ActiveHologram->SetPlacementMaterialState(EHologramMaterialState::HMS_OK);
+        }
+
+        // Authoritative extend material state. Do NOT derive this from GetConstructDisqualifiers:
+        // child previews mirror this state by adding their own FGCDUnaffordable (see the child
+        // CheckValidPlacement overrides), and those child disqualifiers aggregate back onto the
+        // parent. Deriving the parent state from the aggregated disqualifiers therefore forms a
+        // feedback loop that latches red and never recovers once it has gone red, even after the
+        // build becomes affordable again. In extend mode the only real gates are geometry/power
+        // (bScaledExtendValid, handled in the !bScaledExtendValid branch above) and depot-aware
+        // affordability — so derive purely from those.
+        const bool bCanAffordExtend = CanAffordExtendCost(ActiveHologram, PlayerInventory);
+        ExtendMaterialState = bCanAffordExtend
+            ? EHologramMaterialState::HMS_OK
+            : EHologramMaterialState::HMS_ERROR;
+        ActiveHologram->SetPlacementMaterialState(ExtendMaterialState);
+
+        // Defensive: if unaffordable, ensure the parent reflects ERROR (the SetPlacementMaterialState
+        // above already applied ExtendMaterialState; this guards against a stale OK state).
+        if (ExtendMaterialState == EHologramMaterialState::HMS_ERROR
+            && ActiveHologram->GetHologramMaterialState() != EHologramMaterialState::HMS_ERROR)
+        {
+            ActiveHologram->SetPlacementMaterialState(EHologramMaterialState::HMS_ERROR);
+        }
     }
+
+    // Publish the authoritative child-preview state. Child holograms read this via
+    // USFExtendService::ResolveChildPreviewMaterialState() in their CheckValidPlacement,
+    // so the build gun's per-frame validation cascade can no longer reset them to cyan.
+    ExtendChildMaterialState = ExtendMaterialState;
 
     // CRITICAL: Force child holograms back to their intended positions every frame
     // The engine's parent hologram tick resets children to origin via SetHologramLocationAndRotation
@@ -1961,28 +2057,58 @@ void USFExtendService::RefreshExtension(AFGHologram* SourceHologram, bool bForce
         HologramService->RefreshChildPositions();
     }
 
-    // Additional material handling for Smart! hologram types
+    TSet<AFGHologram*> SyncedMaterialChildren;
+    auto SyncExtendPreviewMaterialState = [&](AFGHologram* Child)
+    {
+        if (!IsValid(Child) || SyncedMaterialChildren.Contains(Child))
+        {
+            return;
+        }
+
+        SyncedMaterialChildren.Add(Child);
+        Child->SetActorHiddenInGame(false);
+        Child->SetPlacementMaterialState(ExtendMaterialState);
+
+        if (ASFConveyorLiftHologram* LiftChild = Cast<ASFConveyorLiftHologram>(Child))
+        {
+            LiftChild->ForceApplyHologramMaterial();
+        }
+        else if (ASFConveyorBeltHologram* BeltChild = Cast<ASFConveyorBeltHologram>(Child))
+        {
+            BeltChild->ForceApplyHologramMaterial();
+        }
+        else if (ASFPipelineHologram* PipeChild = Cast<ASFPipelineHologram>(Child))
+        {
+            PipeChild->ForceApplyHologramMaterial();
+        }
+
+        // Prevent child preview validation from immediately repainting spline previews.
+        Child->SetActorTickEnabled(false);
+    };
+
+    for (FSFScaledExtendClone& Clone : ScaledExtendClones)
+    {
+        for (auto& SpawnedPair : Clone.SpawnedHolograms)
+        {
+            SyncExtendPreviewMaterialState(SpawnedPair.Value);
+        }
+    }
+
     for (AFGHologram* Child : BeltPreviewHolograms)
     {
-        if (IsValid(Child))
-        {
-            // CRITICAL: Call ForceApplyHologramMaterial to actually update mesh materials
-            // SetPlacementMaterialState only sets the state, this applies it to mesh components
-            if (ASFConveyorLiftHologram* LiftChild = Cast<ASFConveyorLiftHologram>(Child))
-            {
-                LiftChild->ForceApplyHologramMaterial();
-            }
-            else if (ASFConveyorBeltHologram* BeltChild = Cast<ASFConveyorBeltHologram>(Child))
-            {
-                BeltChild->ForceApplyHologramMaterial();
-            }
-            else if (ASFPipelineHologram* PipeChild = Cast<ASFPipelineHologram>(Child))
-            {
-                PipeChild->ForceApplyHologramMaterial();
-            }
+        SyncExtendPreviewMaterialState(Child);
+    }
 
-            // Disable tick to prevent engine's CheckValidPlacement from overriding our material state
-            Child->SetActorTickEnabled(false);
+    for (const auto& SpawnedPair : JsonSpawnedHolograms)
+    {
+        SyncExtendPreviewMaterialState(SpawnedPair.Value);
+    }
+
+    if (HologramService)
+    {
+        for (AFGHologram* Child : HologramService->GetTrackedChildren())
+        {
+            SyncExtendPreviewMaterialState(Child);
         }
     }
 
@@ -2034,8 +2160,8 @@ void USFExtendService::RefreshExtension(AFGHologram* SourceHologram, bool bForce
                 // Vanilla's hologram system may reset material state, so we need to re-apply
                 if (ASFConveyorBeltHologram* BeltChild = Cast<ASFConveyorBeltHologram>(Child))
                 {
-                    // Force material state back to OK and re-apply to spline meshes
-                    BeltChild->SetPlacementMaterialState(EHologramMaterialState::HMS_OK);
+                    // Re-apply current parent state to spline meshes.
+                    BeltChild->SetPlacementMaterialState(ExtendMaterialState);
                     BeltChild->ForceApplyHologramMaterial();
 
                     // Ensure visibility

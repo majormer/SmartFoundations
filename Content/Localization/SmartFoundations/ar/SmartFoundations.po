@@ -277,15 +277,15 @@ msgstr "إعدادات: {0}"
 
 msgctxt "SmartFoundations,Family_Belt"
 msgid "Conveyor Belts"
-msgstr "أحزمة ناقلة"
+msgstr "السيور الناقلة"
 
 msgctxt "SmartFoundations,Family_Lift"
 msgid "Conveyor Lifts"
-msgstr "مصاعد ناقلة"
+msgstr "رافعات السير الناقل"
 
 msgctxt "SmartFoundations,Family_Pipe"
 msgid "Pipelines"
-msgstr "أنابيب"
+msgstr "خطوط الأنابيب"
 
 msgctxt "SmartFoundations,Family_Pump"
 msgid "Pipeline Pumps"
@@ -293,19 +293,19 @@ msgstr "مضخات أنابيب"
 
 msgctxt "SmartFoundations,Family_PowerPole"
 msgid "Power Poles"
-msgstr "أعمدة كهرباء"
+msgstr "عمود طاقة"
 
 msgctxt "SmartFoundations,Family_WallOutletSingle"
 msgid "Wall Outlets (Single)"
-msgstr "مقابس حائط (مفردة)"
+msgstr "مقابس الحائط (مفردة)"
 
 msgctxt "SmartFoundations,Family_WallOutletDouble"
 msgid "Wall Outlets (Double)"
-msgstr "مقابس حائط (مزدوجة)"
+msgstr "مقابس الحائط (مزدوجة)"
 
 msgctxt "SmartFoundations,Family_Tower"
 msgid "Power Towers"
-msgstr "أبراج كهرباء"
+msgstr "برج الطاقة"
 
 msgctxt "SmartFoundations,Family_Unknown"
 msgid "Unknown"

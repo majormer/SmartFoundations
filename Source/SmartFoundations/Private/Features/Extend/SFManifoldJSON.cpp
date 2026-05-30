@@ -2193,6 +2193,7 @@ int32 FSFCloneTopology::SpawnChildHolograms(
     
     int32 SpawnedCount = 0;
     static int32 JsonSpawnCounter = 0;
+    const EHologramMaterialState ParentMaterialState = ParentHologram->GetHologramMaterialState();
     
     // Build customization lookup from source actors so clones inherit source colors, not parent's
     TMap<FString, FFactoryCustomizationData> SourceCustomizationMap;
@@ -2354,7 +2355,7 @@ int32 FSFCloneTopology::SpawnChildHolograms(
                 // Disable tick to prevent validation from running
                 DistributorChild->SetActorTickEnabled(false);
                 DistributorChild->RegisterAllComponents();
-                DistributorChild->SetPlacementMaterialState(EHologramMaterialState::HMS_OK);
+                DistributorChild->SetPlacementMaterialState(ParentMaterialState);
                 
                 DistributorChild->Tags.AddUnique(FName(TEXT("SF_ExtendChild")));
                 
@@ -2437,7 +2438,7 @@ int32 FSFCloneTopology::SpawnChildHolograms(
                 BeltChild->SetActorEnableCollision(false);
                 BeltChild->SetActorTickEnabled(false);
                 BeltChild->RegisterAllComponents();
-                BeltChild->SetPlacementMaterialState(EHologramMaterialState::HMS_OK);
+                BeltChild->SetPlacementMaterialState(ParentMaterialState);
                 
                 // Add as child for vanilla construction (belt Construct() calls Super::Construct when tagged)
                 ParentHologram->AddChild(BeltChild, ChildName);
@@ -2564,7 +2565,7 @@ int32 FSFCloneTopology::SpawnChildHolograms(
                 }
                 LiftChild->SetActorHiddenInGame(false);
                 LiftChild->SetActorTickEnabled(false);
-                LiftChild->SetPlacementMaterialState(EHologramMaterialState::HMS_OK);
+                LiftChild->SetPlacementMaterialState(ParentMaterialState);
                 LiftChild->SetActorEnableCollision(false);
                 
                 LiftChild->Tags.AddUnique(FName(TEXT("SF_ExtendChild")));
@@ -2641,7 +2642,7 @@ int32 FSFCloneTopology::SpawnChildHolograms(
                 PipeChild->SetActorEnableCollision(false);
                 PipeChild->SetActorTickEnabled(false);
                 PipeChild->RegisterAllComponents();
-                PipeChild->SetPlacementMaterialState(EHologramMaterialState::HMS_OK);
+                PipeChild->SetPlacementMaterialState(ParentMaterialState);
                 
                 // Add as child for vanilla construction (pipe Construct() calls Super::Construct when tagged)
                 ParentHologram->AddChild(PipeChild, ChildName);
@@ -2716,7 +2717,7 @@ int32 FSFCloneTopology::SpawnChildHolograms(
                 
                 PassChild->SetActorTickEnabled(false);
                 PassChild->RegisterAllComponents();
-                PassChild->SetPlacementMaterialState(EHologramMaterialState::HMS_OK);
+                PassChild->SetPlacementMaterialState(ParentMaterialState);
                 
                 PassChild->Tags.AddUnique(FName(TEXT("SF_ExtendChild")));
                 
@@ -2804,7 +2805,7 @@ int32 FSFCloneTopology::SpawnChildHolograms(
                 
                 AttChild->SetActorTickEnabled(false);
                 AttChild->RegisterAllComponents();
-                AttChild->SetPlacementMaterialState(EHologramMaterialState::HMS_OK);
+                AttChild->SetPlacementMaterialState(ParentMaterialState);
                 
                 AttChild->Tags.AddUnique(FName(TEXT("SF_ExtendChild")));
                 
@@ -2883,7 +2884,7 @@ int32 FSFCloneTopology::SpawnChildHolograms(
                 
                 PoleChild->SetActorTickEnabled(false);
                 PoleChild->RegisterAllComponents();
-                PoleChild->SetPlacementMaterialState(EHologramMaterialState::HMS_OK);
+                PoleChild->SetPlacementMaterialState(ParentMaterialState);
                 
                 PoleChild->Tags.AddUnique(FName(TEXT("SF_ExtendChild")));
                 
@@ -2957,7 +2958,7 @@ int32 FSFCloneTopology::SpawnChildHolograms(
                 WireChild->SetActorHiddenInGame(true);  // Hidden — post-build wiring creates the real connection
                 WireChild->SetActorEnableCollision(false);
                 WireChild->SetActorTickEnabled(false);
-                WireChild->SetPlacementMaterialState(EHologramMaterialState::HMS_OK);
+                WireChild->SetPlacementMaterialState(ParentMaterialState);
                 
                 SpawnedHologram = WireChild;
                 SpawnedCount++;
@@ -3043,7 +3044,7 @@ int32 FSFCloneTopology::SpawnChildHolograms(
                     PipeLane->SetActorEnableCollision(false);
                     PipeLane->SetActorTickEnabled(false);
                     PipeLane->RegisterAllComponents();
-                    PipeLane->SetPlacementMaterialState(EHologramMaterialState::HMS_OK);
+                    PipeLane->SetPlacementMaterialState(ParentMaterialState);
                     
                     ParentHologram->AddChild(PipeLane, ChildName);
                     
@@ -3113,7 +3114,7 @@ int32 FSFCloneTopology::SpawnChildHolograms(
                     LiftLane->SetActorEnableCollision(false);
                     LiftLane->SetActorTickEnabled(false);
                     LiftLane->RegisterAllComponents();
-                    LiftLane->SetPlacementMaterialState(EHologramMaterialState::HMS_OK);
+                    LiftLane->SetPlacementMaterialState(ParentMaterialState);
                     
                     ParentHologram->AddChild(LiftLane, ChildName);
                     LiftLane->ForceApplyHologramMaterial();
@@ -3174,7 +3175,7 @@ int32 FSFCloneTopology::SpawnChildHolograms(
                     BeltLane->SetActorEnableCollision(false);
                     BeltLane->SetActorTickEnabled(false);
                     BeltLane->RegisterAllComponents();
-                    BeltLane->SetPlacementMaterialState(EHologramMaterialState::HMS_OK);
+                    BeltLane->SetPlacementMaterialState(ParentMaterialState);
                     
                     ParentHologram->AddChild(BeltLane, ChildName);
                     
@@ -3252,7 +3253,7 @@ int32 FSFCloneTopology::SpawnChildHolograms(
 
                 WallChild->SetActorTickEnabled(false);
                 WallChild->RegisterAllComponents();
-                WallChild->SetPlacementMaterialState(EHologramMaterialState::HMS_OK);
+                WallChild->SetPlacementMaterialState(ParentMaterialState);
 
                 WallChild->Tags.AddUnique(FName(TEXT("SF_ExtendChild")));
 

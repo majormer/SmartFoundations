@@ -6,6 +6,9 @@
 #include "Features/Extend/SFManifoldJSON.h"
 #include "SmartFoundations.h"  // For LogSmartFoundations
 #include "Holograms/Core/SFFactoryHologram.h"
+#include "Holograms/Logistics/SFConveyorBeltHologram.h"
+#include "Holograms/Logistics/SFConveyorLiftHologram.h"
+#include "Holograms/Logistics/SFPipelineHologram.h"
 #include "Subsystem/SFSubsystem.h"
 #include "Hologram/FGHologram.h"
 #include "Hologram/FGFactoryHologram.h"
@@ -75,6 +78,8 @@ void USFExtendHologramService::CreateBeltPreviews(AFGHologram* ParentHologram)
     {
         return;
     }
+
+    CurrentParentHologram = ParentHologram;
     
     const FSFExtendTopology& Topology = ExtendService->GetCurrentTopology();
     if (!Topology.bIsValid || !Topology.SourceBuilding.IsValid())
@@ -151,6 +156,8 @@ void USFExtendHologramService::CreateBeltPreviews(AFGHologram* ParentHologram)
             TrackChildHologram(Hologram, Hologram->GetActorLocation(), Hologram->GetActorRotation());
         }
     }
+
+    RefreshChildPositions();
     
     SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
         TEXT("[SmartRestore][ExtendHologram] Tracked clone holograms: tracked=%d"),
@@ -212,6 +219,10 @@ void USFExtendHologramService::ClearBeltPreviews()
 
 void USFExtendHologramService::RefreshChildPositions()
 {
+    const EHologramMaterialState ParentMaterialState = CurrentParentHologram.IsValid()
+        ? CurrentParentHologram->GetHologramMaterialState()
+        : EHologramMaterialState::HMS_OK;
+
     // Force child holograms back to their intended positions every frame
     for (AFGHologram* Child : TrackedChildren)
     {
@@ -240,9 +251,23 @@ void USFExtendHologramService::RefreshChildPositions()
                 ChildRoot->MarkRenderStateDirty();
             }
             
-            // Force visibility and valid material state
+            // Keep JSON-spawned children visually aligned with the parent result.
+            // They do not run normal validation/cost checks while tick-disabled.
             Child->SetActorHiddenInGame(false);
-            Child->SetPlacementMaterialState(EHologramMaterialState::HMS_OK);
+            Child->SetPlacementMaterialState(ParentMaterialState);
+
+            if (ASFConveyorLiftHologram* LiftChild = Cast<ASFConveyorLiftHologram>(Child))
+            {
+                LiftChild->ForceApplyHologramMaterial();
+            }
+            else if (ASFConveyorBeltHologram* BeltChild = Cast<ASFConveyorBeltHologram>(Child))
+            {
+                BeltChild->ForceApplyHologramMaterial();
+            }
+            else if (ASFPipelineHologram* PipeChild = Cast<ASFPipelineHologram>(Child))
+            {
+                PipeChild->ForceApplyHologramMaterial();
+            }
         }
     }
 }

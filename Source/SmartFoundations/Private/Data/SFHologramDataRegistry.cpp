@@ -20,7 +20,6 @@ FSFHologramData* USFHologramDataRegistry::AttachData(AFGHologram* Hologram) {
     
     return &Data;
 }
-
 FSFHologramData* USFHologramDataRegistry::GetData(AFGHologram* Hologram) {
     if (!Hologram) return nullptr;
 
@@ -86,26 +85,4 @@ void USFHologramDataRegistry::CleanupDeadEntries() {
     {
         UE_LOG(LogSmartFoundations, Log, TEXT("CleanupDeadEntries: Removed %d dead hologram entries"), RemovedCount);
     }
-}
-
-AFGBuildable* USFHologramDataRegistry::GetBuiltBuildable(AFGHologram* Hologram) {
-    if (!Hologram) return nullptr;
-    
-    FSFHologramData* Data = GetData(Hologram);
-    if (!Data) return nullptr;
-    
-    // Return the created actor if it was built and is still valid
-    if (Data->bWasBuilt && Data->CreatedActor && IsValid(Data->CreatedActor))
-    {
-        return Data->CreatedActor;
-    }
-    
-    return nullptr;
-}
-
-bool USFHologramDataRegistry::WasBuilt(AFGHologram* Hologram) {
-    if (!Hologram) return false;
-    
-    FSFHologramData* Data = GetData(Hologram);
-    return Data && Data->bWasBuilt;
 }

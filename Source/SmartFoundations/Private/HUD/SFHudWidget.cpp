@@ -3,6 +3,7 @@
 
 #include "HUD/SFHudWidget.h"
 #include "SmartFoundations.h"
+#include "UI/SFFontLibrary.h"
 #include "Blueprint/WidgetTree.h"
 #include "Components/Border.h"
 #include "Components/VerticalBox.h"
@@ -153,18 +154,14 @@ void USFHudWidget::SetHudScale(float InScale)
 		{
 			if (TextPool[i])
 			{
-				FSlateFontInfo Font = TextPool[i]->GetFont();
-				Font.Size = (i == 0) ? HeaderFontSize : BodyFontSize;
-				TextPool[i]->SetFont(Font);
+				TextPool[i]->SetFont(SFFont::Get((i == 0) ? HeaderFontSize : BodyFontSize));
 			}
 		}
 		for (UTextBlock* Seg : GridSegments)
 		{
 			if (Seg)
 			{
-				FSlateFontInfo Font = Seg->GetFont();
-				Font.Size = BodyFontSize;
-				Seg->SetFont(Font);
+				Seg->SetFont(SFFont::Get(BodyFontSize));
 			}
 		}
 		if (RecipeIconWidget)
@@ -184,29 +181,18 @@ void USFHudWidget::SetHudScale(float InScale)
 
 FSlateFontInfo USFHudWidget::MakeFont(const FString& TypefaceName, int32 Size) const
 {
-	// Use the default UMG TextBlock font (always available in cooked games).
-	// Raw TTF paths like EngineContent/Slate/Fonts/Roboto-*.ttf are stripped in packaged builds.
-	// We grab the default font and only change the size — don't touch TypefaceFontName
-	// since the composite font's typeface entries may not match "Bold"/"Regular".
-	FSlateFontInfo Font;
-	if (UTextBlock* TempBlock = NewObject<UTextBlock>())
-	{
-		Font = TempBlock->GetFont();
-		TempBlock->MarkAsGarbage();
-	}
-	Font.Size = Size;
-	// Note: TypefaceName parameter reserved for future use if we find the correct
-	// composite font entry names. For now, default typeface + size is sufficient.
-	return Font;
+	// Use the in-game multi-script FactoryFont (via SFFont) so the HUD renders every
+	// supported language (Arabic/Persian/Thai/CJK), not just the Latin engine default.
+	// TypefaceName is currently unused: FactoryFont is an offline single-face font.
+	return SFFont::Get(Size);
 }
 
 UTextBlock* USFHudWidget::CreateTextBlock(const FSlateFontInfo& Font, const FLinearColor& Color)
 {
 	UTextBlock* Block = WidgetTree->ConstructWidget<UTextBlock>();
-	// Get the block's own default font (valid in widget tree context), then override just the size
-	FSlateFontInfo ActualFont = Block->GetFont();
-	ActualFont.Size = Font.Size;
-	Block->SetFont(ActualFont);
+	// Use the provided font (FactoryFont via SFFont::Get) directly. Do NOT fall back to the
+	// block's engine-default font, or non-Latin scripts (Arabic/Persian/Thai) won't render.
+	Block->SetFont(Font);
 	Block->SetColorAndOpacity(FSlateColor(Color));
 	Block->SetShadowOffset(FVector2D(1.0f, 1.0f));
 	Block->SetShadowColorAndOpacity(FLinearColor::Black);

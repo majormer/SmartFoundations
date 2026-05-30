@@ -285,7 +285,7 @@ msgstr "Конвейерни асансьори"
 
 msgctxt "SmartFoundations,Family_Pipe"
 msgid "Pipelines"
-msgstr "Тръбопроводи"
+msgstr "Тръби"
 
 msgctxt "SmartFoundations,Family_Pump"
 msgid "Pipeline Pumps"
@@ -293,19 +293,19 @@ msgstr "Тръбни помпи"
 
 msgctxt "SmartFoundations,Family_PowerPole"
 msgid "Power Poles"
-msgstr "Електрически стълбове"
+msgstr "Захранващ Стълб"
 
 msgctxt "SmartFoundations,Family_WallOutletSingle"
 msgid "Wall Outlets (Single)"
-msgstr "Стенни контакти (единични)"
+msgstr "Стенни изводи (единични)"
 
 msgctxt "SmartFoundations,Family_WallOutletDouble"
 msgid "Wall Outlets (Double)"
-msgstr "Стенни контакти (двойни)"
+msgstr "Стенни изводи (двойни)"
 
 msgctxt "SmartFoundations,Family_Tower"
 msgid "Power Towers"
-msgstr "Електрически кули"
+msgstr "Захранваща кула"
 
 msgctxt "SmartFoundations,Family_Unknown"
 msgid "Unknown"
