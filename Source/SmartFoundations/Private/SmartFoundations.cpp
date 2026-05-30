@@ -1,6 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "SmartFoundations.h"
+#include "SFLogMacros.h"
 #include "Input/SFInputRegistry.h"
 #include "Logging/SFLogRegistry.h"
 #include "SFRCO.h"
@@ -9,6 +10,16 @@
 
 // Smart! Log Category - Already declared in header
 DEFINE_LOG_CATEGORY(LogSmartFoundations);
+
+// Per-feature log categories (declared in SFLogMacros.h). Default/core logging stays on
+// LogSmartFoundations; feature code migrates to these incrementally for targeted debugging.
+DEFINE_LOG_CATEGORY(LogSmartExtend);
+DEFINE_LOG_CATEGORY(LogSmartAutoConnect);
+DEFINE_LOG_CATEGORY(LogSmartUpgrade);
+DEFINE_LOG_CATEGORY(LogSmartRestore);
+DEFINE_LOG_CATEGORY(LogSmartGrid);
+DEFINE_LOG_CATEGORY(LogSmartHologram);
+DEFINE_LOG_CATEGORY(LogSmartUI);
 
 void FSmartFoundationsModule::StartupModule()
 {
