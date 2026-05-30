@@ -75,7 +75,7 @@ int32 USFChainActorService::InvalidateAndRebuildChains(
 	AFGBuildableSubsystem* BuildableSub = GetBuildableSubsystem();
 	if (!BuildableSub)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("ChainActorService: No BuildableSubsystem available — cannot invalidate chains"));
+		UE_LOG(LogSmartUpgrade, Warning, TEXT("ChainActorService: No BuildableSubsystem available — cannot invalidate chains"));
 		return 0;
 	}
 
@@ -318,7 +318,7 @@ int32 USFChainActorService::InvalidateAndRebuildChains(
 
 	if (MergedAwayGroups.Num() > 0)
 	{
-		UE_LOG(LogSmartFoundations, Log,
+		UE_LOG(LogSmartUpgrade, Log,
 			TEXT("ChainActorService: Phase 2.5 merged %d adjacent isolated tick group(s) — prevents SPLIT_CHAIN"),
 			MergedAwayGroups.Num());
 	}
@@ -362,7 +362,7 @@ int32 USFChainActorService::InvalidateAndRebuildChains(
 			++DeferredDirtyGroups;
 			DeferredDirtyConveyors += DirtyConveyorsInGroup;
 			BuildableSub->mConveyorGroupsPendingChainActors.AddUnique(TG);
-			UE_LOG(LogSmartFoundations, Warning,
+			UE_LOG(LogSmartUpgrade, Warning,
 				TEXT("ChainActorService: Deferring TG migration because it still contains %d detached/destroying conveyor entrie(s). Details=%s"),
 				DirtyConveyorsInGroup,
 				*DescribeTickGroupForLog(TG));
@@ -379,7 +379,7 @@ int32 USFChainActorService::InvalidateAndRebuildChains(
 		if (ValidBeltCount == 0)
 		{
 			++SkippedEmptyGroups;
-			UE_LOG(LogSmartFoundations, Log,
+			UE_LOG(LogSmartUpgrade, Log,
 				TEXT("ChainActorService: Phase 3 skipping empty TG (%d raw entries, 0 valid) — would create NO_SEGMENTS zombie"),
 				TG->Conveyors.Num());
 			continue;
@@ -553,13 +553,13 @@ int32 USFChainActorService::InvalidateAndRebuildChains(
 					if (ZombieToRecover->GetNumChainSegments() > 0)
 					{
 						bRecovered = true;
-						UE_LOG(LogSmartFoundations, Log,
+						UE_LOG(LogSmartUpgrade, Log,
 							TEXT("ChainActorService: Recovered zombie via SetStartAndEnd+BuildChain — %d seg(s)"),
 							ZombieToRecover->GetNumChainSegments());
 					}
 					else
 					{
-						UE_LOG(LogSmartFoundations, Warning,
+						UE_LOG(LogSmartUpgrade, Warning,
 							TEXT("ChainActorService: Zombie BuildChain still failed after belt-clear — InputEnd=%s OutputEnd=%s Belts=%d Details=%s"),
 							*ChainInputEnd->GetName(),
 							*ChainOutputEnd->GetName(),
@@ -569,7 +569,7 @@ int32 USFChainActorService::InvalidateAndRebuildChains(
 				}
 				else
 				{
-					UE_LOG(LogSmartFoundations, Warning,
+					UE_LOG(LogSmartUpgrade, Warning,
 						TEXT("ChainActorService: Zombie endpoint detection incomplete — InputEnd=%s OutputEnd=%s Belts=%d Details=%s"),
 						ChainInputEnd ? *ChainInputEnd->GetName() : TEXT("null"),
 						ChainOutputEnd ? *ChainOutputEnd->GetName() : TEXT("null"),
@@ -588,7 +588,7 @@ int32 USFChainActorService::InvalidateAndRebuildChains(
 					// RemoveChainActorFromConveyorGroup above) and will be swept by the
 					// deferred PurgeZombieChainActors call 3 s after the upgrade, which
 					// runs safely in TG_PrePhysics before TickFactoryActors (TG_PostPhysics).
-					UE_LOG(LogSmartFoundations, Warning,
+					UE_LOG(LogSmartUpgrade, Warning,
 						TEXT("ChainActorService: Recovery failed for zombie TG=%p ForceShared=%s Belts=%d — detaching and re-queuing. Details=%s"),
 						TG,
 						TG->ForceIntoSharedByBuildable ? *TG->ForceIntoSharedByBuildable->GetName() : TEXT("null"),
@@ -601,7 +601,7 @@ int32 USFChainActorService::InvalidateAndRebuildChains(
 		}
 		else
 		{
-			UE_LOG(LogSmartFoundations, Warning,
+			UE_LOG(LogSmartUpgrade, Warning,
 				TEXT("ChainActorService: Phase 3 migrate call left TG->ChainActor null (TG had %d valid belt(s))"),
 				ValidBeltCount);
 		}
@@ -692,7 +692,7 @@ int32 USFChainActorService::InvalidateAndRebuildChains(
 		if ((bUnassigned || bZeroSegments || bBackPointerMismatch) && PostRebuildLoggedGroups < MaxPostRebuildDetailLogs)
 		{
 			++PostRebuildLoggedGroups;
-			UE_LOG(LogSmartFoundations, Warning,
+			UE_LOG(LogSmartUpgrade, Warning,
 				TEXT("ChainActorService: Post-rebuild invariant failure — unassigned=%s zero_segments=%s backptr_mismatch=%s live_conveyors=%d Details=%s"),
 				bUnassigned ? TEXT("true") : TEXT("false"),
 				bZeroSegments ? TEXT("true") : TEXT("false"),
@@ -702,7 +702,7 @@ int32 USFChainActorService::InvalidateAndRebuildChains(
 		}
 	}
 
-	UE_LOG(LogSmartFoundations, Log,
+	UE_LOG(LogSmartUpgrade, Log,
 		TEXT("ChainActorService: chains=%d invalid=%d explicit_tgs=%d groups_cleared=%d groups_merged=%d groups_migrated=%d skipped_empty=%d deferred_dirty_groups=%d deferred_dirty_conveyors=%d zombies=%d failed_recovery=%d orphan_skipped=%d detached=%d defensive_tgs_cleared=%d post_unassigned=%d post_zero_segments=%d post_backptr_mismatch=%d"),
 		AffectedChains.Num(), InvalidChainCount, ExplicitGroupCount, GroupsToRemove.Num(), MergedAwayGroups.Num(), MigrateCount, SkippedEmptyGroups, DeferredDirtyGroups, DeferredDirtyConveyors, PostMigrateZombies, FailedRecoveryGroups, OrphanCount, DetachedCount, DefensiveTGsCleared, PostRebuildUnassignedGroups, PostRebuildZeroSegmentGroups, PostRebuildBackPointerMismatchGroups);
 
@@ -819,7 +819,7 @@ int32 USFChainActorService::RepairSplitChains()
 
 	if (ChainsToRepair.Num() == 0) return 0;
 
-	UE_LOG(LogSmartFoundations, Log,
+	UE_LOG(LogSmartUpgrade, Log,
 		TEXT("ChainActorService: RepairSplitChains found %d chain(s) involved in SPLIT_CHAIN — rebuilding"),
 		ChainsToRepair.Num());
 
@@ -974,12 +974,12 @@ int32 USFChainActorService::RepairOrphanedBelts(FSFChainRepairResult* OutResult)
 		ReportPath = FPaths::ProjectLogDir() / FString::Printf(TEXT("SmartUpgrade_OrphanTickGroups_%s.json"), *Stamp);
 		if (FFileHelper::SaveStringToFile(OrphanReport, *ReportPath))
 		{
-			UE_LOG(LogSmartFoundations, VeryVerbose,
+			UE_LOG(LogSmartUpgrade, VeryVerbose,
 				TEXT("ChainActorService: orphan tick group report written -> %s"), *ReportPath);
 		}
 		else
 		{
-			UE_LOG(LogSmartFoundations, Warning,
+			UE_LOG(LogSmartUpgrade, Warning,
 				TEXT("ChainActorService: failed to write orphan tick group report to %s"), *ReportPath);
 			ReportPath.Reset();
 		}
@@ -993,7 +993,7 @@ int32 USFChainActorService::RepairOrphanedBelts(FSFChainRepairResult* OutResult)
 		QueuedGroups = ReRegisterAndQueueVanillaRebuildForBelts(BeltsToReRegister, {});
 	}
 
-	UE_LOG(LogSmartFoundations, VeryVerbose,
+	UE_LOG(LogSmartUpgrade, VeryVerbose,
 		TEXT("ChainActorService: RepairOrphanedBelts TRIAGE — orphaned_tgs=%d empty_tgs=%d live_belts=%d candidate_belts=%d reregistered_belts=%d queued_groups=%d report=%s. Save/reload and re-run Detect after repair."),
 		OrphanedTGs, EmptyTGs, BeltsAcrossTGs, CandidateBelts, ReRegisteredBelts, QueuedGroups, ReportPath.IsEmpty() ? TEXT("none") : *ReportPath);
 
@@ -1017,7 +1017,7 @@ void USFChainActorService::RunPostLoadRepair()
 
 	if (Result.HasIssues())
 	{
-		UE_LOG(LogSmartFoundations, VeryVerbose,
+		UE_LOG(LogSmartUpgrade, VeryVerbose,
 			TEXT("ChainActorService: Post-load chain diagnostic found issues but did not mutate conveyor state — zombies=%d split_chains=%d orphaned_tgs=%d tg_backptr_mismatches=%d. Use Smart Upgrade Triage or targeted tooling after the world is stable."),
 			Result.ZombieChainCount,
 			Result.SplitChainCount,
@@ -1026,7 +1026,7 @@ void USFChainActorService::RunPostLoadRepair()
 	}
 	else
 	{
-		UE_LOG(LogSmartFoundations, VeryVerbose,
+		UE_LOG(LogSmartUpgrade, VeryVerbose,
 			TEXT("ChainActorService: Post-load chain diagnostic complete — no issues detected."));
 	}
 }
@@ -1426,7 +1426,7 @@ int32 USFChainActorService::InvalidateAndQueueVanillaRebuildForBelts(
 		{
 			AFGBuildableConveyorBase* First = TG->Conveyors.Num() > 0 ? TG->Conveyors[0] : nullptr;
 			AFGBuildableConveyorBase* Last = TG->Conveyors.Num() > 0 ? TG->Conveyors.Last() : nullptr;
-			UE_LOG(LogSmartFoundations, Log,
+			UE_LOG(LogSmartUpgrade, Log,
 				TEXT("ChainActorService: queued group sample - bucket=%d conveyors=%d sorted=%s first=%s first_bucket=%d last=%s last_bucket=%d"),
 				TGBucketIndex,
 				TG->Conveyors.Num(),
@@ -1442,7 +1442,7 @@ int32 USFChainActorService::InvalidateAndQueueVanillaRebuildForBelts(
 		++FinalQueuedGroups;
 	}
 
-	UE_LOG(LogSmartFoundations, VeryVerbose,
+	UE_LOG(LogSmartUpgrade, VeryVerbose,
 		TEXT("ChainActorService: queued vanilla conveyor rebuild - belts=%d chains=%d groups=%d final_groups=%d cleared=%d detached_chains=%d mismatched_backptrs=%d cleared_backptrs=%d coalesced_groups=%d coalesced_belts=%d multi_groups=%d sorted_groups=%d unsorted_groups=%d lift_belts=%d normalized_buckets=%d"),
 		Belts.Num(), AffectedChains.Num(), GroupsToQueue.Num(), FinalQueuedGroups, ClearedGroups, DetachedChains, QueuedGroupBackPointerMismatches, ClearedBackPointers,
 		CoalescedGroups, CoalescedBelts, MultiConveyorGroups, SortedGroups, UnsortedGroups, LiftBeltsInQueuedGroups, NormalizedBucketAssignments);
@@ -1572,7 +1572,7 @@ int32 USFChainActorService::ReRegisterAndQueueVanillaRebuildForBelts(
 	}
 
 	const int32 PendingGroups = BuildableSub->mConveyorGroupsPendingChainActors.Num();
-	UE_LOG(LogSmartFoundations, VeryVerbose,
+	UE_LOG(LogSmartUpgrade, VeryVerbose,
 		TEXT("ChainActorService: vanilla re-registration queued rebuild - belts=%d removed=%d added=%d groups_cleared=%d chains=%d detached_chains=%d pending_cleared=%d pending_groups=%d"),
 		UniqueBelts.Num(), RemovedBelts, AddedBelts, ClearedGroups, AffectedChains.Num(), DetachedChains, ClearedPendingGroups, PendingGroups);
 
@@ -1614,13 +1614,13 @@ void USFChainActorService::ScheduleDeferredZombiePurge(float DelaySeconds)
 
 		if (Purged > 0)
 		{
-			UE_LOG(LogSmartFoundations, VeryVerbose,
+			UE_LOG(LogSmartUpgrade, VeryVerbose,
 				TEXT("ChainActorService: Deferred post-upgrade cleanup — %d zombie(s) purged. If belts still appear stalled, wait for settling, run Triage > Detect, then save/reload before any orphan recovery."),
 				Purged);
 		}
 		else
 		{
-			UE_LOG(LogSmartFoundations, VeryVerbose,
+			UE_LOG(LogSmartUpgrade, VeryVerbose,
 				TEXT("ChainActorService: Deferred post-upgrade cleanup — no zombies detected."));
 		}
 	}), DelaySeconds, /*bLoop*/ false);
@@ -1733,12 +1733,12 @@ void USFChainActorService::DumpFailingTickGroupToJson(
 
 	if (FFileHelper::SaveStringToFile(J, *Path))
 	{
-		UE_LOG(LogSmartFoundations, VeryVerbose,
+		UE_LOG(LogSmartUpgrade, VeryVerbose,
 			TEXT("ChainActorService: topology dump written → %s"), *Path);
 	}
 	else
 	{
-		UE_LOG(LogSmartFoundations, Warning,
+		UE_LOG(LogSmartUpgrade, Warning,
 			TEXT("ChainActorService: failed to write topology dump to %s"), *Path);
 	}
 }
@@ -1897,7 +1897,7 @@ FSFChainDiagnosticResult USFChainActorService::DetectChainActorIssues() const
 		}
 	}
 
-	UE_LOG(LogSmartFoundations, VeryVerbose,
+	UE_LOG(LogSmartUpgrade, VeryVerbose,
 		TEXT("ChainActorService: DetectChainActorIssues — zombies=%d split_chains=%d orphaned_belts=%d orphaned_tgs=%d empty_orphaned_tgs=%d live_orphaned_belts=%d orphaned_belt_candidates=%d tg_backptr_mismatches=%d"),
 		Result.ZombieChainCount,
 		Result.SplitChainCount,
@@ -1935,7 +1935,7 @@ FSFChainRepairResult USFChainActorService::RepairAllChainActorIssues()
 	RepairOrphanedBelts(&Result);
 	Result.ZombiesPurged        += PurgeZombieChainActors();
 
-	UE_LOG(LogSmartFoundations, VeryVerbose,
+	UE_LOG(LogSmartUpgrade, VeryVerbose,
 		TEXT("ChainActorService: RepairAllChainActorIssues complete — zombies_purged=%d split_groups_rebuilt=%d orphaned_tgs=%d empty_orphaned_tgs=%d live_orphaned_belts=%d orphaned_belt_candidates=%d orphaned_belts_requeued=%d"),
 		Result.ZombiesPurged,
 		Result.SplitGroupsRebuilt,
