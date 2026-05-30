@@ -626,7 +626,61 @@ build+smoke cycles.
 
 ## Self-Review — coverage proof
 
-`[AUDIT PENDING]` — for each god-object, re-derive that the union of planned slices accounts
-for ~100% of the file's current functions (no orphaned region), via a function-by-function
-checklist mapped to slices. List every remaining open question / assumption needing maintainer
-input.
+Function-by-function coverage computed this effort (script bucketed every fn-def by line range
+into its slice; sum of all fn bodies + file header must equal live `wc -l`). **GAP=0 for both
+god-objects — no orphaned region.**
+
+### `SFExtendService.cpp` (live 7,718) — GAP=0
+
+| Destination | fns | lines |
+|-------------|----:|------:|
+| STAYS (orchestrator: Init/Clear/Shutdown, A Direction, Topo+restore-fwd, IsValidTarget, C ExtensionExec, D BuildGunSwap, E belt-preview, Diag-fwd) | 35 | 1,593 |
+| → WiringService: E chain-wiring | 7 | 660 |
+| → WiringService: F WireBuiltChild | 11 | 1,574 |
+| → WiringService: G Manifold | 6 | 774 |
+| → WiringService: I JSON wiring | 4 | 1,707 |
+| → ScaledService: J | 9 | 1,333 |
+| file header (1–77) | — | 77 |
+| **TOTAL** | **72** | **7,718 ✓** |
+
+WiringService receives 660+1,574+774+1,707 = **4,715** (split across 4 `.cpp`, each <2k).
+Residual orchestrator = 1,593 + 77 = **1,670 (<2k ✓ criterion #5 met for this file)**.
+
+### `SFSubsystem.cpp` (live 9,227) — GAP=0
+
+| Destination | fns | lines |
+|-------------|----:|------:|
+| STAYS (facade: Get/accessors, RPC, Config, Recipe-copy, AC-setters, BldgReg, Debug, Chain-rebuild, Restore-enh, DistribLife, BuildHUD, AC-prod, Phase4-swap) | 97 | 2,186 |
+| → FSFInputHandler: S1 (setup+scale+modes) | 24 | 1,455 |
+| → FSFHologramHelperService: S2 lifecycle (lock+reg) | 7 | 1,056 |
+| → FSFHologramHelperService: S3 create/adapter | 13 | 2,083 |
+| → S4 PropSync | 16 | 704 |
+| → SFPowerAutoConnectManager: S5 power | 14 | 612 |
+| → S6 PipeTier | 13 | 963 |
+| file header (1–168) | — | 168 |
+| **TOTAL** | **184** | **9,227 ✓** |
+
+**KEY SELF-REVIEW FINDING:** extracting S1–S6 removes 6,873 → residual facade = 2,186 + 168 =
+**2,354**. That meets **#6 (<3k ✓)** but **still exceeds #5 (no file >2k)**. The subsystem is BOTH
+a god-object AND a file, so #5 is the harder bar. **→ one more small slice needed:** extract
+**Debug Tools (8539–8814, ~275)** → a debug helper + **Chain-Actor Rebuild (9005–9227, ~223)** →
+the existing `SFChainActorService`. That removes ~498 → residual **~1,856 (<2k ✓ #5 met)**. Added
+as Slice **S7** in ordering below.
+
+### Open questions / assumptions needing maintainer input
+
+1. **Grow stubs vs new classes** — recommend filling the existing `FSFInputHandler` /
+   `FSFHologramHelperService` stubs (they have `TODO: Extract from SFSubsystem::X`) rather than
+   new classes. Confirm.
+2. **`CurrentAdapter` home** — stays on subsystem (external `GetCurrentAdapter` caller in
+   `SFGridSpawnerService.cpp:91,624,630`) vs moves to HologramHelper with an accessor. Recommend
+   stays; confirm.
+3. **`StoredCloneTopology` home** — keep canonical on `USFExtendService` (round-1 precedent for
+   `LastCloneTopology`); WiringService/ScaledService/RestoreReplay access via friend. Confirm.
+4. **T8 dedup risk** — extracting shared belt/pipe spline-router must stay byte-identical for BOTH
+   holograms; the only NEEDS-CARE behavior-equivalence check that spans two existing call paths.
+5. **T6 (DI context)** — out of scope for #5/#6; the T1b extractions use the existing subsystem
+   back-ref now. Confirm T6 is deferred until after the criteria are met.
+6. **Pipe Tier (S6) destination** — config helper vs `SFPipeAutoConnectManager`. Needs the
+   pipe-tier fn-level coupling sub-audit (uses `AutoConnectService` 26× + `ActiveHologram` 31×)
+   before deciding; flagged for slice-time.
