@@ -2,6 +2,7 @@
 
 #include "UI/SFFontLibrary.h"
 #include "SmartFoundations.h"
+#include "SFLogMacros.h"
 #include "Engine/Font.h"
 #include "Blueprint/WidgetTree.h"
 #include "Components/TextBlock.h"
@@ -32,7 +33,7 @@ namespace SFFont
         UFont* Loaded = LoadObject<UFont>(nullptr, GUIFontPath);
         if (!Loaded)
         {
-            UE_LOG(LogSmartFoundations, Warning,
+            UE_LOG(LogSmartUI, Warning,
                 TEXT("SFFont: could not load in-game font %s — falling back to engine default; non-Latin text may not render."),
                 GUIFontPath);
         }
