@@ -13,7 +13,7 @@ ASFSmartChildHologram::ASFSmartChildHologram() {
 void ASFSmartChildHologram::CheckValidPlacement() {
     // Check data structure for validation control
     if (ShouldSkipValidation()) {
-        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("SFSmartChildHologram::CheckValidPlacement: Skipping validation for %s"), 
+        UE_LOG(LogSmartHologram, VeryVerbose, TEXT("SFSmartChildHologram::CheckValidPlacement: Skipping validation for %s"), 
             *GetName());
         return; // Skip validation - always valid
     }
@@ -23,36 +23,36 @@ void ASFSmartChildHologram::CheckValidPlacement() {
 }
 
 AActor* ASFSmartChildHologram::Construct(TArray<AActor*>& out_children, FNetConstructionID constructionID) {
-    UE_LOG(LogSmartFoundations, Log, TEXT("SFSmartChildHologram::Construct: Building from hologram %s"), *GetName());
+    UE_LOG(LogSmartHologram, Log, TEXT("SFSmartChildHologram::Construct: Building from hologram %s"), *GetName());
     
     // Call base construction to create the actual building
     AActor* ConstructedActor = Super::Construct(out_children, constructionID);
     
     if (ConstructedActor) {
-        UE_LOG(LogSmartFoundations, Log, TEXT("SFSmartChildHologram::Construct: Successfully constructed %s"), 
+        UE_LOG(LogSmartHologram, Log, TEXT("SFSmartChildHologram::Construct: Successfully constructed %s"), 
             *ConstructedActor->GetName());
         
         // Check if we have a stored recipe to apply
         TSubclassOf<UFGRecipe> StoredRecipe = USFHologramDataService::GetStoredRecipe(this);
         if (StoredRecipe) {
-            UE_LOG(LogSmartFoundations, Log, TEXT("SFSmartChildHologram::Construct: Applying stored recipe %s to building"), 
+            UE_LOG(LogSmartHologram, Log, TEXT("SFSmartChildHologram::Construct: Applying stored recipe %s to building"), 
                 *StoredRecipe->GetName());
             
             // Apply the stored recipe to the constructed building
             if (AFGBuildableManufacturer* ManufacturerBuilding = Cast<AFGBuildableManufacturer>(ConstructedActor))
             {
                 ManufacturerBuilding->SetRecipe(StoredRecipe);
-                UE_LOG(LogSmartFoundations, Log, TEXT("SFSmartChildHologram::Construct: Successfully applied recipe to manufacturer building"));
+                UE_LOG(LogSmartHologram, Log, TEXT("SFSmartChildHologram::Construct: Successfully applied recipe to manufacturer building"));
             }
             else
             {
-                UE_LOG(LogSmartFoundations, Warning, TEXT("SFSmartChildHologram::Construct: Constructed building is not a manufacturer, cannot apply recipe"));
+                UE_LOG(LogSmartHologram, Warning, TEXT("SFSmartChildHologram::Construct: Constructed building is not a manufacturer, cannot apply recipe"));
             }
         } else {
-            UE_LOG(LogSmartFoundations, Verbose, TEXT("SFSmartChildHologram::Construct: No stored recipe found"));
+            UE_LOG(LogSmartHologram, Verbose, TEXT("SFSmartChildHologram::Construct: No stored recipe found"));
         }
     } else {
-        UE_LOG(LogSmartFoundations, Error, TEXT("SFSmartChildHologram::Construct: Failed to construct building"));
+        UE_LOG(LogSmartHologram, Error, TEXT("SFSmartChildHologram::Construct: Failed to construct building"));
     }
     
     return ConstructedActor;

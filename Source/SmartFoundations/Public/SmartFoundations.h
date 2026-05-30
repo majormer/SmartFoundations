@@ -7,6 +7,10 @@
 
 DECLARE_LOG_CATEGORY_EXTERN(LogSmartFoundations, Log, All);
 
+// Per-feature log categories (LogSmartExtend, LogSmartAutoConnect, LogSmartHologram, ...).
+// Included via the core header so any TU that includes SmartFoundations.h can use them.
+#include "SFLogMacros.h"
+
 #ifndef SF_RESTORE_DIAGNOSTIC_LOG
 #define SF_RESTORE_DIAGNOSTIC_LOG(Category, Verbosity, Format, ...) \
 	UE_LOG(Category, Verbose, Format, ##__VA_ARGS__)

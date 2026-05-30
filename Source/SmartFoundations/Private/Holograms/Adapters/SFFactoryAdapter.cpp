@@ -50,14 +50,14 @@ FVector FSFFactoryAdapter::CalculateFactorySize() const
 {
 	if (!HologramPtr.IsValid())
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("FSFFactoryAdapter::CalculateFactorySize - Invalid hologram"));
+		UE_LOG(LogSmartHologram, Warning, TEXT("FSFFactoryAdapter::CalculateFactorySize - Invalid hologram"));
 		return USFBuildableSizeRegistry::GetDefaultSize();
 	}
 
 	UClass* BuildClass = HologramPtr->GetBuildClass();
 	if (!BuildClass)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("FSFFactoryAdapter: No BuildClass"));
+		UE_LOG(LogSmartHologram, Warning, TEXT("FSFFactoryAdapter: No BuildClass"));
 		return USFBuildableSizeRegistry::GetDefaultSize();
 	}
 

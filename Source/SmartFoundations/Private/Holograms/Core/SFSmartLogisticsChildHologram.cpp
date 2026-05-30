@@ -10,7 +10,7 @@ ASFSmartLogisticsChildHologram::ASFSmartLogisticsChildHologram() {
 void ASFSmartLogisticsChildHologram::CheckValidPlacement() {
     // Check data structure for validation control
     if (ShouldSkipValidation()) {
-        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("SFSmartLogisticsChildHologram::CheckValidPlacement: Skipping validation for %s"), 
+        UE_LOG(LogSmartHologram, VeryVerbose, TEXT("SFSmartLogisticsChildHologram::CheckValidPlacement: Skipping validation for %s"), 
             *GetName());
         return; // Skip validation - always valid
     }

@@ -33,19 +33,19 @@ void ASFBuildableChildHologram::SetHologramLocationAndRotation(const FHitResult&
 
 AActor* ASFBuildableChildHologram::Construct(TArray<AActor*>& out_children, FNetConstructionID constructionID)
 {
-	UE_LOG(LogSmartFoundations, Log, TEXT("SFBuildableChildHologram::Construct: Building %s from %s"),
+	UE_LOG(LogSmartHologram, Log, TEXT("SFBuildableChildHologram::Construct: Building %s from %s"),
 		mBuildClass ? *mBuildClass->GetName() : TEXT("NULL"), *GetName());
 
 	AActor* BuiltActor = Super::Construct(out_children, constructionID);
 
 	if (BuiltActor)
 	{
-		UE_LOG(LogSmartFoundations, Log, TEXT("SFBuildableChildHologram::Construct: Successfully built %s"),
+		UE_LOG(LogSmartHologram, Log, TEXT("SFBuildableChildHologram::Construct: Successfully built %s"),
 			*BuiltActor->GetName());
 	}
 	else
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("SFBuildableChildHologram::Construct: Construct returned nullptr for %s"),
+		UE_LOG(LogSmartHologram, Warning, TEXT("SFBuildableChildHologram::Construct: Construct returned nullptr for %s"),
 			*GetName());
 	}
 

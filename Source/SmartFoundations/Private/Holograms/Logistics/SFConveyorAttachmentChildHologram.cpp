@@ -16,7 +16,7 @@ void ASFConveyorAttachmentChildHologram::CheckValidPlacement()
 {
     // Check data structure for validation control
     bool bShouldSkip = ShouldSkipValidation();
-    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 EXTEND CheckValidPlacement: %s - ShouldSkip=%d"), 
+    UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 EXTEND CheckValidPlacement: %s - ShouldSkip=%d"), 
         *GetName(), bShouldSkip);
     
     if (bShouldSkip)
@@ -62,7 +62,7 @@ AActor* ASFConveyorAttachmentChildHologram::Construct(TArray<AActor*>& out_child
                 {
                     ExtendService->RegisterBuiltDistributor(HoloData->ExtendChainId, BuiltBuildable);
                     
-                    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 EXTEND: Distributor %s registered in Construct() for chain %d"),
+                    UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 EXTEND: Distributor %s registered in Construct() for chain %d"),
                         *BuiltBuildable->GetName(), HoloData->ExtendChainId);
                 }
             }

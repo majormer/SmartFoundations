@@ -13,7 +13,7 @@ ASFPowerPoleChildHologram::ASFPowerPoleChildHologram()
 void ASFPowerPoleChildHologram::CheckValidPlacement()
 {
     bool bShouldSkip = ShouldSkipValidation();
-    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⚡ EXTEND PowerPole CheckValidPlacement: %s - ShouldSkip=%d"), 
+    UE_LOG(LogSmartHologram, VeryVerbose, TEXT("⚡ EXTEND PowerPole CheckValidPlacement: %s - ShouldSkip=%d"), 
         *GetName(), bShouldSkip);
     
     if (bShouldSkip)
@@ -50,7 +50,7 @@ AActor* ASFPowerPoleChildHologram::Construct(TArray<AActor*>& out_children, FNet
                 {
                     ExtendService->RegisterJsonBuiltActor(HoloData->JsonCloneId, BuiltActor);
                     
-                    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("⚡ EXTEND: Power pole %s registered in Construct() with JsonCloneId=%s"),
+                    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartHologram, Log, TEXT("⚡ EXTEND: Power pole %s registered in Construct() with JsonCloneId=%s"),
                         *BuiltActor->GetName(), *HoloData->JsonCloneId);
                 }
             }

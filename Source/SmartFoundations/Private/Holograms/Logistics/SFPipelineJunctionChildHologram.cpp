@@ -15,7 +15,7 @@ void ASFPipelineJunctionChildHologram::CheckValidPlacement()
 {
     // Check data structure for validation control
     bool bShouldSkip = ShouldSkipValidation();
-    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 EXTEND Junction CheckValidPlacement: %s - ShouldSkip=%d"), 
+    UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 EXTEND Junction CheckValidPlacement: %s - ShouldSkip=%d"), 
         *GetName(), bShouldSkip);
     
     if (bShouldSkip)
@@ -52,7 +52,7 @@ AActor* ASFPipelineJunctionChildHologram::Construct(TArray<AActor*>& out_childre
                 {
                     ExtendService->RegisterBuiltJunction(HoloData->ExtendChainId, BuiltBuildable);
                     
-                    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 EXTEND: Junction %s registered in Construct() for pipe chain %d"),
+                    UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 EXTEND: Junction %s registered in Construct() for pipe chain %d"),
                         *BuiltBuildable->GetName(), HoloData->ExtendChainId);
                 }
             }
