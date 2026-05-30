@@ -452,10 +452,70 @@ Live `wc -l` this effort: `SFAutoConnectService.cpp` **4,771**, `SFPipeAutoConne
 
 `[AUDIT PENDING]`
 
-## T5 — UI widgets
+## T5 — UI widgets — advances criterion #5
 
-`[AUDIT PENDING]` — `SmartSettingsFormWidget.cpp` (3,746) + `SmartUpgradePanel.cpp` (2,138)
-→ model / presenter / event-binder.
+Live `wc -l`: `SmartSettingsFormWidget.cpp` **3,746**, `SmartUpgradePanel.cpp` **2,138**.
+**UMG constraint:** the `UPROPERTY(meta=(BindWidget))` control members + `UFUNCTION` event
+thunks MUST stay in the `UWidget` subclass (engine binds them by name). So the criterion-#5
+path is **impl-split across `.cpp` files** (one class, many TUs) by section — NOT moving widgets
+out. The charter's full model/presenter/binder is a *deeper* optional refactor (option B);
+recommend option A (impl-split) to hit #5, B later.
+
+### `SmartSettingsFormWidget.cpp` (3,746, 86 fns) — section split (from live fn map)
+
+Sections: `NativeConstruct` (36–685, ~650) + counter/grid populate (686–1129, 1690–1763);
+Restore/preset (1223–1837, ~600: Apply/Save/Delete/Update/Export/Import/ImportFromExtend +
+dropdown/details/format); Apply/Reset/Close (1838–2037); window drag (`NativeOnMouse*` 2038–2125);
+Recipe (2126–2441, ~315); Belt-AC controls (2442–2732); Pipe-AC controls (2733–2980); Power-AC
+controls (2981–3746, ~766 `[VERIFY tail fn list]`).
+
+#### SmartSettingsFormWidget — Slice U1: impl-split into 4 `.cpp`   [lane: NEEDS-CARE]
+- Files: `SmartSettingsFormWidget.cpp` (construct + counter + apply + drag, ~1,500),
+  `_Restore.cpp` (preset section ~600), `_AutoConnect.cpp` (belt+pipe+power controls ~1,050),
+  `_Recipe.cpp` (~315). All <2k.
+- Call-site audit: the widget is created/shown by the subsystem (`SettingsFormWidget` member,
+  `OnToggleSettingsForm`); methods are internal event handlers (bound in NativeConstruct /
+  BlueprintCallable). External entry: `USFSubsystem::OnToggleSettingsForm` + `PopulateFromCounterState`
+  called by subsystem. `[VERIFY grep PopulateFromCounterState|GetSettingsFormWidget callers]`.
+- Shared state: reads/writes the subsystem `Settings` config struct (the belt/pipe/power tier
+  fields at SFSubsystem.h:1042–1064) via the AC setters (SFSubsystem "Belt/Pipe/Power Auto-Connect
+  Setters" sections) — **cross-file coupling with SFSubsystem S6/AC setters** (ledger). Reads
+  `CounterState`; calls `RestoreService` (preset apply/save), `RecipeManagementService`.
+- Extraction approach: pure impl-split (one class across `.cpp`); NO friend/Owner rewrites (same
+  class, members shared in-class). Zero behavior change.
+- Hidden helpers: `[VERIFY]` anon-namespace in the file (formatters/combo-box builders likely).
+- Runtime coupling (SMOKE-CRITICAL): NativeConstruct binds events + populates from live subsystem
+  state; window-drag mutates slate geometry; apply writes config that AC services read next frame.
+  Low tick-coupling (event-driven UI). Smoke: open Smart Panel; apply/reset; preset save→apply→
+  update→delete→export→import→import-from-Extend; recipe select/clear; belt/pipe/power tier +
+  toggle changes; confirm settings take effect on next placement.
+- Size delta: 0 net (impl-split); each file <2k. **Criterion #5 met.**
+
+### `SmartUpgradePanel.cpp` (2,138, 33 fns) — section split
+
+Sections: `NativeConstruct` (50–375); Audit (`RefreshAudit`/`CancelAudit`/`UpdateAuditProgress`/
+`UpdateAuditUI` 560–891 + Refresh/Cancel/EntireMap/Radius/Upgrade handlers); Cost
+(`UpdateCostDisplay` 1323–1508, `CalculateUpgradeCost` 1545–1662, `PopulateTargetTierDropdown`,
+`GetSelectedTargetTier`); Tabs (`OnRadius/Traversal/TriageTabClicked`,`SwitchToTab` 1663–1767);
+Triage (`OnTriageDetect/RepairClicked` 1768–1905); Traversal (`OnTraversalScanClicked`,
+`UpdateTraversalUI` 1906–2138); input/drag/`OnRowSelected`/`GetCardinalDirection`.
+
+#### SmartUpgradePanel — Slice U2: impl-split into 3 `.cpp`   [lane: NEEDS-CARE]
+- Files: `SmartUpgradePanel.cpp` (construct + audit + tabs + input, ~1,200), `_Cost.cpp`
+  (cost display + `CalculateUpgradeCost` + tier dropdown, ~500), `_TriageTraversal.cpp`
+  (triage + traversal tabs, ~440). All <2k.
+- Call-site audit: created/shown by subsystem (`UpgradePanelWidget`, `OnToggleUpgradePanel`);
+  methods internal. `[VERIFY grep external callers]`.
+- Shared state: `CalculateUpgradeCost` uses `SFAssetPaths::UpgradeRecipes` (T4.2 — already shared
+  with `SFUpgradeExecutionService::GetUpgradeRecipe`; ledger entry). Calls `UpgradeAuditService`,
+  `UpgradeExecutionService` (scan/upgrade), reads results structs.
+- Extraction approach: pure impl-split; no friend/Owner. Zero behavior change.
+- Hidden helpers: `[VERIFY]` anon-namespace (cost formatting / cardinal-direction may be local).
+- Runtime coupling (SMOKE-CRITICAL): audit/traversal scans run async with progress callbacks
+  (`UpdateAuditProgress`/`OnUpgradeProgress` fire across frames from the services); cost recompute
+  on tier change. Smoke: open Upgrade panel; Radius/Traversal/Triage tabs; scan; change target
+  tier (cost updates); run upgrade (progress + completion); triage detect/repair.
+- Size delta: 0 net; each file <2k. **Criterion #5 met.**
 
 ## T6 — Service-context DI
 
