@@ -154,7 +154,7 @@ bool FSFPipeConnectorFinder::IsConnectionAngleValid(
 	// Accept if either forward or reverse is within threshold
 	bool bAngleValid = (AngleDegrees <= MaxAngleDegrees) || (ReverseAngleDegrees <= MaxAngleDegrees);
 	
-	UE_LOG(LogSmartFoundations, VeryVerbose, 
+	UE_LOG(LogSmartAutoConnect, VeryVerbose, 
 		TEXT("   Angle check: Connector=%s Forward=%.1f° Reverse=%.1f° Valid=%d"),
 		*Connector->GetName(), AngleDegrees, ReverseAngleDegrees, bAngleValid);
 	

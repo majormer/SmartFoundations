@@ -36,3 +36,6 @@ SMARTFOUNDATIONS_API DECLARE_LOG_CATEGORY_EXTERN(LogSmartHologram, Log, All);
 
 // UI / HUD (Smart Panel, Upgrade panel, HUD widget)
 SMARTFOUNDATIONS_API DECLARE_LOG_CATEGORY_EXTERN(LogSmartUI, Log, All);
+
+// Directional arrow visualization (arrow assets, orbit/label rendering)
+SMARTFOUNDATIONS_API DECLARE_LOG_CATEGORY_EXTERN(LogSmartArrows, Log, All);

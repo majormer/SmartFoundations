@@ -25,7 +25,7 @@ bool FPowerLinePreviewHelper::UpdatePreview(UFGPowerConnectionComponent* InStart
 {
 	if (!InStartConnection || !InEndConnection)
 	{
-		UE_LOG(LogSmartFoundations, Log, TEXT("⚡ UpdatePreview: Invalid connections - start=%s, end=%s"),
+		UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ UpdatePreview: Invalid connections - start=%s, end=%s"),
 			InStartConnection ? *InStartConnection->GetFullName() : TEXT("null"),
 			InEndConnection ? *InEndConnection->GetFullName() : TEXT("null"));
 		return false;
@@ -92,14 +92,14 @@ void FPowerLinePreviewHelper::EnsureSpawned(const FVector& SpawnLocation, UFGPow
 			if (bIsWireHologram && !bIsSmartChild)
 			{
 				// Vanilla wire child detected - pole is in "insert into existing wire" mode
-				UE_LOG(LogSmartFoundations, Log, TEXT("⚡ EnsureSpawned: Skipped - parent pole has vanilla wire child: %s (class: %s)"), 
+				UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ EnsureSpawned: Skipped - parent pole has vanilla wire child: %s (class: %s)"), 
 					*Child->GetName(), *ChildClassName);
 				return;
 			}
 		}
 	}
 
-	UE_LOG(LogSmartFoundations, Log, TEXT("⚡ EnsureSpawned: Creating SFWireHologram at %s"), *SpawnLocation.ToString());
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ EnsureSpawned: Creating SFWireHologram at %s"), *SpawnLocation.ToString());
 
 	// Spawn our custom Smart wire hologram with deferred construction
 	FActorSpawnParameters SpawnParams;
@@ -165,12 +165,12 @@ void FPowerLinePreviewHelper::EnsureSpawned(const FVector& SpawnLocation, UFGPow
 		
 		PowerLineHologram = NewHologram;
 		
-		UE_LOG(LogSmartFoundations, Log, TEXT("⚡ EnsureSpawned: SUCCESS - Created wire hologram %s (parentLocked=%d)"), 
+		UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ EnsureSpawned: SUCCESS - Created wire hologram %s (parentLocked=%d)"), 
 			*NewHologram->GetName(), ParentPole.IsValid() && ParentPole->IsHologramLocked() ? 1 : 0);
 	}
 	else
 	{
-		UE_LOG(LogSmartFoundations, Error, TEXT("⚡ EnsureSpawned: FAILED to spawn SFWireHologram"));
+		UE_LOG(LogSmartAutoConnect, Error, TEXT("⚡ EnsureSpawned: FAILED to spawn SFWireHologram"));
 	}
 }
 
@@ -178,14 +178,14 @@ void FPowerLinePreviewHelper::UpdateLineEndpoints(UFGPowerConnectionComponent* I
 {
 	if (!PowerLineHologram.IsValid() || !InStart || !InEnd)
 	{
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⚡ UpdateLineEndpoints: Invalid state - hologram=%s, start=%s, end=%s"),
+		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("⚡ UpdateLineEndpoints: Invalid state - hologram=%s, start=%s, end=%s"),
 			PowerLineHologram.IsValid() ? *PowerLineHologram->GetName() : TEXT("null"),
 			InStart ? *InStart->GetFullName() : TEXT("null"),
 			InEnd ? *InEnd->GetFullName() : TEXT("null"));
 		return;
 	}
 
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⚡ UpdateLineEndpoints: Updating wire %s: %s → %s"),
+	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("⚡ UpdateLineEndpoints: Updating wire %s: %s → %s"),
 		*PowerLineHologram->GetName(),
 		*InStart->GetName(), *InEnd->GetName());
 
@@ -215,7 +215,7 @@ void FPowerLinePreviewHelper::UpdateLineEndpoints(UFGPowerConnectionComponent* I
 	PowerLineHologram->SetActorHiddenInGame(false);
 	PowerLineHologram->ForceVisibilityUpdate();
 	
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⚡ UpdateLineEndpoints: Updated wire (parentLocked=%d, childRelocked=%d)"),
+	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("⚡ UpdateLineEndpoints: Updated wire (parentLocked=%d, childRelocked=%d)"),
 		bParentLocked ? 1 : 0, bParentLocked ? 1 : 0);
 }
 
@@ -231,7 +231,7 @@ void FPowerLinePreviewHelper::DestroyPreview()
 {
 	if (PowerLineHologram.IsValid())
 	{
-		UE_LOG(LogSmartFoundations, Log, TEXT("⚡ DestroyPreview: Destroying wire hologram %s"),
+		UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ DestroyPreview: Destroying wire hologram %s"),
 			*PowerLineHologram->GetName());
 
 		// Use centralized queued destruction (same pattern as FConduitPreviewHelper)

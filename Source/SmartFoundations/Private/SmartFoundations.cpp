@@ -20,6 +20,7 @@ DEFINE_LOG_CATEGORY(LogSmartRestore);
 DEFINE_LOG_CATEGORY(LogSmartGrid);
 DEFINE_LOG_CATEGORY(LogSmartHologram);
 DEFINE_LOG_CATEGORY(LogSmartUI);
+DEFINE_LOG_CATEGORY(LogSmartArrows);
 
 void FSmartFoundationsModule::StartupModule()
 {

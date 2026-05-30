@@ -31,7 +31,7 @@ void FSFPipeAutoConnectManager::Initialize(USFSubsystem* InSubsystem, USFAutoCon
 	Subsystem = InSubsystem;
 	AutoConnectService = InAutoConnectService;
 
-	UE_LOG(LogSmartFoundations, Log, TEXT("PipeAutoConnectManager initialized (Subsystem=%s, Service=%s)"),
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("PipeAutoConnectManager initialized (Subsystem=%s, Service=%s)"),
 		*GetNameSafe(Subsystem), *GetNameSafe(AutoConnectService));
 }
 
@@ -46,7 +46,7 @@ void FSFPipeAutoConnectManager::ProcessAllJunctions(AFGHologram* ParentJunctionH
 	if (Subsystem->IsSmartDisabledForCurrentAction())
 	{
 		ClearPipePreviews();
-		UE_LOG(LogSmartFoundations, Log, TEXT("🔧 ProcessAllJunctions: Skipped - Smart disabled for current action"));
+		UE_LOG(LogSmartAutoConnect, Log, TEXT("🔧 ProcessAllJunctions: Skipped - Smart disabled for current action"));
 		return;
 	}
 	
@@ -108,7 +108,7 @@ void FSFPipeAutoConnectManager::ProcessAllJunctions(AFGHologram* ParentJunctionH
 		return;
 	}
 	
-	UE_LOG(LogSmartFoundations, Log, TEXT("🔧 PIPE: Processing %d junctions with shared connector reservation"), AllJunctions.Num());
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("🔧 PIPE: Processing %d junctions with shared connector reservation"), AllJunctions.Num());
 	
 	// CRITICAL: Clean up pipe previews for junctions that no longer exist (removed children)
 	// This must happen while preview maps still have data (before any forced clear)
@@ -135,7 +135,7 @@ void FSFPipeAutoConnectManager::ProcessAllJunctions(AFGHologram* ParentJunctionH
 		}
 		
 		bool bIsParent = (Junction == ParentJunctionHologram);
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 PIPE: Processing junction %s %s"), 
+		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🔧 PIPE: Processing junction %s %s"), 
 			bIsParent ? TEXT("(PARENT)") : TEXT("(CHILD)"),
 			*Junction->GetName());
 		
@@ -149,7 +149,7 @@ void FSFPipeAutoConnectManager::ProcessAllJunctions(AFGHologram* ParentJunctionH
 			if (StoredIdx)
 			{
 				ParentConnectorIdx = *StoredIdx;
-				UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   Parent using connector index %d"), ParentConnectorIdx);
+				UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   Parent using connector index %d"), ParentConnectorIdx);
 			}
 			
 			// Capture parent connection type (Input/Output) from child hologram or legacy preview
@@ -164,7 +164,7 @@ void FSFPipeAutoConnectManager::ProcessAllJunctions(AFGHologram* ParentJunctionH
 					{
 						ParentConnectionType = Pair.Key->GetPipeConnectionType();
 						bParentHasConnection = true;
-						UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   Parent connected to %s type connector - restricting children"), 
+						UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   Parent connected to %s type connector - restricting children"), 
 							(ParentConnectionType == EPipeConnectionType::PCT_CONSUMER) ? TEXT("INPUT") : TEXT("OUTPUT"));
 						break;
 					}
@@ -179,7 +179,7 @@ void FSFPipeAutoConnectManager::ProcessAllJunctions(AFGHologram* ParentJunctionH
 					{
 						ParentConnectionType = BuildingConn->GetPipeConnectionType();
 						bParentHasConnection = true;
-						UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   Parent connected to %s type connector - restricting children (legacy)"), 
+						UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   Parent connected to %s type connector - restricting children (legacy)"), 
 							(ParentConnectionType == EPipeConnectionType::PCT_CONSUMER) ? TEXT("INPUT") : TEXT("OUTPUT"));
 					}
 				}
@@ -222,18 +222,18 @@ void FSFPipeAutoConnectManager::ProcessAllJunctions(AFGHologram* ParentJunctionH
 					{
 						// First time connecting - apply it
 						bShouldApply = true;
-						UE_LOG(LogSmartFoundations, Log, TEXT("   🎯 CONTEXT-AWARE SPACING: First pipe connection detected"));
+						UE_LOG(LogSmartAutoConnect, Log, TEXT("   🎯 CONTEXT-AWARE SPACING: First pipe connection detected"));
 					}
 					else if (LastTargetBuildingClass.IsValid() && LastTargetBuildingClass.Get() != CurrentBuildingClass)
 					{
 						// Building changed - reset and apply new spacing
 						bShouldApply = true;
-						UE_LOG(LogSmartFoundations, Log, TEXT("   🎯 CONTEXT-AWARE SPACING: Target building changed (%s → %s), re-adjusting"),
+						UE_LOG(LogSmartAutoConnect, Log, TEXT("   🎯 CONTEXT-AWARE SPACING: Target building changed (%s → %s), re-adjusting"),
 							*LastTargetBuildingClass->GetName(), *CurrentBuildingClass->GetName());
 					}
 					else
 					{
-						UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   🎯 CONTEXT-AWARE SPACING: Skipping (already applied, user can fine-tune)"));
+						UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   🎯 CONTEXT-AWARE SPACING: Skipping (already applied, user can fine-tune)"));
 					}
 					
 					if (bShouldApply)
@@ -263,7 +263,7 @@ void FSFPipeAutoConnectManager::ProcessAllJunctions(AFGHologram* ParentJunctionH
 							bContextSpacingApplied = true;
 							LastTargetBuildingClass = CurrentBuildingClass;
 							
-							UE_LOG(LogSmartFoundations, Log, TEXT("   🎯 CONTEXT-AWARE SPACING: Auto-adjusted pipes to %.1fm x %.1fm (building: %s, width: %.0fcm)"),
+							UE_LOG(LogSmartAutoConnect, Log, TEXT("   🎯 CONTEXT-AWARE SPACING: Auto-adjusted pipes to %.1fm x %.1fm (building: %s, width: %.0fcm)"),
 								BuildingWidth / 100.0f, BuildingWidth / 100.0f,
 								*CurrentBuildingClass->GetName(), BuildingWidth);
 						}
@@ -281,7 +281,7 @@ void FSFPipeAutoConnectManager::ProcessAllJunctions(AFGHologram* ParentJunctionH
 			int32 OppositeIdx = GetOppositeConnectorByNormal(ParentConnectorIdx, JunctionConnectors);
 			TArray<int32> AllowedIndices = { ParentConnectorIdx, OppositeIdx };
 			
-			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   Restricting child to indices %d, %d (opposite by normal)"), 
+			UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   Restricting child to indices %d, %d (opposite by normal)"), 
 				ParentConnectorIdx, OppositeIdx);
 			
 			// Pass parent connection type constraint if available
@@ -293,14 +293,14 @@ void FSFPipeAutoConnectManager::ProcessAllJunctions(AFGHologram* ParentJunctionH
 		{
 			// Fallback: process child normally (no parent restrictions available yet)
 			// Still pass type constraint if available, though unlikely if parent index not set
-			UE_LOG(LogSmartFoundations, Log, TEXT("   🔧 PIPE: Processing child %s without parent restrictions (ParentConnectorIdx=%d)"), 
+			UE_LOG(LogSmartAutoConnect, Log, TEXT("   🔧 PIPE: Processing child %s without parent restrictions (ParentConnectorIdx=%d)"), 
 				*Junction->GetName(), ParentConnectorIdx);
 			const EPipeConnectionType* TypeConstraint = bParentHasConnection ? &ParentConnectionType : nullptr;
 			ProcessPipeJunctions(Junction, &ReservedConnectors, nullptr, TypeConstraint);
 		}
 	}
 	
-	UE_LOG(LogSmartFoundations, Log, TEXT("🔧 PIPE: Finished processing %d junctions (%d connectors reserved, %d building A + %d building B + %d manifold children)"), 
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("🔧 PIPE: Finished processing %d junctions (%d connectors reserved, %d building A + %d building B + %d manifold children)"), 
 		AllJunctions.Num(), ReservedConnectors.Num(), BuildingPipeChildren.Num(), BuildingPipeChildrenB.Num(), ManifoldPipeChildren.Num());
 	
 	// Phase 2: Evaluate junction-to-junction manifolds after Phase 1 (junction-to-building) completes
@@ -372,7 +372,7 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 {
 	if (!ParentJunctionHologram || !Subsystem || !AutoConnectService)
 	{
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("PipeAutoConnectManager: Missing context for ProcessPipeJunctions"));
+		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("PipeAutoConnectManager: Missing context for ProcessPipeJunctions"));
 		return;
 	}
 
@@ -387,7 +387,7 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 		if (DeltaPos.Size() > 1.0f) // Moved more than 1cm
 		{
 			bJunctionMoved = true;
-			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT(" PIPE: Junction moved %.1f cm - updating preview"), DeltaPos.Size());
+			UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT(" PIPE: Junction moved %.1f cm - updating preview"), DeltaPos.Size());
 		}
 	}
 	
@@ -406,7 +406,7 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 	TArray<AFGBuildable*> NearbyBuildings;
 	FSFPipeConnectorFinder::FindNearbyPipeBuildings(ParentJunctionHologram, SearchRadius, NearbyBuildings);
 
-	UE_LOG(LogSmartFoundations, Log,
+	UE_LOG(LogSmartAutoConnect, Log,
 		TEXT("🔍 PIPE: Found %d buildings within %.0fm radius of %s"),
 		NearbyBuildings.Num(), SearchRadius / 100.0f, *ParentJunctionHologram->GetName());
 
@@ -442,7 +442,7 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 		// Skip loose pipes - they're not valid connection targets
 		if (Building->IsA(AFGBuildablePipeline::StaticClass()))
 		{
-			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   ⏭️ Skipping %s - loose pipeline"), *Building->GetName());
+			UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   ⏭️ Skipping %s - loose pipeline"), *Building->GetName());
 			continue;
 		}
 		
@@ -450,14 +450,14 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 		FString BuildingClassName = Building->GetClass()->GetFName().ToString();
 		if (BuildingClassName.Contains(TEXT("PipelineSupport")) || BuildingClassName.Contains(TEXT("PipeSupport")))
 		{
-			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   ⏭️ Skipping %s - pipe support"), *Building->GetName());
+			UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   ⏭️ Skipping %s - pipe support"), *Building->GetName());
 			continue;
 		}
 		
 		// Skip storage containers - they have pipe connections but aren't production buildings
 		if (Building->IsA(AFGBuildableStorage::StaticClass()))
 		{
-			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   ⏭️ Skipping %s - storage building"), *Building->GetName());
+			UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   ⏭️ Skipping %s - storage building"), *Building->GetName());
 			continue;
 		}
 		
@@ -471,24 +471,24 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 			FSFPipeConnectorFinder::GetPipeConnectors(Building, PassthroughPipeConnectors);
 			if (PassthroughPipeConnectors.Num() == 0)
 			{
-				UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   ⏭️ Skipping %s - passthrough without pipe connections"), *Building->GetName());
+				UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   ⏭️ Skipping %s - passthrough without pipe connections"), *Building->GetName());
 				continue;
 			}
-			UE_LOG(LogSmartFoundations, Log, TEXT("   ✅ Floor hole (passthrough) with %d pipe connections accepted as target"), PassthroughPipeConnectors.Num());
+			UE_LOG(LogSmartAutoConnect, Log, TEXT("   ✅ Floor hole (passthrough) with %d pipe connections accepted as target"), PassthroughPipeConnectors.Num());
 			// Fall through to connector matching below
 		}
 		// Only allow factory production buildings (AFGBuildableFactory and subclasses)
 		// This prevents connecting to stations, vehicles, etc.
 		else if (!Building->IsA(AFGBuildableFactory::StaticClass()))
 		{
-			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   ⏭️ Skipping %s - not a factory building"), *Building->GetName());
+			UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   ⏭️ Skipping %s - not a factory building"), *Building->GetName());
 			continue;
 		}
 		
 		// Skip pipeline junctions - they're handled separately (reuse BuildingClassName from above)
 		if (BuildingClassName.Contains(TEXT("PipelineJunction")))
 		{
-			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   ⏭️ Skipping %s - pipeline junction (handled separately)"), *Building->GetName());
+			UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   ⏭️ Skipping %s - pipeline junction (handled separately)"), *Building->GetName());
 			continue;
 		}
 
@@ -496,7 +496,7 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 		FSFPipeConnectorFinder::GetPipeConnectors(Building, PipeConnectors);
 		
 		float BuildingDistanceToJunction = FVector::Dist(Building->GetActorLocation(), JunctionLocation) / 100.0f; // meters
-		UE_LOG(LogSmartFoundations, Log,
+		UE_LOG(LogSmartAutoConnect, Log,
 			TEXT("   📦 Building: %s | Distance: %.1fm | Unconnected Pipes: %d"),
 			*Building->GetClass()->GetName(), BuildingDistanceToJunction, PipeConnectors.Num());
 		
@@ -510,7 +510,7 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 		if (AllowedConnectionType)
 		{
 			TargetConnectorType = *AllowedConnectionType;
-			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   Building %s: Forcing type %s (from parent constraint)"), 
+			UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   Building %s: Forcing type %s (from parent constraint)"), 
 				*Building->GetName(), 
 				(TargetConnectorType == EPipeConnectionType::PCT_CONSUMER) ? TEXT("INPUT") : TEXT("OUTPUT"));
 		}
@@ -545,7 +545,7 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 			if (ClosestBuildingConn)
 			{
 				TargetConnectorType = ClosestBuildingConn->GetPipeConnectionType();
-				UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   Building %s: Closest side has %s connectors"), 
+				UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   Building %s: Closest side has %s connectors"), 
 					*Building->GetName(), 
 					(TargetConnectorType == EPipeConnectionType::PCT_CONSUMER) ? TEXT("INPUT") : TEXT("OUTPUT"));
 			}
@@ -569,7 +569,7 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 				AFGHologram** ExistingClaim = SharedReservedConnectors->Find(BuildingConn);
 				if (ExistingClaim && *ExistingClaim != ParentJunctionHologram)
 				{
-					UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   Skipping reserved connector %s (claimed by %s)"),
+					UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   Skipping reserved connector %s (claimed by %s)"),
 						*BuildingConn->GetName(), *(*ExistingClaim)->GetName());
 					continue;
 				}
@@ -578,7 +578,7 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 			// SIDE FILTER: Only consider connectors matching the target type
 			if (BuildingConn->GetPipeConnectionType() != TargetConnectorType)
 			{
-				UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   Skipping connector %s (wrong side: %s vs %s)"),
+				UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   Skipping connector %s (wrong side: %s vs %s)"),
 					*BuildingConn->GetName(),
 					(BuildingConn->GetPipeConnectionType() == EPipeConnectionType::PCT_CONSUMER) ? TEXT("INPUT") : TEXT("OUTPUT"),
 					(TargetConnectorType == EPipeConnectionType::PCT_CONSUMER) ? TEXT("INPUT") : TEXT("OUTPUT"));
@@ -620,7 +620,7 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 					// RESTRICTION: Check if this connector index is allowed (for child junctions)
 					if (AllowedConnectorIndices && !AllowedConnectorIndices->Contains(JunctionIdx))
 					{
-						UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("      Skipping junction connector %d (not in allowed indices)"), JunctionIdx);
+						UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      Skipping junction connector %d (not in allowed indices)"), JunctionIdx);
 						continue;
 					}
 
@@ -632,7 +632,7 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 					
 					if (!bTypeCompatible)
 					{
-						UE_LOG(LogSmartFoundations, VeryVerbose, 
+						UE_LOG(LogSmartAutoConnect, VeryVerbose, 
 							TEXT("      Skipping junction[%d]: Type mismatch (J:%s B:%s - both same type)"),
 							JunctionIdx,
 							(JunctionConnType == EPipeConnectionType::PCT_CONSUMER) ? TEXT("INPUT") : TEXT("OUTPUT"),
@@ -671,13 +671,13 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 							BestJunctionDistSq = JunctionDistSq;
 							ClosestJunctionConn = JunctionConn;
 							
-							UE_LOG(LogSmartFoundations, VeryVerbose, 
+							UE_LOG(LogSmartAutoConnect, VeryVerbose, 
 								TEXT("      Valid pair: Junction[%d]→Building (JFace=%.2f, BFace=%.2f)"), 
 								JunctionIdx, JunctionFacingDot, BuildingFacingDot);
 						}
 						else
 						{
-							UE_LOG(LogSmartFoundations, VeryVerbose, 
+							UE_LOG(LogSmartAutoConnect, VeryVerbose, 
 								TEXT("      Rejected pair: Junction[%d]→Building (JAngle:%d BAngle:%d Opp:%d JFace:%d BFace:%d)"), 
 								JunctionIdx, bJunctionAngleValid, bBuildingAngleValid, bNormalsOpposite, 
 								bJunctionFacesBuilding, bBuildingFacesJunction);
@@ -693,7 +693,7 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 					BestJunctionConnector = ClosestJunctionConn;
 					BestBuildingConnector = BuildingConn;
 					
-					UE_LOG(LogSmartFoundations, VeryVerbose, 
+					UE_LOG(LogSmartAutoConnect, VeryVerbose, 
 						TEXT("      New best candidate: Score=%.0f (Dist=%.0f, Align=%.2f)"), 
 						BestScore, Distance, MaxAlignment);
 				}
@@ -702,13 +702,13 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 	}
 
 
-	UE_LOG(LogSmartFoundations, VeryVerbose,
+	UE_LOG(LogSmartAutoConnect, VeryVerbose,
 		TEXT("PipeAutoConnectManager::ProcessPipeJunctions - Junction=%s | Buildings=%d | PipeConnectors=%d"),
 		*ParentJunctionHologram->GetName(), NearbyBuildings.Num(), TotalConnectors);
 
 	if (!BestJunctionConnector || !BestBuildingConnector)
 	{
-		UE_LOG(LogSmartFoundations, Log,
+		UE_LOG(LogSmartAutoConnect, Log,
 			TEXT("   ❌ No valid pipe connection found (checked %d buildings, %d total connectors)"),
 			NearbyBuildings.Num(), TotalConnectors);
 		
@@ -716,7 +716,7 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 		TWeakObjectPtr<ASFPipelineHologram>* ExistingChild = BuildingPipeChildren.Find(ParentJunctionHologram);
 		if (ExistingChild && ExistingChild->IsValid())
 		{
-			UE_LOG(LogSmartFoundations, Log, TEXT("🔧 PIPE CHILD: Removing child (no valid connection) for junction %s"), 
+			UE_LOG(LogSmartAutoConnect, Log, TEXT("🔧 PIPE CHILD: Removing child (no valid connection) for junction %s"), 
 				*ParentJunctionHologram->GetName());
 			RemovePipeChild(ParentJunctionHologram, ExistingChild->Get());
 			BuildingPipeChildren.Remove(ParentJunctionHologram);
@@ -739,7 +739,7 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 		constexpr float MaxConnectionDistance = 2500.0f; // 25m
 		if (BestDistance > MaxConnectionDistance)
 		{
-			UE_LOG(LogSmartFoundations, Log,
+			UE_LOG(LogSmartAutoConnect, Log,
 				TEXT("   ❌ Best connection rejected: too far (%.1fm > %.1fm limit)"),
 				BestDistance / 100.0f, MaxConnectionDistance / 100.0f);
 			
@@ -747,7 +747,7 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 			TWeakObjectPtr<ASFPipelineHologram>* ExistingChild = BuildingPipeChildren.Find(ParentJunctionHologram);
 			if (ExistingChild && ExistingChild->IsValid())
 			{
-				UE_LOG(LogSmartFoundations, Log, TEXT("🔧 PIPE CHILD: Removing child (too far) for junction %s"), 
+				UE_LOG(LogSmartAutoConnect, Log, TEXT("🔧 PIPE CHILD: Removing child (too far) for junction %s"), 
 					*ParentJunctionHologram->GetName());
 				RemovePipeChild(ParentJunctionHologram, ExistingChild->Get());
 				BuildingPipeChildren.Remove(ParentJunctionHologram);
@@ -775,7 +775,7 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 		
 		if (BestDistance < EffectiveMinDistance)
 		{
-			UE_LOG(LogSmartFoundations, Log,
+			UE_LOG(LogSmartAutoConnect, Log,
 				TEXT("   ❌ Best connection rejected: too close (%.1fm < %.1fm minimum at %.1f° angle)"),
 				BestDistance / 100.0f, EffectiveMinDistance / 100.0f, AngleDegrees);
 			
@@ -783,7 +783,7 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 			TWeakObjectPtr<ASFPipelineHologram>* ExistingChild = BuildingPipeChildren.Find(ParentJunctionHologram);
 			if (ExistingChild && ExistingChild->IsValid())
 			{
-				UE_LOG(LogSmartFoundations, Log, TEXT("🔧 PIPE CHILD: Removing child (too close) for junction %s"), 
+				UE_LOG(LogSmartAutoConnect, Log, TEXT("🔧 PIPE CHILD: Removing child (too close) for junction %s"), 
 					*ParentJunctionHologram->GetName());
 				RemovePipeChild(ParentJunctionHologram, ExistingChild->Get());
 				BuildingPipeChildren.Remove(ParentJunctionHologram);
@@ -794,7 +794,7 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 			return; // No preview if connection would be too short
 		}
 		
-		UE_LOG(LogSmartFoundations, Log,
+		UE_LOG(LogSmartAutoConnect, Log,
 			TEXT("   ✅ Valid connection found: Distance %.1fm"), BestDistance / 100.0f);
 		
 		// Track which connector index this junction is using (for child restrictions)
@@ -802,12 +802,12 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 		if (ChosenConnectorIdx != INDEX_NONE)
 		{
 			ParentConnectorIndices.Add(ParentJunctionHologram, ChosenConnectorIdx);
-			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   Tracking connector index %d for junction %s (Side A: %s → %s)"), 
+			UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   Tracking connector index %d for junction %s (Side A: %s → %s)"), 
 				ChosenConnectorIdx, *ParentJunctionHologram->GetName(),
 				*BestJunctionConnector->GetName(), *BestBuildingConnector->GetName());
 		}
 		
-		UE_LOG(LogSmartFoundations, VeryVerbose,
+		UE_LOG(LogSmartAutoConnect, VeryVerbose,
 			TEXT("PipeAutoConnectManager::ProcessPipeJunctions - Selected pair: JunctionConn=%s (idx=%d) BuildingConn=%s Dist=%.1f cm"),
 			*BestJunctionConnector->GetName(), ChosenConnectorIdx, *BestBuildingConnector->GetName(), BestDistance);
 
@@ -820,12 +820,12 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 			
 			if (ExistingPreview)
 			{
-				UE_LOG(LogSmartFoundations, Log, TEXT("🔧 PIPE: Found EXISTING preview for junction %s (ptr=%p, total previews=%d)"), 
+				UE_LOG(LogSmartAutoConnect, Log, TEXT("🔧 PIPE: Found EXISTING preview for junction %s (ptr=%p, total previews=%d)"), 
 					*ParentJunctionHologram->GetName(), ParentJunctionHologram, JunctionPipePreviews.Num());
 			}
 			else
 			{
-				UE_LOG(LogSmartFoundations, Log, TEXT("🔧 PIPE: NO existing preview for junction %s (ptr=%p, total previews=%d)"), 
+				UE_LOG(LogSmartAutoConnect, Log, TEXT("🔧 PIPE: NO existing preview for junction %s (ptr=%p, total previews=%d)"), 
 					*ParentJunctionHologram->GetName(), ParentJunctionHologram, JunctionPipePreviews.Num());
 			}
 			
@@ -845,7 +845,7 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 				// Unreserve old connector if junction moved to a different one
 				if (OldConnector)
 				{
-					UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   Unreserving old connector %s"), *OldConnector->GetName());
+					UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   Unreserving old connector %s"), *OldConnector->GetName());
 					SharedReservedConnectors->Remove(OldConnector);
 				}
 			}
@@ -853,7 +853,7 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 			// Check if we already have a child hologram for this junction
 			TWeakObjectPtr<ASFPipelineHologram>* ExistingChild = BuildingPipeChildren.Find(ParentJunctionHologram);
 			
-			UE_LOG(LogSmartFoundations, Log, TEXT("🔧 PIPE CHILD LOOKUP: Junction=%s, Found=%s, TotalChildren=%d"),
+			UE_LOG(LogSmartAutoConnect, Log, TEXT("🔧 PIPE CHILD LOOKUP: Junction=%s, Found=%s, TotalChildren=%d"),
 				*ParentJunctionHologram->GetName(), 
 				(ExistingChild && ExistingChild->IsValid()) ? TEXT("YES") : TEXT("NO"),
 				BuildingPipeChildren.Num());
@@ -875,7 +875,7 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 				if (ExpectedBuildClass && CurrentBuildClass != ExpectedBuildClass)
 				{
 					// Tier/style changed - destroy existing and spawn new with correct tier
-					UE_LOG(LogSmartFoundations, Log, TEXT("🔧 PIPE CHILD: Tier changed - recreating pipe for junction %s (old=%s, new=%s)"),
+					UE_LOG(LogSmartAutoConnect, Log, TEXT("🔧 PIPE CHILD: Tier changed - recreating pipe for junction %s (old=%s, new=%s)"),
 						*ParentJunctionHologram->GetName(),
 						CurrentBuildClass ? *CurrentBuildClass->GetName() : TEXT("null"),
 						*ExpectedBuildClass->GetName());
@@ -893,7 +893,7 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 					if (NewChild)
 					{
 						BuildingPipeChildren.Add(ParentJunctionHologram, NewChild);
-						UE_LOG(LogSmartFoundations, Log, TEXT("🔧 PIPE CHILD: Recreated with new tier for junction %s"),
+						UE_LOG(LogSmartAutoConnect, Log, TEXT("🔧 PIPE CHILD: Recreated with new tier for junction %s"),
 							*ParentJunctionHologram->GetName());
 					}
 					// Skip the update logic below since we just spawned a new child
@@ -928,7 +928,7 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 					}
 					FVector EndNormal = BestBuildingConnector->GetConnectorNormal();
 				
-					UE_LOG(LogSmartFoundations, Log, TEXT("🔧 PIPE UPDATE: Junction=%s @ %s, Start=%s, End=%s (parentLocked=%d)"),
+					UE_LOG(LogSmartAutoConnect, Log, TEXT("🔧 PIPE UPDATE: Junction=%s @ %s, Start=%s, End=%s (parentLocked=%d)"),
 						*ParentJunctionHologram->GetName(), *JunctionPos.ToString(), *StartPos.ToString(), *EndPos.ToString(), bParentLocked ? 1 : 0);
 					
 					// Update position and spline data (RuntimeSettings already declared above for tier check)
@@ -998,7 +998,7 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 					PipeChild->SetActorHiddenInGame(false);
 					PipeChild->SetPlacementMaterialState(ParentJunctionHologram->GetHologramMaterialState());
 					
-					UE_LOG(LogSmartFoundations, Log, TEXT("🔧 PIPE CHILD: Updated existing child for junction %s (parentLocked=%d, childRelocked=%d)"), 
+					UE_LOG(LogSmartAutoConnect, Log, TEXT("🔧 PIPE CHILD: Updated existing child for junction %s (parentLocked=%d, childRelocked=%d)"), 
 						*ParentJunctionHologram->GetName(), bParentLocked ? 1 : 0, bParentLocked ? 1 : 0);
 				}  // End of else block for tier-unchanged update
 			}
@@ -1014,7 +1014,7 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 				if (NewChild)
 				{
 					BuildingPipeChildren.Add(ParentJunctionHologram, NewChild);
-					UE_LOG(LogSmartFoundations, Log, TEXT("🔧 PIPE CHILD: Created building pipe for junction %s (now have %d children)"),
+					UE_LOG(LogSmartAutoConnect, Log, TEXT("🔧 PIPE CHILD: Created building pipe for junction %s (now have %d children)"),
 						*ParentJunctionHologram->GetName(), BuildingPipeChildren.Num());
 				}
 			}
@@ -1023,7 +1023,7 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 			if (ExistingPreview && ExistingPreview->IsValid())
 			{
 				// Update existing preview
-				UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Updating existing pipe preview (DEPRECATED)"));
+				UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("Updating existing pipe preview (DEPRECATED)"));
 				(*ExistingPreview)->UpdatePreview(BestJunctionConnector, BestBuildingConnector);
 			}
 			
@@ -1031,7 +1031,7 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 			if (SharedReservedConnectors)
 			{
 				SharedReservedConnectors->Add(BestBuildingConnector, ParentJunctionHologram);
-				UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   Reserved connector %s for junction %s"),
+				UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   Reserved connector %s for junction %s"),
 					*BestBuildingConnector->GetName(), *ParentJunctionHologram->GetName());
 			}
 			
@@ -1044,7 +1044,7 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 			{
 				int32 OppositeIdx = GetOppositeConnectorByNormal(ChosenConnectorIdx, JunctionConnectors);
 				
-				UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   SIDE B: ChosenIdx=%d OppositeIdx=%d TotalConnectors=%d NearbyBuildings=%d"),
+				UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   SIDE B: ChosenIdx=%d OppositeIdx=%d TotalConnectors=%d NearbyBuildings=%d"),
 					ChosenConnectorIdx, OppositeIdx, JunctionConnectors.Num(), NearbyBuildings.Num());
 				
 				if (OppositeIdx != INDEX_NONE && OppositeIdx < JunctionConnectors.Num())
@@ -1216,7 +1216,7 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 							if (NewChildB)
 							{
 								BuildingPipeChildrenB.Add(ParentJunctionHologram, NewChildB);
-								UE_LOG(LogSmartFoundations, Log, TEXT("🔧 PIPE SIDE B: Created building pipe for junction %s (connector[%d])"),
+								UE_LOG(LogSmartAutoConnect, Log, TEXT("🔧 PIPE SIDE B: Created building pipe for junction %s (connector[%d])"),
 									*ParentJunctionHologram->GetName(), OppositeIdx);
 							}
 						}
@@ -1227,7 +1227,7 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 							SharedReservedConnectors->Add(BestBConn, ParentJunctionHologram);
 						}
 						
-						UE_LOG(LogSmartFoundations, Log, TEXT("   ✅ Side B: Valid connection found: Connector[%d] Distance %.1fm"),
+						UE_LOG(LogSmartAutoConnect, Log, TEXT("   ✅ Side B: Valid connection found: Connector[%d] Distance %.1fm"),
 							OppositeIdx, BestBDist / 100.0f);
 					}
 					else
@@ -1249,7 +1249,7 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 		// CRITICAL FIX: No valid connector pair - DON'T destroy existing preview
 		// Keep preview alive - connector might be valid again next frame (prevents flickering)
 		// Only destroy previews on explicit cleanup, not during evaluation (matches belt behavior)
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("No valid pair for junction %s (keeping existing preview if any)"), 
+		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("No valid pair for junction %s (keeping existing preview if any)"), 
 			*ParentJunctionHologram->GetName());
 		
 		// Note: We don't unreserve connectors here either - let the reservation map clear naturally
@@ -1259,7 +1259,7 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 
 void FSFPipeAutoConnectManager::ClearPipePreviews()
 {
-	UE_LOG(LogSmartFoundations, Log, TEXT("🔧 PIPE: Clearing all pipe children (%d building, %d buildingB, %d manifold, %d floorHole)"), 
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("🔧 PIPE: Clearing all pipe children (%d building, %d buildingB, %d manifold, %d floorHole)"), 
 		BuildingPipeChildren.Num(), BuildingPipeChildrenB.Num(), ManifoldPipeChildren.Num(), FloorHolePipeChildren.Num());
 	
 	// Clear Phase 1 child holograms (junction-to-building)
@@ -1336,14 +1336,14 @@ bool FSFPipeAutoConnectManager::CreatePipePreviewBetweenConnectors(
 {
 	if (!SourceConnector || !TargetConnector || !StorageHologram || !Subsystem)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 CreatePipePreviewBetweenConnectors: Invalid parameters"));
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("🔧 CreatePipePreviewBetweenConnectors: Invalid parameters"));
 		return false;
 	}
 
 	UWorld* World = Subsystem->GetWorld();
 	if (!World)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 CreatePipePreviewBetweenConnectors: No world"));
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("🔧 CreatePipePreviewBetweenConnectors: No world"));
 		return false;
 	}
 
@@ -1354,7 +1354,7 @@ bool FSFPipeAutoConnectManager::CreatePipePreviewBetweenConnectors(
 	{
 		// Update existing preview
 		(*ExistingPreview)->UpdatePreview(SourceConnector, TargetConnector);
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 Updated existing pipe preview for %s"), *StorageHologram->GetName());
+		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🔧 Updated existing pipe preview for %s"), *StorageHologram->GetName());
 		return true;
 	}
 
@@ -1363,7 +1363,7 @@ bool FSFPipeAutoConnectManager::CreatePipePreviewBetweenConnectors(
 	TSharedPtr<FPipePreviewHelper> NewPreview = MakeShared<FPipePreviewHelper>(World, PipeTier, bWithIndicator, StorageHologram);
 	if (!NewPreview.IsValid())
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 Failed to create pipe preview helper"));
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("🔧 Failed to create pipe preview helper"));
 		return false;
 	}
 
@@ -1373,7 +1373,7 @@ bool FSFPipeAutoConnectManager::CreatePipePreviewBetweenConnectors(
 	// Store the preview
 	JunctionPipePreviews.Add(StorageHologram, NewPreview);
 
-	UE_LOG(LogSmartFoundations, Log, TEXT("🔧 Created pipe preview between connectors for %s (Tier=%d, Style=%s)"), 
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("🔧 Created pipe preview between connectors for %s (Tier=%d, Style=%s)"), 
 		*StorageHologram->GetName(), PipeTier, bWithIndicator ? TEXT("Normal") : TEXT("Clean"));
 
 	return true;
@@ -1391,7 +1391,7 @@ void FSFPipeAutoConnectManager::CleanupOrphanedPreviews(const TArray<AFGHologram
 		
 		if (!CurrentJunctions.Contains(Junction))
 		{
-			UE_LOG(LogSmartFoundations, Log, TEXT("🔧 PIPE: Cleaning up orphaned building pipe child for removed junction %s"), 
+			UE_LOG(LogSmartAutoConnect, Log, TEXT("🔧 PIPE: Cleaning up orphaned building pipe child for removed junction %s"), 
 				*GetNameSafe(Junction));
 			
 			if (Pair.Value.IsValid() && Junction)
@@ -1429,7 +1429,7 @@ void FSFPipeAutoConnectManager::CleanupOrphanedPreviews(const TArray<AFGHologram
 		
 		if (!CurrentJunctions.Contains(Junction))
 		{
-			UE_LOG(LogSmartFoundations, Log, TEXT("🔧 PIPE: Cleaning up orphaned manifold pipe child for junction %s (source removed)"), 
+			UE_LOG(LogSmartAutoConnect, Log, TEXT("🔧 PIPE: Cleaning up orphaned manifold pipe child for junction %s (source removed)"), 
 				*GetNameSafe(Junction));
 			
 			// CRITICAL: When source junction is removed, it may already be invalid
@@ -1437,7 +1437,7 @@ void FSFPipeAutoConnectManager::CleanupOrphanedPreviews(const TArray<AFGHologram
 			if (Pair.Value.IsValid())
 			{
 				ASFPipelineHologram* PipeChild = Pair.Value.Get();
-				UE_LOG(LogSmartFoundations, Log, TEXT("🔧 PIPE CHILD: Destroying orphaned %s (parent removed)"), *PipeChild->GetName());
+				UE_LOG(LogSmartAutoConnect, Log, TEXT("🔧 PIPE CHILD: Destroying orphaned %s (parent removed)"), *PipeChild->GetName());
 				PipeChild->Destroy();
 			}
 			
@@ -1462,7 +1462,7 @@ void FSFPipeAutoConnectManager::CleanupOrphanedPreviews(const TArray<AFGHologram
 			TWeakObjectPtr<ASFPipelineHologram>* ManifoldChild = ManifoldPipeChildren.Find(SourceJunction);
 			if (ManifoldChild && ManifoldChild->IsValid())
 			{
-				UE_LOG(LogSmartFoundations, Log, TEXT("🔧 PIPE: Cleaning up manifold pipe child for %s (target %s removed)"), 
+				UE_LOG(LogSmartAutoConnect, Log, TEXT("🔧 PIPE: Cleaning up manifold pipe child for %s (target %s removed)"), 
 					*GetNameSafe(SourceJunction), *GetNameSafe(TargetJunction));
 				
 				RemovePipeChild(SourceJunction, ManifoldChild->Get());
@@ -1536,7 +1536,7 @@ void FSFPipeAutoConnectManager::CleanupOrphanedPreviews(const TArray<AFGHologram
 		{
 			if (It.Value() == Junction)
 			{
-				UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   Unreserving connector %s (junction removed)"), *It.Key()->GetName());
+				UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   Unreserving connector %s (junction removed)"), *It.Key()->GetName());
 				It.RemoveCurrent();
 			}
 		}
@@ -1544,7 +1544,7 @@ void FSFPipeAutoConnectManager::CleanupOrphanedPreviews(const TArray<AFGHologram
 	
 	if (JunctionsToRemove.Num() > 0)
 	{
-		UE_LOG(LogSmartFoundations, Log, TEXT("🔧 PIPE: Cleaned up %d orphaned preview(s)"), JunctionsToRemove.Num());
+		UE_LOG(LogSmartAutoConnect, Log, TEXT("🔧 PIPE: Cleaned up %d orphaned preview(s)"), JunctionsToRemove.Num());
 	}
 }
 
@@ -1552,13 +1552,13 @@ void FSFPipeAutoConnectManager::EvaluatePipeConnections(AFGHologram* ParentJunct
 {
 	if (!ParentJunctionHologram || !Subsystem || !AutoConnectService)
 	{
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("PipeAutoConnectManager::EvaluatePipeConnections - Missing context"));
+		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("PipeAutoConnectManager::EvaluatePipeConnections - Missing context"));
 		return;
 	}
 
 	// Phase 2: Manifold connections (junction-to-junction chaining)
 	// Group junctions by which building pipe INPUT INDEX they connect to (not specific connector instance)
-	UE_LOG(LogSmartFoundations, Log, TEXT("🔗 Pipe Manifolds: Evaluating junction-to-junction chains"));
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("🔗 Pipe Manifolds: Evaluating junction-to-junction chains"));
 	
 	// Track which junctions will be valid sources in this evaluation
 	// Any existing manifold pipe whose source is NOT in this set should be cleaned up
@@ -1597,11 +1597,11 @@ void FSFPipeAutoConnectManager::EvaluatePipeConnections(AFGHologram* ParentJunct
 		// Add junction to this input index's group (e.g., all Input0 junctions together)
 		JunctionsByInputIndex.FindOrAdd(ConnectorIndex).Add(Junction);
 		
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("      Junction %s → Building %s Input[%d]"),
+		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      Junction %s → Building %s Input[%d]"),
 			*Junction->GetName(), *BuildingActor->GetName(), ConnectorIndex);
 	}
 	
-	UE_LOG(LogSmartFoundations, Log, TEXT("🔗 Pipe Manifolds: Found %d input index groups"), 
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("🔗 Pipe Manifolds: Found %d input index groups"), 
 		JunctionsByInputIndex.Num());
 	
 	// For each input index group, chain the junctions together
@@ -1610,12 +1610,12 @@ void FSFPipeAutoConnectManager::EvaluatePipeConnections(AFGHologram* ParentJunct
 		int32 InputIndex = Group.Key;
 		const TArray<AFGHologram*>& JunctionsInGroup = Group.Value;
 		
-		UE_LOG(LogSmartFoundations, Log, TEXT("   📋 Input[%d]: %d junction(s)"), 
+		UE_LOG(LogSmartAutoConnect, Log, TEXT("   📋 Input[%d]: %d junction(s)"), 
 			InputIndex, JunctionsInGroup.Num());
 		
 		if (JunctionsInGroup.Num() < 2)
 		{
-			UE_LOG(LogSmartFoundations, Log, TEXT("      ⏭️ Skipping (need at least 2 junctions for manifold)"));
+			UE_LOG(LogSmartAutoConnect, Log, TEXT("      ⏭️ Skipping (need at least 2 junctions for manifold)"));
 			
 			// Clean up any existing manifold children for junctions in this group (no longer part of chain)
 			for (AFGHologram* Junction : JunctionsInGroup)
@@ -1623,7 +1623,7 @@ void FSFPipeAutoConnectManager::EvaluatePipeConnections(AFGHologram* ParentJunct
 				TWeakObjectPtr<ASFPipelineHologram>* ExistingManifoldChild = ManifoldPipeChildren.Find(Junction);
 				if (ExistingManifoldChild && ExistingManifoldChild->IsValid())
 				{
-					UE_LOG(LogSmartFoundations, Log, TEXT("🔧 PIPE CHILD: Removing manifold child (group too small) for junction %s"), 
+					UE_LOG(LogSmartAutoConnect, Log, TEXT("🔧 PIPE CHILD: Removing manifold child (group too small) for junction %s"), 
 						*Junction->GetName());
 					RemovePipeChild(Junction, ExistingManifoldChild->Get());
 					ManifoldPipeChildren.Remove(Junction);
@@ -1633,7 +1633,7 @@ void FSFPipeAutoConnectManager::EvaluatePipeConnections(AFGHologram* ParentJunct
 			continue; // Need at least 2 junctions to chain
 		}
 		
-		UE_LOG(LogSmartFoundations, Log, TEXT("   🔗 Input[%d]: Chaining %d junctions in manifold"), 
+		UE_LOG(LogSmartAutoConnect, Log, TEXT("   🔗 Input[%d]: Chaining %d junctions in manifold"), 
 			InputIndex, JunctionsInGroup.Num());
 		
 		// Sort junctions by their X coordinate for left-to-right chaining (horizontal manifold)
@@ -1655,7 +1655,7 @@ void FSFPipeAutoConnectManager::EvaluatePipeConnections(AFGHologram* ParentJunct
 				continue;
 			}
 			
-			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("      Chaining %s → %s"), 
+			UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      Chaining %s → %s"), 
 				*SourceJunction->GetName(), *TargetJunction->GetName());
 			
 			// Find best facing connector pair between the two junctions
@@ -1665,7 +1665,7 @@ void FSFPipeAutoConnectManager::EvaluatePipeConnections(AFGHologram* ParentJunct
 			
 			if (!SourceConnector || !TargetConnector)
 			{
-				UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("         ❌ No valid connector pair for manifold"));
+				UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("         ❌ No valid connector pair for manifold"));
 				continue;  // Don't add to ValidManifoldSources - will be cleaned up at end
 			}
 			
@@ -1692,7 +1692,7 @@ void FSFPipeAutoConnectManager::EvaluatePipeConnections(AFGHologram* ParentJunct
 				if (ExpectedBuildClass && CurrentBuildClass != ExpectedBuildClass)
 				{
 					// Tier/style changed - destroy existing and spawn new with correct tier
-					UE_LOG(LogSmartFoundations, Log, TEXT("🔧 PIPE MANIFOLD: Tier changed - recreating pipe for junction %s (old=%s, new=%s)"),
+					UE_LOG(LogSmartAutoConnect, Log, TEXT("🔧 PIPE MANIFOLD: Tier changed - recreating pipe for junction %s (old=%s, new=%s)"),
 						*SourceJunction->GetName(),
 						CurrentBuildClass ? *CurrentBuildClass->GetName() : TEXT("null"),
 						*ExpectedBuildClass->GetName());
@@ -1712,7 +1712,7 @@ void FSFPipeAutoConnectManager::EvaluatePipeConnections(AFGHologram* ParentJunct
 					{
 						ManifoldPipeChildren.Add(SourceJunction, NewChild);
 						ManifoldTargetJunctions.Add(SourceJunction, TargetJunction);
-						UE_LOG(LogSmartFoundations, Log, TEXT("🔧 PIPE MANIFOLD: Recreated with new tier for junction %s"),
+						UE_LOG(LogSmartAutoConnect, Log, TEXT("🔧 PIPE MANIFOLD: Recreated with new tier for junction %s"),
 							*SourceJunction->GetName());
 					}
 					continue;  // Skip the update logic below since we just spawned a new child
@@ -1815,7 +1815,7 @@ void FSFPipeAutoConnectManager::EvaluatePipeConnections(AFGHologram* ParentJunct
 				// Update target junction tracking (in case target changed)
 				ManifoldTargetJunctions.Add(SourceJunction, TargetJunction);
 				
-				UE_LOG(LogSmartFoundations, Log, TEXT("         🔄 Updated existing manifold pipe child (parentLocked=%d, childRelocked=%d)"), 
+				UE_LOG(LogSmartAutoConnect, Log, TEXT("         🔄 Updated existing manifold pipe child (parentLocked=%d, childRelocked=%d)"), 
 					bParentLocked ? 1 : 0, bParentLocked ? 1 : 0);
 			}
 			else
@@ -1831,7 +1831,7 @@ void FSFPipeAutoConnectManager::EvaluatePipeConnections(AFGHologram* ParentJunct
 				{
 					ManifoldPipeChildren.Add(SourceJunction, NewChild);
 					ManifoldTargetJunctions.Add(SourceJunction, TargetJunction);  // Track target for cleanup
-					UE_LOG(LogSmartFoundations, Log, TEXT("         ✅ Created manifold pipe child (now have %d manifold children)"),
+					UE_LOG(LogSmartAutoConnect, Log, TEXT("         ✅ Created manifold pipe child (now have %d manifold children)"),
 						ManifoldPipeChildren.Num());
 				}
 			}
@@ -1863,7 +1863,7 @@ void FSFPipeAutoConnectManager::EvaluatePipeConnections(AFGHologram* ParentJunct
 		TWeakObjectPtr<ASFPipelineHologram>* ManifoldChild = ManifoldPipeChildren.Find(StaleSource);
 		if (ManifoldChild && ManifoldChild->IsValid())
 		{
-			UE_LOG(LogSmartFoundations, Log, TEXT("🔧 PIPE: Cleaning up stale manifold pipe for %s (no longer valid source in chain)"), 
+			UE_LOG(LogSmartAutoConnect, Log, TEXT("🔧 PIPE: Cleaning up stale manifold pipe for %s (no longer valid source in chain)"), 
 				*GetNameSafe(StaleSource));
 			RemovePipeChild(StaleSource, ManifoldChild->Get());
 		}
@@ -1873,7 +1873,7 @@ void FSFPipeAutoConnectManager::EvaluatePipeConnections(AFGHologram* ParentJunct
 	
 	if (StaleManifoldSources.Num() > 0)
 	{
-		UE_LOG(LogSmartFoundations, Log, TEXT("🔧 PIPE: Cleaned up %d stale manifold pipe(s), now have %d manifold children"), 
+		UE_LOG(LogSmartAutoConnect, Log, TEXT("🔧 PIPE: Cleaned up %d stale manifold pipe(s), now have %d manifold children"), 
 			StaleManifoldSources.Num(), ManifoldPipeChildren.Num());
 	}
 }
@@ -1935,7 +1935,7 @@ int32 FSFPipeAutoConnectManager::GetOppositeConnectorByNormal(
 		}
 	}
 	
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   GetOppositeByNormal: Source[%d] Normal=(%.2f,%.2f,%.2f) → Opposite[%d] Dot=%.2f"),
+	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   GetOppositeByNormal: Source[%d] Normal=(%.2f,%.2f,%.2f) → Opposite[%d] Dot=%.2f"),
 		SourceIndex, SourceNormal.X, SourceNormal.Y, SourceNormal.Z, BestIdx, BestDot);
 	
 	return BestIdx;
@@ -1955,7 +1955,7 @@ UFGPipeConnectionComponent* FSFPipeAutoConnectManager::FindAvailableManifoldConn
 	if (JunctionConnectors.Num() != 4)
 	{
 		// All junctions should be 4-way
-		UE_LOG(LogSmartFoundations, Warning, TEXT("Junction %s has %d connectors (expected 4)"), 
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("Junction %s has %d connectors (expected 4)"), 
 			*JunctionHologram->GetName(), JunctionConnectors.Num());
 		return JunctionConnectors.Num() > 0 ? JunctionConnectors[0] : nullptr;
 	}
@@ -1971,7 +1971,7 @@ UFGPipeConnectionComponent* FSFPipeAutoConnectManager::FindAvailableManifoldConn
 	if (BuildingConnectorIdx == INDEX_NONE || BuildingConnectorIdx >= JunctionConnectors.Num())
 	{
 		// No building connection yet, use first connector for manifold
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("            No building connection found, using connector 0 for manifold"));
+		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("            No building connection found, using connector 0 for manifold"));
 		return JunctionConnectors[0];
 	}
 	
@@ -2008,7 +2008,7 @@ UFGPipeConnectionComponent* FSFPipeAutoConnectManager::FindAvailableManifoldConn
 	if (BestManifoldPort)
 	{
 		int32 ManifoldIdx = JunctionConnectors.IndexOfByKey(BestManifoldPort);
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("            Building on connector %d, using perpendicular connector %d for manifold (score=%.2f)"), 
+		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("            Building on connector %d, using perpendicular connector %d for manifold (score=%.2f)"), 
 			BuildingConnectorIdx, ManifoldIdx, BestPerpendicularScore);
 		return BestManifoldPort;
 	}
@@ -2039,7 +2039,7 @@ void FSFPipeAutoConnectManager::FindBestManifoldConnectorPair(
 	
 	if (SourceConnectors.Num() != 4 || TargetConnectors.Num() != 4)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("Manifold: Junctions don't have expected 4 connectors (Source=%d, Target=%d)"),
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("Manifold: Junctions don't have expected 4 connectors (Source=%d, Target=%d)"),
 			SourceConnectors.Num(), TargetConnectors.Num());
 		return;
 	}
@@ -2155,7 +2155,7 @@ void FSFPipeAutoConnectManager::FindBestManifoldConnectorPair(
 				OutSourceConnector = SrcConn;
 				OutTargetConnector = TgtConn;
 				
-				UE_LOG(LogSmartFoundations, VeryVerbose, 
+				UE_LOG(LogSmartAutoConnect, VeryVerbose, 
 					TEXT("            Better pair: Src[%d]→Tgt[%d] (SrcAlign=%.2f TgtAlign=%.2f Facing=%.2f Total=%.2f Dist=%.1f%s)"),
 					SrcIdx, TgtIdx, SrcAlignment, TgtAlignment, FacingScore, TotalScore, PairDistance,
 					bWinsTieBreaker ? TEXT(" [tie-break]") : TEXT(""));
@@ -2167,7 +2167,7 @@ void FSFPipeAutoConnectManager::FindBestManifoldConnectorPair(
 	{
 		int32 FinalSrcIdx = SourceConnectors.IndexOfByKey(OutSourceConnector);
 		int32 FinalTgtIdx = TargetConnectors.IndexOfByKey(OutTargetConnector);
-		UE_LOG(LogSmartFoundations, Log, 
+		UE_LOG(LogSmartAutoConnect, Log, 
 			TEXT("         ✅ Selected manifold pair: Src[%d]→Tgt[%d] (score=%.2f)"),
 			FinalSrcIdx, FinalTgtIdx, BestScore);
 	}
@@ -2185,14 +2185,14 @@ ASFPipelineHologram* FSFPipeAutoConnectManager::SpawnPipeChild(
 {
 	if (!ParentJunction || !JunctionConnector || !TargetConnector || !Subsystem)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 PIPE CHILD: SpawnPipeChild called with invalid parameters"));
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("🔧 PIPE CHILD: SpawnPipeChild called with invalid parameters"));
 		return nullptr;
 	}
 	
 	UWorld* World = ParentJunction->GetWorld();
 	if (!World)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 PIPE CHILD: No world context"));
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("🔧 PIPE CHILD: No world context"));
 		return nullptr;
 	}
 	
@@ -2211,14 +2211,14 @@ ASFPipelineHologram* FSFPipeAutoConnectManager::SpawnPipeChild(
 	{
 		ActualTier = Subsystem->GetHighestUnlockedPipeTier(PlayerController);
 		if (ActualTier == 0) ActualTier = 1; // Default to Mk1 if detection fails
-		UE_LOG(LogSmartFoundations, Log, TEXT("🔧 PIPE CHILD: Auto mode resolved to Mk%d"), ActualTier);
+		UE_LOG(LogSmartAutoConnect, Log, TEXT("🔧 PIPE CHILD: Auto mode resolved to Mk%d"), ActualTier);
 	}
 	
 	// Get pipe build class
 	UClass* PipeBuildClass = Subsystem->GetPipeClassFromConfig(ConfigTier, bWithIndicator, PlayerController);
 	if (!PipeBuildClass)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 PIPE CHILD: No pipe build class for tier %d"), ActualTier);
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("🔧 PIPE CHILD: No pipe build class for tier %d"), ActualTier);
 		return nullptr;
 	}
 	
@@ -2252,7 +2252,7 @@ ASFPipelineHologram* FSFPipeAutoConnectManager::SpawnPipeChild(
 	
 	if (!PipeChild)
 	{
-		UE_LOG(LogSmartFoundations, Error, TEXT("🔧 PIPE CHILD: SpawnActor returned null"));
+		UE_LOG(LogSmartAutoConnect, Error, TEXT("🔧 PIPE CHILD: SpawnActor returned null"));
 		return nullptr;
 	}
 	
@@ -2382,7 +2382,7 @@ ASFPipelineHologram* FSFPipeAutoConnectManager::SpawnPipeChild(
 	PipeChild->TriggerMeshGeneration();
 	PipeChild->ForceApplyHologramMaterial();
 	
-	UE_LOG(LogSmartFoundations, Log, TEXT("🔧 PIPE CHILD: Created %s for %s → %s (%s, Mk%d %s, Recipe=%s)"),
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("🔧 PIPE CHILD: Created %s for %s → %s (%s, Mk%d %s, Recipe=%s)"),
 		*ChildName.ToString(),
 		*ParentJunction->GetName(),
 		bIsManifold ? TEXT("Junction") : TEXT("Building"),
@@ -2402,7 +2402,7 @@ ASFPipelineHologram* FSFPipeAutoConnectManager::SpawnPipeChildAtPosition(
 {
 	if (!ParentHologram || !TargetConnector || !Subsystem)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 PIPE CHILD: SpawnPipeChildAtPosition called with invalid parameters"));
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("🔧 PIPE CHILD: SpawnPipeChildAtPosition called with invalid parameters"));
 		return nullptr;
 	}
 	
@@ -2454,7 +2454,7 @@ ASFPipelineHologram* FSFPipeAutoConnectManager::SpawnPipeChildAtPosition(
 	
 	if (!PipeChild)
 	{
-		UE_LOG(LogSmartFoundations, Error, TEXT("🔧 PIPE CHILD: SpawnActor returned null for floor hole pipe"));
+		UE_LOG(LogSmartAutoConnect, Error, TEXT("🔧 PIPE CHILD: SpawnActor returned null for floor hole pipe"));
 		return nullptr;
 	}
 	
@@ -2563,7 +2563,7 @@ ASFPipelineHologram* FSFPipeAutoConnectManager::SpawnPipeChildAtPosition(
 	PipeChild->TriggerMeshGeneration();
 	PipeChild->ForceApplyHologramMaterial();
 	
-	UE_LOG(LogSmartFoundations, Log, TEXT("🔧 PIPE CHILD: Created floor hole pipe %s for %s (Mk%d %s)"),
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("🔧 PIPE CHILD: Created floor hole pipe %s for %s (Mk%d %s)"),
 		*ChildName.ToString(),
 		*ParentHologram->GetName(),
 		ActualTier,
@@ -2590,7 +2590,7 @@ void FSFPipeAutoConnectManager::RemovePipeChild(AFGHologram* ParentJunction, ASF
 		}
 	}
 	
-	UE_LOG(LogSmartFoundations, Log, TEXT("🔧 PIPE CHILD: Removed %s from %s"),
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("🔧 PIPE CHILD: Removed %s from %s"),
 		*PipeChild->GetName(), *ParentJunction->GetName());
 	
 	PipeChild->Destroy();
@@ -2624,7 +2624,7 @@ void FSFPipeAutoConnectManager::ProcessFloorHolePipes(AFGHologram* ParentHologra
 		}
 	}
 	
-	UE_LOG(LogSmartFoundations, Log, TEXT("🔧 FLOOR HOLE PIPE: Processing %d floor holes (parent + %d children)"),
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("🔧 FLOOR HOLE PIPE: Processing %d floor holes (parent + %d children)"),
 		AllFloorHoles.Num(), AllFloorHoles.Num() - 1);
 	
 	// Get runtime settings for pipe tier and style
@@ -2733,7 +2733,7 @@ void FSFPipeAutoConnectManager::ProcessFloorHolePipes(AFGHologram* ParentHologra
 		FVector StartPos = bUseTopEndpoint ? TopPos : BottomPos;
 		FVector StartNormal = bUseTopEndpoint ? FVector::UpVector : FVector::DownVector;
 		
-		UE_LOG(LogSmartFoundations, Log, TEXT("🔧 FLOOR HOLE PIPE: %s → %s (%.1fm, %s endpoint)"),
+		UE_LOG(LogSmartAutoConnect, Log, TEXT("🔧 FLOOR HOLE PIPE: %s → %s (%.1fm, %s endpoint)"),
 			*FloorHole->GetName(), *BestBuildingConn->GetName(), BestDistance / 100.0f,
 			bUseTopEndpoint ? TEXT("TOP") : TEXT("BOTTOM"));
 		
@@ -2750,7 +2750,7 @@ void FSFPipeAutoConnectManager::ProcessFloorHolePipes(AFGHologram* ParentHologra
 		if (NewChild)
 		{
 			FloorHolePipeChildren.Add(FloorHole, NewChild);
-			UE_LOG(LogSmartFoundations, Log, TEXT("🔧 FLOOR HOLE PIPE: Created pipe child %s for floor hole %s"),
+			UE_LOG(LogSmartAutoConnect, Log, TEXT("🔧 FLOOR HOLE PIPE: Created pipe child %s for floor hole %s"),
 				*NewChild->GetName(), *FloorHole->GetName());
 		}
 	}

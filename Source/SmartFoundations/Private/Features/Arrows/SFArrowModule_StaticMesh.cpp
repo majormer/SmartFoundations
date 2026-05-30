@@ -49,7 +49,7 @@ FSFArrowModule_StaticMesh::FSFArrowModule_StaticMesh()
 	, bInitialized(false)
 	, LastKnownChildCount(0)
 {
-	UE_LOG(LogSmartFoundations, Log, TEXT("FSFArrowModule_StaticMesh: Created (Issue #213: composite arrows + text labels)"));
+	UE_LOG(LogSmartArrows, Log, TEXT("FSFArrowModule_StaticMesh: Created (Issue #213: composite arrows + text labels)"));
 }
 
 FSFArrowModule_StaticMesh::~FSFArrowModule_StaticMesh()
@@ -61,7 +61,7 @@ bool FSFArrowModule_StaticMesh::Initialize(UWorld* World, UObject* Outer, USFSub
 {
 	if (!World || !Outer)
 	{
-		UE_LOG(LogSmartFoundations, Error, TEXT("FSFArrowModule_StaticMesh::Initialize: Invalid World or Outer"));
+		UE_LOG(LogSmartArrows, Error, TEXT("FSFArrowModule_StaticMesh::Initialize: Invalid World or Outer"));
 		return false;
 	}
 
@@ -69,11 +69,11 @@ bool FSFArrowModule_StaticMesh::Initialize(UWorld* World, UObject* Outer, USFSub
 	SubsystemRef = Subsystem;
 	if (Subsystem)
 	{
-		UE_LOG(LogSmartFoundations, Log, TEXT("Initialize: Subsystem reference stored for bounds calculation"));
+		UE_LOG(LogSmartArrows, Log, TEXT("Initialize: Subsystem reference stored for bounds calculation"));
 	}
 	else
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("Initialize: No subsystem reference provided, bounds calculation will use fallbacks"));
+		UE_LOG(LogSmartArrows, Warning, TEXT("Initialize: No subsystem reference provided, bounds calculation will use fallbacks"));
 	}
 
 	// Task #58: Start async asset loading
@@ -154,13 +154,13 @@ bool FSFArrowModule_StaticMesh::AttachToHologram(USceneComponent* HologramRootCo
 {
 	if (!bInitialized)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("FSFArrowModule_StaticMesh::AttachToHologram: Not initialized"));
+		UE_LOG(LogSmartArrows, Warning, TEXT("FSFArrowModule_StaticMesh::AttachToHologram: Not initialized"));
 		return false;
 	}
 
 	if (!HologramRootComponent)
 	{
-		UE_LOG(LogSmartFoundations, Error, TEXT("FSFArrowModule_StaticMesh::AttachToHologram: Invalid hologram root component"));
+		UE_LOG(LogSmartArrows, Error, TEXT("FSFArrowModule_StaticMesh::AttachToHologram: Invalid hologram root component"));
 		return false;
 	}
 
@@ -168,14 +168,14 @@ bool FSFArrowModule_StaticMesh::AttachToHologram(USceneComponent* HologramRootCo
 	UWorld* World = HologramRootComponent->GetWorld();
 	if (!World || World->bIsTearingDown)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("FSFArrowModule_StaticMesh::AttachToHologram: Skipping during world teardown"));
+		UE_LOG(LogSmartArrows, Warning, TEXT("FSFArrowModule_StaticMesh::AttachToHologram: Skipping during world teardown"));
 		return false;
 	}
 
 	// Task #67 Cleanup: Safety check - auto-detach if already attached
 	if (IsAttachedToHologram())
 	{
-		UE_LOG(LogSmartFoundations, Warning, 
+		UE_LOG(LogSmartArrows, Warning, 
 			TEXT("AttachToHologram called while already attached - auto-detaching first to prevent component leaks"));
 		DetachFromHologram();
 	}
@@ -183,7 +183,7 @@ bool FSFArrowModule_StaticMesh::AttachToHologram(USceneComponent* HologramRootCo
 	AActor* HologramActor = HologramRootComponent->GetOwner();
 	if (!HologramActor)
 	{
-		UE_LOG(LogSmartFoundations, Error, TEXT("FSFArrowModule_StaticMesh::AttachToHologram: No actor owner"));
+		UE_LOG(LogSmartArrows, Error, TEXT("FSFArrowModule_StaticMesh::AttachToHologram: No actor owner"));
 		return false;
 	}
 
@@ -197,7 +197,7 @@ bool FSFArrowModule_StaticMesh::AttachToHologram(USceneComponent* HologramRootCo
 	
 	if (bNeedNewComponents)
 	{
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Creating new arrow components for hologram %s"), *HologramActor->GetName());
+		UE_LOG(LogSmartArrows, VeryVerbose, TEXT("Creating new arrow components for hologram %s"), *HologramActor->GetName());
 		
 		// Arrow heads (Cone)
 		ArrowX = NewObject<UStaticMeshComponent>(HologramActor, UStaticMeshComponent::StaticClass(), TEXT("SmartArrowX"));
@@ -216,7 +216,7 @@ bool FSFArrowModule_StaticMesh::AttachToHologram(USceneComponent* HologramRootCo
 	}
 	else
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("Reusing existing arrow components for same hologram"));
+		UE_LOG(LogSmartArrows, Warning, TEXT("Reusing existing arrow components for same hologram"));
 	}
 	
 	// Configure all mesh components
@@ -273,19 +273,19 @@ bool FSFArrowModule_StaticMesh::AttachToHologram(USceneComponent* HologramRootCo
 			DeferredAttachTimerHandle,
 			[this]()
 			{
-				UE_LOG(LogSmartFoundations, Warning, TEXT("Deferred attachment TIMEOUT (5s) - arrows will not appear"));
+				UE_LOG(LogSmartArrows, Warning, TEXT("Deferred attachment TIMEOUT (5s) - arrows will not appear"));
 				if (PendingAttachTarget.IsValid())
 				{
 					SF_LOG_WARNING(Arrows, TEXT("Deferred attachment TIMEOUT (5s) - arrows will not appear"));
 					PendingAttachTarget.Reset();
 				}
-				UE_LOG(LogSmartFoundations, Log, TEXT("Deferred attachment timer completed and cleaned up"));
+				UE_LOG(LogSmartArrows, Log, TEXT("Deferred attachment timer completed and cleaned up"));
 			},
 			5.0f,  // 5 second timeout
 			false   // No loop
 		);
 		
-		UE_LOG(LogSmartFoundations, Log, TEXT("AttachToHologram: ⏳ Deferred attachment timer set (5s timeout)"));
+		UE_LOG(LogSmartArrows, Log, TEXT("AttachToHologram: ⏳ Deferred attachment timer set (5s timeout)"));
 		
 		// Assets will call CompleteDeferredAttachment() when they finish loading
 		return false;  // Not attached yet, but will be soon
@@ -302,7 +302,7 @@ void FSFArrowModule_StaticMesh::DetachFromHologram()
 	// SAFETY: During world teardown, skip detachment entirely to avoid accessing destroyed parents
 	if (ArrowX.IsValid() && ArrowX.Get()->GetWorld() && ArrowX.Get()->GetWorld()->bIsTearingDown)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("DetachFromHologram: Skipping detachment during world teardown"));
+		UE_LOG(LogSmartArrows, Warning, TEXT("DetachFromHologram: Skipping detachment during world teardown"));
 		return;
 	}
 	
@@ -315,7 +315,7 @@ void FSFArrowModule_StaticMesh::DetachFromHologram()
 	
 	if (!ComponentWorld || ComponentWorld->bIsTearingDown)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("DetachFromHologram: World invalid or tearing down, skipping detachment"));
+		UE_LOG(LogSmartArrows, Warning, TEXT("DetachFromHologram: World invalid or tearing down, skipping detachment"));
 		return;
 	}
 
@@ -343,12 +343,12 @@ void FSFArrowModule_StaticMesh::DetachFromHologram()
 	// Labels (Issue #213)
 	SafeDetach(LabelX); SafeDetach(LabelY); SafeDetach(LabelZ);
 
-	UE_LOG(LogSmartFoundations, Log, TEXT("Arrows + shafts + labels detached from hologram"));
+	UE_LOG(LogSmartArrows, Log, TEXT("Arrows + shafts + labels detached from hologram"));
 }
 
 void FSFArrowModule_StaticMesh::Cleanup()
 {
-	UE_LOG(LogSmartFoundations, Log, TEXT("Cleanup: Starting arrow module cleanup"));
+	UE_LOG(LogSmartArrows, Log, TEXT("Cleanup: Starting arrow module cleanup"));
 	
 	// Task #58: Cancel any pending asset loads and deferred attachments
 	AssetManager.CancelPendingLoads();
@@ -358,7 +358,7 @@ void FSFArrowModule_StaticMesh::Cleanup()
 	// Safe approach: Get world from component owner, not from dangling component pointers
 	if (DeferredAttachTimerHandle.IsValid())
 	{
-		UE_LOG(LogSmartFoundations, Log, TEXT("Cleanup: Found active deferred attachment timer"));
+		UE_LOG(LogSmartArrows, Log, TEXT("Cleanup: Found active deferred attachment timer"));
 		
 		// Try to get world from ArrowX's owner (subsystem) if component still valid
 		if (ArrowX.IsValid())
@@ -370,42 +370,42 @@ void FSFArrowModule_StaticMesh::Cleanup()
 					if (World->GetTimerManager().IsTimerActive(DeferredAttachTimerHandle))
 					{
 						World->GetTimerManager().ClearTimer(DeferredAttachTimerHandle);
-						UE_LOG(LogSmartFoundations, Log, TEXT("Cleanup: ✅ Cleared deferred attachment timer"));
+						UE_LOG(LogSmartArrows, Log, TEXT("Cleanup: ✅ Cleared deferred attachment timer"));
 					}
 					else
 					{
-						UE_LOG(LogSmartFoundations, Log, TEXT("Cleanup: Timer exists but not active"));
+						UE_LOG(LogSmartArrows, Log, TEXT("Cleanup: Timer exists but not active"));
 					}
 				}
 				else
 				{
-					UE_LOG(LogSmartFoundations, Warning, TEXT("Cleanup: Owner has no world"));
+					UE_LOG(LogSmartArrows, Warning, TEXT("Cleanup: Owner has no world"));
 				}
 			}
 			else
 			{
-				UE_LOG(LogSmartFoundations, Warning, TEXT("Cleanup: ArrowX has no valid owner"));
+				UE_LOG(LogSmartArrows, Warning, TEXT("Cleanup: ArrowX has no valid owner"));
 			}
 		}
 		else
 		{
-			UE_LOG(LogSmartFoundations, Warning, TEXT("Cleanup: ArrowX invalid, force invalidating timer"));
+			UE_LOG(LogSmartArrows, Warning, TEXT("Cleanup: ArrowX invalid, force invalidating timer"));
 		}
 		
 		// If we can't get world safely, timer will be cleaned up by engine anyway
 		DeferredAttachTimerHandle.Invalidate();
-		UE_LOG(LogSmartFoundations, Log, TEXT("Cleanup: Timer handle invalidated"));
+		UE_LOG(LogSmartArrows, Log, TEXT("Cleanup: Timer handle invalidated"));
 	}
 	else
 	{
-		UE_LOG(LogSmartFoundations, Log, TEXT("Cleanup: No active deferred attachment timer"));
+		UE_LOG(LogSmartArrows, Log, TEXT("Cleanup: No active deferred attachment timer"));
 	}
 	
 	// Early exit if arrows were never initialized (never attached to a hologram)
 	// This happens during world transitions when no build gun was ever equipped
 	if (!ArrowX.IsValid() && !ArrowY.IsValid() && !ArrowZ.IsValid())
 	{
-		UE_LOG(LogSmartFoundations, Log, TEXT("FSFArrowModule_StaticMesh::Cleanup: Nothing to clean up (arrows never attached)"));
+		UE_LOG(LogSmartArrows, Log, TEXT("FSFArrowModule_StaticMesh::Cleanup: Nothing to clean up (arrows never attached)"));
 		bInitialized = false;
 		return;
 	}
@@ -427,7 +427,7 @@ void FSFArrowModule_StaticMesh::Cleanup()
 	// Reality: Cleanup() is only called during subsystem Deinitialize (world transitions)
 	// Verdict: Safe to skip manual detach - engine handles it
 	
-	UE_LOG(LogSmartFoundations, Log, TEXT("FSFArrowModule_StaticMesh::Cleanup: Skipping manual detach - letting engine clean up components"));
+	UE_LOG(LogSmartArrows, Log, TEXT("FSFArrowModule_StaticMesh::Cleanup: Skipping manual detach - letting engine clean up components"));
 
 	// Just null out our references - engine will garbage collect the components
 	ArrowX.Reset(); ArrowY.Reset(); ArrowZ.Reset();
@@ -437,10 +437,10 @@ void FSFArrowModule_StaticMesh::Cleanup()
 	// Clean up dynamic material instances
 	DynamicMaterialX.Reset(); DynamicMaterialY.Reset(); DynamicMaterialZ.Reset();
 	DynamicShaftMaterialX.Reset(); DynamicShaftMaterialY.Reset(); DynamicShaftMaterialZ.Reset();
-	UE_LOG(LogSmartFoundations, Log, TEXT("Cleanup: All component references cleared"));
+	UE_LOG(LogSmartArrows, Log, TEXT("Cleanup: All component references cleared"));
 
 	bInitialized = false;
-	UE_LOG(LogSmartFoundations, Log, TEXT("FSFArrowModule_StaticMesh: Cleaned up (Task #58: async loads cancelled, Task #67: dynamic materials cleared)"));
+	UE_LOG(LogSmartArrows, Log, TEXT("FSFArrowModule_StaticMesh: Cleaned up (Task #58: async loads cancelled, Task #67: dynamic materials cleared)"));
 }
 
 void FSFArrowModule_StaticMesh::UpdateArrows(UWorld* World, const FTransform& BaseTransform, ELastAxisInput HighlightedAxis, bool bVisible)
@@ -450,13 +450,13 @@ void FSFArrowModule_StaticMesh::UpdateArrows(UWorld* World, const FTransform& Ba
 	UpdateCount++;
 	if (UpdateCount % 1000 == 0)  // Log every 1000 updates to reduce spam
 	{
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("UpdateArrows: Called %d times - checking for UObject leaks"), UpdateCount);
+		UE_LOG(LogSmartArrows, VeryVerbose, TEXT("UpdateArrows: Called %d times - checking for UObject leaks"), UpdateCount);
 	}
 	
 	// DEBUG: Log every 10th call to reduce spam
 	if (UpdateCount % 10 == 0)
 	{
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🎯 UpdateArrows: DEBUG - Called #%d, Visible=%s"), UpdateCount, bVisible ? TEXT("YES") : TEXT("NO"));
+		UE_LOG(LogSmartArrows, VeryVerbose, TEXT("🎯 UpdateArrows: DEBUG - Called #%d, Visible=%s"), UpdateCount, bVisible ? TEXT("YES") : TEXT("NO"));
 	}
 	
 	if (!World || !ArrowX.IsValid() || !ArrowY.IsValid() || !ArrowZ.IsValid())
@@ -467,7 +467,7 @@ void FSFArrowModule_StaticMesh::UpdateArrows(UWorld* World, const FTransform& Ba
 	// Early exit if arrows should be hidden
 	if (!ArrowX.IsValid() || !ArrowY.IsValid() || !ArrowZ.IsValid())
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("FSFArrowModule_StaticMesh::UpdateArrows: Components invalid or destroyed"));
+		UE_LOG(LogSmartArrows, Warning, TEXT("FSFArrowModule_StaticMesh::UpdateArrows: Components invalid or destroyed"));
 		return;
 	}
 
@@ -518,7 +518,7 @@ void FSFArrowModule_StaticMesh::UpdateArrows(UWorld* World, const FTransform& Ba
 			// Log child count for debugging (every 10th call)
 			if (UpdateCount % 10 == 0)
 			{
-				UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔍 Child count check: Current=%d, Last=%d, Changed=%s"),
+				UE_LOG(LogSmartArrows, VeryVerbose, TEXT("🔍 Child count check: Current=%d, Last=%d, Changed=%s"),
 					CurrentChildCount, LastKnownChildCount, (CurrentChildCount != LastKnownChildCount) ? TEXT("YES") : TEXT("NO"));
 			}
 			
@@ -527,7 +527,7 @@ void FSFArrowModule_StaticMesh::UpdateArrows(UWorld* World, const FTransform& Ba
 				bGridStructureChanged = true;
 				
 				// Log grid structure changes
-				UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🎯 UpdateArrows: Grid structure changed - %d children (was %d)"), 
+				UE_LOG(LogSmartArrows, VeryVerbose, TEXT("🎯 UpdateArrows: Grid structure changed - %d children (was %d)"), 
 					CurrentChildCount, LastKnownChildCount);
 				
 				LastKnownChildCount = CurrentChildCount;
@@ -547,12 +547,12 @@ void FSFArrowModule_StaticMesh::UpdateArrows(UWorld* World, const FTransform& Ba
 	{
 		if (Bounds.bIsValid)
 		{
-			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT(" ARROW POSITIONING: Dynamic Z=%.1f (TopZ=%.1f, Scale=%.2f)"), 
+			UE_LOG(LogSmartArrows, VeryVerbose, TEXT(" ARROW POSITIONING: Dynamic Z=%.1f (TopZ=%.1f, Scale=%.2f)"), 
 				DynamicZOffset, Bounds.TopZ, Bounds.GetArrowScaleFactor());
 		}
 		else
 		{
-			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT(" ARROW POSITIONING: Fallback Z=%.1f (bounds invalid)"), DynamicZOffset);
+			UE_LOG(LogSmartArrows, VeryVerbose, TEXT(" ARROW POSITIONING: Fallback Z=%.1f (bounds invalid)"), DynamicZOffset);
 		}
 	}
 
@@ -769,7 +769,7 @@ bool FSFArrowModule_StaticMesh::LoadAssets()
 	
 	if (!ArrowMesh.IsValid())
 	{
-		UE_LOG(LogSmartFoundations, Error, TEXT("Failed to load arrow mesh from /Engine/BasicShapes/Cone"));
+		UE_LOG(LogSmartArrows, Error, TEXT("Failed to load arrow mesh from /Engine/BasicShapes/Cone"));
 		return false;
 	}
 
@@ -782,10 +782,10 @@ bool FSFArrowModule_StaticMesh::LoadAssets()
 
 	if (!MaterialX.IsValid())
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("Failed to load material, arrows will use default"));
+		UE_LOG(LogSmartArrows, Warning, TEXT("Failed to load material, arrows will use default"));
 	}
 
-	UE_LOG(LogSmartFoundations, Log, TEXT("FSFArrowModule_StaticMesh: Assets loaded successfully"));
+	UE_LOG(LogSmartArrows, Log, TEXT("FSFArrowModule_StaticMesh: Assets loaded successfully"));
 	return true;
 }
 
@@ -796,7 +796,7 @@ UStaticMeshComponent* FSFArrowModule_StaticMesh::CreateArrowComponent(UObject* O
 	if (Component)
 	{
 		ConfigureArrowComponent(Component);
-		UE_LOG(LogSmartFoundations, Verbose, TEXT("Created arrow component: %s"), *Name.ToString());
+		UE_LOG(LogSmartArrows, Verbose, TEXT("Created arrow component: %s"), *Name.ToString());
 	}
 	
 	return Component;
@@ -848,7 +848,7 @@ void FSFArrowModule_StaticMesh::CompleteDeferredAttachment()
 	
 	if (!World || World->bIsTearingDown)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("CompleteDeferredAttachment: World is tearing down, aborting"));
+		UE_LOG(LogSmartArrows, Warning, TEXT("CompleteDeferredAttachment: World is tearing down, aborting"));
 		PendingAttachTarget.Reset();
 		return;
 	}
@@ -1165,7 +1165,7 @@ FHologramBounds FSFArrowModule_StaticMesh::CalculateHologramBounds() const
 				FVector ParentPosition = ActiveHologram->GetActorLocation();
 				float MaxRelativeZ = 0.0f;
 				
-				UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔍 BOUNDS: Parent at Z=%.1f, %d children"), 
+				UE_LOG(LogSmartArrows, VeryVerbose, TEXT("🔍 BOUNDS: Parent at Z=%.1f, %d children"), 
 					ParentPosition.Z, Children.Num());
 				
 				for (AFGHologram* Child : Children)
@@ -1178,7 +1178,7 @@ FHologramBounds FSFArrowModule_StaticMesh::CalculateHologramBounds() const
 						// Newly spawned children will be at Z=0 until UpdateChildPositions() runs
 						if (FMath::IsNearlyZero(ChildZ, 1.0f))
 						{
-							UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   Child at Z=0.0 (unpositioned, skipping)"));
+							UE_LOG(LogSmartArrows, VeryVerbose, TEXT("   Child at Z=0.0 (unpositioned, skipping)"));
 							continue;
 						}
 						
@@ -1187,14 +1187,14 @@ FHologramBounds FSFArrowModule_StaticMesh::CalculateHologramBounds() const
 						float RelativeZ = ChildZ - ParentPosition.Z;
 						MaxRelativeZ = FMath::Max(MaxRelativeZ, RelativeZ);
 						
-						UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   Child at Z=%.1f, relative=%.1f"), 
+						UE_LOG(LogSmartArrows, VeryVerbose, TEXT("   Child at Z=%.1f, relative=%.1f"), 
 							ChildZ, RelativeZ);
 					}
 				}
 				
 				// Grid height = highest relative position + buildable height
 				GridHeightZ = MaxRelativeZ + BuildableSize.Z;
-				UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("📐 BOUNDS: Grid height = %.1f (max relative=%.1f + buildable=%.1f)"), 
+				UE_LOG(LogSmartArrows, VeryVerbose, TEXT("📐 BOUNDS: Grid height = %.1f (max relative=%.1f + buildable=%.1f)"), 
 					GridHeightZ, MaxRelativeZ, BuildableSize.Z);
 			}
 		}
@@ -1205,7 +1205,7 @@ FHologramBounds FSFArrowModule_StaticMesh::CalculateHologramBounds() const
 	FVector Extents = FVector(BuildableSize.X / 2.0f, BuildableSize.Y / 2.0f, GridHeightZ / 2.0f);
 	float TopZ = GridHeightZ;
 	
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("📐 BOUNDS FINAL: TopZ=%.1f (should be grid height)"), TopZ);
+	UE_LOG(LogSmartArrows, VeryVerbose, TEXT("📐 BOUNDS FINAL: TopZ=%.1f (should be grid height)"), TopZ);
 	
 	FHologramBounds CalculatedBounds(Center, Extents, TopZ);
 	
