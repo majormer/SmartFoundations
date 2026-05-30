@@ -83,6 +83,9 @@ namespace SFFont
                 // FEditableTextBoxStyle keeps its font in TextStyle.Font (SetFont sets that).
                 Edit->WidgetStyle.SetFont(Get(Edit->WidgetStyle.TextStyle.Font.Size));
             }
+            // NOTE: UComboBoxString font cannot be set here — its InitFont() is protected and the
+            // Font property is construction-only. The dropdown font is set on the blueprint asset
+            // (each ComboBoxString's Font property) instead, so it bakes in at construction.
         });
     }
 }

@@ -423,6 +423,10 @@ protected:
     virtual void NativeConstruct() override;
     virtual void NativeDestruct() override;
 
+    /** Auto-size the Apply/Reset/Close header buttons to their (localized) labels and re-tile
+     *  the row, so longer translations (e.g. RTL) are not clipped by the fixed designer width. */
+    void FitHeaderButtonRow();
+
     // Keyboard handling for Escape key
     virtual FReply NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent) override;
 
