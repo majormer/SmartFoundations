@@ -1,7 +1,9 @@
 # Code-Simplicity Refactor — Remaining Work
 
 Resume/handoff doc for the simplification effort. Branch: `refactor/simplification-audit`
-(29 commits ahead of `main`, HEAD `ac164f0`, tree clean, rollback tag `refactor-baseline`).
+(~30 commits ahead of `origin/main` at `15fe368`; tree clean; rollback tag `refactor-baseline` at
+`9b15ecc`). HEAD is the branch tip — run `git log -1` for the exact commit. (Note: local `main` may
+be stale; compare against `origin/main`.)
 Charter: [`Simplification-GOAL.md`](Simplification-GOAL.md) · Tracker: [`SimplificationAudit.md`](SimplificationAudit.md)
 · T3 design: [`ADR-T3-size-registry-format.md`](ADR-T3-size-registry-format.md).
 
@@ -25,22 +27,23 @@ Charter: [`Simplification-GOAL.md`](Simplification-GOAL.md) · Tracker: [`Simpli
 
 | Lines | File | Epic |
 |------:|------|------|
-| 9519 | `Features/Extend/SFExtendService.cpp` | T1 |
-| 8847 | `Subsystem/SFSubsystem.cpp` | T1 |
-| 4773 | `Features/AutoConnect/SFAutoConnectService.cpp` | T1 (scope add) |
+| 9515 | `Features/Extend/SFExtendService.cpp` | T1 |
+| 9227 | `Subsystem/SFSubsystem.cpp` | T1 |
+| 4771 | `Features/AutoConnect/SFAutoConnectService.cpp` | T1 (scope add) |
 | 3746 | `UI/SmartSettingsFormWidget.cpp` | T5 |
-| 2871 | `Features/PipeAutoConnect/SFPipeAutoConnectManager.cpp` | T1 (scope add) |
+| 2789 | `Features/PipeAutoConnect/SFPipeAutoConnectManager.cpp` | T1 (scope add) |
 | 2537 | `Features/Upgrade/SFUpgradeExecutionService.cpp` | T1/review |
 | 2220 | `Holograms/Logistics/SFConveyorBeltHologram.cpp` | T8 |
-| 2148 | `Subsystem/SFHologramHelperService.cpp` | T1 (scope add) |
+| 2144 | `Subsystem/SFHologramHelperService.cpp` | T1 (scope add) |
 | 2138 | `UI/SmartUpgradePanel.cpp` | T5 |
-| 2092 | `Features/Subsystem/SFSubsystemInputService.cpp` | T1 (scope add) |
-| 2075 | `Services/SFChainActorService.cpp` | review |
-| 1949 | `Features/Extend/SFExtendDetectionService.cpp` | T1-adjacent |
+| 1949 | `Services/SFChainActorService.cpp` | review |
+| 1852 | `Features/PowerAutoConnect/SFPowerAutoConnectManager.cpp` | T1 (scope add) |
+| 1805 | `Services/RadarPulse/SFRadarPulseService.cpp` | review |
 
-(Counts refreshed 2026-05-30 after T2. There are **11 `.cpp` files >2k lines**; the T2 split files
-`SFExtendCloneTopology.cpp` (~1,671) and `SFExtendCloneSpawner.cpp` (~1,400) are now below the
-threshold. `SFPipelineHologram.cpp` (~1,481) also dropped below 2k.)
+(Counts refreshed 2026-05-30 after T2, from `wc -l`. There are **9 `.cpp` files >2k lines** — the
+nine rows at/above `SmartUpgradePanel.cpp` (2,138). The T2 split files `SFExtendCloneTopology.cpp`
+(~1,671) and `SFExtendCloneSpawner.cpp` (~1,400) are below the threshold, as is
+`SFPipelineHologram.cpp` (~1,481).)
 
 ## The hard constraint (why the rest is collaborative)
 

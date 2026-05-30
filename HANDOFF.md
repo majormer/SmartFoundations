@@ -22,9 +22,9 @@ Then propose the next step and wait for my go-ahead before editing.
 
 ## Where things stand (2026-05-30)
 
-- Branch `refactor/simplification-audit`, HEAD `ac164f0`, 29 commits ahead of `main`, tree clean
-  (only untracked: this file + two `scripts/loc_*.txt` reports — ignore them). Rollback tag:
-  `refactor-baseline` at `9b15ecc`.
+- Branch `refactor/simplification-audit`, ~30 commits ahead of `origin/main` (`15fe368`), tree clean
+  (only untracked: two `scripts/loc_*.txt` reports — ignore them). Run `git log -1` for the exact HEAD;
+  local `main` may be stale, so compare against `origin/main`. Rollback tag: `refactor-baseline` at `9b15ecc`.
 - **5 of 6 charter criteria met.** Done: architecture map, smoke-test harness (`scripts/smoke_test.py`),
   single edit point for asset paths (`SFAssetPaths.h`) and building sizes (`Content/Data/BuildableSizes.csv`),
   per-feature log categories (`SFLogMacros.h`). Epics complete: **T3** (size registry → CSV+generated,
@@ -33,11 +33,12 @@ Then propose the next step and wait for my go-ahead before editing.
 
 ## Next: T1 — decompose the god-objects
 
-The only path to the last two criteria. Targets (live line counts):
-- `Features/Extend/SFExtendService.cpp` — 9,519
-- `Subsystem/SFSubsystem.cpp` — 8,847
-- Scope-adds also >2k: `SFAutoConnectService.cpp` (4,773), `SFPipeAutoConnectManager.cpp` (2,871),
-  `SFHologramHelperService.cpp` (2,148), `SFSubsystemInputService.cpp` (2,092).
+The only path to the last two criteria. Targets (live `wc -l`):
+- `Features/Extend/SFExtendService.cpp` — 9,515
+- `Subsystem/SFSubsystem.cpp` — 9,227
+- Scope-adds also >2k: `SFAutoConnectService.cpp` (4,771), `SFPipeAutoConnectManager.cpp` (2,789),
+  `SFHologramHelperService.cpp` (2,144). (There are 9 `.cpp` files >2k total; full list in
+  `Simplification-RemainingWork.md`.)
 
 **Recommended first action:** a read-only audit of `SFExtendService.cpp` to map it into cohesive,
 separable units (likely: topology walk, wiring orchestration, scaled-clone planning, diagnostics),
