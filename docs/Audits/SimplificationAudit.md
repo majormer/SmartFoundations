@@ -31,7 +31,8 @@ Also tracked (beyond split/dedupe): SmartMCP smoke-test harness; hologram-adapte
 
 - 2026-05-29: Charter committed (`9b15ecc`). Audit tracker created; `refactor-baseline` tag set. Starting T4 (SAFE-NOW): centralize hardcoded asset paths into `SFAssetPaths.h`, then the player-controller/subsystem lookup helpers.
 - 2026-05-29: T4.1 landed — added `SFAssetPaths.h` and routed the 4 power-feature PowerLine call sites (`SFWireHologram`, `PowerLinePreviewHelper`, `SFPowerAutoConnectManager`) through `SFAssetPaths::PowerLineBuildClass`. Package build SUCCESSFUL (0 errors). Deferred the 3 PowerLine sites in the two giant Extend files (`SFExtendService` 9.5k, `SFManifoldJSON` 3.7k) to fold into their T1/T2 rewrites rather than touch those files twice.
-- 2026-05-29: Wrote `docs/ARCHITECTURE.md` — the 10-minute architecture map. Satisfies one of the charter success criteria; build-free contributor/LLM onboarding deliverable. (`CONTRIBUTING.md` expansion still pending.)
+- 2026-05-29: Wrote `docs/ARCHITECTURE.md` — the 10-minute architecture map. Satisfies one of the charter success criteria; build-free contributor/LLM onboarding deliverable.
+- 2026-05-29: Added per-area file classification (review-every-file pass, area level) and `CONTRIBUTING.md` (onboarding seam: build/run, conventions, PR guidelines). Autonomous SAFE-NOW + doc foundation now in place; remaining epics (T1/T2/T3/T5/T6/T8 and the bulk of T7) are NEEDS-CARE and require in-game SmartMCP smokes + maintainer review per the guardrails.
 
 ## Per-area classification (review-every-file pass)
 
