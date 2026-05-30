@@ -110,23 +110,133 @@ risk-reduction; the plan states for each whether it needs a slice or is left as-
 
 ---
 
-## T1a — `SFExtendService.cpp` (7,718) — remaining units after round 1
+## T1a — `SFExtendService.cpp` (live 7,718) — advances criterion #5 (get <2k)
 
-Round 1 (committed `fd27261`) extracted **H** (Diagnostics → `SFExtendDiagnosticsService`)
-and **B** (Restore-replay → `SFExtendRestoreReplayService`). Remaining cohesive units, from
-the round-1 audit (line numbers are pre-round-1; **re-verify live before slicing**):
+Round 1 (`fd27261`) extracted H (Diagnostics) + B (Restore-replay). **Live unit map** (line
+ranges from `grep -nE '^.*USFExtendService::'`, this effort):
 
-- **F** — built-child registration getters/setters + `WireBuiltChildConnections` (~1,570 lines;
-  the single fn `WireBuiltChildConnections` was ~1,265).
-- **I** — `GenerateAndExecuteWiring` + JSON built-actor registry (~1,705; the fn ~1,648).
-- **J** — Scaled Extend (positions/previews/validate, ~1,330).
-- **G** — Manifold connections (Wire/Create Manifold Belt/Pipe, ~770).
-- **C** — Extension execution (TryExtend/Refresh/Cleanup/affordability, ~770).
-- **E** — Belt previews + per-chain wiring (~770).
-- **A** — Mode/Direction cycling (~280); **D** — build-gun hologram swapping (~185).
+| Unit | Lines | ~Size | Disposition |
+|------|------:|------:|-------------|
+| orchestration/lifecycle (Init/Clear/Shutdown) | 82–217 | 136 | STAYS (orchestrator) |
+| A Direction cycling | 220–413 | 194 | STAYS or fold |
+| Topology-walk + restore forwarders | 416–527 | 112 | STAYS (thin delegators) |
+| IsValidExtendTarget | 528–570 | 43 | STAYS |
+| C Extension execution (TryExtend/Refresh/Cleanup) | 573–1341 | 769 | STAYS (core preview path) |
+| D Build-gun hologram swap | 1344–1529 | 186 | STAYS or fold |
+| E Belt previews + per-chain wiring | 1532–2305 | 774 | SPLIT: previews stay, chain-wiring → Wiring |
+| **F** Phase 3.8 `WireBuiltChildConnections` + Register*/Copy | 2308–3879 | **1,572** | → Wiring |
+| **G** Manifold connections | 3882–4653 | **772** | → Wiring |
+| Diagnostics forwarders | 4656–4676 | 21 | STAYS (thin) |
+| **I** Phase 5/6 `GenerateAndExecuteWiring` + JSON registry | 4679–6383 | **1,705** | → Wiring |
+| **J** Scaled Extend | 6386–7718 | **1,333** | → new ScaledService |
 
-`[AUDIT PENDING]` — Slice Cards for F/I/J/G (the big ones) + a decision on whether A/C/D/E
-collapse into a residual orchestrator under 2k.
+### Cross-unit shared-state matrix (field c — the entanglement, from live grep)
+
+The post-build wiring registries are shared across **E/F/G**; the clone-topology + JSON +
+scaled state across **F/I/J**. Counts = refs per unit (this effort):
+
+```
+BuiltConveyorsByChain        F=10 E=1            BuiltDistributorsByChain   F=10 G=3 E=1
+BuiltJunctionsByChain        F=4 G=3 E=1         BuiltPipesByChain          F=9 E=1
+BuiltChainIsInputMap         F=6 E=1 G=1         BuiltPipeChainIsInputMap   F=4 E=1 G=1
+SourceDistributorsByChain    G=2 E=1 F=1         SourceJunctionsByChain     G=2 E=1 F=1
+DistributorConnectorNameByChain F=2 E=1          (+ E-only: SourceToHologramMap, Pipe/Belt/Lift
+                                                  ChainHologramMap, UnifiedConveyorChainMap,
+                                                  BeltChainDistributorMap, ManifoldBeltHolograms,
+                                                  ChainIsInputMap, BuiltChainElements)
+StoredCloneTopology  F=18 I=18 J=18 E=5 Topo=4   (THE spine — 63 refs; also read by RestoreReplay)
+JsonBuiltActors      I=25 F=19 J=1               JsonSpawnedHolograms  I=5 E=3 F=3 J=2 C=1
+ScaledExtendClones   J=20 I=7 C=1 F=1            RestoredScaledFactoryPreviewLocations I=3 F=1
+PowerPoleWiringData  I=4 E=3 F=1                 HologramService  E=15 J=8 orch=6 C=5 D=5
+```
+
+**Conclusion:** E/F/G/I cannot become *separate* services — they co-own ~19 registry maps +
+`StoredCloneTopology`. But ~4,600 lines of wiring also cannot be one <2k file.
+
+### Architecture decision — wiring cluster → ONE class, impl split across `.cpp` files
+
+The existing **`USFExtendWiringService`** stub was built for exactly this — its header says
+*"Actual wiring logic remains in SFExtendService due to tight coupling… Future Migration: Move
+tracking maps to this service, move wiring implementation here."* It already holds
+`TWeakObjectPtr<USFSubsystem> Subsystem` + `USFExtendService* ExtendService`. Plan:
+
+- Migrate the **~19 registry maps** (Built*/Source*/chain-hologram/DistributorConnectorName)
+  into `USFExtendWiringService` as members (state migration — they become *local*, so NO
+  friend/Owner-> needed for them; this is cleaner than slice B because the maps are exclusive
+  to the wiring cluster once E's chain-wiring moves with them).
+- Move **F, G, I, and E's chain-wiring helpers** (`WirePipeChainConnections`,
+  `WireBeltChainConnections`, `FindPipe/FactoryConnectionByIndex`, `ClearConnectionWiringMaps`,
+  `ConnectAllChainElements`) into the class. To keep every `.cpp` <2k, **split the class
+  implementation across multiple translation units** (UE supports one class, many `.cpp`):
+  `SFExtendWiringService.cpp` (registry + chain wiring, ~1.0k), `SFExtendWiringService_BuiltChild.cpp`
+  (F, ~1.6k), `SFExtendWiringService_Json.cpp` (I, ~1.7k), `SFExtendWiringService_Manifold.cpp`
+  (G, ~0.8k). One header declares all; maps are members of the one class.
+- **`StoredCloneTopology`** stays the canonical member on `USFExtendService` (read by Wiring +
+  Scaled + RestoreReplay) — accessed via a `friend`/accessor, same as round 1's `LastCloneTopology`.
+- **J Scaled Extend** → new `USFExtendScaledService` (owns `ScaledExtendClones`); I's 7
+  `ScaledExtendClones` refs become an accessor on the scaled service (audit each before moving).
+
+### Slice Cards
+
+#### SFExtendService — Slice J: Scaled Extend → `USFExtendScaledService`   [lane: NEEDS-CARE]
+- Moves: `GetExtendCloneCount`/`GetExtendRowCount`/`IsScaledExtendActive`/`OnScaledExtendStateChanged`
+  (6386–6725), `CalculateScaledExtendPositions` (6726–6896), `SpawnScaledExtendPreviews`
+  (6897–7477), `ClearScaledExtendClones` (7478–7565), `ValidateScaledExtendConstraints`
+  (7566–7663), `ValidatePowerCapacity` (7664–7718). ~1,333 lines.
+- Call-site audit: `OnScaledExtendStateChanged` ×5 external (Subsystem, HudService,
+  SmartSettingsFormWidget — from grep); `GetExtendCloneCount`/`GetExtendRowCount`/
+  `IsScaledExtendActive` called by UI/subsystem. → forwarders on orchestrator.
+- Shared state: owns `ScaledExtendClones` (J=20) — but **I reads it 7×** and C 1×, F 1× →
+  expose `GetScaledExtendClones()`/count accessor on the new service, audit those 9 sites.
+  Reads `StoredCloneTopology` (J=18) → accessor on orchestrator. `HologramService` (J=8) →
+  accessor. `Subsystem->GetCounterState()` for grid math.
+- Extraction approach: careful move; friend `USFExtendScaledService` of `USFExtendService` (for
+  StoredCloneTopology + HologramService + counter state); `this`→`Owner` where passed to
+  `SpawnChildHologram*`. Forwarders for the ~5 public methods.
+- Hidden helpers: `[VERIFY]` grep anon-namespace in SpawnScaledExtendPreviews region for
+  file-local statics (round-1 anon ns was all restore-replay; confirm none here are shared).
+- Runtime coupling (SMOKE-CRITICAL): `OnScaledExtendStateChanged` fires from
+  `UpdateCounterState` mid-input; preview spawn happens during hologram tick. Order vs
+  RefreshExtension matters (see round-1 ClearExtendState comment about counter restore
+  triggering OnScaledExtendStateChanged). Smoke: scale X then Y, change spacing/rotation while
+  previewing, look away + back, verify clone count + positions + power-capacity red state.
+- Size delta: −1,333; SFExtendService.cpp → ~6,385.
+- Depends on: none (most separable; **do first** of the remaining Extend units).
+
+#### SFExtendService — Slices F+G+I+Echain: wiring cluster → `USFExtendWiringService`   [lane: NEEDS-CARE]
+- Moves (one class, 4 `.cpp`): F `WireBuiltChildConnections`+Register*/getters+`CopyDistributorConfigurations`
+  (2308–3879); G Manifold (3882–4653); I `GenerateAndExecuteWiring`+JSON registry (4679–6383);
+  E chain-wiring (`WirePipeChainConnections` 1723–1899, `WireBeltChainConnections` 1947–2133,
+  `Find*ConnectionByIndex`, `ClearConnectionWiringMaps`, `ConnectAllChainElements` 2157–2305).
+- Call-site audit (external, from grep): `RegisterJsonBuiltActor` ×12, `GetBuiltActorByCloneId`
+  ×9, `GenerateAndExecuteWiring` ×9, `WireBuiltChildConnections` ×7, `RegisterBuiltConveyor` ×5,
+  `ConnectAllChainElements` ×3, `RegisterBuilt{Distributor,Junction,Pipe}` ×2 each,
+  `WireManifold{Belt,Pipe}` ×2 each — callers are ~13 hologram `Construct()` files +
+  `SFExtendChainHelper` + `SFSubsystem` + `SFHudService`. ALL preserved via orchestrator forwarders.
+- Shared state: the ~19 registry maps migrate INTO the service (become local). Cross-refs that
+  stay external: `StoredCloneTopology` (F=18,I=18 → Owner accessor), `HologramService`
+  (→ Owner accessor), `ScaledExtendClones` (I=7 → ScaledService accessor — **sequence J first**),
+  `PowerPoleWiringData` (I=4,E=3,F=1 → migrate with cluster), `Subsystem` (→ keep back-ref).
+- Extraction approach: careful move + STATE MIGRATION of the maps; friend not needed for maps
+  (now members) but needed for StoredCloneTopology/HologramService access; split impl across 4
+  `.cpp` so each <2k. `this`→`Owner` where the wiring passes the service ptr to topology spawn.
+- Hidden helpers: `[VERIFY]` grep anon-namespace + file-local statics in 1532–6383 for helpers
+  shared with C/J before moving (the round-1 lesson — e.g. any belt/pipe routing helper).
+- Runtime coupling (SMOKE-CRITICAL): the Register* methods run from hologram `Construct()` across
+  frames; `GenerateAndExecuteWiring`/`WireBuiltChildConnections` run in a DEFERRED tick after
+  build (post-build timer). Init-order: WiringService must exist before any child Construct().
+  Frame-order: registries populated over multiple Construct() calls, consumed in the deferred
+  wiring pass. This is the single highest-risk zone in Extend. Smoke: full Extend build with
+  belts+lifts+pipes+power+distributors+junctions+manifold, scaled Extend, restore-from-preset.
+- Size delta: −~4,600 from SFExtendService.cpp; resulting orchestrator ~1,786 (UNDER 2k ✓);
+  WiringService split into 4 files each <2k.
+- Depends on: **Slice J first** (so ScaledExtendClones has its accessor home before I's refs move).
+- Open question `[MAINTAINER]`: confirm whether to grow the existing `USFExtendWiringService`
+  stub vs a fresh class — recommend grow (purpose-built, already wired into Initialize).
+
+After J + the wiring cluster, residual `SFExtendService.cpp` ≈ orchestration + A/C/D + belt-preview
+shell + thin delegators ≈ **~1,786 lines (<2k, criterion #5 met for this file)**. A/C/D need no
+further split. `[VERIFY in self-review: function-by-function coverage sums to 7,718.]`
 
 ## T1b — `SFSubsystem.cpp` (9,227) — the second god-object
 
