@@ -24,6 +24,37 @@ fields filled with grounded evidence. The [Entanglement Ledger](#entanglement-le
 [Global Sequencing](#global-sequencing) sections tie it together; the
 [Self-Review](#self-review--coverage-proof) section proves no region is orphaned.
 
+## Charter anchor — what "done" means
+
+From [`Simplification-GOAL.md`](Simplification-GOAL.md). The refactor's 6 success criteria and
+their live status (per [`Simplification-RemainingWork.md`](Simplification-RemainingWork.md)
+scorecard, this session):
+
+| # | Criterion | Status |
+|---|-----------|--------|
+| 1 | 10-minute architecture map | DONE (`docs/ARCHITECTURE.md`) |
+| 2 | basic smoke-test safety net | DONE (`scripts/smoke_test.py`) |
+| 3 | one edit point for asset paths | DONE (`SFAssetPaths.h`) |
+| 3b | one edit point for building sizes | DONE (`Content/Data/BuildableSizes.csv`) |
+| 4 | per-feature log categories live | DONE |
+| **5** | **no file >~2k lines** | **OPEN — needs T1/T5/T8** |
+| **6** | **no god-object >3k lines** | **OPEN — needs T1** |
+
+**Only #5 and #6 remain, and both are pure decomposition.** That sharply scopes this plan:
+
+- **MUST-DO (closes the criteria):** get every `.cpp` currently >2k under 2k, and both
+  god-objects under 3k. That is exactly the 9 files >2k in the inventory below. This is the
+  bar; everything else is optional.
+- **SHOULD-DO (charter themes, not gating):** T6 service-context DI, the hologram-adapter
+  registry, consolidating power state — improve coupling but are NOT required for #5/#6.
+  Plan them, but sequence them after the criteria are met and flag them as design changes
+  (need an ADR / maintainer intent), not mechanical moves.
+
+Every Slice Card must state **which criterion it advances** (e.g. "drops SFSubsystem.cpp
+9,227→<3k: criterion #6") so effort stays tied to finishing, not gold-plating. Guardrails
+(from the charter) bind every slice: pure-move-first, audit-before-edit, build-validate +
+NEEDS-CARE in-game smoke, no behavior change without a CHANGELOG note.
+
 ## Slice Card template (every slice must fill all fields)
 
 ```
@@ -38,7 +69,13 @@ fields filled with grounded evidence. The [Entanglement Ledger](#entanglement-le
   forwarders stay on the parent; what `this`→owner rewrites are needed.
 - Hidden helpers: <anon-namespace / file-local statics this unit uses, and whether they are
   shared with other units (→ promote) or exclusive (→ move)>.
-- Risk + smoke: <in-game checks this slice needs>.
+- Runtime coupling (SMOKE-CRITICAL): <init-order / lazy-init / frame-order / tick-order
+  dependencies this unit touches that static grep CANNOT prove safe — e.g. a member read
+  before its owner's Initialize(), placement material-state set across a frame boundary,
+  order of GetXService() lazy construction. Name each, or "none identified — still
+  smoke-verify". This is the class grep misses, so it is where Smart's real regressions live.>
+- Risk + smoke: <in-game checks this slice needs; derive directly from the runtime-coupling
+  field above>.
 - Size delta: <expected -N lines; parent file resulting size>.
 - Depends on: <other slices that must land first>.
 ```
