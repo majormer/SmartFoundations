@@ -72,10 +72,10 @@ FVector USFSubsystem::GetFurthestTopHologramPosition() const
     }
 
     // Get current grid counters
-    const FIntVector& GridCounters = GetGridCounters();
+    const FIntVector& CurrentGridCounters = GetGridCounters();
 
     // If grid is 1x1x1 (no extension), return parent position
-    if (GridCounters.X == 1 && GridCounters.Y == 1 && GridCounters.Z == 1)
+    if (CurrentGridCounters.X == 1 && CurrentGridCounters.Y == 1 && CurrentGridCounters.Z == 1)
     {
         return ActiveHologram->GetActorLocation();
     }
@@ -87,8 +87,8 @@ FVector USFSubsystem::GetFurthestTopHologramPosition() const
 
     // Issue #275: Scaled Extend axis mapping
     // Extend clones are placed along the building's Y axis (via RightVector).
-    // GridCounters.X = clone count (always positive, from FMath::Abs).
-    // GridCounters.Y = row count (perpendicular to extend, along building's X axis).
+    // CurrentGridCounters.X = clone count (always positive, from FMath::Abs).
+    // CurrentGridCounters.Y = row count (perpendicular to extend, along building's X axis).
     // CalculateChildPosition maps X param → building X, Y param → building Y.
     // So for Scaled Extend we must swap: clone count → FurthestY, row count → FurthestX.
     const bool bScaledExtend = ExtendService && ExtendService->IsScaledExtendActive();
@@ -96,7 +96,7 @@ FVector USFSubsystem::GetFurthestTopHologramPosition() const
     if (bScaledExtend)
     {
         ESFExtendDirection ExtendDir = ExtendService->GetExtendDirection();
-        int32 CloneCount = FMath::Abs(GridCounters.X);
+        int32 CloneCount = FMath::Abs(CurrentGridCounters.X);
 
         // Clones extend along building's Y axis (RightVector)
         FurthestY = CloneCount - 1;
@@ -106,7 +106,7 @@ FVector USFSubsystem::GetFurthestTopHologramPosition() const
         }
 
         // Rows extend along building's X axis (perpendicular to extend)
-        FurthestX = GridCounters.Y > 0 ? GridCounters.Y - 1 : 0;
+        FurthestX = CurrentGridCounters.Y > 0 ? CurrentGridCounters.Y - 1 : 0;
 
         // Scaled Extend doesn't use Z scaling
         TopZ = 0;
@@ -115,13 +115,13 @@ FVector USFSubsystem::GetFurthestTopHologramPosition() const
     {
         // Normal grid mode: counters directly map to axes
         // X direction
-        if (GridCounters.X > 0)
+        if (CurrentGridCounters.X > 0)
         {
-            FurthestX = GridCounters.X - 1;
+            FurthestX = CurrentGridCounters.X - 1;
         }
-        else if (GridCounters.X < 0)
+        else if (CurrentGridCounters.X < 0)
         {
-            FurthestX = -(FMath::Abs(GridCounters.X) - 1);
+            FurthestX = -(FMath::Abs(CurrentGridCounters.X) - 1);
         }
         else
         {
@@ -129,13 +129,13 @@ FVector USFSubsystem::GetFurthestTopHologramPosition() const
         }
 
         // Y direction
-        if (GridCounters.Y > 0)
+        if (CurrentGridCounters.Y > 0)
         {
-            FurthestY = GridCounters.Y - 1;
+            FurthestY = CurrentGridCounters.Y - 1;
         }
-        else if (GridCounters.Y < 0)
+        else if (CurrentGridCounters.Y < 0)
         {
-            FurthestY = -(FMath::Abs(GridCounters.Y) - 1);
+            FurthestY = -(FMath::Abs(CurrentGridCounters.Y) - 1);
         }
         else
         {
@@ -143,13 +143,13 @@ FVector USFSubsystem::GetFurthestTopHologramPosition() const
         }
 
         // Z direction
-        if (GridCounters.Z > 0)
+        if (CurrentGridCounters.Z > 0)
         {
-            TopZ = GridCounters.Z - 1;
+            TopZ = CurrentGridCounters.Z - 1;
         }
-        else if (GridCounters.Z < 0)
+        else if (CurrentGridCounters.Z < 0)
         {
-            TopZ = -(FMath::Abs(GridCounters.Z) - 1);
+            TopZ = -(FMath::Abs(CurrentGridCounters.Z) - 1);
         }
         else
         {

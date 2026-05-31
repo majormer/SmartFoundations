@@ -1434,7 +1434,6 @@ int32 FSFCloneTopology::WireChildHologramConnections(
     const TMap<FString, AFGHologram*>& SpawnedHolograms,
     AFGHologram* ParentHologram) const
 {
-    using namespace SpawnHelpers;  // For ConvertSplineData
     
     if (!ParentHologram)
     {

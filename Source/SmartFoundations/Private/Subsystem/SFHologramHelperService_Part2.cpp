@@ -6,6 +6,7 @@
  */
 
 #include "Subsystem/SFHologramHelperServiceImpl.h"
+#include "SmartFoundations.h"
 
 void FSFHologramHelperService::ApplyScalingDelta(
 	AFGHologram* Hologram,

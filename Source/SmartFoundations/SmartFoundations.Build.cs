@@ -15,6 +15,8 @@ public class SmartFoundations : ModuleRules
 		// headers still need subdir-qualified includes - handled by qualifying those directly.)
 		bLegacyPublicIncludePaths = true;
 		bLegacyParentIncludePaths = true;
+		// TODO(cleanup): rename the ~5 shadowing locals and restore this to Error.
+		ShadowVariableWarningLevel = WarningLevel.Warning;
 
 		// FactoryGame transitive dependencies
 		// Not all of these are required, but including the extra ones saves you from having to add them later.

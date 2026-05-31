@@ -1435,7 +1435,7 @@ TArray<FItemAmount> ASFPipelineHologram::GetCost(bool includeChildren) const
 						if (PipeRecipe)
 						{
 							// Get recipe ingredients (cost per meter) - iterate directly to avoid copy
-							const TArray<FItemAmount> Ingredients = UFGRecipe::GetIngredients(PipeRecipe);
+							const TArray<FItemAmount> Ingredients = UFGRecipe::GetIngredients(this, PipeRecipe);
 
 							UE_LOG(LogSmartHologram, VeryVerbose, TEXT("💰 PIPE: Found recipe with %d ingredients"), Ingredients.Num());
 
@@ -1448,7 +1448,7 @@ TArray<FItemAmount> ASFPipelineHologram::GetCost(bool includeChildren) const
 									int32 AmountNeeded = FMath::CeilToInt(Ingredient.Amount * LengthInMeters);
 									
 									UE_LOG(LogSmartHologram, VeryVerbose, TEXT("💰 PIPE:   %s: %.1f per meter × %.1f meters = %d total"),
-										*Ingredient.ItemClass->GetName(), Ingredient.Amount, LengthInMeters, AmountNeeded);
+										*Ingredient.ItemClass->GetName(), (double)Ingredient.Amount, LengthInMeters, AmountNeeded);
 									
 									// Add to total cost
 									bool bFound = false;

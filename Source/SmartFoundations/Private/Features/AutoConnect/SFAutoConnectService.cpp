@@ -487,7 +487,6 @@ void USFAutoConnectService::GetBuildingConnectors(AFGBuildable* Building, TArray
 				World,
 				Building->GetActorLocation(),
 				SearchRadius,
-				EFactoryConnectionConnector::FCC_CONVEYOR,
 				EFactoryConnectionDirection::FCD_ANY);
 
 			UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("GetBuildingConnectors: Overlap search around %s found %d potential connectors"),

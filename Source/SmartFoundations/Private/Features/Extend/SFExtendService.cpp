@@ -7,6 +7,7 @@
  */
 
 #include "Features/Extend/SFExtendService.h"
+#include "Engine/OverlapResult.h"
 #include "Features/Extend/SFExtendDetectionService.h"
 #include "Features/Extend/SFExtendTopologyService.h"
 #include "Features/Extend/SFExtendHologramService.h"

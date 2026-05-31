@@ -5,20 +5,6 @@
 
 #define LOCTEXT_NAMESPACE "SmartFoundations"
 
-namespace
-{
-	bool IsConveyorUpgradeFamily(ESFUpgradeFamily Family)
-	{
-		return Family == ESFUpgradeFamily::Belt || Family == ESFUpgradeFamily::Lift;
-	}
-
-	FString GetPanelFamilyDisplayName(ESFUpgradeFamily Family)
-	{
-		return IsConveyorUpgradeFamily(Family)
-			? FString(TEXT("Conveyors"))
-			: USFUpgradeAuditService::GetFamilyDisplayName(Family);
-	}
-}
 
 void USmartUpgradePanel::NativeConstruct()
 {

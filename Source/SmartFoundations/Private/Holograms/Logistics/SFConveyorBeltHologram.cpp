@@ -449,9 +449,9 @@ AActor* ASFConveyorBeltHologram::Construct(TArray<AActor*>& out_children, FNetCo
                 {
                     if (USFSubsystem* SmartSubsystem = USFSubsystem::Get(GetWorld()))
                     {
-                        if (USFExtendService* ExtendService = SmartSubsystem->GetExtendService())
+                        if (USFExtendService* ExtendSvc = SmartSubsystem->GetExtendService())
                         {
-                            ExtendService->RegisterJsonBuiltActor(HoloData->JsonCloneId, BuiltActor);
+                            ExtendSvc->RegisterJsonBuiltActor(HoloData->JsonCloneId, BuiltActor);
                         }
                     }
                 }

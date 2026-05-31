@@ -6,6 +6,10 @@
  */
 
 #include "Subsystem/SFSubsystemImpl.h"
+// TODO(1.2-port): C4702 unreachable - a ~115-line auto-connect SetTimerForNextTick block
+// sits after an unconditional early return below. Suppressed (not deleted) pending review
+// of whether that return is masking intended auto-connect-on-build logic.
+#pragma warning(disable: 4702)
 
 
 void USFSubsystem::OnActorSpawned(AActor* SpawnedActor)

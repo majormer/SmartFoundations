@@ -61,7 +61,7 @@ namespace SFFont
         return Info;
     }
 
-    void ApplyToWidgetTree(UWidgetTree* Tree)
+    void ApplyToWidgetTree(::UWidgetTree* Tree)
     {
         if (!Tree)
         {

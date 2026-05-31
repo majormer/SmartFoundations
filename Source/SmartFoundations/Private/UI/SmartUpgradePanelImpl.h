@@ -39,3 +39,19 @@
 #include "Buildables/FGBuildable.h"
 #include "Equipment/FGBuildGunBuild.h"
 #include "EngineUtils.h"
+
+#include "Features/Upgrade/SFUpgradeAuditService.h"
+
+// Family helpers shared by SmartUpgradePanel.cpp and SmartUpgradePanel_Detail.cpp.
+// Defined here (inline) so both split TUs see them under UE 5.6 non-unity builds.
+inline bool IsConveyorUpgradeFamily(ESFUpgradeFamily Family)
+{
+	return Family == ESFUpgradeFamily::Belt || Family == ESFUpgradeFamily::Lift;
+}
+
+inline FString GetPanelFamilyDisplayName(ESFUpgradeFamily Family)
+{
+	return IsConveyorUpgradeFamily(Family)
+		? FString(TEXT("Conveyors"))
+		: USFUpgradeAuditService::GetFamilyDisplayName(Family);
+}

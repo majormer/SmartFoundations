@@ -1111,7 +1111,7 @@ void FSFPipeAutoConnectManager::ProcessFloorHolePipes(AFGHologram* ParentHologra
 	TSet<AFGHologram*> ProcessedHoles;
 	
 	// Connector reservation: each building connector can only be claimed by one floor hole
-	TSet<UFGPipeConnectionComponent*> ReservedConnectors;
+	TSet<UFGPipeConnectionComponent*> LocalReservedConnectors;
 	
 	for (AFGHologram* FloorHole : AllFloorHoles)
 	{
@@ -1168,7 +1168,7 @@ void FSFPipeAutoConnectManager::ProcessFloorHolePipes(AFGHologram* ParentHologra
 				if (!BuildingConn) continue;
 				
 				// Skip connectors already claimed by another floor hole
-				if (ReservedConnectors.Contains(BuildingConn)) continue;
+				if (LocalReservedConnectors.Contains(BuildingConn)) continue;
 				
 				FVector BuildingConnPos = BuildingConn->GetComponentLocation();
 				
@@ -1204,7 +1204,7 @@ void FSFPipeAutoConnectManager::ProcessFloorHolePipes(AFGHologram* ParentHologra
 		}
 		
 		// Reserve this connector so no other floor hole claims it
-		ReservedConnectors.Add(BestBuildingConn);
+		LocalReservedConnectors.Add(BestBuildingConn);
 		
 		// Select the correct endpoint and normal
 		FVector StartPos = bUseTopEndpoint ? TopPos : BottomPos;

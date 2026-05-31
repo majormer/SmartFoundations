@@ -6,6 +6,7 @@
  */
 
 #include "Subsystem/SFSubsystemImpl.h"
+#include "Engine/OverlapResult.h"
 
 
 // ========================================

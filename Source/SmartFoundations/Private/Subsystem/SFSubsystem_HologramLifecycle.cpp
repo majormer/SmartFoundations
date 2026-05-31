@@ -1159,7 +1159,6 @@ void USFSubsystem::OnBuildGunEquipped()
 	if (SmartContext)
 	{
 		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("✅ Smart! Context exists: %s"), *SmartContext->GetName());
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   Parent: %s"), SmartContext->mParentContext.IsValid() ? *SmartContext->mParentContext->GetName() : TEXT("None"));
 		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   Display Name: %s"), *SmartContext->mDisplayName.ToString());
 		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   Priority: %.1f"), SmartContext->mMenuPriority);
 	}
@@ -1283,7 +1282,6 @@ void USFSubsystem::LogActiveInputContexts(const FString& CallerContext)
 	if (SmartContext)
 	{
 		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("✅ Smart! Context exists: %s"), *SmartContext->GetName());
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   Parent: %s"), SmartContext->mParentContext.IsValid() ? *SmartContext->mParentContext->GetName() : TEXT("None"));
 		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   Display Name: %s"), *SmartContext->mDisplayName.ToString());
 		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   Priority: %.1f"), SmartContext->mMenuPriority);
 	}

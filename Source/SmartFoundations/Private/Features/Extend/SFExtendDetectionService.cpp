@@ -1,6 +1,7 @@
 // Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
 #include "Features/Extend/SFExtendDetectionService.h"
+#include "Engine/OverlapResult.h"
 #include "SmartFoundations.h"  // For LogSmartExtend
 #include "Subsystem/SFSubsystem.h"
 #include "Buildables/FGBuildable.h"

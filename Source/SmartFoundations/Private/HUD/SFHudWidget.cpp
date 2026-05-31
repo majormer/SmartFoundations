@@ -252,10 +252,10 @@ void USFHudWidget::BuildWidgetTree()
 		UTextBlock* Block = CreateTextBlock(Font, Color);
 		TextPool.Add(Block);
 
-		UVerticalBoxSlot* Slot = ContentBox->AddChildToVerticalBox(Block);
-		if (Slot)
+		UVerticalBoxSlot* VBSlot = ContentBox->AddChildToVerticalBox(Block);
+		if (VBSlot)
 		{
-			Slot->SetPadding(FMargin(0.0f, 0.0f, 0.0f, 4.0f));
+			VBSlot->SetPadding(FMargin(0.0f, 0.0f, 0.0f, 4.0f));
 		}
 	}
 

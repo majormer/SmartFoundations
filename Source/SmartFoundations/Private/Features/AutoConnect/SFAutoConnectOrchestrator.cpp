@@ -1673,7 +1673,6 @@ void USFAutoConnectOrchestrator::CollectPotentialConnections(
 				}
 				
 				FVector BuildingConnectorPos = BuildingConnector->GetComponentLocation();
-				FVector DistributorPos = Distributor->GetActorLocation();
 				
 				// Find the best side connector - the one that FACES the building connector most directly
 				UFGFactoryConnectionComponent* BestSideConnector = nullptr;

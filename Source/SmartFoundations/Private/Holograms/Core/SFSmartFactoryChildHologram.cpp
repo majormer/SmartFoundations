@@ -1,6 +1,7 @@
 // Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
 #include "Holograms/Core/SFSmartFactoryChildHologram.h"
+#include "SmartFoundations.h"
 #include "Data/SFHologramDataRegistry.h"
 #include "Subsystem/SFSubsystem.h"
 #include "Services/SFRecipeManagementService.h"

@@ -16,6 +16,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Hologram/FGHologram.h"
 #include "UObject/NoExportTypes.h"
 #include "SFExtendHologramService.generated.h"
 
