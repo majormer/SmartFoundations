@@ -19,7 +19,7 @@ Charter: [`Simplification-GOAL.md`](Simplification-GOAL.md) · Tracker: [`Simpli
 | 3b | one edit point for **building sizes** | ✅ done (`Content/Data/BuildableSizes.csv`) |
 | 4 | per-feature log categories live | ✅ done (~1,900 sites; Extend/Subsystem fold into T1/T2) |
 | 5 | no file >~2k lines | ✅ done (live `wc -l`: largest .cpp = `SFChainActorService.cpp` 1,949) — pending consolidated solo-impl-split smoke |
-| 6 | no god-object >3k | ✅ done (`SFSubsystem.cpp` 9,227 → 6 `.cpp` all <2k) — pending smoke |
+| 6 | no god-object >3k | ✅ done (`SFSubsystem.cpp` 9,227 → 7 semantically-named `.cpp` all <2k) |
 
 **6 of 6 met** by line count + Shipping `PackagePlugin` build (ExitCode=0). E1/E2 (Extend careful moves)
 were in-game smoke-confirmed. The remaining decompositions landed as **pure impl-splits** (one class
@@ -27,6 +27,15 @@ across multiple `.cpp`, zero behavior change): T8a (belt hologram), AC (AutoConn
 U1/U2 (UI widgets), **S (SFSubsystem ×6)**, UP (UpgradeExecution), T1d (HologramHelper). These are
 behavior-preserving by construction but carry a **light-check debt** — recommend one consolidated
 in-game smoke (esp. the subsystem split) before final sign-off.
+
+**Post-smoke cleanup (commit `abfff6e`, `[BUILD-PASSED]`):** the generic `SFSubsystem_Part2..6.cpp`
+were replaced with 7 semantically-named TUs (`SFSubsystem.cpp` core + `_Input` + `_HologramLifecycle`
++ `_Config` + `_HologramCreation` + `_OnActorSpawned` + `_AutoConnect`), body byte-for-byte identical
+to the monolith (184 methods). Every multi-file split unit now dedups its duplicated include block
+into one shared internal `<Unit>Impl.h` (`SFSubsystemImpl.h`, `SFExtendWiringServiceImpl.h`,
+`SFAutoConnectServiceImpl.h`, `SmartSettingsFormWidgetImpl.h`, `SmartUpgradePanelImpl.h`,
+`SFUpgradeExecutionServiceImpl.h`, `SFHologramHelperServiceImpl.h`). Pure readability change, no
+behavior change; rolls into the same recommended consolidated smoke.
 
 ## Current largest files (live `wc -l`, the targets for #5/#6)
 
