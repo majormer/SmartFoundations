@@ -30,6 +30,7 @@ class AFGBuildable;
 class AFGBuildableFactory;
 class AFGBuildableConveyorBase;
 class AFGBuildablePipeline;
+class AFGBuildableConveyorBelt;
 class AFGHologram;
 class UFGPipeConnectionComponentBase;
 class UFGFactoryConnectionComponent;
@@ -68,6 +69,14 @@ public:
 
     /** Connect all chain elements (belts/lifts) after they've been built (deferred post-build) */
     void ConnectAllChainElements(AFGBuildableFactory* NewFactory);
+
+    // ==================== Manifold connections (slice E2 unit G) ====================
+    void WireManifoldConnections(AFGBuildableFactory* SourceFactory, AFGBuildableFactory* CloneFactory);
+    void WireManifoldPipe(AFGBuildablePipeline* BuiltPipe, UFGPipeConnectionComponentBase* SourceConnector, int32 CloneChainId);
+    void WireManifoldBelt(AFGBuildableConveyorBelt* BuiltBelt, UFGFactoryConnectionComponent* SourceConnector, int32 CloneChainId);
+    bool CreateManifoldBelt(UFGFactoryConnectionComponent* FromConnector, UFGFactoryConnectionComponent* ToConnector);
+    bool CreateManifoldPipe(UFGPipeConnectionComponentBase* FromConnector, UFGPipeConnectionComponentBase* ToConnector);
+    AFGBuildableFactory* GetSourceFactory() const;
 
 private:
     /** Wire up pipe hologram connections after all holograms in a chain are spawned */
