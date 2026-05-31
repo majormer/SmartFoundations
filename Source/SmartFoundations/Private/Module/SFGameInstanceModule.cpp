@@ -55,20 +55,14 @@ void USFGameInstanceModule::DispatchLifecycleEvent(ELifecyclePhase Phase)
 	{
 		UE_LOG(LogSmartFoundations, Display, TEXT("Smart! GameInstanceModule: POST_INITIALIZATION - Registering Smart! configuration"));
 
-		// Register Smart! Configuration with SML for in-game menu access
-		// Use the SmartConfigClass property set in the blueprint
-		if (SmartConfigClass)
-		{
-			ModConfigurations.Add(SmartConfigClass);
-			UE_LOG(LogSmartFoundations, Display, TEXT("✅ Smart! Configuration registered successfully - will appear in Mods menu"));
-			UE_LOG(LogSmartFoundations, Display, TEXT("   Config Class: %s"), *SmartConfigClass->GetName());
-			UE_LOG(LogSmartFoundations, Display, TEXT("   Config Path: %s"), *SmartConfigClass->GetPathName());
-		}
-		else
-		{
-			UE_LOG(LogSmartFoundations, Warning, TEXT("❌ SmartConfigClass not set in blueprint Class Defaults"));
-			UE_LOG(LogSmartFoundations, Warning, TEXT("Config menu will not appear. Set SmartConfigClass to Smart_Config blueprint in SFGameInstanceModule_BP."));
-		}
+		// Smart! configuration is declared declaratively in SFGameInstanceModule_BP's
+		// ModConfigurations array (EditDefaultsOnly) and is registered with the ConfigManager
+		// automatically by UGameInstanceModule::RegisterDefaultContent during the INITIALIZATION
+		// lifecycle phase (which runs before this POST_INITIALIZATION). Do NOT re-add it here:
+		// a runtime ModConfigurations.Add is redundant and duplicates the entry in the live module
+		// instance. The blueprint's ModConfigurations array is the single source of truth.
+		// (The empty config menu under 1.2 was a separate issue, fixed in the Smart_Config asset:
+		// its RootSection had bHidden=true, which the 1.2 Mods menu uses to skip the property tree.)
 
 		// Register SML hook for cost aggregation (belt preview costs)
 		RegisterCostAggregationHook();
