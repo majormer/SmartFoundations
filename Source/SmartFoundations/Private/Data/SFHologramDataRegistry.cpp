@@ -1,6 +1,6 @@
 #include "Data/SFHologramDataRegistry.h"
 #include "SmartFoundations.h"
-#include "FGHologram.h"
+#include "Hologram/FGHologram.h"
 #include "Logging/LogMacros.h"
 
 // Static member initialization with deterministic weak pointers

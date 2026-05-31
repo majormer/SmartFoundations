@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "FactoryGame/Public/Hologram/FGFactoryHologram.h"
+#include "Hologram/FGFactoryHologram.h"
 #include "Data/SFHologramDataRegistry.h"
 #include "SFSmartFactoryChildHologram.generated.h"
 

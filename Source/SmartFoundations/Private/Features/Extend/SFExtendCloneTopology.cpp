@@ -3,8 +3,8 @@
 #include "Misc/DateTime.h"
 
 // Satisfactory includes
-#include "FGBuildableConveyorBelt.h"
-#include "FGBuildableConveyorLift.h"
+#include "Buildables/FGBuildableConveyorBelt.h"
+#include "Buildables/FGBuildableConveyorLift.h"
 #include "Buildables/FGBuildablePipeline.h"
 #include "Buildables/FGBuildableConveyorAttachment.h"
 #include "Buildables/FGBuildablePipelineJunction.h"

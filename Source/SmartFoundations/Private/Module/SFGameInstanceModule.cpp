@@ -3,12 +3,12 @@
 #include "SmartFoundations.h"
 
 // Force UHT to parse these classes so AccessTransformers apply
-#include "FactoryGame/Public/Hologram/FGHologram.h"
-#include "FactoryGame/Public/Hologram/FGConveyorBeltHologram.h"
-#include "FactoryGame/Public/Hologram/FGConveyorAttachmentHologram.h"
-#include "FactoryGame/Public/Hologram/FGSplineHologram.h"
-#include "FactoryGame/Public/Hologram/FGBuildableHologram.h"
-#include "FGBlueprintHologram.h"
+#include "Hologram/FGHologram.h"
+#include "Hologram/FGConveyorBeltHologram.h"
+#include "Hologram/FGConveyorAttachmentHologram.h"
+#include "Hologram/FGSplineHologram.h"
+#include "Hologram/FGBuildableHologram.h"
+#include "Hologram/FGBlueprintHologram.h"
 #include "FGConstructDisqualifier.h"
 #include "FGCentralStorageSubsystem.h"
 #include "FGGameState.h"

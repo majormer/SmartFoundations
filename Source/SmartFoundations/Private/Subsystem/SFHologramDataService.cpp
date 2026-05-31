@@ -1,6 +1,6 @@
 #include "Subsystem/SFHologramDataService.h"
 #include "SmartFoundations.h"
-#include "FGHologram.h"
+#include "Hologram/FGHologram.h"
 #include "Logging/LogMacros.h"
 
 FSFHologramData* USFHologramDataService::GetOrCreateData(AFGHologram* Hologram) {

@@ -5,8 +5,8 @@
 #include "Features/Extend/SFExtendDetectionService.h"
 #include "SmartFoundations.h"  // For LogSmartExtend
 #include "Subsystem/SFSubsystem.h"
-#include "FGBuildable.h"
-#include "FGBuildableFactory.h"
+#include "Buildables/FGBuildable.h"
+#include "Buildables/FGBuildableFactory.h"
 #include "Buildables/FGBuildableConveyorBelt.h"
 #include "Buildables/FGBuildableConveyorLift.h"
 #include "Buildables/FGBuildableConveyorAttachment.h"

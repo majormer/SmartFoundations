@@ -1,6 +1,6 @@
 #include "Subsystem/SFValidationService.h"
 #include "SmartFoundations.h"
-#include "FGHologram.h"
+#include "Hologram/FGHologram.h"
 #include "Hologram/FGBuildableHologram.h"
 #include "Hologram/FGConveyorAttachmentHologram.h"
 #include "Hologram/FGPipelineJunctionHologram.h"

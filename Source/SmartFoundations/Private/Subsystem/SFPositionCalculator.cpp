@@ -1,6 +1,6 @@
 #include "Subsystem/SFPositionCalculator.h"
 #include "SmartFoundations.h"
-#include "FGHologram.h"
+#include "Hologram/FGHologram.h"
 
 FSFPositionCalculator::FSFPositionCalculator()
 {

@@ -11,7 +11,7 @@
 #include "Subsystem/SFSubsystem.h"
 #include "FGConstructDisqualifier.h"
 #include "Kismet/GameplayStatics.h"
-#include "FGBuildable.h"
+#include "Buildables/FGBuildable.h"
 #include "Buildables/FGBuildablePassthrough.h"
 #include "FGRecipeManager.h"
 #include "FGRecipe.h"

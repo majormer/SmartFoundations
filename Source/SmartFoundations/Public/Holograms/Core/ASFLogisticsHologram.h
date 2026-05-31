@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "FGSplineHologram.h"
+#include "Hologram/FGSplineHologram.h"
 #include "ASFLogisticsHologram.generated.h"
 
 /**

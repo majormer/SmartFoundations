@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "FactoryGame/Public/Hologram/FGConveyorBeltHologram.h"
+#include "Hologram/FGConveyorBeltHologram.h"
 #include "SFConveyorBeltHologram.generated.h"
 
 /**

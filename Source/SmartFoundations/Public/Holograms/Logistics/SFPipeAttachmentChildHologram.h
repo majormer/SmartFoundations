@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "FactoryGame/Public/Hologram/FGPipelineAttachmentHologram.h"
+#include "Hologram/FGPipelineAttachmentHologram.h"
 #include "Data/SFHologramDataRegistry.h"
 #include "SFPipeAttachmentChildHologram.generated.h"
 

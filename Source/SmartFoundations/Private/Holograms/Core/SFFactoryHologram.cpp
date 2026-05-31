@@ -1,6 +1,6 @@
 #include "Holograms/Core/SFFactoryHologram.h"
 #include "SmartFoundations.h"
-#include "FGBuildableFactory.h"
+#include "Buildables/FGBuildableFactory.h"
 #include "FGRecipe.h"
 #include "Hologram/FGHologram.h"
 #include "FGConstructDisqualifier.h"

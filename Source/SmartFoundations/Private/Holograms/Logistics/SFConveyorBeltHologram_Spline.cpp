@@ -16,7 +16,7 @@
 #include "FGSplineComponent.h"
 #include "FGRecipe.h"
 #include "FGRecipeManager.h"
-#include "FGBuildingDescriptor.h"
+#include "Resources/FGBuildingDescriptor.h"
 #include "DrawDebugHelpers.h"
 #include "Data/SFHologramDataRegistry.h"
 #include "Hologram/FGHologram.h"

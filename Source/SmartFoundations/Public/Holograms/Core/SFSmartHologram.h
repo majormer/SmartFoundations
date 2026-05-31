@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "FGHologram.h"
+#include "Hologram/FGHologram.h"
 #include "SFSmartHologram.generated.h"
 
 /**

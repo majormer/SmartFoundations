@@ -3,7 +3,7 @@
 #include "Services/SFGridSpawnerService.h"
 #include "Features/AutoConnect/SFAutoConnectService.h"
 #include "Features/AutoConnect/SFAutoConnectOrchestrator.h"
-#include "FGHologram.h"
+#include "Hologram/FGHologram.h"
 #include "SmartFoundations.h"
 
 void USFGridTransformService::Initialize(USFSubsystem* InSubsystem)

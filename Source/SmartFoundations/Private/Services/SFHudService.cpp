@@ -15,7 +15,7 @@
 #include "Engine/Texture2D.h"
 #include "Blueprint/UserWidget.h"
 #include "Config/Smart_ConfigStruct.h"
-#include "FGItemDescriptor.h"
+#include "Resources/FGItemDescriptor.h"
 #include "ItemAmount.h"
 #include "FGCentralStorageSubsystem.h"
 #include "FGPlayerController.h"

@@ -6,7 +6,7 @@
 #include "FGRecipe.h"
 #include "Buildables/FGBuildable.h"
 #include "Buildables/FGBuildableManufacturer.h"
-#include "FGBuildGun.h"
+#include "Equipment/FGBuildGun.h"
 #include "InputActionValue.h"
 #include "SFRecipeManagementService.generated.h"
 

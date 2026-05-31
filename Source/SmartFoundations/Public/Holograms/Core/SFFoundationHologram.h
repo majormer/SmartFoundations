@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "SFBuildableHologram.h"
-#include "FGFoundationHologram.h"
+#include "Hologram/FGFoundationHologram.h"
 #include "SFFoundationHologram.generated.h"
 
 /**

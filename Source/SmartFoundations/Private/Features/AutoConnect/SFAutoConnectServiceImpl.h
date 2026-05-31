@@ -34,7 +34,7 @@
 #include "UObject/UnrealType.h"
 #include "FGCentralStorageSubsystem.h"
 #include "FGInventoryComponent.h"
-#include "FGItemDescriptor.h"
+#include "Resources/FGItemDescriptor.h"
 #include "FGCharacterPlayer.h"
 #include "FGPlayerController.h"
 #include "FGConstructDisqualifier.h"

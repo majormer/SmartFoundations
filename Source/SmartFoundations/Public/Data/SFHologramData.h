@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "FGSplineHologram.h"  // For FSplinePointData
+#include "Hologram/FGSplineHologram.h"  // For FSplinePointData
 #include "SFHologramData.generated.h"
 
 // Forward declarations

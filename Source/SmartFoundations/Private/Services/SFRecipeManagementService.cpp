@@ -5,7 +5,7 @@
 #include "Subsystem/SFSubsystem.h"
 #include "Subsystem/SFHologramDataService.h"
 #include "Data/SFHologramDataRegistry.h"
-#include "FGBuildGun.h"
+#include "Equipment/FGBuildGun.h"
 #include "Equipment/FGBuildGunBuild.h"
 #include "FGPlayerController.h"
 #include "FGRecipe.h"

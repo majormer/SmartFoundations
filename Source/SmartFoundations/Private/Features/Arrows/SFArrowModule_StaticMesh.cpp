@@ -10,7 +10,7 @@
 #include "UObject/ConstructorHelpers.h"
 #include "TimerManager.h"
 #include "Engine/World.h"
-#include "FGHologram.h"
+#include "Hologram/FGHologram.h"
 #include "Subsystem/SFSubsystem.h"
 #include "Data/SFBuildableSizeRegistry.h"
 #include "GameFramework/PlayerController.h"

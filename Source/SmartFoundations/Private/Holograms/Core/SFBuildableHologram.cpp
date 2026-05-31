@@ -1,5 +1,5 @@
 #include "Holograms/Core/SFBuildableHologram.h"
-#include "FGBuildable.h"
+#include "Buildables/FGBuildable.h"
 #include "Logging/SFLogMacros.h"
 #include "Data/SFBuildableSizeRegistry.h"
 

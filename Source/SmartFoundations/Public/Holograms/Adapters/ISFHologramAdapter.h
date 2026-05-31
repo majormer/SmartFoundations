@@ -4,7 +4,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "FGHologram.h"
+#include "Hologram/FGHologram.h"
 #include "Features/Scaling/SFScalingTypes.h"
 
 /**

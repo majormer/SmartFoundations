@@ -3,8 +3,8 @@
 #include "Features/Extend/SFExtendDetectionService.h"
 #include "SmartFoundations.h"  // For LogSmartExtend
 #include "Subsystem/SFSubsystem.h"
-#include "FGBuildable.h"
-#include "FGBuildableFactory.h"
+#include "Buildables/FGBuildable.h"
+#include "Buildables/FGBuildableFactory.h"
 #include "FGFactoryConnectionComponent.h"
 #include "FGPipeConnectionComponent.h"
 #include "Hologram/FGHologram.h"
