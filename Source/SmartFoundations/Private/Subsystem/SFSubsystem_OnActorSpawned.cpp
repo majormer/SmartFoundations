@@ -1,158 +1,12 @@
 // Copyright Coffee Stain Studios. All Rights Reserved.
 
 /**
- * USFSubsystem implementation (part 5). Split out of SFSubsystem.cpp (slice S, pure
- * impl-split: one class across multiple .cpp) to keep each file <2k. No behavior change.
+ * USFSubsystem - OnActorSpawned handler + recipe application for spawned buildings.
+ * Part of the SFSubsystem implementation split (see SFSubsystem.cpp). No behavior change.
  */
 
-#include "Subsystem/SFSubsystem.h"
-#include "SmartFoundations.h"
-#include "FGHologram.h"
-#include "Hologram/FGSplineHologram.h"
-#include "Hologram/FGConveyorBeltHologram.h"
-#include "FGRecipeManager.h"
-#include "FGBuildingDescriptor.h"
-#include "Data/SFHologramData.h"
-#include "Data/SFHologramDataRegistry.h"
-#include "Subsystem/SFHologramDataService.h"
-#include "Debug/SFSplineAnalyzer.h"
-#include "UI/SmartSettingsFormWidget.h"
-#include "UI/SmartUpgradePanel.h"
-#include "Subsystem/SFInputHandler.h"
-#include "Subsystem/SFPositionCalculator.h"
-#include "Subsystem/SFValidationService.h"
-#include "Subsystem/SFHologramHelperService.h"
-#include "Features/AutoConnect/SFAutoConnectService.h"
-#include "Features/AutoConnect/SFAutoConnectOrchestrator.h"
-#include "Services/RadarPulse/SFRadarPulseService.h"
-#include "Services/SFHudService.h"
-#include "Services/SFHintBarService.h"
-#include "Services/SFChainActorService.h"
-#include "Features/Upgrade/SFUpgradeAuditService.h"
-#include "Features/Upgrade/SFUpgradeExecutionService.h"
-#include "Services/SFGridStateService.h"
-#include "Services/SFGridSpawnerService.h"
-#include "Services/SFGridTransformService.h"
-#include "Features/Arrows/SFArrowModule_StaticMesh.h"
-#include "Features/PipeAutoConnect/SFPipeAutoConnectManager.h"
-#include "Features/PowerAutoConnect/SFPowerAutoConnectManager.h"
-#include "Features/Restore/SFRestoreService.h"
-#include "Features/Restore/SFRestoreTypes.h"
-#include "Logging/SFLogMacros.h"
-#include "Hologram/FGFactoryBuildingHologram.h"  // Issue #160: Zoop detection
-#include "SFHologramPerformanceProfiler.h"
-#include "Data/SFBuildableSizeRegistry.h"
-#include "Features/AutoConnect/Preview/BeltPreviewHelper.h"
-#include "Config/Smart_ConfigStruct.h"
-#include "FGPlayerController.h"
-#include "FGCharacterPlayer.h"
-#include "FGInventoryComponent.h"
-#include "Equipment/FGBuildGun.h"
-#include "Equipment/FGBuildGunBuild.h"
-#include "Input/FGEnhancedInputComponent.h"
-#include "Input/FGInputMappingContext.h"
-#include "InputAction.h"
-#include "EnhancedInputSubsystems.h"
-#include "Engine/World.h"
-#include "EngineUtils.h"
-#include "Resources/FGBuildingDescriptor.h"
-#include "FGCentralStorageSubsystem.h"
-#include "Blueprint/UserWidget.h"
-#include "Kismet/GameplayStatics.h"
-#include "Async/Async.h"
-#include "Engine/Canvas.h"
-#include "GameFramework/HUD.h"
-#include "GameFramework/GameStateBase.h"
-#include "FGGameState.h"
-#include "FGHUDBase.h"
-#include "Buildables/FGBuildableConveyorAttachment.h"
-#include "Buildables/FGBuildableConveyorBelt.h"
-#include "Buildables/FGBuildablePipelineAttachment.h"
-#include "Buildables/FGBuildablePipeline.h"
-#include "FGPipeSubsystem.h"
-#include "FGPipeNetwork.h"
-#include "Components/SplineComponent.h"
-#include "FGBlueprintProxy.h"
-#include "FGBlueprintHologram.h"
-#include "Holograms/Adapters/ISFHologramAdapter.h"
-#include "Holograms/Core/SFBuildableHologram.h"
-#include "Holograms/Core/SFFactoryHologram.h"
-#include "Holograms/Core/ASFLogisticsHologram.h"
-#include "Holograms/Core/SFFoundationHologram.h"
-#include "Hologram/FGConveyorLiftHologram.h"
-#include "Hologram/FGStandaloneSignHologram.h"
-#include "Holograms/Core/SFStandaloneSignChildHologram.h"
-#include "Holograms/Adapters/SFSmartBuildableAdapter.h"
-#include "Holograms/Adapters/SFSmartLogisticsAdapter.h"
-#include "Holograms/Adapters/SFGenericAdapter.h"
-#include "Holograms/Adapters/SFWallAdapter.h"
-#include "Holograms/Adapters/SFPillarAdapter.h"
-#include "Holograms/Adapters/SFWaterExtractorAdapter.h"
-#include "Holograms/Adapters/SFResourceExtractorAdapter.h"
-#include "Holograms/Adapters/SFFactoryAdapter.h"
-#include "Holograms/Adapters/SFElevatorAdapter.h"
-#include "Holograms/Adapters/SFRampAdapter.h"
-#include "Holograms/Adapters/SFJumpPadAdapter.h"
-#include "Holograms/Adapters/SFUnsupportedAdapter.h"
-#include "Holograms/Adapters/SFPassthroughAdapter.h"
-#include "Holograms/Logistics/SFConveyorBeltHologram.h"
-#include "Holograms/Logistics/SFPipelineHologram.h"
-#include "Input/SFInputRegistry.h"
-#include "Features/Arrows/SFArrowModule_StaticMesh.h"
-#include "Features/Spacing/SFSpacingModule.h"
-#include "Features/PipeAutoConnect/SFPipeAutoConnectManager.h"
-#include "Features/PipeAutoConnect/SFPipeConnectorFinder.h"
-#include "Features/PowerAutoConnect/SFPowerAutoConnectManager.h"
-#include "Buildables/FGBuildablePowerPole.h"
-#include "FGBuildablePolePipe.h"  // For stackable pipeline support auto-connect
-#include "Hologram/FGFoundationHologram.h"
-#include "Hologram/FGWallHologram.h"
-#include "Hologram/FGPillarHologram.h"
-#include "Hologram/FGStackableStorageHologram.h"
-#include "Hologram/FGWaterPumpHologram.h"
-#include "Hologram/FGResourceExtractorHologram.h"
-#include "Hologram/FGFactoryHologram.h"
-#include "Hologram/FGConveyorAttachmentHologram.h"
-#include "Hologram/FGPipelineJunctionHologram.h"
-#include "Hologram/FGPipeHyperAttachmentHologram.h"
-#include "Hologram/FGPassthroughHologram.h"
-#include "Hologram/FGElevatorHologram.h"
-#include "Hologram/FGStairHologram.h"
-#include "Hologram/FGJumpPadHologram.h"
-#include "Hologram/FGWheeledVehicleHologram.h"
-#include "Hologram/FGSpaceElevatorHologram.h"
-#include "Hologram/FGFloodlightHologram.h"
-#include "Buildables/FGBuildablePassthrough.h"
-#include "Buildables/FGBuildableFactory.h"
-#include "Buildables/FGBuildableManufacturer.h"
-#include "FGRecipe.h"
-#include "Subsystem/SFSubsystemStackableCache.h"
+#include "Subsystem/SFSubsystemImpl.h"
 
-UClass* USFSubsystem::GetBeltClassFromConfig(int32 ConfigTier, AFGPlayerController* PlayerController)
-{
-	int32 ActualTier = ConfigTier;
-
-	// Handle "Auto" mode (0 = use highest unlocked)
-	if (ConfigTier == 0)
-	{
-		ActualTier = GetHighestUnlockedBeltTier(PlayerController);
-		UE_LOG(LogSmartFoundations, Verbose, TEXT("GetBeltClassFromConfig: Auto mode selected highest tier Mk%d"), ActualTier);
-	}
-	else
-	{
-		UE_LOG(LogSmartFoundations, Verbose, TEXT("GetBeltClassFromConfig: Using configured tier Mk%d"), ActualTier);
-	}
-
-	// Get belt class for the determined tier
-	UClass* BeltClass = GetBeltClassForTier(ActualTier, PlayerController);
-
-	if (!BeltClass)
-	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("GetBeltClassFromConfig: Belt tier Mk%d unavailable or not unlocked - belt category disabled"), ActualTier);
-	}
-
-	return BeltClass;
-}
 
 void USFSubsystem::OnActorSpawned(AActor* SpawnedActor)
 {
@@ -1802,3 +1656,11 @@ TSubclassOf<UFGRecipe> USFSubsystem::FindRecipeForSpawnedBuilding(AFGBuildableMa
 	return nullptr;
 }
 
+void USFSubsystem::ApplyRecipeDelayed(AFGBuildableManufacturer* ManufacturerBuilding, TSubclassOf<UFGRecipe> Recipe)
+{
+	// Delegate to recipe management service
+	if (RecipeManagementService)
+	{
+		RecipeManagementService->ApplyRecipeDelayed(ManufacturerBuilding, Recipe);
+	}
+}

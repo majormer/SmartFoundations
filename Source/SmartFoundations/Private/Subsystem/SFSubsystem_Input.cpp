@@ -1,0 +1,933 @@
+// Copyright Coffee Stain Studios. All Rights Reserved.
+
+/**
+ * USFSubsystem - input-mode handlers (spacing/steps/stagger/rotation/toggles) + hologram-lock helpers.
+ * Part of the SFSubsystem implementation split (see SFSubsystem.cpp). No behavior change.
+ */
+
+#include "Subsystem/SFSubsystemImpl.h"
+
+
+// ========================================
+// Hologram Lock Ownership Helpers (Task 52)
+// ========================================
+
+bool USFSubsystem::TryAcquireHologramLock()
+{
+    if (!ActiveHologram.IsValid())
+    {
+        return false;
+    }
+
+    // Only lock if not already locked by vanilla hold system
+    if (!ActiveHologram->IsHologramLocked())
+    {
+        bLockedByModifier = true;
+        ActiveHologram->LockHologramPosition(true);
+        UE_LOG(LogSmartFoundations, Verbose, TEXT("🔒 Smart! acquired hologram lock"));
+        return true;
+    }
+    else
+    {
+        UE_LOG(LogSmartFoundations, Verbose, TEXT("🔒 Hologram already locked (vanilla hold owns it)"));
+        return false;
+    }
+}
+
+void USFSubsystem::TryReleaseHologramLock()
+{
+    // Only unlock if WE locked it AND no other Smart! modes are active
+    // Issue #273: Don't release if auto-hold is active — that lock is managed by
+    // ApplyAxisScaling (grid changes) and PollForActiveHologram (user override detection)
+    if (bLockedByModifier && !bAutoHoldActive && !IsAnyModalFeatureActive() && ActiveHologram.IsValid())
+    {
+        bLockedByModifier = false;
+        ActiveHologram->LockHologramPosition(false);
+        UE_LOG(LogSmartFoundations, Verbose, TEXT("🔓 Smart! released hologram lock"));
+    }
+}
+
+bool USFSubsystem::IsAnyModalFeatureActive() const
+{
+    // Phase 0: Forward to InputHandler module (Task #61.6)
+    if (InputHandler)
+    {
+        // Also check EXTEND mode which is managed by the ExtendService
+        return InputHandler->IsAnyModalFeatureActive() || IsExtendModeActive();
+    }
+
+    // Fallback if module not initialized
+    return bModifierScaleXActive || bModifierScaleYActive ||
+           bSpacingModeActive || bStepsModeActive || bStaggerModeActive ||
+           bRecipeModeActive || bAutoConnectSettingsModeActive || bRotationModeActive ||
+           IsExtendModeActive();
+}
+
+FVector USFSubsystem::GetFurthestTopHologramPosition() const
+{
+    // If no active hologram, return zero vector
+    if (!ActiveHologram.IsValid())
+    {
+        return FVector::ZeroVector;
+    }
+
+    // Get current grid counters
+    const FIntVector& GridCounters = GetGridCounters();
+
+    // If grid is 1x1x1 (no extension), return parent position
+    if (GridCounters.X == 1 && GridCounters.Y == 1 && GridCounters.Z == 1)
+    {
+        return ActiveHologram->GetActorLocation();
+    }
+
+    // Calculate furthest grid position based on direction
+    // The "furthest top" is at the corner furthest from the parent (X,Y)
+    // and at the TOP Z level (highest)
+    int32 FurthestX, FurthestY, TopZ;
+
+    // Issue #275: Scaled Extend axis mapping
+    // Extend clones are placed along the building's Y axis (via RightVector).
+    // GridCounters.X = clone count (always positive, from FMath::Abs).
+    // GridCounters.Y = row count (perpendicular to extend, along building's X axis).
+    // CalculateChildPosition maps X param → building X, Y param → building Y.
+    // So for Scaled Extend we must swap: clone count → FurthestY, row count → FurthestX.
+    const bool bScaledExtend = ExtendService && ExtendService->IsScaledExtendActive();
+
+    if (bScaledExtend)
+    {
+        ESFExtendDirection ExtendDir = ExtendService->GetExtendDirection();
+        int32 CloneCount = FMath::Abs(GridCounters.X);
+
+        // Clones extend along building's Y axis (RightVector)
+        FurthestY = CloneCount - 1;
+        if (ExtendDir == ESFExtendDirection::Left)
+        {
+            FurthestY = -FurthestY;  // Left = negative Y
+        }
+
+        // Rows extend along building's X axis (perpendicular to extend)
+        FurthestX = GridCounters.Y > 0 ? GridCounters.Y - 1 : 0;
+
+        // Scaled Extend doesn't use Z scaling
+        TopZ = 0;
+    }
+    else
+    {
+        // Normal grid mode: counters directly map to axes
+        // X direction
+        if (GridCounters.X > 0)
+        {
+            FurthestX = GridCounters.X - 1;
+        }
+        else if (GridCounters.X < 0)
+        {
+            FurthestX = -(FMath::Abs(GridCounters.X) - 1);
+        }
+        else
+        {
+            FurthestX = 0;
+        }
+
+        // Y direction
+        if (GridCounters.Y > 0)
+        {
+            FurthestY = GridCounters.Y - 1;
+        }
+        else if (GridCounters.Y < 0)
+        {
+            FurthestY = -(FMath::Abs(GridCounters.Y) - 1);
+        }
+        else
+        {
+            FurthestY = 0;
+        }
+
+        // Z direction
+        if (GridCounters.Z > 0)
+        {
+            TopZ = GridCounters.Z - 1;
+        }
+        else if (GridCounters.Z < 0)
+        {
+            TopZ = -(FMath::Abs(GridCounters.Z) - 1);
+        }
+        else
+        {
+            TopZ = 0;
+        }
+    }
+
+    // Get parent transform and item size
+    FVector ParentLocation = ActiveHologram->GetActorLocation();
+    FRotator ParentRotation = ActiveHologram->GetActorRotation();
+    FVector ItemSize = GetCachedBuildingSize();
+
+    // Calculate world position using PositionCalculator
+    if (FSFPositionCalculator* PosCalc = GetPositionCalculator())
+    {
+        return PosCalc->CalculateChildPosition(
+            FurthestX,
+            FurthestY,
+            TopZ,
+            ParentLocation,
+            ParentRotation,
+            ItemSize,
+            GetCounterState(),
+            0, // Grid index not needed for position calculation
+            FVector::ZeroVector // No anchor offset for position query
+        );
+    }
+
+    // Fallback: return parent position if PositionCalculator is unavailable
+    return ActiveHologram->GetActorLocation();
+}
+
+// Note: ToggleExtendMode() removed - EXTEND is now AUTOMATIC
+// Activates when pointing at a compatible building of the same type
+
+void USFSubsystem::OnSpacingModeChanged(const FInputActionValue& Value)
+{
+    // Phase 0: Delegate input processing to InputHandler (Task #61.6)
+    if (InputHandler)
+    {
+        InputHandler->OnSpacingModeChanged(Value);
+        // Sync state from module
+        bSpacingModeActive = InputHandler->IsSpacingModeActive();
+    }
+    else
+    {
+        bSpacingModeActive = Value.Get<bool>();
+    }
+    if (bSpacingModeActive)
+    {
+        UE_LOG(LogSmartFoundations, Warning, TEXT("\U0001F527 Spacing Mode: ACTIVE (Semicolon held) - Current axis: %s"),
+            *UEnum::GetValueAsString(CounterState.SpacingAxis));
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   Counters: X=%d cm, Y=%d cm, Z=%d cm"),
+            CounterState.SpacingX, CounterState.SpacingY, CounterState.SpacingZ);
+
+        // Try to acquire lock (Task 52 - centralized)
+        TryAcquireHologramLock();
+    }
+    else
+    {
+        UE_LOG(LogSmartFoundations, Warning, TEXT("\U0001F527 Spacing Mode: Inactive (Semicolon released)"));
+
+        // Try to release lock (Task 52 - centralized)
+        TryReleaseHologramLock();
+    }
+}
+
+void USFSubsystem::OnSpacingCycleAxis()
+{
+    // Legacy handler - redirects to generic context-aware handler
+    // Kept for backward compatibility with existing blueprint bindings
+    OnCycleAxis();
+}
+
+void USFSubsystem::OnStepsModeChanged(const FInputActionValue& Value)
+{
+    // Phase 0: Delegate input processing to InputHandler (Task #61.6)
+    if (InputHandler)
+    {
+        InputHandler->OnStepsModeChanged(Value);
+        // Sync state from module
+        bStepsModeActive = InputHandler->IsStepsModeActive();
+    }
+    else
+    {
+        bStepsModeActive = Value.Get<bool>();
+    }
+    if (bStepsModeActive)
+    {
+        // X-axis: Columns (constant X) step up based on X position
+        // Y-axis: Rows (constant Y) step up based on Y position
+        const TCHAR* AxisName = (CounterState.StepsAxis == ESFScaleAxis::X) ? TEXT("X (columns)") : TEXT("Y (rows)");
+        const int32 CurrentCounter = (CounterState.StepsAxis == ESFScaleAxis::X) ? CounterState.StepsX : CounterState.StepsY;
+
+        UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 Steps Mode: ACTIVE (I held) - Axis: %s"), AxisName);
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   Current counter: %d units (Num0 to toggle X/Y)"), CurrentCounter);
+
+        // Try to acquire lock (Task 52 - centralized)
+        TryAcquireHologramLock();
+    }
+    else
+    {
+        UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 Steps Mode: Inactive (I released)"));
+
+        // Try to release lock (Task 52 - centralized)
+        TryReleaseHologramLock();
+    }
+}
+
+void USFSubsystem::OnCycleAxis()
+{
+    // Phase 0: Delegate input processing to InputHandler (Task #61.6)
+    if (InputHandler)
+    {
+        InputHandler->OnCycleAxis();
+    }
+
+    // Context-aware mode swapper - dispatches based on active mode
+    // Allows Num0 to work intelligently across all modal features
+
+    if (bAutoConnectSettingsModeActive)
+    {
+        // Auto-Connect Settings mode: Cycle to next setting
+        CycleAutoConnectSetting();
+    }
+    else if (bSpacingModeActive)
+    {
+        // Spacing mode: Cycle spacing axis X → Y → Z via service
+        if (GridStateService)
+        {
+            GridStateService->CycleSpacingAxis(CounterState);
+        }
+
+        const TCHAR* AxisName = TEXT("");
+        switch (CounterState.SpacingAxis)
+        {
+        case ESFScaleAxis::X: AxisName = TEXT("X"); break;
+        case ESFScaleAxis::Y: AxisName = TEXT("Y"); break;
+        case ESFScaleAxis::Z: AxisName = TEXT("Z"); break;
+        default: break;
+        }
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT(" Spacing Axis Cycled: Now adjusting %s-axis"), AxisName);
+        UpdateCounterState(CounterState);
+    }
+    else if (bStepsModeActive)
+    {
+        // Steps mode: Toggle between X and Y only via service
+        if (GridStateService)
+        {
+            GridStateService->ToggleStepsAxis(CounterState);
+        }
+
+        const TCHAR* AxisName = (CounterState.StepsAxis == ESFScaleAxis::X) ? TEXT("X") : TEXT("Y");
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT(" Steps Axis Toggled: Now adjusting %s-axis (columns/rows)"), AxisName);
+        UpdateCounterState(CounterState);
+    }
+    else if (bStaggerModeActive)
+    {
+        // Stagger mode: Cycle X → Y → ZX → ZY via service
+        if (GridStateService)
+        {
+            GridStateService->CycleStaggerAxis(CounterState);
+        }
+
+		const TCHAR* AxisName = TEXT("Unknown");
+		const TCHAR* AxisDescription = TEXT("");
+
+		switch (CounterState.StaggerAxis)
+		{
+		case ESFScaleAxis::X:
+			AxisName = TEXT("X");
+			AxisDescription = TEXT("horizontal diagonal - sideways offset");
+			break;
+		case ESFScaleAxis::Y:
+			AxisName = TEXT("Y");
+			AxisDescription = TEXT("horizontal diagonal - forward/back offset");
+			break;
+		case ESFScaleAxis::ZX:
+			AxisName = TEXT("ZX");
+			AxisDescription = TEXT("vertical lean - forward/back");
+			break;
+		case ESFScaleAxis::ZY:
+			AxisName = TEXT("ZY");
+			AxisDescription = TEXT("vertical lean - sideways");
+			break;
+		default:
+			break;
+		}
+
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT(" Stagger Axis Toggled: Now adjusting %s-axis (%s)"), AxisName, AxisDescription);
+		UpdateCounterState(CounterState);
+	}
+	else if (bRecipeModeActive)
+	{
+		// Recipe mode: Clear manual selection completely
+		if (ActiveRecipeSource == ERecipeSource::ManuallySelected)
+		{
+			// Clear manual selection
+			ActiveRecipeSource = ERecipeSource::None;
+			ActiveRecipe = nullptr;
+			CurrentRecipeIndex = 0;
+
+			// Apply recipe clear to parent hologram
+			ApplyRecipeToParentHologram();
+
+			// Trigger debounced regeneration to propagate clear to children
+			if (ActiveHologram.IsValid() && ActiveHologram->GetHologramChildren().Num() > 0)
+			{
+				if (UWorld* World = GetWorld())
+				{
+					World->GetTimerManager().ClearTimer(RecipeRegenerationTimer);
+					World->GetTimerManager().SetTimer(
+						RecipeRegenerationTimer,
+						this,
+						&USFSubsystem::RegenerateChildHologramGrid,
+						0.2f,  // 200ms debounce
+						false
+					);
+					UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🍽️ Recipe cleared - scheduled child regeneration in 200ms"));
+				}
+			}
+
+			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🍽️ Recipe selection cleared - no recipe will be applied to parent or children"));
+		}
+		else
+		{
+			// No manual selection to clear, just clear everything
+			ClearAllRecipes();
+
+			// Apply clear to hologram registry and trigger regeneration
+			ApplyRecipeToParentHologram();
+			if (ActiveHologram.IsValid() && ActiveHologram->GetHologramChildren().Num() > 0)
+			{
+				if (UWorld* World = GetWorld())
+				{
+					World->GetTimerManager().ClearTimer(RecipeRegenerationTimer);
+					World->GetTimerManager().SetTimer(
+						RecipeRegenerationTimer,
+						this,
+						&USFSubsystem::RegenerateChildHologramGrid,
+						0.2f,  // 200ms debounce
+						false
+					);
+					UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🍽️ All recipes cleared - scheduled child regeneration in 200ms"));
+				}
+			}
+		}
+
+		UpdateCounterDisplay();
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🍽️ Recipe selection cleared via Num0"));
+	}
+	else
+	{
+		// No mode active - check for double-tap to toggle Smart disable (Issue #198)
+		// Only works when no modifier keys are held
+		if (!bModifierScaleXActive && !bModifierScaleYActive)
+		{
+			const double CurrentTime = FPlatformTime::Seconds();
+			const double TimeSinceLastTap = CurrentTime - LastCycleAxisTapTime;
+
+			if (TimeSinceLastTap < DoubleTapWindow && LastCycleAxisTapTime > 0.0)
+			{
+				// Double-tap detected - toggle the disable flags
+				bDisableSmartForNextAction = !bDisableSmartForNextAction;
+				bExtendDisabledForSession = !bExtendDisabledForSession;  // Issue #257: toggle Extend too
+
+				if (bDisableSmartForNextAction)
+				{
+					SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("⏸️ Smart! DISABLED for session (Auto-Connect + Extend) (double-tap detected)"));
+
+					// Issue #198: Immediately clear all auto-connect previews when disabling
+					if (ActiveHologram.IsValid() && AutoConnectService)
+					{
+						USFAutoConnectOrchestrator* Orchestrator = GetOrCreateOrchestrator(ActiveHologram.Get());
+						if (Orchestrator)
+						{
+							Orchestrator->ForceRefresh();
+						}
+					}
+
+					// Issue #257: Clear active Extend state when disabling
+					if (ExtendService)
+					{
+						ExtendService->ClearExtendState();
+					}
+				}
+				else
+				{
+					UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("▶️ Smart! RE-ENABLED (Auto-Connect + Extend) (double-tap detected)"));
+
+					// Re-enable: trigger refresh to recreate previews
+					if (ActiveHologram.IsValid() && AutoConnectService)
+					{
+						USFAutoConnectOrchestrator* Orchestrator = GetOrCreateOrchestrator(ActiveHologram.Get());
+						if (Orchestrator)
+						{
+							Orchestrator->ForceRefresh();
+						}
+					}
+				}
+
+				// Reset timing to prevent triple-tap from toggling again
+				LastCycleAxisTapTime = 0.0;
+
+				// Update HUD to show the change
+				UpdateCounterDisplay();
+			}
+			else
+			{
+				// First tap - record time for potential double-tap
+				LastCycleAxisTapTime = CurrentTime;
+				UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Cycle axis tap recorded (no mode active) - waiting for potential double-tap"));
+			}
+		}
+		else
+		{
+			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Cycle axis ignored - modifier keys held"));
+		}
+	}
+}
+
+void USFSubsystem::OnStaggerModeChanged(const FInputActionValue& Value)
+{
+	// Block stagger mode while EXTEND is active
+	if (IsExtendModeActive())
+	{
+		return;
+	}
+
+	// Phase 0: Delegate input processing to InputHandler (Task #61.6)
+	if (InputHandler)
+	{
+		InputHandler->OnStaggerModeChanged(Value);
+		// Sync state from module
+		bStaggerModeActive = InputHandler->IsStaggerModeActive();
+	}
+	else
+	{
+		bStaggerModeActive = Value.Get<bool>();
+	}
+	if (bStaggerModeActive)
+	{
+		// Stagger only uses X and Y axes (lateral grid offset)
+		const TCHAR* AxisName = (CounterState.StaggerAxis == ESFScaleAxis::X) ? TEXT("X (sideways curve)") : TEXT("Y (forward curve)");
+		const int32 CurrentCounter = (CounterState.StaggerAxis == ESFScaleAxis::X) ? CounterState.StaggerX : CounterState.StaggerY;
+
+		UE_LOG(LogSmartFoundations, Warning, TEXT(" Stagger Mode: ACTIVE (Y held) - Axis: %s"), AxisName);
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   Current counter: %d units (Num0 to toggle X/Y)"), CurrentCounter);
+
+		// Try to acquire lock (Task 52 - centralized)
+		TryAcquireHologramLock();
+	}
+	else
+	{
+		// Try to release lock (Task 52 - centralized)
+		TryReleaseHologramLock();
+	}
+}
+
+void USFSubsystem::OnRotationModeChanged(const FInputActionValue& Value)
+{
+	// Scaled Extend (Issue #265): Allow rotation mode during extend.
+
+	// Phase 0: Delegate input processing to InputHandler (Task #61.6)
+	if (InputHandler)
+	{
+		InputHandler->OnRotationModeChanged(Value);
+		// Sync state from module
+		bRotationModeActive = InputHandler->IsRotationModeActive();
+	}
+	else
+	{
+		bRotationModeActive = Value.Get<bool>();
+	}
+	if (bRotationModeActive)
+	{
+		// Rotation currently only uses Z axis (horizontal arc)
+		// Phase 2 will add X and Y axes for vertical arches
+		UE_LOG(LogSmartFoundations, Warning, TEXT(" Rotation Mode: ACTIVE (Comma held) - Axis: Z (horizontal arc)"));
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   Current rotation: %.1f° (Num0 to cycle axis when Phase 2 adds X/Y)"), CounterState.RotationZ);
+
+		// Try to acquire lock (Task 52 - centralized)
+		TryAcquireHologramLock();
+	}
+	else
+	{
+		// Try to release lock (Task 52 - centralized)
+		TryReleaseHologramLock();
+	}
+}
+
+void USFSubsystem::OnToggleArrows()
+{
+	// Phase 0: Delegate input processing to InputHandler (Task #61.6)
+	if (InputHandler)
+	{
+		InputHandler->OnToggleArrows();
+	}
+
+#if SMART_ARROWS_ENABLED
+	// Toggle runtime visibility flag (doesn't change config)
+	bArrowsRuntimeVisible = !bArrowsRuntimeVisible;
+	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("INPUT EVENT: Arrows TOGGLE - Visible: %s (Config default: %s)"),
+		bArrowsRuntimeVisible ? TEXT("ON") : TEXT("OFF"),
+		CachedConfig.bShowArrows ? TEXT("true") : TEXT("false"));
+
+	// Force immediate arrow update to handle visibility change
+	// This ensures arrows appear/disappear instantly without waiting for hologram movement
+	if (ActiveHologram.IsValid() && CurrentAdapter && CurrentAdapter->IsValid() && ArrowModule)
+	{
+		UWorld* World = GetWorld();
+		if (World)
+		{
+			FTransform CurrentTransform = CurrentAdapter->GetBaseTransform();
+
+			if (bArrowsRuntimeVisible)
+			{
+				// Force redraw when enabling - show arrows immediately
+				ArrowModule->UpdateArrows(World, CurrentTransform, LastAxisInput, true);
+				UE_LOG(LogSmartFoundations, Verbose, TEXT("Arrows: Forced redraw on visibility enable"));
+			}
+			else
+			{
+				// Force clear when disabling - hide arrows immediately by calling with bVisible=false
+				ArrowModule->UpdateArrows(World, CurrentTransform, LastAxisInput, false);
+				UE_LOG(LogSmartFoundations, Verbose, TEXT("Arrows: Forced clear on visibility disable"));
+			}
+
+			// Update cache to prevent immediate redraw in next Tick
+			LastHologramTransform = CurrentTransform;
+			LastKnownAxisInput = LastAxisInput;
+			LastChildCount = 0;  // Reset child count when toggling visibility
+		}
+	}
+#else
+	UE_LOG(LogSmartFoundations, Warning, TEXT("Arrows feature is currently disabled (SMART_ARROWS_ENABLED=0)"));
+#endif
+
+	// DEBUG: Comprehensive manifold scan within 50m radius
+	// Captures chain actors, connections, splines, and all properties for research
+	if (RadarPulseService)
+	{
+		const float ScanRadius = 5000.0f;   // 50m = 5000cm
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("📡 [Arrow Toggle Debug] Comprehensive scan within 50m..."));
+
+		// 1. HOLOGRAM SCAN - Inspect all holograms in range (captures mesh paths!)
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("📡 Scanning for holograms..."));
+		RadarPulseService->InspectAllHologramsInRadius(ScanRadius);
+
+		// 2. Chain actor scan (chain boundaries, members, connections)
+		RadarPulseService->ScanChainActors(ScanRadius);
+
+		// 3. Full radar pulse snapshot (all buildables with properties)
+		// Filter to logistics and factory categories for manifold research
+		TArray<FString> ManifoldCategories;
+		ManifoldCategories.Add(TEXT("Belt"));
+		ManifoldCategories.Add(TEXT("Lift"));
+		ManifoldCategories.Add(TEXT("Distributor"));
+		ManifoldCategories.Add(TEXT("Factory"));
+		ManifoldCategories.Add(TEXT("Pipe"));
+		ManifoldCategories.Add(TEXT("Junction"));
+		ManifoldCategories.Add(TEXT("StackablePipePole"));
+		ManifoldCategories.Add(TEXT("StackableBeltPole"));
+
+		FSFRadarPulseSnapshot Snapshot = RadarPulseService->CaptureSnapshotFiltered(
+			ScanRadius,
+			TEXT("MANIFOLD_RESEARCH"),
+			ManifoldCategories
+		);
+
+		// Log with verbose details and enumerate all categories
+		RadarPulseService->LogSnapshotFiltered(Snapshot, true, ManifoldCategories);
+	}
+}
+
+void USFSubsystem::OnToggleSettingsForm()
+{
+	UE_LOG(LogSmartFoundations, Warning, TEXT("!!! K KEY PRESSED !!! (OnToggleSettingsForm)"));
+	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("INPUT EVENT: Settings Form Toggle (Phase 0 validation)"));
+
+	// Route to Upgrade Panel if holding an upgrade-capable hologram (belt/lift/pipe/pump/power pole/wall outlet)
+	if (IsUpgradeCapableContext())
+	{
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Routing to Upgrade Panel (upgrade-capable context)"));
+		OnToggleUpgradePanel();
+		return;
+	}
+
+	// Get player controller
+	AFGPlayerController* PC = GetLastController();
+	if (!PC)
+	{
+		UWorld* World = GetWorld();
+		if (World)
+		{
+			PC = World->GetFirstPlayerController<AFGPlayerController>();
+		}
+	}
+
+	if (!PC)
+	{
+		UE_LOG(LogSmartFoundations, Error, TEXT("Settings Form: No valid PlayerController available"));
+		return;
+	}
+
+	// Toggle behavior: if widget is open, close it (with cancel/revert)
+	if (SettingsFormWidget.IsValid() && SettingsFormWidget->IsInViewport())
+	{
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Closing via toggle key (canceling unapplied changes)"));
+
+		// Use CancelAndClose to revert unapplied changes before closing
+		SettingsFormWidget->CancelAndClose();
+		SettingsFormWidget.Reset();
+		return;
+	}
+
+	// Load the Blueprint Widget class
+	FString WidgetPath = TEXT("/SmartFoundations/SmartFoundations/UI/Smart_SettingsForm_Widget.Smart_SettingsForm_Widget_C");
+	FSoftClassPath WidgetClassPath(WidgetPath);
+	UClass* WidgetClass = WidgetClassPath.TryLoadClass<UUserWidget>();
+
+	if (!WidgetClass)
+	{
+		UE_LOG(LogSmartFoundations, Error, TEXT("Settings Form: Failed to load Blueprint widget class at path: %s"), *WidgetPath);
+		return;
+	}
+
+	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Loaded widget class: %s"), *WidgetClass->GetName());
+
+	// Create widget instance and add to viewport
+	USmartSettingsFormWidget* WidgetInstance = CreateWidget<USmartSettingsFormWidget>(PC, WidgetClass);
+
+	if (!WidgetInstance)
+	{
+		UE_LOG(LogSmartFoundations, Error, TEXT("Settings Form: Failed to create widget instance"));
+		return;
+	}
+
+	// Store reference for toggle behavior
+	SettingsFormWidget = WidgetInstance;
+
+	// Suppress HUD while settings form is open
+	if (HudService)
+	{
+		HudService->SetHUDSuppressed(true);
+	}
+
+	// Populate form with current counter state values
+	WidgetInstance->PopulateFromCounterState(this);
+
+	// Set visibility and add to viewport
+	WidgetInstance->SetVisibility(ESlateVisibility::Visible);
+	WidgetInstance->AddToViewport(100);
+
+	// Enable mouse cursor and UI-only input mode (blocks game input to prevent click-through)
+	PC->bShowMouseCursor = true;
+	FInputModeUIOnly InputMode;
+	InputMode.SetWidgetToFocus(WidgetInstance->TakeWidget());
+	InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+	PC->SetInputMode(InputMode);
+}
+
+bool USFSubsystem::IsUpgradeCapableContext() const
+{
+    AFGHologram* Hologram = ActiveHologram.Get();
+
+    // Fallback: If the 100ms poll hasn't fired yet or cache is stale, check the Build Gun directly
+    if (!Hologram)
+    {
+        AFGPlayerController* PC = GetLastController();
+        if (PC)
+        {
+            if (AFGCharacterPlayer* Character = Cast<AFGCharacterPlayer>(PC->GetCharacter()))
+            {
+                if (AFGBuildGun* BuildGun = Character->GetBuildGun())
+                {
+                    if (BuildGun->IsInState(EBuildGunState::BGS_BUILD))
+                    {
+                        if (UFGBuildGunStateBuild* BuildState = Cast<UFGBuildGunStateBuild>(BuildGun->GetCurrentState()))
+                        {
+                            Hologram = BuildState->GetHologram();
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if (!Hologram)
+    {
+        return false;
+    }
+
+    FString ClassName = Hologram->GetClass()->GetName();
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("IsUpgradeCapableContext: Checking hologram class: %s"), *ClassName);
+
+    // Belt holograms (conveyor belts) - e.g. Holo_ConveyorBelt_C
+    if (ClassName.Contains(TEXT("ConveyorBelt")) && !ClassName.Contains(TEXT("Lift")))
+    {
+        return true;
+    }
+
+    // Lift holograms (conveyor lifts) - e.g. Holo_ConveyorLift_C
+    if (ClassName.Contains(TEXT("ConveyorLift")) || ClassName.Contains(TEXT("Lift")))
+    {
+        return true;
+    }
+
+    // Pipeline holograms (pipes)
+    if (ClassName.Contains(TEXT("Pipeline")) && !ClassName.Contains(TEXT("Junction")) && !ClassName.Contains(TEXT("Pump")) && !ClassName.Contains(TEXT("Support")))
+    {
+        return true;
+    }
+
+    // Power line/wire holograms - use for power network upgrades instead of power poles
+    // This avoids conflict with power pole (and wall outlet) scaling feature
+    if (ClassName.Contains(TEXT("Wire")) || ClassName.Contains(TEXT("PowerLine")))
+    {
+        return true;
+    }
+
+    // Note: Pipeline Pumps, Power Poles, and Wall Outlets intentionally return false here
+    // so that the Smart! Panel opens instead, allowing players to use grid scaling.
+
+    return false;
+}
+
+void USFSubsystem::OnToggleUpgradePanel()
+{
+	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("INPUT EVENT: Upgrade Panel Toggle"));
+
+	// Get player controller
+	AFGPlayerController* PC = GetLastController();
+	if (!PC)
+	{
+		UWorld* World = GetWorld();
+		if (World)
+		{
+			PC = World->GetFirstPlayerController<AFGPlayerController>();
+		}
+	}
+
+	if (!PC)
+	{
+		UE_LOG(LogSmartFoundations, Error, TEXT("Upgrade Panel: No valid PlayerController available"));
+		return;
+	}
+
+	// Toggle behavior: if widget is open, close it
+	if (UpgradePanelWidget.IsValid() && UpgradePanelWidget->IsInViewport())
+	{
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Upgrade Panel: Closing via toggle key"));
+		UpgradePanelWidget->RemoveFromParent();
+		UpgradePanelWidget.Reset();
+
+		// Restore game input mode
+		PC->bShowMouseCursor = false;
+		FInputModeGameOnly InputMode;
+		PC->SetInputMode(InputMode);
+
+		// Re-enable HUD
+		if (HudService)
+		{
+			HudService->SetHUDSuppressed(false);
+		}
+		return;
+	}
+
+	// Load the Upgrade Panel Blueprint Widget class
+	FString WidgetPath = TEXT("/SmartFoundations/SmartFoundations/UI/Smart_UpgradePanel_Widget.Smart_UpgradePanel_Widget_C");
+	FSoftClassPath WidgetClassPath(WidgetPath);
+	UClass* WidgetClass = WidgetClassPath.TryLoadClass<UUserWidget>();
+
+	if (!WidgetClass)
+	{
+		UE_LOG(LogSmartFoundations, Error, TEXT("Upgrade Panel: Failed to load Blueprint widget class at path: %s"), *WidgetPath);
+		return;
+	}
+
+	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Upgrade Panel: Loaded widget class: %s"), *WidgetClass->GetName());
+
+	// Create widget instance - try our C++ class first, fall back to UUserWidget if Blueprint not reparented
+	USmartUpgradePanel* SmartPanelInstance = CreateWidget<USmartUpgradePanel>(PC, WidgetClass);
+	UUserWidget* WidgetInstance = SmartPanelInstance;
+
+	if (!WidgetInstance)
+	{
+		UE_LOG(LogSmartFoundations, Warning, TEXT("Upgrade Panel: CreateWidget<USmartUpgradePanel> failed, trying UUserWidget fallback"));
+		// Blueprint may not be reparented yet - fall back to base UUserWidget
+		WidgetInstance = CreateWidget<UUserWidget>(PC, WidgetClass);
+	}
+
+	if (!WidgetInstance)
+	{
+		UE_LOG(LogSmartFoundations, Error, TEXT("Upgrade Panel: Failed to create widget instance - Blueprint may need to be reparented to UserWidget in Unreal Editor"));
+		UE_LOG(LogSmartFoundations, Error, TEXT("Upgrade Panel: Open Smart_UpgradePanel_Widget in UE Editor, go to Class Settings, and set Parent Class to UserWidget or SmartUpgradePanel"));
+		return;
+	}
+
+	// Store reference for toggle behavior
+	UpgradePanelWidget = WidgetInstance;
+
+	// If using fallback UUserWidget, manually bind the close button
+	if (!SmartPanelInstance)
+	{
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Upgrade Panel: Using fallback mode - manually binding close button"));
+		if (UButton* CloseButton = Cast<UButton>(WidgetInstance->GetWidgetFromName(TEXT("CloseButton"))))
+		{
+			CloseButton->OnClicked.AddDynamic(this, &USFSubsystem::OnUpgradePanelCloseClicked);
+			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Upgrade Panel: CloseButton bound successfully"));
+		}
+		else
+		{
+			UE_LOG(LogSmartFoundations, Warning, TEXT("Upgrade Panel: CloseButton not found in widget"));
+		}
+	}
+
+	// Suppress HUD while upgrade panel is open
+	if (HudService)
+	{
+		HudService->SetHUDSuppressed(true);
+	}
+
+	// Set visibility and add to viewport
+	WidgetInstance->SetVisibility(ESlateVisibility::Visible);
+	WidgetInstance->AddToViewport(100);
+
+	// Enable mouse cursor and UI-only input mode (blocks game input to prevent click-through)
+	PC->bShowMouseCursor = true;
+	FInputModeUIOnly InputMode;
+	InputMode.SetWidgetToFocus(WidgetInstance->TakeWidget());
+	InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+	PC->SetInputMode(InputMode);
+
+	// Set widget to be focusable so it can receive keyboard input
+	WidgetInstance->SetIsFocusable(true);
+	WidgetInstance->SetKeyboardFocus();
+
+	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Upgrade Panel: Opened (ESC or Close button to close)"));
+}
+
+void USFSubsystem::OnUpgradePanelCloseClicked()
+{
+	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Upgrade Panel: Close button clicked (fallback handler)"));
+
+	if (!UpgradePanelWidget.IsValid())
+	{
+		return;
+	}
+
+	// Get player controller
+	AFGPlayerController* PC = GetLastController();
+	if (!PC)
+	{
+		UWorld* World = GetWorld();
+		if (World)
+		{
+			PC = World->GetFirstPlayerController<AFGPlayerController>();
+		}
+	}
+
+	// Remove widget from viewport
+	UpgradePanelWidget->RemoveFromParent();
+	UpgradePanelWidget.Reset();
+
+	// Restore game input mode
+	if (PC)
+	{
+		PC->bShowMouseCursor = false;
+		FInputModeGameOnly InputMode;
+		PC->SetInputMode(InputMode);
+	}
+
+	// Re-enable HUD
+	if (HudService)
+	{
+		HudService->SetHUDSuppressed(false);
+	}
+
+	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Upgrade Panel: Closed via close button"));
+}

@@ -1,153 +1,12 @@
-#include "Subsystem/SFSubsystem.h"
-#include "SmartFoundations.h"
-#include "FGHologram.h"
-#include "Hologram/FGSplineHologram.h"
-#include "Hologram/FGConveyorBeltHologram.h"
-#include "FGRecipeManager.h"
-#include "FGBuildingDescriptor.h"
-#include "Data/SFHologramData.h"
-#include "Data/SFHologramDataRegistry.h"
-#include "Subsystem/SFHologramDataService.h"
-#include "Debug/SFSplineAnalyzer.h"
-#include "UI/SmartSettingsFormWidget.h"
-#include "UI/SmartUpgradePanel.h"
+// Copyright Coffee Stain Studios. All Rights Reserved.
 
-// Phase 0 Extracted Modules (Task #61.6)
-#include "Subsystem/SFInputHandler.h"
-#include "Subsystem/SFPositionCalculator.h"
-#include "Subsystem/SFValidationService.h"
-#include "Subsystem/SFHologramHelperService.h"
+/**
+ * USFSubsystem - core: subsystem lifecycle (ctor/Init/Deinit), accessors, power-connection mgmt, Get() + input setup/scaling.
+ * Implementation split across SFSubsystem.cpp + SFSubsystem_*.cpp (each <2k); shared includes in
+ * SFSubsystemImpl.h. No behavior change from the monolith.
+ */
 
-// Service includes (moved from header for PIMPL pattern)
-#include "Features/AutoConnect/SFAutoConnectService.h"
-#include "Features/AutoConnect/SFAutoConnectOrchestrator.h"
-#include "Services/RadarPulse/SFRadarPulseService.h"
-#include "Services/SFHudService.h"
-#include "Services/SFHintBarService.h"
-#include "Services/SFChainActorService.h"
-#include "Features/Upgrade/SFUpgradeAuditService.h"
-#include "Features/Upgrade/SFUpgradeExecutionService.h"
-#include "Services/SFGridStateService.h"
-#include "Services/SFGridSpawnerService.h"
-#include "Services/SFGridTransformService.h"
-#include "Features/Arrows/SFArrowModule_StaticMesh.h"
-#include "Features/PipeAutoConnect/SFPipeAutoConnectManager.h"
-#include "Features/PowerAutoConnect/SFPowerAutoConnectManager.h"
-#include "Features/Restore/SFRestoreService.h"
-#include "Features/Restore/SFRestoreTypes.h"
-#include "Logging/SFLogMacros.h"
-#include "Hologram/FGFactoryBuildingHologram.h"  // Issue #160: Zoop detection
-#include "SFHologramPerformanceProfiler.h"
-#include "Data/SFBuildableSizeRegistry.h"
-#include "Features/AutoConnect/Preview/BeltPreviewHelper.h"
-#include "Config/Smart_ConfigStruct.h"
-#include "FGPlayerController.h"
-#include "FGCharacterPlayer.h"
-#include "FGInventoryComponent.h"
-#include "Equipment/FGBuildGun.h"
-#include "Equipment/FGBuildGunBuild.h"
-#include "Input/FGEnhancedInputComponent.h"
-#include "Input/FGInputMappingContext.h"
-#include "InputAction.h"
-#include "EnhancedInputSubsystems.h"
-#include "Engine/World.h"
-#include "EngineUtils.h"
-#include "Resources/FGBuildingDescriptor.h"
-#include "FGCentralStorageSubsystem.h"
-#include "Blueprint/UserWidget.h"
-#include "Kismet/GameplayStatics.h"
-#include "Async/Async.h"
-#include "Engine/Canvas.h"
-#include "GameFramework/HUD.h"
-#include "GameFramework/GameStateBase.h"
-#include "FGGameState.h"
-#include "FGHUDBase.h"
-#include "Buildables/FGBuildableConveyorAttachment.h"
-#include "Buildables/FGBuildableConveyorBelt.h"
-#include "Buildables/FGBuildablePipelineAttachment.h"
-#include "Buildables/FGBuildablePipeline.h"
-#include "FGPipeSubsystem.h"
-#include "FGPipeNetwork.h"
-#include "Components/SplineComponent.h"
-
-// Blueprint proxy for Smart Dismantle grouping (Issue #166)
-#include "FGBlueprintProxy.h"
-#include "FGBlueprintHologram.h"
-
-// Build gun integration (Phase 4)
-// Hologram adapters
-#include "Holograms/Adapters/ISFHologramAdapter.h"
-
-// Smart custom hologram classes (Phase 3)
-#include "Holograms/Core/SFBuildableHologram.h"
-#include "Holograms/Core/SFFactoryHologram.h"
-#include "Holograms/Core/ASFLogisticsHologram.h"
-#include "Holograms/Core/SFFoundationHologram.h"
-#include "Hologram/FGConveyorLiftHologram.h"
-#include "Hologram/FGStandaloneSignHologram.h"
-#include "Holograms/Core/SFStandaloneSignChildHologram.h"
-
-// bProcessingGridPlacement (Auto-Connect belt building re-entry lock) promoted to
-// SFSubsystemStackableCache.h as a shared inline var (slice S impl-split).
-
-// Smart custom hologram adapters (Phase 3)
-#include "Holograms/Adapters/SFSmartBuildableAdapter.h"
-#include "Holograms/Adapters/SFSmartLogisticsAdapter.h"
-
-// Vanilla hologram adapters (fallback)
-#include "Holograms/Adapters/SFGenericAdapter.h"
-#include "Holograms/Adapters/SFWallAdapter.h"
-#include "Holograms/Adapters/SFPillarAdapter.h"
-#include "Holograms/Adapters/SFWaterExtractorAdapter.h"
-#include "Holograms/Adapters/SFResourceExtractorAdapter.h"
-#include "Holograms/Adapters/SFFactoryAdapter.h"
-#include "Holograms/Adapters/SFElevatorAdapter.h"
-#include "Holograms/Adapters/SFRampAdapter.h"
-#include "Holograms/Adapters/SFJumpPadAdapter.h"
-#include "Holograms/Adapters/SFUnsupportedAdapter.h"
-#include "Holograms/Adapters/SFPassthroughAdapter.h"
-
-// Smart custom hologram classes (Phase 3)
-#include "Holograms/Logistics/SFConveyorBeltHologram.h"
-#include "Holograms/Logistics/SFPipelineHologram.h"
-
-// Input registry (needed for ClearInputCache and GetSmartInputMappingContext)
-#include "Input/SFInputRegistry.h"
-
-// Feature modules
-#include "Features/Arrows/SFArrowModule_StaticMesh.h"
-#include "Features/Spacing/SFSpacingModule.h"
-#include "Features/PipeAutoConnect/SFPipeAutoConnectManager.h"
-#include "Features/PipeAutoConnect/SFPipeConnectorFinder.h"
-#include "Features/PowerAutoConnect/SFPowerAutoConnectManager.h"
-#include "Buildables/FGBuildablePowerPole.h"
-#include "FGBuildablePolePipe.h"  // For stackable pipeline support auto-connect
-
-// Satisfactory hologram types for adapter factory
-#include "Hologram/FGFoundationHologram.h"
-#include "Hologram/FGWallHologram.h"
-#include "Hologram/FGPillarHologram.h"
-#include "Hologram/FGStackableStorageHologram.h"
-#include "Hologram/FGWaterPumpHologram.h"
-#include "Hologram/FGResourceExtractorHologram.h"
-#include "Hologram/FGFactoryHologram.h"
-#include "Hologram/FGConveyorAttachmentHologram.h"
-#include "Hologram/FGPipelineJunctionHologram.h"
-#include "Hologram/FGPipeHyperAttachmentHologram.h"
-#include "Hologram/FGPassthroughHologram.h"
-#include "Hologram/FGElevatorHologram.h"
-#include "Hologram/FGStairHologram.h"
-#include "Hologram/FGJumpPadHologram.h"
-#include "Hologram/FGWheeledVehicleHologram.h"
-#include "Hologram/FGSpaceElevatorHologram.h"
-#include "Hologram/FGFloodlightHologram.h"
-#include "Buildables/FGBuildablePassthrough.h"
-
-// Recipe copying system includes
-#include "Buildables/FGBuildableFactory.h"
-#include "Buildables/FGBuildableManufacturer.h"
-#include "FGRecipe.h"
-#include "Subsystem/SFSubsystemStackableCache.h"
+#include "Subsystem/SFSubsystemImpl.h"
 
 USFSubsystem::USFSubsystem() : Super()
 {
@@ -1653,4 +1512,81 @@ void USFSubsystem::OnModifierScaleXPressed(const FInputActionValue& Value)
         // Try to acquire lock (Task 52 - centralized)
         TryAcquireHologramLock();
     }
+}
+
+void USFSubsystem::OnModifierScaleXReleased(const FInputActionValue& Value)
+{
+    // Phase 0: Forward to InputHandler module (Task #61.6)
+    if (InputHandler)
+    {
+        InputHandler->OnModifierScaleXReleased(Value);
+
+        // Sync state from module (temporary during migration)
+        bModifierScaleXActive = InputHandler->IsModifierScaleXActive();
+    }
+
+    // Update arrow highlighting based on remaining modifiers
+    if (InputHandler && InputHandler->IsModifierScaleYActive())
+    {
+        LastAxisInput = ELastAxisInput::Y;  // Y modifier still held = Y axis
+    }
+    else
+    {
+        LastAxisInput = ELastAxisInput::None;  // No modifiers = show all arrows
+    }
+
+    // Try to release lock (Task 52 - centralized)
+    TryReleaseHologramLock();
+}
+
+void USFSubsystem::OnModifierScaleYPressed(const FInputActionValue& Value)
+{
+    // Scaled Extend (Issue #265): Allow Y modifier during extend mode for Scaled Extend.
+
+    // Phase 0: Forward to InputHandler module (Task #61.6)
+    if (InputHandler)
+    {
+        InputHandler->OnModifierScaleYPressed(Value);
+
+        // Sync state from module (temporary during migration)
+        bModifierScaleYActive = InputHandler->IsModifierScaleYActive();
+    }
+
+    // Update arrow highlighting immediately based on modifier combination
+    if (InputHandler && InputHandler->IsModifierScaleXActive() && InputHandler->IsModifierScaleYActive())
+    {
+        LastAxisInput = ELastAxisInput::Z;  // Both modifiers = Z axis
+    }
+    else if (bModifierScaleYActive)
+    {
+        LastAxisInput = ELastAxisInput::Y;  // Y modifier only = Y axis
+    }
+
+    // Try to acquire lock (Task 52 - centralized)
+    TryAcquireHologramLock();
+}
+
+void USFSubsystem::OnModifierScaleYReleased(const FInputActionValue& Value)
+{
+    // Phase 0: Forward to InputHandler module (Task #61.6)
+    if (InputHandler)
+    {
+        InputHandler->OnModifierScaleYReleased(Value);
+
+        // Sync state from module (temporary during migration)
+        bModifierScaleYActive = InputHandler->IsModifierScaleYActive();
+    }
+
+    // Update arrow highlighting based on remaining modifiers
+    if (InputHandler && InputHandler->IsModifierScaleXActive())
+    {
+        LastAxisInput = ELastAxisInput::X;  // X modifier still held = X axis
+    }
+    else
+    {
+        LastAxisInput = ELastAxisInput::None;  // No modifiers = show all arrows
+    }
+
+    // Try to release lock (Task 52 - centralized)
+    TryReleaseHologramLock();
 }

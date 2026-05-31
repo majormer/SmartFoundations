@@ -27,5 +27,5 @@ inline TArray<FStackableBeltBuildData> GCachedStackableBeltData;
 inline bool bGStackableBeltDataCached = false;
 
 /** Re-entry lock for grid placement (was a file-scope static in SFSubsystem.cpp; promoted to a
- *  shared inline var so it stays a single instance across the split SFSubsystem_Part*.cpp). */
+ *  shared inline var so it stays a single instance across the split SFSubsystem_*.cpp). */
 inline bool bProcessingGridPlacement = false;
