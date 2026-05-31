@@ -85,6 +85,19 @@ public:
     AFGBuildable* GetBuiltActorByCloneId(const FString& CloneId) const;
     AFGBuildable* GetSourceBuildableByName(const FString& ActorName) const;
 
+    // ==================== Built-child registration + wiring (slice E2 unit F) ====================
+    bool HasPendingPostBuildWiring() const;
+    void RegisterBuiltConveyor(int32 ChainId, int32 ChainIndex, AFGBuildableConveyorBase* BuiltConveyor, bool bIsInputChain);
+    AFGBuildableConveyorBase* GetBuiltConveyor(int32 ChainId, int32 ChainIndex) const;
+    void RegisterBuiltDistributor(int32 ChainId, AFGBuildable* BuiltDistributor);
+    AFGBuildable* GetBuiltDistributor(int32 ChainId) const;
+    FName GetDistributorConnectorName(int32 ChainId) const;
+    void SetDistributorConnectorName(int32 ChainId, FName ConnectorName);
+    void RegisterBuiltJunction(int32 ChainId, AFGBuildable* BuiltJunction);
+    void RegisterBuiltPipe(int32 ChainId, int32 ChainIndex, AFGBuildablePipeline* BuiltPipe, bool bIsInputChain);
+    int32 CopyDistributorConfigurations();
+    void WireBuiltChildConnections(AFGBuildableFactory* NewFactory);
+
 private:
     /** Wire up pipe hologram connections after all holograms in a chain are spawned */
     void WirePipeChainConnections(int32 ChainId, AFGHologram* ParentHologram, bool bIsInputChain);
