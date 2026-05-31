@@ -9,9 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [30.1.0] - Unreleased
+## [30.1.0] - 2026-05-31
 
-> *Final Satisfactory 1.1 release - collects all changes since v30.0.0. Date stamped when cut.*
+> *Final Satisfactory 1.1 release - collects all changes since v30.0.0.*
 
 ### Fixed
 - **Extend previews now show affordability correctly, and honor the Dimensional Depot** - When Extending a factory with auto-connected belts, pipes, and lifts, running short on materials turned the factory red but left the attached belts and pipes cyan, making it look like part of the placement was affordable. Now the whole Extend preview - factory, belts, pipes, lifts, distributors, poles, and wires - turns red together when you genuinely can't afford it, and returns to cyan the moment it's buildable again. The affordability check also counts materials in your Dimensional Depot, so an Extend you can build from the Depot is no longer incorrectly shown as unaffordable.

@@ -543,16 +543,15 @@ Start with the **wiki** for how-to guides, then the Discord for support, example
 
 > The Smart! wiki and issue tracker now live on the main source repository above. They previously lived in a separate issue-tracker repository, before Smart! became source-available — please use the links here rather than any older tracker links you may have bookmarked.
 
-When asking for help, include:
+**Bug reports use structured issue forms** — pick the type that fits: bug, crash, compatibility, Blueprint Designer, feature request, or a Satisfactory 1.2 report. (Blank issues are disabled; the form walks you through it.) Each form prompts for the details below, so it helps to have them ready:
 
-- Smart! version.
-- SML version.
-- Whether you are single-player or multiplayer.
-- Screenshots of the source layout and preview.
-- The buildable you are holding.
-- What you expected Smart! to do.
-
-For Extend issues, a screenshot from above is especially helpful.
+- Smart! version and SML version.
+- Satisfactory version and branch (for example, 1.1 stable, CL 463028).
+- Session type (single-player or multiplayer) and save type.
+- Steps to reproduce, what you expected, and what actually happened.
+- Logs — `FactoryGame.log`, plus the crash-reporter text for crashes.
+- Any other mods you have installed.
+- Screenshots or video. For Extend issues, a screenshot from above is especially helpful.
 
 ---
 
