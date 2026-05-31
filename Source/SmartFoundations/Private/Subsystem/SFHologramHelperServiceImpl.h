@@ -1,4 +1,4 @@
-// Copyright Coffee Stain Studios. All Rights Reserved.
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
 /**
  * Shared include set for the USFHologramHelperService implementation, split across SFHologramHelperService.cpp + _Part2 (each <2k).

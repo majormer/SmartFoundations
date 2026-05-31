@@ -1,3 +1,5 @@
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
+
 #include "Features/Extend/SFExtendCloneTopology.h"
 #include "Features/Extend/SFExtendService.h"
 #include "Misc/DateTime.h"

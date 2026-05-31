@@ -1,4 +1,4 @@
-// Copyright Coffee Stain Studios. All Rights Reserved.
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
 /**
  * Shared include set for the USFUpgradeExecutionService implementation, split across SFUpgradeExecutionService.cpp + _ConnectionRepair (each <2k).

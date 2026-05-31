@@ -1,4 +1,4 @@
-// Copyright Coffee Stain Studios. All Rights Reserved.
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
 /**
  * USmartSettingsFormWidget - belt/pipe/power tier controls + grid direction + key input + spinbox + confirmation dialogs. Split out of SmartSettingsFormWidget.cpp (slice U1,

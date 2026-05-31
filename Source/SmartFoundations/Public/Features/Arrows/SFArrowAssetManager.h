@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 // Smart! Mod - Safe Arrow Asset Manager (Task #58 - Production Fix)
 
 #pragma once

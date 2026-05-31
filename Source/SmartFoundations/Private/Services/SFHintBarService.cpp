@@ -1,3 +1,5 @@
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
+
 #include "Services/SFHintBarService.h"
 #include "SmartFoundations.h"
 #include "SFSubsystem.h"

@@ -1,4 +1,4 @@
-// Copyright Coffee Stain Studios. All Rights Reserved.
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
 /**
  * Shared include set for the USmartUpgradePanel implementation, split across SmartUpgradePanel.cpp + _Detail (each <2k).

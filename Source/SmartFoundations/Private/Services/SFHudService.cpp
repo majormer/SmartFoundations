@@ -1,3 +1,5 @@
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
+
 #include "Services/SFHudService.h"
 // NOTE: SFDeferredCostService removed - child holograms automatically aggregate costs via GetCost()
 #include "Subsystem/SFSubsystem.h"

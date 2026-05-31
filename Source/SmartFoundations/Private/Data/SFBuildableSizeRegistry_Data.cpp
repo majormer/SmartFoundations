@@ -1,3 +1,5 @@
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
+
 // SFBuildableSizeRegistry_Data.cpp
 //
 // GENERATED FILE - DO NOT EDIT BY HAND.

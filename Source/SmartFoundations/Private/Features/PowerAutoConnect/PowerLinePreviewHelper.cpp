@@ -1,3 +1,5 @@
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
+
 #include "Features/PowerAutoConnect/PowerLinePreviewHelper.h"
 #include "Holograms/Power/SFWireHologram.h"
 #include "Hologram/FGHologram.h"

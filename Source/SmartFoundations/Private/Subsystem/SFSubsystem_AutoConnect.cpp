@@ -1,4 +1,4 @@
-// Copyright Coffee Stain Studios. All Rights Reserved.
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
 /**
  * USFSubsystem - auto-connect production + distributor lifecycle + debug tools + deferred pipe wiring + chain-actor rebuild.

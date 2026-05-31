@@ -1,3 +1,5 @@
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
+
 #include "Services/SFGridSpawnerService.h"
 #include "Subsystem/SFSubsystem.h"
 #include "Subsystem/SFHologramHelperService.h"

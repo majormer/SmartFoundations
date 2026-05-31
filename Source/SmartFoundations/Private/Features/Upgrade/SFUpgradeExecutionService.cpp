@@ -1,3 +1,5 @@
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
+
 #include "Features/Upgrade/SFUpgradeExecutionService.h"
 #include "Features/Upgrade/SFUpgradeExecutionServiceImpl.h"
 

@@ -1,3 +1,5 @@
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
+
 // Spawner implementation split from SFExtendCloneTopology.cpp as part of T2.
 // Keep this file focused on turning clone topology entries into preview holograms.
 

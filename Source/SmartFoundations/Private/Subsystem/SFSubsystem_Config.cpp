@@ -1,4 +1,4 @@
-// Copyright Coffee Stain Studios. All Rights Reserved.
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
 /**
  * USFSubsystem - RPC handlers + configuration system + recipe copying + restore-enhanced + pipe-tier + auto-connect setters.

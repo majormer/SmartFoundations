@@ -1,4 +1,4 @@
-// Copyright (c) 2024 SmartFoundations Mod. All Rights Reserved.
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 // Smart! Mod - Resource Extractor Adapter Implementation
 
 #include "SFResourceExtractorAdapter.h"

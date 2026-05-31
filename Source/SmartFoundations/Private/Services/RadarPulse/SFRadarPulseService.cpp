@@ -1,4 +1,4 @@
-// Copyright Coffee Stain Studios. All Rights Reserved.
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 // Smart! Foundations Mod - Object Radar Pulse Diagnostic Service
 
 #include "Services/RadarPulse/SFRadarPulseService.h"

@@ -1,3 +1,5 @@
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
+
 #include "Features/PowerAutoConnect/SFPowerAutoConnectManager.h"
 #include "Subsystem/SFSubsystem.h"
 #include "Features/AutoConnect/SFAutoConnectService.h"

@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
 #include "Features/AutoConnect/SFAutoConnectOrchestrator.h"
 #include "Features/AutoConnect/SFAutoConnectService.h"

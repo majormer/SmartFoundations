@@ -1,4 +1,4 @@
-// Copyright Coffee Stain Studios. All Rights Reserved.
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
 /**
  * USmartSettingsFormWidget - preset apply/save/delete/export/import + counter populate + apply/reset + mouse drag + recipe. Split out of SmartSettingsFormWidget.cpp (slice U1,

@@ -1,4 +1,4 @@
-// Copyright Coffee Stain Studios. All Rights Reserved.
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
 /**
  * USFSubsystem - input-mode handlers (spacing/steps/stagger/rotation/toggles) + hologram-lock helpers.

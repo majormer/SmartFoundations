@@ -1,4 +1,4 @@
-// Copyright Coffee Stain Studios. All Rights Reserved.
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
 /**
  * SFExtendWiringService - Built-child registration + WireBuiltChildConnections (slice E2 unit F).

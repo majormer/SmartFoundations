@@ -1,3 +1,5 @@
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
+
 #pragma once
 #include "CoreMinimal.h"
 #include "Configuration/ConfigManager.h"

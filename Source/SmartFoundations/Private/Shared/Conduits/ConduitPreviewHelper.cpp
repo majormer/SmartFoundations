@@ -1,3 +1,5 @@
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
+
 #include "Shared/Conduits/ConduitPreviewHelper.h"
 #include "Engine/World.h"
 #include "Hologram/FGSplineHologram.h"

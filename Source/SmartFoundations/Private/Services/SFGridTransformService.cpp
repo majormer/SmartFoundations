@@ -1,3 +1,5 @@
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
+
 #include "Services/SFGridTransformService.h"
 #include "Subsystem/SFSubsystem.h"
 #include "Services/SFGridSpawnerService.h"

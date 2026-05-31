@@ -1,4 +1,4 @@
-// Copyright (c) 2024 SmartFoundations Mod. All Rights Reserved.
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 // Smart! Mod - UMG-based HUD Widget (Issue #179)
 // Replaces Canvas-based DrawCounterToHUD for crisp text at any scale.
 
