@@ -1,3 +1,4 @@
+#include "UI/SmartUpgradePanel.h"
 #include "UI/SmartUpgradePanelImpl.h"
 
 #define LOCTEXT_NAMESPACE "SmartFoundations"

@@ -9,6 +9,7 @@
  * identical to the pre-split version. Impl split across SFExtendWiringService*.cpp by unit.
  */
 
+#include "Features/Extend/SFExtendWiringService.h"
 #include "Features/Extend/SFExtendWiringServiceImpl.h"
 
 USFExtendWiringService::USFExtendWiringService()

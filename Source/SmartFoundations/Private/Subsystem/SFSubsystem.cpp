@@ -6,6 +6,7 @@
  * SFSubsystemImpl.h. No behavior change from the monolith.
  */
 
+#include "Subsystem/SFSubsystem.h"
 #include "Subsystem/SFSubsystemImpl.h"
 
 USFSubsystem::USFSubsystem() : Super()

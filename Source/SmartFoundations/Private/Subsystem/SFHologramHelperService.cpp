@@ -1,3 +1,4 @@
+#include "Subsystem/SFHologramHelperService.h"
 #include "Subsystem/SFHologramHelperServiceImpl.h"
 
 namespace

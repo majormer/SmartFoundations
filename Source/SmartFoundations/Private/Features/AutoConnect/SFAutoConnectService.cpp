@@ -1,3 +1,4 @@
+#include "Features/AutoConnect/SFAutoConnectService.h"
 #include "Features/AutoConnect/SFAutoConnectServiceImpl.h"
 
 USFAutoConnectService::USFAutoConnectService()

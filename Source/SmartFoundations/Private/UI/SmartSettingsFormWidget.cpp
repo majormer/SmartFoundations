@@ -1,3 +1,4 @@
+#include "UI/SmartSettingsFormWidget.h"
 #include "UI/SmartSettingsFormWidgetImpl.h"
 
 #define LOCTEXT_NAMESPACE "SmartFoundations"

@@ -1,3 +1,4 @@
+#include "Features/Upgrade/SFUpgradeExecutionService.h"
 #include "Features/Upgrade/SFUpgradeExecutionServiceImpl.h"
 
 namespace
