@@ -1,10 +1,10 @@
 # <img src="https://github.com/majormer/SmartFoundations/blob/main/images/Smart-Logo.png?raw=true" width="150" alt="Smart! Logo"> Smart! Mod
 
-![Status](https://img.shields.io/badge/Status-Released-brightgreen) ![Version](https://img.shields.io/badge/Version-30.0.0-blue) ![Engine](https://img.shields.io/badge/Engine-UE%205.3-blue) ![SML](https://img.shields.io/badge/SML-3.11.x-blue) ![Multiplayer](https://img.shields.io/badge/Multiplayer-Testing-orange) ![AI Assisted Development Used](https://img.shields.io/badge/AI%20Assisted%20Development%20Used-Disclosure%20Below-blue)
+![Status](https://img.shields.io/badge/Status-Released-brightgreen) ![Version](https://img.shields.io/badge/Version-30.1.0-blue) ![Engine](https://img.shields.io/badge/Engine-UE%205.3-blue) ![SML](https://img.shields.io/badge/SML-3.11.x-blue) ![Multiplayer](https://img.shields.io/badge/Multiplayer-Testing-orange) ![AI Assisted Development Used](https://img.shields.io/badge/AI%20Assisted%20Development%20Used-Disclosure%20Below-blue)
 
 > **Multiplayer note:** Smart! is primarily developed for single-player. Multiplayer is under active testing with partial success, but is not currently considered fully supported.
 
-**Quick links:** [Watch videos](#-watch-smart-in-action) • [How Smart works](#-how-smart-changes-building) • [First-time setup](#-first-time-setup) • [Extend explained](#-extend-explained-copy-an-existing-manifold) • [Supported buildings](#-supported-buildings) • [Discord](https://discord.gg/SgXY4CwXYw) • [Report bugs](https://github.com/majormer/SmartFoundations/issues) • [Source](https://github.com/majormer/SmartFoundations)
+**Quick links:** [Watch videos](#-watch-smart-in-action) • [First-time setup](#-first-time-setup) • [Extend explained](#-extend-explained-copy-an-existing-manifold) • [Supported buildings](#-supported-buildings) • [Wiki](https://github.com/majormer/SmartFoundations/wiki) • [Discord](https://discord.gg/SgXY4CwXYw) • [Report bugs](https://github.com/majormer/SmartFoundations/issues) • [Source](https://github.com/majormer/SmartFoundations)
 
 ---
 
@@ -101,19 +101,21 @@ See [LICENSE.md](https://github.com/majormer/SmartFoundations/blob/main/LICENSE.
 
 ---
 
-## 📰 What's New in v30
+## 📰 What's New in v30.1.0
 
-**Current Release:** v30.0.0 — See [full changelog](https://github.com/majormer/SmartFoundations/blob/main/CHANGELOG.md) for all release details
+**Current Release:** v30.1.0 — the final Smart! release for Satisfactory 1.1. See the [full changelog](https://github.com/majormer/SmartFoundations/blob/main/CHANGELOG.md) for all release details.
 
-### Major Feature: Smart Restore Enhanced
+> **Heads up about Satisfactory 1.2:** v30.1.0 is the last Smart! build for Satisfactory **1.1**, kept available for players who stay on 1.1. A separate Smart! release for Satisfactory **1.2** is in progress and will be published after the game updates. This 1.1 build is marked compatible with 1.1 only, so the mod manager will not offer it to a 1.2 game.
 
-The defining feature of version 30 is **Smart Restore Enhanced** — a preset system for saving, applying, sharing, and replaying Smart Panel setups. Presets can capture grid size, spacing, steps, stagger, rotation, production recipe, auto-connect settings, and restored Extend topology.
+### Highlights in v30.1.0
 
-Use the Smart Panel's `Presets >>` button to save your current setup, apply a saved setup later, export a preset to the clipboard, import a shared preset, or turn the last Extend layout you built into a reusable preset. Shared presets are checked against your current unlocks before they can be imported or applied.
+- **All 21 supported languages now render correctly** — Arabic, Persian, and Thai are re-enabled and display properly, and in-game building names now match Satisfactory's own terms across translated languages.
+- **Clearer Extend affordability** — the whole Extend preview (factory, belts, pipes, lifts, distributors, poles, and wires) now turns red together when you cannot afford the placement, and the cost check counts materials in your Dimensional Depot.
+- **UI and performance polish** — Smart Panel buttons and dropdowns fit correctly in every language, and grid scaling is smoother and more stable on large layouts.
 
-### Recent Patch Updates
+### Also in version 30: Smart Restore Enhanced
 
-For detailed information about Smart Restore Enhanced and recent fixes, see the [full changelog](https://github.com/majormer/SmartFoundations/blob/main/CHANGELOG.md).
+Version 30 introduced **Smart Restore Enhanced** — a preset system for saving, applying, sharing, and replaying Smart Panel setups. Presets can capture grid size, spacing, steps, stagger, rotation, production recipe, auto-connect settings, and restored Extend topology. Use the Smart Panel's `Presets >>` button to save your current setup, apply a saved setup later, export or import a shared preset, or turn the last Extend layout you built into a reusable preset. Shared presets are checked against your current unlocks before they can be imported or applied.
 
 ---
 
@@ -528,13 +530,16 @@ If something behaves strangely, test with only Smart! and its required dependenc
 
 ## 💬 Getting Help
 
-Join the Smart! Discord for support, examples, testing updates, and feature discussion:
+Start with the **wiki** for how-to guides, then the Discord for support, examples, testing updates, and feature discussion:
 
 [![Discord](https://img.shields.io/discord/799091523173613589?color=7289da&label=Discord&logo=discord&logoColor=white)](https://discord.gg/SgXY4CwXYw)
 
+- **Wiki and documentation:** https://github.com/majormer/SmartFoundations/wiki
 - **Discord:** https://discord.gg/SgXY4CwXYw
 - **Bug reports:** https://github.com/majormer/SmartFoundations/issues
 - **Source:** https://github.com/majormer/SmartFoundations
+
+> The Smart! wiki and issue tracker now live on the main source repository above. They previously lived in a separate issue-tracker repository, before Smart! became source-available — please use the links here rather than any older tracker links you may have bookmarked.
 
 When asking for help, include:
 
