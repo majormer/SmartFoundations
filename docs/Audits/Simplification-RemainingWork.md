@@ -28,7 +28,6 @@ Charter: [`Simplification-GOAL.md`](Simplification-GOAL.md) · Tracker: [`Simpli
 | Lines | File | Epic |
 |------:|------|------|
 | 9227 | `Subsystem/SFSubsystem.cpp` | T1 |
-| 6448 | `Features/Extend/SFExtendService.cpp` | T1 (round 1 H+B + slice E1 Scaled done; F/G/I remain) |
 | 4771 | `Features/AutoConnect/SFAutoConnectService.cpp` | T1 (scope add) |
 | 3746 | `UI/SmartSettingsFormWidget.cpp` | T5 |
 | 2789 | `Features/PipeAutoConnect/SFPipeAutoConnectManager.cpp` | T1 (scope add) |
@@ -40,11 +39,11 @@ Charter: [`Simplification-GOAL.md`](Simplification-GOAL.md) · Tracker: [`Simpli
 | 1852 | `Features/PowerAutoConnect/SFPowerAutoConnectManager.cpp` | T1 (scope add) |
 | 1805 | `Services/RadarPulse/SFRadarPulseService.cpp` | review |
 
-(Counts refreshed 2026-05-30 after T1 round 1, from live `wc -l`. Still **9 `.cpp` files >2k lines**
-— the nine rows at/above `SmartUpgradePanel.cpp` (2,138); `SFExtendService.cpp` dropped 9,515→7,718
-after the H+B split but is still >2k, so the count is unchanged. The round-1 split files
-`SFExtendDiagnosticsService.cpp` (~916) and `SFExtendRestoreReplayService.cpp` (~1,103) are below
-the threshold, as are the T2 split files. The full decomposition plan for the remaining 9 files lives
+(Counts refreshed 2026-05-30 after T1 slices E1+E2, from live `wc -l`. **8 `.cpp` files >2k lines**
+now — the eight rows at/above `SmartUpgradePanel.cpp` (2,138). **`SFExtendService.cpp` is DONE: 9,515
+(pre-refactor) → 1,877** after H+B (Diagnostics/Restore-replay) + E1 (Scaled) + E2 (the wiring cluster
+→ `USFExtendWiringService` split across 4 `.cpp`, all <2k) — criterion #5 met for the Extend god-object;
+only `SFSubsystem.cpp` remains >3k for #6. The full decomposition plan for the remaining 8 files lives
 in [`RefactorCompletionPlan.md`](RefactorCompletionPlan.md).)
 
 ## The hard constraint (why the rest is collaborative)
