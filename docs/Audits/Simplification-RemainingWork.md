@@ -18,10 +18,15 @@ Charter: [`Simplification-GOAL.md`](Simplification-GOAL.md) · Tracker: [`Simpli
 | 3 | one edit point for **asset paths** | ✅ done (`SFAssetPaths.h`) |
 | 3b | one edit point for **building sizes** | ✅ done (`Content/Data/BuildableSizes.csv`) |
 | 4 | per-feature log categories live | ✅ done (~1,900 sites; Extend/Subsystem fold into T1/T2) |
-| 5 | no file >~2k lines | ⬜ needs T1/T5/T8 |
-| 6 | no god-object >3k | ⬜ needs T1 |
+| 5 | no file >~2k lines | ✅ done (live `wc -l`: largest .cpp = `SFChainActorService.cpp` 1,949) — pending consolidated solo-impl-split smoke |
+| 6 | no god-object >3k | ✅ done (`SFSubsystem.cpp` 9,227 → 6 `.cpp` all <2k) — pending smoke |
 
-**5 of 6 met.** The remaining open criteria (#5, #6) require the NEEDS-CARE god-object/UI/hologram epics.
+**6 of 6 met** by line count + Shipping `PackagePlugin` build (ExitCode=0). E1/E2 (Extend careful moves)
+were in-game smoke-confirmed. The remaining decompositions landed as **pure impl-splits** (one class
+across multiple `.cpp`, zero behavior change): T8a (belt hologram), AC (AutoConnect ×3), PM (PipeManager),
+U1/U2 (UI widgets), **S (SFSubsystem ×6)**, UP (UpgradeExecution), T1d (HologramHelper). These are
+behavior-preserving by construction but carry a **light-check debt** — recommend one consolidated
+in-game smoke (esp. the subsystem split) before final sign-off.
 
 ## Current largest files (live `wc -l`, the targets for #5/#6)
 
