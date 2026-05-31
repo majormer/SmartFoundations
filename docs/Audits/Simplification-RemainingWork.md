@@ -28,7 +28,7 @@ Charter: [`Simplification-GOAL.md`](Simplification-GOAL.md) · Tracker: [`Simpli
 | Lines | File | Epic |
 |------:|------|------|
 | 9227 | `Subsystem/SFSubsystem.cpp` | T1 |
-| 7718 | `Features/Extend/SFExtendService.cpp` | T1 (round 1 done: H+B; F/G/I/J remain) |
+| 6448 | `Features/Extend/SFExtendService.cpp` | T1 (round 1 H+B + slice E1 Scaled done; F/G/I remain) |
 | 4771 | `Features/AutoConnect/SFAutoConnectService.cpp` | T1 (scope add) |
 | 3746 | `UI/SmartSettingsFormWidget.cpp` | T5 |
 | 2789 | `Features/PipeAutoConnect/SFPipeAutoConnectManager.cpp` | T1 (scope add) |

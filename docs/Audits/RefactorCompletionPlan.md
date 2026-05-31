@@ -771,7 +771,7 @@ careful move → full maintainer smoke.
 
 | # | Slice | File(s) cleared | Depends on | Lane |
 |---|-------|-----------------|------------|------|
-| 1 | **E1** Scaled Extend → `USFExtendScaledService` | — | — | smoke |
+| 1 | **E1** Scaled Extend → `USFExtendScaledService` ✅ DONE (`a607e1a`, smoked) | SFExtendService.cpp 7,718→6,448 | — | smoke |
 | 2 | **E2** Wiring cluster (F+G+I+E-chain) → `USFExtendWiringService` (4 `.cpp`) | **SFExtendService.cpp ✓** | E1 (ScaledClones accessor) | smoke |
 | 3 | **T8a** belt/pipe spline-router + cost → shared helpers | **SFConveyorBeltHologram.cpp ✓** | coordinate w/ E2 (helper sigs) | smoke |
 | 4 | **AC0** shared `IsX` predicates → classifier header | — | — | solo |
