@@ -1,5 +1,6 @@
 #include "Holograms/Power/SFWireHologram.h"
 #include "SmartFoundations.h"
+#include "Constants/SFAssetPaths.h"
 #include "Features/Extend/SFExtendService.h"  // ResolveChildPreviewMaterialState
 #include "FGConstructDisqualifier.h"
 #include "Buildables/FGBuildableWire.h"
@@ -20,7 +21,7 @@ void ASFWireHologram::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⚡ SFWireHologram::BeginPlay - %s"), *GetName());
+	UE_LOG(LogSmartHologram, VeryVerbose, TEXT("⚡ SFWireHologram::BeginPlay - %s"), *GetName());
 }
 
 TArray<FItemAmount> ASFWireHologram::GetCost(bool includeChildren) const
@@ -54,7 +55,7 @@ TArray<FItemAmount> ASFWireHologram::GetCost(bool includeChildren) const
 
 AActor* ASFWireHologram::Construct(TArray<AActor*>& out_children, FNetConstructionID constructionID)
 {
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⚡ SFWireHologram::Construct - Building wire %s (Parent: %s)"),
+	UE_LOG(LogSmartHologram, VeryVerbose, TEXT("⚡ SFWireHologram::Construct - Building wire %s (Parent: %s)"),
 		*GetName(), GetParentHologram() ? *GetParentHologram()->GetName() : TEXT("none"));
 	
 	// Issue #229: Extend wire children have no connections set — vanilla Construct()
@@ -62,8 +63,7 @@ AActor* ASFWireHologram::Construct(TArray<AActor*>& out_children, FNetConstructi
 	// post-build wiring in SFExtendService::GenerateAndExecuteWiring() connects it.
 	if (Tags.Contains(FName(TEXT("SF_ExtendChild"))))
 	{
-		UClass* WireClass = LoadClass<AFGBuildableWire>(nullptr,
-			TEXT("/Game/FactoryGame/Buildable/Factory/PowerLine/Build_PowerLine.Build_PowerLine_C"));
+		UClass* WireClass = LoadClass<AFGBuildableWire>(nullptr, SFAssetPaths::PowerLineBuildClass);
 		if (WireClass)
 		{
 			FActorSpawnParameters SpawnParams;
@@ -74,13 +74,13 @@ AActor* ASFWireHologram::Construct(TArray<AActor*>& out_children, FNetConstructi
 			
 			if (Wire)
 			{
-				UE_LOG(LogSmartFoundations, VeryVerbose, TEXT(" SFWireHologram::Construct - Extend wire spawned: %s (post-build wiring will connect)"),
+				UE_LOG(LogSmartHologram, VeryVerbose, TEXT(" SFWireHologram::Construct - Extend wire spawned: %s (post-build wiring will connect)"),
 				*Wire->GetName());
 				return Wire;
 			}
 		}
 		
-		SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Error, TEXT(" SFWireHologram::Construct - Failed to spawn extend wire!"));
+		SF_EXTEND_DIAGNOSTIC_LOG(LogSmartHologram, Error, TEXT(" SFWireHologram::Construct - Failed to spawn extend wire!"));
 		// Fallback: must not return nullptr or vanilla crashes
 	}
 	
@@ -93,7 +93,7 @@ void ASFWireHologram::CheckValidPlacement()
 	// Skip validation for child holograms used as previews
 	if (GetParentHologram())
 	{
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT(" Wire child preview - skipping placement validation"));
+		UE_LOG(LogSmartHologram, VeryVerbose, TEXT(" Wire child preview - skipping placement validation"));
 		// Build gun paints previews from construct disqualifiers; carry the parent's when unaffordable.
 		const EHologramMaterialState ChildState = USFExtendService::ResolveChildPreviewMaterialState(this);
 		ResetConstructDisqualifiers();
@@ -138,7 +138,7 @@ void ASFWireHologram::SetupWirePreview(UFGPowerConnectionComponent* StartConnect
 {
 	if (!StartConnection || !EndConnection)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT(" SetupWirePreview: Invalid connections"));
+		UE_LOG(LogSmartHologram, Warning, TEXT(" SetupWirePreview: Invalid connections"));
 		return;
 	}
 
@@ -150,9 +150,9 @@ void ASFWireHologram::SetupWirePreview(UFGPowerConnectionComponent* StartConnect
 	CachedStartPos = StartConnection->GetComponentLocation();
 	CachedEndPos = EndConnection->GetComponentLocation();
 
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT(" SetupWirePreview: %s"), *GetName());
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   Start: %s"), *CachedStartPos.ToString());
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   End: %s"), *CachedEndPos.ToString());
+	UE_LOG(LogSmartHologram, VeryVerbose, TEXT(" SetupWirePreview: %s"), *GetName());
+	UE_LOG(LogSmartHologram, VeryVerbose, TEXT("   Start: %s"), *CachedStartPos.ToString());
+	UE_LOG(LogSmartHologram, VeryVerbose, TEXT("   End: %s"), *CachedEndPos.ToString());
 
 	// Create our own wire mesh with proper catenary curve
 	CreateWireMeshWithCatenary(CachedStartPos, CachedEndPos);
@@ -170,7 +170,7 @@ void ASFWireHologram::TriggerMeshGeneration()
 {
 	if (!bWireConfigured)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT(" TriggerMeshGeneration called but wire not configured"));
+		UE_LOG(LogSmartHologram, Warning, TEXT(" TriggerMeshGeneration called but wire not configured"));
 		return;
 	}
 
@@ -180,7 +180,7 @@ void ASFWireHologram::TriggerMeshGeneration()
 	// Force visibility
 	ForceVisibilityUpdate();
 
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT(" TriggerMeshGeneration: Wire mesh updated"));
+	UE_LOG(LogSmartHologram, VeryVerbose, TEXT(" TriggerMeshGeneration: Wire mesh updated"));
 }
 
 void ASFWireHologram::ForceVisibilityUpdate()
@@ -234,7 +234,7 @@ void ASFWireHologram::ConfigureActor(AFGBuildable* inBuildable) const
 	AFGBuildableWire* Wire = Cast<AFGBuildableWire>(inBuildable);
 	if (!Wire)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT(" SFWireHologram::ConfigureActor - inBuildable is not a wire!"));
+		UE_LOG(LogSmartHologram, Warning, TEXT(" SFWireHologram::ConfigureActor - inBuildable is not a wire!"));
 		return;
 	}
 	
@@ -268,7 +268,7 @@ void ASFWireHologram::ConfigureActor(AFGBuildable* inBuildable) const
 						if (CircuitConns.Num() > 0)
 						{
 							ActualConn0 = CircuitConns[0];
-							UE_LOG(LogSmartFoundations, VeryVerbose, TEXT(" SFWireHologram::ConfigureActor - Pole-to-building: Found source pole %s"),
+							UE_LOG(LogSmartHologram, VeryVerbose, TEXT(" SFWireHologram::ConfigureActor - Pole-to-building: Found source pole %s"),
 					*Pole->GetName());
 							break;
 						}
@@ -281,7 +281,7 @@ void ASFWireHologram::ConfigureActor(AFGBuildable* inBuildable) const
 				bool bConnected = Wire->Connect(ActualConn0, StoredConn1);
 				if (bConnected)
 				{
-					UE_LOG(LogSmartFoundations, VeryVerbose, TEXT(" SFWireHologram::ConfigureActor - Pole-to-building connected: %s to %s"),
+					UE_LOG(LogSmartHologram, VeryVerbose, TEXT(" SFWireHologram::ConfigureActor - Pole-to-building connected: %s to %s"),
 					ActualConn0->GetOwner() ? *ActualConn0->GetOwner()->GetName() : TEXT("null"),
 					StoredConn1->GetOwner() ? *StoredConn1->GetOwner()->GetName() : TEXT("null"));
 				}
@@ -292,7 +292,7 @@ void ASFWireHologram::ConfigureActor(AFGBuildable* inBuildable) const
 	
 	// Pole-to-pole wire: Target is still a hologram, skip connection here
 	// The deferred system will handle this after all poles are built
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⚡ SFWireHologram::ConfigureActor - Pole-to-pole wire: Deferring connection (target is hologram)"));
+	UE_LOG(LogSmartHologram, VeryVerbose, TEXT("⚡ SFWireHologram::ConfigureActor - Pole-to-pole wire: Deferring connection (target is hologram)"));
 }
 
 void ASFWireHologram::CreateWireMeshWithCatenary(const FVector& StartPos, const FVector& EndPos)
@@ -301,7 +301,7 @@ void ASFWireHologram::CreateWireMeshWithCatenary(const FVector& StartPos, const 
 	UStaticMesh* WireMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Game/FactoryGame/Buildable/Factory/PowerLine/Mesh/PowerLine_static.PowerLine_static"));
 	if (!WireMesh)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("⚡ Failed to load SM_PowerLine mesh"));
+		UE_LOG(LogSmartHologram, Warning, TEXT("⚡ Failed to load SM_PowerLine mesh"));
 		return;
 	}
 
@@ -326,13 +326,13 @@ void ASFWireHologram::CreateWireMeshWithCatenary(const FVector& StartPos, const 
 			PreviewWireMesh->RegisterComponent();
 			PreviewWireMesh->AttachToComponent(GetRootComponent(), FAttachmentTransformRules::KeepRelativeTransform);
 			
-			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⚡ Created PreviewWireMesh component with Powerline_Inst material"));
+			UE_LOG(LogSmartHologram, VeryVerbose, TEXT("⚡ Created PreviewWireMesh component with Powerline_Inst material"));
 		}
 	}
 
 	if (!PreviewWireMesh)
 	{
-		UE_LOG(LogSmartFoundations, Error, TEXT("⚡ Failed to create PreviewWireMesh"));
+		UE_LOG(LogSmartHologram, Error, TEXT("⚡ Failed to create PreviewWireMesh"));
 		return;
 	}
 
@@ -377,7 +377,7 @@ void ASFWireHologram::CreateWireMeshWithCatenary(const FVector& StartPos, const 
 	PreviewWireMesh->SetVisibility(true, true);
 	PreviewWireMesh->MarkRenderStateDirty();
 
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⚡ Wire mesh configured: Length=%.1f cm, Scale=%.2f"), Length, ScaleFactor);
+	UE_LOG(LogSmartHologram, VeryVerbose, TEXT("⚡ Wire mesh configured: Length=%.1f cm, Scale=%.2f"), Length, ScaleFactor);
 }
 
 void ASFWireHologram::ApplyHologramMaterial(UMaterialInterface* Material)
@@ -404,5 +404,5 @@ void ASFWireHologram::ApplyHologramMaterial(UMaterialInterface* Material)
 		}
 	}
 
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⚡ Applied hologram material: %s"), *Material->GetName());
+	UE_LOG(LogSmartHologram, VeryVerbose, TEXT("⚡ Applied hologram material: %s"), *Material->GetName());
 }

@@ -22,12 +22,12 @@ AActor* ASFConveyorAttachmentHologram::Construct(TArray<AActor*>& out_children, 
 
 TArray<FItemAmount> ASFConveyorAttachmentHologram::GetCost(bool includeChildren) const
 {
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("💰 ASFConveyorAttachmentHologram::GetCost() called! includeChildren=%d"), includeChildren);
+	UE_LOG(LogSmartHologram, VeryVerbose, TEXT("💰 ASFConveyorAttachmentHologram::GetCost() called! includeChildren=%d"), includeChildren);
 	
 	// Get base distributor cost from parent
 	TArray<FItemAmount> TotalCost = Super::GetCost(includeChildren);
 	
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("💰 Base distributor cost: %d item types"), TotalCost.Num());
+	UE_LOG(LogSmartHologram, VeryVerbose, TEXT("💰 Base distributor cost: %d item types"), TotalCost.Num());
 	
 	// Add belt preview costs
 	if (USFSubsystem* Subsystem = USFSubsystem::Get(GetWorld()))
@@ -36,7 +36,7 @@ TArray<FItemAmount> ASFConveyorAttachmentHologram::GetCost(bool includeChildren)
 		{
 			TArray<FItemAmount> BeltCosts = AutoConnect->GetBeltPreviewsCost(this);
 			
-			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("💰 Belt preview costs: %d item types"), BeltCosts.Num());
+			UE_LOG(LogSmartHologram, VeryVerbose, TEXT("💰 Belt preview costs: %d item types"), BeltCosts.Num());
 			
 			// Merge belt costs into total cost (using FactorySpawner's pattern)
 			for (const FItemAmount& BeltCost : BeltCosts)
@@ -48,21 +48,21 @@ TArray<FItemAmount> ASFConveyorAttachmentHologram::GetCost(bool includeChildren)
 					[&](const FItemAmount& X) { return X.ItemClass == BeltCost.ItemClass; }))
 				{
 					Existing->Amount += BeltCost.Amount;
-					UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("💰   Merged: %s +%d = %d"), *GetNameSafe(BeltCost.ItemClass), BeltCost.Amount, Existing->Amount);
+					UE_LOG(LogSmartHologram, VeryVerbose, TEXT("💰   Merged: %s +%d = %d"), *GetNameSafe(BeltCost.ItemClass), BeltCost.Amount, Existing->Amount);
 				}
 				else
 				{
 					TotalCost.Add(BeltCost);
-					UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("💰   Added: %s x%d"), *GetNameSafe(BeltCost.ItemClass), BeltCost.Amount);
+					UE_LOG(LogSmartHologram, VeryVerbose, TEXT("💰   Added: %s x%d"), *GetNameSafe(BeltCost.ItemClass), BeltCost.Amount);
 				}
 			}
 		}
 	}
 	
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("💰 Total cost returned: %d item types"), TotalCost.Num());
+	UE_LOG(LogSmartHologram, VeryVerbose, TEXT("💰 Total cost returned: %d item types"), TotalCost.Num());
 	for (const FItemAmount& Item : TotalCost)
 	{
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("💰   → %s x%d"), *GetNameSafe(Item.ItemClass), Item.Amount);
+		UE_LOG(LogSmartHologram, VeryVerbose, TEXT("💰   → %s x%d"), *GetNameSafe(Item.ItemClass), Item.Amount);
 	}
 	
 	return TotalCost;

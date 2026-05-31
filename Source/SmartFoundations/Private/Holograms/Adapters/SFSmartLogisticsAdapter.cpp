@@ -8,7 +8,7 @@ FSFSmartLogisticsAdapter::FSFSmartLogisticsAdapter(ASFLogisticsHologram* InHolog
 	: FSFSmartBuildableAdapter(InHologram)
 	, SmartLogisticsHologram(InHologram)
 {
-	UE_LOG(LogSmartFoundations, Verbose, TEXT("FSFSmartLogisticsAdapter created for: %s"), 
+	UE_LOG(LogSmartHologram, Verbose, TEXT("FSFSmartLogisticsAdapter created for: %s"), 
 		InHologram ? *InHologram->GetName() : TEXT("NULL"));
 }
 
@@ -24,7 +24,7 @@ void FSFSmartLogisticsAdapter::SpawnAutoConnectChildren()
 	{
 		// Delegate to custom hologram method (Phase 1.3 stub for now)
 		// SmartLogisticsHologram->SpawnLogisticsChildren();
-		UE_LOG(LogSmartFoundations, Verbose, TEXT("SpawnAutoConnectChildren called (Phase 1.3 stub)"));
+		UE_LOG(LogSmartHologram, Verbose, TEXT("SpawnAutoConnectChildren called (Phase 1.3 stub)"));
 	}
 }
 
@@ -34,7 +34,7 @@ void FSFSmartLogisticsAdapter::ConnectToNearbyBuildings()
 	{
 		// Delegate to custom hologram method (Phase 1.3 stub for now)
 		// SmartLogisticsHologram->ConnectToNearbyBuildings();
-		UE_LOG(LogSmartFoundations, Verbose, TEXT("ConnectToNearbyBuildings called (Phase 1.3 stub)"));
+		UE_LOG(LogSmartHologram, Verbose, TEXT("ConnectToNearbyBuildings called (Phase 1.3 stub)"));
 	}
 }
 
@@ -44,7 +44,7 @@ void FSFSmartLogisticsAdapter::ApplyAutoSpacing()
 	{
 		// Delegate to custom hologram method (Phase 1.3 stub for now)
 		// SmartLogisticsHologram->ApplyAutoSpacing();
-		UE_LOG(LogSmartFoundations, Verbose, TEXT("ApplyAutoSpacing called (Phase 1.3 stub)"));
+		UE_LOG(LogSmartHologram, Verbose, TEXT("ApplyAutoSpacing called (Phase 1.3 stub)"));
 	}
 }
 

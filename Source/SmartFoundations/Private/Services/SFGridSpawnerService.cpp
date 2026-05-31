@@ -33,14 +33,14 @@ namespace
         const bool bRestoredExtendActive = Subsystem->IsRestoredExtendModeActive();
         if (bWarnOnSuppressedRegen && bRestoredExtendActive)
         {
-            SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Warning,
+            SF_RESTORE_DIAGNOSTIC_LOG(LogSmartGrid, Warning,
                 TEXT("[SmartRestore][Extend] WARNING normal grid regeneration while restored topology active: context=%s parent=%s"),
                 Context,
                 *GetNameSafe(Subsystem->GetActiveHologram()));
         }
         else
         {
-            SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
+            SF_RESTORE_DIAGNOSTIC_LOG(LogSmartGrid, Log,
                 TEXT("[SmartRestore][Extend] Suppressing normal Smart grid spawn/update: context=%s parent=%s liveExtend=%d restoredExtend=%d"),
                 Context,
                 *GetNameSafe(Subsystem->GetActiveHologram()),
@@ -179,14 +179,14 @@ void USFGridSpawnerService::UpdateChildPositions()
 
     if (!SS->GetActiveHologram())
     {
-        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("UpdateChildPositions: Early return - No active hologram"));
+        UE_LOG(LogSmartGrid, VeryVerbose, TEXT("UpdateChildPositions: Early return - No active hologram"));
         return;
     }
 
     // CRITICAL: Even if there are no children, we must trigger the orchestrator to clean up orphaned previews
     if (SpawnedChildren.Num() == 0)
     {
-        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("UpdateChildPositions: No children - triggering orchestrator for cleanup"));
+        UE_LOG(LogSmartGrid, VeryVerbose, TEXT("UpdateChildPositions: No children - triggering orchestrator for cleanup"));
 
         if (AFGHologram* Parent = SS->GetActiveHologram())
         {
@@ -219,13 +219,13 @@ void USFGridSpawnerService::UpdateChildPositions()
                 {
                     Orchestrator->OnFloorHolePipesChanged();
                 }
-                UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   🎯 Orchestrator: Triggered cleanup for valid types (no children)"));
+                UE_LOG(LogSmartGrid, VeryVerbose, TEXT("   🎯 Orchestrator: Triggered cleanup for valid types (no children)"));
             }
         }
         return;
     }
 
-    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("UpdateChildPositions: Called with %d children"), SpawnedChildren.Num());
+    UE_LOG(LogSmartGrid, VeryVerbose, TEXT("UpdateChildPositions: Called with %d children"), SpawnedChildren.Num());
 
     // Drop any invalid or disabled children before iterating
     int32 OriginalCount = SpawnedChildren.Num();
@@ -245,7 +245,7 @@ void USFGridSpawnerService::UpdateChildPositions()
             if (Child->IsDisabled())
             {
                 DisabledCount++;
-                UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("      Filtering disabled child: %s"), *Child->GetName());
+                UE_LOG(LogSmartGrid, VeryVerbose, TEXT("      Filtering disabled child: %s"), *Child->GetName());
                 return true;
             }
 
@@ -255,13 +255,13 @@ void USFGridSpawnerService::UpdateChildPositions()
 
     if (DisabledCount > 0 || InvalidCount > 0)
     {
-        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   Filtered SpawnedChildren: %d total → %d active (removed %d disabled, %d invalid)"),
+        UE_LOG(LogSmartGrid, VeryVerbose, TEXT("   Filtered SpawnedChildren: %d total → %d active (removed %d disabled, %d invalid)"),
             OriginalCount, SpawnedChildren.Num(), DisabledCount, InvalidCount);
     }
 
     if (SpawnedChildren.Num() == 0)
     {
-        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   No active children to position after filtering"));
+        UE_LOG(LogSmartGrid, VeryVerbose, TEXT("   No active children to position after filtering"));
         return;
     }
 
@@ -272,7 +272,7 @@ void USFGridSpawnerService::UpdateChildPositions()
 
     // DEBUG: Log parent state including nudge offset
     FVector ParentAnchorOffset = SS->GetCachedAnchorOffset();
-    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   🔍 PARENT STATE: Location=%s, NudgeOffset=%s, AnchorOffset=%s"),
+    UE_LOG(LogSmartGrid, VeryVerbose, TEXT("   🔍 PARENT STATE: Location=%s, NudgeOffset=%s, AnchorOffset=%s"),
         *ParentLocation.ToString(), *ParentNudgeOffset.ToString(), *ParentAnchorOffset.ToString());
 
     // Use cached building size
@@ -281,7 +281,7 @@ void USFGridSpawnerService::UpdateChildPositions()
     if (!ItemSize.Equals(SS->GetLastLoggedItemSize(), 0.5f))
     {
         SS->SetLastLoggedItemSize(ItemSize);
-        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("ITEM SIZE USED FOR SPACING: %s (CachedBuildingSize=%s)"),
+        UE_LOG(LogSmartGrid, VeryVerbose, TEXT("ITEM SIZE USED FOR SPACING: %s (CachedBuildingSize=%s)"),
             *ItemSize.ToString(), *SS->GetCachedBuildingSize().ToString());
     }
 
@@ -295,7 +295,7 @@ void USFGridSpawnerService::UpdateChildPositions()
 
     if (CounterStateGrid != GridCounters)
     {
-        UE_LOG(LogSmartFoundations, Log,
+        UE_LOG(LogSmartGrid, Log,
             TEXT("UpdateChildPositions: CounterState grid [%d,%d,%d] differs from live grid [%d,%d,%d]; using live grid for child transforms."),
             CounterStateGrid.X, CounterStateGrid.Y, CounterStateGrid.Z,
             GridCounters.X, GridCounters.Y, GridCounters.Z);
@@ -311,7 +311,7 @@ void USFGridSpawnerService::UpdateChildPositions()
     int32 YDir = GridCounters.Y >= 0 ? 1 : -1;
     int32 ZDir = GridCounters.Z >= 0 ? 1 : -1;
 
-    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   Grid dimensions: %dx%dx%d, directions: [%d,%d,%d]"),
+    UE_LOG(LogSmartGrid, VeryVerbose, TEXT("   Grid dimensions: %dx%dx%d, directions: [%d,%d,%d]"),
         XCount, YCount, ZCount, XDir, YDir, ZDir);
 
     // Pre-compute grid indices for progressive batching
@@ -327,13 +327,13 @@ void USFGridSpawnerService::UpdateChildPositions()
             {
                 if (X == 0 && Y == 0 && Z == 0)
                 {
-                    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("      Skipping parent position [0,0,0]"));
+                    UE_LOG(LogSmartGrid, VeryVerbose, TEXT("      Skipping parent position [0,0,0]"));
                     continue;
                 }
 
                 if (ChildIndex >= SpawnedChildren.Num())
                 {
-                    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("      Breaking: ChildIndex %d >= SpawnedChildren %d"),
+                    UE_LOG(LogSmartGrid, VeryVerbose, TEXT("      Breaking: ChildIndex %d >= SpawnedChildren %d"),
                         ChildIndex, SpawnedChildren.Num());
                     break;
                 }
@@ -350,10 +350,10 @@ void USFGridSpawnerService::UpdateChildPositions()
         }
     }
 
-    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   Pre-computed %d grid indices for progressive batch"), GridIndices.Num());
+    UE_LOG(LogSmartGrid, VeryVerbose, TEXT("   Pre-computed %d grid indices for progressive batch"), GridIndices.Num());
     if (GridIndices.Num() == 0 && SpawnedChildren.Num() > 0)
     {
-        UE_LOG(LogSmartFoundations, Warning,
+        UE_LOG(LogSmartGrid, Warning,
             TEXT("UpdateChildPositions: Computed zero grid indices for %d children. Live grid is [%d,%d,%d]. Children will remain at spawn locations."),
             SpawnedChildren.Num(), GridCounters.X, GridCounters.Y, GridCounters.Z);
     }
@@ -363,7 +363,7 @@ void USFGridSpawnerService::UpdateChildPositions()
     {
         if (!GridIndices.IsValidIndex(IndexInBatch))
         {
-            UE_LOG(LogSmartFoundations, Warning,
+            UE_LOG(LogSmartGrid, Warning,
                 TEXT("UpdateChildPositions: Invalid batch index %d for %d grid indices"),
                 IndexInBatch, GridIndices.Num());
             return;
@@ -388,7 +388,7 @@ void USFGridSpawnerService::UpdateChildPositions()
 
         if (ASFConveyorBeltHologram* BeltChild = Cast<ASFConveyorBeltHologram>(ChildHologram))
         {
-            UE_LOG(LogSmartFoundations, VeryVerbose,
+            UE_LOG(LogSmartGrid, VeryVerbose,
                 TEXT("GRID POSITIONER touching belt child %s (parent=%s) grid=[%d,%d,%d] loc=%s"),
                 *BeltChild->GetName(),
                 *GetNameSafe(ParentHologram),
@@ -396,7 +396,7 @@ void USFGridSpawnerService::UpdateChildPositions()
                 *BeltChild->GetActorLocation().ToString());
         }
 
-        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("      Positioning child %d at grid [%d,%d,%d]"),
+        UE_LOG(LogSmartGrid, VeryVerbose, TEXT("      Positioning child %d at grid [%d,%d,%d]"),
             GridIndex.ChildArrayIndex, GridIndex.X, GridIndex.Y, GridIndex.Z);
 
         // CRITICAL FIX: DO NOT pass AnchorOffset to CalculateChildPosition
@@ -435,10 +435,10 @@ void USFGridSpawnerService::UpdateChildPositions()
         FVector OldPosition = ChildHologram->GetActorLocation();
         const bool bParentWasLocked = ParentHologram->IsHologramLocked();
 
-        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   ╔═══ CHILD %d POSITIONING START ═══"), GridIndex.ChildArrayIndex);
-        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   ║ OldPos: %s"), *OldPosition.ToString());
-        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   ║ CalcPos: %s (from PositionCalculator)"), *ChildPosition.ToString());
-        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   ║ ParentLocked: %d"), bParentWasLocked ? 1 : 0);
+        UE_LOG(LogSmartGrid, VeryVerbose, TEXT("   ╔═══ CHILD %d POSITIONING START ═══"), GridIndex.ChildArrayIndex);
+        UE_LOG(LogSmartGrid, VeryVerbose, TEXT("   ║ OldPos: %s"), *OldPosition.ToString());
+        UE_LOG(LogSmartGrid, VeryVerbose, TEXT("   ║ CalcPos: %s (from PositionCalculator)"), *ChildPosition.ToString());
+        UE_LOG(LogSmartGrid, VeryVerbose, TEXT("   ║ ParentLocked: %d"), bParentWasLocked ? 1 : 0);
 
         // Get AnchorOffset for diagnostics
         FVector ChildAnchorOffset = FVector::ZeroVector;
@@ -449,7 +449,7 @@ void USFGridSpawnerService::UpdateChildPositions()
             {
                 FSFBuildableSizeProfile ChildProfile = USFBuildableSizeRegistry::GetProfile(ChildBuildClass);
                 ChildAnchorOffset = ChildProfile.AnchorOffset;
-                UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   ║ ChildAnchorOffset: %s (from registry)"), *ChildAnchorOffset.ToString());
+                UE_LOG(LogSmartGrid, VeryVerbose, TEXT("   ║ ChildAnchorOffset: %s (from registry)"), *ChildAnchorOffset.ToString());
             }
         }
 
@@ -464,7 +464,7 @@ void USFGridSpawnerService::UpdateChildPositions()
             float ChildYawOffset = GridIndex.X * Counter.RotationZ;
             ChildRotation.Yaw += ChildYawOffset;
 
-            UE_LOG(LogSmartFoundations, Verbose,
+            UE_LOG(LogSmartGrid, Verbose,
                 TEXT("🔄 Spawn Child[%d] X=%d: ParentYaw=%.1f° + Offset=%.1f° = FinalYaw=%.1f°"),
                 GridIndex.ChildArrayIndex, GridIndex.X, ParentRotation.Yaw, ChildYawOffset, ChildRotation.Yaw);
         }
@@ -478,25 +478,25 @@ void USFGridSpawnerService::UpdateChildPositions()
         float DeltaZ = NewPosition.Z - OldPosition.Z;
         float OffsetFromCalc = NewPosition.Z - ChildPosition.Z;
 
-        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   ║ NewPos: %s (after SetActorLocationAndRotation)"), *NewPosition.ToString());
-        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   ║ Delta Z: %.1f cm (NewPos - OldPos)"), DeltaZ);
-        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   ║ Offset from CalcPos: %.1f cm (NewPos - CalcPos)"), OffsetFromCalc);
+        UE_LOG(LogSmartGrid, VeryVerbose, TEXT("   ║ NewPos: %s (after SetActorLocationAndRotation)"), *NewPosition.ToString());
+        UE_LOG(LogSmartGrid, VeryVerbose, TEXT("   ║ Delta Z: %.1f cm (NewPos - OldPos)"), DeltaZ);
+        UE_LOG(LogSmartGrid, VeryVerbose, TEXT("   ║ Offset from CalcPos: %.1f cm (NewPos - CalcPos)"), OffsetFromCalc);
 
         // Check if offset matches AnchorOffset
         if (FMath::Abs(OffsetFromCalc - ChildAnchorOffset.Z) < 1.0f)
         {
-            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   ║ ⚠️ MATCHES AnchorOffset.Z! Engine applied offset."));
+            UE_LOG(LogSmartGrid, VeryVerbose, TEXT("   ║ ⚠️ MATCHES AnchorOffset.Z! Engine applied offset."));
         }
         else if (FMath::Abs(OffsetFromCalc) < 1.0f)
         {
-            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   ║ ✅ NO OFFSET - Position matches CalcPos exactly."));
+            UE_LOG(LogSmartGrid, VeryVerbose, TEXT("   ║ ✅ NO OFFSET - Position matches CalcPos exactly."));
         }
         else
         {
-            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   ║ ❓ UNEXPECTED OFFSET - Doesn't match AnchorOffset or zero."));
+            UE_LOG(LogSmartGrid, VeryVerbose, TEXT("   ║ ❓ UNEXPECTED OFFSET - Doesn't match AnchorOffset or zero."));
         }
 
-        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   ╚═══════════════════════════════════"));
+        UE_LOG(LogSmartGrid, VeryVerbose, TEXT("   ╚═══════════════════════════════════"));
 
         // Delegate floor validation to ValidationService
         if (AFGBuildableHologram* BuildableChild = Cast<AFGBuildableHologram>(ChildHologram))
@@ -560,7 +560,7 @@ void USFGridSpawnerService::UpdateChildPositions()
         // Special logging for water extractors
         if (ChildHologram->IsA(ASFWaterPumpChildHologram::StaticClass()))
         {
-            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("  [WATER EXTRACTOR] Child %s moved from %s to %s (Grid[%d,%d,%d])"),
+            UE_LOG(LogSmartGrid, VeryVerbose, TEXT("  [WATER EXTRACTOR] Child %s moved from %s to %s (Grid[%d,%d,%d])"),
                 *ChildHologram->GetName(), *OldPosition.ToString(), *ChildPosition.ToString(),
                 GridIndex.X, GridIndex.Y, GridIndex.Z);
         }
@@ -569,7 +569,7 @@ void USFGridSpawnerService::UpdateChildPositions()
     // Completion callback
     auto CompletionCallback = [SS]() -> void
     {
-        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   Progressive batch reposition complete"));
+        UE_LOG(LogSmartGrid, VeryVerbose, TEXT("   Progressive batch reposition complete"));
 
         if (AFGHologram* Parent = SS->GetActiveHologram())
         {
@@ -579,7 +579,7 @@ void USFGridSpawnerService::UpdateChildPositions()
                 {
                     if (UFGInventoryComponent* Inventory = Character->GetInventory())
                     {
-                        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   Validating parent after batch reposition"));
+                        UE_LOG(LogSmartGrid, VeryVerbose, TEXT("   Validating parent after batch reposition"));
                         Parent->ValidatePlacementAndCost(Inventory);
                     }
                 }
@@ -616,7 +616,7 @@ void USFGridSpawnerService::UpdateChildPositions()
                     Orchestrator->OnFloorHolePipesChanged();
                 }
 
-                UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   🎯 Orchestrator: Grid updates triggered in CompletionCallback"));
+                UE_LOG(LogSmartGrid, VeryVerbose, TEXT("   🎯 Orchestrator: Grid updates triggered in CompletionCallback"));
             }
         }
 
@@ -631,7 +631,7 @@ void USFGridSpawnerService::UpdateChildPositions()
                     if (FSFArrowModule_StaticMesh* ArrowModule = SS->GetArrowModule())
                     {
                         ArrowModule->UpdateArrows(World, CurrentTransform, SS->GetLastAxisInput(), true);
-                        UE_LOG(LogSmartFoundations, Verbose, TEXT("   Arrows updated after child positioning"));
+                        UE_LOG(LogSmartGrid, Verbose, TEXT("   Arrows updated after child positioning"));
                     }
                 }
             }
@@ -650,7 +650,7 @@ void USFGridSpawnerService::UpdateChildPositions()
     }
     else
     {
-        UE_LOG(LogSmartFoundations, Error, TEXT("HologramHelper not available for progressive batch!"));
+        UE_LOG(LogSmartGrid, Error, TEXT("HologramHelper not available for progressive batch!"));
     }
 }
 
@@ -744,7 +744,7 @@ void USFGridSpawnerService::UpdateChildrenForCurrentTransform()
                             Orchestrator->OnFloorHolePipesChanged();
                         }
 
-                        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   🎯 Orchestrator: Movement updates triggered (next tick)"));
+                        UE_LOG(LogSmartGrid, VeryVerbose, TEXT("   🎯 Orchestrator: Movement updates triggered (next tick)"));
                     }
                 }
             });

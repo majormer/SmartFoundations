@@ -109,29 +109,13 @@ private:
 		const FVector& AnchorOffset = FVector::ZeroVector
 	);
 	
-	/** Populate registry with all known vanilla buildable profiles */
+	/**
+	 * Populate registry with all known vanilla buildable profiles.
+	 * GENERATED into SFBuildableSizeRegistry_Data.cpp from Content/Data/BuildableSizes.csv
+	 * (regenerate with scripts/gen_size_registry.py). Replaced the former 14 category .cpp files.
+	 */
 	static void RegisterDefaultProfiles();
-	
-	/** Category-specific registration functions */
-	static void RegisterFoundations();  // Implemented in SFBuildableSizeRegistry_Foundations.cpp
-	static void RegisterRamps();  // Implemented in SFBuildableSizeRegistry_Ramps.cpp
-	static void RegisterWalls();  // Implemented in SFBuildableSizeRegistry_Walls.cpp
-	static void RegisterWalkways();  // Implemented in SFBuildableSizeRegistry_Walkways.cpp
-	static void RegisterBarriers();  // Implemented in SFBuildableSizeRegistry_Barriers.cpp
-	static void RegisterArchitectureDisabled();  // Implemented in SFBuildableSizeRegistry_Architecture_Disabled.cpp
-	static void RegisterStorage();  // Implemented in SFBuildableSizeRegistry_Storage.cpp
-	static void RegisterOrganization();  // Implemented in SFBuildableSizeRegistry_Organization.cpp
-	static void RegisterProduction();  // Implemented in SFBuildableSizeRegistry_Production.cpp
-	static void RegisterExtractors();  // Implemented in SFBuildableSizeRegistry_Extractors.cpp
-	static void RegisterSpecial();  // Implemented in SFBuildableSizeRegistry_Special.cpp
-	static void RegisterPower();  // Implemented in SFBuildableSizeRegistry_Power.cpp
-	static void RegisterLogistics();  // Implemented in SFBuildableSizeRegistry_Logistics.cpp
-	static void RegisterTransport();  // Implemented in SFBuildableSizeRegistry_Transport.cpp
-	static void RegisterArchitecture();
-	static void RegisterStructures();
-	static void RegisterFactory();
-	static void RegisterExtraction();
-	
+
 	/** Check if hologram is rotated 90° or 270° (for X/Y swapping) */
 	static bool IsRotated90Degrees(const FRotator& Rotation);
 

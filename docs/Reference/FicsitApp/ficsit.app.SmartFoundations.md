@@ -1,10 +1,10 @@
 # <img src="https://github.com/majormer/SmartFoundations/blob/main/images/Smart-Logo.png?raw=true" width="150" alt="Smart! Logo"> Smart! Mod
 
-![Status](https://img.shields.io/badge/Status-Released-brightgreen) ![Version](https://img.shields.io/badge/Version-30.0.0-blue) ![Engine](https://img.shields.io/badge/Engine-UE%205.3-blue) ![SML](https://img.shields.io/badge/SML-3.11.x-blue) ![Multiplayer](https://img.shields.io/badge/Multiplayer-Testing-orange) ![AI Assisted Development Used](https://img.shields.io/badge/AI%20Assisted%20Development%20Used-Disclosure%20Below-blue)
+![Status](https://img.shields.io/badge/Status-Released-brightgreen) ![Version](https://img.shields.io/badge/Version-30.1.0-blue) ![Engine](https://img.shields.io/badge/Engine-UE%205.3-blue) ![SML](https://img.shields.io/badge/SML-3.11.x-blue) ![Multiplayer](https://img.shields.io/badge/Multiplayer-Testing-orange) ![AI Assisted Development Used](https://img.shields.io/badge/AI%20Assisted%20Development%20Used-Disclosure%20Below-blue)
 
 > **Multiplayer note:** Smart! is primarily developed for single-player. Multiplayer is under active testing with partial success, but is not currently considered fully supported.
 
-**Quick links:** [Watch videos](#-watch-smart-in-action) • [How Smart works](#-how-smart-changes-building) • [First-time setup](#-first-time-setup) • [Extend explained](#-extend-explained-copy-an-existing-manifold) • [Supported buildings](#-supported-buildings) • [Discord](https://discord.gg/SgXY4CwXYw) • [Report bugs](https://github.com/majormer/SmartFoundations/issues) • [Source](https://github.com/majormer/SmartFoundations)
+**Quick links:** [Watch videos](#-watch-smart-in-action) • [First-time setup](#-first-time-setup) • [Extend explained](#-extend-explained-copy-an-existing-manifold) • [Supported buildings](#-supported-buildings) • [Wiki](https://github.com/majormer/SmartFoundations/wiki) • [Discord](https://discord.gg/SgXY4CwXYw) • [Report bugs](https://github.com/majormer/SmartFoundations/issues) • [Source](https://github.com/majormer/SmartFoundations)
 
 ---
 
@@ -101,19 +101,21 @@ See [LICENSE.md](https://github.com/majormer/SmartFoundations/blob/main/LICENSE.
 
 ---
 
-## 📰 What's New in v30
+## 📰 What's New in v30.1.0
 
-**Current Release:** v30.0.0 — See [full changelog](https://github.com/majormer/SmartFoundations/blob/main/CHANGELOG.md) for all release details
+**Current Release:** v30.1.0 — the final Smart! release for Satisfactory 1.1. See the [full changelog](https://github.com/majormer/SmartFoundations/blob/main/CHANGELOG.md) for all release details.
 
-### Major Feature: Smart Restore Enhanced
+> **Heads up about Satisfactory 1.2:** v30.1.0 is the last Smart! build for Satisfactory **1.1**, kept available for players who stay on 1.1. A separate Smart! release for Satisfactory **1.2** is in progress and will be published after the game updates. This 1.1 build is marked compatible with 1.1 only, so the mod manager will not offer it to a 1.2 game.
 
-The defining feature of version 30 is **Smart Restore Enhanced** — a preset system for saving, applying, sharing, and replaying Smart Panel setups. Presets can capture grid size, spacing, steps, stagger, rotation, production recipe, auto-connect settings, and restored Extend topology.
+### Highlights in v30.1.0
 
-Use the Smart Panel's `Presets >>` button to save your current setup, apply a saved setup later, export a preset to the clipboard, import a shared preset, or turn the last Extend layout you built into a reusable preset. Shared presets are checked against your current unlocks before they can be imported or applied.
+- **All 21 supported languages now render correctly** — Arabic, Persian, and Thai are re-enabled and display properly, and in-game building names now match Satisfactory's own terms across translated languages.
+- **Clearer Extend affordability** — the whole Extend preview (factory, belts, pipes, lifts, distributors, poles, and wires) now turns red together when you cannot afford the placement, and the cost check counts materials in your Dimensional Depot.
+- **UI and performance polish** — Smart Panel buttons and dropdowns fit correctly in every language, and grid scaling is smoother and more stable on large layouts.
 
-### Recent Patch Updates
+### Also in version 30: Smart Restore Enhanced
 
-For detailed information about Smart Restore Enhanced and recent fixes, see the [full changelog](https://github.com/majormer/SmartFoundations/blob/main/CHANGELOG.md).
+Version 30 introduced **Smart Restore Enhanced** — a preset system for saving, applying, sharing, and replaying Smart Panel setups. Presets can capture grid size, spacing, steps, stagger, rotation, production recipe, auto-connect settings, and restored Extend topology. Use the Smart Panel's `Presets >>` button to save your current setup, apply a saved setup later, export or import a shared preset, or turn the last Extend layout you built into a reusable preset. Shared presets are checked against your current unlocks before they can be imported or applied.
 
 ---
 
@@ -140,7 +142,7 @@ Smart! has many keybinds, but you do not need to learn them all immediately.
 | Spacing mode | Change the gap between placed items |
 | Steps mode | Add height changes across a grid |
 | Stagger mode | Offset rows for diagonal or shifted patterns |
-| Double-tap `Num0` | Temporarily disable auto-connect for the next placement |
+| Double-tap `Num0` | Toggle Smart Auto-Connect and Extend off (and on again) for the session |
 
 Keybinds can be changed in Satisfactory's controls menu.
 
@@ -336,7 +338,9 @@ Auto-Connect is not magic routing. It is Smart! making a best effort based on ne
 
 ## 🎮 Controls and Feature Instructions
 
-Smart! uses **native Satisfactory keybinds** that can be customized in **Options > Keybindings > Smart! Scaling Controls**.
+Smart! uses **native Satisfactory keybinds** that can be customized in **Options > Controls > Mods**.
+
+> **Looking for the complete keybind list?** The [Controls](https://github.com/majormer/SmartFoundations/wiki/Controls) and [Settings Reference](https://github.com/majormer/SmartFoundations/wiki/Settings-Reference) wiki pages are generated from the mod's code and are the most accurate, always-current reference. The tables below cover the everyday controls.
 
 ### Grid Scaling
 
@@ -413,7 +417,7 @@ Use Auto-Connect settings when aiming a splitter, merger, pipe junction, or powe
 | Activate Auto-Connect Settings | Hold `U` while aiming a supported logistics or power hologram | Enables context-specific Auto-Connect settings |
 | Cycle Setting | `Num0` while holding `U` | Switch between available Auto-Connect options |
 | Increase/Decrease Value | `Scroll Wheel` or `NumPad 8/5` while holding `U` | Change the selected setting |
-| One-Shot Disable | Double-tap `Num0` with no modifiers | Disable all Auto-Connect for the next placement only |
+| Session Toggle | Double-tap `Num0` with no modifiers | Toggle all Smart Auto-Connect and Extend off for the session, then double-tap again to re-enable |
 
 **For belt distributors:** Enable/disable Auto-Connect, distributor-to-distributor connections, and distributor-to-building belt tier selection.
 
@@ -528,24 +532,26 @@ If something behaves strangely, test with only Smart! and its required dependenc
 
 ## 💬 Getting Help
 
-Join the Smart! Discord for support, examples, testing updates, and feature discussion:
+Start with the **wiki** for how-to guides, then the Discord for support, examples, testing updates, and feature discussion:
 
 [![Discord](https://img.shields.io/discord/799091523173613589?color=7289da&label=Discord&logo=discord&logoColor=white)](https://discord.gg/SgXY4CwXYw)
 
+- **Wiki and documentation:** https://github.com/majormer/SmartFoundations/wiki
 - **Discord:** https://discord.gg/SgXY4CwXYw
 - **Bug reports:** https://github.com/majormer/SmartFoundations/issues
 - **Source:** https://github.com/majormer/SmartFoundations
 
-When asking for help, include:
+> The Smart! wiki and issue tracker now live on the main source repository above. They previously lived in a separate issue-tracker repository, before Smart! became source-available — please use the links here rather than any older tracker links you may have bookmarked.
 
-- Smart! version.
-- SML version.
-- Whether you are single-player or multiplayer.
-- Screenshots of the source layout and preview.
-- The buildable you are holding.
-- What you expected Smart! to do.
+**Bug reports use structured issue forms** — pick the type that fits: bug, crash, compatibility, Blueprint Designer, feature request, or a Satisfactory 1.2 report. (Blank issues are disabled; the form walks you through it.) Each form prompts for the details below, so it helps to have them ready:
 
-For Extend issues, a screenshot from above is especially helpful.
+- Smart! version and SML version.
+- Satisfactory version and branch (for example, 1.1 stable, CL 463028).
+- Session type (single-player or multiplayer) and save type.
+- Steps to reproduce, what you expected, and what actually happened.
+- Logs — `FactoryGame.log`, plus the crash-reporter text for crashes.
+- Any other mods you have installed.
+- Screenshots or video. For Extend issues, a screenshot from above is especially helpful.
 
 ---
 

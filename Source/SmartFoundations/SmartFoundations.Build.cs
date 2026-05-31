@@ -42,7 +42,7 @@ public class SmartFoundations : ModuleRules
 			//"TemplateSequence",
 			"NetCore",
 			"GameplayTags",
-			"Json", "JsonUtilities"
+			"Json"
 		});
 
 		// FactoryGame plugins

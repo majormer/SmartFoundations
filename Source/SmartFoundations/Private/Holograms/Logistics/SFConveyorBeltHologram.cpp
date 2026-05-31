@@ -47,11 +47,11 @@ void ASFConveyorBeltHologram::BeginPlay()
         mValidPlacementMaterial = LoadObject<UMaterialInstance>(nullptr, ValidMaterialPath);
         if (mValidPlacementMaterial)
         {
-            UE_LOG(LogSmartFoundations, Log, TEXT("🎨 Loaded mValidPlacementMaterial: %s"), *mValidPlacementMaterial->GetName());
+            UE_LOG(LogSmartHologram, Log, TEXT("🎨 Loaded mValidPlacementMaterial: %s"), *mValidPlacementMaterial->GetName());
         }
         else
         {
-            UE_LOG(LogSmartFoundations, Warning, TEXT("🎨 Failed to load mValidPlacementMaterial from %s"), ValidMaterialPath);
+            UE_LOG(LogSmartHologram, Warning, TEXT("🎨 Failed to load mValidPlacementMaterial from %s"), ValidMaterialPath);
         }
     }
     
@@ -62,11 +62,11 @@ void ASFConveyorBeltHologram::BeginPlay()
         mInvalidPlacementMaterial = LoadObject<UMaterialInstance>(nullptr, InvalidMaterialPath);
         if (mInvalidPlacementMaterial)
         {
-            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🎨 Loaded mInvalidPlacementMaterial: %s"), *mInvalidPlacementMaterial->GetName());
+            UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🎨 Loaded mInvalidPlacementMaterial: %s"), *mInvalidPlacementMaterial->GetName());
         }
         else
         {
-            UE_LOG(LogSmartFoundations, Warning, TEXT("🎨 Failed to load mInvalidPlacementMaterial from %s"), InvalidMaterialPath);
+            UE_LOG(LogSmartHologram, Warning, TEXT("🎨 Failed to load mInvalidPlacementMaterial from %s"), InvalidMaterialPath);
         }
     }
     
@@ -81,11 +81,11 @@ void ASFConveyorBeltHologram::BeginPlay()
         case NM_Client: NetModeStr = TEXT("Client"); break;
     }
     
-    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🌐 BELT HOLOGRAM SPAWNED: %s | NetMode=%s (%d) | World=%s"), 
+    UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🌐 BELT HOLOGRAM SPAWNED: %s | NetMode=%s (%d) | World=%s"), 
         *GetName(), NetModeStr, (int32)NetMode, GetWorld() ? *GetWorld()->GetName() : TEXT("NULL"));
     
     // Log role information
-    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   Role=%d (3=Authority, 2=AutonomousProxy, 1=SimulatedProxy, 0=None) | RemoteRole=%d"), 
+    UE_LOG(LogSmartHologram, VeryVerbose, TEXT("   Role=%d (3=Authority, 2=AutonomousProxy, 1=SimulatedProxy, 0=None) | RemoteRole=%d"), 
         (int32)GetLocalRole(), (int32)GetRemoteRole());
 }
 
@@ -96,7 +96,7 @@ void ASFConveyorBeltHologram::Tick(float DeltaSeconds)
     if (!bFirstTickLogged)
     {
         bFirstTickLogged = true;
-        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔄 TICK IS RUNNING on %s | CanEverTick=%d | TickEnabled=%d"), 
+        UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔄 TICK IS RUNNING on %s | CanEverTick=%d | TickEnabled=%d"), 
             *GetName(), PrimaryActorTick.bCanEverTick, IsActorTickEnabled());
     }
 
@@ -108,7 +108,7 @@ void ASFConveyorBeltHologram::Tick(float DeltaSeconds)
 
         if (!PreviousLocationSample.IsNearlyZero(1.0f) && ActorLoc.IsNearlyZero(1.0f))
         {
-            UE_LOG(LogSmartFoundations, VeryVerbose,
+            UE_LOG(LogSmartHologram, VeryVerbose,
                 TEXT("🧪 BELT SNAP DETECTED: %s jumped from %s to origin in one frame (Parent=%s)"),
                 *GetName(), *PreviousLocationSample.ToString(), *GetNameSafe(GetParentHologram()));
 // Stack trace removed - UE5 compatibility
@@ -116,7 +116,7 @@ void ASFConveyorBeltHologram::Tick(float DeltaSeconds)
 
         if (ActorLoc.IsNearlyZero(1.0f))
         {
-            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔄 TICK CORRECTION: Actor at origin, moving to spline start"));
+            UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔄 TICK CORRECTION: Actor at origin, moving to spline start"));
             
             const FVector SplineStart = mSplineComponent->GetLocationAtSplinePoint(0, ESplineCoordinateSpace::World);
             if (!SplineStart.IsNearlyZero(1.0f))
@@ -124,12 +124,12 @@ void ASFConveyorBeltHologram::Tick(float DeltaSeconds)
                 if (USceneComponent* RootComp = GetRootComponent())
                 {
                     RootComp->SetWorldLocation(SplineStart, false, nullptr, ETeleportType::TeleportPhysics);
-                    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   ✅ Root moved to %s"), *SplineStart.ToString());
+                    UE_LOG(LogSmartHologram, VeryVerbose, TEXT("   ✅ Root moved to %s"), *SplineStart.ToString());
                 }
                 else
                 {
                     SetActorLocation(SplineStart);
-                    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   ✅ Actor moved to %s"), *SplineStart.ToString());
+                    UE_LOG(LogSmartHologram, VeryVerbose, TEXT("   ✅ Actor moved to %s"), *SplineStart.ToString());
                 }
                 
                 // Keep it visible after correction
@@ -204,7 +204,7 @@ void ASFConveyorBeltHologram::CheckValidPlacement()
         // Log detailed disqualifier info for debugging
         if (Disqualifiers.Num() > 0)
         {
-            UE_LOG(LogSmartFoundations, Log, TEXT("🚫 VANILLA DISQUALIFIERS [%s]: %s (Real: %d)"), 
+            UE_LOG(LogSmartHologram, Log, TEXT("🚫 VANILLA DISQUALIFIERS [%s]: %s (Real: %d)"), 
                 *GetName(), *DisqualifierNames, RealDisqualifierCount);
         }
 
@@ -229,7 +229,7 @@ void ASFConveyorBeltHologram::CheckValidPlacement()
     // Belt children should never block parent placement
     if (GetParentHologram())
     {
-        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Belt child preview (has parent) - skipping validation"));
+        UE_LOG(LogSmartHologram, VeryVerbose, TEXT("Belt child preview (has parent) - skipping validation"));
         // Mirror the Extend preview's authoritative state (frame-order independent), so the
         // child turns red on insufficient materials and back to cyan when affordable again.
         // Reading the parent directly can still see HMS_OK before the build gun applies the
@@ -255,7 +255,7 @@ void ASFConveyorBeltHologram::CheckValidPlacement()
     {
         if (!Data->bNeedToCheckPlacement)
         {
-            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Belt child preview (data registry) - skipping validation"));
+            UE_LOG(LogSmartHologram, VeryVerbose, TEXT("Belt child preview (data registry) - skipping validation"));
             return; // Don't call Super - prevents disqualifiers
         }
     }
@@ -280,7 +280,7 @@ void ASFConveyorBeltHologram::PostHologramPlacement(const FHitResult& hitResult,
         if (bPostHologramPlacementCalled)
         {
             // Already called once - skip to prevent crash
-            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🎯 BELT PostHologramPlacement: Extend child %s - skipping (already called)"), *GetName());
+            UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🎯 BELT PostHologramPlacement: Extend child %s - skipping (already called)"), *GetName());
             return;
         }
         
@@ -292,11 +292,11 @@ void ASFConveyorBeltHologram::PostHologramPlacement(const FHitResult& hitResult,
         // before ConfigureComponents and chain registration run.
         if (Tags.Contains(FName(TEXT("SF_LaneSegment"))))
         {
-            UE_LOG(LogSmartFoundations, Log, TEXT("BELT PostHologramPlacement: Lane segment %s - skipping vanilla post-placement (Smart-managed route)"), *GetName());
+            UE_LOG(LogSmartHologram, Log, TEXT("BELT PostHologramPlacement: Lane segment %s - skipping vanilla post-placement (Smart-managed route)"), *GetName());
             return;
         }
         
-        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("🎯 BELT PostHologramPlacement: Extend child %s - calling Super once for connection wiring"), *GetName());
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartHologram, Log, TEXT("🎯 BELT PostHologramPlacement: Extend child %s - calling Super once for connection wiring"), *GetName());
         Super::PostHologramPlacement(hitResult, callForChildren);
         return;
     }
@@ -306,7 +306,7 @@ void ASFConveyorBeltHologram::PostHologramPlacement(const FHitResult& hitResult,
     // Vanilla's spline update tries to regenerate meshes but the connectors aren't in the right state
     if (bIsAutoConnectChild || bIsStackableChild)
     {
-        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🎯 BELT PostHologramPlacement: %s child %s - skipping vanilla spline update (already generated)"), 
+        UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🎯 BELT PostHologramPlacement: %s child %s - skipping vanilla spline update (already generated)"), 
             bIsAutoConnectChild ? TEXT("Auto-connect") : TEXT("Stackable"), *GetName());
         // Don't call Super - meshes already exist and are correct
         return;
@@ -318,7 +318,7 @@ void ASFConveyorBeltHologram::PostHologramPlacement(const FHitResult& hitResult,
     // BuildSplineMeshes dereferences mSplineComponent without a null check → EXCEPTION_ACCESS_VIOLATION.
     if (!mSplineComponent)
     {
-        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🎯 BELT PostHologramPlacement: %s - skipping (mSplineComponent null, not yet initialized)"), *GetName());
+        UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🎯 BELT PostHologramPlacement: %s - skipping (mSplineComponent null, not yet initialized)"), *GetName());
         return;
     }
     Super::PostHologramPlacement(hitResult, callForChildren);
@@ -354,7 +354,7 @@ void ASFConveyorBeltHologram::SetPlacementMaterialState(EHologramMaterialState m
         }
     }
 
-    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🎨 BELT SetPlacementMaterialState: State=%d, SplineMeshes=%d, Stencil=%d"),
+    UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🎨 BELT SetPlacementMaterialState: State=%d, SplineMeshes=%d, Stencil=%d"),
         (int32)materialState,
         MeshComps.Num(),
         (int32)StencilValue);
@@ -363,11 +363,11 @@ void ASFConveyorBeltHologram::SetPlacementMaterialState(EHologramMaterialState m
 AActor* ASFConveyorBeltHologram::Construct(TArray<AActor*>& out_children, FNetConstructionID constructionID)
 {
     // CRITICAL DIAGNOSTIC: Log spline data BEFORE Construct
-    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 BELT Construct: %s - BEFORE Super::Construct, mSplineData has %d points"), 
+    UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 BELT Construct: %s - BEFORE Super::Construct, mSplineData has %d points"), 
         *GetName(), mSplineData.Num());
     for (int32 i = 0; i < mSplineData.Num(); i++)
     {
-        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 BELT Construct:   Point[%d] Location=%s"), 
+        UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 BELT Construct:   Point[%d] Location=%s"), 
             i, *mSplineData[i].Location.ToString());
     }
     
@@ -377,7 +377,7 @@ AActor* ASFConveyorBeltHologram::Construct(TArray<AActor*>& out_children, FNetCo
     // Connections will be made post-construction via SetConnection()
     if (Tags.Contains(FName(TEXT("SF_ExtendChild"))))
     {
-        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 EXTEND: Belt hologram %s Construct() called - building as child"), 
+        UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 EXTEND: Belt hologram %s Construct() called - building as child"), 
             *GetName());
         
         // ============================================================
@@ -402,7 +402,7 @@ AActor* ASFConveyorBeltHologram::Construct(TArray<AActor*>& out_children, FNetCo
                     if (Targets.bHasValidTargets())
                     {
                         SetSnappedConnections(Targets.Conn0Target, Targets.Conn1Target);
-                        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 EXTEND Chain: Updated %s snapped connections → Conn0=%s, Conn1=%s"),
+                        UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 EXTEND Chain: Updated %s snapped connections → Conn0=%s, Conn1=%s"),
                             *GetName(),
                             Targets.Conn0Target ? *FString::Printf(TEXT("%s on %s"), *Targets.Conn0Target->GetName(), *Targets.Conn0Target->GetOwner()->GetName()) : TEXT("nullptr"),
                             Targets.Conn1Target ? *FString::Printf(TEXT("%s on %s"), *Targets.Conn1Target->GetName(), *Targets.Conn1Target->GetOwner()->GetName()) : TEXT("nullptr"));
@@ -456,7 +456,7 @@ AActor* ASFConveyorBeltHologram::Construct(TArray<AActor*>& out_children, FNetCo
             }
             
             // Log the mapping for debugging
-            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 EXTEND: ✅ Belt hologram %s → Buildable %s (ID: %u, ChainId: %d)"), 
+            UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 EXTEND: ✅ Belt hologram %s → Buildable %s (ID: %u, ChainId: %d)"), 
                 *GetName(), *BuiltActor->GetName(), BuiltActor->GetUniqueID(),
                 HoloData ? HoloData->ExtendChainId : -1);
             
@@ -467,14 +467,14 @@ AActor* ASFConveyorBeltHologram::Construct(TArray<AActor*>& out_children, FNetCo
                 UFGFactoryConnectionComponent* Conn1 = Belt->GetConnection1();
                 AFGConveyorChainActor* ChainActor = Belt->GetConveyorChainActor();
                 
-                UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 EXTEND:   Conn0=%s @ %s, Conn1=%s @ %s"),
+                UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 EXTEND:   Conn0=%s @ %s, Conn1=%s @ %s"),
                     Conn0 ? *Conn0->GetName() : TEXT("null"),
                     Conn0 ? *Conn0->GetComponentLocation().ToString() : TEXT("N/A"),
                     Conn1 ? *Conn1->GetName() : TEXT("null"),
                     Conn1 ? *Conn1->GetComponentLocation().ToString() : TEXT("N/A"));
                 
                 // CRITICAL: Log chain actor to diagnose unified vs separate chains
-                UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⛓️ CHAIN ACTOR: Belt %s → ChainActor=%s (ptr=0x%p)"),
+                UE_LOG(LogSmartHologram, VeryVerbose, TEXT("⛓️ CHAIN ACTOR: Belt %s → ChainActor=%s (ptr=0x%p)"),
                     *Belt->GetName(),
                     ChainActor ? *ChainActor->GetName() : TEXT("NULL"),
                     ChainActor);
@@ -504,14 +504,14 @@ AActor* ASFConveyorBeltHologram::Construct(TArray<AActor*>& out_children, FNetCo
         }
         else
         {
-            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND: ❌ Belt Construct returned nullptr!"));
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartHologram, Warning, TEXT("🔧 EXTEND: ❌ Belt Construct returned nullptr!"));
         }
         
         return BuiltActor;
     }
     
     // For Auto-Connect belts: Build and then wire connections
-    UE_LOG(LogSmartFoundations, Log, TEXT("🔧 AUTO-CONNECT: Belt hologram %s Construct() called - building belt"), 
+    UE_LOG(LogSmartHologram, Log, TEXT("🔧 AUTO-CONNECT: Belt hologram %s Construct() called - building belt"), 
         *GetName());
     
     // Build the belt
@@ -568,7 +568,7 @@ AActor* ASFConveyorBeltHologram::Construct(TArray<AActor*>& out_children, FNetCo
                 if (BestMatch)
                 {
                     BeltConn0->SetConnection(BestMatch);
-                    UE_LOG(LogSmartFoundations, Log, TEXT("🔧 AUTO-CONNECT WIRING: %s.Conn0 → %s.%s (dist=%.1f)"),
+                    UE_LOG(LogSmartHologram, Log, TEXT("🔧 AUTO-CONNECT WIRING: %s.Conn0 → %s.%s (dist=%.1f)"),
                         *BuiltBelt->GetName(), *BestMatch->GetOwner()->GetName(), *BestMatch->GetName(), BestDist);
                 }
             }
@@ -608,7 +608,7 @@ AActor* ASFConveyorBeltHologram::Construct(TArray<AActor*>& out_children, FNetCo
                 if (BestMatch)
                 {
                     BeltConn1->SetConnection(BestMatch);
-                    UE_LOG(LogSmartFoundations, Log, TEXT("🔧 AUTO-CONNECT WIRING: %s.Conn1 → %s.%s (dist=%.1f)"),
+                    UE_LOG(LogSmartHologram, Log, TEXT("🔧 AUTO-CONNECT WIRING: %s.Conn1 → %s.%s (dist=%.1f)"),
                         *BuiltBelt->GetName(), *BestMatch->GetOwner()->GetName(), *BestMatch->GetName(), BestDist);
                 }
             }
@@ -631,7 +631,7 @@ void ASFConveyorBeltHologram::SetHologramLocationAndRotation(const FHitResult& h
 
 TArray<FItemAmount> ASFConveyorBeltHologram::GetCost(bool includeChildren) const
 {
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("💰 BELT GetCost() CALLED on %s (includeChildren=%d)"), *GetName(), includeChildren);
+	UE_LOG(LogSmartHologram, VeryVerbose, TEXT("💰 BELT GetCost() CALLED on %s (includeChildren=%d)"), *GetName(), includeChildren);
 	
 	// Get base cost from parent (should be empty for belts, but call it anyway)
 	TArray<FItemAmount> TotalCost = Super::GetCost(includeChildren);
@@ -651,7 +651,7 @@ TArray<FItemAmount> ASFConveyorBeltHologram::GetCost(bool includeChildren) const
 			{
 				if (HoloData->bHasBackupSplineData && HoloData->BackupSplineData.Num() >= 2)
 				{
-					UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("💰 BELT: Spline length is zero but backup has %d points - RESTORING!"), 
+					UE_LOG(LogSmartHologram, VeryVerbose, TEXT("💰 BELT: Spline length is zero but backup has %d points - RESTORING!"), 
 						HoloData->BackupSplineData.Num());
 					
 					// Restore spline data
@@ -665,7 +665,7 @@ TArray<FItemAmount> ASFConveyorBeltHologram::GetCost(bool includeChildren) const
 					BeltLengthCm = mSplineComponent->GetSplineLength();
 					LengthInMeters = BeltLengthCm / 100.0f;
 					
-					UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("💰 BELT: After restoration, spline length = %.1f cm"), BeltLengthCm);
+					UE_LOG(LogSmartHologram, VeryVerbose, TEXT("💰 BELT: After restoration, spline length = %.1f cm"), BeltLengthCm);
 					
 					// Also trigger mesh generation to make it visible
 					MutableThis->TriggerMeshGeneration();
@@ -675,12 +675,12 @@ TArray<FItemAmount> ASFConveyorBeltHologram::GetCost(bool includeChildren) const
 			// If still zero after restoration attempt, skip cost calculation
 			if (LengthInMeters <= KINDA_SMALL_NUMBER)
 			{
-				UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("💰 BELT: Spline length is zero - skipping belt cost calculation"));
+				UE_LOG(LogSmartHologram, VeryVerbose, TEXT("💰 BELT: Spline length is zero - skipping belt cost calculation"));
 				return TotalCost;
 			}
 		}
 		
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("💰 BELT: Spline length = %.1f cm (%.1f m)"), BeltLengthCm, LengthInMeters);
+		UE_LOG(LogSmartHologram, VeryVerbose, TEXT("💰 BELT: Spline length = %.1f cm (%.1f m)"), BeltLengthCm, LengthInMeters);
 		
 		// Get belt class and determine tier
 		if (mBuildClass)
@@ -697,7 +697,7 @@ TArray<FItemAmount> ASFConveyorBeltHologram::GetCost(bool includeChildren) const
 			else if (ClassName.Contains(TEXT("Mk5"))) BeltTier = 5;
 			else if (ClassName.Contains(TEXT("Mk6"))) BeltTier = 6;
 			
-			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("💰 BELT: Class = %s, Tier = Mk%d"), *ClassName, BeltTier);
+			UE_LOG(LogSmartHologram, VeryVerbose, TEXT("💰 BELT: Class = %s, Tier = Mk%d"), *ClassName, BeltTier);
 			
 			// Get recipe for this belt class
 			UWorld* World = GetWorld();
@@ -715,7 +715,7 @@ TArray<FItemAmount> ASFConveyorBeltHologram::GetCost(bool includeChildren) const
 					}
 					else
 					{
-						UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("💰 BELT: BuildClass is not an AFGBuildable, cannot look up descriptor"));
+						UE_LOG(LogSmartHologram, VeryVerbose, TEXT("💰 BELT: BuildClass is not an AFGBuildable, cannot look up descriptor"));
 						return TotalCost;
 					}
 					TSubclassOf<UFGBuildingDescriptor> Descriptor = RecipeManager->FindBuildingDescriptorByClass(BeltBuildableClass);
@@ -740,51 +740,51 @@ TArray<FItemAmount> ASFConveyorBeltHologram::GetCost(bool includeChildren) const
 									ScaledCost.Amount = SetsNeeded * Cost.Amount;
 									TotalCost.Add(ScaledCost);
 									
-									UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("💰 BELT: Material %s, Base=%d, Length=%.2fm, ExactSets=%.2f, Rounded=%d, Cost=%d"), 
+									UE_LOG(LogSmartHologram, VeryVerbose, TEXT("💰 BELT: Material %s, Base=%d, Length=%.2fm, ExactSets=%.2f, Rounded=%d, Cost=%d"), 
 										*Cost.ItemClass->GetName(), Cost.Amount, LengthInMeters, ExactSets, SetsNeeded, ScaledCost.Amount);
 								}
 							}
 						}
 						else
 						{
-							UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("💰 BELT: No recipe found for Mk%d belt"), BeltTier);
+							UE_LOG(LogSmartHologram, VeryVerbose, TEXT("💰 BELT: No recipe found for Mk%d belt"), BeltTier);
 						}
 					}
 					else
 					{
-						UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("💰 BELT: No descriptor found for belt class"));
+						UE_LOG(LogSmartHologram, VeryVerbose, TEXT("💰 BELT: No descriptor found for belt class"));
 					}
 				}
 			}
 		}
 		else
 		{
-			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("💰 BELT: No build class set!"));
+			UE_LOG(LogSmartHologram, VeryVerbose, TEXT("💰 BELT: No build class set!"));
 		}
 	}
 	else
 	{
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("💰 BELT: No spline component!"));
+		UE_LOG(LogSmartHologram, VeryVerbose, TEXT("💰 BELT: No spline component!"));
 	}
 	
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("💰 BELT: Returning %d item types"), TotalCost.Num());
+	UE_LOG(LogSmartHologram, VeryVerbose, TEXT("💰 BELT: Returning %d item types"), TotalCost.Num());
 	return TotalCost;
 }
 
 void ASFConveyorBeltHologram::TriggerMeshGeneration()
 {
-    UE_LOG(LogSmartFoundations, Log, TEXT("🎯 BELT TriggerMeshGeneration CALLED on %s - mSplineData has %d points"), *GetName(), mSplineData.Num());
+    UE_LOG(LogSmartHologram, Log, TEXT("🎯 BELT TriggerMeshGeneration CALLED on %s - mSplineData has %d points"), *GetName(), mSplineData.Num());
     
     if (!mSplineComponent)
     {
-        UE_LOG(LogSmartFoundations, Warning, TEXT("🎯 BELT TriggerMeshGeneration: mSplineComponent is NULL!"));
+        UE_LOG(LogSmartHologram, Warning, TEXT("🎯 BELT TriggerMeshGeneration: mSplineComponent is NULL!"));
         return;
     }
     
     // Log ALL mSplineData points for debugging
     for (int32 i = 0; i < mSplineData.Num(); i++)
     {
-        UE_LOG(LogSmartFoundations, Log, TEXT("🎯 BELT mSplineData[%d]: Loc=%s"), i, *mSplineData[i].Location.ToString());
+        UE_LOG(LogSmartHologram, Log, TEXT("🎯 BELT mSplineData[%d]: Loc=%s"), i, *mSplineData[i].Location.ToString());
     }
     
     // Push mSplineData into spline component
@@ -797,7 +797,7 @@ void ASFConveyorBeltHologram::TriggerMeshGeneration()
     const float SplineLength = mSplineComponent->GetSplineLength();
     
     // DIAGNOSTIC: Log actual spline component points after UpdateSplineComponent
-    UE_LOG(LogSmartFoundations, Log, TEXT("🎯 BELT After UpdateSplineComponent: %d points, %.1f cm length"), PointCount, SplineLength);
+    UE_LOG(LogSmartHologram, Log, TEXT("🎯 BELT After UpdateSplineComponent: %d points, %.1f cm length"), PointCount, SplineLength);
     if (PointCount > 1)
     {
         // Compare both methods to see if they return different values
@@ -809,16 +809,16 @@ void ASFConveyorBeltHologram::TriggerMeshGeneration()
         mSplineComponent->GetLocationAndTangentAtSplinePoint(0, FirstPos, FirstTan, ESplineCoordinateSpace::Local);
         mSplineComponent->GetLocationAndTangentAtSplinePoint(1, SecondPos, SecondTan, ESplineCoordinateSpace::Local);
         
-        UE_LOG(LogSmartFoundations, Log, TEXT("🎯 BELT GetLocationAtSplinePoint: [0]=%s, [1]=%s, [last]=%s"), 
+        UE_LOG(LogSmartHologram, Log, TEXT("🎯 BELT GetLocationAtSplinePoint: [0]=%s, [1]=%s, [last]=%s"), 
             *FirstPoint.ToString(), *SecondPoint.ToString(), *LastPoint.ToString());
-        UE_LOG(LogSmartFoundations, Log, TEXT("🎯 BELT GetLocationAndTangentAtSplinePoint: [0]=%s, [1]=%s"), 
+        UE_LOG(LogSmartHologram, Log, TEXT("🎯 BELT GetLocationAndTangentAtSplinePoint: [0]=%s, [1]=%s"), 
             *FirstPos.ToString(), *SecondPos.ToString());
     }
-    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🎯 BELT TriggerMeshGeneration: %d points, %.1f cm"), PointCount, SplineLength);
+    UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🎯 BELT TriggerMeshGeneration: %d points, %.1f cm"), PointCount, SplineLength);
     
     if (PointCount < 2)
     {
-        UE_LOG(LogSmartFoundations, Warning, TEXT("🎯 BELT TriggerMeshGeneration: Not enough spline points (%d)"), PointCount);
+        UE_LOG(LogSmartHologram, Warning, TEXT("🎯 BELT TriggerMeshGeneration: Not enough spline points (%d)"), PointCount);
         return;
     }
     
@@ -826,7 +826,7 @@ void ASFConveyorBeltHologram::TriggerMeshGeneration()
     TArray<USplineMeshComponent*> MeshComps;
     GetComponents<USplineMeshComponent>(MeshComps);
     
-    UE_LOG(LogSmartFoundations, Log, TEXT("🎯 BELT: Initial mesh components: %d"), MeshComps.Num());
+    UE_LOG(LogSmartHologram, Log, TEXT("🎯 BELT: Initial mesh components: %d"), MeshComps.Num());
     
     // CRITICAL FIX: Destroy existing mesh components from base class - they don't update properly
     // The base class creates default meshes that don't respond to SetStartAndEnd() correctly
@@ -840,7 +840,7 @@ void ASFConveyorBeltHologram::TriggerMeshGeneration()
     }
     MeshComps.Empty();
     
-    UE_LOG(LogSmartFoundations, Log, TEXT("🎯 BELT: Destroyed old meshes, will create fresh ones"));
+    UE_LOG(LogSmartHologram, Log, TEXT("🎯 BELT: Destroyed old meshes, will create fresh ones"));
     
     // Get belt mesh and mesh length from build class CDO - this ensures they match the actual tier
     UStaticMesh* BeltMesh = nullptr;
@@ -852,29 +852,29 @@ void ASFConveyorBeltHologram::TriggerMeshGeneration()
         {
             BeltMesh = BeltCDO->GetSplineMesh();
             MeshLength = BeltCDO->GetMeshLength();
-            UE_LOG(LogSmartFoundations, Log, TEXT("🎯 BELT TriggerMeshGeneration: Got from CDO: Mesh=%s, MeshLength=%.1f"), 
+            UE_LOG(LogSmartHologram, Log, TEXT("🎯 BELT TriggerMeshGeneration: Got from CDO: Mesh=%s, MeshLength=%.1f"), 
                 BeltMesh ? *BeltMesh->GetName() : TEXT("NULL"),
                 MeshLength);
         }
         else
         {
-            UE_LOG(LogSmartFoundations, Warning, TEXT("🎯 BELT TriggerMeshGeneration: mBuildClass=%s but CDO cast failed"), *mBuildClass->GetName());
+            UE_LOG(LogSmartHologram, Warning, TEXT("🎯 BELT TriggerMeshGeneration: mBuildClass=%s but CDO cast failed"), *mBuildClass->GetName());
         }
     }
     else
     {
-        UE_LOG(LogSmartFoundations, Warning, TEXT("🎯 BELT TriggerMeshGeneration: mBuildClass is NULL!"));
+        UE_LOG(LogSmartHologram, Warning, TEXT("🎯 BELT TriggerMeshGeneration: mBuildClass is NULL!"));
     }
     
     // Fallback to hardcoded Mk5 mesh if CDO lookup failed
     if (!BeltMesh)
     {
-        UE_LOG(LogSmartFoundations, Warning, TEXT("🎯 BELT TriggerMeshGeneration: CDO mesh lookup failed, using fallback"));
+        UE_LOG(LogSmartHologram, Warning, TEXT("🎯 BELT TriggerMeshGeneration: CDO mesh lookup failed, using fallback"));
         BeltMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Game/FactoryGame/Buildable/Factory/ConveyorBeltMk5/Mesh/SM_ConveyorBelt_Mk5.SM_ConveyorBelt_Mk5"));
     }
     if (!BeltMesh)
     {
-        UE_LOG(LogSmartFoundations, Warning, TEXT("🎯 BELT TriggerMeshGeneration: Failed to load belt mesh!"));
+        UE_LOG(LogSmartHologram, Warning, TEXT("🎯 BELT TriggerMeshGeneration: Failed to load belt mesh!"));
         return;
     }
     
@@ -884,14 +884,14 @@ void ASFConveyorBeltHologram::TriggerMeshGeneration()
         MeshLength = 200.0f; // Default belt mesh length
     }
     
-    UE_LOG(LogSmartFoundations, Log, TEXT("🎯 BELT TriggerMeshGeneration: Mesh=%s, MeshLength=%.1f cm, SplineLength=%.1f cm"), 
+    UE_LOG(LogSmartHologram, Log, TEXT("🎯 BELT TriggerMeshGeneration: Mesh=%s, MeshLength=%.1f cm, SplineLength=%.1f cm"), 
         *BeltMesh->GetName(), MeshLength, SplineLength);
     
     // CRITICAL FIX: Calculate segments based on spline length / mesh length (like vanilla)
     // NOT based on spline point count - that causes severe stretching
     const int32 RequiredSegments = FMath::Max(1, FMath::CeilToInt(SplineLength / MeshLength));
     
-    UE_LOG(LogSmartFoundations, Log, TEXT("🎯 BELT TriggerMeshGeneration: Need %d segments (%.1f cm each) for %.1f cm spline"), 
+    UE_LOG(LogSmartHologram, Log, TEXT("🎯 BELT TriggerMeshGeneration: Need %d segments (%.1f cm each) for %.1f cm spline"), 
         RequiredSegments, SplineLength / RequiredSegments, SplineLength);
     
     // Create mesh components
@@ -959,13 +959,13 @@ void ASFConveyorBeltHologram::TriggerMeshGeneration()
             
             if (SegmentIdx == 0)
             {
-                UE_LOG(LogSmartFoundations, Log, TEXT("🎯 BELT Segment[0]: Start=%s End=%s (dist %.1f-%.1f)"), 
+                UE_LOG(LogSmartHologram, Log, TEXT("🎯 BELT Segment[0]: Start=%s End=%s (dist %.1f-%.1f)"), 
                     *StartPos.ToString(), *EndPos.ToString(), StartDist, EndDist);
             }
         }
     }
     
-    UE_LOG(LogSmartFoundations, Log, TEXT("🎯 BELT TriggerMeshGeneration: Created %d segments of %.1f cm each"), 
+    UE_LOG(LogSmartHologram, Log, TEXT("🎯 BELT TriggerMeshGeneration: Created %d segments of %.1f cm each"), 
         MeshComps.Num(), SegmentLength);
     
     // Apply the current hologram material state to newly generated meshes.
@@ -976,14 +976,14 @@ void ASFConveyorBeltHologram::TriggerMeshGeneration()
 void ASFConveyorBeltHologram::ConfigureActor(class AFGBuildable* inBuildable) const
 {
     // CRITICAL DIAGNOSTIC: Log what's in mSplineData before ConfigureActor
-    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 BELT ConfigureActor: Hologram=%s, Buildable=%s"), 
+    UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 BELT ConfigureActor: Hologram=%s, Buildable=%s"), 
         *GetName(), inBuildable ? *inBuildable->GetName() : TEXT("NULL"));
-    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 BELT ConfigureActor: mSplineData has %d points"), mSplineData.Num());
+    UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 BELT ConfigureActor: mSplineData has %d points"), mSplineData.Num());
     
     for (int32 i = 0; i < mSplineData.Num(); i++)
     {
         const FSplinePointData& Point = mSplineData[i];
-        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 BELT ConfigureActor:   Point[%d] Location=%s"), 
+        UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 BELT ConfigureActor:   Point[%d] Location=%s"), 
             i, *Point.Location.ToString());
     }
     
@@ -991,7 +991,7 @@ void ASFConveyorBeltHologram::ConfigureActor(class AFGBuildable* inBuildable) co
     // This handles the case where mSplineData was reset to default 2-point spline by vanilla
     if (FSFHologramData* HoloData = USFHologramDataRegistry::GetData(const_cast<ASFConveyorBeltHologram*>(this)))
     {
-        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 BELT ConfigureActor: Registry entry found - bHasBackup=%d, BackupPoints=%d"),
+        UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 BELT ConfigureActor: Registry entry found - bHasBackup=%d, BackupPoints=%d"),
             HoloData->bHasBackupSplineData ? 1 : 0, HoloData->BackupSplineData.Num());
         
         // If backup has more points than current data, OR if current data appears wrong, we need to restore
@@ -1023,7 +1023,7 @@ void ASFConveyorBeltHologram::ConfigureActor(class AFGBuildable* inBuildable) co
                 if (BackupLength > 500.0f && !CurrentEnd.Equals(BackupEnd, 10.0f))
                 {
                     bNeedsRestore = true;
-                    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 BELT ConfigureActor: Backup end=%.1f, Current end=%.1f - differs, will restore"),
+                    UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 BELT ConfigureActor: Backup end=%.1f, Current end=%.1f - differs, will restore"),
                         BackupEnd.Size(), CurrentEnd.Size());
                 }
                 else if (CurrentEnd.IsNearlyZero(1.0f) && !BackupEnd.IsNearlyZero(1.0f))
@@ -1036,7 +1036,7 @@ void ASFConveyorBeltHologram::ConfigureActor(class AFGBuildable* inBuildable) co
         
         if (bNeedsRestore)
         {
-            UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 BELT ConfigureActor: mSplineData was reset! Restoring %d points from backup (had %d)"), 
+            UE_LOG(LogSmartHologram, Warning, TEXT("🔧 BELT ConfigureActor: mSplineData was reset! Restoring %d points from backup (had %d)"), 
                 HoloData->BackupSplineData.Num(), mSplineData.Num());
             
             // Restore spline data (need to cast away const for this emergency restore)
@@ -1049,37 +1049,37 @@ void ASFConveyorBeltHologram::ConfigureActor(class AFGBuildable* inBuildable) co
                 MutableThis->UpdateSplineComponent();
             }
             
-            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 BELT ConfigureActor: Restored mSplineData now has %d points"), 
+            UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 BELT ConfigureActor: Restored mSplineData now has %d points"), 
                 mSplineData.Num());
             
             // Log the restored points
             for (int32 i = 0; i < mSplineData.Num(); i++)
             {
-                UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 BELT ConfigureActor:   RestoredPoint[%d] Location=%s"), 
+                UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 BELT ConfigureActor:   RestoredPoint[%d] Location=%s"), 
                     i, *mSplineData[i].Location.ToString());
             }
         }
     }
     else
     {
-        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 BELT ConfigureActor: No registry entry found for this hologram"));
+        UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 BELT ConfigureActor: No registry entry found for this hologram"));
     }
     
     if (mSplineComponent)
     {
-        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 BELT ConfigureActor: SplineComponent has %d points, length=%.1f cm"),
+        UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 BELT ConfigureActor: SplineComponent has %d points, length=%.1f cm"),
             mSplineComponent->GetNumberOfSplinePoints(), mSplineComponent->GetSplineLength());
     }
     else
     {
-        UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 BELT ConfigureActor: mSplineComponent is NULL!"));
+        UE_LOG(LogSmartHologram, Warning, TEXT("🔧 BELT ConfigureActor: mSplineComponent is NULL!"));
     }
     
     // CRITICAL: Record expected Point[0] BEFORE Super call to detect if vanilla reverses the spline
     FVector ExpectedPoint0 = mSplineData.Num() > 0 ? mSplineData[0].Location : FVector::ZeroVector;
     int32 ExpectedNumPoints = mSplineData.Num();
     
-    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 BELT ConfigureActor: Expected Point[0]=%s with %d total points"), 
+    UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 BELT ConfigureActor: Expected Point[0]=%s with %d total points"), 
         *ExpectedPoint0.ToString(), ExpectedNumPoints);
     
     // Parent AFGConveyorBeltHologram handles mesh asset initialization automatically
@@ -1093,12 +1093,12 @@ void ASFConveyorBeltHologram::ConfigureActor(class AFGBuildable* inBuildable) co
     if (AFGBuildableConveyorBelt* Belt = Cast<AFGBuildableConveyorBelt>(inBuildable))
     {
         TArray<FSplinePointData>& BeltSplineData = const_cast<TArray<FSplinePointData>&>(Belt->GetSplinePointData());
-        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 BELT ConfigureActor: AFTER Super - Buildable has %d spline points"), 
+        UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 BELT ConfigureActor: AFTER Super - Buildable has %d spline points"), 
             BeltSplineData.Num());
         
         for (int32 i = 0; i < BeltSplineData.Num(); i++)
         {
-            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 BELT ConfigureActor:   BuildablePoint[%d] Location=%s"), 
+            UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 BELT ConfigureActor:   BuildablePoint[%d] Location=%s"), 
                 i, *BeltSplineData[i].Location.ToString());
         }
         
@@ -1117,8 +1117,8 @@ void ASFConveyorBeltHologram::ConfigureActor(class AFGBuildable* inBuildable) co
             
             if (!bPoint0Matches && bPointNMatchesExpected0)
             {
-                UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 BELT ConfigureActor: Vanilla reversed the spline! Correcting..."));
-                UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 BELT ConfigureActor: ActualPoint[0]=%s, ExpectedPoint[0]=%s, ActualPoint[N]=%s"),
+                UE_LOG(LogSmartHologram, Warning, TEXT("🔧 BELT ConfigureActor: Vanilla reversed the spline! Correcting..."));
+                UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 BELT ConfigureActor: ActualPoint[0]=%s, ExpectedPoint[0]=%s, ActualPoint[N]=%s"),
                     *ActualPoint0.ToString(), *ExpectedPoint0.ToString(), *ActualPointN.ToString());
                 
                 // Reverse the spline data back to correct order
@@ -1143,16 +1143,16 @@ void ASFConveyorBeltHologram::ConfigureActor(class AFGBuildable* inBuildable) co
                 // Note: SplineComponent will be updated during buildable's BeginPlay/PostLoad
                 // We only need to fix the mSplineData which determines the actual belt behavior
                 
-                UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 BELT ConfigureActor: Spline corrected! New Point[0]=%s"),
+                UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 BELT ConfigureActor: Spline corrected! New Point[0]=%s"),
                     MutableSplineData && MutableSplineData->Num() > 0 ? *(*MutableSplineData)[0].Location.ToString() : TEXT("EMPTY"));
             }
             else if (bPoint0Matches)
             {
-                UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 BELT ConfigureActor: Spline direction is correct (Point[0] matches)"));
+                UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 BELT ConfigureActor: Spline direction is correct (Point[0] matches)"));
             }
             else
             {
-                UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 BELT ConfigureActor: Spline direction unclear - Point[0] doesn't match expected, but neither does Point[N]"));
+                UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 BELT ConfigureActor: Spline direction unclear - Point[0] doesn't match expected, but neither does Point[N]"));
             }
         }
     }
@@ -1172,7 +1172,7 @@ void ASFConveyorBeltHologram::ConfigureActor(class AFGBuildable* inBuildable) co
     FSFHologramData* HoloData = USFHologramDataRegistry::GetData(const_cast<ASFConveyorBeltHologram*>(this));
     bool bIsExtendChild = HoloData && HoloData->ExtendChainId >= 0 && HoloData->ExtendChainIndex >= 0;
     
-    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 BELT ConfigureActor: Chain connection check - HoloData=%s, ChainId=%d, ChainIndex=%d, bIsExtendChild=%d"),
+    UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 BELT ConfigureActor: Chain connection check - HoloData=%s, ChainId=%d, ChainIndex=%d, bIsExtendChild=%d"),
         HoloData ? TEXT("valid") : TEXT("null"),
         HoloData ? HoloData->ExtendChainId : -999,
         HoloData ? HoloData->ExtendChainIndex : -999,
@@ -1184,7 +1184,7 @@ void ASFConveyorBeltHologram::ConfigureActor(class AFGBuildable* inBuildable) co
         USFSubsystem* SmartSubsystem = USFSubsystem::Get(GetWorld());
         USFExtendService* ExtendService = SmartSubsystem ? SmartSubsystem->GetExtendService() : nullptr;
         
-        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 BELT ConfigureActor: EXTEND child - Belt=%s, ExtendService=%s"),
+        UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 BELT ConfigureActor: EXTEND child - Belt=%s, ExtendService=%s"),
             Belt ? *Belt->GetName() : TEXT("null"),
             ExtendService ? TEXT("valid") : TEXT("null"));
         
@@ -1198,14 +1198,14 @@ void ASFConveyorBeltHologram::ConfigureActor(class AFGBuildable* inBuildable) co
                 AFGBuildableConveyorBase* PrevConveyor = ExtendService->GetBuiltConveyor(
                     HoloData->ExtendChainId, HoloData->ExtendChainIndex - 1);
                 
-                UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 BELT ConfigureActor: Looking for prev conveyor chain %d index %d → %s"),
+                UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 BELT ConfigureActor: Looking for prev conveyor chain %d index %d → %s"),
                     HoloData->ExtendChainId, HoloData->ExtendChainIndex - 1,
                     PrevConveyor ? *PrevConveyor->GetName() : TEXT("NOT FOUND"));
                 
                 if (PrevConveyor && BeltConn0)
                 {
                     UFGFactoryConnectionComponent* PrevConn1 = PrevConveyor->GetConnection1();
-                    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 BELT ConfigureActor: PrevConn1=%s (connected=%d), BeltConn0=%s (connected=%d)"),
+                    UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 BELT ConfigureActor: PrevConn1=%s (connected=%d), BeltConn0=%s (connected=%d)"),
                         PrevConn1 ? *PrevConn1->GetName() : TEXT("null"),
                         PrevConn1 ? PrevConn1->IsConnected() : -1,
                         BeltConn0 ? *BeltConn0->GetName() : TEXT("null"),
@@ -1214,12 +1214,12 @@ void ASFConveyorBeltHologram::ConfigureActor(class AFGBuildable* inBuildable) co
                     if (PrevConn1 && !PrevConn1->IsConnected() && !BeltConn0->IsConnected())
                     {
                         PrevConn1->SetConnection(BeltConn0);
-                        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 BELT ConfigureActor: ✅ Connected %s.Conn1 → %s.Conn0 (CHAIN LINK)"),
+                        UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 BELT ConfigureActor: ✅ Connected %s.Conn1 → %s.Conn0 (CHAIN LINK)"),
                             *PrevConveyor->GetName(), *Belt->GetName());
                     }
                     else
                     {
-                        UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 BELT ConfigureActor: ⚠️ Cannot connect - already connected or null"));
+                        UE_LOG(LogSmartHologram, Warning, TEXT("🔧 BELT ConfigureActor: ⚠️ Cannot connect - already connected or null"));
                     }
                 }
             }
@@ -1228,7 +1228,7 @@ void ASFConveyorBeltHologram::ConfigureActor(class AFGBuildable* inBuildable) co
                 // First belt - connect to distributor
                 AFGBuildable* Distributor = ExtendService->GetBuiltDistributor(HoloData->ExtendChainId);
                 
-                UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 BELT ConfigureActor: First belt (index 0) - Distributor=%s, BeltConn0=%s (connected=%d)"),
+                UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 BELT ConfigureActor: First belt (index 0) - Distributor=%s, BeltConn0=%s (connected=%d)"),
                     Distributor ? *Distributor->GetName() : TEXT("NOT FOUND"),
                     BeltConn0 ? *BeltConn0->GetName() : TEXT("null"),
                     BeltConn0 ? BeltConn0->IsConnected() : -1);
@@ -1261,12 +1261,12 @@ void ASFConveyorBeltHologram::ConfigureActor(class AFGBuildable* inBuildable) co
                     if (BestDistConn)
                     {
                         BestDistConn->SetConnection(BeltConn0);
-                        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 BELT ConfigureActor: ✅ Connected %s.%s → %s.Conn0 (DISTRIBUTOR LINK)"),
+                        UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 BELT ConfigureActor: ✅ Connected %s.%s → %s.Conn0 (DISTRIBUTOR LINK)"),
                             *Distributor->GetName(), *BestDistConn->GetName(), *Belt->GetName());
                     }
                     else
                     {
-                        UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 BELT ConfigureActor: ⚠️ No suitable distributor connection found (needed dir=%d)"),
+                        UE_LOG(LogSmartHologram, Warning, TEXT("🔧 BELT ConfigureActor: ⚠️ No suitable distributor connection found (needed dir=%d)"),
                             (int32)NeededDir);
                     }
                 }
@@ -1286,7 +1286,7 @@ void ASFConveyorBeltHologram::ConfigureActor(class AFGBuildable* inBuildable) co
         AFGBuildableConveyorBelt* Belt = Cast<AFGBuildableConveyorBelt>(inBuildable);
         if (Belt)
         {
-            UE_LOG(LogSmartFoundations, Log, TEXT("🚧 STACKABLE BELT: Built %s (index %d) - wiring deferred to OnActorSpawned"),
+            UE_LOG(LogSmartHologram, Log, TEXT("🚧 STACKABLE BELT: Built %s (index %d) - wiring deferred to OnActorSpawned"),
                 *Belt->GetName(), HoloData->StackableBeltIndex);
         }
     }
@@ -1318,7 +1318,7 @@ void ASFConveyorBeltHologram::ConfigureComponents(AFGBuildable* inBuildable) con
     FSFHologramData* HoloData = USFHologramDataRegistry::GetData(const_cast<ASFConveyorBeltHologram*>(this));
     if (!HoloData)
     {
-        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⛓️ BELT ConfigureComponents: %s - no HoloData, skipping pre-tick wiring"),
+        UE_LOG(LogSmartHologram, VeryVerbose, TEXT("⛓️ BELT ConfigureComponents: %s - no HoloData, skipping pre-tick wiring"),
             *Conveyor->GetName());
         return;
     }
@@ -1329,7 +1329,7 @@ void ASFConveyorBeltHologram::ConfigureComponents(AFGBuildable* inBuildable) con
     
     if (!ExtendService)
     {
-        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⛓️ BELT ConfigureComponents: %s - no ExtendService, skipping pre-tick wiring"),
+        UE_LOG(LogSmartHologram, VeryVerbose, TEXT("⛓️ BELT ConfigureComponents: %s - no ExtendService, skipping pre-tick wiring"),
             *Conveyor->GetName());
         return;
     }
@@ -1345,7 +1345,7 @@ void ASFConveyorBeltHologram::ConfigureComponents(AFGBuildable* inBuildable) con
     // and wire to them. This is similar to how stackable pipes work.
     if (HoloData->bIsStackableBelt)
     {
-        UE_LOG(LogSmartFoundations, Log, TEXT("⛓️ STACKABLE BELT ConfigureComponents: %s - wiring to nearby pole connectors"),
+        UE_LOG(LogSmartHologram, Log, TEXT("⛓️ STACKABLE BELT ConfigureComponents: %s - wiring to nearby pole connectors"),
             *Conveyor->GetName());
         
         const float SearchRadius = 100.0f;  // 1m search radius for pole connectors
@@ -1392,7 +1392,7 @@ void ASFConveyorBeltHologram::ConfigureComponents(AFGBuildable* inBuildable) con
             {
                 Conn0->SetConnection(NearestConn);
                 bMadeConnection = true;
-                UE_LOG(LogSmartFoundations, Log, TEXT("⛓️ STACKABLE BELT: ✅ Wired %s.Conn0 → %s.%s (dist=%.1f)"),
+                UE_LOG(LogSmartHologram, Log, TEXT("⛓️ STACKABLE BELT: ✅ Wired %s.Conn0 → %s.%s (dist=%.1f)"),
                     *Conveyor->GetName(), *NearestConn->GetOwner()->GetName(), *NearestConn->GetName(), NearestDist);
             }
         }
@@ -1439,7 +1439,7 @@ void ASFConveyorBeltHologram::ConfigureComponents(AFGBuildable* inBuildable) con
             {
                 Conn1->SetConnection(NearestConn);
                 bMadeConnection = true;
-                UE_LOG(LogSmartFoundations, Log, TEXT("⛓️ STACKABLE BELT: ✅ Wired %s.Conn1 → %s.%s (dist=%.1f)"),
+                UE_LOG(LogSmartHologram, Log, TEXT("⛓️ STACKABLE BELT: ✅ Wired %s.Conn1 → %s.%s (dist=%.1f)"),
                     *Conveyor->GetName(), *NearestConn->GetOwner()->GetName(), *NearestConn->GetName(), NearestDist);
             }
         }
@@ -1449,14 +1449,14 @@ void ASFConveyorBeltHologram::ConfigureComponents(AFGBuildable* inBuildable) con
         // Calling AddConveyor during ConfigureComponents risks double-add:
         // vanilla's initialization may have already registered the belt,
         // causing chain mismatch → crash in TickFactoryActors.
-        UE_LOG(LogSmartFoundations, Log, TEXT("⛓️ STACKABLE BELT: %s wiring complete (connections=%s) - chain creation deferred to Respline"),
+        UE_LOG(LogSmartHologram, Log, TEXT("⛓️ STACKABLE BELT: %s wiring complete (connections=%s) - chain creation deferred to Respline"),
             *Conveyor->GetName(), bMadeConnection ? TEXT("YES") : TEXT("NO"));
         
         // Early return for stackable belts - they don't use the clone ID system
         return;
     }
     
-    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⛓️ BELT ConfigureComponents: %s (CloneId=%s) checking targets: Conn0→%s.%s, Conn1→%s.%s"),
+    UE_LOG(LogSmartHologram, VeryVerbose, TEXT("⛓️ BELT ConfigureComponents: %s (CloneId=%s) checking targets: Conn0→%s.%s, Conn1→%s.%s"),
         *Conveyor->GetName(),
         *HoloData->JsonCloneId,
         *HoloData->Conn0TargetCloneId, *HoloData->Conn0TargetConnectorName.ToString(),
@@ -1475,7 +1475,7 @@ void ASFConveyorBeltHologram::ConfigureComponents(AFGBuildable* inBuildable) con
             FString SourceActorName = HoloData->Conn0TargetCloneId.Mid(7);  // Skip "source:"
             TargetBuildable = ExtendService->GetSourceBuildableByName(SourceActorName);
             
-            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🛤️ LANE ConfigureComponents: Looking up source buildable '%s' → %s"),
+            UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🛤️ LANE ConfigureComponents: Looking up source buildable '%s' → %s"),
                 *SourceActorName, TargetBuildable ? *TargetBuildable->GetName() : TEXT("NOT FOUND"));
         }
         else
@@ -1503,18 +1503,18 @@ void ASFConveyorBeltHologram::ConfigureComponents(AFGBuildable* inBuildable) con
             {
                 Conn0->SetConnection(TargetConn);
                 bMadeConnection = true;
-                UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⛓️ BELT ConfigureComponents: ✅ Connected %s.Conn0 → %s.%s"),
+                UE_LOG(LogSmartHologram, VeryVerbose, TEXT("⛓️ BELT ConfigureComponents: ✅ Connected %s.Conn0 → %s.%s"),
                     *Conveyor->GetName(), *TargetBuildable->GetName(), *TargetConn->GetName());
             }
             else
             {
-                UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⛓️ BELT ConfigureComponents: Conn0 target %s.%s not found or already connected"),
+                UE_LOG(LogSmartHologram, VeryVerbose, TEXT("⛓️ BELT ConfigureComponents: Conn0 target %s.%s not found or already connected"),
                     *TargetBuildable->GetName(), *HoloData->Conn0TargetConnectorName.ToString());
             }
         }
         else
         {
-            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⛓️ BELT ConfigureComponents: Conn0 target buildable '%s' not yet built"),
+            UE_LOG(LogSmartHologram, VeryVerbose, TEXT("⛓️ BELT ConfigureComponents: Conn0 target buildable '%s' not yet built"),
                 *HoloData->Conn0TargetCloneId);
         }
     }
@@ -1532,7 +1532,7 @@ void ASFConveyorBeltHologram::ConfigureComponents(AFGBuildable* inBuildable) con
             FString SourceActorName = HoloData->Conn1TargetCloneId.Mid(7);  // Skip "source:"
             TargetBuildable = ExtendService->GetSourceBuildableByName(SourceActorName);
             
-            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🛤️ LANE ConfigureComponents: Looking up source buildable '%s' → %s"),
+            UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🛤️ LANE ConfigureComponents: Looking up source buildable '%s' → %s"),
                 *SourceActorName, TargetBuildable ? *TargetBuildable->GetName() : TEXT("NOT FOUND"));
         }
         else
@@ -1560,18 +1560,18 @@ void ASFConveyorBeltHologram::ConfigureComponents(AFGBuildable* inBuildable) con
             {
                 Conn1->SetConnection(TargetConn);
                 bMadeConnection = true;
-                UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⛓️ BELT ConfigureComponents: ✅ Connected %s.Conn1 → %s.%s"),
+                UE_LOG(LogSmartHologram, VeryVerbose, TEXT("⛓️ BELT ConfigureComponents: ✅ Connected %s.Conn1 → %s.%s"),
                     *Conveyor->GetName(), *TargetBuildable->GetName(), *TargetConn->GetName());
             }
             else
             {
-                UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⛓️ BELT ConfigureComponents: Conn1 target %s.%s not found or already connected"),
+                UE_LOG(LogSmartHologram, VeryVerbose, TEXT("⛓️ BELT ConfigureComponents: Conn1 target %s.%s not found or already connected"),
                     *TargetBuildable->GetName(), *HoloData->Conn1TargetConnectorName.ToString());
             }
         }
         else
         {
-            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⛓️ BELT ConfigureComponents: Conn1 target buildable '%s' not yet built"),
+            UE_LOG(LogSmartHologram, VeryVerbose, TEXT("⛓️ BELT ConfigureComponents: Conn1 target buildable '%s' not yet built"),
                 *HoloData->Conn1TargetCloneId);
         }
     }
@@ -1607,7 +1607,7 @@ void ASFConveyorBeltHologram::ConfigureComponents(AFGBuildable* inBuildable) con
                 bool bIsLaneSegment = HoloData->Conn0TargetCloneId.StartsWith(TEXT("source:")) ||
                     HoloData->Conn1TargetCloneId.StartsWith(TEXT("source:"));
                 
-                UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⛓️ BELT ConfigureComponents: %s - EXTEND %s (skipping AddConveyor - Respline handles chain creation better)"),
+                UE_LOG(LogSmartHologram, VeryVerbose, TEXT("⛓️ BELT ConfigureComponents: %s - EXTEND %s (skipping AddConveyor - Respline handles chain creation better)"),
                     *Conveyor->GetName(),
                     bIsLaneSegment ? TEXT("LANE SEGMENT") : TEXT("BELT SEGMENT"));
                 // DON'T add EXTEND belts to subsystem here - CreateChainActors will use Respline
@@ -1622,20 +1622,20 @@ void ASFConveyorBeltHologram::ConfigureComponents(AFGBuildable* inBuildable) con
                 
                 if (bIsStackableBelt)
                 {
-                    UE_LOG(LogSmartFoundations, Log, TEXT("⛓️ BELT ConfigureComponents: %s - STACKABLE BELT - deferring AddConveyor until all connections made"),
+                    UE_LOG(LogSmartHologram, Log, TEXT("⛓️ BELT ConfigureComponents: %s - STACKABLE BELT - deferring AddConveyor until all connections made"),
                         *Conveyor->GetName());
                     // Don't call AddConveyor yet - SFSubsystem will call it after all belts are wired
                 }
                 else
                 {
                     // Non-EXTEND, non-stackable belts - add to subsystem normally
-                    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⛓️ BELT ConfigureComponents: %s - adding to subsystem"),
+                    UE_LOG(LogSmartHologram, VeryVerbose, TEXT("⛓️ BELT ConfigureComponents: %s - adding to subsystem"),
                         *Conveyor->GetName());
                     
                     BuildableSubsystem->AddConveyor(Conveyor);
                     
                     AFGConveyorChainActor* ChainActor = Conveyor->GetConveyorChainActor();
-                    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⛓️ BELT ConfigureComponents: %s - initial chain: %s (%d segments)"),
+                    UE_LOG(LogSmartHologram, VeryVerbose, TEXT("⛓️ BELT ConfigureComponents: %s - initial chain: %s (%d segments)"),
                         *Conveyor->GetName(),
                         ChainActor ? *ChainActor->GetName() : TEXT("NULL"),
                         ChainActor ? ChainActor->GetNumChainSegments() : 0);
@@ -1645,528 +1645,8 @@ void ASFConveyorBeltHologram::ConfigureComponents(AFGBuildable* inBuildable) con
     }
     else
     {
-        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⛓️ BELT ConfigureComponents: %s - no connections made (targets not yet built)"),
+        UE_LOG(LogSmartHologram, VeryVerbose, TEXT("⛓️ BELT ConfigureComponents: %s - no connections made (targets not yet built)"),
             *Conveyor->GetName());
-    }
-}
-
-void ASFConveyorBeltHologram::SetupBeltSpline(UFGFactoryConnectionComponent* StartConnector, UFGFactoryConnectionComponent* EndConnector)
-{
-    if (!StartConnector || !EndConnector)
-    {
-        UE_LOG(LogSmartFoundations, Error, TEXT("SetupBeltSpline: Invalid connectors"));
-        return;
-    }
-	if (StartConnector == EndConnector)
-	{
-		UE_LOG(LogSmartFoundations, Error,
-			TEXT("SetupBeltSpline: StartConnector == EndConnector (%s on %s, ptr=%p) on %s - refusing to build self-connection"),
-			*StartConnector->GetName(),
-			*GetNameSafe(StartConnector->GetOwner()),
-			StartConnector,
-			*GetName());
-		return;
-	}
-    
-    // Get connector positions and directions
-    FVector StartPos = StartConnector->GetComponentLocation();
-    FVector EndPos = EndConnector->GetComponentLocation();
-    FVector StartNormal = StartConnector->GetConnectorNormal();
-    FVector EndNormal = EndConnector->GetConnectorNormal();
-    
-    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 BELT SPLINE SETUP: %s"), *GetName());
-    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   Start: %s (normal: %s)"), *StartPos.ToString(), *StartNormal.ToString());
-    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   End: %s (normal: %s)"), *EndPos.ToString(), *EndNormal.ToString());
-    
-    // Clear existing spline data
-    mSplineData.Empty();
-    
-    // Calculate distance
-    float Distance = FVector::Dist(StartPos, EndPos);
-    
-    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   📐 Belt distance: %.1f cm"), Distance);
-    
-    // VANILLA 4-POINT BELT SPLINE: Belts use capped percentage formula
-    // Point 0: Start connector (50cm tangent)
-    // Point 1: Transition (100cm from start, 50cm arrive, 31% distance leave - max 600cm)
-    // Point 2: Transition (100cm from end, 31% distance arrive - max 600cm, 50cm leave)
-    // Point 3: End connector (50cm tangent)
-    // 
-    // Analysis from vanilla belts:
-    // - 510cm belt: 158cm tangent (31.0%)
-    // - 1924cm belt: 600cm tangent (31.2% but capped at 600cm)
-    // - 2214cm belt: 600cm tangent (would be 687cm at 31%, but capped!)
-    // Formula: CurveTangent = min(Distance * 0.31, 600.0)
-    
-    const float SmallTangent = 50.0f;                    // Fixed at connectors
-    const float MaxCurveTangent = 600.0f;                // Maximum curve tangent length
-    const float CurvePercent = 0.31f;                    // 31% of distance (from vanilla analysis)
-    const float CurveTangent = FMath::Min(Distance * CurvePercent, MaxCurveTangent);  // Capped at 600cm
-    const float TransitionOffset = 100.0f;               // FIXED 100cm
-    
-    // Calculate direction vector between connectors
-    FVector Direction = (EndPos - StartPos).GetSafeNormal();
-    
-    // Point 0: Start connector
-    FSplinePointData Point0;
-    Point0.Location = StartPos;
-    Point0.ArriveTangent = StartNormal * SmallTangent;
-    Point0.LeaveTangent = StartNormal * SmallTangent;
-    mSplineData.Add(Point0);
-    
-    // Point 1: Transition near start (100cm from start)
-    FVector TransitionStart = StartPos + StartNormal * TransitionOffset;
-    FSplinePointData Point1;
-    Point1.Location = TransitionStart;
-    Point1.ArriveTangent = StartNormal * SmallTangent;  // Small arriving from start
-    Point1.LeaveTangent = Direction * CurveTangent;     // Large leaving toward middle
-    mSplineData.Add(Point1);
-    
-    // Point 2: Transition near end (back from end toward start)
-    // EndNormal points toward source, so we ADD it to go back from end toward start
-    FVector TransitionEnd = EndPos + EndNormal * TransitionOffset;
-    FSplinePointData Point2;
-    Point2.Location = TransitionEnd;
-    Point2.ArriveTangent = Direction * CurveTangent;    // Large arriving from middle
-    Point2.LeaveTangent = -EndNormal * SmallTangent;    // Negate EndNormal to point toward destination
-    mSplineData.Add(Point2);
-    
-    // Point 3: End connector
-    FSplinePointData Point3;
-    Point3.Location = EndPos;
-    Point3.ArriveTangent = -EndNormal * SmallTangent;  // Negate EndNormal to match travel direction
-    Point3.LeaveTangent = -EndNormal * SmallTangent;
-    mSplineData.Add(Point3);
-    
-    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   🔧 Vanilla 4-point belt: transitions (100cm), curve tangents (600cm), distance=%.1f cm"), Distance)
-    
-    // CRITICAL FIX: Position ACTOR and spline component at correct world location before setting points
-    // This prevents coordinate system mismatch where spline points are interpreted as offsets
-    
-    // STEP 1: Position the actor itself at the belt start point
-    SetActorLocation(StartPos);
-    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   🔧 Actor positioned at: %s"), *StartPos.ToString());
-    
-    if (mSplineComponent)
-    {
-        // STEP 2: Position spline component at the start of the belt (world space)
-        FVector ComponentLocation = StartPos;
-        mSplineComponent->SetWorldLocation(ComponentLocation);
-        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   🔧 Spline component positioned at: %s"), *ComponentLocation.ToString());
-        
-        // Convert ALL control points and tangents from world to local space
-        // This is critical for proper spline rendering in the component's coordinate system
-        for (int32 i = 0; i < mSplineData.Num(); i++)
-        {
-            FVector WorldLocation = mSplineData[i].Location;
-            FVector WorldArriveTangent = mSplineData[i].ArriveTangent;
-            FVector WorldLeaveTangent = mSplineData[i].LeaveTangent;
-            
-            // Transform to local space
-            FVector LocalLocation = mSplineComponent->GetComponentTransform().InverseTransformPosition(WorldLocation);
-            FVector LocalArriveTangent = mSplineComponent->GetComponentTransform().InverseTransformVector(WorldArriveTangent);
-            FVector LocalLeaveTangent = mSplineComponent->GetComponentTransform().InverseTransformVector(WorldLeaveTangent);
-            
-            // Update spline data with local coordinates
-            mSplineData[i].Location = LocalLocation;
-            mSplineData[i].ArriveTangent = LocalArriveTangent;
-            mSplineData[i].LeaveTangent = LocalLeaveTangent;
-            
-            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   📋 Point %d: Local=%s, Tangent=%s"), 
-                i, *LocalLocation.ToString(), *LocalArriveTangent.ToString());
-        }
-    }
-    
-    // Update the spline component to make the belt visible
-    // CRITICAL: Must call AFGSplineHologram explicitly (same pattern as pipe hologram)
-    AFGSplineHologram::UpdateSplineComponent();
-    
-    // Verify actor position after spline setup
-    FVector ActorPosAfterSetup = GetActorLocation();
-    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   🔍 VERIFY: Actor position after SetupBeltSpline: X=%.1f Y=%.1f Z=%.1f"), 
-        ActorPosAfterSetup.X, ActorPosAfterSetup.Y, ActorPosAfterSetup.Z);
-    
-    if (ActorPosAfterSetup.IsNearlyZero(1.0f))
-    {
-        UE_LOG(LogSmartFoundations, Error, TEXT("   ❌ CRITICAL: Actor reset to origin after SetupBeltSpline! Parent class may have moved it."));
-    }
-    
-    // Note: Mesh generation will be handled by delayed UpdateSplineComponent() call
-    // This allows FinishSpawning() -> BeginPlay() to populate mesh assets first
-    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   ⏳ Spline setup complete - mesh generation deferred to subsystem"));
-    
-    // Force visibility and check mesh components
-    SetActorHiddenInGame(false);
-    if (USplineComponent* SplineComp = mSplineComponent)
-    {
-        SplineComp->SetVisibility(true, true);
-        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   Spline component visibility set"));
-    }
-    
-    // Check if we have any mesh components
-    TArray<UActorComponent*> MeshComponents;
-    GetComponents(UMeshComponent::StaticClass(), MeshComponents);
-    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   Found %d mesh components"), MeshComponents.Num());
-    
-    for (UActorComponent* Comp : MeshComponents)
-    {
-        if (UMeshComponent* Mesh = Cast<UMeshComponent>(Comp))
-        {
-            Mesh->SetVisibility(true, true);
-            Mesh->SetHiddenInGame(false);
-            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   Mesh component visibility forced"));
-        }
-    }
-    
-    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   Belt spline configured with %d points"), mSplineData.Num());
-    
-    // CRITICAL: Also set snapped connections so vanilla system knows this belt is connected
-    // This is what makes auto-connect belts work - they have connectors available at setup time
-    // The snapped connections tell the game to create unified chain actors during build
-    SetSnappedConnections(StartConnector, EndConnector);
-    UE_LOG(LogSmartFoundations, Log,
-        TEXT("🔗 SetupBeltSpline: Set snapped connections [0]=%s on %s (ptr=%p), [1]=%s on %s (ptr=%p)"),
-        StartConnector ? *StartConnector->GetName() : TEXT("null"),
-        StartConnector ? *GetNameSafe(StartConnector->GetOwner()) : TEXT("null"),
-        StartConnector,
-        EndConnector ? *EndConnector->GetName() : TEXT("null"),
-        EndConnector ? *GetNameSafe(EndConnector->GetOwner()) : TEXT("null"),
-        EndConnector);
-}
-
-void ASFConveyorBeltHologram::AutoRouteSplineWithNormals(const FVector& StartPos, const FVector& StartNormal, 
-                                                          const FVector& EndPos, const FVector& EndNormal)
-{
-    UE_LOG(LogSmartFoundations, Log, TEXT("🔍 AutoRouteSplineWithNormals: Routing belt spline with VANILLA 4-POINT structure"));
-    
-    // Use vanilla 4-point spline structure (same as SetupBeltSpline)
-    if (mSplineComponent)
-    {
-        // Clear existing spline
-        mSplineData.Empty();
-        mSplineComponent->ClearSplinePoints();
-        
-        // Calculate distance and direction
-        float Distance = FVector::Dist(StartPos, EndPos);
-        FVector Direction = (EndPos - StartPos).GetSafeNormal();
-        
-        // VANILLA 4-POINT BELT SPLINE: Scaled for distance
-        const float SmallTangent = 50.0f;                    // Fixed at connectors
-        const float MaxCurveTangent = 600.0f;                // Maximum curve tangent length
-        const float CurvePercent = 0.31f;                    // 31% of distance (from vanilla analysis)
-        const float CurveTangent = FMath::Min(Distance * CurvePercent, MaxCurveTangent);  // Capped at 600cm
-        
-        // TransitionOffset must be scaled for short belts to prevent crossing
-        // Use 15% of distance, capped at 100cm max
-        const float TransitionOffset = FMath::Min(Distance * 0.15f, 100.0f);
-        
-        // Point 0: Start connector
-        FSplinePointData Point0;
-        Point0.Location = StartPos;
-        Point0.ArriveTangent = StartNormal * SmallTangent;
-        Point0.LeaveTangent = StartNormal * SmallTangent;
-        mSplineData.Add(Point0);
-        
-        // Point 1: Transition near start
-        FVector TransitionStart = StartPos + StartNormal * TransitionOffset;
-        FSplinePointData Point1;
-        Point1.Location = TransitionStart;
-        Point1.ArriveTangent = StartNormal * SmallTangent;
-        Point1.LeaveTangent = Direction * CurveTangent;
-        mSplineData.Add(Point1);
-        
-        // Point 2: Transition near end (back from end toward start)
-        FVector TransitionEnd = EndPos + EndNormal * TransitionOffset;
-        FSplinePointData Point2;
-        Point2.Location = TransitionEnd;
-        Point2.ArriveTangent = Direction * CurveTangent;
-        Point2.LeaveTangent = -EndNormal * SmallTangent;
-        mSplineData.Add(Point2);
-        
-        // Point 3: End connector
-        FSplinePointData Point3;
-        Point3.Location = EndPos;
-        Point3.ArriveTangent = -EndNormal * SmallTangent;
-        Point3.LeaveTangent = -EndNormal * SmallTangent;
-        mSplineData.Add(Point3);
-        
-        // CRITICAL: Position ACTOR at start point (same as SetupBeltSpline)
-        SetActorLocation(StartPos);
-        
-        // Position spline component at start
-        mSplineComponent->SetWorldLocation(StartPos);
-        
-        // Convert all 4 points to local coordinates
-        FTransform SplineTransform = mSplineComponent->GetComponentTransform();
-        for (int32 i = 0; i < mSplineData.Num(); i++)
-        {
-            mSplineData[i].Location = SplineTransform.InverseTransformPosition(mSplineData[i].Location);
-            mSplineData[i].ArriveTangent = SplineTransform.InverseTransformVector(mSplineData[i].ArriveTangent);
-            mSplineData[i].LeaveTangent = SplineTransform.InverseTransformVector(mSplineData[i].LeaveTangent);
-        }
-        
-        // Update spline component - MUST use AFGSplineHologram explicitly (same as pipe)
-        // Super::UpdateSplineComponent() calls AFGConveyorBeltHologram which doesn't transfer mSplineData
-        AFGSplineHologram::UpdateSplineComponent();
-        
-        UE_LOG(LogSmartFoundations, Log, TEXT("🔍 Auto-routed belt spline: %d points, %.1f cm, spline length=%.1f"), 
-            mSplineData.Num(), Distance, mSplineComponent ? mSplineComponent->GetSplineLength() : 0.0f);
-    }
-    else
-    {
-        UE_LOG(LogSmartFoundations, Warning, TEXT("🔍 AutoRouteSplineWithNormals: No spline component!"));
-    }
-}
-
-bool ASFConveyorBeltHologram::TryUseBuildModeRouting(
-	const FVector& StartPos,
-	const FVector& StartNormal,
-	const FVector& EndPos,
-	const FVector& EndNormal)
-{
-	if (!mSplineComponent)
-	{
-		UE_LOG(LogSmartFoundations, Log, TEXT("🔍 TryUseBuildModeRouting FAILED: No mSplineComponent on %s"), *GetName());
-		return false;
-	}
-	
-	// Select routing mode (set by HUD auto-connect settings).
-	// 0=Auto, 1=2D, 2=Straight, 3=Curve
-	if (RoutingMode == 2)
-	{
-		// Straight: Force a simple 2-point spline (leave tangents as zero).
-		SetActorLocation(StartPos);
-		mSplineComponent->SetWorldLocation(StartPos);
-		mSplineData.Empty();
-		mSplineComponent->ClearSplinePoints();
-		
-		FSplinePointData Point0;
-		Point0.Location = StartPos;
-		Point0.ArriveTangent = FVector::ZeroVector;
-		Point0.LeaveTangent = FVector::ZeroVector;
-		mSplineData.Add(Point0);
-		
-		FSplinePointData Point1;
-		Point1.Location = EndPos;
-		Point1.ArriveTangent = FVector::ZeroVector;
-		Point1.LeaveTangent = FVector::ZeroVector;
-		mSplineData.Add(Point1);
-		
-		FTransform SplineTransform = mSplineComponent->GetComponentTransform();
-		for (int32 i = 0; i < mSplineData.Num(); i++)
-		{
-			mSplineData[i].Location = SplineTransform.InverseTransformPosition(mSplineData[i].Location);
-			mSplineData[i].ArriveTangent = SplineTransform.InverseTransformVector(mSplineData[i].ArriveTangent);
-			mSplineData[i].LeaveTangent = SplineTransform.InverseTransformVector(mSplineData[i].LeaveTangent);
-		}
-	}
-	else if (RoutingMode == 3)
-	{
-		// Curve: Use Smart's existing 4-point curve generator.
-		AutoRouteSplineWithNormals(StartPos, StartNormal, EndPos, EndNormal);
-	}
-	else if (RoutingMode == 1)
-	{
-		// 2D: Curve routing but flattened to horizontal plane.
-		FVector FlatStartNormal = FVector(StartNormal.X, StartNormal.Y, 0.0f).GetSafeNormal();
-		FVector FlatEndNormal = FVector(EndNormal.X, EndNormal.Y, 0.0f).GetSafeNormal();
-		if (FlatStartNormal.IsNearlyZero())
-		{
-			FlatStartNormal = FVector::ForwardVector;
-		}
-		if (FlatEndNormal.IsNearlyZero())
-		{
-			FlatEndNormal = -FVector::ForwardVector;
-		}
-		AutoRouteSplineWithNormals(StartPos, FlatStartNormal, EndPos, FlatEndNormal);
-	}
-	else
-	{
-		// Auto: Use the engine's native routing logic (private in AFGConveyorBeltHologram).
-		// Access is granted via AccessTransformers Friend.
-		AutoRouteSpline(StartPos, StartNormal, EndPos, EndNormal);
-	}
-	
-	// Ensure spline component is updated from mSplineData.
-	AFGSplineHologram::UpdateSplineComponent();
-	
-	const int32 NewSplinePoints = mSplineData.Num();
-	const float NewSplineLength = mSplineComponent->GetSplineLength();
-	const float ExpectedDistance = FVector::Distance(StartPos, EndPos);
-	
-	// NOTE: Engine routing can legitimately return a 2-point straight spline for simple cases.
-	// Treat routing as failed only when the result is clearly a placeholder/invalid (less than 50cm).
-	if (NewSplinePoints < 2 || NewSplineLength < 50.0f)
-	{
-		UE_LOG(LogSmartFoundations, Log,
-			TEXT("🔍 TryUseBuildModeRouting FAILED: Stub spline after AutoRouteSpline on %s | Points=%d Len=%.1f Expected=%.1f | Start=%s StartN=%s End=%s EndN=%s"),
-			*GetName(),
-			NewSplinePoints,
-			NewSplineLength,
-			ExpectedDistance,
-			*StartPos.ToString(),
-			*StartNormal.ToString(),
-			*EndPos.ToString(),
-			*EndNormal.ToString());
-		return false;
-	}
-	
-	// Log at normal level only for the low-point-count cases we historically misclassified.
-	// Keep the typical success path quiet to avoid log spam.
-	if (NewSplinePoints <= 3)
-	{
-		UE_LOG(LogSmartFoundations, Log, TEXT("🔍 TryUseBuildModeRouting OK: Engine AutoRouteSpline produced %d points (Len=%.1f Expected=%.1f) on %s"),
-			NewSplinePoints,
-			NewSplineLength,
-			ExpectedDistance,
-			*GetName());
-	}
-	return true;
-}
-
-void ASFConveyorBeltHologram::SetSplineDataAndUpdate(const TArray<FSplinePointData>& InSplineData)
-{
-    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 SetSplineDataAndUpdate: Setting %d spline points on %s"), InSplineData.Num(), *GetName());
-    
-    // Log input data
-    for (int32 i = 0; i < InSplineData.Num(); i++)
-    {
-        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 SetSplineDataAndUpdate:   Input[%d] Location=%s"), 
-            i, *InSplineData[i].Location.ToString());
-    }
-    
-    // Copy spline data
-    mSplineData = InSplineData;
-    
-    // CRITICAL: Store backup in registry so ConfigureActor can restore if vanilla resets it
-    // This happens when AddChild() or other vanilla code resets mSplineData before Construct()
-    FSFHologramData* HoloData = USFHologramDataRegistry::GetData(this);
-    if (!HoloData)
-    {
-        HoloData = USFHologramDataRegistry::AttachData(this);
-    }
-    if (HoloData)
-    {
-        HoloData->bHasBackupSplineData = true;
-        HoloData->BackupSplineData = InSplineData;
-        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 SetSplineDataAndUpdate: Stored %d points in backup registry"), InSplineData.Num());
-    }
-    
-    // Verify copy
-    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 SetSplineDataAndUpdate: After copy, mSplineData has %d points"), mSplineData.Num());
-    
-    // Update the spline component from the data
-    // CRITICAL: Must call AFGSplineHologram explicitly (same pattern as pipe hologram)
-    if (mSplineComponent)
-    {
-        AFGSplineHologram::UpdateSplineComponent();
-        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 SetSplineDataAndUpdate: UpdateSplineComponent called, spline length=%.1f cm"), 
-            mSplineComponent->GetSplineLength());
-    }
-    else
-    {
-        UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 SetSplineDataAndUpdate: No spline component!"));
-    }
-}
-
-void ASFConveyorBeltHologram::StartContinuousPositionCorrection(UFGFactoryConnectionComponent* Output, UFGFactoryConnectionComponent* Input)
-{
-    // Cache connectors for use in timer callback
-    CachedOutputConnector = Output;
-    CachedInputConnector = Input;
-    
-    if (!Output || !Input)
-    {
-        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   ❌ CONTINUOUS CORRECTION: Invalid connectors, cannot start"));
-        return;
-    }
-    
-    // Stop any existing timer
-    StopContinuousPositionCorrection();
-    
-    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   🔁 CONTINUOUS CORRECTION: Starting timer to rebuild belt every 0.033s (30fps)"));
-    
-    // Set up recurring timer (every ~33ms = 30fps)
-    UWorld* World = GetWorld();
-    if (World)
-    {
-        World->GetTimerManager().SetTimer(
-            ContinuousPositionCorrectionTimer,
-            [this]()
-            {
-                // Validate we still have valid connectors and actor
-                if (!CachedOutputConnector.IsValid() || !CachedInputConnector.IsValid())
-                {
-                    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   ⚠️ CONTINUOUS CORRECTION: Connectors invalid, stopping timer"));
-                    StopContinuousPositionCorrection();
-                    return;
-                }
-                
-                // Check if actor is at origin
-                FVector ActorLoc = GetActorLocation();
-                if (ActorLoc.IsNearlyZero(1.0f))
-                {
-                    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   🔁 CONTINUOUS CORRECTION: Actor at origin, rebuilding belt"));
-                    
-                    // Rebuild spline and trigger mesh generation
-                    SetupBeltSpline(CachedOutputConnector.Get(), CachedInputConnector.Get());
-                    TriggerMeshGeneration();
-                    
-                    // Force visibility
-                    SetActorHiddenInGame(false);
-                }
-            },
-            0.033f,  // Every 33ms (30fps)
-            true     // Loop
-        );
-    }
-}
-
-void ASFConveyorBeltHologram::StopContinuousPositionCorrection()
-{
-    UWorld* World = GetWorld();
-    if (World && ContinuousPositionCorrectionTimer.IsValid())
-    {
-        World->GetTimerManager().ClearTimer(ContinuousPositionCorrectionTimer);
-        ContinuousPositionCorrectionTimer.Invalidate();
-        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   🛑 CONTINUOUS CORRECTION: Timer stopped"));
-    }
-    
-    CachedOutputConnector.Reset();
-    CachedInputConnector.Reset();
-}
-
-void ASFConveyorBeltHologram::ForceApplyHologramMaterial()
-{
-    EHologramMaterialState CurrentState = GetHologramMaterialState();
-    
-    // Call our overridden SetPlacementMaterialState which properly applies
-    // hologram materials to dynamically created spline mesh components.
-    SetPlacementMaterialState(CurrentState);
-    
-    // DEBUG: Log what materials are actually on the spline meshes
-    TArray<USplineMeshComponent*> SplineMeshes;
-    GetComponents<USplineMeshComponent>(SplineMeshes);
-    
-    UE_LOG(LogSmartFoundations, Log, TEXT("🎨 ForceApplyHologramMaterial: Applied material state %d, found %d spline meshes"), 
-        (int32)CurrentState, SplineMeshes.Num());
-    
-    for (int32 i = 0; i < SplineMeshes.Num(); i++)
-    {
-        USplineMeshComponent* SplineMesh = SplineMeshes[i];
-        if (SplineMesh)
-        {
-            UMaterialInterface* Mat = SplineMesh->GetMaterial(0);
-            UStaticMesh* Mesh = SplineMesh->GetStaticMesh();
-            
-            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   [%d] Mesh=%s, Material=%s, Visible=%d, Hidden=%d, RenderCustomDepth=%d"),
-                i,
-                Mesh ? *Mesh->GetName() : TEXT("NULL"),
-                Mat ? *Mat->GetName() : TEXT("NULL"),
-                SplineMesh->IsVisible(),
-                SplineMesh->bHiddenInGame,
-                SplineMesh->bRenderCustomDepth);
-        }
     }
 }
 
@@ -2207,7 +1687,7 @@ void ASFConveyorBeltHologram::SetSnappedConnections(UFGFactoryConnectionComponen
             SnappedArray[0] = Connection0;
             SnappedArray[1] = Connection1;
             
-            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 EXTEND Belt: Set snapped connections on %s: [0]=%s, [1]=%s"),
+            UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 EXTEND Belt: Set snapped connections on %s: [0]=%s, [1]=%s"),
                 *GetName(),
                 Connection0 ? *Connection0->GetName() : TEXT("nullptr"),
                 Connection1 ? *Connection1->GetName() : TEXT("nullptr"));
@@ -2215,6 +1695,6 @@ void ASFConveyorBeltHologram::SetSnappedConnections(UFGFactoryConnectionComponen
     }
     else
     {
-        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND Belt: Failed to find mSnappedConnectionComponents property on %s"), *GetName());
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartHologram, Warning, TEXT("🔧 EXTEND Belt: Failed to find mSnappedConnectionComponents property on %s"), *GetName());
     }
 }

@@ -8,7 +8,7 @@ FSFSmartBuildableAdapter::FSFSmartBuildableAdapter(AFGHologram* InHologram)
 	: FSFHologramAdapterBase(InHologram)
 	, SmartBuildableHologram(Cast<ASFBuildableHologram>(InHologram))
 {
-	UE_LOG(LogSmartFoundations, Verbose, TEXT("FSFSmartBuildableAdapter created for: %s (ASFBuildableHologram: %s)"), 
+	UE_LOG(LogSmartHologram, Verbose, TEXT("FSFSmartBuildableAdapter created for: %s (ASFBuildableHologram: %s)"), 
 		InHologram ? *InHologram->GetName() : TEXT("NULL"),
 		SmartBuildableHologram ? TEXT("Yes") : TEXT("No"));
 }

@@ -9,6 +9,7 @@
 #include "Buildables/FGBuildableWire.h"
 #include "FGCircuitConnectionComponent.h"
 #include "SmartFoundations.h"  // For LogSmartFoundations
+#include "Constants/SFAssetPaths.h"
 #include "FGPlayerController.h"
 #include "FGCharacterPlayer.h"
 #include "FGInventoryComponent.h"
@@ -37,7 +38,7 @@ void FSFPowerAutoConnectManager::ProcessAllPowerPoles(AFGHologram* ParentPoleHol
 {
 	if (!ParentPoleHologram || !Subsystem || !AutoConnectService)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("⚡ ProcessAllPowerPoles: Invalid pointers (Parent=%d, Subsystem=%d, Service=%d)"),
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("⚡ ProcessAllPowerPoles: Invalid pointers (Parent=%d, Subsystem=%d, Service=%d)"),
 			ParentPoleHologram != nullptr, Subsystem != nullptr, AutoConnectService != nullptr);
 		return;
 	}
@@ -67,7 +68,7 @@ void FSFPowerAutoConnectManager::ProcessAllPowerPoles(AFGHologram* ParentPoleHol
 			{
 				ClearPowerLinePreviews();
 			}
-			UE_LOG(LogSmartFoundations, Log, TEXT("⚡ ProcessAllPowerPoles: Skipped - pole has vanilla wire child: %s (class: %s)"), 
+			UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ ProcessAllPowerPoles: Skipped - pole has vanilla wire child: %s (class: %s)"), 
 				*Child->GetName(), *ChildClassName);
 			return;
 		}
@@ -78,7 +79,7 @@ void FSFPowerAutoConnectManager::ProcessAllPowerPoles(AFGHologram* ParentPoleHol
 	{
 		if (PowerLinePreviews.Num() > 0)
 		{
-			UE_LOG(LogSmartFoundations, Log, TEXT("⚡ ProcessAllPowerPoles: Power auto-connect disabled - clearing previews"));
+			UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ ProcessAllPowerPoles: Power auto-connect disabled - clearing previews"));
 			ClearPowerLinePreviews();
 		}
 		return;
@@ -106,7 +107,7 @@ void FSFPowerAutoConnectManager::ProcessAllPowerPoles(AFGHologram* ParentPoleHol
 		// Only log if we have previews to clear
 		if (PowerLinePreviews.Num() > 0)
 		{
-			UE_LOG(LogSmartFoundations, Log, TEXT("⚡ ProcessAllPowerPoles: No poles - clearing previews"));
+			UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ ProcessAllPowerPoles: No poles - clearing previews"));
 			ClearPowerLinePreviews();
 		}
 		return;
@@ -123,7 +124,7 @@ void FSFPowerAutoConnectManager::ProcessAllPowerPoles(AFGHologram* ParentPoleHol
 	if (LastPoleTransforms.Num() != AllPoles.Num())
 	{
 		bGridChanged = true;
-		UE_LOG(LogSmartFoundations, Log, TEXT("⚡ ProcessAllPowerPoles: Grid changed - pole count %d -> %d"), 
+		UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ ProcessAllPowerPoles: Grid changed - pole count %d -> %d"), 
 			LastPoleTransforms.Num(), AllPoles.Num());
 	}
 	else
@@ -157,12 +158,12 @@ void FSFPowerAutoConnectManager::ProcessAllPowerPoles(AFGHologram* ParentPoleHol
 	// (e.g., when moving build gun along Y-axis with existing poles)
 	if (!bGridChanged)
 	{
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⚡ ProcessAllPowerPoles: No grid changes detected - processing building connections only"));
+		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("⚡ ProcessAllPowerPoles: No grid changes detected - processing building connections only"));
 		
 		// Phase 2: Always process building connections even if grid hasn't changed
 		if (Subsystem && Subsystem->GetAutoConnectRuntimeSettings().bConnectPower)
 		{
-			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⚡ ProcessAllPowerPoles: Processing building connections (grid unchanged)"));
+			UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("⚡ ProcessAllPowerPoles: Processing building connections (grid unchanged)"));
 			ProcessBuildingConnections(AllPoles);
 		}
 		
@@ -198,22 +199,22 @@ void FSFPowerAutoConnectManager::ProcessAllPowerPoles(AFGHologram* ParentPoleHol
 		}
 	}
 	
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⚡ ProcessAllPowerPoles: START for parent %s (%d poles)"), 
+	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("⚡ ProcessAllPowerPoles: START for parent %s (%d poles)"), 
 		*ParentPoleHologram->GetName(), AllPoles.Num());
 
 	// Phase 1: Pole-to-pole connections (only if we have multiple poles)
 	if (bHasMultiplePoles)
 	{
 		// Analyze grid topology using AutoConnectService
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⚡ ProcessAllPowerPoles: Analyzing grid topology for %d poles"), AllPoles.Num());
+		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("⚡ ProcessAllPowerPoles: Analyzing grid topology for %d poles"), AllPoles.Num());
 		TArray<FPowerPoleGridNode> Grid = AutoConnectService->AnalyzeGridTopology(AllPoles);
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⚡ ProcessAllPowerPoles: Grid topology found %d nodes"), Grid.Num());
+		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("⚡ ProcessAllPowerPoles: Grid topology found %d nodes"), Grid.Num());
 
 		// Get PowerGridAxis setting: 0=Auto, 1=X, 2=Y, 3=X+Y
 		const auto& Config = Subsystem->GetAutoConnectRuntimeSettings();
 		int32 GridAxisMode = Config.PowerGridAxis;
 		
-		UE_LOG(LogSmartFoundations, Log, TEXT("⚡ ProcessAllPowerPoles: GridAxisMode=%d (0=Auto, 1=X, 2=Y, 3=X+Y)"), GridAxisMode);
+		UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ ProcessAllPowerPoles: GridAxisMode=%d (0=Auto, 1=X, 2=Y, 3=X+Y)"), GridAxisMode);
 		
 		// For Auto mode (0), determine which axis has more poles using GridCounters
 		// GridCounters represent the user's logical grid (shown on HUD as X×Y×Z)
@@ -236,39 +237,39 @@ void FSFPowerAutoConnectManager::ProcessAllPowerPoles(AFGHologram* ParentPoleHol
 			{
 				bConnectX = true;
 				bConnectY = false;
-				UE_LOG(LogSmartFoundations, Log, TEXT("⚡ ProcessAllPowerPoles: Auto mode - X counter higher (%d > %d), connecting X only"), XCount, YCount);
+				UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ ProcessAllPowerPoles: Auto mode - X counter higher (%d > %d), connecting X only"), XCount, YCount);
 			}
 			else if (YCount > XCount)
 			{
 				bConnectX = false;
 				bConnectY = true;
-				UE_LOG(LogSmartFoundations, Log, TEXT("⚡ ProcessAllPowerPoles: Auto mode - Y counter higher (%d > %d), connecting Y only"), YCount, XCount);
+				UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ ProcessAllPowerPoles: Auto mode - Y counter higher (%d > %d), connecting Y only"), YCount, XCount);
 			}
 			else
 			{
 				// Tie - default to X axis
 				bConnectX = true;
 				bConnectY = false;
-				UE_LOG(LogSmartFoundations, Log, TEXT("⚡ ProcessAllPowerPoles: Auto mode - Tie (%d = %d), defaulting to X axis"), XCount, YCount);
+				UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ ProcessAllPowerPoles: Auto mode - Tie (%d = %d), defaulting to X axis"), XCount, YCount);
 			}
 		}
 		else if (GridAxisMode == 1) // X only
 		{
 			bConnectX = true;
 			bConnectY = false;
-			UE_LOG(LogSmartFoundations, Log, TEXT("⚡ ProcessAllPowerPoles: X-only mode"));
+			UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ ProcessAllPowerPoles: X-only mode"));
 		}
 		else if (GridAxisMode == 2) // Y only
 		{
 			bConnectX = false;
 			bConnectY = true;
-			UE_LOG(LogSmartFoundations, Log, TEXT("⚡ ProcessAllPowerPoles: Y-only mode"));
+			UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ ProcessAllPowerPoles: Y-only mode"));
 		}
 		else // X+Y (mode 3)
 		{
 			bConnectX = true;
 			bConnectY = true;
-			UE_LOG(LogSmartFoundations, Log, TEXT("⚡ ProcessAllPowerPoles: X+Y mode (full mesh)"));
+			UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ ProcessAllPowerPoles: X+Y mode (full mesh)"));
 		}
 
 		// Get grid axes from parent pole for proper direction detection
@@ -287,25 +288,25 @@ void FSFPowerAutoConnectManager::ProcessAllPowerPoles(AFGHologram* ParentPoleHol
 			ConnectPoleToNeighbors(Node.Pole, FilteredXNeighbors, FilteredYNeighbors, GridXAxis, GridYAxis);
 			ConnectionsCreated += FilteredXNeighbors.Num() + FilteredYNeighbors.Num();
 		}
-		UE_LOG(LogSmartFoundations, Log, TEXT("⚡ ProcessAllPowerPoles: Created %d pole-to-pole connections"), ConnectionsCreated);
+		UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ ProcessAllPowerPoles: Created %d pole-to-pole connections"), ConnectionsCreated);
 	}
 	else
 	{
-		UE_LOG(LogSmartFoundations, Log, TEXT("⚡ ProcessAllPowerPoles: Single pole - skipping pole-to-pole connections"));
+		UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ ProcessAllPowerPoles: Single pole - skipping pole-to-pole connections"));
 	}
 
 	// Phase 2: Building connections (works for single pole or multiple poles)
 	if (Subsystem && Subsystem->GetAutoConnectRuntimeSettings().bConnectPower)
 	{
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⚡ ProcessAllPowerPoles: Processing building connections"));
+		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("⚡ ProcessAllPowerPoles: Processing building connections"));
 		ProcessBuildingConnections(AllPoles);
 	}
 	else
 	{
-		UE_LOG(LogSmartFoundations, Log, TEXT("⚡ ProcessAllPowerPoles: Building connections disabled in config"));
+		UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ ProcessAllPowerPoles: Building connections disabled in config"));
 	}
 	
-	UE_LOG(LogSmartFoundations, Log, TEXT("⚡ ProcessAllPowerPoles: COMPLETE - Total previews: %d"), PowerLinePreviews.Num());
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ ProcessAllPowerPoles: COMPLETE - Total previews: %d"), PowerLinePreviews.Num());
 }
 
 void FSFPowerAutoConnectManager::ProcessBuildingConnections(const TArray<AFGHologram*>& AllPoles)
@@ -315,7 +316,7 @@ void FSFPowerAutoConnectManager::ProcessBuildingConnections(const TArray<AFGHolo
 	// Clear old planned mappings
 	int32 OldCount = Subsystem->PlannedBuildingConnections.Num();
 	Subsystem->PlannedBuildingConnections.Empty();
-	UE_LOG(LogSmartFoundations, Log, TEXT("⚡ ProcessBuildingConnections: Cleared %d old mappings, processing %d poles"), OldCount, AllPoles.Num());
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ ProcessBuildingConnections: Cleared %d old mappings, processing %d poles"), OldCount, AllPoles.Num());
 	
 	// Get configuration - read range directly from config (not cached) so changes take effect immediately
 	const auto& RuntimeConfig = Subsystem->GetAutoConnectRuntimeSettings();
@@ -325,7 +326,7 @@ void FSFPowerAutoConnectManager::ProcessBuildingConnections(const TArray<AFGHolo
 	FSmart_ConfigStruct FreshConfig = FSmart_ConfigStruct::GetActiveConfig(Subsystem);
 	float RangeCm = static_cast<float>(FreshConfig.PowerConnectRange) * 100.0f;  // Convert meters to cm
 	
-	UE_LOG(LogSmartFoundations, Log, TEXT("⚡ ProcessBuildingConnections: Range=%.0fcm (%.1fm), Reserved=%d"),
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ ProcessBuildingConnections: Range=%.0fcm (%.1fm), Reserved=%d"),
 		RangeCm, RangeCm / 100.0f, UserReserved);
 	
 	if (RangeCm <= 0.0f) return;
@@ -380,7 +381,7 @@ void FSFPowerAutoConnectManager::ProcessBuildingConnections(const TArray<AFGHolo
 		int32 Available = MaxConnections - GridConnectionsUsed - ReservedSlots;
 		PoleCapacity.Add(Pole, FMath::Max(0, Available));
 		
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⚡ ProcessBuildingConnections: Pole %s capacity=%d (max=%d, grid=%d, reserved=%d)"),
+		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("⚡ ProcessBuildingConnections: Pole %s capacity=%d (max=%d, grid=%d, reserved=%d)"),
 			*Pole->GetName(), Available, MaxConnections, GridConnectionsUsed, ReservedSlots);
 	}
 	
@@ -469,7 +470,7 @@ void FSFPowerAutoConnectManager::ProcessBuildingConnections(const TArray<AFGHolo
 	// Sort by distance - closest pairs first
 	AllPairs.Sort([](const FPoleBuildingPair& A, const FPoleBuildingPair& B) { return A.Distance < B.Distance; });
 	
-	UE_LOG(LogSmartFoundations, Log, TEXT("⚡ ProcessBuildingConnections: Found %d pole-building pairs within range"), AllPairs.Num());
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ ProcessBuildingConnections: Found %d pole-building pairs within range"), AllPairs.Num());
 	
 	// ==========================================================================
 	// STEP 4: Global greedy assignment - closest pole always wins
@@ -501,7 +502,7 @@ void FSFPowerAutoConnectManager::ProcessBuildingConnections(const TArray<AFGHolo
 		AssignedBuildings.Add(Pair.Building);
 		(*Capacity)--;
 		
-		UE_LOG(LogSmartFoundations, Log, TEXT("⚡ ProcessBuildingConnections: Assigned %s to %s (dist=%.1f)"),
+		UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ ProcessBuildingConnections: Assigned %s to %s (dist=%.1f)"),
 			*Pair.Building->GetName(), *Pair.Pole->GetName(), Pair.Distance);
 	}
 	
@@ -515,11 +516,11 @@ void FSFPowerAutoConnectManager::ProcessBuildingConnections(const TArray<AFGHolo
 		TArray<AFGBuildable*>* Assignments = PoleAssignments.Find(Pole);
 		if (!Assignments || Assignments->Num() == 0)
 		{
-			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⚡ ProcessBuildingConnections: Pole %s has no building assignments"), *Pole->GetName());
+			UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("⚡ ProcessBuildingConnections: Pole %s has no building assignments"), *Pole->GetName());
 			continue;
 		}
 		
-		UE_LOG(LogSmartFoundations, Log, TEXT("⚡ ProcessBuildingConnections: Creating %d previews for pole %s"),
+		UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ ProcessBuildingConnections: Creating %d previews for pole %s"),
 			Assignments->Num(), *Pole->GetName());
 		
 		for (AFGBuildable* Building : *Assignments)
@@ -531,7 +532,7 @@ void FSFPowerAutoConnectManager::ProcessBuildingConnections(const TArray<AFGHolo
 			FVector PlannedLocation = Pole->GetActorLocation();
 			Subsystem->PlannedBuildingConnections.Add(Building, PlannedLocation);
 			
-			UE_LOG(LogSmartFoundations, Log, TEXT("⚡ ProcessBuildingConnections: Stored mapping %s → pole at (%.0f, %.0f, %.0f)"),
+			UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ ProcessBuildingConnections: Stored mapping %s → pole at (%.0f, %.0f, %.0f)"),
 				*Building->GetName(), PlannedLocation.X, PlannedLocation.Y, PlannedLocation.Z);
 		}
 		
@@ -564,18 +565,18 @@ void FSFPowerAutoConnectManager::ProcessBuildingConnections(const TArray<AFGHolo
 				{
 					// First time connecting - apply it
 					bShouldApply = true;
-					UE_LOG(LogSmartFoundations, Log, TEXT("   ⚡ CONTEXT-AWARE SPACING: First power connection detected"));
+					UE_LOG(LogSmartAutoConnect, Log, TEXT("   ⚡ CONTEXT-AWARE SPACING: First power connection detected"));
 				}
 				else if (LastTargetBuildingClass.IsValid() && LastTargetBuildingClass.Get() != CurrentBuildingClass)
 				{
 					// Building changed - reset and apply new spacing
 					bShouldApply = true;
-					UE_LOG(LogSmartFoundations, Log, TEXT("   ⚡ CONTEXT-AWARE SPACING: Target building changed (%s → %s), re-adjusting"),
+					UE_LOG(LogSmartAutoConnect, Log, TEXT("   ⚡ CONTEXT-AWARE SPACING: Target building changed (%s → %s), re-adjusting"),
 						*LastTargetBuildingClass->GetName(), *CurrentBuildingClass->GetName());
 				}
 				else
 				{
-					UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   ⚡ CONTEXT-AWARE SPACING: Skipping (already applied, user can fine-tune)"));
+					UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   ⚡ CONTEXT-AWARE SPACING: Skipping (already applied, user can fine-tune)"));
 				}
 				
 				if (bShouldApply)
@@ -605,7 +606,7 @@ void FSFPowerAutoConnectManager::ProcessBuildingConnections(const TArray<AFGHolo
 						bContextSpacingApplied = true;
 						LastTargetBuildingClass = CurrentBuildingClass;
 						
-						UE_LOG(LogSmartFoundations, Log, TEXT("   ⚡ CONTEXT-AWARE SPACING: Auto-adjusted poles to %.1fm x %.1fm (building: %s, width: %.0fcm)"),
+						UE_LOG(LogSmartAutoConnect, Log, TEXT("   ⚡ CONTEXT-AWARE SPACING: Auto-adjusted poles to %.1fm x %.1fm (building: %s, width: %.0fcm)"),
 							BuildingWidth / 100.0f, BuildingWidth / 100.0f,
 							*CurrentBuildingClass->GetName(), BuildingWidth);
 					}
@@ -614,7 +615,7 @@ void FSFPowerAutoConnectManager::ProcessBuildingConnections(const TArray<AFGHolo
 		}
 	}
 	
-	UE_LOG(LogSmartFoundations, Log, TEXT("⚡ ProcessBuildingConnections: COMPLETE - Stored %d building-to-pole mappings"),
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ ProcessBuildingConnections: COMPLETE - Stored %d building-to-pole mappings"),
 		Subsystem->PlannedBuildingConnections.Num());
 }
 
@@ -685,7 +686,7 @@ void FSFPowerAutoConnectManager::ConnectPoleToNeighbors(
 {
 	if (!Pole)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("⚡ ConnectPoleToNeighbors: Pole is null"));
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("⚡ ConnectPoleToNeighbors: Pole is null"));
 		return;
 	}
 
@@ -735,14 +736,14 @@ void FSFPowerAutoConnectManager::ConnectPoleToNeighbors(
 		// Connect to both directions
 		if (ClosestPositiveX)
 		{
-			UE_LOG(LogSmartFoundations, Log, TEXT("⚡ ConnectPoleToNeighbors: Creating X+ preview from %s to %s"), 
+			UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ ConnectPoleToNeighbors: Creating X+ preview from %s to %s"), 
 				*Pole->GetName(), *ClosestPositiveX->GetName());
 			CreatePowerLinePreview(Pole, ClosestPositiveX);
 		}
 		
 		if (ClosestNegativeX)
 		{
-			UE_LOG(LogSmartFoundations, Log, TEXT("⚡ ConnectPoleToNeighbors: Creating X- preview from %s to %s"), 
+			UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ ConnectPoleToNeighbors: Creating X- preview from %s to %s"), 
 				*Pole->GetName(), *ClosestNegativeX->GetName());
 			CreatePowerLinePreview(Pole, ClosestNegativeX);
 		}
@@ -792,14 +793,14 @@ void FSFPowerAutoConnectManager::ConnectPoleToNeighbors(
 		// Connect to both directions
 		if (ClosestPositiveY)
 		{
-			UE_LOG(LogSmartFoundations, Log, TEXT("⚡ ConnectPoleToNeighbors: Creating Y+ preview from %s to %s"), 
+			UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ ConnectPoleToNeighbors: Creating Y+ preview from %s to %s"), 
 				*Pole->GetName(), *ClosestPositiveY->GetName());
 			CreatePowerLinePreview(Pole, ClosestPositiveY);
 		}
 		
 		if (ClosestNegativeY)
 		{
-			UE_LOG(LogSmartFoundations, Log, TEXT("⚡ ConnectPoleToNeighbors: Creating Y- preview from %s to %s"), 
+			UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ ConnectPoleToNeighbors: Creating Y- preview from %s to %s"), 
 				*Pole->GetName(), *ClosestNegativeY->GetName());
 			CreatePowerLinePreview(Pole, ClosestNegativeY);
 		}
@@ -810,12 +811,12 @@ bool FSFPowerAutoConnectManager::CreatePowerLinePreview(AFGHologram* SourcePole,
 {
 	if (!SourcePole || !TargetPole || !Subsystem)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("⚡ CreatePowerLinePreview: Invalid input (Source=%d, Target=%d, Subsystem=%d)"),
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("⚡ CreatePowerLinePreview: Invalid input (Source=%d, Target=%d, Subsystem=%d)"),
 			SourcePole != nullptr, TargetPole != nullptr, Subsystem != nullptr);
 		return false;
 	}
 
-	UE_LOG(LogSmartFoundations, Log, TEXT("⚡ CreatePowerLinePreview: Attempting connection %s → %s"),
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ CreatePowerLinePreview: Attempting connection %s → %s"),
 		*SourcePole->GetName(), *TargetPole->GetName());
 
 	// Get power connection components
@@ -824,7 +825,7 @@ bool FSFPowerAutoConnectManager::CreatePowerLinePreview(AFGHologram* SourcePole,
 
 	if (!SourceConnection || !TargetConnection)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("⚡ CreatePowerLinePreview: Missing power connections - Source=%s Target=%s (SourcePole=%s, TargetPole=%s)"),
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("⚡ CreatePowerLinePreview: Missing power connections - Source=%s Target=%s (SourcePole=%s, TargetPole=%s)"),
 			SourceConnection ? TEXT("OK") : TEXT("NULL"), 
 			TargetConnection ? TEXT("OK") : TEXT("NULL"),
 			*SourcePole->GetName(), *TargetPole->GetName());
@@ -837,7 +838,7 @@ bool FSFPowerAutoConnectManager::CreatePowerLinePreview(AFGHologram* SourcePole,
 	// CRITICAL: Validate SourcePole before using as map key
 	if (!SourcePole || !IsValid(SourcePole))
 	{
-		UE_LOG(LogSmartFoundations, Error, TEXT("⚡ CreatePowerLinePreview: CRITICAL - SourcePole is null or invalid for map access"));
+		UE_LOG(LogSmartAutoConnect, Error, TEXT("⚡ CreatePowerLinePreview: CRITICAL - SourcePole is null or invalid for map access"));
 		return false;
 	}
 	
@@ -850,7 +851,7 @@ bool FSFPowerAutoConnectManager::CreatePowerLinePreview(AFGHologram* SourcePole,
 		{
 			if (Preview.IsValid() && Preview->GetEndConnection() == TargetConnection)
 			{
-				UE_LOG(LogSmartFoundations, Log, TEXT("⚡ CreatePowerLinePreview: Connection already exists (same direction)"));
+				UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ CreatePowerLinePreview: Connection already exists (same direction)"));
 				return Preview->UpdatePreview(SourceConnection, TargetConnection);
 			}
 		}
@@ -861,7 +862,7 @@ bool FSFPowerAutoConnectManager::CreatePowerLinePreview(AFGHologram* SourcePole,
 	// CRITICAL: Validate TargetPole before using as map key
 	if (!TargetPole || !IsValid(TargetPole))
 	{
-		UE_LOG(LogSmartFoundations, Error, TEXT("⚡ CreatePowerLinePreview: CRITICAL - TargetPole is null or invalid for map access"));
+		UE_LOG(LogSmartAutoConnect, Error, TEXT("⚡ CreatePowerLinePreview: CRITICAL - TargetPole is null or invalid for map access"));
 		return false;
 	}
 	
@@ -874,7 +875,7 @@ bool FSFPowerAutoConnectManager::CreatePowerLinePreview(AFGHologram* SourcePole,
 		{
 			if (Preview.IsValid() && Preview->GetEndConnection() == SourceConnection)
 			{
-				UE_LOG(LogSmartFoundations, Log, TEXT("⚡ CreatePowerLinePreview: Connection already exists (reverse direction) - skipping duplicate"));
+				UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ CreatePowerLinePreview: Connection already exists (reverse direction) - skipping duplicate"));
 				return true; // Connection already exists in reverse direction
 			}
 		}
@@ -886,7 +887,7 @@ bool FSFPowerAutoConnectManager::CreatePowerLinePreview(AFGHologram* SourcePole,
 		// CRITICAL: Double-check SourcePole validity before map operation
 		if (!SourcePole || !IsValid(SourcePole))
 		{
-			UE_LOG(LogSmartFoundations, Error, TEXT("⚡ CreatePowerLinePreview: CRITICAL - SourcePole became null before map Add"));
+			UE_LOG(LogSmartAutoConnect, Error, TEXT("⚡ CreatePowerLinePreview: CRITICAL - SourcePole became null before map Add"));
 			return false;
 		}
 		
@@ -907,7 +908,7 @@ bool FSFPowerAutoConnectManager::CreatePowerLinePreview(AFGHologram* SourcePole,
 		// CRITICAL: Final validation before array access
 		if (!SourcePole || !IsValid(SourcePole) || !PowerLinePreviews.Contains(SourcePole))
 		{
-			UE_LOG(LogSmartFoundations, Error, TEXT("⚡ CreatePowerLinePreview: CRITICAL - SourcePole invalid before array Add"));
+			UE_LOG(LogSmartAutoConnect, Error, TEXT("⚡ CreatePowerLinePreview: CRITICAL - SourcePole invalid before array Add"));
 			return false;
 		}
 		
@@ -919,11 +920,11 @@ bool FSFPowerAutoConnectManager::CreatePowerLinePreview(AFGHologram* SourcePole,
 		FVector TargetLoc = TargetPole->GetActorLocation();
 		Subsystem->AddPlannedPoleConnection(SourceLoc, TargetLoc);
 		
-		UE_LOG(LogSmartFoundations, Log, TEXT("⚡ CreatePowerLinePreview: SUCCESS - Preview created"));
+		UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ CreatePowerLinePreview: SUCCESS - Preview created"));
 		return true;
 	}
 
-	UE_LOG(LogSmartFoundations, Warning, TEXT("⚡ CreatePowerLinePreview: FAILED - UpdatePreview returned false"));
+	UE_LOG(LogSmartAutoConnect, Warning, TEXT("⚡ CreatePowerLinePreview: FAILED - UpdatePreview returned false"));
 	return false;
 }
 
@@ -963,7 +964,7 @@ UFGPowerConnectionComponent* FSFPowerAutoConnectManager::GetPowerConnection(AFGH
 		}
 	}
 	
-	UE_LOG(LogSmartFoundations, Warning, TEXT("⚡ GetPowerConnection: No power connections found on %s (had %d components, %d circuit components)"), 
+	UE_LOG(LogSmartAutoConnect, Warning, TEXT("⚡ GetPowerConnection: No power connections found on %s (had %d components, %d circuit components)"), 
 		*PoleHologram->GetName(), Components.Num(), CircuitComponents.Num());
 	
 	return nullptr;
@@ -1027,17 +1028,17 @@ void FSFPowerAutoConnectManager::OnPowerPoleBuilt(AFGBuildablePowerPole* BuiltPo
 {
 	if (!BuiltPole || !Subsystem)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("⚡ OnPowerPoleBuilt: Invalid parameters"));
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("⚡ OnPowerPoleBuilt: Invalid parameters"));
 		return;
 	}
 
-	UE_LOG(LogSmartFoundations, Log, TEXT("⚡ OnPowerPoleBuilt: Processing built pole %s"), *BuiltPole->GetName());
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ OnPowerPoleBuilt: Processing built pole %s"), *BuiltPole->GetName());
 
 	// Check if this pole was built from the grid system
 	// Only connect to other grid-built poles, not random poles in the world
 	if (!Subsystem->IsGridBuiltPowerPole(BuiltPole))
 	{
-		UE_LOG(LogSmartFoundations, Log, TEXT("⚡ OnPowerPoleBuilt: %s is not grid-built - skipping auto-connections"), *BuiltPole->GetName());
+		UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ OnPowerPoleBuilt: %s is not grid-built - skipping auto-connections"), *BuiltPole->GetName());
 		return;
 	}
 
@@ -1063,13 +1064,13 @@ void FSFPowerAutoConnectManager::OnPowerPoleBuilt(AFGBuildablePowerPole* BuiltPo
 		}
 	}
 
-	UE_LOG(LogSmartFoundations, Log, TEXT("⚡ OnPowerPoleBuilt: Found %d nearby poles"), NearbyPoles.Num());
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ OnPowerPoleBuilt: Found %d nearby poles"), NearbyPoles.Num());
 
 	// Create power connections to nearby poles (limit connections per pole to prevent explosion)
 	int32 MaxConnectionsPerPole = GetMaxConnectionsForPole(BuiltPole);
 	int32 ConnectionsMade = 0;
 	
-	UE_LOG(LogSmartFoundations, Log, TEXT("⚡ OnPowerPoleBuilt: Max connections for this pole: %d"), MaxConnectionsPerPole);
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ OnPowerPoleBuilt: Max connections for this pole: %d"), MaxConnectionsPerPole);
 	
 	// Count existing connections on this built pole
 	TArray<UFGCircuitConnectionComponent*> BuiltCircuitConnectionsAll;
@@ -1083,13 +1084,13 @@ void FSFPowerAutoConnectManager::OnPowerPoleBuilt(AFGBuildablePowerPole* BuiltPo
 		}
 	}
 	
-	UE_LOG(LogSmartFoundations, Log, TEXT("⚡ OnPowerPoleBuilt: Built pole has %d existing connections (max allowed: %d)"), 
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ OnPowerPoleBuilt: Built pole has %d existing connections (max allowed: %d)"), 
 		ExistingConnections, MaxConnectionsPerPole);
 	
 	// Skip if already at max connections
 	if (ExistingConnections >= MaxConnectionsPerPole)
 	{
-		UE_LOG(LogSmartFoundations, Log, TEXT("⚡ OnPowerPoleBuilt: Built pole already at max connections - skipping"));
+		UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ OnPowerPoleBuilt: Built pole already at max connections - skipping"));
 		return;
 	}
 	
@@ -1119,7 +1120,7 @@ void FSFPowerAutoConnectManager::OnPowerPoleBuilt(AFGBuildablePowerPole* BuiltPo
 		}
 	}
 	
-	UE_LOG(LogSmartFoundations, Log, TEXT("⚡ OnPowerPoleBuilt: Found %d planned neighbors from deferred queue (queue size: %d)"), 
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ OnPowerPoleBuilt: Found %d planned neighbors from deferred queue (queue size: %d)"), 
 		PlannedNeighborLocations.Num(), DeferredConnections.Num());
 	
 	// Find built poles at planned neighbor locations
@@ -1128,7 +1129,7 @@ void FSFPowerAutoConnectManager::OnPowerPoleBuilt(AFGBuildablePowerPole* BuiltPo
 	TArray<AFGBuildablePowerPole*> PolesToConnect;
 	const TArray<TWeakObjectPtr<AFGBuildablePowerPole>>& AllGridBuiltPoles = Subsystem->GetGridBuiltPowerPoles();
 	
-	UE_LOG(LogSmartFoundations, Log, TEXT("⚡ OnPowerPoleBuilt: Searching %d grid-built poles for matches"), AllGridBuiltPoles.Num());
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ OnPowerPoleBuilt: Searching %d grid-built poles for matches"), AllGridBuiltPoles.Num());
 	
 	for (const FVector& NeighborLoc : PlannedNeighborLocations)
 	{
@@ -1144,7 +1145,7 @@ void FSFPowerAutoConnectManager::OnPowerPoleBuilt(AFGBuildablePowerPole* BuiltPo
 		}
 	}
 	
-	UE_LOG(LogSmartFoundations, Log, TEXT("⚡ OnPowerPoleBuilt: Found %d poles to connect (from planned connections)"), PolesToConnect.Num());
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ OnPowerPoleBuilt: Found %d poles to connect (from planned connections)"), PolesToConnect.Num());
 	
 	// Temporary map to track which connections we attempted
 	TMap<UFGCircuitConnectionComponent*, bool> AttemptedConnections;
@@ -1153,7 +1154,7 @@ void FSFPowerAutoConnectManager::OnPowerPoleBuilt(AFGBuildablePowerPole* BuiltPo
 	{
 		if (ConnectionsMade >= RemainingConnections)
 		{
-			UE_LOG(LogSmartFoundations, Log, TEXT("⚡ OnPowerPoleBuilt: Reached remaining connections (%d) - stopping"), RemainingConnections);
+			UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ OnPowerPoleBuilt: Reached remaining connections (%d) - stopping"), RemainingConnections);
 			break;
 		}
 		
@@ -1172,7 +1173,7 @@ void FSFPowerAutoConnectManager::OnPowerPoleBuilt(AFGBuildablePowerPole* BuiltPo
 		
 		if (NearbyExistingConnections >= NearbyMaxConnections)
 		{
-			UE_LOG(LogSmartFoundations, Log, TEXT("⚡ OnPowerPoleBuilt: Nearby pole already at max connections (%d/%d) - skipping"), NearbyExistingConnections, NearbyMaxConnections);
+			UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ OnPowerPoleBuilt: Nearby pole already at max connections (%d/%d) - skipping"), NearbyExistingConnections, NearbyMaxConnections);
 			continue;
 		}
 		
@@ -1187,7 +1188,7 @@ void FSFPowerAutoConnectManager::OnPowerPoleBuilt(AFGBuildablePowerPole* BuiltPo
 		
 		if (BuiltCircuitConnections.Num() == 0 || NearbyCircuitConnections.Num() == 0)
 		{
-			UE_LOG(LogSmartFoundations, Warning, TEXT("⚡ OnPowerPoleBuilt: Pole has no circuit connections - skipping"));
+			UE_LOG(LogSmartAutoConnect, Warning, TEXT("⚡ OnPowerPoleBuilt: Pole has no circuit connections - skipping"));
 			continue;
 		}
 		
@@ -1225,7 +1226,7 @@ void FSFPowerAutoConnectManager::OnPowerPoleBuilt(AFGBuildablePowerPole* BuiltPo
 		
 		if (bAlreadyConnected)
 		{
-			UE_LOG(LogSmartFoundations, Log, TEXT("⚡ OnPowerPoleBuilt: Already connected to %s - skipping"), *NearbyPole->GetName());
+			UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ OnPowerPoleBuilt: Already connected to %s - skipping"), *NearbyPole->GetName());
 			continue;
 		}
 		
@@ -1233,7 +1234,7 @@ void FSFPowerAutoConnectManager::OnPowerPoleBuilt(AFGBuildablePowerPole* BuiltPo
 		// The child wire holograms exist for cost calculation but don't create persistent wires
 		// because unconnected wires are destroyed by the game. Now that both poles are built,
 		// we spawn the wire directly and connect it.
-		UClass* WireClass = LoadClass<AFGBuildableWire>(nullptr, TEXT("/Game/FactoryGame/Buildable/Factory/PowerLine/Build_PowerLine.Build_PowerLine_C"));
+		UClass* WireClass = LoadClass<AFGBuildableWire>(nullptr, SFAssetPaths::PowerLineBuildClass);
 		if (WireClass)
 		{
 			FActorSpawnParameters SpawnParams;
@@ -1245,25 +1246,25 @@ void FSFPowerAutoConnectManager::OnPowerPoleBuilt(AFGBuildablePowerPole* BuiltPo
 				bool bConnected = NewWire->Connect(BuiltConn, NearbyConn);
 				if (bConnected)
 				{
-					UE_LOG(LogSmartFoundations, Log, TEXT("⚡ OnPowerPoleBuilt: Spawned and connected wire between %s and %s"), 
+					UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ OnPowerPoleBuilt: Spawned and connected wire between %s and %s"), 
 						*BuiltPole->GetName(), *NearbyPole->GetName());
 					ConnectionsMade++;
 					PoleToPoleConnectionsMade++;
 				}
 				else
 				{
-					UE_LOG(LogSmartFoundations, Warning, TEXT("⚡ OnPowerPoleBuilt: Wire spawned but Connect() failed - destroying"));
+					UE_LOG(LogSmartAutoConnect, Warning, TEXT("⚡ OnPowerPoleBuilt: Wire spawned but Connect() failed - destroying"));
 					NewWire->Destroy();
 				}
 			}
 			else
 			{
-				UE_LOG(LogSmartFoundations, Warning, TEXT("⚡ OnPowerPoleBuilt: Failed to spawn wire"));
+				UE_LOG(LogSmartAutoConnect, Warning, TEXT("⚡ OnPowerPoleBuilt: Failed to spawn wire"));
 			}
 		}
 		else
 		{
-			UE_LOG(LogSmartFoundations, Warning, TEXT("⚡ OnPowerPoleBuilt: Failed to load wire class"));
+			UE_LOG(LogSmartAutoConnect, Warning, TEXT("⚡ OnPowerPoleBuilt: Failed to load wire class"));
 		}
 		
 		// Remove this connection from the deferred queue since it's been processed
@@ -1289,7 +1290,7 @@ void FSFPowerAutoConnectManager::OnPowerPoleBuilt(AFGBuildablePowerPole* BuiltPo
 	MaxConnectionsPerPole = GetMaxConnectionsForPole(BuiltPole);
 	int32 ReservedSlots = GetReservedSlotsForPole(BuiltPole);
 	
-	UE_LOG(LogSmartFoundations, Log, TEXT("⚡ OnPowerPoleBuilt: Current connections: %d/%d (pole-to-pole made: %d, checking buildings)"), 
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ OnPowerPoleBuilt: Current connections: %d/%d (pole-to-pole made: %d, checking buildings)"), 
 		CurrentConnections, MaxConnectionsPerPole, PoleToPoleConnectionsMade);
 	
 	// Calculate available slots for buildings
@@ -1299,11 +1300,11 @@ void FSFPowerAutoConnectManager::OnPowerPoleBuilt(AFGBuildablePowerPole* BuiltPo
 	// Skip building connections if no room for buildings
 	if (AvailableForBuildings <= 0)
 	{
-		UE_LOG(LogSmartFoundations, Log, TEXT("⚡ OnPowerPoleBuilt: Already at max connections - skipping building connections"));
+		UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ OnPowerPoleBuilt: Already at max connections - skipping building connections"));
 		return;
 	}
 	
-	UE_LOG(LogSmartFoundations, Log, TEXT("⚡ OnPowerPoleBuilt: Available slots for buildings: %d (total: %d, used: %d, reserved: %d)"), 
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ OnPowerPoleBuilt: Available slots for buildings: %d (total: %d, used: %d, reserved: %d)"), 
 		AvailableForBuildings, MaxConnectionsPerPole, CurrentConnections, ReservedSlots);
 	
 	int32 BuildingConnectionsMade = 0;
@@ -1316,12 +1317,12 @@ void FSFPowerAutoConnectManager::OnPowerPoleBuilt(AFGBuildablePowerPole* BuiltPo
 	// Get the pole's actual location for searching
 	FVector PoleLoc = BuiltPole->GetActorLocation();
 	
-	UE_LOG(LogSmartFoundations, Log, TEXT("⚡ OnPowerPoleBuilt: Searching for buildings to connect at (%.1f, %.1f, %.1f)"), 
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ OnPowerPoleBuilt: Searching for buildings to connect at (%.1f, %.1f, %.1f)"), 
 		PoleLoc.X, PoleLoc.Y, PoleLoc.Z);
 	
 	if (!Subsystem)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("⚡ OnPowerPoleBuilt: No subsystem - cannot access planned mappings"));
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("⚡ OnPowerPoleBuilt: No subsystem - cannot access planned mappings"));
 		return;
 	}
 	
@@ -1329,7 +1330,7 @@ void FSFPowerAutoConnectManager::OnPowerPoleBuilt(AFGBuildablePowerPole* BuiltPo
 	FSmart_ConfigStruct FreshConfig = FSmart_ConfigStruct::GetActiveConfig(Subsystem);
 	float RangeCm = static_cast<float>(FreshConfig.PowerConnectRange) * 100.0f;  // Convert meters to cm
 	
-	UE_LOG(LogSmartFoundations, Log, TEXT("⚡ OnPowerPoleBuilt: CommittedBuildingConnections has %d entries, range=%.0fcm (%.1fm)"), 
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ OnPowerPoleBuilt: CommittedBuildingConnections has %d entries, range=%.0fcm (%.1fm)"), 
 		Subsystem->CommittedBuildingConnections.Num(), RangeCm, RangeCm / 100.0f);
 	
 	// Find buildings that:
@@ -1343,7 +1344,7 @@ void FSFPowerAutoConnectManager::OnPowerPoleBuilt(AFGBuildablePowerPole* BuiltPo
 		// Use weak pointer safely - check validity BEFORE accessing
 		if (!Pair.Key.IsValid())
 		{
-			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⚡ OnPowerPoleBuilt: Skipping invalid/destroyed building in CommittedBuildingConnections"));
+			UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("⚡ OnPowerPoleBuilt: Skipping invalid/destroyed building in CommittedBuildingConnections"));
 			continue;
 		}
 		
@@ -1358,7 +1359,7 @@ void FSFPowerAutoConnectManager::OnPowerPoleBuilt(AFGBuildablePowerPole* BuiltPo
 		float LocationDiff = FVector::Dist(PoleLoc, PlannedPoleLocation);
 		if (LocationDiff > 200.0f) // 200cm tolerance for hologram vs built position differences
 		{
-			UE_LOG(LogSmartFoundations, Log, TEXT("⚡ OnPowerPoleBuilt: Building %s was assigned to pole at (%.0f, %.0f) - this pole at (%.0f, %.0f) - SKIPPING"),
+			UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ OnPowerPoleBuilt: Building %s was assigned to pole at (%.0f, %.0f) - this pole at (%.0f, %.0f) - SKIPPING"),
 				*Building->GetName(), PlannedPoleLocation.X, PlannedPoleLocation.Y, PoleLoc.X, PoleLoc.Y);
 			continue;
 		}
@@ -1366,13 +1367,13 @@ void FSFPowerAutoConnectManager::OnPowerPoleBuilt(AFGBuildablePowerPole* BuiltPo
 		// Check distance from THIS pole to the building
 		float Distance = FVector::Dist(PoleLoc, Building->GetActorLocation());
 		
-		UE_LOG(LogSmartFoundations, Log, TEXT("⚡ OnPowerPoleBuilt: Building %s assigned to THIS pole, distance %.1f (max: %.1f)"), 
+		UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ OnPowerPoleBuilt: Building %s assigned to THIS pole, distance %.1f (max: %.1f)"), 
 			*Building->GetName(), Distance, RangeCm);
 		
 		if (Distance <= RangeCm)
 		{
 			BuildingsWithDistance.Add(TPair<AFGBuildable*, float>(Building, Distance));
-			UE_LOG(LogSmartFoundations, Log, TEXT("⚡ OnPowerPoleBuilt: Building %s is in range (%.1f cm)"), *Building->GetName(), Distance);
+			UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ OnPowerPoleBuilt: Building %s is in range (%.1f cm)"), *Building->GetName(), Distance);
 		}
 	}
 	
@@ -1388,7 +1389,7 @@ void FSFPowerAutoConnectManager::OnPowerPoleBuilt(AFGBuildablePowerPole* BuiltPo
 		BuildingsToConnect.Add(Pair.Key);
 	}
 	
-	UE_LOG(LogSmartFoundations, Log, TEXT("⚡ OnPowerPoleBuilt: Found %d buildings in range from planned mappings"), BuildingsToConnect.Num());
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ OnPowerPoleBuilt: Found %d buildings in range from planned mappings"), BuildingsToConnect.Num());
 	
 	// Connect to the planned buildings
 	for (AFGBuildable* Building : BuildingsToConnect)
@@ -1396,13 +1397,13 @@ void FSFPowerAutoConnectManager::OnPowerPoleBuilt(AFGBuildablePowerPole* BuiltPo
 		// Safety check - building might have been destroyed since we collected it
 		if (!Building || !IsValid(Building))
 		{
-			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⚡ OnPowerPoleBuilt: Skipping invalid/destroyed building in BuildingsToConnect"));
+			UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("⚡ OnPowerPoleBuilt: Skipping invalid/destroyed building in BuildingsToConnect"));
 			continue;
 		}
 		
 		if (BuildingConnectionsMade >= MaxBuildingConnections)
 		{
-			UE_LOG(LogSmartFoundations, Log, TEXT("⚡ OnPowerPoleBuilt: Reached max building connections (%d) - stopping"), MaxBuildingConnections);
+			UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ OnPowerPoleBuilt: Reached max building connections (%d) - stopping"), MaxBuildingConnections);
 			break;
 		}
 		
@@ -1423,7 +1424,7 @@ void FSFPowerAutoConnectManager::OnPowerPoleBuilt(AFGBuildablePowerPole* BuiltPo
 		
 		if (!BuildingConn)
 		{
-			UE_LOG(LogSmartFoundations, Log, TEXT("⚡ OnPowerPoleBuilt: Building %s has no available power connection - skipping"), *Building->GetName());
+			UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ OnPowerPoleBuilt: Building %s has no available power connection - skipping"), *Building->GetName());
 			continue;
 		}
 		
@@ -1432,7 +1433,7 @@ void FSFPowerAutoConnectManager::OnPowerPoleBuilt(AFGBuildablePowerPole* BuiltPo
 		BuiltPole->GetComponents(UFGCircuitConnectionComponent::StaticClass(), PoleCircuitConns);
 		if (PoleCircuitConns.Num() == 0)
 		{
-			UE_LOG(LogSmartFoundations, Warning, TEXT("⚡ OnPowerPoleBuilt: Pole has no circuit connections for building connection"));
+			UE_LOG(LogSmartAutoConnect, Warning, TEXT("⚡ OnPowerPoleBuilt: Pole has no circuit connections for building connection"));
 			continue;
 		}
 		
@@ -1444,15 +1445,15 @@ void FSFPowerAutoConnectManager::OnPowerPoleBuilt(AFGBuildablePowerPole* BuiltPo
 		// Deduct cable cost before spawning wire (skip if costs pre-deducted at grid level)
 		if (!bCostsPreDeducted && !DeductCableCost(BuiltPole->GetWorld(), Distance))
 		{
-			UE_LOG(LogSmartFoundations, Warning, TEXT("⚡ OnPowerPoleBuilt: Cannot afford power line to building %s (not enough cables)"), *Building->GetName());
+			UE_LOG(LogSmartAutoConnect, Warning, TEXT("⚡ OnPowerPoleBuilt: Cannot afford power line to building %s (not enough cables)"), *Building->GetName());
 			continue;
 		}
 		
 		// Create the connection
-		UClass* PowerLineClass = LoadObject<UClass>(nullptr, TEXT("/Game/FactoryGame/Buildable/Factory/PowerLine/Build_PowerLine.Build_PowerLine_C"));
+		UClass* PowerLineClass = LoadObject<UClass>(nullptr, SFAssetPaths::PowerLineBuildClass);
 		if (!PowerLineClass)
 		{
-			UE_LOG(LogSmartFoundations, Error, TEXT("⚡ OnPowerPoleBuilt: Failed to load PowerLine class for building connection"));
+			UE_LOG(LogSmartAutoConnect, Error, TEXT("⚡ OnPowerPoleBuilt: Failed to load PowerLine class for building connection"));
 			continue;
 		}
 		
@@ -1470,7 +1471,7 @@ void FSFPowerAutoConnectManager::OnPowerPoleBuilt(AFGBuildablePowerPole* BuiltPo
 			UFGCircuitConnectionComponent* PoleCircuitConn = PoleCircuitConns[0];
 			if (PoleCircuitConn && PowerWire->Connect(PoleCircuitConn, BuildingConn))
 			{
-				UE_LOG(LogSmartFoundations, Log, TEXT("⚡ OnPowerPoleBuilt: Connected to building %s (deducted cables)"), 
+				UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ OnPowerPoleBuilt: Connected to building %s (deducted cables)"), 
 					*Building->GetName());
 				BuildingConnectionsMade++;
 				
@@ -1479,42 +1480,42 @@ void FSFPowerAutoConnectManager::OnPowerPoleBuilt(AFGBuildablePowerPole* BuiltPo
 			}
 			else
 			{
-				UE_LOG(LogSmartFoundations, Warning, TEXT("⚡ OnPowerPoleBuilt: Failed to connect pole to building %s"), 
+				UE_LOG(LogSmartAutoConnect, Warning, TEXT("⚡ OnPowerPoleBuilt: Failed to connect pole to building %s"), 
 					*Building->GetName());
 				PowerWire->Destroy();
 			}
 		}
 	}
 	
-	UE_LOG(LogSmartFoundations, Log, TEXT("⚡ OnPowerPoleBuilt: COMPLETE - Connected %d buildings (from planned mappings)"), BuildingConnectionsMade);
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ OnPowerPoleBuilt: COMPLETE - Connected %d buildings (from planned mappings)"), BuildingConnectionsMade);
 }
 
 bool FSFPowerAutoConnectManager::ReserveConnection(UFGCircuitConnectionComponent* Connection, AFGHologram* Pole)
 {
 	if (!Connection)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("⚡ ReserveConnection: Invalid connection parameter"));
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("⚡ ReserveConnection: Invalid connection parameter"));
 		return false;
 	}
 
 	// For built poles, Pole can be nullptr - that's ok
 	if (!Pole)
 	{
-		UE_LOG(LogSmartFoundations, Log, TEXT("⚡ ReserveConnection: Reserving connection for built pole"));
+		UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ ReserveConnection: Reserving connection for built pole"));
 	}
 
 	// Check if already reserved
 	if (ReservedConnectors.Contains(Connection))
 	{
 		AFGHologram* ReservedPole = ReservedConnectors[Connection];
-		UE_LOG(LogSmartFoundations, Log, TEXT("⚡ ReserveConnection: Connection already reserved by pole %s"), 
+		UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ ReserveConnection: Connection already reserved by pole %s"), 
 			ReservedPole ? *ReservedPole->GetName() : TEXT("built pole"));
 		return false;
 	}
 
 	// Reserve the connection
 	ReservedConnectors.Add(Connection, Pole);
-	UE_LOG(LogSmartFoundations, Log, TEXT("⚡ ReserveConnection: Reserved connection for pole %s"), 
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ ReserveConnection: Reserved connection for pole %s"), 
 		Pole ? *Pole->GetName() : TEXT("built pole"));
 	return true;
 }
@@ -1530,7 +1531,7 @@ void FSFPowerAutoConnectManager::ReleaseConnection(UFGCircuitConnectionComponent
 	{
 		AFGHologram* ReservedPole = ReservedConnectors[Connection];
 		ReservedConnectors.Remove(Connection);
-		UE_LOG(LogSmartFoundations, Log, TEXT("⚡ ReleaseConnection: Released connection from pole %s"), 
+		UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ ReleaseConnection: Released connection from pole %s"), 
 			ReservedPole ? *ReservedPole->GetName() : TEXT("null"));
 	}
 }
@@ -1549,14 +1550,14 @@ void FSFPowerAutoConnectManager::ClearAllReservations()
 {
 	int32 Count = ReservedConnectors.Num();
 	ReservedConnectors.Empty();
-	UE_LOG(LogSmartFoundations, Log, TEXT("⚡ ClearAllReservations: Cleared %d reservations"), Count);
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ ClearAllReservations: Cleared %d reservations"), Count);
 }
 
 void FSFPowerAutoConnectManager::ResetSpacingState()
 {
 	bContextSpacingApplied = false;
 	LastTargetBuildingClass = nullptr;
-	UE_LOG(LogSmartFoundations, Log, TEXT("⚡ ResetSpacingState: Reset spacing tracking"));
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ ResetSpacingState: Reset spacing tracking"));
 }
 
 int32 FSFPowerAutoConnectManager::GetMaxConnectionsForPole(AFGBuildablePowerPole* PowerPole) const
@@ -1574,7 +1575,7 @@ int32 FSFPowerAutoConnectManager::GetMaxConnectionsForPole(AFGBuildablePowerPole
 	if (PoleClass)
 	{
 		FString ClassName = PoleClass->GetName();
-		UE_LOG(LogSmartFoundations, Log, TEXT("⚡ GetMaxConnectionsForPole: Pole class = %s"), *ClassName);
+		UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ GetMaxConnectionsForPole: Pole class = %s"), *ClassName);
 		
 		if (ClassName.Contains(TEXT("PowerPoleMk2")))
 		{
@@ -1604,7 +1605,7 @@ int32 FSFPowerAutoConnectManager::GetMaxConnectionsForPole(AFGBuildablePowerPole
 		ReservedSlots = FMath::Min(UserReserved, BaseConnections - 1); // Reserve at most all but 1 slot
 	}
 	
-	UE_LOG(LogSmartFoundations, Log, TEXT("⚡ GetMaxConnectionsForPole: Base=%d, UserReserved=%d, Final=%d, ReservedSlots=%d"), 
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ GetMaxConnectionsForPole: Base=%d, UserReserved=%d, Final=%d, ReservedSlots=%d"), 
 		BaseConnections, UserReserved, FinalLimit, ReservedSlots);
 	
 	return FinalLimit;
@@ -1661,7 +1662,7 @@ void FSFPowerAutoConnectManager::GetConnectionInfo(AFGBuildablePowerPole* PowerP
 	
 	if (!PowerPole)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("⚡ GetConnectionInfo: Power pole is null"));
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("⚡ GetConnectionInfo: Power pole is null"));
 		return;
 	}
 	
@@ -1685,7 +1686,7 @@ void FSFPowerAutoConnectManager::GetConnectionInfo(AFGBuildablePowerPole* PowerP
 	OutTotalPowerConnections = PowerConnections.Num();
 	
 	// Log detailed info
-	UE_LOG(LogSmartFoundations, Log, TEXT("⚡ GetConnectionInfo: Pole %s - Connected: %d/%d circuit, %d power components"), 
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ GetConnectionInfo: Pole %s - Connected: %d/%d circuit, %d power components"), 
 		*PowerPole->GetName(), OutConnectedCount, OutTotalCircuitConnections, OutTotalPowerConnections);
 	
 	// Log each circuit connection status
@@ -1695,7 +1696,7 @@ void FSFPowerAutoConnectManager::GetConnectionInfo(AFGBuildablePowerPole* PowerP
 		if (Conn)
 		{
 			bool bIsConnected = (Conn->IsConnected() != 0);
-			UE_LOG(LogSmartFoundations, Log, TEXT("⚡   Circuit[%d]: %s"), 
+			UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡   Circuit[%d]: %s"), 
 				i, bIsConnected ? TEXT("Connected") : TEXT("Available"));
 		}
 	}
@@ -1705,18 +1706,18 @@ void FSFPowerAutoConnectManager::DebugLogAllPowerPoleConnections() const
 {
 	if (!Subsystem)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("⚡ DebugLogAllPowerPoleConnections: Subsystem is null"));
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("⚡ DebugLogAllPowerPoleConnections: Subsystem is null"));
 		return;
 	}
 
 	UWorld* World = Subsystem->GetWorld();
 	if (!World)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("⚡ DebugLogAllPowerPoleConnections: World is null"));
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("⚡ DebugLogAllPowerPoleConnections: World is null"));
 		return;
 	}
 
-	UE_LOG(LogSmartFoundations, Log, TEXT("⚡ ========== POWER POLE CONNECTION DEBUG =========="));
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ ========== POWER POLE CONNECTION DEBUG =========="));
 	
 	int32 TotalPoles = 0;
 	int32 TotalConnected = 0;
@@ -1751,7 +1752,7 @@ void FSFPowerAutoConnectManager::DebugLogAllPowerPoleConnections() const
 			else if (ClassName.Contains(TEXT("PowerPoleMk3"))) PoleTier = TEXT("Mk3");
 		}
 		
-		UE_LOG(LogSmartFoundations, Log, TEXT("⚡ Pole [%s] %s at (%.0f,%.0f,%.0f): %d/%d connections (%d available)"), 
+		UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ Pole [%s] %s at (%.0f,%.0f,%.0f): %d/%d connections (%d available)"), 
 			*PoleTier, *Pole->GetName(), Location.X, Location.Y, Location.Z, 
 			ConnectedCount, MaxConnections, MaxConnections - ConnectedCount);
 		
@@ -1759,18 +1760,18 @@ void FSFPowerAutoConnectManager::DebugLogAllPowerPoleConnections() const
 		TotalAvailable += (MaxConnections - ConnectedCount);
 	}
 	
-	UE_LOG(LogSmartFoundations, Log, TEXT("⚡ ========== SUMMARY =========="));
-	UE_LOG(LogSmartFoundations, Log, TEXT("⚡ Total Poles: %d"), TotalPoles);
-	UE_LOG(LogSmartFoundations, Log, TEXT("⚡ Total Connected: %d"), TotalConnected);
-	UE_LOG(LogSmartFoundations, Log, TEXT("⚡ Total Available: %d"), TotalAvailable);
-	UE_LOG(LogSmartFoundations, Log, TEXT("⚡ ======================================"));
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ ========== SUMMARY =========="));
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ Total Poles: %d"), TotalPoles);
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ Total Connected: %d"), TotalConnected);
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ Total Available: %d"), TotalAvailable);
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ ======================================"));
 }
 
 bool FSFPowerAutoConnectManager::DeductCableCost(UWorld* World, float DistanceInCm)
 {
 	if (!World)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("⚡ DeductCableCost: No world"));
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("⚡ DeductCableCost: No world"));
 		return false;
 	}
 	
@@ -1785,7 +1786,7 @@ bool FSFPowerAutoConnectManager::DeductCableCost(UWorld* World, float DistanceIn
 		TEXT("/Game/FactoryGame/Resource/Parts/Cable/Desc_Cable.Desc_Cable_C"));
 	if (!*CableClass)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("⚡ DeductCableCost: Failed to load Cable class"));
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("⚡ DeductCableCost: Failed to load Cable class"));
 		return false;
 	}
 	
@@ -1796,21 +1797,21 @@ bool FSFPowerAutoConnectManager::DeductCableCost(UWorld* World, float DistanceIn
 	AFGPlayerController* PC = Cast<AFGPlayerController>(World->GetFirstPlayerController());
 	if (!PC)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("⚡ DeductCableCost: No player controller"));
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("⚡ DeductCableCost: No player controller"));
 		return false;
 	}
 	
 	AFGCharacterPlayer* Character = Cast<AFGCharacterPlayer>(PC->GetPawn());
 	if (!Character)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("⚡ DeductCableCost: No player character"));
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("⚡ DeductCableCost: No player character"));
 		return false;
 	}
 	
 	UFGInventoryComponent* Inventory = Character->GetInventory();
 	if (!Inventory)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("⚡ DeductCableCost: No player inventory"));
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("⚡ DeductCableCost: No player inventory"));
 		return false;
 	}
 	
@@ -1821,7 +1822,7 @@ bool FSFPowerAutoConnectManager::DeductCableCost(UWorld* World, float DistanceIn
 	
 	if (TotalAvailable < CablesNeeded)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("⚡ DeductCableCost: Not enough cables (%d/%d available)"), TotalAvailable, CablesNeeded);
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("⚡ DeductCableCost: Not enough cables (%d/%d available)"), TotalAvailable, CablesNeeded);
 		return false;
 	}
 	
@@ -1834,7 +1835,7 @@ bool FSFPowerAutoConnectManager::DeductCableCost(UWorld* World, float DistanceIn
 		
 		if (RemovedFromCentral > 0)
 		{
-			UE_LOG(LogSmartFoundations, Log, TEXT("⚡ DeductCableCost: Deducted %d cables from central storage"), RemovedFromCentral);
+			UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ DeductCableCost: Deducted %d cables from central storage"), RemovedFromCentral);
 		}
 	}
 	
@@ -1842,10 +1843,10 @@ bool FSFPowerAutoConnectManager::DeductCableCost(UWorld* World, float DistanceIn
 	if (Remaining > 0)
 	{
 		Inventory->Remove(CableClass, Remaining);
-		UE_LOG(LogSmartFoundations, Log, TEXT("⚡ DeductCableCost: Deducted %d cables from personal inventory"), Remaining);
+		UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ DeductCableCost: Deducted %d cables from personal inventory"), Remaining);
 	}
 	
-	UE_LOG(LogSmartFoundations, Log, TEXT("⚡ DeductCableCost: Deducted %d cables total (distance: %.1fm)"), CablesNeeded, DistanceInMeters);
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ DeductCableCost: Deducted %d cables total (distance: %.1fm)"), CablesNeeded, DistanceInMeters);
 	
 	return true;
 }

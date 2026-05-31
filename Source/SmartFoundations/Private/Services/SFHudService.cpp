@@ -37,14 +37,14 @@ void USFHudService::UpdateWidgetDisplay(const FString& FirstLine, const FString&
     // Store text for HUD canvas drawing
     if (!FirstLine.IsEmpty() || !SecondLine.IsEmpty())
     {
-        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("[Counter Display] Line1: '%s' Line2: '%s'"), *FirstLine, *SecondLine);
+        UE_LOG(LogSmartUI, VeryVerbose, TEXT("[Counter Display] Line1: '%s' Line2: '%s'"), *FirstLine, *SecondLine);
         CurrentCounterText = FirstLine;
         if (!SecondLine.IsEmpty())
         {
             CurrentCounterText += FString::Printf(TEXT("\n%s"), *SecondLine);
         }
 
-        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("HUD(UpdateWidgetDisplay): '%s'"), *CurrentCounterText.Replace(TEXT("\n"), TEXT(" | ")));
+        UE_LOG(LogSmartUI, VeryVerbose, TEXT("HUD(UpdateWidgetDisplay): '%s'"), *CurrentCounterText.Replace(TEXT("\n"), TEXT(" | ")));
     }
     else
     {
@@ -153,7 +153,7 @@ void USFHudService::CreateHudWidget()
     if (HudWidget)
     {
         HudWidget->SetVisibility(ESlateVisibility::Collapsed);
-        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("SFHudService: Created UMG HUD widget"));
+        UE_LOG(LogSmartUI, VeryVerbose, TEXT("SFHudService: Created UMG HUD widget"));
     }
 }
 
@@ -166,7 +166,7 @@ void USFHudService::DestroyHudWidget()
             HudWidget->RemoveFromParent();
         }
         HudWidget = nullptr;
-        UE_LOG(LogSmartFoundations, Log, TEXT("SFHudService: Destroyed UMG HUD widget"));
+        UE_LOG(LogSmartUI, Log, TEXT("SFHudService: Destroyed UMG HUD widget"));
     }
 }
 
@@ -175,7 +175,7 @@ void USFHudService::InitializeWidgets()
 	// HUD binding will happen lazily when first needed
 	if (Subsystem.IsValid())
 	{
-		UE_LOG(LogSmartFoundations, Verbose, TEXT("USFHudService: InitializeWidgets - HUD will bind on first use"));
+		UE_LOG(LogSmartUI, Verbose, TEXT("USFHudService: InitializeWidgets - HUD will bind on first use"));
 	}
 }
 
@@ -198,21 +198,21 @@ void USFHudService::EnsureHUDBinding()
 			{
 				CachedHUD = HUD;
 				HUD->OnHUDPostRender.AddUObject(this, &USFHudService::DrawCounterToHUD);
-				UE_LOG(LogSmartFoundations, Verbose, TEXT("USFHudService: ✅ Bound USFHudService::DrawCounterToHUD to HUD PostRender"));
+				UE_LOG(LogSmartUI, Verbose, TEXT("USFHudService: ✅ Bound USFHudService::DrawCounterToHUD to HUD PostRender"));
 			}
 			else
 			{
-				UE_LOG(LogSmartFoundations, Warning, TEXT("USFHudService: ❌ PC->GetHUD() returned nullptr"));
+				UE_LOG(LogSmartUI, Warning, TEXT("USFHudService: ❌ PC->GetHUD() returned nullptr"));
 			}
 		}
 		else
 		{
-			UE_LOG(LogSmartFoundations, Warning, TEXT("USFHudService: ❌ GetPlayerController returned nullptr"));
+			UE_LOG(LogSmartUI, Warning, TEXT("USFHudService: ❌ GetPlayerController returned nullptr"));
 		}
 	}
 	else
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("USFHudService: GetWorld() returned nullptr"));
+		UE_LOG(LogSmartUI, Warning, TEXT("USFHudService: GetWorld() returned nullptr"));
 	}
 }
 
@@ -223,7 +223,7 @@ void USFHudService::CleanupWidgets()
 	if (AHUD* HUD = CachedHUD.Get())
 	{
 		HUD->OnHUDPostRender.RemoveAll(this);
-		UE_LOG(LogSmartFoundations, Verbose, TEXT("USFHudService: Unbound USFHudService::DrawCounterToHUD from HUD"));
+		UE_LOG(LogSmartUI, Verbose, TEXT("USFHudService: Unbound USFHudService::DrawCounterToHUD from HUD"));
 	}
 	CachedHUD.Reset();
 }
@@ -620,7 +620,7 @@ void USFHudService::ResetState()
 	CachedLiftHeight = 0.0f;
 	CachedWorldHeight = 0.0f;
 
-	UE_LOG(LogSmartFoundations, Log, TEXT("HUD state reset for new hologram"));
+	UE_LOG(LogSmartUI, Log, TEXT("HUD state reset for new hologram"));
 }
 
 #undef LOCTEXT_NAMESPACE

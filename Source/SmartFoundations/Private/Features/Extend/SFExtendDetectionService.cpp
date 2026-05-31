@@ -1,7 +1,7 @@
 // Copyright Coffee Stain Studios. All Rights Reserved.
 
 #include "Features/Extend/SFExtendDetectionService.h"
-#include "SmartFoundations.h"  // For LogSmartFoundations
+#include "SmartFoundations.h"  // For LogSmartExtend
 #include "Subsystem/SFSubsystem.h"
 #include "FGBuildable.h"
 #include "FGBuildableFactory.h"
@@ -25,13 +25,13 @@ USFExtendDetectionService::USFExtendDetectionService()
 void USFExtendDetectionService::Initialize(USFSubsystem* InSubsystem)
 {
     Subsystem = InSubsystem;
-    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("SFExtendDetectionService initialized"));
+    UE_LOG(LogSmartExtend, VeryVerbose, TEXT("SFExtendDetectionService initialized"));
 }
 
 void USFExtendDetectionService::Shutdown()
 {
     Subsystem.Reset();
-    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("SFExtendDetectionService shutdown"));
+    UE_LOG(LogSmartExtend, VeryVerbose, TEXT("SFExtendDetectionService shutdown"));
 }
 
 // ==================== Target Detection ====================
@@ -95,7 +95,7 @@ void USFExtendDetectionService::CycleExtendDirection(int32 Delta)
             ? ESFExtendDirection::Left 
             : ESFExtendDirection::Right;
         
-        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔄 EXTEND: Direction cycled to %s"),
+        UE_LOG(LogSmartExtend, VeryVerbose, TEXT("🔄 EXTEND: Direction cycled to %s"),
             CurrentDirection == ESFExtendDirection::Right ? TEXT("Right") : TEXT("Left"));
     }
 }
@@ -215,7 +215,7 @@ bool USFExtendDetectionService::AutoSelectValidDirection(AFGBuildable* TargetBui
 
     // Otherwise, switch to first valid direction
     CurrentDirection = ValidDirs[0];
-    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔄 EXTEND: Auto-selected direction %s (other side blocked)"),
+    UE_LOG(LogSmartExtend, VeryVerbose, TEXT("🔄 EXTEND: Auto-selected direction %s (other side blocked)"),
         CurrentDirection == ESFExtendDirection::Right ? TEXT("Right") : TEXT("Left"));
     
     return true;

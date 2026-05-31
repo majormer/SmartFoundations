@@ -420,7 +420,7 @@ This will likely require a new helper on `USFSubsystem` — something like `SetB
 
 ### Serialization Pattern
 
-Follow the `ManifoldJSONHelpers` pattern from `SFManifoldJSON.cpp`:
+Use the local Restore JSON helper pattern in `SFRestoreService.cpp`:
 - Manual `TSharedPtr<FJsonObject>` construction (not `FJsonObjectConverter`)
 - Explicit field-by-field serialization for version control
 - Only serialize fields whose capture flag is true
@@ -673,7 +673,7 @@ TOptional<FSFRestorePreset> USFRestoreService::ImportFromString(const FString& E
 | `USFRecipeManagementService` | Read `GetActiveRecipe()` for capture; find and set recipe by class path for restore |
 | `USFExtendService` | Read `GetCurrentTopology()` for "Import from Last Extend" |
 | `FAutoConnectRuntimeSettings` | Read for capture; write for restore (may need a new setter on Subsystem) |
-| `ManifoldJSONHelpers` | Pattern reference for JSON serialization style |
+| Restore JSON helpers | Pattern reference for JSON serialization style |
 
 ## Subsystem Setter Requirements
 

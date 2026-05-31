@@ -31,7 +31,7 @@ void ASFPipelineHologram::BeginPlay()
 	// Check if base hologram created mesh components
 	TArray<USplineMeshComponent*> MeshComps;
 	GetComponents<USplineMeshComponent>(MeshComps);
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   PIPE BeginPlay: Found %d SplineMeshComponents after Super::BeginPlay()"), MeshComps.Num());
+	UE_LOG(LogSmartHologram, VeryVerbose, TEXT("   PIPE BeginPlay: Found %d SplineMeshComponents after Super::BeginPlay()"), MeshComps.Num());
 	
 	// Check mesh and material status
 	for (int32 i = 0; i < MeshComps.Num(); i++)
@@ -41,7 +41,7 @@ void ASFPipelineHologram::BeginPlay()
 		{
 			UStaticMesh* Mesh = MeshComp->GetStaticMesh();
 			UMaterialInterface* Material = MeshComp->GetMaterial(0);
-			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   PIPE BeginPlay: SplineMesh[%d] - Mesh=%s, Material=%s, Visible=%s"),
+			UE_LOG(LogSmartHologram, VeryVerbose, TEXT("   PIPE BeginPlay: SplineMesh[%d] - Mesh=%s, Material=%s, Visible=%s"),
 				i,
 				Mesh ? *Mesh->GetName() : TEXT("NULL"),
 				Material ? *Material->GetName() : TEXT("NULL"),
@@ -53,11 +53,11 @@ void ASFPipelineHologram::BeginPlay()
 	{
 		const int32 PointCount = mSplineComponent->GetNumberOfSplinePoints();
 		const float SplineLength = mSplineComponent->GetSplineLength();
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   PIPE BeginPlay: mSplineComponent has %d points, %.1f cm length"), PointCount, SplineLength);
+		UE_LOG(LogSmartHologram, VeryVerbose, TEXT("   PIPE BeginPlay: mSplineComponent has %d points, %.1f cm length"), PointCount, SplineLength);
 	}
 	else
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("   PIPE BeginPlay: mSplineComponent is NULL!"));
+		UE_LOG(LogSmartHologram, Warning, TEXT("   PIPE BeginPlay: mSplineComponent is NULL!"));
 	}
 }
 
@@ -65,7 +65,7 @@ void ASFPipelineHologram::CheckValidPlacement()
 {
 	if (GetParentHologram())
 	{
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Pipe child preview - skipping placement validation"));
+		UE_LOG(LogSmartHologram, VeryVerbose, TEXT("Pipe child preview - skipping placement validation"));
 		// The build gun derives preview red/cyan from construct disqualifiers, not from
 		// SetPlacementMaterialState. Carry the parent's "unaffordable" disqualifier so the
 		// pipe preview turns red; cleared when affordable so it returns to cyan.
@@ -90,7 +90,7 @@ AActor* ASFPipelineHologram::Construct(TArray<AActor*>& out_children, FNetConstr
 	// IMPORTANT: Return the previously built actor, NOT nullptr - vanilla crashes on nullptr!
 	if (bHasBeenConstructed)
 	{
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 PIPE: Skipping duplicate Construct() for %s (already built, returning cached actor)"), *GetName());
+		UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 PIPE: Skipping duplicate Construct() for %s (already built, returning cached actor)"), *GetName());
 		return ConstructedActor.Get();
 	}
 	bHasBeenConstructed = true;
@@ -102,7 +102,7 @@ AActor* ASFPipelineHologram::Construct(TArray<AActor*>& out_children, FNetConstr
 	
 	if (bIsExtendChild || bIsStackableChild || bIsPipeAutoConnectChild)
 	{
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 %s: Pipe hologram %s Construct() called - building as child"), 
+		UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 %s: Pipe hologram %s Construct() called - building as child"), 
 			bIsPipeAutoConnectChild ? TEXT("PIPE AUTO-CONNECT") : (bIsStackableChild ? TEXT("STACKABLE") : TEXT("EXTEND")), *GetName());
 		
 		// IMPORTANT: For EXTEND children, we need to build the pipe directly without
@@ -140,7 +140,7 @@ AActor* ASFPipelineHologram::Construct(TArray<AActor*>& out_children, FNetConstr
 			FSFHologramData* HoloData = USFHologramDataRegistry::GetData(this);
 			
 			// Log the mapping for debugging
-			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 %s: ✅ Pipe hologram %s → Buildable %s (ID: %u), discarded %d child actors"), 
+			UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 %s: ✅ Pipe hologram %s → Buildable %s (ID: %u), discarded %d child actors"), 
 				bIsStackableChild ? TEXT("STACKABLE") : (bIsPipeAutoConnectChild ? TEXT("PIPE AUTO-CONNECT") : TEXT("EXTEND")),
 				*GetName(), *BuiltActor->GetName(), BuiltActor->GetUniqueID(), DiscardedChildren.Num());
 			
@@ -149,7 +149,7 @@ AActor* ASFPipelineHologram::Construct(TArray<AActor*>& out_children, FNetConstr
 			{
 				UFGPipeConnectionComponentBase* Conn0 = Pipe->GetPipeConnection0();
 				UFGPipeConnectionComponentBase* Conn1 = Pipe->GetPipeConnection1();
-				UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 EXTEND:   Conn0=%s @ %s, Conn1=%s @ %s"),
+				UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 EXTEND:   Conn0=%s @ %s, Conn1=%s @ %s"),
 					Conn0 ? *Conn0->GetName() : TEXT("null"),
 					Conn0 ? *Conn0->GetComponentLocation().ToString() : TEXT("N/A"),
 					Conn1 ? *Conn1->GetName() : TEXT("null"),
@@ -170,7 +170,7 @@ AActor* ASFPipelineHologram::Construct(TArray<AActor*>& out_children, FNetConstr
 						if (NeighborConn && !NeighborConn->IsConnected() && NeighborConn->GetOwner() != Pipe)
 						{
 							Conn0->SetConnection(NeighborConn);
-							UE_LOG(LogSmartFoundations, VeryVerbose, TEXT(" %s: Wired Conn0 to neighbor pipe %s.%s"), 
+							UE_LOG(LogSmartHologram, VeryVerbose, TEXT(" %s: Wired Conn0 to neighbor pipe %s.%s"), 
 								bIsStackableChild ? TEXT("STACKABLE") : (bIsPipeAutoConnectChild ? TEXT("PIPE AUTO-CONNECT") : TEXT("EXTEND")),
 								*NeighborConn->GetOwner()->GetName(), *NeighborConn->GetName());
 						}
@@ -186,7 +186,7 @@ AActor* ASFPipelineHologram::Construct(TArray<AActor*>& out_children, FNetConstr
 						if (NeighborConn && !NeighborConn->IsConnected() && NeighborConn->GetOwner() != Pipe)
 						{
 							Conn1->SetConnection(NeighborConn);
-							UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 STACKABLE: Wired Conn1 to neighbor pipe %s.%s"), 
+							UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 STACKABLE: Wired Conn1 to neighbor pipe %s.%s"), 
 								*NeighborConn->GetOwner()->GetName(), *NeighborConn->GetName());
 						}
 					}
@@ -214,7 +214,7 @@ AActor* ASFPipelineHologram::Construct(TArray<AActor*>& out_children, FNetConstr
 									{
 										Net0->MergeNetworks(Net1);
 										Net0->MarkForFullRebuild();
-										UE_LOG(LogSmartFoundations, Log, TEXT("🔧 STACKABLE: Merged pipe networks %d and %d"), Network0, Network1);
+										UE_LOG(LogSmartHologram, Log, TEXT("🔧 STACKABLE: Merged pipe networks %d and %d"), Network0, Network1);
 									}
 								}
 								else if (Network0 != INDEX_NONE)
@@ -223,7 +223,7 @@ AActor* ASFPipelineHologram::Construct(TArray<AActor*>& out_children, FNetConstr
 									if (Net)
 									{
 										Net->MarkForFullRebuild();
-										UE_LOG(LogSmartFoundations, Log, TEXT("🔧 STACKABLE: Marked network %d for rebuild"), Network0);
+										UE_LOG(LogSmartHologram, Log, TEXT("🔧 STACKABLE: Marked network %d for rebuild"), Network0);
 									}
 								}
 								else if (Network1 != INDEX_NONE)
@@ -232,7 +232,7 @@ AActor* ASFPipelineHologram::Construct(TArray<AActor*>& out_children, FNetConstr
 									if (Net)
 									{
 										Net->MarkForFullRebuild();
-										UE_LOG(LogSmartFoundations, Log, TEXT("🔧 STACKABLE: Marked network %d for rebuild"), Network1);
+										UE_LOG(LogSmartHologram, Log, TEXT("🔧 STACKABLE: Marked network %d for rebuild"), Network1);
 									}
 								}
 							}
@@ -241,7 +241,7 @@ AActor* ASFPipelineHologram::Construct(TArray<AActor*>& out_children, FNetConstr
 					
 					// Finalize the pipe
 					Pipe->OnBuildEffectFinished();
-					UE_LOG(LogSmartFoundations, Log, TEXT("🔧 STACKABLE: Pipe %s finalized (index %d)"), 
+					UE_LOG(LogSmartHologram, Log, TEXT("🔧 STACKABLE: Pipe %s finalized (index %d)"), 
 						*Pipe->GetName(), HoloData->StackablePipeIndex);
 				}
 				
@@ -295,18 +295,18 @@ AActor* ASFPipelineHologram::Construct(TArray<AActor*>& out_children, FNetConstr
 									FloorHole->SetBottomSnappedConnection(PipeConnAsBase);
 								}
 								
-								UE_LOG(LogSmartFoundations, Log, TEXT("🔧 FLOOR HOLE PIPE: ✅ %s.Conn0 registered with %s via Set%sSnappedConnection (DistXY=%.1f)"),
+								UE_LOG(LogSmartHologram, Log, TEXT("🔧 FLOOR HOLE PIPE: ✅ %s.Conn0 registered with %s via Set%sSnappedConnection (DistXY=%.1f)"),
 									*Pipe->GetName(), *FloorHole->GetName(),
 									bIsTopSide ? TEXT("Top") : TEXT("Bottom"), BestDist);
 							}
 							else
 							{
-								UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 FLOOR HOLE PIPE: Conn0 could not cast to UFGConnectionComponent"));
+								UE_LOG(LogSmartHologram, Warning, TEXT("🔧 FLOOR HOLE PIPE: Conn0 could not cast to UFGConnectionComponent"));
 							}
 						}
 						else
 						{
-							UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 FLOOR HOLE PIPE: ❌ No floor hole found near Conn0 @ %s"),
+							UE_LOG(LogSmartHologram, Warning, TEXT("🔧 FLOOR HOLE PIPE: ❌ No floor hole found near Conn0 @ %s"),
 								*PipeConn0Loc.ToString());
 						}
 					}
@@ -319,7 +319,7 @@ AActor* ASFPipelineHologram::Construct(TArray<AActor*>& out_children, FNetConstr
 							Subsystem->RegisterPipeForDeferredWiring(Pipe);
 						}
 						
-						UE_LOG(LogSmartFoundations, Log, TEXT("🔧 PIPE AUTO-CONNECT: Pipe %s built, registered for deferred wiring (%s)"), 
+						UE_LOG(LogSmartHologram, Log, TEXT("🔧 PIPE AUTO-CONNECT: Pipe %s built, registered for deferred wiring (%s)"), 
 							*Pipe->GetName(), HoloData->bIsPipeManifold ? TEXT("Manifold") : TEXT("Building"));
 					}
 				}
@@ -335,7 +335,7 @@ AActor* ASFPipelineHologram::Construct(TArray<AActor*>& out_children, FNetConstr
 						{
 							ExtendService->RegisterBuiltPipe(HoloData->ExtendChainId, HoloData->ExtendChainIndex, Pipe, HoloData->bIsInputChain);
 							
-							UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 EXTEND: Pipe %s registered in Construct() for chain %d, index %d (%s)"),
+							UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 EXTEND: Pipe %s registered in Construct() for chain %d, index %d (%s)"),
 								*Pipe->GetName(), HoloData->ExtendChainId, HoloData->ExtendChainIndex,
 								HoloData->bIsInputChain ? TEXT("INPUT") : TEXT("OUTPUT"));
 						}
@@ -373,14 +373,14 @@ AActor* ASFPipelineHologram::Construct(TArray<AActor*>& out_children, FNetConstr
 		}
 		else
 		{
-			SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND: ❌ Pipe Construct returned nullptr!"));
+			SF_EXTEND_DIAGNOSTIC_LOG(LogSmartHologram, Warning, TEXT("🔧 EXTEND: ❌ Pipe Construct returned nullptr!"));
 		}
 		
 		return BuiltActor;
 	}
 	
 	// For Auto-Connect pipes: Build normally (includes child poles if needed)
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 AUTO-CONNECT: Pipe hologram %s Construct() called - building pipe"), 
+	UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 AUTO-CONNECT: Pipe hologram %s Construct() called - building pipe"), 
 		*GetName());
 	AActor* Result = Super::Construct(out_children, constructionID);
 	
@@ -402,7 +402,7 @@ void ASFPipelineHologram::SpawnChildren(AActor* hologramOwner, FVector spawnLoca
 	    Tags.Contains(FName(TEXT("SF_StackableChild"))) ||
 	    Tags.Contains(FName(TEXT("SF_PipeAutoConnectChild"))))
 	{
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 PIPE: Hologram %s SpawnChildren() - SKIPPING child pole spawning for child pipe"), 
+		UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 PIPE: Hologram %s SpawnChildren() - SKIPPING child pole spawning for child pipe"), 
 			*GetName());
 		// Do NOT call Super::SpawnChildren() - this prevents vanilla from spawning child poles
 		return;
@@ -421,7 +421,7 @@ void ASFPipelineHologram::SetHologramLocationAndRotation(const FHitResult& hitRe
 	{
 		// For EXTEND children, just set location directly without any vanilla processing
 		// The position is managed by SFExtendService via ChildIntendedPositions
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 EXTEND: Pipe hologram %s SetHologramLocationAndRotation() - SKIPPING vanilla processing"), 
+		UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 EXTEND: Pipe hologram %s SetHologramLocationAndRotation() - SKIPPING vanilla processing"), 
 			*GetName());
 		return;
 	}
@@ -469,7 +469,7 @@ void ASFPipelineHologram::SetSnappedConnections(UFGPipeConnectionComponentBase* 
 			SnappedArray[0] = Connection0;
 			SnappedArray[1] = Connection1;
 			
-			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 EXTEND: Set snapped connections on %s: [0]=%s, [1]=%s"),
+			UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 EXTEND: Set snapped connections on %s: [0]=%s, [1]=%s"),
 				*GetName(),
 				Connection0 ? *Connection0->GetName() : TEXT("nullptr"),
 				Connection1 ? *Connection1->GetName() : TEXT("nullptr"));
@@ -477,7 +477,7 @@ void ASFPipelineHologram::SetSnappedConnections(UFGPipeConnectionComponentBase* 
 	}
 	else
 	{
-		SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND: Failed to find mSnappedConnectionComponents property on %s"), *GetName());
+		SF_EXTEND_DIAGNOSTIC_LOG(LogSmartHologram, Warning, TEXT("🔧 EXTEND: Failed to find mSnappedConnectionComponents property on %s"), *GetName());
 	}
 }
 
@@ -489,7 +489,7 @@ bool ASFPipelineHologram::TryUseBuildModeRouting(
 {
 	if (!mSplineComponent)
 	{
-		UE_LOG(LogSmartFoundations, Log, TEXT("🔍 PIPE TryUseBuildModeRouting FAILED: No mSplineComponent on %s"), *GetName());
+		UE_LOG(LogSmartHologram, Log, TEXT("🔍 PIPE TryUseBuildModeRouting FAILED: No mSplineComponent on %s"), *GetName());
 		return false;
 	}
 
@@ -524,7 +524,7 @@ bool ASFPipelineHologram::TryUseBuildModeRouting(
 	// Only fail on clearly invalid placeholders (less than 50cm minimum pipe length).
 	if (NewSplinePoints < 2 || NewSplineLength < 50.0f)
 	{
-		UE_LOG(LogSmartFoundations, Log,
+		UE_LOG(LogSmartHologram, Log,
 			TEXT("🔍 PIPE TryUseBuildModeRouting FAILED: Stub spline after AutoRouteSpline on %s | Points=%d Len=%.1f Expected=%.1f"),
 			*GetName(),
 			NewSplinePoints,
@@ -539,7 +539,7 @@ bool ASFPipelineHologram::TryUseBuildModeRouting(
 	// Log at normal level only for low-point-count results so we can verify engine routing.
 	if (NewSplinePoints <= 3)
 	{
-		UE_LOG(LogSmartFoundations, Log,
+		UE_LOG(LogSmartHologram, Log,
 			TEXT("🔍 PIPE TryUseBuildModeRouting OK: Engine AutoRouteSpline produced %d points (Len=%.1f Expected=%.1f) on %s"),
 			NewSplinePoints,
 			NewSplineLength,
@@ -579,7 +579,7 @@ void ASFPipelineHologram::SetPlacementMaterialState(EHologramMaterialState mater
 		}
 	}
 	
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🎨 PIPE SetPlacementMaterialState: State=%d, SplineMeshes=%d, Stencil=%d"),
+	UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🎨 PIPE SetPlacementMaterialState: State=%d, SplineMeshes=%d, Stencil=%d"),
 		(int32)materialState,
 		MeshComps.Num(),
 		(int32)StencilValue);
@@ -589,7 +589,7 @@ void ASFPipelineHologram::SetupPipeSpline(UFGPipeConnectionComponentBase* StartC
 {
 	if (!StartConnector || !EndConnector)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("SetupPipeSpline: Invalid connectors"));
+		UE_LOG(LogSmartHologram, Warning, TEXT("SetupPipeSpline: Invalid connectors"));
 		return;
 	}
 
@@ -598,9 +598,9 @@ void ASFPipelineHologram::SetupPipeSpline(UFGPipeConnectionComponentBase* StartC
 	const FVector StartNormal = StartConnector->GetConnectorNormal();
 	const FVector EndNormal = EndConnector->GetConnectorNormal();
 
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 PIPE SPLINE SETUP: %s"), *GetName());
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   Start: %s (normal: %s)"), *StartPos.ToString(), *StartNormal.ToString());
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   End: %s (normal: %s)"), *EndPos.ToString(), *EndNormal.ToString());
+	UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 PIPE SPLINE SETUP: %s"), *GetName());
+	UE_LOG(LogSmartHologram, VeryVerbose, TEXT("   Start: %s (normal: %s)"), *StartPos.ToString(), *StartNormal.ToString());
+	UE_LOG(LogSmartHologram, VeryVerbose, TEXT("   End: %s (normal: %s)"), *EndPos.ToString(), *EndNormal.ToString());
 
 	const float Distance = FVector::Dist(StartPos, EndPos);
 	const float SmallTangent = 50.0f;
@@ -656,7 +656,7 @@ void ASFPipelineHologram::SetupPipeSpline(UFGPipeConnectionComponentBase* StartC
 	BuildPoint5.LeaveTangent = -EndNormal * SmallTangent;
 	mBuildSplineData.Add(BuildPoint5);
 	
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   ✅ BUILD SPLINE: 6-point vanilla curve (distance=%.1f cm)"), Distance);
+	UE_LOG(LogSmartHologram, VeryVerbose, TEXT("   ✅ BUILD SPLINE: 6-point vanilla curve (distance=%.1f cm)"), Distance);
 	
 	// ========================================
 	// PREVIEW SPLINE: Simple 2-point straight line
@@ -677,7 +677,7 @@ void ASFPipelineHologram::SetupPipeSpline(UFGPipeConnectionComponentBase* StartC
 	PreviewEnd.LeaveTangent = -EndNormal * 100.0f;
 	mSplineData.Add(PreviewEnd);
 	
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   ✅ PREVIEW SPLINE: 2-point straight line (distance=%.1f cm)"), Distance);
+	UE_LOG(LogSmartHologram, VeryVerbose, TEXT("   ✅ PREVIEW SPLINE: 2-point straight line (distance=%.1f cm)"), Distance);
 
 	// Position actor and convert preview spline to local space
 	SetActorLocation(StartPos);
@@ -699,7 +699,7 @@ void ASFPipelineHologram::SetupPipeSpline(UFGPipeConnectionComponentBase* StartC
 			mSplineData[i].ArriveTangent = CompTransform.InverseTransformVector(WorldArriveTangent);
 			mSplineData[i].LeaveTangent = CompTransform.InverseTransformVector(WorldLeaveTangent);
 			
-			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   Preview Point %d: Local=%s"), 
+			UE_LOG(LogSmartHologram, VeryVerbose, TEXT("   Preview Point %d: Local=%s"), 
 				i, *mSplineData[i].Location.ToString());
 		}
 		
@@ -734,7 +734,7 @@ void ASFPipelineHologram::ConfigureComponents(AFGBuildable* inBuildable) const
 		TArray<FSplinePointData> OriginalSplineData = mSplineData;
 		const_cast<ASFPipelineHologram*>(this)->mSplineData = mBuildSplineData;
 		
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🏗️ BUILDING PIPE: Swapped to 6-point build spline (%d points)"), mBuildSplineData.Num());
+		UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🏗️ BUILDING PIPE: Swapped to 6-point build spline (%d points)"), mBuildSplineData.Num());
 		
 		// Call base class with 6-point spline
 		Super::ConfigureComponents(inBuildable);
@@ -745,7 +745,7 @@ void ASFPipelineHologram::ConfigureComponents(AFGBuildable* inBuildable) const
 	else
 	{
 		// No build spline data (shouldn't happen, but fallback to base)
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT(" BUILDING PIPE: No build spline data! Using preview spline"));
+		UE_LOG(LogSmartHologram, VeryVerbose, TEXT(" BUILDING PIPE: No build spline data! Using preview spline"));
 		Super::ConfigureComponents(inBuildable);
 	}
 	
@@ -783,7 +783,7 @@ void ASFPipelineHologram::ConfigureComponents(AFGBuildable* inBuildable) const
 	UFGPipeConnectionComponentBase* Conn0 = PipeConns.Num() > 0 ? PipeConns[0] : nullptr;
 	UFGPipeConnectionComponentBase* Conn1 = PipeConns.Num() > 1 ? PipeConns[1] : nullptr;
 	
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 PIPE ConfigureComponents: %s checking targets: Conn0→%s.%s, Conn1→%s.%s"),
+	UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 PIPE ConfigureComponents: %s checking targets: Conn0→%s.%s, Conn1→%s.%s"),
 		*Pipeline->GetName(),
 		*HoloData->Conn0TargetCloneId, *HoloData->Conn0TargetConnectorName.ToString(),
 		*HoloData->Conn1TargetCloneId, *HoloData->Conn1TargetConnectorName.ToString());
@@ -796,7 +796,7 @@ void ASFPipelineHologram::ConfigureComponents(AFGBuildable* inBuildable) const
 		{
 			FString SourceActorName = HoloData->Conn0TargetCloneId.Mid(7);
 			TargetBuildable = ExtendService->GetSourceBuildableByName(SourceActorName);
-			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🛤️ LANE ConfigureComponents: Looking up source buildable '%s' → %s"),
+			UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🛤️ LANE ConfigureComponents: Looking up source buildable '%s' → %s"),
 				*SourceActorName, TargetBuildable ? *TargetBuildable->GetName() : TEXT("NOT FOUND"));
 		}
 		else
@@ -818,13 +818,13 @@ void ASFPipelineHologram::ConfigureComponents(AFGBuildable* inBuildable) const
 					if (!TargetConn->IsConnected())
 					{
 						Conn0->SetConnection(TargetConn);
-						UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 PIPE ConfigureComponents: ✅ Connected %s.Conn0 → %s.%s"),
+						UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 PIPE ConfigureComponents: ✅ Connected %s.Conn0 → %s.%s"),
 							*Pipeline->GetName(), *TargetBuildable->GetName(), *TargetConn->GetName());
 					}
 					else
 					{
 						// Target connector is already connected - this is a problem for lanes connecting to source
-						UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 PIPE ConfigureComponents: ⚠️ %s.Conn0 target %s.%s is ALREADY CONNECTED to %s"),
+						UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 PIPE ConfigureComponents: ⚠️ %s.Conn0 target %s.%s is ALREADY CONNECTED to %s"),
 							*Pipeline->GetName(), *TargetBuildable->GetName(), *TargetConn->GetName(),
 							TargetConn->GetConnection() ? *TargetConn->GetConnection()->GetOwner()->GetName() : TEXT("NULL"));
 					}
@@ -833,13 +833,13 @@ void ASFPipelineHologram::ConfigureComponents(AFGBuildable* inBuildable) const
 			}
 			if (!bFoundConnector)
 			{
-				UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 PIPE ConfigureComponents: ⚠️ %s.Conn0 target connector '%s' NOT FOUND on %s"),
+				UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 PIPE ConfigureComponents: ⚠️ %s.Conn0 target connector '%s' NOT FOUND on %s"),
 					*Pipeline->GetName(), *HoloData->Conn0TargetConnectorName.ToString(), *TargetBuildable->GetName());
 			}
 		}
 		else
 		{
-			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 PIPE ConfigureComponents: ⚠️ %s.Conn0 target buildable '%s' NOT FOUND"),
+			UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 PIPE ConfigureComponents: ⚠️ %s.Conn0 target buildable '%s' NOT FOUND"),
 				*Pipeline->GetName(), *HoloData->Conn0TargetCloneId);
 		}
 	}
@@ -852,7 +852,7 @@ void ASFPipelineHologram::ConfigureComponents(AFGBuildable* inBuildable) const
 		{
 			FString SourceActorName = HoloData->Conn1TargetCloneId.Mid(7);
 			TargetBuildable = ExtendService->GetSourceBuildableByName(SourceActorName);
-			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🛤️ LANE ConfigureComponents: Looking up source buildable '%s' → %s"),
+			UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🛤️ LANE ConfigureComponents: Looking up source buildable '%s' → %s"),
 				*SourceActorName, TargetBuildable ? *TargetBuildable->GetName() : TEXT("NOT FOUND"));
 		}
 		else
@@ -872,7 +872,7 @@ void ASFPipelineHologram::ConfigureComponents(AFGBuildable* inBuildable) const
 					if (!TargetConn->IsConnected())
 					{
 						Conn1->SetConnection(TargetConn);
-						UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 PIPE ConfigureComponents: ✅ Connected %s.Conn1 → %s.%s"),
+						UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 PIPE ConfigureComponents: ✅ Connected %s.Conn1 → %s.%s"),
 							*Pipeline->GetName(), *TargetBuildable->GetName(), *TargetConn->GetName());
 					}
 					break;
@@ -910,7 +910,7 @@ void ASFPipelineHologram::ConfigureComponents(AFGBuildable* inBuildable) const
 					{
 						Net0->MergeNetworks(Net1);
 						Net0->MarkForFullRebuild();
-						UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 PIPE ConfigureComponents: Merged networks %d and %d for %s"),
+						UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 PIPE ConfigureComponents: Merged networks %d and %d for %s"),
 							Network0, Network1, *Pipeline->GetName());
 					}
 				}
@@ -922,7 +922,7 @@ void ASFPipelineHologram::ConfigureComponents(AFGBuildable* inBuildable) const
 					if (ValidNetwork && ValidNetwork->IsValidLowLevel())
 					{
 						ValidNetwork->MarkForFullRebuild();
-						UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 PIPE ConfigureComponents: Marked network %d for rebuild for %s"),
+						UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 PIPE ConfigureComponents: Marked network %d for rebuild for %s"),
 							ValidNetworkID, *Pipeline->GetName());
 					}
 				}
@@ -933,7 +933,7 @@ void ASFPipelineHologram::ConfigureComponents(AFGBuildable* inBuildable) const
 
 void ASFPipelineHologram::SetSplineDataAndUpdate(const TArray<FSplinePointData>& InSplineData)
 {
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 PIPE SetSplineDataAndUpdate: Setting %d spline points on %s"), InSplineData.Num(), *GetName());
+	UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 PIPE SetSplineDataAndUpdate: Setting %d spline points on %s"), InSplineData.Num(), *GetName());
 	
 	// Copy spline data
 	mSplineData = InSplineData;
@@ -951,19 +951,19 @@ void ASFPipelineHologram::SetSplineDataAndUpdate(const TArray<FSplinePointData>&
 	{
 		HoloData->bHasBackupSplineData = true;
 		HoloData->BackupSplineData = InSplineData;
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 PIPE SetSplineDataAndUpdate: Stored %d points in backup registry"), InSplineData.Num());
+		UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 PIPE SetSplineDataAndUpdate: Stored %d points in backup registry"), InSplineData.Num());
 	}
 	
 	// Update spline component
 	if (mSplineComponent)
 	{
 		AFGSplineHologram::UpdateSplineComponent();
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 PIPE SetSplineDataAndUpdate: UpdateSplineComponent called, spline length=%.1f cm"), 
+		UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 PIPE SetSplineDataAndUpdate: UpdateSplineComponent called, spline length=%.1f cm"), 
 			mSplineComponent->GetSplineLength());
 	}
 	else
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 PIPE SetSplineDataAndUpdate: No spline component!"));
+		UE_LOG(LogSmartHologram, Warning, TEXT("🔧 PIPE SetSplineDataAndUpdate: No spline component!"));
 	}
 }
 
@@ -974,7 +974,7 @@ void ASFPipelineHologram::ForceApplyHologramMaterial()
 	TArray<USplineMeshComponent*> SplineMeshes;
 	GetComponents<USplineMeshComponent>(SplineMeshes);
 	
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🎨 PIPE ForceApplyHologramMaterial: Applied state %d to %d spline meshes"),
+	UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🎨 PIPE ForceApplyHologramMaterial: Applied state %d to %d spline meshes"),
 		(int32)GetHologramMaterialState(),
 		SplineMeshes.Num());
 	
@@ -986,7 +986,7 @@ void ASFPipelineHologram::ForceApplyHologramMaterial()
 			UStaticMesh* Mesh = SplineMesh->GetStaticMesh();
 			UMaterialInterface* Mat = SplineMesh->GetMaterial(0);
 			
-			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   [%d] Mesh=%s, Material=%s, Visible=%d, Hidden=%d"),
+			UE_LOG(LogSmartHologram, VeryVerbose, TEXT("   [%d] Mesh=%s, Material=%s, Visible=%d, Hidden=%d"),
 				i,
 				Mesh ? *Mesh->GetName() : TEXT("NULL"),
 				Mat ? *Mat->GetName() : TEXT("NULL"),
@@ -998,11 +998,11 @@ void ASFPipelineHologram::ForceApplyHologramMaterial()
 
 void ASFPipelineHologram::TriggerMeshGeneration()
 {
-	UE_LOG(LogSmartFoundations, Log, TEXT("🔧 PIPE TriggerMeshGeneration: %s - mSplineData has %d points"), *GetName(), mSplineData.Num());
+	UE_LOG(LogSmartHologram, Log, TEXT("🔧 PIPE TriggerMeshGeneration: %s - mSplineData has %d points"), *GetName(), mSplineData.Num());
 	
 	if (!mSplineComponent)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 PIPE TriggerMeshGeneration: %s - mSplineComponent is NULL!"), *GetName());
+		UE_LOG(LogSmartHologram, Warning, TEXT("🔧 PIPE TriggerMeshGeneration: %s - mSplineComponent is NULL!"), *GetName());
 		return;
 	}
 
@@ -1012,12 +1012,12 @@ void ASFPipelineHologram::TriggerMeshGeneration()
 	// Log spline stats for debugging
 	const int32 PointCount = mSplineComponent->GetNumberOfSplinePoints();
 	const float SplineLength = mSplineComponent->GetSplineLength();
-	UE_LOG(LogSmartFoundations, Log, TEXT("🔧 PIPE TriggerMeshGeneration: %s - %d spline points, %.1f cm length"), *GetName(), PointCount, SplineLength);
+	UE_LOG(LogSmartHologram, Log, TEXT("🔧 PIPE TriggerMeshGeneration: %s - %d spline points, %.1f cm length"), *GetName(), PointCount, SplineLength);
 	
 	// Get spline points for geometry update
 	if (PointCount < 2)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("   PIPE TriggerMeshGeneration: Not enough spline points (%d)"), PointCount);
+		UE_LOG(LogSmartHologram, Warning, TEXT("   PIPE TriggerMeshGeneration: Not enough spline points (%d)"), PointCount);
 		return;
 	}
 	
@@ -1033,30 +1033,30 @@ void ASFPipelineHologram::TriggerMeshGeneration()
 			PipeMesh = PipeCDO->GetSplineMesh();
 			PipeMaterial = PipeCDO->mSplineMeshMaterial;
 			MeshLength = PipeCDO->GetMeshLength();
-			UE_LOG(LogSmartFoundations, Log, TEXT("🔧 PIPE TriggerMeshGeneration: Got from CDO: Mesh=%s, Material=%s, MeshLength=%.1f"), 
+			UE_LOG(LogSmartHologram, Log, TEXT("🔧 PIPE TriggerMeshGeneration: Got from CDO: Mesh=%s, Material=%s, MeshLength=%.1f"), 
 				PipeMesh ? *PipeMesh->GetName() : TEXT("NULL"),
 				PipeMaterial ? *PipeMaterial->GetName() : TEXT("NULL"),
 				MeshLength);
 		}
 		else
 		{
-			UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 PIPE TriggerMeshGeneration: mBuildClass=%s but CDO cast failed"), *mBuildClass->GetName());
+			UE_LOG(LogSmartHologram, Warning, TEXT("🔧 PIPE TriggerMeshGeneration: mBuildClass=%s but CDO cast failed"), *mBuildClass->GetName());
 		}
 	}
 	else
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 PIPE TriggerMeshGeneration: mBuildClass is NULL!"));
+		UE_LOG(LogSmartHologram, Warning, TEXT("🔧 PIPE TriggerMeshGeneration: mBuildClass is NULL!"));
 	}
 	
 	// Fallback to hardcoded generic pipe mesh if CDO lookup failed
 	if (!PipeMesh)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 PIPE TriggerMeshGeneration: CDO mesh lookup failed, using fallback"));
+		UE_LOG(LogSmartHologram, Warning, TEXT("🔧 PIPE TriggerMeshGeneration: CDO mesh lookup failed, using fallback"));
 		PipeMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Game/FactoryGame/Buildable/Factory/Pipeline/Mesh/SM_Pipe.SM_Pipe"));
 	}
 	if (!PipeMesh)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("   PIPE TriggerMeshGeneration: Failed to load pipe mesh!"));
+		UE_LOG(LogSmartHologram, Warning, TEXT("   PIPE TriggerMeshGeneration: Failed to load pipe mesh!"));
 		return;
 	}
 	
@@ -1066,14 +1066,14 @@ void ASFPipelineHologram::TriggerMeshGeneration()
 		MeshLength = 200.0f; // Default pipe mesh length
 	}
 	
-	UE_LOG(LogSmartFoundations, Log, TEXT("🔧 PIPE TriggerMeshGeneration: Mesh=%s, MeshLength=%.1f cm, SplineLength=%.1f cm"), 
+	UE_LOG(LogSmartHologram, Log, TEXT("🔧 PIPE TriggerMeshGeneration: Mesh=%s, MeshLength=%.1f cm, SplineLength=%.1f cm"), 
 		*PipeMesh->GetName(), MeshLength, SplineLength);
 	
 	// CRITICAL FIX: Calculate segments based on spline length / mesh length (like vanilla)
 	// NOT based on spline point count - that causes severe stretching
 	const int32 RequiredSegments = FMath::Max(1, FMath::CeilToInt(SplineLength / MeshLength));
 	
-	UE_LOG(LogSmartFoundations, Log, TEXT("🔧 PIPE TriggerMeshGeneration: Need %d segments (%.1f cm each) for %.1f cm spline"), 
+	UE_LOG(LogSmartHologram, Log, TEXT("🔧 PIPE TriggerMeshGeneration: Need %d segments (%.1f cm each) for %.1f cm spline"), 
 		RequiredSegments, SplineLength / RequiredSegments, SplineLength);
 	
 	// Get existing mesh components - base class creates default ones that may not update properly
@@ -1161,13 +1161,13 @@ void ASFPipelineHologram::TriggerMeshGeneration()
 			
 			if (SegmentIdx == 0)
 			{
-				UE_LOG(LogSmartFoundations, Log, TEXT("🔧 PIPE Segment[0]: Start=%s End=%s (dist %.1f-%.1f)"), 
+				UE_LOG(LogSmartHologram, Log, TEXT("🔧 PIPE Segment[0]: Start=%s End=%s (dist %.1f-%.1f)"), 
 					*StartPos.ToString(), *EndPos.ToString(), StartDist, EndDist);
 			}
 		}
 	}
 	
-	UE_LOG(LogSmartFoundations, Log, TEXT("🔧 PIPE TriggerMeshGeneration: Created %d segments of %.1f cm each"), 
+	UE_LOG(LogSmartHologram, Log, TEXT("🔧 PIPE TriggerMeshGeneration: Created %d segments of %.1f cm each"), 
 		MeshComps.Num(), SegmentLength);
 	
 	// Apply the current hologram material state to newly created mesh components.
@@ -1175,7 +1175,7 @@ void ASFPipelineHologram::TriggerMeshGeneration()
 	
 	// Check actor position
 	FVector ActorLoc = GetActorLocation();
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   PIPE: Actor location: %s"), *ActorLoc.ToString());
+	UE_LOG(LogSmartHologram, VeryVerbose, TEXT("   PIPE: Actor location: %s"), *ActorLoc.ToString());
 	
 	// Check if components are actually attached and positioned
 	for (int32 i = 0; i < MeshComps.Num() && i < 2; i++)
@@ -1183,7 +1183,7 @@ void ASFPipelineHologram::TriggerMeshGeneration()
 		if (MeshComps[i])
 		{
 			FVector CompWorldLoc = MeshComps[i]->GetComponentLocation();
-			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("      MeshComp[%d] World Location: %s"), i, *CompWorldLoc.ToString());
+			UE_LOG(LogSmartHologram, VeryVerbose, TEXT("      MeshComp[%d] World Location: %s"), i, *CompWorldLoc.ToString());
 		}
 	}
 }
@@ -1194,15 +1194,15 @@ void ASFPipelineHologram::ConfigureActor(class AFGBuildable* inBuildable) const
 	// Vanilla can clear mSplineData during construction processing.
 	// We detect this and restore from backup before passing to Super.
 	
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 PIPE ConfigureActor: Hologram=%s, Buildable=%s"), 
+	UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 PIPE ConfigureActor: Hologram=%s, Buildable=%s"), 
 		*GetName(), inBuildable ? *inBuildable->GetName() : TEXT("NULL"));
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 PIPE ConfigureActor: mSplineData has %d points"), mSplineData.Num());
+	UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 PIPE ConfigureActor: mSplineData has %d points"), mSplineData.Num());
 	
 	// Log current spline data state
 	for (int32 i = 0; i < mSplineData.Num() && i < 3; i++)
 	{
 		const FSplinePointData& Point = mSplineData[i];
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 PIPE ConfigureActor:   Point[%d] Location=%s"), 
+		UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 PIPE ConfigureActor:   Point[%d] Location=%s"), 
 			i, *Point.Location.ToString());
 	}
 	
@@ -1210,7 +1210,7 @@ void ASFPipelineHologram::ConfigureActor(class AFGBuildable* inBuildable) const
 	// This handles the case where mSplineData was reset to default 2-point spline by vanilla
 	if (const FSFHologramData* HoloData = USFHologramDataRegistry::GetData(this))
 	{
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 PIPE ConfigureActor: Registry entry found - bHasBackup=%d, BackupPoints=%d"),
+		UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 PIPE ConfigureActor: Registry entry found - bHasBackup=%d, BackupPoints=%d"),
 			HoloData->bHasBackupSplineData ? 1 : 0, HoloData->BackupSplineData.Num());
 		
 		// If backup has more points than current data, OR if current data appears wrong, we need to restore
@@ -1249,7 +1249,7 @@ void ASFPipelineHologram::ConfigureActor(class AFGBuildable* inBuildable) const
 					if (BackupLength > 100.0f)
 					{
 						bNeedsRestore = true;
-						UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 PIPE ConfigureActor: Backup end=%s (%.1f cm), Current end=%s (%.1f cm) - differs, will restore"),
+						UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 PIPE ConfigureActor: Backup end=%s (%.1f cm), Current end=%s (%.1f cm) - differs, will restore"),
 							*BackupEnd.ToString(), BackupLength, *CurrentEnd.ToString(), CurrentLength);
 					}
 				}
@@ -1264,7 +1264,7 @@ void ASFPipelineHologram::ConfigureActor(class AFGBuildable* inBuildable) const
 		
 		if (bNeedsRestore)
 		{
-			UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 PIPE ConfigureActor: mSplineData was reset! Restoring %d points from backup (had %d)"), 
+			UE_LOG(LogSmartHologram, Warning, TEXT("🔧 PIPE ConfigureActor: mSplineData was reset! Restoring %d points from backup (had %d)"), 
 				HoloData->BackupSplineData.Num(), mSplineData.Num());
 			
 			// Restore spline data (need to cast away const for this emergency restore)
@@ -1279,30 +1279,30 @@ void ASFPipelineHologram::ConfigureActor(class AFGBuildable* inBuildable) const
 				MutableThis->AFGSplineHologram::UpdateSplineComponent();
 			}
 			
-			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 PIPE ConfigureActor: Restored mSplineData now has %d points"), 
+			UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 PIPE ConfigureActor: Restored mSplineData now has %d points"), 
 				mSplineData.Num());
 			
 			// Log the restored points
 			for (int32 i = 0; i < mSplineData.Num() && i < 4; i++)
 			{
-				UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 PIPE ConfigureActor:   RestoredPoint[%d] Location=%s"), 
+				UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 PIPE ConfigureActor:   RestoredPoint[%d] Location=%s"), 
 					i, *mSplineData[i].Location.ToString());
 			}
 		}
 	}
 	else
 	{
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 PIPE ConfigureActor: No registry entry found for this hologram"));
+		UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 PIPE ConfigureActor: No registry entry found for this hologram"));
 	}
 	
 	if (mSplineComponent)
 	{
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 PIPE ConfigureActor: SplineComponent has %d points, length=%.1f cm"),
+		UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 PIPE ConfigureActor: SplineComponent has %d points, length=%.1f cm"),
 			mSplineComponent->GetNumberOfSplinePoints(), mSplineComponent->GetSplineLength());
 	}
 	else
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 PIPE ConfigureActor: mSplineComponent is NULL!"));
+		UE_LOG(LogSmartHologram, Warning, TEXT("🔧 PIPE ConfigureActor: mSplineComponent is NULL!"));
 	}
 	
 	// Call parent to configure the buildable
@@ -1312,11 +1312,11 @@ void ASFPipelineHologram::ConfigureActor(class AFGBuildable* inBuildable) const
 	if (AFGBuildablePipeline* Pipeline = Cast<AFGBuildablePipeline>(inBuildable))
 	{
 		const TArray<FSplinePointData>& PipeSplineData = Pipeline->GetSplinePointData();
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 PIPE ConfigureActor: AFTER Super - Buildable has %d spline points"), 
+		UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 PIPE ConfigureActor: AFTER Super - Buildable has %d spline points"), 
 			PipeSplineData.Num());
 		for (int32 i = 0; i < PipeSplineData.Num() && i < 3; i++)
 		{
-			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 PIPE ConfigureActor:   BuildablePoint[%d] Location=%s"), 
+			UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 PIPE ConfigureActor:   BuildablePoint[%d] Location=%s"), 
 				i, *PipeSplineData[i].Location.ToString());
 		}
 	}
@@ -1324,7 +1324,7 @@ void ASFPipelineHologram::ConfigureActor(class AFGBuildable* inBuildable) const
 
 TArray<FItemAmount> ASFPipelineHologram::GetCost(bool includeChildren) const
 {
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("💰 PIPE GetCost() CALLED on %s (includeChildren=%d)"), *GetName(), includeChildren);
+	UE_LOG(LogSmartHologram, VeryVerbose, TEXT("💰 PIPE GetCost() CALLED on %s (includeChildren=%d)"), *GetName(), includeChildren);
 	
 	// Get base cost from parent (should be empty for pipes, but call it anyway)
 	TArray<FItemAmount> TotalCost = Super::GetCost(includeChildren);
@@ -1343,7 +1343,7 @@ TArray<FItemAmount> ASFPipelineHologram::GetCost(bool includeChildren) const
 			{
 				if (HoloData->bHasBackupSplineData && HoloData->BackupSplineData.Num() >= 2)
 				{
-					UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("💰 PIPE: Spline length is zero but backup has %d points - RESTORING!"), 
+					UE_LOG(LogSmartHologram, VeryVerbose, TEXT("💰 PIPE: Spline length is zero but backup has %d points - RESTORING!"), 
 						HoloData->BackupSplineData.Num());
 					
 					// Restore spline data
@@ -1355,7 +1355,7 @@ TArray<FItemAmount> ASFPipelineHologram::GetCost(bool includeChildren) const
 					PipeLengthCm = mSplineComponent->GetSplineLength();
 					LengthInMeters = PipeLengthCm / 100.0f;
 					
-					UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("💰 PIPE: After restoration, spline length = %.1f cm"), PipeLengthCm);
+					UE_LOG(LogSmartHologram, VeryVerbose, TEXT("💰 PIPE: After restoration, spline length = %.1f cm"), PipeLengthCm);
 					MutableThis->TriggerMeshGeneration();
 				}
 			}
@@ -1363,12 +1363,12 @@ TArray<FItemAmount> ASFPipelineHologram::GetCost(bool includeChildren) const
 			// If still zero after restoration attempt, skip cost calculation
 			if (LengthInMeters <= KINDA_SMALL_NUMBER)
 			{
-				UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("💰 PIPE: Spline length is zero - skipping pipe cost calculation"));
+				UE_LOG(LogSmartHologram, VeryVerbose, TEXT("💰 PIPE: Spline length is zero - skipping pipe cost calculation"));
 				return TotalCost;
 			}
 		}
 		
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("💰 PIPE: Spline length = %.1f cm (%.1f m)"), PipeLengthCm, LengthInMeters);
+		UE_LOG(LogSmartHologram, VeryVerbose, TEXT("💰 PIPE: Spline length = %.1f cm (%.1f m)"), PipeLengthCm, LengthInMeters);
 		
 		// Get pipe class and determine tier
 		if (mBuildClass)
@@ -1387,7 +1387,7 @@ TArray<FItemAmount> ASFPipelineHologram::GetCost(bool includeChildren) const
 				PipeTier = 2;
 			}
 			
-			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("💰 PIPE: Class = %s, Tier = Mk%d"), *ClassName, PipeTier);
+			UE_LOG(LogSmartHologram, VeryVerbose, TEXT("💰 PIPE: Class = %s, Tier = Mk%d"), *ClassName, PipeTier);
 			
 			// Get recipe for this pipe class
 			UWorld* World = GetWorld();
@@ -1435,7 +1435,7 @@ TArray<FItemAmount> ASFPipelineHologram::GetCost(bool includeChildren) const
 							// Get recipe ingredients (cost per meter) - iterate directly to avoid copy
 							const TArray<FItemAmount> Ingredients = UFGRecipe::GetIngredients(PipeRecipe);
 
-							UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("💰 PIPE: Found recipe with %d ingredients"), Ingredients.Num());
+							UE_LOG(LogSmartHologram, VeryVerbose, TEXT("💰 PIPE: Found recipe with %d ingredients"), Ingredients.Num());
 
 							// Calculate total cost based on pipe length
 							for (const FItemAmount& Ingredient : Ingredients)
@@ -1445,7 +1445,7 @@ TArray<FItemAmount> ASFPipelineHologram::GetCost(bool includeChildren) const
 									// Calculate amount needed for this pipe length
 									int32 AmountNeeded = FMath::CeilToInt(Ingredient.Amount * LengthInMeters);
 									
-									UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("💰 PIPE:   %s: %.1f per meter × %.1f meters = %d total"),
+									UE_LOG(LogSmartHologram, VeryVerbose, TEXT("💰 PIPE:   %s: %.1f per meter × %.1f meters = %d total"),
 										*Ingredient.ItemClass->GetName(), Ingredient.Amount, LengthInMeters, AmountNeeded);
 									
 									// Add to total cost
@@ -1468,7 +1468,7 @@ TArray<FItemAmount> ASFPipelineHologram::GetCost(bool includeChildren) const
 						}
 						else
 						{
-							UE_LOG(LogSmartFoundations, Warning, TEXT("💰 PIPE: No recipe found for pipe class %s"), *ClassName);
+							UE_LOG(LogSmartHologram, Warning, TEXT("💰 PIPE: No recipe found for pipe class %s"), *ClassName);
 						}
 					}
 				}
@@ -1476,6 +1476,6 @@ TArray<FItemAmount> ASFPipelineHologram::GetCost(bool includeChildren) const
 		}
 	}
 	
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("💰 PIPE GetCost() RETURNING %d item types"), TotalCost.Num());
+	UE_LOG(LogSmartHologram, VeryVerbose, TEXT("💰 PIPE GetCost() RETURNING %d item types"), TotalCost.Num());
 	return TotalCost;
 }

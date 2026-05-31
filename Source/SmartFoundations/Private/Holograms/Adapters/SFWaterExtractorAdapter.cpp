@@ -56,14 +56,14 @@ FVector FSFWaterExtractorAdapter::CalculateWaterExtractorSize() const
 {
 	if (!HologramPtr.IsValid())
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("FSFWaterExtractorAdapter::CalculateWaterExtractorSize - Invalid hologram"));
+		UE_LOG(LogSmartHologram, Warning, TEXT("FSFWaterExtractorAdapter::CalculateWaterExtractorSize - Invalid hologram"));
 		return USFBuildableSizeRegistry::GetDefaultSize();
 	}
 
 	UClass* BuildClass = HologramPtr->GetBuildClass();
 	if (!BuildClass)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("FSFWaterExtractorAdapter: No BuildClass"));
+		UE_LOG(LogSmartHologram, Warning, TEXT("FSFWaterExtractorAdapter: No BuildClass"));
 		return USFBuildableSizeRegistry::GetDefaultSize();
 	}
 

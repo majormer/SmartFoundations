@@ -9,9 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [30.0.1] - Unreleased
+## [30.1.0] - 2026-05-31
 
-> *Draft entry — collects all changes since the v30.0.0 release.*
+> *Final Satisfactory 1.1 release - collects all changes since v30.0.0.*
 
 ### Fixed
 - **Extend previews now show affordability correctly, and honor the Dimensional Depot** - When Extending a factory with auto-connected belts, pipes, and lifts, running short on materials turned the factory red but left the attached belts and pipes cyan, making it look like part of the placement was affordable. Now the whole Extend preview - factory, belts, pipes, lifts, distributors, poles, and wires - turns red together when you genuinely can't afford it, and returns to cyan the moment it's buildable again. The affordability check also counts materials in your Dimensional Depot, so an Extend you can build from the Depot is no longer incorrectly shown as unaffordable.
@@ -24,7 +24,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Smoother grid scaling** - Reworked how Smart! spawns and refreshes grid preview holograms while scaling, improving stability and performance on large grid layouts.
 
 ### Technical
+- **Fenced to Satisfactory 1.1** - This is the final 1.1-compatible release. It is marked compatible only with game versions up to and including the current 1.1 stable (CL 463028); when 1.2 arrives, the mod manager will not offer this build to 1.2, so 1.1 players keep a working version and 1.2 players are not handed an incompatible one. A separate 1.2 release will follow.
 - **Pre-1.2 cleanup pass** - Removed a large amount of dead and orphaned code ahead of the Satisfactory 1.2 port: unused services (axis-label provider, direction-translation service), legacy input-action definitions, the obsolete pipe chain resolver, stale backup files, empty per-building hologram subclasses, unused hologram adapters, dead scaling/arrow/conveyor helper modules, and a bypassed upgrade result-row widget class; trimmed the core subsystem and upgrade service (~5,000+ lines removed across ~80 files). No intended gameplay change. (Verified against editor content via SMLMCP before removal.)
+- **God-object decomposition** - Split the largest source files - the central subsystem and the Extend engine, each over 9,000 lines - into focused, single-responsibility files, with the code behaving exactly as before. This makes future updates, especially the upcoming Satisfactory 1.2 port, faster and lower-risk. Build-validated; no intended gameplay change.
 - **Extend child-state propagation refactor** - Child preview holograms now read an authoritative material state from the Extend service rather than each inferring it from the parent, resolving the frame-ordering issue behind the insufficient-materials fix above.
 - **Satisfactory 1.2 readiness** - Added the 1.2 porting plan, a multiplayer support planning matrix, and structured GitHub issue forms.
 - **Documentation & project** - New GitHub wiki content, a player FAQ, Smart Camera control docs, and refreshed ficsit.app support metadata.

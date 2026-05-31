@@ -14,7 +14,7 @@
  *
  * Key Files:
  * - SFExtendService.h/.cpp - Main service (topology, previews, diagnostics)
- * - SFManifoldJSON.h/.cpp - JSON schema for topology capture/clone/spawn
+ * - SFExtendCloneTopology.h/.cpp - clone topology capture/transform/spawn
  * - SFWiringManifest.h/.cpp - Post-build connection wiring
  *
  * Legacy systems removed (Dec 2025 cleanup):
@@ -38,6 +38,7 @@
 #include "Features/Extend/SFExtendTopologyService.h"
 #include "Features/Extend/SFExtendHologramService.h"
 #include "Features/Extend/SFExtendWiringService.h"
+#include "Features/Extend/SFExtendScaledService.h"  // For FSFScaledExtendClone (ScaledExtendClones member)
 #include "SFExtendService.generated.h"
 
 class AFGBuildable;
@@ -58,6 +59,9 @@ class ASFConveyorBeltHologram;
 class ASFConveyorLiftHologram;
 class ASFPipelineHologram;
 class ASFPipelineJunctionChildHologram;
+class USFExtendDiagnosticsService;
+class USFExtendRestoreReplayService;
+class USFExtendScaledService;
 class USFSubsystem;
 struct FSplinePointData;
 struct FSFCloneTopology;
@@ -66,143 +70,8 @@ struct FSFWiringManifest;
 // ESFExtendDirection enum moved to SFExtendDetectionService.h
 // Topology structs (FSFConnectionChainNode, FSFPipeConnectionChainNode, FSFExtendTopology) moved to SFExtendTypes.h
 
-// ==================== Diagnostic Capture ====================
-
-/**
- * Captured connection data
- */
-USTRUCT()
-struct FSFCapturedConnection
-{
-    GENERATED_BODY()
-
-    FString ConnectorName;
-    FString ConnectorClass;
-    FVector WorldLocation = FVector::ZeroVector;
-    FRotator WorldRotation = FRotator::ZeroRotator;
-    int32 Direction = 0;  // EFactoryConnectionDirection
-    bool bIsConnected = false;
-    FString ConnectedToActor;
-    FString ConnectedToConnector;
-
-    FSFCapturedConnection() = default;
-};
-
-/**
- * Captured spline point data
- */
-USTRUCT()
-struct FSFCapturedSplinePoint
-{
-    GENERATED_BODY()
-
-    int32 Index = 0;
-    FVector Location = FVector::ZeroVector;      // Local space
-    FVector WorldLocation = FVector::ZeroVector;  // World space
-    FVector ArriveTangent = FVector::ZeroVector;
-    FVector LeaveTangent = FVector::ZeroVector;
-    FRotator Rotation = FRotator::ZeroRotator;
-
-    FSFCapturedSplinePoint() = default;
-};
-
-/**
- * Captured buildable data for diagnostic comparison
- * Used to compare world state before/after EXTEND build
- * COMPREHENSIVE - captures ALL available data
- */
-USTRUCT()
-struct FSFCapturedBuildable
-{
-    GENERATED_BODY()
-
-    // === Identity ===
-    FString Name;
-    FString ClassName;
-    FString Category;
-
-    // === Transform ===
-    FVector Location = FVector::ZeroVector;
-    FRotator Rotation = FRotator::ZeroRotator;
-    FVector Scale = FVector::OneVector;
-    FVector BoundsMin = FVector::ZeroVector;
-    FVector BoundsMax = FVector::ZeroVector;
-
-    // === State ===
-    bool bIsHidden = false;
-    bool bIsPendingKill = false;
-    bool bHasBegunPlay = false;
-
-    // === Connections (Belts/Distributors/Factories) ===
-    TArray<FSFCapturedConnection> FactoryConnections;
-
-    // === Pipe Connections ===
-    TArray<FSFCapturedConnection> PipeConnections;
-
-    // === Spline Data (Belts/Pipes) ===
-    TArray<FSFCapturedSplinePoint> SplinePoints;
-    float SplineLength = 0.0f;
-    int32 SplinePointCount = 0;
-
-    // === Belt-specific ===
-    float BeltSpeed = 0.0f;
-
-    // === Lift-specific ===
-    float LiftHeight = 0.0f;
-    bool bLiftIsReversed = false;
-    FVector LiftTopLocation = FVector::ZeroVector;
-    FVector LiftBottomLocation = FVector::ZeroVector;
-
-    // === All Properties (raw dump) ===
-    TArray<FString> AllProperties;
-
-    // === EXTEND Topology Flags ===
-    /** Is this buildable part of the source EXTEND topology? */
-    bool bIsExtendSource = false;
-
-    /** Specific role in the EXTEND topology (if applicable) */
-    FString ExtendRole;  // "SourceFactory", "InputBelt", "OutputBelt", "InputLift", "OutputLift",
-                         // "InputPipe", "OutputPipe", "Splitter", "Merger", "Junction",
-                         // "Pole" (future), "LiftFloorHole" (future), "PipelinePump" (future)
-
-    /** Chain ID this buildable belongs to (-1 if not part of a chain) */
-    int32 ExtendChainId = -1;
-
-    /** Index within the chain (-1 if not applicable) */
-    int32 ExtendChainIndex = -1;
-
-    FSFCapturedBuildable() = default;
-};
-
-/**
- * Snapshot of all buildables within capture radius
- */
-USTRUCT()
-struct FSFBuildableSnapshot
-{
-    GENERATED_BODY()
-
-    /** All captured buildables */
-    UPROPERTY()
-    TArray<FSFCapturedBuildable> Buildables;
-
-    /** Capture location (player position) */
-    UPROPERTY()
-    FVector CaptureLocation = FVector::ZeroVector;
-
-    /** Capture radius used */
-    UPROPERTY()
-    float CaptureRadius = 0.0f;
-
-    /** Timestamp of capture */
-    UPROPERTY()
-    FDateTime CaptureTime;
-
-    /** Count by category */
-    TMap<FString, int32> CountByCategory;
-
-    FSFBuildableSnapshot() = default;
-};
+// Diagnostic snapshot structs (FSFCapturedConnection/SplinePoint/Buildable, FSFBuildableSnapshot)
+// and the before/after capture logic now live in SFExtendDiagnosticsService.h/.cpp (T1 split).
 
 /**
  * Service for managing EXTEND feature - clones factory buildings with their
@@ -215,6 +84,16 @@ UCLASS()
 class SMARTFOUNDATIONS_API USFExtendService : public UObject
 {
     GENERATED_BODY()
+
+    // Restore-replay logic lives in USFExtendRestoreReplayService but operates on this
+    // service's shared replay/wiring state (StoredCloneTopology, Json* maps, etc.) in place.
+    friend class USFExtendRestoreReplayService;
+    // Scaled Extend planning/preview lives in USFExtendScaledService but operates on this
+    // service's shared scaled/wiring state (ScaledExtendClones, StoredCloneTopology, etc.) in place.
+    friend class USFExtendScaledService;
+    // Post-build wiring (E-chain / built-child / manifold / JSON) lives in USFExtendWiringService
+    // but operates on this service's shared registry maps + StoredCloneTopology in place (slice E2).
+    friend class USFExtendWiringService;
 
 public:
     USFExtendService();
@@ -611,6 +490,18 @@ private:
     UPROPERTY()
     USFExtendWiringService* WiringService = nullptr;
 
+    /** Diagnostics service for EXTEND before/after world snapshots (pure diagnostics; no gameplay path) */
+    UPROPERTY()
+    USFExtendDiagnosticsService* DiagnosticsService = nullptr;
+
+    /** Restore-replay service for Smart Restore Extend clone-topology replay (operates on this service's shared state) */
+    UPROPERTY()
+    USFExtendRestoreReplayService* RestoreReplayService = nullptr;
+
+    /** Scaled Extend service (planning/preview/validate; operates on this service's shared state) */
+    UPROPERTY()
+    USFExtendScaledService* ScaledService = nullptr;
+
     /** Do we have a valid extend target this frame */
     UPROPERTY()
     bool bHasValidTarget = false;
@@ -715,19 +606,10 @@ private:
     /** Used during Construct() to find the correct output on the cloned distributor */
     TMap<int32, FName> DistributorConnectorNameByChain;
 
-    /** Wire up pipe hologram connections after all holograms in a chain are spawned */
-    void WirePipeChainConnections(int32 ChainId, AFGHologram* ParentHologram, bool bIsInputChain);
+    // WirePipeChainConnections / WireBeltChainConnections / FindPipe/FactoryConnectionByIndex
+    // moved to USFExtendWiringService (slice E2a).
 
-    /** Wire up belt hologram connections after all holograms in a chain are spawned */
-    void WireBeltChainConnections(int32 ChainId, AFGHologram* ParentHologram, bool bIsInputChain);
-
-    /** Find a pipe connection component on a hologram by index (0 or 1) */
-    UFGPipeConnectionComponentBase* FindPipeConnectionByIndex(AFGHologram* Hologram, int32 Index) const;
-
-    /** Find a factory connection component on a hologram by index (0 or 1) */
-    UFGFactoryConnectionComponent* FindFactoryConnectionByIndex(AFGHologram* Hologram, int32 Index) const;
-
-    /** Clear all connection wiring tracking maps */
+    /** Clear all connection wiring tracking maps (forwards to WiringService) */
     void ClearConnectionWiringMaps();
 
     /** Building we just built from - prevents immediate re-activation on same building after build */
@@ -751,33 +633,14 @@ private:
     FString ScaledExtendInvalidReason;
 
     /**
-     * All clone sets for Scaled Extend. Each entry represents one complete manifold clone.
-     * Index 0 = first clone (adjacent to source), Index N = Nth clone in chain.
-     * For 2D grids, includes auto-seed clones.
+     * All clone sets for Scaled Extend. FSFScaledExtendClone was relocated to
+     * SFExtendScaledService.h (slice E1) so the scaled service + the post-build wiring path
+     * share it; the scaled planning/preview/validate methods moved to USFExtendScaledService.
      */
-    struct FSFScaledExtendClone
-    {
-        int32 GridX = 0;  // Grid position (0-based, 0 = first clone)
-        int32 GridY = 0;  // Row index (0 = source row)
-        bool bIsSeed = false;  // Auto-seed clone at (0, Y>0)
-        FVector WorldOffset = FVector::ZeroVector;  // Offset from source building
-        FRotator RotationOffset = FRotator::ZeroRotator;  // Rotation relative to source
-        TMap<FString, AFGHologram*> SpawnedHolograms;  // Clone ID -> hologram for this clone
-        TSharedPtr<FSFCloneTopology> CloneTopology;  // Clone topology for this set
-    };
     TArray<FSFScaledExtendClone> ScaledExtendClones;
 
-    /** Calculate world offsets for all clones based on current grid state */
-    void CalculateScaledExtendPositions();
-
-    /** Spawn preview holograms for all scaled extend clones */
-    void SpawnScaledExtendPreviews();
-
-    /** Clear all scaled extend clone data and holograms */
+    /** Clear all scaled extend clone data and holograms (forwards to ScaledService) */
     void ClearScaledExtendClones();
-
-    /** Validate belt/pipe constraints between consecutive clones */
-    bool ValidateScaledExtendConstraints();
 
     /**
      * Issue #288: Validate cloned power pole capacity for pump wiring.
@@ -826,10 +689,8 @@ private:
     bool bRestoredScaledWiringRetryScheduled = false;
     int32 RestoredScaledWiringRetryAttempts = 0;
 
-    FSFCloneTopology BuildRestoredCloneTopologyForCurrentState(AFGHologram* ParentHologram) const;
-    void ClearRestoredCloneTopologyPreview();
-    int32 SpawnRestoredScaledFactoryHolograms(AFGHologram* ParentHologram, TMap<FString, AFGHologram*>& OutSpawnedHolograms);
-    bool SpawnRestoredCloneTopology(AFGHologram* ParentHologram, const FSFCloneTopology& CloneTopology);
+    // Restore-replay helpers (BuildRestoredCloneTopologyForCurrentState, ClearRestoredCloneTopologyPreview,
+    // SpawnRestoredScaledFactoryHolograms, SpawnRestoredCloneTopology) moved to USFExtendRestoreReplayService (T1 split).
 
     // ==================== Power Extend Tracking (Issue #229) ====================
 
@@ -854,10 +715,7 @@ public:
     AFGBuildable* GetSourceBuildableByName(const FString& ActorName) const;
 
 public:
-    // ==================== Diagnostic Capture ====================
-
-    /** Capture all buildables within radius of player for diagnostic comparison */
-    FSFBuildableSnapshot CaptureNearbyBuildables(float Radius = 15000.0f);  // 150m default
+    // ==================== Diagnostic Capture (delegates to DiagnosticsService) ====================
 
     /** Capture the "before" snapshot when preview phase starts */
     void CapturePreviewSnapshot();
@@ -865,13 +723,6 @@ public:
     /** Capture the "after" snapshot and log diff when all builds complete */
     void CapturePostBuildSnapshotAndLogDiff();
 
-    /** Log comparison between two snapshots */
-    void LogSnapshotDiff(const FSFBuildableSnapshot& Before, const FSFBuildableSnapshot& After);
-
-private:
-    /** Snapshot captured during preview phase */
-    FSFBuildableSnapshot PreviewSnapshot;
-
-    /** Whether preview snapshot has been captured */
-    bool bHasPreviewSnapshot = false;
+    /** Whether a preview snapshot has been captured (guards re-capture in CreateBeltPreviews) */
+    bool HasPreviewSnapshot() const;
 };

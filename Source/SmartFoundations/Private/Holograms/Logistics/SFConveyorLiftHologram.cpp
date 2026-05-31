@@ -22,12 +22,12 @@ void ASFConveyorLiftHologram::BeginPlay()
 {
     Super::BeginPlay();
     
-    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 LIFT HOLOGRAM BeginPlay: %s"), *GetName());
+    UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 LIFT HOLOGRAM BeginPlay: %s"), *GetName());
     
     // Log mesh components for debugging
     TArray<UStaticMeshComponent*> MeshComps;
     GetComponents<UStaticMeshComponent>(MeshComps);
-    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   Found %d StaticMeshComponents"), MeshComps.Num());
+    UE_LOG(LogSmartHologram, VeryVerbose, TEXT("   Found %d StaticMeshComponents"), MeshComps.Num());
 }
 
 void ASFConveyorLiftHologram::Destroyed()
@@ -142,7 +142,7 @@ void ASFConveyorLiftHologram::SetSnappedConnections(UFGFactoryConnectionComponen
             SnappedArray[0] = Connection0;
             SnappedArray[1] = Connection1;
             
-            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 EXTEND Lift: Set snapped connections on %s: [0]=%s, [1]=%s"),
+            UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 EXTEND Lift: Set snapped connections on %s: [0]=%s, [1]=%s"),
                 *GetName(),
                 Connection0 ? *Connection0->GetName() : TEXT("nullptr"),
                 Connection1 ? *Connection1->GetName() : TEXT("nullptr"));
@@ -150,7 +150,7 @@ void ASFConveyorLiftHologram::SetSnappedConnections(UFGFactoryConnectionComponen
     }
     else
     {
-        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND Lift: Failed to find mSnappedConnectionComponents property on %s"), *GetName());
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartHologram, Warning, TEXT("🔧 EXTEND Lift: Failed to find mSnappedConnectionComponents property on %s"), *GetName());
     }
 }
 
@@ -159,7 +159,7 @@ AActor* ASFConveyorLiftHologram::Construct(TArray<AActor*>& out_children, FNetCo
     // Check if this is an EXTEND child hologram
     if (Tags.Contains(FName(TEXT("SF_ExtendChild"))))
     {
-        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND LIFT CONSTRUCT: %s entering EXTEND path (JsonCloneId will be set by spawn)"),
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartHologram, Warning, TEXT("🔧 EXTEND LIFT CONSTRUCT: %s entering EXTEND path (JsonCloneId will be set by spawn)"),
             *GetName());
         
         // ============================================================
@@ -183,7 +183,7 @@ AActor* ASFConveyorLiftHologram::Construct(TArray<AActor*>& out_children, FNetCo
                     if (Targets.bHasValidTargets())
                     {
                         SetSnappedConnections(Targets.Conn0Target, Targets.Conn1Target);
-                        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 EXTEND Chain: Updated %s snapped connections → Conn0=%s, Conn1=%s"),
+                        UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 EXTEND Chain: Updated %s snapped connections → Conn0=%s, Conn1=%s"),
                             *GetName(),
                             Targets.Conn0Target ? *FString::Printf(TEXT("%s on %s"), *Targets.Conn0Target->GetName(), *Targets.Conn0Target->GetOwner()->GetName()) : TEXT("nullptr"),
                             Targets.Conn1Target ? *FString::Printf(TEXT("%s on %s"), *Targets.Conn1Target->GetName(), *Targets.Conn1Target->GetOwner()->GetName()) : TEXT("nullptr"));
@@ -237,7 +237,7 @@ AActor* ASFConveyorLiftHologram::Construct(TArray<AActor*>& out_children, FNetCo
             }
 
             // Log the mapping for debugging
-            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 EXTEND: ✅ Lift hologram %s → Buildable %s (ID: %u, ChainId: %d)"),
+            UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 EXTEND: ✅ Lift hologram %s → Buildable %s (ID: %u, ChainId: %d)"),
                 *GetName(), *BuiltActor->GetName(), BuiltActor->GetUniqueID(),
                 HoloData ? HoloData->ExtendChainId : -1);
 
@@ -246,7 +246,7 @@ AActor* ASFConveyorLiftHologram::Construct(TArray<AActor*>& out_children, FNetCo
             {
                 UFGFactoryConnectionComponent* Conn0 = Lift->GetConnection0();
                 UFGFactoryConnectionComponent* Conn1 = Lift->GetConnection1();
-                UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 EXTEND:   Conn0=%s @ %s, Conn1=%s @ %s, Height=%.1f"),
+                UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 EXTEND:   Conn0=%s @ %s, Conn1=%s @ %s, Height=%.1f"),
                     Conn0 ? *Conn0->GetName() : TEXT("null"),
                     Conn0 ? *Conn0->GetComponentLocation().ToString() : TEXT("N/A"),
                     Conn1 ? *Conn1->GetName() : TEXT("null"),
@@ -256,7 +256,7 @@ AActor* ASFConveyorLiftHologram::Construct(TArray<AActor*>& out_children, FNetCo
         }
         else
         {
-            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔧 EXTEND: ❌ Lift Construct returned nullptr!"));
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartHologram, Warning, TEXT("🔧 EXTEND: ❌ Lift Construct returned nullptr!"));
         }
 
         return BuiltActor;
@@ -275,7 +275,7 @@ void ASFConveyorLiftHologram::SetTopTransform(const FTransform& InTopTransform)
         if (TopTransformPtr)
         {
             *TopTransformPtr = InTopTransform;
-            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 LIFT: Set mTopTransform to %s"), 
+            UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 LIFT: Set mTopTransform to %s"), 
                 *InTopTransform.GetLocation().ToString());
         }
     }
@@ -329,13 +329,13 @@ void ASFConveyorLiftHologram::ConfigureComponents(AFGBuildable* inBuildable) con
     UFGFactoryConnectionComponent* Conn1 = Conveyor->GetConnection1();
     
     // Log connection state BEFORE we try anything
-    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⛓️ LIFT ConfigureComponents: %s (CloneId=%s) checking targets: Conn0→%s.%s, Conn1→%s.%s"),
+    UE_LOG(LogSmartHologram, VeryVerbose, TEXT("⛓️ LIFT ConfigureComponents: %s (CloneId=%s) checking targets: Conn0→%s.%s, Conn1→%s.%s"),
         *Conveyor->GetName(),
         *HoloData->JsonCloneId,
         *HoloData->Conn0TargetCloneId, *HoloData->Conn0TargetConnectorName.ToString(),
         *HoloData->Conn1TargetCloneId, *HoloData->Conn1TargetConnectorName.ToString());
     
-    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⛓️ LIFT ConfigureComponents: %s - Conn0 already connected: %s, Conn1 already connected: %s"),
+    UE_LOG(LogSmartHologram, VeryVerbose, TEXT("⛓️ LIFT ConfigureComponents: %s - Conn0 already connected: %s, Conn1 already connected: %s"),
         *Conveyor->GetName(),
         Conn0 && Conn0->IsConnected() ? TEXT("YES") : TEXT("NO"),
         Conn1 && Conn1->IsConnected() ? TEXT("YES") : TEXT("NO"));
@@ -351,7 +351,7 @@ void ASFConveyorLiftHologram::ConfigureComponents(AFGBuildable* inBuildable) con
         {
             FString SourceActorName = HoloData->Conn0TargetCloneId.Mid(7);
             TargetBuildable = ExtendService->GetSourceBuildableByName(SourceActorName);
-            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🛤️ LANE ConfigureComponents: Looking up source buildable '%s' → %s"),
+            UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🛤️ LANE ConfigureComponents: Looking up source buildable '%s' → %s"),
                 *SourceActorName, TargetBuildable ? *TargetBuildable->GetName() : TEXT("NOT FOUND"));
         }
         else
@@ -372,7 +372,7 @@ void ASFConveyorLiftHologram::ConfigureComponents(AFGBuildable* inBuildable) con
                     {
                         Conn0->SetConnection(TargetConn);
                         bMadeConnection = true;
-                        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⛓️ LIFT ConfigureComponents: ✅ Connected %s.Conn0 → %s.%s"),
+                        UE_LOG(LogSmartHologram, VeryVerbose, TEXT("⛓️ LIFT ConfigureComponents: ✅ Connected %s.Conn0 → %s.%s"),
                             *Conveyor->GetName(), *TargetBuildable->GetName(), *TargetConn->GetName());
                     }
                     break;
@@ -381,13 +381,13 @@ void ASFConveyorLiftHologram::ConfigureComponents(AFGBuildable* inBuildable) con
         }
         else
         {
-            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⛓️ LIFT ConfigureComponents: Conn0 target buildable '%s' not yet built"),
+            UE_LOG(LogSmartHologram, VeryVerbose, TEXT("⛓️ LIFT ConfigureComponents: Conn0 target buildable '%s' not yet built"),
                 *HoloData->Conn0TargetCloneId);
         }
     }
     
     // === CONN1: Try to connect to target ===
-    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⛓️ LIFT ConfigureComponents: %s - Conn1 check: TargetCloneId='%s', Conn1 valid=%s, Conn1 connected=%s"),
+    UE_LOG(LogSmartHologram, VeryVerbose, TEXT("⛓️ LIFT ConfigureComponents: %s - Conn1 check: TargetCloneId='%s', Conn1 valid=%s, Conn1 connected=%s"),
         *Conveyor->GetName(),
         *HoloData->Conn1TargetCloneId,
         Conn1 ? TEXT("YES") : TEXT("NO"),
@@ -401,14 +401,14 @@ void ASFConveyorLiftHologram::ConfigureComponents(AFGBuildable* inBuildable) con
         {
             FString SourceActorName = HoloData->Conn1TargetCloneId.Mid(7);
             TargetBuildable = ExtendService->GetSourceBuildableByName(SourceActorName);
-            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🛤️ LANE ConfigureComponents: Looking up source buildable '%s' → %s"),
+            UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🛤️ LANE ConfigureComponents: Looking up source buildable '%s' → %s"),
                 *SourceActorName, TargetBuildable ? *TargetBuildable->GetName() : TEXT("NOT FOUND"));
         }
         else
         {
             TargetBuildable = ExtendService->GetBuiltActorByCloneId(HoloData->Conn1TargetCloneId);
         }
-        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⛓️ LIFT ConfigureComponents: %s - Conn1 target lookup '%s' -> %s"),
+        UE_LOG(LogSmartHologram, VeryVerbose, TEXT("⛓️ LIFT ConfigureComponents: %s - Conn1 target lookup '%s' -> %s"),
             *Conveyor->GetName(),
             *HoloData->Conn1TargetCloneId,
             TargetBuildable ? *TargetBuildable->GetName() : TEXT("NULL"));
@@ -426,7 +426,7 @@ void ASFConveyorLiftHologram::ConfigureComponents(AFGBuildable* inBuildable) con
                     {
                         Conn1->SetConnection(TargetConn);
                         bMadeConnection = true;
-                        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⛓️ LIFT ConfigureComponents: ✅ Connected %s.Conn1 → %s.%s"),
+                        UE_LOG(LogSmartHologram, VeryVerbose, TEXT("⛓️ LIFT ConfigureComponents: ✅ Connected %s.Conn1 → %s.%s"),
                             *Conveyor->GetName(), *TargetBuildable->GetName(), *TargetConn->GetName());
                     }
                     break;
@@ -435,7 +435,7 @@ void ASFConveyorLiftHologram::ConfigureComponents(AFGBuildable* inBuildable) con
         }
         else
         {
-            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⛓️ LIFT ConfigureComponents: Conn1 target buildable '%s' not yet built"),
+            UE_LOG(LogSmartHologram, VeryVerbose, TEXT("⛓️ LIFT ConfigureComponents: Conn1 target buildable '%s' not yet built"),
                 *HoloData->Conn1TargetCloneId);
         }
     }
@@ -452,7 +452,7 @@ void ASFConveyorLiftHologram::ConfigureComponents(AFGBuildable* inBuildable) con
     
     if (bIsExtendLift)
     {
-        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("⛓️ LIFT ConfigureComponents: %s - EXTEND lift (skipping AddConveyor — chain rebuild handles registration)"),
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartHologram, Log, TEXT("⛓️ LIFT ConfigureComponents: %s - EXTEND lift (skipping AddConveyor — chain rebuild handles registration)"),
             *Conveyor->GetName());
     }
     else if (bMadeConnection)
@@ -460,13 +460,13 @@ void ASFConveyorLiftHologram::ConfigureComponents(AFGBuildable* inBuildable) con
         AFGBuildableSubsystem* BuildableSubsystem = AFGBuildableSubsystem::Get(GetWorld());
         if (BuildableSubsystem)
         {
-            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⛓️ LIFT ConfigureComponents: %s - adding to subsystem"),
+            UE_LOG(LogSmartHologram, VeryVerbose, TEXT("⛓️ LIFT ConfigureComponents: %s - adding to subsystem"),
                 *Conveyor->GetName());
             
             BuildableSubsystem->AddConveyor(Conveyor);
             
             AFGConveyorChainActor* ChainActor = Conveyor->GetConveyorChainActor();
-            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⛓️ LIFT ConfigureComponents: %s - initial chain: %s (%d segments)"),
+            UE_LOG(LogSmartHologram, VeryVerbose, TEXT("⛓️ LIFT ConfigureComponents: %s - initial chain: %s (%d segments)"),
                 *Conveyor->GetName(),
                 ChainActor ? *ChainActor->GetName() : TEXT("NULL"),
                 ChainActor ? ChainActor->GetNumChainSegments() : 0);
@@ -474,7 +474,7 @@ void ASFConveyorLiftHologram::ConfigureComponents(AFGBuildable* inBuildable) con
     }
     else
     {
-        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⛓️ LIFT ConfigureComponents: %s - no connections made (targets not yet built)"),
+        UE_LOG(LogSmartHologram, VeryVerbose, TEXT("⛓️ LIFT ConfigureComponents: %s - no connections made (targets not yet built)"),
             *Conveyor->GetName());
     }
 }
@@ -520,7 +520,7 @@ void ASFConveyorLiftHologram::ForceApplyHologramMaterial()
             break;
     }
     
-    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🎨 LIFT ForceApplyHologramMaterial: State=%d, MeshComponents=%d"), 
+    UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🎨 LIFT ForceApplyHologramMaterial: State=%d, MeshComponents=%d"), 
         (int32)CurrentState, MeshComps.Num());
     
     if (Material)
