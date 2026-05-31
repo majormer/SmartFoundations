@@ -26,6 +26,7 @@
 #include "UObject/NoExportTypes.h"
 #include "SFExtendWiringService.generated.h"
 
+class AActor;
 class AFGBuildable;
 class AFGBuildableFactory;
 class AFGBuildableConveyorBase;
@@ -77,6 +78,12 @@ public:
     bool CreateManifoldBelt(UFGFactoryConnectionComponent* FromConnector, UFGFactoryConnectionComponent* ToConnector);
     bool CreateManifoldPipe(UFGPipeConnectionComponentBase* FromConnector, UFGPipeConnectionComponentBase* ToConnector);
     AFGBuildableFactory* GetSourceFactory() const;
+
+    // ==================== JSON-based post-build wiring (slice E2 unit I) ====================
+    int32 GenerateAndExecuteWiring(AFGBuildableFactory* NewFactory);
+    void RegisterJsonBuiltActor(const FString& CloneId, AActor* BuiltActor);
+    AFGBuildable* GetBuiltActorByCloneId(const FString& CloneId) const;
+    AFGBuildable* GetSourceBuildableByName(const FString& ActorName) const;
 
 private:
     /** Wire up pipe hologram connections after all holograms in a chain are spawned */
