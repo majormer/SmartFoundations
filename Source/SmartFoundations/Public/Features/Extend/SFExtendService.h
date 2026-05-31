@@ -91,6 +91,9 @@ class SMARTFOUNDATIONS_API USFExtendService : public UObject
     // Scaled Extend planning/preview lives in USFExtendScaledService but operates on this
     // service's shared scaled/wiring state (ScaledExtendClones, StoredCloneTopology, etc.) in place.
     friend class USFExtendScaledService;
+    // Post-build wiring (E-chain / built-child / manifold / JSON) lives in USFExtendWiringService
+    // but operates on this service's shared registry maps + StoredCloneTopology in place (slice E2).
+    friend class USFExtendWiringService;
 
 public:
     USFExtendService();
@@ -603,19 +606,10 @@ private:
     /** Used during Construct() to find the correct output on the cloned distributor */
     TMap<int32, FName> DistributorConnectorNameByChain;
 
-    /** Wire up pipe hologram connections after all holograms in a chain are spawned */
-    void WirePipeChainConnections(int32 ChainId, AFGHologram* ParentHologram, bool bIsInputChain);
+    // WirePipeChainConnections / WireBeltChainConnections / FindPipe/FactoryConnectionByIndex
+    // moved to USFExtendWiringService (slice E2a).
 
-    /** Wire up belt hologram connections after all holograms in a chain are spawned */
-    void WireBeltChainConnections(int32 ChainId, AFGHologram* ParentHologram, bool bIsInputChain);
-
-    /** Find a pipe connection component on a hologram by index (0 or 1) */
-    UFGPipeConnectionComponentBase* FindPipeConnectionByIndex(AFGHologram* Hologram, int32 Index) const;
-
-    /** Find a factory connection component on a hologram by index (0 or 1) */
-    UFGFactoryConnectionComponent* FindFactoryConnectionByIndex(AFGHologram* Hologram, int32 Index) const;
-
-    /** Clear all connection wiring tracking maps */
+    /** Clear all connection wiring tracking maps (forwards to WiringService) */
     void ClearConnectionWiringMaps();
 
     /** Building we just built from - prevents immediate re-activation on same building after build */

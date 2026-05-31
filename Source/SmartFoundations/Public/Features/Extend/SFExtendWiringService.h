@@ -30,6 +30,9 @@ class AFGBuildable;
 class AFGBuildableFactory;
 class AFGBuildableConveyorBase;
 class AFGBuildablePipeline;
+class AFGHologram;
+class UFGPipeConnectionComponentBase;
+class UFGFactoryConnectionComponent;
 class USFSubsystem;
 class USFExtendService;
 
@@ -57,7 +60,28 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Smart|Extend|Wiring")
     bool IsReady() const { return ExtendService != nullptr; }
 
+    // ==================== E-chain wiring (slice E2a) ====================
+    // Moved from USFExtendService; operate on its shared registry maps via ExtendService->.
+
+    /** Clear all connection wiring tracking maps */
+    void ClearConnectionWiringMaps();
+
+    /** Connect all chain elements (belts/lifts) after they've been built (deferred post-build) */
+    void ConnectAllChainElements(AFGBuildableFactory* NewFactory);
+
 private:
+    /** Wire up pipe hologram connections after all holograms in a chain are spawned */
+    void WirePipeChainConnections(int32 ChainId, AFGHologram* ParentHologram, bool bIsInputChain);
+
+    /** Wire up belt hologram connections after all holograms in a chain are spawned */
+    void WireBeltChainConnections(int32 ChainId, AFGHologram* ParentHologram, bool bIsInputChain);
+
+    /** Find a pipe connection component on a hologram by index (0 or 1) */
+    UFGPipeConnectionComponentBase* FindPipeConnectionByIndex(AFGHologram* Hologram, int32 Index) const;
+
+    /** Find a factory connection component on a hologram by index (0 or 1) */
+    UFGFactoryConnectionComponent* FindFactoryConnectionByIndex(AFGHologram* Hologram, int32 Index) const;
+
     /** Owning subsystem */
     UPROPERTY()
     TWeakObjectPtr<USFSubsystem> Subsystem;
