@@ -38,6 +38,7 @@
 #include "Features/Extend/SFExtendTopologyService.h"
 #include "Features/Extend/SFExtendHologramService.h"
 #include "Features/Extend/SFExtendWiringService.h"
+#include "Features/Extend/SFExtendScaledService.h"  // For FSFScaledExtendClone (ScaledExtendClones member)
 #include "SFExtendService.generated.h"
 
 class AFGBuildable;
@@ -60,6 +61,7 @@ class ASFPipelineHologram;
 class ASFPipelineJunctionChildHologram;
 class USFExtendDiagnosticsService;
 class USFExtendRestoreReplayService;
+class USFExtendScaledService;
 class USFSubsystem;
 struct FSplinePointData;
 struct FSFCloneTopology;
@@ -86,6 +88,9 @@ class SMARTFOUNDATIONS_API USFExtendService : public UObject
     // Restore-replay logic lives in USFExtendRestoreReplayService but operates on this
     // service's shared replay/wiring state (StoredCloneTopology, Json* maps, etc.) in place.
     friend class USFExtendRestoreReplayService;
+    // Scaled Extend planning/preview lives in USFExtendScaledService but operates on this
+    // service's shared scaled/wiring state (ScaledExtendClones, StoredCloneTopology, etc.) in place.
+    friend class USFExtendScaledService;
 
 public:
     USFExtendService();
@@ -490,6 +495,10 @@ private:
     UPROPERTY()
     USFExtendRestoreReplayService* RestoreReplayService = nullptr;
 
+    /** Scaled Extend service (planning/preview/validate; operates on this service's shared state) */
+    UPROPERTY()
+    USFExtendScaledService* ScaledService = nullptr;
+
     /** Do we have a valid extend target this frame */
     UPROPERTY()
     bool bHasValidTarget = false;
@@ -630,33 +639,14 @@ private:
     FString ScaledExtendInvalidReason;
 
     /**
-     * All clone sets for Scaled Extend. Each entry represents one complete manifold clone.
-     * Index 0 = first clone (adjacent to source), Index N = Nth clone in chain.
-     * For 2D grids, includes auto-seed clones.
+     * All clone sets for Scaled Extend. FSFScaledExtendClone was relocated to
+     * SFExtendScaledService.h (slice E1) so the scaled service + the post-build wiring path
+     * share it; the scaled planning/preview/validate methods moved to USFExtendScaledService.
      */
-    struct FSFScaledExtendClone
-    {
-        int32 GridX = 0;  // Grid position (0-based, 0 = first clone)
-        int32 GridY = 0;  // Row index (0 = source row)
-        bool bIsSeed = false;  // Auto-seed clone at (0, Y>0)
-        FVector WorldOffset = FVector::ZeroVector;  // Offset from source building
-        FRotator RotationOffset = FRotator::ZeroRotator;  // Rotation relative to source
-        TMap<FString, AFGHologram*> SpawnedHolograms;  // Clone ID -> hologram for this clone
-        TSharedPtr<FSFCloneTopology> CloneTopology;  // Clone topology for this set
-    };
     TArray<FSFScaledExtendClone> ScaledExtendClones;
 
-    /** Calculate world offsets for all clones based on current grid state */
-    void CalculateScaledExtendPositions();
-
-    /** Spawn preview holograms for all scaled extend clones */
-    void SpawnScaledExtendPreviews();
-
-    /** Clear all scaled extend clone data and holograms */
+    /** Clear all scaled extend clone data and holograms (forwards to ScaledService) */
     void ClearScaledExtendClones();
-
-    /** Validate belt/pipe constraints between consecutive clones */
-    bool ValidateScaledExtendConstraints();
 
     /**
      * Issue #288: Validate cloned power pole capacity for pump wiring.
