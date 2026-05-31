@@ -647,6 +647,37 @@ holds. This is the single Blueprint-verification step in the whole refactor.
 `USFExtendService`/`USFSubsystem`, keep the forwarder `BlueprintCallable` too. No current BP calls
 them (registry-proven), but it preserves the exposed API for runtime/external callers at zero cost.
 
+## Build/Smoke + AccessTransformer Validation (2026-05-30)
+
+**Smoke-harness coverage** (`scripts/smoke_test.py`, readback-only — maintainer drives actions).
+Exposes: `holograms/active` (class), `holograms/children` (**count**), `metrics/uobjects`
+(leak/widget counts), `power/summary`, `production/summary`. Mapping to SMOKE-CRITICAL paths:
+- Covered directly: child-hologram **counts** (E1 scaled clones, E2/AC preview children, S1 grid
+  scaling), active-hologram class (S2/S3 swap/create), UObject leak metrics (S2/S3 register/
+  unregister), power state (S5/AC2).
+- **GAP — no direct connection-integrity readback.** The two highest-risk slices —
+  **E2** (post-build wiring) and **UP1** (upgrade batch connection-repair) — are *about* connector
+  links, which the harness cannot read directly. → verify INDIRECTLY: build a small **producing**
+  network, run the op, confirm `production/summary` keeps flowing (items move ⇒ connectors intact)
+  + visual. **Optional harness upgrade:** expose the (already-extracted) `SFExtendDiagnosticsService`
+  connection-capture (`FSFCapturedConnection` has `ConnectedToActor`/`ConnectedToConnector`) as a
+  SmartMCP endpoint to make E2/UP1 smoke *direct* rather than inferential.
+
+**AccessTransformers** (`Config/AccessTransformers.ini`) — **`Friend` grants are class-specific**,
+so moving friend-dependent code to a *different* class loses private access (compile error). Audit:
+| Grant | Slice that moves related code | Result |
+|-------|-------------------------------|--------|
+| `Friend(AFGConveyorBeltHologram, ASFConveyorBeltHologram)` + `Accessor mBuildModeCurve/Straight` | T8a (spline-router out) | spline fns have **0** private access → **SAFE**; `mBuildMode*` accessors **vestigial** (unused). |
+| same, for `GetCost` | T8a (GetCost → `FSFHologramCostCalculator`) | **1** private access in GetCost → cost calc must param-pass it OR add a friend grant. |
+| `Friend(AFGConveyorBeltHologram, USFUpgradeExecutionService)` | UP1 (batch-repair out) | moved block has **0** belt-private access → **SAFE** (grant stays with the service). |
+| `Friend(AFGHologram, FSFHologramHelperService)` | S2/S3 (move INTO it) | **SAFE** — moving into the friend class; enables access. |
+| `Friend(AFGBuildableSubsystem, USFChainActorService)` | S7 (chain-rebuild INTO it) | **SAFE** — moving into the friend class. |
+
+**GUARDRAIL:** any NEW helper class (`FSFHologramSplineRouter`, `FSFHologramCostCalculator`,
+`FSFUpgradeConnectionRepair`, the wiring/scaled services) that needs vanilla-private access must add
+its own `Friend=` line to `AccessTransformers.ini`. Per this audit, only T8a's cost calc (1 member)
+is a candidate; everything else either has zero private access or moves into an already-friended class.
+
 ## Entanglement Ledger
 
 Every cross-unit shared-state coupling and non-obvious/hidden helper found during the audit,
