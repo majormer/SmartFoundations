@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [31.0.0] - 2026-06-02
+
+> *First Satisfactory 1.2 release - Smart! rebuilt for the 1.2 update. Players still on Satisfactory 1.1 should stay on version 30.1.0.*
+
+### Changed
+- **Smart! now runs on Satisfactory 1.2** - Satisfactory 1.2 moves the game to a new version of Unreal Engine and a new way of packaging mods, which meant rebuilding Smart! against the updated game from the ground up. Every Smart! feature carries over unchanged - grid building, Extend and Scaled Extend, auto-connect for belts, pipes, and power, Smart Upgrade and Triage, Restore presets, the Smart Panel, and all keybinds - with no intended gameplay difference from the 1.1 release. This build targets Satisfactory 1.2 and newer; the mod manager will not offer it to 1.1 players, who should remain on version 30.1.0.
+
+### Technical
+- **Rebuilt for Unreal Engine 5.6** - Smart!'s codebase was migrated to the engine version that ships with Satisfactory 1.2, covering updated game APIs, header layouts, and include rules.
+- **Migrated to the Game Feature plugin model** - Satisfactory 1.2 turns mods into "Game Feature" plugins. Smart! now ships with the Game Feature data the 1.2 game needs to recognize and load it.
+
+---
+
 ## [30.1.0] - 2026-05-31
 
 > *Final Satisfactory 1.1 release - collects all changes since v30.0.0.*
