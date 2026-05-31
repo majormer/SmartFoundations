@@ -649,7 +649,7 @@ protected:
 
     /** Last recipe we logged from the build gun (for change detection) */
     UPROPERTY()
-    UClass* LastLoggedRecipeClass = nullptr;
+    TObjectPtr<UClass> LastLoggedRecipeClass = nullptr;
 
     /** Last item size we logged (to avoid spam). Logged when it changes beyond a small tolerance. */
     UPROPERTY()
@@ -682,15 +682,15 @@ protected:
 	
 	/** Auto-connect service - Belt preview connections for distributors (Refactor: Issue #XXX) */
 	UPROPERTY()
-	USFAutoConnectService* AutoConnectService;
+	TObjectPtr<USFAutoConnectService> AutoConnectService;
 
 	/** EXTEND service - Factory topology cloning (Issue #219) */
 	UPROPERTY()
-	USFExtendService* ExtendService;
+	TObjectPtr<USFExtendService> ExtendService;
 
 	/** Radar Pulse diagnostic service - Object snapshot and diff system */
 	UPROPERTY()
-	USFRadarPulseService* RadarPulseService;
+	TObjectPtr<USFRadarPulseService> RadarPulseService;
 
 	/** Pipe Auto-Connect manager - feature-level coordinator (junctions + manifolds) */
 	TUniquePtr<FSFPipeAutoConnectManager> PipeAutoConnectManager;
@@ -700,35 +700,35 @@ protected:
 
 	/** Auto-connect orchestrators - One per parent distributor hologram */
 	UPROPERTY()
-	TMap<AFGHologram*, USFAutoConnectOrchestrator*> AutoConnectOrchestrators;
+	TMap<TObjectPtr<AFGHologram>, TObjectPtr<USFAutoConnectOrchestrator>> AutoConnectOrchestrators;
 
     /** Recipe management service - Factory crafting recipe selection and application */
     UPROPERTY()
-    USFRecipeManagementService* RecipeManagementService;
+    TObjectPtr<USFRecipeManagementService> RecipeManagementService;
 
     /** Restore service - Smart Restore Enhanced preset system */
     UPROPERTY()
-    USFRestoreService* RestoreService;
+    TObjectPtr<USFRestoreService> RestoreService;
 
     /** Upgrade audit service - Scans world for upgradeable buildables */
     UPROPERTY()
-    USFUpgradeAuditService* UpgradeAuditService;
+    TObjectPtr<USFUpgradeAuditService> UpgradeAuditService;
 
     /** Upgrade execution service - Performs batch upgrades */
     UPROPERTY()
-    USFUpgradeExecutionService* UpgradeExecutionService;
+    TObjectPtr<USFUpgradeExecutionService> UpgradeExecutionService;
     
     /** HUD service - Binding and widget lifecycle */
     UPROPERTY()
-    USFHudService* HudService;
+    TObjectPtr<USFHudService> HudService;
 
     /** Hint bar service - Vanilla hint bar integration (Issue #281) */
     UPROPERTY()
-    USFHintBarService* HintBarService;
+    TObjectPtr<USFHintBarService> HintBarService;
 
     /** Chain actor service - Canonical chain invalidation + synchronous rebuild (v29.2.2) */
     UPROPERTY()
-    USFChainActorService* ChainActorService = nullptr;
+    TObjectPtr<USFChainActorService> ChainActorService = nullptr;
 
     // NOTE: DeferredCostService removed - child holograms automatically aggregate costs via GetCost()
 
@@ -736,15 +736,15 @@ protected:
 
     /** Grid spawner service - Child spawn/update/destroy orchestration (Phase 2 extraction) */
     UPROPERTY()
-    USFGridSpawnerService* GridSpawnerService = nullptr;
+    TObjectPtr<USFGridSpawnerService> GridSpawnerService = nullptr;
 
     /** Grid state service - Single source of truth for counters and axes */
     UPROPERTY()
-    USFGridStateService* GridStateService = nullptr;
+    TObjectPtr<USFGridStateService> GridStateService = nullptr;
 
     /** Grid transform service - Movement detection and propagation (Phase 3 extraction) */
     UPROPERTY()
-    USFGridTransformService* GridTransformService = nullptr;
+    TObjectPtr<USFGridTransformService> GridTransformService = nullptr;
     
     // NOTE: SpawnedChildren tracking moved to HologramHelper (Phase 2 extraction)
     // Use HologramHelper->GetSpawnedChildren() to access children
@@ -1225,7 +1225,7 @@ public:
 	
 	/** Registry of all Smart-created buildings this session */
 	UPROPERTY()
-	TMap<AFGBuildable*, FSFBuildingMetadata> SmartBuildingRegistry;
+	TMap<TObjectPtr<AFGBuildable>, FSFBuildingMetadata> SmartBuildingRegistry;
 	
 	/** Current placement group ID (increments with each placement operation) */
 	int32 CurrentPlacementGroupID = 0;

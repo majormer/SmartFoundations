@@ -200,7 +200,7 @@ private:
 
     /** Parent extend service (source of current target + topology) */
     UPROPERTY()
-    USFExtendService* ExtendService = nullptr;
+    TObjectPtr<USFExtendService> ExtendService = nullptr;
 
     /** Snapshot captured during preview phase */
     FSFBuildableSnapshot PreviewSnapshot;

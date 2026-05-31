@@ -59,7 +59,7 @@ private:
 
     // UMG widget (Issue #179 — replaces Canvas drawing for crisp text)
     UPROPERTY()
-    USFHudWidget* HudWidget = nullptr;
+    TObjectPtr<USFHudWidget> HudWidget = nullptr;
 
     void CreateHudWidget();
     void DestroyHudWidget();

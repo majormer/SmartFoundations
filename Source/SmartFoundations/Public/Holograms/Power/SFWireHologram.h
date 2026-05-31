@@ -67,7 +67,7 @@ private:
 
 	/** Our custom wire mesh component for the preview */
 	UPROPERTY()
-	UStaticMeshComponent* PreviewWireMesh;
+	TObjectPtr<UStaticMeshComponent> PreviewWireMesh;
 
 	/** Track if we've set up the wire */
 	bool bWireConfigured;

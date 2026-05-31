@@ -51,375 +51,375 @@ public:
 protected:
     // Core UI Components (bound from Blueprint)
     UPROPERTY(meta = (BindWidget))
-    UBorder* BackgroundPanel;
+    TObjectPtr<UBorder> BackgroundPanel;
 
     UPROPERTY(meta = (BindWidget))
-    UTextBlock* TitleText;
+    TObjectPtr<UTextBlock> TitleText;
 
     UPROPERTY(meta = (BindWidget))
-    UVerticalBox* ContentContainer;
+    TObjectPtr<UVerticalBox> ContentContainer;
 
     UPROPERTY(meta = (BindWidget))
-    UButton* CloseButton;
+    TObjectPtr<UButton> CloseButton;
 
     // SpinBox inputs (bound from Blueprint) - BindWidgetOptional for graceful fallback
     // Grid inputs: integer values, min 1, delta 1
     UPROPERTY(meta = (BindWidgetOptional))
-    USpinBox* GridXInput;
+    TObjectPtr<USpinBox> GridXInput;
     UPROPERTY(meta = (BindWidgetOptional))
-    USizeBox* GridXInputSizeBox;
+    TObjectPtr<USizeBox> GridXInputSizeBox;
 
     UPROPERTY(meta = (BindWidgetOptional))
-    USpinBox* GridYInput;
+    TObjectPtr<USpinBox> GridYInput;
     UPROPERTY(meta = (BindWidgetOptional))
-    USizeBox* GridYInputSizeBox;
+    TObjectPtr<USizeBox> GridYInputSizeBox;
 
     UPROPERTY(meta = (BindWidgetOptional))
-    USpinBox* GridZInput;
+    TObjectPtr<USpinBox> GridZInput;
     UPROPERTY(meta = (BindWidgetOptional))
-    USizeBox* GridZInputSizeBox;
+    TObjectPtr<USizeBox> GridZInputSizeBox;
 
     // Grid direction toggle buttons (+ or - direction per axis)
     UPROPERTY(meta = (BindWidgetOptional))
-    UButton* GridXDirToggle;
+    TObjectPtr<UButton> GridXDirToggle;
     
     UPROPERTY(meta = (BindWidgetOptional))
-    UButton* GridYDirToggle;
+    TObjectPtr<UButton> GridYDirToggle;
     
     UPROPERTY(meta = (BindWidgetOptional))
-    UButton* GridZDirToggle;
+    TObjectPtr<UButton> GridZDirToggle;
     
     // Direction toggle button labels (show "+" or "-")
     UPROPERTY(meta = (BindWidgetOptional))
-    UTextBlock* GridXDirLabel;
+    TObjectPtr<UTextBlock> GridXDirLabel;
     
     UPROPERTY(meta = (BindWidgetOptional))
-    UTextBlock* GridYDirLabel;
+    TObjectPtr<UTextBlock> GridYDirLabel;
     
     UPROPERTY(meta = (BindWidgetOptional))
-    UTextBlock* GridZDirLabel;
+    TObjectPtr<UTextBlock> GridZDirLabel;
     
     // === Grid Total Display & Warning ===
     
     // Grid total display (shows "Grid Total: X objects")
     UPROPERTY(meta = (BindWidgetOptional))
-    UTextBlock* GridTotalText;
+    TObjectPtr<UTextBlock> GridTotalText;
     
     // Grid warning text (shows warning message for large grids)
     UPROPERTY(meta = (BindWidgetOptional))
-    UTextBlock* GridWarningText;
+    TObjectPtr<UTextBlock> GridWarningText;
 
     // Spacing inputs: float values in meters, min 0, delta 0.5
     UPROPERTY(meta = (BindWidgetOptional))
-    USpinBox* SpacingXInput;
+    TObjectPtr<USpinBox> SpacingXInput;
     UPROPERTY(meta = (BindWidgetOptional))
-    USizeBox* SpacingXInputSizeBox;
+    TObjectPtr<USizeBox> SpacingXInputSizeBox;
 
     UPROPERTY(meta = (BindWidgetOptional))
-    USpinBox* SpacingYInput;
+    TObjectPtr<USpinBox> SpacingYInput;
     UPROPERTY(meta = (BindWidgetOptional))
-    USizeBox* SpacingYInputSizeBox;
+    TObjectPtr<USizeBox> SpacingYInputSizeBox;
 
     UPROPERTY(meta = (BindWidgetOptional))
-    USpinBox* SpacingZInput;
+    TObjectPtr<USpinBox> SpacingZInput;
     UPROPERTY(meta = (BindWidgetOptional))
-    USizeBox* SpacingZInputSizeBox;
+    TObjectPtr<USizeBox> SpacingZInputSizeBox;
 
     // Steps inputs: float values in meters, min 0, delta 0.5
     UPROPERTY(meta = (BindWidgetOptional))
-    USpinBox* StepsXInput;
+    TObjectPtr<USpinBox> StepsXInput;
     UPROPERTY(meta = (BindWidgetOptional))
-    USizeBox* StepsXInputSizeBox;
+    TObjectPtr<USizeBox> StepsXInputSizeBox;
 
     UPROPERTY(meta = (BindWidgetOptional))
-    USpinBox* StepsYInput;
+    TObjectPtr<USpinBox> StepsYInput;
     UPROPERTY(meta = (BindWidgetOptional))
-    USizeBox* StepsYInputSizeBox;
+    TObjectPtr<USizeBox> StepsYInputSizeBox;
 
     // Stagger inputs: float values in meters, min 0, delta 0.5
     UPROPERTY(meta = (BindWidgetOptional))
-    USpinBox* StaggerXInput;
+    TObjectPtr<USpinBox> StaggerXInput;
     UPROPERTY(meta = (BindWidgetOptional))
-    USizeBox* StaggerXInputSizeBox;
+    TObjectPtr<USizeBox> StaggerXInputSizeBox;
 
     UPROPERTY(meta = (BindWidgetOptional))
-    USpinBox* StaggerYInput;
+    TObjectPtr<USpinBox> StaggerYInput;
     UPROPERTY(meta = (BindWidgetOptional))
-    USizeBox* StaggerYInputSizeBox;
+    TObjectPtr<USizeBox> StaggerYInputSizeBox;
 
     UPROPERTY(meta = (BindWidgetOptional))
-    USpinBox* StaggerZXInput;
+    TObjectPtr<USpinBox> StaggerZXInput;
     UPROPERTY(meta = (BindWidgetOptional))
-    USizeBox* StaggerZXInputSizeBox;
+    TObjectPtr<USizeBox> StaggerZXInputSizeBox;
 
     UPROPERTY(meta = (BindWidgetOptional))
-    USpinBox* StaggerZYInput;
+    TObjectPtr<USpinBox> StaggerZYInput;
     UPROPERTY(meta = (BindWidgetOptional))
-    USizeBox* StaggerZYInputSizeBox;
+    TObjectPtr<USizeBox> StaggerZYInputSizeBox;
 
     // Rotation inputs: float values in degrees, min -180, max 180, delta 1
     // Phase 1: Only Z-axis (horizontal arc)
     UPROPERTY(meta = (BindWidgetOptional))
-    USpinBox* RotationZInput;
+    TObjectPtr<USpinBox> RotationZInput;
     UPROPERTY(meta = (BindWidgetOptional))
-    USizeBox* RotationZInputSizeBox;
+    TObjectPtr<USizeBox> RotationZInputSizeBox;
 
     // Apply button (bound from Blueprint)
     UPROPERTY(meta = (BindWidgetOptional))
-    class UButton* ApplyBtn;
+    TObjectPtr<class UButton> ApplyBtn;
     
     // Issue #165: Reset button - zeros spacing, steps, stagger, and rotation (not grid counters)
     UPROPERTY(meta = (BindWidgetOptional))
-    class UButton* ResetBtn;
+    TObjectPtr<class UButton> ResetBtn;
     
     // Apply Immediately checkbox (near Apply button)
     UPROPERTY(meta = (BindWidgetOptional))
-    UCheckBox* ApplyImmediatelyCheckBox;
+    TObjectPtr<UCheckBox> ApplyImmediatelyCheckBox;
 
     // Contextual section headers and summaries (optional)
     UPROPERTY(meta = (BindWidgetOptional))
-    UTextBlock* AutoConnectHeaderText;
+    TObjectPtr<UTextBlock> AutoConnectHeaderText;
 
     UPROPERTY(meta = (BindWidgetOptional))
-    UTextBlock* AutoConnectSummaryText;
+    TObjectPtr<UTextBlock> AutoConnectSummaryText;
     
     // === Belt Auto-Connect Controls ===
     
     // Container for belt auto-connect controls (visibility toggled based on hologram type)
     UPROPERTY(meta = (BindWidgetOptional))
-    UVerticalBox* BeltAutoConnectContainer;
+    TObjectPtr<UVerticalBox> BeltAutoConnectContainer;
     
     // Belt auto-connect enabled checkbox
     UPROPERTY(meta = (BindWidgetOptional))
-    UCheckBox* BeltEnabledCheckBox;
+    TObjectPtr<UCheckBox> BeltEnabledCheckBox;
     
     // Belt tier for main connections (distributor-to-distributor)
     UPROPERTY(meta = (BindWidgetOptional))
-    UComboBoxString* BeltTierMainComboBox;
+    TObjectPtr<UComboBoxString> BeltTierMainComboBox;
     
     // Belt tier for building connections (distributor-to-building)
     UPROPERTY(meta = (BindWidgetOptional))
-    UComboBoxString* BeltTierToBuildingComboBox;
+    TObjectPtr<UComboBoxString> BeltTierToBuildingComboBox;
     
     // Stackable belt direction row (visibility toggled for stackable poles only)
     UPROPERTY(meta = (BindWidgetOptional))
-    UHorizontalBox* StackableBeltDirectionRow;
+    TObjectPtr<UHorizontalBox> StackableBeltDirectionRow;
     
     // Stackable belt direction (Forward/Backward)
     UPROPERTY(meta = (BindWidgetOptional))
-    UComboBoxString* StackableBeltDirectionComboBox;
+    TObjectPtr<UComboBoxString> StackableBeltDirectionComboBox;
     
     // Chain distributors checkbox (manifold mode)
     UPROPERTY(meta = (BindWidgetOptional))
-    UCheckBox* BeltChainCheckBox;
+    TObjectPtr<UCheckBox> BeltChainCheckBox;
     
     // Belt routing mode ComboBox (Default, Curve, Straight)
     UPROPERTY(meta = (BindWidgetOptional))
-    UComboBoxString* BeltRoutingModeComboBox;
+    TObjectPtr<UComboBoxString> BeltRoutingModeComboBox;
     
     // Belt routing mode row (visibility toggled for distributors)
     UPROPERTY(meta = (BindWidgetOptional))
-    UHorizontalBox* BeltRoutingModeRow;
+    TObjectPtr<UHorizontalBox> BeltRoutingModeRow;
     
     // Label widgets for hiding irrelevant text
     UPROPERTY(meta = (BindWidgetOptional))
-    UTextBlock* BeltTierToBuildingLabel;
+    TObjectPtr<UTextBlock> BeltTierToBuildingLabel;
     
     UPROPERTY(meta = (BindWidgetOptional))
-    UTextBlock* BeltChainLabel;
+    TObjectPtr<UTextBlock> BeltChainLabel;
     
     // Direction label for stackable poles
     UPROPERTY(meta = (BindWidgetOptional))
-    UTextBlock* StackableBeltDirectionLabel;
+    TObjectPtr<UTextBlock> StackableBeltDirectionLabel;
 
     // === Pipe Auto-Connect Controls ===
     
     // Container for pipe auto-connect controls (visibility toggled based on hologram type)
     UPROPERTY(meta = (BindWidgetOptional))
-    UVerticalBox* PipeAutoConnectContainer;
+    TObjectPtr<UVerticalBox> PipeAutoConnectContainer;
     
     // Pipe auto-connect enabled checkbox
     UPROPERTY(meta = (BindWidgetOptional))
-    UCheckBox* PipeEnabledCheckBox;
+    TObjectPtr<UCheckBox> PipeEnabledCheckBox;
     
     // Pipe tier for main connections (junction-to-junction)
     UPROPERTY(meta = (BindWidgetOptional))
-    UComboBoxString* PipeTierMainComboBox;
+    TObjectPtr<UComboBoxString> PipeTierMainComboBox;
     
     // Pipe tier for building connections (junction-to-building)
     UPROPERTY(meta = (BindWidgetOptional))
-    UComboBoxString* PipeTierToBuildingComboBox;
+    TObjectPtr<UComboBoxString> PipeTierToBuildingComboBox;
     
     // Label widgets for hiding irrelevant text/rows
     UPROPERTY(meta = (BindWidgetOptional))
-    UHorizontalBox* PipeTierMainRow;
+    TObjectPtr<UHorizontalBox> PipeTierMainRow;
     
     UPROPERTY(meta = (BindWidgetOptional))
-    UHorizontalBox* PipeTierToBuildingRow;
+    TObjectPtr<UHorizontalBox> PipeTierToBuildingRow;
     
     UPROPERTY(meta = (BindWidgetOptional))
-    UTextBlock* PipeTierMainLabel;
+    TObjectPtr<UTextBlock> PipeTierMainLabel;
     
     UPROPERTY(meta = (BindWidgetOptional))
-    UTextBlock* PipeTierToBuildingLabel;
+    TObjectPtr<UTextBlock> PipeTierToBuildingLabel;
     
     // Pipe flow indicator row (only shown if clean pipes are unlocked)
     UPROPERTY(meta = (BindWidgetOptional))
-    UHorizontalBox* PipeIndicatorRow;
+    TObjectPtr<UHorizontalBox> PipeIndicatorRow;
     
     // Pipe flow indicator checkbox (true = with flow indicators, false = clean/no indicators)
     UPROPERTY(meta = (BindWidgetOptional))
-    UCheckBox* PipeIndicatorCheckBox;
+    TObjectPtr<UCheckBox> PipeIndicatorCheckBox;
     
     // Pipe routing mode ComboBox (Auto, Auto2D, Straight, Curve, Noodle, HorizontalToVertical)
     UPROPERTY(meta = (BindWidgetOptional))
-    UComboBoxString* PipeRoutingModeComboBox;
+    TObjectPtr<UComboBoxString> PipeRoutingModeComboBox;
     
     // Pipe routing mode label
     UPROPERTY(meta = (BindWidgetOptional))
-    UTextBlock* PipeRoutingModeLabel;
+    TObjectPtr<UTextBlock> PipeRoutingModeLabel;
 
     // === Power Auto-Connect Controls ===
     
     // Container for power auto-connect controls (visibility toggled based on hologram type)
     UPROPERTY(meta = (BindWidgetOptional))
-    UVerticalBox* PowerAutoConnectContainer;
+    TObjectPtr<UVerticalBox> PowerAutoConnectContainer;
     
     // Power auto-connect enabled checkbox
     UPROPERTY(meta = (BindWidgetOptional))
-    UCheckBox* PowerEnabledCheckBox;
+    TObjectPtr<UCheckBox> PowerEnabledCheckBox;
     
     // Power grid axis ComboBox (Auto, X, Y, X+Y)
     UPROPERTY(meta = (BindWidgetOptional))
-    UComboBoxString* PowerGridAxisComboBox;
+    TObjectPtr<UComboBoxString> PowerGridAxisComboBox;
     
     // Power reserved slots ComboBox (0-5)
     UPROPERTY(meta = (BindWidgetOptional))
-    UComboBoxString* PowerReservedComboBox;
+    TObjectPtr<UComboBoxString> PowerReservedComboBox;
 
     UPROPERTY(meta = (BindWidgetOptional))
-    UTextBlock* RecipeHeaderText;
+    TObjectPtr<UTextBlock> RecipeHeaderText;
 
     // Container for recipe details with icons (replaces RecipeSummaryText)
     UPROPERTY(meta = (BindWidgetOptional))
-    UVerticalBox* RecipeDetailsContainer;
+    TObjectPtr<UVerticalBox> RecipeDetailsContainer;
 
     // Recipe selection ComboBox
     UPROPERTY(meta = (BindWidgetOptional))
-    UComboBoxString* RecipeComboBox;
+    TObjectPtr<UComboBoxString> RecipeComboBox;
 
     // Recipe icon display (next to ComboBox)
     UPROPERTY(meta = (BindWidgetOptional))
-    UImage* RecipeIcon;
+    TObjectPtr<UImage> RecipeIcon;
     
     // Smart! logo image in header
     UPROPERTY(meta = (BindWidgetOptional))
-    UImage* SmartLogoImage;
+    TObjectPtr<UImage> SmartLogoImage;
     
     // Clear recipe button
     UPROPERTY(meta = (BindWidgetOptional))
-    UButton* ClearRecipeButton;
+    TObjectPtr<UButton> ClearRecipeButton;
 
     // === Smart Restore Controls ===
 
     // Restore section container (collapsible)
     UPROPERTY(meta = (BindWidgetOptional))
-    UVerticalBox* RestoreContainer;
+    TObjectPtr<UVerticalBox> RestoreContainer;
 
     UPROPERTY(meta = (BindWidgetOptional))
-    UBorder* RestoreSidePanel;
+    TObjectPtr<UBorder> RestoreSidePanel;
 
     // Preset dropdown — populated from GetPresetNames()
     UPROPERTY(meta = (BindWidgetOptional))
-    UComboBoxString* PresetDropdown;
+    TObjectPtr<UComboBoxString> PresetDropdown;
 
     // Preset name input for saving
     UPROPERTY(meta = (BindWidgetOptional))
-    UEditableTextBox* PresetNameInput;
+    TObjectPtr<UEditableTextBox> PresetNameInput;
 
     // Preset description/metadata display
     UPROPERTY(meta = (BindWidgetOptional))
-    UEditableTextBox* PresetDescriptionInput;
+    TObjectPtr<UEditableTextBox> PresetDescriptionInput;
 
     UPROPERTY(meta = (BindWidgetOptional))
-    UTextBlock* PresetCreatedAtValue;
+    TObjectPtr<UTextBlock> PresetCreatedAtValue;
 
     // Action buttons
     UPROPERTY(meta = (BindWidgetOptional))
-    UButton* ApplyPresetBtn;
+    TObjectPtr<UButton> ApplyPresetBtn;
 
     UPROPERTY(meta = (BindWidgetOptional))
-    UButton* SavePresetBtn;
+    TObjectPtr<UButton> SavePresetBtn;
 
     UPROPERTY(meta = (BindWidgetOptional))
-    UButton* DeletePresetBtn;
+    TObjectPtr<UButton> DeletePresetBtn;
 
     UPROPERTY(meta = (BindWidgetOptional))
-    UButton* UpdatePresetBtn;
+    TObjectPtr<UButton> UpdatePresetBtn;
 
     UPROPERTY(meta = (BindWidgetOptional))
-    UButton* ExportPresetBtn;
+    TObjectPtr<UButton> ExportPresetBtn;
 
     UPROPERTY(meta = (BindWidgetOptional))
-    UButton* ImportPresetBtn;
+    TObjectPtr<UButton> ImportPresetBtn;
 
     UPROPERTY(meta = (BindWidgetOptional))
-    UButton* ImportFromExtendBtn;
+    TObjectPtr<UButton> ImportFromExtendBtn;
 
     // Capture checklist checkboxes
     UPROPERTY(meta = (BindWidgetOptional))
-    UCheckBox* CaptureGridCheckBox;
+    TObjectPtr<UCheckBox> CaptureGridCheckBox;
 
     UPROPERTY(meta = (BindWidgetOptional))
-    UCheckBox* CaptureSpacingCheckBox;
+    TObjectPtr<UCheckBox> CaptureSpacingCheckBox;
 
     UPROPERTY(meta = (BindWidgetOptional))
-    UCheckBox* CaptureStepsCheckBox;
+    TObjectPtr<UCheckBox> CaptureStepsCheckBox;
 
     UPROPERTY(meta = (BindWidgetOptional))
-    UCheckBox* CaptureStaggerCheckBox;
+    TObjectPtr<UCheckBox> CaptureStaggerCheckBox;
 
     UPROPERTY(meta = (BindWidgetOptional))
-    UCheckBox* CaptureRotationCheckBox;
+    TObjectPtr<UCheckBox> CaptureRotationCheckBox;
 
     UPROPERTY(meta = (BindWidgetOptional))
-    UCheckBox* CaptureRecipeCheckBox;
+    TObjectPtr<UCheckBox> CaptureRecipeCheckBox;
 
     UPROPERTY(meta = (BindWidgetOptional))
-    UCheckBox* CaptureAutoConnectCheckBox;
+    TObjectPtr<UCheckBox> CaptureAutoConnectCheckBox;
 
     // Section toggle for collapsible Restore section
     UPROPERTY(meta = (BindWidgetOptional))
-    UButton* RestoreSectionToggle;
+    TObjectPtr<UButton> RestoreSectionToggle;
 
     UPROPERTY(meta = (BindWidgetOptional))
-    UTextBlock* RestoreSectionHeader;
+    TObjectPtr<UTextBlock> RestoreSectionHeader;
     
     // === Confirmation Dialog Widgets ===
     
     // SizeBox container for confirmation dialog (controls size, hidden by default)
     UPROPERTY(meta = (BindWidgetOptional))
-    USizeBox* ConfirmationSizeBox;
+    TObjectPtr<USizeBox> ConfirmationSizeBox;
     
     // Border inside SizeBox for background styling
     UPROPERTY(meta = (BindWidgetOptional))
-    UBorder* ConfirmationOverlay;
+    TObjectPtr<UBorder> ConfirmationOverlay;
     
     // Confirmation dialog title text
     UPROPERTY(meta = (BindWidgetOptional))
-    UTextBlock* ConfirmationTitle;
+    TObjectPtr<UTextBlock> ConfirmationTitle;
     
     // Confirmation dialog message text
     UPROPERTY(meta = (BindWidgetOptional))
-    UTextBlock* ConfirmationMessage;
+    TObjectPtr<UTextBlock> ConfirmationMessage;
     
     // Confirmation "Continue" button
     UPROPERTY(meta = (BindWidgetOptional))
-    UButton* ConfirmYesButton;
+    TObjectPtr<UButton> ConfirmYesButton;
     
     // Confirmation "Cancel" button
     UPROPERTY(meta = (BindWidgetOptional))
-    UButton* ConfirmNoButton;
+    TObjectPtr<UButton> ConfirmNoButton;
 
     // Native widget lifecycle
     virtual void NativeConstruct() override;

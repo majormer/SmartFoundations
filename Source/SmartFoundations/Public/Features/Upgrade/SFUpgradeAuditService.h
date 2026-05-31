@@ -361,5 +361,5 @@ private:
 
 	/** Owning subsystem reference */
 	UPROPERTY(Transient)
-	class USFSubsystem* Subsystem = nullptr;
+	TObjectPtr<class USFSubsystem> Subsystem = nullptr;
 };

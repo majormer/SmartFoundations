@@ -256,7 +256,7 @@ public:
 
 private:
     UPROPERTY()
-    USFSubsystem* Subsystem;
+    TObjectPtr<USFSubsystem> Subsystem;
 
     /** Snapshot cache */
     TMap<FString, FSFRadarPulseSnapshot> SnapshotCache;

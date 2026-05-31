@@ -65,126 +65,126 @@ protected:
 protected:
 	/** Background border that wraps all content */
 	UPROPERTY(meta = (BindWidgetOptional))
-	class UBorder* BackgroundBorder;
+	TObjectPtr<class UBorder> BackgroundBorder;
 
 	/** Status text bound from Blueprint */
 	UPROPERTY(meta = (BindWidget))
-	class UTextBlock* StatusText;
+	TObjectPtr<class UTextBlock> StatusText;
 
 	/** Context header text bound from Blueprint */
 	UPROPERTY(meta = (BindWidget))
-	class UTextBlock* ContextHeaderText;
+	TObjectPtr<class UTextBlock> ContextHeaderText;
 
 	/** Refresh button bound from Blueprint */
 	UPROPERTY(meta = (BindWidget))
-	class UButton* RefreshButton;
+	TObjectPtr<class UButton> RefreshButton;
 
 	/** Cancel button bound from Blueprint */
 	UPROPERTY(meta = (BindWidget))
-	class UButton* CancelButton;
+	TObjectPtr<class UButton> CancelButton;
 
 	/** Header close button (the X in the panel header). SharedCloseButton is the bottom-row close. */
 	UPROPERTY(meta = (BindWidgetOptional))
-	class UButton* CloseButton;
+	TObjectPtr<class UButton> CloseButton;
 
 	// ========== NEW TABBED UI WIDGETS ==========
 
 	/** Tab buttons */
 	UPROPERTY(meta = (BindWidgetOptional))
-	class UButton* RadiusTabButton;
+	TObjectPtr<class UButton> RadiusTabButton;
 
 	UPROPERTY(meta = (BindWidgetOptional))
-	class UButton* TraversalTabButton;
+	TObjectPtr<class UButton> TraversalTabButton;
 
 	UPROPERTY(meta = (BindWidgetOptional))
-	class UButton* TriageTabButton;
+	TObjectPtr<class UButton> TriageTabButton;
 
 	/** Tab content containers (visibility toggled) */
 	UPROPERTY(meta = (BindWidgetOptional))
-	class UVerticalBox* RadiusContent;
+	TObjectPtr<class UVerticalBox> RadiusContent;
 
 	UPROPERTY(meta = (BindWidgetOptional))
-	class UVerticalBox* TraversalContent;
+	TObjectPtr<class UVerticalBox> TraversalContent;
 
 	UPROPERTY(meta = (BindWidgetOptional))
-	class UVerticalBox* TriageContent;
+	TObjectPtr<class UVerticalBox> TriageContent;
 
 	/** Triage tab widgets */
 	UPROPERTY(meta = (BindWidgetOptional))
-	class UTextBlock* TriageWarningText;
+	TObjectPtr<class UTextBlock> TriageWarningText;
 
 	UPROPERTY(meta = (BindWidgetOptional))
-	class UButton* TriageDetectButton;
+	TObjectPtr<class UButton> TriageDetectButton;
 
 	UPROPERTY(meta = (BindWidgetOptional))
-	class UTextBlock* TriageDetectResultText;
+	TObjectPtr<class UTextBlock> TriageDetectResultText;
 
 	UPROPERTY(meta = (BindWidgetOptional))
-	class UButton* TriageRepairButton;
+	TObjectPtr<class UButton> TriageRepairButton;
 
 	UPROPERTY(meta = (BindWidgetOptional))
-	class UTextBlock* TriageRepairResultText;
+	TObjectPtr<class UTextBlock> TriageRepairResultText;
 
 	/** Radius tab widgets */
 	UPROPERTY(meta = (BindWidgetOptional))
-	USpinBox* RadiusSliderSpinBox;
+	TObjectPtr<USpinBox> RadiusSliderSpinBox;
 
 	UPROPERTY(meta = (BindWidgetOptional))
-	class UButton* RadiusScanButton;
+	TObjectPtr<class UButton> RadiusScanButton;
 
 	UPROPERTY(meta = (BindWidgetOptional))
-	class UButton* EntireMapButton;
+	TObjectPtr<class UButton> EntireMapButton;
 
 	UPROPERTY(meta = (BindWidgetOptional))
-	class UVerticalBox* RadiusAuditResultsContainer;
+	TObjectPtr<class UVerticalBox> RadiusAuditResultsContainer;
 
 	UPROPERTY(meta = (BindWidgetOptional))
-	UComboBoxString* RadiusTargetTierComboBox;
+	TObjectPtr<UComboBoxString> RadiusTargetTierComboBox;
 
 	UPROPERTY(meta = (BindWidgetOptional))
-	class UTextBlock* RadiusCostDetailsText;
+	TObjectPtr<class UTextBlock> RadiusCostDetailsText;
 
 	/** Traversal tab widgets */
 	UPROPERTY(meta = (BindWidgetOptional))
-	class UTextBlock* TraversalAnchorText;
+	TObjectPtr<class UTextBlock> TraversalAnchorText;
 
 	UPROPERTY(meta = (BindWidgetOptional))
-	class UButton* TraversalScanButton;
+	TObjectPtr<class UButton> TraversalScanButton;
 
 	UPROPERTY(meta = (BindWidgetOptional))
-	class UVerticalBox* TraversalResultsContainer;
+	TObjectPtr<class UVerticalBox> TraversalResultsContainer;
 
 	UPROPERTY(meta = (BindWidgetOptional))
-	UComboBoxString* TraversalTargetTierComboBox;
+	TObjectPtr<UComboBoxString> TraversalTargetTierComboBox;
 
 	UPROPERTY(meta = (BindWidgetOptional))
-	class UTextBlock* TraversalCostDetailsText;
+	TObjectPtr<class UTextBlock> TraversalCostDetailsText;
 
 	/** Cross-attachment options */
 	UPROPERTY(meta = (BindWidgetOptional))
-	class UCheckBox* CrossSplittersCheckBox;
+	TObjectPtr<class UCheckBox> CrossSplittersCheckBox;
 
 	UPROPERTY(meta = (BindWidgetOptional))
-	class UCheckBox* CrossStorageCheckBox;
+	TObjectPtr<class UCheckBox> CrossStorageCheckBox;
 
 	UPROPERTY(meta = (BindWidgetOptional))
-	class UCheckBox* CrossTrainPlatformsCheckBox;
+	TObjectPtr<class UCheckBox> CrossTrainPlatformsCheckBox;
 
 	/** Shared bottom widgets */
 	UPROPERTY(meta = (BindWidgetOptional))
-	class UTextBlock* SharedStatusText;
+	TObjectPtr<class UTextBlock> SharedStatusText;
 
 	UPROPERTY(meta = (BindWidgetOptional))
-	class UButton* SharedUpgradeButton;
+	TObjectPtr<class UButton> SharedUpgradeButton;
 
 	UPROPERTY(meta = (BindWidgetOptional))
-	class UTextBlock* SharedUpgradeButtonText;
+	TObjectPtr<class UTextBlock> SharedUpgradeButtonText;
 
 	UPROPERTY(meta = (BindWidgetOptional))
-	class UButton* SharedCancelButton;
+	TObjectPtr<class UButton> SharedCancelButton;
 
 	UPROPERTY(meta = (BindWidgetOptional))
-	class UButton* SharedCloseButton;
+	TObjectPtr<class UButton> SharedCloseButton;
 
 	/** Update UI with audit results */
 	UFUNCTION()

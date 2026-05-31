@@ -39,7 +39,7 @@ struct SMARTFOUNDATIONS_API FSFHologramData {
     ESFChildHologramType ChildType = ESFChildHologramType::Normal;
     
     UPROPERTY()
-    AFGHologram* ParentHologram = nullptr;
+    TObjectPtr<AFGHologram> ParentHologram = nullptr;
     
     UPROPERTY()
     bool bIsChildHologram = false;
@@ -79,7 +79,7 @@ struct SMARTFOUNDATIONS_API FSFHologramData {
     
     // Source junction connector for manifold wiring (raw pointer - only valid during build session)
     UPROPERTY()
-    UFGPipeConnectionComponentBase* ManifoldSourceConnector = nullptr;
+    TObjectPtr<UFGPipeConnectionComponentBase> ManifoldSourceConnector = nullptr;
     
     // Chain ID for finding the clone junction after build
     UPROPERTY()
@@ -91,7 +91,7 @@ struct SMARTFOUNDATIONS_API FSFHologramData {
     
     // Source distributor connector for manifold wiring (raw pointer - only valid during build session)
     UPROPERTY()
-    UFGFactoryConnectionComponent* ManifoldSourceBeltConnector = nullptr;
+    TObjectPtr<UFGFactoryConnectionComponent> ManifoldSourceBeltConnector = nullptr;
     
     // Chain ID for finding the clone distributor after build
     UPROPERTY()
@@ -142,10 +142,10 @@ struct SMARTFOUNDATIONS_API FSFHologramData {
     bool bIsStackablePipe = false;
     
     UPROPERTY()
-    UFGPipeConnectionComponentBase* StackablePipeConn0 = nullptr;  // Start connector (on source support)
+    TObjectPtr<UFGPipeConnectionComponentBase> StackablePipeConn0 = nullptr;  // Start connector (on source support)
     
     UPROPERTY()
-    UFGPipeConnectionComponentBase* StackablePipeConn1 = nullptr;  // End connector (on target support)
+    TObjectPtr<UFGPipeConnectionComponentBase> StackablePipeConn1 = nullptr;  // End connector (on target support)
     
     UPROPERTY()
     int32 StackablePipeIndex = -1;  // Position in pipe chain (0, 1, 2...) for pipe-to-pipe wiring
@@ -173,10 +173,10 @@ struct SMARTFOUNDATIONS_API FSFHologramData {
     bool bIsPipeAutoConnectChild = false;
     
     UPROPERTY()
-    UFGPipeConnectionComponentBase* PipeAutoConnectConn0 = nullptr;  // Junction-side connector
+    TObjectPtr<UFGPipeConnectionComponentBase> PipeAutoConnectConn0 = nullptr;  // Junction-side connector
     
     UPROPERTY()
-    UFGPipeConnectionComponentBase* PipeAutoConnectConn1 = nullptr;  // Target connector (building or other junction)
+    TObjectPtr<UFGPipeConnectionComponentBase> PipeAutoConnectConn1 = nullptr;  // Target connector (building or other junction)
     
     UPROPERTY()
     bool bIsPipeManifold = false;  // True if junction→junction, false if junction→building

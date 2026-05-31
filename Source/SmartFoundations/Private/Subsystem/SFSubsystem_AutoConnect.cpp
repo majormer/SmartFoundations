@@ -69,7 +69,7 @@ USFAutoConnectOrchestrator* USFSubsystem::GetOrCreateOrchestrator(AFGHologram* P
 	}
 
 	// Check if orchestrator already exists
-	if (USFAutoConnectOrchestrator** ExistingOrchestrator = AutoConnectOrchestrators.Find(ParentHologram))
+	if (TObjectPtr<USFAutoConnectOrchestrator>* ExistingOrchestrator = AutoConnectOrchestrators.Find(ParentHologram))
 	{
 		return *ExistingOrchestrator;
 	}

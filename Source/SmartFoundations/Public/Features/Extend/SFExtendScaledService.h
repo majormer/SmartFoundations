@@ -82,5 +82,5 @@ private:
 
     /** Owning extend service (source of all shared scaled/wiring state; friended) */
     UPROPERTY()
-    USFExtendService* Owner = nullptr;
+    TObjectPtr<USFExtendService> Owner = nullptr;
 };

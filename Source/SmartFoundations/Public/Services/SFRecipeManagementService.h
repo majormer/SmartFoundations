@@ -288,7 +288,7 @@ private:
 
 	/** Build class that shards were captured from — used to detect build type changes */
 	UPROPERTY(Transient)
-	UClass* ShardSourceBuildClass = nullptr;
+	TObjectPtr<UClass> ShardSourceBuildClass = nullptr;
 
 	/** Stored overclock potential from sampled building (1.0 = 100%, 2.5 = 250%) */
 	float StoredPotential = 1.0f;
@@ -342,11 +342,11 @@ private:
 
 	/** Registry of all Smart-placed buildings with metadata */
 	UPROPERTY(Transient)
-	TMap<AFGBuildable*, FSFBuildingMetadata> SmartBuildingRegistry;
+	TMap<TObjectPtr<AFGBuildable>, FSFBuildingMetadata> SmartBuildingRegistry;
 
 	/** Buildings placed in current placement operation */
 	UPROPERTY(Transient)
-	TArray<AFGBuildable*> CurrentPlacementBuildings;
+	TArray<TObjectPtr<AFGBuildable>> CurrentPlacementBuildings;
 
 	/** Current placement group ID (incremented each placement) */
 	int32 CurrentPlacementGroupID = 0;
@@ -360,7 +360,7 @@ private:
 
 	/** Owning subsystem reference */
 	UPROPERTY(Transient)
-	class USFSubsystem* Subsystem = nullptr;
+	TObjectPtr<class USFSubsystem> Subsystem = nullptr;
 
 	/** Timer for debounced recipe regeneration */
 	FTimerHandle RecipeRegenerationTimer;

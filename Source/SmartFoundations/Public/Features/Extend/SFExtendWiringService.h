@@ -117,5 +117,5 @@ private:
 
     /** Parent extend service (owns wiring implementation for now) */
     UPROPERTY()
-    USFExtendService* ExtendService = nullptr;
+    TObjectPtr<USFExtendService> ExtendService = nullptr;
 };

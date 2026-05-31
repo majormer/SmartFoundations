@@ -476,31 +476,31 @@ private:
 
     /** Detection service for target validation and direction management */
     UPROPERTY()
-    USFExtendDetectionService* DetectionService = nullptr;
+    TObjectPtr<USFExtendDetectionService> DetectionService = nullptr;
 
     /** Topology service for walking and capturing connection chains */
     UPROPERTY()
-    USFExtendTopologyService* TopologyService = nullptr;
+    TObjectPtr<USFExtendTopologyService> TopologyService = nullptr;
 
     /** Hologram service for child hologram management and preview spawning */
     UPROPERTY()
-    USFExtendHologramService* HologramService = nullptr;
+    TObjectPtr<USFExtendHologramService> HologramService = nullptr;
 
     /** Wiring service for post-build connection wiring (interface only - implementation here for now) */
     UPROPERTY()
-    USFExtendWiringService* WiringService = nullptr;
+    TObjectPtr<USFExtendWiringService> WiringService = nullptr;
 
     /** Diagnostics service for EXTEND before/after world snapshots (pure diagnostics; no gameplay path) */
     UPROPERTY()
-    USFExtendDiagnosticsService* DiagnosticsService = nullptr;
+    TObjectPtr<USFExtendDiagnosticsService> DiagnosticsService = nullptr;
 
     /** Restore-replay service for Smart Restore Extend clone-topology replay (operates on this service's shared state) */
     UPROPERTY()
-    USFExtendRestoreReplayService* RestoreReplayService = nullptr;
+    TObjectPtr<USFExtendRestoreReplayService> RestoreReplayService = nullptr;
 
     /** Scaled Extend service (planning/preview/validate; operates on this service's shared state) */
     UPROPERTY()
-    USFExtendScaledService* ScaledService = nullptr;
+    TObjectPtr<USFExtendScaledService> ScaledService = nullptr;
 
     /** Do we have a valid extend target this frame */
     UPROPERTY()
@@ -520,7 +520,7 @@ private:
 
     /** Child hologram previews for belt connections (these BUILD but may be invisible) */
     UPROPERTY()
-    TArray<AFGHologram*> BeltPreviewHolograms;
+    TArray<TObjectPtr<AFGHologram>> BeltPreviewHolograms;
 
     /** Intended world positions for child holograms (engine resets them to origin, we force them back) */
     TMap<AFGHologram*, FVector> ChildIntendedPositions;

@@ -127,7 +127,7 @@ private:
 
     /** Detection service for target validation */
     UPROPERTY()
-    USFExtendDetectionService* DetectionService = nullptr;
+    TObjectPtr<USFExtendDetectionService> DetectionService = nullptr;
 
     /** Cached topology from last walked building */
     UPROPERTY()

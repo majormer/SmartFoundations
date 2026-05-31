@@ -131,7 +131,7 @@ private:
 
     /** Parent extend service (for topology access) */
     UPROPERTY()
-    USFExtendService* ExtendService = nullptr;
+    TObjectPtr<USFExtendService> ExtendService = nullptr;
 
     /** Current parent hologram for child management */
     UPROPERTY()
@@ -139,7 +139,7 @@ private:
 
     /** Tracked child holograms */
     UPROPERTY()
-    TArray<AFGHologram*> TrackedChildren;
+    TArray<TObjectPtr<AFGHologram>> TrackedChildren;
 
     /** Intended world positions for child holograms */
     TMap<AFGHologram*, FVector> ChildIntendedPositions;
