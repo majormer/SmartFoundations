@@ -142,7 +142,7 @@ Smart! has many keybinds, but you do not need to learn them all immediately.
 | Spacing mode | Change the gap between placed items |
 | Steps mode | Add height changes across a grid |
 | Stagger mode | Offset rows for diagonal or shifted patterns |
-| Double-tap `Num0` | Temporarily disable auto-connect for the next placement |
+| Double-tap `Num0` | Toggle Smart Auto-Connect and Extend off (and on again) for the session |
 
 Keybinds can be changed in Satisfactory's controls menu.
 
@@ -338,7 +338,9 @@ Auto-Connect is not magic routing. It is Smart! making a best effort based on ne
 
 ## 🎮 Controls and Feature Instructions
 
-Smart! uses **native Satisfactory keybinds** that can be customized in **Options > Keybindings > Smart! Scaling Controls**.
+Smart! uses **native Satisfactory keybinds** that can be customized in **Options > Controls > Mods**.
+
+> **Looking for the complete keybind list?** The [Controls](https://github.com/majormer/SmartFoundations/wiki/Controls) and [Settings Reference](https://github.com/majormer/SmartFoundations/wiki/Settings-Reference) wiki pages are generated from the mod's code and are the most accurate, always-current reference. The tables below cover the everyday controls.
 
 ### Grid Scaling
 
@@ -415,7 +417,7 @@ Use Auto-Connect settings when aiming a splitter, merger, pipe junction, or powe
 | Activate Auto-Connect Settings | Hold `U` while aiming a supported logistics or power hologram | Enables context-specific Auto-Connect settings |
 | Cycle Setting | `Num0` while holding `U` | Switch between available Auto-Connect options |
 | Increase/Decrease Value | `Scroll Wheel` or `NumPad 8/5` while holding `U` | Change the selected setting |
-| One-Shot Disable | Double-tap `Num0` with no modifiers | Disable all Auto-Connect for the next placement only |
+| Session Toggle | Double-tap `Num0` with no modifiers | Toggle all Smart Auto-Connect and Extend off for the session, then double-tap again to re-enable |
 
 **For belt distributors:** Enable/disable Auto-Connect, distributor-to-distributor connections, and distributor-to-building belt tier selection.
 
