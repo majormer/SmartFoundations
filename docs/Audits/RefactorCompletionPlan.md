@@ -702,10 +702,34 @@ Consolidated from every per-file matrix surfaced this effort (all grep-grounded)
 15. `SmartUpgradePanel::CalculateUpgradeCost` ↔ `SFUpgradeExecutionService::GetUpgradeRecipe` — both
     use `SFAssetPaths::UpgradeRecipes`. **Already centralized (T4.2)** — no further action.
 
-**`[VERIFY]` debt carried to slice-time** (the only unknowns left, all narrow): anon-namespace
-sweeps in each target's body (flagged per card); exact external-caller lists for the impl-split
-files (UI, PipeManager) where most callers are internal; the pipe-tier (S6) fn-level destination
-decision (open question #6); whether `ASFLogisticsHologram` is the shared base for T8a.
+**Anon-namespace / file-local helper sweep — RESOLVED this effort** (grep of all 9 targets +
+HologramHelper). Most files are clean (Extend/AutoConnect/PipeManager/both holograms/SettingsForm =
+0 file-local helpers). Found:
+- `SFUpgradeExecutionService.cpp`: 3 statics `FindFactory/Pipe/PowerConnectorByName` (2115–2150),
+  used ONLY at 2406–2493 — **exclusive to the batch-repair block UP1 moves** → move with UP1, no
+  promotion. ✅ clean.
+- `SFSubsystem.cpp`: anon `struct FStackableBeltBuildData` (~157) — file-local; `[VERIFY at
+  slice-time]` which S-slice(s) use it (likely stackable/grid path).
+- `SmartUpgradePanel.cpp`: anon `IsConveyorUpgradeFamily`/`GetPanelFamilyDisplayName` (~37) —
+  display helpers; if used across U2's 3 split `.cpp`, promote to a shared internal header.
+- `SFHologramHelperService.cpp`: anon `RefreshHologramVisibility` (~72) — if used across T1d's
+  split `.cpp`, promote.
+
+**GENERAL GUARDRAIL (impl-splits):** an anonymous-namespace helper is translation-unit-local, so
+any such helper used by methods landing in *different* split `.cpp` files MUST be promoted to a
+shared internal header (round-1 precedent: `CalculateRestoredScaledClonePlacement`). Applies to
+U1/U2, T1d, AC3, PM, and the wiring/subsystem-helper splits. Cheap to check per slice (grep the
+helper name's usage line-ranges vs the split boundary).
+
+**Other `[VERIFY]` debt (narrow, slice-time):** exact external-caller lists for impl-split files
+(UI, PipeManager — most callers internal); pipe-tier (S6) fn-level destination (open question #6);
+whether `ASFLogisticsHologram` is the shared base for T8a.
+
+**Pre-implementation checks RUN (2026-05-30):** extraction-destination stubs confirmed real +
+owned — `SFSubsystem.h:670/679` `TUniquePtr<FSFInputHandler> InputHandler` +
+`TUniquePtr<FSFHologramHelperService> HologramHelper`, both `MakeUnique` at `SFSubsystem.cpp:176/185`
+(so S1/S2/S3 are "fill the owned stub", not new-class wiring). RPC handlers stay on the facade (no
+moved unit is an SFRCO handler); `SFRCO` is placeholder → low multiplayer coupling.
 
 ## Global Sequencing
 
