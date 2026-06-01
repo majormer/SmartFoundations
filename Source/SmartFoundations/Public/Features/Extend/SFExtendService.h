@@ -663,12 +663,12 @@ private:
      *  dangling raws (the holograms are preview actors the engine destroys). Without this, a stale
      *  entry passes a bare null check and is dereferenced (use-after-free). */
     UPROPERTY()
-    TMap<FString, AFGHologram*> JsonSpawnedHolograms;
+    TMap<FString, TObjectPtr<AFGHologram>> JsonSpawnedHolograms;
 
     /** Map of clone_id -> built actor (populated during Construct(), used for wiring).
      *  UPROPERTY for GC tracking — collected/demolished actors become null rather than dangling. */
     UPROPERTY()
-    TMap<FString, AActor*> JsonBuiltActors;
+    TMap<FString, TObjectPtr<AActor>> JsonBuiltActors;
 
     /** Cached preview locations for restored scaled factories; hologram pointers are often invalid by post-build wiring time. */
     TMap<FString, FVector> RestoredScaledFactoryPreviewLocations;

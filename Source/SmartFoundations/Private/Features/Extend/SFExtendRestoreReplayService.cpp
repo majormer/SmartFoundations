@@ -986,7 +986,11 @@ bool USFExtendRestoreReplayService::SpawnRestoredCloneTopology(AFGHologram* Pare
 
     CloneTopology.WireChildHologramConnections(SpawnedHolograms, ParentHologram);
     Owner->StoredCloneTopology = MakeShared<FSFCloneTopology>(CloneTopology);
-    Owner->JsonSpawnedHolograms = SpawnedHolograms;
+    Owner->JsonSpawnedHolograms.Reset();
+    for (const TPair<FString, AFGHologram*>& Pair : SpawnedHolograms)
+    {
+        Owner->JsonSpawnedHolograms.Add(Pair.Key, Pair.Value);
+    }
     if (Owner->HologramService)
     {
         Owner->HologramService->SetCurrentParentHologram(ParentHologram);

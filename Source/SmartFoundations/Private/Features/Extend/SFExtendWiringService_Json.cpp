@@ -373,7 +373,7 @@ int32 USFExtendWiringService::GenerateAndExecuteWiring(AFGBuildableFactory* NewF
             }
             if (!bHasExpectedLocation)
             {
-                if (AFGHologram* const* SpawnedFactoryHologram = ExtendService->JsonSpawnedHolograms.Find(FactoryId))
+                if (const TObjectPtr<AFGHologram>* SpawnedFactoryHologram = ExtendService->JsonSpawnedHolograms.Find(FactoryId))
                 {
                     if (IsValid(*SpawnedFactoryHologram))
                     {
@@ -615,13 +615,19 @@ int32 USFExtendWiringService::GenerateAndExecuteWiring(AFGBuildableFactory* NewF
 
     // Create chain actors for wired belts (prevents crash in Factory_UpdateRadioactivity)
     // Pass ExtendService->JsonBuiltActors to include lane segments that were wired in ConfigureComponents
-    int32 ChainsCreated = WiringManifest.CreateChainActors(GetWorld(), ExtendService->JsonBuiltActors);
+    // JsonBuiltActors stores TObjectPtr (GC-safe); build a transient raw view for the wiring-manifest API.
+    TMap<FString, AActor*> BuiltActorsRaw;
+    BuiltActorsRaw.Reserve(ExtendService->JsonBuiltActors.Num());
+    for (const TPair<FString, TObjectPtr<AActor>>& Pair : ExtendService->JsonBuiltActors)
+    {
+        BuiltActorsRaw.Add(Pair.Key, Pair.Value);
+    }
+    int32 ChainsCreated = WiringManifest.CreateChainActors(GetWorld(), BuiltActorsRaw);
 
     UE_LOG(LogSmartExtend, VeryVerbose, TEXT("🔌 EXTEND Phase 5/6: Chain actors created - %d chains"), ChainsCreated);
 
-    // Rebuild pipe networks to ensure fluid flow between source and clone manifolds
-    // Pass ExtendService->JsonBuiltActors to include lane segment pipes that were wired in ConfigureComponents
-    int32 NetworksRebuilt = WiringManifest.RebuildPipeNetworks(GetWorld(), ExtendService->JsonBuiltActors);
+    // Rebuild pipe networks to ensure fluid flow between source and clone manifolds (same raw view)
+    int32 NetworksRebuilt = WiringManifest.RebuildPipeNetworks(GetWorld(), BuiltActorsRaw);
 
     UE_LOG(LogSmartExtend, VeryVerbose, TEXT("🔌 EXTEND Phase 5/6: Pipe networks rebuilt - %d networks"), NetworksRebuilt);
 
@@ -1677,7 +1683,7 @@ AFGBuildable* USFExtendWiringService::GetBuiltActorByCloneId(const FString& Clon
     }
 
     // Check ExtendService->JsonBuiltActors map
-    if (AActor* const* FoundActor = ExtendService->JsonBuiltActors.Find(CloneId))
+    if (const TObjectPtr<AActor>* FoundActor = ExtendService->JsonBuiltActors.Find(CloneId))
     {
         return Cast<AFGBuildable>(*FoundActor);
     }

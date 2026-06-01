@@ -134,7 +134,11 @@ void USFExtendHologramService::CreateBeltPreviews(AFGHologram* ParentHologram)
 
     // Store for post-build wiring
     StoredCloneTopology = MakeShared<FSFCloneTopology>(CloneJSON);
-    JsonSpawnedHolograms = SpawnedHolograms;
+    JsonSpawnedHolograms.Reset();
+    for (const TPair<FString, AFGHologram*>& Pair : SpawnedHolograms)
+    {
+        JsonSpawnedHolograms.Add(Pair.Key, Pair.Value);
+    }
 
     SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log,
         TEXT("[SmartRestore][ExtendHologram] Stored clone topology: children=%d spawnedMap=%d"),
@@ -397,7 +401,11 @@ ASFFactoryHologram* USFExtendHologramService::GetSwappedHologram() const
 
 void USFExtendHologramService::StoreJsonSpawnedHolograms(const TMap<FString, AFGHologram*>& SpawnedHolograms)
 {
-    JsonSpawnedHolograms = SpawnedHolograms;
+    JsonSpawnedHolograms.Reset();
+    for (const TPair<FString, AFGHologram*>& Pair : SpawnedHolograms)
+    {
+        JsonSpawnedHolograms.Add(Pair.Key, Pair.Value);
+    }
 }
 
 void USFExtendHologramService::StoreCloneTopology(TSharedPtr<FSFCloneTopology> CloneTopology)

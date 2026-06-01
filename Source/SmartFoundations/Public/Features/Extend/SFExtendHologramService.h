@@ -110,7 +110,7 @@ public:
     void StoreJsonSpawnedHolograms(const TMap<FString, AFGHologram*>& SpawnedHolograms);
 
     /** Get JSON spawned holograms map */
-    const TMap<FString, AFGHologram*>& GetJsonSpawnedHolograms() const { return JsonSpawnedHolograms; }
+    const TMap<FString, TObjectPtr<AFGHologram>>& GetJsonSpawnedHolograms() const { return JsonSpawnedHolograms; }
 
     /** Store clone topology for post-build wiring */
     void StoreCloneTopology(TSharedPtr<FSFCloneTopology> CloneTopology);
@@ -158,7 +158,7 @@ private:
      *  UPROPERTY so the GC tracks/NULLs these (preview holograms the engine destroys) instead of
      *  leaving dangling raw pointers. */
     UPROPERTY()
-    TMap<FString, AFGHologram*> JsonSpawnedHolograms;
+    TMap<FString, TObjectPtr<AFGHologram>> JsonSpawnedHolograms;
 
     /** Stored clone topology for post-build wiring */
     TSharedPtr<FSFCloneTopology> StoredCloneTopology;
