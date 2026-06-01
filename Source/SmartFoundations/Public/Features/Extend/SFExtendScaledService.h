@@ -43,7 +43,10 @@ struct FSFScaledExtendClone
     bool bIsSeed = false;  // Auto-seed clone at (0, Y>0)
     FVector WorldOffset = FVector::ZeroVector;  // Offset from source building
     FRotator RotationOffset = FRotator::ZeroRotator;  // Rotation relative to source
-    TMap<FString, AFGHologram*> SpawnedHolograms;  // Clone ID -> hologram for this clone
+    // GC-safe: weak ptrs never dangle. Raw AFGHologram* here are invisible to GC (plain struct,
+    // non-UPROPERTY ScaledExtendClones), so engine/GC destruction of preview holograms would leave
+    // dangling raws -> crash in ClearScaledExtendClones (EXCEPTION_ACCESS_VIOLATION). See #crash.
+    TMap<FString, TWeakObjectPtr<AFGHologram>> SpawnedHolograms;  // Clone ID -> hologram for this clone
     TSharedPtr<FSFCloneTopology> CloneTopology;  // Clone topology for this set
 };
 

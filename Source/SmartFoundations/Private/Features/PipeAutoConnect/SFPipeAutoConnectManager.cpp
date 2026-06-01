@@ -163,7 +163,7 @@ void FSFPipeAutoConnectManager::ProcessAllJunctions(AFGHologram* ParentJunctionH
 				// Get the building connector from the reserved connectors map
 				for (const auto& Pair : ReservedConnectors)
 				{
-					if (Pair.Value == ParentJunctionHologram)
+					if (Pair.Value == ParentJunctionHologram && IsValid(Pair.Key))
 					{
 						ParentConnectionType = Pair.Key->GetPipeConnectionType();
 						bParentHasConnection = true;

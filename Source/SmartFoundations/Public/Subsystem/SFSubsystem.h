@@ -1230,9 +1230,6 @@ public:
 	/** Current placement group ID (increments with each placement operation) */
 	int32 CurrentPlacementGroupID = 0;
 	
-	/** Track buildings in current placement operation */
-	TArray<AFGBuildable*> CurrentPlacementBuildings;
-	
 	/** Register a Smart-created building in the session registry */
 	void RegisterSmartBuilding(AFGBuildable* Building, int32 IndexInGroup, bool bIsParent);
 	

@@ -34,13 +34,9 @@ void USFExtendWiringService::Shutdown()
 
 void USFExtendWiringService::ClearConnectionWiringMaps()
 {
-    ExtendService->SourceToHologramMap.Empty();
     ExtendService->PipeChainHologramMap.Empty();
     ExtendService->PipeChainJunctionMap.Empty();
-    ExtendService->BeltChainHologramMap.Empty();
-    ExtendService->LiftChainHologramMap.Empty();
     ExtendService->BeltChainDistributorMap.Empty();
-    ExtendService->ManifoldBeltHolograms.Empty();
 
     // Also clear built tracking maps (used by WireBuiltChildConnections)
     ExtendService->BuiltConveyorsByChain.Empty();

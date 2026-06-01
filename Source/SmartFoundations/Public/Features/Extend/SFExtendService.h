@@ -554,29 +554,17 @@ private:
 
     // ==================== Hologram Connection Wiring (prevents child pole spawning) ====================
 
-    /** Map from source buildable (pipe, junction) to its cloned hologram */
-    TMap<AActor*, AFGHologram*> SourceToHologramMap;
-
     /** Per-chain tracking of pipe holograms in spawn order (ChainId → array of pipe holograms) */
     TMap<int32, TArray<ASFPipelineHologram*>> PipeChainHologramMap;
 
     /** Junction hologram for each pipe chain (ChainId → junction hologram) */
     TMap<int32, class ASFPipelineJunctionChildHologram*> PipeChainJunctionMap;
 
-    /** Per-chain tracking of belt holograms in spawn order (ChainId → array of belt holograms) */
-    TMap<int32, TArray<class ASFConveyorBeltHologram*>> BeltChainHologramMap;
-
-    /** Per-chain tracking of lift holograms in spawn order (ChainId → array of lift holograms) */
-    TMap<int32, TArray<class ASFConveyorLiftHologram*>> LiftChainHologramMap;
-
     /** Unified chain map for all conveyors (belts + lifts) indexed by position (ChainId → ChainIndex → Hologram) */
     TMap<int32, TMap<int32, AFGHologram*>> UnifiedConveyorChainMap;
 
     /** Distributor hologram for each belt chain (ChainId → distributor hologram) */
     TMap<int32, AFGHologram*> BeltChainDistributorMap;
-
-    /** Manifold belt hologram for each chain (ChainId → manifold belt hologram) */
-    TMap<int32, ASFConveyorBeltHologram*> ManifoldBeltHolograms;
 
     /** Built conveyor buildables per chain, indexed by position (ChainId → (Index → Conveyor)) */
     TMap<int32, TMap<int32, AFGBuildableConveyorBase*>> BuiltConveyorsByChain;
@@ -670,10 +658,16 @@ private:
     /** Stored clone topology for post-build wiring (Phase 5) */
     TSharedPtr<FSFCloneTopology> StoredCloneTopology;
 
-    /** Map of clone_id -> spawned hologram for post-build wiring (cleared after build) */
+    /** Map of clone_id -> spawned hologram for post-build wiring (cleared after build).
+     *  UPROPERTY so the GC tracks these pointers and NULLs them on collection instead of leaving
+     *  dangling raws (the holograms are preview actors the engine destroys). Without this, a stale
+     *  entry passes a bare null check and is dereferenced (use-after-free). */
+    UPROPERTY()
     TMap<FString, AFGHologram*> JsonSpawnedHolograms;
 
-    /** Map of clone_id -> built actor (populated during Construct(), used for wiring) */
+    /** Map of clone_id -> built actor (populated during Construct(), used for wiring).
+     *  UPROPERTY for GC tracking — collected/demolished actors become null rather than dangling. */
+    UPROPERTY()
     TMap<FString, AActor*> JsonBuiltActors;
 
     /** Cached preview locations for restored scaled factories; hologram pointers are often invalid by post-build wiring time. */

@@ -154,7 +154,10 @@ private:
     /** Whether we've swapped the vanilla hologram for our custom one */
     bool bHasSwappedHologram = false;
 
-    /** JSON spawned holograms for post-build wiring */
+    /** JSON spawned holograms for post-build wiring.
+     *  UPROPERTY so the GC tracks/NULLs these (preview holograms the engine destroys) instead of
+     *  leaving dangling raw pointers. */
+    UPROPERTY()
     TMap<FString, AFGHologram*> JsonSpawnedHolograms;
 
     /** Stored clone topology for post-build wiring */

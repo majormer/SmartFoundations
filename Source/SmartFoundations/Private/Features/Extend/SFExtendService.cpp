@@ -1146,7 +1146,10 @@ void USFExtendService::RefreshExtension(AFGHologram* SourceHologram, bool bForce
     {
         for (auto& SpawnedPair : Clone.SpawnedHolograms)
         {
-            SyncExtendPreviewMaterialState(SpawnedPair.Value);
+            if (SpawnedPair.Value.IsValid())
+            {
+                SyncExtendPreviewMaterialState(SpawnedPair.Value.Get());
+            }
         }
     }
 
