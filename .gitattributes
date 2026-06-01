@@ -1,39 +1,34 @@
-# Default: normalize line endings to LF in the repo, check out as CRLF on Windows
+# Standardize line endings on LF for all text files, both in the repository and
+# on checkout (every platform). Git auto-detects text vs binary; the binary
+# patterns below are never normalized, which matters for Unreal Engine assets.
+
 * text=auto eol=lf
 
-# C++ source and headers — LF in repo, CRLF on Windows checkout
-*.h text eol=lf
-*.cpp text eol=lf
-*.inl text eol=lf
-*.cs text eol=lf
-
-# Config and data files
-*.ini text eol=lf
-*.json text eol=lf
-*.uplugin text eol=lf
-*.uproject text eol=lf
-
-# Scripts
-*.ps1 text eol=crlf
-*.py text eol=lf
-*.bat text eol=crlf
-*.sh text eol=lf
-
-# Localization
-*.po text eol=lf
-*.csv text eol=lf
-
-# Markdown and docs
-*.md text eol=lf
-
-# Binary assets — no line ending normalization
-*.png binary
-*.jpg binary
-*.jpeg binary
-*.gif binary
-*.ico binary
-*.uasset binary
-*.umap binary
-*.locres binary
+# Unreal Engine assets — always binary, never normalize line endings
+*.uasset  binary
+*.umap    binary
+*.uexp    binary
+*.ubulk   binary
+*.locres  binary
 *.locmeta binary
 *.archive binary
+*.pak     binary
+
+# Images / fonts / media
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.bmp  binary
+*.tga  binary
+*.ico  binary
+*.ttf  binary
+*.otf  binary
+*.wav  binary
+*.ogg  binary
+
+# Archives / other binaries
+*.zip binary
+*.7z  binary
+*.gz  binary
+*.bin binary
