@@ -6,6 +6,90 @@
 #include "Engine/Engine.h"
 #include "Smart_ConfigStruct.generated.h"
 
+/*
+ * Mod Configuration Asset '/SmartFoundations/SmartFoundations/Config/Smart_Config' is now organized
+ * into named sections (Belt / Pipe / Power Auto-Connect, Building Behavior, HUD, Arrows). In SML a
+ * named config section maps to a NESTED struct field, so the menu's section layout is mirrored by
+ * the sub-structs below and FSmart_ConfigStruct_Sections.
+ *
+ * The public FSmart_ConfigStruct remains FLAT and unchanged so existing consuming code is untouched.
+ * GetActiveConfig() fills the nested sections struct from the config system and copies the values
+ * down into the flat struct it returns. Fields that are not menu settings (AutoConnectMode,
+ * PowerPoleMk1-4MaxConnections) are not part of any section and keep their flat defaults.
+ */
+
+// ── Section mirror sub-structs (field names must match the config asset's leaf keys) ──
+
+USTRUCT(BlueprintType)
+struct FSmart_BeltConfigSection {
+    GENERATED_BODY()
+    UPROPERTY(BlueprintReadWrite) bool bAutoConnectEnabled{};
+    UPROPERTY(BlueprintReadWrite) bool bAutoConnectDistributors{};
+    UPROPERTY(BlueprintReadWrite) int32 BeltLevelMain{};
+    UPROPERTY(BlueprintReadWrite) int32 BeltLevelToBuilding{};
+    UPROPERTY(BlueprintReadWrite) int32 BeltRoutingMode{};
+    UPROPERTY(BlueprintReadWrite) bool bStackableBeltEnabled{};
+};
+
+USTRUCT(BlueprintType)
+struct FSmart_PipeConfigSection {
+    GENERATED_BODY()
+    UPROPERTY(BlueprintReadWrite) bool bPipeAutoConnectEnabled{};
+    UPROPERTY(BlueprintReadWrite) int32 PipeLevelMain{};
+    UPROPERTY(BlueprintReadWrite) int32 PipeLevelToBuilding{};
+    UPROPERTY(BlueprintReadWrite) int32 PipeRoutingMode{};
+    UPROPERTY(BlueprintReadWrite) bool PipeIndicator{};
+};
+
+USTRUCT(BlueprintType)
+struct FSmart_PowerConfigSection {
+    GENERATED_BODY()
+    UPROPERTY(BlueprintReadWrite) bool bPowerAutoConnectEnabled{};
+    UPROPERTY(BlueprintReadWrite) int32 PowerConnectMode{};
+    UPROPERTY(BlueprintReadWrite) int32 PowerConnectRange{};
+    UPROPERTY(BlueprintReadWrite) int32 PowerConnectReserved{};
+};
+
+USTRUCT(BlueprintType)
+struct FSmart_BuildingBehaviorConfigSection {
+    GENERATED_BODY()
+    UPROPERTY(BlueprintReadWrite) bool bExtendEnabled{true};
+    UPROPERTY(BlueprintReadWrite) bool bExtendPowerEnabled{};
+    UPROPERTY(BlueprintReadWrite) bool bAutoHoldOnGridChange{false};
+    UPROPERTY(BlueprintReadWrite) bool bApplyImmediately{};
+};
+
+USTRUCT(BlueprintType)
+struct FSmart_HUDConfigSection {
+    GENERATED_BODY()
+    UPROPERTY(BlueprintReadWrite) bool bShowHUD{};
+    UPROPERTY(BlueprintReadWrite) float HUDScale{};
+    UPROPERTY(BlueprintReadWrite) float HUDPositionX{0.02f};
+    UPROPERTY(BlueprintReadWrite) float HUDPositionY{0.25f};
+    UPROPERTY(BlueprintReadWrite) int32 HUDTheme{};
+};
+
+USTRUCT(BlueprintType)
+struct FSmart_ArrowsConfigSection {
+    GENERATED_BODY()
+    UPROPERTY(BlueprintReadWrite) bool bShowArrows{};
+    UPROPERTY(BlueprintReadWrite) bool bShowArrowOrbit{true};
+    UPROPERTY(BlueprintReadWrite) bool bShowArrowLabels{true};
+};
+
+/* Nested struct whose field names match the config asset's section keys. Used only to fill from
+ * the config system; values are copied into the flat FSmart_ConfigStruct below. */
+USTRUCT(BlueprintType)
+struct FSmart_ConfigStruct_Sections {
+    GENERATED_BODY()
+    UPROPERTY(BlueprintReadWrite) FSmart_BeltConfigSection BeltAutoConnect;
+    UPROPERTY(BlueprintReadWrite) FSmart_PipeConfigSection PipeAutoConnect;
+    UPROPERTY(BlueprintReadWrite) FSmart_PowerConfigSection PowerAutoConnect;
+    UPROPERTY(BlueprintReadWrite) FSmart_BuildingBehaviorConfigSection BuildingBehavior;
+    UPROPERTY(BlueprintReadWrite) FSmart_HUDConfigSection HUD;
+    UPROPERTY(BlueprintReadWrite) FSmart_ArrowsConfigSection Arrows;
+};
+
 /* Struct generated from Mod Configuration Asset '/SmartFoundations/SmartFoundations/Config/Smart_Config' */
 /* Property order matches Blueprint config UI (grouped by feature, usage-frequency top-to-bottom) */
 USTRUCT(BlueprintType)
@@ -136,15 +220,59 @@ public:
     UPROPERTY(BlueprintReadWrite)
     bool bShowArrowLabels{true};
 
-    /* Retrieves active configuration value and returns object of this struct containing it */
+    /* Retrieves active configuration value and returns object of this struct containing it.
+     * The config asset is organized into sections, so we fill the nested sections struct and copy
+     * the values into this flat struct (keeping all existing consumers unchanged). */
     static FSmart_ConfigStruct GetActiveConfig(UObject* WorldContext) {
         FSmart_ConfigStruct ConfigStruct{};
+        FSmart_ConfigStruct_Sections Sections{};
         FConfigId ConfigId{"SmartFoundations", ""};
         if (const UWorld* World = GEngine->GetWorldFromContextObject(WorldContext, EGetWorldErrorMode::ReturnNull)) {
             UConfigManager* ConfigManager = World->GetGameInstance()->GetSubsystem<UConfigManager>();
-            ConfigManager->FillConfigurationStruct(ConfigId, FDynamicStructInfo{FSmart_ConfigStruct::StaticStruct(), &ConfigStruct});
+            ConfigManager->FillConfigurationStruct(ConfigId, FDynamicStructInfo{FSmart_ConfigStruct_Sections::StaticStruct(), &Sections});
         }
+
+        // Belt Auto-Connect
+        ConfigStruct.bAutoConnectEnabled      = Sections.BeltAutoConnect.bAutoConnectEnabled;
+        ConfigStruct.bAutoConnectDistributors = Sections.BeltAutoConnect.bAutoConnectDistributors;
+        ConfigStruct.BeltLevelMain            = Sections.BeltAutoConnect.BeltLevelMain;
+        ConfigStruct.BeltLevelToBuilding      = Sections.BeltAutoConnect.BeltLevelToBuilding;
+        ConfigStruct.BeltRoutingMode          = Sections.BeltAutoConnect.BeltRoutingMode;
+        ConfigStruct.bStackableBeltEnabled    = Sections.BeltAutoConnect.bStackableBeltEnabled;
+
+        // Pipe Auto-Connect
+        ConfigStruct.bPipeAutoConnectEnabled  = Sections.PipeAutoConnect.bPipeAutoConnectEnabled;
+        ConfigStruct.PipeLevelMain            = Sections.PipeAutoConnect.PipeLevelMain;
+        ConfigStruct.PipeLevelToBuilding      = Sections.PipeAutoConnect.PipeLevelToBuilding;
+        ConfigStruct.PipeRoutingMode          = Sections.PipeAutoConnect.PipeRoutingMode;
+        ConfigStruct.PipeIndicator            = Sections.PipeAutoConnect.PipeIndicator;
+
+        // Power Auto-Connect
+        ConfigStruct.bPowerAutoConnectEnabled = Sections.PowerAutoConnect.bPowerAutoConnectEnabled;
+        ConfigStruct.PowerConnectMode         = Sections.PowerAutoConnect.PowerConnectMode;
+        ConfigStruct.PowerConnectRange        = Sections.PowerAutoConnect.PowerConnectRange;
+        ConfigStruct.PowerConnectReserved     = Sections.PowerAutoConnect.PowerConnectReserved;
+
+        // Building Behavior (Extend + Scaling + Smart Panel)
+        ConfigStruct.bExtendEnabled           = Sections.BuildingBehavior.bExtendEnabled;
+        ConfigStruct.bExtendPowerEnabled      = Sections.BuildingBehavior.bExtendPowerEnabled;
+        ConfigStruct.bAutoHoldOnGridChange    = Sections.BuildingBehavior.bAutoHoldOnGridChange;
+        ConfigStruct.bApplyImmediately        = Sections.BuildingBehavior.bApplyImmediately;
+
+        // HUD
+        ConfigStruct.bShowHUD                 = Sections.HUD.bShowHUD;
+        ConfigStruct.HUDScale                 = Sections.HUD.HUDScale;
+        ConfigStruct.HUDPositionX             = Sections.HUD.HUDPositionX;
+        ConfigStruct.HUDPositionY             = Sections.HUD.HUDPositionY;
+        ConfigStruct.HUDTheme                 = Sections.HUD.HUDTheme;
+
+        // Arrows
+        ConfigStruct.bShowArrows              = Sections.Arrows.bShowArrows;
+        ConfigStruct.bShowArrowOrbit          = Sections.Arrows.bShowArrowOrbit;
+        ConfigStruct.bShowArrowLabels         = Sections.Arrows.bShowArrowLabels;
+
+        // AutoConnectMode and PowerPoleMk1-4MaxConnections are not menu settings; they keep the
+        // flat struct defaults above (this matches prior behavior, where they were never config-filled).
         return ConfigStruct;
     }
 };
-
