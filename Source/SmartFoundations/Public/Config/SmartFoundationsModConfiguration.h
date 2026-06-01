@@ -29,7 +29,7 @@ public:
 
 private:
 	class UConfigPropertySection* CreateSection(const FName& Name, const FText& DisplayName, const FText& Tooltip);
-	class UConfigPropertyBool* CreateBoolProperty(const FName& Name, const FText& DisplayName, bool Value);
-	class UConfigPropertyInteger* CreateIntegerProperty(const FName& Name, const FText& DisplayName, int32 Value);
-	class UConfigPropertyFloat* CreateFloatProperty(const FName& Name, const FText& DisplayName, float Value);
+	class UConfigPropertyBool* CreateBoolProperty(const FName& Name, const FText& DisplayName, const FText& Tooltip, bool Value);
+	class UConfigPropertyInteger* CreateIntegerProperty(const FName& Name, const FText& DisplayName, const FText& Tooltip, int32 Value);
+	class UConfigPropertyFloat* CreateFloatProperty(const FName& Name, const FText& DisplayName, const FText& Tooltip, float Value);
 };
