@@ -12,13 +12,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [31.0.0] - 2026-06-02
 
 > *First Satisfactory 1.2 release - Smart! rebuilt for the 1.2 update. Players still on Satisfactory 1.1 should stay on version 30.1.0.*
+>
+> **One-time settings reset:** the Smart! settings menu was reorganized for this release, so your saved Smart! settings reset to their defaults the first time you load 31.0.0. Set them once and they'll stick from then on.
 
 ### Changed
 - **Smart! now runs on Satisfactory 1.2** - Satisfactory 1.2 moves the game to a new version of Unreal Engine and a new way of packaging mods, which meant rebuilding Smart! against the updated game from the ground up. Every Smart! feature carries over unchanged - grid building, Extend and Scaled Extend, auto-connect for belts, pipes, and power, Smart Upgrade and Triage, Restore presets, the Smart Panel, and all keybinds - with no intended gameplay difference from the 1.1 release. This build targets Satisfactory 1.2 and newer; the mod manager will not offer it to 1.1 players, who should remain on version 30.1.0.
+- **Settings menu reorganized into sections** - The Smart! page under Options > Mods is now grouped into six labeled sections - Belt Auto-Connect, Pipe Auto-Connect, Power Auto-Connect, Building Behavior, HUD, and Arrows - instead of one long undivided list, so related options are easier to find. Several settings that had stopped showing up are also back and editable again: belt and pipe routing modes, stackable-belt auto-connect, the Extend toggles, Auto-Hold on grid change, Apply Immediately, HUD position and theme, and the arrow orbit and label options. (Reorganizing the menu is what triggers the one-time settings reset noted above.)
+
+### Fixed
+- **Fixed a crash during long building sessions with Scaled Extend** - After building with Scaled Extend for a while, the game could crash when the build gun cleaned up its preview holograms - it tried to tidy up holograms the game had already destroyed. The cleanup now safely skips anything that's already gone, so the crash no longer happens.
 
 ### Technical
 - **Rebuilt for Unreal Engine 5.6** - Smart!'s codebase was migrated to the engine version that ships with Satisfactory 1.2, covering updated game APIs, header layouts, and include rules.
 - **Migrated to the Game Feature plugin model** - Satisfactory 1.2 turns mods into "Game Feature" plugins. Smart! now ships with the Game Feature data the 1.2 game needs to recognize and load it.
+- **Settings menu rendering restored and reworked** - The 1.2 rebuild first left the settings menu blank (its root section was flagged hidden) and then lost a third of its entries when the configuration asset was reparented. The menu was repaired, every setting re-authored against the 1.1 source (labels, tooltips, translations, dropdowns, and sliders preserved), and the settings grouped into sections. Settings are still defined as a flat structure in code - a sectioned mirror feeds the menu and copies values back - so the rest of the mod reads them exactly as before.
+- **Memory-safety hardening** - Some preview holograms and built actors tracked by the Extend system were held as references the garbage collector couldn't see, so they could be left pointing at objects the engine had already destroyed - the root cause of the Scaled Extend crash above. These are now tracked properly (cleared by the collector instead of left dangling) and validated before use. A full audit of this pattern across Smart! and its companion mods fixed the remaining cases and confirmed the rest were already safe.
+- **Migrated raw object pointers to TObjectPtr** - Following UE5.6 guidance, raw object pointers held in reflected properties were migrated to the engine's tracked-pointer type.
+- **Code cleanup** - Removed a redundant runtime registration of the Smart configuration, an unused duplicate field, and several unused wiring maps confirmed dead, plus other small fixes (warning levels, an unreachable auto-connect branch).
+- **Documentation** - Added the 1.2 dev-environment upgrade and port runbook, a port-prep inventory, and exact dependency-version notes.
 
 ---
 
