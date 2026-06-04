@@ -122,7 +122,7 @@ message*.txt
 # Temporary sprint scaffolding (goals/audits/plans) — not committed; cleared after the sprint
 docs/Sprints/
 
-# Private-tool docs/harnesses (local-only; reference AdaMCP/SmartMCP — keep out of the public repo)
-docs/Development/AdaMCP-Python.md
+# Local-only dev docs/harnesses (keep out of the public repo)
+docs/Development/Editor-Python.md
 scripts/smoke_test.py
 scripts/config_parity_check.py
