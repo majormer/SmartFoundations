@@ -511,7 +511,7 @@ void USFUpgradeExecutionService::CollectConnectedConveyorCohort(AFGBuildableConv
 
 	while (Stack.Num() > 0 && OutCohort.Num() < MaxCohortSize)
 	{
-		AFGBuildableConveyorBase* Current = Stack.Pop(false);
+		AFGBuildableConveyorBase* Current = Stack.Pop(EAllowShrinking::No);
 		if (!IsValid(Current) || OutCohort.Contains(Current)) continue;
 
 		OutCohort.Add(Current);

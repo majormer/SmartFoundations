@@ -99,7 +99,7 @@ void USFHudService::DrawCounterToHUD(AHUD* HUD, UCanvas* Canvas)
     // Position via viewport coordinates
     const float ClampedPosX = FMath::Clamp(CurrentConfig.HUDPositionX, 0.0f, 0.85f);
     const float ClampedPosY = FMath::Clamp(CurrentConfig.HUDPositionY, 0.0f, 0.85f);
-    FVector2D ViewportSize;
+    FVector2D ViewportSize = FVector2D::ZeroVector;
     if (GEngine && GEngine->GameViewport)
     {
         GEngine->GameViewport->GetViewportSize(ViewportSize);

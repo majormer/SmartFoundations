@@ -633,7 +633,7 @@ FSFCloneTopology FSFCloneTopology::FromSource(const FSFSourceTopology& Source, c
             
             float BestDistance = FLT_MAX;
             FString BestSourceConn, BestCloneConn;
-            FVector BestSourcePos, BestClonePos;
+            FVector BestSourcePos = FVector::ZeroVector, BestClonePos = FVector::ZeroVector;
             
             for (const FString& SourceConn : ValidSourceConnectors)
             {
