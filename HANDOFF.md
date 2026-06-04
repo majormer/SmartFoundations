@@ -70,7 +70,7 @@ T1 is **NEEDS-CARE** per the charter, so each slice follows this loop:
   game runs fails with `UnauthorizedAccessException` (`ExitCode=1`), which is a lock failure, not a code error.
 - **Live Coding** (editor open) blocks editor-target builds; the Shipping `PackagePlugin` path above
   avoids that. Do not build concurrently with the maintainer's own build/game.
-- **Smoke** needs the game running with SmartMCP enabled (HTTP API at :5095); `scripts/smoke_test.py`
+- **Smoke** needs the game running with the in-game diagnostic mod enabled (HTTP API at :5095); `scripts/smoke_test.py`
   reads live state. The maintainer drives in-game checks.
 
 ## Working discipline (large multi-file refactor)

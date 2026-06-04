@@ -379,7 +379,7 @@ Smart captures old chain actors into `PreDestroyChainActors` from belts/lifts **
 
 The chain stabilizer treats belts and lifts as the same chain family (both are `AFGBuildableConveyorBase`) even though they have distinct recipes and UI classification. A conveyor chain can legally span both belts and lifts. Partial upgrades (e.g., upgrading only belts around an unchanged lift) must be handled safely by the chain rebuild path.
 
-For detailed investigation findings, crash analysis, and SmartMCP procedures, see `RESEARCH_SmartUpgrade_ChainActorInvestigation.md` in the working repository.
+For detailed investigation findings, crash analysis, and in-game diagnostic procedures, see `RESEARCH_SmartUpgrade_ChainActorInvestigation.md` in the working repository.
 
 ---
 
@@ -464,7 +464,7 @@ Add a richer diagnostic result for orphaned TGs:
 - number of orphaned TGs
 - number of empty orphaned TGs
 - live belts in orphaned TGs
-- candidate belts that SmartMCP could bounce
+- candidate belts that the in-game diagnostic could bounce
 - pending chain actor queue length
 - oldest time since last upgrade/chain rebuild
 
@@ -538,5 +538,5 @@ Recommended extraction:
 - Do not manually destroy active chain actors during upgrade rebuild.
 - Do not pre-null belt chain actor pointers before vanilla removal.
 - Do not ship in-game mass orphan-bounce repair until scheduling is proven safe.
-- Prefer save/reload first for large-upgrade orphan cleanup; do not use SmartMCP actual bounce on high-count no-reload orphan sets.
+- Prefer save/reload first for large-upgrade orphan cleanup; do not use an actual bounce on high-count no-reload orphan sets.
 - Trust current code and live logs over older speculative docs.

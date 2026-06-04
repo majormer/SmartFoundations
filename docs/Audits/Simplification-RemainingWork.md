@@ -62,7 +62,7 @@ in [`RefactorCompletionPlan.md`](RefactorCompletionPlan.md).)
 
 ## The hard constraint (why the rest is collaborative)
 
-Every remaining epic is **NEEDS-CARE**, and the charter mandates an **in-game SmartMCP smoke per
+Every remaining epic is **NEEDS-CARE**, and the charter mandates an **in-game in-game smoke per
 slice** (foundation grid, auto-connect, extend manifold, upgrade cost). Two facts make these
 turn-taking with the maintainer, not solo-completable:
 

@@ -26,7 +26,7 @@ Every setting (a "leaf key", e.g. `bShowHUD`) must appear, spelled identically, 
 | F | `Smart_ConfigStruct` Blueprint struct asset (editor) | matching key |
 
 Points **A–D are plain C++** and are verified statically by `Scripts/config_parity_check.py`.
-Points **E–F live in the editor** and are verified with AdaMCP (see below).
+Points **E–F live in the editor** and are verified there (see below).
 
 > Field-name rule: the leaf key name must be **identical** across A–F. Section keys
 > (`BeltAutoConnect`, `HUD`, …) likewise must match between `CreateSection`,
@@ -49,14 +49,14 @@ Points **E–F live in the editor** and are verified with AdaMCP (see below).
    (re-skin with the matching `BP_ConfigProperty*`) and the `Smart_ConfigStruct` BP asset.
 8. **Localization**: add the new `LOCTEXT` keys to the loc source and run the loc validators
    (`Scripts/loc_validate.py`, `Scripts/loc_parity_check.py`).
-9. **Compile** C++ (Live Coding via AdaMCP `compile`, or a normal build).
+9. **Compile** C++ (Live Coding, or a normal build).
 10. **Cook once** and verify in-game (see checklist).
 
 Removing a setting: delete it from A–F (and the localization keys) and re-run the static check.
 
-## Verifying with AdaMCP (editor-side, points E/F)
+## Verifying in the editor (editor-side, points E/F)
 
-With the editor open and the AdaMCP bridge up (`http://localhost:8080`):
+With the editor open:
 
 - `get_class_defaults /SmartFoundations/SmartFoundations/Config/Smart_Config.Smart_Config`
   — confirms the Blueprint CDO carries the section tree.
