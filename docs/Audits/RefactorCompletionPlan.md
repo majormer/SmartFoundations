@@ -606,9 +606,9 @@ idioms — most live inside the T1 files, so fold into those slices rather than 
 
 ---
 
-## Blueprint Validation (SMLMCP live editor, 2026-05-30)
+## Blueprint Validation (AdaMCP live editor, 2026-05-30)
 
-Validated the plan against the Blueprint side via the SMLMCP Python API (AssetRegistry referencer
+Validated the plan against the Blueprint side via the AdaMCP Python API (AssetRegistry referencer
 query on `/Script/SmartFoundations`). **Result: only 3 Blueprint assets reference the entire C++
 module:**
 

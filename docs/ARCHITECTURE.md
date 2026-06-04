@@ -51,7 +51,7 @@ UE split: `Public/` (headers other code includes) and `Private/` (implementation
 ## Build & dev workflow
 
 - **Package/deploy:** Alpakit (`RunUAT PackagePlugin … -DLCName=SmartFoundations -build -CopyToGameDirectory_Windows=<game>`). Close the running game first (it locks the mod DLL).
-- **Editor introspection:** the SMLMCP server runs Python in the live editor (see [`Development/SMLMCP-Python.md`](Development/SMLMCP-Python.md)); SmartMCP exposes an in-game HTTP API used for diagnostics and (planned) smoke tests.
+- **Editor introspection:** the AdaMCP server runs Python in the live editor (see [`Development/AdaMCP-Python.md`](Development/AdaMCP-Python.md)); SmartMCP exposes an in-game HTTP API used for diagnostics and (planned) smoke tests.
 - **Tooling:** `scripts/` holds the localization compile/sync and the loc audit tools.
 
 ## Where to start reading

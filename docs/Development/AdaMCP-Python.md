@@ -1,11 +1,11 @@
-# Inspecting the editor with SMLMCP Python
+# Inspecting the editor with AdaMCP Python
 
-SMLMCP exposes a `smlmcp_execute_python` tool that runs Python **inside the live Unreal
+AdaMCP exposes a `adamcp_execute_python` tool that runs Python **inside the live Unreal
 editor** (the editor-side Python plugin must be enabled). It captures `stdout`/`stderr`/errors
 and an optional `__result__`. This is read-mostly introspection of the running editor — useful
 for understanding assets (widgets, fonts, buildables, localization) without a build.
 
-Pair it with `smlmcp_status` first to confirm the editor API is reachable.
+Pair it with `adamcp_status` first to confirm the editor API is reachable.
 
 > The editor process is separate from the running game. It has the FactoryGame **content**
 > loaded but, in this SML modding project, only the **English** game localization — see
