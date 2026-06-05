@@ -296,6 +296,22 @@ At each stacked belt's `ConfigureComponents`: `521–524 built sibling belts in 
 geometry isn't finalized at construct; **all construct-time wiring (clone-ID or proximity) is
 impossible.**
 
+### 6.8 Build-gun crash — child `Construct` returning `nullptr` **[E, 2026-06-05]**
+Implemented Option B with stacked belt children as **preview-only by returning `nullptr` from
+`ASFConveyorBeltHologram::Construct`** (the mechanism EXTEND used "previously"). On **building**
+(not tick): **`EXCEPTION_ACCESS_VIOLATION` reading 0x0 in
+`UFGBuildGunStateBuild::InternalConstructHologram` (`FGBuildGunBuild.cpp:1862`)**, via
+`Server_ConstructHologram` ← `PrimaryFire`. ⇒ **In 1.2 the build gun dereferences the actor a
+child `Construct` returns; returning `nullptr` is fatal.** This is exactly why EXTEND abandoned
+nullptr-suppression ("Previously returned nullptr… but now we want them to build"). The shaped
+spline + cost preview worked (previews showed, cost displayed) — the crash was purely on construct.
+
+> **HARD CONSTRAINT [E].** A child hologram (in the parent's `mChildren`) **must return a real
+> constructed actor** from `Construct`. Therefore a stacked belt cannot be made "preview-only"
+> *while remaining a child*: it either constructs a real belt (auto-registers unconnected → the
+> bug) or it must **not be a child at all**. Preview-only requires **non-child** preview holograms
+> (the legacy `FBeltPreviewHelper` style), or no belt preview.
+
 ### 6.7 Summary table
 | # | Approach | Where | Result |
 |---|---|---|---|
@@ -306,6 +322,7 @@ impossible.**
 | 2 | connect at construct via captured connectors | ConfigureComponents | **no-op** (hologram targets) |
 | 3 | `RemoveConveyor`+`AddConveyor` re-register | stacked timer | **crash** |
 | 4 | STACK-ORDER diagnostic | ConfigureComponents | geometry **not ready** at construct |
+| 5 | preview-only child via `Construct`→`nullptr` | build gun | **crash** (`InternalConstructHologram:1862` null deref) |
 
 ---
 
