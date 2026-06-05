@@ -36,7 +36,7 @@ The actual fix for the reported bug.
 | 2.5 | Triage → Detect after 2.2–2.4 (SmartMCP `/api/conveyor-chains`) | 0 zombie chains, all `hasValidLUT` | ✅ 2026-06-05 (`zombieCount:0`, 18 chains all valid) |
 | 2.6 | **Save + reload** after building stacks | chains valid on reload (the original-bug gate) | ✅ 2026-06-05 (PASS — see resolution below) |
 | 2.7 | Dismantle a stacked run | clean teardown, no orphan chains | ⬜ not yet run |
-| 2.8 | **Reversed/backward** belts over or near a prior stacked run (regression) | no CTD; belts build + flow | 🔄 fix in (TWeakObjectPtr registry); awaiting deploy + retest |
+| 2.8 | **Reversed/backward** belts over or near a prior stacked run (regression) | no CTD; belts build + flow | ✅ 2026-06-05 (no crash; `zombieCount:0`, 6 chains all valid; neighbour wiring confirmed via peer link. Flow not exercised — no feeder.) |
 
 ## Step 3 — Converge other features onto the shared builder
 | # | Test | Expectation | Status |
@@ -134,3 +134,8 @@ None of these are reachable; removal is cleanup, not a fix. They span multiple f
   `StackChainId`/`Index` collide on a reversed rebuild → freed belt read as a dangling pointer (THESIS
   §6.10). **Fix:** dedicated `TWeakObjectPtr` stacked registry (`GStackBuiltConveyors`) +
   `IsValid()`-guarded connectors. **2.8 awaits deploy + retest.**
+- 2026-06-05, SF DLL (reversed fix, deployed via direct Shipping compile + DLL copy) — **2.8 ✅
+  retest PASS.** Maintainer rebuilt a backward run: **no crash** (the prior CTD scenario). SmartMCP:
+  `zombieCount:0`, 6 chains all `hasValidLUT:true`, and belt `…459660` output wired to neighbour
+  `…459656` (peer link) — by-reference resolution now safe through the weak registry. items:0 (no
+  feeder; flow not exercised).
