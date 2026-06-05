@@ -432,6 +432,20 @@ while the identical junction one level down (z=5100) *was* wired.
   identity is assigned per-operation. Adjacency is a property of **the world**, so resolve it from the
   world (coincident positions), not from bookkeeping indices.
 
+### 6.13 Orphan chains — a degenerate class distinct from zombies **[E, 2026-06-05]**
+Inspecting a run built before the §6.11/§6.12 fixes, three chain actors reported **`segments == 1`
+but `totalLengthMeters == 0`**, two of them holding 42 phantom items. They were **not** flagged
+zombie (zombie ≝ `GetNumChainSegments() == 0`) yet were clearly degenerate — chains whose belt(s)
+contribute ~0 length, the by-product of the earlier cross-wired connectors (peers ~100 m apart).
+- **Persistence:** they **survived dismantling** the run's belts (orphaned chain actors with no live
+  belt), but were **cleared by save/reload** — vanilla rebuilds chain actors only for belts that
+  still exist, so an orphan with no belt is simply not recreated, releasing its phantom items.
+- **Tooling:** SmartMCP `query_conveyor_chains` / `/api/conveyor-chains` now flags `segments>=1 &&
+  totalLength≈0` as **`orphan`** (+ `orphanCount`), a class the `segments==0` zombie check missed.
+- **Contrast:** belts built with the §6.12 fix dismantled **cleanly** (no orphan residue), so orphans
+  here were legacy pre-fix damage, not a leak in the current path. Live purge if ever needed:
+  `ForceDestroyChainActor` (1.2, safe-but-destructive — appropriate since there's no transport to keep).
+
 ### 6.7 Summary table
 | # | Approach | Where | Result |
 |---|---|---|---|
