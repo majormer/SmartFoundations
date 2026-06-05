@@ -262,10 +262,20 @@ void USFAutoConnectService::ProcessStackableConveyorPoles(AFGHologram* ParentHol
 				uint64 PairKey = MakePolePairKey(SourcePole, TargetPole);
 				ActivePolePairs.Add(PairKey);
 
+				// Chain identity (THESIS §5.1b): a run is the line of belts along the primary axis
+				// at fixed secondary coords. StackChainId is unique per run (high bit set to avoid
+				// colliding with Extend's small chain ids); StackChainIndex is the 0-based position
+				// along the run (the primary-axis coord). At Construct each belt connects to its
+				// Index±1 neighbour (by registry reference) and registers — connect-then-register.
+				const int32 RunSecondary = bConnectAlongY ? X : Y;
+				const int32 StackChainId = 0x40000000 | ((RunSecondary & 0xFFF) << 12) | (Z & 0xFFF);
+				const int32 StackChainIndex = bConnectAlongY ? Y : X;
+
 				// Create or update belt hologram child
 				AFGHologram* BeltChild = UpdateOrCreateBeltForPolePair(
 					ParentHologram, SourcePole, TargetPole,
-					SourceConnector, TargetConnector, BeltTier, BeltIndex++);
+					SourceConnector, TargetConnector, BeltTier, BeltIndex++,
+					StackChainId, StackChainIndex);
 				
 				if (!BeltChild)
 				{
@@ -1403,7 +1413,9 @@ AFGHologram* USFAutoConnectService::UpdateOrCreateBeltForPolePair(
 	UFGFactoryConnectionComponent* SourceConnector,
 	UFGFactoryConnectionComponent* TargetConnector,
 	int32 BeltTier,
-	int32 BeltIndex)
+	int32 BeltIndex,
+	int32 StackChainId,
+	int32 StackChainIndex)
 {
 	if (!ParentHologram || !SourcePole || !TargetPole || !Subsystem)
 	{
@@ -1605,6 +1617,10 @@ AFGHologram* USFAutoConnectService::UpdateOrCreateBeltForPolePair(
 		// Store pole connector references for ConfigureComponents to wire after construction
 		HoloData->StackableBeltConn0 = SourceConnector;  // Belt output connects to source pole
 		HoloData->StackableBeltConn1 = TargetConnector;  // Belt input connects to target pole
+		// Chain identity: at Construct the belt connects (by reference) to its run neighbour(s)
+		// and registers — connect-then-register (THESIS §5.1b). -1 = not a chain member.
+		HoloData->StackChainId = StackChainId;
+		HoloData->StackChainIndex = StackChainIndex;
 	}
 	
 	BeltChild->FinishSpawning(FTransform(StartPos));

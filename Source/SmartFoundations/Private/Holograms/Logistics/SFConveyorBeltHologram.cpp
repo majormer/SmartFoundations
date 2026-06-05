@@ -373,6 +373,88 @@ AActor* ASFConveyorBeltHologram::Construct(TArray<AActor*>& out_children, FNetCo
             i, *mSplineData[i].Location.ToString());
     }
     
+    // ============================================================
+    // STACKABLE CHAIN MEMBER — build fresh, connect-then-register (THESIS §5.1b/§8)
+    // ============================================================
+    // A run of stacked-pole belts is a chain (StackChainId per run, StackChainIndex = position).
+    // Build a REAL belt (so cost aggregates and the build gun never sees a null return), and BEFORE
+    // construction connect it to whichever run neighbour is already built — predecessor (Index-1)
+    // and/or successor (Index+1) — resolved BY REFERENCE from the conveyor registry (NOT by position,
+    // which isn't final at Construct). Order-agnostic: the first belt registers open; later
+    // neighbours connect to it and vanilla grows one chain per run. Run ends stay open. We use the
+    // generic registry but our OWN StackChainId fields (not ExtendChainId), so no Extend
+    // ConfigureComponents/post-build paths are triggered.
+    {
+        FSFHologramData* StackHolo = USFHologramDataRegistry::GetData(this);
+        if (Tags.Contains(FName(TEXT("SF_StackableChild"))) && StackHolo &&
+            StackHolo->StackChainId >= 0 && StackHolo->StackChainIndex >= 0)
+        {
+            const int32 ChainId = StackHolo->StackChainId;
+            const int32 Index = StackHolo->StackChainIndex;
+
+            USFExtendService* StackRegistry = nullptr;
+            if (USFSubsystem* SmartSubsystem = USFSubsystem::Get(GetWorld()))
+            {
+                StackRegistry = SmartSubsystem->GetExtendService();
+            }
+
+            UFGFactoryConnectionComponent* Conn0Target = nullptr;  // belt input  <- predecessor output
+            UFGFactoryConnectionComponent* Conn1Target = nullptr;  // belt output -> successor input
+            if (StackRegistry)
+            {
+                if (AFGBuildableConveyorBase* Pred = StackRegistry->GetBuiltConveyor(ChainId, Index - 1))
+                {
+                    if (IsValid(Pred)) { Conn0Target = Pred->GetConnection1(); }
+                }
+                if (AFGBuildableConveyorBase* Succ = StackRegistry->GetBuiltConveyor(ChainId, Index + 1))
+                {
+                    if (IsValid(Succ)) { Conn1Target = Succ->GetConnection0(); }
+                }
+            }
+
+            // Snap is for placement/positioning; it does NOT reliably carry the item-flow
+            // connection onto the constructed buildable (items stopped at the gap). So we also
+            // SetConnection on the BUILT belt's connectors below.
+            SetSnappedConnections(Conn0Target, Conn1Target);
+
+            AActor* BuiltActor = Super::Construct(out_children, constructionID);
+
+            bool bWired0 = false, bWired1 = false;
+            if (AFGBuildableConveyorBase* BuiltConveyor = Cast<AFGBuildableConveyorBase>(BuiltActor))
+            {
+                // Establish the ACTUAL item-flow connections on the built belt's connectors, by
+                // reference, to the already-built run neighbour(s). SetConnection is topology only
+                // (not a bucket op) so it's safe on live belts (THESIS §2.6). This lets items hand
+                // off across the run. NOTE: this is connect-AFTER-register, so vanilla may leave the
+                // run as multiple chains (functional, items flow) rather than one merged chain —
+                // unifying into a single chain is a follow-up if Detect/save-reload requires it.
+                UFGFactoryConnectionComponent* C0 = BuiltConveyor->GetConnection0();
+                UFGFactoryConnectionComponent* C1 = BuiltConveyor->GetConnection1();
+                if (C0 && !C0->IsConnected() && Conn0Target && !Conn0Target->IsConnected())
+                {
+                    C0->SetConnection(Conn0Target);
+                    bWired0 = C0->IsConnected();
+                }
+                if (C1 && !C1->IsConnected() && Conn1Target && !Conn1Target->IsConnected())
+                {
+                    C1->SetConnection(Conn1Target);
+                    bWired1 = C1->IsConnected();
+                }
+                if (StackRegistry)
+                {
+                    StackRegistry->RegisterBuiltConveyor(ChainId, Index, BuiltConveyor, /*bIsInputChain=*/false);
+                }
+            }
+
+            UE_LOG(LogSmartHologram, Display, TEXT("🚧 STACK-CHAIN: %s built [chain=%d idx=%d] conn0=%s(%s) conn1=%s(%s)"),
+                *GetName(), ChainId, Index,
+                Conn0Target ? TEXT("pred") : TEXT("open"), bWired0 ? TEXT("WIRED") : TEXT("no"),
+                Conn1Target ? TEXT("succ") : TEXT("open"), bWired1 ? TEXT("WIRED") : TEXT("no"));
+
+            return BuiltActor;
+        }
+    }
+
     // Check if this is an EXTEND child hologram
     // Phase 2: EXTEND belt children now BUILD (vanilla handles them as children)
     // Previously returned nullptr to prevent building, but now we want them to build

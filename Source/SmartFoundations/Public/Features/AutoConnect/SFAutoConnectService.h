@@ -617,8 +617,10 @@ private:
 		UFGFactoryConnectionComponent* SourceConnector,
 		UFGFactoryConnectionComponent* TargetConnector,
 		int32 BeltTier,
-		int32 BeltIndex);
-	
+		int32 BeltIndex,
+		int32 StackChainId,
+		int32 StackChainIndex);
+
 	/** Remove belts for pole pairs that are no longer needed */
 	void RemoveOrphanedBelts(AFGHologram* ParentHologram, const TSet<uint64>& ActivePolePairs);
 	

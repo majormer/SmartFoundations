@@ -826,7 +826,14 @@ void USFSubsystem::OnActorSpawned(AActor* SpawnedActor)
 
 		// Check if this belt is from our stackable pole system
 		// Stackable belts are spawned during pole hologram construction
-		if (ActiveHologram.IsValid() && AutoConnectService &&
+		//
+		// DISABLED (THESIS §5.1b / §8): stacked belts now connect-then-register at Construct
+		// (ASFConveyorBeltHologram::Construct STACK-CHAIN handler wires each belt to its run
+		// neighbour by registry reference and registers it). This deferred-timer path
+		// (proximity re-wire + RemoveConveyorChainActor "invalidate and hope") would UNDO that
+		// correct chain — and bucket-level fixes on live belts crash the ParallelFor tick
+		// (THESIS §6.5). Guarded off; left for reference until removed.
+		if (false && ActiveHologram.IsValid() && AutoConnectService &&
 		    USFAutoConnectService::IsBeltSupportHologram(ActiveHologram.Get()))
 		{
 			PendingStackableBelts.Add(StackableBelt);

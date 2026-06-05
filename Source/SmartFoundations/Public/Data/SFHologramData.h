@@ -164,7 +164,18 @@ struct SMARTFOUNDATIONS_API FSFHologramData {
     
     UPROPERTY()
     TWeakObjectPtr<UFGFactoryConnectionComponent> StackableBeltConn1;  // Target pole connector (belt input connects here)
-    
+
+    // Chain identity for the build-fresh-on-confirm fix (see THESIS §5.1b/§8). A run of stacked
+    // belts = one chain; StackChainId is unique per run (high-offset to avoid Extend collision),
+    // StackChainIndex is the 0-based position along the run. At Construct, a stacked belt connects
+    // (by reference, via the conveyor registry) to whichever run neighbour is already built, then
+    // registers — connect-then-register, order-agnostic. -1 = not a chain member.
+    UPROPERTY()
+    int32 StackChainId = -1;
+
+    UPROPERTY()
+    int32 StackChainIndex = -1;
+
     // ========================================================================
     // Pipe Junction Auto-Connect (Issue #235)
     // ========================================================================
