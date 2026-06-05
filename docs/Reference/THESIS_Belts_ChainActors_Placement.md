@@ -364,8 +364,8 @@ null-return crash) → resolve run neighbour by `StackRegistry->GetBuiltConveyor
 the connection — items still stopped at the break until the explicit `SetConnection` was added) →
 `RegisterBuiltConveyor`. Order-agnostic (predecessor and/or successor).
 - **Result:** no crash; cost charged; items **flow end-to-end** through the former break.
-- **SmartMCP validation:** `/api/connections` shows both ends wired to the correct run peers;
-  `/api/conveyor-chains` shows `zombieCount:0`, all LUTs valid.
+- **Live chain/connection inspection:** belt-connection state shows both ends wired to the correct
+  run peers; the chain audit shows `zombieCount:0`, all LUTs valid.
 - **Save/reload (the original-bug gate): PASS** — post-reload still `zombieCount:0`, connections
   intact, runs re-unified by vanilla into healthy multi-segment chains. ⇒ **invariant satisfiable at
   construct via reference; the §5.3 "impossible" conclusion was about *proximity* wiring only.**
@@ -392,8 +392,8 @@ dereferenced a **garbage connector pointer** our STACK-CHAIN handler had passed 
   must be **weak** (or epoch-scoped). Extend got away with raw pointers only because it clears per-build.
 
 ### 6.11 Reversed-belt cross-wiring — index pairing vs. swapped Connection0/1 **[E, 2026-06-05] ✅ FIXED**
-With the CTD gone (§6.10), reversed runs built without crashing but **mis-wired**. SmartMCP
-`/api/connections` showed connected "peers" whose connectors were **~100 m apart** (e.g.
+With the CTD gone (§6.10), reversed runs built without crashing but **mis-wired**. Live connection
+inspection showed connected "peers" whose connectors were **~100 m apart** (e.g.
 `…459653::ConveyorAny1` @ x=337600 paired with `…459649::ConveyorAny0` @ x=327600), while the
 connectors that physically meet at each junction were left split — one open, one wired to a third
 belt. Player symptom: **cannot snap a new belt to the run ends** (the end connectors are "consumed"
@@ -440,11 +440,60 @@ contribute ~0 length, the by-product of the earlier cross-wired connectors (peer
 - **Persistence:** they **survived dismantling** the run's belts (orphaned chain actors with no live
   belt), but were **cleared by save/reload** — vanilla rebuilds chain actors only for belts that
   still exist, so an orphan with no belt is simply not recreated, releasing its phantom items.
-- **Tooling:** SmartMCP `query_conveyor_chains` / `/api/conveyor-chains` now flags `segments>=1 &&
-  totalLength≈0` as **`orphan`** (+ `orphanCount`), a class the `segments==0` zombie check missed.
+- **Tooling:** the live chain audit now flags `segments>=1 && totalLength≈0` as **`orphan`** (plus an
+  orphan count), a class the `segments==0` zombie check missed.
 - **Contrast:** belts built with the §6.12 fix dismantled **cleanly** (no orphan residue), so orphans
   here were legacy pre-fix damage, not a leak in the current path. Live purge if ever needed:
   `ForceDestroyChainActor` (1.2, safe-but-destructive — appropriate since there's no transport to keep).
+
+### 6.14 Reload chain-stall on long, multi-segment / manually-joined runs **[E, 2026-06-05]**
+**Symptom.** A very long stacked-pole run (several segments joined manually), built across a session,
+flowed correctly while built. After **save + reload** it appeared dead: belts looked empty; the head
+storage container read empty while coal visibly entered it (a pass-through that never buffered) and
+the source backed up — yet *dismantling* a belt reported coal present. Recreating one output belt, or
+a **second** save+reload, instantly restored flow.
+
+**Investigation (live world-state inspection).**
+- **No hoarder/origin sink.** A world-wide audit of every `AFGConveyorChainActor` (sorted by item
+  count) showed ~558 chains, all with item counts proportional to length; no orphan, no zombie,
+  nothing near world origin. The "infinite chain hoarding everything" hypothesis was disproven.
+- **No destruction.** Total items across all chains *rose* over time (≈6,986 → 7,002 → 8,294) — items
+  were **conserved**, not deleted.
+- **Broken vs working belts were structurally identical.** The stalled upper output belt and the
+  working lower one sat in equivalent 2-segment chains: same item count (54), same `bHasValidLUT`,
+  same segment order, same connectivity. No static structural difference distinguished them.
+- **The belt→chain back-pointer is unreliable across reload.** `AFGBuildableConveyorBase::GetConveyorChainActor()`
+  returned null for belts that were genuine segments of live chains (and, post-launder, returned a
+  *stale far-away* chain). Membership must be resolved from the chain side (`GetChainSegments()`),
+  never the belt's back-pointer.
+- **Error vs laundered state.** In the bad first-load the long run existed as **fragmented** chains
+  (≈302 m / 251-item pieces) that were structurally valid but **not advancing items** (a tick/transport
+  stall). After save+reload the same run **coalesced into single `RepSizeHuge` chains** (28 segments,
+  ≈1,208 m, 1,008 items) that ticked and flowed.
+
+**Mechanism [I].** Smart's stacked belts persist in a **fragmented, per-belt chain state** (connect-
+after-register: each belt its own 1-segment chain at build, §6.9/§6.12). On the **first** load from
+that save, vanilla's chain reconstruction yields chains that are structurally valid but in a
+**non-ticking transport state** for the long/manually-joined run. **Any rebuild** — recreating a belt,
+or a second save+reload — re-coalesces the run into a proper multi-segment chain that ticks. Hence
+"first reload stalls, second reload launders."
+
+> ⚠️ **SEVERITY — risk of UNRECOVERABLE loss for game-limited items [maintainer, 2026-06-05].**
+> In every observed case items were **conserved** (totals rose; dismantle reported the coal) — for
+> **bulk** items the stall is recoverable (the workaround restores flow). **But finite, non-replaceable
+> world items — Mercer Spheres, Somersloops — routed across such a run are at real risk of permanent
+> loss:** any path that *destroys* rather than stalls an item (a degenerate chain dropping items, or an
+> unlucky rebuild) would be **unrecoverable** — there is a fixed number of them on the map. This raises
+> the preventive fix from a quality issue to a **data-integrity** one. **Do not route irreplaceable
+> items over Smart stacked-pole runs until the build-time coalesce fix lands**; if you must, save+reload
+> and verify counts before and after.
+
+**Workaround.** After building a long stacked-pole run, **save + reload once** before relying on it;
+that coalesces the chains into a stable, ticking state.
+
+**Fix (planned, see §10).** Coalesce each stacked run into a single proper chain **at build time** so
+the saved state restores cleanly on first load — the long-standing "unify into one chain" item, now at
+**data-integrity** priority because of the irreplaceable-item risk above.
 
 ### 6.7 Summary table
 | # | Approach | Where | Result |
@@ -538,6 +587,14 @@ only option.
 ---
 
 ## 10. Open questions / future work
+- **★ Build-time chain coalesce (DATA-INTEGRITY priority).** Coalesce each stacked run into one proper
+  multi-segment chain **at build time** so the saved state restores cleanly on first load and the
+  reload tick-stall (§6.14) can't occur. Elevated from "quality" to **data-integrity** because a
+  finite, non-replaceable world item (Mercer Sphere, Somersloop) routed over a stall-prone run risks
+  **permanent, unrecoverable loss** (§6.14 severity note). Must be done with the validated rebuild
+  primitive (§6.7 P0c `RebuildOnly`), not the crash-class bucket ops (P0a/3). Until it lands, the
+  player workaround is save+reload once after building a long run, and do not move irreplaceable items
+  over Smart stacked runs.
 - **Dead-code removal — ✅ DONE (2026-06-05, build-verified).** Removed the orphaned belt machinery
   surfaced by the §9 audit: the `QueueChainRebuild` / `CollectChainBelts` / `ExecuteDeferredChainRebuild`
   cluster (crash-class `RemoveConveyor`/`AddConveyor` on live belts, never called) + its members
@@ -578,8 +635,7 @@ only option.
 ## Appendix B — Log grep tokens
 `STACK-PROBE` (post-build chain verdict), `STACK-PREPROBE` (pre-rebuild belt state), `STACK-WIRE`
 (captured-connector wiring), `STACK-ORDER` (construct-timing), `LogConveyorChain: Warning: Last … !=
-mLastConv …` (zombie BuildChain), `ChainActorService:` (service phase summary), `LogSmartMCP`
-(unrelated dev bridge).
+mLastConv …` (zombie BuildChain), `ChainActorService:` (service phase summary).
 
 ## Appendix C — Glossary
 **Chain actor** — `AFGConveyorChainActor`, one actor ticking a run of belts. **Solo chain** — a

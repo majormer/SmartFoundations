@@ -33,12 +33,13 @@ The actual fix for the reported bug.
 | 2.2 | Stacked pole, 2 tall, 3 stacks (the repro) | items flow whole stack; no null-chain belt | ✅ 2026-06-05 (items flowed end-to-end through the segment break) |
 | 2.3 | Tall stack (5+ levels), long run | one chain per run; no zombies | ⬜ not yet run |
 | 2.4 | Stacked belts with **Curve** routing mode | belts curved AND correctly chained (shape + chain both correct) | ⬜ not yet run |
-| 2.5 | Triage → Detect after 2.2–2.4 (SmartMCP `/api/conveyor-chains`) | 0 zombie chains, all `hasValidLUT` | ✅ 2026-06-05 (`zombieCount:0`, 18 chains all valid) |
+| 2.5 | Triage → Detect after 2.2–2.4 (live chain audit) | 0 zombie chains, all `hasValidLUT` | ✅ 2026-06-05 (`zombieCount:0`, 18 chains all valid) |
 | 2.6 | **Save + reload** after building stacks | chains valid on reload (the original-bug gate) | ✅ 2026-06-05 (PASS — see resolution below) |
 | 2.7 | Dismantle a stacked run | clean teardown, no orphan chains | ⬜ not yet run |
 | 2.8 | **Reversed/backward** belts over or near a prior stacked run (regression) | no CTD; belts build + flow | ✅ 2026-06-05 no crash (`zombieCount:0`, 6 chains valid). ⚠️ but exposed cross-wiring → see 2.9 |
 | 2.9 | Reversed run — connectors **coincident** at junctions, run-ends **snappable** | peers physically coincident; open ends accept a new belt | ✅ 2026-06-05 (no crash; snapping works; geometric pairing — peers coincident) |
 | 2.10 | **Multi-drag/segmented** run — abutting segments wire across the seam | no open junction at segment boundaries | 🔄 coincidence-list fix deployed; awaiting multi-segment rebuild + re-validate |
+| 2.11 | **Long multi-segment run survives FIRST reload, ticking** (no stall) | run flows on first load; chains coalesced; no save+reload needed | ❌ 2026-06-05 first load **stalls** (valid-but-non-ticking fragmented chains); 2nd reload launders. Items conserved for bulk, but ⚠️ **data-integrity risk for irreplaceable items** — THESIS §6.14. Preventive fix = build-time coalesce (§10 ★). |
 
 ## Step 3 — Converge other features onto the shared builder
 | # | Test | Expectation | Status |
@@ -89,9 +90,9 @@ This is connect-then-register **without** preview-only or manual cost — becaus
 made by *reference* at construct, not by geometry post-hoc. The earlier "cost reimplementation is
 unavoidable" conclusion was the one wrong turn; Extend's two-phase model showed the way out.
 
-**Validation (live game, via SmartMCP — replaces the planned `STACK-PROBE`/Detect tooling):**
-- `/api/connections` — stacked belts wired to the correct run-neighbour peers on **both** ends.
-- `/api/conveyor-chains` — `zombieCount: 0`, all 18 chains `hasValidLUT: true`, runs carry items.
+**Validation (live game, via live chain/connection inspection — replaces the planned `STACK-PROBE`/Detect tooling):**
+- Connection inspection — stacked belts wired to the correct run-neighbour peers on **both** ends.
+- Chain audit — `zombieCount: 0`, all 18 chains `hasValidLUT: true`, runs carry items.
 - **Items flow end-to-end** through the former segment break (user-confirmed in-game).
 - **Save + reload (the original-bug gate): PASS.** Post-reload `zombieCount: 0`, all LUTs valid,
   connections survived to correct peers, and vanilla had re-unified connected runs into healthy
@@ -124,8 +125,8 @@ None of these are reachable; removal is cleanup, not a fix. They span multiple f
 
 ### Run log
 - 2026-06-05, SF DLL (stacked fix) — **2.1 ✅ / 2.2 ✅ / 2.5 ✅ / 2.6 ✅.** STACK-CHAIN handler:
-  built real stacked-pole belts, items flowed end-to-end through the segment break, SmartMCP showed
-  `zombieCount:0` + all LUTs valid, and the state **survived save/reload**. Fix committed `cd659cc`;
+  built real stacked-pole belts, items flowed end-to-end through the segment break, the live chain
+  audit showed `zombieCount:0` + all LUTs valid, and the state **survived save/reload**. Fix committed `cd659cc`;
   diagnostics tidied + dead timer paths removed `20b39fd`.
 - **3.4 ✅** non-Extend belt-site audit complete (table above): no live path needs new treatment;
   4 dead-code clusters flagged for a build-verified follow-up.
@@ -137,7 +138,18 @@ None of these are reachable; removal is cleanup, not a fix. They span multiple f
   §6.10). **Fix:** dedicated `TWeakObjectPtr` stacked registry (`GStackBuiltConveyors`) +
   `IsValid()`-guarded connectors. **2.8 awaits deploy + retest.**
 - 2026-06-05, SF DLL (reversed fix, deployed via direct Shipping compile + DLL copy) — **2.8 ✅
-  retest PASS.** Maintainer rebuilt a backward run: **no crash** (the prior CTD scenario). SmartMCP:
+  retest PASS.** Maintainer rebuilt a backward run: **no crash** (the prior CTD scenario). Live chain audit:
   `zombieCount:0`, 6 chains all `hasValidLUT:true`, and belt `…459660` output wired to neighbour
   `…459656` (peer link) — by-reference resolution now safe through the weak registry. items:0 (no
   feeder; flow not exercised).
+- 2026-06-05 — **reload tick-stall investigation (2.11), THESIS §6.14.** A very long, manually-joined
+  stacked run flowed when built but **stalled on first reload** (belts looked empty, head container
+  read empty as a pass-through, source backed up; dismantle still reported coal). World-wide chain
+  audit disproved a hoarder/origin sink (≈558 chains, all proportional) and disproved destruction
+  (total items *rose* 6,986→7,002→8,294 = conserved). Broken vs working belts were structurally
+  identical; the belt→chain back-pointer is unreliable across reload. Error state = fragmented valid-
+  but-non-ticking chains; **second save+reload coalesced them into `RepSizeHuge` 28-segment / 1,208 m
+  chains (1,008 items) that flow.** Root: first-load coalesce of the fragmented connect-after-register
+  save state. **Workaround:** save+reload once after building a long run. **⚠️ Severity:** irreplaceable
+  items (Mercer Sphere/Somersloop) over such runs risk unrecoverable loss → preventive build-time
+  coalesce is now data-integrity priority (§10 ★).
