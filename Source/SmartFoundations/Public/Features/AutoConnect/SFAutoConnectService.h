@@ -7,6 +7,7 @@
 #include "FGFactoryConnectionComponent.h"
 #include "Buildables/FGBuildable.h"
 #include "Hologram/FGHologram.h"
+#include "Hologram/HologramHelpers.h"  // FSplinePointData (shared belt builder spline param)
 #include "Features/AutoConnect/Preview/BeltPreviewHelper.h"
 // NOTE: SFBeltCostProxyHologram.h removed - child holograms automatically aggregate costs via GetCost()
 #include "SFAutoConnectService.generated.h"
@@ -357,6 +358,23 @@ public:
 
 	bool BuildBeltFromPreview(const TSharedPtr<FBeltPreviewHelper>& Preview);
 	bool BuildBeltsForDistributor(AFGHologram* DistributorHologram, AFGBuildable* BuiltDistributor);
+
+	/**
+	 * Shared connect-then-register conveyor belt builder — the single sanctioned belt-creation
+	 * path. Spawns a belt with the given shape-routed spline, wires its connectors to the given
+	 * targets, then registers it LAST (AddConveyor) so vanilla forms the correct chain on first
+	 * registration. Pass null for a target to leave that belt end open (e.g. a dangling run end).
+	 * For a multi-belt run, build in order and pass the previous belt's Connection1 as the next
+	 * belt's Conn0Target, so each belt extends the same chain. Returns the built+registered belt,
+	 * or null on failure. See docs/Features/AutoConnect/DESIGN_StackablePole_FromScratch.md.
+	 */
+	class AFGBuildableConveyorBelt* BuildBelt(
+		UWorld* World,
+		int32 BeltTier,
+		const TArray<FSplinePointData>& SplineData,
+		const FVector& SpawnPos,
+		UFGFactoryConnectionComponent* Conn0Target,
+		UFGFactoryConnectionComponent* Conn1Target);
 
 	// ========================================
 	// Connector Pair Storage for Build Handoff

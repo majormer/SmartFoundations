@@ -1123,72 +1123,107 @@ bool USFAutoConnectService::BuildBeltFromPreview(const TSharedPtr<FBeltPreviewHe
 		return false;
 	}
 
-	// Use the belt tier from the preview helper (which matches runtime settings)
-	int32 BeltTier = Preview->GetBeltTier();
-	FString BeltPath = FString::Printf(TEXT("/Game/FactoryGame/Buildable/Factory/ConveyorBeltMk%d/Build_ConveyorBeltMk%d.Build_ConveyorBeltMk%d_C"), BeltTier, BeltTier, BeltTier);
-	UClass* BeltClass = LoadObject<UClass>(nullptr, *BeltPath);
-	if (!BeltClass)
-	{
-		UE_LOG(LogSmartAutoConnect, Warning, TEXT("BuildBeltFromPreview: Failed to load Mk%d belt class from %s"), BeltTier, *BeltPath);
-		return false;
-	}
-	
-	UE_LOG(LogSmartAutoConnect, Log, TEXT("BuildBeltFromPreview: Building Mk%d belt"), BeltTier);
+	// Belt tier from the preview helper (matches runtime settings). The spline above is already
+	// shape-routed (BeltRoutingMode applied on the preview hologram), so the shared builder just
+	// has to spawn → respline → connect → register.
+	const int32 BeltTier = Preview->GetBeltTier();
+	const FVector SpawnPos = SmartHolo->GetActorLocation();
 
-	FVector SpawnPos = SmartHolo->GetActorLocation();
-	AFGBuildableConveyorBelt* Belt = World->SpawnActor<AFGBuildableConveyorBelt>(
-		BeltClass,
-		SpawnPos,
-		FRotator::ZeroRotator);
+	// belt Conn0 (input) wires to the source's OUTPUT connector; belt Conn1 (output) to the
+	// target's INPUT connector — items flow Output → belt → Input.
+	AFGBuildableConveyorBelt* Belt = BuildBelt(World, BeltTier, SplineData, SpawnPos,
+		/*Conn0Target=*/OutputConnector, /*Conn1Target=*/InputConnector);
 	if (!Belt)
 	{
-		UE_LOG(LogSmartAutoConnect, Warning, TEXT("BuildBeltFromPreview: Failed to spawn belt"));
 		return false;
-	}
-
-	AFGBuildableConveyorBelt* Resplined = AFGBuildableConveyorBelt::Respline(Belt, SplineData);
-	if (!Resplined)
-	{
-		UE_LOG(LogSmartAutoConnect, Warning, TEXT("BuildBeltFromPreview: Respline failed"));
-		Belt->Destroy();
-		return false;
-	}
-
-	Belt = Resplined;
-	Belt->OnBuildEffectFinished();
-
-	UFGFactoryConnectionComponent* BeltConnection0 = Belt->GetConnection0();
-	UFGFactoryConnectionComponent* BeltConnection1 = Belt->GetConnection1();
-	if (!BeltConnection0 || !BeltConnection1)
-	{
-		UE_LOG(LogSmartAutoConnect, Warning, TEXT("BuildBeltFromPreview: Belt missing connection components"));
-		Belt->Destroy();
-		return false;
-	}
-
-	// Set connections FIRST - chain actor uses these to determine chain membership
-	BeltConnection0->SetConnection(OutputConnector);
-	BeltConnection1->SetConnection(InputConnector);
-
-	// CRITICAL: Register belt with BuildableSubsystem AFTER connections are set
-	// AddConveyor uses connections to determine which chain the belt joins.
-	// Calling it before connections causes crashes in the parallel factory tick.
-	AFGBuildableSubsystem* BuildableSubsystem = AFGBuildableSubsystem::Get(World);
-	if (BuildableSubsystem)
-	{
-		BuildableSubsystem->AddConveyor(Belt);
-		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("BuildBeltFromPreview: Registered belt with subsystem (ChainActor=%s)"),
-			Belt->GetConveyorChainActor() ? *Belt->GetConveyorChainActor()->GetName() : TEXT("pending"));
-	}
-	else
-	{
-		UE_LOG(LogSmartAutoConnect, Warning, TEXT("BuildBeltFromPreview: No BuildableSubsystem - belt will have no chain actor!"));
 	}
 
 	UE_LOG(LogSmartAutoConnect, Log, TEXT("BuildBeltFromPreview: Built belt %s → %s"),
 		*OutputConnector->GetName(), *InputConnector->GetName());
 
 	return true;
+}
+
+AFGBuildableConveyorBelt* USFAutoConnectService::BuildBelt(
+	UWorld* World,
+	int32 BeltTier,
+	const TArray<FSplinePointData>& SplineData,
+	const FVector& SpawnPos,
+	UFGFactoryConnectionComponent* Conn0Target,
+	UFGFactoryConnectionComponent* Conn1Target)
+{
+	if (!World)
+	{
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("BuildBelt: World is null"));
+		return nullptr;
+	}
+	if (SplineData.Num() == 0)
+	{
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("BuildBelt: empty spline data"));
+		return nullptr;
+	}
+
+	FString BeltPath = FString::Printf(TEXT("/Game/FactoryGame/Buildable/Factory/ConveyorBeltMk%d/Build_ConveyorBeltMk%d.Build_ConveyorBeltMk%d_C"), BeltTier, BeltTier, BeltTier);
+	UClass* BeltClass = LoadObject<UClass>(nullptr, *BeltPath);
+	if (!BeltClass)
+	{
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("BuildBelt: Failed to load Mk%d belt class from %s"), BeltTier, *BeltPath);
+		return nullptr;
+	}
+
+	AFGBuildableConveyorBelt* Belt = World->SpawnActor<AFGBuildableConveyorBelt>(
+		BeltClass, SpawnPos, FRotator::ZeroRotator);
+	if (!Belt)
+	{
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("BuildBelt: Failed to spawn belt"));
+		return nullptr;
+	}
+
+	AFGBuildableConveyorBelt* Resplined = AFGBuildableConveyorBelt::Respline(Belt, SplineData);
+	if (!Resplined)
+	{
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("BuildBelt: Respline failed"));
+		Belt->Destroy();
+		return nullptr;
+	}
+	Belt = Resplined;
+	Belt->OnBuildEffectFinished();
+
+	UFGFactoryConnectionComponent* BeltConn0 = Belt->GetConnection0();
+	UFGFactoryConnectionComponent* BeltConn1 = Belt->GetConnection1();
+	if (!BeltConn0 || !BeltConn1)
+	{
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("BuildBelt: Belt missing connection components"));
+		Belt->Destroy();
+		return nullptr;
+	}
+
+	// CONNECT-THEN-REGISTER: wire connectors FIRST so AddConveyor assigns the correct chain.
+	// Only wire non-null, not-already-connected targets (a run end may be left open).
+	if (Conn0Target && !Conn0Target->IsConnected())
+	{
+		BeltConn0->SetConnection(Conn0Target);
+	}
+	if (Conn1Target && !Conn1Target->IsConnected())
+	{
+		BeltConn1->SetConnection(Conn1Target);
+	}
+
+	// CRITICAL: register LAST. AddConveyor reads the connections to decide chain membership;
+	// registering an unconnected belt makes a solo chain that cannot be merged later (the
+	// stacked-pole bug). See docs/Features/AutoConnect/DESIGN_StackablePole_FromScratch.md.
+	if (AFGBuildableSubsystem* BuildableSubsystem = AFGBuildableSubsystem::Get(World))
+	{
+		BuildableSubsystem->AddConveyor(Belt);
+		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("BuildBelt: Registered Mk%d belt (ChainActor=%s)"),
+			BeltTier, Belt->GetConveyorChainActor() ? *Belt->GetConveyorChainActor()->GetName() : TEXT("pending"));
+	}
+	else
+	{
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("BuildBelt: No BuildableSubsystem — belt will have no chain actor!"));
+	}
+
+	return Belt;
 }
 
 bool USFAutoConnectService::BuildBeltsForDistributor(AFGHologram* DistributorHologram, AFGBuildable* BuiltDistributor)
