@@ -411,6 +411,27 @@ by the bogus long-distance links).
 - **Lesson [I]:** connect by **geometry**, not by connector index, whenever build direction can vary —
   `Connection0`/`Connection1` are not a stable proxy for "this physical end."
 
+### 6.12 Multi-segment gaps — placement-relative index can't identify neighbours **[E, 2026-06-05] ✅ FIXED**
+With reversed wiring corrected (§6.11), a reversed run built in **multiple drags** still left a
+junction unwired: at one shared point both abutting belts' connectors were **free + coincident** but
+not connected to each other (e.g. z=5300 `…427911::Any1` and `…427915::Any0`, both open @ x=337600),
+while the identical junction one level down (z=5100) *was* wired.
+- **Root cause:** even the geometric §6.11 fix still found *candidate* neighbours via the registry
+  keyed on `StackChainId`/`StackChainIndex`. Those are **placement-relative loop indices**
+  (`SFAutoConnectService_Stackable.cpp` numbers from each drag's grid origin), so belts from separate
+  build segments get **misaligned keys** — `Index±1` returns the wrong belt or none, and even
+  `StackChainId` itself can differ for the same physical row across drags. The true neighbour was
+  never offered as a candidate, so the junction stayed open.
+- **Fix:** drop index/ChainId from neighbour-finding entirely. Keep a **flat session list** of built
+  stacked belts (`GStackBuiltConveyors`, `TWeakObjectPtr`) and, post-`Super::Construct`, connect each
+  of our connectors to the **coincident (≤1.5 m), free, `CanConnectTo`-compatible** connector on **any**
+  belt in that list (`SF_WireStackConnectorByCoincidence`). Whichever belt builds second at a shared
+  point wires it; run-ends stay open. Order-, direction-, and segment-independent. (Cost: a linear
+  scan of stacked belts per built belt — fine at normal scale; a spatial index is the future option.)
+- **Lesson [I]:** any *identity-derived* key for "are these two things adjacent?" is fragile when the
+  identity is assigned per-operation. Adjacency is a property of **the world**, so resolve it from the
+  world (coincident positions), not from bookkeeping indices.
+
 ### 6.7 Summary table
 | # | Approach | Where | Result |
 |---|---|---|---|

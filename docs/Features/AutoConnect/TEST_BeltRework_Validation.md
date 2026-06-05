@@ -37,7 +37,8 @@ The actual fix for the reported bug.
 | 2.6 | **Save + reload** after building stacks | chains valid on reload (the original-bug gate) | ✅ 2026-06-05 (PASS — see resolution below) |
 | 2.7 | Dismantle a stacked run | clean teardown, no orphan chains | ⬜ not yet run |
 | 2.8 | **Reversed/backward** belts over or near a prior stacked run (regression) | no CTD; belts build + flow | ✅ 2026-06-05 no crash (`zombieCount:0`, 6 chains valid). ⚠️ but exposed cross-wiring → see 2.9 |
-| 2.9 | Reversed run — connectors **coincident** at junctions, run-ends **snappable** | peers physically coincident; open ends accept a new belt | 🔄 geometric-pairing fix deployed; awaiting rebuild + SmartMCP re-validate |
+| 2.9 | Reversed run — connectors **coincident** at junctions, run-ends **snappable** | peers physically coincident; open ends accept a new belt | ✅ 2026-06-05 (no crash; snapping works; geometric pairing — peers coincident) |
+| 2.10 | **Multi-drag/segmented** run — abutting segments wire across the seam | no open junction at segment boundaries | 🔄 coincidence-list fix deployed; awaiting multi-segment rebuild + re-validate |
 
 ## Step 3 — Converge other features onto the shared builder
 | # | Test | Expectation | Status |
