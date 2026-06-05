@@ -1453,30 +1453,4 @@ public:
 	/** Clear the stackable pipe build cache */
 	void ClearStackablePipeBuildCache();
 
-	// ========================================
-	// Chain Actor Rebuild System (Issue #220 - Stackable Belt Fix)
-	// ========================================
-	// Uses a deferred timer to safely rebuild chains after all belts are placed.
-
-	/** Queue a belt for chain rebuild after a short delay */
-	void QueueChainRebuild(AFGBuildableConveyorBelt* Belt);
-
-	/** Traverse connections to collect all belts in a connected chain */
-	TSet<AFGBuildableConveyorBelt*> CollectChainBelts(AFGBuildableConveyorBelt* StartBelt);
-
-	/** 
-	 * Cache stackable belt preview data for building (Issue #220)
-	 * Called by orchestrator when belt previews are valid, before hologram is destroyed
-	 */
-	void CacheStackableBeltPreviewsForBuild();
-
-private:
-	/** Execute the deferred chain rebuild */
-	void ExecuteDeferredChainRebuild();
-
-	/** Belts pending chain rebuild - processed after timer fires */
-	TSet<TWeakObjectPtr<AFGBuildableConveyorBelt>> PendingChainRebuilds;
-
-	/** Timer handle for deferred chain rebuild */
-	FTimerHandle ChainRebuildTimerHandle;
 };

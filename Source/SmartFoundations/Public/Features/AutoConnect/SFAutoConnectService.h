@@ -355,9 +355,6 @@ public:
 		AFGHologram* StorageHologram,
 		bool bSkipAngleValidation = false);
 
-	bool BuildBeltFromPreview(const TSharedPtr<FBeltPreviewHelper>& Preview);
-	bool BuildBeltsForDistributor(AFGHologram* DistributorHologram, AFGBuildable* BuiltDistributor);
-
 	// ========================================
 	// Connector Pair Storage for Build Handoff
 	// ========================================

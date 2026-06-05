@@ -538,12 +538,15 @@ only option.
 ---
 
 ## 10. Open questions / future work
-- **Dead-code removal (build-verified).** Remove the orphaned belt machinery surfaced by the §9
-  audit: `QueueChainRebuild` (crash-class, never called), `BuildBeltFromPreview`,
-  `BuildBeltsForDistributor`, and the write-only `CacheStackableBeltPreviewsForBuild` producer
-  (+ `SFSubsystemStackableCache.h` + the `SFAutoConnectOrchestrator.cpp:531` call). Cross-file, so
-  do it with a compile (the two `OnActorSpawned` `if(false)` consumers were already removed in
-  `20b39fd`).
+- **Dead-code removal — ✅ DONE (2026-06-05, build-verified).** Removed the orphaned belt machinery
+  surfaced by the §9 audit: the `QueueChainRebuild` / `CollectChainBelts` / `ExecuteDeferredChainRebuild`
+  cluster (crash-class `RemoveConveyor`/`AddConveyor` on live belts, never called) + its members
+  (`PendingChainRebuilds`, `ChainRebuildTimerHandle`, and its `ClearTimer` in `SFSubsystem.cpp`);
+  `BuildBeltFromPreview`; `BuildBeltsForDistributor`; and the write-only `CacheStackableBeltPreviewsForBuild`
+  producer + its `SFAutoConnectOrchestrator` call + the `FStackableBeltBuildData` cache
+  (`SFSubsystemStackableCache.h` retained only for `bProcessingGridPlacement`, still in use). Note:
+  the audit task under-specified the cluster — it named only `QueueChainRebuild`; the two helpers and
+  the `SFSubsystem.cpp` `ClearTimer` had to be found by re-grep. Compiled + linked clean (Win64 Shipping).
 - **Stacked-belt edge cases not yet tested:** tall runs (5+ levels), Curve routing mode, dismantle
   teardown (TEST plan 2.3/2.4/2.7).
 - **Construct-order control.** If vanilla could be made to build stacked belt children

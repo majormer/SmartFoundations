@@ -715,7 +715,6 @@ void USFSubsystem::Deinitialize()
 		World->GetTimerManager().ClearTimer(ContextMonitorTimer);
 		World->GetTimerManager().ClearTimer(HologramPollTimer);
 		World->GetTimerManager().ClearTimer(PowerPoleDeferredTimer);
-		World->GetTimerManager().ClearTimer(ChainRebuildTimerHandle);
 #if SMART_ARROWS_ENABLED
 		World->GetTimerManager().ClearTimer(ArrowTickTimer);
 #endif

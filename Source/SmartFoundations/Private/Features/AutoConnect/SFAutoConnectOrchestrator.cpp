@@ -521,15 +521,10 @@ void USFAutoConnectOrchestrator::RunScheduledStackableBeltEvaluation()
 		return;
 	}
 	
-	// Process stackable conveyor poles for belt auto-connect
+	// Process stackable conveyor poles for belt auto-connect. Belts are built + wired by the
+	// STACK-CHAIN handler in ASFConveyorBeltHologram::Construct (THESIS §6.9–§6.13); the old
+	// preview-cache handoff (CacheStackableBeltPreviewsForBuild) is gone.
 	AutoConnectService->ProcessStackableConveyorPoles(ParentHologram.Get());
-	
-	// Cache belt preview data for building (Issue #220)
-	// This must be called while hologram is valid, so OnActorSpawned can use cached data
-	if (USFSubsystem* Subsystem = AutoConnectService->GetSubsystem())
-	{
-		Subsystem->CacheStackableBeltPreviewsForBuild();
-	}
 }
 
 void USFAutoConnectOrchestrator::OnStackablePipelineSupportsChanged()
