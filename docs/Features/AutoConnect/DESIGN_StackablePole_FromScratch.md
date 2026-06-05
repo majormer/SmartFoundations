@@ -246,6 +246,46 @@ proven model — not inventing cost code.
   explicit `AddConveyor`, so they're never registered-while-unconnected and never disturb a live
   chain. This is the architectural reason stacked must move to preview + build-on-confirm.
 
+## 9.7 CORRECTED approach (2026-06-05) — stay in the child-hologram architecture
+
+Investigation while implementing revealed the live architecture is **not** BuildBelt-on-confirm.
+`BuildBeltFromPreview`/`BuildBeltsForDistributor` are **dead code**; the distributor was
+refactored to **child holograms** (`SFConveyorAttachmentHologram.cpp:18` — *"Belt children are
+now added via AddChild() and vanilla's Construct() builds them automatically … eliminates the
+double-build"*). So BuildBelt-on-confirm would **revert** that refactor and reintroduce
+double-build. (My Step-1 `BuildBelt` extraction therefore refactored dead code — harmless, but
+not the foundation; revert or leave as unused.)
+
+**Why distributor child-belts work and stacked don't** — identical child-hologram mechanism; the
+only difference is *what they wire to at construct*:
+- Distributor/EXTEND belts carry `HoloData->Conn0TargetCloneId`/`Conn1TargetCloneId`. At
+  `ConfigureComponents` they resolve the **already-built** target via
+  `ExtendService->GetBuiltActorByCloneId(...)` (or a `"source:"` actor-name lookup), `SetConnection`,
+  then `AddConveyor` — connect-then-register works because the target exists by then
+  (`SFConveyorBeltHologram.cpp:1466+`).
+- Stacked belts **never reach that code** — their `ConfigureComponents` branch proximity-searches
+  (finds nothing; neighbours not built) and early-returns, so they auto-register unconnected → bug.
+
+**THE FIX (architecture-consistent):** route stacked belts through the same clone-ID construct
+wiring the distributor/EXTEND belts use.
+1. When creating each stacked belt child (`UpdateOrCreateBeltForPolePair`), set its
+   `Conn0TargetCloneId`/`Conn1TargetCloneId` (+ connector names) to its **predecessor in the run**
+   (and/or the source pole), instead of leaving the unused `StackableBeltConn0/Conn1`.
+2. Register each built stacked belt in the clone-ID registry so successors resolve it
+   (the same registry `GetBuiltActorByCloneId` reads).
+3. Guarantee **construct order builds predecessors first** so a belt's target is built when its
+   `ConfigureComponents` runs (in a run A→B→C: B wires to A, C wires to B — the chain grows like a
+   player dragging belts).
+4. Let stacked belts fall through to the existing clone-ID wiring + `AddConveyor` (remove the
+   early-return), and delete the OnActorSpawned proximity-timer path entirely.
+
+**Cost & affordability:** unchanged and already correct — stacked belt child holograms aggregate
+their `GetCost` into the stackable-pole hologram total (vanilla charges), and `UFGCDUnaffordable`
+gates affordability. Nothing to add.
+
+This supersedes §3's BuildBelt-on-confirm sketch and §5's "build belts via BuildBelt" — the lever
+is **child-hologram construct ordering + clone-ID target wiring**, mirroring the distributor.
+
 ## 10. Summary
 
 The current design fights vanilla's chaining by repairing it after the fact. The clean design
