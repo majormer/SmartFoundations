@@ -274,10 +274,21 @@ by clone-ID) buildables.
 - A next-tick `OnActorSpawned` timer (`PendingStackableBelts`) then proximity-wires belt↔belt and
   historically called `RemoveConveyorChainActor` ("invalidate and hope vanilla rebuilds"). **[C]**
 
-**The structural defect:** all belts (and poles) in a stacked placement are built **simultaneously**.
-At any belt's construct, (a) its sibling belts don't exist yet or aren't geometrically ready, and
-(b) its own connectors aren't positioned (§4.1). So the belt **cannot** connect-then-register; it
-register-then-(maybe-later-)connects → the invariant of §3 is violated by construction.
+**The structural defect (as originally diagnosed):** all belts (and poles) in a stacked placement
+are built **simultaneously**. At any belt's construct, (a) its sibling belts don't exist yet or
+aren't geometrically ready, and (b) its own connectors aren't positioned (§4.1). So the belt
+**cannot** connect-then-register; it register-then-(maybe-later-)connects → the invariant of §3 is
+violated by construction.
+
+> ✅ **RESOLVED (2026-06-05) — the "cannot connect-then-register" claim was too strong.** It conflated
+> *geometric* readiness with *reference* readiness. The §3 invariant only needs the **neighbour's
+> connector pointer**, not its final world position — and the `STACK-ORDER` probe (§6.6) confirmed
+> sibling belts **are already constructed** at a given belt's `Construct`. So, exactly as Extend does
+> (§5.1b), the fix connects **by reference**: tag each run with a `StackChainId`/`StackChainIndex`,
+> and in `ASFConveyorBeltHologram::Construct` for a stackable child — call `Super::Construct` (real
+> belt, cost charged, no null-return crash), resolve the run neighbour via the conveyor registry
+> (`GetBuiltConveyor`), `SetConnection` on the built connectors, then `RegisterBuiltConveyor`. No
+> preview-only architecture and **no manual cost reimplementation** were needed. See §6.9 + §8.
 
 ---
 
@@ -343,6 +354,22 @@ spline + cost preview worked (previews showed, cost displayed) — the crash was
 > bug) or it must **not be a child at all**. Preview-only requires **non-child** preview holograms
 > (the legacy `FBeltPreviewHelper` style), or no belt preview.
 
+### 6.9 STACK-CHAIN — real belt + connect-by-reference at construct **[E, 2026-06-05] ✅ THE FIX**
+After 6.8 forced "child holograms must construct a real belt," the resolution stopped fighting that
+and instead made the real belt connect **by reference** (not geometry/proximity — sidestepping 6.6's
+limitation entirely). In `ASFConveyorBeltHologram::Construct` for a `SF_StackableChild`: tag from
+`StackChainId`/`StackChainIndex` → `Super::Construct` (real belt, cost charged via the build gun, no
+null-return crash) → resolve run neighbour by `StackRegistry->GetBuiltConveyor(ChainId, Index±1)` →
+**explicit `SetConnection`** on the built connectors (`SetSnappedConnections` alone did **not** carry
+the connection — items still stopped at the break until the explicit `SetConnection` was added) →
+`RegisterBuiltConveyor`. Order-agnostic (predecessor and/or successor).
+- **Result:** no crash; cost charged; items **flow end-to-end** through the former break.
+- **SmartMCP validation:** `/api/connections` shows both ends wired to the correct run peers;
+  `/api/conveyor-chains` shows `zombieCount:0`, all LUTs valid.
+- **Save/reload (the original-bug gate): PASS** — post-reload still `zombieCount:0`, connections
+  intact, runs re-unified by vanilla into healthy multi-segment chains. ⇒ **invariant satisfiable at
+  construct via reference; the §5.3 "impossible" conclusion was about *proximity* wiring only.**
+
 ### 6.7 Summary table
 | # | Approach | Where | Result |
 |---|---|---|---|
@@ -398,18 +425,51 @@ line would silently discard the option.
 ---
 
 ## 9. Generalization — "belts done properly everywhere"
-The single contract for **all** Smart belt creation: *compute shaped spline → `SpawnActor` →
-`Respline` → `SetConnection` to **real** targets → `AddConveyor` last; build multi-belt runs in
-order.* Audit:
-- Distributor (flat), Extend, normal belts, lifts → already connect-then-register (stable targets). ✓
-- Stackable poles → the lone structural violator (simultaneous build). Fix = Option B. ✗→✓
-- `SFSubsystem_AutoConnect.cpp:793` `RemoveConveyor`/`AddConveyor` "bounce" → review (same hazard class). ⚠
-- Pipes → parallel system, own routing modes, **no chain actors** (simpler); same "shape-aware,
-  connect-before-register" discipline applies.
+The single contract for **all** Smart belt creation: *set connections to **real** targets — by
+reference where geometry isn't ready — **before** the belt registers into the conveyor system
+(`AddConveyor` / vanilla auto-register); never `AddConveyor`/`RemoveConveyor` on a **live** belt off
+a timer; build multi-belt runs by reference, order-agnostic.*
+
+**Full non-Extend belt-site audit (2026-06-05).** Every live site that creates or wires belts/chains
+outside Extend was reviewed; **none needs new treatment** — all are compliant, now-fixed, or dead.
+(Detailed table + dead-code list: `docs/Features/AutoConnect/TEST_BeltRework_Validation.md` §3.4.)
+- **Stackable poles** — the lone structural violator → **fixed** via connect-by-reference at Construct
+  (§5.3 resolution, §6.9). ✗→✓
+- **Distributor → factory** (child holograms) — connect at vanilla child Construct; a narrow
+  `OnActorSpawned` manifold timer only proximity-wires cross-link belts built before their target
+  distributor (empirically zombie-free on reload). ✓
+- **Conveyor lifts** (`SFConveyorLiftHologram`) — `SetConnection` then conditional `AddConveyor`;
+  explicit "no double-add" guard; Extend lifts defer registration to chain rebuild. ✓
+- **`SFChainActorService`** (mass-upgrade migration + connection repair) — bucket ops gated to
+  player-initiated Repair in a stable world; union-find merge prevents solo tick-groups. ✓
+- **Extend family** — two-phase chain model, connect-by-reference. ✓
+- **Pipes** — parallel system, own routing modes, **no chain actors**; same connect-before-register
+  discipline applies but no ParallelFor/chain hazard. ✓
+
+**Dead code surfaced (remove in a build-verified follow-up; spans multiple files, not cut blind):**
+`USFSubsystem::QueueChainRebuild` (crash-class, never called), `BuildBeltFromPreview` (correct but
+unused), `BuildBeltsForDistributor` (superseded by child holograms), and the now-write-only
+`CacheStackableBeltPreviewsForBuild` producer + `SFSubsystemStackableCache.h` + its
+`SFAutoConnectOrchestrator.cpp:531` call.
+
+**Earlier mis-conclusion (corrected):** §9 previously prescribed a `SpawnActor` preview-only
+"Option B" with manual cost reimplementation as the *only* safe path. That was wrong — connecting
+**by reference** inside the real hologram build (Extend's model) satisfies the invariant without
+preview-only or cost reimplementation. The `SpawnActor`→`Respline`→`SetConnection`→`AddConveyor`
+sequence remains valid (it's what `BuildBeltFromPreview`/Extend manifold use), but is **not** the
+only option.
 
 ---
 
 ## 10. Open questions / future work
+- **Dead-code removal (build-verified).** Remove the orphaned belt machinery surfaced by the §9
+  audit: `QueueChainRebuild` (crash-class, never called), `BuildBeltFromPreview`,
+  `BuildBeltsForDistributor`, and the write-only `CacheStackableBeltPreviewsForBuild` producer
+  (+ `SFSubsystemStackableCache.h` + the `SFAutoConnectOrchestrator.cpp:531` call). Cross-file, so
+  do it with a compile (the two `OnActorSpawned` `if(false)` consumers were already removed in
+  `20b39fd`).
+- **Stacked-belt edge cases not yet tested:** tall runs (5+ levels), Curve routing mode, dismantle
+  teardown (TEST plan 2.3/2.4/2.7).
 - **Construct-order control.** If vanilla could be made to build stacked belt children
   predecessor-first *and* finalize geometry before `ConfigureComponents`, window 1 might reopen —
   unverified and likely not worth it vs. window 3.
