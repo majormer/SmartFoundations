@@ -362,6 +362,42 @@ void ASFConveyorBeltHologram::SetPlacementMaterialState(EHologramMaterialState m
         (int32)StencilValue);
 }
 
+// ── Stacked-belt run registry (Issue #220) ──────────────────────────────────────
+// Stacked-pole belts in a run connect to their already-built neighbour BY REFERENCE at
+// Construct (see the STACK-CHAIN handler below). This map is deliberately separate from
+// the Extend registry (USFExtendService::BuiltConveyorsByChain) for two safety reasons:
+//   1. It stores TWeakObjectPtrs, so an entry for a destroyed belt resolves to null and is
+//      NEVER dereferenced. The Extend registry stores RAW pointers and is only cleared on the
+//      Extend chain-fix finalize (which never runs for stacked builds) — so stacked entries
+//      there persisted across builds and dangled. Because StackChainId/Index are direction-
+//      agnostic, building REVERSED belts over a prior run hit a colliding key and read a freed
+//      belt as a dangling pointer → vanilla CanConnectTo → EXCEPTION_ACCESS_VIOLATION in
+//      UFGConnectionComponent::GetOuterBlueprintDesigner (the reversed-belt CTD).
+//   2. It keeps stacked belts out of the Extend finalize, which iterates + Empty()s that map.
+// Keyed [StackChainId][StackChainIndex]. Process-global (fine for singleplayer; MP needs a
+// per-world home — THESIS §10). Dead entries self-null via TWeakObjectPtr; no pruning needed.
+static TMap<int32, TMap<int32, TWeakObjectPtr<AFGBuildableConveyorBase>>> GStackBuiltConveyors;
+
+static void SF_RegisterStackBuilt(int32 ChainId, int32 Index, AFGBuildableConveyorBase* Belt)
+{
+    if (Belt)
+    {
+        GStackBuiltConveyors.FindOrAdd(ChainId).Add(Index, Belt);
+    }
+}
+
+static AFGBuildableConveyorBase* SF_GetStackBuilt(int32 ChainId, int32 Index)
+{
+    if (const TMap<int32, TWeakObjectPtr<AFGBuildableConveyorBase>>* Inner = GStackBuiltConveyors.Find(ChainId))
+    {
+        if (const TWeakObjectPtr<AFGBuildableConveyorBase>* Found = Inner->Find(Index))
+        {
+            return Found->Get();  // null if the belt was destroyed — no dangling deref
+        }
+    }
+    return nullptr;
+}
+
 AActor* ASFConveyorBeltHologram::Construct(TArray<AActor*>& out_children, FNetConstructionID constructionID)
 {
     // CRITICAL DIAGNOSTIC: Log spline data BEFORE Construct
@@ -392,29 +428,29 @@ AActor* ASFConveyorBeltHologram::Construct(TArray<AActor*>& out_children, FNetCo
             const int32 ChainId = StackHolo->StackChainId;
             const int32 Index = StackHolo->StackChainIndex;
 
-            USFExtendService* StackRegistry = nullptr;
-            if (USFSubsystem* SmartSubsystem = USFSubsystem::Get(GetWorld()))
-            {
-                StackRegistry = SmartSubsystem->GetExtendService();
-            }
-
+            // Resolve the already-built run neighbour(s) BY REFERENCE from the stacked-belt
+            // registry (TWeakObjectPtr-backed; see GStackBuiltConveyors above). A destroyed belt
+            // resolves to null and is NEVER dereferenced — this fixes the reversed-belt CTD where a
+            // prior run's freed belt at a colliding StackChainId was read as a dangling raw pointer
+            // and fed to vanilla CanConnectTo (EXCEPTION_ACCESS_VIOLATION in GetOuterBlueprintDesigner).
             UFGFactoryConnectionComponent* Conn0Target = nullptr;  // belt input  <- predecessor output
             UFGFactoryConnectionComponent* Conn1Target = nullptr;  // belt output -> successor input
-            if (StackRegistry)
+            if (AFGBuildableConveyorBase* Pred = SF_GetStackBuilt(ChainId, Index - 1))
             {
-                if (AFGBuildableConveyorBase* Pred = StackRegistry->GetBuiltConveyor(ChainId, Index - 1))
-                {
-                    if (IsValid(Pred)) { Conn0Target = Pred->GetConnection1(); }
-                }
-                if (AFGBuildableConveyorBase* Succ = StackRegistry->GetBuiltConveyor(ChainId, Index + 1))
-                {
-                    if (IsValid(Succ)) { Conn1Target = Succ->GetConnection0(); }
-                }
+                UFGFactoryConnectionComponent* PredOut = Pred->GetConnection1();
+                if (IsValid(PredOut)) { Conn0Target = PredOut; }
+            }
+            if (AFGBuildableConveyorBase* Succ = SF_GetStackBuilt(ChainId, Index + 1))
+            {
+                UFGFactoryConnectionComponent* SuccIn = Succ->GetConnection0();
+                if (IsValid(SuccIn)) { Conn1Target = SuccIn; }
             }
 
             // Snap is for placement/positioning; it does NOT reliably carry the item-flow
             // connection onto the constructed buildable (items stopped at the gap). So we also
-            // SetConnection on the BUILT belt's connectors below.
+            // SetConnection on the BUILT belt's connectors below. Both targets are guaranteed live
+            // (resolved through TWeakObjectPtr + IsValid), so vanilla's ConfigureComponents snap
+            // check cannot deref a freed pointer.
             SetSnappedConnections(Conn0Target, Conn1Target);
 
             AActor* BuiltActor = Super::Construct(out_children, constructionID);
@@ -430,20 +466,18 @@ AActor* ASFConveyorBeltHologram::Construct(TArray<AActor*>& out_children, FNetCo
                 // unifying into a single chain is a follow-up if Detect/save-reload requires it.
                 UFGFactoryConnectionComponent* C0 = BuiltConveyor->GetConnection0();
                 UFGFactoryConnectionComponent* C1 = BuiltConveyor->GetConnection1();
-                if (C0 && !C0->IsConnected() && Conn0Target && !Conn0Target->IsConnected())
+                if (C0 && !C0->IsConnected() && IsValid(Conn0Target) && !Conn0Target->IsConnected())
                 {
                     C0->SetConnection(Conn0Target);
                     bWired0 = C0->IsConnected();
                 }
-                if (C1 && !C1->IsConnected() && Conn1Target && !Conn1Target->IsConnected())
+                if (C1 && !C1->IsConnected() && IsValid(Conn1Target) && !Conn1Target->IsConnected())
                 {
                     C1->SetConnection(Conn1Target);
                     bWired1 = C1->IsConnected();
                 }
-                if (StackRegistry)
-                {
-                    StackRegistry->RegisterBuiltConveyor(ChainId, Index, BuiltConveyor, /*bIsInputChain=*/false);
-                }
+                // Register in the stacked TWeakObjectPtr registry (NOT the Extend raw registry).
+                SF_RegisterStackBuilt(ChainId, Index, BuiltConveyor);
             }
 
             UE_LOG(LogSmartHologram, Verbose, TEXT("🚧 STACK-CHAIN: %s built [chain=%d idx=%d] conn0=%s(%s) conn1=%s(%s)"),

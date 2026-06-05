@@ -370,6 +370,27 @@ the connection — items still stopped at the break until the explicit `SetConne
   intact, runs re-unified by vanilla into healthy multi-segment chains. ⇒ **invariant satisfiable at
   construct via reference; the §5.3 "impossible" conclusion was about *proximity* wiring only.**
 
+### 6.10 Reversed-belt CTD — stale raw-pointer in the by-reference registry **[E, 2026-06-05] ✅ FIXED**
+After 6.9 shipped, building belts with the **reversed/backward** option over or near a prior stacked
+run crashed on **build**: **`EXCEPTION_ACCESS_VIOLATION reading 0xffffffffffffffff` in
+`UFGConnectionComponent::GetOuterBlueprintDesigner` ← `UFGFactoryConnectionComponent::CanConnectTo`
+← vanilla `AFGConveyorBeltHologram::ConfigureComponents:365`**, reached via our `Construct` →
+`Super::Construct` → `ConstructInstance` → our `ConfigureComponents` → `Super`. Vanilla's snap check
+dereferenced a **garbage connector pointer** our STACK-CHAIN handler had passed to `SetSnappedConnections`.
+- **Root cause:** 6.9 resolved neighbours through the **Extend** registry (`BuiltConveyorsByChain`),
+  which stores **raw `AFGBuildableConveyorBase*`** and is only `Empty()`'d by the **Extend** chain-fix
+  finalize — which never runs for stacked builds. Stacked entries therefore **persist across builds and
+  dangle.** `StackChainId`/`StackChainIndex` are **direction-agnostic** (`SFAutoConnectService_Stackable.cpp:271-272`),
+  so a reversed build over a prior run hits a **colliding key**; `GetBuiltConveyor(Index±1)` returns a
+  **freed** belt; `IsValid()` can't detect a dangling raw pointer; `Pred->GetConnection1()` yields garbage.
+- **Fix:** stacked belts use a **dedicated `TWeakObjectPtr`-backed registry** (`GStackBuiltConveyors` in
+  `SFConveyorBeltHologram.cpp`), not the Extend raw registry. A destroyed belt resolves to **null**
+  (`.Get()`) and is never dereferenced; stacked entries no longer pollute the Extend finalize; connector
+  results are `IsValid()`-guarded before `SetSnappedConnections`/`SetConnection`.
+- **Lesson [I]:** "connect by reference" is only as safe as the reference's **lifetime**. A raw pointer
+  shared across build operations without a clear-owner is a latent dangling-deref; cross-op references
+  must be **weak** (or epoch-scoped). Extend got away with raw pointers only because it clears per-build.
+
 ### 6.7 Summary table
 | # | Approach | Where | Result |
 |---|---|---|---|

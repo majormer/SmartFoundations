@@ -36,6 +36,7 @@ The actual fix for the reported bug.
 | 2.5 | Triage → Detect after 2.2–2.4 (SmartMCP `/api/conveyor-chains`) | 0 zombie chains, all `hasValidLUT` | ✅ 2026-06-05 (`zombieCount:0`, 18 chains all valid) |
 | 2.6 | **Save + reload** after building stacks | chains valid on reload (the original-bug gate) | ✅ 2026-06-05 (PASS — see resolution below) |
 | 2.7 | Dismantle a stacked run | clean teardown, no orphan chains | ⬜ not yet run |
+| 2.8 | **Reversed/backward** belts over or near a prior stacked run (regression) | no CTD; belts build + flow | 🔄 fix in (TWeakObjectPtr registry); awaiting deploy + retest |
 
 ## Step 3 — Converge other features onto the shared builder
 | # | Test | Expectation | Status |
@@ -126,3 +127,10 @@ None of these are reachable; removal is cleanup, not a fix. They span multiple f
   diagnostics tidied + dead timer paths removed `20b39fd`.
 - **3.4 ✅** non-Extend belt-site audit complete (table above): no live path needs new treatment;
   4 dead-code clusters flagged for a build-verified follow-up.
+- 2026-06-05, maintainer playtest on the unrebuilt DLL — **CTD building reversed/backward belts**:
+  `EXCEPTION_ACCESS_VIOLATION 0xffff…ffff` in `GetOuterBlueprintDesigner` ← `CanConnectTo` ← vanilla
+  `ConfigureComponents:365`, via our STACK-CHAIN `Construct`. Root cause: the by-reference resolution
+  used the **Extend raw-pointer registry**, never cleared for stacked builds; direction-agnostic
+  `StackChainId`/`Index` collide on a reversed rebuild → freed belt read as a dangling pointer (THESIS
+  §6.10). **Fix:** dedicated `TWeakObjectPtr` stacked registry (`GStackBuiltConveyors`) +
+  `IsValid()`-guarded connectors. **2.8 awaits deploy + retest.**
