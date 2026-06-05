@@ -221,6 +221,37 @@ override injects belt-preview cost into the distributor total (`:26`); affordabi
 code** (no callers) — superseded by child holograms; they remain the cleanest *reference* for the
 `SpawnActor→Respline→SetConnection→AddConveyor` sequence. **[C, verified 2026-06-05]**
 
+### 5.1b How Extend actually forms chains (the model to adapt for stacked) [C, 2026-06-05]
+Extend solves the **same simultaneous-build problem** stacked has, via a **two-phase** scheme —
+and notably **without** returning `nullptr` and **without** position-based wiring:
+
+1. **Real-constructing child holograms.** Extend belt children call `Super::Construct` (return a
+   real actor) — so **no build-gun crash**, and **cost works via child `GetCost` aggregation**.
+2. **Chain model.** `HoloData->ExtendChainId` / `ExtendChainIndex` / `ExtendChainLength` /
+   `bIsInputChain` (`IsExtendChainMember` = ChainId≥0 && Index≥0). Assigned from the Extend
+   topology/manifest (`TopoInfo`).
+3. **Construct-time, connect-by-REFERENCE (best-effort).** `ResolveChainConnections`
+   (`SFExtendChainHelper.cpp:50-57`): belt *i* resolves its already-built successor via
+   `ExtendService->GetBuiltConveyor(ChainId, i+1)` and connects `Conn1 → successor.GetConnection0()`
+   — connector **object**, not world position. Relies on a **reverse build order** (highest index
+   built first) so the successor exists. **This is why geometry-not-final at Construct is irrelevant
+   — it corrects the false conclusion from the `STACK-ORDER` probe (§4.1), which measured positions.**
+4. **Post-build, sorted wiring (the reliable pass).** `WireBuiltChildConnections` (run from the
+   `OnActorSpawned` deferred timer) iterates **sorted chain indices** ("reverse for INPUT chains,
+   forward for OUTPUT", `SFExtendWiringService_BuiltChild.cpp:1254,1522`) and wires connections /
+   reconciles chains after everything is built — the safety net that makes Extend robust regardless
+   of exact construct order.
+5. **Registry (reusable, general):** `RegisterBuiltConveyor(ChainId, Index, belt, bIsInput)` +
+   `GetBuiltConveyor(ChainId, Index)` (`SFExtendService.h:318,327`).
+
+**Open trace item:** the *exact* enforcement of reverse build order at construct is not a single
+sort/`GetConstructResults` — it emerges from the clone/manifest **spawn+AddChild order**, with the
+**post-build sorted pass as the actual reliability guarantee**. So adapting Extend for stacked means
+either reproducing the reverse spawn order *or* (more robustly) leaning on a post-build sorted wiring
+pass like §5.1b.4 — **but** any post-build chain reconciliation must avoid the live-belt bucket
+hazard (§2.6); Extend's post-build pass appears to wire connections + rely on vanilla/chain-service
+rebuild, the safety of which on stacked solo-chains is the thing to verify before relying on it.
+
 ### 5.2 Extend (manifold / built-child / json) — WORKS
 Child holograms + clone-ID construct wiring (`Conn0/Conn1TargetCloneId`) + the
 `USFChainActorService` rebuild for any chain reconciliation. `CreateManifoldBelt`
