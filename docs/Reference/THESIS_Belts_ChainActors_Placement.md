@@ -587,14 +587,40 @@ only option.
 ---
 
 ## 10. Open questions / future work
-- **★ Build-time chain coalesce (DATA-INTEGRITY priority).** Coalesce each stacked run into one proper
-  multi-segment chain **at build time** so the saved state restores cleanly on first load and the
-  reload tick-stall (§6.14) can't occur. Elevated from "quality" to **data-integrity** because a
-  finite, non-replaceable world item (Mercer Sphere, Somersloop) routed over a stall-prone run risks
-  **permanent, unrecoverable loss** (§6.14 severity note). Must be done with the validated rebuild
-  primitive (§6.7 P0c `RebuildOnly`), not the crash-class bucket ops (P0a/3). Until it lands, the
-  player workaround is save+reload once after building a long run, and do not move irreplaceable items
-  over Smart stacked runs.
+- **★ Build-time chain coalesce (DATA-INTEGRITY priority) — PARKED 2026-06-05; design analysed, not
+  implemented.** Coalesce each stacked run into one proper multi-segment chain **at build time** so the
+  saved state restores cleanly on first load and the reload tick-stall (§6.14) can't occur. Elevated to
+  **data-integrity** because a finite, non-replaceable world item (Mercer Sphere, Somersloop) routed
+  over a stall-prone run risks **permanent, unrecoverable loss** (§6.14 severity note). Until it lands,
+  the player workaround is save+reload once after building a long run, and do not move irreplaceable
+  items over Smart stacked runs.
+  - **Design comparison done (parked here).** Two candidate rebuild primitives, both with stacked-context
+    failure history — but **asymmetric failure modes**:
+    - **Option 2 (recommended): `InvalidateAndRebuildForBelts → InvalidateAndRebuildChains`** — the §6.7
+      P0c "RebuildOnly" path (`RemoveChainActorFromConveyorGroup` + Phase 2.5 union-find merge +
+      synchronous `Migrate`). §4.3 calls it the one path "empirically proven to rebuild chains cleanly."
+      Never touches `RemoveConveyor` on a live belt. Worst case = a **NO_SEGMENTS zombie** (non-fatal,
+      detectable, purgeable; has 0-segment recovery + `ScheduleDeferredZombiePurge`). The §6.7 row-1
+      zombie history was recorded **before** the connect-by-coincidence fix (§6.11/§6.12), i.e. the merge
+      was fed garbage 100 m-apart connectivity; with correct connectivity the merge precondition holds.
+    - **Option 1: `ReRegisterAndQueueVanillaRebuildForBelts`** — detaches chains, then `RemoveConveyor`
+      +`AddConveyor` per belt and lets vanilla rebuild next frame. This is what Mass Upgrade uses today
+      (it abandoned manual coalescing because it produced zombies at 100s-of-belts scale). **But** it does
+      `RemoveConveyor` on live belts — the op §2.7/§6.5/§6.7-row3/§10 repeatedly flag as crash-class.
+      Its survival in Upgrade likely rests on detach-chains-first ordering + a settled, player-initiated
+      context. Worst case = **CTD**.
+  - **Decision:** when resumed, implement **Option 2** from a debounced post-build timer (settled, game
+    thread) + `ScheduleDeferredZombiePurge` net; validate via the live chain audit (run = one
+    multi-segment chain; survives FIRST reload). Rationale: for a *don't-lose-irreplaceable-items* fix, a
+    recoverable zombie beats a crash. Only fall back to Option 1 if Option 2 still zombies at stacked-run
+    scale — and treat that as a signal to first finish the Upgrade audit below.
+- **Audit the Upgrade re-register path (`ReRegisterAndQueueVanillaRebuildForBelts`).** Upgrade is the one
+  live site deliberately using `RemoveConveyor` on live belts (the thesis crash-class op). It mitigates
+  via detach-chains-first + settled timing, but this needs an explicit "does the detach-first ordering
+  truly close the ParallelFor race, or is it a latent CTD on unlucky timing?" review. See
+  `SFUpgradeExecutionService.cpp:1622-1638` (the switch to re-register, made because manual coalescing
+  produced NO_SEGMENTS zombies) and `SFChainActorService.cpp:1455` (`ReRegisterAndQueueVanillaRebuildForBelts`).
+  **Both items tracked in the backlog: majormer/SmartFoundations#341.**
 - **Dead-code removal — ✅ DONE (2026-06-05, build-verified).** Removed the orphaned belt machinery
   surfaced by the §9 audit: the `QueueChainRebuild` / `CollectChainBelts` / `ExecuteDeferredChainRebuild`
   cluster (crash-class `RemoveConveyor`/`AddConveyor` on live belts, never called) + its members
