@@ -58,7 +58,7 @@ BuildStack(poleSpecs, levels):
         for i in range(len(builtPoles) - 1):
             a = builtPoles[i].SnapPointAtLevel(level)            # FCD_SNAP_ONLY transforms
             b = builtPoles[i+1].SnapPointAtLevel(level)
-            spline = SplineBetween(a, b)
+            spline = ShapedSpline(a, b, settings.BeltRoutingMode)   # honor Default/Curve/Straight — see §8
 
             belt = World.SpawnActor(BeltClass, a.Location)
             belt = AFGBuildableConveyorBelt::Respline(belt, spline)   # geometry
@@ -152,7 +152,67 @@ which is a small, deterministic generalization of code that already works.
 and `BuildBeltFromPreview` already proves it works. Ship the §3 builder; it stays entirely
 within sanctioned vanilla primitives (`Respline`/`AddConveyor`, optionally `Split`/`Merge`).
 
-## 8. Summary
+## 8. Belt spline SHAPE — orthogonal to chaining, but the builder must compute it
+
+We expose a `BeltRoutingMode` option (`Default / Curve / Straight`;
+`SmartFoundationsModConfiguration.cpp:32-33`). It is critical to see that **shape and chaining
+are independent axes**:
+
+- **Shape** lives entirely in the `TArray<FSplinePointData>` you hand to
+  `AFGBuildableConveyorBelt::Respline`. It does not touch connections or chains.
+- **Chaining** is the `SetConnection`-before-`AddConveyor` ordering. It does not touch geometry.
+
+So connect-then-register does **not** change, break, or constrain the shape options — *provided
+the builder actually computes the shaped spline.* The routing mode becomes geometry via the
+belt hologram's router: `SetRoutingMode(mode)` → `TryUseBuildModeRouting()` /
+`AutoRouteSplineWithNormals()` → `GetSplinePointData()` (see `BeltPreviewHelper.cpp:111-174`).
+That is exactly what the **flat distributor path already does**: a preview hologram produces the
+shaped spline, the points are extracted, and `BuildBeltFromPreview` spawns + `Respline`s with
+them. Shape preserved, connect-then-register honored.
+
+**Design consequence (the trap):** a naive stacked builder that draws a straight line between
+poles would silently **discard the Curve/Default option**. `ShapedSpline()` in §3 must route
+through the same `SetRoutingMode` + `TryUseBuildModeRouting` path (i.e. reuse
+`FBeltPreviewHelper`) to produce the spline points, then build via connect-then-register. Shape
+is computed once, up front; registration is unchanged.
+
+## 9. Apply the contract everywhere — one belt builder, per-feature audit
+
+The real lesson of this investigation is bigger than stacked poles: **every belt Smart creates
+should go through one shared, shape-aware, connect-then-register builder** instead of each
+feature re-deriving belt creation. The single contract:
+
+> compute shaped spline (routing mode) → `SpawnActor` → `Respline` → `SetConnection` to **real**
+> neighbour/endpoint connectors → `AddConveyor` **last**; build multi-belt runs in order so
+> each belt extends the previous belt's chain.
+
+Audit of the current belt-registration sites (each `AddConveyor`) against that contract:
+
+| Feature | Site | Pattern today | Verdict |
+|---|---|---|---|
+| **Distributor → factory (flat)** | `SFAutoConnectService_Belt.cpp:1179` (`BuildBeltFromPreview`) | preview→SplineData→spawn→Respline→SetConnection→AddConveyor | ✅ **Reference.** Shape-aware + connect-then-register. Already correct. |
+| **Extend manifold** | `SFExtendWiringService_Manifold.cpp:657` | SetConnection→AddConveyor | ✅ correct |
+| **Extend manifest / built-child** | `SFWiringManifest.cpp:1282` | service-routed | ✅ (Extend family; verify shape carried) |
+| **Belt hologram, normal belt** | `SFConveyorBeltHologram.cpp:1637` | AddConveyor after connections made | ✅ correct |
+| **Conveyor lift (normal)** | `SFConveyorLiftHologram.cpp:468` | AddConveyor only when `bMadeConnection` | ✅ correct; EXTEND lifts defer to chain rebuild |
+| **Stacked-pole belt** | (no explicit AddConveyor — vanilla auto-registers via hologram `Construct`) | register-first → proximity wire → merge | ❌ **the outlier.** The only path that lets vanilla register the belt before connections exist. Fix per §3. |
+| **AutoConnect bounce** | `SFSubsystem_AutoConnect.cpp:793` | `RemoveConveyor`+`AddConveyor` bounce | ⚠️ review — re-registration bounce, not the clean contract |
+| **Startup migration** | `SFGameInstanceModule.cpp:270` | startup AddConveyor | ⚠️ low-risk; confirm it runs before chains tick |
+| **Upgrade re-register** | `SFChainActorService.cpp:1572` | service-owned RemoveConveyor/AddConveyor | ✅ inside the compliant service boundary |
+
+Takeaways:
+- **Distributor→factory is already done right** — it is the template, not a problem.
+- **Stacked poles are the lone structural outlier** (register-first). The §3 builder brings it
+  onto the same contract.
+- A **shared `BuildBelt(shapedSpline, conn0, conn1)` helper** (generalized from
+  `BuildBeltFromPreview`) would make the contract impossible to violate per-feature and would
+  collapse the duplicated belt-creation code — the highest-leverage cleanup once stacked is fixed.
+- **Pipes** are a parallel system with their own routing modes (`Auto/2D/Straight/Curve/Noodle/
+  H-to-V`, `SmartFoundationsModConfiguration.cpp:47-48`) and many `SetRoutingMode` sites in
+  `SFPipeAutoConnectManager*`; the same "one shape-aware builder, connect before register"
+  discipline applies there, though pipes have no chain actors (simpler).
+
+## 10. Summary
 
 The current design fights vanilla's chaining by repairing it after the fact. The clean design
 **never creates the wrong state**: build supports, then build belts in run order, connecting
