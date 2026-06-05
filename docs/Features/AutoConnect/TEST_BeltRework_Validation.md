@@ -54,4 +54,13 @@ The actual fix for the reported bug.
 ---
 
 ### Run log
-(Record date, build DLL timestamp, and result per test as they're executed.)
+- 2026-06-05, SF DLL 02:17 — **1.1 ✅** shared `BuildBelt` refactor compiles + deploys.
+- 2026-06-05, SF DLL 02:44 — **Step 2 attempt A (post-construct re-register: `RemoveConveyor`→`AddConveyor` in the timer) → ❌ CRASH.** `EXCEPTION_ACCESS_VIOLATION` in `AFGConveyorChainActor::Factory_Tick` on a ParallelFor worker next tick — the documented bucket-mutation race (matches ChainActorMigrationPlan P0). `RemoveConveyor` on a **live registered** belt drops it from its bucket but leaves the now-empty solo chain actor in the tick path → next parallel tick dereferences it. **Re-register-on-live-belts is DISPROVEN.** Reverted to safe baseline + redeployed.
+
+### Conclusion after attempt A — the only safe path is build-fresh
+Every approach that touches **already-registered, live** stacked belts has now failed:
+- merge (`InvalidateAndRebuildForBelts`) → zombie chains,
+- re-register (`RemoveConveyor`/`AddConveyor`) → ParallelFor crash,
+- baseline (`RemoveConveyorChainActor` + hope) → safe but split/no-merge (original bug).
+
+The ONLY proven-safe + correct belt creation is **build fresh via `BuildBelt`** (`SpawnActor`→`Respline`→`SetConnection`→`AddConveyor`), exactly as the distributor/Extend paths do — because SpawnActor'd belts do **not** auto-register until the explicit `AddConveyor`, so they are never registered-while-unconnected and never tear down a live chain. This forces the **preview-only / build-on-confirm** architecture for stacked belts, which in turn requires **manual material cost handling** (SpawnActor'd belts aren't charged by vanilla). Cost reimplementation is therefore unavoidable for a correct fix.

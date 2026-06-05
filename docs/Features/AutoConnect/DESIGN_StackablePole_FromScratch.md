@@ -212,6 +212,40 @@ Takeaways:
   `SFPipeAutoConnectManager*`; the same "one shape-aware builder, connect before register"
   discipline applies there, though pipes have no chain actors (simpler).
 
+## 9.5 Material cost — a solved pattern, not a reimplementation (investigated 2026-06-05)
+
+Because `BuildBelt` (`SpawnActor`) doesn't go through the build-gun construct, vanilla doesn't
+auto-charge for it — so preview-only belts need cost handled explicitly. **The codebase already
+does exactly this for every other Smart-built logistics piece**, so we reuse, not reinvent:
+
+- **Charging** — a hologram `GetCost(bool includeChildren)` override that adds the Smart-built
+  piece's cost into the total vanilla deducts on placement. Templates: `ASFConveyorBeltHologram::
+  GetCost` (`:634`), `ASFConveyorAttachmentHologram::GetCost` (`:26` — the distributor injects
+  its belt costs this way), `ASFPipelineHologram::GetCost`, `ASFWireHologram::GetCost`. Belt cost
+  itself scales via vanilla `AFGBuildable::GetCostMultiplierForLength(totalLength, segmentLength)`.
+- **Affordability / invalidation** — `AddConstructDisqualifier(UFGCDUnaffordable::StaticClass())`
+  on the parent hologram when materials are short (vanilla then blocks the build). Used by belt,
+  lift, pipe, attachment, wire, power-pole, factory holograms. Reusable check: `CanAffordExtendCost`
+  (`SFExtendService.cpp:879`) = compare `Hologram->GetCost(true)` against player inventory **+**
+  `AFGCentralStorageSubsystem` (dimensional depot). Respect the `GetCheatNoCost()` cheat.
+
+**So the stacked design charges materials correctly with existing machinery:** keep the belt
+**previews contributing cost** (the stackable-pole hologram's `GetCost` includes the spanned
+belts — via child aggregation if they stay children, or a `GetCost` override mirroring the
+distributor), and add the standard `UFGCDUnaffordable` disqualifier when short. Vanilla deducts
+the aggregated total on confirm; `BuildBelt` then creates the real belts for free (no double
+charge, since `SpawnActor` doesn't bill). The distributor path already operates exactly this way
+(preview cost + `BuildBeltFromPreview` build), so stacked is bringing one more feature onto the
+proven model — not inventing cost code.
+
+## 9.6 Why the timer approaches failed (record)
+- `RemoveConveyor`/`AddConveyor` on **live registered** belts → `Factory_Tick` ParallelFor crash
+  (orphaned solo chain left in the tick path). Bucket primitives are unsafe on live belts (P0).
+- `InvalidateAndRebuildForBelts` merge of solo chains → zero-segment zombies.
+- Only **build-fresh via `BuildBelt`** is safe: `SpawnActor`'d belts don't auto-register until the
+  explicit `AddConveyor`, so they're never registered-while-unconnected and never disturb a live
+  chain. This is the architectural reason stacked must move to preview + build-on-confirm.
+
 ## 10. Summary
 
 The current design fights vanilla's chaining by repairing it after the fact. The clean design
