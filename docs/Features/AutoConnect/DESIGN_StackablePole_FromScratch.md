@@ -286,6 +286,38 @@ gates affordability. Nothing to add.
 This supersedes §3's BuildBelt-on-confirm sketch and §5's "build belts via BuildBelt" — the lever
 is **child-hologram construct ordering + clone-ID target wiring**, mirroring the distributor.
 
+## 9.8 FINAL approach (2026-06-05, empirically validated) — preview-only + BuildBelt on confirm
+
+The §9.7 clone-ID-at-construct idea was **disproven by the `STACK-ORDER` probe**: at a stacked
+belt's `ConfigureComponents`, **0 sibling belts are within 200 cm of its endpoints — even for the
+last-built belt whose siblings already exist.** The belt's connector geometry isn't finalized at
+that phase (spline/mesh generated later; cf. the "mSplineComponent null, not yet initialized"
+guard). So **no** construct-time wiring works (clone-ID or proximity) — the connectors aren't
+where they'll be. This is the same reason the proximity search always logged `connections=NO`.
+
+Every alternative is now empirically eliminated:
+- construct-time wiring → geometry not ready (`STACK-ORDER` probe);
+- post-construct timer `RemoveConveyor`/`AddConveyor` → ParallelFor crash;
+- post-construct merge → zombies.
+
+**Only viable path: build belts FRESH via `BuildBelt` on confirm** (geometry computed from the
+now-built pole positions), with **preview-only belt holograms** (Option B, maintainer-chosen):
+
+1. **Preview** — keep the belt child holograms as **visual-only** previews; override their
+   construct so they **produce no buildable** for `SF_StackableChild` (the tag + `PostHologramPlacement`
+   skip are the hooks). They never auto-register → no crash, no zombie.
+2. **Build** — on confirm (poles built), `BuildStack` computes each span's shaped spline from the
+   real pole connector transforms and calls `BuildBelt` (`SpawnActor`→`Respline`→`SetConnection` to
+   the previous belt in run order→`AddConveyor`). This is the proven connect-then-register path; not
+   "double-build" because belts are built **only** here (no constructing children).
+3. **Cost** — `GetCost` override on the stackable-pole hologram adds the spanned-belt cost (mirror
+   `ASFConveyorAttachmentHologram::GetCost`); `AddConstructDisqualifier(UFGCDUnaffordable)` +
+   `CanAffordExtendCost`-style check gates affordability; respect `GetCheatNoCost`.
+4. **Cleanup** — remove the `OnActorSpawned` `PendingStackableBelts` timer and the stackable
+   wiring branch in `ConfigureComponents` (now dead).
+
+This supersedes §3/§5/§9.7. It is the only design consistent with all in-game evidence.
+
 ## 10. Summary
 
 The current design fights vanilla's chaining by repairing it after the fact. The clean design

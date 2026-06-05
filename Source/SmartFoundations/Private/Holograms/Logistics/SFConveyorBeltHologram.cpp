@@ -1349,7 +1349,37 @@ void ASFConveyorBeltHologram::ConfigureComponents(AFGBuildable* inBuildable) con
     {
         UE_LOG(LogSmartHologram, Log, TEXT("⛓️ STACKABLE BELT ConfigureComponents: %s - wiring to nearby pole connectors"),
             *Conveyor->GetName());
-        
+
+        // ── Construct-timing probe (Display; grep "STACK-ORDER"). Behaviour-preserving. ──
+        // Settles the crux for the rework: at THIS stacked belt's ConfigureComponents, are sibling
+        // belts already CONSTRUCTED (so connect-then-register at construct is possible), or not (so
+        // the only window with neighbours present is post-construct)? Counts built conveyor belts in
+        // the world (excluding self) and whether one sits near either of this belt's endpoints.
+        {
+            int32 BuiltBelts = 0;
+            int32 NearEndpoint = 0;
+            const float ProbeR = 200.0f;
+            const FVector P0 = Conn0 ? Conn0->GetComponentLocation() : Conveyor->GetActorLocation();
+            const FVector P1 = Conn1 ? Conn1->GetComponentLocation() : Conveyor->GetActorLocation();
+            for (TActorIterator<AFGBuildableConveyorBelt> It(GetWorld()); It; ++It)
+            {
+                AFGBuildableConveyorBelt* Other = *It;
+                if (!Other || Other == Conveyor) continue;
+                ++BuiltBelts;
+                UFGFactoryConnectionComponent* OC0 = Other->GetConnection0();
+                UFGFactoryConnectionComponent* OC1 = Other->GetConnection1();
+                const FVector OL0 = OC0 ? OC0->GetComponentLocation() : Other->GetActorLocation();
+                const FVector OL1 = OC1 ? OC1->GetComponentLocation() : Other->GetActorLocation();
+                if (FVector::Dist(P0, OL1) < ProbeR || FVector::Dist(P1, OL0) < ProbeR ||
+                    FVector::Dist(P0, OL0) < ProbeR || FVector::Dist(P1, OL1) < ProbeR)
+                {
+                    ++NearEndpoint;
+                }
+            }
+            UE_LOG(LogSmartHologram, Display, TEXT("🚧 STACK-ORDER: %s at ConfigureComponents — %d built sibling belt(s) in world, %d within %.0fcm of an endpoint"),
+                *Conveyor->GetName(), BuiltBelts, NearEndpoint, ProbeR);
+        }
+
         const float SearchRadius = 100.0f;  // 1m search radius for pole connectors
         
         // Connect Conn0 (belt output) to nearby pole connector
