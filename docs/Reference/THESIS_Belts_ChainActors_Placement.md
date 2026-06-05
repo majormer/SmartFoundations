@@ -391,6 +391,26 @@ dereferenced a **garbage connector pointer** our STACK-CHAIN handler had passed 
   shared across build operations without a clear-owner is a latent dangling-deref; cross-op references
   must be **weak** (or epoch-scoped). Extend got away with raw pointers only because it clears per-build.
 
+### 6.11 Reversed-belt cross-wiring — index pairing vs. swapped Connection0/1 **[E, 2026-06-05] ✅ FIXED**
+With the CTD gone (§6.10), reversed runs built without crashing but **mis-wired**. SmartMCP
+`/api/connections` showed connected "peers" whose connectors were **~100 m apart** (e.g.
+`…459653::ConveyorAny1` @ x=337600 paired with `…459649::ConveyorAny0` @ x=327600), while the
+connectors that physically meet at each junction were left split — one open, one wired to a third
+belt. Player symptom: **cannot snap a new belt to the run ends** (the end connectors are "consumed"
+by the bogus long-distance links).
+- **Root cause:** the handler paired connectors **by index** — our `Connection0` ← predecessor's
+  `Connection1`, our `Connection1` → successor's `Connection0`. That holds for forward belts (where
+  `Connection0` sits at the low-index/pole_i end), but a **reversed belt has `Connection0`/`Connection1`
+  swapped relative to position**, so the index pairing connects non-coincident connectors.
+- **Fix:** wire by **geometric coincidence**, not index. Post-`Super::Construct` (when the built
+  belt's connectors have real world positions — reliable, unlike at hologram `ConfigureComponents`,
+  §6.6), connect each of our connectors to the **coincident** (≤1.5 m), free, `CanConnectTo`-compatible
+  connector among **both** ends of each resolved run neighbour. Also pass `SetSnappedConnections(nullptr)`
+  so vanilla can't pre-wire a wrong index pair. Forward runs are unaffected (their coincident connector
+  is the same one the index used). Pre-existing mis-wired belts are not retro-fixed — dismantle+rebuild.
+- **Lesson [I]:** connect by **geometry**, not by connector index, whenever build direction can vary —
+  `Connection0`/`Connection1` are not a stable proxy for "this physical end."
+
 ### 6.7 Summary table
 | # | Approach | Where | Result |
 |---|---|---|---|

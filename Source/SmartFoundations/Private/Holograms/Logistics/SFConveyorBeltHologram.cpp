@@ -428,62 +428,63 @@ AActor* ASFConveyorBeltHologram::Construct(TArray<AActor*>& out_children, FNetCo
             const int32 ChainId = StackHolo->StackChainId;
             const int32 Index = StackHolo->StackChainIndex;
 
-            // Resolve the already-built run neighbour(s) BY REFERENCE from the stacked-belt
-            // registry (TWeakObjectPtr-backed; see GStackBuiltConveyors above). A destroyed belt
-            // resolves to null and is NEVER dereferenced — this fixes the reversed-belt CTD where a
-            // prior run's freed belt at a colliding StackChainId was read as a dangling raw pointer
-            // and fed to vanilla CanConnectTo (EXCEPTION_ACCESS_VIOLATION in GetOuterBlueprintDesigner).
-            UFGFactoryConnectionComponent* Conn0Target = nullptr;  // belt input  <- predecessor output
-            UFGFactoryConnectionComponent* Conn1Target = nullptr;  // belt output -> successor input
-            if (AFGBuildableConveyorBase* Pred = SF_GetStackBuilt(ChainId, Index - 1))
-            {
-                UFGFactoryConnectionComponent* PredOut = Pred->GetConnection1();
-                if (IsValid(PredOut)) { Conn0Target = PredOut; }
-            }
-            if (AFGBuildableConveyorBase* Succ = SF_GetStackBuilt(ChainId, Index + 1))
-            {
-                UFGFactoryConnectionComponent* SuccIn = Succ->GetConnection0();
-                if (IsValid(SuccIn)) { Conn1Target = SuccIn; }
-            }
+            // Resolve the already-built run neighbour BELTS (not specific connectors yet) BY REFERENCE
+            // from the stacked-belt registry (TWeakObjectPtr-backed; see GStackBuiltConveyors above).
+            // A destroyed belt resolves to null and is NEVER dereferenced — this fixes the reversed-belt
+            // CTD where a prior run's freed belt at a colliding StackChainId was read as a dangling raw
+            // pointer and fed to vanilla CanConnectTo (EXCEPTION_ACCESS_VIOLATION in GetOuterBlueprintDesigner).
+            AFGBuildableConveyorBase* Pred = SF_GetStackBuilt(ChainId, Index - 1);
+            AFGBuildableConveyorBase* Succ = SF_GetStackBuilt(ChainId, Index + 1);
 
-            // Snap is for placement/positioning; it does NOT reliably carry the item-flow
-            // connection onto the constructed buildable (items stopped at the gap). So we also
-            // SetConnection on the BUILT belt's connectors below. Both targets are guaranteed live
-            // (resolved through TWeakObjectPtr + IsValid), so vanilla's ConfigureComponents snap
-            // check cannot deref a freed pointer.
-            SetSnappedConnections(Conn0Target, Conn1Target);
+            // Do NOT pre-snap to a specific connector index. A REVERSED belt has Connection0/Connection1
+            // swapped relative to position, so the old index pairing (our Conn0 <- pred.Conn1, our Conn1
+            // -> succ.Conn0) wired non-coincident connectors (peers ended up ~100m apart, consuming the
+            // run-end connectors the player needs to snap to). We wire post-construct BY GEOMETRY instead,
+            // which is direction-agnostic. Clearing the snap also stops vanilla pre-wiring a wrong pair.
+            SetSnappedConnections(nullptr, nullptr);
 
             AActor* BuiltActor = Super::Construct(out_children, constructionID);
 
             bool bWired0 = false, bWired1 = false;
             if (AFGBuildableConveyorBase* BuiltConveyor = Cast<AFGBuildableConveyorBase>(BuiltActor))
             {
-                // Establish the ACTUAL item-flow connections on the built belt's connectors, by
-                // reference, to the already-built run neighbour(s). SetConnection is topology only
-                // (not a bucket op) so it's safe on live belts (THESIS §2.6). This lets items hand
-                // off across the run. NOTE: this is connect-AFTER-register, so vanilla may leave the
-                // run as multiple chains (functional, items flow) rather than one merged chain —
-                // unifying into a single chain is a follow-up if Detect/save-reload requires it.
-                UFGFactoryConnectionComponent* C0 = BuiltConveyor->GetConnection0();
-                UFGFactoryConnectionComponent* C1 = BuiltConveyor->GetConnection1();
-                if (C0 && !C0->IsConnected() && IsValid(Conn0Target) && !Conn0Target->IsConnected())
+                // Candidate run-neighbour connectors: BOTH ends of each already-built neighbour. We pick
+                // by coincidence, so we don't assume which connector index faces us (reversed-safe).
+                UFGFactoryConnectionComponent* Cands[4] = {
+                    Pred ? Pred->GetConnection0() : nullptr, Pred ? Pred->GetConnection1() : nullptr,
+                    Succ ? Succ->GetConnection0() : nullptr, Succ ? Succ->GetConnection1() : nullptr };
+
+                // Connect one of OUR connectors to the coincident, free, compatible neighbour connector.
+                // Post-construct the built belt's connectors have real world positions, so distance
+                // matching is reliable (unlike at hologram ConfigureComponents — THESIS §6.6). SetConnection
+                // is topology only (not a bucket op), safe on live belts (THESIS §2.6).
+                auto WireByCoincidence = [&Cands](UFGFactoryConnectionComponent* Ours) -> bool
                 {
-                    C0->SetConnection(Conn0Target);
-                    bWired0 = C0->IsConnected();
-                }
-                if (C1 && !C1->IsConnected() && IsValid(Conn1Target) && !Conn1Target->IsConnected())
-                {
-                    C1->SetConnection(Conn1Target);
-                    bWired1 = C1->IsConnected();
-                }
+                    if (!IsValid(Ours) || Ours->IsConnected()) return false;
+                    const FVector OursLoc = Ours->GetComponentLocation();
+                    UFGFactoryConnectionComponent* Best = nullptr;
+                    float BestSq = FMath::Square(150.0f);  // junction connectors are ~coincident; belts are >=2m long
+                    for (UFGFactoryConnectionComponent* Cand : Cands)
+                    {
+                        if (!IsValid(Cand) || Cand->IsConnected()) continue;
+                        const float DSq = FVector::DistSquared(Cand->GetComponentLocation(), OursLoc);
+                        if (DSq <= BestSq && Ours->CanConnectTo(Cand)) { Best = Cand; BestSq = DSq; }
+                    }
+                    if (Best) { Ours->SetConnection(Best); return Ours->IsConnected(); }
+                    return false;
+                };
+
+                bWired0 = WireByCoincidence(BuiltConveyor->GetConnection0());
+                bWired1 = WireByCoincidence(BuiltConveyor->GetConnection1());
+
                 // Register in the stacked TWeakObjectPtr registry (NOT the Extend raw registry).
                 SF_RegisterStackBuilt(ChainId, Index, BuiltConveyor);
             }
 
-            UE_LOG(LogSmartHologram, Verbose, TEXT("🚧 STACK-CHAIN: %s built [chain=%d idx=%d] conn0=%s(%s) conn1=%s(%s)"),
+            UE_LOG(LogSmartHologram, Verbose, TEXT("🚧 STACK-CHAIN: %s built [chain=%d idx=%d] pred=%s succ=%s wired c0=%s c1=%s"),
                 *GetName(), ChainId, Index,
-                Conn0Target ? TEXT("pred") : TEXT("open"), bWired0 ? TEXT("WIRED") : TEXT("no"),
-                Conn1Target ? TEXT("succ") : TEXT("open"), bWired1 ? TEXT("WIRED") : TEXT("no"));
+                Pred ? TEXT("y") : TEXT("-"), Succ ? TEXT("y") : TEXT("-"),
+                bWired0 ? TEXT("Y") : TEXT("-"), bWired1 ? TEXT("Y") : TEXT("-"));
 
             return BuiltActor;
         }

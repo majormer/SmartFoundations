@@ -36,7 +36,8 @@ The actual fix for the reported bug.
 | 2.5 | Triage → Detect after 2.2–2.4 (SmartMCP `/api/conveyor-chains`) | 0 zombie chains, all `hasValidLUT` | ✅ 2026-06-05 (`zombieCount:0`, 18 chains all valid) |
 | 2.6 | **Save + reload** after building stacks | chains valid on reload (the original-bug gate) | ✅ 2026-06-05 (PASS — see resolution below) |
 | 2.7 | Dismantle a stacked run | clean teardown, no orphan chains | ⬜ not yet run |
-| 2.8 | **Reversed/backward** belts over or near a prior stacked run (regression) | no CTD; belts build + flow | ✅ 2026-06-05 (no crash; `zombieCount:0`, 6 chains all valid; neighbour wiring confirmed via peer link. Flow not exercised — no feeder.) |
+| 2.8 | **Reversed/backward** belts over or near a prior stacked run (regression) | no CTD; belts build + flow | ✅ 2026-06-05 no crash (`zombieCount:0`, 6 chains valid). ⚠️ but exposed cross-wiring → see 2.9 |
+| 2.9 | Reversed run — connectors **coincident** at junctions, run-ends **snappable** | peers physically coincident; open ends accept a new belt | 🔄 geometric-pairing fix deployed; awaiting rebuild + SmartMCP re-validate |
 
 ## Step 3 — Converge other features onto the shared builder
 | # | Test | Expectation | Status |
