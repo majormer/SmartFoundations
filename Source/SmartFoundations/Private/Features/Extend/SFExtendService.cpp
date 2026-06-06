@@ -151,6 +151,7 @@ void USFExtendService::ClearExtendState()
         // By clearing flags first, the counter restore won't trigger extend state changes.
         bHasValidTarget = false;
         bExtendCommitted = false;
+        bExtendManualHold = false;  // #342: clear manual pin on teardown
 
         // Now safe to restore pre-Extend counter snapshot
         if (bHasCounterSnapshot && Subsystem.IsValid())
@@ -615,9 +616,9 @@ bool USFExtendService::TryExtendFromBuilding(AFGBuildable* HitBuilding, AFGHolog
 
         if (!bStillValid)
         {
-            if (bExtendCommitted)
+            if (bExtendCommitted || bExtendManualHold)
             {
-                // Committed — keep Extend alive, just maintain preview
+                // Committed (scale action) or manually pinned (Hold key, #342) — keep Extend alive, maintain preview
                 if (CurrentExtendHologram.IsValid())
                 {
                     RefreshExtension(CurrentExtendHologram.Get());
@@ -656,7 +657,8 @@ bool USFExtendService::TryExtendFromBuilding(AFGBuildable* HitBuilding, AFGHolog
     // Issue #274: When Scaled Extend is committed (locked for inspection), suppress re-triggering
     // on a different building of the same type. The player is walking around to inspect the layout
     // and accidentally facing a similar building shouldn't tear down the entire chain.
-    if (bExtendCommitted && CurrentExtendTarget.IsValid() && CurrentExtendTarget.Get() != HitBuilding)
+    // #342: a manual Hold-key pin gets the same protection.
+    if ((bExtendCommitted || bExtendManualHold) && CurrentExtendTarget.IsValid() && CurrentExtendTarget.Get() != HitBuilding)
     {
         // Still committed to the original target — just maintain the current preview
         if (CurrentExtendHologram.IsValid())
@@ -766,6 +768,7 @@ bool USFExtendService::TryExtendFromBuilding(AFGBuildable* HitBuilding, AFGHolog
     CurrentExtendTarget = HitBuilding;
     bHasValidTarget = true;  // EXTEND is now active!
     bExtendCommitted = false;  // Not committed until first scale action (allows middle-click sampling)
+    bExtendManualHold = false;  // #342: fresh Extend starts un-pinned; a deliberate Hold-key press toggles it on
 
     // Snapshot the current grid counters so we can restore them when Extend deactivates.
     // This prevents normal scaling from inheriting Extend's counter values (X=3, spacing=200, etc.)

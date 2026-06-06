@@ -265,6 +265,14 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Smart|Extend")
     void RefreshExtension(AFGHologram* SourceHologram, bool bForceRefresh = false);
 
+    /** #342: manual Extend hold ("pin"). The vanilla Hold key (H) toggles this via the lock-release
+     *  detection in PollForActiveHologram, so the player can freeze the current Extend preview
+     *  unchanged and look around to verify clearance. Tracked SEPARATELY from bExtendCommitted (the
+     *  scale-action commit) so toggling the pin never disturbs scaled Extend / transform behaviour;
+     *  either flag makes Extend sticky. */
+    void SetExtendManualHold(bool bHold) { bExtendManualHold = bHold; }
+    bool IsExtendManualHoldActive() const { return bExtendManualHold; }
+
     /** Clean up all extension child holograms */
     UFUNCTION(BlueprintCallable, Category = "Smart|Extend")
     void CleanupExtension(AFGHologram* SourceHologram);
@@ -647,6 +655,12 @@ private:
      *  Before committing, looking away deactivates Extend normally (allows middle-click sampling).
      *  After committing, sticky extend keeps Extend alive when looking away. */
     bool bExtendCommitted = false;
+
+    /** #342: true when the player deliberately pinned the current Extend with the vanilla Hold key (H).
+     *  Independent of bExtendCommitted; either makes Extend sticky. Kept separate so toggling the manual
+     *  pin can never un-stick a scale-committed (scaled) Extend. Default false — never auto-set on
+     *  engagement, so free-form placement and look-away teardown stay unchanged. */
+    bool bExtendManualHold = false;
 
     /** Counter snapshot taken when Extend activates.
      *  Restored when Extend deactivates so normal scaling isn't polluted with Extend's counters. */

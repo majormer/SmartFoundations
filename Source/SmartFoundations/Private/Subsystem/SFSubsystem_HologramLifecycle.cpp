@@ -851,6 +851,42 @@ void USFSubsystem::PollForActiveHologram()
 		}
 	}
 
+	// #342: Manual Extend hold ("pin") via the vanilla Hold key (H).
+	// During Extend, Extend owns the hologram lock, so a deliberate Hold press shows up as the hologram
+	// becoming unlocked. Edge-detect that (locked last poll → unlocked now) and TOGGLE a manual pin. We
+	// never auto-pin on engagement, so free-form placement and look-away teardown are unchanged; scaled
+	// Extend / transforms keep committing on their own (the pin is tracked separately). When pinned we
+	// re-freeze so the player can look around to verify clearance; pressing Hold again releases it
+	// (Extend then re-locks on-target, or tears down if looking away).
+	if (ExtendService && IsExtendModeActive() && ActiveHologram.IsValid())
+	{
+		const bool bLockedNow = ActiveHologram->IsHologramLocked();
+		if (bExtendPrevLocked && !bLockedNow)
+		{
+			const bool bNowHeld = !ExtendService->IsExtendManualHoldActive();
+			ExtendService->SetExtendManualHold(bNowHeld);
+			if (bNowHeld)
+			{
+				// The manual pin makes Extend sticky (kept alive when looking away); re-assert the
+				// lock so the preview holds its position while the player looks around.
+				ActiveHologram->LockHologramPosition(true);
+			}
+			UE_LOG(LogSmartFoundations, Log, TEXT("📌 EXTEND: manual hold %s"),
+				bNowHeld ? TEXT("ENGAGED (preview pinned)") : TEXT("RELEASED"));
+		}
+		// Re-read after any re-lock so a fresh pin doesn't read as another toggle next poll.
+		bExtendPrevLocked = ActiveHologram->IsHologramLocked();
+	}
+	else
+	{
+		bExtendPrevLocked = false;
+		// Safety net: clear any stale manual pin once Extend is no longer active.
+		if (ExtendService && ExtendService->IsExtendManualHoldActive())
+		{
+			ExtendService->SetExtendManualHold(false);
+		}
+	}
+
 	// Detect and propagate transform changes via transform service (Phase 3 extraction)
 	if (CurrentHologram && GridTransformService)
 	{
