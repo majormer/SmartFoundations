@@ -41,6 +41,8 @@ def main():
         rows = list(csv.DictReader(f))
 
     lines = []
+    lines.append("// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.")
+    lines.append("")
     lines.append("// SFBuildableSizeRegistry_Data.cpp")
     lines.append("//")
     lines.append("// GENERATED FILE - DO NOT EDIT BY HAND.")
