@@ -346,62 +346,240 @@ bool USFExtendService::IsDirectionValid(ESFExtendDirection Direction) const
         return false;
     }
 
-    // Get building size from registry
-    FVector BuildingSize = FVector(800.0f, 800.0f, 400.0f); // Default fallback
+    const FRotator BuildingRotation = SourceBuilding->GetActorRotation();
+
+    // World-space lateral axis the manifold extends along for this direction.
+    // The manifold grows along the building's LOCAL X (see GetDirectionOffset):
+    // local +X = Right, local -X = Left.
+    const FVector DirAxis = BuildingRotation.RotateVector(
+        Direction == ESFExtendDirection::Right ? FVector(1.f, 0.f, 0.f) : FVector(-1.f, 0.f, 0.f))
+        .GetSafeNormal();
+
+    // ========================================================================
+    // (1) Connection-consumption disqualifier  (Issue #338 - primary check)
+    // ------------------------------------------------------------------------
+    // A direction is "occupied" when the manifold can no longer be wired that
+    // way - i.e. the backbone connector on a chain's distributor/junction that
+    // faces DirAxis is ALREADY connected to a neighbour. This is the authoritative
+    // signal for "don't toggle back into the chain", and unlike a geometric probe
+    // it never trips on open space, so it removes the false positives that forced
+    // players to carve out large empty areas just to extend.
+    //
+    // Aggregation (per user decision): ANY consumed chain blocks the direction, so
+    // a partially-wireable extend that would leave some lanes unconnected is refused.
+    // ========================================================================
+    const FSFExtendTopology& Topology = GetCurrentTopology();
+    if (Topology.bIsValid)
+    {
+        // Walk a belt backbone connector outward; returns true only if it reaches another
+        // conveyor attachment (splitter/merger) within a bounded number of hops - i.e. the
+        // manifold chain genuinely continues that way. A connector that merely leads to an
+        // external feed/sink belt (or a factory) returns false, so an end-of-manifold unit
+        // can still be extended toward its feed side (avoids being MORE restrictive than the
+        // old geometric check, which is the opposite of what we want).
+        auto BeltLeadsToDistributor = [](UFGFactoryConnectionComponent* StartOnDistributor) -> bool
+        {
+            UFGFactoryConnectionComponent* Near = StartOnDistributor ? StartOnDistributor->GetConnection() : nullptr;
+            for (int32 Hop = 0; Near && Hop < 64; ++Hop)
+            {
+                AActor* Owner = Near->GetOwner();
+                if (Cast<AFGBuildableConveyorAttachment>(Owner))
+                {
+                    return true; // splitter/merger -> chain continues
+                }
+                AFGBuildableConveyorBase* Belt = Cast<AFGBuildableConveyorBase>(Owner);
+                if (!Belt)
+                {
+                    return false; // factory / terminal -> not a chain distributor
+                }
+                UFGFactoryConnectionComponent* Far =
+                    (Belt->GetConnection0() == Near) ? Belt->GetConnection1() : Belt->GetConnection0();
+                Near = Far ? Far->GetConnection() : nullptr;
+            }
+            return false;
+        };
+
+        auto PipeLeadsToJunction = [](UFGPipeConnectionComponentBase* StartOnJunction) -> bool
+        {
+            UFGPipeConnectionComponentBase* Near = StartOnJunction ? StartOnJunction->GetConnection() : nullptr;
+            for (int32 Hop = 0; Near && Hop < 64; ++Hop)
+            {
+                AActor* Owner = Near->GetOwner();
+                if (Cast<AFGBuildablePipelineJunction>(Owner))
+                {
+                    return true; // junction -> chain continues
+                }
+                AFGBuildablePipeline* Pipe = Cast<AFGBuildablePipeline>(Owner);
+                if (!Pipe)
+                {
+                    return false;
+                }
+                UFGPipeConnectionComponentBase* Far =
+                    (Pipe->GetPipeConnection0() == Near) ? Pipe->GetPipeConnection1() : Pipe->GetPipeConnection0();
+                Near = Far ? Far->GetConnection() : nullptr;
+            }
+            return false;
+        };
+
+        // True if `Distributor` has a backbone connector facing DirAxis whose chain genuinely
+        // continues to another distributor/junction that way (not merely an external feed).
+        auto BackboneConsumedTowardDir = [&](AFGBuildable* Distributor) -> bool
+        {
+            if (!IsValid(Distributor))
+            {
+                return false;
+            }
+            const FVector Center = Distributor->GetActorLocation();
+
+            // Belt distributors (splitters / mergers)
+            TArray<UFGFactoryConnectionComponent*> BeltConns;
+            Distributor->GetComponents<UFGFactoryConnectionComponent>(BeltConns);
+            for (UFGFactoryConnectionComponent* Conn : BeltConns)
+            {
+                if (!Conn || !Conn->IsConnected())
+                {
+                    continue;
+                }
+                const FVector Facing = (Conn->GetComponentLocation() - Center).GetSafeNormal();
+                if (FVector::DotProduct(Facing, DirAxis) > 0.5f && BeltLeadsToDistributor(Conn))
+                {
+                    return true;
+                }
+            }
+
+            // Pipe junctions
+            TArray<UFGPipeConnectionComponentBase*> PipeConns;
+            Distributor->GetComponents<UFGPipeConnectionComponentBase>(PipeConns);
+            for (UFGPipeConnectionComponentBase* Conn : PipeConns)
+            {
+                if (!Conn || !Conn->IsConnected())
+                {
+                    continue;
+                }
+                const FVector Facing = (Conn->GetComponentLocation() - Center).GetSafeNormal();
+                if (FVector::DotProduct(Facing, DirAxis) > 0.5f && PipeLeadsToJunction(Conn))
+                {
+                    return true;
+                }
+            }
+            return false;
+        };
+
+        auto AnyBeltChainConsumed = [&](const TArray<FSFConnectionChainNode>& Chains) -> bool
+        {
+            for (const FSFConnectionChainNode& Chain : Chains)
+            {
+                if (BackboneConsumedTowardDir(Chain.Distributor.Get()))
+                {
+                    return true;
+                }
+            }
+            return false;
+        };
+        auto AnyPipeChainConsumed = [&](const TArray<FSFPipeConnectionChainNode>& Chains) -> bool
+        {
+            for (const FSFPipeConnectionChainNode& Chain : Chains)
+            {
+                if (BackboneConsumedTowardDir(Chain.Junction.Get()))
+                {
+                    return true;
+                }
+            }
+            return false;
+        };
+
+        if (AnyBeltChainConsumed(Topology.InputChains) ||
+            AnyBeltChainConsumed(Topology.OutputChains) ||
+            AnyPipeChainConsumed(Topology.PipeInputChains) ||
+            AnyPipeChainConsumed(Topology.PipeOutputChains))
+        {
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log,
+                TEXT(" EXTEND: Direction %s disqualified - manifold backbone already wired that way (chain consumed)"),
+                Direction == ESFExtendDirection::Right ? TEXT("Right") : TEXT("Left"));
+            return false;
+        }
+    }
+
+    // ========================================================================
+    // (2) Foreign-collision backstop  (tight)
+    // ------------------------------------------------------------------------
+    // Extend disables vanilla clearance checks (ASFFactoryHologram::CheckValidPlacement
+    // skips Super during Extend), so without this nothing stops a clone spawning inside
+    // an unrelated building. Keep it deliberately tight: real building size, probing only
+    // the actual placement cell, oriented to the building, and ignoring every actor that
+    // belongs to the source manifold. Only a genuine machine (AFGBuildableFactory) overlap
+    // blocks - foundations, belts, splitters and poles do not.
+    // ========================================================================
+    FVector BuildingSize;
     if (USFBuildableSizeRegistry::HasProfile(SourceBuilding->GetClass()))
     {
-        FSFBuildableSizeProfile Profile = USFBuildableSizeRegistry::GetProfile(SourceBuilding->GetClass());
-        BuildingSize = Profile.DefaultSize;
+        BuildingSize = USFBuildableSizeRegistry::GetProfile(SourceBuilding->GetClass()).DefaultSize;
     }
-
-    // Calculate target position for this direction
-    FVector LocalOffset = FVector::ZeroVector;
-    switch (Direction)
+    else
     {
-    case ESFExtendDirection::Right:
-        LocalOffset = FVector(BuildingSize.X, 0.0f, 0.0f);
-        break;
-    case ESFExtendDirection::Left:
-        LocalOffset = FVector(-BuildingSize.X, 0.0f, 0.0f);
-        break;
+        // Real bounds instead of an oversized fixed default (avoids over-blocking).
+        FVector BoundsOrigin, BoxExtent;
+        SourceBuilding->GetActorBounds(false, BoundsOrigin, BoxExtent);
+        BuildingSize = BoxExtent * 2.0f;
     }
 
-    FRotator BuildingRotation = SourceBuilding->GetActorRotation();
-    FVector WorldOffset = BuildingRotation.RotateVector(LocalOffset);
-    FVector TargetCenter = SourceBuilding->GetActorLocation() + WorldOffset;
-
-    // Use a box overlap to check if there's a building at the target position
-    // Use slightly smaller box to avoid false positives from adjacent buildings
-    FVector HalfExtent = BuildingSize * 0.4f; // 80% of building size, centered
+    const FVector TargetCenter = SourceBuilding->GetActorLocation() + DirAxis * BuildingSize.X;
+    const FVector HalfExtent = BuildingSize * 0.45f; // tight: stays within the next cell
 
     TArray<FOverlapResult> Overlaps;
     FCollisionQueryParams QueryParams;
     QueryParams.AddIgnoredActor(SourceBuilding);
 
-    // Check for factory buildings at target position
-    bool bHasOverlap = World->OverlapMultiByChannel(
+    // Ignore the source manifold's own parts so the backstop only catches FOREIGN obstructions.
+    if (Topology.bIsValid)
+    {
+        auto IgnoreActor = [&](AActor* A) { if (A) { QueryParams.AddIgnoredActor(A); } };
+        auto IgnoreBeltChains = [&](const TArray<FSFConnectionChainNode>& Chains)
+        {
+            for (const FSFConnectionChainNode& C : Chains)
+            {
+                IgnoreActor(C.Distributor.Get());
+                for (const auto& Conv : C.Conveyors)    { IgnoreActor(Conv.Get()); }
+                for (const auto& Pole : C.SupportPoles) { IgnoreActor(Pole.Get()); }
+                for (const auto& Pass : C.Passthroughs) { IgnoreActor(Pass.Get()); }
+            }
+        };
+        auto IgnorePipeChains = [&](const TArray<FSFPipeConnectionChainNode>& Chains)
+        {
+            for (const FSFPipeConnectionChainNode& C : Chains)
+            {
+                IgnoreActor(C.Junction.Get());
+                for (const auto& Pipe : C.Pipelines)     { IgnoreActor(Pipe.Get()); }
+                for (const auto& Pole : C.SupportPoles)  { IgnoreActor(Pole.Get()); }
+                for (const auto& Pass : C.Passthroughs)  { IgnoreActor(Pass.Get()); }
+                for (const auto& Att : C.PipeAttachments){ IgnoreActor(Att.Get()); }
+            }
+        };
+        IgnoreBeltChains(Topology.InputChains);
+        IgnoreBeltChains(Topology.OutputChains);
+        IgnorePipeChains(Topology.PipeInputChains);
+        IgnorePipeChains(Topology.PipeOutputChains);
+    }
+
+    const bool bHasOverlap = World->OverlapMultiByChannel(
         Overlaps,
         TargetCenter,
-        FQuat::Identity,
-        ECC_WorldStatic, // Use static channel to find buildings
+        BuildingRotation.Quaternion(),
+        ECC_WorldStatic,
         FCollisionShape::MakeBox(HalfExtent),
-        QueryParams
-    );
+        QueryParams);
 
     if (bHasOverlap)
     {
-        // Check if any overlap is a factory building (not just terrain/foundations)
         for (const FOverlapResult& Overlap : Overlaps)
         {
-            if (AActor* HitActor = Overlap.GetActor())
+            if (AFGBuildableFactory* Factory = Cast<AFGBuildableFactory>(Overlap.GetActor()))
             {
-                if (AFGBuildableFactory* Factory = Cast<AFGBuildableFactory>(HitActor))
-                {
-                    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT(" EXTEND: Direction %s blocked by %s"),
-                        Direction == ESFExtendDirection::Right ? TEXT("Right") : TEXT("Left"),
-                        *Factory->GetName());
-                    return false;
-                }
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log,
+                    TEXT(" EXTEND: Direction %s blocked by foreign building %s (collision backstop)"),
+                    Direction == ESFExtendDirection::Right ? TEXT("Right") : TEXT("Left"),
+                    *Factory->GetName());
+                return false;
             }
         }
     }
