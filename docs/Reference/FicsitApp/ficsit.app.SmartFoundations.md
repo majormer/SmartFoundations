@@ -1,6 +1,6 @@
 # <img src="https://github.com/majormer/SmartFoundations/blob/main/images/Smart-Logo.png?raw=true" width="150" alt="Smart! Logo"> Smart! Mod
 
-![Status](https://img.shields.io/badge/Status-Released-brightgreen) ![Version](https://img.shields.io/badge/Version-30.1.0-blue) ![Engine](https://img.shields.io/badge/Engine-UE%205.3-blue) ![SML](https://img.shields.io/badge/SML-3.11.x-blue) ![Multiplayer](https://img.shields.io/badge/Multiplayer-Testing-orange) ![AI Assisted Development Used](https://img.shields.io/badge/AI%20Assisted%20Development%20Used-Disclosure%20Below-blue)
+![Status](https://img.shields.io/badge/Status-Released-brightgreen) ![Version](https://img.shields.io/badge/Version-31.0.0-blue) ![Satisfactory](https://img.shields.io/badge/Satisfactory-1.2-blue) ![Engine](https://img.shields.io/badge/Engine-UE%205.6-blue) ![SML](https://img.shields.io/badge/SML-3.11.x-blue) ![Multiplayer](https://img.shields.io/badge/Multiplayer-Testing-orange) ![AI Assisted Development Used](https://img.shields.io/badge/AI%20Assisted%20Development%20Used-Disclosure%20Below-blue)
 
 > **Multiplayer note:** Smart! is primarily developed for single-player. Multiplayer is under active testing with partial success, but is not currently considered fully supported.
 
@@ -101,17 +101,21 @@ See [LICENSE.md](https://github.com/majormer/SmartFoundations/blob/main/LICENSE.
 
 ---
 
-## 📰 What's New in v30.1.0
+## 📰 What's New in v31.0.0
 
-**Current Release:** v30.1.0 — the final Smart! release for Satisfactory 1.1. See the [full changelog](https://github.com/majormer/SmartFoundations/blob/main/CHANGELOG.md) for all release details.
+**Current Release:** v31.0.0 — the first Smart! release for Satisfactory **1.2**. See the [full changelog](https://github.com/majormer/SmartFoundations/blob/main/CHANGELOG.md) for all release details.
 
-> **Heads up about Satisfactory 1.2:** v30.1.0 is the last Smart! build for Satisfactory **1.1**, kept available for players who stay on 1.1. A separate Smart! release for Satisfactory **1.2** is in progress and will be published after the game updates. This 1.1 build is marked compatible with 1.1 only, so the mod manager will not offer it to a 1.2 game.
+> **On Satisfactory 1.1?** Stay on **v30.1.0**, the final Smart! build for 1.1. This 31.0.0 build targets Satisfactory **1.2** and newer, so the mod manager will not offer it to a 1.1 game. Updating straight from a 1.1 build (30.0.0)? 31.0.0 also rolls up every fix from 30.1.0, so you get everything in one step.
 
-### Highlights in v30.1.0
+> **One-time settings reset:** the Smart! settings menu was reorganized for this release, so your saved Smart! settings reset to their defaults the first time you load 31.0.0. Set them once and they'll stick from then on.
 
-- **All 21 supported languages now render correctly** — Arabic, Persian, and Thai are re-enabled and display properly, and in-game building names now match Satisfactory's own terms across translated languages.
-- **Clearer Extend affordability** — the whole Extend preview (factory, belts, pipes, lifts, distributors, poles, and wires) now turns red together when you cannot afford the placement, and the cost check counts materials in your Dimensional Depot.
-- **UI and performance polish** — Smart Panel buttons and dropdowns fit correctly in every language, and grid scaling is smoother and more stable on large layouts.
+### Highlights in v31.0.0
+
+- **Rebuilt for Satisfactory 1.2** — Smart! was migrated to the engine (UE 5.6) and the "Game Feature" plugin model that 1.2 uses. Every Smart! feature carries over with no intended gameplay change: grid building, Extend and Scaled Extend, belt/pipe/power auto-connect, Smart Upgrade, Restore presets, the Smart Panel, and all keybinds.
+- **Pipeline T-Junction support** — Satisfactory 1.2's new 3-way Pipeline T-Junction now works everywhere Smart! handles pipes (scaling, Extend, Scaled Extend, pipe auto-connect, and Restore presets), the same as the existing 4-way junction.
+- **Extend can daisy-chain building power** — once you research **Upgraded Power Connectors**, Extending a row of buildings wires their power directly building-to-building along the lane (one chain per row) instead of needing a power pole to each one. It only makes connections you could make by hand.
+- **More reliable stacked-pole belt auto-connect** — auto-connected belts between stackable conveyor poles, including across stacked levels and long runs, now carry items and stay correct after saving and reloading.
+- **Settings menu reorganized into labeled sections**, with a plain-language tooltip on every option.
 
 ### Also in version 30: Smart Restore Enhanced
 
@@ -546,7 +550,7 @@ Start with the **wiki** for how-to guides, then the Discord for support, example
 **Bug reports use structured issue forms** — pick the type that fits: bug, crash, compatibility, Blueprint Designer, feature request, or a Satisfactory 1.2 report. (Blank issues are disabled; the form walks you through it.) Each form prompts for the details below, so it helps to have them ready:
 
 - Smart! version and SML version.
-- Satisfactory version and branch (for example, 1.1 stable, CL 463028).
+- Satisfactory version and branch (for example, 1.2 stable, CL 491125).
 - Session type (single-player or multiplayer) and save type.
 - Steps to reproduce, what you expected, and what actually happened.
 - Logs — `FactoryGame.log`, plus the crash-reporter text for crashes.
