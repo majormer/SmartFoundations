@@ -51,7 +51,7 @@ const FSFUpgradeFamilyResult* FSFUpgradeAuditResult::GetFamilyResult(ESFUpgradeF
 void USFUpgradeAuditService::Initialize(USFSubsystem* InSubsystem)
 {
 	Subsystem = InSubsystem;
-	UE_LOG(LogSmartUpgrade, Log, TEXT("USFUpgradeAuditService: Initialized"));
+	UE_LOG(LogSmartUpgrade, Verbose, TEXT("USFUpgradeAuditService: Initialized"));
 }
 
 void USFUpgradeAuditService::Cleanup()
@@ -59,7 +59,7 @@ void USFUpgradeAuditService::Cleanup()
 	CancelAudit();
 	ClearResults();
 	Subsystem = nullptr;
-	UE_LOG(LogSmartUpgrade, Log, TEXT("USFUpgradeAuditService: Cleaned up"));
+	UE_LOG(LogSmartUpgrade, Verbose, TEXT("USFUpgradeAuditService: Cleaned up"));
 }
 
 void USFUpgradeAuditService::Tick(float DeltaTime)
@@ -108,7 +108,7 @@ bool USFUpgradeAuditService::StartAudit(const FSFUpgradeAuditParams& Params)
 
 	if (PendingBuildables.Num() == 0)
 	{
-		UE_LOG(LogSmartUpgrade, Log, TEXT("USFUpgradeAuditService: No buildables to scan"));
+		UE_LOG(LogSmartUpgrade, Verbose, TEXT("USFUpgradeAuditService: No buildables to scan"));
 		WorkingResult.bSuccess = true;
 		WorkingResult.bInProgress = false;
 		WorkingResult.CompletionTime = FDateTime::Now();
@@ -120,7 +120,7 @@ bool USFUpgradeAuditService::StartAudit(const FSFUpgradeAuditParams& Params)
 	bAuditInProgress = true;
 	CurrentScanIndex = 0;
 
-	UE_LOG(LogSmartUpgrade, Log, TEXT("USFUpgradeAuditService: Started audit - %d buildables to scan (Radius: %.0f)"),
+	UE_LOG(LogSmartUpgrade, Verbose, TEXT("USFUpgradeAuditService: Started audit - %d buildables to scan (Radius: %.0f)"),
 		PendingBuildables.Num(), Params.Radius);
 
 	return true;
@@ -157,7 +157,7 @@ void USFUpgradeAuditService::CancelAudit()
 	PendingBuildables.Empty();
 	CurrentScanIndex = 0;
 	
-	UE_LOG(LogSmartUpgrade, Log, TEXT("USFUpgradeAuditService: Audit canceled"));
+	UE_LOG(LogSmartUpgrade, Verbose, TEXT("USFUpgradeAuditService: Audit canceled"));
 }
 
 void USFUpgradeAuditService::ClearResults()
@@ -430,7 +430,7 @@ void USFUpgradeAuditService::GatherBuildablesToScan()
 		PendingBuildables.Add(Buildable);
 	}
 
-	UE_LOG(LogSmartUpgrade, Log, TEXT("USFUpgradeAuditService: Gathered %d buildables to scan"), PendingBuildables.Num());
+	UE_LOG(LogSmartUpgrade, Verbose, TEXT("USFUpgradeAuditService: Gathered %d buildables to scan"), PendingBuildables.Num());
 }
 
 void USFUpgradeAuditService::ProcessScanBatch()
@@ -485,7 +485,7 @@ void USFUpgradeAuditService::ProcessScanBatch()
 
 void USFUpgradeAuditService::InjectAuditResult(const FSFUpgradeAuditResult& Result)
 {
-	UE_LOG(LogSmartUpgrade, Log, TEXT("USFUpgradeAuditService: Injected audit result from server - Scanned: %d"), Result.TotalScanned);
+	UE_LOG(LogSmartUpgrade, Verbose, TEXT("USFUpgradeAuditService: Injected audit result from server - Scanned: %d"), Result.TotalScanned);
 	
 	// Stop any local scan if one is running
 	if (bAuditInProgress)
@@ -532,14 +532,14 @@ void USFUpgradeAuditService::FinalizeAudit()
 	// Calculate scan duration
 	FTimespan Duration = WorkingResult.CompletionTime - WorkingResult.StartTime;
 
-	UE_LOG(LogSmartUpgrade, Log, 
+	UE_LOG(LogSmartUpgrade, Verbose,
 		TEXT("USFUpgradeAuditService: Audit complete - Scanned: %d, Upgradeable: %d, Duration: %.2fs"),
 		LastResult.TotalScanned, LastResult.TotalUpgradeable, Duration.GetTotalSeconds());
 
 	// Log family breakdown
 	for (const FSFUpgradeFamilyResult& FamilyResult : LastResult.FamilyResults)
 	{
-		UE_LOG(LogSmartUpgrade, Log, TEXT("  %s: %d total, %d upgradeable"),
+		UE_LOG(LogSmartUpgrade, Verbose, TEXT("  %s: %d total, %d upgradeable"),
 			*FamilyResult.GetFamilyDisplayName(), FamilyResult.TotalCount, FamilyResult.UpgradeableCount);
 	}
 
@@ -561,7 +561,7 @@ void USFUpgradeAuditService::FinalizeAudit()
 					if (RCO->GetOuter() == PC)
 					{
 						RCO->Client_ReceiveAuditResult(LastResult);
-						UE_LOG(LogSmartUpgrade, Log, TEXT("USFUpgradeAuditService: Sent audit result to client via RCO"));
+						UE_LOG(LogSmartUpgrade, Verbose, TEXT("USFUpgradeAuditService: Sent audit result to client via RCO"));
 						break;
 					}
 				}

@@ -46,7 +46,7 @@ void USFHintBarService::Initialize(USFSubsystem* InSubsystem)
 				KeyBindingProperty = *It;
 			}
 		}
-		UE_LOG(LogSmartUI, Log, TEXT("HintBarService: Struct loaded (Action=%s, KeyBinding=%s)"),
+		UE_LOG(LogSmartUI, Verbose, TEXT("HintBarService: Struct loaded (Action=%s, KeyBinding=%s)"),
 			ActionProperty ? *ActionProperty->GetName() : TEXT("NULL"),
 			KeyBindingProperty ? *KeyBindingProperty->GetName() : TEXT("NULL"));
 	}
@@ -70,7 +70,7 @@ void USFHintBarService::Shutdown()
 	}
 	CachedBuildModeWidget.Reset();
 	Subsystem.Reset();
-	UE_LOG(LogSmartUI, Log, TEXT("HintBarService: Shutdown"));
+	UE_LOG(LogSmartUI, Verbose, TEXT("HintBarService: Shutdown"));
 }
 
 void USFHintBarService::LoadInputActions()
@@ -104,7 +104,7 @@ void USFHintBarService::LoadInputActions()
 	if (IA_ToggleSettingsForm) ++Loaded;
 
 	bActionsLoaded = (Loaded > 0);
-	UE_LOG(LogSmartUI, Log, TEXT("HintBarService: Loaded %d/9 input actions, MappingContext=%s"),
+	UE_LOG(LogSmartUI, Verbose, TEXT("HintBarService: Loaded %d/9 input actions, MappingContext=%s"),
 		Loaded, SmartMappingContext ? TEXT("OK") : TEXT("MISSING"));
 }
 
@@ -249,7 +249,7 @@ UUserWidget* USFHintBarService::FindWidgetBuildMode() const
 	UUserWidget* Result = VisibleCandidate ? VisibleCandidate : (PopulatedCandidate ? PopulatedCandidate : AnyCandidate);
 	if (Result)
 	{
-		UE_LOG(LogSmartUI, Log, TEXT("HintBarService: Selected %s (visible=%d)"),
+		UE_LOG(LogSmartUI, Verbose, TEXT("HintBarService: Selected %s (visible=%d)"),
 			*Result->GetName(), Result->IsVisible());
 	}
 	return Result;
@@ -276,7 +276,7 @@ void USFHintBarService::InjectSmartHints()
 			UE_LOG(LogSmartUI, Warning, TEXT("HintBarService: SetKeybindingHints function not found on Widget_BuildMode"));
 			return;
 		}
-		UE_LOG(LogSmartUI, Log, TEXT("HintBarService: Found Widget_BuildMode (%s) with SetKeybindingHints"),
+		UE_LOG(LogSmartUI, Verbose, TEXT("HintBarService: Found Widget_BuildMode (%s) with SetKeybindingHints"),
 			*CachedBuildModeWidget->GetName());
 	}
 

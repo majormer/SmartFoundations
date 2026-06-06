@@ -25,11 +25,11 @@ DEFINE_LOG_CATEGORY(LogSmartArrows);
 void FSmartFoundationsModule::StartupModule()
 {
 	// This code will execute after your module is loaded into memory; the exact timing is specified in the .uplugin file per-module
-	UE_LOG(LogSmartFoundations, Warning, TEXT("SmartFoundations module started - Phase 1: Core Infrastructure"));
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("SmartFoundations module started - Phase 1: Core Infrastructure"));
 	
 	// Initialize centralized logging system
 	FSFLogRegistry::LoadFromConfig();
-	UE_LOG(LogSmartFoundations, Log, TEXT("✅ Logging registry initialized from Config/SmartFoundationsLogging.ini"));
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("✅ Logging registry initialized from Config/SmartFoundationsLogging.ini"));
 	
 	// Unregister any existing console commands (handles hot reload/stale state)
 	IConsoleManager::Get().UnregisterConsoleObject(TEXT("SF.Log.List"));
@@ -58,7 +58,7 @@ void FSmartFoundationsModule::StartupModule()
 		ECVF_Default
 	);
 	
-	UE_LOG(LogSmartFoundations, Log, TEXT("✅ Logging console commands registered (SF.Log.List, SF.Log.SetVerbosity, SF.Log.ResetToConfig)"));
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("✅ Logging console commands registered (SF.Log.List, SF.Log.SetVerbosity, SF.Log.ResetToConfig)"));
 	
 	// Initialize Smart! Enhanced Input system using SML 3.11.x approach
 	USFInputRegistry::InitializeSmartInputSystem();
@@ -71,7 +71,7 @@ void FSmartFoundationsModule::StartupModule()
 			if (URemoteCallObjectRegistry* RCORegistry = GameInstance->GetSubsystem<URemoteCallObjectRegistry>())
 			{
 				RCORegistry->RegisterRemoteCallObject(USFRCO::StaticClass());
-				UE_LOG(LogSmartFoundations, Log, TEXT("✅ USFRCO registered with SML RemoteCallObjectRegistry"));
+				UE_LOG(LogSmartFoundations, Verbose, TEXT("✅ USFRCO registered with SML RemoteCallObjectRegistry"));
 			}
 		}
 	}
@@ -89,7 +89,7 @@ void FSmartFoundationsModule::ShutdownModule()
 	IConsoleManager::Get().UnregisterConsoleObject(TEXT("SF.Log.SetVerbosity"));
 	IConsoleManager::Get().UnregisterConsoleObject(TEXT("SF.Log.ResetToConfig"));
 	
-	UE_LOG(LogSmartFoundations, Warning, TEXT("SmartFoundations module shutdown"));
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("SmartFoundations module shutdown"));
 }
 
 // ============================================================================
@@ -98,9 +98,9 @@ void FSmartFoundationsModule::ShutdownModule()
 
 void FSmartFoundationsModule::ConsoleCommand_ListLogCategories()
 {
-	UE_LOG(LogSmartFoundations, Log, TEXT("═══════════════════════════════════════════════════════════"));
-	UE_LOG(LogSmartFoundations, Log, TEXT("Smart! Logging Categories (Current Settings)"));
-	UE_LOG(LogSmartFoundations, Log, TEXT("═══════════════════════════════════════════════════════════"));
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("═══════════════════════════════════════════════════════════"));
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("Smart! Logging Categories (Current Settings)"));
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("═══════════════════════════════════════════════════════════"));
 	
 	TMap<FString, ESFLogVerbosity> Categories = FSFLogRegistry::GetAllCategoryLevels();
 	
@@ -125,25 +125,25 @@ void FSmartFoundationsModule::ConsoleCommand_ListLogCategories()
 			case ESFLogVerbosity::VeryVerbose: Indicator = TEXT("🔍"); break;
 		}
 		
-		UE_LOG(LogSmartFoundations, Log, TEXT("  %s %-25s : %s"), *Indicator, *CategoryName, *LevelName);
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("  %s %-25s : %s"), *Indicator, *CategoryName, *LevelName);
 	}
 	
-	UE_LOG(LogSmartFoundations, Log, TEXT("═══════════════════════════════════════════════════════════"));
-	UE_LOG(LogSmartFoundations, Log, TEXT("Use 'SF.Log.SetVerbosity <Category> <Level>' to change"));
-	UE_LOG(LogSmartFoundations, Log, TEXT("Levels: None | Critical | Normal | Verbose | VeryVerbose"));
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("═══════════════════════════════════════════════════════════"));
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("Use 'SF.Log.SetVerbosity <Category> <Level>' to change"));
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("Levels: None | Critical | Normal | Verbose | VeryVerbose"));
 }
 
 void FSmartFoundationsModule::ConsoleCommand_SetLogVerbosity(const TArray<FString>& Args)
 {
 	if (Args.Num() != 2)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("Usage: SF.Log.SetVerbosity <Category> <Verbosity>"));
-		UE_LOG(LogSmartFoundations, Warning, TEXT("Example: SF.Log.SetVerbosity InputEvents VeryVerbose"));
-		UE_LOG(LogSmartFoundations, Warning, TEXT(""));
-		UE_LOG(LogSmartFoundations, Warning, TEXT("Available verbosity levels:"));
-		UE_LOG(LogSmartFoundations, Warning, TEXT("  None, Critical, Normal, Verbose, VeryVerbose"));
-		UE_LOG(LogSmartFoundations, Warning, TEXT(""));
-		UE_LOG(LogSmartFoundations, Warning, TEXT("Use 'SF.Log.List' to see all categories"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("Usage: SF.Log.SetVerbosity <Category> <Verbosity>"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("Example: SF.Log.SetVerbosity InputEvents VeryVerbose"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT(""));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("Available verbosity levels:"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("  None, Critical, Normal, Verbose, VeryVerbose"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT(""));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("Use 'SF.Log.List' to see all categories"));
 		return;
 	}
 	
@@ -171,20 +171,20 @@ void FSmartFoundationsModule::ConsoleCommand_SetLogVerbosity(const TArray<FStrin
 	// Apply change
 	FSFLogRegistry::SetCategoryVerbosity(Category, Verbosity);
 	
-	UE_LOG(LogSmartFoundations, Log, TEXT("✅ Set %s = %s"), *CategoryName, *VerbosityName);
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("✅ Set %s = %s"), *CategoryName, *VerbosityName);
 	
 	// Warn if enabling very verbose logging
 	if (Verbosity == ESFLogVerbosity::VeryVerbose)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("⚠️ VeryVerbose can generate thousands of log lines - use sparingly!"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("⚠️ VeryVerbose can generate thousands of log lines - use sparingly!"));
 	}
 }
 
 void FSmartFoundationsModule::ConsoleCommand_ResetLogConfig()
 {
 	FSFLogRegistry::LoadFromConfig();
-	UE_LOG(LogSmartFoundations, Log, TEXT("✅ Logging configuration reloaded from Config/SmartFoundationsLogging.ini"));
-	UE_LOG(LogSmartFoundations, Log, TEXT("Use 'SF.Log.List' to see current settings"));
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("✅ Logging configuration reloaded from Config/SmartFoundationsLogging.ini"));
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("Use 'SF.Log.List' to see current settings"));
 }
 	
 IMPLEMENT_MODULE(FSmartFoundationsModule, SmartFoundations)

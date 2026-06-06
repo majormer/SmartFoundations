@@ -49,7 +49,7 @@ void ASFConveyorBeltHologram::BeginPlay()
         mValidPlacementMaterial = LoadObject<UMaterialInstance>(nullptr, ValidMaterialPath);
         if (mValidPlacementMaterial)
         {
-            UE_LOG(LogSmartHologram, Log, TEXT("🎨 Loaded mValidPlacementMaterial: %s"), *mValidPlacementMaterial->GetName());
+            UE_LOG(LogSmartHologram, Verbose, TEXT("🎨 Loaded mValidPlacementMaterial: %s"), *mValidPlacementMaterial->GetName());
         }
         else
         {
@@ -206,7 +206,7 @@ void ASFConveyorBeltHologram::CheckValidPlacement()
         // Log detailed disqualifier info for debugging
         if (Disqualifiers.Num() > 0)
         {
-            UE_LOG(LogSmartHologram, Log, TEXT("🚫 VANILLA DISQUALIFIERS [%s]: %s (Real: %d)"), 
+            UE_LOG(LogSmartHologram, Verbose, TEXT("🚫 VANILLA DISQUALIFIERS [%s]: %s (Real: %d)"),
                 *GetName(), *DisqualifierNames, RealDisqualifierCount);
         }
 
@@ -294,7 +294,7 @@ void ASFConveyorBeltHologram::PostHologramPlacement(const FHitResult& hitResult,
         // before ConfigureComponents and chain registration run.
         if (Tags.Contains(FName(TEXT("SF_LaneSegment"))))
         {
-            UE_LOG(LogSmartHologram, Log, TEXT("BELT PostHologramPlacement: Lane segment %s - skipping vanilla post-placement (Smart-managed route)"), *GetName());
+            UE_LOG(LogSmartHologram, Verbose, TEXT("BELT PostHologramPlacement: Lane segment %s - skipping vanilla post-placement (Smart-managed route)"), *GetName());
             return;
         }
         
@@ -630,7 +630,7 @@ AActor* ASFConveyorBeltHologram::Construct(TArray<AActor*>& out_children, FNetCo
     }
     
     // For Auto-Connect belts: Build and then wire connections
-    UE_LOG(LogSmartHologram, Log, TEXT("🔧 AUTO-CONNECT: Belt hologram %s Construct() called - building belt"), 
+    UE_LOG(LogSmartHologram, Verbose, TEXT("🔧 AUTO-CONNECT: Belt hologram %s Construct() called - building belt"),
         *GetName());
     
     // Build the belt
@@ -687,7 +687,7 @@ AActor* ASFConveyorBeltHologram::Construct(TArray<AActor*>& out_children, FNetCo
                 if (BestMatch)
                 {
                     BeltConn0->SetConnection(BestMatch);
-                    UE_LOG(LogSmartHologram, Log, TEXT("🔧 AUTO-CONNECT WIRING: %s.Conn0 → %s.%s (dist=%.1f)"),
+                    UE_LOG(LogSmartHologram, Verbose, TEXT("🔧 AUTO-CONNECT WIRING: %s.Conn0 → %s.%s (dist=%.1f)"),
                         *BuiltBelt->GetName(), *BestMatch->GetOwner()->GetName(), *BestMatch->GetName(), BestDist);
                 }
             }
@@ -727,7 +727,7 @@ AActor* ASFConveyorBeltHologram::Construct(TArray<AActor*>& out_children, FNetCo
                 if (BestMatch)
                 {
                     BeltConn1->SetConnection(BestMatch);
-                    UE_LOG(LogSmartHologram, Log, TEXT("🔧 AUTO-CONNECT WIRING: %s.Conn1 → %s.%s (dist=%.1f)"),
+                    UE_LOG(LogSmartHologram, Verbose, TEXT("🔧 AUTO-CONNECT WIRING: %s.Conn1 → %s.%s (dist=%.1f)"),
                         *BuiltBelt->GetName(), *BestMatch->GetOwner()->GetName(), *BestMatch->GetName(), BestDist);
                 }
             }
@@ -892,7 +892,7 @@ TArray<FItemAmount> ASFConveyorBeltHologram::GetCost(bool includeChildren) const
 
 void ASFConveyorBeltHologram::TriggerMeshGeneration()
 {
-    UE_LOG(LogSmartHologram, Log, TEXT("🎯 BELT TriggerMeshGeneration CALLED on %s - mSplineData has %d points"), *GetName(), mSplineData.Num());
+    UE_LOG(LogSmartHologram, Verbose, TEXT("🎯 BELT TriggerMeshGeneration CALLED on %s - mSplineData has %d points"), *GetName(), mSplineData.Num());
     
     if (!mSplineComponent)
     {
@@ -903,7 +903,7 @@ void ASFConveyorBeltHologram::TriggerMeshGeneration()
     // Log ALL mSplineData points for debugging
     for (int32 i = 0; i < mSplineData.Num(); i++)
     {
-        UE_LOG(LogSmartHologram, Log, TEXT("🎯 BELT mSplineData[%d]: Loc=%s"), i, *mSplineData[i].Location.ToString());
+        UE_LOG(LogSmartHologram, Verbose, TEXT("🎯 BELT mSplineData[%d]: Loc=%s"), i, *mSplineData[i].Location.ToString());
     }
     
     // Push mSplineData into spline component
@@ -916,7 +916,7 @@ void ASFConveyorBeltHologram::TriggerMeshGeneration()
     const float SplineLength = mSplineComponent->GetSplineLength();
     
     // DIAGNOSTIC: Log actual spline component points after UpdateSplineComponent
-    UE_LOG(LogSmartHologram, Log, TEXT("🎯 BELT After UpdateSplineComponent: %d points, %.1f cm length"), PointCount, SplineLength);
+    UE_LOG(LogSmartHologram, Verbose, TEXT("🎯 BELT After UpdateSplineComponent: %d points, %.1f cm length"), PointCount, SplineLength);
     if (PointCount > 1)
     {
         // Compare both methods to see if they return different values
@@ -928,9 +928,9 @@ void ASFConveyorBeltHologram::TriggerMeshGeneration()
         mSplineComponent->GetLocationAndTangentAtSplinePoint(0, FirstPos, FirstTan, ESplineCoordinateSpace::Local);
         mSplineComponent->GetLocationAndTangentAtSplinePoint(1, SecondPos, SecondTan, ESplineCoordinateSpace::Local);
         
-        UE_LOG(LogSmartHologram, Log, TEXT("🎯 BELT GetLocationAtSplinePoint: [0]=%s, [1]=%s, [last]=%s"), 
+        UE_LOG(LogSmartHologram, Verbose, TEXT("🎯 BELT GetLocationAtSplinePoint: [0]=%s, [1]=%s, [last]=%s"),
             *FirstPoint.ToString(), *SecondPoint.ToString(), *LastPoint.ToString());
-        UE_LOG(LogSmartHologram, Log, TEXT("🎯 BELT GetLocationAndTangentAtSplinePoint: [0]=%s, [1]=%s"), 
+        UE_LOG(LogSmartHologram, Verbose, TEXT("🎯 BELT GetLocationAndTangentAtSplinePoint: [0]=%s, [1]=%s"),
             *FirstPos.ToString(), *SecondPos.ToString());
     }
     UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🎯 BELT TriggerMeshGeneration: %d points, %.1f cm"), PointCount, SplineLength);
@@ -945,7 +945,7 @@ void ASFConveyorBeltHologram::TriggerMeshGeneration()
     TArray<USplineMeshComponent*> MeshComps;
     GetComponents<USplineMeshComponent>(MeshComps);
     
-    UE_LOG(LogSmartHologram, Log, TEXT("🎯 BELT: Initial mesh components: %d"), MeshComps.Num());
+    UE_LOG(LogSmartHologram, Verbose, TEXT("🎯 BELT: Initial mesh components: %d"), MeshComps.Num());
     
     // CRITICAL FIX: Destroy existing mesh components from base class - they don't update properly
     // The base class creates default meshes that don't respond to SetStartAndEnd() correctly
@@ -959,7 +959,7 @@ void ASFConveyorBeltHologram::TriggerMeshGeneration()
     }
     MeshComps.Empty();
     
-    UE_LOG(LogSmartHologram, Log, TEXT("🎯 BELT: Destroyed old meshes, will create fresh ones"));
+    UE_LOG(LogSmartHologram, Verbose, TEXT("🎯 BELT: Destroyed old meshes, will create fresh ones"));
     
     // Get belt mesh and mesh length from build class CDO - this ensures they match the actual tier
     UStaticMesh* BeltMesh = nullptr;
@@ -971,7 +971,7 @@ void ASFConveyorBeltHologram::TriggerMeshGeneration()
         {
             BeltMesh = BeltCDO->GetSplineMesh();
             MeshLength = BeltCDO->GetMeshLength();
-            UE_LOG(LogSmartHologram, Log, TEXT("🎯 BELT TriggerMeshGeneration: Got from CDO: Mesh=%s, MeshLength=%.1f"), 
+            UE_LOG(LogSmartHologram, Verbose, TEXT("🎯 BELT TriggerMeshGeneration: Got from CDO: Mesh=%s, MeshLength=%.1f"),
                 BeltMesh ? *BeltMesh->GetName() : TEXT("NULL"),
                 MeshLength);
         }
@@ -1003,14 +1003,14 @@ void ASFConveyorBeltHologram::TriggerMeshGeneration()
         MeshLength = 200.0f; // Default belt mesh length
     }
     
-    UE_LOG(LogSmartHologram, Log, TEXT("🎯 BELT TriggerMeshGeneration: Mesh=%s, MeshLength=%.1f cm, SplineLength=%.1f cm"), 
+    UE_LOG(LogSmartHologram, Verbose, TEXT("🎯 BELT TriggerMeshGeneration: Mesh=%s, MeshLength=%.1f cm, SplineLength=%.1f cm"),
         *BeltMesh->GetName(), MeshLength, SplineLength);
     
     // CRITICAL FIX: Calculate segments based on spline length / mesh length (like vanilla)
     // NOT based on spline point count - that causes severe stretching
     const int32 RequiredSegments = FMath::Max(1, FMath::CeilToInt(SplineLength / MeshLength));
     
-    UE_LOG(LogSmartHologram, Log, TEXT("🎯 BELT TriggerMeshGeneration: Need %d segments (%.1f cm each) for %.1f cm spline"), 
+    UE_LOG(LogSmartHologram, Verbose, TEXT("🎯 BELT TriggerMeshGeneration: Need %d segments (%.1f cm each) for %.1f cm spline"),
         RequiredSegments, SplineLength / RequiredSegments, SplineLength);
     
     // Create mesh components
@@ -1078,13 +1078,13 @@ void ASFConveyorBeltHologram::TriggerMeshGeneration()
             
             if (SegmentIdx == 0)
             {
-                UE_LOG(LogSmartHologram, Log, TEXT("🎯 BELT Segment[0]: Start=%s End=%s (dist %.1f-%.1f)"), 
+                UE_LOG(LogSmartHologram, Verbose, TEXT("🎯 BELT Segment[0]: Start=%s End=%s (dist %.1f-%.1f)"),
                     *StartPos.ToString(), *EndPos.ToString(), StartDist, EndDist);
             }
         }
     }
     
-    UE_LOG(LogSmartHologram, Log, TEXT("🎯 BELT TriggerMeshGeneration: Created %d segments of %.1f cm each"), 
+    UE_LOG(LogSmartHologram, Verbose, TEXT("🎯 BELT TriggerMeshGeneration: Created %d segments of %.1f cm each"),
         MeshComps.Num(), SegmentLength);
     
     // Apply the current hologram material state to newly generated meshes.
@@ -1405,7 +1405,7 @@ void ASFConveyorBeltHologram::ConfigureActor(class AFGBuildable* inBuildable) co
         AFGBuildableConveyorBelt* Belt = Cast<AFGBuildableConveyorBelt>(inBuildable);
         if (Belt)
         {
-            UE_LOG(LogSmartHologram, Log, TEXT("🚧 STACKABLE BELT: Built %s (index %d) - wiring deferred to OnActorSpawned"),
+            UE_LOG(LogSmartHologram, Verbose, TEXT("🚧 STACKABLE BELT: Built %s (index %d) - wiring deferred to OnActorSpawned"),
                 *Belt->GetName(), HoloData->StackableBeltIndex);
         }
     }
@@ -1464,7 +1464,7 @@ void ASFConveyorBeltHologram::ConfigureComponents(AFGBuildable* inBuildable) con
     // and wire to them. This is similar to how stackable pipes work.
     if (HoloData->bIsStackableBelt)
     {
-        UE_LOG(LogSmartHologram, Log, TEXT("⛓️ STACKABLE BELT ConfigureComponents: %s - wiring to nearby pole connectors"),
+        UE_LOG(LogSmartHologram, Verbose, TEXT("⛓️ STACKABLE BELT ConfigureComponents: %s - wiring to nearby pole connectors"),
             *Conveyor->GetName());
 
         const float SearchRadius = 100.0f;  // 1m search radius for pole connectors
@@ -1511,7 +1511,7 @@ void ASFConveyorBeltHologram::ConfigureComponents(AFGBuildable* inBuildable) con
             {
                 Conn0->SetConnection(NearestConn);
                 bMadeConnection = true;
-                UE_LOG(LogSmartHologram, Log, TEXT("⛓️ STACKABLE BELT: ✅ Wired %s.Conn0 → %s.%s (dist=%.1f)"),
+                UE_LOG(LogSmartHologram, Verbose, TEXT("⛓️ STACKABLE BELT: ✅ Wired %s.Conn0 → %s.%s (dist=%.1f)"),
                     *Conveyor->GetName(), *NearestConn->GetOwner()->GetName(), *NearestConn->GetName(), NearestDist);
             }
         }
@@ -1558,7 +1558,7 @@ void ASFConveyorBeltHologram::ConfigureComponents(AFGBuildable* inBuildable) con
             {
                 Conn1->SetConnection(NearestConn);
                 bMadeConnection = true;
-                UE_LOG(LogSmartHologram, Log, TEXT("⛓️ STACKABLE BELT: ✅ Wired %s.Conn1 → %s.%s (dist=%.1f)"),
+                UE_LOG(LogSmartHologram, Verbose, TEXT("⛓️ STACKABLE BELT: ✅ Wired %s.Conn1 → %s.%s (dist=%.1f)"),
                     *Conveyor->GetName(), *NearestConn->GetOwner()->GetName(), *NearestConn->GetName(), NearestDist);
             }
         }
@@ -1568,7 +1568,7 @@ void ASFConveyorBeltHologram::ConfigureComponents(AFGBuildable* inBuildable) con
         // Calling AddConveyor during ConfigureComponents risks double-add:
         // vanilla's initialization may have already registered the belt,
         // causing chain mismatch → crash in TickFactoryActors.
-        UE_LOG(LogSmartHologram, Log, TEXT("⛓️ STACKABLE BELT: %s wiring complete (connections=%s) - chain creation deferred to Respline"),
+        UE_LOG(LogSmartHologram, Verbose, TEXT("⛓️ STACKABLE BELT: %s wiring complete (connections=%s) - chain creation deferred to Respline"),
             *Conveyor->GetName(), bMadeConnection ? TEXT("YES") : TEXT("NO"));
         
         // Early return for stackable belts - they don't use the clone ID system
@@ -1741,7 +1741,7 @@ void ASFConveyorBeltHologram::ConfigureComponents(AFGBuildable* inBuildable) con
                 
                 if (bIsStackableBelt)
                 {
-                    UE_LOG(LogSmartHologram, Log, TEXT("⛓️ BELT ConfigureComponents: %s - STACKABLE BELT - deferring AddConveyor until all connections made"),
+                    UE_LOG(LogSmartHologram, Verbose, TEXT("⛓️ BELT ConfigureComponents: %s - STACKABLE BELT - deferring AddConveyor until all connections made"),
                         *Conveyor->GetName());
                     // Don't call AddConveyor yet - SFSubsystem will call it after all belts are wired
                 }

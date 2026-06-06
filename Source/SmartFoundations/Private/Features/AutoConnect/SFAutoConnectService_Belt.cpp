@@ -161,7 +161,7 @@ TArray<TSharedPtr<FBeltPreviewHelper>> USFAutoConnectService::ProcessSingleDistr
 		SideConnectorCount, ConnectorType);
 	
 	// NEW: Process distributor chains first (priority 1 for manifold chaining)
-	UE_LOG(LogSmartAutoConnect, Log, TEXT("   Processing distributor chains for manifold connections"));
+	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("   Processing distributor chains for manifold connections"));
 	
 	// Create belt previews for distributor-to-distributor chains
 	if (RuntimeSettings.bChainDistributors && DistributorChains.Num() > 0)
@@ -172,7 +172,7 @@ TArray<TSharedPtr<FBeltPreviewHelper>> USFAutoConnectService::ProcessSingleDistr
 				continue;
 			if (ChainTarget == DistributorHologram)
 			{
-				UE_LOG(LogSmartAutoConnect, Warning, TEXT("   ⚠️ Skipping distributor chain to self: %s"), *DistributorHologram->GetName());
+				UE_LOG(LogSmartAutoConnect, Verbose, TEXT("   ⚠️ Skipping distributor chain to self: %s"), *DistributorHologram->GetName());
 				continue;
 			}
 				
@@ -304,14 +304,14 @@ TArray<TSharedPtr<FBeltPreviewHelper>> USFAutoConnectService::ProcessSingleDistr
 	});
 	
 	// Log sorted order with distances for debugging
-	UE_LOG(LogSmartAutoConnect, Log, TEXT("   🔢 Sorted %d buildings by distance from splitter at %s:"), 
+	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("   🔢 Sorted %d buildings by distance from splitter at %s:"),
 		SortedBuildings.Num(), *SplitterPos.ToString());
 	for (int32 i = 0; i < SortedBuildings.Num(); i++)
 	{
 		if (SortedBuildings[i])
 		{
 			float Dist = FVector::Dist2D(SplitterPos, SortedBuildings[i]->GetActorLocation());
-			UE_LOG(LogSmartAutoConnect, Log, TEXT("      [%d] %s @ %.0f cm"), 
+			UE_LOG(LogSmartAutoConnect, Verbose, TEXT("      [%d] %s @ %.0f cm"),
 				i, *SortedBuildings[i]->GetName(), Dist);
 		}
 	}
@@ -346,7 +346,7 @@ TArray<TSharedPtr<FBeltPreviewHelper>> USFAutoConnectService::ProcessSingleDistr
 	// (No separate toggle needed - controlled by RuntimeSettings.bEnabled)
 	for (AFGBuildable* Building : SortedBuildings)
 		{
-		UE_LOG(LogSmartAutoConnect, Log, TEXT("   🏭 [%s] Processing building %d: %s"), 
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("   🏭 [%s] Processing building %d: %s"),
 			*DistributorHologram->GetName(), HelperIndex, *Building->GetName());
 		
 		bool bIsUpdatingExisting = (HelperIndex < BeltPreviewHelpers.Num());
@@ -404,7 +404,7 @@ TArray<TSharedPtr<FBeltPreviewHelper>> USFAutoConnectService::ProcessSingleDistr
 					{
 						// This input is already reserved - skip it entirely
 						AFGHologram* ReservedBy = ReservedInputs->FindRef(BuildingInput);
-						UE_LOG(LogSmartAutoConnect, Log, 
+						UE_LOG(LogSmartAutoConnect, Verbose,
 							TEXT("      ⏭️ [%s] SKIP input %s - RESERVED by %s"),
 							*DistributorHologram->GetName(), *BuildingInput->GetName(), *GetNameSafe(ReservedBy));
 						continue;
@@ -429,7 +429,7 @@ TArray<TSharedPtr<FBeltPreviewHelper>> USFAutoConnectService::ProcessSingleDistr
 					// This prevents "crossing" to incorrect inputs that are closer but at weird angles
 					if (MaxAlignment < MIN_ANGLE_ALIGNMENT)
 					{
-						UE_LOG(LogSmartAutoConnect, Log,
+						UE_LOG(LogSmartAutoConnect, Verbose,
 							TEXT("      ⏭️ [%s] SKIP input %s - ALIGNMENT too low (%.2f < %.3f)"),
 							*DistributorHologram->GetName(), *BuildingInput->GetName(), MaxAlignment, MIN_ANGLE_ALIGNMENT);
 						continue;
@@ -451,7 +451,7 @@ TArray<TSharedPtr<FBeltPreviewHelper>> USFAutoConnectService::ProcessSingleDistr
 				
 				if (!ClosestBuildingInput)
 				{
-					UE_LOG(LogSmartAutoConnect, Log, TEXT("      ❌ [%s] NO VALID INPUTS found for building %s (all reserved or misaligned)"), 
+					UE_LOG(LogSmartAutoConnect, Verbose, TEXT("      ❌ [%s] NO VALID INPUTS found for building %s (all reserved or misaligned)"),
 						*DistributorHologram->GetName(), *Building->GetName());
 					continue;
 				}
@@ -468,7 +468,7 @@ TArray<TSharedPtr<FBeltPreviewHelper>> USFAutoConnectService::ProcessSingleDistr
 				if (InputSideAlignment > 0.0f)
 				{
 					// Splitter is BEHIND the input (wrong side) - belt would clip through building
-					UE_LOG(LogSmartAutoConnect, Log, TEXT("      ❌ [%s] WRONG SIDE - splitter behind input %s (alignment %.2f > 0)"), 
+					UE_LOG(LogSmartAutoConnect, Verbose, TEXT("      ❌ [%s] WRONG SIDE - splitter behind input %s (alignment %.2f > 0)"),
 						*DistributorHologram->GetName(), *BuildingConnector->GetName(), InputSideAlignment);
 					continue;
 				}
@@ -545,7 +545,7 @@ TArray<TSharedPtr<FBeltPreviewHelper>> USFAutoConnectService::ProcessSingleDistr
 				// If no unassigned outputs available, skip this building
 				if (!ClosestConnector)
 				{
-					UE_LOG(LogSmartAutoConnect, Log, TEXT("      ❌ [%s] NO UNASSIGNED OUTPUTS available for building %s"), 
+					UE_LOG(LogSmartAutoConnect, Verbose, TEXT("      ❌ [%s] NO UNASSIGNED OUTPUTS available for building %s"),
 						*DistributorHologram->GetName(), *Building->GetName());
 					continue;
 				}
@@ -703,7 +703,7 @@ TArray<TSharedPtr<FBeltPreviewHelper>> USFAutoConnectService::ProcessSingleDistr
 				
 				// For merger inputs, we'll check angle at the merger input (not building output)
 				// since merger inputs naturally have ~180° angle relative to building outputs
-				UE_LOG(LogSmartAutoConnect, Log, TEXT("      📐 Merger input connection - angle check will be done at merger input"));
+				UE_LOG(LogSmartAutoConnect, Verbose, TEXT("      📐 Merger input connection - angle check will be done at merger input"));
 			}
 			
 			if (ClosestConnector && BuildingConnector)
@@ -920,7 +920,7 @@ bool USFAutoConnectService::CreateOrUpdateBeltPreview(
     
     if (BeltLength < MinBeltLength)
     {
-        UE_LOG(LogSmartAutoConnect, Log,
+        UE_LOG(LogSmartAutoConnect, Verbose,
             TEXT("   ❌ BELT REJECTED - TOO SHORT: %.1f cm < %.1f cm minimum (%s → %s)"),
             BeltLength, MinBeltLength, *OutputConnector->GetName(), *InputConnector->GetName());
         
@@ -952,7 +952,7 @@ bool USFAutoConnectService::CreateOrUpdateBeltPreview(
 
         if (AngleIn > MaxAngleDegrees || AngleOut > MaxAngleDegrees)
         {
-            UE_LOG(LogSmartAutoConnect, Log,
+            UE_LOG(LogSmartAutoConnect, Verbose,
                 TEXT("   BELT REJECTED - BAD ANGLE: %s → %s (In %.1f° / Out %.1f° > %.1f°)"),
                 *OutputConnector->GetName(), *InputConnector->GetName(),
                 AngleIn, AngleOut, MaxAngleDegrees);
@@ -1000,14 +1000,14 @@ bool USFAutoConnectService::CreateOrUpdateBeltPreview(
     BeltHelper->UpdatePreview(OutputConnector, InputConnector);
     if (!BeltHelper->ValidatePlacementAndRegisterAsChild())
     {
-        UE_LOG(LogSmartAutoConnect, Log,
+        UE_LOG(LogSmartAutoConnect, Verbose,
             TEXT("   ❌ BELT REJECTED - VANILLA: %s → %s"),
             *OutputConnector->GetName(), *InputConnector->GetName());
         BeltHelper.Reset();
         return false;
     }
 
-    UE_LOG(LogSmartAutoConnect, Log,
+    UE_LOG(LogSmartAutoConnect, Verbose,
         TEXT("   ✅ BELT CREATED: %s → %s (Length: %.1f cm, In %.1f° / Out %.1f° ≤ %.1f°)"),
         *OutputConnector->GetName(), *InputConnector->GetName(),
         BeltLength, AngleIn, AngleOut, MaxAngleDegrees);

@@ -108,7 +108,7 @@ void USFHudWidget::SetTheme(int32 ThemeIndex)
 	CurrentTheme = Themes[ThemeIndex];
 	ApplyThemeColors();
 
-	UE_LOG(LogSmartFoundations, Log, TEXT("SFHudWidget: Theme changed to %d"), ThemeIndex);
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("SFHudWidget: Theme changed to %d"), ThemeIndex);
 }
 
 void USFHudWidget::ApplyThemeColors()
@@ -170,7 +170,7 @@ void USFHudWidget::SetHudScale(float InScale)
 			RecipeIconWidget->SetDesiredSizeOverride(FVector2D(IconSize, IconSize));
 		}
 
-		UE_LOG(LogSmartFoundations, Log, TEXT("SFHudWidget: Scale changed to %.1f (header=%d, body=%d)"),
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("SFHudWidget: Scale changed to %.1f (header=%d, body=%d)"),
 			CachedScale, HeaderFontSize, BodyFontSize);
 	}
 }
@@ -294,7 +294,7 @@ void USFHudWidget::BuildWidgetTree()
 		IconSlot->SetHorizontalAlignment(HAlign_Left);
 	}
 
-	UE_LOG(LogSmartFoundations, Log, TEXT("SFHudWidget: Built widget tree (scale=%.1f, headerFont=%d, bodyFont=%d)"),
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("SFHudWidget: Built widget tree (scale=%.1f, headerFont=%d, bodyFont=%d)"),
 		CachedScale, HeaderFontSize, BodyFontSize);
 }
 
@@ -314,11 +314,11 @@ void USFHudWidget::UpdateContent(const TArray<FString>& Lines, UTexture2D* Recip
 	static int32 LogCounter = 0;
 	if (LogCounter++ % 120 == 0)  // Log every ~2 seconds at 60fps
 	{
-		UE_LOG(LogSmartFoundations, Log, TEXT("SFHudWidget::UpdateContent: %d lines, RecipeIcon=%s, TextPool=%d"),
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("SFHudWidget::UpdateContent: %d lines, RecipeIcon=%s, TextPool=%d"),
 			Lines.Num(), RecipeIcon ? TEXT("YES") : TEXT("NO"), TextPool.Num());
 		for (int32 i = 0; i < FMath::Min(Lines.Num(), 3); ++i)
 		{
-			UE_LOG(LogSmartFoundations, Log, TEXT("  Line[%d]: '%s'"), i, *Lines[i]);
+			UE_LOG(LogSmartFoundations, Verbose, TEXT("  Line[%d]: '%s'"), i, *Lines[i]);
 		}
 	}
 

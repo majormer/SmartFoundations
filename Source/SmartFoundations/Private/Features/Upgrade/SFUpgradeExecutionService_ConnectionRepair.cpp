@@ -46,7 +46,7 @@ void USFUpgradeExecutionService::SaveBatchConnectionPairs()
 						SavedConnectionPairs.Add(
 							TPair<AFGBuildableConveyorBase*, int32>(Conveyor, 0),
 							TPair<AFGBuildableConveyorBase*, int32>(PartnerConveyor, PartnerConnIndex));
-						UE_LOG(LogSmartUpgrade, Log, TEXT("SaveBatchConnectionPairs: %s.Conn0 -> %s.Conn%d"),
+						UE_LOG(LogSmartUpgrade, Verbose, TEXT("SaveBatchConnectionPairs: %s.Conn0 -> %s.Conn%d"),
 							*Conveyor->GetName(), *PartnerConveyor->GetName(), PartnerConnIndex);
 					}
 				}
@@ -68,7 +68,7 @@ void USFUpgradeExecutionService::SaveBatchConnectionPairs()
 						SavedConnectionPairs.Add(
 							TPair<AFGBuildableConveyorBase*, int32>(Conveyor, 1),
 							TPair<AFGBuildableConveyorBase*, int32>(PartnerConveyor, PartnerConnIndex));
-						UE_LOG(LogSmartUpgrade, Log, TEXT("SaveBatchConnectionPairs: %s.Conn1 -> %s.Conn%d"),
+						UE_LOG(LogSmartUpgrade, Verbose, TEXT("SaveBatchConnectionPairs: %s.Conn1 -> %s.Conn%d"),
 							*Conveyor->GetName(), *PartnerConveyor->GetName(), PartnerConnIndex);
 					}
 				}
@@ -76,18 +76,18 @@ void USFUpgradeExecutionService::SaveBatchConnectionPairs()
 		}
 	}
 
-	UE_LOG(LogSmartUpgrade, Log, TEXT("SaveBatchConnectionPairs: Saved %d inter-connected pairs"), SavedConnectionPairs.Num());
+	UE_LOG(LogSmartUpgrade, Verbose, TEXT("SaveBatchConnectionPairs: Saved %d inter-connected pairs"), SavedConnectionPairs.Num());
 }
 
 void USFUpgradeExecutionService::FixBatchConnectionReferences()
 {
 	if (SavedConnectionPairs.Num() == 0)
 	{
-		UE_LOG(LogSmartUpgrade, Log, TEXT("FixBatchConnectionReferences: No inter-connected pairs to fix"));
+		UE_LOG(LogSmartUpgrade, Verbose, TEXT("FixBatchConnectionReferences: No inter-connected pairs to fix"));
 		return;
 	}
 
-	UE_LOG(LogSmartUpgrade, Log, TEXT("FixBatchConnectionReferences: Processing %d saved connection pairs"),
+	UE_LOG(LogSmartUpgrade, Verbose, TEXT("FixBatchConnectionReferences: Processing %d saved connection pairs"),
 		SavedConnectionPairs.Num());
 
 	int32 FixedCount = 0;
@@ -122,7 +122,7 @@ void USFUpgradeExecutionService::FixBatchConnectionReferences()
 		TPair<AFGBuildableConveyorBase*, AFGBuildableConveyorBase*> ReversePair(NewPartner, NewConveyor);
 		if (AlreadyConnected.Contains(ConveyorPair) || AlreadyConnected.Contains(ReversePair))
 		{
-			UE_LOG(LogSmartUpgrade, Log, TEXT("FixBatchConnectionReferences: Skipping %s <-> %s (already connected)"),
+			UE_LOG(LogSmartUpgrade, Verbose, TEXT("FixBatchConnectionReferences: Skipping %s <-> %s (already connected)"),
 				*NewConveyor->GetName(), *NewPartner->GetName());
 			continue;
 		}
@@ -158,7 +158,7 @@ void USFUpgradeExecutionService::FixBatchConnectionReferences()
 			ConnToFix->SetConnection(NewPartnerConn);
 			FixedCount++;
 			AlreadyConnected.Add(ConveyorPair);
-			UE_LOG(LogSmartUpgrade, Log, TEXT("FixBatchConnectionReferences: Connected %s.Conn%d -> %s.Conn%d"),
+			UE_LOG(LogSmartUpgrade, Verbose, TEXT("FixBatchConnectionReferences: Connected %s.Conn%d -> %s.Conn%d"),
 				*NewConveyor->GetName(), ConnectionIndex, *NewPartner->GetName(), PartnerConnectionIndex);
 		}
 		else
@@ -261,7 +261,7 @@ void USFUpgradeExecutionService::SaveBatchPipeConnectionPairs()
 				TPair<AFGBuildablePipeline*, int32>(Pipe, ConnIndex),
 				TPair<AFGBuildablePipeline*, int32>(PartnerPipe, PartnerConnIndex));
 
-			UE_LOG(LogSmartUpgrade, Log, TEXT("SaveBatchPipeConnectionPairs: %s.PipeConn%d -> %s.PipeConn%d"),
+			UE_LOG(LogSmartUpgrade, Verbose, TEXT("SaveBatchPipeConnectionPairs: %s.PipeConn%d -> %s.PipeConn%d"),
 				*Pipe->GetName(), ConnIndex, *PartnerPipe->GetName(), PartnerConnIndex);
 		};
 
@@ -269,7 +269,7 @@ void USFUpgradeExecutionService::SaveBatchPipeConnectionPairs()
 		TrySave(Conn1, 1);
 	}
 
-	UE_LOG(LogSmartUpgrade, Log, TEXT("SaveBatchPipeConnectionPairs: Saved %d inter-connected pipe pairs"), SavedPipeConnectionPairs.Num());
+	UE_LOG(LogSmartUpgrade, Verbose, TEXT("SaveBatchPipeConnectionPairs: Saved %d inter-connected pipe pairs"), SavedPipeConnectionPairs.Num());
 }
 
 void USFUpgradeExecutionService::FixBatchPipeConnectionReferences()
@@ -279,7 +279,7 @@ void USFUpgradeExecutionService::FixBatchPipeConnectionReferences()
 		return;
 	}
 
-	UE_LOG(LogSmartUpgrade, Log, TEXT("FixBatchPipeConnectionReferences: Processing %d saved pipe pairs"),
+	UE_LOG(LogSmartUpgrade, Verbose, TEXT("FixBatchPipeConnectionReferences: Processing %d saved pipe pairs"),
 		SavedPipeConnectionPairs.Num());
 
 	int32 FixedCount = 0;
@@ -315,7 +315,7 @@ void USFUpgradeExecutionService::FixBatchPipeConnectionReferences()
 		FixedCount++;
 		AlreadyConnected.Add(Fwd);
 
-		UE_LOG(LogSmartUpgrade, Log, TEXT("FixBatchPipeConnectionReferences: Connected %s.PipeConn%d -> %s.PipeConn%d"),
+		UE_LOG(LogSmartUpgrade, Verbose, TEXT("FixBatchPipeConnectionReferences: Connected %s.PipeConn%d -> %s.PipeConn%d"),
 			*NewPipe->GetName(), ConnIdx, *NewPartner->GetName(), PartnerConnIdx);
 	}
 
@@ -413,7 +413,7 @@ void USFUpgradeExecutionService::CaptureExpectedConnectionManifests()
 		}
 	}
 
-	UE_LOG(LogSmartUpgrade, Log, TEXT("CaptureExpectedConnectionManifests: captured %d edges across %d buildables"),
+	UE_LOG(LogSmartUpgrade, Verbose, TEXT("CaptureExpectedConnectionManifests: captured %d edges across %d buildables"),
 		TotalEdges, ExpectedConnectionEdges.Num());
 }
 

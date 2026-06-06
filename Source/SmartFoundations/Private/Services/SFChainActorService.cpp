@@ -320,7 +320,7 @@ int32 USFChainActorService::InvalidateAndRebuildChains(
 
 	if (MergedAwayGroups.Num() > 0)
 	{
-		UE_LOG(LogSmartUpgrade, Log,
+		UE_LOG(LogSmartUpgrade, Verbose,
 			TEXT("ChainActorService: Phase 2.5 merged %d adjacent isolated tick group(s) — prevents SPLIT_CHAIN"),
 			MergedAwayGroups.Num());
 	}
@@ -381,7 +381,7 @@ int32 USFChainActorService::InvalidateAndRebuildChains(
 		if (ValidBeltCount == 0)
 		{
 			++SkippedEmptyGroups;
-			UE_LOG(LogSmartUpgrade, Log,
+			UE_LOG(LogSmartUpgrade, Verbose,
 				TEXT("ChainActorService: Phase 3 skipping empty TG (%d raw entries, 0 valid) — would create NO_SEGMENTS zombie"),
 				TG->Conveyors.Num());
 			continue;
@@ -555,7 +555,7 @@ int32 USFChainActorService::InvalidateAndRebuildChains(
 					if (ZombieToRecover->GetNumChainSegments() > 0)
 					{
 						bRecovered = true;
-						UE_LOG(LogSmartUpgrade, Log,
+						UE_LOG(LogSmartUpgrade, Verbose,
 							TEXT("ChainActorService: Recovered zombie via SetStartAndEnd+BuildChain — %d seg(s)"),
 							ZombieToRecover->GetNumChainSegments());
 					}
@@ -704,7 +704,7 @@ int32 USFChainActorService::InvalidateAndRebuildChains(
 		}
 	}
 
-	UE_LOG(LogSmartUpgrade, Log,
+	UE_LOG(LogSmartUpgrade, Verbose,
 		TEXT("ChainActorService: chains=%d invalid=%d explicit_tgs=%d groups_cleared=%d groups_merged=%d groups_migrated=%d skipped_empty=%d deferred_dirty_groups=%d deferred_dirty_conveyors=%d zombies=%d failed_recovery=%d orphan_skipped=%d detached=%d defensive_tgs_cleared=%d post_unassigned=%d post_zero_segments=%d post_backptr_mismatch=%d"),
 		AffectedChains.Num(), InvalidChainCount, ExplicitGroupCount, GroupsToRemove.Num(), MergedAwayGroups.Num(), MigrateCount, SkippedEmptyGroups, DeferredDirtyGroups, DeferredDirtyConveyors, PostMigrateZombies, FailedRecoveryGroups, OrphanCount, DetachedCount, DefensiveTGsCleared, PostRebuildUnassignedGroups, PostRebuildZeroSegmentGroups, PostRebuildBackPointerMismatchGroups);
 
@@ -821,7 +821,7 @@ int32 USFChainActorService::RepairSplitChains()
 
 	if (ChainsToRepair.Num() == 0) return 0;
 
-	UE_LOG(LogSmartUpgrade, Log,
+	UE_LOG(LogSmartUpgrade, Verbose,
 		TEXT("ChainActorService: RepairSplitChains found %d chain(s) involved in SPLIT_CHAIN — rebuilding"),
 		ChainsToRepair.Num());
 

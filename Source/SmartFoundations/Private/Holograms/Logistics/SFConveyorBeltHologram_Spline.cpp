@@ -204,7 +204,7 @@ void ASFConveyorBeltHologram::SetupBeltSpline(UFGFactoryConnectionComponent* Sta
     // This is what makes auto-connect belts work - they have connectors available at setup time
     // The snapped connections tell the game to create unified chain actors during build
     SetSnappedConnections(StartConnector, EndConnector);
-    UE_LOG(LogSmartHologram, Log,
+    UE_LOG(LogSmartHologram, Verbose,
         TEXT("🔗 SetupBeltSpline: Set snapped connections [0]=%s on %s (ptr=%p), [1]=%s on %s (ptr=%p)"),
         StartConnector ? *StartConnector->GetName() : TEXT("null"),
         StartConnector ? *GetNameSafe(StartConnector->GetOwner()) : TEXT("null"),
@@ -217,7 +217,7 @@ void ASFConveyorBeltHologram::SetupBeltSpline(UFGFactoryConnectionComponent* Sta
 void ASFConveyorBeltHologram::AutoRouteSplineWithNormals(const FVector& StartPos, const FVector& StartNormal, 
                                                           const FVector& EndPos, const FVector& EndNormal)
 {
-    UE_LOG(LogSmartHologram, Log, TEXT("🔍 AutoRouteSplineWithNormals: Routing belt spline with VANILLA 4-POINT structure"));
+    UE_LOG(LogSmartHologram, Verbose, TEXT("🔍 AutoRouteSplineWithNormals: Routing belt spline with VANILLA 4-POINT structure"));
     
     // Use vanilla 4-point spline structure (same as SetupBeltSpline)
     if (mSplineComponent)
@@ -289,7 +289,7 @@ void ASFConveyorBeltHologram::AutoRouteSplineWithNormals(const FVector& StartPos
         // Super::UpdateSplineComponent() calls AFGConveyorBeltHologram which doesn't transfer mSplineData
         AFGSplineHologram::UpdateSplineComponent();
         
-        UE_LOG(LogSmartHologram, Log, TEXT("🔍 Auto-routed belt spline: %d points, %.1f cm, spline length=%.1f"), 
+        UE_LOG(LogSmartHologram, Verbose, TEXT("🔍 Auto-routed belt spline: %d points, %.1f cm, spline length=%.1f"),
             mSplineData.Num(), Distance, mSplineComponent ? mSplineComponent->GetSplineLength() : 0.0f);
     }
     else
@@ -306,7 +306,7 @@ bool ASFConveyorBeltHologram::TryUseBuildModeRouting(
 {
 	if (!mSplineComponent)
 	{
-		UE_LOG(LogSmartHologram, Log, TEXT("🔍 TryUseBuildModeRouting FAILED: No mSplineComponent on %s"), *GetName());
+		UE_LOG(LogSmartHologram, Verbose, TEXT("🔍 TryUseBuildModeRouting FAILED: No mSplineComponent on %s"), *GetName());
 		return false;
 	}
 	
@@ -378,7 +378,7 @@ bool ASFConveyorBeltHologram::TryUseBuildModeRouting(
 	// Treat routing as failed only when the result is clearly a placeholder/invalid (less than 50cm).
 	if (NewSplinePoints < 2 || NewSplineLength < 50.0f)
 	{
-		UE_LOG(LogSmartHologram, Log,
+		UE_LOG(LogSmartHologram, Verbose,
 			TEXT("🔍 TryUseBuildModeRouting FAILED: Stub spline after AutoRouteSpline on %s | Points=%d Len=%.1f Expected=%.1f | Start=%s StartN=%s End=%s EndN=%s"),
 			*GetName(),
 			NewSplinePoints,
@@ -395,7 +395,7 @@ bool ASFConveyorBeltHologram::TryUseBuildModeRouting(
 	// Keep the typical success path quiet to avoid log spam.
 	if (NewSplinePoints <= 3)
 	{
-		UE_LOG(LogSmartHologram, Log, TEXT("🔍 TryUseBuildModeRouting OK: Engine AutoRouteSpline produced %d points (Len=%.1f Expected=%.1f) on %s"),
+		UE_LOG(LogSmartHologram, Verbose, TEXT("🔍 TryUseBuildModeRouting OK: Engine AutoRouteSpline produced %d points (Len=%.1f Expected=%.1f) on %s"),
 			NewSplinePoints,
 			NewSplineLength,
 			ExpectedDistance,
@@ -528,7 +528,7 @@ void ASFConveyorBeltHologram::ForceApplyHologramMaterial()
     TArray<USplineMeshComponent*> SplineMeshes;
     GetComponents<USplineMeshComponent>(SplineMeshes);
     
-    UE_LOG(LogSmartHologram, Log, TEXT("🎨 ForceApplyHologramMaterial: Applied material state %d, found %d spline meshes"), 
+    UE_LOG(LogSmartHologram, Verbose, TEXT("🎨 ForceApplyHologramMaterial: Applied material state %d, found %d spline meshes"),
         (int32)CurrentState, SplineMeshes.Num());
     
     for (int32 i = 0; i < SplineMeshes.Num(); i++)

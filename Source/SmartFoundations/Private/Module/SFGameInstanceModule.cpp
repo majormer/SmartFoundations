@@ -53,7 +53,7 @@ void USFGameInstanceModule::DispatchLifecycleEvent(ELifecyclePhase Phase)
 
 	if (Phase == ELifecyclePhase::POST_INITIALIZATION)
 	{
-		UE_LOG(LogSmartFoundations, Display, TEXT("Smart! GameInstanceModule: POST_INITIALIZATION - Registering Smart! configuration"));
+		UE_LOG(LogSmartFoundations, Log, TEXT("Smart! GameInstanceModule: POST_INITIALIZATION - Registering Smart! configuration"));
 
 		// Smart! configuration is declared declaratively in SFGameInstanceModule_BP's
 		// ModConfigurations array (EditDefaultsOnly) and is registered with the ConfigManager
@@ -75,7 +75,7 @@ void USFGameInstanceModule::DispatchLifecycleEvent(ELifecyclePhase Phase)
 
 void USFGameInstanceModule::RegisterCostAggregationHook()
 {
-	UE_LOG(LogSmartFoundations, Display, TEXT("💰 Registering GetCost hook for belt preview cost aggregation"));
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("💰 Registering GetCost hook for belt preview cost aggregation"));
 
 	// ========================================
 	// SML Hook: GetCost for Conveyor Attachments
@@ -180,12 +180,12 @@ void USFGameInstanceModule::RegisterCostAggregationHook()
 	// After switching to vanilla child hologram patterns, vanilla affordability checks handle everything correctly.
 	// No custom cost validation needed - child holograms automatically aggregate costs via GetCost() override.
 
-	UE_LOG(LogSmartFoundations, Display, TEXT("✅ GetCost hook registered - child hologram costs automatically aggregated by vanilla"));
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("✅ GetCost hook registered - child hologram costs automatically aggregated by vanilla"));
 }
 
 void USFGameInstanceModule::RegisterBlueprintConstructHook()
 {
-	UE_LOG(LogSmartFoundations, Display, TEXT("⛓️ Registering AFGBlueprintHologram::Construct hook for chain actor rebuilding"));
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("⛓️ Registering AFGBlueprintHologram::Construct hook for chain actor rebuilding"));
 
 	// ========================================
 	// SML Hook: AFGBlueprintHologram::Construct (AFTER)
@@ -204,7 +204,7 @@ void USFGameInstanceModule::RegisterBlueprintConstructHook()
 		GetMutableDefault<AFGBlueprintHologram>(),
 		[](AActor* returnValue, AFGBlueprintHologram* hologram, TArray<AActor*>& out_children, FNetConstructionID NetConstructionID)
 		{
-			UE_LOG(LogSmartFoundations, Log, TEXT("⛓️ AFGBlueprintHologram::Construct AFTER: %s with %d children"),
+			UE_LOG(LogSmartFoundations, Verbose, TEXT("⛓️ AFGBlueprintHologram::Construct AFTER: %s with %d children"),
 				*hologram->GetName(), out_children.Num());
 
 			// Get the world and subsystems
@@ -302,5 +302,5 @@ void USFGameInstanceModule::RegisterBlueprintConstructHook()
 		}
 	);
 
-	UE_LOG(LogSmartFoundations, Display, TEXT("✅ AFGBlueprintHologram::Construct hook registered - chain actors will rebuild during construction"));
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("✅ AFGBlueprintHologram::Construct hook registered - chain actors will rebuild during construction"));
 }
