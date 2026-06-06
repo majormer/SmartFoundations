@@ -429,10 +429,12 @@ UFGPipeConnectionComponent* FSFPipeAutoConnectManager::FindAvailableManifoldConn
 	TArray<UFGPipeConnectionComponent*> JunctionConnectors;
 	FSFPipeConnectorFinder::GetJunctionConnectors(JunctionHologram, JunctionConnectors);
 	
-	if (JunctionConnectors.Num() != 4)
+	if (JunctionConnectors.Num() < 2)
 	{
-		// All junctions should be 4-way
-		UE_LOG(LogSmartAutoConnect, Warning, TEXT("Junction %s has %d connectors (expected 4)"), 
+		// Issue #320: pipe junctions vary in port count (Cross = 4, T-Junction = 3). A manifold
+		// needs at least a building port + one side port; the perpendicular-port search below is
+		// geometry-driven (by connector normal), so any count >= 2 works.
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("Junction %s has %d pipe connectors (need >= 2)"),
 			*JunctionHologram->GetName(), JunctionConnectors.Num());
 		return JunctionConnectors.Num() > 0 ? JunctionConnectors[0] : nullptr;
 	}
@@ -514,9 +516,11 @@ void FSFPipeAutoConnectManager::FindBestManifoldConnectorPair(
 	FSFPipeConnectorFinder::GetJunctionConnectors(SourceJunction, SourceConnectors);
 	FSFPipeConnectorFinder::GetJunctionConnectors(TargetJunction, TargetConnectors);
 	
-	if (SourceConnectors.Num() != 4 || TargetConnectors.Num() != 4)
+	if (SourceConnectors.Num() < 2 || TargetConnectors.Num() < 2)
 	{
-		UE_LOG(LogSmartAutoConnect, Warning, TEXT("Manifold: Junctions don't have expected 4 connectors (Source=%d, Target=%d)"),
+		// Issue #320: pipe junctions vary in port count (Cross = 4, T-Junction = 3). The pairing
+		// below is geometry-driven (facing/alignment by connector normal), so any count >= 2 is fine.
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("Manifold: a junction has too few pipe connectors (Source=%d, Target=%d, need >= 2)"),
 			SourceConnectors.Num(), TargetConnectors.Num());
 		return;
 	}
