@@ -105,8 +105,6 @@ See [LICENSE.md](https://github.com/majormer/SmartFoundations/blob/main/LICENSE.
 
 **Current Release:** v31.0.0 — the first Smart! release for Satisfactory **1.2**. See the [full changelog](https://github.com/majormer/SmartFoundations/blob/main/CHANGELOG.md) for all release details.
 
-> **On Satisfactory 1.1?** Stay on **v30.1.0**, the final Smart! build for 1.1. This 31.0.0 build targets Satisfactory **1.2** and newer, so the mod manager will not offer it to a 1.1 game. Updating straight from a 1.1 build (30.0.0)? 31.0.0 also rolls up every fix from 30.1.0, so you get everything in one step.
-
 > **One-time settings reset:** the Smart! settings menu was reorganized for this release, so your saved Smart! settings reset to their defaults the first time you load 31.0.0. Set them once and they'll stick from then on.
 
 ### Highlights in v31.0.0
