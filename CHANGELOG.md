@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [31.0.0] - 2026-06-05
 
-> *First Satisfactory 1.2 release - Smart! rebuilt for the 1.2 update. Players still on Satisfactory 1.1 should stay on version 30.1.0.*
+> *First Satisfactory 1.2 release - Smart! rebuilt for the 1.2 update.*
 >
 > **Updating straight from a 1.1 build (30.0.0)?** 31.0.0 also rolls up every fix from 30.1.0 - full localization for all 21 languages (including Arabic, Persian, and Thai), Extend affordability with Dimensional Depot support, in-game building-name corrections, Smart Panel text fitting, and smoother grid scaling - all listed in the 30.1.0 section below. Updating from 30.0.0 brings everything in one step.
 >
