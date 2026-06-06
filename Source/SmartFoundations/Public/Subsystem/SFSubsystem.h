@@ -839,10 +839,6 @@ private:
 	bool bAutoHoldActive = false;
 	bool bAutoHoldUserOverrode = false;
 
-	/** #342: previous-poll lock state of the active hologram while Extend is active, used to edge-detect
-	 *  a deliberate vanilla Hold-key press (locked → unlocked) so we can TOGGLE the manual Extend pin. */
-	bool bExtendPrevLocked = false;
-
 	/** Lazy initialization flag (Task #58) - true after first hologram registration */
 	bool bSubsystemInitialized = false;
 	

@@ -1021,9 +1021,20 @@ void USFExtendService::RefreshExtension(AFGHologram* SourceHologram, bool bForce
         ActiveHologram->SetHologramLocationAndRotation(FloorHit);
     }
 
-    // CRITICAL: Ensure hologram stays locked
+    // CRITICAL: Ensure hologram stays locked — and (#342) detect a deliberate Hold press here.
+    // Extend re-locks every frame, which masks the player's unlock from a once-per-frame subsystem
+    // poll. So we catch it at the exact point we'd otherwise blindly re-lock: after activation the
+    // hologram is always locked on entry, so finding it UNLOCKED means the player pressed Hold (H) →
+    // TOGGLE the manual pin. We then always re-assert the lock so the next frame sees a clean locked
+    // state (no repeated toggling), and the lock itself stays on as before. The pin only changes
+    // stickiness (bExtendManualHold feeds the look-away keep-alive), never the scale-commit, so scaled
+    // Extend / transforms are untouched.
     if (!ActiveHologram->IsHologramLocked())
     {
+        bExtendManualHold = !bExtendManualHold;
+        UE_LOG(LogSmartExtend, Log, TEXT("📌 EXTEND: manual hold %s — preview %s"),
+            bExtendManualHold ? TEXT("ENGAGED") : TEXT("RELEASED"),
+            bExtendManualHold ? TEXT("pinned (look around to check clearance)") : TEXT("tracking"));
         ActiveHologram->LockHologramPosition(true);
     }
 
