@@ -314,10 +314,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Smart! Upgrade")
 	bool IsUpgradeCapableContext() const;
 
-	/** Debug: analyze nearby pipe splines (PrimaryFire debug key) */
-	UFUNCTION()
-	void OnDebugPrimaryFire();
-
 	/** Find nearby buildings within specified radius (used by Auto-Connect Service) */
 	TArray<AFGBuildable*> FindNearbyBuildings(FVector Center, float Radius);
 
@@ -1404,11 +1400,6 @@ private:
 	// Debug Tools
 	// ========================================
 
-	/** Analyze nearby vanilla pipes to reverse-engineer spline formulas
-	 * @param Radius Search radius in cm (default 5000cm = 50m)
-	 * Logs detailed spline data including tangent scale factors
-	 */
-	void AnalyzeNearbyPipeSplines(float Radius = 5000.0f);
 
 	// ========================================
 	// Stackable Pipe Support Deferred Build (Issue #220)

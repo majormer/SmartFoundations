@@ -256,13 +256,6 @@ void USFSubsystem::RunPostLoadChainRepair()
 	}
 }
 
-void USFSubsystem::OnDebugPrimaryFire()
-{
-	// Debug: Analyze nearby pipe splines to determine vanilla tangent formulas
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 Debug Primary Fire: Analyzing nearby pipe splines..."));
-	AnalyzeNearbyPipeSplines(5000.0f);  // 50m radius
-}
-
 // ========================================
 // Power Connection Management (moved from header - PIMPL pattern)
 // ========================================

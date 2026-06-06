@@ -125,9 +125,6 @@ public:
 	/** Toggle Arrows */
 	void OnToggleArrows();
 	
-	/** Debug: base-game action to validate pipeline */
-	void OnDebugPrimaryFire();
-
 private:
 	/** Owning subsystem - used to call back for feature logic */
 	TWeakObjectPtr<USFSubsystem> OwnerSubsystem;

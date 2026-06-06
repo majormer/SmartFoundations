@@ -19,7 +19,6 @@
 #include "Data/SFHologramData.h"
 #include "Data/SFHologramDataRegistry.h"
 #include "Subsystem/SFHologramDataService.h"
-#include "Debug/SFSplineAnalyzer.h"
 #include "UI/SmartSettingsFormWidget.h"
 #include "UI/SmartUpgradePanel.h"
 #include "Subsystem/SFInputHandler.h"

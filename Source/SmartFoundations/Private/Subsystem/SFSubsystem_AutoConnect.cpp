@@ -176,50 +176,6 @@ void USFSubsystem::ResetCounters()
     UpdateCounterDisplay();
 }
 
-// ========================================
-// Debug Tools
-// ========================================
-
-void USFSubsystem::AnalyzeNearbyPipeSplines(float Radius)
-{
-	UWorld* World = GetWorld();
-	if (!World)
-	{
-		UE_LOG(LogSmartFoundations, Error, TEXT("🔍 SPLINE ANALYZER: No world context"));
-		return;
-	}
-
-	// Get player location as search center
-	AFGPlayerController* PlayerController = Cast<AFGPlayerController>(World->GetFirstPlayerController());
-	if (!PlayerController)
-	{
-		UE_LOG(LogSmartFoundations, Error, TEXT("🔍 SPLINE ANALYZER: No player controller"));
-		return;
-	}
-
-	AFGCharacterPlayer* Player = Cast<AFGCharacterPlayer>(PlayerController->GetPawn());
-	if (!Player)
-	{
-		UE_LOG(LogSmartFoundations, Error, TEXT("🔍 SPLINE ANALYZER: No player character"));
-		return;
-	}
-
-	FVector PlayerLocation = Player->GetActorLocation();
-
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"));
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔍 SMART! PIPE SPLINE ANALYZER"));
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"));
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Player Location: %s"), *PlayerLocation.ToString());
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Search Radius: %.1fm"), Radius / 100.0f);
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"));
-
-	// Use the analyzer utility (analyzes both pipes and belts)
-	FSFSplineAnalyzer::AnalyzeNearLocation(World, PlayerLocation, Radius);
-
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"));
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔍 Analysis complete. Check logs for detailed spline data."));
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"));
-}
 
 void USFSubsystem::OnPowerPoleBuilt(AFGBuildablePowerPole* BuiltPole)
 {
