@@ -606,9 +606,9 @@ idioms — most live inside the T1 files, so fold into those slices rather than 
 
 ---
 
-## Blueprint Validation (SMLMCP live editor, 2026-05-30)
+## Blueprint Validation (the editor live editor, 2026-05-30)
 
-Validated the plan against the Blueprint side via the SMLMCP Python API (AssetRegistry referencer
+Validated the plan against the Blueprint side via the the live-editor Python API (AssetRegistry referencer
 query on `/Script/SmartFoundations`). **Result: only 3 Blueprint assets reference the entire C++
 module:**
 
@@ -661,7 +661,7 @@ Exposes: `holograms/active` (class), `holograms/children` (**count**), `metrics/
   network, run the op, confirm `production/summary` keeps flowing (items move ⇒ connectors intact)
   + visual. **Optional harness upgrade:** expose the (already-extracted) `SFExtendDiagnosticsService`
   connection-capture (`FSFCapturedConnection` has `ConnectedToActor`/`ConnectedToConnector`) as a
-  SmartMCP endpoint to make E2/UP1 smoke *direct* rather than inferential.
+  in-game diagnostic endpoint to make E2/UP1 smoke *direct* rather than inferential.
 
 **AccessTransformers** (`Config/AccessTransformers.ini`) — **`Friend` grants are class-specific**,
 so moving friend-dependent code to a *different* class loses private access (compile error). Audit:

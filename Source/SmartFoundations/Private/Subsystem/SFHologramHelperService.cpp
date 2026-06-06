@@ -1,4 +1,7 @@
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
+
 #include "Subsystem/SFHologramHelperService.h"
+#include "SmartFoundations.h"
 #include "Subsystem/SFHologramHelperServiceImpl.h"
 
 namespace

@@ -1,3 +1,5 @@
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
+
 #pragma once
 
 #include "CoreMinimal.h"
@@ -59,27 +61,27 @@ private:
 
 	// Cached input action assets for keybind resolution
 	UPROPERTY()
-	UInputAction* IA_ModifierScaleX = nullptr;
+	TObjectPtr<UInputAction> IA_ModifierScaleX = nullptr;
 	UPROPERTY()
-	UInputAction* IA_ModifierScaleY = nullptr;
+	TObjectPtr<UInputAction> IA_ModifierScaleY = nullptr;
 	UPROPERTY()
-	UInputAction* IA_SpacingMode = nullptr;
+	TObjectPtr<UInputAction> IA_SpacingMode = nullptr;
 	UPROPERTY()
-	UInputAction* IA_StepsMode = nullptr;
+	TObjectPtr<UInputAction> IA_StepsMode = nullptr;
 	UPROPERTY()
-	UInputAction* IA_StaggerMode = nullptr;
+	TObjectPtr<UInputAction> IA_StaggerMode = nullptr;
 	UPROPERTY()
-	UInputAction* IA_RotationMode = nullptr;
+	TObjectPtr<UInputAction> IA_RotationMode = nullptr;
 	UPROPERTY()
-	UInputAction* IA_CycleAxis = nullptr;
+	TObjectPtr<UInputAction> IA_CycleAxis = nullptr;
 	UPROPERTY()
-	UInputAction* IA_RecipeMode = nullptr;
+	TObjectPtr<UInputAction> IA_RecipeMode = nullptr;
 	UPROPERTY()
-	UInputAction* IA_ToggleSettingsForm = nullptr;
+	TObjectPtr<UInputAction> IA_ToggleSettingsForm = nullptr;
 
 	// Cached mapping context for keybind resolution
 	UPROPERTY()
-	UFGInputMappingContext* SmartMappingContext = nullptr;
+	TObjectPtr<UFGInputMappingContext> SmartMappingContext = nullptr;
 
 	FTimerHandle HintTickTimer;
 	bool bHintsInjected = false;

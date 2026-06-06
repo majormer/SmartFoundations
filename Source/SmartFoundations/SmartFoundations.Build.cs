@@ -9,6 +9,13 @@ public class SmartFoundations : ModuleRules
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 		CppStandard = CppStandardVersion.Cpp20;
 
+		// UE 5.6 defaults these off (IWYU-strict). Smart's source bare-includes its own Public
+		// subdir headers (e.g. "SFSubsystem.h"), which relied on the legacy flat include paths.
+		// Restore them so the mod compiles without rewriting every internal include. (FactoryGame
+		// headers still need subdir-qualified includes - handled by qualifying those directly.)
+		bLegacyPublicIncludePaths = true;
+		bLegacyParentIncludePaths = true;
+
 		// FactoryGame transitive dependencies
 		// Not all of these are required, but including the extra ones saves you from having to add them later.
 		// Some entries are commented out to avoid compile-time warnings about depending on a module that you don't explicitly depend on.

@@ -1,4 +1,4 @@
-// Copyright Coffee Stain Studios. All Rights Reserved.
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
 /**
  * SFExtendService - EXTEND Feature Service
@@ -265,6 +265,14 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Smart|Extend")
     void RefreshExtension(AFGHologram* SourceHologram, bool bForceRefresh = false);
 
+    /** #342: manual Extend hold ("pin"). The vanilla Hold key (H) toggles this via the lock-release
+     *  detection in PollForActiveHologram, so the player can freeze the current Extend preview
+     *  unchanged and look around to verify clearance. Tracked SEPARATELY from bExtendCommitted (the
+     *  scale-action commit) so toggling the pin never disturbs scaled Extend / transform behaviour;
+     *  either flag makes Extend sticky. */
+    void SetExtendManualHold(bool bHold) { bExtendManualHold = bHold; }
+    bool IsExtendManualHoldActive() const { return bExtendManualHold; }
+
     /** Clean up all extension child holograms */
     UFUNCTION(BlueprintCallable, Category = "Smart|Extend")
     void CleanupExtension(AFGHologram* SourceHologram);
@@ -476,31 +484,31 @@ private:
 
     /** Detection service for target validation and direction management */
     UPROPERTY()
-    USFExtendDetectionService* DetectionService = nullptr;
+    TObjectPtr<USFExtendDetectionService> DetectionService = nullptr;
 
     /** Topology service for walking and capturing connection chains */
     UPROPERTY()
-    USFExtendTopologyService* TopologyService = nullptr;
+    TObjectPtr<USFExtendTopologyService> TopologyService = nullptr;
 
     /** Hologram service for child hologram management and preview spawning */
     UPROPERTY()
-    USFExtendHologramService* HologramService = nullptr;
+    TObjectPtr<USFExtendHologramService> HologramService = nullptr;
 
     /** Wiring service for post-build connection wiring (interface only - implementation here for now) */
     UPROPERTY()
-    USFExtendWiringService* WiringService = nullptr;
+    TObjectPtr<USFExtendWiringService> WiringService = nullptr;
 
     /** Diagnostics service for EXTEND before/after world snapshots (pure diagnostics; no gameplay path) */
     UPROPERTY()
-    USFExtendDiagnosticsService* DiagnosticsService = nullptr;
+    TObjectPtr<USFExtendDiagnosticsService> DiagnosticsService = nullptr;
 
     /** Restore-replay service for Smart Restore Extend clone-topology replay (operates on this service's shared state) */
     UPROPERTY()
-    USFExtendRestoreReplayService* RestoreReplayService = nullptr;
+    TObjectPtr<USFExtendRestoreReplayService> RestoreReplayService = nullptr;
 
     /** Scaled Extend service (planning/preview/validate; operates on this service's shared state) */
     UPROPERTY()
-    USFExtendScaledService* ScaledService = nullptr;
+    TObjectPtr<USFExtendScaledService> ScaledService = nullptr;
 
     /** Do we have a valid extend target this frame */
     UPROPERTY()
@@ -520,7 +528,7 @@ private:
 
     /** Child hologram previews for belt connections (these BUILD but may be invisible) */
     UPROPERTY()
-    TArray<AFGHologram*> BeltPreviewHolograms;
+    TArray<TObjectPtr<AFGHologram>> BeltPreviewHolograms;
 
     /** Intended world positions for child holograms (engine resets them to origin, we force them back) */
     TMap<AFGHologram*, FVector> ChildIntendedPositions;
@@ -554,29 +562,17 @@ private:
 
     // ==================== Hologram Connection Wiring (prevents child pole spawning) ====================
 
-    /** Map from source buildable (pipe, junction) to its cloned hologram */
-    TMap<AActor*, AFGHologram*> SourceToHologramMap;
-
     /** Per-chain tracking of pipe holograms in spawn order (ChainId → array of pipe holograms) */
     TMap<int32, TArray<ASFPipelineHologram*>> PipeChainHologramMap;
 
     /** Junction hologram for each pipe chain (ChainId → junction hologram) */
     TMap<int32, class ASFPipelineJunctionChildHologram*> PipeChainJunctionMap;
 
-    /** Per-chain tracking of belt holograms in spawn order (ChainId → array of belt holograms) */
-    TMap<int32, TArray<class ASFConveyorBeltHologram*>> BeltChainHologramMap;
-
-    /** Per-chain tracking of lift holograms in spawn order (ChainId → array of lift holograms) */
-    TMap<int32, TArray<class ASFConveyorLiftHologram*>> LiftChainHologramMap;
-
     /** Unified chain map for all conveyors (belts + lifts) indexed by position (ChainId → ChainIndex → Hologram) */
     TMap<int32, TMap<int32, AFGHologram*>> UnifiedConveyorChainMap;
 
     /** Distributor hologram for each belt chain (ChainId → distributor hologram) */
     TMap<int32, AFGHologram*> BeltChainDistributorMap;
-
-    /** Manifold belt hologram for each chain (ChainId → manifold belt hologram) */
-    TMap<int32, ASFConveyorBeltHologram*> ManifoldBeltHolograms;
 
     /** Built conveyor buildables per chain, indexed by position (ChainId → (Index → Conveyor)) */
     TMap<int32, TMap<int32, AFGBuildableConveyorBase*>> BuiltConveyorsByChain;
@@ -660,6 +656,12 @@ private:
      *  After committing, sticky extend keeps Extend alive when looking away. */
     bool bExtendCommitted = false;
 
+    /** #342: true when the player deliberately pinned the current Extend with the vanilla Hold key (H).
+     *  Independent of bExtendCommitted; either makes Extend sticky. Kept separate so toggling the manual
+     *  pin can never un-stick a scale-committed (scaled) Extend. Default false — never auto-set on
+     *  engagement, so free-form placement and look-away teardown stay unchanged. */
+    bool bExtendManualHold = false;
+
     /** Counter snapshot taken when Extend activates.
      *  Restored when Extend deactivates so normal scaling isn't polluted with Extend's counters. */
     FSFCounterState PreExtendCounterSnapshot;
@@ -670,11 +672,17 @@ private:
     /** Stored clone topology for post-build wiring (Phase 5) */
     TSharedPtr<FSFCloneTopology> StoredCloneTopology;
 
-    /** Map of clone_id -> spawned hologram for post-build wiring (cleared after build) */
-    TMap<FString, AFGHologram*> JsonSpawnedHolograms;
+    /** Map of clone_id -> spawned hologram for post-build wiring (cleared after build).
+     *  UPROPERTY so the GC tracks these pointers and NULLs them on collection instead of leaving
+     *  dangling raws (the holograms are preview actors the engine destroys). Without this, a stale
+     *  entry passes a bare null check and is dereferenced (use-after-free). */
+    UPROPERTY()
+    TMap<FString, TObjectPtr<AFGHologram>> JsonSpawnedHolograms;
 
-    /** Map of clone_id -> built actor (populated during Construct(), used for wiring) */
-    TMap<FString, AActor*> JsonBuiltActors;
+    /** Map of clone_id -> built actor (populated during Construct(), used for wiring).
+     *  UPROPERTY for GC tracking — collected/demolished actors become null rather than dangling. */
+    UPROPERTY()
+    TMap<FString, TObjectPtr<AActor>> JsonBuiltActors;
 
     /** Cached preview locations for restored scaled factories; hologram pointers are often invalid by post-build wiring time. */
     TMap<FString, FVector> RestoredScaledFactoryPreviewLocations;

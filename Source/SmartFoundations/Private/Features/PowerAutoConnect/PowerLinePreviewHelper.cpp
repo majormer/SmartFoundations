@@ -1,3 +1,5 @@
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
+
 #include "Features/PowerAutoConnect/PowerLinePreviewHelper.h"
 #include "Holograms/Power/SFWireHologram.h"
 #include "Hologram/FGHologram.h"
@@ -25,7 +27,7 @@ bool FPowerLinePreviewHelper::UpdatePreview(UFGPowerConnectionComponent* InStart
 {
 	if (!InStartConnection || !InEndConnection)
 	{
-		UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ UpdatePreview: Invalid connections - start=%s, end=%s"),
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("⚡ UpdatePreview: Invalid connections - start=%s, end=%s"),
 			InStartConnection ? *InStartConnection->GetFullName() : TEXT("null"),
 			InEndConnection ? *InEndConnection->GetFullName() : TEXT("null"));
 		return false;
@@ -92,14 +94,14 @@ void FPowerLinePreviewHelper::EnsureSpawned(const FVector& SpawnLocation, UFGPow
 			if (bIsWireHologram && !bIsSmartChild)
 			{
 				// Vanilla wire child detected - pole is in "insert into existing wire" mode
-				UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ EnsureSpawned: Skipped - parent pole has vanilla wire child: %s (class: %s)"), 
+				UE_LOG(LogSmartAutoConnect, Verbose, TEXT("⚡ EnsureSpawned: Skipped - parent pole has vanilla wire child: %s (class: %s)"),
 					*Child->GetName(), *ChildClassName);
 				return;
 			}
 		}
 	}
 
-	UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ EnsureSpawned: Creating SFWireHologram at %s"), *SpawnLocation.ToString());
+	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("⚡ EnsureSpawned: Creating SFWireHologram at %s"), *SpawnLocation.ToString());
 
 	// Spawn our custom Smart wire hologram with deferred construction
 	FActorSpawnParameters SpawnParams;
@@ -231,7 +233,7 @@ void FPowerLinePreviewHelper::DestroyPreview()
 {
 	if (PowerLineHologram.IsValid())
 	{
-		UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ DestroyPreview: Destroying wire hologram %s"),
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("⚡ DestroyPreview: Destroying wire hologram %s"),
 			*PowerLineHologram->GetName());
 
 		// Use centralized queued destruction (same pattern as FConduitPreviewHelper)

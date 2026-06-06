@@ -1,8 +1,10 @@
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
+
 #pragma once
 
 #include "CoreMinimal.h"
 #include "SFSmartHologram.h"
-#include "FGBuildableHologram.h"
+#include "Hologram/FGBuildableHologram.h"
 #include "Holograms/Adapters/ISFHologramAdapter.h"
 #include "SFBuildableHologram.generated.h"
 

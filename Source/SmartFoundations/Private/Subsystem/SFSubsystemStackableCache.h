@@ -1,31 +1,21 @@
-// Copyright Coffee Stain Studios. All Rights Reserved.
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
 /**
- * Internal shared cache for stackable belt build data (Issue #220).
- * Shared between CacheStackableBeltPreviewsForBuild() and OnActorSpawned(). Promoted from a
- * file-scope anonymous-namespace cache in SFSubsystem.cpp to C++17 inline variables here so the
- * cache stays a single shared instance now that USFSubsystem's implementation is split across
- * multiple .cpp (slice S). Behavior is identical to the pre-split file-static cache.
+ * Internal shared re-entry lock for grid placement (Issue #220).
+ *
+ * bProcessingGridPlacement was a file-scope static in SFSubsystem.cpp; promoted to a C++17 inline
+ * var here so it stays a single shared instance across the split SFSubsystem_*.cpp (slice S).
+ *
+ * This header formerly also held the stackable-belt build cache (FStackableBeltBuildData,
+ * GCachedStackableBeltData, bGStackableBeltDataCached). That cache was removed once stacked belts
+ * moved to the STACK-CHAIN construct handler in ASFConveyorBeltHologram and its producer/consumer
+ * (CacheStackableBeltPreviewsForBuild / the OnActorSpawned SpawnActor builder) were deleted as dead.
+ * See THESIS §6.9–§6.13.
  */
 
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Hologram/FGSplineHologram.h"  // For FSplinePointData
 
-class UFGFactoryConnectionComponent;
-
-struct FStackableBeltBuildData
-{
-    TArray<FSplinePointData> SplineData;
-    TWeakObjectPtr<UFGFactoryConnectionComponent> OutputConnector;
-    TWeakObjectPtr<UFGFactoryConnectionComponent> InputConnector;
-    int32 BeltTier = 0;
-};
-
-inline TArray<FStackableBeltBuildData> GCachedStackableBeltData;
-inline bool bGStackableBeltDataCached = false;
-
-/** Re-entry lock for grid placement (was a file-scope static in SFSubsystem.cpp; promoted to a
- *  shared inline var so it stays a single instance across the split SFSubsystem_*.cpp). */
+/** Re-entry lock for grid placement (single shared instance across the split SFSubsystem_*.cpp). */
 inline bool bProcessingGridPlacement = false;

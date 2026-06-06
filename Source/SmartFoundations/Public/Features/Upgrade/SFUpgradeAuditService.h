@@ -1,4 +1,4 @@
-// Copyright Coffee Stain Studios. All Rights Reserved.
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
 #pragma once
 
@@ -361,5 +361,5 @@ private:
 
 	/** Owning subsystem reference */
 	UPROPERTY(Transient)
-	class USFSubsystem* Subsystem = nullptr;
+	TObjectPtr<class USFSubsystem> Subsystem = nullptr;
 };

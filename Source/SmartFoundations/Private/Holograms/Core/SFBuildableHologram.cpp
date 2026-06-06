@@ -1,5 +1,7 @@
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
+
 #include "Holograms/Core/SFBuildableHologram.h"
-#include "FGBuildable.h"
+#include "Buildables/FGBuildable.h"
 #include "Logging/SFLogMacros.h"
 #include "Data/SFBuildableSizeRegistry.h"
 

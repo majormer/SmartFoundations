@@ -1,3 +1,5 @@
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
+
 #include "Core/Helpers/SFExtendChainHelper.h"
 #include "SmartFoundations.h"
 #include "Data/SFHologramData.h"

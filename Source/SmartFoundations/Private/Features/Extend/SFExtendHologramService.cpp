@@ -1,4 +1,4 @@
-// Copyright Coffee Stain Studios. All Rights Reserved.
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
 #include "Features/Extend/SFExtendHologramService.h"
 #include "Features/Extend/SFExtendTypes.h"
@@ -134,7 +134,11 @@ void USFExtendHologramService::CreateBeltPreviews(AFGHologram* ParentHologram)
 
     // Store for post-build wiring
     StoredCloneTopology = MakeShared<FSFCloneTopology>(CloneJSON);
-    JsonSpawnedHolograms = SpawnedHolograms;
+    JsonSpawnedHolograms.Reset();
+    for (const TPair<FString, AFGHologram*>& Pair : SpawnedHolograms)
+    {
+        JsonSpawnedHolograms.Add(Pair.Key, Pair.Value);
+    }
 
     SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log,
         TEXT("[SmartRestore][ExtendHologram] Stored clone topology: children=%d spawnedMap=%d"),
@@ -397,7 +401,11 @@ ASFFactoryHologram* USFExtendHologramService::GetSwappedHologram() const
 
 void USFExtendHologramService::StoreJsonSpawnedHolograms(const TMap<FString, AFGHologram*>& SpawnedHolograms)
 {
-    JsonSpawnedHolograms = SpawnedHolograms;
+    JsonSpawnedHolograms.Reset();
+    for (const TPair<FString, AFGHologram*>& Pair : SpawnedHolograms)
+    {
+        JsonSpawnedHolograms.Add(Pair.Key, Pair.Value);
+    }
 }
 
 void USFExtendHologramService::StoreCloneTopology(TSharedPtr<FSFCloneTopology> CloneTopology)

@@ -1,8 +1,10 @@
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
+
 #pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "FGHologram.h"
+#include "Hologram/FGHologram.h"
 #include "SFSmartHologram.generated.h"
 
 /**

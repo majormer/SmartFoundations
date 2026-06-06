@@ -34,7 +34,7 @@ Near-term multiplayer work should favor:
 
 ## SML Multiplayer Guidance
 
-The official SML multiplayer docs and the indexed SmartVectorEvolved copy agree on these rules:
+The official SML multiplayer docs and an indexed local copy agree on these rules:
 
 - Code written correctly for multiplayer should also work in single-player; avoid separate single-player-only logic paths where a normal server-authoritative path is possible.
 - Client-to-server actions should go through Remote Call Objects when the caller needs an owned network object for RPCs.
@@ -49,7 +49,7 @@ Reference sources:
 - Official SML docs: [Development/Satisfactory/Multiplayer](https://docs.ficsit.app/satisfactory-modding/latest/Development/Satisfactory/Multiplayer.html)
 - Official SML docs: [Development/ModLoader/Registry](https://docs.ficsit.app/satisfactory-modding/latest/Development/ModLoader/Registry.html)
 - Official SML docs: [Development/Satisfactory/ConditionalPropertyReplication](https://docs.ficsit.app/satisfactory-modding/latest/Development/Satisfactory/ConditionalPropertyReplication.html)
-- SmartVectorEvolved cached docs: `L:\Personal\Repos\smartvectorevolved\cache\ficsit_docs_repo\modules\ROOT\pages\Development\Satisfactory\Multiplayer.adoc`
+- the SML multiplayer docs
 
 ## Existing Smart Multiplayer Surfaces
 

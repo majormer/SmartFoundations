@@ -1,4 +1,4 @@
-// Copyright Coffee Stain Studios. All Rights Reserved.
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
 /**
  * USFSubsystem - auto-connect production + distributor lifecycle + debug tools + deferred pipe wiring + chain-actor rebuild.
@@ -6,6 +6,7 @@
  */
 
 #include "Subsystem/SFSubsystemImpl.h"
+#include "Engine/OverlapResult.h"
 
 
 // ========================================
@@ -68,7 +69,7 @@ USFAutoConnectOrchestrator* USFSubsystem::GetOrCreateOrchestrator(AFGHologram* P
 	}
 
 	// Check if orchestrator already exists
-	if (USFAutoConnectOrchestrator** ExistingOrchestrator = AutoConnectOrchestrators.Find(ParentHologram))
+	if (TObjectPtr<USFAutoConnectOrchestrator>* ExistingOrchestrator = AutoConnectOrchestrators.Find(ParentHologram))
 	{
 		return *ExistingOrchestrator;
 	}
@@ -175,50 +176,6 @@ void USFSubsystem::ResetCounters()
     UpdateCounterDisplay();
 }
 
-// ========================================
-// Debug Tools
-// ========================================
-
-void USFSubsystem::AnalyzeNearbyPipeSplines(float Radius)
-{
-	UWorld* World = GetWorld();
-	if (!World)
-	{
-		UE_LOG(LogSmartFoundations, Error, TEXT("🔍 SPLINE ANALYZER: No world context"));
-		return;
-	}
-
-	// Get player location as search center
-	AFGPlayerController* PlayerController = Cast<AFGPlayerController>(World->GetFirstPlayerController());
-	if (!PlayerController)
-	{
-		UE_LOG(LogSmartFoundations, Error, TEXT("🔍 SPLINE ANALYZER: No player controller"));
-		return;
-	}
-
-	AFGCharacterPlayer* Player = Cast<AFGCharacterPlayer>(PlayerController->GetPawn());
-	if (!Player)
-	{
-		UE_LOG(LogSmartFoundations, Error, TEXT("🔍 SPLINE ANALYZER: No player character"));
-		return;
-	}
-
-	FVector PlayerLocation = Player->GetActorLocation();
-
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"));
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔍 SMART! PIPE SPLINE ANALYZER"));
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"));
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Player Location: %s"), *PlayerLocation.ToString());
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Search Radius: %.1fm"), Radius / 100.0f);
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"));
-
-	// Use the analyzer utility (analyzes both pipes and belts)
-	FSFSplineAnalyzer::AnalyzeNearLocation(World, PlayerLocation, Radius);
-
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"));
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔍 Analysis complete. Check logs for detailed spline data."));
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"));
-}
 
 void USFSubsystem::OnPowerPoleBuilt(AFGBuildablePowerPole* BuiltPole)
 {
@@ -641,227 +598,12 @@ void USFSubsystem::RegisterPipeForDeferredWiring(AFGBuildablePipeline* Pipe)
 	});
 }
 
-// ========================================
-// Chain Actor Rebuild System (Issue #220 - Stackable Belt Fix)
-// ========================================
-// Uses a deferred timer to safely rebuild chains after all belts are placed.
+// Chain Actor Rebuild System (Issue #220) removed (dead): QueueChainRebuild / CollectChainBelts /
+// ExecuteDeferredChainRebuild were never called. They did RemoveConveyor/AddConveyor on live belts
+// off a timer (crash-class — ParallelFor tick race) and are fully superseded by the STACK-CHAIN
+// construct handler in ASFConveyorBeltHologram (THESIS §6.9–§6.13).
 
-void USFSubsystem::QueueChainRebuild(AFGBuildableConveyorBelt* Belt)
-{
-	if (!Belt)
-	{
-		return;
-	}
-
-	PendingChainRebuilds.Add(Belt);
-
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⛓️ CHAIN REBUILD: Queued %s for deferred chain rebuild (pending: %d)"),
-		*Belt->GetName(), PendingChainRebuilds.Num());
-
-	// Reset the timer - this allows batching multiple belts placed in quick succession
-	UWorld* World = GetWorld();
-	if (World)
-	{
-		World->GetTimerManager().ClearTimer(ChainRebuildTimerHandle);
-		World->GetTimerManager().SetTimer(
-			ChainRebuildTimerHandle,
-			this,
-			&USFSubsystem::ExecuteDeferredChainRebuild,
-			0.5f,  // 500ms delay to allow all belts to be placed
-			false  // Don't loop
-		);
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⛓️ CHAIN REBUILD: Timer set for 0.5s"));
-	}
-}
-
-TSet<AFGBuildableConveyorBelt*> USFSubsystem::CollectChainBelts(AFGBuildableConveyorBelt* StartBelt)
-{
-	TSet<AFGBuildableConveyorBelt*> Result;
-	if (!StartBelt)
-	{
-		return Result;
-	}
-
-	TQueue<AFGBuildableConveyorBelt*> ToVisit;
-	ToVisit.Enqueue(StartBelt);
-
-	while (!ToVisit.IsEmpty())
-	{
-		AFGBuildableConveyorBelt* Current;
-		ToVisit.Dequeue(Current);
-
-		if (!Current || Result.Contains(Current))
-		{
-			continue;
-		}
-
-		Result.Add(Current);
-
-		// Follow Conn0
-		UFGFactoryConnectionComponent* Conn0 = Current->GetConnection0();
-		if (Conn0 && Conn0->IsConnected())
-		{
-			UFGFactoryConnectionComponent* OtherConn = Conn0->GetConnection();
-			if (OtherConn)
-			{
-				AActor* Owner = OtherConn->GetOwner();
-				if (AFGBuildableConveyorBelt* Neighbor = Cast<AFGBuildableConveyorBelt>(Owner))
-				{
-					if (!Result.Contains(Neighbor))
-					{
-						ToVisit.Enqueue(Neighbor);
-					}
-				}
-			}
-		}
-
-		// Follow Conn1
-		UFGFactoryConnectionComponent* Conn1 = Current->GetConnection1();
-		if (Conn1 && Conn1->IsConnected())
-		{
-			UFGFactoryConnectionComponent* OtherConn = Conn1->GetConnection();
-			if (OtherConn)
-			{
-				AActor* Owner = OtherConn->GetOwner();
-				if (AFGBuildableConveyorBelt* Neighbor = Cast<AFGBuildableConveyorBelt>(Owner))
-				{
-					if (!Result.Contains(Neighbor))
-					{
-						ToVisit.Enqueue(Neighbor);
-					}
-				}
-			}
-		}
-	}
-
-	return Result;
-}
-
-void USFSubsystem::ExecuteDeferredChainRebuild()
-{
-	if (PendingChainRebuilds.Num() == 0)
-	{
-		return;
-	}
-
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⛓️ CHAIN REBUILD: Executing deferred rebuild for %d pending belt(s)"),
-		PendingChainRebuilds.Num());
-
-	AFGBuildableSubsystem* Subsystem = AFGBuildableSubsystem::Get(GetWorld());
-	if (!Subsystem)
-	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("⛓️ CHAIN REBUILD: No BuildableSubsystem - aborting"));
-		PendingChainRebuilds.Empty();
-		return;
-	}
-
-	// Collect ALL belts from ALL pending chains
-	TSet<AFGBuildableConveyorBelt*> AllChainBelts;
-	for (const TWeakObjectPtr<AFGBuildableConveyorBelt>& WeakBelt : PendingChainRebuilds)
-	{
-		if (WeakBelt.IsValid())
-		{
-			TSet<AFGBuildableConveyorBelt*> ChainBelts = CollectChainBelts(WeakBelt.Get());
-			AllChainBelts.Append(ChainBelts);
-		}
-	}
-
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⛓️ CHAIN REBUILD: Collected %d total belt(s) in chain(s)"),
-		AllChainBelts.Num());
-
-	// Remove all from subsystem
-	int32 RemovedCount = 0;
-	for (AFGBuildableConveyorBelt* Belt : AllChainBelts)
-	{
-		if (Belt && Belt->GetConveyorChainActor())
-		{
-			Subsystem->RemoveConveyor(Belt);
-			RemovedCount++;
-		}
-	}
-
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⛓️ CHAIN REBUILD: Removed %d belt(s) from chain system"),
-		RemovedCount);
-
-	// Re-add all (rebuilds with correct topology)
-	int32 AddedCount = 0;
-	for (AFGBuildableConveyorBelt* Belt : AllChainBelts)
-	{
-		if (Belt)
-		{
-			Subsystem->AddConveyor(Belt);
-			AddedCount++;
-		}
-	}
-
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⛓️ CHAIN REBUILD: Re-added %d belt(s) to chain system"),
-		AddedCount);
-
-	// Clear pending
-	PendingChainRebuilds.Empty();
-
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⛓️ CHAIN REBUILD: Complete"));
-}
-
-void USFSubsystem::CacheStackableBeltPreviewsForBuild()
-{
-	// Uses file-scope global cache: GCachedStackableBeltData, bGStackableBeltDataCached
-	// OnActorSpawned consumes this cache when pole is built
-
-	if (!AutoConnectService || !ActiveHologram.IsValid())
-	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("🚧 STACKABLE BELT CACHE: Missing service or hologram"));
-		return;
-	}
-
-	// Get belt previews from the AutoConnectService
-	TArray<TSharedPtr<FBeltPreviewHelper>>* BeltPreviews = AutoConnectService->GetBeltPreviews(ActiveHologram.Get());
-	if (!BeltPreviews || BeltPreviews->Num() == 0)
-	{
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🚧 STACKABLE BELT CACHE: No belt previews to cache"));
-		return;
-	}
-
-	GCachedStackableBeltData.Empty();
-
-	for (const TSharedPtr<FBeltPreviewHelper>& PreviewHelper : *BeltPreviews)
-	{
-		if (!PreviewHelper.IsValid() || !PreviewHelper->IsPreviewValid()) continue;
-
-		AFGSplineHologram* PreviewHolo = PreviewHelper->GetHologram();
-		if (!PreviewHolo) continue;
-
-		FStackableBeltBuildData Data;
-		Data.BeltTier = PreviewHelper->GetBeltTier();
-		Data.OutputConnector = PreviewHelper->GetOutputConnector();
-		Data.InputConnector = PreviewHelper->GetInputConnector();
-
-		// Extract spline data from the preview hologram
-		USplineComponent* SplineComp = PreviewHolo->FindComponentByClass<USplineComponent>();
-		if (SplineComp)
-		{
-			int32 NumPoints = SplineComp->GetNumberOfSplinePoints();
-			for (int32 i = 0; i < NumPoints; i++)
-			{
-				FSplinePointData Point;
-				Point.Location = SplineComp->GetLocationAtSplinePoint(i, ESplineCoordinateSpace::World);
-				Point.ArriveTangent = SplineComp->GetArriveTangentAtSplinePoint(i, ESplineCoordinateSpace::World);
-				Point.LeaveTangent = SplineComp->GetLeaveTangentAtSplinePoint(i, ESplineCoordinateSpace::World);
-				Data.SplineData.Add(Point);
-			}
-		}
-
-		if (Data.SplineData.Num() >= 2)
-		{
-			GCachedStackableBeltData.Add(Data);
-		}
-	}
-
-	bGStackableBeltDataCached = GCachedStackableBeltData.Num() > 0;
-
-	if (bGStackableBeltDataCached)
-	{
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🚧 STACKABLE BELT CACHE: Cached %d belt(s) from hologram previews"), GCachedStackableBeltData.Num());
-	}
-}
+// CacheStackableBeltPreviewsForBuild() removed (dead): its only consumer was the deferred
+// OnActorSpawned SpawnActor belt builder, deleted when stacked belts moved to the STACK-CHAIN
+// construct handler (THESIS §6.9–§6.13).
 

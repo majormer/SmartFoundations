@@ -1,3 +1,5 @@
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
+
 #include "SFPassthroughAdapter.h"
 #include "Hologram/FGPassthroughHologram.h"
 #include "Buildables/FGBuildableFoundation.h"

@@ -1,3 +1,5 @@
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
+
 // SFBuildableSizeRegistry_Data.cpp
 //
 // GENERATED FILE - DO NOT EDIT BY HAND.
@@ -15,7 +17,7 @@ extern FString CurrentSourceFile;
 void USFBuildableSizeRegistry::RegisterDefaultProfiles()
 {
 	CurrentSourceFile = TEXT("BuildableSizes.csv");
-	SF_LOG_ADAPTER(Normal, TEXT("📂 Registering buildable size profiles from generated table (300 rows)"), 300);
+	SF_LOG_ADAPTER(Normal, TEXT("📂 Registering buildable size profiles from generated table (301 rows)"), 301);
 
 	RegisterProfile(TEXT("Build_Roof_Orange_01_C"), FVector(800.0f, 800.0f, 50.0f), false, false, TEXT(""), true);
 	RegisterProfile(TEXT("Build_Roof_Orange_02_C"), FVector(800.0f, 800.0f, 100.0f), false, false, TEXT(""), true);
@@ -113,6 +115,7 @@ void USFBuildableSizeRegistry::RegisterDefaultProfiles()
 	RegisterProfile(TEXT("Build_PipelineMK2_C"), FVector(100.0f, 100.0f, 100.0f), false, false, TEXT(""), false);
 	RegisterProfile(TEXT("Build_PipelineMK2_NoIndicator_C"), FVector(100.0f, 100.0f, 100.0f), false, false, TEXT(""), false);
 	RegisterProfile(TEXT("Build_PipelineJunction_Cross_C"), FVector(300.0f, 300.0f, 200.0f), false, true, TEXT(""), false, FVector(0.0f, 0.0f, -175.0f));
+	RegisterProfile(TEXT("Build_PipelineJunction_T_C"), FVector(300.0f, 300.0f, 200.0f), false, true, TEXT(""), false, FVector(0.0f, 0.0f, -175.0f));
 	RegisterProfile(TEXT("Build_PipelinePump_C"), FVector(400.0f, 250.0f, 250.0f), false, true, TEXT(""), false, FVector(0.0f, 0.0f, -175.0f));
 	RegisterProfile(TEXT("Build_PipelinePumpMk2_C"), FVector(400.0f, 250.0f, 250.0f), false, true, TEXT(""), false, FVector(0.0f, 0.0f, -175.0f));
 	RegisterProfile(TEXT("Build_Valve_C"), FVector(100.0f, 100.0f, 100.0f), false, false, TEXT(""), false);

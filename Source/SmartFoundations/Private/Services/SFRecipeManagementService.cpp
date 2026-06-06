@@ -1,11 +1,11 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
 #include "SFRecipeManagementService.h"
 #include "SmartFoundations.h"
 #include "Subsystem/SFSubsystem.h"
 #include "Subsystem/SFHologramDataService.h"
 #include "Data/SFHologramDataRegistry.h"
-#include "FGBuildGun.h"
+#include "Equipment/FGBuildGun.h"
 #include "Equipment/FGBuildGunBuild.h"
 #include "FGPlayerController.h"
 #include "FGRecipe.h"
@@ -37,7 +37,7 @@ void USFRecipeManagementService::Initialize(USFSubsystem* InSubsystem)
 	CurrentPlacementBuildings.Empty();
 	CurrentPlacementGroupID = 0;
 	bBlueprintProxyRecentlySpawned = false;
-	UE_LOG(LogSmartFoundations, Log, TEXT("Recipe Management Service: Initialized"));
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("Recipe Management Service: Initialized"));
 }
 
 void USFRecipeManagementService::SyncSubsystemRecipeState() const
@@ -62,7 +62,7 @@ void USFRecipeManagementService::Cleanup()
 		Subsystem->GetWorld()->GetTimerManager().ClearTimer(RecipeRegenerationTimer);
 	}
 	Subsystem = nullptr;
-	UE_LOG(LogSmartFoundations, Log, TEXT("Recipe Management Service: Cleaned up"));
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("Recipe Management Service: Cleaned up"));
 }
 
 // ========================================
@@ -96,7 +96,7 @@ void USFRecipeManagementService::CycleRecipeForward(int32 AccumulatedSteps)
 	const int32 Total = SortedFilteredRecipes.Num();
 	if (Total == 0)
 	{
-		UE_LOG(LogSmartFoundations, Log, TEXT("🍽️ Cannot cycle recipes: %d available"), Total);
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("🍽️ Cannot cycle recipes: %d available"), Total);
 		return;
 	}
 
@@ -135,7 +135,7 @@ void USFRecipeManagementService::CycleRecipeBackward(int32 AccumulatedSteps)
 	const int32 Total = SortedFilteredRecipes.Num();
 	if (Total == 0)
 	{
-		UE_LOG(LogSmartFoundations, Log, TEXT("🍽️ Cannot cycle recipes: %d available"), Total);
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("🍽️ Cannot cycle recipes: %d available"), Total);
 		return;
 	}
 
@@ -738,7 +738,7 @@ void USFRecipeManagementService::RegisterSmartBuilding(AFGBuildable* Building, i
 	CurrentPlacementBuildings.Add(Building);
 	
 	// Log registration
-	UE_LOG(LogSmartFoundations, Log, 
+	UE_LOG(LogSmartFoundations, Verbose,
 		TEXT("REGISTRY: Registered Smart Building | Group=%d Index=%d Type=%s Class=%s Recipe=%s"),
 		Metadata.PlacementGroupID,
 		Metadata.IndexInGroup,
@@ -751,20 +751,20 @@ void USFRecipeManagementService::ApplyRecipesToCurrentPlacement()
 {
 	if (CurrentPlacementBuildings.Num() == 0)
 	{
-		UE_LOG(LogSmartFoundations, Log, TEXT("REGISTRY: No buildings in current placement to apply recipes to"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("REGISTRY: No buildings in current placement to apply recipes to"));
 		return;
 	}
 	
 	if (!bHasStoredProductionRecipe || !StoredProductionRecipe)
 	{
-		UE_LOG(LogSmartFoundations, Log, 
+		UE_LOG(LogSmartFoundations, Verbose,
 			TEXT("REGISTRY: No stored recipe - buildings registered but no recipes to apply (Group %d, %d buildings)"),
 			CurrentPlacementGroupID, CurrentPlacementBuildings.Num());
 		ClearCurrentPlacement();
 		return;
 	}
 	
-	UE_LOG(LogSmartFoundations, Log, 
+	UE_LOG(LogSmartFoundations, Verbose,
 		TEXT("REGISTRY: Applying recipe %s to %d buildings in group %d"),
 		*GetRecipeDisplayName(StoredProductionRecipe),
 		CurrentPlacementBuildings.Num(),
@@ -800,7 +800,7 @@ void USFRecipeManagementService::ApplyRecipesToCurrentPlacement()
 		}
 	}
 	
-	UE_LOG(LogSmartFoundations, Log, 
+	UE_LOG(LogSmartFoundations, Verbose,
 		TEXT("REGISTRY: Recipe application scheduled - %d manufacturers, %d skipped"),
 		AppliedCount, SkippedCount);
 	
@@ -826,7 +826,7 @@ void USFRecipeManagementService::OnActorSpawned(AActor* SpawnedActor)
 	if (SpawnedActor->GetClass()->GetName().Contains(TEXT("BlueprintProxy")))
 	{
 		bBlueprintProxyRecentlySpawned = true;
-		UE_LOG(LogSmartFoundations, Log, TEXT("OnActorSpawned: Blueprint proxy %s detected"), 
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("OnActorSpawned: Blueprint proxy %s detected"),
 			*SpawnedActor->GetName());
 		
 		// Clear the flag after 0.3 seconds
@@ -851,7 +851,7 @@ void USFRecipeManagementService::OnActorSpawned(AActor* SpawnedActor)
 	bool bWantBoost = bHasStoredProductionBoost && StoredProductionBoostShardClass && StoredProductionBoost > 1.0f;
 	bool bSessionMatch = (ShardSessionId == CurrentBuildSessionId);
 	
-	UE_LOG(LogSmartFoundations, Log, TEXT("🔍 OnActorSpawned SHARD CHECK: Factory=%s, Scaling=%s, Session=%s (%d==%d), WantShards=%s, WantBoost=%s"),
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("🔍 OnActorSpawned SHARD CHECK: Factory=%s, Scaling=%s, Session=%s (%d==%d), WantShards=%s, WantBoost=%s"),
 		FactoryBuilding ? TEXT("yes") : TEXT("no"), bIsSmartScaling ? TEXT("yes") : TEXT("no"),
 		bSessionMatch ? TEXT("match") : TEXT("MISMATCH"), ShardSessionId, CurrentBuildSessionId,
 		bWantShards ? TEXT("yes") : TEXT("no"), bWantBoost ? TEXT("yes") : TEXT("no"));
@@ -905,7 +905,7 @@ void USFRecipeManagementService::OnActorSpawned(AActor* SpawnedActor)
 					if (NewMax > 1.0f)
 					{
 						Factory->SetPendingPotential(FMath::Min(CapturedPotential, NewMax));
-						UE_LOG(LogSmartFoundations, Log, TEXT("⚡ Delayed: Power Shards applied to %s, pending=%.0f%%, max=%.0f%%"),
+						UE_LOG(LogSmartFoundations, Verbose, TEXT("⚡ Delayed: Power Shards applied to %s, pending=%.0f%%, max=%.0f%%"),
 							*Factory->GetName(), CapturedPotential * 100.0f, NewMax * 100.0f);
 					}
 					else
@@ -922,7 +922,7 @@ void USFRecipeManagementService::OnActorSpawned(AActor* SpawnedActor)
 					if (NewMaxBoost > 1.0f)
 					{
 						Factory->SetPendingProductionBoost(FMath::Min(CapturedBoost, NewMaxBoost));
-						UE_LOG(LogSmartFoundations, Log, TEXT("🔮 Delayed: Somersloop applied to %s, pending=%.0f%%, max=%.0f%%"),
+						UE_LOG(LogSmartFoundations, Verbose, TEXT("🔮 Delayed: Somersloop applied to %s, pending=%.0f%%, max=%.0f%%"),
 							*Factory->GetName(), CapturedBoost * 100.0f, NewMaxBoost * 100.0f);
 					}
 					else
@@ -952,7 +952,7 @@ void USFRecipeManagementService::OnActorSpawned(AActor* SpawnedActor)
 		
 		if (ActiveRecipe)
 		{
-			UE_LOG(LogSmartFoundations, Log, TEXT("OnActorSpawned: Will apply active recipe %s to manufacturer %s"), 
+			UE_LOG(LogSmartFoundations, Verbose, TEXT("OnActorSpawned: Will apply active recipe %s to manufacturer %s"), 
 				*ActiveRecipe->GetName(), *ManufacturerBuilding->GetName());
 		}
 	}
@@ -963,7 +963,7 @@ void USFRecipeManagementService::ClearCurrentPlacement()
 	CurrentPlacementBuildings.Empty();
 	CurrentPlacementGroupID++;
 	
-	UE_LOG(LogSmartFoundations, Log, 
+	UE_LOG(LogSmartFoundations, Verbose, 
 		TEXT("REGISTRY: Cleared current placement tracking | Next GroupID=%d | Total registered buildings=%d"),
 		CurrentPlacementGroupID, SmartBuildingRegistry.Num());
 }
@@ -1236,7 +1236,7 @@ void USFRecipeManagementService::ApplyRecipeDelayed(AFGBuildableManufacturer* Ma
 	// CRITICAL: Skip recipe changes for blueprint buildings (they retain their preloaded recipes)
 	if (bBlueprintProxyRecentlySpawned)
 	{
-		UE_LOG(LogSmartFoundations, Log, TEXT("ApplyRecipeDelayed: Skipping recipe change for %s - building spawned from blueprint (preserving preloaded recipe)"), 
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("ApplyRecipeDelayed: Skipping recipe change for %s - building spawned from blueprint (preserving preloaded recipe)"), 
 			*ManufacturerBuilding->GetName());
 		return;
 	}
@@ -1279,7 +1279,7 @@ void USFRecipeManagementService::ApplyRecipeDelayed(AFGBuildableManufacturer* Ma
 			return; // Skip applying incompatible recipe
 		}
 		
-		UE_LOG(LogSmartFoundations, Log, TEXT("ApplyRecipeDelayed: Building %s is ready - applying recipe %s"), 
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("ApplyRecipeDelayed: Building %s is ready - applying recipe %s"), 
 			*ManufacturerBuilding->GetName(), *Recipe->GetName());
 		
 		// Apply the recipe to the building
@@ -1287,7 +1287,7 @@ void USFRecipeManagementService::ApplyRecipeDelayed(AFGBuildableManufacturer* Ma
 	}
 	else
 	{
-		UE_LOG(LogSmartFoundations, Log, TEXT("ApplyRecipeDelayed: Building %s is ready - clearing recipe (user cleared with Num0)"), 
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("ApplyRecipeDelayed: Building %s is ready - clearing recipe (user cleared with Num0)"), 
 			*ManufacturerBuilding->GetName());
 		
 		// Clear the recipe from the building
@@ -1296,7 +1296,7 @@ void USFRecipeManagementService::ApplyRecipeDelayed(AFGBuildableManufacturer* Ma
 	
 	// Verify the recipe was actually applied or cleared
 	TSubclassOf<UFGRecipe> AppliedRecipe = ManufacturerBuilding->GetCurrentRecipe();
-	UE_LOG(LogSmartFoundations, Log, TEXT("ApplyRecipeDelayed: Recipe verification - Expected: %s, Applied: %s"), 
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("ApplyRecipeDelayed: Recipe verification - Expected: %s, Applied: %s"), 
 		Recipe ? *Recipe->GetName() : TEXT("NULL"), 
 		AppliedRecipe ? *AppliedRecipe->GetName() : TEXT("NULL"));
 	
@@ -1304,11 +1304,11 @@ void USFRecipeManagementService::ApplyRecipeDelayed(AFGBuildableManufacturer* Ma
 	{
 		if (Recipe)
 		{
-			UE_LOG(LogSmartFoundations, Log, TEXT("ApplyRecipeDelayed: ✅ Recipe successfully applied and verified"));
+			UE_LOG(LogSmartFoundations, Verbose, TEXT("ApplyRecipeDelayed: ✅ Recipe successfully applied and verified"));
 		}
 		else
 		{
-			UE_LOG(LogSmartFoundations, Log, TEXT("ApplyRecipeDelayed: ✅ Recipe successfully cleared and verified"));
+			UE_LOG(LogSmartFoundations, Verbose, TEXT("ApplyRecipeDelayed: ✅ Recipe successfully cleared and verified"));
 		}
 	}
 	else
@@ -1324,19 +1324,19 @@ void USFRecipeManagementService::OnNewBuildSession(UClass* NewBuildClass)
 	if (ShardSessionId == CurrentBuildSessionId && (bHasStoredPotential || bHasStoredProductionBoost)
 		&& NewBuildClass == ShardSourceBuildClass)
 	{
-		UE_LOG(LogSmartFoundations, Log, TEXT("🏷️ New build session: SKIPPED bump (shards active for same class in session %d)"), CurrentBuildSessionId);
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("🏷️ New build session: SKIPPED bump (shards active for same class in session %d)"), CurrentBuildSessionId);
 		return;
 	}
 	
 	++CurrentBuildSessionId;
-	UE_LOG(LogSmartFoundations, Log, TEXT("🏷️ New build session: ID=%d (shard session=%d, match=%s)"),
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("🏷️ New build session: ID=%d (shard session=%d, match=%s)"),
 		CurrentBuildSessionId, ShardSessionId,
 		(CurrentBuildSessionId == ShardSessionId) ? TEXT("yes") : TEXT("no"));
 }
 
 void USFRecipeManagementService::ClearStoredShardState()
 {
-	UE_LOG(LogSmartFoundations, Log, TEXT("🧹 ClearStoredShardState: Clearing shard/somersloop state only (recipe preserved)"));
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("🧹 ClearStoredShardState: Clearing shard/somersloop state only (recipe preserved)"));
 	StoredPotential = 1.0f;
 	StoredProductionBoost = 1.0f;
 	bHasStoredPotential = false;
@@ -1398,7 +1398,7 @@ bool USFRecipeManagementService::ApplyStoredPotentialToBuilding(AFGBuildable* Ta
 		{
 			Factory->SetPendingPotential(FMath::Min(StoredPotential, Factory->GetCurrentMaxPotential()));
 			bAppliedAnything = true;
-			UE_LOG(LogSmartFoundations, Log, TEXT("⚡ Power Shards: Transferred %d/%d to %s, pending=%.0f%%, max=%.0f%%"),
+			UE_LOG(LogSmartFoundations, Verbose, TEXT("⚡ Power Shards: Transferred %d/%d to %s, pending=%.0f%%, max=%.0f%%"),
 				ShardsTransferred, StoredOverclockShardCount, *TargetBuilding->GetName(),
 				StoredPotential * 100.0f, Factory->GetCurrentMaxPotential() * 100.0f);
 		}

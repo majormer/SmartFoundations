@@ -1,3 +1,5 @@
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
+
 #pragma once
 
 #include "CoreMinimal.h"
@@ -123,9 +125,6 @@ public:
 	/** Toggle Arrows */
 	void OnToggleArrows();
 	
-	/** Debug: base-game action to validate pipeline */
-	void OnDebugPrimaryFire();
-
 private:
 	/** Owning subsystem - used to call back for feature logic */
 	TWeakObjectPtr<USFSubsystem> OwnerSubsystem;

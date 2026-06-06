@@ -19,7 +19,7 @@ Review **every file** under `Source/SmartFoundations/` (also `Config/`, `docs/`,
 - **T8 Split Smart-vs-vanilla hologram logic** (M/M): extract grid adapters / junction spawners / a shared `FSFHologramCostCalculator` from `SFConveyorBeltHologram` & `SFPipelineHologram`.
 
 ## Also consider (beyond split/dedupe)
-Smoke-test harness via SmartMCP (zero automated tests today — the safety net that makes T1/T6 less risky); hologram-adapter **registry** replacing the subsystem's 10-way switch; consolidate power-connection state wholly into `SFPowerAutoConnectManager`; const-correctness policy (remove hot-path `const_cast`); committed `ARCHITECTURE.md` / expanded `CONTRIBUTING.md`.
+Smoke-test harness via the in-game diagnostic mod (zero automated tests today — the safety net that makes T1/T6 less risky); hologram-adapter **registry** replacing the subsystem's 10-way switch; consolidate power-connection state wholly into `SFPowerAutoConnectManager`; const-correctness policy (remove hot-path `const_cast`); committed `ARCHITECTURE.md` / expanded `CONTRIBUTING.md`.
 
 ## Classification (per item)
 Impact (H/M/L) × Effort (H/M/L) × **lane**: `SAFE-NOW` (mechanical, no behavior change) vs `NEEDS-CARE` (extraction / DI / JSON removal → build-validate + in-game smoke). **Order:** SAFE-NOW + low-effort first (T3, T4) to build confidence, then NEEDS-CARE epics, one slice per PR.
@@ -27,7 +27,7 @@ Impact (H/M/L) × Effort (H/M/L) × **lane**: `SAFE-NOW` (mechanical, no behavio
 ## Guardrails (mandatory)
 - No behavior change without an explicit CHANGELOG/PR note.
 - Audit-before-edit: read all call sites before moving/renaming a symbol.
-- Build-validate every change (Alpakit/UHT); NEEDS-CARE adds a SmartMCP in-game smoke (foundation grid, auto-connect preview, extend manifold, upgrade cost).
+- Build-validate every change (Alpakit/UHT); NEEDS-CARE adds a in-game smoke (foundation grid, auto-connect preview, extend manifold, upgrade cost).
 - Pure-move first: extractions move code verbatim; behavior tweaks are separate follow-up PRs.
 - Baseline/rollback: tag a known-good commit per epic; one epic = one branch; small, revertable PRs.
 

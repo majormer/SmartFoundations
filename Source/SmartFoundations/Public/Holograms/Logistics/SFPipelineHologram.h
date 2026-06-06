@@ -1,7 +1,9 @@
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
+
 #pragma once
 
 #include "CoreMinimal.h"
-#include "FactoryGame/Public/Hologram/FGPipelineHologram.h"
+#include "Hologram/FGPipelineHologram.h"
 #include "FGPipeConnectionComponent.h"
 #include "SFPipelineHologram.generated.h"
 

@@ -1,3 +1,5 @@
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
+
 #include "Services/SFHudService.h"
 // NOTE: SFDeferredCostService removed - child holograms automatically aggregate costs via GetCost()
 #include "Subsystem/SFSubsystem.h"
@@ -15,7 +17,7 @@
 #include "Engine/Texture2D.h"
 #include "Blueprint/UserWidget.h"
 #include "Config/Smart_ConfigStruct.h"
-#include "FGItemDescriptor.h"
+#include "Resources/FGItemDescriptor.h"
 #include "ItemAmount.h"
 #include "FGCentralStorageSubsystem.h"
 #include "FGPlayerController.h"
@@ -97,7 +99,7 @@ void USFHudService::DrawCounterToHUD(AHUD* HUD, UCanvas* Canvas)
     // Position via viewport coordinates
     const float ClampedPosX = FMath::Clamp(CurrentConfig.HUDPositionX, 0.0f, 0.85f);
     const float ClampedPosY = FMath::Clamp(CurrentConfig.HUDPositionY, 0.0f, 0.85f);
-    FVector2D ViewportSize;
+    FVector2D ViewportSize = FVector2D::ZeroVector;
     if (GEngine && GEngine->GameViewport)
     {
         GEngine->GameViewport->GetViewportSize(ViewportSize);

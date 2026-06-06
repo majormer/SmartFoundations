@@ -1,7 +1,9 @@
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
+
 #pragma once
 
 #include "CoreMinimal.h"
-#include "FactoryGame/Public/Hologram/FGConveyorBeltHologram.h"
+#include "Hologram/FGConveyorBeltHologram.h"
 #include "SFConveyorBeltHologram.generated.h"
 
 /**

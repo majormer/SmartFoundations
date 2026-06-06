@@ -1,4 +1,4 @@
-// Copyright Coffee Stain Studios. All Rights Reserved.
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
 /**
  * FSFPipeAutoConnectManager - connection evaluation / manifold-connector / pipe-child spawning /
@@ -35,7 +35,7 @@ void FSFPipeAutoConnectManager::EvaluatePipeConnections(AFGHologram* ParentJunct
 
 	// Phase 2: Manifold connections (junction-to-junction chaining)
 	// Group junctions by which building pipe INPUT INDEX they connect to (not specific connector instance)
-	UE_LOG(LogSmartAutoConnect, Log, TEXT("🔗 Pipe Manifolds: Evaluating junction-to-junction chains"));
+	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🔗 Pipe Manifolds: Evaluating junction-to-junction chains"));
 	
 	// Track which junctions will be valid sources in this evaluation
 	// Any existing manifold pipe whose source is NOT in this set should be cleaned up
@@ -78,7 +78,7 @@ void FSFPipeAutoConnectManager::EvaluatePipeConnections(AFGHologram* ParentJunct
 			*Junction->GetName(), *BuildingActor->GetName(), ConnectorIndex);
 	}
 	
-	UE_LOG(LogSmartAutoConnect, Log, TEXT("🔗 Pipe Manifolds: Found %d input index groups"), 
+	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🔗 Pipe Manifolds: Found %d input index groups"),
 		JunctionsByInputIndex.Num());
 	
 	// For each input index group, chain the junctions together
@@ -87,12 +87,12 @@ void FSFPipeAutoConnectManager::EvaluatePipeConnections(AFGHologram* ParentJunct
 		int32 InputIndex = Group.Key;
 		const TArray<AFGHologram*>& JunctionsInGroup = Group.Value;
 		
-		UE_LOG(LogSmartAutoConnect, Log, TEXT("   📋 Input[%d]: %d junction(s)"), 
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("   📋 Input[%d]: %d junction(s)"),
 			InputIndex, JunctionsInGroup.Num());
 		
 		if (JunctionsInGroup.Num() < 2)
 		{
-			UE_LOG(LogSmartAutoConnect, Log, TEXT("      ⏭️ Skipping (need at least 2 junctions for manifold)"));
+			UE_LOG(LogSmartAutoConnect, Verbose, TEXT("      ⏭️ Skipping (need at least 2 junctions for manifold)"));
 			
 			// Clean up any existing manifold children for junctions in this group (no longer part of chain)
 			for (AFGHologram* Junction : JunctionsInGroup)
@@ -100,7 +100,7 @@ void FSFPipeAutoConnectManager::EvaluatePipeConnections(AFGHologram* ParentJunct
 				TWeakObjectPtr<ASFPipelineHologram>* ExistingManifoldChild = ManifoldPipeChildren.Find(Junction);
 				if (ExistingManifoldChild && ExistingManifoldChild->IsValid())
 				{
-					UE_LOG(LogSmartAutoConnect, Log, TEXT("🔧 PIPE CHILD: Removing manifold child (group too small) for junction %s"), 
+					UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🔧 PIPE CHILD: Removing manifold child (group too small) for junction %s"),
 						*Junction->GetName());
 					RemovePipeChild(Junction, ExistingManifoldChild->Get());
 					ManifoldPipeChildren.Remove(Junction);
@@ -110,7 +110,7 @@ void FSFPipeAutoConnectManager::EvaluatePipeConnections(AFGHologram* ParentJunct
 			continue; // Need at least 2 junctions to chain
 		}
 		
-		UE_LOG(LogSmartAutoConnect, Log, TEXT("   🔗 Input[%d]: Chaining %d junctions in manifold"), 
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("   🔗 Input[%d]: Chaining %d junctions in manifold"),
 			InputIndex, JunctionsInGroup.Num());
 		
 		// Sort junctions by their X coordinate for left-to-right chaining (horizontal manifold)
@@ -169,7 +169,7 @@ void FSFPipeAutoConnectManager::EvaluatePipeConnections(AFGHologram* ParentJunct
 				if (ExpectedBuildClass && CurrentBuildClass != ExpectedBuildClass)
 				{
 					// Tier/style changed - destroy existing and spawn new with correct tier
-					UE_LOG(LogSmartAutoConnect, Log, TEXT("🔧 PIPE MANIFOLD: Tier changed - recreating pipe for junction %s (old=%s, new=%s)"),
+					UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🔧 PIPE MANIFOLD: Tier changed - recreating pipe for junction %s (old=%s, new=%s)"),
 						*SourceJunction->GetName(),
 						CurrentBuildClass ? *CurrentBuildClass->GetName() : TEXT("null"),
 						*ExpectedBuildClass->GetName());
@@ -189,7 +189,7 @@ void FSFPipeAutoConnectManager::EvaluatePipeConnections(AFGHologram* ParentJunct
 					{
 						ManifoldPipeChildren.Add(SourceJunction, NewChild);
 						ManifoldTargetJunctions.Add(SourceJunction, TargetJunction);
-						UE_LOG(LogSmartAutoConnect, Log, TEXT("🔧 PIPE MANIFOLD: Recreated with new tier for junction %s"),
+						UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🔧 PIPE MANIFOLD: Recreated with new tier for junction %s"),
 							*SourceJunction->GetName());
 					}
 					continue;  // Skip the update logic below since we just spawned a new child
@@ -292,7 +292,7 @@ void FSFPipeAutoConnectManager::EvaluatePipeConnections(AFGHologram* ParentJunct
 				// Update target junction tracking (in case target changed)
 				ManifoldTargetJunctions.Add(SourceJunction, TargetJunction);
 				
-				UE_LOG(LogSmartAutoConnect, Log, TEXT("         🔄 Updated existing manifold pipe child (parentLocked=%d, childRelocked=%d)"), 
+				UE_LOG(LogSmartAutoConnect, Verbose, TEXT("         🔄 Updated existing manifold pipe child (parentLocked=%d, childRelocked=%d)"),
 					bParentLocked ? 1 : 0, bParentLocked ? 1 : 0);
 			}
 			else
@@ -308,7 +308,7 @@ void FSFPipeAutoConnectManager::EvaluatePipeConnections(AFGHologram* ParentJunct
 				{
 					ManifoldPipeChildren.Add(SourceJunction, NewChild);
 					ManifoldTargetJunctions.Add(SourceJunction, TargetJunction);  // Track target for cleanup
-					UE_LOG(LogSmartAutoConnect, Log, TEXT("         ✅ Created manifold pipe child (now have %d manifold children)"),
+					UE_LOG(LogSmartAutoConnect, Verbose, TEXT("         ✅ Created manifold pipe child (now have %d manifold children)"),
 						ManifoldPipeChildren.Num());
 				}
 			}
@@ -340,7 +340,7 @@ void FSFPipeAutoConnectManager::EvaluatePipeConnections(AFGHologram* ParentJunct
 		TWeakObjectPtr<ASFPipelineHologram>* ManifoldChild = ManifoldPipeChildren.Find(StaleSource);
 		if (ManifoldChild && ManifoldChild->IsValid())
 		{
-			UE_LOG(LogSmartAutoConnect, Log, TEXT("🔧 PIPE: Cleaning up stale manifold pipe for %s (no longer valid source in chain)"), 
+			UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🔧 PIPE: Cleaning up stale manifold pipe for %s (no longer valid source in chain)"),
 				*GetNameSafe(StaleSource));
 			RemovePipeChild(StaleSource, ManifoldChild->Get());
 		}
@@ -350,7 +350,7 @@ void FSFPipeAutoConnectManager::EvaluatePipeConnections(AFGHologram* ParentJunct
 	
 	if (StaleManifoldSources.Num() > 0)
 	{
-		UE_LOG(LogSmartAutoConnect, Log, TEXT("🔧 PIPE: Cleaned up %d stale manifold pipe(s), now have %d manifold children"), 
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🔧 PIPE: Cleaned up %d stale manifold pipe(s), now have %d manifold children"),
 			StaleManifoldSources.Num(), ManifoldPipeChildren.Num());
 	}
 }
@@ -429,10 +429,12 @@ UFGPipeConnectionComponent* FSFPipeAutoConnectManager::FindAvailableManifoldConn
 	TArray<UFGPipeConnectionComponent*> JunctionConnectors;
 	FSFPipeConnectorFinder::GetJunctionConnectors(JunctionHologram, JunctionConnectors);
 	
-	if (JunctionConnectors.Num() != 4)
+	if (JunctionConnectors.Num() < 2)
 	{
-		// All junctions should be 4-way
-		UE_LOG(LogSmartAutoConnect, Warning, TEXT("Junction %s has %d connectors (expected 4)"), 
+		// Issue #320: pipe junctions vary in port count (Cross = 4, T-Junction = 3). A manifold
+		// needs at least a building port + one side port; the perpendicular-port search below is
+		// geometry-driven (by connector normal), so any count >= 2 works.
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("Junction %s has %d pipe connectors (need >= 2)"),
 			*JunctionHologram->GetName(), JunctionConnectors.Num());
 		return JunctionConnectors.Num() > 0 ? JunctionConnectors[0] : nullptr;
 	}
@@ -514,9 +516,11 @@ void FSFPipeAutoConnectManager::FindBestManifoldConnectorPair(
 	FSFPipeConnectorFinder::GetJunctionConnectors(SourceJunction, SourceConnectors);
 	FSFPipeConnectorFinder::GetJunctionConnectors(TargetJunction, TargetConnectors);
 	
-	if (SourceConnectors.Num() != 4 || TargetConnectors.Num() != 4)
+	if (SourceConnectors.Num() < 2 || TargetConnectors.Num() < 2)
 	{
-		UE_LOG(LogSmartAutoConnect, Warning, TEXT("Manifold: Junctions don't have expected 4 connectors (Source=%d, Target=%d)"),
+		// Issue #320: pipe junctions vary in port count (Cross = 4, T-Junction = 3). The pairing
+		// below is geometry-driven (facing/alignment by connector normal), so any count >= 2 is fine.
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("Manifold: a junction has too few pipe connectors (Source=%d, Target=%d, need >= 2)"),
 			SourceConnectors.Num(), TargetConnectors.Num());
 		return;
 	}
@@ -644,7 +648,7 @@ void FSFPipeAutoConnectManager::FindBestManifoldConnectorPair(
 	{
 		int32 FinalSrcIdx = SourceConnectors.IndexOfByKey(OutSourceConnector);
 		int32 FinalTgtIdx = TargetConnectors.IndexOfByKey(OutTargetConnector);
-		UE_LOG(LogSmartAutoConnect, Log, 
+		UE_LOG(LogSmartAutoConnect, Verbose,
 			TEXT("         ✅ Selected manifold pair: Src[%d]→Tgt[%d] (score=%.2f)"),
 			FinalSrcIdx, FinalTgtIdx, BestScore);
 	}
@@ -688,7 +692,7 @@ ASFPipelineHologram* FSFPipeAutoConnectManager::SpawnPipeChild(
 	{
 		ActualTier = Subsystem->GetHighestUnlockedPipeTier(PlayerController);
 		if (ActualTier == 0) ActualTier = 1; // Default to Mk1 if detection fails
-		UE_LOG(LogSmartAutoConnect, Log, TEXT("🔧 PIPE CHILD: Auto mode resolved to Mk%d"), ActualTier);
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🔧 PIPE CHILD: Auto mode resolved to Mk%d"), ActualTier);
 	}
 	
 	// Get pipe build class
@@ -859,7 +863,7 @@ ASFPipelineHologram* FSFPipeAutoConnectManager::SpawnPipeChild(
 	PipeChild->TriggerMeshGeneration();
 	PipeChild->ForceApplyHologramMaterial();
 	
-	UE_LOG(LogSmartAutoConnect, Log, TEXT("🔧 PIPE CHILD: Created %s for %s → %s (%s, Mk%d %s, Recipe=%s)"),
+	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🔧 PIPE CHILD: Created %s for %s → %s (%s, Mk%d %s, Recipe=%s)"),
 		*ChildName.ToString(),
 		*ParentJunction->GetName(),
 		bIsManifold ? TEXT("Junction") : TEXT("Building"),
@@ -1040,7 +1044,7 @@ ASFPipelineHologram* FSFPipeAutoConnectManager::SpawnPipeChildAtPosition(
 	PipeChild->TriggerMeshGeneration();
 	PipeChild->ForceApplyHologramMaterial();
 	
-	UE_LOG(LogSmartAutoConnect, Log, TEXT("🔧 PIPE CHILD: Created floor hole pipe %s for %s (Mk%d %s)"),
+	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🔧 PIPE CHILD: Created floor hole pipe %s for %s (Mk%d %s)"),
 		*ChildName.ToString(),
 		*ParentHologram->GetName(),
 		ActualTier,
@@ -1067,7 +1071,7 @@ void FSFPipeAutoConnectManager::RemovePipeChild(AFGHologram* ParentJunction, ASF
 		}
 	}
 	
-	UE_LOG(LogSmartAutoConnect, Log, TEXT("🔧 PIPE CHILD: Removed %s from %s"),
+	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🔧 PIPE CHILD: Removed %s from %s"),
 		*PipeChild->GetName(), *ParentJunction->GetName());
 	
 	PipeChild->Destroy();
@@ -1101,7 +1105,7 @@ void FSFPipeAutoConnectManager::ProcessFloorHolePipes(AFGHologram* ParentHologra
 		}
 	}
 	
-	UE_LOG(LogSmartAutoConnect, Log, TEXT("🔧 FLOOR HOLE PIPE: Processing %d floor holes (parent + %d children)"),
+	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🔧 FLOOR HOLE PIPE: Processing %d floor holes (parent + %d children)"),
 		AllFloorHoles.Num(), AllFloorHoles.Num() - 1);
 	
 	// Get runtime settings for pipe tier and style
@@ -1111,7 +1115,7 @@ void FSFPipeAutoConnectManager::ProcessFloorHolePipes(AFGHologram* ParentHologra
 	TSet<AFGHologram*> ProcessedHoles;
 	
 	// Connector reservation: each building connector can only be claimed by one floor hole
-	TSet<UFGPipeConnectionComponent*> ReservedConnectors;
+	TSet<UFGPipeConnectionComponent*> LocalReservedConnectors;
 	
 	for (AFGHologram* FloorHole : AllFloorHoles)
 	{
@@ -1168,7 +1172,7 @@ void FSFPipeAutoConnectManager::ProcessFloorHolePipes(AFGHologram* ParentHologra
 				if (!BuildingConn) continue;
 				
 				// Skip connectors already claimed by another floor hole
-				if (ReservedConnectors.Contains(BuildingConn)) continue;
+				if (LocalReservedConnectors.Contains(BuildingConn)) continue;
 				
 				FVector BuildingConnPos = BuildingConn->GetComponentLocation();
 				
@@ -1204,13 +1208,13 @@ void FSFPipeAutoConnectManager::ProcessFloorHolePipes(AFGHologram* ParentHologra
 		}
 		
 		// Reserve this connector so no other floor hole claims it
-		ReservedConnectors.Add(BestBuildingConn);
+		LocalReservedConnectors.Add(BestBuildingConn);
 		
 		// Select the correct endpoint and normal
 		FVector StartPos = bUseTopEndpoint ? TopPos : BottomPos;
 		FVector StartNormal = bUseTopEndpoint ? FVector::UpVector : FVector::DownVector;
 		
-		UE_LOG(LogSmartAutoConnect, Log, TEXT("🔧 FLOOR HOLE PIPE: %s → %s (%.1fm, %s endpoint)"),
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🔧 FLOOR HOLE PIPE: %s → %s (%.1fm, %s endpoint)"),
 			*FloorHole->GetName(), *BestBuildingConn->GetName(), BestDistance / 100.0f,
 			bUseTopEndpoint ? TEXT("TOP") : TEXT("BOTTOM"));
 		
@@ -1227,7 +1231,7 @@ void FSFPipeAutoConnectManager::ProcessFloorHolePipes(AFGHologram* ParentHologra
 		if (NewChild)
 		{
 			FloorHolePipeChildren.Add(FloorHole, NewChild);
-			UE_LOG(LogSmartAutoConnect, Log, TEXT("🔧 FLOOR HOLE PIPE: Created pipe child %s for floor hole %s"),
+			UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🔧 FLOOR HOLE PIPE: Created pipe child %s for floor hole %s"),
 				*NewChild->GetName(), *FloorHole->GetName());
 		}
 	}

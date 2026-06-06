@@ -1,10 +1,12 @@
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
+
 #include "Features/Extend/SFExtendCloneTopology.h"
 #include "Features/Extend/SFExtendService.h"
 #include "Misc/DateTime.h"
 
 // Satisfactory includes
-#include "FGBuildableConveyorBelt.h"
-#include "FGBuildableConveyorLift.h"
+#include "Buildables/FGBuildableConveyorBelt.h"
+#include "Buildables/FGBuildableConveyorLift.h"
 #include "Buildables/FGBuildablePipeline.h"
 #include "Buildables/FGBuildableConveyorAttachment.h"
 #include "Buildables/FGBuildablePipelineJunction.h"
@@ -521,11 +523,13 @@ FSFCloneTopology FSFCloneTopology::FromSource(const FSFSourceTopology& Source, c
         // We need to find the closest pair of connectors between source and clone
         // that are valid for a manifold lane connection.
         //
-        // For PIPE JUNCTIONS:
-        //   - ConnectorUsed tells us which connector goes to factory chain
-        //   - Opposite pairs: Connection0↔Connection1, Connection2↔Connection3
-        //   - Exclude factory connector AND its opposite
-        //   - Find closest pair from remaining 2 connectors
+        // For PIPE JUNCTIONS (geometry-driven, Issue #320 - no Cross-specific assumptions):
+        //   - ConnectorUsed tells us which connector goes to the factory chain (excluded)
+        //   - Each connector's facing = (its captured world pos - junction centre), normalized
+        //   - Source backbone port = free connector facing toward the clone (along the manifold axis)
+        //   - Clone backbone port = connector facing back toward the source (the clone reuses the
+        //     source's connector layout at the clone transform)
+        //   - Works for the 4-port Cross, the 3-port T-Junction, and any future junction
         //
         // For BELT DISTRIBUTORS (Splitter/Merger):
         //   - Lane always uses Output1 (output) and Input1 (input)
@@ -570,111 +574,73 @@ FSFCloneTopology FSFCloneTopology::FromSource(const FSFSourceTopology& Source, c
             // instead of hardcoded offsets - this ensures accurate spline generation
             const TMap<FString, FVector>& SourceConnectorPositions = Distributor.ConnectorWorldPositions;
             
-            // Opposite connector mapping (for selecting facing connectors)
-            TMap<FString, FString> OppositeConnector;
-            OppositeConnector.Add(TEXT("Connection0"), TEXT("Connection1"));
-            OppositeConnector.Add(TEXT("Connection1"), TEXT("Connection0"));
-            OppositeConnector.Add(TEXT("Connection2"), TEXT("Connection3"));
-            OppositeConnector.Add(TEXT("Connection3"), TEXT("Connection2"));
-            
-            // Local offsets for clone (which doesn't exist yet, so we calculate from center)
-            // These are the ACTUAL local-space offsets for pipeline junction cross connectors
-            // Connection0/1 are on the X axis, Connection2/3 are on the Y axis
-            TMap<FString, FVector> LocalOffsets;
-            LocalOffsets.Add(TEXT("Connection0"), FVector(-100.0f, 0.0f, 0.0f));
-            LocalOffsets.Add(TEXT("Connection1"), FVector(100.0f, 0.0f, 0.0f));
-            LocalOffsets.Add(TEXT("Connection2"), FVector(0.0f, 100.0f, 0.0f));
-            LocalOffsets.Add(TEXT("Connection3"), FVector(0.0f, -100.0f, 0.0f));
-            
-            // Exclude factory-connected connector and its opposite (they're reserved for factory chain)
-            FString FactoryConnector = Distributor.ConnectorUsed;
-            FString ExcludedOpposite = OppositeConnector.FindRef(FactoryConnector);
-            
-            // Find valid connectors for SOURCE (not factory, not opposite, and not already connected)
-            TArray<FString> ValidSourceConnectors;
+            // Geometry-driven lane connector selection (Issue #320).
+            // Do NOT assume a 4-connector Cross. Derive each connector's facing direction
+            // from its ACTUAL captured world position relative to the junction centre, and
+            // pick the manifold-backbone pair purely from geometry. This handles the Cross,
+            // the 3-port T-Junction, and any future junction with zero hard-coded connector
+            // names or offsets. The clone is a copy of the source, so its connector layout
+            // is the source's local offsets re-applied at the clone transform.
+            const FString FactoryConnector = Distributor.ConnectorUsed;
+
+            // Manifold axis: from the source junction toward the clone (the backbone runs this way).
+            const FVector ManifoldAxis = (CloneDistLocation - SourceDistCenter).GetSafeNormal();
+
+            // Require a real facing toward/away the manifold axis (~within 72 deg) so the
+            // perpendicular stem and the factory tap are never mistaken for a backbone port.
+            const float FacingThreshold = 0.30f;
+
+            FString BestSourceConn, BestCloneConn;
+            FVector BestSourcePos = FVector::ZeroVector, BestClonePos = FVector::ZeroVector;
+            FVector BestSourceNormal = FVector::ZeroVector, BestCloneNormal = FVector::ZeroVector;
+
+            // SOURCE backbone connector: free (not the factory tap, not already connected)
+            // whose outward facing best points toward the clone.
+            float BestSourceFacing = FacingThreshold;
             for (const auto& Pair : SourceConnectorPositions)
             {
-                if (Pair.Key != FactoryConnector && Pair.Key != ExcludedOpposite)
+                if (Pair.Key == FactoryConnector) { continue; }
+                if (Distributor.ConnectedConnectors.Contains(Pair.Key)) { continue; }
+                const FVector Normal = (Pair.Value - SourceDistCenter).GetSafeNormal();
+                const float Facing = FVector::DotProduct(Normal, ManifoldAxis);
+                if (Facing > BestSourceFacing)
                 {
-                    // Source: check if this connector is already connected to something
-                    if (!Distributor.ConnectedConnectors.Contains(Pair.Key))
-                    {
-                        ValidSourceConnectors.Add(Pair.Key);
-                    }
-                    else
-                    {
-                        UE_LOG(LogSmartExtend, VeryVerbose, TEXT("🛤️ PIPE LANE: Excluding source %s (already connected)"), *Pair.Key);
-                    }
+                    BestSourceFacing = Facing;
+                    BestSourceConn = Pair.Key;
+                    BestSourcePos = Pair.Value;
+                    BestSourceNormal = Normal;
                 }
             }
-            
-            // Find valid connectors for CLONE (not factory, not opposite - clone is new, no existing connections)
-            TArray<FString> ValidCloneConnectors;
-            for (const auto& Pair : LocalOffsets)
+
+            // CLONE backbone connector: reuse the source's connector layout at the clone
+            // transform; choose the one (not the factory tap) whose facing best points back
+            // toward the source so the two ports face each other across the gap.
+            float BestCloneFacing = FacingThreshold;
+            for (const auto& Pair : SourceConnectorPositions)
             {
-                if (Pair.Key != FactoryConnector && Pair.Key != ExcludedOpposite)
+                if (Pair.Key == FactoryConnector) { continue; }
+                const FVector LocalOffset = SourceRotation.UnrotateVector(Pair.Value - SourceDistCenter);
+                const FVector CloneWorld = CloneDistLocation + CloneDistRotation.RotateVector(LocalOffset);
+                const FVector Normal = (CloneWorld - CloneDistLocation).GetSafeNormal();
+                const float Facing = FVector::DotProduct(Normal, -ManifoldAxis);
+                if (Facing > BestCloneFacing)
                 {
-                    ValidCloneConnectors.Add(Pair.Key);
+                    BestCloneFacing = Facing;
+                    BestCloneConn = Pair.Key;
+                    BestClonePos = CloneWorld;
+                    BestCloneNormal = Normal;
                 }
             }
-            
-            // If no valid source connectors available, skip this junction's lane segment
-            if (ValidSourceConnectors.Num() == 0)
-            {
-                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Warning, TEXT("🛤️ PIPE LANE: No available connectors on source junction %s (factory=%s, connected=%d) - skipping lane segment"),
-                    *DistributorId, *FactoryConnector, Distributor.ConnectedConnectors.Num());
-                continue;  // CRITICAL: Skip to next distributor to avoid garbage lane data
-            }
-            
-            // Find the CLOSEST connector pair where connectors FACE EACH OTHER
-            // Source uses ACTUAL world position, Clone uses calculated position from center + offset
-            
-            float BestDistance = FLT_MAX;
-            FString BestSourceConn, BestCloneConn;
-            FVector BestSourcePos, BestClonePos;
-            
-            for (const FString& SourceConn : ValidSourceConnectors)
-            {
-                // Use ACTUAL world position from captured connector data
-                const FVector* SourcePosPtr = SourceConnectorPositions.Find(SourceConn);
-                if (!SourcePosPtr) continue;
-                FVector SourcePos = *SourcePosPtr;
-                
-                // For the clone, we need the OPPOSITE connector so they face each other
-                FString CloneConn = OppositeConnector.FindRef(SourceConn);
-                
-                // Make sure the opposite connector is valid for the clone
-                if (!ValidCloneConnectors.Contains(CloneConn))
-                {
-                    continue;
-                }
-                
-                // Clone connector position calculated from center + ROTATED offset (clone doesn't exist yet)
-                // The local offset must be rotated by the clone junction's rotation to get correct world position
-                FVector RotatedOffset = CloneDistRotation.RotateVector(LocalOffsets[CloneConn]);
-                FVector ClonePos = CloneDistLocation + RotatedOffset;
-                
-                // Find the closest pair
-                float Distance = FVector::Dist(SourcePos, ClonePos);
-                
-                if (Distance < BestDistance)
-                {
-                    BestDistance = Distance;
-                    BestSourceConn = SourceConn;
-                    BestCloneConn = CloneConn;
-                    BestSourcePos = SourcePos;
-                    BestClonePos = ClonePos;
-                }
-            }
-            
-            // Safety check: if no valid connector pair was found, skip this lane segment
+
+            // Skip this junction's lane if either backbone connector is unavailable (e.g. the
+            // facing port is consumed) - avoids emitting garbage lane data.
             if (BestSourceConn.IsEmpty() || BestCloneConn.IsEmpty())
             {
-                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Warning, TEXT("🛤️ PIPE LANE: No valid connector pair found for junction %s - skipping lane segment"),
-                    *DistributorId);
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Warning, TEXT("PIPE LANE: No backbone connector facing the manifold axis for junction %s (factory=%s, connected=%d) - skipping lane segment"),
+                    *DistributorId, *FactoryConnector, Distributor.ConnectedConnectors.Num());
                 continue;
             }
-            
+
             LaneType = TEXT("pipe");
             SplineStartPos = BestSourcePos;
             SplineEndPos = BestClonePos;
@@ -682,20 +648,13 @@ FSFCloneTopology FSFCloneTopology::FromSource(const FSFSourceTopology& Source, c
             Conn0Connector = BestSourceConn;
             Conn1Target = DistributorHologramId;
             Conn1Connector = BestCloneConn;
-            
-            // Calculate connector normals (outward-facing direction from junction center)
-            // The normal is the normalized local offset direction, rotated by the junction's world rotation
-            FVector SourceConnLocalDir = LocalOffsets[BestSourceConn].GetSafeNormal();
-            FVector CloneConnLocalDir = LocalOffsets[BestCloneConn].GetSafeNormal();
-            LaneStartNormal = SourceRotation.RotateVector(SourceConnLocalDir);
-            LaneEndNormal = CloneDistRotation.RotateVector(CloneConnLocalDir);
-            
-            UE_LOG(LogSmartExtend, VeryVerbose, TEXT("🛤️ PIPE LANE: Factory uses %s, excluded opposite %s, chose Source.%s(%.0f,%.0f,%.0f)→Clone.%s(%.0f,%.0f,%.0f) (dist=%.0f) normals: start=(%.2f,%.2f,%.2f) end=(%.2f,%.2f,%.2f)"),
-                *FactoryConnector, *ExcludedOpposite,
-                *BestSourceConn, BestSourcePos.X, BestSourcePos.Y, BestSourcePos.Z,
-                *BestCloneConn, BestClonePos.X, BestClonePos.Y, BestClonePos.Z, BestDistance,
-                LaneStartNormal.X, LaneStartNormal.Y, LaneStartNormal.Z,
-                LaneEndNormal.X, LaneEndNormal.Y, LaneEndNormal.Z);
+            LaneStartNormal = BestSourceNormal;
+            LaneEndNormal = BestCloneNormal;
+
+            UE_LOG(LogSmartExtend, VeryVerbose, TEXT("PIPE LANE (geom): factory=%s axis=(%.2f,%.2f,%.2f) chose Source.%s(%.0f,%.0f,%.0f) facing %.2f -> Clone.%s(%.0f,%.0f,%.0f) facing %.2f"),
+                *FactoryConnector, ManifoldAxis.X, ManifoldAxis.Y, ManifoldAxis.Z,
+                *BestSourceConn, BestSourcePos.X, BestSourcePos.Y, BestSourcePos.Z, BestSourceFacing,
+                *BestCloneConn, BestClonePos.X, BestClonePos.Y, BestClonePos.Z, BestCloneFacing);
         }
         else
         {
@@ -1432,7 +1391,6 @@ int32 FSFCloneTopology::WireChildHologramConnections(
     const TMap<FString, AFGHologram*>& SpawnedHolograms,
     AFGHologram* ParentHologram) const
 {
-    using namespace SpawnHelpers;  // For ConvertSplineData
     
     if (!ParentHologram)
     {

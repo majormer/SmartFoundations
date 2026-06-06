@@ -1,3 +1,5 @@
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
+
 #pragma once
 
 #include "CoreMinimal.h"
@@ -46,7 +48,7 @@ struct FSFUpgradeExecutionParams
 
 	/** Player controller for inventory access (required for cost deduction) */
 	UPROPERTY()
-	AFGPlayerController* PlayerController = nullptr;
+	TObjectPtr<AFGPlayerController> PlayerController = nullptr;
 
 	/** Specific buildables to upgrade (if provided, ignores Origin/Radius and upgrades these directly) */
 	UPROPERTY()
@@ -184,7 +186,7 @@ private:
 
 	/** Reference to subsystem */
 	UPROPERTY()
-	USFSubsystem* Subsystem = nullptr;
+	TObjectPtr<USFSubsystem> Subsystem = nullptr;
 
 	/** Current execution parameters */
 	FSFUpgradeExecutionParams CurrentParams;
@@ -200,7 +202,7 @@ private:
 
 	/** Buildables queued for upgrade */
 	UPROPERTY()
-	TArray<AFGBuildable*> PendingUpgrades;
+	TArray<TObjectPtr<AFGBuildable>> PendingUpgrades;
 
 	/** Current index in pending upgrades */
 	int32 CurrentUpgradeIndex = 0;
@@ -220,11 +222,11 @@ private:
 
 	/** Conveyors that were upgraded (for chain rebuild) */
 	UPROPERTY()
-	TArray<class AFGBuildableConveyorBase*> UpgradedConveyors;
+	TArray<TObjectPtr<class AFGBuildableConveyorBase>> UpgradedConveyors;
 
 	/** All conveyors in the original chain (cached at first upgrade) */
 	UPROPERTY()
-	TArray<class AFGBuildableConveyorBase*> CachedChainConveyors;
+	TArray<TObjectPtr<class AFGBuildableConveyorBase>> CachedChainConveyors;
 
 	/** Whether we've cached the chain conveyors */
 	bool bChainCached = false;

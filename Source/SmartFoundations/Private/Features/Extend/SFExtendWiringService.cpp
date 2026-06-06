@@ -1,4 +1,4 @@
-// Copyright Coffee Stain Studios. All Rights Reserved.
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
 /**
  * SFExtendWiringService Implementation
@@ -34,13 +34,9 @@ void USFExtendWiringService::Shutdown()
 
 void USFExtendWiringService::ClearConnectionWiringMaps()
 {
-    ExtendService->SourceToHologramMap.Empty();
     ExtendService->PipeChainHologramMap.Empty();
     ExtendService->PipeChainJunctionMap.Empty();
-    ExtendService->BeltChainHologramMap.Empty();
-    ExtendService->LiftChainHologramMap.Empty();
     ExtendService->BeltChainDistributorMap.Empty();
-    ExtendService->ManifoldBeltHolograms.Empty();
 
     // Also clear built tracking maps (used by WireBuiltChildConnections)
     ExtendService->BuiltConveyorsByChain.Empty();

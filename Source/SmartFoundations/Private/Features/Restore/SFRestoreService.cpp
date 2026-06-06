@@ -1,3 +1,5 @@
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
+
 #include "Features/Restore/SFRestoreService.h"
 #include "Features/Restore/SFRestoreTypes.h"
 #include "Subsystem/SFSubsystem.h"

@@ -1,4 +1,4 @@
-// Copyright Coffee Stain Studios. All Rights Reserved.
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
 /**
  * USFSubsystem - core: subsystem lifecycle (ctor/Init/Deinit), accessors, power-connection mgmt, Get() + input setup/scaling.
@@ -95,7 +95,7 @@ USFSubsystem::USFSubsystem() : Super()
 		RestoreService->Initialize(this);
 	}
 
-	UE_LOG(LogSmartFoundations, Log, TEXT("SFSubsystem: Phase 0 modules and recipe service initialized"));
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("SFSubsystem: Phase 0 modules and recipe service initialized"));
 }
 
 // ========================================
@@ -256,13 +256,6 @@ void USFSubsystem::RunPostLoadChainRepair()
 	}
 }
 
-void USFSubsystem::OnDebugPrimaryFire()
-{
-	// Debug: Analyze nearby pipe splines to determine vanilla tangent formulas
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 Debug Primary Fire: Analyzing nearby pipe splines..."));
-	AnalyzeNearbyPipeSplines(5000.0f);  // 50m radius
-}
-
 // ========================================
 // Power Connection Management (moved from header - PIMPL pattern)
 // ========================================
@@ -270,10 +263,10 @@ void USFSubsystem::OnDebugPrimaryFire()
 void USFSubsystem::CommitBuildingConnections()
 {
 	// Commit building connections (overwrite is fine for these)
-	UE_LOG(LogSmartFoundations, Warning, TEXT("⚡ CommitBuildingConnections: Copying %d planned building connections to committed"),
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("⚡ CommitBuildingConnections: Copying %d planned building connections to committed"),
 		PlannedBuildingConnections.Num());
 	CommittedBuildingConnections = PlannedBuildingConnections;
-	UE_LOG(LogSmartFoundations, Warning, TEXT("⚡ CommitBuildingConnections: CommittedBuildingConnections now has %d entries"),
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("⚡ CommitBuildingConnections: CommittedBuildingConnections now has %d entries"),
 		CommittedBuildingConnections.Num());
 
 	// For pole connections, ADD to the deferred queue instead of overwriting!
@@ -421,7 +414,7 @@ void USFSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
 
-	UE_LOG(LogSmartFoundations, Log, TEXT("Smart! Subsystem: Initialize() called"));
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("Smart! Subsystem: Initialize() called"));
 
 	// Reset recipe sampling subscription flag for safety
 	bHasSubscribedToRecipeSampled = false;
@@ -441,7 +434,7 @@ void USFSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	// Initialize deterministic hologram lifecycle management (Layer 2) - bind once to prevent accumulation
 	InitializeHologramCleanup();
 
-	UE_LOG(LogSmartFoundations, Log, TEXT("Smart! Subsystem: World found, starting timers"));
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("Smart! Subsystem: World found, starting timers"));
 
 	// Phase 0: Initialize extracted modules with world context (Task #61.6)
 	if (InputHandler)
@@ -458,7 +451,7 @@ void USFSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	if (AutoConnectService)
 	{
 		AutoConnectService->Init(this);
-		UE_LOG(LogSmartFoundations, Log, TEXT("Auto-Connect Service initialized"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("Auto-Connect Service initialized"));
 	}
 
 	// Initialize EXTEND service (Issue #219: Factory topology cloning)
@@ -474,7 +467,7 @@ void USFSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	if (RadarPulseService)
 	{
 		RadarPulseService->Initialize(this);
-		UE_LOG(LogSmartFoundations, Log, TEXT("Radar Pulse Service initialized"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("Radar Pulse Service initialized"));
 	}
 
 	// Initialize Pipe Auto-Connect manager (feature-level coordinator)
@@ -527,7 +520,7 @@ void USFSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 		);
 	}
 
-	UE_LOG(LogSmartFoundations, Log, TEXT("Smart! Subsystem: Timers started (player controller + hologram polling) + actor spawn delegate bound"));
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("Smart! Subsystem: Timers started (player controller + hologram polling) + actor spawn delegate bound"));
 }
 
 #if SMART_ARROWS_ENABLED
@@ -715,7 +708,6 @@ void USFSubsystem::Deinitialize()
 		World->GetTimerManager().ClearTimer(ContextMonitorTimer);
 		World->GetTimerManager().ClearTimer(HologramPollTimer);
 		World->GetTimerManager().ClearTimer(PowerPoleDeferredTimer);
-		World->GetTimerManager().ClearTimer(ChainRebuildTimerHandle);
 #if SMART_ARROWS_ENABLED
 		World->GetTimerManager().ClearTimer(ArrowTickTimer);
 #endif
@@ -907,7 +899,7 @@ void USFSubsystem::SetupPlayerInput(AFGPlayerController* PlayerController)
 				0.1f,  // Poll every 100ms
 				true   // Repeat
 			);
-			UE_LOG(LogSmartFoundations, Log, TEXT("Started hologram auto-detection polling"));
+			UE_LOG(LogSmartFoundations, Verbose, TEXT("Started hologram auto-detection polling"));
 		}
 
 		// Store controller reference for subsystem use

@@ -1,4 +1,4 @@
-// Copyright Coffee Stain Studios. All Rights Reserved.
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
 /**
  * SFExtendScaledService Implementation
@@ -230,7 +230,7 @@ void USFExtendScaledService::OnScaledExtendStateChanged()
             for (const auto& Pair : Owner->JsonSpawnedHolograms)
             {
                 AFGHologram* SpawnedHolo = Pair.Value;
-                if (!SpawnedHolo) continue;
+                if (!IsValid(SpawnedHolo)) continue;
 
                 FVector IntendedPos = SpawnedHolo->GetActorLocation();
                 FRotator IntendedRot = SpawnedHolo->GetActorRotation();
@@ -1177,9 +1177,9 @@ void USFExtendScaledService::ClearScaledExtendClones()
                 {
                     for (const auto& Pair : Clone.SpawnedHolograms)
                     {
-                        if (Pair.Value)
+                        if (Pair.Value.IsValid())
                         {
-                            ToRemove.Add(Pair.Value);
+                            ToRemove.Add(Pair.Value.Get());
                         }
                     }
                 }
@@ -1213,7 +1213,7 @@ void USFExtendScaledService::ClearScaledExtendClones()
     {
         for (auto& Pair : Clone.SpawnedHolograms)
         {
-            if (Pair.Value)
+            if (Pair.Value.IsValid())
             {
                 WeakHologramsToDestroy.Add(Pair.Value);
             }

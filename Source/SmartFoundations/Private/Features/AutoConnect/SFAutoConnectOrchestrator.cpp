@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
 #include "Features/AutoConnect/SFAutoConnectOrchestrator.h"
 #include "Features/AutoConnect/SFAutoConnectService.h"
@@ -40,7 +40,7 @@ void USFAutoConnectOrchestrator::EvaluateGrid(bool bForceRecreate)
 		if (Subsystem->IsSmartDisabledForCurrentAction())
 		{
 			ClearAllPreviews();
-			UE_LOG(LogSmartAutoConnect, Log, TEXT("🎯 Orchestrator: EvaluateGrid skipped - Smart disabled for current action"));
+			UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🎯 Orchestrator: EvaluateGrid skipped - Smart disabled for current action"));
 			return;
 		}
 	}
@@ -92,14 +92,14 @@ void USFAutoConnectOrchestrator::EvaluateGrid(bool bForceRecreate)
 
 void USFAutoConnectOrchestrator::OnGridChanged()
 {
-	UE_LOG(LogSmartAutoConnect, Log, TEXT("🎯 Orchestrator: Grid changed - scheduling re-evaluation"));
+	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🎯 Orchestrator: Grid changed - scheduling re-evaluation"));
 	
 	// CRITICAL FIX: Clear evaluation flag for grid changes to prevent race condition
 	// When children are spawned shortly after parent creation, the initial evaluation's
 	// 100ms cooldown can block the child evaluation, leaving children without belt previews
 	if (bIsEvaluatingBelts)
 	{
-		UE_LOG(LogSmartAutoConnect, Log, TEXT("   🔓 Clearing evaluation flag for grid change (was blocking)"));
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("   🔓 Clearing evaluation flag for grid change (was blocking)"));
 		bIsEvaluatingBelts = false;
 		
 		// Also clear the cooldown timer since we're forcing a new evaluation anyway
@@ -141,12 +141,12 @@ void USFAutoConnectOrchestrator::OnPipeJunctionsMoved()
 
 void USFAutoConnectOrchestrator::OnPipeGridChanged()
 {
-	UE_LOG(LogSmartAutoConnect, Log, TEXT("🎯 Orchestrator: Pipe grid changed - scheduling re-evaluation"));
+	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🎯 Orchestrator: Pipe grid changed - scheduling re-evaluation"));
 	
 	// CRITICAL FIX: Clear evaluation flag for grid changes (same as belt fix above)
 	if (bIsEvaluatingPipes)
 	{
-		UE_LOG(LogSmartAutoConnect, Log, TEXT("   🔓 Clearing evaluation flag for pipe grid change (was blocking)"));
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("   🔓 Clearing evaluation flag for pipe grid change (was blocking)"));
 		bIsEvaluatingPipes = false;
 		
 		// Also clear the cooldown timer since we're forcing a new evaluation anyway
@@ -175,12 +175,12 @@ void USFAutoConnectOrchestrator::OnPowerPolesMoved()
 
 void USFAutoConnectOrchestrator::OnPowerGridChanged()
 {
-	UE_LOG(LogSmartAutoConnect, Log, TEXT("🎯 Orchestrator: Power grid changed - scheduling re-evaluation"));
+	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🎯 Orchestrator: Power grid changed - scheduling re-evaluation"));
 	
 	// CRITICAL FIX: Clear evaluation flag for grid changes (same as belt/pipe fix)
 	if (bIsEvaluatingPower)
 	{
-		UE_LOG(LogSmartAutoConnect, Log, TEXT("   🔓 Clearing evaluation flag for power grid change (was blocking)"));
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("   🔓 Clearing evaluation flag for power grid change (was blocking)"));
 		bIsEvaluatingPower = false;
 		
 		// Also clear the cooldown timer since we're forcing a new evaluation anyway
@@ -196,7 +196,7 @@ void USFAutoConnectOrchestrator::OnPowerGridChanged()
 
 void USFAutoConnectOrchestrator::ForceRefresh()
 {
-	UE_LOG(LogSmartAutoConnect, Log, TEXT("🎯 Orchestrator: Force refresh triggered from settings change"));
+	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🎯 Orchestrator: Force refresh triggered from settings change"));
 	
 	// Trigger re-evaluation of all connection types with force recreate
 	// This ensures previews are updated with new settings (tier, routing mode, etc.)
@@ -348,7 +348,7 @@ void USFAutoConnectOrchestrator::RunScheduledPipeEvaluation()
 			if (Subsystem->IsSmartDisabledForCurrentAction())
 			{
 				AutoConnectService->ClearPipePreviews(ParentHologram.Get());
-				UE_LOG(LogSmartAutoConnect, Log, TEXT("🎯 Orchestrator: Pipe evaluation skipped - Smart disabled for current action"));
+				UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🎯 Orchestrator: Pipe evaluation skipped - Smart disabled for current action"));
 				return;
 			}
 		}
@@ -366,7 +366,7 @@ void USFAutoConnectOrchestrator::RunScheduledPipeEvaluation()
 			if (bForce)
 			{
 				AutoConnectService->ClearPipePreviews(ParentHologram.Get());
-				UE_LOG(LogSmartAutoConnect, Log, TEXT("🎯 Orchestrator: Force cleared all pipe previews for settings change"));
+				UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🎯 Orchestrator: Force cleared all pipe previews for settings change"));
 			}
 			
 			// Update pipe previews (will create new previews with current settings)
@@ -450,7 +450,7 @@ void USFAutoConnectOrchestrator::RunScheduledPowerEvaluation()
 					}
 				}
 				
-				UE_LOG(LogSmartAutoConnect, Log, TEXT("🎯 Orchestrator: Force cleared all power previews for settings change"));
+				UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🎯 Orchestrator: Force cleared all power previews for settings change"));
 			}
 			
 			// Update power previews
@@ -513,7 +513,7 @@ void USFAutoConnectOrchestrator::RunScheduledStackableBeltEvaluation()
 {
 	bStackableBeltEvalScheduled = false;
 	
-	UE_LOG(LogSmartAutoConnect, Log, TEXT("🚧 Orchestrator: Stackable conveyor poles changed - processing auto-connect"));
+	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🚧 Orchestrator: Stackable conveyor poles changed - processing auto-connect"));
 	
 	if (!AutoConnectService || !ParentHologram.IsValid())
 	{
@@ -521,15 +521,10 @@ void USFAutoConnectOrchestrator::RunScheduledStackableBeltEvaluation()
 		return;
 	}
 	
-	// Process stackable conveyor poles for belt auto-connect
+	// Process stackable conveyor poles for belt auto-connect. Belts are built + wired by the
+	// STACK-CHAIN handler in ASFConveyorBeltHologram::Construct (THESIS §6.9–§6.13); the old
+	// preview-cache handoff (CacheStackableBeltPreviewsForBuild) is gone.
 	AutoConnectService->ProcessStackableConveyorPoles(ParentHologram.Get());
-	
-	// Cache belt preview data for building (Issue #220)
-	// This must be called while hologram is valid, so OnActorSpawned can use cached data
-	if (USFSubsystem* Subsystem = AutoConnectService->GetSubsystem())
-	{
-		Subsystem->CacheStackableBeltPreviewsForBuild();
-	}
 }
 
 void USFAutoConnectOrchestrator::OnStackablePipelineSupportsChanged()
@@ -649,12 +644,12 @@ void USFAutoConnectOrchestrator::CollectDistributors(TArray<AFGHologram*>& OutDi
 	// Only log at normal verbosity if we found distributors
 	if (OutDistributors.Num() > 0)
 	{
-		UE_LOG(LogSmartAutoConnect, Log, TEXT("🎯 Orchestrator: Collected %d distributors from entire grid"), 
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🎯 Orchestrator: Collected %d distributors from entire grid"),
 			OutDistributors.Num());
 	}
 	else
 	{
-		UE_LOG(LogSmartAutoConnect, Log, TEXT("🎯 Orchestrator: Collected 0 distributors from grid"));
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🎯 Orchestrator: Collected 0 distributors from grid"));
 	}
 }
 
@@ -671,7 +666,7 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 	{
 		if (!Subsystem->GetAutoConnectRuntimeSettings().bEnabled)
 		{
-			UE_LOG(LogSmartAutoConnect, Log, TEXT("🎯 Orchestrator: EvaluateConnections skipped - Belt auto-connect disabled"));
+			UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🎯 Orchestrator: EvaluateConnections skipped - Belt auto-connect disabled"));
 			return;
 		}
 	}
@@ -688,7 +683,7 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 
 	const FTransform ParentTransform = ParentHologram.IsValid() ? ParentHologram->GetActorTransform() : FTransform::Identity;
 
-	UE_LOG(LogSmartAutoConnect, Log, TEXT("🎯 Orchestrator: Evaluating connections for %d distributors using GLOBAL SCORING"), 
+	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🎯 Orchestrator: Evaluating connections for %d distributors using GLOBAL SCORING"),
 		Distributors.Num());
 
 	// ========================================
@@ -699,7 +694,7 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 	
 	if (AllConnections.Num() == 0)
 	{
-		UE_LOG(LogSmartAutoConnect, Log, TEXT("   ⚠️ No potential connections found"));
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("   ⚠️ No potential connections found"));
 		return;
 	}
 
@@ -708,13 +703,13 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 	// ========================================
 	AllConnections.Sort();
 	
-	UE_LOG(LogSmartAutoConnect, Log, TEXT("🎯 GLOBAL SCORING: Sorted %d connections by score"), AllConnections.Num());
+	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🎯 GLOBAL SCORING: Sorted %d connections by score"), AllConnections.Num());
 	
 	// Log top candidates for debugging
 	for (int32 i = 0; i < FMath::Min(10, AllConnections.Num()); i++)
 	{
 		const FPotentialConnection& Conn = AllConnections[i];
-		UE_LOG(LogSmartAutoConnect, Log, TEXT("   [%d] Score=%.0f | %s (lane %d) -> %s (idx %d)"),
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("   [%d] Score=%.0f | %s (lane %d) -> %s (idx %d)"),
 			i, Conn.Score, 
 			*Conn.Distributor->GetName(), Conn.DistributorLaneIndex,
 			*Conn.BuildingConnector->GetName(), Conn.BuildingInputIndex);
@@ -756,13 +751,13 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 		
 		TotalAssignments++;
 		
-		UE_LOG(LogSmartAutoConnect, Log, TEXT("   ✅ ASSIGNED: %s (lane %d) -> %s (idx %d) | Score=%.0f"),
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("   ✅ ASSIGNED: %s (lane %d) -> %s (idx %d) | Score=%.0f"),
 			*Conn.Distributor->GetName(), Conn.DistributorLaneIndex,
 			*Conn.BuildingConnector->GetName(), Conn.BuildingInputIndex,
 			Conn.Score);
 	}
 	
-	UE_LOG(LogSmartAutoConnect, Log, TEXT("🎯 GLOBAL SCORING: Made %d optimal assignments"), TotalAssignments);
+	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🎯 GLOBAL SCORING: Made %d optimal assignments"), TotalAssignments);
 
 	// ========================================
 	// PHASE 4: Create belt previews for assigned connections
@@ -817,7 +812,7 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 				continue;
 			}
 			
-			UE_LOG(LogSmartAutoConnect, Log, TEXT("   🔧 BUILDING BELT: %s -> %s (Dist: %s)"),
+			UE_LOG(LogSmartAutoConnect, Verbose, TEXT("   🔧 BUILDING BELT: %s -> %s (Dist: %s)"),
 				*GetNameSafe(OutputConnector), *GetNameSafe(InputConnector), *Distributor->GetName());
 			
 			// Use the service to create the actual belt preview
@@ -835,11 +830,11 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 			{
 				Previews.Add(Preview);
 				TotalPreviewsCreated++;
-				UE_LOG(LogSmartAutoConnect, Log, TEXT("      ✅ BUILDING BELT SUCCESS"));
+				UE_LOG(LogSmartAutoConnect, Verbose, TEXT("      ✅ BUILDING BELT SUCCESS"));
 			}
 			else
 			{
-				UE_LOG(LogSmartAutoConnect, Log, TEXT("      ❌ BUILDING BELT FAILED: bSuccess=%d, Preview=%s"),
+				UE_LOG(LogSmartAutoConnect, Verbose, TEXT("      ❌ BUILDING BELT FAILED: bSuccess=%d, Preview=%s"),
 					bSuccess, Preview.IsValid() ? TEXT("Valid") : TEXT("Invalid"));
 			}
 		}
@@ -849,7 +844,7 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 		
 		if (Previews.Num() > 0)
 		{
-			UE_LOG(LogSmartAutoConnect, Log, TEXT("   ✅ [%s] Created %d belt(s)"), 
+			UE_LOG(LogSmartAutoConnect, Verbose, TEXT("   ✅ [%s] Created %d belt(s)"),
 				*Distributor->GetName(), Previews.Num());
 			
 			// CONTEXT-AWARE SPACING: Apply for parent distributor
@@ -915,12 +910,12 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 	}
 
 	// Summary log
-	UE_LOG(LogSmartAutoConnect, Log, TEXT("🎯 EVALUATION COMPLETE: %d belts for %d distributors | Reservations: %d"), 
+	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🎯 EVALUATION COMPLETE: %d belts for %d distributors | Reservations: %d"),
 		TotalPreviewsCreated, Distributors.Num(), ReservedInputs.Num());
 	
 	if (TotalPreviewsCreated == 0)
 	{
-		UE_LOG(LogSmartAutoConnect, Log, TEXT("   ⚠️ No belts created - check logs above for rejection reasons"));
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("   ⚠️ No belts created - check logs above for rejection reasons"));
 	}
 
 	// ========================================
@@ -935,7 +930,7 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 		}
 	}
 	
-	UE_LOG(LogSmartAutoConnect, Log, TEXT("🔗 Manifold Detection: Evaluating %d distributors for chaining"), Distributors.Num());
+	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🔗 Manifold Detection: Evaluating %d distributors for chaining"), Distributors.Num());
 
 	// Build lanes per input index from BUILDING reservations
 	TMap<int32, TArray<AFGHologram*>> DistributorsByInputIndex;
@@ -970,7 +965,7 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 	ManifoldReservedInputs.Empty();
 	ManifoldReservedOutputs.Empty();
 	
-	UE_LOG(LogSmartAutoConnect, Log, TEXT("   📊 Found %d input index groups for manifold chaining"), DistributorsByInputIndex.Num());
+	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("   📊 Found %d input index groups for manifold chaining"), DistributorsByInputIndex.Num());
 	
 	// Get parent transform for spatial sorting
 	const FTransform SortTransform = ParentHologram.IsValid() ? ParentHologram->GetActorTransform() : FTransform::Identity;
@@ -983,7 +978,7 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 		
 		if (SplittersInLane.Num() < 2)
 		{
-			UE_LOG(LogSmartAutoConnect, Log, TEXT("   ⏭️ Input%d lane: Only %d splitter(s) - skipping manifold"), 
+			UE_LOG(LogSmartAutoConnect, Verbose, TEXT("   ⏭️ Input%d lane: Only %d splitter(s) - skipping manifold"),
 				InputIndex, SplittersInLane.Num());
 			continue; // Need at least 2 splitters to connect
 		}
@@ -1022,7 +1017,7 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 			});
 		}
 		
-		UE_LOG(LogSmartAutoConnect, Log, TEXT("   🔗 Input%d lane: Connecting %d splitters in manifold (sorted spatially)"), 
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("   🔗 Input%d lane: Connecting %d splitters in manifold (sorted spatially)"),
 			InputIndex, SplittersInLane.Num());
 		
 		// Connect each splitter to the next one in the lane
@@ -1116,7 +1111,7 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 					continue;
 				}
 
-				UE_LOG(LogSmartAutoConnect, Log, TEXT("      🔗 MANIFOLD BELT: %s.%s → %s.%s [Input%d lane] (dot=%.2f)"),
+				UE_LOG(LogSmartAutoConnect, Verbose, TEXT("      🔗 MANIFOLD BELT: %s.%s → %s.%s [Input%d lane] (dot=%.2f)"),
 					*Opt.StoreOn->GetName(),
 					*Opt.Out->GetName(),
 					*Cast<AFGHologram>(Opt.In->GetOwner())->GetName(),
@@ -1177,7 +1172,7 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 		}
 	}
 	
-	UE_LOG(LogSmartAutoConnect, Log, TEXT("   📊 Found %d merger output index groups for manifold chaining"), MergersByOutputIndex.Num());
+	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("   📊 Found %d merger output index groups for manifold chaining"), MergersByOutputIndex.Num());
 	
 	// For each output index group, SORT spatially then connect the mergers sequentially
 	for (auto& IndexGroup : MergersByOutputIndex)
@@ -1187,7 +1182,7 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 		
 		if (MergersInLane.Num() < 2)
 		{
-			UE_LOG(LogSmartAutoConnect, Log, TEXT("   ⏭️ Output%d lane: Only %d merger(s) - skipping manifold"), 
+			UE_LOG(LogSmartAutoConnect, Verbose, TEXT("   ⏭️ Output%d lane: Only %d merger(s) - skipping manifold"),
 				OutputIndex, MergersInLane.Num());
 			continue;
 		}
@@ -1225,7 +1220,7 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 			});
 		}
 		
-		UE_LOG(LogSmartAutoConnect, Log, TEXT("   🔗 Output%d lane: Connecting %d mergers in manifold (sorted spatially)"), 
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("   🔗 Output%d lane: Connecting %d mergers in manifold (sorted spatially)"),
 			OutputIndex, MergersInLane.Num());
 		
 		// Connect each pair of adjacent mergers in the lane
@@ -1575,7 +1570,7 @@ void USFAutoConnectOrchestrator::CollectPotentialConnections(
 		return;
 	}
 	
-	UE_LOG(LogSmartAutoConnect, Log, TEXT("🎯 GLOBAL SCORING: Collecting potential connections from %d distributors"), Distributors.Num());
+	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🎯 GLOBAL SCORING: Collecting potential connections from %d distributors"), Distributors.Num());
 	
 	int32 TotalBuildingsFound = 0;
 	int32 TotalSideConnectorsFound = 0;
@@ -1599,7 +1594,7 @@ void USFAutoConnectOrchestrator::CollectPotentialConnections(
 		
 		if (!bIsSplitter && !bIsMerger)
 		{
-			UE_LOG(LogSmartAutoConnect, Log, TEXT("   ⏭️ %s is neither splitter nor merger"), *Distributor->GetName());
+			UE_LOG(LogSmartAutoConnect, Verbose, TEXT("   ⏭️ %s is neither splitter nor merger"), *Distributor->GetName());
 			continue;
 		}
 		
@@ -1616,7 +1611,7 @@ void USFAutoConnectOrchestrator::CollectPotentialConnections(
 		
 		if (SideConnectors.Num() == 0)
 		{
-			UE_LOG(LogSmartAutoConnect, Log, TEXT("   ⏭️ %s has 0 side connectors"), *Distributor->GetName());
+			UE_LOG(LogSmartAutoConnect, Verbose, TEXT("   ⏭️ %s has 0 side connectors"), *Distributor->GetName());
 			continue;
 		}
 		
@@ -1673,7 +1668,6 @@ void USFAutoConnectOrchestrator::CollectPotentialConnections(
 				}
 				
 				FVector BuildingConnectorPos = BuildingConnector->GetComponentLocation();
-				FVector DistributorPos = Distributor->GetActorLocation();
 				
 				// Find the best side connector - the one that FACES the building connector most directly
 				UFGFactoryConnectionComponent* BestSideConnector = nullptr;
@@ -1702,7 +1696,7 @@ void USFAutoConnectOrchestrator::CollectPotentialConnections(
 					float AngleCosine = FVector::DotProduct(DistConnectorNormal, ToBuilding);
 					float AngleDegrees = FMath::RadiansToDegrees(FMath::Acos(FMath::Clamp(AngleCosine, -1.0f, 1.0f)));
 					
-					UE_LOG(LogSmartAutoConnect, Log, TEXT("      📐 %s: Normal=(%.2f,%.2f,%.2f) ToBuilding=(%.2f,%.2f,%.2f) Angle=%.1f° Dist=%.0f"),
+					UE_LOG(LogSmartAutoConnect, Verbose, TEXT("      📐 %s: Normal=(%.2f,%.2f,%.2f) ToBuilding=(%.2f,%.2f,%.2f) Angle=%.1f° Dist=%.0f"),
 						*DistConnector->GetName(),
 						DistConnectorNormal.X, DistConnectorNormal.Y, DistConnectorNormal.Z,
 						ToBuilding.X, ToBuilding.Y, ToBuilding.Z,
@@ -1775,7 +1769,7 @@ void USFAutoConnectOrchestrator::CollectPotentialConnections(
 		}
 	}
 	
-	UE_LOG(LogSmartAutoConnect, Log, TEXT("🎯 GLOBAL SCORING: Collected %d potential connections"), OutConnections.Num());
-	UE_LOG(LogSmartAutoConnect, Log, TEXT("   📊 DIAGNOSTICS: Buildings=%d, SideConnectors=%d, BuildingConnectors=%d, ValidationsFailed=%d"),
+	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🎯 GLOBAL SCORING: Collected %d potential connections"), OutConnections.Num());
+	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("   📊 DIAGNOSTICS: Buildings=%d, SideConnectors=%d, BuildingConnectors=%d, ValidationsFailed=%d"),
 		TotalBuildingsFound, TotalSideConnectorsFound, TotalBuildingConnectorsFound, TotalValidationsFailed);
 }

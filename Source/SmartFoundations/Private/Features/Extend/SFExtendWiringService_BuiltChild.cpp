@@ -1,4 +1,4 @@
-// Copyright Coffee Stain Studios. All Rights Reserved.
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
 /**
  * SFExtendWiringService - Built-child registration + WireBuiltChildConnections (slice E2 unit F).
@@ -361,7 +361,7 @@ void USFExtendWiringService::WireBuiltChildConnections(AFGBuildableFactory* NewF
     {
         constexpr float AttachmentConnectorProximitySqCm = 25.0f * 25.0f;  // 25 cm radius
         int32 AttachmentsWired = 0;
-        for (const TPair<FString, AActor*>& Entry : ExtendService->JsonBuiltActors)
+        for (const TPair<FString, TObjectPtr<AActor>>& Entry : ExtendService->JsonBuiltActors)
         {
             if (!Entry.Key.StartsWith(TEXT("pipe_attachment_"))) continue;
             AActor* AttachmentActor = Entry.Value;
@@ -378,7 +378,7 @@ void USFExtendWiringService::WireBuiltChildConnections(AFGBuildableFactory* NewF
                 UFGPipeConnectionComponent* BestPipeConn = nullptr;
                 float BestDistSq = AttachmentConnectorProximitySqCm;
 
-                for (const TPair<FString, AActor*>& PipeEntry : ExtendService->JsonBuiltActors)
+                for (const TPair<FString, TObjectPtr<AActor>>& PipeEntry : ExtendService->JsonBuiltActors)
                 {
                     AFGBuildablePipeline* Pipe = Cast<AFGBuildablePipeline>(PipeEntry.Value);
                     if (!IsValid(Pipe)) continue;
@@ -445,8 +445,8 @@ void USFExtendWiringService::WireBuiltChildConnections(AFGBuildableFactory* NewF
             if (Holo.Role != TEXT("pipe_attachment")) continue;
             if (Holo.ConnectedPowerPoleHologramId.IsEmpty()) continue;  // valve or unpowered pump
 
-            AActor* const* PumpActorPtr = ExtendService->JsonBuiltActors.Find(Holo.HologramId);
-            AActor* const* PoleActorPtr = ExtendService->JsonBuiltActors.Find(Holo.ConnectedPowerPoleHologramId);
+            const TObjectPtr<AActor>* PumpActorPtr = ExtendService->JsonBuiltActors.Find(Holo.HologramId);
+            const TObjectPtr<AActor>* PoleActorPtr = ExtendService->JsonBuiltActors.Find(Holo.ConnectedPowerPoleHologramId);
             if (!PumpActorPtr || !*PumpActorPtr || !PoleActorPtr || !*PoleActorPtr)
             {
                 continue;

@@ -1,4 +1,4 @@
-// Copyright Coffee Stain Studios. All Rights Reserved.
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
 /**
  * SFExtendRestoreReplayService - Smart Restore Extend Replay
@@ -78,5 +78,5 @@ private:
 
     /** Owning extend service (source of all shared replay/wiring state; friended) */
     UPROPERTY()
-    USFExtendService* Owner = nullptr;
+    TObjectPtr<USFExtendService> Owner = nullptr;
 };

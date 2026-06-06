@@ -1,3 +1,5 @@
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
+
 #include "Features/AutoConnect/Preview/BeltPreviewHelper.h"
 #include "Engine/World.h"
 #include "Components/SplineMeshComponent.h"

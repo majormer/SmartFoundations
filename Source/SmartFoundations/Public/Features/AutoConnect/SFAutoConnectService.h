@@ -1,4 +1,4 @@
-// Copyright 2024 Maxx. All Rights Reserved.
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
 #pragma once
 
@@ -355,9 +355,6 @@ public:
 		AFGHologram* StorageHologram,
 		bool bSkipAngleValidation = false);
 
-	bool BuildBeltFromPreview(const TSharedPtr<FBeltPreviewHelper>& Preview);
-	bool BuildBeltsForDistributor(AFGHologram* DistributorHologram, AFGBuildable* BuiltDistributor);
-
 	// ========================================
 	// Connector Pair Storage for Build Handoff
 	// ========================================
@@ -617,8 +614,10 @@ private:
 		UFGFactoryConnectionComponent* SourceConnector,
 		UFGFactoryConnectionComponent* TargetConnector,
 		int32 BeltTier,
-		int32 BeltIndex);
-	
+		int32 BeltIndex,
+		int32 StackChainId,
+		int32 StackChainIndex);
+
 	/** Remove belts for pole pairs that are no longer needed */
 	void RemoveOrphanedBelts(AFGHologram* ParentHologram, const TSet<uint64>& ActivePolePairs);
 	

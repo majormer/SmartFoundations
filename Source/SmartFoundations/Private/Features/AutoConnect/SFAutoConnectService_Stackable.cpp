@@ -1,4 +1,4 @@
-// Copyright Coffee Stain Studios. All Rights Reserved.
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
 /**
  * USFAutoConnectService - stackable conveyor/pipe supports + power-pole auto-connect. Split out of SFAutoConnectService.cpp (slice AC,
@@ -64,7 +64,7 @@ void USFAutoConnectService::ProcessStackableConveyorPoles(AFGHologram* ParentHol
 	if (Subsystem->IsSmartDisabledForCurrentAction())
 	{
 		CleanupAllStackableBelts(ParentHologram);
-		UE_LOG(LogSmartAutoConnect, Log, TEXT("🚧 ProcessStackableConveyorPoles: Skipped - Smart disabled for current action"));
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🚧 ProcessStackableConveyorPoles: Skipped - Smart disabled for current action"));
 		return;
 	}
 
@@ -72,7 +72,7 @@ void USFAutoConnectService::ProcessStackableConveyorPoles(AFGHologram* ParentHol
 	const auto& RuntimeSettings = Subsystem->GetAutoConnectRuntimeSettings();
 	if (!RuntimeSettings.bEnabled || !RuntimeSettings.bStackableBeltEnabled)
 	{
-		UE_LOG(LogSmartAutoConnect, Log, TEXT("🚧 ProcessStackableConveyorPoles: Auto-connect disabled (global=%d, stackable belt=%d) - clearing belt children"),
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🚧 ProcessStackableConveyorPoles: Auto-connect disabled (global=%d, stackable belt=%d) - clearing belt children"),
 			RuntimeSettings.bEnabled, RuntimeSettings.bStackableBeltEnabled);
 		
 		// Clear all existing stackable belt children when disabled
@@ -220,7 +220,7 @@ void USFAutoConnectService::ProcessStackableConveyorPoles(AFGHologram* ParentHol
 				// Distance restriction: >56m is too far (game engine limit)
 				if (Distance > MAX_PIPE_LENGTH)
 				{
-					UE_LOG(LogSmartAutoConnect, Log, TEXT("🚧 Belt skipped: distance %.1f cm > 56m between [%d,%d,%d] and [%d,%d,%d]"),
+					UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🚧 Belt skipped: distance %.1f cm > 56m between [%d,%d,%d] and [%d,%d,%d]"),
 						Distance, X, Y, Z, X + 1, Y, Z);
 					continue;
 				}
@@ -231,7 +231,7 @@ void USFAutoConnectService::ProcessStackableConveyorPoles(AFGHologram* ParentHol
 				float AngleDegrees = FMath::RadiansToDegrees(FMath::Asin(VerticalComponent));
 				if (AngleDegrees > 30.0f)
 				{
-					UE_LOG(LogSmartAutoConnect, Log, TEXT("🚧 Belt skipped: angle %.1f° > 30° between [%d,%d,%d] and [%d,%d,%d]"),
+					UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🚧 Belt skipped: angle %.1f° > 30° between [%d,%d,%d] and [%d,%d,%d]"),
 						AngleDegrees, X, Y, Z, X + 1, Y, Z);
 					continue;
 				}
@@ -262,10 +262,20 @@ void USFAutoConnectService::ProcessStackableConveyorPoles(AFGHologram* ParentHol
 				uint64 PairKey = MakePolePairKey(SourcePole, TargetPole);
 				ActivePolePairs.Add(PairKey);
 
+				// Chain identity (THESIS §5.1b): a run is the line of belts along the primary axis
+				// at fixed secondary coords. StackChainId is unique per run (high bit set to avoid
+				// colliding with Extend's small chain ids); StackChainIndex is the 0-based position
+				// along the run (the primary-axis coord). At Construct each belt connects to its
+				// Index±1 neighbour (by registry reference) and registers — connect-then-register.
+				const int32 RunSecondary = bConnectAlongY ? X : Y;
+				const int32 StackChainId = 0x40000000 | ((RunSecondary & 0xFFF) << 12) | (Z & 0xFFF);
+				const int32 StackChainIndex = bConnectAlongY ? Y : X;
+
 				// Create or update belt hologram child
 				AFGHologram* BeltChild = UpdateOrCreateBeltForPolePair(
 					ParentHologram, SourcePole, TargetPole,
-					SourceConnector, TargetConnector, BeltTier, BeltIndex++);
+					SourceConnector, TargetConnector, BeltTier, BeltIndex++,
+					StackChainId, StackChainIndex);
 				
 				if (!BeltChild)
 				{
@@ -313,7 +323,7 @@ void USFAutoConnectService::ProcessStackablePipelineSupports(AFGHologram* Parent
 	if (Subsystem->IsSmartDisabledForCurrentAction())
 	{
 		CleanupAllStackablePipes(ParentHologram);
-		UE_LOG(LogSmartAutoConnect, Log, TEXT("🔧 ProcessStackablePipelineSupports: Skipped - Smart disabled for current action"));
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🔧 ProcessStackablePipelineSupports: Skipped - Smart disabled for current action"));
 		return;
 	}
 
@@ -321,7 +331,7 @@ void USFAutoConnectService::ProcessStackablePipelineSupports(AFGHologram* Parent
 	const auto& RuntimeSettings = Subsystem->GetAutoConnectRuntimeSettings();
 	if (!RuntimeSettings.bEnabled || !RuntimeSettings.bPipeAutoConnectEnabled)
 	{
-		UE_LOG(LogSmartAutoConnect, Log, TEXT("🔧 ProcessStackablePipelineSupports: Auto-connect disabled (global=%d, pipe=%d) - clearing pipe children"),
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🔧 ProcessStackablePipelineSupports: Auto-connect disabled (global=%d, pipe=%d) - clearing pipe children"),
 			RuntimeSettings.bEnabled, RuntimeSettings.bPipeAutoConnectEnabled);
 		
 		// Clear all existing stackable pipe children when disabled
@@ -438,7 +448,7 @@ void USFAutoConnectService::ProcessStackablePipelineSupports(AFGHologram* Parent
 			ParentHologram->GetConstructionInstigator()->GetController());
 		PipeTier = Subsystem->GetHighestUnlockedPipeTier(PlayerController);
 		if (PipeTier == 0) PipeTier = 2; // Default to Mk2 if detection fails
-		UE_LOG(LogSmartAutoConnect, Log, TEXT("🔧 STACKABLE PIPE: Auto tier resolved to Mk%d"), PipeTier);
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🔧 STACKABLE PIPE: Auto tier resolved to Mk%d"), PipeTier);
 	}
 
 	// Build a map from grid position [X,Y,Z] to hologram for fast neighbor lookup
@@ -505,7 +515,7 @@ void USFAutoConnectService::ProcessStackablePipelineSupports(AFGHologram* Parent
 				// Distance restriction: >56m is too far (game engine limit)
 				if (Distance > MAX_PIPE_LENGTH)
 				{
-					UE_LOG(LogSmartAutoConnect, Log, TEXT("🔧 Pipe skipped: distance %.1f cm > 56m between [%d,%d,%d] and [%d,%d,%d]"),
+					UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🔧 Pipe skipped: distance %.1f cm > 56m between [%d,%d,%d] and [%d,%d,%d]"),
 						Distance, X, Y, Z, X + 1, Y, Z);
 					continue;
 				}
@@ -516,7 +526,7 @@ void USFAutoConnectService::ProcessStackablePipelineSupports(AFGHologram* Parent
 				float AngleDegrees = FMath::RadiansToDegrees(FMath::Asin(VerticalComponent));
 				if (AngleDegrees > 30.0f)
 				{
-					UE_LOG(LogSmartAutoConnect, Log, TEXT("🔧 Pipe skipped: angle %.1f° > 30° between [%d,%d,%d] and [%d,%d,%d]"),
+					UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🔧 Pipe skipped: angle %.1f° > 30° between [%d,%d,%d] and [%d,%d,%d]"),
 						AngleDegrees, X, Y, Z, X + 1, Y, Z);
 					continue;
 				}
@@ -668,9 +678,9 @@ AFGHologram* USFAutoConnectService::UpdateOrCreatePipeForPolePair(
 	}
 	
 	// DEBUG: Log positions to diagnose pipe placement issue
-	UE_LOG(LogSmartAutoConnect, Log, TEXT("🔧 PIPE POSITIONS [%d]: SourcePole=%s @ %s, TargetPole=%s @ %s"),
+	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🔧 PIPE POSITIONS [%d]: SourcePole=%s @ %s, TargetPole=%s @ %s"),
 		PipeIndex, *SourcePole->GetName(), *SourcePolePos.ToString(), *TargetPole->GetName(), *TargetPolePos.ToString());
-	UE_LOG(LogSmartAutoConnect, Log, TEXT("🔧 PIPE ENDPOINTS [%d]: Start=%s, End=%s, Dist=%.1f"),
+	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🔧 PIPE ENDPOINTS [%d]: Start=%s, End=%s, Dist=%.1f"),
 		PipeIndex, *StartPos.ToString(), *EndPos.ToString(), FVector::Dist(StartPos, EndPos));
 	
 	// Issue #291 (pipe variant): route straight toward the partner pole in 3D. Pole forward vector
@@ -692,7 +702,7 @@ AFGHologram* USFAutoConnectService::UpdateOrCreatePipeForPolePair(
 		EndNormal = TargetPole ? (-TargetPole->GetActorForwardVector()).GetSafeNormal() : -FVector::ForwardVector;
 	}
 	
-	UE_LOG(LogSmartAutoConnect, Log, TEXT("🔧 STACKABLE PIPE: Routing endpoints StartN=%s EndN=%s"), *StartNormal.ToString(), *EndNormal.ToString());
+	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🔧 STACKABLE PIPE: Routing endpoints StartN=%s EndN=%s"), *StartNormal.ToString(), *EndNormal.ToString());
 	
 	// ========================================================================
 	// BUILD 6-POINT SPLINE WITH 50CM STRAIGHT SECTIONS AT EACH END
@@ -796,7 +806,7 @@ AFGHologram* USFAutoConnectService::UpdateOrCreatePipeForPolePair(
 			if (DesiredBuildClass && CurrentBuildClass != DesiredBuildClass)
 			{
 				// Tier or indicator changed - destroy existing pipe and create new one below
-				UE_LOG(LogSmartAutoConnect, Log, TEXT("🔧 STACKABLE PIPE: Tier/indicator changed for pair 0x%016llX - recreating pipe"), PairKey);
+				UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🔧 STACKABLE PIPE: Tier/indicator changed for pair 0x%016llX - recreating pipe"), PairKey);
 				
 				// Remove from parent's mChildren array
 				FArrayProperty* ChildrenProp = FindFProperty<FArrayProperty>(AFGHologram::StaticClass(), TEXT("mChildren"));
@@ -965,7 +975,7 @@ AFGHologram* USFAutoConnectService::UpdateOrCreatePipeForPolePair(
 	// Track by pole-pair key
 	State.PipesByPolePair.Add(PairKey, PipeChild);
 	
-	UE_LOG(LogSmartAutoConnect, Log, TEXT("🔧 STACKABLE PIPE: Created new pipe %s for pair 0x%016llX (dist=%.1f)"), 
+	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🔧 STACKABLE PIPE: Created new pipe %s for pair 0x%016llX (dist=%.1f)"),
 		*ChildName.ToString(), PairKey, Distance);
 	
 	return PipeChild;
@@ -1007,7 +1017,7 @@ void USFAutoConnectService::RemoveOrphanedPipes(AFGHologram* ParentHologram, con
 				{
 					ParentChildrenArray->Remove(Pipe);
 				}
-				UE_LOG(LogSmartAutoConnect, Log, TEXT("🔧 STACKABLE PIPE: Removing orphaned pipe %s (pair 0x%016llX)"), 
+				UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🔧 STACKABLE PIPE: Removing orphaned pipe %s (pair 0x%016llX)"),
 					*Pipe->GetName(), Pair.Key);
 				Pipe->Destroy();
 			}
@@ -1033,7 +1043,7 @@ void USFAutoConnectService::CleanupAllStackablePipes(AFGHologram* ParentHologram
 		return;
 	}
 	
-	UE_LOG(LogSmartAutoConnect, Log, TEXT("🔧 STACKABLE PIPE CLEANUP: Removing all %d pipes for %s"), 
+	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🔧 STACKABLE PIPE CLEANUP: Removing all %d pipes for %s"),
 		State->PipesByPolePair.Num(), *ParentHologram->GetName());
 	
 	// Get parent's mChildren array for removal
@@ -1118,7 +1128,7 @@ void USFAutoConnectService::ProcessPowerPoles(AFGHologram* ParentHologram)
 	{
 		// Clear any existing previews since we're disabled
 		ClearAllPowerPreviews();
-		UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ ProcessPowerPoles: Skipped - Smart disabled for current action"));
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("⚡ ProcessPowerPoles: Skipped - Smart disabled for current action"));
 		return;
 	}
 
@@ -1136,7 +1146,7 @@ void USFAutoConnectService::ProcessPowerPoles(AFGHologram* ParentHologram)
 		PowerAutoConnectManagers.Add(ParentHologram, NewManager);
 		ManagerPtr = &PowerAutoConnectManagers[ParentHologram];
 		
-		UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ ProcessPowerPoles: Created new power manager"));
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("⚡ ProcessPowerPoles: Created new power manager"));
 	}
 
 	// Process all power poles through the manager
@@ -1151,7 +1161,7 @@ void USFAutoConnectService::ProcessPowerPoles(AFGHologram* ParentHologram)
 
 void USFAutoConnectService::ClearAllPowerPreviews()
 {
-	UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ ClearAllPowerPreviews: Clearing all power line previews (%d managers)"), 
+	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("⚡ ClearAllPowerPreviews: Clearing all power line previews (%d managers)"),
 		PowerAutoConnectManagers.Num());
 	
 	// CRITICAL: Commit planned connections BEFORE clearing anything!
@@ -1203,7 +1213,7 @@ TArray<FPowerPoleGridNode> USFAutoConnectService::AnalyzeGridTopology(const TArr
 {
 	TArray<FPowerPoleGridNode> GridNodes;
 	
-	UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ AnalyzeGridTopology: Analyzing %d poles"), AllPoles.Num());
+	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("⚡ AnalyzeGridTopology: Analyzing %d poles"), AllPoles.Num());
 	
 	if (AllPoles.Num() == 0)
 	{
@@ -1231,7 +1241,7 @@ TArray<FPowerPoleGridNode> USFAutoConnectService::AnalyzeGridTopology(const TArr
 	int32 YDir = CounterState.GridCounters.Y >= 0 ? 1 : -1;
 	int32 ZDir = CounterState.GridCounters.Z >= 0 ? 1 : -1;
 	
-	UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ AnalyzeGridTopology: Grid dimensions %dx%dx%d, dirs [%d,%d,%d]"),
+	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("⚡ AnalyzeGridTopology: Grid dimensions %dx%dx%d, dirs [%d,%d,%d]"),
 		XCount, YCount, ZCount, XDir, YDir, ZDir);
 	
 	// Build a map from grid position to pole hologram
@@ -1280,7 +1290,7 @@ TArray<FPowerPoleGridNode> USFAutoConnectService::AnalyzeGridTopology(const TArr
 		}
 	}
 	
-	UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ AnalyzeGridTopology: Mapped %d poles to grid positions"), PoleToGridPosition.Num());
+	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("⚡ AnalyzeGridTopology: Mapped %d poles to grid positions"), PoleToGridPosition.Num());
 	
 	// Now find neighbors by grid position (adjacent = differ by 1 in exactly one axis)
 	for (AFGHologram* Pole : AllPoles)
@@ -1328,7 +1338,7 @@ TArray<FPowerPoleGridNode> USFAutoConnectService::AnalyzeGridTopology(const TArr
 			Node.YAxisNeighbors.Add(*YNegPtr);
 		}
 		
-		UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ Pole %s at grid[%d,%d,%d]: %d X-neighbors, %d Y-neighbors"),
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("⚡ Pole %s at grid[%d,%d,%d]: %d X-neighbors, %d Y-neighbors"),
 			*Pole->GetName(), GridPos.X, GridPos.Y, GridPos.Z,
 			Node.XAxisNeighbors.Num(), Node.YAxisNeighbors.Num());
 		
@@ -1403,7 +1413,9 @@ AFGHologram* USFAutoConnectService::UpdateOrCreateBeltForPolePair(
 	UFGFactoryConnectionComponent* SourceConnector,
 	UFGFactoryConnectionComponent* TargetConnector,
 	int32 BeltTier,
-	int32 BeltIndex)
+	int32 BeltIndex,
+	int32 StackChainId,
+	int32 StackChainIndex)
 {
 	if (!ParentHologram || !SourcePole || !TargetPole || !Subsystem)
 	{
@@ -1472,7 +1484,7 @@ AFGHologram* USFAutoConnectService::UpdateOrCreateBeltForPolePair(
 		EndNormal = TargetPole ? (-TargetPole->GetActorForwardVector()).GetSafeNormal() : -FVector::ForwardVector;
 	}
 	
-	UE_LOG(LogSmartAutoConnect, Log, TEXT("🚧 STACKABLE BELT: Routing from %s to %s, StartN=%s EndN=%s, Dist=%.1f"),
+	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🚧 STACKABLE BELT: Routing from %s to %s, StartN=%s EndN=%s, Dist=%.1f"),
 		*StartPos.ToString(),
 		*EndPos.ToString(),
 		*StartNormal.ToString(),
@@ -1493,7 +1505,7 @@ AFGHologram* USFAutoConnectService::UpdateOrCreateBeltForPolePair(
 			if (DesiredBuildClass && CurrentBuildClass != DesiredBuildClass)
 			{
 				// Tier changed - destroy existing belt and create new one below
-				UE_LOG(LogSmartAutoConnect, Log, TEXT("🚧 STACKABLE BELT: Tier changed for pair 0x%016llX - recreating belt"), PairKey);
+				UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🚧 STACKABLE BELT: Tier changed for pair 0x%016llX - recreating belt"), PairKey);
 				
 				FArrayProperty* ChildrenProp = FindFProperty<FArrayProperty>(AFGHologram::StaticClass(), TEXT("mChildren"));
 				if (ChildrenProp)
@@ -1605,6 +1617,10 @@ AFGHologram* USFAutoConnectService::UpdateOrCreateBeltForPolePair(
 		// Store pole connector references for ConfigureComponents to wire after construction
 		HoloData->StackableBeltConn0 = SourceConnector;  // Belt output connects to source pole
 		HoloData->StackableBeltConn1 = TargetConnector;  // Belt input connects to target pole
+		// Chain identity: at Construct the belt connects (by reference) to its run neighbour(s)
+		// and registers — connect-then-register (THESIS §5.1b). -1 = not a chain member.
+		HoloData->StackChainId = StackChainId;
+		HoloData->StackChainIndex = StackChainIndex;
 	}
 	
 	BeltChild->FinishSpawning(FTransform(StartPos));
@@ -1639,7 +1655,7 @@ AFGHologram* USFAutoConnectService::UpdateOrCreateBeltForPolePair(
 	// Track by pole-pair key
 	State.BeltsByPolePair.Add(PairKey, BeltChild);
 	
-	UE_LOG(LogSmartAutoConnect, Log, TEXT("🚧 STACKABLE BELT: Created new belt %s for pair 0x%016llX"), 
+	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🚧 STACKABLE BELT: Created new belt %s for pair 0x%016llX"),
 		*ChildName.ToString(), PairKey);
 	
 	return BeltChild;
@@ -1679,7 +1695,7 @@ void USFAutoConnectService::RemoveOrphanedBelts(AFGHologram* ParentHologram, con
 				{
 					ParentChildrenArray->Remove(Belt);
 				}
-				UE_LOG(LogSmartAutoConnect, Log, TEXT("🚧 STACKABLE BELT: Removing orphaned belt %s (pair 0x%016llX)"), 
+				UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🚧 STACKABLE BELT: Removing orphaned belt %s (pair 0x%016llX)"),
 					*Belt->GetName(), Pair.Key);
 				Belt->Destroy();
 			}
@@ -1705,7 +1721,7 @@ void USFAutoConnectService::CleanupAllStackableBelts(AFGHologram* ParentHologram
 		return;
 	}
 	
-	UE_LOG(LogSmartAutoConnect, Log, TEXT("🚧 CleanupAllStackableBelts: Cleaning up %d belt children for %s"),
+	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🚧 CleanupAllStackableBelts: Cleaning up %d belt children for %s"),
 		State->BeltsByPolePair.Num(), *ParentHologram->GetName());
 	
 	FArrayProperty* ChildrenProp = FindFProperty<FArrayProperty>(AFGHologram::StaticClass(), TEXT("mChildren"));

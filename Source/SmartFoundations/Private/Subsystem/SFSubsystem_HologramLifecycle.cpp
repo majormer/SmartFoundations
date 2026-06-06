@@ -1,4 +1,4 @@
-// Copyright Coffee Stain Studios. All Rights Reserved.
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
 /**
  * USFSubsystem - active-hologram lifecycle (Register/Unregister/Poll) + multi-step property sync.
@@ -851,6 +851,10 @@ void USFSubsystem::PollForActiveHologram()
 		}
 	}
 
+	// #342: the manual Extend hold ("pin") toggle is detected inside USFExtendService::RefreshExtension
+	// (at the per-frame "ensure locked" point), not here — Extend re-locks every frame, which masks the
+	// player's unlock from this once-per-frame poll.
+
 	// Detect and propagate transform changes via transform service (Phase 3 extraction)
 	if (CurrentHologram && GridTransformService)
 	{
@@ -1159,7 +1163,6 @@ void USFSubsystem::OnBuildGunEquipped()
 	if (SmartContext)
 	{
 		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("✅ Smart! Context exists: %s"), *SmartContext->GetName());
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   Parent: %s"), SmartContext->mParentContext.IsValid() ? *SmartContext->mParentContext->GetName() : TEXT("None"));
 		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   Display Name: %s"), *SmartContext->mDisplayName.ToString());
 		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   Priority: %.1f"), SmartContext->mMenuPriority);
 	}
@@ -1283,7 +1286,6 @@ void USFSubsystem::LogActiveInputContexts(const FString& CallerContext)
 	if (SmartContext)
 	{
 		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("✅ Smart! Context exists: %s"), *SmartContext->GetName());
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   Parent: %s"), SmartContext->mParentContext.IsValid() ? *SmartContext->mParentContext->GetName() : TEXT("None"));
 		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   Display Name: %s"), *SmartContext->mDisplayName.ToString());
 		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   Priority: %.1f"), SmartContext->mMenuPriority);
 	}

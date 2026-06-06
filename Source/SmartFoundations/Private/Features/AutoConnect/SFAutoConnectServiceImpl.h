@@ -1,4 +1,4 @@
-// Copyright Coffee Stain Studios. All Rights Reserved.
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
 /**
  * Shared include set for the USFAutoConnectService implementation, split across SFAutoConnectService.cpp + _Belt/_Stackable (each <2k).
@@ -34,7 +34,7 @@
 #include "UObject/UnrealType.h"
 #include "FGCentralStorageSubsystem.h"
 #include "FGInventoryComponent.h"
-#include "FGItemDescriptor.h"
+#include "Resources/FGItemDescriptor.h"
 #include "FGCharacterPlayer.h"
 #include "FGPlayerController.h"
 #include "FGConstructDisqualifier.h"

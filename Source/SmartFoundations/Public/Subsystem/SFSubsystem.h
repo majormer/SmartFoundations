@@ -1,3 +1,5 @@
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
+
 #pragma once
 
 #include "CoreMinimal.h"
@@ -311,10 +313,6 @@ public:
 	/** Check if current context supports Smart Upgrade (holding upgrade-capable hologram) */
 	UFUNCTION(BlueprintCallable, Category = "Smart! Upgrade")
 	bool IsUpgradeCapableContext() const;
-
-	/** Debug: analyze nearby pipe splines (PrimaryFire debug key) */
-	UFUNCTION()
-	void OnDebugPrimaryFire();
 
 	/** Find nearby buildings within specified radius (used by Auto-Connect Service) */
 	TArray<AFGBuildable*> FindNearbyBuildings(FVector Center, float Radius);
@@ -647,7 +645,7 @@ protected:
 
     /** Last recipe we logged from the build gun (for change detection) */
     UPROPERTY()
-    UClass* LastLoggedRecipeClass = nullptr;
+    TObjectPtr<UClass> LastLoggedRecipeClass = nullptr;
 
     /** Last item size we logged (to avoid spam). Logged when it changes beyond a small tolerance. */
     UPROPERTY()
@@ -680,15 +678,15 @@ protected:
 	
 	/** Auto-connect service - Belt preview connections for distributors (Refactor: Issue #XXX) */
 	UPROPERTY()
-	USFAutoConnectService* AutoConnectService;
+	TObjectPtr<USFAutoConnectService> AutoConnectService;
 
 	/** EXTEND service - Factory topology cloning (Issue #219) */
 	UPROPERTY()
-	USFExtendService* ExtendService;
+	TObjectPtr<USFExtendService> ExtendService;
 
 	/** Radar Pulse diagnostic service - Object snapshot and diff system */
 	UPROPERTY()
-	USFRadarPulseService* RadarPulseService;
+	TObjectPtr<USFRadarPulseService> RadarPulseService;
 
 	/** Pipe Auto-Connect manager - feature-level coordinator (junctions + manifolds) */
 	TUniquePtr<FSFPipeAutoConnectManager> PipeAutoConnectManager;
@@ -698,35 +696,35 @@ protected:
 
 	/** Auto-connect orchestrators - One per parent distributor hologram */
 	UPROPERTY()
-	TMap<AFGHologram*, USFAutoConnectOrchestrator*> AutoConnectOrchestrators;
+	TMap<TObjectPtr<AFGHologram>, TObjectPtr<USFAutoConnectOrchestrator>> AutoConnectOrchestrators;
 
     /** Recipe management service - Factory crafting recipe selection and application */
     UPROPERTY()
-    USFRecipeManagementService* RecipeManagementService;
+    TObjectPtr<USFRecipeManagementService> RecipeManagementService;
 
     /** Restore service - Smart Restore Enhanced preset system */
     UPROPERTY()
-    USFRestoreService* RestoreService;
+    TObjectPtr<USFRestoreService> RestoreService;
 
     /** Upgrade audit service - Scans world for upgradeable buildables */
     UPROPERTY()
-    USFUpgradeAuditService* UpgradeAuditService;
+    TObjectPtr<USFUpgradeAuditService> UpgradeAuditService;
 
     /** Upgrade execution service - Performs batch upgrades */
     UPROPERTY()
-    USFUpgradeExecutionService* UpgradeExecutionService;
+    TObjectPtr<USFUpgradeExecutionService> UpgradeExecutionService;
     
     /** HUD service - Binding and widget lifecycle */
     UPROPERTY()
-    USFHudService* HudService;
+    TObjectPtr<USFHudService> HudService;
 
     /** Hint bar service - Vanilla hint bar integration (Issue #281) */
     UPROPERTY()
-    USFHintBarService* HintBarService;
+    TObjectPtr<USFHintBarService> HintBarService;
 
     /** Chain actor service - Canonical chain invalidation + synchronous rebuild (v29.2.2) */
     UPROPERTY()
-    USFChainActorService* ChainActorService = nullptr;
+    TObjectPtr<USFChainActorService> ChainActorService = nullptr;
 
     // NOTE: DeferredCostService removed - child holograms automatically aggregate costs via GetCost()
 
@@ -734,15 +732,15 @@ protected:
 
     /** Grid spawner service - Child spawn/update/destroy orchestration (Phase 2 extraction) */
     UPROPERTY()
-    USFGridSpawnerService* GridSpawnerService = nullptr;
+    TObjectPtr<USFGridSpawnerService> GridSpawnerService = nullptr;
 
     /** Grid state service - Single source of truth for counters and axes */
     UPROPERTY()
-    USFGridStateService* GridStateService = nullptr;
+    TObjectPtr<USFGridStateService> GridStateService = nullptr;
 
     /** Grid transform service - Movement detection and propagation (Phase 3 extraction) */
     UPROPERTY()
-    USFGridTransformService* GridTransformService = nullptr;
+    TObjectPtr<USFGridTransformService> GridTransformService = nullptr;
     
     // NOTE: SpawnedChildren tracking moved to HologramHelper (Phase 2 extraction)
     // Use HologramHelper->GetSpawnedChildren() to access children
@@ -836,7 +834,7 @@ private:
 	 *   suppresses re-locking until the next grid change */
 	bool bAutoHoldActive = false;
 	bool bAutoHoldUserOverrode = false;
-	
+
 	/** Lazy initialization flag (Task #58) - true after first hologram registration */
 	bool bSubsystemInitialized = false;
 	
@@ -1223,13 +1221,10 @@ public:
 	
 	/** Registry of all Smart-created buildings this session */
 	UPROPERTY()
-	TMap<AFGBuildable*, FSFBuildingMetadata> SmartBuildingRegistry;
+	TMap<TObjectPtr<AFGBuildable>, FSFBuildingMetadata> SmartBuildingRegistry;
 	
 	/** Current placement group ID (increments with each placement operation) */
 	int32 CurrentPlacementGroupID = 0;
-	
-	/** Track buildings in current placement operation */
-	TArray<AFGBuildable*> CurrentPlacementBuildings;
 	
 	/** Register a Smart-created building in the session registry */
 	void RegisterSmartBuilding(AFGBuildable* Building, int32 IndexInGroup, bool bIsParent);
@@ -1405,11 +1400,6 @@ private:
 	// Debug Tools
 	// ========================================
 
-	/** Analyze nearby vanilla pipes to reverse-engineer spline formulas
-	 * @param Radius Search radius in cm (default 5000cm = 50m)
-	 * Logs detailed spline data including tangent scale factors
-	 */
-	void AnalyzeNearbyPipeSplines(float Radius = 5000.0f);
 
 	// ========================================
 	// Stackable Pipe Support Deferred Build (Issue #220)
@@ -1454,30 +1444,4 @@ public:
 	/** Clear the stackable pipe build cache */
 	void ClearStackablePipeBuildCache();
 
-	// ========================================
-	// Chain Actor Rebuild System (Issue #220 - Stackable Belt Fix)
-	// ========================================
-	// Uses a deferred timer to safely rebuild chains after all belts are placed.
-
-	/** Queue a belt for chain rebuild after a short delay */
-	void QueueChainRebuild(AFGBuildableConveyorBelt* Belt);
-
-	/** Traverse connections to collect all belts in a connected chain */
-	TSet<AFGBuildableConveyorBelt*> CollectChainBelts(AFGBuildableConveyorBelt* StartBelt);
-
-	/** 
-	 * Cache stackable belt preview data for building (Issue #220)
-	 * Called by orchestrator when belt previews are valid, before hologram is destroyed
-	 */
-	void CacheStackableBeltPreviewsForBuild();
-
-private:
-	/** Execute the deferred chain rebuild */
-	void ExecuteDeferredChainRebuild();
-
-	/** Belts pending chain rebuild - processed after timer fires */
-	TSet<TWeakObjectPtr<AFGBuildableConveyorBelt>> PendingChainRebuilds;
-
-	/** Timer handle for deferred chain rebuild */
-	FTimerHandle ChainRebuildTimerHandle;
 };

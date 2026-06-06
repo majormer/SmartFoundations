@@ -1,4 +1,4 @@
-// Copyright Coffee Stain Studios. All Rights Reserved.
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
 /**
  * SFExtendTopologyService - Topology Walking and Capture
@@ -127,7 +127,7 @@ private:
 
     /** Detection service for target validation */
     UPROPERTY()
-    USFExtendDetectionService* DetectionService = nullptr;
+    TObjectPtr<USFExtendDetectionService> DetectionService = nullptr;
 
     /** Cached topology from last walked building */
     UPROPERTY()

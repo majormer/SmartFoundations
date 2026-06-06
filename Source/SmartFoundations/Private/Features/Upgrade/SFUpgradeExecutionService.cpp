@@ -1,3 +1,5 @@
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
+
 #include "Features/Upgrade/SFUpgradeExecutionService.h"
 #include "Features/Upgrade/SFUpgradeExecutionServiceImpl.h"
 
@@ -12,14 +14,14 @@ namespace
 void USFUpgradeExecutionService::Initialize(USFSubsystem* InSubsystem)
 {
 	Subsystem = InSubsystem;
-	UE_LOG(LogSmartUpgrade, Log, TEXT("UpgradeExecutionService: Initialized"));
+	UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: Initialized"));
 }
 
 void USFUpgradeExecutionService::Cleanup()
 {
 	CancelUpgrade();
 	Subsystem = nullptr;
-	UE_LOG(LogSmartUpgrade, Log, TEXT("UpgradeExecutionService: Cleaned up"));
+	UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: Cleaned up"));
 }
 
 void USFUpgradeExecutionService::Tick(float DeltaTime)
@@ -140,7 +142,7 @@ void USFUpgradeExecutionService::StartUpgrade(const FSFUpgradeExecutionParams& P
 
 	if (PendingUpgrades.Num() == 0)
 	{
-		UE_LOG(LogSmartUpgrade, Log, TEXT("UpgradeExecutionService: No targets found to upgrade"));
+		UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: No targets found to upgrade"));
 		WorkingResult.bCompleted = true;
 		LastResult = WorkingResult;
 		OnUpgradeExecutionCompleted.Broadcast(LastResult);
@@ -148,7 +150,7 @@ void USFUpgradeExecutionService::StartUpgrade(const FSFUpgradeExecutionParams& P
 	}
 
 	bUpgradeInProgress = true;
-	UE_LOG(LogSmartUpgrade, Log, TEXT("UpgradeExecutionService: Starting SYNCHRONOUS upgrade of %d items from Tier %d to Tier %d"),
+	UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: Starting SYNCHRONOUS upgrade of %d items from Tier %d to Tier %d"),
 		PendingUpgrades.Num(), Params.SourceTier, Params.TargetTier);
 
 	// Pre-scan: Save connection pairs between conveyors (and pipes) that will be upgraded
@@ -232,7 +234,7 @@ void USFUpgradeExecutionService::CancelUpgrade()
 	CurrentUpgradeIndex = 0;
 
 	OnUpgradeExecutionCompleted.Broadcast(LastResult);
-	UE_LOG(LogSmartUpgrade, Log, TEXT("UpgradeExecutionService: Upgrade cancelled after %d items"), WorkingResult.TotalProcessed);
+	UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: Upgrade cancelled after %d items"), WorkingResult.TotalProcessed);
 }
 
 void USFUpgradeExecutionService::GatherUpgradeTargets()
@@ -245,7 +247,7 @@ void USFUpgradeExecutionService::GatherUpgradeTargets()
 	// If specific buildables were provided (traversal mode), use those directly
 	if (CurrentParams.HasSpecificBuildables())
 	{
-		UE_LOG(LogSmartUpgrade, Log, TEXT("UpgradeExecutionService: Using %d specific buildables from traversal scan (TargetTier=%d)"),
+		UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: Using %d specific buildables from traversal scan (TargetTier=%d)"),
 			CurrentParams.SpecificBuildables.Num(), CurrentParams.TargetTier);
 
 		for (const TWeakObjectPtr<AFGBuildable>& WeakBuildable : CurrentParams.SpecificBuildables)
@@ -261,7 +263,7 @@ void USFUpgradeExecutionService::GatherUpgradeTargets()
 			}
 		}
 
-		UE_LOG(LogSmartUpgrade, Log, TEXT("UpgradeExecutionService: Filtered to %d targets below tier %d"),
+		UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: Filtered to %d targets below tier %d"),
 			PendingUpgrades.Num(), CurrentParams.TargetTier);
 
 		if (IsConveyorUpgradeFamily(CurrentParams.Family))
@@ -288,7 +290,7 @@ void USFUpgradeExecutionService::GatherUpgradeTargets()
 
 	if (IsConveyorUpgradeFamily(CurrentParams.Family))
 	{
-		UE_LOG(LogSmartUpgrade, Log,
+		UE_LOG(LogSmartUpgrade, Verbose,
 			TEXT("UpgradeExecutionService: Gathering conveyor seeds at tier %d (belts + lifts, cohort-safe radius mode)"),
 			CurrentParams.SourceTier);
 
@@ -311,12 +313,12 @@ void USFUpgradeExecutionService::GatherUpgradeTargets()
 			FoundActors.Add(Conveyor);
 		}
 
-		UE_LOG(LogSmartUpgrade, Log, TEXT("UpgradeExecutionService: Found %d conveyor seed(s) at tier %d"),
+		UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: Found %d conveyor seed(s) at tier %d"),
 			FoundActors.Num(), CurrentParams.SourceTier);
 	}
 	else if (CurrentParams.Family == ESFUpgradeFamily::Pipe)
 	{
-		UE_LOG(LogSmartUpgrade, Log, TEXT("UpgradeExecutionService: Gathering pipelines at tier %d (all indicator variants)"),
+		UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: Gathering pipelines at tier %d (all indicator variants)"),
 			CurrentParams.SourceTier);
 		for (TActorIterator<AFGBuildablePipeline> It(World); It; ++It)
 		{
@@ -333,7 +335,7 @@ void USFUpgradeExecutionService::GatherUpgradeTargets()
 			if (PipeTier != CurrentParams.SourceTier) continue;
 			FoundActors.Add(Pipe);
 		}
-		UE_LOG(LogSmartUpgrade, Log, TEXT("UpgradeExecutionService: Found %d pipelines at tier %d"),
+		UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: Found %d pipelines at tier %d"),
 			FoundActors.Num(), CurrentParams.SourceTier);
 	}
 	else
@@ -347,7 +349,7 @@ void USFUpgradeExecutionService::GatherUpgradeTargets()
 			return;
 		}
 
-		UE_LOG(LogSmartUpgrade, Log, TEXT("UpgradeExecutionService: Looking for source class %s (Full: %s) (Family=%d Tier=%d)"),
+		UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: Looking for source class %s (Full: %s) (Family=%d Tier=%d)"),
 			*SourceClass->GetName(), *SourceClass->GetPathName(), static_cast<int32>(CurrentParams.Family), CurrentParams.SourceTier);
 
 		// Gather all actors of the source class - use exact class match to avoid finding subclasses
@@ -361,7 +363,7 @@ void USFUpgradeExecutionService::GatherUpgradeTargets()
 			}
 		}
 
-		UE_LOG(LogSmartUpgrade, Log, TEXT("UpgradeExecutionService: Exact class match found %d actors"), FoundActors.Num());
+		UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: Exact class match found %d actors"), FoundActors.Num());
 	}
 
 	float RadiusSq = CurrentParams.Radius * CurrentParams.Radius;
@@ -398,7 +400,7 @@ void USFUpgradeExecutionService::GatherUpgradeTargets()
 		NormalizeConveyorUpgradeTargets(/*bRespectRadius*/ true);
 	}
 
-	UE_LOG(LogSmartUpgrade, Log, TEXT("UpgradeExecutionService: Gathered %d targets for upgrade"), PendingUpgrades.Num());
+	UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: Gathered %d targets for upgrade"), PendingUpgrades.Num());
 }
 
 void USFUpgradeExecutionService::NormalizeConveyorUpgradeTargets(bool bRespectRadius)
@@ -453,7 +455,7 @@ void USFUpgradeExecutionService::NormalizeConveyorUpgradeTargets(bool bRespectRa
 		if (!bFullyInsideRadius)
 		{
 			++SkippedPartialCohorts;
-			UE_LOG(LogSmartUpgrade, Log,
+			UE_LOG(LogSmartUpgrade, Verbose,
 				TEXT("UpgradeExecutionService: Skipping conveyor cohort containing %s - cohort intersects radius but extends outside it (exclusive-safe prototype)"),
 				*Seed->GetName());
 			continue;
@@ -483,7 +485,7 @@ void USFUpgradeExecutionService::NormalizeConveyorUpgradeTargets(bool bRespectRa
 		if (CurrentParams.MaxItems > 0 && ExpandedTargets.Num() + EligibleInCohort.Num() > CurrentParams.MaxItems)
 		{
 			++SkippedMaxItemCohorts;
-			UE_LOG(LogSmartUpgrade, Log,
+			UE_LOG(LogSmartUpgrade, Verbose,
 				TEXT("UpgradeExecutionService: Skipping conveyor cohort containing %s - adding %d member(s) would exceed MaxItems=%d"),
 				*Seed->GetName(), EligibleInCohort.Num(), CurrentParams.MaxItems);
 			continue;
@@ -494,7 +496,7 @@ void USFUpgradeExecutionService::NormalizeConveyorUpgradeTargets(bool bRespectRa
 
 	PendingUpgrades = MoveTemp(ExpandedTargets);
 
-	UE_LOG(LogSmartUpgrade, Log,
+	UE_LOG(LogSmartUpgrade, Verbose,
 		TEXT("UpgradeExecutionService: Conveyor cohort normalization - seeds=%d cohorts=%d targets=%d skipped_partial=%d skipped_max_items=%d"),
 		ConveyorSeeds.Num(), CohortCount, PendingUpgrades.Num(), SkippedPartialCohorts, SkippedMaxItemCohorts);
 }
@@ -509,7 +511,7 @@ void USFUpgradeExecutionService::CollectConnectedConveyorCohort(AFGBuildableConv
 
 	while (Stack.Num() > 0 && OutCohort.Num() < MaxCohortSize)
 	{
-		AFGBuildableConveyorBase* Current = Stack.Pop(false);
+		AFGBuildableConveyorBase* Current = Stack.Pop(EAllowShrinking::No);
 		if (!IsValid(Current) || OutCohort.Contains(Current)) continue;
 
 		OutCohort.Add(Current);
@@ -1176,7 +1178,7 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 			*OldLift->GetName());
 
 		// Log connection info for debugging floor hole issues
-		UE_LOG(LogSmartUpgrade, Log, TEXT("UpgradeExecutionService: Lift connections - Conn0=%s Partner0=%s, Conn1=%s Partner1=%s"),
+		UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: Lift connections - Conn0=%s Partner0=%s, Conn1=%s Partner1=%s"),
 			OldLift->GetConnection0() ? *OldLift->GetConnection0()->GetName() : TEXT("null"),
 			OldLift->GetConnection0() && OldLift->GetConnection0()->GetConnection() ? *OldLift->GetConnection0()->GetConnection()->GetOwner()->GetName() : TEXT("null"),
 			OldLift->GetConnection1() ? *OldLift->GetConnection1()->GetName() : TEXT("null"),
@@ -1296,7 +1298,7 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 				{
 					UFGInventoryLibrary::GrabItemsFromInventoryAndCentralStorage(
 						LiftPlayerInventory, LiftCentralStorage, bLiftTakeFromInventoryFirst, Entry.Key, Entry.Value);
-					UE_LOG(LogSmartUpgrade, Log, TEXT("Lift upgrade: Deducted %d %s"),
+					UE_LOG(LogSmartUpgrade, Verbose, TEXT("Lift upgrade: Deducted %d %s"),
 						Entry.Value, *UFGItemDescriptor::GetItemName(Entry.Key).ToString());
 				}
 				else if (Entry.Value < 0 && Entry.Key)
@@ -1312,7 +1314,7 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 					}
 					else
 					{
-						UE_LOG(LogSmartUpgrade, Log, TEXT("Lift upgrade: Refunded %d %s"),
+						UE_LOG(LogSmartUpgrade, Verbose, TEXT("Lift upgrade: Refunded %d %s"),
 							RefundAmount, *UFGItemDescriptor::GetItemName(Entry.Key).ToString());
 					}
 				}
@@ -1357,7 +1359,7 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 			const bool bTransferred = NewLift->GetConnection0() && NewLift->GetConnection0()->IsConnected() && NewLift->GetConnection0()->GetConnection() == OldConn0Partner;
 			if (bTransferred)
 			{
-				UE_LOG(LogSmartUpgrade, Log,
+				UE_LOG(LogSmartUpgrade, Verbose,
 					TEXT("UpgradeExecutionService: Lift Conn0 old partner %s transfer=yes"),
 					*OldConn0Partner->GetOwner()->GetName());
 			}
@@ -1374,7 +1376,7 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 			const bool bTransferred = NewLift->GetConnection1() && NewLift->GetConnection1()->IsConnected() && NewLift->GetConnection1()->GetConnection() == OldConn1Partner;
 			if (bTransferred)
 			{
-				UE_LOG(LogSmartUpgrade, Log,
+				UE_LOG(LogSmartUpgrade, Verbose,
 					TEXT("UpgradeExecutionService: Lift Conn1 old partner %s transfer=yes"),
 					*OldConn1Partner->GetOwner()->GetName());
 			}
@@ -1484,7 +1486,7 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 				{
 					UFGInventoryLibrary::GrabItemsFromInventoryAndCentralStorage(
 						PolePlayerInventory, PoleCentralStorage, bPoleTakeFromInventoryFirst, Entry.Key, Entry.Value);
-					UE_LOG(LogSmartUpgrade, Log, TEXT("Pole upgrade: Deducted %d %s"),
+					UE_LOG(LogSmartUpgrade, Verbose, TEXT("Pole upgrade: Deducted %d %s"),
 						Entry.Value, *UFGItemDescriptor::GetItemName(Entry.Key).ToString());
 				}
 				else if (Entry.Value < 0 && Entry.Key)
@@ -1697,7 +1699,7 @@ void USFUpgradeExecutionService::CompleteUpgrade()
 	CurrentUpgradeIndex = 0;
 
 	OnUpgradeExecutionCompleted.Broadcast(LastResult);
-	UE_LOG(LogSmartUpgrade, Log, TEXT("UpgradeExecutionService: Upgrade complete - Success=%d Fail=%d Skip=%d"),
+	UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: Upgrade complete - Success=%d Fail=%d Skip=%d"),
 		LastResult.SuccessCount, LastResult.FailCount, LastResult.SkipCount);
 }
 

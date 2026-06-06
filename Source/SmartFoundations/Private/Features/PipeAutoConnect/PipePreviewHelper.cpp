@@ -1,3 +1,5 @@
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
+
 #include "Features/PipeAutoConnect/PipePreviewHelper.h"
 #include "SmartFoundations.h"
 #include "Engine/World.h"

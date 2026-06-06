@@ -1,3 +1,5 @@
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
+
 #include "Subsystem/SFInputHandler.h"
 #include "SFSubsystem.h"
 #include "SmartFoundations.h"
@@ -146,26 +148,6 @@ void FSFInputHandler::RebindAfterDelay()
 	if (!Subsystem)
 	{
 		return;
-	}
-
-	if (UFGEnhancedInputComponent* EnhancedInputComp = Cast<UFGEnhancedInputComponent>(PC->InputComponent))
-	{
-		// Bind a base-game action to validate the input pipeline end-to-end
-		const TCHAR* PrimaryFirePath = TEXT("/Game/FactoryGame/Inputs/Player/Actions/IA_PrimaryFire.IA_PrimaryFire");
-		const FSoftObjectPath P(PrimaryFirePath);
-		UObject* Obj = P.TryLoad();
-		if (!Obj) Obj = LoadObject<UInputAction>(nullptr, PrimaryFirePath);
-		if (UInputAction* IA = Cast<UInputAction>(Obj))
-		{
-			EnhancedInputComp->BindAction(IA, ETriggerEvent::Started, Subsystem, &USFSubsystem::OnDebugPrimaryFire);
-			EnhancedInputComp->BindAction(IA, ETriggerEvent::Triggered, Subsystem, &USFSubsystem::OnDebugPrimaryFire);
-			EnhancedInputComp->BindAction(IA, ETriggerEvent::Completed, Subsystem, &USFSubsystem::OnDebugPrimaryFire);
-			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Deferred rebind: Bound base action PrimaryFire -> %s"), *IA->GetPathName());
-		}
-		else
-		{
-			UE_LOG(LogSmartFoundations, Error, TEXT("Deferred rebind: Failed to load base action IA_PrimaryFire"));
-		}
 	}
 
 	// Initialize the HUD with current counters (1x1x1 -> hidden)
@@ -484,13 +466,6 @@ void FSFInputHandler::OnToggleArrows()
 }
 
 
-
-void FSFInputHandler::OnDebugPrimaryFire()
-{
-	// Input processing handled in subsystem for complex logic
-	// This method exists for future extraction of input validation logic
-	// Currently: No-op, subsystem handles all logic
-}
 
 void FSFInputHandler::ApplyAxisScaling(ESFScaleAxis Axis, int32 StepDelta, const TCHAR* DebugLabel)
 {

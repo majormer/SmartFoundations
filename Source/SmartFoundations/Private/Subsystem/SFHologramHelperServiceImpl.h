@@ -1,4 +1,4 @@
-// Copyright Coffee Stain Studios. All Rights Reserved.
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
 /**
  * Shared include set for the USFHologramHelperService implementation, split across SFHologramHelperService.cpp + _Part2 (each <2k).
@@ -10,10 +10,10 @@
 
 #include "Subsystem/SFHologramHelperService.h"
 #include "SFSubsystem.h"
-#include "FGHologram.h"
-#include "FactoryGame/Public/Hologram/FGFoundationHologram.h"
-#include "FactoryGame/Public/Hologram/FGFactoryHologram.h"
-#include "FactoryGame/Public/Hologram/FGBuildableHologram.h"
+#include "Hologram/FGHologram.h"
+#include "Hologram/FGFoundationHologram.h"
+#include "Hologram/FGFactoryHologram.h"
+#include "Hologram/FGBuildableHologram.h"
 #include "Hologram/FGPassthroughHologram.h"
 #include "Components/BoxComponent.h"
 #include "Components/PrimitiveComponent.h"

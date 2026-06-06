@@ -1,8 +1,10 @@
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
+
 #pragma once
 
 #include "CoreMinimal.h"
 #include "SFBuildableHologram.h"
-#include "FGFactoryHologram.h"
+#include "Hologram/FGFactoryHologram.h"
 #include "SFFactoryHologram.generated.h"
 
 /**

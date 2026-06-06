@@ -118,3 +118,11 @@ open_issues_summary.txt
 *.session.md
 session-notes/
 message*.txt
+
+# Temporary sprint scaffolding (goals/audits/plans) — not committed; cleared after the sprint
+docs/Sprints/
+
+# Local-only dev docs/harnesses (keep out of the public repo)
+docs/Development/Editor-Python.md
+scripts/smoke_test.py
+scripts/config_parity_check.py

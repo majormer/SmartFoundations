@@ -1,3 +1,5 @@
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
+
 #pragma once
 
 #include "CoreMinimal.h"
@@ -57,7 +59,7 @@ private:
 
     // UMG widget (Issue #179 — replaces Canvas drawing for crisp text)
     UPROPERTY()
-    USFHudWidget* HudWidget = nullptr;
+    TObjectPtr<USFHudWidget> HudWidget = nullptr;
 
     void CreateHudWidget();
     void DestroyHudWidget();

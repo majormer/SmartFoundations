@@ -1,4 +1,4 @@
-// Copyright (c) 2024 SmartFoundations Mod. All Rights Reserved.
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 // Smart! Mod - UMG-based HUD Widget (Issue #179)
 // Replaces Canvas-based DrawCounterToHUD for crisp text at any scale.
 
@@ -75,30 +75,30 @@ private:
 
 	// Widget tree
 	UPROPERTY()
-	UBorder* OuterBorder = nullptr;
+	TObjectPtr<UBorder> OuterBorder = nullptr;
 
 	UPROPERTY()
-	UBorder* InnerBorder = nullptr;
+	TObjectPtr<UBorder> InnerBorder = nullptr;
 
 	UPROPERTY()
-	UVerticalBox* ContentBox = nullptr;
+	TObjectPtr<UVerticalBox> ContentBox = nullptr;
 
 	// Pre-allocated text line pool
 	static constexpr int32 MaxTextLines = 24;
 
 	UPROPERTY()
-	TArray<UTextBlock*> TextPool;
+	TArray<TObjectPtr<UTextBlock>> TextPool;
 
 	// Colored grid line (reused when grid line is present)
 	UPROPERTY()
-	UHorizontalBox* GridLineBox = nullptr;
+	TObjectPtr<UHorizontalBox> GridLineBox = nullptr;
 
 	UPROPERTY()
-	TArray<UTextBlock*> GridSegments;  // 8 segments: "Grid: " X "x" Y "x" Z " (N)"
+	TArray<TObjectPtr<UTextBlock>> GridSegments;  // 8 segments: "Grid: " X "x" Y "x" Z " (N)"
 
 	// Recipe icon
 	UPROPERTY()
-	UImage* RecipeIconWidget = nullptr;
+	TObjectPtr<UImage> RecipeIconWidget = nullptr;
 
 	// Build helpers
 	void BuildWidgetTree();

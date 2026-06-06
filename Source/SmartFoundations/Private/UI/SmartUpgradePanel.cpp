@@ -1,22 +1,10 @@
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
+
 #include "UI/SmartUpgradePanel.h"
 #include "UI/SmartUpgradePanelImpl.h"
 
 #define LOCTEXT_NAMESPACE "SmartFoundations"
 
-namespace
-{
-	bool IsConveyorUpgradeFamily(ESFUpgradeFamily Family)
-	{
-		return Family == ESFUpgradeFamily::Belt || Family == ESFUpgradeFamily::Lift;
-	}
-
-	FString GetPanelFamilyDisplayName(ESFUpgradeFamily Family)
-	{
-		return IsConveyorUpgradeFamily(Family)
-			? FString(TEXT("Conveyors"))
-			: USFUpgradeAuditService::GetFamilyDisplayName(Family);
-	}
-}
 
 void USmartUpgradePanel::NativeConstruct()
 {

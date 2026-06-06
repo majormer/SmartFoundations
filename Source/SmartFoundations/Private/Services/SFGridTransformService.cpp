@@ -1,9 +1,11 @@
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
+
 #include "Services/SFGridTransformService.h"
 #include "Subsystem/SFSubsystem.h"
 #include "Services/SFGridSpawnerService.h"
 #include "Features/AutoConnect/SFAutoConnectService.h"
 #include "Features/AutoConnect/SFAutoConnectOrchestrator.h"
-#include "FGHologram.h"
+#include "Hologram/FGHologram.h"
 #include "SmartFoundations.h"
 
 void USFGridTransformService::Initialize(USFSubsystem* InSubsystem)

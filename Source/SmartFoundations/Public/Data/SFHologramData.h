@@ -1,7 +1,9 @@
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
+
 #pragma once
 
 #include "CoreMinimal.h"
-#include "FGSplineHologram.h"  // For FSplinePointData
+#include "Hologram/FGSplineHologram.h"  // For FSplinePointData
 #include "SFHologramData.generated.h"
 
 // Forward declarations
@@ -37,7 +39,7 @@ struct SMARTFOUNDATIONS_API FSFHologramData {
     ESFChildHologramType ChildType = ESFChildHologramType::Normal;
     
     UPROPERTY()
-    AFGHologram* ParentHologram = nullptr;
+    TObjectPtr<AFGHologram> ParentHologram = nullptr;
     
     UPROPERTY()
     bool bIsChildHologram = false;
@@ -77,7 +79,7 @@ struct SMARTFOUNDATIONS_API FSFHologramData {
     
     // Source junction connector for manifold wiring (raw pointer - only valid during build session)
     UPROPERTY()
-    UFGPipeConnectionComponentBase* ManifoldSourceConnector = nullptr;
+    TObjectPtr<UFGPipeConnectionComponentBase> ManifoldSourceConnector = nullptr;
     
     // Chain ID for finding the clone junction after build
     UPROPERTY()
@@ -89,7 +91,7 @@ struct SMARTFOUNDATIONS_API FSFHologramData {
     
     // Source distributor connector for manifold wiring (raw pointer - only valid during build session)
     UPROPERTY()
-    UFGFactoryConnectionComponent* ManifoldSourceBeltConnector = nullptr;
+    TObjectPtr<UFGFactoryConnectionComponent> ManifoldSourceBeltConnector = nullptr;
     
     // Chain ID for finding the clone distributor after build
     UPROPERTY()
@@ -140,10 +142,10 @@ struct SMARTFOUNDATIONS_API FSFHologramData {
     bool bIsStackablePipe = false;
     
     UPROPERTY()
-    UFGPipeConnectionComponentBase* StackablePipeConn0 = nullptr;  // Start connector (on source support)
+    TObjectPtr<UFGPipeConnectionComponentBase> StackablePipeConn0 = nullptr;  // Start connector (on source support)
     
     UPROPERTY()
-    UFGPipeConnectionComponentBase* StackablePipeConn1 = nullptr;  // End connector (on target support)
+    TObjectPtr<UFGPipeConnectionComponentBase> StackablePipeConn1 = nullptr;  // End connector (on target support)
     
     UPROPERTY()
     int32 StackablePipeIndex = -1;  // Position in pipe chain (0, 1, 2...) for pipe-to-pipe wiring
@@ -162,7 +164,18 @@ struct SMARTFOUNDATIONS_API FSFHologramData {
     
     UPROPERTY()
     TWeakObjectPtr<UFGFactoryConnectionComponent> StackableBeltConn1;  // Target pole connector (belt input connects here)
-    
+
+    // Chain identity for the build-fresh-on-confirm fix (see THESIS §5.1b/§8). A run of stacked
+    // belts = one chain; StackChainId is unique per run (high-offset to avoid Extend collision),
+    // StackChainIndex is the 0-based position along the run. At Construct, a stacked belt connects
+    // (by reference, via the conveyor registry) to whichever run neighbour is already built, then
+    // registers — connect-then-register, order-agnostic. -1 = not a chain member.
+    UPROPERTY()
+    int32 StackChainId = -1;
+
+    UPROPERTY()
+    int32 StackChainIndex = -1;
+
     // ========================================================================
     // Pipe Junction Auto-Connect (Issue #235)
     // ========================================================================
@@ -171,10 +184,10 @@ struct SMARTFOUNDATIONS_API FSFHologramData {
     bool bIsPipeAutoConnectChild = false;
     
     UPROPERTY()
-    UFGPipeConnectionComponentBase* PipeAutoConnectConn0 = nullptr;  // Junction-side connector
+    TObjectPtr<UFGPipeConnectionComponentBase> PipeAutoConnectConn0 = nullptr;  // Junction-side connector
     
     UPROPERTY()
-    UFGPipeConnectionComponentBase* PipeAutoConnectConn1 = nullptr;  // Target connector (building or other junction)
+    TObjectPtr<UFGPipeConnectionComponentBase> PipeAutoConnectConn1 = nullptr;  // Target connector (building or other junction)
     
     UPROPERTY()
     bool bIsPipeManifold = false;  // True if junction→junction, false if junction→building

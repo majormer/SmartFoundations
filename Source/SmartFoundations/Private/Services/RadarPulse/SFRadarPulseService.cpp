@@ -1,4 +1,4 @@
-// Copyright Coffee Stain Studios. All Rights Reserved.
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 // Smart! Foundations Mod - Object Radar Pulse Diagnostic Service
 
 #include "Services/RadarPulse/SFRadarPulseService.h"
@@ -51,14 +51,14 @@ USFRadarPulseService::USFRadarPulseService()
 void USFRadarPulseService::Initialize(USFSubsystem* InSubsystem)
 {
     Subsystem = InSubsystem;
-    UE_LOG(LogSmartFoundations, Log, TEXT("📡 RadarPulse: Service initialized"));
+    UE_LOG(LogSmartFoundations, Verbose, TEXT("📡 RadarPulse: Service initialized"));
 }
 
 void USFRadarPulseService::Shutdown()
 {
     SnapshotCache.Empty();
     Subsystem = nullptr;
-    UE_LOG(LogSmartFoundations, Log, TEXT("📡 RadarPulse: Service shutdown"));
+    UE_LOG(LogSmartFoundations, Verbose, TEXT("📡 RadarPulse: Service shutdown"));
 }
 
 // ==================== CAPTURE ====================
@@ -119,7 +119,7 @@ FSFRadarPulseSnapshot USFRadarPulseService::CaptureSnapshotAtLocationFiltered(co
     }
     const bool bHasFilter = FilterSet.Num() > 0;
 
-    UE_LOG(LogSmartFoundations, Log, TEXT("📡 RadarPulse: Capturing %d actors within %.0fcm of (%.0f, %.0f, %.0f) [%s]%s"),
+    UE_LOG(LogSmartFoundations, Verbose, TEXT("📡 RadarPulse: Capturing %d actors within %.0fcm of (%.0f, %.0f, %.0f) [%s]%s"),
         FoundActors.Num(), Radius, Origin.X, Origin.Y, Origin.Z, *Label,
         bHasFilter ? *FString::Printf(TEXT(" (filtering to %d categories)"), FilterSet.Num()) : TEXT(""));
 
@@ -159,7 +159,7 @@ FSFRadarPulseSnapshot USFRadarPulseService::CaptureSnapshotAtLocationFiltered(co
 
     Snapshot.TotalObjects = Snapshot.Objects.Num();
 
-    UE_LOG(LogSmartFoundations, Log, TEXT("📡 RadarPulse: Captured %d objects in snapshot '%s'"),
+    UE_LOG(LogSmartFoundations, Verbose, TEXT("📡 RadarPulse: Captured %d objects in snapshot '%s'"),
         Snapshot.TotalObjects, *Label);
 
     return Snapshot;
@@ -711,7 +711,7 @@ void USFRadarPulseService::FlagObjectsMatching(
         }
     }
 
-    UE_LOG(LogSmartFoundations, Log, TEXT("📡 RadarPulse: Flagged %d objects with '%s'"), FlaggedCount, *FlagName);
+    UE_LOG(LogSmartFoundations, Verbose, TEXT("📡 RadarPulse: Flagged %d objects with '%s'"), FlaggedCount, *FlagName);
 }
 
 // ==================== COMPARISON ====================
@@ -816,7 +816,7 @@ FSFSnapshotDiff USFRadarPulseService::CompareSnapshots(const FSFRadarPulseSnapsh
 void USFRadarPulseService::CacheSnapshot(const FString& Key, const FSFRadarPulseSnapshot& Snapshot)
 {
     SnapshotCache.Add(Key, Snapshot);
-    UE_LOG(LogSmartFoundations, Log, TEXT("📡 RadarPulse: Cached snapshot '%s' (%d objects)"), *Key, Snapshot.TotalObjects);
+    UE_LOG(LogSmartFoundations, Verbose, TEXT("📡 RadarPulse: Cached snapshot '%s' (%d objects)"), *Key, Snapshot.TotalObjects);
 }
 
 bool USFRadarPulseService::GetCachedSnapshot(const FString& Key, FSFRadarPulseSnapshot& OutSnapshot)
@@ -835,13 +835,13 @@ void USFRadarPulseService::ClearCache(const FString& Key)
     {
         int32 Count = SnapshotCache.Num();
         SnapshotCache.Empty();
-        UE_LOG(LogSmartFoundations, Log, TEXT("📡 RadarPulse: Cleared all %d cached snapshots"), Count);
+        UE_LOG(LogSmartFoundations, Verbose, TEXT("📡 RadarPulse: Cleared all %d cached snapshots"), Count);
     }
     else
     {
         if (SnapshotCache.Remove(Key) > 0)
         {
-            UE_LOG(LogSmartFoundations, Log, TEXT("📡 RadarPulse: Cleared cached snapshot '%s'"), *Key);
+            UE_LOG(LogSmartFoundations, Verbose, TEXT("📡 RadarPulse: Cleared cached snapshot '%s'"), *Key);
         }
     }
 }

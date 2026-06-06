@@ -1,4 +1,4 @@
-// Copyright Coffee Stain Studios. All Rights Reserved.
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
 /**
  * SFExtendRestoreReplayService Implementation
@@ -986,7 +986,11 @@ bool USFExtendRestoreReplayService::SpawnRestoredCloneTopology(AFGHologram* Pare
 
     CloneTopology.WireChildHologramConnections(SpawnedHolograms, ParentHologram);
     Owner->StoredCloneTopology = MakeShared<FSFCloneTopology>(CloneTopology);
-    Owner->JsonSpawnedHolograms = SpawnedHolograms;
+    Owner->JsonSpawnedHolograms.Reset();
+    for (const TPair<FString, AFGHologram*>& Pair : SpawnedHolograms)
+    {
+        Owner->JsonSpawnedHolograms.Add(Pair.Key, Pair.Value);
+    }
     if (Owner->HologramService)
     {
         Owner->HologramService->SetCurrentParentHologram(ParentHologram);

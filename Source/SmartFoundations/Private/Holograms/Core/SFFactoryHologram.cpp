@@ -1,6 +1,8 @@
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
+
 #include "Holograms/Core/SFFactoryHologram.h"
 #include "SmartFoundations.h"
-#include "FGBuildableFactory.h"
+#include "Buildables/FGBuildableFactory.h"
 #include "FGRecipe.h"
 #include "Hologram/FGHologram.h"
 #include "FGConstructDisqualifier.h"

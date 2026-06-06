@@ -1,12 +1,12 @@
-// Copyright Coffee Stain Studios. All Rights Reserved.
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
 #include "Features/Extend/SFExtendTopologyService.h"
 #include "Features/Extend/SFExtendTopologyService.h"
 #include "Features/Extend/SFExtendDetectionService.h"
 #include "SmartFoundations.h"  // For LogSmartExtend
 #include "Subsystem/SFSubsystem.h"
-#include "FGBuildable.h"
-#include "FGBuildableFactory.h"
+#include "Buildables/FGBuildable.h"
+#include "Buildables/FGBuildableFactory.h"
 #include "Buildables/FGBuildableConveyorBelt.h"
 #include "Buildables/FGBuildableConveyorLift.h"
 #include "Buildables/FGBuildableConveyorAttachment.h"

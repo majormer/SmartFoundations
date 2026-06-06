@@ -1,4 +1,4 @@
-// Copyright Coffee Stain Studios. All Rights Reserved.
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
 #include "UI/SFFontLibrary.h"
 #include "SmartFoundations.h"
@@ -61,7 +61,7 @@ namespace SFFont
         return Info;
     }
 
-    void ApplyToWidgetTree(UWidgetTree* Tree)
+    void ApplyToWidgetTree(::UWidgetTree* Tree)
     {
         if (!Tree)
         {

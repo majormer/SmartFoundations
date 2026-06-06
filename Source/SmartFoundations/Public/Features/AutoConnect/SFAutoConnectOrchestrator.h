@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
 #pragma once
 
@@ -192,7 +192,7 @@ private:
 
 	/** Auto-connect service for creating belt previews */
 	UPROPERTY()
-	USFAutoConnectService* AutoConnectService;
+	TObjectPtr<USFAutoConnectService> AutoConnectService;
 
 	/** Shared input reservation map - tracks which distributor claimed which building input */
 	TMap<UFGFactoryConnectionComponent*, AFGHologram*> ReservedInputs;

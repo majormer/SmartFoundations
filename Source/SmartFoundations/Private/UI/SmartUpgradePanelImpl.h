@@ -1,4 +1,4 @@
-// Copyright Coffee Stain Studios. All Rights Reserved.
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
 /**
  * Shared include set for the USmartUpgradePanel implementation, split across SmartUpgradePanel.cpp + _Detail (each <2k).
@@ -39,3 +39,19 @@
 #include "Buildables/FGBuildable.h"
 #include "Equipment/FGBuildGunBuild.h"
 #include "EngineUtils.h"
+
+#include "Features/Upgrade/SFUpgradeAuditService.h"
+
+// Family helpers shared by SmartUpgradePanel.cpp and SmartUpgradePanel_Detail.cpp.
+// Defined here (inline) so both split TUs see them under UE 5.6 non-unity builds.
+inline bool IsConveyorUpgradeFamily(ESFUpgradeFamily Family)
+{
+	return Family == ESFUpgradeFamily::Belt || Family == ESFUpgradeFamily::Lift;
+}
+
+inline FString GetPanelFamilyDisplayName(ESFUpgradeFamily Family)
+{
+	return IsConveyorUpgradeFamily(Family)
+		? FString(TEXT("Conveyors"))
+		: USFUpgradeAuditService::GetFamilyDisplayName(Family);
+}

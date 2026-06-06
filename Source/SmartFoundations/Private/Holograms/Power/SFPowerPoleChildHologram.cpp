@@ -1,3 +1,5 @@
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
+
 #include "Holograms/Power/SFPowerPoleChildHologram.h"
 #include "SmartFoundations.h"
 #include "Data/SFHologramDataRegistry.h"

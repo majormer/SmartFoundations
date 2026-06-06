@@ -1,4 +1,4 @@
-// Copyright Coffee Stain Studios. All Rights Reserved.
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
 /**
  * SFExtendWiringService - Post-Build Connection Wiring Interface
@@ -117,5 +117,5 @@ private:
 
     /** Parent extend service (owns wiring implementation for now) */
     UPROPERTY()
-    USFExtendService* ExtendService = nullptr;
+    TObjectPtr<USFExtendService> ExtendService = nullptr;
 };

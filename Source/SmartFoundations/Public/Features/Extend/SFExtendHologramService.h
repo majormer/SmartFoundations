@@ -1,4 +1,4 @@
-// Copyright Coffee Stain Studios. All Rights Reserved.
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
 /**
  * SFExtendHologramService - Hologram Spawning and Preview Management
@@ -16,6 +16,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Hologram/FGHologram.h"
 #include "UObject/NoExportTypes.h"
 #include "SFExtendHologramService.generated.h"
 
@@ -109,7 +110,7 @@ public:
     void StoreJsonSpawnedHolograms(const TMap<FString, AFGHologram*>& SpawnedHolograms);
 
     /** Get JSON spawned holograms map */
-    const TMap<FString, AFGHologram*>& GetJsonSpawnedHolograms() const { return JsonSpawnedHolograms; }
+    const TMap<FString, TObjectPtr<AFGHologram>>& GetJsonSpawnedHolograms() const { return JsonSpawnedHolograms; }
 
     /** Store clone topology for post-build wiring */
     void StoreCloneTopology(TSharedPtr<FSFCloneTopology> CloneTopology);
@@ -130,7 +131,7 @@ private:
 
     /** Parent extend service (for topology access) */
     UPROPERTY()
-    USFExtendService* ExtendService = nullptr;
+    TObjectPtr<USFExtendService> ExtendService = nullptr;
 
     /** Current parent hologram for child management */
     UPROPERTY()
@@ -138,7 +139,7 @@ private:
 
     /** Tracked child holograms */
     UPROPERTY()
-    TArray<AFGHologram*> TrackedChildren;
+    TArray<TObjectPtr<AFGHologram>> TrackedChildren;
 
     /** Intended world positions for child holograms */
     TMap<AFGHologram*, FVector> ChildIntendedPositions;
@@ -153,8 +154,11 @@ private:
     /** Whether we've swapped the vanilla hologram for our custom one */
     bool bHasSwappedHologram = false;
 
-    /** JSON spawned holograms for post-build wiring */
-    TMap<FString, AFGHologram*> JsonSpawnedHolograms;
+    /** JSON spawned holograms for post-build wiring.
+     *  UPROPERTY so the GC tracks/NULLs these (preview holograms the engine destroys) instead of
+     *  leaving dangling raw pointers. */
+    UPROPERTY()
+    TMap<FString, TObjectPtr<AFGHologram>> JsonSpawnedHolograms;
 
     /** Stored clone topology for post-build wiring */
     TSharedPtr<FSFCloneTopology> StoredCloneTopology;

@@ -1,4 +1,4 @@
-// Copyright Coffee Stain Studios. All Rights Reserved.
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
 /**
  * FSFHologramHelperService implementation (part 2). Split out of SFHologramHelperService.cpp
@@ -6,6 +6,7 @@
  */
 
 #include "Subsystem/SFHologramHelperServiceImpl.h"
+#include "SmartFoundations.h"
 
 void FSFHologramHelperService::ApplyScalingDelta(
 	AFGHologram* Hologram,

@@ -1,4 +1,4 @@
-// Copyright Coffee Stain Studios. All Rights Reserved.
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
 /**
  * SFExtendDiagnosticsService - EXTEND Before/After Snapshot Diagnostics
@@ -200,7 +200,7 @@ private:
 
     /** Parent extend service (source of current target + topology) */
     UPROPERTY()
-    USFExtendService* ExtendService = nullptr;
+    TObjectPtr<USFExtendService> ExtendService = nullptr;
 
     /** Snapshot captured during preview phase */
     FSFBuildableSnapshot PreviewSnapshot;

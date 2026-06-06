@@ -1,3 +1,5 @@
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
+
 #include "SFInputRegistry.h"
 #include "SmartFoundations.h"
 #include "Input/FGInputMappingContext.h"
@@ -30,16 +32,16 @@ void USFInputRegistry::InitializeSmartInputSystem()
 {
 	UE_LOG(LogSmartFoundations, Log, TEXT("Smart! Enhanced Input system initialization - SML 3.11.x Blueprint approach"));
 
-	UE_LOG(LogSmartFoundations, Log, TEXT("📋 Smart! Gameplay Tags ready for Blueprint binding:"));
-	UE_LOG(LogSmartFoundations, Log, TEXT("  - %s (Num8 - Scale Forward)"), *TAG_SCALE_X_POSITIVE);
-	UE_LOG(LogSmartFoundations, Log, TEXT("  - %s (Num5 - Scale Backward)"), *TAG_SCALE_X_NEGATIVE);
-	UE_LOG(LogSmartFoundations, Log, TEXT("  - %s (Num6 - Scale Right)"), *TAG_SCALE_Y_POSITIVE);
-	UE_LOG(LogSmartFoundations, Log, TEXT("  - %s (Num4 - Scale Left)"), *TAG_SCALE_Y_NEGATIVE);
-	UE_LOG(LogSmartFoundations, Log, TEXT("  - %s (Num9 - Scale Up)"), *TAG_SCALE_Z_POSITIVE);
-	UE_LOG(LogSmartFoundations, Log, TEXT("  - %s (Num3 - Scale Down)"), *TAG_SCALE_Z_NEGATIVE);
-	UE_LOG(LogSmartFoundations, Log, TEXT("  - %s (Num0 - Spacing Mode)"), *TAG_SPACING);
-	UE_LOG(LogSmartFoundations, Log, TEXT("  - %s (Num1 - Toggle Arrows)"), *TAG_TOGGLE_ARROWS);
-	UE_LOG(LogSmartFoundations, Log, TEXT("  - %s (Num7 - Reset Scaling)"), *TAG_RESET_SCALING);
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("📋 Smart! Gameplay Tags ready for Blueprint binding:"));
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("  - %s (Num8 - Scale Forward)"), *TAG_SCALE_X_POSITIVE);
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("  - %s (Num5 - Scale Backward)"), *TAG_SCALE_X_NEGATIVE);
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("  - %s (Num6 - Scale Right)"), *TAG_SCALE_Y_POSITIVE);
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("  - %s (Num4 - Scale Left)"), *TAG_SCALE_Y_NEGATIVE);
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("  - %s (Num9 - Scale Up)"), *TAG_SCALE_Z_POSITIVE);
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("  - %s (Num3 - Scale Down)"), *TAG_SCALE_Z_NEGATIVE);
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("  - %s (Num0 - Spacing Mode)"), *TAG_SPACING);
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("  - %s (Num1 - Toggle Arrows)"), *TAG_TOGGLE_ARROWS);
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("  - %s (Num7 - Reset Scaling)"), *TAG_RESET_SCALING);
 
 	// Ensure gameplay tags exist even if no external config is present
 	UGameplayTagsManager& TagManager = UGameplayTagsManager::Get();
@@ -50,7 +52,7 @@ void USFInputRegistry::InitializeSmartInputSystem()
 		if (!ExistingTag.IsValid())
 		{
 			TagManager.AddNativeGameplayTag(TagFName, Description);
-			UE_LOG(LogSmartFoundations, Log, TEXT("Registered gameplay tag: %s"), *TagName);
+			UE_LOG(LogSmartFoundations, Verbose, TEXT("Registered gameplay tag: %s"), *TagName);
 		}
 	};
 
@@ -64,7 +66,7 @@ void USFInputRegistry::InitializeSmartInputSystem()
 	EnsureTag(TAG_TOGGLE_ARROWS, TEXT("Smart! arrow visibility toggle"));
 	EnsureTag(TAG_RESET_SCALING, TEXT("Smart! reset hologram scaling"));
 
-	UE_LOG(LogSmartFoundations, Warning, TEXT("⚠️ REQUIRED: Create the Smart! Enhanced Input action assets in the Unreal Editor"));
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("⚠️ REQUIRED: Create the Smart! Enhanced Input action assets in the Unreal Editor"));
 }
 
 // Static cache - shared across all calls

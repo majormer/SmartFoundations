@@ -1,3 +1,5 @@
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
+
 #pragma once
 
 #include "CoreMinimal.h"
@@ -31,7 +33,7 @@ struct FSFWiringEndpoint
     
     /** Resolved pointer (populated during wiring, not serialized) */
     UPROPERTY(Transient)
-    AActor* ResolvedActor = nullptr;
+    TObjectPtr<AActor> ResolvedActor = nullptr;
     
     /** True if this endpoint refers to a source buildable (not cloned), needs resolution via ExtendService */
     UPROPERTY(Transient)
@@ -108,7 +110,7 @@ struct FSFBuiltBuildable
     
     /** Resolved pointer (populated during wiring, not serialized) */
     UPROPERTY(Transient)
-    AActor* ResolvedActor = nullptr;
+    TObjectPtr<AActor> ResolvedActor = nullptr;
     
     /** Default constructor */
     FSFBuiltBuildable() = default;

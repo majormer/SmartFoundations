@@ -1,3 +1,5 @@
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
+
 #pragma once
 
 #include "CoreMinimal.h"
@@ -65,7 +67,7 @@ private:
 
 	/** Our custom wire mesh component for the preview */
 	UPROPERTY()
-	UStaticMeshComponent* PreviewWireMesh;
+	TObjectPtr<UStaticMeshComponent> PreviewWireMesh;
 
 	/** Track if we've set up the wire */
 	bool bWireConfigured;

@@ -1,14 +1,14 @@
-// Copyright (c) 2024 SmartFoundations Mod. All Rights Reserved.
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 #include "SFGameInstanceModule.h"
 #include "SmartFoundations.h"
 
 // Force UHT to parse these classes so AccessTransformers apply
-#include "FactoryGame/Public/Hologram/FGHologram.h"
-#include "FactoryGame/Public/Hologram/FGConveyorBeltHologram.h"
-#include "FactoryGame/Public/Hologram/FGConveyorAttachmentHologram.h"
-#include "FactoryGame/Public/Hologram/FGSplineHologram.h"
-#include "FactoryGame/Public/Hologram/FGBuildableHologram.h"
-#include "FGBlueprintHologram.h"
+#include "Hologram/FGHologram.h"
+#include "Hologram/FGConveyorBeltHologram.h"
+#include "Hologram/FGConveyorAttachmentHologram.h"
+#include "Hologram/FGSplineHologram.h"
+#include "Hologram/FGBuildableHologram.h"
+#include "Hologram/FGBlueprintHologram.h"
 #include "FGConstructDisqualifier.h"
 #include "FGCentralStorageSubsystem.h"
 #include "FGGameState.h"
@@ -53,22 +53,16 @@ void USFGameInstanceModule::DispatchLifecycleEvent(ELifecyclePhase Phase)
 
 	if (Phase == ELifecyclePhase::POST_INITIALIZATION)
 	{
-		UE_LOG(LogSmartFoundations, Display, TEXT("Smart! GameInstanceModule: POST_INITIALIZATION - Registering Smart! configuration"));
+		UE_LOG(LogSmartFoundations, Log, TEXT("Smart! GameInstanceModule: POST_INITIALIZATION - Registering Smart! configuration"));
 
-		// Register Smart! Configuration with SML for in-game menu access
-		// Use the SmartConfigClass property set in the blueprint
-		if (SmartConfigClass)
-		{
-			ModConfigurations.Add(SmartConfigClass);
-			UE_LOG(LogSmartFoundations, Display, TEXT("✅ Smart! Configuration registered successfully - will appear in Mods menu"));
-			UE_LOG(LogSmartFoundations, Display, TEXT("   Config Class: %s"), *SmartConfigClass->GetName());
-			UE_LOG(LogSmartFoundations, Display, TEXT("   Config Path: %s"), *SmartConfigClass->GetPathName());
-		}
-		else
-		{
-			UE_LOG(LogSmartFoundations, Warning, TEXT("❌ SmartConfigClass not set in blueprint Class Defaults"));
-			UE_LOG(LogSmartFoundations, Warning, TEXT("Config menu will not appear. Set SmartConfigClass to Smart_Config blueprint in SFGameInstanceModule_BP."));
-		}
+		// Smart! configuration is declared declaratively in SFGameInstanceModule_BP's
+		// ModConfigurations array (EditDefaultsOnly) and is registered with the ConfigManager
+		// automatically by UGameInstanceModule::RegisterDefaultContent during the INITIALIZATION
+		// lifecycle phase (which runs before this POST_INITIALIZATION). Do NOT re-add it here:
+		// a runtime ModConfigurations.Add is redundant and duplicates the entry in the live module
+		// instance. The blueprint's ModConfigurations array is the single source of truth.
+		// (The empty config menu under 1.2 was a separate issue, fixed in the Smart_Config asset:
+		// its RootSection had bHidden=true, which the 1.2 Mods menu uses to skip the property tree.)
 
 		// Register SML hook for cost aggregation (belt preview costs)
 		RegisterCostAggregationHook();
@@ -81,7 +75,7 @@ void USFGameInstanceModule::DispatchLifecycleEvent(ELifecyclePhase Phase)
 
 void USFGameInstanceModule::RegisterCostAggregationHook()
 {
-	UE_LOG(LogSmartFoundations, Display, TEXT("💰 Registering GetCost hook for belt preview cost aggregation"));
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("💰 Registering GetCost hook for belt preview cost aggregation"));
 
 	// ========================================
 	// SML Hook: GetCost for Conveyor Attachments
@@ -186,12 +180,12 @@ void USFGameInstanceModule::RegisterCostAggregationHook()
 	// After switching to vanilla child hologram patterns, vanilla affordability checks handle everything correctly.
 	// No custom cost validation needed - child holograms automatically aggregate costs via GetCost() override.
 
-	UE_LOG(LogSmartFoundations, Display, TEXT("✅ GetCost hook registered - child hologram costs automatically aggregated by vanilla"));
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("✅ GetCost hook registered - child hologram costs automatically aggregated by vanilla"));
 }
 
 void USFGameInstanceModule::RegisterBlueprintConstructHook()
 {
-	UE_LOG(LogSmartFoundations, Display, TEXT("⛓️ Registering AFGBlueprintHologram::Construct hook for chain actor rebuilding"));
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("⛓️ Registering AFGBlueprintHologram::Construct hook for chain actor rebuilding"));
 
 	// ========================================
 	// SML Hook: AFGBlueprintHologram::Construct (AFTER)
@@ -210,7 +204,7 @@ void USFGameInstanceModule::RegisterBlueprintConstructHook()
 		GetMutableDefault<AFGBlueprintHologram>(),
 		[](AActor* returnValue, AFGBlueprintHologram* hologram, TArray<AActor*>& out_children, FNetConstructionID NetConstructionID)
 		{
-			UE_LOG(LogSmartFoundations, Log, TEXT("⛓️ AFGBlueprintHologram::Construct AFTER: %s with %d children"),
+			UE_LOG(LogSmartFoundations, Verbose, TEXT("⛓️ AFGBlueprintHologram::Construct AFTER: %s with %d children"),
 				*hologram->GetName(), out_children.Num());
 
 			// Get the world and subsystems
@@ -308,5 +302,5 @@ void USFGameInstanceModule::RegisterBlueprintConstructHook()
 		}
 	);
 
-	UE_LOG(LogSmartFoundations, Display, TEXT("✅ AFGBlueprintHologram::Construct hook registered - chain actors will rebuild during construction"));
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("✅ AFGBlueprintHologram::Construct hook registered - chain actors will rebuild during construction"));
 }

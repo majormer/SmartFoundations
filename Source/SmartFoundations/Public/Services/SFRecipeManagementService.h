@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
 #pragma once
 
@@ -6,7 +6,7 @@
 #include "FGRecipe.h"
 #include "Buildables/FGBuildable.h"
 #include "Buildables/FGBuildableManufacturer.h"
-#include "FGBuildGun.h"
+#include "Equipment/FGBuildGun.h"
 #include "InputActionValue.h"
 #include "SFRecipeManagementService.generated.h"
 
@@ -288,7 +288,7 @@ private:
 
 	/** Build class that shards were captured from — used to detect build type changes */
 	UPROPERTY(Transient)
-	UClass* ShardSourceBuildClass = nullptr;
+	TObjectPtr<UClass> ShardSourceBuildClass = nullptr;
 
 	/** Stored overclock potential from sampled building (1.0 = 100%, 2.5 = 250%) */
 	float StoredPotential = 1.0f;
@@ -342,11 +342,11 @@ private:
 
 	/** Registry of all Smart-placed buildings with metadata */
 	UPROPERTY(Transient)
-	TMap<AFGBuildable*, FSFBuildingMetadata> SmartBuildingRegistry;
+	TMap<TObjectPtr<AFGBuildable>, FSFBuildingMetadata> SmartBuildingRegistry;
 
 	/** Buildings placed in current placement operation */
 	UPROPERTY(Transient)
-	TArray<AFGBuildable*> CurrentPlacementBuildings;
+	TArray<TObjectPtr<AFGBuildable>> CurrentPlacementBuildings;
 
 	/** Current placement group ID (incremented each placement) */
 	int32 CurrentPlacementGroupID = 0;
@@ -360,7 +360,7 @@ private:
 
 	/** Owning subsystem reference */
 	UPROPERTY(Transient)
-	class USFSubsystem* Subsystem = nullptr;
+	TObjectPtr<class USFSubsystem> Subsystem = nullptr;
 
 	/** Timer for debounced recipe regeneration */
 	FTimerHandle RecipeRegenerationTimer;

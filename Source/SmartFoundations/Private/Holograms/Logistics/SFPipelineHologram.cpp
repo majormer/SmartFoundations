@@ -1,3 +1,5 @@
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
+
 #include "Holograms/Logistics/SFPipelineHologram.h"
 #include "SmartFoundations.h"
 #include "Buildables/FGBuildablePipeline.h"
@@ -11,7 +13,7 @@
 #include "Subsystem/SFSubsystem.h"
 #include "FGConstructDisqualifier.h"
 #include "Kismet/GameplayStatics.h"
-#include "FGBuildable.h"
+#include "Buildables/FGBuildable.h"
 #include "Buildables/FGBuildablePassthrough.h"
 #include "FGRecipeManager.h"
 #include "FGRecipe.h"
@@ -214,7 +216,7 @@ AActor* ASFPipelineHologram::Construct(TArray<AActor*>& out_children, FNetConstr
 									{
 										Net0->MergeNetworks(Net1);
 										Net0->MarkForFullRebuild();
-										UE_LOG(LogSmartHologram, Log, TEXT("🔧 STACKABLE: Merged pipe networks %d and %d"), Network0, Network1);
+										UE_LOG(LogSmartHologram, Verbose, TEXT("🔧 STACKABLE: Merged pipe networks %d and %d"), Network0, Network1);
 									}
 								}
 								else if (Network0 != INDEX_NONE)
@@ -223,7 +225,7 @@ AActor* ASFPipelineHologram::Construct(TArray<AActor*>& out_children, FNetConstr
 									if (Net)
 									{
 										Net->MarkForFullRebuild();
-										UE_LOG(LogSmartHologram, Log, TEXT("🔧 STACKABLE: Marked network %d for rebuild"), Network0);
+										UE_LOG(LogSmartHologram, Verbose, TEXT("🔧 STACKABLE: Marked network %d for rebuild"), Network0);
 									}
 								}
 								else if (Network1 != INDEX_NONE)
@@ -232,7 +234,7 @@ AActor* ASFPipelineHologram::Construct(TArray<AActor*>& out_children, FNetConstr
 									if (Net)
 									{
 										Net->MarkForFullRebuild();
-										UE_LOG(LogSmartHologram, Log, TEXT("🔧 STACKABLE: Marked network %d for rebuild"), Network1);
+										UE_LOG(LogSmartHologram, Verbose, TEXT("🔧 STACKABLE: Marked network %d for rebuild"), Network1);
 									}
 								}
 							}
@@ -241,7 +243,7 @@ AActor* ASFPipelineHologram::Construct(TArray<AActor*>& out_children, FNetConstr
 					
 					// Finalize the pipe
 					Pipe->OnBuildEffectFinished();
-					UE_LOG(LogSmartHologram, Log, TEXT("🔧 STACKABLE: Pipe %s finalized (index %d)"), 
+					UE_LOG(LogSmartHologram, Verbose, TEXT("🔧 STACKABLE: Pipe %s finalized (index %d)"),
 						*Pipe->GetName(), HoloData->StackablePipeIndex);
 				}
 				
@@ -295,7 +297,7 @@ AActor* ASFPipelineHologram::Construct(TArray<AActor*>& out_children, FNetConstr
 									FloorHole->SetBottomSnappedConnection(PipeConnAsBase);
 								}
 								
-								UE_LOG(LogSmartHologram, Log, TEXT("🔧 FLOOR HOLE PIPE: ✅ %s.Conn0 registered with %s via Set%sSnappedConnection (DistXY=%.1f)"),
+								UE_LOG(LogSmartHologram, Verbose, TEXT("🔧 FLOOR HOLE PIPE: ✅ %s.Conn0 registered with %s via Set%sSnappedConnection (DistXY=%.1f)"),
 									*Pipe->GetName(), *FloorHole->GetName(),
 									bIsTopSide ? TEXT("Top") : TEXT("Bottom"), BestDist);
 							}
@@ -319,7 +321,7 @@ AActor* ASFPipelineHologram::Construct(TArray<AActor*>& out_children, FNetConstr
 							Subsystem->RegisterPipeForDeferredWiring(Pipe);
 						}
 						
-						UE_LOG(LogSmartHologram, Log, TEXT("🔧 PIPE AUTO-CONNECT: Pipe %s built, registered for deferred wiring (%s)"), 
+						UE_LOG(LogSmartHologram, Verbose, TEXT("🔧 PIPE AUTO-CONNECT: Pipe %s built, registered for deferred wiring (%s)"), 
 							*Pipe->GetName(), HoloData->bIsPipeManifold ? TEXT("Manifold") : TEXT("Building"));
 					}
 				}
@@ -489,7 +491,7 @@ bool ASFPipelineHologram::TryUseBuildModeRouting(
 {
 	if (!mSplineComponent)
 	{
-		UE_LOG(LogSmartHologram, Log, TEXT("🔍 PIPE TryUseBuildModeRouting FAILED: No mSplineComponent on %s"), *GetName());
+		UE_LOG(LogSmartHologram, Verbose, TEXT("🔍 PIPE TryUseBuildModeRouting FAILED: No mSplineComponent on %s"), *GetName());
 		return false;
 	}
 
@@ -524,7 +526,7 @@ bool ASFPipelineHologram::TryUseBuildModeRouting(
 	// Only fail on clearly invalid placeholders (less than 50cm minimum pipe length).
 	if (NewSplinePoints < 2 || NewSplineLength < 50.0f)
 	{
-		UE_LOG(LogSmartHologram, Log,
+		UE_LOG(LogSmartHologram, Verbose,
 			TEXT("🔍 PIPE TryUseBuildModeRouting FAILED: Stub spline after AutoRouteSpline on %s | Points=%d Len=%.1f Expected=%.1f"),
 			*GetName(),
 			NewSplinePoints,
@@ -539,7 +541,7 @@ bool ASFPipelineHologram::TryUseBuildModeRouting(
 	// Log at normal level only for low-point-count results so we can verify engine routing.
 	if (NewSplinePoints <= 3)
 	{
-		UE_LOG(LogSmartHologram, Log,
+		UE_LOG(LogSmartHologram, Verbose,
 			TEXT("🔍 PIPE TryUseBuildModeRouting OK: Engine AutoRouteSpline produced %d points (Len=%.1f Expected=%.1f) on %s"),
 			NewSplinePoints,
 			NewSplineLength,
@@ -998,7 +1000,7 @@ void ASFPipelineHologram::ForceApplyHologramMaterial()
 
 void ASFPipelineHologram::TriggerMeshGeneration()
 {
-	UE_LOG(LogSmartHologram, Log, TEXT("🔧 PIPE TriggerMeshGeneration: %s - mSplineData has %d points"), *GetName(), mSplineData.Num());
+	UE_LOG(LogSmartHologram, Verbose, TEXT("🔧 PIPE TriggerMeshGeneration: %s - mSplineData has %d points"), *GetName(), mSplineData.Num());
 	
 	if (!mSplineComponent)
 	{
@@ -1012,7 +1014,7 @@ void ASFPipelineHologram::TriggerMeshGeneration()
 	// Log spline stats for debugging
 	const int32 PointCount = mSplineComponent->GetNumberOfSplinePoints();
 	const float SplineLength = mSplineComponent->GetSplineLength();
-	UE_LOG(LogSmartHologram, Log, TEXT("🔧 PIPE TriggerMeshGeneration: %s - %d spline points, %.1f cm length"), *GetName(), PointCount, SplineLength);
+	UE_LOG(LogSmartHologram, Verbose, TEXT("🔧 PIPE TriggerMeshGeneration: %s - %d spline points, %.1f cm length"), *GetName(), PointCount, SplineLength);
 	
 	// Get spline points for geometry update
 	if (PointCount < 2)
@@ -1033,7 +1035,7 @@ void ASFPipelineHologram::TriggerMeshGeneration()
 			PipeMesh = PipeCDO->GetSplineMesh();
 			PipeMaterial = PipeCDO->mSplineMeshMaterial;
 			MeshLength = PipeCDO->GetMeshLength();
-			UE_LOG(LogSmartHologram, Log, TEXT("🔧 PIPE TriggerMeshGeneration: Got from CDO: Mesh=%s, Material=%s, MeshLength=%.1f"), 
+			UE_LOG(LogSmartHologram, Verbose, TEXT("🔧 PIPE TriggerMeshGeneration: Got from CDO: Mesh=%s, Material=%s, MeshLength=%.1f"), 
 				PipeMesh ? *PipeMesh->GetName() : TEXT("NULL"),
 				PipeMaterial ? *PipeMaterial->GetName() : TEXT("NULL"),
 				MeshLength);
@@ -1066,14 +1068,14 @@ void ASFPipelineHologram::TriggerMeshGeneration()
 		MeshLength = 200.0f; // Default pipe mesh length
 	}
 	
-	UE_LOG(LogSmartHologram, Log, TEXT("🔧 PIPE TriggerMeshGeneration: Mesh=%s, MeshLength=%.1f cm, SplineLength=%.1f cm"), 
+	UE_LOG(LogSmartHologram, Verbose, TEXT("🔧 PIPE TriggerMeshGeneration: Mesh=%s, MeshLength=%.1f cm, SplineLength=%.1f cm"), 
 		*PipeMesh->GetName(), MeshLength, SplineLength);
 	
 	// CRITICAL FIX: Calculate segments based on spline length / mesh length (like vanilla)
 	// NOT based on spline point count - that causes severe stretching
 	const int32 RequiredSegments = FMath::Max(1, FMath::CeilToInt(SplineLength / MeshLength));
 	
-	UE_LOG(LogSmartHologram, Log, TEXT("🔧 PIPE TriggerMeshGeneration: Need %d segments (%.1f cm each) for %.1f cm spline"), 
+	UE_LOG(LogSmartHologram, Verbose, TEXT("🔧 PIPE TriggerMeshGeneration: Need %d segments (%.1f cm each) for %.1f cm spline"), 
 		RequiredSegments, SplineLength / RequiredSegments, SplineLength);
 	
 	// Get existing mesh components - base class creates default ones that may not update properly
@@ -1161,13 +1163,13 @@ void ASFPipelineHologram::TriggerMeshGeneration()
 			
 			if (SegmentIdx == 0)
 			{
-				UE_LOG(LogSmartHologram, Log, TEXT("🔧 PIPE Segment[0]: Start=%s End=%s (dist %.1f-%.1f)"), 
+				UE_LOG(LogSmartHologram, Verbose, TEXT("🔧 PIPE Segment[0]: Start=%s End=%s (dist %.1f-%.1f)"), 
 					*StartPos.ToString(), *EndPos.ToString(), StartDist, EndDist);
 			}
 		}
 	}
 	
-	UE_LOG(LogSmartHologram, Log, TEXT("🔧 PIPE TriggerMeshGeneration: Created %d segments of %.1f cm each"), 
+	UE_LOG(LogSmartHologram, Verbose, TEXT("🔧 PIPE TriggerMeshGeneration: Created %d segments of %.1f cm each"), 
 		MeshComps.Num(), SegmentLength);
 	
 	// Apply the current hologram material state to newly created mesh components.
@@ -1433,7 +1435,7 @@ TArray<FItemAmount> ASFPipelineHologram::GetCost(bool includeChildren) const
 						if (PipeRecipe)
 						{
 							// Get recipe ingredients (cost per meter) - iterate directly to avoid copy
-							const TArray<FItemAmount> Ingredients = UFGRecipe::GetIngredients(PipeRecipe);
+							const TArray<FItemAmount> Ingredients = UFGRecipe::GetIngredients(this, PipeRecipe);
 
 							UE_LOG(LogSmartHologram, VeryVerbose, TEXT("💰 PIPE: Found recipe with %d ingredients"), Ingredients.Num());
 
@@ -1446,7 +1448,7 @@ TArray<FItemAmount> ASFPipelineHologram::GetCost(bool includeChildren) const
 									int32 AmountNeeded = FMath::CeilToInt(Ingredient.Amount * LengthInMeters);
 									
 									UE_LOG(LogSmartHologram, VeryVerbose, TEXT("💰 PIPE:   %s: %.1f per meter × %.1f meters = %d total"),
-										*Ingredient.ItemClass->GetName(), Ingredient.Amount, LengthInMeters, AmountNeeded);
+										*Ingredient.ItemClass->GetName(), (double)Ingredient.Amount, LengthInMeters, AmountNeeded);
 									
 									// Add to total cost
 									bool bFound = false;

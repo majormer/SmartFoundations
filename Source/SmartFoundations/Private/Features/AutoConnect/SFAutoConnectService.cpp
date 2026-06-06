@@ -1,3 +1,5 @@
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
+
 #include "Features/AutoConnect/SFAutoConnectService.h"
 #include "Features/AutoConnect/SFAutoConnectServiceImpl.h"
 
@@ -20,7 +22,7 @@ void USFAutoConnectService::Init(USFSubsystem* InSubsystem)
 
 void USFAutoConnectService::Shutdown()
 {
-	UE_LOG(LogSmartAutoConnect, Log, TEXT("SFAutoConnectService shutting down"));
+	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("SFAutoConnectService shutting down"));
 	ClearBeltPreviewHelpers();
 	Subsystem = nullptr;
 }
@@ -233,12 +235,12 @@ void USFAutoConnectService::FindDistributorChains(AFGHologram* DistributorHologr
 	
 	TArray<TWeakObjectPtr<AFGHologram>> SpawnedChildren = HologramHelper->GetSpawnedChildren();
 	
-	UE_LOG(LogSmartAutoConnect, Log, TEXT("🔗 Manifold Detection: Current=%s, Parent=%s, SpawnedChildren=%d"), 
+	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🔗 Manifold Detection: Current=%s, Parent=%s, SpawnedChildren=%d"),
 		*DistributorHologram->GetName(), *ParentHologram->GetName(), SpawnedChildren.Num());
 	
 	if (SpawnedChildren.Num() == 0)
 	{
-		UE_LOG(LogSmartAutoConnect, Log, TEXT("   No spawned children - single distributor, no chaining"));
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("   No spawned children - single distributor, no chaining"));
 		return;
 	}
 	
@@ -260,11 +262,11 @@ void USFAutoConnectService::FindDistributorChains(AFGHologram* DistributorHologr
 		}
 	}
 	
-	UE_LOG(LogSmartAutoConnect, Log, TEXT("🔗 Manifold Detection: Found %d distributors in grid"), AllDistributors.Num());
+	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🔗 Manifold Detection: Found %d distributors in grid"), AllDistributors.Num());
 	
 	if (AllDistributors.Num() < 2)
 	{
-		UE_LOG(LogSmartAutoConnect, Log, TEXT("   Need at least 2 distributors for chaining"));
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("   Need at least 2 distributors for chaining"));
 		return;
 	}
 	
@@ -330,7 +332,7 @@ void USFAutoConnectService::FindDistributorChains(AFGHologram* DistributorHologr
 		{
 			AFGHologram* NextDistributor = AllDistributors[CurrentIndex + 1];
 			OutChainTargets.Add(NextDistributor);
-			UE_LOG(LogSmartAutoConnect, Log, TEXT("   🔗 Splitter chain: %s -> %s"), 
+			UE_LOG(LogSmartAutoConnect, Verbose, TEXT("   🔗 Splitter chain: %s -> %s"), 
 				*DistributorHologram->GetName(), *NextDistributor->GetName());
 		}
 	}
@@ -341,12 +343,12 @@ void USFAutoConnectService::FindDistributorChains(AFGHologram* DistributorHologr
 		{
 			AFGHologram* PreviousDistributor = AllDistributors[CurrentIndex - 1];
 			OutChainTargets.Add(PreviousDistributor);
-			UE_LOG(LogSmartAutoConnect, Log, TEXT("   🔗 Merger chain: %s -> %s"), 
+			UE_LOG(LogSmartAutoConnect, Verbose, TEXT("   🔗 Merger chain: %s -> %s"), 
 				*PreviousDistributor->GetName(), *DistributorHologram->GetName());
 		}
 	}
 	
-	UE_LOG(LogSmartAutoConnect, Log, TEXT("   ✅ Found %d distributor chain targets for %s"), 
+	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("   ✅ Found %d distributor chain targets for %s"),
 		OutChainTargets.Num(), *DistributorHologram->GetName());
 }
 
@@ -485,7 +487,6 @@ void USFAutoConnectService::GetBuildingConnectors(AFGBuildable* Building, TArray
 				World,
 				Building->GetActorLocation(),
 				SearchRadius,
-				EFactoryConnectionConnector::FCC_CONVEYOR,
 				EFactoryConnectionDirection::FCD_ANY);
 
 			UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("GetBuildingConnectors: Overlap search around %s found %d potential connectors"),
@@ -622,7 +623,7 @@ UFGFactoryConnectionComponent* USFAutoConnectService::FindMiddleConnector(AFGHol
 	if (Best)
 	{
 		const TCHAR* Type = bIsSplitter ? TEXT("output") : TEXT("input");
-		UE_LOG(LogSmartAutoConnect, Log, TEXT("   FindMiddleConnector: %s middle %s = %s (alignment=%.2f)"), 
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("   FindMiddleConnector: %s middle %s = %s (alignment=%.2f)"),
 			*Distributor->GetName(), Type, *Best->GetName(), BestAlignment);
 	}
 	else
@@ -842,7 +843,7 @@ void USFAutoConnectService::ProcessChildDistributors(AFGHologram* ParentHologram
 		return; // No children to process
 	}
 	
-	UE_LOG(LogSmartAutoConnect, Log, TEXT("👶 Processing %d child holograms for parent %s"), 
+	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("👶 Processing %d child holograms for parent %s"),
 		Children.Num(), *ParentHologram->GetName());
 	
 	// Create shared input reservation map for parent + all children
@@ -876,7 +877,7 @@ void USFAutoConnectService::ProcessChildDistributors(AFGHologram* ParentHologram
 		AllDistributors.Add(Child);
 	}
 	
-	UE_LOG(LogSmartAutoConnect, Log, TEXT("   🎯 Processing %d total distributors (parent + children) with shared input reservation"), 
+	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("   🎯 Processing %d total distributors (parent + children) with shared input reservation"),
 		AllDistributors.Num());
 	
 	// Process each distributor with shared reservation map
@@ -918,7 +919,7 @@ void USFAutoConnectService::ProcessChildDistributors(AFGHologram* ParentHologram
 		}
 	}
 	
-	UE_LOG(LogSmartAutoConnect, Log, TEXT("✅ Finished processing %d distributors (%d inputs reserved)"), 
+	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("✅ Finished processing %d distributors (%d inputs reserved)"),
 		AllDistributors.Num(), ReservedInputs.Num());
 }
 

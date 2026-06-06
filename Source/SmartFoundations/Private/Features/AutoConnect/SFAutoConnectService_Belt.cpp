@@ -1,4 +1,4 @@
-// Copyright Coffee Stain Studios. All Rights Reserved.
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
 /**
  * USFAutoConnectService - belt-distributor auto-connect processing. Split out of SFAutoConnectService.cpp (slice AC,
@@ -161,7 +161,7 @@ TArray<TSharedPtr<FBeltPreviewHelper>> USFAutoConnectService::ProcessSingleDistr
 		SideConnectorCount, ConnectorType);
 	
 	// NEW: Process distributor chains first (priority 1 for manifold chaining)
-	UE_LOG(LogSmartAutoConnect, Log, TEXT("   Processing distributor chains for manifold connections"));
+	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("   Processing distributor chains for manifold connections"));
 	
 	// Create belt previews for distributor-to-distributor chains
 	if (RuntimeSettings.bChainDistributors && DistributorChains.Num() > 0)
@@ -172,7 +172,7 @@ TArray<TSharedPtr<FBeltPreviewHelper>> USFAutoConnectService::ProcessSingleDistr
 				continue;
 			if (ChainTarget == DistributorHologram)
 			{
-				UE_LOG(LogSmartAutoConnect, Warning, TEXT("   ⚠️ Skipping distributor chain to self: %s"), *DistributorHologram->GetName());
+				UE_LOG(LogSmartAutoConnect, Verbose, TEXT("   ⚠️ Skipping distributor chain to self: %s"), *DistributorHologram->GetName());
 				continue;
 			}
 				
@@ -304,14 +304,14 @@ TArray<TSharedPtr<FBeltPreviewHelper>> USFAutoConnectService::ProcessSingleDistr
 	});
 	
 	// Log sorted order with distances for debugging
-	UE_LOG(LogSmartAutoConnect, Log, TEXT("   🔢 Sorted %d buildings by distance from splitter at %s:"), 
+	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("   🔢 Sorted %d buildings by distance from splitter at %s:"),
 		SortedBuildings.Num(), *SplitterPos.ToString());
 	for (int32 i = 0; i < SortedBuildings.Num(); i++)
 	{
 		if (SortedBuildings[i])
 		{
 			float Dist = FVector::Dist2D(SplitterPos, SortedBuildings[i]->GetActorLocation());
-			UE_LOG(LogSmartAutoConnect, Log, TEXT("      [%d] %s @ %.0f cm"), 
+			UE_LOG(LogSmartAutoConnect, Verbose, TEXT("      [%d] %s @ %.0f cm"),
 				i, *SortedBuildings[i]->GetName(), Dist);
 		}
 	}
@@ -346,7 +346,7 @@ TArray<TSharedPtr<FBeltPreviewHelper>> USFAutoConnectService::ProcessSingleDistr
 	// (No separate toggle needed - controlled by RuntimeSettings.bEnabled)
 	for (AFGBuildable* Building : SortedBuildings)
 		{
-		UE_LOG(LogSmartAutoConnect, Log, TEXT("   🏭 [%s] Processing building %d: %s"), 
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("   🏭 [%s] Processing building %d: %s"),
 			*DistributorHologram->GetName(), HelperIndex, *Building->GetName());
 		
 		bool bIsUpdatingExisting = (HelperIndex < BeltPreviewHelpers.Num());
@@ -404,7 +404,7 @@ TArray<TSharedPtr<FBeltPreviewHelper>> USFAutoConnectService::ProcessSingleDistr
 					{
 						// This input is already reserved - skip it entirely
 						AFGHologram* ReservedBy = ReservedInputs->FindRef(BuildingInput);
-						UE_LOG(LogSmartAutoConnect, Log, 
+						UE_LOG(LogSmartAutoConnect, Verbose,
 							TEXT("      ⏭️ [%s] SKIP input %s - RESERVED by %s"),
 							*DistributorHologram->GetName(), *BuildingInput->GetName(), *GetNameSafe(ReservedBy));
 						continue;
@@ -429,7 +429,7 @@ TArray<TSharedPtr<FBeltPreviewHelper>> USFAutoConnectService::ProcessSingleDistr
 					// This prevents "crossing" to incorrect inputs that are closer but at weird angles
 					if (MaxAlignment < MIN_ANGLE_ALIGNMENT)
 					{
-						UE_LOG(LogSmartAutoConnect, Log,
+						UE_LOG(LogSmartAutoConnect, Verbose,
 							TEXT("      ⏭️ [%s] SKIP input %s - ALIGNMENT too low (%.2f < %.3f)"),
 							*DistributorHologram->GetName(), *BuildingInput->GetName(), MaxAlignment, MIN_ANGLE_ALIGNMENT);
 						continue;
@@ -451,7 +451,7 @@ TArray<TSharedPtr<FBeltPreviewHelper>> USFAutoConnectService::ProcessSingleDistr
 				
 				if (!ClosestBuildingInput)
 				{
-					UE_LOG(LogSmartAutoConnect, Log, TEXT("      ❌ [%s] NO VALID INPUTS found for building %s (all reserved or misaligned)"), 
+					UE_LOG(LogSmartAutoConnect, Verbose, TEXT("      ❌ [%s] NO VALID INPUTS found for building %s (all reserved or misaligned)"),
 						*DistributorHologram->GetName(), *Building->GetName());
 					continue;
 				}
@@ -468,7 +468,7 @@ TArray<TSharedPtr<FBeltPreviewHelper>> USFAutoConnectService::ProcessSingleDistr
 				if (InputSideAlignment > 0.0f)
 				{
 					// Splitter is BEHIND the input (wrong side) - belt would clip through building
-					UE_LOG(LogSmartAutoConnect, Log, TEXT("      ❌ [%s] WRONG SIDE - splitter behind input %s (alignment %.2f > 0)"), 
+					UE_LOG(LogSmartAutoConnect, Verbose, TEXT("      ❌ [%s] WRONG SIDE - splitter behind input %s (alignment %.2f > 0)"),
 						*DistributorHologram->GetName(), *BuildingConnector->GetName(), InputSideAlignment);
 					continue;
 				}
@@ -545,7 +545,7 @@ TArray<TSharedPtr<FBeltPreviewHelper>> USFAutoConnectService::ProcessSingleDistr
 				// If no unassigned outputs available, skip this building
 				if (!ClosestConnector)
 				{
-					UE_LOG(LogSmartAutoConnect, Log, TEXT("      ❌ [%s] NO UNASSIGNED OUTPUTS available for building %s"), 
+					UE_LOG(LogSmartAutoConnect, Verbose, TEXT("      ❌ [%s] NO UNASSIGNED OUTPUTS available for building %s"),
 						*DistributorHologram->GetName(), *Building->GetName());
 					continue;
 				}
@@ -703,7 +703,7 @@ TArray<TSharedPtr<FBeltPreviewHelper>> USFAutoConnectService::ProcessSingleDistr
 				
 				// For merger inputs, we'll check angle at the merger input (not building output)
 				// since merger inputs naturally have ~180° angle relative to building outputs
-				UE_LOG(LogSmartAutoConnect, Log, TEXT("      📐 Merger input connection - angle check will be done at merger input"));
+				UE_LOG(LogSmartAutoConnect, Verbose, TEXT("      📐 Merger input connection - angle check will be done at merger input"));
 			}
 			
 			if (ClosestConnector && BuildingConnector)
@@ -920,7 +920,7 @@ bool USFAutoConnectService::CreateOrUpdateBeltPreview(
     
     if (BeltLength < MinBeltLength)
     {
-        UE_LOG(LogSmartAutoConnect, Log,
+        UE_LOG(LogSmartAutoConnect, Verbose,
             TEXT("   ❌ BELT REJECTED - TOO SHORT: %.1f cm < %.1f cm minimum (%s → %s)"),
             BeltLength, MinBeltLength, *OutputConnector->GetName(), *InputConnector->GetName());
         
@@ -952,7 +952,7 @@ bool USFAutoConnectService::CreateOrUpdateBeltPreview(
 
         if (AngleIn > MaxAngleDegrees || AngleOut > MaxAngleDegrees)
         {
-            UE_LOG(LogSmartAutoConnect, Log,
+            UE_LOG(LogSmartAutoConnect, Verbose,
                 TEXT("   BELT REJECTED - BAD ANGLE: %s → %s (In %.1f° / Out %.1f° > %.1f°)"),
                 *OutputConnector->GetName(), *InputConnector->GetName(),
                 AngleIn, AngleOut, MaxAngleDegrees);
@@ -1000,14 +1000,14 @@ bool USFAutoConnectService::CreateOrUpdateBeltPreview(
     BeltHelper->UpdatePreview(OutputConnector, InputConnector);
     if (!BeltHelper->ValidatePlacementAndRegisterAsChild())
     {
-        UE_LOG(LogSmartAutoConnect, Log,
+        UE_LOG(LogSmartAutoConnect, Verbose,
             TEXT("   ❌ BELT REJECTED - VANILLA: %s → %s"),
             *OutputConnector->GetName(), *InputConnector->GetName());
         BeltHelper.Reset();
         return false;
     }
 
-    UE_LOG(LogSmartAutoConnect, Log,
+    UE_LOG(LogSmartAutoConnect, Verbose,
         TEXT("   ✅ BELT CREATED: %s → %s (Length: %.1f cm, In %.1f° / Out %.1f° ≤ %.1f°)"),
         *OutputConnector->GetName(), *InputConnector->GetName(),
         BeltLength, AngleIn, AngleOut, MaxAngleDegrees);
@@ -1077,312 +1077,9 @@ bool USFAutoConnectService::ConnectAnyConnectors(
 	return false;
 }
 
-bool USFAutoConnectService::BuildBeltFromPreview(const TSharedPtr<FBeltPreviewHelper>& Preview)
-{
-	if (!Preview.IsValid())
-	{
-		return false;
-	}
-
-	UFGFactoryConnectionComponent* OutputConnector = Preview->GetOutputConnector();
-	UFGFactoryConnectionComponent* InputConnector = Preview->GetInputConnector();
-	if (!OutputConnector || !InputConnector)
-	{
-		UE_LOG(LogSmartAutoConnect, Warning, TEXT("BuildBeltFromPreview: Missing connectors"));
-		return false;
-	}
-
-	UE_LOG(LogSmartAutoConnect, Log, TEXT("BuildBeltFromPreview: Attempting belt from %s to %s"),
-		*GetNameSafe(OutputConnector), *GetNameSafe(InputConnector));
-
-	if (OutputConnector->IsConnected() || InputConnector->IsConnected())
-	{
-		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("BuildBeltFromPreview: Connectors already connected, skipping"));
-		return false;
-	}
-
-	AFGSplineHologram* BaseHolo = Preview->GetHologram();
-	ASFConveyorBeltHologram* SmartHolo = Cast<ASFConveyorBeltHologram>(BaseHolo);
-	if (!SmartHolo)
-	{
-		UE_LOG(LogSmartAutoConnect, Warning, TEXT("BuildBeltFromPreview: Preview hologram is not a conveyor belt hologram"));
-		return false;
-	}
-
-	const TArray<FSplinePointData>& SplineData = SmartHolo->GetSplineData();
-	if (SplineData.Num() == 0)
-	{
-		UE_LOG(LogSmartAutoConnect, Warning, TEXT("BuildBeltFromPreview: Preview hologram has no spline data"));
-		return false;
-	}
-
-	UWorld* World = OutputConnector->GetWorld();
-	if (!World)
-	{
-		UE_LOG(LogSmartAutoConnect, Warning, TEXT("BuildBeltFromPreview: World is null"));
-		return false;
-	}
-
-	// Use the belt tier from the preview helper (which matches runtime settings)
-	int32 BeltTier = Preview->GetBeltTier();
-	FString BeltPath = FString::Printf(TEXT("/Game/FactoryGame/Buildable/Factory/ConveyorBeltMk%d/Build_ConveyorBeltMk%d.Build_ConveyorBeltMk%d_C"), BeltTier, BeltTier, BeltTier);
-	UClass* BeltClass = LoadObject<UClass>(nullptr, *BeltPath);
-	if (!BeltClass)
-	{
-		UE_LOG(LogSmartAutoConnect, Warning, TEXT("BuildBeltFromPreview: Failed to load Mk%d belt class from %s"), BeltTier, *BeltPath);
-		return false;
-	}
-	
-	UE_LOG(LogSmartAutoConnect, Log, TEXT("BuildBeltFromPreview: Building Mk%d belt"), BeltTier);
-
-	FVector SpawnPos = SmartHolo->GetActorLocation();
-	AFGBuildableConveyorBelt* Belt = World->SpawnActor<AFGBuildableConveyorBelt>(
-		BeltClass,
-		SpawnPos,
-		FRotator::ZeroRotator);
-	if (!Belt)
-	{
-		UE_LOG(LogSmartAutoConnect, Warning, TEXT("BuildBeltFromPreview: Failed to spawn belt"));
-		return false;
-	}
-
-	AFGBuildableConveyorBelt* Resplined = AFGBuildableConveyorBelt::Respline(Belt, SplineData);
-	if (!Resplined)
-	{
-		UE_LOG(LogSmartAutoConnect, Warning, TEXT("BuildBeltFromPreview: Respline failed"));
-		Belt->Destroy();
-		return false;
-	}
-
-	Belt = Resplined;
-	Belt->OnBuildEffectFinished();
-
-	UFGFactoryConnectionComponent* BeltConnection0 = Belt->GetConnection0();
-	UFGFactoryConnectionComponent* BeltConnection1 = Belt->GetConnection1();
-	if (!BeltConnection0 || !BeltConnection1)
-	{
-		UE_LOG(LogSmartAutoConnect, Warning, TEXT("BuildBeltFromPreview: Belt missing connection components"));
-		Belt->Destroy();
-		return false;
-	}
-
-	// Set connections FIRST - chain actor uses these to determine chain membership
-	BeltConnection0->SetConnection(OutputConnector);
-	BeltConnection1->SetConnection(InputConnector);
-
-	// CRITICAL: Register belt with BuildableSubsystem AFTER connections are set
-	// AddConveyor uses connections to determine which chain the belt joins.
-	// Calling it before connections causes crashes in the parallel factory tick.
-	AFGBuildableSubsystem* BuildableSubsystem = AFGBuildableSubsystem::Get(World);
-	if (BuildableSubsystem)
-	{
-		BuildableSubsystem->AddConveyor(Belt);
-		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("BuildBeltFromPreview: Registered belt with subsystem (ChainActor=%s)"),
-			Belt->GetConveyorChainActor() ? *Belt->GetConveyorChainActor()->GetName() : TEXT("pending"));
-	}
-	else
-	{
-		UE_LOG(LogSmartAutoConnect, Warning, TEXT("BuildBeltFromPreview: No BuildableSubsystem - belt will have no chain actor!"));
-	}
-
-	UE_LOG(LogSmartAutoConnect, Log, TEXT("BuildBeltFromPreview: Built belt %s → %s"),
-		*OutputConnector->GetName(), *InputConnector->GetName());
-
-	return true;
-}
-
-bool USFAutoConnectService::BuildBeltsForDistributor(AFGHologram* DistributorHologram, AFGBuildable* BuiltDistributor)
-{
-	if (!DistributorHologram || !BuiltDistributor)
-	{
-		UE_LOG(LogSmartAutoConnect, Warning, TEXT("BuildBeltsForDistributor: Invalid args (Holo=%s Built=%s)"),
-			*GetNameSafe(DistributorHologram), *GetNameSafe(BuiltDistributor));
-		return false;
-	}
-
-	// Get stored connector pairs from preview stage
-	TArray<TPair<UFGFactoryConnectionComponent*, UFGFactoryConnectionComponent*>>* ConnectorPairs = GetConnectorPairs(DistributorHologram);
-	if (!ConnectorPairs || ConnectorPairs->Num() == 0)
-	{
-		UE_LOG(LogSmartAutoConnect, Log, TEXT("BuildBeltsForDistributor: No connector pairs stored for %s"),
-			*GetNameSafe(DistributorHologram));
-		return false;
-	}
-
-	UE_LOG(LogSmartAutoConnect, Log, TEXT("BuildBeltsForDistributor: Found %d stored connector pairs for hologram %s"),
-		ConnectorPairs->Num(), *GetNameSafe(DistributorHologram));
-
-	// Check if this is the parent distributor (not a child)
-	bool bIsParentDistributor = true;
-	if (USFSubsystem* SFSys = USFSubsystem::Get(BuiltDistributor->GetWorld()))
-	{
-		if (FSFHologramHelperService* HologramHelper = SFSys->GetHologramHelper())
-		{
-			const TArray<TWeakObjectPtr<AFGHologram>>& Children = HologramHelper->GetSpawnedChildren();
-			for (const TWeakObjectPtr<AFGHologram>& ChildPtr : Children)
-			{
-				if (ChildPtr.Get() == DistributorHologram)
-				{
-					bIsParentDistributor = false;
-					break;
-				}
-			}
-		}
-	}
-
-	// Deduct belt costs ONLY for parent distributor (covers entire grid)
-	if (bIsParentDistributor)
-	{
-		UE_LOG(LogSmartAutoConnect, Log, TEXT(" Parent distributor - deducting belt costs for entire grid"));
-		
-		if (UWorld* World = BuiltDistributor->GetWorld())
-		{
-			if (AFGCharacterPlayer* Player = Cast<AFGCharacterPlayer>(UGameplayStatics::GetPlayerCharacter(World, 0)))
-			{
-				if (UFGInventoryComponent* Inventory = Player->GetInventory())
-				{
-					// Check if "No Build Cost" cheat is enabled
-					AFGGameState* GameState = World->GetGameState<AFGGameState>();
-					if (GameState && GameState->GetCheatNoCost())
-					{
-						UE_LOG(LogSmartAutoConnect, Log, TEXT(" No Build Cost cheat enabled - skipping belt cost deduction"));
-						// Skip deduction but allow belts to build (HUD still shows costs)
-					}
-					else
-					{
-						// REMOVED: Manual belt cost deduction
-						// Belt costs are now automatically deducted by vanilla via child hologram Construct()
-						// Each belt child has SetRecipe() called, so vanilla deducts costs during build
-					} // End else (No Build Cost check)
-				}
-			}
-		}
-	}
-	else
-	{
-		UE_LOG(LogSmartAutoConnect, Log, TEXT(" Child distributor - belt costs already deducted by parent"));
-	}
-
-	UE_LOG(LogSmartAutoConnect, Log, TEXT("BuildBeltsForDistributor: Building %d belts for %s → %s"),
-		ConnectorPairs->Num(), *GetNameSafe(DistributorHologram), *GetNameSafe(BuiltDistributor));
-
-	// Get built distributor connectors for mapping
-	TArray<UFGFactoryConnectionComponent*> BuiltInputs;
-	TArray<UFGFactoryConnectionComponent*> BuiltOutputs;
-	GetBuildingConnectors(BuiltDistributor, BuiltInputs, BuiltOutputs);
-
-	int32 SuccessCount = 0;
-
-	// Process each stored connector pair
-	for (const TPair<UFGFactoryConnectionComponent*, UFGFactoryConnectionComponent*>& Pair : *ConnectorPairs)
-	{
-		UFGFactoryConnectionComponent* HologramConnector = Pair.Key;
-		UFGFactoryConnectionComponent* BuildingConnector = Pair.Value;
-
-		if (!HologramConnector || !BuildingConnector)
-		{
-			UE_LOG(LogSmartAutoConnect, Warning, TEXT("BuildBeltsForDistributor: Invalid connector pair"));
-			continue;
-		}
-
-		// Determine which side is the hologram connector
-		AActor* HologramOwner = HologramConnector->GetOwner();
-		AActor* BuildingOwner = BuildingConnector->GetOwner();
-
-		if (HologramOwner != DistributorHologram && BuildingOwner != DistributorHologram)
-		{
-			UE_LOG(LogSmartAutoConnect, Warning, TEXT("BuildBeltsForDistributor: Pair doesn't involve distributor hologram"));
-			continue;
-		}
-
-		// Identify if hologram connector is output or input
-		const bool bHoloIsOutput = (HologramConnector->GetDirection() == EFactoryConnectionDirection::FCD_OUTPUT);
-		const bool bHoloIsInput = (HologramConnector->GetDirection() == EFactoryConnectionDirection::FCD_INPUT);
-
-		if (!bHoloIsOutput && !bHoloIsInput)
-		{
-			UE_LOG(LogSmartAutoConnect, Warning, TEXT("BuildBeltsForDistributor: Hologram connector has no direction"));
-			continue;
-		}
-
-		// Map hologram connector to built distributor connector
-		TArray<UFGFactoryConnectionComponent*>& BuiltSideArray = bHoloIsOutput ? BuiltOutputs : BuiltInputs;
-		UFGFactoryConnectionComponent* BuiltDistributorConnector = FindMatchingBuildableConnector(BuiltDistributor, HologramConnector, BuiltSideArray);
-
-		if (!BuiltDistributorConnector)
-		{
-			UE_LOG(LogSmartAutoConnect, Warning, TEXT("BuildBeltsForDistributor: No matching built connector for %s"), *GetNameSafe(HologramConnector));
-			continue;
-		}
-
-		// Determine final connection direction (built distributor → building)
-		UFGFactoryConnectionComponent* OutputConnector = nullptr;
-		UFGFactoryConnectionComponent* InputConnector = nullptr;
-
-		if (bHoloIsOutput)
-		{
-			// Hologram was output → building input, so built should follow same pattern
-			OutputConnector = BuiltDistributorConnector;
-			InputConnector = BuildingConnector;
-		}
-		else
-		{
-			// Hologram was input → building output, so built should follow same pattern
-			OutputConnector = BuildingConnector;
-			InputConnector = BuiltDistributorConnector;
-		}
-
-		if (!OutputConnector || !InputConnector)
-		{
-			UE_LOG(LogSmartAutoConnect, Warning, TEXT("BuildBeltsForDistributor: Failed to determine connection direction"));
-			continue;
-		}
-
-		// Check if connectors are already connected
-		if (OutputConnector->IsConnected() || InputConnector->IsConnected())
-		{
-			UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("BuildBeltsForDistributor: Connectors already connected, skipping"));
-			continue;
-		}
-
-		// Establish the connection using vanilla SetConnection
-		if (OutputConnector->CanConnectTo(InputConnector))
-		{
-			OutputConnector->SetConnection(InputConnector);
-			SuccessCount++;
-			UE_LOG(LogSmartAutoConnect, Log, TEXT("BuildBeltsForDistributor: Connected %s → %s"),
-				*GetNameSafe(OutputConnector), *GetNameSafe(InputConnector));
-		}
-		else
-		{
-			UE_LOG(LogSmartAutoConnect, Warning, TEXT("BuildBeltsForDistributor: Cannot connect %s → %s"),
-				*GetNameSafe(OutputConnector), *GetNameSafe(InputConnector));
-		}
-	}
-
-	// Destroy preview holograms after all connections are established
-	TArray<TSharedPtr<FBeltPreviewHelper>>* Previews = GetBeltPreviews(DistributorHologram);
-	if (Previews)
-	{
-		for (TSharedPtr<FBeltPreviewHelper>& Preview : *Previews)
-		{
-			if (Preview.IsValid())
-			{
-				Preview->DestroyPreview();
-			}
-		}
-		// Clear stored previews
-		DistributorBeltPreviews.Remove(DistributorHologram);
-	}
-
-	// Clear stored connector pairs
-	ClearConnectorPairs(DistributorHologram);
-
-	UE_LOG(LogSmartAutoConnect, Log, TEXT("BuildBeltsForDistributor: Complete - %d/%d belts built successfully"),
-		SuccessCount, ConnectorPairs->Num());
-
-	return SuccessCount > 0;
-}
+// BuildBeltFromPreview() and BuildBeltsForDistributor() removed (dead, never called): superseded by
+// the distributor child-hologram refactor (SFConveyorAttachmentHologram) and the STACK-CHAIN
+// construct handler in ASFConveyorBeltHologram (THESIS §6.9–§6.13).
 
 // ========================================
 // Distributor Detection

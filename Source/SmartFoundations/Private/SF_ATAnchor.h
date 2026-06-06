@@ -1,10 +1,12 @@
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
+
 #pragma once
 
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
-#include "FactoryGame/Public/Hologram/FGHologram.h"
-#include "FactoryGame/Public/Hologram/FGConveyorBeltHologram.h"
-#include "FactoryGame/Public/Hologram/FGSplineHologram.h"
+#include "Hologram/FGHologram.h"
+#include "Hologram/FGConveyorBeltHologram.h"
+#include "Hologram/FGSplineHologram.h"
 #include "SF_ATAnchor.generated.h"
 
 /**
