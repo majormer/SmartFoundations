@@ -7,6 +7,7 @@
  */
 
 #include "Features/Extend/SFExtendWiringServiceImpl.h"
+#include "FGUnlockSubsystem.h"  // Issue #344: detect Upgraded Power Connectors (daisy-chain) unlock
 
 int32 USFExtendWiringService::GenerateAndExecuteWiring(AFGBuildableFactory* NewFactory)
 {
@@ -1648,6 +1649,124 @@ int32 USFExtendWiringService::GenerateAndExecuteWiring(AFGBuildableFactory* NewF
             SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Display, TEXT("⚡ POWER CHAIN: %d pole-to-pole connections across %d pole indices"),
                 ChainWiredCount, PoleIndices.Num());
             WiredCount += ChainWiredCount;
+        }
+    }
+
+    // ----------------------------------------------------------------------
+    // Issue #344: Daisy-chain building power along the extend lane.
+    // When the player has Upgraded Power Connectors unlocked, chain the
+    // extended buildings' power directly along the manifold lane (the source
+    // building's local X / extend axis), one INDEPENDENT chain per row (local
+    // Y) - no cross-row (Y) links, so each chain's ends stay free and the line
+    // remains re-extendable. Capacity is enforced per connector via
+    // GetNumFreeConnections(), which is itself unlock-aware (a daisy-capable
+    // connector's max is 1 until this unlock, 2 after), so we never create a
+    // connection the player could not make manually.
+    {
+        AFGUnlockSubsystem* Unlocks = AFGUnlockSubsystem::Get(GetWorld());
+        const bool bDaisyUnlocked = Unlocks && Unlocks->IsCircuitDaisyChainingUnlocked();
+        if (bDaisyUnlocked && WireClass && IsValid(NewFactory))
+        {
+            // Gather the repeated buildings to chain: the source plus same-class clones.
+            TArray<AFGBuildableFactory*> ChainBuildings;
+            ChainBuildings.Add(NewFactory);
+            const UClass* BuildClass = NewFactory->GetClass();
+
+            // The building we extended FROM is the head of the chain. It is a pre-existing world
+            // actor, NOT in JsonBuiltActors, so add it explicitly (this is what a 2x1 extend needs).
+            AFGBuildable* SourceRaw = ExtendService->LastBuiltFromBuilding.IsValid()
+                ? ExtendService->LastBuiltFromBuilding.Get()
+                : ExtendService->CurrentExtendTarget.Get();
+            if (AFGBuildableFactory* Source = Cast<AFGBuildableFactory>(SourceRaw))
+            {
+                if (Source->GetClass() == BuildClass)
+                {
+                    ChainBuildings.AddUnique(Source);
+                }
+            }
+
+            // Same-class building clones (a scaled Extend builds several at once).
+            for (const auto& Pair : ExtendService->JsonBuiltActors)
+            {
+                AFGBuildableFactory* Clone = Cast<AFGBuildableFactory>(Pair.Value);
+                if (IsValid(Clone) && Clone->GetClass() == BuildClass)
+                {
+                    ChainBuildings.AddUnique(Clone);
+                }
+            }
+
+            if (ChainBuildings.Num() >= 2)
+            {
+                const FVector Origin = NewFactory->GetActorLocation();
+                const FRotator Rot = NewFactory->GetActorRotation();
+                const FVector LaneAxis = Rot.RotateVector(FVector(1.f, 0.f, 0.f)); // extend direction
+                const FVector RowAxis  = Rot.RotateVector(FVector(0.f, 1.f, 0.f)); // perpendicular (rows)
+
+                // Bucket into rows by quantized perpendicular offset (1 m buckets).
+                TMap<int32, TArray<AFGBuildableFactory*>> Rows;
+                for (AFGBuildableFactory* B : ChainBuildings)
+                {
+                    const FVector Off = B->GetActorLocation() - Origin;
+                    const int32 RowKey = FMath::RoundToInt(FVector::DotProduct(Off, RowAxis) / 100.0f);
+                    Rows.FindOrAdd(RowKey).Add(B);
+                }
+
+                auto PowerConnOf = [](AFGBuildableFactory* B) -> UFGCircuitConnectionComponent*
+                {
+                    if (!IsValid(B)) { return nullptr; }
+                    TArray<UFGCircuitConnectionComponent*> Conns;
+                    B->GetComponents<UFGCircuitConnectionComponent>(Conns);
+                    return Conns.Num() > 0 ? Conns[0] : nullptr;
+                };
+
+                int32 DaisyWired = 0;
+                for (auto& RowPair : Rows)
+                {
+                    TArray<AFGBuildableFactory*>& Row = RowPair.Value;
+                    if (Row.Num() < 2) { continue; }
+
+                    // Order along the lane axis.
+                    Row.Sort([&](const AFGBuildableFactory& A, const AFGBuildableFactory& B)
+                    {
+                        return FVector::DotProduct(A.GetActorLocation() - Origin, LaneAxis)
+                             < FVector::DotProduct(B.GetActorLocation() - Origin, LaneAxis);
+                    });
+
+                    for (int32 i = 0; i + 1 < Row.Num(); ++i)
+                    {
+                        UFGCircuitConnectionComponent* A = PowerConnOf(Row[i]);
+                        UFGCircuitConnectionComponent* B = PowerConnOf(Row[i + 1]);
+                        if (!A || !B) { continue; }
+
+                        // Respect real connector capacity (unlock-aware) and avoid duplicates.
+                        if (A->GetNumFreeConnections() <= 0 || B->GetNumFreeConnections() <= 0) { continue; }
+                        TArray<UFGCircuitConnectionComponent*> Existing;
+                        A->GetConnections(Existing);
+                        if (Existing.Contains(B)) { continue; }
+
+                        FActorSpawnParameters SpawnParams;
+                        SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+                        AFGBuildableWire* Wire = GetWorld()->SpawnActor<AFGBuildableWire>(
+                            WireClass, Row[i]->GetActorLocation(), FRotator::ZeroRotator, SpawnParams);
+                        if (Wire && Wire->Connect(A, B))
+                        {
+                            DaisyWired++;
+                        }
+                        else if (Wire)
+                        {
+                            Wire->Destroy();
+                        }
+                    }
+                }
+
+                if (DaisyWired > 0)
+                {
+                    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log,
+                        TEXT("Daisy-chained %d building-to-building power link(s) across %d row(s)"),
+                        DaisyWired, Rows.Num());
+                    WiredCount += DaisyWired;
+                }
+            }
         }
     }
 
