@@ -22,9 +22,6 @@ public:
 	virtual void DispatchLifecycleEvent(ELifecyclePhase Phase) override;
 
 protected:
-	/** Register SML hook for cost aggregation (belt preview costs in distributor tooltip) */
-	void RegisterCostAggregationHook();
-	
 	/** Register SML hook for blueprint construct to handle chain actor rebuilding (like AutoLink) */
 	void RegisterBlueprintConstructHook();
 

@@ -23,50 +23,6 @@ AActor* ASFConveyorAttachmentHologram::Construct(TArray<AActor*>& out_children, 
 	return BuiltActor;
 }
 
-TArray<FItemAmount> ASFConveyorAttachmentHologram::GetCost(bool includeChildren) const
-{
-	UE_LOG(LogSmartHologram, VeryVerbose, TEXT("💰 ASFConveyorAttachmentHologram::GetCost() called! includeChildren=%d"), includeChildren);
-	
-	// Get base distributor cost from parent
-	TArray<FItemAmount> TotalCost = Super::GetCost(includeChildren);
-	
-	UE_LOG(LogSmartHologram, VeryVerbose, TEXT("💰 Base distributor cost: %d item types"), TotalCost.Num());
-	
-	// Add belt preview costs
-	if (USFSubsystem* Subsystem = USFSubsystem::Get(GetWorld()))
-	{
-		if (USFAutoConnectService* AutoConnect = Subsystem->GetAutoConnectService())
-		{
-			TArray<FItemAmount> BeltCosts = AutoConnect->GetBeltPreviewsCost(this);
-			
-			UE_LOG(LogSmartHologram, VeryVerbose, TEXT("💰 Belt preview costs: %d item types"), BeltCosts.Num());
-			
-			// Merge belt costs into total cost (using FactorySpawner's pattern)
-			for (const FItemAmount& BeltCost : BeltCosts)
-			{
-				if (!BeltCost.ItemClass) continue;
-				
-				// Find existing item or add new one
-				if (FItemAmount* Existing = TotalCost.FindByPredicate(
-					[&](const FItemAmount& X) { return X.ItemClass == BeltCost.ItemClass; }))
-				{
-					Existing->Amount += BeltCost.Amount;
-					UE_LOG(LogSmartHologram, VeryVerbose, TEXT("💰   Merged: %s +%d = %d"), *GetNameSafe(BeltCost.ItemClass), BeltCost.Amount, Existing->Amount);
-				}
-				else
-				{
-					TotalCost.Add(BeltCost);
-					UE_LOG(LogSmartHologram, VeryVerbose, TEXT("💰   Added: %s x%d"), *GetNameSafe(BeltCost.ItemClass), BeltCost.Amount);
-				}
-			}
-		}
-	}
-	
-	UE_LOG(LogSmartHologram, VeryVerbose, TEXT("💰 Total cost returned: %d item types"), TotalCost.Num());
-	for (const FItemAmount& Item : TotalCost)
-	{
-		UE_LOG(LogSmartHologram, VeryVerbose, TEXT("💰   → %s x%d"), *GetNameSafe(Item.ItemClass), Item.Amount);
-	}
-	
-	return TotalCost;
-}
+// #348: GetCost override removed. It manually added GetBeltPreviewsCost on top of Super::GetCost,
+// but the auto-connect belts are child holograms already counted by vanilla GetCost(includeChildren),
+// so this double-counted the belt cost. The base class cost (children included) is correct as-is.
