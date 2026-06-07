@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Extend Daisy-Chain Power** turns the feature on or off.
   - **Daisy-Chain Pole-less Factories** decides what happens when you Extend a machine that has no power pole and isn't already part of a chain: on, Extend starts a fresh daisy chain along the new row; off, it leaves power for you to run a pole. Either way, a machine that is *already* daisy-chained always keeps extending its existing chain, and a machine already wired to a pole is left alone.
   - Both default to on, so the behavior matches 31.0.0 until you change them.
-  - A community-requested follow-up to the daisy-chain feature from 31.0.0 (Issue #344).
+  - A community-requested follow-up to the daisy-chain feature from 31.0.0, with thanks to EldritchHaiku and TheGandalf from the Smart! Discord for their feedback on the implementation (Issue #344).
 
 ### Fixed
 
