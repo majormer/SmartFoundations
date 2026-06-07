@@ -1056,6 +1056,7 @@ public:
 		bool bConnectPower = true;     // Power auto-connect enabled
 		bool bExtendPower = true;      // Include power poles when using Extend (Issue #229)
 		bool bExtendDaisyChain = true; // Daisy-chain building power along the extend lane when unlocked (Issue #344)
+		bool bExtendDaisyChainPoleless = true; // Start a new daisy chain when the source is pole-less and unwired (Issue #344)
 		int32 PowerReserved = 1;       // Reserved connections per pole (0-5)
 		int32 PowerGridAxis = 0;       // 0=Auto, 1=X, 2=Y, 3=X+Y
 		float PowerBuildingRange = 5000.0f; // Search radius for buildings in cm (default 50m, max 30000cm/300m)
@@ -1081,6 +1082,7 @@ public:
 			bConnectPower = Config.bPowerAutoConnectEnabled;
 			bExtendPower = Config.bExtendPowerEnabled;
 			bExtendDaisyChain = Config.bExtendDaisyChainPower;
+			bExtendDaisyChainPoleless = Config.bExtendDaisyChainPoleless;
 			PowerReserved = Config.PowerConnectReserved;
 			PowerGridAxis = Config.PowerConnectMode;
 			PowerBuildingRange = static_cast<float>(Config.PowerConnectRange) * 100.0f;  // Convert from meters to cm

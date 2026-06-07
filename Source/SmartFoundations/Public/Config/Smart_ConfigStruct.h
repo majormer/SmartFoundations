@@ -56,6 +56,7 @@ struct FSmart_BuildingBehaviorConfigSection {
     UPROPERTY(BlueprintReadWrite) bool bExtendEnabled{true};
     UPROPERTY(BlueprintReadWrite) bool bExtendPowerEnabled{};
     UPROPERTY(BlueprintReadWrite) bool bExtendDaisyChainPower{true};
+    UPROPERTY(BlueprintReadWrite) bool bExtendDaisyChainPoleless{true};
     UPROPERTY(BlueprintReadWrite) bool bAutoHoldOnGridChange{false};
     UPROPERTY(BlueprintReadWrite) bool bApplyImmediately{};
 };
@@ -181,6 +182,12 @@ public:
     UPROPERTY(BlueprintReadWrite)
     bool bExtendDaisyChainPower{true};
 
+    // Extend daisy-chain on pole-less sources: when the source building has no power pole and no
+    // existing daisy link (starting a fresh manifold), wire the new buildings together via daisy
+    // chain. Sources already daisy-chained are always continued regardless of this flag (Issue #344)
+    UPROPERTY(BlueprintReadWrite)
+    bool bExtendDaisyChainPoleless{true};
+
     // ── Scaling ──
 
     // Auto-Hold: automatically lock hologram position after any grid modification (Issue #273)
@@ -263,6 +270,7 @@ public:
         ConfigStruct.bExtendEnabled           = Sections.BuildingBehavior.bExtendEnabled;
         ConfigStruct.bExtendPowerEnabled      = Sections.BuildingBehavior.bExtendPowerEnabled;
         ConfigStruct.bExtendDaisyChainPower   = Sections.BuildingBehavior.bExtendDaisyChainPower;
+        ConfigStruct.bExtendDaisyChainPoleless = Sections.BuildingBehavior.bExtendDaisyChainPoleless;
         ConfigStruct.bAutoHoldOnGridChange    = Sections.BuildingBehavior.bAutoHoldOnGridChange;
         ConfigStruct.bApplyImmediately        = Sections.BuildingBehavior.bApplyImmediately;
 
