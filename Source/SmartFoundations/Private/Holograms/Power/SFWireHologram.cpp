@@ -214,6 +214,26 @@ void ASFWireHologram::SetWireEndpoints(const FVector& Start, const FVector& End)
 	CachedEndPos = End;
 }
 
+void ASFWireHologram::SetupWirePreviewFromPositions(const FVector& StartWorld, const FVector& EndWorld)
+{
+	// Issue #345: like SetupWirePreview, but from raw world positions (no connection components, since
+	// the Extend clone poles don't exist yet). Endpoints also drive GetWireLength()/GetCost().
+	CachedStartPos = StartWorld;
+	CachedEndPos = EndWorld;
+
+	// Extend repositions its child holograms every frame; keep the wire mesh in absolute world space so
+	// it stays on the endpoints instead of being dragged to the child actor's transform.
+	bUseAbsoluteMeshTransform = true;
+	CreateWireMeshWithCatenary(StartWorld, EndWorld);
+	bWireConfigured = true;
+
+	SetActorLocation((StartWorld + EndWorld) * 0.5f);
+	SetActorHiddenInGame(false);
+
+	// Apply the valid-state hologram stencil so the wire is tinted as a hologram (no material swap).
+	SetPlacementMaterialState(EHologramMaterialState::HMS_OK);
+}
+
 void ASFWireHologram::ConfigureActor(AFGBuildable* inBuildable) const
 {
 	// Issue #244: DEFERRED CONNECTION APPROACH
@@ -331,6 +351,15 @@ void ASFWireHologram::CreateWireMeshWithCatenary(const FVector& StartPos, const 
 	{
 		UE_LOG(LogSmartHologram, Error, TEXT("⚡ Failed to create PreviewWireMesh"));
 		return;
+	}
+
+	// Issue #345: decouple the mesh from the (Extend-repositioned) child actor so the world transform
+	// applied below sticks. Must be set BEFORE the SetWorld* calls so they are interpreted as absolute.
+	if (bUseAbsoluteMeshTransform)
+	{
+		PreviewWireMesh->SetUsingAbsoluteLocation(true);
+		PreviewWireMesh->SetUsingAbsoluteRotation(true);
+		PreviewWireMesh->SetUsingAbsoluteScale(true);
 	}
 
 	// Use static helper from AFGBuildableWire to create a proper wire instance

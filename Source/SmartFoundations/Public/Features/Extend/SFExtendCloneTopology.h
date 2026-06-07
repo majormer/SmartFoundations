@@ -286,6 +286,11 @@ struct FSFSourcePowerPole
     UPROPERTY() bool bSourceHasFreeConnections = false;  // Whether source pole has free slots
     UPROPERTY() int32 SourceFreeConnections = 0;         // Number of free connections
     UPROPERTY() int32 MaxConnections = 4;                // Tier limit (Mk1=4, Mk2=7, Mk3=10)
+    // Issue #345: real source power-connector world positions, so the cable preview sits exactly on
+    // the connectors (clone connector = source connector + extend Offset) rather than a guessed height.
+    UPROPERTY() FSFVec3 PoleConnectorWorld;              // Source pole's power connector world location
+    UPROPERTY() FSFVec3 FactoryConnectorWorld;          // Source factory's power connector world location
+    UPROPERTY() bool bHasConnectorWorld = false;        // True when both connector positions were captured
 };
 
 /**

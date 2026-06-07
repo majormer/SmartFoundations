@@ -41,6 +41,10 @@
 #include "Subsystem/SFSubsystem.h"
 #include "Data/SFHologramDataRegistry.h"
 
+// Issue #345: approximate height (cm) of a power connector above a pole/factory origin, used to lift
+// the previewed cable catenary off the base so it reads like the real pole-top wiring. Tuned in-game.
+static constexpr float SFWireConnectorHeightCm = 600.0f;
+
 // ============================================================================
 // FSFCloneTopology
 // ============================================================================
@@ -370,9 +374,32 @@ FSFCloneTopology FSFCloneTopology::FromSource(const FSFSourceTopology& Source, c
             // Store wire distance in SplineData.Length for the spawner to read
             WireHolo.bHasSplineData = true;
             WireHolo.SplineData.Length = FactoryToPoleDistance;
+
+            // Issue #345: cable world endpoints for the visible preview (clone factory <-> clone pole).
+            // Prefer the real captured source connectors (offset into the clone); fall back to a guessed
+            // connector height only if they were not captured.
+            {
+                FVector FactoryConnW, PoleConnW;
+                if (SourcePole.bHasConnectorWorld)
+                {
+                    FactoryConnW = SourcePole.FactoryConnectorWorld.ToFVector() + Offset;
+                    PoleConnW    = SourcePole.PoleConnectorWorld.ToFVector() + Offset;
+                }
+                else
+                {
+                    const FVector ClonePoleLoc = PoleHolo.Transform.Location.ToFVector();
+                    PoleConnW    = ClonePoleLoc + FVector(0.f, 0.f, SFWireConnectorHeightCm);
+                    FactoryConnW = (ClonePoleLoc - SourcePole.RelativeOffset.ToFVector()) + FVector(0.f, 0.f, SFWireConnectorHeightCm);
+                }
+                FSFSplinePoint PtFactory; PtFactory.World = FSFVec3(FactoryConnW);
+                FSFSplinePoint PtPole;    PtPole.World    = FSFVec3(PoleConnW);
+                WireHolo.SplineData.Points.Add(PtFactory);
+                WireHolo.SplineData.Points.Add(PtPole);
+            }
+
             Result.ChildHolograms.Add(WireHolo);
         }
-        
+
         // Wire cost hologram 2: Source pole ↔ Clone pole (only if source has free connections)
         if (SourcePole.bSourceHasFreeConnections)
         {
@@ -390,6 +417,27 @@ FSFCloneTopology FSFCloneTopology::FromSource(const FSFSourceTopology& Source, c
             WireHolo.bPreviewOnly = true;
             WireHolo.bHasSplineData = true;
             WireHolo.SplineData.Length = SourceToCloneDistance;
+
+            // Issue #345: cable world endpoints (source pole <-> clone pole). The source pole connector
+            // is real and unmoved; the clone pole connector is that same point offset into the clone.
+            {
+                FVector SourcePoleConnW, ClonePoleConnW;
+                if (SourcePole.bHasConnectorWorld)
+                {
+                    SourcePoleConnW = SourcePole.PoleConnectorWorld.ToFVector();
+                    ClonePoleConnW  = SourcePole.PoleConnectorWorld.ToFVector() + Offset;
+                }
+                else
+                {
+                    SourcePoleConnW = SourcePole.Transform.Location.ToFVector() + FVector(0.f, 0.f, SFWireConnectorHeightCm);
+                    ClonePoleConnW  = PoleHolo.Transform.Location.ToFVector()  + FVector(0.f, 0.f, SFWireConnectorHeightCm);
+                }
+                FSFSplinePoint PtSource; PtSource.World = FSFVec3(SourcePoleConnW);
+                FSFSplinePoint PtClone;  PtClone.World  = FSFVec3(ClonePoleConnW);
+                WireHolo.SplineData.Points.Add(PtSource);
+                WireHolo.SplineData.Points.Add(PtClone);
+            }
+
             Result.ChildHolograms.Add(WireHolo);
         }
         
@@ -1325,7 +1373,18 @@ FSFSourceTopology FSFSourceTopology::CaptureFromTopology(const FSFExtendTopology
         SourcePole.bSourceHasFreeConnections = PowerNode.bSourceHasFreeConnections;
         SourcePole.SourceFreeConnections = PowerNode.SourceFreeConnections;
         SourcePole.MaxConnections = PowerNode.MaxConnections;
-        
+
+        // Issue #345: capture the real source connector world positions for an accurate cable preview.
+        if (PowerNode.PoleConnector.IsValid())
+        {
+            SourcePole.PoleConnectorWorld = FSFVec3(PowerNode.PoleConnector->GetComponentLocation());
+        }
+        if (PowerNode.FactoryConnector.IsValid())
+        {
+            SourcePole.FactoryConnectorWorld = FSFVec3(PowerNode.FactoryConnector->GetComponentLocation());
+        }
+        SourcePole.bHasConnectorWorld = PowerNode.PoleConnector.IsValid() && PowerNode.FactoryConnector.IsValid();
+
         Result.PowerPoles.Add(SourcePole);
     }
     

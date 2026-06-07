@@ -50,6 +50,13 @@ public:
 	/** Set wire endpoints directly for cost calculation (Issue #229: extend wires without connections) */
 	void SetWireEndpoints(const FVector& Start, const FVector& End);
 
+	/**
+	 * Issue #345: render a visible wire preview from raw world endpoints, for cases where there are no
+	 * connection components yet (Extend/Scaled-Extend clone cables - the target poles aren't built).
+	 * Caches the endpoints (also drives GetWireLength/GetCost), builds the catenary mesh, and unhides.
+	 */
+	void SetupWirePreviewFromPositions(const FVector& StartWorld, const FVector& EndWorld);
+
 protected:
 	virtual void ConfigureActor(class AFGBuildable* inBuildable) const override;
 
@@ -68,4 +75,11 @@ private:
 
 	/** Track if we've set up the wire */
 	bool bWireConfigured;
+
+	/**
+	 * Issue #345: when true, the preview mesh uses an absolute world transform so it stays spanning its
+	 * world endpoints even when a parent hologram repositions this child actor every frame (Extend).
+	 * The auto-connect path leaves this false (its wire is re-created on preview updates).
+	 */
+	bool bUseAbsoluteMeshTransform = false;
 };
