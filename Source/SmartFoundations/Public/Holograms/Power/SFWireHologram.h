@@ -57,9 +57,6 @@ private:
 	/** Create and configure a wire mesh component with catenary curve */
 	void CreateWireMeshWithCatenary(const FVector& StartPos, const FVector& EndPos);
 
-	/** Apply hologram material to all wire meshes */
-	void ApplyHologramMaterial(UMaterialInterface* Material);
-
 private:
 	/** Cached start/end positions for the wire */
 	FVector CachedStartPos;
