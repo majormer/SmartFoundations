@@ -9,6 +9,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [31.0.1] - 2026-06-07
+
+> *A follow-up to the 1.2 release: settings for Extend's daisy-chain power, plus fixes for doubled auto-connect costs and the Smart! Panel arrow keys.*
+
+### Added
+
+- **Settings for Extend daisy-chain power** - The building-to-building power chaining added in 31.0.0 now has its own controls under Options > Mods > Smart! > Building Behavior:
+  - **Extend Daisy-Chain Power** turns the feature on or off.
+  - **Daisy-Chain Pole-less Factories** decides what happens when you Extend a machine that has no power pole and isn't already part of a chain: on, Extend starts a fresh daisy chain along the new row; off, it leaves power for you to run a pole. Either way, a machine that is *already* daisy-chained always keeps extending its existing chain, and a machine already wired to a pole is left alone.
+  - Both default to on, so the behavior matches 31.0.0 until you change them.
+
+### Fixed
+
+- **Auto-connect conveyors and pipes no longer charge double** - When Smart! auto-connected a conveyor belt (for example to a splitter or merger) or a pipe (between pipe junctions), the cost shown on the build gun was twice what the segment actually cost to build - a belt that refunds 2 plates when dismantled was previewed as needing 4. The preview now matches the real build and dismantle cost. Thanks to ShinryuAspect for the detailed report.
+- **Smart! Panel values no longer snap back when nudged with the arrow keys** - In the Smart! Panel, stepping a value (grid, spacing, steps, stagger, or rotation) with the Up/Down arrow keys would show the new value but then revert to the old one the moment you clicked another field or pressed Apply. Arrow-key changes now stick. Typing a value directly still works as before, and Left/Right still move the text cursor.
+
+---
+
 ## [31.0.0] - 2026-06-05
 
 > *First Satisfactory 1.2 release - Smart! rebuilt for the 1.2 update.*
