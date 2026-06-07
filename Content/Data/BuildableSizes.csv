@@ -95,7 +95,7 @@ Build_Pipeline_NoIndicator_C,100,100,100,0,0,0,0,0,0
 Build_PipelineMK2_C,100,100,100,0,0,0,0,0,0
 Build_PipelineMK2_NoIndicator_C,100,100,100,0,0,0,0,0,0
 Build_PipelineJunction_Cross_C,300,300,200,0,1,0,0,0,-175
-Build_PipelineJunction_T_C,300,300,200,0,1,0,0,0,-175
+Build_PipelineJunction_T_C,300,300,200,0,1,1,0,0,-175
 Build_PipelinePump_C,400,250,250,0,1,0,0,0,-175
 Build_PipelinePumpMk2_C,400,250,250,0,1,0,0,0,-175
 Build_Valve_C,100,100,100,0,0,0,0,0,0

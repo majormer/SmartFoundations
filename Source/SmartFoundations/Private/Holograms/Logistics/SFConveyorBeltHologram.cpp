@@ -752,10 +752,22 @@ TArray<FItemAmount> ASFConveyorBeltHologram::GetCost(bool includeChildren) const
 {
 	UE_LOG(LogSmartHologram, VeryVerbose, TEXT("💰 BELT GetCost() CALLED on %s (includeChildren=%d)"), *GetName(), includeChildren);
 	
-	// Get base cost from parent (should be empty for belts, but call it anyway)
+	// Get base cost from parent. In Satisfactory 1.2 vanilla AFGConveyorBeltHologram::GetCost already
+	// returns the length-based belt material cost.
 	TArray<FItemAmount> TotalCost = Super::GetCost(includeChildren);
-	
-	// Calculate belt cost based on spline length
+
+	// #348: Trust the vanilla belt cost when present. This method used to assume Super returned nothing
+	// for belts (see the old comment) and ALWAYS added its own length-scaled cost on top - which
+	// double-counted the belt, so the build-gun preview charged 2x what dismantling the belt refunds.
+	// The manual length calculation below is now a fallback that only runs when vanilla returned no
+	// cost (e.g. the spline data was reset before this query, which the restoration logic recovers).
+	if (TotalCost.Num() > 0)
+	{
+		UE_LOG(LogSmartHologram, VeryVerbose, TEXT("💰 BELT GetCost: using vanilla cost (%d item types), skipping manual calc"), TotalCost.Num());
+		return TotalCost;
+	}
+
+	// Calculate belt cost based on spline length (fallback when Super returned no cost)
 	if (mSplineComponent)
 	{
 		float BeltLengthCm = mSplineComponent->GetSplineLength();

@@ -432,6 +432,10 @@ protected:
     // Keyboard handling for Escape key
     virtual FReply NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent) override;
 
+    // Issue #230: own Up/Down arrow stepping for focused SpinBoxes in the tunnel phase, before the
+    // engine SSpinBox consumes them (its arrow path leaves stale text that reverts on focus loss).
+    virtual FReply NativeOnPreviewKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent) override;
+
     // Mouse handling for dragging (right mouse button)
     virtual FReply NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
     virtual FReply NativeOnMouseButtonUp(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
@@ -622,6 +626,9 @@ private:
     
     // Check if any text input has keyboard focus
     bool IsAnyTextInputFocused() const;
+
+    // Issue #230: return the Smart Panel SpinBox that currently has keyboard focus (or nullptr).
+    class USpinBox* GetFocusedSpinBox() const;
 
     // Update recipe icon from selected recipe
     void UpdateRecipeIcon(TSubclassOf<class UFGRecipe> Recipe);

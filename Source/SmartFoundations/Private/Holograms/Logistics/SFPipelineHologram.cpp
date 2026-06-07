@@ -1328,10 +1328,21 @@ TArray<FItemAmount> ASFPipelineHologram::GetCost(bool includeChildren) const
 {
 	UE_LOG(LogSmartHologram, VeryVerbose, TEXT("💰 PIPE GetCost() CALLED on %s (includeChildren=%d)"), *GetName(), includeChildren);
 	
-	// Get base cost from parent (should be empty for pipes, but call it anyway)
+	// Get base cost from parent. In Satisfactory 1.2 vanilla AFGPipelineHologram::GetCost already
+	// returns the length-based pipe material cost.
 	TArray<FItemAmount> TotalCost = Super::GetCost(includeChildren);
-	
-	// Calculate pipe cost based on spline length
+
+	// #348: Trust the vanilla pipe cost when present. This method used to assume Super returned nothing
+	// for pipes and always added its own length-scaled cost on top, double-counting the pipe (auto-
+	// connect preview charged 2x the dismantle refund). The manual length calculation below now only
+	// runs as a fallback when vanilla returned nothing (e.g. the spline data was reset before the query).
+	if (TotalCost.Num() > 0)
+	{
+		UE_LOG(LogSmartHologram, VeryVerbose, TEXT("💰 PIPE GetCost: using vanilla cost (%d item types), skipping manual calc"), TotalCost.Num());
+		return TotalCost;
+	}
+
+	// Calculate pipe cost based on spline length (fallback when Super returned no cost)
 	if (mSplineComponent)
 	{
 		float PipeLengthCm = mSplineComponent->GetSplineLength();

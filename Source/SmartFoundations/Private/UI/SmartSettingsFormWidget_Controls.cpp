@@ -7,6 +7,7 @@
  */
 
 #include "UI/SmartSettingsFormWidgetImpl.h"
+#include "Framework/Application/SlateApplication.h"
 
 #define LOCTEXT_NAMESPACE "SmartFoundations"
 
@@ -825,6 +826,58 @@ FReply USmartSettingsFormWidget::NativeOnKeyDown(const FGeometry& InGeometry, co
     return Super::NativeOnKeyDown(InGeometry, InKeyEvent);
 }
 
+FReply USmartSettingsFormWidget::NativeOnPreviewKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent)
+{
+    // Issue #230: Up/Down stepping on a focused SpinBox.
+    //
+    // Engine bug: SSpinBox::OnKeyDown commits the arrowed value and calls ExitTextMode(), but
+    // ExitTextMode() only flips widget visibility - it leaves the (now hidden) inner EditableText
+    // focused and still holding the pre-edit text. When focus finally leaves the box, that stale
+    // text is committed (TextField_OnTextCommitted, OnUserMovedFocus) and reverts the arrowed value.
+    //
+    // We handle the step ourselves in the tunnel (preview) phase, before the SpinBox sees the key,
+    // and pull focus out of the stale EditableText so the revert can never fire. Left/Right are left
+    // alone so the caret can still move while typing.
+    const FKey Key = InKeyEvent.GetKey();
+    const bool bUp = (Key == EKeys::Up);
+    const bool bDown = (Key == EKeys::Down);
+    if (bUp || bDown)
+    {
+        if (USpinBox* Focused = GetFocusedSpinBox())
+        {
+            // Take focus OFF the inner EditableText so its stale pre-edit text can't revert our step.
+            // Focusing the SpinBox with a Mouse cause is deliberate: SSpinBox::OnFocusReceived only
+            // re-enters text mode for Navigation/SetDirectly causes (SetKeyboardFocus() uses SetDirectly,
+            // which is why it failed), so a Mouse-cause focus leaves the box in display mode with no
+            // editable text holding stale text. Moving focus also commits+exits any active text entry,
+            // honoring a value the user typed; we then apply the step on top.
+            if (FSlateApplication::IsInitialized())
+            {
+                if (TSharedPtr<SWidget> SlateWidget = Focused->GetCachedWidget())
+                {
+                    FSlateApplication::Get().SetUserFocus(InKeyEvent.GetUserIndex(), SlateWidget, EFocusCause::Mouse);
+                }
+            }
+
+            float Step = Focused->GetDelta();
+            if (Step <= 0.0f)
+            {
+                Step = 1.0f;
+            }
+
+            // SSpinBox clamps to its min/max inside CommitValue, and firing SetValue runs the bound
+            // OnValueChanged handler (grid warning refresh + immediate-mode apply), so no extra work here.
+            Focused->SetValue(Focused->GetValue() + (bUp ? Step : -Step));
+
+            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: arrow-stepped %s to %.2f"),
+                *Focused->GetName(), Focused->GetValue());
+            return FReply::Handled();
+        }
+    }
+
+    return Super::NativeOnPreviewKeyDown(InGeometry, InKeyEvent);
+}
+
 // ========================================
 // SpinBox Value Handlers
 // ========================================
@@ -929,6 +982,25 @@ bool USmartSettingsFormWidget::IsAnyTextInputFocused() const
            IsSpinBoxFocused(StaggerZXInput) ||
            IsSpinBoxFocused(StaggerZYInput) ||
            IsSpinBoxFocused(RotationZInput);
+}
+
+USpinBox* USmartSettingsFormWidget::GetFocusedSpinBox() const
+{
+    USpinBox* const All[] = {
+        GridXInput, GridYInput, GridZInput,
+        SpacingXInput, SpacingYInput, SpacingZInput,
+        StepsXInput, StepsYInput,
+        StaggerXInput, StaggerYInput, StaggerZXInput, StaggerZYInput,
+        RotationZInput
+    };
+    for (USpinBox* SpinBox : All)
+    {
+        if (SpinBox && SpinBox->HasKeyboardFocus())
+        {
+            return SpinBox;
+        }
+    }
+    return nullptr;
 }
 
 // ========================================

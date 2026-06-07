@@ -1665,7 +1665,9 @@ int32 USFExtendWiringService::GenerateAndExecuteWiring(AFGBuildableFactory* NewF
     {
         AFGUnlockSubsystem* Unlocks = AFGUnlockSubsystem::Get(GetWorld());
         const bool bDaisyUnlocked = Unlocks && Unlocks->IsCircuitDaisyChainingUnlocked();
-        if (bDaisyUnlocked && WireClass && IsValid(NewFactory))
+        // Issue #344: honor the "Extend Daisy-Chain Power" setting (Building Behavior section).
+        const bool bDaisySettingOn = Subsystem.IsValid() && Subsystem->GetAutoConnectRuntimeSettings().bExtendDaisyChain;
+        if (bDaisyUnlocked && bDaisySettingOn && WireClass && IsValid(NewFactory))
         {
             // Gather the repeated buildings to chain: the source plus same-class clones.
             TArray<AFGBuildableFactory*> ChainBuildings;
@@ -1695,7 +1697,44 @@ int32 USFExtendWiringService::GenerateAndExecuteWiring(AFGBuildableFactory* NewF
                 }
             }
 
-            if (ChainBuildings.Num() >= 2)
+            // Issue #344: decide whether to daisy-chain from the SOURCE building's existing
+            // power state (the building we extended FROM):
+            //   - already daisy-chained to another same-class factory -> continue it (master toggle);
+            //   - pole-less AND unwired (starting a fresh manifold)    -> only if the pole-less option is on;
+            //   - already wired to a pole (or anything else)           -> leave power to the pole, no daisy.
+            const bool bPolelessOptOn = Subsystem.IsValid() && Subsystem->GetAutoConnectRuntimeSettings().bExtendDaisyChainPoleless;
+            bool bDoDaisy = bPolelessOptOn; // default for a fresh build with no pre-existing same-class source
+            if (AFGBuildableFactory* SrcFactory = Cast<AFGBuildableFactory>(SourceRaw))
+            {
+                if (SrcFactory->GetClass() == BuildClass)
+                {
+                    bool bChainedToSameClass = false;
+                    bool bHasAnyWire = false;
+                    TArray<UFGCircuitConnectionComponent*> SrcConns;
+                    SrcFactory->GetComponents<UFGCircuitConnectionComponent>(SrcConns);
+                    for (UFGCircuitConnectionComponent* SC : SrcConns)
+                    {
+                        if (!SC) { continue; }
+                        TArray<UFGCircuitConnectionComponent*> Peers;
+                        SC->GetConnections(Peers); // non-hidden = real wires only
+                        for (UFGCircuitConnectionComponent* Peer : Peers)
+                        {
+                            if (!Peer) { continue; }
+                            bHasAnyWire = true;
+                            const AActor* PeerOwner = Peer->GetOwner();
+                            if (PeerOwner && PeerOwner->GetClass() == BuildClass)
+                            {
+                                bChainedToSameClass = true;
+                            }
+                        }
+                    }
+                    bDoDaisy = bChainedToSameClass ? true            // continue an existing same-class chain
+                             : (!bHasAnyWire ? bPolelessOptOn        // pole-less fresh manifold
+                                             : false);              // already on a pole -> no daisy
+                }
+            }
+
+            if (ChainBuildings.Num() >= 2 && bDoDaisy)
             {
                 const FVector Origin = NewFactory->GetActorLocation();
                 const FRotator Rot = NewFactory->GetActorRotation();

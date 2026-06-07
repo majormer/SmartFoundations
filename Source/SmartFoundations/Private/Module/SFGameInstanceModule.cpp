@@ -64,8 +64,8 @@ void USFGameInstanceModule::DispatchLifecycleEvent(ELifecyclePhase Phase)
 		// (The empty config menu under 1.2 was a separate issue, fixed in the Smart_Config asset:
 		// its RootSection had bHidden=true, which the 1.2 Mods menu uses to skip the property tree.)
 
-		// Register SML hook for cost aggregation (belt preview costs)
-		RegisterCostAggregationHook();
+		// #348: cost-aggregation GetCost hook removed - auto-connect belts/pipes are child
+		// holograms, so vanilla GetCost(includeChildren) already counts them (no manual add).
 
 		// Register SML hook for blueprint construct (chain actor rebuilding like AutoLink)
 		RegisterBlueprintConstructHook();
@@ -73,115 +73,13 @@ void USFGameInstanceModule::DispatchLifecycleEvent(ELifecyclePhase Phase)
 	}
 }
 
-void USFGameInstanceModule::RegisterCostAggregationHook()
-{
-	UE_LOG(LogSmartFoundations, Verbose, TEXT("💰 Registering GetCost hook for belt preview cost aggregation"));
-
-	// ========================================
-	// SML Hook: GetCost for Conveyor Attachments
-	// ========================================
-	// We need an SML hook because the vanilla hologram Blueprint (Holo_ConveyorAttachment_C)
-	// is used, not our custom C++ class. Hook intercepts vanilla GetCost() to add belt costs.
-	// Vanilla ValidatePlacementAndCost() will then automatically handle affordability.
-
-	// Hook AFGHologram::GetCost to inject belt preview costs
-	// Signature must match SML's TCallScope pattern
-	SUBSCRIBE_UOBJECT_METHOD(AFGHologram, GetCost, [](auto& scope, const AFGHologram* self, bool includeChildren)
-	{
-		// Call original GetCost implementation
-		TArray<FItemAmount> BaseCost = scope(self, includeChildren);
-
-		// Process conveyor attachment holograms (splitters/mergers)
-		const AFGConveyorAttachmentHologram* Distributor = Cast<AFGConveyorAttachmentHologram>(self);
-		if (Distributor)
-		{
-			// Try to get belt preview costs from auto-connect service
-			if (UWorld* World = self->GetWorld())
-			{
-				if (USFSubsystem* Subsystem = USFSubsystem::Get(World))
-				{
-					if (USFAutoConnectService* AutoConnect = Subsystem->GetAutoConnectService())
-					{
-						TArray<FItemAmount> BeltCosts = AutoConnect->GetBeltPreviewsCost(Distributor);
-
-						if (BeltCosts.Num() > 0)
-						{
-							UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("💰 GetCost hook: Adding %d belt cost item types"), BeltCosts.Num());
-
-							// Merge belt costs using FactorySpawner's pattern
-							for (const FItemAmount& BeltCost : BeltCosts)
-							{
-								if (!BeltCost.ItemClass) continue;
-
-								FItemAmount* Existing = BaseCost.FindByPredicate([&](const FItemAmount& X) {
-									return X.ItemClass == BeltCost.ItemClass;
-								});
-								if (Existing)
-								{
-									Existing->Amount += BeltCost.Amount;
-								}
-								else
-								{
-									BaseCost.Add(BeltCost);
-								}
-							}
-
-							UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("💰 GetCost hook: Returning %d item types total"), BaseCost.Num());
-						}
-					}
-				}
-			}
-		}
-
-		// Process power pole holograms
-		else if (UWorld* World = self->GetWorld())
-		{
-			if (USFSubsystem* Subsystem = USFSubsystem::Get(World))
-			{
-				if (USFAutoConnectService* AutoConnect = Subsystem->GetAutoConnectService())
-				{
-					if (AutoConnect->IsPipelineJunctionHologram(self))
-					{
-						TArray<FItemAmount> PipeCosts = AutoConnect->GetPipePreviewsCost(self);
-
-						if (PipeCosts.Num() > 0)
-						{
-							UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("💰 GetCost hook: Adding %d pipe cost item types"), PipeCosts.Num());
-
-							// Merge pipe costs using same pattern
-							for (const FItemAmount& PipeCost : PipeCosts)
-							{
-								if (!PipeCost.ItemClass) continue;
-
-								FItemAmount* Existing = BaseCost.FindByPredicate([&](const FItemAmount& X) {
-									return X.ItemClass == PipeCost.ItemClass;
-								});
-								if (Existing)
-								{
-									Existing->Amount += PipeCost.Amount;
-								}
-								else
-								{
-									BaseCost.Add(PipeCost);
-								}
-							}
-
-							UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("💰 GetCost hook: Returning %d item types total (including pipes)"), BaseCost.Num());
-						}
-					}
-				}
-			}
-		}
-
-		return BaseCost;
-	});
-
-	// NOTE: ValidatePlacementAndCost hook removed in v24.2.0+
-	// After switching to vanilla child hologram patterns, vanilla affordability checks handle everything correctly.
-	// No custom cost validation needed - child holograms automatically aggregate costs via GetCost() override.
-
-	UE_LOG(LogSmartFoundations, Verbose, TEXT("✅ GetCost hook registered - child hologram costs automatically aggregated by vanilla"));
-}
+// #348: The GetCost aggregation hook was removed. Smart's auto-connect belts and pipe junctions
+// are now child holograms (tagged SF_BeltAutoConnectChild / SF_PipeAutoConnectChild and AddChild'd
+// to the distributor/junction), so vanilla AFGHologram::GetCost(includeChildren) - which the build
+// gun's affordability path uses - already counts them. The old hook also added
+// GetBeltPreviewsCost/GetPipePreviewsCost on top of that base cost, double-counting the auto-connect
+// belt and pipe cost in the build-gun preview (placement charged 2x the dismantle refund). With
+// the children counted by vanilla, that manual addition is redundant, so the hook is gone.
 
 void USFGameInstanceModule::RegisterBlueprintConstructHook()
 {

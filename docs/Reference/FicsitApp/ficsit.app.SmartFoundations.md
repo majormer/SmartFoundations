@@ -1,6 +1,6 @@
 # <img src="https://github.com/majormer/SmartFoundations/blob/main/images/Smart-Logo.png?raw=true" width="150" alt="Smart! Logo"> Smart! Mod
 
-![Status](https://img.shields.io/badge/Status-Released-brightgreen) ![Version](https://img.shields.io/badge/Version-31.0.0-blue) ![Satisfactory](https://img.shields.io/badge/Satisfactory-1.2-blue) ![Engine](https://img.shields.io/badge/Engine-UE%205.6-blue) ![SML](https://img.shields.io/badge/SML-3.11.x-blue) ![Multiplayer](https://img.shields.io/badge/Multiplayer-Testing-orange) ![AI Assisted Development Used](https://img.shields.io/badge/AI%20Assisted%20Development%20Used-Disclosure%20Below-blue)
+![Status](https://img.shields.io/badge/Status-Released-brightgreen) ![Version](https://img.shields.io/badge/Version-31.0.1-blue) ![Satisfactory](https://img.shields.io/badge/Satisfactory-1.2-blue) ![Engine](https://img.shields.io/badge/Engine-UE%205.6-blue) ![SML](https://img.shields.io/badge/SML-3.11.x-blue) ![Multiplayer](https://img.shields.io/badge/Multiplayer-Testing-orange) ![AI Assisted Development Used](https://img.shields.io/badge/AI%20Assisted%20Development%20Used-Disclosure%20Below-blue)
 
 > **Multiplayer note:** Smart! is primarily developed for single-player. Multiplayer is under active testing with partial success, but is not currently considered fully supported.
 
@@ -101,13 +101,19 @@ See [LICENSE.md](https://github.com/majormer/SmartFoundations/blob/main/LICENSE.
 
 ---
 
-## 📰 What's New in v31.0.0
+## 📰 What's New in v31.0.1
 
-**Current Release:** v31.0.0 — the first Smart! release for Satisfactory **1.2**. See the [full changelog](https://github.com/majormer/SmartFoundations/blob/main/CHANGELOG.md) for all release details.
+**Current Release:** v31.0.1 — a patch on top of the Satisfactory **1.2** release. See the [full changelog](https://github.com/majormer/SmartFoundations/blob/main/CHANGELOG.md) for all release details.
 
-> **One-time settings reset:** the Smart! settings menu was reorganized for this release, so your saved Smart! settings reset to their defaults the first time you load 31.0.0. Set them once and they'll stick from then on.
+### Highlights in v31.0.1
 
-### Highlights in v31.0.0
+- **Settings for Extend daisy-chain power** — the building-to-building power chaining now has its own controls under Options > Mods > Smart! > Building Behavior: turn it on or off, and choose whether Extending a pole-less machine starts a fresh daisy chain. Defaults match 31.0.0.
+- **Auto-connect conveyors and pipes no longer charge double** — an auto-connected belt or pipe used to preview at twice its real cost on the build gun; the preview now matches what the segment actually costs and refunds.
+- **Smart! Panel arrow keys fixed** — stepping a value with the Up/Down arrow keys no longer snaps back when the field loses focus.
+
+### Also in v31.0.0: Satisfactory 1.2
+
+> **One-time settings reset:** the Smart! settings menu was reorganized in 31.0.0, so your saved Smart! settings reset to their defaults the first time you load a 31.x build. Set them once and they'll stick from then on.
 
 - **Rebuilt for Satisfactory 1.2** — Smart! was migrated to the engine (UE 5.6) and the "Game Feature" plugin model that 1.2 uses. Every Smart! feature carries over with no intended gameplay change: grid building, Extend and Scaled Extend, belt/pipe/power auto-connect, Smart Upgrade, Restore presets, the Smart Panel, and all keybinds.
 - **Pipeline T-Junction support** — Satisfactory 1.2's new 3-way Pipeline T-Junction now works everywhere Smart! handles pipes (scaling, Extend, Scaled Extend, pipe auto-connect, and Restore presets), the same as the existing 4-way junction.
