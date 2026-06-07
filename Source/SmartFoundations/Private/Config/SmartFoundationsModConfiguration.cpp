@@ -70,6 +70,8 @@ USmartFoundationsModConfiguration::USmartFoundationsModConfiguration()
 		LOCTEXT("P.bExtendEnabled.TT", "Enable Extend - repeat a building or grid outward in one direction."), true));
 	Building->SectionProperties.Add(TEXT("bExtendPowerEnabled"),   CreateBoolProperty(TEXT("bExtendPowerEnabled"),   LOCTEXT("P.bExtendPowerEnabled", "Extend Power Poles"),
 		LOCTEXT("P.bExtendPowerEnabled.TT", "Include power poles when using Extend."), false));
+	Building->SectionProperties.Add(TEXT("bExtendDaisyChainPower"), CreateBoolProperty(TEXT("bExtendDaisyChainPower"), LOCTEXT("P.bExtendDaisyChainPower", "Extend Daisy-Chain Power"),
+		LOCTEXT("P.bExtendDaisyChainPower.TT", "Once Upgraded Power Connectors is unlocked, Extend wires power directly building-to-building along the lane instead of running a pole to each building."), true));
 	Building->SectionProperties.Add(TEXT("bAutoHoldOnGridChange"), CreateBoolProperty(TEXT("bAutoHoldOnGridChange"), LOCTEXT("P.bAutoHoldOnGridChange", "Auto-Hold on Grid Change"),
 		LOCTEXT("P.bAutoHoldOnGridChange.TT", "Automatically lock the hologram in place after any grid change. Press the Hold key to release it."), false));
 	Building->SectionProperties.Add(TEXT("bApplyImmediately"),     CreateBoolProperty(TEXT("bApplyImmediately"),     LOCTEXT("P.bApplyImmediately", "Apply Immediately"),

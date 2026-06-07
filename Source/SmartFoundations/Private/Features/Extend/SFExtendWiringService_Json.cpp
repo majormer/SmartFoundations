@@ -1665,7 +1665,9 @@ int32 USFExtendWiringService::GenerateAndExecuteWiring(AFGBuildableFactory* NewF
     {
         AFGUnlockSubsystem* Unlocks = AFGUnlockSubsystem::Get(GetWorld());
         const bool bDaisyUnlocked = Unlocks && Unlocks->IsCircuitDaisyChainingUnlocked();
-        if (bDaisyUnlocked && WireClass && IsValid(NewFactory))
+        // Issue #344: honor the "Extend Daisy-Chain Power" setting (Building Behavior section).
+        const bool bDaisySettingOn = Subsystem.IsValid() && Subsystem->GetAutoConnectRuntimeSettings().bExtendDaisyChain;
+        if (bDaisyUnlocked && bDaisySettingOn && WireClass && IsValid(NewFactory))
         {
             // Gather the repeated buildings to chain: the source plus same-class clones.
             TArray<AFGBuildableFactory*> ChainBuildings;

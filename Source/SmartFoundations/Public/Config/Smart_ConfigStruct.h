@@ -55,6 +55,7 @@ struct FSmart_BuildingBehaviorConfigSection {
     GENERATED_BODY()
     UPROPERTY(BlueprintReadWrite) bool bExtendEnabled{true};
     UPROPERTY(BlueprintReadWrite) bool bExtendPowerEnabled{};
+    UPROPERTY(BlueprintReadWrite) bool bExtendDaisyChainPower{true};
     UPROPERTY(BlueprintReadWrite) bool bAutoHoldOnGridChange{false};
     UPROPERTY(BlueprintReadWrite) bool bApplyImmediately{};
 };
@@ -175,6 +176,11 @@ public:
     UPROPERTY(BlueprintReadWrite)
     bool bExtendPowerEnabled{};
 
+    // Extend daisy-chain power: chain building-to-building power along the lane when the
+    // Upgraded Power Connectors upgrade is unlocked (Issue #344)
+    UPROPERTY(BlueprintReadWrite)
+    bool bExtendDaisyChainPower{true};
+
     // ── Scaling ──
 
     // Auto-Hold: automatically lock hologram position after any grid modification (Issue #273)
@@ -256,6 +262,7 @@ public:
         // Building Behavior (Extend + Scaling + Smart Panel)
         ConfigStruct.bExtendEnabled           = Sections.BuildingBehavior.bExtendEnabled;
         ConfigStruct.bExtendPowerEnabled      = Sections.BuildingBehavior.bExtendPowerEnabled;
+        ConfigStruct.bExtendDaisyChainPower   = Sections.BuildingBehavior.bExtendDaisyChainPower;
         ConfigStruct.bAutoHoldOnGridChange    = Sections.BuildingBehavior.bAutoHoldOnGridChange;
         ConfigStruct.bApplyImmediately        = Sections.BuildingBehavior.bApplyImmediately;
 
