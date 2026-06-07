@@ -115,7 +115,7 @@ void USFBuildableSizeRegistry::RegisterDefaultProfiles()
 	RegisterProfile(TEXT("Build_PipelineMK2_C"), FVector(100.0f, 100.0f, 100.0f), false, false, TEXT(""), false);
 	RegisterProfile(TEXT("Build_PipelineMK2_NoIndicator_C"), FVector(100.0f, 100.0f, 100.0f), false, false, TEXT(""), false);
 	RegisterProfile(TEXT("Build_PipelineJunction_Cross_C"), FVector(300.0f, 300.0f, 200.0f), false, true, TEXT(""), false, FVector(0.0f, 0.0f, -175.0f));
-	RegisterProfile(TEXT("Build_PipelineJunction_T_C"), FVector(300.0f, 300.0f, 200.0f), false, true, TEXT(""), false, FVector(0.0f, 0.0f, -175.0f));
+	RegisterProfile(TEXT("Build_PipelineJunction_T_C"), FVector(300.0f, 300.0f, 200.0f), false, true, TEXT(""), true, FVector(0.0f, 0.0f, -175.0f));
 	RegisterProfile(TEXT("Build_PipelinePump_C"), FVector(400.0f, 250.0f, 250.0f), false, true, TEXT(""), false, FVector(0.0f, 0.0f, -175.0f));
 	RegisterProfile(TEXT("Build_PipelinePumpMk2_C"), FVector(400.0f, 250.0f, 250.0f), false, true, TEXT(""), false, FVector(0.0f, 0.0f, -175.0f));
 	RegisterProfile(TEXT("Build_Valve_C"), FVector(100.0f, 100.0f, 100.0f), false, false, TEXT(""), false);
