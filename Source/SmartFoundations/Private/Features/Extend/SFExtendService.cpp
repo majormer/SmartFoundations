@@ -931,17 +931,19 @@ bool USFExtendService::TryExtendFromBuilding(AFGBuildable* HitBuilding, AFGHolog
     // NOTE: Orphaned pending builds will be cleared at the start of CreateBeltPreviews().
     // No need to clear here - the flow is: WalkTopology → CreateBeltPreviews (clears all → spawns new).
 
-    if (!WalkTopology(HitBuilding))
+    const bool bWalked = WalkTopology(HitBuilding);
     {
-        // Debug: Log topology walk failure
-        static double LastTopoLog = 0;
-        double Now = FPlatformTime::Seconds();
-        if (Now - LastTopoLog > 2.0)
+        // [EXTEND-MP] TEMP: is WalkTopology the bail? (bare building vs client-specific failure)
+        static double LastTopoLog = 0; const double Now = FPlatformTime::Seconds();
+        if (Now - LastTopoLog > 1.0)
         {
-            UE_LOG(LogSmartExtend, VeryVerbose, TEXT("🔄 EXTEND: No valid topology found for %s (no belts/distributors connected?)"),
-                *HitBuilding->GetName());
+            UE_LOG(LogSmartExtend, Display, TEXT("[EXTEND-MP] WalkTopology(%s) = %s"),
+                *HitBuilding->GetName(), bWalked ? TEXT("TRUE - proceeding") : TEXT("FALSE - bail (no belts/distributors connected?)"));
             LastTopoLog = Now;
         }
+    }
+    if (!bWalked)
+    {
         return false;
     }
 
