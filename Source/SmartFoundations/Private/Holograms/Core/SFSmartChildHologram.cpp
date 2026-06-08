@@ -26,7 +26,18 @@ void ASFSmartChildHologram::CheckValidPlacement() {
 
 AActor* ASFSmartChildHologram::Construct(TArray<AActor*>& out_children, FNetConstructionID constructionID) {
     UE_LOG(LogSmartHologram, Log, TEXT("SFSmartChildHologram::Construct: Building from hologram %s"), *GetName());
-    
+
+    // [MP-SLICE0] TEMP multiplayer instrumentation — remove before release.
+    // Server-side per-child signal (foundation family): if this fires with HasAuthority=1 on
+    // a CLIENT-initiated build, the previewed foundation child round-tripped to the server.
+    // NetMode: 0=Standalone 1=DedicatedServer 2=ListenServer 3=Client.
+    {
+        const int32 NetMode = GetWorld() ? (int32)GetWorld()->GetNetMode() : -1;
+        UE_LOG(LogSmartHologram, Display,
+            TEXT("[MP-SLICE0] SmartChild::Construct: %s NetMode=%d HasAuthority=%d"),
+            *GetName(), NetMode, HasAuthority() ? 1 : 0);
+    }
+
     // Call base construction to create the actual building
     AActor* ConstructedActor = Super::Construct(out_children, constructionID);
     

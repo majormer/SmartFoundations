@@ -38,6 +38,17 @@ AActor* ASFBuildableChildHologram::Construct(TArray<AActor*>& out_children, FNet
 	UE_LOG(LogSmartHologram, Log, TEXT("SFBuildableChildHologram::Construct: Building %s from %s"),
 		mBuildClass ? *mBuildClass->GetName() : TEXT("NULL"), *GetName());
 
+	// [MP-SLICE0] TEMP multiplayer instrumentation — remove before release.
+	// Server-side per-child signal: if this fires with HasAuthority=1 on a CLIENT-initiated
+	// build, the previewed child round-tripped to the server. NetMode: 0=Standalone
+	// 1=DedicatedServer 2=ListenServer 3=Client.
+	{
+		const int32 NetMode = GetWorld() ? (int32)GetWorld()->GetNetMode() : -1;
+		UE_LOG(LogSmartHologram, Display,
+			TEXT("[MP-SLICE0] BuildableChild::Construct: %s build=%s NetMode=%d HasAuthority=%d"),
+			*GetName(), mBuildClass ? *mBuildClass->GetName() : TEXT("NULL"), NetMode, HasAuthority() ? 1 : 0);
+	}
+
 	AActor* BuiltActor = Super::Construct(out_children, constructionID);
 
 	if (BuiltActor)
