@@ -11,11 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [31.0.2] - 2026-06-07
 
-> *Dedicated-server packaging, power-cable previews for Extend, plus Smart! Panel dropdown fixes.*
+> *Dedicated-server packaging, a Creative Mode auto-connect fix, power-cable previews for Extend, plus Smart! Panel dropdown fixes.*
 
 ### Fixed
 
-- **Smart! now ships a dedicated-server build** - Smart! is now packaged for Windows dedicated servers in addition to the game client. Players running or joining a dedicated server could previously hit problems updating or matching Smart! because no server build was published; the server now gets a matching package so updates line up. (This is a packaging fix for server setups, not the multiplayer work still in progress.)
+- **Smart! now ships a dedicated-server build** - Smart! is now packaged for Windows dedicated servers in addition to the game client. Players running or joining a dedicated server could previously hit problems updating or matching Smart! because no server build was published; the server now gets a matching package so updates line up. (This is a packaging fix for server setups, not the multiplayer work still in progress.) (Issue #176)
+- **Auto-connect is free again in Creative Mode / with No Build Cost** - When you play with No Build Cost on (the option Satisfactory 1.2 moved under Creative Mode, formerly Advanced Game Settings), Smart!'s auto-connected belts, pipes, and power lines were still being checked against your inventory and could be blocked as "unaffordable." Auto-connect now recognizes free building the same way the base game does, so it works without materials in Creative Mode. Normal games are unaffected (Issue #324).
 - **Power cable previews are back for Extend and Scaled Extend** - When you Extend (or Scaled Extend) a building that carries a power connection, the preview now shows the power cables running between the source and each copy, including the cable droop, so you can see exactly how the run will wire up before you build. Previously the cables were missing, and an earlier attempt left them floating high above the poles; they now sit on the connectors and follow the rotation and chaining of each copy (Issue #345).
 - **Power auto-connect wire preview no longer shows a red middle** - The wire preview drawn when Smart! auto-connects power could render its middle section in the red "invalid" tint even on a perfectly valid connection. The whole cable now previews in the correct color (Issue #346).
 - **Smart! Panel Routing dropdown opens on Stackable Conveyor Poles** - On a Stackable Conveyor Pole, the Belt Auto-Connect *Routing* dropdown was empty and would not open. It now lists Default / Curve / Straight and applies your choice. Moving the panel by right-click-dragging it also closes any open dropdown instead of leaving it behind (Issue #351).
