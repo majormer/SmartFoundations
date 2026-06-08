@@ -38,6 +38,19 @@ protected:
 	 */
 	void RegisterBeltSupportConstructHook();
 
+	/**
+	 * Multiplayer Slice 0 (Phase 1 - construct chunk guard). Hooks UFGBuildGunStateBuild::InternalConstructHologram
+	 * on the CLIENT. A Smart scaled grid commits as a single reliable Server_ConstructHologram RPC carrying the
+	 * parent + all child holograms serialized into one blob; past an engine byte ceiling (empirical ~135 cells)
+	 * that RPC is dropped at the net layer -> all-or-nothing failure with orphaned previews (no failure callback
+	 * fires because the server never processed it). This guard cancels the oversized construct BEFORE it is sent,
+	 * so nothing orphans (the preview stays as the live active hologram) and the player is told to build in
+	 * smaller sections. Engages only for a network client (NM_Client) above the safe cell count; single-player,
+	 * listen-server host, dedicated-server authority, and small grids take the untouched vanilla path.
+	 * (Phase 2 will auto-chunk the placement instead of refusing it.)
+	 */
+	void RegisterClientConstructChunkGuardHook();
+
 	/** Smart! Configuration blueprint - registered with SML for in-game menu access */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Smart! Configuration")
 	TSubclassOf<class UModConfiguration> SmartConfigClass;

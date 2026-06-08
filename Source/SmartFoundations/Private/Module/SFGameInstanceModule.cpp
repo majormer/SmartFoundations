@@ -22,6 +22,11 @@
 #include "Features/AutoConnect/SFAutoConnectService.h"
 #include "Features/Extend/SFExtendService.h"
 
+// MP Slice 0 (Phase 1): client construct chunk guard
+#include "Equipment/FGBuildGunBuild.h"        // UFGBuildGunStateBuild::InternalConstructHologram / GetHologram
+#include "Core/Helpers/SFNetworkHelper.h"     // FSFNetworkHelper::IsClient
+#include "Engine/Engine.h"                     // GEngine on-screen message
+
 // For chain actor rebuilding
 #include "Buildables/FGBuildableConveyorBase.h"
 #include "Buildables/FGBuildableConveyorBelt.h"
@@ -75,6 +80,10 @@ void USFGameInstanceModule::DispatchLifecycleEvent(ELifecyclePhase Phase)
 		// #341: Register SML hook on the belt-support parent Construct (in-frame chain registration;
 		// one hook covers stackable / wall / ceiling - see RegisterBeltSupportConstructHook).
 		RegisterBeltSupportConstructHook();
+
+		// MP Slice 0 (Phase 1): guard a client against committing an oversized scaled grid in one
+		// construct RPC (the all-or-nothing drop + orphaned-preview bug). See the method comment.
+		RegisterClientConstructChunkGuardHook();
 
 	}
 }
@@ -290,4 +299,83 @@ void USFGameInstanceModule::RegisterBeltSupportConstructHook()
 	);
 
 	UE_LOG(LogSmartFoundations, Verbose, TEXT("✅ AFGConveyorPoleHologram::Construct hook registered (#341 belt-support chain registration: stackable/wall/ceiling)"));
+}
+
+// MP Slice 0 (Phase 1) - construct chunk guard.
+// Empirical hard ceiling on a single client->server construct: ~137 foundations / ~135 constructors per
+// placement (the parent + all child holograms serialize into one reliable Server_ConstructHologram RPC whose
+// blob exceeds UE's reliable partial-bunch byte limit and is dropped at the net layer). We refuse a client
+// placement above a conservative cell count BELOW that edge (heavier holograms may serialize larger and fail
+// sooner, so we leave margin). This is a temporary safety net; Phase 2 will auto-chunk into sub-constructs.
+static constexpr int32 SF_MP_MAX_SINGLE_CONSTRUCT_CELLS = 120;
+
+void USFGameInstanceModule::RegisterClientConstructChunkGuardHook()
+{
+	SUBSCRIBE_METHOD(
+		UFGBuildGunStateBuild::InternalConstructHologram,
+		[](auto& scope, UFGBuildGunStateBuild* self, FNetConstructionID clientNetConstructID)
+		{
+			if (!self)
+			{
+				return;
+			}
+
+			// Only a true network client (NM_Client) serializes the construct over the wire and can hit the
+			// byte ceiling. Single-player, listen-server host, and dedicated-server authority construct locally
+			// (or already have authority) and must take the untouched vanilla one-shot path.
+			UWorld* World = self->GetWorld();
+			if (!World || !FSFNetworkHelper::IsClient(World))
+			{
+				return;
+			}
+
+			AFGHologram* Holo = self->GetHologram();
+			if (!Holo)
+			{
+				return;
+			}
+
+			// Count Smart grid child holograms (tagged SF_GridChild during scaled-grid spawn). +1 for the
+			// parent/origin cell, which is the active hologram itself (not a child).
+			static const FName GridChildTag(TEXT("SF_GridChild"));
+			int32 GridChildCount = 0;
+			for (const AFGHologram* Child : Holo->GetHologramChildren())
+			{
+				if (Child && Child->Tags.Contains(GridChildTag))
+				{
+					++GridChildCount;
+				}
+			}
+
+			if (GridChildCount == 0)
+			{
+				return; // Not a Smart scaled grid (no tagged children) -> vanilla path.
+			}
+
+			const int32 TotalCells = GridChildCount + 1;
+			if (TotalCells <= SF_MP_MAX_SINGLE_CONSTRUCT_CELLS)
+			{
+				return; // Small enough to fit one construct RPC -> vanilla path (works in MP).
+			}
+
+			// Oversized grid on a client: the single Server_ConstructHologram RPC would be dropped at the net
+			// layer (all-or-nothing) and orphan the previews (no failure callback fires because the server
+			// never processes it). Cancel the construct BEFORE it is sent. Nothing orphans - the active
+			// hologram and its preview children stay live, so the player can scale down and build.
+			UE_LOG(LogSmartFoundations, Display,
+				TEXT("[MP-CHUNK] Blocked oversized client construct: %d cells (> %d). A single-RPC construct of this size exceeds the multiplayer limit (~135) and would be dropped. Preview kept; advise smaller sections."),
+				TotalCells, SF_MP_MAX_SINGLE_CONSTRUCT_CELLS);
+
+			if (GEngine)
+			{
+				GEngine->AddOnScreenDebugMessage(-1, 6.0f, FColor::Orange,
+					FString::Printf(TEXT("Smart!: grid too large for multiplayer (%d cells, max ~%d). Build in smaller sections."),
+						TotalCells, SF_MP_MAX_SINGLE_CONSTRUCT_CELLS));
+			}
+
+			scope.Cancel(); // suppress vanilla InternalConstructHologram -> no oversized RPC is sent.
+		}
+	);
+
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("✅ Client construct chunk-guard hook registered (MP Slice 0 Phase 1)"));
 }
