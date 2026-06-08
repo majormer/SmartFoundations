@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [31.1.0] - 2026-06-08
+
+> *A belt-focused update: conveyor belt runs between poles are finally rock-solid, and standard conveyor poles join the auto-connect family.*
+
+### Added
+
+- **Standard conveyor pole auto-connect** - Scaling a standard Conveyor Pole now works like the Stackable Conveyor Pole: place one, scale out a line, and Smart! auto-connects belts between the poles at the height you set. Raise or lower the pole height and the whole line of belts follows. (One quirk to know: set the line's size first and *then* adjust the height - changing the grid size while you're mid-height-adjust will drop you out of the height step.) (Issue #354)
+
+### Fixed
+
+- **Auto-connected belts between poles no longer stall or crash** - When Smart! auto-connected belts across a run of Stackable, Wall, or Ceiling conveyor poles, the belts could end up as a string of disconnected single pieces instead of one continuous line. On a save and reload that run would quietly stop moving items until you reloaded a second time - and in the worst case, connecting a feeder belt and running items through it could **crash the game**. This was long-standing (the stackable belt feature has carried this risk since around v29). Smart! now stitches each pole run into one proper conveyor line as it's built, so it transports correctly, survives save/reload on the first load, and the crash is gone. Your existing factories are unaffected; this only changes how new runs are built. (Issue #341)
+
+---
+
 ## [31.0.2] - 2026-06-07
 
 > *Dedicated-server packaging, a Creative Mode free-build fix, power-cable previews for Extend, plus Smart! Panel dropdown fixes.*

@@ -540,8 +540,8 @@ reliable** — a single-reload retest did not coalesce; the only safe pre-fix gu
 connecting/flowing a freshly built long run.) Wall/ceiling supports are still pre-fix — verify with the
 live chain audit there until they're covered too.
 
-### 6.15 Live re-characterization via SmartMCP chain audit + a second failure mode (CRASH) **[E, 2026-06-08]**
-Controlled retest of §6.14 using the live `smartmcp_conveyor_chains` audit, isolating each step.
+### 6.15 Live re-characterization via a live chain audit + a second failure mode (CRASH) **[E, 2026-06-08]**
+Controlled retest of §6.14 using a live in-game conveyor-chain-actor audit (per-chain segment/item/zombie counts), isolating each step.
 
 **Repro.** A **2-high × 4-segment** Stackable Conveyor Pole run, belt auto-connect ON (8 Mk6 belts).
 
