@@ -5,9 +5,15 @@ and Smart!'s auto-connect placement interact on Satisfactory 1.2 (game CL 491125
 and why stacked-pole belt auto-connect is hard.
 
 **Status:** living reference. Consolidates the investigation of 2026-06-05 (and the prior P0
-chain-actor characterization). Supersedes scattered notes; companion to
-`docs/Features/AutoConnect/DESIGN_StackablePole_FromScratch.md` (the chosen fix) and
-`docs/Sprints/ChainActorMigrationPlan.md` (local; the P0 record).
+chain-actor characterization), plus the **2026-06-08 escalation (§6.15)**. Supersedes scattered
+notes; companion to `docs/Features/AutoConnect/DESIGN_StackablePole_FromScratch.md` (the chosen fix)
+and `docs/Sprints/ChainActorMigrationPlan.md` (local; the P0 record).
+
+> **Latest (2026-06-08):** the build-time chain coalesce (§10) is **RESUMED** on
+> `feature/341-belt-run-chain-coalesce`. A controlled live retest (§6.15) escalated the stacked-run
+> fragmentation from a reload **stall** to **crash-class** (a vanilla merge can leave a belt at
+> `mChainSegmentIndex == -1` → assert on the next factory tick) and showed a **single reload does NOT
+> coalesce** the run. See §6.15 and §10.
 
 ---
 
@@ -44,17 +50,30 @@ of the whole system is:
 > **A belt's connections must exist *before* it is registered into the conveyor subsystem
 > (`AddConveyor`).** Register-then-connect produces a one-belt "solo" chain that the engine will
 > **not** retroactively merge, and any attempt to fix it by mutating live bucket/chain state from
-> outside a complete vanilla operation **crashes** on the next parallel factory tick.
+> outside a complete vanilla operation **crashes** on the next parallel factory tick. **(2026-06-08,
+> §6.15: the crash is not only from *attempted fixes* — a fragmented run can crash from the player's
+> own next action, when connecting a vanilla end-belt makes vanilla merge the solo chains and mis-assign
+> a belt's segment index to -1.)**
 
 Smart!'s belt auto-connect features (distributor→factory, Extend, stackable poles) all reduce to
 the problem of honoring that invariant. Distributor and Extend belts satisfy it naturally because
 their endpoints are **stable, pre-existing** buildables at construct time. **Stackable-pole belts
 violate it structurally**: the belts in a placement are built *simultaneously*, so a belt's
 neighbours don't exist (and its own connector geometry isn't even finalized) when it would need
-to connect. Six in-game experiments narrowed the solution space to exactly one viable design:
-**preview-only belt holograms + fresh `BuildBelt` construction on confirm**, with cost charged via
-a hologram `GetCost` override. This document records the model, the experiments, and the analysis
-in full.
+to connect. Six in-game experiments (§6) converged on the shipped design: **the belt child holograms construct
+real belts and wire their connectors by geometric coincidence at `Construct`, before registering into
+the conveyor subsystem** — the same connect-before-register discipline Extend uses (§9), with cost left
+to vanilla. (An earlier "preview-only belt holograms + fresh `BuildBelt`, cost via a `GetCost` override"
+proposal was superseded before shipping; see §6.8–§6.9 and the §9 mis-conclusion note.) This document
+records the model, the experiments, and the analysis in full.
+
+> **Update 2026-06-08 (§6.15).** Two things sharpened since the original write-up. (1) The fragmented
+> stacked run is **crash-class**, not merely a reload stall: a vanilla merge of the solo chains can
+> leave a belt at `mChainSegmentIndex == -1`, asserting in `AFGConveyorChainActor::GetItemsForSegment()`
+> on the next `ParallelFor` factory tick. (2) A single save+reload does **not** reliably coalesce the
+> run. The required fix is therefore a **build-time coalesce** (§10, `feature/341-belt-run-chain-coalesce`),
+> not reliance on reload. Note also that §9 revisits the **construction** approach summarized above
+> (preview-only + fresh `BuildBelt`); read §8–§9 together before treating that summary as final.
 
 ---
 
@@ -204,8 +223,13 @@ The one code path empirically proven to rebuild chains cleanly (P0 "RebuildOnly"
 - **Phase 2.5** (`:191-326`) union-find **merge** of adjacent isolated tick groups (prevents SPLIT_CHAIN).
 - **Phase 3** (`:328+`) `MigrateConveyorGroupToChainActor` per surviving group; **pre-migration zombie-clear only nulls back-pointers for 0-segment chains** (`:471-481`); on a 0-seg result, a recovery attempt does `SetStartAndEndConveyors(inputEnd, outputEnd)` + `BuildChain` (`:536-554`).
 - **Phase 4** (`:613+`) detach the original affected chain actors.
-This works for **existing** chains (mass-upgrade, Extend). It does **not** save the stacked case
-(see §6) because those belts arrive as multiple **live solo chains** the merge cannot reconstitute.
+This works for **existing** chains (mass-upgrade, Extend). It was previously believed it could **not**
+save the stacked case (see §6) because those belts arrive as multiple **live solo chains**. **Revised
+2026-06-08 (§6.15/§10):** the §6.15 retest shows those solo chains are *correctly connected in series*
+(items flowed end-to-end pre-crash) — they are merely in separate chain actors, which is exactly the
+Phase 2.5 union-find merge's job. So this path is now the **chosen build-time coalesce for stacked runs**
+and is being validated under #341; the old "merge cannot reconstitute" claim held only for the pre-fix
+garbage-connectivity state (§6.7 row-1, before §6.11/§6.12).
 
 ---
 
@@ -474,9 +498,13 @@ a **second** save+reload, instantly restored flow.
 **Mechanism [I].** Smart's stacked belts persist in a **fragmented, per-belt chain state** (connect-
 after-register: each belt its own 1-segment chain at build, §6.9/§6.12). On the **first** load from
 that save, vanilla's chain reconstruction yields chains that are structurally valid but in a
-**non-ticking transport state** for the long/manually-joined run. **Any rebuild** — recreating a belt,
-or a second save+reload — re-coalesces the run into a proper multi-segment chain that ticks. Hence
-"first reload stalls, second reload launders."
+**non-ticking transport state** for the long/manually-joined run. The 2026-06-05 observation was that
+**a rebuild** — recreating a belt, or a *second* save+reload — re-coalesces the run into a proper
+multi-segment chain that ticks ("first reload stalls, second reload launders"). ⚠️ **Partially revised
+2026-06-08 (§6.15):** a controlled single-reload retest was consistent with "first reload stalls" but
+**did not coalesce** (the solo chains persisted with identical IDs). We did **not** retest a *second*
+reload, so "second reload launders" is the 2026-06-05 observation, **not re-confirmed** — do not rely on
+it. The fix does not depend on reload behavior either way (it coalesces at build time).
 
 > ⚠️ **SEVERITY — risk of UNRECOVERABLE loss for game-limited items [maintainer, 2026-06-05].**
 > In every observed case items were **conserved** (totals rose; dismantle reported the coal) — for
@@ -487,9 +515,53 @@ or a second save+reload — re-coalesces the run into a proper multi-segment cha
 > the preventive fix from a quality issue to a **data-integrity** one. **Do not route irreplaceable
 > items over Smart stacked-pole runs until the build-time coalesce fix lands**; if you must, save+reload
 > and verify counts before and after.
+>
+> **ESCALATION 2026-06-08 (§6.15): now crash-class, not only data-loss-risk.** The same fragmentation
+> also **crashes** — connecting a vanilla end-belt makes vanilla merge the solo chains and leave one belt
+> at `mChainSegmentIndex == -1`, asserting on the next factory tick once items flow. So a fresh stacked
+> run is unsafe to *merge or flow*, not just to route irreplaceable items over. The "stall is recoverable"
+> note above held for the bulk-item stall case; it does **not** cover the crash path.
 
-**Workaround.** After building a long stacked-pole run, **save + reload once** before relying on it;
-that coalesces the chains into a stable, ticking state.
+**Workaround (revised 2026-06-08, §6.15).** The original guidance — "save + reload once and it coalesces
+into a stable, ticking state" — is **not reliable**: a controlled single-reload retest did **not** coalesce
+(the solo chains persisted with identical IDs). Do **not** treat one reload as a fix. Until the build-time
+coalesce (§10) lands, the only safe guidance is: **do not connect/flow or route items over a freshly built
+long stacked run** (a merge can crash it, §6.15), and verify with the live chain audit if in doubt.
+
+### 6.15 Live re-characterization via SmartMCP chain audit + a second failure mode (CRASH) **[E, 2026-06-08]**
+Controlled retest of §6.14 using the live `smartmcp_conveyor_chains` audit, isolating each step.
+
+**Repro.** A **2-high × 4-segment** Stackable Conveyor Pole run, belt auto-connect ON (8 Mk6 belts).
+
+**Build-time state — fragmentation confirmed directly.** Immediately after build the 8 belts registered as
+**8 separate 1-segment chains** (one per belt, 40.5 m each) instead of the expected **2 four-segment
+chains** (one per level). At rest every solo chain was internally *valid*: `zombie:0`, `orphan:0`,
+`hasValidLUT:true`, each belt segment 0 of its own chain — so **no `-1` exists yet at build**.
+
+**Reload does NOT self-heal (corrects §6.14 workaround).** Save-to-new-slot + reload once: still the
+**same 8 solo chains, identical `AFGConveyorChainActor` IDs**, still `zombie/orphan:0`. A single reload
+did not coalesce. So vanilla reconstruction is **not** a reliable laundering step — the build-time
+coalesce is the mod's responsibility, not something reload can be trusted to fix.
+
+**Second failure mode — CRASH, not just stall [E/I].** The §6.14 case stalled (items conserved). In this
+retest the consequence was a **CTD**. The fragmented solo chains are *stable at rest*, but when vanilla
+feeder/drain belts were connected to the run, vanilla **merged** the fragments into one ~15-segment chain
+and left one belt at **`mChainSegmentIndex == INDEX_NONE` (-1)**. Once screws flowed, the chain tick
+called `AFGConveyorChainActor::GetItemsForSegment()` → indexed **-1 into the 15-element segment array** →
+`check(Index >= 0 && Index < ArrayNum)` assert → crash, on the `ParallelFor` `TickFactoryActors` path
+(`FGConveyorChainActor.cpp:1527` ← `Factory_UpdateRadioactivity` ← `Factory_Tick`). So the same
+fragmentation has **two** consequences depending on what touches it: **stall** (§6.14) if left alone, or
+**crash** if a merge mis-assigns a segment index. This escalates the issue from data-integrity to
+**crash-class**.
+
+**Implication for the fix.** The build-time coalesce target is now measurable on this repro: after build,
+the audit must show **2 chains × 4 segments** (not 8 × 1), `zombie/orphan:0`. The merge precondition the
+§10 Option-2 path needs **holds here** — the 8 belts are correctly connected in series (items flowed
+end-to-end pre-crash); they are merely in separate chain actors. Coalescing them via
+`InvalidateAndRebuildForBelts` → synchronous `Migrate` should yield 2 clean chains, after which any later
+vanilla merge (the player's end-belts) is well-defined. This is the same shape Extend already uses
+(`FSFWiringManifest::CreateChainActors` → `InvalidateAndRebuildChains`), which is why Extend runs do not
+fragment or crash. Tracked: #341.
 
 **Fix (planned, see §10).** Coalesce each stacked run into a single proper chain **at build time** so
 the saved state restores cleanly on first load — the long-standing "unify into one chain" item, now at
@@ -528,19 +600,24 @@ Window 3 is the **only** survivor. It is not the "double-build" the distributor 
 
 ---
 
-## 8. The surviving design (Option B) — and its cost story
+## 8. The shipped stacked design — real belt + connect-by-coincidence at construct
 
-**Preview-only belt holograms + fresh `BuildBelt` on confirm.** (Full plan:
-`DESIGN_StackablePole_FromScratch.md` §9.8.)
-1. Belt child holograms remain **visual previews + cost contributors** but are overridden to
-   **construct no buildable** (`SF_StackableChild`). No auto-register → no crash, no zombie.
-2. On confirm, `BuildStack` computes each span's shaped spline from real pole transforms and calls
-   `BuildBelt` (`SpawnActor→Respline→SetConnection`(predecessor)`→AddConveyor`) in **run order**, so
-   the engine grows one correct chain per run.
-3. **Cost** (the one thing fresh-build loses, since `SpawnActor` doesn't bill): a `GetCost` override
-   on the stackable-pole hologram adds spanned-belt cost (mirror `ASFConveyorAttachmentHologram::GetCost`),
-   gated by `UFGCDUnaffordable` + `CanAffordExtendCost`-style availability (inventory + central
-   storage), respecting `GetCheatNoCost`. This is **reuse of an existing pattern**, not new cost code.
+> **Supersedes the earlier "Option B (preview-only + fresh `BuildBelt`)" proposal.** §6.8 showed a child
+> hologram cannot be preview-only without ceasing to be a child; §6.9 ("THE FIX") therefore kept the
+> **real** belt and solved the invariant by wiring it at construct. The preview-only +
+> `GetCost`-reimplementation story was retired — see the "Earlier mis-conclusion" note in §9.
+
+**What actually ships (per §6.9–§6.12 + code, `SFConveyorBeltHologram.cpp`).**
+1. Belt child holograms **construct real belts** (tagged `SF_StackableChild`). Cost is charged normally
+   by the build gun, and `ASFConveyorBeltHologram::GetCost` simply trusts vanilla `Super::GetCost`
+   (`:751`, the #348 behaviour) — **no preview-only, no cost reimplementation**.
+2. At `Construct`, each belt's connectors are wired to the correct run peers by **geometric coincidence**
+   (`SF_WireStackConnectorByCoincidence`), *before* registration — **coincidence, not `StackChainId`/`Index`**:
+   the indices are placement-relative and mis-paired reversed runs (§6.11/§6.12). Neighbour lookups use a
+   weak-ptr registry (`GStackBuiltConveyors`) to avoid the §6.10 dangling-pointer CTD.
+3. Chain creation is **deferred**, so a freshly built run is a set of **per-belt solo chains** until
+   coalesced. Turning them into one multi-segment chain per run at build time is the **#341** work
+   (§6.15, §10); without it the run stalls on reload and can **crash** on a later merge (§6.15).
 
 **Spline shape is orthogonal.** `BeltRoutingMode` (Default/Curve/Straight) lives entirely in the
 `SplineData` handed to `Respline`; it does not interact with chaining. The builder must *compute*
@@ -558,8 +635,9 @@ a timer; build multi-belt runs by reference, order-agnostic.*
 **Full non-Extend belt-site audit (2026-06-05).** Every live site that creates or wires belts/chains
 outside Extend was reviewed; **none needs new treatment** — all are compliant, now-fixed, or dead.
 (Detailed table + dead-code list: `docs/Features/AutoConnect/TEST_BeltRework_Validation.md` §3.4.)
-- **Stackable poles** — the lone structural violator → **fixed** via connect-by-reference at Construct
-  (§5.3 resolution, §6.9). ✗→✓
+- **Stackable poles** — the lone structural violator → **fixed** by wiring the real belt at Construct
+  (§5.3 resolution, §6.9), refined from by-reference to **by-coincidence** in §6.11/§6.12. ✗→✓
+  (Build-time chain coalesce of the resulting solo chains is the open #341 work — §6.15/§10.)
 - **Distributor → factory** (child holograms) — connect at vanilla child Construct; a narrow
   `OnActorSpawned` manifold timer only proximity-wires cross-link belts built before their target
   distributor (empirically zombie-free on reload). ✓
@@ -587,15 +665,24 @@ only option.
 ---
 
 ## 10. Open questions / future work
-- **★ Build-time chain coalesce (DATA-INTEGRITY priority) — PARKED 2026-06-05; design analysed, not
-  implemented.** Coalesce each stacked run into one proper multi-segment chain **at build time** so the
-  saved state restores cleanly on first load and the reload tick-stall (§6.14) can't occur. Elevated to
-  **data-integrity** because a finite, non-replaceable world item (Mercer Sphere, Somersloop) routed
-  over a stall-prone run risks **permanent, unrecoverable loss** (§6.14 severity note). Until it lands,
-  the player workaround is save+reload once after building a long run, and do not move irreplaceable
-  items over Smart stacked runs.
-  - **Design comparison done (parked here).** Two candidate rebuild primitives, both with stacked-context
-    failure history — but **asymmetric failure modes**:
+- **★ Build-time chain coalesce (DATA-INTEGRITY + CRASH priority) — RESUMED 2026-06-08; implementing on
+  `feature/341-belt-run-chain-coalesce`.** Coalesce each stacked run into one proper multi-segment chain
+  **at build time** so the saved state restores cleanly on first load and the reload tick-stall (§6.14)
+  can't occur. Elevated to **data-integrity** because a finite, non-replaceable world item (Mercer Sphere,
+  Somersloop) routed over a stall-prone run risks **permanent, unrecoverable loss** (§6.14 severity note).
+  **Further escalated 2026-06-08 (§6.15): the same fragmentation also CRASHES (CTD)** when a vanilla merge
+  mis-assigns a belt's `mChainSegmentIndex` to -1 and items flow — so this is now crash-class, not only a
+  reload-stall. The §6.15 retest also showed a **single reload does NOT coalesce**, so the "reload once"
+  workaround is unverified; until the fix lands, do not move irreplaceable items over Smart stacked runs,
+  and avoid connecting/flowing a freshly built long run without verifying the chain audit.
+  - **Scope (§6.15 + pole-type audit):** applies to **all grid belt-support runs** — Stackable, Wall, and
+    Ceiling mounts share the same deferred-wiring path — and the **distributor auto-connect** path is a
+    suspected (not yet confirmed) sibling. Extend is already correct (`CreateChainActors`).
+  - **Precondition confirmed (§6.15):** the run's belts are correctly connected in series (items flowed
+    end-to-end pre-crash); they are merely in separate chain actors, so the Option-2 union-find + Migrate
+    merge precondition holds.
+  - **Design comparison (decided; implementing on `feature/341-belt-run-chain-coalesce`).** Two candidate
+    rebuild primitives, both with stacked-context failure history — but **asymmetric failure modes**:
     - **Option 2 (recommended): `InvalidateAndRebuildForBelts → InvalidateAndRebuildChains`** — the §6.7
       P0c "RebuildOnly" path (`RemoveChainActorFromConveyorGroup` + Phase 2.5 union-find merge +
       synchronous `Migrate`). §4.3 calls it the one path "empirically proven to rebuild chains cleanly."
@@ -609,11 +696,14 @@ only option.
       `RemoveConveyor` on live belts — the op §2.7/§6.5/§6.7-row3/§10 repeatedly flag as crash-class.
       Its survival in Upgrade likely rests on detach-chains-first ordering + a settled, player-initiated
       context. Worst case = **CTD**.
-  - **Decision:** when resumed, implement **Option 2** from a debounced post-build timer (settled, game
-    thread) + `ScheduleDeferredZombiePurge` net; validate via the live chain audit (run = one
-    multi-segment chain; survives FIRST reload). Rationale: for a *don't-lose-irreplaceable-items* fix, a
-    recoverable zombie beats a crash. Only fall back to Option 1 if Option 2 still zombies at stacked-run
-    scale — and treat that as a signal to first finish the Upgrade audit below.
+  - **Decision:** implement **Option 2** from a debounced post-build timer (settled, game thread) +
+    `ScheduleDeferredZombiePurge` net. **Pass criterion (revised 2026-06-08, §6.15):** the live chain
+    audit after build must show the run as **one multi-segment chain per series-run** (for the §6.15
+    repro: **2 chains × 4 segments**, not 8 × 1), `zombie/orphan:0`. Do **not** use "survives first reload"
+    as the criterion — §6.15 showed vanilla reload is unreliable; reload stability must be **re-tested
+    post-fix**, not assumed. Rationale: for a *don't-lose-irreplaceable-items* fix, a recoverable zombie
+    beats a crash. Only fall back to Option 1 if Option 2 still zombies at stacked-run scale — and treat
+    that as a signal to first finish the Upgrade audit below.
 - **Audit the Upgrade re-register path (`ReRegisterAndQueueVanillaRebuildForBelts`).** Upgrade is the one
   live site deliberately using `RemoveConveyor` on live belts (the thesis crash-class op). It mitigates
   via detach-chains-first + settled timing, but this needs an explicit "does the detach-first ordering
