@@ -1,6 +1,6 @@
 # <img src="https://github.com/majormer/SmartFoundations/blob/main/images/Smart-Logo.png?raw=true" width="150" alt="Smart! Logo"> Smart! Mod
 
-![Status](https://img.shields.io/badge/Status-Released-brightgreen) ![Version](https://img.shields.io/badge/Version-31.0.1-blue) ![Satisfactory](https://img.shields.io/badge/Satisfactory-1.2-blue) ![Engine](https://img.shields.io/badge/Engine-UE%205.6-blue) ![SML](https://img.shields.io/badge/SML-3.11.x-blue) ![Multiplayer](https://img.shields.io/badge/Multiplayer-Testing-orange) ![AI Assisted Development Used](https://img.shields.io/badge/AI%20Assisted%20Development%20Used-Disclosure%20Below-blue)
+![Status](https://img.shields.io/badge/Status-Released-brightgreen) ![Version](https://img.shields.io/badge/Version-31.0.2-blue) ![Satisfactory](https://img.shields.io/badge/Satisfactory-1.2-blue) ![Engine](https://img.shields.io/badge/Engine-UE%205.6-blue) ![SML](https://img.shields.io/badge/SML-3.11.x-blue) ![Multiplayer](https://img.shields.io/badge/Multiplayer-Testing-orange) ![AI Assisted Development Used](https://img.shields.io/badge/AI%20Assisted%20Development%20Used-Disclosure%20Below-blue)
 
 > **Multiplayer note:** Smart! is primarily developed for single-player. Multiplayer is under active testing with partial success, but is not currently considered fully supported.
 
@@ -101,11 +101,17 @@ See [LICENSE.md](https://github.com/majormer/SmartFoundations/blob/main/LICENSE.
 
 ---
 
-## 📰 What's New in v31.0.1
+## 📰 What's New in v31.0.2
 
-**Current Release:** v31.0.1 — a patch on top of the Satisfactory **1.2** release. See the [full changelog](https://github.com/majormer/SmartFoundations/blob/main/CHANGELOG.md) for all release details.
+**Current Release:** v31.0.2 — a patch on top of the Satisfactory **1.2** release. See the [full changelog](https://github.com/majormer/SmartFoundations/blob/main/CHANGELOG.md) for all release details.
 
-### Highlights in v31.0.1
+### Highlights in v31.0.2
+
+- **Power cable previews are back for Extend and Scaled Extend** — when you Extend a building that carries power, the preview again shows the cables (with droop) running between the source and each copy, sitting on the connectors and following each copy's rotation and chaining.
+- **Power auto-connect wire preview no longer shows a red middle** — the auto-connect power cable previews in the correct color end to end instead of tinting its middle section red on a valid connection.
+- **Smart! Panel Routing dropdown opens on Stackable Conveyor Poles** — the Belt Auto-Connect *Routing* dropdown now lists Default / Curve / Straight and applies your choice; dragging the panel also closes any open dropdown.
+
+### Also in v31.0.1
 
 - **Settings for Extend daisy-chain power** — the building-to-building power chaining now has its own controls under Options > Mods > Smart! > Building Behavior: turn it on or off, and choose whether Extending a pole-less machine starts a fresh daisy chain. Defaults match 31.0.0.
 - **Auto-connect conveyors and pipes no longer charge double** — an auto-connected belt or pipe used to preview at twice its real cost on the build gun; the preview now matches what the segment actually costs and refunds.
