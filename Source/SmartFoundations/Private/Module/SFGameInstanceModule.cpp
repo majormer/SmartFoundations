@@ -82,8 +82,12 @@ void USFGameInstanceModule::DispatchLifecycleEvent(ELifecyclePhase Phase)
 		RegisterBeltSupportConstructHook();
 
 		// MP Slice 0 (Phase 1): guard a client against committing an oversized scaled grid in one
-		// construct RPC (the all-or-nothing drop + orphaned-preview bug). See the method comment.
+		// construct RPC (the all-or-nothing drop + orphaned-preview bug). Backstop for the chunker below.
 		RegisterClientConstructChunkGuardHook();
+
+		// MP Slice 0 chunking: shrink an oversized client grid to a fit-in-one-RPC chunk at the fire handler,
+		// before vanilla serializes (Increment 1 = single-chunk proof). See the method comment.
+		RegisterClientGridChunkFireHook();
 
 	}
 }
@@ -389,4 +393,87 @@ void USFGameInstanceModule::RegisterClientConstructChunkGuardHook()
 	);
 
 	UE_LOG(LogSmartFoundations, Verbose, TEXT("✅ Client construct chunk-guard hook registered (MP Slice 0 Phase 1, Server_ConstructHologram)"));
+}
+
+// MP Slice 0 chunking. A Smart grid above this many total cells will not fit one 64KB Server_ConstructHologram.
+// We slice the active hologram's children down to a chunk that fits, BEFORE vanilla serializes (at the fire
+// handler). Increment 1 builds a single chunk to prove the shrink-then-vanilla-serialize mechanic.
+static constexpr int32 SF_MP_OVERSIZED_CELLS = 130; // trigger chunking above this (total cells incl. parent)
+static constexpr int32 SF_MP_CHUNK_KEEP_CHILDREN = 100; // Increment 1: keep this many grid children; drop the rest
+
+void USFGameInstanceModule::RegisterClientGridChunkFireHook()
+{
+	SUBSCRIBE_METHOD(
+		UFGBuildGunStateBuild::InternalExecuteDuBuildStepInput,
+		[](auto& scope, UFGBuildGunStateBuild* self, bool isInputFromARelease)
+		{
+			if (!self)
+			{
+				return;
+			}
+
+			UWorld* World = self->GetWorld();
+			if (!World || !FSFNetworkHelper::IsClient(World))
+			{
+				return; // only a network client serializes over the wire
+			}
+
+			AFGHologram* Holo = self->GetHologram();
+			if (!Holo)
+			{
+				return;
+			}
+
+			// mChildren / mChildrenNameLookupMap are accessible via the USFGameInstanceModule friend AT.
+			TArray<TObjectPtr<AFGHologram>>& Children = Holo->mChildren;
+
+			static const FName GridChildTag(TEXT("SF_GridChild"));
+			int32 GridChildCount = 0;
+			for (const TObjectPtr<AFGHologram>& C : Children)
+			{
+				if (C && C->Tags.Contains(GridChildTag))
+				{
+					++GridChildCount;
+				}
+			}
+			if (GridChildCount == 0)
+			{
+				return; // not a Smart scaled grid
+			}
+
+			const int32 TotalCells = GridChildCount + 1; // + parent/origin cell
+			if (TotalCells <= SF_MP_OVERSIZED_CELLS)
+			{
+				return; // fits one construct -> untouched vanilla path
+			}
+
+			// INCREMENT 1 (proof): shrink to one safe chunk before vanilla serializes. Destroy the excess grid
+			// child previews (they would otherwise orphan). If this chunk builds cleanly server-side, the
+			// shrink-then-vanilla-serialize mechanic is proven and Increment 2 will loop the remaining chunks.
+			int32 RemainingGrid = GridChildCount;
+			int32 Destroyed = 0;
+			for (int32 i = Children.Num() - 1; i >= 0 && RemainingGrid > SF_MP_CHUNK_KEEP_CHILDREN; --i)
+			{
+				AFGHologram* C = Children[i].Get();
+				if (!C || !C->Tags.Contains(GridChildTag))
+				{
+					continue; // never drop non-grid / structural children
+				}
+				const FName ChildName = C->GetNameWithinParentHologram();
+				Holo->mChildrenNameLookupMap.Remove(ChildName);
+				Children.RemoveAt(i);
+				C->Destroy();
+				--RemainingGrid;
+				++Destroyed;
+			}
+
+			UE_LOG(LogSmartFoundations, Display,
+				TEXT("[MP-CHUNK] Increment 1: oversized grid (%d cells) shrank to %d cells (destroyed %d excess child previews) before serialize. Letting vanilla build the chunk."),
+				TotalCells, RemainingGrid + 1, Destroyed);
+
+			// Do NOT cancel: vanilla now serializes + constructs the fit-in-one-RPC grid.
+		}
+	);
+
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("✅ Client grid chunk fire-hook registered (MP Slice 0 chunking, InternalExecuteDuBuildStepInput)"));
 }

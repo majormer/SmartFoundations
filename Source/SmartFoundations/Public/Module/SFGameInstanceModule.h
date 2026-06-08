@@ -52,6 +52,17 @@ protected:
 	 */
 	void RegisterClientConstructChunkGuardHook();
 
+	/**
+	 * MP Slice 0 chunking. Hooks UFGBuildGunStateBuild::InternalExecuteDuBuildStepInput (the client fire
+	 * handler, BEFORE vanilla serializes the construct). For an oversized client scaled grid, slices the
+	 * active hologram's child list down to a chunk that fits one 64KB Server_ConstructHologram before vanilla
+	 * serializes it, so the construct succeeds instead of being dropped. Increment 1 builds a single chunk
+	 * (proof of the shrink-then-vanilla-serialize mechanic); Increment 2 loops the remaining chunks. The
+	 * Server_ConstructHologram guard remains as a backstop. Accesses mChildren via the USFGameInstanceModule
+	 * friend AccessTransformer. Engages only for NM_Client + Smart grids; everything else is untouched.
+	 */
+	void RegisterClientGridChunkFireHook();
+
 	/** Smart! Configuration blueprint - registered with SML for in-game menu access */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Smart! Configuration")
 	TSubclassOf<class UModConfiguration> SmartConfigClass;
