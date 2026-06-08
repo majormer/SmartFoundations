@@ -710,8 +710,9 @@ void USFExtendScaledService::SpawnScaledExtendPreviews()
 
             for (FSFCloneHologram& Holo : Clone.CloneTopology->ChildHolograms)
             {
-                if (Holo.bIsLaneSegment)
+                if (Holo.bIsLaneSegment || Holo.bIsSourceToCloneWire)
                 {
+                    // Issue #345: source->clone power cables are adaptive like lane segments.
                     // Lane segments are ADAPTIVE — only rotate the clone-side endpoint.
                     // The source-side endpoint stays fixed (chain post-processing shifts it later).
                     if (Holo.bHasSplineData && Holo.SplineData.Points.Num() >= 2)
@@ -835,7 +836,8 @@ void USFExtendScaledService::SpawnScaledExtendPreviews()
             // Detect which end is the source using dot product with clone direction.
             for (FSFCloneHologram& Holo : Clone.CloneTopology->ChildHolograms)
             {
-                if (!Holo.bIsLaneSegment) continue;
+                // Issue #345: source->clone power cables chain to the previous clone like lane segments.
+                if (!Holo.bIsLaneSegment && !Holo.bIsSourceToCloneWire) continue;
 
                 if (Holo.bHasSplineData && Holo.SplineData.Points.Num() >= 2)
                 {

@@ -407,6 +407,9 @@ FSFCloneTopology FSFCloneTopology::FromSource(const FSFSourceTopology& Source, c
             FSFCloneHologram WireHolo;
             WireHolo.HologramId = FString::Printf(TEXT("wire_source_clone_%d"), PowerPoleIndex);
             WireHolo.Role = TEXT("wire_cost");
+            // Issue #345: this cable's source end must chain to the previous clone and only its clone end
+            // rotates in Scaled Extend (handled by the lane rotation/chain passes via this flag).
+            WireHolo.bIsSourceToCloneWire = true;
             WireHolo.SourceId = SourcePole.Id;
             WireHolo.SourceClass = TEXT("Build_PowerLine_C");
             WireHolo.HologramClass = TEXT("ASFWireHologram");

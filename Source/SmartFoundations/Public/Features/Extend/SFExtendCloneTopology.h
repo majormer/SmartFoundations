@@ -395,6 +395,12 @@ struct FSFCloneHologram
     // Connector normals for proper spline routing (belt/pipe lanes only)
     UPROPERTY() FSFVec3 LaneStartNormal;         // World-space connector facing direction at start
     UPROPERTY() FSFVec3 LaneEndNormal;           // World-space connector facing direction at end
+
+    // Issue #345: source-pole -> clone-pole power cable. Behaves like a lane segment for Scaled Extend:
+    // its source-side endpoint must chain to the previous clone (not the source) and only its clone-side
+    // endpoint rotates. Kept distinct from bIsLaneSegment so it does NOT pick up belt/pipe lane color
+    // customization in the spawner.
+    UPROPERTY() bool bIsSourceToCloneWire = false;
 };
 
 /**
