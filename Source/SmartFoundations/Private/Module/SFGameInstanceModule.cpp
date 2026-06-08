@@ -26,8 +26,6 @@
 #include "Equipment/FGBuildGunBuild.h"        // UFGBuildGunStateBuild::InternalConstructHologram / GetHologram
 #include "Core/Helpers/SFNetworkHelper.h"     // FSFNetworkHelper::IsClient
 #include "Engine/Engine.h"                     // GEngine on-screen message
-#include "Containers/Ticker.h"                 // FTSTicker for deferred one-per-frame chunk fires
-#include "UObject/CoreNet.h"                   // FNetBitWriter for hand-serializing the construct message
 
 // For chain actor rebuilding
 #include "Buildables/FGBuildableConveyorBase.h"
@@ -321,15 +319,6 @@ void USFGameInstanceModule::RegisterBeltSupportConstructHook()
 static constexpr int32 SF_MP_CONSTRUCT_MAX_BYTES = 60000; // cancel a Smart-grid construct above this
 static constexpr int32 SF_MP_CONSTRUCT_LOG_BYTES = 20000; // log any Smart-grid construct above this (capture real sizes)
 
-// Hand-serialization (full-auto) state. Declared before the guard hook because the guard hook captures
-// chunk 0's NetConstructionID into these. Chunk 0 is the player's natural fire; we capture the valid
-// FNetConstructionID vanilla minted for it, then derive subsequent chunk IDs (Client_ID + n) and hand-build
-// + send each remaining chunk's Server_ConstructHologram ourselves (the build gun only constructs on real
-// input). The biggest unknown is whether the server accepts the derived IDs.
-static FNetConstructionID GSFBaseConstructID;
-static bool GSFExpectingChunk0ID = false;
-static int32 GSFChunkSeq = 0;
-
 void USFGameInstanceModule::RegisterClientConstructChunkGuardHook()
 {
 	SUBSCRIBE_METHOD(
@@ -371,17 +360,6 @@ void USFGameInstanceModule::RegisterClientConstructChunkGuardHook()
 				return; // not a Smart scaled grid -> vanilla path (incl. blueprints)
 			}
 
-			// Chunk-0 of a chunked placement: capture the valid FNetConstructionID vanilla minted so the
-			// deferred ticker can derive IDs for the hand-sent chunks.
-			if (GSFExpectingChunk0ID)
-			{
-				GSFBaseConstructID = clientNetConstructID;
-				GSFExpectingChunk0ID = false;
-				UE_LOG(LogSmartFoundations, Display,
-					TEXT("[MP-CHUNK] captured chunk-0 NetConstructionID: NetPlayerID=%d Server_ID=%u Client_ID=%u"),
-					(int32)clientNetConstructID.NetPlayerID, clientNetConstructID.Server_ID, clientNetConstructID.Client_ID);
-			}
-
 			const int32 Bytes = data.SerializedHologramData.Num();
 
 			// Diagnostic: capture the real serialized size near/over the ceiling (confirms the byte limit).
@@ -417,112 +395,15 @@ void USFGameInstanceModule::RegisterClientConstructChunkGuardHook()
 	UE_LOG(LogSmartFoundations, Verbose, TEXT("✅ Client construct chunk-guard hook registered (MP Slice 0 Phase 1, Server_ConstructHologram)"));
 }
 
-// MP Slice 0 chunking. A Smart grid above this many total cells will not fit one 64KB Server_ConstructHologram.
-static constexpr int32 SF_MP_OVERSIZED_CELLS = 130; // trigger chunking above this (total cells incl. parent)
-static constexpr int32 SF_MP_CHUNK_CHILDREN  = 100; // grid children to build per chunk (parent adds 1 cell)
-static constexpr int32 SF_MP_CHUNK_WAIT_FRAMES = 6; // frames to let the build gun settle between chunk fires
-
-// Re-entrancy guard: the deferred chunk fires re-invoke InternalExecuteDuBuildStepInput; those nested calls
-// must pass straight through to vanilla without re-chunking.
-static bool GSFChunkingInProgress = false;
-
-// Deferred-chunk queue. chunk 0 builds on the player's natural fire; chunks 1+ are fired one-per-frame from a
-// ticker, AFTER the build gun settles, so each is a fresh fire instead of a synchronous re-entry (which the
-// build-gun state machine refuses). Each pending chunk repositions the active hologram to its anchor (a cell
-// the parent builds) and re-homes the chunk's other child holograms onto it.
-struct FSFPendingChunk
-{
-	FTransform AnchorXform;
-	TArray<TWeakObjectPtr<AFGHologram>> Children;
-};
-static TArray<FSFPendingChunk> GSFPendingChunks;
-static TWeakObjectPtr<UFGBuildGunStateBuild> GSFPendingGun;
-static int32 GSFChunkWait = 0;
-static FTSTicker::FDelegateHandle GSFChunkTicker;
-
-bool USFGameInstanceModule::TickPendingGridChunks(float /*Dt*/)
-{
-	if (GSFPendingChunks.Num() == 0)
-	{
-		GSFChunkTicker.Reset();
-		return false; // unregister
-	}
-	if (--GSFChunkWait > 0)
-	{
-		return true; // still letting the gun settle
-	}
-
-	UFGBuildGunStateBuild* Gun = GSFPendingGun.Get();
-	AFGHologram* Holo = Gun ? Gun->GetHologram() : nullptr;
-	if (!Gun || !Holo)
-	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("[MP-CHUNK] deferred: gun/hologram gone; aborting %d remaining chunk(s)."), GSFPendingChunks.Num());
-		GSFPendingChunks.Reset();
-		GSFChunkTicker.Reset();
-		return false;
-	}
-
-	FSFPendingChunk Chunk = GSFPendingChunks[0];
-	GSFPendingChunks.RemoveAt(0);
-
-	TArray<AFGHologram*> Kids;
-	for (const TWeakObjectPtr<AFGHologram>& W : Chunk.Children)
-	{
-		if (AFGHologram* C = W.Get()) { Kids.Add(C); }
-	}
-
-	// Set up the hologram as this chunk: repositioned to the anchor cell, children = the chunk's holograms.
-	Holo->SetActorTransform(Chunk.AnchorXform);
-	USFGameInstanceModule::SetActiveHologramChildren(Holo, Kids);
-
-	// Hand-build the construct message and send it directly (bypassing the build gun, which only constructs
-	// on real input). Derive this chunk's NetConstructionID from the captured chunk-0 ID (Client_ID + seq).
-	UWorld* World = Holo->GetWorld();
-	APlayerController* PC = World ? World->GetFirstPlayerController() : nullptr; // local PC on a client
-	UPackageMap* PackageMap = UFGBuildGunStateBuild::FindPackageMapForPlayerController(PC);
-
-	FNetConstructionID ChunkID = GSFBaseConstructID;
-	ChunkID.Server_ID = 0;
-	ChunkID.Client_ID = (uint16)(GSFBaseConstructID.Client_ID + (uint16)(++GSFChunkSeq));
-
-	Holo->PreConstructMessageSerialization();
-	FNetBitWriter Writer(PackageMap, 1 << 21); // 256 KB bit budget (a chunk is <64KB)
-	FNetConstructionID SerId = ChunkID;
-	Holo->SerializeConstructMessage(Writer, SerId);
-
-	FConstructHologramMessage Msg;
-	Msg.ConstructionID = ChunkID;
-	Msg.Recipe = Holo->GetRecipe();
-	Msg.NumBits = Writer.GetNumBits();
-	Msg.SerializedHologramData.Append(Writer.GetData(), (int32)Writer.GetNumBytes());
-
-	UE_LOG(LogSmartFoundations, Display,
-		TEXT("[MP-CHUNK] deferred: hand-sending chunk (%d children, %d bytes, Client_ID=%u, PackageMap=%s); %d chunk(s) left after this."),
-		Kids.Num(), Msg.SerializedHologramData.Num(), ChunkID.Client_ID, PackageMap ? TEXT("ok") : TEXT("NULL"), GSFPendingChunks.Num());
-
-	GSFChunkingInProgress = true;
-	Gun->Server_ConstructHologram(ChunkID, Msg);
-	GSFChunkingInProgress = false;
-
-	USFGameInstanceModule::SetActiveHologramChildren(Holo, TArray<AFGHologram*>());
-	GSFChunkWait = SF_MP_CHUNK_WAIT_FRAMES;
-	return true;
-}
-
-// Set the active hologram's child list to exactly the given actors. Static member of USFGameInstanceModule so
-// it inherits the friend access to AFGHologram::mChildren / mChildrenNameLookupMap (AccessTransformers.ini).
-void USFGameInstanceModule::SetActiveHologramChildren(AFGHologram* Holo, const TArray<AFGHologram*>& NewChildren)
-{
-	if (!Holo) { return; }
-	Holo->mChildren.Reset();
-	Holo->mChildrenNameLookupMap.Reset();
-	for (AFGHologram* C : NewChildren)
-	{
-		if (!C) { continue; }
-		Holo->mChildren.Add(C);
-		Holo->mChildrenNameLookupMap.Add(C->GetNameWithinParentHologram(), C);
-	}
-}
+// MP Slice 0 SAFETY GUARD. A Smart grid above this many total cells will not fit one 64KB
+// Server_ConstructHologram (empirical ceiling ~135 cells / 65536 bytes). Building such a grid on a CLIENT is
+// not safely achievable today: re-firing the build gun never constructs (single-construct-per-fire state
+// machine, proven), and hand-building the construct message CRASHES the dedicated server (proven - server
+// fatal in UNetDriver::InternalTickDispatch). So we REFUSE an oversized client grid at the fire handler,
+// BEFORE anything is serialized or sent: the grid stays live so the player can scale down and place in
+// smaller sections. This is a temporary guard, NOT a multiplayer feature - large-grid MP placement is part
+// of the future complete multiplayer solution (which cannot ship partially; see AGENTS.md).
+static constexpr int32 SF_MP_OVERSIZED_CELLS = 130; // refuse a client grid above this (total cells incl. parent)
 
 void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 {
@@ -530,15 +411,15 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 		UFGBuildGunStateBuild::InternalExecuteDuBuildStepInput,
 		[](auto& scope, UFGBuildGunStateBuild* self, bool isInputFromARelease)
 		{
-			if (!self || GSFChunkingInProgress)
+			if (!self)
 			{
-				return; // nested re-fire -> let vanilla run unmodified
+				return;
 			}
 
 			UWorld* World = self->GetWorld();
 			if (!World || !FSFNetworkHelper::IsClient(World))
 			{
-				return; // only a network client serializes over the wire
+				return; // only a network client serializes the construct over the wire
 			}
 
 			AFGHologram* Holo = self->GetHologram();
@@ -547,74 +428,44 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 				return;
 			}
 
-			// Snapshot the Smart grid child holograms (tagged SF_GridChild), in order.
+			// Count Smart grid child holograms (tagged SF_GridChild). +1 for the parent/origin cell.
 			static const FName GridChildTag(TEXT("SF_GridChild"));
-			TArray<AFGHologram*> Kids;
-			for (const TObjectPtr<AFGHologram>& C : Holo->mChildren)
+			int32 GridChildCount = 0;
+			for (const AFGHologram* Child : Holo->GetHologramChildren())
 			{
-				if (C && C->Tags.Contains(GridChildTag))
+				if (Child && Child->Tags.Contains(GridChildTag))
 				{
-					Kids.Add(C.Get());
+					++GridChildCount;
 				}
 			}
-			if (Kids.Num() == 0)
+			if (GridChildCount == 0)
 			{
 				return; // not a Smart scaled grid
 			}
 
-			const int32 TotalCells = Kids.Num() + 1; // + parent/origin cell
+			const int32 TotalCells = GridChildCount + 1;
 			if (TotalCells <= SF_MP_OVERSIZED_CELLS)
 			{
-				return; // fits one construct -> untouched vanilla path
+				return; // fits one construct -> untouched vanilla path (builds fine in MP)
 			}
 
-			// INCREMENT 2b (deferred full-auto): chunk 0 builds on THIS natural fire; the rest are queued and
-			// fired one-per-frame from a ticker (after the build gun settles), because the build gun refuses a
-			// synchronous second construct in one fire (proven in 2a).
-
-			// Chunk 0: keep the first SF_MP_CHUNK_CHILDREN grid children on the parent. Vanilla builds the
-			// parent's own origin cell + these on this fire (do NOT cancel).
-			TArray<AFGHologram*> Chunk0;
-			for (int32 i = 0; i < Kids.Num() && Chunk0.Num() < SF_MP_CHUNK_CHILDREN; ++i)
-			{
-				Chunk0.Add(Kids[i]);
-			}
-			USFGameInstanceModule::SetActiveHologramChildren(Holo, Chunk0);
-
-			// Queue the remaining cells as deferred chunks. Each chunk's first leftover cell becomes the
-			// repositioned-parent anchor (its preview is destroyed now; the repositioned parent builds that
-			// cell in the ticker); the rest become the chunk's re-homed children.
-			GSFPendingChunks.Reset();
-			for (int32 Start = SF_MP_CHUNK_CHILDREN; Start < Kids.Num(); Start += SF_MP_CHUNK_CHILDREN)
-			{
-				AFGHologram* Anchor = Kids[Start];
-				if (!Anchor) { continue; }
-				FSFPendingChunk PC;
-				PC.AnchorXform = Anchor->GetActorTransform();
-				for (int32 j = Start + 1; j < Kids.Num() && (j - Start) < SF_MP_CHUNK_CHILDREN; ++j)
-				{
-					if (Kids[j]) { PC.Children.Add(Kids[j]); }
-				}
-				GSFPendingChunks.Add(MoveTemp(PC));
-				Anchor->Destroy();
-			}
-
-			GSFPendingGun = self;
-			GSFChunkWait = SF_MP_CHUNK_WAIT_FRAMES;
-			GSFExpectingChunk0ID = true; // capture chunk 0's NetConstructionID in the Server_ConstructHologram hook
-			GSFChunkSeq = 0;
-			if (!GSFChunkTicker.IsValid())
-			{
-				GSFChunkTicker = FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateStatic(&USFGameInstanceModule::TickPendingGridChunks), 0.0f);
-			}
-
+			// Oversized: refuse the fire BEFORE vanilla serializes/sends. The active hologram + preview stay
+			// live (no teardown, no orphaned previews, no dropped RPC, no server crash). The player scales
+			// down and places in smaller sections.
 			UE_LOG(LogSmartFoundations, Display,
-				TEXT("[MP-CHUNK] Increment 2b (deferred): %d cells -> chunk 0 = parent + %d (building now); queued %d more chunk(s) for one-per-frame fire."),
-				TotalCells, Chunk0.Num(), GSFPendingChunks.Num());
+				TEXT("[MP-CHUNK] Refused oversized client grid: %d cells (> %d). One construct can't carry this many over the wire safely; build in smaller sections."),
+				TotalCells, SF_MP_OVERSIZED_CELLS);
 
-			// Do NOT cancel: vanilla builds chunk 0 now; the ticker fires the queued chunks.
+			if (GEngine)
+			{
+				GEngine->AddOnScreenDebugMessage(-1, 6.0f, FColor::Orange,
+					FString::Printf(TEXT("Smart!: grid too large for multiplayer (%d cells, max ~%d). Build in smaller sections."),
+						TotalCells, SF_MP_OVERSIZED_CELLS));
+			}
+
+			scope.Cancel(); // suppress the fire -> nothing is serialized or sent; the grid stays live.
 		}
 	);
 
-	UE_LOG(LogSmartFoundations, Verbose, TEXT("✅ Client grid chunk fire-hook registered (MP Slice 0 chunking, InternalExecuteDuBuildStepInput)"));
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("✅ Client grid oversized-guard fire-hook registered (MP Slice 0 safety, InternalExecuteDuBuildStepInput)"));
 }

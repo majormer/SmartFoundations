@@ -53,29 +53,15 @@ protected:
 	void RegisterClientConstructChunkGuardHook();
 
 	/**
-	 * MP Slice 0 chunking. Hooks UFGBuildGunStateBuild::InternalExecuteDuBuildStepInput (the client fire
-	 * handler, BEFORE vanilla serializes the construct). For an oversized client scaled grid, slices the
-	 * active hologram's child list down to a chunk that fits one 64KB Server_ConstructHologram before vanilla
-	 * serializes it, so the construct succeeds instead of being dropped. Increment 1 builds a single chunk
-	 * (proof of the shrink-then-vanilla-serialize mechanic); Increment 2 loops the remaining chunks. The
-	 * Server_ConstructHologram guard remains as a backstop. Accesses mChildren via the USFGameInstanceModule
-	 * friend AccessTransformer. Engages only for NM_Client + Smart grids; everything else is untouched.
+	 * MP Slice 0 SAFETY GUARD. Hooks UFGBuildGunStateBuild::InternalExecuteDuBuildStepInput (the client fire
+	 * handler, BEFORE vanilla serializes the construct). For an oversized client scaled grid (one that can't
+	 * fit a single 64KB Server_ConstructHologram), it cancels the fire so nothing is serialized or sent - the
+	 * grid stays live for the player to scale down. This prevents the orphaned-preview/dropped-RPC bug AND the
+	 * server crash that hand-built chunk messages cause. It is NOT a large-grid MP feature (those constructs
+	 * are not safely achievable today - see the method body and AGENTS.md). Engages only for NM_Client + Smart
+	 * grids (tagged SF_GridChild); vanilla placements and blueprints are untouched.
 	 */
 	void RegisterClientGridChunkFireHook();
-
-	/**
-	 * Set the active hologram's child list to exactly the given holograms (replacing mChildren and the name
-	 * lookup map). A static member so it inherits USFGameInstanceModule's friend access to AFGHologram's
-	 * protected child members (see AccessTransformers.ini). Used by the MP chunk loop.
-	 */
-	static void SetActiveHologramChildren(class AFGHologram* Holo, const TArray<class AFGHologram*>& NewChildren);
-
-	/**
-	 * Core-ticker callback that fires the queued MP grid chunks one-per-frame. A static member so it inherits
-	 * the friend access to UFGBuildGunStateBuild::InternalExecuteDuBuildStepInput (AccessTransformers.ini).
-	 * Returns true to keep ticking, false to unregister.
-	 */
-	static bool TickPendingGridChunks(float Dt);
 
 	/** Smart! Configuration blueprint - registered with SML for in-game menu access */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Smart! Configuration")
