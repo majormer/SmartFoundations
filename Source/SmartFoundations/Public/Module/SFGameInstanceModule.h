@@ -39,15 +39,16 @@ protected:
 	void RegisterBeltSupportConstructHook();
 
 	/**
-	 * Multiplayer Slice 0 (Phase 1 - construct chunk guard). Hooks UFGBuildGunStateBuild::InternalConstructHologram
-	 * on the CLIENT. A Smart scaled grid commits as a single reliable Server_ConstructHologram RPC carrying the
-	 * parent + all child holograms serialized into one blob; past an engine byte ceiling (empirical ~135 cells)
-	 * that RPC is dropped at the net layer -> all-or-nothing failure with orphaned previews (no failure callback
-	 * fires because the server never processed it). This guard cancels the oversized construct BEFORE it is sent,
-	 * so nothing orphans (the preview stays as the live active hologram) and the player is told to build in
-	 * smaller sections. Engages only for a network client (NM_Client) above the safe cell count; single-player,
-	 * listen-server host, dedicated-server authority, and small grids take the untouched vanilla path.
-	 * (Phase 2 will auto-chunk the placement instead of refusing it.)
+	 * Multiplayer Slice 0 (Phase 1 - construct chunk guard). Hooks UFGBuildGunStateBuild::Server_ConstructHologram
+	 * on the CLIENT (confirmed seam: the client calls this RPC directly; an earlier InternalConstructHologram hook
+	 * never fired). A Smart scaled grid serializes the parent + all child holograms into one
+	 * FConstructHologramMessage.SerializedHologramData blob; past an engine byte ceiling (~64KB, empirical ~135
+	 * cells) the RPC fails to marshal ("Failed to serialize properties") and is dropped -> all-or-nothing failure
+	 * with orphaned previews (no failure callback fires because the server never processed it). This guard reads
+	 * the ACTUAL serialized byte size and cancels the send for an oversized Smart-grid construct, so nothing
+	 * orphans (the preview stays live) and the player is told to build in smaller sections. Engages only for a
+	 * network client (NM_Client) and only for Smart grids (children tagged SF_GridChild) - vanilla placements and
+	 * blueprints are untouched. (Phase 2 will auto-chunk the placement instead of refusing it.)
 	 */
 	void RegisterClientConstructChunkGuardHook();
 

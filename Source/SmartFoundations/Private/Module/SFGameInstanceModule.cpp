@@ -302,80 +302,91 @@ void USFGameInstanceModule::RegisterBeltSupportConstructHook()
 }
 
 // MP Slice 0 (Phase 1) - construct chunk guard.
-// Empirical hard ceiling on a single client->server construct: ~137 foundations / ~135 constructors per
-// placement (the parent + all child holograms serialize into one reliable Server_ConstructHologram RPC whose
-// blob exceeds UE's reliable partial-bunch byte limit and is dropped at the net layer). We refuse a client
-// placement above a conservative cell count BELOW that edge (heavier holograms may serialize larger and fail
-// sooner, so we leave margin). This is a temporary safety net; Phase 2 will auto-chunk into sub-constructs.
-static constexpr int32 SF_MP_MAX_SINGLE_CONSTRUCT_CELLS = 120;
+// CONFIRMED seam (live test 2026-06-08): the client builds the construct message and calls
+// Server_ConstructHologram DIRECTLY (the earlier InternalConstructHologram hook never fired). The live
+// failure is "LogNet: Error: Can't send function 'Server_ConstructHologram' ...: Failed to serialize
+// properties" - the oversized FConstructHologramMessage.SerializedHologramData blob (one TArray<uint8>
+// holding the whole hologram tree) is too large to marshal, so the reliable RPC is silently dropped ->
+// all-or-nothing + orphaned previews (no Client_OnBuildableFailedConstruction because the server never
+// processed it). We hook Server_ConstructHologram on the client and read the ACTUAL serialized byte size,
+// so the guard is robust across building types (no per-type child-count guessing). Empirically ~137
+// foundations / ~135 constructors fit; that corresponds to ~64KB of SerializedHologramData. We cancel a
+// Smart grid construct whose blob exceeds a margin below that. Phase 2 will chunk instead of refusing.
+static constexpr int32 SF_MP_CONSTRUCT_MAX_BYTES = 60000; // cancel a Smart-grid construct above this
+static constexpr int32 SF_MP_CONSTRUCT_LOG_BYTES = 20000; // log any Smart-grid construct above this (capture real sizes)
 
 void USFGameInstanceModule::RegisterClientConstructChunkGuardHook()
 {
 	SUBSCRIBE_METHOD(
-		UFGBuildGunStateBuild::InternalConstructHologram,
-		[](auto& scope, UFGBuildGunStateBuild* self, FNetConstructionID clientNetConstructID)
+		UFGBuildGunStateBuild::Server_ConstructHologram,
+		[](auto& scope, UFGBuildGunStateBuild* self, FNetConstructionID clientNetConstructID, FConstructHologramMessage data)
 		{
 			if (!self)
 			{
 				return;
 			}
 
-			// Only a true network client (NM_Client) serializes the construct over the wire and can hit the
-			// byte ceiling. Single-player, listen-server host, and dedicated-server authority construct locally
-			// (or already have authority) and must take the untouched vanilla one-shot path.
+			// Only a true network client (NM_Client) marshals the construct over the wire and can hit the
+			// serialize-too-large failure. Host / dedicated-server authority / single-player construct locally.
 			UWorld* World = self->GetWorld();
 			if (!World || !FSFNetworkHelper::IsClient(World))
 			{
 				return;
 			}
 
+			// Scope strictly to Smart scaled grids: only act when the active hologram has Smart grid children
+			// (tagged SF_GridChild). This leaves vanilla single placements AND blueprints completely untouched.
 			AFGHologram* Holo = self->GetHologram();
 			if (!Holo)
 			{
 				return;
 			}
-
-			// Count Smart grid child holograms (tagged SF_GridChild during scaled-grid spawn). +1 for the
-			// parent/origin cell, which is the active hologram itself (not a child).
 			static const FName GridChildTag(TEXT("SF_GridChild"));
-			int32 GridChildCount = 0;
+			bool bIsSmartGrid = false;
 			for (const AFGHologram* Child : Holo->GetHologramChildren())
 			{
 				if (Child && Child->Tags.Contains(GridChildTag))
 				{
-					++GridChildCount;
+					bIsSmartGrid = true;
+					break;
 				}
 			}
-
-			if (GridChildCount == 0)
+			if (!bIsSmartGrid)
 			{
-				return; // Not a Smart scaled grid (no tagged children) -> vanilla path.
+				return; // not a Smart scaled grid -> vanilla path (incl. blueprints)
 			}
 
-			const int32 TotalCells = GridChildCount + 1;
-			if (TotalCells <= SF_MP_MAX_SINGLE_CONSTRUCT_CELLS)
+			const int32 Bytes = data.SerializedHologramData.Num();
+
+			// Diagnostic: capture the real serialized size near/over the ceiling (confirms the byte limit).
+			if (Bytes >= SF_MP_CONSTRUCT_LOG_BYTES)
 			{
-				return; // Small enough to fit one construct RPC -> vanilla path (works in MP).
+				UE_LOG(LogSmartFoundations, Display,
+					TEXT("[MP-CHUNK] Smart-grid client construct: SerializedHologramData=%d bytes (NumBits=%lld), cancel threshold=%d."),
+					Bytes, (long long)data.NumBits, SF_MP_CONSTRUCT_MAX_BYTES);
 			}
 
-			// Oversized grid on a client: the single Server_ConstructHologram RPC would be dropped at the net
-			// layer (all-or-nothing) and orphan the previews (no failure callback fires because the server
-			// never processes it). Cancel the construct BEFORE it is sent. Nothing orphans - the active
-			// hologram and its preview children stay live, so the player can scale down and build.
+			if (Bytes <= SF_MP_CONSTRUCT_MAX_BYTES)
+			{
+				return; // fits one RPC -> let it send (works in MP)
+			}
+
+			// Oversized: the RPC would fail to serialize and be dropped (all-or-nothing) + orphan the previews.
+			// Cancel the send. The active hologram + preview children stay live so the player can scale down.
 			UE_LOG(LogSmartFoundations, Display,
-				TEXT("[MP-CHUNK] Blocked oversized client construct: %d cells (> %d). A single-RPC construct of this size exceeds the multiplayer limit (~135) and would be dropped. Preview kept; advise smaller sections."),
-				TotalCells, SF_MP_MAX_SINGLE_CONSTRUCT_CELLS);
+				TEXT("[MP-CHUNK] Blocked oversized client construct: %d bytes (> %d). Single-RPC construct would be dropped (Failed to serialize properties). Cancelled before send; preview kept."),
+				Bytes, SF_MP_CONSTRUCT_MAX_BYTES);
 
 			if (GEngine)
 			{
 				GEngine->AddOnScreenDebugMessage(-1, 6.0f, FColor::Orange,
-					FString::Printf(TEXT("Smart!: grid too large for multiplayer (%d cells, max ~%d). Build in smaller sections."),
-						TotalCells, SF_MP_MAX_SINGLE_CONSTRUCT_CELLS));
+					FString::Printf(TEXT("Smart!: placement too large for multiplayer (%d KB). Build in smaller sections."),
+						Bytes / 1024));
 			}
 
-			scope.Cancel(); // suppress vanilla InternalConstructHologram -> no oversized RPC is sent.
+			scope.Cancel(); // suppress the doomed Server_ConstructHologram send.
 		}
 	);
 
-	UE_LOG(LogSmartFoundations, Verbose, TEXT("✅ Client construct chunk-guard hook registered (MP Slice 0 Phase 1)"));
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("✅ Client construct chunk-guard hook registered (MP Slice 0 Phase 1, Server_ConstructHologram)"));
 }
