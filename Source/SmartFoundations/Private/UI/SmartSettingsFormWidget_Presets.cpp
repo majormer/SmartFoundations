@@ -7,6 +7,7 @@
  */
 
 #include "UI/SmartSettingsFormWidgetImpl.h"
+#include "Framework/Application/SlateApplication.h"
 
 #define LOCTEXT_NAMESPACE "SmartFoundations"
 
@@ -829,6 +830,14 @@ FReply USmartSettingsFormWidget::NativeOnMouseButtonDown(const FGeometry& InGeom
 {
     if (InMouseEvent.GetEffectingButton() == EKeys::RightMouseButton)
     {
+        // #351: a right-click drag does not dismiss an open ComboBox popup. Its Slate menu is anchored
+        // at open time, so it would stay put while the panel moves (a detached, misplaced dropdown).
+        // Close any open menus before we start dragging.
+        if (FSlateApplication::IsInitialized())
+        {
+            FSlateApplication::Get().DismissAllMenus();
+        }
+
         const FVector2D LocalMouse = InGeometry.AbsoluteToLocal(InMouseEvent.GetScreenSpacePosition());
 
         if (RestoreSidePanelSlot && RestoreSidePanel && RestoreSidePanel->GetVisibility() != ESlateVisibility::Collapsed)

@@ -112,27 +112,23 @@ void ASFWireHologram::CheckValidPlacement()
 
 void ASFWireHologram::SetPlacementMaterialState(EHologramMaterialState materialState)
 {
-	// Let base class handle its components
+	// Let base class handle its components (stencil/render depth on the base meshes)
 	Super::SetPlacementMaterialState(materialState);
-	
-	// Apply materials to our preview wire mesh
-	UMaterialInterface* Material = nullptr;
-	switch (materialState)
+
+	// #346: tint the wire via the custom-depth stencil - the same way belts and vanilla holograms do -
+	// instead of swapping the mesh material. The catenary is rendered by the realistic Powerline
+	// material's world-position-offset; replacing it with a flat hologram material broke the curve's
+	// mid-span shading and left a red/invalid-looking middle segment. Keeping the real material and
+	// writing the hologram stencil lets the hologram post-process tint the whole wire uniformly (cyan
+	// when valid, red when invalid). PreviewWireMesh is created dynamically, so the base class does not
+	// know about it - we write its stencil ourselves (mirrors ASFConveyorBeltHologram).
+	if (PreviewWireMesh)
 	{
-		case EHologramMaterialState::HMS_OK:
-			Material = mValidPlacementMaterial;
-			break;
-		case EHologramMaterialState::HMS_WARNING:
-			Material = mValidPlacementMaterial;
-			break;
-		case EHologramMaterialState::HMS_ERROR:
-			Material = mInvalidPlacementMaterial;
-			break;
-	}
-	
-	if (Material)
-	{
-		ApplyHologramMaterial(Material);
+		const uint8 StencilValue = GetStencilForHologramMaterialState(materialState);
+		PreviewWireMesh->SetRenderCustomDepth(true);
+		PreviewWireMesh->SetCustomDepthStencilValue(StencilValue);
+		PreviewWireMesh->SetCustomDepthStencilWriteMask(ERendererStencilMask::ERSM_Default);
+		PreviewWireMesh->MarkRenderStateDirty();
 	}
 }
 
@@ -156,7 +152,8 @@ void ASFWireHologram::SetupWirePreview(UFGPowerConnectionComponent* StartConnect
 	UE_LOG(LogSmartHologram, VeryVerbose, TEXT("   Start: %s"), *CachedStartPos.ToString());
 	UE_LOG(LogSmartHologram, VeryVerbose, TEXT("   End: %s"), *CachedEndPos.ToString());
 
-	// Create our own wire mesh with proper catenary curve
+	// Create our own wire mesh with proper catenary curve (the vanilla AFGWireHologram does not render
+	// its wire when this hologram is a child preview, so we draw it ourselves).
 	CreateWireMeshWithCatenary(CachedStartPos, CachedEndPos);
 
 	bWireConfigured = true;
@@ -201,11 +198,9 @@ void ASFWireHologram::ForceVisibilityUpdate()
 		}
 	}
 
-	// Apply valid placement material by default
-	if (mValidPlacementMaterial)
-	{
-		ApplyHologramMaterial(mValidPlacementMaterial);
-	}
+	// #346: apply the valid-state hologram stencil (not a material swap) so the wire keeps its realistic
+	// catenary material and is tinted as a valid hologram.
+	SetPlacementMaterialState(EHologramMaterialState::HMS_OK);
 }
 
 float ASFWireHologram::GetWireLength() const
@@ -217,6 +212,26 @@ void ASFWireHologram::SetWireEndpoints(const FVector& Start, const FVector& End)
 {
 	CachedStartPos = Start;
 	CachedEndPos = End;
+}
+
+void ASFWireHologram::SetupWirePreviewFromPositions(const FVector& StartWorld, const FVector& EndWorld)
+{
+	// Issue #345: like SetupWirePreview, but from raw world positions (no connection components, since
+	// the Extend clone poles don't exist yet). Endpoints also drive GetWireLength()/GetCost().
+	CachedStartPos = StartWorld;
+	CachedEndPos = EndWorld;
+
+	// Extend repositions its child holograms every frame; keep the wire mesh in absolute world space so
+	// it stays on the endpoints instead of being dragged to the child actor's transform.
+	bUseAbsoluteMeshTransform = true;
+	CreateWireMeshWithCatenary(StartWorld, EndWorld);
+	bWireConfigured = true;
+
+	SetActorLocation((StartWorld + EndWorld) * 0.5f);
+	SetActorHiddenInGame(false);
+
+	// Apply the valid-state hologram stencil so the wire is tinted as a hologram (no material swap).
+	SetPlacementMaterialState(EHologramMaterialState::HMS_OK);
 }
 
 void ASFWireHologram::ConfigureActor(AFGBuildable* inBuildable) const
@@ -338,6 +353,15 @@ void ASFWireHologram::CreateWireMeshWithCatenary(const FVector& StartPos, const 
 		return;
 	}
 
+	// Issue #345: decouple the mesh from the (Extend-repositioned) child actor so the world transform
+	// applied below sticks. Must be set BEFORE the SetWorld* calls so they are interpreted as absolute.
+	if (bUseAbsoluteMeshTransform)
+	{
+		PreviewWireMesh->SetUsingAbsoluteLocation(true);
+		PreviewWireMesh->SetUsingAbsoluteRotation(true);
+		PreviewWireMesh->SetUsingAbsoluteScale(true);
+	}
+
 	// Use static helper from AFGBuildableWire to create a proper wire instance
 	// This handles the catenary curve calculation
 	FWireInstance WireInstance = AFGBuildableWire::CreateWireInstance(StartPos, EndPos, GetActorTransform());
@@ -382,29 +406,3 @@ void ASFWireHologram::CreateWireMeshWithCatenary(const FVector& StartPos, const 
 	UE_LOG(LogSmartHologram, VeryVerbose, TEXT("⚡ Wire mesh configured: Length=%.1f cm, Scale=%.2f"), Length, ScaleFactor);
 }
 
-void ASFWireHologram::ApplyHologramMaterial(UMaterialInterface* Material)
-{
-	if (!Material)
-	{
-		return;
-	}
-
-	// Apply to our preview mesh
-	if (PreviewWireMesh)
-	{
-		PreviewWireMesh->SetMaterial(0, Material);
-	}
-
-	// Also apply to any base class meshes
-	TArray<UStaticMeshComponent*> MeshComps;
-	GetComponents<UStaticMeshComponent>(MeshComps);
-	for (UStaticMeshComponent* MeshComp : MeshComps)
-	{
-		if (MeshComp)
-		{
-			MeshComp->SetMaterial(0, Material);
-		}
-	}
-
-	UE_LOG(LogSmartHologram, VeryVerbose, TEXT("⚡ Applied hologram material: %s"), *Material->GetName());
-}

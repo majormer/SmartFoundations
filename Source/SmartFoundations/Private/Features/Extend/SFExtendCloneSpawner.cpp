@@ -901,11 +901,22 @@ int32 FSFCloneTopology::SpawnChildHolograms(
                     HoloData->JsonCloneId = ChildData.HologramId;
                 }
                 
-                // Set wire endpoints for cost calculation (GetWireLength() → GetCost())
-                float WireDistance = ChildData.bHasSplineData ? ChildData.SplineData.Length : 0.0f;
-                WireChild->SetWireEndpoints(FVector::ZeroVector, FVector(WireDistance, 0, 0));
-                
-                WireChild->SetActorHiddenInGame(true);  // Hidden — post-build wiring creates the real connection
+                // Issue #345: render a VISIBLE preview catenary from the captured world endpoints
+                // (Points[0]=start, Points.Last()=end). Falls back to the old cost-only hidden wire if
+                // endpoints were not captured. Endpoints also drive GetWireLength() -> GetCost().
+                const float WireDistance = ChildData.bHasSplineData ? ChildData.SplineData.Length : 0.0f;
+                if (ChildData.bHasSplineData && ChildData.SplineData.Points.Num() >= 2)
+                {
+                    const FVector StartW = ChildData.SplineData.Points[0].World.ToFVector();
+                    const FVector EndW   = ChildData.SplineData.Points.Last().World.ToFVector();
+                    WireChild->SetupWirePreviewFromPositions(StartW, EndW);
+                }
+                else
+                {
+                    WireChild->SetWireEndpoints(FVector::ZeroVector, FVector(WireDistance, 0, 0));
+                    WireChild->SetActorHiddenInGame(true);  // cost-only fallback
+                }
+
                 WireChild->SetActorEnableCollision(false);
                 WireChild->SetActorTickEnabled(false);
                 WireChild->SetPlacementMaterialState(ParentMaterialState);

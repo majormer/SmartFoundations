@@ -1124,11 +1124,16 @@ void USFAutoConnectService::StoreBeltPreviews(AFGHologram* DistributorHologram, 
 				
 				// NOTE: DeferredCostService removed - child holograms automatically aggregate costs via GetCost()
 				
-				// Check if "No Build Cost" cheat is enabled
+				// Check if free building is active. Prefer the inventory's GetNoBuildCost(), which
+				// covers BOTH the session-wide cheat (GetCheatNoCost) AND the per-player game-mode
+				// "No Build Cost" rule that Advanced Game Settings / Creative Mode toggles. The old
+				// GameState->GetCheatNoCost() only saw the session cheat, so Creative Mode players
+				// were still charged for auto-connected belts/pipes/power.
 				AFGGameState* GameState = World->GetGameState<AFGGameState>();
-				bool bNoBuildCost = GameState && GameState->GetCheatNoCost();
-				
-				// Only perform affordability validation if cheat is disabled
+				bool bNoBuildCost = Inventory ? Inventory->GetNoBuildCost()
+											  : (GameState && GameState->GetCheatNoCost());
+
+				// Only perform affordability validation if free building is disabled
 				if (!bNoBuildCost && Inventory)
 				{
 					// Check if player can afford belt materials AFTER distributor costs are deducted

@@ -286,6 +286,11 @@ struct FSFSourcePowerPole
     UPROPERTY() bool bSourceHasFreeConnections = false;  // Whether source pole has free slots
     UPROPERTY() int32 SourceFreeConnections = 0;         // Number of free connections
     UPROPERTY() int32 MaxConnections = 4;                // Tier limit (Mk1=4, Mk2=7, Mk3=10)
+    // Issue #345: real source power-connector world positions, so the cable preview sits exactly on
+    // the connectors (clone connector = source connector + extend Offset) rather than a guessed height.
+    UPROPERTY() FSFVec3 PoleConnectorWorld;              // Source pole's power connector world location
+    UPROPERTY() FSFVec3 FactoryConnectorWorld;          // Source factory's power connector world location
+    UPROPERTY() bool bHasConnectorWorld = false;        // True when both connector positions were captured
 };
 
 /**
@@ -390,6 +395,12 @@ struct FSFCloneHologram
     // Connector normals for proper spline routing (belt/pipe lanes only)
     UPROPERTY() FSFVec3 LaneStartNormal;         // World-space connector facing direction at start
     UPROPERTY() FSFVec3 LaneEndNormal;           // World-space connector facing direction at end
+
+    // Issue #345: source-pole -> clone-pole power cable. Behaves like a lane segment for Scaled Extend:
+    // its source-side endpoint must chain to the previous clone (not the source) and only its clone-side
+    // endpoint rotates. Kept distinct from bIsLaneSegment so it does NOT pick up belt/pipe lane color
+    // customization in the spawner.
+    UPROPERTY() bool bIsSourceToCloneWire = false;
 };
 
 /**

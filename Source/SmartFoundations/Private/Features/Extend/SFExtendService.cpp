@@ -1064,6 +1064,15 @@ bool USFExtendService::CanAffordExtendCost(AFGHologram* Hologram, UFGInventoryCo
         return true;  // Can't evaluate -> never block.
     }
 
+    // Free building (session No Build Cost cheat OR the per-player rule that Advanced Game
+    // Settings / Creative Mode toggles) means materials are never required. GetNoBuildCost()
+    // is the same method vanilla uses; without this, Creative Mode players got a material-cost
+    // request and an unaffordable block on Extend even though the base game would build for free.
+    if (Inventory->GetNoBuildCost())
+    {
+        return true;
+    }
+
     AFGCentralStorageSubsystem* CentralStorage = AFGCentralStorageSubsystem::Get(Hologram->GetWorld());
     const TArray<FItemAmount> TotalCost = Hologram->GetCost(/*includeChildren=*/true);
     for (const FItemAmount& Item : TotalCost)

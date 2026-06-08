@@ -1310,6 +1310,22 @@ void USmartSettingsFormWidget::UpdateStackableBeltAutoConnectControls()
         BeltChainLabel->SetVisibility(ESlateVisibility::Collapsed);
     }
 
+    // #351: populate the Routing combobox for stackable conveyor poles too. It was only populated in
+    // the distributor path (UpdateBeltAutoConnectControls), so on a stackable pole it was empty and
+    // never dropped down. Stackable belt auto-connect honors BeltRoutingMode (SFAutoConnectService_Stackable).
+    if (BeltRoutingModeComboBox)
+    {
+        BeltRoutingModeComboBox->ClearOptions();
+        BeltRoutingModeComboBox->AddOption(TEXT("Default"));
+        BeltRoutingModeComboBox->AddOption(TEXT("Curve"));
+        BeltRoutingModeComboBox->AddOption(TEXT("Straight"));
+        BeltRoutingModeComboBox->SetSelectedIndex(FMath::Clamp(Settings.BeltRoutingMode, 0, 2));
+    }
+    if (BeltRoutingModeRow)
+    {
+        BeltRoutingModeRow->SetVisibility(ESlateVisibility::Visible);
+    }
+
     UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Updated stackable belt controls - Enabled=%d, Tier=%d, Direction=%d"),
         Settings.bStackableBeltEnabled, Settings.BeltTierMain, Settings.StackableBeltDirection);
 }
