@@ -800,6 +800,8 @@ void USFSubsystem::Tick(float DeltaTime)
 	{
 		// Get the building the player is looking at via line trace
 		AFGBuildable* LookedAtBuilding = nullptr;
+		FString DbgRawHit = TEXT("(no-pc/cam)"); // [EXTEND-MP] raw trace result for diagnostics
+		FVector DbgDir = FVector::ZeroVector;
 
 		AFGPlayerController* PC = Cast<AFGPlayerController>(LastController.Get());
 		if (!PC)
@@ -815,8 +817,13 @@ void USFSubsystem::Tick(float DeltaTime)
 		{
 			if (APlayerCameraManager* CameraManager = PC->PlayerCameraManager)
 			{
-				FVector Start = CameraManager->GetCameraLocation();
-				FVector End = Start + CameraManager->GetActorForwardVector() * 5000.0f;  // 50m range
+				// [EXTEND-MP] Use the player view point for the aim ray (robust on clients) instead of the
+				// camera-manager actor's forward vector, which can be stale/wrong on a remote client.
+				FVector ViewLoc; FRotator ViewRot;
+				PC->GetPlayerViewPoint(ViewLoc, ViewRot);
+				FVector Start = ViewLoc;
+				DbgDir = ViewRot.Vector();
+				FVector End = Start + DbgDir * 5000.0f;  // 50m range
 
 				FHitResult HitResult;
 				FCollisionQueryParams Params;
@@ -824,7 +831,9 @@ void USFSubsystem::Tick(float DeltaTime)
 				Params.AddIgnoredActor(ActiveHologram.Get());
 
 				// Use WorldStatic channel which hits buildings, not just visibility
-				if (GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_WorldStatic, Params))
+				const bool bHit = GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_WorldStatic, Params);
+				DbgRawHit = bHit ? (HitResult.GetActor() ? HitResult.GetActor()->GetClass()->GetName() : TEXT("hit(no-actor)")) : TEXT("MISS");
+				if (bHit)
 				{
 					AActor* HitActor = HitResult.GetActor();
 					LookedAtBuilding = Cast<AFGBuildable>(HitActor);
@@ -865,11 +874,11 @@ void USFSubsystem::Tick(float DeltaTime)
 			if (NowExt - LastExtMpLog > 1.0)
 			{
 				UE_LOG(LogSmartFoundations, Display,
-					TEXT("[EXTEND-MP] NetMode=%d PC=%s LookedAt=%s class=%s holoBuildClass=%s"),
+					TEXT("[EXTEND-MP] NetMode=%d PC=%s rawHit=%s dir=(%.2f,%.2f,%.2f) LookedAt=%s holoBuildClass=%s"),
 					GetWorld() ? (int32)GetWorld()->GetNetMode() : -1,
 					PC ? TEXT("ok") : TEXT("NULL"),
+					*DbgRawHit, DbgDir.X, DbgDir.Y, DbgDir.Z,
 					LookedAtBuilding ? *LookedAtBuilding->GetName() : TEXT("none"),
-					LookedAtBuilding ? *LookedAtBuilding->GetClass()->GetName() : TEXT("-"),
 					(ActiveHologram.IsValid() && ActiveHologram->GetBuildClass()) ? *ActiveHologram->GetBuildClass()->GetName() : TEXT("-"));
 				LastExtMpLog = NowExt;
 			}
