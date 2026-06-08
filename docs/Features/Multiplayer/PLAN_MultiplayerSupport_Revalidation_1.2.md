@@ -242,20 +242,37 @@ Diagnosis (what each observation rules in/out):
 - **Single-player is unaffected** — large grids (historically 3000+ children) build fine in SP, where the
   construct is local and never serialized. The limit is specific to the **client→server networked construct**.
 
-**Root cause (leading):** a single client→server construct carrying N child holograms is rejected wholesale
-above ~100–144 children — a **count limit in the networked construction path** (candidate: net-construction-ID
-pool / reliable-bunch / sub-object cap). The parent hologram's vanilla `Construct` serializes `mChildren` to
-the server; beyond the limit the whole construct fails atomically. Two distinct **client-side cleanup**
-failure modes layer on top: at moderate over-cap (256) the orphaned previews self-clean after ~1 min; at very
-large counts (1250) they persist as walk-through ghosts with the build gun consumed.
+**Root cause (CONFIRMED from vanilla headers, 2026-06-08):** the whole scaled grid commits as **one reliable
+RPC** — `UFGBuildGunStateBuild::Server_ConstructHologram(FNetConstructionID, FConstructHologramMessage)`
+(`Equipment/FGBuildGunBuild.h:208-209`, `Server, Reliable`). Every child rides inside
+`FConstructHologramMessage.SerializedHologramData`, a single `TArray<uint8>` holding the entire hologram tree
+serialized via `IFGConstructionMessageInterface::SerializeConstructMessage` (`FGConstructionMessageInterface.h`;
+`mChildren` serialized with the parent — `Hologram/FGHologram.h:126,729`). So the construct is **inherently
+all-or-nothing** (one RPC, one blob), and above ~100–144 children the serialized blob exceeds UE's
+**reliable-bunch / packet size ceiling** (an *engine-level* limit, not a FactoryGame constant — which is why
+it never appears in a Smart/FactoryGame grep, and the modding docs don't mention it). "Count-based vs
+byte-based" reconciles: each child serializes to a roughly constant size, so the byte ceiling ≈ count ×
+constant and foundations vs actors hit the same threshold (their child-hologram serialization is similar).
 
-**Fix direction:**
+**Why previews orphan:** vanilla has a failure callback `Client_OnBuildableFailedConstruction(FNetConstructionID)`
+(`FGBuildGunBuild.h:328`) — but it only fires if the **server processes** the message. An oversized RPC
+dropped at the net layer **never reaches the server**, so the callback never fires and the client never learns
+it failed → orphaned previews. The two observed cleanup modes (256 → self-clean ~1 min; 1250 → persistent
+walk-through ghosts, build gun consumed) are downstream of this missing-ack path.
+
+**Fix direction (grounded in the vanilla path above):**
 1. **Chunk** client-originated scaled placement into sub-batches of ≤~64–100 children, each committed as its
-   own construct, so each stays under the net limit. Single-player can keep the single-construct path.
-2. **Reconcile** local preview holograms when the server does not confirm the build (destroy orphans) — fixes
-   the ghost-cleanup bug; degrades worse with size.
-3. **Confirm the exact constant** via a code review of the build-gun / hologram net-construct path (the
-   maintainer flagged the 30.1.0 "smoother grid scaling / children-at-higher-counts" rework as related).
+   own `Server_ConstructHologram` call, so each serialized blob stays under the reliable-bunch ceiling.
+   Single-player can keep the one-shot path. (Lever: Smart already owns the multi-child hologram; the chunking
+   happens at the commit seam, not in `SerializeConstructMessage`.)
+2. **Reconcile** orphaned previews two-pronged: hook `Client_OnBuildableFailedConstruction` for the
+   server-rejected (deliverable-but-refused) case, **plus** a client-side timeout/ack for the dropped-RPC case
+   where that callback never fires (the oversized-blob case). Without the timeout, the ghost cleanup stays
+   broken for exactly the failure we hit.
+3. **Exact constant is engine-level** (UE reliable bunch / packet size), not a FactoryGame/Smart constant — so
+   the chunk size is chosen empirically (≤100 proven safe here) rather than read from a header. The modding
+   docs do not cover this; the vanilla headers (`FGBuildGunBuild.h`, `FGConstructionMessageInterface.h`,
+   `FGHologram.h`) are the authority.
 
 **Significance for the matrix:** scaling's MP risk is **lower than the 2026-05-20 matrix assumed** — the
 commit path is the safe vanilla server-authoritative path and it works for both lightweight and actor
