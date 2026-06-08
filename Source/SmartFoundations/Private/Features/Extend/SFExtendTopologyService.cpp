@@ -76,6 +76,24 @@ bool USFExtendTopologyService::WalkTopology(AFGBuildable* SourceBuilding)
     SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("Smart!: Walking topology for %s with %d connections"),
         *SourceBuilding->GetName(), Connections.Num());
 
+    // [EXTEND-MP] TEMP: does the factory connection graph resolve on a client? Topology bails if every
+    // connector's GetConnection() is null. Log connector count vs resolved count once/sec.
+    {
+        static double LastConnLog = 0; const double NowC = FPlatformTime::Seconds();
+        if (NowC - LastConnLog > 1.0)
+        {
+            int32 NumConnected = 0;
+            for (UFGFactoryConnectionComponent* C : Connections)
+            {
+                if (IsValid(C) && IsValid(C->GetConnection())) { ++NumConnected; }
+            }
+            UE_LOG(LogSmartExtend, Display, TEXT("[EXTEND-MP] %s: %d factory connectors, %d with resolved GetConnection() -> %s"),
+                *SourceBuilding->GetName(), Connections.Num(), NumConnected,
+                (Connections.Num() > 0 && NumConnected == 0) ? TEXT("connection links NOT resolved on client (topology fails)") : TEXT("connections resolve"));
+            LastConnLog = NowC;
+        }
+    }
+
     for (UFGFactoryConnectionComponent* Connector : Connections)
     {
         if (!IsValid(Connector))
