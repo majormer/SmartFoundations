@@ -1,6 +1,6 @@
 # <img src="https://github.com/majormer/SmartFoundations/blob/main/images/Smart-Logo.png?raw=true" width="150" alt="Smart! Logo"> Smart! Mod
 
-![Status](https://img.shields.io/badge/Status-Released-brightgreen) ![Version](https://img.shields.io/badge/Version-31.0.2-blue) ![Satisfactory](https://img.shields.io/badge/Satisfactory-1.2-blue) ![Engine](https://img.shields.io/badge/Engine-UE%205.6-blue) ![SML](https://img.shields.io/badge/SML-3.11.x-blue) ![Multiplayer](https://img.shields.io/badge/Multiplayer-Testing-orange) ![AI Assisted Development Used](https://img.shields.io/badge/AI%20Assisted%20Development%20Used-Disclosure%20Below-blue)
+![Status](https://img.shields.io/badge/Status-Released-brightgreen) ![Version](https://img.shields.io/badge/Version-31.1.0-blue) ![Satisfactory](https://img.shields.io/badge/Satisfactory-1.2-blue) ![Engine](https://img.shields.io/badge/Engine-UE%205.6-blue) ![SML](https://img.shields.io/badge/SML-3.11.x-blue) ![Multiplayer](https://img.shields.io/badge/Multiplayer-Testing-orange) ![AI Assisted Development Used](https://img.shields.io/badge/AI%20Assisted%20Development%20Used-Disclosure%20Below-blue)
 
 > **Multiplayer note:** Smart! is primarily developed for single-player. Multiplayer is under active testing with partial success, but is not currently considered fully supported.
 
@@ -101,16 +101,20 @@ See [LICENSE.md](https://github.com/majormer/SmartFoundations/blob/main/LICENSE.
 
 ---
 
-## 📰 What's New in v31.0.2
+## 📰 What's New in v31.1.0
 
-**Current Release:** v31.0.2 — a patch on top of the Satisfactory **1.2** release. See the [full changelog](https://github.com/majormer/SmartFoundations/blob/main/CHANGELOG.md) for all release details.
+**Current Release:** v31.1.0 — a belt-focused update on the Satisfactory **1.2** line. See the [full changelog](https://github.com/majormer/SmartFoundations/blob/main/CHANGELOG.md) for all release details.
 
-### Highlights in v31.0.2
+### Highlights in v31.1.0
+
+- **Standard conveyor pole auto-connect (new)** — scaling a standard Conveyor Pole now works like the Stackable pole: place one, scale out a line, and Smart! auto-connects belts between the poles at the height you set, with the whole line following as you raise or lower the height. (Tip: size the line first, then set the height.)
+- **Auto-connected belts between poles no longer stall or crash** — runs of auto-connected belts across Stackable / Wall / Ceiling conveyor poles used to fragment into disconnected pieces that could stop moving items after a reload, or even crash the game when items flowed through them. Smart! now stitches each pole run into one proper conveyor line as it's built, so it transports correctly and survives save/reload. A long-standing risk (present since around v29), now fixed.
+
+### Also in v31.0.2
 
 - **Packaged for Windows dedicated servers** — the release now includes a server build so the mod can be installed on a dedicated server and its version lines up with clients on update. Packaging only — multiplayer and dedicated servers are still **not officially supported** (full multiplayer support is planned for a future update).
 - **Smart! builds free in Creative Mode** — with No Build Cost on (now under Creative Mode in 1.2), auto-connect and Extend / Scaled Extend no longer ask for materials or block as "unaffordable"; they build for free, the same as base-game building.
 - **Power cable previews are back for Extend and Scaled Extend** — when you Extend a building that carries power, the preview again shows the cables (with droop) running between the source and each copy, sitting on the connectors and following each copy's rotation and chaining.
-- **Power auto-connect wire preview no longer shows a red middle** — the auto-connect power cable previews in the correct color end to end instead of tinting its middle section red on a valid connection.
 - **Smart! Panel Routing dropdown opens on Stackable Conveyor Poles** — the Belt Auto-Connect *Routing* dropdown now lists Default / Curve / Straight and applies your choice; dragging the panel also closes any open dropdown.
 
 ### Also in v31.0.1

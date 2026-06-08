@@ -526,7 +526,8 @@ void USFGridSpawnerService::UpdateChildPositions()
         // from adding disqualifiers, and force valid material state.
         const bool bNeedsPlacementBypass = ParentHologram->IsA(AFGCeilingLightHologram::StaticClass())
             || ParentHologram->IsA(AFGFloodlightHologram::StaticClass())
-            || ParentHologram->IsA(AFGWallAttachmentHologram::StaticClass());
+            || ParentHologram->IsA(AFGWallAttachmentHologram::StaticClass())
+            || USFAutoConnectService::IsRegularConveyorPoleHologram(ParentHologram);  // #354: standard conveyor pole
         if (bNeedsPlacementBypass)
         {
             ChildHologram->SetActorTickEnabled(false);

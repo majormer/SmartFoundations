@@ -634,6 +634,63 @@ void FSFHologramHelperService::RegenerateChildHologramGrid(
 					ChildHologram = FloodlightChild;
 				}
 			}
+			else if (USFAutoConnectService::IsRegularConveyorPoleHologram(ParentHologram))
+			{
+				// #354: standard conveyor pole - two-step (base + HEIGHT) placement. Use
+				// ASFConveyorPoleChildHologram (extends AFGConveyorPoleHologram) so the parent's chosen
+				// height (mPoleVariationIndex) + build step sync to children via SyncMultiStepHologramProperties.
+				// Gated on IsRegularConveyorPoleHologram so the STACKABLE pole (also AFGConveyorPoleHologram)
+				// keeps its existing generic-child path.
+				UWorld* SpawnWorld = WorldContext.Get();
+				if (SpawnWorld)
+				{
+					FActorSpawnParameters SpawnParams;
+					SpawnParams.Name = ChildName;
+					SpawnParams.Owner = ParentHologram->GetOwner();
+					SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+					SpawnParams.bDeferConstruction = true;
+
+					ASFConveyorPoleChildHologram* PoleChild = SpawnWorld->SpawnActor<ASFConveyorPoleChildHologram>(
+						ASFConveyorPoleChildHologram::StaticClass(),
+						SpawnLocation,
+						FRotator::ZeroRotator,
+						SpawnParams);
+
+					if (PoleChild)
+					{
+						PoleChild->SetChildBuildClass(ParentHologram->GetBuildClass());
+						PoleChild->SetRecipe(Recipe);
+						PoleChild->FinishSpawning(FTransform(FRotator::ZeroRotator, SpawnLocation));
+						ParentHologram->AddChild(PoleChild, ChildName);
+
+						USFHologramDataService::DisableValidation(PoleChild);
+						USFHologramDataService::MarkAsChild(PoleChild, ParentHologram, ESFChildHologramType::ScalingGrid);
+
+						if (PoleChild->IsHologramLocked())
+						{
+							PoleChild->LockHologramPosition(false);
+						}
+						PoleChild->SetActorHiddenInGame(false);
+						PoleChild->SetActorEnableCollision(false);
+
+						TArray<UPrimitiveComponent*> Primitives;
+						PoleChild->GetComponents<UPrimitiveComponent>(Primitives);
+						for (UPrimitiveComponent* PrimComp : Primitives)
+						{
+							PrimComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+						}
+
+						PoleChild->SetActorTickEnabled(false);
+						PoleChild->RegisterAllComponents();
+						PoleChild->SetPlacementMaterialState(EHologramMaterialState::HMS_OK);
+						PoleChild->Tags.AddUnique(FName(TEXT("SF_GridChild")));
+
+						UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("  #354 CONVEYOR POLE CHILD: Spawned %s at %s"),
+							*ChildName.ToString(), *SpawnLocation.ToString());
+					}
+					ChildHologram = PoleChild;
+				}
+			}
 			else if (ParentHologram->IsA(AFGStandaloneSignHologram::StaticClass()))
 			{
 				// Issue #192: Standalone signs/billboards have multi-step builds (pole height).
@@ -839,7 +896,8 @@ void FSFHologramHelperService::RegenerateChildHologramGrid(
 					|| ParentHologram->IsA(AFGCeilingLightHologram::StaticClass())
 					|| ParentHologram->IsA(AFGFloodlightHologram::StaticClass())
 					|| ParentHologram->IsA(AFGWallAttachmentHologram::StaticClass())
-					|| ParentHologram->IsA(AFGWaterPumpHologram::StaticClass());
+					|| ParentHologram->IsA(AFGWaterPumpHologram::StaticClass())
+					|| USFAutoConnectService::IsRegularConveyorPoleHologram(ParentHologram);  // #354
 
 				if (!bIsCustomChild)
 				{
@@ -1006,7 +1064,8 @@ void FSFHologramHelperService::RegenerateChildHologramGrid(
 		// Note: Water pumps are NOT included here — they need tick for water volume validation.
 		const bool bKeepTickDisabled = ParentHologram->IsA(AFGCeilingLightHologram::StaticClass())
 			|| ParentHologram->IsA(AFGFloodlightHologram::StaticClass())
-			|| ParentHologram->IsA(AFGWallAttachmentHologram::StaticClass());
+			|| ParentHologram->IsA(AFGWallAttachmentHologram::StaticClass())
+			|| USFAutoConnectService::IsRegularConveyorPoleHologram(ParentHologram);  // #354
 		for (const TWeakObjectPtr<AFGHologram>& ChildPtr : SpawnedChildren)
 		{
 			if (ChildPtr.IsValid())

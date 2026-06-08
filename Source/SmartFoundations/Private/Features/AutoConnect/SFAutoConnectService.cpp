@@ -1600,11 +1600,35 @@ bool USFAutoConnectService::IsWallConveyorPoleHologram(AFGHologram* Hologram)
 		|| HologramClassName.Contains(TEXT("ConveyorPoleWall"));
 }
 
+bool USFAutoConnectService::IsRegularConveyorPoleHologram(AFGHologram* Hologram)
+{
+	if (!Hologram)
+	{
+		return false;
+	}
+
+	UClass* BuildClass = Hologram->GetBuildClass();
+	if (!BuildClass)
+	{
+		return false;
+	}
+
+	const FString ClassName = BuildClass->GetName();
+
+	// #354: the STANDARD conveyor pole only - Build_ConveyorPole_C. Must NOT match the Stackable or Wall
+	// variants (their class names also contain "ConveyorPole"), so exact-match or exclude those explicitly.
+	return ClassName == TEXT("Build_ConveyorPole_C")
+		|| (ClassName.Contains(TEXT("ConveyorPole"))
+			&& !ClassName.Contains(TEXT("ConveyorPoleStackable"))
+			&& !ClassName.Contains(TEXT("ConveyorPoleWall")));
+}
+
 bool USFAutoConnectService::IsBeltSupportHologram(AFGHologram* Hologram)
 {
-	return IsStackableConveyorPoleHologram(Hologram) 
-		|| IsCeilingConveyorSupportHologram(Hologram) 
-		|| IsWallConveyorPoleHologram(Hologram);
+	return IsStackableConveyorPoleHologram(Hologram)
+		|| IsCeilingConveyorSupportHologram(Hologram)
+		|| IsWallConveyorPoleHologram(Hologram)
+		|| IsRegularConveyorPoleHologram(Hologram);   // #354: standard conveyor pole
 }
 
 // ========================================

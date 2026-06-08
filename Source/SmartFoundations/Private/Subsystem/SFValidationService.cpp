@@ -13,6 +13,7 @@
 #include "Hologram/FGCeilingLightHologram.h"
 #include "Hologram/FGFloodlightHologram.h"
 #include "Hologram/FGWallAttachmentHologram.h"
+#include "Features/AutoConnect/SFAutoConnectService.h"   // #354: IsRegularConveyorPoleHologram
 #include "Engine/World.h"
 #include "Kismet/KismetSystemLibrary.h"
 
@@ -226,11 +227,12 @@ bool FSFValidationService::ShouldEnableFloorValidation(
 	const bool bIsCeilingLight = ParentHologram->IsA(AFGCeilingLightHologram::StaticClass());
 	const bool bIsFloodlight = ParentHologram->IsA(AFGFloodlightHologram::StaticClass());
 	const bool bIsWallAttachment = ParentHologram->IsA(AFGWallAttachmentHologram::StaticClass());
-	if (bIsConveyorAttachment || bIsPipeAttachment || bIsPassthrough || bIsPowerPole || bIsCeilingLight || bIsFloodlight || bIsWallAttachment)
+	const bool bIsRegularPole = USFAutoConnectService::IsRegularConveyorPoleHologram(ParentHologram);  // #354
+	if (bIsConveyorAttachment || bIsPipeAttachment || bIsPassthrough || bIsPowerPole || bIsCeilingLight || bIsFloodlight || bIsWallAttachment || bIsRegularPole)
 	{
-		UE_LOG(LogSmartFoundations, VeryVerbose, 
-			TEXT("ValidationService: Floor validation disabled - Hologram type requires it (ConveyorAttachment=%d, PipeAttachment=%d, Passthrough=%d, PowerPole=%d, CeilingLight=%d, Floodlight=%d, WallAttachment=%d)"),
-			bIsConveyorAttachment, bIsPipeAttachment, bIsPassthrough, bIsPowerPole, bIsCeilingLight, bIsFloodlight, bIsWallAttachment);
+		UE_LOG(LogSmartFoundations, VeryVerbose,
+			TEXT("ValidationService: Floor validation disabled - Hologram type requires it (ConveyorAttachment=%d, PipeAttachment=%d, Passthrough=%d, PowerPole=%d, CeilingLight=%d, Floodlight=%d, WallAttachment=%d, RegularPole=%d)"),
+			bIsConveyorAttachment, bIsPipeAttachment, bIsPassthrough, bIsPowerPole, bIsCeilingLight, bIsFloodlight, bIsWallAttachment, bIsRegularPole);
 		return false;  // Always disable for these types
 	}
 	

@@ -9,6 +9,8 @@
 #include "Hologram/FGSplineHologram.h"
 #include "Hologram/FGBuildableHologram.h"
 #include "Hologram/FGBlueprintHologram.h"
+#include "Hologram/FGConveyorPoleHologram.h"      // #341: belt-support parent hologram (covers stackable/wall/ceiling)
+#include "Holograms/Logistics/SFConveyorBeltHologram.h"  // #341: DrainStackBuiltConveyors
 #include "FGConstructDisqualifier.h"
 #include "FGCentralStorageSubsystem.h"
 #include "FGGameState.h"
@@ -69,6 +71,10 @@ void USFGameInstanceModule::DispatchLifecycleEvent(ELifecyclePhase Phase)
 
 		// Register SML hook for blueprint construct (chain actor rebuilding like AutoLink)
 		RegisterBlueprintConstructHook();
+
+		// #341: Register SML hook on the belt-support parent Construct (in-frame chain registration;
+		// one hook covers stackable / wall / ceiling - see RegisterBeltSupportConstructHook).
+		RegisterBeltSupportConstructHook();
 
 	}
 }
@@ -201,4 +207,87 @@ void USFGameInstanceModule::RegisterBlueprintConstructHook()
 	);
 
 	UE_LOG(LogSmartFoundations, Verbose, TEXT("✅ AFGBlueprintHologram::Construct hook registered - chain actors will rebuild during construction"));
+}
+
+// #341: shared body for the belt-support parent Construct hooks (stackable / wall / ceiling).
+// Runs at the parent hologram's Construct-AFTER: synchronous, all child belts built + wired, and BEFORE
+// the factory tick - the timing Extend relies on. Registers the run's belts in-frame so vanilla builds one
+// chain per series-run. The SAME RemoveConveyor+AddConveyor off a timer crashes Factory_Tick (THESIS 6.16);
+// only the in-frame/pre-tick timing makes it safe.
+static void SF_RegisterStackBuiltRunInFrame(AFGBuildableHologram* hologram, const TCHAR* HookLabel)
+{
+	if (!hologram)
+	{
+		return;
+	}
+
+	// Only the grid PARENT carries children; child poles built inside Super::Construct have none, so this
+	// fires once per placement (not once per child pole/support).
+	if (hologram->GetHologramChildren().Num() == 0)
+	{
+		return;
+	}
+
+	UWorld* World = hologram->GetWorld();
+	AFGBuildableSubsystem* BuildableSubsystem = World ? AFGBuildableSubsystem::Get(World) : nullptr;
+	if (!BuildableSubsystem)
+	{
+		return;
+	}
+
+	// Drain the belts this placement built + wired. Empty => not a belt-support placement.
+	TArray<AFGBuildableConveyorBase*> StackBelts;
+	ASFConveyorBeltHologram::DrainStackBuiltConveyors(StackBelts);
+	if (StackBelts.Num() == 0)
+	{
+		return;
+	}
+
+	// In-frame, pre-tick Remove->Add (Extend's AutoLink pattern). The belts are already wired
+	// (connect-by-coincidence) and registered as solo chains; Remove->Add re-registers them with
+	// connections in place so vanilla unifies each series-run into one multi-segment chain.
+	int32 Rebuilt = 0;
+	for (AFGBuildableConveyorBase* Belt : StackBelts)
+	{
+		if (!Belt || !Belt->IsValidLowLevel())
+		{
+			continue;
+		}
+		UFGFactoryConnectionComponent* Conn0 = Belt->GetConnection0();
+		UFGFactoryConnectionComponent* Conn1 = Belt->GetConnection1();
+		const bool bHasConnection = (Conn0 && Conn0->IsConnected()) || (Conn1 && Conn1->IsConnected());
+		if (bHasConnection)
+		{
+			BuildableSubsystem->RemoveConveyor(Belt);
+			BuildableSubsystem->AddConveyor(Belt);
+			++Rebuilt;
+		}
+	}
+
+	UE_LOG(LogSmartFoundations, Log, TEXT("⛓️ #341 %s HOOK: in-frame rebuilt %d/%d belt-support belt(s) on %s"),
+		HookLabel, Rebuilt, StackBelts.Num(), *hologram->GetName());
+}
+
+void USFGameInstanceModule::RegisterBeltSupportConstructHook()
+{
+	// SML Hook: AFGConveyorPoleHologram::Construct (AFTER) - covers ALL belt-support pole grids:
+	// stackable poles, wall poles, and ceiling mounts.  [#341]
+	//
+	// IMPORTANT (verified live 2026-06-08): AFGConveyorPoleHologram does NOT override Construct, so the hooked
+	// method resolves to the base AFGBuildableHologram::Construct, and SML's vtable patch is broad enough that
+	// this single hook fires for sibling belt-support hologram classes too - confirmed by the log firing on
+	// Holo_ConveyorWallAttachment_C and Holo_ConveyorCeilingAttachment_C, not just stackable poles. So one hook
+	// suffices; a separate AFGWallAttachmentHologram hook was redundant and removed. The handler is typed
+	// AFGBuildableHologram* to match the base method. The GetHologramChildren()>0 + DrainStackBuiltConveyors()
+	// guards make it a cheap no-op for any other hologram the broad patch may also fire for.
+	SUBSCRIBE_METHOD_VIRTUAL_AFTER(
+		AFGConveyorPoleHologram::Construct,
+		GetMutableDefault<AFGConveyorPoleHologram>(),
+		[](AActor* returnValue, AFGBuildableHologram* hologram, TArray<AActor*>& out_children, FNetConstructionID NetConstructionID)
+		{
+			SF_RegisterStackBuiltRunInFrame(hologram, TEXT("BELT-SUPPORT"));
+		}
+	);
+
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("✅ AFGConveyorPoleHologram::Construct hook registered (#341 belt-support chain registration: stackable/wall/ceiling)"));
 }
