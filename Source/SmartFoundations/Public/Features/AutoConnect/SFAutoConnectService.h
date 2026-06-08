@@ -246,8 +246,14 @@ public:
 	static bool IsWallConveyorPoleHologram(AFGHologram* Hologram);
 
 	/**
-	 * Check if a hologram is any belt-capable support structure (Issue #268)
-	 * Includes: stackable conveyor poles, ceiling conveyor supports, wall conveyor poles
+	 * Check if a hologram is the STANDARD (non-stackable) conveyor pole (Build_ConveyorPole_C). #354
+	 * Exact/exclusive match so it does NOT also catch the Stackable or Wall pole variants.
+	 */
+	static bool IsRegularConveyorPoleHologram(AFGHologram* Hologram);
+
+	/**
+	 * Check if a hologram is any belt-capable support structure (Issue #268, #354)
+	 * Includes: stackable conveyor poles, ceiling conveyor supports, wall conveyor poles, standard conveyor poles
 	 * @param Hologram The hologram to check
 	 * @return True if this hologram supports belt auto-connect between grid neighbors
 	 */

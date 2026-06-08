@@ -582,6 +582,9 @@ protected:
 	int32 CachedParentFixtureAngle = INT_MIN;
 	uint8 CachedParentBuildStep = 0;
 
+	/** #354: cached standard-conveyor-pole height (mPoleVariationIndex) for child sync. */
+	int32 CachedParentPoleVariation = INT_MIN;
+
 	/** Sync multi-step hologram properties (e.g. floodlight angle) from parent to children (Issue #200) */
 	void SyncMultiStepHologramProperties();
 

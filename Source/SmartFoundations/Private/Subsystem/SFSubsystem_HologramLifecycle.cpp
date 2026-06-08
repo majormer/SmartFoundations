@@ -951,6 +951,69 @@ void USFSubsystem::SyncMultiStepHologramProperties()
 		return;
 	}
 
+	// === Standard conveyor pole HEIGHT sync (#354) ===
+	// The regular conveyor pole is a two-step placement (base, then height). The chosen height is carried by
+	// the private int32 mPoleVariationIndex (the value the player scrolls in step 2); mBuildStep is the step.
+	// Sync both from parent to children via reflection so a scaled grid of poles all take the parent's height.
+	// GATED to the REGULAR pole only - stackable/wall poles are also AFGConveyorPoleHologram and must not be
+	// touched here (they don't use this height step and already work).
+	if (USFAutoConnectService::IsRegularConveyorPoleHologram(Parent))
+	{
+		AFGConveyorPoleHologram* PoleParent = Cast<AFGConveyorPoleHologram>(Parent);
+		if (PoleParent)
+		{
+			int32 ParentVariation = -1;
+			FIntProperty* VarProp = FindFProperty<FIntProperty>(AFGPoleHologram::StaticClass(), TEXT("mPoleVariationIndex"));
+			if (VarProp)
+			{
+				ParentVariation = VarProp->GetPropertyValue_InContainer(PoleParent);
+			}
+
+			uint8 ParentBuildStep = 0;
+			FProperty* StepProp = FindFProperty<FProperty>(AFGPoleHologram::StaticClass(), TEXT("mBuildStep"));
+			if (StepProp)
+			{
+				StepProp->CopyCompleteValue(&ParentBuildStep, StepProp->ContainerPtrToValuePtr<void>(PoleParent));
+			}
+
+			if (ParentVariation != CachedParentPoleVariation || ParentBuildStep != CachedParentBuildStep)
+			{
+				CachedParentPoleVariation = ParentVariation;
+				CachedParentBuildStep = ParentBuildStep;
+
+				const auto& SpawnedChildren = HologramHelper->GetSpawnedChildren();
+				int32 SyncedCount = 0;
+				for (const auto& ChildPtr : SpawnedChildren)
+				{
+					if (!ChildPtr.IsValid()) continue;
+					AFGConveyorPoleHologram* PoleChild = Cast<AFGConveyorPoleHologram>(ChildPtr.Get());
+					if (!PoleChild) continue;
+
+					if (VarProp)  VarProp->SetPropertyValue_InContainer(PoleChild, ParentVariation);
+					if (StepProp) StepProp->CopyCompleteValue(StepProp->ContainerPtrToValuePtr<void>(PoleChild), &ParentBuildStep);
+
+					// Refresh the child's mesh/height from the new variation index. Prefer the reflected
+					// OnRep; fall back to our public RefreshPoleMesh() shim if the OnRep does not refresh.
+					if (UFunction* RepFunc = PoleChild->FindFunction(TEXT("OnRep_PoleVariationIndex")))
+					{
+						PoleChild->ProcessEvent(RepFunc, nullptr);
+					}
+					else if (ASFConveyorPoleChildHologram* SmartChild = Cast<ASFConveyorPoleChildHologram>(PoleChild))
+					{
+						SmartChild->RefreshPoleMesh();
+					}
+					SyncedCount++;
+				}
+				if (SyncedCount > 0)
+				{
+					UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("#354 Synced conveyor-pole height to %d children: VariationIndex=%d, BuildStep=%d"),
+						SyncedCount, ParentVariation, ParentBuildStep);
+				}
+			}
+		}
+		return;
+	}
+
 	// === Standalone sign/billboard sync (Issue #192) ===
 	AFGStandaloneSignHologram* SignParent = Cast<AFGStandaloneSignHologram>(Parent);
 	if (SignParent)

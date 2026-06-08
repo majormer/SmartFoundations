@@ -125,6 +125,9 @@
 #include "Hologram/FGWheeledVehicleHologram.h"
 #include "Hologram/FGSpaceElevatorHologram.h"
 #include "Hologram/FGFloodlightHologram.h"
+#include "Hologram/FGConveyorPoleHologram.h"               // #354: standard conveyor pole height sync
+#include "Hologram/FGPoleHologram.h"                       // #354: mPoleVariationIndex / mBuildStep / EPoleHologramBuildStep
+#include "Holograms/Logistics/SFConveyorPoleChildHologram.h"  // #354: pole grid child
 #include "Buildables/FGBuildablePassthrough.h"
 #include "Buildables/FGBuildableFactory.h"
 #include "Buildables/FGBuildableManufacturer.h"

@@ -25,6 +25,7 @@
 #include "Holograms/Core/SFBuildableChildHologram.h"
 #include "Holograms/Core/SFFloodlightChildHologram.h"
 #include "Holograms/Core/SFStandaloneSignChildHologram.h"
+#include "Holograms/Logistics/SFConveyorPoleChildHologram.h"   // #354: standard conveyor pole grid child
 #include "Hologram/FGStandaloneSignHologram.h"
 #include "Hologram/FGSignPoleHologram.h"
 #include "Data/SFHologramDataRegistry.h"
