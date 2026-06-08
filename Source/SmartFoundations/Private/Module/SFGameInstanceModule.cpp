@@ -321,6 +321,15 @@ void USFGameInstanceModule::RegisterBeltSupportConstructHook()
 static constexpr int32 SF_MP_CONSTRUCT_MAX_BYTES = 60000; // cancel a Smart-grid construct above this
 static constexpr int32 SF_MP_CONSTRUCT_LOG_BYTES = 20000; // log any Smart-grid construct above this (capture real sizes)
 
+// Hand-serialization (full-auto) state. Declared before the guard hook because the guard hook captures
+// chunk 0's NetConstructionID into these. Chunk 0 is the player's natural fire; we capture the valid
+// FNetConstructionID vanilla minted for it, then derive subsequent chunk IDs (Client_ID + n) and hand-build
+// + send each remaining chunk's Server_ConstructHologram ourselves (the build gun only constructs on real
+// input). The biggest unknown is whether the server accepts the derived IDs.
+static FNetConstructionID GSFBaseConstructID;
+static bool GSFExpectingChunk0ID = false;
+static int32 GSFChunkSeq = 0;
+
 void USFGameInstanceModule::RegisterClientConstructChunkGuardHook()
 {
 	SUBSCRIBE_METHOD(
@@ -430,14 +439,6 @@ static TArray<FSFPendingChunk> GSFPendingChunks;
 static TWeakObjectPtr<UFGBuildGunStateBuild> GSFPendingGun;
 static int32 GSFChunkWait = 0;
 static FTSTicker::FDelegateHandle GSFChunkTicker;
-
-// Hand-serialization (full-auto) state. Chunk 0 is the player's natural fire; we capture the valid
-// FNetConstructionID vanilla minted for it, then derive subsequent chunk IDs (Client_ID + n) and hand-build
-// + send each remaining chunk's Server_ConstructHologram ourselves (bypassing the build gun, which only
-// constructs on real input). The biggest unknown is whether the server accepts the derived IDs.
-static FNetConstructionID GSFBaseConstructID;
-static bool GSFExpectingChunk0ID = false;
-static int32 GSFChunkSeq = 0;
 
 bool USFGameInstanceModule::TickPendingGridChunks(float /*Dt*/)
 {
