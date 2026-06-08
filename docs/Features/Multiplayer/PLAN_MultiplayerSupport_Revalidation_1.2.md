@@ -248,11 +248,18 @@ RPC** — `UFGBuildGunStateBuild::Server_ConstructHologram(FNetConstructionID, F
 `FConstructHologramMessage.SerializedHologramData`, a single `TArray<uint8>` holding the entire hologram tree
 serialized via `IFGConstructionMessageInterface::SerializeConstructMessage` (`FGConstructionMessageInterface.h`;
 `mChildren` serialized with the parent — `Hologram/FGHologram.h:126,729`). So the construct is **inherently
-all-or-nothing** (one RPC, one blob), and above ~100–144 children the serialized blob exceeds UE's
-**reliable-bunch / packet size ceiling** (an *engine-level* limit, not a FactoryGame constant — which is why
-it never appears in a Smart/FactoryGame grep, and the modding docs don't mention it). "Count-based vs
-byte-based" reconciles: each child serializes to a roughly constant size, so the byte ceiling ≈ count ×
-constant and foundations vs actors hit the same threshold (their child-hologram serialization is similar).
+all-or-nothing** (one RPC, one blob), and past a threshold the serialized blob exceeds UE's **reliable
+partial-bunch byte ceiling** (an *engine-level* limit, not a FactoryGame constant — which is why it never
+appears in a Smart/FactoryGame grep, and the modding docs don't mention it).
+
+**Measured boundaries (hard, reproducible, single 1×N lines):** foundations **136 OK / 137 fail**;
+constructors **135 OK / 136 fail**. The **off-by-one between building types is the proof it is byte-based,
+not a count cap**: a fixed byte ceiling ÷ a near-constant per-child serialized size. Each child's payload is
+dominated by **common hologram fields** (transform, `FNetConstructionID`, build-class ref, hologram state) —
+identical in size regardless of building — so the boundary barely moves; the constructor carries a hair more
+(recipe/class-path) and so crosses the ceiling one child sooner. Back-of-envelope: ~64 KB ceiling ÷ ~480
+bytes/child ≈ 136. There is **no "136/137" constant anywhere in code** — it is `floor((ceiling − overhead) /
+bytes_per_child)`.
 
 **Why previews orphan:** vanilla has a failure callback `Client_OnBuildableFailedConstruction(FNetConstructionID)`
 (`FGBuildGunBuild.h:328`) — but it only fires if the **server processes** the message. An oversized RPC
