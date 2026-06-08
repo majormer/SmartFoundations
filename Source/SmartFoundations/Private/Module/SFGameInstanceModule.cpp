@@ -396,10 +396,25 @@ void USFGameInstanceModule::RegisterClientConstructChunkGuardHook()
 }
 
 // MP Slice 0 chunking. A Smart grid above this many total cells will not fit one 64KB Server_ConstructHologram.
-// We slice the active hologram's children down to a chunk that fits, BEFORE vanilla serializes (at the fire
-// handler). Increment 1 builds a single chunk to prove the shrink-then-vanilla-serialize mechanic.
 static constexpr int32 SF_MP_OVERSIZED_CELLS = 130; // trigger chunking above this (total cells incl. parent)
-static constexpr int32 SF_MP_CHUNK_KEEP_CHILDREN = 100; // Increment 1: keep this many grid children; drop the rest
+static constexpr int32 SF_MP_CHUNK_CHILDREN  = 100; // grid children to build per chunk (parent adds 1 cell)
+
+// Re-entrancy guard: the chunk loop re-invokes InternalExecuteDuBuildStepInput; those nested calls must pass
+// straight through to vanilla without re-chunking.
+static bool GSFChunkingInProgress = false;
+
+// Set the active hologram's child list to exactly the given actors (friend access to mChildren/lookup map).
+static void SF_SetHologramChildren(AFGHologram* Holo, const TArray<AFGHologram*>& NewChildren)
+{
+	Holo->mChildren.Reset();
+	Holo->mChildrenNameLookupMap.Reset();
+	for (AFGHologram* C : NewChildren)
+	{
+		if (!C) { continue; }
+		Holo->mChildren.Add(C);
+		Holo->mChildrenNameLookupMap.Add(C->GetNameWithinParentHologram(), C);
+	}
+}
 
 void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 {
@@ -407,9 +422,9 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 		UFGBuildGunStateBuild::InternalExecuteDuBuildStepInput,
 		[](auto& scope, UFGBuildGunStateBuild* self, bool isInputFromARelease)
 		{
-			if (!self)
+			if (!self || GSFChunkingInProgress)
 			{
-				return;
+				return; // nested re-fire -> let vanilla run unmodified
 			}
 
 			UWorld* World = self->GetWorld();
@@ -424,54 +439,88 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 				return;
 			}
 
-			// mChildren / mChildrenNameLookupMap are accessible via the USFGameInstanceModule friend AT.
-			TArray<TObjectPtr<AFGHologram>>& Children = Holo->mChildren;
-
+			// Snapshot the Smart grid child holograms (tagged SF_GridChild), in order.
 			static const FName GridChildTag(TEXT("SF_GridChild"));
-			int32 GridChildCount = 0;
-			for (const TObjectPtr<AFGHologram>& C : Children)
+			TArray<AFGHologram*> Kids;
+			for (const TObjectPtr<AFGHologram>& C : Holo->mChildren)
 			{
 				if (C && C->Tags.Contains(GridChildTag))
 				{
-					++GridChildCount;
+					Kids.Add(C.Get());
 				}
 			}
-			if (GridChildCount == 0)
+			if (Kids.Num() == 0)
 			{
 				return; // not a Smart scaled grid
 			}
 
-			const int32 TotalCells = GridChildCount + 1; // + parent/origin cell
+			const int32 TotalCells = Kids.Num() + 1; // + parent/origin cell
 			if (TotalCells <= SF_MP_OVERSIZED_CELLS)
 			{
 				return; // fits one construct -> untouched vanilla path
 			}
 
-			// INCREMENT 1 (proof): shrink to one safe chunk before vanilla serializes. Destroy the excess grid
-			// child previews (they would otherwise orphan). If this chunk builds cleanly server-side, the
-			// shrink-then-vanilla-serialize mechanic is proven and Increment 2 will loop the remaining chunks.
-			int32 RemainingGrid = GridChildCount;
-			int32 Destroyed = 0;
-			for (int32 i = Children.Num() - 1; i >= 0 && RemainingGrid > SF_MP_CHUNK_KEEP_CHILDREN; --i)
+			// INCREMENT 2a (bounded): build TWO chunks to prove the re-fire loop respects a repositioned parent.
+			//  - Chunk 0: parent stays at the origin, children = Kids[0..99].
+			//  - Chunk 1: parent is REPOSITIONED to Kids[100]'s transform (that cell is built as the parent),
+			//    children = Kids[101..199]. If chunk 1 lands at Kids[100]'s position (not the crosshair), the
+			//    loop mechanic works and Increment 2b generalizes to all chunks.
+			// Excess cells beyond two chunks are dropped (destroyed) for this bounded proof.
+			const FTransform OriginXform = Holo->GetActorTransform();
+
+			// Build chunk 0 child set.
+			TArray<AFGHologram*> Chunk0;
+			for (int32 i = 0; i < Kids.Num() && Chunk0.Num() < SF_MP_CHUNK_CHILDREN; ++i)
 			{
-				AFGHologram* C = Children[i].Get();
-				if (!C || !C->Tags.Contains(GridChildTag))
-				{
-					continue; // never drop non-grid / structural children
-				}
-				const FName ChildName = C->GetNameWithinParentHologram();
-				Holo->mChildrenNameLookupMap.Remove(ChildName);
-				Children.RemoveAt(i);
-				C->Destroy();
-				--RemainingGrid;
-				++Destroyed;
+				Chunk0.Add(Kids[i]);
+			}
+
+			// Chunk 1 anchor (becomes the repositioned parent) + its children.
+			AFGHologram* Chunk1Anchor = (Kids.Num() > SF_MP_CHUNK_CHILDREN) ? Kids[SF_MP_CHUNK_CHILDREN] : nullptr;
+			FTransform Chunk1Xform = Chunk1Anchor ? Chunk1Anchor->GetActorTransform() : OriginXform;
+			TArray<AFGHologram*> Chunk1;
+			for (int32 i = SF_MP_CHUNK_CHILDREN + 1; i < Kids.Num() && Chunk1.Num() < SF_MP_CHUNK_CHILDREN; ++i)
+			{
+				Chunk1.Add(Kids[i]);
+			}
+
+			// Destroy any cells beyond the two chunks (bounded proof) + the anchor's old preview (the parent
+			// will build that cell when repositioned).
+			int32 Dropped = 0;
+			for (AFGHologram* K : Kids)
+			{
+				const bool bUsed = (K == Chunk1Anchor) || Chunk0.Contains(K) || Chunk1.Contains(K);
+				if (K == Chunk1Anchor) { K->Destroy(); ++Dropped; continue; }
+				if (!bUsed && K) { K->Destroy(); ++Dropped; }
 			}
 
 			UE_LOG(LogSmartFoundations, Display,
-				TEXT("[MP-CHUNK] Increment 1: oversized grid (%d cells) shrank to %d cells (destroyed %d excess child previews) before serialize. Letting vanilla build the chunk."),
-				TotalCells, RemainingGrid + 1, Destroyed);
+				TEXT("[MP-CHUNK] Increment 2a: %d cells -> chunk0(parent@origin + %d), chunk1(parent@Kids[100] + %d); dropped %d beyond two chunks."),
+				TotalCells, Chunk0.Num(), Chunk1.Num(), Dropped);
 
-			// Do NOT cancel: vanilla now serializes + constructs the fit-in-one-RPC grid.
+			// Drive the two chunks. Cancel the original fire; we re-invoke it per chunk.
+			scope.Cancel();
+			GSFChunkingInProgress = true;
+
+			// Chunk 0
+			Holo->SetActorTransform(OriginXform);
+			SF_SetHologramChildren(Holo, Chunk0);
+			UE_LOG(LogSmartFoundations, Display, TEXT("[MP-CHUNK] Increment 2a: firing chunk 0 (%d children) at origin"), Chunk0.Num());
+			self->InternalExecuteDuBuildStepInput(false);
+
+			// Chunk 1 (repositioned parent)
+			if (Chunk1Anchor)
+			{
+				Holo->SetActorTransform(Chunk1Xform);
+				SF_SetHologramChildren(Holo, Chunk1);
+				UE_LOG(LogSmartFoundations, Display, TEXT("[MP-CHUNK] Increment 2a: firing chunk 1 (%d children) at repositioned parent (Kids[100])"), Chunk1.Num());
+				self->InternalExecuteDuBuildStepInput(false);
+			}
+
+			// Clean up: clear any leftover children + restore the parent to the crosshair origin.
+			SF_SetHologramChildren(Holo, TArray<AFGHologram*>());
+			Holo->SetActorTransform(OriginXform);
+			GSFChunkingInProgress = false;
 		}
 	);
 
