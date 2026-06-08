@@ -103,6 +103,17 @@ public:
 	UFUNCTION(Client, Reliable)
 	void Client_ReceiveAuditResult(FSFUpgradeAuditResult Result);
 
+	//~ Begin UObject Interface
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
+	//~ End UObject Interface
+
+	// SML requires a Remote Call Object to have at least one replicated UPROPERTY (registered in
+	// GetLifetimeReplicatedProps) - otherwise the RCO does not replicate and its client->server RPCs
+	// silently do nothing. (See the official SML multiplayer docs.) This dummy satisfies that requirement;
+	// nothing reads it. Without it, the scaling/spacing/arrow/upgrade RPCs above never actually run.
+	UPROPERTY(Replicated)
+	bool bDummyReplicated = true;
+
 protected:
 	// ========================================
 	// Validation & Security

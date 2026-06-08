@@ -17,6 +17,14 @@ bool USFRCO::ShouldRegisterRemoteCallObject(const AFGGameMode* GameMode) const
 	return true;
 }
 
+void USFRCO::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	// Required for the RCO to replicate at all (SML rule): register at least one replicated property.
+	DOREPLIFETIME(USFRCO, bDummyReplicated);
+}
+
 // ========================================
 // Scaling RPCs
 // ========================================
