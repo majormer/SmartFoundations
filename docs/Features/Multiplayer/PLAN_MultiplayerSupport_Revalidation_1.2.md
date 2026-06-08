@@ -281,6 +281,20 @@ walk-through ghosts, build gun consumed) are downstream of this missing-ack path
    docs do not cover this; the vanilla headers (`FGBuildGunBuild.h`, `FGConstructionMessageInterface.h`,
    `FGHologram.h`) are the authority.
 
+**RESULT (live testing, 2026-06-08) — chunking is NOT viable; shipped a safety guard instead.**
+The ceiling is exactly **65536 bytes** (foundations 136 OK/137 fail, constructors 135/136 — off-by-one proves
+byte-based). A *single* chunk built cleanly via the natural player fire (shrink `mChildren` before vanilla
+serializes → 65536→32768 bytes, builds). But building the *remaining* chunks requires driving extra constructs,
+and all three mechanisms failed: (1) synchronous build-gun re-fire never constructs (single-construct-per-fire
+state machine); (2) deferred per-frame re-fire never constructs either (build gun only constructs on real
+input); (3) hand-building `FConstructHologramMessage` + calling `Server_ConstructHologram` directly **crashes
+the dedicated server** (`UNetDriver::InternalTickDispatch`), despite the client side fully working (package map
+resolves, blob serializes, derived `FNetConstructionID` Client_IDs send). **Conclusion: full-auto large-grid
+MP placement is not safely achievable with available APIs.** Current code: a **safety guard** at the client
+fire handler refuses an oversized grid (>130 cells) before any send — no crash, no orphan, grid stays live to
+scale down. Large-grid MP placement is parked for the *complete* MP solution (which cannot ship partially);
+revisit only if vanilla exposes the construct sequencing.
+
 **Significance for the matrix:** scaling's MP risk is **lower than the 2026-05-20 matrix assumed** — the
 commit path is the safe vanilla server-authoritative path and it works for both lightweight and actor
 buildables at normal scale. The only defect is the large-batch ceiling + preview cleanup, both bounded and
