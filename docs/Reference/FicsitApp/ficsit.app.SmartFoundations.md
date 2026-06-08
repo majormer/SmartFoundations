@@ -107,6 +107,7 @@ See [LICENSE.md](https://github.com/majormer/SmartFoundations/blob/main/LICENSE.
 
 ### Highlights in v31.0.2
 
+- **Dedicated-server build** — Smart! is now packaged for Windows dedicated servers, fixing update/matching problems for players on dedicated-server setups. (Packaging fix, not the multiplayer work still in progress.)
 - **Power cable previews are back for Extend and Scaled Extend** — when you Extend a building that carries power, the preview again shows the cables (with droop) running between the source and each copy, sitting on the connectors and following each copy's rotation and chaining.
 - **Power auto-connect wire preview no longer shows a red middle** — the auto-connect power cable previews in the correct color end to end instead of tinting its middle section red on a valid connection.
 - **Smart! Panel Routing dropdown opens on Stackable Conveyor Poles** — the Belt Auto-Connect *Routing* dropdown now lists Default / Curve / Straight and applies your choice; dragging the panel also closes any open dropdown.
