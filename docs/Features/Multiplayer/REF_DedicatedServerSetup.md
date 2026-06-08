@@ -147,6 +147,37 @@ Sequence to a working modded Windows dedi:
 3. Apply the **SmartFoundations server package** at the version matching the client under test.
 4. Connect client via `open 127.0.0.1`; run the MP tests.
 
+### Update (2026-06-08, second boot) — SML fixed; real blocker is SmartFoundations not deployed for the server target
+
+After updating SML to 3.12.0 via SMM, the **PSAPI/SML crash is gone** — SML 3.12.0 and a SmartCamera
+WindowsServer rebuild both load. The server now aborts at a **different, later** point:
+
+```
+Unable to load plugin 'SmartFoundations'. Aborting.   (PluginManager ConfigureEnabledPlugins)
+```
+
+Root cause: **`SmartCamera.uplugin` hard-declares a dependency on SmartFoundations**
+(`"Plugins": [ { "Name": "SmartFoundations", "Enabled": true, "SemVersion": ">=25.0.0" }, ... ]`), but
+**SmartFoundations is not deployed for the WindowsServer target** — there is no
+`Mods/GameFeatures/SmartFoundations/` on the server. SmartCamera can't satisfy its dependency → fatal abort.
+(Renaming the SmartCamera folder in place does **not** disable it: UE plugin discovery scans for the
+`.uplugin` file regardless of folder name; to truly disable a GameFeature, move it out of the server tree.)
+
+Dev-env state: a current **SF server DLL** (`Binaries/Win64/FactoryServer-SmartFoundations-Win64-Shipping.dll`,
+2026-06-08) and cooked `Saved/Cooked/WindowsServer/` content exist, but **no packaged WindowsServer pak**
+and nothing deployed. SmartCamera, by contrast, has the full deployed set on the server:
+`FactoryServer-SmartCamera-Win64-Shipping.dll` + `.modules` + `Content/Paks/WindowsServer/*.pak/.ucas/.utoc`
++ `.uplugin` + `Resources/Icon128.png`. That set is the **template** for what a complete SF server deploy
+needs.
+
+**Fix (maintainer / Alpakit, do NOT hand-mix DLL+pak — BuildId trap):** run Alpakit with the **WindowsServer**
+target for SmartFoundations (the same step that produced the working SmartCamera server package) and deploy
+to `Mods/GameFeatures/SmartFoundations/`. Then re-boot; SmartCamera's dependency resolves and the server
+should reach a ready state, after which it can be claimed.
+
+Verified-good so far: server core (CL491125), SML 3.12.0, SmartCamera WindowsServer build. Outstanding:
+SmartFoundations WindowsServer package + deploy, then claim.
+
 ## Open setup decisions (to confirm before standing one up)
 
 - **Where:** local Windows box (same machine as dev), a separate Linux box/VM, or both? (Both eventually, for
