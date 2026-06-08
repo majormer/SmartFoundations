@@ -37,7 +37,15 @@ public:
      * When used as EXTEND preview child, this returns nullptr to prevent building.
      */
     virtual AActor* Construct(TArray<AActor*>& out_children, FNetConstructionID constructionID) override;
-    
+
+    /**
+     * #341: drain the list of freshly-built stackable belts (each registers here after it builds and
+     * wires its connectors by coincidence). Called from the parent pole hologram's Construct hook -
+     * in-frame and BEFORE the factory tick - to register the run so vanilla builds one chain per
+     * series-run. Empties the list. THESIS Belts/ChainActors 6.16.
+     */
+    static void DrainStackBuiltConveyors(TArray<class AFGBuildableConveyorBase*>& OutBelts);
+
     /**
      * Override PostHologramPlacement to skip vanilla spline update for child holograms.
      * Vanilla's GenerateAndUpdateSpline() crashes when called on our child belt holograms

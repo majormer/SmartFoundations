@@ -387,6 +387,19 @@ static void SF_RegisterStackBuilt(AFGBuildableConveyorBase* Belt)
     }
 }
 
+// #341: drain the stack-built belts for in-frame chain registration from the parent pole Construct hook.
+void ASFConveyorBeltHologram::DrainStackBuiltConveyors(TArray<AFGBuildableConveyorBase*>& OutBelts)
+{
+    for (const TWeakObjectPtr<AFGBuildableConveyorBase>& Weak : GStackBuiltConveyors)
+    {
+        if (AFGBuildableConveyorBase* Belt = Weak.Get())
+        {
+            OutBelts.Add(Belt);
+        }
+    }
+    GStackBuiltConveyors.Empty();
+}
+
 // Connect `Ours` to the coincident (<=tol), free, CanConnectTo-compatible connector on any OTHER
 // built stacked belt. Returns true if a connection was made. Safe on live belts (SetConnection is
 // topology only — THESIS §2.6) and against dead belts (TWeakObjectPtr::Get()).

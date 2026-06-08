@@ -9,6 +9,8 @@
 #include "Hologram/FGSplineHologram.h"
 #include "Hologram/FGBuildableHologram.h"
 #include "Hologram/FGBlueprintHologram.h"
+#include "Hologram/FGConveyorPoleHologram.h"      // #341: parent hologram of a stackable-pole grid
+#include "Holograms/Logistics/SFConveyorBeltHologram.h"  // #341: DrainStackBuiltConveyors
 #include "FGConstructDisqualifier.h"
 #include "FGCentralStorageSubsystem.h"
 #include "FGGameState.h"
@@ -69,6 +71,9 @@ void USFGameInstanceModule::DispatchLifecycleEvent(ELifecyclePhase Phase)
 
 		// Register SML hook for blueprint construct (chain actor rebuilding like AutoLink)
 		RegisterBlueprintConstructHook();
+
+		// #341: Register SML hook on the stackable-pole parent Construct (in-frame chain registration)
+		RegisterStackablePoleConstructHook();
 
 	}
 }
@@ -201,4 +206,80 @@ void USFGameInstanceModule::RegisterBlueprintConstructHook()
 	);
 
 	UE_LOG(LogSmartFoundations, Verbose, TEXT("✅ AFGBlueprintHologram::Construct hook registered - chain actors will rebuild during construction"));
+}
+
+void USFGameInstanceModule::RegisterStackablePoleConstructHook()
+{
+	// ========================================
+	// SML Hook: AFGConveyorPoleHologram::Construct (AFTER)  [#341]
+	// ========================================
+	// A Smart stackable-pole grid is built by the parent pole hologram: its Super::Construct builds ALL
+	// child poles and child belts (each belt wires its connectors by coincidence in its own
+	// ConfigureComponents), then returns. That AFTER point is synchronous, all-wired, and BEFORE the
+	// factory tick - the same timing Extend's blueprint hook relies on. We register the run's belts here
+	// (in-frame), so vanilla builds ONE chain per series-run. Doing this off a deferred timer instead
+	// ticks into garbage and crashes Factory_Tick (THESIS 6.16); the in-frame timing makes it safe.
+	// NOTE: AFGConveyorPoleHologram does not override Construct, so the hooked method resolves to the
+	// base AFGBuildableHologram::Construct and the handler parameter must be typed AFGBuildableHologram*.
+	// The GetMutableDefault<AFGConveyorPoleHologram>() instance still narrows the vtable patch to pole
+	// holograms (and subclasses), so this only fires for conveyor-pole parents.
+	SUBSCRIBE_METHOD_VIRTUAL_AFTER(
+		AFGConveyorPoleHologram::Construct,
+		GetMutableDefault<AFGConveyorPoleHologram>(),
+		[](AActor* returnValue, AFGBuildableHologram* hologram, TArray<AActor*>& out_children, FNetConstructionID NetConstructionID)
+		{
+			if (!hologram)
+			{
+				return;
+			}
+
+			// Only the grid PARENT pole carries children; child poles built inside Super::Construct have
+			// none, so this fires once per placement (not once per child pole).
+			if (hologram->GetHologramChildren().Num() == 0)
+			{
+				return;
+			}
+
+			UWorld* World = hologram->GetWorld();
+			AFGBuildableSubsystem* BuildableSubsystem = World ? AFGBuildableSubsystem::Get(World) : nullptr;
+			if (!BuildableSubsystem)
+			{
+				return;
+			}
+
+			// Drain the belts this placement built + wired. Empty => not a stackable-belt placement.
+			TArray<AFGBuildableConveyorBase*> StackBelts;
+			ASFConveyorBeltHologram::DrainStackBuiltConveyors(StackBelts);
+			if (StackBelts.Num() == 0)
+			{
+				return;
+			}
+
+			// In-frame, pre-tick Remove->Add (Extend's AutoLink pattern). The belts are already wired
+			// (connect-by-coincidence) and registered as solo chains; Remove->Add re-registers them with
+			// connections in place so vanilla unifies each series-run into one multi-segment chain.
+			int32 Rebuilt = 0;
+			for (AFGBuildableConveyorBase* Belt : StackBelts)
+			{
+				if (!Belt || !Belt->IsValidLowLevel())
+				{
+					continue;
+				}
+				UFGFactoryConnectionComponent* Conn0 = Belt->GetConnection0();
+				UFGFactoryConnectionComponent* Conn1 = Belt->GetConnection1();
+				const bool bHasConnection = (Conn0 && Conn0->IsConnected()) || (Conn1 && Conn1->IsConnected());
+				if (bHasConnection)
+				{
+					BuildableSubsystem->RemoveConveyor(Belt);
+					BuildableSubsystem->AddConveyor(Belt);
+					++Rebuilt;
+				}
+			}
+
+			UE_LOG(LogSmartFoundations, Log, TEXT("⛓️ #341 STACK POLE HOOK: in-frame rebuilt %d/%d stacked belt(s) on %s"),
+				Rebuilt, StackBelts.Num(), *hologram->GetName());
+		}
+	);
+
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("✅ AFGConveyorPoleHologram::Construct hook registered (#341 stacked chain registration)"));
 }
