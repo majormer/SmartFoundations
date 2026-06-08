@@ -555,13 +555,14 @@ fragmentation has **two** consequences depending on what touches it: **stall** (
 **crash-class**.
 
 **Implication for the fix.** The build-time coalesce target is now measurable on this repro: after build,
-the audit must show **2 chains × 4 segments** (not 8 × 1), `zombie/orphan:0`. The merge precondition the
-§10 Option-2 path needs **holds here** — the 8 belts are correctly connected in series (items flowed
-end-to-end pre-crash); they are merely in separate chain actors. Coalescing them via
-`InvalidateAndRebuildForBelts` → synchronous `Migrate` should yield 2 clean chains, after which any later
-vanilla merge (the player's end-belts) is well-defined. This is the same shape Extend already uses
-(`FSFWiringManifest::CreateChainActors` → `InvalidateAndRebuildChains`), which is why Extend runs do not
-fragment or crash. Tracked: #341.
+the audit must show **2 chains × 4 segments** (not 8 × 1), `zombie/orphan:0`. ⚠️ **Iteration-1 inference
+FALSIFIED (§6.16, 2026-06-08):** this section first claimed the §10 Option-2 merge precondition "holds"
+and that `InvalidateAndRebuildForBelts → Migrate` "should yield 2 clean chains." A live test disproved it
+— the union-find found the correct 2×4 groups *with correct connectivity*, but `MigrateConveyorGroupToChainActor`
+/ `BuildChain` still produced 0-segment **zombies** (exactly what the §6.7 summary-table row 1 already
+recorded). **Correct connectivity is necessary but not sufficient**; the post-build merge of freshly-built
+stacked solo chains is a dead end. See §6.16 for the root cause and the corrected approach (defer
+registration, mirror Extend). Tracked: #341.
 
 **Fix (planned, see §10).** Coalesce each stacked run into a single proper chain **at build time** so
 the saved state restores cleanly on first load — the long-standing "unify into one chain" item, now at
@@ -578,6 +579,77 @@ the saved state restores cleanly on first load — the long-standing "unify into
 | 3 | `RemoveConveyor`+`AddConveyor` re-register | stacked timer | **crash** |
 | 4 | STACK-ORDER diagnostic | ConfigureComponents | geometry **not ready** at construct |
 | 5 | preview-only child via `Construct`→`nullptr` | build gun | **crash** (`InternalConstructHologram:1862` null deref) |
+
+### 6.16 Build-time coalesce — iteration 1 result, root cause, and the iteration-2 hypothesis **[E+I, 2026-06-08]**
+
+**Iteration 1 (shipped to a dev build, live-tested): post-build merge → FAILED.** Hooked a debounced
+post-build timer that fed the run's belts to `InvalidateAndRebuildForBelts` (`USFSubsystem::ProcessDeferredBeltRunCoalesce`).
+Live log on the §6.15 repro (2-high × 4):
+```
+#341 BELT-RUN COALESCE: coalesced 8 belt(s) -> migrated 2 group(s)
+ChainActorService: Zombie BuildChain still failed after belt-clear — InputEnd=…6655 OutputEnd=…6643 Belts=4 …
+ChainActorService: Recovery failed for zombie TG … — detaching and re-queuing
+```
+The union-find was **correct** — 2 groups of 4 belts, correct head→tail (…6655→…6651→…6648→…6643),
+correct input/output ends. But `MigrateConveyorGroupToChainActor` / `BuildChain` produced **0-segment
+zombies**, recovery (`SetStartAndEndConveyors`+retry) also failed, and the zombie-purge then left the
+8 belts with **no chain actor at all** (audit: run absent from the chain list; belts physically present).
+This reproduces §6.7 summary-table **row 1** and falsifies §6.15's "correct connectivity ⇒ merge holds"
+inference: connectivity was provably correct, yet `BuildChain` could not reconstitute the freshly-built
+solo chains. **The post-build merge path is a confirmed dead end for stacked.**
+
+**Root cause found [C].** `ASFConveyorBeltHologram::ConfigureComponents` *intends* to defer `AddConveyor`
+for stacked belts, but the guard is keyed on the wrong string:
+```cpp
+// SFConveyorBeltHologram.cpp ~1764
+bool bIsStackableBelt = BeltName.Contains(TEXT("StackableBelt_"));
+```
+`BeltName` here is the **built actor** name — `Build_ConveyorBeltMk6_C_<id>` — which never contains
+`StackableBelt_` (that is the *hologram/preview* name). So the guard is always **false**, the belt falls
+to the `else` and **`AddConveyor` runs immediately** (`:1778`). Because stacked belts are built
+**simultaneously**, a belt registers before its neighbour exists → **register-then-connect → solo chain**
+(the §1/§3 invariant violation). The deferral the code's own comment describes **never actually happened**;
+none of the §6.7 rows tested true deferral-then-first-registration because of this bug.
+
+**Iteration-2 hypothesis [I] — mirror Extend's deferral, don't merge after the fact.** Extend never
+fragments because its belts (a) **defer `AddConveyor`** (`bIsExtendBelt` branch, `:1747-1757`) and
+(b) register **with connections already in place** — `SFExtendWiringService_BuiltChild.cpp:1441-1510`
+pre-sets `mSnappedConnectionComponents` before `FinishSpawningActor`, plus topology `SetConnection`, then
+defers registration. Apply the same to stacked:
+1. **Actually defer** `AddConveyor` for stacked built belts — detect via the `SF_StackableChild` **tag**
+   (set in `Construct`), not the never-matching name.
+2. **First-register when the run is fully wired** — in the debounced post-build pass, call `AddConveyor`
+   on each belt (connections are by then established by `SF_WireStackConnectorByCoincidence`), so vanilla
+   builds **one chain per series-run** the normal way — connect-*before*-register honoured. This is a
+   *first* registration of never-added belts (NOT the §6.7 row-3 `RemoveConveyor`+`AddConveyor` re-register
+   on live belts, which crashes), so it is the standard safe path.
+   Replaces the iteration-1 `InvalidateAndRebuildForBelts`+zombie-purge (wrong tool: it merges *existing*
+   chains; there are none to merge once deferral works).
+
+**Prediction (the test that confirms/refutes).** After build on the §6.15 repro: audit shows **2 chains ×
+4 segments**, `zombie/orphan:0`; connect feeder/drain + flow → **no crash**; save+reload → still 2 chains,
+flows first load. **Risk:** if topology `SetConnection` (without snapped connections) is insufficient for
+vanilla `AddConveyor` to unify the run, expect partial/solo chains again → iteration 3 adds snapped
+connections (`mSnappedConnectionComponents`) to the stacked wiring as Extend does. Tracked: #341.
+
+**Iteration 2 RESULT (live-tested 2026-06-08): CRASH on build — approach abandoned.** The deferral
+fix worked (`#341 BELT-RUN REGISTER: first-registered 8 wired belt(s)` logged at frame 6), but the **next
+factory tick crashed** (frame 7): `EXCEPTION_ACCESS_VIOLATION reading 0x000000020000009b` in
+`AFGConveyorChainActor::Factory_Tick()` (`FGConveyorChainActor.cpp:270`), on the `ParallelFor`
+`TickFactoryActors` path. Calling `AFGBuildableSubsystem::AddConveyor` **from a deferred timer** (a later
+frame) is the §9-forbidden "bucket op off a timer" and matches §6.7 summary-table **row 3** (`re-register |
+stacked timer | crash`) — even as a *first* registration. So both post-build strategies are now empirically
+closed: **iteration 1 (chain-level merge) → zombies (row 1); iteration 2 (bucket-level register off timer)
+→ crash (row 3).**
+
+**Conclusion [I, 2026-06-08].** A freshly-built stacked run **cannot** be repaired after the construction
+frame — not by merging the solo chains (BuildChain won't reconstitute them) nor by (re)registering off a
+timer (ticks into garbage). The only path the evidence leaves open is Extend's: register each belt **within
+the construction frame, before any factory tick, with connections already set** (Extend does this via the
+`AFGBlueprintHologram::Construct`-AFTER SML hook). Stacked's simultaneous grid build has **no equivalent
+synchronous "all belts built + wired, pre-tick" hook today** — providing one is the real (larger) prerequisite,
+not another post-build tweak. Iteration-2 code reverted to the safe solo-chain status quo (stalls on reload,
+but no crash on build); #341 returns to the parked state with this dead-end map recorded. Tracked: #341.
 
 ---
 
@@ -678,18 +750,24 @@ only option.
   - **Scope (§6.15 + pole-type audit):** applies to **all grid belt-support runs** — Stackable, Wall, and
     Ceiling mounts share the same deferred-wiring path — and the **distributor auto-connect** path is a
     suspected (not yet confirmed) sibling. Extend is already correct (`CreateChainActors`).
-  - **Precondition confirmed (§6.15):** the run's belts are correctly connected in series (items flowed
-    end-to-end pre-crash); they are merely in separate chain actors, so the Option-2 union-find + Migrate
-    merge precondition holds.
-  - **Design comparison (decided; implementing on `feature/341-belt-run-chain-coalesce`).** Two candidate
-    rebuild primitives, both with stacked-context failure history — but **asymmetric failure modes**:
-    - **Option 2 (recommended): `InvalidateAndRebuildForBelts → InvalidateAndRebuildChains`** — the §6.7
+  - **Connectivity confirmed, but merge still fails (§6.15 → §6.16, REVISED 2026-06-08):** the run's belts
+    are correctly connected in series (items flowed end-to-end pre-crash); they are merely in separate
+    chain actors. We *inferred* that made the Option-2 union-find + Migrate merge precondition hold — and
+    **iteration 1 disproved it** (§6.16): with correct connectivity, `BuildChain` still produced 0-segment
+    zombies. Correct connectivity is necessary, not sufficient. **The post-build merge is abandoned.**
+  - **Chosen approach (§6.16): defer registration, mirror Extend — NOT post-build merge.** Root cause is a
+    name-check bug (`bIsStackableBelt = BeltName.Contains("StackableBelt_")`, never true for the built
+    actor) so stacked belts never deferred `AddConveyor` and always register-then-connected into solo
+    chains. Fix: defer `AddConveyor` via the `SF_StackableChild` tag, then first-register each belt once the
+    run is fully wired so vanilla builds one chain (connect-before-register honoured). The two candidate
+    *post-build rebuild* primitives below are retained only as historical analysis — **both are superseded
+    by the deferral approach.**
+    - **Option 2: `InvalidateAndRebuildForBelts → InvalidateAndRebuildChains`** — the §6.7
       P0c "RebuildOnly" path (`RemoveChainActorFromConveyorGroup` + Phase 2.5 union-find merge +
-      synchronous `Migrate`). §4.3 calls it the one path "empirically proven to rebuild chains cleanly."
-      Never touches `RemoveConveyor` on a live belt. Worst case = a **NO_SEGMENTS zombie** (non-fatal,
-      detectable, purgeable; has 0-segment recovery + `ScheduleDeferredZombiePurge`). The §6.7 row-1
-      zombie history was recorded **before** the connect-by-coincidence fix (§6.11/§6.12), i.e. the merge
-      was fed garbage 100 m-apart connectivity; with correct connectivity the merge precondition holds.
+      synchronous `Migrate`). §4.3 calls it the one path "empirically proven to rebuild chains cleanly" —
+      **for *existing* chains (Upgrade/Extend), not freshly-built stacked solo chains: iteration 1 (§6.16)
+      showed it zombies here even with correct connectivity.** Never touches `RemoveConveyor` on a live
+      belt; worst case = a NO_SEGMENTS zombie.
     - **Option 1: `ReRegisterAndQueueVanillaRebuildForBelts`** — detaches chains, then `RemoveConveyor`
       +`AddConveyor` per belt and lets vanilla rebuild next frame. This is what Mass Upgrade uses today
       (it abandoned manual coalescing because it produced zombies at 100s-of-belts scale). **But** it does
