@@ -178,6 +178,37 @@ should reach a ready state, after which it can be claimed.
 Verified-good so far: server core (CL491125), SML 3.12.0, SmartCamera WindowsServer build. Outstanding:
 SmartFoundations WindowsServer package + deploy, then claim.
 
+### RESOLVED (2026-06-08, third boot) — modded dedi boots clean
+
+The real blocker turned out to be the **SML server binary**: the active SMM profile pinned **SML 3.11.3**
+and the deployed `FactoryServer-SML-Win64-Shipping.dll` was the **Jan-2 pre-1.2 build** that fails the
+`PSAPI.DLL` import (GetLastError=127). Once SmartFoundations was deployed and plugin-*configure* passed, the
+engine reached module-*load* and the stale SML surfaced — with SmartFoundations (126: `Missing import:
+FactoryServer-SML-Win64-Shipping.dll`) and SmartCamera cascading off it. The "SML fixed" read from the
+second boot was a false positive: that boot aborted earlier (SF missing at configure) before any module DLL
+loaded.
+
+Fix applied by the maintainer: rebuilt **SML + SmartFoundations + SmartCamera** for the WindowsServer target
+to both the game and the dedi (SML server DLL now 3.12.0, 2026-06-07). Result — **clean boot**:
+
+```
+LogServer: Server API listening on [::]:7777 Dedicated Server
+LogNet:    GameNetDriver ... IpNetDriver listening on port 7777
+LogGame:   Discovered 1 Remote Call Objects on AFGGameMode::InitGame   <-- USFRCO registers server-side
+LogSmartFoundations: ClearRegistry: Cleared 0 hologram entries          <-- SF module live
+LogSmartCamera: Subscribed to SFSubsystem ... (IsBound: YES)            <-- dependency chain OK
+LogServer: Server startup time elapsed and saving/level loading is done
+```
+
+Process `FactoryServer-Win64-Shipping-Cmd` healthy (~308 MB). Loads `DedicatedserverEntry` (unclaimed).
+**Lesson:** SMM "looks up to date" can be misleading — verify the on-disk server **binary date/version**, not
+just the profile lock. The dedi needs the SML *server* binaries actually replaced, which here required a
+local server-target rebuild because the dev env is ahead of (or differs from) the SMR-pinned 3.11.3.
+
+**Remaining to a usable test server:** claim it from a normal game client (admin password + server name +
+create/select a save); the entry map is expected until a save is loaded. Then connect via `open 127.0.0.1`.
+Infrastructure (SML + SF + SmartCamera + RCO) is validated.
+
 ## Open setup decisions (to confirm before standing one up)
 
 - **Where:** local Windows box (same machine as dev), a separate Linux box/VM, or both? (Both eventually, for
