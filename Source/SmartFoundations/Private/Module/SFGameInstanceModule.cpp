@@ -27,6 +27,7 @@
 #include "Core/Helpers/SFNetworkHelper.h"     // FSFNetworkHelper::IsClient
 #include "Engine/Engine.h"                     // GEngine on-screen message
 #include "Containers/Ticker.h"                 // FTSTicker for deferred one-per-frame chunk fires
+#include "UObject/CoreNet.h"                   // FNetBitWriter for hand-serializing the construct message
 
 // For chain actor rebuilding
 #include "Buildables/FGBuildableConveyorBase.h"
@@ -361,6 +362,17 @@ void USFGameInstanceModule::RegisterClientConstructChunkGuardHook()
 				return; // not a Smart scaled grid -> vanilla path (incl. blueprints)
 			}
 
+			// Chunk-0 of a chunked placement: capture the valid FNetConstructionID vanilla minted so the
+			// deferred ticker can derive IDs for the hand-sent chunks.
+			if (GSFExpectingChunk0ID)
+			{
+				GSFBaseConstructID = clientNetConstructID;
+				GSFExpectingChunk0ID = false;
+				UE_LOG(LogSmartFoundations, Display,
+					TEXT("[MP-CHUNK] captured chunk-0 NetConstructionID: NetPlayerID=%d Server_ID=%u Client_ID=%u"),
+					(int32)clientNetConstructID.NetPlayerID, clientNetConstructID.Server_ID, clientNetConstructID.Client_ID);
+			}
+
 			const int32 Bytes = data.SerializedHologramData.Num();
 
 			// Diagnostic: capture the real serialized size near/over the ceiling (confirms the byte limit).
@@ -419,6 +431,14 @@ static TWeakObjectPtr<UFGBuildGunStateBuild> GSFPendingGun;
 static int32 GSFChunkWait = 0;
 static FTSTicker::FDelegateHandle GSFChunkTicker;
 
+// Hand-serialization (full-auto) state. Chunk 0 is the player's natural fire; we capture the valid
+// FNetConstructionID vanilla minted for it, then derive subsequent chunk IDs (Client_ID + n) and hand-build
+// + send each remaining chunk's Server_ConstructHologram ourselves (bypassing the build gun, which only
+// constructs on real input). The biggest unknown is whether the server accepts the derived IDs.
+static FNetConstructionID GSFBaseConstructID;
+static bool GSFExpectingChunk0ID = false;
+static int32 GSFChunkSeq = 0;
+
 bool USFGameInstanceModule::TickPendingGridChunks(float /*Dt*/)
 {
 	if (GSFPendingChunks.Num() == 0)
@@ -450,15 +470,37 @@ bool USFGameInstanceModule::TickPendingGridChunks(float /*Dt*/)
 		if (AFGHologram* C = W.Get()) { Kids.Add(C); }
 	}
 
+	// Set up the hologram as this chunk: repositioned to the anchor cell, children = the chunk's holograms.
 	Holo->SetActorTransform(Chunk.AnchorXform);
 	USFGameInstanceModule::SetActiveHologramChildren(Holo, Kids);
 
+	// Hand-build the construct message and send it directly (bypassing the build gun, which only constructs
+	// on real input). Derive this chunk's NetConstructionID from the captured chunk-0 ID (Client_ID + seq).
+	UWorld* World = Holo->GetWorld();
+	APlayerController* PC = World ? World->GetFirstPlayerController() : nullptr; // local PC on a client
+	UPackageMap* PackageMap = UFGBuildGunStateBuild::FindPackageMapForPlayerController(PC);
+
+	FNetConstructionID ChunkID = GSFBaseConstructID;
+	ChunkID.Server_ID = 0;
+	ChunkID.Client_ID = (uint16)(GSFBaseConstructID.Client_ID + (uint16)(++GSFChunkSeq));
+
+	Holo->PreConstructMessageSerialization();
+	FNetBitWriter Writer(PackageMap, 1 << 21); // 256 KB bit budget (a chunk is <64KB)
+	FNetConstructionID SerId = ChunkID;
+	Holo->SerializeConstructMessage(Writer, SerId);
+
+	FConstructHologramMessage Msg;
+	Msg.ConstructionID = ChunkID;
+	Msg.Recipe = Holo->GetRecipe();
+	Msg.NumBits = Writer.GetNumBits();
+	Msg.SerializedHologramData.Append(Writer.GetData(), (int32)Writer.GetNumBytes());
+
 	UE_LOG(LogSmartFoundations, Display,
-		TEXT("[MP-CHUNK] deferred: firing chunk (%d children) at anchor; %d chunk(s) left after this."),
-		Kids.Num(), GSFPendingChunks.Num());
+		TEXT("[MP-CHUNK] deferred: hand-sending chunk (%d children, %d bytes, Client_ID=%u, PackageMap=%s); %d chunk(s) left after this."),
+		Kids.Num(), Msg.SerializedHologramData.Num(), ChunkID.Client_ID, PackageMap ? TEXT("ok") : TEXT("NULL"), GSFPendingChunks.Num());
 
 	GSFChunkingInProgress = true;
-	Gun->InternalExecuteDuBuildStepInput(false);
+	Gun->Server_ConstructHologram(ChunkID, Msg);
 	GSFChunkingInProgress = false;
 
 	USFGameInstanceModule::SetActiveHologramChildren(Holo, TArray<AFGHologram*>());
@@ -558,6 +600,8 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 
 			GSFPendingGun = self;
 			GSFChunkWait = SF_MP_CHUNK_WAIT_FRAMES;
+			GSFExpectingChunk0ID = true; // capture chunk 0's NetConstructionID in the Server_ConstructHologram hook
+			GSFChunkSeq = 0;
 			if (!GSFChunkTicker.IsValid())
 			{
 				GSFChunkTicker = FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateStatic(&USFGameInstanceModule::TickPendingGridChunks), 0.0f);
