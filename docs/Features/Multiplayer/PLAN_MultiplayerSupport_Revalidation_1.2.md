@@ -211,6 +211,57 @@ auto-connect hooks.
   save/reload. **Diagnostics:** temporary `UE_LOG(LogSmartFoundations, Display, …)` at the RPC entry, the
   authority branch, and the per-child construct — `Display`, not `VeryVerbose` (won't show in-game).
 
+### Slice 0 — EMPIRICAL RESULT (2026-06-08, live dedicated-server test)
+
+Run against a **claimed Windows dedicated server** (CL491125) with a game client joined via
+`open 127.0.0.1`, observing the **server's authoritative state live** through the SmartMCP dedi API
+(port 51096). This is Approach B — stricter than a listen server (no PC index 0 on the dedi).
+
+**Headline: client-originated scaled placement WORKS in MP — for normal grid sizes, for both buildable
+kinds.** The core Slice 0 parity question is **YES**. Above a count threshold it fails in a bounded,
+reproducible, fixable way.
+
+Data (cumulative server-side count via `nearby_buildings`; foundations confirmed visually + persist-through-
+reconnect since they are lightweight instances invisible to the actor scan):
+- Foundation tower (~10) + 3×3 (9) → built and persisted. ✅
+- Constructors: 3 → 3; +25 → 28; +100 → **128** — every one a valid replicated actor on the correct grid. ✅
+- Constructors **144 (12×12) → 0 persisted** (server stayed at 128). ✗
+- Foundations **256 (16×16) → 0**; Constructors **256 → 0**; Foundations **1250 → 0**. ✗
+- **All-or-nothing:** on failure, *zero* of the batch persists (not truncated).
+
+Diagnosis (what each observation rules in/out):
+- **COUNT-based, not payload-based.** Lightweight foundations (tiny per-child data) and heavy factory actors
+  fail at the *same* ~100–144 threshold. A byte/bunch-size limit would let foundations go far higher.
+- **NOT a preview-positioning timing bug.** Smart spawns children into `mChildren` synchronously but
+  *positions* them via a progressive batch (~200/frame, ticked by `USFSubsystem::Tick()`), designed for
+  single-player FPS (`SFGridSpawnerService.cpp`, `SFHologramHelperService*`). Hypothesis was that the client
+  fires before the batch settles — **disproven live**: waiting ~10 s for the preview to fully settle before
+  placing still failed.
+- **Not a Smart hard cap.** `GRID_CHILDREN_HARD_CAP = 2000`, `LARGE_GRID_WARNING_THRESHOLD = 100`
+  (`SFHologramHelperService.h`). The 100 warning matches the observed boundary but only warns.
+- **Single-player is unaffected** — large grids (historically 3000+ children) build fine in SP, where the
+  construct is local and never serialized. The limit is specific to the **client→server networked construct**.
+
+**Root cause (leading):** a single client→server construct carrying N child holograms is rejected wholesale
+above ~100–144 children — a **count limit in the networked construction path** (candidate: net-construction-ID
+pool / reliable-bunch / sub-object cap). The parent hologram's vanilla `Construct` serializes `mChildren` to
+the server; beyond the limit the whole construct fails atomically. Two distinct **client-side cleanup**
+failure modes layer on top: at moderate over-cap (256) the orphaned previews self-clean after ~1 min; at very
+large counts (1250) they persist as walk-through ghosts with the build gun consumed.
+
+**Fix direction:**
+1. **Chunk** client-originated scaled placement into sub-batches of ≤~64–100 children, each committed as its
+   own construct, so each stays under the net limit. Single-player can keep the single-construct path.
+2. **Reconcile** local preview holograms when the server does not confirm the build (destroy orphans) — fixes
+   the ghost-cleanup bug; degrades worse with size.
+3. **Confirm the exact constant** via a code review of the build-gun / hologram net-construct path (the
+   maintainer flagged the 30.1.0 "smoother grid scaling / children-at-higher-counts" rework as related).
+
+**Significance for the matrix:** scaling's MP risk is **lower than the 2026-05-20 matrix assumed** — the
+commit path is the safe vanilla server-authoritative path and it works for both lightweight and actor
+buildables at normal scale. The only defect is the large-batch ceiling + preview cleanup, both bounded and
+fixable. This is the first concrete MP work item (ahead of, or alongside, #334).
+
 ### After Slice 0 — Slice 1: fix #334 power (smallest real bug)
 Gate `OnPowerPoleBuilt` behind authority; for client builds, route the pole-to-pole wire request through
 `USFRCO` so the server spawns the `AFGBuildableWire` and it replicates. Same host+client harness, asserting
