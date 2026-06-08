@@ -107,7 +107,7 @@ See [LICENSE.md](https://github.com/majormer/SmartFoundations/blob/main/LICENSE.
 
 ### Highlights in v31.0.2
 
-- **Dedicated-server build** — Smart! is now packaged for Windows dedicated servers, fixing update/matching problems for players on dedicated-server setups. (Packaging fix, not the multiplayer work still in progress.)
+- **Packaged for Windows dedicated servers** — the release now includes a server build so the mod can be installed on a dedicated server and its version lines up with clients on update. Packaging only — multiplayer and dedicated servers are still **not officially supported** (full multiplayer support is planned for a future update).
 - **Smart! builds free in Creative Mode** — with No Build Cost on (now under Creative Mode in 1.2), auto-connect and Extend / Scaled Extend no longer ask for materials or block as "unaffordable"; they build for free, the same as base-game building.
 - **Power cable previews are back for Extend and Scaled Extend** — when you Extend a building that carries power, the preview again shows the cables (with droop) running between the source and each copy, sitting on the connectors and following each copy's rotation and chaining.
 - **Power auto-connect wire preview no longer shows a red middle** — the auto-connect power cable previews in the correct color end to end instead of tinting its middle section red on a valid connection.
