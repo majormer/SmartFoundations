@@ -857,6 +857,24 @@ void USFSubsystem::Tick(float DeltaTime)
 			}
 		}
 
+		// [EXTEND-MP] TEMP diagnostic: why does Extend never activate on a client? Log the detection state
+		// once/sec (Display so it shows in-game; remove before release).
+		{
+			static double LastExtMpLog = 0;
+			const double NowExt = FPlatformTime::Seconds();
+			if (NowExt - LastExtMpLog > 1.0)
+			{
+				UE_LOG(LogSmartFoundations, Display,
+					TEXT("[EXTEND-MP] NetMode=%d PC=%s LookedAt=%s class=%s holoBuildClass=%s"),
+					GetWorld() ? (int32)GetWorld()->GetNetMode() : -1,
+					PC ? TEXT("ok") : TEXT("NULL"),
+					LookedAtBuilding ? *LookedAtBuilding->GetName() : TEXT("none"),
+					LookedAtBuilding ? *LookedAtBuilding->GetClass()->GetName() : TEXT("-"),
+					(ActiveHologram.IsValid() && ActiveHologram->GetBuildClass()) ? *ActiveHologram->GetBuildClass()->GetName() : TEXT("-"));
+				LastExtMpLog = NowExt;
+			}
+		}
+
 		// TryExtendFromBuilding handles the automatic activation/deactivation
 		ExtendService->TryExtendFromBuilding(LookedAtBuilding, ActiveHologram.Get());
 	}

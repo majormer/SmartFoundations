@@ -817,19 +817,38 @@ bool USFExtendService::TryExtendFromBuilding(AFGBuildable* HitBuilding, AFGHolog
         // Not yet activated — validate normally before first activation
         if (!IsValid(HitBuilding) || !IsValid(SourceHologram))
         {
-            return false;
+            return false; // no target/hologram (handled/logged upstream)
         }
 
         UClass* HologramBuildClass = SourceHologram->GetBuildClass();
         if (!HologramBuildClass || !HitBuilding->IsA(HologramBuildClass))
         {
+            // [EXTEND-MP] TEMP: class mismatch is a common client failure (proxy class vs hologram build class).
+            static double LastBail1 = 0; const double Now1 = FPlatformTime::Seconds();
+            if (Now1 - LastBail1 > 1.0)
+            {
+                UE_LOG(LogSmartExtend, Display, TEXT("[EXTEND-MP] activation bail: IsA mismatch - building=%s holoBuildClass=%s"),
+                    *HitBuilding->GetClass()->GetName(), HologramBuildClass ? *HologramBuildClass->GetName() : TEXT("NULL"));
+                LastBail1 = Now1;
+            }
             return false;
         }
 
         if (!IsValidExtendTarget(HitBuilding))
         {
+            // [EXTEND-MP] TEMP: target rejected (resource extractor / not a manufacturer / detection-service check).
+            static double LastBail2 = 0; const double Now2 = FPlatformTime::Seconds();
+            if (Now2 - LastBail2 > 1.0)
+            {
+                UE_LOG(LogSmartExtend, Display, TEXT("[EXTEND-MP] activation bail: IsValidExtendTarget=false for %s"),
+                    *HitBuilding->GetClass()->GetName());
+                LastBail2 = Now2;
+            }
             return false;
         }
+
+        // [EXTEND-MP] TEMP: passed activation validation - Extend SHOULD proceed to build the preview.
+        UE_LOG(LogSmartExtend, Display, TEXT("[EXTEND-MP] activation PASSED for %s - proceeding to preview"), *HitBuilding->GetName());
     }
 
     // Issue #274: When Scaled Extend is committed (locked for inspection), suppress re-triggering
