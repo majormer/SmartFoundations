@@ -112,6 +112,41 @@ Per `Development/TestingResources.adoc`: run the dedi locally (`FactoryServer.ex
 127.0.0.1`. Every iteration needs the **server-target** mod recompiled and redeployed (Alpakit can copy to a
 network path like `//host/share/satisfactory` for a remote box), and the server restarted to reload files.
 
+## Current state (2026-06-08) — Windows dedi already installed, first blocker found
+
+A Windows dedicated server is **already installed** at
+`<SteamLibrary>\steamapps\common\SatisfactoryDedicatedServer` and is **version-matched to the client**:
+`CL491125 / GameVersion 1.2.2.2 / branch rel-main-1.2.0` (Steam app 1690800, buildid 23300422). It is
+**unclaimed** (no SaveGames, no Session/Admin config yet).
+
+**First concrete #176 blocker — stale server-side SML.** Launching the vanilla server
+(`FactoryServer.exe -log -unattended -NoSteamClient`) **crashes on boot**:
+
+```
+Failed to load '...\Mods\SML\Binaries\Win64\FactoryServer-SML-Win64-Shipping.dll' (GetLastError=127)
+  Missing import: PSAPI.DLL
+Plugin 'SML' failed to load because module 'SML' could not be loaded.
+```
+
+Cause: the server has **SML 3.11.3 (DLL dated 2026-01-02, `GameVersion ">=416835"` = pre-1.2)** installed,
+but the server binaries are the **June 1.2 build (CL491125)**. `GetLastError=127` is ERROR_PROC_NOT_FOUND —
+PSAPI.DLL *is* present on the system, so this is the stale pre-1.2 SML DLL being ABI-incompatible with the
+1.2 engine (export mismatch), not a missing system file. The client/dev env is on **SML 3.12.0** (and the
+dev env already has a current server-target SML DLL dated 2026-06-07).
+
+**Fix (mod-manager, maintainer-driven — do NOT hand-copy binaries):** update the server install's SML to the
+**3.12.0 / 1.2 server target** via SMM or ficsit-cli pointed at the server folder. Re-applying the managed
+profile should pull the correct `WindowsServer` (and later `LinuxServer`) target binaries. Do **not** copy
+the dev-env `FactoryServer-SML-Win64-Shipping.dll` over the stale one by hand — the cooked pak/BuildId must
+match (same trap as the content-cook BuildId rule in AGENTS.md). After SML 3.12.0 loads cleanly (vanilla-ish
+boot), the SmartFoundations **server target** (31.0.2 Windows server package) can be applied on top.
+
+Sequence to a working modded Windows dedi:
+1. Mod manager → server install → update **SML → 3.12.0** (server target). Boot vanilla-clean.
+2. Claim the server from a normal game client (set admin password + server name, create/select a save).
+3. Apply the **SmartFoundations server package** at the version matching the client under test.
+4. Connect client via `open 127.0.0.1`; run the MP tests.
+
 ## Open setup decisions (to confirm before standing one up)
 
 - **Where:** local Windows box (same machine as dev), a separate Linux box/VM, or both? (Both eventually, for
