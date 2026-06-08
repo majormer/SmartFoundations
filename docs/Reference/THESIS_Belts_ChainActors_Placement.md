@@ -759,9 +759,10 @@ a timer; build multi-belt runs by reference, order-agnostic.*
 **Full non-Extend belt-site audit (2026-06-05).** Every live site that creates or wires belts/chains
 outside Extend was reviewed; **none needs new treatment** — all are compliant, now-fixed, or dead.
 (Detailed table + dead-code list: `docs/Features/AutoConnect/TEST_BeltRework_Validation.md` §3.4.)
-- **Stackable poles** — the lone structural violator → **fixed** by wiring the real belt at Construct
-  (§5.3 resolution, §6.9), refined from by-reference to **by-coincidence** in §6.11/§6.12. ✗→✓
-  (Build-time chain coalesce of the resulting solo chains is the open #341 work — §6.15/§10.)
+- **Stackable / wall / ceiling pole belt runs** — the lone structural violators (multi-belt runs built
+  simultaneously). Belt wiring fixed by connect-by-coincidence at Construct (§6.9, refined §6.11/§6.12);
+  the resulting solo chains are now **unified at build time** by the in-frame parent-pole `Construct` hook
+  (§6.16, #341 — ✅ SOLVED). ✗→✓
 - **Distributor → factory** (child holograms) — connect at vanilla child Construct; a narrow
   `OnActorSpawned` manifold timer only proximity-wires cross-link belts built before their target
   distributor (empirically zombie-free on reload). ✓
@@ -772,6 +773,30 @@ outside Extend was reviewed; **none needs new treatment** — all are compliant,
 - **Extend family** — two-phase chain model, connect-by-reference. ✓
 - **Pipes** — parallel system, own routing modes, **no chain actors**; same connect-before-register
   discipline applies but no ParallelFor/chain hazard. ✓
+
+**Complete belt-creation-path audit (2026-06-08) — every path, classified.** The organising principle:
+**fragmentation is only possible for a MULTI-belt run that should be one chain.** A *single-segment* belt
+(both ends on pre-existing connectors) is its own correct 1-segment chain — that is the right end state,
+not a fragment — and a distributor sitting between two colinear segments legitimately breaks the chain.
+
+| Path | Belt shape | Registration timing | Verdict |
+|---|---|---|---|
+| **Stackable / Wall / Ceiling pole runs** | multi-belt series | in-frame parent-pole `Construct` hook (#341) | ✅ **fixed** (the only at-risk path) |
+| **Extend / Scaled Extend / Restore-Replay** | multi-belt | snapped connections before `Super::Construct`; `CreateChainActors`→`InvalidateAndRebuildChains` in-frame | ✅ safe |
+| **Extend manifold connectors** | single segment | explicit `SetConnection` before `AddConveyor` (coded comment) | ✅ safe |
+| **Distributor auto-connect (lanes + dist→dist manifold)** | **always single segment** (maintainer-confirmed: lanes are never >1 segment) | each belt joins two pre-existing connectors → its own 1-seg chain | ✅ safe by design |
+| **Conveyor lifts** | single | `SetConnection` then conditional `AddConveyor`, no-double-add guard | ✅ safe |
+| **Mass Upgrade** | existing belts | synchronous in-frame `Remove+Add`, **detach-chains-first** | ✅ safe-by-design (audited §6.16-era; honors the §9 contract) |
+
+**Conclusion:** the *only* belt path that can fragment is the multi-belt pole run, and #341 closes it. Every
+other path is either a single-segment belt (inherently one correct chain) or registers in-frame/pre-tick.
+No other at-risk belt-creation site exists.
+
+**One-hook coverage note (verified live):** the #341 fix needs only **one** SML hook
+(`RegisterBeltSupportConstructHook` on `AFGConveyorPoleHologram::Construct`). Because that resolves to the
+base `AFGBuildableHologram::Construct`, SML's vtable patch is broad enough to fire for sibling belt-support
+classes too — confirmed by the hook firing on `Holo_ConveyorWallAttachment_C` and
+`Holo_ConveyorCeilingAttachment_C`. A separate `AFGWallAttachmentHologram` hook was redundant and removed.
 
 **Dead code surfaced (remove in a build-verified follow-up; spans multiple files, not cut blind):**
 `USFSubsystem::QueueChainRebuild` (crash-class, never called), `BuildBeltFromPreview` (correct but
