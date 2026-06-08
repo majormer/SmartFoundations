@@ -63,6 +63,13 @@ protected:
 	 */
 	void RegisterClientGridChunkFireHook();
 
+	/**
+	 * Set the active hologram's child list to exactly the given holograms (replacing mChildren and the name
+	 * lookup map). A static member so it inherits USFGameInstanceModule's friend access to AFGHologram's
+	 * protected child members (see AccessTransformers.ini). Used by the MP chunk loop.
+	 */
+	static void SetActiveHologramChildren(class AFGHologram* Holo, const TArray<class AFGHologram*>& NewChildren);
+
 	/** Smart! Configuration blueprint - registered with SML for in-game menu access */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Smart! Configuration")
 	TSubclassOf<class UModConfiguration> SmartConfigClass;

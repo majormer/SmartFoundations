@@ -403,9 +403,11 @@ static constexpr int32 SF_MP_CHUNK_CHILDREN  = 100; // grid children to build pe
 // straight through to vanilla without re-chunking.
 static bool GSFChunkingInProgress = false;
 
-// Set the active hologram's child list to exactly the given actors (friend access to mChildren/lookup map).
-static void SF_SetHologramChildren(AFGHologram* Holo, const TArray<AFGHologram*>& NewChildren)
+// Set the active hologram's child list to exactly the given actors. Static member of USFGameInstanceModule so
+// it inherits the friend access to AFGHologram::mChildren / mChildrenNameLookupMap (AccessTransformers.ini).
+void USFGameInstanceModule::SetActiveHologramChildren(AFGHologram* Holo, const TArray<AFGHologram*>& NewChildren)
 {
+	if (!Holo) { return; }
 	Holo->mChildren.Reset();
 	Holo->mChildrenNameLookupMap.Reset();
 	for (AFGHologram* C : NewChildren)
@@ -504,7 +506,7 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 
 			// Chunk 0
 			Holo->SetActorTransform(OriginXform);
-			SF_SetHologramChildren(Holo, Chunk0);
+			USFGameInstanceModule::SetActiveHologramChildren(Holo, Chunk0);
 			UE_LOG(LogSmartFoundations, Display, TEXT("[MP-CHUNK] Increment 2a: firing chunk 0 (%d children) at origin"), Chunk0.Num());
 			self->InternalExecuteDuBuildStepInput(false);
 
@@ -512,13 +514,13 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 			if (Chunk1Anchor)
 			{
 				Holo->SetActorTransform(Chunk1Xform);
-				SF_SetHologramChildren(Holo, Chunk1);
+				USFGameInstanceModule::SetActiveHologramChildren(Holo, Chunk1);
 				UE_LOG(LogSmartFoundations, Display, TEXT("[MP-CHUNK] Increment 2a: firing chunk 1 (%d children) at repositioned parent (Kids[100])"), Chunk1.Num());
 				self->InternalExecuteDuBuildStepInput(false);
 			}
 
 			// Clean up: clear any leftover children + restore the parent to the crosshair origin.
-			SF_SetHologramChildren(Holo, TArray<AFGHologram*>());
+			USFGameInstanceModule::SetActiveHologramChildren(Holo, TArray<AFGHologram*>());
 			Holo->SetActorTransform(OriginXform);
 			GSFChunkingInProgress = false;
 		}
