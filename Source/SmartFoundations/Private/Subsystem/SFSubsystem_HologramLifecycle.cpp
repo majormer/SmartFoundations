@@ -957,6 +957,13 @@ void USFSubsystem::SyncMultiStepHologramProperties()
 	// Sync both from parent to children via reflection so a scaled grid of poles all take the parent's height.
 	// GATED to the REGULAR pole only - stackable/wall poles are also AFGConveyorPoleHologram and must not be
 	// touched here (they don't use this height step and already work).
+	//
+	// KNOWN LIMITATION (#354): SCALING WHILE IN THE HEIGHT-ADJUST STEP drops the player out of height-adjust.
+	// Re-evaluating the grid (spawning/removing child poles) during the parent's active vanilla build-step
+	// disrupts that build-step state; gating our own parent refresh did not fix it, so the cause is the grid
+	// re-eval itself, not this sync. The conveyor pole is the only build-*height* two-step buildable Smart
+	// scales, so there's nothing to compare against - treat as a pole-specific quirk. Workflow workaround:
+	// size the pole line first, THEN adjust the height (or adjust then build); just don't scale mid-drag.
 	if (USFAutoConnectService::IsRegularConveyorPoleHologram(Parent))
 	{
 		AFGConveyorPoleHologram* PoleParent = Cast<AFGConveyorPoleHologram>(Parent);
@@ -976,12 +983,18 @@ void USFSubsystem::SyncMultiStepHologramProperties()
 				StepProp->CopyCompleteValue(&ParentBuildStep, StepProp->ContainerPtrToValuePtr<void>(PoleParent));
 			}
 
-			if (ParentVariation != CachedParentPoleVariation || ParentBuildStep != CachedParentBuildStep)
+			// #354: also re-sync when the CHILD COUNT changes (a pole was added/removed by scaling), not just
+			// on a height change - otherwise a newly-scaled pole keeps its base height (belt on the floor)
+			// until the player nudges the height. Tracking the count reconciles new poles + their belts at
+			// the current height on the next tick.
+			const auto& SpawnedChildren = HologramHelper->GetSpawnedChildren();
+			const int32 ChildCount = SpawnedChildren.Num();
+			if (ParentVariation != CachedParentPoleVariation || ParentBuildStep != CachedParentBuildStep || ChildCount != CachedPoleChildCount)
 			{
 				CachedParentPoleVariation = ParentVariation;
 				CachedParentBuildStep = ParentBuildStep;
+				CachedPoleChildCount = ChildCount;
 
-				const auto& SpawnedChildren = HologramHelper->GetSpawnedChildren();
 				int32 SyncedCount = 0;
 				for (const auto& ChildPtr : SpawnedChildren)
 				{
@@ -1008,6 +1021,30 @@ void USFSubsystem::SyncMultiStepHologramProperties()
 				{
 					UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("#354 Synced conveyor-pole height to %d children: VariationIndex=%d, BuildStep=%d"),
 						SyncedCount, ParentVariation, ParentBuildStep);
+				}
+
+				// #354: refresh the PARENT's mesh/connector too - but ONLY in build step 1 (placement).
+				// In step 1 vanilla hasn't run UpdatePoleMesh on the parent yet, so its belt connector is
+				// still at the FLOOR while the children (OnRep'd above) sit at the synced height, leaving the
+				// belt's parent end on the ground. In PHBS_AdjustHeight the player is actively dragging the
+				// parent's height and vanilla moves its connector every frame - forcing OnRep there fights
+				// the drag and kicks the player out of the height step (the #354 quirk). So skip it then.
+				if (ParentBuildStep != static_cast<uint8>(EPoleHologramBuildStep::PHBS_AdjustHeight))
+				{
+					if (UFunction* ParentRep = PoleParent->FindFunction(TEXT("OnRep_PoleVariationIndex")))
+					{
+						PoleParent->ProcessEvent(ParentRep, nullptr);
+					}
+				}
+
+				// #354: belt auto-connect otherwise only recomputes on GRID/spacing changes, so raising the
+				// pole HEIGHT never moved the belts - they stayed at the initial (shortest, ~floor) height.
+				// The pole's SnapOnly0 belt connector is at the TOP (height-aware), so re-running belt
+				// auto-connect after refreshing both parent + children connectors re-routes the belts to the
+				// poles' top connectors.
+				if (USFAutoConnectOrchestrator* Orchestrator = GetOrCreateOrchestrator(Parent))
+				{
+					Orchestrator->OnStackableConveyorPolesChanged();
 				}
 			}
 		}

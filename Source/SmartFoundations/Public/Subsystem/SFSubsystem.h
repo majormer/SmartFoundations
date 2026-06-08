@@ -585,6 +585,9 @@ protected:
 	/** #354: cached standard-conveyor-pole height (mPoleVariationIndex) for child sync. */
 	int32 CachedParentPoleVariation = INT_MIN;
 
+	/** #354: cached pole child count - re-sync height + belts when a pole is scaled in/out. */
+	int32 CachedPoleChildCount = -1;
+
 	/** Sync multi-step hologram properties (e.g. floodlight angle) from parent to children (Issue #200) */
 	void SyncMultiStepHologramProperties();
 
