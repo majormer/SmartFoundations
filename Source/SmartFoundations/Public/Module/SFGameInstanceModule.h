@@ -70,6 +70,13 @@ protected:
 	 */
 	static void SetActiveHologramChildren(class AFGHologram* Holo, const TArray<class AFGHologram*>& NewChildren);
 
+	/**
+	 * Core-ticker callback that fires the queued MP grid chunks one-per-frame. A static member so it inherits
+	 * the friend access to UFGBuildGunStateBuild::InternalExecuteDuBuildStepInput (AccessTransformers.ini).
+	 * Returns true to keep ticking, false to unregister.
+	 */
+	static bool TickPendingGridChunks(float Dt);
+
 	/** Smart! Configuration blueprint - registered with SML for in-game menu access */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Smart! Configuration")
 	TSubclassOf<class UModConfiguration> SmartConfigClass;

@@ -26,6 +26,7 @@
 #include "Equipment/FGBuildGunBuild.h"        // UFGBuildGunStateBuild::InternalConstructHologram / GetHologram
 #include "Core/Helpers/SFNetworkHelper.h"     // FSFNetworkHelper::IsClient
 #include "Engine/Engine.h"                     // GEngine on-screen message
+#include "Containers/Ticker.h"                 // FTSTicker for deferred one-per-frame chunk fires
 
 // For chain actor rebuilding
 #include "Buildables/FGBuildableConveyorBase.h"
@@ -398,10 +399,72 @@ void USFGameInstanceModule::RegisterClientConstructChunkGuardHook()
 // MP Slice 0 chunking. A Smart grid above this many total cells will not fit one 64KB Server_ConstructHologram.
 static constexpr int32 SF_MP_OVERSIZED_CELLS = 130; // trigger chunking above this (total cells incl. parent)
 static constexpr int32 SF_MP_CHUNK_CHILDREN  = 100; // grid children to build per chunk (parent adds 1 cell)
+static constexpr int32 SF_MP_CHUNK_WAIT_FRAMES = 6; // frames to let the build gun settle between chunk fires
 
-// Re-entrancy guard: the chunk loop re-invokes InternalExecuteDuBuildStepInput; those nested calls must pass
-// straight through to vanilla without re-chunking.
+// Re-entrancy guard: the deferred chunk fires re-invoke InternalExecuteDuBuildStepInput; those nested calls
+// must pass straight through to vanilla without re-chunking.
 static bool GSFChunkingInProgress = false;
+
+// Deferred-chunk queue. chunk 0 builds on the player's natural fire; chunks 1+ are fired one-per-frame from a
+// ticker, AFTER the build gun settles, so each is a fresh fire instead of a synchronous re-entry (which the
+// build-gun state machine refuses). Each pending chunk repositions the active hologram to its anchor (a cell
+// the parent builds) and re-homes the chunk's other child holograms onto it.
+struct FSFPendingChunk
+{
+	FTransform AnchorXform;
+	TArray<TWeakObjectPtr<AFGHologram>> Children;
+};
+static TArray<FSFPendingChunk> GSFPendingChunks;
+static TWeakObjectPtr<UFGBuildGunStateBuild> GSFPendingGun;
+static int32 GSFChunkWait = 0;
+static FTSTicker::FDelegateHandle GSFChunkTicker;
+
+bool USFGameInstanceModule::TickPendingGridChunks(float /*Dt*/)
+{
+	if (GSFPendingChunks.Num() == 0)
+	{
+		GSFChunkTicker.Reset();
+		return false; // unregister
+	}
+	if (--GSFChunkWait > 0)
+	{
+		return true; // still letting the gun settle
+	}
+
+	UFGBuildGunStateBuild* Gun = GSFPendingGun.Get();
+	AFGHologram* Holo = Gun ? Gun->GetHologram() : nullptr;
+	if (!Gun || !Holo)
+	{
+		UE_LOG(LogSmartFoundations, Warning, TEXT("[MP-CHUNK] deferred: gun/hologram gone; aborting %d remaining chunk(s)."), GSFPendingChunks.Num());
+		GSFPendingChunks.Reset();
+		GSFChunkTicker.Reset();
+		return false;
+	}
+
+	FSFPendingChunk Chunk = GSFPendingChunks[0];
+	GSFPendingChunks.RemoveAt(0);
+
+	TArray<AFGHologram*> Kids;
+	for (const TWeakObjectPtr<AFGHologram>& W : Chunk.Children)
+	{
+		if (AFGHologram* C = W.Get()) { Kids.Add(C); }
+	}
+
+	Holo->SetActorTransform(Chunk.AnchorXform);
+	USFGameInstanceModule::SetActiveHologramChildren(Holo, Kids);
+
+	UE_LOG(LogSmartFoundations, Display,
+		TEXT("[MP-CHUNK] deferred: firing chunk (%d children) at anchor; %d chunk(s) left after this."),
+		Kids.Num(), GSFPendingChunks.Num());
+
+	GSFChunkingInProgress = true;
+	Gun->InternalExecuteDuBuildStepInput(false);
+	GSFChunkingInProgress = false;
+
+	USFGameInstanceModule::SetActiveHologramChildren(Holo, TArray<AFGHologram*>());
+	GSFChunkWait = SF_MP_CHUNK_WAIT_FRAMES;
+	return true;
+}
 
 // Set the active hologram's child list to exactly the given actors. Static member of USFGameInstanceModule so
 // it inherits the friend access to AFGHologram::mChildren / mChildrenNameLookupMap (AccessTransformers.ini).
@@ -462,67 +525,49 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 				return; // fits one construct -> untouched vanilla path
 			}
 
-			// INCREMENT 2a (bounded): build TWO chunks to prove the re-fire loop respects a repositioned parent.
-			//  - Chunk 0: parent stays at the origin, children = Kids[0..99].
-			//  - Chunk 1: parent is REPOSITIONED to Kids[100]'s transform (that cell is built as the parent),
-			//    children = Kids[101..199]. If chunk 1 lands at Kids[100]'s position (not the crosshair), the
-			//    loop mechanic works and Increment 2b generalizes to all chunks.
-			// Excess cells beyond two chunks are dropped (destroyed) for this bounded proof.
-			const FTransform OriginXform = Holo->GetActorTransform();
+			// INCREMENT 2b (deferred full-auto): chunk 0 builds on THIS natural fire; the rest are queued and
+			// fired one-per-frame from a ticker (after the build gun settles), because the build gun refuses a
+			// synchronous second construct in one fire (proven in 2a).
 
-			// Build chunk 0 child set.
+			// Chunk 0: keep the first SF_MP_CHUNK_CHILDREN grid children on the parent. Vanilla builds the
+			// parent's own origin cell + these on this fire (do NOT cancel).
 			TArray<AFGHologram*> Chunk0;
 			for (int32 i = 0; i < Kids.Num() && Chunk0.Num() < SF_MP_CHUNK_CHILDREN; ++i)
 			{
 				Chunk0.Add(Kids[i]);
 			}
+			USFGameInstanceModule::SetActiveHologramChildren(Holo, Chunk0);
 
-			// Chunk 1 anchor (becomes the repositioned parent) + its children.
-			AFGHologram* Chunk1Anchor = (Kids.Num() > SF_MP_CHUNK_CHILDREN) ? Kids[SF_MP_CHUNK_CHILDREN] : nullptr;
-			FTransform Chunk1Xform = Chunk1Anchor ? Chunk1Anchor->GetActorTransform() : OriginXform;
-			TArray<AFGHologram*> Chunk1;
-			for (int32 i = SF_MP_CHUNK_CHILDREN + 1; i < Kids.Num() && Chunk1.Num() < SF_MP_CHUNK_CHILDREN; ++i)
+			// Queue the remaining cells as deferred chunks. Each chunk's first leftover cell becomes the
+			// repositioned-parent anchor (its preview is destroyed now; the repositioned parent builds that
+			// cell in the ticker); the rest become the chunk's re-homed children.
+			GSFPendingChunks.Reset();
+			for (int32 Start = SF_MP_CHUNK_CHILDREN; Start < Kids.Num(); Start += SF_MP_CHUNK_CHILDREN)
 			{
-				Chunk1.Add(Kids[i]);
+				AFGHologram* Anchor = Kids[Start];
+				if (!Anchor) { continue; }
+				FSFPendingChunk PC;
+				PC.AnchorXform = Anchor->GetActorTransform();
+				for (int32 j = Start + 1; j < Kids.Num() && (j - Start) < SF_MP_CHUNK_CHILDREN; ++j)
+				{
+					if (Kids[j]) { PC.Children.Add(Kids[j]); }
+				}
+				GSFPendingChunks.Add(MoveTemp(PC));
+				Anchor->Destroy();
 			}
 
-			// Destroy any cells beyond the two chunks (bounded proof) + the anchor's old preview (the parent
-			// will build that cell when repositioned).
-			int32 Dropped = 0;
-			for (AFGHologram* K : Kids)
+			GSFPendingGun = self;
+			GSFChunkWait = SF_MP_CHUNK_WAIT_FRAMES;
+			if (!GSFChunkTicker.IsValid())
 			{
-				const bool bUsed = (K == Chunk1Anchor) || Chunk0.Contains(K) || Chunk1.Contains(K);
-				if (K == Chunk1Anchor) { K->Destroy(); ++Dropped; continue; }
-				if (!bUsed && K) { K->Destroy(); ++Dropped; }
+				GSFChunkTicker = FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateStatic(&USFGameInstanceModule::TickPendingGridChunks), 0.0f);
 			}
 
 			UE_LOG(LogSmartFoundations, Display,
-				TEXT("[MP-CHUNK] Increment 2a: %d cells -> chunk0(parent@origin + %d), chunk1(parent@Kids[100] + %d); dropped %d beyond two chunks."),
-				TotalCells, Chunk0.Num(), Chunk1.Num(), Dropped);
+				TEXT("[MP-CHUNK] Increment 2b (deferred): %d cells -> chunk 0 = parent + %d (building now); queued %d more chunk(s) for one-per-frame fire."),
+				TotalCells, Chunk0.Num(), GSFPendingChunks.Num());
 
-			// Drive the two chunks. Cancel the original fire; we re-invoke it per chunk.
-			scope.Cancel();
-			GSFChunkingInProgress = true;
-
-			// Chunk 0
-			Holo->SetActorTransform(OriginXform);
-			USFGameInstanceModule::SetActiveHologramChildren(Holo, Chunk0);
-			UE_LOG(LogSmartFoundations, Display, TEXT("[MP-CHUNK] Increment 2a: firing chunk 0 (%d children) at origin"), Chunk0.Num());
-			self->InternalExecuteDuBuildStepInput(false);
-
-			// Chunk 1 (repositioned parent)
-			if (Chunk1Anchor)
-			{
-				Holo->SetActorTransform(Chunk1Xform);
-				USFGameInstanceModule::SetActiveHologramChildren(Holo, Chunk1);
-				UE_LOG(LogSmartFoundations, Display, TEXT("[MP-CHUNK] Increment 2a: firing chunk 1 (%d children) at repositioned parent (Kids[100])"), Chunk1.Num());
-				self->InternalExecuteDuBuildStepInput(false);
-			}
-
-			// Clean up: clear any leftover children + restore the parent to the crosshair origin.
-			USFGameInstanceModule::SetActiveHologramChildren(Holo, TArray<AFGHologram*>());
-			Holo->SetActorTransform(OriginXform);
-			GSFChunkingInProgress = false;
+			// Do NOT cancel: vanilla builds chunk 0 now; the ticker fires the queued chunks.
 		}
 	);
 
