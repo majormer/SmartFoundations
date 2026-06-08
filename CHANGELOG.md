@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [31.0.2] - 2026-06-07
 
-> *Dedicated-server packaging, a Creative Mode auto-connect fix, power-cable previews for Extend, plus Smart! Panel dropdown fixes.*
+> *Dedicated-server packaging, a Creative Mode free-build fix, power-cable previews for Extend, plus Smart! Panel dropdown fixes.*
 
 ### Fixed
 
