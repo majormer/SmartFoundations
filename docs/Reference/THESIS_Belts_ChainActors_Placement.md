@@ -649,7 +649,30 @@ the construction frame, before any factory tick, with connections already set** 
 `AFGBlueprintHologram::Construct`-AFTER SML hook). Stacked's simultaneous grid build has **no equivalent
 synchronous "all belts built + wired, pre-tick" hook today** — providing one is the real (larger) prerequisite,
 not another post-build tweak. Iteration-2 code reverted to the safe solo-chain status quo (stalls on reload,
-but no crash on build); #341 returns to the parked state with this dead-end map recorded. Tracked: #341.
+but no crash on build). Tracked: #341.
+
+**Path forward (iteration 3 design, 2026-06-08): register within the parent hologram's `Construct`, like
+Extend.** Verified architecture for a stackable-pole grid:
+- The **distributor** `OnActorSpawned` grid-placement path (`bProcessingGridPlacement` → the line-319
+  completion point) is **gated on `IsDistributorHologram(ActiveHologram)`** (`SFSubsystem_OnActorSpawned.cpp:147`),
+  so a **pure stackable placement never reaches it** — it is NOT a usable hook for stacked. (Ruled out a
+  scout suggestion.)
+- The **parent** of a stackable run is the **vanilla pole hologram** (`Build_ConveyorPoleStackable_C`); the
+  belt children are `AddChild`'d to it in `ProcessStackableConveyorPoles` (`SFAutoConnectService_Stackable.cpp:275`).
+  When the player builds, that parent's `Construct` runs `Super::Construct` (which builds **all** children,
+  each belt wiring itself by coincidence in its own `ConfigureComponents`) and only then returns — a
+  **synchronous, all-built, all-wired, pre-factory-tick** point, exactly the timing Extend relies on.
+- **Extend's proven mechanism** is an SML hook on `AFGBlueprintHologram::Construct` (AFTER) in
+  `SFGameInstanceModule.cpp` that iterates the just-built conveyors and (re)registers them **within that
+  frame** (`SFConveyorBeltHologram`/manifold path). Smart's own factory holograms do the same post-`Super`
+  child pass (`ASFFactoryHologram::Construct`, `:53+`).
+- **Plan:** add an SML hook on the conveyor-**pole** hologram's `Construct` (AFTER) — or the narrowest
+  vanilla base that covers stackable/wall/ceiling poles — that drains `GStackBuiltConveyors` and registers
+  each wired belt **synchronously, in-frame** (the §9-safe timing, NOT a timer). Because it runs before the
+  factory tick, the `AddConveyor` that crashed off a timer (iteration 2) is safe here — same as Extend.
+  Open sub-questions to resolve while implementing: (a) exact pole-hologram class to hook; (b) whether to
+  pair with the §6.16 deferral fix (so belts are first-registered in-frame) or Remove+Add the
+  already-solo belts as Extend's hook does; (c) confirm wall/ceiling poles share the hook. Tracked: #341.
 
 ---
 
