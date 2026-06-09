@@ -13,6 +13,7 @@
 #include "Holograms/Logistics/SFConveyorLiftHologram.h"
 #include "Holograms/Logistics/SFPipelineHologram.h"
 #include "Subsystem/SFPositionCalculator.h"
+#include "Data/SFBuildableSizeRegistry.h"
 #include "HAL/IConsoleManager.h"
 #include "Logging/SFLogMacros.h"
 
@@ -46,22 +47,41 @@ void ASFFactoryHologram::PreConstructMessageSerialization()
     // Guarded so legacy behaviour (and SP / listen-host, which construct directly without a message)
     // is completely unaffected.
     if (CVarSFMPSpecConstruction.GetValueOnAnyThread() == 0) return;
-    if (!mScalingSpec.bValid) return;
     if (mChildren.Num() == 0) return;
 
+    // Capture the grid into a compact spec from the authoritative counter state + size registry.
+    // (Self-contained on the hologram: the client knows its own grid via the subsystem.)
+    USFSubsystem* SS = USFSubsystem::Get(GetWorld());
+    if (!SS) return;
+
+    const FSFCounterState Counters = SS->GetCounterState();
+    const int32 NX = FMath::Max(1, FMath::Abs(Counters.GridCounters.X));
+    const int32 NY = FMath::Max(1, FMath::Abs(Counters.GridCounters.Y));
+    const int32 NZ = FMath::Max(1, FMath::Abs(Counters.GridCounters.Z));
+    if (NX * NY * NZ <= 1) return; // trivial grid: nothing to expand server-side
+
+    USFBuildableSizeRegistry::Initialize();
+    const FSFBuildableSizeProfile Profile = USFBuildableSizeRegistry::GetProfile(GetBuildClass());
+
+    mScalingSpec.Counters = Counters;
+    mScalingSpec.ItemSize = Profile.DefaultSize;
+    mScalingSpec.AnchorOffset = Profile.AnchorOffset;
+    mScalingSpec.bValid = true;
+
+    // Detach the grid children from the serialized child list so they are NOT sent. The preview
+    // actors still exist and are owned/cleaned up by the Smart grid-spawner's own tracking list,
+    // not by mChildren. The server regenerates them from mScalingSpec.
     mStashedSpecChildren.Reset();
     for (AFGHologram* Child : mChildren)
     {
         mStashedSpecChildren.Add(Child);
     }
-    // Detach from the serialized child list. The preview actors still exist and are owned/cleaned up
-    // by the Smart grid-spawner's own tracking list, not by mChildren.
     mChildren.Reset();
 
     UE_LOG(LogSmartFoundations, Display,
-        TEXT("[MP-SPEC] PreConstructMessageSerialization: stripped %d grid children from the wire; ")
-        TEXT("spec describes %d cells. Construct message is now O(1)."),
-        mStashedSpecChildren.Num(), mScalingSpec.CellCount());
+        TEXT("[MP-SPEC] PreConstructMessageSerialization: captured spec (%d cells), stripped %d grid ")
+        TEXT("children from the wire. Construct message is now O(1)."),
+        mScalingSpec.CellCount(), mStashedSpecChildren.Num());
 }
 
 void ASFFactoryHologram::PostConstructMessageDeserialization()
