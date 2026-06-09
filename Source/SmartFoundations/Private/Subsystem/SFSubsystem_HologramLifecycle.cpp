@@ -7,9 +7,11 @@
 
 #include "Subsystem/SFSubsystemImpl.h"
 #include "Holograms/Core/SFFactoryHologram.h"
+#include "Holograms/Core/SFFoundationHologram.h"
+#include "Holograms/Core/SFScalingSpecExpansion.h"
 #include "Hologram/FGFactoryHologram.h"
+#include "Hologram/FGFoundationHologram.h"
 #include "Features/Extend/SFExtendService.h"
-#include "HAL/IConsoleManager.h"
 
 
 // Hologram management with enhanced logging
@@ -135,25 +137,42 @@ void USFSubsystem::RegisterActiveHologram(AFGHologram* Hologram)
 	// BuildState->mHologram via reflection; we then set ActiveHologram to the same swapped hologram
 	// below, so Poll sees a MATCH (not the mismatch that caused the historical loop). A re-entrancy
 	// guard prevents the swap's FinishSpawning from recursing into another swap. Default 0 ⇒ this
-	// block is skipped entirely and behaviour is unchanged. RUNTIME VALIDATION PENDING (MP session):
-	// confirm no re-registration loop and no Extend-state interference (the swap sets ExtendService
-	// bHasSwappedHologram; benign when no Extend target is active, but watch it under test).
+	// block is skipped entirely and behaviour is unchanged. Both swaps are NOT tracked as Extend
+	// swaps (bTrackAsExtendSwap=false / never), so Extend state stays untouched. RUNTIME VALIDATION
+	// PENDING (MP session): confirm no re-registration loop.
 	{
-		static const IConsoleVariable* CVarSpec =
-			IConsoleManager::Get().FindConsoleVariable(TEXT("sf.MP.SpecConstruction"));
 		static bool bReentryGuard = false;
-		const bool bSpecOn = CVarSpec && CVarSpec->GetInt() != 0;
-		if (bSpecOn && !bReentryGuard && ExtendService
-			&& Hologram->IsA(AFGFactoryHologram::StaticClass())
-			&& !Hologram->IsA(ASFFactoryHologram::StaticClass()))
+		if (SFScalingSpecExpansion::IsSpecConstructionEnabled() && !bReentryGuard && ExtendService)
 		{
 			TGuardValue<bool> ReentryScope(bReentryGuard, true);
-			if (ASFFactoryHologram* Swapped = ExtendService->SwapToSmartFactoryHologram(Hologram))
+
+			if (Hologram->IsA(AFGFactoryHologram::StaticClass())
+				&& !Hologram->IsA(ASFFactoryHologram::StaticClass()))
 			{
-				UE_LOG(LogSmartFoundations, Display,
-					TEXT("[MP-SPEC] RegisterActiveHologram: swapped vanilla factory hologram to ")
-					TEXT("ASFFactoryHologram for spec-construction (%s)."), *Swapped->GetName());
-				Hologram = Swapped; // continue registration with the swapped custom hologram
+				// Production buildings -> ASFFactoryHologram (no Extend swap tracking: this is the
+				// scaling spec path, not Extend; RestoreOriginalHologram must stay a no-op).
+				if (ASFFactoryHologram* Swapped =
+					ExtendService->SwapToSmartFactoryHologram(Hologram, /*bTrackAsExtendSwap=*/false))
+				{
+					UE_LOG(LogSmartFoundations, Display,
+						TEXT("[MP-SPEC] RegisterActiveHologram: swapped vanilla factory hologram to ")
+						TEXT("ASFFactoryHologram for spec-construction (%s)."), *Swapped->GetName());
+					Hologram = Swapped; // continue registration with the swapped custom hologram
+				}
+			}
+			else if (Hologram->GetClass() == AFGFoundationHologram::StaticClass())
+			{
+				// Flat foundations -> ASFFoundationHologram. EXACT class only: foundation-family
+				// subclasses (ramps, quarter pipes, ...) have placement behaviour our generic
+				// replacement would lose, so they stay on the legacy path until covered explicitly.
+				if (ASFFoundationHologram* Swapped =
+					ExtendService->SwapToSmartFoundationHologram(Hologram))
+				{
+					UE_LOG(LogSmartFoundations, Display,
+						TEXT("[MP-SPEC] RegisterActiveHologram: swapped vanilla foundation hologram to ")
+						TEXT("ASFFoundationHologram for spec-construction (%s)."), *Swapped->GetName());
+					Hologram = Swapped;
+				}
 			}
 		}
 	}

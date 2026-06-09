@@ -64,10 +64,6 @@ public:
     virtual void PostConstructMessageDeserialization() override;
 
 protected:
-    /** Server-side expansion: spawn one child hologram per non-origin grid cell from mScalingSpec,
-     *  positioned via USFPositionCalculator, parented via the vanilla SpawnChildHologramFromRecipe. */
-    void ExpandScalingSpecIntoChildren();
-
     /** Compact grid description, replicated/serialized with the construct message (CustomSerialization). */
     UPROPERTY(CustomSerialization)
     FSFScalingSpec mScalingSpec;

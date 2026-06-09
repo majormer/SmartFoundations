@@ -27,6 +27,11 @@
 #include "Core/Helpers/SFNetworkHelper.h"     // FSFNetworkHelper::IsClient
 #include "Engine/Engine.h"                     // GEngine on-screen message
 
+// MP spec-based construction: guard bypass for spec-capable parents
+#include "Holograms/Core/SFFactoryHologram.h"
+#include "Holograms/Core/SFFoundationHologram.h"
+#include "Holograms/Core/SFScalingSpecExpansion.h"
+
 // For chain actor rebuilding
 #include "Buildables/FGBuildableConveyorBase.h"
 #include "Buildables/FGBuildableConveyorBelt.h"
@@ -425,6 +430,20 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 			AFGHologram* Holo = self->GetHologram();
 			if (!Holo)
 			{
+				return;
+			}
+
+			// [MP-SPEC] When spec-based construction is enabled AND the active hologram is one of the
+			// spec-capable parents (swapped at registration), the grid children are stripped from the
+			// wire in PreConstructMessageSerialization and the message is O(1) - the oversized refusal
+			// must NOT fire. Legacy holograms (e.g. ramp subclasses not yet covered by the swap) still
+			// serialize all children, so for them the guard stays authoritative.
+			if (SFScalingSpecExpansion::IsSpecConstructionEnabled()
+				&& (Holo->IsA(ASFFactoryHologram::StaticClass()) || Holo->IsA(ASFFoundationHologram::StaticClass())))
+			{
+				UE_LOG(LogSmartFoundations, Display,
+					TEXT("[MP-SPEC] Oversized guard bypassed: %s commits via the compact spec path."),
+					*Holo->GetName());
 				return;
 			}
 

@@ -457,9 +457,21 @@ public:
      * Swap the build gun's active hologram to our custom ASFFactoryHologram.
      * This gives us control over SetHologramLocationAndRotation for EXTEND positioning.
      * @param VanillaHologram The current vanilla factory hologram
+     * @param bTrackAsExtendSwap When true (Extend), record SwappedHologram/bHasSwappedHologram so
+     *        RestoreOriginalHologram works. Pass false for the MP scaling spec swap, which reuses
+     *        the mechanism but must not put the Extend service into "swapped" state.
      * @return The swapped custom hologram, or nullptr if swap failed
      */
-    ASFFactoryHologram* SwapToSmartFactoryHologram(AFGHologram* VanillaHologram);
+    ASFFactoryHologram* SwapToSmartFactoryHologram(AFGHologram* VanillaHologram, bool bTrackAsExtendSwap = true);
+
+    /**
+     * Swap the build gun's active hologram to ASFFoundationHologram (MP scaling spec path for
+     * FOUNDATION grids). Same proven mechanism as the factory swap (repoints BuildState->mHologram);
+     * never tracked as an Extend swap.
+     * @param VanillaHologram The current vanilla foundation hologram (exact-class AFGFoundationHologram)
+     * @return The swapped custom hologram, or nullptr if swap failed
+     */
+    class ASFFoundationHologram* SwapToSmartFoundationHologram(AFGHologram* VanillaHologram);
 
     /**
      * Restore the original hologram when EXTEND mode ends.

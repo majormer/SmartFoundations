@@ -5,11 +5,17 @@
 #include "CoreMinimal.h"
 #include "SFBuildableHologram.h"
 #include "Hologram/FGFoundationHologram.h"
+#include "Features/Scaling/SFScalingSpec.h"  // FSFScalingSpec (MP spec-based construction)
 #include "SFFoundationHologram.generated.h"
 
 /**
  * Base class for all Smart foundation holograms.
  * Handles foundation-specific validation and grid snapping.
+ *
+ * Also the spec-capable scaling parent for FOUNDATION grids in multiplayer: mirrors
+ * ASFFactoryHologram's spec hooks (capture + strip client-side, regenerate server-side), delegating
+ * the shared logic to SFScalingSpecExpansion. The plain-scaling swap in RegisterActiveHologram picks
+ * this class for foundation-family holograms (production buildings use ASFFactoryHologram).
  */
 UCLASS()
 class SMARTFOUNDATIONS_API ASFFoundationHologram : public AFGFoundationHologram
@@ -23,11 +29,31 @@ public:
     virtual void BeginPlay() override;
     virtual void ConfigureActor(AFGBuildable* InBuildable) const override;
 
+    /** Copy mBuildClass/mRecipe from the vanilla hologram being swapped out (call before FinishSpawning). */
+    void InitializeFromHologram(AFGHologram* SourceHologram);
+
+    // ── Multiplayer spec-based construction (see ASFFactoryHologram for the model description)
+    void SetScalingSpec(const FSFScalingSpec& InSpec) { mScalingSpec = InSpec; }
+    const FSFScalingSpec& GetScalingSpec() const { return mScalingSpec; }
+
+    /** Client: capture the grid spec + strip grid children from the serialized construct message. */
+    virtual void PreConstructMessageSerialization() override;
+    /** Server: regenerate the grid children from the spec before cost/Construct. */
+    virtual void PostConstructMessageDeserialization() override;
+
 protected:
+    /** Compact grid description, replicated/serialized with the construct message (CustomSerialization). */
+    UPROPERTY(CustomSerialization)
+    FSFScalingSpec mScalingSpec;
+
+    /** Children temporarily detached from mChildren during client serialization (kept off the wire). */
+    UPROPERTY(Transient)
+    TArray<TObjectPtr<class AFGHologram>> mStashedSpecChildren;
+
     // Foundation validation and snapping
     virtual void ValidateFoundationPlacement();
     virtual void ApplyFoundationSnapping();
-    
+
     // Common helper functions
     virtual void LogSmartActivity(const FString& Activity) const;
 };

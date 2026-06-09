@@ -12,20 +12,8 @@
 #include "Holograms/Logistics/SFConveyorBeltHologram.h"
 #include "Holograms/Logistics/SFConveyorLiftHologram.h"
 #include "Holograms/Logistics/SFPipelineHologram.h"
-#include "Subsystem/SFPositionCalculator.h"
-#include "Data/SFBuildableSizeRegistry.h"
-#include "HAL/IConsoleManager.h"
+#include "Holograms/Core/SFScalingSpecExpansion.h"
 #include "Logging/SFLogMacros.h"
-
-// MP spec-based construction toggle. Off by default: the existing path (and the oversized-grid
-// safety guard) remain authoritative until this is validated in a live multiplayer session.
-// Set `sf.MP.SpecConstruction 1` on the CLIENT to ship the compact grid spec instead of N children.
-static TAutoConsoleVariable<int32> CVarSFMPSpecConstruction(
-    TEXT("sf.MP.SpecConstruction"),
-    0,
-    TEXT("Smart!: when 1, scaling grids commit via a compact server-expanded spec (MP) instead of ")
-    TEXT("serializing N child holograms. Experimental; default 0 (legacy path + oversized guard)."),
-    ECVF_Default);
 
 ASFFactoryHologram::ASFFactoryHologram()
 {
@@ -46,27 +34,9 @@ void ASFFactoryHologram::PreConstructMessageSerialization()
     // wire O(1)). The server regenerates them from mScalingSpec in PostConstructMessageDeserialization.
     // Guarded so legacy behaviour (and SP / listen-host, which construct directly without a message)
     // is completely unaffected.
-    if (CVarSFMPSpecConstruction.GetValueOnAnyThread() == 0) return;
+    if (!SFScalingSpecExpansion::IsSpecConstructionEnabled()) return;
     if (mChildren.Num() == 0) return;
-
-    // Capture the grid into a compact spec from the authoritative counter state + size registry.
-    // (Self-contained on the hologram: the client knows its own grid via the subsystem.)
-    USFSubsystem* SS = USFSubsystem::Get(GetWorld());
-    if (!SS) return;
-
-    const FSFCounterState Counters = SS->GetCounterState();
-    const int32 NX = FMath::Max(1, FMath::Abs(Counters.GridCounters.X));
-    const int32 NY = FMath::Max(1, FMath::Abs(Counters.GridCounters.Y));
-    const int32 NZ = FMath::Max(1, FMath::Abs(Counters.GridCounters.Z));
-    if (NX * NY * NZ <= 1) return; // trivial grid: nothing to expand server-side
-
-    USFBuildableSizeRegistry::Initialize();
-    const FSFBuildableSizeProfile Profile = USFBuildableSizeRegistry::GetProfile(GetBuildClass());
-
-    mScalingSpec.Counters = Counters;
-    mScalingSpec.ItemSize = Profile.DefaultSize;
-    mScalingSpec.AnchorOffset = Profile.AnchorOffset;
-    mScalingSpec.bValid = true;
+    if (!SFScalingSpecExpansion::CaptureScalingSpec(this, mScalingSpec)) return;
 
     // Detach the grid children from the serialized child list so they are NOT sent. The preview
     // actors still exist and are owned/cleaned up by the Smart grid-spawner's own tracking list,
@@ -79,8 +49,8 @@ void ASFFactoryHologram::PreConstructMessageSerialization()
     mChildren.Reset();
 
     UE_LOG(LogSmartFoundations, Display,
-        TEXT("[MP-SPEC] PreConstructMessageSerialization: captured spec (%d cells), stripped %d grid ")
-        TEXT("children from the wire. Construct message is now O(1)."),
+        TEXT("[MP-SPEC] PreConstructMessageSerialization(factory): captured spec (%d cells), stripped ")
+        TEXT("%d grid children from the wire. Construct message is now O(1)."),
         mScalingSpec.CellCount(), mStashedSpecChildren.Num());
 }
 
@@ -95,81 +65,7 @@ void ASFFactoryHologram::PostConstructMessageDeserialization()
     if (!HasAuthority()) return;
     if (mChildren.Num() > 0) return; // already populated (shouldn't happen on the spec path)
 
-    ExpandScalingSpecIntoChildren();
-}
-
-void ASFFactoryHologram::ExpandScalingSpecIntoChildren()
-{
-    UWorld* World = GetWorld();
-    if (!World || !mScalingSpec.bValid) return;
-    if (!mRecipe)
-    {
-        UE_LOG(LogSmartFoundations, Warning,
-            TEXT("[MP-SPEC] ExpandScalingSpecIntoChildren: no recipe on parent hologram %s; cannot expand."),
-            *GetName());
-        return;
-    }
-
-    const FSFCounterState& C = mScalingSpec.Counters;
-    const FVector ParentLoc = GetActorLocation();
-    const FRotator ParentRot = GetActorRotation();
-
-    const int32 NX = FMath::Max(1, FMath::Abs(C.GridCounters.X));
-    const int32 NY = FMath::Max(1, FMath::Abs(C.GridCounters.Y));
-    const int32 NZ = FMath::Max(1, FMath::Abs(C.GridCounters.Z));
-    const int32 SgnX = (C.GridCounters.X < 0) ? -1 : 1;
-    const int32 SgnY = (C.GridCounters.Y < 0) ? -1 : 1;
-    const int32 SgnZ = (C.GridCounters.Z < 0) ? -1 : 1;
-
-    FSFPositionCalculator Calc;
-    AActor* HoloOwner = GetOwner();
-    int32 SpawnedChildren = 0;
-    int32 LinearIndex = 0;
-
-    for (int32 ZI = 0; ZI < NZ; ++ZI)
-    {
-        for (int32 YI = 0; YI < NY; ++YI)
-        {
-            for (int32 XI = 0; XI < NX; ++XI)
-            {
-                // (0,0,0) is the parent buildable itself (built by Super::Construct), not a child.
-                if (XI == 0 && YI == 0 && ZI == 0) continue;
-
-                const int32 GX = XI * SgnX;
-                const int32 GY = YI * SgnY;
-                const int32 GZ = ZI * SgnZ;
-
-                const FVector CellLoc = Calc.CalculateChildPosition(
-                    GX, GY, GZ, ParentLoc, ParentRot,
-                    mScalingSpec.ItemSize, C, LinearIndex, mScalingSpec.AnchorOffset);
-                ++LinearIndex;
-
-                const FName ChildName(*FString::Printf(TEXT("SFSpecCell_%d_%d_%d"), GX, GY, GZ));
-
-                AFGHologram* Child = AFGHologram::SpawnChildHologramFromRecipe(
-                    this, ChildName, mRecipe, HoloOwner, CellLoc,
-                    [ParentRot](AFGHologram* NewChild)
-                    {
-                        if (NewChild)
-                        {
-                            NewChild->SetActorRotation(ParentRot);
-                            NewChild->Tags.AddUnique(FName(TEXT("SF_GridChild")));
-                        }
-                    });
-
-                if (Child)
-                {
-                    ++SpawnedChildren;
-                }
-            }
-        }
-    }
-
-    UE_LOG(LogSmartFoundations, Display,
-        TEXT("[MP-SPEC] ExpandScalingSpecIntoChildren: regenerated %d/%d grid children server-side ")
-        TEXT("for %s (recipe=%s). Vanilla cost + Construct will now build the full grid."),
-        SpawnedChildren, mScalingSpec.CellCount() - 1, *GetName(),
-        mRecipe ? *mRecipe->GetName() : TEXT("null"));
+    SFScalingSpecExpansion::ExpandScalingSpecIntoChildren(this, mScalingSpec, mRecipe);
 }
 
 void ASFFactoryHologram::BeginPlay()

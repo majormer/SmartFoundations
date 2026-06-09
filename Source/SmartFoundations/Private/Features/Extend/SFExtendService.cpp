@@ -26,6 +26,7 @@
 #include "Services/RadarPulse/SFRadarPulseService.h"
 #include "SmartFoundations.h"  // For LogSmartExtend
 #include "Holograms/Core/SFFactoryHologram.h"
+#include "Holograms/Core/SFFoundationHologram.h"
 #include "Holograms/Logistics/SFConveyorAttachmentChildHologram.h"
 #include "Holograms/Logistics/SFConveyorBeltHologram.h"
 #include "Holograms/Logistics/SFPipelineHologram.h"
@@ -1635,7 +1636,7 @@ UFGBuildGunStateBuild* USFExtendService::GetBuildGunBuildState(AFGBuildGun* Buil
     return Cast<UFGBuildGunStateBuild>(BuildGun->GetBuildGunStateFor(EBuildGunState::BGS_BUILD));
 }
 
-ASFFactoryHologram* USFExtendService::SwapToSmartFactoryHologram(AFGHologram* VanillaHologram)
+ASFFactoryHologram* USFExtendService::SwapToSmartFactoryHologram(AFGHologram* VanillaHologram, bool bTrackAsExtendSwap)
 {
     if (!VanillaHologram || !VanillaHologram->IsValidLowLevel())
     {
@@ -1741,12 +1742,95 @@ ASFFactoryHologram* USFExtendService::SwapToSmartFactoryHologram(AFGHologram* Va
     // Destroy the vanilla hologram
     VanillaHologram->Destroy();
 
-    // Track the swap (both locally and in HologramService for future migration)
-    SwappedHologram = CustomHologram;
-    bHasSwappedHologram = true;
+    // Track the swap (both locally and in HologramService for future migration).
+    // The MP scaling spec path reuses this swap but must NOT put Extend into "swapped" state
+    // (no Extend target is active and RestoreOriginalHologram must stay a no-op).
+    if (bTrackAsExtendSwap)
+    {
+        SwappedHologram = CustomHologram;
+        bHasSwappedHologram = true;
+    }
 
     SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("🔄 EXTEND SWAP: ✅ Successfully swapped to ASFFactoryHologram"));
 
+    return CustomHologram;
+}
+
+ASFFoundationHologram* USFExtendService::SwapToSmartFoundationHologram(AFGHologram* VanillaHologram)
+{
+    // MP scaling spec path for FOUNDATION grids. Mirrors SwapToSmartFactoryHologram (the proven
+    // mechanism: deferred spawn -> init from vanilla -> repoint BuildState->mHologram -> destroy
+    // vanilla) with ASFFoundationHologram as the target and no Extend swap tracking.
+    if (!VanillaHologram || !VanillaHologram->IsValidLowLevel())
+    {
+        UE_LOG(LogSmartFoundations, Warning, TEXT("[MP-SPEC] FOUNDATION SWAP: Invalid vanilla hologram"));
+        return nullptr;
+    }
+
+    AFGBuildGun* BuildGun = GetPlayerBuildGun();
+    if (!BuildGun)
+    {
+        UE_LOG(LogSmartFoundations, Warning, TEXT("[MP-SPEC] FOUNDATION SWAP: Could not get build gun"));
+        return nullptr;
+    }
+
+    UFGBuildGunStateBuild* BuildState = GetBuildGunBuildState(BuildGun);
+    if (!BuildState)
+    {
+        UE_LOG(LogSmartFoundations, Warning, TEXT("[MP-SPEC] FOUNDATION SWAP: Could not get build state"));
+        return nullptr;
+    }
+
+    UWorld* World = VanillaHologram->GetWorld();
+    if (!World || !VanillaHologram->GetBuildClass())
+    {
+        UE_LOG(LogSmartFoundations, Warning, TEXT("[MP-SPEC] FOUNDATION SWAP: No world or no BuildClass"));
+        return nullptr;
+    }
+
+    ASFFoundationHologram* CustomHologram = World->SpawnActorDeferred<ASFFoundationHologram>(
+        ASFFoundationHologram::StaticClass(),
+        FTransform(VanillaHologram->GetActorRotation(), VanillaHologram->GetActorLocation()),
+        BuildGun,
+        nullptr,
+        ESpawnActorCollisionHandlingMethod::AlwaysSpawn
+    );
+    if (!CustomHologram)
+    {
+        UE_LOG(LogSmartFoundations, Error, TEXT("[MP-SPEC] FOUNDATION SWAP: Failed to spawn deferred custom hologram"));
+        return nullptr;
+    }
+
+    // Initialize from the vanilla hologram BEFORE BeginPlay (copies mBuildClass + mRecipe).
+    CustomHologram->InitializeFromHologram(VanillaHologram);
+
+    // Copy mConstructionInstigator (private) via reflection - needed for build FX
+    if (FProperty* InstigatorProp = AFGHologram::StaticClass()->FindPropertyByName(TEXT("mConstructionInstigator")))
+    {
+        InstigatorProp->CopyCompleteValue(
+            InstigatorProp->ContainerPtrToValuePtr<void>(CustomHologram),
+            InstigatorProp->ContainerPtrToValuePtr<void>(VanillaHologram)
+        );
+    }
+
+    CustomHologram->FinishSpawning(FTransform(VanillaHologram->GetActorRotation(), VanillaHologram->GetActorLocation()));
+
+    // Repoint the build gun's hologram pointer to the custom one (the loop-avoidance key).
+    FProperty* HologramProp = BuildState->GetClass()->FindPropertyByName(TEXT("mHologram"));
+    FObjectProperty* ObjProp = HologramProp ? CastField<FObjectProperty>(HologramProp) : nullptr;
+    void* ValuePtr = ObjProp ? HologramProp->ContainerPtrToValuePtr<void>(BuildState) : nullptr;
+    if (!ValuePtr)
+    {
+        UE_LOG(LogSmartFoundations, Error, TEXT("[MP-SPEC] FOUNDATION SWAP: Could not find mHologram property"));
+        CustomHologram->Destroy();
+        return nullptr;
+    }
+    ObjProp->SetObjectPropertyValue(ValuePtr, CustomHologram);
+
+    VanillaHologram->Destroy();
+
+    UE_LOG(LogSmartFoundations, Display, TEXT("[MP-SPEC] FOUNDATION SWAP: Swapped to ASFFoundationHologram (%s)"),
+        *CustomHologram->GetName());
     return CustomHologram;
 }
 
