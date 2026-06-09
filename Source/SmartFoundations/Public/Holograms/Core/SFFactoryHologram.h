@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "SFBuildableHologram.h"
 #include "Hologram/FGFactoryHologram.h"
+#include "Features/Scaling/SFScalingSpec.h"  // FSFScalingSpec (MP spec-based construction)
 #include "SFFactoryHologram.generated.h"
 
 /**
@@ -46,7 +47,35 @@ public:
      */
     void InitializeFromHologram(AFGHologram* SourceHologram);
 
+    // ── Multiplayer spec-based construction (docs/Features/Multiplayer/DESIGN_MP_ConstructionModel.md)
+    // The client populates a compact FSFScalingSpec describing the whole grid; on a remote client
+    // fire the grid children are stripped from the wire (PreConstructMessageSerialization) so the
+    // construct message stays O(1); the server regenerates the children from the spec
+    // (PostConstructMessageDeserialization) before vanilla cost-aggregation + Construct run, so both
+    // reuse proven machinery. All gated behind the `sf.MP.SpecConstruction` console variable.
+
+    /** Set by the scaling activation path whenever the grid changes; the authoritative spec to expand. */
+    void SetScalingSpec(const FSFScalingSpec& InSpec) { mScalingSpec = InSpec; }
+    const FSFScalingSpec& GetScalingSpec() const { return mScalingSpec; }
+
+    /** Client: strip grid children from the serialized construct message (keep the spec only). */
+    virtual void PreConstructMessageSerialization() override;
+    /** Server: regenerate the grid children from the spec before cost/Construct. */
+    virtual void PostConstructMessageDeserialization() override;
+
 protected:
+    /** Server-side expansion: spawn one child hologram per non-origin grid cell from mScalingSpec,
+     *  positioned via USFPositionCalculator, parented via the vanilla SpawnChildHologramFromRecipe. */
+    void ExpandScalingSpecIntoChildren();
+
+    /** Compact grid description, replicated/serialized with the construct message (CustomSerialization). */
+    UPROPERTY(CustomSerialization)
+    FSFScalingSpec mScalingSpec;
+
+    /** Children temporarily detached from mChildren during client serialization (kept off the wire). */
+    UPROPERTY(Transient)
+    TArray<TObjectPtr<class AFGHologram>> mStashedSpecChildren;
+
     // Recipe copying implementation
     virtual void ApplyStoredRecipe(AActor* Building) const;
     virtual bool IsProductionBuilding(AActor* Building) const;
