@@ -174,6 +174,25 @@ void USFSubsystem::RegisterActiveHologram(AFGHologram* Hologram)
 					Hologram = Swapped;
 				}
 			}
+			else if (!Hologram->IsA(ASFFactoryHologram::StaticClass())
+				&& !Hologram->IsA(ASFFoundationHologram::StaticClass()))
+			{
+				// Coverage diagnostic (once per class): live test 2026-06-09 showed the 4m foundation
+				// hologram did NOT match the exact-class gate above - this names the actual class so
+				// the gate can be widened deliberately instead of guessed.
+				static TSet<FName> LoggedUnmatchedClasses;
+				const FName HoloClassName = Hologram->GetClass()->GetFName();
+				if (!LoggedUnmatchedClasses.Contains(HoloClassName))
+				{
+					LoggedUnmatchedClasses.Add(HoloClassName);
+					UE_LOG(LogSmartFoundations, Display,
+						TEXT("[MP-SPEC] RegisterActiveHologram: no spec swap for hologram class %s ")
+						TEXT("(build=%s, parent=%s) - not covered yet."),
+						*HoloClassName.ToString(),
+						*GetNameSafe(Hologram->GetBuildClass()),
+						*GetNameSafe(Hologram->GetClass()->GetSuperClass()));
+				}
+			}
 		}
 	}
 

@@ -60,6 +60,9 @@ public:
 
     /** Client: strip grid children from the serialized construct message (keep the spec only). */
     virtual void PreConstructMessageSerialization() override;
+    /** Client (saving): after the message bytes are written, restore the stripped children into
+     *  mChildren so the post-fire hologram teardown destroys the previews normally (no orphans). */
+    virtual void SerializeConstructMessage(FArchive& ar, FNetConstructionID id) override;
     /** Server: regenerate the grid children from the spec before cost/Construct. */
     virtual void PostConstructMessageDeserialization() override;
 

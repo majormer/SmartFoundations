@@ -54,6 +54,30 @@ void ASFFactoryHologram::PreConstructMessageSerialization()
         mScalingSpec.CellCount(), mStashedSpecChildren.Num());
 }
 
+void ASFFactoryHologram::SerializeConstructMessage(FArchive& ar, FNetConstructionID id)
+{
+    Super::SerializeConstructMessage(ar, id);
+
+    // Client/saving: the message bytes were just written from the STRIPPED child list. Restore the
+    // stash into mChildren immediately so the hologram is whole again - the build gun's post-fire
+    // teardown then destroys the preview children normally. Without this, the stripped previews
+    // leak as orphans and the grid-spawner tracking desyncs (live-test finding, 2026-06-09).
+    if (ar.IsSaving() && mStashedSpecChildren.Num() > 0)
+    {
+        for (const TObjectPtr<AFGHologram>& Child : mStashedSpecChildren)
+        {
+            if (Child)
+            {
+                mChildren.Add(Child);
+            }
+        }
+        UE_LOG(LogSmartFoundations, Display,
+            TEXT("[MP-SPEC] SerializeConstructMessage(factory): restored %d stripped children post-write."),
+            mStashedSpecChildren.Num());
+        mStashedSpecChildren.Reset();
+    }
+}
+
 void ASFFactoryHologram::PostConstructMessageDeserialization()
 {
     Super::PostConstructMessageDeserialization();

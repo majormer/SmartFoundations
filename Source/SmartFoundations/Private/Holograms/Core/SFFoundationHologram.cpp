@@ -58,6 +58,28 @@ void ASFFoundationHologram::PreConstructMessageSerialization()
         mScalingSpec.CellCount(), mStashedSpecChildren.Num());
 }
 
+void ASFFoundationHologram::SerializeConstructMessage(FArchive& ar, FNetConstructionID id)
+{
+    Super::SerializeConstructMessage(ar, id);
+
+    // Client/saving: restore the stripped children post-write so the post-fire teardown destroys
+    // the previews normally (see ASFFactoryHologram::SerializeConstructMessage).
+    if (ar.IsSaving() && mStashedSpecChildren.Num() > 0)
+    {
+        for (const TObjectPtr<AFGHologram>& Child : mStashedSpecChildren)
+        {
+            if (Child)
+            {
+                mChildren.Add(Child);
+            }
+        }
+        UE_LOG(LogSmartFoundations, Display,
+            TEXT("[MP-SPEC] SerializeConstructMessage(foundation): restored %d stripped children post-write."),
+            mStashedSpecChildren.Num());
+        mStashedSpecChildren.Reset();
+    }
+}
+
 void ASFFoundationHologram::PostConstructMessageDeserialization()
 {
     Super::PostConstructMessageDeserialization();
