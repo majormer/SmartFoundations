@@ -12,6 +12,7 @@
 #include "Hologram/FGFactoryHologram.h"
 #include "Hologram/FGFoundationHologram.h"
 #include "Hologram/FGRampHologram.h"
+#include "Data/SFBuildableSizeRegistry.h"
 #include "Features/Extend/SFExtendService.h"
 
 
@@ -147,7 +148,18 @@ void USFSubsystem::RegisterActiveHologram(AFGHologram* Hologram)
 		{
 			TGuardValue<bool> ReentryScope(bReentryGuard, true);
 
-			if (Hologram->IsA(AFGFactoryHologram::StaticClass())
+			// Eligibility comes from the buildable size registry - Smart's existing source of truth
+			// for what may scale (the same profile whose DefaultSize/AnchorOffset the spec already
+			// reproduces server-side). Only swap holograms Smart would actually scale.
+			USFBuildableSizeRegistry::Initialize();
+			const bool bSupportsScaling =
+				USFBuildableSizeRegistry::GetProfile(Hologram->GetBuildClass()).bSupportsScaling;
+
+			if (!bSupportsScaling)
+			{
+				// fall through: not Smart-scalable -> never spec-swapped, legacy behaviour
+			}
+			else if (Hologram->IsA(AFGFactoryHologram::StaticClass())
 				&& !Hologram->IsA(ASFFactoryHologram::StaticClass()))
 			{
 				// Production buildings -> ASFFactoryHologram (no Extend swap tracking: this is the
