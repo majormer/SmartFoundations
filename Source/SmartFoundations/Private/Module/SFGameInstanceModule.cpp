@@ -33,6 +33,7 @@
 #include "Subsystem/SFHologramHelperService.h"
 #include "SFRCO.h"
 #include "FGPlayerController.h"
+#include "FGBlueprintProxy.h"   // server-side Smart Dismantle group for spec-built grids
 
 // For chain actor rebuilding
 #include "Buildables/FGBuildableConveyorBase.h"
@@ -628,10 +629,15 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 			scope.Override(Cost);
 		});
 
-	// ── Hook B: expansion. Fires at the AFGBuildableHologram::Construct body (primary virtual) -
-	// inside the Super chain of every buildable hologram, before the base child-construct loop -
-	// on the server, after Server_ConstructHologram validation has already passed on the childless
-	// parent. Consumes the staged spec (matched by instigator + build class).
+	// ── Hook B: expansion + group bookkeeping. Fires at the AFGBuildableHologram::Construct body
+	// (primary virtual) - inside the Super chain of every buildable hologram, before the base
+	// child-construct loop - on the server, after Server_ConstructHologram validation has already
+	// passed on the childless parent. Consumes the staged spec (matched by instigator + build
+	// class), expands, runs the original, then registers ALL built actors into one
+	// AFGBlueprintProxy so Smart Dismantle group-dismantle works on spec-built grids. The proxy is
+	// created SERVER-side (its mBuildables array is replicated, so the client group UI sees it and
+	// dismantle is server-authoritative - the legacy client-side proxy from OnActorSpawned cannot
+	// cover server-built actors).
 	SUBSCRIBE_METHOD_VIRTUAL(AFGBuildableHologram::Construct, BuildableHologramCDO,
 		[=](auto& scope, AFGBuildableHologram* self, TArray<AActor*>& out_children, FNetConstructionID constructionID)
 		{
@@ -648,7 +654,58 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 			{
 				SFScalingSpecExpansion::ExpandScalingSpecIntoChildren(self, Spec, self->GetRecipe());
 			}
-			// original runs after return and constructs parent + expanded children
+
+			// Run the original construct now (parent + expanded children) so we can group the
+			// resulting actors. out_children is filled by the vanilla child-construct loop.
+			AActor* BuiltParent = scope(self, out_children, constructionID);
+
+			// Group everything that was built into one blueprint proxy (Smart Dismantle group).
+			TArray<AFGBuildable*> BuiltBuildables;
+			if (AFGBuildable* ParentBuildable = Cast<AFGBuildable>(BuiltParent))
+			{
+				BuiltBuildables.Add(ParentBuildable);
+			}
+			for (AActor* ChildActor : out_children)
+			{
+				if (AFGBuildable* ChildBuildable = Cast<AFGBuildable>(ChildActor))
+				{
+					BuiltBuildables.AddUnique(ChildBuildable);
+				}
+			}
+
+			if (BuiltBuildables.Num() > 1)
+			{
+				UWorld* World = self->GetWorld();
+				FActorSpawnParameters ProxyParams;
+				ProxyParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+				AFGBlueprintProxy* GroupProxy = World ? World->SpawnActor<AFGBlueprintProxy>(
+					AFGBlueprintProxy::StaticClass(),
+					BuiltBuildables[0]->GetActorTransform(),
+					ProxyParams) : nullptr;
+
+				if (GroupProxy)
+				{
+					for (AFGBuildable* Buildable : BuiltBuildables)
+					{
+						if (!Buildable->GetBlueprintProxy())
+						{
+							Buildable->SetBlueprintProxy(GroupProxy);
+							GroupProxy->RegisterBuildable(Buildable);
+						}
+					}
+					UE_LOG(LogSmartFoundations, Display,
+						TEXT("[MP-SPEC] Grouped %d spec-built buildables into blueprint proxy %s (Smart Dismantle group)."),
+						BuiltBuildables.Num(), *GroupProxy->GetName());
+				}
+				else
+				{
+					UE_LOG(LogSmartFoundations, Warning,
+						TEXT("[MP-SPEC] Could not spawn blueprint proxy for spec-built group (%d buildables)."),
+						BuiltBuildables.Num());
+				}
+			}
+
+			scope.Override(BuiltParent);
 		});
 
 	UE_LOG(LogSmartFoundations, Verbose, TEXT("✅ Spec-construction hooks registered (GetCost / Construct - class-agnostic; spec staged via USFRCO)"));
