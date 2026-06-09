@@ -8,17 +8,17 @@
 #include "Data/SFBuildableSizeRegistry.h"
 #include "HAL/IConsoleManager.h"
 
-// MP spec-based construction toggle. Off by default: the existing path (and the oversized-grid
-// safety guard) remain authoritative until this is validated in a live multiplayer session.
-// Enable on the CLIENT via console `sf.MP.SpecConstruction 1`, or in a Shipping build via
-// %LOCALAPPDATA%/FactoryGame/Saved/Config/Windows/Engine.ini:
-//   [SystemSettings]
-//   sf.MP.SpecConstruction=1
+// MP spec-based construction. ON by default - the mod must be self-contained (no launch options /
+// ini edits for players; Saved/Engine.ini is rewritten by the game's diff-config system anyway).
+// The CVar exists ONLY as a developer escape hatch: in a dev/debug session it can be set to 0 to
+// fall back to the legacy serialize-children path + oversized guard while isolating a regression.
+// Players never touch it. (This branch does not ship until the complete MP solution is validated.)
 static TAutoConsoleVariable<int32> CVarSFMPSpecConstruction(
 	TEXT("sf.MP.SpecConstruction"),
-	0,
-	TEXT("Smart!: when 1, scaling grids commit via a compact server-expanded spec (MP) instead of ")
-	TEXT("serializing N child holograms. Experimental; default 0 (legacy path + oversized guard)."),
+	1,
+	TEXT("Smart!: when 1 (default), scaling grids commit via a compact server-expanded spec (MP) ")
+	TEXT("instead of serializing N child holograms. Set 0 to fall back to the legacy path + ")
+	TEXT("oversized guard (developer debugging only)."),
 	ECVF_Default);
 
 namespace SFScalingSpecExpansion
@@ -26,7 +26,20 @@ namespace SFScalingSpecExpansion
 
 bool IsSpecConstructionEnabled()
 {
-	return CVarSFMPSpecConstruction.GetValueOnAnyThread() != 0;
+	const bool bEnabled = CVarSFMPSpecConstruction.GetValueOnAnyThread() != 0;
+
+	// One-time visibility: make the gate state unambiguous in every session log.
+	static bool bLoggedOnce = false;
+	if (!bLoggedOnce)
+	{
+		bLoggedOnce = true;
+		UE_LOG(LogSmartFoundations, Display,
+			TEXT("[MP-SPEC] Spec-based scaling construction is %s (sf.MP.SpecConstruction=%d)."),
+			bEnabled ? TEXT("ENABLED") : TEXT("DISABLED"),
+			CVarSFMPSpecConstruction.GetValueOnAnyThread());
+	}
+
+	return bEnabled;
 }
 
 bool CaptureScalingSpec(AFGHologram* Hologram, FSFScalingSpec& OutSpec)
