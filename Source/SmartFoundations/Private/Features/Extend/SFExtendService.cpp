@@ -1085,17 +1085,31 @@ bool USFExtendService::CanAffordExtendCost(AFGHologram* Hologram, UFGInventoryCo
         return true;  // Can't evaluate -> never block.
     }
 
+    // #357: ALWAYS run the parent cost walk every frame, even under No Build Cost. Beyond
+    // computing affordability, GetCost(includeChildren=true) walks the child holograms, and
+    // that per-frame walk is what KEEPS THE EXTEND CHILD BELT PREVIEWS ALIVE. The internal
+    // factory<->distributor belts (role "belt_segment", built via SetSplineDataAndUpdate) are
+    // otherwise regenerated to ZERO spline meshes by vanilla's per-frame spline rebuild; the
+    // between-distributor lanes (AutoRouteSplineWithNormals) survive regardless. Proven by
+    // elimination: affordable-via-materials (walk runs -> belts visible, HMS_OK) and
+    // affordable-via-No-Build-Cost (old early-return skipped the walk -> belts missing, also
+    // HMS_OK) are BOTH HMS_OK, so the material state is NOT the trigger; running GetCost is.
+    // The early-return added in 720e2bc (#324) skipped this walk under free build, which is the
+    // sole behavioral difference between the visible and missing cases (the availability loop
+    // below is pure inventory reads with no hologram side effect).
+    AFGCentralStorageSubsystem* CentralStorage = AFGCentralStorageSubsystem::Get(Hologram->GetWorld());
+    const TArray<FItemAmount> TotalCost = Hologram->GetCost(/*includeChildren=*/true);
+
     // Free building (session No Build Cost cheat OR the per-player rule that Advanced Game
     // Settings / Creative Mode toggles) means materials are never required. GetNoBuildCost()
     // is the same method vanilla uses; without this, Creative Mode players got a material-cost
     // request and an unaffordable block on Extend even though the base game would build for free.
+    // (We still ran GetCost above for its preview-keep-alive side effect.)
     if (Inventory->GetNoBuildCost())
     {
         return true;
     }
 
-    AFGCentralStorageSubsystem* CentralStorage = AFGCentralStorageSubsystem::Get(Hologram->GetWorld());
-    const TArray<FItemAmount> TotalCost = Hologram->GetCost(/*includeChildren=*/true);
     for (const FItemAmount& Item : TotalCost)
     {
         if (!Item.ItemClass || Item.Amount <= 0)

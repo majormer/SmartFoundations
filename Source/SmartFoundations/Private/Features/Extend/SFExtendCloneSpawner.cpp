@@ -343,7 +343,7 @@ int32 FSFCloneTopology::SpawnChildHolograms(
                 Rotation,
                 SpawnParams
             );
-            
+
             if (BeltChild)
             {
                 BeltChild->SetReplicates(false);
@@ -410,7 +410,7 @@ int32 FSFCloneTopology::SpawnChildHolograms(
                 
                 // Force hologram material (required for spline mesh visibility)
                 BeltChild->ForceApplyHologramMaterial();
-                
+
                 SpawnedHologram = BeltChild;
                 SpawnedCount++;
                 
@@ -1152,7 +1152,7 @@ int32 FSFCloneTopology::SpawnChildHolograms(
                         BeltLane->TriggerMeshGeneration();
                     }
                     BeltLane->ForceApplyHologramMaterial();
-                    
+
                     SpawnedHologram = BeltLane;
                     SpawnedCount++;
                     
