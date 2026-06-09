@@ -417,6 +417,17 @@ void USFGameInstanceModule::RegisterClientConstructChunkGuardHook()
 // of the future complete multiplayer solution (which cannot ship partially; see AGENTS.md).
 static constexpr int32 SF_MP_OVERSIZED_CELLS = 130; // refuse a client grid above this (total cells incl. parent)
 
+// [MP-SPEC] #334 stopgap: Smart auto-connect preview child tags stripped before a client fire
+// (defined at file scope - a brace-initializer inside a SUBSCRIBE_METHOD macro argument splits
+// the macro args on its commas, same gotcha as multi-capture lambda lists).
+static const FName GSFAutoConnectChildTags[] = {
+	FName(TEXT("SF_BeltAutoConnectChild")),
+	FName(TEXT("SF_PipeAutoConnectChild")),
+	FName(TEXT("SF_PowerAutoConnectChild")),
+	FName(TEXT("SF_StackableChild")),
+};
+static constexpr int32 GSFAutoConnectChildTagCount = UE_ARRAY_COUNT(GSFAutoConnectChildTags);
+
 void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 {
 	SUBSCRIBE_METHOD(
@@ -438,6 +449,48 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 			if (!Holo)
 			{
 				return;
+			}
+
+			// [MP-SPEC] #334 STOPGAP: Smart auto-connect preview children (belts / pipes / wires /
+			// stackable poles) must NEVER cross the construct message - the server crashes
+			// deserializing them (live 2026-06-09: assert in AFGConveyorBeltHologram::
+			// UpdateSplineComponent via OnRep_SplineData inside Server_ConstructHologram, empty
+			// spline array; a 1x1 merger fire with auto-connect belts killed the dedi). Until the
+			// #334 slice rebuilds the wiring server-side with authority, strip + destroy these
+			// preview children at fire time. Auto-connect therefore does not WIRE in MP yet - the
+			// pre-existing #334 status - but it no longer crashes the server. SP/listen-host are
+			// unaffected (this hook is NM_Client-only). Applies to ALL client fires when the spec
+			// path is enabled, grid or not (the crash case was a 1x1).
+			if (SFScalingSpecExpansion::IsSpecConstructionEnabled())
+			{
+				TArray<AFGHologram*> AutoConnectToStrip;
+				for (AFGHologram* Child : Holo->mChildren)
+				{
+					if (!Child)
+					{
+						continue;
+					}
+					for (int32 TagIdx = 0; TagIdx < GSFAutoConnectChildTagCount; ++TagIdx)
+					{
+						if (Child->Tags.Contains(GSFAutoConnectChildTags[TagIdx]))
+						{
+							AutoConnectToStrip.Add(Child);
+							break;
+						}
+					}
+				}
+				if (AutoConnectToStrip.Num() > 0)
+				{
+					for (AFGHologram* Child : AutoConnectToStrip)
+					{
+						Holo->mChildren.Remove(Child);
+						Child->Destroy();
+					}
+					UE_LOG(LogSmartFoundations, Display,
+						TEXT("[MP-SPEC] Stripped %d auto-connect preview children before the fire ")
+						TEXT("(server-side wiring pending, #334)."),
+						AutoConnectToStrip.Num());
+				}
 			}
 
 			// Count Smart grid child holograms (tagged SF_GridChild). +1 for the parent/origin cell.
