@@ -549,6 +549,16 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 	UE_LOG(LogSmartFoundations, Verbose, TEXT("✅ Client grid oversized-guard fire-hook registered (MP Slice 0 safety, InternalExecuteDuBuildStepInput)"));
 }
 
+// [MP-SPEC] The blueprint proxy for the spec-construct currently executing on the server.
+// Set by the Construct hook around scope() (construction is synchronous + single-threaded);
+// the ConfigureActor hook assigns it to every buildable configured inside that window. The
+// assignment MUST happen pre-BeginPlay: lightweight-eligible buildables (foundations etc.)
+// convert to lightweight instances in BeginPlay and only then does vanilla transfer the proxy
+// membership to replicated lightweight indices (RegisterLightweightInstance) - a proxy assigned
+// after Construct ends up holding soon-destroyed temp actors and self-destructs (live finding
+// 2026-06-09: "no grouping persists" on spec-built foundation grids).
+static TWeakObjectPtr<AFGBlueprintProxy> GSFActiveSpecGroupProxy;
+
 void USFGameInstanceModule::RegisterSpecConstructionHooks()
 {
 	static const FName GridChildTag(TEXT("SF_GridChild"));
@@ -655,57 +665,55 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 				SFScalingSpecExpansion::ExpandScalingSpecIntoChildren(self, Spec, self->GetRecipe());
 			}
 
-			// Run the original construct now (parent + expanded children) so we can group the
-			// resulting actors. out_children is filled by the vanilla child-construct loop.
-			AActor* BuiltParent = scope(self, out_children, constructionID);
-
-			// Group everything that was built into one blueprint proxy (Smart Dismantle group).
-			TArray<AFGBuildable*> BuiltBuildables;
-			if (AFGBuildable* ParentBuildable = Cast<AFGBuildable>(BuiltParent))
+			// Spawn the group proxy BEFORE construction and expose it for the window of this
+			// construct: the ConfigureActor hook below assigns it to every buildable configured
+			// inside scope() - i.e. pre-BeginPlay, the timing vanilla blueprints use, so
+			// lightweight conversion transfers membership to replicated lightweight indices.
+			AFGBlueprintProxy* GroupProxy = nullptr;
+			if (UWorld* World = self->GetWorld())
 			{
-				BuiltBuildables.Add(ParentBuildable);
-			}
-			for (AActor* ChildActor : out_children)
-			{
-				if (AFGBuildable* ChildBuildable = Cast<AFGBuildable>(ChildActor))
-				{
-					BuiltBuildables.AddUnique(ChildBuildable);
-				}
-			}
-
-			if (BuiltBuildables.Num() > 1)
-			{
-				UWorld* World = self->GetWorld();
 				FActorSpawnParameters ProxyParams;
 				ProxyParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-				AFGBlueprintProxy* GroupProxy = World ? World->SpawnActor<AFGBlueprintProxy>(
-					AFGBlueprintProxy::StaticClass(),
-					BuiltBuildables[0]->GetActorTransform(),
-					ProxyParams) : nullptr;
+				GroupProxy = World->SpawnActor<AFGBlueprintProxy>(
+					AFGBlueprintProxy::StaticClass(), self->GetActorTransform(), ProxyParams);
+			}
+			GSFActiveSpecGroupProxy = GroupProxy;
 
-				if (GroupProxy)
-				{
-					for (AFGBuildable* Buildable : BuiltBuildables)
-					{
-						if (!Buildable->GetBlueprintProxy())
-						{
-							Buildable->SetBlueprintProxy(GroupProxy);
-							GroupProxy->RegisterBuildable(Buildable);
-						}
-					}
-					UE_LOG(LogSmartFoundations, Display,
-						TEXT("[MP-SPEC] Grouped %d spec-built buildables into blueprint proxy %s (Smart Dismantle group)."),
-						BuiltBuildables.Num(), *GroupProxy->GetName());
-				}
-				else
-				{
-					UE_LOG(LogSmartFoundations, Warning,
-						TEXT("[MP-SPEC] Could not spawn blueprint proxy for spec-built group (%d buildables)."),
-						BuiltBuildables.Num());
-				}
+			AActor* BuiltParent = scope(self, out_children, constructionID);
+
+			GSFActiveSpecGroupProxy.Reset();
+			if (GroupProxy)
+			{
+				UE_LOG(LogSmartFoundations, Display,
+					TEXT("[MP-SPEC] Spec group proxy %s: %d actor buildables registered (+ lightweight instances tracked by index); built parent=%s, out_children=%d."),
+					*GroupProxy->GetName(), GroupProxy->GetBuildables().Num(),
+					*GetNameSafe(BuiltParent), out_children.Num());
+				// If nothing registered (neither actors nor lightweights), let it clean itself up.
+				GroupProxy->ValidateExistanceOtherwiseSelfDestruct();
 			}
 
 			scope.Override(BuiltParent);
+		});
+
+	// ── Hook C: group membership assignment, pre-BeginPlay. ConfigureActor is called by the
+	// hologram on the deferred-spawned buildable BEFORE FinishSpawning/BeginPlay - the only window
+	// where lightweight-eligible buildables (foundations etc.) can join a blueprint proxy, because
+	// their BeginPlay converts them to lightweight instances and transfers proxy membership to
+	// replicated indices. Assigns the active spec-construct's proxy to every buildable configured
+	// inside the Construct window above. (Primary-class virtual; same hook InfiniteZoop uses.)
+	SUBSCRIBE_METHOD_VIRTUAL_AFTER(AFGBuildableHologram::ConfigureActor, BuildableHologramCDO,
+		[](const AFGBuildableHologram* self, AFGBuildable* inBuildable)
+		{
+			AFGBlueprintProxy* GroupProxy = GSFActiveSpecGroupProxy.Get();
+			if (!GroupProxy || !inBuildable)
+			{
+				return;
+			}
+			if (!inBuildable->GetBlueprintProxy())
+			{
+				inBuildable->SetBlueprintProxy(GroupProxy);
+				GroupProxy->RegisterBuildable(inBuildable);
+			}
 		});
 
 	UE_LOG(LogSmartFoundations, Verbose, TEXT("✅ Spec-construction hooks registered (GetCost / Construct - class-agnostic; spec staged via USFRCO)"));
