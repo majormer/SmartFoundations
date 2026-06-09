@@ -78,18 +78,24 @@ void ASFFactoryHologram::SerializeConstructMessage(FArchive& ar, FNetConstructio
     }
 }
 
-void ASFFactoryHologram::PostConstructMessageDeserialization()
+TArray<FItemAmount> ASFFactoryHologram::GetCost(bool includeChildren) const
 {
-    Super::PostConstructMessageDeserialization();
+    TArray<FItemAmount> Cost = Super::GetCost(includeChildren);
 
-    // Server-side, after the spec has been read off the wire and before vanilla cost-aggregation +
-    // Construct run: regenerate the grid children from the compact spec. With the children present
-    // again, vanilla GetCost(includeChildren) charges the full grid and Super::Construct builds it.
-    if (!mScalingSpec.bValid) return;
-    if (!HasAuthority()) return;
-    if (mChildren.Num() > 0) return; // already populated (shouldn't happen on the spec path)
-
-    SFScalingSpecExpansion::ExpandScalingSpecIntoChildren(this, mScalingSpec, mRecipe);
+    // Spec path, server side: cost is validated/charged BEFORE Construct, but the grid children are
+    // expanded INSIDE Construct (after validation - fresh holograms cannot pass vanilla placement
+    // validation, live-test finding 2026-06-09). The grid is uniform, so the correct total is the
+    // parent's per-cell cost scaled by the cell count. Client side never scales: its children are
+    // real (mChildren populated), so vanilla aggregation already yields the full amount.
+    if (includeChildren && mScalingSpec.bValid && HasAuthority() && mChildren.Num() == 0)
+    {
+        const int32 Cells = mScalingSpec.CellCount();
+        for (FItemAmount& Item : Cost)
+        {
+            Item.Amount *= Cells;
+        }
+    }
+    return Cost;
 }
 
 void ASFFactoryHologram::BeginPlay()
@@ -123,6 +129,16 @@ void ASFFactoryHologram::BeginPlay()
 
 AActor* ASFFactoryHologram::Construct(TArray<AActor*>& out_children, FNetConstructionID constructionID)
 {
+    // [MP-SPEC] Server-side spec expansion. Runs HERE - after Server_ConstructHologram validation
+    // has passed on the (childless) parent - because fresh holograms cannot pass vanilla placement
+    // validation (FGCDInitializing/InvalidFloor/InvalidAimLocation; live-test finding 2026-06-09).
+    // Cost was already charged correctly via the GetCost cell-count scaling. The children added
+    // here are constructed by Super::Construct's normal child loop, never validated.
+    if (HasAuthority() && mScalingSpec.bValid && mChildren.Num() == 0)
+    {
+        SFScalingSpecExpansion::ExpandScalingSpecIntoChildren(this, mScalingSpec, mRecipe);
+    }
+
     // [MP-SLICE0] TEMP multiplayer instrumentation — remove before release.
     // Parent-commit signal: does the scaled-factory Construct run with authority for a
     // CLIENT-initiated build, and how many children does it carry into the build?

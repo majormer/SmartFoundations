@@ -80,15 +80,32 @@ void ASFFoundationHologram::SerializeConstructMessage(FArchive& ar, FNetConstruc
     }
 }
 
-void ASFFoundationHologram::PostConstructMessageDeserialization()
+TArray<FItemAmount> ASFFoundationHologram::GetCost(bool includeChildren) const
 {
-    Super::PostConstructMessageDeserialization();
+    TArray<FItemAmount> Cost = Super::GetCost(includeChildren);
 
-    if (!mScalingSpec.bValid) return;
-    if (!HasAuthority()) return;
-    if (mChildren.Num() > 0) return; // already populated (shouldn't happen on the spec path)
+    // Spec path, server side: children are expanded inside Construct (after validation), so scale
+    // the uniform per-cell cost by the cell count (see ASFFactoryHologram::GetCost).
+    if (includeChildren && mScalingSpec.bValid && HasAuthority() && mChildren.Num() == 0)
+    {
+        const int32 Cells = mScalingSpec.CellCount();
+        for (FItemAmount& Item : Cost)
+        {
+            Item.Amount *= Cells;
+        }
+    }
+    return Cost;
+}
 
-    SFScalingSpecExpansion::ExpandScalingSpecIntoChildren(this, mScalingSpec, mRecipe);
+AActor* ASFFoundationHologram::Construct(TArray<AActor*>& out_children, FNetConstructionID constructionID)
+{
+    // [MP-SPEC] Server-side spec expansion, post-validation (see ASFFactoryHologram::Construct).
+    if (HasAuthority() && mScalingSpec.bValid && mChildren.Num() == 0)
+    {
+        SFScalingSpecExpansion::ExpandScalingSpecIntoChildren(this, mScalingSpec, mRecipe);
+    }
+
+    return Super::Construct(out_children, constructionID);
 }
 
 void ASFFoundationHologram::BeginPlay()

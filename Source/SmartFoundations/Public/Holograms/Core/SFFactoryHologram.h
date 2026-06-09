@@ -63,8 +63,10 @@ public:
     /** Client (saving): after the message bytes are written, restore the stripped children into
      *  mChildren so the post-fire hologram teardown destroys the previews normally (no orphans). */
     virtual void SerializeConstructMessage(FArchive& ar, FNetConstructionID id) override;
-    /** Server: regenerate the grid children from the spec before cost/Construct. */
-    virtual void PostConstructMessageDeserialization() override;
+
+    /** Spec path: at server cost-charge time the grid children do not exist yet (they are expanded
+     *  inside Construct, AFTER validation), so scale the uniform per-cell cost by the cell count. */
+    virtual TArray<FItemAmount> GetCost(bool includeChildren) const override;
 
 protected:
     /** Compact grid description, replicated/serialized with the construct message (CustomSerialization). */

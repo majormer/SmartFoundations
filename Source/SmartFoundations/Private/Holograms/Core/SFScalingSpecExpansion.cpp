@@ -141,16 +141,12 @@ int32 ExpandScalingSpecIntoChildren(AFGHologram* Parent, const FSFScalingSpec& S
 
 				if (Child)
 				{
-					// Clear the never-aimed state. Freshly spawned holograms carry FGCDInitializing /
-					// FGCDInvalidAimLocation until they receive a placement pass, and server-side
-					// validation rejects the whole construct on them (live-test finding, 2026-06-09).
-					// Run one placement pass with a synthetic hit at the cell, then restore the exact
-					// grid transform (same pattern as the Extend lift spawner).
-					FHitResult CellHit;
-					CellHit.Location = CellLoc;
-					CellHit.ImpactPoint = CellLoc;
-					CellHit.ImpactNormal = FVector::UpVector;
-					Child->SetHologramLocationAndRotation(CellHit);
+					// Exact grid transform. No placement/validation pass is needed: expansion runs
+					// inside Construct, AFTER server validation has already passed on the parent -
+					// fresh children are constructed directly and never validated. (Live-test finding
+					// 2026-06-09: expanding BEFORE validation is unworkable - freshly spawned vanilla
+					// holograms carry FGCDInitializing/FGCDInvalidFloor/FGCDInvalidAimLocation that
+					// programmatic spawns cannot clear, and the whole construct gets rejected.)
 					Child->SetActorLocationAndRotation(CellLoc, ParentRot);
 					++SpawnedChildren;
 				}
