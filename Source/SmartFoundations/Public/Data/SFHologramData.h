@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "Hologram/FGSplineHologram.h"  // For FSplinePointData
-#include "Features/Scaling/SFScalingSpec.h"  // FSFScalingSpec (MP spec-based construction)
 #include "SFHologramData.generated.h"
 
 // Forward declarations
@@ -48,13 +47,6 @@ struct SMARTFOUNDATIONS_API FSFHologramData {
     // Recipe copying support
     UPROPERTY()
     TSubclassOf<UFGRecipe> StoredRecipe = nullptr;
-
-    // MP spec-based scaling construction (class-agnostic hook path): the compact grid description
-    // captured client-side at fire time and read back server-side from the construct message.
-    // Attached HERE (registry) rather than as a hologram UPROPERTY so it works for EVERY hologram
-    // class - including the vanilla Blueprint wrappers (Holo_Foundation_C etc.) - without swapping.
-    UPROPERTY()
-    FSFScalingSpec ScalingSpec;
     
     // Backup spline data for EXTEND belt holograms
     // Stored because mSplineData on AFGSplineHologram can be cleared by replication

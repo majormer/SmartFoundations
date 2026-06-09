@@ -13,6 +13,7 @@
 #include "Features/Scaling/SFScalingTypes.h"
 #include "Features/Arrows/FSFArrowTypes.h"
 #include "HUD/SFHUDTypes.h"
+#include "Features/Scaling/SFScalingSpec.h"
 #include "Config/Smart_ConfigStruct.h"
 
 // Service includes - needed for FSFBuildingMetadata and FSplinePointData struct members
@@ -808,6 +809,28 @@ public:
 
     /** Reset all counters to defaults and refresh HUD */
     void ResetCounters();
+
+// ========================================
+// MP spec-based scaling construction - SERVER-side per-player spec staging
+// (Client stages via USFRCO::Server_StageScalingSpec at fire time; the AFGBuildableHologram::
+//  Construct hook consumes it, matched by instigator + build class. Overwrite semantics: every
+//  fire stages - an invalid spec when there is no grid - so stale specs cannot leak.)
+// ========================================
+
+    /** Server: stage (or clear, when !Spec.bValid) the pending scaling spec for a player. */
+    void StageScalingSpecForPlayer(class APlayerController* PC, const FSFScalingSpec& Spec);
+
+    /** Server: peek the staged spec for a construct instigator if it matches the build class. */
+    bool PeekScalingSpecForInstigator(class APawn* Instigator, UClass* BuildClass, FSFScalingSpec& OutSpec) const;
+
+    /** Server: consume (clear) the staged spec for a construct instigator if it matches. */
+    bool ConsumeScalingSpecForInstigator(class APawn* Instigator, UClass* BuildClass, FSFScalingSpec& OutSpec);
+
+private:
+    /** Server-only: pending scaling spec per player controller (transient, never saved). */
+    TMap<TWeakObjectPtr<APlayerController>, FSFScalingSpec> StagedScalingSpecs;
+
+public:
 
 // ========================================
 // Scaling Operations (Phase 0: Public for InputHandler access)

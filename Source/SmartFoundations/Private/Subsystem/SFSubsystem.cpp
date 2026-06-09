@@ -410,6 +410,58 @@ void USFSubsystem::UpdateCounterState(const FSFCounterState& NewState)
 	}
 }
 
+// ========================================
+// MP spec-based scaling construction - server-side per-player spec staging
+// ========================================
+
+void USFSubsystem::StageScalingSpecForPlayer(APlayerController* PC, const FSFScalingSpec& Spec)
+{
+	if (!PC)
+	{
+		return;
+	}
+	if (Spec.bValid)
+	{
+		StagedScalingSpecs.Add(PC, Spec);
+	}
+	else
+	{
+		// An invalid spec is an explicit CLEAR (sent on every non-grid fire) - overwrite semantics
+		// guarantee a stale spec from an earlier failed construct cannot leak into a later fire.
+		StagedScalingSpecs.Remove(PC);
+	}
+}
+
+bool USFSubsystem::PeekScalingSpecForInstigator(APawn* Instigator, UClass* BuildClass, FSFScalingSpec& OutSpec) const
+{
+	if (!Instigator || !BuildClass)
+	{
+		return false;
+	}
+	APlayerController* PC = Cast<APlayerController>(Instigator->GetController());
+	if (!PC)
+	{
+		return false;
+	}
+	const FSFScalingSpec* Staged = StagedScalingSpecs.Find(PC);
+	if (!Staged || !Staged->bValid || Staged->BuildClass != BuildClass)
+	{
+		return false;
+	}
+	OutSpec = *Staged;
+	return true;
+}
+
+bool USFSubsystem::ConsumeScalingSpecForInstigator(APawn* Instigator, UClass* BuildClass, FSFScalingSpec& OutSpec)
+{
+	if (!PeekScalingSpecForInstigator(Instigator, BuildClass, OutSpec))
+	{
+		return false;
+	}
+	StagedScalingSpecs.Remove(Cast<APlayerController>(Instigator->GetController()));
+	return true;
+}
+
 void USFSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);

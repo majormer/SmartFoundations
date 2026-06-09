@@ -38,6 +38,11 @@ struct SMARTFOUNDATIONS_API FSFScalingSpec
 	UPROPERTY()
 	FVector AnchorOffset = FVector::ZeroVector;
 
+	/** Build class of the uniform grid - the server only consumes a staged spec for a construct of
+	 *  the SAME class (guards against any client/server fire mismatch or RPC race). */
+	UPROPERTY()
+	TSubclassOf<class AFGBuildable> BuildClass = nullptr;
+
 	/** True once populated from a live grid; the server only expands when valid. */
 	UPROPERTY()
 	bool bValid = false;

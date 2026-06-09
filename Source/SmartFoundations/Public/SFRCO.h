@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "FGRemoteCallObject.h"
 #include "Features/Spacing/SFSpacingTypes.h"
+#include "Features/Scaling/SFScalingSpec.h"
 #include "Features/Upgrade/SFUpgradeExecutionService.h"
 #include "SFRCO.generated.h"
 
@@ -76,6 +77,20 @@ public:
 	 */
 	UFUNCTION(Server, Reliable, WithValidation)
 	void Server_ToggleArrows(bool bVisible);
+
+	// ========================================
+	// MP spec-based scaling construction
+	// ========================================
+
+	/**
+	 * Client stages the compact grid spec on the server right before firing the build gun.
+	 * The server keys it by this RCO's owning player controller; the AFGBuildableHologram::Construct
+	 * hook consumes it (matched by instigator + build class) and expands the grid server-side.
+	 * Sent on EVERY client fire - with an INVALID spec when there is no grid - so a stale spec from
+	 * a failed construct can never leak into a later fire (overwrite semantics).
+	 */
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_StageScalingSpec(FSFScalingSpec Spec);
 
 	// ========================================
 	// Upgrade Audit RPCs

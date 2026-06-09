@@ -70,6 +70,7 @@ bool CaptureScalingSpec(AFGHologram* Hologram, FSFScalingSpec& OutSpec)
 	OutSpec.Counters = Counters;
 	OutSpec.ItemSize = Profile.DefaultSize;
 	OutSpec.AnchorOffset = Profile.AnchorOffset;
+	OutSpec.BuildClass = Hologram->GetBuildClass();
 	OutSpec.bValid = true;
 	return true;
 }

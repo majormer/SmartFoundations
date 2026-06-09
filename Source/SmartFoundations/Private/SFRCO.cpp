@@ -201,6 +201,43 @@ bool USFRCO::Server_ToggleArrows_Validate(bool bVisible)
 }
 
 // ========================================
+// MP spec-based scaling construction
+// ========================================
+
+void USFRCO::Server_StageScalingSpec_Implementation(FSFScalingSpec Spec)
+{
+	USFSubsystem* Subsystem = USFSubsystem::Get(this);
+	AFGPlayerController* OwnerPC = Cast<AFGPlayerController>(GetOuter());
+	if (!IsValid(Subsystem) || !OwnerPC)
+	{
+		UE_LOG(LogSmartFoundations, Warning,
+			TEXT("[SFRCO] Server_StageScalingSpec: missing subsystem (%d) or owner PC (%d)"),
+			IsValid(Subsystem) ? 1 : 0, OwnerPC ? 1 : 0);
+		return;
+	}
+
+	Subsystem->StageScalingSpecForPlayer(OwnerPC, Spec);
+
+	if (Spec.bValid)
+	{
+		UE_LOG(LogSmartFoundations, Display,
+			TEXT("[MP-SPEC] Server staged scaling spec for %s: %d cells of %s."),
+			*GetNameSafe(OwnerPC), Spec.CellCount(), *GetNameSafe(*Spec.BuildClass));
+	}
+}
+
+bool USFRCO::Server_StageScalingSpec_Validate(FSFScalingSpec Spec)
+{
+	// Sanity-bound the grid (a forged/buggy spec cannot demand absurd expansion).
+	const FIntVector& G = Spec.Counters.GridCounters;
+	const int64 Cells = (int64)FMath::Max(1, FMath::Abs(G.X))
+		* FMath::Max(1, FMath::Abs(G.Y))
+		* FMath::Max(1, FMath::Abs(G.Z));
+	return FMath::Abs(G.X) <= 2000 && FMath::Abs(G.Y) <= 2000 && FMath::Abs(G.Z) <= 2000
+		&& Cells <= 100000;
+}
+
+// ========================================
 // Upgrade Audit RPCs
 // ========================================
 
