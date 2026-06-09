@@ -6,6 +6,10 @@
  */
 
 #include "Subsystem/SFSubsystemImpl.h"
+#include "Holograms/Core/SFFactoryHologram.h"
+#include "Hologram/FGFactoryHologram.h"
+#include "Features/Extend/SFExtendService.h"
+#include "HAL/IConsoleManager.h"
 
 
 // Hologram management with enhanced logging
@@ -117,14 +121,43 @@ void USFSubsystem::RegisterActiveHologram(AFGHologram* Hologram)
 		CurrentAutoConnectSetting = EAutoConnectSetting::Enabled;
 	}
 
-	// NOTE: Hologram swapping is DISABLED to fix the infinite re-registration loop
-	// The build gun holds the original hologram reference, and swapping creates a mismatch:
+	// NOTE: Hologram swapping is DISABLED by default to avoid the infinite re-registration loop
+	// The build gun holds the original hologram reference, and a NAIVE swap creates a mismatch:
 	// - BuildState->GetHologram() returns vanilla hologram
 	// - ActiveHologram is our swapped custom hologram
 	// - PollForActiveHologram sees mismatch → unregister/re-register → infinite loop
 	//
-	// EXTEND and Scaling work with vanilla holograms - no swap needed.
-	// If custom hologram behavior is needed in the future, use Blueprint class remapping at module load.
+	// EXTEND and Scaling work with vanilla holograms - no swap needed (default path).
+	//
+	// [MP] EXCEPTION (gated): when sf.MP.SpecConstruction=1, swap the vanilla factory hologram to
+	// ASFFactoryHologram so it can carry the grid spec + override the construct-message hooks
+	// (PLAN_MP_ScalingConstruction_Impl.md). This reuses the PROVEN Extend swap, which repoints
+	// BuildState->mHologram via reflection; we then set ActiveHologram to the same swapped hologram
+	// below, so Poll sees a MATCH (not the mismatch that caused the historical loop). A re-entrancy
+	// guard prevents the swap's FinishSpawning from recursing into another swap. Default 0 ⇒ this
+	// block is skipped entirely and behaviour is unchanged. RUNTIME VALIDATION PENDING (MP session):
+	// confirm no re-registration loop and no Extend-state interference (the swap sets ExtendService
+	// bHasSwappedHologram; benign when no Extend target is active, but watch it under test).
+	{
+		static const IConsoleVariable* CVarSpec =
+			IConsoleManager::Get().FindConsoleVariable(TEXT("sf.MP.SpecConstruction"));
+		static bool bReentryGuard = false;
+		const bool bSpecOn = CVarSpec && CVarSpec->GetInt() != 0;
+		if (bSpecOn && !bReentryGuard && ExtendService
+			&& Hologram->IsA(AFGFactoryHologram::StaticClass())
+			&& !Hologram->IsA(ASFFactoryHologram::StaticClass()))
+		{
+			TGuardValue<bool> ReentryScope(bReentryGuard, true);
+			if (ASFFactoryHologram* Swapped = ExtendService->SwapToSmartFactoryHologram(Hologram))
+			{
+				UE_LOG(LogSmartFoundations, Display,
+					TEXT("[MP-SPEC] RegisterActiveHologram: swapped vanilla factory hologram to ")
+					TEXT("ASFFactoryHologram for spec-construction (%s)."), *Swapped->GetName());
+				Hologram = Swapped; // continue registration with the swapped custom hologram
+			}
+		}
+	}
+
 	ActiveHologram = Hologram;
 	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("RegisterActiveHologram: %s"), *Hologram->GetName());
 
