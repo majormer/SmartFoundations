@@ -5,7 +5,6 @@
 #include "CoreMinimal.h"
 #include "SFBuildableHologram.h"
 #include "Hologram/FGFactoryHologram.h"
-#include "Features/Scaling/SFScalingSpec.h"  // FSFScalingSpec (MP spec-based construction)
 #include "SFFactoryHologram.generated.h"
 
 /**
@@ -47,36 +46,12 @@ public:
      */
     void InitializeFromHologram(AFGHologram* SourceHologram);
 
-    // ── Multiplayer spec-based construction (docs/Features/Multiplayer/DESIGN_MP_ConstructionModel.md)
-    // The client populates a compact FSFScalingSpec describing the whole grid; on a remote client
-    // fire the grid children are stripped from the wire (PreConstructMessageSerialization) so the
-    // construct message stays O(1); the server regenerates the children from the spec
-    // (PostConstructMessageDeserialization) before vanilla cost-aggregation + Construct run, so both
-    // reuse proven machinery. All gated behind the `sf.MP.SpecConstruction` console variable.
-
-    /** Set by the scaling activation path whenever the grid changes; the authoritative spec to expand. */
-    void SetScalingSpec(const FSFScalingSpec& InSpec) { mScalingSpec = InSpec; }
-    const FSFScalingSpec& GetScalingSpec() const { return mScalingSpec; }
-
-    /** Client: strip grid children from the serialized construct message (keep the spec only). */
-    virtual void PreConstructMessageSerialization() override;
-    /** Client (saving): after the message bytes are written, restore the stripped children into
-     *  mChildren so the post-fire hologram teardown destroys the previews normally (no orphans). */
-    virtual void SerializeConstructMessage(FArchive& ar, FNetConstructionID id) override;
-
-    /** Spec path: at server cost-charge time the grid children do not exist yet (they are expanded
-     *  inside Construct, AFTER validation), so scale the uniform per-cell cost by the cell count. */
-    virtual TArray<FItemAmount> GetCost(bool includeChildren) const override;
+    // (The MP spec-based construction machinery that briefly lived on this class - spec UPROPERTY,
+    // Pre/SerializeConstructMessage overrides, GetCost scaling, Construct expansion - moved to the
+    // class-agnostic hook path in USFGameInstanceModule::RegisterSpecConstructionHooks + the
+    // hologram data registry, so it covers every scalable buildable without hologram swaps.)
 
 protected:
-    /** Compact grid description, replicated/serialized with the construct message (CustomSerialization). */
-    UPROPERTY(CustomSerialization)
-    FSFScalingSpec mScalingSpec;
-
-    /** Children temporarily detached from mChildren during client serialization (kept off the wire). */
-    UPROPERTY(Transient)
-    TArray<TObjectPtr<class AFGHologram>> mStashedSpecChildren;
-
     // Recipe copying implementation
     virtual void ApplyStoredRecipe(AActor* Building) const;
     virtual bool IsProductionBuilding(AActor* Building) const;

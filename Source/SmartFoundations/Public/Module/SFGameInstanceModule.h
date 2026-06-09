@@ -63,6 +63,23 @@ protected:
 	 */
 	void RegisterClientGridChunkFireHook();
 
+	/**
+	 * MP spec-based scaling construction - CLASS-AGNOSTIC hook path (covers every scalable
+	 * buildable, including vanilla Blueprint hologram wrappers like Holo_Foundation_C, without
+	 * swapping the active hologram). Three hooks on vanilla virtual BODIES (they fire via the
+	 * Super chain from any subclass):
+	 *  - AFGHologram::SerializeConstructMessage: saving = capture spec + strip SF_GridChild
+	 *    children -> original writes the O(1) message -> append spec -> restore children;
+	 *    loading = original reads -> read spec into the hologram data registry.
+	 *  - AFGHologram::Construct (before original runs): server expands the registry spec into
+	 *    children post-validation (fresh holograms cannot pass vanilla placement validation -
+	 *    live finding 2026-06-09).
+	 *  - AFGHologram::GetCost: server scales the per-cell cost by the cell count while the
+	 *    children do not exist yet (pre-Construct charge time).
+	 * Gated by sf.MP.SpecConstruction + USFBuildableSizeRegistry.bSupportsScaling.
+	 */
+	void RegisterSpecConstructionHooks();
+
 	/** Smart! Configuration blueprint - registered with SML for in-game menu access */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Smart! Configuration")
 	TSubclassOf<class UModConfiguration> SmartConfigClass;

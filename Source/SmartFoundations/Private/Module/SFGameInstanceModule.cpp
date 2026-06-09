@@ -27,10 +27,11 @@
 #include "Core/Helpers/SFNetworkHelper.h"     // FSFNetworkHelper::IsClient
 #include "Engine/Engine.h"                     // GEngine on-screen message
 
-// MP spec-based construction: guard bypass for spec-capable parents
-#include "Holograms/Core/SFFactoryHologram.h"
-#include "Holograms/Core/SFFoundationHologram.h"
+// MP spec-based construction: class-agnostic hooks + guard bypass
 #include "Holograms/Core/SFScalingSpecExpansion.h"
+#include "Data/SFBuildableSizeRegistry.h"
+#include "Data/SFHologramDataRegistry.h"
+#include "Subsystem/SFHologramDataService.h"
 
 // For chain actor rebuilding
 #include "Buildables/FGBuildableConveyorBase.h"
@@ -93,6 +94,10 @@ void USFGameInstanceModule::DispatchLifecycleEvent(ELifecyclePhase Phase)
 		// MP Slice 0 chunking: shrink an oversized client grid to a fit-in-one-RPC chunk at the fire handler,
 		// before vanilla serializes (Increment 1 = single-chunk proof). See the method comment.
 		RegisterClientGridChunkFireHook();
+
+		// MP spec-based scaling construction (class-agnostic hook path - covers ALL scalable
+		// buildables including BP hologram wrappers, no hologram swap). See the method comment.
+		RegisterSpecConstructionHooks();
 
 	}
 }
@@ -433,18 +438,20 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 				return;
 			}
 
-			// [MP-SPEC] When spec-based construction is enabled AND the active hologram is one of the
-			// spec-capable parents (swapped at registration), the grid children are stripped from the
-			// wire in PreConstructMessageSerialization and the message is O(1) - the oversized refusal
-			// must NOT fire. Legacy holograms (e.g. ramp subclasses not yet covered by the swap) still
-			// serialize all children, so for them the guard stays authoritative.
-			if (SFScalingSpecExpansion::IsSpecConstructionEnabled()
-				&& (Holo->IsA(ASFFactoryHologram::StaticClass()) || Holo->IsA(ASFFoundationHologram::StaticClass())))
+			// [MP-SPEC] When spec-based construction is enabled and the buildable is Smart-scalable
+			// (size registry), the SerializeConstructMessage hook strips the grid children and the
+			// message is O(1) - the oversized refusal must NOT fire. Non-scalable grids (none today)
+			// keep the guard; with the CVar off the guard stays fully authoritative.
+			if (SFScalingSpecExpansion::IsSpecConstructionEnabled())
 			{
-				UE_LOG(LogSmartFoundations, Display,
-					TEXT("[MP-SPEC] Oversized guard bypassed: %s commits via the compact spec path."),
-					*Holo->GetName());
-				return;
+				USFBuildableSizeRegistry::Initialize();
+				if (USFBuildableSizeRegistry::GetProfile(Holo->GetBuildClass()).bSupportsScaling)
+				{
+					UE_LOG(LogSmartFoundations, Display,
+						TEXT("[MP-SPEC] Oversized guard bypassed: %s commits via the compact spec path."),
+						*Holo->GetName());
+					return;
+				}
 			}
 
 			// Count Smart grid child holograms (tagged SF_GridChild). +1 for the parent/origin cell.
@@ -487,4 +494,168 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 	);
 
 	UE_LOG(LogSmartFoundations, Verbose, TEXT("✅ Client grid oversized-guard fire-hook registered (MP Slice 0 safety, InternalExecuteDuBuildStepInput)"));
+}
+
+void USFGameInstanceModule::RegisterSpecConstructionHooks()
+{
+	static const FName GridChildTag(TEXT("SF_GridChild"));
+
+	// Count the Smart grid children currently attached to a hologram (the strip/expand targets).
+	auto CountGridChildren = [](AFGHologram* Holo) -> int32
+	{
+		int32 Count = 0;
+		for (AFGHologram* Child : Holo->mChildren)
+		{
+			if (Child && Child->Tags.Contains(GridChildTag))
+			{
+				++Count;
+			}
+		}
+		return Count;
+	};
+
+	// CDOs for virtual-method body resolution. SUBSCRIBE_METHOD on a virtual resolves to a vcall
+	// thunk and SML's hook install CRASHES at startup (live finding 2026-06-09: FatalError in
+	// FNativeHookManagerInternal::RegisterHookFunction). SUBSCRIBE_METHOD_VIRTUAL resolves the
+	// actual body from the CDO's vtable - and hooking the BASE body fires for the entire Super
+	// chain (same mechanism the belt-support Construct hook above relies on).
+	AFGHologram* HologramCDO = GetMutableDefault<AFGHologram>();
+	AFGBuildableHologram* BuildableHologramCDO = GetMutableDefault<AFGBuildableHologram>();
+
+	// ── Hook 1: the construct message. AFGHologram::SerializeConstructMessage is the base body of
+	// the Super chain for every hologram class (BP wrappers cannot override C++ virtuals), and it
+	// is where the child tree is serialized. Wrap it symmetrically on both sides.
+	SUBSCRIBE_METHOD_VIRTUAL(AFGHologram::SerializeConstructMessage, HologramCDO,
+		[CountGridChildren](auto& scope, AFGHologram* self, FArchive& ar, FNetConstructionID id)
+		{
+			if (!self || !SFScalingSpecExpansion::IsSpecConstructionEnabled())
+			{
+				return; // original runs untouched; no spec byte is written/read (symmetric: CVar
+				        // matches across client+server because both run this same module).
+			}
+
+			if (ar.IsSaving())
+			{
+				// CLIENT (fire): capture the grid into a compact spec and strip the grid children
+				// so the original writes an O(1) message; append the spec; restore the children so
+				// the post-fire teardown destroys the previews normally.
+				FSFScalingSpec Spec;
+				TArray<AFGHologram*> Stash;
+
+				const int32 TaggedChildren = CountGridChildren(self);
+				bool bHasSpec = false;
+				if (TaggedChildren > 0)
+				{
+					USFBuildableSizeRegistry::Initialize();
+					if (USFBuildableSizeRegistry::GetProfile(self->GetBuildClass()).bSupportsScaling
+						&& SFScalingSpecExpansion::CaptureScalingSpec(self, Spec))
+					{
+						bHasSpec = true;
+						for (int32 i = self->mChildren.Num() - 1; i >= 0; --i)
+						{
+							AFGHologram* Child = self->mChildren[i];
+							if (Child && Child->Tags.Contains(GridChildTag))
+							{
+								Stash.Add(Child);
+								self->mChildren.RemoveAt(i);
+							}
+						}
+					}
+				}
+
+				scope(self, ar, id); // original writes the (possibly childless) hologram
+
+				ar << bHasSpec;
+				if (bHasSpec)
+				{
+					FSFScalingSpec::StaticStruct()->SerializeBin(ar, &Spec);
+					UE_LOG(LogSmartFoundations, Display,
+						TEXT("[MP-SPEC] SerializeConstructMessage(%s): captured spec (%d cells), stripped %d grid children, message is O(1)."),
+						*self->GetClass()->GetName(), Spec.CellCount(), Stash.Num());
+				}
+
+				for (AFGHologram* Child : Stash)
+				{
+					self->mChildren.Add(Child);
+				}
+			}
+			else
+			{
+				// SERVER (receive): original reads the childless hologram, then read the spec into
+				// the per-hologram data registry. Expansion happens later, inside Construct
+				// (post-validation - fresh holograms cannot pass vanilla placement validation).
+				scope(self, ar, id);
+
+				bool bHasSpec = false;
+				ar << bHasSpec;
+				if (bHasSpec)
+				{
+					FSFScalingSpec Spec;
+					FSFScalingSpec::StaticStruct()->SerializeBin(ar, &Spec);
+					if (FSFHologramData* Data = USFHologramDataService::GetOrCreateData(self))
+					{
+						Data->ScalingSpec = Spec;
+					}
+					UE_LOG(LogSmartFoundations, Display,
+						TEXT("[MP-SPEC] SerializeConstructMessage(%s): server received spec (%d cells)."),
+						*self->GetClass()->GetName(), Spec.CellCount());
+				}
+			}
+		});
+
+	// ── Hook 2: cost. Charged server-side BEFORE Construct, when the grid children do not exist
+	// yet - scale the uniform per-cell cost by the cell count. Fires at the AFGHologram::GetCost
+	// base body (the scalable parents' classes do not override GetCost; spline types that do never
+	// carry a spec).
+	SUBSCRIBE_METHOD_VIRTUAL(AFGHologram::GetCost, HologramCDO,
+		[CountGridChildren](auto& scope, const AFGHologram* self, bool includeChildren)
+		{
+			if (!self || !includeChildren || !SFScalingSpecExpansion::IsSpecConstructionEnabled())
+			{
+				return;
+			}
+			AFGHologram* MutableSelf = const_cast<AFGHologram*>(self);
+			if (!MutableSelf->HasAuthority())
+			{
+				return; // client cost comes from its real preview children via vanilla aggregation
+			}
+			FSFHologramData* Data = USFHologramDataRegistry::GetData(MutableSelf);
+			if (!Data || !Data->ScalingSpec.bValid || CountGridChildren(MutableSelf) > 0)
+			{
+				return; // no pending spec (or already expanded) -> vanilla cost
+			}
+
+			TArray<FItemAmount> Cost = scope(self, includeChildren);
+			const int32 Cells = Data->ScalingSpec.CellCount();
+			for (FItemAmount& Item : Cost)
+			{
+				Item.Amount *= Cells;
+			}
+			scope.Override(Cost);
+		});
+
+	// ── Hook 3: expansion. Fires at the AFGBuildableHologram::Construct body - inside the Super
+	// chain of every buildable hologram, before the base child-construct loop - on the server,
+	// after Server_ConstructHologram validation has already passed on the childless parent.
+	SUBSCRIBE_METHOD_VIRTUAL(AFGBuildableHologram::Construct, BuildableHologramCDO,
+		[CountGridChildren](auto& scope, AFGBuildableHologram* self, TArray<AActor*>& out_children, FNetConstructionID constructionID)
+		{
+			if (!self || !self->HasAuthority() || !SFScalingSpecExpansion::IsSpecConstructionEnabled())
+			{
+				return;
+			}
+			FSFHologramData* Data = USFHologramDataRegistry::GetData(self);
+			if (!Data || !Data->ScalingSpec.bValid)
+			{
+				return; // not a spec parent (e.g. one of the children constructing in the loop)
+			}
+			if (CountGridChildren(self) == 0)
+			{
+				SFScalingSpecExpansion::ExpandScalingSpecIntoChildren(self, Data->ScalingSpec, self->GetRecipe());
+			}
+			Data->ScalingSpec.bValid = false; // one-shot
+			// original runs after return and constructs parent + expanded children
+		});
+
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("✅ Spec-construction hooks registered (SerializeConstructMessage / GetCost / Construct - class-agnostic)"));
 }

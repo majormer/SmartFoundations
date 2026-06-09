@@ -12,90 +12,11 @@
 #include "Holograms/Logistics/SFConveyorBeltHologram.h"
 #include "Holograms/Logistics/SFConveyorLiftHologram.h"
 #include "Holograms/Logistics/SFPipelineHologram.h"
-#include "Holograms/Core/SFScalingSpecExpansion.h"
 #include "Logging/SFLogMacros.h"
 
 ASFFactoryHologram::ASFFactoryHologram()
 {
     // Initialize factory-specific defaults
-}
-
-// ────────────────────────────────────────────────────────────────────────────────────────────
-// MP spec-based construction (Option A: ride the natural build-gun fire with an O(1) spec)
-// See docs/Features/Multiplayer/PLAN_MP_ScalingConstruction_Impl.md
-// ────────────────────────────────────────────────────────────────────────────────────────────
-
-void ASFFactoryHologram::PreConstructMessageSerialization()
-{
-    Super::PreConstructMessageSerialization();
-
-    // Client-side, at fire time: if the spec path is enabled and we have a populated grid spec,
-    // detach the grid children so they are NOT serialized into the construct message (keeps the
-    // wire O(1)). The server regenerates them from mScalingSpec in PostConstructMessageDeserialization.
-    // Guarded so legacy behaviour (and SP / listen-host, which construct directly without a message)
-    // is completely unaffected.
-    if (!SFScalingSpecExpansion::IsSpecConstructionEnabled()) return;
-    if (mChildren.Num() == 0) return;
-    if (!SFScalingSpecExpansion::CaptureScalingSpec(this, mScalingSpec)) return;
-
-    // Detach the grid children from the serialized child list so they are NOT sent. The preview
-    // actors still exist and are owned/cleaned up by the Smart grid-spawner's own tracking list,
-    // not by mChildren. The server regenerates them from mScalingSpec.
-    mStashedSpecChildren.Reset();
-    for (AFGHologram* Child : mChildren)
-    {
-        mStashedSpecChildren.Add(Child);
-    }
-    mChildren.Reset();
-
-    UE_LOG(LogSmartFoundations, Display,
-        TEXT("[MP-SPEC] PreConstructMessageSerialization(factory): captured spec (%d cells), stripped ")
-        TEXT("%d grid children from the wire. Construct message is now O(1)."),
-        mScalingSpec.CellCount(), mStashedSpecChildren.Num());
-}
-
-void ASFFactoryHologram::SerializeConstructMessage(FArchive& ar, FNetConstructionID id)
-{
-    Super::SerializeConstructMessage(ar, id);
-
-    // Client/saving: the message bytes were just written from the STRIPPED child list. Restore the
-    // stash into mChildren immediately so the hologram is whole again - the build gun's post-fire
-    // teardown then destroys the preview children normally. Without this, the stripped previews
-    // leak as orphans and the grid-spawner tracking desyncs (live-test finding, 2026-06-09).
-    if (ar.IsSaving() && mStashedSpecChildren.Num() > 0)
-    {
-        for (const TObjectPtr<AFGHologram>& Child : mStashedSpecChildren)
-        {
-            if (Child)
-            {
-                mChildren.Add(Child);
-            }
-        }
-        UE_LOG(LogSmartFoundations, Display,
-            TEXT("[MP-SPEC] SerializeConstructMessage(factory): restored %d stripped children post-write."),
-            mStashedSpecChildren.Num());
-        mStashedSpecChildren.Reset();
-    }
-}
-
-TArray<FItemAmount> ASFFactoryHologram::GetCost(bool includeChildren) const
-{
-    TArray<FItemAmount> Cost = Super::GetCost(includeChildren);
-
-    // Spec path, server side: cost is validated/charged BEFORE Construct, but the grid children are
-    // expanded INSIDE Construct (after validation - fresh holograms cannot pass vanilla placement
-    // validation, live-test finding 2026-06-09). The grid is uniform, so the correct total is the
-    // parent's per-cell cost scaled by the cell count. Client side never scales: its children are
-    // real (mChildren populated), so vanilla aggregation already yields the full amount.
-    if (includeChildren && mScalingSpec.bValid && HasAuthority() && mChildren.Num() == 0)
-    {
-        const int32 Cells = mScalingSpec.CellCount();
-        for (FItemAmount& Item : Cost)
-        {
-            Item.Amount *= Cells;
-        }
-    }
-    return Cost;
 }
 
 void ASFFactoryHologram::BeginPlay()
@@ -129,16 +50,6 @@ void ASFFactoryHologram::BeginPlay()
 
 AActor* ASFFactoryHologram::Construct(TArray<AActor*>& out_children, FNetConstructionID constructionID)
 {
-    // [MP-SPEC] Server-side spec expansion. Runs HERE - after Server_ConstructHologram validation
-    // has passed on the (childless) parent - because fresh holograms cannot pass vanilla placement
-    // validation (FGCDInitializing/InvalidFloor/InvalidAimLocation; live-test finding 2026-06-09).
-    // Cost was already charged correctly via the GetCost cell-count scaling. The children added
-    // here are constructed by Super::Construct's normal child loop, never validated.
-    if (HasAuthority() && mScalingSpec.bValid && mChildren.Num() == 0)
-    {
-        SFScalingSpecExpansion::ExpandScalingSpecIntoChildren(this, mScalingSpec, mRecipe);
-    }
-
     // [MP-SLICE0] TEMP multiplayer instrumentation — remove before release.
     // Parent-commit signal: does the scaled-factory Construct run with authority for a
     // CLIENT-initiated build, and how many children does it carry into the build?
