@@ -116,6 +116,33 @@ Compact and fixed-size (no per-cell data). Serializes in a handful of bytes + th
 
 These cannot be verified without an in-game MP session; they are the points to test when available.
 
+## Live-test status (2026-06-09) + known gaps
+
+**MILESTONE: the model works end-to-end for factory machines.** Live on the dedicated server: a
+175-cell constructor grid committed via the O(1) spec, the server expanded 174/174 children inside
+`Construct` (post-validation), built all of them (`out_children=174`, zero disqualifiers), and each
+is individually dismantlable. Key findings baked into the implementation:
+
+- Expansion MUST run inside `Construct` (post-validation): freshly spawned vanilla holograms cannot
+  pass vanilla placement validation (`FGCDInitializing`/`FGCDInvalidFloor`/`FGCDInvalidAimLocation`).
+  Cost correctness restored via `GetCost` cell-count scaling on the spec parents.
+- The stripped preview children must be restored into `mChildren` right after the message bytes are
+  written (`SerializeConstructMessage`, saving side) or they leak as orphans.
+- Vanilla flat foundations use a BP hologram subclass (`Holo_Foundation_C`) - gate on the hologram
+  FAMILY (excluding `AFGRampHologram`), not exact class.
+- The toggle ships ON inside the mod (`sf.MP.SpecConstruction`, developer escape hatch only):
+  players must never configure anything externally, and Saved/Engine.ini is rewritten by the game.
+
+**Known gaps (parked, tracked here):**
+- **Cost validation untested** - the test server runs creative/No Build Cost; the `GetCost`
+  cell-scaling needs a real-inventory MP test (charge exactly N x per-cell, no double-charge).
+- **Smart Dismantle groups**: spec-built children skip the client-side group bookkeeping the legacy
+  path performs, so group dismantle shows the group but cannot dismantle spec-built buildables.
+  Same family as the other post-build bookkeeping that must move server-side or replicate (#334
+  wiring, production-recipe application for manufacturer children). Address with that slice.
+- **Ramp/inclined foundation family** stays on the legacy path (guard still active for it).
+- **Foundations (flat)** gate widened to the family; awaiting live retest.
+
 ## Slice order
 
 - **S1** swap scaling parent + `FSFScalingSpec` + capture + serialize override (compile-clean).
