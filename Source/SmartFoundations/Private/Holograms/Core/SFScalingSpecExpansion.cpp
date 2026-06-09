@@ -122,9 +122,15 @@ int32 ExpandScalingSpecIntoChildren(AFGHologram* Parent, const FSFScalingSpec& S
 				const int32 GY = YI * SgnY;
 				const int32 GZ = ZI * SgnZ;
 
+				// AnchorOffset deliberately NOT passed (ZeroVector): like the legacy grid spawner
+				// (SFGridSpawnerService.cpp "CRITICAL FIX: DO NOT pass AnchorOffset"), we place via
+				// direct actor transform, which expects the FINAL world position. Passing the
+				// registry anchor pre-lowers attachment types (splitters/mergers/pipe junctions,
+				// AnchorOffset.Z ~ -100cm) by their compensation - live finding 2026-06-09: spec
+				// grid children sank half-height while the parent sat correctly.
 				const FVector CellLoc = Calc.CalculateChildPosition(
 					GX, GY, GZ, ParentLoc, ParentRot,
-					Spec.ItemSize, C, LinearIndex, Spec.AnchorOffset);
+					Spec.ItemSize, C, LinearIndex, FVector::ZeroVector);
 				++LinearIndex;
 
 				const FName ChildName(*FString::Printf(TEXT("SFSpecCell_%d_%d_%d"), GX, GY, GZ));
