@@ -118,10 +118,13 @@ These cannot be verified without an in-game MP session; they are the points to t
 
 ## Live-test status (2026-06-09) + known gaps
 
-**MILESTONE: the model works end-to-end for factory machines.** Live on the dedicated server: a
-175-cell constructor grid committed via the O(1) spec, the server expanded 174/174 children inside
-`Construct` (post-validation), built all of them (`out_children=174`, zero disqualifiers), and each
-is individually dismantlable. Key findings baked into the implementation:
+**MILESTONE: the model works end-to-end for BOTH families.** Live on the dedicated server: a
+175-cell constructor grid AND >130-cell flat-foundation grids committed via the O(1) spec, the
+server expanded all children inside `Construct` (post-validation), built all of them
+(`out_children=N`, zero disqualifiers), each individually dismantlable. Foundations confirmed
+working as expected by the maintainer (lightweight-instance path included). Swap eligibility is
+now gated on `USFBuildableSizeRegistry.bSupportsScaling` (the existing per-buildable source of
+truth). Key findings baked into the implementation:
 
 - Expansion MUST run inside `Construct` (post-validation): freshly spawned vanilla holograms cannot
   pass vanilla placement validation (`FGCDInitializing`/`FGCDInvalidFloor`/`FGCDInvalidAimLocation`).
