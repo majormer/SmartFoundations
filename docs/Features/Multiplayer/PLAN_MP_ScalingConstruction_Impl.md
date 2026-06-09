@@ -136,15 +136,29 @@ truth). Key findings baked into the implementation:
 - The toggle ships ON inside the mod (`sf.MP.SpecConstruction`, developer escape hatch only):
   players must never configure anything externally, and Saved/Engine.ini is rewritten by the game.
 
+**Final architecture (2026-06-09 evening, live-validated): class-agnostic hooks + RCO staging.**
+The subclass/swap implementation was replaced by three seams that cover EVERY scalable buildable
+(registry-gated) with no hologram swap: the client fire hook captures the spec + stages it via
+`USFRCO::Server_StageScalingSpec` + destroys the local preview (sticky counters regenerate it);
+the server `Construct` hook (primary virtual, CDO-resolved) consumes the staged spec
+post-validation and expands; the `GetCost` hook scales by cell count pre-charge. Two hard rules
+learned by live crash: SML hooks need `SUBSCRIBE_METHOD_VIRTUAL`+CDO for virtuals, and
+INTERFACE-inherited virtuals (SerializeConstructMessage et al.) must never be hooked (interface-
+adjusted `this`). LIVE-VALIDATED on the dedi: constructors (175), foundations, 414-cell ramps,
+224-cell stairs (`Holo_RampDouble_C`/`Holo_Ramp_C` - families the swap explicitly excluded),
+**with real-inventory cost deduction confirmed** (No Build Cost off, materials charged).
+
 **Known gaps (parked, tracked here):**
-- **Cost validation untested** - the test server runs creative/No Build Cost; the `GetCost`
-  cell-scaling needs a real-inventory MP test (charge exactly N x per-cell, no double-charge).
 - **Smart Dismantle groups**: spec-built children skip the client-side group bookkeeping the legacy
   path performs, so group dismantle shows the group but cannot dismantle spec-built buildables.
   Same family as the other post-build bookkeeping that must move server-side or replicate (#334
   wiring, production-recipe application for manufacturer children). Address with that slice.
-- **Ramp/inclined foundation family** stays on the legacy path (guard still active for it).
-- **Foundations (flat)** gate widened to the family; awaiting live retest.
+- **Auto-connect children** (belts/wires attached to grid previews) are not part of the spec; they
+  are destroyed with the preview at fire time and not built server-side. Part of the #334 slice.
+- **RPC ordering race** (spec stage vs construct, different actor channels): never observed losing
+  in testing; a lost race builds the parent only (benign, logged).
+- **Single-frame expansion**: the server constructs all N children inside one Construct call;
+  fine at ~400, unmeasured at thousands - the time-sliced queue (S4) remains future work.
 
 ## Slice order
 
