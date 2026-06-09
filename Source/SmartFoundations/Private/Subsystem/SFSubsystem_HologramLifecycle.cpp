@@ -11,6 +11,7 @@
 #include "Holograms/Core/SFScalingSpecExpansion.h"
 #include "Hologram/FGFactoryHologram.h"
 #include "Hologram/FGFoundationHologram.h"
+#include "Hologram/FGRampHologram.h"
 #include "Features/Extend/SFExtendService.h"
 
 
@@ -160,11 +161,16 @@ void USFSubsystem::RegisterActiveHologram(AFGHologram* Hologram)
 					Hologram = Swapped; // continue registration with the swapped custom hologram
 				}
 			}
-			else if (Hologram->GetClass() == AFGFoundationHologram::StaticClass())
+			else if (Hologram->IsA(AFGFoundationHologram::StaticClass())
+				&& !Hologram->IsA(ASFFoundationHologram::StaticClass())
+				&& !Hologram->IsA(AFGRampHologram::StaticClass()))
 			{
-				// Flat foundations -> ASFFoundationHologram. EXACT class only: foundation-family
-				// subclasses (ramps, quarter pipes, ...) have placement behaviour our generic
-				// replacement would lose, so they stay on the legacy path until covered explicitly.
+				// Foundation family -> ASFFoundationHologram. Live test 2026-06-09: vanilla flat
+				// foundations use a BLUEPRINT hologram subclass (Holo_Foundation_C, parent
+				// FGFoundationHologram), so an exact-class gate never matches - match the family.
+				// AFGRampHologram (the only C++ subclass: ramps/quarter-pipe family) is excluded:
+				// its inclined placement behaviour would be lost by our generic replacement, so it
+				// stays on the legacy path until covered explicitly.
 				if (ASFFoundationHologram* Swapped =
 					ExtendService->SwapToSmartFoundationHologram(Hologram))
 				{
