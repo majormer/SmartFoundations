@@ -1066,18 +1066,15 @@ void USmartUpgradePanel::OnTraversalScanClicked()
 		USFUpgradeTraversalService::OnClientTraversalResultReceived.AddUObject(
 			this, &USmartUpgradePanel::OnClientTraversalResult);
 
-		TArray<AActor*> RCOActors;
-		UGameplayStatics::GetAllActorsOfClass(GetWorld(), USFRCO::StaticClass(), RCOActors);
-		for (AActor* Actor : RCOActors)
+		// RCOs are not actors — GetRemoteCallObjectOfClass, never GetAllActorsOfClass
+		// (the old actor scan failed silently on every client; live finding 2026-06-10).
+		if (AFGPlayerController* FGPC = Cast<AFGPlayerController>(PC))
 		{
-			if (USFRCO* RCO = Cast<USFRCO>(Actor))
+			if (USFRCO* RCO = FGPC->GetRemoteCallObjectOfClass<USFRCO>())
 			{
-				if (RCO->GetOuter() == PC)
-				{
-					RCO->Server_StartUpgradeTraversal(AnchorBuildable, TraversalConfig);
-					UE_LOG(LogSmartUI, Verbose, TEXT("Upgrade Panel: Sent traversal request via SFRCO"));
-					return;
-				}
+				RCO->Server_StartUpgradeTraversal(AnchorBuildable, TraversalConfig);
+				UE_LOG(LogSmartUI, Verbose, TEXT("Upgrade Panel: Sent traversal request via SFRCO"));
+				return;
 			}
 		}
 		UE_LOG(LogSmartUI, Warning, TEXT("Upgrade Panel: Could not find SFRCO instance for traversal scan"));

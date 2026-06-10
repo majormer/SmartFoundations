@@ -1712,22 +1712,21 @@ void USFUpgradeExecutionService::CompleteUpgrade()
 	// the audit service uses.
 	if (CurrentParams.PlayerController && !CurrentParams.PlayerController->IsLocalController() && World)
 	{
-		TArray<AActor*> RCOActors;
-		UGameplayStatics::GetAllActorsOfClass(World, USFRCO::StaticClass(), RCOActors);
-		for (AActor* Actor : RCOActors)
+		// RCOs are not actors — resolve via the owning PC, never GetAllActorsOfClass
+		// (the audit service's identical actor scan never found one; live finding 2026-06-10).
+		if (USFRCO* RCO = CurrentParams.PlayerController->GetRemoteCallObjectOfClass<USFRCO>())
 		{
-			if (USFRCO* RCO = Cast<USFRCO>(Actor))
-			{
-				if (RCO->GetOuter() == CurrentParams.PlayerController)
-				{
-					RCO->Client_ReceiveUpgradeResult(LastResult);
-					UE_LOG(LogSmartUpgrade, Display,
-						TEXT("[UPGRADE-MP] Sent upgrade result to client %s via RCO (Success=%d Fail=%d Skip=%d)."),
-						*GetNameSafe(CurrentParams.PlayerController), LastResult.SuccessCount,
-						LastResult.FailCount, LastResult.SkipCount);
-					break;
-				}
-			}
+			RCO->Client_ReceiveUpgradeResult(LastResult);
+			UE_LOG(LogSmartUpgrade, Display,
+				TEXT("[UPGRADE-MP] Sent upgrade result to client %s via RCO (Success=%d Fail=%d Skip=%d)."),
+				*GetNameSafe(CurrentParams.PlayerController), LastResult.SuccessCount,
+				LastResult.FailCount, LastResult.SkipCount);
+		}
+		else
+		{
+			UE_LOG(LogSmartUpgrade, Warning,
+				TEXT("[UPGRADE-MP] Could not resolve USFRCO for %s - upgrade result not delivered to the client."),
+				*GetNameSafe(CurrentParams.PlayerController));
 		}
 	}
 }

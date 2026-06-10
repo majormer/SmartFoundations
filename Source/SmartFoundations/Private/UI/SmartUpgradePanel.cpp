@@ -528,18 +528,17 @@ void USmartUpgradePanel::OnUpgradeButtonClicked()
 	// exactly as in SP. Never fall through to a client-side run (client-only actors + desync).
 	if (GetWorld() && GetWorld()->GetNetMode() == NM_Client)
 	{
-		TArray<AActor*> RCOActors;
-		UGameplayStatics::GetAllActorsOfClass(GetWorld(), USFRCO::StaticClass(), RCOActors);
-		for (AActor* Actor : RCOActors)
+		// RCOs are UObjects outered to the player controller, NOT actors —
+		// GetAllActorsOfClass can never find one (live finding 2026-06-10: the audit panel's
+		// identical lookup failed silently on every client, so the audit RCO port had never
+		// actually worked in MP). GetRemoteCallObjectOfClass is the correct resolution.
+		if (AFGPlayerController* FGPC = Cast<AFGPlayerController>(PC))
 		{
-			if (USFRCO* RCO = Cast<USFRCO>(Actor))
+			if (USFRCO* RCO = FGPC->GetRemoteCallObjectOfClass<USFRCO>())
 			{
-				if (RCO->GetOuter() == PC)
-				{
-					RCO->Server_StartUpgrade(Params);
-					UE_LOG(LogSmartUI, Verbose, TEXT("Upgrade Panel: Sent upgrade request via SFRCO"));
-					return;
-				}
+				RCO->Server_StartUpgrade(Params);
+				UE_LOG(LogSmartUI, Verbose, TEXT("Upgrade Panel: Sent upgrade request via SFRCO"));
+				return;
 			}
 		}
 		UE_LOG(LogSmartUI, Warning, TEXT("Upgrade Panel: Could not find SFRCO instance for upgrade execution"));
@@ -575,19 +574,15 @@ void USmartUpgradePanel::RefreshAudit()
 			// Trigger via RCO if we're a client, otherwise direct call
 			if (World->GetNetMode() == NM_Client)
 			{
-				TArray<AActor*> RCOActors;
-				UGameplayStatics::GetAllActorsOfClass(World, USFRCO::StaticClass(), RCOActors);
-
-				for (AActor* Actor : RCOActors)
+				// RCOs are not actors — GetRemoteCallObjectOfClass, never GetAllActorsOfClass
+				// (the old actor scan failed silently on every client; live finding 2026-06-10).
+				if (AFGPlayerController* FGPC = Cast<AFGPlayerController>(PC))
 				{
-					if (USFRCO* RCO = Cast<USFRCO>(Actor))
+					if (USFRCO* RCO = FGPC->GetRemoteCallObjectOfClass<USFRCO>())
 					{
-						if (RCO->GetOuter() == PC)
-						{
-							RCO->Server_StartUpgradeAudit(Params);
-							UE_LOG(LogSmartUI, VeryVerbose, TEXT("Upgrade Panel: Sent Refresh request via SFRCO"));
-							return;
-						}
+						RCO->Server_StartUpgradeAudit(Params);
+						UE_LOG(LogSmartUI, VeryVerbose, TEXT("Upgrade Panel: Sent Refresh request via SFRCO"));
+						return;
 					}
 				}
 				UE_LOG(LogSmartUI, Warning, TEXT("Upgrade Panel: Could not find SFRCO instance for Refresh"));
@@ -617,19 +612,14 @@ void USmartUpgradePanel::CancelAudit()
 		{
 			if (World->GetNetMode() == NM_Client)
 			{
-				TArray<AActor*> RCOActors;
-				UGameplayStatics::GetAllActorsOfClass(World, USFRCO::StaticClass(), RCOActors);
-
-				for (AActor* Actor : RCOActors)
+				// RCOs are not actors — GetRemoteCallObjectOfClass, never GetAllActorsOfClass.
+				if (AFGPlayerController* FGPC = Cast<AFGPlayerController>(PC))
 				{
-					if (USFRCO* RCO = Cast<USFRCO>(Actor))
+					if (USFRCO* RCO = FGPC->GetRemoteCallObjectOfClass<USFRCO>())
 					{
-						if (RCO->GetOuter() == PC)
-						{
-							RCO->Server_CancelUpgradeAudit();
-							UE_LOG(LogSmartUI, VeryVerbose, TEXT("Upgrade Panel: Sent Cancel request via SFRCO"));
-							return;
-						}
+						RCO->Server_CancelUpgradeAudit();
+						UE_LOG(LogSmartUI, VeryVerbose, TEXT("Upgrade Panel: Sent Cancel request via SFRCO"));
+						return;
 					}
 				}
 			}
