@@ -26,6 +26,22 @@ Smart Dismantle groups, normal Extend (build + wiring + daisy power + dismantle)
 (rotated, heterogeneous blender sets, lifts in the manifold, daisy power, extend-off-built-chain,
 live item flow under load — 62 chains / 917 items / 0 zombie / 0 orphan). The factory-tick crash
 is RESOLVED (chain registration by type, d79e19b — see the resolved section below).
+**LIVE-VALIDATED 2026-06-10 (later session): Restore MP** (client preset replay → staged restore
+commit → server ReplayRestoreCloneTopology; 4x1/5x1 blender grids built, wired, recipes applied,
+items flowing through every clone) **and Smart Upgrade MP** (client-routed save-wide belt/lift
+upgrade, Success=19, result echo to the client panel). Three same-day root causes fixed en route:
+(1) RCO resolution — RCOs are NOT actors; GetAllActorsOfClass(USFRCO) never finds one; all six
+sites now use PC->GetRemoteCallObjectOfClass (the audit RCO port had NEVER worked on clients);
+(2) detached-but-segmented chain actors — upgrade/extend chain rebuilds left old chains alive
+WITH segments → escaped the 0-seg purge → unconditionally saved → reload found belts in two
+chains → vanilla's worker-thread recovery assert (the boot crash), and at runtime imprisoned
+in-flight items (frozen manifolds); FIX: deferred purge force-destroys them via vanilla's
+ForceDestroyChainActor from the game-thread timer window + a 15s post-load sweep self-repairs
+already-poisoned saves (both live-validated);
+(3) preset capture poisoning — Import-from-Last-Extend on a client saved empty segment
+connections (GetConnection() null); FIX: server pushes its authoritatively derived clone
+topology to the building client after every commit (Client_ReceiveServerCloneTopology);
+GetLastCloneTopology prefers it on clients.
 
 **Remaining for complete MP support (workstream rule: CANNOT SHIP PARTIAL):**
 1. Extend costs in NON-CREATIVE (GetCost hook charges the staged preview-exact array — untested).
