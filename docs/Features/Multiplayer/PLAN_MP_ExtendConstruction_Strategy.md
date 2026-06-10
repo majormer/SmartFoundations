@@ -185,8 +185,11 @@ Cost, SourceBuilding, ScaledClones[]}; the server derives the topology at the co
 SP bug in the scaled clone wiring loop (prefix-stripped map keys vs prefixed connection targets =
 empty per-clone manifests; now generated from the prefixed topology against the global id map).
 
-Remaining for Extend-MP hardening: rotated scaled extend (clearance leniency untested), pipe/lift
-heterogeneous topologies (refineries), Restore, costs in non-creative, diagnostics strip.
+Remaining for Extend-MP hardening: lifts as primary conduits (vertical manifolds), daisy power
+continuation along scaled chains, Restore, costs in non-creative, diagnostics strip.
+VALIDATED 2026-06-10: rotated scaled extend (maintainer's post-fix build had rotation; built,
+chained, and carried live item flow — 62 chains / 917 items / 0 zombie / 0 orphan under load);
+heterogeneous topologies (blender 7-clone set, belts+pipes+lifts, every clone wired 23/23).
 
 ## Dependencies / ordering
 
