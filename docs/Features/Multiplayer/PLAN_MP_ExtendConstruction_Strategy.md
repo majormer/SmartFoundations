@@ -43,7 +43,19 @@ connections (GetConnection() null); FIX: server pushes its authoritatively deriv
 topology to the building client after every commit (Client_ReceiveServerCloneTopology);
 GetLastCloneTopology prefers it on clients.
 
-**OPEN INVESTIGATION (2026-06-10 end of session): freed-pointer factory-tick AV.**
+**RESOLVED (2026-06-10, 12 repros, b3acba5): the freed-pointer factory-tick AV was OUR GetCost
+hook calling scope.Override(Cost) WITHOUT invoking scope() first.** For a hooked method
+returning TArray BY VALUE, SML's ApplyCallUserTypeByValue move-assigns the override into an
+UNINITIALIZED return slot when the original was never invoked - the move-assign wild-frees the
+slot's stack-garbage Data pointer, which in CheckCanAfford's frame (dedi mirror build gun,
+costs ON, ticking while a client aims) held the AIMED-AT BUILDING's address. Wild
+FMemory::Free(liveActor) -> allocator freelist scribble over its vtable -> ParallelFor tick AV
+minutes later. Convicted via hardware write watchpoint on the victim's vtable slot (address
+boot-logged by the one-shot identity table). Rule added to AGENTS.md: never Override a by-value
+return without invoking scope() first. The investigation history below is retained for the
+debugging-workflow lessons (cdb live attach, watchpoints, detector layering).
+
+**INVESTIGATION HISTORY (resolved above): freed-pointer factory-tick AV.**
 Three identical dedi crashes (TickFactoryActors lambda_31, FGBuildableSubsystem.cpp:644,
 ParallelFor worker calling through freed heap — cdb-symbolized, rip in zeroed heap), each
 ~2 min after building/dismantling 1x1 auto-connect distributor+belt groups; the third followed a
