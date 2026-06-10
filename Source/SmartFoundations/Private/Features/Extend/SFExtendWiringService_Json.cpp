@@ -1223,11 +1223,19 @@ int32 USFExtendWiringService::GenerateAndExecuteWiring(AFGBuildableFactory* NewF
     // ==================== Scaled Extend: Additional Clone Wiring (Issue #265) ====================
     // Process wiring for each additional clone set beyond clone 1
     int32 ScaledExtendWiredCount = 0;
+    // [EXTEND-MP] Display level while MP Extend validates (Verbose is stripped on the dedi).
+    UE_LOG(LogSmartFoundations, Display,
+        TEXT("[EXTEND-MP] Scaled clone wiring: %d clone set(s), jsonBuilt=%d, sourceTarget=%s."),
+        ExtendService->ScaledExtendClones.Num(), ExtendService->JsonBuiltActors.Num(),
+        *GetNameSafe(ExtendService->CurrentExtendTarget.Get()));
     for (int32 CloneIdx = 0; CloneIdx < ExtendService->ScaledExtendClones.Num(); CloneIdx++)
     {
         FSFScaledExtendClone& Clone = ExtendService->ScaledExtendClones[CloneIdx];
         if (!Clone.CloneTopology.IsValid() || Clone.CloneTopology->ChildHolograms.Num() == 0)
         {
+            UE_LOG(LogSmartFoundations, Display,
+                TEXT("[EXTEND-MP] Scaled clone wiring: Clone[%d] SKIPPED - topology %s."),
+                CloneIdx, Clone.CloneTopology.IsValid() ? TEXT("empty") : TEXT("null"));
             continue;
         }
 
@@ -1270,7 +1278,9 @@ int32 USFExtendWiringService::GenerateAndExecuteWiring(AFGBuildableFactory* NewF
 
         if (!CloneFactory)
         {
-            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Warning, TEXT("⚡ SCALED EXTEND Wire: Could not find built factory for Clone[%d] at expected position"), CloneIdx);
+            UE_LOG(LogSmartFoundations, Display,
+                TEXT("[EXTEND-MP] Scaled clone wiring: Clone[%d] SKIPPED - no built factory within 5m of expected position %s."),
+                CloneIdx, *ExpectedPos.ToCompactString());
             continue;
         }
 
@@ -1314,6 +1324,12 @@ int32 USFExtendWiringService::GenerateAndExecuteWiring(AFGBuildableFactory* NewF
         int32 CloneWired = CloneManifest.ExecuteWiring(GetWorld());
         int32 CloneChains = CloneManifest.CreateChainActors(GetWorld(), CloneBuiltActors);
         int32 ClonePipes = CloneManifest.RebuildPipeNetworks(GetWorld(), CloneBuiltActors);
+
+        // [EXTEND-MP] Display level while MP Extend validates.
+        UE_LOG(LogSmartFoundations, Display,
+            TEXT("[EXTEND-MP] Scaled clone wiring: Clone[%d] factory=%s mapped=%d manifestBelts=%d manifestPipes=%d wired=%d chains=%d."),
+            CloneIdx, *CloneFactory->GetName(), CloneBuiltActors.Num(),
+            CloneManifest.BeltConnections.Num(), CloneManifest.PipeConnections.Num(), CloneWired, CloneChains);
 
         // Lift ↔ Passthrough linking for scaled clone (Issue #260) — world search approach
         {
