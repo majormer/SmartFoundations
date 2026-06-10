@@ -1044,11 +1044,24 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 			// [EXTEND-MP] A staged Extend commit overrides with the EXACT preview cost captured
 			// client-side (parent + all clone children) - the childless server parent would
 			// otherwise charge the bare factory only.
+			//
+			// THE 12-CRASH WILD-FREE BUG LIVED HERE (root-caused via hardware watchpoint,
+			// 2026-06-10): scope.Override() WITHOUT a prior scope() invocation. For a hooked
+			// method returning TArray BY VALUE, SML's invoker (ApplyCallUserTypeByValue)
+			// move-ASSIGNS the override into the return slot - and if the original was never
+			// invoked, that slot is UNINITIALIZED, so TArray::operator= frees whatever garbage
+			// Data pointer the stack held. In CheckCanAfford's frame (dedi mirror build gun,
+			// costs ON, every tick while aiming) that garbage was the AIMED-AT BUILDING's
+			// address: FMemory::Free(liveActor) -> freelist scribble over its vtable -> the
+			// freed-pointer factory-tick AV minutes later. RULE: NEVER Override a by-value
+			// return without invoking scope() first to construct the slot (the scaling branch
+			// below always did - which is why scaled costs never crashed).
 			FSFExtendCommitSpec ExtendSpec;
 			if (FindStagedExtendCommit(self, ExtendSpec, /*bConsume=*/false))
 			{
 				if (MutableSelf->GetHologramChildren().Num() == 0 && ExtendSpec.Cost.Num() > 0)
 				{
+					scope(self, includeChildren); // initialize the return slot FIRST
 					scope.Override(ExtendSpec.Cost);
 				}
 				return;
