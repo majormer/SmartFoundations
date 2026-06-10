@@ -840,35 +840,44 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 			}
 		});
 
-	// [CHAIN-FIX] Destruction chokepoint guard. The 4th freed-pointer tick AV reproduced with NO
-	// dismantle and NO build (hover extend -> look away -> re-aim), with the RemoveConveyor guard
-	// silent - so some conveyor destruction path never calls RemoveConveyor at all and leaves the
-	// belt in a tick-group array. EndPlay fires for EVERY destruction path; the before-hook sweeps
-	// the tick groups while the object is still alive and logs WHICH belt + WHY it died, naming
-	// the leaking path. AFGBuildableConveyorBase overrides EndPlay (primary-class virtual), so the
-	// CDO resolves the conveyor-specific body - the hook fires only for conveyors.
-	AFGBuildableConveyorBase* ConveyorBaseCDO = GetMutableDefault<AFGBuildableConveyorBase>();
-	SUBSCRIBE_METHOD_VIRTUAL(AFGBuildableConveyorBase::EndPlay, ConveyorBaseCDO,
-		[](auto& scope, AFGBuildableConveyorBase* self, const EEndPlayReason::Type endPlayReason)
+	// [CHAIN-FIX] Destruction chokepoint guard, ALL buildables. cdb on the 5th freed-pointer tick
+	// AV (2026-06-10) identified the crashing loop: TickFactoryActors' lambda walks
+	// mFactoryBuildings (subsystem +0x3C0, confirmed via PDB) and virtual-calls each entry - the
+	// freed entry sat at the array END (= most recently registered), and the conveyor-only guards
+	// stayed silent, so a NON-conveyor factory buildable is destroyed by some path that skips
+	// vanilla RemoveBuildable. EndPlay fires for every destruction path; running AFTER the
+	// original (scope first) means vanilla's own cleanup has happened - anything still left in
+	// mFactoryBuildings/groups or the conveyor tick groups is a true leak: force-removed and
+	// logged with name + reason, naming the leaking path on the next repro. AFGBuildable
+	// overrides EndPlay (primary-class virtual): hooking its body via the CDO fires for the
+	// whole Super chain - every buildable, conveyors included.
+	AFGBuildable* BuildableCDO = GetMutableDefault<AFGBuildable>();
+	SUBSCRIBE_METHOD_VIRTUAL(AFGBuildable::EndPlay, BuildableCDO,
+		[](auto& scope, AFGBuildable* self, const EEndPlayReason::Type endPlayReason)
 		{
-			if (self && self->HasAuthority())
+			scope(self, endPlayReason);
+			if (!self || !self->HasAuthority())
 			{
-				if (UWorld* World = self->GetWorld())
-				{
-					if (USFSubsystem* SS = USFSubsystem::Get(World))
-					{
-						if (USFChainActorService* ChainSvc = SS->GetChainActorService())
-						{
-							const int32 Removed = ChainSvc->RemoveConveyorFromAllTickGroups(self);
-							if (Removed > 0)
-							{
-								UE_LOG(LogSmartFoundations, Display,
-									TEXT("[CHAIN-DIAG] EndPlay guard: %s died (reason=%d) while STILL in %d tick group(s) - leak path identified, freed-pointer tick AV prevented."),
-									*self->GetName(), static_cast<int32>(endPlayReason), Removed);
-							}
-						}
-					}
-				}
+				return;
+			}
+			UWorld* World = self->GetWorld();
+			USFSubsystem* SS = World ? USFSubsystem::Get(World) : nullptr;
+			USFChainActorService* ChainSvc = SS ? SS->GetChainActorService() : nullptr;
+			if (!ChainSvc)
+			{
+				return;
+			}
+			int32 Removed = ChainSvc->RemoveBuildableFromFactoryTickArrays(self);
+			if (AFGBuildableConveyorBase* Conveyor = Cast<AFGBuildableConveyorBase>(self))
+			{
+				Removed += ChainSvc->RemoveConveyorFromAllTickGroups(Conveyor);
+			}
+			if (Removed > 0)
+			{
+				UE_LOG(LogSmartFoundations, Display,
+					TEXT("[CHAIN-DIAG] EndPlay guard: %s (%s) died (reason=%d) while STILL in %d factory-tick entr%s - leak path identified, freed-pointer tick AV prevented."),
+					*self->GetName(), *GetNameSafe(self->GetClass()), static_cast<int32>(endPlayReason),
+					Removed, Removed == 1 ? TEXT("y") : TEXT("ies"));
 			}
 		});
 

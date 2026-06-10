@@ -1780,6 +1780,20 @@ int32 USFChainActorService::RemoveConveyorFromAllTickGroups(AFGBuildableConveyor
 	return StaleRemovals;
 }
 
+int32 USFChainActorService::RemoveBuildableFromFactoryTickArrays(AFGBuildable* Buildable)
+{
+	AFGBuildableSubsystem* BuildableSub = GetBuildableSubsystem();
+	if (!BuildableSub || !Buildable) return 0;
+
+	int32 Removed = 0;
+	Removed += BuildableSub->mFactoryBuildings.Remove(Buildable);
+	for (TArray<AFGBuildable*>& Group : BuildableSub->mFactoryBuildingGroups)
+	{
+		Removed += Group.Remove(Buildable);
+	}
+	return Removed;
+}
+
 void USFChainActorService::ScheduleDeferredZombiePurge(float DelaySeconds)
 {
 	USFSubsystem* Sub = Subsystem.Get();

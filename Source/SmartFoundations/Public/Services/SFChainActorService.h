@@ -253,6 +253,14 @@ public:
 	 *  the access grant. Returns the number of stale entries removed. */
 	int32 RemoveConveyorFromAllTickGroups(class AFGBuildableConveyorBase* Conveyor);
 
+	/** [CHAIN-FIX] Force-remove a buildable from mFactoryBuildings + mFactoryBuildingGroups.
+	 *  cdb on the 5th freed-pointer tick AV (2026-06-10) showed TickFactoryActors' lambda walking
+	 *  mFactoryBuildings (+0x3C0) and virtual-calling a freed entry near the array END (the most
+	 *  recently registered buildables) — some destruction path skips vanilla RemoveBuildable.
+	 *  Called from the AFGBuildable::EndPlay after-hook; only true leaks survive vanilla cleanup
+	 *  to be found here. Returns entries removed. */
+	int32 RemoveBuildableFromFactoryTickArrays(class AFGBuildable* Buildable);
+
 	/**
 	 * Schedule a deferred call to PurgeZombieChainActors after a short delay, giving
 	 * vanilla one or two factory ticks to settle pending migrations before we sweep.
