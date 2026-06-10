@@ -138,17 +138,33 @@ endpoint resolution is implicit in the belt's geometry.
 - Server-side safety nets that also run with authority: deferred belt wiring (next-tick,
   distributor parents), deferred pipe wiring (next-tick), stackable-pipe manual build+connect.
 
-## Live-test checkpoints (increment D, all conduit families)
+## Validation matrix - ALL CONDUIT FAMILIES PASSED (2026-06-10)
 
-Belt checkpoints (merger/splitter rows, manifold lanes, dismantle group, costs) PASSED 2026-06-10.
+| Family | Status | Notes |
+| --- | --- | --- |
+| Distributor belts (mergers + splitters) | PASS | building belts + manifold lanes; chain-verified |
+| Pipe junctions | PASS | recursive capture fix (grid-child previews are grandchildren) |
+| Floor-hole (passthrough) pipes | PASS | bFloorHolePipe replay branch |
+| Power wires | PASS | direct-spawn post-construct (never from holograms) |
+| Stackable conveyor poles | PASS | 0 zombie / 0 orphan chains; #341 in-frame unification |
+| Stackable pipe supports | PASS | |
+| Wall + ceiling conveyor poles | PASS | |
+| Standard conveyor poles | PASS | multi-step fire gate + height sync; chain-verified |
+| Floodlights (angle step) | PASS | multi-step gate + angle sync |
+| Standalone signs (height step) | PASS | sign POLES remain a pre-existing SP limitation (#330) |
+| Conveyor lifts | n/a | auto-connect does not produce lifts (open feature request) |
 
-1. Power-pole grid -> wires appear between grid poles on both sides, charged; check
-   `[MP-334] SpawnConduitPlanChildren` and no "wire entry ... unresolved" warnings.
-2. Pipe junction grid next to fluid buildings -> pipes build + wire (deferred wiring log:
-   "PIPE AUTO-CONNECT DEFERRED WIRING"); floor-hole (passthrough) pipe placement wires through
-   the foundation.
-3. Stackable conveyor pole grid -> run belts build + wire + unify into chains (#341 in-frame log);
-   wall poles / ceiling mounts / standard conveyor poles same.
-4. Stackable pipe support grid -> run pipes build + wire + networks merge.
-5. All conduits join the Smart Dismantle group (post-construct sweep covers every built child).
-6. SP regression sweep: all auto-connect families unchanged (capture/stage is NM_Client-only).
+All conduits join the Smart Dismantle group. Costs charged via ConduitPlanCost.
+
+Fix history for the round-2/3 bugs: recursive descendant capture; pipe junction-branch
+discriminator resolved AFTER FinishSpawning; wires direct-spawned post-construct (hologram-replayed
+wires were unconnected zombies); SetRecipe(null) guard (stackable belt previews carry no recipe -
+dedi assert); multi-step fire gate (step-advance input destroyed previews mid-placement);
+multi-step property sync to spec-expanded children (pole height / floodlight angle / sign step).
+
+**Increment B (settings sync) is OBSOLETE**: it existed for the server-re-derivation model. The
+conduit plan ships the final result - tiers, routing, geometry are baked into the captured classes
+and splines, and the server-side wirers are purely geometric. Client settings honored by construction.
+
+SP regression sweep: DEFERRED by maintainer decision until the full MP feature set (incl. Extend)
+is in place; everything here is gated client-fire/server-spec so SP is expected unchanged.
