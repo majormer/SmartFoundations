@@ -10,6 +10,9 @@
 #include "Hologram/FGBuildableHologram.h"
 #include "Hologram/FGBlueprintHologram.h"
 #include "Hologram/FGConveyorPoleHologram.h"      // #341: belt-support parent hologram (covers stackable/wall/ceiling)
+#include "Hologram/FGPoleHologram.h"              // [MP-SPEC] multi-step gate: pole height step
+#include "Hologram/FGFloodlightHologram.h"        // [MP-SPEC] multi-step gate: floodlight angle step
+#include "Hologram/FGStandaloneSignHologram.h"    // [MP-SPEC] multi-step gate: sign height step
 #include "Holograms/Logistics/SFConveyorBeltHologram.h"  // #341: DrainStackBuiltConveyors
 #include "FGConstructDisqualifier.h"
 #include "FGCentralStorageSubsystem.h"
@@ -407,6 +410,45 @@ void USFGameInstanceModule::RegisterClientConstructChunkGuardHook()
 	UE_LOG(LogSmartFoundations, Verbose, TEXT("✅ Client construct chunk-guard hook registered (MP Slice 0 Phase 1, Server_ConstructHologram)"));
 }
 
+// [MP-SPEC] Multi-step holograms construct only on their FINAL step's input; earlier inputs merely
+// advance the step (pole base->height, floodlight angle, sign height). Treating a step-advance as
+// a fire captured + DESTROYED the previews mid-placement (live 2026-06-10: a standard conveyor
+// pole had no belt previews during height adjust and then fired with an empty plan). The pole gate
+// uses the exact-class check (Build_ConveyorPole_C): stackable/wall poles construct in one click
+// and are live-validated - they must not be gated. Unknown layouts default to "constructs"
+// (the pre-gate behavior, correct for every single-step hologram).
+static bool SF_InputWillConstruct(AFGHologram* Holo)
+{
+	auto FinalStepReached = [&](UClass* Class, uint8 FinalStep) -> bool
+	{
+		FProperty* StepProp = FindFProperty<FProperty>(Class, TEXT("mBuildStep"));
+		if (!StepProp)
+		{
+			return true;
+		}
+		uint8 Step = 0;
+		StepProp->CopyCompleteValue(&Step, StepProp->ContainerPtrToValuePtr<void>(Holo));
+		return Step == FinalStep;
+	};
+
+	if (USFAutoConnectService::IsRegularConveyorPoleHologram(Holo))
+	{
+		return FinalStepReached(AFGPoleHologram::StaticClass(),
+			static_cast<uint8>(EPoleHologramBuildStep::PHBS_AdjustHeight));
+	}
+	if (Holo->IsA<AFGFloodlightHologram>())
+	{
+		return FinalStepReached(AFGFloodlightHologram::StaticClass(),
+			static_cast<uint8>(EFloodlightHologramBuildStep::FHBS_AdjustAngle));
+	}
+	if (Holo->IsA<AFGStandaloneSignHologram>())
+	{
+		return FinalStepReached(AFGStandaloneSignHologram::StaticClass(),
+			static_cast<uint8>(ESignHologramBuildStep::ESHBS_AdjustHeight));
+	}
+	return true;
+}
+
 // MP Slice 0 SAFETY GUARD. A Smart grid above this many total cells will not fit one 64KB
 // Server_ConstructHologram (empirical ceiling ~135 cells / 65536 bytes). Building such a grid on a CLIENT is
 // not safely achievable today: re-firing the build gun never constructs (single-construct-per-fire state
@@ -447,6 +489,13 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 
 			AFGHologram* Holo = self->GetHologram();
 			if (!Holo)
+			{
+				return;
+			}
+
+			// A step-advance input (multi-step holograms) is NOT a fire: nothing serializes, so
+			// nothing may be captured, staged, stripped, or destroyed here.
+			if (!SF_InputWillConstruct(Holo))
 			{
 				return;
 			}
