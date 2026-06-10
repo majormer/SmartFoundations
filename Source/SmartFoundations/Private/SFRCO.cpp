@@ -418,6 +418,91 @@ bool USFRCO::Server_CancelUpgradeAudit_Validate()
 	return true;
 }
 
+// ========================================
+// Upgrade Execution + Traversal RPCs ([UPGRADE-MP])
+// ========================================
+
+void USFRCO::Server_StartUpgrade_Implementation(FSFUpgradeExecutionParams Params)
+{
+	USFSubsystem* Subsystem = USFSubsystem::Get(this);
+	AFGPlayerController* OwnerPC = Cast<AFGPlayerController>(GetOuter());
+	if (!IsValid(Subsystem) || !OwnerPC)
+	{
+		UE_LOG(LogSmartFoundations, Warning,
+			TEXT("[UPGRADE-MP] Server_StartUpgrade: missing subsystem (%d) or owner PC (%d)"),
+			IsValid(Subsystem) ? 1 : 0, OwnerPC ? 1 : 0);
+		return;
+	}
+
+	USFUpgradeExecutionService* ExecutionService = Subsystem->GetUpgradeExecutionService();
+	if (!IsValid(ExecutionService))
+	{
+		UE_LOG(LogSmartFoundations, Error, TEXT("[UPGRADE-MP] Server_StartUpgrade: no execution service"));
+		return;
+	}
+
+	// Authoritative requester: cost deduction, build-gun hologram instigation, and the result
+	// echo all key off this - never the client-supplied field.
+	Params.PlayerController = OwnerPC;
+
+	UE_LOG(LogSmartFoundations, Display,
+		TEXT("[UPGRADE-MP] Server starting upgrade for %s: family=%d %d->%d radius=%.0fcm specific=%d"),
+		*GetNameSafe(OwnerPC), static_cast<int32>(Params.Family), Params.SourceTier, Params.TargetTier,
+		Params.Radius, Params.SpecificBuildables.Num());
+	ExecutionService->StartUpgrade(Params);
+}
+
+bool USFRCO::Server_StartUpgrade_Validate(FSFUpgradeExecutionParams Params)
+{
+	return Params.SourceTier >= 0 && Params.SourceTier <= 6
+		&& Params.TargetTier >= 0 && Params.TargetTier <= 6
+		&& Params.Radius >= 0.0f
+		&& Params.SpecificBuildables.Num() <= 50000;
+}
+
+void USFRCO::Client_ReceiveUpgradeResult_Implementation(FSFUpgradeExecutionResult Result)
+{
+	USFSubsystem* Subsystem = USFSubsystem::Get(this);
+	if (IsValid(Subsystem))
+	{
+		if (USFUpgradeExecutionService* ExecutionService = Subsystem->GetUpgradeExecutionService())
+		{
+			ExecutionService->InjectUpgradeResult(Result);
+		}
+	}
+}
+
+void USFRCO::Server_StartUpgradeTraversal_Implementation(AFGBuildable* AnchorBuildable, FSFTraversalConfig Config)
+{
+	AFGPlayerController* OwnerPC = Cast<AFGPlayerController>(GetOuter());
+	if (!OwnerPC || !AnchorBuildable)
+	{
+		UE_LOG(LogSmartFoundations, Warning,
+			TEXT("[UPGRADE-MP] Server_StartUpgradeTraversal: missing owner PC (%d) or anchor (%d)"),
+			OwnerPC ? 1 : 0, AnchorBuildable ? 1 : 0);
+		return;
+	}
+
+	// The walk is synchronous; a throwaway service matches the SP panel's usage.
+	USFUpgradeTraversalService* TraversalService = NewObject<USFUpgradeTraversalService>();
+	const FSFTraversalResult Result = TraversalService->TraverseNetwork(AnchorBuildable, Config, OwnerPC);
+	UE_LOG(LogSmartFoundations, Display,
+		TEXT("[UPGRADE-MP] Server traversal for %s from %s: family=%d entries=%d upgradeable=%d"),
+		*GetNameSafe(OwnerPC), *GetNameSafe(AnchorBuildable), static_cast<int32>(Result.Family),
+		Result.Entries.Num(), Result.UpgradeableCount);
+	Client_ReceiveTraversalResult(Result);
+}
+
+bool USFRCO::Server_StartUpgradeTraversal_Validate(AFGBuildable* AnchorBuildable, FSFTraversalConfig Config)
+{
+	return Config.MaxTraversalCount >= 0 && Config.MaxTraversalCount <= 100000;
+}
+
+void USFRCO::Client_ReceiveTraversalResult_Implementation(FSFTraversalResult Result)
+{
+	USFUpgradeTraversalService::InjectTraversalResult(Result);
+}
+
 void USFRCO::Client_ReceiveAuditResult_Implementation(FSFUpgradeAuditResult Result)
 {
 	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("[SFRCO] Client_ReceiveAuditResult: Success=%d, TotalScanned=%d"), Result.bSuccess, Result.TotalScanned);

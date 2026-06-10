@@ -135,6 +135,11 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "SmartFoundations|Upgrade")
 	void CancelUpgrade();
 
+	/** [UPGRADE-MP] Client-side: install a server-executed result and broadcast completion, so
+	 *  panel delegates bound to this (local) service fire exactly as in SP. Mirrors
+	 *  USFUpgradeAuditService::InjectAuditResult. */
+	void InjectUpgradeResult(const FSFUpgradeExecutionResult& Result);
+
 	/** Check if upgrade is in progress */
 	UFUNCTION(BlueprintPure, Category = "SmartFoundations|Upgrade")
 	bool IsUpgradeInProgress() const { return bUpgradeInProgress; }

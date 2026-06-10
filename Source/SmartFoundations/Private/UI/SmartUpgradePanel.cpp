@@ -6,6 +6,14 @@
 #define LOCTEXT_NAMESPACE "SmartFoundations"
 
 
+void USmartUpgradePanel::NativeDestruct()
+{
+	// [UPGRADE-MP] The traversal-result delegate is static (the panel news up a throwaway
+	// traversal service per scan) - unbind so a dead widget is never broadcast to.
+	USFUpgradeTraversalService::OnClientTraversalResultReceived.RemoveAll(this);
+	Super::NativeDestruct();
+}
+
 void USmartUpgradePanel::NativeConstruct()
 {
 	Super::NativeConstruct();
@@ -511,6 +519,35 @@ void USmartUpgradePanel::OnUpgradeButtonClicked()
 	if (StatusText)
 	{
 		StatusText->SetText(FText::Format(LOCTEXT("Upgrade_Upgrading", "Upgrading {0} Mk.{1} \u2192 Mk.{2}..."), FText::FromString(FamilyName), FText::AsNumber(SelectedTier), FText::AsNumber(TargetTier)));
+	}
+
+	// [UPGRADE-MP] On a network client the whole execution pipeline (hologram replacement, actor
+	// destruction, connection repair, chain rebuild, cost) is server-authoritative world mutation
+	// - route the request through the RCO. The result comes back via Client_ReceiveUpgradeResult
+	// and is injected into the LOCAL execution service, so the delegate subscriptions above fire
+	// exactly as in SP. Never fall through to a client-side run (client-only actors + desync).
+	if (GetWorld() && GetWorld()->GetNetMode() == NM_Client)
+	{
+		TArray<AActor*> RCOActors;
+		UGameplayStatics::GetAllActorsOfClass(GetWorld(), USFRCO::StaticClass(), RCOActors);
+		for (AActor* Actor : RCOActors)
+		{
+			if (USFRCO* RCO = Cast<USFRCO>(Actor))
+			{
+				if (RCO->GetOuter() == PC)
+				{
+					RCO->Server_StartUpgrade(Params);
+					UE_LOG(LogSmartUI, Verbose, TEXT("Upgrade Panel: Sent upgrade request via SFRCO"));
+					return;
+				}
+			}
+		}
+		UE_LOG(LogSmartUI, Warning, TEXT("Upgrade Panel: Could not find SFRCO instance for upgrade execution"));
+		if (StatusText)
+		{
+			StatusText->SetText(LOCTEXT("Upgrade_ErrRCO", "Error: server connection unavailable"));
+		}
+		return;
 	}
 
 	ExecutionService->StartUpgrade(Params);

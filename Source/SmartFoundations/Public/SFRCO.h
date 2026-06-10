@@ -9,6 +9,7 @@
 #include "Features/Extend/SFExtendTypes.h"      // FSFExtendTopology ([EXTEND-MP] topology RCO)
 #include "Features/Extend/SFExtendCommitSpec.h" // FSFExtendCommitSpec ([EXTEND-MP] commit staging)
 #include "Features/Upgrade/SFUpgradeExecutionService.h"
+#include "Features/Upgrade/SFUpgradeTraversalService.h" // [UPGRADE-MP] FSFTraversalConfig/Result
 #include "SFRCO.generated.h"
 
 /**
@@ -148,6 +149,38 @@ public:
 	 */
 	UFUNCTION(Client, Reliable)
 	void Client_ReceiveAuditResult(FSFUpgradeAuditResult Result);
+
+	// ========================================
+	// Upgrade Execution + Traversal RPCs ([UPGRADE-MP])
+	// ========================================
+
+	/**
+	 * Client requests a Smart Upgrade batch execution. The whole pipeline (target gathering,
+	 * hologram replacement, connection capture/repair, chain stabilization, cost) is world
+	 * mutation and MUST run with authority - running it client-side spawns client-only actors
+	 * and desyncs (the #334 hazard class). PlayerController is overridden server-side from the
+	 * RCO owner; the client-supplied field is never trusted.
+	 */
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_StartUpgrade(FSFUpgradeExecutionParams Params);
+
+	/** Server sends the execution result back; injected into the client's local execution
+	 *  service so panel delegates fire as in SP. */
+	UFUNCTION(Client, Reliable)
+	void Client_ReceiveUpgradeResult(FSFUpgradeExecutionResult Result);
+
+	/**
+	 * Client requests a network traversal walk. Traversal follows factory/pipe/circuit
+	 * connection components whose connection values are server-only (the same null-GetConnection
+	 * client limitation as the Extend topology walk), so the walk must run on the server.
+	 */
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_StartUpgradeTraversal(AFGBuildable* AnchorBuildable, FSFTraversalConfig Config);
+
+	/** Server sends the traversal result back; injected via
+	 *  USFUpgradeTraversalService::InjectTraversalResult (tier counts recomputed client-side). */
+	UFUNCTION(Client, Reliable)
+	void Client_ReceiveTraversalResult(FSFTraversalResult Result);
 
 	//~ Begin UObject Interface
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;

@@ -666,8 +666,13 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 	// Get buildable subsystem
 	AFGBuildableSubsystem* BuildableSubsystem = AFGBuildableSubsystem::Get(World);
 
-	// Get player controller and build gun for hologram spawning
-	AFGPlayerController* PC = Cast<AFGPlayerController>(World->GetFirstPlayerController());
+	// Get player controller and build gun for hologram spawning. [UPGRADE-MP] Use the REQUESTING
+	// player's controller: on a dedicated server GetFirstPlayerController is whichever client
+	// happened to connect first (the known wrong-player build-path hazard) - and the requester's
+	// build gun/pawn exist server-side. Fall back to first PC for legacy callers without one.
+	AFGPlayerController* PC = CurrentParams.PlayerController
+		? CurrentParams.PlayerController.Get()
+		: Cast<AFGPlayerController>(World->GetFirstPlayerController());
 	if (!PC)
 	{
 		UE_LOG(LogSmartUpgrade, Warning, TEXT("UpgradeExecutionService: No player controller"));
@@ -1701,6 +1706,40 @@ void USFUpgradeExecutionService::CompleteUpgrade()
 	OnUpgradeExecutionCompleted.Broadcast(LastResult);
 	UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: Upgrade complete - Success=%d Fail=%d Skip=%d"),
 		LastResult.SuccessCount, LastResult.FailCount, LastResult.SkipCount);
+
+	// [UPGRADE-MP] When the request came from a REMOTE client (RCO-routed), echo the result back
+	// to that player's RCO so their local service broadcasts to their panel - the same delivery
+	// the audit service uses.
+	if (CurrentParams.PlayerController && !CurrentParams.PlayerController->IsLocalController() && World)
+	{
+		TArray<AActor*> RCOActors;
+		UGameplayStatics::GetAllActorsOfClass(World, USFRCO::StaticClass(), RCOActors);
+		for (AActor* Actor : RCOActors)
+		{
+			if (USFRCO* RCO = Cast<USFRCO>(Actor))
+			{
+				if (RCO->GetOuter() == CurrentParams.PlayerController)
+				{
+					RCO->Client_ReceiveUpgradeResult(LastResult);
+					UE_LOG(LogSmartUpgrade, Display,
+						TEXT("[UPGRADE-MP] Sent upgrade result to client %s via RCO (Success=%d Fail=%d Skip=%d)."),
+						*GetNameSafe(CurrentParams.PlayerController), LastResult.SuccessCount,
+						LastResult.FailCount, LastResult.SkipCount);
+					break;
+				}
+			}
+		}
+	}
+}
+
+void USFUpgradeExecutionService::InjectUpgradeResult(const FSFUpgradeExecutionResult& Result)
+{
+	LastResult = Result;
+	bUpgradeInProgress = false;
+	OnUpgradeExecutionCompleted.Broadcast(LastResult);
+	UE_LOG(LogSmartUpgrade, Verbose,
+		TEXT("[UPGRADE-MP] Injected server upgrade result - Success=%d Fail=%d Skip=%d"),
+		Result.SuccessCount, Result.FailCount, Result.SkipCount);
 }
 
 TSubclassOf<UFGRecipe> USFUpgradeExecutionService::GetUpgradeRecipe(ESFUpgradeFamily Family, int32 TargetTier) const

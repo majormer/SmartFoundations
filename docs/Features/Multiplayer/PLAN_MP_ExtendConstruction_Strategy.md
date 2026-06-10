@@ -47,7 +47,25 @@ is RESOLVED (chain registration by type, d79e19b — see the resolved section be
    construct seam (synthetic-hit SetHologramLocationAndRotation) — watch for preview-pipeline
    re-trigger artifacts on the dedi; (c) counter state is installed into the dedi's GLOBAL
    subsystem state at the construct seam (accepted single-frame race with other players).
-3. **Smart Upgrade MP** — the last feature; not yet analyzed for MP.
+3. **Smart Upgrade MP — IMPLEMENTED 2026-06-10, awaiting live test.** Analysis: the AUDIT path was
+   already MP-ported (Server_StartUpgradeAudit / Client_ReceiveAuditResult, panel routes on
+   NM_Client); EXECUTION and TRAVERSAL were not — a client StartUpgrade would run the whole
+   world-mutation pipeline client-side (client-only actors, no-authority destroys, local-only
+   costs: the #334 hazard class), and a client traversal walks GetConnection()=null so the
+   Traversal tab was structurally empty on clients. Port mirrors the audit pattern exactly:
+   `USFRCO::Server_StartUpgrade` (PlayerController overridden server-side from the RCO owner) +
+   `Client_ReceiveUpgradeResult` → `InjectUpgradeResult` broadcasts the local service delegate;
+   `Server_StartUpgradeTraversal` (server walk, synchronous) + `Client_ReceiveTraversalResult` →
+   static `USFUpgradeTraversalService::InjectTraversalResult` → panel
+   `OnClientTraversalResult` → the same `UpdateTraversalUI`. Also fixed the
+   `GetFirstPlayerController` build-gun hazard in `ProcessSingleUpgrade` (now the requesting
+   player's PC). UHT gotcha: TMaps are forbidden in RPC structs — `FSFTraversalResult.CountByTier`
+   is `UPROPERTY(NotReplicated)` and recomputed from Entries client-side. Execution runs the
+   UNCHANGED server-side pipeline incl. the two-phase chain-actor rebuild (the SFChainActorService
+   rules) — same code as an SP/host run; new belts/chains replicate. Live-test focus: client-
+   triggered belt upgrade across a live chain (chain registration on the dedi + client visual),
+   traversal-mode upgrade (SpecificBuildables resolve via package map), cost deduction from the
+   requesting client's inventory, result text on the client panel.
 4. Cleanup before release: strip [MP-SLICE0]/[EXTEND-MP]/[MP-334]/[MP-SPEC] Display diagnostics +
    dedi HintBarService spam; S4 time-sliced construction queue (thousands-scale) still unbuilt.
 5. SP regression sweep (maintainer-deferred until all MP features work).

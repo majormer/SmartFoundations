@@ -1055,11 +1055,50 @@ void USmartUpgradePanel::OnTraversalScanClicked()
 		TraversalConfig.bCrossTrainPlatforms = CrossTrainPlatformsCheckBox->IsChecked();
 	}
 
+	// [UPGRADE-MP] On a network client the walk must run on the SERVER: traversal follows
+	// factory/pipe/circuit connection components and their connection values are server-only
+	// (GetConnection() is null on clients - the same limitation as the Extend topology walk).
+	// The result arrives via Client_ReceiveTraversalResult -> InjectTraversalResult -> the
+	// static delegate below, and lands in the same UpdateTraversalUI path as the SP scan.
+	if (GetWorld() && GetWorld()->GetNetMode() == NM_Client)
+	{
+		USFUpgradeTraversalService::OnClientTraversalResultReceived.RemoveAll(this);
+		USFUpgradeTraversalService::OnClientTraversalResultReceived.AddUObject(
+			this, &USmartUpgradePanel::OnClientTraversalResult);
+
+		TArray<AActor*> RCOActors;
+		UGameplayStatics::GetAllActorsOfClass(GetWorld(), USFRCO::StaticClass(), RCOActors);
+		for (AActor* Actor : RCOActors)
+		{
+			if (USFRCO* RCO = Cast<USFRCO>(Actor))
+			{
+				if (RCO->GetOuter() == PC)
+				{
+					RCO->Server_StartUpgradeTraversal(AnchorBuildable, TraversalConfig);
+					UE_LOG(LogSmartUI, Verbose, TEXT("Upgrade Panel: Sent traversal request via SFRCO"));
+					return;
+				}
+			}
+		}
+		UE_LOG(LogSmartUI, Warning, TEXT("Upgrade Panel: Could not find SFRCO instance for traversal scan"));
+		if (SharedStatusText)
+		{
+			SharedStatusText->SetText(LOCTEXT("Upgrade_ErrRCOScan", "Error: server connection unavailable"));
+		}
+		return;
+	}
+
 	// Create traversal service and run scan
 	USFUpgradeTraversalService* TraversalService = NewObject<USFUpgradeTraversalService>();
 	CachedTraversalResult = TraversalService->TraverseNetwork(AnchorBuildable, TraversalConfig, PC);
 
 	// Update UI with results
+	UpdateTraversalUI(CachedTraversalResult);
+}
+
+void USmartUpgradePanel::OnClientTraversalResult(const FSFTraversalResult& Result)
+{
+	CachedTraversalResult = Result;
 	UpdateTraversalUI(CachedTraversalResult);
 }
 
