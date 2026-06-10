@@ -20,6 +20,21 @@
 void USFChainActorService::Initialize(USFSubsystem* InSubsystem)
 {
 	Subsystem = InSubsystem;
+
+	// Load-time repair sweep (authority only): a save written while detached-but-segmented
+	// chains existed (the pre-fix upgrade/extend rebuild left them; ShouldSave is unconditionally
+	// true) reloads with belts claimed by TWO chains — vanilla's in-tick recovery then fires
+	// ForceDestroyChainActor from a ParallelFor WORKER and randomly asserts (the 2026-06-10 boot
+	// crash). Sweeping once shortly after load force-destroys those chains from the GAME THREAD
+	// (items transfer back to belts) before the race can fire again. 15 s leaves vanilla's own
+	// load-time chain registration time to settle first.
+	if (UWorld* World = InSubsystem ? InSubsystem->GetWorld() : nullptr)
+	{
+		if (World->GetNetMode() != NM_Client)
+		{
+			ScheduleDeferredZombiePurge(15.0f);
+		}
+	}
 }
 
 void USFChainActorService::Shutdown()
@@ -760,7 +775,7 @@ int32 USFChainActorService::PurgeZombieChainActors()
 	// Factory_Tick:614 → ForceDestroyChainActor fires from a ParallelFor worker thread
 	// (assertion: GTestRegisterComponentTickFunctions == 0 fails on worker threads).
 	TArray<AFGConveyorChainActor*> Zombies;
-	int32 DetachedWithSegments = 0;
+	TArray<AFGConveyorChainActor*> DetachedWithSegments;
 	for (TActorIterator<AFGConveyorChainActor> It(World); It; ++It)
 	{
 		AFGConveyorChainActor* Chain = *It;
@@ -771,9 +786,13 @@ int32 USFChainActorService::PurgeZombieChainActors()
 		}
 		else
 		{
-			// [CHAIN-DIAG] A chain WITH segments that no tick group owns escapes this purge,
-			// saves (ShouldSave unconditionally true), and poisons the reload (belts found in
-			// two chains' segment lists -> vanilla's racy in-tick recovery -> 2026-06-10 crash).
+			// A chain WITH segments that no tick group owns is NOT inert (the old Phase 2/4
+			// assumption): it persists into saves (ShouldSave is unconditionally true) where its
+			// segment list claims belts now owned by the replacement chain — on reload vanilla's
+			// in-tick recovery fires ForceDestroyChainActor from a ParallelFor WORKER and
+			// randomly asserts in FNetworkObjectList (the 2026-06-10 boot crash). At runtime it
+			// also imprisons its in-flight items (length-0 orphan chains holding 6-12 items each,
+			// starving downstream factories — live finding, same day).
 			bool bOwned = false;
 			for (FConveyorTickGroup* TG : BuildableSub->mConveyorTickGroup)
 			{
@@ -781,24 +800,35 @@ int32 USFChainActorService::PurgeZombieChainActors()
 			}
 			if (!bOwned)
 			{
-				++DetachedWithSegments;
-				if (DetachedWithSegments <= 12)
-				{
-					UE_LOG(LogSmartUpgrade, Display,
-						TEXT("[CHAIN-DIAG] Purge SKIPPING detached-but-segmented chain %s (segments=%d) — save-poison candidate"),
-						*Chain->GetName(), Chain->GetNumChainSegments());
-				}
+				DetachedWithSegments.Add(Chain);
 			}
 		}
 	}
-	if (DetachedWithSegments > 0)
+
+	// Destroy detached-but-segmented chains via VANILLA's own cleanup. ForceDestroyChainActor
+	// removes the chain from the tick buckets AND transfers its items back onto the conveyor
+	// belts — exactly the two leaks (save poison + imprisoned items). It is only unsafe from
+	// ParallelFor workers (vanilla's own in-tick recovery crash); this timer context is the
+	// game thread in TG_PrePhysics, before TickFactoryActors dispatches — the same safety
+	// window the 0-segment Destroy() path below has used since April 2026.
+	int32 ForceDestroyedCount = 0;
+	for (AFGConveyorChainActor* Chain : DetachedWithSegments)
+	{
+		if (!IsValid(Chain)) continue;
+		UE_LOG(LogSmartUpgrade, Display,
+			TEXT("[CHAIN-DIAG] Purge force-destroying detached-but-segmented chain %s (segments=%d) — items transfer back to belts"),
+			*Chain->GetName(), Chain->GetNumChainSegments());
+		BuildableSub->ForceDestroyChainActor(Chain);
+		++ForceDestroyedCount;
+	}
+	if (ForceDestroyedCount > 0)
 	{
 		UE_LOG(LogSmartUpgrade, Display,
-			TEXT("[CHAIN-DIAG] Purge sweep: %d detached-but-segmented chain(s) NOT purged (save-poison candidates)"),
-			DetachedWithSegments);
+			TEXT("[CHAIN-DIAG] Purge sweep: %d detached-but-segmented chain(s) force-destroyed (save-poison + frozen-item fix)"),
+			ForceDestroyedCount);
 	}
 
-	if (Zombies.Num() == 0) return 0;
+	if (Zombies.Num() == 0) return ForceDestroyedCount;
 
 	int32 PurgeCount = 0;
 	for (AFGConveyorChainActor* Chain : Zombies)
@@ -829,7 +859,7 @@ int32 USFChainActorService::PurgeZombieChainActors()
 		++PurgeCount;
 	}
 
-	return PurgeCount;
+	return PurgeCount + ForceDestroyedCount;
 }
 
 int32 USFChainActorService::RepairSplitChains()
