@@ -47,11 +47,15 @@ GetLastCloneTopology prefers it on clients.
 Three identical dedi crashes (TickFactoryActors lambda_31, FGBuildableSubsystem.cpp:644,
 ParallelFor worker calling through freed heap — cdb-symbolized, rip in zeroed heap), each
 ~2 min after building/dismantling 1x1 auto-connect distributor+belt groups; the third followed a
-Smart Dismantle directly (GC-latency timing). Working theory: stale mConveyorBucketID makes
-vanilla RemoveConveyor silently no-op in shipping → dismantled belt stays in another tick group's
-array → freed → ticked. GUARD DEPLOYED (ab02ab5): RemoveConveyor after-hook force-removes the
-belt from every TG and logs [CHAIN-DIAG] when it catches one — next dismantle either names the
-leak in one log line or the theory is wrong (dumps + cdb workflow in AGENTS.md). Related fixes
+Smart Dismantle directly (GC-latency timing). A 4TH repro killed the dismantle theory: NO
+dismantle, NO build — just hover-extend → look away → re-aim — with the RemoveConveyor guard
+(ab02ab5) silent. So some conveyor destruction path never calls RemoveConveyor at all; the
+trigger correlates with the EXTEND AIM/TEARDOWN cycle on the dedi (its mirror runs aim-time
+pipelines). SECOND GUARD DEPLOYED (5257f00): AFGBuildableConveyorBase::EndPlay before-hook —
+the destruction chokepoint — sweeps every tick group while the object is alive and logs which
+belt died, why (EEndPlayReason), and how many stale entries it left. The next repro attempt
+either prints the leak's name or survives silently; either way it cannot AV from this class
+anymore (dumps + cdb workflow in AGENTS.md). Related fixes
 same session: chain-hygiene sweep after every spec/extend construct + always-on sweep summary
 (06694cf), chainless-belt heal (7649aec), detached-chain force-destroy + member-belt re-register
 (0b9c87c). Separate closed item: a wild-pointer walk crash was a STALE-OBJECT-FILE layout
