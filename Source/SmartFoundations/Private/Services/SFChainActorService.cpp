@@ -1802,8 +1802,15 @@ int32 USFChainActorService::ScrubFactoryTickArrays()
 	auto IsEntryHealthy = [](AFGBuildable* Entry) -> bool
 	{
 		// IsValidLowLevelFast rejects freed/garbage pointers (GUObjectArray membership + vtable
-		// sanity); IsValid additionally rejects pending-kill objects.
-		return Entry && Entry->IsValidLowLevelFast(/*bRecursive*/ false) && IsValid(Entry);
+		// sanity); IsValid additionally rejects pending-kill objects. The IsA check catches the
+		// one case those CANNOT: a stale entry whose freed memory was REUSED by a different live
+		// UObject at the same address - it passes both validity checks but is not a buildable,
+		// and Factory_Tick through the wrong (smaller) vtable reads garbage past it (the
+		// 2026-06-10 tick-AV signature; repro 10 motivated this check).
+		return Entry
+			&& Entry->IsValidLowLevelFast(/*bRecursive*/ false)
+			&& IsValid(Entry)
+			&& Entry->IsA<AFGBuildable>();
 	};
 
 	int32 RemovedTotal = 0;
@@ -1817,12 +1824,21 @@ int32 USFChainActorService::ScrubFactoryTickArrays()
 			continue;
 		}
 
-		// Identify the corruption site via valid neighbors (registration order context).
+		// Identify the corruption site via valid neighbors (registration order context). If the
+		// entry is a live UObject of the WRONG class, the address was recycled - name the
+		// squatter: its class points at whatever allocates over freed buildables.
 		AFGBuildable* Prev = Buildings.IsValidIndex(Index - 1) ? Buildings[Index - 1] : nullptr;
 		AFGBuildable* Next = Buildings.IsValidIndex(Index + 1) ? Buildings[Index + 1] : nullptr;
+		FString EntryDescription = TEXT("<freed/garbage>");
+		if (Entry && Entry->IsValidLowLevelFast(false) && IsValid(Entry) && !Entry->IsA<AFGBuildable>())
+		{
+			UObject* Squatter = static_cast<UObject*>(Entry);
+			EntryDescription = FString::Printf(TEXT("LIVE NON-BUILDABLE (recycled address): %s / %s"),
+				*Squatter->GetName(), *GetNameSafe(Squatter->GetClass()));
+		}
 		UE_LOG(LogSmartUpgrade, Error,
-			TEXT("[CHAIN-DIAG] CORRUPT mFactoryBuildings entry at index %d/%d: ptr=0x%llX (prev=%s next=%s) - removed before the factory tick could call through it."),
-			Index, Buildings.Num(), reinterpret_cast<uint64>(Entry),
+			TEXT("[CHAIN-DIAG] CORRUPT mFactoryBuildings entry at index %d/%d: ptr=0x%llX [%s] (prev=%s next=%s) - removed before the factory tick could call through it."),
+			Index, Buildings.Num(), reinterpret_cast<uint64>(Entry), *EntryDescription,
 			IsEntryHealthy(Prev) ? *Prev->GetName() : TEXT("<invalid/none>"),
 			IsEntryHealthy(Next) ? *Next->GetName() : TEXT("<invalid/none>"));
 		Buildings.RemoveAt(Index);
