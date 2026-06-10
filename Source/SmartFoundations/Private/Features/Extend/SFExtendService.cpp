@@ -676,6 +676,14 @@ bool USFExtendService::WalkTopology(AFGBuildable* SourceBuilding)
     return false;
 }
 
+void USFExtendService::SetStoredCloneTopologyForServerCommit(const FSFCloneTopology& Clone)
+{
+    StoredCloneTopology = MakeShared<FSFCloneTopology>(Clone);
+    UE_LOG(LogSmartExtend, Display,
+        TEXT("[EXTEND-MP] Server installed staged clone topology: %d children (parent class %s)."),
+        Clone.ChildHolograms.Num(), *Clone.ParentBuildClass);
+}
+
 void USFExtendService::ReceiveServerTopology(const FSFExtendTopology& Topology)
 {
     CachedServerTopology = Topology;

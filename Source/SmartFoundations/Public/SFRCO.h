@@ -6,7 +6,8 @@
 #include "FGRemoteCallObject.h"
 #include "Features/Spacing/SFSpacingTypes.h"
 #include "Features/Scaling/SFScalingSpec.h"
-#include "Features/Extend/SFExtendTypes.h"   // FSFExtendTopology ([EXTEND-MP] topology RCO)
+#include "Features/Extend/SFExtendTypes.h"      // FSFExtendTopology ([EXTEND-MP] topology RCO)
+#include "Features/Extend/SFExtendCommitSpec.h" // FSFExtendCommitSpec ([EXTEND-MP] commit staging)
 #include "Features/Upgrade/SFUpgradeExecutionService.h"
 #include "SFRCO.generated.h"
 
@@ -112,6 +113,15 @@ public:
 	 *  which the client caches briefly as a negative result to avoid request spam). */
 	UFUNCTION(Client, Reliable)
 	void Client_ReceiveExtendTopology(FSFExtendTopology Topology);
+
+	/**
+	 * [EXTEND-MP] Client stages the Extend commit (fresh clone topology + preview cost) right
+	 * before firing the build gun; the Construct hook consumes it (matched by instigator + build
+	 * class) and reconstructs the clone children server-side. Overwrite semantics like the
+	 * scaling spec (an invalid commit is an explicit clear).
+	 */
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_StageExtendCommit(FSFExtendCommitSpec Spec);
 
 	// ========================================
 	// Upgrade Audit RPCs

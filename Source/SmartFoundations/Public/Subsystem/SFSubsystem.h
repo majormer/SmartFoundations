@@ -14,6 +14,7 @@
 #include "Features/Arrows/FSFArrowTypes.h"
 #include "HUD/SFHUDTypes.h"
 #include "Features/Scaling/SFScalingSpec.h"
+#include "Features/Extend/SFExtendCommitSpec.h"   // [EXTEND-MP] staged Extend commit
 #include "Config/Smart_ConfigStruct.h"
 
 // Service includes - needed for FSFBuildingMetadata and FSplinePointData struct members
@@ -826,9 +827,24 @@ public:
     /** Server: consume (clear) the staged spec for a construct instigator if it matches. */
     bool ConsumeScalingSpecForInstigator(class APawn* Instigator, UClass* BuildClass, FSFScalingSpec& OutSpec);
 
+    // [EXTEND-MP] Same staging model for the Extend commit (clone topology + cost), staged via
+    // USFRCO::Server_StageExtendCommit at fire time, consumed by the same Construct hook.
+
+    /** Server: stage (or clear, when !Spec.bValid) the pending Extend commit for a player. */
+    void StageExtendCommitForPlayer(class APlayerController* PC, const FSFExtendCommitSpec& Spec);
+
+    /** Server: peek the staged Extend commit for a construct instigator if it matches. */
+    bool PeekExtendCommitForInstigator(class APawn* Instigator, UClass* BuildClass, FSFExtendCommitSpec& OutSpec) const;
+
+    /** Server: consume (clear) the staged Extend commit for a construct instigator if it matches. */
+    bool ConsumeExtendCommitForInstigator(class APawn* Instigator, UClass* BuildClass, FSFExtendCommitSpec& OutSpec);
+
 private:
     /** Server-only: pending scaling spec per player controller (transient, never saved). */
     TMap<TWeakObjectPtr<APlayerController>, FSFScalingSpec> StagedScalingSpecs;
+
+    /** Server-only: pending Extend commit per player controller (transient, never saved). */
+    TMap<TWeakObjectPtr<APlayerController>, FSFExtendCommitSpec> StagedExtendCommits;
 
 public:
 

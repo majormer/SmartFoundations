@@ -228,6 +228,11 @@ public:
      *  client branch consumes it on the next activation tick. */
     void ReceiveServerTopology(const FSFExtendTopology& Topology);
 
+    /** [EXTEND-MP] Server-side: install the staged commit's clone topology as StoredCloneTopology
+     *  so the post-build wiring pass (WireBuiltChildConnections, fed by the registries the clone
+     *  children populate during Construct) finds the same state an SP build would have. */
+    void SetStoredCloneTopologyForServerCommit(const struct FSFCloneTopology& Clone);
+
     UFUNCTION(BlueprintCallable, Category = "Smart|Extend")
     const FSFExtendTopology& GetLastExtendTopology() const;
 

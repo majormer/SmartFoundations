@@ -462,6 +462,54 @@ bool USFSubsystem::ConsumeScalingSpecForInstigator(APawn* Instigator, UClass* Bu
 	return true;
 }
 
+// [EXTEND-MP] Extend commit staging - identical model to the scaling spec above.
+
+void USFSubsystem::StageExtendCommitForPlayer(APlayerController* PC, const FSFExtendCommitSpec& Spec)
+{
+	if (!PC)
+	{
+		return;
+	}
+	if (Spec.bValid)
+	{
+		StagedExtendCommits.Add(PC, Spec);
+	}
+	else
+	{
+		StagedExtendCommits.Remove(PC);
+	}
+}
+
+bool USFSubsystem::PeekExtendCommitForInstigator(APawn* Instigator, UClass* BuildClass, FSFExtendCommitSpec& OutSpec) const
+{
+	if (!Instigator || !BuildClass)
+	{
+		return false;
+	}
+	APlayerController* PC = Cast<APlayerController>(Instigator->GetController());
+	if (!PC)
+	{
+		return false;
+	}
+	const FSFExtendCommitSpec* Staged = StagedExtendCommits.Find(PC);
+	if (!Staged || !Staged->bValid || Staged->BuildClass != BuildClass)
+	{
+		return false;
+	}
+	OutSpec = *Staged;
+	return true;
+}
+
+bool USFSubsystem::ConsumeExtendCommitForInstigator(APawn* Instigator, UClass* BuildClass, FSFExtendCommitSpec& OutSpec)
+{
+	if (!PeekExtendCommitForInstigator(Instigator, BuildClass, OutSpec))
+	{
+		return false;
+	}
+	StagedExtendCommits.Remove(Cast<APlayerController>(Instigator->GetController()));
+	return true;
+}
+
 void USFSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);

@@ -310,6 +310,46 @@ void USFRCO::Client_ReceiveExtendTopology_Implementation(FSFExtendTopology Topol
 	}
 }
 
+void USFRCO::Server_StageExtendCommit_Implementation(FSFExtendCommitSpec Spec)
+{
+	USFSubsystem* Subsystem = USFSubsystem::Get(this);
+	AFGPlayerController* OwnerPC = Cast<AFGPlayerController>(GetOuter());
+	if (!IsValid(Subsystem) || !OwnerPC)
+	{
+		UE_LOG(LogSmartFoundations, Warning,
+			TEXT("[EXTEND-MP] Server_StageExtendCommit: missing subsystem (%d) or owner PC (%d)"),
+			IsValid(Subsystem) ? 1 : 0, OwnerPC ? 1 : 0);
+		return;
+	}
+
+	Subsystem->StageExtendCommitForPlayer(OwnerPC, Spec);
+
+	if (Spec.bValid)
+	{
+		UE_LOG(LogSmartFoundations, Display,
+			TEXT("[EXTEND-MP] Server staged Extend commit for %s: %d clone children of %s, %d cost item type(s)."),
+			*GetNameSafe(OwnerPC), Spec.Clone.ChildHolograms.Num(),
+			*GetNameSafe(*Spec.BuildClass), Spec.Cost.Num());
+	}
+}
+
+bool USFRCO::Server_StageExtendCommit_Validate(FSFExtendCommitSpec Spec)
+{
+	// Sanity-bound the clone description (a forged/buggy commit cannot demand absurd spawning).
+	if (Spec.Clone.ChildHolograms.Num() > 4096)
+	{
+		return false;
+	}
+	for (const FSFCloneHologram& Child : Spec.Clone.ChildHolograms)
+	{
+		if (Child.SplineData.Points.Num() > 256)
+		{
+			return false;
+		}
+	}
+	return true;
+}
+
 // ========================================
 // Upgrade Audit RPCs
 // ========================================

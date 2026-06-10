@@ -470,6 +470,10 @@ static const FName GSFAutoConnectChildTags[] = {
 };
 static constexpr int32 GSFAutoConnectChildTagCount = UE_ARRAY_COUNT(GSFAutoConnectChildTags);
 
+// Alias: a TMap<A,B> inside a SUBSCRIBE macro argument splits the macro args on the template
+// comma (the recurring gotcha - see the multi-capture and brace-initializer notes above).
+using FSFSpawnedCloneMap = TMap<FString, AFGHologram*>;
+
 void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 {
 	SUBSCRIBE_METHOD(
@@ -500,28 +504,102 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 				return;
 			}
 
-			// [EXTEND-MP] INTERIM GUARD until the Extend commit is ported (slice 2): a client
-			// fire with Extend clone children serializes them into the construct message, and the
-			// recipe-less belt/lift clones assert the CLIENT in SerializeConstructMessage (live
-			// crash 2026-06-10: "Assertion failed: hologramRecipe" via the pending-ghost path in
-			// SetupPendingConstructionHologram). Refuse the fire; the preview stays live.
+			// [EXTEND-MP] Extend commit (slice 2): an active Extend session fires with
+			// SF_ExtendChild clone children attached. They must NEVER serialize into the construct
+			// message (the recipe-less belt/lift clones assert the CLIENT in
+			// SerializeConstructMessage - live crash 2026-06-10). Instead, mirror the scaling
+			// model: re-emit a FRESH clone topology at the FINAL fire position (the preview's
+			// stored topology has stale transforms - children are re-positioned while aiming),
+			// stage it via the RCO with the exact preview cost, destroy the preview children, and
+			// fire the childless O(1) parent; the server's Construct hook reconstructs the clones.
 			{
 				static const FName ExtendChildTag(TEXT("SF_ExtendChild"));
+				bool bExtendFire = false;
 				for (AFGHologram* Child : Holo->GetHologramChildren())
 				{
 					if (Child && Child->Tags.Contains(ExtendChildTag))
 					{
-						UE_LOG(LogSmartFoundations, Display,
-							TEXT("[EXTEND-MP] Refused client Extend fire on %s: the Extend commit is not ported to multiplayer yet (slice 2)."),
-							*Holo->GetName());
-						if (GEngine)
-						{
-							GEngine->AddOnScreenDebugMessage(-1, 6.0f, FColor::Orange,
-								TEXT("Smart!: Extend building in multiplayer is not supported yet."));
-						}
-						scope.Cancel();
-						return;
+						bExtendFire = true;
+						break;
 					}
+				}
+
+				if (bExtendFire)
+				{
+					bool bCommitted = false;
+					if (SFScalingSpecExpansion::IsSpecConstructionEnabled())
+					{
+						FSFExtendCommitSpec ExtendSpec;
+						USFSubsystem* SS = USFSubsystem::Get(World);
+						USFExtendService* Extend = SS ? SS->GetExtendService() : nullptr;
+						if (Extend)
+						{
+							const FSFExtendTopology& Topo = Extend->GetLastExtendTopology();
+							if (Topo.bIsValid && Topo.SourceBuilding.IsValid())
+							{
+								const FVector FinalOffset =
+									Holo->GetActorLocation() - Topo.SourceBuilding->GetActorLocation();
+								const FSFSourceTopology Source = FSFSourceTopology::CaptureFromTopology(Topo);
+								ExtendSpec.Clone = FSFCloneTopology::FromSource(Source, FinalOffset);
+								ExtendSpec.Cost = Holo->GetCost(true); // parent + preview children
+								ExtendSpec.BuildClass = Holo->GetBuildClass();
+								ExtendSpec.bValid = ExtendSpec.Clone.ChildHolograms.Num() > 0;
+							}
+						}
+
+						if (ExtendSpec.bValid)
+						{
+							if (APawn* InstigatorPawn = Holo->GetConstructionInstigator())
+							{
+								if (AFGPlayerController* PC = Cast<AFGPlayerController>(InstigatorPawn->GetController()))
+								{
+									if (USFRCO* RCO = PC->GetRemoteCallObjectOfClass<USFRCO>())
+									{
+										RCO->Server_StageExtendCommit(ExtendSpec);
+										// Explicit scaling CLEAR: Extend hijacks the grid counters,
+										// and a stale scaling spec must never expand a factory grid
+										// on top of the Extend commit.
+										RCO->Server_StageScalingSpec(FSFScalingSpec());
+										bCommitted = true;
+									}
+								}
+							}
+						}
+
+						if (bCommitted)
+						{
+							TArray<AFGHologram*> ToDestroy;
+							for (AFGHologram* Child : Holo->mChildren)
+							{
+								if (Child && Child->Tags.Contains(ExtendChildTag))
+								{
+									ToDestroy.Add(Child);
+								}
+							}
+							for (AFGHologram* Child : ToDestroy)
+							{
+								Holo->mChildren.Remove(Child);
+								Child->Destroy();
+							}
+							UE_LOG(LogSmartFoundations, Display,
+								TEXT("[EXTEND-MP] Client fire: staged Extend commit (%d clone children), destroyed %d previews; construct message will be O(1)."),
+								ExtendSpec.Clone.ChildHolograms.Num(), ToDestroy.Num());
+							return; // fire proceeds with the childless parent
+						}
+					}
+
+					// Could not stage (spec disabled / no topology / RCO unreachable): refuse the
+					// fire - serializing the clone children would assert this client.
+					UE_LOG(LogSmartFoundations, Display,
+						TEXT("[EXTEND-MP] Refused client Extend fire on %s: could not stage the Extend commit."),
+						*Holo->GetName());
+					if (GEngine)
+					{
+						GEngine->AddOnScreenDebugMessage(-1, 6.0f, FColor::Orange,
+							TEXT("Smart!: Extend commit could not be staged - try again."));
+					}
+					scope.Cancel();
+					return;
 				}
 			}
 
@@ -780,6 +858,22 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 			: SS->PeekScalingSpecForInstigator(Instigator, BuildClass, OutSpec);
 	};
 
+	// [EXTEND-MP] Resolve the staged Extend commit for a constructing/costing hologram.
+	auto FindStagedExtendCommit = [](const AFGHologram* Holo, FSFExtendCommitSpec& OutSpec, bool bConsume) -> bool
+	{
+		AFGHologram* MutableHolo = const_cast<AFGHologram*>(Holo);
+		USFSubsystem* SS = USFSubsystem::Get(MutableHolo->GetWorld());
+		if (!SS)
+		{
+			return false;
+		}
+		APawn* Instigator = MutableHolo->GetConstructionInstigator();
+		UClass* BuildClass = MutableHolo->GetBuildClass();
+		return bConsume
+			? SS->ConsumeExtendCommitForInstigator(Instigator, BuildClass, OutSpec)
+			: SS->PeekExtendCommitForInstigator(Instigator, BuildClass, OutSpec);
+	};
+
 	// ── Hook A: cost. Charged server-side BEFORE Construct, when the grid children do not exist
 	// yet - scale the uniform per-cell cost by the staged cell count. Fires at the
 	// AFGHologram::GetCost base body (primary virtual; the scalable parents' classes do not
@@ -796,6 +890,20 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 			{
 				return; // client cost comes from its real preview children via vanilla aggregation
 			}
+
+			// [EXTEND-MP] A staged Extend commit overrides with the EXACT preview cost captured
+			// client-side (parent + all clone children) - the childless server parent would
+			// otherwise charge the bare factory only.
+			FSFExtendCommitSpec ExtendSpec;
+			if (FindStagedExtendCommit(self, ExtendSpec, /*bConsume=*/false))
+			{
+				if (MutableSelf->GetHologramChildren().Num() == 0 && ExtendSpec.Cost.Num() > 0)
+				{
+					scope.Override(ExtendSpec.Cost);
+				}
+				return;
+			}
+
 			FSFScalingSpec Spec;
 			if (!FindStagedSpec(self, Spec, /*bConsume=*/false) || CountGridChildren(MutableSelf) > 0)
 			{
@@ -850,24 +958,56 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 				return;
 			}
 			FSFScalingSpec Spec;
-			if (!FindStagedSpec(self, Spec, /*bConsume=*/true))
+			const bool bHasScaling = FindStagedSpec(self, Spec, /*bConsume=*/true);
+			FSFExtendCommitSpec ExtendSpec;
+			const bool bHasExtend = !bHasScaling && FindStagedExtendCommit(self, ExtendSpec, /*bConsume=*/true);
+			if (!bHasScaling && !bHasExtend)
 			{
-				return; // no staged spec for this instigator/class (e.g. a child in the loop)
-			}
-			if (CountGridChildren(self) == 0)
-			{
-				SFScalingSpecExpansion::ExpandScalingSpecIntoChildren(self, Spec, self->GetRecipe());
+				return; // nothing staged for this instigator/class (e.g. a child in the loop)
 			}
 
-			// [MP-334] Server-side auto-connect belt wiring: replay the CLIENT'S staged belt plan.
-			// The client's fire-time previews are the only complete, real plan that ever exists -
-			// server-side re-derivation (ProcessSingleDistributor) returned 0 at this seam, and the
-			// server's own aim-time previews are empty here / not construct-grade (three failed
-			// approaches, live-proven 2026-06-09; see PLAN_MP_AutoConnect_334.md). The plan belts
-			// are appended AFTER the grid children, so the vanilla child-construct loop below
-			// builds the distributors first and each belt's SF_BeltAutoConnectChild Construct path
-			// wires it geometrically against BUILT actors - the same mechanism SP uses.
-			SFScalingSpecExpansion::SpawnConduitPlanChildren(self, Spec);
+			if (bHasScaling)
+			{
+				if (CountGridChildren(self) == 0)
+				{
+					SFScalingSpecExpansion::ExpandScalingSpecIntoChildren(self, Spec, self->GetRecipe());
+				}
+
+				// [MP-334] Server-side auto-connect belt wiring: replay the CLIENT'S staged belt
+				// plan. The client's fire-time previews are the only complete, real plan that ever
+				// exists - server-side re-derivation (ProcessSingleDistributor) returned 0 at this
+				// seam, and the server's own aim-time previews are empty here / not construct-grade
+				// (three failed approaches, live-proven 2026-06-09; see PLAN_MP_AutoConnect_334.md).
+				// The plan belts are appended AFTER the grid children, so the vanilla child-
+				// construct loop below builds the distributors first and each belt's
+				// SF_BeltAutoConnectChild Construct path wires it geometrically against BUILT
+				// actors - the same mechanism SP uses.
+				SFScalingSpecExpansion::SpawnConduitPlanChildren(self, Spec);
+			}
+			else
+			{
+				// [EXTEND-MP] Reconstruct the clone children from the staged commit - the SAME
+				// executor the client preview uses (FSFCloneTopology::SpawnChildHolograms +
+				// WireChildHologramConnections), run server-side pre-scope(). The children's own
+				// Construct paths populate the Extend wiring registries (RegisterJsonBuiltActor,
+				// chain registrations), and the deferred post-build wiring (OnActorSpawned on the
+				// built factory, authority-side) finishes the wiring exactly as SP does. The
+				// staged topology is installed as StoredCloneTopology so that pass finds the
+				// same state an SP build would have.
+				if (USFSubsystem* SS = USFSubsystem::Get(self->GetWorld()))
+				{
+					if (USFExtendService* Extend = SS->GetExtendService())
+					{
+						Extend->SetStoredCloneTopologyForServerCommit(ExtendSpec.Clone);
+						FSFSpawnedCloneMap SpawnedClones;
+						const int32 NumSpawned = ExtendSpec.Clone.SpawnChildHolograms(self, Extend, SpawnedClones);
+						const int32 NumWired = ExtendSpec.Clone.WireChildHologramConnections(SpawnedClones, self);
+						UE_LOG(LogSmartFoundations, Display,
+							TEXT("[EXTEND-MP] Server reconstructed %d/%d clone children (%d pre-wired) for %s; vanilla construct will build them."),
+							NumSpawned, ExtendSpec.Clone.ChildHolograms.Num(), NumWired, *self->GetName());
+					}
+				}
+			}
 
 			// Spawn the group proxy BEFORE construction and expose it for the window of this
 			// construct: the ConfigureActor hook below assigns it to every buildable configured
@@ -920,7 +1060,10 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 			// hologram-replayed wires came out as unconnected zombies, live 2026-06-10). Direct
 			// AFGBuildableWire spawn + Connect, the proven OnPowerPoleBuilt primitive. Registers
 			// the wires into the group proxy itself (they are not in out_children).
-			SFScalingSpecExpansion::SpawnWirePlanPostConstruct(BuiltParent, out_children, Spec, GroupProxy);
+			if (bHasScaling)
+			{
+				SFScalingSpecExpansion::SpawnWirePlanPostConstruct(BuiltParent, out_children, Spec, GroupProxy);
+			}
 
 			if (GroupProxy)
 			{
