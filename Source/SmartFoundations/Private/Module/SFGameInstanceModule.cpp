@@ -468,7 +468,7 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 				if (bScalable)
 				{
 					SFScalingSpecExpansion::CaptureScalingSpec(Holo, Spec);
-					SFScalingSpecExpansion::CaptureBeltPlan(Holo, Spec);
+					SFScalingSpecExpansion::CaptureConduitPlan(Holo, Spec);
 
 					// [MP-334] Reliable-RPC ceiling guard: a very large belt plan could overflow
 					// Server_StageScalingSpec the same way the construct message itself once did
@@ -477,20 +477,20 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 					// live so the player can place in smaller sections. Conservative estimate:
 					// ~100B fixed + ~80B per spline point per belt (FVectors are doubles in UE5).
 					int32 PlanBytesEstimate = 0;
-					for (const FSFBeltPlanEntry& Entry : Spec.BeltPlan)
+					for (const FSFConduitPlanEntry& Entry : Spec.ConduitPlan)
 					{
 						PlanBytesEstimate += 100 + Entry.SplinePoints.Num() * 80;
 					}
 					if (PlanBytesEstimate > 45000)
 					{
 						UE_LOG(LogSmartFoundations, Display,
-							TEXT("[MP-334] Refused client fire: belt plan too large to stage reliably (%d belts, ~%d bytes). Build in smaller sections."),
-							Spec.BeltPlan.Num(), PlanBytesEstimate);
+							TEXT("[MP-334] Refused client fire: conduit plan too large to stage reliably (%d conduits, ~%d bytes). Build in smaller sections."),
+							Spec.ConduitPlan.Num(), PlanBytesEstimate);
 						if (GEngine)
 						{
 							GEngine->AddOnScreenDebugMessage(-1, 6.0f, FColor::Orange,
-								FString::Printf(TEXT("Smart!: too many auto-connect belts for one multiplayer placement (%d). Build in smaller sections."),
-									Spec.BeltPlan.Num()));
+								FString::Printf(TEXT("Smart!: too many auto-connect belts/pipes/wires for one multiplayer placement (%d). Build in smaller sections."),
+									Spec.ConduitPlan.Num()));
 						}
 						scope.Cancel();
 						return;
@@ -588,8 +588,8 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 					if (Spec.bValid && bStaged)
 					{
 						UE_LOG(LogSmartFoundations, Display,
-							TEXT("[MP-SPEC] Client fire: staged spec (%d cells of %s, %d planned belt(s)), destroying %d preview children; construct message will be O(1)."),
-							Spec.CellCount(), *GetNameSafe(*Spec.BuildClass), Spec.BeltPlan.Num(), GridChildCount);
+							TEXT("[MP-SPEC] Client fire: staged spec (%d cells of %s, %d planned conduit(s)), destroying %d preview children; construct message will be O(1)."),
+							Spec.CellCount(), *GetNameSafe(*Spec.BuildClass), Spec.ConduitPlan.Num(), GridChildCount);
 
 						// Destroy the preview grid through the helper's own cleanup (tracking stays
 						// consistent; the sticky counters regenerate the grid on the next hologram).
@@ -738,7 +738,7 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 			// [MP-334] Charge the staged auto-connect belts too: exact vanilla length-based
 			// preview costs, summed client-side at capture. Without this the server-built plan
 			// belts would be free (they join mChildren only inside Construct, after costing).
-			for (const FItemAmount& BeltItem : Spec.BeltPlanCost)
+			for (const FItemAmount& BeltItem : Spec.ConduitPlanCost)
 			{
 				bool bMerged = false;
 				for (FItemAmount& Item : Cost)
@@ -793,7 +793,7 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 			// are appended AFTER the grid children, so the vanilla child-construct loop below
 			// builds the distributors first and each belt's SF_BeltAutoConnectChild Construct path
 			// wires it geometrically against BUILT actors - the same mechanism SP uses.
-			SFScalingSpecExpansion::SpawnBeltPlanChildren(self, Spec);
+			SFScalingSpecExpansion::SpawnConduitPlanChildren(self, Spec);
 
 			// Spawn the group proxy BEFORE construction and expose it for the window of this
 			// construct: the ConfigureActor hook below assigns it to every buildable configured

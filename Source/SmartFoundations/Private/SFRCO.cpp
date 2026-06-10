@@ -221,8 +221,8 @@ void USFRCO::Server_StageScalingSpec_Implementation(FSFScalingSpec Spec)
 	if (Spec.bValid)
 	{
 		UE_LOG(LogSmartFoundations, Display,
-			TEXT("[MP-SPEC] Server staged scaling spec for %s: %d cells of %s, %d planned belt(s)."),
-			*GetNameSafe(OwnerPC), Spec.CellCount(), *GetNameSafe(*Spec.BuildClass), Spec.BeltPlan.Num());
+			TEXT("[MP-SPEC] Server staged scaling spec for %s: %d cells of %s, %d planned conduit(s)."),
+			*GetNameSafe(OwnerPC), Spec.CellCount(), *GetNameSafe(*Spec.BuildClass), Spec.ConduitPlan.Num());
 	}
 }
 
@@ -239,14 +239,14 @@ bool USFRCO::Server_StageScalingSpec_Validate(FSFScalingSpec Spec)
 		return false;
 	}
 
-	// Sanity-bound the belt plan (#334): at most ~3 belts per distributor cell in practice; allow
+	// Sanity-bound the conduit plan (#334): at most a few conduits per grid cell in practice; allow
 	// generous headroom. Spline previews route with a handful of points; 64 is far beyond any real
 	// auto-connect belt.
-	if (Spec.BeltPlan.Num() > 4096)
+	if (Spec.ConduitPlan.Num() > 4096)
 	{
 		return false;
 	}
-	for (const FSFBeltPlanEntry& Entry : Spec.BeltPlan)
+	for (const FSFConduitPlanEntry& Entry : Spec.ConduitPlan)
 	{
 		if (Entry.SplinePoints.Num() > 64)
 		{

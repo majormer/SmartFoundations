@@ -35,19 +35,22 @@ namespace SFScalingSpecExpansion
 		TSubclassOf<UFGRecipe> Recipe);
 
 	/**
-	 * Client-side (#334): capture the auto-connect belt wiring plan from the live preview helpers
-	 * into the spec, BEFORE the fire hook strips/destroys those previews. Walks the parent + every
-	 * child hologram and snapshots each stored belt preview (class, recipe, transform, routed
-	 * spline) plus its exact vanilla length-based cost into Spec.BeltPlan / Spec.BeltPlanCost.
+	 * Client-side (#334): capture the auto-connect conduit wiring plan (belts, pipes, stackable
+	 * runs, power wires) from the parent's tagged preview child holograms into the spec, BEFORE
+	 * the fire hook strips/destroys those previews. Snapshots each preview's family kind, class,
+	 * recipe, transform, routed spline (or wire endpoints) plus its exact vanilla preview cost
+	 * into Spec.ConduitPlan / Spec.ConduitPlanCost.
 	 */
-	void CaptureBeltPlan(AFGHologram* Hologram, FSFScalingSpec& InOutSpec);
+	void CaptureConduitPlan(AFGHologram* Hologram, FSFScalingSpec& InOutSpec);
 
 	/**
-	 * Server-side (#334): replay the staged belt plan as fresh ASFConveyorBeltHologram children of
-	 * the constructing parent. MUST be called AFTER ExpandScalingSpecIntoChildren so the belts sit
-	 * after the grid cells in mChildren: the vanilla child-construct loop then builds the
-	 * distributors first and each belt's SF_BeltAutoConnectChild Construct path wires it by
-	 * geometric coincidence against BUILT actors only. Returns the number of belts spawned.
+	 * Server-side (#334): replay the staged conduit plan as fresh tagged child holograms of the
+	 * constructing parent (the same spawn recipes the client preview pipeline uses, minus the
+	 * client-only visuals). MUST be called AFTER ExpandScalingSpecIntoChildren so the conduits sit
+	 * after the grid cells in mChildren: the vanilla child-construct loop then builds the grid
+	 * cells first and each family's existing Construct wiring path connects its conduit against
+	 * BUILT actors. Wire endpoints are resolved by world location against the pre-construct
+	 * hologram set. Returns the number of conduits spawned.
 	 */
-	int32 SpawnBeltPlanChildren(AFGHologram* Parent, const FSFScalingSpec& Spec);
+	int32 SpawnConduitPlanChildren(AFGHologram* Parent, const FSFScalingSpec& Spec);
 }

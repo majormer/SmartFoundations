@@ -9,7 +9,12 @@
 #include "Data/SFBuildableSizeRegistry.h"
 #include "Features/AutoConnect/SFAutoConnectService.h"
 #include "Holograms/Logistics/SFConveyorBeltHologram.h"
+#include "Holograms/Logistics/SFPipelineHologram.h"
+#include "Holograms/Power/SFWireHologram.h"
+#include "FGPowerConnectionComponent.h"
+#include "Buildables/FGBuildable.h"
 #include "Engine/World.h"
+#include "EngineUtils.h"
 #include "HAL/IConsoleManager.h"
 
 // MP spec-based construction. ON by default - the mod must be self-contained (no launch options /
@@ -170,155 +175,401 @@ int32 ExpandScalingSpecIntoChildren(AFGHologram* Parent, const FSFScalingSpec& S
 	return SpawnedChildren;
 }
 
-void CaptureBeltPlan(AFGHologram* Hologram, FSFScalingSpec& InOutSpec)
+// Merge one preview's cost items into the plan's aggregated cost (per item class).
+static void SF_MergePlanCost(FSFScalingSpec& Spec, const TArray<FItemAmount>& Items)
+{
+	for (const FItemAmount& Item : Items)
+	{
+		bool bMerged = false;
+		for (FItemAmount& Existing : Spec.ConduitPlanCost)
+		{
+			if (Existing.ItemClass == Item.ItemClass)
+			{
+				Existing.Amount += Item.Amount;
+				bMerged = true;
+				break;
+			}
+		}
+		if (!bMerged)
+		{
+			Spec.ConduitPlanCost.Add(Item);
+		}
+	}
+}
+
+void CaptureConduitPlan(AFGHologram* Hologram, FSFScalingSpec& InOutSpec)
 {
 	if (!Hologram)
 	{
 		return;
 	}
-	USFSubsystem* SS = USFSubsystem::Get(Hologram->GetWorld());
-	USFAutoConnectService* AutoConnect = SS ? SS->GetAutoConnectService() : nullptr;
-	if (!AutoConnect)
-	{
-		return;
-	}
 
-	// The service stores previews keyed per distributor hologram: the parent itself and/or any of
-	// its grid children (manifold lanes are stored on their SOURCE distributor, so walking each
-	// distributor once visits every belt exactly once).
-	TArray<AFGHologram*> Sources;
-	Sources.Add(Hologram);
+	// All Smart auto-connect previews - distributor belts (incl. manifold lanes of grid-child
+	// distributors), junction/floor-hole pipes, stackable-run belts/pipes, and power wires - are
+	// attached as TAGGED CHILDREN of the active parent hologram (proven: the fire-hook strip of
+	// parent mChildren removes every one of them). One uniform walk captures every family.
+	static const FName BeltTag(TEXT("SF_BeltAutoConnectChild"));
+	static const FName PipeTag(TEXT("SF_PipeAutoConnectChild"));
+	static const FName PowerTag(TEXT("SF_PowerAutoConnectChild"));
+	static const FName StackableTag(TEXT("SF_StackableChild"));
+
+	int32 PerKind[5] = {0, 0, 0, 0, 0};
 	for (AFGHologram* Child : Hologram->GetHologramChildren())
 	{
-		if (Child)
-		{
-			Sources.Add(Child);
-		}
-	}
-
-	for (AFGHologram* Source : Sources)
-	{
-		const TArray<TSharedPtr<FBeltPreviewHelper>>* Previews = AutoConnect->GetBeltPreviews(Source);
-		if (!Previews)
+		if (!Child)
 		{
 			continue;
 		}
-		for (const TSharedPtr<FBeltPreviewHelper>& Helper : *Previews)
+
+		FSFConduitPlanEntry Entry;
+		if (ASFConveyorBeltHologram* BeltHolo = Cast<ASFConveyorBeltHologram>(Child))
 		{
-			if (!Helper.IsValid())
+			if (Child->Tags.Contains(BeltTag))
+			{
+				Entry.Kind = ESFConduitPlanKind::Belt;
+			}
+			else if (Child->Tags.Contains(StackableTag))
+			{
+				Entry.Kind = ESFConduitPlanKind::StackableBelt;
+			}
+			else
 			{
 				continue;
 			}
-			ASFConveyorBeltHologram* BeltHolo = Helper->GetTypedHologram();
-			if (!IsValid(BeltHolo) || BeltHolo->GetSplineData().Num() < 2)
+			if (BeltHolo->GetSplineData().Num() < 2)
 			{
 				continue;
 			}
-
-			FSFBeltPlanEntry Entry;
-			Entry.BeltClass = BeltHolo->GetBuildClass();
-			Entry.Recipe = BeltHolo->GetRecipe();
-			Entry.Location = BeltHolo->GetActorLocation();
-			Entry.Rotation = BeltHolo->GetActorRotation();
 			Entry.SplinePoints = BeltHolo->GetSplineData();
-			InOutSpec.BeltPlan.Add(MoveTemp(Entry));
-
-			// Exact vanilla length-based cost of this preview, merged per item class. Charged by
-			// the server's GetCost hook alongside the cell-scaled grid cost.
-			for (const FItemAmount& Item : BeltHolo->GetCost(false))
+		}
+		else if (ASFPipelineHologram* PipeHolo = Cast<ASFPipelineHologram>(Child))
+		{
+			if (Child->Tags.Contains(PipeTag))
 			{
-				bool bMerged = false;
-				for (FItemAmount& Existing : InOutSpec.BeltPlanCost)
-				{
-					if (Existing.ItemClass == Item.ItemClass)
-					{
-						Existing.Amount += Item.Amount;
-						bMerged = true;
-						break;
-					}
-				}
-				if (!bMerged)
-				{
-					InOutSpec.BeltPlanCost.Add(Item);
-				}
+				Entry.Kind = ESFConduitPlanKind::Pipe;
+			}
+			else if (Child->Tags.Contains(StackableTag))
+			{
+				Entry.Kind = ESFConduitPlanKind::StackablePipe;
+			}
+			else
+			{
+				continue;
+			}
+			if (PipeHolo->GetSplineData().Num() < 2)
+			{
+				continue;
+			}
+			Entry.SplinePoints = PipeHolo->GetSplineData();
+		}
+		else if (ASFWireHologram* WireHolo = Cast<ASFWireHologram>(Child))
+		{
+			if (!Child->Tags.Contains(PowerTag))
+			{
+				continue;
+			}
+			UFGCircuitConnectionComponent* C0 = WireHolo->GetConnection(0);
+			UFGCircuitConnectionComponent* C1 = WireHolo->GetConnection(1);
+			if (!C0 || !C1)
+			{
+				continue;
+			}
+			Entry.Kind = ESFConduitPlanKind::Wire;
+			Entry.WireStart = C0->GetComponentLocation();
+			Entry.WireEnd = C1->GetComponentLocation();
+		}
+		else
+		{
+			continue;
+		}
+
+		// Family-specific registry facts that must survive the wire (the registry is client-local).
+		if (FSFHologramData* Data = USFHologramDataRegistry::GetData(Child))
+		{
+			if (Entry.Kind == ESFConduitPlanKind::Pipe)
+			{
+				Entry.bFloorHolePipe = (Data->PipeAutoConnectConn0 == nullptr);
+			}
+			else if (Entry.Kind == ESFConduitPlanKind::StackableBelt)
+			{
+				Entry.StackIndex = Data->StackableBeltIndex;
+			}
+			else if (Entry.Kind == ESFConduitPlanKind::StackablePipe)
+			{
+				Entry.StackIndex = Data->StackablePipeIndex;
 			}
 		}
+
+		Entry.BuildClass = Child->GetBuildClass();
+		Entry.Recipe = Child->GetRecipe();
+		Entry.Location = Child->GetActorLocation();
+		Entry.Rotation = Child->GetActorRotation();
+
+		// Exact vanilla preview cost, merged per item class. Charged by the server's GetCost hook
+		// alongside the cell-scaled grid cost.
+		SF_MergePlanCost(InOutSpec, Child->GetCost(false));
+
+		++PerKind[(int32)Entry.Kind];
+		InOutSpec.ConduitPlan.Add(MoveTemp(Entry));
 	}
 
-	if (InOutSpec.BeltPlan.Num() > 0)
+	if (InOutSpec.ConduitPlan.Num() > 0)
 	{
 		UE_LOG(LogSmartFoundations, Display,
-			TEXT("[MP-334] Client fire: captured belt plan with %d belt(s) (%d cost item type(s)) from live previews."),
-			InOutSpec.BeltPlan.Num(), InOutSpec.BeltPlanCost.Num());
+			TEXT("[MP-334] Client fire: captured conduit plan - %d belt(s), %d pipe(s), %d stackable belt(s), %d stackable pipe(s), %d wire(s) (%d cost item type(s))."),
+			PerKind[0], PerKind[1], PerKind[2], PerKind[3], PerKind[4], InOutSpec.ConduitPlanCost.Num());
 	}
 }
 
-int32 SpawnBeltPlanChildren(AFGHologram* Parent, const FSFScalingSpec& Spec)
+// Resolve the power connection component nearest to a captured wire-endpoint location, searching
+// the PRE-CONSTRUCT hologram set first (parent + grid children - vanilla remaps hologram
+// connections to the built poles during construct, the SP mechanism), then already-built world
+// actors (a wire endpoint may target an existing pole/machine outside the grid).
+static UFGPowerConnectionComponent* SF_ResolvePowerConnectionAt(
+	AFGHologram* Parent, const FVector& Location, float Tolerance)
+{
+	UFGPowerConnectionComponent* Best = nullptr;
+	float BestDistSq = FMath::Square(Tolerance);
+
+	auto Consider = [&](AActor* Actor)
+	{
+		if (!Actor)
+		{
+			return;
+		}
+		TArray<UFGPowerConnectionComponent*> Connections;
+		Actor->GetComponents<UFGPowerConnectionComponent>(Connections);
+		for (UFGPowerConnectionComponent* Conn : Connections)
+		{
+			if (!Conn)
+			{
+				continue;
+			}
+			const float DistSq = FVector::DistSquared(Conn->GetComponentLocation(), Location);
+			if (DistSq < BestDistSq)
+			{
+				BestDistSq = DistSq;
+				Best = Conn;
+			}
+		}
+	};
+
+	Consider(Parent);
+	for (AFGHologram* Child : Parent->GetHologramChildren())
+	{
+		Consider(Child);
+	}
+	if (!Best)
+	{
+		for (TActorIterator<AFGBuildable> It(Parent->GetWorld()); It; ++It)
+		{
+			Consider(*It);
+		}
+	}
+	return Best;
+}
+
+int32 SpawnConduitPlanChildren(AFGHologram* Parent, const FSFScalingSpec& Spec)
 {
 	UWorld* World = Parent ? Parent->GetWorld() : nullptr;
-	if (!World || Spec.BeltPlan.Num() == 0)
+	if (!World || Spec.ConduitPlan.Num() == 0)
 	{
 		return 0;
 	}
 
+	// One synthetic stack-chain id per construct: the stack-chain Construct path only gates on
+	// id/index >= 0 (wiring is geometric coincidence, not index pairing), but use a high offset
+	// away from client/Extend id ranges anyway.
+	static int32 GSFMPStackChainSeq = 1500000000;
+	const int32 StackChainId = GSFMPStackChainSeq++;
+
 	int32 Spawned = 0;
-	int32 BeltIndex = 0;
-	for (const FSFBeltPlanEntry& Entry : Spec.BeltPlan)
+	int32 EntryIndex = 0;
+	for (const FSFConduitPlanEntry& Entry : Spec.ConduitPlan)
 	{
-		++BeltIndex;
-		if (!Entry.BeltClass || Entry.SplinePoints.Num() < 2)
+		++EntryIndex;
+		const bool bIsWire = (Entry.Kind == ESFConduitPlanKind::Wire);
+		if (!Entry.BuildClass || (!bIsWire && Entry.SplinePoints.Num() < 2))
 		{
 			UE_LOG(LogSmartFoundations, Warning,
-				TEXT("[MP-334] SpawnBeltPlanChildren: plan entry %d invalid (class=%s, points=%d) - skipped."),
-				BeltIndex, *GetNameSafe(*Entry.BeltClass), Entry.SplinePoints.Num());
+				TEXT("[MP-334] SpawnConduitPlanChildren: entry %d invalid (kind=%d, class=%s, points=%d) - skipped."),
+				EntryIndex, (int32)Entry.Kind, *GetNameSafe(*Entry.BuildClass), Entry.SplinePoints.Num());
 			continue;
 		}
 
-		// Mirror the proven Extend clone-spawner recipe (SFExtendCloneSpawner belt_segment path),
-		// minus the client-only visual finalization (the server doesn't render previews).
+		// Mirror the proven client spawn recipes (belt/pipe/stackable spawners + the Extend clone
+		// spawner), minus the client-only visual finalization (the server doesn't render previews).
 		FActorSpawnParameters SpawnParams;
 		SpawnParams.Owner = Parent->GetOwner();
 		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 		SpawnParams.bDeferConstruction = true;
 
-		ASFConveyorBeltHologram* Belt = World->SpawnActor<ASFConveyorBeltHologram>(
-			ASFConveyorBeltHologram::StaticClass(), Entry.Location, Entry.Rotation, SpawnParams);
-		if (!Belt)
+		AFGHologram* Conduit = nullptr;
+		switch (Entry.Kind)
 		{
-			UE_LOG(LogSmartFoundations, Warning,
-				TEXT("[MP-334] SpawnBeltPlanChildren: belt %d failed to spawn."), BeltIndex);
-			continue;
+		case ESFConduitPlanKind::Belt:
+		case ESFConduitPlanKind::StackableBelt:
+		{
+			ASFConveyorBeltHologram* Belt = World->SpawnActor<ASFConveyorBeltHologram>(
+				ASFConveyorBeltHologram::StaticClass(), Entry.Location, Entry.Rotation, SpawnParams);
+			if (!Belt)
+			{
+				break;
+			}
+			Belt->SetReplicates(false);
+			Belt->SetReplicateMovement(false);
+			Belt->SetBuildClass(Entry.BuildClass);
+			Belt->SetRecipe(Entry.Recipe);
+			USFHologramDataService::DisableValidation(Belt);
+
+			if (Entry.Kind == ESFConduitPlanKind::Belt)
+			{
+				// SF_BeltAutoConnectChild routes Construct through the auto-connect path:
+				// Super::Construct builds the belt, then it self-wires each free end to the
+				// nearest free, direction-compatible connector within 50cm among BUILT actors
+				// only - by then the parent buildable and all grid-cell distributors exist
+				// (conduits are appended LAST in mChildren). Same mechanism SP uses.
+				Belt->Tags.AddUnique(FName(TEXT("SF_BeltAutoConnectChild")));
+			}
+			else
+			{
+				// SF_StackableChild + chain identity routes Construct through the stack-chain
+				// path: build fresh, then wire by geometric coincidence against the other built
+				// stacked belts and register for the #341 in-frame chain unification (which runs
+				// in the belt-support parent's Construct hook, also live server-side).
+				Belt->Tags.AddUnique(FName(TEXT("SF_StackableChild")));
+				if (FSFHologramData* Data = USFHologramDataService::GetOrCreateData(Belt))
+				{
+					Data->bIsStackableBelt = true;
+					Data->StackableBeltIndex = FMath::Max(0, Entry.StackIndex);
+					Data->StackChainId = StackChainId;
+					Data->StackChainIndex = FMath::Max(0, Entry.StackIndex);
+				}
+			}
+
+			Belt->FinishSpawning(FTransform(Entry.Rotation, Entry.Location));
+			Belt->SetActorEnableCollision(false);
+			Belt->SetSplineDataAndUpdate(Entry.SplinePoints);
+			Parent->AddChild(Belt, Belt->GetFName());
+			// Defensive re-apply AFTER AddChild (Extend-proven: vanilla can reset spline data on
+			// child registration; empty mSplineData crashes OnRep_SplineData/UpdateSplineComponent).
+			Belt->SetSplineDataAndUpdate(Entry.SplinePoints);
+			Conduit = Belt;
+			break;
 		}
 
-		Belt->SetReplicates(false);
-		Belt->SetReplicateMovement(false);
-		Belt->SetBuildClass(Entry.BeltClass);
-		Belt->SetRecipe(Entry.Recipe);
+		case ESFConduitPlanKind::Pipe:
+		case ESFConduitPlanKind::StackablePipe:
+		{
+			ASFPipelineHologram* Pipe = World->SpawnActor<ASFPipelineHologram>(
+				ASFPipelineHologram::StaticClass(), Entry.Location, Entry.Rotation, SpawnParams);
+			if (!Pipe)
+			{
+				break;
+			}
+			Pipe->SetReplicates(false);
+			Pipe->SetReplicateMovement(false);
+			Pipe->SetBuildClass(Entry.BuildClass);
+			Pipe->SetRecipe(Entry.Recipe);
+			USFHologramDataService::DisableValidation(Pipe);
+			USFHologramDataService::MarkAsChild(Pipe, Parent, ESFChildHologramType::AutoConnect);
 
-		// The SF_BeltAutoConnectChild tag routes this hologram's Construct through the auto-connect
-		// path: Super::Construct builds the belt, then it self-wires each free end to the nearest
-		// free, direction-compatible connector within 50cm among BUILT actors only - by then the
-		// parent buildable and all grid-cell distributors exist (belts are appended LAST in
-		// mChildren), and pre-existing world targets always did. Same mechanism SP uses.
-		Belt->Tags.AddUnique(FName(TEXT("SF_BeltAutoConnectChild")));
-		USFHologramDataService::DisableValidation(Belt);
+			FSFHologramData* Data = USFHologramDataService::GetOrCreateData(Pipe);
+			if (Entry.Kind == ESFConduitPlanKind::Pipe)
+			{
+				Pipe->Tags.AddUnique(FName(TEXT("SF_PipeAutoConnectChild")));
+				if (Data)
+				{
+					Data->bIsPipeAutoConnectChild = true;
+					// PipeAutoConnectConn0 is ONLY a branch discriminator at the construct seam:
+					// null = floor-hole branch (passthrough snap registration by proximity),
+					// non-null = junction branch (deferred geometric wiring). The component is
+					// never dereferenced there, so any non-null connection works server-side.
+					if (!Entry.bFloorHolePipe)
+					{
+						TArray<UFGPipeConnectionComponentBase*> PipeConns;
+						Pipe->GetComponents<UFGPipeConnectionComponentBase>(PipeConns);
+						Data->PipeAutoConnectConn0 = PipeConns.Num() > 0 ? PipeConns[0] : nullptr;
+						if (PipeConns.Num() == 0)
+						{
+							UE_LOG(LogSmartFoundations, Warning,
+								TEXT("[MP-334] SpawnConduitPlanChildren: pipe entry %d has no connection component for the junction-branch discriminator; it will take the floor-hole branch."),
+								EntryIndex);
+						}
+					}
+				}
+			}
+			else
+			{
+				Pipe->Tags.AddUnique(FName(TEXT("SF_StackableChild")));
+				if (Data)
+				{
+					Data->bIsStackablePipe = true;
+					Data->StackablePipeIndex = FMath::Max(0, Entry.StackIndex);
+				}
+			}
 
-		Belt->FinishSpawning(FTransform(Entry.Rotation, Entry.Location));
-		Belt->SetActorEnableCollision(false);
-		Belt->SetSplineDataAndUpdate(Entry.SplinePoints);
+			Pipe->FinishSpawning(FTransform(Entry.Rotation, Entry.Location));
+			Pipe->SetActorEnableCollision(false);
+			Pipe->SetSplineDataAndUpdate(Entry.SplinePoints);
+			Parent->AddChild(Pipe, Pipe->GetFName());
+			Pipe->SetSplineDataAndUpdate(Entry.SplinePoints);
+			Conduit = Pipe;
+			break;
+		}
 
-		Parent->AddChild(Belt, Belt->GetFName());
+		case ESFConduitPlanKind::Wire:
+		{
+			UFGPowerConnectionComponent* C0 = SF_ResolvePowerConnectionAt(Parent, Entry.WireStart, 100.0f);
+			UFGPowerConnectionComponent* C1 = SF_ResolvePowerConnectionAt(Parent, Entry.WireEnd, 100.0f);
+			if (!C0 || !C1 || C0 == C1)
+			{
+				UE_LOG(LogSmartFoundations, Warning,
+					TEXT("[MP-334] SpawnConduitPlanChildren: wire entry %d endpoints unresolved (C0=%s, C1=%s) - skipped."),
+					EntryIndex, *GetNameSafe(C0), *GetNameSafe(C1));
+				break;
+			}
 
-		// Defensive re-apply AFTER AddChild (Extend-proven: vanilla can reset spline data on
-		// child registration; an empty mSplineData crashes OnRep_SplineData/UpdateSplineComponent).
-		Belt->SetSplineDataAndUpdate(Entry.SplinePoints);
+			ASFWireHologram* Wire = World->SpawnActor<ASFWireHologram>(
+				ASFWireHologram::StaticClass(), Entry.WireStart, FRotator::ZeroRotator, SpawnParams);
+			if (!Wire)
+			{
+				break;
+			}
+			Wire->SetReplicates(false);
+			Wire->SetReplicateMovement(false);
+			Wire->SetBuildClass(Entry.BuildClass);
+			Wire->SetRecipe(Entry.Recipe);
+			Wire->Tags.AddUnique(FName(TEXT("SF_PowerAutoConnectChild")));
+			USFHologramDataService::DisableValidation(Wire);
+			Wire->FinishSpawning(FTransform(FRotator::ZeroRotator, Entry.WireStart));
+			// Sets mConnections[0/1]; vanilla AFGWireHologram::Construct builds the AFGBuildableWire
+			// between them, remapping hologram-owned connections to the built poles (SP mechanism).
+			Wire->SetupWirePreview(C0, C1);
+			Parent->AddChild(Wire, Wire->GetFName());
+			Conduit = Wire;
+			break;
+		}
 
-		++Spawned;
+		default:
+			break;
+		}
+
+		if (Conduit)
+		{
+			++Spawned;
+		}
+		else
+		{
+			UE_LOG(LogSmartFoundations, Warning,
+				TEXT("[MP-334] SpawnConduitPlanChildren: entry %d (kind=%d) failed to spawn."),
+				EntryIndex, (int32)Entry.Kind);
+		}
 	}
 
 	UE_LOG(LogSmartFoundations, Display,
-		TEXT("[MP-334] SpawnBeltPlanChildren: %d/%d staged belt(s) attached to %s; vanilla construct will build + wire them."),
-		Spawned, Spec.BeltPlan.Num(), *Parent->GetName());
+		TEXT("[MP-334] SpawnConduitPlanChildren: %d/%d staged conduit(s) attached to %s; vanilla construct will build + wire them."),
+		Spawned, Spec.ConduitPlan.Num(), *Parent->GetName());
 
 	return Spawned;
 }

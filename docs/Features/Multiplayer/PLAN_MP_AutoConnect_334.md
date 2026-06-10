@@ -104,17 +104,51 @@ endpoint resolution is implicit in the belt's geometry.
   `out_children` -> the spec group proxy registers them -> Smart Dismantle groups include them.
 - **Cost**: the GetCost hook appends `Spec.BeltPlanCost` after the cell scaling - the staged
   belts are charged with the grid (closes the unpaid-belt interim gap).
-- Same pattern extends to pipes (junction plan) and power (wire endpoint pairs - even simpler:
-  two connection components + wire class). NOT yet implemented - pipes/power previews are still
-  stripped at fire and not rebuilt.
+- Belt-plan live-validated 2026-06-09/10: merger AND splitter rows, building belts + manifold
+  lanes all built/wired/replicated/charged; belts in the Smart Dismantle group (post-construct
+  sweep - spline buildables never reach the ConfigureActor base body the pre-BeginPlay hook
+  patches; safe because conveyors are never lightweight).
 
-## Live-test checkpoints (increment C, belt plan)
+## Increment D (2026-06-10): plan GENERALIZED to all conduit families - awaiting live test
 
-1. Client builds a 1x1 merger next to a factory with auto-connect belt previews -> belts BUILD
-   server-side, wired (check `[MP-334] SpawnBeltPlanChildren` + flow), replicate to the client,
-   and are charged (test with build costs on).
-2. Client builds a merger ROW (the 5-merger manifold case) -> building belts AND merger-to-merger
-   manifold lanes all build + wire.
-3. The built belts are part of the Smart Dismantle group (group-dismantle removes belts too).
-4. SP regression: auto-connect belts wire exactly as before (capture/stage path is NM_Client-only).
-5. Pipes/power: still expected NOT to wire in MP (next increments); no crashes, no ghosts.
+`FSFBeltPlanEntry` -> `FSFConduitPlanEntry` with `ESFConduitPlanKind`
+{Belt, Pipe, StackableBelt, StackablePipe, Wire}; `Spec.ConduitPlan` / `Spec.ConduitPlanCost`.
+
+- **Capture** is now a single uniform walk of the parent's tagged preview children (all families
+  attach to the parent - proven by the fire-hook strip): belt/pipe kinds snapshot the routed
+  spline; wires snapshot the two endpoint connection LOCATIONS (`AFGWireHologram::GetConnection`);
+  pipe entries record `bFloorHolePipe` (registry `PipeAutoConnectConn0 == null`); stackable kinds
+  record their run index.
+- **Replay** mirrors each family's client spawn recipe:
+  - Belt: as before (`SF_BeltAutoConnectChild`, geometric self-wiring in Construct).
+  - StackableBelt: `SF_StackableChild` + registry chain identity (synthetic high-offset
+    StackChainId) -> stack-chain Construct path (coincidence wiring + #341 in-frame chain
+    unification, whose parent hook is also live server-side).
+  - Pipe: `SF_PipeAutoConnectChild` + registry `bIsPipeAutoConnectChild`;
+    `PipeAutoConnectConn0` is ONLY a branch discriminator at the construct seam (never
+    dereferenced) - set to one of the pipe holo's own components for the junction branch
+    (deferred next-tick geometric wiring), left null for the floor-hole branch (passthrough
+    snap registration by proximity).
+  - StackablePipe: `SF_StackableChild` + `bIsStackablePipe` (overlap wiring + network merge in
+    Construct; the OnActorSpawned manual build path dedups via `bHasBeenConstructed`).
+  - Wire: resolve both endpoints by location against the PRE-construct hologram set (parent +
+    grid children; vanilla remaps hologram connections to built poles - the SP mechanism), fall
+    back to built world actors; spawn `ASFWireHologram` + `SetupWirePreview(C0, C1)`; vanilla
+    Construct builds the AFGBuildableWire.
+- Server-side safety nets that also run with authority: deferred belt wiring (next-tick,
+  distributor parents), deferred pipe wiring (next-tick), stackable-pipe manual build+connect.
+
+## Live-test checkpoints (increment D, all conduit families)
+
+Belt checkpoints (merger/splitter rows, manifold lanes, dismantle group, costs) PASSED 2026-06-10.
+
+1. Power-pole grid -> wires appear between grid poles on both sides, charged; check
+   `[MP-334] SpawnConduitPlanChildren` and no "wire entry ... unresolved" warnings.
+2. Pipe junction grid next to fluid buildings -> pipes build + wire (deferred wiring log:
+   "PIPE AUTO-CONNECT DEFERRED WIRING"); floor-hole (passthrough) pipe placement wires through
+   the foundation.
+3. Stackable conveyor pole grid -> run belts build + wire + unify into chains (#341 in-frame log);
+   wall poles / ceiling mounts / standard conveyor poles same.
+4. Stackable pipe support grid -> run pipes build + wire + networks merge.
+5. All conduits join the Smart Dismantle group (post-construct sweep covers every built child).
+6. SP regression sweep: all auto-connect families unchanged (capture/stage is NM_Client-only).
