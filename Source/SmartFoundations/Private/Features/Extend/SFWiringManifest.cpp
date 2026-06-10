@@ -825,15 +825,18 @@ int32 FSFWiringManifest::CreateChainActors(UWorld* World, const TMap<FString, AA
         }
     }
 
-    // From AdditionalActors (lane_segment, belt_segment, lift_segment from JSON build)
+    // From AdditionalActors — collect by TYPE, like RebuildPipeNetworks does.
+    // Per-clone scaled-extend maps carry sc{i}_-prefixed keys, which a
+    // StartsWith("lane_segment"...) role filter never matches: clone belts then
+    // skip chain registration entirely (chains=0) while ConfigureComponents has
+    // already deferred AddConveyor to this pass. Connected-but-unchained belts
+    // are the THESIS factory-tick hazard class (live dedi AV in
+    // AFGBuildableSubsystem::TickFactoryActors, 2026-06-10).
     for (const auto& Pair : AdditionalActors)
     {
-        if (Pair.Key.StartsWith(TEXT("lane_segment")) || Pair.Key.StartsWith(TEXT("belt_segment")) || Pair.Key.StartsWith(TEXT("lift_segment")))
+        if (AFGBuildableConveyorBase* Conveyor = Cast<AFGBuildableConveyorBase>(Pair.Value))
         {
-            if (AFGBuildableConveyorBase* Conveyor = Cast<AFGBuildableConveyorBase>(Pair.Value))
-            {
-                AllConveyors.AddUnique(Conveyor);
-            }
+            AllConveyors.AddUnique(Conveyor);
         }
     }
 

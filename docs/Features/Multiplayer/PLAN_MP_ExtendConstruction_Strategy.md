@@ -201,7 +201,30 @@ heterogeneous topologies (refineries), Restore, costs in non-creative, diagnosti
 Per the workstream rule, nothing ships until **all** features work in MP; the oversized-grid guard
 remains the interim safety measure.
 
-## OPEN: dedi factory-tick crash after blender scaled extend (2026-06-10 07:22)
+## ROOT-CAUSED (fix pending live re-test): dedi factory-tick crash after blender scaled extend (2026-06-10 07:22)
+
+**Root cause (found 2026-06-10 by code inspection, no dump needed):**
+`FSFWiringManifest::CreateChainActors` collected conveyors from the `AdditionalActors` map by KEY
+role prefix (`StartsWith("lane_segment"/"belt_segment"/"lift_segment")`). The prefixed-key wiring
+fix (68ba8d5) switched the per-clone maps to `sc{i}_`-prefixed keys, so the filter matched NOTHING:
+`AllConveyors == 0`, early-return 0 — the literal `chains=0` in every clone log line. Meanwhile
+extend belts deliberately SKIP `AddConveyor` in `ConfigureComponents`
+(SFConveyorBeltHologram.cpp:1757, "CreateChainActors will handle it"), so every scaled-clone belt
+was connection-wired but NEVER registered with the conveyor subsystem — the exact
+connected-but-unchained THESIS hazard class → factory-tick AV ~2.5 min later. (A regression
+introduced BY 68ba8d5; affects SP scaled extend identically. `RebuildPipeNetworks` was immune
+because it collects by `Cast<AFGBuildablePipeline>` regardless of key — which is why pipes worked.)
+
+**Fix:** collect conveyors by TYPE (`Cast<AFGBuildableConveyorBase>` over all `AdditionalActors`
+values), mirroring the pipe pass. Per-clone neighbor chains exist by pass order (parent set rebuilt
+first with unprefixed keys), so `InvalidateAndRebuildChains` ingests the fresh belts via the proven
+orphan re-registration (SFChainActorService.cpp:1572).
+
+**Re-test gate:** rebuild the blender scaled extend on the dedi, confirm per-clone `chains>0` in
+the wiring log + WiringManifest.json, verify chain integrity via SmartMCP (0 zombie / 0 orphan),
+and let it tick well past the ~2.5 min crash window.
+
+### Original crash record (pre-diagnosis)
 
 Repro context: blender scaled extend (7 clone sets, 151 children, every clone wired 23 incl.
 12 pipe connections) built clean at 07:20:10 and ticked for ~2.5 minutes. At 07:22:42 the player
