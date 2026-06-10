@@ -748,10 +748,23 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 						}
 
 						FSFReservedInputsMap ReservedInputs;
-						int32 BeltPreviews = AutoConnect->ProcessSingleDistributor(self, &ReservedInputs).Num();
-						for (AFGHologram* Distributor : DistributorChildren)
+						int32 BeltPreviews = 0;
+
+						TArray<AFGHologram*> AllDistributors;
+						AllDistributors.Add(self);
+						AllDistributors.Append(DistributorChildren);
+						for (AFGHologram* Distributor : AllDistributors)
 						{
-							BeltPreviews += AutoConnect->ProcessSingleDistributor(Distributor, &ReservedInputs).Num();
+							// [MP-334] TEMP diagnostic: the first live round returned 0 previews for
+							// every distributor while the aim-time pipeline succeeds on the same
+							// hologram - log the raw inputs of the decision at this exact moment.
+							const FVector DistLoc = Distributor->GetActorLocation();
+							const int32 NearbyCount = SS->FindNearbyBuildings(DistLoc, 2500.0f).Num();
+							const int32 Made = AutoConnect->ProcessSingleDistributor(Distributor, &ReservedInputs).Num();
+							BeltPreviews += Made;
+							UE_LOG(LogSmartFoundations, Display,
+								TEXT("[MP-334]   distributor %s at %s: nearbyBuildings=%d -> beltPreviews=%d"),
+								*Distributor->GetName(), *DistLoc.ToCompactString(), NearbyCount, Made);
 						}
 
 						UE_LOG(LogSmartFoundations, Display,
