@@ -33,6 +33,7 @@
 // MP spec-based construction: class-agnostic hooks + RCO spec staging
 #include "Holograms/Core/SFScalingSpecExpansion.h"
 #include "Data/SFBuildableSizeRegistry.h"
+#include "Data/SFHologramDataRegistry.h"   // [EXTEND-MP] JsonCloneId wiring anchors post-construct
 #include "Subsystem/SFHologramHelperService.h"
 #include "SFRCO.h"
 #include "FGPlayerController.h"
@@ -534,21 +535,9 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 						USFExtendService* Extend = SS ? SS->GetExtendService() : nullptr;
 						if (Extend)
 						{
-							const FSFExtendTopology& Topo = Extend->GetLastExtendTopology();
-							if (Topo.bIsValid && Topo.SourceBuilding.IsValid())
-							{
-								const FVector FinalOffset =
-									Holo->GetActorLocation() - Topo.SourceBuilding->GetActorLocation();
-								const FSFSourceTopology Source = FSFSourceTopology::CaptureFromTopology(Topo);
-								ExtendSpec.Clone = FSFCloneTopology::FromSource(Source, FinalOffset);
-								ExtendSpec.Cost = Holo->GetCost(true); // parent + preview children
-								ExtendSpec.BuildClass = Holo->GetBuildClass();
-								ExtendSpec.SourceBuilding = Topo.SourceBuilding.Get();
-								// Scaled Extend: ship the per-clone PARAMETERS; the server re-runs
-								// the same spawn pipeline against its own authoritative walk.
-								Extend->GetScaledClonePlanForCommit(ExtendSpec.ScaledClones);
-								ExtendSpec.bValid = ExtendSpec.Clone.ChildHolograms.Num() > 0;
-							}
+							// Fresh clone topology at the FINAL fire position + cost + scaled
+							// clone parameters (the same capture the throttled pre-stage uses).
+							Extend->BuildCommitSpecForMP(Holo, ExtendSpec);
 						}
 
 						if (ExtendSpec.bValid)
@@ -728,6 +717,8 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 					// grid does.
 
 					// Stage (or clear) the spec server-side BEFORE the construct RPC goes out.
+					// Also stage an Extend-commit CLEAR: a pre-staged commit from an earlier
+					// (cancelled) Extend session must never be consumed by this plain fire.
 					bool bStaged = false;
 					if (APawn* InstigatorPawn = Holo->GetConstructionInstigator())
 					{
@@ -736,6 +727,7 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 							if (USFRCO* RCO = PC->GetRemoteCallObjectOfClass<USFRCO>())
 							{
 								RCO->Server_StageScalingSpec(Spec);
+								RCO->Server_StageExtendCommit(FSFExtendCommitSpec());
 								bStaged = true;
 							}
 						}
@@ -1036,6 +1028,65 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 			AActor* BuiltParent = scope(self, out_children, constructionID);
 
 			GSFActiveSpecGroupProxy.Reset();
+
+			// [EXTEND-MP] Register the clone-id -> built-actor anchors for the wiring pass. In SP
+			// this lives in ASFFactoryHologram::Construct (the swapped parent): it position-matches
+			// every child hologram carrying a JsonCloneId (the scaled clone FACTORIES,
+			// "sc{i}_factory" - vanilla holograms whose own Construct knows nothing of clone ids)
+			// to its built actor. The server constructs through the VANILLA hologram, so those
+			// anchors never registered and the deferred wiring resolved NOTHING - a scaled run
+			// built geometrically perfect but fully unwired (live 2026-06-10). Same seam, same
+			// position-match, with the self-registered skip (#288).
+			if (bHasExtend)
+			{
+				if (USFSubsystem* SS = USFSubsystem::Get(self->GetWorld()))
+				{
+					if (USFExtendService* Extend = SS->GetExtendService())
+					{
+						int32 RegisteredAnchors = 0;
+						for (AFGHologram* ChildHolo : self->mChildren)
+						{
+							if (!ChildHolo)
+							{
+								continue;
+							}
+							FSFHologramData* ChildData = USFHologramDataRegistry::GetData(ChildHolo);
+							if (!ChildData || ChildData->JsonCloneId.IsEmpty())
+							{
+								continue;
+							}
+							if (Extend->GetBuiltActorByCloneId(ChildData->JsonCloneId) != nullptr)
+							{
+								continue; // self-registered during its own Construct (exact match)
+							}
+							const FVector ChildPos = ChildHolo->GetActorLocation();
+							AActor* BestMatch = nullptr;
+							float BestDist = 200.0f;
+							for (AActor* ChildActor : out_children)
+							{
+								if (!ChildActor)
+								{
+									continue;
+								}
+								const float Dist = FVector::Dist(ChildActor->GetActorLocation(), ChildPos);
+								if (Dist < BestDist)
+								{
+									BestDist = Dist;
+									BestMatch = ChildActor;
+								}
+							}
+							if (BestMatch)
+							{
+								Extend->RegisterJsonBuiltActor(ChildData->JsonCloneId, BestMatch);
+								++RegisteredAnchors;
+							}
+						}
+						UE_LOG(LogSmartFoundations, Display,
+							TEXT("[EXTEND-MP] Registered %d clone-id wiring anchor(s) post-construct for %s."),
+							RegisteredAnchors, *GetNameSafe(BuiltParent));
+					}
+				}
+			}
 
 			// [MP-334] Post-construct sweep: spline buildables (the plan belts) never reach the
 			// AFGBuildableHologram::ConfigureActor BASE body our pre-BeginPlay hook patches (the

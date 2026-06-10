@@ -473,10 +473,12 @@ void USFSubsystem::StageExtendCommitForPlayer(APlayerController* PC, const FSFEx
 	if (Spec.bValid)
 	{
 		StagedExtendCommits.Add(PC, Spec);
+		StagedExtendCommitTimes.Add(PC, FPlatformTime::Seconds());
 	}
 	else
 	{
 		StagedExtendCommits.Remove(PC);
+		StagedExtendCommitTimes.Remove(PC);
 	}
 }
 
@@ -496,6 +498,13 @@ bool USFSubsystem::PeekExtendCommitForInstigator(APawn* Instigator, UClass* Buil
 	{
 		return false;
 	}
+	// Freshness TTL: a live session pre-stages every ~250ms; an entry older than this belongs to
+	// an abandoned session whose CLEAR was lost - never consume it into an unrelated construct.
+	const double* StagedAt = StagedExtendCommitTimes.Find(PC);
+	if (!StagedAt || FPlatformTime::Seconds() - *StagedAt > 10.0)
+	{
+		return false;
+	}
 	OutSpec = *Staged;
 	return true;
 }
@@ -506,7 +515,9 @@ bool USFSubsystem::ConsumeExtendCommitForInstigator(APawn* Instigator, UClass* B
 	{
 		return false;
 	}
-	StagedExtendCommits.Remove(Cast<APlayerController>(Instigator->GetController()));
+	APlayerController* PC = Cast<APlayerController>(Instigator->GetController());
+	StagedExtendCommits.Remove(PC);
+	StagedExtendCommitTimes.Remove(PC);
 	return true;
 }
 

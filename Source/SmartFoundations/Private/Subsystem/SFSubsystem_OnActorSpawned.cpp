@@ -135,7 +135,9 @@ void USFSubsystem::OnActorSpawned(AActor* SpawnedActor)
 							return;
 						}
 
-						UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 EXTEND: Deferred connection wiring executing for %s"), *WeakFactory->GetName());
+						// [EXTEND-MP] Display level while MP Extend validates: this is the wiring
+						// pass trigger and the dedi log is the only visibility (Verbose stripped).
+						UE_LOG(LogSmartFoundations, Display, TEXT("[EXTEND-MP] Deferred connection wiring executing for %s"), *WeakFactory->GetName());
 						// NOTE: Child holograms (belts, lifts, pipes) are built by vanilla via AddChild
 						// We just need to wire their connections here
 

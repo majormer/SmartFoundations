@@ -244,6 +244,23 @@ public:
      *  rotations / grid coords) into the commit spec. Empty when Scaled Extend is not active. */
     void GetScaledClonePlanForCommit(TArray<struct FSFExtendCommitScaledClone>& OutClones) const;
 
+    /** [EXTEND-MP] Client-side: build the full Extend commit spec from the live session (fresh
+     *  clone topology at the hologram's CURRENT position, preview cost, source building, scaled
+     *  clone parameters). Returns false when no valid Extend session backs the hologram. */
+    bool BuildCommitSpecForMP(AFGHologram* ParentHologram, struct FSFExtendCommitSpec& OutSpec) const;
+
+    /** [EXTEND-MP] Client-side: PRE-STAGE the commit on the server (throttled, ~4/s) while the
+     *  Extend preview is active. The commit RPC is LARGE (spline data -> fragmented bunches) and
+     *  the construct RPC is tiny; staged-at-fire lost the cross-channel race live (2026-06-10:
+     *  rotated scaled fire built a bare parent). Continuous pre-staging makes the commit long
+     *  since staged when the fire lands; the fire-time stage remains as the final refresh. */
+    void MaybeStageCommitForMP(AFGHologram* ParentHologram);
+
+    /** [EXTEND-MP] Client-side: stage an explicit CLEAR (invalid commit) so a stale pre-staged
+     *  commit can never be consumed by a later non-Extend construct. Called on session teardown
+     *  and on every non-Extend fire of a scalable class. */
+    void StageCommitClearForMP();
+
     /** [EXTEND-MP] Server-side: reconstruct the Scaled Extend clone sets for a staged commit.
      *  Re-walks the SOURCE building's graph (authoritative on the server), installs the shipped
      *  per-clone parameters as ScaledExtendClones, and re-runs the SAME spawn pipeline the SP
@@ -663,6 +680,9 @@ private:
     TWeakObjectPtr<AFGBuildable> PendingTopologyRequestBuilding;
 
     double LastTopologyRequestTime = 0.0;
+
+    /** [EXTEND-MP] Pre-stage throttle for the commit RPC. */
+    double LastCommitStageTime = 0.0;
 
     TSharedPtr<FSFCloneTopology> LastCloneTopology;
 

@@ -127,6 +127,10 @@ void USFExtendService::ClearExtendState()
 {
     if (bHasValidTarget)
     {
+        // [EXTEND-MP] Stage an explicit commit CLEAR (client-only no-op otherwise): a pre-staged
+        // commit must never survive the session it belonged to.
+        StageCommitClearForMP();
+
         // CRITICAL: Unlock the extend hologram BEFORE any cleanup.
         // This is the hologram that was locked at activation — must be unlocked
         // so the build gun can reposition it when the player aims elsewhere.
@@ -704,6 +708,80 @@ void USFExtendService::GetScaledClonePlanForCommit(TArray<FSFExtendCommitScaledC
         Entry.GridY = Clone.GridY;
         Entry.bIsSeed = Clone.bIsSeed;
         OutClones.Add(Entry);
+    }
+}
+
+bool USFExtendService::BuildCommitSpecForMP(AFGHologram* ParentHologram, FSFExtendCommitSpec& OutSpec) const
+{
+    OutSpec = FSFExtendCommitSpec();
+    if (!ParentHologram)
+    {
+        return false;
+    }
+    const FSFExtendTopology& Topo = GetLastExtendTopology();
+    if (!Topo.bIsValid || !Topo.SourceBuilding.IsValid())
+    {
+        return false;
+    }
+
+    // Re-emit a FRESH clone topology at the hologram's CURRENT position - the preview's stored
+    // topology has stale transforms (children are re-positioned while aiming).
+    const FVector FinalOffset = ParentHologram->GetActorLocation() - Topo.SourceBuilding->GetActorLocation();
+    const FSFSourceTopology Source = FSFSourceTopology::CaptureFromTopology(Topo);
+    OutSpec.Clone = FSFCloneTopology::FromSource(Source, FinalOffset);
+    OutSpec.Cost = ParentHologram->GetCost(true); // parent + preview children, exact preview cost
+    OutSpec.BuildClass = ParentHologram->GetBuildClass();
+    OutSpec.SourceBuilding = Topo.SourceBuilding.Get();
+    GetScaledClonePlanForCommit(OutSpec.ScaledClones);
+    OutSpec.bValid = OutSpec.Clone.ChildHolograms.Num() > 0;
+    return OutSpec.bValid;
+}
+
+void USFExtendService::MaybeStageCommitForMP(AFGHologram* ParentHologram)
+{
+    if (!Subsystem.IsValid() || !FSFNetworkHelper::IsClient(Subsystem->GetWorld()))
+    {
+        return;
+    }
+    const double Now = FPlatformTime::Seconds();
+    if (Now - LastCommitStageTime < 0.25)
+    {
+        return;
+    }
+    LastCommitStageTime = Now;
+
+    FSFExtendCommitSpec Spec;
+    if (!BuildCommitSpecForMP(ParentHologram, Spec))
+    {
+        return;
+    }
+    if (UWorld* World = Subsystem->GetWorld())
+    {
+        if (AFGPlayerController* PC = Cast<AFGPlayerController>(World->GetFirstPlayerController()))
+        {
+            if (USFRCO* RCO = PC->GetRemoteCallObjectOfClass<USFRCO>())
+            {
+                RCO->Server_StageExtendCommit(Spec);
+            }
+        }
+    }
+}
+
+void USFExtendService::StageCommitClearForMP()
+{
+    if (!Subsystem.IsValid() || !FSFNetworkHelper::IsClient(Subsystem->GetWorld()))
+    {
+        return;
+    }
+    if (UWorld* World = Subsystem->GetWorld())
+    {
+        if (AFGPlayerController* PC = Cast<AFGPlayerController>(World->GetFirstPlayerController()))
+        {
+            if (USFRCO* RCO = PC->GetRemoteCallObjectOfClass<USFRCO>())
+            {
+                RCO->Server_StageExtendCommit(FSFExtendCommitSpec()); // bValid=false = clear
+            }
+        }
     }
 }
 
@@ -1331,6 +1409,11 @@ void USFExtendService::RefreshExtension(AFGHologram* SourceHologram, bool bForce
     {
         ActiveHologram = SourceHologram;
     }
+
+    // [EXTEND-MP] Pre-stage the commit while the preview is active (throttled, client-only no-op
+    // otherwise): the commit RPC is large and lost the cross-channel race against the tiny
+    // construct RPC when staged only at fire time (live 2026-06-10).
+    MaybeStageCommitForMP(ActiveHologram);
 
     if (!IsValid(ActiveHologram))
     {

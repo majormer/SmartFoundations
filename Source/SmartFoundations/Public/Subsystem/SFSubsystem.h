@@ -846,6 +846,11 @@ private:
     /** Server-only: pending Extend commit per player controller (transient, never saved). */
     TMap<TWeakObjectPtr<APlayerController>, FSFExtendCommitSpec> StagedExtendCommits;
 
+    /** Server-only: staging time per commit ([EXTEND-MP] freshness TTL - commits are PRE-staged
+     *  continuously while the preview is active, so a live session refreshes every ~250ms; an
+     *  entry older than the TTL is an abandoned session and must not be consumed). */
+    TMap<TWeakObjectPtr<APlayerController>, double> StagedExtendCommitTimes;
+
 public:
 
 // ========================================
