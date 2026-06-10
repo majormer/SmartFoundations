@@ -812,6 +812,35 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 			AActor* BuiltParent = scope(self, out_children, constructionID);
 
 			GSFActiveSpecGroupProxy.Reset();
+
+			// [MP-334] Post-construct sweep: spline buildables (the plan belts) never reach the
+			// AFGBuildableHologram::ConfigureActor BASE body our pre-BeginPlay hook patches (the
+			// vanilla spline-hologram chain configures them elsewhere - live finding 2026-06-09:
+			// proxy registered the 4 mergers but none of the 7 belts). Registering them HERE is
+			// safe because conveyors are real actors, never lightweight - the pre-BeginPlay window
+			// only matters for lightweight conversion (foundations). The GetBlueprintProxy() guard
+			// skips everything Hook C already registered.
+			if (GroupProxy)
+			{
+				for (AActor* Child : out_children)
+				{
+					AFGBuildable* ChildBuildable = Cast<AFGBuildable>(Child);
+					if (ChildBuildable && !ChildBuildable->GetBlueprintProxy())
+					{
+						ChildBuildable->SetBlueprintProxy(GroupProxy);
+						GroupProxy->RegisterBuildable(ChildBuildable);
+					}
+				}
+				if (AFGBuildable* ParentBuildable = Cast<AFGBuildable>(BuiltParent))
+				{
+					if (!ParentBuildable->GetBlueprintProxy())
+					{
+						ParentBuildable->SetBlueprintProxy(GroupProxy);
+						GroupProxy->RegisterBuildable(ParentBuildable);
+					}
+				}
+			}
+
 			if (GroupProxy)
 			{
 				UE_LOG(LogSmartFoundations, Display,
