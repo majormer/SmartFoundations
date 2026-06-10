@@ -885,6 +885,23 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 			}
 		});
 
+	// Symmetric detector: a REMOVAL mid-tick can shrink-reallocate mFactoryBuildings, freeing the
+	// buffer under the ParallelFor workers just like a growth realloc (9th repro: Add detector
+	// silent, pre-tick scrub valid -> the mutation, whatever it is, happens DURING the tick).
+	SUBSCRIBE_METHOD(
+		AFGBuildableSubsystem::RemoveBuildable,
+		[](auto& scope, AFGBuildableSubsystem* self, AFGBuildable* buildable)
+		{
+			if (bInsideFactoryTick)
+			{
+				UE_LOG(LogSmartFoundations, Error,
+					TEXT("[CHAIN-DIAG] RemoveBuildable(%s / %s) DURING TickFactory! A shrink-realloc frees the buffer under the ParallelFor - THE freed-buffer tick AV. Callstack follows."),
+					buildable ? *buildable->GetName() : TEXT("null"),
+					buildable ? *GetNameSafe(buildable->GetClass()) : TEXT("null"));
+				FDebug::DumpStackTraceToLog(ELogVerbosity::Error);
+			}
+		});
+
 	// [CHAIN-FIX] Destruction chokepoint guard, ALL buildables. cdb on the 5th freed-pointer tick
 	// AV (2026-06-10) identified the crashing loop: TickFactoryActors' lambda walks
 	// mFactoryBuildings (subsystem +0x3C0, confirmed via PDB) and virtual-calls each entry - the
