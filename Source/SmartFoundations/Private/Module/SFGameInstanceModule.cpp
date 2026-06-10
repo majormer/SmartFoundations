@@ -500,6 +500,31 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 				return;
 			}
 
+			// [EXTEND-MP] INTERIM GUARD until the Extend commit is ported (slice 2): a client
+			// fire with Extend clone children serializes them into the construct message, and the
+			// recipe-less belt/lift clones assert the CLIENT in SerializeConstructMessage (live
+			// crash 2026-06-10: "Assertion failed: hologramRecipe" via the pending-ghost path in
+			// SetupPendingConstructionHologram). Refuse the fire; the preview stays live.
+			{
+				static const FName ExtendChildTag(TEXT("SF_ExtendChild"));
+				for (AFGHologram* Child : Holo->GetHologramChildren())
+				{
+					if (Child && Child->Tags.Contains(ExtendChildTag))
+					{
+						UE_LOG(LogSmartFoundations, Display,
+							TEXT("[EXTEND-MP] Refused client Extend fire on %s: the Extend commit is not ported to multiplayer yet (slice 2)."),
+							*Holo->GetName());
+						if (GEngine)
+						{
+							GEngine->AddOnScreenDebugMessage(-1, 6.0f, FColor::Orange,
+								TEXT("Smart!: Extend building in multiplayer is not supported yet."));
+						}
+						scope.Cancel();
+						return;
+					}
+				}
+			}
+
 			const bool bSpecEnabled = SFScalingSpecExpansion::IsSpecConstructionEnabled();
 
 			// [MP-SPEC] Capture the spec AND the auto-connect belt plan (#334) BEFORE the strip
