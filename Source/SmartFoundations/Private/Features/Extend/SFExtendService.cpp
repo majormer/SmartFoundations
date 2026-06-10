@@ -22,6 +22,9 @@
 #include "Services/SFRecipeManagementService.h"
 #include "Subsystem/SFSubsystem.h"
 #include "Subsystem/SFHologramDataService.h"
+#include "Core/Helpers/SFNetworkHelper.h"   // [EXTEND-MP] IsClient (server-walk topology branch)
+#include "SFRCO.h"                          // [EXTEND-MP] Server_RequestExtendTopology
+#include "FGPlayerController.h"
 // NOTE: SFRecipeCostInjector.h removed - child holograms automatically aggregate costs via GetCost()
 #include "Services/RadarPulse/SFRadarPulseService.h"
 #include "SmartFoundations.h"  // For LogSmartExtend
@@ -607,6 +610,58 @@ TArray<ESFExtendDirection> USFExtendService::GetValidDirections() const
 
 bool USFExtendService::WalkTopology(AFGBuildable* SourceBuilding)
 {
+    // [EXTEND-MP] A network client cannot walk the graph locally: mConnectedComponent is
+    // UPROPERTY(SaveGame) - server-only, NOT replicated - so GetConnection() is null on clients
+    // by design (live-diagnosed 2026-06-08: "2 factory connectors, 0 with resolved
+    // GetConnection()"). Ask the SERVER to walk via the USFRCO topology request and consume the
+    // cached reply here: activation calls WalkTopology every tick while aiming, so returning
+    // false until the reply lands makes the flow async with zero restructuring. The reply's
+    // actor/component references are replicated objects, so they resolve against local proxies.
+    if (Subsystem.IsValid() && FSFNetworkHelper::IsClient(Subsystem->GetWorld()))
+    {
+        const double Now = FPlatformTime::Seconds();
+
+        // Cached reply for THIS building, still fresh?
+        if (CachedServerTopologyBuilding.Get() == SourceBuilding
+            && Now - CachedServerTopologyTime < 3.0)
+        {
+            if (!CachedServerTopology.bIsValid)
+            {
+                return false; // negative result cached: nothing to extend here
+            }
+            if (TopologyService)
+            {
+                TopologyService->InjectTopology(CachedServerTopology);
+            }
+            LastExtendTopology = CachedServerTopology;
+            return true;
+        }
+
+        // Not cached (or stale): fire a throttled server request and bail for this tick.
+        if (PendingTopologyRequestBuilding.Get() != SourceBuilding
+            || Now - LastTopologyRequestTime > 1.0)
+        {
+            bool bRequested = false;
+            if (UWorld* World = Subsystem->GetWorld())
+            {
+                if (AFGPlayerController* PC = Cast<AFGPlayerController>(World->GetFirstPlayerController()))
+                {
+                    if (USFRCO* RCO = PC->GetRemoteCallObjectOfClass<USFRCO>())
+                    {
+                        RCO->Server_RequestExtendTopology(SourceBuilding);
+                        bRequested = true;
+                    }
+                }
+            }
+            PendingTopologyRequestBuilding = SourceBuilding;
+            LastTopologyRequestTime = Now;
+            UE_LOG(LogSmartExtend, Display,
+                TEXT("[EXTEND-MP] Client requested server topology walk for %s (%s)."),
+                *GetNameSafe(SourceBuilding), bRequested ? TEXT("sent") : TEXT("RCO unavailable"));
+        }
+        return false;
+    }
+
     if (TopologyService)
     {
         const bool bWalked = TopologyService->WalkTopology(SourceBuilding);
@@ -619,6 +674,19 @@ bool USFExtendService::WalkTopology(AFGBuildable* SourceBuilding)
 
     UE_LOG(LogSmartExtend, Verbose, TEXT("Smart!: WalkTopology called but TopologyService not initialized"));
     return false;
+}
+
+void USFExtendService::ReceiveServerTopology(const FSFExtendTopology& Topology)
+{
+    CachedServerTopology = Topology;
+    CachedServerTopologyBuilding = Topology.SourceBuilding;
+    CachedServerTopologyTime = FPlatformTime::Seconds();
+
+    UE_LOG(LogSmartExtend, Display,
+        TEXT("[EXTEND-MP] Client received server topology for %s: valid=%d (beltIn=%d beltOut=%d pipeIn=%d pipeOut=%d power=%d)"),
+        *GetNameSafe(Topology.SourceBuilding.Get()), Topology.bIsValid ? 1 : 0,
+        Topology.InputChains.Num(), Topology.OutputChains.Num(),
+        Topology.PipeInputChains.Num(), Topology.PipeOutputChains.Num(), Topology.PowerPoles.Num());
 }
 
 const FSFExtendTopology& USFExtendService::GetCurrentTopology() const

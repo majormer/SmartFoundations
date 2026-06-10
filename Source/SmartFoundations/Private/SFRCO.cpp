@@ -4,6 +4,7 @@
 #include "SmartFoundations.h"
 #include "Hologram/FGHologram.h"
 #include "Subsystem/SFSubsystem.h"
+#include "Features/Extend/SFExtendService.h"   // [EXTEND-MP] topology walk RPCs
 #include "FGPlayerController.h"  // AFGPlayerController (don't rely on transitive unity-build includes)
 #include "Net/UnrealNetwork.h"
 
@@ -254,6 +255,59 @@ bool USFRCO::Server_StageScalingSpec_Validate(FSFScalingSpec Spec)
 		}
 	}
 	return true;
+}
+
+// ========================================
+// Extend MP: server-side topology walk
+// ========================================
+
+void USFRCO::Server_RequestExtendTopology_Implementation(AFGBuildable* SourceBuilding)
+{
+	USFSubsystem* Subsystem = USFSubsystem::Get(this);
+	USFExtendService* Extend = IsValid(Subsystem) ? Subsystem->GetExtendService() : nullptr;
+	if (!Extend || !IsValid(SourceBuilding))
+	{
+		UE_LOG(LogSmartFoundations, Warning,
+			TEXT("[EXTEND-MP] Server_RequestExtendTopology: missing extend service (%d) or building (%d)"),
+			Extend ? 1 : 0, IsValid(SourceBuilding) ? 1 : 0);
+		return;
+	}
+
+	FSFExtendTopology Reply;
+	if (Extend->WalkTopology(SourceBuilding))
+	{
+		Reply = Extend->GetCurrentTopology();
+	}
+	else
+	{
+		// Negative reply: tag the building so the client caches "nothing to extend here" briefly
+		// instead of re-requesting every tick while aiming.
+		Reply.Reset();
+		Reply.SourceBuilding = SourceBuilding;
+		Reply.bIsValid = false;
+	}
+
+	UE_LOG(LogSmartFoundations, Display,
+		TEXT("[EXTEND-MP] Server walked topology for %s: valid=%d (beltIn=%d beltOut=%d pipeIn=%d pipeOut=%d power=%d)"),
+		*GetNameSafe(SourceBuilding), Reply.bIsValid ? 1 : 0,
+		Reply.InputChains.Num(), Reply.OutputChains.Num(),
+		Reply.PipeInputChains.Num(), Reply.PipeOutputChains.Num(), Reply.PowerPoles.Num());
+
+	Client_ReceiveExtendTopology(Reply);
+}
+
+bool USFRCO::Server_RequestExtendTopology_Validate(AFGBuildable* SourceBuilding)
+{
+	return true; // null-checked in the implementation; no client-supplied geometry to bound
+}
+
+void USFRCO::Client_ReceiveExtendTopology_Implementation(FSFExtendTopology Topology)
+{
+	USFSubsystem* Subsystem = USFSubsystem::Get(this);
+	if (USFExtendService* Extend = IsValid(Subsystem) ? Subsystem->GetExtendService() : nullptr)
+	{
+		Extend->ReceiveServerTopology(Topology);
+	}
 }
 
 // ========================================

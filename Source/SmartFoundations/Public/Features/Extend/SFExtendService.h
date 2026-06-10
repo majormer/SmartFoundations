@@ -224,6 +224,10 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Smart|Extend")
     const FSFExtendTopology& GetCurrentTopology() const;
 
+    /** [EXTEND-MP] Client-side: store a server-walked topology (USFRCO reply). WalkTopology's
+     *  client branch consumes it on the next activation tick. */
+    void ReceiveServerTopology(const FSFExtendTopology& Topology);
+
     UFUNCTION(BlueprintCallable, Category = "Smart|Extend")
     const FSFExtendTopology& GetLastExtendTopology() const;
 
@@ -617,6 +621,23 @@ private:
 
     UPROPERTY()
     FSFExtendTopology LastExtendTopology;
+
+    // [EXTEND-MP] Client-side cache of the last SERVER-walked topology (USFRCO reply), keyed by
+    // building with a short TTL. bIsValid=false entries are negative results ("nothing to extend
+    // here") cached to stop per-tick request spam while aiming.
+    UPROPERTY()
+    FSFExtendTopology CachedServerTopology;
+
+    UPROPERTY()
+    TWeakObjectPtr<AFGBuildable> CachedServerTopologyBuilding;
+
+    double CachedServerTopologyTime = 0.0;
+
+    /** [EXTEND-MP] Request throttle: last building asked for + when. */
+    UPROPERTY()
+    TWeakObjectPtr<AFGBuildable> PendingTopologyRequestBuilding;
+
+    double LastTopologyRequestTime = 0.0;
 
     TSharedPtr<FSFCloneTopology> LastCloneTopology;
 

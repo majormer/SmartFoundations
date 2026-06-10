@@ -6,6 +6,7 @@
 #include "FGRemoteCallObject.h"
 #include "Features/Spacing/SFSpacingTypes.h"
 #include "Features/Scaling/SFScalingSpec.h"
+#include "Features/Extend/SFExtendTypes.h"   // FSFExtendTopology ([EXTEND-MP] topology RCO)
 #include "Features/Upgrade/SFUpgradeExecutionService.h"
 #include "SFRCO.generated.h"
 
@@ -91,6 +92,26 @@ public:
 	 */
 	UFUNCTION(Server, Reliable, WithValidation)
 	void Server_StageScalingSpec(FSFScalingSpec Spec);
+
+	// ========================================
+	// Extend MP: server-side topology walk
+	// ========================================
+
+	/**
+	 * [EXTEND-MP] Client asks the server to walk the Extend connection topology for a target
+	 * building. A network client cannot walk locally: mConnectedComponent is UPROPERTY(SaveGame)
+	 * (server-only), so GetConnection() is null on clients by design. The server has the
+	 * authoritative graph; it walks and replies with Client_ReceiveExtendTopology. The topology
+	 * references replicated actors + their default-subobject components, so the client resolves
+	 * every reference against its local proxies.
+	 */
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_RequestExtendTopology(class AFGBuildable* SourceBuilding);
+
+	/** [EXTEND-MP] Server's reply: the walked topology (bIsValid=false = nothing to extend,
+	 *  which the client caches briefly as a negative result to avoid request spam). */
+	UFUNCTION(Client, Reliable)
+	void Client_ReceiveExtendTopology(FSFExtendTopology Topology);
 
 	// ========================================
 	// Upgrade Audit RPCs
