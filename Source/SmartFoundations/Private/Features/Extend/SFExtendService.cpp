@@ -724,17 +724,62 @@ bool USFExtendService::BuildCommitSpecForMP(AFGHologram* ParentHologram, FSFExte
         return false;
     }
 
-    // Re-emit a FRESH clone topology at the hologram's CURRENT position - the preview's stored
-    // topology has stale transforms (children are re-positioned while aiming).
-    const FVector FinalOffset = ParentHologram->GetActorLocation() - Topo.SourceBuilding->GetActorLocation();
-    const FSFSourceTopology Source = FSFSourceTopology::CaptureFromTopology(Topo);
-    OutSpec.Clone = FSFCloneTopology::FromSource(Source, FinalOffset);
+    // PARAMETERS ONLY: the clone topology is derived SERVER-side (ReconstructCommitOnServer).
+    // Capturing it here poisons every segment's connections - CaptureBeltChain/CapturePipeChain
+    // read GetConnection(), null on clients - and the wiring manifest comes out empty (live root
+    // cause 2026-06-10: every MP Extend built unwired).
+    OutSpec.ParentOffset = ParentHologram->GetActorLocation() - Topo.SourceBuilding->GetActorLocation();
     OutSpec.Cost = ParentHologram->GetCost(true); // parent + preview children, exact preview cost
     OutSpec.BuildClass = ParentHologram->GetBuildClass();
     OutSpec.SourceBuilding = Topo.SourceBuilding.Get();
     GetScaledClonePlanForCommit(OutSpec.ScaledClones);
-    OutSpec.bValid = OutSpec.Clone.ChildHolograms.Num() > 0;
-    return OutSpec.bValid;
+    OutSpec.bValid = true;
+    return true;
+}
+
+int32 USFExtendService::ReconstructCommitOnServer(AFGHologram* ParentHologram, const FSFExtendCommitSpec& Spec)
+{
+    if (!ParentHologram || !TopologyService)
+    {
+        return 0;
+    }
+
+    SetStoredCloneTopologyForServerCommit(FSFCloneTopology()); // replaced below; keep state coherent
+    SetServerCommitSourceBuilding(Spec.SourceBuilding);
+
+    AFGBuildable* Source = CurrentExtendTarget.Get();
+    if (!Source)
+    {
+        UE_LOG(LogSmartExtend, Warning,
+            TEXT("[EXTEND-MP] ReconstructCommitOnServer: no source building in the commit - nothing reconstructed."));
+        return 0;
+    }
+
+    // Authoritative graph walk: only the SERVER's GetConnection() values are real.
+    if (!TopologyService->WalkTopology(Source))
+    {
+        UE_LOG(LogSmartExtend, Warning,
+            TEXT("[EXTEND-MP] ReconstructCommitOnServer: server topology walk failed for %s."),
+            *GetNameSafe(Source));
+        return 0;
+    }
+
+    const FSFSourceTopology Src = FSFSourceTopology::CaptureFromTopology(TopologyService->GetCurrentTopology());
+    const FSFCloneTopology Clone = FSFCloneTopology::FromSource(Src, Spec.ParentOffset);
+    SetStoredCloneTopologyForServerCommit(Clone);
+
+    TMap<FString, AFGHologram*> SpawnedClones;
+    const int32 NumSpawned = Clone.SpawnChildHolograms(ParentHologram, this, SpawnedClones);
+    const int32 NumWired = Clone.WireChildHologramConnections(SpawnedClones, ParentHologram);
+    UE_LOG(LogSmartFoundations, Display,
+        TEXT("[EXTEND-MP] Server reconstructed %d/%d clone children (%d pre-wired) for %s; vanilla construct will build them."),
+        NumSpawned, Clone.ChildHolograms.Num(), NumWired, *ParentHologram->GetName());
+
+    // Scaled clone sets ride the same server-derived topology (SpawnScaledExtendPreviews
+    // re-captures from the topology service's CurrentTopology, walked above).
+    ReconstructScaledCommitOnServer(ParentHologram, Spec.ScaledClones);
+
+    return NumSpawned;
 }
 
 void USFExtendService::MaybeStageCommitForMP(AFGHologram* ParentHologram)

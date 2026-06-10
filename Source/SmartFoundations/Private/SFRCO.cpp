@@ -327,27 +327,17 @@ void USFRCO::Server_StageExtendCommit_Implementation(FSFExtendCommitSpec Spec)
 	if (Spec.bValid)
 	{
 		UE_LOG(LogSmartFoundations, Display,
-			TEXT("[EXTEND-MP] Server staged Extend commit for %s: %d clone children of %s, %d cost item type(s)."),
-			*GetNameSafe(OwnerPC), Spec.Clone.ChildHolograms.Num(),
+			TEXT("[EXTEND-MP] Server staged Extend commit for %s: offset %s, %d scaled clone(s) of %s, %d cost item type(s)."),
+			*GetNameSafe(OwnerPC), *Spec.ParentOffset.ToCompactString(), Spec.ScaledClones.Num(),
 			*GetNameSafe(*Spec.BuildClass), Spec.Cost.Num());
 	}
 }
 
 bool USFRCO::Server_StageExtendCommit_Validate(FSFExtendCommitSpec Spec)
 {
-	// Sanity-bound the clone description (a forged/buggy commit cannot demand absurd spawning).
-	if (Spec.Clone.ChildHolograms.Num() > 4096 || Spec.ScaledClones.Num() > 1024)
-	{
-		return false;
-	}
-	for (const FSFCloneHologram& Child : Spec.Clone.ChildHolograms)
-	{
-		if (Child.SplineData.Points.Num() > 256)
-		{
-			return false;
-		}
-	}
-	return true;
+	// Sanity-bound the commit parameters (a forged/buggy commit cannot demand absurd spawning).
+	// The clone topology itself is derived SERVER-side from these, never shipped.
+	return Spec.ScaledClones.Num() <= 1024 && Spec.ParentOffset.Size() <= 1.0e7;
 }
 
 // ========================================

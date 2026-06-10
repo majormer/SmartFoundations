@@ -577,8 +577,8 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 								Child->Destroy();
 							}
 							UE_LOG(LogSmartFoundations, Display,
-								TEXT("[EXTEND-MP] Client fire: staged Extend commit (%d clone children), destroyed %d previews; construct message will be O(1)."),
-								ExtendSpec.Clone.ChildHolograms.Num(), ToDestroy.Num());
+								TEXT("[EXTEND-MP] Client fire: staged Extend commit (offset %s, %d scaled clone(s)), destroyed %d previews; construct message will be O(1)."),
+								*ExtendSpec.ParentOffset.ToCompactString(), ExtendSpec.ScaledClones.Num(), ToDestroy.Num());
 							return; // fire proceeds with the childless parent
 						}
 					}
@@ -984,31 +984,19 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 			}
 			else
 			{
-				// [EXTEND-MP] Reconstruct the clone children from the staged commit - the SAME
-				// executor the client preview uses (FSFCloneTopology::SpawnChildHolograms +
-				// WireChildHologramConnections), run server-side pre-scope(). The children's own
-				// Construct paths populate the Extend wiring registries (RegisterJsonBuiltActor,
-				// chain registrations), and the deferred post-build wiring (OnActorSpawned on the
-				// built factory, authority-side) finishes the wiring exactly as SP does. The
-				// staged topology is installed as StoredCloneTopology so that pass finds the
-				// same state an SP build would have.
+				// [EXTEND-MP] Reconstruct the FULL commit server-side, pre-scope(): authoritative
+				// graph walk -> CaptureFromTopology -> FromSource(ParentOffset) -> spawn parent
+				// clone set + scaled clone sets. The topology MUST be derived here, never shipped
+				// from the client - client-side capture poisons every segment connection because
+				// GetConnection() is null on clients (live root cause 2026-06-10: empty wiring
+				// manifests, every MP Extend built unwired). The children's Construct paths
+				// populate the wiring registries; the synchronous wiring pass below finishes the
+				// job with authority.
 				if (USFSubsystem* SS = USFSubsystem::Get(self->GetWorld()))
 				{
 					if (USFExtendService* Extend = SS->GetExtendService())
 					{
-						Extend->SetStoredCloneTopologyForServerCommit(ExtendSpec.Clone);
-						Extend->SetServerCommitSourceBuilding(ExtendSpec.SourceBuilding);
-						FSFSpawnedCloneMap SpawnedClones;
-						const int32 NumSpawned = ExtendSpec.Clone.SpawnChildHolograms(self, Extend, SpawnedClones);
-						const int32 NumWired = ExtendSpec.Clone.WireChildHologramConnections(SpawnedClones, self);
-						UE_LOG(LogSmartFoundations, Display,
-							TEXT("[EXTEND-MP] Server reconstructed %d/%d clone children (%d pre-wired) for %s; vanilla construct will build them."),
-							NumSpawned, ExtendSpec.Clone.ChildHolograms.Num(), NumWired, *self->GetName());
-
-						// Scaled Extend: re-run the SP spawn pipeline for the additional clone
-						// sets (factory children + infrastructure + lanes) from the shipped
-						// per-clone parameters + the server's own authoritative topology walk.
-						Extend->ReconstructScaledCommitOnServer(self, ExtendSpec.ScaledClones);
+						Extend->ReconstructCommitOnServer(self, ExtendSpec);
 					}
 				}
 			}

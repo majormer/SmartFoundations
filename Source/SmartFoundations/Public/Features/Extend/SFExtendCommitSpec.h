@@ -11,14 +11,12 @@
 /**
  * The staged Extend commit a CLIENT ships to the server right before firing the build gun
  * ([EXTEND-MP] slice 2; see PLAN_MP_ExtendConstruction_Strategy.md). Mirrors the scaling spec's
- * intent->authority model: the client re-emits a FRESH clone topology at fire time (the preview's
- * stored topology has stale world transforms - children are re-positioned while aiming), destroys
- * its preview children, and fires a childless O(1) parent; the server's Construct hook consumes
- * this spec and reconstructs the clone children PRE-scope() via the same executor the client
- * preview uses (FSFCloneTopology::SpawnChildHolograms + WireChildHologramConnections).
- *
- * FSFCloneTopology is wire-safe by construction: a fully reflected, VALUE-ONLY schema (strings,
- * floats, transforms, spline points - zero object pointers).
+ * intent->authority model, and like it the spec carries ONLY PARAMETERS: the server re-derives
+ * the clone topology ITSELF (authoritative graph walk -> CaptureFromTopology -> FromSource at
+ * ParentOffset) and reconstructs the children pre-scope(). The clone topology MUST be built
+ * server-side: capturing it on the client poisons every segment's connections, because
+ * CaptureBeltChain/CapturePipeChain read GetConnection() - null on clients by design - so the
+ * wiring manifest comes out empty (live root cause 2026-06-10: every MP Extend built unwired).
  */
 /** One Scaled Extend clone set's PARAMETERS ([EXTEND-MP]). The server does not need the clone
  *  topologies themselves: it re-walks the source's graph authoritatively and re-runs the SAME
@@ -51,9 +49,10 @@ struct SMARTFOUNDATIONS_API FSFExtendCommitSpec
 {
 	GENERATED_BODY()
 
-	/** The clone description, emitted at FIRE time with the final parent offset. */
+	/** Final fire-position offset of the parent clone from the SOURCE building. The server runs
+	 *  FromSource(serverWalkedTopology, ParentOffset) to derive the clone topology itself. */
 	UPROPERTY()
-	FSFCloneTopology Clone;
+	FVector ParentOffset = FVector::ZeroVector;
 
 	/** Exact preview cost (parent + all preview children, vanilla GetCost(true) at fire) -
 	 *  the server's GetCost hook overrides with this so the commit charges what was previewed. */

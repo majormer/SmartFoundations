@@ -270,6 +270,14 @@ public:
     int32 ReconstructScaledCommitOnServer(AFGHologram* ParentHologram,
         const TArray<struct FSFExtendCommitScaledClone>& Clones);
 
+    /** [EXTEND-MP] Server-side: reconstruct the FULL staged commit at the construct seam. Walks
+     *  the source graph (authoritative - GetConnection() is real here, unlike the client where it
+     *  is null and poisons every captured segment connection), derives the parent clone topology
+     *  via CaptureFromTopology + FromSource(ParentOffset), installs it as StoredCloneTopology,
+     *  spawns the parent clone set, then reconstructs the scaled clone sets. Returns children
+     *  spawned for the parent set. */
+    int32 ReconstructCommitOnServer(AFGHologram* ParentHologram, const struct FSFExtendCommitSpec& Spec);
+
     UFUNCTION(BlueprintCallable, Category = "Smart|Extend")
     const FSFExtendTopology& GetLastExtendTopology() const;
 
