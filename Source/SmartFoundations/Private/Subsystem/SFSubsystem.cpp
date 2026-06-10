@@ -984,7 +984,7 @@ void USFSubsystem::Tick(float DeltaTime)
 			const double NowExt = FPlatformTime::Seconds();
 			if (NowExt - LastExtMpLog > 1.0)
 			{
-				UE_LOG(LogSmartFoundations, Display,
+				UE_LOG(LogSmartFoundations, Verbose,
 					TEXT("[EXTEND-MP] NetMode=%d PC=%s rawHit=%s dir=(%.2f,%.2f,%.2f) LookedAt=%s holoBuildClass=%s"),
 					GetWorld() ? (int32)GetWorld()->GetNetMode() : -1,
 					PC ? TEXT("ok") : TEXT("NULL"),

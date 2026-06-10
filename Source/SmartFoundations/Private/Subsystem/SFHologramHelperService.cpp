@@ -967,7 +967,7 @@ void FSFHologramHelperService::RegenerateChildHologramGrid(
 		// and on which net side. NetMode: 0=Standalone 1=DedicatedServer 2=ListenServer 3=Client.
 		{
 			const int32 NetMode = ParentHologram->GetWorld() ? (int32)ParentHologram->GetWorld()->GetNetMode() : -1;
-			UE_LOG(LogSmartFoundations, Display,
+			UE_LOG(LogSmartFoundations, Verbose,
 				TEXT("[MP-SLICE0] GridRegen: parent=%s NetMode=%d HasAuthority=%d grid=%dx%dx%d previewChildren=%d"),
 				*ParentHologram->GetName(), NetMode, ParentHologram->HasAuthority() ? 1 : 0,
 				GridCounters.X, GridCounters.Y, GridCounters.Z, SpawnedChildren.Num());

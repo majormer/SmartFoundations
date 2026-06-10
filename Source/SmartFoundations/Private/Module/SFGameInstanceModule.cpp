@@ -577,7 +577,7 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 								Holo->mChildren.Remove(Child);
 								Child->Destroy();
 							}
-							UE_LOG(LogSmartFoundations, Display,
+							UE_LOG(LogSmartFoundations, Verbose,
 								TEXT("[EXTEND-MP] Client fire: staged Extend commit (offset %s, %d scaled clone(s)), destroyed %d previews; construct message will be O(1)."),
 								*ExtendSpec.ParentOffset.ToCompactString(), ExtendSpec.ScaledClones.Num(), ToDestroy.Num());
 							return; // fire proceeds with the childless parent
@@ -586,7 +586,7 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 
 					// Could not stage (spec disabled / no topology / RCO unreachable): refuse the
 					// fire - serializing the clone children would assert this client.
-					UE_LOG(LogSmartFoundations, Display,
+					UE_LOG(LogSmartFoundations, Verbose,
 						TEXT("[EXTEND-MP] Refused client Extend fire on %s: could not stage the Extend commit."),
 						*Holo->GetName());
 					if (GEngine)
@@ -631,7 +631,7 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 					}
 					if (PlanBytesEstimate > 45000)
 					{
-						UE_LOG(LogSmartFoundations, Display,
+						UE_LOG(LogSmartFoundations, Verbose,
 							TEXT("[MP-334] Refused client fire: conduit plan too large to stage reliably (%d conduits, ~%d bytes). Build in smaller sections."),
 							Spec.ConduitPlan.Num(), PlanBytesEstimate);
 						if (GEngine)
@@ -680,7 +680,7 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 						Holo->mChildren.Remove(Child);
 						Child->Destroy();
 					}
-					UE_LOG(LogSmartFoundations, Display,
+					UE_LOG(LogSmartFoundations, Verbose,
 						TEXT("[MP-SPEC] Stripped %d auto-connect preview children before the fire ")
 						TEXT("(server-side wiring pending, #334)."),
 						AutoConnectToStrip.Num());
@@ -738,7 +738,7 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 
 					if (Spec.bValid && bStaged)
 					{
-						UE_LOG(LogSmartFoundations, Display,
+						UE_LOG(LogSmartFoundations, Verbose,
 							TEXT("[MP-SPEC] Client fire: staged spec (%d cells of %s, %d planned conduit(s)), destroying %d preview children; construct message will be O(1)."),
 							Spec.CellCount(), *GetNameSafe(*Spec.BuildClass), Spec.ConduitPlan.Num(), GridChildCount);
 
@@ -840,18 +840,11 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 			}
 		});
 
-	// [CHAIN-FIX] Pre-tick integrity scrub. 7 freed-pointer tick AV repros with three falsified
-	// theories (RemoveConveyor skip, conveyor EndPlay skip, buildable EndPlay skip, arrows) - the
-	// corrupt entry appears in mFactoryBuildings by some path none of the chokepoint guards see.
-	// Validate the arrays IMMEDIATELY before vanilla's ParallelFor walks them: the corrupt entry
-	// is removed (server survives) and the log pinpoints its index + valid neighbors.
-	// bInsideFactoryTick: the 8th repro proved the corruption happens MID-tick (the pre-tick
-	// scrub found every entry valid on the very tick that crashed). Leading theory: something
-	// REGISTERS a buildable while the ParallelFor walks mFactoryBuildings -> TArray realloc ->
-	// workers read the freed old buffer (garbage entries, exactly the dump signature). The flag
-	// + the AddBuildable hook below convict the registrant by name.
-	static bool bInsideFactoryTick = false;
-
+	// [CHAIN-FIX] Pre-tick integrity scrub (permanent safety net, ~2us for ~2k entries): validate
+	// mFactoryBuildings (+ groups) immediately before vanilla's ParallelFor walks them. A corrupt
+	// entry is removed (the server survives the tick) and logged with its index + valid neighbors.
+	// Kept after the 2026-06-10 wild-free incident (GetCost hook Override-without-invoke, fixed):
+	// this class of bug otherwise kills dedicated servers minutes after the corrupting write.
 	SUBSCRIBE_METHOD(
 		AFGBuildableSubsystem::TickFactory,
 		[](auto& scope, AFGBuildableSubsystem* self, float dt, ELevelTick TickType)
@@ -865,60 +858,6 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 						ChainSvc->ScrubFactoryTickArrays();
 					}
 				}
-			}
-			bInsideFactoryTick = true;
-			scope(self, dt, TickType);
-			bInsideFactoryTick = false;
-		});
-
-	SUBSCRIBE_METHOD(
-		AFGBuildableSubsystem::AddBuildable,
-		[](auto& scope, AFGBuildableSubsystem* self, AFGBuildable* buildable)
-		{
-			if (bInsideFactoryTick)
-			{
-				UE_LOG(LogSmartFoundations, Error,
-					TEXT("[CHAIN-DIAG] AddBuildable(%s / %s) DURING TickFactory! mFactoryBuildings can realloc under the ParallelFor - THE freed-buffer tick AV. Callstack follows."),
-					buildable ? *buildable->GetName() : TEXT("null"),
-					buildable ? *GetNameSafe(buildable->GetClass()) : TEXT("null"));
-				FDebug::DumpStackTraceToLog(ELogVerbosity::Error);
-			}
-		});
-
-	// [CHAIN-DIAG] Mid-tick SPAWN detector. Live forensics (repro 12) proved: Num grew 1843->1844
-	// DURING the crashing tick (the AddBuildable hook missed it - inlined call site), and the
-	// corrupt entry was a real actor whose first 16 bytes held an allocator freelist link with
-	// the rest of the actor (PrimaryActorTick vftable at +0x30) intact - i.e. a buildable is
-	// spawned, registered, destroyed, AND freed by the concurrent purge ALL WITHIN ONE FACTORY
-	// TICK. BeginPlay is virtual - it cannot be inlined away from this hook - so this names the
-	// short-lived buildable and its spawn callstack.
-	AFGBuildable* BuildableBeginPlayCDO = GetMutableDefault<AFGBuildable>();
-	SUBSCRIBE_METHOD_VIRTUAL(AFGBuildable::BeginPlay, BuildableBeginPlayCDO,
-		[](auto& scope, AFGBuildable* self)
-		{
-			if (bInsideFactoryTick && self && self->HasAuthority())
-			{
-				UE_LOG(LogSmartFoundations, Error,
-					TEXT("[CHAIN-DIAG] AFGBuildable::BeginPlay(%s / %s) DURING TickFactory - the mid-tick registration. Callstack follows."),
-					*self->GetName(), *GetNameSafe(self->GetClass()));
-				FDebug::DumpStackTraceToLog(ELogVerbosity::Error);
-			}
-		});
-
-	// Symmetric detector: a REMOVAL mid-tick can shrink-reallocate mFactoryBuildings, freeing the
-	// buffer under the ParallelFor workers just like a growth realloc (9th repro: Add detector
-	// silent, pre-tick scrub valid -> the mutation, whatever it is, happens DURING the tick).
-	SUBSCRIBE_METHOD(
-		AFGBuildableSubsystem::RemoveBuildable,
-		[](auto& scope, AFGBuildableSubsystem* self, AFGBuildable* buildable)
-		{
-			if (bInsideFactoryTick)
-			{
-				UE_LOG(LogSmartFoundations, Error,
-					TEXT("[CHAIN-DIAG] RemoveBuildable(%s / %s) DURING TickFactory! A shrink-realloc frees the buffer under the ParallelFor - THE freed-buffer tick AV. Callstack follows."),
-					buildable ? *buildable->GetName() : TEXT("null"),
-					buildable ? *GetNameSafe(buildable->GetClass()) : TEXT("null"));
-				FDebug::DumpStackTraceToLog(ELogVerbosity::Error);
 			}
 		});
 
@@ -956,7 +895,7 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 			}
 			if (Removed > 0)
 			{
-				UE_LOG(LogSmartFoundations, Display,
+				UE_LOG(LogSmartFoundations, Warning,
 					TEXT("[CHAIN-DIAG] EndPlay guard: %s (%s) died (reason=%d) while STILL in %d factory-tick entr%s - leak path identified, freed-pointer tick AV prevented."),
 					*self->GetName(), *GetNameSafe(self->GetClass()), static_cast<int32>(endPlayReason),
 					Removed, Removed == 1 ? TEXT("y") : TEXT("ies"));
@@ -1236,7 +1175,7 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 								++RegisteredAnchors;
 							}
 						}
-						UE_LOG(LogSmartFoundations, Display,
+						UE_LOG(LogSmartFoundations, Verbose,
 							TEXT("[EXTEND-MP] Registered %d clone-id wiring anchor(s) post-construct for %s."),
 							RegisteredAnchors, *GetNameSafe(BuiltParent));
 
@@ -1252,7 +1191,7 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 						// chain registration proves safe.
 						if (AFGBuildableFactory* BuiltFactory = Cast<AFGBuildableFactory>(BuiltParent))
 						{
-							UE_LOG(LogSmartFoundations, Display,
+							UE_LOG(LogSmartFoundations, Verbose,
 								TEXT("[EXTEND-MP] Commit wiring pass executing for %s."),
 								*BuiltFactory->GetName());
 							Extend->ConnectAllChainElements(BuiltFactory);
@@ -1302,7 +1241,7 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 
 			if (GroupProxy)
 			{
-				UE_LOG(LogSmartFoundations, Display,
+				UE_LOG(LogSmartFoundations, Verbose,
 					TEXT("[MP-SPEC] Spec group proxy %s: %d actor buildables registered (+ lightweight instances tracked by index); built parent=%s, out_children=%d."),
 					*GroupProxy->GetName(), GroupProxy->GetBuildables().Num(),
 					*GetNameSafe(BuiltParent), out_children.Num());

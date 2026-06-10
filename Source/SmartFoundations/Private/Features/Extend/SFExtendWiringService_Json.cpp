@@ -1224,7 +1224,7 @@ int32 USFExtendWiringService::GenerateAndExecuteWiring(AFGBuildableFactory* NewF
     // Process wiring for each additional clone set beyond clone 1
     int32 ScaledExtendWiredCount = 0;
     // [EXTEND-MP] Display level while MP Extend validates (Verbose is stripped on the dedi).
-    UE_LOG(LogSmartFoundations, Display,
+    UE_LOG(LogSmartFoundations, Verbose,
         TEXT("[EXTEND-MP] Scaled clone wiring: %d clone set(s), jsonBuilt=%d, sourceTarget=%s."),
         ExtendService->ScaledExtendClones.Num(), ExtendService->JsonBuiltActors.Num(),
         *GetNameSafe(ExtendService->CurrentExtendTarget.Get()));
@@ -1233,7 +1233,7 @@ int32 USFExtendWiringService::GenerateAndExecuteWiring(AFGBuildableFactory* NewF
         FSFScaledExtendClone& Clone = ExtendService->ScaledExtendClones[CloneIdx];
         if (!Clone.CloneTopology.IsValid() || Clone.CloneTopology->ChildHolograms.Num() == 0)
         {
-            UE_LOG(LogSmartFoundations, Display,
+            UE_LOG(LogSmartFoundations, Verbose,
                 TEXT("[EXTEND-MP] Scaled clone wiring: Clone[%d] SKIPPED - topology %s."),
                 CloneIdx, Clone.CloneTopology.IsValid() ? TEXT("empty") : TEXT("null"));
             continue;
@@ -1278,7 +1278,7 @@ int32 USFExtendWiringService::GenerateAndExecuteWiring(AFGBuildableFactory* NewF
 
         if (!CloneFactory)
         {
-            UE_LOG(LogSmartFoundations, Display,
+            UE_LOG(LogSmartFoundations, Verbose,
                 TEXT("[EXTEND-MP] Scaled clone wiring: Clone[%d] SKIPPED - no built factory within 5m of expected position %s."),
                 CloneIdx, *ExpectedPos.ToCompactString());
             continue;
@@ -1321,7 +1321,7 @@ int32 USFExtendWiringService::GenerateAndExecuteWiring(AFGBuildableFactory* NewF
         int32 ClonePipes = CloneManifest.RebuildPipeNetworks(GetWorld(), CloneBuiltActors);
 
         // [EXTEND-MP] Display level while MP Extend validates.
-        UE_LOG(LogSmartFoundations, Display,
+        UE_LOG(LogSmartFoundations, Verbose,
             TEXT("[EXTEND-MP] Scaled clone wiring: Clone[%d] factory=%s mapped=%d manifestBelts=%d manifestPipes=%d wired=%d chains=%d."),
             CloneIdx, *CloneFactory->GetName(), CloneBuiltActors.Num(),
             CloneManifest.BeltConnections.Num(), CloneManifest.PipeConnections.Num(), CloneWired, CloneChains);

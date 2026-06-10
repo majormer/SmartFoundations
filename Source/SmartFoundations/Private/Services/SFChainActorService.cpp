@@ -182,7 +182,7 @@ int32 USFChainActorService::InvalidateAndRebuildChains(
 			// still HOLDS SEGMENTS it will be skipped by the 0-segment zombie purge, persist into
 			// the save (ShouldSave is unconditionally true), and poison the reload — belts appear
 			// in two chains' segment lists (live crash class 2026-06-10).
-			UE_LOG(LogSmartUpgrade, Display,
+			UE_LOG(LogSmartUpgrade, Verbose,
 				TEXT("[CHAIN-DIAG] Phase1 orphan affected chain %s: segments=%d (no owning TG; left alive)"),
 				*Chain->GetName(), Chain->GetNumChainSegments());
 		}
@@ -515,7 +515,7 @@ int32 USFChainActorService::InvalidateAndRebuildChains(
 				if (Listed > 1) MemberNames += TEXT(",");
 				MemberNames += B->GetName();
 			}
-			UE_LOG(LogSmartUpgrade, Display,
+			UE_LOG(LogSmartUpgrade, Verbose,
 				TEXT("[CHAIN-DIAG] Phase3 migrated TG (%d belts: %s) -> chain %s segments=%d"),
 				ValidBeltCount, *MemberNames,
 				TG->ChainActor ? *TG->ChainActor->GetName() : TEXT("null"),
@@ -698,7 +698,7 @@ int32 USFChainActorService::InvalidateAndRebuildChains(
 		// segments are NON-zero here, the deferred purge will SKIP it, it saves (ShouldSave is
 		// unconditionally true), and the reload sees its belts in two chains — the 2026-06-10
 		// load-crash poison. This line is the smoking gun for that hypothesis.
-		UE_LOG(LogSmartUpgrade, Display,
+		UE_LOG(LogSmartUpgrade, Verbose,
 			TEXT("[CHAIN-DIAG] Phase4 detached old chain %s: segments=%d%s"),
 			*Chain->GetName(), Chain->GetNumChainSegments(),
 			Chain->GetNumChainSegments() > 0 ? TEXT("  <-- WILL ESCAPE THE 0-SEG PURGE AND POISON THE SAVE") : TEXT(""));
@@ -831,7 +831,7 @@ int32 USFChainActorService::PurgeZombieChainActors()
 				OrphanedMemberBelts.AddUnique(Seg.ConveyorBase);
 			}
 		}
-		UE_LOG(LogSmartUpgrade, Display,
+		UE_LOG(LogSmartUpgrade, Warning,
 			TEXT("[CHAIN-DIAG] Purge force-destroying detached-but-segmented chain %s (segments=%d) — items transfer back to belts"),
 			*Chain->GetName(), Chain->GetNumChainSegments());
 		BuildableSub->ForceDestroyChainActor(Chain);
@@ -848,7 +848,7 @@ int32 USFChainActorService::PurgeZombieChainActors()
 	}
 	if (ForceDestroyedCount > 0)
 	{
-		UE_LOG(LogSmartUpgrade, Display,
+		UE_LOG(LogSmartUpgrade, Warning,
 			TEXT("[CHAIN-DIAG] Purge sweep: %d detached-but-segmented chain(s) force-destroyed, %d chainless member belt(s) re-registered for vanilla rebuild"),
 			ForceDestroyedCount, ReRegisteredBelts);
 	}
@@ -885,21 +885,21 @@ int32 USFChainActorService::PurgeZombieChainActors()
 		++HealedChainlessBelts;
 		if (HealedChainlessBelts <= 12)
 		{
-			UE_LOG(LogSmartUpgrade, Display,
+			UE_LOG(LogSmartUpgrade, Warning,
 				TEXT("[CHAIN-DIAG] Purge sweep: re-registered connected-but-chainless belt %s (thesis factory-tick hazard)"),
 				*Belt->GetName());
 		}
 	}
 	if (HealedChainlessBelts > 0)
 	{
-		UE_LOG(LogSmartUpgrade, Display,
+		UE_LOG(LogSmartUpgrade, Warning,
 			TEXT("[CHAIN-DIAG] Purge sweep: %d connected-but-chainless belt(s) re-registered total"),
 			HealedChainlessBelts);
 	}
 
 	if (Zombies.Num() == 0)
 	{
-		UE_LOG(LogSmartUpgrade, Display,
+		UE_LOG(LogSmartUpgrade, Verbose,
 			TEXT("[CHAIN-DIAG] Sweep complete: zombiesPurged=0 detachedForceDestroyed=%d orphanBeltsReRegistered=%d chainlessBeltsHealed=%d"),
 			ForceDestroyedCount, ReRegisteredBelts, HealedChainlessBelts);
 		return ForceDestroyedCount;
@@ -936,7 +936,7 @@ int32 USFChainActorService::PurgeZombieChainActors()
 
 	// [CHAIN-DIAG] Always-on sweep summary: lets a shipping dedi log show whether a build path
 	// left chainless belts behind (the thesis factory-tick AV) without verbose logging.
-	UE_LOG(LogSmartUpgrade, Display,
+	UE_LOG(LogSmartUpgrade, Verbose,
 		TEXT("[CHAIN-DIAG] Sweep complete: zombiesPurged=%d detachedForceDestroyed=%d orphanBeltsReRegistered=%d chainlessBeltsHealed=%d"),
 		PurgeCount, ForceDestroyedCount, ReRegisteredBelts, HealedChainlessBelts);
 
@@ -1773,7 +1773,7 @@ int32 USFChainActorService::RemoveConveyorFromAllTickGroups(AFGBuildableConveyor
 	}
 	if (StaleRemovals > 0)
 	{
-		UE_LOG(LogSmartUpgrade, Display,
+		UE_LOG(LogSmartUpgrade, Warning,
 			TEXT("[CHAIN-DIAG] RemoveConveyor guard: %s was STILL in %d tick group(s) after vanilla removal (stale bucket id) - force-removed (freed-pointer factory-tick AV prevented)."),
 			*Conveyor->GetName(), StaleRemovals);
 	}
@@ -1817,25 +1817,6 @@ int32 USFChainActorService::ScrubFactoryTickArrays()
 
 	TArray<AFGBuildable*>& Buildings = BuildableSub->mFactoryBuildings;
 
-	// [CHAIN-DIAG] One-shot identity table around index 1824 - the corrupt entry sat at exactly
-	// that index in two independent live AV captures, and its corpse's FName bits matched the
-	// aimed-at building's name number. Logging address+name+class at boot lets the next crash's
-	// corpse address be matched against the original occupant: same address = the live building
-	// is being silently destroyed/replaced mid-session; different = a same-named ghost instance.
-	static bool bIdentityTableLogged = false;
-	if (!bIdentityTableLogged && Buildings.Num() > 1830)
-	{
-		bIdentityTableLogged = true;
-		for (int32 Index = 1815; Index < FMath::Min(Buildings.Num(), 1844); ++Index)
-		{
-			AFGBuildable* Entry = Buildings[Index];
-			UE_LOG(LogSmartUpgrade, Display,
-				TEXT("[CHAIN-DIAG] FactoryBuildings[%d] = 0x%llX  %s (%s)"),
-				Index, reinterpret_cast<uint64>(Entry),
-				(Entry && Entry->IsValidLowLevelFast(false)) ? *Entry->GetName() : TEXT("<invalid>"),
-				(Entry && Entry->IsValidLowLevelFast(false)) ? *GetNameSafe(Entry->GetClass()) : TEXT("?"));
-		}
-	}
 	for (int32 Index = Buildings.Num() - 1; Index >= 0; --Index)
 	{
 		AFGBuildable* Entry = Buildings[Index];

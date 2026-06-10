@@ -56,7 +56,7 @@ AActor* ASFFactoryHologram::Construct(TArray<AActor*>& out_children, FNetConstru
     // NetMode: 0=Standalone 1=DedicatedServer 2=ListenServer 3=Client.
     {
         const int32 NetMode = GetWorld() ? (int32)GetWorld()->GetNetMode() : -1;
-        UE_LOG(LogSmartFoundations, Display,
+        UE_LOG(LogSmartFoundations, Verbose,
             TEXT("[MP-SLICE0] FactoryHologram::Construct ENTER: %s NetMode=%d HasAuthority=%d mChildren=%d"),
             *GetName(), NetMode, HasAuthority() ? 1 : 0, mChildren.Num());
     }
@@ -64,7 +64,7 @@ AActor* ASFFactoryHologram::Construct(TArray<AActor*>& out_children, FNetConstru
     AActor* BuiltActor = Super::Construct(out_children, constructionID);
 
     // [MP-SLICE0] TEMP — out_children = built child actors produced server-side this Construct.
-    UE_LOG(LogSmartFoundations, Display,
+    UE_LOG(LogSmartFoundations, Verbose,
         TEXT("[MP-SLICE0] FactoryHologram::Construct EXIT: %s BuiltActor=%s out_children=%d mChildren=%d"),
         *GetName(), BuiltActor ? *BuiltActor->GetName() : TEXT("null"), out_children.Num(), mChildren.Num());
 

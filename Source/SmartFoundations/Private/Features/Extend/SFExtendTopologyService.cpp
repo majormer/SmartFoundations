@@ -87,7 +87,7 @@ bool USFExtendTopologyService::WalkTopology(AFGBuildable* SourceBuilding)
             {
                 if (IsValid(C) && IsValid(C->GetConnection())) { ++NumConnected; }
             }
-            UE_LOG(LogSmartExtend, Display, TEXT("[EXTEND-MP] %s: %d factory connectors, %d with resolved GetConnection() -> %s"),
+            UE_LOG(LogSmartExtend, Verbose, TEXT("[EXTEND-MP] %s: %d factory connectors, %d with resolved GetConnection() -> %s"),
                 *SourceBuilding->GetName(), Connections.Num(), NumConnected,
                 (Connections.Num() > 0 && NumConnected == 0) ? TEXT("connection links NOT resolved on client (topology fails)") : TEXT("connections resolve"));
             LastConnLog = NowC;

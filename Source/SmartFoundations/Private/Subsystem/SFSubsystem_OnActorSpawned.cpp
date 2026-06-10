@@ -137,7 +137,7 @@ void USFSubsystem::OnActorSpawned(AActor* SpawnedActor)
 
 						// [EXTEND-MP] Display level while MP Extend validates: this is the wiring
 						// pass trigger and the dedi log is the only visibility (Verbose stripped).
-						UE_LOG(LogSmartFoundations, Display, TEXT("[EXTEND-MP] Deferred connection wiring executing for %s"), *WeakFactory->GetName());
+						UE_LOG(LogSmartFoundations, Verbose, TEXT("[EXTEND-MP] Deferred connection wiring executing for %s"), *WeakFactory->GetName());
 						// NOTE: Child holograms (belts, lifts, pipes) are built by vanilla via AddChild
 						// We just need to wire their connections here
 
@@ -175,7 +175,7 @@ void USFSubsystem::OnActorSpawned(AActor* SpawnedActor)
 				DiagPreviewCount = DiagPreviews->Num();
 			}
 		}
-		UE_LOG(LogSmartFoundations, Display,
+		UE_LOG(LogSmartFoundations, Verbose,
 			TEXT("[MP-334] OnActorSpawned(attachment=%s): svc=%d activeHolo=%s isDistributorHolo=%d busyLatch=%d previews=%d"),
 			*DiagAttachment->GetName(),
 			AutoConnectService ? 1 : 0,

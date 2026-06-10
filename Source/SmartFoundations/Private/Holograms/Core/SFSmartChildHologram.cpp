@@ -33,7 +33,7 @@ AActor* ASFSmartChildHologram::Construct(TArray<AActor*>& out_children, FNetCons
     // NetMode: 0=Standalone 1=DedicatedServer 2=ListenServer 3=Client.
     {
         const int32 NetMode = GetWorld() ? (int32)GetWorld()->GetNetMode() : -1;
-        UE_LOG(LogSmartHologram, Display,
+        UE_LOG(LogSmartHologram, Verbose,
             TEXT("[MP-SLICE0] SmartChild::Construct: %s NetMode=%d HasAuthority=%d"),
             *GetName(), NetMode, HasAuthority() ? 1 : 0);
     }

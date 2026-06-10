@@ -221,7 +221,7 @@ void USFRCO::Server_StageScalingSpec_Implementation(FSFScalingSpec Spec)
 
 	if (Spec.bValid)
 	{
-		UE_LOG(LogSmartFoundations, Display,
+		UE_LOG(LogSmartFoundations, Verbose,
 			TEXT("[MP-SPEC] Server staged scaling spec for %s: %d cells of %s, %d planned conduit(s)."),
 			*GetNameSafe(OwnerPC), Spec.CellCount(), *GetNameSafe(*Spec.BuildClass), Spec.ConduitPlan.Num());
 	}
@@ -287,7 +287,7 @@ void USFRCO::Server_RequestExtendTopology_Implementation(AFGBuildable* SourceBui
 		Reply.bIsValid = false;
 	}
 
-	UE_LOG(LogSmartFoundations, Display,
+	UE_LOG(LogSmartFoundations, Verbose,
 		TEXT("[EXTEND-MP] Server walked topology for %s: valid=%d (beltIn=%d beltOut=%d pipeIn=%d pipeOut=%d power=%d)"),
 		*GetNameSafe(SourceBuilding), Reply.bIsValid ? 1 : 0,
 		Reply.InputChains.Num(), Reply.OutputChains.Num(),
@@ -326,7 +326,7 @@ void USFRCO::Server_StageExtendCommit_Implementation(FSFExtendCommitSpec Spec)
 
 	if (Spec.bValid)
 	{
-		UE_LOG(LogSmartFoundations, Display,
+		UE_LOG(LogSmartFoundations, Verbose,
 			TEXT("[EXTEND-MP] Server staged %s commit for %s: offset %s, %d scaled clone(s) of %s, %d cost item type(s)%s."),
 			Spec.bIsRestore ? TEXT("RESTORE") : TEXT("Extend"),
 			*GetNameSafe(OwnerPC), *Spec.ParentOffset.ToCompactString(), Spec.ScaledClones.Num(),
@@ -445,7 +445,7 @@ void USFRCO::Server_StartUpgrade_Implementation(FSFUpgradeExecutionParams Params
 	// echo all key off this - never the client-supplied field.
 	Params.PlayerController = OwnerPC;
 
-	UE_LOG(LogSmartFoundations, Display,
+	UE_LOG(LogSmartFoundations, Verbose,
 		TEXT("[UPGRADE-MP] Server starting upgrade for %s: family=%d %d->%d radius=%.0fcm specific=%d"),
 		*GetNameSafe(OwnerPC), static_cast<int32>(Params.Family), Params.SourceTier, Params.TargetTier,
 		Params.Radius, Params.SpecificBuildables.Num());
@@ -486,7 +486,7 @@ void USFRCO::Server_StartUpgradeTraversal_Implementation(AFGBuildable* AnchorBui
 	// The walk is synchronous; a throwaway service matches the SP panel's usage.
 	USFUpgradeTraversalService* TraversalService = NewObject<USFUpgradeTraversalService>();
 	const FSFTraversalResult Result = TraversalService->TraverseNetwork(AnchorBuildable, Config, OwnerPC);
-	UE_LOG(LogSmartFoundations, Display,
+	UE_LOG(LogSmartFoundations, Verbose,
 		TEXT("[UPGRADE-MP] Server traversal for %s from %s: family=%d entries=%d upgradeable=%d"),
 		*GetNameSafe(OwnerPC), *GetNameSafe(AnchorBuildable), static_cast<int32>(Result.Family),
 		Result.Entries.Num(), Result.UpgradeableCount);

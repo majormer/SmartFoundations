@@ -1717,7 +1717,7 @@ void USFUpgradeExecutionService::CompleteUpgrade()
 		if (USFRCO* RCO = CurrentParams.PlayerController->GetRemoteCallObjectOfClass<USFRCO>())
 		{
 			RCO->Client_ReceiveUpgradeResult(LastResult);
-			UE_LOG(LogSmartUpgrade, Display,
+			UE_LOG(LogSmartUpgrade, Verbose,
 				TEXT("[UPGRADE-MP] Sent upgrade result to client %s via RCO (Success=%d Fail=%d Skip=%d)."),
 				*GetNameSafe(CurrentParams.PlayerController), LastResult.SuccessCount,
 				LastResult.FailCount, LastResult.SkipCount);

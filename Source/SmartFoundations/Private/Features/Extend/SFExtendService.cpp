@@ -659,7 +659,7 @@ bool USFExtendService::WalkTopology(AFGBuildable* SourceBuilding)
             }
             PendingTopologyRequestBuilding = SourceBuilding;
             LastTopologyRequestTime = Now;
-            UE_LOG(LogSmartExtend, Display,
+            UE_LOG(LogSmartExtend, Verbose,
                 TEXT("[EXTEND-MP] Client requested server topology walk for %s (%s)."),
                 *GetNameSafe(SourceBuilding), bRequested ? TEXT("sent") : TEXT("RCO unavailable"));
         }
@@ -683,7 +683,7 @@ bool USFExtendService::WalkTopology(AFGBuildable* SourceBuilding)
 void USFExtendService::SetStoredCloneTopologyForServerCommit(const FSFCloneTopology& Clone)
 {
     StoredCloneTopology = MakeShared<FSFCloneTopology>(Clone);
-    UE_LOG(LogSmartExtend, Display,
+    UE_LOG(LogSmartExtend, Verbose,
         TEXT("[EXTEND-MP] Server installed staged clone topology: %d children (parent class %s)."),
         Clone.ChildHolograms.Num(), *Clone.ParentBuildClass);
 }
@@ -692,7 +692,7 @@ void USFExtendService::SetServerCommitSourceBuilding(AFGBuildable* Source)
 {
     LastBuiltFromBuilding = Source;
     CurrentExtendTarget = Source;
-    UE_LOG(LogSmartExtend, Display,
+    UE_LOG(LogSmartExtend, Verbose,
         TEXT("[EXTEND-MP] Server installed commit source building: %s."), *GetNameSafe(Source));
 }
 
@@ -813,7 +813,7 @@ int32 USFExtendService::ReconstructCommitOnServer(AFGHologram* ParentHologram, c
 
         const bool bReplayed = ReplayRestoreCloneTopology(ParentHologram, Spec.RestoreTemplate);
         const int32 NumChildren = ParentHologram->GetHologramChildren().Num();
-        UE_LOG(LogSmartFoundations, Display,
+        UE_LOG(LogSmartFoundations, Verbose,
             TEXT("[EXTEND-MP] Server reconstructed RESTORE commit for %s: replayed=%d, parent now has %d children (template %d, grid %dx%d)."),
             *ParentHologram->GetName(), bReplayed ? 1 : 0, NumChildren,
             Spec.RestoreTemplate.ChildHolograms.Num(),
@@ -848,7 +848,7 @@ int32 USFExtendService::ReconstructCommitOnServer(AFGHologram* ParentHologram, c
     TMap<FString, AFGHologram*> SpawnedClones;
     const int32 NumSpawned = Clone.SpawnChildHolograms(ParentHologram, this, SpawnedClones);
     const int32 NumWired = Clone.WireChildHologramConnections(SpawnedClones, ParentHologram);
-    UE_LOG(LogSmartFoundations, Display,
+    UE_LOG(LogSmartFoundations, Verbose,
         TEXT("[EXTEND-MP] Server reconstructed %d/%d clone children (%d pre-wired) for %s; vanilla construct will build them."),
         NumSpawned, Clone.ChildHolograms.Num(), NumWired, *ParentHologram->GetName());
 
@@ -866,7 +866,7 @@ int32 USFExtendService::ReconstructCommitOnServer(AFGHologram* ParentHologram, c
                 if (USFRCO* RCO = InstigatorPC->GetRemoteCallObjectOfClass<USFRCO>())
                 {
                     RCO->Client_ReceiveServerCloneTopology(Clone);
-                    UE_LOG(LogSmartExtend, Display,
+                    UE_LOG(LogSmartExtend, Verbose,
                         TEXT("[EXTEND-MP] Pushed server-derived clone topology (%d children) to %s for preset capture."),
                         Clone.ChildHolograms.Num(), *GetNameSafe(InstigatorPC));
                 }
@@ -974,7 +974,7 @@ int32 USFExtendService::ReconstructScaledCommitOnServer(AFGHologram* ParentHolog
 
     ScaledService->SpawnCloneSetsForServerCommit();
 
-    UE_LOG(LogSmartExtend, Display,
+    UE_LOG(LogSmartExtend, Verbose,
         TEXT("[EXTEND-MP] Server reconstructed %d scaled clone set(s) for %s (parent now has %d children)."),
         ScaledExtendClones.Num(), *GetNameSafe(ParentHologram), ParentHologram->GetHologramChildren().Num());
 
@@ -984,7 +984,7 @@ int32 USFExtendService::ReconstructScaledCommitOnServer(AFGHologram* ParentHolog
 void USFExtendService::ReceiveServerCloneTopology(const FSFCloneTopology& Topology)
 {
     ServerDerivedCloneTopology = MakeShared<FSFCloneTopology>(Topology);
-    UE_LOG(LogSmartExtend, Display,
+    UE_LOG(LogSmartExtend, Verbose,
         TEXT("[EXTEND-MP] Client received server-derived clone topology: %d children (preset-grade, full connections)."),
         Topology.ChildHolograms.Num());
 }
@@ -995,7 +995,7 @@ void USFExtendService::ReceiveServerTopology(const FSFExtendTopology& Topology)
     CachedServerTopologyBuilding = Topology.SourceBuilding;
     CachedServerTopologyTime = FPlatformTime::Seconds();
 
-    UE_LOG(LogSmartExtend, Display,
+    UE_LOG(LogSmartExtend, Verbose,
         TEXT("[EXTEND-MP] Client received server topology for %s: valid=%d (beltIn=%d beltOut=%d pipeIn=%d pipeOut=%d power=%d)"),
         *GetNameSafe(Topology.SourceBuilding.Get()), Topology.bIsValid ? 1 : 0,
         Topology.InputChains.Num(), Topology.OutputChains.Num(),
@@ -1240,7 +1240,7 @@ bool USFExtendService::TryExtendFromBuilding(AFGBuildable* HitBuilding, AFGHolog
             static double LastBail1 = 0; const double Now1 = FPlatformTime::Seconds();
             if (Now1 - LastBail1 > 1.0)
             {
-                UE_LOG(LogSmartExtend, Display, TEXT("[EXTEND-MP] activation bail: IsA mismatch - building=%s holoBuildClass=%s"),
+                UE_LOG(LogSmartExtend, Verbose, TEXT("[EXTEND-MP] activation bail: IsA mismatch - building=%s holoBuildClass=%s"),
                     *HitBuilding->GetClass()->GetName(), HologramBuildClass ? *HologramBuildClass->GetName() : TEXT("NULL"));
                 LastBail1 = Now1;
             }
@@ -1253,7 +1253,7 @@ bool USFExtendService::TryExtendFromBuilding(AFGBuildable* HitBuilding, AFGHolog
             static double LastBail2 = 0; const double Now2 = FPlatformTime::Seconds();
             if (Now2 - LastBail2 > 1.0)
             {
-                UE_LOG(LogSmartExtend, Display, TEXT("[EXTEND-MP] activation bail: IsValidExtendTarget=false for %s"),
+                UE_LOG(LogSmartExtend, Verbose, TEXT("[EXTEND-MP] activation bail: IsValidExtendTarget=false for %s"),
                     *HitBuilding->GetClass()->GetName());
                 LastBail2 = Now2;
             }
@@ -1261,7 +1261,7 @@ bool USFExtendService::TryExtendFromBuilding(AFGBuildable* HitBuilding, AFGHolog
         }
 
         // [EXTEND-MP] TEMP: passed activation validation - Extend SHOULD proceed to build the preview.
-        UE_LOG(LogSmartExtend, Display, TEXT("[EXTEND-MP] activation PASSED for %s - proceeding to preview"), *HitBuilding->GetName());
+        UE_LOG(LogSmartExtend, Verbose, TEXT("[EXTEND-MP] activation PASSED for %s - proceeding to preview"), *HitBuilding->GetName());
     }
 
     // Issue #274: When Scaled Extend is committed (locked for inspection), suppress re-triggering
@@ -1350,7 +1350,7 @@ bool USFExtendService::TryExtendFromBuilding(AFGBuildable* HitBuilding, AFGHolog
         static double LastTopoLog = 0; const double Now = FPlatformTime::Seconds();
         if (Now - LastTopoLog > 1.0)
         {
-            UE_LOG(LogSmartExtend, Display, TEXT("[EXTEND-MP] WalkTopology(%s) = %s"),
+            UE_LOG(LogSmartExtend, Verbose, TEXT("[EXTEND-MP] WalkTopology(%s) = %s"),
                 *HitBuilding->GetName(), bWalked ? TEXT("TRUE - proceeding") : TEXT("FALSE - bail (no belts/distributors connected?)"));
             LastTopoLog = Now;
         }

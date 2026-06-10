@@ -48,7 +48,7 @@ bool IsSpecConstructionEnabled()
 	if (!bLoggedOnce)
 	{
 		bLoggedOnce = true;
-		UE_LOG(LogSmartFoundations, Display,
+		UE_LOG(LogSmartFoundations, Verbose,
 			TEXT("[MP-SPEC] Spec-based scaling construction is %s (sf.MP.SpecConstruction=%d)."),
 			bEnabled ? TEXT("ENABLED") : TEXT("DISABLED"),
 			CVarSFMPSpecConstruction.GetValueOnAnyThread());
@@ -241,7 +241,7 @@ int32 ExpandScalingSpecIntoChildren(AFGHologram* Parent, const FSFScalingSpec& S
 		}
 	}
 
-	UE_LOG(LogSmartFoundations, Display,
+	UE_LOG(LogSmartFoundations, Verbose,
 		TEXT("[MP-SPEC] ExpandScalingSpecIntoChildren: regenerated %d/%d grid children server-side ")
 		TEXT("for %s (recipe=%s). Vanilla cost + Construct will now build the full grid."),
 		SpawnedChildren, Spec.CellCount() - 1, *Parent->GetName(), *Recipe->GetName());
@@ -403,7 +403,7 @@ void CaptureConduitPlan(AFGHologram* Hologram, FSFScalingSpec& InOutSpec)
 
 	if (InOutSpec.ConduitPlan.Num() > 0)
 	{
-		UE_LOG(LogSmartFoundations, Display,
+		UE_LOG(LogSmartFoundations, Verbose,
 			TEXT("[MP-334] Client fire: captured conduit plan - %d belt(s), %d pipe(s), %d stackable belt(s), %d stackable pipe(s), %d wire(s) (%d cost item type(s))."),
 			PerKind[0], PerKind[1], PerKind[2], PerKind[3], PerKind[4], InOutSpec.ConduitPlanCost.Num());
 	}
@@ -650,7 +650,7 @@ int32 SpawnConduitPlanChildren(AFGHologram* Parent, const FSFScalingSpec& Spec)
 			++WireEntries;
 		}
 	}
-	UE_LOG(LogSmartFoundations, Display,
+	UE_LOG(LogSmartFoundations, Verbose,
 		TEXT("[MP-334] SpawnConduitPlanChildren: %d/%d staged conduit(s) attached to %s (%d wire(s) deferred to post-construct); vanilla construct will build + wire them."),
 		Spawned, Spec.ConduitPlan.Num() - WireEntries, *Parent->GetName(), WireEntries);
 
@@ -751,7 +751,7 @@ int32 SpawnWirePlanPostConstruct(AActor* BuiltParent, const TArray<AActor*>& Out
 
 	if (WireEntries > 0)
 	{
-		UE_LOG(LogSmartFoundations, Display,
+		UE_LOG(LogSmartFoundations, Verbose,
 			TEXT("[MP-334] SpawnWirePlanPostConstruct: built %d/%d staged wire(s) for %s."),
 			Built, WireEntries, *GetNameSafe(BuiltParent));
 	}

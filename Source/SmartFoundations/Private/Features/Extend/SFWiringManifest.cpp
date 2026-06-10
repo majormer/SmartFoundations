@@ -892,7 +892,7 @@ int32 FSFWiringManifest::CreateChainActors(UWorld* World, const TMap<FString, AA
             if (Listed > 1) ChainNames += TEXT(",");
             ChainNames += FString::Printf(TEXT("%s(segs=%d)"), *Chain->GetName(), Chain->GetNumChainSegments());
         }
-        UE_LOG(LogSmartExtend, Display,
+        UE_LOG(LogSmartExtend, Verbose,
             TEXT("[CHAIN-DIAG] CreateChainActors: %d conveyor(s), %d affected chain(s): %s"),
             AllConveyors.Num(), AffectedChains.Num(), Listed == 0 ? TEXT("<none>") : *ChainNames);
     }

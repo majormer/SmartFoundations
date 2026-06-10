@@ -184,11 +184,18 @@ void USFHintBarService::OnHintTickTimer()
 
 UUserWidget* USFHintBarService::FindWidgetBuildMode() const
 {
-	// Load the Widget_BuildMode Blueprint generated class
+	// Hint bars are client UI: a dedicated server has no UI assets cooked, so the load below
+	// fails on EVERY hint tick and spams Warnings (live 2026-06-10 dedi logs). Warn once, then
+	// stay quiet - the nullptr return already no-ops the injection.
 	UClass* WidgetClass = LoadClass<UUserWidget>(nullptr, WidgetBuildModePath);
 	if (!WidgetClass)
 	{
-		UE_LOG(LogSmartUI, Warning, TEXT("HintBarService: Failed to load Widget_BuildMode class"));
+		static bool bWarnedOnce = false;
+		if (!bWarnedOnce)
+		{
+			bWarnedOnce = true;
+			UE_LOG(LogSmartUI, Warning, TEXT("HintBarService: Failed to load Widget_BuildMode class (further occurrences suppressed; expected on dedicated servers)"));
+		}
 		return nullptr;
 	}
 
