@@ -897,7 +897,13 @@ int32 USFChainActorService::PurgeZombieChainActors()
 			HealedChainlessBelts);
 	}
 
-	if (Zombies.Num() == 0) return ForceDestroyedCount;
+	if (Zombies.Num() == 0)
+	{
+		UE_LOG(LogSmartUpgrade, Display,
+			TEXT("[CHAIN-DIAG] Sweep complete: zombiesPurged=0 detachedForceDestroyed=%d orphanBeltsReRegistered=%d chainlessBeltsHealed=%d"),
+			ForceDestroyedCount, ReRegisteredBelts, HealedChainlessBelts);
+		return ForceDestroyedCount;
+	}
 
 	int32 PurgeCount = 0;
 	for (AFGConveyorChainActor* Chain : Zombies)
@@ -927,6 +933,12 @@ int32 USFChainActorService::PurgeZombieChainActors()
 
 		++PurgeCount;
 	}
+
+	// [CHAIN-DIAG] Always-on sweep summary: lets a shipping dedi log show whether a build path
+	// left chainless belts behind (the thesis factory-tick AV) without verbose logging.
+	UE_LOG(LogSmartUpgrade, Display,
+		TEXT("[CHAIN-DIAG] Sweep complete: zombiesPurged=%d detachedForceDestroyed=%d orphanBeltsReRegistered=%d chainlessBeltsHealed=%d"),
+		PurgeCount, ForceDestroyedCount, ReRegisteredBelts, HealedChainlessBelts);
 
 	return PurgeCount + ForceDestroyedCount;
 }

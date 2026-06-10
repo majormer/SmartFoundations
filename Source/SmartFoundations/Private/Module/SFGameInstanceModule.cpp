@@ -22,6 +22,7 @@
 // SML hooking for cost aggregation and blueprint construct
 #include "Patching/NativeHookManager.h"
 #include "Subsystem/SFSubsystem.h"
+#include "Services/SFChainActorService.h"  // [CHAIN-FIX] post-construct chain-hygiene sweep
 #include "Features/AutoConnect/SFAutoConnectService.h"
 #include "Features/Extend/SFExtendService.h"
 
@@ -1143,6 +1144,21 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 					*GetNameSafe(BuiltParent), out_children.Num());
 				// If nothing registered (neither actors nor lightweights), let it clean itself up.
 				GroupProxy->ValidateExistanceOtherwiseSelfDestruct();
+			}
+
+			// [CHAIN-FIX] Run the chain-hygiene sweep shortly after EVERY server-side spec/extend
+			// construct: it purges detached chains AND re-registers any connected-but-chainless
+			// belt. The thesis factory-tick AV (FGBuildableSubsystem.cpp:644, virtual call into
+			// freed/garbage memory minutes after a build) reproduced twice on 2026-06-10 in
+			// sessions whose only Smart activity was 1x1 conduit-plan builds - the sweep only ran
+			// at boot and post-upgrade, leaving the spec-build path uncovered. Timer is coalesced;
+			// scheduling per construct is cheap.
+			if (USFSubsystem* SweepSS = USFSubsystem::Get(self->GetWorld()))
+			{
+				if (USFChainActorService* ChainSvc = SweepSS->GetChainActorService())
+				{
+					ChainSvc->ScheduleDeferredZombiePurge(3.0f);
+				}
 			}
 
 			scope.Override(BuiltParent);
