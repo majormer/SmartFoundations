@@ -6,6 +6,7 @@
  */
 
 #include "Subsystem/SFSubsystemImpl.h"
+#include "Core/Helpers/SFNetworkHelper.h"  // [#334] authority gate
 
 
 void USFSubsystem::OnActorSpawned(AActor* SpawnedActor)
@@ -14,6 +15,22 @@ void USFSubsystem::OnActorSpawned(AActor* SpawnedActor)
 	if (RecipeManagementService)
 	{
 		RecipeManagementService->OnActorSpawned(SpawnedActor);
+	}
+
+	// ========================================
+	// [MP / #334] AUTHORITY GATE for everything below.
+	// Every remaining section of this handler MUTATES world state post-build (blueprint-proxy
+	// grouping, belt/pipe auto-connect builds, stackable pipe/belt wiring). On a NETWORK CLIENT,
+	// OnActorSpawned fires for REPLICATED server-built actors - running these sections there
+	// spawns client-only ghost actors and connections the server never sees (the root cause of
+	// #334: client-only power wires, and the same class of bug for belts/pipes). Authority sides
+	// (single player standalone, listen-server host, dedicated server) are unchanged: the server
+	// runs its OWN preview/decision pipeline against its mirrored hologram and performs the
+	// wiring here with authority.
+	// ========================================
+	if (FSFNetworkHelper::IsClient(GetWorld()))
+	{
+		return;
 	}
 
 	// ========================================
