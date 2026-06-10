@@ -43,8 +43,26 @@ connections (GetConnection() null); FIX: server pushes its authoritatively deriv
 topology to the building client after every commit (Client_ReceiveServerCloneTopology);
 GetLastCloneTopology prefers it on clients.
 
+**OPEN INVESTIGATION (2026-06-10 end of session): freed-pointer factory-tick AV.**
+Three identical dedi crashes (TickFactoryActors lambda_31, FGBuildableSubsystem.cpp:644,
+ParallelFor worker calling through freed heap — cdb-symbolized, rip in zeroed heap), each
+~2 min after building/dismantling 1x1 auto-connect distributor+belt groups; the third followed a
+Smart Dismantle directly (GC-latency timing). Working theory: stale mConveyorBucketID makes
+vanilla RemoveConveyor silently no-op in shipping → dismantled belt stays in another tick group's
+array → freed → ticked. GUARD DEPLOYED (ab02ab5): RemoveConveyor after-hook force-removes the
+belt from every TG and logs [CHAIN-DIAG] when it catches one — next dismantle either names the
+leak in one log line or the theory is wrong (dumps + cdb workflow in AGENTS.md). Related fixes
+same session: chain-hygiene sweep after every spec/extend construct + always-on sweep summary
+(06694cf), chainless-belt heal (7649aec), detached-chain force-destroy + member-belt re-register
+(0b9c87c). Separate closed item: a wild-pointer walk crash was a STALE-OBJECT-FILE layout
+mismatch — clean module rebuild fixed it (rule + cdb recipe added to AGENTS.md).
+
 **Remaining for complete MP support (workstream rule: CANNOT SHIP PARTIAL):**
-1. Extend costs in NON-CREATIVE (GetCost hook charges the staged preview-exact array — untested).
+1. Extend costs in NON-CREATIVE — STILL UNTESTED (two attempts ended in the tick crash above
+   before the fire; the staged commit carried the 6-type cost array correctly both times).
+   Re-test: extend with costs on, verify inventory deduction matches the preview quote.
+1b. Validate the RemoveConveyor guard: build + Smart Dismantle an auto-connect group, watch for
+   the [CHAIN-DIAG] guard line, confirm no crash within ~5 min after.
 2. **Restore MP — IMPLEMENTED 2026-06-10, awaiting live test.** A restore commit rides the
    EXISTING extend-commit machinery end to end: `FSFExtendCommitSpec` gained
    `{bIsRestore, RestoreTemplate (the preset's value-only FSFCloneTopology), RestoreCounterState,
