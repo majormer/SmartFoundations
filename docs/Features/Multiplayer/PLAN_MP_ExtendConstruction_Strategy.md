@@ -105,7 +105,20 @@ confirmed). Every feature in the maintainer rule is now live-validated in MP: sc
 auto-connect (all conduit families), Extend, Scaled Extend, Restore, Upgrade, Dismantle,
 non-creative costs.
 
-**Remaining before release (cleanup only):**
+**Diagnostics strip DONE (1f7ba64):** investigation scaffolding deleted (mid-tick detectors,
+identity table); permanent safety nets KEPT (pre-tick factory-array scrub, EndPlay +
+RemoveConveyor destruction sweeps, chain-hygiene + post-load sweeps) with catch-lines at
+Warning; 52 routine Display diagnostics demoted to Verbose; HintBarService dedi spam silenced.
+Issues updated with the campaign results: #309 (milestone), #334 (resolution), #356 (Smart
+Walking SP/MP analysis + path forward).
+
+**Remaining before release:**
+0. Maintainer SP regression sweep (the final gate), then merge feature/mp-server-construction.
+   Consider: upstream SML report for the Override-without-invoke by-value footgun; the SP/MP
+   path unification (Phase 1: always-RCO panel call sites; Phase 2: spec-path-only construction,
+   piloted by Smart Walking #356).
+
+**Original cleanup list (superseded by the above):**
 1. [DONE — see above] Extend costs in NON-CREATIVE — was: STILL UNTESTED (two attempts ended in the tick crash above
    before the fire; the staged commit carried the 6-type cost array correctly both times).
    Re-test: extend with costs on, verify inventory deduction matches the preview quote.
