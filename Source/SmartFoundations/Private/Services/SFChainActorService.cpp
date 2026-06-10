@@ -811,21 +811,90 @@ int32 USFChainActorService::PurgeZombieChainActors()
 	// ParallelFor workers (vanilla's own in-tick recovery crash); this timer context is the
 	// game thread in TG_PrePhysics, before TickFactoryActors dispatches — the same safety
 	// window the 0-segment Destroy() path below has used since April 2026.
+	//
+	// CRITICAL FOLLOW-UP: a belt whose ONLY chain was the destroyed one is left
+	// connected-but-chainless — the THESIS factory-tick hazard (live 2026-06-10: the sweep ran,
+	// the save captured chainless belts, the next boot AV'd in TickFactoryActors ~8 min in,
+	// FGBuildableSubsystem.cpp:644 — the original d79e19b crash line). Collect each destroyed
+	// chain's member belts FIRST, then re-register any belt left chainless through vanilla
+	// (Remove+AddConveyor → the pending-chain path rebuilds a real chain next frame — the
+	// proven ReRegister pattern).
 	int32 ForceDestroyedCount = 0;
+	TArray<AFGBuildableConveyorBase*> OrphanedMemberBelts;
 	for (AFGConveyorChainActor* Chain : DetachedWithSegments)
 	{
 		if (!IsValid(Chain)) continue;
+		for (const FConveyorChainSplineSegment& Seg : Chain->GetChainSegments())
+		{
+			if (Seg.ConveyorBase && IsValid(Seg.ConveyorBase))
+			{
+				OrphanedMemberBelts.AddUnique(Seg.ConveyorBase);
+			}
+		}
 		UE_LOG(LogSmartUpgrade, Display,
 			TEXT("[CHAIN-DIAG] Purge force-destroying detached-but-segmented chain %s (segments=%d) — items transfer back to belts"),
 			*Chain->GetName(), Chain->GetNumChainSegments());
 		BuildableSub->ForceDestroyChainActor(Chain);
 		++ForceDestroyedCount;
 	}
+	int32 ReRegisteredBelts = 0;
+	for (AFGBuildableConveyorBase* Belt : OrphanedMemberBelts)
+	{
+		if (!IsValid(Belt) || Belt->IsActorBeingDestroyed()) continue;
+		if (Belt->GetConveyorChainActor() != nullptr) continue; // still owned by a live chain — fine
+		BuildableSub->RemoveConveyor(Belt);
+		BuildableSub->AddConveyor(Belt);
+		++ReRegisteredBelts;
+	}
 	if (ForceDestroyedCount > 0)
 	{
 		UE_LOG(LogSmartUpgrade, Display,
-			TEXT("[CHAIN-DIAG] Purge sweep: %d detached-but-segmented chain(s) force-destroyed (save-poison + frozen-item fix)"),
-			ForceDestroyedCount);
+			TEXT("[CHAIN-DIAG] Purge sweep: %d detached-but-segmented chain(s) force-destroyed, %d chainless member belt(s) re-registered for vanilla rebuild"),
+			ForceDestroyedCount, ReRegisteredBelts);
+	}
+
+	// General heal: a CONNECTED belt with no chain actor is the thesis factory-tick hazard
+	// regardless of how it got that way — a save can carry them (live 2026-06-10: a save written
+	// right after a force-destroy sweep, before vanilla rebuilt, AV'd the next boot ~8 min in).
+	// Re-register any such belt unless its tick group is already pending a vanilla chain build.
+	int32 HealedChainlessBelts = 0;
+	for (TActorIterator<AFGBuildableConveyorBase> It(World); It; ++It)
+	{
+		AFGBuildableConveyorBase* Belt = *It;
+		if (!Belt || !IsValid(Belt) || Belt->IsActorBeingDestroyed()) continue;
+		if (Belt->GetConveyorChainActor() != nullptr) continue;
+
+		UFGFactoryConnectionComponent* C0 = Belt->GetConnection0();
+		UFGFactoryConnectionComponent* C1 = Belt->GetConnection1();
+		const bool bConnected = (C0 && C0->IsConnected()) || (C1 && C1->IsConnected());
+		if (!bConnected) continue;
+
+		// Skip belts whose tick group vanilla is already going to rebuild this/next frame.
+		const int32 BucketID = Belt->GetConveyorBucketID();
+		if (BuildableSub->mConveyorTickGroup.IsValidIndex(BucketID))
+		{
+			FConveyorTickGroup* TG = BuildableSub->mConveyorTickGroup[BucketID];
+			if (TG && BuildableSub->mConveyorGroupsPendingChainActors.Contains(TG))
+			{
+				continue;
+			}
+		}
+
+		BuildableSub->RemoveConveyor(Belt);
+		BuildableSub->AddConveyor(Belt);
+		++HealedChainlessBelts;
+		if (HealedChainlessBelts <= 12)
+		{
+			UE_LOG(LogSmartUpgrade, Display,
+				TEXT("[CHAIN-DIAG] Purge sweep: re-registered connected-but-chainless belt %s (thesis factory-tick hazard)"),
+				*Belt->GetName());
+		}
+	}
+	if (HealedChainlessBelts > 0)
+	{
+		UE_LOG(LogSmartUpgrade, Display,
+			TEXT("[CHAIN-DIAG] Purge sweep: %d connected-but-chainless belt(s) re-registered total"),
+			HealedChainlessBelts);
 	}
 
 	if (Zombies.Num() == 0) return ForceDestroyedCount;
