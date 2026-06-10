@@ -167,6 +167,27 @@ Scaled Extend rides the same commit (it already builds per-clone `FSFCloneTopolo
 `SFExtendScaledService.cpp:698`). Restore replays captured clone topologies through the same
 spawner, so it inherits the ported commit too.
 
+## Slice 2 LIVE-VALIDATED (2026-06-10, commits d61c7b1..68ba8d5)
+
+Normal Extend AND Scaled Extend work end-to-end in MP: 21-clone scaled constructor chain built,
+every clone set wired 8/8 manifest connections, daisy power, dismantle groups, and EXTENDING OFF
+the built chain's end clone works (topology walk valid on built clones). Five root causes fixed
+en route - see the workstream memory / commit log: (1) wiring anchors lived in the client-only
+swapped hologram class; (2) the large commit RPC lost the cross-channel race (fix: parameters-only
+spec + continuous pre-staging + TTL); (3) deferred wiring races the post-construct cleanup (fix:
+synchronous pass at the Construct seam with the built parent); (4) server vanilla clearance
+rejects Extend placement (fix: CheckValidPlacement leniency hook - on the AFGBuildableHologram
+OVERRIDE, the base member pointer is an unhookable thunk); (5) THE ROOT: the commit's clone
+topology was client-captured and CaptureBeltChain/CapturePipeChain read GetConnection() (null on
+clients) - every MP Extend built unwired. Fix: the spec carries ONLY parameters {ParentOffset,
+Cost, SourceBuilding, ScaledClones[]}; the server derives the topology at the construct seam
+(walk -> CaptureFromTopology -> FromSource -> ReconstructCommitOnServer). BONUS: fixed a latent
+SP bug in the scaled clone wiring loop (prefix-stripped map keys vs prefixed connection targets =
+empty per-clone manifests; now generated from the prefixed topology against the global id map).
+
+Remaining for Extend-MP hardening: rotated scaled extend (clearance leniency untested), pipe/lift
+heterogeneous topologies (refineries), Restore, costs in non-creative, diagnostics strip.
+
 ## Dependencies / ordering
 
 - Depends on the **scaling slice** proving the spec round-trip + server expansion + (for Option A)
