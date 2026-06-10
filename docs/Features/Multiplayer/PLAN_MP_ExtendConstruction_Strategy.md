@@ -111,6 +111,62 @@ topology. Spacing/direction/rotation math must match (reuse the same calculators
 4. **Heterogeneous role coverage** — belts, pipes, lifts, lanes, passthroughs, distributors,
    power poles — each reconstructed + wired server-side; per-role failure isolation.
 
+## Status 2026-06-10
+
+**Slice 1 DONE (commit eebc0ac): client Extend previews work in MP for the first time.**
+`USFRCO::Server_RequestExtendTopology` / `Client_ReceiveExtendTopology`; WalkTopology's client
+branch fires a throttled request and returns false - activation's per-tick retry makes the flow
+async with zero restructuring. `FSFExtendTopology` crosses the wire as-is: it references
+replicated actors + their default-subobject components, which resolve against client proxies
+(only the `mConnectedComponent` VALUES needed to DISCOVER the graph are server-only).
+`FSFPowerChainNode`'s four naked members gained UPROPERTY() to actually serialize. Negative
+replies cached briefly. Live-validated: previews show on a client.
+
+**Slice 3 ALREADY DONE** by the #334 conduit-plan work (see PLAN_MP_AutoConnect_334.md): the
+post-build wiring paths run server-side with authority and are live-validated across all families.
+
+**Interim guard (commit 914bcee):** a client Extend FIRE is refused with an on-screen notice.
+Firing the unported commit serializes the clone children into the construct message and the
+recipe-less belt/lift clones assert the CLIENT in `SerializeConstructMessage` (live crash
+2026-06-10: "Assertion failed: hologramRecipe" via `SetupPendingConstructionHologram`'s
+pending-ghost path - SP never runs that path, which is why SP Extend fires fine). The guard is
+removed by slice 2.
+
+### Slice 2 concrete design (the remaining work)
+
+**Key discovery: the clone description is wire-safe by construction.** `FSFSourceTopology` and
+`FSFCloneTopology` (SFExtendCloneTopology.h) are fully reflected, VALUE-ONLY structs - strings,
+floats, transforms, spline points, zero object pointers (designed as a JSON-ish schema). And
+`FSFCloneTopology` carries its own executor: `SpawnChildHolograms(Parent, ExtendService, Out)` +
+`WireChildHologramConnections`. The pipeline `CaptureFromTopology(topology) -> FromSource(source,
+offset) -> SpawnChildHolograms` is deterministic given (topology, offset).
+
+Flow (mirrors the scaling/conduit commit exactly):
+1. Client fire with Extend active: capture the staged Extend commit, destroy the preview children,
+   fire the childless parent (replaces the interim guard).
+2. Stage via a new `USFRCO::Server_StageExtendCommit` into the subsystem per-player map (overwrite
+   semantics like the scaling spec).
+3. Server `Construct` hook (the existing seam): consume by instigator+BuildClass; per clone run
+   `SpawnChildHolograms` + `WireChildHologramConnections` PRE-scope(); the vanilla child loop
+   constructs everything; the Extend built-child registries + post-build wiring run server-side
+   with authority (slice 3, already validated).
+4. Cost: staged cost array captured client-side from the preview (the ConduitPlanCost pattern) -
+   the GetCost hook appends it.
+
+**Payload decision** (make at implementation time):
+- Option 1: ship `TArray<FSFCloneTopology>` (one per clone, as the preview emitted them -
+  includes Scaled Extend's post-FromSource rotation fix-ups). Faithful but O(clones) bytes;
+  large manifolds x many clones can approach the reliable-RPC ceiling - needs the byte-estimate
+  refusal guard like the conduit plan.
+- Option 2: ship ONE `FSFSourceTopology` + clone offsets/rotations and re-run
+  `FromSource` (+ the Scaled Extend fix-ups, which are plain code) server-side. O(1) in clone
+  count; requires the fix-up code to be callable server-side deterministically.
+Start with Option 1 + the guard (simplest, most faithful); fall back to Option 2 if sizes bite.
+
+Scaled Extend rides the same commit (it already builds per-clone `FSFCloneTopology` instances -
+`SFExtendScaledService.cpp:698`). Restore replays captured clone topologies through the same
+spawner, so it inherits the ported commit too.
+
 ## Dependencies / ordering
 
 - Depends on the **scaling slice** proving the spec round-trip + server expansion + (for Option A)
