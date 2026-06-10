@@ -747,23 +747,51 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 							}
 						}
 
-						FSFReservedInputsMap ReservedInputs;
+						// PRIMARY PATH: re-attach the server's own AIM-TIME previews. The server's
+						// mirror pipeline already derived the wiring plan for the parent (fully
+						// routed belt holograms with snapped connectors, stored in the service map,
+						// proven alive at this moment by the gate diagnostics) - the construct-
+						// message deserialization merely knocked them out of mChildren. Re-derive
+						// via ProcessSingleDistributor returned 0 here for every distributor even
+						// with 20+ nearby buildings found (live rounds 1-2), so reuse beats
+						// re-derivation for the parent.
 						int32 BeltPreviews = 0;
-
-						TArray<AFGHologram*> AllDistributors;
-						AllDistributors.Add(self);
-						AllDistributors.Append(DistributorChildren);
-						for (AFGHologram* Distributor : AllDistributors)
+						if (TArray<TSharedPtr<FBeltPreviewHelper>>* StoredPreviews = AutoConnect->GetBeltPreviews(self))
 						{
-							// [MP-334] TEMP diagnostic: the first live round returned 0 previews for
-							// every distributor while the aim-time pipeline succeeds on the same
-							// hologram - log the raw inputs of the decision at this exact moment.
+							for (const TSharedPtr<FBeltPreviewHelper>& Helper : *StoredPreviews)
+							{
+								if (!Helper.IsValid())
+								{
+									continue;
+								}
+								AFGSplineHologram* BeltHolo = Helper->GetHologram();
+								if (!IsValid(BeltHolo))
+								{
+									continue;
+								}
+								if (!self->GetHologramChildren().Contains(BeltHolo))
+								{
+									self->AddChild(BeltHolo, BeltHolo->GetFName());
+								}
+								++BeltPreviews;
+							}
+						}
+						UE_LOG(LogSmartFoundations, Display,
+							TEXT("[MP-334]   parent %s: re-attached %d stored aim-time belt previews."),
+							*self->GetName(), BeltPreviews);
+
+						// Grid children have no aim-time previews (they exist only at construct);
+						// re-derivation is still the plan for them, but it currently yields 0 -
+						// keep the diagnostic to debug with the parent as a working comparison.
+						FSFReservedInputsMap ReservedInputs;
+						for (AFGHologram* Distributor : DistributorChildren)
+						{
 							const FVector DistLoc = Distributor->GetActorLocation();
 							const int32 NearbyCount = SS->FindNearbyBuildings(DistLoc, 2500.0f).Num();
 							const int32 Made = AutoConnect->ProcessSingleDistributor(Distributor, &ReservedInputs).Num();
 							BeltPreviews += Made;
 							UE_LOG(LogSmartFoundations, Display,
-								TEXT("[MP-334]   distributor %s at %s: nearbyBuildings=%d -> beltPreviews=%d"),
+								TEXT("[MP-334]   grid child %s at %s: nearbyBuildings=%d -> beltPreviews=%d"),
 								*Distributor->GetName(), *DistLoc.ToCompactString(), NearbyCount, Made);
 						}
 
