@@ -845,6 +845,13 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 	// corrupt entry appears in mFactoryBuildings by some path none of the chokepoint guards see.
 	// Validate the arrays IMMEDIATELY before vanilla's ParallelFor walks them: the corrupt entry
 	// is removed (server survives) and the log pinpoints its index + valid neighbors.
+	// bInsideFactoryTick: the 8th repro proved the corruption happens MID-tick (the pre-tick
+	// scrub found every entry valid on the very tick that crashed). Leading theory: something
+	// REGISTERS a buildable while the ParallelFor walks mFactoryBuildings -> TArray realloc ->
+	// workers read the freed old buffer (garbage entries, exactly the dump signature). The flag
+	// + the AddBuildable hook below convict the registrant by name.
+	static bool bInsideFactoryTick = false;
+
 	SUBSCRIBE_METHOD(
 		AFGBuildableSubsystem::TickFactory,
 		[](auto& scope, AFGBuildableSubsystem* self, float dt, ELevelTick TickType)
@@ -858,6 +865,23 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 						ChainSvc->ScrubFactoryTickArrays();
 					}
 				}
+			}
+			bInsideFactoryTick = true;
+			scope(self, dt, TickType);
+			bInsideFactoryTick = false;
+		});
+
+	SUBSCRIBE_METHOD(
+		AFGBuildableSubsystem::AddBuildable,
+		[](auto& scope, AFGBuildableSubsystem* self, AFGBuildable* buildable)
+		{
+			if (bInsideFactoryTick)
+			{
+				UE_LOG(LogSmartFoundations, Error,
+					TEXT("[CHAIN-DIAG] AddBuildable(%s / %s) DURING TickFactory! mFactoryBuildings can realloc under the ParallelFor - THE freed-buffer tick AV. Callstack follows."),
+					buildable ? *buildable->GetName() : TEXT("null"),
+					buildable ? *GetNameSafe(buildable->GetClass()) : TEXT("null"));
+				FDebug::DumpStackTraceToLog(ELogVerbosity::Error);
 			}
 		});
 
