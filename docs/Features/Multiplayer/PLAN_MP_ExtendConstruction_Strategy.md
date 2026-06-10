@@ -200,3 +200,29 @@ heterogeneous topologies (refineries), Restore, costs in non-creative, diagnosti
 
 Per the workstream rule, nothing ships until **all** features work in MP; the oversized-grid guard
 remains the interim safety measure.
+
+## OPEN: dedi factory-tick crash after blender scaled extend (2026-06-10 07:22)
+
+Repro context: blender scaled extend (7 clone sets, 151 children, every clone wired 23 incl.
+12 pipe connections) built clean at 07:20:10 and ticked for ~2.5 minutes. At 07:22:42 the player
+aimed at the END clone (walk valid=1 - extend-off-chain ACTIVATED, the feature works) and fired a
+normal extend off it at 07:22:43. One frame later: EXCEPTION_ACCESS_VIOLATION on a heap address in
+`AFGBuildableSubsystem::TickFactoryActors` (FGBuildableSubsystem.cpp:644, ParallelFor lambda) -
+a freed/garbage actor in the factory tick arrays. NO Smart logs in the crash frame: the new fire's
+construct RPC had NOT yet been processed (staged-commit log only), so the leading hypothesis is a
+TIMEBOMB from the blender build (poisoned factory-tick entry) rather than the new construct.
+
+Evidence preserved: crash folder UECC-Windows-B806A0C64D3B58734FC0E38F04B60288_0000 (UEMinidump.dmp
++ log), WiringManifest.json from the build. No cdb/windbg installed yet - install Windows
+Debugging Tools and open the dump with the FactoryServer-SmartFoundations PDB to identify the
+faulting actor type.
+
+Diagnosis plan: (1) dump analysis; (2) repro the blender chain and observe WHEN it dies (idle vs
+production start vs player action) - if reproducible, bisect the commit wiring pass by disabling
+CreateChainActors / RebuildPipeNetworks for the commit path (the manifest reported chains=0,
+suggesting the connected belts may lack unified chain registration - the THESIS hazard class);
+(3) compare against an identical SP blender scaled extend for baseline.
+
+Also pending from the same round: end-blender showed 2/6 factory connections (1 belt in, 1 pipe
+in) - CONFIRM whether the source blender had only those connected (Extend mirrors the source's
+chains; partial source = partial clone is correct behavior).
