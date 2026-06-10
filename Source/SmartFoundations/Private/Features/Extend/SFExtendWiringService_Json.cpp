@@ -1284,42 +1284,37 @@ int32 USFExtendWiringService::GenerateAndExecuteWiring(AFGBuildableFactory* NewF
             continue;
         }
 
-        // Build clone_id -> buildable mapping for ExtendService clone set
+        // Per-clone actor map with PREFIXED keys (scopes chain/network rebuilds to this clone).
         TMap<FString, AActor*> CloneBuiltActors;
-        CloneBuiltActors.Add(TEXT("parent"), CloneFactory);
-
-        // Find all built actors with ExtendService clone's prefix
         FString ClonePrefix = FString::Printf(TEXT("sc%d_"), CloneIdx);
         for (const auto& Pair : ExtendService->JsonBuiltActors)
         {
             if (Pair.Key.StartsWith(ClonePrefix) && IsValid(Pair.Value))
             {
-                // Strip prefix for topology matching
-                FString OriginalId = Pair.Key.Mid(ClonePrefix.Len());
-                CloneBuiltActors.Add(OriginalId, Pair.Value);
+                CloneBuiltActors.Add(Pair.Key, Pair.Value);
             }
         }
+        CloneBuiltActors.Add(FString::Printf(TEXT("sc%d_factory"), CloneIdx), CloneFactory);
 
         SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("⚡ SCALED EXTEND Wire: Clone[%d] - %d built actors mapped (factory=%s)"),
             CloneIdx, CloneBuiltActors.Num(), *CloneFactory->GetName());
 
-        // Generate and execute wiring for ExtendService clone
-        // Use the clone's topology but with stripped IDs (matching original topology structure)
-        FSFCloneTopology StrippedTopology = *Clone.CloneTopology;
-        for (FSFCloneHologram& Holo : StrippedTopology.ChildHolograms)
+        // Generate the clone's manifest from its PREFIXED topology against the GLOBAL id map.
+        // The spawn-time prefix pass rewrites every connection TARGET into the prefixed
+        // namespace ("parent" -> "sc{i}_factory", internal refs -> "sc{i}_X", lane source-sides
+        // -> "sc{i-1}_X" or the parent set's UNPREFIXED ids). The old code stripped prefixes
+        // from the map keys and hologram ids but NEVER from the targets, so every lookup missed
+        // and the per-clone manifests came out empty (live 2026-06-10: manifestBelts=0 for every
+        // clone, with clone-0's lanes mis-resolving into its own namespace). The global map
+        // resolves all of it: parent-set ids, every prefixed clone id, and the parent factory.
+        TMap<FString, AActor*> CloneGenMap = CloneIdToBuildable;
+        for (const auto& Pair : CloneBuiltActors)
         {
-            if (Holo.HologramId.StartsWith(ClonePrefix))
-            {
-                Holo.HologramId = Holo.HologramId.Mid(ClonePrefix.Len());
-            }
-            if (Holo.ConnectedPowerPoleHologramId.StartsWith(ClonePrefix))
-            {
-                Holo.ConnectedPowerPoleHologramId = Holo.ConnectedPowerPoleHologramId.Mid(ClonePrefix.Len());
-            }
+            CloneGenMap.Add(Pair.Key, Pair.Value);
         }
 
         FSFWiringManifest CloneManifest = FSFWiringManifest::Generate(
-            StrippedTopology, CloneBuiltActors, CloneFactory);
+            *Clone.CloneTopology, CloneGenMap, CloneFactory);
 
         int32 CloneWired = CloneManifest.ExecuteWiring(GetWorld());
         int32 CloneChains = CloneManifest.CreateChainActors(GetWorld(), CloneBuiltActors);
@@ -1485,7 +1480,8 @@ int32 USFExtendWiringService::GenerateAndExecuteWiring(AFGBuildableFactory* NewF
             }
         }
 
-        for (const FSFCloneHologram& Holo : StrippedTopology.ChildHolograms)
+        // (Prefixed topology + prefixed CloneBuiltActors keys: ids and pole references line up.)
+        for (const FSFCloneHologram& Holo : Clone.CloneTopology->ChildHolograms)
         {
             if (Holo.Role != TEXT("pipe_attachment")) continue;
             if (Holo.ConnectedPowerPoleHologramId.IsEmpty()) continue;
