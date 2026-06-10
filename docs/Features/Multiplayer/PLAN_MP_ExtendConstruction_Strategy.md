@@ -185,12 +185,14 @@ Cost, SourceBuilding, ScaledClones[]}; the server derives the topology at the co
 SP bug in the scaled clone wiring loop (prefix-stripped map keys vs prefixed connection targets =
 empty per-clone manifests; now generated from the prefixed topology against the global id map).
 
-Remaining for Extend-MP hardening: daisy power continuation along scaled chains, Restore, costs
-in non-creative, diagnostics strip.
+Remaining for Extend-MP hardening: Restore, costs in non-creative, diagnostics strip.
 VALIDATED 2026-06-10: rotated scaled extend (maintainer's post-fix build had rotation; built,
 chained, and carried live item flow — 62 chains / 917 items / 0 zombie / 0 orphan under load);
 lifts in the manifold (same run: ConveyorLiftMk5 segments in the wiring pass, uniform flow
-through every chain); heterogeneous topologies (blender 7-clone set, belts+pipes+lifts, every
+through every chain); daisy power along the scaled chain (same run: power poles + Build_PowerLine
+actors along the run, mid-chain Pipeline Pump Mk.2 hasPower=true, producing factories powered
+end to end — note: pipeline junctions report idleReason=no_power as a SENSOR ARTIFACT, they have
+no power connector); heterogeneous topologies (blender 7-clone set, belts+pipes+lifts, every
 clone wired 23/23).
 
 ## Dependencies / ordering
