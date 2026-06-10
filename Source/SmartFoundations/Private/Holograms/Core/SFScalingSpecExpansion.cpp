@@ -55,14 +55,11 @@ bool CaptureScalingSpec(AFGHologram* Hologram, FSFScalingSpec& OutSpec)
 		return false;
 	}
 
+	// NOTE: trivial 1x1x1 grids are captured too (since the #334 increment): the server-side
+	// Construct hook is also the seam where auto-connect wiring is re-derived with authority, and
+	// a SINGLE distributor with auto-connect belts needs that path as much as a grid does. The
+	// expansion loop simply spawns zero children for a 1-cell spec, and the cost scale is x1.
 	const FSFCounterState Counters = SS->GetCounterState();
-	const int32 NX = FMath::Max(1, FMath::Abs(Counters.GridCounters.X));
-	const int32 NY = FMath::Max(1, FMath::Abs(Counters.GridCounters.Y));
-	const int32 NZ = FMath::Max(1, FMath::Abs(Counters.GridCounters.Z));
-	if (NX * NY * NZ <= 1)
-	{
-		return false; // trivial grid: nothing to expand server-side
-	}
 
 	USFBuildableSizeRegistry::Initialize();
 	const FSFBuildableSizeProfile Profile = USFBuildableSizeRegistry::GetProfile(Hologram->GetBuildClass());

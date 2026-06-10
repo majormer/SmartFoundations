@@ -428,6 +428,10 @@ static const FName GSFAutoConnectChildTags[] = {
 };
 static constexpr int32 GSFAutoConnectChildTagCount = UE_ARRAY_COUNT(GSFAutoConnectChildTags);
 
+// Alias: a TMap<A,B> inside a SUBSCRIBE macro argument splits the macro args on the template
+// comma (third occurrence of this gotcha - see the multi-capture and brace-initializer notes).
+using FSFReservedInputsMap = TMap<UFGFactoryConnectionComponent*, AFGHologram*>;
+
 void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 {
 	SUBSCRIBE_METHOD(
@@ -520,11 +524,12 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 				USFBuildableSizeRegistry::Initialize();
 				if (USFBuildableSizeRegistry::GetProfile(Holo->GetBuildClass()).bSupportsScaling)
 				{
+					// Capture even for a 1x1 (no grid children): the staged spec is also what routes
+					// the construct through the server-side Construct hook, where auto-connect
+					// wiring is re-derived with authority (#334) - a single distributor with belts
+					// needs that as much as a grid does.
 					FSFScalingSpec Spec; // bValid=false by default = explicit clear
-					if (GridChildCount > 0)
-					{
-						SFScalingSpecExpansion::CaptureScalingSpec(Holo, Spec);
-					}
+					SFScalingSpecExpansion::CaptureScalingSpec(Holo, Spec);
 
 					// Stage (or clear) the spec server-side BEFORE the construct RPC goes out.
 					bool bStaged = false;
@@ -716,6 +721,45 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 			if (CountGridChildren(self) == 0)
 			{
 				SFScalingSpecExpansion::ExpandScalingSpecIntoChildren(self, Spec, self->GetRecipe());
+			}
+
+			// [MP-334] Server-side auto-connect wiring. Re-run the belt decision pipeline on the
+			// parent + the expanded grid children RIGHT BEFORE construct: the service attaches the
+			// resulting belt previews as REAL child holograms (the conduit base AddChilds them),
+			// so the vanilla child-construct loop below builds + wires them - the exact mechanism
+			// SP uses, executed where authority lives. (The client's preview belt children are
+			// stripped at fire - they crash the server in deserialization - and the server's own
+			// mirror previews are clobbered when the construct message deserializes into it, so
+			// this re-derivation is the authoritative source of MP wiring.)
+			if (USFSubsystem* SS = USFSubsystem::Get(self->GetWorld()))
+			{
+				if (USFAutoConnectService* AutoConnect = SS->GetAutoConnectService())
+				{
+					if (USFAutoConnectService::IsDistributorHologram(self))
+					{
+						// Copy the child list first: processing appends belt children to it.
+						TArray<AFGHologram*> DistributorChildren;
+						for (AFGHologram* Child : self->GetHologramChildren())
+						{
+							if (Child && USFAutoConnectService::IsDistributorHologram(Child))
+							{
+								DistributorChildren.Add(Child);
+							}
+						}
+
+						FSFReservedInputsMap ReservedInputs;
+						int32 BeltPreviews = AutoConnect->ProcessSingleDistributor(self, &ReservedInputs).Num();
+						for (AFGHologram* Distributor : DistributorChildren)
+						{
+							BeltPreviews += AutoConnect->ProcessSingleDistributor(Distributor, &ReservedInputs).Num();
+						}
+
+						UE_LOG(LogSmartFoundations, Display,
+							TEXT("[MP-334] Server-side auto-connect: %d belt previews attached pre-construct ")
+							TEXT("(parent + %d grid distributors); vanilla construct will build + wire them."),
+							BeltPreviews, DistributorChildren.Num());
+					}
+				}
 			}
 
 			// Spawn the group proxy BEFORE construction and expose it for the window of this
