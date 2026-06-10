@@ -62,8 +62,14 @@ yet confirmed: SFExtendWiringService_Manifold.cpp spawns REAL belts then
 AFGBuildableConveyorBelt::Respline (destroy+recreate). CURRENT GUARD (4c7f5ec, supersedes
 5257f00): AFGBuildable::EndPlay AFTER-hook (scope first, so only true leaks remain) force-removes
 the dying buildable from mFactoryBuildings + mFactoryBuildingGroups + conveyor tick groups and
-logs name/class/reason. Next repro names the leaking path; the AV is structurally prevented
-either way (dumps + cdb workflow in AGENTS.md; `dt` against the dedi PDB names subsystem members). Related fixes
+logs name/class/reason. A 6TH repro with the AFGBuildable guard SILENT reframed it: not a dead-listed actor but HEAP
+CORRUPTION (loop bound constant 0x733 across all dumps = corrupted Num/capture). Crash-adjacent
+log named the corruptor: the ARROW module on the dedi (readiness checks can never pass under the
+null renderer -> every aim cycle deferred attach, armed a 5s raw-this lambda timer on a
+non-UObject module whose Cleanup clear was silently skipped when the hologram died first, and
+re-ran failing /Engine/BasicShapes async loads). FIX 052f728: arrows fully no-op on dedicated
+servers + timer world cached at arm and cleared unconditionally. VALIDATE: costs-ON
+hover->away->re-aim repro; if stable, this investigation closes (cdb workflow in AGENTS.md). Related fixes
 same session: chain-hygiene sweep after every spec/extend construct + always-on sweep summary
 (06694cf), chainless-belt heal (7649aec), detached-chain force-destroy + member-belt re-register
 (0b9c87c). Separate closed item: a wild-pointer walk crash was a STALE-OBJECT-FILE layout
