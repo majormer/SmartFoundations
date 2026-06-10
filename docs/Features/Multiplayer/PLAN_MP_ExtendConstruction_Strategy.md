@@ -97,8 +97,16 @@ same session: chain-hygiene sweep after every spec/extend construct + always-on 
 (0b9c87c). Separate closed item: a wild-pointer walk crash was a STALE-OBJECT-FILE layout
 mismatch — clean module rebuild fixed it (rule + cdb recipe added to AGENTS.md).
 
-**Remaining for complete MP support (workstream rule: CANNOT SHIP PARTIAL):**
-1. Extend costs in NON-CREATIVE — STILL UNTESTED (two attempts ended in the tick crash above
+**✅ MP FEATURE SURFACE COMPLETE (2026-06-10 end of day): Extend costs in NON-CREATIVE
+LIVE-VALIDATED** — after the GetCost-hook wild-free fix (b3acba5), the killer repro (costs-ON
+hover/re-aim, 13 walks) ran clean and a costs-on SCALED extend (6/6 children + 4 clone sets,
+34 children) built with the inventory deduction EXACTLY matching the preview quote (maintainer
+confirmed). Every feature in the maintainer rule is now live-validated in MP: scaling,
+auto-connect (all conduit families), Extend, Scaled Extend, Restore, Upgrade, Dismantle,
+non-creative costs.
+
+**Remaining before release (cleanup only):**
+1. [DONE — see above] Extend costs in NON-CREATIVE — was: STILL UNTESTED (two attempts ended in the tick crash above
    before the fire; the staged commit carried the 6-type cost array correctly both times).
    Re-test: extend with costs on, verify inventory deduction matches the preview quote.
 1b. Validate the RemoveConveyor guard: build + Smart Dismantle an auto-connect group, watch for
