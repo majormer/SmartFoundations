@@ -336,7 +336,7 @@ void USFRCO::Server_StageExtendCommit_Implementation(FSFExtendCommitSpec Spec)
 bool USFRCO::Server_StageExtendCommit_Validate(FSFExtendCommitSpec Spec)
 {
 	// Sanity-bound the clone description (a forged/buggy commit cannot demand absurd spawning).
-	if (Spec.Clone.ChildHolograms.Num() > 4096)
+	if (Spec.Clone.ChildHolograms.Num() > 4096 || Spec.ScaledClones.Num() > 1024)
 	{
 		return false;
 	}

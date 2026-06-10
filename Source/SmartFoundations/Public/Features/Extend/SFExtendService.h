@@ -240,6 +240,19 @@ public:
      *  2026-06-10). */
     void SetServerCommitSourceBuilding(AFGBuildable* Source);
 
+    /** [EXTEND-MP] Client-side capture: copy the active Scaled Extend clone PARAMETERS (offsets /
+     *  rotations / grid coords) into the commit spec. Empty when Scaled Extend is not active. */
+    void GetScaledClonePlanForCommit(TArray<struct FSFExtendCommitScaledClone>& OutClones) const;
+
+    /** [EXTEND-MP] Server-side: reconstruct the Scaled Extend clone sets for a staged commit.
+     *  Re-walks the SOURCE building's graph (authoritative on the server), installs the shipped
+     *  per-clone parameters as ScaledExtendClones, and re-runs the SAME spawn pipeline the SP
+     *  preview uses (SpawnScaledExtendPreviews) against the constructing parent - regenerating
+     *  factory children, infrastructure topologies, rotation fix-ups, and lanes identically.
+     *  Requires SetServerCommitSourceBuilding to have been called. Returns clone sets installed. */
+    int32 ReconstructScaledCommitOnServer(AFGHologram* ParentHologram,
+        const TArray<struct FSFExtendCommitScaledClone>& Clones);
+
     UFUNCTION(BlueprintCallable, Category = "Smart|Extend")
     const FSFExtendTopology& GetLastExtendTopology() const;
 

@@ -692,6 +692,73 @@ void USFExtendService::SetServerCommitSourceBuilding(AFGBuildable* Source)
         TEXT("[EXTEND-MP] Server installed commit source building: %s."), *GetNameSafe(Source));
 }
 
+void USFExtendService::GetScaledClonePlanForCommit(TArray<FSFExtendCommitScaledClone>& OutClones) const
+{
+    OutClones.Reset();
+    for (const FSFScaledExtendClone& Clone : ScaledExtendClones)
+    {
+        FSFExtendCommitScaledClone Entry;
+        Entry.WorldOffset = Clone.WorldOffset;
+        Entry.RotationOffset = Clone.RotationOffset;
+        Entry.GridX = Clone.GridX;
+        Entry.GridY = Clone.GridY;
+        Entry.bIsSeed = Clone.bIsSeed;
+        OutClones.Add(Entry);
+    }
+}
+
+int32 USFExtendService::ReconstructScaledCommitOnServer(AFGHologram* ParentHologram,
+    const TArray<FSFExtendCommitScaledClone>& Clones)
+{
+    if (Clones.Num() == 0 || !ParentHologram || !TopologyService || !ScaledService)
+    {
+        return 0;
+    }
+    AFGBuildable* Source = CurrentExtendTarget.Get();
+    if (!Source)
+    {
+        UE_LOG(LogSmartExtend, Warning,
+            TEXT("[EXTEND-MP] ReconstructScaledCommitOnServer: no source building installed - scaled clone sets skipped."));
+        return 0;
+    }
+
+    // Authoritative graph walk (the server owns mConnectedComponent) - the spawn pipeline below
+    // captures its source topology from TopologyService->GetCurrentTopology().
+    if (!TopologyService->WalkTopology(Source))
+    {
+        UE_LOG(LogSmartExtend, Warning,
+            TEXT("[EXTEND-MP] ReconstructScaledCommitOnServer: server topology walk failed for %s - scaled clone sets skipped."),
+            *GetNameSafe(Source));
+        return 0;
+    }
+
+    // Install the session state SpawnScaledExtendPreviews reads, then run the SAME pipeline the
+    // SP preview uses: per clone it spawns the factory child (JsonCloneId "sc{i}_factory"),
+    // regenerates the infrastructure topology (FromSource + rigid-body rotation + lanes), and
+    // fills ScaledExtendClones[i].SpawnedHolograms / CloneTopology - exactly the state the scaled
+    // post-build wiring consumes after the vanilla child-construct loop builds everything.
+    CurrentExtendHologram = ParentHologram;
+    ScaledExtendClones.Empty();
+    for (const FSFExtendCommitScaledClone& C : Clones)
+    {
+        FSFScaledExtendClone Entry;
+        Entry.GridX = C.GridX;
+        Entry.GridY = C.GridY;
+        Entry.bIsSeed = C.bIsSeed;
+        Entry.WorldOffset = C.WorldOffset;
+        Entry.RotationOffset = C.RotationOffset;
+        ScaledExtendClones.Add(Entry);
+    }
+
+    ScaledService->SpawnCloneSetsForServerCommit();
+
+    UE_LOG(LogSmartExtend, Display,
+        TEXT("[EXTEND-MP] Server reconstructed %d scaled clone set(s) for %s (parent now has %d children)."),
+        ScaledExtendClones.Num(), *GetNameSafe(ParentHologram), ParentHologram->GetHologramChildren().Num());
+
+    return ScaledExtendClones.Num();
+}
+
 void USFExtendService::ReceiveServerTopology(const FSFExtendTopology& Topology)
 {
     CachedServerTopology = Topology;

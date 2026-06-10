@@ -20,6 +20,32 @@
  * FSFCloneTopology is wire-safe by construction: a fully reflected, VALUE-ONLY schema (strings,
  * floats, transforms, spline points - zero object pointers).
  */
+/** One Scaled Extend clone set's PARAMETERS ([EXTEND-MP]). The server does not need the clone
+ *  topologies themselves: it re-walks the source's graph authoritatively and re-runs the SAME
+ *  spawn pipeline the SP preview uses (SpawnScaledExtendPreviews) with these parameters - that
+ *  regenerates each clone's factory child, infrastructure topology, rigid-body rotation fix-ups,
+ *  and lane segments exactly as the client previewed them. */
+USTRUCT()
+struct SMARTFOUNDATIONS_API FSFExtendCommitScaledClone
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	FVector WorldOffset = FVector::ZeroVector;     // offset from the SOURCE building
+
+	UPROPERTY()
+	FRotator RotationOffset = FRotator::ZeroRotator;
+
+	UPROPERTY()
+	int32 GridX = 0;
+
+	UPROPERTY()
+	int32 GridY = 0;
+
+	UPROPERTY()
+	bool bIsSeed = false;
+};
+
 USTRUCT()
 struct SMARTFOUNDATIONS_API FSFExtendCommitSpec
 {
@@ -45,6 +71,11 @@ struct SMARTFOUNDATIONS_API FSFExtendCommitSpec
 	 *  head) must arrive with the commit. */
 	UPROPERTY()
 	TObjectPtr<class AFGBuildable> SourceBuilding = nullptr;
+
+	/** Scaled Extend ([EXTEND-MP]): the per-clone parameters of every additional clone set.
+	 *  Empty for a normal (single-clone) Extend. */
+	UPROPERTY()
+	TArray<FSFExtendCommitScaledClone> ScaledClones;
 
 	/** True once populated from a live Extend session. */
 	UPROPERTY()

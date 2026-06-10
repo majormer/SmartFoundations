@@ -544,6 +544,9 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 								ExtendSpec.Cost = Holo->GetCost(true); // parent + preview children
 								ExtendSpec.BuildClass = Holo->GetBuildClass();
 								ExtendSpec.SourceBuilding = Topo.SourceBuilding.Get();
+								// Scaled Extend: ship the per-clone PARAMETERS; the server re-runs
+								// the same spawn pipeline against its own authoritative walk.
+								Extend->GetScaledClonePlanForCommit(ExtendSpec.ScaledClones);
 								ExtendSpec.bValid = ExtendSpec.Clone.ChildHolograms.Num() > 0;
 							}
 						}
@@ -1007,6 +1010,11 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 						UE_LOG(LogSmartFoundations, Display,
 							TEXT("[EXTEND-MP] Server reconstructed %d/%d clone children (%d pre-wired) for %s; vanilla construct will build them."),
 							NumSpawned, ExtendSpec.Clone.ChildHolograms.Num(), NumWired, *self->GetName());
+
+						// Scaled Extend: re-run the SP spawn pipeline for the additional clone
+						// sets (factory children + infrastructure + lanes) from the shipped
+						// per-clone parameters + the server's own authoritative topology walk.
+						Extend->ReconstructScaledCommitOnServer(self, ExtendSpec.ScaledClones);
 					}
 				}
 			}
