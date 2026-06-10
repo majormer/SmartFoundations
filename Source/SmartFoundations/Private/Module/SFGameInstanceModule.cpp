@@ -840,6 +840,38 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 			}
 		});
 
+	// [CHAIN-FIX] Destruction chokepoint guard. The 4th freed-pointer tick AV reproduced with NO
+	// dismantle and NO build (hover extend -> look away -> re-aim), with the RemoveConveyor guard
+	// silent - so some conveyor destruction path never calls RemoveConveyor at all and leaves the
+	// belt in a tick-group array. EndPlay fires for EVERY destruction path; the before-hook sweeps
+	// the tick groups while the object is still alive and logs WHICH belt + WHY it died, naming
+	// the leaking path. AFGBuildableConveyorBase overrides EndPlay (primary-class virtual), so the
+	// CDO resolves the conveyor-specific body - the hook fires only for conveyors.
+	AFGBuildableConveyorBase* ConveyorBaseCDO = GetMutableDefault<AFGBuildableConveyorBase>();
+	SUBSCRIBE_METHOD_VIRTUAL(AFGBuildableConveyorBase::EndPlay, ConveyorBaseCDO,
+		[](auto& scope, AFGBuildableConveyorBase* self, const EEndPlayReason::Type endPlayReason)
+		{
+			if (self && self->HasAuthority())
+			{
+				if (UWorld* World = self->GetWorld())
+				{
+					if (USFSubsystem* SS = USFSubsystem::Get(World))
+					{
+						if (USFChainActorService* ChainSvc = SS->GetChainActorService())
+						{
+							const int32 Removed = ChainSvc->RemoveConveyorFromAllTickGroups(self);
+							if (Removed > 0)
+							{
+								UE_LOG(LogSmartFoundations, Display,
+									TEXT("[CHAIN-DIAG] EndPlay guard: %s died (reason=%d) while STILL in %d tick group(s) - leak path identified, freed-pointer tick AV prevented."),
+									*self->GetName(), static_cast<int32>(endPlayReason), Removed);
+							}
+						}
+					}
+				}
+			}
+		});
+
 	// Count the Smart grid children currently attached to a hologram (the strip/expand targets).
 	auto CountGridChildren = [](AFGHologram* Holo) -> int32
 	{
