@@ -221,8 +221,8 @@ void USFRCO::Server_StageScalingSpec_Implementation(FSFScalingSpec Spec)
 	if (Spec.bValid)
 	{
 		UE_LOG(LogSmartFoundations, Display,
-			TEXT("[MP-SPEC] Server staged scaling spec for %s: %d cells of %s."),
-			*GetNameSafe(OwnerPC), Spec.CellCount(), *GetNameSafe(*Spec.BuildClass));
+			TEXT("[MP-SPEC] Server staged scaling spec for %s: %d cells of %s, %d planned belt(s)."),
+			*GetNameSafe(OwnerPC), Spec.CellCount(), *GetNameSafe(*Spec.BuildClass), Spec.BeltPlan.Num());
 	}
 }
 
@@ -233,8 +233,27 @@ bool USFRCO::Server_StageScalingSpec_Validate(FSFScalingSpec Spec)
 	const int64 Cells = (int64)FMath::Max(1, FMath::Abs(G.X))
 		* FMath::Max(1, FMath::Abs(G.Y))
 		* FMath::Max(1, FMath::Abs(G.Z));
-	return FMath::Abs(G.X) <= 2000 && FMath::Abs(G.Y) <= 2000 && FMath::Abs(G.Z) <= 2000
-		&& Cells <= 100000;
+	if (FMath::Abs(G.X) > 2000 || FMath::Abs(G.Y) > 2000 || FMath::Abs(G.Z) > 2000
+		|| Cells > 100000)
+	{
+		return false;
+	}
+
+	// Sanity-bound the belt plan (#334): at most ~3 belts per distributor cell in practice; allow
+	// generous headroom. Spline previews route with a handful of points; 64 is far beyond any real
+	// auto-connect belt.
+	if (Spec.BeltPlan.Num() > 4096)
+	{
+		return false;
+	}
+	for (const FSFBeltPlanEntry& Entry : Spec.BeltPlan)
+	{
+		if (Entry.SplinePoints.Num() > 64)
+		{
+			return false;
+		}
+	}
+	return true;
 }
 
 // ========================================

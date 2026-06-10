@@ -33,4 +33,21 @@ namespace SFScalingSpecExpansion
 	 */
 	int32 ExpandScalingSpecIntoChildren(AFGHologram* Parent, const FSFScalingSpec& Spec,
 		TSubclassOf<UFGRecipe> Recipe);
+
+	/**
+	 * Client-side (#334): capture the auto-connect belt wiring plan from the live preview helpers
+	 * into the spec, BEFORE the fire hook strips/destroys those previews. Walks the parent + every
+	 * child hologram and snapshots each stored belt preview (class, recipe, transform, routed
+	 * spline) plus its exact vanilla length-based cost into Spec.BeltPlan / Spec.BeltPlanCost.
+	 */
+	void CaptureBeltPlan(AFGHologram* Hologram, FSFScalingSpec& InOutSpec);
+
+	/**
+	 * Server-side (#334): replay the staged belt plan as fresh ASFConveyorBeltHologram children of
+	 * the constructing parent. MUST be called AFTER ExpandScalingSpecIntoChildren so the belts sit
+	 * after the grid cells in mChildren: the vanilla child-construct loop then builds the
+	 * distributors first and each belt's SF_BeltAutoConnectChild Construct path wires it by
+	 * geometric coincidence against BUILT actors only. Returns the number of belts spawned.
+	 */
+	int32 SpawnBeltPlanChildren(AFGHologram* Parent, const FSFScalingSpec& Spec);
 }

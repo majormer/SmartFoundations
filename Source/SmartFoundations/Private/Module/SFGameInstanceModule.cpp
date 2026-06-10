@@ -428,10 +428,6 @@ static const FName GSFAutoConnectChildTags[] = {
 };
 static constexpr int32 GSFAutoConnectChildTagCount = UE_ARRAY_COUNT(GSFAutoConnectChildTags);
 
-// Alias: a TMap<A,B> inside a SUBSCRIBE macro argument splits the macro args on the template
-// comma (third occurrence of this gotcha - see the multi-capture and brace-initializer notes).
-using FSFReservedInputsMap = TMap<UFGFactoryConnectionComponent*, AFGHologram*>;
-
 void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 {
 	SUBSCRIBE_METHOD(
@@ -455,17 +451,63 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 				return;
 			}
 
-			// [MP-SPEC] #334 STOPGAP: Smart auto-connect preview children (belts / pipes / wires /
+			const bool bSpecEnabled = SFScalingSpecExpansion::IsSpecConstructionEnabled();
+
+			// [MP-SPEC] Capture the spec AND the auto-connect belt plan (#334) BEFORE the strip
+			// below destroys the preview holograms - the client's fire-time previews are the only
+			// complete, real wiring plan that ever exists (server-side re-derivation and aim-time
+			// preview reuse both failed live; see PLAN_MP_AutoConnect_334.md). Captured even for a
+			// 1x1: a single distributor with belts needs the server Construct seam as much as a
+			// grid does.
+			FSFScalingSpec Spec; // bValid=false by default = explicit clear
+			bool bScalable = false;
+			if (bSpecEnabled)
+			{
+				USFBuildableSizeRegistry::Initialize();
+				bScalable = USFBuildableSizeRegistry::GetProfile(Holo->GetBuildClass()).bSupportsScaling;
+				if (bScalable)
+				{
+					SFScalingSpecExpansion::CaptureScalingSpec(Holo, Spec);
+					SFScalingSpecExpansion::CaptureBeltPlan(Holo, Spec);
+
+					// [MP-334] Reliable-RPC ceiling guard: a very large belt plan could overflow
+					// Server_StageScalingSpec the same way the construct message itself once did
+					// (a silently dropped staging RPC would leave the server constructing a bare
+					// 1x1). Refuse the fire BEFORE the previews are destroyed - the grid stays
+					// live so the player can place in smaller sections. Conservative estimate:
+					// ~100B fixed + ~80B per spline point per belt (FVectors are doubles in UE5).
+					int32 PlanBytesEstimate = 0;
+					for (const FSFBeltPlanEntry& Entry : Spec.BeltPlan)
+					{
+						PlanBytesEstimate += 100 + Entry.SplinePoints.Num() * 80;
+					}
+					if (PlanBytesEstimate > 45000)
+					{
+						UE_LOG(LogSmartFoundations, Display,
+							TEXT("[MP-334] Refused client fire: belt plan too large to stage reliably (%d belts, ~%d bytes). Build in smaller sections."),
+							Spec.BeltPlan.Num(), PlanBytesEstimate);
+						if (GEngine)
+						{
+							GEngine->AddOnScreenDebugMessage(-1, 6.0f, FColor::Orange,
+								FString::Printf(TEXT("Smart!: too many auto-connect belts for one multiplayer placement (%d). Build in smaller sections."),
+									Spec.BeltPlan.Num()));
+						}
+						scope.Cancel();
+						return;
+					}
+				}
+			}
+
+			// [MP-SPEC] #334: Smart auto-connect preview children (belts / pipes / wires /
 			// stackable poles) must NEVER cross the construct message - the server crashes
 			// deserializing them (live 2026-06-09: assert in AFGConveyorBeltHologram::
 			// UpdateSplineComponent via OnRep_SplineData inside Server_ConstructHologram, empty
-			// spline array; a 1x1 merger fire with auto-connect belts killed the dedi). Until the
-			// #334 slice rebuilds the wiring server-side with authority, strip + destroy these
-			// preview children at fire time. Auto-connect therefore does not WIRE in MP yet - the
-			// pre-existing #334 status - but it no longer crashes the server. SP/listen-host are
-			// unaffected (this hook is NM_Client-only). Applies to ALL client fires when the spec
-			// path is enabled, grid or not (the crash case was a 1x1).
-			if (SFScalingSpecExpansion::IsSpecConstructionEnabled())
+			// spline array; a 1x1 merger fire with auto-connect belts killed the dedi). The belts
+			// are rebuilt server-side from the staged plan above; pipes/power wiring is still
+			// pending (#334 remaining increments). SP/listen-host are unaffected (this hook is
+			// NM_Client-only). Applies to ALL client fires when the spec path is enabled, grid or
+			// not (the crash case was a 1x1).
+			if (bSpecEnabled)
 			{
 				TArray<AFGHologram*> AutoConnectToStrip;
 				for (AFGHologram* Child : Holo->mChildren)
@@ -519,17 +561,15 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 			//      preview on the next hologram automatically, matching legacy UX),
 			//   4. let the fire proceed: it serializes a clean 1-cell hologram (O(1) message); the
 			//      server's Construct hook consumes the staged spec and expands the grid.
-			if (SFScalingSpecExpansion::IsSpecConstructionEnabled())
+			if (bSpecEnabled)
 			{
-				USFBuildableSizeRegistry::Initialize();
-				if (USFBuildableSizeRegistry::GetProfile(Holo->GetBuildClass()).bSupportsScaling)
+				if (bScalable)
 				{
-					// Capture even for a 1x1 (no grid children): the staged spec is also what routes
-					// the construct through the server-side Construct hook, where auto-connect
-					// wiring is re-derived with authority (#334) - a single distributor with belts
-					// needs that as much as a grid does.
-					FSFScalingSpec Spec; // bValid=false by default = explicit clear
-					SFScalingSpecExpansion::CaptureScalingSpec(Holo, Spec);
+					// Spec (+ belt plan) was captured ABOVE, before the strip destroyed the
+					// previews. Even a 1x1 spec is staged: it routes the construct through the
+					// server-side Construct hook, where the staged belt plan is replayed with
+					// authority (#334) - a single distributor with belts needs that as much as a
+					// grid does.
 
 					// Stage (or clear) the spec server-side BEFORE the construct RPC goes out.
 					bool bStaged = false;
@@ -548,8 +588,8 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 					if (Spec.bValid && bStaged)
 					{
 						UE_LOG(LogSmartFoundations, Display,
-							TEXT("[MP-SPEC] Client fire: staged spec (%d cells of %s), destroying %d preview children; construct message will be O(1)."),
-							Spec.CellCount(), *GetNameSafe(*Spec.BuildClass), GridChildCount);
+							TEXT("[MP-SPEC] Client fire: staged spec (%d cells of %s, %d planned belt(s)), destroying %d preview children; construct message will be O(1)."),
+							Spec.CellCount(), *GetNameSafe(*Spec.BuildClass), Spec.BeltPlan.Num(), GridChildCount);
 
 						// Destroy the preview grid through the helper's own cleanup (tracking stays
 						// consistent; the sticky counters regenerate the grid on the next hologram).
@@ -694,6 +734,28 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 			{
 				Item.Amount *= Cells;
 			}
+
+			// [MP-334] Charge the staged auto-connect belts too: exact vanilla length-based
+			// preview costs, summed client-side at capture. Without this the server-built plan
+			// belts would be free (they join mChildren only inside Construct, after costing).
+			for (const FItemAmount& BeltItem : Spec.BeltPlanCost)
+			{
+				bool bMerged = false;
+				for (FItemAmount& Item : Cost)
+				{
+					if (Item.ItemClass == BeltItem.ItemClass)
+					{
+						Item.Amount += BeltItem.Amount;
+						bMerged = true;
+						break;
+					}
+				}
+				if (!bMerged)
+				{
+					Cost.Add(BeltItem);
+				}
+			}
+
 			scope.Override(Cost);
 		});
 
@@ -723,85 +785,15 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 				SFScalingSpecExpansion::ExpandScalingSpecIntoChildren(self, Spec, self->GetRecipe());
 			}
 
-			// [MP-334] Server-side auto-connect wiring. Re-run the belt decision pipeline on the
-			// parent + the expanded grid children RIGHT BEFORE construct: the service attaches the
-			// resulting belt previews as REAL child holograms (the conduit base AddChilds them),
-			// so the vanilla child-construct loop below builds + wires them - the exact mechanism
-			// SP uses, executed where authority lives. (The client's preview belt children are
-			// stripped at fire - they crash the server in deserialization - and the server's own
-			// mirror previews are clobbered when the construct message deserializes into it, so
-			// this re-derivation is the authoritative source of MP wiring.)
-			if (USFSubsystem* SS = USFSubsystem::Get(self->GetWorld()))
-			{
-				if (USFAutoConnectService* AutoConnect = SS->GetAutoConnectService())
-				{
-					if (USFAutoConnectService::IsDistributorHologram(self))
-					{
-						// Copy the child list first: processing appends belt children to it.
-						TArray<AFGHologram*> DistributorChildren;
-						for (AFGHologram* Child : self->GetHologramChildren())
-						{
-							if (Child && USFAutoConnectService::IsDistributorHologram(Child))
-							{
-								DistributorChildren.Add(Child);
-							}
-						}
-
-						// PRIMARY PATH: re-attach the server's own AIM-TIME previews. The server's
-						// mirror pipeline already derived the wiring plan for the parent (fully
-						// routed belt holograms with snapped connectors, stored in the service map,
-						// proven alive at this moment by the gate diagnostics) - the construct-
-						// message deserialization merely knocked them out of mChildren. Re-derive
-						// via ProcessSingleDistributor returned 0 here for every distributor even
-						// with 20+ nearby buildings found (live rounds 1-2), so reuse beats
-						// re-derivation for the parent.
-						int32 BeltPreviews = 0;
-						if (TArray<TSharedPtr<FBeltPreviewHelper>>* StoredPreviews = AutoConnect->GetBeltPreviews(self))
-						{
-							for (const TSharedPtr<FBeltPreviewHelper>& Helper : *StoredPreviews)
-							{
-								if (!Helper.IsValid())
-								{
-									continue;
-								}
-								AFGSplineHologram* BeltHolo = Helper->GetHologram();
-								if (!IsValid(BeltHolo))
-								{
-									continue;
-								}
-								if (!self->GetHologramChildren().Contains(BeltHolo))
-								{
-									self->AddChild(BeltHolo, BeltHolo->GetFName());
-								}
-								++BeltPreviews;
-							}
-						}
-						UE_LOG(LogSmartFoundations, Display,
-							TEXT("[MP-334]   parent %s: re-attached %d stored aim-time belt previews."),
-							*self->GetName(), BeltPreviews);
-
-						// Grid children have no aim-time previews (they exist only at construct);
-						// re-derivation is still the plan for them, but it currently yields 0 -
-						// keep the diagnostic to debug with the parent as a working comparison.
-						FSFReservedInputsMap ReservedInputs;
-						for (AFGHologram* Distributor : DistributorChildren)
-						{
-							const FVector DistLoc = Distributor->GetActorLocation();
-							const int32 NearbyCount = SS->FindNearbyBuildings(DistLoc, 2500.0f).Num();
-							const int32 Made = AutoConnect->ProcessSingleDistributor(Distributor, &ReservedInputs).Num();
-							BeltPreviews += Made;
-							UE_LOG(LogSmartFoundations, Display,
-								TEXT("[MP-334]   grid child %s at %s: nearbyBuildings=%d -> beltPreviews=%d"),
-								*Distributor->GetName(), *DistLoc.ToCompactString(), NearbyCount, Made);
-						}
-
-						UE_LOG(LogSmartFoundations, Display,
-							TEXT("[MP-334] Server-side auto-connect: %d belt previews attached pre-construct ")
-							TEXT("(parent + %d grid distributors); vanilla construct will build + wire them."),
-							BeltPreviews, DistributorChildren.Num());
-					}
-				}
-			}
+			// [MP-334] Server-side auto-connect belt wiring: replay the CLIENT'S staged belt plan.
+			// The client's fire-time previews are the only complete, real plan that ever exists -
+			// server-side re-derivation (ProcessSingleDistributor) returned 0 at this seam, and the
+			// server's own aim-time previews are empty here / not construct-grade (three failed
+			// approaches, live-proven 2026-06-09; see PLAN_MP_AutoConnect_334.md). The plan belts
+			// are appended AFTER the grid children, so the vanilla child-construct loop below
+			// builds the distributors first and each belt's SF_BeltAutoConnectChild Construct path
+			// wires it geometrically against BUILT actors - the same mechanism SP uses.
+			SFScalingSpecExpansion::SpawnBeltPlanChildren(self, Spec);
 
 			// Spawn the group proxy BEFORE construction and expose it for the window of this
 			// construct: the ConfigureActor hook below assigns it to every buildable configured

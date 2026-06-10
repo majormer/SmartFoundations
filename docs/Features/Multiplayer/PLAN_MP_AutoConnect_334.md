@@ -76,26 +76,45 @@ fixes the design:
 3. **The CLIENT is the only party with the complete, real plan at fire time** (its preview belts
    are full holograms with routed splines + snapped connectors; we strip them at fire anyway).
 
-**REVISED increment C: ship the explicit belt plan in the staged intent.**
-- At the client fire hook, before stripping, capture per auto-connect belt:
-  `{ DistributorCellIndex (grid linear index or parent=-1), DistributorConnectorName,
-     TargetBuildable (replicated AFGBuildable* - serializes via the package map),
-     TargetConnectorName, BeltRecipe, SplinePoints }`.
-- Stage it with the scaling spec via `USFRCO` (extend the staged struct).
-- Server, AFTER the grid constructs (out_children known): resolve each entry - cell index ->
-  built distributor, connector by NAME on the built actor, target connector by name on the
-  replicated buildable - then build each belt directly with the proven primitive
-  (`ASFConveyorBeltHologram` + `SetSplineDataAndUpdate` + `SetSnappedConnections` + `Construct`),
-  the same mechanism the Extend clone spawner uses. No preview machinery involved.
-- Same pattern then extends to pipes (junction plan) and power (wire endpoint pairs - even
-  simpler: two connection components + wire class).
-- Charge the belts as part of the staged plan's cost (closes the unpaid-belt interim gap).
+**REVISED increment C: ship the explicit belt plan in the staged intent. IMPLEMENTED 2026-06-09.**
 
-## Live-test checkpoints (after A)
+The implementation simplified the sketched design in one important way: NO connector names, cell
+indices, or replicated component refs cross the wire. `ASFConveyorBeltHologram::Construct`'s
+`SF_BeltAutoConnectChild` path already wires a freshly built belt GEOMETRICALLY - each free end
+connects to the nearest free, direction-compatible connector within 50cm among BUILT actors only
+(the same mechanism SP uses for every auto-connect belt today). So the plan per belt is just
+`{ BeltClass, Recipe, Location, Rotation, SplinePoints (local) }` (`FSFBeltPlanEntry`), and
+endpoint resolution is implicit in the belt's geometry.
 
-1. Client builds a merger with auto-connect belts -> server log: does the server's
-   OnActorSpawned belt section run? Do server-derived belts get BUILT and wired? Do they
-   replicate to the client?
-2. Client builds a power-pole grid -> do wires appear (server-spawned) on both sides? No ghost
-   client wires?
-3. SP regression: belts/pipes/power wire exactly as before (authority held locally).
+- **Capture** (`SFScalingSpecExpansion::CaptureBeltPlan`, client fire hook): BEFORE the strip
+  destroys the previews, walk the service's stored previews for the parent + every child
+  distributor and snapshot each belt preview's class/recipe/transform/routed spline into
+  `Spec.BeltPlan`, plus its exact vanilla length-based `GetCost(false)` into `Spec.BeltPlanCost`
+  (merged per item class).
+- **Stage**: part of `FSFScalingSpec` via the existing `USFRCO::Server_StageScalingSpec` -
+  overwrite semantics carry over, so a stale plan can't leak. Validation bounds: <=4096 belts,
+  <=64 spline points each. A reliable-RPC ceiling guard at the fire hook refuses the fire
+  (~>45KB estimated plan) BEFORE the previews are destroyed, keeping the grid live.
+- **Replay** (`SFScalingSpecExpansion::SpawnBeltPlanChildren`, server Construct hook): after
+  `ExpandScalingSpecIntoChildren`, spawn each plan belt as a fresh `ASFConveyorBeltHologram`
+  child (Extend clone-spawner recipe: deferred spawn, `SetBuildClass`/`SetRecipe`,
+  `SF_BeltAutoConnectChild` tag, `DisableValidation`, `SetSplineDataAndUpdate` before AND after
+  `AddChild`). Appended AFTER the grid cells in `mChildren`, so the vanilla child-construct loop
+  builds the distributors first and each belt then self-wires against built actors. Belts join
+  `out_children` -> the spec group proxy registers them -> Smart Dismantle groups include them.
+- **Cost**: the GetCost hook appends `Spec.BeltPlanCost` after the cell scaling - the staged
+  belts are charged with the grid (closes the unpaid-belt interim gap).
+- Same pattern extends to pipes (junction plan) and power (wire endpoint pairs - even simpler:
+  two connection components + wire class). NOT yet implemented - pipes/power previews are still
+  stripped at fire and not rebuilt.
+
+## Live-test checkpoints (increment C, belt plan)
+
+1. Client builds a 1x1 merger next to a factory with auto-connect belt previews -> belts BUILD
+   server-side, wired (check `[MP-334] SpawnBeltPlanChildren` + flow), replicate to the client,
+   and are charged (test with build costs on).
+2. Client builds a merger ROW (the 5-merger manifold case) -> building belts AND merger-to-merger
+   manifold lanes all build + wire.
+3. The built belts are part of the Smart Dismantle group (group-dismantle removes belts too).
+4. SP regression: auto-connect belts wire exactly as before (capture/stage path is NM_Client-only).
+5. Pipes/power: still expected NOT to wire in MP (next increments); no crashes, no ghosts.

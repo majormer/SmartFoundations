@@ -5,7 +5,11 @@
 #include "Hologram/FGHologram.h"
 #include "Subsystem/SFSubsystem.h"
 #include "Subsystem/SFPositionCalculator.h"
+#include "Subsystem/SFHologramDataService.h"
 #include "Data/SFBuildableSizeRegistry.h"
+#include "Features/AutoConnect/SFAutoConnectService.h"
+#include "Holograms/Logistics/SFConveyorBeltHologram.h"
+#include "Engine/World.h"
 #include "HAL/IConsoleManager.h"
 
 // MP spec-based construction. ON by default - the mod must be self-contained (no launch options /
@@ -164,6 +168,159 @@ int32 ExpandScalingSpecIntoChildren(AFGHologram* Parent, const FSFScalingSpec& S
 		SpawnedChildren, Spec.CellCount() - 1, *Parent->GetName(), *Recipe->GetName());
 
 	return SpawnedChildren;
+}
+
+void CaptureBeltPlan(AFGHologram* Hologram, FSFScalingSpec& InOutSpec)
+{
+	if (!Hologram)
+	{
+		return;
+	}
+	USFSubsystem* SS = USFSubsystem::Get(Hologram->GetWorld());
+	USFAutoConnectService* AutoConnect = SS ? SS->GetAutoConnectService() : nullptr;
+	if (!AutoConnect)
+	{
+		return;
+	}
+
+	// The service stores previews keyed per distributor hologram: the parent itself and/or any of
+	// its grid children (manifold lanes are stored on their SOURCE distributor, so walking each
+	// distributor once visits every belt exactly once).
+	TArray<AFGHologram*> Sources;
+	Sources.Add(Hologram);
+	for (AFGHologram* Child : Hologram->GetHologramChildren())
+	{
+		if (Child)
+		{
+			Sources.Add(Child);
+		}
+	}
+
+	for (AFGHologram* Source : Sources)
+	{
+		const TArray<TSharedPtr<FBeltPreviewHelper>>* Previews = AutoConnect->GetBeltPreviews(Source);
+		if (!Previews)
+		{
+			continue;
+		}
+		for (const TSharedPtr<FBeltPreviewHelper>& Helper : *Previews)
+		{
+			if (!Helper.IsValid())
+			{
+				continue;
+			}
+			ASFConveyorBeltHologram* BeltHolo = Helper->GetTypedHologram();
+			if (!IsValid(BeltHolo) || BeltHolo->GetSplineData().Num() < 2)
+			{
+				continue;
+			}
+
+			FSFBeltPlanEntry Entry;
+			Entry.BeltClass = BeltHolo->GetBuildClass();
+			Entry.Recipe = BeltHolo->GetRecipe();
+			Entry.Location = BeltHolo->GetActorLocation();
+			Entry.Rotation = BeltHolo->GetActorRotation();
+			Entry.SplinePoints = BeltHolo->GetSplineData();
+			InOutSpec.BeltPlan.Add(MoveTemp(Entry));
+
+			// Exact vanilla length-based cost of this preview, merged per item class. Charged by
+			// the server's GetCost hook alongside the cell-scaled grid cost.
+			for (const FItemAmount& Item : BeltHolo->GetCost(false))
+			{
+				bool bMerged = false;
+				for (FItemAmount& Existing : InOutSpec.BeltPlanCost)
+				{
+					if (Existing.ItemClass == Item.ItemClass)
+					{
+						Existing.Amount += Item.Amount;
+						bMerged = true;
+						break;
+					}
+				}
+				if (!bMerged)
+				{
+					InOutSpec.BeltPlanCost.Add(Item);
+				}
+			}
+		}
+	}
+
+	if (InOutSpec.BeltPlan.Num() > 0)
+	{
+		UE_LOG(LogSmartFoundations, Display,
+			TEXT("[MP-334] Client fire: captured belt plan with %d belt(s) (%d cost item type(s)) from live previews."),
+			InOutSpec.BeltPlan.Num(), InOutSpec.BeltPlanCost.Num());
+	}
+}
+
+int32 SpawnBeltPlanChildren(AFGHologram* Parent, const FSFScalingSpec& Spec)
+{
+	UWorld* World = Parent ? Parent->GetWorld() : nullptr;
+	if (!World || Spec.BeltPlan.Num() == 0)
+	{
+		return 0;
+	}
+
+	int32 Spawned = 0;
+	int32 BeltIndex = 0;
+	for (const FSFBeltPlanEntry& Entry : Spec.BeltPlan)
+	{
+		++BeltIndex;
+		if (!Entry.BeltClass || Entry.SplinePoints.Num() < 2)
+		{
+			UE_LOG(LogSmartFoundations, Warning,
+				TEXT("[MP-334] SpawnBeltPlanChildren: plan entry %d invalid (class=%s, points=%d) - skipped."),
+				BeltIndex, *GetNameSafe(*Entry.BeltClass), Entry.SplinePoints.Num());
+			continue;
+		}
+
+		// Mirror the proven Extend clone-spawner recipe (SFExtendCloneSpawner belt_segment path),
+		// minus the client-only visual finalization (the server doesn't render previews).
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.Owner = Parent->GetOwner();
+		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+		SpawnParams.bDeferConstruction = true;
+
+		ASFConveyorBeltHologram* Belt = World->SpawnActor<ASFConveyorBeltHologram>(
+			ASFConveyorBeltHologram::StaticClass(), Entry.Location, Entry.Rotation, SpawnParams);
+		if (!Belt)
+		{
+			UE_LOG(LogSmartFoundations, Warning,
+				TEXT("[MP-334] SpawnBeltPlanChildren: belt %d failed to spawn."), BeltIndex);
+			continue;
+		}
+
+		Belt->SetReplicates(false);
+		Belt->SetReplicateMovement(false);
+		Belt->SetBuildClass(Entry.BeltClass);
+		Belt->SetRecipe(Entry.Recipe);
+
+		// The SF_BeltAutoConnectChild tag routes this hologram's Construct through the auto-connect
+		// path: Super::Construct builds the belt, then it self-wires each free end to the nearest
+		// free, direction-compatible connector within 50cm among BUILT actors only - by then the
+		// parent buildable and all grid-cell distributors exist (belts are appended LAST in
+		// mChildren), and pre-existing world targets always did. Same mechanism SP uses.
+		Belt->Tags.AddUnique(FName(TEXT("SF_BeltAutoConnectChild")));
+		USFHologramDataService::DisableValidation(Belt);
+
+		Belt->FinishSpawning(FTransform(Entry.Rotation, Entry.Location));
+		Belt->SetActorEnableCollision(false);
+		Belt->SetSplineDataAndUpdate(Entry.SplinePoints);
+
+		Parent->AddChild(Belt, Belt->GetFName());
+
+		// Defensive re-apply AFTER AddChild (Extend-proven: vanilla can reset spline data on
+		// child registration; an empty mSplineData crashes OnRep_SplineData/UpdateSplineComponent).
+		Belt->SetSplineDataAndUpdate(Entry.SplinePoints);
+
+		++Spawned;
+	}
+
+	UE_LOG(LogSmartFoundations, Display,
+		TEXT("[MP-334] SpawnBeltPlanChildren: %d/%d staged belt(s) attached to %s; vanilla construct will build + wire them."),
+		Spawned, Spec.BeltPlan.Num(), *Parent->GetName());
+
+	return Spawned;
 }
 
 } // namespace SFScalingSpecExpansion
