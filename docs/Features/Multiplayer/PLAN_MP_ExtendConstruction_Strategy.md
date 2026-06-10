@@ -68,8 +68,18 @@ log named the corruptor: the ARROW module on the dedi (readiness checks can neve
 null renderer -> every aim cycle deferred attach, armed a 5s raw-this lambda timer on a
 non-UObject module whose Cleanup clear was silently skipped when the hologram died first, and
 re-ran failing /Engine/BasicShapes async loads). FIX 052f728: arrows fully no-op on dedicated
-servers + timer world cached at arm and cleared unconditionally. VALIDATE: costs-ON
-hover->away->re-aim repro; if stable, this investigation closes (cdb workflow in AGENTS.md). Related fixes
+servers + timer world cached at arm and cleared unconditionally. Repros 7-9 falsified arrows AND the dead-entry model entirely: the pre-tick scrub (623832c)
+found every entry VALID on the crashing tick, and the mid-tick AddBuildable detector (18f26f8)
+stayed silent - the mutation happens DURING the ParallelFor by something other than
+registration. Current build (d993fcc) adds the symmetric RemoveBuildable mid-tick detector
+(shrink-realloc frees the buffer under the workers). IF THAT IS ALSO SILENT, the next-session
+DEFINITIVE move is interactive: attach cdb to the LIVE dedi (cdbX64 -p <pid>), resolve the
+subsystem ptr (captured in any dump or via SmartMCP), set a hardware write breakpoint on the
+array pointer field - `ba w8 <subsystem>+0x3C0` - and run the costs-ON hover repro: the break
+fires at the exact corrupting instruction. Known facts for whoever continues: crash = vtable
+call on garbage entry of mFactoryBuildings (+0x3C0, PDB-named) inside TickFactoryActors
+lambda_31; Num=1843 stable; crash index varies (1824, 1841-1843); entries valid at tick start;
+costs-ON correlates, costs-OFF never crashes; client aim/walk/stage cycle is the trigger window. Related fixes
 same session: chain-hygiene sweep after every spec/extend construct + always-on sweep summary
 (06694cf), chainless-belt heal (7649aec), detached-chain force-destroy + member-belt re-register
 (0b9c87c). Separate closed item: a wild-pointer walk crash was a STALE-OBJECT-FILE layout
