@@ -841,6 +841,13 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 				}
 			}
 
+			// [MP-334] Staged power wires build AFTER the grid, against BUILT actors - wires are
+			// never built from holograms (even in SP the wire child holograms exist only for cost;
+			// hologram-replayed wires came out as unconnected zombies, live 2026-06-10). Direct
+			// AFGBuildableWire spawn + Connect, the proven OnPowerPoleBuilt primitive. Registers
+			// the wires into the group proxy itself (they are not in out_children).
+			SFScalingSpecExpansion::SpawnWirePlanPostConstruct(BuiltParent, out_children, Spec, GroupProxy);
+
 			if (GroupProxy)
 			{
 				UE_LOG(LogSmartFoundations, Display,

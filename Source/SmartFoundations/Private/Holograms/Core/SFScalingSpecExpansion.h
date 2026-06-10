@@ -53,4 +53,16 @@ namespace SFScalingSpecExpansion
 	 * hologram set. Returns the number of conduits spawned.
 	 */
 	int32 SpawnConduitPlanChildren(AFGHologram* Parent, const FSFScalingSpec& Spec);
+
+	/**
+	 * Server-side (#334): build the staged WIRE entries AFTER the grid has constructed. Wires are
+	 * never built from holograms - even in SP the wire child holograms exist only for cost, and
+	 * the persistent wire is direct-spawned post-build (unconnected wires self-destruct). Resolves
+	 * each endpoint power connection by world location among the BUILT actors (parent +
+	 * out_children, falling back to the world), dedupes against wires the power manager already
+	 * spawned, then AFGBuildableWire + Connect (the proven OnPowerPoleBuilt primitive). Registers
+	 * each wire into GroupProxy (may be null). Returns the number of wires built.
+	 */
+	int32 SpawnWirePlanPostConstruct(AActor* BuiltParent, const TArray<AActor*>& OutChildren,
+		const FSFScalingSpec& Spec, class AFGBlueprintProxy* GroupProxy);
 }

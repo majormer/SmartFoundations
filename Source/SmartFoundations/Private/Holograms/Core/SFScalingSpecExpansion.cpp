@@ -13,6 +13,8 @@
 #include "Holograms/Power/SFWireHologram.h"
 #include "FGPowerConnectionComponent.h"
 #include "Buildables/FGBuildable.h"
+#include "Buildables/FGBuildableWire.h"
+#include "FGBlueprintProxy.h"
 #include "Engine/World.h"
 #include "EngineUtils.h"
 #include "HAL/IConsoleManager.h"
@@ -204,22 +206,36 @@ void CaptureConduitPlan(AFGHologram* Hologram, FSFScalingSpec& InOutSpec)
 		return;
 	}
 
-	// All Smart auto-connect previews - distributor belts (incl. manifold lanes of grid-child
-	// distributors), junction/floor-hole pipes, stackable-run belts/pipes, and power wires - are
-	// attached as TAGGED CHILDREN of the active parent hologram (proven: the fire-hook strip of
-	// parent mChildren removes every one of them). One uniform walk captures every family.
+	// All Smart auto-connect previews are TAGGED holograms somewhere in the parent's DESCENDANT
+	// tree: distributor belts attach to the top parent, but grid-child junctions/poles attach
+	// their pipe/wire previews to THEMSELVES (live finding 2026-06-10: a 5-cell junction grid
+	// captured only the parent's 1 pipe with a direct-children-only walk). Walk recursively.
 	static const FName BeltTag(TEXT("SF_BeltAutoConnectChild"));
 	static const FName PipeTag(TEXT("SF_PipeAutoConnectChild"));
 	static const FName PowerTag(TEXT("SF_PowerAutoConnectChild"));
 	static const FName StackableTag(TEXT("SF_StackableChild"));
 
-	int32 PerKind[5] = {0, 0, 0, 0, 0};
-	for (AFGHologram* Child : Hologram->GetHologramChildren())
+	TArray<AFGHologram*> Descendants;
 	{
-		if (!Child)
+		TArray<AFGHologram*> Stack;
+		Stack.Add(Hologram);
+		while (Stack.Num() > 0)
 		{
-			continue;
+			AFGHologram* Current = Stack.Pop();
+			for (AFGHologram* Child : Current->GetHologramChildren())
+			{
+				if (Child)
+				{
+					Descendants.Add(Child);
+					Stack.Add(Child);
+				}
+			}
 		}
+	}
+
+	int32 PerKind[5] = {0, 0, 0, 0, 0};
+	for (AFGHologram* Child : Descendants)
+	{
 
 		FSFConduitPlanEntry Entry;
 		if (ASFConveyorBeltHologram* BeltHolo = Cast<ASFConveyorBeltHologram>(Child))
@@ -321,14 +337,14 @@ void CaptureConduitPlan(AFGHologram* Hologram, FSFScalingSpec& InOutSpec)
 	}
 }
 
-// Resolve the power connection component nearest to a captured wire-endpoint location, searching
-// the PRE-CONSTRUCT hologram set first (parent + grid children - vanilla remaps hologram
-// connections to the built poles during construct, the SP mechanism), then already-built world
-// actors (a wire endpoint may target an existing pole/machine outside the grid).
-static UFGPowerConnectionComponent* SF_ResolvePowerConnectionAt(
-	AFGHologram* Parent, const FVector& Location, float Tolerance)
+// Resolve the circuit connection component nearest to a captured wire-endpoint location among
+// the BUILT actors of this construct (parent + out_children), falling back to the world (a wire
+// endpoint may target an existing pole/machine outside the grid).
+static UFGCircuitConnectionComponent* SF_ResolveCircuitConnectionAt(
+	UWorld* World, AActor* BuiltParent, const TArray<AActor*>& OutChildren,
+	const FVector& Location, float Tolerance)
 {
-	UFGPowerConnectionComponent* Best = nullptr;
+	UFGCircuitConnectionComponent* Best = nullptr;
 	float BestDistSq = FMath::Square(Tolerance);
 
 	auto Consider = [&](AActor* Actor)
@@ -337,9 +353,9 @@ static UFGPowerConnectionComponent* SF_ResolvePowerConnectionAt(
 		{
 			return;
 		}
-		TArray<UFGPowerConnectionComponent*> Connections;
-		Actor->GetComponents<UFGPowerConnectionComponent>(Connections);
-		for (UFGPowerConnectionComponent* Conn : Connections)
+		TArray<UFGCircuitConnectionComponent*> Connections;
+		Actor->GetComponents<UFGCircuitConnectionComponent>(Connections);
+		for (UFGCircuitConnectionComponent* Conn : Connections)
 		{
 			if (!Conn)
 			{
@@ -354,14 +370,14 @@ static UFGPowerConnectionComponent* SF_ResolvePowerConnectionAt(
 		}
 	};
 
-	Consider(Parent);
-	for (AFGHologram* Child : Parent->GetHologramChildren())
+	Consider(BuiltParent);
+	for (AActor* Child : OutChildren)
 	{
 		Consider(Child);
 	}
-	if (!Best)
+	if (!Best && World)
 	{
-		for (TActorIterator<AFGBuildable> It(Parent->GetWorld()); It; ++It)
+		for (TActorIterator<AFGBuildable> It(World); It; ++It)
 		{
 			Consider(*It);
 		}
@@ -481,22 +497,6 @@ int32 SpawnConduitPlanChildren(AFGHologram* Parent, const FSFScalingSpec& Spec)
 				if (Data)
 				{
 					Data->bIsPipeAutoConnectChild = true;
-					// PipeAutoConnectConn0 is ONLY a branch discriminator at the construct seam:
-					// null = floor-hole branch (passthrough snap registration by proximity),
-					// non-null = junction branch (deferred geometric wiring). The component is
-					// never dereferenced there, so any non-null connection works server-side.
-					if (!Entry.bFloorHolePipe)
-					{
-						TArray<UFGPipeConnectionComponentBase*> PipeConns;
-						Pipe->GetComponents<UFGPipeConnectionComponentBase>(PipeConns);
-						Data->PipeAutoConnectConn0 = PipeConns.Num() > 0 ? PipeConns[0] : nullptr;
-						if (PipeConns.Num() == 0)
-						{
-							UE_LOG(LogSmartFoundations, Warning,
-								TEXT("[MP-334] SpawnConduitPlanChildren: pipe entry %d has no connection component for the junction-branch discriminator; it will take the floor-hole branch."),
-								EntryIndex);
-						}
-					}
 				}
 			}
 			else
@@ -511,6 +511,24 @@ int32 SpawnConduitPlanChildren(AFGHologram* Parent, const FSFScalingSpec& Spec)
 
 			Pipe->FinishSpawning(FTransform(Entry.Rotation, Entry.Location));
 			Pipe->SetActorEnableCollision(false);
+
+			// PipeAutoConnectConn0 is ONLY a branch discriminator at the construct seam: null =
+			// floor-hole branch (passthrough snap registration by proximity), non-null = junction
+			// branch (deferred geometric wiring). The component is never dereferenced there, so
+			// any non-null connection works server-side. MUST be resolved AFTER FinishSpawning -
+			// the deferred-spawned hologram has no components before it (live finding 2026-06-10).
+			if (Entry.Kind == ESFConduitPlanKind::Pipe && Data && !Entry.bFloorHolePipe)
+			{
+				TArray<UFGPipeConnectionComponentBase*> PipeConns;
+				Pipe->GetComponents<UFGPipeConnectionComponentBase>(PipeConns);
+				Data->PipeAutoConnectConn0 = PipeConns.Num() > 0 ? PipeConns[0] : nullptr;
+				if (PipeConns.Num() == 0)
+				{
+					UE_LOG(LogSmartFoundations, Warning,
+						TEXT("[MP-334] SpawnConduitPlanChildren: pipe entry %d has no connection component for the junction-branch discriminator; it will take the floor-hole branch."),
+						EntryIndex);
+				}
+			}
 			Pipe->SetSplineDataAndUpdate(Entry.SplinePoints);
 			Parent->AddChild(Pipe, Pipe->GetFName());
 			Pipe->SetSplineDataAndUpdate(Entry.SplinePoints);
@@ -519,37 +537,11 @@ int32 SpawnConduitPlanChildren(AFGHologram* Parent, const FSFScalingSpec& Spec)
 		}
 
 		case ESFConduitPlanKind::Wire:
-		{
-			UFGPowerConnectionComponent* C0 = SF_ResolvePowerConnectionAt(Parent, Entry.WireStart, 100.0f);
-			UFGPowerConnectionComponent* C1 = SF_ResolvePowerConnectionAt(Parent, Entry.WireEnd, 100.0f);
-			if (!C0 || !C1 || C0 == C1)
-			{
-				UE_LOG(LogSmartFoundations, Warning,
-					TEXT("[MP-334] SpawnConduitPlanChildren: wire entry %d endpoints unresolved (C0=%s, C1=%s) - skipped."),
-					EntryIndex, *GetNameSafe(C0), *GetNameSafe(C1));
-				break;
-			}
-
-			ASFWireHologram* Wire = World->SpawnActor<ASFWireHologram>(
-				ASFWireHologram::StaticClass(), Entry.WireStart, FRotator::ZeroRotator, SpawnParams);
-			if (!Wire)
-			{
-				break;
-			}
-			Wire->SetReplicates(false);
-			Wire->SetReplicateMovement(false);
-			Wire->SetBuildClass(Entry.BuildClass);
-			Wire->SetRecipe(Entry.Recipe);
-			Wire->Tags.AddUnique(FName(TEXT("SF_PowerAutoConnectChild")));
-			USFHologramDataService::DisableValidation(Wire);
-			Wire->FinishSpawning(FTransform(FRotator::ZeroRotator, Entry.WireStart));
-			// Sets mConnections[0/1]; vanilla AFGWireHologram::Construct builds the AFGBuildableWire
-			// between them, remapping hologram-owned connections to the built poles (SP mechanism).
-			Wire->SetupWirePreview(C0, C1);
-			Parent->AddChild(Wire, Wire->GetFName());
-			Conduit = Wire;
-			break;
-		}
+			// Wires are NOT built from holograms - even in SP the wire child holograms exist only
+			// for cost, and the persistent wire is direct-spawned post-build (unconnected wires
+			// self-destruct; live finding 2026-06-10: hologram-replayed wires built as unconnected
+			// zombies). Handled by SpawnWirePlanPostConstruct AFTER the grid constructs.
+			continue;
 
 		default:
 			break;
@@ -567,11 +559,121 @@ int32 SpawnConduitPlanChildren(AFGHologram* Parent, const FSFScalingSpec& Spec)
 		}
 	}
 
+	int32 WireEntries = 0;
+	for (const FSFConduitPlanEntry& Entry : Spec.ConduitPlan)
+	{
+		if (Entry.Kind == ESFConduitPlanKind::Wire)
+		{
+			++WireEntries;
+		}
+	}
 	UE_LOG(LogSmartFoundations, Display,
-		TEXT("[MP-334] SpawnConduitPlanChildren: %d/%d staged conduit(s) attached to %s; vanilla construct will build + wire them."),
-		Spawned, Spec.ConduitPlan.Num(), *Parent->GetName());
+		TEXT("[MP-334] SpawnConduitPlanChildren: %d/%d staged conduit(s) attached to %s (%d wire(s) deferred to post-construct); vanilla construct will build + wire them."),
+		Spawned, Spec.ConduitPlan.Num() - WireEntries, *Parent->GetName(), WireEntries);
 
 	return Spawned;
+}
+
+int32 SpawnWirePlanPostConstruct(AActor* BuiltParent, const TArray<AActor*>& OutChildren,
+	const FSFScalingSpec& Spec, AFGBlueprintProxy* GroupProxy)
+{
+	UWorld* World = BuiltParent ? BuiltParent->GetWorld() : nullptr;
+	if (!World)
+	{
+		return 0;
+	}
+
+	int32 Built = 0;
+	int32 WireEntries = 0;
+	int32 EntryIndex = 0;
+	for (const FSFConduitPlanEntry& Entry : Spec.ConduitPlan)
+	{
+		++EntryIndex;
+		if (Entry.Kind != ESFConduitPlanKind::Wire)
+		{
+			continue;
+		}
+		++WireEntries;
+
+		if (!Entry.BuildClass || !Entry.BuildClass->IsChildOf(AFGBuildableWire::StaticClass()))
+		{
+			UE_LOG(LogSmartFoundations, Warning,
+				TEXT("[MP-334] SpawnWirePlanPostConstruct: wire entry %d has invalid wire class %s - skipped."),
+				EntryIndex, *GetNameSafe(*Entry.BuildClass));
+			continue;
+		}
+
+		UFGCircuitConnectionComponent* C0 = SF_ResolveCircuitConnectionAt(
+			World, BuiltParent, OutChildren, Entry.WireStart, 100.0f);
+		UFGCircuitConnectionComponent* C1 = SF_ResolveCircuitConnectionAt(
+			World, BuiltParent, OutChildren, Entry.WireEnd, 100.0f);
+		if (!C0 || !C1 || C0 == C1)
+		{
+			UE_LOG(LogSmartFoundations, Warning,
+				TEXT("[MP-334] SpawnWirePlanPostConstruct: wire entry %d endpoints unresolved (C0=%s, C1=%s) - skipped."),
+				EntryIndex, *GetNameSafe(C0), *GetNameSafe(C1));
+			continue;
+		}
+
+		// Dedupe: the power manager's OnPowerPoleBuilt also runs server-side during this construct
+		// and may already have wired this pair (e.g. pole-to-existing-factory connections).
+		bool bAlreadyConnected = false;
+		TArray<AFGBuildableWire*> ExistingWires;
+		C0->GetWires(ExistingWires);
+		for (AFGBuildableWire* Wire : ExistingWires)
+		{
+			if (Wire && (Wire->GetConnection(0) == C1 || Wire->GetConnection(1) == C1))
+			{
+				bAlreadyConnected = true;
+				break;
+			}
+		}
+		if (bAlreadyConnected)
+		{
+			continue;
+		}
+
+		// The proven OnPowerPoleBuilt primitive: direct-spawn the wire and Connect the two built
+		// connection components. Unconnected wires self-destruct, so Connect failure -> Destroy.
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+		AFGBuildableWire* NewWire = World->SpawnActor<AFGBuildableWire>(
+			*Entry.BuildClass, Entry.WireStart, FRotator::ZeroRotator, SpawnParams);
+		if (!NewWire)
+		{
+			UE_LOG(LogSmartFoundations, Warning,
+				TEXT("[MP-334] SpawnWirePlanPostConstruct: wire entry %d failed to spawn."), EntryIndex);
+			continue;
+		}
+		if (!NewWire->Connect(C0, C1))
+		{
+			UE_LOG(LogSmartFoundations, Warning,
+				TEXT("[MP-334] SpawnWirePlanPostConstruct: wire entry %d Connect() failed (%s <-> %s) - destroyed."),
+				EntryIndex, *GetNameSafe(C0->GetOwner()), *GetNameSafe(C1->GetOwner()));
+			NewWire->Destroy();
+			continue;
+		}
+
+		// Wires built here are not in out_children, so the module's proxy sweep misses them -
+		// register into the Smart Dismantle group directly (wires are real actors, never
+		// lightweight, so post-construct registration is safe).
+		if (GroupProxy && !NewWire->GetBlueprintProxy())
+		{
+			NewWire->SetBlueprintProxy(GroupProxy);
+			GroupProxy->RegisterBuildable(NewWire);
+		}
+
+		++Built;
+	}
+
+	if (WireEntries > 0)
+	{
+		UE_LOG(LogSmartFoundations, Display,
+			TEXT("[MP-334] SpawnWirePlanPostConstruct: built %d/%d staged wire(s) for %s."),
+			Built, WireEntries, *GetNameSafe(BuiltParent));
+	}
+
+	return Built;
 }
 
 } // namespace SFScalingSpecExpansion
