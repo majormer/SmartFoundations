@@ -885,6 +885,26 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 			}
 		});
 
+	// [CHAIN-DIAG] Mid-tick SPAWN detector. Live forensics (repro 12) proved: Num grew 1843->1844
+	// DURING the crashing tick (the AddBuildable hook missed it - inlined call site), and the
+	// corrupt entry was a real actor whose first 16 bytes held an allocator freelist link with
+	// the rest of the actor (PrimaryActorTick vftable at +0x30) intact - i.e. a buildable is
+	// spawned, registered, destroyed, AND freed by the concurrent purge ALL WITHIN ONE FACTORY
+	// TICK. BeginPlay is virtual - it cannot be inlined away from this hook - so this names the
+	// short-lived buildable and its spawn callstack.
+	AFGBuildable* BuildableBeginPlayCDO = GetMutableDefault<AFGBuildable>();
+	SUBSCRIBE_METHOD_VIRTUAL(AFGBuildable::BeginPlay, BuildableBeginPlayCDO,
+		[](auto& scope, AFGBuildable* self)
+		{
+			if (bInsideFactoryTick && self && self->HasAuthority())
+			{
+				UE_LOG(LogSmartFoundations, Error,
+					TEXT("[CHAIN-DIAG] AFGBuildable::BeginPlay(%s / %s) DURING TickFactory - the mid-tick registration. Callstack follows."),
+					*self->GetName(), *GetNameSafe(self->GetClass()));
+				FDebug::DumpStackTraceToLog(ELogVerbosity::Error);
+			}
+		});
+
 	// Symmetric detector: a REMOVAL mid-tick can shrink-reallocate mFactoryBuildings, freeing the
 	// buffer under the ParallelFor workers just like a growth realloc (9th repro: Add detector
 	// silent, pre-tick scrub valid -> the mutation, whatever it is, happens DURING the tick).
