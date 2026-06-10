@@ -846,6 +846,25 @@ bool USFExtendService::TryExtendFromBuilding(AFGBuildable* HitBuilding, AFGHolog
         return false;
     }
 
+    // [EXTEND-MP] The DEDICATED SERVER must never run the Extend preview pipeline on its mirror
+    // hologram. Extend previews are client-side cosmetics, and the staged commit
+    // (Server_StageExtendCommit) carries everything the server needs at construct time. Live
+    // crash 2026-06-10: the dedi's mirror activation spawned its OWN recipe-less clone preview
+    // children; the client's construct message then deserialized into that hologram (clobbering
+    // mChildren - the documented hazard) and ValidatePlacementAndCost made a virtual call into a
+    // freed child (EXCEPTION_ACCESS_VIOLATION at 0xffffffff). SP and listen-host are unaffected
+    // (their local player IS the previewing player).
+    if (Subsystem.IsValid())
+    {
+        if (UWorld* World = Subsystem->GetWorld())
+        {
+            if (World->GetNetMode() == NM_DedicatedServer)
+            {
+                return false;
+            }
+        }
+    }
+
     // Debug: Entry log
     static double LastEntryLog = 0;
     double EntryNow = FPlatformTime::Seconds();
