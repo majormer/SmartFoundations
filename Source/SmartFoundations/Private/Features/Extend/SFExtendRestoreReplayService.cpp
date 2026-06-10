@@ -323,6 +323,10 @@ void USFExtendRestoreReplayService::ClearRestoredCloneTopologySession(const TCHA
         ? Owner->RestoredCloneTopologyTemplate->ChildHolograms.Num()
         : 0;
 
+    // [EXTEND-MP] A pre-staged restore commit must never be consumed by a later plain fire
+    // (client-only no-op elsewhere; the plain-fire hook also stages an explicit clear).
+    Owner->StageCommitClearForMP();
+
     ClearRestoredCloneTopologyPreview();
     Owner->RestoredCloneParentHologram.Reset();
     Owner->RestoredCloneTopologyTemplate.Reset();
@@ -519,6 +523,12 @@ void USFExtendRestoreReplayService::TickRestoredCloneTopology(float DeltaTime)
     }
 
     Owner->HologramService->RefreshChildPositions();
+
+    // [EXTEND-MP] Pre-stage the RESTORE commit continuously while the replay session is live
+    // (client-only + 250ms-throttled inside; BuildCommitSpecForMP builds the restore variant when
+    // this session is active). Same rationale as the Extend pre-stage: the commit RPC is much
+    // larger than the construct RPC and loses the cross-channel race when staged only at fire.
+    Owner->MaybeStageCommitForMP(ParentHologram);
 }
 
 void USFExtendRestoreReplayService::OnRestoredCloneTopologyStateChanged()

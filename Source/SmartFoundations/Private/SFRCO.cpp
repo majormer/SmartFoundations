@@ -327,17 +327,41 @@ void USFRCO::Server_StageExtendCommit_Implementation(FSFExtendCommitSpec Spec)
 	if (Spec.bValid)
 	{
 		UE_LOG(LogSmartFoundations, Display,
-			TEXT("[EXTEND-MP] Server staged Extend commit for %s: offset %s, %d scaled clone(s) of %s, %d cost item type(s)."),
+			TEXT("[EXTEND-MP] Server staged %s commit for %s: offset %s, %d scaled clone(s) of %s, %d cost item type(s)%s."),
+			Spec.bIsRestore ? TEXT("RESTORE") : TEXT("Extend"),
 			*GetNameSafe(OwnerPC), *Spec.ParentOffset.ToCompactString(), Spec.ScaledClones.Num(),
-			*GetNameSafe(*Spec.BuildClass), Spec.Cost.Num());
+			*GetNameSafe(*Spec.BuildClass), Spec.Cost.Num(),
+			Spec.bIsRestore
+				? *FString::Printf(TEXT(", restore template children=%d"), Spec.RestoreTemplate.ChildHolograms.Num())
+				: TEXT(""));
 	}
 }
 
 bool USFRCO::Server_StageExtendCommit_Validate(FSFExtendCommitSpec Spec)
 {
 	// Sanity-bound the commit parameters (a forged/buggy commit cannot demand absurd spawning).
-	// The clone topology itself is derived SERVER-side from these, never shipped.
-	return Spec.ScaledClones.Num() <= 1024 && Spec.ParentOffset.Size() <= 1.0e7;
+	// For an EXTEND commit the clone topology is derived SERVER-side from these, never shipped.
+	if (Spec.ScaledClones.Num() > 1024 || Spec.ParentOffset.Size() > 1.0e7)
+	{
+		return false;
+	}
+	// A RESTORE commit ships the preset's value-only TEMPLATE topology (no source building exists
+	// to walk). Bound it like the conduit plan: child and per-spline-point caps.
+	if (Spec.bIsRestore)
+	{
+		if (Spec.RestoreTemplate.ChildHolograms.Num() > 4096)
+		{
+			return false;
+		}
+		for (const FSFCloneHologram& Holo : Spec.RestoreTemplate.ChildHolograms)
+		{
+			if (Holo.SplineData.Points.Num() > 64)
+			{
+				return false;
+			}
+		}
+	}
+	return true;
 }
 
 // ========================================

@@ -718,6 +718,51 @@ bool USFExtendService::BuildCommitSpecForMP(AFGHologram* ParentHologram, FSFExte
     {
         return false;
     }
+
+    // [EXTEND-MP] RESTORE commit: an active Smart Restore replay session owns the preview, so the
+    // commit must be the restore one - there is no source building to walk (the topology comes
+    // from the saved preset template, value-only and wire-safe). Ship the compact TEMPLATE plus
+    // the panel state + production recipe the server-side replay pipeline reads; the server
+    // re-expands at the validated parent's final position (fresher than any client re-emission).
+    if (bRestoredCloneTopologyActive && RestoredCloneTopologyTemplate.IsValid())
+    {
+        const FSFCloneTopology& Template = *RestoredCloneTopologyTemplate;
+
+        // Reliable-RPC ceiling guard (same rationale as the conduit-plan guard): a preset
+        // template is normally one clone's infrastructure, but refuse anything that could
+        // overflow the staging RPC before the previews are destroyed.
+        int32 BytesEstimate = 0;
+        for (const FSFCloneHologram& Holo : Template.ChildHolograms)
+        {
+            BytesEstimate += 400 + Holo.SplineData.Points.Num() * 80;
+        }
+        if (BytesEstimate > 45000)
+        {
+            UE_LOG(LogSmartExtend, Warning,
+                TEXT("[EXTEND-MP] Restore commit refused: preset template too large to stage reliably (%d children, ~%d bytes)."),
+                Template.ChildHolograms.Num(), BytesEstimate);
+            return false;
+        }
+
+        OutSpec.bIsRestore = true;
+        OutSpec.RestoreTemplate = Template;
+        OutSpec.Cost = ParentHologram->GetCost(true); // parent + restored preview children, exact
+        OutSpec.BuildClass = ParentHologram->GetBuildClass();
+        if (Subsystem.IsValid())
+        {
+            OutSpec.RestoreCounterState = Subsystem->GetCounterState();
+            if (USFRecipeManagementService* RecipeSvc = Subsystem->GetRecipeManagementService())
+            {
+                if (RecipeSvc->HasStoredProductionRecipe())
+                {
+                    OutSpec.RestoreProductionRecipe = RecipeSvc->GetStoredProductionRecipe();
+                }
+            }
+        }
+        OutSpec.bValid = true;
+        return true;
+    }
+
     const FSFExtendTopology& Topo = GetLastExtendTopology();
     if (!Topo.bIsValid || !Topo.SourceBuilding.IsValid())
     {
@@ -742,6 +787,38 @@ int32 USFExtendService::ReconstructCommitOnServer(AFGHologram* ParentHologram, c
     if (!ParentHologram || !TopologyService)
     {
         return 0;
+    }
+
+    // [EXTEND-MP] RESTORE commit: no source building exists to walk - the preset TEMPLATE arrived
+    // with the commit. Install the client's panel state + production recipe (the replay pipeline
+    // and the restored-factory placement/wiring math read them from the subsystem), then run the
+    // SAME replay pipeline the SP preview uses: expansion at this validated parent's position,
+    // rr_X_Y factory spawn, infra spawn, pre-wiring, and the session state
+    // (StoredCloneTopology / JsonSpawnedHolograms / RestoredScaledFactoryPreviewLocations) the
+    // post-construct wiring pass consumes. Mirrors how the scaled commit reuses
+    // SpawnScaledExtendPreviews via SpawnCloneSetsForServerCommit.
+    if (Spec.bIsRestore)
+    {
+        if (Subsystem.IsValid())
+        {
+            Subsystem->UpdateCounterState(Spec.RestoreCounterState);
+            if (Spec.RestoreProductionRecipe)
+            {
+                if (USFRecipeManagementService* RecipeSvc = Subsystem->GetRecipeManagementService())
+                {
+                    RecipeSvc->StoreProductionRecipeClass(Spec.RestoreProductionRecipe);
+                }
+            }
+        }
+
+        const bool bReplayed = ReplayRestoreCloneTopology(ParentHologram, Spec.RestoreTemplate);
+        const int32 NumChildren = ParentHologram->GetHologramChildren().Num();
+        UE_LOG(LogSmartFoundations, Display,
+            TEXT("[EXTEND-MP] Server reconstructed RESTORE commit for %s: replayed=%d, parent now has %d children (template %d, grid %dx%d)."),
+            *ParentHologram->GetName(), bReplayed ? 1 : 0, NumChildren,
+            Spec.RestoreTemplate.ChildHolograms.Num(),
+            Spec.RestoreCounterState.GridCounters.X, Spec.RestoreCounterState.GridCounters.Y);
+        return bReplayed ? NumChildren : 0;
     }
 
     SetStoredCloneTopologyForServerCommit(FSFCloneTopology()); // replaced below; keep state coherent

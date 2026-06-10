@@ -5,8 +5,12 @@
 
 #include "CoreMinimal.h"
 #include "Features/Extend/SFExtendCloneTopology.h"   // FSFCloneTopology (value-only, wire-safe)
+#include "HUD/SFHUDTypes.h"                           // FSFCounterState (Restore commit panel state)
 #include "ItemAmount.h"                               // FItemAmount (staged cost)
+#include "Templates/SubclassOf.h"
 #include "SFExtendCommitSpec.generated.h"
+
+class UFGRecipe;
 
 /**
  * The staged Extend commit a CLIENT ships to the server right before firing the build gun
@@ -75,6 +79,31 @@ struct SMARTFOUNDATIONS_API FSFExtendCommitSpec
 	 *  Empty for a normal (single-clone) Extend. */
 	UPROPERTY()
 	TArray<FSFExtendCommitScaledClone> ScaledClones;
+
+	/** RESTORE commit ([EXTEND-MP] Restore slice). A Smart Restore replay has NO source building
+	 *  to walk: the topology comes from the saved preset, a value-only template captured at save
+	 *  time. The client ships that compact TEMPLATE (not the expanded preview) plus the Smart
+	 *  Panel counter state and the stored production recipe; the server installs them and re-runs
+	 *  the SAME replay pipeline the SP preview uses (ReplayRestoreCloneTopology: expansion at the
+	 *  validated parent's final position + rr_X_Y factory placement + infra spawn + pre-wiring).
+	 *  The connection data is preset-sourced, not GetConnection()-derived at fire time, so the
+	 *  client-capture poisoning that forbids shipping the EXTEND topology does not apply here. */
+	UPROPERTY()
+	bool bIsRestore = false;
+
+	UPROPERTY()
+	FSFCloneTopology RestoreTemplate;
+
+	/** Smart Panel state the replay expansion + restored-factory placement math read
+	 *  (grid counters, spacing, steps, rotation). The server's own counter state is a default
+	 *  mirror that never saw the client's panel. */
+	UPROPERTY()
+	FSFCounterState RestoreCounterState;
+
+	/** The preset's production recipe for the restored factories (asset class - package-map
+	 *  safe). Null when the preset carried none. */
+	UPROPERTY()
+	TSubclassOf<UFGRecipe> RestoreProductionRecipe = nullptr;
 
 	/** True once populated from a live Extend session. */
 	UPROPERTY()

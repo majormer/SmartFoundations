@@ -275,7 +275,9 @@ public:
      *  is null and poisons every captured segment connection), derives the parent clone topology
      *  via CaptureFromTopology + FromSource(ParentOffset), installs it as StoredCloneTopology,
      *  spawns the parent clone set, then reconstructs the scaled clone sets. Returns children
-     *  spawned for the parent set. */
+     *  spawned for the parent set. A RESTORE commit (Spec.bIsRestore) has no source building to
+     *  walk: the preset TEMPLATE arrives in the spec; the panel state + production recipe are
+     *  installed and the SAME SP replay pipeline runs (ReplayRestoreCloneTopology). */
     int32 ReconstructCommitOnServer(AFGHologram* ParentHologram, const struct FSFExtendCommitSpec& Spec);
 
     UFUNCTION(BlueprintCallable, Category = "Smart|Extend")

@@ -29,8 +29,24 @@ is RESOLVED (chain registration by type, d79e19b — see the resolved section be
 
 **Remaining for complete MP support (workstream rule: CANNOT SHIP PARTIAL):**
 1. Extend costs in NON-CREATIVE (GetCost hook charges the staged preview-exact array — untested).
-2. **Restore MP** — replays captured clone topologies through the same spawner; expected to be
-   fire-path hookup onto the existing commit machinery.
+2. **Restore MP — IMPLEMENTED 2026-06-10, awaiting live test.** A restore commit rides the
+   EXISTING extend-commit machinery end to end: `FSFExtendCommitSpec` gained
+   `{bIsRestore, RestoreTemplate (the preset's value-only FSFCloneTopology), RestoreCounterState,
+   RestoreProductionRecipe}`; `BuildCommitSpecForMP` builds the restore variant whenever the
+   replay session is active (so the fire hook, GetCost hook, clearance hook, Hook B and the
+   pre-stage/clear flows all work UNCHANGED); `ReconstructCommitOnServer` branches on
+   `bIsRestore`: installs counter state + production recipe, then runs the SAME SP replay
+   pipeline (`ReplayRestoreCloneTopology`) against the constructing parent — no source-building
+   walk needed, and the GetConnection() poisoning rule doesn't apply because the connections are
+   preset-sourced values. Pre-staging added to `TickRestoredCloneTopology`; clear staged on
+   session teardown; RCO validation bounds the template (≤4096 children, ≤64 spline points each);
+   client-side ~45KB byte guard refuses oversized templates before previews are destroyed.
+   Caveats for the live test: (a) a preset whose Extend topology was SAVED on an MP client may
+   carry empty CloneConnections (client-side capture poisoning at save time) — test with a preset
+   saved in SP or by the host; (b) the server-side replay runs KickRestoredPreviewParent at the
+   construct seam (synthetic-hit SetHologramLocationAndRotation) — watch for preview-pipeline
+   re-trigger artifacts on the dedi; (c) counter state is installed into the dedi's GLOBAL
+   subsystem state at the construct seam (accepted single-frame race with other players).
 3. **Smart Upgrade MP** — the last feature; not yet analyzed for MP.
 4. Cleanup before release: strip [MP-SLICE0]/[EXTEND-MP]/[MP-334]/[MP-SPEC] Display diagnostics +
    dedi HintBarService spam; S4 time-sliced construction queue (thousands-scale) still unbuilt.
