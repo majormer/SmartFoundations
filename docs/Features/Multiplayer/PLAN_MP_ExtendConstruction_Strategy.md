@@ -2,7 +2,8 @@
 title: Smart Multiplayer — Extend Construction Strategy
 type: PLAN
 date: 2026-06-09
-status: Draft
+updated: 2026-06-10
+status: Implemented — Extend + Scaled Extend live-validated in MP; Restore/Upgrade remain
 category: Features
 branch: feature/mp-server-construction
 related:
@@ -16,6 +17,35 @@ issues:
 ---
 
 # Smart Multiplayer — Extend Construction Strategy
+
+## STATUS SNAPSHOT (2026-06-10, end of session)
+
+**Working in MP, live-validated on the dedi:** scaling (all families, real costs), #334
+auto-connect (ALL conduit families incl. stackables/poles/floodlights/signs/floor holes),
+Smart Dismantle groups, normal Extend (build + wiring + daisy power + dismantle), Scaled Extend
+(rotated, heterogeneous blender sets, lifts in the manifold, daisy power, extend-off-built-chain,
+live item flow under load — 62 chains / 917 items / 0 zombie / 0 orphan). The factory-tick crash
+is RESOLVED (chain registration by type, d79e19b — see the resolved section below).
+
+**Remaining for complete MP support (workstream rule: CANNOT SHIP PARTIAL):**
+1. Extend costs in NON-CREATIVE (GetCost hook charges the staged preview-exact array — untested).
+2. **Restore MP** — replays captured clone topologies through the same spawner; expected to be
+   fire-path hookup onto the existing commit machinery.
+3. **Smart Upgrade MP** — the last feature; not yet analyzed for MP.
+4. Cleanup before release: strip [MP-SLICE0]/[EXTEND-MP]/[MP-334]/[MP-SPEC] Display diagnostics +
+   dedi HintBarService spam; S4 time-sliced construction queue (thousands-scale) still unbuilt.
+5. SP regression sweep (maintainer-deferred until all MP features work).
+6. Confirm end-blender 2/6 connections mirror its source (partial source = partial clone correct).
+
+Key seams for whoever continues: client fire hook + server Hook A/B/C/D live in
+`SFGameInstanceModule.cpp` (RegisterClientGridChunkFireHook / RegisterSpecConstructionHooks);
+staging in USFRCO + USFSubsystem; Extend server derivation in `SFExtendService.cpp`
+(ReconstructCommitOnServer / ReconstructScaledCommitOnServer); wiring in
+`SFExtendWiringService_Json.cpp` + `SFWiringManifest.cpp`. DEBUG GOLD: the wiring pass writes
+`WiringManifest.json` to the dedi's Saved/Logs every run. Deploy = BOTH targets (AGENTS.md golden
+path). Memory file `multiplayer-workstream.md` carries the full debugging arc + 7 root causes.
+
+---
 
 How to bring Extend onto the same client/server construction model as scaling
 (`DESIGN_MP_ConstructionModel.md`). Strategy only — sequenced after the scaling slice validates the
