@@ -15,6 +15,10 @@
 #include "Buildables/FGBuildable.h"
 #include "Buildables/FGBuildableWire.h"
 #include "FGBlueprintProxy.h"
+#include "Hologram/FGPoleHologram.h"            // #354: mPoleVariationIndex / mBuildStep
+#include "Hologram/FGConveyorPoleHologram.h"
+#include "Hologram/FGFloodlightHologram.h"      // #200: mFixtureAngle / mBuildStep
+#include "Hologram/FGStandaloneSignHologram.h"  // #192: mBuildStep
 #include "Engine/World.h"
 #include "EngineUtils.h"
 #include "HAL/IConsoleManager.h"
@@ -81,6 +85,69 @@ bool CaptureScalingSpec(AFGHologram* Hologram, FSFScalingSpec& OutSpec)
 	OutSpec.BuildClass = Hologram->GetBuildClass();
 	OutSpec.bValid = true;
 	return true;
+}
+
+// Multi-step buildables carry the player's step-2 choice in PRIVATE hologram members which the
+// CLIENT preview syncs parent->child every tick via reflection (#354 standard conveyor pole
+// height, #200 floodlight fixture angle, #192 sign build step - see USFSubsystem::
+// SyncMultiStepHologramProperties). Spec-expanded server children spawn with DEFAULTS, so without
+// this they build at e.g. floor height while the captured belts route to top connectors (live
+// finding 2026-06-10, standard poles). The parent's own values crossed the wire inside the
+// construct message - copy the same properties to each child and fire the same OnRep refresh, so
+// the child's connectors/mesh state match before ConfigureActor snapshots them into the buildable.
+static void SF_SyncMultiStepPropertiesToChild(AFGHologram* Parent, AFGHologram* Child)
+{
+	// #354: STANDARD conveyor pole only - stackable/wall poles are also AFGConveyorPoleHologram
+	// and must not be touched (same gate as the client sync).
+	if (USFAutoConnectService::IsRegularConveyorPoleHologram(Parent) && Child->IsA<AFGConveyorPoleHologram>())
+	{
+		if (FIntProperty* VarProp = FindFProperty<FIntProperty>(AFGPoleHologram::StaticClass(), TEXT("mPoleVariationIndex")))
+		{
+			VarProp->SetPropertyValue_InContainer(Child, VarProp->GetPropertyValue_InContainer(Parent));
+		}
+		if (FProperty* StepProp = FindFProperty<FProperty>(AFGPoleHologram::StaticClass(), TEXT("mBuildStep")))
+		{
+			StepProp->CopyCompleteValue(
+				StepProp->ContainerPtrToValuePtr<void>(Child),
+				StepProp->ContainerPtrToValuePtr<void>(Parent));
+		}
+		if (UFunction* RepFunc = Child->FindFunction(TEXT("OnRep_PoleVariationIndex")))
+		{
+			Child->ProcessEvent(RepFunc, nullptr);
+		}
+		return;
+	}
+
+	// #200: floodlight fixture angle.
+	if (Parent->IsA<AFGFloodlightHologram>() && Child->IsA<AFGFloodlightHologram>())
+	{
+		if (FIntProperty* AngleProp = FindFProperty<FIntProperty>(AFGFloodlightHologram::StaticClass(), TEXT("mFixtureAngle")))
+		{
+			AngleProp->SetPropertyValue_InContainer(Child, AngleProp->GetPropertyValue_InContainer(Parent));
+		}
+		if (FProperty* StepProp = FindFProperty<FProperty>(AFGFloodlightHologram::StaticClass(), TEXT("mBuildStep")))
+		{
+			StepProp->CopyCompleteValue(
+				StepProp->ContainerPtrToValuePtr<void>(Child),
+				StepProp->ContainerPtrToValuePtr<void>(Parent));
+		}
+		if (UFunction* RepFunc = Child->FindFunction(TEXT("OnRep_FixtureAngle")))
+		{
+			Child->ProcessEvent(RepFunc, nullptr);
+		}
+		return;
+	}
+
+	// #192: standalone sign build step.
+	if (Parent->IsA<AFGStandaloneSignHologram>() && Child->IsA<AFGStandaloneSignHologram>())
+	{
+		if (FProperty* StepProp = FindFProperty<FProperty>(AFGStandaloneSignHologram::StaticClass(), TEXT("mBuildStep")))
+		{
+			StepProp->CopyCompleteValue(
+				StepProp->ContainerPtrToValuePtr<void>(Child),
+				StepProp->ContainerPtrToValuePtr<void>(Parent));
+		}
+	}
 }
 
 int32 ExpandScalingSpecIntoChildren(AFGHologram* Parent, const FSFScalingSpec& Spec,
@@ -163,6 +230,11 @@ int32 ExpandScalingSpecIntoChildren(AFGHologram* Parent, const FSFScalingSpec& S
 					// holograms carry FGCDInitializing/FGCDInvalidFloor/FGCDInvalidAimLocation that
 					// programmatic spawns cannot clear, and the whole construct gets rejected.)
 					Child->SetActorLocationAndRotation(CellLoc, ParentRot);
+
+					// Multi-step parents (pole height / floodlight angle / sign step): copy the
+					// player's step-2 choice from the parent so the child builds with it.
+					SF_SyncMultiStepPropertiesToChild(Parent, Child);
+
 					++SpawnedChildren;
 				}
 			}
