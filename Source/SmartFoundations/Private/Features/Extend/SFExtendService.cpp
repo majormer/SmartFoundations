@@ -684,6 +684,14 @@ void USFExtendService::SetStoredCloneTopologyForServerCommit(const FSFCloneTopol
         Clone.ChildHolograms.Num(), *Clone.ParentBuildClass);
 }
 
+void USFExtendService::SetServerCommitSourceBuilding(AFGBuildable* Source)
+{
+    LastBuiltFromBuilding = Source;
+    CurrentExtendTarget = Source;
+    UE_LOG(LogSmartExtend, Display,
+        TEXT("[EXTEND-MP] Server installed commit source building: %s."), *GetNameSafe(Source));
+}
+
 void USFExtendService::ReceiveServerTopology(const FSFExtendTopology& Topology)
 {
     CachedServerTopology = Topology;

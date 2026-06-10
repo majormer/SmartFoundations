@@ -233,6 +233,13 @@ public:
      *  children populate during Construct) finds the same state an SP build would have. */
     void SetStoredCloneTopologyForServerCommit(const struct FSFCloneTopology& Clone);
 
+    /** [EXTEND-MP] Server-side: install the commit's SOURCE building as the Extend session anchor
+     *  (LastBuiltFromBuilding + CurrentExtendTarget). The dedi never runs the preview pipeline, so
+     *  the post-build wiring state it normally sets must come from the staged commit - without it
+     *  the #344 daisy-chain head is null and building-to-building power never wires (live finding
+     *  2026-06-10). */
+    void SetServerCommitSourceBuilding(AFGBuildable* Source);
+
     UFUNCTION(BlueprintCallable, Category = "Smart|Extend")
     const FSFExtendTopology& GetLastExtendTopology() const;
 

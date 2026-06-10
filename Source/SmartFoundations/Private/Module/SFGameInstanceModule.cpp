@@ -543,6 +543,7 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 								ExtendSpec.Clone = FSFCloneTopology::FromSource(Source, FinalOffset);
 								ExtendSpec.Cost = Holo->GetCost(true); // parent + preview children
 								ExtendSpec.BuildClass = Holo->GetBuildClass();
+								ExtendSpec.SourceBuilding = Topo.SourceBuilding.Get();
 								ExtendSpec.bValid = ExtendSpec.Clone.ChildHolograms.Num() > 0;
 							}
 						}
@@ -999,6 +1000,7 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 					if (USFExtendService* Extend = SS->GetExtendService())
 					{
 						Extend->SetStoredCloneTopologyForServerCommit(ExtendSpec.Clone);
+						Extend->SetServerCommitSourceBuilding(ExtendSpec.SourceBuilding);
 						FSFSpawnedCloneMap SpawnedClones;
 						const int32 NumSpawned = ExtendSpec.Clone.SpawnChildHolograms(self, Extend, SpawnedClones);
 						const int32 NumWired = ExtendSpec.Clone.WireChildHologramConnections(SpawnedClones, self);

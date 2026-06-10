@@ -39,6 +39,13 @@ struct SMARTFOUNDATIONS_API FSFExtendCommitSpec
 	UPROPERTY()
 	TSubclassOf<class AFGBuildable> BuildClass = nullptr;
 
+	/** The building the player extended FROM (replicated actor, serializes via the package map).
+	 *  The dedi no longer runs the Extend preview pipeline, so the session state the post-build
+	 *  wiring anchors on (LastBuiltFromBuilding / CurrentExtendTarget - e.g. the #344 daisy-chain
+	 *  head) must arrive with the commit. */
+	UPROPERTY()
+	TObjectPtr<class AFGBuildable> SourceBuilding = nullptr;
+
 	/** True once populated from a live Extend session. */
 	UPROPERTY()
 	bool bValid = false;
