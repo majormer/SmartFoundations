@@ -1794,6 +1794,59 @@ int32 USFChainActorService::RemoveBuildableFromFactoryTickArrays(AFGBuildable* B
 	return Removed;
 }
 
+int32 USFChainActorService::ScrubFactoryTickArrays()
+{
+	AFGBuildableSubsystem* BuildableSub = GetBuildableSubsystem();
+	if (!BuildableSub) return 0;
+
+	auto IsEntryHealthy = [](AFGBuildable* Entry) -> bool
+	{
+		// IsValidLowLevelFast rejects freed/garbage pointers (GUObjectArray membership + vtable
+		// sanity); IsValid additionally rejects pending-kill objects.
+		return Entry && Entry->IsValidLowLevelFast(/*bRecursive*/ false) && IsValid(Entry);
+	};
+
+	int32 RemovedTotal = 0;
+
+	TArray<AFGBuildable*>& Buildings = BuildableSub->mFactoryBuildings;
+	for (int32 Index = Buildings.Num() - 1; Index >= 0; --Index)
+	{
+		AFGBuildable* Entry = Buildings[Index];
+		if (IsEntryHealthy(Entry))
+		{
+			continue;
+		}
+
+		// Identify the corruption site via valid neighbors (registration order context).
+		AFGBuildable* Prev = Buildings.IsValidIndex(Index - 1) ? Buildings[Index - 1] : nullptr;
+		AFGBuildable* Next = Buildings.IsValidIndex(Index + 1) ? Buildings[Index + 1] : nullptr;
+		UE_LOG(LogSmartUpgrade, Error,
+			TEXT("[CHAIN-DIAG] CORRUPT mFactoryBuildings entry at index %d/%d: ptr=0x%llX (prev=%s next=%s) - removed before the factory tick could call through it."),
+			Index, Buildings.Num(), reinterpret_cast<uint64>(Entry),
+			IsEntryHealthy(Prev) ? *Prev->GetName() : TEXT("<invalid/none>"),
+			IsEntryHealthy(Next) ? *Next->GetName() : TEXT("<invalid/none>"));
+		Buildings.RemoveAt(Index);
+		++RemovedTotal;
+	}
+
+	for (TArray<AFGBuildable*>& Group : BuildableSub->mFactoryBuildingGroups)
+	{
+		for (int32 Index = Group.Num() - 1; Index >= 0; --Index)
+		{
+			if (!IsEntryHealthy(Group[Index]))
+			{
+				UE_LOG(LogSmartUpgrade, Error,
+					TEXT("[CHAIN-DIAG] CORRUPT mFactoryBuildingGroups entry: ptr=0x%llX - removed."),
+					reinterpret_cast<uint64>(Group[Index]));
+				Group.RemoveAt(Index);
+				++RemovedTotal;
+			}
+		}
+	}
+
+	return RemovedTotal;
+}
+
 void USFChainActorService::ScheduleDeferredZombiePurge(float DelaySeconds)
 {
 	USFSubsystem* Sub = Subsystem.Get();

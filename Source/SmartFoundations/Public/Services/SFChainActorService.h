@@ -261,6 +261,14 @@ public:
 	 *  to be found here. Returns entries removed. */
 	int32 RemoveBuildableFromFactoryTickArrays(class AFGBuildable* Buildable);
 
+	/** [CHAIN-FIX] Pre-tick integrity scrub of mFactoryBuildings (+ groups): validate every entry
+	 *  against the UObject table (IsValidLowLevelFast + IsValid) and remove corrupt/freed ones,
+	 *  logging the index, raw pointer, and VALID NEIGHBORS' names — turning the 2026-06-10
+	 *  freed-pointer tick AV (7 repros, three falsified guards: RemoveConveyor, conveyor EndPlay,
+	 *  buildable EndPlay) into a survivable, precisely-located log line. Called from the
+	 *  TickFactory before-hook every factory tick (~2us for ~2k entries). Returns removed count. */
+	int32 ScrubFactoryTickArrays();
+
 	/**
 	 * Schedule a deferred call to PurgeZombieChainActors after a short delay, giving
 	 * vanilla one or two factory ticks to settle pending migrations before we sweep.

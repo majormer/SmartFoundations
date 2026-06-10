@@ -840,6 +840,27 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 			}
 		});
 
+	// [CHAIN-FIX] Pre-tick integrity scrub. 7 freed-pointer tick AV repros with three falsified
+	// theories (RemoveConveyor skip, conveyor EndPlay skip, buildable EndPlay skip, arrows) - the
+	// corrupt entry appears in mFactoryBuildings by some path none of the chokepoint guards see.
+	// Validate the arrays IMMEDIATELY before vanilla's ParallelFor walks them: the corrupt entry
+	// is removed (server survives) and the log pinpoints its index + valid neighbors.
+	SUBSCRIBE_METHOD(
+		AFGBuildableSubsystem::TickFactory,
+		[](auto& scope, AFGBuildableSubsystem* self, float dt, ELevelTick TickType)
+		{
+			if (self && self->HasAuthority())
+			{
+				if (USFSubsystem* SS = USFSubsystem::Get(self->GetWorld()))
+				{
+					if (USFChainActorService* ChainSvc = SS->GetChainActorService())
+					{
+						ChainSvc->ScrubFactoryTickArrays();
+					}
+				}
+			}
+		});
+
 	// [CHAIN-FIX] Destruction chokepoint guard, ALL buildables. cdb on the 5th freed-pointer tick
 	// AV (2026-06-10) identified the crashing loop: TickFactoryActors' lambda walks
 	// mFactoryBuildings (subsystem +0x3C0, confirmed via PDB) and virtual-calls each entry - the
