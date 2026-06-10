@@ -1045,31 +1045,6 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 				{
 					if (USFExtendService* Extend = SS->GetExtendService())
 					{
-						// [EXTEND-MP] Schedule the post-build wiring pass OURSELVES, next tick,
-						// with the BUILT PARENT as the factory anchor. The legacy OnActorSpawned
-						// trigger queues per factory spawn and proved unreliable at the commit
-						// seam (live 2026-06-10: only the LAST junction's lambda ran, so
-						// "parent"/"Factory" targets resolved against a junction and every
-						// factory-end connection failed). Our pass runs first; the legacy lambdas
-						// no-op afterwards via their HasPendingPostBuildWiring re-check.
-						if (AFGBuildableFactory* BuiltFactory = Cast<AFGBuildableFactory>(BuiltParent))
-						{
-							TWeakObjectPtr<AFGBuildableFactory> WeakFactory = BuiltFactory;
-							TWeakObjectPtr<USFExtendService> WeakExtend = Extend;
-							self->GetWorld()->GetTimerManager().SetTimerForNextTick([=]()
-							{
-								if (WeakFactory.IsValid() && WeakExtend.IsValid()
-									&& WeakExtend->HasPendingPostBuildWiring())
-								{
-									UE_LOG(LogSmartFoundations, Display,
-										TEXT("[EXTEND-MP] Commit wiring pass executing for %s."),
-										*WeakFactory->GetName());
-									WeakExtend->ConnectAllChainElements(WeakFactory.Get());
-									WeakExtend->WireBuiltChildConnections(WeakFactory.Get());
-								}
-							});
-						}
-
 						int32 RegisteredAnchors = 0;
 						for (AFGHologram* ChildHolo : self->mChildren)
 						{
@@ -1111,6 +1086,25 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 						UE_LOG(LogSmartFoundations, Display,
 							TEXT("[EXTEND-MP] Registered %d clone-id wiring anchor(s) post-construct for %s."),
 							RegisteredAnchors, *GetNameSafe(BuiltParent));
+
+						// [EXTEND-MP] Run the post-build wiring pass SYNCHRONOUSLY, here, with the
+						// BUILT PARENT as the factory anchor. Deferral is structurally unreliable
+						// at the commit seam: the legacy per-factory-spawn lambdas resolved
+						// "parent"/"Factory" against whichever factory their trigger captured
+						// (live: a junction -> every factory-end connection failed), and BOTH the
+						// legacy and a next-tick pass race the post-construct hologram
+						// re-registration cleanup that clears the pending-wiring state (live:
+						// everything no-opped). This point is POST-construct - all children built,
+						// configured, and registered - the same in-frame pre-tick timing the #341
+						// chain registration proves safe.
+						if (AFGBuildableFactory* BuiltFactory = Cast<AFGBuildableFactory>(BuiltParent))
+						{
+							UE_LOG(LogSmartFoundations, Display,
+								TEXT("[EXTEND-MP] Commit wiring pass executing for %s."),
+								*BuiltFactory->GetName());
+							Extend->ConnectAllChainElements(BuiltFactory);
+							Extend->WireBuiltChildConnections(BuiltFactory);
+						}
 					}
 				}
 			}
