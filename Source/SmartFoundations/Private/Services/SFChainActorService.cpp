@@ -1757,6 +1757,29 @@ int32 USFChainActorService::ReRegisterAndQueueVanillaRebuildForBelts(
 	return PendingGroups;
 }
 
+int32 USFChainActorService::RemoveConveyorFromAllTickGroups(AFGBuildableConveyorBase* Conveyor)
+{
+	AFGBuildableSubsystem* BuildableSub = GetBuildableSubsystem();
+	if (!BuildableSub || !Conveyor) return 0;
+
+	int32 StaleRemovals = 0;
+	for (FConveyorTickGroup* TG : BuildableSub->mConveyorTickGroup)
+	{
+		if (TG && TG->Conveyors.Contains(Conveyor))
+		{
+			TG->Conveyors.Remove(Conveyor);
+			++StaleRemovals;
+		}
+	}
+	if (StaleRemovals > 0)
+	{
+		UE_LOG(LogSmartUpgrade, Display,
+			TEXT("[CHAIN-DIAG] RemoveConveyor guard: %s was STILL in %d tick group(s) after vanilla removal (stale bucket id) - force-removed (freed-pointer factory-tick AV prevented)."),
+			*Conveyor->GetName(), StaleRemovals);
+	}
+	return StaleRemovals;
+}
+
 void USFChainActorService::ScheduleDeferredZombiePurge(float DelaySeconds)
 {
 	USFSubsystem* Sub = Subsystem.Get();

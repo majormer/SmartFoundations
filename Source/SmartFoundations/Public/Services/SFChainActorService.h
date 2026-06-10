@@ -245,6 +245,14 @@ public:
 	 */
 	int32 PurgeZombieChainActors();
 
+	/** [CHAIN-FIX] Force-remove a conveyor from EVERY tick group's Conveyors array. Called by the
+	 *  RemoveConveyor after-hook: a stale mConveyorBucketID makes vanilla's removal silently fail
+	 *  in shipping, leaving a soon-to-be-freed pointer in a TG that TickFactoryActors' ParallelFor
+	 *  later calls through (the 2026-06-10 freed-pointer factory-tick AV, reproduced 3x). Lives
+	 *  here because mConveyorTickGroup is private to AFGBuildableSubsystem and this service holds
+	 *  the access grant. Returns the number of stale entries removed. */
+	int32 RemoveConveyorFromAllTickGroups(class AFGBuildableConveyorBase* Conveyor);
+
 	/**
 	 * Schedule a deferred call to PurgeZombieChainActors after a short delay, giving
 	 * vanilla one or two factory ticks to settle pending migrations before we sweep.

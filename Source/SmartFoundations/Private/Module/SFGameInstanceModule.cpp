@@ -812,6 +812,34 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 {
 	static const FName GridChildTag(TEXT("SF_GridChild"));
 
+	// [CHAIN-FIX] Stale tick-group entry guard. A conveyor whose cached mConveyorBucketID points
+	// at the WRONG tick group makes vanilla RemoveConveyor silently fail in shipping (the assert
+	// is compiled out) - the belt stays in some OTHER TG->Conveyors array, gets destroyed by the
+	// dismantle, GC frees the memory ~1-2 min later, and TickFactoryActors' ParallelFor calls
+	// through the freed pointer (EXCEPTION_ACCESS_VIOLATION at FGBuildableSubsystem.cpp:644 -
+	// reproduced three times on 2026-06-10, each ~2 min after building/dismantling auto-connect
+	// belts). AFTER vanilla RemoveConveyor runs, sweep every tick group and force-remove any
+	// lingering entry for this belt. Plain SUBSCRIBE_METHOD is correct: RemoveConveyor is a
+	// non-virtual member (the no-plain-subscribe rule applies to virtuals only).
+	SUBSCRIBE_METHOD(
+		AFGBuildableSubsystem::RemoveConveyor,
+		[](auto& scope, AFGBuildableSubsystem* self, AFGBuildableConveyorBase* conveyor)
+		{
+			scope(self, conveyor);
+			if (!self || !conveyor)
+			{
+				return;
+			}
+			// Sweep lives in the chain service (mConveyorTickGroup access grant).
+			if (USFSubsystem* SS = USFSubsystem::Get(self->GetWorld()))
+			{
+				if (USFChainActorService* ChainSvc = SS->GetChainActorService())
+				{
+					ChainSvc->RemoveConveyorFromAllTickGroups(conveyor);
+				}
+			}
+		});
+
 	// Count the Smart grid children currently attached to a hologram (the strip/expand targets).
 	auto CountGridChildren = [](AFGHologram* Holo) -> int32
 	{
