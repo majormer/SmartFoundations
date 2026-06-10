@@ -51,11 +51,19 @@ Smart Dismantle directly (GC-latency timing). A 4TH repro killed the dismantle t
 dismantle, NO build — just hover-extend → look away → re-aim — with the RemoveConveyor guard
 (ab02ab5) silent. So some conveyor destruction path never calls RemoveConveyor at all; the
 trigger correlates with the EXTEND AIM/TEARDOWN cycle on the dedi (its mirror runs aim-time
-pipelines). SECOND GUARD DEPLOYED (5257f00): AFGBuildableConveyorBase::EndPlay before-hook —
-the destruction chokepoint — sweeps every tick group while the object is alive and logs which
-belt died, why (EEndPlayReason), and how many stale entries it left. The next repro attempt
-either prints the leak's name or survives silently; either way it cannot AV from this class
-anymore (dumps + cdb workflow in AGENTS.md). Related fixes
+pipelines). A 5TH repro (costs ON, hover→away→re-aim, conveyor guards silent) was cracked with cdb:
+disassembling the crashing lambda showed it walking **mFactoryBuildings** (subsystem +0x3C0,
+member named via PDB `dt`) virtual-calling each entry; the freed entry sat at the array END =
+most recently registered buildables. So a NON-conveyor factory buildable (constructor/merger/
+splitter class) is destroyed by a path that skips vanilla RemoveBuildable. MAINTAINER
+CORRELATION: every costs-ON session crashed, every costs-OFF session was clean — and the preview
+materials have cost-conditional logic (maintainer hint, unexplored). Code suspect found but not
+yet confirmed: SFExtendWiringService_Manifold.cpp spawns REAL belts then
+AFGBuildableConveyorBelt::Respline (destroy+recreate). CURRENT GUARD (4c7f5ec, supersedes
+5257f00): AFGBuildable::EndPlay AFTER-hook (scope first, so only true leaks remain) force-removes
+the dying buildable from mFactoryBuildings + mFactoryBuildingGroups + conveyor tick groups and
+logs name/class/reason. Next repro names the leaking path; the AV is structurally prevented
+either way (dumps + cdb workflow in AGENTS.md; `dt` against the dedi PDB names subsystem members). Related fixes
 same session: chain-hygiene sweep after every spec/extend construct + always-on sweep summary
 (06694cf), chainless-belt heal (7649aec), detached-chain force-destroy + member-belt re-register
 (0b9c87c). Separate closed item: a wild-pointer walk crash was a STALE-OBJECT-FILE layout
