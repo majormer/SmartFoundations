@@ -40,6 +40,8 @@
 #include "FGBlueprintProxy.h"   // server-side Smart Dismantle group for spec-built grids
 
 // For chain actor rebuilding
+#include "Buildables/FGBuildableFactory.h"   // [EXTEND-MP] commit wiring pass anchor
+#include "TimerManager.h"                    // [EXTEND-MP] next-tick commit wiring pass
 #include "Buildables/FGBuildableConveyorBase.h"
 #include "Buildables/FGBuildableConveyorBelt.h"
 #include "Buildables/FGBuildableConveyorLift.h"
@@ -1043,6 +1045,31 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 				{
 					if (USFExtendService* Extend = SS->GetExtendService())
 					{
+						// [EXTEND-MP] Schedule the post-build wiring pass OURSELVES, next tick,
+						// with the BUILT PARENT as the factory anchor. The legacy OnActorSpawned
+						// trigger queues per factory spawn and proved unreliable at the commit
+						// seam (live 2026-06-10: only the LAST junction's lambda ran, so
+						// "parent"/"Factory" targets resolved against a junction and every
+						// factory-end connection failed). Our pass runs first; the legacy lambdas
+						// no-op afterwards via their HasPendingPostBuildWiring re-check.
+						if (AFGBuildableFactory* BuiltFactory = Cast<AFGBuildableFactory>(BuiltParent))
+						{
+							TWeakObjectPtr<AFGBuildableFactory> WeakFactory = BuiltFactory;
+							TWeakObjectPtr<USFExtendService> WeakExtend = Extend;
+							self->GetWorld()->GetTimerManager().SetTimerForNextTick([=]()
+							{
+								if (WeakFactory.IsValid() && WeakExtend.IsValid()
+									&& WeakExtend->HasPendingPostBuildWiring())
+								{
+									UE_LOG(LogSmartFoundations, Display,
+										TEXT("[EXTEND-MP] Commit wiring pass executing for %s."),
+										*WeakFactory->GetName());
+									WeakExtend->ConnectAllChainElements(WeakFactory.Get());
+									WeakExtend->WireBuiltChildConnections(WeakFactory.Get());
+								}
+							});
+						}
+
 						int32 RegisteredAnchors = 0;
 						for (AFGHologram* ChildHolo : self->mChildren)
 						{
@@ -1137,6 +1164,31 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 			}
 
 			scope.Override(BuiltParent);
+		});
+
+	// ── Hook D: server-side placement leniency for staged Extend commits. SP's swapped parent
+	// (ASFFactoryHologram) SKIPS clearance checks during Extend - the clone is deliberately placed
+	// adjacent to the source with logistics in between, which full vanilla clearance rejects. The
+	// server constructs through the VANILLA hologram, so the same fire that previews valid on the
+	// client was refused server-side (live 2026-06-10: FGCDEncroachingClearance from
+	// ValidatePlacementAndCost). Mirror SP: when a staged Extend commit exists for this hologram,
+	// clear the disqualifiers after vanilla evaluates them.
+	// NOTE: hooked at the AFGBuildableHologram override, NOT the AFGHologram base -
+	// &AFGHologram::CheckValidPlacement resolves to an unhookable import thunk (live dedi
+	// startup FATAL 2026-06-10: "resulting function still points to a thunk"). The override
+	// covers every buildable hologram, which is exactly the set that can carry a staged commit.
+	SUBSCRIBE_METHOD_VIRTUAL_AFTER(AFGBuildableHologram::CheckValidPlacement, BuildableHologramCDO,
+		[=](AFGBuildableHologram* self)
+		{
+			if (!self || !self->HasAuthority() || !SFScalingSpecExpansion::IsSpecConstructionEnabled())
+			{
+				return;
+			}
+			FSFExtendCommitSpec ExtendSpec;
+			if (FindStagedExtendCommit(self, ExtendSpec, /*bConsume=*/false))
+			{
+				self->ResetConstructDisqualifiers();
+			}
 		});
 
 	// ── Hook C: group membership assignment, pre-BeginPlay. ConfigureActor is called by the
