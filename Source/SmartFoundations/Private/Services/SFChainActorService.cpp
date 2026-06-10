@@ -899,7 +899,7 @@ int32 USFChainActorService::PurgeZombieChainActors()
 
 	if (Zombies.Num() == 0)
 	{
-		UE_LOG(LogSmartUpgrade, Verbose,
+		UE_LOG(LogSmartUpgrade, Display,
 			TEXT("[CHAIN-DIAG] Sweep complete: zombiesPurged=0 detachedForceDestroyed=%d orphanBeltsReRegistered=%d chainlessBeltsHealed=%d"),
 			ForceDestroyedCount, ReRegisteredBelts, HealedChainlessBelts);
 		return ForceDestroyedCount;
@@ -936,7 +936,7 @@ int32 USFChainActorService::PurgeZombieChainActors()
 
 	// [CHAIN-DIAG] Always-on sweep summary: lets a shipping dedi log show whether a build path
 	// left chainless belts behind (the thesis factory-tick AV) without verbose logging.
-	UE_LOG(LogSmartUpgrade, Verbose,
+	UE_LOG(LogSmartUpgrade, Display,
 		TEXT("[CHAIN-DIAG] Sweep complete: zombiesPurged=%d detachedForceDestroyed=%d orphanBeltsReRegistered=%d chainlessBeltsHealed=%d"),
 		PurgeCount, ForceDestroyedCount, ReRegisteredBelts, HealedChainlessBelts);
 
