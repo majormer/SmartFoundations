@@ -435,7 +435,13 @@ int32 SpawnConduitPlanChildren(AFGHologram* Parent, const FSFScalingSpec& Spec)
 			Belt->SetReplicates(false);
 			Belt->SetReplicateMovement(false);
 			Belt->SetBuildClass(Entry.BuildClass);
-			Belt->SetRecipe(Entry.Recipe);
+			// Stackable belt previews carry NO recipe on the client (their spawner sets only the
+			// build class), and vanilla SetRecipe check()s non-null - SetRecipe(null) was a live
+			// server crash 2026-06-10. Mirror the client: only set when captured.
+			if (Entry.Recipe)
+			{
+				Belt->SetRecipe(Entry.Recipe);
+			}
 			USFHologramDataService::DisableValidation(Belt);
 
 			if (Entry.Kind == ESFConduitPlanKind::Belt)
@@ -486,7 +492,12 @@ int32 SpawnConduitPlanChildren(AFGHologram* Parent, const FSFScalingSpec& Spec)
 			Pipe->SetReplicates(false);
 			Pipe->SetReplicateMovement(false);
 			Pipe->SetBuildClass(Entry.BuildClass);
-			Pipe->SetRecipe(Entry.Recipe);
+			// Same null guard as belts: stackable pipe previews may carry no recipe, and vanilla
+			// SetRecipe check()s non-null.
+			if (Entry.Recipe)
+			{
+				Pipe->SetRecipe(Entry.Recipe);
+			}
 			USFHologramDataService::DisableValidation(Pipe);
 			USFHologramDataService::MarkAsChild(Pipe, Parent, ESFChildHologramType::AutoConnect);
 
