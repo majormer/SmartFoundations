@@ -1816,6 +1816,26 @@ int32 USFChainActorService::ScrubFactoryTickArrays()
 	int32 RemovedTotal = 0;
 
 	TArray<AFGBuildable*>& Buildings = BuildableSub->mFactoryBuildings;
+
+	// [CHAIN-DIAG] One-shot identity table around index 1824 - the corrupt entry sat at exactly
+	// that index in two independent live AV captures, and its corpse's FName bits matched the
+	// aimed-at building's name number. Logging address+name+class at boot lets the next crash's
+	// corpse address be matched against the original occupant: same address = the live building
+	// is being silently destroyed/replaced mid-session; different = a same-named ghost instance.
+	static bool bIdentityTableLogged = false;
+	if (!bIdentityTableLogged && Buildings.Num() > 1830)
+	{
+		bIdentityTableLogged = true;
+		for (int32 Index = 1815; Index < FMath::Min(Buildings.Num(), 1844); ++Index)
+		{
+			AFGBuildable* Entry = Buildings[Index];
+			UE_LOG(LogSmartUpgrade, Display,
+				TEXT("[CHAIN-DIAG] FactoryBuildings[%d] = 0x%llX  %s (%s)"),
+				Index, reinterpret_cast<uint64>(Entry),
+				(Entry && Entry->IsValidLowLevelFast(false)) ? *Entry->GetName() : TEXT("<invalid>"),
+				(Entry && Entry->IsValidLowLevelFast(false)) ? *GetNameSafe(Entry->GetClass()) : TEXT("?"));
+		}
+	}
 	for (int32 Index = Buildings.Num() - 1; Index >= 0; --Index)
 	{
 		AFGBuildable* Entry = Buildings[Index];
