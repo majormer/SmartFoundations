@@ -158,6 +158,31 @@ void USFSubsystem::OnActorSpawned(AActor* SpawnedActor)
 		}
 	}
 
+	// [MP-334] TEMP diagnostic: report every gate of the belt auto-connect build path at once
+	// (the path is silent at Display level, and on the dedi we cannot see which gate fails).
+	if (AFGBuildableConveyorAttachment* DiagAttachment = Cast<AFGBuildableConveyorAttachment>(SpawnedActor))
+	{
+		const bool bDiagHoloValid = ActiveHologram.IsValid();
+		const bool bDiagIsDistributor = bDiagHoloValid && AutoConnectService
+			&& AutoConnectService->IsDistributorHologram(ActiveHologram.Get());
+		int32 DiagPreviewCount = -1;
+		if (bDiagIsDistributor)
+		{
+			if (TArray<TSharedPtr<FBeltPreviewHelper>>* DiagPreviews = AutoConnectService->GetBeltPreviews(ActiveHologram.Get()))
+			{
+				DiagPreviewCount = DiagPreviews->Num();
+			}
+		}
+		UE_LOG(LogSmartFoundations, Display,
+			TEXT("[MP-334] OnActorSpawned(attachment=%s): svc=%d activeHolo=%s isDistributorHolo=%d busyLatch=%d previews=%d"),
+			*DiagAttachment->GetName(),
+			AutoConnectService ? 1 : 0,
+			*GetNameSafe(ActiveHologram.Get()),
+			bDiagIsDistributor ? 1 : 0,
+			bProcessingGridPlacement ? 1 : 0,
+			DiagPreviewCount);
+	}
+
 	if (AutoConnectService && ActiveHologram.IsValid())
 	{
 		AFGBuildableConveyorAttachment* Attachment = Cast<AFGBuildableConveyorAttachment>(SpawnedActor);
