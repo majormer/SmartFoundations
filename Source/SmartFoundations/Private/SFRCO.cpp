@@ -503,6 +503,18 @@ void USFRCO::Client_ReceiveTraversalResult_Implementation(FSFTraversalResult Res
 	USFUpgradeTraversalService::InjectTraversalResult(Result);
 }
 
+void USFRCO::Client_ReceiveServerCloneTopology_Implementation(FSFCloneTopology Topology)
+{
+	USFSubsystem* Subsystem = USFSubsystem::Get(this);
+	if (IsValid(Subsystem))
+	{
+		if (USFExtendService* ExtendService = Subsystem->GetExtendService())
+		{
+			ExtendService->ReceiveServerCloneTopology(Topology);
+		}
+	}
+}
+
 void USFRCO::Client_ReceiveAuditResult_Implementation(FSFUpgradeAuditResult Result)
 {
 	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("[SFRCO] Client_ReceiveAuditResult: Success=%d, TotalScanned=%d"), Result.bSuccess, Result.TotalScanned);

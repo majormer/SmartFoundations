@@ -852,6 +852,28 @@ int32 USFExtendService::ReconstructCommitOnServer(AFGHologram* ParentHologram, c
         TEXT("[EXTEND-MP] Server reconstructed %d/%d clone children (%d pre-wired) for %s; vanilla construct will build them."),
         NumSpawned, Clone.ChildHolograms.Num(), NumWired, *ParentHologram->GetName());
 
+    // [EXTEND-MP] Push the authoritative clone topology to the BUILDING CLIENT so a later
+    // Import-from-Last-Extend saves a preset with REAL segment connections - the client's own
+    // capture has them all empty (GetConnection() null on clients) and such a preset restores
+    // into unconnected belt segments (live finding 2026-06-10). Value-only struct, one reliable
+    // RPC, bounded by the parent clone set's child count.
+    if (APawn* InstigatorPawn = ParentHologram->GetConstructionInstigator())
+    {
+        if (AFGPlayerController* InstigatorPC = Cast<AFGPlayerController>(InstigatorPawn->GetController()))
+        {
+            if (!InstigatorPC->IsLocalController())
+            {
+                if (USFRCO* RCO = InstigatorPC->GetRemoteCallObjectOfClass<USFRCO>())
+                {
+                    RCO->Client_ReceiveServerCloneTopology(Clone);
+                    UE_LOG(LogSmartExtend, Display,
+                        TEXT("[EXTEND-MP] Pushed server-derived clone topology (%d children) to %s for preset capture."),
+                        Clone.ChildHolograms.Num(), *GetNameSafe(InstigatorPC));
+                }
+            }
+        }
+    }
+
     // Scaled clone sets ride the same server-derived topology (SpawnScaledExtendPreviews
     // re-captures from the topology service's CurrentTopology, walked above).
     ReconstructScaledCommitOnServer(ParentHologram, Spec.ScaledClones);
@@ -959,6 +981,14 @@ int32 USFExtendService::ReconstructScaledCommitOnServer(AFGHologram* ParentHolog
     return ScaledExtendClones.Num();
 }
 
+void USFExtendService::ReceiveServerCloneTopology(const FSFCloneTopology& Topology)
+{
+    ServerDerivedCloneTopology = MakeShared<FSFCloneTopology>(Topology);
+    UE_LOG(LogSmartExtend, Display,
+        TEXT("[EXTEND-MP] Client received server-derived clone topology: %d children (preset-grade, full connections)."),
+        Topology.ChildHolograms.Num());
+}
+
 void USFExtendService::ReceiveServerTopology(const FSFExtendTopology& Topology)
 {
     CachedServerTopology = Topology;
@@ -1003,6 +1033,19 @@ TSharedPtr<FSFCloneTopology> USFExtendService::GetLastCloneTopology() const
             TEXT("[SmartRestore][Extend] GetLastCloneTopology: returning restored template topology children=%d"),
             RestoredCloneTopologyTemplate->ChildHolograms.Num());
         return MakeShared<FSFCloneTopology>(*RestoredCloneTopologyTemplate);
+    }
+
+    // [EXTEND-MP] On a client, prefer the SERVER-derived copy (pushed after every commit
+    // reconstruction): the client-captured topologies below have empty segment connections
+    // (GetConnection() is null on clients) and poison any preset saved from them - restored
+    // builds then place belts that never wire (live finding 2026-06-10).
+    if (ServerDerivedCloneTopology.IsValid()
+        && Subsystem.IsValid() && FSFNetworkHelper::IsClient(Subsystem->GetWorld()))
+    {
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log,
+            TEXT("[SmartRestore][Extend] GetLastCloneTopology: returning SERVER-derived topology children=%d"),
+            ServerDerivedCloneTopology->ChildHolograms.Num());
+        return MakeShared<FSFCloneTopology>(*ServerDerivedCloneTopology);
     }
 
     if (StoredCloneTopology.IsValid())

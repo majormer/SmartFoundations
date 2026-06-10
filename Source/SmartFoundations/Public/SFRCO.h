@@ -182,6 +182,17 @@ public:
 	UFUNCTION(Client, Reliable)
 	void Client_ReceiveTraversalResult(FSFTraversalResult Result);
 
+	/**
+	 * [EXTEND-MP] Server pushes the AUTHORITATIVELY derived clone topology to the building client
+	 * after every Extend commit reconstruction. The client's own capture poisons every segment
+	 * connection (GetConnection() is null on clients), so a preset saved on a client via
+	 * Import-from-Last-Extend carried empty wiring targets and restored builds came out with
+	 * unconnected belt segments (live finding 2026-06-10). The client caches this copy and
+	 * GetLastCloneTopology prefers it.
+	 */
+	UFUNCTION(Client, Reliable)
+	void Client_ReceiveServerCloneTopology(FSFCloneTopology Topology);
+
 	//~ Begin UObject Interface
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 	//~ End UObject Interface

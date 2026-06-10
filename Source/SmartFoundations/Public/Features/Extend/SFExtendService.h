@@ -228,6 +228,13 @@ public:
      *  client branch consumes it on the next activation tick. */
     void ReceiveServerTopology(const FSFExtendTopology& Topology);
 
+    /** [EXTEND-MP] Client-side: cache the AUTHORITATIVELY derived clone topology the server
+     *  pushes after every Extend commit reconstruction. GetLastCloneTopology prefers this on
+     *  clients - the client's own capture has empty segment connections (GetConnection() null),
+     *  which poisoned presets saved via Import-from-Last-Extend (live finding 2026-06-10:
+     *  restored builds came out with unconnected belt segments). */
+    void ReceiveServerCloneTopology(const struct FSFCloneTopology& Topology);
+
     /** [EXTEND-MP] Server-side: install the staged commit's clone topology as StoredCloneTopology
      *  so the post-build wiring pass (WireBuiltChildConnections, fed by the registries the clone
      *  children populate during Construct) finds the same state an SP build would have. */
@@ -695,6 +702,10 @@ private:
     double LastCommitStageTime = 0.0;
 
     TSharedPtr<FSFCloneTopology> LastCloneTopology;
+
+    /** [EXTEND-MP] Client cache of the server-derived clone topology (pushed after every commit
+     *  reconstruction; full segment connections - see ReceiveServerCloneTopology). */
+    TSharedPtr<FSFCloneTopology> ServerDerivedCloneTopology;
 
     // ==================== Scaled Extend State (Issue #265) ====================
 
