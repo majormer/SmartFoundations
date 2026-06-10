@@ -201,7 +201,19 @@ heterogeneous topologies (refineries), Restore, costs in non-creative, diagnosti
 Per the workstream rule, nothing ships until **all** features work in MP; the oversized-grid guard
 remains the interim safety measure.
 
-## ROOT-CAUSED (fix pending live re-test): dedi factory-tick crash after blender scaled extend (2026-06-10 07:22)
+## RESOLVED (fix d79e19b, live re-test PASSED 2026-06-10 07:48): dedi factory-tick crash after blender scaled extend
+
+**Re-test result:** blender scaled extend rebuilt on the dedi post-fix (07:48:33, 1 clone set,
+jsonBuilt=43, every connection wired 23/23). SmartMCP chain scan: both new sets carry REAL chain
+actors (mirrored shapes — 3-segment lane chain + building-belt singles per set), 0 zombie /
+0 orphan. Server ticked >5 minutes past build (old timebomb fired at ~2.5 min) with no crash and
+no new crash folder. The per-clone log still prints `chains=0` — now the BENIGN early-out
+(fresh belts with no pre-existing neighbor chains to migrate; vanilla's pending-chain path
+registers them), not the silent conveyor-collection no-op.
+
+Note: `Failed to connect conveyor components ... snap only (or any)` LogGame errors at the build
+frame are PRE-EXISTING noise (also present in all previously-validated runs, 72-252 per session);
+the Any-direction components get connected by a later pass.
 
 **Root cause (found 2026-06-10 by code inspection, no dump needed):**
 `FSFWiringManifest::CreateChainActors` collected conveyors from the `AdditionalActors` map by KEY
