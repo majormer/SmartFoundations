@@ -163,6 +163,13 @@ int32 USFChainActorService::InvalidateAndRebuildChains(
 		else
 		{
 			++OrphanCount;
+			// [CHAIN-DIAG] An "orphan" affected chain (no owning TG) is assumed inert, but if it
+			// still HOLDS SEGMENTS it will be skipped by the 0-segment zombie purge, persist into
+			// the save (ShouldSave is unconditionally true), and poison the reload — belts appear
+			// in two chains' segment lists (live crash class 2026-06-10).
+			UE_LOG(LogSmartUpgrade, Display,
+				TEXT("[CHAIN-DIAG] Phase1 orphan affected chain %s: segments=%d (no owning TG; left alive)"),
+				*Chain->GetName(), Chain->GetNumChainSegments());
 		}
 	}
 
@@ -482,6 +489,24 @@ int32 USFChainActorService::InvalidateAndRebuildChains(
 
 		BuildableSub->MigrateConveyorGroupToChainActor(TG);
 
+		// [CHAIN-DIAG] One line per migrated group: new chain identity + segment count + members.
+		{
+			FString MemberNames;
+			int32 Listed = 0;
+			for (AFGBuildableConveyorBase* B : TG->Conveyors)
+			{
+				if (!IsValid(B)) continue;
+				if (Listed++ == 5) { MemberNames += TEXT(",..."); break; }
+				if (Listed > 1) MemberNames += TEXT(",");
+				MemberNames += B->GetName();
+			}
+			UE_LOG(LogSmartUpgrade, Display,
+				TEXT("[CHAIN-DIAG] Phase3 migrated TG (%d belts: %s) -> chain %s segments=%d"),
+				ValidBeltCount, *MemberNames,
+				TG->ChainActor ? *TG->ChainActor->GetName() : TEXT("null"),
+				TG->ChainActor ? TG->ChainActor->GetNumChainSegments() : -1);
+		}
+
 		// Post-migrate check: did we produce a valid chain?
 		if (TG->ChainActor)
 		{
@@ -652,6 +677,16 @@ int32 USFChainActorService::InvalidateAndRebuildChains(
 		// calls Destroy() on it in a safe timer context 3 seconds from now.
 		BuildableSub->RemoveConveyorChainActor(Chain);
 		++DetachedCount;
+
+		// [CHAIN-DIAG] CRITICAL probe: this detached chain is assumed to be a 0-segment zombie
+		// (Phase 2's RemoveChainActorFromConveyorGroup supposedly zeroed its segment list). If
+		// segments are NON-zero here, the deferred purge will SKIP it, it saves (ShouldSave is
+		// unconditionally true), and the reload sees its belts in two chains — the 2026-06-10
+		// load-crash poison. This line is the smoking gun for that hypothesis.
+		UE_LOG(LogSmartUpgrade, Display,
+			TEXT("[CHAIN-DIAG] Phase4 detached old chain %s: segments=%d%s"),
+			*Chain->GetName(), Chain->GetNumChainSegments(),
+			Chain->GetNumChainSegments() > 0 ? TEXT("  <-- WILL ESCAPE THE 0-SEG PURGE AND POISON THE SAVE") : TEXT(""));
 	}
 
 	// Phase 5: Verify every affected group is internally consistent before returning.
@@ -725,12 +760,42 @@ int32 USFChainActorService::PurgeZombieChainActors()
 	// Factory_Tick:614 → ForceDestroyChainActor fires from a ParallelFor worker thread
 	// (assertion: GTestRegisterComponentTickFunctions == 0 fails on worker threads).
 	TArray<AFGConveyorChainActor*> Zombies;
+	int32 DetachedWithSegments = 0;
 	for (TActorIterator<AFGConveyorChainActor> It(World); It; ++It)
 	{
 		AFGConveyorChainActor* Chain = *It;
 		if (!Chain || !IsValid(Chain)) continue;
 		if (Chain->GetNumChainSegments() == 0)
+		{
 			Zombies.Add(Chain);
+		}
+		else
+		{
+			// [CHAIN-DIAG] A chain WITH segments that no tick group owns escapes this purge,
+			// saves (ShouldSave unconditionally true), and poisons the reload (belts found in
+			// two chains' segment lists -> vanilla's racy in-tick recovery -> 2026-06-10 crash).
+			bool bOwned = false;
+			for (FConveyorTickGroup* TG : BuildableSub->mConveyorTickGroup)
+			{
+				if (TG && TG->ChainActor == Chain) { bOwned = true; break; }
+			}
+			if (!bOwned)
+			{
+				++DetachedWithSegments;
+				if (DetachedWithSegments <= 12)
+				{
+					UE_LOG(LogSmartUpgrade, Display,
+						TEXT("[CHAIN-DIAG] Purge SKIPPING detached-but-segmented chain %s (segments=%d) — save-poison candidate"),
+						*Chain->GetName(), Chain->GetNumChainSegments());
+				}
+			}
+		}
+	}
+	if (DetachedWithSegments > 0)
+	{
+		UE_LOG(LogSmartUpgrade, Display,
+			TEXT("[CHAIN-DIAG] Purge sweep: %d detached-but-segmented chain(s) NOT purged (save-poison candidates)"),
+			DetachedWithSegments);
 	}
 
 	if (Zombies.Num() == 0) return 0;

@@ -879,6 +879,24 @@ int32 FSFWiringManifest::CreateChainActors(UWorld* World, const TMap<FString, AA
     SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("⛓️ CHAIN REBUILD: %d conveyors, %d affected chains to rebuild"),
         AllConveyors.Num(), AffectedChains.Num());
 
+    // [CHAIN-DIAG] Shipping-visible summary of what this pass is about to touch (the Verbose
+    // line above is invisible on a shipping dedi — that blindness cost the 2026-06-10 save-poison
+    // investigation a full repro cycle).
+    {
+        FString ChainNames;
+        int32 Listed = 0;
+        for (AFGConveyorChainActor* Chain : AffectedChains)
+        {
+            if (!IsValid(Chain)) continue;
+            if (Listed++ == 8) { ChainNames += TEXT(",..."); break; }
+            if (Listed > 1) ChainNames += TEXT(",");
+            ChainNames += FString::Printf(TEXT("%s(segs=%d)"), *Chain->GetName(), Chain->GetNumChainSegments());
+        }
+        UE_LOG(LogSmartExtend, Display,
+            TEXT("[CHAIN-DIAG] CreateChainActors: %d conveyor(s), %d affected chain(s): %s"),
+            AllConveyors.Num(), AffectedChains.Num(), Listed == 0 ? TEXT("<none>") : *ChainNames);
+    }
+
     USFSubsystem* Subsystem = USFSubsystem::Get(World);
     USFChainActorService* ChainService = Subsystem ? Subsystem->GetChainActorService() : nullptr;
     if (!ChainService)
