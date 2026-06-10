@@ -60,6 +60,37 @@ Same intent->authority model as scaling:
   against built (vs preview) actors; manufacturer production-recipe application for spec children;
   per-family verification (belts, pipes, power, stackables).
 
+## Increment C live findings (2026-06-09 evening, three rounds) - REVISED DESIGN
+
+Three approaches to belt wiring at the server construct seam were tried live; the evidence now
+fixes the design:
+
+1. **Re-derivation fails in that context**: `ProcessSingleDistributor` returns 0 previews for
+   every distributor at the construct seam even with sane positions and 20+ nearby buildings
+   found by the physics scan (the failure is deeper in the pair logic, context-dependent).
+2. **Reusing the server's aim-time previews fails on timing**: `GetBeltPreviews(constructHolo)`
+   is empty at the seam, then repopulates DURING the construct (the deserialize moves the
+   hologram, retriggering the preview pipeline) - always one step behind the child-list
+   enumeration. Maintainer also notes distributor belt previews are not construct-grade the way
+   e.g. stackable-pole belt holograms are.
+3. **The CLIENT is the only party with the complete, real plan at fire time** (its preview belts
+   are full holograms with routed splines + snapped connectors; we strip them at fire anyway).
+
+**REVISED increment C: ship the explicit belt plan in the staged intent.**
+- At the client fire hook, before stripping, capture per auto-connect belt:
+  `{ DistributorCellIndex (grid linear index or parent=-1), DistributorConnectorName,
+     TargetBuildable (replicated AFGBuildable* - serializes via the package map),
+     TargetConnectorName, BeltRecipe, SplinePoints }`.
+- Stage it with the scaling spec via `USFRCO` (extend the staged struct).
+- Server, AFTER the grid constructs (out_children known): resolve each entry - cell index ->
+  built distributor, connector by NAME on the built actor, target connector by name on the
+  replicated buildable - then build each belt directly with the proven primitive
+  (`ASFConveyorBeltHologram` + `SetSplineDataAndUpdate` + `SetSnappedConnections` + `Construct`),
+  the same mechanism the Extend clone spawner uses. No preview machinery involved.
+- Same pattern then extends to pipes (junction plan) and power (wire endpoint pairs - even
+  simpler: two connection components + wire class).
+- Charge the belts as part of the staged plan's cost (closes the unpaid-belt interim gap).
+
 ## Live-test checkpoints (after A)
 
 1. Client builds a merger with auto-connect belts -> server log: does the server's
