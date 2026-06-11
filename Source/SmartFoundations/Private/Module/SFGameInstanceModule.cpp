@@ -873,6 +873,30 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 	// overrides EndPlay (primary-class virtual): hooking its body via the CDO fires for the
 	// whole Super chain - every buildable, conveyors included.
 	AFGBuildable* BuildableCDO = GetMutableDefault<AFGBuildable>();
+
+	// [NULL-WIRE GUARD] Vanilla Dismantle_Implementation walks every circuit connection's wire
+	// list and calls Execute_Dismantle on each entry UNGUARDED - a null entry (a wire destroyed
+	// without disconnecting, or a SaveGame wire reference that failed to load) is an instant
+	// "Assertion failed: O != 0" (live SP crash 2026-06-11: dismantling an Extended blueprint
+	// buildable). Scrub null/dead entries BEFORE the original runs. Void return - no by-value
+	// return-slot concerns; scope() invoked after the scrub.
+	SUBSCRIBE_METHOD_VIRTUAL(AFGBuildable::Dismantle_Implementation, BuildableCDO,
+		[](auto& scope, AFGBuildable* self)
+		{
+			if (self && self->HasAuthority())
+			{
+				const int32 Scrubbed = USFChainActorService::ScrubNullWireEntries(self);
+				if (Scrubbed > 0)
+				{
+					UE_LOG(LogSmartFoundations, Warning,
+						TEXT("[NULL-WIRE GUARD] %s (%s): scrubbed %d null/dead wire entr%s before dismantle (vanilla would have asserted)."),
+						*self->GetName(), *self->GetClass()->GetName(), Scrubbed,
+						Scrubbed == 1 ? TEXT("y") : TEXT("ies"));
+				}
+			}
+			scope(self);
+		});
+
 	SUBSCRIBE_METHOD_VIRTUAL(AFGBuildable::EndPlay, BuildableCDO,
 		[](auto& scope, AFGBuildable* self, const EEndPlayReason::Type endPlayReason)
 		{

@@ -245,6 +245,14 @@ public:
 	 */
 	int32 PurgeZombieChainActors();
 
+	/** [#366-class guard] Remove null/dead entries from every circuit connection's wire list on
+	 *  a buildable. Vanilla's Dismantle_Implementation calls Execute_Dismantle on each wire in
+	 *  mWires unguarded - a null entry (wire destroyed without disconnecting, or a SaveGame wire
+	 *  reference that failed to load) is an instant assert (live SP crash 2026-06-11, dismantling
+	 *  an Extended blueprint buildable). Static + here because mWires is protected and this class
+	 *  holds the AccessTransformers friend grant. Returns entries scrubbed. */
+	static int32 ScrubNullWireEntries(class AFGBuildable* Buildable);
+
 	/** [CHAIN-FIX] Force-remove a conveyor from EVERY tick group's Conveyors array. Called by the
 	 *  RemoveConveyor after-hook: a stale mConveyorBucketID makes vanilla's removal silently fail
 	 *  in shipping, leaving a soon-to-be-freed pointer in a TG that TickFactoryActors' ParallelFor

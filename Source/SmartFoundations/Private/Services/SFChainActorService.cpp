@@ -16,6 +16,8 @@
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
 #include "Misc/DateTime.h"
+#include "FGCircuitConnectionComponent.h"
+#include "Buildables/FGBuildableWire.h"
 
 void USFChainActorService::Initialize(USFSubsystem* InSubsystem)
 {
@@ -759,6 +761,38 @@ int32 USFChainActorService::InvalidateAndRebuildChains(
 		AffectedChains.Num(), InvalidChainCount, ExplicitGroupCount, GroupsToRemove.Num(), MergedAwayGroups.Num(), MigrateCount, SkippedEmptyGroups, DeferredDirtyGroups, DeferredDirtyConveyors, PostMigrateZombies, FailedRecoveryGroups, OrphanCount, DetachedCount, DefensiveTGsCleared, PostRebuildUnassignedGroups, PostRebuildZeroSegmentGroups, PostRebuildBackPointerMismatchGroups);
 
 	return MigrateCount;
+}
+
+int32 USFChainActorService::ScrubNullWireEntries(AFGBuildable* Buildable)
+{
+	if (!Buildable)
+	{
+		return 0;
+	}
+
+	int32 Scrubbed = 0;
+	TInlineComponentArray<UFGCircuitConnectionComponent*> CircuitConnections;
+	Buildable->GetComponents(CircuitConnections);
+	for (UFGCircuitConnectionComponent* Connection : CircuitConnections)
+	{
+		if (!Connection)
+		{
+			continue;
+		}
+		// mWires is protected (AccessTransformers friend grant). Remove entries that are null
+		// or already torn down - vanilla's dismantle loop calls Execute_Dismantle on each one
+		// unguarded and asserts on null.
+		const int32 Removed = Connection->mWires.RemoveAll([](const TObjectPtr<AFGBuildableWire>& Wire)
+		{
+			return !IsValid(Wire.Get());
+		});
+		if (Removed > 0)
+		{
+			Scrubbed += Removed;
+			Connection->mNumWiresConnected = static_cast<uint8>(Connection->mWires.Num());
+		}
+	}
+	return Scrubbed;
 }
 
 int32 USFChainActorService::PurgeZombieChainActors()

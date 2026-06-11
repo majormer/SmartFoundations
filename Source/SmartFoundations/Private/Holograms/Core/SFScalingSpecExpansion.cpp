@@ -22,6 +22,7 @@
 #include "Engine/World.h"
 #include "EngineUtils.h"
 #include "HAL/IConsoleManager.h"
+#include "FGDismantleInterface.h"
 
 // MP spec-based construction. ON by default - the mod must be self-contained (no launch options /
 // ini edits for players; Saved/Engine.ini is rewritten by the game's diff-config system anyway).
@@ -757,7 +758,10 @@ int32 SpawnWirePlanPostConstruct(AActor* BuiltParent, const TArray<AActor*>& Out
 			UE_LOG(LogSmartFoundations, Warning,
 				TEXT("[MP-334] SpawnWirePlanPostConstruct: wire entry %d Connect() failed (%s <-> %s) - destroyed."),
 				EntryIndex, *GetNameSafe(C0->GetOwner()), *GetNameSafe(C1->GetOwner()));
-			NewWire->Destroy();
+			// [NULL-WIRE GUARD] Dismantle, not Destroy: a failed Connect may still have
+				// registered one side; bare Destroy leaves a dead entry in that connection's
+				// SaveGame'd wire list (asserts on the owner's next dismantle / after reload).
+				IFGDismantleInterface::Execute_Dismantle(NewWire);
 			continue;
 		}
 
