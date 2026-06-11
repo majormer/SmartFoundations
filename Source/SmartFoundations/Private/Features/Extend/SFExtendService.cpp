@@ -1233,16 +1233,11 @@ bool USFExtendService::TryExtendFromBuilding(AFGBuildable* HitBuilding, AFGHolog
             return false; // no target/hologram (handled/logged upstream)
         }
 
-        // [#331] The Blueprint Designer is a vanilla-placement zone: Extend's clone commit
-        // direct-spawns logistics that bypass designer registration (invisible to blueprint
-        // capture) and its grouping would poison blueprint saves (#312). Never activate
-        // Extend from or onto a designer-resident building.
-        if (SourceHologram->GetBlueprintDesigner() != nullptr || HitBuilding->GetBlueprintDesigner() != nullptr)
-        {
-            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Verbose,
-                TEXT("🔄 EXTEND: Not activating - hologram or target is inside a Blueprint Designer (vanilla-only zone)"));
-            return false;
-        }
+        // [#365] Extend WORKS inside the Blueprint Designer: every clone spawn site
+        // propagates the designer context (SFPropagateDesignerToClone in the clone spawner),
+        // so clones and logistics register with the designer and get captured by blueprint
+        // saves. The earlier vanilla-only gate (added while auto-connect designer support was
+        // unproven) is removed; #312's proxy-grouping guards remain - those are orthogonal.
 
         UClass* HologramBuildClass = SourceHologram->GetBuildClass();
         if (!HologramBuildClass || !HitBuilding->IsA(HologramBuildClass))

@@ -46,6 +46,21 @@
 #include "Subsystem/SFSubsystem.h"
 #include "Data/SFHologramDataRegistry.h"
 
+// [#365] Every Extend clone hologram must carry the Blueprint Designer context of the source
+// hologram: vanilla copies hologram->buildable at construct, so a clone spawned without it
+// builds buildables the designer never tracks (invisible to blueprint capture, left behind
+// on designer clear). Called at every clone spawn site, right where MarkAsChild runs.
+static void SFPropagateDesignerToClone(AFGHologram* Clone, AFGHologram* ParentHologram)
+{
+	if (Clone && ParentHologram)
+	{
+		if (AFGBuildableBlueprintDesigner* Designer = ParentHologram->GetBlueprintDesigner())
+		{
+			Clone->SetInsideBlueprintDesigner(Designer);
+		}
+	}
+}
+
 // ============================================================================
 // FSFCloneTopology - Spawn child holograms
 // ============================================================================
@@ -286,6 +301,7 @@ int32 FSFCloneTopology::SpawnChildHolograms(
                 // Disable validation AFTER AddChild
                 USFHologramDataService::DisableValidation(DistributorChild);
                 USFHologramDataService::MarkAsChild(DistributorChild, ParentHologram, ESFChildHologramType::ExtendClone);
+                SFPropagateDesignerToClone(DistributorChild, ParentHologram);
                 
                 // Configure visibility
                 if (DistributorChild->IsHologramLocked())
@@ -355,12 +371,8 @@ int32 FSFCloneTopology::SpawnChildHolograms(
 
                 USFHologramDataService::DisableValidation(BeltChild);
                 USFHologramDataService::MarkAsChild(BeltChild, ParentHologram, ESFChildHologramType::ExtendClone);
+                SFPropagateDesignerToClone(BeltChild, ParentHologram);
 
-                // [#331] Propagate designer context so the built belt registers with the designer
-                if (AFGBuildableBlueprintDesigner* Designer = ParentHologram->GetBlueprintDesigner())
-                {
-                    BeltChild->SetInsideBlueprintDesigner(Designer);
-                }
 
                 BeltChild->FinishSpawning(FTransform(Rotation, Location));
                 BeltChild->SetActorLocation(Location);
@@ -459,6 +471,7 @@ int32 FSFCloneTopology::SpawnChildHolograms(
                 
                 USFHologramDataService::DisableValidation(LiftChild);
                 USFHologramDataService::MarkAsChild(LiftChild, ParentHologram, ESFChildHologramType::ExtendClone);
+                SFPropagateDesignerToClone(LiftChild, ParentHologram);
                 
                 LiftChild->FinishSpawning(FTransform(Rotation, Location));
                 
@@ -575,6 +588,7 @@ int32 FSFCloneTopology::SpawnChildHolograms(
                 
                 USFHologramDataService::DisableValidation(PipeChild);
                 USFHologramDataService::MarkAsChild(PipeChild, ParentHologram, ESFChildHologramType::ExtendClone);
+                SFPropagateDesignerToClone(PipeChild, ParentHologram);
                 
                 PipeChild->FinishSpawning(FTransform(Rotation, Location));
                 PipeChild->SetActorLocation(Location);
@@ -657,6 +671,7 @@ int32 FSFCloneTopology::SpawnChildHolograms(
                 
                 USFHologramDataService::DisableValidation(PassChild);
                 USFHologramDataService::MarkAsChild(PassChild, ParentHologram, ESFChildHologramType::ExtendClone);
+                SFPropagateDesignerToClone(PassChild, ParentHologram);
                 
                 if (PassChild->IsHologramLocked())
                 {
@@ -735,6 +750,7 @@ int32 FSFCloneTopology::SpawnChildHolograms(
                 
                 USFHologramDataService::DisableValidation(AttChild);
                 USFHologramDataService::MarkAsChild(AttChild, ParentHologram, ESFChildHologramType::ExtendClone);
+                SFPropagateDesignerToClone(AttChild, ParentHologram);
                 
                 // Stash the clone metadata (UserFlowLimit + JsonCloneId) on the
                 // registry so Construct can apply the flow limit after the
@@ -811,6 +827,7 @@ int32 FSFCloneTopology::SpawnChildHolograms(
                 // Disable validation AFTER AddChild
                 USFHologramDataService::DisableValidation(PoleChild);
                 USFHologramDataService::MarkAsChild(PoleChild, ParentHologram, ESFChildHologramType::ExtendClone);
+                SFPropagateDesignerToClone(PoleChild, ParentHologram);
                 
                 // Store JsonCloneId for post-build registration
                 FSFHologramData* HoloData = USFHologramDataRegistry::GetData(PoleChild);
@@ -895,6 +912,7 @@ int32 FSFCloneTopology::SpawnChildHolograms(
                 
                 USFHologramDataService::DisableValidation(WireChild);
                 USFHologramDataService::MarkAsChild(WireChild, ParentHologram, ESFChildHologramType::ExtendClone);
+                SFPropagateDesignerToClone(WireChild, ParentHologram);
                 
                 // Store JsonCloneId so the wire registers on build
                 FSFHologramData* HoloData = USFHologramDataRegistry::GetData(WireChild);
@@ -993,6 +1011,7 @@ int32 FSFCloneTopology::SpawnChildHolograms(
                     
                     USFHologramDataService::DisableValidation(PipeLane);
                     USFHologramDataService::MarkAsChild(PipeLane, ParentHologram, ESFChildHologramType::ExtendClone);
+                    SFPropagateDesignerToClone(PipeLane, ParentHologram);
                     
                     PipeLane->FinishSpawning(FTransform(Rotation, Location));
                     
@@ -1068,6 +1087,7 @@ int32 FSFCloneTopology::SpawnChildHolograms(
                     
                     USFHologramDataService::DisableValidation(LiftLane);
                     USFHologramDataService::MarkAsChild(LiftLane, ParentHologram, ESFChildHologramType::ExtendClone);
+                    SFPropagateDesignerToClone(LiftLane, ParentHologram);
                     
                     LiftLane->FinishSpawning(FTransform(Rotation, Location));
                     
@@ -1123,12 +1143,8 @@ int32 FSFCloneTopology::SpawnChildHolograms(
 
                     USFHologramDataService::DisableValidation(BeltLane);
                     USFHologramDataService::MarkAsChild(BeltLane, ParentHologram, ESFChildHologramType::ExtendClone);
+                    SFPropagateDesignerToClone(BeltLane, ParentHologram);
 
-                    // [#331] Propagate designer context so the built lane registers with the designer
-                    if (AFGBuildableBlueprintDesigner* Designer = ParentHologram->GetBlueprintDesigner())
-                    {
-                        BeltLane->SetInsideBlueprintDesigner(Designer);
-                    }
 
                     BeltLane->FinishSpawning(FTransform(Rotation, Location));
                     
@@ -1209,6 +1225,7 @@ int32 FSFCloneTopology::SpawnChildHolograms(
 
                 USFHologramDataService::DisableValidation(WallChild);
                 USFHologramDataService::MarkAsChild(WallChild, ParentHologram, ESFChildHologramType::ExtendClone);
+                SFPropagateDesignerToClone(WallChild, ParentHologram);
 
                 if (WallChild->IsHologramLocked())
                 {

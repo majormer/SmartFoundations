@@ -221,14 +221,21 @@ int32 ExpandScalingSpecIntoChildren(AFGHologram* Parent, const FSFScalingSpec& S
 
 				const FName ChildName(*FString::Printf(TEXT("SFSpecCell_%d_%d_%d"), GX, GY, GZ));
 
+				// [#365] Designer context for designer-resident spec grids (MP has designers too)
+				AFGBuildableBlueprintDesigner* CellDesigner = Parent->GetBlueprintDesigner();
+
 				AFGHologram* Child = AFGHologram::SpawnChildHologramFromRecipe(
 					Parent, ChildName, Recipe, HoloOwner, CellLoc,
-					[CellRot](AFGHologram* NewChild)
+					[CellRot, CellDesigner](AFGHologram* NewChild)
 					{
 						if (NewChild)
 						{
 							NewChild->SetActorRotation(CellRot);
 							NewChild->Tags.AddUnique(FName(TEXT("SF_GridChild")));
+							if (CellDesigner)
+							{
+								NewChild->SetInsideBlueprintDesigner(CellDesigner);
+							}
 						}
 					});
 
