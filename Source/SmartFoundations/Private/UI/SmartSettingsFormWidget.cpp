@@ -1067,11 +1067,11 @@ void USmartSettingsFormWidget::PopulateFromCounterState(USFSubsystem* Subsystem)
 
 void USmartSettingsFormWidget::FitHeaderButtonRow()
 {
-    // [#352 restructure] The header buttons live in a HorizontalBox now, so position and
-    // width come from layout. All that remains of the old canvas-band math is the localized
-    // label fit: shrink any label that would make its button unreasonably wide, so long
-    // translations don't stretch the header.
-    const float LabelAvail = 110.0f;
+    // [#352 restructure] The header buttons live in a fixed-width row under the title now
+    // (HeaderButtonRowBox, 285px = the content column, split into equal thirds), so each
+    // button is ~93px. All that remains of the old canvas-band math is the localized label
+    // fit: shrink any label that would clip in its third.
+    const float LabelAvail = 80.0f;
     auto FitLabel = [this, LabelAvail](const TCHAR* WidgetName)
     {
         UTextBlock* Label = Cast<UTextBlock>(GetWidgetFromName(FName(WidgetName)));
