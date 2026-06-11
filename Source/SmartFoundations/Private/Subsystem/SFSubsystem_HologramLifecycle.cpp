@@ -286,7 +286,8 @@ void USFSubsystem::RegisterActiveHologram(AFGHologram* Hologram)
 	// Wall conveyor poles scale along Y, so default spacing goes on Y axis for them
 	if (USFAutoConnectService::IsStackableSupportHologram(Hologram) || USFAutoConnectService::IsBeltSupportHologram(Hologram) || USFAutoConnectService::IsPipeSupportHologram(Hologram))
 	{
-		const bool bWallPole = USFAutoConnectService::IsWallConveyorPoleHologram(Hologram);
+		const bool bWallPole = USFAutoConnectService::IsWallConveyorPoleHologram(Hologram)
+			|| USFAutoConnectService::IsWallPipelineSupportHologram(Hologram);  // #364: wall pipe supports scale along Y too
 		int32& SpacingAxis = bWallPole ? CounterState.SpacingY : CounterState.SpacingX;
 
 		if (SpacingAxis == 0)

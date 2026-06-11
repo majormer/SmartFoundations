@@ -1651,10 +1651,27 @@ bool USFAutoConnectService::IsBeltSupportHologram(AFGHologram* Hologram)
 		|| IsRegularConveyorPoleHologram(Hologram);   // #354: standard conveyor pole
 }
 
+bool USFAutoConnectService::IsWallPipelineSupportHologram(AFGHologram* Hologram)
+{
+	if (!Hologram)
+	{
+		return false;
+	}
+	UClass* BuildClass = Hologram->GetBuildClass();
+	if (!BuildClass)
+	{
+		return false;
+	}
+	// #364: the WALL pipeline support - exact match so the Wall Hole
+	// (Build_PipelineSupportWallHole_C) is NOT caught.
+	return BuildClass->GetName() == TEXT("Build_PipelineSupportWall_C");
+}
+
 bool USFAutoConnectService::IsPipeSupportHologram(AFGHologram* Hologram)
 {
 	return IsStackablePipelineSupportHologram(Hologram)
-		|| IsRegularPipelinePoleHologram(Hologram);   // #364: standard pipeline support
+		|| IsRegularPipelinePoleHologram(Hologram)    // #364: standard pipeline support
+		|| IsWallPipelineSupportHologram(Hologram);   // #364: wall pipeline support
 }
 
 // ========================================

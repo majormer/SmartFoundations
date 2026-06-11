@@ -271,6 +271,12 @@ public:
 	 * IsBeltSupportHologram: stackable pipeline supports plus the standard Pipeline Support.
 	 * @return True if this hologram supports pipe auto-connect between grid neighbors
 	 */
+	/**
+	 * Check if a hologram is the WALL pipeline support (Build_PipelineSupportWall_C). #364
+	 * Exact match; does not catch the Wall Hole.
+	 */
+	static bool IsWallPipelineSupportHologram(AFGHologram* Hologram);
+
 	static bool IsPipeSupportHologram(AFGHologram* Hologram);
 
 	/**
