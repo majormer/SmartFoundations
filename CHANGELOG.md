@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Smart! works in the Blueprint Designer** - Building with Smart! inside the Blueprint Designer now behaves like the open world: auto-connect belts and pipes preview, space themselves, and build correctly, and everything Smart! builds is properly captured into the blueprint (and removed by designer clear). Previously Smart!-built belts and pipes were invisible to the designer - left behind on clear and missing from saved blueprints. (Issue #331)
-- **Pipeline supports can now be scaled** - Pipeline Supports, Pipeline Wall Supports, and Pipeline Wall Holes support grid scaling like their conveyor-pole counterparts: place one, scale out a line or grid. Auto-connecting pipes between the scaled supports, the way the Stackable Pipeline Support does, is a tracked follow-up (Issue #364). Thanks to Torkeug (Issues #291, #292, #293)
+- **Pipeline supports can now be scaled** - Pipeline Supports, Pipeline Wall Supports, and Pipeline Wall Holes support grid scaling: place one, scale out a line or grid. This is the first half of the request - auto-connecting pipes between the scaled supports (and carrying the ground support's height setting across the line, like the Conveyor Pole does for belts) is tracked as the follow-up (Issue #364). Thanks to Torkeug (Issue #293; first half of #291 and #292)
 
 ### Fixed
 

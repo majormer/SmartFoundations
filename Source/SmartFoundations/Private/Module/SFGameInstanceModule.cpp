@@ -1055,6 +1055,28 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 	SUBSCRIBE_METHOD_VIRTUAL(AFGBuildableHologram::Construct, BuildableHologramCDO,
 		[=](auto& scope, AFGBuildableHologram* self, TArray<AActor*>& out_children, FNetConstructionID constructionID)
 		{
+			// [#365] Universal designer propagation at the commit seam. The constructing
+			// hologram reliably carries the Blueprint Designer context HERE (vanilla updates
+			// it while aiming; activation-time stamping on clone spawn can run too early,
+			// before the aim has tagged the hologram - live find: Extend's parent registered
+			// with the designer but every clone built untracked). Vanilla's child-construct
+			// loop does NOT propagate parent->child, so stamp every child hologram now - the
+			// last moment before their buildables spawn. Covers Smart grids, Extend clones,
+			// and conduit previews alike; runs regardless of the spec-construction toggle.
+			if (self && self->HasAuthority())
+			{
+				if (AFGBuildableBlueprintDesigner* Designer = self->GetBlueprintDesigner())
+				{
+					for (AFGHologram* ChildHolo : self->GetHologramChildren())
+					{
+						if (ChildHolo && ChildHolo->GetBlueprintDesigner() == nullptr)
+						{
+							ChildHolo->SetInsideBlueprintDesigner(Designer);
+						}
+					}
+				}
+			}
+
 			if (!self || !self->HasAuthority() || !SFScalingSpecExpansion::IsSpecConstructionEnabled())
 			{
 				return;
