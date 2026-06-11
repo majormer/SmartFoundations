@@ -208,15 +208,26 @@ int32 ExpandScalingSpecIntoChildren(AFGHologram* Parent, const FSFScalingSpec& S
 					Spec.ItemSize, C, LinearIndex, FVector::ZeroVector);
 				++LinearIndex;
 
+				// [#363] Rotation mode: each cell rotates progressively along the arc, exactly
+				// like SP's grid spawner (ChildYawOffset = X index * RotationZ). The calculator
+				// already curves the POSITIONS from the spec's counters; the expansion was
+				// pinning every cell's FACING to the parent - MP clients previewed curved runs
+				// that built with unrotated cells (Discord report, day one of 32.0.0).
+				FRotator CellRot = ParentRot;
+				if (!FMath::IsNearlyZero(C.RotationZ))
+				{
+					CellRot.Yaw += GX * C.RotationZ;
+				}
+
 				const FName ChildName(*FString::Printf(TEXT("SFSpecCell_%d_%d_%d"), GX, GY, GZ));
 
 				AFGHologram* Child = AFGHologram::SpawnChildHologramFromRecipe(
 					Parent, ChildName, Recipe, HoloOwner, CellLoc,
-					[ParentRot](AFGHologram* NewChild)
+					[CellRot](AFGHologram* NewChild)
 					{
 						if (NewChild)
 						{
-							NewChild->SetActorRotation(ParentRot);
+							NewChild->SetActorRotation(CellRot);
 							NewChild->Tags.AddUnique(FName(TEXT("SF_GridChild")));
 						}
 					});
@@ -229,7 +240,7 @@ int32 ExpandScalingSpecIntoChildren(AFGHologram* Parent, const FSFScalingSpec& S
 					// 2026-06-09: expanding BEFORE validation is unworkable - freshly spawned vanilla
 					// holograms carry FGCDInitializing/FGCDInvalidFloor/FGCDInvalidAimLocation that
 					// programmatic spawns cannot clear, and the whole construct gets rejected.)
-					Child->SetActorLocationAndRotation(CellLoc, ParentRot);
+					Child->SetActorLocationAndRotation(CellLoc, CellRot);
 
 					// Multi-step parents (pole height / floodlight angle / sign step): copy the
 					// player's step-2 choice from the parent so the child builds with it.
