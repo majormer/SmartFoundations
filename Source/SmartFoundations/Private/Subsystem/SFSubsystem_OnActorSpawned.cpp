@@ -47,8 +47,14 @@ void USFSubsystem::OnActorSpawned(AActor* SpawnedActor)
 			const FIntVector& Grid = GetGridCounters();
 			const bool bIsMultiGrid = (FMath::Abs(Grid.X) > 1 || FMath::Abs(Grid.Y) > 1 || FMath::Abs(Grid.Z) > 1);
 			const bool bIsExtendActive = ExtendService && ExtendService->IsExtendModeActive();  // Issue #270
+			// Smart Restore of a SINGLE extend clone is neither multi-grid (counters stay 1x1x1)
+			// nor extend-active (bHasValidTarget belongs to the aim-at-target flow, not the replay) —
+			// without this arm its buildables never join a proxy and R-key dismantle only takes one
+			// building. The restore session flag stays set through the commit; it is cleared on the
+			// post-build tick once the parent hologram goes invalid.
+			const bool bIsRestoreReplayActive = ExtendService && ExtendService->IsRestoredCloneTopologyActive();
 
-			if ((bIsMultiGrid || bIsExtendActive) && !Buildable->GetBlueprintProxy())
+			if ((bIsMultiGrid || bIsExtendActive || bIsRestoreReplayActive) && !Buildable->GetBlueprintProxy())
 			{
 				// DIAGNOSTIC: Log what type of building is spawning
 				UE_LOG(LogSmartFoundations, VeryVerbose, TEXT(" SMART DISMANTLE: Building spawned: %s (class: %s)"),
