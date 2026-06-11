@@ -267,6 +267,13 @@ public:
 	static bool IsBeltSupportHologram(AFGHologram* Hologram);
 
 	/**
+	 * Check if a hologram is any pipe-capable support structure (#364). The pipe analog of
+	 * IsBeltSupportHologram: stackable pipeline supports plus the standard Pipeline Support.
+	 * @return True if this hologram supports pipe auto-connect between grid neighbors
+	 */
+	static bool IsPipeSupportHologram(AFGHologram* Hologram);
+
+	/**
 	 * Process auto-connect for stackable conveyor poles
 	 * Creates belt previews between consecutive poles in a scaled grid
 	 * @param ParentHologram The parent hologram containing stackable conveyor poles

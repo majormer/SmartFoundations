@@ -101,7 +101,7 @@ void USFSubsystem::RegisterActiveHologram(AFGHologram* Hologram)
 			CurrentAutoConnectSetting = EAutoConnectSetting::PowerEnabled;
 		}
 		else if (AutoConnectService->IsPipelineJunctionHologram(Hologram) ||
-		         AutoConnectService->IsStackablePipelineSupportHologram(Hologram))
+		         AutoConnectService->IsPipeSupportHologram(Hologram))
 		{
 			CurrentAutoConnectSetting = EAutoConnectSetting::Enabled; // Pipe context
 		}
@@ -284,7 +284,7 @@ void USFSubsystem::RegisterActiveHologram(AFGHologram* Hologram)
 	// Apply default spacing for belt/pipe support poles (User Request, Issue #268)
 	// Sets 54m (5400cm) spacing to facilitate bus building
 	// Wall conveyor poles scale along Y, so default spacing goes on Y axis for them
-	if (USFAutoConnectService::IsStackableSupportHologram(Hologram) || USFAutoConnectService::IsBeltSupportHologram(Hologram))
+	if (USFAutoConnectService::IsStackableSupportHologram(Hologram) || USFAutoConnectService::IsBeltSupportHologram(Hologram) || USFAutoConnectService::IsPipeSupportHologram(Hologram))
 	{
 		const bool bWallPole = USFAutoConnectService::IsWallConveyorPoleHologram(Hologram);
 		int32& SpacingAxis = bWallPole ? CounterState.SpacingY : CounterState.SpacingX;
@@ -1150,6 +1150,14 @@ void USFSubsystem::SyncMultiStepHologramProperties()
 						PipePoleParent->ProcessEvent(ParentRep, nullptr);
 					}
 				}
+
+				// #364: re-route the auto-connect pipes after a height or ANGLE change - the
+				// pipe runs route between the poles' snap connectors, which move with both.
+				// The belt analog is #354's OnStackableConveyorPolesChanged in the branch above.
+				if (USFAutoConnectOrchestrator* Orchestrator = GetOrCreateOrchestrator(Parent))
+				{
+					Orchestrator->OnStackablePipelineSupportsChanged();
+				}
 			}
 		}
 		return;
@@ -1314,7 +1322,7 @@ void USFSubsystem::OnParentHologramDestroyed(AActor* DestroyedActor)
 		// 1. Build actors spawn BEFORE OnParentHologramDestroyed is called
 		// 2. Child holograms are already destroyed by this point
 		// Positions are cached in ProcessStackablePipelineSupports where children are still valid
-		if (AutoConnectService && AutoConnectService->IsStackablePipelineSupportHologram(DestroyedHologram))
+		if (AutoConnectService && AutoConnectService->IsPipeSupportHologram(DestroyedHologram))
 		{
 			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 STACKABLE PIPE SUPPORT: OnParentHologramDestroyed - cache already set (Expected=%d, Pending=%d)"),
 				StackablePipeSupportExpectedCount, bStackablePipeBuildPending);

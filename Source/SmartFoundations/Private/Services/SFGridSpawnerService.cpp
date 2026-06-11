@@ -212,7 +212,7 @@ void USFGridSpawnerService::UpdateChildPositions()
                 {
                     Orchestrator->OnStackableConveyorPolesChanged();
                 }
-                if (USFAutoConnectService::IsStackablePipelineSupportHologram(Parent))
+                if (USFAutoConnectService::IsPipeSupportHologram(Parent))
                 {
                     Orchestrator->OnStackablePipelineSupportsChanged();
                 }
@@ -610,7 +610,7 @@ void USFGridSpawnerService::UpdateChildPositions()
                 {
                     Orchestrator->OnStackableConveyorPolesChanged();
                 }
-                if (USFAutoConnectService::IsStackablePipelineSupportHologram(Parent))
+                if (USFAutoConnectService::IsPipeSupportHologram(Parent))
                 {
                     Orchestrator->OnStackablePipelineSupportsChanged();
                 }
@@ -738,7 +738,7 @@ void USFGridSpawnerService::UpdateChildrenForCurrentTransform()
                         {
                             Orchestrator->OnStackableConveyorPolesChanged();
                         }
-                        if (USFAutoConnectService::IsStackablePipelineSupportHologram(ParentLater))
+                        if (USFAutoConnectService::IsPipeSupportHologram(ParentLater))
                         {
                             Orchestrator->OnStackablePipelineSupportsChanged();
                         }

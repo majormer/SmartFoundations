@@ -1651,6 +1651,12 @@ bool USFAutoConnectService::IsBeltSupportHologram(AFGHologram* Hologram)
 		|| IsRegularConveyorPoleHologram(Hologram);   // #354: standard conveyor pole
 }
 
+bool USFAutoConnectService::IsPipeSupportHologram(AFGHologram* Hologram)
+{
+	return IsStackablePipelineSupportHologram(Hologram)
+		|| IsRegularPipelinePoleHologram(Hologram);   // #364: standard pipeline support
+}
+
 // ========================================
 // Issue #187: Floor Hole Pipe Auto-Connect
 // ========================================

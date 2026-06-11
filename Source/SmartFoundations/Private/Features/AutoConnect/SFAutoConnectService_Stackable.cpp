@@ -407,7 +407,7 @@ void USFAutoConnectService::ProcessStackablePipelineSupports(AFGHologram* Parent
 	TArray<TWeakObjectPtr<AFGHologram>> SpawnedChildren = HologramHelper->GetSpawnedChildren();
 	for (const TWeakObjectPtr<AFGHologram>& ChildPtr : SpawnedChildren)
 	{
-		if (ChildPtr.IsValid() && IsStackablePipelineSupportHologram(ChildPtr.Get()))
+		if (ChildPtr.IsValid() && IsPipeSupportHologram(ChildPtr.Get()))
 		{
 			AllSupports.Add(ChildPtr.Get());
 		}
@@ -477,7 +477,7 @@ void USFAutoConnectService::ProcessStackablePipelineSupports(AFGHologram* Parent
 					continue; // Skip parent position
 				}
 				
-				if (SpawnedChildren[ChildIndex].IsValid() && IsStackablePipelineSupportHologram(SpawnedChildren[ChildIndex].Get()))
+				if (SpawnedChildren[ChildIndex].IsValid() && IsPipeSupportHologram(SpawnedChildren[ChildIndex].Get()))
 				{
 					GridToHologram.Add(PackGridPos(X, Y, Z), SpawnedChildren[ChildIndex].Get());
 				}
