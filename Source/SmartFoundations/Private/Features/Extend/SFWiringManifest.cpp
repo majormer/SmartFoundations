@@ -825,15 +825,18 @@ int32 FSFWiringManifest::CreateChainActors(UWorld* World, const TMap<FString, AA
         }
     }
 
-    // From AdditionalActors (lane_segment, belt_segment, lift_segment from JSON build)
+    // From AdditionalActors — collect by TYPE, like RebuildPipeNetworks does.
+    // Per-clone scaled-extend maps carry sc{i}_-prefixed keys, which a
+    // StartsWith("lane_segment"...) role filter never matches: clone belts then
+    // skip chain registration entirely (chains=0) while ConfigureComponents has
+    // already deferred AddConveyor to this pass. Connected-but-unchained belts
+    // are the THESIS factory-tick hazard class (live dedi AV in
+    // AFGBuildableSubsystem::TickFactoryActors, 2026-06-10).
     for (const auto& Pair : AdditionalActors)
     {
-        if (Pair.Key.StartsWith(TEXT("lane_segment")) || Pair.Key.StartsWith(TEXT("belt_segment")) || Pair.Key.StartsWith(TEXT("lift_segment")))
+        if (AFGBuildableConveyorBase* Conveyor = Cast<AFGBuildableConveyorBase>(Pair.Value))
         {
-            if (AFGBuildableConveyorBase* Conveyor = Cast<AFGBuildableConveyorBase>(Pair.Value))
-            {
-                AllConveyors.AddUnique(Conveyor);
-            }
+            AllConveyors.AddUnique(Conveyor);
         }
     }
 
@@ -875,6 +878,24 @@ int32 FSFWiringManifest::CreateChainActors(UWorld* World, const TMap<FString, AA
 
     SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("⛓️ CHAIN REBUILD: %d conveyors, %d affected chains to rebuild"),
         AllConveyors.Num(), AffectedChains.Num());
+
+    // [CHAIN-DIAG] Shipping-visible summary of what this pass is about to touch (the Verbose
+    // line above is invisible on a shipping dedi — that blindness cost the 2026-06-10 save-poison
+    // investigation a full repro cycle).
+    {
+        FString ChainNames;
+        int32 Listed = 0;
+        for (AFGConveyorChainActor* Chain : AffectedChains)
+        {
+            if (!IsValid(Chain)) continue;
+            if (Listed++ == 8) { ChainNames += TEXT(",..."); break; }
+            if (Listed > 1) ChainNames += TEXT(",");
+            ChainNames += FString::Printf(TEXT("%s(segs=%d)"), *Chain->GetName(), Chain->GetNumChainSegments());
+        }
+        UE_LOG(LogSmartExtend, Verbose,
+            TEXT("[CHAIN-DIAG] CreateChainActors: %d conveyor(s), %d affected chain(s): %s"),
+            AllConveyors.Num(), AffectedChains.Num(), Listed == 0 ? TEXT("<none>") : *ChainNames);
+    }
 
     USFSubsystem* Subsystem = USFSubsystem::Get(World);
     USFChainActorService* ChainService = Subsystem ? Subsystem->GetChainActorService() : nullptr;

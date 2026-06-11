@@ -65,6 +65,18 @@ bool FSFArrowModule_StaticMesh::Initialize(UWorld* World, UObject* Outer, USFSub
 		return false;
 	}
 
+	// [CHAIN-FIX] Arrows are client cosmetics; on a dedicated server the readiness checks can
+	// never pass (no render data under the null renderer), so every AttachToHologram deferred,
+	// armed 5s timers, and re-ran a failing /Engine/BasicShapes async load on every aim cycle
+	// (live 2026-06-10: "Asset load completed but validation failed (Head=FAILED Shaft=FAILED)"
+	// spam on the dedi during the heap-corruption investigation). No-op the whole module there.
+	if (World->GetNetMode() == NM_DedicatedServer)
+	{
+		bDisabledOnDedicatedServer = true;
+		UE_LOG(LogSmartArrows, Display, TEXT("FSFArrowModule_StaticMesh: disabled on dedicated server (client cosmetics)."));
+		return true;
+	}
+
 	// Store subsystem reference for bounds calculation (Task #67)
 	SubsystemRef = Subsystem;
 	if (Subsystem)
@@ -152,6 +164,10 @@ bool FSFArrowModule_StaticMesh::Initialize(UWorld* World, UObject* Outer, USFSub
 
 bool FSFArrowModule_StaticMesh::AttachToHologram(USceneComponent* HologramRootComponent)
 {
+	if (bDisabledOnDedicatedServer)
+	{
+		return false; // [CHAIN-FIX] silent no-op on the dedi - see Initialize
+	}
 	if (!bInitialized)
 	{
 		UE_LOG(LogSmartArrows, Warning, TEXT("FSFArrowModule_StaticMesh::AttachToHologram: Not initialized"));
@@ -267,7 +283,12 @@ bool FSFArrowModule_StaticMesh::AttachToHologram(USceneComponent* HologramRootCo
 		SF_LOG_ARROWS(Normal, TEXT("⏳ AttachToHologram: Assets not ready yet, deferring attachment (will complete when assets load)"));
 		
 		PendingAttachTarget = HologramRootComponent;
-		
+
+		// [CHAIN-FIX] Remember the arming world so Cleanup can ALWAYS clear this timer. The old
+		// path resolved the world through ArrowX's outer - the HOLOGRAM - which usually dies
+		// before this module, so an armed timer with a raw-`this` lambda could outlive cleanup.
+		DeferredAttachTimerWorld = World;
+
 		// Set timeout timer (5 seconds)
 		World->GetTimerManager().SetTimer(
 			DeferredAttachTimerHandle,
@@ -354,52 +375,26 @@ void FSFArrowModule_StaticMesh::Cleanup()
 	AssetManager.CancelPendingLoads();
 	PendingAttachTarget.Reset();
 	
-	// Task #67 Cleanup: Clear deferred attachment timer if active
-	// Safe approach: Get world from component owner, not from dangling component pointers
+	// [CHAIN-FIX] Clear the deferred-attach timer UNCONDITIONALLY via the world cached when it
+	// was armed. The old path resolved the world through ArrowX's outer - the HOLOGRAM - which
+	// usually dies before this module, so the clear was silently skipped and only the LOCAL
+	// handle was invalidated ("timer will be cleaned up by engine anyway" was wrong: the armed
+	// raw-`this` lambda still fires; if this module is ever destroyed first, that is a
+	// write-after-free into recycled heap - the 2026-06-10 dedi corruption suspect class).
 	if (DeferredAttachTimerHandle.IsValid())
 	{
-		UE_LOG(LogSmartArrows, Verbose, TEXT("Cleanup: Found active deferred attachment timer"));
-		
-		// Try to get world from ArrowX's owner (subsystem) if component still valid
-		if (ArrowX.IsValid())
+		if (UWorld* TimerWorld = DeferredAttachTimerWorld.Get())
 		{
-			if (UObject* Owner = ArrowX.Get()->GetOuter())
-			{
-				if (UWorld* World = Owner->GetWorld())
-				{
-					if (World->GetTimerManager().IsTimerActive(DeferredAttachTimerHandle))
-					{
-						World->GetTimerManager().ClearTimer(DeferredAttachTimerHandle);
-						UE_LOG(LogSmartArrows, Verbose, TEXT("Cleanup: ✅ Cleared deferred attachment timer"));
-					}
-					else
-					{
-						UE_LOG(LogSmartArrows, Verbose, TEXT("Cleanup: Timer exists but not active"));
-					}
-				}
-				else
-				{
-					UE_LOG(LogSmartArrows, Warning, TEXT("Cleanup: Owner has no world"));
-				}
-			}
-			else
-			{
-				UE_LOG(LogSmartArrows, Warning, TEXT("Cleanup: ArrowX has no valid owner"));
-			}
+			TimerWorld->GetTimerManager().ClearTimer(DeferredAttachTimerHandle);
+			UE_LOG(LogSmartArrows, Verbose, TEXT("Cleanup: ✅ Cleared deferred attachment timer (cached world)"));
 		}
 		else
 		{
-			UE_LOG(LogSmartArrows, Warning, TEXT("Cleanup: ArrowX invalid, force invalidating timer"));
+			UE_LOG(LogSmartArrows, Warning, TEXT("Cleanup: timer was armed but its world is gone (world teardown) - timer died with the world"));
 		}
-		
-		// If we can't get world safely, timer will be cleaned up by engine anyway
 		DeferredAttachTimerHandle.Invalidate();
-		UE_LOG(LogSmartArrows, Verbose, TEXT("Cleanup: Timer handle invalidated"));
 	}
-	else
-	{
-		UE_LOG(LogSmartArrows, Verbose, TEXT("Cleanup: No active deferred attachment timer"));
-	}
+	DeferredAttachTimerWorld.Reset();
 	
 	// Early exit if arrows were never initialized (never attached to a hologram)
 	// This happens during world transitions when no build gun was ever equipped

@@ -12,6 +12,7 @@
 #include "FGCircuitConnectionComponent.h"
 #include "SmartFoundations.h"  // For LogSmartFoundations
 #include "Constants/SFAssetPaths.h"
+#include "Core/Helpers/SFNetworkHelper.h"  // [#334] authority gate
 #include "FGPlayerController.h"
 #include "FGCharacterPlayer.h"
 #include "FGInventoryComponent.h"
@@ -1031,6 +1032,15 @@ void FSFPowerAutoConnectManager::OnPowerPoleBuilt(AFGBuildablePowerPole* BuiltPo
 	if (!BuiltPole || !Subsystem)
 	{
 		UE_LOG(LogSmartAutoConnect, Warning, TEXT("⚡ OnPowerPoleBuilt: Invalid parameters"));
+		return;
+	}
+
+	// [MP / #334] Authority gate: this function direct-spawns AFGBuildableWire actors. On a
+	// network client it would create client-only ghost wires for replicated server-built poles -
+	// the original #334 bug. Authority sides (SP standalone / listen host / dedicated server)
+	// are unchanged. Defense-in-depth: the OnActorSpawned caller is gated too.
+	if (FSFNetworkHelper::IsClient(BuiltPole->GetWorld()))
+	{
 		return;
 	}
 

@@ -73,6 +73,11 @@ public:
     void ClearScaledExtendClones();
     bool ValidatePowerCapacity();
 
+    /** [EXTEND-MP] Server-commit entry: run the SAME spawn pipeline the SP preview uses against
+     *  the already-installed session state (CurrentExtendTarget/CurrentExtendHologram/topology +
+     *  ScaledExtendClones parameters). Used by ReconstructScaledCommitOnServer. */
+    void SpawnCloneSetsForServerCommit() { SpawnScaledExtendPreviews(); }
+
 private:
     /** Calculate world offsets for all clones based on current grid state */
     void CalculateScaledExtendPositions();

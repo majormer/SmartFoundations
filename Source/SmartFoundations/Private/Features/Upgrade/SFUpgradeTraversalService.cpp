@@ -23,6 +23,25 @@
 #include "FGPowerCircuit.h"
 #include "Buildables/FGBuildableWire.h"
 
+// [UPGRADE-MP] Client-side delivery of server-walked traversal results (see header).
+FSFOnTraversalResultReceived USFUpgradeTraversalService::OnClientTraversalResultReceived;
+
+void USFUpgradeTraversalService::InjectTraversalResult(FSFTraversalResult Result)
+{
+	// A TMap UPROPERTY does not reliably serialize across an RPC - rebuild the tier counts from
+	// the entries, which are plain reflected fields.
+	Result.CountByTier.Reset();
+	for (const FSFUpgradeAuditEntry& Entry : Result.Entries)
+	{
+		Result.CountByTier.FindOrAdd(Entry.CurrentTier)++;
+	}
+
+	UE_LOG(LogSmartUpgrade, Verbose,
+		TEXT("[UPGRADE-MP] Injected server traversal result: family=%d entries=%d upgradeable=%d"),
+		static_cast<int32>(Result.Family), Result.Entries.Num(), Result.UpgradeableCount);
+	OnClientTraversalResultReceived.Broadcast(Result);
+}
+
 FSFTraversalResult USFUpgradeTraversalService::TraverseNetwork(
 	AFGBuildable* AnchorBuildable,
 	const FSFTraversalConfig& Config,

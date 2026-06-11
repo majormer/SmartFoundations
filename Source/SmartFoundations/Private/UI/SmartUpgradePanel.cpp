@@ -6,6 +6,14 @@
 #define LOCTEXT_NAMESPACE "SmartFoundations"
 
 
+void USmartUpgradePanel::NativeDestruct()
+{
+	// [UPGRADE-MP] The traversal-result delegate is static (the panel news up a throwaway
+	// traversal service per scan) - unbind so a dead widget is never broadcast to.
+	USFUpgradeTraversalService::OnClientTraversalResultReceived.RemoveAll(this);
+	Super::NativeDestruct();
+}
+
 void USmartUpgradePanel::NativeConstruct()
 {
 	Super::NativeConstruct();
@@ -513,6 +521,34 @@ void USmartUpgradePanel::OnUpgradeButtonClicked()
 		StatusText->SetText(FText::Format(LOCTEXT("Upgrade_Upgrading", "Upgrading {0} Mk.{1} \u2192 Mk.{2}..."), FText::FromString(FamilyName), FText::AsNumber(SelectedTier), FText::AsNumber(TargetTier)));
 	}
 
+	// [UPGRADE-MP] On a network client the whole execution pipeline (hologram replacement, actor
+	// destruction, connection repair, chain rebuild, cost) is server-authoritative world mutation
+	// - route the request through the RCO. The result comes back via Client_ReceiveUpgradeResult
+	// and is injected into the LOCAL execution service, so the delegate subscriptions above fire
+	// exactly as in SP. Never fall through to a client-side run (client-only actors + desync).
+	if (GetWorld() && GetWorld()->GetNetMode() == NM_Client)
+	{
+		// RCOs are UObjects outered to the player controller, NOT actors —
+		// GetAllActorsOfClass can never find one (live finding 2026-06-10: the audit panel's
+		// identical lookup failed silently on every client, so the audit RCO port had never
+		// actually worked in MP). GetRemoteCallObjectOfClass is the correct resolution.
+		if (AFGPlayerController* FGPC = Cast<AFGPlayerController>(PC))
+		{
+			if (USFRCO* RCO = FGPC->GetRemoteCallObjectOfClass<USFRCO>())
+			{
+				RCO->Server_StartUpgrade(Params);
+				UE_LOG(LogSmartUI, Verbose, TEXT("Upgrade Panel: Sent upgrade request via SFRCO"));
+				return;
+			}
+		}
+		UE_LOG(LogSmartUI, Warning, TEXT("Upgrade Panel: Could not find SFRCO instance for upgrade execution"));
+		if (StatusText)
+		{
+			StatusText->SetText(LOCTEXT("Upgrade_ErrRCO", "Error: server connection unavailable"));
+		}
+		return;
+	}
+
 	ExecutionService->StartUpgrade(Params);
 }
 
@@ -538,19 +574,15 @@ void USmartUpgradePanel::RefreshAudit()
 			// Trigger via RCO if we're a client, otherwise direct call
 			if (World->GetNetMode() == NM_Client)
 			{
-				TArray<AActor*> RCOActors;
-				UGameplayStatics::GetAllActorsOfClass(World, USFRCO::StaticClass(), RCOActors);
-
-				for (AActor* Actor : RCOActors)
+				// RCOs are not actors — GetRemoteCallObjectOfClass, never GetAllActorsOfClass
+				// (the old actor scan failed silently on every client; live finding 2026-06-10).
+				if (AFGPlayerController* FGPC = Cast<AFGPlayerController>(PC))
 				{
-					if (USFRCO* RCO = Cast<USFRCO>(Actor))
+					if (USFRCO* RCO = FGPC->GetRemoteCallObjectOfClass<USFRCO>())
 					{
-						if (RCO->GetOuter() == PC)
-						{
-							RCO->Server_StartUpgradeAudit(Params);
-							UE_LOG(LogSmartUI, VeryVerbose, TEXT("Upgrade Panel: Sent Refresh request via SFRCO"));
-							return;
-						}
+						RCO->Server_StartUpgradeAudit(Params);
+						UE_LOG(LogSmartUI, VeryVerbose, TEXT("Upgrade Panel: Sent Refresh request via SFRCO"));
+						return;
 					}
 				}
 				UE_LOG(LogSmartUI, Warning, TEXT("Upgrade Panel: Could not find SFRCO instance for Refresh"));
@@ -580,19 +612,14 @@ void USmartUpgradePanel::CancelAudit()
 		{
 			if (World->GetNetMode() == NM_Client)
 			{
-				TArray<AActor*> RCOActors;
-				UGameplayStatics::GetAllActorsOfClass(World, USFRCO::StaticClass(), RCOActors);
-
-				for (AActor* Actor : RCOActors)
+				// RCOs are not actors — GetRemoteCallObjectOfClass, never GetAllActorsOfClass.
+				if (AFGPlayerController* FGPC = Cast<AFGPlayerController>(PC))
 				{
-					if (USFRCO* RCO = Cast<USFRCO>(Actor))
+					if (USFRCO* RCO = FGPC->GetRemoteCallObjectOfClass<USFRCO>())
 					{
-						if (RCO->GetOuter() == PC)
-						{
-							RCO->Server_CancelUpgradeAudit();
-							UE_LOG(LogSmartUI, VeryVerbose, TEXT("Upgrade Panel: Sent Cancel request via SFRCO"));
-							return;
-						}
+						RCO->Server_CancelUpgradeAudit();
+						UE_LOG(LogSmartUI, VeryVerbose, TEXT("Upgrade Panel: Sent Cancel request via SFRCO"));
+						return;
 					}
 				}
 			}

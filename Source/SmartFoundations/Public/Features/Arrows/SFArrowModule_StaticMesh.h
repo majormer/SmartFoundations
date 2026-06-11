@@ -220,6 +220,16 @@ private:
 	/** Timer handle for deferred attachment timeout */
 	FTimerHandle DeferredAttachTimerHandle;
 
+	/** World the deferred-attach timer was armed in. Cleanup previously reached the world only
+	 *  through ArrowX's outer - the HOLOGRAM - which usually dies first, so the timer was never
+	 *  cleared when it mattered ([CHAIN-FIX] 2026-06-10 dedi heap-corruption investigation). */
+	TWeakObjectPtr<UWorld> DeferredAttachTimerWorld;
+
+	/** [CHAIN-FIX] Arrows are pure client cosmetics. On a dedicated server the asset "readiness"
+	 *  checks can never pass (no render data under the null renderer), so every attach deferred,
+	 *  re-armed timers, and re-ran failing async loads forever. Disabled wholesale there. */
+	bool bDisabledOnDedicatedServer = false;
+
 	/** Current configuration */
 	FArrowConfig Config;
 

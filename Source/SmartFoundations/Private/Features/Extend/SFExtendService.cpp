@@ -22,6 +22,9 @@
 #include "Services/SFRecipeManagementService.h"
 #include "Subsystem/SFSubsystem.h"
 #include "Subsystem/SFHologramDataService.h"
+#include "Core/Helpers/SFNetworkHelper.h"   // [EXTEND-MP] IsClient (server-walk topology branch)
+#include "SFRCO.h"                          // [EXTEND-MP] Server_RequestExtendTopology
+#include "FGPlayerController.h"
 // NOTE: SFRecipeCostInjector.h removed - child holograms automatically aggregate costs via GetCost()
 #include "Services/RadarPulse/SFRadarPulseService.h"
 #include "SmartFoundations.h"  // For LogSmartExtend
@@ -124,6 +127,10 @@ void USFExtendService::ClearExtendState()
 {
     if (bHasValidTarget)
     {
+        // [EXTEND-MP] Stage an explicit commit CLEAR (client-only no-op otherwise): a pre-staged
+        // commit must never survive the session it belonged to.
+        StageCommitClearForMP();
+
         // CRITICAL: Unlock the extend hologram BEFORE any cleanup.
         // This is the hologram that was locked at activation — must be unlocked
         // so the build gun can reposition it when the player aims elsewhere.
@@ -607,6 +614,58 @@ TArray<ESFExtendDirection> USFExtendService::GetValidDirections() const
 
 bool USFExtendService::WalkTopology(AFGBuildable* SourceBuilding)
 {
+    // [EXTEND-MP] A network client cannot walk the graph locally: mConnectedComponent is
+    // UPROPERTY(SaveGame) - server-only, NOT replicated - so GetConnection() is null on clients
+    // by design (live-diagnosed 2026-06-08: "2 factory connectors, 0 with resolved
+    // GetConnection()"). Ask the SERVER to walk via the USFRCO topology request and consume the
+    // cached reply here: activation calls WalkTopology every tick while aiming, so returning
+    // false until the reply lands makes the flow async with zero restructuring. The reply's
+    // actor/component references are replicated objects, so they resolve against local proxies.
+    if (Subsystem.IsValid() && FSFNetworkHelper::IsClient(Subsystem->GetWorld()))
+    {
+        const double Now = FPlatformTime::Seconds();
+
+        // Cached reply for THIS building, still fresh?
+        if (CachedServerTopologyBuilding.Get() == SourceBuilding
+            && Now - CachedServerTopologyTime < 3.0)
+        {
+            if (!CachedServerTopology.bIsValid)
+            {
+                return false; // negative result cached: nothing to extend here
+            }
+            if (TopologyService)
+            {
+                TopologyService->InjectTopology(CachedServerTopology);
+            }
+            LastExtendTopology = CachedServerTopology;
+            return true;
+        }
+
+        // Not cached (or stale): fire a throttled server request and bail for this tick.
+        if (PendingTopologyRequestBuilding.Get() != SourceBuilding
+            || Now - LastTopologyRequestTime > 1.0)
+        {
+            bool bRequested = false;
+            if (UWorld* World = Subsystem->GetWorld())
+            {
+                if (AFGPlayerController* PC = Cast<AFGPlayerController>(World->GetFirstPlayerController()))
+                {
+                    if (USFRCO* RCO = PC->GetRemoteCallObjectOfClass<USFRCO>())
+                    {
+                        RCO->Server_RequestExtendTopology(SourceBuilding);
+                        bRequested = true;
+                    }
+                }
+            }
+            PendingTopologyRequestBuilding = SourceBuilding;
+            LastTopologyRequestTime = Now;
+            UE_LOG(LogSmartExtend, Verbose,
+                TEXT("[EXTEND-MP] Client requested server topology walk for %s (%s)."),
+                *GetNameSafe(SourceBuilding), bRequested ? TEXT("sent") : TEXT("RCO unavailable"));
+        }
+        return false;
+    }
+
     if (TopologyService)
     {
         const bool bWalked = TopologyService->WalkTopology(SourceBuilding);
@@ -619,6 +678,328 @@ bool USFExtendService::WalkTopology(AFGBuildable* SourceBuilding)
 
     UE_LOG(LogSmartExtend, Verbose, TEXT("Smart!: WalkTopology called but TopologyService not initialized"));
     return false;
+}
+
+void USFExtendService::SetStoredCloneTopologyForServerCommit(const FSFCloneTopology& Clone)
+{
+    StoredCloneTopology = MakeShared<FSFCloneTopology>(Clone);
+    UE_LOG(LogSmartExtend, Verbose,
+        TEXT("[EXTEND-MP] Server installed staged clone topology: %d children (parent class %s)."),
+        Clone.ChildHolograms.Num(), *Clone.ParentBuildClass);
+}
+
+void USFExtendService::SetServerCommitSourceBuilding(AFGBuildable* Source)
+{
+    LastBuiltFromBuilding = Source;
+    CurrentExtendTarget = Source;
+    UE_LOG(LogSmartExtend, Verbose,
+        TEXT("[EXTEND-MP] Server installed commit source building: %s."), *GetNameSafe(Source));
+}
+
+void USFExtendService::GetScaledClonePlanForCommit(TArray<FSFExtendCommitScaledClone>& OutClones) const
+{
+    OutClones.Reset();
+    for (const FSFScaledExtendClone& Clone : ScaledExtendClones)
+    {
+        FSFExtendCommitScaledClone Entry;
+        Entry.WorldOffset = Clone.WorldOffset;
+        Entry.RotationOffset = Clone.RotationOffset;
+        Entry.GridX = Clone.GridX;
+        Entry.GridY = Clone.GridY;
+        Entry.bIsSeed = Clone.bIsSeed;
+        OutClones.Add(Entry);
+    }
+}
+
+bool USFExtendService::BuildCommitSpecForMP(AFGHologram* ParentHologram, FSFExtendCommitSpec& OutSpec) const
+{
+    OutSpec = FSFExtendCommitSpec();
+    if (!ParentHologram)
+    {
+        return false;
+    }
+
+    // [EXTEND-MP] RESTORE commit: an active Smart Restore replay session owns the preview, so the
+    // commit must be the restore one - there is no source building to walk (the topology comes
+    // from the saved preset template, value-only and wire-safe). Ship the compact TEMPLATE plus
+    // the panel state + production recipe the server-side replay pipeline reads; the server
+    // re-expands at the validated parent's final position (fresher than any client re-emission).
+    if (bRestoredCloneTopologyActive && RestoredCloneTopologyTemplate.IsValid())
+    {
+        const FSFCloneTopology& Template = *RestoredCloneTopologyTemplate;
+
+        // Reliable-RPC ceiling guard (same rationale as the conduit-plan guard): a preset
+        // template is normally one clone's infrastructure, but refuse anything that could
+        // overflow the staging RPC before the previews are destroyed.
+        int32 BytesEstimate = 0;
+        for (const FSFCloneHologram& Holo : Template.ChildHolograms)
+        {
+            BytesEstimate += 400 + Holo.SplineData.Points.Num() * 80;
+        }
+        if (BytesEstimate > 45000)
+        {
+            UE_LOG(LogSmartExtend, Warning,
+                TEXT("[EXTEND-MP] Restore commit refused: preset template too large to stage reliably (%d children, ~%d bytes)."),
+                Template.ChildHolograms.Num(), BytesEstimate);
+            return false;
+        }
+
+        OutSpec.bIsRestore = true;
+        OutSpec.RestoreTemplate = Template;
+        OutSpec.Cost = ParentHologram->GetCost(true); // parent + restored preview children, exact
+        OutSpec.BuildClass = ParentHologram->GetBuildClass();
+        if (Subsystem.IsValid())
+        {
+            OutSpec.RestoreCounterState = Subsystem->GetCounterState();
+            if (USFRecipeManagementService* RecipeSvc = Subsystem->GetRecipeManagementService())
+            {
+                if (RecipeSvc->HasStoredProductionRecipe())
+                {
+                    OutSpec.RestoreProductionRecipe = RecipeSvc->GetStoredProductionRecipe();
+                }
+            }
+        }
+        OutSpec.bValid = true;
+        return true;
+    }
+
+    const FSFExtendTopology& Topo = GetLastExtendTopology();
+    if (!Topo.bIsValid || !Topo.SourceBuilding.IsValid())
+    {
+        return false;
+    }
+
+    // PARAMETERS ONLY: the clone topology is derived SERVER-side (ReconstructCommitOnServer).
+    // Capturing it here poisons every segment's connections - CaptureBeltChain/CapturePipeChain
+    // read GetConnection(), null on clients - and the wiring manifest comes out empty (live root
+    // cause 2026-06-10: every MP Extend built unwired).
+    OutSpec.ParentOffset = ParentHologram->GetActorLocation() - Topo.SourceBuilding->GetActorLocation();
+    OutSpec.Cost = ParentHologram->GetCost(true); // parent + preview children, exact preview cost
+    OutSpec.BuildClass = ParentHologram->GetBuildClass();
+    OutSpec.SourceBuilding = Topo.SourceBuilding.Get();
+    GetScaledClonePlanForCommit(OutSpec.ScaledClones);
+    OutSpec.bValid = true;
+    return true;
+}
+
+int32 USFExtendService::ReconstructCommitOnServer(AFGHologram* ParentHologram, const FSFExtendCommitSpec& Spec)
+{
+    if (!ParentHologram || !TopologyService)
+    {
+        return 0;
+    }
+
+    // [EXTEND-MP] RESTORE commit: no source building exists to walk - the preset TEMPLATE arrived
+    // with the commit. Install the client's panel state + production recipe (the replay pipeline
+    // and the restored-factory placement/wiring math read them from the subsystem), then run the
+    // SAME replay pipeline the SP preview uses: expansion at this validated parent's position,
+    // rr_X_Y factory spawn, infra spawn, pre-wiring, and the session state
+    // (StoredCloneTopology / JsonSpawnedHolograms / RestoredScaledFactoryPreviewLocations) the
+    // post-construct wiring pass consumes. Mirrors how the scaled commit reuses
+    // SpawnScaledExtendPreviews via SpawnCloneSetsForServerCommit.
+    if (Spec.bIsRestore)
+    {
+        if (Subsystem.IsValid())
+        {
+            Subsystem->UpdateCounterState(Spec.RestoreCounterState);
+            if (Spec.RestoreProductionRecipe)
+            {
+                if (USFRecipeManagementService* RecipeSvc = Subsystem->GetRecipeManagementService())
+                {
+                    RecipeSvc->StoreProductionRecipeClass(Spec.RestoreProductionRecipe);
+                }
+            }
+        }
+
+        const bool bReplayed = ReplayRestoreCloneTopology(ParentHologram, Spec.RestoreTemplate);
+        const int32 NumChildren = ParentHologram->GetHologramChildren().Num();
+        UE_LOG(LogSmartFoundations, Verbose,
+            TEXT("[EXTEND-MP] Server reconstructed RESTORE commit for %s: replayed=%d, parent now has %d children (template %d, grid %dx%d)."),
+            *ParentHologram->GetName(), bReplayed ? 1 : 0, NumChildren,
+            Spec.RestoreTemplate.ChildHolograms.Num(),
+            Spec.RestoreCounterState.GridCounters.X, Spec.RestoreCounterState.GridCounters.Y);
+        return bReplayed ? NumChildren : 0;
+    }
+
+    SetStoredCloneTopologyForServerCommit(FSFCloneTopology()); // replaced below; keep state coherent
+    SetServerCommitSourceBuilding(Spec.SourceBuilding);
+
+    AFGBuildable* Source = CurrentExtendTarget.Get();
+    if (!Source)
+    {
+        UE_LOG(LogSmartExtend, Warning,
+            TEXT("[EXTEND-MP] ReconstructCommitOnServer: no source building in the commit - nothing reconstructed."));
+        return 0;
+    }
+
+    // Authoritative graph walk: only the SERVER's GetConnection() values are real.
+    if (!TopologyService->WalkTopology(Source))
+    {
+        UE_LOG(LogSmartExtend, Warning,
+            TEXT("[EXTEND-MP] ReconstructCommitOnServer: server topology walk failed for %s."),
+            *GetNameSafe(Source));
+        return 0;
+    }
+
+    const FSFSourceTopology Src = FSFSourceTopology::CaptureFromTopology(TopologyService->GetCurrentTopology());
+    const FSFCloneTopology Clone = FSFCloneTopology::FromSource(Src, Spec.ParentOffset);
+    SetStoredCloneTopologyForServerCommit(Clone);
+
+    TMap<FString, AFGHologram*> SpawnedClones;
+    const int32 NumSpawned = Clone.SpawnChildHolograms(ParentHologram, this, SpawnedClones);
+    const int32 NumWired = Clone.WireChildHologramConnections(SpawnedClones, ParentHologram);
+    UE_LOG(LogSmartFoundations, Verbose,
+        TEXT("[EXTEND-MP] Server reconstructed %d/%d clone children (%d pre-wired) for %s; vanilla construct will build them."),
+        NumSpawned, Clone.ChildHolograms.Num(), NumWired, *ParentHologram->GetName());
+
+    // [EXTEND-MP] Push the authoritative clone topology to the BUILDING CLIENT so a later
+    // Import-from-Last-Extend saves a preset with REAL segment connections - the client's own
+    // capture has them all empty (GetConnection() null on clients) and such a preset restores
+    // into unconnected belt segments (live finding 2026-06-10). Value-only struct, one reliable
+    // RPC, bounded by the parent clone set's child count.
+    if (APawn* InstigatorPawn = ParentHologram->GetConstructionInstigator())
+    {
+        if (AFGPlayerController* InstigatorPC = Cast<AFGPlayerController>(InstigatorPawn->GetController()))
+        {
+            if (!InstigatorPC->IsLocalController())
+            {
+                if (USFRCO* RCO = InstigatorPC->GetRemoteCallObjectOfClass<USFRCO>())
+                {
+                    RCO->Client_ReceiveServerCloneTopology(Clone);
+                    UE_LOG(LogSmartExtend, Verbose,
+                        TEXT("[EXTEND-MP] Pushed server-derived clone topology (%d children) to %s for preset capture."),
+                        Clone.ChildHolograms.Num(), *GetNameSafe(InstigatorPC));
+                }
+            }
+        }
+    }
+
+    // Scaled clone sets ride the same server-derived topology (SpawnScaledExtendPreviews
+    // re-captures from the topology service's CurrentTopology, walked above).
+    ReconstructScaledCommitOnServer(ParentHologram, Spec.ScaledClones);
+
+    return NumSpawned;
+}
+
+void USFExtendService::MaybeStageCommitForMP(AFGHologram* ParentHologram)
+{
+    if (!Subsystem.IsValid() || !FSFNetworkHelper::IsClient(Subsystem->GetWorld()))
+    {
+        return;
+    }
+    const double Now = FPlatformTime::Seconds();
+    if (Now - LastCommitStageTime < 0.25)
+    {
+        return;
+    }
+    LastCommitStageTime = Now;
+
+    FSFExtendCommitSpec Spec;
+    if (!BuildCommitSpecForMP(ParentHologram, Spec))
+    {
+        return;
+    }
+    if (UWorld* World = Subsystem->GetWorld())
+    {
+        if (AFGPlayerController* PC = Cast<AFGPlayerController>(World->GetFirstPlayerController()))
+        {
+            if (USFRCO* RCO = PC->GetRemoteCallObjectOfClass<USFRCO>())
+            {
+                RCO->Server_StageExtendCommit(Spec);
+            }
+        }
+    }
+}
+
+void USFExtendService::StageCommitClearForMP()
+{
+    if (!Subsystem.IsValid() || !FSFNetworkHelper::IsClient(Subsystem->GetWorld()))
+    {
+        return;
+    }
+    if (UWorld* World = Subsystem->GetWorld())
+    {
+        if (AFGPlayerController* PC = Cast<AFGPlayerController>(World->GetFirstPlayerController()))
+        {
+            if (USFRCO* RCO = PC->GetRemoteCallObjectOfClass<USFRCO>())
+            {
+                RCO->Server_StageExtendCommit(FSFExtendCommitSpec()); // bValid=false = clear
+            }
+        }
+    }
+}
+
+int32 USFExtendService::ReconstructScaledCommitOnServer(AFGHologram* ParentHologram,
+    const TArray<FSFExtendCommitScaledClone>& Clones)
+{
+    if (Clones.Num() == 0 || !ParentHologram || !TopologyService || !ScaledService)
+    {
+        return 0;
+    }
+    AFGBuildable* Source = CurrentExtendTarget.Get();
+    if (!Source)
+    {
+        UE_LOG(LogSmartExtend, Warning,
+            TEXT("[EXTEND-MP] ReconstructScaledCommitOnServer: no source building installed - scaled clone sets skipped."));
+        return 0;
+    }
+
+    // Authoritative graph walk (the server owns mConnectedComponent) - the spawn pipeline below
+    // captures its source topology from TopologyService->GetCurrentTopology().
+    if (!TopologyService->WalkTopology(Source))
+    {
+        UE_LOG(LogSmartExtend, Warning,
+            TEXT("[EXTEND-MP] ReconstructScaledCommitOnServer: server topology walk failed for %s - scaled clone sets skipped."),
+            *GetNameSafe(Source));
+        return 0;
+    }
+
+    // Install the session state SpawnScaledExtendPreviews reads, then run the SAME pipeline the
+    // SP preview uses: per clone it spawns the factory child (JsonCloneId "sc{i}_factory"),
+    // regenerates the infrastructure topology (FromSource + rigid-body rotation + lanes), and
+    // fills ScaledExtendClones[i].SpawnedHolograms / CloneTopology - exactly the state the scaled
+    // post-build wiring consumes after the vanilla child-construct loop builds everything.
+    CurrentExtendHologram = ParentHologram;
+    ScaledExtendClones.Empty();
+    for (const FSFExtendCommitScaledClone& C : Clones)
+    {
+        FSFScaledExtendClone Entry;
+        Entry.GridX = C.GridX;
+        Entry.GridY = C.GridY;
+        Entry.bIsSeed = C.bIsSeed;
+        Entry.WorldOffset = C.WorldOffset;
+        Entry.RotationOffset = C.RotationOffset;
+        ScaledExtendClones.Add(Entry);
+    }
+
+    ScaledService->SpawnCloneSetsForServerCommit();
+
+    UE_LOG(LogSmartExtend, Verbose,
+        TEXT("[EXTEND-MP] Server reconstructed %d scaled clone set(s) for %s (parent now has %d children)."),
+        ScaledExtendClones.Num(), *GetNameSafe(ParentHologram), ParentHologram->GetHologramChildren().Num());
+
+    return ScaledExtendClones.Num();
+}
+
+void USFExtendService::ReceiveServerCloneTopology(const FSFCloneTopology& Topology)
+{
+    ServerDerivedCloneTopology = MakeShared<FSFCloneTopology>(Topology);
+    UE_LOG(LogSmartExtend, Verbose,
+        TEXT("[EXTEND-MP] Client received server-derived clone topology: %d children (preset-grade, full connections)."),
+        Topology.ChildHolograms.Num());
+}
+
+void USFExtendService::ReceiveServerTopology(const FSFExtendTopology& Topology)
+{
+    CachedServerTopology = Topology;
+    CachedServerTopologyBuilding = Topology.SourceBuilding;
+    CachedServerTopologyTime = FPlatformTime::Seconds();
+
+    UE_LOG(LogSmartExtend, Verbose,
+        TEXT("[EXTEND-MP] Client received server topology for %s: valid=%d (beltIn=%d beltOut=%d pipeIn=%d pipeOut=%d power=%d)"),
+        *GetNameSafe(Topology.SourceBuilding.Get()), Topology.bIsValid ? 1 : 0,
+        Topology.InputChains.Num(), Topology.OutputChains.Num(),
+        Topology.PipeInputChains.Num(), Topology.PipeOutputChains.Num(), Topology.PowerPoles.Num());
 }
 
 const FSFExtendTopology& USFExtendService::GetCurrentTopology() const
@@ -652,6 +1033,19 @@ TSharedPtr<FSFCloneTopology> USFExtendService::GetLastCloneTopology() const
             TEXT("[SmartRestore][Extend] GetLastCloneTopology: returning restored template topology children=%d"),
             RestoredCloneTopologyTemplate->ChildHolograms.Num());
         return MakeShared<FSFCloneTopology>(*RestoredCloneTopologyTemplate);
+    }
+
+    // [EXTEND-MP] On a client, prefer the SERVER-derived copy (pushed after every commit
+    // reconstruction): the client-captured topologies below have empty segment connections
+    // (GetConnection() is null on clients) and poison any preset saved from them - restored
+    // builds then place belts that never wire (live finding 2026-06-10).
+    if (ServerDerivedCloneTopology.IsValid()
+        && Subsystem.IsValid() && FSFNetworkHelper::IsClient(Subsystem->GetWorld()))
+    {
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log,
+            TEXT("[SmartRestore][Extend] GetLastCloneTopology: returning SERVER-derived topology children=%d"),
+            ServerDerivedCloneTopology->ChildHolograms.Num());
+        return MakeShared<FSFCloneTopology>(*ServerDerivedCloneTopology);
     }
 
     if (StoredCloneTopology.IsValid())
@@ -770,6 +1164,25 @@ bool USFExtendService::TryExtendFromBuilding(AFGBuildable* HitBuilding, AFGHolog
         return false;
     }
 
+    // [EXTEND-MP] The DEDICATED SERVER must never run the Extend preview pipeline on its mirror
+    // hologram. Extend previews are client-side cosmetics, and the staged commit
+    // (Server_StageExtendCommit) carries everything the server needs at construct time. Live
+    // crash 2026-06-10: the dedi's mirror activation spawned its OWN recipe-less clone preview
+    // children; the client's construct message then deserialized into that hologram (clobbering
+    // mChildren - the documented hazard) and ValidatePlacementAndCost made a virtual call into a
+    // freed child (EXCEPTION_ACCESS_VIOLATION at 0xffffffff). SP and listen-host are unaffected
+    // (their local player IS the previewing player).
+    if (Subsystem.IsValid())
+    {
+        if (UWorld* World = Subsystem->GetWorld())
+        {
+            if (World->GetNetMode() == NM_DedicatedServer)
+            {
+                return false;
+            }
+        }
+    }
+
     // Debug: Entry log
     static double LastEntryLog = 0;
     double EntryNow = FPlatformTime::Seconds();
@@ -817,19 +1230,38 @@ bool USFExtendService::TryExtendFromBuilding(AFGBuildable* HitBuilding, AFGHolog
         // Not yet activated — validate normally before first activation
         if (!IsValid(HitBuilding) || !IsValid(SourceHologram))
         {
-            return false;
+            return false; // no target/hologram (handled/logged upstream)
         }
 
         UClass* HologramBuildClass = SourceHologram->GetBuildClass();
         if (!HologramBuildClass || !HitBuilding->IsA(HologramBuildClass))
         {
+            // [EXTEND-MP] TEMP: class mismatch is a common client failure (proxy class vs hologram build class).
+            static double LastBail1 = 0; const double Now1 = FPlatformTime::Seconds();
+            if (Now1 - LastBail1 > 1.0)
+            {
+                UE_LOG(LogSmartExtend, Verbose, TEXT("[EXTEND-MP] activation bail: IsA mismatch - building=%s holoBuildClass=%s"),
+                    *HitBuilding->GetClass()->GetName(), HologramBuildClass ? *HologramBuildClass->GetName() : TEXT("NULL"));
+                LastBail1 = Now1;
+            }
             return false;
         }
 
         if (!IsValidExtendTarget(HitBuilding))
         {
+            // [EXTEND-MP] TEMP: target rejected (resource extractor / not a manufacturer / detection-service check).
+            static double LastBail2 = 0; const double Now2 = FPlatformTime::Seconds();
+            if (Now2 - LastBail2 > 1.0)
+            {
+                UE_LOG(LogSmartExtend, Verbose, TEXT("[EXTEND-MP] activation bail: IsValidExtendTarget=false for %s"),
+                    *HitBuilding->GetClass()->GetName());
+                LastBail2 = Now2;
+            }
             return false;
         }
+
+        // [EXTEND-MP] TEMP: passed activation validation - Extend SHOULD proceed to build the preview.
+        UE_LOG(LogSmartExtend, Verbose, TEXT("[EXTEND-MP] activation PASSED for %s - proceeding to preview"), *HitBuilding->GetName());
     }
 
     // Issue #274: When Scaled Extend is committed (locked for inspection), suppress re-triggering
@@ -912,17 +1344,19 @@ bool USFExtendService::TryExtendFromBuilding(AFGBuildable* HitBuilding, AFGHolog
     // NOTE: Orphaned pending builds will be cleared at the start of CreateBeltPreviews().
     // No need to clear here - the flow is: WalkTopology → CreateBeltPreviews (clears all → spawns new).
 
-    if (!WalkTopology(HitBuilding))
+    const bool bWalked = WalkTopology(HitBuilding);
     {
-        // Debug: Log topology walk failure
-        static double LastTopoLog = 0;
-        double Now = FPlatformTime::Seconds();
-        if (Now - LastTopoLog > 2.0)
+        // [EXTEND-MP] TEMP: is WalkTopology the bail? (bare building vs client-specific failure)
+        static double LastTopoLog = 0; const double Now = FPlatformTime::Seconds();
+        if (Now - LastTopoLog > 1.0)
         {
-            UE_LOG(LogSmartExtend, VeryVerbose, TEXT("🔄 EXTEND: No valid topology found for %s (no belts/distributors connected?)"),
-                *HitBuilding->GetName());
+            UE_LOG(LogSmartExtend, Verbose, TEXT("[EXTEND-MP] WalkTopology(%s) = %s"),
+                *HitBuilding->GetName(), bWalked ? TEXT("TRUE - proceeding") : TEXT("FALSE - bail (no belts/distributors connected?)"));
             LastTopoLog = Now;
         }
+    }
+    if (!bWalked)
+    {
         return false;
     }
 
@@ -1064,17 +1498,31 @@ bool USFExtendService::CanAffordExtendCost(AFGHologram* Hologram, UFGInventoryCo
         return true;  // Can't evaluate -> never block.
     }
 
+    // #357: ALWAYS run the parent cost walk every frame, even under No Build Cost. Beyond
+    // computing affordability, GetCost(includeChildren=true) walks the child holograms, and
+    // that per-frame walk is what KEEPS THE EXTEND CHILD BELT PREVIEWS ALIVE. The internal
+    // factory<->distributor belts (role "belt_segment", built via SetSplineDataAndUpdate) are
+    // otherwise regenerated to ZERO spline meshes by vanilla's per-frame spline rebuild; the
+    // between-distributor lanes (AutoRouteSplineWithNormals) survive regardless. Proven by
+    // elimination: affordable-via-materials (walk runs -> belts visible, HMS_OK) and
+    // affordable-via-No-Build-Cost (old early-return skipped the walk -> belts missing, also
+    // HMS_OK) are BOTH HMS_OK, so the material state is NOT the trigger; running GetCost is.
+    // The early-return added in 720e2bc (#324) skipped this walk under free build, which is the
+    // sole behavioral difference between the visible and missing cases (the availability loop
+    // below is pure inventory reads with no hologram side effect).
+    AFGCentralStorageSubsystem* CentralStorage = AFGCentralStorageSubsystem::Get(Hologram->GetWorld());
+    const TArray<FItemAmount> TotalCost = Hologram->GetCost(/*includeChildren=*/true);
+
     // Free building (session No Build Cost cheat OR the per-player rule that Advanced Game
     // Settings / Creative Mode toggles) means materials are never required. GetNoBuildCost()
     // is the same method vanilla uses; without this, Creative Mode players got a material-cost
     // request and an unaffordable block on Extend even though the base game would build for free.
+    // (We still ran GetCost above for its preview-keep-alive side effect.)
     if (Inventory->GetNoBuildCost())
     {
         return true;
     }
 
-    AFGCentralStorageSubsystem* CentralStorage = AFGCentralStorageSubsystem::Get(Hologram->GetWorld());
-    const TArray<FItemAmount> TotalCost = Hologram->GetCost(/*includeChildren=*/true);
     for (const FItemAmount& Item : TotalCost)
     {
         if (!Item.ItemClass || Item.Amount <= 0)
@@ -1126,6 +1574,11 @@ void USFExtendService::RefreshExtension(AFGHologram* SourceHologram, bool bForce
     {
         ActiveHologram = SourceHologram;
     }
+
+    // [EXTEND-MP] Pre-stage the commit while the preview is active (throttled, client-only no-op
+    // otherwise): the commit RPC is large and lost the cross-channel race against the tiny
+    // construct RPC when staged only at fire time (live 2026-06-10).
+    MaybeStageCommitForMP(ActiveHologram);
 
     if (!IsValid(ActiveHologram))
     {
@@ -1600,7 +2053,7 @@ UFGBuildGunStateBuild* USFExtendService::GetBuildGunBuildState(AFGBuildGun* Buil
     return Cast<UFGBuildGunStateBuild>(BuildGun->GetBuildGunStateFor(EBuildGunState::BGS_BUILD));
 }
 
-ASFFactoryHologram* USFExtendService::SwapToSmartFactoryHologram(AFGHologram* VanillaHologram)
+ASFFactoryHologram* USFExtendService::SwapToSmartFactoryHologram(AFGHologram* VanillaHologram, bool bTrackAsExtendSwap)
 {
     if (!VanillaHologram || !VanillaHologram->IsValidLowLevel())
     {
@@ -1706,14 +2159,23 @@ ASFFactoryHologram* USFExtendService::SwapToSmartFactoryHologram(AFGHologram* Va
     // Destroy the vanilla hologram
     VanillaHologram->Destroy();
 
-    // Track the swap (both locally and in HologramService for future migration)
-    SwappedHologram = CustomHologram;
-    bHasSwappedHologram = true;
+    // Track the swap (both locally and in HologramService for future migration).
+    // The MP scaling spec path reuses this swap but must NOT put Extend into "swapped" state
+    // (no Extend target is active and RestoreOriginalHologram must stay a no-op).
+    if (bTrackAsExtendSwap)
+    {
+        SwappedHologram = CustomHologram;
+        bHasSwappedHologram = true;
+    }
 
     SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("🔄 EXTEND SWAP: ✅ Successfully swapped to ASFFactoryHologram"));
 
     return CustomHologram;
 }
+
+// (SwapToSmartFoundationHologram was removed: the MP spec-construction path is now class-agnostic
+// via SML hooks - see USFGameInstanceModule::RegisterSpecConstructionHooks - so no scaling swap of
+// any kind is needed. The factory swap above remains for EXTEND.)
 
 void USFExtendService::RestoreOriginalHologram()
 {

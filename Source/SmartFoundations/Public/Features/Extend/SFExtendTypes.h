@@ -160,16 +160,22 @@ struct FSFPowerChainNode
     UPROPERTY()
     TWeakObjectPtr<UFGCircuitConnectionComponent> PoleConnector;
 
-    /** Relative offset from factory to pole (world space) */
+    /** Relative offset from factory to pole (world space).
+     *  UPROPERTY (with the three below) since 2026-06-10: FSFExtendTopology crosses the wire in
+     *  the [EXTEND-MP] topology RCO, and only reflected members serialize. */
+    UPROPERTY()
     FVector RelativeOffset = FVector::ZeroVector;
 
     /** Whether the source pole has free connections for source↔clone wiring */
+    UPROPERTY()
     bool bSourceHasFreeConnections = false;
 
     /** Number of free connections on source pole at time of topology capture */
+    UPROPERTY()
     int32 SourceFreeConnections = 0;
 
     /** Max connections for this pole tier (Mk1=4, Mk2=7, Mk3=10) */
+    UPROPERTY()
     int32 MaxConnections = 4;
 
     FSFPowerChainNode()

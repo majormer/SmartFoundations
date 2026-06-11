@@ -6,6 +6,7 @@
  */
 
 #include "Subsystem/SFSubsystemImpl.h"
+#include "Core/Helpers/SFNetworkHelper.h"  // [#334] authority gate
 
 
 void USFSubsystem::OnActorSpawned(AActor* SpawnedActor)
@@ -14,6 +15,22 @@ void USFSubsystem::OnActorSpawned(AActor* SpawnedActor)
 	if (RecipeManagementService)
 	{
 		RecipeManagementService->OnActorSpawned(SpawnedActor);
+	}
+
+	// ========================================
+	// [MP / #334] AUTHORITY GATE for everything below.
+	// Every remaining section of this handler MUTATES world state post-build (blueprint-proxy
+	// grouping, belt/pipe auto-connect builds, stackable pipe/belt wiring). On a NETWORK CLIENT,
+	// OnActorSpawned fires for REPLICATED server-built actors - running these sections there
+	// spawns client-only ghost actors and connections the server never sees (the root cause of
+	// #334: client-only power wires, and the same class of bug for belts/pipes). Authority sides
+	// (single player standalone, listen-server host, dedicated server) are unchanged: the server
+	// runs its OWN preview/decision pipeline against its mirrored hologram and performs the
+	// wiring here with authority.
+	// ========================================
+	if (FSFNetworkHelper::IsClient(GetWorld()))
+	{
+		return;
 	}
 
 	// ========================================
@@ -30,8 +47,14 @@ void USFSubsystem::OnActorSpawned(AActor* SpawnedActor)
 			const FIntVector& Grid = GetGridCounters();
 			const bool bIsMultiGrid = (FMath::Abs(Grid.X) > 1 || FMath::Abs(Grid.Y) > 1 || FMath::Abs(Grid.Z) > 1);
 			const bool bIsExtendActive = ExtendService && ExtendService->IsExtendModeActive();  // Issue #270
+			// Smart Restore of a SINGLE extend clone is neither multi-grid (counters stay 1x1x1)
+			// nor extend-active (bHasValidTarget belongs to the aim-at-target flow, not the replay) —
+			// without this arm its buildables never join a proxy and R-key dismantle only takes one
+			// building. The restore session flag stays set through the commit; it is cleared on the
+			// post-build tick once the parent hologram goes invalid.
+			const bool bIsRestoreReplayActive = ExtendService && ExtendService->IsRestoredCloneTopologyActive();
 
-			if ((bIsMultiGrid || bIsExtendActive) && !Buildable->GetBlueprintProxy())
+			if ((bIsMultiGrid || bIsExtendActive || bIsRestoreReplayActive) && !Buildable->GetBlueprintProxy())
 			{
 				// DIAGNOSTIC: Log what type of building is spawning
 				UE_LOG(LogSmartFoundations, VeryVerbose, TEXT(" SMART DISMANTLE: Building spawned: %s (class: %s)"),
@@ -118,7 +141,9 @@ void USFSubsystem::OnActorSpawned(AActor* SpawnedActor)
 							return;
 						}
 
-						UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 EXTEND: Deferred connection wiring executing for %s"), *WeakFactory->GetName());
+						// [EXTEND-MP] Display level while MP Extend validates: this is the wiring
+						// pass trigger and the dedi log is the only visibility (Verbose stripped).
+						UE_LOG(LogSmartFoundations, Verbose, TEXT("[EXTEND-MP] Deferred connection wiring executing for %s"), *WeakFactory->GetName());
 						// NOTE: Child holograms (belts, lifts, pipes) are built by vanilla via AddChild
 						// We just need to wire their connections here
 
@@ -139,6 +164,31 @@ void USFSubsystem::OnActorSpawned(AActor* SpawnedActor)
 				});
 			}
 		}
+	}
+
+	// [MP-334] TEMP diagnostic: report every gate of the belt auto-connect build path at once
+	// (the path is silent at Display level, and on the dedi we cannot see which gate fails).
+	if (AFGBuildableConveyorAttachment* DiagAttachment = Cast<AFGBuildableConveyorAttachment>(SpawnedActor))
+	{
+		const bool bDiagHoloValid = ActiveHologram.IsValid();
+		const bool bDiagIsDistributor = bDiagHoloValid && AutoConnectService
+			&& AutoConnectService->IsDistributorHologram(ActiveHologram.Get());
+		int32 DiagPreviewCount = -1;
+		if (bDiagIsDistributor)
+		{
+			if (TArray<TSharedPtr<FBeltPreviewHelper>>* DiagPreviews = AutoConnectService->GetBeltPreviews(ActiveHologram.Get()))
+			{
+				DiagPreviewCount = DiagPreviews->Num();
+			}
+		}
+		UE_LOG(LogSmartFoundations, Verbose,
+			TEXT("[MP-334] OnActorSpawned(attachment=%s): svc=%d activeHolo=%s isDistributorHolo=%d busyLatch=%d previews=%d"),
+			*DiagAttachment->GetName(),
+			AutoConnectService ? 1 : 0,
+			*GetNameSafe(ActiveHologram.Get()),
+			bDiagIsDistributor ? 1 : 0,
+			bProcessingGridPlacement ? 1 : 0,
+			DiagPreviewCount);
 	}
 
 	if (AutoConnectService && ActiveHologram.IsValid())

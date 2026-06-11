@@ -54,6 +54,9 @@ protected:
 	/** Native construct to bind close button click */
 	virtual void NativeConstruct() override;
 
+	/** [UPGRADE-MP] Unbind the static traversal-result delegate */
+	virtual void NativeDestruct() override;
+
 	/** Refresh audit results */
 	UFUNCTION(BlueprintCallable, Category = "SmartFoundations|Upgrade")
 	void RefreshAudit();
@@ -262,6 +265,9 @@ private:
 
 	/** Update traversal UI with results */
 	void UpdateTraversalUI(const FSFTraversalResult& Result);
+
+	/** [UPGRADE-MP] Server-walked traversal result arrived on this client */
+	void OnClientTraversalResult(const FSFTraversalResult& Result);
 
 	/** Current tab state */
 	ESmartUpgradeTab ActiveTab = ESmartUpgradeTab::Radius;

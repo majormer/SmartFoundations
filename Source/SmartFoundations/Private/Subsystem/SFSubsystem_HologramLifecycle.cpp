@@ -124,7 +124,10 @@ void USFSubsystem::RegisterActiveHologram(AFGHologram* Hologram)
 	// - PollForActiveHologram sees mismatch → unregister/re-register → infinite loop
 	//
 	// EXTEND and Scaling work with vanilla holograms - no swap needed.
-	// If custom hologram behavior is needed in the future, use Blueprint class remapping at module load.
+	// (The MP spec-construction path is hologram-class-agnostic: it rides SML hooks on the vanilla
+	// virtual bodies + the per-hologram data registry - see RegisterSpecConstructionHooks in
+	// SFGameInstanceModule. An earlier iteration swapped to ASF spec-parent classes here; that was
+	// live-validated but replaced by the hook path for total coverage incl. BP hologram wrappers.)
 	ActiveHologram = Hologram;
 	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("RegisterActiveHologram: %s"), *Hologram->GetName());
 

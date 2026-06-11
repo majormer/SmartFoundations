@@ -46,6 +46,11 @@ public:
      */
     void InitializeFromHologram(AFGHologram* SourceHologram);
 
+    // (The MP spec-based construction machinery that briefly lived on this class - spec UPROPERTY,
+    // Pre/SerializeConstructMessage overrides, GetCost scaling, Construct expansion - moved to the
+    // class-agnostic hook path in USFGameInstanceModule::RegisterSpecConstructionHooks + the
+    // hologram data registry, so it covers every scalable buildable without hologram swaps.)
+
 protected:
     // Recipe copying implementation
     virtual void ApplyStoredRecipe(AActor* Building) const;

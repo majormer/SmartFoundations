@@ -50,8 +50,24 @@ void ASFFactoryHologram::BeginPlay()
 
 AActor* ASFFactoryHologram::Construct(TArray<AActor*>& out_children, FNetConstructionID constructionID)
 {
+    // [MP-SLICE0] TEMP multiplayer instrumentation — remove before release.
+    // Parent-commit signal: does the scaled-factory Construct run with authority for a
+    // CLIENT-initiated build, and how many children does it carry into the build?
+    // NetMode: 0=Standalone 1=DedicatedServer 2=ListenServer 3=Client.
+    {
+        const int32 NetMode = GetWorld() ? (int32)GetWorld()->GetNetMode() : -1;
+        UE_LOG(LogSmartFoundations, Verbose,
+            TEXT("[MP-SLICE0] FactoryHologram::Construct ENTER: %s NetMode=%d HasAuthority=%d mChildren=%d"),
+            *GetName(), NetMode, HasAuthority() ? 1 : 0, mChildren.Num());
+    }
+
     AActor* BuiltActor = Super::Construct(out_children, constructionID);
-    
+
+    // [MP-SLICE0] TEMP — out_children = built child actors produced server-side this Construct.
+    UE_LOG(LogSmartFoundations, Verbose,
+        TEXT("[MP-SLICE0] FactoryHologram::Construct EXIT: %s BuiltActor=%s out_children=%d mChildren=%d"),
+        *GetName(), BuiltActor ? *BuiltActor->GetName() : TEXT("null"), out_children.Num(), mChildren.Num());
+
     if (BuiltActor)
     {
         USFSubsystem* SmartSubsystem = USFSubsystem::Get(GetWorld());

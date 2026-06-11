@@ -245,6 +245,30 @@ public:
 	 */
 	int32 PurgeZombieChainActors();
 
+	/** [CHAIN-FIX] Force-remove a conveyor from EVERY tick group's Conveyors array. Called by the
+	 *  RemoveConveyor after-hook: a stale mConveyorBucketID makes vanilla's removal silently fail
+	 *  in shipping, leaving a soon-to-be-freed pointer in a TG that TickFactoryActors' ParallelFor
+	 *  later calls through (the 2026-06-10 freed-pointer factory-tick AV, reproduced 3x). Lives
+	 *  here because mConveyorTickGroup is private to AFGBuildableSubsystem and this service holds
+	 *  the access grant. Returns the number of stale entries removed. */
+	int32 RemoveConveyorFromAllTickGroups(class AFGBuildableConveyorBase* Conveyor);
+
+	/** [CHAIN-FIX] Force-remove a buildable from mFactoryBuildings + mFactoryBuildingGroups.
+	 *  cdb on the 5th freed-pointer tick AV (2026-06-10) showed TickFactoryActors' lambda walking
+	 *  mFactoryBuildings (+0x3C0) and virtual-calling a freed entry near the array END (the most
+	 *  recently registered buildables) — some destruction path skips vanilla RemoveBuildable.
+	 *  Called from the AFGBuildable::EndPlay after-hook; only true leaks survive vanilla cleanup
+	 *  to be found here. Returns entries removed. */
+	int32 RemoveBuildableFromFactoryTickArrays(class AFGBuildable* Buildable);
+
+	/** [CHAIN-FIX] Pre-tick integrity scrub of mFactoryBuildings (+ groups): validate every entry
+	 *  against the UObject table (IsValidLowLevelFast + IsValid) and remove corrupt/freed ones,
+	 *  logging the index, raw pointer, and VALID NEIGHBORS' names — turning the 2026-06-10
+	 *  freed-pointer tick AV (7 repros, three falsified guards: RemoveConveyor, conveyor EndPlay,
+	 *  buildable EndPlay) into a survivable, precisely-located log line. Called from the
+	 *  TickFactory before-hook every factory tick (~2us for ~2k entries). Returns removed count. */
+	int32 ScrubFactoryTickArrays();
+
 	/**
 	 * Schedule a deferred call to PurgeZombieChainActors after a short delay, giving
 	 * vanilla one or two factory ticks to settle pending migrations before we sweep.

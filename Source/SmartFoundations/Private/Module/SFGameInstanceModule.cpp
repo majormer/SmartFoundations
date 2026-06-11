@@ -10,6 +10,9 @@
 #include "Hologram/FGBuildableHologram.h"
 #include "Hologram/FGBlueprintHologram.h"
 #include "Hologram/FGConveyorPoleHologram.h"      // #341: belt-support parent hologram (covers stackable/wall/ceiling)
+#include "Hologram/FGPoleHologram.h"              // [MP-SPEC] multi-step gate: pole height step
+#include "Hologram/FGFloodlightHologram.h"        // [MP-SPEC] multi-step gate: floodlight angle step
+#include "Hologram/FGStandaloneSignHologram.h"    // [MP-SPEC] multi-step gate: sign height step
 #include "Holograms/Logistics/SFConveyorBeltHologram.h"  // #341: DrainStackBuiltConveyors
 #include "FGConstructDisqualifier.h"
 #include "FGCentralStorageSubsystem.h"
@@ -19,10 +22,27 @@
 // SML hooking for cost aggregation and blueprint construct
 #include "Patching/NativeHookManager.h"
 #include "Subsystem/SFSubsystem.h"
+#include "Services/SFChainActorService.h"  // [CHAIN-FIX] post-construct chain-hygiene sweep
 #include "Features/AutoConnect/SFAutoConnectService.h"
 #include "Features/Extend/SFExtendService.h"
 
+// MP Slice 0 (Phase 1): client construct chunk guard
+#include "Equipment/FGBuildGunBuild.h"        // UFGBuildGunStateBuild::InternalConstructHologram / GetHologram
+#include "Core/Helpers/SFNetworkHelper.h"     // FSFNetworkHelper::IsClient
+#include "Engine/Engine.h"                     // GEngine on-screen message
+
+// MP spec-based construction: class-agnostic hooks + RCO spec staging
+#include "Holograms/Core/SFScalingSpecExpansion.h"
+#include "Data/SFBuildableSizeRegistry.h"
+#include "Data/SFHologramDataRegistry.h"   // [EXTEND-MP] JsonCloneId wiring anchors post-construct
+#include "Subsystem/SFHologramHelperService.h"
+#include "SFRCO.h"
+#include "FGPlayerController.h"
+#include "FGBlueprintProxy.h"   // server-side Smart Dismantle group for spec-built grids
+
 // For chain actor rebuilding
+#include "Buildables/FGBuildableFactory.h"   // [EXTEND-MP] commit wiring pass anchor
+#include "TimerManager.h"                    // [EXTEND-MP] next-tick commit wiring pass
 #include "Buildables/FGBuildableConveyorBase.h"
 #include "Buildables/FGBuildableConveyorBelt.h"
 #include "Buildables/FGBuildableConveyorLift.h"
@@ -75,6 +95,18 @@ void USFGameInstanceModule::DispatchLifecycleEvent(ELifecyclePhase Phase)
 		// #341: Register SML hook on the belt-support parent Construct (in-frame chain registration;
 		// one hook covers stackable / wall / ceiling - see RegisterBeltSupportConstructHook).
 		RegisterBeltSupportConstructHook();
+
+		// MP Slice 0 (Phase 1): guard a client against committing an oversized scaled grid in one
+		// construct RPC (the all-or-nothing drop + orphaned-preview bug). Backstop for the chunker below.
+		RegisterClientConstructChunkGuardHook();
+
+		// MP Slice 0 chunking: shrink an oversized client grid to a fit-in-one-RPC chunk at the fire handler,
+		// before vanilla serializes (Increment 1 = single-chunk proof). See the method comment.
+		RegisterClientGridChunkFireHook();
+
+		// MP spec-based scaling construction (class-agnostic hook path - covers ALL scalable
+		// buildables including BP hologram wrappers, no hologram swap). See the method comment.
+		RegisterSpecConstructionHooks();
 
 	}
 }
@@ -290,4 +322,996 @@ void USFGameInstanceModule::RegisterBeltSupportConstructHook()
 	);
 
 	UE_LOG(LogSmartFoundations, Verbose, TEXT("✅ AFGConveyorPoleHologram::Construct hook registered (#341 belt-support chain registration: stackable/wall/ceiling)"));
+}
+
+// MP Slice 0 (Phase 1) - construct chunk guard.
+// CONFIRMED seam (live test 2026-06-08): the client builds the construct message and calls
+// Server_ConstructHologram DIRECTLY (the earlier InternalConstructHologram hook never fired). The live
+// failure is "LogNet: Error: Can't send function 'Server_ConstructHologram' ...: Failed to serialize
+// properties" - the oversized FConstructHologramMessage.SerializedHologramData blob (one TArray<uint8>
+// holding the whole hologram tree) is too large to marshal, so the reliable RPC is silently dropped ->
+// all-or-nothing + orphaned previews (no Client_OnBuildableFailedConstruction because the server never
+// processed it). We hook Server_ConstructHologram on the client and read the ACTUAL serialized byte size,
+// so the guard is robust across building types (no per-type child-count guessing). Empirically ~137
+// foundations / ~135 constructors fit; that corresponds to ~64KB of SerializedHologramData. We cancel a
+// Smart grid construct whose blob exceeds a margin below that. Phase 2 will chunk instead of refusing.
+static constexpr int32 SF_MP_CONSTRUCT_MAX_BYTES = 60000; // cancel a Smart-grid construct above this
+static constexpr int32 SF_MP_CONSTRUCT_LOG_BYTES = 20000; // log any Smart-grid construct above this (capture real sizes)
+
+void USFGameInstanceModule::RegisterClientConstructChunkGuardHook()
+{
+	SUBSCRIBE_METHOD(
+		UFGBuildGunStateBuild::Server_ConstructHologram,
+		[](auto& scope, UFGBuildGunStateBuild* self, FNetConstructionID clientNetConstructID, FConstructHologramMessage data)
+		{
+			if (!self)
+			{
+				return;
+			}
+
+			// Only a true network client (NM_Client) marshals the construct over the wire and can hit the
+			// serialize-too-large failure. Host / dedicated-server authority / single-player construct locally.
+			UWorld* World = self->GetWorld();
+			if (!World || !FSFNetworkHelper::IsClient(World))
+			{
+				return;
+			}
+
+			// Scope strictly to Smart scaled grids: only act when the active hologram has Smart grid children
+			// (tagged SF_GridChild). This leaves vanilla single placements AND blueprints completely untouched.
+			AFGHologram* Holo = self->GetHologram();
+			if (!Holo)
+			{
+				return;
+			}
+			static const FName GridChildTag(TEXT("SF_GridChild"));
+			bool bIsSmartGrid = false;
+			for (const AFGHologram* Child : Holo->GetHologramChildren())
+			{
+				if (Child && Child->Tags.Contains(GridChildTag))
+				{
+					bIsSmartGrid = true;
+					break;
+				}
+			}
+			if (!bIsSmartGrid)
+			{
+				return; // not a Smart scaled grid -> vanilla path (incl. blueprints)
+			}
+
+			const int32 Bytes = data.SerializedHologramData.Num();
+
+			// Diagnostic: capture the real serialized size near/over the ceiling (confirms the byte limit).
+			if (Bytes >= SF_MP_CONSTRUCT_LOG_BYTES)
+			{
+				UE_LOG(LogSmartFoundations, Display,
+					TEXT("[MP-CHUNK] Smart-grid client construct: SerializedHologramData=%d bytes (NumBits=%lld), cancel threshold=%d."),
+					Bytes, (long long)data.NumBits, SF_MP_CONSTRUCT_MAX_BYTES);
+			}
+
+			if (Bytes <= SF_MP_CONSTRUCT_MAX_BYTES)
+			{
+				return; // fits one RPC -> let it send (works in MP)
+			}
+
+			// Oversized: the RPC would fail to serialize and be dropped (all-or-nothing) + orphan the previews.
+			// Cancel the send. The active hologram + preview children stay live so the player can scale down.
+			UE_LOG(LogSmartFoundations, Display,
+				TEXT("[MP-CHUNK] Blocked oversized client construct: %d bytes (> %d). Single-RPC construct would be dropped (Failed to serialize properties). Cancelled before send; preview kept."),
+				Bytes, SF_MP_CONSTRUCT_MAX_BYTES);
+
+			if (GEngine)
+			{
+				GEngine->AddOnScreenDebugMessage(-1, 6.0f, FColor::Orange,
+					FString::Printf(TEXT("Smart!: placement too large for multiplayer (%d KB). Build in smaller sections."),
+						Bytes / 1024));
+			}
+
+			scope.Cancel(); // suppress the doomed Server_ConstructHologram send.
+		}
+	);
+
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("✅ Client construct chunk-guard hook registered (MP Slice 0 Phase 1, Server_ConstructHologram)"));
+}
+
+// [MP-SPEC] Multi-step holograms construct only on their FINAL step's input; earlier inputs merely
+// advance the step (pole base->height, floodlight angle, sign height). Treating a step-advance as
+// a fire captured + DESTROYED the previews mid-placement (live 2026-06-10: a standard conveyor
+// pole had no belt previews during height adjust and then fired with an empty plan). The pole gate
+// uses the exact-class check (Build_ConveyorPole_C): stackable/wall poles construct in one click
+// and are live-validated - they must not be gated. Unknown layouts default to "constructs"
+// (the pre-gate behavior, correct for every single-step hologram).
+static bool SF_InputWillConstruct(AFGHologram* Holo)
+{
+	auto FinalStepReached = [&](UClass* Class, uint8 FinalStep) -> bool
+	{
+		FProperty* StepProp = FindFProperty<FProperty>(Class, TEXT("mBuildStep"));
+		if (!StepProp)
+		{
+			return true;
+		}
+		uint8 Step = 0;
+		StepProp->CopyCompleteValue(&Step, StepProp->ContainerPtrToValuePtr<void>(Holo));
+		return Step == FinalStep;
+	};
+
+	if (USFAutoConnectService::IsRegularConveyorPoleHologram(Holo))
+	{
+		return FinalStepReached(AFGPoleHologram::StaticClass(),
+			static_cast<uint8>(EPoleHologramBuildStep::PHBS_AdjustHeight));
+	}
+	if (Holo->IsA<AFGFloodlightHologram>())
+	{
+		return FinalStepReached(AFGFloodlightHologram::StaticClass(),
+			static_cast<uint8>(EFloodlightHologramBuildStep::FHBS_AdjustAngle));
+	}
+	if (Holo->IsA<AFGStandaloneSignHologram>())
+	{
+		return FinalStepReached(AFGStandaloneSignHologram::StaticClass(),
+			static_cast<uint8>(ESignHologramBuildStep::ESHBS_AdjustHeight));
+	}
+	return true;
+}
+
+// MP Slice 0 SAFETY GUARD. A Smart grid above this many total cells will not fit one 64KB
+// Server_ConstructHologram (empirical ceiling ~135 cells / 65536 bytes). Building such a grid on a CLIENT is
+// not safely achievable today: re-firing the build gun never constructs (single-construct-per-fire state
+// machine, proven), and hand-building the construct message CRASHES the dedicated server (proven - server
+// fatal in UNetDriver::InternalTickDispatch). So we REFUSE an oversized client grid at the fire handler,
+// BEFORE anything is serialized or sent: the grid stays live so the player can scale down and place in
+// smaller sections. This is a temporary guard, NOT a multiplayer feature - large-grid MP placement is part
+// of the future complete multiplayer solution (which cannot ship partially; see AGENTS.md).
+static constexpr int32 SF_MP_OVERSIZED_CELLS = 130; // refuse a client grid above this (total cells incl. parent)
+
+// [MP-SPEC] #334 stopgap: Smart auto-connect preview child tags stripped before a client fire
+// (defined at file scope - a brace-initializer inside a SUBSCRIBE_METHOD macro argument splits
+// the macro args on its commas, same gotcha as multi-capture lambda lists).
+static const FName GSFAutoConnectChildTags[] = {
+	FName(TEXT("SF_BeltAutoConnectChild")),
+	FName(TEXT("SF_PipeAutoConnectChild")),
+	FName(TEXT("SF_PowerAutoConnectChild")),
+	FName(TEXT("SF_StackableChild")),
+};
+static constexpr int32 GSFAutoConnectChildTagCount = UE_ARRAY_COUNT(GSFAutoConnectChildTags);
+
+// Alias: a TMap<A,B> inside a SUBSCRIBE macro argument splits the macro args on the template
+// comma (the recurring gotcha - see the multi-capture and brace-initializer notes above).
+using FSFSpawnedCloneMap = TMap<FString, AFGHologram*>;
+
+void USFGameInstanceModule::RegisterClientGridChunkFireHook()
+{
+	SUBSCRIBE_METHOD(
+		UFGBuildGunStateBuild::InternalExecuteDuBuildStepInput,
+		[](auto& scope, UFGBuildGunStateBuild* self, bool isInputFromARelease)
+		{
+			if (!self)
+			{
+				return;
+			}
+
+			UWorld* World = self->GetWorld();
+			if (!World || !FSFNetworkHelper::IsClient(World))
+			{
+				return; // only a network client serializes the construct over the wire
+			}
+
+			AFGHologram* Holo = self->GetHologram();
+			if (!Holo)
+			{
+				return;
+			}
+
+			// A step-advance input (multi-step holograms) is NOT a fire: nothing serializes, so
+			// nothing may be captured, staged, stripped, or destroyed here.
+			if (!SF_InputWillConstruct(Holo))
+			{
+				return;
+			}
+
+			// [EXTEND-MP] Extend commit (slice 2): an active Extend session fires with
+			// SF_ExtendChild clone children attached. They must NEVER serialize into the construct
+			// message (the recipe-less belt/lift clones assert the CLIENT in
+			// SerializeConstructMessage - live crash 2026-06-10). Instead, mirror the scaling
+			// model: re-emit a FRESH clone topology at the FINAL fire position (the preview's
+			// stored topology has stale transforms - children are re-positioned while aiming),
+			// stage it via the RCO with the exact preview cost, destroy the preview children, and
+			// fire the childless O(1) parent; the server's Construct hook reconstructs the clones.
+			{
+				static const FName ExtendChildTag(TEXT("SF_ExtendChild"));
+				bool bExtendFire = false;
+				for (AFGHologram* Child : Holo->GetHologramChildren())
+				{
+					if (Child && Child->Tags.Contains(ExtendChildTag))
+					{
+						bExtendFire = true;
+						break;
+					}
+				}
+
+				if (bExtendFire)
+				{
+					bool bCommitted = false;
+					if (SFScalingSpecExpansion::IsSpecConstructionEnabled())
+					{
+						FSFExtendCommitSpec ExtendSpec;
+						USFSubsystem* SS = USFSubsystem::Get(World);
+						USFExtendService* Extend = SS ? SS->GetExtendService() : nullptr;
+						if (Extend)
+						{
+							// Fresh clone topology at the FINAL fire position + cost + scaled
+							// clone parameters (the same capture the throttled pre-stage uses).
+							Extend->BuildCommitSpecForMP(Holo, ExtendSpec);
+						}
+
+						if (ExtendSpec.bValid)
+						{
+							if (APawn* InstigatorPawn = Holo->GetConstructionInstigator())
+							{
+								if (AFGPlayerController* PC = Cast<AFGPlayerController>(InstigatorPawn->GetController()))
+								{
+									if (USFRCO* RCO = PC->GetRemoteCallObjectOfClass<USFRCO>())
+									{
+										RCO->Server_StageExtendCommit(ExtendSpec);
+										// Explicit scaling CLEAR: Extend hijacks the grid counters,
+										// and a stale scaling spec must never expand a factory grid
+										// on top of the Extend commit.
+										RCO->Server_StageScalingSpec(FSFScalingSpec());
+										bCommitted = true;
+									}
+								}
+							}
+						}
+
+						if (bCommitted)
+						{
+							TArray<AFGHologram*> ToDestroy;
+							for (AFGHologram* Child : Holo->mChildren)
+							{
+								if (Child && Child->Tags.Contains(ExtendChildTag))
+								{
+									ToDestroy.Add(Child);
+								}
+							}
+							for (AFGHologram* Child : ToDestroy)
+							{
+								Holo->mChildren.Remove(Child);
+								Child->Destroy();
+							}
+							UE_LOG(LogSmartFoundations, Verbose,
+								TEXT("[EXTEND-MP] Client fire: staged Extend commit (offset %s, %d scaled clone(s)), destroyed %d previews; construct message will be O(1)."),
+								*ExtendSpec.ParentOffset.ToCompactString(), ExtendSpec.ScaledClones.Num(), ToDestroy.Num());
+							return; // fire proceeds with the childless parent
+						}
+					}
+
+					// Could not stage (spec disabled / no topology / RCO unreachable): refuse the
+					// fire - serializing the clone children would assert this client.
+					UE_LOG(LogSmartFoundations, Verbose,
+						TEXT("[EXTEND-MP] Refused client Extend fire on %s: could not stage the Extend commit."),
+						*Holo->GetName());
+					if (GEngine)
+					{
+						GEngine->AddOnScreenDebugMessage(-1, 6.0f, FColor::Orange,
+							TEXT("Smart!: Extend commit could not be staged - try again."));
+					}
+					scope.Cancel();
+					return;
+				}
+			}
+
+			const bool bSpecEnabled = SFScalingSpecExpansion::IsSpecConstructionEnabled();
+
+			// [MP-SPEC] Capture the spec AND the auto-connect belt plan (#334) BEFORE the strip
+			// below destroys the preview holograms - the client's fire-time previews are the only
+			// complete, real wiring plan that ever exists (server-side re-derivation and aim-time
+			// preview reuse both failed live; see PLAN_MP_AutoConnect_334.md). Captured even for a
+			// 1x1: a single distributor with belts needs the server Construct seam as much as a
+			// grid does.
+			FSFScalingSpec Spec; // bValid=false by default = explicit clear
+			bool bScalable = false;
+			if (bSpecEnabled)
+			{
+				USFBuildableSizeRegistry::Initialize();
+				bScalable = USFBuildableSizeRegistry::GetProfile(Holo->GetBuildClass()).bSupportsScaling;
+				if (bScalable)
+				{
+					SFScalingSpecExpansion::CaptureScalingSpec(Holo, Spec);
+					SFScalingSpecExpansion::CaptureConduitPlan(Holo, Spec);
+
+					// [MP-334] Reliable-RPC ceiling guard: a very large belt plan could overflow
+					// Server_StageScalingSpec the same way the construct message itself once did
+					// (a silently dropped staging RPC would leave the server constructing a bare
+					// 1x1). Refuse the fire BEFORE the previews are destroyed - the grid stays
+					// live so the player can place in smaller sections. Conservative estimate:
+					// ~100B fixed + ~80B per spline point per belt (FVectors are doubles in UE5).
+					int32 PlanBytesEstimate = 0;
+					for (const FSFConduitPlanEntry& Entry : Spec.ConduitPlan)
+					{
+						PlanBytesEstimate += 100 + Entry.SplinePoints.Num() * 80;
+					}
+					if (PlanBytesEstimate > 45000)
+					{
+						UE_LOG(LogSmartFoundations, Verbose,
+							TEXT("[MP-334] Refused client fire: conduit plan too large to stage reliably (%d conduits, ~%d bytes). Build in smaller sections."),
+							Spec.ConduitPlan.Num(), PlanBytesEstimate);
+						if (GEngine)
+						{
+							GEngine->AddOnScreenDebugMessage(-1, 6.0f, FColor::Orange,
+								FString::Printf(TEXT("Smart!: too many auto-connect belts/pipes/wires for one multiplayer placement (%d). Build in smaller sections."),
+									Spec.ConduitPlan.Num()));
+						}
+						scope.Cancel();
+						return;
+					}
+				}
+			}
+
+			// [MP-SPEC] #334: Smart auto-connect preview children (belts / pipes / wires /
+			// stackable poles) must NEVER cross the construct message - the server crashes
+			// deserializing them (live 2026-06-09: assert in AFGConveyorBeltHologram::
+			// UpdateSplineComponent via OnRep_SplineData inside Server_ConstructHologram, empty
+			// spline array; a 1x1 merger fire with auto-connect belts killed the dedi). The belts
+			// are rebuilt server-side from the staged plan above; pipes/power wiring is still
+			// pending (#334 remaining increments). SP/listen-host are unaffected (this hook is
+			// NM_Client-only). Applies to ALL client fires when the spec path is enabled, grid or
+			// not (the crash case was a 1x1).
+			if (bSpecEnabled)
+			{
+				TArray<AFGHologram*> AutoConnectToStrip;
+				for (AFGHologram* Child : Holo->mChildren)
+				{
+					if (!Child)
+					{
+						continue;
+					}
+					for (int32 TagIdx = 0; TagIdx < GSFAutoConnectChildTagCount; ++TagIdx)
+					{
+						if (Child->Tags.Contains(GSFAutoConnectChildTags[TagIdx]))
+						{
+							AutoConnectToStrip.Add(Child);
+							break;
+						}
+					}
+				}
+				if (AutoConnectToStrip.Num() > 0)
+				{
+					for (AFGHologram* Child : AutoConnectToStrip)
+					{
+						Holo->mChildren.Remove(Child);
+						Child->Destroy();
+					}
+					UE_LOG(LogSmartFoundations, Verbose,
+						TEXT("[MP-SPEC] Stripped %d auto-connect preview children before the fire ")
+						TEXT("(server-side wiring pending, #334)."),
+						AutoConnectToStrip.Num());
+				}
+			}
+
+			// Count Smart grid child holograms (tagged SF_GridChild). +1 for the parent/origin cell.
+			static const FName GridChildTag(TEXT("SF_GridChild"));
+			int32 GridChildCount = 0;
+			for (const AFGHologram* Child : Holo->GetHologramChildren())
+			{
+				if (Child && Child->Tags.Contains(GridChildTag))
+				{
+					++GridChildCount;
+				}
+			}
+
+			// [MP-SPEC] Spec path (class-agnostic): when enabled and the buildable is Smart-scalable
+			// (size registry), the CLIENT commits the grid as a compact spec:
+			//   1. capture the spec from the live grid (invalid when no grid - an explicit CLEAR),
+			//   2. stage it on the server via the USFRCO reliable RPC (overwrite semantics, so a
+			//      stale spec from an earlier failed construct can never leak into a later fire),
+			//   3. destroy the local preview children through the grid-spawner's own proven cleanup
+			//      (no strip/restore around vanilla serialization - that timing caused the orphan
+			//      bug and the interface-virtual hook crash; the sticky grid counters regenerate the
+			//      preview on the next hologram automatically, matching legacy UX),
+			//   4. let the fire proceed: it serializes a clean 1-cell hologram (O(1) message); the
+			//      server's Construct hook consumes the staged spec and expands the grid.
+			if (bSpecEnabled)
+			{
+				if (bScalable)
+				{
+					// Spec (+ belt plan) was captured ABOVE, before the strip destroyed the
+					// previews. Even a 1x1 spec is staged: it routes the construct through the
+					// server-side Construct hook, where the staged belt plan is replayed with
+					// authority (#334) - a single distributor with belts needs that as much as a
+					// grid does.
+
+					// Stage (or clear) the spec server-side BEFORE the construct RPC goes out.
+					// Also stage an Extend-commit CLEAR: a pre-staged commit from an earlier
+					// (cancelled) Extend session must never be consumed by this plain fire.
+					bool bStaged = false;
+					if (APawn* InstigatorPawn = Holo->GetConstructionInstigator())
+					{
+						if (AFGPlayerController* PC = Cast<AFGPlayerController>(InstigatorPawn->GetController()))
+						{
+							if (USFRCO* RCO = PC->GetRemoteCallObjectOfClass<USFRCO>())
+							{
+								RCO->Server_StageScalingSpec(Spec);
+								RCO->Server_StageExtendCommit(FSFExtendCommitSpec());
+								bStaged = true;
+							}
+						}
+					}
+
+					if (Spec.bValid && bStaged)
+					{
+						UE_LOG(LogSmartFoundations, Verbose,
+							TEXT("[MP-SPEC] Client fire: staged spec (%d cells of %s, %d planned conduit(s)), destroying %d preview children; construct message will be O(1)."),
+							Spec.CellCount(), *GetNameSafe(*Spec.BuildClass), Spec.ConduitPlan.Num(), GridChildCount);
+
+						// Destroy the preview grid through the helper's own cleanup (tracking stays
+						// consistent; the sticky counters regenerate the grid on the next hologram).
+						if (USFSubsystem* SS = USFSubsystem::Get(World))
+						{
+							if (FSFHologramHelperService* Helper = SS->GetHologramHelper())
+							{
+								Helper->DestroyAllChildren();
+							}
+						}
+					}
+					else if (!bStaged && Spec.bValid)
+					{
+						UE_LOG(LogSmartFoundations, Warning,
+							TEXT("[MP-SPEC] Client fire: could not reach USFRCO to stage the spec - falling through to the legacy path/guard."));
+					}
+
+					if (Spec.bValid && bStaged)
+					{
+						return; // fire proceeds with the (now childless) hologram
+					}
+					// else: no grid (clear staged) or no RCO -> fall through to legacy guard logic
+				}
+			}
+
+			if (GridChildCount == 0)
+			{
+				return; // not a Smart scaled grid
+			}
+
+			const int32 TotalCells = GridChildCount + 1;
+			if (TotalCells <= SF_MP_OVERSIZED_CELLS)
+			{
+				return; // fits one construct -> untouched vanilla path (builds fine in MP)
+			}
+
+			// Oversized: refuse the fire BEFORE vanilla serializes/sends. The active hologram + preview stay
+			// live (no teardown, no orphaned previews, no dropped RPC, no server crash). The player scales
+			// down and places in smaller sections.
+			UE_LOG(LogSmartFoundations, Display,
+				TEXT("[MP-CHUNK] Refused oversized client grid: %d cells (> %d). One construct can't carry this many over the wire safely; build in smaller sections."),
+				TotalCells, SF_MP_OVERSIZED_CELLS);
+
+			if (GEngine)
+			{
+				GEngine->AddOnScreenDebugMessage(-1, 6.0f, FColor::Orange,
+					FString::Printf(TEXT("Smart!: grid too large for multiplayer (%d cells, max ~%d). Build in smaller sections."),
+						TotalCells, SF_MP_OVERSIZED_CELLS));
+			}
+
+			scope.Cancel(); // suppress the fire -> nothing is serialized or sent; the grid stays live.
+		}
+	);
+
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("✅ Client grid oversized-guard fire-hook registered (MP Slice 0 safety, InternalExecuteDuBuildStepInput)"));
+}
+
+// [MP-SPEC] The blueprint proxy for the spec-construct currently executing on the server.
+// Set by the Construct hook around scope() (construction is synchronous + single-threaded);
+// the ConfigureActor hook assigns it to every buildable configured inside that window. The
+// assignment MUST happen pre-BeginPlay: lightweight-eligible buildables (foundations etc.)
+// convert to lightweight instances in BeginPlay and only then does vanilla transfer the proxy
+// membership to replicated lightweight indices (RegisterLightweightInstance) - a proxy assigned
+// after Construct ends up holding soon-destroyed temp actors and self-destructs (live finding
+// 2026-06-09: "no grouping persists" on spec-built foundation grids).
+static TWeakObjectPtr<AFGBlueprintProxy> GSFActiveSpecGroupProxy;
+
+void USFGameInstanceModule::RegisterSpecConstructionHooks()
+{
+	static const FName GridChildTag(TEXT("SF_GridChild"));
+
+	// [CHAIN-FIX] Stale tick-group entry guard. A conveyor whose cached mConveyorBucketID points
+	// at the WRONG tick group makes vanilla RemoveConveyor silently fail in shipping (the assert
+	// is compiled out) - the belt stays in some OTHER TG->Conveyors array, gets destroyed by the
+	// dismantle, GC frees the memory ~1-2 min later, and TickFactoryActors' ParallelFor calls
+	// through the freed pointer (EXCEPTION_ACCESS_VIOLATION at FGBuildableSubsystem.cpp:644 -
+	// reproduced three times on 2026-06-10, each ~2 min after building/dismantling auto-connect
+	// belts). AFTER vanilla RemoveConveyor runs, sweep every tick group and force-remove any
+	// lingering entry for this belt. Plain SUBSCRIBE_METHOD is correct: RemoveConveyor is a
+	// non-virtual member (the no-plain-subscribe rule applies to virtuals only).
+	SUBSCRIBE_METHOD(
+		AFGBuildableSubsystem::RemoveConveyor,
+		[](auto& scope, AFGBuildableSubsystem* self, AFGBuildableConveyorBase* conveyor)
+		{
+			scope(self, conveyor);
+			if (!self || !conveyor)
+			{
+				return;
+			}
+			// Sweep lives in the chain service (mConveyorTickGroup access grant).
+			if (USFSubsystem* SS = USFSubsystem::Get(self->GetWorld()))
+			{
+				if (USFChainActorService* ChainSvc = SS->GetChainActorService())
+				{
+					ChainSvc->RemoveConveyorFromAllTickGroups(conveyor);
+				}
+			}
+		});
+
+	// [CHAIN-FIX] Pre-tick integrity scrub (permanent safety net, ~2us for ~2k entries): validate
+	// mFactoryBuildings (+ groups) immediately before vanilla's ParallelFor walks them. A corrupt
+	// entry is removed (the server survives the tick) and logged with its index + valid neighbors.
+	// Kept after the 2026-06-10 wild-free incident (GetCost hook Override-without-invoke, fixed):
+	// this class of bug otherwise kills dedicated servers minutes after the corrupting write.
+	SUBSCRIBE_METHOD(
+		AFGBuildableSubsystem::TickFactory,
+		[](auto& scope, AFGBuildableSubsystem* self, float dt, ELevelTick TickType)
+		{
+			if (self && self->HasAuthority())
+			{
+				if (USFSubsystem* SS = USFSubsystem::Get(self->GetWorld()))
+				{
+					if (USFChainActorService* ChainSvc = SS->GetChainActorService())
+					{
+						ChainSvc->ScrubFactoryTickArrays();
+					}
+				}
+			}
+		});
+
+	// [CHAIN-FIX] Destruction chokepoint guard, ALL buildables. cdb on the 5th freed-pointer tick
+	// AV (2026-06-10) identified the crashing loop: TickFactoryActors' lambda walks
+	// mFactoryBuildings (subsystem +0x3C0, confirmed via PDB) and virtual-calls each entry - the
+	// freed entry sat at the array END (= most recently registered), and the conveyor-only guards
+	// stayed silent, so a NON-conveyor factory buildable is destroyed by some path that skips
+	// vanilla RemoveBuildable. EndPlay fires for every destruction path; running AFTER the
+	// original (scope first) means vanilla's own cleanup has happened - anything still left in
+	// mFactoryBuildings/groups or the conveyor tick groups is a true leak: force-removed and
+	// logged with name + reason, naming the leaking path on the next repro. AFGBuildable
+	// overrides EndPlay (primary-class virtual): hooking its body via the CDO fires for the
+	// whole Super chain - every buildable, conveyors included.
+	AFGBuildable* BuildableCDO = GetMutableDefault<AFGBuildable>();
+	SUBSCRIBE_METHOD_VIRTUAL(AFGBuildable::EndPlay, BuildableCDO,
+		[](auto& scope, AFGBuildable* self, const EEndPlayReason::Type endPlayReason)
+		{
+			scope(self, endPlayReason);
+			if (!self || !self->HasAuthority())
+			{
+				return;
+			}
+			UWorld* World = self->GetWorld();
+			USFSubsystem* SS = World ? USFSubsystem::Get(World) : nullptr;
+			USFChainActorService* ChainSvc = SS ? SS->GetChainActorService() : nullptr;
+			if (!ChainSvc)
+			{
+				return;
+			}
+			int32 Removed = ChainSvc->RemoveBuildableFromFactoryTickArrays(self);
+			if (AFGBuildableConveyorBase* Conveyor = Cast<AFGBuildableConveyorBase>(self))
+			{
+				Removed += ChainSvc->RemoveConveyorFromAllTickGroups(Conveyor);
+			}
+			if (Removed > 0)
+			{
+				UE_LOG(LogSmartFoundations, Warning,
+					TEXT("[CHAIN-DIAG] EndPlay guard: %s (%s) died (reason=%d) while STILL in %d factory-tick entr%s - leak path identified, freed-pointer tick AV prevented."),
+					*self->GetName(), *GetNameSafe(self->GetClass()), static_cast<int32>(endPlayReason),
+					Removed, Removed == 1 ? TEXT("y") : TEXT("ies"));
+			}
+		});
+
+	// Count the Smart grid children currently attached to a hologram (the strip/expand targets).
+	auto CountGridChildren = [](AFGHologram* Holo) -> int32
+	{
+		int32 Count = 0;
+		for (AFGHologram* Child : Holo->mChildren)
+		{
+			if (Child && Child->Tags.Contains(GridChildTag))
+			{
+				++Count;
+			}
+		}
+		return Count;
+	};
+
+	// CDOs for virtual-method body resolution. SUBSCRIBE_METHOD on a virtual resolves to a vcall
+	// thunk and SML's hook install CRASHES at startup (live finding 2026-06-09: FatalError in
+	// FNativeHookManagerInternal::RegisterHookFunction). SUBSCRIBE_METHOD_VIRTUAL resolves the
+	// actual body from the CDO's vtable - and hooking the BASE body fires for the entire Super
+	// chain (same mechanism the belt-support Construct hook above relies on).
+	//
+	// IMPORTANT: only PRIMARY-class virtuals may be hooked. SerializeConstructMessage (and the
+	// Pre/Post message methods) come from IFGConstructionMessageInterface - a SECONDARY base - and
+	// hooking them delivers an interface-adjusted `this` (live crash 2026-06-09: self off by the
+	// interface offset, EXCEPTION_ACCESS_VIOLATION in the first member read). The spec therefore
+	// crosses the wire via USFRCO::Server_StageScalingSpec (staged per player at fire time by the
+	// fire hook above), NOT by injecting into the construct message.
+	AFGHologram* HologramCDO = GetMutableDefault<AFGHologram>();
+	AFGBuildableHologram* BuildableHologramCDO = GetMutableDefault<AFGBuildableHologram>();
+
+	// Resolve the staged spec for a constructing/costing hologram (server side).
+	auto FindStagedSpec = [](const AFGHologram* Holo, FSFScalingSpec& OutSpec, bool bConsume) -> bool
+	{
+		AFGHologram* MutableHolo = const_cast<AFGHologram*>(Holo);
+		USFSubsystem* SS = USFSubsystem::Get(MutableHolo->GetWorld());
+		if (!SS)
+		{
+			return false;
+		}
+		APawn* Instigator = MutableHolo->GetConstructionInstigator();
+		UClass* BuildClass = MutableHolo->GetBuildClass();
+		return bConsume
+			? SS->ConsumeScalingSpecForInstigator(Instigator, BuildClass, OutSpec)
+			: SS->PeekScalingSpecForInstigator(Instigator, BuildClass, OutSpec);
+	};
+
+	// [EXTEND-MP] Resolve the staged Extend commit for a constructing/costing hologram.
+	auto FindStagedExtendCommit = [](const AFGHologram* Holo, FSFExtendCommitSpec& OutSpec, bool bConsume) -> bool
+	{
+		AFGHologram* MutableHolo = const_cast<AFGHologram*>(Holo);
+		USFSubsystem* SS = USFSubsystem::Get(MutableHolo->GetWorld());
+		if (!SS)
+		{
+			return false;
+		}
+		APawn* Instigator = MutableHolo->GetConstructionInstigator();
+		UClass* BuildClass = MutableHolo->GetBuildClass();
+		return bConsume
+			? SS->ConsumeExtendCommitForInstigator(Instigator, BuildClass, OutSpec)
+			: SS->PeekExtendCommitForInstigator(Instigator, BuildClass, OutSpec);
+	};
+
+	// ── Hook A: cost. Charged server-side BEFORE Construct, when the grid children do not exist
+	// yet - scale the uniform per-cell cost by the staged cell count. Fires at the
+	// AFGHologram::GetCost base body (primary virtual; the scalable parents' classes do not
+	// override GetCost, and spline types that do never carry a staged spec).
+	SUBSCRIBE_METHOD_VIRTUAL(AFGHologram::GetCost, HologramCDO,
+		[=](auto& scope, const AFGHologram* self, bool includeChildren)
+		{
+			if (!self || !includeChildren || !SFScalingSpecExpansion::IsSpecConstructionEnabled())
+			{
+				return;
+			}
+			AFGHologram* MutableSelf = const_cast<AFGHologram*>(self);
+			if (!MutableSelf->HasAuthority())
+			{
+				return; // client cost comes from its real preview children via vanilla aggregation
+			}
+
+			// [EXTEND-MP] A staged Extend commit overrides with the EXACT preview cost captured
+			// client-side (parent + all clone children) - the childless server parent would
+			// otherwise charge the bare factory only.
+			//
+			// THE 12-CRASH WILD-FREE BUG LIVED HERE (root-caused via hardware watchpoint,
+			// 2026-06-10): scope.Override() WITHOUT a prior scope() invocation. For a hooked
+			// method returning TArray BY VALUE, SML's invoker (ApplyCallUserTypeByValue)
+			// move-ASSIGNS the override into the return slot - and if the original was never
+			// invoked, that slot is UNINITIALIZED, so TArray::operator= frees whatever garbage
+			// Data pointer the stack held. In CheckCanAfford's frame (dedi mirror build gun,
+			// costs ON, every tick while aiming) that garbage was the AIMED-AT BUILDING's
+			// address: FMemory::Free(liveActor) -> freelist scribble over its vtable -> the
+			// freed-pointer factory-tick AV minutes later. RULE: NEVER Override a by-value
+			// return without invoking scope() first to construct the slot (the scaling branch
+			// below always did - which is why scaled costs never crashed).
+			FSFExtendCommitSpec ExtendSpec;
+			if (FindStagedExtendCommit(self, ExtendSpec, /*bConsume=*/false))
+			{
+				if (MutableSelf->GetHologramChildren().Num() == 0 && ExtendSpec.Cost.Num() > 0)
+				{
+					scope(self, includeChildren); // initialize the return slot FIRST
+					scope.Override(ExtendSpec.Cost);
+				}
+				return;
+			}
+
+			FSFScalingSpec Spec;
+			if (!FindStagedSpec(self, Spec, /*bConsume=*/false) || CountGridChildren(MutableSelf) > 0)
+			{
+				return; // no staged spec (or children already present) -> vanilla cost
+			}
+
+			TArray<FItemAmount> Cost = scope(self, includeChildren);
+			const int32 Cells = Spec.CellCount();
+			for (FItemAmount& Item : Cost)
+			{
+				Item.Amount *= Cells;
+			}
+
+			// [MP-334] Charge the staged auto-connect belts too: exact vanilla length-based
+			// preview costs, summed client-side at capture. Without this the server-built plan
+			// belts would be free (they join mChildren only inside Construct, after costing).
+			for (const FItemAmount& BeltItem : Spec.ConduitPlanCost)
+			{
+				bool bMerged = false;
+				for (FItemAmount& Item : Cost)
+				{
+					if (Item.ItemClass == BeltItem.ItemClass)
+					{
+						Item.Amount += BeltItem.Amount;
+						bMerged = true;
+						break;
+					}
+				}
+				if (!bMerged)
+				{
+					Cost.Add(BeltItem);
+				}
+			}
+
+			scope.Override(Cost);
+		});
+
+	// ── Hook B: expansion + group bookkeeping. Fires at the AFGBuildableHologram::Construct body
+	// (primary virtual) - inside the Super chain of every buildable hologram, before the base
+	// child-construct loop - on the server, after Server_ConstructHologram validation has already
+	// passed on the childless parent. Consumes the staged spec (matched by instigator + build
+	// class), expands, runs the original, then registers ALL built actors into one
+	// AFGBlueprintProxy so Smart Dismantle group-dismantle works on spec-built grids. The proxy is
+	// created SERVER-side (its mBuildables array is replicated, so the client group UI sees it and
+	// dismantle is server-authoritative - the legacy client-side proxy from OnActorSpawned cannot
+	// cover server-built actors).
+	SUBSCRIBE_METHOD_VIRTUAL(AFGBuildableHologram::Construct, BuildableHologramCDO,
+		[=](auto& scope, AFGBuildableHologram* self, TArray<AActor*>& out_children, FNetConstructionID constructionID)
+		{
+			if (!self || !self->HasAuthority() || !SFScalingSpecExpansion::IsSpecConstructionEnabled())
+			{
+				return;
+			}
+			FSFScalingSpec Spec;
+			const bool bHasScaling = FindStagedSpec(self, Spec, /*bConsume=*/true);
+			FSFExtendCommitSpec ExtendSpec;
+			const bool bHasExtend = !bHasScaling && FindStagedExtendCommit(self, ExtendSpec, /*bConsume=*/true);
+			if (!bHasScaling && !bHasExtend)
+			{
+				return; // nothing staged for this instigator/class (e.g. a child in the loop)
+			}
+
+			if (bHasScaling)
+			{
+				if (CountGridChildren(self) == 0)
+				{
+					SFScalingSpecExpansion::ExpandScalingSpecIntoChildren(self, Spec, self->GetRecipe());
+				}
+
+				// [MP-334] Server-side auto-connect belt wiring: replay the CLIENT'S staged belt
+				// plan. The client's fire-time previews are the only complete, real plan that ever
+				// exists - server-side re-derivation (ProcessSingleDistributor) returned 0 at this
+				// seam, and the server's own aim-time previews are empty here / not construct-grade
+				// (three failed approaches, live-proven 2026-06-09; see PLAN_MP_AutoConnect_334.md).
+				// The plan belts are appended AFTER the grid children, so the vanilla child-
+				// construct loop below builds the distributors first and each belt's
+				// SF_BeltAutoConnectChild Construct path wires it geometrically against BUILT
+				// actors - the same mechanism SP uses.
+				SFScalingSpecExpansion::SpawnConduitPlanChildren(self, Spec);
+			}
+			else
+			{
+				// [EXTEND-MP] Reconstruct the FULL commit server-side, pre-scope(): authoritative
+				// graph walk -> CaptureFromTopology -> FromSource(ParentOffset) -> spawn parent
+				// clone set + scaled clone sets. The topology MUST be derived here, never shipped
+				// from the client - client-side capture poisons every segment connection because
+				// GetConnection() is null on clients (live root cause 2026-06-10: empty wiring
+				// manifests, every MP Extend built unwired). The children's Construct paths
+				// populate the wiring registries; the synchronous wiring pass below finishes the
+				// job with authority.
+				if (USFSubsystem* SS = USFSubsystem::Get(self->GetWorld()))
+				{
+					if (USFExtendService* Extend = SS->GetExtendService())
+					{
+						Extend->ReconstructCommitOnServer(self, ExtendSpec);
+					}
+				}
+			}
+
+			// Spawn the group proxy BEFORE construction and expose it for the window of this
+			// construct: the ConfigureActor hook below assigns it to every buildable configured
+			// inside scope() - i.e. pre-BeginPlay, the timing vanilla blueprints use, so
+			// lightweight conversion transfers membership to replicated lightweight indices.
+			AFGBlueprintProxy* GroupProxy = nullptr;
+			if (UWorld* World = self->GetWorld())
+			{
+				FActorSpawnParameters ProxyParams;
+				ProxyParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+				GroupProxy = World->SpawnActor<AFGBlueprintProxy>(
+					AFGBlueprintProxy::StaticClass(), self->GetActorTransform(), ProxyParams);
+			}
+			GSFActiveSpecGroupProxy = GroupProxy;
+
+			AActor* BuiltParent = scope(self, out_children, constructionID);
+
+			GSFActiveSpecGroupProxy.Reset();
+
+			// [EXTEND-MP] Register the clone-id -> built-actor anchors for the wiring pass. In SP
+			// this lives in ASFFactoryHologram::Construct (the swapped parent): it position-matches
+			// every child hologram carrying a JsonCloneId (the scaled clone FACTORIES,
+			// "sc{i}_factory" - vanilla holograms whose own Construct knows nothing of clone ids)
+			// to its built actor. The server constructs through the VANILLA hologram, so those
+			// anchors never registered and the deferred wiring resolved NOTHING - a scaled run
+			// built geometrically perfect but fully unwired (live 2026-06-10). Same seam, same
+			// position-match, with the self-registered skip (#288).
+			if (bHasExtend)
+			{
+				if (USFSubsystem* SS = USFSubsystem::Get(self->GetWorld()))
+				{
+					if (USFExtendService* Extend = SS->GetExtendService())
+					{
+						int32 RegisteredAnchors = 0;
+						for (AFGHologram* ChildHolo : self->mChildren)
+						{
+							if (!ChildHolo)
+							{
+								continue;
+							}
+							FSFHologramData* ChildData = USFHologramDataRegistry::GetData(ChildHolo);
+							if (!ChildData || ChildData->JsonCloneId.IsEmpty())
+							{
+								continue;
+							}
+							if (Extend->GetBuiltActorByCloneId(ChildData->JsonCloneId) != nullptr)
+							{
+								continue; // self-registered during its own Construct (exact match)
+							}
+							const FVector ChildPos = ChildHolo->GetActorLocation();
+							AActor* BestMatch = nullptr;
+							float BestDist = 200.0f;
+							for (AActor* ChildActor : out_children)
+							{
+								if (!ChildActor)
+								{
+									continue;
+								}
+								const float Dist = FVector::Dist(ChildActor->GetActorLocation(), ChildPos);
+								if (Dist < BestDist)
+								{
+									BestDist = Dist;
+									BestMatch = ChildActor;
+								}
+							}
+							if (BestMatch)
+							{
+								Extend->RegisterJsonBuiltActor(ChildData->JsonCloneId, BestMatch);
+								++RegisteredAnchors;
+							}
+						}
+						UE_LOG(LogSmartFoundations, Verbose,
+							TEXT("[EXTEND-MP] Registered %d clone-id wiring anchor(s) post-construct for %s."),
+							RegisteredAnchors, *GetNameSafe(BuiltParent));
+
+						// [EXTEND-MP] Run the post-build wiring pass SYNCHRONOUSLY, here, with the
+						// BUILT PARENT as the factory anchor. Deferral is structurally unreliable
+						// at the commit seam: the legacy per-factory-spawn lambdas resolved
+						// "parent"/"Factory" against whichever factory their trigger captured
+						// (live: a junction -> every factory-end connection failed), and BOTH the
+						// legacy and a next-tick pass race the post-construct hologram
+						// re-registration cleanup that clears the pending-wiring state (live:
+						// everything no-opped). This point is POST-construct - all children built,
+						// configured, and registered - the same in-frame pre-tick timing the #341
+						// chain registration proves safe.
+						if (AFGBuildableFactory* BuiltFactory = Cast<AFGBuildableFactory>(BuiltParent))
+						{
+							UE_LOG(LogSmartFoundations, Verbose,
+								TEXT("[EXTEND-MP] Commit wiring pass executing for %s."),
+								*BuiltFactory->GetName());
+							Extend->ConnectAllChainElements(BuiltFactory);
+							Extend->WireBuiltChildConnections(BuiltFactory);
+						}
+					}
+				}
+			}
+
+			// [MP-334] Post-construct sweep: spline buildables (the plan belts) never reach the
+			// AFGBuildableHologram::ConfigureActor BASE body our pre-BeginPlay hook patches (the
+			// vanilla spline-hologram chain configures them elsewhere - live finding 2026-06-09:
+			// proxy registered the 4 mergers but none of the 7 belts). Registering them HERE is
+			// safe because conveyors are real actors, never lightweight - the pre-BeginPlay window
+			// only matters for lightweight conversion (foundations). The GetBlueprintProxy() guard
+			// skips everything Hook C already registered.
+			if (GroupProxy)
+			{
+				for (AActor* Child : out_children)
+				{
+					AFGBuildable* ChildBuildable = Cast<AFGBuildable>(Child);
+					if (ChildBuildable && !ChildBuildable->GetBlueprintProxy())
+					{
+						ChildBuildable->SetBlueprintProxy(GroupProxy);
+						GroupProxy->RegisterBuildable(ChildBuildable);
+					}
+				}
+				if (AFGBuildable* ParentBuildable = Cast<AFGBuildable>(BuiltParent))
+				{
+					if (!ParentBuildable->GetBlueprintProxy())
+					{
+						ParentBuildable->SetBlueprintProxy(GroupProxy);
+						GroupProxy->RegisterBuildable(ParentBuildable);
+					}
+				}
+			}
+
+			// [MP-334] Staged power wires build AFTER the grid, against BUILT actors - wires are
+			// never built from holograms (even in SP the wire child holograms exist only for cost;
+			// hologram-replayed wires came out as unconnected zombies, live 2026-06-10). Direct
+			// AFGBuildableWire spawn + Connect, the proven OnPowerPoleBuilt primitive. Registers
+			// the wires into the group proxy itself (they are not in out_children).
+			if (bHasScaling)
+			{
+				SFScalingSpecExpansion::SpawnWirePlanPostConstruct(BuiltParent, out_children, Spec, GroupProxy);
+			}
+
+			if (GroupProxy)
+			{
+				UE_LOG(LogSmartFoundations, Verbose,
+					TEXT("[MP-SPEC] Spec group proxy %s: %d actor buildables registered (+ lightweight instances tracked by index); built parent=%s, out_children=%d."),
+					*GroupProxy->GetName(), GroupProxy->GetBuildables().Num(),
+					*GetNameSafe(BuiltParent), out_children.Num());
+				// If nothing registered (neither actors nor lightweights), let it clean itself up.
+				GroupProxy->ValidateExistanceOtherwiseSelfDestruct();
+			}
+
+			// [CHAIN-FIX] Run the chain-hygiene sweep shortly after EVERY server-side spec/extend
+			// construct: it purges detached chains AND re-registers any connected-but-chainless
+			// belt. The thesis factory-tick AV (FGBuildableSubsystem.cpp:644, virtual call into
+			// freed/garbage memory minutes after a build) reproduced twice on 2026-06-10 in
+			// sessions whose only Smart activity was 1x1 conduit-plan builds - the sweep only ran
+			// at boot and post-upgrade, leaving the spec-build path uncovered. Timer is coalesced;
+			// scheduling per construct is cheap.
+			if (USFSubsystem* SweepSS = USFSubsystem::Get(self->GetWorld()))
+			{
+				if (USFChainActorService* ChainSvc = SweepSS->GetChainActorService())
+				{
+					ChainSvc->ScheduleDeferredZombiePurge(3.0f);
+				}
+			}
+
+			scope.Override(BuiltParent);
+		});
+
+	// ── Hook D: server-side placement leniency for staged Extend commits. SP's swapped parent
+	// (ASFFactoryHologram) SKIPS clearance checks during Extend - the clone is deliberately placed
+	// adjacent to the source with logistics in between, which full vanilla clearance rejects. The
+	// server constructs through the VANILLA hologram, so the same fire that previews valid on the
+	// client was refused server-side (live 2026-06-10: FGCDEncroachingClearance from
+	// ValidatePlacementAndCost). Mirror SP: when a staged Extend commit exists for this hologram,
+	// clear the disqualifiers after vanilla evaluates them.
+	// NOTE: hooked at the AFGBuildableHologram override, NOT the AFGHologram base -
+	// &AFGHologram::CheckValidPlacement resolves to an unhookable import thunk (live dedi
+	// startup FATAL 2026-06-10: "resulting function still points to a thunk"). The override
+	// covers every buildable hologram, which is exactly the set that can carry a staged commit.
+	SUBSCRIBE_METHOD_VIRTUAL_AFTER(AFGBuildableHologram::CheckValidPlacement, BuildableHologramCDO,
+		[=](AFGBuildableHologram* self)
+		{
+			if (!self || !self->HasAuthority() || !SFScalingSpecExpansion::IsSpecConstructionEnabled())
+			{
+				return;
+			}
+			FSFExtendCommitSpec ExtendSpec;
+			if (FindStagedExtendCommit(self, ExtendSpec, /*bConsume=*/false))
+			{
+				self->ResetConstructDisqualifiers();
+			}
+		});
+
+	// ── Hook C: group membership assignment, pre-BeginPlay. ConfigureActor is called by the
+	// hologram on the deferred-spawned buildable BEFORE FinishSpawning/BeginPlay - the only window
+	// where lightweight-eligible buildables (foundations etc.) can join a blueprint proxy, because
+	// their BeginPlay converts them to lightweight instances and transfers proxy membership to
+	// replicated indices. Assigns the active spec-construct's proxy to every buildable configured
+	// inside the Construct window above. (Primary-class virtual; same hook InfiniteZoop uses.)
+	SUBSCRIBE_METHOD_VIRTUAL_AFTER(AFGBuildableHologram::ConfigureActor, BuildableHologramCDO,
+		[](const AFGBuildableHologram* self, AFGBuildable* inBuildable)
+		{
+			AFGBlueprintProxy* GroupProxy = GSFActiveSpecGroupProxy.Get();
+			if (!GroupProxy || !inBuildable)
+			{
+				return;
+			}
+			if (!inBuildable->GetBlueprintProxy())
+			{
+				inBuildable->SetBlueprintProxy(GroupProxy);
+				GroupProxy->RegisterBuildable(inBuildable);
+			}
+		});
+
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("✅ Spec-construction hooks registered (GetCost / Construct - class-agnostic; spec staged via USFRCO)"));
 }

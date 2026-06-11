@@ -224,6 +224,69 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Smart|Extend")
     const FSFExtendTopology& GetCurrentTopology() const;
 
+    /** [EXTEND-MP] Client-side: store a server-walked topology (USFRCO reply). WalkTopology's
+     *  client branch consumes it on the next activation tick. */
+    void ReceiveServerTopology(const FSFExtendTopology& Topology);
+
+    /** [EXTEND-MP] Client-side: cache the AUTHORITATIVELY derived clone topology the server
+     *  pushes after every Extend commit reconstruction. GetLastCloneTopology prefers this on
+     *  clients - the client's own capture has empty segment connections (GetConnection() null),
+     *  which poisoned presets saved via Import-from-Last-Extend (live finding 2026-06-10:
+     *  restored builds came out with unconnected belt segments). */
+    void ReceiveServerCloneTopology(const struct FSFCloneTopology& Topology);
+
+    /** [EXTEND-MP] Server-side: install the staged commit's clone topology as StoredCloneTopology
+     *  so the post-build wiring pass (WireBuiltChildConnections, fed by the registries the clone
+     *  children populate during Construct) finds the same state an SP build would have. */
+    void SetStoredCloneTopologyForServerCommit(const struct FSFCloneTopology& Clone);
+
+    /** [EXTEND-MP] Server-side: install the commit's SOURCE building as the Extend session anchor
+     *  (LastBuiltFromBuilding + CurrentExtendTarget). The dedi never runs the preview pipeline, so
+     *  the post-build wiring state it normally sets must come from the staged commit - without it
+     *  the #344 daisy-chain head is null and building-to-building power never wires (live finding
+     *  2026-06-10). */
+    void SetServerCommitSourceBuilding(AFGBuildable* Source);
+
+    /** [EXTEND-MP] Client-side capture: copy the active Scaled Extend clone PARAMETERS (offsets /
+     *  rotations / grid coords) into the commit spec. Empty when Scaled Extend is not active. */
+    void GetScaledClonePlanForCommit(TArray<struct FSFExtendCommitScaledClone>& OutClones) const;
+
+    /** [EXTEND-MP] Client-side: build the full Extend commit spec from the live session (fresh
+     *  clone topology at the hologram's CURRENT position, preview cost, source building, scaled
+     *  clone parameters). Returns false when no valid Extend session backs the hologram. */
+    bool BuildCommitSpecForMP(AFGHologram* ParentHologram, struct FSFExtendCommitSpec& OutSpec) const;
+
+    /** [EXTEND-MP] Client-side: PRE-STAGE the commit on the server (throttled, ~4/s) while the
+     *  Extend preview is active. The commit RPC is LARGE (spline data -> fragmented bunches) and
+     *  the construct RPC is tiny; staged-at-fire lost the cross-channel race live (2026-06-10:
+     *  rotated scaled fire built a bare parent). Continuous pre-staging makes the commit long
+     *  since staged when the fire lands; the fire-time stage remains as the final refresh. */
+    void MaybeStageCommitForMP(AFGHologram* ParentHologram);
+
+    /** [EXTEND-MP] Client-side: stage an explicit CLEAR (invalid commit) so a stale pre-staged
+     *  commit can never be consumed by a later non-Extend construct. Called on session teardown
+     *  and on every non-Extend fire of a scalable class. */
+    void StageCommitClearForMP();
+
+    /** [EXTEND-MP] Server-side: reconstruct the Scaled Extend clone sets for a staged commit.
+     *  Re-walks the SOURCE building's graph (authoritative on the server), installs the shipped
+     *  per-clone parameters as ScaledExtendClones, and re-runs the SAME spawn pipeline the SP
+     *  preview uses (SpawnScaledExtendPreviews) against the constructing parent - regenerating
+     *  factory children, infrastructure topologies, rotation fix-ups, and lanes identically.
+     *  Requires SetServerCommitSourceBuilding to have been called. Returns clone sets installed. */
+    int32 ReconstructScaledCommitOnServer(AFGHologram* ParentHologram,
+        const TArray<struct FSFExtendCommitScaledClone>& Clones);
+
+    /** [EXTEND-MP] Server-side: reconstruct the FULL staged commit at the construct seam. Walks
+     *  the source graph (authoritative - GetConnection() is real here, unlike the client where it
+     *  is null and poisons every captured segment connection), derives the parent clone topology
+     *  via CaptureFromTopology + FromSource(ParentOffset), installs it as StoredCloneTopology,
+     *  spawns the parent clone set, then reconstructs the scaled clone sets. Returns children
+     *  spawned for the parent set. A RESTORE commit (Spec.bIsRestore) has no source building to
+     *  walk: the preset TEMPLATE arrives in the spec; the panel state + production recipe are
+     *  installed and the SAME SP replay pipeline runs (ReplayRestoreCloneTopology). */
+    int32 ReconstructCommitOnServer(AFGHologram* ParentHologram, const struct FSFExtendCommitSpec& Spec);
+
     UFUNCTION(BlueprintCallable, Category = "Smart|Extend")
     const FSFExtendTopology& GetLastExtendTopology() const;
 
@@ -457,9 +520,12 @@ public:
      * Swap the build gun's active hologram to our custom ASFFactoryHologram.
      * This gives us control over SetHologramLocationAndRotation for EXTEND positioning.
      * @param VanillaHologram The current vanilla factory hologram
+     * @param bTrackAsExtendSwap When true (Extend), record SwappedHologram/bHasSwappedHologram so
+     *        RestoreOriginalHologram works. Pass false to reuse the mechanism without putting the
+     *        Extend service into "swapped" state.
      * @return The swapped custom hologram, or nullptr if swap failed
      */
-    ASFFactoryHologram* SwapToSmartFactoryHologram(AFGHologram* VanillaHologram);
+    ASFFactoryHologram* SwapToSmartFactoryHologram(AFGHologram* VanillaHologram, bool bTrackAsExtendSwap = true);
 
     /**
      * Restore the original hologram when EXTEND mode ends.
@@ -615,7 +681,31 @@ private:
     UPROPERTY()
     FSFExtendTopology LastExtendTopology;
 
+    // [EXTEND-MP] Client-side cache of the last SERVER-walked topology (USFRCO reply), keyed by
+    // building with a short TTL. bIsValid=false entries are negative results ("nothing to extend
+    // here") cached to stop per-tick request spam while aiming.
+    UPROPERTY()
+    FSFExtendTopology CachedServerTopology;
+
+    UPROPERTY()
+    TWeakObjectPtr<AFGBuildable> CachedServerTopologyBuilding;
+
+    double CachedServerTopologyTime = 0.0;
+
+    /** [EXTEND-MP] Request throttle: last building asked for + when. */
+    UPROPERTY()
+    TWeakObjectPtr<AFGBuildable> PendingTopologyRequestBuilding;
+
+    double LastTopologyRequestTime = 0.0;
+
+    /** [EXTEND-MP] Pre-stage throttle for the commit RPC. */
+    double LastCommitStageTime = 0.0;
+
     TSharedPtr<FSFCloneTopology> LastCloneTopology;
+
+    /** [EXTEND-MP] Client cache of the server-derived clone topology (pushed after every commit
+     *  reconstruction; full segment connections - see ReceiveServerCloneTopology). */
+    TSharedPtr<FSFCloneTopology> ServerDerivedCloneTopology;
 
     // ==================== Scaled Extend State (Issue #265) ====================
 

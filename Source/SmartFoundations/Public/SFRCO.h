@@ -5,7 +5,11 @@
 #include "CoreMinimal.h"
 #include "FGRemoteCallObject.h"
 #include "Features/Spacing/SFSpacingTypes.h"
+#include "Features/Scaling/SFScalingSpec.h"
+#include "Features/Extend/SFExtendTypes.h"      // FSFExtendTopology ([EXTEND-MP] topology RCO)
+#include "Features/Extend/SFExtendCommitSpec.h" // FSFExtendCommitSpec ([EXTEND-MP] commit staging)
 #include "Features/Upgrade/SFUpgradeExecutionService.h"
+#include "Features/Upgrade/SFUpgradeTraversalService.h" // [UPGRADE-MP] FSFTraversalConfig/Result
 #include "SFRCO.generated.h"
 
 /**
@@ -78,6 +82,49 @@ public:
 	void Server_ToggleArrows(bool bVisible);
 
 	// ========================================
+	// MP spec-based scaling construction
+	// ========================================
+
+	/**
+	 * Client stages the compact grid spec on the server right before firing the build gun.
+	 * The server keys it by this RCO's owning player controller; the AFGBuildableHologram::Construct
+	 * hook consumes it (matched by instigator + build class) and expands the grid server-side.
+	 * Sent on EVERY client fire - with an INVALID spec when there is no grid - so a stale spec from
+	 * a failed construct can never leak into a later fire (overwrite semantics).
+	 */
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_StageScalingSpec(FSFScalingSpec Spec);
+
+	// ========================================
+	// Extend MP: server-side topology walk
+	// ========================================
+
+	/**
+	 * [EXTEND-MP] Client asks the server to walk the Extend connection topology for a target
+	 * building. A network client cannot walk locally: mConnectedComponent is UPROPERTY(SaveGame)
+	 * (server-only), so GetConnection() is null on clients by design. The server has the
+	 * authoritative graph; it walks and replies with Client_ReceiveExtendTopology. The topology
+	 * references replicated actors + their default-subobject components, so the client resolves
+	 * every reference against its local proxies.
+	 */
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_RequestExtendTopology(class AFGBuildable* SourceBuilding);
+
+	/** [EXTEND-MP] Server's reply: the walked topology (bIsValid=false = nothing to extend,
+	 *  which the client caches briefly as a negative result to avoid request spam). */
+	UFUNCTION(Client, Reliable)
+	void Client_ReceiveExtendTopology(FSFExtendTopology Topology);
+
+	/**
+	 * [EXTEND-MP] Client stages the Extend commit (fresh clone topology + preview cost) right
+	 * before firing the build gun; the Construct hook consumes it (matched by instigator + build
+	 * class) and reconstructs the clone children server-side. Overwrite semantics like the
+	 * scaling spec (an invalid commit is an explicit clear).
+	 */
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_StageExtendCommit(FSFExtendCommitSpec Spec);
+
+	// ========================================
 	// Upgrade Audit RPCs
 	// ========================================
 
@@ -102,6 +149,60 @@ public:
 	 */
 	UFUNCTION(Client, Reliable)
 	void Client_ReceiveAuditResult(FSFUpgradeAuditResult Result);
+
+	// ========================================
+	// Upgrade Execution + Traversal RPCs ([UPGRADE-MP])
+	// ========================================
+
+	/**
+	 * Client requests a Smart Upgrade batch execution. The whole pipeline (target gathering,
+	 * hologram replacement, connection capture/repair, chain stabilization, cost) is world
+	 * mutation and MUST run with authority - running it client-side spawns client-only actors
+	 * and desyncs (the #334 hazard class). PlayerController is overridden server-side from the
+	 * RCO owner; the client-supplied field is never trusted.
+	 */
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_StartUpgrade(FSFUpgradeExecutionParams Params);
+
+	/** Server sends the execution result back; injected into the client's local execution
+	 *  service so panel delegates fire as in SP. */
+	UFUNCTION(Client, Reliable)
+	void Client_ReceiveUpgradeResult(FSFUpgradeExecutionResult Result);
+
+	/**
+	 * Client requests a network traversal walk. Traversal follows factory/pipe/circuit
+	 * connection components whose connection values are server-only (the same null-GetConnection
+	 * client limitation as the Extend topology walk), so the walk must run on the server.
+	 */
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_StartUpgradeTraversal(AFGBuildable* AnchorBuildable, FSFTraversalConfig Config);
+
+	/** Server sends the traversal result back; injected via
+	 *  USFUpgradeTraversalService::InjectTraversalResult (tier counts recomputed client-side). */
+	UFUNCTION(Client, Reliable)
+	void Client_ReceiveTraversalResult(FSFTraversalResult Result);
+
+	/**
+	 * [EXTEND-MP] Server pushes the AUTHORITATIVELY derived clone topology to the building client
+	 * after every Extend commit reconstruction. The client's own capture poisons every segment
+	 * connection (GetConnection() is null on clients), so a preset saved on a client via
+	 * Import-from-Last-Extend carried empty wiring targets and restored builds came out with
+	 * unconnected belt segments (live finding 2026-06-10). The client caches this copy and
+	 * GetLastCloneTopology prefers it.
+	 */
+	UFUNCTION(Client, Reliable)
+	void Client_ReceiveServerCloneTopology(FSFCloneTopology Topology);
+
+	//~ Begin UObject Interface
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
+	//~ End UObject Interface
+
+	// SML requires a Remote Call Object to have at least one replicated UPROPERTY (registered in
+	// GetLifetimeReplicatedProps) - otherwise the RCO does not replicate and its client->server RPCs
+	// silently do nothing. (See the official SML multiplayer docs.) This dummy satisfies that requirement;
+	// nothing reads it. Without it, the scaling/spacing/arrow/upgrade RPCs above never actually run.
+	UPROPERTY(Replicated)
+	bool bDummyReplicated = true;
 
 protected:
 	// ========================================

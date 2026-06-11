@@ -4,6 +4,7 @@
 #include "SmartFoundations.h"
 #include "Hologram/FGHologram.h"
 #include "Subsystem/SFSubsystem.h"
+#include "Features/Extend/SFExtendService.h"   // [EXTEND-MP] topology walk RPCs
 #include "FGPlayerController.h"  // AFGPlayerController (don't rely on transitive unity-build includes)
 #include "Net/UnrealNetwork.h"
 
@@ -15,6 +16,14 @@ bool USFRCO::ShouldRegisterRemoteCallObject(const AFGGameMode* GameMode) const
 {
 	// Always register Smart! RCO - no conditional registration needed
 	return true;
+}
+
+void USFRCO::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	// Required for the RCO to replicate at all (SML rule): register at least one replicated property.
+	DOREPLIFETIME(USFRCO, bDummyReplicated);
 }
 
 // ========================================
@@ -193,6 +202,169 @@ bool USFRCO::Server_ToggleArrows_Validate(bool bVisible)
 }
 
 // ========================================
+// MP spec-based scaling construction
+// ========================================
+
+void USFRCO::Server_StageScalingSpec_Implementation(FSFScalingSpec Spec)
+{
+	USFSubsystem* Subsystem = USFSubsystem::Get(this);
+	AFGPlayerController* OwnerPC = Cast<AFGPlayerController>(GetOuter());
+	if (!IsValid(Subsystem) || !OwnerPC)
+	{
+		UE_LOG(LogSmartFoundations, Warning,
+			TEXT("[SFRCO] Server_StageScalingSpec: missing subsystem (%d) or owner PC (%d)"),
+			IsValid(Subsystem) ? 1 : 0, OwnerPC ? 1 : 0);
+		return;
+	}
+
+	Subsystem->StageScalingSpecForPlayer(OwnerPC, Spec);
+
+	if (Spec.bValid)
+	{
+		UE_LOG(LogSmartFoundations, Verbose,
+			TEXT("[MP-SPEC] Server staged scaling spec for %s: %d cells of %s, %d planned conduit(s)."),
+			*GetNameSafe(OwnerPC), Spec.CellCount(), *GetNameSafe(*Spec.BuildClass), Spec.ConduitPlan.Num());
+	}
+}
+
+bool USFRCO::Server_StageScalingSpec_Validate(FSFScalingSpec Spec)
+{
+	// Sanity-bound the grid (a forged/buggy spec cannot demand absurd expansion).
+	const FIntVector& G = Spec.Counters.GridCounters;
+	const int64 Cells = (int64)FMath::Max(1, FMath::Abs(G.X))
+		* FMath::Max(1, FMath::Abs(G.Y))
+		* FMath::Max(1, FMath::Abs(G.Z));
+	if (FMath::Abs(G.X) > 2000 || FMath::Abs(G.Y) > 2000 || FMath::Abs(G.Z) > 2000
+		|| Cells > 100000)
+	{
+		return false;
+	}
+
+	// Sanity-bound the conduit plan (#334): at most a few conduits per grid cell in practice; allow
+	// generous headroom. Spline previews route with a handful of points; 64 is far beyond any real
+	// auto-connect belt.
+	if (Spec.ConduitPlan.Num() > 4096)
+	{
+		return false;
+	}
+	for (const FSFConduitPlanEntry& Entry : Spec.ConduitPlan)
+	{
+		if (Entry.SplinePoints.Num() > 64)
+		{
+			return false;
+		}
+	}
+	return true;
+}
+
+// ========================================
+// Extend MP: server-side topology walk
+// ========================================
+
+void USFRCO::Server_RequestExtendTopology_Implementation(AFGBuildable* SourceBuilding)
+{
+	USFSubsystem* Subsystem = USFSubsystem::Get(this);
+	USFExtendService* Extend = IsValid(Subsystem) ? Subsystem->GetExtendService() : nullptr;
+	if (!Extend || !IsValid(SourceBuilding))
+	{
+		UE_LOG(LogSmartFoundations, Warning,
+			TEXT("[EXTEND-MP] Server_RequestExtendTopology: missing extend service (%d) or building (%d)"),
+			Extend ? 1 : 0, IsValid(SourceBuilding) ? 1 : 0);
+		return;
+	}
+
+	FSFExtendTopology Reply;
+	if (Extend->WalkTopology(SourceBuilding))
+	{
+		Reply = Extend->GetCurrentTopology();
+	}
+	else
+	{
+		// Negative reply: tag the building so the client caches "nothing to extend here" briefly
+		// instead of re-requesting every tick while aiming.
+		Reply.Reset();
+		Reply.SourceBuilding = SourceBuilding;
+		Reply.bIsValid = false;
+	}
+
+	UE_LOG(LogSmartFoundations, Verbose,
+		TEXT("[EXTEND-MP] Server walked topology for %s: valid=%d (beltIn=%d beltOut=%d pipeIn=%d pipeOut=%d power=%d)"),
+		*GetNameSafe(SourceBuilding), Reply.bIsValid ? 1 : 0,
+		Reply.InputChains.Num(), Reply.OutputChains.Num(),
+		Reply.PipeInputChains.Num(), Reply.PipeOutputChains.Num(), Reply.PowerPoles.Num());
+
+	Client_ReceiveExtendTopology(Reply);
+}
+
+bool USFRCO::Server_RequestExtendTopology_Validate(AFGBuildable* SourceBuilding)
+{
+	return true; // null-checked in the implementation; no client-supplied geometry to bound
+}
+
+void USFRCO::Client_ReceiveExtendTopology_Implementation(FSFExtendTopology Topology)
+{
+	USFSubsystem* Subsystem = USFSubsystem::Get(this);
+	if (USFExtendService* Extend = IsValid(Subsystem) ? Subsystem->GetExtendService() : nullptr)
+	{
+		Extend->ReceiveServerTopology(Topology);
+	}
+}
+
+void USFRCO::Server_StageExtendCommit_Implementation(FSFExtendCommitSpec Spec)
+{
+	USFSubsystem* Subsystem = USFSubsystem::Get(this);
+	AFGPlayerController* OwnerPC = Cast<AFGPlayerController>(GetOuter());
+	if (!IsValid(Subsystem) || !OwnerPC)
+	{
+		UE_LOG(LogSmartFoundations, Warning,
+			TEXT("[EXTEND-MP] Server_StageExtendCommit: missing subsystem (%d) or owner PC (%d)"),
+			IsValid(Subsystem) ? 1 : 0, OwnerPC ? 1 : 0);
+		return;
+	}
+
+	Subsystem->StageExtendCommitForPlayer(OwnerPC, Spec);
+
+	if (Spec.bValid)
+	{
+		UE_LOG(LogSmartFoundations, Verbose,
+			TEXT("[EXTEND-MP] Server staged %s commit for %s: offset %s, %d scaled clone(s) of %s, %d cost item type(s)%s."),
+			Spec.bIsRestore ? TEXT("RESTORE") : TEXT("Extend"),
+			*GetNameSafe(OwnerPC), *Spec.ParentOffset.ToCompactString(), Spec.ScaledClones.Num(),
+			*GetNameSafe(*Spec.BuildClass), Spec.Cost.Num(),
+			Spec.bIsRestore
+				? *FString::Printf(TEXT(", restore template children=%d"), Spec.RestoreTemplate.ChildHolograms.Num())
+				: TEXT(""));
+	}
+}
+
+bool USFRCO::Server_StageExtendCommit_Validate(FSFExtendCommitSpec Spec)
+{
+	// Sanity-bound the commit parameters (a forged/buggy commit cannot demand absurd spawning).
+	// For an EXTEND commit the clone topology is derived SERVER-side from these, never shipped.
+	if (Spec.ScaledClones.Num() > 1024 || Spec.ParentOffset.Size() > 1.0e7)
+	{
+		return false;
+	}
+	// A RESTORE commit ships the preset's value-only TEMPLATE topology (no source building exists
+	// to walk). Bound it like the conduit plan: child and per-spline-point caps.
+	if (Spec.bIsRestore)
+	{
+		if (Spec.RestoreTemplate.ChildHolograms.Num() > 4096)
+		{
+			return false;
+		}
+		for (const FSFCloneHologram& Holo : Spec.RestoreTemplate.ChildHolograms)
+		{
+			if (Holo.SplineData.Points.Num() > 64)
+			{
+				return false;
+			}
+		}
+	}
+	return true;
+}
+
+// ========================================
 // Upgrade Audit RPCs
 // ========================================
 
@@ -244,6 +416,103 @@ void USFRCO::Server_CancelUpgradeAudit_Implementation()
 bool USFRCO::Server_CancelUpgradeAudit_Validate()
 {
 	return true;
+}
+
+// ========================================
+// Upgrade Execution + Traversal RPCs ([UPGRADE-MP])
+// ========================================
+
+void USFRCO::Server_StartUpgrade_Implementation(FSFUpgradeExecutionParams Params)
+{
+	USFSubsystem* Subsystem = USFSubsystem::Get(this);
+	AFGPlayerController* OwnerPC = Cast<AFGPlayerController>(GetOuter());
+	if (!IsValid(Subsystem) || !OwnerPC)
+	{
+		UE_LOG(LogSmartFoundations, Warning,
+			TEXT("[UPGRADE-MP] Server_StartUpgrade: missing subsystem (%d) or owner PC (%d)"),
+			IsValid(Subsystem) ? 1 : 0, OwnerPC ? 1 : 0);
+		return;
+	}
+
+	USFUpgradeExecutionService* ExecutionService = Subsystem->GetUpgradeExecutionService();
+	if (!IsValid(ExecutionService))
+	{
+		UE_LOG(LogSmartFoundations, Error, TEXT("[UPGRADE-MP] Server_StartUpgrade: no execution service"));
+		return;
+	}
+
+	// Authoritative requester: cost deduction, build-gun hologram instigation, and the result
+	// echo all key off this - never the client-supplied field.
+	Params.PlayerController = OwnerPC;
+
+	UE_LOG(LogSmartFoundations, Verbose,
+		TEXT("[UPGRADE-MP] Server starting upgrade for %s: family=%d %d->%d radius=%.0fcm specific=%d"),
+		*GetNameSafe(OwnerPC), static_cast<int32>(Params.Family), Params.SourceTier, Params.TargetTier,
+		Params.Radius, Params.SpecificBuildables.Num());
+	ExecutionService->StartUpgrade(Params);
+}
+
+bool USFRCO::Server_StartUpgrade_Validate(FSFUpgradeExecutionParams Params)
+{
+	return Params.SourceTier >= 0 && Params.SourceTier <= 6
+		&& Params.TargetTier >= 0 && Params.TargetTier <= 6
+		&& Params.Radius >= 0.0f
+		&& Params.SpecificBuildables.Num() <= 50000;
+}
+
+void USFRCO::Client_ReceiveUpgradeResult_Implementation(FSFUpgradeExecutionResult Result)
+{
+	USFSubsystem* Subsystem = USFSubsystem::Get(this);
+	if (IsValid(Subsystem))
+	{
+		if (USFUpgradeExecutionService* ExecutionService = Subsystem->GetUpgradeExecutionService())
+		{
+			ExecutionService->InjectUpgradeResult(Result);
+		}
+	}
+}
+
+void USFRCO::Server_StartUpgradeTraversal_Implementation(AFGBuildable* AnchorBuildable, FSFTraversalConfig Config)
+{
+	AFGPlayerController* OwnerPC = Cast<AFGPlayerController>(GetOuter());
+	if (!OwnerPC || !AnchorBuildable)
+	{
+		UE_LOG(LogSmartFoundations, Warning,
+			TEXT("[UPGRADE-MP] Server_StartUpgradeTraversal: missing owner PC (%d) or anchor (%d)"),
+			OwnerPC ? 1 : 0, AnchorBuildable ? 1 : 0);
+		return;
+	}
+
+	// The walk is synchronous; a throwaway service matches the SP panel's usage.
+	USFUpgradeTraversalService* TraversalService = NewObject<USFUpgradeTraversalService>();
+	const FSFTraversalResult Result = TraversalService->TraverseNetwork(AnchorBuildable, Config, OwnerPC);
+	UE_LOG(LogSmartFoundations, Verbose,
+		TEXT("[UPGRADE-MP] Server traversal for %s from %s: family=%d entries=%d upgradeable=%d"),
+		*GetNameSafe(OwnerPC), *GetNameSafe(AnchorBuildable), static_cast<int32>(Result.Family),
+		Result.Entries.Num(), Result.UpgradeableCount);
+	Client_ReceiveTraversalResult(Result);
+}
+
+bool USFRCO::Server_StartUpgradeTraversal_Validate(AFGBuildable* AnchorBuildable, FSFTraversalConfig Config)
+{
+	return Config.MaxTraversalCount >= 0 && Config.MaxTraversalCount <= 100000;
+}
+
+void USFRCO::Client_ReceiveTraversalResult_Implementation(FSFTraversalResult Result)
+{
+	USFUpgradeTraversalService::InjectTraversalResult(Result);
+}
+
+void USFRCO::Client_ReceiveServerCloneTopology_Implementation(FSFCloneTopology Topology)
+{
+	USFSubsystem* Subsystem = USFSubsystem::Get(this);
+	if (IsValid(Subsystem))
+	{
+		if (USFExtendService* ExtendService = Subsystem->GetExtendService())
+		{
+			ExtendService->ReceiveServerCloneTopology(Topology);
+		}
+	}
 }
 
 void USFRCO::Client_ReceiveAuditResult_Implementation(FSFUpgradeAuditResult Result)

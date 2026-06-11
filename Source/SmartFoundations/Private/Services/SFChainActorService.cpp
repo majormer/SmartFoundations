@@ -20,6 +20,21 @@
 void USFChainActorService::Initialize(USFSubsystem* InSubsystem)
 {
 	Subsystem = InSubsystem;
+
+	// Load-time repair sweep (authority only): a save written while detached-but-segmented
+	// chains existed (the pre-fix upgrade/extend rebuild left them; ShouldSave is unconditionally
+	// true) reloads with belts claimed by TWO chains — vanilla's in-tick recovery then fires
+	// ForceDestroyChainActor from a ParallelFor WORKER and randomly asserts (the 2026-06-10 boot
+	// crash). Sweeping once shortly after load force-destroys those chains from the GAME THREAD
+	// (items transfer back to belts) before the race can fire again. 15 s leaves vanilla's own
+	// load-time chain registration time to settle first.
+	if (UWorld* World = InSubsystem ? InSubsystem->GetWorld() : nullptr)
+	{
+		if (World->GetNetMode() != NM_Client)
+		{
+			ScheduleDeferredZombiePurge(15.0f);
+		}
+	}
 }
 
 void USFChainActorService::Shutdown()
@@ -163,6 +178,13 @@ int32 USFChainActorService::InvalidateAndRebuildChains(
 		else
 		{
 			++OrphanCount;
+			// [CHAIN-DIAG] An "orphan" affected chain (no owning TG) is assumed inert, but if it
+			// still HOLDS SEGMENTS it will be skipped by the 0-segment zombie purge, persist into
+			// the save (ShouldSave is unconditionally true), and poison the reload — belts appear
+			// in two chains' segment lists (live crash class 2026-06-10).
+			UE_LOG(LogSmartUpgrade, Verbose,
+				TEXT("[CHAIN-DIAG] Phase1 orphan affected chain %s: segments=%d (no owning TG; left alive)"),
+				*Chain->GetName(), Chain->GetNumChainSegments());
 		}
 	}
 
@@ -482,6 +504,24 @@ int32 USFChainActorService::InvalidateAndRebuildChains(
 
 		BuildableSub->MigrateConveyorGroupToChainActor(TG);
 
+		// [CHAIN-DIAG] One line per migrated group: new chain identity + segment count + members.
+		{
+			FString MemberNames;
+			int32 Listed = 0;
+			for (AFGBuildableConveyorBase* B : TG->Conveyors)
+			{
+				if (!IsValid(B)) continue;
+				if (Listed++ == 5) { MemberNames += TEXT(",..."); break; }
+				if (Listed > 1) MemberNames += TEXT(",");
+				MemberNames += B->GetName();
+			}
+			UE_LOG(LogSmartUpgrade, Verbose,
+				TEXT("[CHAIN-DIAG] Phase3 migrated TG (%d belts: %s) -> chain %s segments=%d"),
+				ValidBeltCount, *MemberNames,
+				TG->ChainActor ? *TG->ChainActor->GetName() : TEXT("null"),
+				TG->ChainActor ? TG->ChainActor->GetNumChainSegments() : -1);
+		}
+
 		// Post-migrate check: did we produce a valid chain?
 		if (TG->ChainActor)
 		{
@@ -652,6 +692,16 @@ int32 USFChainActorService::InvalidateAndRebuildChains(
 		// calls Destroy() on it in a safe timer context 3 seconds from now.
 		BuildableSub->RemoveConveyorChainActor(Chain);
 		++DetachedCount;
+
+		// [CHAIN-DIAG] CRITICAL probe: this detached chain is assumed to be a 0-segment zombie
+		// (Phase 2's RemoveChainActorFromConveyorGroup supposedly zeroed its segment list). If
+		// segments are NON-zero here, the deferred purge will SKIP it, it saves (ShouldSave is
+		// unconditionally true), and the reload sees its belts in two chains — the 2026-06-10
+		// load-crash poison. This line is the smoking gun for that hypothesis.
+		UE_LOG(LogSmartUpgrade, Verbose,
+			TEXT("[CHAIN-DIAG] Phase4 detached old chain %s: segments=%d%s"),
+			*Chain->GetName(), Chain->GetNumChainSegments(),
+			Chain->GetNumChainSegments() > 0 ? TEXT("  <-- WILL ESCAPE THE 0-SEG PURGE AND POISON THE SAVE") : TEXT(""));
 	}
 
 	// Phase 5: Verify every affected group is internally consistent before returning.
@@ -725,15 +775,135 @@ int32 USFChainActorService::PurgeZombieChainActors()
 	// Factory_Tick:614 → ForceDestroyChainActor fires from a ParallelFor worker thread
 	// (assertion: GTestRegisterComponentTickFunctions == 0 fails on worker threads).
 	TArray<AFGConveyorChainActor*> Zombies;
+	TArray<AFGConveyorChainActor*> DetachedWithSegments;
 	for (TActorIterator<AFGConveyorChainActor> It(World); It; ++It)
 	{
 		AFGConveyorChainActor* Chain = *It;
 		if (!Chain || !IsValid(Chain)) continue;
 		if (Chain->GetNumChainSegments() == 0)
+		{
 			Zombies.Add(Chain);
+		}
+		else
+		{
+			// A chain WITH segments that no tick group owns is NOT inert (the old Phase 2/4
+			// assumption): it persists into saves (ShouldSave is unconditionally true) where its
+			// segment list claims belts now owned by the replacement chain — on reload vanilla's
+			// in-tick recovery fires ForceDestroyChainActor from a ParallelFor WORKER and
+			// randomly asserts in FNetworkObjectList (the 2026-06-10 boot crash). At runtime it
+			// also imprisons its in-flight items (length-0 orphan chains holding 6-12 items each,
+			// starving downstream factories — live finding, same day).
+			bool bOwned = false;
+			for (FConveyorTickGroup* TG : BuildableSub->mConveyorTickGroup)
+			{
+				if (TG && TG->ChainActor == Chain) { bOwned = true; break; }
+			}
+			if (!bOwned)
+			{
+				DetachedWithSegments.Add(Chain);
+			}
+		}
 	}
 
-	if (Zombies.Num() == 0) return 0;
+	// Destroy detached-but-segmented chains via VANILLA's own cleanup. ForceDestroyChainActor
+	// removes the chain from the tick buckets AND transfers its items back onto the conveyor
+	// belts — exactly the two leaks (save poison + imprisoned items). It is only unsafe from
+	// ParallelFor workers (vanilla's own in-tick recovery crash); this timer context is the
+	// game thread in TG_PrePhysics, before TickFactoryActors dispatches — the same safety
+	// window the 0-segment Destroy() path below has used since April 2026.
+	//
+	// CRITICAL FOLLOW-UP: a belt whose ONLY chain was the destroyed one is left
+	// connected-but-chainless — the THESIS factory-tick hazard (live 2026-06-10: the sweep ran,
+	// the save captured chainless belts, the next boot AV'd in TickFactoryActors ~8 min in,
+	// FGBuildableSubsystem.cpp:644 — the original d79e19b crash line). Collect each destroyed
+	// chain's member belts FIRST, then re-register any belt left chainless through vanilla
+	// (Remove+AddConveyor → the pending-chain path rebuilds a real chain next frame — the
+	// proven ReRegister pattern).
+	int32 ForceDestroyedCount = 0;
+	TArray<AFGBuildableConveyorBase*> OrphanedMemberBelts;
+	for (AFGConveyorChainActor* Chain : DetachedWithSegments)
+	{
+		if (!IsValid(Chain)) continue;
+		for (const FConveyorChainSplineSegment& Seg : Chain->GetChainSegments())
+		{
+			if (Seg.ConveyorBase && IsValid(Seg.ConveyorBase))
+			{
+				OrphanedMemberBelts.AddUnique(Seg.ConveyorBase);
+			}
+		}
+		UE_LOG(LogSmartUpgrade, Warning,
+			TEXT("[CHAIN-DIAG] Purge force-destroying detached-but-segmented chain %s (segments=%d) — items transfer back to belts"),
+			*Chain->GetName(), Chain->GetNumChainSegments());
+		BuildableSub->ForceDestroyChainActor(Chain);
+		++ForceDestroyedCount;
+	}
+	int32 ReRegisteredBelts = 0;
+	for (AFGBuildableConveyorBase* Belt : OrphanedMemberBelts)
+	{
+		if (!IsValid(Belt) || Belt->IsActorBeingDestroyed()) continue;
+		if (Belt->GetConveyorChainActor() != nullptr) continue; // still owned by a live chain — fine
+		BuildableSub->RemoveConveyor(Belt);
+		BuildableSub->AddConveyor(Belt);
+		++ReRegisteredBelts;
+	}
+	if (ForceDestroyedCount > 0)
+	{
+		UE_LOG(LogSmartUpgrade, Warning,
+			TEXT("[CHAIN-DIAG] Purge sweep: %d detached-but-segmented chain(s) force-destroyed, %d chainless member belt(s) re-registered for vanilla rebuild"),
+			ForceDestroyedCount, ReRegisteredBelts);
+	}
+
+	// General heal: a CONNECTED belt with no chain actor is the thesis factory-tick hazard
+	// regardless of how it got that way — a save can carry them (live 2026-06-10: a save written
+	// right after a force-destroy sweep, before vanilla rebuilt, AV'd the next boot ~8 min in).
+	// Re-register any such belt unless its tick group is already pending a vanilla chain build.
+	int32 HealedChainlessBelts = 0;
+	for (TActorIterator<AFGBuildableConveyorBase> It(World); It; ++It)
+	{
+		AFGBuildableConveyorBase* Belt = *It;
+		if (!Belt || !IsValid(Belt) || Belt->IsActorBeingDestroyed()) continue;
+		if (Belt->GetConveyorChainActor() != nullptr) continue;
+
+		UFGFactoryConnectionComponent* C0 = Belt->GetConnection0();
+		UFGFactoryConnectionComponent* C1 = Belt->GetConnection1();
+		const bool bConnected = (C0 && C0->IsConnected()) || (C1 && C1->IsConnected());
+		if (!bConnected) continue;
+
+		// Skip belts whose tick group vanilla is already going to rebuild this/next frame.
+		const int32 BucketID = Belt->GetConveyorBucketID();
+		if (BuildableSub->mConveyorTickGroup.IsValidIndex(BucketID))
+		{
+			FConveyorTickGroup* TG = BuildableSub->mConveyorTickGroup[BucketID];
+			if (TG && BuildableSub->mConveyorGroupsPendingChainActors.Contains(TG))
+			{
+				continue;
+			}
+		}
+
+		BuildableSub->RemoveConveyor(Belt);
+		BuildableSub->AddConveyor(Belt);
+		++HealedChainlessBelts;
+		if (HealedChainlessBelts <= 12)
+		{
+			UE_LOG(LogSmartUpgrade, Warning,
+				TEXT("[CHAIN-DIAG] Purge sweep: re-registered connected-but-chainless belt %s (thesis factory-tick hazard)"),
+				*Belt->GetName());
+		}
+	}
+	if (HealedChainlessBelts > 0)
+	{
+		UE_LOG(LogSmartUpgrade, Warning,
+			TEXT("[CHAIN-DIAG] Purge sweep: %d connected-but-chainless belt(s) re-registered total"),
+			HealedChainlessBelts);
+	}
+
+	if (Zombies.Num() == 0)
+	{
+		UE_LOG(LogSmartUpgrade, Display,
+			TEXT("[CHAIN-DIAG] Sweep complete: zombiesPurged=0 detachedForceDestroyed=%d orphanBeltsReRegistered=%d chainlessBeltsHealed=%d"),
+			ForceDestroyedCount, ReRegisteredBelts, HealedChainlessBelts);
+		return ForceDestroyedCount;
+	}
 
 	int32 PurgeCount = 0;
 	for (AFGConveyorChainActor* Chain : Zombies)
@@ -764,7 +934,13 @@ int32 USFChainActorService::PurgeZombieChainActors()
 		++PurgeCount;
 	}
 
-	return PurgeCount;
+	// [CHAIN-DIAG] Always-on sweep summary: lets a shipping dedi log show whether a build path
+	// left chainless belts behind (the thesis factory-tick AV) without verbose logging.
+	UE_LOG(LogSmartUpgrade, Display,
+		TEXT("[CHAIN-DIAG] Sweep complete: zombiesPurged=%d detachedForceDestroyed=%d orphanBeltsReRegistered=%d chainlessBeltsHealed=%d"),
+		PurgeCount, ForceDestroyedCount, ReRegisteredBelts, HealedChainlessBelts);
+
+	return PurgeCount + ForceDestroyedCount;
 }
 
 int32 USFChainActorService::RepairSplitChains()
@@ -1579,6 +1755,113 @@ int32 USFChainActorService::ReRegisterAndQueueVanillaRebuildForBelts(
 		UniqueBelts.Num(), RemovedBelts, AddedBelts, ClearedGroups, AffectedChains.Num(), DetachedChains, ClearedPendingGroups, PendingGroups);
 
 	return PendingGroups;
+}
+
+int32 USFChainActorService::RemoveConveyorFromAllTickGroups(AFGBuildableConveyorBase* Conveyor)
+{
+	AFGBuildableSubsystem* BuildableSub = GetBuildableSubsystem();
+	if (!BuildableSub || !Conveyor) return 0;
+
+	int32 StaleRemovals = 0;
+	for (FConveyorTickGroup* TG : BuildableSub->mConveyorTickGroup)
+	{
+		if (TG && TG->Conveyors.Contains(Conveyor))
+		{
+			TG->Conveyors.Remove(Conveyor);
+			++StaleRemovals;
+		}
+	}
+	if (StaleRemovals > 0)
+	{
+		UE_LOG(LogSmartUpgrade, Warning,
+			TEXT("[CHAIN-DIAG] RemoveConveyor guard: %s was STILL in %d tick group(s) after vanilla removal (stale bucket id) - force-removed (freed-pointer factory-tick AV prevented)."),
+			*Conveyor->GetName(), StaleRemovals);
+	}
+	return StaleRemovals;
+}
+
+int32 USFChainActorService::RemoveBuildableFromFactoryTickArrays(AFGBuildable* Buildable)
+{
+	AFGBuildableSubsystem* BuildableSub = GetBuildableSubsystem();
+	if (!BuildableSub || !Buildable) return 0;
+
+	int32 Removed = 0;
+	Removed += BuildableSub->mFactoryBuildings.Remove(Buildable);
+	for (TArray<AFGBuildable*>& Group : BuildableSub->mFactoryBuildingGroups)
+	{
+		Removed += Group.Remove(Buildable);
+	}
+	return Removed;
+}
+
+int32 USFChainActorService::ScrubFactoryTickArrays()
+{
+	AFGBuildableSubsystem* BuildableSub = GetBuildableSubsystem();
+	if (!BuildableSub) return 0;
+
+	auto IsEntryHealthy = [](AFGBuildable* Entry) -> bool
+	{
+		// IsValidLowLevelFast rejects freed/garbage pointers (GUObjectArray membership + vtable
+		// sanity); IsValid additionally rejects pending-kill objects. The IsA check catches the
+		// one case those CANNOT: a stale entry whose freed memory was REUSED by a different live
+		// UObject at the same address - it passes both validity checks but is not a buildable,
+		// and Factory_Tick through the wrong (smaller) vtable reads garbage past it (the
+		// 2026-06-10 tick-AV signature; repro 10 motivated this check).
+		return Entry
+			&& Entry->IsValidLowLevelFast(/*bRecursive*/ false)
+			&& IsValid(Entry)
+			&& Entry->IsA<AFGBuildable>();
+	};
+
+	int32 RemovedTotal = 0;
+
+	TArray<AFGBuildable*>& Buildings = BuildableSub->mFactoryBuildings;
+
+	for (int32 Index = Buildings.Num() - 1; Index >= 0; --Index)
+	{
+		AFGBuildable* Entry = Buildings[Index];
+		if (IsEntryHealthy(Entry))
+		{
+			continue;
+		}
+
+		// Identify the corruption site via valid neighbors (registration order context). If the
+		// entry is a live UObject of the WRONG class, the address was recycled - name the
+		// squatter: its class points at whatever allocates over freed buildables.
+		AFGBuildable* Prev = Buildings.IsValidIndex(Index - 1) ? Buildings[Index - 1] : nullptr;
+		AFGBuildable* Next = Buildings.IsValidIndex(Index + 1) ? Buildings[Index + 1] : nullptr;
+		FString EntryDescription = TEXT("<freed/garbage>");
+		if (Entry && Entry->IsValidLowLevelFast(false) && IsValid(Entry) && !Entry->IsA<AFGBuildable>())
+		{
+			UObject* Squatter = static_cast<UObject*>(Entry);
+			EntryDescription = FString::Printf(TEXT("LIVE NON-BUILDABLE (recycled address): %s / %s"),
+				*Squatter->GetName(), *GetNameSafe(Squatter->GetClass()));
+		}
+		UE_LOG(LogSmartUpgrade, Error,
+			TEXT("[CHAIN-DIAG] CORRUPT mFactoryBuildings entry at index %d/%d: ptr=0x%llX [%s] (prev=%s next=%s) - removed before the factory tick could call through it."),
+			Index, Buildings.Num(), reinterpret_cast<uint64>(Entry), *EntryDescription,
+			IsEntryHealthy(Prev) ? *Prev->GetName() : TEXT("<invalid/none>"),
+			IsEntryHealthy(Next) ? *Next->GetName() : TEXT("<invalid/none>"));
+		Buildings.RemoveAt(Index);
+		++RemovedTotal;
+	}
+
+	for (TArray<AFGBuildable*>& Group : BuildableSub->mFactoryBuildingGroups)
+	{
+		for (int32 Index = Group.Num() - 1; Index >= 0; --Index)
+		{
+			if (!IsEntryHealthy(Group[Index]))
+			{
+				UE_LOG(LogSmartUpgrade, Error,
+					TEXT("[CHAIN-DIAG] CORRUPT mFactoryBuildingGroups entry: ptr=0x%llX - removed."),
+					reinterpret_cast<uint64>(Group[Index]));
+				Group.RemoveAt(Index);
+				++RemovedTotal;
+			}
+		}
+	}
+
+	return RemovedTotal;
 }
 
 void USFChainActorService::ScheduleDeferredZombiePurge(float DelaySeconds)

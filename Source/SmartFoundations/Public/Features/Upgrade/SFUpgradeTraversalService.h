@@ -68,8 +68,9 @@ struct FSFTraversalResult
 	UPROPERTY()
 	TArray<FSFUpgradeAuditEntry> Entries;
 
-	/** Count by tier */
-	UPROPERTY()
+	/** Count by tier. NotReplicated: UHT forbids TMaps in RPC structs; this never crosses the
+	 *  wire - InjectTraversalResult recomputes it from Entries on the client ([UPGRADE-MP]). */
+	UPROPERTY(NotReplicated)
 	TMap<int32, int32> CountByTier;
 
 	/** Total count of buildables in network */
@@ -92,6 +93,9 @@ struct FSFTraversalResult
 	bool IsValid() const { return Family != ESFUpgradeFamily::None && ErrorMessage.IsEmpty(); }
 };
 
+/** [UPGRADE-MP] Native delegate for server-walked traversal results delivered to a client. */
+DECLARE_MULTICAST_DELEGATE_OneParam(FSFOnTraversalResultReceived, const FSFTraversalResult&);
+
 /**
  * Service for traversing connected buildable networks
  * Used by the Upgrade Panel to find all buildables in a connected system
@@ -102,6 +106,16 @@ class SMARTFOUNDATIONS_API USFUpgradeTraversalService : public UObject
 	GENERATED_BODY()
 
 public:
+	/** [UPGRADE-MP] Broadcast on the CLIENT when a server-walked traversal result arrives via
+	 *  USFRCO::Client_ReceiveTraversalResult. Static because the panel news up a throwaway
+	 *  traversal service per scan - there is no shared instance to route through. Subscribers
+	 *  (the Upgrade Panel) must RemoveAll(this) on destruction. */
+	static FSFOnTraversalResultReceived OnClientTraversalResultReceived;
+
+	/** [UPGRADE-MP] Client-side: normalize and broadcast a server-walked result. CountByTier is
+	 *  recomputed from Entries (a TMap UPROPERTY is not reliably serialized across an RPC). */
+	static void InjectTraversalResult(FSFTraversalResult Result);
+
 	/**
 	 * Traverse a network starting from an anchor buildable
 	 * @param AnchorBuildable The starting point for traversal

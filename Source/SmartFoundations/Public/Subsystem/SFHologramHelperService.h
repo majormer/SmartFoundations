@@ -503,9 +503,11 @@ private:
 		const FRotator& Rotation
 	);
 
+public:
 	/**
 	 * Destroy all current child holograms
-	 * Helper for regenerating grid
+	 * Helper for regenerating grid. Public: also used by the MP spec-construction fire hook to
+	 * clear the preview grid at fire time (the sticky counters regenerate it on the next hologram).
 	 */
 	void DestroyAllChildren();
 };

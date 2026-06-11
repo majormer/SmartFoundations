@@ -38,6 +38,48 @@ protected:
 	 */
 	void RegisterBeltSupportConstructHook();
 
+	/**
+	 * Multiplayer Slice 0 (Phase 1 - construct chunk guard). Hooks UFGBuildGunStateBuild::Server_ConstructHologram
+	 * on the CLIENT (confirmed seam: the client calls this RPC directly; an earlier InternalConstructHologram hook
+	 * never fired). A Smart scaled grid serializes the parent + all child holograms into one
+	 * FConstructHologramMessage.SerializedHologramData blob; past an engine byte ceiling (~64KB, empirical ~135
+	 * cells) the RPC fails to marshal ("Failed to serialize properties") and is dropped -> all-or-nothing failure
+	 * with orphaned previews (no failure callback fires because the server never processed it). This guard reads
+	 * the ACTUAL serialized byte size and cancels the send for an oversized Smart-grid construct, so nothing
+	 * orphans (the preview stays live) and the player is told to build in smaller sections. Engages only for a
+	 * network client (NM_Client) and only for Smart grids (children tagged SF_GridChild) - vanilla placements and
+	 * blueprints are untouched. (Phase 2 will auto-chunk the placement instead of refusing it.)
+	 */
+	void RegisterClientConstructChunkGuardHook();
+
+	/**
+	 * MP Slice 0 SAFETY GUARD. Hooks UFGBuildGunStateBuild::InternalExecuteDuBuildStepInput (the client fire
+	 * handler, BEFORE vanilla serializes the construct). For an oversized client scaled grid (one that can't
+	 * fit a single 64KB Server_ConstructHologram), it cancels the fire so nothing is serialized or sent - the
+	 * grid stays live for the player to scale down. This prevents the orphaned-preview/dropped-RPC bug AND the
+	 * server crash that hand-built chunk messages cause. It is NOT a large-grid MP feature (those constructs
+	 * are not safely achievable today - see the method body and AGENTS.md). Engages only for NM_Client + Smart
+	 * grids (tagged SF_GridChild); vanilla placements and blueprints are untouched.
+	 */
+	void RegisterClientGridChunkFireHook();
+
+	/**
+	 * MP spec-based scaling construction - CLASS-AGNOSTIC hook path (covers every scalable
+	 * buildable, including vanilla Blueprint hologram wrappers like Holo_Foundation_C, without
+	 * swapping the active hologram). Three hooks on vanilla virtual BODIES (they fire via the
+	 * Super chain from any subclass):
+	 *  - AFGHologram::SerializeConstructMessage: saving = capture spec + strip SF_GridChild
+	 *    children -> original writes the O(1) message -> append spec -> restore children;
+	 *    loading = original reads -> read spec into the hologram data registry.
+	 *  - AFGHologram::Construct (before original runs): server expands the registry spec into
+	 *    children post-validation (fresh holograms cannot pass vanilla placement validation -
+	 *    live finding 2026-06-09).
+	 *  - AFGHologram::GetCost: server scales the per-cell cost by the cell count while the
+	 *    children do not exist yet (pre-Construct charge time).
+	 * Gated by sf.MP.SpecConstruction + USFBuildableSizeRegistry.bSupportsScaling.
+	 */
+	void RegisterSpecConstructionHooks();
+
 	/** Smart! Configuration blueprint - registered with SML for in-game menu access */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Smart! Configuration")
 	TSubclassOf<class UModConfiguration> SmartConfigClass;

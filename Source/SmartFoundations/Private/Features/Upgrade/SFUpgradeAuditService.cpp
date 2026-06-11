@@ -549,22 +549,20 @@ void USFUpgradeAuditService::FinalizeAudit()
 	{
 		if (AFGPlayerController* PC = CurrentParams.RequestingPlayer.Get())
 		{
-			// Find our RCO instance for this player
-			// In SML, RCOs are spawned per player controller
-			TArray<AActor*> RCOActors;
-			UGameplayStatics::GetAllActorsOfClass(World, USFRCO::StaticClass(), RCOActors);
-			
-			for (AActor* Actor : RCOActors)
+			// RCOs are UObjects outered to the player controller, NOT actors — the old
+			// GetAllActorsOfClass scan here could never find one, so audit results were never
+			// delivered to clients (live finding 2026-06-10; the panel-side request lookup had
+			// the same bug, masking this one).
+			if (USFRCO* RCO = PC->GetRemoteCallObjectOfClass<USFRCO>())
 			{
-				if (USFRCO* RCO = Cast<USFRCO>(Actor))
-				{
-					if (RCO->GetOuter() == PC)
-					{
-						RCO->Client_ReceiveAuditResult(LastResult);
-						UE_LOG(LogSmartUpgrade, Verbose, TEXT("USFUpgradeAuditService: Sent audit result to client via RCO"));
-						break;
-					}
-				}
+				RCO->Client_ReceiveAuditResult(LastResult);
+				UE_LOG(LogSmartUpgrade, Verbose, TEXT("USFUpgradeAuditService: Sent audit result to client via RCO"));
+			}
+			else
+			{
+				UE_LOG(LogSmartUpgrade, Warning,
+					TEXT("USFUpgradeAuditService: Could not resolve USFRCO for %s - audit result not delivered."),
+					*GetNameSafe(PC));
 			}
 		}
 	}

@@ -27,7 +27,7 @@ protected:
     // Foundation validation and snapping
     virtual void ValidateFoundationPlacement();
     virtual void ApplyFoundationSnapping();
-    
+
     // Common helper functions
     virtual void LogSmartActivity(const FString& Activity) const;
 };

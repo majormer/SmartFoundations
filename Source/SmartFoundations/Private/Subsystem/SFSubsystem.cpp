@@ -410,6 +410,117 @@ void USFSubsystem::UpdateCounterState(const FSFCounterState& NewState)
 	}
 }
 
+// ========================================
+// MP spec-based scaling construction - server-side per-player spec staging
+// ========================================
+
+void USFSubsystem::StageScalingSpecForPlayer(APlayerController* PC, const FSFScalingSpec& Spec)
+{
+	if (!PC)
+	{
+		return;
+	}
+	if (Spec.bValid)
+	{
+		StagedScalingSpecs.Add(PC, Spec);
+	}
+	else
+	{
+		// An invalid spec is an explicit CLEAR (sent on every non-grid fire) - overwrite semantics
+		// guarantee a stale spec from an earlier failed construct cannot leak into a later fire.
+		StagedScalingSpecs.Remove(PC);
+	}
+}
+
+bool USFSubsystem::PeekScalingSpecForInstigator(APawn* Instigator, UClass* BuildClass, FSFScalingSpec& OutSpec) const
+{
+	if (!Instigator || !BuildClass)
+	{
+		return false;
+	}
+	APlayerController* PC = Cast<APlayerController>(Instigator->GetController());
+	if (!PC)
+	{
+		return false;
+	}
+	const FSFScalingSpec* Staged = StagedScalingSpecs.Find(PC);
+	if (!Staged || !Staged->bValid || Staged->BuildClass != BuildClass)
+	{
+		return false;
+	}
+	OutSpec = *Staged;
+	return true;
+}
+
+bool USFSubsystem::ConsumeScalingSpecForInstigator(APawn* Instigator, UClass* BuildClass, FSFScalingSpec& OutSpec)
+{
+	if (!PeekScalingSpecForInstigator(Instigator, BuildClass, OutSpec))
+	{
+		return false;
+	}
+	StagedScalingSpecs.Remove(Cast<APlayerController>(Instigator->GetController()));
+	return true;
+}
+
+// [EXTEND-MP] Extend commit staging - identical model to the scaling spec above.
+
+void USFSubsystem::StageExtendCommitForPlayer(APlayerController* PC, const FSFExtendCommitSpec& Spec)
+{
+	if (!PC)
+	{
+		return;
+	}
+	if (Spec.bValid)
+	{
+		StagedExtendCommits.Add(PC, Spec);
+		StagedExtendCommitTimes.Add(PC, FPlatformTime::Seconds());
+	}
+	else
+	{
+		StagedExtendCommits.Remove(PC);
+		StagedExtendCommitTimes.Remove(PC);
+	}
+}
+
+bool USFSubsystem::PeekExtendCommitForInstigator(APawn* Instigator, UClass* BuildClass, FSFExtendCommitSpec& OutSpec) const
+{
+	if (!Instigator || !BuildClass)
+	{
+		return false;
+	}
+	APlayerController* PC = Cast<APlayerController>(Instigator->GetController());
+	if (!PC)
+	{
+		return false;
+	}
+	const FSFExtendCommitSpec* Staged = StagedExtendCommits.Find(PC);
+	if (!Staged || !Staged->bValid || Staged->BuildClass != BuildClass)
+	{
+		return false;
+	}
+	// Freshness TTL: a live session pre-stages every ~250ms; an entry older than this belongs to
+	// an abandoned session whose CLEAR was lost - never consume it into an unrelated construct.
+	const double* StagedAt = StagedExtendCommitTimes.Find(PC);
+	if (!StagedAt || FPlatformTime::Seconds() - *StagedAt > 10.0)
+	{
+		return false;
+	}
+	OutSpec = *Staged;
+	return true;
+}
+
+bool USFSubsystem::ConsumeExtendCommitForInstigator(APawn* Instigator, UClass* BuildClass, FSFExtendCommitSpec& OutSpec)
+{
+	if (!PeekExtendCommitForInstigator(Instigator, BuildClass, OutSpec))
+	{
+		return false;
+	}
+	APlayerController* PC = Cast<APlayerController>(Instigator->GetController());
+	StagedExtendCommits.Remove(PC);
+	StagedExtendCommitTimes.Remove(PC);
+	return true;
+}
+
 void USFSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
@@ -800,6 +911,8 @@ void USFSubsystem::Tick(float DeltaTime)
 	{
 		// Get the building the player is looking at via line trace
 		AFGBuildable* LookedAtBuilding = nullptr;
+		FString DbgRawHit = TEXT("(no-pc/cam)"); // [EXTEND-MP] raw trace result for diagnostics
+		FVector DbgDir = FVector::ZeroVector;
 
 		AFGPlayerController* PC = Cast<AFGPlayerController>(LastController.Get());
 		if (!PC)
@@ -815,8 +928,13 @@ void USFSubsystem::Tick(float DeltaTime)
 		{
 			if (APlayerCameraManager* CameraManager = PC->PlayerCameraManager)
 			{
-				FVector Start = CameraManager->GetCameraLocation();
-				FVector End = Start + CameraManager->GetActorForwardVector() * 5000.0f;  // 50m range
+				// [EXTEND-MP] Use the player view point for the aim ray (robust on clients) instead of the
+				// camera-manager actor's forward vector, which can be stale/wrong on a remote client.
+				FVector ViewLoc; FRotator ViewRot;
+				PC->GetPlayerViewPoint(ViewLoc, ViewRot);
+				FVector Start = ViewLoc;
+				DbgDir = ViewRot.Vector();
+				FVector End = Start + DbgDir * 5000.0f;  // 50m range
 
 				FHitResult HitResult;
 				FCollisionQueryParams Params;
@@ -824,7 +942,9 @@ void USFSubsystem::Tick(float DeltaTime)
 				Params.AddIgnoredActor(ActiveHologram.Get());
 
 				// Use WorldStatic channel which hits buildings, not just visibility
-				if (GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_WorldStatic, Params))
+				const bool bHit = GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_WorldStatic, Params);
+				DbgRawHit = bHit ? (HitResult.GetActor() ? HitResult.GetActor()->GetClass()->GetName() : TEXT("hit(no-actor)")) : TEXT("MISS");
+				if (bHit)
 				{
 					AActor* HitActor = HitResult.GetActor();
 					LookedAtBuilding = Cast<AFGBuildable>(HitActor);
@@ -854,6 +974,24 @@ void USFSubsystem::Tick(float DeltaTime)
 			{
 				SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔄 EXTEND: No PlayerController available for line trace"));
 				LastWarnTime = CurrentTime;
+			}
+		}
+
+		// [EXTEND-MP] TEMP diagnostic: why does Extend never activate on a client? Log the detection state
+		// once/sec (Display so it shows in-game; remove before release).
+		{
+			static double LastExtMpLog = 0;
+			const double NowExt = FPlatformTime::Seconds();
+			if (NowExt - LastExtMpLog > 1.0)
+			{
+				UE_LOG(LogSmartFoundations, Verbose,
+					TEXT("[EXTEND-MP] NetMode=%d PC=%s rawHit=%s dir=(%.2f,%.2f,%.2f) LookedAt=%s holoBuildClass=%s"),
+					GetWorld() ? (int32)GetWorld()->GetNetMode() : -1,
+					PC ? TEXT("ok") : TEXT("NULL"),
+					*DbgRawHit, DbgDir.X, DbgDir.Y, DbgDir.Z,
+					LookedAtBuilding ? *LookedAtBuilding->GetName() : TEXT("none"),
+					(ActiveHologram.IsValid() && ActiveHologram->GetBuildClass()) ? *ActiveHologram->GetBuildClass()->GetName() : TEXT("-"));
+				LastExtMpLog = NowExt;
 			}
 		}
 

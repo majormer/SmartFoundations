@@ -80,12 +80,13 @@ FSFValidationService::FValidationResult FSFValidationService::ValidateGridSize(c
 	// non-positive/overflow sizes. The real protection against UObject exhaustion is the
 	// GRID_CHILDREN_HARD_CAP (2000) critical downscale in USFHologramHelperService, plus its
 	// UObject warning thresholds. Keep this comparison as an overflow guard only.
-	if (TotalSize > SMART_MAX_GRID_SIZE + 1)  // +1 for parent
+	// 64-bit arithmetic: SMART_MAX_GRID_SIZE is INT_MAX, so +1 overflows int32 (clang -Werror)
+	if ((int64)TotalSize > (int64)SMART_MAX_GRID_SIZE + 1)  // +1 for parent
 	{
 		FString ErrorMsg = FString::Printf(
-			TEXT("Grid size %d exceeds maximum limit of %d (prevents UObject exhaustion)"),
+			TEXT("Grid size %d exceeds maximum limit of %lld (prevents UObject exhaustion)"),
 			TotalSize,
-			SMART_MAX_GRID_SIZE + 1
+			(int64)SMART_MAX_GRID_SIZE + 1
 		);
 		return FValidationResult::Failure(ErrorMsg);
 	}
@@ -114,11 +115,13 @@ bool FSFValidationService::ValidateAndAdjustGridSize(FIntVector& GridCounters, i
 	// Adjustment needed - scale down proportionally
 	const int32 OriginalChildren = ChildrenNeeded;
 	const int32 OriginalTotal = TotalItems;
+	// Saturating cap: SMART_MAX_GRID_SIZE is INT_MAX, so +1 must be computed in 64-bit
+	const int64 MaxTotalItems = (int64)SMART_MAX_GRID_SIZE + 1;  // +1 for parent
 	ChildrenNeeded = SMART_MAX_GRID_SIZE;
-	TotalItems = SMART_MAX_GRID_SIZE + 1;  // +1 for parent
-	
+	TotalItems = (int32)FMath::Min<int64>(MaxTotalItems, MAX_int32);
+
 	// Adjust grid counters proportionally to reflect the capped size
-	const float ScaleFactor = FMath::Sqrt((float)(SMART_MAX_GRID_SIZE + 1) / (float)OriginalTotal);
+	const float ScaleFactor = FMath::Sqrt((float)MaxTotalItems / (float)OriginalTotal);
 	XCount = FMath::Max(1, FMath::RoundToInt(XCount * ScaleFactor));
 	YCount = FMath::Max(1, FMath::RoundToInt(YCount * ScaleFactor));
 	ZCount = FMath::Max(1, FMath::RoundToInt(ZCount * ScaleFactor));
@@ -134,9 +137,9 @@ bool FSFValidationService::ValidateAndAdjustGridSize(FIntVector& GridCounters, i
 	
 	// Log the adjustment
 	UE_LOG(LogSmartFoundations, Error, 
-		TEXT("⚠️ GRID SIZE LIMIT! Requested %dx%dx%d (%d items) exceeds max (%d). Adjusted to %dx%dx%d (%d items)."),
+		TEXT("⚠️ GRID SIZE LIMIT! Requested %dx%dx%d (%d items) exceeds max (%lld). Adjusted to %dx%dx%d (%d items)."),
 		FMath::Abs(GridCounters.X), FMath::Abs(GridCounters.Y), FMath::Abs(GridCounters.Z), OriginalTotal,
-		SMART_MAX_GRID_SIZE + 1,
+		MaxTotalItems,
 		XCount, YCount, ZCount, AdjustedTotal);
 	
 	return true;  // Adjustment was made

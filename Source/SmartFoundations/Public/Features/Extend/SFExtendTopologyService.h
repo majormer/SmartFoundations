@@ -60,6 +60,12 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Smart|Extend|Topology")
     void ClearTopology();
 
+    /** [EXTEND-MP] Inject a SERVER-walked topology as the current cached topology. A network
+     *  client cannot walk locally (mConnectedComponent is SaveGame-only, GetConnection() is null
+     *  on clients); the server walks via the USFRCO topology request and the client injects the
+     *  reply here - the referenced actors/components are replicated, so they resolve locally. */
+    void InjectTopology(const FSFExtendTopology& Topology) { CachedTopology = Topology; }
+
     /** Check if we have valid cached topology */
     UFUNCTION(BlueprintCallable, Category = "Smart|Extend|Topology")
     bool HasValidTopology() const;
