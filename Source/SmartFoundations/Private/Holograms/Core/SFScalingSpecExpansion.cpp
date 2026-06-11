@@ -507,6 +507,12 @@ int32 SpawnConduitPlanChildren(AFGHologram* Parent, const FSFScalingSpec& Spec)
 			Belt->SetReplicates(false);
 			Belt->SetReplicateMovement(false);
 			Belt->SetBuildClass(Entry.BuildClass);
+			// [#331] Propagate designer context from the constructing parent so the built
+			// belt registers with the designer (vanilla copies hologram->buildable).
+			if (AFGBuildableBlueprintDesigner* Designer = Parent->GetBlueprintDesigner())
+			{
+				Belt->SetInsideBlueprintDesigner(Designer);
+			}
 			// Stackable belt previews carry NO recipe on the client (their spawner sets only the
 			// build class), and vanilla SetRecipe check()s non-null - SetRecipe(null) was a live
 			// server crash 2026-06-10. Mirror the client: only set when captured.

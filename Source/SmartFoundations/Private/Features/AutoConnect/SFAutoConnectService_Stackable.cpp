@@ -1604,6 +1604,14 @@ AFGHologram* USFAutoConnectService::UpdateOrCreateBeltForPolePair(
 	BeltChild->SetReplicateMovement(false);
 	BeltChild->SetBuildClass(BeltBuildClass);
 	BeltChild->Tags.AddUnique(FName(TEXT("SF_StackableChild")));
+
+	// [#331] Propagate the Blueprint Designer context: vanilla copies the hologram's designer
+	// onto the constructed buildable (pre-BeginPlay), so a Smart-spawned hologram that lacks it
+	// builds buildables the designer never tracks (invisible to blueprint capture).
+	if (AFGBuildableBlueprintDesigner* Designer = ParentHologram->GetBlueprintDesigner())
+	{
+		BeltChild->SetInsideBlueprintDesigner(Designer);
+	}
 	
 	USFHologramDataService::DisableValidation(BeltChild);
 	USFHologramDataService::MarkAsChild(BeltChild, ParentHologram, ESFChildHologramType::AutoConnect);

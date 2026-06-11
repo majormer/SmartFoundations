@@ -337,6 +337,15 @@ ASFFactoryHologram* USFExtendHologramService::SwapToSmartFactoryHologram(AFGHolo
     // Initialize from the vanilla hologram BEFORE BeginPlay
     CustomHologram->InitializeFromHologram(VanillaHologram);
 
+    // [#331] Carry the Blueprint Designer context across the swap: vanilla set it on the
+    // hologram it created inside the designer volume, and copies it onto every buildable at
+    // construct. A swap that drops it makes everything this hologram builds invisible to the
+    // designer (untracked, uncaptured by blueprint saves).
+    if (AFGBuildableBlueprintDesigner* Designer = VanillaHologram->GetBlueprintDesigner())
+    {
+        CustomHologram->SetInsideBlueprintDesigner(Designer);
+    }
+
     // Finish spawning - this will call BeginPlay with mBuildClass properly set
     CustomHologram->FinishSpawning(FTransform(VanillaHologram->GetActorRotation(), VanillaHologram->GetActorLocation()));
 

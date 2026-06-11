@@ -349,13 +349,19 @@ int32 FSFCloneTopology::SpawnChildHolograms(
                 BeltChild->SetReplicates(false);
                 BeltChild->SetReplicateMovement(false);
                 BeltChild->SetBuildClass(BuildClass);
-                
+
                 // CRITICAL: Add tag BEFORE FinishSpawning so CheckValidPlacement can detect it
                 BeltChild->Tags.AddUnique(FName(TEXT("SF_ExtendChild")));
-                
+
                 USFHologramDataService::DisableValidation(BeltChild);
                 USFHologramDataService::MarkAsChild(BeltChild, ParentHologram, ESFChildHologramType::ExtendClone);
-                
+
+                // [#331] Propagate designer context so the built belt registers with the designer
+                if (AFGBuildableBlueprintDesigner* Designer = ParentHologram->GetBlueprintDesigner())
+                {
+                    BeltChild->SetInsideBlueprintDesigner(Designer);
+                }
+
                 BeltChild->FinishSpawning(FTransform(Rotation, Location));
                 BeltChild->SetActorLocation(Location);
                 BeltChild->SetActorRotation(Rotation);
@@ -1114,10 +1120,16 @@ int32 FSFCloneTopology::SpawnChildHolograms(
                     BeltLane->SetBuildClass(BeltBuildClass);
                     BeltLane->Tags.AddUnique(FName(TEXT("SF_ExtendChild")));
                     BeltLane->Tags.AddUnique(FName(TEXT("SF_LaneSegment")));
-                    
+
                     USFHologramDataService::DisableValidation(BeltLane);
                     USFHologramDataService::MarkAsChild(BeltLane, ParentHologram, ESFChildHologramType::ExtendClone);
-                    
+
+                    // [#331] Propagate designer context so the built lane registers with the designer
+                    if (AFGBuildableBlueprintDesigner* Designer = ParentHologram->GetBlueprintDesigner())
+                    {
+                        BeltLane->SetInsideBlueprintDesigner(Designer);
+                    }
+
                     BeltLane->FinishSpawning(FTransform(Rotation, Location));
                     
                     // Use AutoRouteSplineWithNormals for proper curved spline routing

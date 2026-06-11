@@ -2130,6 +2130,13 @@ ASFFactoryHologram* USFExtendService::SwapToSmartFactoryHologram(AFGHologram* Va
     // This copies mBuildClass, mRecipe, etc. which are required for BeginPlay
     CustomHologram->InitializeFromHologram(VanillaHologram);
 
+    // [#331] Carry the Blueprint Designer context across the swap (vanilla copies it onto
+    // every constructed buildable; dropping it makes builds invisible to the designer).
+    if (AFGBuildableBlueprintDesigner* Designer = VanillaHologram->GetBlueprintDesigner())
+    {
+        CustomHologram->SetInsideBlueprintDesigner(Designer);
+    }
+
     // Copy mConstructionInstigator (private) via reflection — needed for build FX
     FProperty* InstigatorProp = AFGHologram::StaticClass()->FindPropertyByName(TEXT("mConstructionInstigator"));
     if (InstigatorProp)

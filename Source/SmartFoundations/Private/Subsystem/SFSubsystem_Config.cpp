@@ -338,6 +338,14 @@ void USFSubsystem::OnActorDestroyed(AActor* DestroyedActor)
 		// Clean up auto-connect previews when hologram is destroyed (covers Escape, right-click, etc.)
 		if (ActiveHologram.IsValid() && ActiveHologram.Get() == Hologram)
 		{
+			// [#358] Esc/cancel destroys the active hologram WITHOUT passing through
+			// UnregisterActiveHologram - the input context would stay stuck on, eating
+			// vanilla keys (live find: scale + Esc left the Customizer's X dead).
+			if (InputHandler)
+			{
+				InputHandler->SetSmartContextActive(false);
+			}
+
 			if (AutoConnectService)
 			{
 				// Only clear the appropriate preview type based on hologram type
