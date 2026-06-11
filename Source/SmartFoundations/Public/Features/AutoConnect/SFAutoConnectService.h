@@ -252,6 +252,13 @@ public:
 	static bool IsRegularConveyorPoleHologram(AFGHologram* Hologram);
 
 	/**
+	 * Check if a hologram is the STANDARD (non-stackable, non-wall) pipeline support
+	 * (Build_PipelineSupport_C). #364 - the pipe analog of IsRegularConveyorPoleHologram.
+	 * Exact/exclusive so it does NOT catch the Stackable support, Wall support, or Wall Hole.
+	 */
+	static bool IsRegularPipelinePoleHologram(AFGHologram* Hologram);
+
+	/**
 	 * Check if a hologram is any belt-capable support structure (Issue #268, #354)
 	 * Includes: stackable conveyor poles, ceiling conveyor supports, wall conveyor poles, standard conveyor poles
 	 * @param Hologram The hologram to check

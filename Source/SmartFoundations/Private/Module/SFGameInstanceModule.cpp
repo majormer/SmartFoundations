@@ -435,7 +435,8 @@ static bool SF_InputWillConstruct(AFGHologram* Holo)
 		return Step == FinalStep;
 	};
 
-	if (USFAutoConnectService::IsRegularConveyorPoleHologram(Holo))
+	// #364: the standard pipeline support shares AFGPoleHologram's step machinery with the conveyor pole
+	if (USFAutoConnectService::IsRegularConveyorPoleHologram(Holo) || USFAutoConnectService::IsRegularPipelinePoleHologram(Holo))
 	{
 		return FinalStepReached(AFGPoleHologram::StaticClass(),
 			static_cast<uint8>(EPoleHologramBuildStep::PHBS_AdjustHeight));

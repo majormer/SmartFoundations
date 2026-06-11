@@ -527,7 +527,8 @@ void USFGridSpawnerService::UpdateChildPositions()
         const bool bNeedsPlacementBypass = ParentHologram->IsA(AFGCeilingLightHologram::StaticClass())
             || ParentHologram->IsA(AFGFloodlightHologram::StaticClass())
             || ParentHologram->IsA(AFGWallAttachmentHologram::StaticClass())
-            || USFAutoConnectService::IsRegularConveyorPoleHologram(ParentHologram);  // #354: standard conveyor pole
+            || USFAutoConnectService::IsRegularConveyorPoleHologram(ParentHologram)   // #354: standard conveyor pole
+            || USFAutoConnectService::IsRegularPipelinePoleHologram(ParentHologram);  // #364: standard pipeline support
         if (bNeedsPlacementBypass)
         {
             ChildHologram->SetActorTickEnabled(false);

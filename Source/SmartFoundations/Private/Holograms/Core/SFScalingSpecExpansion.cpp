@@ -23,6 +23,7 @@
 #include "EngineUtils.h"
 #include "HAL/IConsoleManager.h"
 #include "FGDismantleInterface.h"
+#include "Hologram/FGPipelinePoleHologram.h"
 
 // MP spec-based construction. ON by default - the mod must be self-contained (no launch options /
 // ini edits for players; Saved/Engine.ini is rewritten by the game's diff-config system anyway).
@@ -115,6 +116,34 @@ static void SF_SyncMultiStepPropertiesToChild(AFGHologram* Parent, AFGHologram* 
 		if (UFunction* RepFunc = Child->FindFunction(TEXT("OnRep_PoleVariationIndex")))
 		{
 			Child->ProcessEvent(RepFunc, nullptr);
+		}
+		return;
+	}
+
+	// #364: STANDARD pipeline support - height (inherited pole machinery) + vertical angle
+	// (public API). Same gate discipline as #354: stackable/wall supports untouched.
+	if (USFAutoConnectService::IsRegularPipelinePoleHologram(Parent) && Child->IsA<AFGPipelinePoleHologram>())
+	{
+		if (FIntProperty* VarProp = FindFProperty<FIntProperty>(AFGPoleHologram::StaticClass(), TEXT("mPoleVariationIndex")))
+		{
+			VarProp->SetPropertyValue_InContainer(Child, VarProp->GetPropertyValue_InContainer(Parent));
+		}
+		if (FProperty* StepProp = FindFProperty<FProperty>(AFGPoleHologram::StaticClass(), TEXT("mBuildStep")))
+		{
+			StepProp->CopyCompleteValue(
+				StepProp->ContainerPtrToValuePtr<void>(Child),
+				StepProp->ContainerPtrToValuePtr<void>(Parent));
+		}
+		AFGPipelinePoleHologram* PipeParent = CastChecked<AFGPipelinePoleHologram>(Parent);
+		AFGPipelinePoleHologram* PipeChild = CastChecked<AFGPipelinePoleHologram>(Child);
+		PipeChild->SetVerticalAngle(PipeParent->GetVerticalAngle());
+		if (UFunction* RepFunc = Child->FindFunction(TEXT("OnRep_PoleVariationIndex")))
+		{
+			Child->ProcessEvent(RepFunc, nullptr);
+		}
+		if (UFunction* AngleRep = Child->FindFunction(TEXT("OnRep_VerticalAngle")))
+		{
+			Child->ProcessEvent(AngleRep, nullptr);
 		}
 		return;
 	}

@@ -6,6 +6,8 @@
  */
 
 #include "Subsystem/SFSubsystemImpl.h"
+#include "Hologram/FGPipelinePoleHologram.h"
+#include "Holograms/Logistics/SFPipelinePoleChildHologram.h"
 
 
 // Hologram management with enhanced logging
@@ -1062,6 +1064,91 @@ void USFSubsystem::SyncMultiStepHologramProperties()
 				if (USFAutoConnectOrchestrator* Orchestrator = GetOrCreateOrchestrator(Parent))
 				{
 					Orchestrator->OnStackableConveyorPolesChanged();
+				}
+			}
+		}
+		return;
+	}
+
+	// === Standard pipeline support HEIGHT + VERTICAL ANGLE sync (#364) ===
+	// The pipe analog of the #354 conveyor-pole branch, with one addition the conveyor pole
+	// doesn't have: mVerticalAngle tilts the top piece + pipe connection for sloped runs
+	// (public Get/SetVerticalAngle - no reflection needed). Height still rides the inherited
+	// mPoleVariationIndex/mBuildStep pair via reflection. GATED to the regular ground support;
+	// stackable/wall supports keep their existing paths.
+	if (USFAutoConnectService::IsRegularPipelinePoleHologram(Parent))
+	{
+		AFGPipelinePoleHologram* PipePoleParent = Cast<AFGPipelinePoleHologram>(Parent);
+		if (PipePoleParent)
+		{
+			int32 ParentVariation = -1;
+			FIntProperty* VarProp = FindFProperty<FIntProperty>(AFGPoleHologram::StaticClass(), TEXT("mPoleVariationIndex"));
+			if (VarProp)
+			{
+				ParentVariation = VarProp->GetPropertyValue_InContainer(PipePoleParent);
+			}
+
+			uint8 ParentBuildStep = 0;
+			FProperty* StepProp = FindFProperty<FProperty>(AFGPoleHologram::StaticClass(), TEXT("mBuildStep"));
+			if (StepProp)
+			{
+				StepProp->CopyCompleteValue(&ParentBuildStep, StepProp->ContainerPtrToValuePtr<void>(PipePoleParent));
+			}
+
+			const float ParentAngle = PipePoleParent->GetVerticalAngle();
+
+			const auto& SpawnedChildren = HologramHelper->GetSpawnedChildren();
+			const int32 ChildCount = SpawnedChildren.Num();
+			if (ParentVariation != CachedParentPipePoleVariation
+				|| ParentBuildStep != CachedParentBuildStep
+				|| !FMath::IsNearlyEqual(ParentAngle, CachedParentPipePoleAngle)
+				|| ChildCount != CachedPipePoleChildCount)
+			{
+				CachedParentPipePoleVariation = ParentVariation;
+				CachedParentBuildStep = ParentBuildStep;
+				CachedParentPipePoleAngle = ParentAngle;
+				CachedPipePoleChildCount = ChildCount;
+
+				int32 SyncedCount = 0;
+				for (const auto& ChildPtr : SpawnedChildren)
+				{
+					if (!ChildPtr.IsValid()) continue;
+					ASFPipelinePoleChildHologram* PipePoleChild = Cast<ASFPipelinePoleChildHologram>(ChildPtr.Get());
+					if (!PipePoleChild) continue;
+
+					if (VarProp)  VarProp->SetPropertyValue_InContainer(PipePoleChild, ParentVariation);
+					if (StepProp) StepProp->CopyCompleteValue(StepProp->ContainerPtrToValuePtr<void>(PipePoleChild), &ParentBuildStep);
+					PipePoleChild->SetVerticalAngle(ParentAngle);
+
+					// Refresh the child's mesh/height/angle. Prefer the reflected OnReps; fall back
+					// to the public RefreshPoleMesh shim.
+					if (UFunction* RepFunc = PipePoleChild->FindFunction(TEXT("OnRep_PoleVariationIndex")))
+					{
+						PipePoleChild->ProcessEvent(RepFunc, nullptr);
+					}
+					else
+					{
+						PipePoleChild->RefreshPoleMesh();
+					}
+					if (UFunction* AngleRep = PipePoleChild->FindFunction(TEXT("OnRep_VerticalAngle")))
+					{
+						PipePoleChild->ProcessEvent(AngleRep, nullptr);
+					}
+					SyncedCount++;
+				}
+				if (SyncedCount > 0)
+				{
+					UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("#364 Synced pipeline-support to %d children: VariationIndex=%d, BuildStep=%d, VerticalAngle=%.1f"),
+						SyncedCount, ParentVariation, ParentBuildStep, ParentAngle);
+				}
+
+				// Mirror #354: refresh the PARENT's connector outside the active height-drag step.
+				if (ParentBuildStep != static_cast<uint8>(EPoleHologramBuildStep::PHBS_AdjustHeight))
+				{
+					if (UFunction* ParentRep = PipePoleParent->FindFunction(TEXT("OnRep_PoleVariationIndex")))
+					{
+						PipePoleParent->ProcessEvent(ParentRep, nullptr);
+					}
 				}
 			}
 		}

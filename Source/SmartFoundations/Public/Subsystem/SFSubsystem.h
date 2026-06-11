@@ -590,6 +590,12 @@ protected:
 	/** #354: cached pole child count - re-sync height + belts when a pole is scaled in/out. */
 	int32 CachedPoleChildCount = -1;
 
+	/** #364: cached standard-pipeline-support state for child sync (height variation, vertical
+	 *  angle of the top piece, and child count for scale-in/out re-sync). */
+	int32 CachedParentPipePoleVariation = INT_MIN;
+	float CachedParentPipePoleAngle = -FLT_MAX;
+	int32 CachedPipePoleChildCount = -1;
+
 	/** Sync multi-step hologram properties (e.g. floodlight angle) from parent to children (Issue #200) */
 	void SyncMultiStepHologramProperties();
 

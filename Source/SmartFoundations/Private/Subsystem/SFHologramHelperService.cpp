@@ -3,6 +3,7 @@
 #include "Subsystem/SFHologramHelperService.h"
 #include "SmartFoundations.h"
 #include "Subsystem/SFHologramHelperServiceImpl.h"
+#include "Holograms/Logistics/SFPipelinePoleChildHologram.h"
 
 namespace
 {
@@ -691,6 +692,64 @@ void FSFHologramHelperService::RegenerateChildHologramGrid(
 					ChildHologram = PoleChild;
 				}
 			}
+			else if (USFAutoConnectService::IsRegularPipelinePoleHologram(ParentHologram))
+			{
+				// #364: standard pipeline support - two-step (base + HEIGHT) placement PLUS a vertical
+				// ANGLE on the top piece (sloped pipe runs; conveyor poles have no angle). Use
+				// ASFPipelinePoleChildHologram (extends AFGPipelinePoleHologram) so the parent's height
+				// (mPoleVariationIndex), build step, and mVerticalAngle sync to children via
+				// SyncMultiStepHologramProperties. Gated so the STACKABLE and WALL supports keep their
+				// existing paths.
+				UWorld* SpawnWorld = WorldContext.Get();
+				if (SpawnWorld)
+				{
+					FActorSpawnParameters SpawnParams;
+					SpawnParams.Name = ChildName;
+					SpawnParams.Owner = ParentHologram->GetOwner();
+					SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+					SpawnParams.bDeferConstruction = true;
+
+					ASFPipelinePoleChildHologram* PipePoleChild = SpawnWorld->SpawnActor<ASFPipelinePoleChildHologram>(
+						ASFPipelinePoleChildHologram::StaticClass(),
+						SpawnLocation,
+						FRotator::ZeroRotator,
+						SpawnParams);
+
+					if (PipePoleChild)
+					{
+						PipePoleChild->SetChildBuildClass(ParentHologram->GetBuildClass());
+						PipePoleChild->SetRecipe(Recipe);
+						PipePoleChild->FinishSpawning(FTransform(FRotator::ZeroRotator, SpawnLocation));
+						ParentHologram->AddChild(PipePoleChild, ChildName);
+
+						USFHologramDataService::DisableValidation(PipePoleChild);
+						USFHologramDataService::MarkAsChild(PipePoleChild, ParentHologram, ESFChildHologramType::ScalingGrid);
+
+						if (PipePoleChild->IsHologramLocked())
+						{
+							PipePoleChild->LockHologramPosition(false);
+						}
+						PipePoleChild->SetActorHiddenInGame(false);
+						PipePoleChild->SetActorEnableCollision(false);
+
+						TArray<UPrimitiveComponent*> PipePolePrimitives;
+						PipePoleChild->GetComponents<UPrimitiveComponent>(PipePolePrimitives);
+						for (UPrimitiveComponent* PrimComp : PipePolePrimitives)
+						{
+							PrimComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+						}
+
+						PipePoleChild->SetActorTickEnabled(false);
+						PipePoleChild->RegisterAllComponents();
+						PipePoleChild->SetPlacementMaterialState(EHologramMaterialState::HMS_OK);
+						PipePoleChild->Tags.AddUnique(FName(TEXT("SF_GridChild")));
+
+						UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("  #364 PIPELINE POLE CHILD: Spawned %s at %s"),
+							*ChildName.ToString(), *SpawnLocation.ToString());
+					}
+					ChildHologram = PipePoleChild;
+				}
+			}
 			else if (ParentHologram->IsA(AFGStandaloneSignHologram::StaticClass()))
 			{
 				// Issue #192: Standalone signs/billboards have multi-step builds (pole height).
@@ -897,7 +956,8 @@ void FSFHologramHelperService::RegenerateChildHologramGrid(
 					|| ParentHologram->IsA(AFGFloodlightHologram::StaticClass())
 					|| ParentHologram->IsA(AFGWallAttachmentHologram::StaticClass())
 					|| ParentHologram->IsA(AFGWaterPumpHologram::StaticClass())
-					|| USFAutoConnectService::IsRegularConveyorPoleHologram(ParentHologram);  // #354
+					|| USFAutoConnectService::IsRegularConveyorPoleHologram(ParentHologram)   // #354
+					|| USFAutoConnectService::IsRegularPipelinePoleHologram(ParentHologram);  // #364
 
 				if (!bIsCustomChild)
 				{
@@ -1076,7 +1136,8 @@ void FSFHologramHelperService::RegenerateChildHologramGrid(
 		const bool bKeepTickDisabled = ParentHologram->IsA(AFGCeilingLightHologram::StaticClass())
 			|| ParentHologram->IsA(AFGFloodlightHologram::StaticClass())
 			|| ParentHologram->IsA(AFGWallAttachmentHologram::StaticClass())
-			|| USFAutoConnectService::IsRegularConveyorPoleHologram(ParentHologram);  // #354
+			|| USFAutoConnectService::IsRegularConveyorPoleHologram(ParentHologram)   // #354
+			|| USFAutoConnectService::IsRegularPipelinePoleHologram(ParentHologram);  // #364
 		for (const TWeakObjectPtr<AFGHologram>& ChildPtr : SpawnedChildren)
 		{
 			if (ChildPtr.IsValid())
