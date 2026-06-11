@@ -86,7 +86,7 @@ stayed silent - the mutation happens DURING the ParallelFor by something other t
 registration. Current build (d993fcc) adds the symmetric RemoveBuildable mid-tick detector
 (shrink-realloc frees the buffer under the workers). IF THAT IS ALSO SILENT, the next-session
 DEFINITIVE move is interactive: attach cdb to the LIVE dedi (cdbX64 -p <pid>), resolve the
-subsystem ptr (captured in any dump or via SmartMCP), set a hardware write breakpoint on the
+subsystem ptr (captured in any dump or via live server-state inspection), set a hardware write breakpoint on the
 array pointer field - `ba w8 <subsystem>+0x3C0` - and run the costs-ON hover repro: the break
 fires at the exact corrupting instruction. Known facts for whoever continues: crash = vtable
 call on garbage entry of mFactoryBuildings (+0x3C0, PDB-named) inside TickFactoryActors
@@ -370,7 +370,7 @@ remains the interim safety measure.
 ## RESOLVED (fix d79e19b, live re-test PASSED 2026-06-10 07:48): dedi factory-tick crash after blender scaled extend
 
 **Re-test result:** blender scaled extend rebuilt on the dedi post-fix (07:48:33, 1 clone set,
-jsonBuilt=43, every connection wired 23/23). SmartMCP chain scan: both new sets carry REAL chain
+jsonBuilt=43, every connection wired 23/23). Live chain scan: both new sets carry REAL chain
 actors (mirrored shapes — 3-segment lane chain + building-belt singles per set), 0 zombie /
 0 orphan. Server ticked >5 minutes past build (old timebomb fired at ~2.5 min) with no crash and
 no new crash folder. The per-clone log still prints `chains=0` — now the BENIGN early-out
@@ -399,7 +399,7 @@ first with unprefixed keys), so `InvalidateAndRebuildChains` ingests the fresh b
 orphan re-registration (SFChainActorService.cpp:1572).
 
 **Re-test gate:** rebuild the blender scaled extend on the dedi, confirm per-clone `chains>0` in
-the wiring log + WiringManifest.json, verify chain integrity via SmartMCP (0 zombie / 0 orphan),
+the wiring log + WiringManifest.json, verify chain integrity via a live chain scan (0 zombie / 0 orphan),
 and let it tick well past the ~2.5 min crash window.
 
 ### Original crash record (pre-diagnosis)

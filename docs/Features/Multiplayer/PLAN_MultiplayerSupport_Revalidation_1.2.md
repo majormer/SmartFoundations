@@ -214,7 +214,7 @@ auto-connect hooks.
 ### Slice 0 — EMPIRICAL RESULT (2026-06-08, live dedicated-server test)
 
 Run against a **claimed Windows dedicated server** (CL491125) with a game client joined via
-`open 127.0.0.1`, observing the **server's authoritative state live** through the SmartMCP dedi API
+`open 127.0.0.1`, observing the **server's authoritative state live** through live server-state inspection
 (port 51096). This is Approach B — stricter than a listen server (no PC index 0 on the dedi).
 
 **Headline: client-originated scaled placement WORKS in MP — for normal grid sizes, for both buildable

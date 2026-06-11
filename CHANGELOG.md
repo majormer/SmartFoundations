@@ -5,7 +5,23 @@ All notable changes to Smart! will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-> **Audience note:** This changelog is read by players, not developers. Entries should describe what the user experiences — what was broken, what it felt like, and what's better now. Class names, internal APIs, and implementation details belong in code comments or design docs, not here.
+> **Audience note:** This changelog is read by players, not developers. Entries should describe what the user experiences — what was broken, what it felt like, and what's better now. Class names, internal APIs, and implementation details belong in code comments or design docs, not here. Unless an entry says otherwise, changes apply to both single-player and multiplayer.
+
+---
+
+## [32.0.0] - 2026-06-11
+
+> *The multiplayer release: every Smart! feature now works in multiplayer on dedicated servers — Windows and Linux.*
+
+### Multiplayer
+
+- **Full multiplayer support** — Smart! now works in multiplayer. Grid scaling, belt/pipe/power auto-connect, Extend and Scaled Extend, Smart Upgrade, Smart Restore presets, and Smart Dismantle all build correctly when you play as a client on a dedicated server, with normal build costs charged exactly as the preview shows. Everything Smart! places is a standard, fully replicated game building — other players see it, can use it, and can dismantle it, just as if it were built by hand. (Issues #309, #334)
+- **Linux dedicated servers** — Smart! is now packaged for Linux dedicated servers alongside the existing Windows server build, which covers most hosted-server providers. For server admins: install the same Smart! version on the server and on every client (the mod manager keeps these paired). (Issue #176)
+
+### Fixed
+
+- **Smart Dismantle now removes a restored single module as one group** — restoring a preset of a single Extend module (one machine plus its distributors and belts) built fine, but the dismantle tool would only take it apart one building at a time instead of offering the whole module, unlike scaled and extended builds. Restored modules now group for one-click dismantle like everything else Smart! places. (Issue #359)
+- **Belt repairs while building and on save load** — after large Upgrade or Extend sessions, leftover internal conveyor records could make a stretch of auto-connected belt hold items without moving them (starving the machines behind it), and in rare cases crash the game when loading a save written in that state. Smart! now cleans these up as you build and upgrade, and repairs any affected belts when a save loads — including saves made on earlier versions. (Issue #360)
 
 ---
 

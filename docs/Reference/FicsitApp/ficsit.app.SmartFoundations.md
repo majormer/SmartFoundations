@@ -1,8 +1,8 @@
 # <img src="https://github.com/majormer/SmartFoundations/blob/main/images/Smart-Logo.png?raw=true" width="150" alt="Smart! Logo"> Smart! Mod
 
-![Status](https://img.shields.io/badge/Status-Released-brightgreen) ![Version](https://img.shields.io/badge/Version-31.1.0-blue) ![Satisfactory](https://img.shields.io/badge/Satisfactory-1.2-blue) ![Engine](https://img.shields.io/badge/Engine-UE%205.6-blue) ![SML](https://img.shields.io/badge/SML-3.11.x-blue) ![Multiplayer](https://img.shields.io/badge/Multiplayer-Testing-orange) ![AI Assisted Development Used](https://img.shields.io/badge/AI%20Assisted%20Development%20Used-Disclosure%20Below-blue)
+![Status](https://img.shields.io/badge/Status-Released-brightgreen) ![Version](https://img.shields.io/badge/Version-32.0.0-blue) ![Satisfactory](https://img.shields.io/badge/Satisfactory-1.2-blue) ![Engine](https://img.shields.io/badge/Engine-UE%205.6-blue) ![SML](https://img.shields.io/badge/SML-3.12-blue) ![Multiplayer](https://img.shields.io/badge/Multiplayer-Supported-brightgreen) ![AI Assisted Development Used](https://img.shields.io/badge/AI%20Assisted%20Development%20Used-Disclosure%20Below-blue)
 
-> **Multiplayer note:** Smart! is primarily developed for single-player. Multiplayer is under active testing with partial success, but is not currently considered fully supported.
+> **Multiplayer note:** As of v32.0.0, every Smart! feature works in multiplayer on dedicated servers (Windows and Linux). Multiplayer support is new in this release — if you hit something odd in a multiplayer session, please report it on [GitHub](https://github.com/majormer/SmartFoundations/issues) or [Discord](https://discord.gg/SgXY4CwXYw).
 
 **Quick links:** [Watch videos](#-watch-smart-in-action) • [First-time setup](#-first-time-setup) • [Extend explained](#-extend-explained-copy-an-existing-manifold) • [Supported buildings](#-supported-buildings) • [Wiki](https://github.com/majormer/SmartFoundations/wiki) • [Discord](https://discord.gg/SgXY4CwXYw) • [Report bugs](https://github.com/majormer/SmartFoundations/issues) • [Source](https://github.com/majormer/SmartFoundations)
 
@@ -65,12 +65,12 @@ Smart! is useful if you enjoy designing factories but do not enjoy repeating the
 - Copy a working production block and repeat it somewhere else.
 - Batch-upgrade belts, lifts, pipes, and power infrastructure after unlocking better tiers.
 - Keep a vanilla-like save: Smart! places standard Satisfactory buildings.
+- Build together: Smart! works in multiplayer on dedicated servers (Windows and Linux).
 
 ### Smart! may not be what you want if you expect:
 
 - Free buildings or free resources.
 - A creative-mode replacement.
-- A fully supported multiplayer experience today.
 - Perfect compatibility with every modded buildable or every other building-assist mod.
 
 ### Source Availability
@@ -101,44 +101,28 @@ See [LICENSE.md](https://github.com/majormer/SmartFoundations/blob/main/LICENSE.
 
 ---
 
-## 📰 What's New in v31.1.0
+## 📰 What's New in v32.0.0: Multiplayer
 
-**Current Release:** v31.1.0 — a belt-focused update on the Satisfactory **1.2** line. See the [full changelog](https://github.com/majormer/SmartFoundations/blob/main/CHANGELOG.md) for all release details.
+**Current Release:** v32.0.0 — the multiplayer release. See the [full changelog](https://github.com/majormer/SmartFoundations/blob/main/CHANGELOG.md) for all release details.
 
-### Highlights in v31.1.0
+### Smart! now works in multiplayer
 
-- **Standard conveyor pole auto-connect (new)** — scaling a standard Conveyor Pole now works like the Stackable pole: place one, scale out a line, and Smart! auto-connects belts between the poles at the height you set, with the whole line following as you raise or lower the height. (Tip: size the line first, then set the height.)
-- **Auto-connected belts between poles no longer stall or crash** — runs of auto-connected belts across Stackable / Wall / Ceiling conveyor poles used to fragment into disconnected pieces that could stop moving items after a reload, or even crash the game when items flowed through them. Smart! now stitches each pole run into one proper conveyor line as it's built, so it transports correctly and survives save/reload. A long-standing risk (present since around v29), now fixed.
+Every Smart! feature now works when you play as a client on a dedicated server: grid scaling, belt/pipe/power auto-connect, Extend and Scaled Extend, Smart Upgrade, Smart Restore presets, and Smart Dismantle — with normal build costs charged exactly as the preview shows. Everything Smart! places is a standard, fully replicated game building: other players see it, can use it, and can dismantle it, just as if it were built by hand.
 
-### Also in v31.0.2
+- **Windows and Linux dedicated servers** — the release includes server builds for both platforms, so Smart! runs on most hosted-server providers.
+- **For server admins** — install the same Smart! version on the server and on every client; the mod manager keeps these paired on update.
+- Multiplayer support is new in this release. If something behaves differently in a multiplayer session than in single-player, that's a bug — please report it on [GitHub](https://github.com/majormer/SmartFoundations/issues) or [Discord](https://discord.gg/SgXY4CwXYw).
 
-- **Packaged for Windows dedicated servers** — the release now includes a server build so the mod can be installed on a dedicated server and its version lines up with clients on update. Packaging only — multiplayer and dedicated servers are still **not officially supported** (full multiplayer support is planned for a future update).
-- **Smart! builds free in Creative Mode** — with No Build Cost on (now under Creative Mode in 1.2), auto-connect and Extend / Scaled Extend no longer ask for materials or block as "unaffordable"; they build for free, the same as base-game building.
-- **Power cable previews are back for Extend and Scaled Extend** — when you Extend a building that carries power, the preview again shows the cables (with droop) running between the source and each copy, sitting on the connectors and following each copy's rotation and chaining.
-- **Smart! Panel Routing dropdown opens on Stackable Conveyor Poles** — the Belt Auto-Connect *Routing* dropdown now lists Default / Curve / Straight and applies your choice; dragging the panel also closes any open dropdown.
+This release also fixes one-click Smart Dismantle for restored single modules, and adds belt repairs while building and on save load (including saves made on earlier versions) — see the [changelog](https://github.com/majormer/SmartFoundations/blob/main/CHANGELOG.md) for details.
 
-### Also in v31.0.1
+### Earlier in the 31.x line: Satisfactory 1.2
 
-- **Settings for Extend daisy-chain power** — the building-to-building power chaining now has its own controls under Options > Mods > Smart! > Building Behavior: turn it on or off, and choose whether Extending a pole-less machine starts a fresh daisy chain. Defaults match 31.0.0.
-- **Auto-connect conveyors and pipes no longer charge double** — an auto-connected belt or pipe used to preview at twice its real cost on the build gun; the preview now matches what the segment actually costs and refunds.
-- **Smart! Panel arrow keys fixed** — stepping a value with the Up/Down arrow keys no longer snaps back when the field loses focus.
-
-### Also in v31.0.0: Satisfactory 1.2
-
-> **One-time settings reset:** the Smart! settings menu was reorganized in 31.0.0, so your saved Smart! settings reset to their defaults the first time you load a 31.x build. Set them once and they'll stick from then on.
-
-- **Rebuilt for Satisfactory 1.2** — Smart! was migrated to the engine (UE 5.6) and the "Game Feature" plugin model that 1.2 uses. Every Smart! feature carries over with no intended gameplay change: grid building, Extend and Scaled Extend, belt/pipe/power auto-connect, Smart Upgrade, Restore presets, the Smart Panel, and all keybinds.
-- **Pipeline T-Junction support** — Satisfactory 1.2's new 3-way Pipeline T-Junction now works everywhere Smart! handles pipes (scaling, Extend, Scaled Extend, pipe auto-connect, and Restore presets), the same as the existing 4-way junction.
-- **Extend can daisy-chain building power** — once you research **Upgraded Power Connectors**, Extending a row of buildings wires their power directly building-to-building along the lane (one chain per row) instead of needing a power pole to each one. It only makes connections you could make by hand.
-- **More reliable stacked-pole belt auto-connect** — auto-connected belts between stackable conveyor poles, including across stacked levels and long runs, now carry items and stay correct after saving and reloading.
-- **Settings menu reorganized into labeled sections**, with a plain-language tooltip on every option.
-
-### Also in version 30: Smart Restore Enhanced
-
-Version 30 introduced **Smart Restore Enhanced** — a preset system for saving, applying, sharing, and replaying Smart Panel setups. Presets can capture grid size, spacing, steps, stagger, rotation, production recipe, auto-connect settings, and restored Extend topology. Use the Smart Panel's `Presets >>` button to save your current setup, apply a saved setup later, export or import a shared preset, or turn the last Extend layout you built into a reusable preset. Shared presets are checked against your current unlocks before they can be imported or applied.
+- **Rebuilt for Satisfactory 1.2** (v31.0.0) — Smart! was migrated to Unreal Engine 5.6 and the plugin model that 1.2 uses. Every Smart! feature carried over, and 1.2's new Pipeline T-Junction works everywhere Smart! handles pipes. (One-time note: settings were reorganized in 31.0.0, so saved Smart! settings reset to defaults the first time you load a 31.x-or-later build from 30.x or earlier.)
+- **Extend can daisy-chain building power** (v31.0.0) — once you research Upgraded Power Connectors, Extending a row of buildings wires power directly building-to-building along the lane, with settings to control it under Options > Mods > Smart!.
+- **Rock-solid belt runs between conveyor poles** (v31.1.0) — standard Conveyor Poles joined the auto-connect family, and auto-connected belt runs across pole lines were rebuilt to transport correctly and survive save/reload, fixing a long-standing stall/crash risk.
+- Plus a series of quality fixes across 31.0.1–31.1.0: free building in Creative Mode, power-cable previews for Extend, corrected auto-connect costs, and Smart! Panel fixes — all in the [changelog](https://github.com/majormer/SmartFoundations/blob/main/CHANGELOG.md).
 
 ---
-
 ## 🛠️ First-Time Setup
 
 Smart! has many keybinds, but you do not need to learn them all immediately.
@@ -234,6 +218,12 @@ Supported upgrade families include:
 - Conveyor belts and lifts.
 - Pipelines.
 - Power poles and wall outlets.
+
+### 6. Smart Restore Presets
+
+Smart Restore is a preset system for saving, applying, sharing, and replaying Smart Panel setups.
+
+Presets can capture grid size, spacing, steps, stagger, rotation, production recipe, auto-connect settings, and a restored Extend topology — a whole factory module layout. Use the Smart Panel's `Presets >>` button to save your current setup, apply a saved setup later, export or import a shared preset, or turn the last Extend layout you built into a reusable preset. Shared presets are checked against your current unlocks before they can be imported or applied.
 
 ---
 
@@ -662,7 +652,7 @@ No. Smart! is a different system. It can place grids and factory modules in ways
 
 ### Does Smart! work in multiplayer?
 
-Multiplayer is under active testing with partial success, but is not fully supported. If you play multiplayer, expect edge cases and report issues with clear reproduction steps.
+Yes — as of v32.0.0, every Smart! feature works in multiplayer on dedicated servers (Windows and Linux). Install the same Smart! version on the server and on every client. Multiplayer support is new, so if something behaves differently in a multiplayer session than in single-player, that's a bug — please report it with clear reproduction steps.
 
 ### Why did Extend not copy my layout?
 
