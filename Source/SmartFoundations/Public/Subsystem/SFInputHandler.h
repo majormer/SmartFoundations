@@ -47,6 +47,12 @@ public:
 	/** Rebind shortly after SetupPlayerInput to catch post-initialization state */
 	void RebindAfterDelay();
 
+	/** [#358] Add/remove the Smart! mapping context with hologram lifecycle. The context is
+	 * scoped to hologram-active so Smart!'s priority-100 bindings (e.g. Scale X on X) only
+	 * shadow vanilla keys while the player is actually building - Satisfactory 1.2 bound the
+	 * Customizer to X, and an always-on context consumed it everywhere. */
+	void SetSmartContextActive(bool bActive);
+
 	// ========================================
 	// Input State Queries
 	// ========================================
@@ -137,6 +143,9 @@ private:
 
 	/** Has input been set up for the current player */
 	bool bInputSetupCompleted = false;
+
+	/** [#358] Whether the Smart! mapping context is currently in the Enhanced Input stack */
+	bool bSmartContextActive = false;
 
 	/** Modifier key state for Z-axis wheel detection */
 	bool bModifierScaleXActive = false;

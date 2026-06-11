@@ -45,6 +45,16 @@ void USFAutoConnectOrchestrator::EvaluateGrid(bool bForceRecreate)
 		}
 	}
 
+	// [#331] The Blueprint Designer is a vanilla-placement zone: Smart's direct-spawn belt/pipe
+	// builds bypass the designer's buildable registration (invisible to blueprint capture), so
+	// auto-connect is disabled while the hologram is inside a designer.
+	if (ParentHologram->GetBlueprintDesigner() != nullptr)
+	{
+		ClearAllPreviews();
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🎯 Orchestrator: EvaluateGrid skipped - hologram is inside a Blueprint Designer (vanilla-only zone)"));
+		return;
+	}
+
 	// Prevent recursive evaluation (belt preview updates can trigger movement events)
 	if (bIsEvaluatingBelts)
 	{

@@ -1233,6 +1233,17 @@ bool USFExtendService::TryExtendFromBuilding(AFGBuildable* HitBuilding, AFGHolog
             return false; // no target/hologram (handled/logged upstream)
         }
 
+        // [#331] The Blueprint Designer is a vanilla-placement zone: Extend's clone commit
+        // direct-spawns logistics that bypass designer registration (invisible to blueprint
+        // capture) and its grouping would poison blueprint saves (#312). Never activate
+        // Extend from or onto a designer-resident building.
+        if (SourceHologram->GetBlueprintDesigner() != nullptr || HitBuilding->GetBlueprintDesigner() != nullptr)
+        {
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Verbose,
+                TEXT("🔄 EXTEND: Not activating - hologram or target is inside a Blueprint Designer (vanilla-only zone)"));
+            return false;
+        }
+
         UClass* HologramBuildClass = SourceHologram->GetBuildClass();
         if (!HologramBuildClass || !HitBuilding->IsA(HologramBuildClass))
         {

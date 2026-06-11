@@ -1109,8 +1109,12 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 			// construct: the ConfigureActor hook below assigns it to every buildable configured
 			// inside scope() - i.e. pre-BeginPlay, the timing vanilla blueprints use, so
 			// lightweight conversion transfers membership to replicated lightweight indices.
+			// [#312] Never create a Smart group proxy for a construct inside the Blueprint
+			// Designer: mBlueprintProxy is SaveGame, so a designer-resident buildable pointing
+			// at a Smart WORLD proxy makes the blueprint save chase that reference out of the
+			// designer ("saving a blueprint saves the whole world").
 			AFGBlueprintProxy* GroupProxy = nullptr;
-			if (UWorld* World = self->GetWorld())
+			if (UWorld* World = self->GetWorld(); World && self->GetBlueprintDesigner() == nullptr)
 			{
 				FActorSpawnParameters ProxyParams;
 				ProxyParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
@@ -1303,6 +1307,12 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 		{
 			AFGBlueprintProxy* GroupProxy = GSFActiveSpecGroupProxy.Get();
 			if (!GroupProxy || !inBuildable)
+			{
+				return;
+			}
+			// [#312] Designer-resident buildables must never reference a Smart world proxy
+			// (SaveGame reference would poison blueprint saves).
+			if (inBuildable->GetBlueprintDesigner() != nullptr)
 			{
 				return;
 			}

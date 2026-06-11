@@ -556,6 +556,14 @@ void USFSubsystem::RegisterActiveHologram(AFGHologram* Hologram)
 		RecipeManagementService->OnNewBuildSession(Hologram->GetBuildClass());
 	}
 
+	// [#358] Smart!'s input mapping context is scoped to hologram-active so its bindings
+	// (e.g. Scale X on X) only shadow vanilla keys while actually building - 1.2's
+	// Customizer key (X) must reach vanilla when no hologram is in hand.
+	if (InputHandler)
+	{
+		InputHandler->SetSmartContextActive(true);
+	}
+
 	// Notify external systems (like SmartCamera)
 	if (OnHologramCreated.IsBound())
 	{
@@ -575,6 +583,12 @@ void USFSubsystem::UnregisterActiveHologram(AFGHologram* Hologram)
 		}
 
 		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Unregistering active hologram: %s"), *Hologram->GetName());
+
+		// [#358] Return Smart!'s keys to vanilla as soon as the player stops building
+		if (InputHandler)
+		{
+			InputHandler->SetSmartContextActive(false);
+		}
 
 		// Issue #281: Remove Smart! hints from hint bar
 		if (HintBarService)

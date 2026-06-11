@@ -29,12 +29,52 @@ void FSFInputHandler::Initialize(USFSubsystem* InOwnerSubsystem)
 
 void FSFInputHandler::Shutdown()
 {
+	// [#358] Leave no Smart! context behind in the Enhanced Input stack
+	SetSmartContextActive(false);
+
 	// TODO: Unbind all input actions
 	OwnerSubsystem.Reset();
 	LastController.Reset();
 	bInputSetupCompleted = false;
 
 	UE_LOG(LogSmartFoundations, Log, TEXT("InputHandler: Shutdown complete"));
+}
+
+void FSFInputHandler::SetSmartContextActive(bool bActive)
+{
+	if (bActive == bSmartContextActive)
+	{
+		return;
+	}
+
+	APlayerController* PC = LastController.Get();
+	if (!PC || !IsValid(PC) || !PC->GetLocalPlayer())
+	{
+		return; // no local player yet; SetupPlayerInput re-applies for an already-active hologram
+	}
+	UEnhancedInputLocalPlayerSubsystem* InputSubsystem = PC->GetLocalPlayer()->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>();
+	UFGInputMappingContext* SmartContext = USFInputRegistry::GetSmartInputMappingContext();
+	if (!InputSubsystem || !SmartContext)
+	{
+		return;
+	}
+
+	if (bActive)
+	{
+		// HIGH priority (100) so Smart! consumes input before the base game while building
+		// (prevents wheel from rotating the hologram, routes X/Y/Z modifiers, etc.)
+		InputSubsystem->AddMappingContext(SmartContext, 100);
+	}
+	else
+	{
+		InputSubsystem->RemoveMappingContext(SmartContext);
+		// If we had pulled the vanilla build-gun context for modifier handling, restore it
+		// rather than stranding it removed with no hologram to release it.
+		EnableVanillaBuildGunContext();
+	}
+	bSmartContextActive = bActive;
+	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Smart! Input Mapping Context %s (hologram-scoped, priority 100)"),
+		bActive ? TEXT("added") : TEXT("removed"));
 }
 
 void FSFInputHandler::SetupPlayerInput(AFGPlayerController* PlayerController)
@@ -74,23 +114,20 @@ void FSFInputHandler::SetupPlayerInput(AFGPlayerController* PlayerController)
 		// Bind our input actions to subsystem methods using the modern SML approach
 		USFInputRegistry::BindInputActionsToSubsystem(Subsystem, EnhancedInputComp);
 
-		// Load and apply our input mapping context
+		// Load our input mapping context
 		// BUG FIX (Issue #148): Cache is cleared during world cleanup, ensuring fresh load for new worlds
 		if (UFGInputMappingContext* SmartContext = USFInputRegistry::GetSmartInputMappingContext())
 		{
 			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("✅ Smart! Mapping Context loaded: %s"), *SmartContext->GetName());
 
-			// Get the Enhanced Input Subsystem to add our mapping context
-			if (UEnhancedInputLocalPlayerSubsystem* InputSubsystem = PlayerController->GetLocalPlayer()->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>())
+			// [#358] The context is NOT added here. It is scoped to hologram-active via
+			// SetSmartContextActive (called from Register/UnregisterActiveHologram) so Smart!'s
+			// priority-100 bindings only shadow vanilla keys while the player is actually
+			// building. Satisfactory 1.2 bound the Customizer to X; Smart!'s always-on context
+			// consumed it everywhere, even with no hologram in hand.
+			if (Subsystem->GetActiveHologram())
 			{
-				// Add with HIGH priority (100) to ensure we consume input before base game
-				// This is critical for input consumption to work (prevents wheel from rotating hologram)
-				InputSubsystem->AddMappingContext(SmartContext, 100);
-				UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Smart! Input Mapping Context added to Enhanced Input Subsystem (Priority: 100)"));
-			}
-			else
-			{
-				UE_LOG(LogSmartFoundations, Error, TEXT("Failed to get Enhanced Input Local Player Subsystem"));
+				SetSmartContextActive(true); // setup ran mid-build (e.g. deferred rebind)
 			}
 		}
 		else

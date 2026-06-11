@@ -41,8 +41,12 @@ void USFSubsystem::OnActorSpawned(AActor* SpawnedActor)
 	// ========================================
 	if (AFGBuildable* Buildable = Cast<AFGBuildable>(SpawnedActor))
 	{
+		// [#312] Buildables inside the Blueprint Designer never join Smart's world group
+		// proxies: mBlueprintProxy is SaveGame, so a designer-resident buildable pointing at
+		// a world proxy makes the blueprint save chase that reference out of the designer
+		// ("saving a blueprint saves the whole world").
 		// Only group if we have an active Smart! hologram with a multi-building grid
-		if (ActiveHologram.IsValid())
+		if (ActiveHologram.IsValid() && Buildable->GetBlueprintDesigner() == nullptr)
 		{
 			const FIntVector& Grid = GetGridCounters();
 			const bool bIsMultiGrid = (FMath::Abs(Grid.X) > 1 || FMath::Abs(Grid.Y) > 1 || FMath::Abs(Grid.Z) > 1);
