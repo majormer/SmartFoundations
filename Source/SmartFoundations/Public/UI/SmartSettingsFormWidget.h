@@ -450,23 +450,13 @@ private:
     bool bIsDraggingRestorePanel = false;
     FVector2D DragOffset = FVector2D::ZeroVector;
 
-    // Cached canvas slots for moving the whole panel together
+    // Cached canvas slots for dragging. [#352 restructure] The panel is ONE canvas child
+    // (BackgroundPanel contains header + ScaleBox'd content in real layout containers), so
+    // dragging moves a single slot. The old seven-floater lockstep (six cached slots + six
+    // relative offsets, re-synced on every layout change) is gone with the RenderTransform
+    // hack that required it.
     UCanvasPanelSlot* BackgroundPanelSlot = nullptr;
-    UCanvasPanelSlot* TitleTextSlot = nullptr;
-    UCanvasPanelSlot* ContentContainerSlot = nullptr;
-    UCanvasPanelSlot* ApplyButtonSlot = nullptr;
-    UCanvasPanelSlot* ResetButtonSlot = nullptr;
-    UCanvasPanelSlot* CloseButtonSlot = nullptr;
-    UCanvasPanelSlot* SmartLogoSlot = nullptr;
     UCanvasPanelSlot* RestoreSidePanelSlot = nullptr;
-
-    // Relative offsets from the background panel for header/content widgets
-    FVector2D TitleOffset = FVector2D::ZeroVector;
-    FVector2D ContentOffset = FVector2D::ZeroVector;
-    FVector2D ApplyOffset = FVector2D::ZeroVector;
-    FVector2D ResetOffset = FVector2D::ZeroVector;
-    FVector2D CloseOffset = FVector2D::ZeroVector;
-    FVector2D LogoOffset = FVector2D::ZeroVector;
 
     // Issue #231: Snapshot all SpinBox values on any change. On commit, UMG may
     // overwrite internal values from stale text. We restore from our snapshot.

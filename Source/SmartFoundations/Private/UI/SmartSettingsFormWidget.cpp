@@ -386,45 +386,11 @@ void USmartSettingsFormWidget::NativeConstruct()
         PowerReservedComboBox->OnSelectionChanged.AddDynamic(this, &USmartSettingsFormWidget::OnPowerReservedChanged);
     }
 
-    // Cache canvas slots for dragging and compute relative offsets
+    // Cache the two draggable canvas slots. [#352 restructure] Header and content now live
+    // INSIDE BackgroundPanel (real layout containers; content under a layout-true ScaleBox),
+    // so the panel drags as one slot and ComboBox popups anchor where they render.
     BackgroundPanelSlot     = Cast<UCanvasPanelSlot>(BackgroundPanel->Slot);
-    TitleTextSlot           = TitleText ? Cast<UCanvasPanelSlot>(TitleText->Slot) : nullptr;
-    ContentContainerSlot    = ContentContainer ? Cast<UCanvasPanelSlot>(ContentContainer->Slot) : nullptr;
-    ApplyButtonSlot         = ApplyBtn ? Cast<UCanvasPanelSlot>(ApplyBtn->Slot) : nullptr;
-    ResetButtonSlot         = ResetBtn ? Cast<UCanvasPanelSlot>(ResetBtn->Slot) : nullptr;
-    CloseButtonSlot         = CloseButton ? Cast<UCanvasPanelSlot>(CloseButton->Slot) : nullptr;
-    SmartLogoSlot           = SmartLogoImage ? Cast<UCanvasPanelSlot>(SmartLogoImage->Slot) : nullptr;
     RestoreSidePanelSlot    = RestoreSidePanel ? Cast<UCanvasPanelSlot>(RestoreSidePanel->Slot) : nullptr;
-
-    if (BackgroundPanelSlot)
-    {
-        const FVector2D BackgroundPos = BackgroundPanelSlot->GetPosition();
-
-        if (TitleTextSlot)
-        {
-            TitleOffset = TitleTextSlot->GetPosition() - BackgroundPos;
-        }
-        if (ContentContainerSlot)
-        {
-            ContentOffset = ContentContainerSlot->GetPosition() - BackgroundPos;
-        }
-        if (ApplyButtonSlot)
-        {
-            ApplyOffset = ApplyButtonSlot->GetPosition() - BackgroundPos;
-        }
-        if (ResetButtonSlot)
-        {
-            ResetOffset = ResetButtonSlot->GetPosition() - BackgroundPos;
-        }
-        if (CloseButtonSlot)
-        {
-            CloseOffset = CloseButtonSlot->GetPosition() - BackgroundPos;
-        }
-        if (SmartLogoSlot)
-        {
-            LogoOffset = SmartLogoSlot->GetPosition() - BackgroundPos;
-        }
-    }
 
     // ========== DARK THEME STYLING ==========
 
@@ -1101,51 +1067,11 @@ void USmartSettingsFormWidget::PopulateFromCounterState(USFSubsystem* Subsystem)
 
 void USmartSettingsFormWidget::FitHeaderButtonRow()
 {
-    if (!ApplyButtonSlot || !ResetButtonSlot || !CloseButtonSlot)
-    {
-        return;
-    }
-
-    // The Apply/Reset/Close buttons sit in a narrow header band to the RIGHT of the Smart! logo
-    // (the logo ends ~x295; the content column runs to ~x632; the collapsible Smart Restore panel
-    // begins ~x592). Keep the row's left edge at the designer's leftmost button (clears the logo)
-    // and extend it to the right edge of the content column, then split into equal thirds. The
-    // band is tight, so each label is shrunk to fit its button width below.
-    TArray<UCanvasPanelSlot*> Row = { ApplyButtonSlot, CloseButtonSlot, ResetButtonSlot };
-    Row.Sort([](const UCanvasPanelSlot& A, const UCanvasPanelSlot& B)
-    {
-        return A.GetPosition().X < B.GetPosition().X;   // preserve designer left-to-right order
-    });
-
-    const float Left = Row[0]->GetPosition().X;          // designer leftmost button: clears the logo
-    float Right = Left + 280.0f;                          // fallback span if content size unknown
-    if (ContentContainerSlot && ContentContainerSlot->GetSize().X > 1.0f)
-    {
-        // Inset from the content's right edge so the row doesn't touch the panel border.
-        Right = ContentContainerSlot->GetPosition().X + ContentContainerSlot->GetSize().X - 44.0f;
-    }
-    if (RestoreSidePanelSlot)
-    {
-        // Keep clear of the (collapsible) Smart Restore panel, which sits to the right.
-        Right = FMath::Min(Right, RestoreSidePanelSlot->GetPosition().X - 8.0f);
-    }
-
-    const float Gap = 8.0f;
-    const float Height = 44.0f;                           // taller, comfortably tappable
-    const float RowY = Row[0]->GetPosition().Y;           // keep the designed vertical position
-    const float ButtonWidth = FMath::Max(60.0f, (Right - Left - 2.0f * Gap) / 3.0f);
-
-    float X = Left;
-    for (UCanvasPanelSlot* ButtonSlot : Row)
-    {
-        ButtonSlot->SetAutoSize(false);
-        ButtonSlot->SetSize(FVector2D(ButtonWidth, Height));
-        ButtonSlot->SetPosition(FVector2D(X, RowY));
-        X += ButtonWidth + Gap;
-    }
-
-    // Shrink each label until it fits its button so no language is clipped in this tight band.
-    const float LabelAvail = ButtonWidth - 16.0f;
+    // [#352 restructure] The header buttons live in a HorizontalBox now, so position and
+    // width come from layout. All that remains of the old canvas-band math is the localized
+    // label fit: shrink any label that would make its button unreasonably wide, so long
+    // translations don't stretch the header.
+    const float LabelAvail = 110.0f;
     auto FitLabel = [this, LabelAvail](const TCHAR* WidgetName)
     {
         UTextBlock* Label = Cast<UTextBlock>(GetWidgetFromName(FName(WidgetName)));
@@ -1168,15 +1094,6 @@ void USmartSettingsFormWidget::FitHeaderButtonRow()
     FitLabel(TEXT("ApplyBtnText"));
     FitLabel(TEXT("ResetBtnText"));
     FitLabel(TEXT("CloseButtonText"));
-
-    // Keep the panel-drag offsets in sync with the new positions.
-    if (BackgroundPanelSlot)
-    {
-        const FVector2D BgPos = BackgroundPanelSlot->GetPosition();
-        ApplyOffset = ApplyButtonSlot->GetPosition() - BgPos;
-        ResetOffset = ResetButtonSlot->GetPosition() - BgPos;
-        CloseOffset = CloseButtonSlot->GetPosition() - BgPos;
-    }
 }
 
 void USmartSettingsFormWidget::OnCloseButtonClicked()
