@@ -810,6 +810,7 @@ int32 USFChainActorService::PurgeZombieChainActors()
 	// (assertion: GTestRegisterComponentTickFunctions == 0 fails on worker threads).
 	TArray<AFGConveyorChainActor*> Zombies;
 	TArray<AFGConveyorChainActor*> DetachedWithSegments;
+	TArray<AFGConveyorChainActor*> PoisonedChains;
 	for (TActorIterator<AFGConveyorChainActor> It(World); It; ++It)
 	{
 		AFGConveyorChainActor* Chain = *It;
@@ -817,26 +818,85 @@ int32 USFChainActorService::PurgeZombieChainActors()
 		if (Chain->GetNumChainSegments() == 0)
 		{
 			Zombies.Add(Chain);
+			continue;
 		}
-		else
+
+		// [#367] POISONED chain: a segment list containing a dead/invalid conveyor reference.
+		// Vanilla's revert (RevertChainActor_Unsafe -> MoveItemsFromChainToBelts) dereferences
+		// segment conveyors UNGUARDED, so any path that lets vanilla revert this chain AVs -
+		// including our own heal below (RemoveConveyor triggers the revert via the tick group)
+		// and ForceDestroyChainActor. Live player crash 2026-06-11 (Mawie the Fox, Discord).
+		// These must be removed SURGICALLY (never reverted) before the other phases run.
+		bool bPoisoned = false;
+		for (const FConveyorChainSplineSegment& Seg : Chain->GetChainSegments())
 		{
-			// A chain WITH segments that no tick group owns is NOT inert (the old Phase 2/4
-			// assumption): it persists into saves (ShouldSave is unconditionally true) where its
-			// segment list claims belts now owned by the replacement chain — on reload vanilla's
-			// in-tick recovery fires ForceDestroyChainActor from a ParallelFor WORKER and
-			// randomly asserts in FNetworkObjectList (the 2026-06-10 boot crash). At runtime it
-			// also imprisons its in-flight items (length-0 orphan chains holding 6-12 items each,
-			// starving downstream factories — live finding, same day).
-			bool bOwned = false;
-			for (FConveyorTickGroup* TG : BuildableSub->mConveyorTickGroup)
+			if (!IsValid(Seg.ConveyorBase))
 			{
-				if (TG && TG->ChainActor == Chain) { bOwned = true; break; }
-			}
-			if (!bOwned)
-			{
-				DetachedWithSegments.Add(Chain);
+				bPoisoned = true;
+				break;
 			}
 		}
+		if (bPoisoned)
+		{
+			PoisonedChains.Add(Chain);
+			continue;
+		}
+
+		// A chain WITH segments that no tick group owns is NOT inert (the old Phase 2/4
+		// assumption): it persists into saves (ShouldSave is unconditionally true) where its
+		// segment list claims belts now owned by the replacement chain — on reload vanilla's
+		// in-tick recovery fires ForceDestroyChainActor from a ParallelFor WORKER and
+		// randomly asserts in FNetworkObjectList (the 2026-06-10 boot crash). At runtime it
+		// also imprisons its in-flight items (length-0 orphan chains holding 6-12 items each,
+		// starving downstream factories — live finding, same day).
+		bool bOwned = false;
+		for (FConveyorTickGroup* TG : BuildableSub->mConveyorTickGroup)
+		{
+			if (TG && TG->ChainActor == Chain) { bOwned = true; break; }
+		}
+		if (!bOwned)
+		{
+			DetachedWithSegments.Add(Chain);
+		}
+	}
+
+	// [#367] Phase 0: surgical removal of poisoned chains via the zombie path primitives -
+	// null the tick-group back-pointer, deregister, Destroy. Vanilla's revert never runs, so
+	// the dead segment entries are never dereferenced. In-flight items on these chains are
+	// forfeit (they were already in a corrupt container); surviving member belts are collected
+	// and re-registered below so vanilla rebuilds them clean chains.
+	int32 PoisonedRemoved = 0;
+	TArray<AFGBuildableConveyorBase*> PoisonedMemberBelts;
+	for (AFGConveyorChainActor* Chain : PoisonedChains)
+	{
+		if (!IsValid(Chain)) continue;
+		for (const FConveyorChainSplineSegment& Seg : Chain->GetChainSegments())
+		{
+			if (Seg.ConveyorBase && IsValid(Seg.ConveyorBase))
+			{
+				PoisonedMemberBelts.AddUnique(Seg.ConveyorBase);
+			}
+		}
+		UE_LOG(LogSmartUpgrade, Warning,
+			TEXT("[CHAIN-DIAG] POISONED chain %s: segment list holds dead conveyor reference(s) - removed surgically, no vanilla revert (#367). Surviving member belts re-register below."),
+			*Chain->GetName());
+		for (FConveyorTickGroup* TG : BuildableSub->mConveyorTickGroup)
+		{
+			if (TG && TG->ChainActor == Chain)
+			{
+				BuildableSub->RemoveChainActorFromConveyorGroup(TG);
+			}
+		}
+		BuildableSub->RemoveConveyorChainActor(Chain);
+		Chain->Destroy();
+		++PoisonedRemoved;
+	}
+	for (AFGBuildableConveyorBase* Belt : PoisonedMemberBelts)
+	{
+		if (!IsValid(Belt) || Belt->IsActorBeingDestroyed()) continue;
+		if (Belt->GetConveyorChainActor() != nullptr) continue;
+		BuildableSub->RemoveConveyor(Belt);
+		BuildableSub->AddConveyor(Belt);
 	}
 
 	// Destroy detached-but-segmented chains via VANILLA's own cleanup. ForceDestroyChainActor
@@ -934,9 +994,9 @@ int32 USFChainActorService::PurgeZombieChainActors()
 	if (Zombies.Num() == 0)
 	{
 		UE_LOG(LogSmartUpgrade, Display,
-			TEXT("[CHAIN-DIAG] Sweep complete: zombiesPurged=0 detachedForceDestroyed=%d orphanBeltsReRegistered=%d chainlessBeltsHealed=%d"),
-			ForceDestroyedCount, ReRegisteredBelts, HealedChainlessBelts);
-		return ForceDestroyedCount;
+			TEXT("[CHAIN-DIAG] Sweep complete: zombiesPurged=0 poisonedRemoved=%d detachedForceDestroyed=%d orphanBeltsReRegistered=%d chainlessBeltsHealed=%d"),
+			PoisonedRemoved, ForceDestroyedCount, ReRegisteredBelts, HealedChainlessBelts);
+		return PoisonedRemoved + ForceDestroyedCount;
 	}
 
 	int32 PurgeCount = 0;
@@ -971,10 +1031,10 @@ int32 USFChainActorService::PurgeZombieChainActors()
 	// [CHAIN-DIAG] Always-on sweep summary: lets a shipping dedi log show whether a build path
 	// left chainless belts behind (the thesis factory-tick AV) without verbose logging.
 	UE_LOG(LogSmartUpgrade, Display,
-		TEXT("[CHAIN-DIAG] Sweep complete: zombiesPurged=%d detachedForceDestroyed=%d orphanBeltsReRegistered=%d chainlessBeltsHealed=%d"),
-		PurgeCount, ForceDestroyedCount, ReRegisteredBelts, HealedChainlessBelts);
+		TEXT("[CHAIN-DIAG] Sweep complete: zombiesPurged=%d poisonedRemoved=%d detachedForceDestroyed=%d orphanBeltsReRegistered=%d chainlessBeltsHealed=%d"),
+		PurgeCount, PoisonedRemoved, ForceDestroyedCount, ReRegisteredBelts, HealedChainlessBelts);
 
-	return PurgeCount + ForceDestroyedCount;
+	return PurgeCount + PoisonedRemoved + ForceDestroyedCount;
 }
 
 int32 USFChainActorService::RepairSplitChains()
