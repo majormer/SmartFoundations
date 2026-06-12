@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [32.1.0] - unreleased
+## [32.1.0] - 2026-06-11
 
 > *A fast follow to the multiplayer release: day-one community reports fixed, Smart! support inside the Blueprint Designer, pipeline support scaling, and a reworked Smart! Panel.*
 
@@ -25,7 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Multiplayer: rotated scaled builds now construct rotated** - Building a scaled run with Rotation set (curved ramps and arcs) as a multiplayer client previewed correctly but built with every copy facing the same direction. The server now applies each copy's rotation exactly like single-player. Thanks to Aerlon from the Smart! Discord, reported within a day of 32.0.0 (Issue #363)
 - **The Customizer's X key works again** - Satisfactory 1.2 bound the Customizer to X, which collided with Smart!'s Scale X. Smart!'s build keys are now only active while you're actually holding a buildable: empty hands, X opens the Customizer; buildable in hand, X scales. Also fixed the keys staying captured after canceling a build with Esc. Thanks to swallerwaller (Issue #358)
 - **Smart! Panel dropdowns open in the right place** - The Belt Auto-Connect dropdowns (and every other dropdown on the panel) could open detached from their boxes, worst with the panel positioned low on the screen. The panel was rebuilt so menus anchor exactly where they render - and it picked up a cleaner, more compact layout along the way: Apply/Reset/Close in a row under the header, value columns that no longer collide with labels in any language, and better contrast. (Issue #352)
-- **Crash fix: dismantling a building with a broken power-wire record** - Dismantling a building whose power connection carried a dead wire reference (left by an earlier failed connection or a save where the wire didn't load) crashed the game. Smart! now cleans up its own failed wire connections properly AND repairs any broken wire records it finds at dismantle time, so affected buildings - including ones from older saves - dismantle safely. (Found dismantling an Extended blueprint building)
+- **Crash fix: dismantling a building with a broken power-wire record** - Dismantling a building whose power connection carried a dead wire reference (left by an earlier failed connection or a save where the wire didn't load) crashed the game. Smart! now cleans up its own failed wire connections properly AND repairs any broken wire records it finds at dismantle time, so affected buildings - including ones from older saves - dismantle safely. (Issue #369)
 - **Crash fix: belt-repair sweep on corrupted chain records** - Smart!'s automatic belt repair (which heals conveyor bookkeeping on save load and after builds) could crash if a save carried a corrupted conveyor-chain record holding references to removed belts. The sweep now detects these and removes them surgically; surviving belts are re-registered and rebuild cleanly. Items that were in transit on a corrupted chain are lost, which beats the alternative - a crash on every load. Thanks to Mawie the Fox from the Satisfactory Modding Discord (Issue #367)
 
 ---
