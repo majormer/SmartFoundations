@@ -6,6 +6,7 @@
  */
 
 #include "Features/Extend/SFExtendWiringServiceImpl.h"
+#include "FGDismantleInterface.h"
 
 bool USFExtendWiringService::HasPendingPostBuildWiring() const
 {
@@ -502,7 +503,10 @@ void USFExtendWiringService::WireBuiltChildConnections(AFGBuildableFactory* NewF
             else
             {
                 ++PumpsSkipped;
-                NewWire->Destroy();
+                // [NULL-WIRE GUARD] Dismantle, not Destroy: a failed Connect may still have
+				// registered one side; bare Destroy leaves a dead entry in that connection's
+				// SaveGame'd wire list (asserts on the owner's next dismantle / after reload).
+				IFGDismantleInterface::Execute_Dismantle(NewWire);
                 SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Warning, TEXT("⚡ EXTEND Phase 3.8b (#288): Wire->Connect() failed for pump %s → pole %s"),
                     *ClonePump->GetName(), *ClonePole->GetName());
             }

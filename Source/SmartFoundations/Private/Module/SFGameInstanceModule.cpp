@@ -48,6 +48,9 @@
 #include "Buildables/FGBuildableConveyorLift.h"
 #include "FGBuildableSubsystem.h"
 #include "FGConveyorChainActor.h"
+#include "Hologram/FGWallAttachmentHologram.h"        // [#364-MP] wall-support server re-validation
+#include "Buildables/FGBuildableBlueprintDesigner.h"  // [#365-MP] designer containment re-derive
+#include "EngineUtils.h"                              // [#365-MP] TActorIterator over designers
 
 // Tiny linker anchor to ensure StaticClass() is referenced
 static void SF_ForceUHT_SeeFGHolograms()
@@ -435,7 +438,8 @@ static bool SF_InputWillConstruct(AFGHologram* Holo)
 		return Step == FinalStep;
 	};
 
-	if (USFAutoConnectService::IsRegularConveyorPoleHologram(Holo))
+	// #364: the standard pipeline support shares AFGPoleHologram's step machinery with the conveyor pole
+	if (USFAutoConnectService::IsRegularConveyorPoleHologram(Holo) || USFAutoConnectService::IsRegularPipelinePoleHologram(Holo))
 	{
 		return FinalStepReached(AFGPoleHologram::StaticClass(),
 			static_cast<uint8>(EPoleHologramBuildStep::PHBS_AdjustHeight));
@@ -873,6 +877,30 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 	// overrides EndPlay (primary-class virtual): hooking its body via the CDO fires for the
 	// whole Super chain - every buildable, conveyors included.
 	AFGBuildable* BuildableCDO = GetMutableDefault<AFGBuildable>();
+
+	// [NULL-WIRE GUARD] Vanilla Dismantle_Implementation walks every circuit connection's wire
+	// list and calls Execute_Dismantle on each entry UNGUARDED - a null entry (a wire destroyed
+	// without disconnecting, or a SaveGame wire reference that failed to load) is an instant
+	// "Assertion failed: O != 0" (live SP crash 2026-06-11: dismantling an Extended blueprint
+	// buildable). Scrub null/dead entries BEFORE the original runs. Void return - no by-value
+	// return-slot concerns; scope() invoked after the scrub.
+	SUBSCRIBE_METHOD_VIRTUAL(AFGBuildable::Dismantle_Implementation, BuildableCDO,
+		[](auto& scope, AFGBuildable* self)
+		{
+			if (self && self->HasAuthority())
+			{
+				const int32 Scrubbed = USFChainActorService::ScrubNullWireEntries(self);
+				if (Scrubbed > 0)
+				{
+					UE_LOG(LogSmartFoundations, Warning,
+						TEXT("[NULL-WIRE GUARD] %s (%s): scrubbed %d null/dead wire entr%s before dismantle (vanilla would have asserted)."),
+						*self->GetName(), *self->GetClass()->GetName(), Scrubbed,
+						Scrubbed == 1 ? TEXT("y") : TEXT("ies"));
+				}
+			}
+			scope(self);
+		});
+
 	SUBSCRIBE_METHOD_VIRTUAL(AFGBuildable::EndPlay, BuildableCDO,
 		[](auto& scope, AFGBuildable* self, const EEndPlayReason::Type endPlayReason)
 		{
@@ -962,6 +990,45 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 			? SS->ConsumeExtendCommitForInstigator(Instigator, BuildClass, OutSpec)
 			: SS->PeekExtendCommitForInstigator(Instigator, BuildClass, OutSpec);
 	};
+
+	// ── [#364-MP] Wall-attachment re-validation for staged client fires. The server re-runs
+	// CheckValidPlacement on the deserialized hologram inside Server_ConstructHologram, but
+	// mSnappedBuilding does not survive the trip for these fires - the server-side hologram
+	// reports FGCDMustSnapWall and the whole construct is refused (live 2026-06-11: every scaled
+	// wall pipeline support fire on the Windows dedi). The CLIENT already validated the wall snap
+	// (the build gun will not fire a red preview), and a staged spec exists ONLY for a Smart
+	// client fire - the same trust model the spec expansion itself uses. Strip exactly that one
+	// disqualifier; every other server-side check (overlap, clearance, affordability) stays.
+	// Hooked at the AFGWallAttachmentHologram body so all wall-mount families are covered
+	// (pipeline wall supports, conveyor wall mounts).
+	AFGWallAttachmentHologram* WallAttachmentCDO = GetMutableDefault<AFGWallAttachmentHologram>();
+	SUBSCRIBE_METHOD_VIRTUAL(AFGWallAttachmentHologram::CheckValidPlacement, WallAttachmentCDO,
+		[=](auto& scope, AFGWallAttachmentHologram* self)
+		{
+			scope(self);
+			if (!self || !self->HasAuthority())
+			{
+				return;
+			}
+			FSFScalingSpec StagedSpec;
+			if (!FindStagedSpec(self, StagedSpec, /*bConsume=*/false))
+			{
+				return; // not a staged Smart client fire - vanilla/SP validation untouched
+			}
+			TArray<TSubclassOf<UFGConstructDisqualifier>> Disqualifiers;
+			self->GetConstructDisqualifiers(Disqualifiers);
+			if (Disqualifiers.Remove(UFGCDMustSnapWall::StaticClass()) > 0)
+			{
+				self->ResetConstructDisqualifiers();
+				for (const TSubclassOf<UFGConstructDisqualifier>& Disqualifier : Disqualifiers)
+				{
+					self->AddConstructDisqualifier(Disqualifier);
+				}
+				UE_LOG(LogSmartFoundations, Display,
+					TEXT("[MP-SPEC] %s: cleared server-side FGCDMustSnapWall for a staged client fire (client validated the wall snap; %d other disqualifier(s) kept)."),
+					*self->GetName(), Disqualifiers.Num());
+			}
+		});
 
 	// ── Hook A: cost. Charged server-side BEFORE Construct, when the grid children do not exist
 	// yet - scale the uniform per-cell cost by the staged cell count. Fires at the
@@ -1055,6 +1122,57 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 	SUBSCRIBE_METHOD_VIRTUAL(AFGBuildableHologram::Construct, BuildableHologramCDO,
 		[=](auto& scope, AFGBuildableHologram* self, TArray<AActor*>& out_children, FNetConstructionID constructionID)
 		{
+			// [#365] Universal designer propagation at the commit seam. The constructing
+			// hologram reliably carries the Blueprint Designer context HERE (vanilla updates
+			// it while aiming; activation-time stamping on clone spawn can run too early,
+			// before the aim has tagged the hologram - live find: Extend's parent registered
+			// with the designer but every clone built untracked). Vanilla's child-construct
+			// loop does NOT propagate parent->child, so stamp every child hologram now - the
+			// last moment before their buildables spawn. Covers Smart grids, Extend clones,
+			// and conduit previews alike; runs regardless of the spec-construction toggle.
+			if (self && self->HasAuthority())
+			{
+				// [#365-MP] Designer re-derivation for staged client fires. mBlueprintDesigner does
+				// not reliably survive the construct message for these fires (live 2026-06-11:
+				// client-scaled machines inside a designer built with NO designer context server-side
+				// - "Attempt to connect between missmatched blueprint designers" on every conduit, and
+				// nothing registered into the blueprint). The designer is an ordinary replicated actor
+				// with an authoritative containment test, so re-derive it from the parent's location.
+				// Gated to staged fires; a no-op when the reference crossed or outside any designer.
+				if (self->GetBlueprintDesigner() == nullptr && SFScalingSpecExpansion::IsSpecConstructionEnabled())
+				{
+					FSFScalingSpec PeekSpec;
+					FSFExtendCommitSpec PeekCommit;
+					if (FindStagedSpec(self, PeekSpec, /*bConsume=*/false) ||
+					    FindStagedExtendCommit(self, PeekCommit, /*bConsume=*/false))
+					{
+						const FVector ParentLocation = self->GetActorLocation();
+						for (TActorIterator<AFGBuildableBlueprintDesigner> It(self->GetWorld()); It; ++It)
+						{
+							if (*It && It->IsLocationInsideDesigner(ParentLocation))
+							{
+								self->SetInsideBlueprintDesigner(*It);
+								UE_LOG(LogSmartFoundations, Display,
+									TEXT("[MP-SPEC] %s: re-derived Blueprint Designer context (%s) from containment for a staged client fire (reference did not cross the construct message)."),
+									*self->GetName(), *It->GetName());
+								break;
+							}
+						}
+					}
+				}
+
+				if (AFGBuildableBlueprintDesigner* Designer = self->GetBlueprintDesigner())
+				{
+					for (AFGHologram* ChildHolo : self->GetHologramChildren())
+					{
+						if (ChildHolo && ChildHolo->GetBlueprintDesigner() == nullptr)
+						{
+							ChildHolo->SetInsideBlueprintDesigner(Designer);
+						}
+					}
+				}
+			}
+
 			if (!self || !self->HasAuthority() || !SFScalingSpecExpansion::IsSpecConstructionEnabled())
 			{
 				return;
@@ -1067,6 +1185,13 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 			{
 				return; // nothing staged for this instigator/class (e.g. a child in the loop)
 			}
+
+			// [#365-MP] One line per staged construct: the designer state at the seam is the
+			// load-bearing fact for designer-resident client builds (see re-derivation above).
+			UE_LOG(LogSmartFoundations, Display,
+				TEXT("[MP-SPEC] Construct seam: %s (%s staged), designer=%s."),
+				*self->GetName(), bHasScaling ? TEXT("scaling spec") : TEXT("extend commit"),
+				self->GetBlueprintDesigner() ? *self->GetBlueprintDesigner()->GetName() : TEXT("none"));
 
 			if (bHasScaling)
 			{
@@ -1109,8 +1234,12 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 			// construct: the ConfigureActor hook below assigns it to every buildable configured
 			// inside scope() - i.e. pre-BeginPlay, the timing vanilla blueprints use, so
 			// lightweight conversion transfers membership to replicated lightweight indices.
+			// [#312] Never create a Smart group proxy for a construct inside the Blueprint
+			// Designer: mBlueprintProxy is SaveGame, so a designer-resident buildable pointing
+			// at a Smart WORLD proxy makes the blueprint save chase that reference out of the
+			// designer ("saving a blueprint saves the whole world").
 			AFGBlueprintProxy* GroupProxy = nullptr;
-			if (UWorld* World = self->GetWorld())
+			if (UWorld* World = self->GetWorld(); World && self->GetBlueprintDesigner() == nullptr)
 			{
 				FActorSpawnParameters ProxyParams;
 				ProxyParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
@@ -1303,6 +1432,12 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 		{
 			AFGBlueprintProxy* GroupProxy = GSFActiveSpecGroupProxy.Get();
 			if (!GroupProxy || !inBuildable)
+			{
+				return;
+			}
+			// [#312] Designer-resident buildables must never reference a Smart world proxy
+			// (SaveGame reference would poison blueprint saves).
+			if (inBuildable->GetBlueprintDesigner() != nullptr)
 			{
 				return;
 			}

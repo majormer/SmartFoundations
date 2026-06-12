@@ -230,7 +230,8 @@ bool FSFValidationService::ShouldEnableFloorValidation(
 	const bool bIsCeilingLight = ParentHologram->IsA(AFGCeilingLightHologram::StaticClass());
 	const bool bIsFloodlight = ParentHologram->IsA(AFGFloodlightHologram::StaticClass());
 	const bool bIsWallAttachment = ParentHologram->IsA(AFGWallAttachmentHologram::StaticClass());
-	const bool bIsRegularPole = USFAutoConnectService::IsRegularConveyorPoleHologram(ParentHologram);  // #354
+	const bool bIsRegularPole = USFAutoConnectService::IsRegularConveyorPoleHologram(ParentHologram)   // #354
+		|| USFAutoConnectService::IsRegularPipelinePoleHologram(ParentHologram);  // #364: standard pipeline support
 	if (bIsConveyorAttachment || bIsPipeAttachment || bIsPassthrough || bIsPowerPole || bIsCeilingLight || bIsFloodlight || bIsWallAttachment || bIsRegularPole)
 	{
 		UE_LOG(LogSmartFoundations, VeryVerbose,

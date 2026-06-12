@@ -79,6 +79,15 @@ void FConduitPreviewHelper::EnsureSpawned(const FVector& SpawnLocation)
 	USFHologramDataService::DisableValidation(SpawnedHologram);
 	USFHologramDataService::MarkAsChild(SpawnedHologram, ParentHologram.Get(), ESFChildHologramType::AutoConnect);
 
+	// [#331] Propagate the Blueprint Designer context (vanilla copies hologram->buildable at
+	// construct). This is the GENERIC conduit preview spawner - distributor belts and junction
+	// pipes - the path the live repro went through: without this the built conduits never
+	// register with the designer (left behind on designer clear, missing from blueprint saves).
+	if (AFGBuildableBlueprintDesigner* Designer = ParentHologram->GetBlueprintDesigner())
+	{
+		SpawnedHologram->SetInsideBlueprintDesigner(Designer);
+	}
+
 	// Finish spawning
 	SpawnedHologram->FinishSpawning(FTransform(SpawnLocation));
 

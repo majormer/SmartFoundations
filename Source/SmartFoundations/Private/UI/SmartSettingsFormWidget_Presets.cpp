@@ -889,35 +889,9 @@ FReply USmartSettingsFormWidget::NativeOnMouseMove(const FGeometry& InGeometry, 
 
     if (bIsDragging && BackgroundPanelSlot)
     {
+        // [#352 restructure] The panel is one canvas child; dragging moves one slot.
         const FVector2D LocalMouse = InGeometry.AbsoluteToLocal(InMouseEvent.GetScreenSpacePosition());
-        const FVector2D NewBackgroundPos = LocalMouse - DragOffset;
-
-        BackgroundPanelSlot->SetPosition(NewBackgroundPos);
-
-        if (TitleTextSlot)
-        {
-            TitleTextSlot->SetPosition(NewBackgroundPos + TitleOffset);
-        }
-        if (ContentContainerSlot)
-        {
-            ContentContainerSlot->SetPosition(NewBackgroundPos + ContentOffset);
-        }
-        if (SmartLogoSlot)
-        {
-            SmartLogoSlot->SetPosition(NewBackgroundPos + LogoOffset);
-        }
-        if (ApplyButtonSlot)
-        {
-            ApplyButtonSlot->SetPosition(NewBackgroundPos + ApplyOffset);
-        }
-        if (ResetButtonSlot)
-        {
-            ResetButtonSlot->SetPosition(NewBackgroundPos + ResetOffset);
-        }
-        if (CloseButtonSlot)
-        {
-            CloseButtonSlot->SetPosition(NewBackgroundPos + CloseOffset);
-        }
+        BackgroundPanelSlot->SetPosition(LocalMouse - DragOffset);
     }
 
     return Super::NativeOnMouseMove(InGeometry, InMouseEvent);

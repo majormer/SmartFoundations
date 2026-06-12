@@ -1,6 +1,6 @@
 # <img src="https://github.com/majormer/SmartFoundations/blob/main/images/Smart-Logo.png?raw=true" width="150" alt="Smart! Logo"> Smart! Mod
 
-![Status](https://img.shields.io/badge/Status-Released-brightgreen) ![Version](https://img.shields.io/badge/Version-32.0.0-blue) ![Satisfactory](https://img.shields.io/badge/Satisfactory-1.2-blue) ![Engine](https://img.shields.io/badge/Engine-UE%205.6-blue) ![SML](https://img.shields.io/badge/SML-3.12-blue) ![Multiplayer](https://img.shields.io/badge/Multiplayer-Supported-brightgreen) ![AI Assisted Development Used](https://img.shields.io/badge/AI%20Assisted%20Development%20Used-Disclosure%20Below-blue)
+![Status](https://img.shields.io/badge/Status-Released-brightgreen) ![Version](https://img.shields.io/badge/Version-32.1.0-blue) ![Satisfactory](https://img.shields.io/badge/Satisfactory-1.2-blue) ![Engine](https://img.shields.io/badge/Engine-UE%205.6-blue) ![SML](https://img.shields.io/badge/SML-3.12-blue) ![Multiplayer](https://img.shields.io/badge/Multiplayer-Supported-brightgreen) ![AI Assisted Development Used](https://img.shields.io/badge/AI%20Assisted%20Development%20Used-Disclosure%20Below-blue)
 
 > **Multiplayer note:** As of v32.0.0, every Smart! feature works in multiplayer on dedicated servers (Windows and Linux). Multiplayer support is new in this release — if you hit something odd in a multiplayer session, please report it on [GitHub](https://github.com/majormer/SmartFoundations/issues) or [Discord](https://discord.gg/SgXY4CwXYw).
 
@@ -101,19 +101,28 @@ See [LICENSE.md](https://github.com/majormer/SmartFoundations/blob/main/LICENSE.
 
 ---
 
-## 📰 What's New in v32.0.0: Multiplayer
+## 📰 What's New in v32.1.0: Blueprint Designer + Pipeline Supports
 
-**Current Release:** v32.0.0 — the multiplayer release. See the [full changelog](https://github.com/majormer/SmartFoundations/blob/main/CHANGELOG.md) for all release details.
+**Current Release:** v32.1.0 — a fast follow to the multiplayer release: day-one community reports fixed, Smart! support inside the Blueprint Designer, pipeline support scaling, and a reworked Smart! Panel. See the [full changelog](https://github.com/majormer/SmartFoundations/blob/main/CHANGELOG.md) for all release details.
 
-### Smart! now works in multiplayer
+### Smart! works in the Blueprint Designer
 
-Every Smart! feature now works when you play as a client on a dedicated server: grid scaling, belt/pipe/power auto-connect, Extend and Scaled Extend, Smart Upgrade, Smart Restore presets, and Smart Dismantle — with normal build costs charged exactly as the preview shows. Everything Smart! places is a standard, fully replicated game building: other players see it, can use it, and can dismantle it, just as if it were built by hand.
+Building with Smart! inside the Blueprint Designer now behaves like the open world: auto-connect belts and pipes preview, space themselves, and build correctly; Extend and Scaled Extend work on designer-resident buildings; and everything Smart! builds is properly captured into the blueprint. This also fixes a serious bug where blueprints saved with Smart!-grouped buildings inside could balloon to the size of your whole save file.
 
-- **Windows and Linux dedicated servers** — the release includes server builds for both platforms, so Smart! runs on most hosted-server providers.
-- **For server admins** — install the same Smart! version on the server and on every client; the mod manager keeps these paired on update.
-- Multiplayer support is new in this release. If something behaves differently in a multiplayer session than in single-player, that's a bug — please report it on [GitHub](https://github.com/majormer/SmartFoundations/issues) or [Discord](https://discord.gg/SgXY4CwXYw).
+### Pipeline supports join the scaling family
 
-This release also fixes one-click Smart Dismantle for restored single modules, and adds belt repairs while building and on save load (including saves made on earlier versions) — see the [changelog](https://github.com/majormer/SmartFoundations/blob/main/CHANGELOG.md) for details.
+Pipeline Supports, Pipeline Wall Supports, and Pipeline Wall Holes can now be grid-scaled. Scaled Pipeline Supports and Wall Supports also build a connected pipe run between the copies — plumbed end to end, with each support's snap point left free for manual connections — and the standard support's height and angle settings mirror across the whole line.
+
+### Community reports from the 32.0.0 release week — fixed
+
+- **The Customizer's X key works again** — Smart!'s build keys are now only active while you hold a buildable.
+- **Multiplayer: rotated scaled builds** (curved ramps and arcs) now construct rotated, exactly like the preview.
+- **Smart! Panel dropdowns** open attached to their boxes, on a cleaner, more compact panel.
+- **Two crash fixes**: dismantling a building with a broken power-wire record, and the belt-repair sweep on saves carrying corrupted conveyor-chain records.
+
+### Also in v32.0.0: Multiplayer
+
+Every Smart! feature works when you play as a client on a dedicated server — grid scaling, belt/pipe/power auto-connect, Extend and Scaled Extend, Smart Upgrade, Smart Restore presets, and Smart Dismantle — with normal build costs charged exactly as the preview shows. Server builds ship for **Windows and Linux dedicated servers**; install the same Smart! version on the server and on every client (the mod manager keeps these paired). If something behaves differently in multiplayer than in single-player, that's a bug — please report it on [GitHub](https://github.com/majormer/SmartFoundations/issues) or [Discord](https://discord.gg/SgXY4CwXYw).
 
 ### Earlier in the 31.x line: Satisfactory 1.2
 

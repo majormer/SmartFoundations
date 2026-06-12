@@ -407,7 +407,7 @@ void USFAutoConnectService::ProcessStackablePipelineSupports(AFGHologram* Parent
 	TArray<TWeakObjectPtr<AFGHologram>> SpawnedChildren = HologramHelper->GetSpawnedChildren();
 	for (const TWeakObjectPtr<AFGHologram>& ChildPtr : SpawnedChildren)
 	{
-		if (ChildPtr.IsValid() && IsStackablePipelineSupportHologram(ChildPtr.Get()))
+		if (ChildPtr.IsValid() && IsPipeSupportHologram(ChildPtr.Get()))
 		{
 			AllSupports.Add(ChildPtr.Get());
 		}
@@ -477,7 +477,7 @@ void USFAutoConnectService::ProcessStackablePipelineSupports(AFGHologram* Parent
 					continue; // Skip parent position
 				}
 				
-				if (SpawnedChildren[ChildIndex].IsValid() && IsStackablePipelineSupportHologram(SpawnedChildren[ChildIndex].Get()))
+				if (SpawnedChildren[ChildIndex].IsValid() && IsPipeSupportHologram(SpawnedChildren[ChildIndex].Get()))
 				{
 					GridToHologram.Add(PackGridPos(X, Y, Z), SpawnedChildren[ChildIndex].Get());
 				}
@@ -488,22 +488,31 @@ void USFAutoConnectService::ProcessStackablePipelineSupports(AFGHologram* Parent
 	
 	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🔧 Mapped %d supports to grid positions"), GridToHologram.Num());
 
-	// Connect X-neighbors: for each grid position, connect to X+1 if it exists
+	// Connect grid neighbors along the scaling axis. Stackable + standard supports scale along
+	// X; WALL pipeline supports scale along Y (#364, mirroring #268's wall conveyor poles) - so
+	// connect Y-neighbors ([X,Y,Z] -> [X,Y+1,Z]) for them, X-neighbors otherwise.
+	const bool bConnectAlongY = IsWallPipelineSupportHologram(ParentHologram);
 	int32 PipeIndex = 0;
 	for (int32 Z = 0; Z < ZCount; ++Z)
 	{
 		for (int32 Y = 0; Y < YCount; ++Y)
 		{
-			for (int32 X = 0; X < XCount - 1; ++X)  // Stop at XCount-1 since we connect to X+1
+			for (int32 X = 0; X < XCount; ++X)
 			{
+				// Stop one short of the end along the connect axis (we connect to +1)
+				if (bConnectAlongY && Y >= YCount - 1) continue;
+				if (!bConnectAlongY && X >= XCount - 1) continue;
+
 				AFGHologram** SourcePtr = GridToHologram.Find(PackGridPos(X, Y, Z));
-				AFGHologram** TargetPtr = GridToHologram.Find(PackGridPos(X + 1, Y, Z));
-				
+				AFGHologram** TargetPtr = bConnectAlongY
+					? GridToHologram.Find(PackGridPos(X, Y + 1, Z))
+					: GridToHologram.Find(PackGridPos(X + 1, Y, Z));
+
 				if (!SourcePtr || !TargetPtr || !*SourcePtr || !*TargetPtr)
 				{
 					continue; // One or both neighbors missing
 				}
-				
+
 				// ========================================================================
 				// DISTANCE AND ANGLE RESTRICTIONS
 				// ========================================================================
@@ -511,23 +520,23 @@ void USFAutoConnectService::ProcessStackablePipelineSupports(AFGHologram* Parent
 				FVector Pos1 = (*SourcePtr)->GetActorLocation();
 				FVector Pos2 = (*TargetPtr)->GetActorLocation();
 				float Distance = FVector::Dist(Pos1, Pos2);
-				
+
 				// Distance restriction: >56m is too far (game engine limit)
 				if (Distance > MAX_PIPE_LENGTH)
 				{
-					UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🔧 Pipe skipped: distance %.1f cm > 56m between [%d,%d,%d] and [%d,%d,%d]"),
-						Distance, X, Y, Z, X + 1, Y, Z);
+					UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🔧 Pipe skipped: distance %.1f cm > 56m between [%d,%d,%d] and next along %hs"),
+						Distance, X, Y, Z, bConnectAlongY ? "Y" : "X");
 					continue;
 				}
-				
+
 				// Angle restriction: >30° from horizontal
 				FVector DirectionVec = (Pos2 - Pos1).GetSafeNormal();
 				float VerticalComponent = FMath::Abs(DirectionVec.Z);
 				float AngleDegrees = FMath::RadiansToDegrees(FMath::Asin(VerticalComponent));
 				if (AngleDegrees > 30.0f)
 				{
-					UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🔧 Pipe skipped: angle %.1f° > 30° between [%d,%d,%d] and [%d,%d,%d]"),
-						AngleDegrees, X, Y, Z, X + 1, Y, Z);
+					UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🔧 Pipe skipped: angle %.1f° > 30° between [%d,%d,%d] and next along %hs"),
+						AngleDegrees, X, Y, Z, bConnectAlongY ? "Y" : "X");
 					continue;
 				}
 				
@@ -1604,6 +1613,14 @@ AFGHologram* USFAutoConnectService::UpdateOrCreateBeltForPolePair(
 	BeltChild->SetReplicateMovement(false);
 	BeltChild->SetBuildClass(BeltBuildClass);
 	BeltChild->Tags.AddUnique(FName(TEXT("SF_StackableChild")));
+
+	// [#331] Propagate the Blueprint Designer context: vanilla copies the hologram's designer
+	// onto the constructed buildable (pre-BeginPlay), so a Smart-spawned hologram that lacks it
+	// builds buildables the designer never tracks (invisible to blueprint capture).
+	if (AFGBuildableBlueprintDesigner* Designer = ParentHologram->GetBlueprintDesigner())
+	{
+		BeltChild->SetInsideBlueprintDesigner(Designer);
+	}
 	
 	USFHologramDataService::DisableValidation(BeltChild);
 	USFHologramDataService::MarkAsChild(BeltChild, ParentHologram, ESFChildHologramType::AutoConnect);

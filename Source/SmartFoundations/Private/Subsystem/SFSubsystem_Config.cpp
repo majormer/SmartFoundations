@@ -338,6 +338,14 @@ void USFSubsystem::OnActorDestroyed(AActor* DestroyedActor)
 		// Clean up auto-connect previews when hologram is destroyed (covers Escape, right-click, etc.)
 		if (ActiveHologram.IsValid() && ActiveHologram.Get() == Hologram)
 		{
+			// [#358] Esc/cancel destroys the active hologram WITHOUT passing through
+			// UnregisterActiveHologram - the input context would stay stuck on, eating
+			// vanilla keys (live find: scale + Esc left the Customizer's X dead).
+			if (InputHandler)
+			{
+				InputHandler->SetSmartContextActive(false);
+			}
+
 			if (AutoConnectService)
 			{
 				// Only clear the appropriate preview type based on hologram type
@@ -528,7 +536,7 @@ void USFSubsystem::OnRecipeModeChanged(const FInputActionValue& Value)
 	{
 		bool bIsDistributor = AutoConnectService->IsDistributorHologram(ActiveHologram.Get());
 		bool bIsPipeJunction = AutoConnectService->IsPipelineJunctionHologram(ActiveHologram.Get());
-		bool bIsStackablePipe = AutoConnectService->IsStackablePipelineSupportHologram(ActiveHologram.Get());
+		bool bIsStackablePipe = AutoConnectService->IsPipeSupportHologram(ActiveHologram.Get());
 		bool bIsStackableBelt = USFAutoConnectService::IsBeltSupportHologram(ActiveHologram.Get());
 		bool bIsPowerPole = AutoConnectService->IsPowerPoleHologram(ActiveHologram.Get());
 		bool bIsPassthroughPipe = USFAutoConnectService::IsPassthroughPipeHologram(ActiveHologram.Get());
@@ -1061,7 +1069,7 @@ void USFSubsystem::CycleAutoConnectSetting()
     if (ActiveHologram.IsValid() && AutoConnectService)
     {
         bIsPipeJunction = AutoConnectService->IsPipelineJunctionHologram(ActiveHologram.Get());
-        bIsStackablePipe = AutoConnectService->IsStackablePipelineSupportHologram(ActiveHologram.Get());
+        bIsStackablePipe = AutoConnectService->IsPipeSupportHologram(ActiveHologram.Get());
         bIsStackableBelt = USFAutoConnectService::IsBeltSupportHologram(ActiveHologram.Get());
         bIsPowerPole = AutoConnectService->IsPowerPoleHologram(ActiveHologram.Get());
     }
@@ -1226,7 +1234,7 @@ void USFSubsystem::AdjustAutoConnectSetting(int32 Delta)
         if (ActiveHologram.IsValid() && AutoConnectService)
         {
             if (AutoConnectService->IsPipelineJunctionHologram(ActiveHologram.Get()) ||
-                AutoConnectService->IsStackablePipelineSupportHologram(ActiveHologram.Get()) ||
+                AutoConnectService->IsPipeSupportHologram(ActiveHologram.Get()) ||
                 USFAutoConnectService::IsPassthroughPipeHologram(ActiveHologram.Get()))
             {
                 // Pipe hologram (junction, stackable support, or floor hole): toggle pipe auto-connect
@@ -1353,7 +1361,7 @@ void USFSubsystem::AdjustAutoConnectSetting(int32 Delta)
                 UE_LOG(LogSmartFoundations, VeryVerbose, TEXT(" Orchestrator: Force recreated pipe previews after settings change"));
             }
         }
-        else if (AutoConnectService->IsStackablePipelineSupportHologram(ActiveHologram.Get()))
+        else if (AutoConnectService->IsPipeSupportHologram(ActiveHologram.Get()))
         {
             // Stackable pipe supports: trigger re-processing of pipe previews
             AutoConnectService->ProcessStackablePipelineSupports(ActiveHologram.Get());
@@ -1399,7 +1407,7 @@ FString USFSubsystem::GetAutoConnectSettingDisplayString() const
         // Context-aware display: show belt or pipe auto-connect status
         if (ActiveHologram.IsValid() && AutoConnectService &&
             (AutoConnectService->IsPipelineJunctionHologram(ActiveHologram.Get()) ||
-             AutoConnectService->IsStackablePipelineSupportHologram(ActiveHologram.Get()) ||
+             AutoConnectService->IsPipeSupportHologram(ActiveHologram.Get()) ||
              USFAutoConnectService::IsPassthroughPipeHologram(ActiveHologram.Get())))
         {
             SettingName = TEXT("Pipe Auto-Connect");

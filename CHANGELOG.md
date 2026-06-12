@@ -9,6 +9,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [32.1.0] - 2026-06-11
+
+> *A fast follow to the multiplayer release: day-one community reports fixed, Smart! support inside the Blueprint Designer, pipeline support scaling, and a reworked Smart! Panel.*
+
+### Added
+
+- **Smart! works in the Blueprint Designer** - Building with Smart! inside the Blueprint Designer now behaves like the open world: auto-connect belts and pipes preview, space themselves, and build correctly, Extend and Scaled Extend work on designer-resident buildings, and everything Smart! builds is properly captured into the blueprint (and removed by designer clear). Previously Smart!-built belts and pipes were invisible to the designer - left behind on clear and missing from saved blueprints. (Issues #331, #365)
+- **Scaled pipeline supports follow height AND angle** - The standard Pipeline Support is a two-step buildable (place, then height) with an adjustable vertical angle on its top piece for sloped pipe runs. Scaling a line or grid of them now mirrors both to every copy: adjust the parent's height or tilt and the whole line follows, in single-player and multiplayer. (Issues #291, #364)
+- **Pipeline supports can now be scaled, with pipes auto-connected between them** - Pipeline Supports, Pipeline Wall Supports, and Pipeline Wall Holes support grid scaling: place one, scale out a line or grid. Scaled Pipeline Supports and Pipeline Wall Supports also build a connected pipe run between the copies, just like the Conveyor Pole does for belts - the run is plumbed end to end (fluid flows through every joint), and each support's snap point stays free so you can still connect pipes to it by hand. Thanks to Torkeug (Issues #291, #292, #293, #364)
+
+### Fixed
+
+- **Saving a blueprint no longer saves the whole world** - Placing Smart!-grouped buildings inside the Blueprint Designer could poison the blueprint save with references to the rest of your world. Designer builds no longer join Smart!'s one-click-dismantle groups (the designer has its own handling), keeping blueprint saves blueprint-sized. Thanks to i-am-not-choco (Issue #312)
+- **Multiplayer: rotated scaled builds now construct rotated** - Building a scaled run with Rotation set (curved ramps and arcs) as a multiplayer client previewed correctly but built with every copy facing the same direction. The server now applies each copy's rotation exactly like single-player. Thanks to Aerlon from the Smart! Discord, reported within a day of 32.0.0 (Issue #363)
+- **The Customizer's X key works again** - Satisfactory 1.2 bound the Customizer to X, which collided with Smart!'s Scale X. Smart!'s build keys are now only active while you're actually holding a buildable: empty hands, X opens the Customizer; buildable in hand, X scales. Also fixed the keys staying captured after canceling a build with Esc. Thanks to swallerwaller (Issue #358)
+- **Smart! Panel dropdowns open in the right place** - The Belt Auto-Connect dropdowns (and every other dropdown on the panel) could open detached from their boxes, worst with the panel positioned low on the screen. The panel was rebuilt so menus anchor exactly where they render - and it picked up a cleaner, more compact layout along the way: Apply/Reset/Close in a row under the header, value columns that no longer collide with labels in any language, and better contrast. (Issue #352)
+- **Crash fix: dismantling a building with a broken power-wire record** - Dismantling a building whose power connection carried a dead wire reference (left by an earlier failed connection or a save where the wire didn't load) crashed the game. Smart! now cleans up its own failed wire connections properly AND repairs any broken wire records it finds at dismantle time, so affected buildings - including ones from older saves - dismantle safely. (Issue #369)
+- **Crash fix: belt-repair sweep on corrupted chain records** - Smart!'s automatic belt repair (which heals conveyor bookkeeping on save load and after builds) could crash if a save carried a corrupted conveyor-chain record holding references to removed belts. The sweep now detects these and removes them surgically; surviving belts are re-registered and rebuild cleanly. Items that were in transit on a corrupted chain are lost, which beats the alternative - a crash on every load. Thanks to Mawie the Fox from the Satisfactory Modding Discord (Issue #367)
+
+---
+
 ## [32.0.0] - 2026-06-11
 
 > *The multiplayer release: every Smart! feature now works in multiplayer on dedicated servers — Windows and Linux.*

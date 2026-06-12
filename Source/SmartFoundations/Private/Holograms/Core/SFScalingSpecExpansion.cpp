@@ -22,6 +22,8 @@
 #include "Engine/World.h"
 #include "EngineUtils.h"
 #include "HAL/IConsoleManager.h"
+#include "FGDismantleInterface.h"
+#include "Hologram/FGPipelinePoleHologram.h"
 
 // MP spec-based construction. ON by default - the mod must be self-contained (no launch options /
 // ini edits for players; Saved/Engine.ini is rewritten by the game's diff-config system anyway).
@@ -118,6 +120,34 @@ static void SF_SyncMultiStepPropertiesToChild(AFGHologram* Parent, AFGHologram* 
 		return;
 	}
 
+	// #364: STANDARD pipeline support - height (inherited pole machinery) + vertical angle
+	// (public API). Same gate discipline as #354: stackable/wall supports untouched.
+	if (USFAutoConnectService::IsRegularPipelinePoleHologram(Parent) && Child->IsA<AFGPipelinePoleHologram>())
+	{
+		if (FIntProperty* VarProp = FindFProperty<FIntProperty>(AFGPoleHologram::StaticClass(), TEXT("mPoleVariationIndex")))
+		{
+			VarProp->SetPropertyValue_InContainer(Child, VarProp->GetPropertyValue_InContainer(Parent));
+		}
+		if (FProperty* StepProp = FindFProperty<FProperty>(AFGPoleHologram::StaticClass(), TEXT("mBuildStep")))
+		{
+			StepProp->CopyCompleteValue(
+				StepProp->ContainerPtrToValuePtr<void>(Child),
+				StepProp->ContainerPtrToValuePtr<void>(Parent));
+		}
+		AFGPipelinePoleHologram* PipeParent = CastChecked<AFGPipelinePoleHologram>(Parent);
+		AFGPipelinePoleHologram* PipeChild = CastChecked<AFGPipelinePoleHologram>(Child);
+		PipeChild->SetVerticalAngle(PipeParent->GetVerticalAngle());
+		if (UFunction* RepFunc = Child->FindFunction(TEXT("OnRep_PoleVariationIndex")))
+		{
+			Child->ProcessEvent(RepFunc, nullptr);
+		}
+		if (UFunction* AngleRep = Child->FindFunction(TEXT("OnRep_VerticalAngle")))
+		{
+			Child->ProcessEvent(AngleRep, nullptr);
+		}
+		return;
+	}
+
 	// #200: floodlight fixture angle.
 	if (Parent->IsA<AFGFloodlightHologram>() && Child->IsA<AFGFloodlightHologram>())
 	{
@@ -208,16 +238,34 @@ int32 ExpandScalingSpecIntoChildren(AFGHologram* Parent, const FSFScalingSpec& S
 					Spec.ItemSize, C, LinearIndex, FVector::ZeroVector);
 				++LinearIndex;
 
+				// [#363] Rotation mode: each cell rotates progressively along the arc, exactly
+				// like SP's grid spawner (ChildYawOffset = X index * RotationZ). The calculator
+				// already curves the POSITIONS from the spec's counters; the expansion was
+				// pinning every cell's FACING to the parent - MP clients previewed curved runs
+				// that built with unrotated cells (Discord report, day one of 32.0.0).
+				FRotator CellRot = ParentRot;
+				if (!FMath::IsNearlyZero(C.RotationZ))
+				{
+					CellRot.Yaw += GX * C.RotationZ;
+				}
+
 				const FName ChildName(*FString::Printf(TEXT("SFSpecCell_%d_%d_%d"), GX, GY, GZ));
+
+				// [#365] Designer context for designer-resident spec grids (MP has designers too)
+				AFGBuildableBlueprintDesigner* CellDesigner = Parent->GetBlueprintDesigner();
 
 				AFGHologram* Child = AFGHologram::SpawnChildHologramFromRecipe(
 					Parent, ChildName, Recipe, HoloOwner, CellLoc,
-					[ParentRot](AFGHologram* NewChild)
+					[CellRot, CellDesigner](AFGHologram* NewChild)
 					{
 						if (NewChild)
 						{
-							NewChild->SetActorRotation(ParentRot);
+							NewChild->SetActorRotation(CellRot);
 							NewChild->Tags.AddUnique(FName(TEXT("SF_GridChild")));
+							if (CellDesigner)
+							{
+								NewChild->SetInsideBlueprintDesigner(CellDesigner);
+							}
 						}
 					});
 
@@ -229,7 +277,7 @@ int32 ExpandScalingSpecIntoChildren(AFGHologram* Parent, const FSFScalingSpec& S
 					// 2026-06-09: expanding BEFORE validation is unworkable - freshly spawned vanilla
 					// holograms carry FGCDInitializing/FGCDInvalidFloor/FGCDInvalidAimLocation that
 					// programmatic spawns cannot clear, and the whole construct gets rejected.)
-					Child->SetActorLocationAndRotation(CellLoc, ParentRot);
+					Child->SetActorLocationAndRotation(CellLoc, CellRot);
 
 					// Multi-step parents (pole height / floodlight angle / sign step): copy the
 					// player's step-2 choice from the parent so the child builds with it.
@@ -507,6 +555,12 @@ int32 SpawnConduitPlanChildren(AFGHologram* Parent, const FSFScalingSpec& Spec)
 			Belt->SetReplicates(false);
 			Belt->SetReplicateMovement(false);
 			Belt->SetBuildClass(Entry.BuildClass);
+			// [#331] Propagate designer context from the constructing parent so the built
+			// belt registers with the designer (vanilla copies hologram->buildable).
+			if (AFGBuildableBlueprintDesigner* Designer = Parent->GetBlueprintDesigner())
+			{
+				Belt->SetInsideBlueprintDesigner(Designer);
+			}
 			// Stackable belt previews carry NO recipe on the client (their spawner sets only the
 			// build class), and vanilla SetRecipe check()s non-null - SetRecipe(null) was a live
 			// server crash 2026-06-10. Mirror the client: only set when captured.
@@ -733,7 +787,10 @@ int32 SpawnWirePlanPostConstruct(AActor* BuiltParent, const TArray<AActor*>& Out
 			UE_LOG(LogSmartFoundations, Warning,
 				TEXT("[MP-334] SpawnWirePlanPostConstruct: wire entry %d Connect() failed (%s <-> %s) - destroyed."),
 				EntryIndex, *GetNameSafe(C0->GetOwner()), *GetNameSafe(C1->GetOwner()));
-			NewWire->Destroy();
+			// [NULL-WIRE GUARD] Dismantle, not Destroy: a failed Connect may still have
+				// registered one side; bare Destroy leaves a dead entry in that connection's
+				// SaveGame'd wire list (asserts on the owner's next dismantle / after reload).
+				IFGDismantleInterface::Execute_Dismantle(NewWire);
 			continue;
 		}
 

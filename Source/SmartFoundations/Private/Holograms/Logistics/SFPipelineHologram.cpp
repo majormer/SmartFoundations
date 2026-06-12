@@ -162,37 +162,61 @@ AActor* ASFPipelineHologram::Construct(TArray<AActor*>& out_children, FNetConstr
 				// We use its location to find and connect to OTHER PIPES at that location.
 				if (bIsStackableChild && HoloData && HoloData->bIsStackablePipe)
 				{
+					// [#364] NEVER wire to a PCT_SNAP_ONLY connector: supports' SnapOnly0 is a snap
+					// POINT, not a fluid connection - a pipe end wired to it is a dead joint that ALSO
+					// blocks the player from snapping anything to that support. The hazard was always
+					// latent in every support family (the finder returns ONE winner by tie-break; the
+					// stackable/ground layouts happened to let the real pipe end win) - the wall layout
+					// exposed it. Because the finder returns a single candidate, a snap-only winner must
+					// be EXCLUDED and the search RETRIED, or a coincident real pipe end is never
+					// considered (live find: reject-without-retry left run joints unwired for fluid).
+					auto FindWireablePipeConn = [Pipe](UFGPipeConnectionComponentBase* OwnConn) -> UFGPipeConnectionComponentBase*
+					{
+						const FVector SearchLocation = OwnConn->GetComponentLocation();
+						TSet<UFGPipeConnectionComponentBase*> Ignored;
+						for (int32 Attempt = 0; Attempt < 4; ++Attempt)
+						{
+							UFGPipeConnectionComponentBase* Candidate = UFGPipeConnectionComponentBase::FindCompatibleOverlappingConnection(
+								OwnConn, SearchLocation, Pipe, 50.0f, Ignored);
+							if (!Candidate)
+							{
+								return nullptr;
+							}
+							const UFGPipeConnectionComponent* AsPipeConn = Cast<UFGPipeConnectionComponent>(Candidate);
+							const bool bSnapOnly = AsPipeConn && AsPipeConn->GetPipeConnectionType() == EPipeConnectionType::PCT_SNAP_ONLY;
+							if (bSnapOnly || Candidate->IsConnected() || Candidate->GetOwner() == Pipe)
+							{
+								Ignored.Add(Candidate);
+								continue;
+							}
+							return Candidate;
+						}
+						return nullptr;
+					};
+
 					// At Conn0 location (start of this pipe), find another pipe's endpoint to connect to
 					if (Conn0 && !Conn0->IsConnected())
 					{
-						FVector SearchLocation = Conn0->GetComponentLocation();
-						UFGPipeConnectionComponentBase* NeighborConn = UFGPipeConnectionComponentBase::FindCompatibleOverlappingConnection(
-							Conn0, SearchLocation, Pipe, 50.0f, {});
-						
-						if (NeighborConn && !NeighborConn->IsConnected() && NeighborConn->GetOwner() != Pipe)
+						if (UFGPipeConnectionComponentBase* NeighborConn = FindWireablePipeConn(Conn0))
 						{
 							Conn0->SetConnection(NeighborConn);
-							UE_LOG(LogSmartHologram, VeryVerbose, TEXT(" %s: Wired Conn0 to neighbor pipe %s.%s"), 
+							UE_LOG(LogSmartHologram, VeryVerbose, TEXT(" %s: Wired Conn0 to neighbor pipe %s.%s"),
 								bIsStackableChild ? TEXT("STACKABLE") : (bIsPipeAutoConnectChild ? TEXT("PIPE AUTO-CONNECT") : TEXT("EXTEND")),
 								*NeighborConn->GetOwner()->GetName(), *NeighborConn->GetName());
 						}
 					}
-					
+
 					// At Conn1 location (end of this pipe), find another pipe's endpoint to connect to
 					if (Conn1 && !Conn1->IsConnected())
 					{
-						FVector SearchLocation = Conn1->GetComponentLocation();
-						UFGPipeConnectionComponentBase* NeighborConn = UFGPipeConnectionComponentBase::FindCompatibleOverlappingConnection(
-							Conn1, SearchLocation, Pipe, 50.0f, {});
-						
-						if (NeighborConn && !NeighborConn->IsConnected() && NeighborConn->GetOwner() != Pipe)
+						if (UFGPipeConnectionComponentBase* NeighborConn = FindWireablePipeConn(Conn1))
 						{
 							Conn1->SetConnection(NeighborConn);
-							UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 STACKABLE: Wired Conn1 to neighbor pipe %s.%s"), 
+							UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 STACKABLE: Wired Conn1 to neighbor pipe %s.%s"),
 								*NeighborConn->GetOwner()->GetName(), *NeighborConn->GetName());
 						}
 					}
-					
+
 					// Merge/rebuild pipe networks to ensure fluid can flow
 					UWorld* World = GetWorld();
 					if (World)

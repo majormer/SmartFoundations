@@ -41,8 +41,12 @@ void USFSubsystem::OnActorSpawned(AActor* SpawnedActor)
 	// ========================================
 	if (AFGBuildable* Buildable = Cast<AFGBuildable>(SpawnedActor))
 	{
+		// [#312] Buildables inside the Blueprint Designer never join Smart's world group
+		// proxies: mBlueprintProxy is SaveGame, so a designer-resident buildable pointing at
+		// a world proxy makes the blueprint save chase that reference out of the designer
+		// ("saving a blueprint saves the whole world").
 		// Only group if we have an active Smart! hologram with a multi-building grid
-		if (ActiveHologram.IsValid())
+		if (ActiveHologram.IsValid() && Buildable->GetBlueprintDesigner() == nullptr)
 		{
 			const FIntVector& Grid = GetGridCounters();
 			const bool bIsMultiGrid = (FMath::Abs(Grid.X) > 1 || FMath::Abs(Grid.Y) > 1 || FMath::Abs(Grid.Z) > 1);
@@ -580,8 +584,15 @@ void USFSubsystem::OnActorSpawned(AActor* SpawnedActor)
 	// The flag is reset when the hologram changes.
 	FString SpawnedClassName = SpawnedActor->GetClass()->GetName();
 
+	// [#364] "PipelineSupport" admits the standard ground support (Build_PipelineSupport_C) and the
+	// wall support (Build_PipelineSupportWall_C) so their scaled runs get the same manual build +
+	// distance-check wiring as the stackable family. Construct-time wiring alone is NOT sufficient
+	// for run interiors: vanilla's FindCompatibleOverlappingConnection cannot be made to yield a
+	// just-built neighbor run pipe reliably (live find: all wall-run joints left unwired), while
+	// Phase 2 below pairs the newly built pipes by plain distance, no physics involved.
 	bool bIsStackablePipeSupport = (SpawnedClassName.Contains(TEXT("PipeSupportStackable")) ||
-	                                SpawnedClassName.Contains(TEXT("PipelineStackable"))) &&
+	                                SpawnedClassName.Contains(TEXT("PipelineStackable")) ||
+	                                SpawnedClassName.Contains(TEXT("PipelineSupport"))) &&
 	                               SpawnedClassName.StartsWith(TEXT("Build_"));
 
 	// Track if we've already built pipes for this placement operation

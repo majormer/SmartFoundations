@@ -1233,6 +1233,12 @@ bool USFExtendService::TryExtendFromBuilding(AFGBuildable* HitBuilding, AFGHolog
             return false; // no target/hologram (handled/logged upstream)
         }
 
+        // [#365] Extend WORKS inside the Blueprint Designer: every clone spawn site
+        // propagates the designer context (SFPropagateDesignerToClone in the clone spawner),
+        // so clones and logistics register with the designer and get captured by blueprint
+        // saves. The earlier vanilla-only gate (added while auto-connect designer support was
+        // unproven) is removed; #312's proxy-grouping guards remain - those are orthogonal.
+
         UClass* HologramBuildClass = SourceHologram->GetBuildClass();
         if (!HologramBuildClass || !HitBuilding->IsA(HologramBuildClass))
         {
@@ -2118,6 +2124,13 @@ ASFFactoryHologram* USFExtendService::SwapToSmartFactoryHologram(AFGHologram* Va
     // CRITICAL: Initialize from the vanilla hologram BEFORE BeginPlay
     // This copies mBuildClass, mRecipe, etc. which are required for BeginPlay
     CustomHologram->InitializeFromHologram(VanillaHologram);
+
+    // [#331] Carry the Blueprint Designer context across the swap (vanilla copies it onto
+    // every constructed buildable; dropping it makes builds invisible to the designer).
+    if (AFGBuildableBlueprintDesigner* Designer = VanillaHologram->GetBlueprintDesigner())
+    {
+        CustomHologram->SetInsideBlueprintDesigner(Designer);
+    }
 
     // Copy mConstructionInstigator (private) via reflection — needed for build FX
     FProperty* InstigatorProp = AFGHologram::StaticClass()->FindPropertyByName(TEXT("mConstructionInstigator"));

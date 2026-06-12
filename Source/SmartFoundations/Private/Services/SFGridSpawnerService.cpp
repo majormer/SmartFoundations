@@ -212,7 +212,7 @@ void USFGridSpawnerService::UpdateChildPositions()
                 {
                     Orchestrator->OnStackableConveyorPolesChanged();
                 }
-                if (USFAutoConnectService::IsStackablePipelineSupportHologram(Parent))
+                if (USFAutoConnectService::IsPipeSupportHologram(Parent))
                 {
                     Orchestrator->OnStackablePipelineSupportsChanged();
                 }
@@ -527,7 +527,8 @@ void USFGridSpawnerService::UpdateChildPositions()
         const bool bNeedsPlacementBypass = ParentHologram->IsA(AFGCeilingLightHologram::StaticClass())
             || ParentHologram->IsA(AFGFloodlightHologram::StaticClass())
             || ParentHologram->IsA(AFGWallAttachmentHologram::StaticClass())
-            || USFAutoConnectService::IsRegularConveyorPoleHologram(ParentHologram);  // #354: standard conveyor pole
+            || USFAutoConnectService::IsRegularConveyorPoleHologram(ParentHologram)   // #354: standard conveyor pole
+            || USFAutoConnectService::IsRegularPipelinePoleHologram(ParentHologram);  // #364: standard pipeline support
         if (bNeedsPlacementBypass)
         {
             ChildHologram->SetActorTickEnabled(false);
@@ -609,7 +610,7 @@ void USFGridSpawnerService::UpdateChildPositions()
                 {
                     Orchestrator->OnStackableConveyorPolesChanged();
                 }
-                if (USFAutoConnectService::IsStackablePipelineSupportHologram(Parent))
+                if (USFAutoConnectService::IsPipeSupportHologram(Parent))
                 {
                     Orchestrator->OnStackablePipelineSupportsChanged();
                 }
@@ -737,7 +738,7 @@ void USFGridSpawnerService::UpdateChildrenForCurrentTransform()
                         {
                             Orchestrator->OnStackableConveyorPolesChanged();
                         }
-                        if (USFAutoConnectService::IsStackablePipelineSupportHologram(ParentLater))
+                        if (USFAutoConnectService::IsPipeSupportHologram(ParentLater))
                         {
                             Orchestrator->OnStackablePipelineSupportsChanged();
                         }

@@ -120,10 +120,14 @@ void USFBuildableSizeRegistry::RegisterDefaultProfiles()
 	RegisterProfile(TEXT("Build_PipelinePumpMk2_C"), FVector(400.0f, 250.0f, 250.0f), false, true, TEXT(""), false, FVector(0.0f, 0.0f, -175.0f));
 	RegisterProfile(TEXT("Build_Valve_C"), FVector(100.0f, 100.0f, 100.0f), false, false, TEXT(""), false);
 	RegisterProfile(TEXT("Build_ConveyorMonitor_C"), FVector(100.0f, 100.0f, 100.0f), false, false, TEXT(""), false);
-	RegisterProfile(TEXT("Build_PipelineSupport_C"), FVector(100.0f, 100.0f, 100.0f), false, false, TEXT(""), false);
+	// #291/#292/#293 (Torkeug): pipeline supports scale like their conveyor-pole analogs
+	// (Build_ConveyorPole_C / Build_ConveyorPoleWall_C). Scaling/grid placement only - pipe
+	// auto-connect between scaled supports (full Stackable parity) is a tracked follow-up,
+	// the same split #354 made for conveyor poles. Dims mirror the family siblings.
+	RegisterProfile(TEXT("Build_PipelineSupport_C"), FVector(100.0f, 200.0f, 200.0f), false, true, TEXT(""), false);
 	RegisterProfile(TEXT("Build_PipeSupportStackable_C"), FVector(100.0f, 200.0f, 200.0f), false, true, TEXT(""), true);
-	RegisterProfile(TEXT("Build_PipelineSupportWall_C"), FVector(100.0f, 100.0f, 100.0f), false, false, TEXT(""), false);
-	RegisterProfile(TEXT("Build_PipelineSupportWallHole_C"), FVector(100.0f, 100.0f, 100.0f), false, false, TEXT(""), false);
+	RegisterProfile(TEXT("Build_PipelineSupportWall_C"), FVector(200.0f, 200.0f, 200.0f), false, true, TEXT(""), false);
+	RegisterProfile(TEXT("Build_PipelineSupportWallHole_C"), FVector(100.0f, 100.0f, 100.0f), false, true, TEXT(""), false);
 	RegisterProfile(TEXT("Build_FoundationPassthrough_Pipe_C"), FVector(800.0f, 800.0f, 400.0f), false, true, TEXT(""), false);
 	RegisterProfile(TEXT("Build_ConveyorAttachmentMerger_C"), FVector(400.0f, 400.0f, 200.0f), false, true, TEXT(""), false, FVector(0.0f, 0.0f, -100.0f));
 	RegisterProfile(TEXT("Build_ConveyorAttachmentMergerPriority_C"), FVector(400.0f, 400.0f, 200.0f), false, true, TEXT(""), false, FVector(0.0f, 0.0f, -100.0f));

@@ -20,6 +20,7 @@
 #include "Data/SFBuildableSizeRegistry.h"
 #include "Config/Smart_ConfigStruct.h"
 #include "FGCentralStorageSubsystem.h"
+#include "FGDismantleInterface.h"
 
 FSFPowerAutoConnectManager::FSFPowerAutoConnectManager()
 {
@@ -1266,7 +1267,10 @@ void FSFPowerAutoConnectManager::OnPowerPoleBuilt(AFGBuildablePowerPole* BuiltPo
 				else
 				{
 					UE_LOG(LogSmartAutoConnect, Warning, TEXT("⚡ OnPowerPoleBuilt: Wire spawned but Connect() failed - destroying"));
-					NewWire->Destroy();
+					// [NULL-WIRE GUARD] Dismantle, not Destroy: a failed Connect may still have
+				// registered one side; bare Destroy leaves a dead entry in that connection's
+				// SaveGame'd wire list (asserts on the owner's next dismantle / after reload).
+				IFGDismantleInterface::Execute_Dismantle(NewWire);
 				}
 			}
 			else
@@ -1494,7 +1498,10 @@ void FSFPowerAutoConnectManager::OnPowerPoleBuilt(AFGBuildablePowerPole* BuiltPo
 			{
 				UE_LOG(LogSmartAutoConnect, Warning, TEXT("⚡ OnPowerPoleBuilt: Failed to connect pole to building %s"), 
 					*Building->GetName());
-				PowerWire->Destroy();
+				// [NULL-WIRE GUARD] Dismantle, not Destroy: a failed Connect may still have
+				// registered one side; bare Destroy leaves a dead entry in that connection's
+				// SaveGame'd wire list (asserts on the owner's next dismantle / after reload).
+				IFGDismantleInterface::Execute_Dismantle(PowerWire);
 			}
 		}
 	}

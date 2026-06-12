@@ -6,6 +6,8 @@
  */
 
 #include "Subsystem/SFSubsystemImpl.h"
+#include "Hologram/FGPipelinePoleHologram.h"
+#include "Holograms/Logistics/SFPipelinePoleChildHologram.h"
 
 
 // Hologram management with enhanced logging
@@ -99,7 +101,7 @@ void USFSubsystem::RegisterActiveHologram(AFGHologram* Hologram)
 			CurrentAutoConnectSetting = EAutoConnectSetting::PowerEnabled;
 		}
 		else if (AutoConnectService->IsPipelineJunctionHologram(Hologram) ||
-		         AutoConnectService->IsStackablePipelineSupportHologram(Hologram))
+		         AutoConnectService->IsPipeSupportHologram(Hologram))
 		{
 			CurrentAutoConnectSetting = EAutoConnectSetting::Enabled; // Pipe context
 		}
@@ -282,9 +284,10 @@ void USFSubsystem::RegisterActiveHologram(AFGHologram* Hologram)
 	// Apply default spacing for belt/pipe support poles (User Request, Issue #268)
 	// Sets 54m (5400cm) spacing to facilitate bus building
 	// Wall conveyor poles scale along Y, so default spacing goes on Y axis for them
-	if (USFAutoConnectService::IsStackableSupportHologram(Hologram) || USFAutoConnectService::IsBeltSupportHologram(Hologram))
+	if (USFAutoConnectService::IsStackableSupportHologram(Hologram) || USFAutoConnectService::IsBeltSupportHologram(Hologram) || USFAutoConnectService::IsPipeSupportHologram(Hologram))
 	{
-		const bool bWallPole = USFAutoConnectService::IsWallConveyorPoleHologram(Hologram);
+		const bool bWallPole = USFAutoConnectService::IsWallConveyorPoleHologram(Hologram)
+			|| USFAutoConnectService::IsWallPipelineSupportHologram(Hologram);  // #364: wall pipe supports scale along Y too
 		int32& SpacingAxis = bWallPole ? CounterState.SpacingY : CounterState.SpacingX;
 
 		if (SpacingAxis == 0)
@@ -556,6 +559,14 @@ void USFSubsystem::RegisterActiveHologram(AFGHologram* Hologram)
 		RecipeManagementService->OnNewBuildSession(Hologram->GetBuildClass());
 	}
 
+	// [#358] Smart!'s input mapping context is scoped to hologram-active so its bindings
+	// (e.g. Scale X on X) only shadow vanilla keys while actually building - 1.2's
+	// Customizer key (X) must reach vanilla when no hologram is in hand.
+	if (InputHandler)
+	{
+		InputHandler->SetSmartContextActive(true);
+	}
+
 	// Notify external systems (like SmartCamera)
 	if (OnHologramCreated.IsBound())
 	{
@@ -575,6 +586,12 @@ void USFSubsystem::UnregisterActiveHologram(AFGHologram* Hologram)
 		}
 
 		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Unregistering active hologram: %s"), *Hologram->GetName());
+
+		// [#358] Return Smart!'s keys to vanilla as soon as the player stops building
+		if (InputHandler)
+		{
+			InputHandler->SetSmartContextActive(false);
+		}
 
 		// Issue #281: Remove Smart! hints from hint bar
 		if (HintBarService)
@@ -1054,6 +1071,99 @@ void USFSubsystem::SyncMultiStepHologramProperties()
 		return;
 	}
 
+	// === Standard pipeline support HEIGHT + VERTICAL ANGLE sync (#364) ===
+	// The pipe analog of the #354 conveyor-pole branch, with one addition the conveyor pole
+	// doesn't have: mVerticalAngle tilts the top piece + pipe connection for sloped runs
+	// (public Get/SetVerticalAngle - no reflection needed). Height still rides the inherited
+	// mPoleVariationIndex/mBuildStep pair via reflection. GATED to the regular ground support;
+	// stackable/wall supports keep their existing paths.
+	if (USFAutoConnectService::IsRegularPipelinePoleHologram(Parent))
+	{
+		AFGPipelinePoleHologram* PipePoleParent = Cast<AFGPipelinePoleHologram>(Parent);
+		if (PipePoleParent)
+		{
+			int32 ParentVariation = -1;
+			FIntProperty* VarProp = FindFProperty<FIntProperty>(AFGPoleHologram::StaticClass(), TEXT("mPoleVariationIndex"));
+			if (VarProp)
+			{
+				ParentVariation = VarProp->GetPropertyValue_InContainer(PipePoleParent);
+			}
+
+			uint8 ParentBuildStep = 0;
+			FProperty* StepProp = FindFProperty<FProperty>(AFGPoleHologram::StaticClass(), TEXT("mBuildStep"));
+			if (StepProp)
+			{
+				StepProp->CopyCompleteValue(&ParentBuildStep, StepProp->ContainerPtrToValuePtr<void>(PipePoleParent));
+			}
+
+			const float ParentAngle = PipePoleParent->GetVerticalAngle();
+
+			const auto& SpawnedChildren = HologramHelper->GetSpawnedChildren();
+			const int32 ChildCount = SpawnedChildren.Num();
+			if (ParentVariation != CachedParentPipePoleVariation
+				|| ParentBuildStep != CachedParentBuildStep
+				|| !FMath::IsNearlyEqual(ParentAngle, CachedParentPipePoleAngle)
+				|| ChildCount != CachedPipePoleChildCount)
+			{
+				CachedParentPipePoleVariation = ParentVariation;
+				CachedParentBuildStep = ParentBuildStep;
+				CachedParentPipePoleAngle = ParentAngle;
+				CachedPipePoleChildCount = ChildCount;
+
+				int32 SyncedCount = 0;
+				for (const auto& ChildPtr : SpawnedChildren)
+				{
+					if (!ChildPtr.IsValid()) continue;
+					ASFPipelinePoleChildHologram* PipePoleChild = Cast<ASFPipelinePoleChildHologram>(ChildPtr.Get());
+					if (!PipePoleChild) continue;
+
+					if (VarProp)  VarProp->SetPropertyValue_InContainer(PipePoleChild, ParentVariation);
+					if (StepProp) StepProp->CopyCompleteValue(StepProp->ContainerPtrToValuePtr<void>(PipePoleChild), &ParentBuildStep);
+					PipePoleChild->SetVerticalAngle(ParentAngle);
+
+					// Refresh the child's mesh/height/angle. Prefer the reflected OnReps; fall back
+					// to the public RefreshPoleMesh shim.
+					if (UFunction* RepFunc = PipePoleChild->FindFunction(TEXT("OnRep_PoleVariationIndex")))
+					{
+						PipePoleChild->ProcessEvent(RepFunc, nullptr);
+					}
+					else
+					{
+						PipePoleChild->RefreshPoleMesh();
+					}
+					if (UFunction* AngleRep = PipePoleChild->FindFunction(TEXT("OnRep_VerticalAngle")))
+					{
+						PipePoleChild->ProcessEvent(AngleRep, nullptr);
+					}
+					SyncedCount++;
+				}
+				if (SyncedCount > 0)
+				{
+					UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("#364 Synced pipeline-support to %d children: VariationIndex=%d, BuildStep=%d, VerticalAngle=%.1f"),
+						SyncedCount, ParentVariation, ParentBuildStep, ParentAngle);
+				}
+
+				// Mirror #354: refresh the PARENT's connector outside the active height-drag step.
+				if (ParentBuildStep != static_cast<uint8>(EPoleHologramBuildStep::PHBS_AdjustHeight))
+				{
+					if (UFunction* ParentRep = PipePoleParent->FindFunction(TEXT("OnRep_PoleVariationIndex")))
+					{
+						PipePoleParent->ProcessEvent(ParentRep, nullptr);
+					}
+				}
+
+				// #364: re-route the auto-connect pipes after a height or ANGLE change - the
+				// pipe runs route between the poles' snap connectors, which move with both.
+				// The belt analog is #354's OnStackableConveyorPolesChanged in the branch above.
+				if (USFAutoConnectOrchestrator* Orchestrator = GetOrCreateOrchestrator(Parent))
+				{
+					Orchestrator->OnStackablePipelineSupportsChanged();
+				}
+			}
+		}
+		return;
+	}
+
 	// === Standalone sign/billboard sync (Issue #192) ===
 	AFGStandaloneSignHologram* SignParent = Cast<AFGStandaloneSignHologram>(Parent);
 	if (SignParent)
@@ -1213,7 +1323,7 @@ void USFSubsystem::OnParentHologramDestroyed(AActor* DestroyedActor)
 		// 1. Build actors spawn BEFORE OnParentHologramDestroyed is called
 		// 2. Child holograms are already destroyed by this point
 		// Positions are cached in ProcessStackablePipelineSupports where children are still valid
-		if (AutoConnectService && AutoConnectService->IsStackablePipelineSupportHologram(DestroyedHologram))
+		if (AutoConnectService && AutoConnectService->IsPipeSupportHologram(DestroyedHologram))
 		{
 			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 STACKABLE PIPE SUPPORT: OnParentHologramDestroyed - cache already set (Expected=%d, Pending=%d)"),
 				StackablePipeSupportExpectedCount, bStackablePipeBuildPending);

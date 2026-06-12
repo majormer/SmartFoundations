@@ -1623,12 +1623,55 @@ bool USFAutoConnectService::IsRegularConveyorPoleHologram(AFGHologram* Hologram)
 			&& !ClassName.Contains(TEXT("ConveyorPoleWall")));
 }
 
+bool USFAutoConnectService::IsRegularPipelinePoleHologram(AFGHologram* Hologram)
+{
+	if (!Hologram)
+	{
+		return false;
+	}
+
+	UClass* BuildClass = Hologram->GetBuildClass();
+	if (!BuildClass)
+	{
+		return false;
+	}
+
+	// #364: the STANDARD pipeline support only - Build_PipelineSupport_C. Must NOT match the
+	// Stackable support (Build_PipeSupportStackable_C), the Wall support
+	// (Build_PipelineSupportWall_C), or the Wall Hole (Build_PipelineSupportWallHole_C).
+	const FString ClassName = BuildClass->GetName();
+	return ClassName == TEXT("Build_PipelineSupport_C");
+}
+
 bool USFAutoConnectService::IsBeltSupportHologram(AFGHologram* Hologram)
 {
 	return IsStackableConveyorPoleHologram(Hologram)
 		|| IsCeilingConveyorSupportHologram(Hologram)
 		|| IsWallConveyorPoleHologram(Hologram)
 		|| IsRegularConveyorPoleHologram(Hologram);   // #354: standard conveyor pole
+}
+
+bool USFAutoConnectService::IsWallPipelineSupportHologram(AFGHologram* Hologram)
+{
+	if (!Hologram)
+	{
+		return false;
+	}
+	UClass* BuildClass = Hologram->GetBuildClass();
+	if (!BuildClass)
+	{
+		return false;
+	}
+	// #364: the WALL pipeline support - exact match so the Wall Hole
+	// (Build_PipelineSupportWallHole_C) is NOT caught.
+	return BuildClass->GetName() == TEXT("Build_PipelineSupportWall_C");
+}
+
+bool USFAutoConnectService::IsPipeSupportHologram(AFGHologram* Hologram)
+{
+	return IsStackablePipelineSupportHologram(Hologram)
+		|| IsRegularPipelinePoleHologram(Hologram)    // #364: standard pipeline support
+		|| IsWallPipelineSupportHologram(Hologram);   // #364: wall pipeline support
 }
 
 // ========================================

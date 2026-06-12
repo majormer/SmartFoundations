@@ -631,6 +631,13 @@ void USFExtendScaledService::SpawnScaledExtendPreviews()
             USFHologramDataService::DisableValidation(FactoryHologram);
             USFHologramDataService::MarkAsChild(FactoryHologram, ParentHologram, ESFChildHologramType::ScalingGrid);
 
+            // [#365] Carry the designer context so designer-resident scaled-extend factories
+            // register with the designer (vanilla copies hologram->buildable at construct).
+            if (AFGBuildableBlueprintDesigner* Designer = ParentHologram->GetBlueprintDesigner())
+            {
+                FactoryHologram->SetInsideBlueprintDesigner(Designer);
+            }
+
             // Copy stored recipe to Owner clone
             if (Owner->Subsystem.IsValid() && Owner->Subsystem->bHasStoredProductionRecipe)
             {
