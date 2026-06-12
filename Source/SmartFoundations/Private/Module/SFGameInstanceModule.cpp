@@ -48,6 +48,9 @@
 #include "Buildables/FGBuildableConveyorLift.h"
 #include "FGBuildableSubsystem.h"
 #include "FGConveyorChainActor.h"
+#include "Hologram/FGWallAttachmentHologram.h"        // [#364-MP] wall-support server re-validation
+#include "Buildables/FGBuildableBlueprintDesigner.h"  // [#365-MP] designer containment re-derive
+#include "EngineUtils.h"                              // [#365-MP] TActorIterator over designers
 
 // Tiny linker anchor to ensure StaticClass() is referenced
 static void SF_ForceUHT_SeeFGHolograms()
@@ -988,6 +991,45 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 			: SS->PeekExtendCommitForInstigator(Instigator, BuildClass, OutSpec);
 	};
 
+	// ── [#364-MP] Wall-attachment re-validation for staged client fires. The server re-runs
+	// CheckValidPlacement on the deserialized hologram inside Server_ConstructHologram, but
+	// mSnappedBuilding does not survive the trip for these fires - the server-side hologram
+	// reports FGCDMustSnapWall and the whole construct is refused (live 2026-06-11: every scaled
+	// wall pipeline support fire on the Windows dedi). The CLIENT already validated the wall snap
+	// (the build gun will not fire a red preview), and a staged spec exists ONLY for a Smart
+	// client fire - the same trust model the spec expansion itself uses. Strip exactly that one
+	// disqualifier; every other server-side check (overlap, clearance, affordability) stays.
+	// Hooked at the AFGWallAttachmentHologram body so all wall-mount families are covered
+	// (pipeline wall supports, conveyor wall mounts).
+	AFGWallAttachmentHologram* WallAttachmentCDO = GetMutableDefault<AFGWallAttachmentHologram>();
+	SUBSCRIBE_METHOD_VIRTUAL(AFGWallAttachmentHologram::CheckValidPlacement, WallAttachmentCDO,
+		[=](auto& scope, AFGWallAttachmentHologram* self)
+		{
+			scope(self);
+			if (!self || !self->HasAuthority())
+			{
+				return;
+			}
+			FSFScalingSpec StagedSpec;
+			if (!FindStagedSpec(self, StagedSpec, /*bConsume=*/false))
+			{
+				return; // not a staged Smart client fire - vanilla/SP validation untouched
+			}
+			TArray<TSubclassOf<UFGConstructDisqualifier>> Disqualifiers;
+			self->GetConstructDisqualifiers(Disqualifiers);
+			if (Disqualifiers.Remove(UFGCDMustSnapWall::StaticClass()) > 0)
+			{
+				self->ResetConstructDisqualifiers();
+				for (const TSubclassOf<UFGConstructDisqualifier>& Disqualifier : Disqualifiers)
+				{
+					self->AddConstructDisqualifier(Disqualifier);
+				}
+				UE_LOG(LogSmartFoundations, Display,
+					TEXT("[MP-SPEC] %s: cleared server-side FGCDMustSnapWall for a staged client fire (client validated the wall snap; %d other disqualifier(s) kept)."),
+					*self->GetName(), Disqualifiers.Num());
+			}
+		});
+
 	// ── Hook A: cost. Charged server-side BEFORE Construct, when the grid children do not exist
 	// yet - scale the uniform per-cell cost by the staged cell count. Fires at the
 	// AFGHologram::GetCost base body (primary virtual; the scalable parents' classes do not
@@ -1090,6 +1132,35 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 			// and conduit previews alike; runs regardless of the spec-construction toggle.
 			if (self && self->HasAuthority())
 			{
+				// [#365-MP] Designer re-derivation for staged client fires. mBlueprintDesigner does
+				// not reliably survive the construct message for these fires (live 2026-06-11:
+				// client-scaled machines inside a designer built with NO designer context server-side
+				// - "Attempt to connect between missmatched blueprint designers" on every conduit, and
+				// nothing registered into the blueprint). The designer is an ordinary replicated actor
+				// with an authoritative containment test, so re-derive it from the parent's location.
+				// Gated to staged fires; a no-op when the reference crossed or outside any designer.
+				if (self->GetBlueprintDesigner() == nullptr && SFScalingSpecExpansion::IsSpecConstructionEnabled())
+				{
+					FSFScalingSpec PeekSpec;
+					FSFExtendCommitSpec PeekCommit;
+					if (FindStagedSpec(self, PeekSpec, /*bConsume=*/false) ||
+					    FindStagedExtendCommit(self, PeekCommit, /*bConsume=*/false))
+					{
+						const FVector ParentLocation = self->GetActorLocation();
+						for (TActorIterator<AFGBuildableBlueprintDesigner> It(self->GetWorld()); It; ++It)
+						{
+							if (*It && It->IsLocationInsideDesigner(ParentLocation))
+							{
+								self->SetInsideBlueprintDesigner(*It);
+								UE_LOG(LogSmartFoundations, Display,
+									TEXT("[MP-SPEC] %s: re-derived Blueprint Designer context (%s) from containment for a staged client fire (reference did not cross the construct message)."),
+									*self->GetName(), *It->GetName());
+								break;
+							}
+						}
+					}
+				}
+
 				if (AFGBuildableBlueprintDesigner* Designer = self->GetBlueprintDesigner())
 				{
 					for (AFGHologram* ChildHolo : self->GetHologramChildren())
@@ -1114,6 +1185,13 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 			{
 				return; // nothing staged for this instigator/class (e.g. a child in the loop)
 			}
+
+			// [#365-MP] One line per staged construct: the designer state at the seam is the
+			// load-bearing fact for designer-resident client builds (see re-derivation above).
+			UE_LOG(LogSmartFoundations, Display,
+				TEXT("[MP-SPEC] Construct seam: %s (%s staged), designer=%s."),
+				*self->GetName(), bHasScaling ? TEXT("scaling spec") : TEXT("extend commit"),
+				self->GetBlueprintDesigner() ? *self->GetBlueprintDesigner()->GetName() : TEXT("none"));
 
 			if (bHasScaling)
 			{
