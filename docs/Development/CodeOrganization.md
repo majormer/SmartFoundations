@@ -96,7 +96,11 @@ SmartFoundations/
 ```
 
 **No loose translation units.** Every `.cpp`/`.h` lives under a domain subdirectory.
-Nothing sits directly at the `Private/` or `Public/` root.
+Nothing sits directly at the `Private/` or `Public/` root — **with one exception: the module
+identity and logging core** (`SmartFoundations.h`/`.cpp` — the `IMPLEMENT_MODULE` class and the
+`LogSmartFoundations` category — and its companion `SFLogMacros.h`). These are the conventional UE
+module-root files, `SmartFoundations.h` is included by ~90 TUs for the log category, and relocating
+them buys nothing but churn. They stay at the module root by design.
 
 ---
 

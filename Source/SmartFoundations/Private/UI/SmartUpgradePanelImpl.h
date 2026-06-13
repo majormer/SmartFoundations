@@ -33,7 +33,7 @@
 #include "Components/VerticalBoxSlot.h"
 #include "Kismet/GameplayStatics.h"
 #include "Camera/PlayerCameraManager.h"
-#include "Public/SFRCO.h"
+#include "Core/Net/SFRCO.h"
 #include "FGRecipe.h"
 #include "Resources/FGItemDescriptor.h"
 #include "Buildables/FGBuildable.h"

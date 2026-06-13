@@ -15,7 +15,7 @@
 #include "Buildables/FGBuildableWire.h"
 #include "Kismet/GameplayStatics.h"
 #include "EngineUtils.h"
-#include "SFRCO.h"
+#include "Core/Net/SFRCO.h"
 
 #define LOCTEXT_NAMESPACE "SmartFoundations"
 

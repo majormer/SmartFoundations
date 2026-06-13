@@ -17,7 +17,7 @@
 #include "FGConstructDisqualifier.h"
 #include "FGCentralStorageSubsystem.h"
 #include "FGGameState.h"
-#include "SF_ATAnchor.h"
+#include "Core/SF_ATAnchor.h"
 
 // SML hooking for cost aggregation and blueprint construct
 #include "Patching/NativeHookManager.h"
@@ -36,7 +36,7 @@
 #include "Data/SFBuildableSizeRegistry.h"
 #include "Data/SFHologramDataRegistry.h"   // [EXTEND-MP] JsonCloneId wiring anchors post-construct
 #include "Subsystem/SFHologramHelperService.h"
-#include "SFRCO.h"
+#include "Core/Net/SFRCO.h"
 #include "FGPlayerController.h"
 #include "FGBlueprintProxy.h"   // server-side Smart Dismantle group for spec-built grids
 
