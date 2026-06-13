@@ -13,6 +13,7 @@
 - [Transforms](Transforms)
 - [Auto-Connect](Auto-Connect)
 - [Extend](Extend)
+- [Smart Restore](Smart-Restore)
 - [Smart Upgrade](Smart-Upgrade)
 - [Smart Dismantle](Smart-Dismantle)
 - [Smart Camera](Smart-Camera)

@@ -33,12 +33,13 @@ Use these settings to control power cable previews.
 - Choose connection mode.
 - Set connection range.
 - Reserve pole connections so Smart! does not fill every slot.
-- Set max connection behavior for pole tiers.
 
 ## Extend
 
 - Enable or disable Extend.
 - Enable or disable power copying during Extend where supported.
+- Daisy-chain power building-to-building along the lane (once Upgraded Power Connectors is unlocked).
+- Daisy-chain power on pole-less sources when starting a fresh manifold.
 
 ## Scaling
 

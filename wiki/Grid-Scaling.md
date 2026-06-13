@@ -38,4 +38,6 @@ Smart! can grow a grid in the opposite direction by using negative values. This 
 
 Smart! works best with standard buildables that have a known size and normal placement behavior. Some special Satisfactory holograms are more complicated and may need dedicated Smart! support.
 
+Pole-style buildables scale too — Conveyor Poles, Pipeline Supports, and Pipeline Wall Supports — and Smart! carries their height (and a pipeline support's top angle) across the whole line. When you scale a line of supports, Smart! can also build the belt or pipe run between them; see [Auto-Connect](Auto-Connect).
+
 If a buildable does not scale correctly, try a smaller test first and report the buildable name in an issue.

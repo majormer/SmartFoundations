@@ -18,12 +18,14 @@ Some modded or unusual buildables may not scale correctly until Smart! has expli
 
 ## Multiplayer
 
-Smart! is primarily developed for single-player.
+Smart! works in multiplayer on dedicated servers. Every Smart! feature — Grid Scaling, Auto-Connect (belts, pipes, and power), Extend, Smart Upgrade, Smart Restore, and Smart Dismantle — works when you play as a client, with normal build costs. Everything Smart! places is a standard, fully replicated game building: other players see it, can use it, and can dismantle it, just as if you had built it by hand.
 
-Multiplayer is under active testing with partial success, but it should not be treated as fully supported yet. If you use Smart! in multiplayer, test carefully and keep backups.
+- **Dedicated servers:** both Windows and Linux are supported.
+- **For server admins:** install the same Smart! version on the server and on every client. The Mod Manager keeps these matched when you update.
+- **Smart Camera** (the companion mod) also works in multiplayer.
 
-Good multiplayer habits:
+Multiplayer is newer than single-player, so if something behaves differently in a multiplayer session than it does in single-player, that is a bug — please report it on GitHub or Discord, and mention what you were building and whether you were the host or a client.
 
-- Start with small foundation or machine grids.
-- Avoid huge Auto-Connect or Smart Upgrade operations until you know the session is stable.
-- Report what you were building, who hosted, and whether the issue happened on host or client.
+## Blueprint Designer
+
+Smart! works inside the Blueprint Designer just like it does in the open world: scale grids, Auto-Connect belts and pipes, and use Extend and Scaled Extend on buildings in the designer. Everything Smart! builds is captured into the saved blueprint, so your blueprints come out complete.

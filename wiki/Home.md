@@ -25,6 +25,7 @@ Start here:
 - [Transforms](Transforms): add spacing, steps, stagger, or curved layouts.
 - [Auto-Connect](Auto-Connect): preview belts, pipes, and power lines automatically.
 - [Extend](Extend): copy an existing working factory module.
+- [Smart Restore](Smart-Restore): save, share, and replay Smart! setups and whole module layouts.
 - [Smart Upgrade](Smart-Upgrade): upgrade existing belts, lifts, pipes, and power poles in batches.
 - [Smart Dismantle](Smart-Dismantle): dismantle Smart-built groups through vanilla Blueprint Dismantle.
 - [Smart Camera](Smart-Camera): companion picture-in-picture camera for precision building.

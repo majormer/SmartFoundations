@@ -2,7 +2,7 @@
 
 Smart Camera is a companion mod for Smart!. It adds a picture-in-picture camera view while building so you can inspect a hologram from another angle without running around the build site.
 
-This page is a temporary home for Smart Camera documentation. Long term, Smart Camera may be merged into Smart! after multiplayer work is stable, or its source may be published separately like Smart!.
+This page is a temporary home for Smart Camera documentation. Long term, Smart Camera may be merged into Smart!, or its source may be published separately like Smart!.
 
 > Screenshot placeholder: Smart Camera PiP viewport showing the far end of a long Smart! foundation grid.
 
@@ -11,10 +11,10 @@ This page is a temporary home for Smart Camera documentation. Long term, Smart C
 Smart Camera currently depends on:
 
 - SmartFoundations v25.0.0 or newer.
-- SML 3.11.x.
-- Satisfactory 1.1+ / game version 416835 or newer.
+- SML 3.12.x.
+- Satisfactory 1.2 / game version 491125 or newer.
 
-Multiplayer is not currently certified. Treat it the same way as Smart!: test carefully and keep backups.
+Smart Camera works in multiplayer on dedicated servers, the same as Smart!. Install matching versions on the server and on every client.
 
 ## What It Does
 
