@@ -59,7 +59,7 @@ The actual fix for the reported bug.
 
 ### Run log
 - 2026-06-05, SF DLL 02:17 — **1.1 ✅** shared `BuildBelt` refactor compiles + deploys.
-- 2026-06-05, SF DLL 02:44 — **Step 2 attempt A (post-construct re-register: `RemoveConveyor`→`AddConveyor` in the timer) → ❌ CRASH.** `EXCEPTION_ACCESS_VIOLATION` in `AFGConveyorChainActor::Factory_Tick` on a ParallelFor worker next tick — the documented bucket-mutation race (matches ChainActorMigrationPlan P0). `RemoveConveyor` on a **live registered** belt drops it from its bucket but leaves the now-empty solo chain actor in the tick path → next parallel tick dereferences it. **Re-register-on-live-belts is DISPROVEN.** Reverted to safe baseline + redeployed.
+- 2026-06-05, SF DLL 02:44 — **Step 2 attempt A (post-construct re-register: `RemoveConveyor`→`AddConveyor` in the timer) → ❌ CRASH.** `EXCEPTION_ACCESS_VIOLATION` in `AFGConveyorChainActor::Factory_Tick` on a ParallelFor worker next tick — the documented bucket-mutation race (matches the belt/chain reference P0, `docs/Reference/THESIS_Belts_ChainActors_Placement.md` §6.1/§2.7). `RemoveConveyor` on a **live registered** belt drops it from its bucket but leaves the now-empty solo chain actor in the tick path → next parallel tick dereferences it. **Re-register-on-live-belts is DISPROVEN.** Reverted to safe baseline + redeployed.
 
 ### Conclusion after attempt A — the only safe path is build-fresh
 Every approach that touches **already-registered, live** stacked belts has now failed:

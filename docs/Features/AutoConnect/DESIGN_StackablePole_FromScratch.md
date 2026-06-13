@@ -3,7 +3,7 @@
 > Written 2026-06-05, deliberately **ignoring the current implementation**. The goal is to
 > describe how stacked-pole belt auto-connect *should* be built from first principles on the
 > 1.2 headers, then use it to judge/replace what exists. Diagnosis of why the current code
-> fails is in `docs/Sprints/ChainActorMigrationPlan.md`; the one-line summary is: **the current
+> fails is in `docs/Reference/THESIS_Belts_ChainActors_Placement.md` (§3, §5.3, §6.2); the one-line summary is: **the current
 > code registers each belt into the conveyor system before anything it can connect to is real,
 > then tries to merge the resulting solo chains — which vanilla refuses to do.**
 
