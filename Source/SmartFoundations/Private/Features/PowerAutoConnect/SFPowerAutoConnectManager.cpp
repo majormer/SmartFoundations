@@ -1,5 +1,12 @@
 // Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
+// SP/MP DIVERGENCE MAP — PowerAutoConnect   (see CodeOrganization.md §5)
+//  1. Wire spawn — [MP-CLIENT] a client never spawns power wires (OnPowerPoleBuilt early-returns on
+//                  FSFNetworkHelper::IsClient); [MP-AUTH] wires are built server-side, post-construct,
+//                  by direct AFGBuildableWire spawn + Connect (NOT replayed from holograms — hologram-
+//                  replayed wires came out as unconnected zombies). Server path: SpawnWirePlanPostConstruct
+//                  (Net seam: Hook B, Core/Net/SFGameInstanceModule_SpecHooks.cpp).
+
 #include "Features/PowerAutoConnect/SFPowerAutoConnectManager.h"
 #include "Subsystem/SFSubsystem.h"
 #include "Features/AutoConnect/SFAutoConnectService.h"
@@ -1036,7 +1043,7 @@ void FSFPowerAutoConnectManager::OnPowerPoleBuilt(AFGBuildablePowerPole* BuiltPo
 		return;
 	}
 
-	// [MP / #334] Authority gate: this function direct-spawns AFGBuildableWire actors. On a
+	// [MP-CLIENT] (#334) Authority gate: this function direct-spawns AFGBuildableWire actors. On a
 	// network client it would create client-only ghost wires for replicated server-built poles -
 	// the original #334 bug. Authority sides (SP standalone / listen host / dedicated server)
 	// are unchanged. Defense-in-depth: the OnActorSpawned caller is gated too.
