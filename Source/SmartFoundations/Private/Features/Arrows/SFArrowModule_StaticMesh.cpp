@@ -4,7 +4,7 @@
 #include "Features/Arrows/SFArrowModule_StaticMesh.h"
 #include "SmartFoundations.h"
 #include "Logging/SFLogMacros.h"
-#include "Core/Helpers/SFNetworkHelper.h"
+#include "Core/Net/SFNetworkHelper.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "Engine/StaticMesh.h"
 #include "UObject/ConstructorHelpers.h"

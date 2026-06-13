@@ -22,7 +22,7 @@
 #include "Services/SFRecipeManagementService.h"
 #include "Subsystem/SFSubsystem.h"
 #include "Subsystem/SFHologramDataService.h"
-#include "Core/Helpers/SFNetworkHelper.h"   // [EXTEND-MP] IsClient (server-walk topology branch)
+#include "Core/Net/SFNetworkHelper.h"   // [EXTEND-MP] IsClient (server-walk topology branch)
 #include "Core/Net/SFRCO.h"                          // [EXTEND-MP] Server_RequestExtendTopology
 #include "FGPlayerController.h"
 // NOTE: SFRecipeCostInjector.h removed - child holograms automatically aggregate costs via GetCost()

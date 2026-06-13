@@ -28,7 +28,7 @@
 
 // MP Slice 0 (Phase 1): client construct chunk guard
 #include "Equipment/FGBuildGunBuild.h"        // UFGBuildGunStateBuild::InternalConstructHologram / GetHologram
-#include "Core/Helpers/SFNetworkHelper.h"     // FSFNetworkHelper::IsClient
+#include "Core/Net/SFNetworkHelper.h"     // FSFNetworkHelper::IsClient
 #include "Engine/Engine.h"                     // GEngine on-screen message
 
 // MP spec-based construction: class-agnostic hooks + RCO spec staging

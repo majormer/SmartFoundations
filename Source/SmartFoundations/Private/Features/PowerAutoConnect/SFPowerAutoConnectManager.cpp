@@ -12,7 +12,7 @@
 #include "FGCircuitConnectionComponent.h"
 #include "SmartFoundations.h"  // For LogSmartFoundations
 #include "Constants/SFAssetPaths.h"
-#include "Core/Helpers/SFNetworkHelper.h"  // [#334] authority gate
+#include "Core/Net/SFNetworkHelper.h"  // [#334] authority gate
 #include "FGPlayerController.h"
 #include "FGCharacterPlayer.h"
 #include "FGInventoryComponent.h"

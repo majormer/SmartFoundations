@@ -6,7 +6,7 @@
  */
 
 #include "Subsystem/SFSubsystemImpl.h"
-#include "Core/Helpers/SFNetworkHelper.h"  // [#334] authority gate
+#include "Core/Net/SFNetworkHelper.h"  // [#334] authority gate
 
 
 void USFSubsystem::OnActorSpawned(AActor* SpawnedActor)
