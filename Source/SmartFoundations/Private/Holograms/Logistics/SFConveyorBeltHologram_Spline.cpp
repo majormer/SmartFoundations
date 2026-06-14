@@ -20,6 +20,7 @@
 #include "DrawDebugHelpers.h"
 #include "Data/SFHologramDataRegistry.h"
 #include "Hologram/FGHologram.h"
+#include "Subsystem/SFSubsystem.h"  // [#380] read configured BeltRoutingMode for lane belts
 #include "FGConstructDisqualifier.h"
 #include "Features/Extend/SFExtendService.h"
 #include "Subsystem/SFSubsystem.h"
@@ -214,7 +215,29 @@ void ASFConveyorBeltHologram::SetupBeltSpline(UFGFactoryConnectionComponent* Sta
         EndConnector);
 }
 
-void ASFConveyorBeltHologram::AutoRouteSplineWithNormals(const FVector& StartPos, const FVector& StartNormal, 
+void ASFConveyorBeltHologram::RouteLaneWithConfiguredMode(const FVector& StartPos, const FVector& StartNormal,
+                                                          const FVector& EndPos, const FVector& EndNormal)
+{
+    // [#380] Honor the player's configured belt routing mode (Default / Curve / Straight) for Extend
+    // lane belts, mirroring the AutoConnect/stackable belt path. Previously lane belts called
+    // AutoRouteSplineWithNormals directly and so always routed "Default", ignoring the setting -
+    // most visible when extending along a curve (rotation between copies).
+    int32 ConfiguredMode = 0;  // 0 = Default
+    if (USFSubsystem* SmartSubsystem = USFSubsystem::Get(GetWorld()))
+    {
+        ConfiguredMode = SmartSubsystem->GetAutoConnectRuntimeSettings().BeltRoutingMode;
+    }
+    SetRoutingMode(ConfiguredMode);
+
+    // Try build-mode (curve/straight) routing; fall back to the plain auto-route if unavailable
+    // (identical fallback to the AutoConnect belt path - so worst case is the prior behavior).
+    if (!TryUseBuildModeRouting(StartPos, StartNormal, EndPos, EndNormal))
+    {
+        AutoRouteSplineWithNormals(StartPos, StartNormal, EndPos, EndNormal);
+    }
+}
+
+void ASFConveyorBeltHologram::AutoRouteSplineWithNormals(const FVector& StartPos, const FVector& StartNormal,
                                                           const FVector& EndPos, const FVector& EndNormal)
 {
     UE_LOG(LogSmartHologram, Verbose, TEXT("🔍 AutoRouteSplineWithNormals: Routing belt spline with VANILLA 4-POINT structure"));

@@ -264,12 +264,12 @@ void USFExtendScaledService::OnScaledExtendStateChanged()
                     {
                         if (HoloData.bIsLaneSegment && HoloData.bHasSplineData && HoloData.SplineData.Points.Num() >= 2)
                         {
-                            // Lane segments: use AutoRouteSplineWithNormals
+                            // [#380] Lane segments: route honoring the configured belt routing mode
                             FVector StartPos = HoloData.SplineData.Points[0].World.ToFVector();
                             FVector EndPos = HoloData.SplineData.Points.Last().World.ToFVector();
                             FVector StartNormal = HoloData.LaneStartNormal.ToFVector();
                             FVector EndNormal = HoloData.LaneEndNormal.ToFVector();
-                            Belt->AutoRouteSplineWithNormals(StartPos, StartNormal, EndPos, EndNormal);
+                            Belt->RouteLaneWithConfiguredMode(StartPos, StartNormal, EndPos, EndNormal);  // [#380] honor belt routing mode
                             Belt->TriggerMeshGeneration();
                             Belt->ForceApplyHologramMaterial();
                         }
@@ -1076,13 +1076,13 @@ void USFExtendScaledService::SpawnScaledExtendPreviews()
                     {
                         if (HoloData.bIsLaneSegment && HoloData.bHasSplineData && HoloData.SplineData.Points.Num() >= 2)
                         {
-                            // Lane segments: use AutoRouteSplineWithNormals for proper curved routing
+                            // [#380] Lane segments: route honoring the configured belt routing mode
                             FVector StartPos = HoloData.SplineData.Points[0].World.ToFVector();
                             FVector EndPos = HoloData.SplineData.Points.Last().World.ToFVector();
                             FVector StartNormal = HoloData.LaneStartNormal.ToFVector();
                             FVector EndNormal = HoloData.LaneEndNormal.ToFVector();
 
-                            Belt->AutoRouteSplineWithNormals(StartPos, StartNormal, EndPos, EndNormal);
+                            Belt->RouteLaneWithConfiguredMode(StartPos, StartNormal, EndPos, EndNormal);  // [#380] honor belt routing mode
                             Belt->TriggerMeshGeneration();
                             Belt->ForceApplyHologramMaterial();
                         }
