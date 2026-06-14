@@ -1726,12 +1726,26 @@ TArray<FString> USFSubsystem::GetDirtyAutoConnectSettings() const
 
 void USFSubsystem::ResetAutoConnectRuntimeSettings()
 {
-	// Reset runtime settings to match FRESH config (not cached)
-	// This ensures config changes made mid-session take effect when equipping a new hologram
+	// [#371] Called when the active hologram changes. Runtime (panel/hotkey) edits are TEMPORARY
+	// overrides of the global-config defaults and must SURVIVE across placements and hologram
+	// changes - the reported bug was them evaporating after a single placement. bInitialized means
+	// "user modified this session" (every Set*/Adjust path sets it; InitFromConfig clears it). So we
+	// preserve an active override here, EXCEPT when the global config itself changed since we last
+	// synced to it: that is the newer, more specific action and wins ("global config is the default;
+	// a runtime change wins but is temporary"). A genuine config change re-syncs and clears the override.
 	FSmart_ConfigStruct FreshConfig = FSmart_ConfigStruct::GetActiveConfig(this);
-	AutoConnectRuntimeSettings.InitFromConfig(FreshConfig);
 
-	// Issue #257: Refresh Extend enabled state from fresh config
+	const bool bUserModified = AutoConnectRuntimeSettings.bInitialized;
+	const bool bGlobalConfigChanged = !FAutoConnectRuntimeSettings::ConfigDefaultsMatch(FreshConfig, CachedConfig);
+
+	if (!bUserModified || bGlobalConfigChanged)
+	{
+		AutoConnectRuntimeSettings.InitFromConfig(FreshConfig);  // clears bInitialized -> back to config-tracking
+		CachedConfig = FreshConfig;                              // new baseline for future change detection
+	}
+	// else: user override active and global config unchanged -> keep the runtime edit (the #371 fix)
+
+	// Issue #257: Refresh Extend enabled state from fresh config (independent of the override above)
 	bExtendEnabledByConfig = FreshConfig.bExtendEnabled;
 
 	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT(" Auto-Connect runtime settings reset from config:"));

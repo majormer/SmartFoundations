@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Smart! Panel settings now stick across placements** - Changing a setting in the Smart! Panel (e.g. Belt Main Tier from Auto to Mk1, or turning Belt Auto-Connect off) only applied to the building you were placing - the next placement snapped back to your global config. Panel changes now persist as a temporary session override and carry across placements, until you change the matching global setting in the pause menu (which takes over again) or it's reset. (Issue #371)
 - **Blueprint Designer: Extend no longer previews or charges for copies that won't fit** - Using Extend or Scaled Extend on a building inside the Blueprint Designer could show copy previews spilling past the designer walls and include them in the cost quote - so the build gun warned "Hologram cannot be placed in Blueprint Designer!" and "Missing materials" even though the copies that *did* fit built correctly. Smart! now drops the out-of-bounds copies up front, so the preview and the materials quote reflect only what will actually build. (Issue #366)
 
 ---

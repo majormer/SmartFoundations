@@ -691,10 +691,11 @@ void USFSubsystem::UnregisterActiveHologram(AFGHologram* Hologram)
 				CounterState.GridCounters.Z);
 		}
 
-		// CRITICAL FIX: Reset auto-connect runtime settings so next build session loads from global config
-		// Without this, runtime settings persist between build sessions, ignoring global config changes
-		AutoConnectRuntimeSettings.bInitialized = false;
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   Reset auto-connect runtime settings (will reload from config on next hologram)"));
+		// [#371] Do NOT clear the user-modified flag here. Runtime (panel/hotkey) edits are temporary
+		// overrides that must persist across placements; wiping the flag on every hologram unregister
+		// made them evaporate after a single placement (the reported bug). Picking up genuine global
+		// config changes is handled on the next hologram change by ResetAutoConnectRuntimeSettings(),
+		// which re-syncs only when the global config actually changed - preserving the override otherwise.
 	}
 	else
 	{
