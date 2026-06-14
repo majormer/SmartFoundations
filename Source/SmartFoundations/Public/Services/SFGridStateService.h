@@ -56,6 +56,14 @@ public:
         }
     }
 
+    void CycleRotationAxis(FSFCounterState& State)
+    {
+        // Rotation is ALWAYS yaw (around vertical Z); buildings stay upright. This only chooses
+        // whether the yaw progresses along X-clones (run curves) or Y-rows (rows fan out).
+        // Toggle X <-> Y only.
+        State.RotationAxis = (State.RotationAxis == ESFScaleAxis::X) ? ESFScaleAxis::Y : ESFScaleAxis::X;
+    }
+
     // Apply grid counter scaling with forbidden value skipping (0, -1)
     // Returns previous value for logging/comparison
     int32 ApplyAxisScaling(FSFCounterState& State, ESFScaleAxis Axis, int32 StepDelta)
@@ -128,15 +136,13 @@ public:
 
     void AdjustRotation(FSFCounterState& State, ESFScaleAxis Axis, int32 AccumulatedSteps, int32 Direction)
     {
-        // Rotation uses degrees, 5° per step for fine control
+        // Rotation uses degrees, 5° per step for fine control.
+        // Axis here is the PROGRESSION axis (X-clones vs Y-rows) and does NOT affect the
+        // yaw angle value — the single RotationZ angle is always adjusted regardless of Axis.
+        (void)Axis;
         constexpr float INCREMENT = 5.0f;
         const float Delta = Direction * INCREMENT * AccumulatedSteps;
-        switch (Axis)
-        {
-        case ESFScaleAxis::Z: State.RotationZ += Delta; break;
-        // Phase 2 will add X and Y axes
-        default: break;
-        }
+        State.RotationZ += Delta;
     }
 
     // Unified value adjustment routing

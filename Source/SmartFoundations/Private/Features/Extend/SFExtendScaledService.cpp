@@ -495,17 +495,45 @@ void USFExtendScaledService::CalculateScaledExtendPositions()
             SeedClone.GridY = Row;
             SeedClone.bIsSeed = true;
 
-            // Seed position: offset in Y direction (perpendicular to extend direction)
-            // Y direction is perpendicular to X (extend) direction
-            FVector YOffset = FVector(0.0f, EffectiveRowHeight * Row * YDir, 0.0f);
-            // Add Y spacing
-            YOffset.Y += State.SpacingY * Row * YDir;
-            // Add Y steps (vertical offset per row for terraced look)
-            float YSteps = State.StepsY * Row;
+            // [#372] Y-progression: the seed (GridX=0) is the row's anchor ON the fanned arc, not
+            // a parallel lane. Place it at the row arc anchor with the row yaw so the whole row
+            // fans out from the source. X-progression keeps the original parallel-lane seed.
+            const bool bSeedProgressY = (State.RotationAxis == ESFScaleAxis::Y)
+                && !FMath::IsNearlyZero(State.RotationZ);
+            if (bSeedProgressY)
+            {
+                float ArcLength = BuildingSize.X + static_cast<float>(State.SpacingX);
+                float StepRadians = FMath::Abs(FMath::DegreesToRadians(State.RotationZ));
+                float Radius = (StepRadians > KINDA_SMALL_NUMBER) ? ArcLength / StepRadians : 0.0f;
 
-            SeedClone.WorldOffset = SourceRotation.RotateVector(YOffset);
-            SeedClone.WorldOffset.Z += YSteps;
-            SeedClone.RotationOffset = FRotator::ZeroRotator;
+                float AngleDeg = static_cast<float>(Row) * State.RotationZ;
+                float AbsAngleRad = FMath::Abs(FMath::DegreesToRadians(AngleDeg));
+                float SignRotation = (State.RotationZ >= 0.0f) ? 1.0f : -1.0f;
+                const float SignY = static_cast<float>(YDir);
+
+                FVector RowAnchor;
+                RowAnchor.X = SignRotation * (Radius - Radius * FMath::Cos(AbsAngleRad));  // curve in local X
+                RowAnchor.Y = SignY * Radius * FMath::Sin(AbsAngleRad);                    // forward along local Y
+                RowAnchor.Z = State.StepsY * Row;                                          // terraced rise per row
+
+                SeedClone.WorldOffset = SourceRotation.RotateVector(FVector(RowAnchor.X, RowAnchor.Y, 0.0f));
+                SeedClone.WorldOffset.Z += RowAnchor.Z;
+                SeedClone.RotationOffset = FRotator(0.0f, AngleDeg, 0.0f);  // pure yaw
+            }
+            else
+            {
+                // Seed position: offset in Y direction (perpendicular to extend direction)
+                // Y direction is perpendicular to X (extend) direction
+                FVector YOffset = FVector(0.0f, EffectiveRowHeight * Row * YDir, 0.0f);
+                // Add Y spacing
+                YOffset.Y += State.SpacingY * Row * YDir;
+                // Add Y steps (vertical offset per row for terraced look)
+                float YSteps = State.StepsY * Row;
+
+                SeedClone.WorldOffset = SourceRotation.RotateVector(YOffset);
+                SeedClone.WorldOffset.Z += YSteps;
+                SeedClone.RotationOffset = FRotator::ZeroRotator;
+            }
 
             if (IsCloneInDesignerBounds(SeedClone))  // [#366] skip clones outside the designer volume
             {
@@ -529,36 +557,82 @@ void USFExtendScaledService::CalculateScaledExtendPositions()
             // Check if rotation is active
             bool bRotationActive = !FMath::IsNearlyZero(State.RotationZ);
 
+            // [#372] Rotation PROGRESSION axis: the cumulative (always-yaw) angle builds up either
+            // per X-clone (default — the run curves as it extends) or per Y-row (rows fan out).
+            // The angle value (RotationZ) is identical in both; only WHICH index drives it changes.
+            const bool bProgressY = (State.RotationAxis == ESFScaleAxis::Y);
+            const int32 ProgressIndex = bProgressY ? Row : CloneIndex;
+
             FVector CloneOffset;
             FRotator CloneRotation = FRotator::ZeroRotator;
 
             if (bRotationActive)
             {
-                // Arc/radial placement - cumulative rotation per clone
-                // Each clone steps along an arc, rotating by RotationZ degrees per step
+                // Arc/radial placement - cumulative rotation per progression step.
+                // Each step rotates by RotationZ degrees; rotation is ALWAYS pure yaw (upright).
                 float ArcLength = BuildingSize.X + static_cast<float>(State.SpacingX);
                 float StepRadians = FMath::Abs(FMath::DegreesToRadians(State.RotationZ));
                 float Radius = (StepRadians > KINDA_SMALL_NUMBER) ? ArcLength / StepRadians : 0.0f;
 
-                float AngleDeg = static_cast<float>(CloneIndex) * State.RotationZ;
+                float AngleDeg = static_cast<float>(ProgressIndex) * State.RotationZ;
                 float AngleRad = FMath::DegreesToRadians(AngleDeg);
                 float SignRotation = (State.RotationZ >= 0.0f) ? 1.0f : -1.0f;
-
-                // Arc position in local space — matches CalculateRotationOffset pattern:
-                //   X = SignX * R * Sin(|θ|)              (direction determines forward/backward)
-                //   Y = SignRotation * (R - R*Cos(|θ|))   (NO direction sign — canonical)
-                //   Rotation = AngleDeg * XDirectionSign  (sign baked into angle)
                 float AbsAngleRad = FMath::Abs(AngleRad);
                 float SignX = XDirectionSign;
 
-                CloneOffset.X = SignX * Radius * FMath::Sin(AbsAngleRad);
-                CloneOffset.Y = SignRotation * (Radius - Radius * FMath::Cos(AbsAngleRad));
-                CloneOffset.Z = 0.0f;
+                if (!bProgressY)
+                {
+                    // X-PROGRESSION (default, behavior-preserving): arc advances along local X
+                    // (the extend direction), curves in local Y. Driven by CloneIndex.
+                    //   X = SignX * R * Sin(|θ|)              (direction determines forward/backward)
+                    //   Y = SignRotation * (R - R*Cos(|θ|))   (NO direction sign — canonical)
+                    //   Rotation = AngleDeg * XDirectionSign  (sign baked into angle)
+                    CloneOffset.X = SignX * Radius * FMath::Sin(AbsAngleRad);
+                    CloneOffset.Y = SignRotation * (Radius - Radius * FMath::Cos(AbsAngleRad));
+                    CloneOffset.Z = 0.0f;
 
-                // Apply steps (vertical offset per clone)
-                CloneOffset.Z += State.StepsX * CloneIndex;
+                    // Apply steps (vertical offset per clone)
+                    CloneOffset.Z += State.StepsX * CloneIndex;
 
-                CloneRotation = FRotator(0.0f, AngleDeg * XDirectionSign, 0.0f);
+                    CloneRotation = FRotator(0.0f, AngleDeg * XDirectionSign, 0.0f);
+
+                    // Add Y row offset (parallel lanes). Only meaningful for X-progression:
+                    // in Y-progression the row IS the arc-forward, so this must not be applied.
+                    if (Row > 0)
+                    {
+                        CloneOffset.Y += EffectiveRowHeight * Row * YDir + State.SpacingY * Row * YDir;
+                        CloneOffset.Z += State.StepsY * Row;
+                    }
+                }
+                else
+                {
+                    // Y-PROGRESSION (new): the ROWS fan out around the vertical axis. The arc-forward/
+                    // curve axes swap vs the X path — the arc advances along local Y (driven by Row)
+                    // and curves in local X. Each row sits at cumulative yaw (Row * RotationZ); the
+                    // row's own clones then march forward along that rotated extend direction.
+                    //   Row anchor:  Y = SignY * R * Sin(|θ|),  X = SignRotation * (R - R*Cos(|θ|))
+                    // where the forward sign follows the Y row direction (YDir) just as the X path's
+                    // forward follows XDirectionSign.
+                    const float SignY = static_cast<float>(YDir);
+                    FVector RowAnchor;
+                    RowAnchor.X = SignRotation * (Radius - Radius * FMath::Cos(AbsAngleRad));
+                    RowAnchor.Y = SignY * Radius * FMath::Sin(AbsAngleRad);
+                    RowAnchor.Z = State.StepsY * Row;  // terraced rows still rise per Row
+
+                    // Per-clone forward along the row's rotated extend direction (local X spun by yaw).
+                    // The yaw applied to the row is AngleDeg (pure yaw); rotate the linear extend
+                    // vector by it so clones within the row stay rigid with the fanned row.
+                    const float Forward = BuildingSize.X * CloneIndex + State.SpacingX * CloneIndex;
+                    FVector LocalExtend(XDirectionSign * Forward, 0.0f, 0.0f);
+                    const FRotator RowYaw(0.0f, AngleDeg, 0.0f);
+                    FVector RotatedExtend = RowYaw.RotateVector(LocalExtend);
+
+                    CloneOffset.X = RowAnchor.X + RotatedExtend.X;
+                    CloneOffset.Y = RowAnchor.Y + RotatedExtend.Y;
+                    CloneOffset.Z = RowAnchor.Z + State.StepsX * CloneIndex;
+
+                    CloneRotation = FRotator(0.0f, AngleDeg, 0.0f);
+                }
             }
             else
             {
@@ -566,13 +640,13 @@ void USFExtendScaledService::CalculateScaledExtendPositions()
                 CloneOffset.X = XDirectionSign * (BuildingSize.X * CloneIndex + State.SpacingX * CloneIndex);
                 CloneOffset.Y = 0.0f;
                 CloneOffset.Z = State.StepsX * CloneIndex;  // Steps = vertical offset per clone
-            }
 
-            // Add Y row offset
-            if (Row > 0)
-            {
-                CloneOffset.Y += EffectiveRowHeight * Row * YDir + State.SpacingY * Row * YDir;
-                CloneOffset.Z += State.StepsY * Row;
+                // Add Y row offset (parallel lanes) - linear (no rotation) path.
+                if (Row > 0)
+                {
+                    CloneOffset.Y += EffectiveRowHeight * Row * YDir + State.SpacingY * Row * YDir;
+                    CloneOffset.Z += State.StepsY * Row;
+                }
             }
 
             // Rotate offset by source building rotation to get world space

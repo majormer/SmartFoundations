@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > *A maintenance release: community-reported bug fixes, on a codebase reorganized so multiplayer issues are faster to track down.*
 
+### Added
+
+- **Rotation can now build up along the Y axis** - The Rotation control arcs a scaled grid by yawing each copy a little more than the last. Until now that build-up always ran along X, so the *run* curved as it extended. Press Num0 while holding the Rotation key to switch the build-up to the Y axis, so the *rows* fan out around the vertical instead. It stays a flat, upright rotation either way - nothing ever tilts or flips. (Issue #372)
+
 ### Changed
 
 - **Smart! no longer auto-repairs conveyor chains when a save loads** - Smart! used to run an automatic conveyor-chain repair sweep a few seconds after every save load, to clean up corrupted chain bookkeeping. It no longer does. A save that carries chain corruption - which is most often introduced by *other* mods - now loads untouched, so Smart! neither silently changes your world nor gets blamed for problems it didn't cause. The runtime crash protections stay in place (Smart! still prevents the known belt-related crashes as you build and dismantle), and Smart! still tidies up the chains it builds itself. A separate, opt-in cleanup mod is planned for the rarer case where you genuinely need to repair an already-corrupted save. (Issue #367)
