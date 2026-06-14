@@ -33,6 +33,7 @@
 #include "Holograms/Logistics/SFConveyorLiftHologram.h"
 #include "Data/SFBuildableSizeRegistry.h"
 #include "Data/SFHologramDataRegistry.h"
+#include "Buildables/FGBuildableBlueprintDesigner.h"  // [#366] IsLocationInsideDesigner clamp
 #include "Buildables/FGBuildableConveyorBelt.h"
 #include "Buildables/FGBuildableConveyorLift.h"
 #include "FGConveyorChainActor.h"
@@ -467,6 +468,22 @@ void USFExtendScaledService::CalculateScaledExtendPositions()
     // Determine Y direction sign (negative Y = opposite perpendicular)
     int32 YDir = (Owner->Subsystem->GetCounterState().GridCounters.Y >= 0) ? 1 : -1;
 
+    // [#366] Designer-bounds clamp. When extending a designer-resident building, a clone whose
+    // position falls outside the Blueprint Designer volume can never construct (vanilla refuses
+    // out-of-bounds buildables), yet it would still render a preview AND be charged in the cost
+    // quote - the reported "Hologram cannot be placed in Blueprint Designer!" + "Missing materials"
+    // while the in-bounds portion builds fine. This array is the single source of truth every
+    // downstream spawner and the cost aggregation key from, so dropping out-of-bounds clones HERE
+    // keeps preview and quote honest. No-op outside a designer (the common open-world case).
+    AFGBuildableBlueprintDesigner* BoundsDesigner = Owner->CurrentExtendHologram.IsValid()
+        ? Owner->CurrentExtendHologram->GetBlueprintDesigner() : nullptr;
+    const FVector SourceWorldLocation = SourceBuilding->GetActorLocation();
+    auto IsCloneInDesignerBounds = [&](const FSFScaledExtendClone& Clone) -> bool
+    {
+        if (!BoundsDesigner) { return true; }  // not designer-resident: never clamp
+        return BoundsDesigner->IsLocationInsideDesigner(SourceWorldLocation + Clone.WorldOffset);
+    };
+
     // For each row and clone position, calculate the world offset
     for (int32 Row = 0; Row < RowCount; Row++)
     {
@@ -490,7 +507,10 @@ void USFExtendScaledService::CalculateScaledExtendPositions()
             SeedClone.WorldOffset.Z += YSteps;
             SeedClone.RotationOffset = FRotator::ZeroRotator;
 
-            Owner->ScaledExtendClones.Add(SeedClone);
+            if (IsCloneInDesignerBounds(SeedClone))  // [#366] skip clones outside the designer volume
+            {
+                Owner->ScaledExtendClones.Add(SeedClone);
+            }
         }
 
         // For each clone in Owner row
@@ -562,7 +582,10 @@ void USFExtendScaledService::CalculateScaledExtendPositions()
 
             ExtendClone.RotationOffset = CloneRotation;
 
-            Owner->ScaledExtendClones.Add(ExtendClone);
+            if (IsCloneInDesignerBounds(ExtendClone))  // [#366] skip clones outside the designer volume
+            {
+                Owner->ScaledExtendClones.Add(ExtendClone);
+            }
         }
     }
 
