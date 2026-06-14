@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Rotation can now build up along the Y axis** - The Rotation control arcs a scaled grid by yawing each copy a little more than the last. Until now that build-up always ran along X, so the *run* curved as it extended. Press Num0 while holding the Rotation key to switch the build-up to the Y axis, so the *rows* fan out around the vertical instead. It stays a flat, upright rotation either way - nothing ever tilts or flips. (Issue #372)
+- **Rotation can now build up along the Y axis** - The Rotation control arcs a scaled grid by yawing each copy a little more than the last. Until now that build-up always ran along X, so the *run* curved as it extended. Now you can switch the build-up to the Y axis so the *rows* fan out around the vertical instead - either with Num0 while holding the Rotation key, or with the new X/Y selector on the Rotation row of the Smart! Panel. It stays a flat, upright rotation either way - nothing ever tilts or flips. (Issue #372)
 
 ### Changed
 

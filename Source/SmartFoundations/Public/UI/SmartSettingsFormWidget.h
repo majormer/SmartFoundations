@@ -157,12 +157,16 @@ protected:
     UPROPERTY(meta = (BindWidgetOptional))
     TObjectPtr<USizeBox> StaggerZYInputSizeBox;
 
-    // Rotation inputs: float values in degrees, min -180, max 180, delta 1
-    // Phase 1: Only Z-axis (horizontal arc)
+    // Rotation inputs: float values in degrees, min -180, max 180, delta 1.
+    // Rotation is always yaw (around Z); the combo below selects the PROGRESSION axis (#372).
     UPROPERTY(meta = (BindWidgetOptional))
     TObjectPtr<USpinBox> RotationZInput;
     UPROPERTY(meta = (BindWidgetOptional))
     TObjectPtr<USizeBox> RotationZInputSizeBox;
+
+    // [#372] Rotation progression axis selector: "X" (yaw builds up along the run) or "Y" (rows fan out).
+    UPROPERTY(meta = (BindWidgetOptional))
+    TObjectPtr<UComboBoxString> RotationAxisComboBox;
 
     // Apply button (bound from Blueprint)
     UPROPERTY(meta = (BindWidgetOptional))
@@ -644,6 +648,10 @@ private:
     // Belt tier main ComboBox changed
     UFUNCTION()
     void OnBeltTierMainChanged(FString SelectedItem, ESelectInfo::Type SelectionType);
+
+    /** [#372] Rotation progression-axis combo changed (X = build up along run, Y = rows fan out). */
+    UFUNCTION()
+    void OnRotationAxisChanged(FString SelectedItem, ESelectInfo::Type SelectionType);
     
     // Belt tier to building ComboBox changed
     UFUNCTION()

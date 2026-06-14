@@ -548,6 +548,13 @@ void USmartSettingsFormWidget::PopulateCounterInputsFromState(const FSFCounterSt
         RotationZInput->SetValue(State.RotationZ);
     }
 
+    // [#372] Reflect the rotation progression axis (X-clones vs Y-rows). Direct selection so it
+    // doesn't re-fire OnRotationAxisChanged.
+    if (RotationAxisComboBox)
+    {
+        RotationAxisComboBox->SetSelectedIndex(State.RotationAxis == ESFScaleAxis::Y ? 1 : 0);
+    }
+
     bApplyImmediately = bWasApplyImmediately;
     UpdateGridWarningDisplay();
 }

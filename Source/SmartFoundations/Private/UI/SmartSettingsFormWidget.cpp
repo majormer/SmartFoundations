@@ -247,6 +247,7 @@ void USmartSettingsFormWidget::NativeConstruct()
     ConfigureComboBoxStyle(PowerGridAxisComboBox);
     ConfigureComboBoxStyle(PowerReservedComboBox);
     ConfigureComboBoxStyle(PresetDropdown, BeltTierMainComboBox);
+    ConfigureComboBoxStyle(RotationAxisComboBox, BeltTierMainComboBox);  // [#372] copy belt-combo style
 
     // Bind Apply Immediately checkbox
     // NOTE: Do NOT set checkbox state here - PopulateFromCounterState() is called BEFORE NativeConstruct
@@ -348,6 +349,15 @@ void USmartSettingsFormWidget::NativeConstruct()
     if (BeltRoutingModeComboBox)
     {
         BeltRoutingModeComboBox->OnSelectionChanged.AddDynamic(this, &USmartSettingsFormWidget::OnBeltRoutingModeChanged);
+    }
+
+    // [#372] Rotation progression-axis selector (X = yaw builds up along the run, Y = rows fan out)
+    if (RotationAxisComboBox)
+    {
+        RotationAxisComboBox->ClearOptions();
+        RotationAxisComboBox->AddOption(TEXT("X"));
+        RotationAxisComboBox->AddOption(TEXT("Y"));
+        RotationAxisComboBox->OnSelectionChanged.AddDynamic(this, &USmartSettingsFormWidget::OnRotationAxisChanged);
     }
 
     // Bind pipe auto-connect controls
