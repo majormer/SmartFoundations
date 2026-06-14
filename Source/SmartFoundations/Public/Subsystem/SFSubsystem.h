@@ -161,9 +161,6 @@ public:
 	UFUNCTION()
 	void RebindAfterDelay();
 
-	/** Deferred post-load chain diagnostic; does not mutate conveyor state. */
-	void RunPostLoadChainRepair();
-
     // ========================================
     // Facade Accessors for Grid Spawner Service (Phase 2)
     // ========================================
@@ -622,9 +619,6 @@ protected:
 
 	/** Timer for deferred power pole connections */
 	FTimerHandle PowerPoleDeferredTimer;
-
-	/** One-shot timer that runs post-load chain diagnostics. */
-	FTimerHandle PostLoadChainRepairTimer;
 
 	/** Pending power poles waiting for connections */
 	UPROPERTY()

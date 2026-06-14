@@ -231,13 +231,6 @@ public:
 		const TSet<AFGConveyorChainActor*>& ExtraChains);
 
 	/**
-	 * Post-load automated diagnostic: report chain actor issues without mutating conveyor state.
-	 * Intended to be called once after the world is fully loaded (via a deferred timer from USFSubsystem).
-	 * Load-time mutation is intentionally avoided because conveyor chain actors tick on worker threads.
-	 */
-	void RunPostLoadRepair();
-
-	/**
 	 * Destroy all AFGConveyorChainActor instances with zero chain segments (NO_SEGMENTS zombies).
 	 * Safe, idempotent. Called by deferred post-upgrade cleanup and explicit repair flows.
 	 * Public so UpgradeExecutionService can invoke it directly as a safety-net after

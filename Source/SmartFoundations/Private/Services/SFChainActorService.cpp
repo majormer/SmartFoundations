@@ -23,20 +23,12 @@ void USFChainActorService::Initialize(USFSubsystem* InSubsystem)
 {
 	Subsystem = InSubsystem;
 
-	// Load-time repair sweep (authority only): a save written while detached-but-segmented
-	// chains existed (the pre-fix upgrade/extend rebuild left them; ShouldSave is unconditionally
-	// true) reloads with belts claimed by TWO chains — vanilla's in-tick recovery then fires
-	// ForceDestroyChainActor from a ParallelFor WORKER and randomly asserts (the 2026-06-10 boot
-	// crash). Sweeping once shortly after load force-destroys those chains from the GAME THREAD
-	// (items transfer back to belts) before the race can fire again. 15 s leaves vanilla's own
-	// load-time chain registration time to settle first.
-	if (UWorld* World = InSubsystem ? InSubsystem->GetWorld() : nullptr)
-	{
-		if (World->GetNetMode() != NM_Client)
-		{
-			ScheduleDeferredZombiePurge(15.0f);
-		}
-	}
+	// [Track E / #367] The load-time chain-repair sweep was REMOVED here. Smart! no longer silently
+	// mutates the player's world at load: a save carrying pre-existing chain corruption (frequently
+	// from OTHER mods — e.g. the flex-splines lead on #367) now reloads untouched. The runtime guards
+	// still prevent the freed-pointer Factory_Tick AV (RemoveConveyor sweep, pre-tick scrub, EndPlay
+	// guard, null-wire dismantle scrub), and the post-BUILD hygiene pass still cleans only the chains
+	// Smart! itself just built. Cleaning up pre-existing corruption is now opt-in (a separate mod).
 }
 
 void USFChainActorService::Shutdown()
@@ -1281,26 +1273,6 @@ int32 USFChainActorService::RepairOrphanedBelts(FSFChainRepairResult* OutResult)
 	}
 
 	return ReRegisteredBelts;
-}
-
-void USFChainActorService::RunPostLoadRepair()
-{
-	const FSFChainDiagnosticResult Result = DetectChainActorIssues();
-
-	if (Result.HasIssues())
-	{
-		UE_LOG(LogSmartUpgrade, VeryVerbose,
-			TEXT("ChainActorService: Post-load chain diagnostic found issues but did not mutate conveyor state — zombies=%d split_chains=%d orphaned_tgs=%d tg_backptr_mismatches=%d. Use Smart Upgrade Triage or targeted tooling after the world is stable."),
-			Result.ZombieChainCount,
-			Result.SplitChainCount,
-			Result.OrphanedTickGroupCount,
-			Result.TickGroupBackPointerMismatchCount);
-	}
-	else
-	{
-		UE_LOG(LogSmartUpgrade, VeryVerbose,
-			TEXT("ChainActorService: Post-load chain diagnostic complete — no issues detected."));
-	}
 }
 
 int32 USFChainActorService::InvalidateAndRebuildForBelts(

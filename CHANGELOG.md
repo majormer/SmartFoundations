@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Smart! no longer auto-repairs conveyor chains when a save loads** - Smart! used to run an automatic conveyor-chain repair sweep a few seconds after every save load, to clean up corrupted chain bookkeeping. It no longer does. A save that carries chain corruption - which is most often introduced by *other* mods - now loads untouched, so Smart! neither silently changes your world nor gets blamed for problems it didn't cause. The runtime crash protections stay in place (Smart! still prevents the known belt-related crashes as you build and dismantle), and Smart! still tidies up the chains it builds itself. A separate, opt-in cleanup mod is planned for the rarer case where you genuinely need to repair an already-corrupted save. (Issue #367)
 - **Under the hood: groundwork for faster multiplayer fixes** - The first stage of an ongoing internal reorganization: Smart!'s multiplayer networking code was consolidated into one place, and the features whose single-player and multiplayer behavior differ now carry a short map of exactly where they diverge. This is partial - more cleanup is planned - and nothing about how Smart! builds or plays changes. It's groundwork that makes multiplayer bug reports faster to track down and fix. (Ongoing refactor #377)
 
 ### Fixed
