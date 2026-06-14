@@ -24,7 +24,7 @@ If an old comment says "Smart does not have Extend yet" or "pipes are not suppor
 
 No. As far as the original Smart feature set goes, the current Smart! has restored the major features players remember: scaling, transforms, auto-connect, Extend, Restore-style presets, and companion camera support.
 
-The main feature still pending is full multiplayer and dedicated server support.
+Multiplayer on dedicated servers — the last big piece — shipped in 32.0.0.
 
 ## Is Smart! A Cheat Mod?
 
@@ -40,15 +40,13 @@ Do save before changing any mod setup. If you used Smart Camera, remove that com
 
 ## Does Smart! Work In Multiplayer?
 
-Multiplayer is not fully supported yet.
+Yes. Smart! works in multiplayer on dedicated servers (Windows and Linux). Every feature — scaling, Auto-Connect, Extend, Smart Upgrade, Smart Restore, and Smart Dismantle — works when you play as a client, with normal build costs, and everything Smart! places is a standard replicated building that other players can see, use, and dismantle.
 
-Some features may work better for the host than for clients, but the safe answer is that Smart! is currently best treated as a single-player or host-controlled building tool. Dedicated server support is not something to rely on yet.
+Install the same Smart! version on the server and on every client; the Mod Manager keeps them matched. Multiplayer is newer than single-player, so if something behaves differently in a session than it does solo, please report it. See [Compatibility and Multiplayer](Compatibility-and-Multiplayer).
 
 ## Will Smart! Work With Satisfactory 1.2?
 
-Satisfactory 1.2 is expected to require a mod rebuild.
-
-As of May 22, 2026, the public 1.2 release is expected on June 2, 2026. There may be a gap while SML, FactoryGame headers, Unreal changes, and Smart! itself are updated and tested.
+Yes. Smart! runs on Satisfactory 1.2 — it was rebuilt for the 1.2 engine and is the current supported version. If you are coming from a 1.1 build, just update Smart! through the Mod Manager.
 
 ## Why Do My Controls Do Nothing?
 
@@ -85,6 +83,12 @@ Smart! uses `K` for panel-style controls, but the panel depends on what you are 
 When you are placing a normal Smart-supported building, `K` opens the Smart Panel. When you are holding a belt, lift, pipe, or wire/power line, `K` opens Smart Upgrade.
 
 Power poles and wall outlets intentionally keep opening the Smart Panel so you can scale them. To upgrade power poles or wall outlets, open Smart Upgrade from a wire/power line or use the panel's scan modes.
+
+## Can I Hold Or Nudge A Smart Grid?
+
+Yes. Smart! works with Satisfactory's vanilla Hold and nudge. Hold the parent hologram (default `H`) and nudge it with the arrow keys, and the whole Smart grid moves with the parent — the copies follow along. Vanilla levitation while held works the same way. (Nudge and levitation are vanilla build-gun features, not Smart! features; Smart! just makes the grid follow the held parent.)
+
+Smart! also has an **Auto-Hold** setting that locks the hologram automatically after you change the grid, so a large preview does not drift. You can release that lock with the vanilla Hold key.
 
 ## What Is The Infinite Nudge Issue?
 

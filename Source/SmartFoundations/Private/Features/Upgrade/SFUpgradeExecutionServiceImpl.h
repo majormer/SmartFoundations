@@ -48,5 +48,5 @@
 #include "Features/Extend/SFExtendService.h"
 #include "FGItemPickup_Spawnable.h"
 #include "FGCrate.h"
-#include "SFRCO.h"                     // [UPGRADE-MP] result echo to the requesting client's RCO
+#include "Core/Net/SFRCO.h"                     // [UPGRADE-MP] result echo to the requesting client's RCO
 #include "Kismet/GameplayStatics.h"    // [UPGRADE-MP] RCO lookup (GetAllActorsOfClass)

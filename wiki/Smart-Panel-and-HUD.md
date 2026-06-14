@@ -18,7 +18,7 @@ Use the Smart Settings Form for:
 - Power Auto-Connect settings.
 - HUD and arrow preferences.
 
-Depending on your settings, changes may apply immediately or wait until you click Apply.
+The panel has **Apply**, **Reset**, and **Close** buttons in a row under the header. Depending on your settings, changes may apply immediately or wait until you click Apply; Reset returns the settings to their defaults.
 
 > Screenshot placeholder: Smart Settings Form with Auto-Connect settings visible.
 

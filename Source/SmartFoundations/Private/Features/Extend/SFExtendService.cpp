@@ -6,6 +6,23 @@
  * See SFExtendService.h for architecture overview and documentation.
  */
 
+// SP/MP DIVERGENCE MAP — Extend   (entry point for an Extend multiplayer-only bug; see CodeOrganization.md §5)
+//  1. Topology walk     — [MP-CLIENT] a client cannot walk the connection graph locally
+//                         (mConnectedComponent is null on clients); [MP-SEAM] it requests the
+//                         walk over Server_RequestExtendTopology (SFRCO) and the server pushes the
+//                         authoritative topology back for preset capture.
+//  2. Commit reconstruct— [MP-AUTH] the server reconstructs the FULL commit from its own graph walk
+//                         (ReconstructCommitOnServer / ReconstructScaledCommitOnServer); topology is
+//                         NEVER shipped from the client (client GetConnection() is null → poisoned wiring).
+//  3. Cost charge       — [MP-AUTH] the childless server parent would charge the bare factory only, so
+//                         GetCost is overridden with the client-captured preview cost. (Net seam: Hook A,
+//                         Core/Net/SFGameInstanceModule_SpecHooks.cpp)
+//  4. Designer context  — [MP-REPL] mBlueprintDesigner does not cross the construct message; re-derived
+//                         authoritatively from containment at the construct seam. (Net seam: Hook B)
+//  5. Clone-id wiring   — [MP-AUTH] the SP swapped-parent (ASFFactoryHologram) does not exist server-side,
+//                         so the server position-matches clone-id children to built actors post-construct
+//                         and runs the wiring pass synchronously. (Net seam: Hook B)
+
 #include "Features/Extend/SFExtendService.h"
 #include "Engine/OverlapResult.h"
 #include "Features/Extend/SFExtendDetectionService.h"
@@ -22,8 +39,8 @@
 #include "Services/SFRecipeManagementService.h"
 #include "Subsystem/SFSubsystem.h"
 #include "Subsystem/SFHologramDataService.h"
-#include "Core/Helpers/SFNetworkHelper.h"   // [EXTEND-MP] IsClient (server-walk topology branch)
-#include "SFRCO.h"                          // [EXTEND-MP] Server_RequestExtendTopology
+#include "Core/Net/SFNetworkHelper.h"   // [EXTEND-MP] IsClient (server-walk topology branch)
+#include "Core/Net/SFRCO.h"                          // [EXTEND-MP] Server_RequestExtendTopology
 #include "FGPlayerController.h"
 // NOTE: SFRecipeCostInjector.h removed - child holograms automatically aggregate costs via GetCost()
 #include "Services/RadarPulse/SFRadarPulseService.h"
@@ -614,9 +631,9 @@ TArray<ESFExtendDirection> USFExtendService::GetValidDirections() const
 
 bool USFExtendService::WalkTopology(AFGBuildable* SourceBuilding)
 {
-    // [EXTEND-MP] A network client cannot walk the graph locally: mConnectedComponent is
-    // UPROPERTY(SaveGame) - server-only, NOT replicated - so GetConnection() is null on clients
-    // by design (live-diagnosed 2026-06-08: "2 factory connectors, 0 with resolved
+    // [MP-CLIENT][MP-SEAM] (Extend §1) A network client cannot walk the graph locally:
+    // mConnectedComponent is UPROPERTY(SaveGame) - server-only, NOT replicated - so GetConnection()
+    // is null on clients by design (live-diagnosed 2026-06-08: "2 factory connectors, 0 with resolved
     // GetConnection()"). Ask the SERVER to walk via the USFRCO topology request and consume the
     // cached reply here: activation calls WalkTopology every tick while aiming, so returning
     // false until the reply lands makes the flow async with zero restructuring. The reply's
@@ -782,6 +799,8 @@ bool USFExtendService::BuildCommitSpecForMP(AFGHologram* ParentHologram, FSFExte
     return true;
 }
 
+// [MP-AUTH] (Extend §2) Server-authoritative commit reconstruction. Called from the construct seam
+// (Net: Hook B). Derives topology from the server's own graph walk - NEVER from client-shipped data.
 int32 USFExtendService::ReconstructCommitOnServer(AFGHologram* ParentHologram, const FSFExtendCommitSpec& Spec)
 {
     if (!ParentHologram || !TopologyService)
@@ -881,6 +900,8 @@ int32 USFExtendService::ReconstructCommitOnServer(AFGHologram* ParentHologram, c
     return NumSpawned;
 }
 
+// [MP-CLIENT][MP-SEAM] (Extend §2) Client-only: stage the commit to the server over USFRCO so the
+// server can reconstruct it authoritatively (ReconstructCommitOnServer). No-op on authority.
 void USFExtendService::MaybeStageCommitForMP(AFGHologram* ParentHologram)
 {
     if (!Subsystem.IsValid() || !FSFNetworkHelper::IsClient(Subsystem->GetWorld()))

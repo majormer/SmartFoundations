@@ -1,5 +1,16 @@
 // Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
+// SP/MP DIVERGENCE MAP — AutoConnect   (see CodeOrganization.md §5)
+//  This service computes the belt/pipe plan and (in SP) wires it geometrically against built actors
+//  via SF_*AutoConnectChild child holograms. The plan itself runs the same both ways; the divergence
+//  is WHO holds the plan at construct time:
+//  1. Plan capture  — [MP-SEAM] the CLIENT's fire-time previews are the only complete plan that ever
+//                     exists (server re-derivation at the construct seam returns 0). The plan is staged
+//                     with the scaling spec (ConduitPlanCost + conduit-plan children) via SFRCO.
+//  2. Plan replay   — [MP-AUTH] the server appends the staged plan as SF_BeltAutoConnectChild children
+//                     AFTER the grid; each belt then wires geometrically against BUILT actors, exactly
+//                     as SP does. (Net seam: Hook B → SpawnConduitPlanChildren, SFGameInstanceModule_SpecHooks.cpp)
+
 #include "Features/AutoConnect/SFAutoConnectService.h"
 #include "Features/AutoConnect/SFAutoConnectServiceImpl.h"
 

@@ -24,11 +24,13 @@ Smart! can preview belts between compatible distributors and from distributors t
 Use Pipe Auto-Connect when scaling:
 
 - Pipe junctions.
-- Pipe supports.
+- Pipeline supports (ground and wall).
 - Fluid machines.
 - Fluid buffers.
 
 Smart! can preview pipe connections where the pipe endpoints are compatible.
+
+**Scaled pipeline supports build a pipe run.** When you scale a line of Pipeline Supports or Pipeline Wall Supports, Smart! plumbs a connected pipe run between the copies — the same way a scaled line of Conveyor Poles builds a belt run. Fluid flows through the whole run, and each support's own snap point stays free, so you can still connect a pipe to it by hand. The ground support's height and its top-piece angle carry across the whole line, so a sloped run stays consistent.
 
 > Screenshot placeholder: pipe junction grid with preview pipes.
 

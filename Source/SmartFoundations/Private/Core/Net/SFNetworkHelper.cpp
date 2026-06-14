@@ -1,6 +1,6 @@
 // Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
-#include "SFNetworkHelper.h"
+#include "Core/Net/SFNetworkHelper.h"
 #include "SmartFoundations.h"
 
 bool FSFNetworkHelper::IsMultiplayer(const UWorld* World)
