@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [32.1.1] - Unreleased
+
+> *A maintenance release: community-reported bug fixes, on a codebase reorganized so multiplayer issues are faster to track down.*
+
+### Changed
+
+- **Under the hood: groundwork for faster multiplayer fixes** - The first stage of an ongoing internal reorganization: Smart!'s multiplayer networking code was consolidated into one place, and the features whose single-player and multiplayer behavior differ now carry a short map of exactly where they diverge. This is partial - more cleanup is planned - and nothing about how Smart! builds or plays changes. It's groundwork that makes multiplayer bug reports faster to track down and fix. (Ongoing refactor #377)
+
+<!-- ### Fixed — bug fixes for this release are added here as they land (see issues brought into scope) -->
+
+---
+
 ## [32.1.0] - 2026-06-11
 
 > *A fast follow to the multiplayer release: day-one community reports fixed, Smart! support inside the Blueprint Designer, pipeline support scaling, and a reworked Smart! Panel.*
