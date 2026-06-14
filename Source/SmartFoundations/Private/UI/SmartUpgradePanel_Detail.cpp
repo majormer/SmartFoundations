@@ -675,11 +675,7 @@ void USmartUpgradePanel::OnTraversalTabClicked()
 	SwitchToTab(ESmartUpgradeTab::Traversal);
 }
 
-void USmartUpgradePanel::OnTriageTabClicked()
-{
-	UE_LOG(LogSmartUI, VeryVerbose, TEXT("Upgrade Panel: Triage tab clicked"));
-	SwitchToTab(ESmartUpgradeTab::Triage);
-}
+// [Track E] OnTriageTabClicked removed.
 
 void USmartUpgradePanel::SwitchToTab(ESmartUpgradeTab NewTab)
 {
@@ -687,7 +683,6 @@ void USmartUpgradePanel::SwitchToTab(ESmartUpgradeTab NewTab)
 
 	const bool bRadiusTab = (NewTab == ESmartUpgradeTab::Radius);
 	const bool bTraversalTab = (NewTab == ESmartUpgradeTab::Traversal);
-	const bool bTriageTab = (NewTab == ESmartUpgradeTab::Triage);
 
 	// Toggle content visibility
 	if (RadiusContent)
@@ -697,10 +692,6 @@ void USmartUpgradePanel::SwitchToTab(ESmartUpgradeTab NewTab)
 	if (TraversalContent)
 	{
 		TraversalContent->SetVisibility(bTraversalTab ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
-	}
-	if (TriageContent)
-	{
-		TriageContent->SetVisibility(bTriageTab ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
 	}
 
 	// Update tab button appearance (visual feedback for active/inactive)
@@ -717,10 +708,6 @@ void USmartUpgradePanel::SwitchToTab(ESmartUpgradeTab NewTab)
 	{
 		TraversalTabButton->SetBackgroundColor(bTraversalTab ? ActiveTabColor : InactiveTabColor);
 	}
-	if (TriageTabButton)
-	{
-		TriageTabButton->SetBackgroundColor(bTriageTab ? ActiveTabColor : InactiveTabColor);
-	}
 
 	// Update tab text colors
 	if (UTextBlock* RadiusText = RadiusTabButton ? Cast<UTextBlock>(RadiusTabButton->GetChildAt(0)) : nullptr)
@@ -730,10 +717,6 @@ void USmartUpgradePanel::SwitchToTab(ESmartUpgradeTab NewTab)
 	if (UTextBlock* TraversalText = TraversalTabButton ? Cast<UTextBlock>(TraversalTabButton->GetChildAt(0)) : nullptr)
 	{
 		TraversalText->SetColorAndOpacity(FSlateColor(bTraversalTab ? ActiveTextColor : InactiveTextColor));
-	}
-	if (UTextBlock* TriageText = TriageTabButton ? Cast<UTextBlock>(TriageTabButton->GetChildAt(0)) : nullptr)
-	{
-		TriageText->SetColorAndOpacity(FSlateColor(bTriageTab ? ActiveTextColor : InactiveTextColor));
 	}
 
 	// Update shared status text based on tab
@@ -746,10 +729,6 @@ void USmartUpgradePanel::SwitchToTab(ESmartUpgradeTab NewTab)
 		else if (bTraversalTab)
 		{
 			SharedStatusText->SetText(LOCTEXT("Upgrade_AimAndScan", "Aim at a buildable and press Scan Network"));
-		}
-		else
-		{
-			SharedStatusText->SetText(LOCTEXT("Triage_Ready", "Use Detect to scan for chain issues"));
 		}
 	}
 
@@ -765,146 +744,11 @@ void USmartUpgradePanel::SwitchToTab(ESmartUpgradeTab NewTab)
 	}
 
 	UE_LOG(LogSmartUI, VeryVerbose, TEXT("Upgrade Panel: Switched to %s tab"),
-		bRadiusTab ? TEXT("Radius") : bTraversalTab ? TEXT("Traversal") : TEXT("Triage"));
+		bRadiusTab ? TEXT("Radius") : TEXT("Network"));
 }
 
-void USmartUpgradePanel::OnTriageDetectClicked()
-{
-	UE_LOG(LogSmartUI, VeryVerbose, TEXT("Upgrade Panel: Triage Detect clicked"));
-
-	USFSubsystem* Subsystem = USFSubsystem::Get(this);
-	if (!Subsystem)
-	{
-		return;
-	}
-
-	USFChainActorService* ChainService = Subsystem->GetChainActorService();
-	if (!ChainService)
-	{
-		return;
-	}
-
-	if (SharedStatusText)
-	{
-		SharedStatusText->SetText(LOCTEXT("Triage_Detecting", "Scanning map for chain issues..."));
-	}
-
-	const FSFChainDiagnosticResult Result = ChainService->DetectChainActorIssues();
-
-	if (TriageDetectResultText)
-	{
-		if (Result.HasIssues())
-		{
-			TriageDetectResultText->SetText(FText::Format(
-				LOCTEXT("Triage_IssuesFound", "Found {0} zombie chain(s), {1} split chain group(s), {2} chain=NONE belt(s), and {3} orphaned tick group(s) ({4} empty, {5} live belt/lift entries, {6} connected candidate group(s)).\nRepair will purge zombies, rebuild split chains, and re-register live conveyors from orphaned tick groups. After repair, save, reload, and run Detect again."),
-				FText::AsNumber(Result.ZombieChainCount),
-				FText::AsNumber(Result.SplitChainCount),
-				FText::AsNumber(Result.OrphanedBeltCount),
-				FText::AsNumber(Result.OrphanedTickGroupCount),
-				FText::AsNumber(Result.EmptyOrphanedTickGroupCount),
-				FText::AsNumber(Result.LiveBeltsInOrphanedTickGroups),
-				FText::AsNumber(Result.OrphanedBeltCandidates)));
-		}
-		else
-		{
-			TriageDetectResultText->SetText(LOCTEXT("Triage_NoIssues", "No issues detected. Your conveyor chains are healthy."));
-		}
-		TriageDetectResultText->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
-	}
-
-	// Show repair button only if there are issues to fix
-	if (TriageRepairButton)
-	{
-		TriageRepairButton->SetVisibility(Result.HasIssues() ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
-	}
-
-	// Reset repair result when re-detecting
-	if (TriageRepairResultText)
-	{
-		TriageRepairResultText->SetVisibility(ESlateVisibility::Collapsed);
-	}
-
-	if (SharedStatusText)
-	{
-		SharedStatusText->SetText(Result.HasIssues()
-			? LOCTEXT("Triage_IssuesSummary", "Issues found - Repair handles zombies, splits, and orphaned tick groups")
-			: LOCTEXT("Triage_AllClear", "All clear — no chain issues found"));
-	}
-}
-
-void USmartUpgradePanel::OnTriageRepairClicked()
-{
-	UE_LOG(LogSmartUI, VeryVerbose, TEXT("Upgrade Panel: Triage Repair clicked"));
-
-	USFSubsystem* Subsystem = USFSubsystem::Get(this);
-	if (!Subsystem)
-	{
-		return;
-	}
-
-	USFChainActorService* ChainService = Subsystem->GetChainActorService();
-	if (!ChainService)
-	{
-		return;
-	}
-
-	if (SharedStatusText)
-	{
-		SharedStatusText->SetText(LOCTEXT("Triage_Repairing", "Repairing chain issues..."));
-	}
-
-	const FSFChainRepairResult Result = ChainService->RepairAllChainActorIssues();
-
-	if (TriageRepairResultText)
-	{
-		if (Result.HasAnyResults())
-		{
-			if (Result.HasOrphanCandidates() && !Result.OrphanedBeltReportPath.IsEmpty())
-			{
-				TriageRepairResultText->SetText(FText::Format(
-					LOCTEXT("Triage_RepairDoneWithReport", "Repair complete. Removed {0} zombie chain(s), rebuilt {1} split group(s), and re-registered {7} live conveyor(s) from {3} orphaned tick group(s), including {4} empty group(s) and {5} live belt(s). A diagnostic report was written to: {6}"),
-					FText::AsNumber(Result.ZombiesPurged),
-					FText::AsNumber(Result.SplitGroupsRebuilt),
-					FText::AsNumber(Result.OrphanedBeltCandidates),
-					FText::AsNumber(Result.OrphanedTickGroupCount),
-					FText::AsNumber(Result.EmptyOrphanedTickGroupCount),
-					FText::AsNumber(Result.LiveBeltsInOrphanedTickGroups),
-					FText::FromString(Result.OrphanedBeltReportPath),
-					FText::AsNumber(Result.OrphanedBeltsRequeued)));
-			}
-			else
-			{
-				TriageRepairResultText->SetText(FText::Format(
-					LOCTEXT("Triage_RepairDone", "Repair complete. Removed {0} zombie chain(s), rebuilt {1} split group(s), and re-registered {6} live conveyor(s) from {3} orphaned tick group(s), including {4} empty group(s) and {5} live belt(s). Save, reload, and run Detect again."),
-					FText::AsNumber(Result.ZombiesPurged),
-					FText::AsNumber(Result.SplitGroupsRebuilt),
-					FText::AsNumber(Result.OrphanedBeltCandidates),
-					FText::AsNumber(Result.OrphanedTickGroupCount),
-					FText::AsNumber(Result.EmptyOrphanedTickGroupCount),
-					FText::AsNumber(Result.LiveBeltsInOrphanedTickGroups),
-					FText::AsNumber(Result.OrphanedBeltsRequeued)));
-			}
-		}
-		else
-		{
-			TriageRepairResultText->SetText(LOCTEXT("Triage_RepairNone", "Repair complete. Nothing needed fixing."));
-		}
-		TriageRepairResultText->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
-	}
-
-	// Hide the repair button after running
-	if (TriageRepairButton)
-	{
-		TriageRepairButton->SetVisibility(ESlateVisibility::Collapsed);
-	}
-
-	if (SharedStatusText)
-	{
-		SharedStatusText->SetText(Result.HasOrphanCandidates()
-			? LOCTEXT("Triage_RepairCompleteWithOrphans", "Chain repair complete — save, reload, and run Detect again")
-			: LOCTEXT("Triage_RepairComplete", "Chain repair complete"));
-	}
-}
+// [Track E] OnTriageDetectClicked / OnTriageRepairClicked removed. They were the only callers of the
+// chain-repair triage tooling (DetectChainActorIssues / RepairAllChainActorIssues), which is also removed.
 
 void USmartUpgradePanel::OnTraversalScanClicked()
 {

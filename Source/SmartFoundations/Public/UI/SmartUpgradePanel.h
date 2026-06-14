@@ -21,8 +21,8 @@ UENUM()
 enum class ESmartUpgradeTab : uint8
 {
 	Radius,
-	Traversal,
-	Triage
+	Traversal
+	// [Track E] Triage tab removed - the chain-repair Detect/Repair tooling is gone (stop silent world-repair).
 };
 
 // Forward declarations
@@ -99,8 +99,7 @@ protected:
 	UPROPERTY(meta = (BindWidgetOptional))
 	TObjectPtr<class UButton> TraversalTabButton;
 
-	UPROPERTY(meta = (BindWidgetOptional))
-	TObjectPtr<class UButton> TriageTabButton;
+	// [Track E] TriageTabButton removed.
 
 	/** Tab content containers (visibility toggled) */
 	UPROPERTY(meta = (BindWidgetOptional))
@@ -109,24 +108,7 @@ protected:
 	UPROPERTY(meta = (BindWidgetOptional))
 	TObjectPtr<class UVerticalBox> TraversalContent;
 
-	UPROPERTY(meta = (BindWidgetOptional))
-	TObjectPtr<class UVerticalBox> TriageContent;
-
-	/** Triage tab widgets */
-	UPROPERTY(meta = (BindWidgetOptional))
-	TObjectPtr<class UTextBlock> TriageWarningText;
-
-	UPROPERTY(meta = (BindWidgetOptional))
-	TObjectPtr<class UButton> TriageDetectButton;
-
-	UPROPERTY(meta = (BindWidgetOptional))
-	TObjectPtr<class UTextBlock> TriageDetectResultText;
-
-	UPROPERTY(meta = (BindWidgetOptional))
-	TObjectPtr<class UButton> TriageRepairButton;
-
-	UPROPERTY(meta = (BindWidgetOptional))
-	TObjectPtr<class UTextBlock> TriageRepairResultText;
+	// [Track E] TriageContent + its Detect/Repair widgets removed (chain-repair tooling gone).
 
 	/** Radius tab widgets */
 	UPROPERTY(meta = (BindWidgetOptional))
@@ -247,19 +229,13 @@ private:
 	UFUNCTION()
 	void OnTraversalTabClicked();
 
-	UFUNCTION()
-	void OnTriageTabClicked();
+	// [Track E] OnTriageTabClicked removed.
 
 	/** Handle traversal scan button click */
 	UFUNCTION()
 	void OnTraversalScanClicked();
 
-	/** Triage tab button handlers */
-	UFUNCTION()
-	void OnTriageDetectClicked();
-
-	UFUNCTION()
-	void OnTriageRepairClicked();
+	// [Track E] OnTriageDetectClicked / OnTriageRepairClicked removed (chain-repair tooling gone).
 
 	void SwitchToTab(ESmartUpgradeTab NewTab);
 
