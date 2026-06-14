@@ -99,7 +99,11 @@ protected:
 	UPROPERTY(meta = (BindWidgetOptional))
 	TObjectPtr<class UButton> TraversalTabButton;
 
-	// [Track E] TriageTabButton removed.
+	// [Track E] The Triage tab's tooling/handlers were removed. The widgets remain in the Blueprint
+	// (a clean delete via AdaMCP left dangling variable GUIDs that fail cook), so we keep the tab
+	// button + content bound here only to COLLAPSE them at construct - the tab is hidden, never wired.
+	UPROPERTY(meta = (BindWidgetOptional))
+	TObjectPtr<class UButton> TriageTabButton;
 
 	/** Tab content containers (visibility toggled) */
 	UPROPERTY(meta = (BindWidgetOptional))
@@ -108,7 +112,9 @@ protected:
 	UPROPERTY(meta = (BindWidgetOptional))
 	TObjectPtr<class UVerticalBox> TraversalContent;
 
-	// [Track E] TriageContent + its Detect/Repair widgets removed (chain-repair tooling gone).
+	// [Track E] Collapsed at construct (see TriageTabButton note); not wired to any handler.
+	UPROPERTY(meta = (BindWidgetOptional))
+	TObjectPtr<class UVerticalBox> TriageContent;
 
 	/** Radius tab widgets */
 	UPROPERTY(meta = (BindWidgetOptional))

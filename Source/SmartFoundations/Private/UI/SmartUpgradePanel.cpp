@@ -215,6 +215,17 @@ void USmartUpgradePanel::NativeConstruct()
 
 	// [Track E] Triage tab init removed (warning text, Detect/Repair result/button setup + bindings).
 	// The chain-repair Detect/Repair tooling was the "silent world-repair" surface; it is gone.
+	// The Triage widgets still exist in the Blueprint (deleting them via tooling left dangling variable
+	// GUIDs that fail the cook), so collapse the tab button + content here - the tab is never shown,
+	// never wired. A proper widget delete in the editor can drop them entirely later.
+	if (TriageTabButton)
+	{
+		TriageTabButton->SetVisibility(ESlateVisibility::Collapsed);
+	}
+	if (TriageContent)
+	{
+		TriageContent->SetVisibility(ESlateVisibility::Collapsed);
+	}
 
 	// Set default checkbox states
 	if (CrossSplittersCheckBox)
