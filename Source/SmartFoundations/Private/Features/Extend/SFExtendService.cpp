@@ -805,6 +805,9 @@ bool USFExtendService::BuildCommitSpecForMP(AFGHologram* ParentHologram, FSFExte
     {
         OutSpec.BeltRoutingMode = Subsystem->GetAutoConnectRuntimeSettings().BeltRoutingMode;
         OutSpec.PipeRoutingMode = Subsystem->GetAutoConnectRuntimeSettings().PipeRoutingMode;
+        OutSpec.BeltTierMain = Subsystem->GetAutoConnectRuntimeSettings().BeltTierMain;
+        OutSpec.PipeTierMain = Subsystem->GetAutoConnectRuntimeSettings().PipeTierMain;
+        OutSpec.bPipeIndicator = Subsystem->GetAutoConnectRuntimeSettings().bPipeIndicator;
         OutSpec.CounterState = Subsystem->GetCounterState();
     }
     GetScaledClonePlanForCommit(OutSpec.ScaledClones);
@@ -865,6 +868,9 @@ int32 USFExtendService::ReconstructCommitOnServer(AFGHologram* ParentHologram, c
     {
         Subsystem->SetAutoConnectBeltRoutingMode(Spec.BeltRoutingMode);
         Subsystem->SetAutoConnectPipeRoutingMode(Spec.PipeRoutingMode);
+        Subsystem->SetAutoConnectBeltTierMain(Spec.BeltTierMain);
+        Subsystem->SetAutoConnectPipeTierMain(Spec.PipeTierMain);
+        Subsystem->SetAutoConnectPipeIndicator(Spec.bPipeIndicator);
         Subsystem->UpdateCounterState(Spec.CounterState);
     }
 

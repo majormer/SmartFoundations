@@ -78,6 +78,20 @@ struct SMARTFOUNDATIONS_API FSFExtendCommitSpec
 	UPROPERTY()
 	int32 PipeRoutingMode = 0;
 
+	/** [#386] Manifold-lane belt/pipe tiers + pipe indicator the client has set (BeltTierMain =
+	 *  distributor-to-distributor, PipeTierMain = junction-to-junction). The post-build manifold wiring
+	 *  builds lane belts/pipes at these tiers; the server's own runtime settings default elsewhere, so
+	 *  without these the MP lane belts/pipes build at the wrong tier (preview-right, construct-wrong).
+	 *  The server installs them before the lanes are wired. 0 = Auto (resolve to highest unlocked). */
+	UPROPERTY()
+	int32 BeltTierMain = 0;
+
+	UPROPERTY()
+	int32 PipeTierMain = 0;
+
+	UPROPERTY()
+	bool bPipeIndicator = true;
+
 	/** [#382] Smart Panel counter state (rotation, grid, spacing, steps) the EXTEND re-derivation
 	 *  reads. The server's own counter state is a default mirror (RotationZ=0), so cross-clone math
 	 *  that reads it directly - e.g. the first child's manifold lane to the PREVIOUS (parent)
