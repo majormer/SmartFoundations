@@ -1,6 +1,6 @@
 # <img src="https://github.com/majormer/SmartFoundations/blob/main/images/Smart-Logo.png?raw=true" width="150" alt="Smart! Logo"> Smart! Mod
 
-![Status](https://img.shields.io/badge/Status-Released-brightgreen) ![Version](https://img.shields.io/badge/Version-32.1.0-blue) ![Satisfactory](https://img.shields.io/badge/Satisfactory-1.2-blue) ![Engine](https://img.shields.io/badge/Engine-UE%205.6-blue) ![SML](https://img.shields.io/badge/SML-3.12-blue) ![Multiplayer](https://img.shields.io/badge/Multiplayer-Supported-brightgreen) ![AI Assisted Development Used](https://img.shields.io/badge/AI%20Assisted%20Development%20Used-Disclosure%20Below-blue)
+![Status](https://img.shields.io/badge/Status-Released-brightgreen) ![Version](https://img.shields.io/badge/Version-32.1.1-blue) ![Satisfactory](https://img.shields.io/badge/Satisfactory-1.2-blue) ![Engine](https://img.shields.io/badge/Engine-UE%205.6-blue) ![SML](https://img.shields.io/badge/SML-3.12-blue) ![Multiplayer](https://img.shields.io/badge/Multiplayer-Supported-brightgreen) ![AI Assisted Development Used](https://img.shields.io/badge/AI%20Assisted%20Development%20Used-Disclosure%20Below-blue)
 
 > **Multiplayer note:** As of v32.0.0, every Smart! feature works in multiplayer on dedicated servers (Windows and Linux). Multiplayer support is new in this release — if you hit something odd in a multiplayer session, please report it on [GitHub](https://github.com/majormer/SmartFoundations/issues) or [Discord](https://discord.gg/SgXY4CwXYw).
 
@@ -101,17 +101,29 @@ See [LICENSE.md](https://github.com/majormer/SmartFoundations/blob/main/LICENSE.
 
 ---
 
-## 📰 What's New in v32.1.0: Blueprint Designer + Pipeline Supports
+## 📰 What's New in v32.1.1: Multiplayer polish + routing modes
 
-**Current Release:** v32.1.0 — a fast follow to the multiplayer release: day-one community reports fixed, Smart! support inside the Blueprint Designer, pipeline support scaling, and a reworked Smart! Panel. See the [full changelog](https://github.com/majormer/SmartFoundations/blob/main/CHANGELOG.md) for all release details.
+**Current Release:** v32.1.1 — a maintenance update: community-reported bug fixes (most of them multiplayer), belt and pipe routing modes that now take effect everywhere, and a new rotation-axis option. See the [full changelog](https://github.com/majormer/SmartFoundations/blob/main/CHANGELOG.md) for all release details.
 
-### Smart! works in the Blueprint Designer
+### Belt & pipe routing modes that actually take effect
 
-Building with Smart! inside the Blueprint Designer now behaves like the open world: auto-connect belts and pipes preview, space themselves, and build correctly; Extend and Scaled Extend work on designer-resident buildings; and everything Smart! builds is properly captured into the blueprint. This also fixes a serious bug where blueprints saved with Smart!-grouped buildings inside could balloon to the size of your whole save file.
+Choosing Curve or Straight for belts, or Auto 2D / Curve / Noodle / Horizontal→Vertical for pipes, now changes the route exactly like the build gun's own build modes — for both auto-connected lines and Extend lanes, in single-player and multiplayer.
 
-### Pipeline supports join the scaling family
+### Multiplayer rotated Extend, fixed
 
-Pipeline Supports, Pipeline Wall Supports, and Pipeline Wall Holes can now be grid-scaled. Scaled Pipeline Supports and Wall Supports also build a connected pipe run between the copies — plumbed end to end, with each support's snap point left free for manual connections — and the standard support's height and angle settings mirror across the whole line.
+On dedicated servers, rotating a scaled Extend now builds correctly end to end: the parent copy's internal belts rotate to match the preview, the lanes between copies stay on the right connectors instead of crossing over as the line curves, and manifold lane belts and pipes build at the tier you configured.
+
+### A new way to rotate, plus smaller fixes
+
+- **Rotation build-up axis** — choose whether progressive rotation curves the *run* (X) or fans the *rows* (Y), via Num0 on the Rotation key or the new X/Y selector in the Smart! Panel.
+- **Radius Upgrade** no longer lists belts it can't actually upgrade.
+- **Blueprint Designer** Extend no longer previews or charges for copies that won't fit.
+- **Dedicated servers** no longer spam chain-diagnostic warnings on shutdown.
+- Under the hood, Smart!'s multiplayer code was consolidated to make future MP fixes land faster.
+
+### Recently in v32.1.0: Blueprint Designer + Pipeline Supports
+
+Building with Smart! inside the Blueprint Designer behaves like the open world — auto-connect, Extend, and correct blueprint capture (also fixing blueprints that could balloon to save-file size) — and Pipeline Supports, Wall Supports, and Wall Holes joined the scaling family with a plumbed pipe run built between the copies.
 
 ### Community reports from the 32.0.0 release week — fixed
 
