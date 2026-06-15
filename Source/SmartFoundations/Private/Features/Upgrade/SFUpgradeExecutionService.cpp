@@ -501,7 +501,7 @@ void USFUpgradeExecutionService::NormalizeConveyorUpgradeTargets(bool bRespectRa
 		ConveyorSeeds.Num(), CohortCount, PendingUpgrades.Num(), SkippedPartialCohorts, SkippedMaxItemCohorts);
 }
 
-void USFUpgradeExecutionService::CollectConnectedConveyorCohort(AFGBuildableConveyorBase* StartConveyor, TSet<AFGBuildableConveyorBase*>& OutCohort) const
+void USFUpgradeExecutionService::CollectConnectedConveyorCohort(AFGBuildableConveyorBase* StartConveyor, TSet<AFGBuildableConveyorBase*>& OutCohort)
 {
 	if (!IsValid(StartConveyor)) return;
 
@@ -561,12 +561,20 @@ bool USFUpgradeExecutionService::ConveyorIntersectsRadius(AFGBuildableConveyorBa
 
 bool USFUpgradeExecutionService::ConveyorFullyInsideRadius(AFGBuildableConveyorBase* Conveyor) const
 {
-	if (!IsValid(Conveyor) || CurrentParams.Radius <= 0.0f)
+	if (CurrentParams.Radius <= 0.0f)
+	{
+		return true;
+	}
+	return IsConveyorFullyInsideRadius(Conveyor, CurrentParams.Origin, CurrentParams.Radius * CurrentParams.Radius);
+}
+
+bool USFUpgradeExecutionService::IsConveyorFullyInsideRadius(AFGBuildableConveyorBase* Conveyor, const FVector& Origin, float RadiusSq)
+{
+	if (!IsValid(Conveyor) || RadiusSq <= 0.0f)
 	{
 		return true;
 	}
 
-	const float RadiusSq = CurrentParams.Radius * CurrentParams.Radius;
 	const float Length = Conveyor->GetLength();
 	const float SampleOffsets[] = { 0.0f, Length * 0.25f, Length * 0.5f, Length * 0.75f, Length };
 
@@ -575,7 +583,7 @@ bool USFUpgradeExecutionService::ConveyorFullyInsideRadius(AFGBuildableConveyorB
 		FVector SampleLocation = Conveyor->GetActorLocation();
 		FVector SampleDirection = FVector::ForwardVector;
 		Conveyor->GetLocationAndDirectionAtOffset(FMath::Clamp(Offset, 0.0f, Length), SampleLocation, SampleDirection);
-		if (FVector::DistSquared(SampleLocation, CurrentParams.Origin) > RadiusSq)
+		if (FVector::DistSquared(SampleLocation, Origin) > RadiusSq)
 		{
 			return false;
 		}

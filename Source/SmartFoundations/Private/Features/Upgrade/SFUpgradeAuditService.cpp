@@ -9,6 +9,8 @@
 #include "FGPlayerController.h"
 #include "Buildables/FGBuildableConveyorBelt.h"
 #include "Buildables/FGBuildableConveyorLift.h"
+#include "Buildables/FGBuildableConveyorBase.h"
+#include "Features/Upgrade/SFUpgradeExecutionService.h"  // [#376] shared static cohort/radius helpers
 #include "Buildables/FGBuildablePipeline.h"
 #include "Buildables/FGBuildablePipelinePump.h"
 #include "Buildables/FGBuildablePowerPole.h"
@@ -395,6 +397,9 @@ void USFUpgradeAuditService::GatherBuildablesToScan()
 	const float RadiusSquared = CurrentParams.Radius > 0.0f ? FMath::Square(CurrentParams.Radius) : 0.0f;
 	const bool bRadiusLimited = RadiusSquared > 0.0f;
 
+	// [#376] Memoize per-conveyor cohort "fully inside radius" so each connected cohort is traversed once.
+	TMap<AFGBuildableConveyorBase*, bool> ConveyorCohortInsideCache;
+
 	// Iterate all buildables in the world
 	for (TActorIterator<AFGBuildable> It(World); It; ++It)
 	{
@@ -420,10 +425,47 @@ void USFUpgradeAuditService::GatherBuildablesToScan()
 		// Radius check if applicable
 		if (bRadiusLimited)
 		{
-			float DistSquared = FVector::DistSquared(Buildable->GetActorLocation(), CurrentParams.Origin);
-			if (DistSquared > RadiusSquared)
+			if (AFGBuildableConveyorBase* Conveyor = Cast<AFGBuildableConveyorBase>(Buildable))
 			{
-				continue;
+				// [#376] Count conveyors by the SAME rule the radius upgrade uses: a belt/lift is only
+				// upgradeable if its WHOLE connected cohort is fully inside the radius. The execution
+				// skips cohorts that straddle the boundary ("exclusive-safe"), so counting a lone in-radius
+				// belt of such a cohort showed a phantom "upgradeable" the user could never fulfil.
+				bool bCohortInside;
+				if (const bool* Cached = ConveyorCohortInsideCache.Find(Conveyor))
+				{
+					bCohortInside = *Cached;
+				}
+				else
+				{
+					TSet<AFGBuildableConveyorBase*> Cohort;
+					USFUpgradeExecutionService::CollectConnectedConveyorCohort(Conveyor, Cohort);
+					bCohortInside = true;
+					for (AFGBuildableConveyorBase* Member : Cohort)
+					{
+						if (!USFUpgradeExecutionService::IsConveyorFullyInsideRadius(Member, CurrentParams.Origin, RadiusSquared))
+						{
+							bCohortInside = false;
+							break;
+						}
+					}
+					for (AFGBuildableConveyorBase* Member : Cohort)
+					{
+						ConveyorCohortInsideCache.Add(Member, bCohortInside);
+					}
+				}
+				if (!bCohortInside)
+				{
+					continue;
+				}
+			}
+			else
+			{
+				float DistSquared = FVector::DistSquared(Buildable->GetActorLocation(), CurrentParams.Origin);
+				if (DistSquared > RadiusSquared)
+				{
+					continue;
+				}
 			}
 		}
 
