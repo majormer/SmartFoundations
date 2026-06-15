@@ -1726,24 +1726,18 @@ TArray<FString> USFSubsystem::GetDirtyAutoConnectSettings() const
 
 void USFSubsystem::ResetAutoConnectRuntimeSettings()
 {
-	// [#371] Called when the active hologram changes. Runtime (panel/hotkey) edits are TEMPORARY
-	// overrides of the global-config defaults and must SURVIVE across placements and hologram
-	// changes - the reported bug was them evaporating after a single placement. bInitialized means
-	// "user modified this session" (every Set*/Adjust path sets it; InitFromConfig clears it). So we
-	// preserve an active override here, EXCEPT when the global config itself changed since we last
-	// synced to it: that is the newer, more specific action and wins ("global config is the default;
-	// a runtime change wins but is temporary"). A genuine config change re-syncs and clears the override.
+	// [#371] Called when the active hologram INSTANCE changes - i.e. on equip/recipe change and on the
+	// fresh hologram the build gun spawns AFTER a construct, but NOT while aiming (the same instance is
+	// just repositioned; see RegisterActiveHologram's CurrentHologram != ActiveHologram guard). Smart
+	// Panel / hotkey edits are a TEMPORARY one-off override of the global-config defaults for a SINGLE
+	// build: they survive aiming the current placement (the just-built building's auto-connect reads
+	// them before the next hologram registers), but once that placement is built we re-read the global
+	// config here so the override does NOT carry to the next build. Per the maintainer's decision on
+	// issue #371, the Panel is a per-build override only - anything that should persist between builds
+	// belongs in the global settings (Pause -> Mods -> Smart!), which already exist for that purpose.
 	FSmart_ConfigStruct FreshConfig = FSmart_ConfigStruct::GetActiveConfig(this);
-
-	const bool bUserModified = AutoConnectRuntimeSettings.bInitialized;
-	const bool bGlobalConfigChanged = !FAutoConnectRuntimeSettings::ConfigDefaultsMatch(FreshConfig, CachedConfig);
-
-	if (!bUserModified || bGlobalConfigChanged)
-	{
-		AutoConnectRuntimeSettings.InitFromConfig(FreshConfig);  // clears bInitialized -> back to config-tracking
-		CachedConfig = FreshConfig;                              // new baseline for future change detection
-	}
-	// else: user override active and global config unchanged -> keep the runtime edit (the #371 fix)
+	AutoConnectRuntimeSettings.InitFromConfig(FreshConfig);  // clears bInitialized -> back to config-tracking
+	CachedConfig = FreshConfig;                              // new baseline for future change detection
 
 	// Issue #257: Refresh Extend enabled state from fresh config (independent of the override above)
 	bExtendEnabledByConfig = FreshConfig.bExtendEnabled;
