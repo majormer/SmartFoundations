@@ -422,8 +422,20 @@ struct FSFCloneTopology
     // Child holograms
     UPROPERTY() TArray<FSFCloneHologram> ChildHolograms;
     
-    /** Generate from source topology with offset */
-    static FSFCloneTopology FromSource(const FSFSourceTopology& Source, const FVector& Offset);
+    /** Generate from source topology with offset.
+     *  PrincipalAxisWorld (#384): the extend's rotation-STABLE forward direction in world space. When
+     *  supplied (non-zero), the pipe-lane SOURCE backbone port is chosen against this axis instead of
+     *  the per-clone offset direction - which arcs ~5deg/clone on a rotated extend and otherwise drops
+     *  the source connector below the facing threshold past ~clone 14, killing the remaining lanes.
+     *  Zero (default) preserves the legacy per-clone-offset behavior for the parent/restore callers. */
+    static FSFCloneTopology FromSource(const FSFSourceTopology& Source, const FVector& Offset, const FVector& PrincipalAxisWorld = FVector::ZeroVector);
+
+    /** [#382] Apply a rigid-body yaw rotation to this clone set's infrastructure around Center.
+     *  Internal segments rotate rigidly (position + rotation + spline + lift); lane segments are
+     *  adaptive (only the clone-side endpoint rotates, determined by WorldOffsetToClone). This is the
+     *  exact rotation the SP preview applies to clone 1 - shared so the server build matches the
+     *  preview instead of leaving the parent's belts un-rotated (FromSource only positions them). */
+    void ApplyRigidYawRotation(const FRotator& RotOffset, const FVector& Center, const FVector& WorldOffsetToClone);
     
     /**
      * Spawn child holograms from this clone topology

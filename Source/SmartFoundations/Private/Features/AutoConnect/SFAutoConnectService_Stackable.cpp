@@ -849,12 +849,13 @@ AFGHologram* USFAutoConnectService::UpdateOrCreatePipeForPolePair(
 			
 			// Step 2: Update position and spline data
 			ExistingPipe->SetActorLocation(StartPos);
+			int32 PipeRoutingMode = 0;
 			if (USFSubsystem* SmartSubsystem = USFSubsystem::Get(GetWorld()))
 			{
-				const auto& Settings = SmartSubsystem->GetAutoConnectRuntimeSettings();
-				ExistingPipe->SetRoutingMode(Settings.PipeRoutingMode);
+				PipeRoutingMode = SmartSubsystem->GetAutoConnectRuntimeSettings().PipeRoutingMode;
 			}
-			if (!ExistingPipe->TryUseBuildModeRouting(StartPos, StartNormal, EndPos, EndNormal))
+			// [#383] Drive the vanilla pipe build-mode descriptors (all six modes); falls back internally.
+			if (!ExistingPipe->ApplyPipeBuildModeRouting(PipeRoutingMode, StartPos, StartNormal, EndPos, EndNormal))
 			{
 				ExistingPipe->SetSplineDataAndUpdate(SplinePoints);
 			}
@@ -961,12 +962,13 @@ AFGHologram* USFAutoConnectService::UpdateOrCreatePipeForPolePair(
 		}
 	}
 	
+	int32 PipeRoutingMode = 0;
 	if (USFSubsystem* SmartSubsystem = USFSubsystem::Get(GetWorld()))
 	{
-		const auto& Settings = SmartSubsystem->GetAutoConnectRuntimeSettings();
-		PipeChild->SetRoutingMode(Settings.PipeRoutingMode);
+		PipeRoutingMode = SmartSubsystem->GetAutoConnectRuntimeSettings().PipeRoutingMode;
 	}
-	if (!PipeChild->TryUseBuildModeRouting(StartPos, StartNormal, EndPos, EndNormal))
+	// [#383] Drive the vanilla pipe build-mode descriptors (all six modes); falls back internally.
+	if (!PipeChild->ApplyPipeBuildModeRouting(PipeRoutingMode, StartPos, StartNormal, EndPos, EndNormal))
 	{
 		PipeChild->SetSplineDataAndUpdate(SplinePoints);
 	}
@@ -1542,18 +1544,14 @@ AFGHologram* USFAutoConnectService::UpdateOrCreateBeltForPolePair(
 				}
 				
 				ExistingBelt->SetActorLocation(StartPos);
+				int32 BeltRoutingMode = 0;
 				if (USFSubsystem* SmartSubsystem = USFSubsystem::Get(GetWorld()))
 				{
-					const auto& Settings = SmartSubsystem->GetAutoConnectRuntimeSettings();
-					ExistingBelt->SetRoutingMode(Settings.BeltRoutingMode);
+					BeltRoutingMode = SmartSubsystem->GetAutoConnectRuntimeSettings().BeltRoutingMode;
 				}
-				
-				// Try using build mode for automatic spline routing, fallback to custom routing
-				if (!ExistingBelt->TryUseBuildModeRouting(StartPos, StartNormal, EndPos, EndNormal))
-				{
-					// Build mode not available, use custom routing
-					ExistingBelt->AutoRouteSplineWithNormals(StartPos, StartNormal, EndPos, EndNormal);
-				}
+				// [#380] Drive the vanilla build-mode descriptors so Curve/Straight actually take effect
+				// (shared with Extend lanes); falls back to AutoRouteSplineWithNormals internally.
+				ExistingBelt->ApplyBeltBuildModeRouting(BeltRoutingMode, StartPos, StartNormal, EndPos, EndNormal);
 				
 				ExistingBelt->SetActorHiddenInGame(false);
 				ExistingBelt->SetPlacementMaterialState(ParentHologram->GetHologramMaterialState());
@@ -1645,18 +1643,14 @@ AFGHologram* USFAutoConnectService::UpdateOrCreateBeltForPolePair(
 	// Set snapped connections to prevent child pole spawning
 	BeltChild->SetSnappedConnections(SourceConnector, TargetConnector);
 	
+	int32 BeltRoutingMode = 0;
 	if (USFSubsystem* SmartSubsystem = USFSubsystem::Get(GetWorld()))
 	{
-		const auto& Settings = SmartSubsystem->GetAutoConnectRuntimeSettings();
-		BeltChild->SetRoutingMode(Settings.BeltRoutingMode);
+		BeltRoutingMode = SmartSubsystem->GetAutoConnectRuntimeSettings().BeltRoutingMode;
 	}
-	
-	// Try using build mode for automatic spline routing, fallback to custom routing
-	if (!BeltChild->TryUseBuildModeRouting(StartPos, StartNormal, EndPos, EndNormal))
-	{
-		// Build mode not available, use custom routing
-		BeltChild->AutoRouteSplineWithNormals(StartPos, StartNormal, EndPos, EndNormal);
-	}
+	// [#380] Drive the vanilla build-mode descriptors so Curve/Straight actually take effect
+	// (shared with Extend lanes); falls back to AutoRouteSplineWithNormals internally.
+	BeltChild->ApplyBeltBuildModeRouting(BeltRoutingMode, StartPos, StartNormal, EndPos, EndNormal);
 	
 	BeltChild->SetActorHiddenInGame(false);
 	BeltChild->SetActorEnableCollision(false);

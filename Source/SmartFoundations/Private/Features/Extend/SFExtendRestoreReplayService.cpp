@@ -1048,7 +1048,10 @@ bool USFExtendRestoreReplayService::SpawnRestoredCloneTopology(AFGHologram* Pare
                             const FVector EndPos = HoloData.SplineData.Points.Last().World.ToFVector();
                             const FVector StartNormal = HoloData.LaneStartNormal.ToFVector();
                             const FVector EndNormal = HoloData.LaneEndNormal.ToFVector();
-                            Belt->AutoRouteSplineWithNormals(StartPos, StartNormal, EndPos, EndNormal);
+                            // [#380] Honor the configured belt routing mode on the MP/server-commit replay
+                            // path too - this previously called AutoRouteSplineWithNormals directly, so
+                            // lane belts always routed "Default" on dedicated servers even with Curve set.
+                            Belt->RouteLaneWithConfiguredMode(StartPos, StartNormal, EndPos, EndNormal);
                             Belt->TriggerMeshGeneration();
                             Belt->ForceApplyHologramMaterial();
                         }
@@ -1076,7 +1079,7 @@ bool USFExtendRestoreReplayService::SpawnRestoredCloneTopology(AFGHologram* Pare
                             const FVector EndPos = HoloData.SplineData.Points.Last().World.ToFVector();
                             const FVector StartNormal = HoloData.LaneStartNormal.ToFVector();
                             const FVector EndNormal = HoloData.LaneEndNormal.ToFVector();
-                            Pipe->TryUseBuildModeRouting(StartPos, StartNormal, EndPos, EndNormal);
+                            Pipe->RoutePipeLaneWithConfiguredMode(StartPos, StartNormal, EndPos, EndNormal);  // [#383] honor pipe routing mode
                             Pipe->TriggerMeshGeneration();
                             Pipe->ForceApplyHologramMaterial();
                         }

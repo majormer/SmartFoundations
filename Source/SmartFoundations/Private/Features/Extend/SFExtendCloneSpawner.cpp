@@ -1023,7 +1023,7 @@ int32 FSFCloneTopology::SpawnChildHolograms(
                         FVector StartNormal = ChildData.LaneStartNormal.ToFVector();
                         FVector EndNormal = ChildData.LaneEndNormal.ToFVector();
                         
-                        PipeLane->TryUseBuildModeRouting(StartPos, StartNormal, EndPos, EndNormal);
+                        PipeLane->RoutePipeLaneWithConfiguredMode(StartPos, StartNormal, EndPos, EndNormal);  // [#383] honor pipe routing mode
                     }
                     
                     PipeLane->SetActorHiddenInGame(false);
