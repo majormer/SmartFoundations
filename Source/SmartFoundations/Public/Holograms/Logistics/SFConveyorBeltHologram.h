@@ -97,8 +97,29 @@ public:
 	void CallGenerateAndUpdateSpline(const FHitResult& HitResult) { GenerateAndUpdateSpline(HitResult); }
 	
 	// Route spline between two connectors using their positions and normals
-	void AutoRouteSplineWithNormals(const FVector& StartPos, const FVector& StartNormal, 
+	void AutoRouteSplineWithNormals(const FVector& StartPos, const FVector& StartNormal,
 	                                 const FVector& EndPos, const FVector& EndNormal);
+
+	/**
+	 * [#380] Route this belt as an Extend "lane" segment, honoring the player's configured belt
+	 * routing mode (Default / Curve / Straight from the auto-connect settings) - falling back to
+	 * AutoRouteSplineWithNormals if build-mode routing is unavailable. Lane belts previously called
+	 * AutoRouteSplineWithNormals directly and so always came out "Default", ignoring the setting.
+	 * (Factory-internal belts are exact clones of the source and intentionally do NOT use this.)
+	 */
+	void RouteLaneWithConfiguredMode(const FVector& StartPos, const FVector& StartNormal,
+	                                 const FVector& EndPos, const FVector& EndNormal);
+
+	/**
+	 * [#380] Route this belt using the VANILLA build-mode descriptors. Maps Smart's belt routing mode
+	 * (0=Default, 1=Curve, 2=Straight) to the game's own mBuildModeCurve / mBuildModeStraight and lets
+	 * AutoRouteSpline insert real bends (mBendRadius) - the same spline the build gun produces. Falls
+	 * back to AutoRouteSplineWithNormals only when the descriptor isn't available. Shared by auto-connect
+	 * (SP + MP) and Extend lane belts so "Curve"/"Straight" actually take effect.
+	 * @return true if vanilla build-mode routing produced a valid spline; false if it fell back.
+	 */
+	bool ApplyBeltBuildModeRouting(int32 BeltRoutingMode, const FVector& StartPos, const FVector& StartNormal,
+	                               const FVector& EndPos, const FVector& EndNormal);
 	
 	/**
 	 * Use engine's automatic spline routing via build modes.

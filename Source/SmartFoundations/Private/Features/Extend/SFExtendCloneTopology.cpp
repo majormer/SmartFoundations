@@ -49,7 +49,71 @@ static constexpr float SFWireConnectorHeightCm = 600.0f;
 // FSFCloneTopology
 // ============================================================================
 
-FSFCloneTopology FSFCloneTopology::FromSource(const FSFSourceTopology& Source, const FVector& Offset)
+void FSFCloneTopology::ApplyRigidYawRotation(const FRotator& RotOffset, const FVector& Center, const FVector& WorldOffsetToClone)
+{
+    for (FSFCloneHologram& Holo : ChildHolograms)
+    {
+        if (Holo.bIsLaneSegment)
+        {
+            // Lane segments are ADAPTIVE — only rotate the clone-side endpoint; source-side stays fixed.
+            if (Holo.bHasSplineData && Holo.SplineData.Points.Num() >= 2)
+            {
+                FVector StartWorld = Holo.SplineData.Points[0].World.ToFVector();
+                FVector EndWorld = Holo.SplineData.Points.Last().World.ToFVector();
+                FVector LaneDir = EndWorld - StartWorld;
+                bool bCloneAtEnd = (FVector::DotProduct(LaneDir, WorldOffsetToClone) > 0.0f);
+
+                if (bCloneAtEnd)
+                {
+                    FVector RelEnd = EndWorld - Center;
+                    FVector RotatedEnd = Center + RotOffset.RotateVector(RelEnd);
+                    Holo.SplineData.Points.Last().World = FSFVec3(RotatedEnd);
+                    Holo.LaneEndNormal = FSFVec3(RotOffset.RotateVector(Holo.LaneEndNormal.ToFVector()));
+                }
+                else
+                {
+                    FVector RelStart = StartWorld - Center;
+                    FVector RotatedStart = Center + RotOffset.RotateVector(RelStart);
+                    Holo.SplineData.Points[0].World = FSFVec3(RotatedStart);
+                    Holo.LaneStartNormal = FSFVec3(RotOffset.RotateVector(Holo.LaneStartNormal.ToFVector()));
+                }
+
+                FVector NewStart = Holo.SplineData.Points[0].World.ToFVector();
+                FVector NewEnd = Holo.SplineData.Points.Last().World.ToFVector();
+                Holo.SplineData.Length = FVector::Dist(NewStart, NewEnd);
+                Holo.Transform = FSFTransform(NewStart, (NewEnd - NewStart).Rotation());
+            }
+            continue;
+        }
+
+        // Internal segments rotate rigidly around the factory center.
+        FVector HoloPos = Holo.Transform.Location.ToFVector();
+        FVector RelPos = HoloPos - Center;
+        FVector RotatedPos = Center + RotOffset.RotateVector(RelPos);
+        FRotator RotatedRot = Holo.Transform.Rotation.ToFRotator() + RotOffset;
+        Holo.Transform = FSFTransform(RotatedPos, RotatedRot);
+
+        if (Holo.bHasSplineData)
+        {
+            for (FSFSplinePoint& Point : Holo.SplineData.Points)
+            {
+                FVector WorldPt = Point.World.ToFVector();
+                FVector RelPt = WorldPt - Center;
+                Point.World = FSFVec3(Center + RotOffset.RotateVector(RelPt));
+            }
+        }
+
+        if (Holo.bHasLiftData)
+        {
+            FVector BotPos = Holo.LiftData.BottomTransform.Location.ToFVector();
+            FVector BotRel = BotPos - Center;
+            Holo.LiftData.BottomTransform.Location = FSFVec3(Center + RotOffset.RotateVector(BotRel));
+            Holo.LiftData.BottomTransform.Rotation = FSFRot3(Holo.LiftData.BottomTransform.Rotation.ToFRotator() + RotOffset);
+        }
+    }
+}
+
+FSFCloneTopology FSFCloneTopology::FromSource(const FSFSourceTopology& Source, const FVector& Offset, const FVector& PrincipalAxisWorld)
 {
     FSFCloneTopology Result;
     Result.SchemaVersion = TEXT("1.0");
@@ -637,6 +701,14 @@ FSFCloneTopology FSFCloneTopology::FromSource(const FSFSourceTopology& Source, c
             // Manifold axis: from the source junction toward the clone (the backbone runs this way).
             const FVector ManifoldAxis = (CloneDistLocation - SourceDistCenter).GetSafeNormal();
 
+            // Source backbone port (#384): pick against a ROTATION-STABLE axis. On a rotated extend the
+            // per-clone offset (ManifoldAxis) arcs ~5deg/clone away from the source's fixed connectors,
+            // so by ~clone 14 the source port falls below FacingThreshold and the lane is dropped. When
+            // the caller passes the extend's principal forward axis, use it so every clone selects the
+            // SAME source backbone port no matter how far the chain has curved. Zero -> legacy behavior.
+            const FVector SourceFacingAxis = PrincipalAxisWorld.IsNearlyZero()
+                ? ManifoldAxis : PrincipalAxisWorld.GetSafeNormal();
+
             // Require a real facing toward/away the manifold axis (~within 72 deg) so the
             // perpendicular stem and the factory tap are never mistaken for a backbone port.
             const float FacingThreshold = 0.30f;
@@ -653,7 +725,7 @@ FSFCloneTopology FSFCloneTopology::FromSource(const FSFSourceTopology& Source, c
                 if (Pair.Key == FactoryConnector) { continue; }
                 if (Distributor.ConnectedConnectors.Contains(Pair.Key)) { continue; }
                 const FVector Normal = (Pair.Value - SourceDistCenter).GetSafeNormal();
-                const float Facing = FVector::DotProduct(Normal, ManifoldAxis);
+                const float Facing = FVector::DotProduct(Normal, SourceFacingAxis);
                 if (Facing > BestSourceFacing)
                 {
                     BestSourceFacing = Facing;
@@ -663,23 +735,29 @@ FSFCloneTopology FSFCloneTopology::FromSource(const FSFSourceTopology& Source, c
                 }
             }
 
-            // CLONE backbone connector: reuse the source's connector layout at the clone
-            // transform; choose the one (not the factory tap) whose facing best points back
-            // toward the source so the two ports face each other across the gap.
-            float BestCloneFacing = FacingThreshold;
+            // CLONE backbone connector (#384): must be the port OPPOSITE the source's chosen
+            // backbone port in the source's OWN layout, so the manifold stays a straight
+            // pass-through no matter how far the clone is rotated. Picking by world-facing
+            // toward the source (the old approach) flips to an ADJACENT port once the clone
+            // rotates past ~45deg - the moment a perpendicular port happens to face the source
+            // better than the true backbone-opposite port - which is the connector cross-over.
+            // The clone is a rotated copy of the source, so we select the source-layout port
+            // most anti-parallel to the source's port, then place it at the clone transform.
+            float BestCloneOpposition = -2.0f;
             for (const auto& Pair : SourceConnectorPositions)
             {
                 if (Pair.Key == FactoryConnector) { continue; }
-                const FVector LocalOffset = SourceRotation.UnrotateVector(Pair.Value - SourceDistCenter);
-                const FVector CloneWorld = CloneDistLocation + CloneDistRotation.RotateVector(LocalOffset);
-                const FVector Normal = (CloneWorld - CloneDistLocation).GetSafeNormal();
-                const float Facing = FVector::DotProduct(Normal, -ManifoldAxis);
-                if (Facing > BestCloneFacing)
+                if (Pair.Key == BestSourceConn) { continue; }
+                const FVector SourceLayoutNormal = (Pair.Value - SourceDistCenter).GetSafeNormal();
+                const float Opposition = FVector::DotProduct(SourceLayoutNormal, -BestSourceNormal);
+                if (Opposition > BestCloneOpposition)
                 {
-                    BestCloneFacing = Facing;
+                    BestCloneOpposition = Opposition;
+                    const FVector LocalOffset = SourceRotation.UnrotateVector(Pair.Value - SourceDistCenter);
+                    const FVector CloneWorld = CloneDistLocation + CloneDistRotation.RotateVector(LocalOffset);
                     BestCloneConn = Pair.Key;
                     BestClonePos = CloneWorld;
-                    BestCloneNormal = Normal;
+                    BestCloneNormal = (CloneWorld - CloneDistLocation).GetSafeNormal();
                 }
             }
 
@@ -702,10 +780,12 @@ FSFCloneTopology FSFCloneTopology::FromSource(const FSFSourceTopology& Source, c
             LaneStartNormal = BestSourceNormal;
             LaneEndNormal = BestCloneNormal;
 
-            UE_LOG(LogSmartExtend, VeryVerbose, TEXT("PIPE LANE (geom): factory=%s axis=(%.2f,%.2f,%.2f) chose Source.%s(%.0f,%.0f,%.0f) facing %.2f -> Clone.%s(%.0f,%.0f,%.0f) facing %.2f"),
-                *FactoryConnector, ManifoldAxis.X, ManifoldAxis.Y, ManifoldAxis.Z,
-                *BestSourceConn, BestSourcePos.X, BestSourcePos.Y, BestSourcePos.Z, BestSourceFacing,
-                *BestCloneConn, BestClonePos.X, BestClonePos.Y, BestClonePos.Z, BestCloneFacing);
+            // The clone port is the backbone-OPPOSITE of the source port (opposition ~1.0), so the
+            // manifold stays a straight pass-through regardless of clone rotation (#384).
+            UE_LOG(LogSmartExtend, VeryVerbose, TEXT("PIPE LANE (geom) %s: axis=(%.2f,%.2f,%.2f) Source.%s facing=%.2f -> Clone.%s opposition=%.2f (cloneRot=%.0f)"),
+                *DistributorId, ManifoldAxis.X, ManifoldAxis.Y, ManifoldAxis.Z,
+                *BestSourceConn, BestSourceFacing,
+                *BestCloneConn, BestCloneOpposition, CloneDistRotation.Yaw);
         }
         else
         {

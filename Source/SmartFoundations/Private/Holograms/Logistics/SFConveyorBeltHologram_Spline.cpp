@@ -20,6 +20,7 @@
 #include "DrawDebugHelpers.h"
 #include "Data/SFHologramDataRegistry.h"
 #include "Hologram/FGHologram.h"
+#include "Subsystem/SFSubsystem.h"  // [#380] read configured BeltRoutingMode for lane belts
 #include "FGConstructDisqualifier.h"
 #include "Features/Extend/SFExtendService.h"
 #include "Subsystem/SFSubsystem.h"
@@ -214,7 +215,75 @@ void ASFConveyorBeltHologram::SetupBeltSpline(UFGFactoryConnectionComponent* Sta
         EndConnector);
 }
 
-void ASFConveyorBeltHologram::AutoRouteSplineWithNormals(const FVector& StartPos, const FVector& StartNormal, 
+void ASFConveyorBeltHologram::RouteLaneWithConfiguredMode(const FVector& StartPos, const FVector& StartNormal,
+                                                          const FVector& EndPos, const FVector& EndNormal)
+{
+    // [#380] Honor the player's configured belt routing mode for Extend lane belts by driving the
+    // VANILLA build-mode descriptors (ApplyBeltBuildModeRouting) - the same path auto-connect uses -
+    // so Curve/Straight produce the real game spline. (Factory-internal belts are exact source clones
+    // and do NOT use this; the manifold factory->distributor path is left untouched.)
+    int32 BeltMode = 0;  // belt routing mode: 0=Default, 1=Curve, 2=Straight
+    if (USFSubsystem* SmartSubsystem = USFSubsystem::Get(GetWorld()))
+    {
+        BeltMode = SmartSubsystem->GetAutoConnectRuntimeSettings().BeltRoutingMode;
+    }
+    ApplyBeltBuildModeRouting(BeltMode, StartPos, StartNormal, EndPos, EndNormal);
+}
+
+bool ASFConveyorBeltHologram::ApplyBeltBuildModeRouting(int32 BeltRoutingMode,
+    const FVector& StartPos, const FVector& StartNormal, const FVector& EndPos, const FVector& EndNormal)
+{
+    // [#380] Smart spawns this belt hologram by C++ class (SpawnActor<ASFConveyorBeltHologram>), so the
+    // BP-default build-mode descriptors (mBuildModeCurve / mBuildModeStraight) are NULL - which made the
+    // vanilla path no-op and fall back to the flat AutoRouteSplineWithNormals (diagnostic: vanilla=0).
+    // Lazily copy them from the belt's REAL hologram CDO: build class -> buildable CDO -> mHologramClass
+    // -> its CDO. mBuildMode* are reached via the AccessTransformers friend on AFGConveyorBeltHologram.
+    if (!mBuildModeCurve || !mBuildModeStraight)
+    {
+        if (const TSubclassOf<AActor> BuildClass = GetBuildClass())
+        {
+            if (const AFGBuildable* BuildableCDO = Cast<AFGBuildable>(BuildClass->GetDefaultObject()))
+            {
+                if (BuildableCDO->mHologramClass)
+                {
+                    if (const AFGConveyorBeltHologram* HoloCDO = Cast<AFGConveyorBeltHologram>(BuildableCDO->mHologramClass->GetDefaultObject()))
+                    {
+                        if (!mBuildModeCurve)    { mBuildModeCurve = HoloCDO->mBuildModeCurve; }
+                        if (!mBuildModeStraight) { mBuildModeStraight = HoloCDO->mBuildModeStraight; }
+                    }
+                }
+            }
+        }
+    }
+
+    // [#380] Map Smart's belt routing mode (0=Default, 1=Curve, 2=Straight) to the vanilla belt
+    // build-mode descriptor and let the game's own AutoRouteSpline route the spline with real bends
+    // (mBendRadius) - identical to what the build gun produces. AutoRouteSpline via the friend declaration.
+    if (mSplineComponent)
+    {
+        TSubclassOf<UFGHologramBuildModeDescriptor> ModeDesc = nullptr;
+        if (BeltRoutingMode == 1)      { ModeDesc = mBuildModeCurve; }
+        else if (BeltRoutingMode == 2) { ModeDesc = mBuildModeStraight; }
+
+        // Default (0) uses the belt's native build mode (no override). Curve/Straight override it.
+        if (ModeDesc || BeltRoutingMode == 0)
+        {
+            if (ModeDesc) { SetBuildModeOverride(ModeDesc); }
+            AutoRouteSpline(StartPos, StartNormal, EndPos, EndNormal);
+            AFGSplineHologram::UpdateSplineComponent();
+            if (mSplineData.Num() >= 2 && mSplineComponent->GetSplineLength() >= 50.0f)
+            {
+                return true;
+            }
+        }
+    }
+
+    // Fallback: Smart's hand-rolled normals routing (descriptor unavailable or a stub spline).
+    AutoRouteSplineWithNormals(StartPos, StartNormal, EndPos, EndNormal);
+    return false;
+}
+
+void ASFConveyorBeltHologram::AutoRouteSplineWithNormals(const FVector& StartPos, const FVector& StartNormal,
                                                           const FVector& EndPos, const FVector& EndNormal)
 {
     UE_LOG(LogSmartHologram, Verbose, TEXT("🔍 AutoRouteSplineWithNormals: Routing belt spline with VANILLA 4-POINT structure"));

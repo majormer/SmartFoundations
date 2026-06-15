@@ -91,7 +91,7 @@ void USmartUpgradePanel::NativeConstruct()
 		// Tab buttons
 		SetLabel(TEXT("RadiusTabButtonText"), LOCTEXT("Upgrade_Tab_Radius", "Radius"));
 		SetLabel(TEXT("TraversalTabButtonText"), LOCTEXT("Upgrade_Tab_Network", "Network"));
-		SetLabel(TEXT("TriageTabButtonText"), LOCTEXT("Upgrade_Tab_Triage", "Triage"));
+		// [Track E] Triage tab removed.
 
 		// Radius tab labels
 		SetLabel(TEXT("RadiusSliderLabel"), LOCTEXT("Upgrade_RadiusLabel", "Radius (m):"));
@@ -116,10 +116,7 @@ void USmartUpgradePanel::NativeConstruct()
 		SetLabel(TEXT("SharedCancelButtonText"), LOCTEXT("Upgrade_Btn_Cancel", "Cancel"));
 		SetLabel(TEXT("SharedCloseButtonText"), LOCTEXT("Upgrade_Btn_Close", "Close"));
 		SetLabel(TEXT("CloseButtonText"), LOCTEXT("Upgrade_Btn_X", "X"));
-
-		// Triage button labels
-		SetLabel(TEXT("TriageDetectButtonText"), LOCTEXT("Triage_Btn_Detect", "Detect Issues"));
-		SetLabel(TEXT("TriageRepairButtonText"), LOCTEXT("Triage_Btn_Repair", "Repair All Issues"));
+		// [Track E] Triage Detect/Repair button labels removed.
 	}
 
 	// ========== TABBED UI BINDINGS ==========
@@ -133,10 +130,7 @@ void USmartUpgradePanel::NativeConstruct()
 	{
 		TraversalTabButton->OnClicked.AddDynamic(this, &USmartUpgradePanel::OnTraversalTabClicked);
 	}
-	if (TriageTabButton)
-	{
-		TriageTabButton->OnClicked.AddDynamic(this, &USmartUpgradePanel::OnTriageTabClicked);
-	}
+	// [Track E] TriageTabButton binding removed.
 
 	// Configure new radius spinbox (RadiusSliderSpinBox)
 	if (RadiusSliderSpinBox)
@@ -219,39 +213,18 @@ void USmartUpgradePanel::NativeConstruct()
 		TraversalCostDetailsText->SetText(LOCTEXT("Upgrade_ScanCosts", "Scan network to see costs"));
 	}
 
-	// ========== TRIAGE TAB INIT ==========
-
-	// Set warning text
-	if (TriageWarningText)
+	// [Track E] Triage tab init removed (warning text, Detect/Repair result/button setup + bindings).
+	// The chain-repair Detect/Repair tooling was the "silent world-repair" surface; it is gone.
+	// The Triage widgets still exist in the Blueprint (deleting them via tooling left dangling variable
+	// GUIDs that fail the cook), so collapse the tab button + content here - the tab is never shown,
+	// never wired. A proper widget delete in the editor can drop them entirely later.
+	if (TriageTabButton)
 	{
-		TriageWarningText->SetText(LOCTEXT("Triage_Warning",
-			"These tools diagnose conveyor chain issues after mass upgrades or save/load. "
-			"Repair purges zombie chains, rebuilds split chains, and re-registers orphaned conveyor tick groups after load. "
-			"Save before repair; after repair, save, reload, and run Detect again."));
+		TriageTabButton->SetVisibility(ESlateVisibility::Collapsed);
 	}
-
-	// Initialize result text labels (collapsed by default)
-	if (TriageDetectResultText)
+	if (TriageContent)
 	{
-		TriageDetectResultText->SetVisibility(ESlateVisibility::Collapsed);
-	}
-	if (TriageRepairButton)
-	{
-		TriageRepairButton->SetVisibility(ESlateVisibility::Collapsed);
-	}
-	if (TriageRepairResultText)
-	{
-		TriageRepairResultText->SetVisibility(ESlateVisibility::Collapsed);
-	}
-
-	// Bind triage buttons
-	if (TriageDetectButton)
-	{
-		TriageDetectButton->OnClicked.AddDynamic(this, &USmartUpgradePanel::OnTriageDetectClicked);
-	}
-	if (TriageRepairButton)
-	{
-		TriageRepairButton->OnClicked.AddDynamic(this, &USmartUpgradePanel::OnTriageRepairClicked);
+		TriageContent->SetVisibility(ESlateVisibility::Collapsed);
 	}
 
 	// Set default checkbox states

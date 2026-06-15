@@ -248,14 +248,6 @@ void USFSubsystem::RebindAfterDelay()
 	}
 }
 
-void USFSubsystem::RunPostLoadChainRepair()
-{
-	if (ChainActorService)
-	{
-		ChainActorService->RunPostLoadRepair();
-	}
-}
-
 // ========================================
 // Power Connection Management (moved from header - PIMPL pattern)
 // ========================================
@@ -616,20 +608,9 @@ void USFSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	// Bind to actor spawn delegate for recipe inheritance
 	World->AddOnActorSpawnedHandler(FOnActorSpawned::FDelegate::CreateUObject(this, &USFSubsystem::OnActorSpawned));
 
-	// Schedule one-shot post-load chain diagnostics. Deferred by 8 seconds to ensure all
-	// buildable actors (and their chain actors) are fully spawned and initialized.
-	// This is intentionally diagnostic-only: mutating chain actors during normal load can
-	// race vanilla conveyor Factory_Tick worker threads.
-	if (ChainActorService)
-	{
-		World->GetTimerManager().SetTimer(
-			PostLoadChainRepairTimer,
-			this,
-			&USFSubsystem::RunPostLoadChainRepair,
-			8.0f,
-			false  // One-shot
-		);
-	}
+	// [Track E / #367] The deferred post-load chain diagnostic timer was removed along with the
+	// load-time repair sweep (see USFChainActorService::Initialize). Smart! does not scan or mutate
+	// chain actors at load; runtime guards and the post-build hygiene pass remain.
 
 	UE_LOG(LogSmartFoundations, Verbose, TEXT("Smart! Subsystem: Timers started (player controller + hologram polling) + actor spawn delegate bound"));
 }

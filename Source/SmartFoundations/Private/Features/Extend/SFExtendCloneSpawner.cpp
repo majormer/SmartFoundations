@@ -1023,7 +1023,7 @@ int32 FSFCloneTopology::SpawnChildHolograms(
                         FVector StartNormal = ChildData.LaneStartNormal.ToFVector();
                         FVector EndNormal = ChildData.LaneEndNormal.ToFVector();
                         
-                        PipeLane->TryUseBuildModeRouting(StartPos, StartNormal, EndPos, EndNormal);
+                        PipeLane->RoutePipeLaneWithConfiguredMode(StartPos, StartNormal, EndPos, EndNormal);  // [#383] honor pipe routing mode
                     }
                     
                     PipeLane->SetActorHiddenInGame(false);
@@ -1148,8 +1148,8 @@ int32 FSFCloneTopology::SpawnChildHolograms(
 
                     BeltLane->FinishSpawning(FTransform(Rotation, Location));
                     
-                    // Use AutoRouteSplineWithNormals for proper curved spline routing
-                    // (same approach as stackable conveyor pole auto-connect)
+                    // [#380] Route honoring the configured belt routing mode (Default/Curve/Straight),
+                    // same as the stackable/auto-connect belt path - lane belts otherwise came out Default.
                     if (ChildData.bHasSplineData && ChildData.SplineData.Points.Num() >= 2)
                     {
                         FVector StartPos = ChildData.SplineData.Points[0].World.ToFVector();
@@ -1157,7 +1157,7 @@ int32 FSFCloneTopology::SpawnChildHolograms(
                         FVector StartNormal = ChildData.LaneStartNormal.ToFVector();
                         FVector EndNormal = ChildData.LaneEndNormal.ToFVector();
                         
-                        BeltLane->AutoRouteSplineWithNormals(StartPos, StartNormal, EndPos, EndNormal);
+                        BeltLane->RouteLaneWithConfiguredMode(StartPos, StartNormal, EndPos, EndNormal);  // [#380] honor belt routing mode
                     }
                     
                     BeltLane->SetActorHiddenInGame(false);
@@ -1176,7 +1176,7 @@ int32 FSFCloneTopology::SpawnChildHolograms(
                         FVector StartNormal = ChildData.LaneStartNormal.ToFVector();
                         FVector EndNormal = ChildData.LaneEndNormal.ToFVector();
                         
-                        BeltLane->AutoRouteSplineWithNormals(StartPos, StartNormal, EndPos, EndNormal);
+                        BeltLane->RouteLaneWithConfiguredMode(StartPos, StartNormal, EndPos, EndNormal);  // [#380] honor belt routing mode
                         BeltLane->TriggerMeshGeneration();
                     }
                     BeltLane->ForceApplyHologramMaterial();

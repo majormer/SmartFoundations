@@ -79,6 +79,23 @@ public:
 		const FVector& EndPos,
 		const FVector& EndNormal);
 
+	/**
+	 * [#383] Route this pipe using the VANILLA build-mode descriptors. Maps the pipe routing mode
+	 * (0=Auto, 1=Auto2D, 2=Straight, 3=Curve, 4=Noodle, 5=HorizontalToVertical) to the game's own
+	 * mBuildMode* descriptors and lets AutoRouteSpline route it - so all six modes (incl. Noodle / H2V,
+	 * which Smart's hand-rolled routing never supported) take effect. Falls back to the existing
+	 * TryUseBuildModeRouting when a descriptor isn't available. Mirrors the belt ApplyBeltBuildModeRouting.
+	 * @return true if a valid spline was produced (vanilla or fallback).
+	 */
+	bool ApplyPipeBuildModeRouting(int32 PipeRoutingMode, const FVector& StartPos, const FVector& StartNormal,
+	                               const FVector& EndPos, const FVector& EndNormal);
+
+	/** [#383] Route this pipe as an Extend "lane" segment: read the configured pipe routing mode and
+	 *  drive the vanilla descriptors (mirrors the belt RouteLaneWithConfiguredMode). Previously the
+	 *  Extend pipe lanes called TryUseBuildModeRouting without setting the mode, so they always routed Auto. */
+	void RoutePipeLaneWithConfiguredMode(const FVector& StartPos, const FVector& StartNormal,
+	                                     const FVector& EndPos, const FVector& EndNormal);
+
 	void SetRoutingMode(int32 InRoutingMode) { RoutingMode = InRoutingMode; }
     
     // Get the 6-point build spline (not the 2-point preview spline)

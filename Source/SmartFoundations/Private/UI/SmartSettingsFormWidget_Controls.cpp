@@ -189,6 +189,23 @@ void USmartSettingsFormWidget::OnBeltEnabledChanged(bool bIsChecked)
     }
 }
 
+void USmartSettingsFormWidget::OnRotationAxisChanged(FString SelectedItem, ESelectInfo::Type SelectionType)
+{
+    if (SelectionType == ESelectInfo::Direct)
+    {
+        return;  // Ignore programmatic changes (our own SetSelectedIndex during populate)
+    }
+    if (!CachedSubsystem.IsValid())
+    {
+        return;
+    }
+    // [#372] Always-yaw rotation; this only selects whether the yaw progresses along X-clones or Y-rows.
+    FSFCounterState NewState = CachedSubsystem->GetCounterState();
+    NewState.RotationAxis = (SelectedItem == TEXT("Y")) ? ESFScaleAxis::Y : ESFScaleAxis::X;
+    CachedSubsystem->UpdateCounterState(NewState);
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Rotation progression axis -> %s"), *SelectedItem);
+}
+
 void USmartSettingsFormWidget::OnBeltTierMainChanged(FString SelectedItem, ESelectInfo::Type SelectionType)
 {
     if (SelectionType == ESelectInfo::Direct)

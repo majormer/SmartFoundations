@@ -182,15 +182,20 @@ void FSFPositionCalculator::UpdateChildPositions(
 						FRotator ChildRotation = ParentRotation;
 						if (!FMath::IsNearlyZero(CounterState.RotationZ))
 						{
-							// ROTATION MODE: Each child rotates progressively along the arc
-							// Each building rotates to face tangent to the arc (same direction as arc curves)
-							// The rotation matches the arc direction - positive RotationZ = clockwise arc = clockwise building rotation
-							float ChildYawOffset = (X * XDir) * CounterState.RotationZ;
+							// ROTATION MODE: Each child rotates progressively along the arc, tangent to it.
+							// [#372] The yaw must build up along the SAME axis the arc progresses on (matches
+							// CalculateRotationOffset's AngleDegrees = ProgressIndex * RotationZ). Default is X
+							// (the run curves); with RotationAxis == Y the rows fan out, so drive the yaw by Y.
+							// Without this, a 1-wide Y-progression grid keeps X==0 and the buildings never turn.
+							// Y-progression swaps forward/curve axes (reflection) -> negate so the turn matches the fan.
+							const int32 RotProgress = (CounterState.RotationAxis == ESFScaleAxis::Y)
+								? -(Y * YDir) : (X * XDir);
+							float ChildYawOffset = RotProgress * CounterState.RotationZ;
 							ChildRotation.Yaw += ChildYawOffset;
-							
-							UE_LOG(LogSmartFoundations, Verbose, 
-								TEXT("🔄 Child[%d] X=%d: ParentYaw=%.1f° + Offset=%.1f° = FinalYaw=%.1f°"),
-								ChildIndex, X * XDir, ParentRotation.Yaw, ChildYawOffset, ChildRotation.Yaw);
+
+							UE_LOG(LogSmartFoundations, Verbose,
+								TEXT("🔄 Child[%d] progress=%d: ParentYaw=%.1f° + Offset=%.1f° = FinalYaw=%.1f°"),
+								ChildIndex, RotProgress, ParentRotation.Yaw, ChildYawOffset, ChildRotation.Yaw);
 						}
 						
 						// Set child transform
@@ -370,23 +375,32 @@ FVector FSFPositionCalculator::CalculateRotationOffset(
 		? ArcLength / StepRadians
 		: 0.0f;
 	
-	// Multi-row behavior: parallel curved lanes (like a curved road)
-	// Y rows maintain their relative positions (Y=1 always to the right of Y=0)
-	// For +rotation (right curve): Y=1 is on the INSIDE (smaller radius)
-	// For -rotation (left curve): Y=1 is on the OUTSIDE (larger radius)
-	const float RowGap = ItemSize.Y + static_cast<float>(CounterState.SpacingY);
+	// [#372] Rotation PROGRESSION axis: the (always-yaw) angle builds up either per-X (default —
+	// the run curves as it extends) or per-Y (rows fan out). When progressing along Y we swap the
+	// roles of X and Y: the angle is driven by Y and the parallel-lane radius adjustment by X.
+	// Rotation is ALWAYS pure yaw in both cases (buildings stay upright).
+	const bool bProgressY = (CounterState.RotationAxis == ESFScaleAxis::Y);
+	const int32 ProgressIndex = bProgressY ? Y : X;   // drives the cumulative angle
+	const int32 LaneIndex     = bProgressY ? X : Y;   // drives the parallel-lane radius offset
+
+	// Multi-lane behavior: parallel curved lanes (like a curved road)
+	// Lanes maintain their relative positions (lane=1 always to the right of lane=0)
+	// For +rotation (right curve): lane=1 is on the INSIDE (smaller radius)
+	// For -rotation (left curve): lane=1 is on the OUTSIDE (larger radius)
+	const float RowGap = (bProgressY ? ItemSize.X : ItemSize.Y)
+		+ static_cast<float>(bProgressY ? CounterState.SpacingX : CounterState.SpacingY);
 	const float SignRotation = (RotationStepDeg >= 0.0f) ? 1.0f : -1.0f;
-	const float Radius = BaseRadius - SignRotation * Y * RowGap;
-	
-	// Angle for this X position (signed). We use the user step directly so that
+	const float Radius = BaseRadius - SignRotation * LaneIndex * RowGap;
+
+	// Angle for this progression position (signed). We use the user step directly so that
 	// changing the sign mirrors the arc left/right while preserving forward motion.
-	const float AngleDegrees = static_cast<float>(X) * RotationStepDeg;
+	const float AngleDegrees = static_cast<float>(ProgressIndex) * RotationStepDeg;
 	const float AngleRadians = FMath::DegreesToRadians(AngleDegrees);
-	
+
 	// DEBUG: Log core geometry values for troubleshooting
 	UE_LOG(LogSmartFoundations, Verbose,
-		TEXT("RotationOffset: X=%d Y=%d, RotationZ=%.1f°, ArcLength=%.0fcm, BaseRadius=%.0fcm, Radius=%.0fcm, Angle=%.1f°"),
-		X, Y, RotationStepDeg, ArcLength, BaseRadius, Radius, AngleDegrees);
+		TEXT("RotationOffset: X=%d Y=%d, ProgressAxis=%s, RotationZ=%.1f°, ArcLength=%.0fcm, BaseRadius=%.0fcm, Radius=%.0fcm, Angle=%.1f°"),
+		X, Y, bProgressY ? TEXT("Y") : TEXT("X"), RotationStepDeg, ArcLength, BaseRadius, Radius, AngleDegrees);
 	
 	// Arc parametrization for PARALLEL CURVED LANES (like a curved road):
 	// - X_local = forward (along grid X axis, away from parent)
@@ -403,23 +417,35 @@ FVector FSFPositionCalculator::CalculateRotationOffset(
 	// - Y rows maintain their relative positions regardless of X or Rotation sign
 	
 	// IMPORTANT: Separate the signs to handle all 4 combinations correctly:
-	// - sign(X) determines forward vs backward
+	// - sign(progression index) determines forward vs backward
 	// - sign(Rotation) determines right vs left curve
-	// - magnitude uses |X * Rotation| for the arc geometry
-	const float SignX = (X >= 0) ? 1.0f : -1.0f;
+	// - magnitude uses |index * Rotation| for the arc geometry
+	const float SignForward = (ProgressIndex >= 0) ? 1.0f : -1.0f;
 	const float AbsAngleRadians = FMath::Abs(AngleRadians);
-	
+
 	const float SinTheta = FMath::Sin(AbsAngleRadians);
 	const float CosTheta = FMath::Cos(AbsAngleRadians);
-	
+
+	// Forward = R*sin(|θ|) along the progression axis; Sideways = curve on the other axis.
+	const float ForwardComponent = SignForward * Radius * SinTheta;
+	const float SidewaysComponent = SignRotation * (BaseRadius - Radius * CosTheta);
+
 	FVector ArcOffset;
-	// Forward: SignX determines direction (positive X = forward, negative X = backward)
-	ArcOffset.X = SignX * Radius * SinTheta;
-	// Sideways: SignRotation determines curve direction (positive = right, negative = left)
-	ArcOffset.Y = SignRotation * (BaseRadius - Radius * CosTheta);
+	if (!bProgressY)
+	{
+		// X-PROGRESSION (default, behavior-preserving): forward along local X, curve in local Y.
+		ArcOffset.X = ForwardComponent;
+		ArcOffset.Y = SidewaysComponent;
+	}
+	else
+	{
+		// Y-PROGRESSION (new): rows fan out — forward along local Y, curve in local X.
+		ArcOffset.X = SidewaysComponent;
+		ArcOffset.Y = ForwardComponent;
+	}
 	ArcOffset.Z = 0.0f;  // Z handled by Steps/SpacingZ
-	
-	// Set rotation for this building so it faces tangent to the arc.
+
+	// Set rotation for this building so it faces tangent to the arc. ALWAYS pure yaw (upright).
 	OutRotation = FRotator(0.0f, AngleDegrees, 0.0f);
 	
 	UE_LOG(LogSmartFoundations, Verbose,

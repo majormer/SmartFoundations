@@ -127,6 +127,12 @@ public:
 	/** Tick for batch processing */
 	void Tick(float DeltaTime);
 
+	/** [#376] Shared static conveyor-radius helpers - PUBLIC so the audit service can run the IDENTICAL
+	 *  cohort grouping + fully-inside test the radius upgrade uses. Keeping them in one place is what
+	 *  prevents the audit's "upgradeable" count from drifting away from what the execution will do. */
+	static void CollectConnectedConveyorCohort(class AFGBuildableConveyorBase* StartConveyor, TSet<class AFGBuildableConveyorBase*>& OutCohort);
+	static bool IsConveyorFullyInsideRadius(class AFGBuildableConveyorBase* Conveyor, const FVector& Origin, float RadiusSq);
+
 	/** Start upgrade execution */
 	UFUNCTION(BlueprintCallable, Category = "SmartFoundations|Upgrade")
 	void StartUpgrade(const FSFUpgradeExecutionParams& Params);
@@ -174,13 +180,10 @@ private:
 	/** Expand belt/lift targets to safe connected conveyor cohorts. */
 	void NormalizeConveyorUpgradeTargets(bool bRespectRadius);
 
-	/** Collect connected belts/lifts that belong to one conveyor cohort. */
-	void CollectConnectedConveyorCohort(class AFGBuildableConveyorBase* StartConveyor, TSet<class AFGBuildableConveyorBase*>& OutCohort) const;
-
 	/** Whether a conveyor intersects the current radius selection. */
 	bool ConveyorIntersectsRadius(class AFGBuildableConveyorBase* Conveyor) const;
 
-	/** Whether a conveyor is fully inside the current radius selection. */
+	/** Whether a conveyor is fully inside the current radius selection (delegates to the static helper). */
 	bool ConveyorFullyInsideRadius(class AFGBuildableConveyorBase* Conveyor) const;
 
 	/** Resolve the correct target recipe for a specific buildable in a mixed batch. */

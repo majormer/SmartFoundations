@@ -791,9 +791,25 @@ bool USFExtendService::BuildCommitSpecForMP(AFGHologram* ParentHologram, FSFExte
     // read GetConnection(), null on clients - and the wiring manifest comes out empty (live root
     // cause 2026-06-10: every MP Extend built unwired).
     OutSpec.ParentOffset = ParentHologram->GetActorLocation() - Topo.SourceBuilding->GetActorLocation();
+    // [#382] Ship the parent's yaw offset from the source so the server can rotate the parent's belts
+    // (FromSource only positions them). Pure yaw - rotation is always around Z; buildings stay upright.
+    const FRotator ParentDelta = ParentHologram->GetActorRotation() - Topo.SourceBuilding->GetActorRotation();
+    OutSpec.ParentRotation = FRotator(0.0f, ParentDelta.Yaw, 0.0f);
     OutSpec.Cost = ParentHologram->GetCost(true); // parent + preview children, exact preview cost
     OutSpec.BuildClass = ParentHologram->GetBuildClass();
     OutSpec.SourceBuilding = Topo.SourceBuilding.Get();
+    // [#380] Ship the client's belt routing mode; the server re-derives lanes with its own (default) settings.
+    // [#382] Ship the counter state too - cross-clone lane math (e.g. PrevCloneRotation for the first
+    // child's manifold lane to the parent distributor) reads CounterState.RotationZ directly server-side.
+    if (Subsystem.IsValid())
+    {
+        OutSpec.BeltRoutingMode = Subsystem->GetAutoConnectRuntimeSettings().BeltRoutingMode;
+        OutSpec.PipeRoutingMode = Subsystem->GetAutoConnectRuntimeSettings().PipeRoutingMode;
+        OutSpec.BeltTierMain = Subsystem->GetAutoConnectRuntimeSettings().BeltTierMain;
+        OutSpec.PipeTierMain = Subsystem->GetAutoConnectRuntimeSettings().PipeTierMain;
+        OutSpec.bPipeIndicator = Subsystem->GetAutoConnectRuntimeSettings().bPipeIndicator;
+        OutSpec.CounterState = Subsystem->GetCounterState();
+    }
     GetScaledClonePlanForCommit(OutSpec.ScaledClones);
     OutSpec.bValid = true;
     return true;
@@ -843,6 +859,21 @@ int32 USFExtendService::ReconstructCommitOnServer(AFGHologram* ParentHologram, c
     SetStoredCloneTopologyForServerCommit(FSFCloneTopology()); // replaced below; keep state coherent
     SetServerCommitSourceBuilding(Spec.SourceBuilding);
 
+    // [#380] Apply the client's belt routing mode before re-deriving lanes (covers both the parent
+    // path below and ReconstructScaledCommitOnServer). The server's own runtime settings default to
+    // 0/Default, so without this MP lane belts ignore Curve/Straight even when the client set them.
+    // [#382] Install the client's counter state too, so cross-clone lane math (PrevCloneRotation for
+    // the first child's manifold lane to the parent distributor) reads the real RotationZ, not 0.
+    if (Subsystem.IsValid())
+    {
+        Subsystem->SetAutoConnectBeltRoutingMode(Spec.BeltRoutingMode);
+        Subsystem->SetAutoConnectPipeRoutingMode(Spec.PipeRoutingMode);
+        Subsystem->SetAutoConnectBeltTierMain(Spec.BeltTierMain);
+        Subsystem->SetAutoConnectPipeTierMain(Spec.PipeTierMain);
+        Subsystem->SetAutoConnectPipeIndicator(Spec.bPipeIndicator);
+        Subsystem->UpdateCounterState(Spec.CounterState);
+    }
+
     AFGBuildable* Source = CurrentExtendTarget.Get();
     if (!Source)
     {
@@ -861,7 +892,16 @@ int32 USFExtendService::ReconstructCommitOnServer(AFGHologram* ParentHologram, c
     }
 
     const FSFSourceTopology Src = FSFSourceTopology::CaptureFromTopology(TopologyService->GetCurrentTopology());
-    const FSFCloneTopology Clone = FSFCloneTopology::FromSource(Src, Spec.ParentOffset);
+    FSFCloneTopology Clone = FSFCloneTopology::FromSource(Src, Spec.ParentOffset);
+    // [#382] FromSource only POSITIONS the parent's belts; the server's counter state is a default
+    // mirror (RotationZ=0) so the SP preview's parent-rotation block never runs here. Apply the
+    // parent yaw that arrived in the commit spec, using the SAME shared helper the preview uses, so
+    // the parent's belts rotate on the build exactly as they did in the preview (children carry their
+    // own per-clone rotation via SpawnScaledExtendPreviews and are unaffected).
+    if (!FMath::IsNearlyZero(Spec.ParentRotation.Yaw))
+    {
+        Clone.ApplyRigidYawRotation(Spec.ParentRotation, ParentHologram->GetActorLocation(), Spec.ParentOffset);
+    }
     SetStoredCloneTopologyForServerCommit(Clone);
 
     TMap<FString, AFGHologram*> SpawnedClones;

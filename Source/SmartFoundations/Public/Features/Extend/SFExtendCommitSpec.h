@@ -58,6 +58,49 @@ struct SMARTFOUNDATIONS_API FSFExtendCommitSpec
 	UPROPERTY()
 	FVector ParentOffset = FVector::ZeroVector;
 
+	/** [#382] Parent clone's yaw rotation offset from the SOURCE building. FromSource() positions the
+	 *  parent's belts but does NOT rotate them, and the server's counter state is a default mirror
+	 *  (RotationZ=0), so without this the parent's belts stay at source orientation on the build even
+	 *  though the factory rotates. The server applies this to the derived clone topology, mirroring
+	 *  the SP preview's parent-rotation block. (Children carry their own per-clone RotationOffset.) */
+	UPROPERTY()
+	FRotator ParentRotation = FRotator::ZeroRotator;
+
+	/** [#380] Belt routing mode (0=Default, 1=Curve, 2=Straight) the client has set. The server
+	 *  re-derives lane belts with its OWN runtime settings (default 0), so without this MP lane
+	 *  belts always route Default even with Curve selected. The server applies it before routing. */
+	UPROPERTY()
+	int32 BeltRoutingMode = 0;
+
+	/** [#383] Pipe routing mode (0=Auto, 1=Auto2D, 2=Straight, 3=Curve, 4=Noodle, 5=H2V) the client
+	 *  has set. Same reason as BeltRoutingMode: the server re-derives lane pipes with its own default
+	 *  pipe mode, so without this MP pipe lanes ignore the client's selection. Applied before routing. */
+	UPROPERTY()
+	int32 PipeRoutingMode = 0;
+
+	/** [#386] Manifold-lane belt/pipe tiers + pipe indicator the client has set (BeltTierMain =
+	 *  distributor-to-distributor, PipeTierMain = junction-to-junction). The post-build manifold wiring
+	 *  builds lane belts/pipes at these tiers; the server's own runtime settings default elsewhere, so
+	 *  without these the MP lane belts/pipes build at the wrong tier (preview-right, construct-wrong).
+	 *  The server installs them before the lanes are wired. 0 = Auto (resolve to highest unlocked). */
+	UPROPERTY()
+	int32 BeltTierMain = 0;
+
+	UPROPERTY()
+	int32 PipeTierMain = 0;
+
+	UPROPERTY()
+	bool bPipeIndicator = true;
+
+	/** [#382] Smart Panel counter state (rotation, grid, spacing, steps) the EXTEND re-derivation
+	 *  reads. The server's own counter state is a default mirror (RotationZ=0), so cross-clone math
+	 *  that reads it directly - e.g. the first child's manifold lane to the PREVIOUS (parent)
+	 *  distributor uses CounterState.RotationZ for PrevCloneRotation - targets the parent's
+	 *  un-rotated position on the build. The server installs this (UpdateCounterState) before
+	 *  re-deriving. (Restore ships the analogous RestoreCounterState.) */
+	UPROPERTY()
+	FSFCounterState CounterState;
+
 	/** Exact preview cost (parent + all preview children, vanilla GetCost(true) at fire) -
 	 *  the server's GetCost hook overrides with this so the commit charges what was previewed. */
 	UPROPERTY()

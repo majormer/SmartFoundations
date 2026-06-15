@@ -156,6 +156,15 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 		[](auto& scope, AFGBuildable* self, const EEndPlayReason::Type endPlayReason)
 		{
 			scope(self, endPlayReason);
+			// [#381] Only a real in-game destruction (Destroyed) can leave a buildable registered in a
+			// factory-tick array and cause the freed-pointer tick AV this guard exists to prevent. On
+			// world teardown (Quit / LevelTransition / RemovedFromWorld - e.g. dedicated-server shutdown)
+			// EVERY buildable is still registered by design and there is no subsequent tick, so the
+			// force-remove + warning are meaningless and spam one line per buildable. Skip those.
+			if (endPlayReason != EEndPlayReason::Destroyed)
+			{
+				return;
+			}
 			if (!self || !self->HasAuthority())
 			{
 				return;

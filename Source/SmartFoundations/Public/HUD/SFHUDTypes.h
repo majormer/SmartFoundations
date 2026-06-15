@@ -100,9 +100,11 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = "Smart|Rotation")
 	float RotationZ = 0.0f;
 	
-	/** Currently active axis for rotation adjustments */
+	/** Rotation PROGRESSION axis: chooses whether the (always-yaw) rotation builds up
+	 *  per X-clone (X = default, run curves as it extends) or per Y-row (Y = rows fan out).
+	 *  This is NOT a rotation plane — rotation is ALWAYS yaw (around vertical Z); buildings stay upright. */
 	UPROPERTY(BlueprintReadWrite, Category = "Smart|Rotation")
-	ESFScaleAxis RotationAxis = ESFScaleAxis::Z;
+	ESFScaleAxis RotationAxis = ESFScaleAxis::X;
 
 	// TODO: Add Levitation counters when Task 41 is implemented
 	// UPROPERTY(BlueprintReadWrite, Category = "Smart|Levitation")
@@ -139,7 +141,7 @@ public:
 		
 		// Rotation
 		RotationZ = 0.0f;
-		RotationAxis = ESFScaleAxis::Z;
+		RotationAxis = ESFScaleAxis::X;  // progression axis: X-clones (default) vs Y-rows; always yaw
 		
 		// Levitation (when implemented)
 		// LevitationRelative = 0.0f;

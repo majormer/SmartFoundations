@@ -85,6 +85,19 @@ private:
     /** Spawn preview holograms for all scaled extend clones */
     void SpawnScaledExtendPreviews();
 
+    /** [#383/#384 perf] The actual heavy rebuild (clear + reposition + re-route every clone's
+     *  belts/pipes). OnScaledExtendStateChanged debounces calls to this so a fast rotation/spacing
+     *  scroll - which fired a full 22-clone re-derive + curved-pipe re-route on EVERY scroll tick
+     *  (~15/sec) - coalesces: the leading change rebuilds immediately (slow deliberate adjustments
+     *  stay instant), and a burst collapses to one trailing rebuild ~90ms after it settles. */
+    void RebuildScaledExtendNow();
+
+    /** Trailing-edge debounce timer for RebuildScaledExtendNow (see OnScaledExtendStateChanged). */
+    FTimerHandle ScaledRebuildTimerHandle;
+
+    /** Wall-clock of the last rebuild, for the leading-edge gate. */
+    double LastScaledRebuildTime = 0.0;
+
     /** Validate belt/pipe constraints between consecutive clones */
     bool ValidateScaledExtendConstraints();
 

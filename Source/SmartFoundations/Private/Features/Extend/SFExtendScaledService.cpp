@@ -9,6 +9,8 @@
  */
 
 #include "Features/Extend/SFExtendScaledService.h"
+#include "Engine/World.h"        // UWorld::GetTimerManager for the rebuild debounce (#383/#384 perf)
+#include "TimerManager.h"        // FTimerManager::SetTimer/ClearTimer/IsTimerActive
 #include "Features/Extend/SFExtendService.h"
 #include "Features/Extend/SFExtendDetectionService.h"
 #include "Features/Extend/SFExtendTopologyService.h"
@@ -33,6 +35,7 @@
 #include "Holograms/Logistics/SFConveyorLiftHologram.h"
 #include "Data/SFBuildableSizeRegistry.h"
 #include "Data/SFHologramDataRegistry.h"
+#include "Buildables/FGBuildableBlueprintDesigner.h"  // [#366] IsLocationInsideDesigner clamp
 #include "Buildables/FGBuildableConveyorBelt.h"
 #include "Buildables/FGBuildableConveyorLift.h"
 #include "FGConveyorChainActor.h"
@@ -87,11 +90,58 @@ void USFExtendScaledService::Initialize(USFExtendService* InExtendService)
 
 void USFExtendScaledService::Shutdown()
 {
+    if (UWorld* World = Owner ? Owner->GetWorld() : nullptr)
+    {
+        World->GetTimerManager().ClearTimer(ScaledRebuildTimerHandle);
+    }
     Owner = nullptr;
 }
 
 void USFExtendScaledService::OnScaledExtendStateChanged()
 {
+    // [#383/#384 perf] Debounce the heavy rebuild. Each rotation/spacing scroll tick used to fire a
+    // full 22-clone re-derive + curved-pipe re-route (~15/sec during a fast scroll), which is the
+    // "ton of lag". Coalesce: the LEADING change after an idle gap rebuilds immediately (slow
+    // deliberate adjustments stay instant), and a burst collapses to ONE trailing rebuild ~90ms after
+    // it settles. The MP commit path stages every 250ms (captures the settled preview) and the SP
+    // build-click is always preceded by an aim pause >> 90ms, so commits never read a stale topology.
+    constexpr double DebounceSeconds = 0.090;
+
+    if (!Owner->bHasValidTarget || !Owner->CurrentExtendTarget.IsValid() || !Owner->CurrentExtendHologram.IsValid())
+    {
+        if (UWorld* W = Owner ? Owner->GetWorld() : nullptr)
+        {
+            W->GetTimerManager().ClearTimer(ScaledRebuildTimerHandle);
+        }
+        return;
+    }
+
+    UWorld* World = Owner->GetWorld();
+    if (!World)
+    {
+        // No world/timer manager available - fall back to immediate behavior.
+        RebuildScaledExtendNow();
+        return;
+    }
+
+    const double Now = FPlatformTime::Seconds();
+    if (Now - LastScaledRebuildTime >= DebounceSeconds)
+    {
+        // Leading edge: idle long enough that this is a fresh, deliberate change - rebuild now.
+        World->GetTimerManager().ClearTimer(ScaledRebuildTimerHandle);
+        RebuildScaledExtendNow();
+        return;
+    }
+
+    // Inside a burst: (re)arm the trailing timer so the FINAL state always rebuilds exactly once.
+    World->GetTimerManager().SetTimer(ScaledRebuildTimerHandle, this,
+        &USFExtendScaledService::RebuildScaledExtendNow, DebounceSeconds, false);
+}
+
+void USFExtendScaledService::RebuildScaledExtendNow()
+{
+    LastScaledRebuildTime = FPlatformTime::Seconds();
+
     if (!Owner->bHasValidTarget || !Owner->CurrentExtendTarget.IsValid() || !Owner->CurrentExtendHologram.IsValid())
     {
         return;
@@ -149,70 +199,9 @@ void USFExtendScaledService::OnScaledExtendStateChanged()
             // WorldOffset from source to clone 1 (used to determine clone-side of lane segments)
             FVector Clone1WorldOffset = FactoryCenter - Owner->CurrentExtendTarget->GetActorLocation();
 
-            for (FSFCloneHologram& Holo : Owner->StoredCloneTopology->ChildHolograms)
-            {
-                if (Holo.bIsLaneSegment)
-                {
-                    // Lane segments are ADAPTIVE — only rotate the clone-side endpoint.
-                    // Source-side stays fixed. (Same logic as Step 2.25)
-                    if (Holo.bHasSplineData && Holo.SplineData.Points.Num() >= 2)
-                    {
-                        FVector StartWorld = Holo.SplineData.Points[0].World.ToFVector();
-                        FVector EndWorld = Holo.SplineData.Points.Last().World.ToFVector();
-                        FVector LaneDir = EndWorld - StartWorld;
-                        bool bCloneAtEnd = (FVector::DotProduct(LaneDir, Clone1WorldOffset) > 0.0f);
-
-                        if (bCloneAtEnd)
-                        {
-                            FVector RelEnd = EndWorld - FactoryCenter;
-                            FVector RotatedEnd = FactoryCenter + Clone1RotOffset.RotateVector(RelEnd);
-                            Holo.SplineData.Points.Last().World = FSFVec3(RotatedEnd);
-                            Holo.LaneEndNormal = FSFVec3(Clone1RotOffset.RotateVector(Holo.LaneEndNormal.ToFVector()));
-                        }
-                        else
-                        {
-                            FVector RelStart = StartWorld - FactoryCenter;
-                            FVector RotatedStart = FactoryCenter + Clone1RotOffset.RotateVector(RelStart);
-                            Holo.SplineData.Points[0].World = FSFVec3(RotatedStart);
-                            Holo.LaneStartNormal = FSFVec3(Clone1RotOffset.RotateVector(Holo.LaneStartNormal.ToFVector()));
-                        }
-
-                        // Recalculate transform from updated endpoints
-                        FVector NewStart = Holo.SplineData.Points[0].World.ToFVector();
-                        FVector NewEnd = Holo.SplineData.Points.Last().World.ToFVector();
-                        Holo.SplineData.Length = FVector::Dist(NewStart, NewEnd);
-                        Holo.Transform = FSFTransform(NewStart, (NewEnd - NewStart).Rotation());
-                    }
-                    continue;
-                }
-
-                // Rotate position around factory center
-                FVector HoloPos = Holo.Transform.Location.ToFVector();
-                FVector RelPos = HoloPos - FactoryCenter;
-                FVector RotatedPos = FactoryCenter + Clone1RotOffset.RotateVector(RelPos);
-                FRotator RotatedRot = Holo.Transform.Rotation.ToFRotator() + Clone1RotOffset;
-                Holo.Transform = FSFTransform(RotatedPos, RotatedRot);
-
-                // Rotate spline world positions
-                if (Holo.bHasSplineData)
-                {
-                    for (FSFSplinePoint& Point : Holo.SplineData.Points)
-                    {
-                        FVector WorldPt = Point.World.ToFVector();
-                        FVector RelPt = WorldPt - FactoryCenter;
-                        Point.World = FSFVec3(FactoryCenter + Clone1RotOffset.RotateVector(RelPt));
-                    }
-                }
-
-                // Rotate lift data
-                if (Holo.bHasLiftData)
-                {
-                    FVector BotPos = Holo.LiftData.BottomTransform.Location.ToFVector();
-                    FVector BotRel = BotPos - FactoryCenter;
-                    Holo.LiftData.BottomTransform.Location = FSFVec3(FactoryCenter + Clone1RotOffset.RotateVector(BotRel));
-                    Holo.LiftData.BottomTransform.Rotation = FSFRot3(Holo.LiftData.BottomTransform.Rotation.ToFRotator() + Clone1RotOffset);
-                }
-            }
+            // [#382] Shared with the server build (ReconstructCommitOnServer) so the parent's belts
+            // rotate identically in preview and on the dedi - see FSFCloneTopology::ApplyRigidYawRotation.
+            Owner->StoredCloneTopology->ApplyRigidYawRotation(Clone1RotOffset, FactoryCenter, Clone1WorldOffset);
 
             // Step 2: Reposition spawned holograms from rotated topology + regenerate meshes
             // Build IntendedPositions maps from rotated topology (same pattern as SpawnScaledExtendPreviews)
@@ -263,12 +252,12 @@ void USFExtendScaledService::OnScaledExtendStateChanged()
                     {
                         if (HoloData.bIsLaneSegment && HoloData.bHasSplineData && HoloData.SplineData.Points.Num() >= 2)
                         {
-                            // Lane segments: use AutoRouteSplineWithNormals
+                            // [#380] Lane segments: route honoring the configured belt routing mode
                             FVector StartPos = HoloData.SplineData.Points[0].World.ToFVector();
                             FVector EndPos = HoloData.SplineData.Points.Last().World.ToFVector();
                             FVector StartNormal = HoloData.LaneStartNormal.ToFVector();
                             FVector EndNormal = HoloData.LaneEndNormal.ToFVector();
-                            Belt->AutoRouteSplineWithNormals(StartPos, StartNormal, EndPos, EndNormal);
+                            Belt->RouteLaneWithConfiguredMode(StartPos, StartNormal, EndPos, EndNormal);  // [#380] honor belt routing mode
                             Belt->TriggerMeshGeneration();
                             Belt->ForceApplyHologramMaterial();
                         }
@@ -299,7 +288,7 @@ void USFExtendScaledService::OnScaledExtendStateChanged()
                             FVector StartNormal = HoloData.LaneStartNormal.ToFVector();
                             FVector EndNormal = HoloData.LaneEndNormal.ToFVector();
 
-                            Pipe->TryUseBuildModeRouting(StartPos, StartNormal, EndPos, EndNormal);
+                            Pipe->RoutePipeLaneWithConfiguredMode(StartPos, StartNormal, EndPos, EndNormal);  // [#383] honor pipe routing mode
                             Pipe->TriggerMeshGeneration();
                             Pipe->ForceApplyHologramMaterial();
                         }
@@ -467,6 +456,22 @@ void USFExtendScaledService::CalculateScaledExtendPositions()
     // Determine Y direction sign (negative Y = opposite perpendicular)
     int32 YDir = (Owner->Subsystem->GetCounterState().GridCounters.Y >= 0) ? 1 : -1;
 
+    // [#366] Designer-bounds clamp. When extending a designer-resident building, a clone whose
+    // position falls outside the Blueprint Designer volume can never construct (vanilla refuses
+    // out-of-bounds buildables), yet it would still render a preview AND be charged in the cost
+    // quote - the reported "Hologram cannot be placed in Blueprint Designer!" + "Missing materials"
+    // while the in-bounds portion builds fine. This array is the single source of truth every
+    // downstream spawner and the cost aggregation key from, so dropping out-of-bounds clones HERE
+    // keeps preview and quote honest. No-op outside a designer (the common open-world case).
+    AFGBuildableBlueprintDesigner* BoundsDesigner = Owner->CurrentExtendHologram.IsValid()
+        ? Owner->CurrentExtendHologram->GetBlueprintDesigner() : nullptr;
+    const FVector SourceWorldLocation = SourceBuilding->GetActorLocation();
+    auto IsCloneInDesignerBounds = [&](const FSFScaledExtendClone& Clone) -> bool
+    {
+        if (!BoundsDesigner) { return true; }  // not designer-resident: never clamp
+        return BoundsDesigner->IsLocationInsideDesigner(SourceWorldLocation + Clone.WorldOffset);
+    };
+
     // For each row and clone position, calculate the world offset
     for (int32 Row = 0; Row < RowCount; Row++)
     {
@@ -478,19 +483,50 @@ void USFExtendScaledService::CalculateScaledExtendPositions()
             SeedClone.GridY = Row;
             SeedClone.bIsSeed = true;
 
-            // Seed position: offset in Y direction (perpendicular to extend direction)
-            // Y direction is perpendicular to X (extend) direction
-            FVector YOffset = FVector(0.0f, EffectiveRowHeight * Row * YDir, 0.0f);
-            // Add Y spacing
-            YOffset.Y += State.SpacingY * Row * YDir;
-            // Add Y steps (vertical offset per row for terraced look)
-            float YSteps = State.StepsY * Row;
+            // [#372] Y-progression: the seed (GridX=0) is the row's anchor ON the fanned arc, not
+            // a parallel lane. Place it at the row arc anchor with the row yaw so the whole row
+            // fans out from the source. X-progression keeps the original parallel-lane seed.
+            const bool bSeedProgressY = (State.RotationAxis == ESFScaleAxis::Y)
+                && !FMath::IsNearlyZero(State.RotationZ);
+            if (bSeedProgressY)
+            {
+                float ArcLength = BuildingSize.X + static_cast<float>(State.SpacingX);
+                float StepRadians = FMath::Abs(FMath::DegreesToRadians(State.RotationZ));
+                float Radius = (StepRadians > KINDA_SMALL_NUMBER) ? ArcLength / StepRadians : 0.0f;
 
-            SeedClone.WorldOffset = SourceRotation.RotateVector(YOffset);
-            SeedClone.WorldOffset.Z += YSteps;
-            SeedClone.RotationOffset = FRotator::ZeroRotator;
+                float AngleDeg = static_cast<float>(Row) * State.RotationZ;
+                float AbsAngleRad = FMath::Abs(FMath::DegreesToRadians(AngleDeg));
+                float SignRotation = (State.RotationZ >= 0.0f) ? 1.0f : -1.0f;
+                const float SignY = static_cast<float>(YDir);
 
-            Owner->ScaledExtendClones.Add(SeedClone);
+                FVector RowAnchor;
+                RowAnchor.X = SignRotation * (Radius - Radius * FMath::Cos(AbsAngleRad));  // curve in local X
+                RowAnchor.Y = SignY * Radius * FMath::Sin(AbsAngleRad);                    // forward along local Y
+                RowAnchor.Z = State.StepsY * Row;                                          // terraced rise per row
+
+                SeedClone.WorldOffset = SourceRotation.RotateVector(FVector(RowAnchor.X, RowAnchor.Y, 0.0f));
+                SeedClone.WorldOffset.Z += RowAnchor.Z;
+                SeedClone.RotationOffset = FRotator(0.0f, AngleDeg, 0.0f);  // pure yaw
+            }
+            else
+            {
+                // Seed position: offset in Y direction (perpendicular to extend direction)
+                // Y direction is perpendicular to X (extend) direction
+                FVector YOffset = FVector(0.0f, EffectiveRowHeight * Row * YDir, 0.0f);
+                // Add Y spacing
+                YOffset.Y += State.SpacingY * Row * YDir;
+                // Add Y steps (vertical offset per row for terraced look)
+                float YSteps = State.StepsY * Row;
+
+                SeedClone.WorldOffset = SourceRotation.RotateVector(YOffset);
+                SeedClone.WorldOffset.Z += YSteps;
+                SeedClone.RotationOffset = FRotator::ZeroRotator;
+            }
+
+            if (IsCloneInDesignerBounds(SeedClone))  // [#366] skip clones outside the designer volume
+            {
+                Owner->ScaledExtendClones.Add(SeedClone);
+            }
         }
 
         // For each clone in Owner row
@@ -509,36 +545,82 @@ void USFExtendScaledService::CalculateScaledExtendPositions()
             // Check if rotation is active
             bool bRotationActive = !FMath::IsNearlyZero(State.RotationZ);
 
+            // [#372] Rotation PROGRESSION axis: the cumulative (always-yaw) angle builds up either
+            // per X-clone (default — the run curves as it extends) or per Y-row (rows fan out).
+            // The angle value (RotationZ) is identical in both; only WHICH index drives it changes.
+            const bool bProgressY = (State.RotationAxis == ESFScaleAxis::Y);
+            const int32 ProgressIndex = bProgressY ? Row : CloneIndex;
+
             FVector CloneOffset;
             FRotator CloneRotation = FRotator::ZeroRotator;
 
             if (bRotationActive)
             {
-                // Arc/radial placement - cumulative rotation per clone
-                // Each clone steps along an arc, rotating by RotationZ degrees per step
+                // Arc/radial placement - cumulative rotation per progression step.
+                // Each step rotates by RotationZ degrees; rotation is ALWAYS pure yaw (upright).
                 float ArcLength = BuildingSize.X + static_cast<float>(State.SpacingX);
                 float StepRadians = FMath::Abs(FMath::DegreesToRadians(State.RotationZ));
                 float Radius = (StepRadians > KINDA_SMALL_NUMBER) ? ArcLength / StepRadians : 0.0f;
 
-                float AngleDeg = static_cast<float>(CloneIndex) * State.RotationZ;
+                float AngleDeg = static_cast<float>(ProgressIndex) * State.RotationZ;
                 float AngleRad = FMath::DegreesToRadians(AngleDeg);
                 float SignRotation = (State.RotationZ >= 0.0f) ? 1.0f : -1.0f;
-
-                // Arc position in local space — matches CalculateRotationOffset pattern:
-                //   X = SignX * R * Sin(|θ|)              (direction determines forward/backward)
-                //   Y = SignRotation * (R - R*Cos(|θ|))   (NO direction sign — canonical)
-                //   Rotation = AngleDeg * XDirectionSign  (sign baked into angle)
                 float AbsAngleRad = FMath::Abs(AngleRad);
                 float SignX = XDirectionSign;
 
-                CloneOffset.X = SignX * Radius * FMath::Sin(AbsAngleRad);
-                CloneOffset.Y = SignRotation * (Radius - Radius * FMath::Cos(AbsAngleRad));
-                CloneOffset.Z = 0.0f;
+                if (!bProgressY)
+                {
+                    // X-PROGRESSION (default, behavior-preserving): arc advances along local X
+                    // (the extend direction), curves in local Y. Driven by CloneIndex.
+                    //   X = SignX * R * Sin(|θ|)              (direction determines forward/backward)
+                    //   Y = SignRotation * (R - R*Cos(|θ|))   (NO direction sign — canonical)
+                    //   Rotation = AngleDeg * XDirectionSign  (sign baked into angle)
+                    CloneOffset.X = SignX * Radius * FMath::Sin(AbsAngleRad);
+                    CloneOffset.Y = SignRotation * (Radius - Radius * FMath::Cos(AbsAngleRad));
+                    CloneOffset.Z = 0.0f;
 
-                // Apply steps (vertical offset per clone)
-                CloneOffset.Z += State.StepsX * CloneIndex;
+                    // Apply steps (vertical offset per clone)
+                    CloneOffset.Z += State.StepsX * CloneIndex;
 
-                CloneRotation = FRotator(0.0f, AngleDeg * XDirectionSign, 0.0f);
+                    CloneRotation = FRotator(0.0f, AngleDeg * XDirectionSign, 0.0f);
+
+                    // Add Y row offset (parallel lanes). Only meaningful for X-progression:
+                    // in Y-progression the row IS the arc-forward, so this must not be applied.
+                    if (Row > 0)
+                    {
+                        CloneOffset.Y += EffectiveRowHeight * Row * YDir + State.SpacingY * Row * YDir;
+                        CloneOffset.Z += State.StepsY * Row;
+                    }
+                }
+                else
+                {
+                    // Y-PROGRESSION (new): the ROWS fan out around the vertical axis. The arc-forward/
+                    // curve axes swap vs the X path — the arc advances along local Y (driven by Row)
+                    // and curves in local X. Each row sits at cumulative yaw (Row * RotationZ); the
+                    // row's own clones then march forward along that rotated extend direction.
+                    //   Row anchor:  Y = SignY * R * Sin(|θ|),  X = SignRotation * (R - R*Cos(|θ|))
+                    // where the forward sign follows the Y row direction (YDir) just as the X path's
+                    // forward follows XDirectionSign.
+                    const float SignY = static_cast<float>(YDir);
+                    FVector RowAnchor;
+                    RowAnchor.X = SignRotation * (Radius - Radius * FMath::Cos(AbsAngleRad));
+                    RowAnchor.Y = SignY * Radius * FMath::Sin(AbsAngleRad);
+                    RowAnchor.Z = State.StepsY * Row;  // terraced rows still rise per Row
+
+                    // Per-clone forward along the row's rotated extend direction (local X spun by yaw).
+                    // The yaw applied to the row is AngleDeg (pure yaw); rotate the linear extend
+                    // vector by it so clones within the row stay rigid with the fanned row.
+                    const float Forward = BuildingSize.X * CloneIndex + State.SpacingX * CloneIndex;
+                    FVector LocalExtend(XDirectionSign * Forward, 0.0f, 0.0f);
+                    const FRotator RowYaw(0.0f, AngleDeg, 0.0f);
+                    FVector RotatedExtend = RowYaw.RotateVector(LocalExtend);
+
+                    CloneOffset.X = RowAnchor.X + RotatedExtend.X;
+                    CloneOffset.Y = RowAnchor.Y + RotatedExtend.Y;
+                    CloneOffset.Z = RowAnchor.Z + State.StepsX * CloneIndex;
+
+                    CloneRotation = FRotator(0.0f, AngleDeg, 0.0f);
+                }
             }
             else
             {
@@ -546,13 +628,13 @@ void USFExtendScaledService::CalculateScaledExtendPositions()
                 CloneOffset.X = XDirectionSign * (BuildingSize.X * CloneIndex + State.SpacingX * CloneIndex);
                 CloneOffset.Y = 0.0f;
                 CloneOffset.Z = State.StepsX * CloneIndex;  // Steps = vertical offset per clone
-            }
 
-            // Add Y row offset
-            if (Row > 0)
-            {
-                CloneOffset.Y += EffectiveRowHeight * Row * YDir + State.SpacingY * Row * YDir;
-                CloneOffset.Z += State.StepsY * Row;
+                // Add Y row offset (parallel lanes) - linear (no rotation) path.
+                if (Row > 0)
+                {
+                    CloneOffset.Y += EffectiveRowHeight * Row * YDir + State.SpacingY * Row * YDir;
+                    CloneOffset.Z += State.StepsY * Row;
+                }
             }
 
             // Rotate offset by source building rotation to get world space
@@ -562,7 +644,10 @@ void USFExtendScaledService::CalculateScaledExtendPositions()
 
             ExtendClone.RotationOffset = CloneRotation;
 
-            Owner->ScaledExtendClones.Add(ExtendClone);
+            if (IsCloneInDesignerBounds(ExtendClone))  // [#366] skip clones outside the designer volume
+            {
+                Owner->ScaledExtendClones.Add(ExtendClone);
+            }
         }
     }
 
@@ -596,6 +681,32 @@ void USFExtendScaledService::SpawnScaledExtendPreviews()
 
     // Capture source topology once for cloning
     FSFSourceTopology SourceTopo = FSFSourceTopology::CaptureFromTopology(Topology);
+
+    // [#384] Rotation-stable principal extend axis (world space): the un-arced extend-forward direction,
+    // passed to FromSource so each clone's pipe-lane SOURCE backbone port is chosen against this fixed
+    // axis instead of the per-clone offset - which arcs ~5deg/clone on a rotated extend and otherwise
+    // drops the source connector below the facing threshold past ~clone 14, killing the rest of the lanes.
+    //
+    // Derived from the clone OFFSETS (installed identically on SP and the MP server during commit
+    // reconstruction), NOT from DetectionService: the detection direction is client-only and defaults to
+    // Right on a dedicated server, which would mispick the source port for a LEFT extend (SP/MP divergence,
+    // same trap as #382). The least-rotated non-seed clone points along the extend with negligible arc.
+    FVector PrincipalAxisWorld = FVector::ZeroVector;
+    {
+        float BestYaw = 1.0e30f;
+        for (const FSFScaledExtendClone& C : Owner->ScaledExtendClones)
+        {
+            if (C.bIsSeed) { continue; }
+            const FVector OffsetXY(C.WorldOffset.X, C.WorldOffset.Y, 0.0f);
+            if (OffsetXY.IsNearlyZero()) { continue; }
+            const float AbsYaw = FMath::Abs(C.RotationOffset.Yaw);
+            if (AbsYaw < BestYaw)
+            {
+                BestYaw = AbsYaw;
+                PrincipalAxisWorld = OffsetXY.GetSafeNormal();
+            }
+        }
+    }
 
     int32 TotalHologramsSpawned = 0;
 
@@ -702,7 +813,7 @@ void USFExtendScaledService::SpawnScaledExtendPreviews()
         }
 
         // === Step 2: Spawn infrastructure (belts, distributors, pipes, power) around Owner clone ===
-        Clone.CloneTopology = MakeShared<FSFCloneTopology>(FSFCloneTopology::FromSource(SourceTopo, Clone.WorldOffset));
+        Clone.CloneTopology = MakeShared<FSFCloneTopology>(FSFCloneTopology::FromSource(SourceTopo, Clone.WorldOffset, PrincipalAxisWorld));
 
         // === Step 2.25: RIGID BODY ROTATION ===
         // Clone topology is a rigid body relative to the factory building.
@@ -813,17 +924,16 @@ void USFExtendScaledService::SpawnScaledExtendPreviews()
             {
                 // First additional clone in row 0 → previous is clone 1 (parent hologram)
                 PrevCloneOffset = Owner->CurrentExtendHologram->GetActorLocation() - Owner->CurrentExtendTarget->GetActorLocation();
-                // Parent hologram IS rotated by RotationZ * DirSign when rotation is active
-                // Must include DirSign to match clone 1's actual rotation from Owner->RefreshExtension
-                if (Owner->Subsystem.IsValid())
+                // [#382] Use the parent hologram's ACTUAL rotation delta from the source, not
+                // CounterState.RotationZ * DirSign. The extend DIRECTION is client-side UI state the
+                // server doesn't have, so DirSign defaulted wrong on the dedi and the first child's
+                // manifold lane targeted a mis-rotated parent connector (the SP preview happened to use
+                // the right DirSign, which is why it only broke on MP). Reading the real parent rotation
+                // is identical on the client and correct on the server, and is guaranteed consistent
+                // with the parent belts' own rotation (both derive from the same actual parent transform).
                 {
-                    const FSFCounterState& CounterState = Owner->Subsystem->GetCounterState();
-                    if (!FMath::IsNearlyZero(CounterState.RotationZ))
-                    {
-                        ESFExtendDirection PrevDir = Owner->DetectionService ? Owner->DetectionService->GetExtendDirection() : ESFExtendDirection::Right;
-                        float PrevDirSign = (PrevDir == ESFExtendDirection::Right) ? 1.0f : -1.0f;
-                        PrevCloneRotation = FRotator(0.0f, CounterState.RotationZ * PrevDirSign, 0.0f);
-                    }
+                    const FRotator ParentDelta = Owner->CurrentExtendHologram->GetActorRotation() - Owner->CurrentExtendTarget->GetActorRotation();
+                    PrevCloneRotation = FRotator(0.0f, ParentDelta.Yaw, 0.0f);
                 }
             }
             else
@@ -1053,13 +1163,13 @@ void USFExtendScaledService::SpawnScaledExtendPreviews()
                     {
                         if (HoloData.bIsLaneSegment && HoloData.bHasSplineData && HoloData.SplineData.Points.Num() >= 2)
                         {
-                            // Lane segments: use AutoRouteSplineWithNormals for proper curved routing
+                            // [#380] Lane segments: route honoring the configured belt routing mode
                             FVector StartPos = HoloData.SplineData.Points[0].World.ToFVector();
                             FVector EndPos = HoloData.SplineData.Points.Last().World.ToFVector();
                             FVector StartNormal = HoloData.LaneStartNormal.ToFVector();
                             FVector EndNormal = HoloData.LaneEndNormal.ToFVector();
 
-                            Belt->AutoRouteSplineWithNormals(StartPos, StartNormal, EndPos, EndNormal);
+                            Belt->RouteLaneWithConfiguredMode(StartPos, StartNormal, EndPos, EndNormal);  // [#380] honor belt routing mode
                             Belt->TriggerMeshGeneration();
                             Belt->ForceApplyHologramMaterial();
                         }
@@ -1090,7 +1200,7 @@ void USFExtendScaledService::SpawnScaledExtendPreviews()
                             FVector StartNormal = HoloData.LaneStartNormal.ToFVector();
                             FVector EndNormal = HoloData.LaneEndNormal.ToFVector();
 
-                            Pipe->TryUseBuildModeRouting(StartPos, StartNormal, EndPos, EndNormal);
+                            Pipe->RoutePipeLaneWithConfiguredMode(StartPos, StartNormal, EndPos, EndNormal);  // [#383] honor pipe routing mode
                             Pipe->TriggerMeshGeneration();
                             Pipe->ForceApplyHologramMaterial();
                         }

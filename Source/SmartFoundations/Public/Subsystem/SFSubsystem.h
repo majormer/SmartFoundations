@@ -161,9 +161,6 @@ public:
 	UFUNCTION()
 	void RebindAfterDelay();
 
-	/** Deferred post-load chain diagnostic; does not mutate conveyor state. */
-	void RunPostLoadChainRepair();
-
     // ========================================
     // Facade Accessors for Grid Spawner Service (Phase 2)
     // ========================================
@@ -622,9 +619,6 @@ protected:
 
 	/** Timer for deferred power pole connections */
 	FTimerHandle PowerPoleDeferredTimer;
-
-	/** One-shot timer that runs post-load chain diagnostics. */
-	FTimerHandle PostLoadChainRepairTimer;
 
 	/** Pending power poles waiting for connections */
 	UPROPERTY()
@@ -1142,8 +1136,42 @@ public:
 			PowerReserved = Config.PowerConnectReserved;
 			PowerGridAxis = Config.PowerConnectMode;
 			PowerBuildingRange = static_cast<float>(Config.PowerConnectRange) * 100.0f;  // Convert from meters to cm
-			
+
 			bInitialized = false;  // Reset to not modified when initialized from config
+		}
+
+		/** [#371] Compare only the config-derived fields (the ones InitFromConfig sets). Excludes
+		 *  bInitialized and StackableBeltDirection (not config-backed). Used to tell whether the
+		 *  global config has changed since the runtime settings were last synced to it. */
+		bool EqualsConfigDerived(const FAutoConnectRuntimeSettings& O) const
+		{
+			return bEnabled == O.bEnabled
+				&& BeltTierMain == O.BeltTierMain
+				&& BeltTierToBuilding == O.BeltTierToBuilding
+				&& bChainDistributors == O.bChainDistributors
+				&& BeltRoutingMode == O.BeltRoutingMode
+				&& bStackableBeltEnabled == O.bStackableBeltEnabled
+				&& bPipeAutoConnectEnabled == O.bPipeAutoConnectEnabled
+				&& PipeTierMain == O.PipeTierMain
+				&& PipeTierToBuilding == O.PipeTierToBuilding
+				&& bPipeIndicator == O.bPipeIndicator
+				&& PipeRoutingMode == O.PipeRoutingMode
+				&& bConnectPower == O.bConnectPower
+				&& bExtendPower == O.bExtendPower
+				&& bExtendDaisyChain == O.bExtendDaisyChain
+				&& bExtendDaisyChainPoleless == O.bExtendDaisyChainPoleless
+				&& PowerReserved == O.PowerReserved
+				&& PowerGridAxis == O.PowerGridAxis
+				&& PowerBuildingRange == O.PowerBuildingRange;
+		}
+
+		/** [#371] True if configs A and B produce identical auto-connect defaults (i.e. the global
+		 *  config did not change in any way Smart's runtime settings care about). */
+		static bool ConfigDefaultsMatch(const FSmart_ConfigStruct& A, const FSmart_ConfigStruct& B)
+		{
+			FAutoConnectRuntimeSettings RA; RA.InitFromConfig(A);
+			FAutoConnectRuntimeSettings RB; RB.InitFromConfig(B);
+			return RA.EqualsConfigDerived(RB);
 		}
 	};
 	

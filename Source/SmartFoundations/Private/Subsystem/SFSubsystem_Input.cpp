@@ -342,6 +342,22 @@ void USFSubsystem::OnCycleAxis()
 		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT(" Stagger Axis Toggled: Now adjusting %s-axis (%s)"), AxisName, AxisDescription);
 		UpdateCounterState(CounterState);
 	}
+	else if (bRotationModeActive)
+	{
+		// Rotation mode: toggle the PROGRESSION axis X <-> Y via service.
+		// Rotation is always yaw (buildings stay upright); this only chooses whether the
+		// yaw builds up along X-clones (run curves) or Y-rows (rows fan out).
+		if (GridStateService)
+		{
+			GridStateService->CycleRotationAxis(CounterState);
+		}
+
+		const TCHAR* AxisDescription = (CounterState.RotationAxis == ESFScaleAxis::Y)
+			? TEXT("Y (rows fan out)")
+			: TEXT("X (curve along the run)");
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT(" Rotation Progression Axis Toggled: Now %s"), AxisDescription);
+		UpdateCounterState(CounterState);
+	}
 	else if (bRecipeModeActive)
 	{
 		// Recipe mode: Clear manual selection completely
@@ -526,10 +542,13 @@ void USFSubsystem::OnRotationModeChanged(const FInputActionValue& Value)
 	}
 	if (bRotationModeActive)
 	{
-		// Rotation currently only uses Z axis (horizontal arc)
-		// Phase 2 will add X and Y axes for vertical arches
-		UE_LOG(LogSmartFoundations, Warning, TEXT(" Rotation Mode: ACTIVE (Comma held) - Axis: Z (horizontal arc)"));
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   Current rotation: %.1f° (Num0 to cycle axis when Phase 2 adds X/Y)"), CounterState.RotationZ);
+		// Rotation is ALWAYS yaw (horizontal arc, upright). Num0 toggles the PROGRESSION axis:
+		// X (the run curves as it extends) vs Y (the rows fan out).
+		const TCHAR* ProgressDesc = (CounterState.RotationAxis == ESFScaleAxis::Y)
+			? TEXT("Y (rows fan out)")
+			: TEXT("X (curve along the run)");
+		UE_LOG(LogSmartFoundations, Warning, TEXT(" Rotation Mode: ACTIVE (Comma held) - Progression: %s"), ProgressDesc);
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   Current rotation: %.1f° (Num0 to toggle progression axis X/Y)"), CounterState.RotationZ);
 
 		// Try to acquire lock (Task 52 - centralized)
 		TryAcquireHologramLock();

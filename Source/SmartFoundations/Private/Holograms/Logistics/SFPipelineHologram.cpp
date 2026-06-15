@@ -15,6 +15,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Buildables/FGBuildable.h"
 #include "Buildables/FGBuildablePassthrough.h"
+#include "Hologram/HologramHelpers.h"                // [#383] FHologramAStarNode for Noodle (PathFindingRouteSpline)
 #include "FGRecipeManager.h"
 #include "FGRecipe.h"
 #include "EngineUtils.h"
@@ -507,6 +508,30 @@ void ASFPipelineHologram::SetSnappedConnections(UFGPipeConnectionComponentBase* 
 	}
 }
 
+bool ASFPipelineHologram::ApplyPipeBuildModeRouting(int32 PipeRoutingMode,
+	const FVector& StartPos, const FVector& StartNormal, const FVector& EndPos, const FVector& EndNormal)
+{
+	// [#383] Pipes route each mode through a DISTINCT vanilla function (AutoRouteCurveSpline,
+	// AutoRouteStraightSpline, Auto2DRouteSpline, HorizontalAndVerticalRouteSpline, ...) - unlike belts,
+	// whose single AutoRouteSpline is itself mode-aware. So the belt-style "set a build-mode descriptor
+	// then call AutoRouteSpline" always produced the Auto route (near-straight, diagnostic: len≈straight).
+	// Instead, set the mode and dispatch through TryUseBuildModeRouting, which calls the matching vanilla
+	// routing function per mode (so Curve bows via AutoRouteCurveSpline, etc.).
+	SetRoutingMode(PipeRoutingMode);
+	return TryUseBuildModeRouting(StartPos, StartNormal, EndPos, EndNormal);
+}
+
+void ASFPipelineHologram::RoutePipeLaneWithConfiguredMode(const FVector& StartPos, const FVector& StartNormal,
+	const FVector& EndPos, const FVector& EndNormal)
+{
+	int32 PipeRoutingMode = 0;
+	if (USFSubsystem* SmartSubsystem = USFSubsystem::Get(GetWorld()))
+	{
+		PipeRoutingMode = SmartSubsystem->GetAutoConnectRuntimeSettings().PipeRoutingMode;
+	}
+	ApplyPipeBuildModeRouting(PipeRoutingMode, StartPos, StartNormal, EndPos, EndNormal);
+}
+
 bool ASFPipelineHologram::TryUseBuildModeRouting(
 	const FVector& StartPos,
 	const FVector& StartNormal,
@@ -520,7 +545,7 @@ bool ASFPipelineHologram::TryUseBuildModeRouting(
 	}
 
 	// Select routing mode (set by HUD auto-connect settings).
-	// 0=Auto, 1=2D, 2=Straight, 3=Curve
+	// 0=Auto, 1=Auto2D, 2=Straight, 3=Curve, 4=Noodle, 5=HorizontalToVertical
 	switch (RoutingMode)
 	{
 	case 1:
@@ -531,6 +556,17 @@ bool ASFPipelineHologram::TryUseBuildModeRouting(
 		break;
 	case 3:
 		AutoRouteCurveSpline(StartPos, StartNormal, EndPos, EndNormal);
+		break;
+	case 4:
+		{
+			// [#383] Noodle: A* path-find route (FHologramAStarNode now available via HologramHelpers.h).
+			TArray<FHologramAStarNode> PathNodes;
+			PathFindingRouteSpline(PathNodes, StartPos, StartNormal, EndPos, EndNormal);
+		}
+		break;
+	case 5:
+		// [#383] Horizontal->Vertical transition routing.
+		HorizontalAndVerticalRouteSpline(true, StartPos, StartNormal, EndPos, EndNormal);
 		break;
 	case 0:
 	default:

@@ -231,13 +231,6 @@ public:
 		const TSet<AFGConveyorChainActor*>& ExtraChains);
 
 	/**
-	 * Post-load automated diagnostic: report chain actor issues without mutating conveyor state.
-	 * Intended to be called once after the world is fully loaded (via a deferred timer from USFSubsystem).
-	 * Load-time mutation is intentionally avoided because conveyor chain actors tick on worker threads.
-	 */
-	void RunPostLoadRepair();
-
-	/**
 	 * Destroy all AFGConveyorChainActor instances with zero chain segments (NO_SEGMENTS zombies).
 	 * Safe, idempotent. Called by deferred post-upgrade cleanup and explicit repair flows.
 	 * Public so UpgradeExecutionService can invoke it directly as a safety-net after
@@ -286,27 +279,8 @@ public:
 	 */
 	void ScheduleDeferredZombiePurge(float DelaySeconds);
 
-	/**
-	 * Scan the entire map for invalid chain actor states without making any repairs.
-	 * Reports: NO_SEGMENTS zombie chain actors and SPLIT_CHAIN pairs (adjacent flat belts
-	 * in different chain actors). Legitimate split boundaries (lift/cross-level) are excluded.
-	 *
-	 * Intended to be called from the UI Detect button before asking the player to confirm repair.
-	 * Safe to call at any time; read-only.
-	 */
-	FSFChainDiagnosticResult DetectChainActorIssues() const;
-
-	/**
-	 * Perform a map-wide chain actor pass:
-	 *   Phase 1 — Purge NO_SEGMENTS zombie chain actors (PurgeZombieChainActors).
-	 *   Phase 2 — Detect and rebuild SPLIT_CHAIN pairs (RepairSplitChains).
-	 *   Phase 3 — Re-register live conveyors from orphaned tick groups after the world has settled.
-	 *
-	 * This is the explicit repair action for the UI Repair button. Post-load checks are
-	 * diagnostic-only and deliberately do not call this path. Returns a result struct
-	 * summarising repairs and orphan candidates.
-	 */
-	FSFChainRepairResult RepairAllChainActorIssues();
+	// [Track E] DetectChainActorIssues() / RepairAllChainActorIssues() removed - they were the
+	// chain-repair triage tooling behind the (now removed) Upgrade Triage tab's Detect/Repair buttons.
 
 	/**
 	 * Diagnostic: dump a single failing tick group's topology to a timestamped JSON file
@@ -347,13 +321,7 @@ private:
 	 */
 	int32 RepairSplitChains();
 
-	/**
-	 * Finds orphaned tick groups and re-registers their live conveyors through vanilla's
-	 * RemoveConveyor/AddConveyor path. Intended only for explicit Triage repair after the
-	 * save has loaded and the world is stable, not for automatic load-time mutation.
-	 * Returns the number of live conveyors submitted for re-registration.
-	 */
-	int32 RepairOrphanedBelts(FSFChainRepairResult* OutResult = nullptr);
+	// [Track E] RepairOrphanedBelts() removed (chain-repair triage tooling).
 
 private:
 	UPROPERTY()

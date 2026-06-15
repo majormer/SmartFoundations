@@ -21,8 +21,8 @@ UENUM()
 enum class ESmartUpgradeTab : uint8
 {
 	Radius,
-	Traversal,
-	Triage
+	Traversal
+	// [Track E] Triage tab removed - the chain-repair Detect/Repair tooling is gone (stop silent world-repair).
 };
 
 // Forward declarations
@@ -99,6 +99,9 @@ protected:
 	UPROPERTY(meta = (BindWidgetOptional))
 	TObjectPtr<class UButton> TraversalTabButton;
 
+	// [Track E] The Triage tab's tooling/handlers were removed. The widgets remain in the Blueprint
+	// (a clean delete via AdaMCP left dangling variable GUIDs that fail cook), so we keep the tab
+	// button + content bound here only to COLLAPSE them at construct - the tab is hidden, never wired.
 	UPROPERTY(meta = (BindWidgetOptional))
 	TObjectPtr<class UButton> TriageTabButton;
 
@@ -109,24 +112,9 @@ protected:
 	UPROPERTY(meta = (BindWidgetOptional))
 	TObjectPtr<class UVerticalBox> TraversalContent;
 
+	// [Track E] Collapsed at construct (see TriageTabButton note); not wired to any handler.
 	UPROPERTY(meta = (BindWidgetOptional))
 	TObjectPtr<class UVerticalBox> TriageContent;
-
-	/** Triage tab widgets */
-	UPROPERTY(meta = (BindWidgetOptional))
-	TObjectPtr<class UTextBlock> TriageWarningText;
-
-	UPROPERTY(meta = (BindWidgetOptional))
-	TObjectPtr<class UButton> TriageDetectButton;
-
-	UPROPERTY(meta = (BindWidgetOptional))
-	TObjectPtr<class UTextBlock> TriageDetectResultText;
-
-	UPROPERTY(meta = (BindWidgetOptional))
-	TObjectPtr<class UButton> TriageRepairButton;
-
-	UPROPERTY(meta = (BindWidgetOptional))
-	TObjectPtr<class UTextBlock> TriageRepairResultText;
 
 	/** Radius tab widgets */
 	UPROPERTY(meta = (BindWidgetOptional))
@@ -247,19 +235,13 @@ private:
 	UFUNCTION()
 	void OnTraversalTabClicked();
 
-	UFUNCTION()
-	void OnTriageTabClicked();
+	// [Track E] OnTriageTabClicked removed.
 
 	/** Handle traversal scan button click */
 	UFUNCTION()
 	void OnTraversalScanClicked();
 
-	/** Triage tab button handlers */
-	UFUNCTION()
-	void OnTriageDetectClicked();
-
-	UFUNCTION()
-	void OnTriageRepairClicked();
+	// [Track E] OnTriageDetectClicked / OnTriageRepairClicked removed (chain-repair tooling gone).
 
 	void SwitchToTab(ESmartUpgradeTab NewTab);
 

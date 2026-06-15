@@ -556,14 +556,17 @@ TPair<FString, FString> USFHudService::BuildCounterDisplayLines() const
 		Lines.Add(LOCTEXT("HUD_StaggerDefault", "Stagger*: 0.0m").ToString());
 	}
 
-	// Rotation lines (radial/arc placement)
+	// Rotation lines (radial/arc placement). Rotation is ALWAYS yaw; RotationAxis is the
+	// PROGRESSION axis (X-clones vs Y-rows), never Z. Show the row whenever rotation is active
+	// or a non-zero angle is set — NOT gated on a specific axis value.
 	const bool bRotationActive = Subsystem->IsRotationModeActive();
 	const ESFScaleAxis RotationAxis = Subsystem->GetCurrentRotationAxis();
-	const bool bShowRotationZ = !FMath::IsNearlyZero(State.RotationZ) || (bRotationActive && RotationAxis == ESFScaleAxis::Z);
+	const TCHAR* RotationAxisLabel = (RotationAxis == ESFScaleAxis::Y) ? TEXT("Y") : TEXT("X");
+	const bool bShowRotationZ = !FMath::IsNearlyZero(State.RotationZ) || bRotationActive;
 	bool bAnyRotationPrinted = false;
 	if (bShowRotationZ)
 	{
-		const bool bIsActive = (bRotationActive && RotationAxis == ESFScaleAxis::Z);
+		const bool bIsActive = bRotationActive;
 
 		// DESIGN DECISION: Show degrees + abbreviated calculated info
 		// Calculate radius and buildings-per-circle for user reference
@@ -577,7 +580,8 @@ TPair<FString, FString> USFHudService::BuildCounterDisplayLines() const
 
 		if (Radius > 0.0f && BuildingsPerCircle > 0)
 		{
-			Lines.Add(FText::Format(LOCTEXT("HUD_RotationZFull", "Rotation [Z]{0}: {1}\u00B0 (R={2}m, {3}/circle)"),
+			Lines.Add(FText::Format(LOCTEXT("HUD_RotationZFull", "Rotation [{0}]{1}: {2}\u00B0 (R={3}m, {4}/circle)"),
+				FText::FromString(RotationAxisLabel),
 				FText::FromString(bIsActive ? TEXT("*") : TEXT("")),
 				FText::FromString(FString::Printf(TEXT("%.1f"), State.RotationZ)),
 				FText::FromString(FString::Printf(TEXT("%.1f"), Radius)),
@@ -585,7 +589,8 @@ TPair<FString, FString> USFHudService::BuildCounterDisplayLines() const
 		}
 		else
 		{
-			Lines.Add(FText::Format(LOCTEXT("HUD_RotationZ", "Rotation [Z]{0}: {1}\u00B0"),
+			Lines.Add(FText::Format(LOCTEXT("HUD_RotationZ", "Rotation [{0}]{1}: {2}\u00B0"),
+				FText::FromString(RotationAxisLabel),
 				FText::FromString(bIsActive ? TEXT("*") : TEXT("")),
 				FText::FromString(FString::Printf(TEXT("%.1f"), State.RotationZ))).ToString());
 		}

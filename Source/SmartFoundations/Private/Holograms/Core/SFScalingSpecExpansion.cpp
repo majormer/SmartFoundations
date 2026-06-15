@@ -239,14 +239,18 @@ int32 ExpandScalingSpecIntoChildren(AFGHologram* Parent, const FSFScalingSpec& S
 				++LinearIndex;
 
 				// [#363] Rotation mode: each cell rotates progressively along the arc, exactly
-				// like SP's grid spawner (ChildYawOffset = X index * RotationZ). The calculator
-				// already curves the POSITIONS from the spec's counters; the expansion was
-				// pinning every cell's FACING to the parent - MP clients previewed curved runs
-				// that built with unrotated cells (Discord report, day one of 32.0.0).
+				// like SP's grid spawner. The calculator already curves the POSITIONS from the
+				// spec's counters; the expansion was pinning every cell's FACING to the parent -
+				// MP clients previewed curved runs that built with unrotated cells (Discord report,
+				// day one of 32.0.0).
+				// [#372] Yaw builds up along the SAME axis the arc progresses on (default X, or Y when
+				// RotationAxis == Y - rows fan out), matching SFGridSpawnerService. GX/GY are signed.
 				FRotator CellRot = ParentRot;
 				if (!FMath::IsNearlyZero(C.RotationZ))
 				{
-					CellRot.Yaw += GX * C.RotationZ;
+					// Y-progression swaps forward/curve axes (reflection) -> negate so the turn matches the fan.
+					const int32 RotProgress = (C.RotationAxis == ESFScaleAxis::Y) ? -GY : GX;
+					CellRot.Yaw += RotProgress * C.RotationZ;
 				}
 
 				const FName ChildName(*FString::Printf(TEXT("SFSpecCell_%d_%d_%d"), GX, GY, GZ));

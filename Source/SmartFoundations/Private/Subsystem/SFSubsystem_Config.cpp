@@ -1726,12 +1726,20 @@ TArray<FString> USFSubsystem::GetDirtyAutoConnectSettings() const
 
 void USFSubsystem::ResetAutoConnectRuntimeSettings()
 {
-	// Reset runtime settings to match FRESH config (not cached)
-	// This ensures config changes made mid-session take effect when equipping a new hologram
+	// [#371] Called when the active hologram INSTANCE changes - i.e. on equip/recipe change and on the
+	// fresh hologram the build gun spawns AFTER a construct, but NOT while aiming (the same instance is
+	// just repositioned; see RegisterActiveHologram's CurrentHologram != ActiveHologram guard). Smart
+	// Panel / hotkey edits are a TEMPORARY one-off override of the global-config defaults for a SINGLE
+	// build: they survive aiming the current placement (the just-built building's auto-connect reads
+	// them before the next hologram registers), but once that placement is built we re-read the global
+	// config here so the override does NOT carry to the next build. Per the maintainer's decision on
+	// issue #371, the Panel is a per-build override only - anything that should persist between builds
+	// belongs in the global settings (Pause -> Mods -> Smart!), which already exist for that purpose.
 	FSmart_ConfigStruct FreshConfig = FSmart_ConfigStruct::GetActiveConfig(this);
-	AutoConnectRuntimeSettings.InitFromConfig(FreshConfig);
+	AutoConnectRuntimeSettings.InitFromConfig(FreshConfig);  // clears bInitialized -> back to config-tracking
+	CachedConfig = FreshConfig;                              // new baseline for future change detection
 
-	// Issue #257: Refresh Extend enabled state from fresh config
+	// Issue #257: Refresh Extend enabled state from fresh config (independent of the override above)
 	bExtendEnabledByConfig = FreshConfig.bExtendEnabled;
 
 	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT(" Auto-Connect runtime settings reset from config:"));
