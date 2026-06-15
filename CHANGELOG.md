@@ -24,7 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
-- **The Upgrade panel's "Triage" tab** - The Smart! Upgrade panel had a third "Triage" tab with "Detect Issues" and "Repair All Issues" tools that rewrote conveyor-chain bookkeeping across your save. That kind of silent world-repair doesn't belong in a building mod - the corruption it chased is usually introduced by other mods - so the tab and its tooling have been removed (together with the load-time repair sweep above). The Radius and Network upgrade tabs are unchanged. (Issue #367)
+- **The Upgrade panel's "Triage" tab** - The Smart! Upgrade panel had a third "Triage" tab with "Detect Issues" and "Repair All Issues" tools. These were added early on to clean up conveyor-chain bookkeeping problems that Smart!'s own Upgrade feature could introduce while that feature was still being stabilized. Upgrade has since settled and no longer causes those problems, so the repair tools are no longer needed - and leaving manual "repair all" buttons in place risks actions that could adversely affect a save. The tab and its tooling have been removed; the Radius and Network upgrade tabs are unchanged. (Issue #367)
 
 ### Fixed
 
