@@ -11,7 +11,7 @@ Open it with `K`.
 Use the Smart Settings Form for:
 
 - Grid size.
-- Spacing, Steps, Stagger, and Rotation.
+- Spacing, Steps, Stagger, and Rotation. The Rotation row also has an **X/Y selector** that chooses which grid axis the rotation builds up along — X curves the run, Y fans the rows out (see [Transforms](Transforms)).
 - Recipe selection.
 - Belt Auto-Connect settings.
 - Pipe Auto-Connect settings.

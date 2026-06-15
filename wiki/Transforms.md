@@ -54,7 +54,7 @@ Controls:
 
 ## Rotation
 
-Rotation places copies around a horizontal arc.
+Rotation places copies around a horizontal arc — each copy is yawed a little more than the last.
 
 Use it for:
 
@@ -65,6 +65,9 @@ Use it for:
 Controls:
 
 - Hold `,`.
-- Use `Num 8`, `Num 5`, or mouse wheel.
+- Use `Num 8`, `Num 5`, or mouse wheel to set the per-copy angle.
+- Press `Num 0` (or use the **X/Y selector on the Rotation row of the Smart! Panel**) to choose which grid axis the rotation builds up along:
+  - **X** (default) — the rotation accumulates along the columns, so the **run** curves as it extends.
+  - **Y** — the rotation accumulates along the rows, so the **rows** fan out around the vertical instead.
 
-Current Smart! builds support Z-axis rotation for horizontal arcs. Vertical arch rotation is not currently an active feature.
+Either way it stays a flat, upright arc — nothing ever tilts or flips. (Smart! rotates around the vertical/yaw axis only; vertical arch rotation is not currently an active feature.)
