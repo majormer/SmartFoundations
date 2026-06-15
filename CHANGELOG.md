@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [32.1.1] - Unreleased
+## [32.1.1] - 2026-06-15
 
 > *A maintenance release: community-reported bug fixes, on a codebase reorganized so multiplayer issues are faster to track down.*
 
@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **Smart! no longer auto-repairs conveyor chains when a save loads** - Smart! used to run an automatic conveyor-chain repair sweep a few seconds after every save load, to clean up corrupted chain bookkeeping. It no longer does. A save that carries chain corruption - which is most often introduced by *other* mods - now loads untouched, so Smart! neither silently changes your world nor gets blamed for problems it didn't cause. The runtime crash protections stay in place (Smart! still prevents the known belt-related crashes as you build and dismantle), and Smart! still tidies up the chains it builds itself. A separate, opt-in cleanup mod is planned for the rarer case where you genuinely need to repair an already-corrupted save. (Issue #367)
+- **Smart! no longer auto-repairs conveyor chains when a save loads** - Smart! used to run an automatic conveyor-chain repair sweep a few seconds after every save load, to clean up corrupted chain bookkeeping. It no longer does. A save that carries chain corruption - which is most often introduced by *other* mods - now loads untouched, so Smart! neither silently changes your world nor gets blamed for problems it didn't cause. The runtime crash protections stay in place (Smart! still prevents the known belt-related crashes as you build and dismantle), and Smart! still tidies up the chains it builds itself. A separate, opt-in cleanup mod is planned for the rarer case where you genuinely need to repair an already-corrupted save. (Issue #367, reported by Mawie the Fox)
 - **Under the hood: groundwork for faster multiplayer fixes** - The first stage of an ongoing internal reorganization: Smart!'s multiplayer networking code was consolidated into one place, and the features whose single-player and multiplayer behavior differ now carry a short map of exactly where they diverge. This is partial - more cleanup is planned - and nothing about how Smart! builds or plays changes. It's groundwork that makes multiplayer bug reports faster to track down and fix. (Ongoing refactor #377)
 
 ### Removed
@@ -28,7 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- **Dedicated servers: no more chain-diagnostic log spam on shutdown** - Shutting down a dedicated server made Smart! log a warning for every factory building ("...died while still in a factory-tick entry..."). The warnings were harmless - that check is only meaningful when a building is destroyed mid-game - but they flooded the shutdown log. Smart! now only logs it for real in-game destruction, so server shutdown stays quiet. (Issue #381)
+- **Dedicated servers: no more chain-diagnostic log spam on shutdown** - Shutting down a dedicated server made Smart! log a warning for every factory building ("...died while still in a factory-tick entry..."). The warnings were harmless - that check is only meaningful when a building is destroyed mid-game - but they flooded the shutdown log. Smart! now only logs it for real in-game destruction, so server shutdown stays quiet. (Issue #381, reported by DarthPorisius)
 - **Belt routing modes (Curve / Straight) now actually take effect** - Choosing Curve or Straight for your belt routing barely changed anything - auto-connected belts and Extend lane belts came out nearly straight regardless of the setting. Smart! now uses the game's own belt build modes, so Curve bows the belt exactly like the build gun's Curve mode and Straight runs dead straight - for both auto-connect belts and Extend / Scaled Extend lane belts, in single-player and multiplayer. (The short belts inside each extended machine are exact copies of the source and are intentionally left unchanged.) (Issue #380, reported by @SanderKlomp)
 - **Pipe routing modes now all take effect (Auto 2D, Straight, Curve, Noodle, Horizontal→Vertical)** - The pipe routing dropdown offered six modes, but only the default actually routed - Curve, Auto 2D, Noodle, and Horizontal→Vertical had no visible effect on auto-connected pipes or Extend pipe lanes. Smart! now uses the game's own pipe routing for each mode, so every one routes just like the build gun does, for both auto-connect and Extend / Scaled Extend. (Issue #383)
 - **Multiplayer: rotated Extend now builds the parent copy's belts and lane correctly** - On a dedicated server, extending a line of machines with rotation rotated each copy's machine, but the first ("parent") copy's belts stayed at the source orientation and the lane joining the next machine to it missed the connector - it only looked right in single-player. The server now rotates the parent copy's belts to match the preview and joins the lane to the parent's actual rotated position. (Issue #382)
