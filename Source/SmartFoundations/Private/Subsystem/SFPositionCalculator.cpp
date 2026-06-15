@@ -182,15 +182,20 @@ void FSFPositionCalculator::UpdateChildPositions(
 						FRotator ChildRotation = ParentRotation;
 						if (!FMath::IsNearlyZero(CounterState.RotationZ))
 						{
-							// ROTATION MODE: Each child rotates progressively along the arc
-							// Each building rotates to face tangent to the arc (same direction as arc curves)
-							// The rotation matches the arc direction - positive RotationZ = clockwise arc = clockwise building rotation
-							float ChildYawOffset = (X * XDir) * CounterState.RotationZ;
+							// ROTATION MODE: Each child rotates progressively along the arc, tangent to it.
+							// [#372] The yaw must build up along the SAME axis the arc progresses on (matches
+							// CalculateRotationOffset's AngleDegrees = ProgressIndex * RotationZ). Default is X
+							// (the run curves); with RotationAxis == Y the rows fan out, so drive the yaw by Y.
+							// Without this, a 1-wide Y-progression grid keeps X==0 and the buildings never turn.
+							// Y-progression swaps forward/curve axes (reflection) -> negate so the turn matches the fan.
+							const int32 RotProgress = (CounterState.RotationAxis == ESFScaleAxis::Y)
+								? -(Y * YDir) : (X * XDir);
+							float ChildYawOffset = RotProgress * CounterState.RotationZ;
 							ChildRotation.Yaw += ChildYawOffset;
-							
-							UE_LOG(LogSmartFoundations, Verbose, 
-								TEXT("🔄 Child[%d] X=%d: ParentYaw=%.1f° + Offset=%.1f° = FinalYaw=%.1f°"),
-								ChildIndex, X * XDir, ParentRotation.Yaw, ChildYawOffset, ChildRotation.Yaw);
+
+							UE_LOG(LogSmartFoundations, Verbose,
+								TEXT("🔄 Child[%d] progress=%d: ParentYaw=%.1f° + Offset=%.1f° = FinalYaw=%.1f°"),
+								ChildIndex, RotProgress, ParentRotation.Yaw, ChildYawOffset, ChildRotation.Yaw);
 						}
 						
 						// Set child transform

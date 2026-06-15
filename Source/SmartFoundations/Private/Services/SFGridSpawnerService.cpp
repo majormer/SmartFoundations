@@ -463,12 +463,18 @@ void USFGridSpawnerService::UpdateChildPositions()
             // ROTATION MODE: Each child rotates progressively along the arc
             // Each building rotates to face tangent to the arc (same direction as arc curves)
             // The rotation matches the arc direction - positive RotationZ = clockwise arc = clockwise building rotation
-            float ChildYawOffset = GridIndex.X * Counter.RotationZ;
+            // [#372] Yaw builds up along the SAME axis the arc progresses on (matches the position
+            // fan): default X (run curves), or Y when RotationAxis == Y (rows fan out). GridIndex.X/.Y
+            // are signed (X*XDir / Y*YDir). Without the Y case a 1-wide Y grid keeps X==0 -> no turn.
+            // Y-progression swaps the arc's forward/curve axes (X<->Y), a reflection that flips the
+            // tangent handedness - negate the Y case so each building turns WITH the fan, not against it.
+            const int32 RotProgress = (Counter.RotationAxis == ESFScaleAxis::Y) ? -GridIndex.Y : GridIndex.X;
+            float ChildYawOffset = RotProgress * Counter.RotationZ;
             ChildRotation.Yaw += ChildYawOffset;
 
             UE_LOG(LogSmartGrid, Verbose,
-                TEXT("🔄 Spawn Child[%d] X=%d: ParentYaw=%.1f° + Offset=%.1f° = FinalYaw=%.1f°"),
-                GridIndex.ChildArrayIndex, GridIndex.X, ParentRotation.Yaw, ChildYawOffset, ChildRotation.Yaw);
+                TEXT("🔄 Spawn Child[%d] progress=%d: ParentYaw=%.1f° + Offset=%.1f° = FinalYaw=%.1f°"),
+                GridIndex.ChildArrayIndex, RotProgress, ParentRotation.Yaw, ChildYawOffset, ChildRotation.Yaw);
         }
         // Issue #171: Use actor transforms directly for ALL children instead of
         // SetHologramLocationAndRotation, which floor-traces/snaps and applies offsets.
