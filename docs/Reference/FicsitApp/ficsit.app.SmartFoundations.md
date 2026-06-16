@@ -8,6 +8,18 @@
 
 ---
 
+<div align="center">
+
+### ▶ [Watch the Official Smart! Trailer](https://www.youtube.com/watch?v=FTlTEfIbBxw)
+
+[![Watch the official Smart! trailer](https://img.youtube.com/vi/FTlTEfIbBxw/maxresdefault.jpg)](https://www.youtube.com/watch?v=FTlTEfIbBxw)
+
+**New to Smart!? Start here — a four-minute tour of everything it does.**
+
+</div>
+
+---
+
 ## 🚀 What is Smart!?
 
 Smart! is a building-assist mod for Satisfactory. It helps you place repeated layouts faster while still using normal Satisfactory buildings and normal material costs.
