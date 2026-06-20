@@ -155,6 +155,16 @@ public:
     FVector GetFurthestScaledCloneWorldPosition(const FVector& FallbackLocation) const;
 
     /**
+     * [#373] World position of the FURTHEST clone for a SMART RESTORE of an Extend pattern, used by the
+     * Smart Camera. Restore is a distinct path from live scaled extend (IsScaledExtendActive is false -
+     * no live target), so the camera would otherwise fall to the generic grid formula, which computes the
+     * MIRROR of the restore's actual direction. This computes the furthest cell with the SAME function the
+     * restored clones use (CalculateRestoredScaledClonePlacement), relative to the stored restore parent,
+     * so the focus can never disagree with the placement. Returns FallbackLocation if no restore is active.
+     */
+    FVector GetFurthestRestoredCloneWorldPosition(const FVector& FallbackLocation) const;
+
+    /**
      * Get the invalidation reason if the current scaled extend configuration is invalid.
      * Returns empty string if valid.
      */

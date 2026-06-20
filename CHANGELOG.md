@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [32.1.2] - Unreleased
 
-> *In progress — community-reported bug fixes for the Blueprint Designer and placement, plus a recipe-memory opt-out. Entries below are drafts and may change before release.*
+> *In progress — a community-reported bug-fix patch: Blueprint Designer recipe loss, multiplayer recipe selection, stackable pipelines, Extend manifold clearance, a recipe-memory opt-out, the Auto-Hold default, Smart Camera Extend tracking, Smart Restore scaling/camera, and a full logging-noise pass. Entries below are drafts and may change before release.*
 
 ### Added
 
@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **Auto-Hold on Grid Change now defaults on** *(in progress)* - The option that automatically locks the hologram in place after you change its grid (so it doesn't drift while you reposition the camera) now defaults to **on**, restoring the behavior Smart! had before this became a toggle. You can still turn it off in the mod config, and the vanilla Hold key releases any individual lock. (Issue #279)
+- **Much quieter logging by default** *(in progress)* - Smart!'s diagnostic logging was audited end to end. The many status messages that used to print during normal building, scaling, and connecting are now diagnostic-only, and the internal log categories default to errors-only. Together with the chain-diagnostic fix below, the game and dedicated-server logs now stay essentially quiet unless something actually goes wrong - smaller log files and a little less overhead in long sessions. (Any category can still be turned up at runtime for troubleshooting.)
 
 ### Fixed
 
@@ -31,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Remembered recipe now clears when you holster the build gun** *(in progress)* - The recipe Smart! remembers (from picking one, or middle-click sampling a building) stayed set after you put the build gun away - it still showed in the panel and pre-filled the next machine you placed, so you had to Clear it by hand. Switching to a weapon (or any other equipment) and back now gives you a clean slate. (Issue #392)
 - **Fixed a logging flood that could hurt frame rate in large factories** *(in progress)* - Smart!'s internal belt-chain safety guards (which prevent a known crash during heavy building and dismantling) wrote a warning to the log every single time they ran - which in a big, busy factory meant tens of thousands of lines per session, enough to drag down FPS through sheer log volume. The guards still do their job; they're just silent now unless you explicitly enable diagnostic logging. (Issue #393, reported on the Smart! Discord)
 - **Smart Camera now follows the head of an Extend run** *(in progress)* - With the Smart! Camera companion mod, the picture-in-picture view didn't track the leading building while you scaled an Extend - it framed the wrong spot (it followed the wrong axis and ignored your spacing/steps), and the problem was especially visible in multiplayer. The camera now follows the furthest building in the run, whichever side you extend to, matching where the copies actually land. (Issue #373; requires the Smart! Camera mod)
+- **Smart Restore: Extend patterns scale the way you scroll, and the camera follows them** *(in progress)* - Restoring a saved Extend pattern and scaling it had two problems: it would only grow in one fixed direction (you couldn't scroll the other way along X to extend back), and the Smart Camera framed the *opposite* end from where the buildings actually went. Restoring an Extend pattern now scales **bidirectionally** on X - scroll either way to extend that way (intentionally more flexible than a fresh Scaled Extend, which locks to the side you pick) - and, with the Smart! Camera mod, the picture-in-picture tracks the real head of the restored run. (Issue #394)
 
 ---
 

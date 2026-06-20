@@ -360,6 +360,32 @@ FVector USFExtendService::GetFurthestScaledCloneWorldPosition(const FVector& Fal
     return FurthestOffset ? (SourceLocation + *FurthestOffset) : FallbackLocation;
 }
 
+FVector USFExtendService::GetFurthestRestoredCloneWorldPosition(const FVector& FallbackLocation) const
+{
+    // [#373] Smart Restore replays a captured Extend pattern via a different path than live scaled extend
+    // (no live target, so IsScaledExtendActive() is false) - the camera therefore can't read the live
+    // ScaledExtendClones store, and the generic grid focus computes the MIRROR of the restore's actual
+    // direction. Compute the furthest cell with the SAME function the restored clones use, relative to the
+    // parent they were placed against, so the focus matches the run exactly (including the bidirectional
+    // scroll sign). Falls back to the caller's location when no restore is active.
+    if (!bRestoredCloneTopologyActive || !RestoredCloneTopologyTemplate.IsValid() || !Subsystem.IsValid())
+    {
+        return FallbackLocation;
+    }
+    AFGHologram* Parent = RestoredCloneParentHologram.Get();
+    if (!Parent)
+    {
+        return FallbackLocation;
+    }
+
+    const FSFCounterState& State = Subsystem->GetCounterState();
+    const int32 FurthestX = FMath::Max(1, FMath::Abs(State.GridCounters.X)) - 1;
+    const int32 FurthestY = FMath::Max(1, FMath::Abs(State.GridCounters.Y)) - 1;
+    const FRestoredScaledClonePlacement Placement = CalculateRestoredScaledClonePlacement(
+        Parent, RestoredCloneTopologyTemplate.Get(), State, FurthestX, FurthestY);
+    return Parent->GetActorLocation() + Placement.WorldOffset;
+}
+
 FVector USFExtendService::GetDirectionOffset(const FVector& BuildingSize, const FRotator& BuildingRotation) const
 {
     // Calculate offset perpendicular to belt direction (Left/Right only)

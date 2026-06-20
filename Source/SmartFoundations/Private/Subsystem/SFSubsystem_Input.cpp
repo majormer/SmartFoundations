@@ -80,6 +80,15 @@ FVector USFSubsystem::GetFurthestTopHologramPosition() const
         return ActiveHologram->GetActorLocation();
     }
 
+    // [#373] Smart Restore of an Extend pattern is its OWN focus path - it has no live extend target, so
+    // IsScaledExtendActive() is false and the generic grid path below would frame the MIRROR of the run
+    // (the reported "camera follows the opposite of the scaled direction"). Read the furthest restored
+    // clone from the same placement math the restore uses, so the focus matches the actual clones.
+    if (ExtendService && ExtendService->IsRestoredCloneTopologyActive())
+    {
+        return ExtendService->GetFurthestRestoredCloneWorldPosition(ActiveHologram->GetActorLocation());
+    }
+
     // Calculate furthest grid position based on direction
     // The "furthest top" is at the corner furthest from the parent (X,Y)
     // and at the TOP Z level (highest)
