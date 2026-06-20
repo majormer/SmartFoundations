@@ -51,7 +51,7 @@ void FSFHologramHelperService::Shutdown()
 	ActiveHologram.Reset();
 	WorldContext.Reset();
 
-	UE_LOG(LogSmartFoundations, Log, TEXT("HologramHelperService: Shutdown complete"));
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("HologramHelperService: Shutdown complete"));
 }
 
 void FSFHologramHelperService::RegisterActiveHologram(AFGHologram* Hologram)
@@ -60,7 +60,7 @@ void FSFHologramHelperService::RegisterActiveHologram(AFGHologram* Hologram)
 
 	if (!Hologram || !IsValid(Hologram))
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("HologramHelperService: Cannot register invalid hologram"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("HologramHelperService: Cannot register invalid hologram"));
 		return;
 	}
 
@@ -203,7 +203,7 @@ void FSFHologramHelperService::RegenerateChildHologramGrid(
 			if (!bZoopActive)
 			{
 				bZoopActive = true;
-				UE_LOG(LogSmartFoundations, Warning,
+				UE_LOG(LogSmartFoundations, Verbose,
 					TEXT("⚠️ Zoop detected (%d instances) - Smart! scaling disabled to prevent overlap."),
 					ZoopTransforms.Num());
 			}
@@ -278,7 +278,7 @@ void FSFHologramHelperService::RegenerateChildHologramGrid(
 	else
 	{
 		// Fallback if module not initialized (shouldn't happen)
-		UE_LOG(LogSmartFoundations, Error, TEXT("ValidationService module not initialized!"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("ValidationService module not initialized!"));
 		int32 TotalItems = FMath::Abs(GridCounters.X) * FMath::Abs(GridCounters.Y) * FMath::Abs(GridCounters.Z);
 		ChildrenNeeded = FMath::Max(0, TotalItems - 1);
 	}
@@ -303,7 +303,7 @@ void FSFHologramHelperService::RegenerateChildHologramGrid(
 	{
 		if (ChildrenNeeded > GRID_CHILDREN_HARD_CAP)
 		{
-			UE_LOG(LogSmartFoundations, Error,
+			UE_LOG(LogSmartFoundations, Verbose,
 				TEXT("🛑 CRITICAL: Grid size capped from %d to %d children to prevent engine crash!"),
 				ChildrenNeeded, GRID_CHILDREN_HARD_CAP);
 
@@ -316,7 +316,7 @@ void FSFHologramHelperService::RegenerateChildHologramGrid(
 			// Recalculate children needed with capped dimensions
 			ChildrenNeeded = FMath::Max(0, (FMath::Abs(GridCounters.X) * FMath::Abs(GridCounters.Y) * FMath::Abs(GridCounters.Z)) - 1);
 
-			UE_LOG(LogSmartFoundations, Warning,
+			UE_LOG(LogSmartFoundations, Verbose,
 				TEXT("   Grid adjusted to %dx%dx%d = %d children"),
 				GridCounters.X, GridCounters.Y, GridCounters.Z, ChildrenNeeded);
 		}
@@ -406,7 +406,7 @@ void FSFHologramHelperService::RegenerateChildHologramGrid(
 		TSubclassOf<UFGRecipe> Recipe = ParentHologram->GetRecipe();
 		if (!Recipe)
 		{
-			UE_LOG(LogSmartFoundations, Error, TEXT("RegenerateChildHologramGrid: Parent hologram has no recipe!"));
+			UE_LOG(LogSmartFoundations, Verbose, TEXT("RegenerateChildHologramGrid: Parent hologram has no recipe!"));
 			return;
 		}
 
@@ -414,7 +414,7 @@ void FSFHologramHelperService::RegenerateChildHologramGrid(
 		UWorld* World = WorldContext.Get();
 		if (!World)
 		{
-			UE_LOG(LogSmartFoundations, Error, TEXT("RegenerateChildHologramGrid: No world context!"));
+			UE_LOG(LogSmartFoundations, Verbose, TEXT("RegenerateChildHologramGrid: No world context!"));
 			return;
 		}
 
@@ -1006,7 +1006,7 @@ void FSFHologramHelperService::RegenerateChildHologramGrid(
 			}
 			else
 			{
-				UE_LOG(LogSmartFoundations, Error, TEXT("  FAILED to spawn child %s!"), *ChildName.ToString());
+				UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("  FAILED to spawn child %s!"), *ChildName.ToString());
 			}
 		}
 

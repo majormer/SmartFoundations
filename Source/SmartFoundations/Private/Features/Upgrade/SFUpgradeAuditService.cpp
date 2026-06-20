@@ -80,7 +80,7 @@ bool USFUpgradeAuditService::StartAudit(const FSFUpgradeAuditParams& Params)
 {
 	if (bAuditInProgress)
 	{
-		UE_LOG(LogSmartUpgrade, Warning, TEXT("USFUpgradeAuditService: Audit already in progress, canceling previous"));
+		UE_LOG(LogSmartUpgrade, Verbose, TEXT("USFUpgradeAuditService: Audit already in progress, canceling previous"));
 		CancelAudit();
 	}
 
@@ -283,12 +283,12 @@ int32 USFUpgradeAuditService::GetBuildableTier(AFGBuildable* Buildable)
 		FString TierPattern = FString::Printf(TEXT("Mk%d"), Tier);
 		if (ClassName.Contains(TierPattern))
 		{
-			UE_LOG(LogSmartUpgrade, Verbose, TEXT("GetBuildableTier: %s matched pattern %s -> Tier %d"), *ClassName, *TierPattern, Tier);
+			UE_LOG(LogSmartUpgrade, VeryVerbose, TEXT("GetBuildableTier: %s matched pattern %s -> Tier %d"), *ClassName, *TierPattern, Tier);
 			return Tier;
 		}
 	}
 	
-	UE_LOG(LogSmartUpgrade, Warning, TEXT("GetBuildableTier: %s did not match any Mk pattern, falling back"), *ClassName);
+	UE_LOG(LogSmartUpgrade, VeryVerbose, TEXT("GetBuildableTier: %s did not match any Mk pattern, falling back"), *ClassName);
 
 	// Check for numeric suffixes (_01, _02, etc.)
 	for (int32 Tier = 6; Tier >= 1; --Tier)
@@ -390,7 +390,7 @@ void USFUpgradeAuditService::GatherBuildablesToScan()
 	UWorld* World = Subsystem ? Subsystem->GetWorld() : nullptr;
 	if (!World)
 	{
-		UE_LOG(LogSmartUpgrade, Error, TEXT("USFUpgradeAuditService: No valid world for scanning"));
+		UE_LOG(LogSmartUpgrade, Verbose, TEXT("USFUpgradeAuditService: No valid world for scanning"));
 		return;
 	}
 
@@ -602,7 +602,7 @@ void USFUpgradeAuditService::FinalizeAudit()
 			}
 			else
 			{
-				UE_LOG(LogSmartUpgrade, Warning,
+				UE_LOG(LogSmartUpgrade, Verbose,
 					TEXT("USFUpgradeAuditService: Could not resolve USFRCO for %s - audit result not delivered."),
 					*GetNameSafe(PC));
 			}

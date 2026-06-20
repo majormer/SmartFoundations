@@ -81,7 +81,7 @@ void USFUpgradeExecutionService::StartUpgrade(const FSFUpgradeExecutionParams& P
 {
 	if (bUpgradeInProgress)
 	{
-		UE_LOG(LogSmartUpgrade, Warning, TEXT("UpgradeExecutionService: Upgrade already in progress"));
+		UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: Upgrade already in progress"));
 		return;
 	}
 
@@ -93,7 +93,7 @@ void USFUpgradeExecutionService::StartUpgrade(const FSFUpgradeExecutionParams& P
 
 	if (Params.Family == ESFUpgradeFamily::None || Params.TargetTier == 0)
 	{
-		UE_LOG(LogSmartUpgrade, Warning, TEXT("UpgradeExecutionService: Invalid params - Family=%d TargetTier=%d"),
+		UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: Invalid params - Family=%d TargetTier=%d"),
 			static_cast<int32>(Params.Family), Params.TargetTier);
 		return;
 	}
@@ -101,14 +101,14 @@ void USFUpgradeExecutionService::StartUpgrade(const FSFUpgradeExecutionParams& P
 	// For radius mode, require valid source tier
 	if (!bIsTraversalMode && Params.SourceTier == 0)
 	{
-		UE_LOG(LogSmartUpgrade, Warning, TEXT("UpgradeExecutionService: Invalid source tier for radius mode"));
+		UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: Invalid source tier for radius mode"));
 		return;
 	}
 
 	// For radius mode, target must be greater than source
 	if (!bIsTraversalMode && Params.TargetTier <= Params.SourceTier)
 	{
-		UE_LOG(LogSmartUpgrade, Warning, TEXT("UpgradeExecutionService: Target tier must be greater than source tier"));
+		UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: Target tier must be greater than source tier"));
 		return;
 	}
 
@@ -116,7 +116,7 @@ void USFUpgradeExecutionService::StartUpgrade(const FSFUpgradeExecutionParams& P
 	CurrentTargetRecipe = GetUpgradeRecipe(Params.Family, Params.TargetTier);
 	if (!CurrentTargetRecipe)
 	{
-		UE_LOG(LogSmartUpgrade, Warning, TEXT("UpgradeExecutionService: Could not find recipe for Family=%d Tier=%d"),
+		UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: Could not find recipe for Family=%d Tier=%d"),
 			static_cast<int32>(Params.Family), Params.TargetTier);
 		return;
 	}
@@ -189,7 +189,7 @@ void USFUpgradeExecutionService::StartUpgrade(const FSFUpgradeExecutionParams& P
 				// Ran out of funds - abort remaining upgrades
 				bAbortedDueToFunds = true;
 				WorkingResult.FailCount++;
-				UE_LOG(LogSmartUpgrade, Warning, TEXT("UpgradeExecutionService: Ran out of funds - aborting remaining upgrades"));
+				UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: Ran out of funds - aborting remaining upgrades"));
 			}
 			else
 			{
@@ -344,7 +344,7 @@ void USFUpgradeExecutionService::GatherUpgradeTargets()
 		TSubclassOf<AFGBuildable> SourceClass = GetBuildableClass(CurrentParams.Family, CurrentParams.SourceTier);
 		if (!SourceClass)
 		{
-			UE_LOG(LogSmartUpgrade, Warning, TEXT("UpgradeExecutionService: Could not find source class for Family=%d Tier=%d"),
+			UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: Could not find source class for Family=%d Tier=%d"),
 				static_cast<int32>(CurrentParams.Family), CurrentParams.SourceTier);
 			return;
 		}
@@ -536,7 +536,7 @@ void USFUpgradeExecutionService::CollectConnectedConveyorCohort(AFGBuildableConv
 
 	if (OutCohort.Num() >= MaxCohortSize)
 	{
-		UE_LOG(LogSmartUpgrade, Warning,
+		UE_LOG(LogSmartUpgrade, Verbose,
 			TEXT("UpgradeExecutionService: Conveyor cohort traversal hit safety cap of %d from seed %s"),
 			MaxCohortSize,
 			*StartConveyor->GetName());
@@ -608,7 +608,7 @@ TSubclassOf<UFGRecipe> USFUpgradeExecutionService::GetTargetRecipeForBuildable(A
 	TSubclassOf<UFGRecipe> Recipe = GetUpgradeRecipe(BuildableFamily, CurrentParams.TargetTier);
 	if (!Recipe)
 	{
-		UE_LOG(LogSmartUpgrade, Warning,
+		UE_LOG(LogSmartUpgrade, Verbose,
 			TEXT("UpgradeExecutionService: No target recipe for %s family=%d tier=%d"),
 			*Buildable->GetName(), static_cast<int32>(BuildableFamily), CurrentParams.TargetTier);
 		return nullptr;
@@ -635,7 +635,7 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 	ESFUpgradeFamily ActualFamily = USFUpgradeTraversalService::GetUpgradeFamily(Buildable);
 	if (ActualFamily == ESFUpgradeFamily::None)
 	{
-		UE_LOG(LogSmartUpgrade, Warning, TEXT("UpgradeExecutionService: Cannot determine family for %s"),
+		UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: Cannot determine family for %s"),
 			*Buildable->GetName());
 		return 0;
 	}
@@ -648,7 +648,7 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 		ActualTargetRecipe = GetUpgradeRecipe(ActualFamily, CurrentParams.TargetTier);
 		if (!ActualTargetRecipe)
 		{
-			UE_LOG(LogSmartUpgrade, Warning, TEXT("UpgradeExecutionService: No recipe for Family=%d Tier=%d"),
+			UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: No recipe for Family=%d Tier=%d"),
 				static_cast<int32>(ActualFamily), CurrentParams.TargetTier);
 			return 0;
 		}
@@ -658,7 +658,7 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 	TSubclassOf<AFGBuildable> NewBuildableClass = GetBuildableClass(ActualFamily, CurrentParams.TargetTier);
 	if (!NewBuildableClass)
 	{
-		UE_LOG(LogSmartUpgrade, Warning, TEXT("UpgradeExecutionService: No buildable class for Family=%d Tier=%d"),
+		UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: No buildable class for Family=%d Tier=%d"),
 			static_cast<int32>(ActualFamily), CurrentParams.TargetTier);
 		return 0;
 	}
@@ -683,21 +683,21 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 		: Cast<AFGPlayerController>(World->GetFirstPlayerController());
 	if (!PC)
 	{
-		UE_LOG(LogSmartUpgrade, Warning, TEXT("UpgradeExecutionService: No player controller"));
+		UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: No player controller"));
 		return 0;
 	}
 
 	AFGCharacterPlayer* PlayerChar = Cast<AFGCharacterPlayer>(PC->GetPawn());
 	if (!PlayerChar)
 	{
-		UE_LOG(LogSmartUpgrade, Warning, TEXT("UpgradeExecutionService: No player character"));
+		UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: No player character"));
 		return 0;
 	}
 
 	AFGBuildGun* BuildGun = PlayerChar->GetBuildGun();
 	if (!BuildGun)
 	{
-		UE_LOG(LogSmartUpgrade, Warning, TEXT("UpgradeExecutionService: No build gun"));
+		UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: No build gun"));
 		return 0;
 	}
 
@@ -726,7 +726,7 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 
 		if (!Hologram)
 		{
-			UE_LOG(LogSmartUpgrade, Warning, TEXT("UpgradeExecutionService: SpawnHologramFromRecipe failed"));
+			UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: SpawnHologramFromRecipe failed"));
 			return 0;
 		}
 		UE_LOG(LogSmartUpgrade, VeryVerbose, TEXT("⚙️ STEP 1: Hologram spawned: %s"), *Hologram->GetName());
@@ -745,7 +745,7 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 
 		if (!Hologram->TryUpgrade(HitResult))
 		{
-			UE_LOG(LogSmartUpgrade, Warning, TEXT("UpgradeExecutionService: TryUpgrade failed"));
+			UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: TryUpgrade failed"));
 			Hologram->Destroy();
 			return 0;
 		}
@@ -757,7 +757,7 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 
 		if (!Hologram->IsUpgrade())
 		{
-			UE_LOG(LogSmartUpgrade, Warning, TEXT("UpgradeExecutionService: Hologram is not upgrade after validation"));
+			UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: Hologram is not upgrade after validation"));
 			Hologram->Destroy();
 			return 0;
 		}
@@ -830,7 +830,7 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 					}
 					if (Available < Entry.Value)
 					{
-						UE_LOG(LogSmartUpgrade, Warning, TEXT("UpgradeExecutionService: Cannot afford upgrade - need %d %s, have %d"),
+						UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: Cannot afford upgrade - need %d %s, have %d"),
 							Entry.Value, *UFGItemDescriptor::GetItemName(Entry.Key).ToString(), Available);
 						Hologram->Destroy();
 						return -1;  // Out of funds - abort remaining
@@ -859,7 +859,7 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 					{
 						int32 Overflow = RefundAmount - Added;
 						OverflowItems.FindOrAdd(Entry.Key) += Overflow;
-						UE_LOG(LogSmartUpgrade, Warning, TEXT("Belt upgrade: Refund overflow - %d/%d %s added, %d to crate"),
+						UE_LOG(LogSmartUpgrade, Verbose, TEXT("Belt upgrade: Refund overflow - %d/%d %s added, %d to crate"),
 							Added, RefundAmount, *UFGItemDescriptor::GetItemName(Entry.Key).ToString(), Overflow);
 					}
 					else
@@ -903,7 +903,7 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 		AFGBuildableConveyorBelt* NewBelt = Cast<AFGBuildableConveyorBelt>(ConstructedActor);
 		if (!NewBelt)
 		{
-			UE_LOG(LogSmartUpgrade, Warning, TEXT("UpgradeExecutionService: Construct failed for %s"), *OldBelt->GetName());
+			UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: Construct failed for %s"), *OldBelt->GetName());
 			return 0;
 		}
 		UE_LOG(LogSmartUpgrade, VeryVerbose, TEXT("⚙️ STEP 6: Construct() created new belt: %s"), *NewBelt->GetName());
@@ -940,7 +940,7 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 				}
 				else
 				{
-					UE_LOG(LogSmartUpgrade, Warning, TEXT("⚙️ STEP 8a: Conn0 old partner %s was not transferred by vanilla upgrade flow"),
+					UE_LOG(LogSmartUpgrade, Verbose, TEXT("⚙️ STEP 8a: Conn0 old partner %s was not transferred by vanilla upgrade flow"),
 						*Partner0->GetOwner()->GetName());
 				}
 			}
@@ -957,7 +957,7 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 				}
 				else
 				{
-					UE_LOG(LogSmartUpgrade, Warning, TEXT("⚙️ STEP 8b: Conn1 old partner %s was not transferred by vanilla upgrade flow"),
+					UE_LOG(LogSmartUpgrade, Verbose, TEXT("⚙️ STEP 8b: Conn1 old partner %s was not transferred by vanilla upgrade flow"),
 						*Partner1->GetOwner()->GetName());
 				}
 			}
@@ -1018,7 +1018,7 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 		TArray<FSplinePointData> SplineData = OldPipe->GetSplinePointData();
 		if (SplineData.Num() < 2)
 		{
-			UE_LOG(LogSmartUpgrade, Warning, TEXT("UpgradeExecutionService: Pipe has insufficient spline points"));
+			UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: Pipe has insufficient spline points"));
 			return 0;
 		}
 
@@ -1038,7 +1038,7 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 
 		if (!SmartHolo)
 		{
-			UE_LOG(LogSmartUpgrade, Warning, TEXT("UpgradeExecutionService: Failed to spawn Smart pipe hologram"));
+			UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: Failed to spawn Smart pipe hologram"));
 			return 0;
 		}
 
@@ -1096,7 +1096,7 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 					}
 					if (Available < Entry.Value)
 					{
-						UE_LOG(LogSmartUpgrade, Warning, TEXT("UpgradeExecutionService: Cannot afford pipe upgrade - need %d %s, have %d"),
+						UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: Cannot afford pipe upgrade - need %d %s, have %d"),
 							Entry.Value, *UFGItemDescriptor::GetItemName(Entry.Key).ToString(), Available);
 						SmartHolo->Destroy();
 						return -1;  // Out of funds - abort remaining
@@ -1125,7 +1125,7 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 					{
 						int32 Overflow = RefundAmount - Added;
 						OverflowItems.FindOrAdd(Entry.Key) += Overflow;
-						UE_LOG(LogSmartUpgrade, Warning, TEXT("Pipe upgrade: Refund overflow - %d/%d %s added, %d to crate"),
+						UE_LOG(LogSmartUpgrade, Verbose, TEXT("Pipe upgrade: Refund overflow - %d/%d %s added, %d to crate"),
 							Added, RefundAmount, *UFGItemDescriptor::GetItemName(Entry.Key).ToString(), Overflow);
 					}
 					else
@@ -1147,7 +1147,7 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 		AFGBuildablePipeline* NewPipe = Cast<AFGBuildablePipeline>(ConstructedActor);
 		if (!NewPipe)
 		{
-			UE_LOG(LogSmartUpgrade, Warning, TEXT("UpgradeExecutionService: Construct failed for pipe %s"), *OldPipe->GetName());
+			UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: Construct failed for pipe %s"), *OldPipe->GetName());
 			return 0;
 		}
 
@@ -1208,14 +1208,14 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 
 		if (!LiftHologram)
 		{
-			UE_LOG(LogSmartUpgrade, Warning, TEXT("UpgradeExecutionService: SpawnHologramFromRecipe failed for lift"));
+			UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: SpawnHologramFromRecipe failed for lift"));
 			return 0;
 		}
 
 		// Verify it's a lift hologram
 		if (!LiftHologram->IsA<AFGConveyorLiftHologram>())
 		{
-			UE_LOG(LogSmartUpgrade, Warning, TEXT("UpgradeExecutionService: Hologram is not a lift hologram"));
+			UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: Hologram is not a lift hologram"));
 			LiftHologram->Destroy();
 			return 0;
 		}
@@ -1244,7 +1244,7 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 
 		if (!LiftHologram->TryUpgrade(LiftHitResult))
 		{
-			UE_LOG(LogSmartUpgrade, Warning, TEXT("UpgradeExecutionService: TryUpgrade failed for lift"));
+			UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: TryUpgrade failed for lift"));
 			LiftHologram->Destroy();
 			return 0;
 		}
@@ -1293,7 +1293,7 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 					}
 					if (Available < Entry.Value)
 					{
-						UE_LOG(LogSmartUpgrade, Warning, TEXT("UpgradeExecutionService: Cannot afford lift upgrade - need %d %s, have %d"),
+						UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: Cannot afford lift upgrade - need %d %s, have %d"),
 							Entry.Value, *UFGItemDescriptor::GetItemName(Entry.Key).ToString(), Available);
 						LiftHologram->Destroy();
 						return -1;  // Out of funds - abort remaining
@@ -1322,7 +1322,7 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 					{
 						int32 Overflow = RefundAmount - Added;
 						OverflowItems.FindOrAdd(Entry.Key) += Overflow;
-						UE_LOG(LogSmartUpgrade, Warning, TEXT("Lift upgrade: Refund overflow - %d/%d %s added, %d to crate"),
+						UE_LOG(LogSmartUpgrade, Verbose, TEXT("Lift upgrade: Refund overflow - %d/%d %s added, %d to crate"),
 							Added, RefundAmount, *UFGItemDescriptor::GetItemName(Entry.Key).ToString(), Overflow);
 					}
 					else
@@ -1354,7 +1354,7 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 		AFGBuildableConveyorLift* NewLift = Cast<AFGBuildableConveyorLift>(ConstructedActor);
 		if (!NewLift)
 		{
-			UE_LOG(LogSmartUpgrade, Warning, TEXT("UpgradeExecutionService: Construct failed for lift %s"), *OldLift->GetName());
+			UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: Construct failed for lift %s"), *OldLift->GetName());
 			return 0;
 		}
 
@@ -1378,7 +1378,7 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 			}
 			else
 			{
-				UE_LOG(LogSmartUpgrade, Warning,
+				UE_LOG(LogSmartUpgrade, Verbose,
 					TEXT("UpgradeExecutionService: Lift Conn0 old partner %s transfer=no"),
 					*OldConn0Partner->GetOwner()->GetName());
 			}
@@ -1395,7 +1395,7 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 			}
 			else
 			{
-				UE_LOG(LogSmartUpgrade, Warning,
+				UE_LOG(LogSmartUpgrade, Verbose,
 					TEXT("UpgradeExecutionService: Lift Conn1 old partner %s transfer=no"),
 					*OldConn1Partner->GetOwner()->GetName());
 			}
@@ -1482,7 +1482,7 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 					}
 					if (Available < Entry.Value)
 					{
-						UE_LOG(LogSmartUpgrade, Warning, TEXT("UpgradeExecutionService: Cannot afford pole upgrade - need %d %s, have %d"),
+						UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: Cannot afford pole upgrade - need %d %s, have %d"),
 							Entry.Value, *UFGItemDescriptor::GetItemName(Entry.Key).ToString(), Available);
 						return -1;  // Out of funds - abort remaining
 					}
@@ -1510,7 +1510,7 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 					{
 						int32 Overflow = RefundAmount - Added;
 						OverflowItems.FindOrAdd(Entry.Key) += Overflow;
-						UE_LOG(LogSmartUpgrade, Warning, TEXT("Pole upgrade: Refund overflow - %d/%d %s added, %d to crate"),
+						UE_LOG(LogSmartUpgrade, Verbose, TEXT("Pole upgrade: Refund overflow - %d/%d %s added, %d to crate"),
 							Added, RefundAmount, *UFGItemDescriptor::GetItemName(Entry.Key).ToString(), Overflow);
 					}
 					else
@@ -1534,7 +1534,7 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 
 		if (!PoleHologram)
 		{
-			UE_LOG(LogSmartUpgrade, Warning, TEXT("UpgradeExecutionService: Failed to spawn pole hologram from recipe %s"),
+			UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: Failed to spawn pole hologram from recipe %s"),
 				*GetNameSafe(ActualTargetRecipe));
 			return 0;
 		}
@@ -1549,7 +1549,7 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 			OldPole->GetActorLocation(), OldPole->GetActorRotation().Vector());
 		if (!PoleHologram->TryUpgrade(HitResult))
 		{
-			UE_LOG(LogSmartUpgrade, Warning, TEXT("UpgradeExecutionService: TryUpgrade FAILED for %s (hologram=%s, target=%s)"),
+			UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: TryUpgrade FAILED for %s (hologram=%s, target=%s)"),
 				*OldPole->GetName(), *PoleHologram->GetClass()->GetName(), *GetNameSafe(NewBuildableClass));
 			PoleHologram->Destroy();
 			return 0;
@@ -1566,7 +1566,7 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 		AFGBuildablePowerPole* NewPole = Cast<AFGBuildablePowerPole>(ConstructedActor);
 		if (!NewPole)
 		{
-			UE_LOG(LogSmartUpgrade, Warning, TEXT("UpgradeExecutionService: Construct failed for pole %s"), *OldPole->GetName());
+			UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: Construct failed for pole %s"), *OldPole->GetName());
 			return 0;
 		}
 
@@ -1595,7 +1595,7 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 	}
 
 	// Unsupported type
-	UE_LOG(LogSmartUpgrade, Warning, TEXT("UpgradeExecutionService: Unsupported buildable type: %s"),
+	UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: Unsupported buildable type: %s"),
 		*Buildable->GetClass()->GetName());
 	return 0;
 }
@@ -1652,7 +1652,7 @@ void USFUpgradeExecutionService::CompleteUpgrade()
 		}
 		else
 		{
-			UE_LOG(LogSmartUpgrade, Warning,
+			UE_LOG(LogSmartUpgrade, Verbose,
 				TEXT("⚙️ Upgrade batch complete - %d conveyors upgraded (ChainActorService unavailable — chain topology may be stale until vanilla rebuilds next frame)"),
 				UpgradedConveyors.Num());
 		}
@@ -1732,7 +1732,7 @@ void USFUpgradeExecutionService::CompleteUpgrade()
 		}
 		else
 		{
-			UE_LOG(LogSmartUpgrade, Warning,
+			UE_LOG(LogSmartUpgrade, Verbose,
 				TEXT("[UPGRADE-MP] Could not resolve USFRCO for %s - upgrade result not delivered to the client."),
 				*GetNameSafe(CurrentParams.PlayerController));
 		}
@@ -1776,7 +1776,7 @@ TSubclassOf<UFGRecipe> USFUpgradeExecutionService::GetUpgradeRecipe(ESFUpgradeFa
 				{
 					return TSubclassOf<UFGRecipe>(RecipeClass);
 				}
-				UE_LOG(LogSmartUpgrade, Warning, TEXT("UpgradeExecutionService: Failed to load lift recipe for tier %d"), TargetTier);
+				UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: Failed to load lift recipe for tier %d"), TargetTier);
 			}
 			return nullptr;
 		}
@@ -1791,7 +1791,7 @@ TSubclassOf<UFGRecipe> USFUpgradeExecutionService::GetUpgradeRecipe(ESFUpgradeFa
 				{
 					return TSubclassOf<UFGRecipe>(RecipeClass);
 				}
-				UE_LOG(LogSmartUpgrade, Warning, TEXT("UpgradeExecutionService: Failed to load power pole recipe for tier %d"), TargetTier);
+				UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: Failed to load power pole recipe for tier %d"), TargetTier);
 			}
 			return nullptr;
 		}
@@ -1806,7 +1806,7 @@ TSubclassOf<UFGRecipe> USFUpgradeExecutionService::GetUpgradeRecipe(ESFUpgradeFa
 				{
 					return TSubclassOf<UFGRecipe>(RecipeClass);
 				}
-				UE_LOG(LogSmartUpgrade, Warning, TEXT("UpgradeExecutionService: Failed to load single wall outlet recipe for tier %d (may not be unlocked)"), TargetTier);
+				UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: Failed to load single wall outlet recipe for tier %d (may not be unlocked)"), TargetTier);
 			}
 			return nullptr;
 		}
@@ -1821,7 +1821,7 @@ TSubclassOf<UFGRecipe> USFUpgradeExecutionService::GetUpgradeRecipe(ESFUpgradeFa
 				{
 					return TSubclassOf<UFGRecipe>(RecipeClass);
 				}
-				UE_LOG(LogSmartUpgrade, Warning, TEXT("UpgradeExecutionService: Failed to load double wall outlet recipe for tier %d (may not be unlocked)"), TargetTier);
+				UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: Failed to load double wall outlet recipe for tier %d (may not be unlocked)"), TargetTier);
 			}
 			return nullptr;
 		}
@@ -1829,7 +1829,7 @@ TSubclassOf<UFGRecipe> USFUpgradeExecutionService::GetUpgradeRecipe(ESFUpgradeFa
 		case ESFUpgradeFamily::Tower:
 			// Pump: TODO if needed
 			// Tower: Audit-only, no upgrade execution
-			UE_LOG(LogSmartUpgrade, Warning, TEXT("UpgradeExecutionService: GetUpgradeRecipe not implemented for family %d"),
+			UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: GetUpgradeRecipe not implemented for family %d"),
 				static_cast<int32>(Family));
 			return nullptr;
 
@@ -1875,7 +1875,7 @@ TSubclassOf<AFGBuildable> USFUpgradeExecutionService::GetBuildableClass(ESFUpgra
 				{
 					return TSubclassOf<AFGBuildable>(LiftClass);
 				}
-				UE_LOG(LogSmartUpgrade, Warning, TEXT("UpgradeExecutionService: Failed to load lift class for tier %d"), Tier);
+				UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: Failed to load lift class for tier %d"), Tier);
 			}
 			return nullptr;
 		}
@@ -1894,7 +1894,7 @@ TSubclassOf<AFGBuildable> USFUpgradeExecutionService::GetBuildableClass(ESFUpgra
 				{
 					return TSubclassOf<AFGBuildable>(PoleClass);
 				}
-				UE_LOG(LogSmartUpgrade, Warning, TEXT("UpgradeExecutionService: Failed to load power pole class for tier %d"), Tier);
+				UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: Failed to load power pole class for tier %d"), Tier);
 			}
 			return nullptr;
 		}
@@ -1913,7 +1913,7 @@ TSubclassOf<AFGBuildable> USFUpgradeExecutionService::GetBuildableClass(ESFUpgra
 				{
 					return TSubclassOf<AFGBuildable>(WallOutletClass);
 				}
-				UE_LOG(LogSmartUpgrade, Warning, TEXT("UpgradeExecutionService: Failed to load single wall outlet class for tier %d"), Tier);
+				UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: Failed to load single wall outlet class for tier %d"), Tier);
 			}
 			return nullptr;
 		}
@@ -1932,7 +1932,7 @@ TSubclassOf<AFGBuildable> USFUpgradeExecutionService::GetBuildableClass(ESFUpgra
 				{
 					return TSubclassOf<AFGBuildable>(WallOutletClass);
 				}
-				UE_LOG(LogSmartUpgrade, Warning, TEXT("UpgradeExecutionService: Failed to load double wall outlet class for tier %d"), Tier);
+				UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: Failed to load double wall outlet class for tier %d"), Tier);
 			}
 			return nullptr;
 		}
@@ -1940,7 +1940,7 @@ TSubclassOf<AFGBuildable> USFUpgradeExecutionService::GetBuildableClass(ESFUpgra
 		case ESFUpgradeFamily::Tower:
 			// Pump: TODO if needed
 			// Tower: Audit-only, no upgrade execution
-			UE_LOG(LogSmartUpgrade, Warning, TEXT("UpgradeExecutionService: GetBuildableClass not implemented for family %d"),
+			UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: GetBuildableClass not implemented for family %d"),
 				static_cast<int32>(Family));
 			return nullptr;
 		default:

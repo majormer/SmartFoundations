@@ -57,7 +57,7 @@ struct FSmart_BuildingBehaviorConfigSection {
     UPROPERTY(BlueprintReadWrite) bool bExtendPowerEnabled{};
     UPROPERTY(BlueprintReadWrite) bool bExtendDaisyChainPower{true};
     UPROPERTY(BlueprintReadWrite) bool bExtendDaisyChainPoleless{true};
-    UPROPERTY(BlueprintReadWrite) bool bAutoHoldOnGridChange{false};
+    UPROPERTY(BlueprintReadWrite) bool bAutoHoldOnGridChange{true};  // [#279] default ON (restores pre-config behavior)
     UPROPERTY(BlueprintReadWrite) bool bApplyImmediately{};
 };
 
@@ -192,8 +192,9 @@ public:
 
     // Auto-Hold: automatically lock hologram position after any grid modification (Issue #273)
     // Unlike Scaled Extend, this lock can be manually released by pressing the vanilla Hold key
+    // [#279] default ON - restores the pre-config-option behavior the feature replaced
     UPROPERTY(BlueprintReadWrite)
-    bool bAutoHoldOnGridChange{false};
+    bool bAutoHoldOnGridChange{true};
 
     // ── Smart Panel ──
 

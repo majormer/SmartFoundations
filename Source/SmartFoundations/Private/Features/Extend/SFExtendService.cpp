@@ -548,7 +548,14 @@ bool USFExtendService::IsDirectionValid(ESFExtendDirection Direction) const
     }
 
     const FVector TargetCenter = SourceBuilding->GetActorLocation() + DirAxis * BuildingSize.X;
-    const FVector HalfExtent = BuildingSize * 0.45f; // tight: stays within the next cell
+    // [#385] Same-level wrong-side probe. The horizontal extent stays within the next cell so a
+    // machine already occupying that cell beside us still blocks the direction. But the VERTICAL
+    // extent is clamped to a thin slab: overlap is allowed (vanilla allows it), and a manifold
+    // stacked a few walls above/below was never "the wrong side". Previously HalfExtent scaled
+    // with full building height, so the box reached onto other floors and blocked a legitimate
+    // stacked manifold (a 3-wall gap failed while a 4-wall gap worked — reporter @maxstudy).
+    FVector HalfExtent = BuildingSize * 0.45f; // horizontal: stays within the next cell
+    HalfExtent.Z = 50.0f;                       // vertical: same level only, ignore stacked neighbours
 
     TArray<FOverlapResult> Overlaps;
     FCollisionQueryParams QueryParams;
@@ -877,7 +884,7 @@ int32 USFExtendService::ReconstructCommitOnServer(AFGHologram* ParentHologram, c
     AFGBuildable* Source = CurrentExtendTarget.Get();
     if (!Source)
     {
-        UE_LOG(LogSmartExtend, Warning,
+        UE_LOG(LogSmartExtend, Verbose,
             TEXT("[EXTEND-MP] ReconstructCommitOnServer: no source building in the commit - nothing reconstructed."));
         return 0;
     }
@@ -885,7 +892,7 @@ int32 USFExtendService::ReconstructCommitOnServer(AFGHologram* ParentHologram, c
     // Authoritative graph walk: only the SERVER's GetConnection() values are real.
     if (!TopologyService->WalkTopology(Source))
     {
-        UE_LOG(LogSmartExtend, Warning,
+        UE_LOG(LogSmartExtend, Verbose,
             TEXT("[EXTEND-MP] ReconstructCommitOnServer: server topology walk failed for %s."),
             *GetNameSafe(Source));
         return 0;
@@ -1000,7 +1007,7 @@ int32 USFExtendService::ReconstructScaledCommitOnServer(AFGHologram* ParentHolog
     AFGBuildable* Source = CurrentExtendTarget.Get();
     if (!Source)
     {
-        UE_LOG(LogSmartExtend, Warning,
+        UE_LOG(LogSmartExtend, Verbose,
             TEXT("[EXTEND-MP] ReconstructScaledCommitOnServer: no source building installed - scaled clone sets skipped."));
         return 0;
     }
@@ -1009,7 +1016,7 @@ int32 USFExtendService::ReconstructScaledCommitOnServer(AFGHologram* ParentHolog
     // captures its source topology from TopologyService->GetCurrentTopology().
     if (!TopologyService->WalkTopology(Source))
     {
-        UE_LOG(LogSmartExtend, Warning,
+        UE_LOG(LogSmartExtend, Verbose,
             TEXT("[EXTEND-MP] ReconstructScaledCommitOnServer: server topology walk failed for %s - scaled clone sets skipped."),
             *GetNameSafe(Source));
         return 0;
@@ -1739,7 +1746,7 @@ void USFExtendService::RefreshExtension(AFGHologram* SourceHologram, bool bForce
     if (!ActiveHologram->IsHologramLocked())
     {
         bExtendManualHold = !bExtendManualHold;
-        UE_LOG(LogSmartExtend, Log, TEXT("📌 EXTEND: manual hold %s — preview %s"),
+        UE_LOG(LogSmartExtend, Verbose, TEXT("📌 EXTEND: manual hold %s — preview %s"),
             bExtendManualHold ? TEXT("ENGAGED") : TEXT("RELEASED"),
             bExtendManualHold ? TEXT("pinned (look around to check clearance)") : TEXT("tracking"));
         ActiveHologram->LockHologramPosition(true);

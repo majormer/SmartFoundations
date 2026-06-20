@@ -170,13 +170,13 @@ bool FSFArrowModule_StaticMesh::AttachToHologram(USceneComponent* HologramRootCo
 	}
 	if (!bInitialized)
 	{
-		UE_LOG(LogSmartArrows, Warning, TEXT("FSFArrowModule_StaticMesh::AttachToHologram: Not initialized"));
+		UE_LOG(LogSmartArrows, Verbose, TEXT("FSFArrowModule_StaticMesh::AttachToHologram: Not initialized"));
 		return false;
 	}
 
 	if (!HologramRootComponent)
 	{
-		UE_LOG(LogSmartArrows, Error, TEXT("FSFArrowModule_StaticMesh::AttachToHologram: Invalid hologram root component"));
+		UE_LOG(LogSmartArrows, Verbose, TEXT("FSFArrowModule_StaticMesh::AttachToHologram: Invalid hologram root component"));
 		return false;
 	}
 
@@ -191,7 +191,7 @@ bool FSFArrowModule_StaticMesh::AttachToHologram(USceneComponent* HologramRootCo
 	// Task #67 Cleanup: Safety check - auto-detach if already attached
 	if (IsAttachedToHologram())
 	{
-		UE_LOG(LogSmartArrows, Warning, 
+		UE_LOG(LogSmartArrows, Verbose,
 			TEXT("AttachToHologram called while already attached - auto-detaching first to prevent component leaks"));
 		DetachFromHologram();
 	}
@@ -199,7 +199,7 @@ bool FSFArrowModule_StaticMesh::AttachToHologram(USceneComponent* HologramRootCo
 	AActor* HologramActor = HologramRootComponent->GetOwner();
 	if (!HologramActor)
 	{
-		UE_LOG(LogSmartArrows, Error, TEXT("FSFArrowModule_StaticMesh::AttachToHologram: No actor owner"));
+		UE_LOG(LogSmartArrows, Verbose, TEXT("FSFArrowModule_StaticMesh::AttachToHologram: No actor owner"));
 		return false;
 	}
 
@@ -294,7 +294,7 @@ bool FSFArrowModule_StaticMesh::AttachToHologram(USceneComponent* HologramRootCo
 			DeferredAttachTimerHandle,
 			[this]()
 			{
-				UE_LOG(LogSmartArrows, Warning, TEXT("Deferred attachment TIMEOUT (5s) - arrows will not appear"));
+				UE_LOG(LogSmartArrows, Verbose, TEXT("Deferred attachment TIMEOUT (5s) - arrows will not appear"));
 				if (PendingAttachTarget.IsValid())
 				{
 					SF_LOG_WARNING(Arrows, TEXT("Deferred attachment TIMEOUT (5s) - arrows will not appear"));
@@ -390,7 +390,7 @@ void FSFArrowModule_StaticMesh::Cleanup()
 		}
 		else
 		{
-			UE_LOG(LogSmartArrows, Warning, TEXT("Cleanup: timer was armed but its world is gone (world teardown) - timer died with the world"));
+			UE_LOG(LogSmartArrows, Verbose, TEXT("Cleanup: timer was armed but its world is gone (world teardown) - timer died with the world"));
 		}
 		DeferredAttachTimerHandle.Invalidate();
 	}
@@ -462,7 +462,7 @@ void FSFArrowModule_StaticMesh::UpdateArrows(UWorld* World, const FTransform& Ba
 	// Early exit if arrows should be hidden
 	if (!ArrowX.IsValid() || !ArrowY.IsValid() || !ArrowZ.IsValid())
 	{
-		UE_LOG(LogSmartArrows, Warning, TEXT("FSFArrowModule_StaticMesh::UpdateArrows: Components invalid or destroyed"));
+		UE_LOG(LogSmartArrows, VeryVerbose, TEXT("FSFArrowModule_StaticMesh::UpdateArrows: Components invalid or destroyed"));
 		return;
 	}
 

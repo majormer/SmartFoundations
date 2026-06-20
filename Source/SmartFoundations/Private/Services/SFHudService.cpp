@@ -168,7 +168,7 @@ void USFHudService::DestroyHudWidget()
             HudWidget->RemoveFromParent();
         }
         HudWidget = nullptr;
-        UE_LOG(LogSmartUI, Log, TEXT("SFHudService: Destroyed UMG HUD widget"));
+        UE_LOG(LogSmartUI, Verbose, TEXT("SFHudService: Destroyed UMG HUD widget"));
     }
 }
 
@@ -204,17 +204,17 @@ void USFHudService::EnsureHUDBinding()
 			}
 			else
 			{
-				UE_LOG(LogSmartUI, Warning, TEXT("USFHudService: ❌ PC->GetHUD() returned nullptr"));
+				UE_LOG(LogSmartUI, Verbose, TEXT("USFHudService: ❌ PC->GetHUD() returned nullptr"));
 			}
 		}
 		else
 		{
-			UE_LOG(LogSmartUI, Warning, TEXT("USFHudService: ❌ GetPlayerController returned nullptr"));
+			UE_LOG(LogSmartUI, Verbose, TEXT("USFHudService: ❌ GetPlayerController returned nullptr"));
 		}
 	}
 	else
 	{
-		UE_LOG(LogSmartUI, Warning, TEXT("USFHudService: GetWorld() returned nullptr"));
+		UE_LOG(LogSmartUI, Verbose, TEXT("USFHudService: GetWorld() returned nullptr"));
 	}
 }
 
@@ -627,7 +627,7 @@ void USFHudService::ResetState()
 	CachedLiftHeight = 0.0f;
 	CachedWorldHeight = 0.0f;
 
-	UE_LOG(LogSmartUI, Log, TEXT("HUD state reset for new hologram"));
+	UE_LOG(LogSmartUI, Verbose, TEXT("HUD state reset for new hologram"));
 }
 
 #undef LOCTEXT_NAMESPACE

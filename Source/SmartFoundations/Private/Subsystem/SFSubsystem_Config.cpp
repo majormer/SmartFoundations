@@ -21,7 +21,7 @@ void USFSubsystem::ApplyScalingFromRPC(AFGHologram* HologramActor, uint8 Axis, i
 	// Validate hologram matches our active hologram
 	if (!HologramActor || HologramActor != ActiveHologram.Get())
 	{
-		UE_LOG(LogSmartFoundations, Warning,
+		UE_LOG(LogSmartFoundations, Verbose,
 			TEXT("[RPC] ApplyScalingFromRPC: Hologram mismatch or invalid"));
 		return;
 	}
@@ -29,7 +29,7 @@ void USFSubsystem::ApplyScalingFromRPC(AFGHologram* HologramActor, uint8 Axis, i
 	// Validate axis
 	if (Axis > 2)
 	{
-		UE_LOG(LogSmartFoundations, Error,
+		UE_LOG(LogSmartFoundations, Verbose,
 			TEXT("[RPC] ApplyScalingFromRPC: Invalid axis %d"), Axis);
 		return;
 	}
@@ -70,7 +70,7 @@ void USFSubsystem::ResetScalingFromRPC(AFGHologram* HologramActor)
 	// Validate hologram matches our active hologram
 	if (!HologramActor || HologramActor != ActiveHologram.Get())
 	{
-		UE_LOG(LogSmartFoundations, Warning,
+		UE_LOG(LogSmartFoundations, Verbose,
 			TEXT("[RPC] ResetScalingFromRPC: Hologram mismatch or invalid"));
 		return;
 	}
@@ -115,7 +115,7 @@ void USFSubsystem::SetArrowVisibilityFromRPC(bool bVisible)
         TEXT("[RPC] SetArrowVisibilityFromRPC: Arrows visibility set to %s"),
         bVisible ? TEXT("VISIBLE") : TEXT("HIDDEN"));
 #else
-    UE_LOG(LogSmartFoundations, Warning,
+    UE_LOG(LogSmartFoundations, Verbose,
         TEXT("[RPC] SetArrowVisibilityFromRPC ignored - arrows feature disabled"));
 #endif
 
@@ -214,7 +214,7 @@ void USFSubsystem::LoadConfiguration()
 	UWorld* World = GetWorld();
 	if (!World)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("⚠️ LoadConfiguration: No world context, using defaults"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("⚠️ LoadConfiguration: No world context, using defaults"));
 		// Use defaults - config will be loaded later if needed
 		bArrowsRuntimeVisible = true;
 		return;
@@ -223,7 +223,7 @@ void USFSubsystem::LoadConfiguration()
 	UGameInstance* GameInstance = World->GetGameInstance();
 	if (!GameInstance)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("⚠️ LoadConfiguration: No game instance, using defaults"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("⚠️ LoadConfiguration: No game instance, using defaults"));
 		bArrowsRuntimeVisible = true;
 		return;
 	}
@@ -231,7 +231,7 @@ void USFSubsystem::LoadConfiguration()
 	UConfigManager* ConfigManager = GameInstance->GetSubsystem<UConfigManager>();
 	if (!ConfigManager)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("⚠️ LoadConfiguration: ConfigManager not available yet, using defaults"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("⚠️ LoadConfiguration: ConfigManager not available yet, using defaults"));
 		bArrowsRuntimeVisible = true;
 		return;
 	}
@@ -301,7 +301,7 @@ bool USFSubsystem::AbortRestoreSession(const TCHAR* Reason)
 		RestoreService->ClearActiveRestoreSession(Reason);
 	}
 
-	SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
+	SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Verbose,
 		TEXT("[SmartRestore] Aborted restore session: reason=%s topology=%d session=%d"),
 		Reason ? Reason : TEXT("Unknown"),
 		bHadRestoredTopology ? 1 : 0,
@@ -318,7 +318,7 @@ void USFSubsystem::InitializeHologramCleanup()
 		// Bind to OnActorDestroyed delegate to automatically clean up hologram data
 		// This ensures deterministic cleanup for any hologram destruction scenario
 		World->AddOnActorDestroyedHandler(FOnActorDestroyed::FDelegate::CreateUObject(this, &USFSubsystem::OnActorDestroyed));
-		UE_LOG(LogSmartFoundations, Log, TEXT("✅ Initialized Hologram Cleanup: Bound to OnActorDestroyed delegate."));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("✅ Initialized Hologram Cleanup: Bound to OnActorDestroyed delegate."));
 	}
 	else
 	{
@@ -549,7 +549,7 @@ void USFSubsystem::OnRecipeModeChanged(const FInputActionValue& Value)
 	}
 	else
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT(" OnRecipeModeChanged: ActiveHologram=%d, AutoConnectService=%d"),
+		UE_LOG(LogSmartFoundations, Verbose, TEXT(" OnRecipeModeChanged: ActiveHologram=%d, AutoConnectService=%d"),
 			ActiveHologram.IsValid(), AutoConnectService != nullptr);
 	}
 
@@ -580,7 +580,7 @@ void USFSubsystem::OnRecipeModeChanged(const FInputActionValue& Value)
 		}
 		else
 		{
-			UE_LOG(LogSmartFoundations, Warning, TEXT("⚙️ Auto-Connect Settings Mode: Inactive (U released)"));
+			UE_LOG(LogSmartFoundations, Verbose, TEXT("⚙️ Auto-Connect Settings Mode: Inactive (U released)"));
 
 			// Try to release lock
 			TryReleaseHologramLock();
@@ -604,7 +604,7 @@ void USFSubsystem::OnRecipeModeChanged(const FInputActionValue& Value)
 		}
 		else
 		{
-			UE_LOG(LogSmartFoundations, Warning, TEXT("🍽️ Recipe Mode: Inactive (U released)"));
+			UE_LOG(LogSmartFoundations, Verbose, TEXT("🍽️ Recipe Mode: Inactive (U released)"));
 
 			// Try to release lock
 			TryReleaseHologramLock();
@@ -668,7 +668,7 @@ void USFSubsystem::SetAutoConnectRuntimeSettingsFromPreset(const FSFRestoreAutoC
 	AutoConnectRuntimeSettings.PowerReserved = PresetState.PowerReserved;
 	AutoConnectRuntimeSettings.bInitialized = true;
 
-	SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Display,
+	SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Verbose,
 		TEXT("[SmartRestore] Applied auto-connect settings from preset"));
 }
 
@@ -689,7 +689,7 @@ bool USFSubsystem::SetBuildGunByRecipeName(const FString& RecipeClassName)
 	AFGRecipeManager* RecipeManager = AFGRecipeManager::Get(World);
 	if (!RecipeManager)
 	{
-		SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Warning,
+		SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Verbose,
 			TEXT("[SmartRestore] SetBuildGunByRecipeName: No recipe manager"));
 		return false;
 	}
@@ -709,7 +709,7 @@ bool USFSubsystem::SetBuildGunByRecipeName(const FString& RecipeClassName)
 
 	if (!TargetRecipe)
 	{
-		SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Warning,
+		SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Verbose,
 			TEXT("[SmartRestore] SetBuildGunByRecipeName: Recipe '%s' not found in available recipes"),
 			*RecipeClassName);
 		return false;
@@ -732,7 +732,7 @@ bool USFSubsystem::SetBuildGunByRecipeName(const FString& RecipeClassName)
 	AFGBuildGun* BuildGun = Character->GetBuildGun();
 	if (!BuildGun)
 	{
-		SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Warning,
+		SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Verbose,
 			TEXT("[SmartRestore] SetBuildGunByRecipeName: No build gun found"));
 		return false;
 	}
@@ -742,14 +742,14 @@ bool USFSubsystem::SetBuildGunByRecipeName(const FString& RecipeClassName)
 		BuildGun->GetBuildGunStateFor(EBuildGunState::BGS_BUILD));
 	if (!BuildState)
 	{
-		SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Warning,
+		SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Verbose,
 			TEXT("[SmartRestore] SetBuildGunByRecipeName: No build gun build state"));
 		return false;
 	}
 
 	BuildState->SetActiveRecipe(TargetRecipe);
 
-	SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Display,
+	SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Verbose,
 		TEXT("[SmartRestore] Switched build gun to recipe '%s'"), *RecipeClassName);
 	return true;
 }
@@ -799,7 +799,7 @@ UClass* USFSubsystem::GetPipeClassForTier(int32 Tier, bool bWithIndicator, AFGPl
 	// Clamp to valid range
 	if (Tier < 1 || Tier > 2)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("GetPipeClassForTier: Invalid tier %d (must be 1-2)"), Tier);
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("GetPipeClassForTier: Invalid tier %d (must be 1-2)"), Tier);
 		return nullptr;
 	}
 
@@ -834,7 +834,7 @@ UClass* USFSubsystem::GetPipeClassForTier(int32 Tier, bool bWithIndicator, AFGPl
 
 	if (!PipeClass)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("GetPipeClassForTier: Failed to load pipe class for tier %d (indicator=%d)"),
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("GetPipeClassForTier: Failed to load pipe class for tier %d (indicator=%d)"),
 			Tier, bWithIndicator);
 		return nullptr;
 	}
@@ -868,7 +868,7 @@ TSubclassOf<UFGRecipe> USFSubsystem::GetBeltRecipeForTier(int32 Tier)
 	// Clamp to valid range
 	if (Tier < 1 || Tier > 6)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("GetBeltRecipeForTier: Invalid tier %d (must be 1-6)"), Tier);
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("GetBeltRecipeForTier: Invalid tier %d (must be 1-6)"), Tier);
 		return nullptr;
 	}
 
@@ -889,7 +889,7 @@ TSubclassOf<UFGRecipe> USFSubsystem::GetBeltRecipeForTier(int32 Tier)
 
 	if (!RecipeClass)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("GetBeltRecipeForTier: Failed to load recipe for Mk%d belt"), Tier);
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("GetBeltRecipeForTier: Failed to load recipe for Mk%d belt"), Tier);
 		return nullptr;
 	}
 
@@ -901,7 +901,7 @@ TSubclassOf<UFGRecipe> USFSubsystem::GetPipeRecipeForTier(int32 Tier, bool bWith
 	// Clamp to valid range
 	if (Tier < 1 || Tier > 2)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("GetPipeRecipeForTier: Invalid tier %d (must be 1-2)"), Tier);
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("GetPipeRecipeForTier: Invalid tier %d (must be 1-2)"), Tier);
 		return nullptr;
 	}
 
@@ -936,7 +936,7 @@ TSubclassOf<UFGRecipe> USFSubsystem::GetPipeRecipeForTier(int32 Tier, bool bWith
 
 	if (!RecipeClass)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("GetPipeRecipeForTier: Failed to load recipe for tier %d (indicator=%d)"),
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("GetPipeRecipeForTier: Failed to load recipe for tier %d (indicator=%d)"),
 			Tier, bWithIndicator);
 		return nullptr;
 	}
@@ -948,21 +948,21 @@ int32 USFSubsystem::GetHighestUnlockedPipeTier(AFGPlayerController* PlayerContro
 {
 	if (!PlayerController)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("GetHighestUnlockedPipeTier: No player controller, defaulting to Mk1"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("GetHighestUnlockedPipeTier: No player controller, defaulting to Mk1"));
 		return 1;  // Default to Mk1 if no player context
 	}
 
 	UWorld* World = PlayerController->GetWorld();
 	if (!World)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("GetHighestUnlockedPipeTier: No world context, defaulting to Mk1"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("GetHighestUnlockedPipeTier: No world context, defaulting to Mk1"));
 		return 1;
 	}
 
 	AFGRecipeManager* RecipeManager = AFGRecipeManager::Get(World);
 	if (!RecipeManager)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("GetHighestUnlockedPipeTier: No recipe manager, defaulting to Mk1"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("GetHighestUnlockedPipeTier: No recipe manager, defaulting to Mk1"));
 		return 1;
 	}
 
@@ -993,7 +993,7 @@ int32 USFSubsystem::GetHighestUnlockedPipeTier(AFGPlayerController* PlayerContro
 	}
 
 	// Fallback: If nothing is unlocked (shouldn't happen), return Mk1
-	UE_LOG(LogSmartFoundations, Warning, TEXT("GetHighestUnlockedPipeTier: No pipes unlocked, defaulting to Mk1"));
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("GetHighestUnlockedPipeTier: No pipes unlocked, defaulting to Mk1"));
 	return 1;
 }
 
@@ -1052,7 +1052,7 @@ UClass* USFSubsystem::GetPipeClassFromConfig(int32 ConfigTier, bool bWithIndicat
 
 	if (!PipeClass)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("GetPipeClassFromConfig: Pipe tier Mk%d (%s) unavailable or not unlocked - pipe category disabled"),
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("GetPipeClassFromConfig: Pipe tier Mk%d (%s) unavailable or not unlocked - pipe category disabled"),
 			ActualTier, bWithIndicator ? TEXT("Normal") : TEXT("Clean"));
 	}
 

@@ -6,6 +6,9 @@
 #include "Subsystem/SFSubsystem.h"
 #include "Features/Extend/SFExtendService.h"   // [EXTEND-MP] topology walk RPCs
 #include "FGPlayerController.h"  // AFGPlayerController (don't rely on transitive unity-build includes)
+#include "FGCharacterPlayer.h"   // [#368] resolve the owning pawn for the clipboard sync
+#include "Module/SFGameInstanceModule.h" // [#368] SetBuildStateClipboardRecipe (friend write helper)
+#include "FGRecipe.h"  // [#368] UFGRecipe
 #include "Net/UnrealNetwork.h"
 
 // ========================================
@@ -44,7 +47,7 @@ void USFRCO::Server_ApplyScaling_Implementation(
 	// Validate hologram exists
 	if (!IsValid(HologramActor))
 	{
-		UE_LOG(LogSmartFoundations, Warning,
+		UE_LOG(LogSmartFoundations, Verbose,
 			TEXT("[SFRCO] Server_ApplyScaling: Invalid hologram actor"));
 		return;
 	}
@@ -52,7 +55,7 @@ void USFRCO::Server_ApplyScaling_Implementation(
 	// Additional validation checks
 	if (!ValidateScalingRequest(HologramActor, Axis, Delta, NewCounter))
 	{
-		UE_LOG(LogSmartFoundations, Warning,
+		UE_LOG(LogSmartFoundations, Verbose,
 			TEXT("[SFRCO] Server_ApplyScaling: Validation failed"));
 		return;
 	}
@@ -61,7 +64,7 @@ void USFRCO::Server_ApplyScaling_Implementation(
 	USFSubsystem* Subsystem = USFSubsystem::Get(this);
 	if (!IsValid(Subsystem))
 	{
-		UE_LOG(LogSmartFoundations, Error,
+		UE_LOG(LogSmartFoundations, Verbose,
 			TEXT("[SFRCO] Server_ApplyScaling: Failed to get SFSubsystem"));
 		return;
 	}
@@ -83,14 +86,14 @@ bool USFRCO::Server_ApplyScaling_Validate(
 	// Basic parameter validation
 	if (Axis > 2) // X=0, Y=1, Z=2
 	{
-		UE_LOG(LogSmartFoundations, Warning,
+		UE_LOG(LogSmartFoundations, Verbose,
 			TEXT("[SFRCO] Server_ApplyScaling_Validate: Invalid axis %d"), Axis);
 		return false;
 	}
 
 	if (FMath::Abs(Delta) != 1)
 	{
-		UE_LOG(LogSmartFoundations, Warning,
+		UE_LOG(LogSmartFoundations, Verbose,
 			TEXT("[SFRCO] Server_ApplyScaling_Validate: Invalid delta %d (must be ±1)"), Delta);
 		return false;
 	}
@@ -99,7 +102,7 @@ bool USFRCO::Server_ApplyScaling_Validate(
 	const int32 ClampedCounter = ClampCounter(NewCounter);
 	if (ClampedCounter != NewCounter)
 	{
-		UE_LOG(LogSmartFoundations, Warning,
+		UE_LOG(LogSmartFoundations, Verbose,
 			TEXT("[SFRCO] Server_ApplyScaling_Validate: Counter %d out of range"), NewCounter);
 		return false;
 	}
@@ -114,7 +117,7 @@ void USFRCO::Server_ResetScaling_Implementation(AFGHologram* HologramActor)
 
 	if (!IsValid(HologramActor))
 	{
-		UE_LOG(LogSmartFoundations, Warning,
+		UE_LOG(LogSmartFoundations, Verbose,
 			TEXT("[SFRCO] Server_ResetScaling: Invalid hologram actor"));
 		return;
 	}
@@ -122,7 +125,7 @@ void USFRCO::Server_ResetScaling_Implementation(AFGHologram* HologramActor)
 	USFSubsystem* Subsystem = USFSubsystem::Get(this);
 	if (!IsValid(Subsystem))
 	{
-		UE_LOG(LogSmartFoundations, Error,
+		UE_LOG(LogSmartFoundations, Verbose,
 			TEXT("[SFRCO] Server_ResetScaling: Failed to get SFSubsystem"));
 		return;
 	}
@@ -152,7 +155,7 @@ void USFRCO::Server_SetSpacingMode_Implementation(ESFSpacingMode NewMode)
 	USFSubsystem* Subsystem = USFSubsystem::Get(this);
 	if (!IsValid(Subsystem))
 	{
-		UE_LOG(LogSmartFoundations, Error,
+		UE_LOG(LogSmartFoundations, Verbose,
 			TEXT("[SFRCO] Server_SetSpacingMode: Failed to get SFSubsystem"));
 		return;
 	}
@@ -183,7 +186,7 @@ void USFRCO::Server_ToggleArrows_Implementation(bool bVisible)
 	USFSubsystem* Subsystem = USFSubsystem::Get(this);
 	if (!IsValid(Subsystem))
 	{
-		UE_LOG(LogSmartFoundations, Error,
+		UE_LOG(LogSmartFoundations, Verbose,
 			TEXT("[SFRCO] Server_ToggleArrows: Failed to get SFSubsystem"));
 		return;
 	}
@@ -211,7 +214,7 @@ void USFRCO::Server_StageScalingSpec_Implementation(FSFScalingSpec Spec)
 	AFGPlayerController* OwnerPC = Cast<AFGPlayerController>(GetOuter());
 	if (!IsValid(Subsystem) || !OwnerPC)
 	{
-		UE_LOG(LogSmartFoundations, Warning,
+		UE_LOG(LogSmartFoundations, Verbose,
 			TEXT("[SFRCO] Server_StageScalingSpec: missing subsystem (%d) or owner PC (%d)"),
 			IsValid(Subsystem) ? 1 : 0, OwnerPC ? 1 : 0);
 		return;
@@ -225,6 +228,30 @@ void USFRCO::Server_StageScalingSpec_Implementation(FSFScalingSpec Spec)
 			TEXT("[MP-SPEC] Server staged scaling spec for %s: %d cells of %s, %d planned conduit(s)."),
 			*GetNameSafe(OwnerPC), Spec.CellCount(), *GetNameSafe(*Spec.BuildClass), Spec.ConduitPlan.Num());
 	}
+}
+
+// [#368] Per-player vanilla clipboard recipe sync. Derive the trusted player from THIS RCO's owning
+// controller (Within = FGPlayerController) - never a client-supplied or cached player - so a pick by
+// one client can never write another client's build-gun clipboard on a dedicated server.
+void USFRCO::Server_SetClipboardRecipe_Implementation(TSubclassOf<UFGRecipe> Recipe)
+{
+	AFGPlayerController* OwnerPC = Cast<AFGPlayerController>(GetOuter());
+	if (!OwnerPC)
+	{
+		return;
+	}
+	AFGCharacterPlayer* Player = Cast<AFGCharacterPlayer>(OwnerPC->GetPawn());
+	if (!Player)
+	{
+		return;
+	}
+	USFGameInstanceModule::SetBuildStateClipboardRecipe(Player, Recipe);
+}
+
+bool USFRCO::Server_SetClipboardRecipe_Validate(TSubclassOf<UFGRecipe> Recipe)
+{
+	// null = explicit clear; otherwise must be a real recipe class.
+	return Recipe == nullptr || Recipe->IsChildOf(UFGRecipe::StaticClass());
 }
 
 bool USFRCO::Server_StageScalingSpec_Validate(FSFScalingSpec Spec)
@@ -267,7 +294,7 @@ void USFRCO::Server_RequestExtendTopology_Implementation(AFGBuildable* SourceBui
 	USFExtendService* Extend = IsValid(Subsystem) ? Subsystem->GetExtendService() : nullptr;
 	if (!Extend || !IsValid(SourceBuilding))
 	{
-		UE_LOG(LogSmartFoundations, Warning,
+		UE_LOG(LogSmartFoundations, Verbose,
 			TEXT("[EXTEND-MP] Server_RequestExtendTopology: missing extend service (%d) or building (%d)"),
 			Extend ? 1 : 0, IsValid(SourceBuilding) ? 1 : 0);
 		return;
@@ -316,7 +343,7 @@ void USFRCO::Server_StageExtendCommit_Implementation(FSFExtendCommitSpec Spec)
 	AFGPlayerController* OwnerPC = Cast<AFGPlayerController>(GetOuter());
 	if (!IsValid(Subsystem) || !OwnerPC)
 	{
-		UE_LOG(LogSmartFoundations, Warning,
+		UE_LOG(LogSmartFoundations, Verbose,
 			TEXT("[EXTEND-MP] Server_StageExtendCommit: missing subsystem (%d) or owner PC (%d)"),
 			IsValid(Subsystem) ? 1 : 0, OwnerPC ? 1 : 0);
 		return;
@@ -375,14 +402,14 @@ void USFRCO::Server_StartUpgradeAudit_Implementation(FSFUpgradeAuditParams Param
 	USFSubsystem* Subsystem = USFSubsystem::Get(this);
 	if (!IsValid(Subsystem))
 	{
-		UE_LOG(LogSmartFoundations, Error, TEXT("[SFRCO] Server_StartUpgradeAudit: Failed to get SFSubsystem"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("[SFRCO] Server_StartUpgradeAudit: Failed to get SFSubsystem"));
 		return;
 	}
 
 	USFUpgradeAuditService* AuditService = Subsystem->GetUpgradeAuditService();
 	if (!IsValid(AuditService))
 	{
-		UE_LOG(LogSmartFoundations, Error, TEXT("[SFRCO] Server_StartUpgradeAudit: Failed to get UpgradeAuditService"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("[SFRCO] Server_StartUpgradeAudit: Failed to get UpgradeAuditService"));
 		return;
 	}
 
@@ -428,7 +455,7 @@ void USFRCO::Server_StartUpgrade_Implementation(FSFUpgradeExecutionParams Params
 	AFGPlayerController* OwnerPC = Cast<AFGPlayerController>(GetOuter());
 	if (!IsValid(Subsystem) || !OwnerPC)
 	{
-		UE_LOG(LogSmartFoundations, Warning,
+		UE_LOG(LogSmartFoundations, Verbose,
 			TEXT("[UPGRADE-MP] Server_StartUpgrade: missing subsystem (%d) or owner PC (%d)"),
 			IsValid(Subsystem) ? 1 : 0, OwnerPC ? 1 : 0);
 		return;
@@ -437,7 +464,7 @@ void USFRCO::Server_StartUpgrade_Implementation(FSFUpgradeExecutionParams Params
 	USFUpgradeExecutionService* ExecutionService = Subsystem->GetUpgradeExecutionService();
 	if (!IsValid(ExecutionService))
 	{
-		UE_LOG(LogSmartFoundations, Error, TEXT("[UPGRADE-MP] Server_StartUpgrade: no execution service"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("[UPGRADE-MP] Server_StartUpgrade: no execution service"));
 		return;
 	}
 
@@ -477,7 +504,7 @@ void USFRCO::Server_StartUpgradeTraversal_Implementation(AFGBuildable* AnchorBui
 	AFGPlayerController* OwnerPC = Cast<AFGPlayerController>(GetOuter());
 	if (!OwnerPC || !AnchorBuildable)
 	{
-		UE_LOG(LogSmartFoundations, Warning,
+		UE_LOG(LogSmartFoundations, Verbose,
 			TEXT("[UPGRADE-MP] Server_StartUpgradeTraversal: missing owner PC (%d) or anchor (%d)"),
 			OwnerPC ? 1 : 0, AnchorBuildable ? 1 : 0);
 		return;
@@ -544,7 +571,7 @@ bool USFRCO::ValidateScalingRequest(
 	// Check hologram authority
 	if (!HasHologramAuthority(HologramActor))
 	{
-		UE_LOG(LogSmartFoundations, Warning,
+		UE_LOG(LogSmartFoundations, Verbose,
 			TEXT("[SFRCO] ValidateScalingRequest: Caller lacks hologram authority"));
 		return false;
 	}
@@ -552,7 +579,7 @@ bool USFRCO::ValidateScalingRequest(
 	// Check rate limiting
 	if (!CheckRateLimit())
 	{
-		UE_LOG(LogSmartFoundations, Warning,
+		UE_LOG(LogSmartFoundations, Verbose,
 			TEXT("[SFRCO] ValidateScalingRequest: Rate limit exceeded"));
 		return false;
 	}

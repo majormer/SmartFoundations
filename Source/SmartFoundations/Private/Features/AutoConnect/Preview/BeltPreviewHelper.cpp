@@ -56,7 +56,7 @@ void FBeltPreviewHelper::ConfigureHologram(AFGSplineHologram* SpawnedHologram, U
 	TSubclassOf<AFGBuildable> BeltBuildClass = GetBuildClass(Subsystem);
 	if (!BeltBuildClass)
 	{
-		UE_LOG(LogSmartFoundations, Error, TEXT("Failed to get Mk%d belt buildable class"), Tier);
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("Failed to get Mk%d belt buildable class"), Tier);
 		return;
 	}
 
@@ -68,11 +68,11 @@ void FBeltPreviewHelper::ConfigureHologram(AFGSplineHologram* SpawnedHologram, U
 	if (BeltRecipe)
 	{
 		BeltHologram->SetRecipe(BeltRecipe);
-		UE_LOG(LogSmartFoundations, Log, TEXT("✅ Set recipe on belt child for Mk%d"), Tier);
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("✅ Set recipe on belt child for Mk%d"), Tier);
 	}
 	else
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("⚠️ No recipe found for Mk%d belt - cost aggregation may fail"), Tier);
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("⚠️ No recipe found for Mk%d belt - cost aggregation may fail"), Tier);
 	}
 
 	// Tag as auto-connect child

@@ -212,7 +212,7 @@ void USFSubsystem::ClearNormalGridChildrenForExtendSuppression(const TCHAR* Cont
 		QueuedGridChildren++;
 	}
 
-	SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
+	SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Verbose,
 		TEXT("[SmartRestore][Extend] Suppressing normal Smart grid spawn/update: context=%s parent=%s helperChildren=%d queuedGrid=%d preservedExtend=%d skippedOther=%d liveExtend=%d restoredExtend=%d"),
 		Context ? Context : TEXT("Unknown"),
 		*GetNameSafe(GetActiveHologram()),
@@ -953,7 +953,7 @@ void USFSubsystem::Tick(float DeltaTime)
 			double CurrentTime = FPlatformTime::Seconds();
 			if (CurrentTime - LastWarnTime > 5.0)  // Log every 5 seconds max
 			{
-				SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Warning, TEXT("🔄 EXTEND: No PlayerController available for line trace"));
+				SF_EXTEND_DIAGNOSTIC_LOG(LogSmartFoundations, Verbose, TEXT("🔄 EXTEND: No PlayerController available for line trace"));
 				LastWarnTime = CurrentTime;
 			}
 		}
@@ -1070,7 +1070,7 @@ void USFSubsystem::ApplyAxisScaling(ESFScaleAxis Axis, int32 StepDelta, const TC
 
 	if (!ActiveHologram.IsValid())
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("ApplyAxisScaling: No active hologram registered"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("ApplyAxisScaling: No active hologram registered"));
 		return;
 	}
 
@@ -1084,7 +1084,7 @@ void USFSubsystem::ApplyAxisScaling(ESFScaleAxis Axis, int32 StepDelta, const TC
 	// Check if hologram supports scaling features
 	if (CurrentAdapter && !CurrentAdapter->SupportsFeature(ESFFeature::ScaleX))
 	{
-		UE_LOG(LogSmartFoundations, Warning,
+		UE_LOG(LogSmartFoundations, Verbose,
 			TEXT("Scaling not supported for %s - ignoring input"),
 			*CurrentAdapter->GetAdapterTypeName());
 		return;
@@ -1125,7 +1125,7 @@ void USFSubsystem::ApplyAxisScaling(ESFScaleAxis Axis, int32 StepDelta, const TC
 	const bool bRestoredExtendActive = IsRestoredExtendModeActive();
 	if (ShouldSuppressNormalGridChildren())
 	{
-		SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("[SmartRestore][Extend] %s axis changed, grid=[%d,%d,%d], liveExtend=%d restoredExtend=%d"),
+		SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Verbose, TEXT("[SmartRestore][Extend] %s axis changed, grid=[%d,%d,%d], liveExtend=%d restoredExtend=%d"),
 			DebugLabel,
 			CounterState.GridCounters.X,
 			CounterState.GridCounters.Y,
@@ -1318,7 +1318,7 @@ void USFSubsystem::OnScaleXChanged(const FInputActionValue& Value)
 	if (!RotationBefore.Equals(RotationAfter, 0.01f))
 	{
 		ActiveHologram->SetActorRotation(RotationBefore);
-		UE_LOG(LogSmartFoundations, Warning, TEXT("\U0001f504 Rotation leak corrected during scaling. Before: %s, After: %s, Delta: Yaw=%.2f"),
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("\U0001f504 Rotation leak corrected during scaling. Before: %s, After: %s, Delta: Yaw=%.2f"),
 			*RotationBefore.ToCompactString(), *RotationAfter.ToCompactString(),
 			RotationAfter.Yaw - RotationBefore.Yaw);
 	}

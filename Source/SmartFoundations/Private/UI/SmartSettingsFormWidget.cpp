@@ -9,7 +9,7 @@ void USmartSettingsFormWidget::NativeConstruct()
 {
     Super::NativeConstruct();
 
-    UE_LOG(LogSmartFoundations, Log, TEXT("Settings Form: NativeConstruct called"));
+    UE_LOG(LogSmartFoundations, Verbose, TEXT("Settings Form: NativeConstruct called"));
 
     // Switch designer-placed (and localized) labels/fields to the in-game multi-script font.
     SFFont::ApplyToWidgetTree(WidgetTree);
@@ -26,25 +26,25 @@ void USmartSettingsFormWidget::NativeConstruct()
     // Check if Blueprint widgets are bound
     if (!BackgroundPanel)
     {
-        UE_LOG(LogSmartFoundations, Error, TEXT("Settings Form: BackgroundPanel not bound from Blueprint"));
+        UE_LOG(LogSmartFoundations, Verbose, TEXT("Settings Form: BackgroundPanel not bound from Blueprint"));
         return;
     }
 
     if (!TitleText)
     {
-        UE_LOG(LogSmartFoundations, Error, TEXT("Settings Form: TitleText not bound from Blueprint"));
+        UE_LOG(LogSmartFoundations, Verbose, TEXT("Settings Form: TitleText not bound from Blueprint"));
         return;
     }
 
     if (!ContentContainer)
     {
-        UE_LOG(LogSmartFoundations, Error, TEXT("Settings Form: ContentContainer not bound from Blueprint"));
+        UE_LOG(LogSmartFoundations, Verbose, TEXT("Settings Form: ContentContainer not bound from Blueprint"));
         return;
     }
 
     if (!CloseButton)
     {
-        UE_LOG(LogSmartFoundations, Error, TEXT("Settings Form: CloseButton not bound from Blueprint"));
+        UE_LOG(LogSmartFoundations, Verbose, TEXT("Settings Form: CloseButton not bound from Blueprint"));
         return;
     }
 
@@ -479,7 +479,7 @@ void USmartSettingsFormWidget::NativeConstruct()
         }
     }
 
-    UE_LOG(LogSmartFoundations, Log, TEXT("Settings Form: Blueprint widgets bound successfully"));
+    UE_LOG(LogSmartFoundations, Verbose, TEXT("Settings Form: Blueprint widgets bound successfully"));
 
     // === Localize Blueprint Labels ===
     // Override default text set in the Widget Blueprint with LOCTEXT for runtime localization.
@@ -635,7 +635,7 @@ void USmartSettingsFormWidget::PopulateFromCounterState(USFSubsystem* Subsystem)
 {
     if (!Subsystem)
     {
-        UE_LOG(LogSmartFoundations, Error, TEXT("Settings Form: Cannot populate - Subsystem is null"));
+        UE_LOG(LogSmartFoundations, Verbose, TEXT("Settings Form: Cannot populate - Subsystem is null"));
         return;
     }
 

@@ -280,7 +280,7 @@ void USFHintBarService::InjectSmartHints()
 		SetKeybindingHintsFunc = CachedBuildModeWidget->FindFunction(FName(TEXT("SetKeybindingHints")));
 		if (!SetKeybindingHintsFunc)
 		{
-			UE_LOG(LogSmartUI, Warning, TEXT("HintBarService: SetKeybindingHints function not found on Widget_BuildMode"));
+			UE_LOG(LogSmartUI, Verbose, TEXT("HintBarService: SetKeybindingHints function not found on Widget_BuildMode"));
 			return;
 		}
 		UE_LOG(LogSmartUI, Verbose, TEXT("HintBarService: Found Widget_BuildMode (%s) with SetKeybindingHints"),

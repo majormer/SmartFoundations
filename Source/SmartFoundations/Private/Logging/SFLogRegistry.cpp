@@ -7,34 +7,38 @@
 // Define static members
 std::atomic<uint8> FSFLogRegistry::CategoryVerbosity[static_cast<uint8>(ESFLogCategory::MAX_CATEGORIES)];
 
-// Default verbosity levels (conservative - reduce spam in normal operation)
+// Default verbosity levels: errors-only baseline so the log stays quiet out of the box. Every
+// category defaults to Critical (only Critical-level / SF_LOG_ERROR / SF_LOG_WARNING emit) or None
+// (fully off for the very-noisy ones). Raise any category at runtime to debug, e.g.
+// `SF.Log.SetVerbosity Scaling Verbose`. Previously several were Normal (and Performance Verbose),
+// which would have printed at UE Log level if those (currently unused) macros gained hot-path callers.
 const ESFLogVerbosity FSFLogRegistry::DefaultVerbosity[static_cast<uint8>(ESFLogCategory::MAX_CATEGORIES)] = {
-	// Core systems - reduce spam
+	// Core systems
 	ESFLogVerbosity::None,      // AdapterSizing - VERY noisy, off by default
-	ESFLogVerbosity::Critical,  // InputEvents - only show errors
-	ESFLogVerbosity::Normal,    // ModeChanges - important state changes
-	ESFLogVerbosity::Critical,  // CounterUpdates - only show errors
-	ESFLogVerbosity::Critical,  // HUDUpdates - only show errors
-	
+	ESFLogVerbosity::Critical,  // InputEvents - errors only (raise to debug input)
+	ESFLogVerbosity::Critical,  // ModeChanges - errors only (raise to trace mode toggles)
+	ESFLogVerbosity::Critical,  // CounterUpdates - errors only
+	ESFLogVerbosity::Critical,  // HUDUpdates - errors only
+
 	// Grid/Array features
-	ESFLogVerbosity::Normal,    // GridRegeneration - important for debugging grids
+	ESFLogVerbosity::Critical,  // GridRegeneration - errors only (raise to debug grid resize)
 	ESFLogVerbosity::None,      // GridPositioning - very noisy, off by default
-	ESFLogVerbosity::Normal,    // ChildLifecycle - important lifecycle events
-	
+	ESFLogVerbosity::Critical,  // ChildLifecycle - errors only (raise to trace child spawn/destroy)
+
 	// Build gun integration
-	ESFLogVerbosity::Normal,    // BuildGunState - important state tracking
-	ESFLogVerbosity::Normal,    // HologramRegistration - important lifecycle
-	
+	ESFLogVerbosity::Critical,  // BuildGunState - errors only
+	ESFLogVerbosity::Critical,  // HologramRegistration - errors only
+
 	// Feature modules
-	ESFLogVerbosity::Critical,  // Arrows - only errors
-	ESFLogVerbosity::Normal,    // Scaling - important feature
-	ESFLogVerbosity::Normal,    // Spacing - important feature
-	ESFLogVerbosity::Normal,    // Steps - important feature
-	ESFLogVerbosity::Normal,    // Stagger - important feature
-	
+	ESFLogVerbosity::Critical,  // Arrows - errors only
+	ESFLogVerbosity::Critical,  // Scaling - errors only (raise to debug scaling)
+	ESFLogVerbosity::Critical,  // Spacing - errors only
+	ESFLogVerbosity::Critical,  // Steps - errors only
+	ESFLogVerbosity::Critical,  // Stagger - errors only
+
 	// Performance & diagnostics
-	ESFLogVerbosity::Verbose,   // Performance - detailed when needed
-	ESFLogVerbosity::Normal     // NetworkSync - multiplayer issues
+	ESFLogVerbosity::Critical,  // Performance - errors only (raise to Verbose for timing metrics)
+	ESFLogVerbosity::Critical   // NetworkSync - errors only (raise to debug multiplayer)
 };
 
 void FSFLogRegistry::SetCategoryVerbosity(ESFLogCategory Category, ESFLogVerbosity Level)

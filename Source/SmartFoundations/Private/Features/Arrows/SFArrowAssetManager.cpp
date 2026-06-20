@@ -19,7 +19,7 @@ FSFArrowAssetManager::FSFArrowAssetManager()
 	ArrowMaterialSoft = TSoftObjectPtr<UMaterialInterface>(FSoftObjectPath(TEXT("/Engine/BasicShapes/BasicShapeMaterial.BasicShapeMaterial")));
 	
 	// Version stamp to confirm new code is running (Task #58)
-	UE_LOG(LogSmartArrows, Warning, TEXT("🔧 SFArrowAssetManager v3.0 constructed - FIXED ASSET PATHS!"));
+	UE_LOG(LogSmartArrows, Verbose, TEXT("🔧 SFArrowAssetManager v3.0 constructed - FIXED ASSET PATHS!"));
 }
 
 FSFArrowAssetManager::~FSFArrowAssetManager()

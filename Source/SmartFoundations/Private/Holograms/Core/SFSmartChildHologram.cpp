@@ -25,7 +25,7 @@ void ASFSmartChildHologram::CheckValidPlacement() {
 }
 
 AActor* ASFSmartChildHologram::Construct(TArray<AActor*>& out_children, FNetConstructionID constructionID) {
-    UE_LOG(LogSmartHologram, Log, TEXT("SFSmartChildHologram::Construct: Building from hologram %s"), *GetName());
+    UE_LOG(LogSmartHologram, Verbose, TEXT("SFSmartChildHologram::Construct: Building from hologram %s"), *GetName());
 
     // [MP-SLICE0] TEMP multiplayer instrumentation — remove before release.
     // Server-side per-child signal (foundation family): if this fires with HasAuthority=1 on
@@ -42,30 +42,30 @@ AActor* ASFSmartChildHologram::Construct(TArray<AActor*>& out_children, FNetCons
     AActor* ConstructedActor = Super::Construct(out_children, constructionID);
     
     if (ConstructedActor) {
-        UE_LOG(LogSmartHologram, Log, TEXT("SFSmartChildHologram::Construct: Successfully constructed %s"), 
+        UE_LOG(LogSmartHologram, Verbose, TEXT("SFSmartChildHologram::Construct: Successfully constructed %s"),
             *ConstructedActor->GetName());
         
         // Check if we have a stored recipe to apply
         TSubclassOf<UFGRecipe> StoredRecipe = USFHologramDataService::GetStoredRecipe(this);
         if (StoredRecipe) {
-            UE_LOG(LogSmartHologram, Log, TEXT("SFSmartChildHologram::Construct: Applying stored recipe %s to building"), 
+            UE_LOG(LogSmartHologram, Verbose, TEXT("SFSmartChildHologram::Construct: Applying stored recipe %s to building"),
                 *StoredRecipe->GetName());
             
             // Apply the stored recipe to the constructed building
             if (AFGBuildableManufacturer* ManufacturerBuilding = Cast<AFGBuildableManufacturer>(ConstructedActor))
             {
                 ManufacturerBuilding->SetRecipe(StoredRecipe);
-                UE_LOG(LogSmartHologram, Log, TEXT("SFSmartChildHologram::Construct: Successfully applied recipe to manufacturer building"));
+                UE_LOG(LogSmartHologram, Verbose, TEXT("SFSmartChildHologram::Construct: Successfully applied recipe to manufacturer building"));
             }
             else
             {
-                UE_LOG(LogSmartHologram, Warning, TEXT("SFSmartChildHologram::Construct: Constructed building is not a manufacturer, cannot apply recipe"));
+                UE_LOG(LogSmartHologram, Verbose, TEXT("SFSmartChildHologram::Construct: Constructed building is not a manufacturer, cannot apply recipe"));
             }
         } else {
             UE_LOG(LogSmartHologram, Verbose, TEXT("SFSmartChildHologram::Construct: No stored recipe found"));
         }
     } else {
-        UE_LOG(LogSmartHologram, Error, TEXT("SFSmartChildHologram::Construct: Failed to construct building"));
+        UE_LOG(LogSmartHologram, Verbose, TEXT("SFSmartChildHologram::Construct: Failed to construct building"));
     }
     
     return ConstructedActor;

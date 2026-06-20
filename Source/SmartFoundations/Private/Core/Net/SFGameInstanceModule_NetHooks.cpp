@@ -111,7 +111,7 @@ void USFGameInstanceModule::RegisterClientConstructChunkGuardHook()
 			// Diagnostic: capture the real serialized size near/over the ceiling (confirms the byte limit).
 			if (Bytes >= SF_MP_CONSTRUCT_LOG_BYTES)
 			{
-				UE_LOG(LogSmartFoundations, Display,
+				UE_LOG(LogSmartFoundations, Verbose,
 					TEXT("[MP-CHUNK] Smart-grid client construct: SerializedHologramData=%d bytes (NumBits=%lld), cancel threshold=%d."),
 					Bytes, (long long)data.NumBits, SF_MP_CONSTRUCT_MAX_BYTES);
 			}
@@ -123,7 +123,7 @@ void USFGameInstanceModule::RegisterClientConstructChunkGuardHook()
 
 			// Oversized: the RPC would fail to serialize and be dropped (all-or-nothing) + orphan the previews.
 			// Cancel the send. The active hologram + preview children stay live so the player can scale down.
-			UE_LOG(LogSmartFoundations, Display,
+			UE_LOG(LogSmartFoundations, Verbose,
 				TEXT("[MP-CHUNK] Blocked oversized client construct: %d bytes (> %d). Single-RPC construct would be dropped (Failed to serialize properties). Cancelled before send; preview kept."),
 				Bytes, SF_MP_CONSTRUCT_MAX_BYTES);
 
@@ -482,7 +482,7 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 					}
 					else if (!bStaged && Spec.bValid)
 					{
-						UE_LOG(LogSmartFoundations, Warning,
+						UE_LOG(LogSmartFoundations, Verbose,
 							TEXT("[MP-SPEC] Client fire: could not reach USFRCO to stage the spec - falling through to the legacy path/guard."));
 					}
 
@@ -508,7 +508,7 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 			// Oversized: refuse the fire BEFORE vanilla serializes/sends. The active hologram + preview stay
 			// live (no teardown, no orphaned previews, no dropped RPC, no server crash). The player scales
 			// down and places in smaller sections.
-			UE_LOG(LogSmartFoundations, Display,
+			UE_LOG(LogSmartFoundations, Verbose,
 				TEXT("[MP-CHUNK] Refused oversized client grid: %d cells (> %d). One construct can't carry this many over the wire safely; build in smaller sections."),
 				TotalCells, SF_MP_OVERSIZED_CELLS);
 

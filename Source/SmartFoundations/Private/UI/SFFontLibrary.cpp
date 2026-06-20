@@ -33,7 +33,7 @@ namespace SFFont
         UFont* Loaded = LoadObject<UFont>(nullptr, GUIFontPath);
         if (!Loaded)
         {
-            UE_LOG(LogSmartUI, Warning,
+            UE_LOG(LogSmartUI, Verbose,
                 TEXT("SFFont: could not load in-game font %s — falling back to engine default; non-Latin text may not render."),
                 GUIFontPath);
         }

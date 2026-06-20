@@ -636,7 +636,7 @@ void USFSubsystem::OnActorSpawned(AActor* SpawnedActor)
 						}
 						else
 						{
-							UE_LOG(LogSmartFoundations, Warning, TEXT("STACKABLE PIPE BUILD: Failed to build pipe child %s"), *Child->GetName());
+							UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("STACKABLE PIPE BUILD: Failed to build pipe child %s"), *Child->GetName());
 						}
 					}
 				}
@@ -950,7 +950,7 @@ TSubclassOf<UFGRecipe> USFSubsystem::FindRecipeForSpawnedBuilding(AFGBuildableMa
 	// CRITICAL: Enhanced SpawnedBuilding validation (deterministic safety)
 	if (!IsValid(SpawnedBuilding))
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("FindRecipeForSpawnedBuilding: SpawnedBuilding is invalid"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("FindRecipeForSpawnedBuilding: SpawnedBuilding is invalid"));
 		return nullptr;
 	}
 
@@ -974,7 +974,7 @@ TSubclassOf<UFGRecipe> USFSubsystem::FindRecipeForSpawnedBuilding(AFGBuildableMa
 		// Check if hologram is still valid
 		if (!WeakHologram.IsValid())
 		{
-			UE_LOG(LogSmartFoundations, Warning, TEXT("FindRecipeForSpawnedBuilding: Found invalid hologram in registry"));
+			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("FindRecipeForSpawnedBuilding: Found invalid hologram in registry"));
 			continue;
 		}
 

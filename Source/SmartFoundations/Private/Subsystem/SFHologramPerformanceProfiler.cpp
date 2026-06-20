@@ -14,7 +14,7 @@ void FSFHologramPerformanceProfiler::BeginSpawnProfile(const FString& OperationN
 {
 	if (bIsProfiling)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("⚠️ BeginSpawnProfile called while already profiling!"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("⚠️ BeginSpawnProfile called while already profiling!"));
 		return;
 	}
 
@@ -40,7 +40,7 @@ void FSFHologramPerformanceProfiler::EndSpawnProfile()
 {
 	if (!bIsProfiling)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("⚠️ EndSpawnProfile called without BeginSpawnProfile!"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("⚠️ EndSpawnProfile called without BeginSpawnProfile!"));
 		return;
 	}
 
@@ -71,7 +71,7 @@ void FSFHologramPerformanceProfiler::BeginDestroyProfile(const FString& Operatio
 {
 	if (bIsProfiling)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("⚠️ BeginDestroyProfile called while already profiling!"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("⚠️ BeginDestroyProfile called while already profiling!"));
 		return;
 	}
 
@@ -94,7 +94,7 @@ void FSFHologramPerformanceProfiler::EndDestroyProfile()
 {
 	if (!bIsProfiling)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("⚠️ EndDestroyProfile called without BeginDestroyProfile!"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("⚠️ EndDestroyProfile called without BeginDestroyProfile!"));
 		return;
 	}
 
@@ -121,7 +121,7 @@ void FSFHologramPerformanceProfiler::BeginRepositionProfile(const FString& Opera
 {
 	if (bIsProfiling)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("⚠️ BeginRepositionProfile called while already profiling!"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("⚠️ BeginRepositionProfile called while already profiling!"));
 		return;
 	}
 
@@ -134,16 +134,16 @@ void FSFHologramPerformanceProfiler::BeginRepositionProfile(const FString& Opera
 	FPlatformMemoryStats MemStats = FPlatformMemory::GetStats();
 	CurrentProfile.MemoryBefore = MemStats.UsedPhysical;
 
-	UE_LOG(LogSmartFoundations, Warning, TEXT("📊 REPOSITION PROFILE START: %s (repositioning %d children)"), *OperationName, ChildCount);
-	UE_LOG(LogSmartFoundations, Warning, TEXT("   UObjects Before: %d"), CurrentProfile.UObjectsBefore);
-	UE_LOG(LogSmartFoundations, Warning, TEXT("   Memory Before: %.2f MB"), CurrentProfile.MemoryBefore / (1024.0 * 1024.0));
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("📊 REPOSITION PROFILE START: %s (repositioning %d children)"), *OperationName, ChildCount);
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("   UObjects Before: %d"), CurrentProfile.UObjectsBefore);
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("   Memory Before: %.2f MB"), CurrentProfile.MemoryBefore / (1024.0 * 1024.0));
 }
 
 void FSFHologramPerformanceProfiler::EndRepositionProfile(int32 TransformCalls, int32 FloorValidationToggles)
 {
 	if (!bIsProfiling)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("⚠️ EndRepositionProfile called without BeginRepositionProfile!"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("⚠️ EndRepositionProfile called without BeginRepositionProfile!"));
 		return;
 	}
 
@@ -155,13 +155,13 @@ void FSFHologramPerformanceProfiler::EndRepositionProfile(int32 TransformCalls, 
 	const SIZE_T MemoryAfter = MemStats.UsedPhysical;
 	const int64 MemoryDelta = static_cast<int64>(MemoryAfter) - static_cast<int64>(CurrentProfile.MemoryBefore);
 
-	UE_LOG(LogSmartFoundations, Warning, TEXT("📊 REPOSITION PROFILE END: %s"), *CurrentProfile.OperationName);
-	UE_LOG(LogSmartFoundations, Warning, TEXT("   Children Repositioned: %d"), CurrentProfile.ChildCount);
-	UE_LOG(LogSmartFoundations, Warning, TEXT("   Transform Calls: %d"), TransformCalls);
-	UE_LOG(LogSmartFoundations, Warning, TEXT("   Floor Validation Toggles: %d"), FloorValidationToggles);
-	UE_LOG(LogSmartFoundations, Warning, TEXT("   UObjects After: %d (delta: %d)"), UObjectsAfter, UObjectDelta);
-	UE_LOG(LogSmartFoundations, Warning, TEXT("   Memory After: %.2f MB (delta: %.2f MB)"), MemoryAfter / (1024.0 * 1024.0), MemoryDelta / (1024.0 * 1024.0));
-	UE_LOG(LogSmartFoundations, Warning, TEXT("   Time Elapsed: %.3f ms (%.3f ms per child)"), TimeElapsed * 1000.0, CurrentProfile.ChildCount > 0 ? (TimeElapsed * 1000.0) / CurrentProfile.ChildCount : 0.0f);
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("📊 REPOSITION PROFILE END: %s"), *CurrentProfile.OperationName);
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("   Children Repositioned: %d"), CurrentProfile.ChildCount);
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("   Transform Calls: %d"), TransformCalls);
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("   Floor Validation Toggles: %d"), FloorValidationToggles);
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("   UObjects After: %d (delta: %d)"), UObjectsAfter, UObjectDelta);
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("   Memory After: %.2f MB (delta: %.2f MB)"), MemoryAfter / (1024.0 * 1024.0), MemoryDelta / (1024.0 * 1024.0));
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("   Time Elapsed: %.3f ms (%.3f ms per child)"), TimeElapsed * 1000.0, CurrentProfile.ChildCount > 0 ? (TimeElapsed * 1000.0) / CurrentProfile.ChildCount : 0.0f);
 
 	bIsProfiling = false;
 }
@@ -170,7 +170,7 @@ void FSFHologramPerformanceProfiler::BeginValidationProfile(const FString& Opera
 {
 	if (bIsProfiling)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("⚠️ BeginValidationProfile called while already profiling!"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("⚠️ BeginValidationProfile called while already profiling!"));
 		return;
 	}
 
@@ -185,7 +185,7 @@ void FSFHologramPerformanceProfiler::EndValidationProfile(EHologramMaterialState
 {
 	if (!bIsProfiling)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("⚠️ EndValidationProfile called without BeginValidationProfile!"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("⚠️ EndValidationProfile called without BeginValidationProfile!"));
 		return;
 	}
 
@@ -207,12 +207,12 @@ void FSFHologramPerformanceProfiler::LogUObjectStats(const FString& Context)
 	const int32 TotalObjects = GUObjectArray.GetObjectArrayNum();
 	const int32 MaxObjects = GUObjectArray.GetObjectArrayNumMinusPermanent();
 
-	UE_LOG(LogSmartFoundations, Warning, TEXT("📊 UOBJECT STATS [%s]"), *Context);
-	UE_LOG(LogSmartFoundations, Warning, TEXT("   Total UObjects: %d / %d"), TotalObjects, MaxObjects);
-	UE_LOG(LogSmartFoundations, Warning, TEXT("   Utilization: %.2f%%"), MaxObjects > 0 ? (static_cast<float>(TotalObjects) / MaxObjects * 100.0f) : 0.0f);
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("📊 UOBJECT STATS [%s]"), *Context);
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("   Total UObjects: %d / %d"), TotalObjects, MaxObjects);
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("   Utilization: %.2f%%"), MaxObjects > 0 ? (static_cast<float>(TotalObjects) / MaxObjects * 100.0f) : 0.0f);
 
 	FPlatformMemoryStats MemStats = FPlatformMemory::GetStats();
-	UE_LOG(LogSmartFoundations, Warning, TEXT("   Physical Memory: %.2f MB used / %.2f MB total"),
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("   Physical Memory: %.2f MB used / %.2f MB total"),
 		MemStats.UsedPhysical / (1024.0 * 1024.0),
 		MemStats.TotalPhysical / (1024.0 * 1024.0));
 }

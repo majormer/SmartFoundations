@@ -49,7 +49,7 @@ void FSFPowerAutoConnectManager::ProcessAllPowerPoles(AFGHologram* ParentPoleHol
 {
 	if (!ParentPoleHologram || !Subsystem || !AutoConnectService)
 	{
-		UE_LOG(LogSmartAutoConnect, Warning, TEXT("⚡ ProcessAllPowerPoles: Invalid pointers (Parent=%d, Subsystem=%d, Service=%d)"),
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("⚡ ProcessAllPowerPoles: Invalid pointers (Parent=%d, Subsystem=%d, Service=%d)"),
 			ParentPoleHologram != nullptr, Subsystem != nullptr, AutoConnectService != nullptr);
 		return;
 	}
@@ -697,7 +697,7 @@ void FSFPowerAutoConnectManager::ConnectPoleToNeighbors(
 {
 	if (!Pole)
 	{
-		UE_LOG(LogSmartAutoConnect, Warning, TEXT("⚡ ConnectPoleToNeighbors: Pole is null"));
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("⚡ ConnectPoleToNeighbors: Pole is null"));
 		return;
 	}
 
@@ -822,7 +822,7 @@ bool FSFPowerAutoConnectManager::CreatePowerLinePreview(AFGHologram* SourcePole,
 {
 	if (!SourcePole || !TargetPole || !Subsystem)
 	{
-		UE_LOG(LogSmartAutoConnect, Warning, TEXT("⚡ CreatePowerLinePreview: Invalid input (Source=%d, Target=%d, Subsystem=%d)"),
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("⚡ CreatePowerLinePreview: Invalid input (Source=%d, Target=%d, Subsystem=%d)"),
 			SourcePole != nullptr, TargetPole != nullptr, Subsystem != nullptr);
 		return false;
 	}
@@ -836,7 +836,7 @@ bool FSFPowerAutoConnectManager::CreatePowerLinePreview(AFGHologram* SourcePole,
 
 	if (!SourceConnection || !TargetConnection)
 	{
-		UE_LOG(LogSmartAutoConnect, Warning, TEXT("⚡ CreatePowerLinePreview: Missing power connections - Source=%s Target=%s (SourcePole=%s, TargetPole=%s)"),
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("⚡ CreatePowerLinePreview: Missing power connections - Source=%s Target=%s (SourcePole=%s, TargetPole=%s)"),
 			SourceConnection ? TEXT("OK") : TEXT("NULL"), 
 			TargetConnection ? TEXT("OK") : TEXT("NULL"),
 			*SourcePole->GetName(), *TargetPole->GetName());
@@ -849,7 +849,7 @@ bool FSFPowerAutoConnectManager::CreatePowerLinePreview(AFGHologram* SourcePole,
 	// CRITICAL: Validate SourcePole before using as map key
 	if (!SourcePole || !IsValid(SourcePole))
 	{
-		UE_LOG(LogSmartAutoConnect, Error, TEXT("⚡ CreatePowerLinePreview: CRITICAL - SourcePole is null or invalid for map access"));
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("⚡ CreatePowerLinePreview: CRITICAL - SourcePole is null or invalid for map access"));
 		return false;
 	}
 	
@@ -873,7 +873,7 @@ bool FSFPowerAutoConnectManager::CreatePowerLinePreview(AFGHologram* SourcePole,
 	// CRITICAL: Validate TargetPole before using as map key
 	if (!TargetPole || !IsValid(TargetPole))
 	{
-		UE_LOG(LogSmartAutoConnect, Error, TEXT("⚡ CreatePowerLinePreview: CRITICAL - TargetPole is null or invalid for map access"));
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("⚡ CreatePowerLinePreview: CRITICAL - TargetPole is null or invalid for map access"));
 		return false;
 	}
 	
@@ -898,7 +898,7 @@ bool FSFPowerAutoConnectManager::CreatePowerLinePreview(AFGHologram* SourcePole,
 		// CRITICAL: Double-check SourcePole validity before map operation
 		if (!SourcePole || !IsValid(SourcePole))
 		{
-			UE_LOG(LogSmartAutoConnect, Error, TEXT("⚡ CreatePowerLinePreview: CRITICAL - SourcePole became null before map Add"));
+			UE_LOG(LogSmartAutoConnect, Verbose, TEXT("⚡ CreatePowerLinePreview: CRITICAL - SourcePole became null before map Add"));
 			return false;
 		}
 		
@@ -919,7 +919,7 @@ bool FSFPowerAutoConnectManager::CreatePowerLinePreview(AFGHologram* SourcePole,
 		// CRITICAL: Final validation before array access
 		if (!SourcePole || !IsValid(SourcePole) || !PowerLinePreviews.Contains(SourcePole))
 		{
-			UE_LOG(LogSmartAutoConnect, Error, TEXT("⚡ CreatePowerLinePreview: CRITICAL - SourcePole invalid before array Add"));
+			UE_LOG(LogSmartAutoConnect, Verbose, TEXT("⚡ CreatePowerLinePreview: CRITICAL - SourcePole invalid before array Add"));
 			return false;
 		}
 		
@@ -935,7 +935,7 @@ bool FSFPowerAutoConnectManager::CreatePowerLinePreview(AFGHologram* SourcePole,
 		return true;
 	}
 
-	UE_LOG(LogSmartAutoConnect, Warning, TEXT("⚡ CreatePowerLinePreview: FAILED - UpdatePreview returned false"));
+	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("⚡ CreatePowerLinePreview: FAILED - UpdatePreview returned false"));
 	return false;
 }
 
@@ -975,7 +975,7 @@ UFGPowerConnectionComponent* FSFPowerAutoConnectManager::GetPowerConnection(AFGH
 		}
 	}
 	
-	UE_LOG(LogSmartAutoConnect, Warning, TEXT("⚡ GetPowerConnection: No power connections found on %s (had %d components, %d circuit components)"), 
+	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("⚡ GetPowerConnection: No power connections found on %s (had %d components, %d circuit components)"),
 		*PoleHologram->GetName(), Components.Num(), CircuitComponents.Num());
 	
 	return nullptr;
@@ -1039,7 +1039,7 @@ void FSFPowerAutoConnectManager::OnPowerPoleBuilt(AFGBuildablePowerPole* BuiltPo
 {
 	if (!BuiltPole || !Subsystem)
 	{
-		UE_LOG(LogSmartAutoConnect, Warning, TEXT("⚡ OnPowerPoleBuilt: Invalid parameters"));
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("⚡ OnPowerPoleBuilt: Invalid parameters"));
 		return;
 	}
 
@@ -1208,7 +1208,7 @@ void FSFPowerAutoConnectManager::OnPowerPoleBuilt(AFGBuildablePowerPole* BuiltPo
 		
 		if (BuiltCircuitConnections.Num() == 0 || NearbyCircuitConnections.Num() == 0)
 		{
-			UE_LOG(LogSmartAutoConnect, Warning, TEXT("⚡ OnPowerPoleBuilt: Pole has no circuit connections - skipping"));
+			UE_LOG(LogSmartAutoConnect, Verbose, TEXT("⚡ OnPowerPoleBuilt: Pole has no circuit connections - skipping"));
 			continue;
 		}
 		
@@ -1273,7 +1273,7 @@ void FSFPowerAutoConnectManager::OnPowerPoleBuilt(AFGBuildablePowerPole* BuiltPo
 				}
 				else
 				{
-					UE_LOG(LogSmartAutoConnect, Warning, TEXT("⚡ OnPowerPoleBuilt: Wire spawned but Connect() failed - destroying"));
+					UE_LOG(LogSmartAutoConnect, Verbose, TEXT("⚡ OnPowerPoleBuilt: Wire spawned but Connect() failed - destroying"));
 					// [NULL-WIRE GUARD] Dismantle, not Destroy: a failed Connect may still have
 				// registered one side; bare Destroy leaves a dead entry in that connection's
 				// SaveGame'd wire list (asserts on the owner's next dismantle / after reload).
@@ -1282,12 +1282,12 @@ void FSFPowerAutoConnectManager::OnPowerPoleBuilt(AFGBuildablePowerPole* BuiltPo
 			}
 			else
 			{
-				UE_LOG(LogSmartAutoConnect, Warning, TEXT("⚡ OnPowerPoleBuilt: Failed to spawn wire"));
+				UE_LOG(LogSmartAutoConnect, Verbose, TEXT("⚡ OnPowerPoleBuilt: Failed to spawn wire"));
 			}
 		}
 		else
 		{
-			UE_LOG(LogSmartAutoConnect, Warning, TEXT("⚡ OnPowerPoleBuilt: Failed to load wire class"));
+			UE_LOG(LogSmartAutoConnect, Verbose, TEXT("⚡ OnPowerPoleBuilt: Failed to load wire class"));
 		}
 		
 		// Remove this connection from the deferred queue since it's been processed
@@ -1345,7 +1345,7 @@ void FSFPowerAutoConnectManager::OnPowerPoleBuilt(AFGBuildablePowerPole* BuiltPo
 	
 	if (!Subsystem)
 	{
-		UE_LOG(LogSmartAutoConnect, Warning, TEXT("⚡ OnPowerPoleBuilt: No subsystem - cannot access planned mappings"));
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("⚡ OnPowerPoleBuilt: No subsystem - cannot access planned mappings"));
 		return;
 	}
 	
@@ -1456,7 +1456,7 @@ void FSFPowerAutoConnectManager::OnPowerPoleBuilt(AFGBuildablePowerPole* BuiltPo
 		BuiltPole->GetComponents(UFGCircuitConnectionComponent::StaticClass(), PoleCircuitConns);
 		if (PoleCircuitConns.Num() == 0)
 		{
-			UE_LOG(LogSmartAutoConnect, Warning, TEXT("⚡ OnPowerPoleBuilt: Pole has no circuit connections for building connection"));
+			UE_LOG(LogSmartAutoConnect, Verbose, TEXT("⚡ OnPowerPoleBuilt: Pole has no circuit connections for building connection"));
 			continue;
 		}
 		
@@ -1468,7 +1468,7 @@ void FSFPowerAutoConnectManager::OnPowerPoleBuilt(AFGBuildablePowerPole* BuiltPo
 		// Deduct cable cost before spawning wire (skip if costs pre-deducted at grid level)
 		if (!bCostsPreDeducted && !DeductCableCost(BuiltPole->GetWorld(), Distance))
 		{
-			UE_LOG(LogSmartAutoConnect, Warning, TEXT("⚡ OnPowerPoleBuilt: Cannot afford power line to building %s (not enough cables)"), *Building->GetName());
+			UE_LOG(LogSmartAutoConnect, Verbose, TEXT("⚡ OnPowerPoleBuilt: Cannot afford power line to building %s (not enough cables)"), *Building->GetName());
 			continue;
 		}
 		
@@ -1476,7 +1476,7 @@ void FSFPowerAutoConnectManager::OnPowerPoleBuilt(AFGBuildablePowerPole* BuiltPo
 		UClass* PowerLineClass = LoadObject<UClass>(nullptr, SFAssetPaths::PowerLineBuildClass);
 		if (!PowerLineClass)
 		{
-			UE_LOG(LogSmartAutoConnect, Error, TEXT("⚡ OnPowerPoleBuilt: Failed to load PowerLine class for building connection"));
+			UE_LOG(LogSmartAutoConnect, Verbose, TEXT("⚡ OnPowerPoleBuilt: Failed to load PowerLine class for building connection"));
 			continue;
 		}
 		
@@ -1503,7 +1503,7 @@ void FSFPowerAutoConnectManager::OnPowerPoleBuilt(AFGBuildablePowerPole* BuiltPo
 			}
 			else
 			{
-				UE_LOG(LogSmartAutoConnect, Warning, TEXT("⚡ OnPowerPoleBuilt: Failed to connect pole to building %s"), 
+				UE_LOG(LogSmartAutoConnect, Verbose, TEXT("⚡ OnPowerPoleBuilt: Failed to connect pole to building %s"),
 					*Building->GetName());
 				// [NULL-WIRE GUARD] Dismantle, not Destroy: a failed Connect may still have
 				// registered one side; bare Destroy leaves a dead entry in that connection's
@@ -1520,7 +1520,7 @@ bool FSFPowerAutoConnectManager::ReserveConnection(UFGCircuitConnectionComponent
 {
 	if (!Connection)
 	{
-		UE_LOG(LogSmartAutoConnect, Warning, TEXT("⚡ ReserveConnection: Invalid connection parameter"));
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("⚡ ReserveConnection: Invalid connection parameter"));
 		return false;
 	}
 
@@ -1688,7 +1688,7 @@ void FSFPowerAutoConnectManager::GetConnectionInfo(AFGBuildablePowerPole* PowerP
 	
 	if (!PowerPole)
 	{
-		UE_LOG(LogSmartAutoConnect, Warning, TEXT("⚡ GetConnectionInfo: Power pole is null"));
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("⚡ GetConnectionInfo: Power pole is null"));
 		return;
 	}
 	
@@ -1732,14 +1732,14 @@ void FSFPowerAutoConnectManager::DebugLogAllPowerPoleConnections() const
 {
 	if (!Subsystem)
 	{
-		UE_LOG(LogSmartAutoConnect, Warning, TEXT("⚡ DebugLogAllPowerPoleConnections: Subsystem is null"));
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("⚡ DebugLogAllPowerPoleConnections: Subsystem is null"));
 		return;
 	}
 
 	UWorld* World = Subsystem->GetWorld();
 	if (!World)
 	{
-		UE_LOG(LogSmartAutoConnect, Warning, TEXT("⚡ DebugLogAllPowerPoleConnections: World is null"));
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("⚡ DebugLogAllPowerPoleConnections: World is null"));
 		return;
 	}
 
@@ -1797,7 +1797,7 @@ bool FSFPowerAutoConnectManager::DeductCableCost(UWorld* World, float DistanceIn
 {
 	if (!World)
 	{
-		UE_LOG(LogSmartAutoConnect, Warning, TEXT("⚡ DeductCableCost: No world"));
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("⚡ DeductCableCost: No world"));
 		return false;
 	}
 	
@@ -1812,7 +1812,7 @@ bool FSFPowerAutoConnectManager::DeductCableCost(UWorld* World, float DistanceIn
 		TEXT("/Game/FactoryGame/Resource/Parts/Cable/Desc_Cable.Desc_Cable_C"));
 	if (!*CableClass)
 	{
-		UE_LOG(LogSmartAutoConnect, Warning, TEXT("⚡ DeductCableCost: Failed to load Cable class"));
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("⚡ DeductCableCost: Failed to load Cable class"));
 		return false;
 	}
 	
@@ -1823,21 +1823,21 @@ bool FSFPowerAutoConnectManager::DeductCableCost(UWorld* World, float DistanceIn
 	AFGPlayerController* PC = Cast<AFGPlayerController>(World->GetFirstPlayerController());
 	if (!PC)
 	{
-		UE_LOG(LogSmartAutoConnect, Warning, TEXT("⚡ DeductCableCost: No player controller"));
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("⚡ DeductCableCost: No player controller"));
 		return false;
 	}
 	
 	AFGCharacterPlayer* Character = Cast<AFGCharacterPlayer>(PC->GetPawn());
 	if (!Character)
 	{
-		UE_LOG(LogSmartAutoConnect, Warning, TEXT("⚡ DeductCableCost: No player character"));
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("⚡ DeductCableCost: No player character"));
 		return false;
 	}
 	
 	UFGInventoryComponent* Inventory = Character->GetInventory();
 	if (!Inventory)
 	{
-		UE_LOG(LogSmartAutoConnect, Warning, TEXT("⚡ DeductCableCost: No player inventory"));
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("⚡ DeductCableCost: No player inventory"));
 		return false;
 	}
 	
@@ -1848,7 +1848,7 @@ bool FSFPowerAutoConnectManager::DeductCableCost(UWorld* World, float DistanceIn
 	
 	if (TotalAvailable < CablesNeeded)
 	{
-		UE_LOG(LogSmartAutoConnect, Warning, TEXT("⚡ DeductCableCost: Not enough cables (%d/%d available)"), TotalAvailable, CablesNeeded);
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("⚡ DeductCableCost: Not enough cables (%d/%d available)"), TotalAvailable, CablesNeeded);
 		return false;
 	}
 	

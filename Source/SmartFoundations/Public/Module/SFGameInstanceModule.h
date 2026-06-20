@@ -80,7 +80,35 @@ protected:
 	 */
 	void RegisterSpecConstructionHooks();
 
+	/**
+	 * [#368/#279] Hook AFGBuildGun::UnEquip to run Smart's holster cleanup. The legacy
+	 * USFSubsystem::OnBuildGunUnequipped() (which clears the remembered recipe and, now, the vanilla
+	 * clipboard recipe) was orphaned - never called from anywhere - so a recipe "stuck" across build
+	 * sessions (it still showed in the HUD and re-applied after a holster). This wires it to the real
+	 * unequip event (gated to the local player), and clears the local build-gun clipboard directly via
+	 * the gun (the subsystem's Player->GetBuildGun() path can be null mid-unequip).
+	 */
+	void RegisterBuildGunUnequipHook();
+
 	/** Smart! Configuration blueprint - registered with SML for in-game menu access */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Smart! Configuration")
 	TSubclassOf<class UModConfiguration> SmartConfigClass;
+
+public:
+	/**
+	 * [#368] Sync the player's vanilla build-gun clipboard recipe. When a player picks a recipe via
+	 * the U key / Smart Panel, Smart's chosen recipe must match the vanilla clipboard, because
+	 * vanilla's PasteSettings re-applies mSampledClipboardSettings to the built manufacturer AFTER
+	 * Smart's spec-construction SetRecipe (last-writer-wins) - so a stale sampled clipboard otherwise
+	 * overrides the player's selection (live MP repro: sampled Copper Sheet overrode a U-selected
+	 * Cable). This writes the recipe into the player's build-gun clipboard so vanilla pastes the SAME
+	 * recipe Smart does. The field is NOT replicated, so each side sets its own copy: the client calls
+	 * this locally and a per-player USFRCO::Server_SetClipboardRecipe sets the server's. Recipe==null
+	 * CLEARS the clipboard (recipe-less vanilla placement; the holster path uses this). An existing
+	 * manufacturer clipboard is modified in place (preserving any sampled overclock/Somersloop); a
+	 * fresh clipboard is created neutral. Uses GetBuildGunStateFor(BGS_BUILD) so the clear works even
+	 * after the gun has left build state on holster. Lives here because AccessTransformers grants
+	 * USFGameInstanceModule friend access to UFGBuildGunStateBuild::mSampledClipboardSettings.
+	 */
+	static void SetBuildStateClipboardRecipe(class AFGCharacterPlayer* Player, TSubclassOf<class UFGRecipe> Recipe);
 };

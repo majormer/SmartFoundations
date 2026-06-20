@@ -72,7 +72,7 @@ FSFRadarPulseSnapshot USFRadarPulseService::CaptureSnapshotFiltered(float Radius
 {
     if (!Subsystem || !Subsystem->GetWorld())
     {
-        UE_LOG(LogSmartFoundations, Warning, TEXT("📡 RadarPulse: Cannot capture - no valid world"));
+        UE_LOG(LogSmartFoundations, Verbose, TEXT("📡 RadarPulse: Cannot capture - no valid world"));
         return FSFRadarPulseSnapshot();
     }
 
@@ -80,7 +80,7 @@ FSFRadarPulseSnapshot USFRadarPulseService::CaptureSnapshotFiltered(float Radius
     APlayerController* PC = Subsystem->GetWorld()->GetFirstPlayerController();
     if (!PC || !PC->GetPawn())
     {
-        UE_LOG(LogSmartFoundations, Warning, TEXT("📡 RadarPulse: Cannot capture - no valid player"));
+        UE_LOG(LogSmartFoundations, Verbose, TEXT("📡 RadarPulse: Cannot capture - no valid player"));
         return FSFRadarPulseSnapshot();
     }
 
@@ -852,7 +852,7 @@ void USFRadarPulseService::InspectHologram(AFGHologram* Hologram, const FString&
 {
     if (!IsValid(Hologram))
     {
-        UE_LOG(LogSmartFoundations, Warning, TEXT("📡 RadarPulse: InspectHologram called with invalid hologram"));
+        UE_LOG(LogSmartFoundations, Verbose, TEXT("📡 RadarPulse: InspectHologram called with invalid hologram"));
         return;
     }
 
@@ -1164,7 +1164,7 @@ void USFRadarPulseService::InspectAllHologramsInRadius(float Radius)
 {
     if (!Subsystem || !Subsystem->GetWorld())
     {
-        UE_LOG(LogSmartFoundations, Warning, TEXT("📡 RadarPulse: Cannot scan - no valid world"));
+        UE_LOG(LogSmartFoundations, Verbose, TEXT("📡 RadarPulse: Cannot scan - no valid world"));
         return;
     }
 
@@ -1174,7 +1174,7 @@ void USFRadarPulseService::InspectAllHologramsInRadius(float Radius)
     APlayerController* PC = World->GetFirstPlayerController();
     if (!PC || !PC->GetPawn())
     {
-        UE_LOG(LogSmartFoundations, Warning, TEXT("📡 RadarPulse: Cannot scan - no valid player"));
+        UE_LOG(LogSmartFoundations, Verbose, TEXT("📡 RadarPulse: Cannot scan - no valid player"));
         return;
     }
 
@@ -1665,7 +1665,7 @@ void USFRadarPulseService::ScanChainActors(float Radius)
 {
     if (!Subsystem || !Subsystem->GetWorld())
     {
-        UE_LOG(LogSmartFoundations, Warning, TEXT("📡 ScanChainActors: Cannot scan - no valid world"));
+        UE_LOG(LogSmartFoundations, Verbose, TEXT("📡 ScanChainActors: Cannot scan - no valid world"));
         return;
     }
 
@@ -1675,7 +1675,7 @@ void USFRadarPulseService::ScanChainActors(float Radius)
     APlayerController* PC = World->GetFirstPlayerController();
     if (!PC || !PC->GetPawn())
     {
-        UE_LOG(LogSmartFoundations, Warning, TEXT("📡 ScanChainActors: Cannot scan - no valid player"));
+        UE_LOG(LogSmartFoundations, Verbose, TEXT("📡 ScanChainActors: Cannot scan - no valid player"));
         return;
     }
 

@@ -47,7 +47,7 @@ AFGHologram* USFSubsystem::TrySwapToSmartHologram(AFGHologram* OriginalHologram)
 {
 	if (!OriginalHologram || !OriginalHologram->IsValidLowLevel())
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("TrySwapToSmartHologram: Invalid hologram"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("TrySwapToSmartHologram: Invalid hologram"));
 		return OriginalHologram;
 	}
 
@@ -90,7 +90,7 @@ AFGHologram* USFSubsystem::TrySwapToSmartHologram(AFGHologram* OriginalHologram)
 		}
 		else
 		{
-			UE_LOG(LogSmartFoundations, Error, TEXT("❌ Failed to create custom foundation hologram, falling back to vanilla"));
+			UE_LOG(LogSmartFoundations, Verbose, TEXT("❌ Failed to create custom foundation hologram, falling back to vanilla"));
 		}
 	}
 	else if (Cast<AFGFactoryHologram>(OriginalHologram))
@@ -118,7 +118,7 @@ AFGHologram* USFSubsystem::TrySwapToSmartHologram(AFGHologram* OriginalHologram)
 		}
 		else
 		{
-			UE_LOG(LogSmartFoundations, Error, TEXT("❌ Failed to create custom logistics hologram, falling back to vanilla"));
+			UE_LOG(LogSmartFoundations, Verbose, TEXT("❌ Failed to create custom logistics hologram, falling back to vanilla"));
 		}
 	}
 
@@ -134,7 +134,7 @@ ASFFoundationHologram* USFSubsystem::CreateCustomFoundationHologram(AFGHologram*
 {
 	if (!OriginalHologram || !OriginalHologram->IsValidLowLevel())
 	{
-		UE_LOG(LogSmartFoundations, Error, TEXT("CreateCustomFoundationHologram: Invalid original hologram"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("CreateCustomFoundationHologram: Invalid original hologram"));
 		return nullptr;
 	}
 
@@ -142,7 +142,7 @@ ASFFoundationHologram* USFSubsystem::CreateCustomFoundationHologram(AFGHologram*
 	UWorld* World = OriginalHologram->GetWorld();
 	if (!World)
 	{
-		UE_LOG(LogSmartFoundations, Error, TEXT("CreateCustomFoundationHologram: No world context"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("CreateCustomFoundationHologram: No world context"));
 		return nullptr;
 	}
 
@@ -156,7 +156,7 @@ ASFFoundationHologram* USFSubsystem::CreateCustomFoundationHologram(AFGHologram*
 	ASFFoundationHologram* CustomHologram = World->SpawnActor<ASFFoundationHologram>(ASFFoundationHologram::StaticClass(), SpawnParams);
 	if (!CustomHologram)
 	{
-		UE_LOG(LogSmartFoundations, Error, TEXT("CreateCustomFoundationHologram: Failed to spawn custom hologram"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("CreateCustomFoundationHologram: Failed to spawn custom hologram"));
 		return nullptr;
 	}
 
@@ -190,14 +190,14 @@ ASFFactoryHologram* USFSubsystem::CreateCustomFactoryHologram(AFGHologram* Origi
 {
 	if (!OriginalHologram || !OriginalHologram->IsValidLowLevel())
 	{
-		UE_LOG(LogSmartFoundations, Error, TEXT("CreateCustomFactoryHologram: Invalid original hologram"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("CreateCustomFactoryHologram: Invalid original hologram"));
 		return nullptr;
 	}
 
 	UWorld* World = OriginalHologram->GetWorld();
 	if (!World)
 	{
-		UE_LOG(LogSmartFoundations, Error, TEXT("CreateCustomFactoryHologram: No world context"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("CreateCustomFactoryHologram: No world context"));
 		return nullptr;
 	}
 
@@ -209,7 +209,7 @@ ASFFactoryHologram* USFSubsystem::CreateCustomFactoryHologram(AFGHologram* Origi
 	ASFFactoryHologram* CustomHologram = World->SpawnActor<ASFFactoryHologram>(ASFFactoryHologram::StaticClass(), SpawnParams);
 	if (!CustomHologram)
 	{
-		UE_LOG(LogSmartFoundations, Error, TEXT("CreateCustomFactoryHologram: Failed to spawn custom hologram"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("CreateCustomFactoryHologram: Failed to spawn custom hologram"));
 		return nullptr;
 	}
 
@@ -240,14 +240,14 @@ ASFLogisticsHologram* USFSubsystem::CreateCustomLogisticsHologram(AFGHologram* O
 {
 	if (!OriginalHologram || !OriginalHologram->IsValidLowLevel())
 	{
-		UE_LOG(LogSmartFoundations, Error, TEXT("CreateCustomLogisticsHologram: Invalid original hologram"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("CreateCustomLogisticsHologram: Invalid original hologram"));
 		return nullptr;
 	}
 
 	UWorld* World = OriginalHologram->GetWorld();
 	if (!World)
 	{
-		UE_LOG(LogSmartFoundations, Error, TEXT("CreateCustomLogisticsHologram: No world context"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("CreateCustomLogisticsHologram: No world context"));
 		return nullptr;
 	}
 
@@ -259,7 +259,7 @@ ASFLogisticsHologram* USFSubsystem::CreateCustomLogisticsHologram(AFGHologram* O
 	ASFLogisticsHologram* CustomHologram = World->SpawnActor<ASFLogisticsHologram>(ASFLogisticsHologram::StaticClass(), SpawnParams);
 	if (!CustomHologram)
 	{
-		UE_LOG(LogSmartFoundations, Error, TEXT("CreateCustomLogisticsHologram: Failed to spawn custom hologram"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("CreateCustomLogisticsHologram: Failed to spawn custom hologram"));
 		return nullptr;
 	}
 
@@ -290,7 +290,7 @@ void USFSubsystem::CopyHologramProperties(AFGHologram* Source, AFGHologram* Dest
 {
 	if (!Source || !Destination)
 	{
-		UE_LOG(LogSmartFoundations, Error, TEXT("CopyHologramProperties: Invalid source or destination"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("CopyHologramProperties: Invalid source or destination"));
 		return;
 	}
 
@@ -325,7 +325,7 @@ bool USFSubsystem::ReplaceHologramInBuildGun(AFGHologram* OriginalHologram, AFGH
 
 	if (!OriginalHologram || !CustomHologram)
 	{
-		UE_LOG(LogSmartFoundations, Error, TEXT("ReplaceHologramInBuildGun: Invalid holograms"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("ReplaceHologramInBuildGun: Invalid holograms"));
 		return false;
 	}
 
@@ -344,7 +344,7 @@ UClass* USFSubsystem::GetBeltClassForTier(int32 Tier, AFGPlayerController* Playe
 	// Clamp to valid range
 	if (Tier < 1 || Tier > 6)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("GetBeltClassForTier: Invalid tier %d (must be 1-6)"), Tier);
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("GetBeltClassForTier: Invalid tier %d (must be 1-6)"), Tier);
 		return nullptr;
 	}
 
@@ -357,7 +357,7 @@ UClass* USFSubsystem::GetBeltClassForTier(int32 Tier, AFGPlayerController* Playe
 
 	if (!BeltClass)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("GetBeltClassForTier: Failed to load belt class for tier %d"), Tier);
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("GetBeltClassForTier: Failed to load belt class for tier %d"), Tier);
 		return nullptr;
 	}
 
@@ -388,21 +388,21 @@ int32 USFSubsystem::GetHighestUnlockedBeltTier(AFGPlayerController* PlayerContro
 {
 	if (!PlayerController)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("GetHighestUnlockedBeltTier: No player controller, defaulting to Mk1"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("GetHighestUnlockedBeltTier: No player controller, defaulting to Mk1"));
 		return 1;  // Default to Mk1 if no player context
 	}
 
 	UWorld* World = PlayerController->GetWorld();
 	if (!World)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("GetHighestUnlockedBeltTier: No world context, defaulting to Mk1"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("GetHighestUnlockedBeltTier: No world context, defaulting to Mk1"));
 		return 1;
 	}
 
 	AFGRecipeManager* RecipeManager = AFGRecipeManager::Get(World);
 	if (!RecipeManager)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("GetHighestUnlockedBeltTier: No recipe manager, defaulting to Mk1"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("GetHighestUnlockedBeltTier: No recipe manager, defaulting to Mk1"));
 		return 1;
 	}
 
@@ -426,7 +426,7 @@ int32 USFSubsystem::GetHighestUnlockedBeltTier(AFGPlayerController* PlayerContro
 	}
 
 	// Fallback: If nothing is unlocked (shouldn't happen), return Mk1
-	UE_LOG(LogSmartFoundations, Warning, TEXT("GetHighestUnlockedBeltTier: No belts unlocked, defaulting to Mk1"));
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("GetHighestUnlockedBeltTier: No belts unlocked, defaulting to Mk1"));
 	return 1;
 }
 
@@ -546,7 +546,7 @@ UClass* USFSubsystem::GetBeltClassFromConfig(int32 ConfigTier, AFGPlayerControll
 
 	if (!BeltClass)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("GetBeltClassFromConfig: Belt tier Mk%d unavailable or not unlocked - belt category disabled"), ActualTier);
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("GetBeltClassFromConfig: Belt tier Mk%d unavailable or not unlocked - belt category disabled"), ActualTier);
 	}
 
 	return BeltClass;

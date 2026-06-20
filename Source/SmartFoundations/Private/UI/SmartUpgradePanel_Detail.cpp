@@ -921,7 +921,7 @@ void USmartUpgradePanel::OnTraversalScanClicked()
 				return;
 			}
 		}
-		UE_LOG(LogSmartUI, Warning, TEXT("Upgrade Panel: Could not find SFRCO instance for traversal scan"));
+		UE_LOG(LogSmartUI, Verbose, TEXT("Upgrade Panel: Could not find SFRCO instance for traversal scan"));
 		if (SharedStatusText)
 		{
 			SharedStatusText->SetText(LOCTEXT("Upgrade_ErrRCOScan", "Error: server connection unavailable"));

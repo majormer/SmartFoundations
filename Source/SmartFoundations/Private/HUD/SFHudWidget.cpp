@@ -306,7 +306,7 @@ void USFHudWidget::UpdateContent(const TArray<FString>& Lines, UTexture2D* Recip
 {
 	if (!ContentBox || TextPool.Num() == 0)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("SFHudWidget::UpdateContent: ContentBox=%s, TextPool=%d — early exit"),
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("SFHudWidget::UpdateContent: ContentBox=%s, TextPool=%d — early exit"),
 			ContentBox ? TEXT("OK") : TEXT("NULL"), TextPool.Num());
 		return;
 	}
@@ -366,7 +366,7 @@ void USFHudWidget::UpdateContent(const TArray<FString>& Lines, UTexture2D* Recip
 		UTextBlock* Block = TextPool[PoolIndex];
 		if (!Block)
 		{
-			UE_LOG(LogSmartFoundations, Warning, TEXT("SFHudWidget: TextPool[%d] is NULL!"), PoolIndex);
+			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("SFHudWidget: TextPool[%d] is NULL!"), PoolIndex);
 			PoolIndex++;
 			continue;
 		}

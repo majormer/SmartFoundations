@@ -15,7 +15,7 @@ void USFSubsystem::RegisterActiveHologram(AFGHologram* Hologram)
 {
 	if (!Hologram)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("HOLOGRAM REGISTRATION FAILED: Null hologram pointer"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("HOLOGRAM REGISTRATION FAILED: Null hologram pointer"));
 		return;
 	}
 
@@ -427,7 +427,7 @@ void USFSubsystem::RegisterActiveHologram(AFGHologram* Hologram)
 			else
 			{
 				// Shouldn't happen - HasProfile returned true but hologram isn't buildable
-				UE_LOG(LogSmartFoundations, Warning, TEXT("⚠️ Registry has profile but hologram is not AFGBuildableHologram - using adapter fallback"));
+				UE_LOG(LogSmartFoundations, Verbose, TEXT("⚠️ Registry has profile but hologram is not AFGBuildableHologram - using adapter fallback"));
 				const FBoxSphereBounds AdapterBounds = CurrentAdapter->GetBuildingBounds();
 				CachedBuildingSize = AdapterBounds.BoxExtent * 2.0f;
 				CachedAnchorOffset = FVector::ZeroVector;
@@ -454,7 +454,7 @@ void USFSubsystem::RegisterActiveHologram(AFGHologram* Hologram)
 				CachedBuildingSize = FVector(800.0f, 800.0f, 100.0f);
 			}
 
-			UE_LOG(LogSmartFoundations, Warning, TEXT("⚠️ CACHED BUILDING SIZE: %s via %s fallback (unknown buildable - consider adding to registry)"),
+			UE_LOG(LogSmartFoundations, Verbose, TEXT("⚠️ CACHED BUILDING SIZE: %s via %s fallback (unknown buildable - consider adding to registry)"),
 				*CachedBuildingSize.ToString(), *CurrentAdapter->GetAdapterTypeName());
 		}
 
@@ -497,7 +497,7 @@ void USFSubsystem::RegisterActiveHologram(AFGHologram* Hologram)
 			}
 			else
 			{
-				UE_LOG(LogSmartFoundations, Error, TEXT("❌ ARROW MODULE NOT READY"));
+				UE_LOG(LogSmartFoundations, Verbose, TEXT("❌ ARROW MODULE NOT READY"));
 			}
 		}
 		else
@@ -509,7 +509,7 @@ void USFSubsystem::RegisterActiveHologram(AFGHologram* Hologram)
 	}
 	else
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("HOLOGRAM REGISTERED: %s - Adapter creation failed"), *Hologram->GetName());
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("HOLOGRAM REGISTERED: %s - Adapter creation failed"), *Hologram->GetName());
 	}
 
 	// Initial auto-connect check for distributor holograms (fixes missing previews on first selection)
@@ -701,11 +701,11 @@ void USFSubsystem::UnregisterActiveHologram(AFGHologram* Hologram)
 	{
 		if (Hologram)
 		{
-			UE_LOG(LogSmartFoundations, Warning, TEXT("HOLOGRAM UNREGISTER FAILED: %s not currently active"), *Hologram->GetName());
+			UE_LOG(LogSmartFoundations, Verbose, TEXT("HOLOGRAM UNREGISTER FAILED: %s not currently active"), *Hologram->GetName());
 		}
 		else
 		{
-			UE_LOG(LogSmartFoundations, Warning, TEXT("HOLOGRAM UNREGISTER FAILED: Null hologram pointer"));
+			UE_LOG(LogSmartFoundations, Verbose, TEXT("HOLOGRAM UNREGISTER FAILED: Null hologram pointer"));
 		}
 	}
 }
@@ -773,11 +773,11 @@ void USFSubsystem::PollForActiveHologram()
 	{
 		BuildGun->mOnRecipeSampled.AddDynamic(this, &USFSubsystem::OnBuildGunRecipeSampled);
 		bHasSubscribedToRecipeSampled = true;
-		UE_LOG(LogSmartFoundations, Log, TEXT("RECIPE COPYING: Subscribed to build gun's OnRecipeSampled delegate"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("RECIPE COPYING: Subscribed to build gun's OnRecipeSampled delegate"));
 	}
 	else if (!bHasSubscribedToRecipeSampled)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("RECIPE COPYING: BuildGun is invalid, cannot subscribe to recipe sampling delegate"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("RECIPE COPYING: BuildGun is invalid, cannot subscribe to recipe sampling delegate"));
 	}
 
 	// Check if we're in build state
@@ -1208,7 +1208,7 @@ void USFSubsystem::ApplyScalingToHologram(const FVector& ScalingDelta)
 {
 	if (!ActiveHologram.IsValid())
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("SCALING FAILED: No active hologram"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("SCALING FAILED: No active hologram"));
 		return;
 	}
 
@@ -1350,7 +1350,7 @@ void USFSubsystem::OnBuildGunEquipped()
 {
 	if (!LastController.IsValid())
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("Cannot log contexts: No player controller"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("Cannot log contexts: No player controller"));
 		return;
 	}
 
@@ -1359,7 +1359,7 @@ void USFSubsystem::OnBuildGunEquipped()
 
 	if (!InputSubsystem)
 	{
-		UE_LOG(LogSmartFoundations, Error, TEXT("Cannot log contexts: No Enhanced Input subsystem"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("Cannot log contexts: No Enhanced Input subsystem"));
 		return;
 	}
 
@@ -1382,7 +1382,7 @@ void USFSubsystem::OnBuildGunEquipped()
 	}
 	else
 	{
-		UE_LOG(LogSmartFoundations, Error, TEXT("❌ Smart! Context NOT LOADED"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("❌ Smart! Context NOT LOADED"));
 	}
 
 	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("═══════════════════════════════════════════════════════════"));
@@ -1454,6 +1454,14 @@ void USFSubsystem::OnBuildGunUnequipped()
 	// should NOT persist across build gun sessions to avoid accidentally applying them
 	// to unrelated builds later. We clear them on unequip.
 	ClearStoredProductionRecipe();
+	// [#368] Also drop the vanilla build-gun clipboard recipe on holster (#208/#209: overrides must
+	// not persist across build sessions), so re-equipping and placing a manufacturer is recipe-less.
+	// GetBuildGunStateFor(BGS_BUILD) inside the helper reaches the build state even though the gun has
+	// already left build mode here.
+	if (RecipeManagementService)
+	{
+		RecipeManagementService->SyncClipboardRecipe(nullptr);
+	}
 	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("RECIPE COPYING: Cleared stored recipe and items on build gun unequip"));
 
 	// Now it is safe to destroy any pending children we deferred while building
@@ -1473,7 +1481,7 @@ void USFSubsystem::LogActiveInputContexts(const FString& CallerContext)
 {
 	if (!LastController.IsValid())
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("[%s] Cannot log contexts: No player controller"), *CallerContext);
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("[%s] Cannot log contexts: No player controller"), *CallerContext);
 		return;
 	}
 
@@ -1482,7 +1490,7 @@ void USFSubsystem::LogActiveInputContexts(const FString& CallerContext)
 
 	if (!InputSubsystem)
 	{
-		UE_LOG(LogSmartFoundations, Error, TEXT("[%s] Cannot log contexts: No Enhanced Input subsystem"), *CallerContext);
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("[%s] Cannot log contexts: No Enhanced Input subsystem"), *CallerContext);
 		return;
 	}
 
@@ -1505,7 +1513,7 @@ void USFSubsystem::LogActiveInputContexts(const FString& CallerContext)
 	}
 	else
 	{
-		UE_LOG(LogSmartFoundations, Error, TEXT("❌ Smart! Context NOT LOADED"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("❌ Smart! Context NOT LOADED"));
 	}
 
 	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("═══════════════════════════════════════════════════════════"));
@@ -1515,7 +1523,7 @@ TSharedPtr<ISFHologramAdapter> USFSubsystem::CreateHologramAdapter(AFGHologram* 
 {
 	if (!Hologram)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("CreateHologramAdapter: Null hologram"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("CreateHologramAdapter: Null hologram"));
 		return nullptr;
 	}
 
@@ -1566,7 +1574,7 @@ TSharedPtr<ISFHologramAdapter> USFSubsystem::CreateHologramAdapter(AFGHologram* 
 	// ========================================
 	if (Cast<AFGBlueprintHologram>(Hologram))
 	{
-		UE_LOG(LogSmartFoundations, Warning,
+		UE_LOG(LogSmartFoundations, Verbose,
 			TEXT("Detected Blueprint hologram (%s) - Smart! features disabled (blueprint placement)"),
 			*Hologram->GetName());
 		return MakeShared<FSFUnsupportedAdapter>(Hologram, TEXT("Blueprint"));
@@ -1621,7 +1629,7 @@ TSharedPtr<ISFHologramAdapter> USFSubsystem::CreateHologramAdapter(AFGHologram* 
 	{
 		// Other resource extractors (miners, oil extractors) CANNOT be scaled
 		// They must be placed on specific resource nodes - children fail validation
-		UE_LOG(LogSmartFoundations, Warning, TEXT("Creating ResourceExtractor adapter for %s (scaling disabled - must be on resource node)"), *Hologram->GetName());
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("Creating ResourceExtractor adapter for %s (scaling disabled - must be on resource node)"), *Hologram->GetName());
 		return MakeShared<FSFResourceExtractorAdapter>(Hologram);
 	}
 	else if (Cast<AFGFoundationHologram>(Hologram))
@@ -1676,7 +1684,7 @@ TSharedPtr<ISFHologramAdapter> USFSubsystem::CreateHologramAdapter(AFGHologram* 
 			if (!Profile.bSupportsScaling)
 			{
 				// Registry disables scaling for this buildable
-				UE_LOG(LogSmartFoundations, Warning,
+				UE_LOG(LogSmartFoundations, Verbose,
 					TEXT("Detected registry buildable with scaling disabled (%s) - Smart! features disabled"),
 					*InnerBuildClass->GetName());
 				return MakeShared<FSFUnsupportedAdapter>(Hologram, TEXT("RegistryDisabled"));
@@ -1723,14 +1731,14 @@ TSharedPtr<ISFHologramAdapter> USFSubsystem::CreateHologramAdapter(AFGHologram* 
 
 	else if (Cast<AFGWheeledVehicleHologram>(Hologram))
 	{
-		UE_LOG(LogSmartFoundations, Warning,
+		UE_LOG(LogSmartFoundations, Verbose,
 			TEXT("Detected vehicle hologram (%s) - Smart! features disabled (vehicles not supported)"),
 			*HologramTypeName);
 		return MakeShared<FSFUnsupportedAdapter>(Hologram, TEXT("Vehicle"));
 	}
 	else if (Cast<AFGSpaceElevatorHologram>(Hologram))
 	{
-		UE_LOG(LogSmartFoundations, Warning,
+		UE_LOG(LogSmartFoundations, Verbose,
 			TEXT("Detected Space Elevator hologram (%s) - Smart! features disabled (unique building)"),
 			*HologramTypeName);
 		return MakeShared<FSFUnsupportedAdapter>(Hologram, TEXT("SpaceElevator"));
@@ -1758,7 +1766,7 @@ TSharedPtr<ISFHologramAdapter> USFSubsystem::CreateHologramAdapter(AFGHologram* 
 			else
 			{
 				// Registry says scaling is disabled (extractors, unique buildings, etc.)
-				UE_LOG(LogSmartFoundations, Warning,
+				UE_LOG(LogSmartFoundations, Verbose,
 					TEXT("Detected registry buildable with scaling disabled (%s) - Smart! features disabled"),
 					*InnerBuildClass->GetName());
 				return MakeShared<FSFUnsupportedAdapter>(Hologram, TEXT("RegistryDisabled"));
@@ -1800,7 +1808,7 @@ TSharedPtr<ISFHologramAdapter> USFSubsystem::CreateHologramAdapter(AFGHologram* 
 			}
 		}
 
-		UE_LOG(LogSmartFoundations, Warning,
+		UE_LOG(LogSmartFoundations, Verbose,
 			TEXT("Detected unknown hologram type (%s) - Smart! features disabled. Inheritance: %s"),
 			*HologramTypeName, *InnerInheritanceStr);
 

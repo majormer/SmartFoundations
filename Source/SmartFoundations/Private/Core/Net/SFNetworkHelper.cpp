@@ -121,7 +121,7 @@ void FSFNetworkHelper::LogNetworkState(const UWorld* World, const FString& Conte
 {
 	if (!World)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("[NetworkState%s] World is invalid"),
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("[NetworkState%s] World is invalid"),
 			Context.IsEmpty() ? TEXT("") : *FString::Printf(TEXT(" | %s"), *Context));
 		return;
 	}
@@ -132,7 +132,7 @@ void FSFNetworkHelper::LogNetworkState(const UWorld* World, const FString& Conte
 
 	FString ContextPrefix = Context.IsEmpty() ? TEXT("") : FString::Printf(TEXT(" | %s"), *Context);
 
-	UE_LOG(LogSmartFoundations, Log, TEXT("[NetworkState%s] Mode=%s (%d) | IsMultiplayer=%s"),
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("[NetworkState%s] Mode=%s (%d) | IsMultiplayer=%s"),
 		*ContextPrefix,
 		*ModeString,
 		static_cast<int32>(NetMode),

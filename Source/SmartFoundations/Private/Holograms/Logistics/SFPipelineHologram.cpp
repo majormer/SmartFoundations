@@ -60,7 +60,7 @@ void ASFPipelineHologram::BeginPlay()
 	}
 	else
 	{
-		UE_LOG(LogSmartHologram, Warning, TEXT("   PIPE BeginPlay: mSplineComponent is NULL!"));
+		UE_LOG(LogSmartHologram, Verbose, TEXT("   PIPE BeginPlay: mSplineComponent is NULL!"));
 	}
 }
 
@@ -328,12 +328,12 @@ AActor* ASFPipelineHologram::Construct(TArray<AActor*>& out_children, FNetConstr
 							}
 							else
 							{
-								UE_LOG(LogSmartHologram, Warning, TEXT("🔧 FLOOR HOLE PIPE: Conn0 could not cast to UFGConnectionComponent"));
+								UE_LOG(LogSmartHologram, Verbose, TEXT("🔧 FLOOR HOLE PIPE: Conn0 could not cast to UFGConnectionComponent"));
 							}
 						}
 						else
 						{
-							UE_LOG(LogSmartHologram, Warning, TEXT("🔧 FLOOR HOLE PIPE: ❌ No floor hole found near Conn0 @ %s"),
+							UE_LOG(LogSmartHologram, Verbose, TEXT("🔧 FLOOR HOLE PIPE: ❌ No floor hole found near Conn0 @ %s"),
 								*PipeConn0Loc.ToString());
 						}
 					}
@@ -651,7 +651,7 @@ void ASFPipelineHologram::SetupPipeSpline(UFGPipeConnectionComponentBase* StartC
 {
 	if (!StartConnector || !EndConnector)
 	{
-		UE_LOG(LogSmartHologram, Warning, TEXT("SetupPipeSpline: Invalid connectors"));
+		UE_LOG(LogSmartHologram, Verbose, TEXT("SetupPipeSpline: Invalid connectors"));
 		return;
 	}
 
@@ -1025,7 +1025,7 @@ void ASFPipelineHologram::SetSplineDataAndUpdate(const TArray<FSplinePointData>&
 	}
 	else
 	{
-		UE_LOG(LogSmartHologram, Warning, TEXT("🔧 PIPE SetSplineDataAndUpdate: No spline component!"));
+		UE_LOG(LogSmartHologram, Verbose, TEXT("🔧 PIPE SetSplineDataAndUpdate: No spline component!"));
 	}
 }
 
@@ -1064,7 +1064,7 @@ void ASFPipelineHologram::TriggerMeshGeneration()
 	
 	if (!mSplineComponent)
 	{
-		UE_LOG(LogSmartHologram, Warning, TEXT("🔧 PIPE TriggerMeshGeneration: %s - mSplineComponent is NULL!"), *GetName());
+		UE_LOG(LogSmartHologram, Verbose, TEXT("🔧 PIPE TriggerMeshGeneration: %s - mSplineComponent is NULL!"), *GetName());
 		return;
 	}
 
@@ -1079,7 +1079,7 @@ void ASFPipelineHologram::TriggerMeshGeneration()
 	// Get spline points for geometry update
 	if (PointCount < 2)
 	{
-		UE_LOG(LogSmartHologram, Warning, TEXT("   PIPE TriggerMeshGeneration: Not enough spline points (%d)"), PointCount);
+		UE_LOG(LogSmartHologram, Verbose, TEXT("   PIPE TriggerMeshGeneration: Not enough spline points (%d)"), PointCount);
 		return;
 	}
 	
@@ -1102,23 +1102,23 @@ void ASFPipelineHologram::TriggerMeshGeneration()
 		}
 		else
 		{
-			UE_LOG(LogSmartHologram, Warning, TEXT("🔧 PIPE TriggerMeshGeneration: mBuildClass=%s but CDO cast failed"), *mBuildClass->GetName());
+			UE_LOG(LogSmartHologram, Verbose, TEXT("🔧 PIPE TriggerMeshGeneration: mBuildClass=%s but CDO cast failed"), *mBuildClass->GetName());
 		}
 	}
 	else
 	{
-		UE_LOG(LogSmartHologram, Warning, TEXT("🔧 PIPE TriggerMeshGeneration: mBuildClass is NULL!"));
+		UE_LOG(LogSmartHologram, Verbose, TEXT("🔧 PIPE TriggerMeshGeneration: mBuildClass is NULL!"));
 	}
 	
 	// Fallback to hardcoded generic pipe mesh if CDO lookup failed
 	if (!PipeMesh)
 	{
-		UE_LOG(LogSmartHologram, Warning, TEXT("🔧 PIPE TriggerMeshGeneration: CDO mesh lookup failed, using fallback"));
+		UE_LOG(LogSmartHologram, Verbose, TEXT("🔧 PIPE TriggerMeshGeneration: CDO mesh lookup failed, using fallback"));
 		PipeMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Game/FactoryGame/Buildable/Factory/Pipeline/Mesh/SM_Pipe.SM_Pipe"));
 	}
 	if (!PipeMesh)
 	{
-		UE_LOG(LogSmartHologram, Warning, TEXT("   PIPE TriggerMeshGeneration: Failed to load pipe mesh!"));
+		UE_LOG(LogSmartHologram, Verbose, TEXT("   PIPE TriggerMeshGeneration: Failed to load pipe mesh!"));
 		return;
 	}
 	
@@ -1326,7 +1326,7 @@ void ASFPipelineHologram::ConfigureActor(class AFGBuildable* inBuildable) const
 		
 		if (bNeedsRestore)
 		{
-			UE_LOG(LogSmartHologram, Warning, TEXT("🔧 PIPE ConfigureActor: mSplineData was reset! Restoring %d points from backup (had %d)"), 
+			UE_LOG(LogSmartHologram, Verbose, TEXT("🔧 PIPE ConfigureActor: mSplineData was reset! Restoring %d points from backup (had %d)"),
 				HoloData->BackupSplineData.Num(), mSplineData.Num());
 			
 			// Restore spline data (need to cast away const for this emergency restore)
@@ -1364,7 +1364,7 @@ void ASFPipelineHologram::ConfigureActor(class AFGBuildable* inBuildable) const
 	}
 	else
 	{
-		UE_LOG(LogSmartHologram, Warning, TEXT("🔧 PIPE ConfigureActor: mSplineComponent is NULL!"));
+		UE_LOG(LogSmartHologram, Verbose, TEXT("🔧 PIPE ConfigureActor: mSplineComponent is NULL!"));
 	}
 	
 	// Call parent to configure the buildable
@@ -1541,7 +1541,7 @@ TArray<FItemAmount> ASFPipelineHologram::GetCost(bool includeChildren) const
 						}
 						else
 						{
-							UE_LOG(LogSmartHologram, Warning, TEXT("💰 PIPE: No recipe found for pipe class %s"), *ClassName);
+							UE_LOG(LogSmartHologram, Verbose, TEXT("💰 PIPE: No recipe found for pipe class %s"), *ClassName);
 						}
 					}
 				}

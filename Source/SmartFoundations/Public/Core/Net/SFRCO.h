@@ -96,6 +96,21 @@ public:
 	void Server_StageScalingSpec(FSFScalingSpec Spec);
 
 	// ========================================
+	// [#368] Vanilla clipboard recipe sync
+	// ========================================
+
+	/**
+	 * Client syncs the SERVER's build-gun clipboard recipe to its chosen recipe. Vanilla's
+	 * PasteSettings re-applies the player's sampled clipboard to the built manufacturer after Smart's
+	 * spec-construction SetRecipe (last-writer-wins), so without this a stale sampled clipboard
+	 * overrides a U/Panel recipe pick on the authoritative build. Per-player: the server resolves the
+	 * pawn from THIS RCO's owning controller only (never a cached/current player), so one client's
+	 * pick cannot bleed onto another's build. Recipe==null clears (recipe-less placement / holster).
+	 */
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_SetClipboardRecipe(TSubclassOf<class UFGRecipe> Recipe);
+
+	// ========================================
 	// Extend MP: server-side topology walk
 	// ========================================
 

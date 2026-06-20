@@ -167,12 +167,12 @@ void FPowerLinePreviewHelper::EnsureSpawned(const FVector& SpawnLocation, UFGPow
 		
 		PowerLineHologram = NewHologram;
 		
-		UE_LOG(LogSmartAutoConnect, Log, TEXT("⚡ EnsureSpawned: SUCCESS - Created wire hologram %s (parentLocked=%d)"), 
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("⚡ EnsureSpawned: SUCCESS - Created wire hologram %s (parentLocked=%d)"),
 			*NewHologram->GetName(), ParentPole.IsValid() && ParentPole->IsHologramLocked() ? 1 : 0);
 	}
 	else
 	{
-		UE_LOG(LogSmartAutoConnect, Error, TEXT("⚡ EnsureSpawned: FAILED to spawn SFWireHologram"));
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("⚡ EnsureSpawned: FAILED to spawn SFWireHologram"));
 	}
 }
 

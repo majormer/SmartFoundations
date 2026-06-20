@@ -150,8 +150,13 @@ bool USFExtendDetectionService::IsDirectionValid(ESFExtendDirection Direction, A
         return false;
     }
 
-    // Use a box overlap check with building dimensions
-    FVector HalfExtent = BuildingSize * 0.4f; // Slightly smaller to allow some tolerance
+    // Use a box overlap check with building dimensions.
+    // [#385] Same-level wrong-side probe: keep the horizontal extent (catches a machine already
+    // beside us in the next cell) but clamp the vertical extent to a thin slab so a manifold
+    // stacked a few walls above/below isn't mistaken for the wrong side. Overlap is allowed;
+    // this only stops Extend offering a side that's occupied at THIS level.
+    FVector HalfExtent = BuildingSize * 0.4f; // horizontal: slightly smaller for tolerance
+    HalfExtent.Z = 50.0f;                      // vertical: same level only, ignore stacked neighbours
     
     TArray<FOverlapResult> Overlaps;
     FCollisionQueryParams QueryParams;

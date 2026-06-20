@@ -67,7 +67,7 @@ void USFHologramDataRegistry::ClearRegistry() {
     int32 Count = HologramDataMap.Num();
     HologramDataMap.Empty();
     
-    UE_LOG(LogSmartFoundations, Log, TEXT("ClearRegistry: Cleared %d hologram entries"), Count);
+    UE_LOG(LogSmartFoundations, Verbose, TEXT("ClearRegistry: Cleared %d hologram entries"), Count);
 }
 
 void USFHologramDataRegistry::CleanupDeadEntries() {
@@ -85,6 +85,6 @@ void USFHologramDataRegistry::CleanupDeadEntries() {
     
     if (RemovedCount > 0)
     {
-        UE_LOG(LogSmartFoundations, Log, TEXT("CleanupDeadEntries: Removed %d dead hologram entries"), RemovedCount);
+        UE_LOG(LogSmartFoundations, Verbose, TEXT("CleanupDeadEntries: Removed %d dead hologram entries"), RemovedCount);
     }
 }

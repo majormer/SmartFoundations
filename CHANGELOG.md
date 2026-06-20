@@ -9,6 +9,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [32.1.2] - Unreleased
+
+> *In progress — community-reported bug fixes for the Blueprint Designer and placement, plus a recipe-memory opt-out. Entries below are drafts and may change before release.*
+
+### Added
+
+- **Option to place buildings without a remembered recipe** *(in progress)* - Smart! remembers your last-used recipe and pre-fills it on newly placed production buildings. A new setting lets you turn that off, so machines place recipe-less - and using the panel's **Clear** now sticks even if you sample (mid-click pick) a building that has a recipe, instead of immediately re-filling the slot. (Issue #379, reported by MasterFenix on the Smart! Discord)
+
+### Changed
+
+- **Auto-Hold on Grid Change now defaults on** *(in progress)* - The option that automatically locks the hologram in place after you change its grid (so it doesn't drift while you reposition the camera) now defaults to **on**, restoring the behavior Smart! had before this became a toggle. You can still turn it off in the mod config, and the vanilla Hold key releases any individual lock. (Issue #279)
+
+### Fixed
+
+- **Blueprint Designer: recipes no longer stripped when you recall a blueprint** *(in progress)* - Recalling a blueprint *into the Blueprint Designer* while Smart! was active wiped the recipes from its machines - and once lost, they didn't come back on reload. The blueprint itself was fine (it placed correctly in the world, and loaded fine with Smart! disabled); Smart!'s in-session recipe pass was clearing recipes off blueprint-loaded machines. Smart! now leaves designer-loaded buildings' recipes alone. (Issue #368, reported by @w00kab, corroborated by Dende)
+- **Extend: manifolds no longer blocked by another manifold close below** *(in progress)* - Extending a manifold (e.g. a row of smelters) refused to build in the intended direction when another manifold sat less than four wall-blocks directly underneath, forcing the run the opposite way; at four walls it worked fine. The vertical clearance check was too tight. (Issue #385, reported by @maxstudy)
+- **Stackable pipelines now scale like stackable conveyor poles, not like a pipe upgrade** *(in progress)* - Selecting a stackable pipeline and scaling it made Smart! show the build gun's *upgrade* prompts and open the Upgrade panel on K, instead of the Smart! Panel - it was mistaking the scaled run for an upgrade of an existing pipe. Scaling a stackable pipeline now behaves like the stackable conveyor poles, with full grid/spacing/steps/stagger adjustment. (Issue #390, reported by @FusionPixelStudio)
+- **Stackable pipelines: no more pipe left behind when you un-scale** *(in progress)* - Scaling a stackable pipeline out and then back in removed the pipe pole but left the connecting pipe segment floating where the pole used to be (it only vanished once a new pole spawned on the other side). Un-scaling now removes the pipe along with its pole. (Issue #391, reported by @FusionPixelStudio)
+- **Multiplayer: the recipe you pick now actually lands on the building you place** *(in progress)* - On a dedicated server, choosing a recipe with the recipe wheel (hold U + scroll) and then placing a production building built it with the *wrong* recipe - the one you'd last middle-click sampled, not the one you selected. The game re-applied that stale sampled recipe over your choice. Smart! now keeps the game's recipe clipboard in step with your selection, per player, so the machine builds with the recipe you actually picked - matching single-player. (Issue #368, corroborated by Dende)
+- **Remembered recipe now clears when you holster the build gun** *(in progress)* - The recipe Smart! remembers (from picking one, or middle-click sampling a building) stayed set after you put the build gun away - it still showed in the panel and pre-filled the next machine you placed, so you had to Clear it by hand. Switching to a weapon (or any other equipment) and back now gives you a clean slate. (Issue #392)
+- **Fixed a logging flood that could hurt frame rate in large factories** *(in progress)* - Smart!'s internal belt-chain safety guards (which prevent a known crash during heavy building and dismantling) wrote a warning to the log every single time they ran - which in a big, busy factory meant tens of thousands of lines per session, enough to drag down FPS through sheer log volume. The guards still do their job; they're just silent now unless you explicitly enable diagnostic logging. (Issue #393, reported on the Smart! Discord)
+
+---
+
 ## [32.1.1] - 2026-06-15
 
 > *A maintenance release: community-reported bug fixes, on a codebase reorganized so multiplayer issues are faster to track down.*

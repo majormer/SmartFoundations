@@ -297,7 +297,7 @@ void USFGridSpawnerService::UpdateChildPositions()
 
     if (CounterStateGrid != GridCounters)
     {
-        UE_LOG(LogSmartGrid, Log,
+        UE_LOG(LogSmartGrid, Verbose,
             TEXT("UpdateChildPositions: CounterState grid [%d,%d,%d] differs from live grid [%d,%d,%d]; using live grid for child transforms."),
             CounterStateGrid.X, CounterStateGrid.Y, CounterStateGrid.Z,
             GridCounters.X, GridCounters.Y, GridCounters.Z);
@@ -355,7 +355,7 @@ void USFGridSpawnerService::UpdateChildPositions()
     UE_LOG(LogSmartGrid, VeryVerbose, TEXT("   Pre-computed %d grid indices for progressive batch"), GridIndices.Num());
     if (GridIndices.Num() == 0 && SpawnedChildren.Num() > 0)
     {
-        UE_LOG(LogSmartGrid, Warning,
+        UE_LOG(LogSmartGrid, Verbose,
             TEXT("UpdateChildPositions: Computed zero grid indices for %d children. Live grid is [%d,%d,%d]. Children will remain at spawn locations."),
             SpawnedChildren.Num(), GridCounters.X, GridCounters.Y, GridCounters.Z);
     }
@@ -365,7 +365,7 @@ void USFGridSpawnerService::UpdateChildPositions()
     {
         if (!GridIndices.IsValidIndex(IndexInBatch))
         {
-            UE_LOG(LogSmartGrid, Warning,
+            UE_LOG(LogSmartGrid, VeryVerbose,
                 TEXT("UpdateChildPositions: Invalid batch index %d for %d grid indices"),
                 IndexInBatch, GridIndices.Num());
             return;
@@ -660,7 +660,7 @@ void USFGridSpawnerService::UpdateChildPositions()
     }
     else
     {
-        UE_LOG(LogSmartGrid, Error, TEXT("HologramHelper not available for progressive batch!"));
+        UE_LOG(LogSmartGrid, Verbose, TEXT("HologramHelper not available for progressive batch!"));
     }
 }
 
