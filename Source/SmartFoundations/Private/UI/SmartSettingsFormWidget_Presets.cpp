@@ -672,7 +672,7 @@ void USmartSettingsFormWidget::OnApplyButtonClicked()
 
     if (!CachedSubsystem.IsValid())
     {
-        UE_LOG(LogSmartFoundations, Error, TEXT("Settings Form: No cached subsystem reference"));
+        UE_LOG(LogSmartFoundations, Verbose, TEXT("Settings Form: No cached subsystem reference"));
         return;
     }
 
@@ -722,7 +722,7 @@ void USmartSettingsFormWidget::ApplyCurrentValues()
 {
     if (!CachedSubsystem.IsValid())
     {
-        UE_LOG(LogSmartFoundations, Error, TEXT("Settings Form: No cached subsystem reference"));
+        UE_LOG(LogSmartFoundations, Verbose, TEXT("Settings Form: No cached subsystem reference"));
         return;
     }
 
@@ -919,7 +919,7 @@ void USmartSettingsFormWidget::OnRecipeSelectionChanged(FString SelectedItem, ES
     int32 SelectedIndex = RecipeComboBox->GetSelectedIndex();
     if (SelectedIndex < 0 || SelectedIndex >= CachedRecipeList.Num())
     {
-        UE_LOG(LogSmartFoundations, Warning, TEXT("Settings Form: Invalid recipe selection index %d"), SelectedIndex);
+        UE_LOG(LogSmartFoundations, Verbose, TEXT("Settings Form: Invalid recipe selection index %d"), SelectedIndex);
         return;
     }
 

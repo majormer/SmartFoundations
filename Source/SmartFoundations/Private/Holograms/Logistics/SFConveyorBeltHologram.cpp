@@ -53,7 +53,7 @@ void ASFConveyorBeltHologram::BeginPlay()
         }
         else
         {
-            UE_LOG(LogSmartHologram, Warning, TEXT("🎨 Failed to load mValidPlacementMaterial from %s"), ValidMaterialPath);
+            UE_LOG(LogSmartHologram, Verbose, TEXT("🎨 Failed to load mValidPlacementMaterial from %s"), ValidMaterialPath);
         }
     }
     
@@ -68,7 +68,7 @@ void ASFConveyorBeltHologram::BeginPlay()
         }
         else
         {
-            UE_LOG(LogSmartHologram, Warning, TEXT("🎨 Failed to load mInvalidPlacementMaterial from %s"), InvalidMaterialPath);
+            UE_LOG(LogSmartHologram, Verbose, TEXT("🎨 Failed to load mInvalidPlacementMaterial from %s"), InvalidMaterialPath);
         }
     }
     
@@ -921,7 +921,7 @@ void ASFConveyorBeltHologram::TriggerMeshGeneration()
     
     if (!mSplineComponent)
     {
-        UE_LOG(LogSmartHologram, Warning, TEXT("🎯 BELT TriggerMeshGeneration: mSplineComponent is NULL!"));
+        UE_LOG(LogSmartHologram, Verbose, TEXT("🎯 BELT TriggerMeshGeneration: mSplineComponent is NULL!"));
         return;
     }
     
@@ -962,7 +962,7 @@ void ASFConveyorBeltHologram::TriggerMeshGeneration()
     
     if (PointCount < 2)
     {
-        UE_LOG(LogSmartHologram, Warning, TEXT("🎯 BELT TriggerMeshGeneration: Not enough spline points (%d)"), PointCount);
+        UE_LOG(LogSmartHologram, Verbose, TEXT("🎯 BELT TriggerMeshGeneration: Not enough spline points (%d)"), PointCount);
         return;
     }
     
@@ -1002,23 +1002,23 @@ void ASFConveyorBeltHologram::TriggerMeshGeneration()
         }
         else
         {
-            UE_LOG(LogSmartHologram, Warning, TEXT("🎯 BELT TriggerMeshGeneration: mBuildClass=%s but CDO cast failed"), *mBuildClass->GetName());
+            UE_LOG(LogSmartHologram, Verbose, TEXT("🎯 BELT TriggerMeshGeneration: mBuildClass=%s but CDO cast failed"), *mBuildClass->GetName());
         }
     }
     else
     {
-        UE_LOG(LogSmartHologram, Warning, TEXT("🎯 BELT TriggerMeshGeneration: mBuildClass is NULL!"));
+        UE_LOG(LogSmartHologram, Verbose, TEXT("🎯 BELT TriggerMeshGeneration: mBuildClass is NULL!"));
     }
     
     // Fallback to hardcoded Mk5 mesh if CDO lookup failed
     if (!BeltMesh)
     {
-        UE_LOG(LogSmartHologram, Warning, TEXT("🎯 BELT TriggerMeshGeneration: CDO mesh lookup failed, using fallback"));
+        UE_LOG(LogSmartHologram, Verbose, TEXT("🎯 BELT TriggerMeshGeneration: CDO mesh lookup failed, using fallback"));
         BeltMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Game/FactoryGame/Buildable/Factory/ConveyorBeltMk5/Mesh/SM_ConveyorBelt_Mk5.SM_ConveyorBelt_Mk5"));
     }
     if (!BeltMesh)
     {
-        UE_LOG(LogSmartHologram, Warning, TEXT("🎯 BELT TriggerMeshGeneration: Failed to load belt mesh!"));
+        UE_LOG(LogSmartHologram, Verbose, TEXT("🎯 BELT TriggerMeshGeneration: Failed to load belt mesh!"));
         return;
     }
     
@@ -1180,7 +1180,7 @@ void ASFConveyorBeltHologram::ConfigureActor(class AFGBuildable* inBuildable) co
         
         if (bNeedsRestore)
         {
-            UE_LOG(LogSmartHologram, Warning, TEXT("🔧 BELT ConfigureActor: mSplineData was reset! Restoring %d points from backup (had %d)"), 
+            UE_LOG(LogSmartHologram, Verbose, TEXT("🔧 BELT ConfigureActor: mSplineData was reset! Restoring %d points from backup (had %d)"),
                 HoloData->BackupSplineData.Num(), mSplineData.Num());
             
             // Restore spline data (need to cast away const for this emergency restore)
@@ -1216,7 +1216,7 @@ void ASFConveyorBeltHologram::ConfigureActor(class AFGBuildable* inBuildable) co
     }
     else
     {
-        UE_LOG(LogSmartHologram, Warning, TEXT("🔧 BELT ConfigureActor: mSplineComponent is NULL!"));
+        UE_LOG(LogSmartHologram, Verbose, TEXT("🔧 BELT ConfigureActor: mSplineComponent is NULL!"));
     }
     
     // CRITICAL: Record expected Point[0] BEFORE Super call to detect if vanilla reverses the spline
@@ -1261,7 +1261,7 @@ void ASFConveyorBeltHologram::ConfigureActor(class AFGBuildable* inBuildable) co
             
             if (!bPoint0Matches && bPointNMatchesExpected0)
             {
-                UE_LOG(LogSmartHologram, Warning, TEXT("🔧 BELT ConfigureActor: Vanilla reversed the spline! Correcting..."));
+                UE_LOG(LogSmartHologram, Verbose, TEXT("🔧 BELT ConfigureActor: Vanilla reversed the spline! Correcting..."));
                 UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 BELT ConfigureActor: ActualPoint[0]=%s, ExpectedPoint[0]=%s, ActualPoint[N]=%s"),
                     *ActualPoint0.ToString(), *ExpectedPoint0.ToString(), *ActualPointN.ToString());
                 
@@ -1363,7 +1363,7 @@ void ASFConveyorBeltHologram::ConfigureActor(class AFGBuildable* inBuildable) co
                     }
                     else
                     {
-                        UE_LOG(LogSmartHologram, Warning, TEXT("🔧 BELT ConfigureActor: ⚠️ Cannot connect - already connected or null"));
+                        UE_LOG(LogSmartHologram, Verbose, TEXT("🔧 BELT ConfigureActor: ⚠️ Cannot connect - already connected or null"));
                     }
                 }
             }
@@ -1410,7 +1410,7 @@ void ASFConveyorBeltHologram::ConfigureActor(class AFGBuildable* inBuildable) co
                     }
                     else
                     {
-                        UE_LOG(LogSmartHologram, Warning, TEXT("🔧 BELT ConfigureActor: ⚠️ No suitable distributor connection found (needed dir=%d)"),
+                        UE_LOG(LogSmartHologram, Verbose, TEXT("🔧 BELT ConfigureActor: ⚠️ No suitable distributor connection found (needed dir=%d)"),
                             (int32)NeededDir);
                     }
                 }

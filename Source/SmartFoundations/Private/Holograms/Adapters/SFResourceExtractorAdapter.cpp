@@ -51,14 +51,14 @@ FVector FSFResourceExtractorAdapter::CalculateExtractorSize() const
 {
 	if (!HologramPtr.IsValid())
 	{
-		UE_LOG(LogSmartHologram, Warning, TEXT("FSFResourceExtractorAdapter::CalculateExtractorSize - Invalid hologram"));
+		UE_LOG(LogSmartHologram, Verbose, TEXT("FSFResourceExtractorAdapter::CalculateExtractorSize - Invalid hologram"));
 		return USFBuildableSizeRegistry::GetDefaultSize();
 	}
 
 	UClass* BuildClass = HologramPtr->GetBuildClass();
 	if (!BuildClass)
 	{
-		UE_LOG(LogSmartHologram, Warning, TEXT("FSFResourceExtractorAdapter: No BuildClass"));
+		UE_LOG(LogSmartHologram, Verbose, TEXT("FSFResourceExtractorAdapter: No BuildClass"));
 		return USFBuildableSizeRegistry::GetDefaultSize();
 	}
 

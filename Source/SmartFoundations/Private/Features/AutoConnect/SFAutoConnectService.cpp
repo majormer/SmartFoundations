@@ -76,7 +76,7 @@ void USFAutoConnectService::OnDistributorHologramUpdated(AFGHologram* ParentHolo
 {
 	if (!ParentHologram)
 	{
-		UE_LOG(LogSmartAutoConnect, Warning, TEXT("OnDistributorHologramUpdated: ParentHologram is null"));
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("OnDistributorHologramUpdated: ParentHologram is null"));
 		return;
 	}
 	
@@ -224,7 +224,7 @@ void USFAutoConnectService::FindDistributorChains(AFGHologram* DistributorHologr
 {
 	if (!DistributorHologram || !Subsystem)
 	{
-		UE_LOG(LogSmartAutoConnect, Warning, TEXT("FindDistributorChains: DistributorHologram or Subsystem is null"));
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("FindDistributorChains: DistributorHologram or Subsystem is null"));
 		return;
 	}
 	
@@ -246,12 +246,12 @@ void USFAutoConnectService::FindDistributorChains(AFGHologram* DistributorHologr
 	
 	TArray<TWeakObjectPtr<AFGHologram>> SpawnedChildren = HologramHelper->GetSpawnedChildren();
 	
-	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🔗 Manifold Detection: Current=%s, Parent=%s, SpawnedChildren=%d"),
+	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🔗 Manifold Detection: Current=%s, Parent=%s, SpawnedChildren=%d"),
 		*DistributorHologram->GetName(), *ParentHologram->GetName(), SpawnedChildren.Num());
 	
 	if (SpawnedChildren.Num() == 0)
 	{
-		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("   No spawned children - single distributor, no chaining"));
+		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   No spawned children - single distributor, no chaining"));
 		return;
 	}
 	
@@ -273,11 +273,11 @@ void USFAutoConnectService::FindDistributorChains(AFGHologram* DistributorHologr
 		}
 	}
 	
-	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🔗 Manifold Detection: Found %d distributors in grid"), AllDistributors.Num());
+	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🔗 Manifold Detection: Found %d distributors in grid"), AllDistributors.Num());
 	
 	if (AllDistributors.Num() < 2)
 	{
-		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("   Need at least 2 distributors for chaining"));
+		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   Need at least 2 distributors for chaining"));
 		return;
 	}
 	
@@ -327,7 +327,7 @@ void USFAutoConnectService::FindDistributorChains(AFGHologram* DistributorHologr
 	
 	if (CurrentIndex == -1)
 	{
-		UE_LOG(LogSmartAutoConnect, Warning, TEXT("   Current distributor not found in array"));
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("   Current distributor not found in array"));
 		return;
 	}
 	
@@ -343,7 +343,7 @@ void USFAutoConnectService::FindDistributorChains(AFGHologram* DistributorHologr
 		{
 			AFGHologram* NextDistributor = AllDistributors[CurrentIndex + 1];
 			OutChainTargets.Add(NextDistributor);
-			UE_LOG(LogSmartAutoConnect, Verbose, TEXT("   🔗 Splitter chain: %s -> %s"), 
+			UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   🔗 Splitter chain: %s -> %s"),
 				*DistributorHologram->GetName(), *NextDistributor->GetName());
 		}
 	}
@@ -354,12 +354,12 @@ void USFAutoConnectService::FindDistributorChains(AFGHologram* DistributorHologr
 		{
 			AFGHologram* PreviousDistributor = AllDistributors[CurrentIndex - 1];
 			OutChainTargets.Add(PreviousDistributor);
-			UE_LOG(LogSmartAutoConnect, Verbose, TEXT("   🔗 Merger chain: %s -> %s"), 
+			UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   🔗 Merger chain: %s -> %s"),
 				*PreviousDistributor->GetName(), *DistributorHologram->GetName());
 		}
 	}
 	
-	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("   ✅ Found %d distributor chain targets for %s"),
+	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   ✅ Found %d distributor chain targets for %s"),
 		OutChainTargets.Num(), *DistributorHologram->GetName());
 }
 
@@ -371,7 +371,7 @@ void USFAutoConnectService::FindCompatibleBuildingsForDistributor(AFGHologram* D
 {
 	if (!DistributorHologram || !Subsystem)
 	{
-		UE_LOG(LogSmartAutoConnect, Warning, TEXT("FindCompatibleBuildingsForDistributor: DistributorHologram or Subsystem is null"));
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("FindCompatibleBuildingsForDistributor: DistributorHologram or Subsystem is null"));
 		return;
 	}
 	
@@ -429,7 +429,7 @@ void USFAutoConnectService::GetBuildingConnectors(AFGBuildable* Building, TArray
 {
 	if (!Building)
 	{
-		UE_LOG(LogSmartAutoConnect, Warning, TEXT("GetBuildingConnectors: Building is null"));
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("GetBuildingConnectors: Building is null"));
 		return;
 	}
 
@@ -584,7 +584,7 @@ UFGFactoryConnectionComponent* USFAutoConnectService::FindMiddleConnector(AFGHol
 {
 	if (!Distributor)
 	{
-		UE_LOG(LogSmartAutoConnect, Warning, TEXT("FindMiddleConnector: Distributor is null"));
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("FindMiddleConnector: Distributor is null"));
 		return nullptr;
 	}
 
@@ -592,7 +592,7 @@ UFGFactoryConnectionComponent* USFAutoConnectService::FindMiddleConnector(AFGHol
 	const bool bIsMerger   = IsMergerHologram(Distributor);
 	if (!bIsSplitter && !bIsMerger)
 	{
-		UE_LOG(LogSmartAutoConnect, Warning, TEXT("FindMiddleConnector: %s is not a splitter or merger"), *Distributor->GetName());
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("FindMiddleConnector: %s is not a splitter or merger"), *Distributor->GetName());
 		return nullptr;
 	}
 
@@ -634,13 +634,13 @@ UFGFactoryConnectionComponent* USFAutoConnectService::FindMiddleConnector(AFGHol
 	if (Best)
 	{
 		const TCHAR* Type = bIsSplitter ? TEXT("output") : TEXT("input");
-		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("   FindMiddleConnector: %s middle %s = %s (alignment=%.2f)"),
+		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   FindMiddleConnector: %s middle %s = %s (alignment=%.2f)"),
 			*Distributor->GetName(), Type, *Best->GetName(), BestAlignment);
 	}
 	else
 	{
 		const TCHAR* Type = bIsSplitter ? TEXT("outputs") : TEXT("inputs");
-		UE_LOG(LogSmartAutoConnect, Warning, TEXT("FindMiddleConnector: No %s found on %s"), Type, *Distributor->GetName());
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("FindMiddleConnector: No %s found on %s"), Type, *Distributor->GetName());
 	}
 
 	return Best;
@@ -653,7 +653,7 @@ UFGFactoryConnectionComponent* USFAutoConnectService::FindConnectorFacingTarget(
 {
 	if (!SourceDistributor || !TargetDistributor)
 	{
-		UE_LOG(LogSmartAutoConnect, Warning, TEXT("FindConnectorFacingTarget: Source or Target is null"));
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("FindConnectorFacingTarget: Source or Target is null"));
 		return nullptr;
 	}
 
@@ -692,7 +692,7 @@ UFGFactoryConnectionComponent* USFAutoConnectService::FindConnectorFacingTarget(
 	}
 	else
 	{
-		UE_LOG(LogSmartAutoConnect, Warning, TEXT("FindConnectorFacingTarget: No connector facing target found"));
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("FindConnectorFacingTarget: No connector facing target found"));
 	}
 
 	return Best;
@@ -702,7 +702,7 @@ UFGFactoryConnectionComponent* USFAutoConnectService::FindSideConnector(AFGHolog
 {
 	if (!Distributor)
 	{
-		UE_LOG(LogSmartAutoConnect, Warning, TEXT("FindSideConnector: Distributor is null"));
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("FindSideConnector: Distributor is null"));
 		return nullptr;
 	}
 
@@ -712,7 +712,7 @@ UFGFactoryConnectionComponent* USFAutoConnectService::FindSideConnector(AFGHolog
 
 	if (!bIsSplitter && !bIsMerger)
 	{
-		UE_LOG(LogSmartAutoConnect, Warning, TEXT("FindSideConnector: %s is not a splitter or merger"), *Distributor->GetName());
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("FindSideConnector: %s is not a splitter or merger"), *Distributor->GetName());
 		return nullptr;
 	}
 
@@ -766,7 +766,7 @@ UFGFactoryConnectionComponent* USFAutoConnectService::FindSideConnector(AFGHolog
 	}
 
 	const TCHAR* ConnectorType = bIsSplitter ? TEXT("output") : TEXT("input");
-	UE_LOG(LogSmartAutoConnect, Warning, TEXT("FindSideConnector: Side %s %d not found on %s (has %d sides)"), 
+	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("FindSideConnector: Side %s %d not found on %s (has %d sides)"),
 		ConnectorType, Index, *Distributor->GetName(), SideConnectors.Num());
 	return nullptr;
 }
@@ -777,7 +777,7 @@ void USFAutoConnectService::GetAllSideConnectors(AFGHologram* Distributor, TArra
 
 	if (!Distributor)
 	{
-		UE_LOG(LogSmartAutoConnect, Warning, TEXT("GetAllSideConnectors: Distributor is null"));
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("GetAllSideConnectors: Distributor is null"));
 		return;
 	}
 
@@ -787,7 +787,7 @@ void USFAutoConnectService::GetAllSideConnectors(AFGHologram* Distributor, TArra
 
 	if (!bIsSplitter && !bIsMerger)
 	{
-		UE_LOG(LogSmartAutoConnect, Warning, TEXT("GetAllSideConnectors: %s is not a splitter or merger"), *Distributor->GetName());
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("GetAllSideConnectors: %s is not a splitter or merger"), *Distributor->GetName());
 		return;
 	}
 
@@ -854,7 +854,7 @@ void USFAutoConnectService::ProcessChildDistributors(AFGHologram* ParentHologram
 		return; // No children to process
 	}
 	
-	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("👶 Processing %d child holograms for parent %s"),
+	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("👶 Processing %d child holograms for parent %s"),
 		Children.Num(), *ParentHologram->GetName());
 	
 	// Create shared input reservation map for parent + all children
@@ -888,7 +888,7 @@ void USFAutoConnectService::ProcessChildDistributors(AFGHologram* ParentHologram
 		AllDistributors.Add(Child);
 	}
 	
-	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("   🎯 Processing %d total distributors (parent + children) with shared input reservation"),
+	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   🎯 Processing %d total distributors (parent + children) with shared input reservation"),
 		AllDistributors.Num());
 	
 	// Process each distributor with shared reservation map
@@ -930,7 +930,7 @@ void USFAutoConnectService::ProcessChildDistributors(AFGHologram* ParentHologram
 		}
 	}
 	
-	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("✅ Finished processing %d distributors (%d inputs reserved)"),
+	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("✅ Finished processing %d distributors (%d inputs reserved)"),
 		AllDistributors.Num(), ReservedInputs.Num());
 }
 
@@ -973,7 +973,7 @@ void USFAutoConnectService::StoreConnectorPair(AFGHologram* DistributorHologram,
 {
 	if (!DistributorHologram || !HologramConnector || !BuildingConnector)
 	{
-		UE_LOG(LogSmartAutoConnect, Warning, TEXT("StoreConnectorPair: Invalid parameters"));
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("StoreConnectorPair: Invalid parameters"));
 		return;
 	}
 

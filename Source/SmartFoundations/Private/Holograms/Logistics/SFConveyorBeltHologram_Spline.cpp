@@ -35,12 +35,12 @@ void ASFConveyorBeltHologram::SetupBeltSpline(UFGFactoryConnectionComponent* Sta
 {
     if (!StartConnector || !EndConnector)
     {
-        UE_LOG(LogSmartHologram, Error, TEXT("SetupBeltSpline: Invalid connectors"));
+        UE_LOG(LogSmartHologram, Verbose, TEXT("SetupBeltSpline: Invalid connectors"));
         return;
     }
 	if (StartConnector == EndConnector)
 	{
-		UE_LOG(LogSmartHologram, Error,
+		UE_LOG(LogSmartHologram, Verbose,
 			TEXT("SetupBeltSpline: StartConnector == EndConnector (%s on %s, ptr=%p) on %s - refusing to build self-connection"),
 			*StartConnector->GetName(),
 			*GetNameSafe(StartConnector->GetOwner()),
@@ -169,7 +169,7 @@ void ASFConveyorBeltHologram::SetupBeltSpline(UFGFactoryConnectionComponent* Sta
     
     if (ActorPosAfterSetup.IsNearlyZero(1.0f))
     {
-        UE_LOG(LogSmartHologram, Error, TEXT("   ❌ CRITICAL: Actor reset to origin after SetupBeltSpline! Parent class may have moved it."));
+        UE_LOG(LogSmartHologram, Verbose, TEXT("   ❌ CRITICAL: Actor reset to origin after SetupBeltSpline! Parent class may have moved it."));
     }
     
     // Note: Mesh generation will be handled by delayed UpdateSplineComponent() call
@@ -363,7 +363,7 @@ void ASFConveyorBeltHologram::AutoRouteSplineWithNormals(const FVector& StartPos
     }
     else
     {
-        UE_LOG(LogSmartHologram, Warning, TEXT("🔍 AutoRouteSplineWithNormals: No spline component!"));
+        UE_LOG(LogSmartHologram, Verbose, TEXT("🔍 AutoRouteSplineWithNormals: No spline component!"));
     }
 }
 
@@ -514,7 +514,7 @@ void ASFConveyorBeltHologram::SetSplineDataAndUpdate(const TArray<FSplinePointDa
     }
     else
     {
-        UE_LOG(LogSmartHologram, Warning, TEXT("🔧 SetSplineDataAndUpdate: No spline component!"));
+        UE_LOG(LogSmartHologram, Verbose, TEXT("🔧 SetSplineDataAndUpdate: No spline component!"));
     }
 }
 

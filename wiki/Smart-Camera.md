@@ -18,7 +18,7 @@ Smart Camera works in multiplayer on dedicated servers, the same as Smart!. Inst
 
 ## What It Does
 
-Smart Camera creates a small overlay viewport while a Smart! hologram is active. The camera tracks the active hologram, and for large Smart! grids it can follow the furthest/top-most relevant grid position instead of only the starting hologram.
+Smart Camera creates a small overlay viewport while a Smart! hologram is active. The camera follows the active build: for large grids and **Extend** runs it tracks the leading edge — the furthest, top-most building in the run — rather than staying on the starting building, and it follows the head of the run whichever direction you scale it. This includes replaying a **restored** Extend, and it works in single-player and on dedicated servers.
 
 Use it for:
 

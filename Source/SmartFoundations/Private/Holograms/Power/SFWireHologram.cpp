@@ -136,7 +136,7 @@ void ASFWireHologram::SetupWirePreview(UFGPowerConnectionComponent* StartConnect
 {
 	if (!StartConnection || !EndConnection)
 	{
-		UE_LOG(LogSmartHologram, Warning, TEXT(" SetupWirePreview: Invalid connections"));
+		UE_LOG(LogSmartHologram, Verbose, TEXT(" SetupWirePreview: Invalid connections"));
 		return;
 	}
 
@@ -169,7 +169,7 @@ void ASFWireHologram::TriggerMeshGeneration()
 {
 	if (!bWireConfigured)
 	{
-		UE_LOG(LogSmartHologram, Warning, TEXT(" TriggerMeshGeneration called but wire not configured"));
+		UE_LOG(LogSmartHologram, Verbose, TEXT(" TriggerMeshGeneration called but wire not configured"));
 		return;
 	}
 
@@ -251,7 +251,7 @@ void ASFWireHologram::ConfigureActor(AFGBuildable* inBuildable) const
 	AFGBuildableWire* Wire = Cast<AFGBuildableWire>(inBuildable);
 	if (!Wire)
 	{
-		UE_LOG(LogSmartHologram, Warning, TEXT(" SFWireHologram::ConfigureActor - inBuildable is not a wire!"));
+		UE_LOG(LogSmartHologram, Verbose, TEXT(" SFWireHologram::ConfigureActor - inBuildable is not a wire!"));
 		return;
 	}
 	
@@ -318,7 +318,7 @@ void ASFWireHologram::CreateWireMeshWithCatenary(const FVector& StartPos, const 
 	UStaticMesh* WireMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Game/FactoryGame/Buildable/Factory/PowerLine/Mesh/PowerLine_static.PowerLine_static"));
 	if (!WireMesh)
 	{
-		UE_LOG(LogSmartHologram, Warning, TEXT("⚡ Failed to load SM_PowerLine mesh"));
+		UE_LOG(LogSmartHologram, Verbose, TEXT("⚡ Failed to load SM_PowerLine mesh"));
 		return;
 	}
 
@@ -349,7 +349,7 @@ void ASFWireHologram::CreateWireMeshWithCatenary(const FVector& StartPos, const 
 
 	if (!PreviewWireMesh)
 	{
-		UE_LOG(LogSmartHologram, Error, TEXT("⚡ Failed to create PreviewWireMesh"));
+		UE_LOG(LogSmartHologram, Verbose, TEXT("⚡ Failed to create PreviewWireMesh"));
 		return;
 	}
 

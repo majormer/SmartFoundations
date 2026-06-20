@@ -42,14 +42,14 @@ FVector FSFGenericAdapter::CalculateSize() const
 {
 	if (!HologramPtr.IsValid())
 	{
-		UE_LOG(LogSmartHologram, Warning, TEXT("FSFGenericAdapter[%s]::CalculateSize - Invalid hologram"), *TypeName);
+		UE_LOG(LogSmartHologram, Verbose, TEXT("FSFGenericAdapter[%s]::CalculateSize - Invalid hologram"), *TypeName);
 		return USFBuildableSizeRegistry::GetDefaultSize();
 	}
 
 	UClass* BuildClass = HologramPtr->GetBuildClass();
 	if (!BuildClass)
 	{
-		UE_LOG(LogSmartHologram, Warning, TEXT("FSFGenericAdapter[%s]: No BuildClass"), *TypeName);
+		UE_LOG(LogSmartHologram, Verbose, TEXT("FSFGenericAdapter[%s]: No BuildClass"), *TypeName);
 		return USFBuildableSizeRegistry::GetDefaultSize();
 	}
 

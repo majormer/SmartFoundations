@@ -112,6 +112,15 @@ struct SMARTFOUNDATIONS_API FSFScalingSpec
 	UPROPERTY()
 	TSubclassOf<class AFGBuildable> BuildClass = nullptr;
 
+	/** [#368] The player's remembered production recipe (manual U-select / building sample), carried
+	 *  so the SERVER can apply it to the authoritative manufacturer build. Recipe memory is
+	 *  client-side only (non-replicated); this staged field is the SOLE crossing for a fresh manual
+	 *  placement in multiplayer - on a dedicated server the placing client's recipe never otherwise
+	 *  reaches the authority. Null when nothing is remembered (the server then applies no recipe, so
+	 *  a designer recall / world paste / other-mod spawn - none of which stage a spec - is untouched). */
+	UPROPERTY()
+	TSubclassOf<class UFGRecipe> ProductionRecipe = nullptr;
+
 	/** True once populated from a live grid; the server only expands when valid. */
 	UPROPERTY()
 	bool bValid = false;

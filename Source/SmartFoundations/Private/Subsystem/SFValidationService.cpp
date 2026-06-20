@@ -136,7 +136,7 @@ bool FSFValidationService::ValidateAndAdjustGridSize(FIntVector& GridCounters, i
 	OutChildrenNeeded = FMath::Max(0, AdjustedTotal - 1);
 	
 	// Log the adjustment
-	UE_LOG(LogSmartFoundations, Error, 
+	UE_LOG(LogSmartFoundations, Verbose,
 		TEXT("⚠️ GRID SIZE LIMIT! Requested %dx%dx%d (%d items) exceeds max (%lld). Adjusted to %dx%dx%d (%d items)."),
 		FMath::Abs(GridCounters.X), FMath::Abs(GridCounters.Y), FMath::Abs(GridCounters.Z), OriginalTotal,
 		MaxTotalItems,

@@ -13,14 +13,14 @@ TArray<TSharedPtr<FBeltPreviewHelper>> USFAutoConnectService::ProcessSingleDistr
 {
 	if (!DistributorHologram)
 	{
-		UE_LOG(LogSmartAutoConnect, Warning, TEXT("ProcessSingleDistributor: DistributorHologram is null"));
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("ProcessSingleDistributor: DistributorHologram is null"));
 		return TArray<TSharedPtr<FBeltPreviewHelper>>();
 	}
 	
 	// Get runtime settings from subsystem
 	if (!Subsystem)
 	{
-		UE_LOG(LogSmartAutoConnect, Warning, TEXT("ProcessSingleDistributor: Subsystem is null"));
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("ProcessSingleDistributor: Subsystem is null"));
 		return TArray<TSharedPtr<FBeltPreviewHelper>>();
 	}
 	
@@ -52,7 +52,7 @@ TArray<TSharedPtr<FBeltPreviewHelper>> USFAutoConnectService::ProcessSingleDistr
 	UClass* BuildClass = DistributorHologram->GetBuildClass();
 	if (!BuildClass)
 	{
-		UE_LOG(LogSmartAutoConnect, Warning, TEXT("ProcessSingleDistributor: BuildClass is null"));
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("ProcessSingleDistributor: BuildClass is null"));
 		return BeltPreviewHelpers;
 	}
 	
@@ -142,7 +142,7 @@ TArray<TSharedPtr<FBeltPreviewHelper>> USFAutoConnectService::ProcessSingleDistr
 	}
 	else
 	{
-		UE_LOG(LogSmartAutoConnect, Error, TEXT("   ❌ Failed to get build class from distributor hologram"));
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("   ❌ Failed to get build class from distributor hologram"));
 	}
 	
 	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   Distributor has %d inputs and %d outputs available"), 
@@ -202,7 +202,7 @@ TArray<TSharedPtr<FBeltPreviewHelper>> USFAutoConnectService::ProcessSingleDistr
 			{
 				if (SourceConnector == TargetConnector)
 				{
-					UE_LOG(LogSmartAutoConnect, Error,
+					UE_LOG(LogSmartAutoConnect, Verbose,
 						TEXT("      ❌ Distributor chain produced self-connection (%s on %s, ptr=%p) - skipping"),
 						*SourceConnector->GetName(),
 						*GetNameSafe(SourceConnector->GetOwner()),
@@ -264,12 +264,12 @@ TArray<TSharedPtr<FBeltPreviewHelper>> USFAutoConnectService::ProcessSingleDistr
 				}
 				else
 				{
-					UE_LOG(LogSmartAutoConnect, Error, TEXT("      Failed to create distributor chain belt preview helper"));
+					UE_LOG(LogSmartAutoConnect, Verbose, TEXT("      Failed to create distributor chain belt preview helper"));
 				}
 			}
 			else
 			{
-				UE_LOG(LogSmartAutoConnect, Warning, TEXT("      No compatible connectors for distributor chain (%s -> %s)"),
+				UE_LOG(LogSmartAutoConnect, Verbose, TEXT("      No compatible connectors for distributor chain (%s -> %s)"),
 				*DistributorHologram->GetName(), *GetNameSafe(ChainTarget));
 			}
 		}
@@ -895,7 +895,7 @@ bool USFAutoConnectService::CreateOrUpdateBeltPreview(
 {
     if (!OutputConnector || !InputConnector)
     {
-        UE_LOG(LogSmartAutoConnect, Warning, TEXT("CreateOrUpdateBeltPreview: Invalid connectors"));
+        UE_LOG(LogSmartAutoConnect, Verbose, TEXT("CreateOrUpdateBeltPreview: Invalid connectors"));
         return false;
     }
 
@@ -991,7 +991,7 @@ bool USFAutoConnectService::CreateOrUpdateBeltPreview(
         BeltHelper = MakeShared<FBeltPreviewHelper>(GetWorld(), BeltTier, ParentDistributor);
         if (!BeltHelper.IsValid())
         {
-            UE_LOG(LogSmartAutoConnect, Error, TEXT("   ❌ Failed to create belt preview helper"));
+            UE_LOG(LogSmartAutoConnect, Verbose, TEXT("   ❌ Failed to create belt preview helper"));
             return false;
         }
         UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   ✨ Created new belt preview helper"));
@@ -1023,7 +1023,7 @@ bool USFAutoConnectService::ConnectAnyConnectors(
 {
     if (!OutputConnector || !InputConnector || !StorageHologram)
     {
-        UE_LOG(LogSmartAutoConnect, Warning, TEXT("ConnectAnyConnectors: Invalid parameters"));
+        UE_LOG(LogSmartAutoConnect, Verbose, TEXT("ConnectAnyConnectors: Invalid parameters"));
         return false;
     }
 

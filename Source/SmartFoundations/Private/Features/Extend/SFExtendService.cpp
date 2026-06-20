@@ -331,6 +331,61 @@ void USFExtendService::CycleExtendDirection(int32 Delta)
     }
 }
 
+FVector USFExtendService::GetFurthestScaledCloneWorldPosition(const FVector& FallbackLocation) const
+{
+    // [#373] The clones are anchored to CurrentExtendTarget (the source building); each clone's
+    // WorldOffset already bakes in the direction sign, spacing, steps, arc and row layout that
+    // SFExtendScaledService computed. The furthest clone (largest offset from the source) is the head
+    // of the run - what the Smart Camera should frame. No clones (between rebuilds) or a gone source
+    // -> fall back to the caller's location (the parent hologram).
+    const AFGBuildable* Source = CurrentExtendTarget.Get();
+    if (!Source || ScaledExtendClones.Num() == 0)
+    {
+        return FallbackLocation;
+    }
+
+    const FVector SourceLocation = Source->GetActorLocation();
+    const FVector* FurthestOffset = nullptr;
+    float BestDistSq = -1.0f;
+    for (const FSFScaledExtendClone& Clone : ScaledExtendClones)
+    {
+        const float DistSq = Clone.WorldOffset.SizeSquared();
+        if (DistSq > BestDistSq)
+        {
+            BestDistSq = DistSq;
+            FurthestOffset = &Clone.WorldOffset;
+        }
+    }
+
+    return FurthestOffset ? (SourceLocation + *FurthestOffset) : FallbackLocation;
+}
+
+FVector USFExtendService::GetFurthestRestoredCloneWorldPosition(const FVector& FallbackLocation) const
+{
+    // [#373] Smart Restore replays a captured Extend pattern via a different path than live scaled extend
+    // (no live target, so IsScaledExtendActive() is false) - the camera therefore can't read the live
+    // ScaledExtendClones store, and the generic grid focus computes the MIRROR of the restore's actual
+    // direction. Compute the furthest cell with the SAME function the restored clones use, relative to the
+    // parent they were placed against, so the focus matches the run exactly (including the bidirectional
+    // scroll sign). Falls back to the caller's location when no restore is active.
+    if (!bRestoredCloneTopologyActive || !RestoredCloneTopologyTemplate.IsValid() || !Subsystem.IsValid())
+    {
+        return FallbackLocation;
+    }
+    AFGHologram* Parent = RestoredCloneParentHologram.Get();
+    if (!Parent)
+    {
+        return FallbackLocation;
+    }
+
+    const FSFCounterState& State = Subsystem->GetCounterState();
+    const int32 FurthestX = FMath::Max(1, FMath::Abs(State.GridCounters.X)) - 1;
+    const int32 FurthestY = FMath::Max(1, FMath::Abs(State.GridCounters.Y)) - 1;
+    const FRestoredScaledClonePlacement Placement = CalculateRestoredScaledClonePlacement(
+        Parent, RestoredCloneTopologyTemplate.Get(), State, FurthestX, FurthestY);
+    return Parent->GetActorLocation() + Placement.WorldOffset;
+}
+
 FVector USFExtendService::GetDirectionOffset(const FVector& BuildingSize, const FRotator& BuildingRotation) const
 {
     // Calculate offset perpendicular to belt direction (Left/Right only)
@@ -548,7 +603,14 @@ bool USFExtendService::IsDirectionValid(ESFExtendDirection Direction) const
     }
 
     const FVector TargetCenter = SourceBuilding->GetActorLocation() + DirAxis * BuildingSize.X;
-    const FVector HalfExtent = BuildingSize * 0.45f; // tight: stays within the next cell
+    // [#385] Same-level wrong-side probe. The horizontal extent stays within the next cell so a
+    // machine already occupying that cell beside us still blocks the direction. But the VERTICAL
+    // extent is clamped to a thin slab: overlap is allowed (vanilla allows it), and a manifold
+    // stacked a few walls above/below was never "the wrong side". Previously HalfExtent scaled
+    // with full building height, so the box reached onto other floors and blocked a legitimate
+    // stacked manifold (a 3-wall gap failed while a 4-wall gap worked — reporter @maxstudy).
+    FVector HalfExtent = BuildingSize * 0.45f; // horizontal: stays within the next cell
+    HalfExtent.Z = 50.0f;                       // vertical: same level only, ignore stacked neighbours
 
     TArray<FOverlapResult> Overlaps;
     FCollisionQueryParams QueryParams;
@@ -877,7 +939,7 @@ int32 USFExtendService::ReconstructCommitOnServer(AFGHologram* ParentHologram, c
     AFGBuildable* Source = CurrentExtendTarget.Get();
     if (!Source)
     {
-        UE_LOG(LogSmartExtend, Warning,
+        UE_LOG(LogSmartExtend, Verbose,
             TEXT("[EXTEND-MP] ReconstructCommitOnServer: no source building in the commit - nothing reconstructed."));
         return 0;
     }
@@ -885,7 +947,7 @@ int32 USFExtendService::ReconstructCommitOnServer(AFGHologram* ParentHologram, c
     // Authoritative graph walk: only the SERVER's GetConnection() values are real.
     if (!TopologyService->WalkTopology(Source))
     {
-        UE_LOG(LogSmartExtend, Warning,
+        UE_LOG(LogSmartExtend, Verbose,
             TEXT("[EXTEND-MP] ReconstructCommitOnServer: server topology walk failed for %s."),
             *GetNameSafe(Source));
         return 0;
@@ -1000,7 +1062,7 @@ int32 USFExtendService::ReconstructScaledCommitOnServer(AFGHologram* ParentHolog
     AFGBuildable* Source = CurrentExtendTarget.Get();
     if (!Source)
     {
-        UE_LOG(LogSmartExtend, Warning,
+        UE_LOG(LogSmartExtend, Verbose,
             TEXT("[EXTEND-MP] ReconstructScaledCommitOnServer: no source building installed - scaled clone sets skipped."));
         return 0;
     }
@@ -1009,7 +1071,7 @@ int32 USFExtendService::ReconstructScaledCommitOnServer(AFGHologram* ParentHolog
     // captures its source topology from TopologyService->GetCurrentTopology().
     if (!TopologyService->WalkTopology(Source))
     {
-        UE_LOG(LogSmartExtend, Warning,
+        UE_LOG(LogSmartExtend, Verbose,
             TEXT("[EXTEND-MP] ReconstructScaledCommitOnServer: server topology walk failed for %s - scaled clone sets skipped."),
             *GetNameSafe(Source));
         return 0;
@@ -1739,7 +1801,7 @@ void USFExtendService::RefreshExtension(AFGHologram* SourceHologram, bool bForce
     if (!ActiveHologram->IsHologramLocked())
     {
         bExtendManualHold = !bExtendManualHold;
-        UE_LOG(LogSmartExtend, Log, TEXT("📌 EXTEND: manual hold %s — preview %s"),
+        UE_LOG(LogSmartExtend, Verbose, TEXT("📌 EXTEND: manual hold %s — preview %s"),
             bExtendManualHold ? TEXT("ENGAGED") : TEXT("RELEASED"),
             bExtendManualHold ? TEXT("pinned (look around to check clearance)") : TEXT("tracking"));
         ActiveHologram->LockHologramPosition(true);

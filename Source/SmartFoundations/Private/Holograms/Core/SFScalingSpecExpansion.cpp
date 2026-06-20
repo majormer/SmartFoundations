@@ -85,6 +85,12 @@ bool CaptureScalingSpec(AFGHologram* Hologram, FSFScalingSpec& OutSpec)
 	OutSpec.ItemSize = Profile.DefaultSize;
 	OutSpec.AnchorOffset = Profile.AnchorOffset;
 	OutSpec.BuildClass = Hologram->GetBuildClass();
+	// [#368] Carry the player's remembered production recipe so the SERVER applies it to the
+	// authoritative manufacturer build (recipe memory is client-side only; this is the sole crossing
+	// for a fresh manual placement in MP). Null when nothing is remembered -> server applies nothing.
+	// Non-manufacturer placements just carry whatever is remembered; the server-side apply ignores it
+	// via its IsProductionBuilding gate, and the install is restored after the build.
+	OutSpec.ProductionRecipe = SS->GetActiveRecipe();
 	OutSpec.bValid = true;
 	return true;
 }
@@ -189,7 +195,7 @@ int32 ExpandScalingSpecIntoChildren(AFGHologram* Parent, const FSFScalingSpec& S
 	}
 	if (!Recipe)
 	{
-		UE_LOG(LogSmartFoundations, Warning,
+		UE_LOG(LogSmartFoundations, Verbose,
 			TEXT("[MP-SPEC] ExpandScalingSpecIntoChildren: no recipe on parent hologram %s; cannot expand."),
 			*Parent->GetName());
 		return 0;
@@ -531,7 +537,7 @@ int32 SpawnConduitPlanChildren(AFGHologram* Parent, const FSFScalingSpec& Spec)
 		const bool bIsWire = (Entry.Kind == ESFConduitPlanKind::Wire);
 		if (!Entry.BuildClass || (!bIsWire && Entry.SplinePoints.Num() < 2))
 		{
-			UE_LOG(LogSmartFoundations, Warning,
+			UE_LOG(LogSmartFoundations, VeryVerbose,
 				TEXT("[MP-334] SpawnConduitPlanChildren: entry %d invalid (kind=%d, class=%s, points=%d) - skipped."),
 				EntryIndex, (int32)Entry.Kind, *GetNameSafe(*Entry.BuildClass), Entry.SplinePoints.Num());
 			continue;
@@ -665,7 +671,7 @@ int32 SpawnConduitPlanChildren(AFGHologram* Parent, const FSFScalingSpec& Spec)
 				Data->PipeAutoConnectConn0 = PipeConns.Num() > 0 ? PipeConns[0] : nullptr;
 				if (PipeConns.Num() == 0)
 				{
-					UE_LOG(LogSmartFoundations, Warning,
+					UE_LOG(LogSmartFoundations, VeryVerbose,
 						TEXT("[MP-334] SpawnConduitPlanChildren: pipe entry %d has no connection component for the junction-branch discriminator; it will take the floor-hole branch."),
 						EntryIndex);
 				}
@@ -694,7 +700,7 @@ int32 SpawnConduitPlanChildren(AFGHologram* Parent, const FSFScalingSpec& Spec)
 		}
 		else
 		{
-			UE_LOG(LogSmartFoundations, Warning,
+			UE_LOG(LogSmartFoundations, VeryVerbose,
 				TEXT("[MP-334] SpawnConduitPlanChildren: entry %d (kind=%d) failed to spawn."),
 				EntryIndex, (int32)Entry.Kind);
 		}
@@ -738,7 +744,7 @@ int32 SpawnWirePlanPostConstruct(AActor* BuiltParent, const TArray<AActor*>& Out
 
 		if (!Entry.BuildClass || !Entry.BuildClass->IsChildOf(AFGBuildableWire::StaticClass()))
 		{
-			UE_LOG(LogSmartFoundations, Warning,
+			UE_LOG(LogSmartFoundations, VeryVerbose,
 				TEXT("[MP-334] SpawnWirePlanPostConstruct: wire entry %d has invalid wire class %s - skipped."),
 				EntryIndex, *GetNameSafe(*Entry.BuildClass));
 			continue;
@@ -750,7 +756,7 @@ int32 SpawnWirePlanPostConstruct(AActor* BuiltParent, const TArray<AActor*>& Out
 			World, BuiltParent, OutChildren, Entry.WireEnd, 100.0f);
 		if (!C0 || !C1 || C0 == C1)
 		{
-			UE_LOG(LogSmartFoundations, Warning,
+			UE_LOG(LogSmartFoundations, VeryVerbose,
 				TEXT("[MP-334] SpawnWirePlanPostConstruct: wire entry %d endpoints unresolved (C0=%s, C1=%s) - skipped."),
 				EntryIndex, *GetNameSafe(C0), *GetNameSafe(C1));
 			continue;
@@ -782,13 +788,13 @@ int32 SpawnWirePlanPostConstruct(AActor* BuiltParent, const TArray<AActor*>& Out
 			*Entry.BuildClass, Entry.WireStart, FRotator::ZeroRotator, SpawnParams);
 		if (!NewWire)
 		{
-			UE_LOG(LogSmartFoundations, Warning,
+			UE_LOG(LogSmartFoundations, VeryVerbose,
 				TEXT("[MP-334] SpawnWirePlanPostConstruct: wire entry %d failed to spawn."), EntryIndex);
 			continue;
 		}
 		if (!NewWire->Connect(C0, C1))
 		{
-			UE_LOG(LogSmartFoundations, Warning,
+			UE_LOG(LogSmartFoundations, VeryVerbose,
 				TEXT("[MP-334] SpawnWirePlanPostConstruct: wire entry %d Connect() failed (%s <-> %s) - destroyed."),
 				EntryIndex, *GetNameSafe(C0->GetOwner()), *GetNameSafe(C1->GetOwner()));
 			// [NULL-WIRE GUARD] Dismantle, not Destroy: a failed Connect may still have

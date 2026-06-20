@@ -64,7 +64,7 @@ FSFTraversalResult USFUpgradeTraversalService::TraverseNetwork(
 		return Result;
 	}
 
-	UE_LOG(LogSmartUpgrade, Log, TEXT("TraversalService: Starting traversal from %s (Family: %d)"),
+	UE_LOG(LogSmartUpgrade, Verbose, TEXT("TraversalService: Starting traversal from %s (Family: %d)"),
 		*AnchorBuildable->GetName(), (int32)Result.Family);
 
 	TSet<AFGBuildable*> VisitedSet;
@@ -137,7 +137,7 @@ FSFTraversalResult USFUpgradeTraversalService::TraverseNetwork(
 		}
 		else
 		{
-			UE_LOG(LogSmartUpgrade, Warning, TEXT("TraversalService: Failed to cast %s to AFGBuildablePowerPole or AFGBuildableWire - class hierarchy: %s"),
+			UE_LOG(LogSmartUpgrade, Verbose, TEXT("TraversalService: Failed to cast %s to AFGBuildablePowerPole or AFGBuildableWire - class hierarchy: %s"),
 				*AnchorBuildable->GetName(), *AnchorBuildable->GetClass()->GetSuperClass()->GetName());
 			Result.ErrorMessage = FString::Printf(TEXT("Power pole/wire cast failed for %s"), *AnchorBuildable->GetClass()->GetName());
 			return Result;
@@ -153,7 +153,7 @@ FSFTraversalResult USFUpgradeTraversalService::TraverseNetwork(
 	if (FoundBuildables.Num() >= Config.MaxTraversalCount)
 	{
 		Result.bHitMaxLimit = true;
-		UE_LOG(LogSmartUpgrade, Warning, TEXT("TraversalService: Hit max traversal limit of %d"), Config.MaxTraversalCount);
+		UE_LOG(LogSmartUpgrade, Verbose, TEXT("TraversalService: Hit max traversal limit of %d"), Config.MaxTraversalCount);
 	}
 
 	// Get subsystem for tier lookups
@@ -223,7 +223,7 @@ FSFTraversalResult USFUpgradeTraversalService::TraverseNetwork(
 		}
 	}
 
-	UE_LOG(LogSmartUpgrade, Log, TEXT("TraversalService: Found %d buildables (%d upgradeable)"),
+	UE_LOG(LogSmartUpgrade, Verbose, TEXT("TraversalService: Found %d buildables (%d upgradeable)"),
 		Result.TotalCount, Result.UpgradeableCount);
 
 	return Result;

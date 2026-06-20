@@ -62,7 +62,7 @@ AActor* ASFWallHoleChildHologram::Construct(TArray<AActor*>& out_children, FNetC
     }
     else
     {
-        UE_LOG(LogSmartHologram, Warning, TEXT("🧱 WALL HOLE CHILD: Construct returned nullptr for %s"), *GetName());
+        UE_LOG(LogSmartHologram, Verbose, TEXT("🧱 WALL HOLE CHILD: Construct returned nullptr for %s"), *GetName());
     }
 
     return BuiltActor;

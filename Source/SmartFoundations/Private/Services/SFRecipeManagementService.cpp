@@ -24,6 +24,8 @@
 #include "FGFactoryClipboard.h"
 #include "Kismet/GameplayStatics.h"
 #include "TimerManager.h"
+#include "Module/SFGameInstanceModule.h"  // [#368] SetBuildStateClipboardRecipe (clipboard sync)
+#include "Core/Net/SFRCO.h"               // [#368] Server_SetClipboardRecipe
 
 // ========================================
 // Initialization & Lifecycle
@@ -50,6 +52,38 @@ void USFRecipeManagementService::SyncSubsystemRecipeState() const
 	Subsystem->StoredProductionRecipe = StoredProductionRecipe;
 	Subsystem->StoredRecipeDisplayName = StoredRecipeDisplayName;
 	Subsystem->bHasStoredProductionRecipe = bHasStoredProductionRecipe;
+}
+
+void USFRecipeManagementService::SyncClipboardRecipe(TSubclassOf<UFGRecipe> Recipe)
+{
+	// [#368] Keep the player's vanilla build-gun clipboard in sync with Smart's chosen recipe so
+	// vanilla's PasteSettings applies the SAME recipe Smart's spec-construction does (otherwise a
+	// stale sampled clipboard overrides a U/Panel pick on the authoritative build). Recipe-pick runs
+	// on the owning client; set the local copy AND ask the server to set its copy (the field is not
+	// replicated). On SP/listen-host the local set is the authority; the RCO is a harmless no-op/echo.
+	if (!Subsystem)
+	{
+		return;
+	}
+	UWorld* World = Subsystem->GetWorld();
+	if (!World)
+	{
+		return;
+	}
+	AFGCharacterPlayer* Player = Cast<AFGCharacterPlayer>(UGameplayStatics::GetPlayerCharacter(World, 0));
+	if (!Player)
+	{
+		return;
+	}
+	USFGameInstanceModule::SetBuildStateClipboardRecipe(Player, Recipe);
+
+	if (AFGPlayerController* PC = Cast<AFGPlayerController>(Player->GetController()))
+	{
+		if (USFRCO* RCO = PC->GetRemoteCallObjectOfClass<USFRCO>())
+		{
+			RCO->Server_SetClipboardRecipe(Recipe);
+		}
+	}
 }
 
 void USFRecipeManagementService::Cleanup()
@@ -188,7 +222,11 @@ void USFRecipeManagementService::SetActiveRecipeByIndex(int32 Index)
 	
 	// Apply recipe to parent hologram if available
 	ApplyRecipeToParentHologram();
-	
+
+	// [#368] Mirror the pick into the vanilla build-gun clipboard (client + server) so vanilla pastes
+	// the same recipe Smart does and a stale sampled clipboard can't override this selection.
+	SyncClipboardRecipe(ActiveRecipe);
+
 	// Debounced regeneration - only if children exist and recipe actually changed
 	AFGHologram* Hologram = Subsystem ? Subsystem->GetActiveHologram() : nullptr;
 	if (Hologram)
@@ -311,7 +349,7 @@ TArray<TSubclassOf<UFGRecipe>> USFRecipeManagementService::GetFilteredRecipesFor
 	AFGRecipeManager* RecipeManager = AFGRecipeManager::Get(Subsystem->GetWorld());
 	if (!RecipeManager) 
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("🍽️ Cannot get RecipeManager"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("🍽️ Cannot get RecipeManager"));
 		SortedFilteredRecipes.Empty();
 		return TArray<TSubclassOf<UFGRecipe>>();
 	}
@@ -322,7 +360,7 @@ TArray<TSubclassOf<UFGRecipe>> USFRecipeManagementService::GetFilteredRecipesFor
 	UClass* HologramBuildClass = ActiveHologram->GetBuildClass();
 	if (!HologramBuildClass) 
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("🍽️ Cannot get hologram buildable class (non-buildable hologram?)"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("🍽️ Cannot get hologram buildable class (non-buildable hologram?)"));
 		SortedFilteredRecipes.Empty();
 		return TArray<TSubclassOf<UFGRecipe>>();
 	}
@@ -360,7 +398,11 @@ void USFRecipeManagementService::ClearAllRecipes()
 	StoredRecipeDisplayName = TEXT("");
 	bHasStoredProductionRecipe = false;
 	SyncSubsystemRecipeState();
-	
+
+	// [#368] Explicit recipe clear (Num0 / panel Clear) -> drop the vanilla clipboard recipe too, so
+	// the next placement is recipe-less (vanilla behavior). No-op during init/cleanup (no build gun).
+	SyncClipboardRecipe(nullptr);
+
 	// Clear unlocked recipes
 	UnlockedRecipes.Empty();
 	SortedFilteredRecipes.Empty();
@@ -381,7 +423,7 @@ void USFRecipeManagementService::StoreProductionRecipeFromBuilding(AFGBuildable*
 {
 	if (!SourceBuilding || !IsValid(SourceBuilding))
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("🍽️ Cannot store recipe - source building is invalid"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("🍽️ Cannot store recipe - source building is invalid"));
 		return;
 	}
 	
@@ -658,7 +700,13 @@ void USFRecipeManagementService::ClearStoredProductionRecipe()
 	{
 		Subsystem->UpdateCounterDisplay();
 	}
-	
+
+	// [#368] NOTE: intentionally does NOT touch the vanilla build-gun clipboard here. The middle-click
+	// sample handler (StoreProductionRecipeFromBuilding) routes through this reset, and clearing the
+	// clipboard would wipe the recipe vanilla's own sample just populated (breaking vanilla Ctrl+V).
+	// The clipboard is cleared at the deliberate sites instead: ClearAllRecipes (Num0/panel) and the
+	// holster path (OnBuildGunUnequipped).
+
 	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🍽️ Cleared stored production recipe"));
 }
 
@@ -674,7 +722,7 @@ void USFRecipeManagementService::ApplyRecipeToParentHologram()
 	
 	if (!Subsystem || !Subsystem->GetActiveHologram())
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("🍽️ No active hologram to apply recipe to"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("🍽️ No active hologram to apply recipe to"));
 		return;
 	}
 	
@@ -710,7 +758,7 @@ void USFRecipeManagementService::ApplyRecipeToParentHologram()
 	}
 	else
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("🍽️ Could not attach hologram data to parent %s"), 
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("🍽️ Could not attach hologram data to parent %s"),
 			*ParentHologram->GetName());
 	}
 }
@@ -719,7 +767,7 @@ void USFRecipeManagementService::RegisterSmartBuilding(AFGBuildable* Building, i
 {
 	if (!Building || !IsValid(Building))
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("REGISTRY: Cannot register null or invalid building"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("REGISTRY: Cannot register null or invalid building"));
 		return;
 	}
 	
@@ -910,7 +958,7 @@ void USFRecipeManagementService::OnActorSpawned(AActor* SpawnedActor)
 					}
 					else
 					{
-						UE_LOG(LogSmartFoundations, Warning, TEXT("⚡ Delayed: Power Shards failed for %s (max=%.0f%%)"),
+						UE_LOG(LogSmartFoundations, Verbose, TEXT("⚡ Delayed: Power Shards failed for %s (max=%.0f%%)"),
 							*Factory->GetName(), NewMax * 100.0f);
 					}
 				}
@@ -927,7 +975,7 @@ void USFRecipeManagementService::OnActorSpawned(AActor* SpawnedActor)
 					}
 					else
 					{
-						UE_LOG(LogSmartFoundations, Warning, TEXT("🔮 Delayed: Somersloop failed for %s (max=%.0f%%)"),
+						UE_LOG(LogSmartFoundations, Verbose, TEXT("🔮 Delayed: Somersloop failed for %s (max=%.0f%%)"),
 							*Factory->GetName(), NewMaxBoost * 100.0f);
 					}
 				}
@@ -941,7 +989,25 @@ void USFRecipeManagementService::OnActorSpawned(AActor* SpawnedActor)
 	{
 		return;
 	}
-	
+
+	// [#368] Only apply Smart's remembered recipe to a manufacturer SMART IS ACTIVELY PLACING.
+	// A manufacturer that spawns with no active Smart! hologram came from somewhere else — a
+	// blueprint recalled into the Blueprint Designer, a world blueprint paste, or another mod —
+	// and must keep the recipe it loaded with. Without this gate the 0.1s timer below ran for
+	// EVERY manufacturer and, when no recipe was held (ActiveRecipe == null), cleared the
+	// blueprint's own recipe via SetRecipe(nullptr) — the "blueprint configuration lost" bug.
+	// Gating at spawn time (where the active-hologram state is reliable) replaces the fragile
+	// time-boxed bBlueprintProxyRecentlySpawned guard, which missed designer recall entirely
+	// (no AFGBlueprintProxy world actor spawns) and raced on world placement. It also correctly
+	// PRESERVES recipe application for Smart! placements made inside the Designer (those carry an
+	// active hologram), which a blanket GetBlueprintDesigner() skip would have regressed.
+	if (!Subsystem->GetActiveHologram())
+	{
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("OnActorSpawned: Manufacturer %s spawned with no active Smart! hologram (blueprint/recall origin) - leaving its recipe untouched"),
+			*ManufacturerBuilding->GetName());
+		return;
+	}
+
 	// Apply the ActiveRecipe to the spawned building
 	if (World)
 	{
@@ -1229,7 +1295,7 @@ void USFRecipeManagementService::ApplyRecipeDelayed(AFGBuildableManufacturer* Ma
 {
 	if (!IsValid(ManufacturerBuilding))
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("ApplyRecipeDelayed: Building is invalid - cannot apply/clear recipe"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("ApplyRecipeDelayed: Building is invalid - cannot apply/clear recipe"));
 		return;
 	}
 	
@@ -1246,12 +1312,12 @@ void USFRecipeManagementService::ApplyRecipeDelayed(AFGBuildableManufacturer* Ma
 	{
 		if (Recipe)
 		{
-			UE_LOG(LogSmartFoundations, Warning, TEXT("ApplyRecipeDelayed: Building %s not ready for recipe (HasActorBegunPlay=false) - retrying with longer delay"), 
+			UE_LOG(LogSmartFoundations, Verbose, TEXT("ApplyRecipeDelayed: Building %s not ready for recipe (HasActorBegunPlay=false) - retrying with longer delay"),
 				*ManufacturerBuilding->GetName());
 		}
 		else
 		{
-			UE_LOG(LogSmartFoundations, Warning, TEXT("ApplyRecipeDelayed: Building %s not ready for recipe clear (HasActorBegunPlay=false) - retrying with longer delay"), 
+			UE_LOG(LogSmartFoundations, Verbose, TEXT("ApplyRecipeDelayed: Building %s not ready for recipe clear (HasActorBegunPlay=false) - retrying with longer delay"),
 				*ManufacturerBuilding->GetName());
 		}
 		
@@ -1271,7 +1337,7 @@ void USFRecipeManagementService::ApplyRecipeDelayed(AFGBuildableManufacturer* Ma
 		// CRITICAL FIX FOR ISSUE #184: Validate recipe compatibility before applying
 		if (!IsRecipeCompatibleWithBuilding(Recipe, ManufacturerBuilding))
 		{
-			UE_LOG(LogSmartFoundations, Warning, 
+			UE_LOG(LogSmartFoundations, Verbose,
 				TEXT("ApplyRecipeDelayed: ❌ Recipe %s is NOT compatible with building %s (class: %s) - skipping application"),
 				*Recipe->GetName(),
 				*ManufacturerBuilding->GetName(),
@@ -1313,7 +1379,7 @@ void USFRecipeManagementService::ApplyRecipeDelayed(AFGBuildableManufacturer* Ma
 	}
 	else
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("ApplyRecipeDelayed: ❌ Recipe verification failed - expected/applied mismatch"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("ApplyRecipeDelayed: ❌ Recipe verification failed - expected/applied mismatch"));
 	}
 }
 
@@ -1404,7 +1470,7 @@ bool USFRecipeManagementService::ApplyStoredPotentialToBuilding(AFGBuildable* Ta
 		}
 		else
 		{
-			UE_LOG(LogSmartFoundations, Warning, TEXT("⚡ Power Shards: Could not transfer to %s (player may be out)"),
+			UE_LOG(LogSmartFoundations, Verbose, TEXT("⚡ Power Shards: Could not transfer to %s (player may be out)"),
 				*TargetBuilding->GetName());
 		}
 	}

@@ -18,7 +18,7 @@ void USmartUpgradePanel::NativeConstruct()
 {
 	Super::NativeConstruct();
 
-	UE_LOG(LogSmartUI, Log, TEXT("Upgrade Panel: NativeConstruct"));
+	UE_LOG(LogSmartUI, Verbose, TEXT("Upgrade Panel: NativeConstruct"));
 
 	// Switch designer-placed (and localized) labels to the in-game multi-script font so
 	// Arabic/Persian/Thai/CJK render correctly. Runtime-built rows route through SFFont::Get below.
@@ -142,7 +142,7 @@ void USmartUpgradePanel::NativeConstruct()
 		RadiusSliderSpinBox->SetValue(CurrentRadiusMeters);
 		RadiusSliderSpinBox->SetDelta(4.0f);
 		RadiusSliderSpinBox->OnValueChanged.AddDynamic(this, &USmartUpgradePanel::OnRadiusValueChanged);
-		UE_LOG(LogSmartUI, Log, TEXT("Upgrade Panel: RadiusSliderSpinBox configured"));
+		UE_LOG(LogSmartUI, Verbose, TEXT("Upgrade Panel: RadiusSliderSpinBox configured"));
 	}
 
 	// Bind radius scan button
@@ -514,7 +514,7 @@ void USmartUpgradePanel::OnUpgradeButtonClicked()
 				return;
 			}
 		}
-		UE_LOG(LogSmartUI, Warning, TEXT("Upgrade Panel: Could not find SFRCO instance for upgrade execution"));
+		UE_LOG(LogSmartUI, Verbose, TEXT("Upgrade Panel: Could not find SFRCO instance for upgrade execution"));
 		if (StatusText)
 		{
 			StatusText->SetText(LOCTEXT("Upgrade_ErrRCO", "Error: server connection unavailable"));
@@ -558,7 +558,7 @@ void USmartUpgradePanel::RefreshAudit()
 						return;
 					}
 				}
-				UE_LOG(LogSmartUI, Warning, TEXT("Upgrade Panel: Could not find SFRCO instance for Refresh"));
+				UE_LOG(LogSmartUI, Verbose, TEXT("Upgrade Panel: Could not find SFRCO instance for Refresh"));
 			}
 			else
 			{
@@ -856,7 +856,7 @@ void USmartUpgradePanel::ClosePanel()
 	APlayerController* PC = GetOwningPlayer();
 	if (!PC)
 	{
-		UE_LOG(LogSmartUI, Warning, TEXT("Upgrade Panel: No owning player controller"));
+		UE_LOG(LogSmartUI, Verbose, TEXT("Upgrade Panel: No owning player controller"));
 		RemoveFromParent();
 		return;
 	}

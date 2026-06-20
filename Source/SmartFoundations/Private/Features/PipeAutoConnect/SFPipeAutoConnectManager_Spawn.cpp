@@ -434,7 +434,7 @@ UFGPipeConnectionComponent* FSFPipeAutoConnectManager::FindAvailableManifoldConn
 		// Issue #320: pipe junctions vary in port count (Cross = 4, T-Junction = 3). A manifold
 		// needs at least a building port + one side port; the perpendicular-port search below is
 		// geometry-driven (by connector normal), so any count >= 2 works.
-		UE_LOG(LogSmartAutoConnect, Warning, TEXT("Junction %s has %d pipe connectors (need >= 2)"),
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("Junction %s has %d pipe connectors (need >= 2)"),
 			*JunctionHologram->GetName(), JunctionConnectors.Num());
 		return JunctionConnectors.Num() > 0 ? JunctionConnectors[0] : nullptr;
 	}
@@ -520,7 +520,7 @@ void FSFPipeAutoConnectManager::FindBestManifoldConnectorPair(
 	{
 		// Issue #320: pipe junctions vary in port count (Cross = 4, T-Junction = 3). The pairing
 		// below is geometry-driven (facing/alignment by connector normal), so any count >= 2 is fine.
-		UE_LOG(LogSmartAutoConnect, Warning, TEXT("Manifold: a junction has too few pipe connectors (Source=%d, Target=%d, need >= 2)"),
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("Manifold: a junction has too few pipe connectors (Source=%d, Target=%d, need >= 2)"),
 			SourceConnectors.Num(), TargetConnectors.Num());
 		return;
 	}
@@ -666,14 +666,14 @@ ASFPipelineHologram* FSFPipeAutoConnectManager::SpawnPipeChild(
 {
 	if (!ParentJunction || !JunctionConnector || !TargetConnector || !Subsystem)
 	{
-		UE_LOG(LogSmartAutoConnect, Warning, TEXT("🔧 PIPE CHILD: SpawnPipeChild called with invalid parameters"));
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🔧 PIPE CHILD: SpawnPipeChild called with invalid parameters"));
 		return nullptr;
 	}
 	
 	UWorld* World = ParentJunction->GetWorld();
 	if (!World)
 	{
-		UE_LOG(LogSmartAutoConnect, Warning, TEXT("🔧 PIPE CHILD: No world context"));
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🔧 PIPE CHILD: No world context"));
 		return nullptr;
 	}
 	
@@ -699,7 +699,7 @@ ASFPipelineHologram* FSFPipeAutoConnectManager::SpawnPipeChild(
 	UClass* PipeBuildClass = Subsystem->GetPipeClassFromConfig(ConfigTier, bWithIndicator, PlayerController);
 	if (!PipeBuildClass)
 	{
-		UE_LOG(LogSmartAutoConnect, Warning, TEXT("🔧 PIPE CHILD: No pipe build class for tier %d"), ActualTier);
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🔧 PIPE CHILD: No pipe build class for tier %d"), ActualTier);
 		return nullptr;
 	}
 	
@@ -733,7 +733,7 @@ ASFPipelineHologram* FSFPipeAutoConnectManager::SpawnPipeChild(
 	
 	if (!PipeChild)
 	{
-		UE_LOG(LogSmartAutoConnect, Error, TEXT("🔧 PIPE CHILD: SpawnActor returned null"));
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🔧 PIPE CHILD: SpawnActor returned null"));
 		return nullptr;
 	}
 	
@@ -883,7 +883,7 @@ ASFPipelineHologram* FSFPipeAutoConnectManager::SpawnPipeChildAtPosition(
 {
 	if (!ParentHologram || !TargetConnector || !Subsystem)
 	{
-		UE_LOG(LogSmartAutoConnect, Warning, TEXT("🔧 PIPE CHILD: SpawnPipeChildAtPosition called with invalid parameters"));
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🔧 PIPE CHILD: SpawnPipeChildAtPosition called with invalid parameters"));
 		return nullptr;
 	}
 	
@@ -935,7 +935,7 @@ ASFPipelineHologram* FSFPipeAutoConnectManager::SpawnPipeChildAtPosition(
 	
 	if (!PipeChild)
 	{
-		UE_LOG(LogSmartAutoConnect, Error, TEXT("🔧 PIPE CHILD: SpawnActor returned null for floor hole pipe"));
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🔧 PIPE CHILD: SpawnActor returned null for floor hole pipe"));
 		return nullptr;
 	}
 	

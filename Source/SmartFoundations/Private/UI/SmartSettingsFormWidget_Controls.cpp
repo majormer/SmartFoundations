@@ -1167,14 +1167,14 @@ void USmartSettingsFormWidget::ShowLargeGridConfirmation(TFunction<void()> OnCon
         Title = LOCTEXT("Panel_Confirm_ExtremeTitle", "EXTREME GRID WARNING!").ToString();
         Message = FText::Format(LOCTEXT("Panel_Confirm_ExtremeMsg", "You are about to generate {0} holograms.\n\nThis will likely cause a significant freeze and may crash the game.\n\nAre you sure you want to continue?"), FText::AsNumber(GridTotal)).ToString();
         TitleColor = FLinearColor(1.0f, 0.2f, 0.2f, 1.0f);  // Red
-        UE_LOG(LogSmartFoundations, Warning, TEXT("Settings Form: Showing EXTREME grid confirmation for %d objects"), GridTotal);
+        UE_LOG(LogSmartFoundations, Verbose, TEXT("Settings Form: Showing EXTREME grid confirmation for %d objects"), GridTotal);
     }
     else if (GridTotal >= GRID_WARNING_THRESHOLD_WARNING)
     {
         Title = LOCTEXT("Panel_Confirm_LargeTitle", "Large Grid Warning").ToString();
         Message = FText::Format(LOCTEXT("Panel_Confirm_LargeMsg", "You are about to generate {0} holograms.\n\nThis may cause a temporary freeze.\n\nContinue?"), FText::AsNumber(GridTotal)).ToString();
         TitleColor = FLinearColor(1.0f, 0.5f, 0.0f, 1.0f);  // Orange
-        UE_LOG(LogSmartFoundations, Warning, TEXT("Settings Form: Showing large grid confirmation for %d objects"), GridTotal);
+        UE_LOG(LogSmartFoundations, Verbose, TEXT("Settings Form: Showing large grid confirmation for %d objects"), GridTotal);
     }
     else
     {
@@ -1196,7 +1196,7 @@ void USmartSettingsFormWidget::ShowConfirmationDialog(const FString& Title, cons
     if (!ConfirmationSizeBox)
     {
         // No dialog widget available, just proceed
-        UE_LOG(LogSmartFoundations, Warning, TEXT("Settings Form: Confirmation dialog not available, proceeding anyway"));
+        UE_LOG(LogSmartFoundations, Verbose, TEXT("Settings Form: Confirmation dialog not available, proceeding anyway"));
         if (PendingConfirmCallback)
         {
             PendingConfirmCallback();

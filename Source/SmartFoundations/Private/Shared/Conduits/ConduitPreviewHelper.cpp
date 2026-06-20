@@ -28,7 +28,7 @@ void FConduitPreviewHelper::EnsureSpawned(const FVector& SpawnLocation)
 {
 	if (!World.IsValid() || !ParentHologram.IsValid())
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("Cannot spawn %s hologram - invalid world or parent"),
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("Cannot spawn %s hologram - invalid world or parent"),
 			*GetConnectorType());
 		return;
 	}
@@ -42,7 +42,7 @@ void FConduitPreviewHelper::EnsureSpawned(const FVector& SpawnLocation)
 	USFSubsystem* Subsystem = USFSubsystem::Get(World.Get());
 	if (!Subsystem)
 	{
-		UE_LOG(LogSmartFoundations, Error, TEXT("Cannot spawn %s - no subsystem"), *GetConnectorType());
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("Cannot spawn %s - no subsystem"), *GetConnectorType());
 		return;
 	}
 
@@ -50,7 +50,7 @@ void FConduitPreviewHelper::EnsureSpawned(const FVector& SpawnLocation)
 	TSubclassOf<AFGSplineHologram> HologramClass = GetHologramClass();
 	if (!HologramClass)
 	{
-		UE_LOG(LogSmartFoundations, Error, TEXT("Cannot spawn %s - no hologram class"), *GetConnectorType());
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("Cannot spawn %s - no hologram class"), *GetConnectorType());
 		return;
 	}
 
@@ -68,7 +68,7 @@ void FConduitPreviewHelper::EnsureSpawned(const FVector& SpawnLocation)
 
 	if (!SpawnedHologram)
 	{
-		UE_LOG(LogSmartFoundations, Error, TEXT("Failed to spawn %s hologram actor"), *GetConnectorType());
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("Failed to spawn %s hologram actor"), *GetConnectorType());
 		return;
 	}
 
@@ -108,7 +108,7 @@ void FConduitPreviewHelper::EnsureSpawned(const FVector& SpawnLocation)
 
 	Hologram = SpawnedHologram;
 
-	UE_LOG(LogSmartFoundations, Log, TEXT("✅ %s hologram spawned: %s (Tier %d)"),
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("✅ %s hologram spawned: %s (Tier %d)"),
 		*GetConnectorType(), *SpawnedHologram->GetName(), Tier);
 }
 

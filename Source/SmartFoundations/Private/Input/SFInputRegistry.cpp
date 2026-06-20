@@ -111,9 +111,9 @@ UFGInputMappingContext* USFInputRegistry::GetSmartInputMappingContext()
 		}
 		else
 		{
-			UE_LOG(LogSmartFoundations, Error, TEXT("❌ Failed to load Smart! Input Mapping Context"));
-			UE_LOG(LogSmartFoundations, Error, TEXT("❌ Asset should be at: /SmartFoundations/SmartFoundations/Input/Contexts/MC_Smart_BuildGunBuild"));
-			UE_LOG(LogSmartFoundations, Error, TEXT("❌ Verify Blueprint asset exists in Unreal Editor"));
+			UE_LOG(LogSmartFoundations, Verbose, TEXT("❌ Failed to load Smart! Input Mapping Context"));
+			UE_LOG(LogSmartFoundations, Verbose, TEXT("❌ Asset should be at: /SmartFoundations/SmartFoundations/Input/Contexts/MC_Smart_BuildGunBuild"));
+			UE_LOG(LogSmartFoundations, Verbose, TEXT("❌ Verify Blueprint asset exists in Unreal Editor"));
 		}
 	}
 
@@ -124,7 +124,7 @@ void USFInputRegistry::BindInputActionsToSubsystem(USFSubsystem* Subsystem, UFGE
 {
 	if (!Subsystem || !InputComponent)
 	{
-		UE_LOG(LogSmartFoundations, Error, TEXT("BindInputActionsToSubsystem: Invalid subsystem or input component"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("BindInputActionsToSubsystem: Invalid subsystem or input component"));
 		return;
 	}
 
@@ -154,7 +154,7 @@ void USFInputRegistry::BindInputActionsToSubsystem(USFSubsystem* Subsystem, UFGE
 	}
 	else
 	{
-		UE_LOG(LogSmartFoundations, Error, TEXT("❌ Failed to load: IA_Smart_ScaleX"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("❌ Failed to load: IA_Smart_ScaleX"));
 	}
 
 	if (UInputAction* IA_ScaleY = LoadIA(TEXT("/SmartFoundations/SmartFoundations/Input/Actions/IA_Smart_ScaleY.IA_Smart_ScaleY")))
@@ -165,7 +165,7 @@ void USFInputRegistry::BindInputActionsToSubsystem(USFSubsystem* Subsystem, UFGE
 	}
 	else
 	{
-		UE_LOG(LogSmartFoundations, Error, TEXT("❌ Failed to load: IA_Smart_ScaleY"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("❌ Failed to load: IA_Smart_ScaleY"));
 	}
 
 	if (UInputAction* IA_ScaleZ = LoadIA(TEXT("/SmartFoundations/SmartFoundations/Input/Actions/IA_Smart_ScaleZ.IA_Smart_ScaleZ")))
@@ -176,7 +176,7 @@ void USFInputRegistry::BindInputActionsToSubsystem(USFSubsystem* Subsystem, UFGE
 	}
 	else
 	{
-		UE_LOG(LogSmartFoundations, Error, TEXT("❌ Failed to load: IA_Smart_ScaleZ"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("❌ Failed to load: IA_Smart_ScaleZ"));
 	}
 
 	// === Mouse Wheel (Unified context-aware handler) ===
@@ -189,7 +189,7 @@ void USFInputRegistry::BindInputActionsToSubsystem(USFSubsystem* Subsystem, UFGE
 	}
 	else
 	{
-		UE_LOG(LogSmartFoundations, Error, TEXT("❌ Failed to load: IA_Smart_MouseWheel"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("❌ Failed to load: IA_Smart_MouseWheel"));
 	}
 
 	// === Modifier Actions (Boolean) ===
@@ -231,7 +231,7 @@ void USFInputRegistry::BindInputActionsToSubsystem(USFSubsystem* Subsystem, UFGE
 	}
 	else
 	{
-		UE_LOG(LogSmartFoundations, Error, TEXT("❌ Failed to load: IA_Smart_RecipeMode"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("❌ Failed to load: IA_Smart_RecipeMode"));
 	}
 
 	// === UNIFIED VALUE ADJUSTMENT (replaces individual Spacing/Steps/Stagger adjust actions) ===
@@ -244,7 +244,7 @@ void USFInputRegistry::BindInputActionsToSubsystem(USFSubsystem* Subsystem, UFGE
 	}
 	else
 	{
-		UE_LOG(LogSmartFoundations, Error, TEXT("❌ Failed to load: IA_Smart_IncreaseValue"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("❌ Failed to load: IA_Smart_IncreaseValue"));
 	}
 
 	if (UInputAction* IA_DecreaseValue = LoadIA(TEXT("/SmartFoundations/SmartFoundations/Input/Actions/IA_Smart_DecreaseValue.IA_Smart_DecreaseValue")))
@@ -255,7 +255,7 @@ void USFInputRegistry::BindInputActionsToSubsystem(USFSubsystem* Subsystem, UFGE
 	}
 	else
 	{
-		UE_LOG(LogSmartFoundations, Error, TEXT("❌ Failed to load: IA_Smart_DecreaseValue"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("❌ Failed to load: IA_Smart_DecreaseValue"));
 	}
 
 	// Generic Cycle Axis - context-aware (works for Spacing, Steps, Stagger modes)
@@ -315,7 +315,7 @@ void USFInputRegistry::BindInputActionsToSubsystem(USFSubsystem* Subsystem, UFGE
 	}
 	else
 	{
-		UE_LOG(LogSmartFoundations, Error, TEXT("❌ Failed to load: IA_Smart_ToggleSettingsForm"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("❌ Failed to load: IA_Smart_ToggleSettingsForm"));
 	}
 
 	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Smart! NEW input binding complete - %d action bindings registered"), BoundCount);

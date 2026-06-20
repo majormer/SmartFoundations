@@ -28,6 +28,10 @@
 
 // MP Slice 0 (Phase 1): client construct chunk guard
 #include "Equipment/FGBuildGunBuild.h"        // UFGBuildGunStateBuild::InternalConstructHologram / GetHologram
+#include "Equipment/FGBuildGun.h"             // [#368] AFGBuildGun::GetBuildGunStateFor / EBuildGunState
+#include "FGCharacterPlayer.h"                // [#368] AFGCharacterPlayer::GetBuildGun
+#include "Buildables/FGBuildableManufacturer.h" // [#368] UFGManufacturerClipboardSettings
+#include "FGRecipe.h"                         // [#368] UFGRecipe
 #include "Core/Net/SFNetworkHelper.h"     // FSFNetworkHelper::IsClient
 #include "Engine/Engine.h"                     // GEngine on-screen message
 
@@ -110,6 +114,9 @@ void USFGameInstanceModule::DispatchLifecycleEvent(ELifecyclePhase Phase)
 		// MP spec-based scaling construction (class-agnostic hook path - covers ALL scalable
 		// buildables including BP hologram wrappers, no hologram swap). See the method comment.
 		RegisterSpecConstructionHooks();
+
+		// [#368/#279] Wire the orphaned holster cleanup to the real build-gun unequip event.
+		RegisterBuildGunUnequipHook();
 
 	}
 }
@@ -299,7 +306,7 @@ static void SF_RegisterStackBuiltRunInFrame(AFGBuildableHologram* hologram, cons
 		}
 	}
 
-	UE_LOG(LogSmartFoundations, Log, TEXT("⛓️ #341 %s HOOK: in-frame rebuilt %d/%d belt-support belt(s) on %s"),
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("⛓️ #341 %s HOOK: in-frame rebuilt %d/%d belt-support belt(s) on %s"),
 		HookLabel, Rebuilt, StackBelts.Num(), *hologram->GetName());
 }
 
@@ -325,5 +332,129 @@ void USFGameInstanceModule::RegisterBeltSupportConstructHook()
 	);
 
 	UE_LOG(LogSmartFoundations, Verbose, TEXT("✅ AFGConveyorPoleHologram::Construct hook registered (#341 belt-support chain registration: stackable/wall/ceiling)"));
+}
+
+// [#368] Sync the player's vanilla build-gun clipboard recipe so vanilla's PasteSettings applies the
+// SAME recipe Smart's spec-construction does. See the header for the full rationale. Friend access to
+// UFGBuildGunStateBuild::mSampledClipboardSettings comes from Config/AccessTransformers.ini.
+void USFGameInstanceModule::SetBuildStateClipboardRecipe(AFGCharacterPlayer* Player, TSubclassOf<UFGRecipe> Recipe)
+{
+	if (!Player)
+	{
+		return;
+	}
+	AFGBuildGun* Gun = Player->GetBuildGun();
+	if (!Gun)
+	{
+		return;
+	}
+	// Resolve the BUILD state object directly (not GetCurrentState) so this works even when the gun
+	// has already left build state on holster - the clear path needs that.
+	UFGBuildGunStateBuild* BuildState = Cast<UFGBuildGunStateBuild>(Gun->GetBuildGunStateFor(EBuildGunState::BGS_BUILD));
+	if (!BuildState)
+	{
+		return;
+	}
+
+	if (!Recipe)
+	{
+		// Clear: restore recipe-less placement. Only drop a manufacturer clipboard Smart may have set;
+		// never stomp a non-manufacturer sampled clipboard the player legitimately holds.
+		if (Cast<UFGManufacturerClipboardSettings>(BuildState->mSampledClipboardSettings))
+		{
+			BuildState->mSampledClipboardSettings = nullptr;
+		}
+		return;
+	}
+
+	// Read-modify-write: change only the recipe, preserving any sampled overclock/Somersloop on an
+	// existing manufacturer clipboard. Create a neutral clipboard if there isn't one yet.
+	UFGManufacturerClipboardSettings* Settings = Cast<UFGManufacturerClipboardSettings>(BuildState->mSampledClipboardSettings);
+	if (!Settings)
+	{
+		Settings = NewObject<UFGManufacturerClipboardSettings>(BuildState);
+		Settings->mTargetPotential = 1.0f;
+		Settings->mTargetProductionBoost = 0.0f;
+		Settings->mReachablePotential = 1.0f;
+		Settings->mReachableProductionBoost = 0.0f;
+		Settings->mOverclockingShardDescriptor = nullptr;
+		Settings->mProductionBoostShardDescriptor = nullptr;
+		BuildState->mSampledClipboardSettings = Settings;
+	}
+	Settings->mRecipe = Recipe;
+}
+
+void USFGameInstanceModule::RegisterBuildGunUnequipHook()
+{
+	// [#368/#279] AFGBuildGun::UnEquip fires on a true holster (weapon in hand / different equipment),
+	// unlike just opening the build menu. We hold the gun here, so the build state (and its clipboard)
+	// is reachable even though the player is leaving build mode. This is the live trigger the orphaned
+	// USFSubsystem::OnBuildGunUnequipped() always needed.
+	SUBSCRIBE_METHOD_VIRTUAL_AFTER(
+		AFGBuildGun::UnEquip,
+		GetMutableDefault<AFGBuildGun>(),
+		[](AFGBuildGun* self)
+		{
+			if (!self)
+			{
+				return;
+			}
+
+			AFGCharacterPlayer* Instigator = self->GetInstigatorCharacter();
+
+			// Confirmed 2026-06-20: the instigator is ALWAYS detached by the time this AFTER hook runs
+			// (logged instigator=None / locallyControlled=NO on every holster in a live SP test) - which
+			// is why the original "bail if !Player" gate never cleared the recipe. The local-build-gun
+			// fallback below is the real working path. Verbose: kept for future diagnosis, quiet by default.
+			UE_LOG(LogSmartFoundations, Verbose,
+				TEXT("[#392] AFGBuildGun::UnEquip: gun=%s instigator=%s locallyControlled=%s"),
+				*GetNameSafe(self), *GetNameSafe(Instigator),
+				(Instigator && Instigator->IsLocallyControlled()) ? TEXT("YES") : TEXT("NO"));
+
+			// Local player only - never react to another player's replicated unequip on a listen host.
+			// The instigator can be detached mid-UnEquip (our AFTER hook runs after the body), so a hard
+			// "bail if instigator null" would silently skip the holster clear in exactly the case we care
+			// about. When the instigator is gone, match this gun against the LOCAL player's build gun
+			// instead: that stays correct on a listen host (a remote player's gun won't match) and on a
+			// dedicated server (no local controller -> never matches), while still firing in SP/client.
+			bool bIsLocal = false;
+			if (Instigator)
+			{
+				bIsLocal = Instigator->IsLocallyControlled();
+			}
+			else if (UWorld* World = self->GetWorld())
+			{
+				if (APlayerController* PC = World->GetFirstPlayerController())
+				{
+					if (PC->IsLocalController())
+					{
+						AFGCharacterPlayer* LocalChar = Cast<AFGCharacterPlayer>(PC->GetPawn());
+						bIsLocal = (LocalChar && LocalChar->GetBuildGun() == self);
+					}
+				}
+			}
+			if (!bIsLocal)
+			{
+				return;
+			}
+
+			// Clear the LOCAL build-gun clipboard recipe directly via this gun (reliable mid-unequip).
+			if (UFGBuildGunStateBuild* BuildState = Cast<UFGBuildGunStateBuild>(self->GetBuildGunStateFor(EBuildGunState::BGS_BUILD)))
+			{
+				if (Cast<UFGManufacturerClipboardSettings>(BuildState->mSampledClipboardSettings))
+				{
+					BuildState->mSampledClipboardSettings = nullptr;
+				}
+			}
+
+			// Run the holster cleanup: clears Smart's remembered recipe (HUD resets) and fires the
+			// per-player RCO to clear the SERVER's clipboard copy, plus the existing context cleanup.
+			if (USFSubsystem* Subsystem = USFSubsystem::Get(self->GetWorld()))
+			{
+				Subsystem->OnBuildGunUnequipped();
+			}
+		});
+
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("[#392] AFGBuildGun::UnEquip hook registered (holster recipe + clipboard clear)"));
 }
 

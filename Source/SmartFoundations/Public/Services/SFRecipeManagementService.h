@@ -128,6 +128,18 @@ public:
 	/** Clear stored production recipe (clears everything: recipe + shards + somersloops) */
 	void ClearStoredProductionRecipe();
 
+	/**
+	 * [#368] Sync the player's vanilla build-gun clipboard recipe to Recipe (null = clear), on both
+	 * the local client (so the local hologram build agrees) and the server (per-player RCO), so
+	 * vanilla's PasteSettings applies the same recipe Smart's spec-construction does and a stale
+	 * sampled clipboard can't override a U/Panel pick. Called from the deliberate recipe-pick site
+	 * (SetActiveRecipeByIndex), the explicit recipe-clear (ClearAllRecipes / Num0 / panel), and the
+	 * holster path (USFSubsystem::OnBuildGunUnequipped). Deliberately NOT called from
+	 * ClearStoredProductionRecipe, because the middle-click sample handler routes through that and
+	 * must not wipe the clipboard vanilla's own sample just populated.
+	 */
+	void SyncClipboardRecipe(TSubclassOf<UFGRecipe> Recipe);
+
 	/** Clear only stored shard/somersloop state (does NOT clear recipe) */
 	void ClearStoredShardState();
 

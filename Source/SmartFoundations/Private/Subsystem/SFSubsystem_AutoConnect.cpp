@@ -20,7 +20,7 @@ TArray<AFGBuildable*> USFSubsystem::FindNearbyBuildings(FVector Center, float Ra
 	UWorld* World = GetWorld();
 	if (!World)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("FindNearbyBuildings: No world context"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("FindNearbyBuildings: No world context"));
 		return NearbyBuildings;
 	}
 
@@ -91,7 +91,7 @@ void USFSubsystem::OnDistributorHologramUpdated(AFGHologram* DistributorHologram
 {
 	if (!DistributorHologram)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("OnDistributorHologramUpdated: DistributorHologram is null"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("OnDistributorHologramUpdated: DistributorHologram is null"));
 		return;
 	}
 
@@ -106,7 +106,7 @@ void USFSubsystem::OnDistributorHologramUpdated(AFGHologram* DistributorHologram
 	USFAutoConnectOrchestrator* Orchestrator = GetOrCreateOrchestrator(DistributorHologram);
 	if (!Orchestrator)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("Auto-Connect Orchestrator not available - skipping distributor update"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("Auto-Connect Orchestrator not available - skipping distributor update"));
 		return;
 	}
 
@@ -181,7 +181,7 @@ void USFSubsystem::OnPowerPoleBuilt(AFGBuildablePowerPole* BuiltPole)
 {
 	if (!BuiltPole)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("⚡ OnPowerPoleBuilt: Invalid power pole"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("⚡ OnPowerPoleBuilt: Invalid power pole"));
 		return;
 	}
 
@@ -207,7 +207,7 @@ void USFSubsystem::OnPowerPoleBuilt(AFGBuildablePowerPole* BuiltPole)
 	}
 	else
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("⚡ OnPowerPoleBuilt: Power auto-connect manager not available"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("⚡ OnPowerPoleBuilt: Power auto-connect manager not available"));
 		return; // Removed return false here
 	}
 }
@@ -509,7 +509,7 @@ void USFSubsystem::RegisterPipeForDeferredWiring(AFGBuildablePipeline* Pipe)
 				}
 				else
 				{
-					UE_LOG(LogSmartFoundations, Warning, TEXT("PIPE AUTO-CONNECT: No connector found for %s.Conn0 @ %s"),
+					UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("PIPE AUTO-CONNECT: No connector found for %s.Conn0 @ %s"),
 						*Pipe->GetName(), *SearchLoc.ToString());
 				}
 			}

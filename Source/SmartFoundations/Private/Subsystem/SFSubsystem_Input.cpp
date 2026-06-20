@@ -80,36 +80,34 @@ FVector USFSubsystem::GetFurthestTopHologramPosition() const
         return ActiveHologram->GetActorLocation();
     }
 
+    // [#373] Smart Restore of an Extend pattern is its OWN focus path - it has no live extend target, so
+    // IsScaledExtendActive() is false and the generic grid path below would frame the MIRROR of the run
+    // (the reported "camera follows the opposite of the scaled direction"). Read the furthest restored
+    // clone from the same placement math the restore uses, so the focus matches the actual clones.
+    if (ExtendService && ExtendService->IsRestoredCloneTopologyActive())
+    {
+        return ExtendService->GetFurthestRestoredCloneWorldPosition(ActiveHologram->GetActorLocation());
+    }
+
     // Calculate furthest grid position based on direction
     // The "furthest top" is at the corner furthest from the parent (X,Y)
     // and at the TOP Z level (highest)
     int32 FurthestX, FurthestY, TopZ;
 
-    // Issue #275: Scaled Extend axis mapping
-    // Extend clones are placed along the building's Y axis (via RightVector).
-    // CurrentGridCounters.X = clone count (always positive, from FMath::Abs).
-    // CurrentGridCounters.Y = row count (perpendicular to extend, along building's X axis).
-    // CalculateChildPosition maps X param → building X, Y param → building Y.
-    // So for Scaled Extend we must swap: clone count → FurthestY, row count → FurthestX.
+    // [#373] Scaled Extend uses a SEPARATE focus computation from normal grid scaling (the "two camera
+    // functions"). Normal grid is symmetric: the cell sign follows the grid counter sign, so the generic
+    // CalculateChildPosition path below works. Extend is NOT: once you pick a side, the run grows by the
+    // ABSOLUTE scroll magnitude in that one direction (XDirectionSign = Right:+1 / Left:-1), and the real
+    // clones are placed along the SOURCE's local X (forward) with spacing/steps/arc/rows by
+    // SFExtendScaledService - not along the Y axis the old #275 mapping assumed. Re-deriving that placement
+    // here would drift from it, so instead read the furthest ACTUAL clone the extend service already
+    // computed (source location + its world offset). This frames the leading factory building whichever
+    // way the run extends, on both SP and a client.
     const bool bScaledExtend = ExtendService && ExtendService->IsScaledExtendActive();
 
     if (bScaledExtend)
     {
-        ESFExtendDirection ExtendDir = ExtendService->GetExtendDirection();
-        int32 CloneCount = FMath::Abs(CurrentGridCounters.X);
-
-        // Clones extend along building's Y axis (RightVector)
-        FurthestY = CloneCount - 1;
-        if (ExtendDir == ESFExtendDirection::Left)
-        {
-            FurthestY = -FurthestY;  // Left = negative Y
-        }
-
-        // Rows extend along building's X axis (perpendicular to extend)
-        FurthestX = CurrentGridCounters.Y > 0 ? CurrentGridCounters.Y - 1 : 0;
-
-        // Scaled Extend doesn't use Z scaling
-        TopZ = 0;
+        return ExtendService->GetFurthestScaledCloneWorldPosition(ActiveHologram->GetActorLocation());
     }
     else
     {
@@ -200,7 +198,7 @@ void USFSubsystem::OnSpacingModeChanged(const FInputActionValue& Value)
     }
     if (bSpacingModeActive)
     {
-        UE_LOG(LogSmartFoundations, Warning, TEXT("\U0001F527 Spacing Mode: ACTIVE (Semicolon held) - Current axis: %s"),
+        UE_LOG(LogSmartFoundations, Verbose, TEXT("\U0001F527 Spacing Mode: ACTIVE (Semicolon held) - Current axis: %s"),
             *UEnum::GetValueAsString(CounterState.SpacingAxis));
         UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   Counters: X=%d cm, Y=%d cm, Z=%d cm"),
             CounterState.SpacingX, CounterState.SpacingY, CounterState.SpacingZ);
@@ -210,7 +208,7 @@ void USFSubsystem::OnSpacingModeChanged(const FInputActionValue& Value)
     }
     else
     {
-        UE_LOG(LogSmartFoundations, Warning, TEXT("\U0001F527 Spacing Mode: Inactive (Semicolon released)"));
+        UE_LOG(LogSmartFoundations, Verbose, TEXT("\U0001F527 Spacing Mode: Inactive (Semicolon released)"));
 
         // Try to release lock (Task 52 - centralized)
         TryReleaseHologramLock();
@@ -244,7 +242,7 @@ void USFSubsystem::OnStepsModeChanged(const FInputActionValue& Value)
         const TCHAR* AxisName = (CounterState.StepsAxis == ESFScaleAxis::X) ? TEXT("X (columns)") : TEXT("Y (rows)");
         const int32 CurrentCounter = (CounterState.StepsAxis == ESFScaleAxis::X) ? CounterState.StepsX : CounterState.StepsY;
 
-        UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 Steps Mode: ACTIVE (I held) - Axis: %s"), AxisName);
+        UE_LOG(LogSmartFoundations, Verbose, TEXT("🔧 Steps Mode: ACTIVE (I held) - Axis: %s"), AxisName);
         UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   Current counter: %d units (Num0 to toggle X/Y)"), CurrentCounter);
 
         // Try to acquire lock (Task 52 - centralized)
@@ -252,7 +250,7 @@ void USFSubsystem::OnStepsModeChanged(const FInputActionValue& Value)
     }
     else
     {
-        UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 Steps Mode: Inactive (I released)"));
+        UE_LOG(LogSmartFoundations, Verbose, TEXT("🔧 Steps Mode: Inactive (I released)"));
 
         // Try to release lock (Task 52 - centralized)
         TryReleaseHologramLock();
@@ -512,7 +510,7 @@ void USFSubsystem::OnStaggerModeChanged(const FInputActionValue& Value)
 		const TCHAR* AxisName = (CounterState.StaggerAxis == ESFScaleAxis::X) ? TEXT("X (sideways curve)") : TEXT("Y (forward curve)");
 		const int32 CurrentCounter = (CounterState.StaggerAxis == ESFScaleAxis::X) ? CounterState.StaggerX : CounterState.StaggerY;
 
-		UE_LOG(LogSmartFoundations, Warning, TEXT(" Stagger Mode: ACTIVE (Y held) - Axis: %s"), AxisName);
+		UE_LOG(LogSmartFoundations, Verbose, TEXT(" Stagger Mode: ACTIVE (Y held) - Axis: %s"), AxisName);
 		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   Current counter: %d units (Num0 to toggle X/Y)"), CurrentCounter);
 
 		// Try to acquire lock (Task 52 - centralized)
@@ -547,7 +545,7 @@ void USFSubsystem::OnRotationModeChanged(const FInputActionValue& Value)
 		const TCHAR* ProgressDesc = (CounterState.RotationAxis == ESFScaleAxis::Y)
 			? TEXT("Y (rows fan out)")
 			: TEXT("X (curve along the run)");
-		UE_LOG(LogSmartFoundations, Warning, TEXT(" Rotation Mode: ACTIVE (Comma held) - Progression: %s"), ProgressDesc);
+		UE_LOG(LogSmartFoundations, Verbose, TEXT(" Rotation Mode: ACTIVE (Comma held) - Progression: %s"), ProgressDesc);
 		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   Current rotation: %.1f° (Num0 to toggle progression axis X/Y)"), CounterState.RotationZ);
 
 		// Try to acquire lock (Task 52 - centralized)
@@ -604,7 +602,7 @@ void USFSubsystem::OnToggleArrows()
 		}
 	}
 #else
-	UE_LOG(LogSmartFoundations, Warning, TEXT("Arrows feature is currently disabled (SMART_ARROWS_ENABLED=0)"));
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("Arrows feature is currently disabled (SMART_ARROWS_ENABLED=0)"));
 #endif
 
 	// DEBUG: Comprehensive manifold scan within 50m radius
@@ -646,7 +644,7 @@ void USFSubsystem::OnToggleArrows()
 
 void USFSubsystem::OnToggleSettingsForm()
 {
-	UE_LOG(LogSmartFoundations, Warning, TEXT("!!! K KEY PRESSED !!! (OnToggleSettingsForm)"));
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("!!! K KEY PRESSED !!! (OnToggleSettingsForm)"));
 	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("INPUT EVENT: Settings Form Toggle (Phase 0 validation)"));
 
 	// Route to Upgrade Panel if holding an upgrade-capable hologram (belt/lift/pipe/pump/power pole/wall outlet)
@@ -670,7 +668,7 @@ void USFSubsystem::OnToggleSettingsForm()
 
 	if (!PC)
 	{
-		UE_LOG(LogSmartFoundations, Error, TEXT("Settings Form: No valid PlayerController available"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("Settings Form: No valid PlayerController available"));
 		return;
 	}
 
@@ -692,7 +690,7 @@ void USFSubsystem::OnToggleSettingsForm()
 
 	if (!WidgetClass)
 	{
-		UE_LOG(LogSmartFoundations, Error, TEXT("Settings Form: Failed to load Blueprint widget class at path: %s"), *WidgetPath);
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("Settings Form: Failed to load Blueprint widget class at path: %s"), *WidgetPath);
 		return;
 	}
 
@@ -703,7 +701,7 @@ void USFSubsystem::OnToggleSettingsForm()
 
 	if (!WidgetInstance)
 	{
-		UE_LOG(LogSmartFoundations, Error, TEXT("Settings Form: Failed to create widget instance"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("Settings Form: Failed to create widget instance"));
 		return;
 	}
 
@@ -778,7 +776,12 @@ bool USFSubsystem::IsUpgradeCapableContext() const
     }
 
     // Pipeline holograms (pipes)
-    if (ClassName.Contains(TEXT("Pipeline")) && !ClassName.Contains(TEXT("Junction")) && !ClassName.Contains(TEXT("Pump")) && !ClassName.Contains(TEXT("Support")))
+    // [#390] Exclude "Stackable": the Stackable Pipeline Support's hologram is named
+    // Holo_PipelineStackable_C — it contains "Pipeline" but NOT "Support", so without this
+    // exclusion it was misclassified as upgrade-capable and opened the Upgrade panel on K
+    // instead of the Smart! Panel. It's a scaling target (like the stackable conveyor pole,
+    // which similarly isn't caught by the ConveyorBelt check above), not a pipe to upgrade.
+    if (ClassName.Contains(TEXT("Pipeline")) && !ClassName.Contains(TEXT("Junction")) && !ClassName.Contains(TEXT("Pump")) && !ClassName.Contains(TEXT("Support")) && !ClassName.Contains(TEXT("Stackable")))
     {
         return true;
     }
@@ -813,7 +816,7 @@ void USFSubsystem::OnToggleUpgradePanel()
 
 	if (!PC)
 	{
-		UE_LOG(LogSmartFoundations, Error, TEXT("Upgrade Panel: No valid PlayerController available"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("Upgrade Panel: No valid PlayerController available"));
 		return;
 	}
 
@@ -844,7 +847,7 @@ void USFSubsystem::OnToggleUpgradePanel()
 
 	if (!WidgetClass)
 	{
-		UE_LOG(LogSmartFoundations, Error, TEXT("Upgrade Panel: Failed to load Blueprint widget class at path: %s"), *WidgetPath);
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("Upgrade Panel: Failed to load Blueprint widget class at path: %s"), *WidgetPath);
 		return;
 	}
 
@@ -856,15 +859,15 @@ void USFSubsystem::OnToggleUpgradePanel()
 
 	if (!WidgetInstance)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("Upgrade Panel: CreateWidget<USmartUpgradePanel> failed, trying UUserWidget fallback"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("Upgrade Panel: CreateWidget<USmartUpgradePanel> failed, trying UUserWidget fallback"));
 		// Blueprint may not be reparented yet - fall back to base UUserWidget
 		WidgetInstance = CreateWidget<UUserWidget>(PC, WidgetClass);
 	}
 
 	if (!WidgetInstance)
 	{
-		UE_LOG(LogSmartFoundations, Error, TEXT("Upgrade Panel: Failed to create widget instance - Blueprint may need to be reparented to UserWidget in Unreal Editor"));
-		UE_LOG(LogSmartFoundations, Error, TEXT("Upgrade Panel: Open Smart_UpgradePanel_Widget in UE Editor, go to Class Settings, and set Parent Class to UserWidget or SmartUpgradePanel"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("Upgrade Panel: Failed to create widget instance - Blueprint may need to be reparented to UserWidget in Unreal Editor"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("Upgrade Panel: Open Smart_UpgradePanel_Widget in UE Editor, go to Class Settings, and set Parent Class to UserWidget or SmartUpgradePanel"));
 		return;
 	}
 
@@ -882,7 +885,7 @@ void USFSubsystem::OnToggleUpgradePanel()
 		}
 		else
 		{
-			UE_LOG(LogSmartFoundations, Warning, TEXT("Upgrade Panel: CloseButton not found in widget"));
+			UE_LOG(LogSmartFoundations, Verbose, TEXT("Upgrade Panel: CloseButton not found in widget"));
 		}
 	}
 

@@ -86,7 +86,7 @@ int32 USFChainActorService::InvalidateAndRebuildChains(
 	AFGBuildableSubsystem* BuildableSub = GetBuildableSubsystem();
 	if (!BuildableSub)
 	{
-		UE_LOG(LogSmartUpgrade, Warning, TEXT("ChainActorService: No BuildableSubsystem available — cannot invalidate chains"));
+		UE_LOG(LogSmartUpgrade, Verbose, TEXT("ChainActorService: No BuildableSubsystem available — cannot invalidate chains"));
 		return 0;
 	}
 
@@ -380,7 +380,7 @@ int32 USFChainActorService::InvalidateAndRebuildChains(
 			++DeferredDirtyGroups;
 			DeferredDirtyConveyors += DirtyConveyorsInGroup;
 			BuildableSub->mConveyorGroupsPendingChainActors.AddUnique(TG);
-			UE_LOG(LogSmartUpgrade, Warning,
+			UE_LOG(LogSmartUpgrade, VeryVerbose,
 				TEXT("ChainActorService: Deferring TG migration because it still contains %d detached/destroying conveyor entrie(s). Details=%s"),
 				DirtyConveyorsInGroup,
 				*DescribeTickGroupForLog(TG));
@@ -595,7 +595,7 @@ int32 USFChainActorService::InvalidateAndRebuildChains(
 					}
 					else
 					{
-						UE_LOG(LogSmartUpgrade, Warning,
+						UE_LOG(LogSmartUpgrade, VeryVerbose,
 							TEXT("ChainActorService: Zombie BuildChain still failed after belt-clear — InputEnd=%s OutputEnd=%s Belts=%d Details=%s"),
 							*ChainInputEnd->GetName(),
 							*ChainOutputEnd->GetName(),
@@ -605,7 +605,7 @@ int32 USFChainActorService::InvalidateAndRebuildChains(
 				}
 				else
 				{
-					UE_LOG(LogSmartUpgrade, Warning,
+					UE_LOG(LogSmartUpgrade, VeryVerbose,
 						TEXT("ChainActorService: Zombie endpoint detection incomplete — InputEnd=%s OutputEnd=%s Belts=%d Details=%s"),
 						ChainInputEnd ? *ChainInputEnd->GetName() : TEXT("null"),
 						ChainOutputEnd ? *ChainOutputEnd->GetName() : TEXT("null"),
@@ -624,7 +624,7 @@ int32 USFChainActorService::InvalidateAndRebuildChains(
 					// RemoveChainActorFromConveyorGroup above) and will be swept by the
 					// deferred PurgeZombieChainActors call 3 s after the upgrade, which
 					// runs safely in TG_PrePhysics before TickFactoryActors (TG_PostPhysics).
-					UE_LOG(LogSmartUpgrade, Warning,
+					UE_LOG(LogSmartUpgrade, VeryVerbose,
 						TEXT("ChainActorService: Recovery failed for zombie TG=%p ForceShared=%s Belts=%d — detaching and re-queuing. Details=%s"),
 						TG,
 						TG->ForceIntoSharedByBuildable ? *TG->ForceIntoSharedByBuildable->GetName() : TEXT("null"),
@@ -637,7 +637,7 @@ int32 USFChainActorService::InvalidateAndRebuildChains(
 		}
 		else
 		{
-			UE_LOG(LogSmartUpgrade, Warning,
+			UE_LOG(LogSmartUpgrade, VeryVerbose,
 				TEXT("ChainActorService: Phase 3 migrate call left TG->ChainActor null (TG had %d valid belt(s))"),
 				ValidBeltCount);
 		}
@@ -738,7 +738,7 @@ int32 USFChainActorService::InvalidateAndRebuildChains(
 		if ((bUnassigned || bZeroSegments || bBackPointerMismatch) && PostRebuildLoggedGroups < MaxPostRebuildDetailLogs)
 		{
 			++PostRebuildLoggedGroups;
-			UE_LOG(LogSmartUpgrade, Warning,
+			UE_LOG(LogSmartUpgrade, VeryVerbose,
 				TEXT("ChainActorService: Post-rebuild invariant failure — unassigned=%s zero_segments=%s backptr_mismatch=%s live_conveyors=%d Details=%s"),
 				bUnassigned ? TEXT("true") : TEXT("false"),
 				bZeroSegments ? TEXT("true") : TEXT("false"),
@@ -869,7 +869,7 @@ int32 USFChainActorService::PurgeZombieChainActors()
 				PoisonedMemberBelts.AddUnique(Seg.ConveyorBase);
 			}
 		}
-		UE_LOG(LogSmartUpgrade, Warning,
+		UE_LOG(LogSmartUpgrade, VeryVerbose,
 			TEXT("[CHAIN-DIAG] POISONED chain %s: segment list holds dead conveyor reference(s) - removed surgically, no vanilla revert (#367). Surviving member belts re-register below."),
 			*Chain->GetName());
 		for (FConveyorTickGroup* TG : BuildableSub->mConveyorTickGroup)
@@ -917,7 +917,7 @@ int32 USFChainActorService::PurgeZombieChainActors()
 				OrphanedMemberBelts.AddUnique(Seg.ConveyorBase);
 			}
 		}
-		UE_LOG(LogSmartUpgrade, Warning,
+		UE_LOG(LogSmartUpgrade, VeryVerbose,
 			TEXT("[CHAIN-DIAG] Purge force-destroying detached-but-segmented chain %s (segments=%d) — items transfer back to belts"),
 			*Chain->GetName(), Chain->GetNumChainSegments());
 		BuildableSub->ForceDestroyChainActor(Chain);
@@ -934,7 +934,7 @@ int32 USFChainActorService::PurgeZombieChainActors()
 	}
 	if (ForceDestroyedCount > 0)
 	{
-		UE_LOG(LogSmartUpgrade, Warning,
+		UE_LOG(LogSmartUpgrade, Verbose,
 			TEXT("[CHAIN-DIAG] Purge sweep: %d detached-but-segmented chain(s) force-destroyed, %d chainless member belt(s) re-registered for vanilla rebuild"),
 			ForceDestroyedCount, ReRegisteredBelts);
 	}
@@ -971,21 +971,21 @@ int32 USFChainActorService::PurgeZombieChainActors()
 		++HealedChainlessBelts;
 		if (HealedChainlessBelts <= 12)
 		{
-			UE_LOG(LogSmartUpgrade, Warning,
+			UE_LOG(LogSmartUpgrade, VeryVerbose,
 				TEXT("[CHAIN-DIAG] Purge sweep: re-registered connected-but-chainless belt %s (thesis factory-tick hazard)"),
 				*Belt->GetName());
 		}
 	}
 	if (HealedChainlessBelts > 0)
 	{
-		UE_LOG(LogSmartUpgrade, Warning,
+		UE_LOG(LogSmartUpgrade, Verbose,
 			TEXT("[CHAIN-DIAG] Purge sweep: %d connected-but-chainless belt(s) re-registered total"),
 			HealedChainlessBelts);
 	}
 
 	if (Zombies.Num() == 0)
 	{
-		UE_LOG(LogSmartUpgrade, Display,
+		UE_LOG(LogSmartUpgrade, Verbose,
 			TEXT("[CHAIN-DIAG] Sweep complete: zombiesPurged=0 poisonedRemoved=%d detachedForceDestroyed=%d orphanBeltsReRegistered=%d chainlessBeltsHealed=%d"),
 			PoisonedRemoved, ForceDestroyedCount, ReRegisteredBelts, HealedChainlessBelts);
 		return PoisonedRemoved + ForceDestroyedCount;
@@ -1022,7 +1022,7 @@ int32 USFChainActorService::PurgeZombieChainActors()
 
 	// [CHAIN-DIAG] Always-on sweep summary: lets a shipping dedi log show whether a build path
 	// left chainless belts behind (the thesis factory-tick AV) without verbose logging.
-	UE_LOG(LogSmartUpgrade, Display,
+	UE_LOG(LogSmartUpgrade, Verbose,
 		TEXT("[CHAIN-DIAG] Sweep complete: zombiesPurged=%d poisonedRemoved=%d detachedForceDestroyed=%d orphanBeltsReRegistered=%d chainlessBeltsHealed=%d"),
 		PurgeCount, PoisonedRemoved, ForceDestroyedCount, ReRegisteredBelts, HealedChainlessBelts);
 
@@ -1486,7 +1486,7 @@ int32 USFChainActorService::InvalidateAndQueueVanillaRebuildForBelts(
 		{
 			AFGBuildableConveyorBase* First = TG->Conveyors.Num() > 0 ? TG->Conveyors[0] : nullptr;
 			AFGBuildableConveyorBase* Last = TG->Conveyors.Num() > 0 ? TG->Conveyors.Last() : nullptr;
-			UE_LOG(LogSmartUpgrade, Log,
+			UE_LOG(LogSmartUpgrade, VeryVerbose,
 				TEXT("ChainActorService: queued group sample - bucket=%d conveyors=%d sorted=%s first=%s first_bucket=%d last=%s last_bucket=%d"),
 				TGBucketIndex,
 				TG->Conveyors.Num(),
@@ -1655,7 +1655,11 @@ int32 USFChainActorService::RemoveConveyorFromAllTickGroups(AFGBuildableConveyor
 	}
 	if (StaleRemovals > 0)
 	{
-		UE_LOG(LogSmartUpgrade, Warning,
+		// [#388-perf] VeryVerbose, not Warning: fires per-conveyor on every stale tick-group removal
+		// (normal during factory churn) - at Warning it floods the log (~70k lines/session reported)
+		// and tanks FPS via synchronous file writes. The guard still force-removes (prevents the
+		// freed-pointer factory-tick AV); only the log line is silenced.
+		UE_LOG(LogSmartUpgrade, VeryVerbose,
 			TEXT("[CHAIN-DIAG] RemoveConveyor guard: %s was STILL in %d tick group(s) after vanilla removal (stale bucket id) - force-removed (freed-pointer factory-tick AV prevented)."),
 			*Conveyor->GetName(), StaleRemovals);
 	}
@@ -1719,7 +1723,7 @@ int32 USFChainActorService::ScrubFactoryTickArrays()
 			EntryDescription = FString::Printf(TEXT("LIVE NON-BUILDABLE (recycled address): %s / %s"),
 				*Squatter->GetName(), *GetNameSafe(Squatter->GetClass()));
 		}
-		UE_LOG(LogSmartUpgrade, Error,
+		UE_LOG(LogSmartUpgrade, VeryVerbose,
 			TEXT("[CHAIN-DIAG] CORRUPT mFactoryBuildings entry at index %d/%d: ptr=0x%llX [%s] (prev=%s next=%s) - removed before the factory tick could call through it."),
 			Index, Buildings.Num(), reinterpret_cast<uint64>(Entry), *EntryDescription,
 			IsEntryHealthy(Prev) ? *Prev->GetName() : TEXT("<invalid/none>"),
@@ -1734,7 +1738,7 @@ int32 USFChainActorService::ScrubFactoryTickArrays()
 		{
 			if (!IsEntryHealthy(Group[Index]))
 			{
-				UE_LOG(LogSmartUpgrade, Error,
+				UE_LOG(LogSmartUpgrade, VeryVerbose,
 					TEXT("[CHAIN-DIAG] CORRUPT mFactoryBuildingGroups entry: ptr=0x%llX - removed."),
 					reinterpret_cast<uint64>(Group[Index]));
 				Group.RemoveAt(Index);
@@ -1905,7 +1909,7 @@ void USFChainActorService::DumpFailingTickGroupToJson(
 	}
 	else
 	{
-		UE_LOG(LogSmartUpgrade, Warning,
+		UE_LOG(LogSmartUpgrade, Verbose,
 			TEXT("ChainActorService: failed to write topology dump to %s"), *Path);
 	}
 }

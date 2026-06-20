@@ -56,7 +56,7 @@ void USFAutoConnectService::ProcessStackableConveyorPoles(AFGHologram* ParentHol
 {
 	if (!ParentHologram || !Subsystem)
 	{
-		UE_LOG(LogSmartAutoConnect, Warning, TEXT("🚧 ProcessStackableConveyorPoles: null parent hologram or subsystem"));
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🚧 ProcessStackableConveyorPoles: null parent hologram or subsystem"));
 		return;
 	}
 	
@@ -279,7 +279,7 @@ void USFAutoConnectService::ProcessStackableConveyorPoles(AFGHologram* ParentHol
 				
 				if (!BeltChild)
 				{
-					UE_LOG(LogSmartAutoConnect, Warning, TEXT("🚧 ⚠️ Failed to create belt for grid [%d,%d,%d] -> [%d,%d,%d]"),
+					UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🚧 ⚠️ Failed to create belt for grid [%d,%d,%d] -> [%d,%d,%d]"),
 						X, Y, Z, X + 1, Y, Z);
 				}
 			}
@@ -315,7 +315,7 @@ void USFAutoConnectService::ProcessStackablePipelineSupports(AFGHologram* Parent
 {
 	if (!ParentHologram || !Subsystem)
 	{
-		UE_LOG(LogSmartAutoConnect, Warning, TEXT("🔧 ProcessStackablePipelineSupports: null parent hologram or subsystem"));
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🔧 ProcessStackablePipelineSupports: null parent hologram or subsystem"));
 		return;
 	}
 	
@@ -415,7 +415,14 @@ void USFAutoConnectService::ProcessStackablePipelineSupports(AFGHologram* Parent
 
 	if (AllSupports.Num() < 2)
 	{
-		// Need at least 2 supports for auto-connect - skip silently
+		// [#391] Grid shrank back to a single support (e.g. scale out then un-scale): no pairs
+		// remain, so every pipe still tracked for this parent is now orphaned. Clean them up
+		// before returning. Previously this returned early WITHOUT cleanup, so the orphan-removal
+		// at the end of the pairing loop never ran for the shrink-to-one case — the last pipe was
+		// left behind until a new support spawned on the other side re-entered the loop and ran
+		// RemoveOrphanedPipes (the reporter's "removed when a new pole spawns on the other side").
+		// Preview-only cleanup, identical on SP and MP; also prevents a built orphan if fired.
+		CleanupAllStackablePipes(ParentHologram);
 		return;
 	}
 	
@@ -887,7 +894,7 @@ AFGHologram* USFAutoConnectService::UpdateOrCreatePipeForPolePair(
 	UClass* PipeBuildClass = Subsystem->GetPipeClassFromConfig(PipeTier, bWithIndicator, nullptr);
 	if (!PipeBuildClass)
 	{
-		UE_LOG(LogSmartAutoConnect, Warning, TEXT("🔧 STACKABLE PIPE: No pipe build class for tier %d"), PipeTier);
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🔧 STACKABLE PIPE: No pipe build class for tier %d"), PipeTier);
 		return nullptr;
 	}
 	
@@ -915,7 +922,7 @@ AFGHologram* USFAutoConnectService::UpdateOrCreatePipeForPolePair(
 	
 	if (!PipeChild)
 	{
-		UE_LOG(LogSmartAutoConnect, Error, TEXT("🔧 STACKABLE PIPE: SpawnActor returned null"));
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🔧 STACKABLE PIPE: SpawnActor returned null"));
 		return nullptr;
 	}
 	
@@ -1130,7 +1137,7 @@ void USFAutoConnectService::ProcessPowerPoles(AFGHologram* ParentHologram)
 {
 	if (!ParentHologram)
 	{
-		UE_LOG(LogSmartAutoConnect, Warning, TEXT("⚡ ProcessPowerPoles: null parent hologram"));
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("⚡ ProcessPowerPoles: null parent hologram"));
 		return;
 	}
 	
@@ -1240,7 +1247,7 @@ TArray<FPowerPoleGridNode> USFAutoConnectService::AnalyzeGridTopology(const TArr
 	USFSubsystem* SmartSubsystem = USFSubsystem::Get(AllPoles[0]->GetWorld());
 	if (!SmartSubsystem)
 	{
-		UE_LOG(LogSmartAutoConnect, Warning, TEXT("⚡ AnalyzeGridTopology: No subsystem - falling back to empty"));
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("⚡ AnalyzeGridTopology: No subsystem - falling back to empty"));
 		return GridNodes;
 	}
 	
@@ -1575,7 +1582,7 @@ AFGHologram* USFAutoConnectService::UpdateOrCreateBeltForPolePair(
 	UClass* BeltBuildClass = Subsystem->GetBeltClassForTier(BeltTier, nullptr);
 	if (!BeltBuildClass)
 	{
-		UE_LOG(LogSmartAutoConnect, Warning, TEXT("🚧 STACKABLE BELT: No belt build class for tier %d"), BeltTier);
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🚧 STACKABLE BELT: No belt build class for tier %d"), BeltTier);
 		return nullptr;
 	}
 	
@@ -1603,7 +1610,7 @@ AFGHologram* USFAutoConnectService::UpdateOrCreateBeltForPolePair(
 	
 	if (!BeltChild)
 	{
-		UE_LOG(LogSmartAutoConnect, Error, TEXT("🚧 STACKABLE BELT: SpawnActor returned null"));
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🚧 STACKABLE BELT: SpawnActor returned null"));
 		return nullptr;
 	}
 	

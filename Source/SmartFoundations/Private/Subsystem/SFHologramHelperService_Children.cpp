@@ -20,7 +20,7 @@ void FSFHologramHelperService::ApplyScalingDelta(
 
 	if (!Hologram || !IsValid(Hologram))
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("ApplyScalingDelta: Invalid hologram"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("ApplyScalingDelta: Invalid hologram"));
 		return;
 	}
 
@@ -583,7 +583,7 @@ void FSFHologramHelperService::EndRepositionChildren()
 
 	if (!bInBatchReposition)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("EndRepositionChildren called without matching Begin"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("EndRepositionChildren called without matching Begin"));
 		return;
 	}
 
@@ -620,7 +620,7 @@ void FSFHologramHelperService::BeginProgressiveBatchReposition(
 
 	if (GridIndices.Num() == 0)
 	{
-		UE_LOG(LogSmartFoundations, Log, TEXT("BeginProgressiveBatchReposition: No children to position; running completion callback immediately"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("BeginProgressiveBatchReposition: No children to position; running completion callback immediately"));
 		if (CompletionCallback)
 		{
 			CompletionCallback();
@@ -661,7 +661,7 @@ void FSFHologramHelperService::TickProgressiveBatchReposition(float DeltaTime)
 	// Validate parent hologram still exists
 	if (!BatchState.ParentHologram.IsValid())
 	{
-		UE_LOG(LogSmartFoundations, Warning,
+		UE_LOG(LogSmartFoundations, Verbose,
 			TEXT("TickProgressiveBatchReposition: Parent hologram destroyed, cancelling batch"));
 		CancelProgressiveBatchReposition();
 		return;
@@ -842,16 +842,16 @@ FSFHologramHelperService::EUObjectWarningLevel FSFHologramHelperService::CheckUO
 		switch (WarningLevel)
 		{
 			case EUObjectWarningLevel::Critical:
-				UE_LOG(LogSmartFoundations, Error, TEXT("🛑 CRITICAL: %s - Grid capped to prevent crash!"), *WarningMessage);
+				UE_LOG(LogSmartFoundations, Verbose, TEXT("🛑 CRITICAL: %s - Grid capped to prevent crash!"), *WarningMessage);
 				break;
 			case EUObjectWarningLevel::Red:
-				UE_LOG(LogSmartFoundations, Error, TEXT("🚨 %s - Build may crash! Recommend smaller grid."), *WarningMessage);
+				UE_LOG(LogSmartFoundations, Verbose, TEXT("🚨 %s - Build may crash! Recommend smaller grid."), *WarningMessage);
 				break;
 			case EUObjectWarningLevel::Orange:
-				UE_LOG(LogSmartFoundations, Warning, TEXT("⚠️ %s - FPS may drop significantly."), *WarningMessage);
+				UE_LOG(LogSmartFoundations, Verbose, TEXT("⚠️ %s - FPS may drop significantly."), *WarningMessage);
 				break;
 			case EUObjectWarningLevel::Yellow:
-				UE_LOG(LogSmartFoundations, Warning, TEXT("⚠️ %s - Consider building in sections."), *WarningMessage);
+				UE_LOG(LogSmartFoundations, Verbose, TEXT("⚠️ %s - Consider building in sections."), *WarningMessage);
 				break;
 			default:
 				break;
@@ -908,7 +908,7 @@ AFGHologram* FSFHologramHelperService::SpawnChildHologram(
 
 	if (!ChildHologram)
 	{
-		UE_LOG(LogSmartFoundations, Error, TEXT("SpawnChildHologram: Failed to spawn child from recipe %s"),
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("SpawnChildHologram: Failed to spawn child from recipe %s"),
 			*Recipe->GetName());
 		return nullptr;
 	}
@@ -966,7 +966,7 @@ void FSFHologramHelperService::DestroyAllChildren()
 	if (SpawnedChildren.Num() > LARGE_GRID_WARNING_THRESHOLD)
 	{
 		bInMassDestruction = true;
-		UE_LOG(LogSmartFoundations, Warning,
+		UE_LOG(LogSmartFoundations, Verbose,
 			TEXT("HologramHelperService: Mass destruction of %d children detected"),
 			SpawnedChildren.Num()
 		);

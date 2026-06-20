@@ -81,14 +81,14 @@ void FSFInputHandler::SetupPlayerInput(AFGPlayerController* PlayerController)
 {
 	if (!PlayerController || !IsValid(PlayerController))
 	{
-		UE_LOG(LogSmartFoundations, Error, TEXT("InputHandler::SetupPlayerInput: Invalid player controller"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("InputHandler::SetupPlayerInput: Invalid player controller"));
 		return;
 	}
 
 	USFSubsystem* Subsystem = OwnerSubsystem.Get();
 	if (!Subsystem)
 	{
-		UE_LOG(LogSmartFoundations, Error, TEXT("InputHandler::SetupPlayerInput: No owner subsystem"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("InputHandler::SetupPlayerInput: No owner subsystem"));
 		return;
 	}
 
@@ -132,13 +132,13 @@ void FSFInputHandler::SetupPlayerInput(AFGPlayerController* PlayerController)
 		}
 		else
 		{
-			UE_LOG(LogSmartFoundations, Error, TEXT("❌ Smart! Input Mapping Context not loaded - Blueprint assets required"));
-			UE_LOG(LogSmartFoundations, Error, TEXT("📖 Create the Smart! input action assets in the Unreal Editor"));
+			UE_LOG(LogSmartFoundations, Verbose, TEXT("❌ Smart! Input Mapping Context not loaded - Blueprint assets required"));
+			UE_LOG(LogSmartFoundations, Verbose, TEXT("📖 Create the Smart! input action assets in the Unreal Editor"));
 		}
 	}
 	else
 	{
-		UE_LOG(LogSmartFoundations, Error, TEXT("Player controller does not have UFGEnhancedInputComponent"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("Player controller does not have UFGEnhancedInputComponent"));
 	}
 
 	bInputSetupCompleted = true;
@@ -177,7 +177,7 @@ void FSFInputHandler::RebindAfterDelay()
 	AFGPlayerController* PC = LastController.IsValid() ? LastController.Get() : nullptr;
 	if (!PC)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("InputHandler: Deferred rebind: No player controller available"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("InputHandler: Deferred rebind: No player controller available"));
 		return;
 	}
 
@@ -292,12 +292,12 @@ void FSFInputHandler::DisableVanillaBuildGunContext()
 		}
 		else
 		{
-			UE_LOG(LogSmartFoundations, Warning, TEXT("⚠️ DisableVanillaBuildGunContext: Context found but not active: %s"), *VanillaContext->GetName());
+			UE_LOG(LogSmartFoundations, Verbose, TEXT("⚠️ DisableVanillaBuildGunContext: Context found but not active: %s"), *VanillaContext->GetName());
 		}
 	}
 	else
 	{
-		UE_LOG(LogSmartFoundations, Error, TEXT("❌ DisableVanillaBuildGunContext: Failed to load vanilla context! Paths checked: MC_BuildGunBuild, MC_BuildGun"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("❌ DisableVanillaBuildGunContext: Failed to load vanilla context! Paths checked: MC_BuildGunBuild, MC_BuildGun"));
 	}
 }
 
@@ -346,7 +346,7 @@ void FSFInputHandler::EnableVanillaBuildGunContext()
 	}
 	else
 	{
-		UE_LOG(LogSmartFoundations, Error, TEXT("❌ EnableVanillaBuildGunContext: Failed to load vanilla context"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("❌ EnableVanillaBuildGunContext: Failed to load vanilla context"));
 	}
 }
 
@@ -378,7 +378,7 @@ void FSFInputHandler::OnScaleZChanged(const FInputActionValue& Value)
 void FSFInputHandler::OnModifierScaleXPressed(const FInputActionValue& Value)
 {
 	bModifierScaleXActive = true;
-	UE_LOG(LogSmartFoundations, Warning, TEXT("[KEY] Modifier Scale X: ACTIVE (X key held) - Wheel should now work for X-axis scaling"));
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("[KEY] Modifier Scale X: ACTIVE (X key held) - Wheel should now work for X-axis scaling"));
 	if (USFSubsystem* Subsystem = OwnerSubsystem.Get())
 	{
 		Subsystem->UpdateCounterDisplay();
@@ -388,7 +388,7 @@ void FSFInputHandler::OnModifierScaleXPressed(const FInputActionValue& Value)
 void FSFInputHandler::OnModifierScaleXReleased(const FInputActionValue& Value)
 {
 	bModifierScaleXActive = false;
-	UE_LOG(LogSmartFoundations, Warning, TEXT("[KEY] Modifier Scale X: Inactive (X released)"));
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("[KEY] Modifier Scale X: Inactive (X released)"));
 	if (USFSubsystem* Subsystem = OwnerSubsystem.Get())
 	{
 		Subsystem->UpdateCounterDisplay();
@@ -398,7 +398,7 @@ void FSFInputHandler::OnModifierScaleXReleased(const FInputActionValue& Value)
 void FSFInputHandler::OnModifierScaleYPressed(const FInputActionValue& Value)
 {
 	bModifierScaleYActive = true;
-	UE_LOG(LogSmartFoundations, Warning, TEXT("[KEY] Modifier Scale Y: ACTIVE (Z held)"));
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("[KEY] Modifier Scale Y: ACTIVE (Z held)"));
 	if (USFSubsystem* Subsystem = OwnerSubsystem.Get())
 	{
 		Subsystem->UpdateCounterDisplay();
@@ -408,7 +408,7 @@ void FSFInputHandler::OnModifierScaleYPressed(const FInputActionValue& Value)
 void FSFInputHandler::OnModifierScaleYReleased(const FInputActionValue& Value)
 {
 	bModifierScaleYActive = false;
-	UE_LOG(LogSmartFoundations, Warning, TEXT("[KEY] Modifier Scale Y: Inactive (Z released)"));
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("[KEY] Modifier Scale Y: Inactive (Z released)"));
 	if (USFSubsystem* Subsystem = OwnerSubsystem.Get())
 	{
 		Subsystem->UpdateCounterDisplay();

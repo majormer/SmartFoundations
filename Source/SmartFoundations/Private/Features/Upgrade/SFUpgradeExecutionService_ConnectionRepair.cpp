@@ -163,7 +163,7 @@ void USFUpgradeExecutionService::FixBatchConnectionReferences()
 		}
 		else
 		{
-			UE_LOG(LogSmartUpgrade, Warning, TEXT("FixBatchConnectionReferences: Connection%d not found on %s"),
+			UE_LOG(LogSmartUpgrade, Verbose, TEXT("FixBatchConnectionReferences: Connection%d not found on %s"),
 				PartnerConnectionIndex, *NewPartner->GetName());
 		}
 	}
@@ -464,7 +464,7 @@ void USFUpgradeExecutionService::ValidateAndRepairConnections()
 			{
 				// Partner could not be resolved — this is a broken edge we cannot repair.
 				Broken++;
-				UE_LOG(LogSmartUpgrade, Warning,
+				UE_LOG(LogSmartUpgrade, Verbose,
 					TEXT("ValidateAndRepairConnections: %s.%s -> <unresolvable partner> (kind=%d)"),
 					*NewLocal->GetName(), *Edge.LocalConnectorName.ToString(), (int32)Edge.Kind);
 				continue;
@@ -480,7 +480,7 @@ void USFUpgradeExecutionService::ValidateAndRepairConnections()
 					if (!LocalConn || !PartnerConn)
 					{
 						Broken++;
-						UE_LOG(LogSmartUpgrade, Warning,
+						UE_LOG(LogSmartUpgrade, Verbose,
 							TEXT("ValidateAndRepairConnections: factory edge %s.%s -> %s.%s connector not found on new actor"),
 							*NewLocal->GetName(), *Edge.LocalConnectorName.ToString(),
 							*PartnerNew->GetName(), *Edge.PartnerConnectorName.ToString());
@@ -509,7 +509,7 @@ void USFUpgradeExecutionService::ValidateAndRepairConnections()
 					else
 					{
 						Broken++;
-						UE_LOG(LogSmartUpgrade, Warning,
+						UE_LOG(LogSmartUpgrade, Verbose,
 							TEXT("ValidateAndRepairConnections: BROKEN factory %s.%s <-> %s.%s (repair failed)"),
 							*NewLocal->GetName(), *Edge.LocalConnectorName.ToString(),
 							*PartnerNew->GetName(), *Edge.PartnerConnectorName.ToString());
@@ -524,7 +524,7 @@ void USFUpgradeExecutionService::ValidateAndRepairConnections()
 					if (!LocalConn || !PartnerConn)
 					{
 						Broken++;
-						UE_LOG(LogSmartUpgrade, Warning,
+						UE_LOG(LogSmartUpgrade, Verbose,
 							TEXT("ValidateAndRepairConnections: pipe edge %s.%s -> %s.%s connector not found on new actor"),
 							*NewLocal->GetName(), *Edge.LocalConnectorName.ToString(),
 							*PartnerNew->GetName(), *Edge.PartnerConnectorName.ToString());
@@ -551,7 +551,7 @@ void USFUpgradeExecutionService::ValidateAndRepairConnections()
 					else
 					{
 						Broken++;
-						UE_LOG(LogSmartUpgrade, Warning,
+						UE_LOG(LogSmartUpgrade, Verbose,
 							TEXT("ValidateAndRepairConnections: BROKEN pipe %s.%s <-> %s.%s (repair failed)"),
 							*NewLocal->GetName(), *Edge.LocalConnectorName.ToString(),
 							*PartnerNew->GetName(), *Edge.PartnerConnectorName.ToString());
@@ -566,7 +566,7 @@ void USFUpgradeExecutionService::ValidateAndRepairConnections()
 					if (!LocalConn || !PartnerConn)
 					{
 						Broken++;
-						UE_LOG(LogSmartUpgrade, Warning,
+						UE_LOG(LogSmartUpgrade, Verbose,
 							TEXT("ValidateAndRepairConnections: power edge %s.%s -> %s.%s connector not found on new actor"),
 							*NewLocal->GetName(), *Edge.LocalConnectorName.ToString(),
 							*PartnerNew->GetName(), *Edge.PartnerConnectorName.ToString());
@@ -589,7 +589,7 @@ void USFUpgradeExecutionService::ValidateAndRepairConnections()
 					// In practice, vanilla's pole Upgrade_Implementation transfers wires, so this
 					// branch should be rare. Log for diagnostic purposes.
 					Broken++;
-					UE_LOG(LogSmartUpgrade, Warning,
+					UE_LOG(LogSmartUpgrade, Verbose,
 						TEXT("ValidateAndRepairConnections: BROKEN power %s.%s <-> %s.%s (wire-based repair not implemented; vanilla Upgrade should have transferred)"),
 						*NewLocal->GetName(), *Edge.LocalConnectorName.ToString(),
 						*PartnerNew->GetName(), *Edge.PartnerConnectorName.ToString());

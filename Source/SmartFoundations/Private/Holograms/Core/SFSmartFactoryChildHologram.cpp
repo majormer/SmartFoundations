@@ -38,7 +38,7 @@ void ASFSmartFactoryChildHologram::ConfigureActor(class AFGBuildable* inBuildabl
     if (const FSFHologramData* Data = USFHologramDataRegistry::GetData(this)) {
         if (Data->StoredRecipe) {
             Subsystem->ApplyStoredProductionRecipeToBuilding(inBuildable);
-            UE_LOG(LogSmartHologram, Log, TEXT("SFSmartFactoryChildHologram::ConfigureActor: Applied stored recipe to %s"),
+            UE_LOG(LogSmartHologram, Verbose, TEXT("SFSmartFactoryChildHologram::ConfigureActor: Applied stored recipe to %s"),
                 *inBuildable->GetName());
         }
     }
@@ -59,13 +59,13 @@ void ASFSmartFactoryChildHologram::ConfigureActor(class AFGBuildable* inBuildabl
             bool bApplied = RecipeService->ApplyStoredPotentialToBuilding(inBuildable, Player);
             if (bApplied)
             {
-                UE_LOG(LogSmartHologram, Log, TEXT("SFSmartFactoryChildHologram::ConfigureActor: Applied Power Shards/Somersloops to %s"),
+                UE_LOG(LogSmartHologram, Verbose, TEXT("SFSmartFactoryChildHologram::ConfigureActor: Applied Power Shards/Somersloops to %s"),
                     *inBuildable->GetName());
             }
         }
         else
         {
-            UE_LOG(LogSmartHologram, Warning, TEXT("SFSmartFactoryChildHologram::ConfigureActor: No player found for shard/somersloop transfer"));
+            UE_LOG(LogSmartHologram, Verbose, TEXT("SFSmartFactoryChildHologram::ConfigureActor: No player found for shard/somersloop transfer"));
         }
     }
 }

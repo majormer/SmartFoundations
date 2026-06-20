@@ -30,7 +30,7 @@ void USFAutoConnectOrchestrator::EvaluateGrid(bool bForceRecreate)
 {
 	if (!ParentHologram.IsValid() || !AutoConnectService)
 	{
-		UE_LOG(LogSmartAutoConnect, Warning, TEXT("🎯 Orchestrator: Cannot evaluate - invalid parent or service"));
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🎯 Orchestrator: Cannot evaluate - invalid parent or service"));
 		return;
 	}
 	
@@ -287,7 +287,7 @@ void USFAutoConnectOrchestrator::ScheduleEvaluation(bool bForceRecreate)
 
 	if (!ParentHologram.IsValid() || !ParentHologram->GetWorld())
 	{
-		UE_LOG(LogSmartAutoConnect, Warning, TEXT("🎯 Orchestrator: Cannot schedule evaluation - no world"));
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🎯 Orchestrator: Cannot schedule evaluation - no world"));
 		// Fallback: run immediately
 		RunScheduledEvaluation();
 		return;
@@ -323,7 +323,7 @@ void USFAutoConnectOrchestrator::SchedulePipeEvaluation(bool bForceRecreate)
 
 	if (!ParentHologram.IsValid() || !ParentHologram->GetWorld())
 	{
-		UE_LOG(LogSmartAutoConnect, Warning, TEXT("🎯 Orchestrator: Cannot schedule pipe evaluation - no world"));
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🎯 Orchestrator: Cannot schedule pipe evaluation - no world"));
 		// Fallback: run immediately
 		RunScheduledPipeEvaluation();
 		return;
@@ -410,7 +410,7 @@ void USFAutoConnectOrchestrator::SchedulePowerEvaluation(bool bForceRecreate)
 
 	if (!ParentHologram.IsValid() || !ParentHologram->GetWorld())
 	{
-		UE_LOG(LogSmartAutoConnect, Warning, TEXT("🎯 Orchestrator: Cannot schedule power evaluation - no world"));
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🎯 Orchestrator: Cannot schedule power evaluation - no world"));
 		// Fallback: run immediately
 		RunScheduledPowerEvaluation();
 		return;
@@ -523,7 +523,7 @@ void USFAutoConnectOrchestrator::RunScheduledStackableBeltEvaluation()
 	
 	if (!AutoConnectService || !ParentHologram.IsValid())
 	{
-		UE_LOG(LogSmartAutoConnect, Warning, TEXT("🚧 Orchestrator: Missing service or parent hologram"));
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🚧 Orchestrator: Missing service or parent hologram"));
 		return;
 	}
 	

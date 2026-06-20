@@ -35,7 +35,7 @@ void ASFPipeAttachmentChildHologram::CheckValidPlacement()
 
 AActor* ASFPipeAttachmentChildHologram::Construct(TArray<AActor*>& out_children, FNetConstructionID constructionID)
 {
-    UE_LOG(LogSmartHologram, Log, TEXT("🔧 PIPE ATTACHMENT CHILD: Construct() called for %s"), *GetName());
+    UE_LOG(LogSmartHologram, Verbose, TEXT("🔧 PIPE ATTACHMENT CHILD: Construct() called for %s"), *GetName());
 
     // Vanilla AFGPipelineAttachmentHologram::Construct spawns the AFGBuildable, hooks
     // the FluidIntegrant into the pipe subsystem, and registers with
@@ -67,23 +67,23 @@ AActor* ASFPipeAttachmentChildHologram::Construct(TArray<AActor*>& out_children,
             if (AFGBuildablePipelinePump* Pump = Cast<AFGBuildablePipelinePump>(BuiltActor))
             {
                 Pump->SetUserFlowLimit(HoloData->PipeAttachmentUserFlowLimit);
-                UE_LOG(LogSmartHologram, Log, TEXT("🔧 PIPE ATTACHMENT CHILD: Applied UserFlowLimit=%.3f to cloned pump/valve %s"),
+                UE_LOG(LogSmartHologram, Verbose, TEXT("🔧 PIPE ATTACHMENT CHILD: Applied UserFlowLimit=%.3f to cloned pump/valve %s"),
                     HoloData->PipeAttachmentUserFlowLimit, *BuiltActor->GetName());
             }
             else
             {
-                UE_LOG(LogSmartHologram, Warning, TEXT("🔧 PIPE ATTACHMENT CHILD: Built actor %s is not an AFGBuildablePipelinePump — cannot apply UserFlowLimit"),
+                UE_LOG(LogSmartHologram, Verbose, TEXT("🔧 PIPE ATTACHMENT CHILD: Built actor %s is not an AFGBuildablePipelinePump — cannot apply UserFlowLimit"),
                     *BuiltActor->GetName());
             }
         }
 
-        UE_LOG(LogSmartHologram, Log, TEXT("🔧 PIPE ATTACHMENT CHILD: Successfully built %s -> %s (CloneId=%s)"),
+        UE_LOG(LogSmartHologram, Verbose, TEXT("🔧 PIPE ATTACHMENT CHILD: Successfully built %s -> %s (CloneId=%s)"),
             *GetName(), *BuiltActor->GetName(),
             HoloData ? *HoloData->JsonCloneId : TEXT("none"));
     }
     else
     {
-        UE_LOG(LogSmartHologram, Warning, TEXT("🔧 PIPE ATTACHMENT CHILD: Construct returned nullptr for %s"), *GetName());
+        UE_LOG(LogSmartHologram, Verbose, TEXT("🔧 PIPE ATTACHMENT CHILD: Construct returned nullptr for %s"), *GetName());
     }
 
     return BuiltActor;

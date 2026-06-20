@@ -1339,14 +1339,14 @@ bool FSFPipeAutoConnectManager::CreatePipePreviewBetweenConnectors(
 {
 	if (!SourceConnector || !TargetConnector || !StorageHologram || !Subsystem)
 	{
-		UE_LOG(LogSmartAutoConnect, Warning, TEXT("🔧 CreatePipePreviewBetweenConnectors: Invalid parameters"));
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🔧 CreatePipePreviewBetweenConnectors: Invalid parameters"));
 		return false;
 	}
 
 	UWorld* World = Subsystem->GetWorld();
 	if (!World)
 	{
-		UE_LOG(LogSmartAutoConnect, Warning, TEXT("🔧 CreatePipePreviewBetweenConnectors: No world"));
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🔧 CreatePipePreviewBetweenConnectors: No world"));
 		return false;
 	}
 
@@ -1366,7 +1366,7 @@ bool FSFPipeAutoConnectManager::CreatePipePreviewBetweenConnectors(
 	TSharedPtr<FPipePreviewHelper> NewPreview = MakeShared<FPipePreviewHelper>(World, PipeTier, bWithIndicator, StorageHologram);
 	if (!NewPreview.IsValid())
 	{
-		UE_LOG(LogSmartAutoConnect, Warning, TEXT("🔧 Failed to create pipe preview helper"));
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🔧 Failed to create pipe preview helper"));
 		return false;
 	}
 

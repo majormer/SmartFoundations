@@ -39,7 +39,7 @@ void ASFFactoryHologram::BeginPlay()
         }
     }
     
-    UE_LOG(LogSmartFoundations, Log, TEXT("🔄 SFFactoryHologram BeginPlay: Has %d mesh components, mBuildClass=%s, Materials=%d, FirstMat=%s"),
+    UE_LOG(LogSmartFoundations, Verbose, TEXT("🔄 SFFactoryHologram BeginPlay: Has %d mesh components, mBuildClass=%s, Materials=%d, FirstMat=%s"),
         MeshComponents.Num(),
         mBuildClass ? *mBuildClass->GetName() : TEXT("null"),
         MaterialCount,
@@ -78,7 +78,7 @@ AActor* ASFFactoryHologram::Construct(TArray<AActor*>& out_children, FNetConstru
         if (ExtService && HoloData && !HoloData->JsonCloneId.IsEmpty())
         {
             ExtService->RegisterJsonBuiltActor(HoloData->JsonCloneId, BuiltActor);
-            UE_LOG(LogSmartFoundations, Log, TEXT("🔧 FACTORY Construct: Registered parent %s → %s for wiring"),
+            UE_LOG(LogSmartFoundations, Verbose, TEXT("🔧 FACTORY Construct: Registered parent %s → %s for wiring"),
                 *HoloData->JsonCloneId, *BuiltActor->GetName());
         }
         
@@ -124,12 +124,12 @@ AActor* ASFFactoryHologram::Construct(TArray<AActor*>& out_children, FNetConstru
                 if (BestMatch)
                 {
                     ExtService->RegisterJsonBuiltActor(ChildData->JsonCloneId, BestMatch);
-                    UE_LOG(LogSmartFoundations, Log, TEXT("🔧 FACTORY Construct: Registered child %s → %s (dist=%.0f)"),
+                    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 FACTORY Construct: Registered child %s → %s (dist=%.0f)"),
                         *ChildData->JsonCloneId, *BestMatch->GetName(), BestDist);
                 }
                 else
                 {
-                    UE_LOG(LogSmartFoundations, Warning, TEXT("🔧 FACTORY Construct: No match for child %s at (%+.0f,%+.0f,%+.0f)"),
+                    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 FACTORY Construct: No match for child %s at (%+.0f,%+.0f,%+.0f)"),
                         *ChildData->JsonCloneId, ChildPos.X, ChildPos.Y, ChildPos.Z);
                 }
             }
@@ -305,7 +305,7 @@ void ASFFactoryHologram::InitializeFromHologram(AFGHologram* SourceHologram)
 {
     if (!SourceHologram)
     {
-        UE_LOG(LogSmartFoundations, Error, TEXT("InitializeFromHologram: SourceHologram is null"));
+        UE_LOG(LogSmartFoundations, Verbose, TEXT("InitializeFromHologram: SourceHologram is null"));
         return;
     }
     
@@ -320,7 +320,7 @@ void ASFFactoryHologram::InitializeFromHologram(AFGHologram* SourceHologram)
         mRecipe = SourceRecipe;
     }
     
-    UE_LOG(LogSmartFoundations, Log, TEXT("InitializeFromHologram: Set mBuildClass=%s, mRecipe=%s"), 
+    UE_LOG(LogSmartFoundations, Verbose, TEXT("InitializeFromHologram: Set mBuildClass=%s, mRecipe=%s"),
         mBuildClass ? *mBuildClass->GetName() : TEXT("null"),
         mRecipe ? *mRecipe->GetName() : TEXT("null"));
 }

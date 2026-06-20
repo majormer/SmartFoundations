@@ -51,7 +51,7 @@ FVector FSFWallAdapter::CalculateWallSizeForGrid() const
 {
 	if (!HologramPtr.IsValid())
 	{
-		UE_LOG(LogSmartHologram, Warning, TEXT("FSFWallAdapter::CalculateWallSizeForGrid - Invalid hologram"));
+		UE_LOG(LogSmartHologram, Verbose, TEXT("FSFWallAdapter::CalculateWallSizeForGrid - Invalid hologram"));
 		// Default wall: 8m wide, 4m tall, use width for Y-axis spacing
 		return FVector(800.0f, 800.0f, 400.0f);
 	}
@@ -59,7 +59,7 @@ FVector FSFWallAdapter::CalculateWallSizeForGrid() const
 	UClass* BuildClass = HologramPtr->GetBuildClass();
 	if (!BuildClass)
 	{
-		UE_LOG(LogSmartHologram, Warning, TEXT("FSFWallAdapter: No BuildClass"));
+		UE_LOG(LogSmartHologram, Verbose, TEXT("FSFWallAdapter: No BuildClass"));
 		return FVector(800.0f, 800.0f, 400.0f);
 	}
 
@@ -77,7 +77,7 @@ FVector FSFWallAdapter::CalculateWallSizeForGrid() const
 		PhysicalSize.Z   // Z: Use actual height for Z-axis spacing
 	);
 
-	UE_LOG(LogSmartHologram, Log, TEXT("FSFWallAdapter: Physical=%s Grid=%s Source=%s Class=%s"),
+	UE_LOG(LogSmartHologram, Verbose, TEXT("FSFWallAdapter: Physical=%s Grid=%s Source=%s Class=%s"),
 		*PhysicalSize.ToString(), *GridSize.ToString(), *Source, *BuildClass->GetName());
 
 	return GridSize;
