@@ -43,7 +43,7 @@ Use these settings to control power cable previews.
 
 ## Scaling
 
-- Auto-Hold on grid change locks the hologram after you modify the grid. This helps keep a large preview from moving accidentally.
+- Auto-Hold on grid change locks the hologram after you modify the grid, so a large preview doesn't move accidentally. **On by default** (as of 32.1.2) — turn it off here if you'd rather the hologram stay free to reposition, and the vanilla Hold key releases any individual lock.
 
 ## Smart Panel
 

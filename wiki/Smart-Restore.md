@@ -29,6 +29,8 @@ Open the Smart Panel with `K` and use the `Presets >>` button to:
 
 After you build with Extend, Smart Restore can capture that exact layout as an editable preset draft — the source building, its recipe where available, the factories, belts, conveyor lifts, pipes, distributors, power poles, and the cloned connection layout. It is the fastest way to turn a module you just built by hand into something you can replay anywhere.
 
+When you replay a captured Extend, you can re-scale the run **in either direction** along its axis before placing — scroll one way to grow it one direction, the other way to grow it the other (a restored Extend isn't locked to a single side the way a fresh Scaled Extend is).
+
 ## Sharing Is Progression-Safe
 
 Shared presets are checked against your current unlocks before they can be imported or applied. If a preset needs a building, recipe, belt or pipe tier, lift, splitter, merger, power component, or other piece you have not unlocked yet, Smart! rejects it instead of letting you build something you could not place by hand.
