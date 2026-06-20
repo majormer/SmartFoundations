@@ -85,31 +85,20 @@ FVector USFSubsystem::GetFurthestTopHologramPosition() const
     // and at the TOP Z level (highest)
     int32 FurthestX, FurthestY, TopZ;
 
-    // Issue #275: Scaled Extend axis mapping
-    // Extend clones are placed along the building's Y axis (via RightVector).
-    // CurrentGridCounters.X = clone count (always positive, from FMath::Abs).
-    // CurrentGridCounters.Y = row count (perpendicular to extend, along building's X axis).
-    // CalculateChildPosition maps X param → building X, Y param → building Y.
-    // So for Scaled Extend we must swap: clone count → FurthestY, row count → FurthestX.
+    // [#373] Scaled Extend uses a SEPARATE focus computation from normal grid scaling (the "two camera
+    // functions"). Normal grid is symmetric: the cell sign follows the grid counter sign, so the generic
+    // CalculateChildPosition path below works. Extend is NOT: once you pick a side, the run grows by the
+    // ABSOLUTE scroll magnitude in that one direction (XDirectionSign = Right:+1 / Left:-1), and the real
+    // clones are placed along the SOURCE's local X (forward) with spacing/steps/arc/rows by
+    // SFExtendScaledService - not along the Y axis the old #275 mapping assumed. Re-deriving that placement
+    // here would drift from it, so instead read the furthest ACTUAL clone the extend service already
+    // computed (source location + its world offset). This frames the leading factory building whichever
+    // way the run extends, on both SP and a client.
     const bool bScaledExtend = ExtendService && ExtendService->IsScaledExtendActive();
 
     if (bScaledExtend)
     {
-        ESFExtendDirection ExtendDir = ExtendService->GetExtendDirection();
-        int32 CloneCount = FMath::Abs(CurrentGridCounters.X);
-
-        // Clones extend along building's Y axis (RightVector)
-        FurthestY = CloneCount - 1;
-        if (ExtendDir == ESFExtendDirection::Left)
-        {
-            FurthestY = -FurthestY;  // Left = negative Y
-        }
-
-        // Rows extend along building's X axis (perpendicular to extend)
-        FurthestX = CurrentGridCounters.Y > 0 ? CurrentGridCounters.Y - 1 : 0;
-
-        // Scaled Extend doesn't use Z scaling
-        TopZ = 0;
+        return ExtendService->GetFurthestScaledCloneWorldPosition(ActiveHologram->GetActorLocation());
     }
     else
     {

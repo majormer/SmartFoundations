@@ -146,6 +146,15 @@ public:
     bool IsScaledExtendActive() const;
 
     /**
+     * [#373] World position of the FURTHEST scaled-extend clone (the leading factory building), used by
+     * the Smart Camera to frame the head of the run. Reads the clones the extend service already computed
+     * (ScaledExtendClones: each carries a WorldOffset from the source building, already including direction
+     * sign / spacing / steps / arc / rows), so the camera tracks the real placement instead of re-deriving
+     * it. Returns FallbackLocation if there are no clones (e.g. between rebuilds) or the source is gone.
+     */
+    FVector GetFurthestScaledCloneWorldPosition(const FVector& FallbackLocation) const;
+
+    /**
      * Get the invalidation reason if the current scaled extend configuration is invalid.
      * Returns empty string if valid.
      */

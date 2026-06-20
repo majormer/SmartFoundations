@@ -331,6 +331,35 @@ void USFExtendService::CycleExtendDirection(int32 Delta)
     }
 }
 
+FVector USFExtendService::GetFurthestScaledCloneWorldPosition(const FVector& FallbackLocation) const
+{
+    // [#373] The clones are anchored to CurrentExtendTarget (the source building); each clone's
+    // WorldOffset already bakes in the direction sign, spacing, steps, arc and row layout that
+    // SFExtendScaledService computed. The furthest clone (largest offset from the source) is the head
+    // of the run - what the Smart Camera should frame. No clones (between rebuilds) or a gone source
+    // -> fall back to the caller's location (the parent hologram).
+    const AFGBuildable* Source = CurrentExtendTarget.Get();
+    if (!Source || ScaledExtendClones.Num() == 0)
+    {
+        return FallbackLocation;
+    }
+
+    const FVector SourceLocation = Source->GetActorLocation();
+    const FVector* FurthestOffset = nullptr;
+    float BestDistSq = -1.0f;
+    for (const FSFScaledExtendClone& Clone : ScaledExtendClones)
+    {
+        const float DistSq = Clone.WorldOffset.SizeSquared();
+        if (DistSq > BestDistSq)
+        {
+            BestDistSq = DistSq;
+            FurthestOffset = &Clone.WorldOffset;
+        }
+    }
+
+    return FurthestOffset ? (SourceLocation + *FurthestOffset) : FallbackLocation;
+}
+
 FVector USFExtendService::GetDirectionOffset(const FVector& BuildingSize, const FRotator& BuildingRotation) const
 {
     // Calculate offset perpendicular to belt direction (Left/Right only)
