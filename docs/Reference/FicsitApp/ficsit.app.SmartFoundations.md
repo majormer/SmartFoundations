@@ -1,6 +1,6 @@
 # <img src="https://github.com/majormer/SmartFoundations/blob/main/images/Smart-Logo.png?raw=true" width="150" alt="Smart! Logo"> Smart! Mod
 
-![Status](https://img.shields.io/badge/Status-Released-brightgreen) ![Version](https://img.shields.io/badge/Version-32.1.1-blue) ![Satisfactory](https://img.shields.io/badge/Satisfactory-1.2-blue) ![Engine](https://img.shields.io/badge/Engine-UE%205.6-blue) ![SML](https://img.shields.io/badge/SML-3.12-blue) ![Multiplayer](https://img.shields.io/badge/Multiplayer-Supported-brightgreen) ![AI Assisted Development Used](https://img.shields.io/badge/AI%20Assisted%20Development%20Used-Disclosure%20Below-blue)
+![Status](https://img.shields.io/badge/Status-Released-brightgreen) ![Version](https://img.shields.io/badge/Version-32.1.2-blue) ![Satisfactory](https://img.shields.io/badge/Satisfactory-1.2-blue) ![Engine](https://img.shields.io/badge/Engine-UE%205.6-blue) ![SML](https://img.shields.io/badge/SML-3.12-blue) ![Multiplayer](https://img.shields.io/badge/Multiplayer-Supported-brightgreen) ![AI Assisted Development Used](https://img.shields.io/badge/AI%20Assisted%20Development%20Used-Disclosure%20Below-blue)
 
 > **Multiplayer note:** As of v32.0.0, every Smart! feature works in multiplayer on dedicated servers (Windows and Linux). Multiplayer support is new in this release — if you hit something odd in a multiplayer session, please report it on [GitHub](https://github.com/majormer/SmartFoundations/issues) or [Discord](https://discord.gg/SgXY4CwXYw).
 
@@ -113,25 +113,31 @@ See [LICENSE.md](https://github.com/majormer/SmartFoundations/blob/main/LICENSE.
 
 ---
 
-## 📰 What's New in v32.1.1: Multiplayer polish + routing modes
+## 📰 What's New in v32.1.2: Recipe fixes, camera & restore polish, quieter logs
 
-**Current Release:** v32.1.1 — a maintenance update: community-reported bug fixes (most of them multiplayer), belt and pipe routing modes that now take effect everywhere, and a new rotation-axis option. See the [full changelog](https://github.com/majormer/SmartFoundations/blob/main/CHANGELOG.md) for all release details.
+**Current Release:** v32.1.2 — a community-reported bug-fix patch: production-recipe handling in blueprints and multiplayer, stackable-pipeline scaling, Extend clearance, recipe memory that clears with the build gun, the Smart Camera following Extend runs, Smart Restore scaling, and a big logging-noise cleanup. See the [full changelog](https://github.com/majormer/SmartFoundations/blob/main/CHANGELOG.md) for all release details.
 
-### Belt & pipe routing modes that actually take effect
+### Recipes that stick — in blueprints and multiplayer
 
-Choosing Curve or Straight for belts, or Auto 2D / Curve / Noodle / Horizontal→Vertical for pipes, now changes the route exactly like the build gun's own build modes — for both auto-connected lines and Extend lanes, in single-player and multiplayer.
+- Recalling a blueprint into the Blueprint Designer no longer strips the recipes from its machines.
+- On dedicated servers, the recipe you pick with the recipe wheel now actually lands on the building you place — it was getting overwritten by a stale sampled recipe.
+- Putting the build gun away now clears the remembered recipe (matching vanilla), so a recipe you picked earlier no longer auto-fills onto unrelated builds later - and you can place recipe-less without hunting for the Clear button.
 
-### Multiplayer rotated Extend, fixed
+### Smart Camera & Smart Restore follow the run
 
-On dedicated servers, rotating a scaled Extend now builds correctly end to end: the parent copy's internal belts rotate to match the preview, the lanes between copies stay on the right connectors instead of crossing over as the line curves, and manifold lane belts and pipes build at the tier you configured.
+- With the Smart! Camera mod, the picture-in-picture now tracks the **head of an Extend run** as you scale it — and follows a restored Extend pattern correctly too, instead of framing the wrong end.
+- Restoring an Extend pattern now scales **both directions** along X (you can scroll either way).
 
-### A new way to rotate, plus smaller fixes
+### Stackable pipelines, Extend clearance, and a much quieter log
 
-- **Rotation build-up axis** — choose whether progressive rotation curves the *run* (X) or fans the *rows* (Y), via Num0 on the Rotation key or the new X/Y selector in the Smart! Panel.
-- **Radius Upgrade** no longer lists belts it can't actually upgrade.
-- **Blueprint Designer** Extend no longer previews or charges for copies that won't fit.
-- **Dedicated servers** no longer spam chain-diagnostic warnings on shutdown.
-- Under the hood, Smart!'s multiplayer code was consolidated to make future MP fixes land faster.
+- Stackable pipelines scale like stackable conveyor poles (no stray Upgrade panel), and no longer leave a pipe segment behind when you un-scale.
+- Extend is no longer blocked by a manifold sitting a few floors below.
+- **Auto-Hold on Grid Change** now defaults on, restoring the older default behavior.
+- Smart! no longer floods the log in large factories — the diagnostic spam that was badly inflating log files is silenced.
+
+### Recently in v32.1.1: Multiplayer polish + routing modes
+
+Belt and pipe routing modes (Curve / Straight for belts; Auto 2D / Curve / Noodle / Horizontal→Vertical for pipes) now take effect for auto-connect and Extend lanes; multiplayer rotated Extend builds correctly end to end; progressive rotation can build up along the X *run* or the Y *rows*; and Radius Upgrade, Blueprint Designer Extend, and dedicated-server shutdown logging all got fixes.
 
 ### Recently in v32.1.0: Blueprint Designer + Pipeline Supports
 
