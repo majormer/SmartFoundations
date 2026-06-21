@@ -1,0 +1,776 @@
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
+
+#include "Features/Walk/SFWalkService.h"
+#include "Features/Walk/SFWalkConveyance.h"
+#include "Subsystem/SFSubsystem.h"
+#include "Subsystem/SFHologramDataService.h"
+#include "Subsystem/SFPositionCalculator.h"
+#include "Hologram/FGHologram.h"
+#include "FGRecipe.h"
+#include "FGFactoryConnectionComponent.h"
+#include "GameFramework/Pawn.h"
+#include "HAL/IConsoleManager.h"
+#include "UObject/UnrealType.h"   // FArrayProperty / FindFProperty for the safe-teardown reflection unlink
+
+DEFINE_LOG_CATEGORY_STATIC(LogSmartWalk, Log, All);
+
+// Safe hologram teardown — MIRRORS the grid's QueueChildForDestroy (SFHologramHelperService_Children.cpp): if the
+// hologram is in a parent's vanilla mChildren, reflection-unlink it FIRST, then Destroy(). This keeps the build
+// gun's per-tick AFGHologram::ResetConstructDisqualifiers recursion from ever dereferencing a freed mChildren
+// entry. Walk holograms are standalone (no AddChild), so the unlink is normally a no-op — but this makes teardown
+// crash-proof regardless of how a hologram came to have a parent.
+static void SF_SafeDestroyHologram(AFGHologram* Holo)
+{
+    if (!IsValid(Holo))
+    {
+        return;
+    }
+    if (AFGHologram* Parent = Holo->GetParentHologram())
+    {
+        if (FArrayProperty* ChildrenProp = FindFProperty<FArrayProperty>(AFGHologram::StaticClass(), TEXT("mChildren")))
+        {
+            if (TArray<AFGHologram*>* ChildrenArray = ChildrenProp->ContainerPtrToValuePtr<TArray<AFGHologram*>>(Parent))
+            {
+                ChildrenArray->Remove(Holo);
+            }
+        }
+    }
+    Holo->Destroy();
+}
+
+// Belt-bus cross-section spacing (cm). The stackable pole footprint is ~(100,200,200); these pack lanes/levels
+// edge-to-edge. Tunable — the maintainer can dial these once the bus shape is visible.
+static constexpr float WALK_LANE_SPACING  = 200.0f;   // lateral gap between parallel lanes (perpendicular to heading)
+static constexpr float WALK_STACK_SPACING = 200.0f;   // vertical gap between stacked belt levels
+
+// Diagnostic helper: dump a hologram's WORLD transform, its LOCAL/relative transform (to whatever it is
+// attached to — for a standalone walk preview this should EQUAL the world transform), the seed's world
+// transform, and the delta between where we INTENDED to place it and where it actually landed. This is the
+// single source of truth for "where did this thing go, in world vs local space" — log it at every placement.
+static void SF_LogPlacement(const TCHAR* Tag, int32 Index, AFGHologram* Holo, const FTransform& IntendedWorld, AFGHologram* Seed)
+{
+    if (!IsValid(Holo))
+    {
+        UE_LOG(LogSmartWalk, Warning, TEXT("  [PLACE] %s[%d]: hologram INVALID"), Tag, Index);
+        return;
+    }
+    const FVector  WLoc = Holo->GetActorLocation();
+    const FRotator WRot = Holo->GetActorRotation();
+    FVector  LLoc = FVector::ZeroVector;
+    FRotator LRot = FRotator::ZeroRotator;
+    bool bAttached = false;
+    if (USceneComponent* Root = Holo->GetRootComponent())
+    {
+        LLoc = Root->GetRelativeLocation();
+        LRot = Root->GetRelativeRotation();
+        bAttached = (Root->GetAttachParent() != nullptr);
+    }
+    const FVector SeedLoc = IsValid(Seed) ? Seed->GetActorLocation() : FVector::ZeroVector;
+    const FVector Delta   = WLoc - IntendedWorld.GetLocation();
+    UE_LOG(LogSmartWalk, Log,
+        TEXT("  [PLACE] %s[%d] %s | intended.world=%s yaw=%.1f | actual.world=%s yaw=%.1f | actual.local=%s yaw=%.1f (attached=%d) | seed.world=%s | delta(actual-intended)=%s |delta|=%.1f"),
+        Tag, Index, *GetNameSafe(Holo),
+        *IntendedWorld.GetLocation().ToString(), IntendedWorld.Rotator().Yaw,
+        *WLoc.ToString(), WRot.Yaw,
+        *LLoc.ToString(), LRot.Yaw, bAttached ? 1 : 0,
+        *SeedLoc.ToString(),
+        *Delta.ToString(), Delta.Size());
+}
+
+void USFWalkService::Initialize(USFSubsystem* InSubsystem)
+{
+    Subsystem = InSubsystem;
+    UE_LOG(LogSmartWalk, Log, TEXT("Initialize: subsystem=%s"), *GetNameSafe(InSubsystem));
+}
+
+bool USFWalkService::EnterWalk(AFGHologram* InSeedHologram)
+{
+    UE_LOG(LogSmartWalk, Log, TEXT(">>> EnterWalk ENTER: seed=%s valid=%d recipe=%s bActive=%d"),
+        *GetNameSafe(InSeedHologram), IsValid(InSeedHologram) ? 1 : 0,
+        IsValid(InSeedHologram) ? *GetNameSafe(InSeedHologram->GetRecipe()) : TEXT("n/a"), bActive ? 1 : 0);
+
+    if (bActive)
+    {
+        UE_LOG(LogSmartWalk, Log, TEXT("<<< EnterWalk EXIT: already active"));
+        return true;
+    }
+
+    if (!IsValid(InSeedHologram) || !InSeedHologram->GetRecipe())
+    {
+        UE_LOG(LogSmartWalk, Warning, TEXT("<<< EnterWalk EXIT: invalid seed hologram or no recipe"));
+        return false;
+    }
+
+    SeedHologram = InSeedHologram;
+    // Seed straight from the held pole's transform. The run advances via the SAME established grid-placement
+    // transform auto-connect uses (FSFPositionCalculator, in AccumulateFrame), which derives "forward" from the
+    // pole's Yaw — so the walk extends the exact direction auto-connect would, no bespoke axis math needed.
+    OriginFrame = InSeedHologram->GetActorTransform();
+    UE_LOG(LogSmartWalk, Log, TEXT("EnterWalk: OriginFrame(seed.world) loc=%s yaw=%.1f | seed locked=%d hidden=%d"),
+        *OriginFrame.GetLocation().ToString(), OriginFrame.Rotator().Yaw,
+        InSeedHologram->IsHologramLocked() ? 1 : 0, InSeedHologram->IsHidden() ? 1 : 0);
+
+    // MVP: the held buildable is a stackable conveyor pole → Belt conveyance. Later this is selected from the
+    // ISFWalkConveyance registry by the held buildable (contextual availability).
+    USFWalkBeltConveyance* BeltConveyance = NewObject<USFWalkBeltConveyance>(this);
+    BeltConveyance->SetSubsystem(Subsystem.Get());
+    Conveyance = BeltConveyance;
+
+    // Fresh walk starts single-lane (1×1). The cross-section persists across segments via these counters.
+    CrossSectionLanes = 1;
+    CrossSectionStacks = 1;
+
+    Segments.Reset();
+    Segments.Add(FSFWalkSegment());   // segment 0, the first anchor forward
+    ActiveIndex = 0;
+    bActive = true;
+
+    // Build the origin cross-section (seed = cell 0,0) BEFORE segment 0 so segment 0's belts connect back to it.
+    RebuildOriginHolograms();
+    SpawnSegmentHologram(0);
+
+    UE_LOG(LogSmartWalk, Log, TEXT("<<< EnterWalk EXIT: seeded Path at %s, segments=%d active=%d"),
+        *OriginFrame.GetLocation().ToString(), Segments.Num(), ActiveIndex);
+    return true;
+}
+
+void USFWalkService::ExitWalk(bool /*bCommit*/)
+{
+    UE_LOG(LogSmartWalk, Log, TEXT(">>> ExitWalk ENTER: bActive=%d segments=%d"), bActive ? 1 : 0, Segments.Num());
+    // Slice 0: the single-commit build path arrives in Slice 3; for now exit always tears down the preview.
+    ClearAll();
+    SeedHologram = nullptr;
+    bActive = false;
+    UE_LOG(LogSmartWalk, Log, TEXT("<<< ExitWalk EXIT: Path torn down"));
+}
+
+void USFWalkService::CommitActiveAndAdvance()
+{
+    UE_LOG(LogSmartWalk, Log, TEXT(">>> CommitActiveAndAdvance ENTER: bActive=%d segments=%d active=%d"),
+        bActive ? 1 : 0, Segments.Num(), ActiveIndex);
+    if (!bActive)
+    {
+        UE_LOG(LogSmartWalk, Log, TEXT("<<< CommitActiveAndAdvance EXIT: not active"));
+        return;
+    }
+
+    // Commit-on-scale: the active segment freezes; start a new active one that INHERITS the current adjusters
+    // (turn/spacing/rise/shift) so the run keeps its settings as you advance — set a 45°/24 m segment once and
+    // advance to sweep it, rather than re-dialing every segment (the auto-connect "set params then scale" model).
+    // Holograms/belt are per-segment and intentionally not copied.
+    FSFWalkSegment NewSeg;
+    if (Segments.IsValidIndex(ActiveIndex))
+    {
+        const FSFWalkSegment& Prev = Segments[ActiveIndex];
+        NewSeg.Advance     = Prev.Advance;
+        NewSeg.TurnDegrees = Prev.TurnDegrees;
+        NewSeg.Rise        = Prev.Rise;
+        NewSeg.Shift       = Prev.Shift;
+        NewSeg.NumLanes    = Prev.NumLanes;     // inherit the bus cross-section so the run stays uniform
+        NewSeg.NumStacks   = Prev.NumStacks;
+    }
+    else
+    {
+        NewSeg.NumLanes  = CrossSectionLanes;
+        NewSeg.NumStacks = CrossSectionStacks;
+    }
+    Segments.Add(NewSeg);
+    ActiveIndex = Segments.Num() - 1;
+    SpawnSegmentHologram(ActiveIndex);
+
+    UE_LOG(LogSmartWalk, Log, TEXT("<<< CommitActiveAndAdvance EXIT: now %d segments, active=%d (inherited adv=%.0f turn=%.0f rise=%.0f shift=%.0f)"),
+        Segments.Num(), ActiveIndex, NewSeg.Advance, NewSeg.TurnDegrees, NewSeg.Rise, NewSeg.Shift);
+}
+
+void USFWalkService::BackUp()
+{
+    UE_LOG(LogSmartWalk, Log, TEXT(">>> BackUp ENTER: bActive=%d segments=%d active=%d"),
+        bActive ? 1 : 0, Segments.Num(), ActiveIndex);
+    if (!bActive || Segments.Num() <= 1)
+    {
+        UE_LOG(LogSmartWalk, Log, TEXT("<<< BackUp EXIT: nothing to pop (keep >=1 segment)"));
+        return;   // keep at least the seed segment
+    }
+
+    DestroySegmentHolograms(Segments.Last());
+    Segments.Pop();
+    ActiveIndex = Segments.Num() - 1;
+
+    UE_LOG(LogSmartWalk, Log, TEXT("<<< BackUp EXIT: now %d segments, active=%d"), Segments.Num(), ActiveIndex);
+}
+
+void USFWalkService::SetActiveAdjusters(float Advance, float TurnDegrees, float Rise, float Shift)
+{
+    if (!bActive || !Segments.IsValidIndex(ActiveIndex))
+    {
+        return;
+    }
+
+    FSFWalkSegment& Seg = Segments[ActiveIndex];
+    UE_LOG(LogSmartWalk, Log, TEXT(">>> SetActiveAdjusters ENTER: active=%d old(adv=%.0f turn=%.0f rise=%.0f shift=%.0f) -> new(adv=%.0f turn=%.0f rise=%.0f shift=%.0f)"),
+        ActiveIndex, Seg.Advance, Seg.TurnDegrees, Seg.Rise, Seg.Shift, Advance, TurnDegrees, Rise, Shift);
+    Seg.Advance = Advance;
+    Seg.TurnDegrees = TurnDegrees;
+    Seg.Rise = Rise;
+    Seg.Shift = Shift;
+
+    // Re-derive every frame from this segment forward (forward kinematics).
+    RepositionFrom(ActiveIndex);
+    UE_LOG(LogSmartWalk, Log, TEXT("<<< SetActiveAdjusters EXIT: repositioned from %d"), ActiveIndex);
+}
+
+void USFWalkService::NudgeActive(float dAdvance, float dTurn, float dRise, float dShift)
+{
+    UE_LOG(LogSmartWalk, Log, TEXT(">>> NudgeActive ENTER: active=%d deltas(dAdv=%.0f dTurn=%.0f dRise=%.0f dShift=%.0f) bActive=%d"),
+        ActiveIndex, dAdvance, dTurn, dRise, dShift, bActive ? 1 : 0);
+    if (!bActive || !Segments.IsValidIndex(ActiveIndex))
+    {
+        UE_LOG(LogSmartWalk, Log, TEXT("<<< NudgeActive EXIT: not active / invalid active index"));
+        return;
+    }
+
+    FSFWalkSegment& Seg = Segments[ActiveIndex];
+    SetActiveAdjusters(Seg.Advance + dAdvance, Seg.TurnDegrees + dTurn, Seg.Rise + dRise, Seg.Shift + dShift);
+}
+
+void USFWalkService::AdjustCrossSection(int32 DeltaLanes, int32 DeltaStacks)
+{
+    if (!bActive)
+    {
+        return;
+    }
+    // Replicate GridStateService::ApplyAxisScaling on each SIGNED counter: |val| = count, sign = side, and the
+    // forbidden values 0 and -1 are skipped — so the count steps …-3,-2,1,2,3… and scrolling back through center
+    // flips the bus to the OTHER side. Same directional behaviour as stackable-pole grid scaling.
+    auto GridStep = [](int32 Val, int32 Delta) -> int32
+    {
+        if (Delta == 0) { return Val; }
+        int32 NewVal = Val + Delta;
+        if (NewVal == 0 || NewVal == -1) { NewVal = (Delta > 0) ? 1 : -2; }
+        return NewVal;
+    };
+    const int32 OldLanes = CrossSectionLanes;
+    const int32 OldStacks = CrossSectionStacks;
+    CrossSectionLanes  = GridStep(CrossSectionLanes, DeltaLanes);
+    CrossSectionStacks = GridStep(CrossSectionStacks, DeltaStacks);
+    UE_LOG(LogSmartWalk, Log, TEXT(">>> AdjustCrossSection: laneCtr %d->%d  stackCtr %d->%d  (d=%d,%d) segments=%d"),
+        OldLanes, CrossSectionLanes, OldStacks, CrossSectionStacks, DeltaLanes, DeltaStacks, Segments.Num());
+
+    if (OldLanes == CrossSectionLanes && OldStacks == CrossSectionStacks)
+    {
+        return;   // no change, skip the rebuild
+    }
+
+    // MVP uniform: every segment gets the new cross-section. (Per-segment mode later would set the active one only.)
+    for (FSFWalkSegment& Seg : Segments)
+    {
+        Seg.NumLanes  = CrossSectionLanes;
+        Seg.NumStacks = CrossSectionStacks;
+    }
+    // The pole COUNT changed, so we can't just reposition — destroy + respawn the whole cross-section.
+    RebuildHolograms();
+}
+
+void USFWalkService::RebuildHolograms()
+{
+    UE_LOG(LogSmartWalk, Log, TEXT(">>> RebuildHolograms: segments=%d cross-section=%dx%d"),
+        Segments.Num(), CrossSectionLanes, CrossSectionStacks);
+    // The origin cross-section is segment 0's predecessor — rebuild it FIRST so segment 0's belts find its cells.
+    RebuildOriginHolograms();
+    for (FSFWalkSegment& Seg : Segments)
+    {
+        DestroySegmentHolograms(Seg);
+    }
+    // Respawn in order so each segment's predecessor poles already exist when its belts are linked.
+    for (int32 i = 0; i < Segments.Num(); ++i)
+    {
+        SpawnSegmentHologram(i);
+    }
+    UE_LOG(LogSmartWalk, Log, TEXT("<<< RebuildHolograms done"));
+}
+
+void USFWalkService::RebuildOriginHolograms()
+{
+    AFGHologram* Seed = SeedHologram.Get();
+
+    // Tear down previously-spawned origin cells — but NEVER the seed (cell 0,0), which the build gun owns.
+    for (const TWeakObjectPtr<AFGHologram>& WeakHolo : OriginHolograms)
+    {
+        AFGHologram* Holo = WeakHolo.Get();
+        if (Holo && Holo != Seed)
+        {
+            SF_SafeDestroyHologram(Holo);
+        }
+    }
+    OriginHolograms.Reset();
+
+    if (!IsValid(Seed))
+    {
+        return;
+    }
+
+    // The origin uses the same uniform cross-section as the segments, placed at the SEED frame. Cell (0,0) = seed.
+    const int32 Lanes     = FMath::Max(1, FMath::Abs(CrossSectionLanes));
+    const int32 Stacks    = FMath::Max(1, FMath::Abs(CrossSectionStacks));
+    const int32 LaneSign  = (CrossSectionLanes  >= 1) ? 1 : -1;
+    const int32 StackSign = (CrossSectionStacks >= 1) ? 1 : -1;
+    OriginHolograms.Reserve(Lanes * Stacks);
+    for (int32 LaneRow = 0; LaneRow < Lanes; ++LaneRow)
+    {
+        for (int32 StackRow = 0; StackRow < Stacks; ++StackRow)
+        {
+            if (LaneRow == 0 && StackRow == 0)
+            {
+                OriginHolograms.Add(Seed);   // cell (0,0) IS the held seed pole — don't spawn or own it
+                continue;
+            }
+            const int32 SignedLane  = LaneRow * LaneSign;
+            const int32 SignedStack = StackRow * StackSign;
+            const FTransform Pose = CrossSectionPose(OriginFrame, SignedLane, SignedStack);
+            OriginHolograms.Add(SpawnOnePole(Pose, /*Index*/ -1, SignedLane, SignedStack));
+        }
+    }
+    UE_LOG(LogSmartWalk, Log, TEXT("RebuildOriginHolograms: %d origin cells (cell0=seed=%s)"),
+        OriginHolograms.Num(), *GetNameSafe(Seed));
+}
+
+FTransform USFWalkService::AccumulateFrame(const TArray<FSFWalkSegment>& Segs, const FTransform& Origin, int32 EndIndex, bool bTrace)
+{
+    // Reuse the ESTABLISHED grid placement transform (FSFPositionCalculator — the same one foundations, belts,
+    // and auto-connect's scale-out use). Each segment is one forward step (X=1) from the running frame: the
+    // calculator derives "forward" from the frame's Yaw (the 180-Yaw-90 mapping), so the run extends the exact
+    // direction auto-connect would. The Turn then advances the heading via the standard FRotator (advance-then-
+    // rotate: the anchor sits one Advance straight ahead, the turn becomes the exit heading for the next leg).
+    FSFPositionCalculator Calc;
+    FVector Loc = Origin.GetLocation();
+    FRotator Rot = Origin.Rotator();
+    const int32 Last = FMath::Min(EndIndex, Segs.Num() - 1);
+    if (bTrace)
+    {
+        UE_LOG(LogSmartWalk, Log, TEXT("  [KIN] AccumulateFrame: origin.world=%s yaw=%.1f  endIndex=%d  (resolving to last=%d of %d segs)"),
+            *Loc.ToString(), Rot.Yaw, EndIndex, Last, Segs.Num());
+    }
+    for (int32 i = 0; i <= Last; ++i)
+    {
+        const FSFWalkSegment& S = Segs[i];
+
+        // One step via the established placement transform. RotationZ selects the mode INSIDE
+        // CalculateChildPosition: 0 → straight advance; non-zero → its ARC branch (auto-connect's rotation
+        // transform / CalculateRotationOffset), so a Turn bends the run on a smooth curve instead of faceting.
+        // ItemSize.X carries the step distance (Advance) — it is both the linear spacing and the arc length.
+        const FVector PreLoc = Loc;
+        const FRotator PreRot = Rot;
+        FSFCounterState CS;
+        CS.RotationZ = S.TurnDegrees;
+        FVector NewLoc = Calc.CalculateChildPosition(1, 0, 0, Loc, Rot, FVector(S.Advance, 0.0f, 0.0f), CS);
+        NewLoc.Z += S.Rise;   // vertical rise (a single step doesn't carry SpacingZ; apply directly)
+        // Shift (lateral) is reserved for the single-lane MVP.
+
+        Rot += FRotator(0.0f, S.TurnDegrees, 0.0f);   // advance the heading (exit heading for the next leg)
+        Loc = NewLoc;
+
+        if (bTrace)
+        {
+            UE_LOG(LogSmartWalk, Log, TEXT("  [KIN]   step %d: adv=%.0f turn=%.0f rise=%.0f | preLoc=%s preYaw=%.1f -> postLoc=%s postYaw=%.1f (step delta=%s)"),
+                i, S.Advance, S.TurnDegrees, S.Rise, *PreLoc.ToString(), PreRot.Yaw, *Loc.ToString(), Rot.Yaw, *(Loc - PreLoc).ToString());
+        }
+    }
+    if (bTrace)
+    {
+        UE_LOG(LogSmartWalk, Log, TEXT("  [KIN] AccumulateFrame RESULT: world=%s yaw=%.1f"), *Loc.ToString(), Rot.Yaw);
+    }
+    return FTransform(Rot, Loc);
+}
+
+FTransform USFWalkService::FrameAtIndex(int32 EndIndex, bool bTrace) const
+{
+    return AccumulateFrame(Segments, OriginFrame, EndIndex, bTrace);
+}
+
+FString USFWalkService::RunSelfTest()
+{
+    // Three straight forward steps (no turn) via the ESTABLISHED placement transform. At Yaw 0 the grid
+    // "forward" maps to -X (the 180-Yaw-90 mapping), so the head lands 3*800 back along -X. (Turn/arc bend
+    // routes through CalculateChildPosition's rotation branch and is validated in-game.)
+    TArray<FSFWalkSegment> Segs;
+    FSFWalkSegment S0; S0.Advance = 800.0f; Segs.Add(S0);
+    FSFWalkSegment S1; S1.Advance = 800.0f; Segs.Add(S1);
+    FSFWalkSegment S2; S2.Advance = 800.0f; Segs.Add(S2);
+
+    const FTransform Head = AccumulateFrame(Segs, FTransform::Identity, 2);
+    const FVector P = Head.GetLocation();
+    const float Yaw = Head.Rotator().Yaw;
+
+    const FVector ExpectedP(-2400.0f, 0.0f, 0.0f);
+    const float ExpectedYaw = 0.0f;
+    const bool bPosOk = P.Equals(ExpectedP, 1.0f);
+    const bool bYawOk = FMath::IsNearlyEqual(FRotator::NormalizeAxis(Yaw - ExpectedYaw), 0.0f, 0.1f);
+
+    const FString Result = FString::Printf(
+        TEXT("%s — head=(%.1f, %.1f, %.1f) yaw=%.1f  | expected=(-2400.0, 0.0, 0.0) yaw=0.0"),
+        (bPosOk && bYawOk) ? TEXT("PASS") : TEXT("FAIL"), P.X, P.Y, P.Z, Yaw);
+
+    UE_LOG(LogSmartWalk, Log, TEXT("[SelfTest] %s"), *Result);
+    return Result;
+}
+
+FTransform USFWalkService::GetHeadFrame() const
+{
+    return FrameAtIndex(ActiveIndex);
+}
+
+TArray<FSFWalkSegmentView> USFWalkService::GetSegmentViews() const
+{
+    TArray<FSFWalkSegmentView> Views;
+    Views.Reserve(Segments.Num());
+    for (int32 i = 0; i < Segments.Num(); ++i)
+    {
+        FSFWalkSegmentView V;
+        V.Index = i;
+        V.Advance = Segments[i].Advance;
+        V.TurnDegrees = Segments[i].TurnDegrees;
+        V.Rise = Segments[i].Rise;
+        V.Shift = Segments[i].Shift;
+        V.ExitHeadingDeg = FrameAtIndex(i).Rotator().Yaw;
+        V.bActive = (i == ActiveIndex);
+        Views.Add(V);
+    }
+    return Views;
+}
+
+void USFWalkService::RerouteBelts()
+{
+    if (bActive)
+    {
+        // Frames/poles are unchanged; RepositionFrom re-invokes the conveyance per segment, which re-reads the
+        // (now-changed) belt routing mode and re-routes each span. Cheap no-op on the pole transforms.
+        RepositionFrom(0);
+    }
+}
+
+void USFWalkService::RefreshWalkValidity()
+{
+    if (!bActive)
+    {
+        return;
+    }
+    // REUSE the grid/Extend clone-preview pattern (SFGridSpawnerService UpdateCallback ~538-546, SFExtendService
+    // RefreshExtension ~1838): our walk holograms are STANDALONE (not build-gun-ticked, not AddChild'd), so the
+    // FGCDInitializing disqualifier added during init is never cleared and they render RED. Clear it + force HMS_OK
+    // every frame (cheap, a handful of holograms). Order matters: clear disqualifiers FIRST, then material state.
+    // The SEED is the build gun's own active hologram (self-validates) and is not in Segments, so it's untouched.
+    for (const FSFWalkSegment& Seg : Segments)
+    {
+        for (const TWeakObjectPtr<AFGHologram>& WeakHolo : Seg.Holograms)
+        {
+            if (AFGHologram* Holo = WeakHolo.Get())
+            {
+                Holo->ResetConstructDisqualifiers();
+                Holo->SetPlacementMaterialState(EHologramMaterialState::HMS_OK);
+            }
+        }
+        for (const TWeakObjectPtr<AFGHologram>& WeakBelt : Seg.Belts)
+        {
+            if (AFGHologram* Belt = WeakBelt.Get())
+            {
+                Belt->ResetConstructDisqualifiers();
+                Belt->SetPlacementMaterialState(EHologramMaterialState::HMS_OK);
+            }
+        }
+    }
+    // Origin cross-section cells too — but skip cell 0 (the seed), which the build gun validates itself.
+    AFGHologram* SeedH = SeedHologram.Get();
+    for (const TWeakObjectPtr<AFGHologram>& WeakHolo : OriginHolograms)
+    {
+        if (AFGHologram* Holo = WeakHolo.Get())
+        {
+            if (Holo == SeedH) { continue; }
+            Holo->ResetConstructDisqualifiers();
+            Holo->SetPlacementMaterialState(EHologramMaterialState::HMS_OK);
+        }
+    }
+}
+
+void USFWalkService::SpawnSegmentHologram(int32 Index)
+{
+    if (!Segments.IsValidIndex(Index))
+    {
+        return;
+    }
+
+    AFGHologram* Seed = SeedHologram.Get();
+    if (!IsValid(Seed) || !Seed->GetRecipe())
+    {
+        UE_LOG(LogSmartWalk, Warning, TEXT("SpawnSegmentHologram[%d]: seed hologram/recipe invalid"), Index);
+        return;
+    }
+
+    FSFWalkSegment& Seg = Segments[Index];
+    // Signed cross-section counters (grid convention): |N| = count, sign = side. Rows are 0..count-1; the SIGNED
+    // index fed to placement = row * sign, so +Y counter fans right, -Y fans left (one side per scroll).
+    const int32 Lanes     = FMath::Max(1, FMath::Abs(Seg.NumLanes));
+    const int32 Stacks    = FMath::Max(1, FMath::Abs(Seg.NumStacks));
+    const int32 LaneSign  = (Seg.NumLanes  >= 1) ? 1 : -1;
+    const int32 StackSign = (Seg.NumStacks >= 1) ? 1 : -1;
+    const FTransform Center = FrameAtIndex(Index, /*bTrace*/ true);
+    UE_LOG(LogSmartWalk, Log, TEXT(">>> SpawnSegmentHologram[%d] ENTER: cross-section %dx%d (lanesCtr=%d stacksCtr=%d) center.world=%s yaw=%.1f"),
+        Index, Lanes, Stacks, Seg.NumLanes, Seg.NumStacks, *Center.GetLocation().ToString(), Center.Rotator().Yaw);
+
+    // Spawn the full lane×stack cross-section at this segment's center frame. Flat index = laneRow*Stacks + stackRow.
+    Seg.Holograms.Reset();
+    Seg.Holograms.Reserve(Lanes * Stacks);
+    for (int32 LaneRow = 0; LaneRow < Lanes; ++LaneRow)
+    {
+        for (int32 StackRow = 0; StackRow < Stacks; ++StackRow)
+        {
+            const int32 SignedLane  = LaneRow * LaneSign;
+            const int32 SignedStack = StackRow * StackSign;
+            const FTransform Pose = CrossSectionPose(Center, SignedLane, SignedStack);
+            Seg.Holograms.Add(SpawnOnePole(Pose, Index, SignedLane, SignedStack));   // null kept to preserve flat indexing
+        }
+    }
+
+    UE_LOG(LogSmartWalk, Log, TEXT("<<< SpawnSegmentHologram[%d] EXIT: spawned %d poles"), Index, Seg.Holograms.Num());
+
+    // Link this segment's cross-section to its predecessor's with one belt per cell.
+    UpdateSegmentBelts(Index);
+}
+
+AFGHologram* USFWalkService::SpawnOnePole(const FTransform& Pose, int32 Index, int32 Lane, int32 Stack)
+{
+    AFGHologram* Seed = SeedHologram.Get();
+    if (!IsValid(Seed))
+    {
+        return nullptr;
+    }
+    TSubclassOf<UFGRecipe> Recipe = Seed->GetRecipe();
+    AActor* BuildGunOwner = Seed->GetOwner();
+    APawn* HologramInstigator = Cast<APawn>(Seed->GetInstigator());
+
+    // Standalone spawn (NOT a grid child, NOT AddChild'd) — world-anchored, WalkSegment-tagged so the grid sweep
+    // skips it; kept cyan by the per-frame RefreshWalkValidity (the build gun never ticks it). AddChild is avoided
+    // deliberately: it re-bases the pole to the far seed (horizon) AND the build gun's ResetConstructDisqualifiers
+    // recursion crashes on the stale mChildren entry when the pole is Destroy()'d (no public RemoveChild).
+    AFGHologram* Holo = AFGHologram::SpawnHologramFromRecipe(
+        Recipe, BuildGunOwner ? BuildGunOwner : Seed, Pose.GetLocation(), HologramInstigator);
+    if (!IsValid(Holo))
+    {
+        UE_LOG(LogSmartWalk, Warning, TEXT("  SpawnOnePole seg%d L%d S%d: SpawnHologramFromRecipe returned null"), Index, Lane, Stack);
+        return nullptr;
+    }
+
+    Holo->SetActorLocationAndRotation(Pose.GetLocation(), Pose.Rotator());
+    Holo->UpdateComponentTransforms();   // refresh connector world transforms so the belt routes to the right spots
+    USFHologramDataService::DisableValidation(Holo);
+    USFHologramDataService::MarkAsChild(Holo, Seed, ESFChildHologramType::WalkSegment);
+    Holo->SetActorHiddenInGame(false);
+    Holo->SetActorEnableCollision(false);
+    Holo->SetActorTickEnabled(false);
+    Holo->RegisterAllComponents();
+    Holo->SetPlacementMaterialState(EHologramMaterialState::HMS_OK);
+    Holo->ForceNetUpdate();
+    SF_LogPlacement(*FString::Printf(TEXT("seg%d L%d S%d"), Index, Lane, Stack), Index, Holo, Pose, Seed);
+    return Holo;
+}
+
+FTransform USFWalkService::CrossSectionPose(const FTransform& Center, int32 SignedLane, int32 SignedStack) const
+{
+    // SignedLane/SignedStack are DIRECTIONAL indices (the caller derives them from the segment's signed counter):
+    // +N = N lanes to the right of center, -N = N to the left — exactly the grid's signed-axis convention, so
+    // Scale-Y grows ONE side per scroll (no forced mirror). Cell (0,0) = the seed's line (path centerline).
+    if (SignedLane == 0 && SignedStack == 0)
+    {
+        return Center;
+    }
+    // Reuse the established placement offsets: X=0 (already advanced to Center), Y=SignedLane (lateral, perpendicular
+    // to the heading), Z=SignedStack (vertical). ItemSize carries the per-cell spacing; CS default → RotationZ=0 →
+    // linear (the turn is already baked into Center). Rotation stays the segment heading so every lane faces down-path.
+    FSFPositionCalculator Calc;
+    FSFCounterState CS;
+    const FVector ItemSize(0.0f, WALK_LANE_SPACING, WALK_STACK_SPACING);
+    const FVector Loc = Calc.CalculateChildPosition(0, SignedLane, SignedStack, Center.GetLocation(), Center.Rotator(), ItemSize, CS);
+    return FTransform(Center.Rotator(), Loc);
+}
+
+AFGHologram* USFWalkService::PredecessorAnchorAt(int32 Index, int32 PoleIndex) const
+{
+    if (Index <= 0)
+    {
+        // Segment 0's backward link is the ORIGIN cross-section (cell 0 = the seed; the rest are walk-spawned),
+        // so the bus connects to a full-width origin from the very first set.
+        return OriginHolograms.IsValidIndex(PoleIndex) ? OriginHolograms[PoleIndex].Get() : nullptr;
+    }
+    if (Segments.IsValidIndex(Index - 1) && Segments[Index - 1].Holograms.IsValidIndex(PoleIndex))
+    {
+        return Segments[Index - 1].Holograms[PoleIndex].Get();
+    }
+    return nullptr;
+}
+
+void USFWalkService::UpdateSegmentBelts(int32 Index)
+{
+    if (!Conveyance || !Segments.IsValidIndex(Index))
+    {
+        return;
+    }
+    FSFWalkSegment& Seg = Segments[Index];
+    const int32 Count = Seg.Holograms.Num();
+    Seg.Belts.SetNum(Count);   // one belt slot per cross-section cell, same flat index as Holograms
+
+    int32 Made = 0;
+    for (int32 PoleIdx = 0; PoleIdx < Count; ++PoleIdx)
+    {
+        AFGHologram* ToAnchor = Seg.Holograms[PoleIdx].Get();
+        AFGHologram* FromAnchor = PredecessorAnchorAt(Index, PoleIdx);
+        if (!IsValid(ToAnchor) || !IsValid(FromAnchor))
+        {
+            continue;   // missing pole (e.g. a failed spawn) — skip this cell's belt this pass
+        }
+        Seg.Belts[PoleIdx] = Conveyance->LinkOrUpdate(Seg.Belts[PoleIdx].Get(), FromAnchor, ToAnchor, SeedHologram.Get());
+        ++Made;
+    }
+    UE_LOG(LogSmartWalk, Log, TEXT("  UpdateSegmentBelts[%d]: %d belts over %d cells"), Index, Made, Count);
+}
+
+void USFWalkService::RepositionFrom(int32 StartIndex)
+{
+    const int32 From = FMath::Max(0, StartIndex);
+    UE_LOG(LogSmartWalk, Log, TEXT(">>> RepositionFrom ENTER: startIndex=%d (clamped=%d) segments=%d"),
+        StartIndex, From, Segments.Num());
+    for (int32 i = From; i < Segments.Num(); ++i)
+    {
+        FSFWalkSegment& Seg = Segments[i];
+        const int32 Stacks    = FMath::Max(1, FMath::Abs(Seg.NumStacks));
+        const int32 LaneSign  = (Seg.NumLanes  >= 1) ? 1 : -1;
+        const int32 StackSign = (Seg.NumStacks >= 1) ? 1 : -1;
+        const FTransform Center = FrameAtIndex(i, /*bTrace*/ true);
+        for (int32 PoleIdx = 0; PoleIdx < Seg.Holograms.Num(); ++PoleIdx)
+        {
+            if (AFGHologram* Holo = Seg.Holograms[PoleIdx].Get())
+            {
+                const FTransform Pose = CrossSectionPose(Center, (PoleIdx / Stacks) * LaneSign, (PoleIdx % Stacks) * StackSign);
+                Holo->SetActorLocationAndRotation(Pose.GetLocation(), Pose.Rotator());
+                Holo->UpdateComponentTransforms();   // refresh connectors after the move (no re-register here)
+            }
+        }
+        // Re-route this segment's belts; iterating in order means the predecessor poles are already repositioned.
+        UpdateSegmentBelts(i);
+    }
+    UE_LOG(LogSmartWalk, Log, TEXT("<<< RepositionFrom EXIT"));
+}
+
+void USFWalkService::DestroySegmentHolograms(FSFWalkSegment& Segment)
+{
+    UE_LOG(LogSmartWalk, Log, TEXT("  DestroySegmentHolograms: belts=%d holos=%d"),
+        Segment.Belts.Num(), Segment.Holograms.Num());
+    for (const TWeakObjectPtr<AFGHologram>& WeakBelt : Segment.Belts)
+    {
+        SF_SafeDestroyHologram(WeakBelt.Get());   // reflection-unlink then Destroy (mirror grid's safe teardown)
+    }
+    Segment.Belts.Reset();
+
+    for (const TWeakObjectPtr<AFGHologram>& WeakHolo : Segment.Holograms)
+    {
+        SF_SafeDestroyHologram(WeakHolo.Get());
+    }
+    Segment.Holograms.Reset();
+}
+
+void USFWalkService::ClearAll()
+{
+    UE_LOG(LogSmartWalk, Log, TEXT(">>> ClearAll ENTER: segments=%d originCells=%d"), Segments.Num(), OriginHolograms.Num());
+    for (FSFWalkSegment& Seg : Segments)
+    {
+        DestroySegmentHolograms(Seg);
+    }
+    Segments.Reset();
+    // Tear down the spawned origin cells — but NOT the seed (cell 0,0), which the build gun owns.
+    AFGHologram* Seed = SeedHologram.Get();
+    for (const TWeakObjectPtr<AFGHologram>& WeakHolo : OriginHolograms)
+    {
+        AFGHologram* Holo = WeakHolo.Get();
+        if (Holo && Holo != Seed)
+        {
+            SF_SafeDestroyHologram(Holo);
+        }
+    }
+    OriginHolograms.Reset();
+    ActiveIndex = INDEX_NONE;
+    UE_LOG(LogSmartWalk, Log, TEXT("<<< ClearAll EXIT"));
+}
+
+// ============================================================================
+// Test scaffolding (Slice 0): console commands to drive the walk without the
+// Slice 4 panel/HUD. Removed/replaced when the Walk widget lands.
+//   Smart.Walk.Toggle   — enter/exit walk mode on the held hologram
+//   Smart.Walk.Advance  — commit the active segment and start a new one
+//   Smart.Walk.BackUp   — destructive back-up of the active segment
+// ============================================================================
+
+static void SF_WalkToggleCmd(UWorld* World)
+{
+    if (USFSubsystem* S = USFSubsystem::Get(World))
+    {
+        S->ToggleWalkMode();
+    }
+}
+
+static void SF_WalkAdvanceCmd(UWorld* World)
+{
+    if (USFSubsystem* S = USFSubsystem::Get(World))
+    {
+        if (USFWalkService* W = S->GetWalkService())
+        {
+            W->CommitActiveAndAdvance();
+        }
+    }
+}
+
+static void SF_WalkBackUpCmd(UWorld* World)
+{
+    if (USFSubsystem* S = USFSubsystem::Get(World))
+    {
+        if (USFWalkService* W = S->GetWalkService())
+        {
+            W->BackUp();
+        }
+    }
+}
+
+static FAutoConsoleCommandWithWorld GSFWalkToggle(
+    TEXT("Smart.Walk.Toggle"), TEXT("Smart Walking: enter/exit walk mode on the held hologram"),
+    FConsoleCommandWithWorldDelegate::CreateStatic(&SF_WalkToggleCmd));
+
+static FAutoConsoleCommandWithWorld GSFWalkAdvance(
+    TEXT("Smart.Walk.Advance"), TEXT("Smart Walking: commit the active segment and start a new one"),
+    FConsoleCommandWithWorldDelegate::CreateStatic(&SF_WalkAdvanceCmd));
+
+static FAutoConsoleCommandWithWorld GSFWalkBackUp(
+    TEXT("Smart.Walk.BackUp"), TEXT("Smart Walking: destructive back-up of the active segment"),
+    FConsoleCommandWithWorldDelegate::CreateStatic(&SF_WalkBackUpCmd));
+
+static void SF_WalkTurnCmd(const TArray<FString>& Args, UWorld* World)
+{
+    const float Deg = Args.Num() > 0 ? FCString::Atof(*Args[0]) : 15.0f;
+    if (USFSubsystem* S = USFSubsystem::Get(World))
+    {
+        S->WalkNudgeActive(0.0f, Deg, 0.0f, 0.0f);
+    }
+}
+
+static void SF_WalkRiseCmd(const TArray<FString>& Args, UWorld* World)
+{
+    const float Cm = Args.Num() > 0 ? FCString::Atof(*Args[0]) : 200.0f;
+    if (USFSubsystem* S = USFSubsystem::Get(World))
+    {
+        S->WalkNudgeActive(0.0f, 0.0f, Cm, 0.0f);
+    }
+}
+
+static FAutoConsoleCommandWithWorldAndArgs GSFWalkTurn(
+    TEXT("Smart.Walk.Turn"), TEXT("Smart Walking: turn the active segment by <degrees> (right = positive; default 15)"),
+    FConsoleCommandWithWorldAndArgsDelegate::CreateStatic(&SF_WalkTurnCmd));
+
+static FAutoConsoleCommandWithWorldAndArgs GSFWalkRise(
+    TEXT("Smart.Walk.Rise"), TEXT("Smart Walking: raise the active segment by <cm> (default 200)"),
+    FConsoleCommandWithWorldAndArgsDelegate::CreateStatic(&SF_WalkRiseCmd));

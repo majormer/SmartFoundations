@@ -5,6 +5,7 @@
 #include "Subsystem/SFSubsystem.h"
 #include "Features/Extend/SFExtendService.h"
 #include "Features/Restore/SFRestoreService.h"
+#include "Features/Walk/SFWalkService.h"
 #include "SmartFoundations.h"
 #include "HUD/SFHUDTypes.h"
 #include "HUD/SFHudWidget.h"
@@ -325,8 +326,36 @@ TPair<FString, FString> USFHudService::BuildCounterDisplayLines() const
 		}
 	}
 
-	// Grid dimensions and count (suppress during Extend — the Extend indicator already shows clone×row)
-	if (!Subsystem->IsExtendModeActive())
+	// Smart Walking (#356): while walking, the build state IS the segment path — show the walk's segment count
+	// + heading and the active segment's adjusters in place of the grid counter (which doesn't apply on foot).
+	bool bWalkActive = false;
+	if (USFWalkService* Walk = Subsystem->GetWalkService())
+	{
+		if (Walk->IsActive())
+		{
+			bWalkActive = true;
+			const TArray<FSFWalkSegmentView> Views = Walk->GetSegmentViews();
+			const float HeadDeg = Views.Num() > 0 ? Views.Last().ExitHeadingDeg : 0.0f;
+			Lines.Add(FText::Format(LOCTEXT("HUD_Walk", "*Walk: {0} seg   head {1} deg"),
+				FText::AsNumber(Views.Num()), FText::AsNumber(FMath::RoundToInt(HeadDeg))).ToString());
+
+			const int32 ActiveIdx = Walk->GetActiveIndex();
+			if (Views.IsValidIndex(ActiveIdx))
+			{
+				const FSFWalkSegmentView& A = Views[ActiveIdx];
+				Lines.Add(FText::Format(LOCTEXT("HUD_WalkSeg", ">#{0}  Adv {1}m  Turn {2} deg  Rise {3}m  Shift {4}m"),
+					FText::AsNumber(A.Index),
+					FText::FromString(FString::Printf(TEXT("%.1f"), A.Advance / 100.0f)),
+					FText::AsNumber(FMath::RoundToInt(A.TurnDegrees)),
+					FText::FromString(FString::Printf(TEXT("%.1f"), A.Rise / 100.0f)),
+					FText::FromString(FString::Printf(TEXT("%.1f"), A.Shift / 100.0f))).ToString());
+			}
+		}
+	}
+
+	// Grid dimensions and count (suppress during Extend — the Extend indicator already shows clone×row —
+	// and during Walk, which shows its own segment readout above)
+	if (!Subsystem->IsExtendModeActive() && !bWalkActive)
 	{
 		if (State.GridCounters.X != 1 || State.GridCounters.Y != 1 || State.GridCounters.Z != 1)
 		{

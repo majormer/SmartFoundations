@@ -258,6 +258,12 @@ void ASFConveyorBeltHologram::CheckValidPlacement()
         if (!Data->bNeedToCheckPlacement)
         {
             UE_LOG(LogSmartHologram, VeryVerbose, TEXT("Belt child preview (data registry) - skipping validation"));
+            // The build gun paints previews from construct disqualifiers, not SetPlacementMaterialState. A
+            // validation-disabled preview belt that is NEVER vanilla-AddChild'd (Smart Walking spawns belts
+            // standalone) must CLEAR residual disqualifiers here, else TriggerMeshGeneration's
+            // GetHologramMaterialState() recompute reads them and paints the belt red. Mirrors the parented path.
+            ResetConstructDisqualifiers();
+            SetPlacementMaterialState(EHologramMaterialState::HMS_OK);
             return; // Don't call Super - prevents disqualifiers
         }
     }

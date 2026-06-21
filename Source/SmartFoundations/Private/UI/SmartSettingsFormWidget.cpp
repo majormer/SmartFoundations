@@ -62,6 +62,12 @@ void USmartSettingsFormWidget::NativeConstruct()
         ResetBtn->OnClicked.AddDynamic(this, &USmartSettingsFormWidget::OnResetButtonClicked);
     }
 
+    // #356 Smart Walking entry button
+    if (WalkPathButton)
+    {
+        WalkPathButton->OnClicked.AddDynamic(this, &USmartSettingsFormWidget::OnWalkPathButtonClicked);
+    }
+
     // Set up confirmation dialog button handlers
     if (ConfirmYesButton)
     {
@@ -1104,6 +1110,20 @@ void USmartSettingsFormWidget::FitHeaderButtonRow()
     FitLabel(TEXT("ApplyBtnText"));
     FitLabel(TEXT("ResetBtnText"));
     FitLabel(TEXT("CloseButtonText"));
+}
+
+void USmartSettingsFormWidget::OnWalkPathButtonClicked()
+{
+    UE_LOG(LogSmartFoundations, Verbose, TEXT("Settings Form: Walk Path button clicked"));
+    // #356: close the panel FIRST (so its input/HUD reset doesn't clobber the walk widget), then enter
+    // Smart Walking on the held buildable and open the dedicated Walk widget.
+    TWeakObjectPtr<USFSubsystem> Sub = CachedSubsystem;
+    CloseForm();
+    if (Sub.IsValid())
+    {
+        Sub->EnterWalkMode();
+        Sub->OpenWalkPanel();
+    }
 }
 
 void USmartSettingsFormWidget::OnCloseButtonClicked()

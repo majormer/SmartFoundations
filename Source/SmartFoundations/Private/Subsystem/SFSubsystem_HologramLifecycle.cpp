@@ -1421,6 +1421,9 @@ void USFSubsystem::OnBuildGunUnequipped()
 {
 	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT(" BUILD GUN UNEQUIPPED - Smart! build context deactivated"));
 
+	// #356: holstering exits Smart Walking and tears the preview down (vanilla-aligned, like the #392 clipboard clear).
+	ExitWalkMode();
+
 	AbortRestoreSession(TEXT("Build gun unequipped"));
 
 	// Reset recipe sampling subscription flag

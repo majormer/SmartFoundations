@@ -6,6 +6,7 @@
  */
 
 #include "Subsystem/SFSubsystemImpl.h"
+#include "Features/Walk/SFWalkService.h"
 
 
 // ========================================
@@ -52,8 +53,8 @@ bool USFSubsystem::IsAnyModalFeatureActive() const
     // Phase 0: Forward to InputHandler module (Task #61.6)
     if (InputHandler)
     {
-        // Also check EXTEND mode which is managed by the ExtendService
-        return InputHandler->IsAnyModalFeatureActive() || IsExtendModeActive();
+        // Also check EXTEND mode (ExtendService) and Smart Walking (#356), both top-level modes
+        return InputHandler->IsAnyModalFeatureActive() || IsExtendModeActive() || bWalkModeActive;
     }
 
     // Fallback if module not initialized
@@ -69,6 +70,14 @@ FVector USFSubsystem::GetFurthestTopHologramPosition() const
     if (!ActiveHologram.IsValid())
     {
         return FVector::ZeroVector;
+    }
+
+    // Smart Walking (#356): the camera latches the path FRONTIER — the active (last) segment's exit frame —
+    // NOT a furthest-by-axis grid value. A turning/looping path breaks the "furthest cell" assumption, so the
+    // frontier (the same exit frame the segment table's compass column reports) is the correct focus target.
+    if (bWalkModeActive && WalkService && WalkService->IsActive() && WalkService->GetSegmentCount() > 0)
+    {
+        return WalkService->GetHeadFrame().GetLocation();
     }
 
     // Get current grid counters

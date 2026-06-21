@@ -70,6 +70,8 @@ class USFGridSpawnerService;
 class USFGridTransformService;
 class USFChainActorService;
 class USFRestoreService;
+class USFWalkService;
+class USFWalkPanelWidget;
 struct FSFRestoreAutoConnectState;
 
 // Smart! hologram forward declarations
@@ -422,6 +424,41 @@ public:
 	/** Get radar pulse diagnostic service */
 	USFRadarPulseService* GetRadarPulseService() const { return RadarPulseService; }
 
+	/** Get Smart Walking service (#356) */
+	USFWalkService* GetWalkService() const { return WalkService; }
+
+	/** True while a Smart Walking Path is being steered. */
+	UFUNCTION(BlueprintCallable, Category = "Smart Walking")
+	bool IsWalkModeActive() const { return bWalkModeActive; }
+
+	/** Enter Smart Walking on the held hologram (seeds a Path). No-op if already walking or no seed. */
+	UFUNCTION(BlueprintCallable, Category = "Smart Walking")
+	void EnterWalkMode();
+
+	/** Exit Smart Walking (Slice 0: tears down the preview). No-op if not walking. */
+	UFUNCTION(BlueprintCallable, Category = "Smart Walking")
+	void ExitWalkMode();
+
+	/** Toggle Smart Walking on/off. Reached by the Slice 4 Smart Panel button. */
+	UFUNCTION(BlueprintCallable, Category = "Smart Walking")
+	void ToggleWalkMode();
+
+	/** Commit the active segment and start a new one (advance). */
+	UFUNCTION(BlueprintCallable, Category = "Smart Walking")
+	void WalkAdvance();
+
+	/** Destructive back-up of the active segment. */
+	UFUNCTION(BlueprintCallable, Category = "Smart Walking")
+	void WalkBackUp();
+
+	/** Steer the active segment by deltas: advance (cm), turn (deg), rise (cm), shift (cm). */
+	UFUNCTION(BlueprintCallable, Category = "Smart Walking")
+	void WalkNudgeActive(float DeltaAdvanceCm, float DeltaTurnDeg, float DeltaRiseCm, float DeltaShiftCm);
+
+	/** Create + show the dedicated Walk widget (the segment list/timeline). Reached by the Smart Panel button. */
+	UFUNCTION(BlueprintCallable, Category = "Smart Walking")
+	void OpenWalkPanel();
+
 	/** Check if Smart! is actively scaling (grid > 1x1x1) — any axis with abs > 1 */
 	bool IsSmartScalingActive() const
 	{
@@ -639,6 +676,10 @@ protected:
 	UPROPERTY()
 	TWeakObjectPtr<class USmartSettingsFormWidget> SettingsFormWidget;
 
+	/** Smart Walking dedicated widget (#356) */
+	UPROPERTY()
+	TWeakObjectPtr<class USFWalkPanelWidget> WalkPanelWidget;
+
 	/** Settings Form Widget Class (Blueprint reference) - initialized in constructor */
 	UPROPERTY(EditDefaultsOnly, Category = "Smart! UI")
 	TSubclassOf<class USmartSettingsFormWidget> SettingsFormWidgetClass;
@@ -695,6 +736,10 @@ protected:
 	/** Radar Pulse diagnostic service - Object snapshot and diff system */
 	UPROPERTY()
 	TObjectPtr<USFRadarPulseService> RadarPulseService;
+
+	/** Smart Walking service - progressive per-segment build mode (#356) */
+	UPROPERTY()
+	TObjectPtr<USFWalkService> WalkService;
 
 	/** Pipe Auto-Connect manager - feature-level coordinator (junctions + manifolds) */
 	TUniquePtr<FSFPipeAutoConnectManager> PipeAutoConnectManager;
@@ -893,6 +938,13 @@ private:
 	bool bStepsModeActive = false;
 	bool bStaggerModeActive = false;
 	bool bRotationModeActive = false;
+
+	/** Smart Walking top-level mode (#356). Mutually exclusive with grid-scaling; routes scale input to WalkService. */
+	bool bWalkModeActive = false;
+
+	/** #356 reframe: in walk mode, route the active transform modal (spacing/rotation/steps/stagger) to the ACTIVE
+	 *  segment instead of the grid. Returns true if it handled the adjust (caller should return). */
+	bool RouteWalkValueAdjust(int32 AccumulatedSteps, int32 Direction);
 	
 	// All counter and axis fields migrated to CounterState
 	// Deprecated mirrors removed - use GetCounterState() accessors

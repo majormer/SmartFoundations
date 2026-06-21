@@ -6,6 +6,7 @@
  */
 
 #include "Subsystem/SFSubsystemImpl.h"
+#include "Features/Walk/SFWalkService.h"
 
 
 // ========================================
@@ -1390,6 +1391,15 @@ void USFSubsystem::AdjustAutoConnectSetting(int32 Delta)
                 UE_LOG(LogSmartFoundations, VeryVerbose, TEXT(" Orchestrator: Force recreated power previews after settings change"));
             }
         }
+    }
+
+    // Smart Walking (#356): a walk in progress reads these auto-connect settings (belt routing mode, tier) when it
+    // routes its belts — re-route its preview belts immediately so changing routing to Curve/Straight is reflected
+    // live, just like auto-connect refreshes its own previews above.
+    if (WalkService && WalkService->IsActive())
+    {
+        WalkService->RerouteBelts();
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT(" Walk: re-routed belts after auto-connect setting change (routingMode=%d)"), AutoConnectRuntimeSettings.BeltRoutingMode);
     }
 
     UpdateCounterDisplay();

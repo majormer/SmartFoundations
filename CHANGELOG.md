@@ -9,6 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [33.0.0] - Unreleased
+
+> *A major new build mode: **Smart Walking**. Where scaling lays down a rigid uniform grid, Smart Walking builds a **path** — a connected run that walks forward one segment at a time, and each segment can turn a corner or climb a slope. One continuous run routes exactly where you want it, while you stay put and watch the leading edge crawl across the map through the Smart! Camera.*
+
+### Added
+
+- **Smart Walking — steer a run that turns, slopes, and walks to its destination** - A new building mode for connected runs, starting with stacked conveyor poles and their auto-connected belts. Scaling builds a straight, uniform grid; Smart Walking builds a *route*. You advance the run one segment at a time, and each segment can carry its own turn, climb, and spacing - so a single continuous run rounds corners and changes grade and arrives precisely where you want it, instead of stopping to pivot and start a fresh run by hand. You stay at the start and watch the leading edge travel across the map through the Smart! Camera picture-in-picture, which latches onto the head of the run as it turns. Scroll to lay each segment, steer the active one to turn or slope, back up to undo a segment, and commit the whole path in one go. Designed from the start to extend to pipes, hyper-tubes, and more in future updates. (Issue #356)
+
+### Fixed
+
+- **Stackable conveyor poles: no more belt left behind when you un-scale** - Scaling a stackable conveyor pole out and then back in removed the cloned poles but left the connecting belt preview floating where they used to be - it only vanished once a new pole spawned on the other side. Un-scaling now removes the belt along with its poles, matching the stackable-pipeline fix from 32.1.2. (Issue #397)
+- **Conveyor pole belts curve through turns again** - On a rotated (arc) run of conveyor poles - stackable, ceiling, wall, or regular - the auto-connected belts cut straight across and kinked sharply at each pole instead of bowing smoothly through the turn, and the Curve belt-routing mode had no visible effect. Belts now exit each pole along its facing and follow the curve of the run, while still running straight on a straight grid and no longer ramping on height changes. (Issue #398)
+- **Pipelines curve through turns too** - The same straight-cut/facet problem affected auto-connected pipelines on a rotated run of pipeline supports; pipes now bow through the curve like belts do, matching the fix above. (Issue #400)
+
+---
+
 ## [32.1.2] - 2026-06-20
 
 > *A community-reported bug-fix patch: Blueprint Designer recipe loss, multiplayer recipe selection, stackable pipelines, Extend manifold clearance, recipe memory that clears with the build gun, the Auto-Hold default, Smart Camera Extend tracking, Smart Restore scaling/camera, and a full logging-noise pass.*
