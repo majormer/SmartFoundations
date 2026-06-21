@@ -134,14 +134,212 @@ bool USFWalkService::EnterWalk(AFGHologram* InSeedHologram)
     return true;
 }
 
-void USFWalkService::ExitWalk(bool /*bCommit*/)
+void USFWalkService::ExitWalk(bool bCommit)
 {
-    UE_LOG(LogSmartWalk, Log, TEXT(">>> ExitWalk ENTER: bActive=%d segments=%d"), bActive ? 1 : 0, Segments.Num());
-    // Slice 0: the single-commit build path arrives in Slice 3; for now exit always tears down the preview.
+    UE_LOG(LogSmartWalk, Log, TEXT(">>> ExitWalk ENTER: bActive=%d segments=%d bCommit=%d"), bActive ? 1 : 0, Segments.Num(), bCommit ? 1 : 0);
+    // Slice 3: the ACTUAL build is the parameters-only commit spec the server reconstructs (staged at the fire
+    // hook via Server_StageWalkCommit -> ReconstructWalkCommitOnServer). The client side only ever needs to tear
+    // down its standalone PREVIEW holograms - whether we committed (server is building from the spec) or cancelled.
     ClearAll();
     SeedHologram = nullptr;
     bActive = false;
-    UE_LOG(LogSmartWalk, Log, TEXT("<<< ExitWalk EXIT: Path torn down"));
+    UE_LOG(LogSmartWalk, Log, TEXT("<<< ExitWalk EXIT: preview torn down"));
+}
+
+FSFWalkCommitSpec USFWalkService::BuildCommitSpec() const
+{
+    FSFWalkCommitSpec Spec;
+    AFGHologram* Seed = SeedHologram.Get();
+    if (!bActive || !IsValid(Seed) || Segments.Num() == 0)
+    {
+        return Spec;   // bValid stays false = explicit clear (overwrite semantics)
+    }
+
+    Spec.OriginFrame = OriginFrame;
+    Spec.Segments.Reserve(Segments.Num());
+    for (const FSFWalkSegment& Seg : Segments)
+    {
+        FSFWalkCommitSegment Out;
+        Out.Advance     = Seg.Advance;
+        Out.TurnDegrees = Seg.TurnDegrees;
+        Out.Rise        = Seg.Rise;
+        Out.Shift       = Seg.Shift;
+        Out.NumLanes    = Seg.NumLanes;
+        Out.NumStacks   = Seg.NumStacks;
+        Spec.Segments.Add(Out);
+    }
+
+    if (USFSubsystem* Sub = Subsystem.Get())
+    {
+        Spec.BeltRoutingMode = Sub->GetAutoConnectRuntimeSettings().BeltRoutingMode;
+        Spec.BeltTier        = Sub->GetAutoConnectRuntimeSettings().BeltTierMain;
+    }
+    Spec.BuildClass = Seed->GetBuildClass();
+
+    // Cost = every walk-spawned preview hologram (origin extras + each segment's poles + belts). The seed itself
+    // (origin cell 0,0) is charged by vanilla as the build-gun's own hologram, so it is excluded here.
+    auto AddCost = [&Spec](AFGHologram* Holo, const TCHAR* Kind)
+    {
+        if (!IsValid(Holo)) { return; }
+        const TArray<FItemAmount> C = Holo->GetCost(/*includeChildren=*/false);
+        // [cost-diag] one line per costed hologram (Verbose: BuildCommitSpec runs every preview frame now).
+        UE_LOG(LogSmartWalk, Verbose, TEXT("  [cost] %s %s recipe=%s -> %d item type(s)%s"),
+            Kind, *Holo->GetName(), Holo->GetRecipe() ? TEXT("yes") : TEXT("NULL"), C.Num(),
+            C.Num() > 0 ? *FString::Printf(TEXT(" first.amt=%d"), C[0].Amount) : TEXT(""));
+        for (const FItemAmount& Item : C)
+        {
+            bool bMerged = false;
+            for (FItemAmount& Existing : Spec.Cost)
+            {
+                if (Existing.ItemClass == Item.ItemClass) { Existing.Amount += Item.Amount; bMerged = true; break; }
+            }
+            if (!bMerged) { Spec.Cost.Add(Item); }
+        }
+    };
+    for (const TWeakObjectPtr<AFGHologram>& H : OriginHolograms)
+    {
+        if (H.Get() != Seed) { AddCost(H.Get(), TEXT("origin-pole")); }
+    }
+    for (const FSFWalkSegment& Seg : Segments)
+    {
+        for (const TWeakObjectPtr<AFGHologram>& H : Seg.Holograms) { AddCost(H.Get(), TEXT("pole")); }
+        for (const TWeakObjectPtr<AFGHologram>& B : Seg.Belts)     { AddCost(B.Get(), TEXT("belt")); }
+    }
+
+    Spec.bValid = true;
+    UE_LOG(LogSmartWalk, Verbose, TEXT("BuildCommitSpec: %d segment(s), beltMode=%d tier=%d, %d cost item type(s) TOTAL"),
+        Spec.Segments.Num(), Spec.BeltRoutingMode, Spec.BeltTier, Spec.Cost.Num());
+    return Spec;
+}
+
+int32 USFWalkService::ReconstructWalkCommitOnServer(AFGHologram* Seed, const FSFWalkCommitSpec& Spec)
+{
+    UE_LOG(LogSmartWalk, Log, TEXT(">>> ReconstructWalkCommitOnServer ENTER: seed=%s segments=%d"),
+        *GetNameSafe(Seed), Spec.Segments.Num());
+    if (!IsValid(Seed) || Spec.Segments.Num() == 0)
+    {
+        return 0;
+    }
+    TSubclassOf<UFGRecipe> Recipe = Seed->GetRecipe();
+    if (!Recipe)
+    {
+        UE_LOG(LogSmartWalk, Warning, TEXT("<<< ReconstructWalkCommitOnServer: seed has no recipe"));
+        return 0;
+    }
+    AActor* Owner = Seed->GetOwner();
+    APawn* HologramInstigator = Cast<APawn>(Seed->GetInstigator());
+
+    // Apply the client's belt routing mode + tier so the server routes the spanning belts identically (the
+    // server's own runtime settings default elsewhere; mirrors Extend's #380/#386 install before re-deriving).
+    if (USFSubsystem* Sub = Subsystem.Get())
+    {
+        Sub->SetAutoConnectBeltRoutingMode(Spec.BeltRoutingMode);
+        Sub->SetAutoConnectBeltTierMain(Spec.BeltTier);
+    }
+
+    // Rebuild a LOCAL segment list from the spec deltas - no member-state mutation, so this is reentrant on the
+    // server and never clobbers a listen-host's own live walk session.
+    TArray<FSFWalkSegment> Segs;
+    Segs.Reserve(Spec.Segments.Num());
+    for (const FSFWalkCommitSegment& S : Spec.Segments)
+    {
+        FSFWalkSegment Seg;
+        Seg.Advance = S.Advance; Seg.TurnDegrees = S.TurnDegrees; Seg.Rise = S.Rise; Seg.Shift = S.Shift;
+        Seg.NumLanes = S.NumLanes; Seg.NumStacks = S.NumStacks;
+        Segs.Add(Seg);
+    }
+
+    // Spawn one pole AddChild'd to the seed at a world pose (the vanilla scope() cascade builds it).
+    auto SpawnBuildPole = [&](const FTransform& Pose) -> AFGHologram*
+    {
+        AFGHologram* Holo = AFGHologram::SpawnHologramFromRecipe(Recipe, Owner ? Owner : Seed, Pose.GetLocation(), HologramInstigator);
+        if (!IsValid(Holo)) { return nullptr; }
+        USFHologramDataService::DisableValidation(Holo);
+        // AddChild ASSERTS on a duplicate child name (FGHologram.cpp:2470) - NAME_None collides on the 2nd child.
+        // The hologram's own actor FName is unique within the world, so use it as the (unique) child name.
+        Seed->AddChild(Holo, Holo->GetFName());
+        // AddChild RE-BASES the child's transform relative to the seed (vanilla repositions children) - set the
+        // WORLD pose AFTER so the pole lands where the deltas put it, not at the far-origin re-base that caused the
+        // earlier horizon bug. (Mirrors Extend re-applying child geometry after AddChild.)
+        Holo->SetActorLocationAndRotation(Pose.GetLocation(), Pose.Rotator());
+        Holo->UpdateComponentTransforms();
+        return Holo;
+    };
+
+    int32 Spawned = 0;
+
+    // Origin cross-section: cells 1..N (cell 0,0 IS the seed = the parent being built). MVP bus is uniform, so the
+    // origin uses segment 0's signed lane/stack counters.
+    const int32 OLanes  = FMath::Max(1, FMath::Abs(Segs[0].NumLanes));
+    const int32 OStacks = FMath::Max(1, FMath::Abs(Segs[0].NumStacks));
+    const int32 OLaneSign  = (Segs[0].NumLanes  >= 1) ? 1 : -1;
+    const int32 OStackSign = (Segs[0].NumStacks >= 1) ? 1 : -1;
+    TArray<AFGHologram*> OriginPoles;
+    OriginPoles.SetNumZeroed(OLanes * OStacks);
+    for (int32 L = 0; L < OLanes; ++L)
+    {
+        for (int32 K = 0; K < OStacks; ++K)
+        {
+            const int32 Flat = L * OStacks + K;
+            if (L == 0 && K == 0)
+            {
+                OriginPoles[Flat] = Seed;   // cell 0,0 = the seed itself
+                continue;
+            }
+            const FTransform Pose = CrossSectionPose(Spec.OriginFrame, L * OLaneSign, K * OStackSign);
+            OriginPoles[Flat] = SpawnBuildPole(Pose);
+            if (OriginPoles[Flat]) { ++Spawned; }
+        }
+    }
+
+    // Each segment's cross-section poles, at the frame the deltas derive (forward kinematics from the origin).
+    TArray<TArray<AFGHologram*>> SegPoles;
+    SegPoles.SetNum(Segs.Num());
+    for (int32 i = 0; i < Segs.Num(); ++i)
+    {
+        const int32 Lanes  = FMath::Max(1, FMath::Abs(Segs[i].NumLanes));
+        const int32 Stacks = FMath::Max(1, FMath::Abs(Segs[i].NumStacks));
+        const int32 LaneSign  = (Segs[i].NumLanes  >= 1) ? 1 : -1;
+        const int32 StackSign = (Segs[i].NumStacks >= 1) ? 1 : -1;
+        const FTransform Center = AccumulateFrame(Segs, Spec.OriginFrame, i);
+        SegPoles[i].SetNumZeroed(Lanes * Stacks);
+        for (int32 L = 0; L < Lanes; ++L)
+        {
+            for (int32 K = 0; K < Stacks; ++K)
+            {
+                const int32 Flat = L * Stacks + K;
+                const FTransform Pose = CrossSectionPose(Center, L * LaneSign, K * StackSign);
+                SegPoles[i][Flat] = SpawnBuildPole(Pose);
+                if (SegPoles[i][Flat]) { ++Spawned; }
+            }
+        }
+    }
+
+    // Spanning belts: predecessor pole (same flat cell) -> this segment's pole, AddChild'd + pre-wired so the
+    // cascade builds + connects them. (Uniform MVP: predecessor and current share the same cell count/indexing.)
+    int32 Belts = 0;
+    if (Conveyance)
+    {
+        for (int32 i = 0; i < Segs.Num(); ++i)
+        {
+            const TArray<AFGHologram*>& Prev = (i == 0) ? OriginPoles : SegPoles[i - 1];
+            const TArray<AFGHologram*>& Cur  = SegPoles[i];
+            for (int32 Cell = 0; Cell < Cur.Num(); ++Cell)
+            {
+                AFGHologram* ToPole   = Cur.IsValidIndex(Cell)  ? Cur[Cell]  : nullptr;
+                AFGHologram* FromPole = Prev.IsValidIndex(Cell) ? Prev[Cell] : nullptr;
+                if (!IsValid(ToPole) || !IsValid(FromPole)) { continue; }
+                if (Conveyance->LinkOrUpdate(nullptr, FromPole, ToPole, Seed, /*bAddChildForBuild=*/true))
+                {
+                    ++Belts;
+                }
+            }
+        }
+    }
+
+    UE_LOG(LogSmartWalk, Log, TEXT("<<< ReconstructWalkCommitOnServer EXIT: %d pole(s) + %d belt(s) AddChild'd to %s; vanilla construct will build them"),
+        Spawned, Belts, *GetNameSafe(Seed));
+    return Spawned + Belts;
 }
 
 void USFWalkService::CommitActiveAndAdvance()

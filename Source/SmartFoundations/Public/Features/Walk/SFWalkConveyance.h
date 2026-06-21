@@ -29,10 +29,12 @@ public:
 
     /**
      * Create (if ExistingSpan is null) or update the spanning element connecting FromAnchor → ToAnchor.
-     * ParentForChild is the seed hologram to AddChild the new span to (so it inherits the build gun's validated
-     * lifecycle). Returns the span hologram (belt), or null if it could not be produced. Base class is a no-op.
+     * ParentForChild is the seed hologram. With bAddChildForBuild=false (preview) the span is spawned STANDALONE;
+     * with bAddChildForBuild=true (Slice 3 commit, server-side) it is AddChild'd to ParentForChild so the vanilla
+     * Construct cascade builds it (the Extend SpawnChildHolograms pattern). Returns the span hologram, or null.
+     * Base class is a no-op.
      */
-    virtual AFGHologram* LinkOrUpdate(AFGHologram* ExistingSpan, AFGHologram* FromAnchor, AFGHologram* ToAnchor, AFGHologram* ParentForChild)
+    virtual AFGHologram* LinkOrUpdate(AFGHologram* ExistingSpan, AFGHologram* FromAnchor, AFGHologram* ToAnchor, AFGHologram* ParentForChild, bool bAddChildForBuild = false)
     {
         return nullptr;
     }
@@ -52,7 +54,7 @@ class SMARTFOUNDATIONS_API USFWalkBeltConveyance : public USFWalkConveyance
     GENERATED_BODY()
 
 public:
-    virtual AFGHologram* LinkOrUpdate(AFGHologram* ExistingSpan, AFGHologram* FromAnchor, AFGHologram* ToAnchor, AFGHologram* ParentForChild) override;
+    virtual AFGHologram* LinkOrUpdate(AFGHologram* ExistingSpan, AFGHologram* FromAnchor, AFGHologram* ToAnchor, AFGHologram* ParentForChild, bool bAddChildForBuild = false) override;
 
 private:
     /** First factory connector on a pole hologram (the stackable pole's SnapOnly0), or null. */

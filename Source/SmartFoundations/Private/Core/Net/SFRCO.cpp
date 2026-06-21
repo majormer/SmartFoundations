@@ -392,6 +392,52 @@ bool USFRCO::Server_StageExtendCommit_Validate(FSFExtendCommitSpec Spec)
 }
 
 // ========================================
+// Smart Walking MP (#356 Slice 3): walk commit staging
+// ========================================
+
+void USFRCO::Server_StageWalkCommit_Implementation(FSFWalkCommitSpec Spec)
+{
+	USFSubsystem* Subsystem = USFSubsystem::Get(this);
+	AFGPlayerController* OwnerPC = Cast<AFGPlayerController>(GetOuter());
+	if (!IsValid(Subsystem) || !OwnerPC)
+	{
+		UE_LOG(LogSmartFoundations, Verbose,
+			TEXT("[Walk-MP] Server_StageWalkCommit: missing subsystem (%d) or owner PC (%d)"),
+			IsValid(Subsystem) ? 1 : 0, OwnerPC ? 1 : 0);
+		return;
+	}
+
+	Subsystem->StageWalkCommitForPlayer(OwnerPC, Spec);
+
+	if (Spec.bValid)
+	{
+		UE_LOG(LogSmartFoundations, Verbose,
+			TEXT("[Walk-MP] Server staged walk commit for %s: %d segment(s) of %s, beltMode=%d tier=%d, %d cost item type(s)."),
+			*GetNameSafe(OwnerPC), Spec.Segments.Num(), *GetNameSafe(*Spec.BuildClass),
+			Spec.BeltRoutingMode, Spec.BeltTier, Spec.Cost.Num());
+	}
+}
+
+bool USFRCO::Server_StageWalkCommit_Validate(FSFWalkCommitSpec Spec)
+{
+	// Sanity-bound the commit so a forged/buggy commit cannot demand absurd server-side spawning.
+	// The world frames are re-derived SERVER-side from these deltas, never shipped.
+	if (Spec.Segments.Num() > 4096 || Spec.OriginFrame.GetLocation().Size() > 1.0e7)
+	{
+		return false;
+	}
+	for (const FSFWalkCommitSegment& Seg : Spec.Segments)
+	{
+		// |lanes|/|stacks| are the SIGNED bus counters; a sane bus is well under a few hundred wide.
+		if (FMath::Abs(Seg.NumLanes) > 256 || FMath::Abs(Seg.NumStacks) > 256)
+		{
+			return false;
+		}
+	}
+	return true;
+}
+
+// ========================================
 // Upgrade Audit RPCs
 // ========================================
 

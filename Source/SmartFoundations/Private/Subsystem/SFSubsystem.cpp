@@ -516,6 +516,65 @@ bool USFSubsystem::ConsumeExtendCommitForInstigator(APawn* Instigator, UClass* B
 	return true;
 }
 
+// Smart Walking (#356 Slice 3): walk commit staging - identical model to the Extend commit above.
+
+void USFSubsystem::StageWalkCommitForPlayer(APlayerController* PC, const FSFWalkCommitSpec& Spec)
+{
+	if (!PC)
+	{
+		return;
+	}
+	if (Spec.bValid)
+	{
+		StagedWalkCommits.Add(PC, Spec);
+		StagedWalkCommitTimes.Add(PC, FPlatformTime::Seconds());
+	}
+	else
+	{
+		StagedWalkCommits.Remove(PC);
+		StagedWalkCommitTimes.Remove(PC);
+	}
+}
+
+bool USFSubsystem::PeekWalkCommitForInstigator(APawn* Instigator, UClass* BuildClass, FSFWalkCommitSpec& OutSpec) const
+{
+	if (!Instigator || !BuildClass)
+	{
+		return false;
+	}
+	APlayerController* PC = Cast<APlayerController>(Instigator->GetController());
+	if (!PC)
+	{
+		return false;
+	}
+	const FSFWalkCommitSpec* Staged = StagedWalkCommits.Find(PC);
+	if (!Staged || !Staged->bValid || Staged->BuildClass != BuildClass)
+	{
+		return false;
+	}
+	// Freshness TTL: the walk stages its commit at fire time and the construct consumes it in the same
+	// fire, so anything older than this belongs to an abandoned commit - never consume it.
+	const double* StagedAt = StagedWalkCommitTimes.Find(PC);
+	if (!StagedAt || FPlatformTime::Seconds() - *StagedAt > 10.0)
+	{
+		return false;
+	}
+	OutSpec = *Staged;
+	return true;
+}
+
+bool USFSubsystem::ConsumeWalkCommitForInstigator(APawn* Instigator, UClass* BuildClass, FSFWalkCommitSpec& OutSpec)
+{
+	if (!PeekWalkCommitForInstigator(Instigator, BuildClass, OutSpec))
+	{
+		return false;
+	}
+	APlayerController* PC = Cast<APlayerController>(Instigator->GetController());
+	StagedWalkCommits.Remove(PC);
+	StagedWalkCommitTimes.Remove(PC);
+	return true;
+}
+
 void USFSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);

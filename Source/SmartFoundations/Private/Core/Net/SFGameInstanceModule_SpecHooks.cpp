@@ -33,6 +33,7 @@
 #include "Services/SFChainActorService.h"  // [CHAIN-FIX] post-construct chain-hygiene sweep
 #include "Features/AutoConnect/SFAutoConnectService.h"
 #include "Features/Extend/SFExtendService.h"
+#include "Features/Walk/SFWalkService.h"   // Smart Walking (#356 Slice 3) server-side commit reconstruction
 #include "Equipment/FGBuildGunBuild.h"        // UFGBuildGunStateBuild::InternalConstructHologram / GetHologram
 #include "Core/Net/SFNetworkHelper.h"     // FSFNetworkHelper::IsClient
 #include "Engine/Engine.h"                     // GEngine on-screen message
@@ -256,6 +257,22 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 			: SS->PeekExtendCommitForInstigator(Instigator, BuildClass, OutSpec);
 	};
 
+	// Smart Walking (#356 Slice 3): resolve the staged walk commit for a constructing/costing seed hologram.
+	auto FindStagedWalkCommit = [](const AFGHologram* Holo, FSFWalkCommitSpec& OutSpec, bool bConsume) -> bool
+	{
+		AFGHologram* MutableHolo = const_cast<AFGHologram*>(Holo);
+		USFSubsystem* SS = USFSubsystem::Get(MutableHolo->GetWorld());
+		if (!SS)
+		{
+			return false;
+		}
+		APawn* Instigator = MutableHolo->GetConstructionInstigator();
+		UClass* BuildClass = MutableHolo->GetBuildClass();
+		return bConsume
+			? SS->ConsumeWalkCommitForInstigator(Instigator, BuildClass, OutSpec)
+			: SS->PeekWalkCommitForInstigator(Instigator, BuildClass, OutSpec);
+	};
+
 	// ── [#364-MP] Wall-attachment re-validation for staged client fires. The server re-runs
 	// CheckValidPlacement on the deserialized hologram inside Server_ConstructHologram, but
 	// mSnappedBuilding does not survive the trip for these fires - the server-side hologram
@@ -338,6 +355,53 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 				return;
 			}
 
+			// Smart Walking (#356 Slice 3): a staged walk commit charges the seed's own cost PLUS every walk
+			// pole/belt the server will build (WalkSpec.Cost is the extras only; the seed is the bare hologram
+			// here). Same by-value safety rule: invoke scope() to construct the return slot BEFORE Override().
+			// Smart Walking (#356 Slice 3): charge the seed's own cost PLUS every walk pole/belt the server will
+			// build. At COMMIT the spec is staged (FindStagedWalkCommit); during the PREVIEW the build-gun cost
+			// overlay updates while aiming but nothing is staged yet, so synthesize the cost from the LIVE walk
+			// session - otherwise the overlay shows only the bare seed (walk holograms are standalone, so vanilla
+			// GetCost aggregation can't see them, unlike auto-connect's AddChild'd grid children). Same by-value
+			// safety rule: invoke scope() to construct the return slot BEFORE Override(). NO re-entry: BuildCommitSpec
+			// sums GetCost(false), which this hook ignores (the includeChildren==false guard returns at the top).
+			FSFWalkCommitSpec WalkSpec;
+			bool bHaveWalkCost = FindStagedWalkCommit(self, WalkSpec, /*bConsume=*/false);
+			if (!bHaveWalkCost)
+			{
+				if (USFSubsystem* SS = USFSubsystem::Get(self->GetWorld()))
+				{
+					if (USFWalkService* Walk = SS->GetWalkService(); Walk && Walk->IsActive())
+					{
+						WalkSpec = Walk->BuildCommitSpec();
+						bHaveWalkCost = WalkSpec.bValid;
+					}
+				}
+			}
+			if (bHaveWalkCost)
+			{
+				const int32 NumChildren = MutableSelf->GetHologramChildren().Num();
+				UE_LOG(LogSmartFoundations, Verbose,
+					TEXT("[Walk-cost] Hook A %s: incl=%d children=%d cost-types=%d -> %s"),
+					*self->GetName(), includeChildren ? 1 : 0, NumChildren, WalkSpec.Cost.Num(),
+					(NumChildren == 0 && WalkSpec.Cost.Num() > 0) ? TEXT("CHARGING walk extras") : TEXT("SKIP"));
+				if (NumChildren == 0 && WalkSpec.Cost.Num() > 0)
+				{
+					TArray<FItemAmount> Total = scope(self, includeChildren); // seed's own cost (slot initialized)
+					for (const FItemAmount& W : WalkSpec.Cost)
+					{
+						bool bMerged = false;
+						for (FItemAmount& T : Total)
+						{
+							if (T.ItemClass == W.ItemClass) { T.Amount += W.Amount; bMerged = true; break; }
+						}
+						if (!bMerged) { Total.Add(W); }
+					}
+					scope.Override(Total);
+				}
+				return;
+			}
+
 			FSFScalingSpec Spec;
 			if (!FindStagedSpec(self, Spec, /*bConsume=*/false) || CountGridChildren(MutableSelf) > 0)
 			{
@@ -408,8 +472,10 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 				{
 					FSFScalingSpec PeekSpec;
 					FSFExtendCommitSpec PeekCommit;
+					FSFWalkCommitSpec PeekWalk;
 					if (FindStagedSpec(self, PeekSpec, /*bConsume=*/false) ||
-					    FindStagedExtendCommit(self, PeekCommit, /*bConsume=*/false))
+					    FindStagedExtendCommit(self, PeekCommit, /*bConsume=*/false) ||
+					    FindStagedWalkCommit(self, PeekWalk, /*bConsume=*/false))
 					{
 						const FVector ParentLocation = self->GetActorLocation();
 						for (TActorIterator<AFGBuildableBlueprintDesigner> It(self->GetWorld()); It; ++It)
@@ -446,7 +512,9 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 			const bool bHasScaling = FindStagedSpec(self, Spec, /*bConsume=*/true);
 			FSFExtendCommitSpec ExtendSpec;
 			const bool bHasExtend = !bHasScaling && FindStagedExtendCommit(self, ExtendSpec, /*bConsume=*/true);
-			if (!bHasScaling && !bHasExtend)
+			FSFWalkCommitSpec WalkSpec;
+			const bool bHasWalk = !bHasScaling && !bHasExtend && FindStagedWalkCommit(self, WalkSpec, /*bConsume=*/true);
+			if (!bHasScaling && !bHasExtend && !bHasWalk)
 			{
 				return; // nothing staged for this instigator/class (e.g. a child in the loop)
 			}
@@ -455,7 +523,7 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 			// load-bearing fact for designer-resident client builds (see re-derivation above).
 			UE_LOG(LogSmartFoundations, Verbose,
 				TEXT("[MP-SPEC] Construct seam: %s (%s staged), designer=%s."),
-				*self->GetName(), bHasScaling ? TEXT("scaling spec") : TEXT("extend commit"),
+				*self->GetName(), bHasScaling ? TEXT("scaling spec") : (bHasExtend ? TEXT("extend commit") : TEXT("walk commit")),
 				self->GetBlueprintDesigner() ? *self->GetBlueprintDesigner()->GetName() : TEXT("none"));
 
 			if (bHasScaling)
@@ -476,7 +544,7 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 				// actors - the same mechanism SP uses.
 				SFScalingSpecExpansion::SpawnConduitPlanChildren(self, Spec);
 			}
-			else
+			else if (bHasExtend)
 			{
 				// [EXTEND-MP] Reconstruct the FULL commit server-side, pre-scope(): authoritative
 				// graph walk -> CaptureFromTopology -> FromSource(ParentOffset) -> spawn parent
@@ -491,6 +559,22 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 					if (USFExtendService* Extend = SS->GetExtendService())
 					{
 						Extend->ReconstructCommitOnServer(self, ExtendSpec);
+					}
+				}
+			}
+			else // bHasWalk
+			{
+				// Smart Walking (#356 Slice 3): reconstruct the walk's poles + belts server-side, pre-scope():
+				// re-derive every frame from the per-segment deltas (AccumulateFrame), spawn the cross-section
+				// poles + spanning belts AddChild'd to this seed + pre-wired. The scope() cascade below builds
+				// them; the belts coincidence-wire via the existing ASFConveyorBeltHologram construct path. The
+				// client only ever previewed standalone holograms (discarded on commit) - the authoritative
+				// geometry is re-derived here from the parameters-only spec, exactly like the Extend commit.
+				if (USFSubsystem* SS = USFSubsystem::Get(self->GetWorld()))
+				{
+					if (USFWalkService* Walk = SS->GetWalkService())
+					{
+						Walk->ReconstructWalkCommitOnServer(self, WalkSpec);
 					}
 				}
 			}

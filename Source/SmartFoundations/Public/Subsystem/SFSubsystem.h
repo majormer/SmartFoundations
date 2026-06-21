@@ -15,6 +15,7 @@
 #include "HUD/SFHUDTypes.h"
 #include "Features/Scaling/SFScalingSpec.h"
 #include "Features/Extend/SFExtendCommitSpec.h"   // [EXTEND-MP] staged Extend commit
+#include "Features/Walk/SFWalkCommitSpec.h"        // Smart Walking (#356 Slice 3) staged walk commit
 #include "Config/Smart_ConfigStruct.h"
 
 // Service includes - needed for FSFBuildingMetadata and FSplinePointData struct members
@@ -884,6 +885,19 @@ public:
     /** Server: consume (clear) the staged Extend commit for a construct instigator if it matches. */
     bool ConsumeExtendCommitForInstigator(class APawn* Instigator, UClass* BuildClass, FSFExtendCommitSpec& OutSpec);
 
+    // Smart Walking (#356 Slice 3): same staging model for the walk commit (origin + per-segment deltas
+    // + conveyance config + cost), staged via USFRCO::Server_StageWalkCommit at fire time, consumed by
+    // the same Construct hook to reconstruct the walk poles + belts server-side.
+
+    /** Server: stage (or clear, when !Spec.bValid) the pending walk commit for a player. */
+    void StageWalkCommitForPlayer(class APlayerController* PC, const FSFWalkCommitSpec& Spec);
+
+    /** Server: peek the staged walk commit for a construct instigator if it matches. */
+    bool PeekWalkCommitForInstigator(class APawn* Instigator, UClass* BuildClass, FSFWalkCommitSpec& OutSpec) const;
+
+    /** Server: consume (clear) the staged walk commit for a construct instigator if it matches. */
+    bool ConsumeWalkCommitForInstigator(class APawn* Instigator, UClass* BuildClass, FSFWalkCommitSpec& OutSpec);
+
 private:
     /** Server-only: pending scaling spec per player controller (transient, never saved). */
     TMap<TWeakObjectPtr<APlayerController>, FSFScalingSpec> StagedScalingSpecs;
@@ -895,6 +909,12 @@ private:
      *  continuously while the preview is active, so a live session refreshes every ~250ms; an
      *  entry older than the TTL is an abandoned session and must not be consumed). */
     TMap<TWeakObjectPtr<APlayerController>, double> StagedExtendCommitTimes;
+
+    /** Server-only: pending walk commit per player controller (transient, never saved). */
+    TMap<TWeakObjectPtr<APlayerController>, FSFWalkCommitSpec> StagedWalkCommits;
+
+    /** Server-only: staging time per walk commit (freshness TTL, same model as the Extend commit). */
+    TMap<TWeakObjectPtr<APlayerController>, double> StagedWalkCommitTimes;
 
 public:
 

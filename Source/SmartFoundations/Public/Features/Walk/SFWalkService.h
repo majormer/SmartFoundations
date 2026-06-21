@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "UObject/Object.h"
 #include "Features/Walk/SFWalkTypes.h"
+#include "Features/Walk/SFWalkCommitSpec.h"
 #include "SFWalkService.generated.h"
 
 class USFSubsystem;
@@ -42,8 +43,21 @@ public:
      */
     bool EnterWalk(AFGHologram* SeedHologram);
 
-    /** End the walk. Slice 0: always destroys the preview (bCommit is reserved for Slice 3). */
+    /** End the walk. bCommit just discards the local PREVIEW: the actual build is the staged commit spec the
+     *  server reconstructs (BuildCommitSpec -> Server_StageWalkCommit -> ReconstructWalkCommitOnServer), so the
+     *  client side only needs to tear down its preview holograms either way. */
     void ExitWalk(bool bCommit);
+
+    /** Slice 3: snapshot the live walk session into a wire-safe, PARAMETERS-ONLY commit spec (origin frame +
+     *  per-segment deltas + belt mode/tier + seed class + summed preview cost). Returns an invalid spec (bValid
+     *  false = clear) when there is nothing to commit. Client-side; staged via USFRCO::Server_StageWalkCommit. */
+    FSFWalkCommitSpec BuildCommitSpec() const;
+
+    /** Slice 3 (SERVER, at the construct seam): reconstruct the walk poles + belts from a staged commit spec,
+     *  AddChild'd to the seed hologram and pre-wired, so the vanilla scope() cascade builds them (mirrors
+     *  USFExtendService::ReconstructCommitOnServer). Re-derives every frame from the deltas via AccumulateFrame -
+     *  uses LOCAL state only, never the live member session. Returns the number of child holograms spawned. */
+    int32 ReconstructWalkCommitOnServer(AFGHologram* SeedHologram, const FSFWalkCommitSpec& Spec);
 
     /** Commit-on-scale: lock the active segment and start a new active one inheriting the heading. */
     void CommitActiveAndAdvance();

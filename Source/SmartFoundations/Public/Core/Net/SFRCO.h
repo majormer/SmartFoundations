@@ -8,6 +8,7 @@
 #include "Features/Scaling/SFScalingSpec.h"
 #include "Features/Extend/SFExtendTypes.h"      // FSFExtendTopology ([EXTEND-MP] topology RCO)
 #include "Features/Extend/SFExtendCommitSpec.h" // FSFExtendCommitSpec ([EXTEND-MP] commit staging)
+#include "Features/Walk/SFWalkCommitSpec.h"      // FSFWalkCommitSpec (Smart Walking #356 Slice 3 commit staging)
 #include "Features/Upgrade/SFUpgradeExecutionService.h"
 #include "Features/Upgrade/SFUpgradeTraversalService.h" // [UPGRADE-MP] FSFTraversalConfig/Result
 #include "SFRCO.generated.h"
@@ -138,6 +139,20 @@ public:
 	 */
 	UFUNCTION(Server, Reliable, WithValidation)
 	void Server_StageExtendCommit(FSFExtendCommitSpec Spec);
+
+	// ========================================
+	// Smart Walking MP (#356 Slice 3): spec-based walk commit
+	// ========================================
+
+	/**
+	 * Client stages the Smart Walking commit (origin frame + per-segment authored deltas + conveyance
+	 * config + preview cost) right before firing the build gun. The Construct hook consumes it (matched
+	 * by instigator + seed build class) and reconstructs the walk poles + belts server-side from the
+	 * deltas - PARAMETERS ONLY, like the Extend commit. Overwrite semantics (an invalid commit is an
+	 * explicit clear), so a stale commit from an abandoned walk can never leak into a later fire.
+	 */
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_StageWalkCommit(FSFWalkCommitSpec Spec);
 
 	// ========================================
 	// Upgrade Audit RPCs

@@ -7,6 +7,7 @@
 #include "Holograms/Logistics/SFConveyorBeltHologram.h"
 #include "FGFactoryConnectionComponent.h"
 #include "FGPlayerController.h"
+#include "FGRecipe.h"   // UFGRecipe for the belt-tier recipe (length-based GetCost needs it)
 
 // Distinct category from SFWalkService.cpp's LogSmartWalk: the module is a UNITY build, so two file-local
 // DEFINE_LOG_CATEGORY_STATIC(LogSmartWalk) in the same TU collide (struct redefinition). Belt routing logs land
@@ -29,10 +30,10 @@ UFGFactoryConnectionComponent* USFWalkBeltConveyance::FirstConnector(AFGHologram
     return Connectors.Num() > 0 ? Connectors[0] : nullptr;
 }
 
-AFGHologram* USFWalkBeltConveyance::LinkOrUpdate(AFGHologram* ExistingSpan, AFGHologram* FromAnchor, AFGHologram* ToAnchor, AFGHologram* ParentForChild)
+AFGHologram* USFWalkBeltConveyance::LinkOrUpdate(AFGHologram* ExistingSpan, AFGHologram* FromAnchor, AFGHologram* ToAnchor, AFGHologram* ParentForChild, bool bAddChildForBuild)
 {
-    UE_LOG(LogSmartWalkBelt, Log, TEXT(">>> LinkOrUpdate ENTER: existing=%s from=%s to=%s parent(seed)=%s"),
-        *GetNameSafe(ExistingSpan), *GetNameSafe(FromAnchor), *GetNameSafe(ToAnchor), *GetNameSafe(ParentForChild));
+    UE_LOG(LogSmartWalkBelt, Log, TEXT(">>> LinkOrUpdate ENTER: existing=%s from=%s to=%s parent(seed)=%s build=%d"),
+        *GetNameSafe(ExistingSpan), *GetNameSafe(FromAnchor), *GetNameSafe(ToAnchor), *GetNameSafe(ParentForChild), bAddChildForBuild ? 1 : 0);
     USFSubsystem* Sub = Subsystem.Get();
     if (!Sub || !IsValid(FromAnchor) || !IsValid(ToAnchor))
     {
@@ -116,6 +117,11 @@ AFGHologram* USFWalkBeltConveyance::LinkOrUpdate(AFGHologram* ExistingSpan, AFGH
     {
         return nullptr;
     }
+    // Resolve the belt RECIPE for this tier too: vanilla AFGConveyorBeltHologram::GetCost derives the length-based
+    // cost from the recipe's ingredients-per-meter x spline length. Without a recipe GetCost returns 0 -> the walk
+    // committed FREE belts (the build class alone is enough to BUILD, but not to COST). Mirrors the established
+    // child-hologram order (SetBuildClass + SetRecipe before FinishSpawning) the stackable/Extend children use.
+    const TSubclassOf<UFGRecipe> BeltRecipe = Sub->GetBeltRecipeForTier(BeltTier);
 
     UWorld* World = ToAnchor->GetWorld();
     if (!World)
@@ -138,6 +144,10 @@ AFGHologram* USFWalkBeltConveyance::LinkOrUpdate(AFGHologram* ExistingSpan, AFGH
     Belt->SetReplicates(false);
     Belt->SetReplicateMovement(false);
     Belt->SetBuildClass(BeltBuildClass);
+    if (BeltRecipe)
+    {
+        Belt->SetRecipe(BeltRecipe);   // length-based GetCost needs the recipe (else free belts) - mRecipe is null on a fresh spawn, so the SetRecipe !mRecipe assert is satisfied
+    }
     Belt->Tags.AddUnique(FName(TEXT("SF_StackableChild")));
 
     USFHologramDataService::DisableValidation(Belt);
@@ -162,11 +172,21 @@ AFGHologram* USFWalkBeltConveyance::LinkOrUpdate(AFGHologram* ExistingSpan, AFGH
     Belt->SetActorTickEnabled(false);
     Belt->RegisterAllComponents();
     Belt->SetPlacementMaterialState(EHologramMaterialState::HMS_OK);
-    // STANDALONE — deliberately NOT AddChild'd to the seed (same crash/horizon reasons as the walk pole): AddChild
-    // leaves a stale mChildren entry on Destroy() that the build gun's per-tick ResetConstructDisqualifiers
-    // recursion crashes on, and re-bases the belt's transform relative to the far-from-origin seed. The belt is
-    // routed in WORLD space (StartPos/EndPos are world connector positions) and tracked by SFWalkService.
-    // ParentForChild is retained in the signature only for the entry-log diagnostics.
+    if (bAddChildForBuild && IsValid(ParentForChild))
+    {
+        // Slice 3 COMMIT (server-side at the construct seam): AddChild to the seed so the vanilla scope()
+        // cascade builds it (the Extend SpawnChildHolograms pattern). Safe here - this is a one-shot construct,
+        // not the per-frame preview tick that the standalone path avoids (where AddChild's stale mChildren entry
+        // crashed the build gun's ResetConstructDisqualifiers recursion). SetSnappedConnections above carries the
+        // wiring into the build.
+        ParentForChild->AddChild(Belt, Belt->GetFName());   // unique child name (NAME_None asserts on duplicates)
+        // AddChild RE-BASES/repositions the child (vanilla), so re-route in WORLD space AFTER it - the committed
+        // belt then keeps the exact shape it previewed (mirrors Extend re-applying spline data after AddChild).
+        Belt->ApplyBeltBuildModeRouting(RoutingMode, StartPos, StartNormal, EndPos, EndNormal);
+    }
+    // PREVIEW (bAddChildForBuild=false): deliberately left STANDALONE - AddChild re-bases the belt to the
+    // far-from-origin seed and its stale mChildren entry crashes the build gun's per-tick disqualifier recursion
+    // on Destroy(). The belt is routed in WORLD space and tracked by SFWalkService.
     Belt->TriggerMeshGeneration();
     Belt->ForceApplyHologramMaterial();
 
