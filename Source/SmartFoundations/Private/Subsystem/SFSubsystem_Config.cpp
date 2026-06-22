@@ -1617,6 +1617,13 @@ bool USFSubsystem::IsCurrentHologramAutoConnectCapable() const
 	       USFAutoConnectService::IsPassthroughPipeHologram(Hologram);
 }
 
+bool USFSubsystem::IsCurrentHologramWalkable() const
+{
+	// Smart Walking seeds from a stackable belt OR pipe support (the tested set; matches the walk's conveyance adapters).
+	return AutoConnectService && ActiveHologram.IsValid()
+		&& AutoConnectService->IsStackableSupportHologram(ActiveHologram.Get());
+}
+
 TArray<FString> USFSubsystem::GetDirtyAutoConnectSettings() const
 {
 	TArray<FString> DirtySettings;

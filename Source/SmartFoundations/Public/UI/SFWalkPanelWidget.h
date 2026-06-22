@@ -16,6 +16,7 @@ struct FSFWalkSegmentView;
 class USFWalkPanelWidget;
 class USpinBox;
 class UHorizontalBox;
+class UComboBoxString;
 
 /**
  * Tiny per-cell binding for the editable table. A USpinBox's OnValueCommitted delegate carries only the new value,
@@ -64,6 +65,11 @@ protected:
     /** Modal (UIOnly) panel blocks the game K toggle, so handle K/Escape here to hide it. */
     virtual FReply NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent) override;
 
+    /** Right-click-drag the panel to reposition it (render-translate the stable SegmentListBox; persists across refreshes). */
+    virtual FReply NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
+    virtual FReply NativeOnMouseMove(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
+    virtual FReply NativeOnMouseButtonUp(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
+
     UPROPERTY(meta = (BindWidgetOptional)) TObjectPtr<UTextBlock> TitleText;
     UPROPERTY(meta = (BindWidgetOptional)) TObjectPtr<UTextBlock> SummaryText;
     UPROPERTY(meta = (BindWidgetOptional)) TObjectPtr<UVerticalBox> SegmentListBox;
@@ -100,11 +106,22 @@ private:
     UFUNCTION() void OnConveyanceTierCycle();
     UFUNCTION() void OnRoutingCycle();
 
+    /** #356 setting dropdowns — write the live auto-connect tier/direction/routing setting + RerouteSpans (per GetConveyanceType). */
+    UFUNCTION() void OnTierComboChanged(FString SelectedItem, ESelectInfo::Type SelectionType);
+    UFUNCTION() void OnDirectionComboChanged(FString SelectedItem, ESelectInfo::Type SelectionType);
+    UFUNCTION() void OnRoutingComboChanged(FString SelectedItem, ESelectInfo::Type SelectionType);
+
+    /** OnGenerateWidget for the setting combos — black SF-font item text (runtime combos can't InitFont, which is protected). */
+    UFUNCTION() UWidget* MakeComboItemWidget(FString Item);
+
     /** Build one segment-list row (index | Advance | Turn | Rise | Exit heading), highlighting the active. */
     UWidget* MakeSegmentRow(const FSFWalkSegmentView& View);
 
     /** Build a "[Label   <Value>]" selector row; OutButton receives the clickable value button so Refresh can bind it. */
     UWidget* MakeSelectorRow(const FString& Label, const FString& Value, class UButton*& OutButton);
+
+    /** Build a "[Label  <dropdown>]" combo row; OutCombo receives the UComboBoxString so Refresh can bind it. */
+    UWidget* MakeComboRow(const FString& Label, const TArray<FString>& Options, int32 SelectedIndex, TObjectPtr<class UComboBoxString>& OutCombo);
 
     /** A small text cell for a row (FontSize defaults to the dense table size). */
     UWidget* MakeCell(const FString& Text, const FLinearColor& Color, int32 FontSize = 10);
@@ -122,11 +139,22 @@ private:
     UPROPERTY()
     TArray<TObjectPtr<USFWalkCellBinding>> CellBindings;
 
+    /** #356 setting dropdowns (rebuilt each Refresh), wired to the live auto-connect settings. */
+    UPROPERTY() TObjectPtr<UComboBoxString> TierCombo;
+    UPROPERTY() TObjectPtr<UComboBoxString> DirectionCombo;
+    UPROPERTY() TObjectPtr<UComboBoxString> RoutingCombo;
+
     /** When true, a committed cell applies + rebuilds live; when false, edits stage in PendingEdits until Apply. */
     bool bApplyImmediately = true;
 
     /** Staged cell edits (key = {segment index, field id}, value = the typed display value) when not applying live. */
     TMap<FIntPoint, float> PendingEdits;
+
+    /** Right-click drag-to-move state. PanelOffset is the accumulated render-translation applied to SegmentListBox. */
+    FVector2D PanelOffset = FVector2D::ZeroVector;
+    bool bDraggingPanel = false;
+    FVector2D DragMouseStart = FVector2D::ZeroVector;
+    FVector2D DragOffsetStart = FVector2D::ZeroVector;
 
     /** Tear down the widget (remove from viewport, restore input). */
     void CloseWidget();

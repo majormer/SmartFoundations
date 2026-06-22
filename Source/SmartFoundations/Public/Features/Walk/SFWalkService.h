@@ -104,6 +104,11 @@ public:
      *  routing mode changes via the auto-connect settings) — the path/frames are unchanged, only the spans re-route. */
     void RerouteSpans();
 
+    /** Destroy + re-create every segment's spanning element so LinkOrUpdate's CREATE branch re-resolves the current
+     *  belt/pipe TIER class (the UPDATE branch only re-routes geometry on the old class). Poles/frames unchanged.
+     *  Call this — not RerouteSpans — after a tier change so the preview shows the new Mk class. */
+    void RecreateSpans();
+
     /** Per-frame (driven by the subsystem Tick while walk is active) re-clear of FGCDInitializing + force HMS_OK on
      *  the walk's STANDALONE preview holograms. Mirrors how the grid/Extend keep their un-ticked clone previews cyan
      *  (ResetConstructDisqualifiers then SetPlacementMaterialState). These holograms are deliberately NOT AddChild'd
@@ -161,6 +166,11 @@ private:
     /** True if the player can afford the whole walk (all non-seed holograms' summed cost vs inventory + central storage;
      *  always true under No Build Cost). Drives the red/cyan preview state in RefreshWalkValidity. */
     bool CanAffordWalk() const;
+
+    /** Nudge-the-parent auto-rebase: if the seed (parent) has been nudged since last frame, re-anchor OriginFrame to it
+     *  and reposition the origin cells + every segment so the whole run moves rigidly with the parent (like AC poles).
+     *  Cheap no-op when the seed hasn't moved; called each frame from RefreshWalkValidity. */
+    void SyncToSeedTransform();
 
     UPROPERTY()
     TWeakObjectPtr<USFSubsystem> Subsystem;

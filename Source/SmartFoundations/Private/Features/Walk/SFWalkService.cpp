@@ -710,6 +710,28 @@ void USFWalkService::RerouteSpans()
     }
 }
 
+void USFWalkService::RecreateSpans()
+{
+    if (!bActive)
+    {
+        return;
+    }
+    // A tier change must re-spawn the belts: LinkOrUpdate's UPDATE branch only re-routes geometry on the existing
+    // hologram (old Mk class); the belt class is resolved only in the CREATE branch (null ExistingSpan). Destroy
+    // every span the same way DestroySegmentHolograms does (reflection-unlink then Destroy), null the slots, then
+    // RepositionFrom re-runs UpdateSegmentSpans so each now-null slot takes the CREATE path with the current tier.
+    // Poles/frames are unchanged, so only the spans churn.
+    for (FSFWalkSegment& Seg : Segments)
+    {
+        for (const TWeakObjectPtr<AFGHologram>& WeakSpan : Seg.Spans)
+        {
+            SF_SafeDestroyHologram(WeakSpan.Get());
+        }
+        Seg.Spans.Reset();
+    }
+    RepositionFrom(0);
+}
+
 bool USFWalkService::CanAffordWalk() const
 {
     if (!bActive)
@@ -778,12 +800,50 @@ bool USFWalkService::CanAffordWalk() const
     return true;
 }
 
+void USFWalkService::SyncToSeedTransform()
+{
+    AFGHologram* Seed = SeedHologram.Get();
+    if (!Seed)
+    {
+        return;
+    }
+
+    const FTransform SeedXf = Seed->GetActorTransform();
+    if (SeedXf.GetLocation().Equals(OriginFrame.GetLocation(), 1.0f))
+    {
+        return;   // seed hasn't moved since last frame — nothing to re-anchor
+    }
+
+    // Seed was nudged (the build-gun nudge bypasses the position lock) — re-anchor the WHOLE run to it so it moves
+    // rigidly with the parent, mirroring how nudging an auto-connect belt pole carries its run.
+    OriginFrame = SeedXf;
+
+    // Re-place the origin cross-section cells around the new seed frame (skip cell 0 = seed; it moved itself). Cells are
+    // flat-indexed laneRow*|stacks|+stackRow, same as RebuildOriginHolograms.
+    const int32 Stacks    = FMath::Max(1, FMath::Abs(CrossSectionStacks));
+    const int32 LaneSign  = (CrossSectionLanes  >= 1) ? 1 : -1;
+    const int32 StackSign = (CrossSectionStacks >= 1) ? 1 : -1;
+    for (int32 i = 0; i < OriginHolograms.Num(); ++i)
+    {
+        AFGHologram* Holo = OriginHolograms[i].Get();
+        if (!IsValid(Holo) || Holo == Seed) { continue; }
+        const FTransform Pose = CrossSectionPose(OriginFrame, (i / Stacks) * LaneSign, (i % Stacks) * StackSign);
+        Holo->SetActorLocationAndRotation(Pose.GetLocation(), Pose.Rotator());
+        Holo->UpdateComponentTransforms();
+    }
+
+    // Re-derive + reposition every segment's poles + spans from the new origin.
+    RepositionFrom(0);
+}
+
 void USFWalkService::RefreshWalkValidity()
 {
     if (!bActive)
     {
         return;
     }
+
+    SyncToSeedTransform();   // nudge-the-parent: keep the run anchored to the (possibly nudged) seed
     // Standalone walk holograms aren't build-gun-ticked, so the FGCDInitializing disqualifier added during init is never
     // cleared and they'd render RED. Clear it every frame, THEN set the material state by AFFORDABILITY: HMS_OK (cyan)
     // if the player can afford the whole walk, HMS_ERROR (red) if not — so a broke walk shows red instead of silently

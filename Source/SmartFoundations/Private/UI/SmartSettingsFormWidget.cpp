@@ -66,6 +66,22 @@ void USmartSettingsFormWidget::NativeConstruct()
     if (WalkPathButton)
     {
         WalkPathButton->OnClicked.AddDynamic(this, &USmartSettingsFormWidget::OnWalkPathButtonClicked);
+        // Match the Smart Restore button (grey box, black label at size 24) and label it "Smart Walking".
+        if (UButton* RestoreBtn = Cast<UButton>(GetWidgetFromName(TEXT("RestoreSectionToggle"))))
+        {
+            WalkPathButton->SetStyle(RestoreBtn->WidgetStyle);
+        }
+        if (UTextBlock* WalkLabel = Cast<UTextBlock>(WalkPathButton->GetChildAt(0)))
+        {
+            WalkLabel->SetText(FText::FromString(TEXT("Smart Walking")));
+            WalkLabel->SetColorAndOpacity(FSlateColor(FLinearColor(0.0f, 0.0f, 0.0f, 1.0f)));
+            WalkLabel->SetFont(SFFont::Get(24));
+        }
+        // Contextual: only show Walk Path for a seed that can start a walk (stackable belt/pipe support). Collapsed
+        // otherwise so it takes NO space — the panel never widens for it, and whatever's below (Smart Restore) reflows up.
+        USFSubsystem* WalkSub = USFSubsystem::Get(GetWorld());
+        WalkPathButton->SetVisibility((WalkSub && WalkSub->IsCurrentHologramWalkable())
+            ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
     }
 
     // Set up confirmation dialog button handlers
@@ -502,7 +518,7 @@ void USmartSettingsFormWidget::NativeConstruct()
         // Button labels
         SetLabel(TEXT("ApplyBtnText"), LOCTEXT("Panel_Btn_Apply", "Apply"));
         SetLabel(TEXT("ResetBtnText"), LOCTEXT("Panel_Btn_Reset", "Reset"));
-        SetLabel(TEXT("CloseButtonText"), LOCTEXT("Panel_Btn_Close", "Close"));
+        SetLabel(TEXT("CloseButtonText"), FText::FromString(TEXT("X")));  // glyph close button (top-right of header), not a localized word
         SetLabel(TEXT("ClearRecipeButtonText"), LOCTEXT("Panel_Btn_ClearRecipe", "Clear"));
         SetLabel(TEXT("ConfirmYesText"), LOCTEXT("Panel_Btn_Continue", "Continue"));
         SetLabel(TEXT("ConfirmNoText"), LOCTEXT("Panel_Btn_Cancel", "Cancel"));

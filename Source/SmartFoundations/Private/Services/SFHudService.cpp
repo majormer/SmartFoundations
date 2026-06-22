@@ -339,6 +339,7 @@ TPair<FString, FString> USFHudService::BuildCounterDisplayLines() const
 			const FString Conveyance = (Walk->GetConveyanceType() == ESFWalkConveyanceType::Pipe) ? TEXT("pipe") : TEXT("belt");
 			// Compact one-line badge — heading now shows the 16-point compass + degrees, and the per-segment detail
 			// lives in the Walk panel, not the HUD (this used to be two verbose lines that cluttered the screen).
+			if (!Subsystem->IsWalkPanelVisible())   // panel shows this readout itself; HUD draws over it (badge returns when the panel is hidden via K)
 			Lines.Add(FText::Format(LOCTEXT("HUD_Walk", "*Walk  {0} seg | head {1} {2}deg | {3}"),
 				FText::AsNumber(Views.Num()),
 				FText::FromString(SFHeadingToCompass16(HeadDeg)),

@@ -465,6 +465,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Smart Walking")
 	void ToggleWalkPanel();
 
+	/** True while the Walk panel is up (in viewport + Visible). The HUD uses this to suppress its walk readout,
+	 *  which otherwise draws over/through the panel; it returns when the panel is hidden via K. */
+	bool IsWalkPanelVisible() const;
+
 	/** Check if Smart! is actively scaling (grid > 1x1x1) — any axis with abs > 1 */
 	bool IsSmartScalingActive() const
 	{
@@ -1269,6 +1273,9 @@ public:
 	
 	/** Check if current hologram is an auto-connect capable type (distributor, pipe junction, power pole, stackable support) */
 	bool IsCurrentHologramAutoConnectCapable() const;
+
+	/** Check if the current hologram can SEED a Smart Walk (a stackable belt/pipe support) — gates the Walk Path button. */
+	bool IsCurrentHologramWalkable() const;
 	
 	/** Get current auto-connect runtime settings (for use by auto-connect service) */
 	const FAutoConnectRuntimeSettings& GetAutoConnectRuntimeSettings() const { return AutoConnectRuntimeSettings; }

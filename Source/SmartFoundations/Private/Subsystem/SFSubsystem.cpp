@@ -1302,6 +1302,12 @@ void USFSubsystem::OpenWalkPanel()
 	Widget->AddToViewport(100);
 }
 
+bool USFSubsystem::IsWalkPanelVisible() const
+{
+	return WalkPanelWidget.IsValid() && WalkPanelWidget->IsInViewport()
+		&& WalkPanelWidget->GetVisibility() == ESlateVisibility::Visible;
+}
+
 void USFSubsystem::ToggleWalkPanel()
 {
 	// Create it (Collapsed) if this is the first K press of the walk, then fall through to show it.

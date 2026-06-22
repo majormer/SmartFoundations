@@ -44,6 +44,13 @@ AFGHologram* USFWalkBeltConveyance::LinkOrUpdate(AFGHologram* ExistingSpan, AFGH
         return ExistingSpan;
     }
 
+    // #356 belt direction: Backward (StackableBeltDirection == 1) reverses flow by swapping which pole is source vs
+    // target (mirrors SFAutoConnectService_Stackable). Applied here so BOTH the create and update paths below honor it.
+    if (Sub->GetAutoConnectRuntimeSettings().StackableBeltDirection == 1)
+    {
+        Swap(FromAnchor, ToAnchor);
+    }
+
     UFGFactoryConnectionComponent* FromConn = FirstConnector(FromAnchor);
     UFGFactoryConnectionComponent* ToConn = FirstConnector(ToAnchor);
 
@@ -92,6 +99,7 @@ AFGHologram* USFWalkBeltConveyance::LinkOrUpdate(AFGHologram* ExistingSpan, AFGH
     if (ASFConveyorBeltHologram* Existing = Cast<ASFConveyorBeltHologram>(ExistingSpan))
     {
         Existing->SetActorLocation(StartPos);
+        Existing->SetSnappedConnections(FromConn, ToConn);   // #356: re-wire so a direction toggle flips flow on the existing belt, not just geometry
         Existing->ApplyBeltBuildModeRouting(RoutingMode, StartPos, StartNormal, EndPos, EndNormal);
         Existing->TriggerMeshGeneration();
         Existing->ForceApplyHologramMaterial();
