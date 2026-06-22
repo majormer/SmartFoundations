@@ -60,3 +60,21 @@ private:
     /** First factory connector on a pole hologram (the stackable pole's SnapOnly0), or null. */
     static class UFGFactoryConnectionComponent* FirstConnector(AFGHologram* Pole);
 };
+
+/**
+ * Pipe conveyance: the spanning element is an SFPipelineHologram routed between two stackable pipeline supports'
+ * pipe connectors, mirroring USFWalkBeltConveyance and the proven stackable-pipe auto-connect path
+ * (ApplyPipeBuildModeRouting + mSnappedConnectionComponents + tier recipe for cost; coincidence-wired at Construct).
+ */
+UCLASS()
+class SMARTFOUNDATIONS_API USFWalkPipeConveyance : public USFWalkConveyance
+{
+    GENERATED_BODY()
+
+public:
+    virtual AFGHologram* LinkOrUpdate(AFGHologram* ExistingSpan, AFGHologram* FromAnchor, AFGHologram* ToAnchor, AFGHologram* ParentForChild, bool bAddChildForBuild = false) override;
+
+private:
+    /** First pipe connector on a pipeline-support hologram, or null. */
+    static class UFGPipeConnectionComponentBase* FirstPipeConnector(AFGHologram* Support);
+};

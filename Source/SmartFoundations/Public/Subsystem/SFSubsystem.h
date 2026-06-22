@@ -460,6 +460,11 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Smart Walking")
 	void OpenWalkPanel();
 
+	/** #356: while a walk is engaged, K toggles this panel IN LIEU OF the Smart Panel — hide it to steer with a clean
+	 *  screen (HUD badge only), restore it to review the segment path. Creates the panel if it isn't up yet. */
+	UFUNCTION(BlueprintCallable, Category = "Smart Walking")
+	void ToggleWalkPanel();
+
 	/** Check if Smart! is actively scaling (grid > 1x1x1) — any axis with abs > 1 */
 	bool IsSmartScalingActive() const
 	{

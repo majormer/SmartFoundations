@@ -2,13 +2,19 @@
 
 #include "Features/Walk/SFWalkService.h"
 #include "Features/Walk/SFWalkConveyance.h"
+#include "Features/AutoConnect/SFAutoConnectService.h"   // IsStackablePipelineSupportHologram (seed-type -> conveyance adapter)
 #include "Subsystem/SFSubsystem.h"
 #include "Subsystem/SFHologramDataService.h"
 #include "Subsystem/SFPositionCalculator.h"
 #include "Hologram/FGHologram.h"
 #include "FGRecipe.h"
 #include "FGFactoryConnectionComponent.h"
+#include "FGCharacterPlayer.h"            // player inventory for walk affordability (red previews when broke)
+#include "FGInventoryComponent.h"
+#include "FGCentralStorageSubsystem.h"
+#include "Resources/FGItemDescriptor.h"  // UFGItemDescriptor key for the cost tally
 #include "GameFramework/Pawn.h"
+#include "GameFramework/Controller.h"
 #include "HAL/IConsoleManager.h"
 #include "UObject/UnrealType.h"   // FArrayProperty / FindFProperty for the safe-teardown reflection unlink
 
@@ -110,11 +116,26 @@ bool USFWalkService::EnterWalk(AFGHologram* InSeedHologram)
         *OriginFrame.GetLocation().ToString(), OriginFrame.Rotator().Yaw,
         InSeedHologram->IsHologramLocked() ? 1 : 0, InSeedHologram->IsHidden() ? 1 : 0);
 
-    // MVP: the held buildable is a stackable conveyor pole → Belt conveyance. Later this is selected from the
-    // ISFWalkConveyance registry by the held buildable (contextual availability).
-    USFWalkBeltConveyance* BeltConveyance = NewObject<USFWalkBeltConveyance>(this);
-    BeltConveyance->SetSubsystem(Subsystem.Get());
-    Conveyance = BeltConveyance;
+    // Select the conveyance adapter from the held buildable: a stackable PIPELINE support lays pipes; otherwise
+    // (a stackable conveyor pole) belts. The chosen type travels in the commit spec so the server reconstructs the
+    // matching span. (Later this generalizes to an ISFWalkConveyance registry for hyper-tubes, tracks, etc.)
+    ConveyanceType = USFAutoConnectService::IsStackablePipelineSupportHologram(InSeedHologram)
+        ? ESFWalkConveyanceType::Pipe
+        : ESFWalkConveyanceType::Belt;
+    if (ConveyanceType == ESFWalkConveyanceType::Pipe)
+    {
+        USFWalkPipeConveyance* PipeConveyance = NewObject<USFWalkPipeConveyance>(this);
+        PipeConveyance->SetSubsystem(Subsystem.Get());
+        Conveyance = PipeConveyance;
+    }
+    else
+    {
+        USFWalkBeltConveyance* BeltConveyance = NewObject<USFWalkBeltConveyance>(this);
+        BeltConveyance->SetSubsystem(Subsystem.Get());
+        Conveyance = BeltConveyance;
+    }
+    UE_LOG(LogSmartWalk, Log, TEXT("EnterWalk: conveyance = %s"),
+        ConveyanceType == ESFWalkConveyanceType::Pipe ? TEXT("PIPE") : TEXT("BELT"));
 
     // Fresh walk starts single-lane (1×1). The cross-section persists across segments via these counters.
     CrossSectionLanes = 1;
@@ -169,10 +190,15 @@ FSFWalkCommitSpec USFWalkService::BuildCommitSpec() const
         Spec.Segments.Add(Out);
     }
 
+    Spec.ConveyanceType = ConveyanceType;
     if (USFSubsystem* Sub = Subsystem.Get())
     {
-        Spec.BeltRoutingMode = Sub->GetAutoConnectRuntimeSettings().BeltRoutingMode;
-        Spec.BeltTier        = Sub->GetAutoConnectRuntimeSettings().BeltTierMain;
+        const auto& AC = Sub->GetAutoConnectRuntimeSettings();
+        Spec.BeltRoutingMode = AC.BeltRoutingMode;
+        Spec.BeltTier        = AC.BeltTierMain;
+        Spec.PipeRoutingMode = AC.PipeRoutingMode;
+        Spec.PipeTier        = AC.PipeTierMain;
+        Spec.bPipeIndicator  = AC.bPipeIndicator;
     }
     Spec.BuildClass = Seed->GetBuildClass();
 
@@ -203,7 +229,7 @@ FSFWalkCommitSpec USFWalkService::BuildCommitSpec() const
     for (const FSFWalkSegment& Seg : Segments)
     {
         for (const TWeakObjectPtr<AFGHologram>& H : Seg.Holograms) { AddCost(H.Get(), TEXT("pole")); }
-        for (const TWeakObjectPtr<AFGHologram>& B : Seg.Belts)     { AddCost(B.Get(), TEXT("belt")); }
+        for (const TWeakObjectPtr<AFGHologram>& S : Seg.Spans)     { AddCost(S.Get(), TEXT("span")); }
     }
 
     Spec.bValid = true;
@@ -229,12 +255,31 @@ int32 USFWalkService::ReconstructWalkCommitOnServer(AFGHologram* Seed, const FSF
     AActor* Owner = Seed->GetOwner();
     APawn* HologramInstigator = Cast<APawn>(Seed->GetInstigator());
 
-    // Apply the client's belt routing mode + tier so the server routes the spanning belts identically (the
-    // server's own runtime settings default elsewhere; mirrors Extend's #380/#386 install before re-deriving).
+    // Apply the client's routing mode + tier so the server routes the spans identically (its own runtime settings
+    // default elsewhere; mirrors Extend's #380/#386 install before re-deriving), and build a LOCAL conveyance
+    // adapter from the spec's type - the member Conveyance is null on a server with no live walk session (dedi),
+    // so never rely on it here.
+    USFWalkConveyance* BuildConveyance = nullptr;
     if (USFSubsystem* Sub = Subsystem.Get())
     {
         Sub->SetAutoConnectBeltRoutingMode(Spec.BeltRoutingMode);
         Sub->SetAutoConnectBeltTierMain(Spec.BeltTier);
+        Sub->SetAutoConnectPipeRoutingMode(Spec.PipeRoutingMode);
+        Sub->SetAutoConnectPipeTierMain(Spec.PipeTier);
+        Sub->SetAutoConnectPipeIndicator(Spec.bPipeIndicator);
+
+        if (Spec.ConveyanceType == ESFWalkConveyanceType::Pipe)
+        {
+            USFWalkPipeConveyance* P = NewObject<USFWalkPipeConveyance>(this);
+            P->SetSubsystem(Sub);
+            BuildConveyance = P;
+        }
+        else
+        {
+            USFWalkBeltConveyance* B = NewObject<USFWalkBeltConveyance>(this);
+            B->SetSubsystem(Sub);
+            BuildConveyance = B;
+        }
     }
 
     // Rebuild a LOCAL segment list from the spec deltas - no member-state mutation, so this is reentrant on the
@@ -317,8 +362,8 @@ int32 USFWalkService::ReconstructWalkCommitOnServer(AFGHologram* Seed, const FSF
 
     // Spanning belts: predecessor pole (same flat cell) -> this segment's pole, AddChild'd + pre-wired so the
     // cascade builds + connects them. (Uniform MVP: predecessor and current share the same cell count/indexing.)
-    int32 Belts = 0;
-    if (Conveyance)
+    int32 Spans = 0;
+    if (BuildConveyance)
     {
         for (int32 i = 0; i < Segs.Num(); ++i)
         {
@@ -329,17 +374,17 @@ int32 USFWalkService::ReconstructWalkCommitOnServer(AFGHologram* Seed, const FSF
                 AFGHologram* ToPole   = Cur.IsValidIndex(Cell)  ? Cur[Cell]  : nullptr;
                 AFGHologram* FromPole = Prev.IsValidIndex(Cell) ? Prev[Cell] : nullptr;
                 if (!IsValid(ToPole) || !IsValid(FromPole)) { continue; }
-                if (Conveyance->LinkOrUpdate(nullptr, FromPole, ToPole, Seed, /*bAddChildForBuild=*/true))
+                if (BuildConveyance->LinkOrUpdate(nullptr, FromPole, ToPole, Seed, /*bAddChildForBuild=*/true))
                 {
-                    ++Belts;
+                    ++Spans;
                 }
             }
         }
     }
 
-    UE_LOG(LogSmartWalk, Log, TEXT("<<< ReconstructWalkCommitOnServer EXIT: %d pole(s) + %d belt(s) AddChild'd to %s; vanilla construct will build them"),
-        Spawned, Belts, *GetNameSafe(Seed));
-    return Spawned + Belts;
+    UE_LOG(LogSmartWalk, Log, TEXT("<<< ReconstructWalkCommitOnServer EXIT: %d pole(s) + %d span(s) AddChild'd to %s; vanilla construct will build them"),
+        Spawned, Spans, *GetNameSafe(Seed));
+    return Spawned + Spans;
 }
 
 void USFWalkService::CommitActiveAndAdvance()
@@ -415,6 +460,25 @@ void USFWalkService::SetActiveAdjusters(float Advance, float TurnDegrees, float 
     // Re-derive every frame from this segment forward (forward kinematics).
     RepositionFrom(ActiveIndex);
     UE_LOG(LogSmartWalk, Log, TEXT("<<< SetActiveAdjusters EXIT: repositioned from %d"), ActiveIndex);
+}
+
+void USFWalkService::SetSegmentAtIndex(int32 Index, float Advance, float TurnDegrees, float Rise, float Shift)
+{
+    if (!bActive || !Segments.IsValidIndex(Index))
+    {
+        return;
+    }
+
+    FSFWalkSegment& Seg = Segments[Index];
+    Seg.Advance = Advance;
+    Seg.TurnDegrees = TurnDegrees;
+    Seg.Rise = Rise;
+    Seg.Shift = Shift;
+
+    // Re-derive + reposition every frame from this segment forward (committed-segment edit → live downstream rebuild).
+    RepositionFrom(Index);
+    UE_LOG(LogSmartWalk, Log, TEXT("[Walk] SetSegmentAtIndex %d -> adv=%.0f turn=%.0f rise=%.0f shift=%.0f"),
+        Index, Advance, TurnDegrees, Rise, Shift);
 }
 
 void USFWalkService::NudgeActive(float dAdvance, float dTurn, float dRise, float dShift)
@@ -636,7 +700,7 @@ TArray<FSFWalkSegmentView> USFWalkService::GetSegmentViews() const
     return Views;
 }
 
-void USFWalkService::RerouteBelts()
+void USFWalkService::RerouteSpans()
 {
     if (bActive)
     {
@@ -646,17 +710,87 @@ void USFWalkService::RerouteBelts()
     }
 }
 
+bool USFWalkService::CanAffordWalk() const
+{
+    if (!bActive)
+    {
+        return true;
+    }
+
+    // Player inventory — if we can't resolve it, never block (mirrors Extend's CanAffordExtendCost).
+    UFGInventoryComponent* Inventory = nullptr;
+    if (Subsystem.IsValid())
+    {
+        if (AController* Ctrl = Subsystem->GetLastController())
+        {
+            if (AFGCharacterPlayer* Char = Cast<AFGCharacterPlayer>(Ctrl->GetPawn()))
+            {
+                Inventory = Char->GetInventory();
+            }
+        }
+    }
+    if (!Inventory)
+    {
+        return true;
+    }
+    if (Inventory->GetNoBuildCost())
+    {
+        return true;   // free build (creative / No Build Cost)
+    }
+
+    // Sum the cost of every walk hologram (poles + spans + origin cells) EXCLUDING the seed (OriginHolograms[0], which
+    // the build gun charges separately). Walk holograms are standalone (not AddChild'd), so sum each one's own GetCost.
+    TMap<TSubclassOf<UFGItemDescriptor>, int32> Totals;
+    auto AddCost = [&Totals](AFGHologram* H)
+    {
+        if (!IsValid(H)) { return; }
+        for (const FItemAmount& IA : H->GetCost(/*includeChildren=*/false))
+        {
+            if (IA.ItemClass && IA.Amount > 0)
+            {
+                Totals.FindOrAdd(IA.ItemClass) += IA.Amount;
+            }
+        }
+    };
+    for (int32 i = 1; i < OriginHolograms.Num(); ++i)   // skip [0] = seed
+    {
+        AddCost(OriginHolograms[i].Get());
+    }
+    for (const FSFWalkSegment& Seg : Segments)
+    {
+        for (const TWeakObjectPtr<AFGHologram>& W : Seg.Holograms) { AddCost(W.Get()); }
+        for (const TWeakObjectPtr<AFGHologram>& W : Seg.Spans)     { AddCost(W.Get()); }
+    }
+
+    AFGCentralStorageSubsystem* CentralStorage = AFGCentralStorageSubsystem::Get(GetWorld());
+    for (const TPair<TSubclassOf<UFGItemDescriptor>, int32>& Pair : Totals)
+    {
+        int32 Available = Inventory->GetNumItems(Pair.Key);
+        if (CentralStorage)
+        {
+            Available += CentralStorage->GetNumItemsFromCentralStorage(Pair.Key);
+        }
+        if (Available < Pair.Value)
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
 void USFWalkService::RefreshWalkValidity()
 {
     if (!bActive)
     {
         return;
     }
-    // REUSE the grid/Extend clone-preview pattern (SFGridSpawnerService UpdateCallback ~538-546, SFExtendService
-    // RefreshExtension ~1838): our walk holograms are STANDALONE (not build-gun-ticked, not AddChild'd), so the
-    // FGCDInitializing disqualifier added during init is never cleared and they render RED. Clear it + force HMS_OK
-    // every frame (cheap, a handful of holograms). Order matters: clear disqualifiers FIRST, then material state.
-    // The SEED is the build gun's own active hologram (self-validates) and is not in Segments, so it's untouched.
+    // Standalone walk holograms aren't build-gun-ticked, so the FGCDInitializing disqualifier added during init is never
+    // cleared and they'd render RED. Clear it every frame, THEN set the material state by AFFORDABILITY: HMS_OK (cyan)
+    // if the player can afford the whole walk, HMS_ERROR (red) if not — so a broke walk shows red instead of silently
+    // building nothing and clearing. (Order matters: clear disqualifiers FIRST, then material state.)
+    const bool bAfford = CanAffordWalk();
+    const EHologramMaterialState State = bAfford ? EHologramMaterialState::HMS_OK : EHologramMaterialState::HMS_ERROR;
+
     for (const FSFWalkSegment& Seg : Segments)
     {
         for (const TWeakObjectPtr<AFGHologram>& WeakHolo : Seg.Holograms)
@@ -664,19 +798,19 @@ void USFWalkService::RefreshWalkValidity()
             if (AFGHologram* Holo = WeakHolo.Get())
             {
                 Holo->ResetConstructDisqualifiers();
-                Holo->SetPlacementMaterialState(EHologramMaterialState::HMS_OK);
+                Holo->SetPlacementMaterialState(State);
             }
         }
-        for (const TWeakObjectPtr<AFGHologram>& WeakBelt : Seg.Belts)
+        for (const TWeakObjectPtr<AFGHologram>& WeakBelt : Seg.Spans)
         {
             if (AFGHologram* Belt = WeakBelt.Get())
             {
                 Belt->ResetConstructDisqualifiers();
-                Belt->SetPlacementMaterialState(EHologramMaterialState::HMS_OK);
+                Belt->SetPlacementMaterialState(State);
             }
         }
     }
-    // Origin cross-section cells too — but skip cell 0 (the seed), which the build gun validates itself.
+    // Origin cross-section cells too — but skip cell 0 (the seed); handled below.
     AFGHologram* SeedH = SeedHologram.Get();
     for (const TWeakObjectPtr<AFGHologram>& WeakHolo : OriginHolograms)
     {
@@ -684,8 +818,16 @@ void USFWalkService::RefreshWalkValidity()
         {
             if (Holo == SeedH) { continue; }
             Holo->ResetConstructDisqualifiers();
-            Holo->SetPlacementMaterialState(EHologramMaterialState::HMS_OK);
+            Holo->SetPlacementMaterialState(State);
         }
+    }
+
+    // The SEED (parent) is the build gun's own hologram — it only knows its own 1-pole cost, so it stays cyan even when
+    // the TOTAL walk is unaffordable. Force it red too when broke (parent AND children red); when affordable, leave it
+    // to the build gun's own validation so we don't fight it.
+    if (!bAfford && SeedH)
+    {
+        SeedH->SetPlacementMaterialState(EHologramMaterialState::HMS_ERROR);
     }
 }
 
@@ -731,7 +873,7 @@ void USFWalkService::SpawnSegmentHologram(int32 Index)
     UE_LOG(LogSmartWalk, Log, TEXT("<<< SpawnSegmentHologram[%d] EXIT: spawned %d poles"), Index, Seg.Holograms.Num());
 
     // Link this segment's cross-section to its predecessor's with one belt per cell.
-    UpdateSegmentBelts(Index);
+    UpdateSegmentSpans(Index);
 }
 
 AFGHologram* USFWalkService::SpawnOnePole(const FTransform& Pose, int32 Index, int32 Lane, int32 Stack)
@@ -805,7 +947,7 @@ AFGHologram* USFWalkService::PredecessorAnchorAt(int32 Index, int32 PoleIndex) c
     return nullptr;
 }
 
-void USFWalkService::UpdateSegmentBelts(int32 Index)
+void USFWalkService::UpdateSegmentSpans(int32 Index)
 {
     if (!Conveyance || !Segments.IsValidIndex(Index))
     {
@@ -813,7 +955,7 @@ void USFWalkService::UpdateSegmentBelts(int32 Index)
     }
     FSFWalkSegment& Seg = Segments[Index];
     const int32 Count = Seg.Holograms.Num();
-    Seg.Belts.SetNum(Count);   // one belt slot per cross-section cell, same flat index as Holograms
+    Seg.Spans.SetNum(Count);   // one span slot (belt or pipe) per cross-section cell, same flat index as Holograms
 
     int32 Made = 0;
     for (int32 PoleIdx = 0; PoleIdx < Count; ++PoleIdx)
@@ -824,10 +966,10 @@ void USFWalkService::UpdateSegmentBelts(int32 Index)
         {
             continue;   // missing pole (e.g. a failed spawn) — skip this cell's belt this pass
         }
-        Seg.Belts[PoleIdx] = Conveyance->LinkOrUpdate(Seg.Belts[PoleIdx].Get(), FromAnchor, ToAnchor, SeedHologram.Get());
+        Seg.Spans[PoleIdx] = Conveyance->LinkOrUpdate(Seg.Spans[PoleIdx].Get(), FromAnchor, ToAnchor, SeedHologram.Get());
         ++Made;
     }
-    UE_LOG(LogSmartWalk, Log, TEXT("  UpdateSegmentBelts[%d]: %d belts over %d cells"), Index, Made, Count);
+    UE_LOG(LogSmartWalk, Log, TEXT("  UpdateSegmentSpans[%d]: %d span(s) over %d cells"), Index, Made, Count);
 }
 
 void USFWalkService::RepositionFrom(int32 StartIndex)
@@ -852,7 +994,7 @@ void USFWalkService::RepositionFrom(int32 StartIndex)
             }
         }
         // Re-route this segment's belts; iterating in order means the predecessor poles are already repositioned.
-        UpdateSegmentBelts(i);
+        UpdateSegmentSpans(i);
     }
     UE_LOG(LogSmartWalk, Log, TEXT("<<< RepositionFrom EXIT"));
 }
@@ -860,12 +1002,12 @@ void USFWalkService::RepositionFrom(int32 StartIndex)
 void USFWalkService::DestroySegmentHolograms(FSFWalkSegment& Segment)
 {
     UE_LOG(LogSmartWalk, Log, TEXT("  DestroySegmentHolograms: belts=%d holos=%d"),
-        Segment.Belts.Num(), Segment.Holograms.Num());
-    for (const TWeakObjectPtr<AFGHologram>& WeakBelt : Segment.Belts)
+        Segment.Spans.Num(), Segment.Holograms.Num());
+    for (const TWeakObjectPtr<AFGHologram>& WeakBelt : Segment.Spans)
     {
         SF_SafeDestroyHologram(WeakBelt.Get());   // reflection-unlink then Destroy (mirror grid's safe teardown)
     }
-    Segment.Belts.Reset();
+    Segment.Spans.Reset();
 
     for (const TWeakObjectPtr<AFGHologram>& WeakHolo : Segment.Holograms)
     {

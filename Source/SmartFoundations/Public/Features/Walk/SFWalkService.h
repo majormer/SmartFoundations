@@ -37,6 +37,9 @@ public:
     /** True while a Path is being walked. */
     bool IsActive() const { return bActive; }
 
+    /** Which conveyance the active walk is laying (belt vs pipe) - for the HUD badge + panel labels. */
+    ESFWalkConveyanceType GetConveyanceType() const { return ConveyanceType; }
+
     /**
      * Begin a walk seeded from the held build-gun hologram. Captures the origin frame from the seed,
      * seeds the first active segment, and spawns its placeholder. Returns false if it can't start.
@@ -68,6 +71,10 @@ public:
     /** Set the four authored adjusters on the active segment and re-derive downstream (Slice 1 uses this). */
     void SetActiveAdjusters(float Advance, float TurnDegrees, float Rise, float Shift);
 
+    /** Set the four adjusters on ANY segment by index and re-derive downstream from it — the back-end for editing a
+     *  committed segment in the Walk panel table. No-op if the index is invalid or no walk is active. */
+    void SetSegmentAtIndex(int32 Index, float Advance, float TurnDegrees, float Rise, float Shift);
+
     /** Add deltas to the active segment's adjusters (steering) and re-derive downstream. */
     void NudgeActive(float dAdvance, float dTurn, float dRise, float dShift);
 
@@ -93,9 +100,9 @@ public:
     /** Index of the active (editable head) segment, or INDEX_NONE. */
     int32 GetActiveIndex() const { return ActiveIndex; }
 
-    /** Re-route every segment's belt with the current routing settings (e.g. after the belt routing mode changes
-     *  via the auto-connect settings) — the path/frames are unchanged, only the spanning belts re-route. */
-    void RerouteBelts();
+    /** Re-route every segment's spanning element (belt or pipe) with the current routing settings (e.g. after the
+     *  routing mode changes via the auto-connect settings) — the path/frames are unchanged, only the spans re-route. */
+    void RerouteSpans();
 
     /** Per-frame (driven by the subsystem Tick while walk is active) re-clear of FGCDInitializing + force HMS_OK on
      *  the walk's STANDALONE preview holograms. Mirrors how the grid/Extend keep their un-ticked clone previews cyan
@@ -131,8 +138,9 @@ private:
      *  at the SAME cell; for segment 0 only cell 0 links back (to the single held seed), other cells start here. */
     AFGHologram* PredecessorAnchorAt(int32 Index, int32 PoleIndex) const;
 
-    /** Create or re-route every belt (one per cross-section cell) spanning the predecessor poles → this segment. */
-    void UpdateSegmentBelts(int32 Index);
+    /** Create or re-route every spanning element (belt or pipe, one per cross-section cell) spanning the predecessor
+     *  poles → this segment. */
+    void UpdateSegmentSpans(int32 Index);
 
     /** Reposition the holograms of every segment from StartIndex forward to their derived frames. */
     void RepositionFrom(int32 StartIndex);
@@ -149,6 +157,10 @@ private:
 
     /** Tear down all preview holograms and clear the segment list. */
     void ClearAll();
+
+    /** True if the player can afford the whole walk (all non-seed holograms' summed cost vs inventory + central storage;
+     *  always true under No Build Cost). Drives the red/cyan preview state in RefreshWalkValidity. */
+    bool CanAffordWalk() const;
 
     UPROPERTY()
     TWeakObjectPtr<USFSubsystem> Subsystem;
@@ -168,9 +180,13 @@ private:
      *  pole itself (never destroyed by the walk); the rest are walk-spawned so the bus starts full-width. */
     TArray<TWeakObjectPtr<AFGHologram>> OriginHolograms;
 
-    /** The conveyance adapter that produces the spanning element between anchors (MVP: belt). */
+    /** The conveyance adapter that produces the spanning element between anchors (belt or pipe). */
     UPROPERTY()
     TObjectPtr<USFWalkConveyance> Conveyance;
+
+    /** Which conveyance the active walk lays (belt vs pipe), selected from the seed buildable at EnterWalk;
+     *  travels in the commit spec so the server reconstructs the matching adapter. */
+    ESFWalkConveyanceType ConveyanceType = ESFWalkConveyanceType::Belt;
 
     /** Active (editable head) segment index. */
     int32 ActiveIndex = INDEX_NONE;

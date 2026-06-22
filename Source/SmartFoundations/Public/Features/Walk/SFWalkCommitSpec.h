@@ -10,6 +10,15 @@
 
 class UFGRecipe;
 
+/** Which conveyance the walk is laying. Selected from the seed buildable at EnterWalk (belt pole vs pipeline
+ *  support); travels in the commit spec so the server reconstructs the matching spanning element. */
+UENUM()
+enum class ESFWalkConveyanceType : uint8
+{
+	Belt = 0,
+	Pipe = 1,
+};
+
 /**
  * One walk segment's AUTHORED parameters - the slim, wire-safe subset of FSFWalkSegment (no transient
  * hologram pointers). The server re-derives every world frame from these via the SAME forward kinematics
@@ -48,12 +57,25 @@ struct SMARTFOUNDATIONS_API FSFWalkCommitSpec
 	/** The ordered Path: per-segment authored deltas (the source of truth the server re-derives from). */
 	UPROPERTY() TArray<FSFWalkCommitSegment> Segments;
 
+	/** Which spanning conveyance this run lays (belt vs pipe) - the server reconstructs the matching adapter. */
+	UPROPERTY() ESFWalkConveyanceType ConveyanceType = ESFWalkConveyanceType::Belt;
+
 	/** Belt routing mode (0=Default, 1=Curve, 2=Straight) the client has set - the server re-routes the
 	 *  spanning belts with its OWN runtime default otherwise (mirrors FSFExtendCommitSpec::BeltRoutingMode). */
 	UPROPERTY() int32 BeltRoutingMode = 0;
 
 	/** Belt tier the client previewed (0 = Auto / highest unlocked). */
 	UPROPERTY() int32 BeltTier = 0;
+
+	/** Pipe routing mode (0=Auto, 1=Auto2D, 2=Straight, 3=Curve, 4=Noodle, 5=H2V) - same install-on-server reason
+	 *  as BeltRoutingMode. Only meaningful when ConveyanceType == Pipe. */
+	UPROPERTY() int32 PipeRoutingMode = 0;
+
+	/** Pipe tier the client previewed (0 = Auto). Only meaningful when ConveyanceType == Pipe. */
+	UPROPERTY() int32 PipeTier = 0;
+
+	/** Pipe indicator (the flow-indicator variant) the client has set. Only meaningful for pipes. */
+	UPROPERTY() bool bPipeIndicator = true;
 
 	/** Seed pole build class - the server only consumes a staged commit for a construct of the SAME
 	 *  class (guards against any client/server fire mismatch or RPC race). */

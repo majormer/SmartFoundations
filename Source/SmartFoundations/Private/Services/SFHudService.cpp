@@ -336,20 +336,14 @@ TPair<FString, FString> USFHudService::BuildCounterDisplayLines() const
 			bWalkActive = true;
 			const TArray<FSFWalkSegmentView> Views = Walk->GetSegmentViews();
 			const float HeadDeg = Views.Num() > 0 ? Views.Last().ExitHeadingDeg : 0.0f;
-			Lines.Add(FText::Format(LOCTEXT("HUD_Walk", "*Walk: {0} seg   head {1} deg"),
-				FText::AsNumber(Views.Num()), FText::AsNumber(FMath::RoundToInt(HeadDeg))).ToString());
-
-			const int32 ActiveIdx = Walk->GetActiveIndex();
-			if (Views.IsValidIndex(ActiveIdx))
-			{
-				const FSFWalkSegmentView& A = Views[ActiveIdx];
-				Lines.Add(FText::Format(LOCTEXT("HUD_WalkSeg", ">#{0}  Adv {1}m  Turn {2} deg  Rise {3}m  Shift {4}m"),
-					FText::AsNumber(A.Index),
-					FText::FromString(FString::Printf(TEXT("%.1f"), A.Advance / 100.0f)),
-					FText::AsNumber(FMath::RoundToInt(A.TurnDegrees)),
-					FText::FromString(FString::Printf(TEXT("%.1f"), A.Rise / 100.0f)),
-					FText::FromString(FString::Printf(TEXT("%.1f"), A.Shift / 100.0f))).ToString());
-			}
+			const FString Conveyance = (Walk->GetConveyanceType() == ESFWalkConveyanceType::Pipe) ? TEXT("pipe") : TEXT("belt");
+			// Compact one-line badge — heading now shows the 16-point compass + degrees, and the per-segment detail
+			// lives in the Walk panel, not the HUD (this used to be two verbose lines that cluttered the screen).
+			Lines.Add(FText::Format(LOCTEXT("HUD_Walk", "*Walk  {0} seg | head {1} {2}deg | {3}"),
+				FText::AsNumber(Views.Num()),
+				FText::FromString(SFHeadingToCompass16(HeadDeg)),
+				FText::AsNumber(FMath::RoundToInt(HeadDeg)),
+				FText::FromString(Conveyance)).ToString());
 		}
 	}
 

@@ -1219,7 +1219,10 @@ void USFSubsystem::CycleAutoConnectSetting()
         }
     }
 
-    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT(" Auto-Connect Setting Cycled: %s"), *GetAutoConnectSettingDisplayString());
+    // [AC-HUD #403 diag] Log-level: shows whether the Num0 cycle actually reaches Pipe Routing Mode on a pipe support
+    // (and which type branch was taken) vs belt - the static path is symmetric so this isolates the runtime divergence.
+    UE_LOG(LogSmartFoundations, Log, TEXT("[AC-HUD] cycled -> %s (pipe=%d belt=%d junction=%d power=%d)"),
+        *GetAutoConnectSettingDisplayString(), bIsStackablePipe, bIsStackableBelt, bIsPipeJunction, bIsPowerPole);
     UpdateCounterDisplay();
 }
 
@@ -1335,7 +1338,10 @@ void USFSubsystem::AdjustAutoConnectSetting(int32 Delta)
         break;
     }
 
-    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT(" Auto-Connect Setting Adjusted: %s"), *GetAutoConnectSettingDisplayString());
+    // [AC-HUD #403 diag] Log-level so a pipe-vs-belt HUD routing test is traceable (the static path is symmetric;
+    // this confirms at runtime whether the adjust fires for a pipe support + which value it set).
+    UE_LOG(LogSmartFoundations, Log, TEXT("[AC-HUD] adjusted -> %s (beltMode=%d pipeMode=%d)"),
+        *GetAutoConnectSettingDisplayString(), AutoConnectRuntimeSettings.BeltRoutingMode, AutoConnectRuntimeSettings.PipeRoutingMode);
 
     // Trigger immediate re-evaluation of previews with new settings
     if (ActiveHologram.IsValid() && AutoConnectService)
@@ -1366,7 +1372,7 @@ void USFSubsystem::AdjustAutoConnectSetting(int32 Delta)
         {
             // Stackable pipe supports: trigger re-processing of pipe previews
             AutoConnectService->ProcessStackablePipelineSupports(ActiveHologram.Get());
-            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT(" Stackable Pipe: Force recreated pipe previews after settings change"));
+            UE_LOG(LogSmartFoundations, Log, TEXT("[AC-HUD] reprocess -> stackable PIPE supports (pipeMode=%d)"), AutoConnectRuntimeSettings.PipeRoutingMode);
         }
         else if (USFAutoConnectService::IsPassthroughPipeHologram(ActiveHologram.Get()))
         {
@@ -1378,7 +1384,7 @@ void USFSubsystem::AdjustAutoConnectSetting(int32 Delta)
         {
             // Belt support poles (stackable, ceiling, wall): trigger re-processing of belt previews
             AutoConnectService->ProcessStackableConveyorPoles(ActiveHologram.Get());
-            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT(" Belt Support: Force recreated belt previews after settings change"));
+            UE_LOG(LogSmartFoundations, Log, TEXT("[AC-HUD] reprocess -> belt supports (beltMode=%d)"), AutoConnectRuntimeSettings.BeltRoutingMode);
         }
         else if (AutoConnectService->IsPowerPoleHologram(ActiveHologram.Get()))
         {
@@ -1398,7 +1404,7 @@ void USFSubsystem::AdjustAutoConnectSetting(int32 Delta)
     // live, just like auto-connect refreshes its own previews above.
     if (WalkService && WalkService->IsActive())
     {
-        WalkService->RerouteBelts();
+        WalkService->RerouteSpans();
         UE_LOG(LogSmartFoundations, VeryVerbose, TEXT(" Walk: re-routed belts after auto-connect setting change (routingMode=%d)"), AutoConnectRuntimeSettings.BeltRoutingMode);
     }
 
@@ -1605,6 +1611,9 @@ bool USFSubsystem::IsCurrentHologramAutoConnectCapable() const
 	       AutoConnectService->IsPipelineJunctionHologram(Hologram) ||
 	       AutoConnectService->IsPowerPoleHologram(Hologram) ||
 	       USFAutoConnectService::IsBeltSupportHologram(Hologram) ||
+	       AutoConnectService->IsPipeSupportHologram(Hologram) ||   // #403: pipe supports (stackable/regular/wall) were
+	                                                                //   missing here, so the HUD suppressed the whole
+	                                                                //   auto-connect settings section for them (belt worked)
 	       USFAutoConnectService::IsPassthroughPipeHologram(Hologram);
 }
 
@@ -1621,7 +1630,8 @@ TArray<FString> USFSubsystem::GetDirtyAutoConnectSettings() const
 	bool bIsPipeJunction = false;
 	bool bIsDistributor = false;
 	bool bIsPowerPole = false;
-	bool bIsStackableSupport = false;
+	bool bIsStackableSupport = false;   // belt supports (stackable/ceiling/wall/regular conveyor pole)
+	bool bIsPipeSupport = false;        // #403: pipe supports (stackable/regular/wall) → show PIPE settings
 	bool bIsPassthroughPipe = false;
 	if (ActiveHologram.IsValid() && AutoConnectService)
 	{
@@ -1630,15 +1640,16 @@ TArray<FString> USFSubsystem::GetDirtyAutoConnectSettings() const
 		bIsDistributor = AutoConnectService->IsDistributorHologram(Hologram);
 		bIsPowerPole = AutoConnectService->IsPowerPoleHologram(Hologram);
 		bIsStackableSupport = USFAutoConnectService::IsBeltSupportHologram(Hologram);
+		bIsPipeSupport = AutoConnectService->IsPipeSupportHologram(Hologram);
 		bIsPassthroughPipe = USFAutoConnectService::IsPassthroughPipeHologram(Hologram);
 	}
 
 	// CRITICAL FIX: Only show settings relevant to current hologram type
 	// Pipe junctions should only show pipe settings, distributors should only show belt settings
 
-	if (bIsPipeJunction || bIsPassthroughPipe)
+	if (bIsPipeJunction || bIsPassthroughPipe || bIsPipeSupport)
 	{
-		// Pipe junction or floor hole passthrough: Show pipe-related settings
+		// Pipe junction, floor hole passthrough, or pipe support (#403): Show pipe-related settings
 		if (AutoConnectRuntimeSettings.bPipeAutoConnectEnabled != CachedConfig.bPipeAutoConnectEnabled)
 		{
 			DirtySettings.Add(FString::Printf(TEXT("Pipe Auto-Connect: %s"),

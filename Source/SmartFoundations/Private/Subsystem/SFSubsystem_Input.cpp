@@ -656,6 +656,16 @@ void USFSubsystem::OnToggleSettingsForm()
 	UE_LOG(LogSmartFoundations, Verbose, TEXT("!!! K KEY PRESSED !!! (OnToggleSettingsForm)"));
 	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("INPUT EVENT: Settings Form Toggle (Phase 0 validation)"));
 
+	// Smart Walking (#356): while a walk is engaged, K toggles the WALK panel in lieu of the Smart Panel (hide to steer
+	// with a clean screen / restore to review the segment path). The walk seed is a belt/pipe — itself upgrade-capable —
+	// so this MUST run before the upgrade-panel routing below, or K would open the Upgrade Panel mid-walk instead.
+	if (WalkService && WalkService->IsActive())
+	{
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("Settings Form: walk active → toggling Walk panel in lieu of Smart Panel"));
+		ToggleWalkPanel();
+		return;
+	}
+
 	// Route to Upgrade Panel if holding an upgrade-capable hologram (belt/lift/pipe/pump/power pole/wall outlet)
 	if (IsUpgradeCapableContext())
 	{

@@ -60,10 +60,10 @@ struct SMARTFOUNDATIONS_API FSFWalkSegment
     UPROPERTY(Transient)
     TArray<TWeakObjectPtr<AFGHologram>> Holograms;
 
-    /** The spanning belts from the PREVIOUS segment's poles to this segment's, one per (lane,stack), same flat
-     *  indexing as Holograms. Runtime only. */
+    /** The spanning elements (belts OR pipes — conveyance-agnostic) from the PREVIOUS segment's poles to this
+     *  segment's, one per (lane,stack), same flat indexing as Holograms. Runtime only. */
     UPROPERTY(Transient)
-    TArray<TWeakObjectPtr<AFGHologram>> Belts;
+    TArray<TWeakObjectPtr<AFGHologram>> Spans;
 
     /**
      * Local-frame delta this segment applies to the running frame.
@@ -93,3 +93,22 @@ struct SMARTFOUNDATIONS_API FSFWalkSegmentView
     UPROPERTY(BlueprintReadOnly, Category = "Smart Walking") float ExitHeadingDeg = 0.0f; // absolute yaw at this segment's exit
     UPROPERTY(BlueprintReadOnly, Category = "Smart Walking") bool bActive = false;
 };
+
+/**
+ * 16-point compass label for a WORLD yaw heading, for the walk widget's Exit column + the HUD badge.
+ * Mapping is the in-game world compass the maintainer observed: yaw 0 = W, 90 = N, 180 = E, -90/270 = S
+ * (the compass turns clockwise as yaw increases), so the standard compass angle (0 = N, clockwise) is (yaw - 90).
+ * If it reads off against the in-game HUD compass, this single offset is the only thing to adjust.
+ */
+inline FString SFHeadingToCompass16(float Yaw)
+{
+    static const TCHAR* const Names[16] = {
+        TEXT("N"),  TEXT("NNE"), TEXT("NE"), TEXT("ENE"),
+        TEXT("E"),  TEXT("ESE"), TEXT("SE"), TEXT("SSE"),
+        TEXT("S"),  TEXT("SSW"), TEXT("SW"), TEXT("WSW"),
+        TEXT("W"),  TEXT("WNW"), TEXT("NW"), TEXT("NNW") };
+    float CompassDeg = FMath::Fmod(Yaw - 90.0f, 360.0f);
+    if (CompassDeg < 0.0f) { CompassDeg += 360.0f; }
+    const int32 Idx = FMath::RoundToInt(CompassDeg / 22.5f) % 16;
+    return FString(Names[Idx]);
+}

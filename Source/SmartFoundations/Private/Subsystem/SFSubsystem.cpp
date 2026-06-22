@@ -11,6 +11,7 @@
 #include "Features/Walk/SFWalkService.h"
 #include "UI/SFWalkPanelWidget.h"
 #include "Blueprint/UserWidget.h"
+#include "GameFramework/PlayerController.h"  // FInputModeGameAndUI/GameOnly for the Walk panel show/hide
 
 USFSubsystem::USFSubsystem() : Super()
 {
@@ -1294,11 +1295,58 @@ void USFSubsystem::OpenWalkPanel()
 		return;
 	}
 	WalkPanelWidget = Widget;
-	// #356 reframe: the Walk panel is a DISPLAY-ONLY overlay. The walk is driven by the in-world controls with the
-	// player free to move (or steering remotely via the Smart Camera) — so we do NOT capture input or show a cursor.
-	// HitTestInvisible keeps the overlay from eating clicks. (Cursor-based editing of prior segments is a fast-follow.)
-	Widget->SetVisibility(ESlateVisibility::HitTestInvisible);
+	// #356 two-mode design: the walk DEFAULTS to steer mode — created Collapsed so the screen is the HUD badge alone
+	// and the in-world controls drive the path. K (ToggleWalkPanel) restores it as a cursor-interactive panel for
+	// editing/config, then hides it again to steer. (Was a permanently-visible HitTestInvisible overlay.)
+	Widget->SetVisibility(ESlateVisibility::Collapsed);
 	Widget->AddToViewport(100);
+}
+
+void USFSubsystem::ToggleWalkPanel()
+{
+	// Create it (Collapsed) if this is the first K press of the walk, then fall through to show it.
+	if (!WalkPanelWidget.IsValid() || !WalkPanelWidget->IsInViewport())
+	{
+		OpenWalkPanel();
+	}
+	if (!WalkPanelWidget.IsValid())
+	{
+		return;
+	}
+
+	APlayerController* PC = GetLastController();
+	if (!PC)
+	{
+		PC = GetWorld() ? GetWorld()->GetFirstPlayerController() : nullptr;
+	}
+
+	const bool bHidden = WalkPanelWidget->GetVisibility() == ESlateVisibility::Collapsed;
+	if (bHidden)
+	{
+		// Restore → interactive EDIT mode: Visible + cursor + UIOnly. UIOnly makes the panel MODAL — clicks outside it
+		// hit no widget and are swallowed (no accidental world building, like the Smart Panel) and steering pauses
+		// (panel-up = edit). Because UIOnly also blocks the game K action, the widget handles K/Escape itself (its
+		// NativeOnKeyDown), so it's focused here. Refresh() so it reflects any steering done while hidden.
+		WalkPanelWidget->SetVisibility(ESlateVisibility::Visible);
+		WalkPanelWidget->Refresh();
+		if (PC)
+		{
+			PC->bShowMouseCursor = true;
+			FInputModeUIOnly Mode;
+			Mode.SetWidgetToFocus(WalkPanelWidget->TakeWidget());
+			PC->SetInputMode(Mode);
+		}
+	}
+	else
+	{
+		// Hide → STEER mode: restore game input + hide the cursor (HUD badge only).
+		WalkPanelWidget->SetVisibility(ESlateVisibility::Collapsed);
+		if (PC)
+		{
+			PC->bShowMouseCursor = false;
+			PC->SetInputMode(FInputModeGameOnly());
+		}
+	}
 }
 
 bool USFSubsystem::RouteWalkValueAdjust(int32 AccumulatedSteps, int32 Direction)

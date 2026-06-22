@@ -5,9 +5,11 @@
 #include "Subsystem/SFHologramDataService.h"
 #include "Hologram/FGHologram.h"
 #include "Holograms/Logistics/SFConveyorBeltHologram.h"
+#include "Holograms/Logistics/SFPipelineHologram.h"   // ASFPipelineHologram + AFGPipelineHologram + UFGPipeConnectionComponentBase (pipe adapter)
 #include "FGFactoryConnectionComponent.h"
 #include "FGPlayerController.h"
 #include "FGRecipe.h"   // UFGRecipe for the belt-tier recipe (length-based GetCost needs it)
+#include "UObject/UnrealType.h"   // FProperty reflection for the pipe's mSnappedConnectionComponents
 
 // Distinct category from SFWalkService.cpp's LogSmartWalk: the module is a UNITY build, so two file-local
 // DEFINE_LOG_CATEGORY_STATIC(LogSmartWalk) in the same TU collide (struct redefinition). Belt routing logs land
@@ -193,4 +195,168 @@ AFGHologram* USFWalkBeltConveyance::LinkOrUpdate(AFGHologram* ExistingSpan, AFGH
     UE_LOG(LogSmartWalkBelt, Log, TEXT("<<< LinkOrUpdate EXIT (CREATE): belt=%s actor.world=%s | tier=%d class=%s"),
         *GetNameSafe(Belt), *Belt->GetActorLocation().ToString(), BeltTier, *GetNameSafe(BeltBuildClass));
     return Belt;
+}
+
+// ====================================================================================================
+// USFWalkPipeConveyance — pipe adapter. Mirrors the belt adapter above but lays an ASFPipelineHologram
+// span between two stackable pipeline supports, using the pipe routing/cost/snapped-connection path proven
+// by stackable-pipe auto-connect (SFAutoConnectService_Stackable.cpp UpdateOrCreatePipeForPolePair).
+// ====================================================================================================
+
+UFGPipeConnectionComponentBase* USFWalkPipeConveyance::FirstPipeConnector(AFGHologram* Support)
+{
+    if (!IsValid(Support))
+    {
+        return nullptr;
+    }
+    TArray<UFGPipeConnectionComponentBase*> Connectors;
+    Support->GetComponents<UFGPipeConnectionComponentBase>(Connectors);
+    return Connectors.Num() > 0 ? Connectors[0] : nullptr;
+}
+
+AFGHologram* USFWalkPipeConveyance::LinkOrUpdate(AFGHologram* ExistingSpan, AFGHologram* FromAnchor, AFGHologram* ToAnchor, AFGHologram* ParentForChild, bool bAddChildForBuild)
+{
+    UE_LOG(LogSmartWalkBelt, Log, TEXT(">>> [Pipe] LinkOrUpdate ENTER: existing=%s from=%s to=%s parent(seed)=%s build=%d"),
+        *GetNameSafe(ExistingSpan), *GetNameSafe(FromAnchor), *GetNameSafe(ToAnchor), *GetNameSafe(ParentForChild), bAddChildForBuild ? 1 : 0);
+    USFSubsystem* Sub = Subsystem.Get();
+    if (!Sub || !IsValid(FromAnchor) || !IsValid(ToAnchor))
+    {
+        return ExistingSpan;
+    }
+
+    UFGPipeConnectionComponentBase* FromConn = FirstPipeConnector(FromAnchor);
+    UFGPipeConnectionComponentBase* ToConn = FirstPipeConnector(ToAnchor);
+
+    const FVector StartPos = FromConn ? FromConn->GetComponentLocation() : FromAnchor->GetActorLocation();
+    const FVector EndPos = ToConn ? ToConn->GetComponentLocation() : ToAnchor->GetActorLocation();
+
+    // Exit each support along its FACING (the walk orients the support to the segment heading) so a turn bows the
+    // pipe toward the connector normal; keep the chord's pitch so a height delta doesn't ramp. Same intent as the
+    // shared SF_ResolveSupportExitNormal in the stackable-pipe AC path (which we can't call across the TU boundary).
+    const FVector Dir = (EndPos - StartPos);
+    const FVector DirN = Dir.GetSafeNormal();
+    auto ResolveFacing = [](AFGHologram* Anchor, const FVector& Chord) -> FVector
+    {
+        const FVector ChordH = FVector(Chord.X, Chord.Y, 0.0f).GetSafeNormal();
+        FVector FacingH = IsValid(Anchor) ? Anchor->GetActorForwardVector() : FVector::ZeroVector;
+        FacingH.Z = 0.0f;
+        FacingH = FacingH.GetSafeNormal();
+        if (FacingH.IsNearlyZero() || ChordH.IsNearlyZero()) { return Chord; }
+        if (FVector::DotProduct(FacingH, ChordH) < 0.0f) { FacingH = -FacingH; }
+        if (FVector::DotProduct(FacingH, ChordH) < 0.5f) { return Chord; }
+        return (FacingH + FVector(0.0f, 0.0f, Chord.Z)).GetSafeNormal();
+    };
+    FVector StartNormal = ResolveFacing(FromAnchor, DirN);
+    FVector EndNormal   = ResolveFacing(ToAnchor, -DirN);
+    if (StartNormal.IsNearlyZero()) { StartNormal = DirN; }
+    if (EndNormal.IsNearlyZero())   { EndNormal   = -DirN; }
+
+    const int32 RoutingMode = Sub->GetAutoConnectRuntimeSettings().PipeRoutingMode;
+
+    // Update path: re-route an existing pipe to follow moved anchors (steering / back-up).
+    if (ASFPipelineHologram* Existing = Cast<ASFPipelineHologram>(ExistingSpan))
+    {
+        Existing->SetActorLocation(StartPos);
+        Existing->ApplyPipeBuildModeRouting(RoutingMode, StartPos, StartNormal, EndPos, EndNormal);
+        Existing->TriggerMeshGeneration();
+        Existing->ForceApplyHologramMaterial();
+        UE_LOG(LogSmartWalkBelt, Log, TEXT("<<< [Pipe] LinkOrUpdate EXIT (UPDATE): pipe=%s"), *GetNameSafe(Existing));
+        return Existing;
+    }
+
+    // Create path: resolve pipe tier + indicator (mirrors the stackable-pipe AC create path; Auto -> highest unlocked).
+    int32 PipeTier = Sub->GetAutoConnectRuntimeSettings().PipeTierMain;
+    const bool bWithIndicator = Sub->GetAutoConnectRuntimeSettings().bPipeIndicator;
+    AFGPlayerController* PC = nullptr;
+    if (UWorld* W = ToAnchor->GetWorld())
+    {
+        PC = Cast<AFGPlayerController>(W->GetFirstPlayerController());
+    }
+    if (PipeTier == 0)
+    {
+        PipeTier = Sub->GetHighestUnlockedPipeTier(PC);
+    }
+    UClass* PipeBuildClass = Sub->GetPipeClassFromConfig(PipeTier, bWithIndicator, PC);
+    if (!PipeBuildClass)
+    {
+        return nullptr;
+    }
+    const TSubclassOf<UFGRecipe> PipeRecipe = Sub->GetPipeRecipeForTier(PipeTier, bWithIndicator);
+
+    UWorld* World = ToAnchor->GetWorld();
+    if (!World)
+    {
+        return nullptr;
+    }
+
+    FActorSpawnParameters SpawnParams;
+    SpawnParams.Owner = ToAnchor->GetOwner();
+    SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+    SpawnParams.bDeferConstruction = true;
+
+    ASFPipelineHologram* Pipe = World->SpawnActor<ASFPipelineHologram>(
+        ASFPipelineHologram::StaticClass(), StartPos, FRotator::ZeroRotator, SpawnParams);
+    if (!Pipe)
+    {
+        return nullptr;
+    }
+
+    Pipe->SetReplicates(false);
+    Pipe->SetReplicateMovement(false);
+    Pipe->SetBuildClass(PipeBuildClass);
+    if (PipeRecipe)
+    {
+        Pipe->SetRecipe(PipeRecipe);   // length-based GetCost needs the recipe (else free pipes) - mRecipe null on fresh spawn satisfies the assert
+    }
+    Pipe->Tags.AddUnique(FName(TEXT("SF_StackableChild")));
+
+    USFHologramDataService::DisableValidation(Pipe);
+    USFHologramDataService::MarkAsChild(Pipe, ToAnchor, ESFChildHologramType::WalkSegment);
+
+    if (FSFHologramData* HoloData = USFHologramDataService::GetOrCreateData(Pipe))
+    {
+        HoloData->bIsStackablePipe = true;
+        HoloData->StackablePipeConn0 = FromConn;
+        HoloData->StackablePipeConn1 = ToConn;
+        HoloData->StackablePipeIndex = 0;
+    }
+
+    Pipe->FinishSpawning(FTransform(StartPos));
+
+    // Pre-wire the snapped connections. ASFPipelineHologram has no SetSnappedConnections method, so set the vanilla
+    // mSnappedConnectionComponents[0/1] by reflection - exactly like the stackable-pipe AC create path.
+    if (FromConn || ToConn)
+    {
+        if (FProperty* SnappedProp = AFGPipelineHologram::StaticClass()->FindPropertyByName(TEXT("mSnappedConnectionComponents")))
+        {
+            if (void* PropAddr = SnappedProp->ContainerPtrToValuePtr<void>(Pipe))
+            {
+                UFGPipeConnectionComponentBase** SnappedArray = static_cast<UFGPipeConnectionComponentBase**>(PropAddr);
+                if (SnappedArray)
+                {
+                    SnappedArray[0] = FromConn;
+                    SnappedArray[1] = ToConn;
+                }
+            }
+        }
+    }
+
+    Pipe->ApplyPipeBuildModeRouting(RoutingMode, StartPos, StartNormal, EndPos, EndNormal);
+    Pipe->SetActorHiddenInGame(false);
+    Pipe->SetActorEnableCollision(false);
+    Pipe->SetActorTickEnabled(false);
+    Pipe->RegisterAllComponents();
+    Pipe->SetPlacementMaterialState(EHologramMaterialState::HMS_OK);
+    if (bAddChildForBuild && IsValid(ParentForChild))
+    {
+        // Slice 3 COMMIT (server-side at the construct seam): AddChild so the vanilla scope() cascade builds it.
+        ParentForChild->AddChild(Pipe, Pipe->GetFName());   // unique child name (NAME_None asserts on duplicates)
+        Pipe->ApplyPipeBuildModeRouting(RoutingMode, StartPos, StartNormal, EndPos, EndNormal);   // re-route after AddChild re-bases
+    }
+    Pipe->TriggerMeshGeneration();
+    Pipe->ForceApplyHologramMaterial();
+
+    UE_LOG(LogSmartWalkBelt, Log, TEXT("<<< [Pipe] LinkOrUpdate EXIT (CREATE): pipe=%s actor.world=%s | tier=%d class=%s"),
+        *GetNameSafe(Pipe), *Pipe->GetActorLocation().ToString(), PipeTier, *GetNameSafe(PipeBuildClass));
+    return Pipe;
 }
