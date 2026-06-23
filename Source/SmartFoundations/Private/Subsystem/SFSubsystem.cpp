@@ -1295,11 +1295,13 @@ void USFSubsystem::OpenWalkPanel()
 		return;
 	}
 	WalkPanelWidget = Widget;
-	// #356 two-mode design: the walk DEFAULTS to steer mode — created Collapsed so the screen is the HUD badge alone
-	// and the in-world controls drive the path. K (ToggleWalkPanel) restores it as a cursor-interactive panel for
-	// editing/config, then hides it again to steer. (Was a permanently-visible HitTestInvisible overlay.)
+	// #356 two-mode design: steer mode (Collapsed — HUD badge + in-world controls) vs edit mode (visible cursor panel),
+	// toggled with K. Create it Collapsed + add to viewport, then immediately ToggleWalkPanel() to OPEN it in edit mode:
+	// entering a walk needs a visible cue — the Smart Panel vanishing into a bare steer screen read as "nothing happened".
+	// (ToggleWalkPanel's create-guard sees the widget already in-viewport, so this doesn't recurse.)
 	Widget->SetVisibility(ESlateVisibility::Collapsed);
 	Widget->AddToViewport(100);
+	ToggleWalkPanel();   // show the panel right away; K then hides it to steer
 }
 
 bool USFSubsystem::IsWalkPanelVisible() const
@@ -1341,6 +1343,10 @@ void USFSubsystem::ToggleWalkPanel()
 			FInputModeUIOnly Mode;
 			Mode.SetWidgetToFocus(WalkPanelWidget->TakeWidget());
 			PC->SetInputMode(Mode);
+			// Explicit keyboard focus so the panel's NativeOnKeyDown reliably gets K/Escape. SetWidgetToFocus alone
+			// routes MOUSE, not keyboard — without this, K only worked after clicking a widget (mirrors the Upgrade panel).
+			WalkPanelWidget->SetIsFocusable(true);
+			WalkPanelWidget->SetKeyboardFocus();
 		}
 	}
 	else

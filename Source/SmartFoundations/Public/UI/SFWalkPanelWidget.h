@@ -34,6 +34,7 @@ public:
     int32 FieldId = 0;
 
     UFUNCTION() void OnCommitted(float NewValue, ETextCommit::Type CommitType);
+    UFUNCTION() void OnChanged(float NewValue);   // live (drag / arrow / wheel) — applies without rebuilding the table
 };
 
 /**
@@ -58,6 +59,10 @@ public:
     /** Apply one edited table cell to the walk: sets the field on segment Index and rebuilds downstream live.
      *  Called by USFWalkCellBinding::OnCommitted. FieldId: 0=Advance(m) 1=Turn(deg) 2=Rise(m) 3=Shift(m). */
     void ApplyCellEdit(int32 Index, int32 FieldId, float NewValue);
+
+    /** Live variant bound to USpinBox OnValueChanged (drag / arrow / wheel): applies the edit + updates the 3D preview
+     *  via SetSegmentAtIndex, but does NOT rebuild the table (a full Refresh would destroy the spinbox being dragged). */
+    void ApplyCellEditLive(int32 Index, int32 FieldId, float NewValue);
 
 protected:
     virtual void NativeConstruct() override;
@@ -84,6 +89,7 @@ private:
     USFSubsystem* GetSubsystem();
 
     UFUNCTION() void OnClose();
+    UFUNCTION() void OnBackToScaling();   // footer "‹ Scaling" — exit walk + reopen the Smart Panel (grid scaling)
     UFUNCTION() void OnApply();   // footer Apply — push any staged (typed) edits, then re-route + redisplay
     UFUNCTION() void OnApplyImmediatelyChanged(bool bIsChecked);  // toggle: live edits vs stage-then-Apply
 
@@ -91,6 +97,7 @@ private:
     UFUNCTION() void OnTierComboChanged(FString SelectedItem, ESelectInfo::Type SelectionType);
     UFUNCTION() void OnDirectionComboChanged(FString SelectedItem, ESelectInfo::Type SelectionType);
     UFUNCTION() void OnRoutingComboChanged(FString SelectedItem, ESelectInfo::Type SelectionType);
+    UFUNCTION() void OnIndicatorComboChanged(FString SelectedItem, ESelectInfo::Type SelectionType);   // pipe Clean/Normal style (unlock-gated)
 
     /** OnGenerateWidget for the setting combos — black SF-font item text (runtime combos can't InitFont, which is protected). */
     UFUNCTION() UWidget* MakeComboItemWidget(FString Item);
@@ -117,10 +124,15 @@ private:
     UPROPERTY()
     TArray<TObjectPtr<USFWalkCellBinding>> CellBindings;
 
+    /** True only while MakeEditCell programmatically SetValue()s a spinbox, so the bound live OnValueChanged doesn't
+     *  apply the initial value as if the user dragged it (mirrors the Smart Panel's programmatic-set guard). */
+    bool bSuppressLiveEdit = false;
+
     /** #356 setting dropdowns (rebuilt each Refresh), wired to the live auto-connect settings. */
     UPROPERTY() TObjectPtr<UComboBoxString> TierCombo;
     UPROPERTY() TObjectPtr<UComboBoxString> DirectionCombo;
     UPROPERTY() TObjectPtr<UComboBoxString> RoutingCombo;
+    UPROPERTY() TObjectPtr<UComboBoxString> IndicatorCombo;   // pipe-only "Pipe Style" (Normal/Clean); shown only when clean pipes are unlocked
 
     /** When true, a committed cell applies + rebuilds live; when false, edits stage in PendingEdits until Apply. */
     bool bApplyImmediately = true;

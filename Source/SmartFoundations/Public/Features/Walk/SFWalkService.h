@@ -100,6 +100,11 @@ public:
     /** Index of the active (editable head) segment, or INDEX_NONE. */
     int32 GetActiveIndex() const { return ActiveIndex; }
 
+    /** The seed buildable the walk was started from (locked in place on enter); null if no walk or it was destroyed.
+     *  The hologram poll compares the live build-gun hologram's class against this to cancel the walk when the held
+     *  buildable changes (e.g. selecting a splitter, or switching a stackable belt pole to a pipe pole). */
+    AFGHologram* GetSeedHologram() const { return SeedHologram.Get(); }
+
     /** Re-route every segment's spanning element (belt or pipe) with the current routing settings (e.g. after the
      *  routing mode changes via the auto-connect settings) — the path/frames are unchanged, only the spans re-route. */
     void RerouteSpans();

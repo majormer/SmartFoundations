@@ -8,6 +8,7 @@
 #include "Subsystem/SFSubsystemImpl.h"
 #include "Hologram/FGPipelinePoleHologram.h"
 #include "Holograms/Logistics/SFPipelinePoleChildHologram.h"
+#include "Features/Walk/SFWalkService.h"   // GetSeedHologram() for the held-buildable-changed walk cancel
 
 
 // Hologram management with enhanced logging
@@ -783,6 +784,14 @@ void USFSubsystem::PollForActiveHologram()
 	// Check if we're in build state
 	if (!BuildGun->IsInState(EBuildGunState::BGS_BUILD))
 	{
+		// Walk mode: tear down the preview when the build gun leaves the build state (dismantle, paint, etc.) —
+		// otherwise the walk's standalone preview holograms dangle. Guard on the flag (avoids needing the full
+		// USFWalkService type here, and avoids ExitWalkMode's enter-log firing every frame the gun is out of build).
+		if (bWalkModeActive)
+		{
+			ExitWalkMode();
+		}
+
 		const bool bAbortedRestore = AbortRestoreSession(TEXT("Build gun left build state"));
 
 		// Clear hologram if not in build state
@@ -840,6 +849,24 @@ void USFSubsystem::PollForActiveHologram()
 	if (bAbortedRestoreForRecipeClear)
 	{
 		ResetCounters();
+	}
+
+	// Walk mode: cancel the walk if the held buildable changed while still in BUILD state — e.g. selecting a splitter
+	// from the hotbar, or switching a stackable belt pole to a pipe pole. The walk is seeded from ONE buildable class;
+	// a different live hologram (or the seed being destroyed) means the player moved on, so tear the preview down.
+	// Runs BEFORE the registration below, while ActiveHologram still points at the seed, so ExitWalkMode unlocks it.
+	if (bWalkModeActive && WalkService)
+	{
+		AFGHologram* WalkSeed = WalkService->GetSeedHologram();
+		const bool bSeedGone = (WalkSeed == nullptr);
+		const bool bDifferentBuildable = (WalkSeed && CurrentHologram && CurrentHologram->GetBuildClass() != WalkSeed->GetBuildClass());
+		if (bSeedGone || bDifferentBuildable)
+		{
+			UE_LOG(LogSmartFoundations, Log, TEXT("[Walk] Held buildable changed (seed=%s current=%s) — exiting walk"),
+				*GetNameSafe(WalkSeed), *GetNameSafe(CurrentHologram));
+			ExitWalkMode();
+			return;
+		}
 	}
 
 	// Update registration if hologram changed

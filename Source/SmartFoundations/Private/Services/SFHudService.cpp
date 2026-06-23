@@ -67,6 +67,7 @@ void USFHudService::DrawCounterToHUD(AHUD* HUD, UCanvas* Canvas)
     // Determine if the widget should be visible
     const bool bShouldShow = CachedConfig.bShowHUD
         && !bHUDSuppressed
+        && !Subsystem->IsWalkPanelVisible()   // walk EDIT panel up = it shows this info itself; hide the HUD readout so it doesn't bleed through the panel
         && Subsystem->GetActiveHologram() != nullptr;
 
     // Ensure widget exists

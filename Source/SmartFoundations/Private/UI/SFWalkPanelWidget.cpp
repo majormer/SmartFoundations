@@ -150,6 +150,17 @@ USFSubsystem* USFWalkPanelWidget::GetSubsystem()
 
 void USFWalkPanelWidget::OnClose()     { if (USFSubsystem* S = GetSubsystem()) { S->ToggleWalkPanel(); } }  // hide (keeps drag pos); walk stays active
 
+void USFWalkPanelWidget::OnBackToScaling()
+{
+    // Explicit exit from walk back to grid scaling: end the walk (this also tears down THIS panel), then reopen the
+    // Smart Panel. ExitWalkMode must run FIRST — OnToggleSettingsForm re-routes to the walk panel while a walk is
+    // active, so clearing the walk first lets it open the Smart Panel instead. Don't touch `this`/members after.
+    USFSubsystem* S = GetSubsystem();
+    if (!S) { return; }
+    S->ExitWalkMode();
+    S->OnToggleSettingsForm();
+}
+
 void USFWalkPanelWidget::OnApply()
 {
     USFSubsystem* S = GetSubsystem();
@@ -286,7 +297,7 @@ void USFWalkPanelWidget::Refresh()
             Views.Num(), (Views.Num() == 1) ? TEXT("") : TEXT("s"),
             *SFHeadingToCompass16(HeadDeg), HeadDeg,
             bPipe ? TEXT("Pipe") : TEXT("Belt"), TEXT("")),   // tier now lives in the Tier dropdown
-        FLinearColor(0.886f, 0.498f, 0.118f, 1.0f), 11));
+        FLinearColor(0.9f, 0.9f, 0.9f, 1.0f), 11));   // white summary text — match the Smart Panel
 
     // Pinned setting dropdowns (mirror the Smart Panel) — apply live to the walk's spans via the auto-connect setters.
     {
@@ -307,6 +318,21 @@ void USFWalkPanelWidget::Refresh()
         {
             Col->AddChildToVerticalBox(RouteRow);
             if (RoutingCombo) { RoutingCombo->OnSelectionChanged.AddDynamic(this, &USFWalkPanelWidget::OnRoutingComboChanged); }
+        }
+
+        // Pipe Style (Normal/Clean) — pipe-only, and ONLY when clean pipes are unlocked in-game (a research unlock).
+        // "Clean" = no flow indicators (the Build_Pipeline_NoIndicator class); it is a pipe CLASS, not a routing mode.
+        // Mirrors the Smart Panel's Flow Indicator control, which gates on the same AreCleanPipesUnlocked predicate.
+        if (bPipe && PC && S->AreCleanPipesUnlocked(PC))
+        {
+            TArray<FString> StyleOpts;
+            StyleOpts.Add(TEXT("Normal"));   // index 0 = with flow indicators (bPipeIndicator = true)
+            StyleOpts.Add(TEXT("Clean"));    // index 1 = no indicators       (bPipeIndicator = false)
+            if (UWidget* StyleRow = MakeComboRow(TEXT("Pipe Style"), StyleOpts, AC.bPipeIndicator ? 0 : 1, IndicatorCombo))
+            {
+                Col->AddChildToVerticalBox(StyleRow);
+                if (IndicatorCombo) { IndicatorCombo->OnSelectionChanged.AddDynamic(this, &USFWalkPanelWidget::OnIndicatorComboChanged); }
+            }
         }
 
         if (!bPipe)   // belt direction only (pipes have no direction)
@@ -339,8 +365,24 @@ void USFWalkPanelWidget::Refresh()
         }
     }
 
-    // Footer — just Apply + an "apply immediately" toggle. (Build is always LMB; cancel = holster the build gun.)
+    // Footer — "‹ Scaling" (back to the Smart Panel) + Apply + an "apply immediately" toggle. (Build is always LMB;
+    // cancel = holster the build gun.)
     UHorizontalBox* Footer = NewObject<UHorizontalBox>(this);
+
+    // Back to scaling: exit the walk and reopen the Smart Panel (grid scaling) — the explicit way out of walk mode.
+    UButton* ScalingBtn = NewObject<UButton>(this);
+    ScalingBtn->SetStyle(SFPanelButtonStyle());
+    UTextBlock* ScalingText = NewObject<UTextBlock>(this);
+    ScalingText->SetText(FText::FromString(TEXT("‹ Scaling")));   // ‹ = single left-angle quote (back chevron)
+    ScalingText->SetFont(SFFont::Get(11));
+    ScalingText->SetColorAndOpacity(FSlateColor(FLinearColor(1.0f, 0.85f, 0.0f, 1.0f)));   // gold on dark, like Apply/X
+    ScalingBtn->AddChild(ScalingText);
+    ScalingBtn->OnClicked.AddDynamic(this, &USFWalkPanelWidget::OnBackToScaling);
+    if (UHorizontalBoxSlot* ScalingSlot = Footer->AddChildToHorizontalBox(ScalingBtn))
+    {
+        ScalingSlot->SetPadding(FMargin(4.0f, 4.0f));
+        ScalingSlot->SetVerticalAlignment(VAlign_Center);
+    }
 
     UButton* ApplyBtn = NewObject<UButton>(this);
     ApplyBtn->SetStyle(SFPanelButtonStyle());   // dark rounded fill like the Smart Panel buttons
@@ -385,7 +427,7 @@ UWidget* USFWalkPanelWidget::MakeCell(const FString& Text, const FLinearColor& C
 UWidget* USFWalkPanelWidget::MakeSegmentRow(const FSFWalkSegmentView& View)
 {
     UHorizontalBox* Row = NewObject<UHorizontalBox>(this);
-    const FLinearColor Col = View.bActive ? FLinearColor(1.0f, 0.85f, 0.0f, 1.0f) : FLinearColor(0.9f, 0.9f, 0.9f, 1.0f);
+    const FLinearColor Col(0.9f, 0.9f, 0.9f, 1.0f);   // white # / Exit cells (match the headers); the active segment is marked by the ">" prefix
 
     // Fixed-width columns so every row lines up with the header. Advance/Rise/Shift are edited in METERS (the view
     // stores cm); ApplyCellEdit converts back. Turn is degrees.
@@ -415,7 +457,7 @@ void USFWalkPanelWidget::AddFixedCell(UHorizontalBox* Row, UWidget* Content, flo
 UWidget* USFWalkPanelWidget::MakeHeaderRow()
 {
     UHorizontalBox* Row = NewObject<UHorizontalBox>(this);
-    const FLinearColor H(1.0f, 0.6f, 0.2f, 1.0f);   // header orange
+    const FLinearColor H(0.9f, 0.9f, 0.9f, 1.0f);   // white column headers — match the Smart Panel's light setting labels
     AddFixedCell(Row, MakeCell(TEXT("#"), H), 34.0f);
     AddFixedCell(Row, MakeCell(TEXT("Advance m"), H), 84.0f);
     AddFixedCell(Row, MakeCell(TEXT("Turn"), H), 66.0f);
@@ -435,21 +477,31 @@ USpinBox* USFWalkPanelWidget::MakeEditCell(int32 SegIndex, int32 FieldId, float 
     Spin->SetDelta(Delta);
     Spin->SetMinFractionalDigits(0);
     Spin->SetMaxFractionalDigits(1);
-    Spin->SetValue(DisplayValue);
     Spin->SetFont(SFFont::Get(10));   // match the dense table cells
-    Spin->SetForegroundColor(FSlateColor(FLinearColor::Black));   // setter pushes to the live Slate widget; raw field write didn't   // dark value text, readable on the light field (matches Smart Panel)
+    Spin->SetForegroundColor(FSlateColor(FLinearColor::Black));   // setter pushes to the live Slate widget (matches Smart Panel)
 
     USFWalkCellBinding* Binding = NewObject<USFWalkCellBinding>(this);
     Binding->Owner = this;
     Binding->SegmentIndex = SegIndex;
     Binding->FieldId = FieldId;
-    Spin->OnValueCommitted.AddDynamic(Binding, &USFWalkCellBinding::OnCommitted);
+    Spin->OnValueCommitted.AddDynamic(Binding, &USFWalkCellBinding::OnCommitted);   // commit (focus-loss / Enter) → apply + full table refresh
+    Spin->OnValueChanged.AddDynamic(Binding, &USFWalkCellBinding::OnChanged);       // live (drag / arrow / wheel) → apply, no table rebuild
     CellBindings.Add(Binding);
+
+    // Set the initial value LAST, under the suppress guard: SetValue() fires OnValueChanged, and without the guard each
+    // cell's initial set on every Refresh would apply as though the user dragged it (mirrors the Smart Panel guard).
+    bSuppressLiveEdit = true;
+    Spin->SetValue(DisplayValue);
+    bSuppressLiveEdit = false;
     return Spin;
 }
 
-void USFWalkPanelWidget::ApplyCellEdit(int32 Index, int32 FieldId, float NewValue)
+void USFWalkPanelWidget::ApplyCellEditLive(int32 Index, int32 FieldId, float NewValue)
 {
+    // Live path (USpinBox OnValueChanged: drag / arrow / wheel). MUST NOT call Refresh() — that does
+    // SegmentListBox->ClearChildren() and would destroy the very spinbox the user is dragging.
+    if (bSuppressLiveEdit) { return; }   // the programmatic SetValue in MakeEditCell, not a user edit
+
     if (!bApplyImmediately)
     {
         // Not live — stage it (the SpinBox already shows the typed value); the Apply button will push all staged edits.
@@ -475,8 +527,15 @@ void USFWalkPanelWidget::ApplyCellEdit(int32 Index, int32 FieldId, float NewValu
     default: break;
     }
 
-    W->SetSegmentAtIndex(Index, Adv, Turn, Rise, Shift);   // rebuilds the 3D preview downstream
-    Refresh();                                             // refresh the derived Exit headings in the table
+    W->SetSegmentAtIndex(Index, Adv, Turn, Rise, Shift);   // RepositionFrom updates the live 3D preview — NO Refresh() here
+}
+
+void USFWalkPanelWidget::ApplyCellEdit(int32 Index, int32 FieldId, float NewValue)
+{
+    // Commit path (USpinBox OnValueCommitted: focus-loss / Enter). Apply via the shared live path, then do the FULL
+    // table rebuild — safe here because focus has left the spinbox — to finalize the derived Exit-heading column.
+    ApplyCellEditLive(Index, FieldId, NewValue);
+    if (bApplyImmediately) { Refresh(); }
 }
 
 void USFWalkCellBinding::OnCommitted(float NewValue, ETextCommit::Type CommitType)
@@ -487,12 +546,20 @@ void USFWalkCellBinding::OnCommitted(float NewValue, ETextCommit::Type CommitTyp
     }
 }
 
+void USFWalkCellBinding::OnChanged(float NewValue)
+{
+    if (Owner.IsValid())
+    {
+        Owner->ApplyCellEditLive(SegmentIndex, FieldId, NewValue);
+    }
+}
+
 UWidget* USFWalkPanelWidget::MakeComboRow(const FString& Label, const TArray<FString>& Options, int32 SelectedIndex, TObjectPtr<UComboBoxString>& OutCombo)
 {
     UHorizontalBox* Row = NewObject<UHorizontalBox>(this);
 
     // Label cell (header orange).
-    if (UHorizontalBoxSlot* LabelSlot = Row->AddChildToHorizontalBox(MakeCell(Label, FLinearColor(1.0f, 0.6f, 0.2f, 1.0f))))
+    if (UHorizontalBoxSlot* LabelSlot = Row->AddChildToHorizontalBox(MakeCell(Label, FLinearColor(0.9f, 0.9f, 0.9f, 1.0f))))
     {
         LabelSlot->SetPadding(FMargin(4.0f, 2.0f));
     }
@@ -571,4 +638,14 @@ void USFWalkPanelWidget::OnRoutingComboChanged(FString SelectedItem, ESelectInfo
     if (W->GetConveyanceType() == ESFWalkConveyanceType::Pipe) { S->SetAutoConnectPipeRoutingMode(Idx); }
     else { S->SetAutoConnectBeltRoutingMode(Idx); }
     W->RerouteSpans();
+}
+
+void USFWalkPanelWidget::OnIndicatorComboChanged(FString SelectedItem, ESelectInfo::Type SelectionType)
+{
+    if (SelectionType == ESelectInfo::Direct) { return; }   // ignore the programmatic SetSelectedIndex during Refresh
+    USFSubsystem* S = GetSubsystem();
+    USFWalkService* W = S ? S->GetWalkService() : nullptr;
+    if (!S || !W || !IndicatorCombo) { return; }
+    S->SetAutoConnectPipeIndicator(IndicatorCombo->GetSelectedIndex() == 0);   // 0=Normal (with indicators), 1=Clean (none)
+    W->RecreateSpans();   // indicator changes the pipe CLASS (Build_Pipeline vs _NoIndicator) — recreate, like the tier change
 }
