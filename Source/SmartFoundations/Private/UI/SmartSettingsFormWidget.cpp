@@ -66,17 +66,8 @@ void USmartSettingsFormWidget::NativeConstruct()
     if (WalkPathButton)
     {
         WalkPathButton->OnClicked.AddDynamic(this, &USmartSettingsFormWidget::OnWalkPathButtonClicked);
-        // Match the Smart Restore button (grey box, black label at size 24) and label it "Smart Walking".
-        if (UButton* RestoreBtn = Cast<UButton>(GetWidgetFromName(TEXT("RestoreSectionToggle"))))
-        {
-            WalkPathButton->SetStyle(RestoreBtn->WidgetStyle);
-        }
-        if (UTextBlock* WalkLabel = Cast<UTextBlock>(WalkPathButton->GetChildAt(0)))
-        {
-            WalkLabel->SetText(FText::FromString(TEXT("Smart Walking")));
-            WalkLabel->SetColorAndOpacity(FSlateColor(FLinearColor(0.0f, 0.0f, 0.0f, 1.0f)));
-            WalkLabel->SetFont(SFFont::Get(24));
-        }
+        // Style ("Smart Restore"-matching grey box) and the "Smart Walking" label now live in the Blueprint
+        // (WalkPathButton.WidgetStyle + WalkPathLabel text/colour) — no fragile runtime GetChildAt override.
         // Contextual: only show Walk Path for a seed that can start a walk (stackable belt/pipe support). Collapsed
         // otherwise so it takes NO space — the panel never widens for it, and whatever's below (Smart Restore) reflows up.
         USFSubsystem* WalkSub = USFSubsystem::Get(GetWorld());
@@ -515,102 +506,9 @@ void USmartSettingsFormWidget::NativeConstruct()
             }
         };
 
-        // Button labels
-        SetLabel(TEXT("ApplyBtnText"), LOCTEXT("Panel_Btn_Apply", "Apply"));
-        SetLabel(TEXT("ResetBtnText"), LOCTEXT("Panel_Btn_Reset", "Reset"));
+        // Panel labels now live in the Blueprint, re-keyed to their original LOCTEXT keys so existing
+        // translations still resolve (gathered from assets). Only the non-localized "X" glyph stays in code.
         SetLabel(TEXT("CloseButtonText"), FText::FromString(TEXT("X")));  // glyph close button (top-right of header), not a localized word
-        SetLabel(TEXT("ClearRecipeButtonText"), LOCTEXT("Panel_Btn_ClearRecipe", "Clear"));
-        SetLabel(TEXT("ConfirmYesText"), LOCTEXT("Panel_Btn_Continue", "Continue"));
-        SetLabel(TEXT("ConfirmNoText"), LOCTEXT("Panel_Btn_Cancel", "Cancel"));
-        SetLabel(TEXT("ApplyPresetBtnText"), LOCTEXT("Panel_Btn_ApplyPreset", "Apply"));
-        SetLabel(TEXT("SavePresetBtnText"), LOCTEXT("Panel_Btn_SavePreset", "Save Current"));
-        SetLabel(TEXT("DeletePresetBtnText"), LOCTEXT("Panel_Btn_DeletePreset", "Delete"));
-        SetLabel(TEXT("UpdatePresetBtnText"), LOCTEXT("Panel_Btn_UpdatePreset", "Update"));
-        SetLabel(TEXT("ExportPresetBtnText"), LOCTEXT("Panel_Btn_ExportPreset", "Export to Clipboard"));
-        SetLabel(TEXT("ImportPresetBtnText"), LOCTEXT("Panel_Btn_ImportPreset", "Import from Clipboard"));
-        SetLabel(TEXT("ImportFromExtendBtnText"), LOCTEXT("Panel_Btn_ImportFromExtend", "Import from Last Extend"));
-
-        // Apply Immediately label
-        SetLabel(TEXT("ApplyImmediatelyLabel"), LOCTEXT("Panel_ApplyImmediately", "Apply Immediately:"));
-
-        // Section headers
-        SetLabel(TEXT("GridSectionHeader"), LOCTEXT("Panel_Section_Grid", "Grid"));
-        SetLabel(TEXT("SpacingSectionHeader"), LOCTEXT("Panel_Section_Spacing", "Spacing"));
-        SetLabel(TEXT("StepsSectionHeader"), LOCTEXT("Panel_Section_Steps", "Steps"));
-        SetLabel(TEXT("StaggerSectionHeader"), LOCTEXT("Panel_Section_Stagger", "Stagger"));
-        SetLabel(TEXT("RotationSectionHeader"), LOCTEXT("Panel_Section_Rotation", "Rotation"));
-
-        // Grid row labels
-        SetLabel(TEXT("GridXLabel"), LOCTEXT("Panel_GridX", "Grid [X]:"));
-        SetLabel(TEXT("GridYLabel"), LOCTEXT("Panel_GridY", "Grid [Y]:"));
-        SetLabel(TEXT("GridZLabel"), LOCTEXT("Panel_GridZ", "Grid [Z]:"));
-
-        // Spacing row labels
-        SetLabel(TEXT("SpacingXLabel"), LOCTEXT("Panel_SpacingX", "Spacing [X]:"));
-        SetLabel(TEXT("SpacingYLabel"), LOCTEXT("Panel_SpacingY", "Spacing [Y]:"));
-        SetLabel(TEXT("SpacingZLabel"), LOCTEXT("Panel_SpacingZ", "Spacing [Z]:"));
-
-        // Spacing unit labels
-        SetLabel(TEXT("SpacingXUnit"), LOCTEXT("Panel_Unit_Meters", "m"));
-        SetLabel(TEXT("SpacingYUnit"), LOCTEXT("Panel_Unit_Meters", "m"));
-        SetLabel(TEXT("SpacingZUnit"), LOCTEXT("Panel_Unit_Meters", "m"));
-
-        // Steps row labels
-        SetLabel(TEXT("StepsXLabel"), LOCTEXT("Panel_StepsX", "Steps [X]:"));
-        SetLabel(TEXT("StepsYLabel"), LOCTEXT("Panel_StepsY", "Steps [Y]:"));
-
-        // Steps unit labels
-        SetLabel(TEXT("StepsXUnit"), LOCTEXT("Panel_Unit_Meters", "m"));
-        SetLabel(TEXT("StepsYUnit"), LOCTEXT("Panel_Unit_Meters", "m"));
-
-        // Stagger row labels
-        SetLabel(TEXT("StaggerXLabel"), LOCTEXT("Panel_StaggerX", "Stagger [X]:"));
-        SetLabel(TEXT("StaggerYLabel"), LOCTEXT("Panel_StaggerY", "Stagger [Y]:"));
-        SetLabel(TEXT("StaggerZXLabel"), LOCTEXT("Panel_StaggerZX", "Stagger [ZX]:"));
-        SetLabel(TEXT("StaggerZYLabel"), LOCTEXT("Panel_StaggerZY", "Stagger [ZY]:"));
-
-        // Stagger unit labels
-        SetLabel(TEXT("StaggerXUnit"), LOCTEXT("Panel_Unit_Meters", "m"));
-        SetLabel(TEXT("StaggerYUnit"), LOCTEXT("Panel_Unit_Meters", "m"));
-        SetLabel(TEXT("StaggerZXUnit"), LOCTEXT("Panel_Unit_Meters", "m"));
-        SetLabel(TEXT("StaggerZYUnit"), LOCTEXT("Panel_Unit_Meters", "m"));
-
-        // Rotation row label and unit
-        SetLabel(TEXT("RotationZLabel"), LOCTEXT("Panel_RotationZ", "Rotation [Z]:"));
-        SetLabel(TEXT("RotationZUnit"), LOCTEXT("Panel_Unit_Degrees", "\u00B0"));
-        SetLabel(TEXT("RestoreSectionHeader"), LOCTEXT("Panel_Section_Presets", "Smart Restore"));
-        SetLabel(TEXT("PresetDropdownLabel"), LOCTEXT("Panel_Restore_SelectPreset", "Selected Preset:"));
-        SetLabel(TEXT("PresetNameInputLabel"), LOCTEXT("Panel_Restore_PresetName", "New Preset Name:"));
-        SetLabel(TEXT("PresetDescriptionLabel"), LOCTEXT("Panel_Restore_Description", "Description:"));
-        SetLabel(TEXT("PresetCreatedAtLabel"), LOCTEXT("Panel_Restore_CreatedAt", "Created:"));
-        SetLabel(TEXT("CaptureLabel"), LOCTEXT("Panel_Restore_Capture", "Capture:"));
-        SetLabel(TEXT("CaptureGridLabel"), LOCTEXT("Panel_Restore_CaptureGrid", "Grid"));
-        SetLabel(TEXT("CaptureSpacingLabel"), LOCTEXT("Panel_Restore_CaptureSpacing", "Spacing"));
-        SetLabel(TEXT("CaptureStepsLabel"), LOCTEXT("Panel_Restore_CaptureSteps", "Steps"));
-        SetLabel(TEXT("CaptureStaggerLabel"), LOCTEXT("Panel_Restore_CaptureStagger", "Stagger"));
-        SetLabel(TEXT("CaptureRotationLabel"), LOCTEXT("Panel_Restore_CaptureRotation", "Rotation"));
-        SetLabel(TEXT("CaptureRecipeLabel"), LOCTEXT("Panel_Restore_CaptureRecipe", "Recipe"));
-        SetLabel(TEXT("CaptureAutoConnectLabel"), LOCTEXT("Panel_Restore_CaptureAutoConnect", "Auto-Connect"));
-
-        // Belt auto-connect labels
-        SetLabel(TEXT("BeltEnabledLabel"), LOCTEXT("Panel_AC_BeltEnabled", "Belt Auto-Connect:"));
-        SetLabel(TEXT("BeltTierMainLabel"), LOCTEXT("Panel_AC_MainTier", "Main Tier:"));
-        SetLabel(TEXT("BeltTierToBuildingLabel"), LOCTEXT("Panel_AC_ToBuilding", "To Building:"));
-        SetLabel(TEXT("BeltChainLabel"), LOCTEXT("Panel_AC_Chain", "Chain:"));
-        SetLabel(TEXT("StackableBeltDirectionLabel"), LOCTEXT("Panel_AC_Direction", "Direction:"));
-        SetLabel(TEXT("BeltRoutingModeLabel"), LOCTEXT("Panel_AC_Routing", "Routing:"));
-
-        // Pipe auto-connect labels
-        SetLabel(TEXT("PipeEnabledLabel"), LOCTEXT("Panel_AC_PipeEnabled", "Pipe Auto-Connect:"));
-        SetLabel(TEXT("PipeTierMainLabel"), LOCTEXT("Panel_AC_MainTier", "Main Tier:"));
-        SetLabel(TEXT("PipeTierToBuildingLabel"), LOCTEXT("Panel_AC_ToBuilding", "To Building:"));
-        SetLabel(TEXT("PipeIndicatorLabel"), LOCTEXT("Panel_AC_FlowIndicator", "Flow Indicator:"));
-        SetLabel(TEXT("PipeRoutingModeLabel"), LOCTEXT("Panel_AC_Routing", "Routing:"));
-
-        // Power auto-connect labels
-        SetLabel(TEXT("PowerEnabledLabel"), LOCTEXT("Panel_AC_PowerEnabled", "Power Auto-Connect:"));
-        SetLabel(TEXT("PowerGridAxisLabel"), LOCTEXT("Panel_AC_GridAxis", "Grid Axis:"));
-        SetLabel(TEXT("PowerReservedLabel"), LOCTEXT("Panel_AC_Reserved", "Reserved:"));
     }
 
     UpdateRestoreButtonTextColors();
@@ -944,7 +842,7 @@ void USmartSettingsFormWidget::PopulateFromCounterState(USFSubsystem* Subsystem)
     {
         if (AutoConnectHeaderText)
         {
-            AutoConnectHeaderText->SetText(LOCTEXT("Panel_AutoConnectHeader", "Auto-Connect"));
+            // header text set in the Blueprint now (re-keyed Panel_AutoConnectHeader)
             AutoConnectHeaderText->SetVisibility(ESlateVisibility::Visible);
         }
         if (AutoConnectSummaryText)
@@ -1015,7 +913,7 @@ void USmartSettingsFormWidget::PopulateFromCounterState(USFSubsystem* Subsystem)
     {
         if (RecipeHeaderText)
         {
-            RecipeHeaderText->SetText(LOCTEXT("Panel_RecipeHeader", "Recipes"));
+            // header text set in the Blueprint now (re-keyed Panel_RecipeHeader)
             RecipeHeaderText->SetVisibility(ESlateVisibility::Visible);
         }
 

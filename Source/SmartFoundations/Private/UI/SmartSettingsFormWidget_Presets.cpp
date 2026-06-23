@@ -623,6 +623,7 @@ void USmartSettingsFormWidget::UpdateRestoreButtonTextColors()
     };
 
     SetTextColor(TEXT("RestoreSectionHeader"), BlackText);
+    SetTextColor(TEXT("WalkPathLabel"), BlackText);   // #356 entry button — match Smart Restore (the recursive light-grey pass in NativeConstruct would otherwise leave its label grey)
     SetTextColor(TEXT("ApplyPresetBtnText"), BlackText);
     SetTextColor(TEXT("SavePresetBtnText"), BlackText);
     SetTextColor(TEXT("DeletePresetBtnText"), BlackText);

@@ -70,41 +70,22 @@ protected:
     virtual FReply NativeOnMouseMove(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
     virtual FReply NativeOnMouseButtonUp(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
 
-    UPROPERTY(meta = (BindWidgetOptional)) TObjectPtr<UTextBlock> TitleText;
-    UPROPERTY(meta = (BindWidgetOptional)) TObjectPtr<UTextBlock> SummaryText;
-    UPROPERTY(meta = (BindWidgetOptional)) TObjectPtr<UVerticalBox> SegmentListBox;
+    /** The panel's outer Border (dark backdrop) — set up in the Blueprint with the Smart Panel's brush, wrapping
+     *  SegmentListBox. Drag-to-move render-translates THIS so the backdrop + content move together. */
+    UPROPERTY(meta = (BindWidgetOptional)) TObjectPtr<UBorder> WalkBackdrop;
 
-    UPROPERTY(meta = (BindWidgetOptional)) TObjectPtr<UButton> AdvanceButton;
-    UPROPERTY(meta = (BindWidgetOptional)) TObjectPtr<UButton> BackUpButton;
-    UPROPERTY(meta = (BindWidgetOptional)) TObjectPtr<UButton> TurnLeftButton;
-    UPROPERTY(meta = (BindWidgetOptional)) TObjectPtr<UButton> TurnRightButton;
-    UPROPERTY(meta = (BindWidgetOptional)) TObjectPtr<UButton> RaiseButton;
-    UPROPERTY(meta = (BindWidgetOptional)) TObjectPtr<UButton> LowerButton;
-    UPROPERTY(meta = (BindWidgetOptional)) TObjectPtr<UButton> CommitButton;
-    UPROPERTY(meta = (BindWidgetOptional)) TObjectPtr<UButton> CancelButton;
-    UPROPERTY(meta = (BindWidgetOptional)) TObjectPtr<UButton> CloseButton;
+    /** Content mount: Refresh() builds the UI (header, dropdowns, editable table, footer) into this VBox each rebuild.
+     *  The old BP title/summary/steer-button widgets were removed — driven by scroll/keys + the table + a runtime "X". */
+    UPROPERTY(meta = (BindWidgetOptional)) TObjectPtr<UVerticalBox> SegmentListBox;
 
 private:
     TWeakObjectPtr<USFSubsystem> CachedSubsystem;
 
     USFSubsystem* GetSubsystem();
 
-    UFUNCTION() void OnAdvance();
-    UFUNCTION() void OnBackUp();
-    UFUNCTION() void OnTurnLeft();
-    UFUNCTION() void OnTurnRight();
-    UFUNCTION() void OnRaise();
-    UFUNCTION() void OnLower();
-    UFUNCTION() void OnCommit();
-    UFUNCTION() void OnCancel();
     UFUNCTION() void OnClose();
     UFUNCTION() void OnApply();   // footer Apply — push any staged (typed) edits, then re-route + redisplay
     UFUNCTION() void OnApplyImmediatelyChanged(bool bIsChecked);  // toggle: live edits vs stage-then-Apply
-
-    /** #356 interactive selectors — clicking cycles the walk's conveyance tier / routing mode forward: writes the
-     *  live auto-connect setting (belt or pipe, per GetConveyanceType) then re-routes every span via RerouteSpans. */
-    UFUNCTION() void OnConveyanceTierCycle();
-    UFUNCTION() void OnRoutingCycle();
 
     /** #356 setting dropdowns — write the live auto-connect tier/direction/routing setting + RerouteSpans (per GetConveyanceType). */
     UFUNCTION() void OnTierComboChanged(FString SelectedItem, ESelectInfo::Type SelectionType);
@@ -116,9 +97,6 @@ private:
 
     /** Build one segment-list row (index | Advance | Turn | Rise | Exit heading), highlighting the active. */
     UWidget* MakeSegmentRow(const FSFWalkSegmentView& View);
-
-    /** Build a "[Label   <Value>]" selector row; OutButton receives the clickable value button so Refresh can bind it. */
-    UWidget* MakeSelectorRow(const FString& Label, const FString& Value, class UButton*& OutButton);
 
     /** Build a "[Label  <dropdown>]" combo row; OutCombo receives the UComboBoxString so Refresh can bind it. */
     UWidget* MakeComboRow(const FString& Label, const TArray<FString>& Options, int32 SelectedIndex, TObjectPtr<class UComboBoxString>& OutCombo);

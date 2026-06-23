@@ -22,6 +22,31 @@
 #include "GameFramework/PlayerController.h"
 #include "FGPlayerController.h"  // AFGPlayerController for GetHighestUnlocked*Tier (no transitive unity-build reliance)
 
+// Dark rounded button style matching the Smart Panel's buttons (CloseButton/Apply/Reset, captured via AdaMCP
+// describe_widget). Without it, a built UButton falls back to the default LIGHT-GREY Slate style, which is what
+// made the gold "X" / labels read poorly. Values are the Smart Panel CloseButton's exact WidgetStyle brushes.
+static FButtonStyle SFPanelButtonStyle()
+{
+    auto MakeBrush = [](const FLinearColor& Fill)
+    {
+        FSlateBrush B;
+        B.TintColor = FSlateColor(Fill);
+        B.DrawAs = ESlateBrushDrawType::RoundedBox;
+        B.OutlineSettings.CornerRadii = FVector4(4.0f, 4.0f, 4.0f, 4.0f);
+        B.OutlineSettings.Color = FSlateColor(FLinearColor(0.695f, 0.695f, 0.695f, 1.0f));
+        B.OutlineSettings.Width = 1.0f;
+        B.OutlineSettings.RoundingType = ESlateBrushRoundingType::FixedRadius;
+        return B;
+    };
+    FButtonStyle Style;
+    Style.SetNormal(MakeBrush(FLinearColor(0.15f, 0.15f, 0.18f, 1.0f)));
+    Style.SetHovered(MakeBrush(FLinearColor(0.25f, 0.25f, 0.30f, 1.0f)));
+    Style.SetPressed(MakeBrush(FLinearColor(0.10f, 0.10f, 0.12f, 1.0f)));
+    Style.SetNormalPadding(FMargin(12.0f, 1.5f, 12.0f, 1.5f));
+    Style.SetPressedPadding(FMargin(12.0f, 1.5f, 12.0f, 1.5f));
+    return Style;
+}
+
 // Display-name helpers for the conveyance tier + routing-mode selectors (mirror the auto-connect setter ranges).
 static FString SFTierName(int32 Tier)
 {
@@ -47,38 +72,10 @@ void USFWalkPanelWidget::NativeConstruct()
 {
     Super::NativeConstruct();
 
-    if (TitleText)
-    {
-        TitleText->SetText(FText::FromString(TEXT("Smart Walking")));
-    }
-
-    if (AdvanceButton)   { AdvanceButton->OnClicked.AddDynamic(this, &USFWalkPanelWidget::OnAdvance); }
-    if (BackUpButton)    { BackUpButton->OnClicked.AddDynamic(this, &USFWalkPanelWidget::OnBackUp); }
-    if (TurnLeftButton)  { TurnLeftButton->OnClicked.AddDynamic(this, &USFWalkPanelWidget::OnTurnLeft); }
-    if (TurnRightButton) { TurnRightButton->OnClicked.AddDynamic(this, &USFWalkPanelWidget::OnTurnRight); }
-    if (RaiseButton)     { RaiseButton->OnClicked.AddDynamic(this, &USFWalkPanelWidget::OnRaise); }
-    if (LowerButton)     { LowerButton->OnClicked.AddDynamic(this, &USFWalkPanelWidget::OnLower); }
-    if (CommitButton)    { CommitButton->OnClicked.AddDynamic(this, &USFWalkPanelWidget::OnCommit); }
-    if (CancelButton)    { CancelButton->OnClicked.AddDynamic(this, &USFWalkPanelWidget::OnCancel); }
-    if (CloseButton)     { CloseButton->OnClicked.AddDynamic(this, &USFWalkPanelWidget::OnClose); }
-
-    // #356 free-movement reframe: the steer buttons are redundant with the in-world scaling controls and the
-    // maintainer asked to remove them ("not adding value"). The panel is now a pure segment-list overlay.
-    // Collapse them in C++ so no BP re-cook is needed; bindings are left harmless (the buttons never show).
-    auto Collapse = [](UWidget* W) { if (W) { W->SetVisibility(ESlateVisibility::Collapsed); } };
-    Collapse(AdvanceButton);
-    Collapse(BackUpButton);
-    Collapse(TurnLeftButton);
-    Collapse(TurnRightButton);
-    Collapse(RaiseButton);
-    Collapse(LowerButton);
-    Collapse(CommitButton);
-    Collapse(CancelButton);
-    Collapse(CloseButton);
-    // Title/summary are now rendered inside the runtime backdrop (Refresh), so hide the bare BP ones.
-    Collapse(TitleText);
-    Collapse(SummaryText);
-
+    // The entire panel — frame, backdrop, header, Tier/Routing/Direction dropdowns, editable segment table and
+    // footer — is built in Refresh() into the BindWidget SegmentListBox; the BP is just that mount point. (The old
+    // BP title/summary/steer-button widgets were removed; the runtime "X" button binds OnClose itself, and the
+    // segment cells + dropdowns wire up in Refresh().)
     Refresh();
 }
 
@@ -115,9 +112,15 @@ FReply USFWalkPanelWidget::NativeOnMouseMove(const FGeometry& InGeometry, const 
     {
         const float DPI = FMath::Max(0.01f, UWidgetLayoutLibrary::GetViewportScale(this));
         PanelOffset = DragOffsetStart + (InMouseEvent.GetScreenSpacePosition() - DragMouseStart) / DPI;
-        if (SegmentListBox)
+        // Translate the outer WalkBackdrop Border (the BP backdrop that wraps the content) so the brush AND the
+        // content move together. Both are stable widgets (not rebuilt), so the offset persists across Refresh.
+        if (WalkBackdrop)
         {
-            SegmentListBox->SetRenderTranslation(PanelOffset);   // SegmentListBox is stable → persists across Refresh
+            WalkBackdrop->SetRenderTranslation(PanelOffset);
+        }
+        else if (SegmentListBox)
+        {
+            SegmentListBox->SetRenderTranslation(PanelOffset);
         }
         return FReply::Handled();
     }
@@ -145,14 +148,6 @@ USFSubsystem* USFWalkPanelWidget::GetSubsystem()
     return CachedSubsystem.Get();
 }
 
-void USFWalkPanelWidget::OnAdvance()   { if (USFSubsystem* S = GetSubsystem()) { S->WalkAdvance(); } Refresh(); }
-void USFWalkPanelWidget::OnBackUp()    { if (USFSubsystem* S = GetSubsystem()) { S->WalkBackUp(); } Refresh(); }
-void USFWalkPanelWidget::OnTurnLeft()  { if (USFSubsystem* S = GetSubsystem()) { S->WalkNudgeActive(0.0f, -15.0f, 0.0f, 0.0f); } Refresh(); }
-void USFWalkPanelWidget::OnTurnRight() { if (USFSubsystem* S = GetSubsystem()) { S->WalkNudgeActive(0.0f, 15.0f, 0.0f, 0.0f); } Refresh(); }
-void USFWalkPanelWidget::OnRaise()     { if (USFSubsystem* S = GetSubsystem()) { S->WalkNudgeActive(0.0f, 0.0f, 100.0f, 0.0f); } Refresh(); }
-void USFWalkPanelWidget::OnLower()     { if (USFSubsystem* S = GetSubsystem()) { S->WalkNudgeActive(0.0f, 0.0f, -100.0f, 0.0f); } Refresh(); }
-void USFWalkPanelWidget::OnCommit()    { CloseWidget(); }   // done editing → close panel, back to in-world build (LMB)
-void USFWalkPanelWidget::OnCancel()    { if (USFSubsystem* S = GetSubsystem()) { S->ExitWalkMode(); } CloseWidget(); }
 void USFWalkPanelWidget::OnClose()     { if (USFSubsystem* S = GetSubsystem()) { S->ToggleWalkPanel(); } }  // hide (keeps drag pos); walk stays active
 
 void USFWalkPanelWidget::OnApply()
@@ -244,17 +239,12 @@ void USFWalkPanelWidget::Refresh()
         FrameSlot->SetVerticalAlignment(VAlign_Top);
     }
 
-    UBorder* Backdrop = NewObject<UBorder>(this);
-    FSlateBrush BdBrush;
-    BdBrush.DrawAs = ESlateBrushDrawType::Image;   // solid fill; the default UBorder brush is a see-through 9-slice outline
-    BdBrush.TintColor = FSlateColor(FLinearColor(0.17f, 0.24f, 0.31f, 0.90f));
-    Backdrop->SetBrush(BdBrush);
-    Backdrop->SetBrushColor(FLinearColor(0.1f, 0.1f, 0.15f, 0.95f));   // match the Smart Panel BackgroundPanel
-    Backdrop->SetPadding(FMargin(12.0f, 8.0f));
-    Frame->SetContent(Backdrop);
-
+    // The dark canvas background is a designer-set Border in the Blueprint now (WalkBackdrop, wrapping SegmentListBox).
+    // A runtime UBorder::SetBrush does NOT reliably push the tint/alpha to the live SBorder (it kept rendering
+    // near-transparent or wrong-coloured), whereas a BP-serialized brush renders correctly — exactly like the Smart
+    // Panel's BackgroundPanel. So the C++ just builds the content column; the BP provides the matching dark canvas.
     UVerticalBox* Col = NewObject<UVerticalBox>(this);
-    Backdrop->SetContent(Col);
+    Frame->SetContent(Col);
 
     // Branded header: SMART! logo + "Smart! Walking" title — matches the Smart Panel's header.
     UHorizontalBox* HeaderRow = NewObject<UHorizontalBox>(this);
@@ -277,10 +267,11 @@ void USFWalkPanelWidget::Refresh()
     }
     // Close (X) — a reliable click-to-close (K/Escape can miss when focus is on a cell or just after a drag).
     UButton* CloseBtn = NewObject<UButton>(this);
+    CloseBtn->SetStyle(SFPanelButtonStyle());   // dark rounded fill like the Smart Panel — gold X on dark, never on light grey
     UTextBlock* CloseX = NewObject<UTextBlock>(this);
     CloseX->SetText(FText::FromString(TEXT("X")));
     CloseX->SetFont(SFFont::Get(13));
-    CloseX->SetColorAndOpacity(FSlateColor(FLinearColor(1.0f, 0.85f, 0.0f, 1.0f)));   // match the Smart Panel X (gold @13)
+    CloseX->SetColorAndOpacity(FSlateColor(FLinearColor(1.0f, 0.85f, 0.0f, 1.0f)));   // gold @13 — readable on the dark button
     CloseBtn->AddChild(CloseX);
     CloseBtn->OnClicked.AddDynamic(this, &USFWalkPanelWidget::OnClose);
     if (UHorizontalBoxSlot* CloseSlot = HeaderRow->AddChildToHorizontalBox(CloseBtn))
@@ -352,10 +343,11 @@ void USFWalkPanelWidget::Refresh()
     UHorizontalBox* Footer = NewObject<UHorizontalBox>(this);
 
     UButton* ApplyBtn = NewObject<UButton>(this);
+    ApplyBtn->SetStyle(SFPanelButtonStyle());   // dark rounded fill like the Smart Panel buttons
     UTextBlock* ApplyText = NewObject<UTextBlock>(this);
     ApplyText->SetText(FText::FromString(TEXT("Apply")));
     ApplyText->SetFont(SFFont::Get(11));
-    ApplyText->SetColorAndOpacity(FSlateColor(FLinearColor(0.0f, 0.0f, 0.0f, 1.0f)));   // black: readable on the grey button (matches Smart Restore)
+    ApplyText->SetColorAndOpacity(FSlateColor(FLinearColor(1.0f, 0.85f, 0.0f, 1.0f)));   // gold on dark (matches the Smart Panel Apply/Reset)
     ApplyBtn->AddChild(ApplyText);
     ApplyBtn->OnClicked.AddDynamic(this, &USFWalkPanelWidget::OnApply);
     if (UHorizontalBoxSlot* ApplySlot = Footer->AddChildToHorizontalBox(ApplyBtn))
@@ -495,7 +487,7 @@ void USFWalkCellBinding::OnCommitted(float NewValue, ETextCommit::Type CommitTyp
     }
 }
 
-UWidget* USFWalkPanelWidget::MakeSelectorRow(const FString& Label, const FString& Value, UButton*& OutButton)
+UWidget* USFWalkPanelWidget::MakeComboRow(const FString& Label, const TArray<FString>& Options, int32 SelectedIndex, TObjectPtr<UComboBoxString>& OutCombo)
 {
     UHorizontalBox* Row = NewObject<UHorizontalBox>(this);
 
@@ -505,34 +497,9 @@ UWidget* USFWalkPanelWidget::MakeSelectorRow(const FString& Label, const FString
         LabelSlot->SetPadding(FMargin(4.0f, 2.0f));
     }
 
-    // Clickable value (gold) — click cycles the option forward; Refresh rebinds it each rebuild.
-    UButton* Btn = NewObject<UButton>(this);
-    UTextBlock* ValText = NewObject<UTextBlock>(this);
-    ValText->SetText(FText::FromString(Value));
-    ValText->SetColorAndOpacity(FSlateColor(FLinearColor(0.0f, 0.0f, 0.0f, 1.0f)));   // black: readable on the grey selector button
-    ValText->SetFont(SFFont::Get(11));
-    Btn->AddChild(ValText);
-    if (UHorizontalBoxSlot* BtnSlot = Row->AddChildToHorizontalBox(Btn))
-    {
-        BtnSlot->SetPadding(FMargin(4.0f, 2.0f));
-    }
-    OutButton = Btn;
-    return Row;
-}
-
-UWidget* USFWalkPanelWidget::MakeComboRow(const FString& Label, const TArray<FString>& Options, int32 SelectedIndex, TObjectPtr<UComboBoxString>& OutCombo)
-{
-    UHorizontalBox* Row = NewObject<UHorizontalBox>(this);
-
-    // Label cell (header orange) — matches MakeSelectorRow.
-    if (UHorizontalBoxSlot* LabelSlot = Row->AddChildToHorizontalBox(MakeCell(Label, FLinearColor(1.0f, 0.6f, 0.2f, 1.0f))))
-    {
-        LabelSlot->SetPadding(FMargin(4.0f, 2.0f));
-    }
-
     UComboBoxString* Combo = NewObject<UComboBoxString>(this);
-    // Font/ForegroundColor have no public setter on a runtime combo (InitFont is protected); the supported way to
-    // control item appearance is OnGenerateWidget — each item becomes a black SF-font TextBlock (readable on the grey box).
+    // Style the dropdown LIST items via OnGenerateWidget (each item = a black SF-font TextBlock); the CLOSED box's
+    // selected text is styled by Combo->Font / Combo->ForegroundColor below (both public UPROPERTYs).
     Combo->OnGenerateWidgetEvent.BindDynamic(this, &USFWalkPanelWidget::MakeComboItemWidget);
     // Standard Box item brushes (mirror the Smart Panel's ConfigureComboBoxStyle).
     FTableRowStyle ItemStyle = Combo->GetItemStyle();
@@ -545,6 +512,12 @@ UWidget* USFWalkPanelWidget::MakeComboRow(const FString& Label, const TArray<FSt
     ItemStyle.OddRowBackgroundBrush.DrawAs = ESlateBrushDrawType::Box;
     ItemStyle.OddRowBackgroundHoveredBrush.DrawAs = ESlateBrushDrawType::Box;
     Combo->SetItemStyle(ItemStyle);
+
+    // Closed-box selected text: black on the light combo box — matches the Smart Panel combos (which set
+    // ForegroundColor=black + a bold font). Font/ForegroundColor are public UPROPERTYs; assign them before the
+    // underlying widget constructs (when the panel is shown) so they take effect.
+    Combo->Font = SFFont::Get(11);
+    Combo->ForegroundColor = FSlateColor(FLinearColor::Black);
 
     for (const FString& Opt : Options) { Combo->AddOption(Opt); }
     if (Options.IsValidIndex(SelectedIndex)) { Combo->SetSelectedIndex(SelectedIndex); }
@@ -564,56 +537,6 @@ UWidget* USFWalkPanelWidget::MakeComboItemWidget(FString Item)
     T->SetFont(SFFont::Get(9));   // compact, closer to the Smart Panel combos
     T->SetColorAndOpacity(FSlateColor(FLinearColor::Black));   // readable on the grey combo
     return T;
-}
-
-void USFWalkPanelWidget::OnConveyanceTierCycle()
-{
-    USFSubsystem* S = GetSubsystem();
-    USFWalkService* W = S ? S->GetWalkService() : nullptr;
-    if (!S || !W) { return; }
-
-    const auto& AC = S->GetAutoConnectRuntimeSettings();
-    const bool bPipe = W->GetConveyanceType() == ESFWalkConveyanceType::Pipe;
-    AFGPlayerController* PC = Cast<AFGPlayerController>(GetOwningPlayer());
-
-    if (bPipe)
-    {
-        const int32 Max = S->GetHighestUnlockedPipeTier(PC);
-        int32 Next = AC.PipeTierMain + 1;
-        if (Next > Max) { Next = 0; }   // wrap back through 0 = Auto
-        S->SetAutoConnectPipeTierMain(Next);
-    }
-    else
-    {
-        const int32 Max = S->GetHighestUnlockedBeltTier(PC);
-        int32 Next = AC.BeltTierMain + 1;
-        if (Next > Max) { Next = 0; }
-        S->SetAutoConnectBeltTierMain(Next);
-    }
-
-    W->RerouteSpans();   // re-route every span with the new tier (path/frames unchanged)
-    Refresh();
-}
-
-void USFWalkPanelWidget::OnRoutingCycle()
-{
-    USFSubsystem* S = GetSubsystem();
-    USFWalkService* W = S ? S->GetWalkService() : nullptr;
-    if (!S || !W) { return; }
-
-    const auto& AC = S->GetAutoConnectRuntimeSettings();
-    const bool bPipe = W->GetConveyanceType() == ESFWalkConveyanceType::Pipe;
-    if (bPipe)
-    {
-        S->SetAutoConnectPipeRoutingMode((AC.PipeRoutingMode + 1) % 6);
-    }
-    else
-    {
-        S->SetAutoConnectBeltRoutingMode((AC.BeltRoutingMode + 1) % 3);
-    }
-
-    W->RerouteSpans();   // re-route every span with the new routing mode
-    Refresh();
 }
 
 void USFWalkPanelWidget::OnTierComboChanged(FString SelectedItem, ESelectInfo::Type SelectionType)
