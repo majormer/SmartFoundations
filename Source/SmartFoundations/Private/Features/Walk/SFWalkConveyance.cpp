@@ -2,6 +2,7 @@
 
 #include "Features/Walk/SFWalkConveyance.h"
 #include "Subsystem/SFSubsystem.h"
+#include "Features/AutoConnect/SFAutoConnectService.h"   // MAX_PIPE_LENGTH — the single-span cap for belts AND pipes
 #include "Subsystem/SFHologramDataService.h"
 #include "Hologram/FGHologram.h"
 #include "Holograms/Logistics/SFConveyorBeltHologram.h"
@@ -15,6 +16,14 @@
 // DEFINE_LOG_CATEGORY_STATIC(LogSmartWalk) in the same TU collide (struct redefinition). Belt routing logs land
 // under "LogSmartWalkBelt"; filter the log by "SmartWalk" to catch both.
 DEFINE_LOG_CATEGORY_STATIC(LogSmartWalkBelt, Log, All);
+
+// Walk span cap (CHORD / straight pole-to-pole distance). The vanilla belt+pipe limit is mMaxSplineLength = 5600.1 cm
+// (~56m; FGConveyorBeltHologram.h:175 / FGPipelineHologram.h:206, SAME for both) and it is on the CURVED SPLINE length;
+// we measure the straight chord, and a turn makes the spline LONGER than the chord. Reserve ~2m (cap the chord ~54m) so
+// the routed spline stays under the vanilla limit — this matches the ~54m practical max observed in-game. (Stackable AC
+// uses the full ~56m chord because its grid belts are straight; the walk curves on turns, so it needs the margin.)
+// Beyond this, LinkOrUpdate refuses the span and the segment shows a gap, exactly like stackable AC's skip-when-too-far.
+static constexpr float SF_WALK_MAX_SPAN_CM = USFAutoConnectService::MAX_PIPE_LENGTH - 200.0f;   // ~5401 cm / 54 m
 
 void USFWalkConveyance::SetSubsystem(USFSubsystem* InSubsystem)
 {
@@ -32,7 +41,7 @@ UFGFactoryConnectionComponent* USFWalkBeltConveyance::FirstConnector(AFGHologram
     return Connectors.Num() > 0 ? Connectors[0] : nullptr;
 }
 
-AFGHologram* USFWalkBeltConveyance::LinkOrUpdate(AFGHologram* ExistingSpan, AFGHologram* FromAnchor, AFGHologram* ToAnchor, AFGHologram* ParentForChild, bool bAddChildForBuild)
+AFGHologram* USFWalkBeltConveyance::LinkOrUpdate(AFGHologram* ExistingSpan, AFGHologram* FromAnchor, AFGHologram* ToAnchor, AFGHologram* ParentForChild, bool bAddChildForBuild, float SegmentTurnDeg)
 {
     UE_LOG(LogSmartWalkBelt, Log, TEXT(">>> LinkOrUpdate ENTER: existing=%s from=%s to=%s parent(seed)=%s build=%d"),
         *GetNameSafe(ExistingSpan), *GetNameSafe(FromAnchor), *GetNameSafe(ToAnchor), *GetNameSafe(ParentForChild), bAddChildForBuild ? 1 : 0);
@@ -57,6 +66,17 @@ AFGHologram* USFWalkBeltConveyance::LinkOrUpdate(AFGHologram* ExistingSpan, AFGH
     const FVector StartPos = FromConn ? FromConn->GetComponentLocation() : FromAnchor->GetActorLocation();
     const FVector EndPos = ToConn ? ToConn->GetComponentLocation() : ToAnchor->GetActorLocation();
 
+    // Belt length cap (see SF_WALK_MAX_SPAN_CM above): a walk segment's 3D span (Advance + Rise + Shift) can exceed the
+    // vanilla belt limit, and our chord is ~2m under the spline limit to leave room for the turn curve. Refuse it here:
+    // return null (no span). The caller (UpdateSegmentSpans) destroys any now-too-long existing span; the commit path
+    // then builds no belt for that segment (mirrors stackable AC's skip-when-too-far).
+    if (FVector::Dist(StartPos, EndPos) > SF_WALK_MAX_SPAN_CM)
+    {
+        UE_LOG(LogSmartWalkBelt, Warning, TEXT("<<< LinkOrUpdate EXIT: belt span %.0f cm > %.0f cm cap — skipped (segment too long)"),
+            FVector::Dist(StartPos, EndPos), SF_WALK_MAX_SPAN_CM);
+        return nullptr;
+    }
+
     // #356: route exactly like auto-connect / Scaled-Extend — exit each pole along its CONNECTOR FACING, not
     // straight at the partner. On a turn the downstream pole is rotated, so its connector normal rotates with it,
     // and the game's own AutoRouteSpline (via ApplyBeltBuildModeRouting below) curves the belt through the turn.
@@ -76,24 +96,29 @@ AFGHologram* USFWalkBeltConveyance::LinkOrUpdate(AFGHologram* ExistingSpan, AFGH
         }
         return N;
     };
-    FVector StartNormal = ResolveFacing(FromConn, FromAnchor);
+    // ENTRY (start): exit the source pole on the side OPPOSITE the previous segment's end — i.e. CONTINUE the previous
+    // belt's travel through the shared pole, so two belts never come out the same side (maintainer's rule; vanilla lets
+    // you pick either free connection point). The walk orients each pole facing -heading, so the source pole's facing
+    // points BACK toward the previous belt's end; -(facing) is the continuation/heading. A reversal then routes as a
+    // wide arc back into itself (e.g. a 270° loop), like a manual belt — not the inverted/straight shapes the old
+    // conditional sign-flip gave (it left a PERPENDICULAR start unflipped at a 180° turn, so the belt folded back).
+    // ENTRY (start): leave the source pole along the PREVIOUS segment's heading — continue the prior belt's travel
+    // through the shared pole. The walk faces each pole -heading, so -(facing) IS that heading. This puts the exit
+    // opposite the previous belt's entry at the shared pole (maintainer's rule), for every turn angle — no special case.
+    FVector StartNormal = -ResolveFacing(FromConn, FromAnchor);
+    // EXIT (end): arrive at the destination pole ALONG ITS HEADING. The pole faces back along that heading, so its
+    // facing IS the arrival normal, and the belt enters opposite where the NEXT segment leaves (the through-route).
+    // Do NOT snap EndN toward the chord: on a turn the chord != the heading, and the old chord sign-flip inverted the
+    // arrival, folding the belt back at the shared pole (the 270° X-crossing). Straight runs (chord == heading) and the
+    // 180° case (chord perpendicular to facing -> dot 0, never flipped) are unaffected.
     FVector EndNormal   = ResolveFacing(ToConn, ToAnchor);
-
-    // Spline convention (matches SetupBeltSpline): StartNormal exits toward the partner, EndNormal exits toward
-    // the source. Orient each facing accordingly (handles which connector index we grabbed) without fighting a
-    // genuine turn — for turns under 90° the sign is preserved, so the curve survives.
-    if (!DirN.IsNearlyZero())
-    {
-        if (FVector::DotProduct(StartNormal, DirN)  < 0.0f) { StartNormal = -StartNormal; }
-        if (FVector::DotProduct(EndNormal,  -DirN)  < 0.0f) { EndNormal   = -EndNormal; }
-    }
     if (StartNormal.IsNearlyZero()) { StartNormal = DirN; }
     if (EndNormal.IsNearlyZero())   { EndNormal   = -DirN; }
 
     const int32 RoutingMode = Sub->GetAutoConnectRuntimeSettings().BeltRoutingMode;
-    UE_LOG(LogSmartWalkBelt, Log, TEXT("  LinkOrUpdate routing: StartPos.world=%s EndPos.world=%s | StartN=%s EndN=%s | mode=%d len=%.1f | fromConn=%s toConn=%s"),
+    UE_LOG(LogSmartWalkBelt, Log, TEXT("  LinkOrUpdate routing: StartPos.world=%s EndPos.world=%s | StartN=%s EndN=%s | mode=%d len=%.1f turn=%.0f | fromConn=%s toConn=%s"),
         *StartPos.ToString(), *EndPos.ToString(), *StartNormal.ToString(), *EndNormal.ToString(),
-        RoutingMode, Dir.Size(), FromConn ? TEXT("yes") : TEXT("NULL"), ToConn ? TEXT("yes") : TEXT("NULL"));
+        RoutingMode, Dir.Size(), SegmentTurnDeg, FromConn ? TEXT("yes") : TEXT("NULL"), ToConn ? TEXT("yes") : TEXT("NULL"));
 
     // Update path: re-route an existing belt to follow moved anchors (steering / back-up).
     if (ASFConveyorBeltHologram* Existing = Cast<ASFConveyorBeltHologram>(ExistingSpan))
@@ -222,7 +247,7 @@ UFGPipeConnectionComponentBase* USFWalkPipeConveyance::FirstPipeConnector(AFGHol
     return Connectors.Num() > 0 ? Connectors[0] : nullptr;
 }
 
-AFGHologram* USFWalkPipeConveyance::LinkOrUpdate(AFGHologram* ExistingSpan, AFGHologram* FromAnchor, AFGHologram* ToAnchor, AFGHologram* ParentForChild, bool bAddChildForBuild)
+AFGHologram* USFWalkPipeConveyance::LinkOrUpdate(AFGHologram* ExistingSpan, AFGHologram* FromAnchor, AFGHologram* ToAnchor, AFGHologram* ParentForChild, bool bAddChildForBuild, float SegmentTurnDeg)
 {
     UE_LOG(LogSmartWalkBelt, Log, TEXT(">>> [Pipe] LinkOrUpdate ENTER: existing=%s from=%s to=%s parent(seed)=%s build=%d"),
         *GetNameSafe(ExistingSpan), *GetNameSafe(FromAnchor), *GetNameSafe(ToAnchor), *GetNameSafe(ParentForChild), bAddChildForBuild ? 1 : 0);
@@ -238,28 +263,35 @@ AFGHologram* USFWalkPipeConveyance::LinkOrUpdate(AFGHologram* ExistingSpan, AFGH
     const FVector StartPos = FromConn ? FromConn->GetComponentLocation() : FromAnchor->GetActorLocation();
     const FVector EndPos = ToConn ? ToConn->GetComponentLocation() : ToAnchor->GetActorLocation();
 
-    // Exit each support along its FACING (the walk orients the support to the segment heading) so a turn bows the
-    // pipe toward the connector normal; keep the chord's pitch so a height delta doesn't ramp. Same intent as the
-    // shared SF_ResolveSupportExitNormal in the stackable-pipe AC path (which we can't call across the TU boundary).
+    // Pipe length cap (see SF_WALK_MAX_SPAN_CM above): same ~54m chord cap as belts (the vanilla 56m limit is on the
+    // curved spline). Refuse an over-long span (return null, no pipe); the caller destroys any now-too-long existing one.
+    if (FVector::Dist(StartPos, EndPos) > SF_WALK_MAX_SPAN_CM)
+    {
+        UE_LOG(LogSmartWalkBelt, Warning, TEXT("<<< [Pipe] LinkOrUpdate EXIT: span %.0f cm > %.0f cm cap — skipped (segment too long)"),
+            FVector::Dist(StartPos, EndPos), SF_WALK_MAX_SPAN_CM);
+        return nullptr;
+    }
+
+    // ENTRY: leave the source support along the PREVIOUS heading (continue the prior span's travel through the shared
+    // support); the support faces -heading, so -(forward) is that heading. EXIT: arrive at the dest support along ITS
+    // heading (its facing IS the arrival normal). Both come straight from the support facings — NOT snapped to the
+    // chord: on a turn the chord != the heading, and snapping inverted the arrival, folding the span at the shared
+    // support (the same X-crossing the belts had). Keep each chord's pitch (Z) so a height delta doesn't ramp.
     const FVector Dir = (EndPos - StartPos);
     const FVector DirN = Dir.GetSafeNormal();
-    auto ResolveFacing = [](AFGHologram* Anchor, const FVector& Chord) -> FVector
-    {
-        const FVector ChordH = FVector(Chord.X, Chord.Y, 0.0f).GetSafeNormal();
-        FVector FacingH = IsValid(Anchor) ? Anchor->GetActorForwardVector() : FVector::ZeroVector;
-        FacingH.Z = 0.0f;
-        FacingH = FacingH.GetSafeNormal();
-        if (FacingH.IsNearlyZero() || ChordH.IsNearlyZero()) { return Chord; }
-        if (FVector::DotProduct(FacingH, ChordH) < 0.0f) { FacingH = -FacingH; }
-        if (FVector::DotProduct(FacingH, ChordH) < 0.5f) { return Chord; }
-        return (FacingH + FVector(0.0f, 0.0f, Chord.Z)).GetSafeNormal();
-    };
-    FVector StartNormal = ResolveFacing(FromAnchor, DirN);
-    FVector EndNormal   = ResolveFacing(ToAnchor, -DirN);
+    FVector StartFwd = IsValid(FromAnchor) ? FromAnchor->GetActorForwardVector() : FVector::ZeroVector;
+    StartFwd.Z = 0.0f; StartFwd = StartFwd.GetSafeNormal();
+    FVector StartNormal = StartFwd.IsNearlyZero() ? DirN : (-StartFwd + FVector(0.0f, 0.0f, DirN.Z)).GetSafeNormal();
+    FVector EndFwd = IsValid(ToAnchor) ? ToAnchor->GetActorForwardVector() : FVector::ZeroVector;
+    EndFwd.Z = 0.0f; EndFwd = EndFwd.GetSafeNormal();
+    FVector EndNormal = EndFwd.IsNearlyZero() ? -DirN : (EndFwd + FVector(0.0f, 0.0f, DirN.Z)).GetSafeNormal();
     if (StartNormal.IsNearlyZero()) { StartNormal = DirN; }
     if (EndNormal.IsNearlyZero())   { EndNormal   = -DirN; }
 
     const int32 RoutingMode = Sub->GetAutoConnectRuntimeSettings().PipeRoutingMode;
+    UE_LOG(LogSmartWalkBelt, Log, TEXT("  [Pipe] LinkOrUpdate routing: StartPos=%s EndPos=%s | StartN=%s EndN=%s | mode=%d len=%.1f turn=%.0f"),
+        *StartPos.ToString(), *EndPos.ToString(), *StartNormal.ToString(), *EndNormal.ToString(),
+        RoutingMode, Dir.Size(), SegmentTurnDeg);
 
     // Update path: re-route an existing pipe to follow moved anchors (steering / back-up).
     if (ASFPipelineHologram* Existing = Cast<ASFPipelineHologram>(ExistingSpan))

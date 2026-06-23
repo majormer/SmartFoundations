@@ -34,7 +34,7 @@ public:
      * Construct cascade builds it (the Extend SpawnChildHolograms pattern). Returns the span hologram, or null.
      * Base class is a no-op.
      */
-    virtual AFGHologram* LinkOrUpdate(AFGHologram* ExistingSpan, AFGHologram* FromAnchor, AFGHologram* ToAnchor, AFGHologram* ParentForChild, bool bAddChildForBuild = false)
+    virtual AFGHologram* LinkOrUpdate(AFGHologram* ExistingSpan, AFGHologram* FromAnchor, AFGHologram* ToAnchor, AFGHologram* ParentForChild, bool bAddChildForBuild = false, float SegmentTurnDeg = 0.0f)
     {
         return nullptr;
     }
@@ -54,7 +54,7 @@ class SMARTFOUNDATIONS_API USFWalkBeltConveyance : public USFWalkConveyance
     GENERATED_BODY()
 
 public:
-    virtual AFGHologram* LinkOrUpdate(AFGHologram* ExistingSpan, AFGHologram* FromAnchor, AFGHologram* ToAnchor, AFGHologram* ParentForChild, bool bAddChildForBuild = false) override;
+    virtual AFGHologram* LinkOrUpdate(AFGHologram* ExistingSpan, AFGHologram* FromAnchor, AFGHologram* ToAnchor, AFGHologram* ParentForChild, bool bAddChildForBuild = false, float SegmentTurnDeg = 0.0f) override;
 
 private:
     /** First factory connector on a pole hologram (the stackable pole's SnapOnly0), or null. */
@@ -72,7 +72,7 @@ class SMARTFOUNDATIONS_API USFWalkPipeConveyance : public USFWalkConveyance
     GENERATED_BODY()
 
 public:
-    virtual AFGHologram* LinkOrUpdate(AFGHologram* ExistingSpan, AFGHologram* FromAnchor, AFGHologram* ToAnchor, AFGHologram* ParentForChild, bool bAddChildForBuild = false) override;
+    virtual AFGHologram* LinkOrUpdate(AFGHologram* ExistingSpan, AFGHologram* FromAnchor, AFGHologram* ToAnchor, AFGHologram* ParentForChild, bool bAddChildForBuild = false, float SegmentTurnDeg = 0.0f) override;
 
 private:
     /** First pipe connector on a pipeline-support hologram, or null. */

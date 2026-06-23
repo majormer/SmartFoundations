@@ -417,15 +417,9 @@ void USmartSettingsFormWidget::NativeConstruct()
 
     // ========== DARK THEME STYLING ==========
 
-    // Dark background on BackgroundPanel
-    if (BackgroundPanel)
-    {
-        BackgroundPanel->SetBrushColor(FLinearColor(0.02f, 0.02f, 0.04f, 0.92f));
-    }
-    if (RestoreSidePanel)
-    {
-        RestoreSidePanel->SetBrushColor(FLinearColor(0.02f, 0.02f, 0.04f, 0.92f));
-    }
+    // Dark backdrop colour now lives in the Blueprint (BackgroundPanel + RestoreSidePanel BrushColor =
+    // 0.02,0.02,0.04,0.92) as the single source of truth — so the editor preview matches the game, and the Walk
+    // panel mirrors the exact same value. (Was a runtime SetBrushColor override the BP designer view didn't reflect.)
 
     // Orange accent on title
     if (TitleText)

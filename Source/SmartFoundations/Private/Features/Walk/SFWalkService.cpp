@@ -89,6 +89,13 @@ void USFWalkService::Initialize(USFSubsystem* InSubsystem)
     UE_LOG(LogSmartWalk, Log, TEXT("Initialize: subsystem=%s"), *GetNameSafe(InSubsystem));
 }
 
+// Per-segment guard (also enforced in the Walk panel spinbox). A 0-length first/edited span tangles and can build
+// reversed — a segment that wants the same point should just be dropped, so the floor is 1 m. (Turn is NOT capped:
+// a 180° reversal is valid; the belt router pairs the connectors for it — see SFWalkConveyance::LinkOrUpdate.)
+static constexpr float SF_WALK_MIN_ADVANCE_CM     = 100.0f;    // 1 m floor (no 0-length spans)
+static constexpr float SF_WALK_DEFAULT_ADVANCE_CM = 5400.0f;   // first segment starts at the 54 m max — nobody walks at 1 m
+static constexpr float SF_WALK_MAX_TURN_DEG       = 270.0f;    // a single segment can spiral up to a 270° loop (vanilla-valid wide arc); beyond that just wraps/overlaps
+
 bool USFWalkService::EnterWalk(AFGHologram* InSeedHologram)
 {
     UE_LOG(LogSmartWalk, Log, TEXT(">>> EnterWalk ENTER: seed=%s valid=%d recipe=%s bActive=%d"),
@@ -142,7 +149,9 @@ bool USFWalkService::EnterWalk(AFGHologram* InSeedHologram)
     CrossSectionStacks = 1;
 
     Segments.Reset();
-    Segments.Add(FSFWalkSegment());   // segment 0, the first anchor forward
+    FSFWalkSegment Seg0;
+    Seg0.Advance = SF_WALK_DEFAULT_ADVANCE_CM;   // start at the 54 m max — nobody builds 1 m segments (new segments still inherit the previous advance, even if reduced)
+    Segments.Add(Seg0);   // segment 0, the first anchor forward
     ActiveIndex = 0;
     bActive = true;
 
@@ -374,7 +383,7 @@ int32 USFWalkService::ReconstructWalkCommitOnServer(AFGHologram* Seed, const FSF
                 AFGHologram* ToPole   = Cur.IsValidIndex(Cell)  ? Cur[Cell]  : nullptr;
                 AFGHologram* FromPole = Prev.IsValidIndex(Cell) ? Prev[Cell] : nullptr;
                 if (!IsValid(ToPole) || !IsValid(FromPole)) { continue; }
-                if (BuildConveyance->LinkOrUpdate(nullptr, FromPole, ToPole, Seed, /*bAddChildForBuild=*/true))
+                if (BuildConveyance->LinkOrUpdate(nullptr, FromPole, ToPole, Seed, /*bAddChildForBuild=*/true, Segs[i].TurnDegrees))
                 {
                     ++Spans;
                 }
@@ -417,6 +426,7 @@ void USFWalkService::CommitActiveAndAdvance()
         NewSeg.NumLanes  = CrossSectionLanes;
         NewSeg.NumStacks = CrossSectionStacks;
     }
+    NewSeg.Advance = FMath::Max(NewSeg.Advance, SF_WALK_MIN_ADVANCE_CM);   // safety: never a 0-length new segment
     Segments.Add(NewSeg);
     ActiveIndex = Segments.Num() - 1;
     SpawnSegmentHologram(ActiveIndex);
@@ -452,8 +462,8 @@ void USFWalkService::SetActiveAdjusters(float Advance, float TurnDegrees, float 
     FSFWalkSegment& Seg = Segments[ActiveIndex];
     UE_LOG(LogSmartWalk, Log, TEXT(">>> SetActiveAdjusters ENTER: active=%d old(adv=%.0f turn=%.0f rise=%.0f shift=%.0f) -> new(adv=%.0f turn=%.0f rise=%.0f shift=%.0f)"),
         ActiveIndex, Seg.Advance, Seg.TurnDegrees, Seg.Rise, Seg.Shift, Advance, TurnDegrees, Rise, Shift);
-    Seg.Advance = Advance;
-    Seg.TurnDegrees = TurnDegrees;
+    Seg.Advance = FMath::Max(Advance, SF_WALK_MIN_ADVANCE_CM);   // min 1 m — no 0-length spans
+    Seg.TurnDegrees = FMath::Clamp(TurnDegrees, -SF_WALK_MAX_TURN_DEG, SF_WALK_MAX_TURN_DEG);   // up to a 270° loop
     Seg.Rise = Rise;
     Seg.Shift = Shift;
 
@@ -470,8 +480,8 @@ void USFWalkService::SetSegmentAtIndex(int32 Index, float Advance, float TurnDeg
     }
 
     FSFWalkSegment& Seg = Segments[Index];
-    Seg.Advance = Advance;
-    Seg.TurnDegrees = TurnDegrees;
+    Seg.Advance = FMath::Max(Advance, SF_WALK_MIN_ADVANCE_CM);   // min 1 m — no 0-length spans
+    Seg.TurnDegrees = FMath::Clamp(TurnDegrees, -SF_WALK_MAX_TURN_DEG, SF_WALK_MAX_TURN_DEG);   // up to a 270° loop
     Seg.Rise = Rise;
     Seg.Shift = Shift;
 
@@ -1026,8 +1036,16 @@ void USFWalkService::UpdateSegmentSpans(int32 Index)
         {
             continue;   // missing pole (e.g. a failed spawn) — skip this cell's belt this pass
         }
-        Seg.Spans[PoleIdx] = Conveyance->LinkOrUpdate(Seg.Spans[PoleIdx].Get(), FromAnchor, ToAnchor, SeedHologram.Get());
-        ++Made;
+        AFGHologram* OldSpan = Seg.Spans[PoleIdx].Get();
+        AFGHologram* NewSpan = Conveyance->LinkOrUpdate(OldSpan, FromAnchor, ToAnchor, SeedHologram.Get(), false, Seg.TurnDegrees);
+        if (!NewSpan && IsValid(OldSpan))
+        {
+            // LinkOrUpdate dropped the span (segment too long for one belt/pipe, > MAX_PIPE_LENGTH) — destroy the stale
+            // one so it doesn't linger at the old geometry. Mirrors stackable auto-connect leaving a gap when too far.
+            SF_SafeDestroyHologram(OldSpan);
+        }
+        Seg.Spans[PoleIdx] = NewSpan;
+        if (NewSpan) { ++Made; }
     }
     UE_LOG(LogSmartWalk, Log, TEXT("  UpdateSegmentSpans[%d]: %d span(s) over %d cells"), Index, Made, Count);
 }
