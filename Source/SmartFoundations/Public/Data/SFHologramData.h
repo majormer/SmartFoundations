@@ -19,6 +19,7 @@ enum class ESFChildHologramType : uint8 {
     ScalingGrid,
     AutoConnect,
     ExtendClone,
+    WalkSegment,
     CustomData
 };
 

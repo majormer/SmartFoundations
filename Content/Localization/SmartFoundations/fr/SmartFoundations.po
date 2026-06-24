@@ -970,3 +970,1151 @@ msgstr "Réparation des chaînes terminée"
 msgctxt "SmartFoundations,Triage_RepairCompleteWithOrphans"
 msgid "Chain repair complete — save, reload, and run Detect again"
 msgstr "Reparation des chaines terminee — sauvegardez, rechargez et relancez Detecter"
+
+msgctxt "0019837C427C49F6BA1DE5A2BAF52104"
+msgid "Straight"
+msgstr "Droit"
+
+msgctxt "067E1A5040E18EA163524F8F205335A9"
+msgid "Smart! Steps"
+msgstr "Smart! Marches"
+
+msgctxt "09B266E74168D79CC01A54B6220782CC"
+msgid "Network"
+msgstr "Réseau"
+
+msgctxt "0A60D4B54D01B286CA22F0A0967B6803"
+msgid "UPGRADE"
+msgstr "AMÉLIORER"
+
+msgctxt "0B68620A45C29BCF2BD3D390E9C6440C"
+msgid "High Contrast (3)"
+msgstr "Contraste élevé (3)"
+
+msgctxt "0F38693943C29DCD75F8C1B27871C5B8"
+msgid "Adjust Current Axis"
+msgstr "Ajuster l'axe actuel"
+
+msgctxt "12DA0489426F414A397D0589ED6C0745"
+msgid "Smart! Spacing"
+msgstr "Smart! Espacement"
+
+msgctxt "1322786544407AA4F8ED1B8190F76D9F"
+msgid "Scan"
+msgstr "Scanner"
+
+msgctxt "15B881014DC7C163FCB1419FB255A0EC"
+msgid "Dark (1)"
+msgstr "Sombre (1)"
+
+msgctxt "15E8B3EA40E8AC8A1E8E818BA03670E5"
+msgid "Adjust grid X-axis (forward/backward)"
+msgstr "Ajuster l'axe X de la grille (avant/arrière)"
+
+msgctxt "173D524544632CCDED043A9E3F4F7CC3"
+msgid "Estimated Cost"
+msgstr "Coût estimé"
+
+msgctxt "1754F7834BF1389234CDF2A4813856D4"
+msgid "Cancel"
+msgstr "Annuler"
+
+msgctxt "1926932648C4B2B04FFA2DA78759EB8A"
+msgid "X"
+msgstr "X"
+
+msgctxt "1BCE444B43095B0D655193A1B416CBBD"
+msgid "Increase value for active feature (scaling, spacing, steps, or stagger)"
+msgstr "Augmenter la valeur de la fonction active (mise à l'échelle, espacement, marches ou décalage)"
+
+msgctxt "1C0157F7400B84FCEA0CB0997F18ECFA"
+msgid "Smart! Recipe"
+msgstr "Smart! Recette"
+
+msgctxt "1CBE81654BEC06C4EE4D2F9B77C6823C"
+msgid "Radius"
+msgstr "Rayon"
+
+msgctxt "1CBF9AC24AB88ED704D8B89C23669BF7"
+msgid "REFRESH"
+msgstr "ACTUALISER"
+
+msgctxt "1D5643D5431C6F63F8A943BCE13CBE7E"
+msgid "Smart! Spacing"
+msgstr "Smart! Espacement"
+
+msgctxt "23C90C2D418545EC4333738F056A5EE6"
+msgid "°"
+msgstr "°"
+
+msgctxt "246236E4495CCCF2A3E4FC85C85DA9AB"
+msgid "Smart! Spacing"
+msgstr "Smart! Espacement"
+
+msgctxt "2878874049B6D5EE0A5D6D9B48259F72"
+msgid "Hold to activate spacing (modifier key)"
+msgstr "Maintenez pour activer l'espacement (touche modificatrice)"
+
+msgctxt "29B5665E4347B8A528480EA82ED201BE"
+msgid "Auto"
+msgstr "Auto"
+
+msgctxt "2B909A3E4443898FEB06568A0618C52A"
+msgid "Hold to activate rotation transform mode (modifier key)"
+msgstr "Maintenez pour activer le mode rotation (touche modificatrice)"
+
+msgctxt "2E5F43054D0239D4BAC0F4862CB459FB"
+msgid "Curve"
+msgstr "Courbe"
+
+msgctxt "310A5EFE4224B829F9BA469562A68951"
+msgid "Recipe Mode"
+msgstr "Mode recette"
+
+msgctxt "311FCC0E4AB23FE12C19BA94A560D1FB"
+msgid "Adjust grid Y-axis (left/right)"
+msgstr "Ajuster l'axe Y de la grille (gauche/droite)"
+
+msgctxt "31D1020F4EA86C6B0532A3916E9533CD"
+msgid "Mk6 (6)"
+msgstr "Mk6 (6)"
+
+msgctxt "32F87FF84A2C859EEF06EDA73BD50D90"
+msgid "Radius (m):"
+msgstr "Rayon (m) :"
+
+msgctxt "331CFA504EADB43C56B9C1AF41012E2F"
+msgid "Smart! Grid Scaling"
+msgstr "Smart! Mise à l'échelle"
+
+msgctxt "3326E4B341828CD7663F6285E104A803"
+msgid "Toggle Arrows"
+msgstr "Basculer les flèches"
+
+msgctxt "337DE321404C52EA519126A27AD16256"
+msgid "Classic (2)"
+msgstr "Classique (2)"
+
+msgctxt "33C84A48437DD1E5D1CF0AAD223DC813"
+msgid "Large Grid Warning"
+msgstr "Avertissement grande grille"
+
+msgctxt "348DAE9A4D32A65A01DF6A8106D161BC"
+msgid "Cycle Axis Mode"
+msgstr "Changer de mode d'axe"
+
+msgctxt "3739407645161CDED5901EACEAEE5915"
+msgid "+"
+msgstr "+"
+
+msgctxt "3BECA57E4ACCC555B29B23AC5605DDCD"
+msgid "Decrease value for active feature (scaling, spacing, steps, or stagger)"
+msgstr "Diminuer la valeur de la fonction active (mise à l'échelle, espacement, marches ou décalage)"
+
+msgctxt "3CEFA89C415D47DF87C953A4F5A22837"
+msgid "(0 upgradeable)"
+msgstr "(0 améliorable)"
+
+msgctxt "3E62D33F4FA4C52320AB48BD9B6D8B1C"
+msgid "Toggle Settings Form"
+msgstr "Basculer le formulaire de paramètres"
+
+msgctxt "40EADFF242CC6D8E10A4EDB6D777D2BC"
+msgid "Auto (0)"
+msgstr "Auto (0)"
+
+msgctxt "427A62BA4B691763413124A521EE7AA2"
+msgid "These tools diagnose and repair conveyor chain corruption. Only use them if you are experiencing belt issues."
+msgstr "Ces outils diagnostiquent et réparent la corruption des chaînes de convoyeurs. Ne les utilisez que si vous rencontrez des problèmes de convoyeurs."
+
+msgctxt "438320444C8158C55C66F08F8D53EBD5"
+msgid "Mk3 (3)"
+msgstr "Mk3 (3)"
+
+msgctxt "444B8B2648F771FC835D1CABC302BA9E"
+msgid "Y (2)"
+msgstr "Y (2)"
+
+msgctxt "466E938E4AA5B443D005619DEB8F0382"
+msgid "Smart! Panel"
+msgstr "Smart! Panneau"
+
+msgctxt "47FABC9743E900C118B8FCAF9C9076DE"
+msgid "Target Tier:"
+msgstr "Niveau cible :"
+
+msgctxt "4878AB2843890693F30F2BBA496DCCE8"
+msgid "Adjust step height for layers"
+msgstr "Ajuster la hauteur des marches pour les couches"
+
+msgctxt "5162B61A422973421A9B5084A1B41030"
+msgid "Smart! Stagger"
+msgstr "Smart! Décalage"
+
+msgctxt "51EB9D9A495D641249A89FA0BD6F76B3"
+msgid "Smart! Grid Scaling"
+msgstr "Smart! Mise à l'échelle"
+
+msgctxt "53A77D7341E0BB96E67D9287BEF26C24"
+msgid "Smart! Grid Scaling"
+msgstr "Smart! Mise à l'échelle"
+
+msgctxt "56027A5C460D5844EF237AB48DAA5A28"
+msgid "X+Y (3)"
+msgstr "X+Y (3)"
+
+msgctxt "5938A49142B563B4FB59E985E9AE1841"
+msgid "Cross Storage Containers"
+msgstr "Traverser conteneurs"
+
+msgctxt "59B517F844E13DA8F3D539844F2C9378"
+msgid "X (1)"
+msgstr "X (1)"
+
+msgctxt "60DE1CEC4B85C0CC72203CBF61E7568D"
+msgid "Curve"
+msgstr "Courbe"
+
+msgctxt "62C6E10A41335FE94A371DB0EA31B799"
+msgid "Smart! Grid Scaling"
+msgstr "Smart! Mise à l'échelle"
+
+msgctxt "63AABDCD482973D2CAFDF2932D97AE25"
+msgid "Smart! Steps"
+msgstr "Smart! Marches"
+
+msgctxt "6587C0CB460666BD6FC98BB018890DC5"
+msgid "Mk2 (2)"
+msgstr "Mk2 (2)"
+
+msgctxt "66C35E014DB7009BE3B924A85F570FD7"
+msgid "Press REFRESH to scan for upgradeable buildings. Press ESC or K to close."
+msgstr "Appuyez sur ACTUALISER pour rechercher des bâtiments améliorables. Appuyez sur ÉCHAP ou K pour fermer."
+
+msgctxt "6B9892D145A9E8A2054CEBAEF0A6B4E5"
+msgid "Share"
+msgstr "Partager"
+
+msgctxt "6F0E40FD4B11CA1CEC6FC5B06EB0188C"
+msgid "Stagger Left/Right"
+msgstr "Décaler à gauche/droite"
+
+msgctxt "70622324402CD200612E9395164CE150"
+msgid "Repair All Issues"
+msgstr "Réparer tous les problèmes"
+
+msgctxt "72BCC75B46EB14C88FA0CB8AFFE0ACFA"
+msgid "0"
+msgstr "0"
+
+msgctxt "74176A6A4B5B3CE8A9A4BA8F752D804C"
+msgid "Estimated Cost"
+msgstr "Coût estimé"
+
+msgctxt "78E37EDB4BEB48A04A5139AC6A0C614D"
+msgid "Show/hide axis direction arrows"
+msgstr "Afficher/masquer les flèches directionnelles des axes"
+
+msgctxt "790FF28E4D98D951C6AE27B8A147F50F"
+msgid "Press to clear active recipe"
+msgstr "Appuyez pour effacer la recette active"
+
+msgctxt "7945CB1F4E10CE8044DCBF8DC47322E1"
+msgid "Adjust sideways offset for grid items"
+msgstr "Ajuster le décalage latéral des éléments de la grille"
+
+msgctxt "7A593AF64E9BB01288D106BC6229CBF9"
+msgid "Cross Splitters/Mergers"
+msgstr "Traverser répartiteurs/fusionneurs"
+
+msgctxt "7A7B62144F20B0B73ABCD8B643EED6A1"
+msgid "Mk2 (2)"
+msgstr "Mk2 (2)"
+
+msgctxt "7BAE3F3D4FEAEB14DC15CCBAC6FA6820"
+msgid "Smart! Configuration"
+msgstr "Smart! Configuration"
+
+msgctxt "7C1BBA564FF13BA590D8A89C48E3F2C8"
+msgid "Anchor: Aim at a belt, pipe, or pole"
+msgstr "Ancrage : visez un convoyeur, tuyau ou poteau"
+
+msgctxt "7ECCEB924559BAD3A1844C80D4581EAE"
+msgid "Grid Total: 1 objects"
+msgstr "Total grille : 1 objet"
+
+msgctxt "7F2E5ED1421D2CB422D39B96E7FEFA25"
+msgid "Scale Forward/Back"
+msgstr "Mise à l'échelle avant/arrière"
+
+msgctxt "80ADD8BF4E442F2608D92FB8ECD49CC2"
+msgid "Mk1 (1)"
+msgstr "Mk1 (1)"
+
+msgctxt "827BDCB04E7D02296EA3E880D6C24DC3"
+msgid "SCAN NETWORK"
+msgstr "SCANNER LE RÉSEAU"
+
+msgctxt "86A78F2C47F34655E5C58484EC93E3AD"
+msgid "Smart! Recipe"
+msgstr "Smart! Recette"
+
+msgctxt "8A7DD44D47B48C266B3B88AC01D1CEF3"
+msgid "Straight"
+msgstr "Droit"
+
+msgctxt "8BB84C5240D8A57F87983A986C3DFB73"
+msgid "Smart! Upgrade Panel"
+msgstr "Smart! Panneau d'amélioration"
+
+msgctxt "8E24BA32430E1A670137ABA048747BB8"
+msgid "Monochrome (5)"
+msgstr "Monochrome (5)"
+
+msgctxt "928114D446D78C041AEF5D88157821E9"
+msgid "Noodle"
+msgstr "Nouille"
+
+msgctxt "93C024D64433A5447D2C0396B3C5CB33"
+msgid "Hold to activate progressive layering (modifier key)"
+msgstr "Maintenez pour activer la superposition progressive (touche modificatrice)"
+
+msgctxt "9423B8A2450BD3341A377D9BD4CCD62B"
+msgid "CANCEL"
+msgstr "ANNULER"
+
+msgctxt "9643BBEF4D4BFEB216B5CDB73AC1A4C8"
+msgid "Spacing Mode"
+msgstr "Mode espacement"
+
+msgctxt "96E044FE4DDABD241B0483A89D209A2C"
+msgid "Run Detect to see results"
+msgstr "Lancez Détecter pour voir les résultats"
+
+msgctxt "97E5935349503B2191BFE4B385BC7AB3"
+msgid "Smart! Foundations"
+msgstr "Smart! Foundations"
+
+msgctxt "9852395F409F9C751F989FA1748BFA16"
+msgid "Auto (0)"
+msgstr "Auto (0)"
+
+msgctxt "98E28A8E4D25D9D8BCD4C08EC6A98DE6"
+msgid "Configure Smart! scaling, visualization, and HUD settings"
+msgstr "Configurer la mise à l'échelle, la visualisation et le HUD de Smart!"
+
+msgctxt "9AE7D23346D4BB5B0192848D8291920C"
+msgid "Hold to scale X-axis. Combine with Y modifier to scale Z-axis."
+msgstr "Maintenez pour mettre à l'échelle l'axe X. Combinez avec le modificateur Y pour l'axe Z."
+
+msgctxt "9C14E6F8447F242BFBB485BD8E31A5F3"
+msgid "Cycle through X → Y → Z axes"
+msgstr "Parcourir les axes X → Y → Z"
+
+msgctxt "9C1531E24044FDC579C089A23F379274"
+msgid "Detect Issues"
+msgstr "Détecter les problèmes"
+
+msgctxt "9E038900477F0B65A5A64E91AB5C00F0"
+msgid "HUD Scale"
+msgstr "Échelle du HUD"
+
+msgctxt "9E972DC647E3D424CFE890B235FB1EE3"
+msgid "Select items to see costs"
+msgstr "Sélectionnez des éléments pour voir les coûts"
+
+msgctxt "A08F54F64F8642B9E7F8F1AA30D2B869"
+msgid "Minimal (4)"
+msgstr "Minimal (4)"
+
+msgctxt "A1723C3742687518D3D7FAB8769C4F43"
+msgid "Once (1)"
+msgstr "Une fois (1)"
+
+msgctxt "A4625ACE4A31BA74C187C09C62723BE6"
+msgid "Steps Mode"
+msgstr "Mode marches"
+
+msgctxt "A65B455D41D3967FE018129E6F8D99BC"
+msgid "Scale Left/Right"
+msgstr "Mise à l'échelle gauche/droite"
+
+msgctxt "A6A1DA99437171CC3D6B8C9E2918CEE0"
+msgid "Default (0)"
+msgstr "Défaut (0)"
+
+msgctxt "A70A70BC46CB9221B4A7618D9D344FCD"
+msgid "Horiz→Vert"
+msgstr "Horiz→Vert"
+
+msgctxt "A863449D4ED1EF98FD3531A57C03A83B"
+msgid "Auto (0)"
+msgstr "Auto (0)"
+
+msgctxt "A9F4FD7C4ADCBE49DE0631A2046B8C32"
+msgid "Auto 2D"
+msgstr "Auto 2D"
+
+msgctxt "AC9521FE4F1ABB4F0FDA12BE408820F6"
+msgid "Stagger Mode"
+msgstr "Mode décalage"
+
+msgctxt "ADFEA69944158AB689D01EB52BA2A425"
+msgid "Adjust grid Z-axis (up/down)"
+msgstr "Ajuster l'axe Z de la grille (haut/bas)"
+
+msgctxt "B433CC5C466EDDBF3105FA829F9B12D5"
+msgid "Scale X Modifier"
+msgstr "Modificateur d'échelle X"
+
+msgctxt "B4E7FC1B4C29E5780A005DACF4F6605B"
+msgid "Smart! Grid Scaling"
+msgstr "Smart! Mise à l'échelle"
+
+msgctxt "B67A2B1049D6C022FFE45AA3C7E91E0D"
+msgid "Mk1 (1)"
+msgstr "Mk1 (1)"
+
+msgctxt "B8C9B67949C7644C3AE6519EBC26464D"
+msgid "Smart! Grid Scaling"
+msgstr "Smart! Mise à l'échelle"
+
+msgctxt "BB16B38F4773E62C787CD8A7A950B2A0"
+msgid "Warning message here"
+msgstr "Message d'avertissement ici"
+
+msgctxt "BE3FB1994C8451039886D1829DD59B06"
+msgid "Entire Map"
+msgstr "Carte entière"
+
+msgctxt "BE9D645D4352A41A16C3D0A5F1F62C94"
+msgid "+"
+msgstr "+"
+
+msgctxt "BEFE3D9D4EA76F0E2C34198C02E30A1E"
+msgid "Family Name Mk.1"
+msgstr "Nom de famille Mk.1"
+
+msgctxt "C08F8647484002CCC38A78938534A251"
+msgid "Mk5 (5)"
+msgstr "Mk5 (5)"
+
+msgctxt "C0E174744867FC71F8E879B5AE7D69EE"
+msgid "Mk4 (4)"
+msgstr "Mk4 (4)"
+
+msgctxt "C34C1A5F452AB8290A9A00BA9D73780D"
+msgid "Target Tier:"
+msgstr "Niveau cible :"
+
+msgctxt "C6DDD93A4DEF142BBA1E08BBE2381F1B"
+msgid "Repair result will appear here"
+msgstr "Le résultat de la réparation apparaîtra ici"
+
+msgctxt "CB15E1A74E71CFAEDB6CA3AA8994C227"
+msgid "Close"
+msgstr "Fermer"
+
+msgctxt "CDF7639140F228F3095085B61DF1FC1A"
+msgid "Not saved"
+msgstr "Non enregistré"
+
+msgctxt "SmartFoundations,Config.Description"
+msgid "Smart! Foundations settings."
+msgstr "Paramètres de Smart! Foundations."
+
+msgctxt "SmartFoundations,Config.DisplayName"
+msgid "Smart!"
+msgstr "Smart!"
+
+msgctxt "SmartFoundations,Config.Root.Name"
+msgid "Smart!"
+msgstr "Smart!"
+
+msgctxt "SmartFoundations,Config.Root.Tooltip"
+msgid "Smart! Foundations settings."
+msgstr "Paramètres de Smart! Foundations."
+
+msgctxt "D042222F4CF5B96FB75D6AB15DFD0645"
+msgid "Cross Train Platforms"
+msgstr "Traverser plateformes de train"
+
+msgctxt "D09E94C0499C4C4F3E606D9E2461B19A"
+msgid "Toggle Smart Settings Form"
+msgstr "Basculer le formulaire de paramètres Smart"
+
+msgctxt "D16C08E24764156DC1CBDAB0287C8627"
+msgid "Default"
+msgstr "Défaut"
+
+msgctxt "D5988C104C18248A9BFD8485A40BE7BF"
+msgid "Triage"
+msgstr "Triage"
+
+msgctxt "D62D58CF4AFE88D8DE519488D31F424F"
+msgid "Scale Up/Down"
+msgstr "Mise à l'échelle haut/bas"
+
+msgctxt "DD0B98B04A427071B009D7BAA464B531"
+msgid "Save New Preset"
+msgstr "Enregistrer un nouveau préréglage"
+
+msgctxt "DFC6C7C441EFDC29C8E28F8F68C31EC1"
+msgid "Always (0)"
+msgstr "Toujours (0)"
+
+msgctxt "E148F27C4C01935B4E019BA49F4A0F55"
+msgid "Steps Up/Down"
+msgstr "Marches haut/bas"
+
+msgctxt "E3CA9AD8424D9B1B3B996C97C1F70A61"
+msgid "Rotation Mode"
+msgstr "Mode rotation"
+
+msgctxt "E522B9984A797E90FDF435B93981833C"
+msgid "Smart! Rotation"
+msgstr "Smart! Rotation"
+
+msgctxt "E66C9E5840CD757371D1B2A26B0937F7"
+msgid "Scan network to see costs"
+msgstr "Scanner le réseau pour voir les coûts"
+
+msgctxt "E7D5F1A145882159A49EE89DEAA01EF5"
+msgid "Hold to activate sideways offset (modifier key)"
+msgstr "Maintenez pour activer le décalage latéral (touche modificatrice)"
+
+msgctxt "E9350DEF466B0A2E9F7FBDB9FA947A97"
+msgid "Never (2)"
+msgstr "Jamais (2)"
+
+msgctxt "EA82618C44B70702397E7E97036E946B"
+msgid "Show Direction Arrows (can be overridden)"
+msgstr "Afficher les flèches directionnelles"
+
+msgctxt "F10D935E43878D99436DE5979A4E7EFD"
+msgid "Adjust spacing for currently selected axis"
+msgstr "Ajuster l'espacement de l'axe actuellement sélectionné"
+
+msgctxt "F484CB0045E1F6610752E19D98C01DFE"
+msgid "Smart! Interface"
+msgstr "Smart! Interface"
+
+msgctxt "F506AD1F41CF8A81A27FC0A480EAE8B8"
+msgid "Smart Restore"
+msgstr "Smart Restauration"
+
+msgctxt "F5885ED64196DAF6BE5F878ED0AF0A29"
+msgid "Smart! Stagger"
+msgstr "Smart! Décalage"
+
+msgctxt "F87C5DEE489864EDB5D02386C86E62CF"
+msgid "Recipe Up/Down"
+msgstr "Recette haut/bas"
+
+msgctxt "F8E467094A594E5C21A542B94D14B1E6"
+msgid "+"
+msgstr "+"
+
+msgctxt "FA69B4C54C1F9AC00819708F1BD00666"
+msgid "Hold to scale Y-axis. Combine with X modifier to scale Z-axis."
+msgstr "Maintenez pour mettre à l'échelle l'axe Y. Combinez avec le modificateur X pour l'axe Z."
+
+msgctxt "FA953BD649A5AEE3F69CB7AFE9E2A43A"
+msgid "Route mouse wheel input to the active Smart! feature (scaling, spacing, steps, or stagger)"
+msgstr "Diriger la molette de la souris vers la fonction Smart! active (mise à l'échelle, espacement, marches ou décalage)"
+
+msgctxt "FD2BEAF2493FD288E0C03FB923FE3E94"
+msgid "Ready"
+msgstr "Prêt"
+
+msgctxt "FD8B2189447F09294CBA09A02293BB9C"
+msgid "Core Smart! Foundations settings for HUD display and default scale values"
+msgstr "Paramètres de base de Smart! Foundations pour l'affichage du HUD et les valeurs d'échelle par défaut"
+
+msgctxt "FECC44E2411C81715010F7B2FAD081E6"
+msgid "Scale Y Modifier"
+msgstr "Modificateur d'échelle Y"
+
+msgctxt "FF3BF8944642F2DEE83E0685A53303EE"
+msgid "Adjust Recipe"
+msgstr "Ajuster la recette"
+
+msgctxt "SmartFoundations,HUD_RestoreActive"
+msgid "*Restore Active"
+msgstr "*Restauration active"
+
+msgctxt "SmartFoundations,HUD_RestorePreset"
+msgid "*Restore: {0}"
+msgstr "*Restauration : {0}"
+
+msgctxt "SmartFoundations,HUD_Walk"
+msgid "*Walk  {0} seg | head {1} {2}deg | {3}"
+msgstr "*Marche  {0} seg | cap {1} {2}deg | {3}"
+
+msgctxt "SmartFoundations,HUD_WalkAdvance"
+msgid "Advance{0}: {1}m"
+msgstr "Avance{0} : {1}m"
+
+msgctxt "SmartFoundations,HUD_WalkRise"
+msgid "Rise{0}: {1}m"
+msgstr "Montée{0} : {1}m"
+
+msgctxt "SmartFoundations,HUD_WalkShift"
+msgid "Shift{0}: {1}m"
+msgstr "Décalage{0} : {1}m"
+
+msgctxt "SmartFoundations,HUD_WalkTurn"
+msgid "Turn{0}: {1}°"
+msgstr "Virage{0} : {1}°"
+
+msgctxt "SmartFoundations,HUD_Walk_Belt"
+msgid "belt"
+msgstr "convoyeur"
+
+msgctxt "SmartFoundations,HUD_Walk_Pipe"
+msgid "pipe"
+msgstr "tuyau"
+
+msgctxt "SmartFoundations,Hint_CycleMode"
+msgid "Cycle Mode"
+msgstr "Changer de mode"
+
+msgctxt "SmartFoundations,Hint_Recipe"
+msgid "Recipe"
+msgstr "Recette"
+
+msgctxt "SmartFoundations,Hint_Rotation"
+msgid "Rotation"
+msgstr "Rotation"
+
+msgctxt "SmartFoundations,Hint_ScaleX"
+msgid "Scale X"
+msgstr "Échelle X"
+
+msgctxt "SmartFoundations,Hint_ScaleY"
+msgid "Scale Y"
+msgstr "Échelle Y"
+
+msgctxt "SmartFoundations,Hint_ScaleZ"
+msgid "Scale Z"
+msgstr "Échelle Z"
+
+msgctxt "SmartFoundations,Hint_SmartPanel"
+msgid "Smart Panel"
+msgstr "Panneau Smart"
+
+msgctxt "SmartFoundations,Hint_Spacing"
+msgid "Spacing"
+msgstr "Espacement"
+
+msgctxt "SmartFoundations,Hint_Stagger"
+msgid "Stagger"
+msgstr "Décalage"
+
+msgctxt "SmartFoundations,Hint_Steps"
+msgid "Steps"
+msgstr "Marches"
+
+msgctxt "SmartFoundations,P.BeltLevelMain"
+msgid "Manifold Lane Belt"
+msgstr "Convoyeur collecteur"
+
+msgctxt "SmartFoundations,P.BeltLevelMain.TT"
+msgid "Belt tier for distributor-to-distributor (manifold) connections. Auto uses the highest tier you've unlocked."
+msgstr "Niveau de convoyeur pour les connexions distributeur-à-distributeur (collecteur). Auto utilise le niveau le plus élevé débloqué."
+
+msgctxt "SmartFoundations,P.BeltLevelToBuilding"
+msgid "Factory Belt"
+msgstr "Convoyeur usine"
+
+msgctxt "SmartFoundations,P.BeltLevelToBuilding.TT"
+msgid "Belt tier for distributor-to-building connections. Auto uses the highest tier you've unlocked."
+msgstr "Niveau de convoyeur pour les connexions distributeur-à-bâtiment. Auto utilise le niveau le plus élevé débloqué."
+
+msgctxt "SmartFoundations,P.BeltRoutingMode"
+msgid "Belt Routing Mode"
+msgstr "Mode routage convoyeur"
+
+msgctxt "SmartFoundations,P.BeltRoutingMode.TT"
+msgid "How auto-connected belts are shaped: Default, Curve, or Straight."
+msgstr "Forme des convoyeurs auto-connectés : Défaut, Courbe ou Droit."
+
+msgctxt "SmartFoundations,P.HUDPositionX"
+msgid "HUD Position X"
+msgstr "Position X du HUD"
+
+msgctxt "SmartFoundations,P.HUDPositionX.TT"
+msgid "Horizontal position of the HUD on screen (0 = left edge, 1 = right edge)."
+msgstr "Position horizontale du HUD à l'écran (0 = bord gauche, 1 = bord droit)."
+
+msgctxt "SmartFoundations,P.HUDPositionY"
+msgid "HUD Position Y"
+msgstr "Position Y du HUD"
+
+msgctxt "SmartFoundations,P.HUDPositionY.TT"
+msgid "Vertical position of the HUD on screen (0 = top, 1 = bottom)."
+msgstr "Position verticale du HUD à l'écran (0 = haut, 1 = bas)."
+
+msgctxt "SmartFoundations,P.HUDScale"
+msgid "HUD Scale"
+msgstr "Échelle du HUD"
+
+msgctxt "SmartFoundations,P.HUDScale.TT"
+msgid "Size of the Smart! HUD overlay."
+msgstr "Taille de l'overlay HUD de Smart!."
+
+msgctxt "SmartFoundations,P.HUDTheme"
+msgid "HUD Theme"
+msgstr "Thème du HUD"
+
+msgctxt "SmartFoundations,P.HUDTheme.TT"
+msgid "Color theme for the HUD: Default (FICSIT orange), Dark, Classic, High Contrast, Minimal, or Monochrome."
+msgstr "Thème de couleur du HUD : Défaut (orange FICSIT), Sombre, Classique, Contraste élevé, Minimal ou Monochrome."
+
+msgctxt "SmartFoundations,P.PipeIndicator"
+msgid "Flow Indicator"
+msgstr "Indicateur de flux"
+
+msgctxt "SmartFoundations,P.PipeIndicator.TT"
+msgid "Show a flow-direction indicator on auto-connected pipes."
+msgstr "Afficher un indicateur de direction du flux sur les tuyaux auto-connectés."
+
+msgctxt "SmartFoundations,P.PipeLevelMain"
+msgid "Main Tier"
+msgstr "Niveau principal"
+
+msgctxt "SmartFoundations,P.PipeLevelMain.TT"
+msgid "Pipe tier for the main connections. Auto uses the highest tier you've unlocked."
+msgstr "Niveau de tuyau pour les connexions principales. Auto utilise le niveau le plus élevé débloqué."
+
+msgctxt "SmartFoundations,P.PipeLevelToBuilding"
+msgid "To Building"
+msgstr "Vers bâtiment"
+
+msgctxt "SmartFoundations,P.PipeLevelToBuilding.TT"
+msgid "Pipe tier for connections to buildings. Auto uses the highest tier you've unlocked."
+msgstr "Niveau de tuyau pour les connexions vers les bâtiments. Auto utilise le niveau le plus élevé débloqué."
+
+msgctxt "SmartFoundations,P.PipeRoutingMode"
+msgid "Pipe Routing Mode"
+msgstr "Mode routage tuyaux"
+
+msgctxt "SmartFoundations,P.PipeRoutingMode.TT"
+msgid "How auto-connected pipes are shaped: Auto, 2D, Straight, Curve, Noodle, or Horizontal-to-Vertical."
+msgstr "Forme des tuyaux auto-connectés : Auto, 2D, Droit, Courbe, Nouille ou Horizontal-vers-Vertical."
+
+msgctxt "SmartFoundations,P.PowerConnectMode"
+msgid "Grid Axis"
+msgstr "Axe de grille"
+
+msgctxt "SmartFoundations,P.PowerConnectMode.TT"
+msgid "Which directions power poles connect: Auto, X only, Y only, or both X and Y."
+msgstr "Directions dans lesquelles les poteaux électriques se connectent : Auto, X seul, Y seul, ou X et Y."
+
+msgctxt "SmartFoundations,P.PowerConnectRange"
+msgid "Connection Range"
+msgstr "Portée de connexion"
+
+msgctxt "SmartFoundations,P.PowerConnectRange.TT"
+msgid "Maximum distance, in meters, to search for a power connection."
+msgstr "Distance maximale, en mètres, pour rechercher une connexion électrique."
+
+msgctxt "SmartFoundations,P.PowerConnectReserved"
+msgid "Connections to Keep Free"
+msgstr "Connexions à réserver"
+
+msgctxt "SmartFoundations,P.PowerConnectReserved.TT"
+msgid "Number of pole connection slots to leave free for your own manual wiring."
+msgstr "Nombre d'emplacements de connexion de poteau à laisser libres pour votre câblage manuel."
+
+msgctxt "SmartFoundations,P.bApplyImmediately"
+msgid "Apply Immediately"
+msgstr "Appliquer immédiatement"
+
+msgctxt "SmartFoundations,P.bApplyImmediately.TT"
+msgid "Apply Smart Panel changes instantly instead of clicking the Apply button."
+msgstr "Appliquer les changements du Panneau Smart instantanément au lieu de cliquer sur le bouton Appliquer."
+
+msgctxt "SmartFoundations,P.bAutoConnectDistributors"
+msgid "Use Manifold Lane Belts"
+msgstr "Convoyeurs collecteurs"
+
+msgctxt "SmartFoundations,P.bAutoConnectDistributors.TT"
+msgid "Chain distributors together with manifold lane belts, so a whole row is fed from one input."
+msgstr "Enchaîner les distributeurs avec des convoyeurs collecteurs, pour qu'une rangée entière soit alimentée par une seule entrée."
+
+msgctxt "SmartFoundations,P.bAutoConnectEnabled"
+msgid "Belt Auto-Connect"
+msgstr "Connexion auto convoyeurs"
+
+msgctxt "SmartFoundations,P.bAutoConnectEnabled.TT"
+msgid "Automatically connect conveyor belts between placed buildings and distributors."
+msgstr "Connecter automatiquement les convoyeurs entre les bâtiments placés et les distributeurs."
+
+msgctxt "SmartFoundations,P.bAutoHoldOnGridChange"
+msgid "Auto-Hold on Grid Change"
+msgstr "Verrouillage auto sur changement"
+
+msgctxt "SmartFoundations,P.bAutoHoldOnGridChange.TT"
+msgid "Automatically lock the hologram in place after any grid change. Press the Hold key to release it."
+msgstr "Verrouiller automatiquement l'hologramme en place après tout changement de grille. Appuyez sur la touche Verrouiller pour le relâcher."
+
+msgctxt "SmartFoundations,P.bExtendDaisyChainPoleless"
+msgid "Daisy-Chain Pole-less Factories"
+msgstr "Chaînage des usines sans poteau"
+
+msgctxt "SmartFoundations,P.bExtendDaisyChainPoleless.TT"
+msgid "When you Extend a factory that has no power pole and no existing daisy link (starting a fresh manifold), wire the new buildings together with daisy-chain power. Factories already daisy-chained are always continued regardless of this option."
+msgstr "Lorsque vous étendez une usine sans poteau électrique et sans lien de chaînage existant (démarrage d'un nouveau collecteur), câblez les nouveaux bâtiments ensemble par chaînage électrique. Les usines déjà chaînées sont toujours poursuivies, quelle que soit cette option."
+
+msgctxt "SmartFoundations,P.bExtendDaisyChainPower"
+msgid "Extend Daisy-Chain Power"
+msgstr "Étendre le chaînage électrique"
+
+msgctxt "SmartFoundations,P.bExtendDaisyChainPower.TT"
+msgid "Once Upgraded Power Connectors is unlocked, Extend wires power directly building-to-building along the lane instead of running a pole to each building."
+msgstr "Une fois les connecteurs électriques améliorés débloqués, Étendre câble l'énergie directement de bâtiment à bâtiment le long de la rangée au lieu d'amener un poteau à chaque bâtiment."
+
+msgctxt "SmartFoundations,P.bExtendEnabled"
+msgid "Extend Enabled"
+msgstr "Extension activée"
+
+msgctxt "SmartFoundations,P.bExtendEnabled.TT"
+msgid "Enable Extend - repeat a building or grid outward in one direction."
+msgstr "Activer Étendre — répéter un bâtiment ou une grille vers l'extérieur dans une direction."
+
+msgctxt "SmartFoundations,P.bExtendPowerEnabled"
+msgid "Extend Power Poles"
+msgstr "Étendre les poteaux électriques"
+
+msgctxt "SmartFoundations,P.bExtendPowerEnabled.TT"
+msgid "Include power poles when using Extend."
+msgstr "Inclure les poteaux électriques lors de l'utilisation d'Étendre."
+
+msgctxt "SmartFoundations,P.bPipeAutoConnectEnabled"
+msgid "Pipe Auto-Connect"
+msgstr "Connexion auto tuyaux"
+
+msgctxt "SmartFoundations,P.bPipeAutoConnectEnabled.TT"
+msgid "Automatically connect pipes between placed buildings."
+msgstr "Connecter automatiquement les tuyaux entre les bâtiments placés."
+
+msgctxt "SmartFoundations,P.bPowerAutoConnectEnabled"
+msgid "Power Auto-Connect"
+msgstr "Connexion auto énergie"
+
+msgctxt "SmartFoundations,P.bPowerAutoConnectEnabled.TT"
+msgid "Automatically wire power between placed buildings and nearby power poles."
+msgstr "Câbler automatiquement l'énergie entre les bâtiments placés et les poteaux électriques proches."
+
+msgctxt "SmartFoundations,P.bShowArrowLabels"
+msgid "Arrow Axis Labels"
+msgstr "Étiquettes d'axes des flèches"
+
+msgctxt "SmartFoundations,P.bShowArrowLabels.TT"
+msgid "Show X/Y/Z axis labels on the direction arrows."
+msgstr "Afficher les étiquettes d'axe X/Y/Z sur les flèches directionnelles."
+
+msgctxt "SmartFoundations,P.bShowArrowOrbit"
+msgid "Arrow Orbit Animation"
+msgstr "Animation orbite des flèches"
+
+msgctxt "SmartFoundations,P.bShowArrowOrbit.TT"
+msgid "Animate the arrows orbiting the hologram. Turn off for static arrows that still track you."
+msgstr "Animer les flèches en orbite autour de l'hologramme. Désactivez pour des flèches statiques qui vous suivent toujours."
+
+msgctxt "SmartFoundations,P.bShowArrows"
+msgid "Show Direction Arrows"
+msgstr "Afficher les flèches directionnelles"
+
+msgctxt "SmartFoundations,P.bShowArrows.TT"
+msgid "Show X/Y/Z direction arrows on the building hologram."
+msgstr "Afficher les flèches directionnelles X/Y/Z sur l'hologramme du bâtiment."
+
+msgctxt "SmartFoundations,P.bShowHUD"
+msgid "Show HUD Overlay"
+msgstr "Afficher le HUD"
+
+msgctxt "SmartFoundations,P.bShowHUD.TT"
+msgid "Show the Smart! overlay (grid, scale, and recipe info) while building."
+msgstr "Afficher l'overlay Smart! (grille, échelle et infos de recette) pendant la construction."
+
+msgctxt "SmartFoundations,P.bStackableBeltEnabled"
+msgid "Stackable Belt Auto-Connect"
+msgstr "Connexion auto empilable"
+
+msgctxt "SmartFoundations,P.bStackableBeltEnabled.TT"
+msgid "Allow auto-connected belts to stack vertically where they overlap."
+msgstr "Autoriser les convoyeurs auto-connectés à s'empiler verticalement là où ils se chevauchent."
+
+msgctxt "SmartFoundations,Panel_Btn_ApplyPreset"
+msgid "Apply"
+msgstr "Appliquer"
+
+msgctxt "SmartFoundations,Panel_Btn_DeletePreset"
+msgid "Delete"
+msgstr "Supprimer"
+
+msgctxt "SmartFoundations,Panel_Btn_ExportPreset"
+msgid "Export to Clipboard"
+msgstr "Exporter vers le presse-papiers"
+
+msgctxt "SmartFoundations,Panel_Btn_ImportFromExtend"
+msgid "Import from Last Extend"
+msgstr "Importer depuis la dernière extension"
+
+msgctxt "SmartFoundations,Panel_Btn_ImportPreset"
+msgid "Import from Clipboard"
+msgstr "Importer depuis le presse-papiers"
+
+msgctxt "SmartFoundations,Panel_Btn_SavePreset"
+msgid "Save Current"
+msgstr "Enregistrer l'actuel"
+
+msgctxt "SmartFoundations,Panel_Btn_SmartWalking"
+msgid "Smart Walking"
+msgstr "Smart Marche"
+
+msgctxt "SmartFoundations,Panel_Btn_UpdatePreset"
+msgid "Update"
+msgstr "Mettre à jour"
+
+msgctxt "SmartFoundations,Panel_Restore_Capture"
+msgid "Capture:"
+msgstr "Capturer :"
+
+msgctxt "SmartFoundations,Panel_Restore_CaptureAutoConnect"
+msgid "Auto-Connect"
+msgstr "Connexion auto"
+
+msgctxt "SmartFoundations,Panel_Restore_CaptureGrid"
+msgid "Grid"
+msgstr "Grille"
+
+msgctxt "SmartFoundations,Panel_Restore_CaptureRecipe"
+msgid "Recipe"
+msgstr "Recette"
+
+msgctxt "SmartFoundations,Panel_Restore_CaptureRotation"
+msgid "Rotation"
+msgstr "Rotation"
+
+msgctxt "SmartFoundations,Panel_Restore_CaptureSpacing"
+msgid "Spacing"
+msgstr "Espacement"
+
+msgctxt "SmartFoundations,Panel_Restore_CaptureStagger"
+msgid "Stagger"
+msgstr "Décalage"
+
+msgctxt "SmartFoundations,Panel_Restore_CaptureSteps"
+msgid "Steps"
+msgstr "Marches"
+
+msgctxt "SmartFoundations,Panel_Restore_CreatedAt"
+msgid "Created:"
+msgstr "Créé :"
+
+msgctxt "SmartFoundations,Panel_Restore_DeleteMessage"
+msgid "Delete preset '{0}'?"
+msgstr "Supprimer le préréglage « {0} » ?"
+
+msgctxt "SmartFoundations,Panel_Restore_DeleteTitle"
+msgid "Delete Preset"
+msgstr "Supprimer le préréglage"
+
+msgctxt "SmartFoundations,Panel_Restore_Description"
+msgid "Description:"
+msgstr "Description :"
+
+msgctxt "SmartFoundations,Panel_Restore_NotSaved"
+msgid "Not saved"
+msgstr "Non enregistré"
+
+msgctxt "SmartFoundations,Panel_Restore_OverwriteMessage"
+msgid "A preset named '{0}' already exists. Overwrite?"
+msgstr "Un préréglage nommé « {0} » existe déjà. Écraser ?"
+
+msgctxt "SmartFoundations,Panel_Restore_OverwriteTitle"
+msgid "Overwrite Preset"
+msgstr "Écraser le préréglage"
+
+msgctxt "SmartFoundations,Panel_Restore_PresetName"
+msgid "New Preset Name:"
+msgstr "Nom du nouveau préréglage :"
+
+msgctxt "SmartFoundations,Panel_Restore_SelectPreset"
+msgid "Selected Preset:"
+msgstr "Préréglage sélectionné :"
+
+msgctxt "SmartFoundations,Panel_Section_Presets"
+msgid "Smart Restore"
+msgstr "Smart Restauration"
+
+msgctxt "SmartFoundations,Sec.Arrows"
+msgid "Arrows"
+msgstr "Flèches"
+
+msgctxt "SmartFoundations,Sec.Arrows.TT"
+msgid "Directional arrows drawn on the building hologram."
+msgstr "Flèches directionnelles dessinées sur l'hologramme du bâtiment."
+
+msgctxt "SmartFoundations,Sec.Belt"
+msgid "Belt Auto-Connect"
+msgstr "Connexion auto convoyeurs"
+
+msgctxt "SmartFoundations,Sec.Belt.TT"
+msgid "Automatically run conveyor belts between the buildings you place."
+msgstr "Faire passer automatiquement des convoyeurs entre les bâtiments que vous placez."
+
+msgctxt "SmartFoundations,Sec.Building"
+msgid "Building Behavior"
+msgstr "Comportement de construction"
+
+msgctxt "SmartFoundations,Sec.Building.TT"
+msgid "How Extend, auto-hold, and Apply behave while building."
+msgstr "Comment Étendre, le verrouillage auto et Appliquer se comportent pendant la construction."
+
+msgctxt "SmartFoundations,Sec.HUD"
+msgid "HUD"
+msgstr "HUD"
+
+msgctxt "SmartFoundations,Sec.HUD.TT"
+msgid "The on-screen Smart! overlay shown while you build."
+msgstr "L'overlay Smart! affiché à l'écran pendant la construction."
+
+msgctxt "SmartFoundations,Sec.Pipe"
+msgid "Pipe Auto-Connect"
+msgstr "Connexion auto tuyaux"
+
+msgctxt "SmartFoundations,Sec.Pipe.TT"
+msgid "Automatically run pipes between the buildings you place."
+msgstr "Faire passer automatiquement des tuyaux entre les bâtiments que vous placez."
+
+msgctxt "SmartFoundations,Sec.Power"
+msgid "Power Auto-Connect"
+msgstr "Connexion auto énergie"
+
+msgctxt "SmartFoundations,Sec.Power.TT"
+msgid "Automatically wire power between buildings and power poles as you build."
+msgstr "Câbler automatiquement l'énergie entre les bâtiments et les poteaux électriques pendant la construction."
+
+msgctxt "SmartFoundations,Upgrade_ErrRCO"
+msgid "Error: server connection unavailable"
+msgstr "Erreur : connexion au serveur indisponible"
+
+msgctxt "SmartFoundations,Upgrade_ErrRCOScan"
+msgid "Error: server connection unavailable"
+msgstr "Erreur : connexion au serveur indisponible"
+
+msgctxt "SmartFoundations,Walk_ApplyImmediately"
+msgid "apply immediately"
+msgstr "appliquer immédiatement"
+
+msgctxt "SmartFoundations,Walk_Btn_Scaling"
+msgid "‹ Scaling"
+msgstr "‹ Mise à l'échelle"
+
+msgctxt "SmartFoundations,Walk_Col_Advance"
+msgid "Advance m"
+msgstr "Avance m"
+
+msgctxt "SmartFoundations,Walk_Col_Exit"
+msgid "Exit"
+msgstr "Sortie"
+
+msgctxt "SmartFoundations,Walk_Col_Rise"
+msgid "Rise m"
+msgstr "Montée m"
+
+msgctxt "SmartFoundations,Walk_Col_Shift"
+msgid "Shift m"
+msgstr "Décalage m"
+
+msgctxt "SmartFoundations,Walk_Col_Turn"
+msgid "Turn"
+msgstr "Virage"
+
+msgctxt "SmartFoundations,Walk_Conveyance_Belt"
+msgid "Belt"
+msgstr "Convoyeur"
+
+msgctxt "SmartFoundations,Walk_Conveyance_Pipe"
+msgid "Pipe"
+msgstr "Tuyau"
+
+msgctxt "SmartFoundations,Walk_Lbl_Direction"
+msgid "Direction"
+msgstr "Direction"
+
+msgctxt "SmartFoundations,Walk_Lbl_PipeStyle"
+msgid "Pipe Style"
+msgstr "Style de tuyau"
+
+msgctxt "SmartFoundations,Walk_Lbl_Routing"
+msgid "Routing"
+msgstr "Routage"
+
+msgctxt "SmartFoundations,Walk_Lbl_Tier"
+msgid "Tier"
+msgstr "Niveau"
+
+msgctxt "SmartFoundations,Walk_Opt_Auto"
+msgid "Auto"
+msgstr "Auto"
+
+msgctxt "SmartFoundations,Walk_Opt_Auto2D"
+msgid "Auto 2D"
+msgstr "Auto 2D"
+
+msgctxt "SmartFoundations,Walk_Opt_Backward"
+msgid "Backward"
+msgstr "Arrière"
+
+msgctxt "SmartFoundations,Walk_Opt_Clean"
+msgid "Clean"
+msgstr "Épuré"
+
+msgctxt "SmartFoundations,Walk_Opt_Curve"
+msgid "Curve"
+msgstr "Courbe"
+
+msgctxt "SmartFoundations,Walk_Opt_Default"
+msgid "Default"
+msgstr "Défaut"
+
+msgctxt "SmartFoundations,Walk_Opt_Forward"
+msgid "Forward"
+msgstr "Avant"
+
+msgctxt "SmartFoundations,Walk_Opt_HToV"
+msgid "H->V"
+msgstr "H→V"
+
+msgctxt "SmartFoundations,Walk_Opt_Noodle"
+msgid "Noodle"
+msgstr "Nouille"
+
+msgctxt "SmartFoundations,Walk_Opt_Normal"
+msgid "Normal"
+msgstr "Normal"
+
+msgctxt "SmartFoundations,Walk_Opt_Straight"
+msgid "Straight"
+msgstr "Droit"
+
+msgctxt "SmartFoundations,Walk_Summary"
+msgid "{0} {0}|plural(one=segment,other=segments)  ·  head {1} {2} deg  ·  {3}"
+msgstr "{0} {0}|plural(one=segment,other=segments)  ·  cap {1} {2} deg  ·  {3}"
+
+msgctxt "SmartFoundations,Hint_UpgradePanel"
+msgid "Upgrade Panel"
+msgstr "Panneau d'amélioration"
+
+msgctxt "SmartFoundations,Walk_Invalid_TooLong"
+msgid "segment {0} too long ({1}m > 56m)"
+msgstr "segment {0} trop long ({1}m > 56m)"
+
+msgctxt "SmartFoundations,Walk_Invalid_TooSteep"
+msgid "segment {0} too steep ({1}deg > 30deg)"
+msgstr "segment {0} trop raide ({1}deg > 30deg)"

@@ -8,6 +8,10 @@
 
 #include "Subsystem/SFSubsystem.h"
 #include "Subsystem/SFSubsystemImpl.h"
+#include "Features/Walk/SFWalkService.h"
+#include "UI/SFWalkPanelWidget.h"
+#include "Blueprint/UserWidget.h"
+#include "GameFramework/PlayerController.h"  // FInputModeGameAndUI/GameOnly for the Walk panel show/hide
 
 USFSubsystem::USFSubsystem() : Super()
 {
@@ -513,6 +517,65 @@ bool USFSubsystem::ConsumeExtendCommitForInstigator(APawn* Instigator, UClass* B
 	return true;
 }
 
+// Smart Walking (#356 Slice 3): walk commit staging - identical model to the Extend commit above.
+
+void USFSubsystem::StageWalkCommitForPlayer(APlayerController* PC, const FSFWalkCommitSpec& Spec)
+{
+	if (!PC)
+	{
+		return;
+	}
+	if (Spec.bValid)
+	{
+		StagedWalkCommits.Add(PC, Spec);
+		StagedWalkCommitTimes.Add(PC, FPlatformTime::Seconds());
+	}
+	else
+	{
+		StagedWalkCommits.Remove(PC);
+		StagedWalkCommitTimes.Remove(PC);
+	}
+}
+
+bool USFSubsystem::PeekWalkCommitForInstigator(APawn* Instigator, UClass* BuildClass, FSFWalkCommitSpec& OutSpec) const
+{
+	if (!Instigator || !BuildClass)
+	{
+		return false;
+	}
+	APlayerController* PC = Cast<APlayerController>(Instigator->GetController());
+	if (!PC)
+	{
+		return false;
+	}
+	const FSFWalkCommitSpec* Staged = StagedWalkCommits.Find(PC);
+	if (!Staged || !Staged->bValid || Staged->BuildClass != BuildClass)
+	{
+		return false;
+	}
+	// Freshness TTL: the walk stages its commit at fire time and the construct consumes it in the same
+	// fire, so anything older than this belongs to an abandoned commit - never consume it.
+	const double* StagedAt = StagedWalkCommitTimes.Find(PC);
+	if (!StagedAt || FPlatformTime::Seconds() - *StagedAt > 10.0)
+	{
+		return false;
+	}
+	OutSpec = *Staged;
+	return true;
+}
+
+bool USFSubsystem::ConsumeWalkCommitForInstigator(APawn* Instigator, UClass* BuildClass, FSFWalkCommitSpec& OutSpec)
+{
+	if (!PeekWalkCommitForInstigator(Instigator, BuildClass, OutSpec))
+	{
+		return false;
+	}
+	APlayerController* PC = Cast<APlayerController>(Instigator->GetController());
+	StagedWalkCommits.Remove(PC);
+	StagedWalkCommitTimes.Remove(PC);
+	return true;
+}
+
 void USFSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
@@ -571,6 +634,14 @@ void USFSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	{
 		RadarPulseService->Initialize(this);
 		UE_LOG(LogSmartFoundations, Verbose, TEXT("Radar Pulse Service initialized"));
+	}
+
+	// Initialize Smart Walking service (#356)
+	WalkService = NewObject<USFWalkService>(this);
+	if (WalkService)
+	{
+		WalkService->Initialize(this);
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("Smart Walking Service initialized"));
 	}
 
 	// Initialize Pipe Auto-Connect manager (feature-level coordinator)
@@ -757,6 +828,14 @@ void USFSubsystem::Deinitialize()
 		ExtendService = nullptr;
 	}
 
+	// Shutdown Smart Walking service (#356)
+	if (WalkService)
+	{
+		WalkService->ExitWalk(false);
+		WalkService = nullptr;
+	}
+	bWalkModeActive = false;
+
 	// Shutdown Radar Pulse diagnostic service
 	if (RadarPulseService)
 	{
@@ -848,6 +927,15 @@ void USFSubsystem::Tick(float DeltaTime)
 	if (ExtendService)
 	{
 		ExtendService->TickRestoredCloneTopology(DeltaTime);
+	}
+
+	// Smart Walking: keep the standalone preview holograms cyan. They are deliberately NOT build-gun-ticked and NOT
+	// AddChild'd (AddChild crashes the build gun's per-tick ResetConstructDisqualifiers recursion), so the
+	// FGCDInitializing flag added during init would otherwise persist and paint them red. Re-clear it + force HMS_OK
+	// every frame — the same per-frame refresh the grid/Extend use to keep their un-ticked clone previews valid.
+	if (WalkService && WalkService->IsActive())
+	{
+		WalkService->RefreshWalkValidity();
 	}
 
 	// Issue #160: Continuous Zoop detection
@@ -1054,6 +1142,266 @@ void USFSubsystem::CheckForPlayerController()
 	}
 }
 
+void USFSubsystem::EnterWalkMode()
+{
+	UE_LOG(LogSmartFoundations, Log, TEXT(">>> [Walk] EnterWalkMode ENTER: bWalkModeActive=%d active=%s"),
+		bWalkModeActive ? 1 : 0, *GetNameSafe(ActiveHologram.Get()));
+	if (bWalkModeActive)
+	{
+		UE_LOG(LogSmartFoundations, Log, TEXT("<<< [Walk] EnterWalkMode EXIT: already active"));
+		return;
+	}
+
+	AFGHologram* Seed = ActiveHologram.Get();
+	if (!Seed)
+	{
+		UE_LOG(LogSmartFoundations, Warning, TEXT("<<< [Walk] EnterWalkMode EXIT: no active hologram to seed a Path"));
+		return;
+	}
+	UE_LOG(LogSmartFoundations, Log, TEXT("  [Walk] EnterWalkMode: seed=%s world=%s yaw=%.1f locked=%d | counter before reset=%s"),
+		*GetNameSafe(Seed), *Seed->GetActorLocation().ToString(), Seed->GetActorRotation().Yaw,
+		Seed->IsHologramLocked() ? 1 : 0, *GetCounterState().GridCounters.ToString());
+
+	// Switching from grid scaling to walking: clear any scaled grid children (else they linger as orphan
+	// previews) and LOCK the seed in place — an unlocked parent that follows the cursor would force rebuilding
+	// the whole path on every move.
+	if (FSFHologramHelperService* Helper = GetHologramHelper())
+	{
+		Helper->DestroyAllChildren();
+	}
+	// Reset the grid counter to 1x1x1 too: DestroyAllChildren only empties Smart's tracking array, so a later
+	// grid resync would otherwise pull the scaling clones back from the parent's mChildren and re-spawn them at
+	// the stale scaled size. With the counter at 1x1x1 there is nothing to regenerate.
+	{
+		FSFCounterState CounterReset = GetCounterState();
+		CounterReset.GridCounters = FIntVector(1, 1, 1);
+		UpdateCounterState(CounterReset);
+	}
+	bLockedByModifier = true;
+	Seed->LockHologramPosition(true);
+
+	if (WalkService && WalkService->EnterWalk(Seed))
+	{
+		bWalkModeActive = true;
+		UpdateCounterDisplay();   // surface the walk's segment state in the build HUD immediately
+		UE_LOG(LogSmartFoundations, Log, TEXT("Smart Walking: entered (seed locked, grid children cleared)"));
+	}
+	else
+	{
+		// Walk failed to start — undo the lock so we don't strand a locked hologram.
+		bLockedByModifier = false;
+		Seed->LockHologramPosition(false);
+	}
+}
+
+void USFSubsystem::ExitWalkMode()
+{
+	UE_LOG(LogSmartFoundations, Log, TEXT(">>> [Walk] ExitWalkMode ENTER: bWalkModeActive=%d active=%s"),
+		bWalkModeActive ? 1 : 0, *GetNameSafe(ActiveHologram.Get()));
+	if (!bWalkModeActive)
+	{
+		return;
+	}
+
+	if (WalkService)
+	{
+		WalkService->ExitWalk(false);
+	}
+	// Tear down the segment-list overlay on every exit path (holster, cancel, etc.).
+	if (WalkPanelWidget.IsValid())
+	{
+		WalkPanelWidget->RemoveFromParent();
+		WalkPanelWidget.Reset();
+	}
+	// Release the seed lock the walk took on enter, so the parent follows the cursor again.
+	if (bLockedByModifier && ActiveHologram.IsValid())
+	{
+		bLockedByModifier = false;
+		ActiveHologram->LockHologramPosition(false);
+	}
+	bWalkModeActive = false;
+	UpdateCounterDisplay();   // walk is gone → HUD falls back to the normal grid counter
+	UE_LOG(LogSmartFoundations, Log, TEXT("Smart Walking: exited"));
+}
+
+void USFSubsystem::ToggleWalkMode()
+{
+	if (bWalkModeActive)
+	{
+		ExitWalkMode();
+	}
+	else
+	{
+		EnterWalkMode();
+	}
+}
+
+void USFSubsystem::WalkAdvance()
+{
+	if (bWalkModeActive && WalkService)
+	{
+		WalkService->CommitActiveAndAdvance();
+	}
+}
+
+void USFSubsystem::WalkBackUp()
+{
+	if (bWalkModeActive && WalkService)
+	{
+		WalkService->BackUp();
+	}
+}
+
+void USFSubsystem::WalkNudgeActive(float DeltaAdvanceCm, float DeltaTurnDeg, float DeltaRiseCm, float DeltaShiftCm)
+{
+	if (bWalkModeActive && WalkService)
+	{
+		WalkService->NudgeActive(DeltaAdvanceCm, DeltaTurnDeg, DeltaRiseCm, DeltaShiftCm);
+	}
+}
+
+void USFSubsystem::OpenWalkPanel()
+{
+	APlayerController* PC = GetLastController();
+	if (!PC)
+	{
+		PC = GetWorld() ? GetWorld()->GetFirstPlayerController() : nullptr;
+	}
+	if (!PC)
+	{
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("Walk Panel: no PlayerController"));
+		return;
+	}
+
+	// Already open → just refresh it.
+	if (WalkPanelWidget.IsValid() && WalkPanelWidget->IsInViewport())
+	{
+		WalkPanelWidget->Refresh();
+		return;
+	}
+
+	const FString WidgetPath = TEXT("/SmartFoundations/SmartFoundations/UI/Smart_WalkPanel_Widget.Smart_WalkPanel_Widget_C");
+	FSoftClassPath WidgetClassPath(WidgetPath);
+	UClass* WidgetClass = WidgetClassPath.TryLoadClass<UUserWidget>();
+	if (!WidgetClass)
+	{
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("Walk Panel: failed to load widget class at %s"), *WidgetPath);
+		return;
+	}
+
+	USFWalkPanelWidget* Widget = CreateWidget<USFWalkPanelWidget>(PC, WidgetClass);
+	if (!Widget)
+	{
+		return;
+	}
+	WalkPanelWidget = Widget;
+	// #356 two-mode design: steer mode (Collapsed — HUD badge + in-world controls) vs edit mode (visible cursor panel),
+	// toggled with K. Create it Collapsed + add to viewport, then immediately ToggleWalkPanel() to OPEN it in edit mode:
+	// entering a walk needs a visible cue — the Smart Panel vanishing into a bare steer screen read as "nothing happened".
+	// (ToggleWalkPanel's create-guard sees the widget already in-viewport, so this doesn't recurse.)
+	Widget->SetVisibility(ESlateVisibility::Collapsed);
+	Widget->AddToViewport(100);
+	ToggleWalkPanel();   // show the panel right away; K then hides it to steer
+}
+
+bool USFSubsystem::IsWalkPanelVisible() const
+{
+	return WalkPanelWidget.IsValid() && WalkPanelWidget->IsInViewport()
+		&& WalkPanelWidget->GetVisibility() == ESlateVisibility::Visible;
+}
+
+void USFSubsystem::ToggleWalkPanel()
+{
+	// Create it (Collapsed) if this is the first K press of the walk, then fall through to show it.
+	if (!WalkPanelWidget.IsValid() || !WalkPanelWidget->IsInViewport())
+	{
+		OpenWalkPanel();
+	}
+	if (!WalkPanelWidget.IsValid())
+	{
+		return;
+	}
+
+	APlayerController* PC = GetLastController();
+	if (!PC)
+	{
+		PC = GetWorld() ? GetWorld()->GetFirstPlayerController() : nullptr;
+	}
+
+	const bool bHidden = WalkPanelWidget->GetVisibility() == ESlateVisibility::Collapsed;
+	if (bHidden)
+	{
+		// Restore → interactive EDIT mode: Visible + cursor + UIOnly. UIOnly makes the panel MODAL — clicks outside it
+		// hit no widget and are swallowed (no accidental world building, like the Smart Panel) and steering pauses
+		// (panel-up = edit). Because UIOnly also blocks the game K action, the widget handles K/Escape itself (its
+		// NativeOnKeyDown), so it's focused here. Refresh() so it reflects any steering done while hidden.
+		WalkPanelWidget->SetVisibility(ESlateVisibility::Visible);
+		WalkPanelWidget->Refresh();
+		if (PC)
+		{
+			PC->bShowMouseCursor = true;
+			FInputModeUIOnly Mode;
+			Mode.SetWidgetToFocus(WalkPanelWidget->TakeWidget());
+			PC->SetInputMode(Mode);
+			// Explicit keyboard focus so the panel's NativeOnKeyDown reliably gets K/Escape. SetWidgetToFocus alone
+			// routes MOUSE, not keyboard — without this, K only worked after clicking a widget (mirrors the Upgrade panel).
+			WalkPanelWidget->SetIsFocusable(true);
+			WalkPanelWidget->SetKeyboardFocus();
+		}
+	}
+	else
+	{
+		// Hide → STEER mode: restore game input + hide the cursor (HUD badge only).
+		WalkPanelWidget->SetVisibility(ESlateVisibility::Collapsed);
+		if (PC)
+		{
+			PC->bShowMouseCursor = false;
+			PC->SetInputMode(FInputModeGameOnly());
+		}
+	}
+}
+
+bool USFSubsystem::RouteWalkValueAdjust(int32 AccumulatedSteps, int32 Direction)
+{
+	// Authoritative gate: whenever a walk is in progress, the walk OWNS all value-adjust input (Num8/Num5,
+	// modifier scroll). Gate on the service's own IsActive() — never let the grid-scaling path run while a walk
+	// exists, even if the bWalkModeActive flag and the service ever disagree. (#356: Num8/Num5 were leaking to
+	// grid Y scaling, which blocked auto-connect.)
+	if (!WalkService || !WalkService->IsActive())
+	{
+		return false;
+	}
+
+	// #356 reframe: the active transform modal acts on the ACTIVE segment, not the grid. (Increments are tunable.)
+	const float Steps = static_cast<float>(FMath::Max(1, AccumulatedSteps)) * static_cast<float>(Direction);
+	float dAdvance = 0.0f, dTurn = 0.0f, dRise = 0.0f, dShift = 0.0f;
+	if (bSpacingModeActive)       { dAdvance = Steps * 100.0f; }   // Spacing  → segment gap   (1 m / step)
+	else if (bRotationModeActive) { dTurn    = Steps * 15.0f;  }   // Rotation → segment turn  (15 deg / step)
+	else if (bStepsModeActive)    { dRise    = Steps * 100.0f; }   // Steps    → segment rise  (1 m / step)
+	else if (bStaggerModeActive)  { dShift   = Steps * 100.0f; }   // Stagger  → segment shift (1 m / step)
+	else
+	{
+		// No transform modal → a plain Scale-X value-adjust ADVANCES (up) / BACKS UP (down) the walk, segment by
+		// segment (the in-world "scaling" reframe). Single advance entry point for value-adjust input so the grid
+		// counter is never touched while walking.
+		if (Direction >= 0) { WalkService->CommitActiveAndAdvance(); }
+		else                { WalkService->BackUp(); }
+		if (WalkPanelWidget.IsValid()) { WalkPanelWidget->Refresh(); }
+		UpdateCounterDisplay();
+		UE_LOG(LogSmartFoundations, Log, TEXT("[Walk] value-adjust (steps=%d dir=%d) -> %s"),
+			AccumulatedSteps, Direction, Direction >= 0 ? TEXT("advance") : TEXT("back-up"));
+		return true;
+	}
+
+	WalkService->NudgeActive(dAdvance, dTurn, dRise, dShift);
+	if (WalkPanelWidget.IsValid())
+	{
+		WalkPanelWidget->Refresh();
+	}
+	UpdateCounterDisplay();
+	return true;
+}
+
 void USFSubsystem::ApplyAxisScaling(ESFScaleAxis Axis, int32 StepDelta, const TCHAR* DebugLabel)
 {
 	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("[INPUT] ApplyAxisScaling: Axis=%d Delta=%d Label=%s Extend=%d"),
@@ -1067,6 +1415,34 @@ void USFSubsystem::ApplyAxisScaling(ESFScaleAxis Axis, int32 StepDelta, const TC
 	// ========================================
 	// 1. Validation
 	// ========================================
+
+	// Smart Walking (#356): walk mode owns scale input. Scale-X commits the active segment and advances;
+	// scale-X-down backs up. The grid path NEVER runs while walking (lane separation by construction).
+	if (WalkService && WalkService->IsActive())
+	{
+		// Walk owns scale input by construction (authoritative IsActive gate). Scale-X advances/backs-up segment by
+		// segment; Scale-Y adds/removes a parallel bus LANE; Scale-Z adds/removes a vertical STACK level.
+		switch (Axis)
+		{
+		case ESFScaleAxis::X:
+			if (StepDelta > 0)      { WalkService->CommitActiveAndAdvance(); }
+			else if (StepDelta < 0) { WalkService->BackUp(); }
+			break;
+		case ESFScaleAxis::Y:
+			WalkService->AdjustCrossSection(StepDelta, 0);   // lanes (perpendicular to the heading)
+			break;
+		case ESFScaleAxis::Z:
+			WalkService->AdjustCrossSection(0, StepDelta);   // vertical stack levels
+			break;
+		default:
+			break;
+		}
+		if (WalkPanelWidget.IsValid()) { WalkPanelWidget->Refresh(); }
+		UpdateCounterDisplay();
+		UE_LOG(LogSmartFoundations, Log, TEXT("[Walk] ApplyAxisScaling axis=%d delta=%d (X=advance/back, Y=lanes, Z=stacks)"),
+			static_cast<int32>(Axis), StepDelta);
+		return;
+	}
 
 	if (!ActiveHologram.IsValid())
 	{
@@ -1434,6 +1810,9 @@ void USFSubsystem::OnValueIncreased(const FInputActionValue& Value)
         return;
     }
 
+    // #356 walk: transform modals act on the active segment, not the grid.
+    if (RouteWalkValueAdjust(1, +1)) { return; }
+
     // Unified modal routing via GridStateService dispatcher
     if (GridStateService)
     {
@@ -1502,6 +1881,9 @@ void USFSubsystem::OnMouseWheelChanged(const FInputActionValue& Value)
         // Fall through to modal routing below
     }
 
+    // #356 walk: transform modals act on the active segment, not the grid.
+    if (RouteWalkValueAdjust(AccumulatedSteps, Direction)) { return; }
+
     // Unified modal routing via GridStateService dispatcher
     if (GridStateService)
     {
@@ -1566,6 +1948,9 @@ void USFSubsystem::OnValueDecreased(const FInputActionValue& Value)
         AdjustAutoConnectSetting(-1);
         return;
     }
+
+    // #356 walk: transform modals act on the active segment, not the grid.
+    if (RouteWalkValueAdjust(AccumulatedSteps, -1)) { return; }
 
     // Unified modal routing via GridStateService dispatcher
     if (GridStateService)

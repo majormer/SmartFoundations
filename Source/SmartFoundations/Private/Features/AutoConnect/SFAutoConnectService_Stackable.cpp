@@ -7,6 +7,36 @@
 
 #include "Features/AutoConnect/SFAutoConnectServiceImpl.h"
 
+// Shared belt/pipe auto-connect exit-normal resolver (#398 belts, #400 pipes, + wall hardening). Exits each support
+// along its FACING so a rotated/arc run BOWS toward the connector normal instead of a straight chord that facets at
+// the support. WALL supports exit PERPENDICULAR to the wall (#268) via the RightVector and SKIP the near-perpendicular
+// guard (perpendicular IS their intent); all other supports use the forward vector and DO apply the guard. In every
+// case: HORIZONTAL direction from the facing (the curve) + PITCH from the chord (so a height delta doesn't ramp — the
+// #291 reason these were chords) + sign-flip toward the run. A straight run reduces to the chord (no spurious curve).
+static FVector SF_ResolveSupportExitNormal(AFGHologram* Pole, const FVector& Chord, bool bUseRightVector)
+{
+	const FVector ChordH = FVector(Chord.X, Chord.Y, 0.0f).GetSafeNormal();
+	FVector FacingH = Pole ? (bUseRightVector ? Pole->GetActorRightVector() : Pole->GetActorForwardVector()) : FVector::ZeroVector;
+	FacingH.Z = 0.0f;
+	FacingH = FacingH.GetSafeNormal();
+	if (FacingH.IsNearlyZero() || ChordH.IsNearlyZero())
+	{
+		return Chord;   // degenerate (vertical run / no facing) — straight chord
+	}
+	if (FVector::DotProduct(FacingH, ChordH) < 0.0f)
+	{
+		FacingH = -FacingH;   // orient toward the run direction
+	}
+	// Non-wall supports exit ALONG the run, so a facing wildly off the chord is degenerate (#291 S-curve) → chord.
+	// Wall supports exit perpendicular by design (#268), so they skip this guard.
+	if (!bUseRightVector && FVector::DotProduct(FacingH, ChordH) < 0.5f)
+	{
+		return Chord;
+	}
+	// Horizontal exit from the facing (the curve) + the chord's pitch (no #291 ramp).
+	return (FacingH + FVector(0.0f, 0.0f, Chord.Z)).GetSafeNormal();
+}
+
 void USFAutoConnectService::ProcessFloorHolePipes(AFGHologram* ParentHologram)
 {
 	if (!ParentHologram || !Subsystem)
@@ -127,6 +157,12 @@ void USFAutoConnectService::ProcessStackableConveyorPoles(AFGHologram* ParentHol
 
 	if (AllPoles.Num() < 2)
 	{
+		// [#397] Grid shrank back to a single pole (e.g. scale out then un-scale): no pairs remain, so every belt
+		// still tracked for this parent is now orphaned. Clean them up before returning — previously this returned
+		// early WITHOUT cleanup, so the orphan-removal at the end of the pairing loop never ran in the shrink-to-one
+		// case, leaving the last preview belt behind until a new pole spawned and re-entered the loop. Mirrors the
+		// stackable-pipe fix (#391, line ~425). Preview-only cleanup, identical on SP and MP.
+		CleanupAllStackableBelts(ParentHologram);
 		return;
 	}
 	
@@ -699,15 +735,16 @@ AFGHologram* USFAutoConnectService::UpdateOrCreatePipeForPolePair(
 	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🔧 PIPE ENDPOINTS [%d]: Start=%s, End=%s, Dist=%.1f"),
 		PipeIndex, *StartPos.ToString(), *EndPos.ToString(), FVector::Dist(StartPos, EndPos));
 	
-	// Issue #291 (pipe variant): route straight toward the partner pole in 3D. Pole forward vector
-	// was causing the same bulge/ramp seen on belts when pole forward didn't exactly match the
-	// direction between pole endpoints (slight Z tilt or perpendicular pole rotation).
+	// [#400] Bow toward each support's facing — the pipe analog of the belt #398 fix — via the shared resolver.
+	// Wall pipeline supports exit perpendicular (RightVector, #268), others along the forward facing; both get the
+	// chord-pitch (no #291 ramp) and the perpendicular guard. Replaces the old #291 straight-chord carryover that
+	// faceted at every support on a rotated run. A straight run still reduces to the chord.
 	const FVector Direction = (EndPos - StartPos);
 	const FVector ToTarget = Direction.GetSafeNormal();
 	const FVector ToSource = (-Direction).GetSafeNormal();
 
-	FVector StartNormal = ToTarget;
-	FVector EndNormal = ToSource;
+	FVector StartNormal = SF_ResolveSupportExitNormal(SourcePole, ToTarget, IsWallPipelineSupportHologram(SourcePole));
+	FVector EndNormal   = SF_ResolveSupportExitNormal(TargetPole, ToSource, IsWallPipelineSupportHologram(TargetPole));
 
 	if (StartNormal.IsNearlyZero())
 	{
@@ -1467,30 +1504,11 @@ AFGHologram* USFAutoConnectService::UpdateOrCreateBeltForPolePair(
 	FVector StartNormal;
 	FVector EndNormal;
 
-	if (bUseRightVector)
-	{
-		// Wall poles: keep existing "RightVector with sign correction" behavior (#268).
-		StartNormal = SourcePole ? SourcePole->GetActorRightVector() : ToTarget;
-		StartNormal = StartNormal.GetSafeNormal();
-		if (!StartNormal.IsNearlyZero() && !ToTarget.IsNearlyZero() && FVector::DotProduct(StartNormal, ToTarget) < 0.0f)
-		{
-			StartNormal *= -1.0f;
-		}
-
-		EndNormal = TargetPole ? TargetPole->GetActorRightVector() : ToSource;
-		EndNormal = EndNormal.GetSafeNormal();
-		if (!EndNormal.IsNearlyZero() && !ToSource.IsNearlyZero() && FVector::DotProduct(EndNormal, ToSource) < 0.0f)
-		{
-			EndNormal *= -1.0f;
-		}
-	}
-	else
-	{
-		// Stackable/ceiling poles: route straight toward the partner pole in 3D. Pole forward
-		// is only used as a degenerate fallback for coincident endpoints.
-		StartNormal = ToTarget;
-		EndNormal = ToSource;
-	}
+	// [#398 belts + wall hardening] Route both branches through the shared resolver: wall poles exit perpendicular
+	// (RightVector, #268); stackable / ceiling / regular exit along the forward facing. Both now get the chord-pitch
+	// and perpendicular handling, so every belt pole type bows on a rotated run without ramping on height deltas.
+	StartNormal = SF_ResolveSupportExitNormal(SourcePole, ToTarget, bUseRightVector);
+	EndNormal   = SF_ResolveSupportExitNormal(TargetPole, ToSource, bUseRightVector);
 
 	// Degenerate fallbacks (overlapping poles / zero direction)
 	if (StartNormal.IsNearlyZero())

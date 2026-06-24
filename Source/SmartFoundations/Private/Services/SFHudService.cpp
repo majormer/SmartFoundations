@@ -5,6 +5,7 @@
 #include "Subsystem/SFSubsystem.h"
 #include "Features/Extend/SFExtendService.h"
 #include "Features/Restore/SFRestoreService.h"
+#include "Features/Walk/SFWalkService.h"
 #include "SmartFoundations.h"
 #include "HUD/SFHUDTypes.h"
 #include "HUD/SFHudWidget.h"
@@ -66,6 +67,7 @@ void USFHudService::DrawCounterToHUD(AHUD* HUD, UCanvas* Canvas)
     // Determine if the widget should be visible
     const bool bShouldShow = CachedConfig.bShowHUD
         && !bHUDSuppressed
+        && !Subsystem->IsWalkPanelVisible()   // walk EDIT panel up = it shows this info itself; hide the HUD readout so it doesn't bleed through the panel
         && Subsystem->GetActiveHologram() != nullptr;
 
     // Ensure widget exists
@@ -325,8 +327,37 @@ TPair<FString, FString> USFHudService::BuildCounterDisplayLines() const
 		}
 	}
 
-	// Grid dimensions and count (suppress during Extend — the Extend indicator already shows clone×row)
-	if (!Subsystem->IsExtendModeActive())
+	// Smart Walking (#356): while walking, the build state IS the segment path — show the walk's segment count
+	// + heading and the active segment's adjusters in place of the grid counter (which doesn't apply on foot).
+	bool bWalkActive = false;
+	if (USFWalkService* Walk = Subsystem->GetWalkService())
+	{
+		if (Walk->IsActive())
+		{
+			bWalkActive = true;
+			const TArray<FSFWalkSegmentView> Views = Walk->GetSegmentViews();
+			const float HeadDeg = Views.Num() > 0 ? Views.Last().ExitHeadingDeg : 0.0f;
+			const FText Conveyance = (Walk->GetConveyanceType() == ESFWalkConveyanceType::Pipe) ? LOCTEXT("HUD_Walk_Pipe", "pipe") : LOCTEXT("HUD_Walk_Belt", "belt");
+			// Compact one-line badge — heading now shows the 16-point compass + degrees, and the per-segment detail
+			// lives in the Walk panel, not the HUD (this used to be two verbose lines that cluttered the screen).
+			if (!Subsystem->IsWalkPanelVisible())   // panel shows this readout itself; HUD draws over it (badge returns when the panel is hidden via K)
+			{
+				FString WalkLine = FText::Format(LOCTEXT("HUD_Walk", "*Walk  {0} seg | head {1} {2}deg | {3}"),
+					FText::AsNumber(Views.Num()),
+					FText::FromString(SFHeadingToCompass16(HeadDeg)),
+					FText::AsNumber(FMath::RoundToInt(HeadDeg)),
+					Conveyance).ToString();
+				// Explain WHY a walk is invalid (too long / too steep) right in the badge — mirrors Extend's [reason] append.
+				const FString InvalidReason = Walk->GetInvalidShapeReason();
+				if (!InvalidReason.IsEmpty()) { WalkLine += FString::Printf(TEXT("  [%s]"), *InvalidReason); }
+				Lines.Add(WalkLine);
+			}
+		}
+	}
+
+	// Grid dimensions and count (suppress during Extend — the Extend indicator already shows clone×row —
+	// and during Walk, which shows its own segment readout above)
+	if (!Subsystem->IsExtendModeActive() && !bWalkActive)
 	{
 		if (State.GridCounters.X != 1 || State.GridCounters.Y != 1 || State.GridCounters.Z != 1)
 		{
@@ -444,6 +475,48 @@ TPair<FString, FString> USFHudService::BuildCounterDisplayLines() const
 		}
 	}
 
+	// Value-adjust readout. While walking, these scroll controls drive the ACTIVE SEGMENT (RouteWalkValueAdjust),
+	// so show that segment's LIVE adjusters here instead of the grid counter — which the walk never touches, so it
+	// sat frozen (the "spacing/rotation/steps not updating" report). Off-walk it's the grid as before. '*' marks the
+	// mode currently being scrolled (renders yellow), matching the grid rows below.
+	if (bWalkActive)
+	{
+		USFWalkService* WalkSvc = Subsystem->GetWalkService();
+		const TArray<FSFWalkSegmentView> WViews = WalkSvc ? WalkSvc->GetSegmentViews() : TArray<FSFWalkSegmentView>();
+		const FSFWalkSegmentView* AV = nullptr;
+		for (const FSFWalkSegmentView& V : WViews) { if (V.bActive) { AV = &V; break; } }
+		if (AV)
+		{
+			const bool bSpc = Subsystem->IsSpacingModeActive();
+			const bool bRot = Subsystem->IsRotationModeActive();
+			const bool bStp = Subsystem->IsStepsModeActive();
+			const bool bStg = Subsystem->IsStaggerModeActive();
+			// Advance is always shown (every segment has one); Turn/Rise/Shift show when held or non-zero.
+			Lines.Add(FText::Format(LOCTEXT("HUD_WalkAdvance", "Advance{0}: {1}m"),
+				FText::FromString(bSpc ? TEXT("*") : TEXT("")),
+				FText::FromString(FString::Printf(TEXT("%.1f"), AV->Advance / 100.0f))).ToString());
+			if (bRot || !FMath::IsNearlyZero(AV->TurnDegrees))
+			{
+				Lines.Add(FText::Format(LOCTEXT("HUD_WalkTurn", "Turn{0}: {1}°"),
+					FText::FromString(bRot ? TEXT("*") : TEXT("")),
+					FText::FromString(FString::Printf(TEXT("%.1f"), AV->TurnDegrees))).ToString());
+			}
+			if (bStp || !FMath::IsNearlyZero(AV->Rise))
+			{
+				Lines.Add(FText::Format(LOCTEXT("HUD_WalkRise", "Rise{0}: {1}m"),
+					FText::FromString(bStp ? TEXT("*") : TEXT("")),
+					FText::FromString(FString::Printf(TEXT("%.1f"), AV->Rise / 100.0f))).ToString());
+			}
+			if (bStg || !FMath::IsNearlyZero(AV->Shift))
+			{
+				Lines.Add(FText::Format(LOCTEXT("HUD_WalkShift", "Shift{0}: {1}m"),
+					FText::FromString(bStg ? TEXT("*") : TEXT("")),
+					FText::FromString(FString::Printf(TEXT("%.1f"), AV->Shift / 100.0f))).ToString());
+			}
+		}
+	}
+	else
+	{
 	// Spacing lines
 	const bool bSpacingActive = Subsystem->IsSpacingModeActive();
 	const ESFScaleAxis SpacingAxis = Subsystem->GetCurrentSpacingAxis();
@@ -600,6 +673,7 @@ TPair<FString, FString> USFHudService::BuildCounterDisplayLines() const
 	{
 		Lines.Add(LOCTEXT("HUD_RotationDefault", "Rotation*: 0.0\u00B0").ToString());
 	}
+	}   // end else (!bWalkActive) \u2014 grid value-adjust readout
 
 	const FString FirstLine = FString::Join(Lines, TEXT("\n"));
 	const FString SecondLine = TEXT("");

@@ -1,8 +1,8 @@
 # <img src="https://github.com/majormer/SmartFoundations/blob/main/images/Smart-Logo.png?raw=true" width="150" alt="Smart! Logo"> Smart! Mod
 
-![Status](https://img.shields.io/badge/Status-Released-brightgreen) ![Version](https://img.shields.io/badge/Version-32.1.2-blue) ![Satisfactory](https://img.shields.io/badge/Satisfactory-1.2-blue) ![Engine](https://img.shields.io/badge/Engine-UE%205.6-blue) ![SML](https://img.shields.io/badge/SML-3.12-blue) ![Multiplayer](https://img.shields.io/badge/Multiplayer-Supported-brightgreen) ![AI Assisted Development Used](https://img.shields.io/badge/AI%20Assisted%20Development%20Used-Disclosure%20Below-blue)
+![Status](https://img.shields.io/badge/Status-Released-brightgreen) ![Version](https://img.shields.io/badge/Version-33.0.0-blue) ![Satisfactory](https://img.shields.io/badge/Satisfactory-1.2-blue) ![Engine](https://img.shields.io/badge/Engine-UE%205.6-blue) ![SML](https://img.shields.io/badge/SML-3.12-blue) ![Multiplayer](https://img.shields.io/badge/Multiplayer-Supported-brightgreen) ![AI Assisted Development Used](https://img.shields.io/badge/AI%20Assisted%20Development%20Used-Disclosure%20Below-blue)
 
-> **Multiplayer note:** As of v32.0.0, every Smart! feature works in multiplayer on dedicated servers (Windows and Linux). Multiplayer support is new in this release — if you hit something odd in a multiplayer session, please report it on [GitHub](https://github.com/majormer/SmartFoundations/issues) or [Discord](https://discord.gg/SgXY4CwXYw).
+> **Multiplayer note:** As of v32.0.0, every Smart! feature works in multiplayer on dedicated servers (Windows and Linux) — including **Smart Walking**, new in v33.0.0. If you hit something odd in a multiplayer session, please report it on [GitHub](https://github.com/majormer/SmartFoundations/issues) or [Discord](https://discord.gg/SgXY4CwXYw).
 
 **Quick links:** [Watch videos](#-watch-smart-in-action) • [First-time setup](#-first-time-setup) • [Extend explained](#-extend-explained-copy-an-existing-manifold) • [Supported buildings](#-supported-buildings) • [Wiki](https://github.com/majormer/SmartFoundations/wiki) • [Discord](https://discord.gg/SgXY4CwXYw) • [Report bugs](https://github.com/majormer/SmartFoundations/issues) • [Source](https://github.com/majormer/SmartFoundations)
 
@@ -113,46 +113,23 @@ See [LICENSE.md](https://github.com/majormer/SmartFoundations/blob/main/LICENSE.
 
 ---
 
-## 📰 What's New in v32.1.2: Recipe fixes, camera & restore polish, quieter logs
+## 📰 What's New in v33.0.0: Smart Walking
 
-**Current Release:** v32.1.2 — a community-reported bug-fix patch: production-recipe handling in blueprints and multiplayer, stackable-pipeline scaling, Extend clearance, recipe memory that clears with the build gun, the Smart Camera following Extend runs, Smart Restore scaling, and a big logging-noise cleanup. See the [full changelog](https://github.com/majormer/SmartFoundations/blob/main/CHANGELOG.md) for all release details.
+**Current Release:** v33.0.0 introduces **Smart Walking** — a whole new build mode. Where scaling stamps out a rigid, uniform grid, Smart Walking lays down a *path*: a connected run that walks forward one segment at a time, and each segment can round a corner, climb a slope, or shift aside. One continuous run of belts or pipes routes exactly where you want it while you stay put and watch the leading edge crawl across the map through the Smart! Camera. See the [full changelog](https://github.com/majormer/SmartFoundations/blob/main/CHANGELOG.md) for all the details.
 
-### Recipes that stick — in blueprints and multiplayer
+### Smart Walking — steer a connected run that turns, climbs, and walks to its destination
 
-- Recalling a blueprint into the Blueprint Designer no longer strips the recipes from its machines.
-- On dedicated servers, the recipe you pick with the recipe wheel now actually lands on the building you place — it was getting overwritten by a stale sampled recipe.
-- Putting the build gun away now clears the remembered recipe (matching vanilla), so a recipe you picked earlier no longer auto-fills onto unrelated builds later - and you can place recipe-less without hunting for the Clear button.
+Hold a stackable conveyor pole or pipeline support on the build gun, press `K` to open the Smart! Panel, and click **Smart Walking** to begin. Scroll to advance and lay each new segment; steer the active segment to turn, rise, shift, and set its spacing; back up to undo a segment; and commit the whole run in one build. Turns sweep all the way around to a near-full loop, and **both belts and pipes** are supported — belts get tier, flow direction, and routing; pipes get tier, routing, and a Normal-vs-Clean style. A Smart Walking panel (toggle with `K`) lists every segment in an editable table, with each segment's exit heading shown as a 16-point compass bearing. The full material cost is charged on commit, and the whole preview turns red when you can't afford the run; a segment that runs too long, or (for belts) climbs too steeply, is flagged and can't be committed. With the **Smart! Camera** companion mod, the picture-in-picture latches onto the head of the run and follows it across the map. Works in single-player and multiplayer, and the whole feature is translated across ~20 languages. Designed to extend to hyper-tubes and more in future updates.
 
-### Smart Camera & Smart Restore follow the run
+### Also new in v33.0.0
 
-- With the Smart! Camera mod, the picture-in-picture now tracks the **head of an Extend run** as you scale it — and follows a restored Extend pattern correctly too, instead of framing the wrong end.
-- Restoring an Extend pattern now scales **both directions** along X (you can scroll either way).
+- **Broader translation coverage** across all of Smart!'s ~20 languages — more of the Smart! Panel, the in-build HUD, and the keybind hints now appear in your language. Spot something that reads wrong? Translation corrections are welcome on the [GitHub issue tracker](https://github.com/majormer/SmartFoundations/issues).
+- **Smart! Panel refresh** — a new Smart Walking button, the panel now closes with a clear **X** in the top-right corner, and the Apply/Reset buttons are bigger.
 
-### Stackable pipelines, Extend clearance, and a much quieter log
+### Also in the v32.x line
 
-- Stackable pipelines scale like stackable conveyor poles (no stray Upgrade panel), and no longer leave a pipe segment behind when you un-scale.
-- Extend is no longer blocked by a manifold sitting a few floors below.
-- **Auto-Hold on Grid Change** now defaults on, restoring the older default behavior.
-- Smart! no longer floods the log in large factories — the diagnostic spam that was badly inflating log files is silenced.
-
-### Recently in v32.1.1: Multiplayer polish + routing modes
-
-Belt and pipe routing modes (Curve / Straight for belts; Auto 2D / Curve / Noodle / Horizontal→Vertical for pipes) now take effect for auto-connect and Extend lanes; multiplayer rotated Extend builds correctly end to end; progressive rotation can build up along the X *run* or the Y *rows*; and Radius Upgrade, Blueprint Designer Extend, and dedicated-server shutdown logging all got fixes.
-
-### Recently in v32.1.0: Blueprint Designer + Pipeline Supports
-
-Building with Smart! inside the Blueprint Designer behaves like the open world — auto-connect, Extend, and correct blueprint capture (also fixing blueprints that could balloon to save-file size) — and Pipeline Supports, Wall Supports, and Wall Holes joined the scaling family with a plumbed pipe run built between the copies.
-
-### Community reports from the 32.0.0 release week — fixed
-
-- **The Customizer's X key works again** — Smart!'s build keys are now only active while you hold a buildable.
-- **Multiplayer: rotated scaled builds** (curved ramps and arcs) now construct rotated, exactly like the preview.
-- **Smart! Panel dropdowns** open attached to their boxes, on a cleaner, more compact panel.
-- **Two crash fixes**: dismantling a building with a broken power-wire record, and the belt-repair sweep on saves carrying corrupted conveyor-chain records.
-
-### Also in v32.0.0: Multiplayer
-
-Every Smart! feature works when you play as a client on a dedicated server — grid scaling, belt/pipe/power auto-connect, Extend and Scaled Extend, Smart Upgrade, Smart Restore presets, and Smart Dismantle — with normal build costs charged exactly as the preview shows. Server builds ship for **Windows and Linux dedicated servers**; install the same Smart! version on the server and on every client (the mod manager keeps these paired). If something behaves differently in multiplayer than in single-player, that's a bug — please report it on [GitHub](https://github.com/majormer/SmartFoundations/issues) or [Discord](https://discord.gg/SgXY4CwXYw).
+- **v32.1.x** — recipe handling in blueprints and multiplayer, stackable-pipeline scaling, Extend clearance, the remembered recipe clearing with the build gun, the Smart Camera and Smart Restore following Extend runs, belt/pipe routing modes taking effect, progressive rotation along the X *run* or the Y *rows*, Smart! inside the Blueprint Designer, Pipeline/Wall Supports joining the scaling family, and a big logging-noise cleanup. See the [changelog](https://github.com/majormer/SmartFoundations/blob/main/CHANGELOG.md) for the full per-patch detail.
+- **v32.0.0 — Multiplayer.** Every Smart! feature works when you play as a client on a dedicated server (**Windows and Linux**) — grid scaling, auto-connect, Extend, Smart Upgrade, Smart Restore, and Smart Dismantle — with normal build costs charged exactly as the preview shows. Install the same Smart! version on the server and on every client (the mod manager keeps these paired).
 
 ### Earlier in the 31.x line: Satisfactory 1.2
 
@@ -263,6 +240,19 @@ Supported upgrade families include:
 Smart Restore is a preset system for saving, applying, sharing, and replaying Smart Panel setups.
 
 Presets can capture grid size, spacing, steps, stagger, rotation, production recipe, auto-connect settings, and a restored Extend topology — a whole factory module layout. Use the Smart Panel's `Presets >>` button to save your current setup, apply a saved setup later, export or import a shared preset, or turn the last Extend layout you built into a reusable preset. Shared presets are checked against your current unlocks before they can be imported or applied.
+
+### 7. Smart Walking
+
+Smart Walking is a build mode for laying a single connected run that turns, climbs, and routes to a destination — instead of a rigid uniform grid.
+
+Hold a stackable conveyor pole or pipeline support, press `K`, and click **Smart Walking**. Then:
+
+- **Advance** the run one segment at a time, laying a pole-and-belt (or pipe) cross-section as you go.
+- **Steer the active segment** — turn to round a corner, rise for a slope, shift sideways, or set its spacing — using the same in-world controls you already use for scaling. Only the leading segment moves; everything behind it stays locked.
+- **Back up** to undo the last segment.
+- **Commit** the whole run in one build, paying the normal material cost.
+
+Belts and pipes are both supported, with the run's tier, routing, and (for belts) flow direction set once for the whole path. The optional Smart Walking panel (`K`) lists every segment in an editable table with a compass exit heading. With the Smart! Camera companion mod, the picture-in-picture follows the head of the run so you can route across the map without leaving your spot. Smart Walking works in single-player and on dedicated servers.
 
 ---
 
@@ -535,6 +525,20 @@ Use Extend when you want to copy a working factory module.
 
 For manifolds, connect factories to splitter/merger side ports and leave the straight-through ports for the continuing manifold line.
 
+### Smart Walking Instructions
+
+Use Smart Walking to lay one connected belt or pipe run that turns, climbs, and routes where you want it.
+
+1. Hold a stackable **conveyor pole** or **pipeline support** on the build gun.
+2. Press `K` to open the Smart! Panel, then click **Smart Walking**. (The button is hidden when the held buildable cannot be walked.)
+3. **Advance** the run with the scaling control to drop each new segment.
+4. **Steer the active segment** with the rotation, spacing, steps, and stagger controls to turn, set spacing, rise, and shift.
+5. **Back up** to undo the last segment.
+6. Press `K` any time to open the Smart Walking panel and edit any segment in a table.
+7. **Commit** the run in one build, paying the normal material cost. (The preview turns red if you cannot afford it, or if a segment is too long or too steep.)
+
+The keys match your scaling controls and can be customized in **Options > Controls > Mods**. See the [Controls](https://github.com/majormer/SmartFoundations/wiki/Controls) wiki page for the always-current list.
+
 ## 📦 Supported Buildings
 
 Smart! supports many buildables, especially those with normal single-click placement.
@@ -558,7 +562,7 @@ Some vanilla placements are multi-step or drag-based and do not fit Smart!'s gri
 - Railways and train signals.
 - Blueprints as Smart-scaled buildables.
 
-Smart! can still create some belts, pipes, lifts, and wires as part of Auto-Connect or Extend. They are just not usually the primary item you scale directly.
+Smart! can still create belts, pipes, lifts, and wires as part of Auto-Connect, Extend, or Smart Walking. They are just not usually the primary item you scale directly.
 
 ---
 

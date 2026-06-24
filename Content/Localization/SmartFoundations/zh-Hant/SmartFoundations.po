@@ -970,3 +970,1151 @@ msgstr "鏈修復完成"
 msgctxt "SmartFoundations,Triage_RepairCompleteWithOrphans"
 msgid "Chain repair complete — save, reload, and run Detect again"
 msgstr "鏈修復完成 — 請儲存、重新載入並再次執行偵測"
+
+msgctxt "0019837C427C49F6BA1DE5A2BAF52104"
+msgid "Straight"
+msgstr "直線"
+
+msgctxt "067E1A5040E18EA163524F8F205335A9"
+msgid "Smart! Steps"
+msgstr "Smart! 台階"
+
+msgctxt "09B266E74168D79CC01A54B6220782CC"
+msgid "Network"
+msgstr "網路"
+
+msgctxt "0A60D4B54D01B286CA22F0A0967B6803"
+msgid "UPGRADE"
+msgstr "升級"
+
+msgctxt "0B68620A45C29BCF2BD3D390E9C6440C"
+msgid "High Contrast (3)"
+msgstr "高對比 (3)"
+
+msgctxt "0F38693943C29DCD75F8C1B27871C5B8"
+msgid "Adjust Current Axis"
+msgstr "調整當前軸"
+
+msgctxt "12DA0489426F414A397D0589ED6C0745"
+msgid "Smart! Spacing"
+msgstr "Smart! 間距"
+
+msgctxt "1322786544407AA4F8ED1B8190F76D9F"
+msgid "Scan"
+msgstr "掃描"
+
+msgctxt "15B881014DC7C163FCB1419FB255A0EC"
+msgid "Dark (1)"
+msgstr "暗色 (1)"
+
+msgctxt "15E8B3EA40E8AC8A1E8E818BA03670E5"
+msgid "Adjust grid X-axis (forward/backward)"
+msgstr "調整網格 X 軸（前/後）"
+
+msgctxt "173D524544632CCDED043A9E3F4F7CC3"
+msgid "Estimated Cost"
+msgstr "預估成本"
+
+msgctxt "1754F7834BF1389234CDF2A4813856D4"
+msgid "Cancel"
+msgstr "取消"
+
+msgctxt "1926932648C4B2B04FFA2DA78759EB8A"
+msgid "X"
+msgstr "X"
+
+msgctxt "1BCE444B43095B0D655193A1B416CBBD"
+msgid "Increase value for active feature (scaling, spacing, steps, or stagger)"
+msgstr "增加當前啟用功能的數值（縮放、間距、台階或交錯）"
+
+msgctxt "1C0157F7400B84FCEA0CB0997F18ECFA"
+msgid "Smart! Recipe"
+msgstr "Smart! 配方"
+
+msgctxt "1CBE81654BEC06C4EE4D2F9B77C6823C"
+msgid "Radius"
+msgstr "半徑"
+
+msgctxt "1CBF9AC24AB88ED704D8B89C23669BF7"
+msgid "REFRESH"
+msgstr "重新整理"
+
+msgctxt "1D5643D5431C6F63F8A943BCE13CBE7E"
+msgid "Smart! Spacing"
+msgstr "Smart! 間距"
+
+msgctxt "23C90C2D418545EC4333738F056A5EE6"
+msgid "°"
+msgstr "°"
+
+msgctxt "246236E4495CCCF2A3E4FC85C85DA9AB"
+msgid "Smart! Spacing"
+msgstr "Smart! 間距"
+
+msgctxt "2878874049B6D5EE0A5D6D9B48259F72"
+msgid "Hold to activate spacing (modifier key)"
+msgstr "按住以啟用間距（修飾鍵）"
+
+msgctxt "29B5665E4347B8A528480EA82ED201BE"
+msgid "Auto"
+msgstr "自動"
+
+msgctxt "2B909A3E4443898FEB06568A0618C52A"
+msgid "Hold to activate rotation transform mode (modifier key)"
+msgstr "按住以啟用旋轉變換模式（修飾鍵）"
+
+msgctxt "2E5F43054D0239D4BAC0F4862CB459FB"
+msgid "Curve"
+msgstr "曲線"
+
+msgctxt "310A5EFE4224B829F9BA469562A68951"
+msgid "Recipe Mode"
+msgstr "配方模式"
+
+msgctxt "311FCC0E4AB23FE12C19BA94A560D1FB"
+msgid "Adjust grid Y-axis (left/right)"
+msgstr "調整網格 Y 軸（左/右）"
+
+msgctxt "31D1020F4EA86C6B0532A3916E9533CD"
+msgid "Mk6 (6)"
+msgstr "Mk6 (6)"
+
+msgctxt "32F87FF84A2C859EEF06EDA73BD50D90"
+msgid "Radius (m):"
+msgstr "半徑 (m):"
+
+msgctxt "331CFA504EADB43C56B9C1AF41012E2F"
+msgid "Smart! Grid Scaling"
+msgstr "Smart! 網格縮放"
+
+msgctxt "3326E4B341828CD7663F6285E104A803"
+msgid "Toggle Arrows"
+msgstr "切換箭頭"
+
+msgctxt "337DE321404C52EA519126A27AD16256"
+msgid "Classic (2)"
+msgstr "經典 (2)"
+
+msgctxt "33C84A48437DD1E5D1CF0AAD223DC813"
+msgid "Large Grid Warning"
+msgstr "大網格警告"
+
+msgctxt "348DAE9A4D32A65A01DF6A8106D161BC"
+msgid "Cycle Axis Mode"
+msgstr "切換軸模式"
+
+msgctxt "3739407645161CDED5901EACEAEE5915"
+msgid "+"
+msgstr "+"
+
+msgctxt "3BECA57E4ACCC555B29B23AC5605DDCD"
+msgid "Decrease value for active feature (scaling, spacing, steps, or stagger)"
+msgstr "減少當前啟用功能的數值（縮放、間距、台階或交錯）"
+
+msgctxt "3CEFA89C415D47DF87C953A4F5A22837"
+msgid "(0 upgradeable)"
+msgstr "（0 可升級）"
+
+msgctxt "3E62D33F4FA4C52320AB48BD9B6D8B1C"
+msgid "Toggle Settings Form"
+msgstr "切換設定表單"
+
+msgctxt "40EADFF242CC6D8E10A4EDB6D777D2BC"
+msgid "Auto (0)"
+msgstr "自動 (0)"
+
+msgctxt "427A62BA4B691763413124A521EE7AA2"
+msgid "These tools diagnose and repair conveyor chain corruption. Only use them if you are experiencing belt issues."
+msgstr "這些工具用於診斷與修復輸送帶鏈損壞。僅在你遇到傳送帶問題時使用。"
+
+msgctxt "438320444C8158C55C66F08F8D53EBD5"
+msgid "Mk3 (3)"
+msgstr "Mk3 (3)"
+
+msgctxt "444B8B2648F771FC835D1CABC302BA9E"
+msgid "Y (2)"
+msgstr "Y (2)"
+
+msgctxt "466E938E4AA5B443D005619DEB8F0382"
+msgid "Smart! Panel"
+msgstr "Smart! 面板"
+
+msgctxt "47FABC9743E900C118B8FCAF9C9076DE"
+msgid "Target Tier:"
+msgstr "目標等級:"
+
+msgctxt "4878AB2843890693F30F2BBA496DCCE8"
+msgid "Adjust step height for layers"
+msgstr "調整各層的台階高度"
+
+msgctxt "5162B61A422973421A9B5084A1B41030"
+msgid "Smart! Stagger"
+msgstr "Smart! 交錯"
+
+msgctxt "51EB9D9A495D641249A89FA0BD6F76B3"
+msgid "Smart! Grid Scaling"
+msgstr "Smart! 網格縮放"
+
+msgctxt "53A77D7341E0BB96E67D9287BEF26C24"
+msgid "Smart! Grid Scaling"
+msgstr "Smart! 網格縮放"
+
+msgctxt "56027A5C460D5844EF237AB48DAA5A28"
+msgid "X+Y (3)"
+msgstr "X+Y (3)"
+
+msgctxt "5938A49142B563B4FB59E985E9AE1841"
+msgid "Cross Storage Containers"
+msgstr "穿越儲存容器"
+
+msgctxt "59B517F844E13DA8F3D539844F2C9378"
+msgid "X (1)"
+msgstr "X (1)"
+
+msgctxt "60DE1CEC4B85C0CC72203CBF61E7568D"
+msgid "Curve"
+msgstr "曲線"
+
+msgctxt "62C6E10A41335FE94A371DB0EA31B799"
+msgid "Smart! Grid Scaling"
+msgstr "Smart! 網格縮放"
+
+msgctxt "63AABDCD482973D2CAFDF2932D97AE25"
+msgid "Smart! Steps"
+msgstr "Smart! 台階"
+
+msgctxt "6587C0CB460666BD6FC98BB018890DC5"
+msgid "Mk2 (2)"
+msgstr "Mk2 (2)"
+
+msgctxt "66C35E014DB7009BE3B924A85F570FD7"
+msgid "Press REFRESH to scan for upgradeable buildings. Press ESC or K to close."
+msgstr "按重新整理以掃描可升級的建築。按 ESC 或 K 關閉。"
+
+msgctxt "6B9892D145A9E8A2054CEBAEF0A6B4E5"
+msgid "Share"
+msgstr "分享"
+
+msgctxt "6F0E40FD4B11CA1CEC6FC5B06EB0188C"
+msgid "Stagger Left/Right"
+msgstr "向左/向右交錯"
+
+msgctxt "70622324402CD200612E9395164CE150"
+msgid "Repair All Issues"
+msgstr "修復所有問題"
+
+msgctxt "72BCC75B46EB14C88FA0CB8AFFE0ACFA"
+msgid "0"
+msgstr "0"
+
+msgctxt "74176A6A4B5B3CE8A9A4BA8F752D804C"
+msgid "Estimated Cost"
+msgstr "預估成本"
+
+msgctxt "78E37EDB4BEB48A04A5139AC6A0C614D"
+msgid "Show/hide axis direction arrows"
+msgstr "顯示/隱藏軸方向箭頭"
+
+msgctxt "790FF28E4D98D951C6AE27B8A147F50F"
+msgid "Press to clear active recipe"
+msgstr "按下以清除當前配方"
+
+msgctxt "7945CB1F4E10CE8044DCBF8DC47322E1"
+msgid "Adjust sideways offset for grid items"
+msgstr "調整網格項目的橫向偏移"
+
+msgctxt "7A593AF64E9BB01288D106BC6229CBF9"
+msgid "Cross Splitters/Mergers"
+msgstr "穿越分離器/合併器"
+
+msgctxt "7A7B62144F20B0B73ABCD8B643EED6A1"
+msgid "Mk2 (2)"
+msgstr "Mk2 (2)"
+
+msgctxt "7BAE3F3D4FEAEB14DC15CCBAC6FA6820"
+msgid "Smart! Configuration"
+msgstr "Smart! 設定"
+
+msgctxt "7C1BBA564FF13BA590D8A89C48E3F2C8"
+msgid "Anchor: Aim at a belt, pipe, or pole"
+msgstr "錨點：瞄準輸送帶、管道或電線桿"
+
+msgctxt "7ECCEB924559BAD3A1844C80D4581EAE"
+msgid "Grid Total: 1 objects"
+msgstr "網格總計：1 個物件"
+
+msgctxt "7F2E5ED1421D2CB422D39B96E7FEFA25"
+msgid "Scale Forward/Back"
+msgstr "向前/向後縮放"
+
+msgctxt "80ADD8BF4E442F2608D92FB8ECD49CC2"
+msgid "Mk1 (1)"
+msgstr "Mk1 (1)"
+
+msgctxt "827BDCB04E7D02296EA3E880D6C24DC3"
+msgid "SCAN NETWORK"
+msgstr "掃描網路"
+
+msgctxt "86A78F2C47F34655E5C58484EC93E3AD"
+msgid "Smart! Recipe"
+msgstr "Smart! 配方"
+
+msgctxt "8A7DD44D47B48C266B3B88AC01D1CEF3"
+msgid "Straight"
+msgstr "直線"
+
+msgctxt "8BB84C5240D8A57F87983A986C3DFB73"
+msgid "Smart! Upgrade Panel"
+msgstr "Smart! 升級面板"
+
+msgctxt "8E24BA32430E1A670137ABA048747BB8"
+msgid "Monochrome (5)"
+msgstr "單色 (5)"
+
+msgctxt "928114D446D78C041AEF5D88157821E9"
+msgid "Noodle"
+msgstr "麵條式"
+
+msgctxt "93C024D64433A5447D2C0396B3C5CB33"
+msgid "Hold to activate progressive layering (modifier key)"
+msgstr "按住以啟用漸進式分層（修飾鍵）"
+
+msgctxt "9423B8A2450BD3341A377D9BD4CCD62B"
+msgid "CANCEL"
+msgstr "取消"
+
+msgctxt "9643BBEF4D4BFEB216B5CDB73AC1A4C8"
+msgid "Spacing Mode"
+msgstr "間距模式"
+
+msgctxt "96E044FE4DDABD241B0483A89D209A2C"
+msgid "Run Detect to see results"
+msgstr "執行偵測以查看結果"
+
+msgctxt "97E5935349503B2191BFE4B385BC7AB3"
+msgid "Smart! Foundations"
+msgstr "Smart! Foundations"
+
+msgctxt "9852395F409F9C751F989FA1748BFA16"
+msgid "Auto (0)"
+msgstr "自動 (0)"
+
+msgctxt "98E28A8E4D25D9D8BCD4C08EC6A98DE6"
+msgid "Configure Smart! scaling, visualization, and HUD settings"
+msgstr "設定 Smart! 的縮放、視覺化與 HUD 選項"
+
+msgctxt "9AE7D23346D4BB5B0192848D8291920C"
+msgid "Hold to scale X-axis. Combine with Y modifier to scale Z-axis."
+msgstr "按住以縮放 X 軸。與 Y 修飾鍵組合以縮放 Z 軸。"
+
+msgctxt "9C14E6F8447F242BFBB485BD8E31A5F3"
+msgid "Cycle through X → Y → Z axes"
+msgstr "循環切換 X → Y → Z 軸"
+
+msgctxt "9C1531E24044FDC579C089A23F379274"
+msgid "Detect Issues"
+msgstr "偵測問題"
+
+msgctxt "9E038900477F0B65A5A64E91AB5C00F0"
+msgid "HUD Scale"
+msgstr "HUD 縮放"
+
+msgctxt "9E972DC647E3D424CFE890B235FB1EE3"
+msgid "Select items to see costs"
+msgstr "選擇項目以查看成本"
+
+msgctxt "A08F54F64F8642B9E7F8F1AA30D2B869"
+msgid "Minimal (4)"
+msgstr "極簡 (4)"
+
+msgctxt "A1723C3742687518D3D7FAB8769C4F43"
+msgid "Once (1)"
+msgstr "一次 (1)"
+
+msgctxt "A4625ACE4A31BA74C187C09C62723BE6"
+msgid "Steps Mode"
+msgstr "台階模式"
+
+msgctxt "A65B455D41D3967FE018129E6F8D99BC"
+msgid "Scale Left/Right"
+msgstr "向左/向右縮放"
+
+msgctxt "A6A1DA99437171CC3D6B8C9E2918CEE0"
+msgid "Default (0)"
+msgstr "預設 (0)"
+
+msgctxt "A70A70BC46CB9221B4A7618D9D344FCD"
+msgid "Horiz→Vert"
+msgstr "水平→垂直"
+
+msgctxt "A863449D4ED1EF98FD3531A57C03A83B"
+msgid "Auto (0)"
+msgstr "自動 (0)"
+
+msgctxt "A9F4FD7C4ADCBE49DE0631A2046B8C32"
+msgid "Auto 2D"
+msgstr "自動 2D"
+
+msgctxt "AC9521FE4F1ABB4F0FDA12BE408820F6"
+msgid "Stagger Mode"
+msgstr "交錯模式"
+
+msgctxt "ADFEA69944158AB689D01EB52BA2A425"
+msgid "Adjust grid Z-axis (up/down)"
+msgstr "調整網格 Z 軸（上/下）"
+
+msgctxt "B433CC5C466EDDBF3105FA829F9B12D5"
+msgid "Scale X Modifier"
+msgstr "縮放 X 修飾鍵"
+
+msgctxt "B4E7FC1B4C29E5780A005DACF4F6605B"
+msgid "Smart! Grid Scaling"
+msgstr "Smart! 網格縮放"
+
+msgctxt "B67A2B1049D6C022FFE45AA3C7E91E0D"
+msgid "Mk1 (1)"
+msgstr "Mk1 (1)"
+
+msgctxt "B8C9B67949C7644C3AE6519EBC26464D"
+msgid "Smart! Grid Scaling"
+msgstr "Smart! 網格縮放"
+
+msgctxt "BB16B38F4773E62C787CD8A7A950B2A0"
+msgid "Warning message here"
+msgstr "警告訊息顯示於此"
+
+msgctxt "BE3FB1994C8451039886D1829DD59B06"
+msgid "Entire Map"
+msgstr "整張地圖"
+
+msgctxt "BE9D645D4352A41A16C3D0A5F1F62C94"
+msgid "+"
+msgstr "+"
+
+msgctxt "BEFE3D9D4EA76F0E2C34198C02E30A1E"
+msgid "Family Name Mk.1"
+msgstr "類別名稱 Mk.1"
+
+msgctxt "C08F8647484002CCC38A78938534A251"
+msgid "Mk5 (5)"
+msgstr "Mk5 (5)"
+
+msgctxt "C0E174744867FC71F8E879B5AE7D69EE"
+msgid "Mk4 (4)"
+msgstr "Mk4 (4)"
+
+msgctxt "C34C1A5F452AB8290A9A00BA9D73780D"
+msgid "Target Tier:"
+msgstr "目標等級:"
+
+msgctxt "C6DDD93A4DEF142BBA1E08BBE2381F1B"
+msgid "Repair result will appear here"
+msgstr "修復結果將顯示於此"
+
+msgctxt "CB15E1A74E71CFAEDB6CA3AA8994C227"
+msgid "Close"
+msgstr "關閉"
+
+msgctxt "CDF7639140F228F3095085B61DF1FC1A"
+msgid "Not saved"
+msgstr "未儲存"
+
+msgctxt "SmartFoundations,Config.Description"
+msgid "Smart! Foundations settings."
+msgstr "Smart! Foundations 設定。"
+
+msgctxt "SmartFoundations,Config.DisplayName"
+msgid "Smart!"
+msgstr "Smart!"
+
+msgctxt "SmartFoundations,Config.Root.Name"
+msgid "Smart!"
+msgstr "Smart!"
+
+msgctxt "SmartFoundations,Config.Root.Tooltip"
+msgid "Smart! Foundations settings."
+msgstr "Smart! Foundations 設定。"
+
+msgctxt "D042222F4CF5B96FB75D6AB15DFD0645"
+msgid "Cross Train Platforms"
+msgstr "穿越火車月台"
+
+msgctxt "D09E94C0499C4C4F3E606D9E2461B19A"
+msgid "Toggle Smart Settings Form"
+msgstr "切換 Smart 設定表單"
+
+msgctxt "D16C08E24764156DC1CBDAB0287C8627"
+msgid "Default"
+msgstr "預設"
+
+msgctxt "D5988C104C18248A9BFD8485A40BE7BF"
+msgid "Triage"
+msgstr "診斷"
+
+msgctxt "D62D58CF4AFE88D8DE519488D31F424F"
+msgid "Scale Up/Down"
+msgstr "向上/向下縮放"
+
+msgctxt "DD0B98B04A427071B009D7BAA464B531"
+msgid "Save New Preset"
+msgstr "儲存新預設"
+
+msgctxt "DFC6C7C441EFDC29C8E28F8F68C31EC1"
+msgid "Always (0)"
+msgstr "總是 (0)"
+
+msgctxt "E148F27C4C01935B4E019BA49F4A0F55"
+msgid "Steps Up/Down"
+msgstr "向上/向下台階"
+
+msgctxt "E3CA9AD8424D9B1B3B996C97C1F70A61"
+msgid "Rotation Mode"
+msgstr "旋轉模式"
+
+msgctxt "E522B9984A797E90FDF435B93981833C"
+msgid "Smart! Rotation"
+msgstr "Smart! 旋轉"
+
+msgctxt "E66C9E5840CD757371D1B2A26B0937F7"
+msgid "Scan network to see costs"
+msgstr "掃描網路以查看費用"
+
+msgctxt "E7D5F1A145882159A49EE89DEAA01EF5"
+msgid "Hold to activate sideways offset (modifier key)"
+msgstr "按住以啟用橫向偏移（修飾鍵）"
+
+msgctxt "E9350DEF466B0A2E9F7FBDB9FA947A97"
+msgid "Never (2)"
+msgstr "從不 (2)"
+
+msgctxt "EA82618C44B70702397E7E97036E946B"
+msgid "Show Direction Arrows (can be overridden)"
+msgstr "顯示方向箭頭（可被覆寫）"
+
+msgctxt "F10D935E43878D99436DE5979A4E7EFD"
+msgid "Adjust spacing for currently selected axis"
+msgstr "調整當前選定軸的間距"
+
+msgctxt "F484CB0045E1F6610752E19D98C01DFE"
+msgid "Smart! Interface"
+msgstr "Smart! 介面"
+
+msgctxt "F506AD1F41CF8A81A27FC0A480EAE8B8"
+msgid "Smart Restore"
+msgstr "Smart 還原"
+
+msgctxt "F5885ED64196DAF6BE5F878ED0AF0A29"
+msgid "Smart! Stagger"
+msgstr "Smart! 交錯"
+
+msgctxt "F87C5DEE489864EDB5D02386C86E62CF"
+msgid "Recipe Up/Down"
+msgstr "向上/向下配方"
+
+msgctxt "F8E467094A594E5C21A542B94D14B1E6"
+msgid "+"
+msgstr "+"
+
+msgctxt "FA69B4C54C1F9AC00819708F1BD00666"
+msgid "Hold to scale Y-axis. Combine with X modifier to scale Z-axis."
+msgstr "按住以縮放 Y 軸。與 X 修飾鍵組合以縮放 Z 軸。"
+
+msgctxt "FA953BD649A5AEE3F69CB7AFE9E2A43A"
+msgid "Route mouse wheel input to the active Smart! feature (scaling, spacing, steps, or stagger)"
+msgstr "將滑鼠滾輪輸入導向當前啟用的 Smart! 功能（縮放、間距、台階或交錯）"
+
+msgctxt "FD2BEAF2493FD288E0C03FB923FE3E94"
+msgid "Ready"
+msgstr "就緒"
+
+msgctxt "FD8B2189447F09294CBA09A02293BB9C"
+msgid "Core Smart! Foundations settings for HUD display and default scale values"
+msgstr "Core Smart! Foundations settings for HUD display and default scale values"
+
+msgctxt "FECC44E2411C81715010F7B2FAD081E6"
+msgid "Scale Y Modifier"
+msgstr "縮放 Y 修飾鍵"
+
+msgctxt "FF3BF8944642F2DEE83E0685A53303EE"
+msgid "Adjust Recipe"
+msgstr "調整配方"
+
+msgctxt "SmartFoundations,HUD_RestoreActive"
+msgid "*Restore Active"
+msgstr "*還原啟用"
+
+msgctxt "SmartFoundations,HUD_RestorePreset"
+msgid "*Restore: {0}"
+msgstr "*還原: {0}"
+
+msgctxt "SmartFoundations,HUD_Walk"
+msgid "*Walk  {0} seg | head {1} {2}deg | {3}"
+msgstr "*行走  {0} 段 | 朝向 {1} {2}度 | {3}"
+
+msgctxt "SmartFoundations,HUD_WalkAdvance"
+msgid "Advance{0}: {1}m"
+msgstr "前進{0}: {1}m"
+
+msgctxt "SmartFoundations,HUD_WalkRise"
+msgid "Rise{0}: {1}m"
+msgstr "上升{0}: {1}m"
+
+msgctxt "SmartFoundations,HUD_WalkShift"
+msgid "Shift{0}: {1}m"
+msgstr "位移{0}: {1}m"
+
+msgctxt "SmartFoundations,HUD_WalkTurn"
+msgid "Turn{0}: {1}°"
+msgstr "轉向{0}: {1}°"
+
+msgctxt "SmartFoundations,HUD_Walk_Belt"
+msgid "belt"
+msgstr "傳送帶"
+
+msgctxt "SmartFoundations,HUD_Walk_Pipe"
+msgid "pipe"
+msgstr "管道"
+
+msgctxt "SmartFoundations,Hint_CycleMode"
+msgid "Cycle Mode"
+msgstr "切換模式"
+
+msgctxt "SmartFoundations,Hint_Recipe"
+msgid "Recipe"
+msgstr "配方"
+
+msgctxt "SmartFoundations,Hint_Rotation"
+msgid "Rotation"
+msgstr "旋轉"
+
+msgctxt "SmartFoundations,Hint_ScaleX"
+msgid "Scale X"
+msgstr "縮放 X"
+
+msgctxt "SmartFoundations,Hint_ScaleY"
+msgid "Scale Y"
+msgstr "縮放 Y"
+
+msgctxt "SmartFoundations,Hint_ScaleZ"
+msgid "Scale Z"
+msgstr "縮放 Z"
+
+msgctxt "SmartFoundations,Hint_SmartPanel"
+msgid "Smart Panel"
+msgstr "Smart 面板"
+
+msgctxt "SmartFoundations,Hint_Spacing"
+msgid "Spacing"
+msgstr "間距"
+
+msgctxt "SmartFoundations,Hint_Stagger"
+msgid "Stagger"
+msgstr "交錯"
+
+msgctxt "SmartFoundations,Hint_Steps"
+msgid "Steps"
+msgstr "台階"
+
+msgctxt "SmartFoundations,P.BeltLevelMain"
+msgid "Manifold Lane Belt"
+msgstr "分配器傳送帶"
+
+msgctxt "SmartFoundations,P.BeltLevelMain.TT"
+msgid "Belt tier for distributor-to-distributor (manifold) connections. Auto uses the highest tier you've unlocked."
+msgstr "分配器對分配器（分流）連接的傳送帶等級。自動會使用你已解鎖的最高等級。"
+
+msgctxt "SmartFoundations,P.BeltLevelToBuilding"
+msgid "Factory Belt"
+msgstr "工廠傳送帶"
+
+msgctxt "SmartFoundations,P.BeltLevelToBuilding.TT"
+msgid "Belt tier for distributor-to-building connections. Auto uses the highest tier you've unlocked."
+msgstr "分配器對建築連接的傳送帶等級。自動會使用你已解鎖的最高等級。"
+
+msgctxt "SmartFoundations,P.BeltRoutingMode"
+msgid "Belt Routing Mode"
+msgstr "傳送帶路由模式"
+
+msgctxt "SmartFoundations,P.BeltRoutingMode.TT"
+msgid "How auto-connected belts are shaped: Default, Curve, or Straight."
+msgstr "自動連接的傳送帶採用的形狀：預設、曲線或直線。"
+
+msgctxt "SmartFoundations,P.HUDPositionX"
+msgid "HUD Position X"
+msgstr "HUD 位置 X"
+
+msgctxt "SmartFoundations,P.HUDPositionX.TT"
+msgid "Horizontal position of the HUD on screen (0 = left edge, 1 = right edge)."
+msgstr "HUD 在螢幕上的水平位置（0 = 左邊緣，1 = 右邊緣）。"
+
+msgctxt "SmartFoundations,P.HUDPositionY"
+msgid "HUD Position Y"
+msgstr "HUD 位置 Y"
+
+msgctxt "SmartFoundations,P.HUDPositionY.TT"
+msgid "Vertical position of the HUD on screen (0 = top, 1 = bottom)."
+msgstr "HUD 在螢幕上的垂直位置（0 = 頂部，1 = 底部）。"
+
+msgctxt "SmartFoundations,P.HUDScale"
+msgid "HUD Scale"
+msgstr "HUD 縮放"
+
+msgctxt "SmartFoundations,P.HUDScale.TT"
+msgid "Size of the Smart! HUD overlay."
+msgstr "Smart! HUD 覆蓋層的大小。"
+
+msgctxt "SmartFoundations,P.HUDTheme"
+msgid "HUD Theme"
+msgstr "HUD 主題"
+
+msgctxt "SmartFoundations,P.HUDTheme.TT"
+msgid "Color theme for the HUD: Default (FICSIT orange), Dark, Classic, High Contrast, Minimal, or Monochrome."
+msgstr "HUD 的色彩主題：預設（FICSIT 橘）、暗色、經典、高對比、極簡或單色。"
+
+msgctxt "SmartFoundations,P.PipeIndicator"
+msgid "Flow Indicator"
+msgstr "流向指示"
+
+msgctxt "SmartFoundations,P.PipeIndicator.TT"
+msgid "Show a flow-direction indicator on auto-connected pipes."
+msgstr "在自動連接的管道上顯示流向指示器。"
+
+msgctxt "SmartFoundations,P.PipeLevelMain"
+msgid "Main Tier"
+msgstr "主等級"
+
+msgctxt "SmartFoundations,P.PipeLevelMain.TT"
+msgid "Pipe tier for the main connections. Auto uses the highest tier you've unlocked."
+msgstr "主連接的管道等級。自動會使用你已解鎖的最高等級。"
+
+msgctxt "SmartFoundations,P.PipeLevelToBuilding"
+msgid "To Building"
+msgstr "到建築"
+
+msgctxt "SmartFoundations,P.PipeLevelToBuilding.TT"
+msgid "Pipe tier for connections to buildings. Auto uses the highest tier you've unlocked."
+msgstr "連接到建築的管道等級。自動會使用你已解鎖的最高等級。"
+
+msgctxt "SmartFoundations,P.PipeRoutingMode"
+msgid "Pipe Routing Mode"
+msgstr "管道路由模式"
+
+msgctxt "SmartFoundations,P.PipeRoutingMode.TT"
+msgid "How auto-connected pipes are shaped: Auto, 2D, Straight, Curve, Noodle, or Horizontal-to-Vertical."
+msgstr "自動連接的管道採用的形狀：自動、2D、直線、曲線、麵條式或水平轉垂直。"
+
+msgctxt "SmartFoundations,P.PowerConnectMode"
+msgid "Grid Axis"
+msgstr "網格軸"
+
+msgctxt "SmartFoundations,P.PowerConnectMode.TT"
+msgid "Which directions power poles connect: Auto, X only, Y only, or both X and Y."
+msgstr "電線桿相互連接的方向：自動、僅 X、僅 Y，或 X 與 Y 兩者。"
+
+msgctxt "SmartFoundations,P.PowerConnectRange"
+msgid "Connection Range"
+msgstr "連接範圍"
+
+msgctxt "SmartFoundations,P.PowerConnectRange.TT"
+msgid "Maximum distance, in meters, to search for a power connection."
+msgstr "搜尋電力連接的最大距離（公尺）。"
+
+msgctxt "SmartFoundations,P.PowerConnectReserved"
+msgid "Connections to Keep Free"
+msgstr "保留連接數"
+
+msgctxt "SmartFoundations,P.PowerConnectReserved.TT"
+msgid "Number of pole connection slots to leave free for your own manual wiring."
+msgstr "在電線桿上保留供你手動接線的連接插槽數量。"
+
+msgctxt "SmartFoundations,P.bApplyImmediately"
+msgid "Apply Immediately"
+msgstr "立即套用"
+
+msgctxt "SmartFoundations,P.bApplyImmediately.TT"
+msgid "Apply Smart Panel changes instantly instead of clicking the Apply button."
+msgstr "即時套用 Smart 面板的變更，而非點擊套用按鈕。"
+
+msgctxt "SmartFoundations,P.bAutoConnectDistributors"
+msgid "Use Manifold Lane Belts"
+msgstr "使用分配器傳送帶"
+
+msgctxt "SmartFoundations,P.bAutoConnectDistributors.TT"
+msgid "Chain distributors together with manifold lane belts, so a whole row is fed from one input."
+msgstr "用分配器傳送帶將各分配器串接起來，使整排由單一輸入供料。"
+
+msgctxt "SmartFoundations,P.bAutoConnectEnabled"
+msgid "Belt Auto-Connect"
+msgstr "傳送帶自動連接"
+
+msgctxt "SmartFoundations,P.bAutoConnectEnabled.TT"
+msgid "Automatically connect conveyor belts between placed buildings and distributors."
+msgstr "在放置的建築與分配器之間自動連接輸送帶。"
+
+msgctxt "SmartFoundations,P.bAutoHoldOnGridChange"
+msgid "Auto-Hold on Grid Change"
+msgstr "網格更改時自動鎖定"
+
+msgctxt "SmartFoundations,P.bAutoHoldOnGridChange.TT"
+msgid "Automatically lock the hologram in place after any grid change. Press the Hold key to release it."
+msgstr "在任何網格變更後自動將全息圖鎖定就位。按鎖定鍵以解除。"
+
+msgctxt "SmartFoundations,P.bExtendDaisyChainPoleless"
+msgid "Daisy-Chain Pole-less Factories"
+msgstr "菊鏈無電線桿工廠"
+
+msgctxt "SmartFoundations,P.bExtendDaisyChainPoleless.TT"
+msgid "When you Extend a factory that has no power pole and no existing daisy link (starting a fresh manifold), wire the new buildings together with daisy-chain power. Factories already daisy-chained are always continued regardless of this option."
+msgstr "當你延伸一座沒有電線桿且沒有既有菊鏈連結的工廠（開始全新分流）時，以菊鏈電力將新建築相互接線。已菊鏈的工廠無論此選項為何都會持續延續。"
+
+msgctxt "SmartFoundations,P.bExtendDaisyChainPower"
+msgid "Extend Daisy-Chain Power"
+msgstr "延伸菊鏈電力"
+
+msgctxt "SmartFoundations,P.bExtendDaisyChainPower.TT"
+msgid "Once Upgraded Power Connectors is unlocked, Extend wires power directly building-to-building along the lane instead of running a pole to each building."
+msgstr "解鎖升級版電力連接器後，延伸會沿著該排在建築之間直接接線，而非為每座建築拉一根電線桿。"
+
+msgctxt "SmartFoundations,P.bExtendEnabled"
+msgid "Extend Enabled"
+msgstr "延伸啟用"
+
+msgctxt "SmartFoundations,P.bExtendEnabled.TT"
+msgid "Enable Extend - repeat a building or grid outward in one direction."
+msgstr "啟用延伸 — 朝單一方向向外重複建築或網格。"
+
+msgctxt "SmartFoundations,P.bExtendPowerEnabled"
+msgid "Extend Power Poles"
+msgstr "延伸電線桿"
+
+msgctxt "SmartFoundations,P.bExtendPowerEnabled.TT"
+msgid "Include power poles when using Extend."
+msgstr "使用延伸時納入電線桿。"
+
+msgctxt "SmartFoundations,P.bPipeAutoConnectEnabled"
+msgid "Pipe Auto-Connect"
+msgstr "管道自動連接"
+
+msgctxt "SmartFoundations,P.bPipeAutoConnectEnabled.TT"
+msgid "Automatically connect pipes between placed buildings."
+msgstr "在放置的建築之間自動連接管道。"
+
+msgctxt "SmartFoundations,P.bPowerAutoConnectEnabled"
+msgid "Power Auto-Connect"
+msgstr "電力自動連接"
+
+msgctxt "SmartFoundations,P.bPowerAutoConnectEnabled.TT"
+msgid "Automatically wire power between placed buildings and nearby power poles."
+msgstr "在放置的建築與附近的電線桿之間自動接線電力。"
+
+msgctxt "SmartFoundations,P.bShowArrowLabels"
+msgid "Arrow Axis Labels"
+msgstr "箭頭軸標籤"
+
+msgctxt "SmartFoundations,P.bShowArrowLabels.TT"
+msgid "Show X/Y/Z axis labels on the direction arrows."
+msgstr "在方向箭頭上顯示 X/Y/Z 軸標籤。"
+
+msgctxt "SmartFoundations,P.bShowArrowOrbit"
+msgid "Arrow Orbit Animation"
+msgstr "箭頭軌道動畫"
+
+msgctxt "SmartFoundations,P.bShowArrowOrbit.TT"
+msgid "Animate the arrows orbiting the hologram. Turn off for static arrows that still track you."
+msgstr "讓箭頭環繞全息圖做動畫。關閉以使用仍會追蹤你的靜態箭頭。"
+
+msgctxt "SmartFoundations,P.bShowArrows"
+msgid "Show Direction Arrows"
+msgstr "顯示方向箭頭"
+
+msgctxt "SmartFoundations,P.bShowArrows.TT"
+msgid "Show X/Y/Z direction arrows on the building hologram."
+msgstr "在建築全息圖上顯示 X/Y/Z 方向箭頭。"
+
+msgctxt "SmartFoundations,P.bShowHUD"
+msgid "Show HUD Overlay"
+msgstr "顯示 HUD"
+
+msgctxt "SmartFoundations,P.bShowHUD.TT"
+msgid "Show the Smart! overlay (grid, scale, and recipe info) while building."
+msgstr "建造時顯示 Smart! 覆蓋層（網格、縮放與配方資訊）。"
+
+msgctxt "SmartFoundations,P.bStackableBeltEnabled"
+msgid "Stackable Belt Auto-Connect"
+msgstr "可堆疊傳送帶自動連接"
+
+msgctxt "SmartFoundations,P.bStackableBeltEnabled.TT"
+msgid "Allow auto-connected belts to stack vertically where they overlap."
+msgstr "允許自動連接的傳送帶在重疊處垂直堆疊。"
+
+msgctxt "SmartFoundations,Panel_Btn_ApplyPreset"
+msgid "Apply"
+msgstr "套用"
+
+msgctxt "SmartFoundations,Panel_Btn_DeletePreset"
+msgid "Delete"
+msgstr "刪除"
+
+msgctxt "SmartFoundations,Panel_Btn_ExportPreset"
+msgid "Export to Clipboard"
+msgstr "匯出到剪貼簿"
+
+msgctxt "SmartFoundations,Panel_Btn_ImportFromExtend"
+msgid "Import from Last Extend"
+msgstr "從上次延伸匯入"
+
+msgctxt "SmartFoundations,Panel_Btn_ImportPreset"
+msgid "Import from Clipboard"
+msgstr "從剪貼簿匯入"
+
+msgctxt "SmartFoundations,Panel_Btn_SavePreset"
+msgid "Save Current"
+msgstr "儲存當前"
+
+msgctxt "SmartFoundations,Panel_Btn_SmartWalking"
+msgid "Smart Walking"
+msgstr "Smart 行走"
+
+msgctxt "SmartFoundations,Panel_Btn_UpdatePreset"
+msgid "Update"
+msgstr "更新"
+
+msgctxt "SmartFoundations,Panel_Restore_Capture"
+msgid "Capture:"
+msgstr "擷取:"
+
+msgctxt "SmartFoundations,Panel_Restore_CaptureAutoConnect"
+msgid "Auto-Connect"
+msgstr "自動連接"
+
+msgctxt "SmartFoundations,Panel_Restore_CaptureGrid"
+msgid "Grid"
+msgstr "網格"
+
+msgctxt "SmartFoundations,Panel_Restore_CaptureRecipe"
+msgid "Recipe"
+msgstr "配方"
+
+msgctxt "SmartFoundations,Panel_Restore_CaptureRotation"
+msgid "Rotation"
+msgstr "旋轉"
+
+msgctxt "SmartFoundations,Panel_Restore_CaptureSpacing"
+msgid "Spacing"
+msgstr "間距"
+
+msgctxt "SmartFoundations,Panel_Restore_CaptureStagger"
+msgid "Stagger"
+msgstr "交錯"
+
+msgctxt "SmartFoundations,Panel_Restore_CaptureSteps"
+msgid "Steps"
+msgstr "台階"
+
+msgctxt "SmartFoundations,Panel_Restore_CreatedAt"
+msgid "Created:"
+msgstr "建立時間:"
+
+msgctxt "SmartFoundations,Panel_Restore_DeleteMessage"
+msgid "Delete preset '{0}'?"
+msgstr "刪除預設「{0}」？"
+
+msgctxt "SmartFoundations,Panel_Restore_DeleteTitle"
+msgid "Delete Preset"
+msgstr "刪除預設"
+
+msgctxt "SmartFoundations,Panel_Restore_Description"
+msgid "Description:"
+msgstr "說明:"
+
+msgctxt "SmartFoundations,Panel_Restore_NotSaved"
+msgid "Not saved"
+msgstr "未儲存"
+
+msgctxt "SmartFoundations,Panel_Restore_OverwriteMessage"
+msgid "A preset named '{0}' already exists. Overwrite?"
+msgstr "已存在名為「{0}」的預設。是否覆寫？"
+
+msgctxt "SmartFoundations,Panel_Restore_OverwriteTitle"
+msgid "Overwrite Preset"
+msgstr "覆寫預設"
+
+msgctxt "SmartFoundations,Panel_Restore_PresetName"
+msgid "New Preset Name:"
+msgstr "新預設名稱:"
+
+msgctxt "SmartFoundations,Panel_Restore_SelectPreset"
+msgid "Selected Preset:"
+msgstr "選定的預設:"
+
+msgctxt "SmartFoundations,Panel_Section_Presets"
+msgid "Smart Restore"
+msgstr "Smart 還原"
+
+msgctxt "SmartFoundations,Sec.Arrows"
+msgid "Arrows"
+msgstr "箭頭"
+
+msgctxt "SmartFoundations,Sec.Arrows.TT"
+msgid "Directional arrows drawn on the building hologram."
+msgstr "繪製在建築全息圖上的方向箭頭。"
+
+msgctxt "SmartFoundations,Sec.Belt"
+msgid "Belt Auto-Connect"
+msgstr "傳送帶自動連接"
+
+msgctxt "SmartFoundations,Sec.Belt.TT"
+msgid "Automatically run conveyor belts between the buildings you place."
+msgstr "在你放置的建築之間自動牽引輸送帶。"
+
+msgctxt "SmartFoundations,Sec.Building"
+msgid "Building Behavior"
+msgstr "建造行為"
+
+msgctxt "SmartFoundations,Sec.Building.TT"
+msgid "How Extend, auto-hold, and Apply behave while building."
+msgstr "建造時延伸、自動鎖定與套用的行為方式。"
+
+msgctxt "SmartFoundations,Sec.HUD"
+msgid "HUD"
+msgstr "HUD"
+
+msgctxt "SmartFoundations,Sec.HUD.TT"
+msgid "The on-screen Smart! overlay shown while you build."
+msgstr "建造時顯示於畫面上的 Smart! 覆蓋層。"
+
+msgctxt "SmartFoundations,Sec.Pipe"
+msgid "Pipe Auto-Connect"
+msgstr "管道自動連接"
+
+msgctxt "SmartFoundations,Sec.Pipe.TT"
+msgid "Automatically run pipes between the buildings you place."
+msgstr "在你放置的建築之間自動牽引管道。"
+
+msgctxt "SmartFoundations,Sec.Power"
+msgid "Power Auto-Connect"
+msgstr "電力自動連接"
+
+msgctxt "SmartFoundations,Sec.Power.TT"
+msgid "Automatically wire power between buildings and power poles as you build."
+msgstr "建造時在建築與電線桿之間自動接線電力。"
+
+msgctxt "SmartFoundations,Upgrade_ErrRCO"
+msgid "Error: server connection unavailable"
+msgstr "錯誤：伺服器連線不可用"
+
+msgctxt "SmartFoundations,Upgrade_ErrRCOScan"
+msgid "Error: server connection unavailable"
+msgstr "錯誤：伺服器連線不可用"
+
+msgctxt "SmartFoundations,Walk_ApplyImmediately"
+msgid "apply immediately"
+msgstr "立即套用"
+
+msgctxt "SmartFoundations,Walk_Btn_Scaling"
+msgid "‹ Scaling"
+msgstr "‹ 縮放"
+
+msgctxt "SmartFoundations,Walk_Col_Advance"
+msgid "Advance m"
+msgstr "前進 m"
+
+msgctxt "SmartFoundations,Walk_Col_Exit"
+msgid "Exit"
+msgstr "出向"
+
+msgctxt "SmartFoundations,Walk_Col_Rise"
+msgid "Rise m"
+msgstr "上升 m"
+
+msgctxt "SmartFoundations,Walk_Col_Shift"
+msgid "Shift m"
+msgstr "位移 m"
+
+msgctxt "SmartFoundations,Walk_Col_Turn"
+msgid "Turn"
+msgstr "轉向"
+
+msgctxt "SmartFoundations,Walk_Conveyance_Belt"
+msgid "Belt"
+msgstr "傳送帶"
+
+msgctxt "SmartFoundations,Walk_Conveyance_Pipe"
+msgid "Pipe"
+msgstr "管道"
+
+msgctxt "SmartFoundations,Walk_Lbl_Direction"
+msgid "Direction"
+msgstr "方向"
+
+msgctxt "SmartFoundations,Walk_Lbl_PipeStyle"
+msgid "Pipe Style"
+msgstr "管道樣式"
+
+msgctxt "SmartFoundations,Walk_Lbl_Routing"
+msgid "Routing"
+msgstr "路由"
+
+msgctxt "SmartFoundations,Walk_Lbl_Tier"
+msgid "Tier"
+msgstr "等級"
+
+msgctxt "SmartFoundations,Walk_Opt_Auto"
+msgid "Auto"
+msgstr "自動"
+
+msgctxt "SmartFoundations,Walk_Opt_Auto2D"
+msgid "Auto 2D"
+msgstr "自動 2D"
+
+msgctxt "SmartFoundations,Walk_Opt_Backward"
+msgid "Backward"
+msgstr "向後"
+
+msgctxt "SmartFoundations,Walk_Opt_Clean"
+msgid "Clean"
+msgstr "簡潔"
+
+msgctxt "SmartFoundations,Walk_Opt_Curve"
+msgid "Curve"
+msgstr "曲線"
+
+msgctxt "SmartFoundations,Walk_Opt_Default"
+msgid "Default"
+msgstr "預設"
+
+msgctxt "SmartFoundations,Walk_Opt_Forward"
+msgid "Forward"
+msgstr "向前"
+
+msgctxt "SmartFoundations,Walk_Opt_HToV"
+msgid "H->V"
+msgstr "水平→垂直"
+
+msgctxt "SmartFoundations,Walk_Opt_Noodle"
+msgid "Noodle"
+msgstr "麵條式"
+
+msgctxt "SmartFoundations,Walk_Opt_Normal"
+msgid "Normal"
+msgstr "正常"
+
+msgctxt "SmartFoundations,Walk_Opt_Straight"
+msgid "Straight"
+msgstr "直線"
+
+msgctxt "SmartFoundations,Walk_Summary"
+msgid "{0} {0}|plural(one=segment,other=segments)  ·  head {1} {2} deg  ·  {3}"
+msgstr "{0} {0}|plural(other=段)  ·  朝向 {1} {2} 度  ·  {3}"
+
+msgctxt "SmartFoundations,Hint_UpgradePanel"
+msgid "Upgrade Panel"
+msgstr "升級面板"
+
+msgctxt "SmartFoundations,Walk_Invalid_TooLong"
+msgid "segment {0} too long ({1}m > 56m)"
+msgstr "段 {0} 過長 ({1}m > 56m)"
+
+msgctxt "SmartFoundations,Walk_Invalid_TooSteep"
+msgid "segment {0} too steep ({1}deg > 30deg)"
+msgstr "段 {0} 過陡 ({1}度 > 30度)"

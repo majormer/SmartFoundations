@@ -16,15 +16,15 @@ msgstr ""
 #. Arrow axis labels
 msgctxt "SmartFoundations,ArrowLabel_X"
 msgid "X"
-msgstr ""
+msgstr "X"
 
 msgctxt "SmartFoundations,ArrowLabel_Y"
 msgid "Y"
-msgstr ""
+msgstr "Y"
 
 msgctxt "SmartFoundations,ArrowLabel_Z"
 msgid "Z"
-msgstr ""
+msgstr "Z"
 
 #. Smart Panel titles
 msgctxt "SmartFoundations,Panel_Title"
@@ -325,7 +325,7 @@ msgstr "Tự động kết nối băng chuyền:"
 
 msgctxt "SmartFoundations,Config_AutoConnectEnabled_TT"
 msgid "Enable automatic belt connections between distributors and buildings"
-msgstr ""
+msgstr "Bật kết nối băng chuyền tự động giữa bộ phân phối và tòa nhà"
 
 msgctxt "SmartFoundations,Config_ManifoldLaneBelts"
 msgid "Use Manifold Lane Belts:"
@@ -333,7 +333,7 @@ msgstr "Sử dụng băng chuyền ống góp:"
 
 msgctxt "SmartFoundations,Config_ManifoldLaneBelts_TT"
 msgid "Automatically chain distributors together using the Manifold Lane Belt tier"
-msgstr ""
+msgstr "Tự động nối các bộ phân phối với nhau bằng cấp băng chuyền ống góp"
 
 msgctxt "SmartFoundations,Config_ManifoldLaneBelt"
 msgid "Manifold Lane Belt:"
@@ -341,7 +341,7 @@ msgstr "Băng chuyền ống góp:"
 
 msgctxt "SmartFoundations,Config_ManifoldLaneBelt_TT"
 msgid "Belt tier for distributor-to-distributor (manifold) connections (0=Auto)"
-msgstr ""
+msgstr "Cấp băng chuyền cho kết nối bộ phân phối với bộ phân phối (ống góp) (0=Tự động)"
 
 msgctxt "SmartFoundations,Config_FactoryBelt"
 msgid "Factory Belt:"
@@ -349,7 +349,7 @@ msgstr "Băng chuyền nhà máy:"
 
 msgctxt "SmartFoundations,Config_FactoryBelt_TT"
 msgid "Belt tier for distributor-to-building connections (0=Auto)"
-msgstr ""
+msgstr "Cấp băng chuyền cho kết nối bộ phân phối với tòa nhà (0=Tự động)"
 
 msgctxt "SmartFoundations,Config_BeltRoutingMode"
 msgid "Belt Routing Mode:"
@@ -357,7 +357,7 @@ msgstr "Chế độ định tuyến băng chuyền:"
 
 msgctxt "SmartFoundations,Config_BeltRoutingMode_TT"
 msgid "0=Default, 1=Curve, 2=Straight"
-msgstr ""
+msgstr "0=Mặc định, 1=Cong, 2=Thẳng"
 
 msgctxt "SmartFoundations,Config_StackableBelt"
 msgid "Stackable Belt Auto-Connect"
@@ -365,7 +365,7 @@ msgstr "Tự động kết nối băng chuyền xếp chồng"
 
 msgctxt "SmartFoundations,Config_StackableBelt_TT"
 msgid "Enable automatic belt connections between stackable conveyor poles"
-msgstr ""
+msgstr "Bật kết nối băng chuyền tự động giữa các cột băng chuyền xếp chồng"
 
 msgctxt "SmartFoundations,Config_PipeAutoConnect"
 msgid "Pipe Auto-Connect:"
@@ -373,7 +373,7 @@ msgstr "Tự động kết nối ống:"
 
 msgctxt "SmartFoundations,Config_PipeAutoConnect_TT"
 msgid "Enable automatic pipe connections between junctions and buildings"
-msgstr ""
+msgstr "Bật kết nối ống tự động giữa các điểm nối và tòa nhà"
 
 msgctxt "SmartFoundations,Config_PipeMainTier"
 msgid "Main Tier:"
@@ -381,7 +381,7 @@ msgstr "Cấp chính:"
 
 msgctxt "SmartFoundations,Config_PipeMainTier_TT"
 msgid "Pipe tier for junction-to-junction (manifold) connections (0=Auto)"
-msgstr ""
+msgstr "Cấp ống cho kết nối điểm nối với điểm nối (ống góp) (0=Tự động)"
 
 msgctxt "SmartFoundations,Config_PipeToBuilding"
 msgid "To Building:"
@@ -389,7 +389,7 @@ msgstr "Đến tòa nhà:"
 
 msgctxt "SmartFoundations,Config_PipeToBuilding_TT"
 msgid "Pipe tier for junction-to-building connections (0=Auto)"
-msgstr ""
+msgstr "Cấp ống cho kết nối điểm nối với tòa nhà (0=Tự động)"
 
 msgctxt "SmartFoundations,Config_PipeRoutingMode"
 msgid "Pipe Routing Mode:"
@@ -397,7 +397,7 @@ msgstr "Chế độ định tuyến ống:"
 
 msgctxt "SmartFoundations,Config_PipeRoutingMode_TT"
 msgid "0=Auto, 1=Auto2D, 2=Straight, 3=Curve, 4=Noodle, 5=Horiz→Vert"
-msgstr ""
+msgstr "0=Tự động, 1=Tự động 2D, 2=Thẳng, 3=Cong, 4=Mì, 5=Ngang→Dọc"
 
 msgctxt "SmartFoundations,Config_FlowIndicator"
 msgid "Flow Indicator:"
@@ -405,7 +405,7 @@ msgstr "Chỉ báo dòng chảy:"
 
 msgctxt "SmartFoundations,Config_FlowIndicator_TT"
 msgid "Show flow direction indicator on pipes (off = \"
-msgstr ""
+msgstr "Hiển thị chỉ báo hướng dòng chảy trên ống (tắt = \\"
 
 msgctxt "SmartFoundations,Config_PowerAutoConnect"
 msgid "Power Auto-Connect:"
@@ -413,7 +413,7 @@ msgstr "Tự động kết nối điện:"
 
 msgctxt "SmartFoundations,Config_PowerAutoConnect_TT"
 msgid "Enable automatic power connections between poles and buildings"
-msgstr ""
+msgstr "Bật kết nối điện tự động giữa các cột và tòa nhà"
 
 msgctxt "SmartFoundations,Config_PowerGridAxis"
 msgid "Grid Axis:"
@@ -421,7 +421,7 @@ msgstr "Trục lưới:"
 
 msgctxt "SmartFoundations,Config_PowerGridAxis_TT"
 msgid "Direction power poles connect to each other (Auto/X only/Y only/X+Y)"
-msgstr ""
+msgstr "Hướng các cột điện kết nối với nhau (Tự động/Chỉ X/Chỉ Y/X+Y)"
 
 msgctxt "SmartFoundations,Config_PowerRange"
 msgid "Connection Range:"
@@ -429,7 +429,7 @@ msgstr "Phạm vi kết nối:"
 
 msgctxt "SmartFoundations,Config_PowerRange_TT"
 msgid "Maximum distance to search for buildings to connect (in meters)"
-msgstr ""
+msgstr "Khoảng cách tối đa để tìm tòa nhà cần kết nối (tính bằng mét)"
 
 msgctxt "SmartFoundations,Config_PowerReserved"
 msgid "# of Connections to Keep Free:"
@@ -437,7 +437,7 @@ msgstr "# Kết nối dự trữ:"
 
 msgctxt "SmartFoundations,Config_PowerReserved_TT"
 msgid "Reserve this many connections on each power pole for manual wiring"
-msgstr ""
+msgstr "Dự trữ số kết nối này trên mỗi cột điện để đấu nối thủ công"
 
 msgctxt "SmartFoundations,Config_ExtendEnabled"
 msgid "Extend Enabled:"
@@ -445,7 +445,7 @@ msgstr "Bật mở rộng:"
 
 msgctxt "SmartFoundations,Config_ExtendEnabled_TT"
 msgid "Enable the Extend feature (auto-clone manifolds when placing near existing buildings). Disable to prevent Extend from activating."
-msgstr ""
+msgstr "Bật tính năng Mở rộng (tự động nhân bản ống góp khi đặt gần tòa nhà có sẵn). Tắt để ngăn Mở rộng kích hoạt."
 
 msgctxt "SmartFoundations,Config_ExtendPower"
 msgid "Extend Power Poles:"
@@ -453,7 +453,7 @@ msgstr "Mở rộng cột điện:"
 
 msgctxt "SmartFoundations,Config_ExtendPower_TT"
 msgid "Include power poles when using Extend to duplicate factory buildings"
-msgstr ""
+msgstr "Bao gồm cột điện khi dùng Mở rộng để nhân bản tòa nhà nhà máy"
 
 msgctxt "SmartFoundations,Config_AutoHold"
 msgid "Auto-Hold on Grid Change:"
@@ -461,7 +461,7 @@ msgstr "Tự động giữ khi thay đổi lưới:"
 
 msgctxt "SmartFoundations,Config_AutoHold_TT"
 msgid "Automatically lock hologram position after any grid modification (X/Y/Z > 1). Press Hold key to manually release. No world reload required."
-msgstr ""
+msgstr "Tự động khóa vị trí ảnh ba chiều sau bất kỳ thay đổi lưới nào (X/Y/Z > 1). Nhấn phím Giữ để thả thủ công. Không cần tải lại thế giới."
 
 msgctxt "SmartFoundations,Config_ApplyImmediate"
 msgid "Apply Immediately"
@@ -469,7 +469,7 @@ msgstr "Áp dụng ngay"
 
 msgctxt "SmartFoundations,Config_ApplyImmediate_TT"
 msgid "Apply Smart Panel settings immediately without clicking Apply button"
-msgstr ""
+msgstr "Áp dụng cài đặt Bảng Smart ngay lập tức mà không cần nhấn nút Áp dụng"
 
 msgctxt "SmartFoundations,Config_ShowHUD"
 msgid "Show HUD Overlay"
@@ -485,7 +485,7 @@ msgstr "Tỷ lệ HUD"
 
 msgctxt "SmartFoundations,Config_HUDScale_TT"
 msgid "Scale of the HUD overlay (0.5 to 2.0)"
-msgstr ""
+msgstr "Tỷ lệ của lớp phủ HUD (0.5 đến 2.0)"
 
 msgctxt "SmartFoundations,Config_HUDPosX"
 msgid "HUD Position X"
@@ -493,7 +493,7 @@ msgstr "Vị trí HUD ngang"
 
 msgctxt "SmartFoundations,Config_HUDPosX_TT"
 msgid "Horizontal position of HUD (0.0 = left, 1.0 = right). Default: 0.02"
-msgstr ""
+msgstr "Vị trí ngang của HUD (0.0 = trái, 1.0 = phải). Mặc định: 0.02"
 
 msgctxt "SmartFoundations,Config_HUDPosY"
 msgid "HUD Position Y"
@@ -501,7 +501,7 @@ msgstr "Vị trí HUD dọc"
 
 msgctxt "SmartFoundations,Config_HUDPosY_TT"
 msgid "Vertical position of HUD (0.0 = top, 1.0 = bottom). Default: 0.25"
-msgstr ""
+msgstr "Vị trí dọc của HUD (0.0 = trên, 1.0 = dưới). Mặc định: 0.25"
 
 msgctxt "SmartFoundations,Config_HUDTheme"
 msgid "HUD Theme:"
@@ -517,7 +517,7 @@ msgstr "Hiển thị mũi tên hướng (có thể ghi đè)"
 
 msgctxt "SmartFoundations,Config_ShowArrows_TT"
 msgid "Display directional arrows on holograms - This setting is reflected whenever you load into the game."
-msgstr ""
+msgstr "Hiển thị mũi tên hướng trên ảnh ba chiều - Cài đặt này được áp dụng mỗi khi bạn vào trò chơi."
 
 msgctxt "SmartFoundations,Config_ArrowOrbit"
 msgid "Arrow Orbit Animation:"
@@ -525,7 +525,7 @@ msgstr "Hoạt ảnh quỹ đạo mũi tên:"
 
 msgctxt "SmartFoundations,Config_ArrowOrbit_TT"
 msgid "Enable animated orbiting of directional arrows around the hologram. Disable for static arrows that still track player position."
-msgstr ""
+msgstr "Bật hoạt ảnh mũi tên hướng quay quanh ảnh ba chiều. Tắt để mũi tên tĩnh nhưng vẫn hướng theo vị trí người chơi."
 
 msgctxt "SmartFoundations,Config_ArrowLabels"
 msgid "Arrow Axis Labels:"
@@ -533,7 +533,7 @@ msgstr "Nhãn trục mũi tên:"
 
 msgctxt "SmartFoundations,Config_ArrowLabels_TT"
 msgid "Show X/Y/Z text labels on directional arrows. Disable for cleaner arrow visuals without text."
-msgstr ""
+msgstr "Hiển thị nhãn chữ X/Y/Z trên mũi tên hướng. Tắt để mũi tên gọn hơn, không có chữ."
 
 msgctxt "SmartFoundations,Panel_Btn_Apply"
 msgid "Apply"
@@ -633,11 +633,11 @@ msgstr "Lệch [ZY]:"
 
 msgctxt "SmartFoundations,Panel_Unit_Meters"
 msgid "m"
-msgstr ""
+msgstr "m"
 
 msgctxt "SmartFoundations,Panel_Unit_Degrees"
 msgid "°"
-msgstr ""
+msgstr "°"
 
 msgctxt "SmartFoundations,Panel_RotationZ"
 msgid "Rotation [Z]:"
@@ -879,3 +879,1239 @@ msgstr "Sửa chuỗi hoàn tất"
 msgctxt "SmartFoundations,Triage_RepairCompleteWithOrphans"
 msgid "Chain repair complete — save, reload, and run Detect again"
 msgstr "Sua chuoi hoan tat — hay luu, tai lai va chay Phat hien lan nua"
+
+msgctxt "0019837C427C49F6BA1DE5A2BAF52104"
+msgid "Straight"
+msgstr "Thẳng"
+
+msgctxt "067E1A5040E18EA163524F8F205335A9"
+msgid "Smart! Steps"
+msgstr "Smart! Bậc"
+
+msgctxt "09B266E74168D79CC01A54B6220782CC"
+msgid "Network"
+msgstr "Mạng"
+
+msgctxt "0A60D4B54D01B286CA22F0A0967B6803"
+msgid "UPGRADE"
+msgstr "NÂNG CẤP"
+
+msgctxt "0B68620A45C29BCF2BD3D390E9C6440C"
+msgid "High Contrast (3)"
+msgstr "Tương phản cao (3)"
+
+msgctxt "0F38693943C29DCD75F8C1B27871C5B8"
+msgid "Adjust Current Axis"
+msgstr "Điều chỉnh trục hiện tại"
+
+msgctxt "12DA0489426F414A397D0589ED6C0745"
+msgid "Smart! Spacing"
+msgstr "Smart! Khoảng cách"
+
+msgctxt "1322786544407AA4F8ED1B8190F76D9F"
+msgid "Scan"
+msgstr "Quét"
+
+msgctxt "15B881014DC7C163FCB1419FB255A0EC"
+msgid "Dark (1)"
+msgstr "Tối (1)"
+
+msgctxt "15E8B3EA40E8AC8A1E8E818BA03670E5"
+msgid "Adjust grid X-axis (forward/backward)"
+msgstr "Điều chỉnh trục X của lưới (trước/sau)"
+
+msgctxt "173D524544632CCDED043A9E3F4F7CC3"
+msgid "Estimated Cost"
+msgstr "Chi phí ước tính"
+
+msgctxt "1754F7834BF1389234CDF2A4813856D4"
+msgid "Cancel"
+msgstr "Hủy"
+
+msgctxt "1926932648C4B2B04FFA2DA78759EB8A"
+msgid "X"
+msgstr "X"
+
+msgctxt "1BCE444B43095B0D655193A1B416CBBD"
+msgid "Increase value for active feature (scaling, spacing, steps, or stagger)"
+msgstr "Tăng giá trị cho tính năng đang hoạt động (co giãn, khoảng cách, bậc hoặc lệch)"
+
+msgctxt "1C0157F7400B84FCEA0CB0997F18ECFA"
+msgid "Smart! Recipe"
+msgstr "Smart! Công thức"
+
+msgctxt "1CBE81654BEC06C4EE4D2F9B77C6823C"
+msgid "Radius"
+msgstr "Bán kính"
+
+msgctxt "1CBF9AC24AB88ED704D8B89C23669BF7"
+msgid "REFRESH"
+msgstr "LÀM MỚI"
+
+msgctxt "1D5643D5431C6F63F8A943BCE13CBE7E"
+msgid "Smart! Spacing"
+msgstr "Smart! Khoảng cách"
+
+msgctxt "23C90C2D418545EC4333738F056A5EE6"
+msgid "°"
+msgstr "°"
+
+msgctxt "246236E4495CCCF2A3E4FC85C85DA9AB"
+msgid "Smart! Spacing"
+msgstr "Smart! Khoảng cách"
+
+msgctxt "2878874049B6D5EE0A5D6D9B48259F72"
+msgid "Hold to activate spacing (modifier key)"
+msgstr "Giữ để bật khoảng cách (phím bổ trợ)"
+
+msgctxt "29B5665E4347B8A528480EA82ED201BE"
+msgid "Auto"
+msgstr "Tự động"
+
+msgctxt "2B909A3E4443898FEB06568A0618C52A"
+msgid "Hold to activate rotation transform mode (modifier key)"
+msgstr "Giữ để bật chế độ biến đổi xoay (phím bổ trợ)"
+
+msgctxt "2E5F43054D0239D4BAC0F4862CB459FB"
+msgid "Curve"
+msgstr "Cong"
+
+msgctxt "310A5EFE4224B829F9BA469562A68951"
+msgid "Recipe Mode"
+msgstr "Chế độ công thức"
+
+msgctxt "311FCC0E4AB23FE12C19BA94A560D1FB"
+msgid "Adjust grid Y-axis (left/right)"
+msgstr "Điều chỉnh trục Y của lưới (trái/phải)"
+
+msgctxt "31D1020F4EA86C6B0532A3916E9533CD"
+msgid "Mk6 (6)"
+msgstr "Mk6 (6)"
+
+msgctxt "32F87FF84A2C859EEF06EDA73BD50D90"
+msgid "Radius (m):"
+msgstr "Bán kính (m):"
+
+msgctxt "331CFA504EADB43C56B9C1AF41012E2F"
+msgid "Smart! Grid Scaling"
+msgstr "Smart! Co giãn lưới"
+
+msgctxt "3326E4B341828CD7663F6285E104A803"
+msgid "Toggle Arrows"
+msgstr "Bật/tắt mũi tên"
+
+msgctxt "337DE321404C52EA519126A27AD16256"
+msgid "Classic (2)"
+msgstr "Cổ điển (2)"
+
+msgctxt "33C84A48437DD1E5D1CF0AAD223DC813"
+msgid "Large Grid Warning"
+msgstr "Cảnh báo lưới lớn"
+
+msgctxt "348DAE9A4D32A65A01DF6A8106D161BC"
+msgid "Cycle Axis Mode"
+msgstr "Chuyển chế độ trục"
+
+msgctxt "3739407645161CDED5901EACEAEE5915"
+msgid "+"
+msgstr "+"
+
+msgctxt "3BECA57E4ACCC555B29B23AC5605DDCD"
+msgid "Decrease value for active feature (scaling, spacing, steps, or stagger)"
+msgstr "Giảm giá trị cho tính năng đang hoạt động (co giãn, khoảng cách, bậc hoặc lệch)"
+
+msgctxt "3CEFA89C415D47DF87C953A4F5A22837"
+msgid "(0 upgradeable)"
+msgstr "(0 có thể nâng cấp)"
+
+msgctxt "3E62D33F4FA4C52320AB48BD9B6D8B1C"
+msgid "Toggle Settings Form"
+msgstr "Bật/tắt biểu mẫu cài đặt"
+
+msgctxt "40EADFF242CC6D8E10A4EDB6D777D2BC"
+msgid "Auto (0)"
+msgstr "Tự động (0)"
+
+msgctxt "427A62BA4B691763413124A521EE7AA2"
+msgid "These tools diagnose and repair conveyor chain corruption. Only use them if you are experiencing belt issues."
+msgstr "Các công cụ này chẩn đoán và sửa lỗi hỏng chuỗi băng chuyền. Chỉ dùng khi bạn gặp sự cố băng chuyền."
+
+msgctxt "438320444C8158C55C66F08F8D53EBD5"
+msgid "Mk3 (3)"
+msgstr "Mk3 (3)"
+
+msgctxt "444B8B2648F771FC835D1CABC302BA9E"
+msgid "Y (2)"
+msgstr "Y (2)"
+
+msgctxt "466E938E4AA5B443D005619DEB8F0382"
+msgid "Smart! Panel"
+msgstr "Smart! Bảng điều khiển"
+
+msgctxt "47FABC9743E900C118B8FCAF9C9076DE"
+msgid "Target Tier:"
+msgstr "Cấp mục tiêu:"
+
+msgctxt "4878AB2843890693F30F2BBA496DCCE8"
+msgid "Adjust step height for layers"
+msgstr "Điều chỉnh chiều cao bậc cho các lớp"
+
+msgctxt "5162B61A422973421A9B5084A1B41030"
+msgid "Smart! Stagger"
+msgstr "Smart! Lệch"
+
+msgctxt "51EB9D9A495D641249A89FA0BD6F76B3"
+msgid "Smart! Grid Scaling"
+msgstr "Smart! Co giãn lưới"
+
+msgctxt "53A77D7341E0BB96E67D9287BEF26C24"
+msgid "Smart! Grid Scaling"
+msgstr "Smart! Co giãn lưới"
+
+msgctxt "56027A5C460D5844EF237AB48DAA5A28"
+msgid "X+Y (3)"
+msgstr "X+Y (3)"
+
+msgctxt "5938A49142B563B4FB59E985E9AE1841"
+msgid "Cross Storage Containers"
+msgstr "Qua thùng chứa"
+
+msgctxt "59B517F844E13DA8F3D539844F2C9378"
+msgid "X (1)"
+msgstr "X (1)"
+
+msgctxt "60DE1CEC4B85C0CC72203CBF61E7568D"
+msgid "Curve"
+msgstr "Cong"
+
+msgctxt "62C6E10A41335FE94A371DB0EA31B799"
+msgid "Smart! Grid Scaling"
+msgstr "Smart! Co giãn lưới"
+
+msgctxt "63AABDCD482973D2CAFDF2932D97AE25"
+msgid "Smart! Steps"
+msgstr "Smart! Bậc"
+
+msgctxt "6587C0CB460666BD6FC98BB018890DC5"
+msgid "Mk2 (2)"
+msgstr "Mk2 (2)"
+
+msgctxt "66C35E014DB7009BE3B924A85F570FD7"
+msgid "Press REFRESH to scan for upgradeable buildings. Press ESC or K to close."
+msgstr "Nhấn LÀM MỚI để quét tòa nhà có thể nâng cấp. Nhấn ESC hoặc K để đóng."
+
+msgctxt "6B9892D145A9E8A2054CEBAEF0A6B4E5"
+msgid "Share"
+msgstr "Chia sẻ"
+
+msgctxt "6F0E40FD4B11CA1CEC6FC5B06EB0188C"
+msgid "Stagger Left/Right"
+msgstr "Lệch trái/phải"
+
+msgctxt "70622324402CD200612E9395164CE150"
+msgid "Repair All Issues"
+msgstr "Sửa tất cả sự cố"
+
+msgctxt "72BCC75B46EB14C88FA0CB8AFFE0ACFA"
+msgid "0"
+msgstr "0"
+
+msgctxt "74176A6A4B5B3CE8A9A4BA8F752D804C"
+msgid "Estimated Cost"
+msgstr "Chi phí ước tính"
+
+msgctxt "78E37EDB4BEB48A04A5139AC6A0C614D"
+msgid "Show/hide axis direction arrows"
+msgstr "Hiện/ẩn mũi tên hướng trục"
+
+msgctxt "790FF28E4D98D951C6AE27B8A147F50F"
+msgid "Press to clear active recipe"
+msgstr "Nhấn để xóa công thức đang hoạt động"
+
+msgctxt "7945CB1F4E10CE8044DCBF8DC47322E1"
+msgid "Adjust sideways offset for grid items"
+msgstr "Điều chỉnh độ lệch ngang cho các mục trong lưới"
+
+msgctxt "7A593AF64E9BB01288D106BC6229CBF9"
+msgid "Cross Splitters/Mergers"
+msgstr "Qua bộ chia/gộp"
+
+msgctxt "7A7B62144F20B0B73ABCD8B643EED6A1"
+msgid "Mk2 (2)"
+msgstr "Mk2 (2)"
+
+msgctxt "7BAE3F3D4FEAEB14DC15CCBAC6FA6820"
+msgid "Smart! Configuration"
+msgstr "Smart! Cấu hình"
+
+msgctxt "7C1BBA564FF13BA590D8A89C48E3F2C8"
+msgid "Anchor: Aim at a belt, pipe, or pole"
+msgstr "Mỏ neo: Ngắm vào băng chuyền, ống hoặc cột"
+
+msgctxt "7ECCEB924559BAD3A1844C80D4581EAE"
+msgid "Grid Total: 1 objects"
+msgstr "Tổng lưới: 1 đối tượng"
+
+msgctxt "7F2E5ED1421D2CB422D39B96E7FEFA25"
+msgid "Scale Forward/Back"
+msgstr "Co giãn trước/sau"
+
+msgctxt "80ADD8BF4E442F2608D92FB8ECD49CC2"
+msgid "Mk1 (1)"
+msgstr "Mk1 (1)"
+
+msgctxt "827BDCB04E7D02296EA3E880D6C24DC3"
+msgid "SCAN NETWORK"
+msgstr "QUÉT MẠNG"
+
+msgctxt "86A78F2C47F34655E5C58484EC93E3AD"
+msgid "Smart! Recipe"
+msgstr "Smart! Công thức"
+
+msgctxt "8A7DD44D47B48C266B3B88AC01D1CEF3"
+msgid "Straight"
+msgstr "Thẳng"
+
+msgctxt "8BB84C5240D8A57F87983A986C3DFB73"
+msgid "Smart! Upgrade Panel"
+msgstr "Smart! Bảng nâng cấp"
+
+msgctxt "8E24BA32430E1A670137ABA048747BB8"
+msgid "Monochrome (5)"
+msgstr "Monochrome (5)"
+
+msgctxt "928114D446D78C041AEF5D88157821E9"
+msgid "Noodle"
+msgstr "Mì"
+
+msgctxt "93C024D64433A5447D2C0396B3C5CB33"
+msgid "Hold to activate progressive layering (modifier key)"
+msgstr "Giữ để bật xếp lớp lũy tiến (phím bổ trợ)"
+
+msgctxt "9423B8A2450BD3341A377D9BD4CCD62B"
+msgid "CANCEL"
+msgstr "HỦY"
+
+msgctxt "9643BBEF4D4BFEB216B5CDB73AC1A4C8"
+msgid "Spacing Mode"
+msgstr "Chế độ khoảng cách"
+
+msgctxt "96E044FE4DDABD241B0483A89D209A2C"
+msgid "Run Detect to see results"
+msgstr "Chạy Phát hiện để xem kết quả"
+
+msgctxt "97E5935349503B2191BFE4B385BC7AB3"
+msgid "Smart! Foundations"
+msgstr "Smart! Foundations"
+
+msgctxt "9852395F409F9C751F989FA1748BFA16"
+msgid "Auto (0)"
+msgstr "Tự động (0)"
+
+msgctxt "98E28A8E4D25D9D8BCD4C08EC6A98DE6"
+msgid "Configure Smart! scaling, visualization, and HUD settings"
+msgstr "Cấu hình cài đặt co giãn, hiển thị và HUD của Smart!"
+
+msgctxt "9AE7D23346D4BB5B0192848D8291920C"
+msgid "Hold to scale X-axis. Combine with Y modifier to scale Z-axis."
+msgstr "Giữ để co giãn trục X. Kết hợp với phím bổ trợ Y để co giãn trục Z."
+
+msgctxt "9C14E6F8447F242BFBB485BD8E31A5F3"
+msgid "Cycle through X → Y → Z axes"
+msgstr "Xoay vòng qua các trục X → Y → Z"
+
+msgctxt "9C1531E24044FDC579C089A23F379274"
+msgid "Detect Issues"
+msgstr "Phát hiện sự cố"
+
+msgctxt "9E038900477F0B65A5A64E91AB5C00F0"
+msgid "HUD Scale"
+msgstr "Tỷ lệ HUD"
+
+msgctxt "9E972DC647E3D424CFE890B235FB1EE3"
+msgid "Select items to see costs"
+msgstr "Chọn các mục để xem chi phí"
+
+msgctxt "A08F54F64F8642B9E7F8F1AA30D2B869"
+msgid "Minimal (4)"
+msgstr "Tối thiểu (4)"
+
+msgctxt "A1723C3742687518D3D7FAB8769C4F43"
+msgid "Once (1)"
+msgstr "Một lần (1)"
+
+msgctxt "A4625ACE4A31BA74C187C09C62723BE6"
+msgid "Steps Mode"
+msgstr "Chế độ bậc"
+
+msgctxt "A65B455D41D3967FE018129E6F8D99BC"
+msgid "Scale Left/Right"
+msgstr "Co giãn trái/phải"
+
+msgctxt "A6A1DA99437171CC3D6B8C9E2918CEE0"
+msgid "Default (0)"
+msgstr "Mặc định (0)"
+
+msgctxt "A70A70BC46CB9221B4A7618D9D344FCD"
+msgid "Horiz→Vert"
+msgstr "Ngang→Dọc"
+
+msgctxt "A863449D4ED1EF98FD3531A57C03A83B"
+msgid "Auto (0)"
+msgstr "Tự động (0)"
+
+msgctxt "A9F4FD7C4ADCBE49DE0631A2046B8C32"
+msgid "Auto 2D"
+msgstr "Tự động 2D"
+
+msgctxt "AC9521FE4F1ABB4F0FDA12BE408820F6"
+msgid "Stagger Mode"
+msgstr "Chế độ lệch"
+
+msgctxt "ADFEA69944158AB689D01EB52BA2A425"
+msgid "Adjust grid Z-axis (up/down)"
+msgstr "Điều chỉnh trục Z của lưới (lên/xuống)"
+
+msgctxt "B433CC5C466EDDBF3105FA829F9B12D5"
+msgid "Scale X Modifier"
+msgstr "Phím bổ trợ co giãn X"
+
+msgctxt "B4E7FC1B4C29E5780A005DACF4F6605B"
+msgid "Smart! Grid Scaling"
+msgstr "Smart! Co giãn lưới"
+
+msgctxt "B67A2B1049D6C022FFE45AA3C7E91E0D"
+msgid "Mk1 (1)"
+msgstr "Mk1 (1)"
+
+msgctxt "B8C9B67949C7644C3AE6519EBC26464D"
+msgid "Smart! Grid Scaling"
+msgstr "Smart! Co giãn lưới"
+
+msgctxt "BB16B38F4773E62C787CD8A7A950B2A0"
+msgid "Warning message here"
+msgstr "Thông báo cảnh báo ở đây"
+
+msgctxt "BE3FB1994C8451039886D1829DD59B06"
+msgid "Entire Map"
+msgstr "Toàn bản đồ"
+
+msgctxt "BE9D645D4352A41A16C3D0A5F1F62C94"
+msgid "+"
+msgstr "+"
+
+msgctxt "BEFE3D9D4EA76F0E2C34198C02E30A1E"
+msgid "Family Name Mk.1"
+msgstr "Tên nhóm Mk.1"
+
+msgctxt "C08F8647484002CCC38A78938534A251"
+msgid "Mk5 (5)"
+msgstr "Mk5 (5)"
+
+msgctxt "C0E174744867FC71F8E879B5AE7D69EE"
+msgid "Mk4 (4)"
+msgstr "Mk4 (4)"
+
+msgctxt "C34C1A5F452AB8290A9A00BA9D73780D"
+msgid "Target Tier:"
+msgstr "Cấp mục tiêu:"
+
+msgctxt "C6DDD93A4DEF142BBA1E08BBE2381F1B"
+msgid "Repair result will appear here"
+msgstr "Kết quả sửa chữa sẽ hiển thị ở đây"
+
+msgctxt "CB15E1A74E71CFAEDB6CA3AA8994C227"
+msgid "Close"
+msgstr "Đóng"
+
+msgctxt "CDF7639140F228F3095085B61DF1FC1A"
+msgid "Not saved"
+msgstr "Chưa lưu"
+
+msgctxt "SmartFoundations,Config.Description"
+msgid "Smart! Foundations settings."
+msgstr "Cài đặt Smart! Foundations."
+
+msgctxt "SmartFoundations,Config.DisplayName"
+msgid "Smart!"
+msgstr "Smart!"
+
+msgctxt "SmartFoundations,Config.Root.Name"
+msgid "Smart!"
+msgstr "Smart!"
+
+msgctxt "SmartFoundations,Config.Root.Tooltip"
+msgid "Smart! Foundations settings."
+msgstr "Cài đặt Smart! Foundations."
+
+msgctxt "D042222F4CF5B96FB75D6AB15DFD0645"
+msgid "Cross Train Platforms"
+msgstr "Qua sân ga tàu"
+
+msgctxt "D09E94C0499C4C4F3E606D9E2461B19A"
+msgid "Toggle Smart Settings Form"
+msgstr "Bật/tắt biểu mẫu cài đặt Smart"
+
+msgctxt "D16C08E24764156DC1CBDAB0287C8627"
+msgid "Default"
+msgstr "Mặc định"
+
+msgctxt "D5988C104C18248A9BFD8485A40BE7BF"
+msgid "Triage"
+msgstr "Phân loại"
+
+msgctxt "D62D58CF4AFE88D8DE519488D31F424F"
+msgid "Scale Up/Down"
+msgstr "Co giãn lên/xuống"
+
+msgctxt "DD0B98B04A427071B009D7BAA464B531"
+msgid "Save New Preset"
+msgstr "Lưu cài đặt sẵn mới"
+
+msgctxt "DFC6C7C441EFDC29C8E28F8F68C31EC1"
+msgid "Always (0)"
+msgstr "Luôn luôn (0)"
+
+msgctxt "E148F27C4C01935B4E019BA49F4A0F55"
+msgid "Steps Up/Down"
+msgstr "Bậc lên/xuống"
+
+msgctxt "E3CA9AD8424D9B1B3B996C97C1F70A61"
+msgid "Rotation Mode"
+msgstr "Chế độ xoay"
+
+msgctxt "E522B9984A797E90FDF435B93981833C"
+msgid "Smart! Rotation"
+msgstr "Smart! Xoay"
+
+msgctxt "E66C9E5840CD757371D1B2A26B0937F7"
+msgid "Scan network to see costs"
+msgstr "Quét mạng để xem chi phí"
+
+msgctxt "E7D5F1A145882159A49EE89DEAA01EF5"
+msgid "Hold to activate sideways offset (modifier key)"
+msgstr "Giữ để bật độ lệch ngang (phím bổ trợ)"
+
+msgctxt "E9350DEF466B0A2E9F7FBDB9FA947A97"
+msgid "Never (2)"
+msgstr "Không bao giờ (2)"
+
+msgctxt "EA82618C44B70702397E7E97036E946B"
+msgid "Show Direction Arrows (can be overridden)"
+msgstr "Hiển thị mũi tên hướng (có thể ghi đè)"
+
+msgctxt "F10D935E43878D99436DE5979A4E7EFD"
+msgid "Adjust spacing for currently selected axis"
+msgstr "Điều chỉnh khoảng cách cho trục đang chọn"
+
+msgctxt "F484CB0045E1F6610752E19D98C01DFE"
+msgid "Smart! Interface"
+msgstr "Smart! Giao diện"
+
+msgctxt "F506AD1F41CF8A81A27FC0A480EAE8B8"
+msgid "Smart Restore"
+msgstr "Smart Khôi phục"
+
+msgctxt "F5885ED64196DAF6BE5F878ED0AF0A29"
+msgid "Smart! Stagger"
+msgstr "Smart! Lệch"
+
+msgctxt "F87C5DEE489864EDB5D02386C86E62CF"
+msgid "Recipe Up/Down"
+msgstr "Công thức lên/xuống"
+
+msgctxt "F8E467094A594E5C21A542B94D14B1E6"
+msgid "+"
+msgstr "+"
+
+msgctxt "FA69B4C54C1F9AC00819708F1BD00666"
+msgid "Hold to scale Y-axis. Combine with X modifier to scale Z-axis."
+msgstr "Giữ để co giãn trục Y. Kết hợp với phím bổ trợ X để co giãn trục Z."
+
+msgctxt "FA953BD649A5AEE3F69CB7AFE9E2A43A"
+msgid "Route mouse wheel input to the active Smart! feature (scaling, spacing, steps, or stagger)"
+msgstr "Định tuyến đầu vào con lăn chuột tới tính năng Smart! đang hoạt động (co giãn, khoảng cách, bậc hoặc lệch)"
+
+msgctxt "FD2BEAF2493FD288E0C03FB923FE3E94"
+msgid "Ready"
+msgstr "Sẵn sàng"
+
+msgctxt "FD8B2189447F09294CBA09A02293BB9C"
+msgid "Core Smart! Foundations settings for HUD display and default scale values"
+msgstr "Cài đặt Smart! cơ bản cho hiển thị HUD và giá trị tỷ lệ mặc định"
+
+msgctxt "FECC44E2411C81715010F7B2FAD081E6"
+msgid "Scale Y Modifier"
+msgstr "Phím bổ trợ co giãn Y"
+
+msgctxt "FF3BF8944642F2DEE83E0685A53303EE"
+msgid "Adjust Recipe"
+msgstr "Điều chỉnh công thức"
+
+msgctxt "SmartFoundations,HUD_RestoreActive"
+msgid "*Restore Active"
+msgstr "*Khôi phục đang hoạt động"
+
+msgctxt "SmartFoundations,HUD_RestorePreset"
+msgid "*Restore: {0}"
+msgstr "*Khôi phục: {0}"
+
+msgctxt "SmartFoundations,HUD_Walk"
+msgid "*Walk  {0} seg | head {1} {2}deg | {3}"
+msgstr "*Đi bộ  {0} đoạn | hướng {1} {2}độ | {3}"
+
+msgctxt "SmartFoundations,HUD_WalkAdvance"
+msgid "Advance{0}: {1}m"
+msgstr "Tiến{0}: {1}m"
+
+msgctxt "SmartFoundations,HUD_WalkRise"
+msgid "Rise{0}: {1}m"
+msgstr "Lên{0}: {1}m"
+
+msgctxt "SmartFoundations,HUD_WalkShift"
+msgid "Shift{0}: {1}m"
+msgstr "Dịch{0}: {1}m"
+
+msgctxt "SmartFoundations,HUD_WalkTurn"
+msgid "Turn{0}: {1}°"
+msgstr "Rẽ{0}: {1}°"
+
+msgctxt "SmartFoundations,HUD_Walk_Belt"
+msgid "belt"
+msgstr "băng tải"
+
+msgctxt "SmartFoundations,HUD_Walk_Pipe"
+msgid "pipe"
+msgstr "ống"
+
+msgctxt "SmartFoundations,Hint_CycleMode"
+msgid "Cycle Mode"
+msgstr "Chuyển chế độ"
+
+msgctxt "SmartFoundations,Hint_Recipe"
+msgid "Recipe"
+msgstr "Công thức"
+
+msgctxt "SmartFoundations,Hint_Rotation"
+msgid "Rotation"
+msgstr "Xoay"
+
+msgctxt "SmartFoundations,Hint_ScaleX"
+msgid "Scale X"
+msgstr "Co giãn X"
+
+msgctxt "SmartFoundations,Hint_ScaleY"
+msgid "Scale Y"
+msgstr "Co giãn Y"
+
+msgctxt "SmartFoundations,Hint_ScaleZ"
+msgid "Scale Z"
+msgstr "Co giãn Z"
+
+msgctxt "SmartFoundations,Hint_SmartPanel"
+msgid "Smart Panel"
+msgstr "Bảng Smart"
+
+msgctxt "SmartFoundations,Hint_Spacing"
+msgid "Spacing"
+msgstr "Khoảng cách"
+
+msgctxt "SmartFoundations,Hint_Stagger"
+msgid "Stagger"
+msgstr "Lệch"
+
+msgctxt "SmartFoundations,Hint_Steps"
+msgid "Steps"
+msgstr "Bậc"
+
+msgctxt "SmartFoundations,P.BeltLevelMain"
+msgid "Manifold Lane Belt"
+msgstr "Băng chuyền ống góp"
+
+msgctxt "SmartFoundations,P.BeltLevelMain.TT"
+msgid "Belt tier for distributor-to-distributor (manifold) connections. Auto uses the highest tier you've unlocked."
+msgstr "Cấp băng chuyền cho kết nối bộ phân phối với bộ phân phối (ống góp). Tự động dùng cấp cao nhất bạn đã mở khóa."
+
+msgctxt "SmartFoundations,P.BeltLevelToBuilding"
+msgid "Factory Belt"
+msgstr "Băng chuyền nhà máy"
+
+msgctxt "SmartFoundations,P.BeltLevelToBuilding.TT"
+msgid "Belt tier for distributor-to-building connections. Auto uses the highest tier you've unlocked."
+msgstr "Cấp băng chuyền cho kết nối bộ phân phối với tòa nhà. Tự động dùng cấp cao nhất bạn đã mở khóa."
+
+msgctxt "SmartFoundations,P.BeltRoutingMode"
+msgid "Belt Routing Mode"
+msgstr "Chế độ định tuyến băng chuyền"
+
+msgctxt "SmartFoundations,P.BeltRoutingMode.TT"
+msgid "How auto-connected belts are shaped: Default, Curve, or Straight."
+msgstr "Cách tạo hình băng chuyền tự động kết nối: Mặc định, Cong hoặc Thẳng."
+
+msgctxt "SmartFoundations,P.HUDPositionX"
+msgid "HUD Position X"
+msgstr "Vị trí HUD ngang"
+
+msgctxt "SmartFoundations,P.HUDPositionX.TT"
+msgid "Horizontal position of the HUD on screen (0 = left edge, 1 = right edge)."
+msgstr "Vị trí ngang của HUD trên màn hình (0 = mép trái, 1 = mép phải)."
+
+msgctxt "SmartFoundations,P.HUDPositionY"
+msgid "HUD Position Y"
+msgstr "Vị trí HUD dọc"
+
+msgctxt "SmartFoundations,P.HUDPositionY.TT"
+msgid "Vertical position of the HUD on screen (0 = top, 1 = bottom)."
+msgstr "Vị trí dọc của HUD trên màn hình (0 = trên, 1 = dưới)."
+
+msgctxt "SmartFoundations,P.HUDScale"
+msgid "HUD Scale"
+msgstr "Tỷ lệ HUD"
+
+msgctxt "SmartFoundations,P.HUDScale.TT"
+msgid "Size of the Smart! HUD overlay."
+msgstr "Kích thước của lớp phủ Smart! HUD."
+
+msgctxt "SmartFoundations,P.HUDTheme"
+msgid "HUD Theme"
+msgstr "Chủ đề HUD"
+
+msgctxt "SmartFoundations,P.HUDTheme.TT"
+msgid "Color theme for the HUD: Default (FICSIT orange), Dark, Classic, High Contrast, Minimal, or Monochrome."
+msgstr "Chủ đề màu cho HUD: Mặc định (cam FICSIT), Tối, Cổ điển, Tương phản cao, Tối thiểu hoặc Monochrome."
+
+msgctxt "SmartFoundations,P.PipeIndicator"
+msgid "Flow Indicator"
+msgstr "Chỉ báo dòng chảy"
+
+msgctxt "SmartFoundations,P.PipeIndicator.TT"
+msgid "Show a flow-direction indicator on auto-connected pipes."
+msgstr "Hiển thị chỉ báo hướng dòng chảy trên ống tự động kết nối."
+
+msgctxt "SmartFoundations,P.PipeLevelMain"
+msgid "Main Tier"
+msgstr "Cấp chính"
+
+msgctxt "SmartFoundations,P.PipeLevelMain.TT"
+msgid "Pipe tier for the main connections. Auto uses the highest tier you've unlocked."
+msgstr "Cấp ống cho kết nối chính. Tự động dùng cấp cao nhất bạn đã mở khóa."
+
+msgctxt "SmartFoundations,P.PipeLevelToBuilding"
+msgid "To Building"
+msgstr "Đến tòa nhà"
+
+msgctxt "SmartFoundations,P.PipeLevelToBuilding.TT"
+msgid "Pipe tier for connections to buildings. Auto uses the highest tier you've unlocked."
+msgstr "Cấp ống cho kết nối đến tòa nhà. Tự động dùng cấp cao nhất bạn đã mở khóa."
+
+msgctxt "SmartFoundations,P.PipeRoutingMode"
+msgid "Pipe Routing Mode"
+msgstr "Chế độ định tuyến ống"
+
+msgctxt "SmartFoundations,P.PipeRoutingMode.TT"
+msgid "How auto-connected pipes are shaped: Auto, 2D, Straight, Curve, Noodle, or Horizontal-to-Vertical."
+msgstr "Cách tạo hình ống tự động kết nối: Tự động, 2D, Thẳng, Cong, Mì hoặc Ngang sang Dọc."
+
+msgctxt "SmartFoundations,P.PowerConnectMode"
+msgid "Grid Axis"
+msgstr "Trục lưới"
+
+msgctxt "SmartFoundations,P.PowerConnectMode.TT"
+msgid "Which directions power poles connect: Auto, X only, Y only, or both X and Y."
+msgstr "Hướng các cột điện kết nối: Tự động, chỉ X, chỉ Y, hoặc cả X và Y."
+
+msgctxt "SmartFoundations,P.PowerConnectRange"
+msgid "Connection Range"
+msgstr "Phạm vi kết nối"
+
+msgctxt "SmartFoundations,P.PowerConnectRange.TT"
+msgid "Maximum distance, in meters, to search for a power connection."
+msgstr "Khoảng cách tối đa, tính bằng mét, để tìm kết nối điện."
+
+msgctxt "SmartFoundations,P.PowerConnectReserved"
+msgid "Connections to Keep Free"
+msgstr "Kết nối dự trữ"
+
+msgctxt "SmartFoundations,P.PowerConnectReserved.TT"
+msgid "Number of pole connection slots to leave free for your own manual wiring."
+msgstr "Số khe kết nối trên cột để dành cho việc đấu nối thủ công của bạn."
+
+msgctxt "SmartFoundations,P.bApplyImmediately"
+msgid "Apply Immediately"
+msgstr "Áp dụng ngay"
+
+msgctxt "SmartFoundations,P.bApplyImmediately.TT"
+msgid "Apply Smart Panel changes instantly instead of clicking the Apply button."
+msgstr "Áp dụng thay đổi Bảng Smart ngay lập tức thay vì nhấn nút Áp dụng."
+
+msgctxt "SmartFoundations,P.bAutoConnectDistributors"
+msgid "Use Manifold Lane Belts"
+msgstr "Sử dụng băng chuyền ống góp"
+
+msgctxt "SmartFoundations,P.bAutoConnectDistributors.TT"
+msgid "Chain distributors together with manifold lane belts, so a whole row is fed from one input."
+msgstr "Nối các bộ phân phối với nhau bằng băng chuyền ống góp, để cả một hàng được cấp từ một đầu vào."
+
+msgctxt "SmartFoundations,P.bAutoConnectEnabled"
+msgid "Belt Auto-Connect"
+msgstr "Tự động kết nối băng chuyền"
+
+msgctxt "SmartFoundations,P.bAutoConnectEnabled.TT"
+msgid "Automatically connect conveyor belts between placed buildings and distributors."
+msgstr "Tự động kết nối băng chuyền giữa các tòa nhà đã đặt và bộ phân phối."
+
+msgctxt "SmartFoundations,P.bAutoHoldOnGridChange"
+msgid "Auto-Hold on Grid Change"
+msgstr "Tự động giữ khi thay đổi lưới"
+
+msgctxt "SmartFoundations,P.bAutoHoldOnGridChange.TT"
+msgid "Automatically lock the hologram in place after any grid change. Press the Hold key to release it."
+msgstr "Tự động khóa ảnh ba chiều tại chỗ sau bất kỳ thay đổi lưới nào. Nhấn phím Giữ để thả."
+
+msgctxt "SmartFoundations,P.bExtendDaisyChainPoleless"
+msgid "Daisy-Chain Pole-less Factories"
+msgstr "Đấu nối tiếp nhà máy không cột"
+
+msgctxt "SmartFoundations,P.bExtendDaisyChainPoleless.TT"
+msgid "When you Extend a factory that has no power pole and no existing daisy link (starting a fresh manifold), wire the new buildings together with daisy-chain power. Factories already daisy-chained are always continued regardless of this option."
+msgstr "Khi bạn Mở rộng một nhà máy không có cột điện và không có liên kết nối tiếp sẵn (bắt đầu một ống góp mới), hãy đấu các tòa nhà mới với nhau bằng điện nối tiếp. Các nhà máy đã nối tiếp luôn được tiếp tục bất kể tùy chọn này."
+
+msgctxt "SmartFoundations,P.bExtendDaisyChainPower"
+msgid "Extend Daisy-Chain Power"
+msgstr "Mở rộng điện nối tiếp"
+
+msgctxt "SmartFoundations,P.bExtendDaisyChainPower.TT"
+msgid "Once Upgraded Power Connectors is unlocked, Extend wires power directly building-to-building along the lane instead of running a pole to each building."
+msgstr "Sau khi mở khóa Đầu nối điện nâng cấp, Mở rộng đấu điện trực tiếp giữa tòa nhà với tòa nhà dọc theo làn thay vì chạy một cột đến từng tòa nhà."
+
+msgctxt "SmartFoundations,P.bExtendEnabled"
+msgid "Extend Enabled"
+msgstr "Bật mở rộng"
+
+msgctxt "SmartFoundations,P.bExtendEnabled.TT"
+msgid "Enable Extend - repeat a building or grid outward in one direction."
+msgstr "Bật Mở rộng - lặp lại một tòa nhà hoặc lưới ra bên ngoài theo một hướng."
+
+msgctxt "SmartFoundations,P.bExtendPowerEnabled"
+msgid "Extend Power Poles"
+msgstr "Mở rộng cột điện"
+
+msgctxt "SmartFoundations,P.bExtendPowerEnabled.TT"
+msgid "Include power poles when using Extend."
+msgstr "Bao gồm cột điện khi dùng Mở rộng."
+
+msgctxt "SmartFoundations,P.bPipeAutoConnectEnabled"
+msgid "Pipe Auto-Connect"
+msgstr "Tự động kết nối ống"
+
+msgctxt "SmartFoundations,P.bPipeAutoConnectEnabled.TT"
+msgid "Automatically connect pipes between placed buildings."
+msgstr "Tự động kết nối ống giữa các tòa nhà đã đặt."
+
+msgctxt "SmartFoundations,P.bPowerAutoConnectEnabled"
+msgid "Power Auto-Connect"
+msgstr "Tự động kết nối điện"
+
+msgctxt "SmartFoundations,P.bPowerAutoConnectEnabled.TT"
+msgid "Automatically wire power between placed buildings and nearby power poles."
+msgstr "Tự động đấu điện giữa các tòa nhà đã đặt và cột điện gần đó."
+
+msgctxt "SmartFoundations,P.bShowArrowLabels"
+msgid "Arrow Axis Labels"
+msgstr "Nhãn trục mũi tên"
+
+msgctxt "SmartFoundations,P.bShowArrowLabels.TT"
+msgid "Show X/Y/Z axis labels on the direction arrows."
+msgstr "Hiển thị nhãn trục X/Y/Z trên mũi tên hướng."
+
+msgctxt "SmartFoundations,P.bShowArrowOrbit"
+msgid "Arrow Orbit Animation"
+msgstr "Hoạt ảnh quỹ đạo mũi tên"
+
+msgctxt "SmartFoundations,P.bShowArrowOrbit.TT"
+msgid "Animate the arrows orbiting the hologram. Turn off for static arrows that still track you."
+msgstr "Tạo hoạt ảnh mũi tên quay quanh ảnh ba chiều. Tắt để mũi tên tĩnh nhưng vẫn hướng theo bạn."
+
+msgctxt "SmartFoundations,P.bShowArrows"
+msgid "Show Direction Arrows"
+msgstr "Hiển thị mũi tên hướng"
+
+msgctxt "SmartFoundations,P.bShowArrows.TT"
+msgid "Show X/Y/Z direction arrows on the building hologram."
+msgstr "Hiển thị mũi tên hướng X/Y/Z trên ảnh ba chiều tòa nhà."
+
+msgctxt "SmartFoundations,P.bShowHUD"
+msgid "Show HUD Overlay"
+msgstr "Hiển thị HUD"
+
+msgctxt "SmartFoundations,P.bShowHUD.TT"
+msgid "Show the Smart! overlay (grid, scale, and recipe info) while building."
+msgstr "Hiển thị lớp phủ Smart! (thông tin lưới, tỷ lệ và công thức) khi xây dựng."
+
+msgctxt "SmartFoundations,P.bStackableBeltEnabled"
+msgid "Stackable Belt Auto-Connect"
+msgstr "Tự động kết nối băng chuyền xếp chồng"
+
+msgctxt "SmartFoundations,P.bStackableBeltEnabled.TT"
+msgid "Allow auto-connected belts to stack vertically where they overlap."
+msgstr "Cho phép băng chuyền tự động kết nối xếp chồng theo chiều dọc nơi chúng giao nhau."
+
+msgctxt "SmartFoundations,Panel_Btn_ApplyPreset"
+msgid "Apply"
+msgstr "Áp dụng"
+
+msgctxt "SmartFoundations,Panel_Btn_DeletePreset"
+msgid "Delete"
+msgstr "Xóa"
+
+msgctxt "SmartFoundations,Panel_Btn_ExportPreset"
+msgid "Export to Clipboard"
+msgstr "Xuất ra bộ nhớ tạm"
+
+msgctxt "SmartFoundations,Panel_Btn_ImportFromExtend"
+msgid "Import from Last Extend"
+msgstr "Nhập từ lần Mở rộng cuối"
+
+msgctxt "SmartFoundations,Panel_Btn_ImportPreset"
+msgid "Import from Clipboard"
+msgstr "Nhập từ bộ nhớ tạm"
+
+msgctxt "SmartFoundations,Panel_Btn_SavePreset"
+msgid "Save Current"
+msgstr "Lưu hiện tại"
+
+msgctxt "SmartFoundations,Panel_Btn_SmartWalking"
+msgid "Smart Walking"
+msgstr "Smart Đi bộ"
+
+msgctxt "SmartFoundations,Panel_Btn_UpdatePreset"
+msgid "Update"
+msgstr "Cập nhật"
+
+msgctxt "SmartFoundations,Panel_Restore_Capture"
+msgid "Capture:"
+msgstr "Ghi lại:"
+
+msgctxt "SmartFoundations,Panel_Restore_CaptureAutoConnect"
+msgid "Auto-Connect"
+msgstr "Tự động kết nối"
+
+msgctxt "SmartFoundations,Panel_Restore_CaptureGrid"
+msgid "Grid"
+msgstr "Lưới"
+
+msgctxt "SmartFoundations,Panel_Restore_CaptureRecipe"
+msgid "Recipe"
+msgstr "Công thức"
+
+msgctxt "SmartFoundations,Panel_Restore_CaptureRotation"
+msgid "Rotation"
+msgstr "Xoay"
+
+msgctxt "SmartFoundations,Panel_Restore_CaptureSpacing"
+msgid "Spacing"
+msgstr "Khoảng cách"
+
+msgctxt "SmartFoundations,Panel_Restore_CaptureStagger"
+msgid "Stagger"
+msgstr "Lệch"
+
+msgctxt "SmartFoundations,Panel_Restore_CaptureSteps"
+msgid "Steps"
+msgstr "Bậc"
+
+msgctxt "SmartFoundations,Panel_Restore_CreatedAt"
+msgid "Created:"
+msgstr "Đã tạo:"
+
+msgctxt "SmartFoundations,Panel_Restore_DeleteMessage"
+msgid "Delete preset '{0}'?"
+msgstr "Xóa cài đặt sẵn '{0}'?"
+
+msgctxt "SmartFoundations,Panel_Restore_DeleteTitle"
+msgid "Delete Preset"
+msgstr "Xóa cài đặt sẵn"
+
+msgctxt "SmartFoundations,Panel_Restore_Description"
+msgid "Description:"
+msgstr "Mô tả:"
+
+msgctxt "SmartFoundations,Panel_Restore_NotSaved"
+msgid "Not saved"
+msgstr "Chưa lưu"
+
+msgctxt "SmartFoundations,Panel_Restore_OverwriteMessage"
+msgid "A preset named '{0}' already exists. Overwrite?"
+msgstr "Đã có cài đặt sẵn tên '{0}'. Ghi đè?"
+
+msgctxt "SmartFoundations,Panel_Restore_OverwriteTitle"
+msgid "Overwrite Preset"
+msgstr "Ghi đè cài đặt sẵn"
+
+msgctxt "SmartFoundations,Panel_Restore_PresetName"
+msgid "New Preset Name:"
+msgstr "Tên cài đặt sẵn mới:"
+
+msgctxt "SmartFoundations,Panel_Restore_SelectPreset"
+msgid "Selected Preset:"
+msgstr "Cài đặt sẵn đã chọn:"
+
+msgctxt "SmartFoundations,Panel_Section_Presets"
+msgid "Smart Restore"
+msgstr "Smart Khôi phục"
+
+msgctxt "SmartFoundations,Sec.Arrows"
+msgid "Arrows"
+msgstr "Mũi tên"
+
+msgctxt "SmartFoundations,Sec.Arrows.TT"
+msgid "Directional arrows drawn on the building hologram."
+msgstr "Mũi tên hướng vẽ trên ảnh ba chiều tòa nhà."
+
+msgctxt "SmartFoundations,Sec.Belt"
+msgid "Belt Auto-Connect"
+msgstr "Tự động kết nối băng chuyền"
+
+msgctxt "SmartFoundations,Sec.Belt.TT"
+msgid "Automatically run conveyor belts between the buildings you place."
+msgstr "Tự động chạy băng chuyền giữa các tòa nhà bạn đặt."
+
+msgctxt "SmartFoundations,Sec.Building"
+msgid "Building Behavior"
+msgstr "Hành vi xây dựng"
+
+msgctxt "SmartFoundations,Sec.Building.TT"
+msgid "How Extend, auto-hold, and Apply behave while building."
+msgstr "Cách Mở rộng, tự động giữ và Áp dụng hoạt động khi xây dựng."
+
+msgctxt "SmartFoundations,Sec.HUD"
+msgid "HUD"
+msgstr "HUD"
+
+msgctxt "SmartFoundations,Sec.HUD.TT"
+msgid "The on-screen Smart! overlay shown while you build."
+msgstr "Lớp phủ Smart! trên màn hình hiển thị khi bạn xây dựng."
+
+msgctxt "SmartFoundations,Sec.Pipe"
+msgid "Pipe Auto-Connect"
+msgstr "Tự động kết nối ống"
+
+msgctxt "SmartFoundations,Sec.Pipe.TT"
+msgid "Automatically run pipes between the buildings you place."
+msgstr "Tự động chạy ống giữa các tòa nhà bạn đặt."
+
+msgctxt "SmartFoundations,Sec.Power"
+msgid "Power Auto-Connect"
+msgstr "Tự động kết nối điện"
+
+msgctxt "SmartFoundations,Sec.Power.TT"
+msgid "Automatically wire power between buildings and power poles as you build."
+msgstr "Tự động đấu điện giữa các tòa nhà và cột điện khi bạn xây dựng."
+
+msgctxt "SmartFoundations,Upgrade_AimAndScan"
+msgid "Aim at a buildable and press Scan Network"
+msgstr "Ngắm vào vật xây được và nhấn Quét mạng"
+
+msgctxt "SmartFoundations,Upgrade_AimAtTarget"
+msgid "Aim at a belt, pipe, or power pole to scan its network"
+msgstr "Ngắm vào băng chuyền, ống hoặc cột điện để quét mạng của nó"
+
+msgctxt "SmartFoundations,Upgrade_Anchor"
+msgid "Anchor: {0} (Mk{1})"
+msgstr "Mỏ neo: {0} (Mk{1})"
+
+msgctxt "SmartFoundations,Upgrade_Cancelled"
+msgid "Upgrade cancelled: {0}/{1} completed"
+msgstr "Đã hủy nâng cấp: {0}/{1} hoàn thành"
+
+msgctxt "SmartFoundations,Upgrade_ClickToSelect"
+msgid "Click to select {0} for upgrade"
+msgstr "Nhấn để chọn {0} để nâng cấp"
+
+msgctxt "SmartFoundations,Upgrade_Complete"
+msgid "Upgrade complete: {0} success, {1} failed, {2} skipped"
+msgstr "Nâng cấp hoàn tất: {0} thành công, {1} thất bại, {2} bỏ qua"
+
+msgctxt "SmartFoundations,Upgrade_CostHeader"
+msgid "{0} × {1} Mk.{2} → Mk.{3}\n"
+msgstr "{0} × {1} Mk.{2} → Mk.{3}\\n"
+
+msgctxt "SmartFoundations,Upgrade_CostItems"
+msgid "{0} items → Mk.{1}\n"
+msgstr "{0} mục → Mk.{1}\\n"
+
+msgctxt "SmartFoundations,Upgrade_CostUnavailable"
+msgid "{0} × {1} Mk.{2} → Mk.{3}\n(Cost unavailable)"
+msgstr "{0} × {1} Mk.{2} → Mk.{3}\\n(Không có chi phí)"
+
+msgctxt "SmartFoundations,Upgrade_ErrNoPlayer"
+msgid "Error: No player controller"
+msgstr "Lỗi: Không có bộ điều khiển người chơi"
+
+msgctxt "SmartFoundations,Upgrade_ErrRCO"
+msgid "Error: server connection unavailable"
+msgstr "Lỗi: kết nối máy chủ không khả dụng"
+
+msgctxt "SmartFoundations,Upgrade_ErrRCOScan"
+msgid "Error: server connection unavailable"
+msgstr "Lỗi: kết nối máy chủ không khả dụng"
+
+msgctxt "SmartFoundations,Upgrade_FoundItems"
+msgid "Found {0} items ({1} upgradeable)"
+msgstr "Tìm thấy {0} mục ({1} có thể nâng cấp)"
+
+msgctxt "SmartFoundations,Upgrade_FoundItemsLimit"
+msgid "{0} [LIMIT HIT]"
+msgstr "{0} [ĐẠT GIỚI HẠN]"
+
+msgctxt "SmartFoundations,Upgrade_Invalid"
+msgid "Invalid: {0}"
+msgstr "Không hợp lệ: {0}"
+
+msgctxt "SmartFoundations,Upgrade_Nearest"
+msgid "Nearest {0}: {1}m {2}"
+msgstr "Gần nhất {0}: {1}m {2}"
+
+msgctxt "SmartFoundations,Upgrade_NoNetCost"
+msgid "(No net cost)"
+msgstr "(Không có chi phí ròng)"
+
+msgctxt "SmartFoundations,Upgrade_NoTarget"
+msgid "No target - aim at a buildable"
+msgstr "Không có mục tiêu - ngắm vào vật xây được"
+
+msgctxt "SmartFoundations,Upgrade_NoValidTarget"
+msgid "{0} Mk.{1}: No valid upgrade target selected"
+msgstr "{0} Mk.{1}: Chưa chọn mục tiêu nâng cấp hợp lệ"
+
+msgctxt "SmartFoundations,Upgrade_NotUpgradeable"
+msgid "Target is not upgradeable - aim at a belt, pipe, or power pole"
+msgstr "Mục tiêu không thể nâng cấp - ngắm vào băng chuyền, ống hoặc cột điện"
+
+msgctxt "SmartFoundations,Upgrade_ProgressCount"
+msgid "Upgrading... {0}/{1} ({2}%)"
+msgstr "Đang nâng cấp... {0}/{1} ({2}%)"
+
+msgctxt "SmartFoundations,Upgrade_ScanFailed"
+msgid "Scan failed: {0}"
+msgstr "Quét thất bại: {0}"
+
+msgctxt "SmartFoundations,Upgrade_Scanning"
+msgid "Scanning network..."
+msgstr "Đang quét mạng..."
+
+msgctxt "SmartFoundations,Upgrade_SetRadiusScan"
+msgid "Set radius and press Scan to find items"
+msgstr "Đặt bán kính và nhấn Quét để tìm các mục"
+
+msgctxt "SmartFoundations,Walk_ApplyImmediately"
+msgid "apply immediately"
+msgstr "áp dụng ngay"
+
+msgctxt "SmartFoundations,Walk_Btn_Scaling"
+msgid "‹ Scaling"
+msgstr "‹ Co giãn"
+
+msgctxt "SmartFoundations,Walk_Col_Advance"
+msgid "Advance m"
+msgstr "Tiến m"
+
+msgctxt "SmartFoundations,Walk_Col_Exit"
+msgid "Exit"
+msgstr "Hướng ra"
+
+msgctxt "SmartFoundations,Walk_Col_Rise"
+msgid "Rise m"
+msgstr "Lên m"
+
+msgctxt "SmartFoundations,Walk_Col_Shift"
+msgid "Shift m"
+msgstr "Dịch m"
+
+msgctxt "SmartFoundations,Walk_Col_Turn"
+msgid "Turn"
+msgstr "Rẽ"
+
+msgctxt "SmartFoundations,Walk_Conveyance_Belt"
+msgid "Belt"
+msgstr "Băng tải"
+
+msgctxt "SmartFoundations,Walk_Conveyance_Pipe"
+msgid "Pipe"
+msgstr "Ống"
+
+msgctxt "SmartFoundations,Walk_Lbl_Direction"
+msgid "Direction"
+msgstr "Hướng"
+
+msgctxt "SmartFoundations,Walk_Lbl_PipeStyle"
+msgid "Pipe Style"
+msgstr "Kiểu ống"
+
+msgctxt "SmartFoundations,Walk_Lbl_Routing"
+msgid "Routing"
+msgstr "Định tuyến"
+
+msgctxt "SmartFoundations,Walk_Lbl_Tier"
+msgid "Tier"
+msgstr "Cấp"
+
+msgctxt "SmartFoundations,Walk_Opt_Auto"
+msgid "Auto"
+msgstr "Tự động"
+
+msgctxt "SmartFoundations,Walk_Opt_Auto2D"
+msgid "Auto 2D"
+msgstr "Tự động 2D"
+
+msgctxt "SmartFoundations,Walk_Opt_Backward"
+msgid "Backward"
+msgstr "Lùi"
+
+msgctxt "SmartFoundations,Walk_Opt_Clean"
+msgid "Clean"
+msgstr "Sạch"
+
+msgctxt "SmartFoundations,Walk_Opt_Curve"
+msgid "Curve"
+msgstr "Cong"
+
+msgctxt "SmartFoundations,Walk_Opt_Default"
+msgid "Default"
+msgstr "Mặc định"
+
+msgctxt "SmartFoundations,Walk_Opt_Forward"
+msgid "Forward"
+msgstr "Tiến"
+
+msgctxt "SmartFoundations,Walk_Opt_HToV"
+msgid "H->V"
+msgstr "H->V"
+
+msgctxt "SmartFoundations,Walk_Opt_Noodle"
+msgid "Noodle"
+msgstr "Mì"
+
+msgctxt "SmartFoundations,Walk_Opt_Normal"
+msgid "Normal"
+msgstr "Bình thường"
+
+msgctxt "SmartFoundations,Walk_Opt_Straight"
+msgid "Straight"
+msgstr "Thẳng"
+
+msgctxt "SmartFoundations,Walk_Summary"
+msgid "{0} {0}|plural(one=segment,other=segments)  ·  head {1} {2} deg  ·  {3}"
+msgstr "{0} {0}|plural(other=đoạn)  ·  hướng {1} {2} độ  ·  {3}"
+
+msgctxt "SmartFoundations,Hint_UpgradePanel"
+msgid "Upgrade Panel"
+msgstr "Bảng nâng cấp"
+
+msgctxt "SmartFoundations,Walk_Invalid_TooLong"
+msgid "segment {0} too long ({1}m > 56m)"
+msgstr "đoạn {0} quá dài ({1}m > 56m)"
+
+msgctxt "SmartFoundations,Walk_Invalid_TooSteep"
+msgid "segment {0} too steep ({1}deg > 30deg)"
+msgstr "đoạn {0} quá dốc ({1}độ > 30độ)"

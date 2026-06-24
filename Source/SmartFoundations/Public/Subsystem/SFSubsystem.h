@@ -15,6 +15,7 @@
 #include "HUD/SFHUDTypes.h"
 #include "Features/Scaling/SFScalingSpec.h"
 #include "Features/Extend/SFExtendCommitSpec.h"   // [EXTEND-MP] staged Extend commit
+#include "Features/Walk/SFWalkCommitSpec.h"        // Smart Walking (#356 Slice 3) staged walk commit
 #include "Config/Smart_ConfigStruct.h"
 
 // Service includes - needed for FSFBuildingMetadata and FSplinePointData struct members
@@ -70,6 +71,8 @@ class USFGridSpawnerService;
 class USFGridTransformService;
 class USFChainActorService;
 class USFRestoreService;
+class USFWalkService;
+class USFWalkPanelWidget;
 struct FSFRestoreAutoConnectState;
 
 // Smart! hologram forward declarations
@@ -422,6 +425,50 @@ public:
 	/** Get radar pulse diagnostic service */
 	USFRadarPulseService* GetRadarPulseService() const { return RadarPulseService; }
 
+	/** Get Smart Walking service (#356) */
+	USFWalkService* GetWalkService() const { return WalkService; }
+
+	/** True while a Smart Walking Path is being steered. */
+	UFUNCTION(BlueprintCallable, Category = "Smart Walking")
+	bool IsWalkModeActive() const { return bWalkModeActive; }
+
+	/** Enter Smart Walking on the held hologram (seeds a Path). No-op if already walking or no seed. */
+	UFUNCTION(BlueprintCallable, Category = "Smart Walking")
+	void EnterWalkMode();
+
+	/** Exit Smart Walking (Slice 0: tears down the preview). No-op if not walking. */
+	UFUNCTION(BlueprintCallable, Category = "Smart Walking")
+	void ExitWalkMode();
+
+	/** Toggle Smart Walking on/off. Reached by the Slice 4 Smart Panel button. */
+	UFUNCTION(BlueprintCallable, Category = "Smart Walking")
+	void ToggleWalkMode();
+
+	/** Commit the active segment and start a new one (advance). */
+	UFUNCTION(BlueprintCallable, Category = "Smart Walking")
+	void WalkAdvance();
+
+	/** Destructive back-up of the active segment. */
+	UFUNCTION(BlueprintCallable, Category = "Smart Walking")
+	void WalkBackUp();
+
+	/** Steer the active segment by deltas: advance (cm), turn (deg), rise (cm), shift (cm). */
+	UFUNCTION(BlueprintCallable, Category = "Smart Walking")
+	void WalkNudgeActive(float DeltaAdvanceCm, float DeltaTurnDeg, float DeltaRiseCm, float DeltaShiftCm);
+
+	/** Create + show the dedicated Walk widget (the segment list/timeline). Reached by the Smart Panel button. */
+	UFUNCTION(BlueprintCallable, Category = "Smart Walking")
+	void OpenWalkPanel();
+
+	/** #356: while a walk is engaged, K toggles this panel IN LIEU OF the Smart Panel — hide it to steer with a clean
+	 *  screen (HUD badge only), restore it to review the segment path. Creates the panel if it isn't up yet. */
+	UFUNCTION(BlueprintCallable, Category = "Smart Walking")
+	void ToggleWalkPanel();
+
+	/** True while the Walk panel is up (in viewport + Visible). The HUD uses this to suppress its walk readout,
+	 *  which otherwise draws over/through the panel; it returns when the panel is hidden via K. */
+	bool IsWalkPanelVisible() const;
+
 	/** Check if Smart! is actively scaling (grid > 1x1x1) — any axis with abs > 1 */
 	bool IsSmartScalingActive() const
 	{
@@ -639,6 +686,10 @@ protected:
 	UPROPERTY()
 	TWeakObjectPtr<class USmartSettingsFormWidget> SettingsFormWidget;
 
+	/** Smart Walking dedicated widget (#356) */
+	UPROPERTY()
+	TWeakObjectPtr<class USFWalkPanelWidget> WalkPanelWidget;
+
 	/** Settings Form Widget Class (Blueprint reference) - initialized in constructor */
 	UPROPERTY(EditDefaultsOnly, Category = "Smart! UI")
 	TSubclassOf<class USmartSettingsFormWidget> SettingsFormWidgetClass;
@@ -695,6 +746,10 @@ protected:
 	/** Radar Pulse diagnostic service - Object snapshot and diff system */
 	UPROPERTY()
 	TObjectPtr<USFRadarPulseService> RadarPulseService;
+
+	/** Smart Walking service - progressive per-segment build mode (#356) */
+	UPROPERTY()
+	TObjectPtr<USFWalkService> WalkService;
 
 	/** Pipe Auto-Connect manager - feature-level coordinator (junctions + manifolds) */
 	TUniquePtr<FSFPipeAutoConnectManager> PipeAutoConnectManager;
@@ -839,6 +894,19 @@ public:
     /** Server: consume (clear) the staged Extend commit for a construct instigator if it matches. */
     bool ConsumeExtendCommitForInstigator(class APawn* Instigator, UClass* BuildClass, FSFExtendCommitSpec& OutSpec);
 
+    // Smart Walking (#356 Slice 3): same staging model for the walk commit (origin + per-segment deltas
+    // + conveyance config + cost), staged via USFRCO::Server_StageWalkCommit at fire time, consumed by
+    // the same Construct hook to reconstruct the walk poles + belts server-side.
+
+    /** Server: stage (or clear, when !Spec.bValid) the pending walk commit for a player. */
+    void StageWalkCommitForPlayer(class APlayerController* PC, const FSFWalkCommitSpec& Spec);
+
+    /** Server: peek the staged walk commit for a construct instigator if it matches. */
+    bool PeekWalkCommitForInstigator(class APawn* Instigator, UClass* BuildClass, FSFWalkCommitSpec& OutSpec) const;
+
+    /** Server: consume (clear) the staged walk commit for a construct instigator if it matches. */
+    bool ConsumeWalkCommitForInstigator(class APawn* Instigator, UClass* BuildClass, FSFWalkCommitSpec& OutSpec);
+
 private:
     /** Server-only: pending scaling spec per player controller (transient, never saved). */
     TMap<TWeakObjectPtr<APlayerController>, FSFScalingSpec> StagedScalingSpecs;
@@ -850,6 +918,12 @@ private:
      *  continuously while the preview is active, so a live session refreshes every ~250ms; an
      *  entry older than the TTL is an abandoned session and must not be consumed). */
     TMap<TWeakObjectPtr<APlayerController>, double> StagedExtendCommitTimes;
+
+    /** Server-only: pending walk commit per player controller (transient, never saved). */
+    TMap<TWeakObjectPtr<APlayerController>, FSFWalkCommitSpec> StagedWalkCommits;
+
+    /** Server-only: staging time per walk commit (freshness TTL, same model as the Extend commit). */
+    TMap<TWeakObjectPtr<APlayerController>, double> StagedWalkCommitTimes;
 
 public:
 
@@ -893,6 +967,13 @@ private:
 	bool bStepsModeActive = false;
 	bool bStaggerModeActive = false;
 	bool bRotationModeActive = false;
+
+	/** Smart Walking top-level mode (#356). Mutually exclusive with grid-scaling; routes scale input to WalkService. */
+	bool bWalkModeActive = false;
+
+	/** #356 reframe: in walk mode, route the active transform modal (spacing/rotation/steps/stagger) to the ACTIVE
+	 *  segment instead of the grid. Returns true if it handled the adjust (caller should return). */
+	bool RouteWalkValueAdjust(int32 AccumulatedSteps, int32 Direction);
 	
 	// All counter and axis fields migrated to CounterState
 	// Deprecated mirrors removed - use GetCounterState() accessors
@@ -1192,6 +1273,9 @@ public:
 	
 	/** Check if current hologram is an auto-connect capable type (distributor, pipe junction, power pole, stackable support) */
 	bool IsCurrentHologramAutoConnectCapable() const;
+
+	/** Check if the current hologram can SEED a Smart Walk (a stackable belt/pipe support) — gates the Walk Path button. */
+	bool IsCurrentHologramWalkable() const;
 	
 	/** Get current auto-connect runtime settings (for use by auto-connect service) */
 	const FAutoConnectRuntimeSettings& GetAutoConnectRuntimeSettings() const { return AutoConnectRuntimeSettings; }

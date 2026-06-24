@@ -540,7 +540,7 @@ bool ASFPipelineHologram::TryUseBuildModeRouting(
 {
 	if (!mSplineComponent)
 	{
-		UE_LOG(LogSmartHologram, Verbose, TEXT("🔍 PIPE TryUseBuildModeRouting FAILED: No mSplineComponent on %s"), *GetName());
+		UE_LOG(LogSmartHologram, Verbose, TEXT("[PipeRoute] FALLBACK — no spline component %s"), *GetName());
 		return false;
 	}
 
@@ -587,27 +587,17 @@ bool ASFPipelineHologram::TryUseBuildModeRouting(
 	if (NewSplinePoints < 2 || NewSplineLength < 50.0f)
 	{
 		UE_LOG(LogSmartHologram, Verbose,
-			TEXT("🔍 PIPE TryUseBuildModeRouting FAILED: Stub spline after AutoRouteSpline on %s | Points=%d Len=%.1f Expected=%.1f"),
-			*GetName(),
-			NewSplinePoints,
-			NewSplineLength,
-			ExpectedDistance);
+			TEXT("[PipeRoute] FALLBACK — in-game routed a STUB (mode=%d points=%d len=%.0f expected=%.0f) %s"),
+			RoutingMode, NewSplinePoints, NewSplineLength, ExpectedDistance, *GetName());
 		return false;
 	}
 
 	// Use the same routed spline for build.
 	mBuildSplineData = mSplineData;
 
-	// Log at normal level only for low-point-count results so we can verify engine routing.
-	if (NewSplinePoints <= 3)
-	{
-		UE_LOG(LogSmartHologram, Verbose,
-			TEXT("🔍 PIPE TryUseBuildModeRouting OK: Engine AutoRouteSpline produced %d points (Len=%.1f Expected=%.1f) on %s"),
-			NewSplinePoints,
-			NewSplineLength,
-			ExpectedDistance,
-			*GetName());
-	}
+	UE_LOG(LogSmartHologram, Verbose,
+		TEXT("[PipeRoute] IN-GAME used (mode=%d points=%d len=%.0f) %s"),
+		RoutingMode, NewSplinePoints, NewSplineLength, *GetName());
 
 	return true;
 }

@@ -175,6 +175,10 @@ protected:
     // Issue #165: Reset button - zeros spacing, steps, stagger, and rotation (not grid counters)
     UPROPERTY(meta = (BindWidgetOptional))
     TObjectPtr<class UButton> ResetBtn;
+
+    // #356 Smart Walking: enters Walk mode on the held buildable and closes the panel so you can steer the run.
+    UPROPERTY(meta = (BindWidgetOptional))
+    TObjectPtr<class UButton> WalkPathButton;
     
     // Apply Immediately checkbox (near Apply button)
     UPROPERTY(meta = (BindWidgetOptional))
@@ -505,6 +509,10 @@ private:
     // Issue #165: Reset spacing, steps, stagger, and rotation to zero
     UFUNCTION()
     void OnResetButtonClicked();
+
+    // #356 Smart Walking: toggle Walk mode on the held buildable, then close the panel to steer.
+    UFUNCTION()
+    void OnWalkPathButtonClicked();
     
     // Actually apply the current values (called after confirmation if needed)
     void ApplyCurrentValues();

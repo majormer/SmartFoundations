@@ -30,6 +30,7 @@
 #include "Services/SFChainActorService.h"  // [CHAIN-FIX] post-construct chain-hygiene sweep
 #include "Features/AutoConnect/SFAutoConnectService.h"
 #include "Features/Extend/SFExtendService.h"
+#include "Features/Walk/SFWalkService.h"   // Smart Walking (#356 Slice 3) commit-on-fire staging
 #include "Equipment/FGBuildGunBuild.h"        // UFGBuildGunStateBuild::InternalConstructHologram / GetHologram
 #include "Core/Net/SFNetworkHelper.h"     // FSFNetworkHelper::IsClient
 #include "Engine/Engine.h"                     // GEngine on-screen message
@@ -218,9 +219,9 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 			}
 
 			UWorld* World = self->GetWorld();
-			if (!World || !FSFNetworkHelper::IsClient(World))
+			if (!World)
 			{
-				return; // only a network client serializes the construct over the wire
+				return;
 			}
 
 			AFGHologram* Holo = self->GetHologram();
@@ -234,6 +235,36 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 			if (!SF_InputWillConstruct(Holo))
 			{
 				return;
+			}
+
+			// Smart Walking (#356 Slice 3): commit on fire, BEFORE the network-client gate so it runs for ALL net
+			// modes - the RCO Server_ call executes locally on authority (SP / listen-host) and over the wire on a
+			// client, so single-player and multiplayer share ONE path ("SP runs the same RPC, locally short-
+			// circuited"). A live walk stages its parameters-only commit spec (the server's construct hook
+			// reconstructs the poles + belts) and discards the local preview; the seed then fires normally and its
+			// construct consumes the staged spec.
+			if (USFSubsystem* WalkSS = USFSubsystem::Get(World))
+			{
+				if (USFWalkService* Walk = WalkSS->GetWalkService(); Walk && Walk->IsActive())
+				{
+					const FSFWalkCommitSpec WalkSpec = Walk->BuildCommitSpec();
+					if (APawn* InstigatorPawn = Holo->GetConstructionInstigator())
+					{
+						if (AFGPlayerController* WalkPC = Cast<AFGPlayerController>(InstigatorPawn->GetController()))
+						{
+							if (USFRCO* RCO = WalkPC->GetRemoteCallObjectOfClass<USFRCO>())
+							{
+								RCO->Server_StageWalkCommit(WalkSpec);
+							}
+						}
+					}
+					Walk->ExitWalk(/*bCommit=*/true); // discard the local preview; the build is the staged spec
+				}
+			}
+
+			if (!FSFNetworkHelper::IsClient(World))
+			{
+				return; // only a network client serializes the construct over the wire (Extend/scaling staging below)
 			}
 
 			// [EXTEND-MP] Extend commit (slice 2): an active Extend session fires with

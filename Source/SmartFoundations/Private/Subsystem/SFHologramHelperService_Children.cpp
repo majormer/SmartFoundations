@@ -978,6 +978,20 @@ void FSFHologramHelperService::DestroyAllChildren()
 		{
 			if (IsValid(Child))
 			{
+				// MIRROR QueueChildForDestroy's safe teardown (above): reflection-unlink from the parent's
+				// mChildren BEFORE Destroy(). Raw Destroy() left freed pointers in mChildren, and the build gun's
+				// per-tick AFGHologram::ResetConstructDisqualifiers recurses into mChildren and crashes on them
+				// (0x440) — e.g. when EnterWalkMode clears a scaled seed's grid cluster before walking.
+				if (AFGHologram* Parent = Child->GetParentHologram())
+				{
+					if (FArrayProperty* ChildrenProp = FindFProperty<FArrayProperty>(AFGHologram::StaticClass(), TEXT("mChildren")))
+					{
+						if (TArray<AFGHologram*>* ChildrenArray = ChildrenProp->ContainerPtrToValuePtr<TArray<AFGHologram*>>(Parent))
+						{
+							ChildrenArray->Remove(Child);
+						}
+					}
+				}
 				Child->Destroy();
 			}
 		}

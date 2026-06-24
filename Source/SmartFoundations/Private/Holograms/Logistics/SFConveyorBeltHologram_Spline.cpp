@@ -256,9 +256,13 @@ bool ASFConveyorBeltHologram::ApplyBeltBuildModeRouting(int32 BeltRoutingMode,
         }
     }
 
-    // [#380] Map Smart's belt routing mode (0=Default, 1=Curve, 2=Straight) to the vanilla belt
-    // build-mode descriptor and let the game's own AutoRouteSpline route the spline with real bends
-    // (mBendRadius) - identical to what the build gun produces. AutoRouteSpline via the friend declaration.
+    const bool bDescriptorsReady = (mBuildModeCurve != nullptr && mBuildModeStraight != nullptr);
+
+    // [#380] Map Smart's belt routing mode (0=Default, 1=Curve, 2=Straight) to the vanilla belt build-mode
+    // descriptor and let the GAME'S OWN AutoRouteSpline route the spline with real bends (mBendRadius) - identical
+    // to what the build gun produces. We LOG which router actually wins (at Log level, so it shows in Shipping) so
+    // testing — both Walking and stackable auto-connect — is never ambiguous: the in-game router should be the
+    // primary path and the hand-rolled fallback a rare exception, NOT the 80% case. Filter the log by [BeltRoute].
     if (mSplineComponent)
     {
         TSubclassOf<UFGHologramBuildModeDescriptor> ModeDesc = nullptr;
@@ -271,14 +275,29 @@ bool ASFConveyorBeltHologram::ApplyBeltBuildModeRouting(int32 BeltRoutingMode,
             if (ModeDesc) { SetBuildModeOverride(ModeDesc); }
             AutoRouteSpline(StartPos, StartNormal, EndPos, EndNormal);
             AFGSplineHologram::UpdateSplineComponent();
-            if (mSplineData.Num() >= 2 && mSplineComponent->GetSplineLength() >= 50.0f)
+            const int32 Points = mSplineData.Num();
+            const float Len = mSplineComponent ? mSplineComponent->GetSplineLength() : 0.0f;
+            if (Points >= 2 && Len >= 50.0f)
             {
+                UE_LOG(LogSmartHologram, Verbose, TEXT("[BeltRoute] IN-GAME AutoRouteSpline used (mode=%d points=%d len=%.0f descReady=%d) %s"),
+                    BeltRoutingMode, Points, Len, bDescriptorsReady ? 1 : 0, *GetName());
                 return true;
             }
+            UE_LOG(LogSmartHologram, Verbose, TEXT("[BeltRoute] FALLBACK — in-game AutoRouteSpline returned a STUB (mode=%d points=%d len=%.0f descReady=%d) %s"),
+                BeltRoutingMode, Points, Len, bDescriptorsReady ? 1 : 0, *GetName());
+        }
+        else
+        {
+            UE_LOG(LogSmartHologram, Verbose, TEXT("[BeltRoute] FALLBACK — no build-mode descriptor for mode=%d (descReady=%d) %s"),
+                BeltRoutingMode, bDescriptorsReady ? 1 : 0, *GetName());
         }
     }
+    else
+    {
+        UE_LOG(LogSmartHologram, Verbose, TEXT("[BeltRoute] FALLBACK — no spline component %s"), *GetName());
+    }
 
-    // Fallback: Smart's hand-rolled normals routing (descriptor unavailable or a stub spline).
+    // Fallback: Smart's hand-rolled 4-point normals routing (descriptor unavailable or a stub in-game spline).
     AutoRouteSplineWithNormals(StartPos, StartNormal, EndPos, EndNormal);
     return false;
 }
