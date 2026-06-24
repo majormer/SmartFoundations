@@ -970,3 +970,1139 @@ msgstr "Ремонт цепей завершён"
 msgctxt "SmartFoundations,Triage_RepairCompleteWithOrphans"
 msgid "Chain repair complete — save, reload, and run Detect again"
 msgstr "Ремонт цепей завершен — сохранитесь, перезагрузите сохранение и снова запустите обнаружение"
+
+msgctxt "0019837C427C49F6BA1DE5A2BAF52104"
+msgid "Straight"
+msgstr "Прямая"
+
+msgctxt "067E1A5040E18EA163524F8F205335A9"
+msgid "Smart! Steps"
+msgstr "Smart! Ступени"
+
+msgctxt "09B266E74168D79CC01A54B6220782CC"
+msgid "Network"
+msgstr "Сеть"
+
+msgctxt "0A60D4B54D01B286CA22F0A0967B6803"
+msgid "UPGRADE"
+msgstr "УЛУЧШИТЬ"
+
+msgctxt "0B68620A45C29BCF2BD3D390E9C6440C"
+msgid "High Contrast (3)"
+msgstr "Высокий контраст (3)"
+
+msgctxt "0F38693943C29DCD75F8C1B27871C5B8"
+msgid "Adjust Current Axis"
+msgstr "Настроить текущую ось"
+
+msgctxt "12DA0489426F414A397D0589ED6C0745"
+msgid "Smart! Spacing"
+msgstr "Smart! Интервал"
+
+msgctxt "1322786544407AA4F8ED1B8190F76D9F"
+msgid "Scan"
+msgstr "Сканировать"
+
+msgctxt "15B881014DC7C163FCB1419FB255A0EC"
+msgid "Dark (1)"
+msgstr "Тёмная (1)"
+
+msgctxt "15E8B3EA40E8AC8A1E8E818BA03670E5"
+msgid "Adjust grid X-axis (forward/backward)"
+msgstr "Настройка оси X сетки (вперёд/назад)"
+
+msgctxt "173D524544632CCDED043A9E3F4F7CC3"
+msgid "Estimated Cost"
+msgstr "Ориентировочная стоимость"
+
+msgctxt "1754F7834BF1389234CDF2A4813856D4"
+msgid "Cancel"
+msgstr "Отмена"
+
+msgctxt "1926932648C4B2B04FFA2DA78759EB8A"
+msgid "X"
+msgstr "X"
+
+msgctxt "1BCE444B43095B0D655193A1B416CBBD"
+msgid "Increase value for active feature (scaling, spacing, steps, or stagger)"
+msgstr "Увеличить значение активной функции (масштабирование, интервал, ступени или смещение)"
+
+msgctxt "1C0157F7400B84FCEA0CB0997F18ECFA"
+msgid "Smart! Recipe"
+msgstr "Smart! Рецепт"
+
+msgctxt "1CBE81654BEC06C4EE4D2F9B77C6823C"
+msgid "Radius"
+msgstr "Радиус"
+
+msgctxt "1CBF9AC24AB88ED704D8B89C23669BF7"
+msgid "REFRESH"
+msgstr "ОБНОВИТЬ"
+
+msgctxt "1D5643D5431C6F63F8A943BCE13CBE7E"
+msgid "Smart! Spacing"
+msgstr "Smart! Интервал"
+
+msgctxt "23C90C2D418545EC4333738F056A5EE6"
+msgid "°"
+msgstr "°"
+
+msgctxt "246236E4495CCCF2A3E4FC85C85DA9AB"
+msgid "Smart! Spacing"
+msgstr "Smart! Интервал"
+
+msgctxt "2878874049B6D5EE0A5D6D9B48259F72"
+msgid "Hold to activate spacing (modifier key)"
+msgstr "Удерживайте для активации интервала (клавиша-модификатор)"
+
+msgctxt "29B5665E4347B8A528480EA82ED201BE"
+msgid "Auto"
+msgstr "Авто"
+
+msgctxt "2B909A3E4443898FEB06568A0618C52A"
+msgid "Hold to activate rotation transform mode (modifier key)"
+msgstr "Удерживайте для активации режима вращения (клавиша-модификатор)"
+
+msgctxt "2E5F43054D0239D4BAC0F4862CB459FB"
+msgid "Curve"
+msgstr "Дуга"
+
+msgctxt "310A5EFE4224B829F9BA469562A68951"
+msgid "Recipe Mode"
+msgstr "Режим рецепта"
+
+msgctxt "311FCC0E4AB23FE12C19BA94A560D1FB"
+msgid "Adjust grid Y-axis (left/right)"
+msgstr "Настройка оси Y сетки (влево/вправо)"
+
+msgctxt "31D1020F4EA86C6B0532A3916E9533CD"
+msgid "Mk6 (6)"
+msgstr "Mk6 (6)"
+
+msgctxt "32F87FF84A2C859EEF06EDA73BD50D90"
+msgid "Radius (m):"
+msgstr "Радиус (м):"
+
+msgctxt "331CFA504EADB43C56B9C1AF41012E2F"
+msgid "Smart! Grid Scaling"
+msgstr "Smart! Масштабирование сетки"
+
+msgctxt "3326E4B341828CD7663F6285E104A803"
+msgid "Toggle Arrows"
+msgstr "Переключить стрелки"
+
+msgctxt "337DE321404C52EA519126A27AD16256"
+msgid "Classic (2)"
+msgstr "Классическая (2)"
+
+msgctxt "33C84A48437DD1E5D1CF0AAD223DC813"
+msgid "Large Grid Warning"
+msgstr "Предупреждение: большая сетка"
+
+msgctxt "348DAE9A4D32A65A01DF6A8106D161BC"
+msgid "Cycle Axis Mode"
+msgstr "Сменить режим оси"
+
+msgctxt "3739407645161CDED5901EACEAEE5915"
+msgid "+"
+msgstr "+"
+
+msgctxt "3BECA57E4ACCC555B29B23AC5605DDCD"
+msgid "Decrease value for active feature (scaling, spacing, steps, or stagger)"
+msgstr "Уменьшить значение активной функции (масштабирование, интервал, ступени или смещение)"
+
+msgctxt "3CEFA89C415D47DF87C953A4F5A22837"
+msgid "(0 upgradeable)"
+msgstr "(0 можно улучшить)"
+
+msgctxt "3E62D33F4FA4C52320AB48BD9B6D8B1C"
+msgid "Toggle Settings Form"
+msgstr "Переключить форму настроек"
+
+msgctxt "40EADFF242CC6D8E10A4EDB6D777D2BC"
+msgid "Auto (0)"
+msgstr "Авто (0)"
+
+msgctxt "427A62BA4B691763413124A521EE7AA2"
+msgid "These tools diagnose and repair conveyor chain corruption. Only use them if you are experiencing belt issues."
+msgstr "Эти инструменты диагностируют и устраняют повреждения цепей конвейеров. Используйте их только при проблемах с лентами."
+
+msgctxt "438320444C8158C55C66F08F8D53EBD5"
+msgid "Mk3 (3)"
+msgstr "Mk3 (3)"
+
+msgctxt "444B8B2648F771FC835D1CABC302BA9E"
+msgid "Y (2)"
+msgstr "Y (2)"
+
+msgctxt "466E938E4AA5B443D005619DEB8F0382"
+msgid "Smart! Panel"
+msgstr "Smart! Панель"
+
+msgctxt "47FABC9743E900C118B8FCAF9C9076DE"
+msgid "Target Tier:"
+msgstr "Целевой уровень:"
+
+msgctxt "4878AB2843890693F30F2BBA496DCCE8"
+msgid "Adjust step height for layers"
+msgstr "Настройка высоты ступени для слоёв"
+
+msgctxt "5162B61A422973421A9B5084A1B41030"
+msgid "Smart! Stagger"
+msgstr "Smart! Смещение"
+
+msgctxt "51EB9D9A495D641249A89FA0BD6F76B3"
+msgid "Smart! Grid Scaling"
+msgstr "Smart! Масштабирование сетки"
+
+msgctxt "53A77D7341E0BB96E67D9287BEF26C24"
+msgid "Smart! Grid Scaling"
+msgstr "Smart! Масштабирование сетки"
+
+msgctxt "56027A5C460D5844EF237AB48DAA5A28"
+msgid "X+Y (3)"
+msgstr "X+Y (3)"
+
+msgctxt "5938A49142B563B4FB59E985E9AE1841"
+msgid "Cross Storage Containers"
+msgstr "Через контейнеры"
+
+msgctxt "59B517F844E13DA8F3D539844F2C9378"
+msgid "X (1)"
+msgstr "X (1)"
+
+msgctxt "60DE1CEC4B85C0CC72203CBF61E7568D"
+msgid "Curve"
+msgstr "Дуга"
+
+msgctxt "62C6E10A41335FE94A371DB0EA31B799"
+msgid "Smart! Grid Scaling"
+msgstr "Smart! Масштабирование сетки"
+
+msgctxt "63AABDCD482973D2CAFDF2932D97AE25"
+msgid "Smart! Steps"
+msgstr "Smart! Ступени"
+
+msgctxt "6587C0CB460666BD6FC98BB018890DC5"
+msgid "Mk2 (2)"
+msgstr "Mk2 (2)"
+
+msgctxt "66C35E014DB7009BE3B924A85F570FD7"
+msgid "Press REFRESH to scan for upgradeable buildings. Press ESC or K to close."
+msgstr "Нажмите ОБНОВИТЬ для поиска улучшаемых зданий. Нажмите ESC или K для закрытия."
+
+msgctxt "6B9892D145A9E8A2054CEBAEF0A6B4E5"
+msgid "Share"
+msgstr "Поделиться"
+
+msgctxt "6F0E40FD4B11CA1CEC6FC5B06EB0188C"
+msgid "Stagger Left/Right"
+msgstr "Смещение влево/вправо"
+
+msgctxt "70622324402CD200612E9395164CE150"
+msgid "Repair All Issues"
+msgstr "Исправить все проблемы"
+
+msgctxt "72BCC75B46EB14C88FA0CB8AFFE0ACFA"
+msgid "0"
+msgstr "0"
+
+msgctxt "74176A6A4B5B3CE8A9A4BA8F752D804C"
+msgid "Estimated Cost"
+msgstr "Ориентировочная стоимость"
+
+msgctxt "78E37EDB4BEB48A04A5139AC6A0C614D"
+msgid "Show/hide axis direction arrows"
+msgstr "Показать/скрыть стрелки направления осей"
+
+msgctxt "790FF28E4D98D951C6AE27B8A147F50F"
+msgid "Press to clear active recipe"
+msgstr "Нажмите для очистки активного рецепта"
+
+msgctxt "7945CB1F4E10CE8044DCBF8DC47322E1"
+msgid "Adjust sideways offset for grid items"
+msgstr "Настройка бокового сдвига для объектов сетки"
+
+msgctxt "7A593AF64E9BB01288D106BC6229CBF9"
+msgid "Cross Splitters/Mergers"
+msgstr "Через разделители/объединители"
+
+msgctxt "7A7B62144F20B0B73ABCD8B643EED6A1"
+msgid "Mk2 (2)"
+msgstr "Mk2 (2)"
+
+msgctxt "7BAE3F3D4FEAEB14DC15CCBAC6FA6820"
+msgid "Smart! Configuration"
+msgstr "Smart! Конфигурация"
+
+msgctxt "7C1BBA564FF13BA590D8A89C48E3F2C8"
+msgid "Anchor: Aim at a belt, pipe, or pole"
+msgstr "Якорь: наведите на ленту, трубу или опору"
+
+msgctxt "7ECCEB924559BAD3A1844C80D4581EAE"
+msgid "Grid Total: 1 objects"
+msgstr "Всего в сетке: 1 объект"
+
+msgctxt "7F2E5ED1421D2CB422D39B96E7FEFA25"
+msgid "Scale Forward/Back"
+msgstr "Масштаб вперёд/назад"
+
+msgctxt "80ADD8BF4E442F2608D92FB8ECD49CC2"
+msgid "Mk1 (1)"
+msgstr "Mk1 (1)"
+
+msgctxt "827BDCB04E7D02296EA3E880D6C24DC3"
+msgid "SCAN NETWORK"
+msgstr "СКАНИРОВАТЬ СЕТЬ"
+
+msgctxt "86A78F2C47F34655E5C58484EC93E3AD"
+msgid "Smart! Recipe"
+msgstr "Smart! Рецепт"
+
+msgctxt "8A7DD44D47B48C266B3B88AC01D1CEF3"
+msgid "Straight"
+msgstr "Прямая"
+
+msgctxt "8BB84C5240D8A57F87983A986C3DFB73"
+msgid "Smart! Upgrade Panel"
+msgstr "Smart! Панель улучшения"
+
+msgctxt "8E24BA32430E1A670137ABA048747BB8"
+msgid "Monochrome (5)"
+msgstr "Монохром (5)"
+
+msgctxt "928114D446D78C041AEF5D88157821E9"
+msgid "Noodle"
+msgstr "Лапша"
+
+msgctxt "93C024D64433A5447D2C0396B3C5CB33"
+msgid "Hold to activate progressive layering (modifier key)"
+msgstr "Удерживайте для активации прогрессивного наслоения (клавиша-модификатор)"
+
+msgctxt "9423B8A2450BD3341A377D9BD4CCD62B"
+msgid "CANCEL"
+msgstr "ОТМЕНА"
+
+msgctxt "9643BBEF4D4BFEB216B5CDB73AC1A4C8"
+msgid "Spacing Mode"
+msgstr "Режим интервала"
+
+msgctxt "96E044FE4DDABD241B0483A89D209A2C"
+msgid "Run Detect to see results"
+msgstr "Запустите обнаружение для просмотра результатов"
+
+msgctxt "97E5935349503B2191BFE4B385BC7AB3"
+msgid "Smart! Foundations"
+msgstr "Smart! Foundations"
+
+msgctxt "9852395F409F9C751F989FA1748BFA16"
+msgid "Auto (0)"
+msgstr "Авто (0)"
+
+msgctxt "98E28A8E4D25D9D8BCD4C08EC6A98DE6"
+msgid "Configure Smart! scaling, visualization, and HUD settings"
+msgstr "Настройка масштабирования, визуализации и HUD Smart!"
+
+msgctxt "9AE7D23346D4BB5B0192848D8291920C"
+msgid "Hold to scale X-axis. Combine with Y modifier to scale Z-axis."
+msgstr "Удерживайте для масштабирования оси X. Сочетайте с модификатором Y для оси Z."
+
+msgctxt "9C14E6F8447F242BFBB485BD8E31A5F3"
+msgid "Cycle through X → Y → Z axes"
+msgstr "Циклически переключать оси X → Y → Z"
+
+msgctxt "9C1531E24044FDC579C089A23F379274"
+msgid "Detect Issues"
+msgstr "Обнаружить проблемы"
+
+msgctxt "9E038900477F0B65A5A64E91AB5C00F0"
+msgid "HUD Scale"
+msgstr "Масштаб HUD"
+
+msgctxt "9E972DC647E3D424CFE890B235FB1EE3"
+msgid "Select items to see costs"
+msgstr "Выберите объекты для просмотра стоимости"
+
+msgctxt "A08F54F64F8642B9E7F8F1AA30D2B869"
+msgid "Minimal (4)"
+msgstr "Минимальная (4)"
+
+msgctxt "A1723C3742687518D3D7FAB8769C4F43"
+msgid "Once (1)"
+msgstr "Один раз (1)"
+
+msgctxt "A4625ACE4A31BA74C187C09C62723BE6"
+msgid "Steps Mode"
+msgstr "Режим ступеней"
+
+msgctxt "A65B455D41D3967FE018129E6F8D99BC"
+msgid "Scale Left/Right"
+msgstr "Масштаб влево/вправо"
+
+msgctxt "A6A1DA99437171CC3D6B8C9E2918CEE0"
+msgid "Default (0)"
+msgstr "По умолчанию (0)"
+
+msgctxt "A70A70BC46CB9221B4A7618D9D344FCD"
+msgid "Horiz→Vert"
+msgstr "Гориз→Верт"
+
+msgctxt "A863449D4ED1EF98FD3531A57C03A83B"
+msgid "Auto (0)"
+msgstr "Авто (0)"
+
+msgctxt "A9F4FD7C4ADCBE49DE0631A2046B8C32"
+msgid "Auto 2D"
+msgstr "Авто 2D"
+
+msgctxt "AC9521FE4F1ABB4F0FDA12BE408820F6"
+msgid "Stagger Mode"
+msgstr "Режим смещения"
+
+msgctxt "ADFEA69944158AB689D01EB52BA2A425"
+msgid "Adjust grid Z-axis (up/down)"
+msgstr "Настройка оси Z сетки (вверх/вниз)"
+
+msgctxt "B433CC5C466EDDBF3105FA829F9B12D5"
+msgid "Scale X Modifier"
+msgstr "Модификатор масштаба X"
+
+msgctxt "B4E7FC1B4C29E5780A005DACF4F6605B"
+msgid "Smart! Grid Scaling"
+msgstr "Smart! Масштабирование сетки"
+
+msgctxt "B67A2B1049D6C022FFE45AA3C7E91E0D"
+msgid "Mk1 (1)"
+msgstr "Mk1 (1)"
+
+msgctxt "B8C9B67949C7644C3AE6519EBC26464D"
+msgid "Smart! Grid Scaling"
+msgstr "Smart! Масштабирование сетки"
+
+msgctxt "BB16B38F4773E62C787CD8A7A950B2A0"
+msgid "Warning message here"
+msgstr "Текст предупреждения"
+
+msgctxt "BE3FB1994C8451039886D1829DD59B06"
+msgid "Entire Map"
+msgstr "Вся карта"
+
+msgctxt "BE9D645D4352A41A16C3D0A5F1F62C94"
+msgid "+"
+msgstr "+"
+
+msgctxt "BEFE3D9D4EA76F0E2C34198C02E30A1E"
+msgid "Family Name Mk.1"
+msgstr "Семейство Mk.1"
+
+msgctxt "C08F8647484002CCC38A78938534A251"
+msgid "Mk5 (5)"
+msgstr "Mk5 (5)"
+
+msgctxt "C0E174744867FC71F8E879B5AE7D69EE"
+msgid "Mk4 (4)"
+msgstr "Mk4 (4)"
+
+msgctxt "C34C1A5F452AB8290A9A00BA9D73780D"
+msgid "Target Tier:"
+msgstr "Целевой уровень:"
+
+msgctxt "C6DDD93A4DEF142BBA1E08BBE2381F1B"
+msgid "Repair result will appear here"
+msgstr "Здесь появится результат ремонта"
+
+msgctxt "CB15E1A74E71CFAEDB6CA3AA8994C227"
+msgid "Close"
+msgstr "Закрыть"
+
+msgctxt "CDF7639140F228F3095085B61DF1FC1A"
+msgid "Not saved"
+msgstr "Не сохранено"
+
+msgctxt "SmartFoundations,Config.Description"
+msgid "Smart! Foundations settings."
+msgstr "Настройки Smart! Foundations."
+
+msgctxt "SmartFoundations,Config.DisplayName"
+msgid "Smart!"
+msgstr "Smart!"
+
+msgctxt "SmartFoundations,Config.Root.Name"
+msgid "Smart!"
+msgstr "Smart!"
+
+msgctxt "SmartFoundations,Config.Root.Tooltip"
+msgid "Smart! Foundations settings."
+msgstr "Настройки Smart! Foundations."
+
+msgctxt "D042222F4CF5B96FB75D6AB15DFD0645"
+msgid "Cross Train Platforms"
+msgstr "Через ж/д платформы"
+
+msgctxt "D09E94C0499C4C4F3E606D9E2461B19A"
+msgid "Toggle Smart Settings Form"
+msgstr "Переключить форму настроек Smart"
+
+msgctxt "D16C08E24764156DC1CBDAB0287C8627"
+msgid "Default"
+msgstr "По умолчанию"
+
+msgctxt "D5988C104C18248A9BFD8485A40BE7BF"
+msgid "Triage"
+msgstr "Диагностика"
+
+msgctxt "D62D58CF4AFE88D8DE519488D31F424F"
+msgid "Scale Up/Down"
+msgstr "Масштаб вверх/вниз"
+
+msgctxt "DD0B98B04A427071B009D7BAA464B531"
+msgid "Save New Preset"
+msgstr "Сохранить новый пресет"
+
+msgctxt "DFC6C7C441EFDC29C8E28F8F68C31EC1"
+msgid "Always (0)"
+msgstr "Всегда (0)"
+
+msgctxt "E148F27C4C01935B4E019BA49F4A0F55"
+msgid "Steps Up/Down"
+msgstr "Ступени вверх/вниз"
+
+msgctxt "E3CA9AD8424D9B1B3B996C97C1F70A61"
+msgid "Rotation Mode"
+msgstr "Режим вращения"
+
+msgctxt "E522B9984A797E90FDF435B93981833C"
+msgid "Smart! Rotation"
+msgstr "Smart! Вращение"
+
+msgctxt "E66C9E5840CD757371D1B2A26B0937F7"
+msgid "Scan network to see costs"
+msgstr "Сканируйте сеть для просмотра стоимости"
+
+msgctxt "E7D5F1A145882159A49EE89DEAA01EF5"
+msgid "Hold to activate sideways offset (modifier key)"
+msgstr "Удерживайте для активации бокового сдвига (клавиша-модификатор)"
+
+msgctxt "E9350DEF466B0A2E9F7FBDB9FA947A97"
+msgid "Never (2)"
+msgstr "Никогда (2)"
+
+msgctxt "EA82618C44B70702397E7E97036E946B"
+msgid "Show Direction Arrows (can be overridden)"
+msgstr "Показывать стрелки направления"
+
+msgctxt "F10D935E43878D99436DE5979A4E7EFD"
+msgid "Adjust spacing for currently selected axis"
+msgstr "Настройка интервала для выбранной оси"
+
+msgctxt "F484CB0045E1F6610752E19D98C01DFE"
+msgid "Smart! Interface"
+msgstr "Smart! Интерфейс"
+
+msgctxt "F506AD1F41CF8A81A27FC0A480EAE8B8"
+msgid "Smart Restore"
+msgstr "Smart! Восстановление"
+
+msgctxt "F5885ED64196DAF6BE5F878ED0AF0A29"
+msgid "Smart! Stagger"
+msgstr "Smart! Смещение"
+
+msgctxt "F87C5DEE489864EDB5D02386C86E62CF"
+msgid "Recipe Up/Down"
+msgstr "Рецепт вверх/вниз"
+
+msgctxt "F8E467094A594E5C21A542B94D14B1E6"
+msgid "+"
+msgstr "+"
+
+msgctxt "FA69B4C54C1F9AC00819708F1BD00666"
+msgid "Hold to scale Y-axis. Combine with X modifier to scale Z-axis."
+msgstr "Удерживайте для масштабирования оси Y. Сочетайте с модификатором X для оси Z."
+
+msgctxt "FA953BD649A5AEE3F69CB7AFE9E2A43A"
+msgid "Route mouse wheel input to the active Smart! feature (scaling, spacing, steps, or stagger)"
+msgstr "Направить ввод колеса мыши на активную функцию Smart! (масштабирование, интервал, ступени или смещение)"
+
+msgctxt "FD2BEAF2493FD288E0C03FB923FE3E94"
+msgid "Ready"
+msgstr "Готово"
+
+msgctxt "FD8B2189447F09294CBA09A02293BB9C"
+msgid "Core Smart! Foundations settings for HUD display and default scale values"
+msgstr "Основные настройки Smart! Foundations для отображения HUD и значений масштаба по умолчанию"
+
+msgctxt "FECC44E2411C81715010F7B2FAD081E6"
+msgid "Scale Y Modifier"
+msgstr "Модификатор масштаба Y"
+
+msgctxt "FF3BF8944642F2DEE83E0685A53303EE"
+msgid "Adjust Recipe"
+msgstr "Настроить рецепт"
+
+msgctxt "SmartFoundations,HUD_RestoreActive"
+msgid "*Restore Active"
+msgstr "*Восстановление активно"
+
+msgctxt "SmartFoundations,HUD_RestorePreset"
+msgid "*Restore: {0}"
+msgstr "*Восстановление: {0}"
+
+msgctxt "SmartFoundations,HUD_Walk"
+msgid "*Walk  {0} seg | head {1} {2}deg | {3}"
+msgstr "*Ходьба  {0} сег | курс {1} {2}° | {3}"
+
+msgctxt "SmartFoundations,HUD_WalkAdvance"
+msgid "Advance{0}: {1}m"
+msgstr "Вперёд{0}: {1}м"
+
+msgctxt "SmartFoundations,HUD_WalkRise"
+msgid "Rise{0}: {1}m"
+msgstr "Подъём{0}: {1}м"
+
+msgctxt "SmartFoundations,HUD_WalkShift"
+msgid "Shift{0}: {1}m"
+msgstr "Сдвиг{0}: {1}м"
+
+msgctxt "SmartFoundations,HUD_WalkTurn"
+msgid "Turn{0}: {1}°"
+msgstr "Поворот{0}: {1}°"
+
+msgctxt "SmartFoundations,HUD_Walk_Belt"
+msgid "belt"
+msgstr "лента"
+
+msgctxt "SmartFoundations,HUD_Walk_Pipe"
+msgid "pipe"
+msgstr "труба"
+
+msgctxt "SmartFoundations,Hint_CycleMode"
+msgid "Cycle Mode"
+msgstr "Сменить режим"
+
+msgctxt "SmartFoundations,Hint_Recipe"
+msgid "Recipe"
+msgstr "Рецепт"
+
+msgctxt "SmartFoundations,Hint_Rotation"
+msgid "Rotation"
+msgstr "Вращение"
+
+msgctxt "SmartFoundations,Hint_ScaleX"
+msgid "Scale X"
+msgstr "Масштаб X"
+
+msgctxt "SmartFoundations,Hint_ScaleY"
+msgid "Scale Y"
+msgstr "Масштаб Y"
+
+msgctxt "SmartFoundations,Hint_ScaleZ"
+msgid "Scale Z"
+msgstr "Масштаб Z"
+
+msgctxt "SmartFoundations,Hint_SmartPanel"
+msgid "Smart Panel"
+msgstr "Smart Панель"
+
+msgctxt "SmartFoundations,Hint_Spacing"
+msgid "Spacing"
+msgstr "Интервал"
+
+msgctxt "SmartFoundations,Hint_Stagger"
+msgid "Stagger"
+msgstr "Смещение"
+
+msgctxt "SmartFoundations,Hint_Steps"
+msgid "Steps"
+msgstr "Ступени"
+
+msgctxt "SmartFoundations,P.BeltLevelMain"
+msgid "Manifold Lane Belt"
+msgstr "Лента коллектора"
+
+msgctxt "SmartFoundations,P.BeltLevelMain.TT"
+msgid "Belt tier for distributor-to-distributor (manifold) connections. Auto uses the highest tier you've unlocked."
+msgstr "Уровень ленты для соединений между распределителями (коллектор). «Авто» использует наивысший открытый уровень."
+
+msgctxt "SmartFoundations,P.BeltLevelToBuilding"
+msgid "Factory Belt"
+msgstr "Лента к зданию"
+
+msgctxt "SmartFoundations,P.BeltLevelToBuilding.TT"
+msgid "Belt tier for distributor-to-building connections. Auto uses the highest tier you've unlocked."
+msgstr "Уровень ленты для соединений распределителя со зданием. «Авто» использует наивысший открытый уровень."
+
+msgctxt "SmartFoundations,P.BeltRoutingMode"
+msgid "Belt Routing Mode"
+msgstr "Режим прокладки лент"
+
+msgctxt "SmartFoundations,P.BeltRoutingMode.TT"
+msgid "How auto-connected belts are shaped: Default, Curve, or Straight."
+msgstr "Форма автоматически подключаемых лент: по умолчанию, дугой или прямой."
+
+msgctxt "SmartFoundations,P.HUDPositionX"
+msgid "HUD Position X"
+msgstr "Позиция HUD X"
+
+msgctxt "SmartFoundations,P.HUDPositionX.TT"
+msgid "Horizontal position of the HUD on screen (0 = left edge, 1 = right edge)."
+msgstr "Горизонтальная позиция HUD на экране (0 = левый край, 1 = правый край)."
+
+msgctxt "SmartFoundations,P.HUDPositionY"
+msgid "HUD Position Y"
+msgstr "Позиция HUD Y"
+
+msgctxt "SmartFoundations,P.HUDPositionY.TT"
+msgid "Vertical position of the HUD on screen (0 = top, 1 = bottom)."
+msgstr "Вертикальная позиция HUD на экране (0 = вверху, 1 = внизу)."
+
+msgctxt "SmartFoundations,P.HUDScale"
+msgid "HUD Scale"
+msgstr "Масштаб HUD"
+
+msgctxt "SmartFoundations,P.HUDScale.TT"
+msgid "Size of the Smart! HUD overlay."
+msgstr "Размер наложения HUD Smart!."
+
+msgctxt "SmartFoundations,P.HUDTheme"
+msgid "HUD Theme"
+msgstr "Тема HUD"
+
+msgctxt "SmartFoundations,P.HUDTheme.TT"
+msgid "Color theme for the HUD: Default (FICSIT orange), Dark, Classic, High Contrast, Minimal, or Monochrome."
+msgstr "Цветовая тема HUD: по умолчанию (оранжевая FICSIT), тёмная, классическая, высокий контраст, минимальная или монохром."
+
+msgctxt "SmartFoundations,P.PipeIndicator"
+msgid "Flow Indicator"
+msgstr "Индикатор потока"
+
+msgctxt "SmartFoundations,P.PipeIndicator.TT"
+msgid "Show a flow-direction indicator on auto-connected pipes."
+msgstr "Показывать индикатор направления потока на автоматически подключённых трубах."
+
+msgctxt "SmartFoundations,P.PipeLevelMain"
+msgid "Main Tier"
+msgstr "Основной уровень"
+
+msgctxt "SmartFoundations,P.PipeLevelMain.TT"
+msgid "Pipe tier for the main connections. Auto uses the highest tier you've unlocked."
+msgstr "Уровень труб для основных соединений. «Авто» использует наивысший открытый уровень."
+
+msgctxt "SmartFoundations,P.PipeLevelToBuilding"
+msgid "To Building"
+msgstr "К зданию"
+
+msgctxt "SmartFoundations,P.PipeLevelToBuilding.TT"
+msgid "Pipe tier for connections to buildings. Auto uses the highest tier you've unlocked."
+msgstr "Уровень труб для соединений со зданиями. «Авто» использует наивысший открытый уровень."
+
+msgctxt "SmartFoundations,P.PipeRoutingMode"
+msgid "Pipe Routing Mode"
+msgstr "Режим прокладки труб"
+
+msgctxt "SmartFoundations,P.PipeRoutingMode.TT"
+msgid "How auto-connected pipes are shaped: Auto, 2D, Straight, Curve, Noodle, or Horizontal-to-Vertical."
+msgstr "Форма автоматически подключаемых труб: авто, 2D, прямая, дуга, лапша или из горизонтали в вертикаль."
+
+msgctxt "SmartFoundations,P.PowerConnectMode"
+msgid "Grid Axis"
+msgstr "Ось сетки"
+
+msgctxt "SmartFoundations,P.PowerConnectMode.TT"
+msgid "Which directions power poles connect: Auto, X only, Y only, or both X and Y."
+msgstr "Направления, в которых соединяются электростолбы: авто, только X, только Y или X и Y."
+
+msgctxt "SmartFoundations,P.PowerConnectRange"
+msgid "Connection Range"
+msgstr "Дальность подключения"
+
+msgctxt "SmartFoundations,P.PowerConnectRange.TT"
+msgid "Maximum distance, in meters, to search for a power connection."
+msgstr "Максимальное расстояние в метрах для поиска подключения к энергосети."
+
+msgctxt "SmartFoundations,P.PowerConnectReserved"
+msgid "Connections to Keep Free"
+msgstr "Свободных подключений"
+
+msgctxt "SmartFoundations,P.PowerConnectReserved.TT"
+msgid "Number of pole connection slots to leave free for your own manual wiring."
+msgstr "Число слотов подключения на столбе, оставляемых свободными для ручной прокладки проводов."
+
+msgctxt "SmartFoundations,P.bApplyImmediately"
+msgid "Apply Immediately"
+msgstr "Применять сразу"
+
+msgctxt "SmartFoundations,P.bApplyImmediately.TT"
+msgid "Apply Smart Panel changes instantly instead of clicking the Apply button."
+msgstr "Применять изменения Smart Панели мгновенно, без нажатия кнопки «Применить»."
+
+msgctxt "SmartFoundations,P.bAutoConnectDistributors"
+msgid "Use Manifold Lane Belts"
+msgstr "Ленты коллектора"
+
+msgctxt "SmartFoundations,P.bAutoConnectDistributors.TT"
+msgid "Chain distributors together with manifold lane belts, so a whole row is fed from one input."
+msgstr "Соединять распределители друг с другом лентами коллектора, чтобы весь ряд питался от одного входа."
+
+msgctxt "SmartFoundations,P.bAutoConnectEnabled"
+msgid "Belt Auto-Connect"
+msgstr "Автоподключение лент"
+
+msgctxt "SmartFoundations,P.bAutoConnectEnabled.TT"
+msgid "Automatically connect conveyor belts between placed buildings and distributors."
+msgstr "Автоматически соединять конвейерные ленты между размещаемыми зданиями и распределителями."
+
+msgctxt "SmartFoundations,P.bAutoHoldOnGridChange"
+msgid "Auto-Hold on Grid Change"
+msgstr "Автофиксация при изменении сетки"
+
+msgctxt "SmartFoundations,P.bAutoHoldOnGridChange.TT"
+msgid "Automatically lock the hologram in place after any grid change. Press the Hold key to release it."
+msgstr "Автоматически фиксировать голограмму на месте после любого изменения сетки. Нажмите клавишу фиксации, чтобы освободить."
+
+msgctxt "SmartFoundations,P.bExtendDaisyChainPoleless"
+msgid "Daisy-Chain Pole-less Factories"
+msgstr "Цепочка зданий без столбов"
+
+msgctxt "SmartFoundations,P.bExtendDaisyChainPoleless.TT"
+msgid "When you Extend a factory that has no power pole and no existing daisy link (starting a fresh manifold), wire the new buildings together with daisy-chain power. Factories already daisy-chained are always continued regardless of this option."
+msgstr "Когда вы продлеваете фабрику без электростолба и без существующей цепочки (начиная новый коллектор), соединяйте новые здания между собой цепочкой питания. Уже соединённые в цепочку фабрики всегда продолжаются независимо от этой опции."
+
+msgctxt "SmartFoundations,P.bExtendDaisyChainPower"
+msgid "Extend Daisy-Chain Power"
+msgstr "Цепочка питания при продлении"
+
+msgctxt "SmartFoundations,P.bExtendDaisyChainPower.TT"
+msgid "Once Upgraded Power Connectors is unlocked, Extend wires power directly building-to-building along the lane instead of running a pole to each building."
+msgstr "После открытия улучшенных силовых разъёмов продление подаёт питание напрямую от здания к зданию вдоль ряда, вместо прокладки столба к каждому зданию."
+
+msgctxt "SmartFoundations,P.bExtendEnabled"
+msgid "Extend Enabled"
+msgstr "Продление включено"
+
+msgctxt "SmartFoundations,P.bExtendEnabled.TT"
+msgid "Enable Extend - repeat a building or grid outward in one direction."
+msgstr "Включить продление — повторение здания или сетки в одном направлении."
+
+msgctxt "SmartFoundations,P.bExtendPowerEnabled"
+msgid "Extend Power Poles"
+msgstr "Продление электростолбов"
+
+msgctxt "SmartFoundations,P.bExtendPowerEnabled.TT"
+msgid "Include power poles when using Extend."
+msgstr "Включать электростолбы при использовании продления."
+
+msgctxt "SmartFoundations,P.bPipeAutoConnectEnabled"
+msgid "Pipe Auto-Connect"
+msgstr "Автоподключение труб"
+
+msgctxt "SmartFoundations,P.bPipeAutoConnectEnabled.TT"
+msgid "Automatically connect pipes between placed buildings."
+msgstr "Автоматически соединять трубы между размещаемыми зданиями."
+
+msgctxt "SmartFoundations,P.bPowerAutoConnectEnabled"
+msgid "Power Auto-Connect"
+msgstr "Автоподключение энергии"
+
+msgctxt "SmartFoundations,P.bPowerAutoConnectEnabled.TT"
+msgid "Automatically wire power between placed buildings and nearby power poles."
+msgstr "Автоматически подавать питание между размещаемыми зданиями и ближайшими электростолбами."
+
+msgctxt "SmartFoundations,P.bShowArrowLabels"
+msgid "Arrow Axis Labels"
+msgstr "Метки осей стрелок"
+
+msgctxt "SmartFoundations,P.bShowArrowLabels.TT"
+msgid "Show X/Y/Z axis labels on the direction arrows."
+msgstr "Показывать метки осей X/Y/Z на стрелках направления."
+
+msgctxt "SmartFoundations,P.bShowArrowOrbit"
+msgid "Arrow Orbit Animation"
+msgstr "Анимация орбиты стрелок"
+
+msgctxt "SmartFoundations,P.bShowArrowOrbit.TT"
+msgid "Animate the arrows orbiting the hologram. Turn off for static arrows that still track you."
+msgstr "Анимировать вращение стрелок вокруг голограммы. Отключите для статичных стрелок, которые всё равно следуют за вами."
+
+msgctxt "SmartFoundations,P.bShowArrows"
+msgid "Show Direction Arrows"
+msgstr "Показывать стрелки направления"
+
+msgctxt "SmartFoundations,P.bShowArrows.TT"
+msgid "Show X/Y/Z direction arrows on the building hologram."
+msgstr "Показывать стрелки направления X/Y/Z на голограмме здания."
+
+msgctxt "SmartFoundations,P.bShowHUD"
+msgid "Show HUD Overlay"
+msgstr "Показывать HUD"
+
+msgctxt "SmartFoundations,P.bShowHUD.TT"
+msgid "Show the Smart! overlay (grid, scale, and recipe info) while building."
+msgstr "Показывать наложение Smart! (сетка, масштаб и сведения о рецепте) во время строительства."
+
+msgctxt "SmartFoundations,P.bStackableBeltEnabled"
+msgid "Stackable Belt Auto-Connect"
+msgstr "Стекируемые ленты"
+
+msgctxt "SmartFoundations,P.bStackableBeltEnabled.TT"
+msgid "Allow auto-connected belts to stack vertically where they overlap."
+msgstr "Разрешить автоматически подключаемым лентам стекироваться вертикально при пересечении."
+
+msgctxt "SmartFoundations,Panel_Btn_ApplyPreset"
+msgid "Apply"
+msgstr "Применить"
+
+msgctxt "SmartFoundations,Panel_Btn_DeletePreset"
+msgid "Delete"
+msgstr "Удалить"
+
+msgctxt "SmartFoundations,Panel_Btn_ExportPreset"
+msgid "Export to Clipboard"
+msgstr "Экспорт в буфер обмена"
+
+msgctxt "SmartFoundations,Panel_Btn_ImportFromExtend"
+msgid "Import from Last Extend"
+msgstr "Импорт из последнего продления"
+
+msgctxt "SmartFoundations,Panel_Btn_ImportPreset"
+msgid "Import from Clipboard"
+msgstr "Импорт из буфера обмена"
+
+msgctxt "SmartFoundations,Panel_Btn_SavePreset"
+msgid "Save Current"
+msgstr "Сохранить текущее"
+
+msgctxt "SmartFoundations,Panel_Btn_SmartWalking"
+msgid "Smart Walking"
+msgstr "Smart Ходьба"
+
+msgctxt "SmartFoundations,Panel_Btn_UpdatePreset"
+msgid "Update"
+msgstr "Обновить"
+
+msgctxt "SmartFoundations,Panel_Restore_Capture"
+msgid "Capture:"
+msgstr "Захват:"
+
+msgctxt "SmartFoundations,Panel_Restore_CaptureAutoConnect"
+msgid "Auto-Connect"
+msgstr "Автоподключение"
+
+msgctxt "SmartFoundations,Panel_Restore_CaptureGrid"
+msgid "Grid"
+msgstr "Сетка"
+
+msgctxt "SmartFoundations,Panel_Restore_CaptureRecipe"
+msgid "Recipe"
+msgstr "Рецепт"
+
+msgctxt "SmartFoundations,Panel_Restore_CaptureRotation"
+msgid "Rotation"
+msgstr "Вращение"
+
+msgctxt "SmartFoundations,Panel_Restore_CaptureSpacing"
+msgid "Spacing"
+msgstr "Интервал"
+
+msgctxt "SmartFoundations,Panel_Restore_CaptureStagger"
+msgid "Stagger"
+msgstr "Смещение"
+
+msgctxt "SmartFoundations,Panel_Restore_CaptureSteps"
+msgid "Steps"
+msgstr "Ступени"
+
+msgctxt "SmartFoundations,Panel_Restore_CreatedAt"
+msgid "Created:"
+msgstr "Создано:"
+
+msgctxt "SmartFoundations,Panel_Restore_DeleteMessage"
+msgid "Delete preset '{0}'?"
+msgstr "Удалить пресет «{0}»?"
+
+msgctxt "SmartFoundations,Panel_Restore_DeleteTitle"
+msgid "Delete Preset"
+msgstr "Удалить пресет"
+
+msgctxt "SmartFoundations,Panel_Restore_Description"
+msgid "Description:"
+msgstr "Описание:"
+
+msgctxt "SmartFoundations,Panel_Restore_NotSaved"
+msgid "Not saved"
+msgstr "Не сохранено"
+
+msgctxt "SmartFoundations,Panel_Restore_OverwriteMessage"
+msgid "A preset named '{0}' already exists. Overwrite?"
+msgstr "Пресет с именем «{0}» уже существует. Перезаписать?"
+
+msgctxt "SmartFoundations,Panel_Restore_OverwriteTitle"
+msgid "Overwrite Preset"
+msgstr "Перезаписать пресет"
+
+msgctxt "SmartFoundations,Panel_Restore_PresetName"
+msgid "New Preset Name:"
+msgstr "Имя нового пресета:"
+
+msgctxt "SmartFoundations,Panel_Restore_SelectPreset"
+msgid "Selected Preset:"
+msgstr "Выбранный пресет:"
+
+msgctxt "SmartFoundations,Panel_Section_Presets"
+msgid "Smart Restore"
+msgstr "Smart! Восстановление"
+
+msgctxt "SmartFoundations,Sec.Arrows"
+msgid "Arrows"
+msgstr "Стрелки"
+
+msgctxt "SmartFoundations,Sec.Arrows.TT"
+msgid "Directional arrows drawn on the building hologram."
+msgstr "Стрелки направления, рисуемые на голограмме здания."
+
+msgctxt "SmartFoundations,Sec.Belt"
+msgid "Belt Auto-Connect"
+msgstr "Автоподключение лент"
+
+msgctxt "SmartFoundations,Sec.Belt.TT"
+msgid "Automatically run conveyor belts between the buildings you place."
+msgstr "Автоматически прокладывать конвейерные ленты между размещаемыми зданиями."
+
+msgctxt "SmartFoundations,Sec.Building"
+msgid "Building Behavior"
+msgstr "Поведение при строительстве"
+
+msgctxt "SmartFoundations,Sec.Building.TT"
+msgid "How Extend, auto-hold, and Apply behave while building."
+msgstr "Как ведут себя продление, автофиксация и применение во время строительства."
+
+msgctxt "SmartFoundations,Sec.HUD"
+msgid "HUD"
+msgstr "HUD"
+
+msgctxt "SmartFoundations,Sec.HUD.TT"
+msgid "The on-screen Smart! overlay shown while you build."
+msgstr "Экранное наложение Smart!, отображаемое во время строительства."
+
+msgctxt "SmartFoundations,Sec.Pipe"
+msgid "Pipe Auto-Connect"
+msgstr "Автоподключение труб"
+
+msgctxt "SmartFoundations,Sec.Pipe.TT"
+msgid "Automatically run pipes between the buildings you place."
+msgstr "Автоматически прокладывать трубы между размещаемыми зданиями."
+
+msgctxt "SmartFoundations,Sec.Power"
+msgid "Power Auto-Connect"
+msgstr "Автоподключение энергии"
+
+msgctxt "SmartFoundations,Sec.Power.TT"
+msgid "Automatically wire power between buildings and power poles as you build."
+msgstr "Автоматически подавать питание между зданиями и электростолбами во время строительства."
+
+msgctxt "SmartFoundations,Upgrade_ErrRCO"
+msgid "Error: server connection unavailable"
+msgstr "Ошибка: соединение с сервером недоступно"
+
+msgctxt "SmartFoundations,Upgrade_ErrRCOScan"
+msgid "Error: server connection unavailable"
+msgstr "Ошибка: соединение с сервером недоступно"
+
+msgctxt "SmartFoundations,Walk_ApplyImmediately"
+msgid "apply immediately"
+msgstr "применять сразу"
+
+msgctxt "SmartFoundations,Walk_Btn_Scaling"
+msgid "‹ Scaling"
+msgstr "‹ Масштабирование"
+
+msgctxt "SmartFoundations,Walk_Col_Advance"
+msgid "Advance m"
+msgstr "Вперёд, м"
+
+msgctxt "SmartFoundations,Walk_Col_Exit"
+msgid "Exit"
+msgstr "Курс на выходе"
+
+msgctxt "SmartFoundations,Walk_Col_Rise"
+msgid "Rise m"
+msgstr "Подъём, м"
+
+msgctxt "SmartFoundations,Walk_Col_Shift"
+msgid "Shift m"
+msgstr "Сдвиг, м"
+
+msgctxt "SmartFoundations,Walk_Col_Turn"
+msgid "Turn"
+msgstr "Поворот"
+
+msgctxt "SmartFoundations,Walk_Conveyance_Belt"
+msgid "Belt"
+msgstr "Лента"
+
+msgctxt "SmartFoundations,Walk_Conveyance_Pipe"
+msgid "Pipe"
+msgstr "Труба"
+
+msgctxt "SmartFoundations,Walk_Lbl_Direction"
+msgid "Direction"
+msgstr "Направление"
+
+msgctxt "SmartFoundations,Walk_Lbl_PipeStyle"
+msgid "Pipe Style"
+msgstr "Стиль трубы"
+
+msgctxt "SmartFoundations,Walk_Lbl_Routing"
+msgid "Routing"
+msgstr "Маршрутизация"
+
+msgctxt "SmartFoundations,Walk_Lbl_Tier"
+msgid "Tier"
+msgstr "Уровень"
+
+msgctxt "SmartFoundations,Walk_Opt_Auto"
+msgid "Auto"
+msgstr "Авто"
+
+msgctxt "SmartFoundations,Walk_Opt_Auto2D"
+msgid "Auto 2D"
+msgstr "Авто 2D"
+
+msgctxt "SmartFoundations,Walk_Opt_Backward"
+msgid "Backward"
+msgstr "Назад"
+
+msgctxt "SmartFoundations,Walk_Opt_Clean"
+msgid "Clean"
+msgstr "Чистый"
+
+msgctxt "SmartFoundations,Walk_Opt_Curve"
+msgid "Curve"
+msgstr "Дуга"
+
+msgctxt "SmartFoundations,Walk_Opt_Default"
+msgid "Default"
+msgstr "По умолчанию"
+
+msgctxt "SmartFoundations,Walk_Opt_Forward"
+msgid "Forward"
+msgstr "Вперёд"
+
+msgctxt "SmartFoundations,Walk_Opt_HToV"
+msgid "H->V"
+msgstr "Гориз→Верт"
+
+msgctxt "SmartFoundations,Walk_Opt_Noodle"
+msgid "Noodle"
+msgstr "Лапша"
+
+msgctxt "SmartFoundations,Walk_Opt_Normal"
+msgid "Normal"
+msgstr "Обычный"
+
+msgctxt "SmartFoundations,Walk_Opt_Straight"
+msgid "Straight"
+msgstr "Прямая"
+
+msgctxt "SmartFoundations,Walk_Summary"
+msgid "{0} {0}|plural(one=segment,other=segments)  ·  head {1} {2} deg  ·  {3}"
+msgstr "{0} {0}|plural(one=сегмент,few=сегмента,many=сегментов,other=сегмента)  ·  курс {1} {2} °  ·  {3}"
