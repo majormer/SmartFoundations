@@ -23,7 +23,7 @@ DEFINE_LOG_CATEGORY_STATIC(LogSmartWalkBelt, Log, All);
 // the routed spline stays under the vanilla limit — this matches the ~54m practical max observed in-game. (Stackable AC
 // uses the full ~56m chord because its grid belts are straight; the walk curves on turns, so it needs the margin.)
 // Beyond this, LinkOrUpdate refuses the span and the segment shows a gap, exactly like stackable AC's skip-when-too-far.
-static constexpr float SF_WALK_MAX_SPAN_CM = USFAutoConnectService::MAX_PIPE_LENGTH - 200.0f;   // ~5401 cm / 54 m
+static constexpr float SF_WALK_MAX_SPAN_CM = USFAutoConnectService::MAX_PIPE_LENGTH;   // 5601 cm / ~56 m — the vanilla single-span max (same as stackable auto-connect); over this the span is skipped and the segment reds
 
 void USFWalkConveyance::SetSubsystem(USFSubsystem* InSubsystem)
 {

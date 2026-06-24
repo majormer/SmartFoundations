@@ -341,11 +341,17 @@ TPair<FString, FString> USFHudService::BuildCounterDisplayLines() const
 			// Compact one-line badge — heading now shows the 16-point compass + degrees, and the per-segment detail
 			// lives in the Walk panel, not the HUD (this used to be two verbose lines that cluttered the screen).
 			if (!Subsystem->IsWalkPanelVisible())   // panel shows this readout itself; HUD draws over it (badge returns when the panel is hidden via K)
-			Lines.Add(FText::Format(LOCTEXT("HUD_Walk", "*Walk  {0} seg | head {1} {2}deg | {3}"),
-				FText::AsNumber(Views.Num()),
-				FText::FromString(SFHeadingToCompass16(HeadDeg)),
-				FText::AsNumber(FMath::RoundToInt(HeadDeg)),
-				Conveyance).ToString());
+			{
+				FString WalkLine = FText::Format(LOCTEXT("HUD_Walk", "*Walk  {0} seg | head {1} {2}deg | {3}"),
+					FText::AsNumber(Views.Num()),
+					FText::FromString(SFHeadingToCompass16(HeadDeg)),
+					FText::AsNumber(FMath::RoundToInt(HeadDeg)),
+					Conveyance).ToString();
+				// Explain WHY a walk is invalid (too long / too steep) right in the badge — mirrors Extend's [reason] append.
+				const FString InvalidReason = Walk->GetInvalidShapeReason();
+				if (!InvalidReason.IsEmpty()) { WalkLine += FString::Printf(TEXT("  [%s]"), *InvalidReason); }
+				Lines.Add(WalkLine);
+			}
 		}
 	}
 

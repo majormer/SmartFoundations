@@ -241,7 +241,8 @@ FSFWalkCommitSpec USFWalkService::BuildCommitSpec() const
         for (const TWeakObjectPtr<AFGHologram>& S : Seg.Spans)     { AddCost(S.Get(), TEXT("span")); }
     }
 
-    Spec.bValid = true;
+    // Block the commit when any segment is an invalid SHAPE (too long / too steep) — the same restriction the previews red.
+    Spec.bValid = !HasInvalidSegmentShape();
     UE_LOG(LogSmartWalk, Verbose, TEXT("BuildCommitSpec: %d segment(s), beltMode=%d tier=%d, %d cost item type(s) TOTAL"),
         Spec.Segments.Num(), Spec.BeltRoutingMode, Spec.BeltTier, Spec.Cost.Num());
     return Spec;
@@ -846,6 +847,67 @@ void USFWalkService::SyncToSeedTransform()
     RepositionFrom(0);
 }
 
+FString USFWalkService::GetSegmentShapeError(int32 Index) const
+{
+    if (!Segments.IsValidIndex(Index)) { return FString(); }
+    const TArray<TWeakObjectPtr<AFGHologram>>& Prev = (Index == 0) ? OriginHolograms : Segments[Index - 1].Holograms;
+    const TArray<TWeakObjectPtr<AFGHologram>>& Cur  = Segments[Index].Holograms;
+    if (!Prev.IsValidIndex(0) || !Cur.IsValidIndex(0)) { return FString(); }   // no center cell to measure -> can't flag
+    AFGHologram* A = Prev[0].Get();
+    AFGHologram* B = Cur[0].Get();
+    if (!IsValid(A) || !IsValid(B)) { return FString(); }
+    const FVector PA = A->GetActorLocation();
+    const FVector PB = B->GetActorLocation();
+    const float Dist = FVector::Dist(PA, PB);
+    // Length: a single span can't exceed the vanilla max spline length (mirrors SFAutoConnectService_Stackable's cap).
+    if (Dist > USFAutoConnectService::MAX_PIPE_LENGTH)
+    {
+        FFormatOrderedArguments Args;
+        Args.Add(Index + 1);
+        Args.Add(FMath::RoundToInt(Dist / 100.0f));
+        return FText::Format(NSLOCTEXT("SmartFoundations", "Walk_Invalid_TooLong", "segment {0} too long ({1}m > 56m)"), Args).ToString();
+    }
+    // Vertical slope: BELTS can't climb steeper than 30deg from horizontal (mirrors auto-connect: asin(|dir.Z|) > 30).
+    // PIPES are exempt — they route fine at steep/vertical angles depending on the routing mode.
+    if (GetConveyanceType() != ESFWalkConveyanceType::Pipe)
+    {
+        const FVector Dir = (PB - PA).GetSafeNormal();
+        const float SlopeDeg = FMath::RadiansToDegrees(FMath::Asin(FMath::Abs(Dir.Z)));
+        if (SlopeDeg > 30.0f)
+        {
+            FFormatOrderedArguments Args;
+            Args.Add(Index + 1);
+            Args.Add(FMath::RoundToInt(SlopeDeg));
+            return FText::Format(NSLOCTEXT("SmartFoundations", "Walk_Invalid_TooSteep", "segment {0} too steep ({1}deg > 30deg)"), Args).ToString();
+        }
+    }
+    return FString();
+}
+
+bool USFWalkService::IsSegmentShapeValid(int32 Index) const
+{
+    return GetSegmentShapeError(Index).IsEmpty();
+}
+
+bool USFWalkService::HasInvalidSegmentShape() const
+{
+    for (int32 i = 0; i < Segments.Num(); ++i)
+    {
+        if (!IsSegmentShapeValid(i)) { return true; }
+    }
+    return false;
+}
+
+FString USFWalkService::GetInvalidShapeReason() const
+{
+    for (int32 i = 0; i < Segments.Num(); ++i)
+    {
+        const FString Err = GetSegmentShapeError(i);
+        if (!Err.IsEmpty()) { return Err; }
+    }
+    return FString();
+}
+
 void USFWalkService::RefreshWalkValidity()
 {
     if (!bActive)
@@ -861,14 +923,22 @@ void USFWalkService::RefreshWalkValidity()
     const bool bAfford = CanAffordWalk();
     const EHologramMaterialState State = bAfford ? EHologramMaterialState::HMS_OK : EHologramMaterialState::HMS_ERROR;
 
-    for (const FSFWalkSegment& Seg : Segments)
+    bool bAnyInvalidShape = false;
+    for (int32 SegIdx = 0; SegIdx < Segments.Num(); ++SegIdx)
     {
+        const FSFWalkSegment& Seg = Segments[SegIdx];
+        // Invalid SHAPE = span too long (>56m) or, for belts, too steep (>30deg from horizontal). Red that segment's
+        // poles AND span (mirrors the auto-connect length/slope restrictions; pipes skip the slope cap). A too-long
+        // segment has no span (LinkOrUpdate skips it), but its poles still red so the gap reads as invalid, not missing.
+        const bool bShapeValid = IsSegmentShapeValid(SegIdx);
+        if (!bShapeValid) { bAnyInvalidShape = true; }
+        const EHologramMaterialState SegState = (bAfford && bShapeValid) ? EHologramMaterialState::HMS_OK : EHologramMaterialState::HMS_ERROR;
         for (const TWeakObjectPtr<AFGHologram>& WeakHolo : Seg.Holograms)
         {
             if (AFGHologram* Holo = WeakHolo.Get())
             {
                 Holo->ResetConstructDisqualifiers();
-                Holo->SetPlacementMaterialState(State);
+                Holo->SetPlacementMaterialState(SegState);
             }
         }
         for (const TWeakObjectPtr<AFGHologram>& WeakBelt : Seg.Spans)
@@ -876,7 +946,7 @@ void USFWalkService::RefreshWalkValidity()
             if (AFGHologram* Belt = WeakBelt.Get())
             {
                 Belt->ResetConstructDisqualifiers();
-                Belt->SetPlacementMaterialState(State);
+                Belt->SetPlacementMaterialState(SegState);
             }
         }
     }
@@ -895,7 +965,7 @@ void USFWalkService::RefreshWalkValidity()
     // The SEED (parent) is the build gun's own hologram — it only knows its own 1-pole cost, so it stays cyan even when
     // the TOTAL walk is unaffordable. Force it red too when broke (parent AND children red); when affordable, leave it
     // to the build gun's own validation so we don't fight it.
-    if (!bAfford && SeedH)
+    if ((!bAfford || bAnyInvalidShape) && SeedH)
     {
         SeedH->SetPlacementMaterialState(EHologramMaterialState::HMS_ERROR);
     }

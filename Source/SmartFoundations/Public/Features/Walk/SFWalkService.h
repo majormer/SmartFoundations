@@ -40,6 +40,10 @@ public:
     /** Which conveyance the active walk is laying (belt vs pipe) - for the HUD badge + panel labels. */
     ESFWalkConveyanceType GetConveyanceType() const { return ConveyanceType; }
 
+    /** The first invalid-segment reason (e.g. "segment 2 too steep (83deg > 30deg)"), or empty if every segment shape is
+     *  valid. Shown appended to the HUD walk badge — mirrors Extend's [INVALID]/[reason] pattern. */
+    FString GetInvalidShapeReason() const;
+
     /**
      * Begin a walk seeded from the held build-gun hologram. Captures the origin frame from the seed,
      * seeds the first active segment, and spawns its placeholder. Returns false if it can't start.
@@ -171,6 +175,16 @@ private:
     /** True if the player can afford the whole walk (all non-seed holograms' summed cost vs inventory + central storage;
      *  always true under No Build Cost). Drives the red/cyan preview state in RefreshWalkValidity. */
     bool CanAffordWalk() const;
+
+    /** Reason string if segment Index's span is an invalid SHAPE — too long (>56m) or, for belts, too steep (>30deg;
+     *  pipes exempt). Empty = valid. Geometry mirrors the stackable auto-connect length/slope caps. */
+    FString GetSegmentShapeError(int32 Index) const;
+
+    /** Convenience: GetSegmentShapeError(Index).IsEmpty(). */
+    bool IsSegmentShapeValid(int32 Index) const;
+
+    /** True if ANY segment has an invalid shape — reds the seed + blocks the commit (BuildCommitSpec bValid=false). */
+    bool HasInvalidSegmentShape() const;
 
     /** Nudge-the-parent auto-rebase: if the seed (parent) has been nudged since last frame, re-anchor OriginFrame to it
      *  and reposition the origin cells + every segment so the whole run moves rigidly with the parent (like AC poles).
