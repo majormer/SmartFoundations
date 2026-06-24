@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [33.0.0] - Unreleased
+## [33.0.0] - 2026-06-24
 
 > *A major new build mode: **Smart Walking**. Where scaling lays down a rigid uniform grid, Smart Walking builds a **path** — a connected run that walks forward one segment at a time, and each segment can turn a corner, climb a slope, or shift aside. One continuous run of belts or pipes routes exactly where you want it, while you stay put and watch the leading edge crawl across the map through the Smart! Camera. This release also brings Smart! to around 20 languages and gives the Smart! Panel a refresh.*
 
