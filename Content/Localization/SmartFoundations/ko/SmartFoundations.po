@@ -2106,3 +2106,15 @@ msgstr "직선"
 msgctxt "SmartFoundations,Walk_Summary"
 msgid "{0} {0}|plural(one=segment,other=segments)  ·  head {1} {2} deg  ·  {3}"
 msgstr "{0} {0}|plural(other=세그먼트)  ·  방위 {1} {2} 도  ·  {3}"
+
+msgctxt "SmartFoundations,Hint_UpgradePanel"
+msgid "Upgrade Panel"
+msgstr "업그레이드 패널"
+
+msgctxt "SmartFoundations,Walk_Invalid_TooLong"
+msgid "segment {0} too long ({1}m > 56m)"
+msgstr "세그먼트 {0} 너무 긺 ({1}m > 56m)"
+
+msgctxt "SmartFoundations,Walk_Invalid_TooSteep"
+msgid "segment {0} too steep ({1}deg > 30deg)"
+msgstr "세그먼트 {0} 너무 가파름 ({1}도 > 30도)"

@@ -2103,3 +2103,15 @@ msgstr "Straight"
 msgctxt "SmartFoundations,Walk_Summary"
 msgid "{0} {0}|plural(one=segment,other=segments)  ·  head {1} {2} deg  ·  {3}"
 msgstr "{0} {0}|plural(one=segment,other=segmenter)  ·  kurs {1} {2} grader  ·  {3}"
+
+msgctxt "SmartFoundations,Hint_UpgradePanel"
+msgid "Upgrade Panel"
+msgstr "Oppgraderingspanel"
+
+msgctxt "SmartFoundations,Walk_Invalid_TooLong"
+msgid "segment {0} too long ({1}m > 56m)"
+msgstr "segment {0} for lang ({1}m > 56m)"
+
+msgctxt "SmartFoundations,Walk_Invalid_TooSteep"
+msgid "segment {0} too steep ({1}deg > 30deg)"
+msgstr "segment {0} for bratt ({1}deg > 30deg)"

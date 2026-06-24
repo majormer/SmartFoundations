@@ -2106,3 +2106,15 @@ msgstr "Düz"
 msgctxt "SmartFoundations,Walk_Summary"
 msgid "{0} {0}|plural(one=segment,other=segments)  ·  head {1} {2} deg  ·  {3}"
 msgstr "{0} {0}|plural(one=segment,other=segment)  ·  rota {1} {2} deg  ·  {3}"
+
+msgctxt "SmartFoundations,Hint_UpgradePanel"
+msgid "Upgrade Panel"
+msgstr "Yükseltme Paneli"
+
+msgctxt "SmartFoundations,Walk_Invalid_TooLong"
+msgid "segment {0} too long ({1}m > 56m)"
+msgstr "segment {0} çok uzun ({1}m > 56m)"
+
+msgctxt "SmartFoundations,Walk_Invalid_TooSteep"
+msgid "segment {0} too steep ({1}deg > 30deg)"
+msgstr "segment {0} çok dik ({1}derece > 30derece)"

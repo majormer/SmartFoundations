@@ -2106,3 +2106,15 @@ msgstr "Прямая"
 msgctxt "SmartFoundations,Walk_Summary"
 msgid "{0} {0}|plural(one=segment,other=segments)  ·  head {1} {2} deg  ·  {3}"
 msgstr "{0} {0}|plural(one=сегмент,few=сегмента,many=сегментов,other=сегмента)  ·  курс {1} {2} °  ·  {3}"
+
+msgctxt "SmartFoundations,Hint_UpgradePanel"
+msgid "Upgrade Panel"
+msgstr "Панель улучшения"
+
+msgctxt "SmartFoundations,Walk_Invalid_TooLong"
+msgid "segment {0} too long ({1}m > 56m)"
+msgstr "сегмент {0} слишком длинный ({1}м > 56м)"
+
+msgctxt "SmartFoundations,Walk_Invalid_TooSteep"
+msgid "segment {0} too steep ({1}deg > 30deg)"
+msgstr "сегмент {0} слишком крутой ({1}° > 30°)"

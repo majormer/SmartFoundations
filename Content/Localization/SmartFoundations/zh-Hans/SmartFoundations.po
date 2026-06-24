@@ -2106,3 +2106,15 @@ msgstr "直线"
 msgctxt "SmartFoundations,Walk_Summary"
 msgid "{0} {0}|plural(one=segment,other=segments)  ·  head {1} {2} deg  ·  {3}"
 msgstr "{0} {0}|plural(other=段)  ·  朝向 {1} {2} 度  ·  {3}"
+
+msgctxt "SmartFoundations,Hint_UpgradePanel"
+msgid "Upgrade Panel"
+msgstr "升级面板"
+
+msgctxt "SmartFoundations,Walk_Invalid_TooLong"
+msgid "segment {0} too long ({1}m > 56m)"
+msgstr "第 {0} 段过长（{1}m > 56m）"
+
+msgctxt "SmartFoundations,Walk_Invalid_TooSteep"
+msgid "segment {0} too steep ({1}deg > 30deg)"
+msgstr "第 {0} 段过陡（{1}度 > 30度）"

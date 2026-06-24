@@ -2038,3 +2038,15 @@ msgstr "ตรง"
 msgctxt "SmartFoundations,Walk_Summary"
 msgid "{0} {0}|plural(one=segment,other=segments)  ·  head {1} {2} deg  ·  {3}"
 msgstr "{0} {0}|plural(other=เซ็กเมนต์)  ·  ทิศ {1} {2} องศา  ·  {3}"
+
+msgctxt "SmartFoundations,Hint_UpgradePanel"
+msgid "Upgrade Panel"
+msgstr "แผงอัพเกรด"
+
+msgctxt "SmartFoundations,Walk_Invalid_TooLong"
+msgid "segment {0} too long ({1}m > 56m)"
+msgstr "เซ็กเมนต์ {0} ยาวเกินไป ({1}ม. > 56ม.)"
+
+msgctxt "SmartFoundations,Walk_Invalid_TooSteep"
+msgid "segment {0} too steep ({1}deg > 30deg)"
+msgstr "เซ็กเมนต์ {0} ชันเกินไป ({1} องศา > 30 องศา)"

@@ -2038,3 +2038,15 @@ msgstr "مستقيم"
 msgctxt "SmartFoundations,Walk_Summary"
 msgid "{0} {0}|plural(one=segment,other=segments)  ·  head {1} {2} deg  ·  {3}"
 msgstr "{0} {0}|plural(zero=مقطع,one=مقطع,two=مقطعان,few=مقاطع,many=مقطعاً,other=مقطع)  ·  الاتجاه {1} {2} deg  ·  {3}"
+
+msgctxt "SmartFoundations,Hint_UpgradePanel"
+msgid "Upgrade Panel"
+msgstr "لوحة الترقية"
+
+msgctxt "SmartFoundations,Walk_Invalid_TooLong"
+msgid "segment {0} too long ({1}m > 56m)"
+msgstr "المقطع {0} طويل جداً ({1}م > 56م)"
+
+msgctxt "SmartFoundations,Walk_Invalid_TooSteep"
+msgid "segment {0} too steep ({1}deg > 30deg)"
+msgstr "المقطع {0} حاد جداً ({1}deg > 30deg)"
