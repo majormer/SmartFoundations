@@ -55,7 +55,8 @@ AFGHologram* USFWalkBeltConveyance::LinkOrUpdate(AFGHologram* ExistingSpan, AFGH
 
     // #356 belt direction: Backward (StackableBeltDirection == 1) reverses flow by swapping which pole is source vs
     // target (mirrors SFAutoConnectService_Stackable). Applied here so BOTH the create and update paths below honor it.
-    if (Sub->GetAutoConnectRuntimeSettings().StackableBeltDirection == 1)
+    const bool bBackward = (Sub->GetAutoConnectRuntimeSettings().StackableBeltDirection == 1);
+    if (bBackward)
     {
         Swap(FromAnchor, ToAnchor);
     }
@@ -112,6 +113,12 @@ AFGHologram* USFWalkBeltConveyance::LinkOrUpdate(AFGHologram* ExistingSpan, AFGH
     // arrival, folding the belt back at the shared pole (the 270° X-crossing). Straight runs (chord == heading) and the
     // 180° case (chord perpendicular to facing -> dot 0, never flipped) are unaffected.
     FVector EndNormal   = ResolveFacing(ToConn, ToAnchor);
+    // #356 Backward: the swap above reversed the spline (source/dest) so flow runs the other way, but StartNormal/
+    // EndNormal are still computed with the forward "leave along +heading" rule — now from the DOWNSTREAM pole, so the
+    // exit points AWAY from the (now upstream) destination and the belt curls back to reach it ("returns into the back"
+    // / wrong exit). Reverse both exits so a Backward run lays a STRAIGHT reversed belt, not a U-turn — the maintainer's
+    // rule that a reverse flips every pole exit. (The DirN fallbacks below already reflect the swapped geometry.)
+    if (bBackward) { StartNormal = -StartNormal; EndNormal = -EndNormal; }
     if (StartNormal.IsNearlyZero()) { StartNormal = DirN; }
     if (EndNormal.IsNearlyZero())   { EndNormal   = -DirN; }
 

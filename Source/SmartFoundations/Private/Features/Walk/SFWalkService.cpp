@@ -10,6 +10,7 @@
 #include "FGRecipe.h"
 #include "FGFactoryConnectionComponent.h"
 #include "FGCharacterPlayer.h"            // player inventory for walk affordability (red previews when broke)
+#include "FGPlayerController.h"           // resolve "Auto" belt/pipe tier client-side (the server has no local PC)
 #include "FGInventoryComponent.h"
 #include "FGCentralStorageSubsystem.h"
 #include "Resources/FGItemDescriptor.h"  // UFGItemDescriptor key for the cost tally
@@ -208,6 +209,19 @@ FSFWalkCommitSpec USFWalkService::BuildCommitSpec() const
         Spec.PipeRoutingMode = AC.PipeRoutingMode;
         Spec.PipeTier        = AC.PipeTierMain;
         Spec.bPipeIndicator  = AC.bPipeIndicator;
+        Spec.BeltDirection   = AC.StackableBeltDirection;
+
+        // Resolve "Auto" (tier 0) to a concrete tier HERE, on the machine that owns the walk — a client (or the
+        // listen-host) always has a local player. The server reconstruction runs with NO local PlayerController
+        // (null on a dedicated server), where the tier resolver falls back to Mk1, so leaving Auto as 0 would
+        // silently build Mk1 belts/pipes regardless of the player's unlocks. Pinning the concrete tier into the
+        // spec also keeps the committed run matching the previewed tier and the staged cost.
+        if (UWorld* W = Seed->GetWorld())
+        {
+            AFGPlayerController* LocalPC = Cast<AFGPlayerController>(W->GetFirstPlayerController());
+            if (Spec.BeltTier == 0) { Spec.BeltTier = Sub->GetHighestUnlockedBeltTier(LocalPC); }
+            if (Spec.PipeTier == 0) { Spec.PipeTier = Sub->GetHighestUnlockedPipeTier(LocalPC); }
+        }
     }
     Spec.BuildClass = Seed->GetBuildClass();
 
@@ -277,6 +291,7 @@ int32 USFWalkService::ReconstructWalkCommitOnServer(AFGHologram* Seed, const FSF
         Sub->SetAutoConnectPipeRoutingMode(Spec.PipeRoutingMode);
         Sub->SetAutoConnectPipeTierMain(Spec.PipeTier);
         Sub->SetAutoConnectPipeIndicator(Spec.bPipeIndicator);
+        Sub->SetAutoConnectStackableBeltDirection(Spec.BeltDirection);
 
         if (Spec.ConveyanceType == ESFWalkConveyanceType::Pipe)
         {

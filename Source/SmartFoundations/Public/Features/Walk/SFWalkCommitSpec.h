@@ -77,6 +77,11 @@ struct SMARTFOUNDATIONS_API FSFWalkCommitSpec
 	/** Pipe indicator (the flow-indicator variant) the client has set. Only meaningful for pipes. */
 	UPROPERTY() bool bPipeIndicator = true;
 
+	/** Belt flow direction (0=Forward, 1=Backward) the client has set - the server re-installs it before reconstructing
+	 *  so a reversed belt walk builds reversed on a dedicated server (LinkOrUpdate reads it live; it is NOT derivable
+	 *  from the geometry). Only meaningful when ConveyanceType == Belt. */
+	UPROPERTY() int32 BeltDirection = 0;
+
 	/** Seed pole build class - the server only consumes a staged commit for a construct of the SAME
 	 *  class (guards against any client/server fire mismatch or RPC race). */
 	UPROPERTY() TSubclassOf<class AFGBuildable> BuildClass = nullptr;

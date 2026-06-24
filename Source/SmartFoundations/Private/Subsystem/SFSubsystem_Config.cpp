@@ -576,6 +576,20 @@ void USFSubsystem::OnRecipeModeChanged(const FInputActionValue& Value)
 			// Try to acquire lock
 			TryAcquireHologramLock();
 
+			// Smart Walking: the enable toggle is moot during a walk, so don't show it as the entry setting — skip to
+			// the first setting that actually shapes the run (belt Tier / pipe Tier).
+			if (USFWalkService* WalkSvc = GetWalkService(); WalkSvc && WalkSvc->IsActive())
+			{
+				if (CurrentAutoConnectSetting == EAutoConnectSetting::StackableBeltEnabled)
+				{
+					CurrentAutoConnectSetting = EAutoConnectSetting::StackableBeltTier;
+				}
+				else if (CurrentAutoConnectSetting == EAutoConnectSetting::Enabled)
+				{
+					CurrentAutoConnectSetting = EAutoConnectSetting::PipeTierMain;
+				}
+			}
+
 			// Update HUD to show current active setting
 			UpdateCounterDisplay();
 		}
@@ -1219,6 +1233,21 @@ void USFSubsystem::CycleAutoConnectSetting()
         }
     }
 
+    // Smart Walking: the enable toggle (Auto-Connect ON/OFF) is moot during a walk — the run always lays its own
+    // conveyance — so skip it; while walking the cycle only steps through settings that actually shape the run
+    // (belt: Tier/Routing/Direction; pipe: Tier/Style/Routing).
+    if (USFWalkService* WalkSvc = GetWalkService(); WalkSvc && WalkSvc->IsActive())
+    {
+        if (CurrentAutoConnectSetting == EAutoConnectSetting::StackableBeltEnabled)
+        {
+            CurrentAutoConnectSetting = EAutoConnectSetting::StackableBeltTier;
+        }
+        else if (CurrentAutoConnectSetting == EAutoConnectSetting::Enabled)
+        {
+            CurrentAutoConnectSetting = EAutoConnectSetting::PipeTierMain;
+        }
+    }
+
     // [AC-HUD #403 diag] Log-level: shows whether the Num0 cycle actually reaches Pipe Routing Mode on a pipe support
     // (and which type branch was taken) vs belt - the static path is symmetric so this isolates the runtime divergence.
     UE_LOG(LogSmartFoundations, Log, TEXT("[AC-HUD] cycled -> %s (pipe=%d belt=%d junction=%d power=%d)"),
@@ -1404,8 +1433,17 @@ void USFSubsystem::AdjustAutoConnectSetting(int32 Delta)
     // live, just like auto-connect refreshes its own previews above.
     if (WalkService && WalkService->IsActive())
     {
-        WalkService->RerouteSpans();
-        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT(" Walk: re-routed belts after auto-connect setting change (routingMode=%d)"), AutoConnectRuntimeSettings.BeltRoutingMode);
+        // A TIER or pipe-STYLE change alters the conveyance CLASS, so the spans must be RE-CREATED — RerouteSpans
+        // only re-routes the existing old-class spans (the live bug: a tier switch via the build HUD left the preview
+        // on the old Mk class even though the committed build was correct; the walk PANEL works because it calls
+        // RecreateSpans). A routing change is geometry-only, so the lighter reroute still suffices there.
+        const bool bClassChanged =
+            CurrentAutoConnectSetting == EAutoConnectSetting::BeltTierMain ||
+            CurrentAutoConnectSetting == EAutoConnectSetting::StackableBeltTier ||
+            CurrentAutoConnectSetting == EAutoConnectSetting::PipeTierMain ||
+            CurrentAutoConnectSetting == EAutoConnectSetting::PipeIndicator;
+        if (bClassChanged) { WalkService->RecreateSpans(); } else { WalkService->RerouteSpans(); }
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT(" Walk: %s spans after auto-connect setting change"), bClassChanged ? TEXT("re-created") : TEXT("re-routed"));
     }
 
     UpdateCounterDisplay();

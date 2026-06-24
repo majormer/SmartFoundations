@@ -326,7 +326,17 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 			AFGHologram* MutableSelf = const_cast<AFGHologram*>(self);
 			if (!MutableSelf->HasAuthority())
 			{
-				return; // client cost comes from its real preview children via vanilla aggregation
+				// Extend/scaling preview children are AddChild'd, so vanilla GetCost aggregation already sums them on
+				// the client. Walk previews are STANDALONE (invisible to that aggregation), so on a client the build-gun
+				// overlay would otherwise show only the bare seed — fall through to the existing walk block below to
+				// synthesize the full run cost while an ACTIVE walk is held; everything else still returns to vanilla.
+				// (No new Override here — this only lets the client REACH the existing crash-safe walk block.)
+				USFSubsystem* WalkSS = USFSubsystem::Get(self->GetWorld());
+				USFWalkService* WalkSvc = WalkSS ? WalkSS->GetWalkService() : nullptr;
+				if (!WalkSvc || !WalkSvc->IsActive())
+				{
+					return; // non-walk client cost comes from vanilla aggregation of the AddChild'd children
+				}
 			}
 
 			// [EXTEND-MP] A staged Extend commit overrides with the EXACT preview cost captured
@@ -508,12 +518,20 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 			{
 				return;
 			}
+			// Consume ALL staged specs for this seed (so none leaks to a later construct), then pick by intent below.
+			// A stackable conveyor pole is ALSO a (1x1) scaling grid, so on a network CLIENT a committed walk stages
+			// BOTH a walk commit AND a scaling spec for the same seed — the Extend/scaling staging runs below the
+			// IsClient gate in the fire hook (skipped on SP/listen-host, which is why this only broke on a dedicated
+			// server). The old short-circuit consumed the scaling spec and never checked the walk commit, so the run
+			// never reconstructed and only the seed built.
 			FSFScalingSpec Spec;
-			const bool bHasScaling = FindStagedSpec(self, Spec, /*bConsume=*/true);
+			bool bHasScaling = FindStagedSpec(self, Spec, /*bConsume=*/true);
 			FSFExtendCommitSpec ExtendSpec;
-			const bool bHasExtend = !bHasScaling && FindStagedExtendCommit(self, ExtendSpec, /*bConsume=*/true);
+			bool bHasExtend = FindStagedExtendCommit(self, ExtendSpec, /*bConsume=*/true);
 			FSFWalkCommitSpec WalkSpec;
-			const bool bHasWalk = !bHasScaling && !bHasExtend && FindStagedWalkCommit(self, WalkSpec, /*bConsume=*/true);
+			const bool bHasWalk = FindStagedWalkCommit(self, WalkSpec, /*bConsume=*/true);
+			// A committed WALK supersedes the incidental scaling/Extend spec a stackable pole also stages.
+			if (bHasWalk) { bHasScaling = false; bHasExtend = false; }
 			if (!bHasScaling && !bHasExtend && !bHasWalk)
 			{
 				return; // nothing staged for this instigator/class (e.g. a child in the loop)
