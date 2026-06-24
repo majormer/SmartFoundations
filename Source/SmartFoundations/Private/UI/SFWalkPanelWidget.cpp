@@ -22,6 +22,8 @@
 #include "GameFramework/PlayerController.h"
 #include "FGPlayerController.h"  // AFGPlayerController for GetHighestUnlocked*Tier (no transitive unity-build reliance)
 
+#define LOCTEXT_NAMESPACE "SmartFoundations"   // walk-panel UI strings gather into the same namespace as the rest of the mod
+
 // Dark rounded button style matching the Smart Panel's buttons (CloseButton/Apply/Reset, captured via AdaMCP
 // describe_widget). Without it, a built UButton falls back to the default LIGHT-GREY Slate style, which is what
 // made the gold "X" / labels read poorly. Values are the Smart Panel CloseButton's exact WidgetStyle brushes.
@@ -50,7 +52,8 @@ static FButtonStyle SFPanelButtonStyle()
 // Display-name helpers for the conveyance tier + routing-mode selectors (mirror the auto-connect setter ranges).
 static FString SFTierName(int32 Tier)
 {
-    return Tier <= 0 ? FString(TEXT("Auto")) : FString::Printf(TEXT("Mk%d"), Tier);
+    // "Auto" is localized; "Mk%d" is an untranslated model designation (kept as-is, matching the Smart Panel).
+    return Tier <= 0 ? LOCTEXT("Walk_Opt_Auto", "Auto").ToString() : FString::Printf(TEXT("Mk%d"), Tier);
 }
 
 static FString SFRoutingName(bool bPipe, int32 Mode)
@@ -58,12 +61,23 @@ static FString SFRoutingName(bool bPipe, int32 Mode)
     if (bPipe)
     {
         // 0=Auto 1=Auto2D 2=Straight 3=Curve 4=Noodle 5=HorizontalToVertical (SetAutoConnectPipeRoutingMode range)
-        static const TCHAR* const P[6] = { TEXT("Auto"), TEXT("Auto 2D"), TEXT("Straight"), TEXT("Curve"), TEXT("Noodle"), TEXT("H->V") };
-        return FString(P[FMath::Clamp(Mode, 0, 5)]);
+        switch (FMath::Clamp(Mode, 0, 5))
+        {
+        case 1:  return LOCTEXT("Walk_Opt_Auto2D",   "Auto 2D").ToString();
+        case 2:  return LOCTEXT("Walk_Opt_Straight", "Straight").ToString();
+        case 3:  return LOCTEXT("Walk_Opt_Curve",    "Curve").ToString();
+        case 4:  return LOCTEXT("Walk_Opt_Noodle",   "Noodle").ToString();
+        case 5:  return LOCTEXT("Walk_Opt_HToV",     "H->V").ToString();
+        default: return LOCTEXT("Walk_Opt_Auto",     "Auto").ToString();
+        }
     }
     // 0=Default 1=Curve 2=Straight (SetAutoConnectBeltRoutingMode range)
-    static const TCHAR* const B[3] = { TEXT("Default"), TEXT("Curve"), TEXT("Straight") };
-    return FString(B[FMath::Clamp(Mode, 0, 2)]);
+    switch (FMath::Clamp(Mode, 0, 2))
+    {
+    case 1:  return LOCTEXT("Walk_Opt_Curve",    "Curve").ToString();
+    case 2:  return LOCTEXT("Walk_Opt_Straight", "Straight").ToString();
+    default: return LOCTEXT("Walk_Opt_Default",  "Default").ToString();
+    }
 }
 
 DEFINE_LOG_CATEGORY_STATIC(LogSmartWalkUI, Log, All);
@@ -291,13 +305,21 @@ void USFWalkPanelWidget::Refresh()
     }
     Col->AddChildToVerticalBox(HeaderRow);
 
-    // Path summary (always visible above the scroll area).
-    Col->AddChildToVerticalBox(MakeCell(
-        FString::Printf(TEXT("%d segment%s  ·  head %s %.0f deg  ·  %s %s"),
-            Views.Num(), (Views.Num() == 1) ? TEXT("") : TEXT("s"),
-            *SFHeadingToCompass16(HeadDeg), HeadDeg,
-            bPipe ? TEXT("Pipe") : TEXT("Belt"), TEXT("")),   // tier now lives in the Tier dropdown
-        FLinearColor(0.9f, 0.9f, 0.9f, 1.0f), 11));   // white summary text — match the Smart Panel
+    // Path summary (always visible above the scroll area). Fully localized via FText::Format: the count drives an ICU
+    // plural (segment/segments), "head"/"deg" are part of the gathered format, the compass stays untranslated, and the
+    // conveyance word is its own LOCTEXT. (Tier now lives in the Tier dropdown, so the old trailing slot is gone.)
+    {
+        FFormatOrderedArguments SummaryArgs;
+        SummaryArgs.Add(Views.Num());                                       // {0} segment count + plural selector
+        SummaryArgs.Add(FText::FromString(SFHeadingToCompass16(HeadDeg)));  // {1} compass (intentionally untranslated)
+        SummaryArgs.Add(FMath::RoundToInt(HeadDeg));                        // {2} head heading, degrees
+        SummaryArgs.Add(bPipe ? LOCTEXT("Walk_Conveyance_Pipe", "Pipe")
+                              : LOCTEXT("Walk_Conveyance_Belt", "Belt"));   // {3} conveyance word
+        const FText SummaryText = FText::Format(
+            LOCTEXT("Walk_Summary", "{0} {0}|plural(one=segment,other=segments)  ·  head {1} {2} deg  ·  {3}"),
+            SummaryArgs);
+        Col->AddChildToVerticalBox(MakeCell(SummaryText, FLinearColor(0.9f, 0.9f, 0.9f, 1.0f), 11));   // white summary — match the Smart Panel
+    }
 
     // Pinned setting dropdowns (mirror the Smart Panel) — apply live to the walk's spans via the auto-connect setters.
     {
@@ -305,7 +327,7 @@ void USFWalkPanelWidget::Refresh()
         const int32 MaxTier = bPipe ? S->GetHighestUnlockedPipeTier(PC) : S->GetHighestUnlockedBeltTier(PC);
         TArray<FString> TierOpts;
         for (int32 t = 0; t <= MaxTier; ++t) { TierOpts.Add(SFTierName(t)); }
-        if (UWidget* TierRow = MakeComboRow(TEXT("Tier"), TierOpts, FMath::Clamp(Tier, 0, MaxTier), TierCombo))
+        if (UWidget* TierRow = MakeComboRow(LOCTEXT("Walk_Lbl_Tier", "Tier"), TierOpts, FMath::Clamp(Tier, 0, MaxTier), TierCombo))
         {
             Col->AddChildToVerticalBox(TierRow);
             if (TierCombo) { TierCombo->OnSelectionChanged.AddDynamic(this, &USFWalkPanelWidget::OnTierComboChanged); }
@@ -314,7 +336,7 @@ void USFWalkPanelWidget::Refresh()
         const int32 RouteMax = bPipe ? 5 : 2;
         TArray<FString> RouteOpts;
         for (int32 r = 0; r <= RouteMax; ++r) { RouteOpts.Add(SFRoutingName(bPipe, r)); }
-        if (UWidget* RouteRow = MakeComboRow(TEXT("Routing"), RouteOpts, FMath::Clamp(RouteMode, 0, RouteMax), RoutingCombo))
+        if (UWidget* RouteRow = MakeComboRow(LOCTEXT("Walk_Lbl_Routing", "Routing"), RouteOpts, FMath::Clamp(RouteMode, 0, RouteMax), RoutingCombo))
         {
             Col->AddChildToVerticalBox(RouteRow);
             if (RoutingCombo) { RoutingCombo->OnSelectionChanged.AddDynamic(this, &USFWalkPanelWidget::OnRoutingComboChanged); }
@@ -326,9 +348,9 @@ void USFWalkPanelWidget::Refresh()
         if (bPipe && PC && S->AreCleanPipesUnlocked(PC))
         {
             TArray<FString> StyleOpts;
-            StyleOpts.Add(TEXT("Normal"));   // index 0 = with flow indicators (bPipeIndicator = true)
-            StyleOpts.Add(TEXT("Clean"));    // index 1 = no indicators       (bPipeIndicator = false)
-            if (UWidget* StyleRow = MakeComboRow(TEXT("Pipe Style"), StyleOpts, AC.bPipeIndicator ? 0 : 1, IndicatorCombo))
+            StyleOpts.Add(LOCTEXT("Walk_Opt_Normal", "Normal").ToString());   // index 0 = with flow indicators (bPipeIndicator = true)
+            StyleOpts.Add(LOCTEXT("Walk_Opt_Clean",  "Clean").ToString());    // index 1 = no indicators       (bPipeIndicator = false)
+            if (UWidget* StyleRow = MakeComboRow(LOCTEXT("Walk_Lbl_PipeStyle", "Pipe Style"), StyleOpts, AC.bPipeIndicator ? 0 : 1, IndicatorCombo))
             {
                 Col->AddChildToVerticalBox(StyleRow);
                 if (IndicatorCombo) { IndicatorCombo->OnSelectionChanged.AddDynamic(this, &USFWalkPanelWidget::OnIndicatorComboChanged); }
@@ -338,9 +360,9 @@ void USFWalkPanelWidget::Refresh()
         if (!bPipe)   // belt direction only (pipes have no direction)
         {
             TArray<FString> DirOpts;
-            DirOpts.Add(TEXT("Forward"));
-            DirOpts.Add(TEXT("Backward"));
-            if (UWidget* DirRow = MakeComboRow(TEXT("Direction"), DirOpts, FMath::Clamp(AC.StackableBeltDirection, 0, 1), DirectionCombo))
+            DirOpts.Add(LOCTEXT("Walk_Opt_Forward",  "Forward").ToString());
+            DirOpts.Add(LOCTEXT("Walk_Opt_Backward", "Backward").ToString());
+            if (UWidget* DirRow = MakeComboRow(LOCTEXT("Walk_Lbl_Direction", "Direction"), DirOpts, FMath::Clamp(AC.StackableBeltDirection, 0, 1), DirectionCombo))
             {
                 Col->AddChildToVerticalBox(DirRow);
                 if (DirectionCombo) { DirectionCombo->OnSelectionChanged.AddDynamic(this, &USFWalkPanelWidget::OnDirectionComboChanged); }
@@ -373,7 +395,7 @@ void USFWalkPanelWidget::Refresh()
     UButton* ScalingBtn = NewObject<UButton>(this);
     ScalingBtn->SetStyle(SFPanelButtonStyle());
     UTextBlock* ScalingText = NewObject<UTextBlock>(this);
-    ScalingText->SetText(FText::FromString(TEXT("‹ Scaling")));   // ‹ = single left-angle quote (back chevron)
+    ScalingText->SetText(LOCTEXT("Walk_Btn_Scaling", "‹ Scaling"));   // ‹ = back chevron (glyph kept inside the translated unit)
     ScalingText->SetFont(SFFont::Get(11));
     ScalingText->SetColorAndOpacity(FSlateColor(FLinearColor(1.0f, 0.85f, 0.0f, 1.0f)));   // gold on dark, like Apply/X
     ScalingBtn->AddChild(ScalingText);
@@ -387,7 +409,7 @@ void USFWalkPanelWidget::Refresh()
     UButton* ApplyBtn = NewObject<UButton>(this);
     ApplyBtn->SetStyle(SFPanelButtonStyle());   // dark rounded fill like the Smart Panel buttons
     UTextBlock* ApplyText = NewObject<UTextBlock>(this);
-    ApplyText->SetText(FText::FromString(TEXT("Apply")));
+    ApplyText->SetText(LOCTEXT("Panel_Btn_Apply", "Apply"));   // reuse the Smart Panel's existing Apply key
     ApplyText->SetFont(SFFont::Get(11));
     ApplyText->SetColorAndOpacity(FSlateColor(FLinearColor(1.0f, 0.85f, 0.0f, 1.0f)));   // gold on dark (matches the Smart Panel Apply/Reset)
     ApplyBtn->AddChild(ApplyText);
@@ -407,7 +429,7 @@ void USFWalkPanelWidget::Refresh()
         CheckSlot->SetVerticalAlignment(VAlign_Center);
     }
     if (UHorizontalBoxSlot* LblSlot = Footer->AddChildToHorizontalBox(
-            MakeCell(TEXT("apply immediately"), FLinearColor(0.9f, 0.9f, 0.9f, 1.0f), 10)))
+            MakeCell(LOCTEXT("Walk_ApplyImmediately", "apply immediately"), FLinearColor(0.9f, 0.9f, 0.9f, 1.0f), 10)))
     {
         LblSlot->SetVerticalAlignment(VAlign_Center);
     }
@@ -421,6 +443,15 @@ UWidget* USFWalkPanelWidget::MakeCell(const FString& Text, const FLinearColor& C
     Cell->SetText(FText::FromString(Text));
     Cell->SetColorAndOpacity(FSlateColor(Color));
     Cell->SetFont(SFFont::Get(FontSize));   // shrink from the default ~24pt so the dense columns don't collide
+    return Cell;
+}
+
+UWidget* USFWalkPanelWidget::MakeCell(const FText& Text, const FLinearColor& Color, int32 FontSize)
+{
+    UTextBlock* Cell = NewObject<UTextBlock>(this);
+    Cell->SetText(Text);   // already-localized FText (LOCTEXT) — not flattened through FromString
+    Cell->SetColorAndOpacity(FSlateColor(Color));
+    Cell->SetFont(SFFont::Get(FontSize));
     return Cell;
 }
 
@@ -458,12 +489,12 @@ UWidget* USFWalkPanelWidget::MakeHeaderRow()
 {
     UHorizontalBox* Row = NewObject<UHorizontalBox>(this);
     const FLinearColor H(0.9f, 0.9f, 0.9f, 1.0f);   // white column headers — match the Smart Panel's light setting labels
-    AddFixedCell(Row, MakeCell(TEXT("#"), H), 34.0f);
-    AddFixedCell(Row, MakeCell(TEXT("Advance m"), H), 84.0f);
-    AddFixedCell(Row, MakeCell(TEXT("Turn"), H), 66.0f);
-    AddFixedCell(Row, MakeCell(TEXT("Rise m"), H), 66.0f);
-    AddFixedCell(Row, MakeCell(TEXT("Shift m"), H), 66.0f);
-    AddFixedCell(Row, MakeCell(TEXT("Exit"), H), 110.0f);
+    AddFixedCell(Row, MakeCell(TEXT("#"), H), 34.0f);   // glyph — kept untranslated
+    AddFixedCell(Row, MakeCell(LOCTEXT("Walk_Col_Advance", "Advance m"), H), 84.0f);
+    AddFixedCell(Row, MakeCell(LOCTEXT("Walk_Col_Turn",    "Turn"),      H), 66.0f);
+    AddFixedCell(Row, MakeCell(LOCTEXT("Walk_Col_Rise",    "Rise m"),    H), 66.0f);
+    AddFixedCell(Row, MakeCell(LOCTEXT("Walk_Col_Shift",   "Shift m"),   H), 66.0f);
+    AddFixedCell(Row, MakeCell(LOCTEXT("Walk_Col_Exit",    "Exit"),      H), 110.0f);
     return Row;
 }
 
@@ -554,7 +585,7 @@ void USFWalkCellBinding::OnChanged(float NewValue)
     }
 }
 
-UWidget* USFWalkPanelWidget::MakeComboRow(const FString& Label, const TArray<FString>& Options, int32 SelectedIndex, TObjectPtr<UComboBoxString>& OutCombo)
+UWidget* USFWalkPanelWidget::MakeComboRow(const FText& Label, const TArray<FString>& Options, int32 SelectedIndex, TObjectPtr<UComboBoxString>& OutCombo)
 {
     UHorizontalBox* Row = NewObject<UHorizontalBox>(this);
 
@@ -649,3 +680,5 @@ void USFWalkPanelWidget::OnIndicatorComboChanged(FString SelectedItem, ESelectIn
     S->SetAutoConnectPipeIndicator(IndicatorCombo->GetSelectedIndex() == 0);   // 0=Normal (with indicators), 1=Clean (none)
     W->RecreateSpans();   // indicator changes the pipe CLASS (Build_Pipeline vs _NoIndicator) — recreate, like the tier change
 }
+
+#undef LOCTEXT_NAMESPACE

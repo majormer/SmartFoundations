@@ -106,10 +106,13 @@ private:
     UWidget* MakeSegmentRow(const FSFWalkSegmentView& View);
 
     /** Build a "[Label  <dropdown>]" combo row; OutCombo receives the UComboBoxString so Refresh can bind it. */
-    UWidget* MakeComboRow(const FString& Label, const TArray<FString>& Options, int32 SelectedIndex, TObjectPtr<class UComboBoxString>& OutCombo);
+    UWidget* MakeComboRow(const FText& Label, const TArray<FString>& Options, int32 SelectedIndex, TObjectPtr<class UComboBoxString>& OutCombo);
 
     /** A small text cell for a row (FontSize defaults to the dense table size). */
     UWidget* MakeCell(const FString& Text, const FLinearColor& Color, int32 FontSize = 10);
+
+    /** Overload for already-localized text (LOCTEXT) — static labels/headers/buttons. */
+    UWidget* MakeCell(const FText& Text, const FLinearColor& Color, int32 FontSize = 10);
 
     /** The table header row (column titles), pinned above the scroll area. */
     UWidget* MakeHeaderRow();
