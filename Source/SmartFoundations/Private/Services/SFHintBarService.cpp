@@ -303,30 +303,33 @@ void USFHintBarService::InjectSmartHints()
 	void* ArrayPtr = CachedKeybindsProp->ContainerPtrToValuePtr<void>(CachedBuildModeWidget.Get());
 	FScriptArrayHelper ArrayHelper(CachedKeybindsProp, ArrayPtr);
 
-	// Known Smart! hint labels for detection and stripping
-	static const TArray<FString> SmartLabels = {
-		TEXT("Scale X"), TEXT("Scale Y"), TEXT("Scale Z"),
-		TEXT("Spacing"), TEXT("Steps"), TEXT("Stagger"), TEXT("Rotation"),
-		TEXT("Cycle Mode"), TEXT("Recipe"), TEXT("Smart Panel"), TEXT("Upgrade Panel")
+	// Detect/strip our hints by their LOCTEXT KEY, NOT the displayed text. The Action FTexts are NSLOCTEXT
+	// (localized), so matching English label strings failed in every non-English locale → old hints were never
+	// stripped and got re-added every 100ms tick → the mCachedKeybinds array grew without bound → SetKeybindingHints
+	// instanced ever-more hint widgets → UObject pool exhaustion crash. The "Hint_*" key is locale-independent.
+	static const TSet<FString> SmartHintKeys = {
+		TEXT("Hint_ScaleX"), TEXT("Hint_ScaleY"), TEXT("Hint_ScaleZ"),
+		TEXT("Hint_Spacing"), TEXT("Hint_Steps"), TEXT("Hint_Stagger"), TEXT("Hint_Rotation"),
+		TEXT("Hint_CycleMode"), TEXT("Hint_Recipe"), TEXT("Hint_SmartPanel"), TEXT("Hint_UpgradePanel")
+	};
+	auto IsSmartHint = [](const FText& ActionText) -> bool
+	{
+		const TOptional<FString> Key = FTextInspector::GetKey(ActionText);
+		return Key.IsSet() && SmartHintKeys.Contains(Key.GetValue());
 	};
 
-	// Check if any Smart! hints are already in the array
+	// Check if any Smart! hints are already in the array (by locale-independent key)
 	bool bAlreadyPresent = false;
 	for (int32 i = 0; i < ArrayHelper.Num(); i++)
 	{
 		uint8* ElemPtr = ArrayHelper.GetRawPtr(i);
 		FText ActionText;
 		ActionProperty->GetValue_InContainer(ElemPtr, &ActionText);
-		const FString ActionStr = ActionText.ToString();
-		for (const FString& Label : SmartLabels)
+		if (IsSmartHint(ActionText))
 		{
-			if (ActionStr == Label)
-			{
-				bAlreadyPresent = true;
-				break;
-			}
+			bAlreadyPresent = true;
+			break;
 		}
-		if (bAlreadyPresent) break;
 	}
 
 	// Context: upgrade-capable → Upgrade Panel only, Scaled Extend → hide Scale Z & Stagger,
@@ -352,14 +355,9 @@ void USFHintBarService::InjectSmartHints()
 			uint8* ElemPtr = ArrayHelper.GetRawPtr(i);
 			FText ActionText;
 			ActionProperty->GetValue_InContainer(ElemPtr, &ActionText);
-			const FString ActionStr = ActionText.ToString();
-			for (const FString& Label : SmartLabels)
+			if (IsSmartHint(ActionText))
 			{
-				if (ActionStr == Label)
-				{
-					ArrayHelper.RemoveValues(i, 1);
-					break;
-				}
+				ArrayHelper.RemoveValues(i, 1);
 			}
 		}
 	}
@@ -408,7 +406,7 @@ void USFHintBarService::InjectSmartHints()
 	else
 	{
 		// Upgrade-capable items (belts, lifts, pipes, wires) — only the panel hint
-		SmartHints.Add({ FText::FromString(TEXT("Upgrade Panel")),
+		SmartHints.Add({ NSLOCTEXT("SmartFoundations", "Hint_UpgradePanel", "Upgrade Panel"),
 			ResolveKeyText(IA_ToggleSettingsForm) });
 	}
 
