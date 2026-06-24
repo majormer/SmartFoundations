@@ -225,11 +225,28 @@ public:
 	static bool IsStackablePipelineSupportHologram(AFGHologram* Hologram);
 
 	/**
+	 * #405: Check if a hologram is a stackable HYPERTUBE support (Build_HyperPoleStackable_C).
+	 * It SHARES the Holo_PipelineStackable_C hologram with the stackable pipe support, so detection
+	 * keys off the BUILD class, exactly like IsStackablePipelineSupportHologram.
+	 * @param Hologram The hologram to check
+	 * @return True if this is a stackable hypertube support hologram (Build_HyperPoleStackable_C)
+	 */
+	static bool IsStackableHypertubeSupportHologram(AFGHologram* Hologram);
+
+	/**
 	 * Check if a hologram is any stackable support structure (conveyor pole or pipeline support)
 	 * @param Hologram The hologram to check
 	 * @return True if this is a stackable conveyor pole or stackable pipeline support
 	 */
 	static bool IsStackableSupportHologram(AFGHologram* Hologram);
+
+	/**
+	 * Shared belt/pipe/hypertube support exit-normal resolver: exit each support along its FACING so a
+	 * rotated/arc run BOWS toward the connector normal instead of faceting at a straight chord (#398/#400).
+	 * Wall supports (bUseRightVector) exit PERPENDICULAR (#268). Promoted from a file-local static so the
+	 * hypertube auto-connect slice can reuse it instead of duplicating the geometry.
+	 */
+	static FVector ResolveSupportExitNormal(AFGHologram* Pole, const FVector& Chord, bool bUseRightVector);
 
 	/**
 	 * Check if a hologram is a conveyor ceiling support (Issue #268)

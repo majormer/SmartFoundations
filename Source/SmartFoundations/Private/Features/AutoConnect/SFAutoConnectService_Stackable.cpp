@@ -13,7 +13,7 @@
 // guard (perpendicular IS their intent); all other supports use the forward vector and DO apply the guard. In every
 // case: HORIZONTAL direction from the facing (the curve) + PITCH from the chord (so a height delta doesn't ramp — the
 // #291 reason these were chords) + sign-flip toward the run. A straight run reduces to the chord (no spurious curve).
-static FVector SF_ResolveSupportExitNormal(AFGHologram* Pole, const FVector& Chord, bool bUseRightVector)
+FVector USFAutoConnectService::ResolveSupportExitNormal(AFGHologram* Pole, const FVector& Chord, bool bUseRightVector)
 {
 	const FVector ChordH = FVector(Chord.X, Chord.Y, 0.0f).GetSafeNormal();
 	FVector FacingH = Pole ? (bUseRightVector ? Pole->GetActorRightVector() : Pole->GetActorForwardVector()) : FVector::ZeroVector;
@@ -743,8 +743,8 @@ AFGHologram* USFAutoConnectService::UpdateOrCreatePipeForPolePair(
 	const FVector ToTarget = Direction.GetSafeNormal();
 	const FVector ToSource = (-Direction).GetSafeNormal();
 
-	FVector StartNormal = SF_ResolveSupportExitNormal(SourcePole, ToTarget, IsWallPipelineSupportHologram(SourcePole));
-	FVector EndNormal   = SF_ResolveSupportExitNormal(TargetPole, ToSource, IsWallPipelineSupportHologram(TargetPole));
+	FVector StartNormal = ResolveSupportExitNormal(SourcePole, ToTarget, IsWallPipelineSupportHologram(SourcePole));
+	FVector EndNormal   = ResolveSupportExitNormal(TargetPole, ToSource, IsWallPipelineSupportHologram(TargetPole));
 
 	if (StartNormal.IsNearlyZero())
 	{
@@ -1507,8 +1507,8 @@ AFGHologram* USFAutoConnectService::UpdateOrCreateBeltForPolePair(
 	// [#398 belts + wall hardening] Route both branches through the shared resolver: wall poles exit perpendicular
 	// (RightVector, #268); stackable / ceiling / regular exit along the forward facing. Both now get the chord-pitch
 	// and perpendicular handling, so every belt pole type bows on a rotated run without ramping on height deltas.
-	StartNormal = SF_ResolveSupportExitNormal(SourcePole, ToTarget, bUseRightVector);
-	EndNormal   = SF_ResolveSupportExitNormal(TargetPole, ToSource, bUseRightVector);
+	StartNormal = ResolveSupportExitNormal(SourcePole, ToTarget, bUseRightVector);
+	EndNormal   = ResolveSupportExitNormal(TargetPole, ToSource, bUseRightVector);
 
 	// Degenerate fallbacks (overlapping poles / zero direction)
 	if (StartNormal.IsNearlyZero())

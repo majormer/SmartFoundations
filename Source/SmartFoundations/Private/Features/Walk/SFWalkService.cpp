@@ -3,6 +3,7 @@
 #include "Features/Walk/SFWalkService.h"
 #include "Features/Walk/SFWalkConveyance.h"
 #include "Features/AutoConnect/SFAutoConnectService.h"   // IsStackablePipelineSupportHologram (seed-type -> conveyance adapter)
+#include "Shared/Conduits/SFConveyanceShape.h"            // shared span shape-validity rules (walk + hypertube AC)
 #include "Subsystem/SFSubsystem.h"
 #include "Subsystem/SFHologramDataService.h"
 #include "Subsystem/SFPositionCalculator.h"
@@ -871,32 +872,12 @@ FString USFWalkService::GetSegmentShapeError(int32 Index) const
     AFGHologram* A = Prev[0].Get();
     AFGHologram* B = Cur[0].Get();
     if (!IsValid(A) || !IsValid(B)) { return FString(); }
-    const FVector PA = A->GetActorLocation();
-    const FVector PB = B->GetActorLocation();
-    const float Dist = FVector::Dist(PA, PB);
-    // Length: a single span can't exceed the vanilla max spline length (mirrors SFAutoConnectService_Stackable's cap).
-    if (Dist > USFAutoConnectService::MAX_PIPE_LENGTH)
-    {
-        FFormatOrderedArguments Args;
-        Args.Add(Index + 1);
-        Args.Add(FMath::RoundToInt(Dist / 100.0f));
-        return FText::Format(NSLOCTEXT("SmartFoundations", "Walk_Invalid_TooLong", "segment {0} too long ({1}m > 56m)"), Args).ToString();
-    }
-    // Vertical slope: BELTS can't climb steeper than 30deg from horizontal (mirrors auto-connect: asin(|dir.Z|) > 30).
-    // PIPES are exempt — they route fine at steep/vertical angles depending on the routing mode.
-    if (GetConveyanceType() != ESFWalkConveyanceType::Pipe)
-    {
-        const FVector Dir = (PB - PA).GetSafeNormal();
-        const float SlopeDeg = FMath::RadiansToDegrees(FMath::Asin(FMath::Abs(Dir.Z)));
-        if (SlopeDeg > 30.0f)
-        {
-            FFormatOrderedArguments Args;
-            Args.Add(Index + 1);
-            Args.Add(FMath::RoundToInt(SlopeDeg));
-            return FText::Format(NSLOCTEXT("SmartFoundations", "Walk_Invalid_TooSteep", "segment {0} too steep ({1}deg > 30deg)"), Args).ToString();
-        }
-    }
-    return FString();
+    // Shared span SHAPE rules (belt/pipe/hyper). Walk POLICY: any invalid segment blocks the commit
+    // (see HasInvalidSegmentShape). Belt gets the 30deg slope gate; pipe is exempt (routes at any angle).
+    const SFConveyanceShape::EKind Kind = (GetConveyanceType() == ESFWalkConveyanceType::Pipe)
+        ? SFConveyanceShape::EKind::Pipe : SFConveyanceShape::EKind::Belt;
+    return SFConveyanceShape::EvaluateSpan(A->GetActorLocation(), B->GetActorLocation(), Kind,
+        USFAutoConnectService::MAX_PIPE_LENGTH, Index + 1);
 }
 
 bool USFWalkService::IsSegmentShapeValid(int32 Index) const
