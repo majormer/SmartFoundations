@@ -6,6 +6,7 @@
  */
 
 #include "Features/AutoConnect/SFAutoConnectServiceImpl.h"
+#include "Features/HypertubeAutoConnect/SFHypertubeSpanBuilder.h"   // #405: SFHypertube::BuildOrUpdateSpan (new slice)
 
 // Shared belt/pipe auto-connect exit-normal resolver (#398 belts, #400 pipes, + wall hardening). Exits each support
 // along its FACING so a rotated/arc run BOWS toward the connector normal instead of a straight chord that facets at
@@ -663,6 +664,259 @@ void USFAutoConnectService::ProcessStackablePipelineSupports(AFGHologram* Parent
 			}
 		}
 	}
+}
+
+// ============================================================================
+// #405: STACKABLE HYPERTUBE SUPPORT AUTO-CONNECT (S2b preview)
+// ============================================================================
+void USFAutoConnectService::ProcessStackableHypertubeSupports(AFGHologram* ParentHologram)
+{
+	if (!ParentHologram || !Subsystem)
+	{
+		return;
+	}
+
+	if (Subsystem->IsSmartDisabledForCurrentAction())
+	{
+		CleanupAllStackableHypertubes(ParentHologram);
+		return;
+	}
+
+	const auto& RuntimeSettings = Subsystem->GetAutoConnectRuntimeSettings();
+	if (!RuntimeSettings.bEnabled || !RuntimeSettings.bPipeAutoConnectEnabled)
+	{
+		CleanupAllStackableHypertubes(ParentHologram);
+		return;
+	}
+
+	TSet<uint64> ActivePolePairs;
+
+	FSFHologramHelperService* HologramHelper = Subsystem->GetHologramHelper();
+	if (!HologramHelper)
+	{
+		return;
+	}
+
+	const FSFCounterState& CounterState = Subsystem->GetCounterState();
+	int32 XCount = FMath::Abs(CounterState.GridCounters.X);
+	int32 YCount = FMath::Abs(CounterState.GridCounters.Y);
+	int32 ZCount = FMath::Abs(CounterState.GridCounters.Z);
+
+	TArray<TWeakObjectPtr<AFGHologram>> SpawnedChildren = HologramHelper->GetSpawnedChildren();
+
+	TMap<int64, AFGHologram*> GridToHologram;
+	auto PackGridPos = [](int32 X, int32 Y, int32 Z) -> int64 {
+		return ((int64)(X + 128) << 16) | ((int64)(Y + 128) << 8) | (int64)(Z + 128);
+	};
+
+	GridToHologram.Add(PackGridPos(0, 0, 0), ParentHologram);
+
+	int32 ChildIndex = 0;
+	for (int32 Z = 0; Z < ZCount && ChildIndex < SpawnedChildren.Num(); ++Z)
+	{
+		for (int32 X = 0; X < XCount && ChildIndex < SpawnedChildren.Num(); ++X)
+		{
+			for (int32 Y = 0; Y < YCount && ChildIndex < SpawnedChildren.Num(); ++Y)
+			{
+				if (X == 0 && Y == 0 && Z == 0)
+				{
+					continue;
+				}
+				if (SpawnedChildren[ChildIndex].IsValid() && IsStackableHypertubeSupportHologram(SpawnedChildren[ChildIndex].Get()))
+				{
+					GridToHologram.Add(PackGridPos(X, Y, Z), SpawnedChildren[ChildIndex].Get());
+				}
+				ChildIndex++;
+			}
+		}
+	}
+
+	if (GridToHologram.Num() < 2)
+	{
+		CleanupAllStackableHypertubes(ParentHologram);
+		return;
+	}
+
+	// STACKABLE-ONLY: hypertube poles scale along X — connect X-neighbours ([X,Y,Z] -> [X+1,Y,Z]).
+	FStackableHypertubeState& State = StackableHypertubeStates.FindOrAdd(ParentHologram);
+	for (int32 Z = 0; Z < ZCount; ++Z)
+	{
+		for (int32 Y = 0; Y < YCount; ++Y)
+		{
+			for (int32 X = 0; X < XCount - 1; ++X)
+			{
+				AFGHologram** SourcePtr = GridToHologram.Find(PackGridPos(X, Y, Z));
+				AFGHologram** TargetPtr = GridToHologram.Find(PackGridPos(X + 1, Y, Z));
+				if (!SourcePtr || !TargetPtr || !*SourcePtr || !*TargetPtr)
+				{
+					continue;
+				}
+
+				AFGHologram* SourceSupport = *SourcePtr;
+				AFGHologram* TargetSupport = *TargetPtr;
+
+				uint64 PairKey = MakePolePairKey(SourceSupport, TargetSupport);
+				ActivePolePairs.Add(PairKey);
+
+				TWeakObjectPtr<AFGHologram>* ExistingPtr = State.SpansByPolePair.Find(PairKey);
+				AFGHologram* ExistingSpan = (ExistingPtr && ExistingPtr->IsValid()) ? ExistingPtr->Get() : nullptr;
+
+				// Pass ParentHologram (grid root) as the AddChild parent — pipe-parity: the stackable-pipe AC
+				// AddChild's spans to the grid-root ParentHologram, and its mChildren removal walks that same root. #405.
+				AFGHologram* Span = SFHypertube::BuildOrUpdateSpan(Subsystem, SourceSupport, TargetSupport, ExistingSpan, ParentHologram);
+
+				if (Span)
+				{
+					State.SpansByPolePair.Add(PairKey, Span);
+				}
+				else if (ExistingSpan)
+				{
+					if (ExistingSpan->IsValidLowLevel())
+					{
+						// Span is AddChild'd into ParentHologram's mChildren — drop the stale ptr before destroying. #405.
+						if (FArrayProperty* ChildrenProp = FindFProperty<FArrayProperty>(AFGHologram::StaticClass(), TEXT("mChildren")))
+						{
+							if (TArray<AFGHologram*>* ParentChildrenArray = ChildrenProp->ContainerPtrToValuePtr<TArray<AFGHologram*>>(ParentHologram))
+							{
+								ParentChildrenArray->Remove(ExistingSpan);
+							}
+						}
+						ExistingSpan->Destroy();
+					}
+					State.SpansByPolePair.Remove(PairKey);
+				}
+			}
+		}
+	}
+
+	RemoveOrphanedHypertubes(ParentHologram, ActivePolePairs);
+
+	FStackableHypertubeState* FinalState = StackableHypertubeStates.Find(ParentHologram);
+	if (FinalState)
+	{
+		const bool bParentLocked = ParentHologram->IsHologramLocked();
+		const EHologramMaterialState ParentMaterialState = ParentHologram->GetHologramMaterialState();
+		for (auto& Pair : FinalState->SpansByPolePair)
+		{
+			if (Pair.Value.IsValid())
+			{
+				AFGHologram* Span = Pair.Value.Get();
+				const bool bSpanLocked = Span->IsHologramLocked();
+				if (bParentLocked && !bSpanLocked)
+				{
+					Span->LockHologramPosition(true);
+				}
+				else if (!bParentLocked && bSpanLocked)
+				{
+					Span->LockHologramPosition(false);
+				}
+				Span->SetActorHiddenInGame(false);
+				Span->SetPlacementMaterialState(ParentMaterialState);
+			}
+		}
+	}
+}
+
+void USFAutoConnectService::RemoveOrphanedHypertubes(AFGHologram* ParentHologram, const TSet<uint64>& ActivePolePairs)
+{
+	if (!ParentHologram)
+	{
+		return;
+	}
+
+	FStackableHypertubeState* State = StackableHypertubeStates.Find(ParentHologram);
+	if (!State)
+	{
+		return;
+	}
+
+	// Spans are AddChild'd into the parent's mChildren (pipe-parity), so drop the stale ptr there before
+	// destroying the actor — exactly like RemoveOrphanedPipes. #405.
+	FArrayProperty* ChildrenProp = FindFProperty<FArrayProperty>(AFGHologram::StaticClass(), TEXT("mChildren"));
+	TArray<AFGHologram*>* ParentChildrenArray = ChildrenProp
+		? ChildrenProp->ContainerPtrToValuePtr<TArray<AFGHologram*>>(ParentHologram)
+		: nullptr;
+
+	TArray<uint64> KeysToRemove;
+	for (auto& Pair : State->SpansByPolePair)
+	{
+		if (!ActivePolePairs.Contains(Pair.Key))
+		{
+			KeysToRemove.Add(Pair.Key);
+			if (Pair.Value.IsValid())
+			{
+				AFGHologram* Span = Pair.Value.Get();
+				if (ParentChildrenArray) { ParentChildrenArray->Remove(Span); }
+				Span->Destroy();
+			}
+		}
+	}
+
+	for (uint64 Key : KeysToRemove)
+	{
+		State->SpansByPolePair.Remove(Key);
+	}
+}
+
+void USFAutoConnectService::CleanupAllStackableHypertubes(AFGHologram* ParentHologram)
+{
+	if (!ParentHologram)
+	{
+		return;
+	}
+
+	FStackableHypertubeState* State = StackableHypertubeStates.Find(ParentHologram);
+	if (!State || State->SpansByPolePair.Num() == 0)
+	{
+		return;
+	}
+
+	FArrayProperty* ChildrenProp = FindFProperty<FArrayProperty>(AFGHologram::StaticClass(), TEXT("mChildren"));
+	TArray<AFGHologram*>* ParentChildrenArray = ChildrenProp
+		? ChildrenProp->ContainerPtrToValuePtr<TArray<AFGHologram*>>(ParentHologram)
+		: nullptr;
+
+	for (auto& Pair : State->SpansByPolePair)
+	{
+		if (Pair.Value.IsValid())
+		{
+			AFGHologram* Span = Pair.Value.Get();
+			if (ParentChildrenArray) { ParentChildrenArray->Remove(Span); }
+			Span->Destroy();
+		}
+	}
+
+	State->SpansByPolePair.Empty();
+	StackableHypertubeStates.Remove(ParentHologram);
+}
+
+void USFAutoConnectService::CleanupAllStackableHypertubesAllParents()
+{
+	if (StackableHypertubeStates.Num() == 0)
+	{
+		return;
+	}
+
+	FArrayProperty* ChildrenProp = FindFProperty<FArrayProperty>(AFGHologram::StaticClass(), TEXT("mChildren"));
+	for (auto& ParentPair : StackableHypertubeStates)
+	{
+		AFGHologram* Parent = ParentPair.Key.Get();
+		TArray<AFGHologram*>* ParentChildrenArray = (ChildrenProp && IsValid(Parent))
+			? ChildrenProp->ContainerPtrToValuePtr<TArray<AFGHologram*>>(Parent)
+			: nullptr;
+
+		for (auto& SpanPair : ParentPair.Value.SpansByPolePair)
+		{
+			if (SpanPair.Value.IsValid())
+			{
+				AFGHologram* Span = SpanPair.Value.Get();
+				if (ParentChildrenArray) { ParentChildrenArray->Remove(Span); }
+				Span->Destroy();
+			}
+		}
+	}
+
+	StackableHypertubeStates.Empty();
 }
 
 // ========================================================================

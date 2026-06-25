@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [33.1.0] - Unreleased
+
+> *Hyper Tubes join the Smart! family.* Auto-Connect and Smart Walking now understand stackable hypertube supports — scale out a line of them and Smart! lays the hypertube run between them, or walk a steered hypertube route the same way you already do with belts and pipes.
+
+### Added
+
+- **Hyper Tubes — Auto-Connect and Smart Walking support** - Smart! now works with **Stackable Hypertube Supports**. Scale out a row of them and Auto-Connect lays the hypertube run between consecutive supports automatically, just like it already does for conveyor poles and pipeline supports; and Smart Walking can steer a hypertube run that turns and climbs, the same way it walks belts and pipes. (Issue #405)
+
+---
+
 ## [33.0.0] - 2026-06-24
 
 > *A major new build mode: **Smart Walking**. Where scaling lays down a rigid uniform grid, Smart Walking builds a **path** — a connected run that walks forward one segment at a time, and each segment can turn a corner, climb a slope, or shift aside. One continuous run of belts or pipes routes exactly where you want it, while you stay put and watch the leading edge crawl across the map through the Smart! Camera. This release also brings Smart! to around 20 languages and gives the Smart! Panel a refresh.*

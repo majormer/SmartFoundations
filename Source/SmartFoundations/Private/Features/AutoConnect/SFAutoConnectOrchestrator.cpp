@@ -211,6 +211,7 @@ void USFAutoConnectOrchestrator::ForceRefresh()
 	OnPowerGridChanged();
 	OnStackableConveyorPolesChanged();
 	OnStackablePipelineSupportsChanged();
+	OnStackableHypertubeSupportsChanged();
 	OnFloorHolePipesChanged();
 }
 
@@ -219,6 +220,12 @@ void USFAutoConnectOrchestrator::Cleanup()
 	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🎯 Orchestrator: Cleaning up all previews"));
 	
 	ClearAllPreviews();
+	if (AutoConnectService)
+	{
+		// #405: hypertube spans are AddChild'd (vanilla cascade-destroys them with the parent), but sweep any
+		// stragglers and clear the state map here as a race-free Deinitialize/shutdown net (timer cleared below).
+		AutoConnectService->CleanupAllStackableHypertubesAllParents();
+	}
 	ReservedInputs.Empty();
 	
 	// Clear timers if active
@@ -234,6 +241,7 @@ void USFAutoConnectOrchestrator::Cleanup()
 		World->GetTimerManager().ClearTimer(StackablePipeEvalTimerHandle);
 		World->GetTimerManager().ClearTimer(StackableBeltEvalTimerHandle);
 		World->GetTimerManager().ClearTimer(FloorHolePipeEvalTimerHandle);
+		World->GetTimerManager().ClearTimer(StackableHypertubeEvalTimerHandle);
 	}
 	
 	bIsEvaluatingBelts = false;
@@ -245,6 +253,7 @@ void USFAutoConnectOrchestrator::Cleanup()
 	bStackablePipeEvalScheduled = false;
 	bStackableBeltEvalScheduled = false;
 	bFloorHolePipeEvalScheduled = false;
+	bStackableHypertubeEvalScheduled = false;
 	bForceRecreatePending = false;
 	bPipeForceRecreatePending = false;
 	bPowerForceRecreatePending = false;
@@ -573,6 +582,40 @@ void USFAutoConnectOrchestrator::RunScheduledStackablePipeEvaluation()
 	
 	// Process stackable pipeline supports for pipe auto-connect
 	AutoConnectService->ProcessStackablePipelineSupports(ParentHologram.Get());
+}
+
+void USFAutoConnectOrchestrator::OnStackableHypertubeSupportsChanged()
+{
+	ScheduleStackableHypertubeEvaluation();
+}
+
+void USFAutoConnectOrchestrator::ScheduleStackableHypertubeEvaluation()
+{
+	if (!ParentHologram.IsValid() || !ParentHologram->GetWorld())
+	{
+		RunScheduledStackableHypertubeEvaluation();
+		return;
+	}
+
+	UWorld* World = ParentHologram->GetWorld();
+	World->GetTimerManager().ClearTimer(StackableHypertubeEvalTimerHandle);
+
+	bStackableHypertubeEvalScheduled = true;
+	FTimerDelegate D;
+	D.BindUObject(this, &USFAutoConnectOrchestrator::RunScheduledStackableHypertubeEvaluation);
+	World->GetTimerManager().SetTimer(StackableHypertubeEvalTimerHandle, D, 0.10f, /*bLoop=*/false);
+}
+
+void USFAutoConnectOrchestrator::RunScheduledStackableHypertubeEvaluation()
+{
+	bStackableHypertubeEvalScheduled = false;
+
+	if (!AutoConnectService || !ParentHologram.IsValid())
+	{
+		return;
+	}
+
+	AutoConnectService->ProcessStackableHypertubeSupports(ParentHologram.Get());
 }
 
 // ========================================

@@ -216,6 +216,11 @@ void USFGridSpawnerService::UpdateChildPositions()
                 {
                     Orchestrator->OnStackablePipelineSupportsChanged();
                 }
+                // #405: Stackable hypertube support auto-connect (preview)
+                if (USFAutoConnectService::IsStackableHypertubeSupportHologram(Parent))
+                {
+                    Orchestrator->OnStackableHypertubeSupportsChanged();
+                }
                 // Issue #187: Floor hole pipe auto-connect
                 if (USFAutoConnectService::IsPassthroughPipeHologram(Parent))
                 {
@@ -620,6 +625,11 @@ void USFGridSpawnerService::UpdateChildPositions()
                 {
                     Orchestrator->OnStackablePipelineSupportsChanged();
                 }
+                // #405: Stackable hypertube support auto-connect (preview)
+                if (USFAutoConnectService::IsStackableHypertubeSupportHologram(Parent))
+                {
+                    Orchestrator->OnStackableHypertubeSupportsChanged();
+                }
                 // Issue #187: Floor hole pipe auto-connect
                 if (USFAutoConnectService::IsPassthroughPipeHologram(Parent))
                 {
@@ -747,6 +757,11 @@ void USFGridSpawnerService::UpdateChildrenForCurrentTransform()
                         if (USFAutoConnectService::IsPipeSupportHologram(ParentLater))
                         {
                             Orchestrator->OnStackablePipelineSupportsChanged();
+                        }
+                        // #405: Stackable hypertube support auto-connect (preview)
+                        if (USFAutoConnectService::IsStackableHypertubeSupportHologram(ParentLater))
+                        {
+                            Orchestrator->OnStackableHypertubeSupportsChanged();
                         }
                         // Issue #187: Floor hole pipe auto-connect
                         if (USFAutoConnectService::IsPassthroughPipeHologram(ParentLater))

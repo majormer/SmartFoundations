@@ -1512,6 +1512,10 @@ public:
 	 */
 	UClass* GetPipeClassFromConfig(int32 ConfigTier, bool bWithIndicator, AFGPlayerController* PlayerController);
 
+	/** #405: resolve the single hypertube buildable class (Build_PipeHyper_C), unlock-gated. Hypertubes have
+	 *  no tier/indicator, so this is the one-class analog of GetPipeClassFromConfig. Null if not unlocked. */
+	UClass* GetHypertubeClassFromConfig(AFGPlayerController* PlayerController);
+
 private:
 
 	/** Load configuration from SML config system */

@@ -53,6 +53,11 @@ public:
 	/** Maximum pipe length in cm (56.01m - game engine limit) */
 	static constexpr float MAX_PIPE_LENGTH = 5601.0f;
 
+	/** #405: max single-span length for HYPERTUBES (cm). Seeded to the vanilla shared spline cap (~56m);
+	 *  TODO confirm Hologram_PipeHyper.mMaxSplineLength in-editor. Kept as its OWN constant so it can diverge
+	 *  from belt/pipe without touching them. */
+	static constexpr float MAX_HYPERTUBE_LENGTH = 5601.0f;
+
 	/** Minimum angle alignment for auto-connect (cos(45°) = 0.707) */
 	static constexpr float MIN_ANGLE_ALIGNMENT = 0.707f;
 
@@ -309,6 +314,20 @@ public:
 	 * @param ParentHologram The parent hologram containing stackable pipeline supports
 	 */
 	void ProcessStackablePipelineSupports(AFGHologram* ParentHologram);
+
+	/**
+	 * #405: Process auto-connect for stackable HYPERTUBE supports (S2b preview). Stackable-only.
+	 * Gathers scaled hypertube support children, pairs adjacent ones along X, renders a preview tube
+	 * per pair via SFHypertube::BuildOrUpdateSpan. Mirrors ProcessStackablePipelineSupports.
+	 */
+	void ProcessStackableHypertubeSupports(AFGHologram* ParentHologram);
+
+	/**
+	 * #405: Tear down ALL tracked stackable hypertube preview spans across every parent. Hypertube spans are
+	 * S2b preview-only (NOT AddChild'd), so unlike stackable pipe/belt spans they do NOT auto-destroy with the
+	 * parent hologram. Call on build cancel / holster / held-buildable change to avoid orphaned spans.
+	 */
+	void CleanupAllStackableHypertubesAllParents();
 
 	// ========================================
 	// Floor Hole Pipe Auto-Connect (Issue #187)
@@ -616,7 +635,24 @@ private:
 		TMap<uint64, TWeakObjectPtr<AFGHologram>> PipesByPolePair;
 	};
 	TMap<TWeakObjectPtr<AFGHologram>, FStackablePipeState> StackablePipeStates;
-	
+
+	// ========================================================================
+	// #405: Stackable HYPERTUBE Child Tracking (Pole-Pair Based)
+	// ========================================================================
+	// Reuses MakePolePairKey. S2b is preview-only (no AddChild/commit); spans live only in this map
+	// and are torn down by RemoveOrphanedHypertubes / CleanupAllStackableHypertubes.
+	struct FStackableHypertubeState
+	{
+		TMap<uint64, TWeakObjectPtr<AFGHologram>> SpansByPolePair;
+	};
+	TMap<TWeakObjectPtr<AFGHologram>, FStackableHypertubeState> StackableHypertubeStates;
+
+	/** #405: Remove hypertube spans for pole pairs no longer needed */
+	void RemoveOrphanedHypertubes(AFGHologram* ParentHologram, const TSet<uint64>& ActivePolePairs);
+
+	/** #405: Clean up all tracked stackable hypertube children for a parent hologram */
+	void CleanupAllStackableHypertubes(AFGHologram* ParentHologram);
+
 	/** Update or create pipe hologram for a pole pair, returns the pipe hologram */
 	AFGHologram* UpdateOrCreatePipeForPolePair(
 		AFGHologram* ParentHologram,

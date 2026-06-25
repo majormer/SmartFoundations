@@ -1074,6 +1074,37 @@ UClass* USFSubsystem::GetPipeClassFromConfig(int32 ConfigTier, bool bWithIndicat
 	return PipeClass;
 }
 
+UClass* USFSubsystem::GetHypertubeClassFromConfig(AFGPlayerController* PlayerController)
+{
+	// Hypertubes are a SINGLE buildable - no tier, no indicator/clean variant - so unlike GetPipeClassFromConfig
+	// this loads the one class and gates it on the player's unlock (mirrors GetPipeClassForTier's unlock check).
+	static const TCHAR* HyperPath = TEXT("/Game/FactoryGame/Buildable/Factory/PipeHyper/Build_PipeHyper.Build_PipeHyper_C");
+	UClass* HyperClass = LoadObject<UClass>(nullptr, HyperPath);
+	if (!HyperClass)
+	{
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("GetHypertubeClassFromConfig: failed to load Build_PipeHyper_C"));
+		return nullptr;
+	}
+
+	if (PlayerController)
+	{
+		if (UWorld* World = PlayerController->GetWorld())
+		{
+			if (AFGRecipeManager* RecipeManager = AFGRecipeManager::Get(World))
+			{
+				TSubclassOf<AFGBuildable> HyperBuildableClass = HyperClass;
+				if (!RecipeManager->IsBuildingAvailable(HyperBuildableClass))
+				{
+					UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("GetHypertubeClassFromConfig: hypertube not unlocked yet"));
+					return nullptr;   // not researched - prevents building an unavailable hypertube
+				}
+			}
+		}
+	}
+
+	return HyperClass;
+}
+
 void USFSubsystem::CycleAutoConnectSetting()
 {
     // Check context (Belt vs Pipe Junction vs Stackable Pipe vs Stackable Belt vs Power)
@@ -1402,6 +1433,12 @@ void USFSubsystem::AdjustAutoConnectSetting(int32 Delta)
             // Stackable pipe supports: trigger re-processing of pipe previews
             AutoConnectService->ProcessStackablePipelineSupports(ActiveHologram.Get());
             UE_LOG(LogSmartFoundations, Log, TEXT("[AC-HUD] reprocess -> stackable PIPE supports (pipeMode=%d)"), AutoConnectRuntimeSettings.PipeRoutingMode);
+        }
+        else if (USFAutoConnectService::IsStackableHypertubeSupportHologram(ActiveHologram.Get()))
+        {
+            // #405: Stackable hypertube supports — re-process preview tubes on settings change
+            AutoConnectService->ProcessStackableHypertubeSupports(ActiveHologram.Get());
+            UE_LOG(LogSmartFoundations, Log, TEXT("[AC-HUD] reprocess -> stackable HYPERTUBE supports (pipeMode=%d)"), AutoConnectRuntimeSettings.PipeRoutingMode);
         }
         else if (USFAutoConnectService::IsPassthroughPipeHologram(ActiveHologram.Get()))
         {

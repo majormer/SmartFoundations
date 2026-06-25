@@ -3,6 +3,7 @@
 #include "Holograms/Logistics/SFPipelineHologram.h"
 #include "SmartFoundations.h"
 #include "Buildables/FGBuildablePipeline.h"
+#include "Buildables/FGBuildablePipeBase.h"   // #405: common base of fluid pipe + hypertube — read the spline mesh by base cast
 #include "Components/SplineMeshComponent.h"
 #include "Hologram/FGSplineHologram.h"
 #include "FGPipeConnectionComponent.h"
@@ -1080,7 +1081,11 @@ void ASFPipelineHologram::TriggerMeshGeneration()
 	
 	if (mBuildClass)
 	{
-		if (AFGBuildablePipeline* PipeCDO = Cast<AFGBuildablePipeline>(mBuildClass->GetDefaultObject()))
+		// #405: cast to the COMMON base (AFGBuildablePipeBase), not AFGBuildablePipeline — a hypertube
+		// (AFGBuildablePipeHyper) is a SIBLING of the fluid pipe, so the narrow cast failed and fell back to
+		// the fluid SM_Pipe mesh. GetSplineMesh/GetMeshLength/mSplineMeshMaterial are virtual on the base, so
+		// each subclass (fluid OR hyper) returns its own correct mesh.
+		if (AFGBuildablePipeBase* PipeCDO = Cast<AFGBuildablePipeBase>(mBuildClass->GetDefaultObject()))
 		{
 			PipeMesh = PipeCDO->GetSplineMesh();
 			PipeMaterial = PipeCDO->mSplineMeshMaterial;

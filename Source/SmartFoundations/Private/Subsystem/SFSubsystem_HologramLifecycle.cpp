@@ -656,6 +656,9 @@ void USFSubsystem::UnregisterActiveHologram(AFGHologram* Hologram)
 			AutoConnectService->ClearBeltPreviewHelpers();
 			// Clear all pipe managers (previews are managed by auto-connect service now)
 			AutoConnectService->ClearAllPipeManagers();
+			// #405: Stackable HYPERTUBE spans are AddChild'd into the parent (pipe-parity), so vanilla
+			// cascade-destroys them with the parent on cancel/holster/held-buildable change — no explicit
+			// sweep is needed at this chokepoint, exactly like stackable pipe/belt spans.
 		}
 
 		// Clean up EXTEND service children when hologram is cancelled
