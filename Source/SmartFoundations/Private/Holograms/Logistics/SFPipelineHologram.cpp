@@ -148,11 +148,19 @@ AActor* ASFPipelineHologram::Construct(TArray<AActor*>& out_children, FNetConstr
 				bIsStackableChild ? TEXT("STACKABLE") : (bIsPipeAutoConnectChild ? TEXT("PIPE AUTO-CONNECT") : TEXT("EXTEND")),
 				*GetName(), *BuiltActor->GetName(), BuiltActor->GetUniqueID(), DiscardedChildren.Num());
 			
-			// Log pipe connection info and register with SFExtendService
-			if (AFGBuildablePipeline* Pipe = Cast<AFGBuildablePipeline>(BuiltActor))
+			// Wire pipe AND hypertube spans: gate on the shared base AFGBuildablePipeBase so the hyper span
+			// (AFGBuildablePipeHyper — a SIBLING of AFGBuildablePipeline, not a subclass) enters this branch.
+			// Read connectors base-typed via GetConnection0/1() (NOT fluid-only GetPipeConnection0/1()); both
+			// return UFGPipeConnectionComponentBase*. SetConnection + the snap-only finder live on the base; the
+			// fluid AFGPipeNetwork merge tail self-skips for hyper (its Cast<UFGPipeConnectionComponent> is null). #405
+			if (AFGBuildablePipeBase* Pipe = Cast<AFGBuildablePipeBase>(BuiltActor))
 			{
-				UFGPipeConnectionComponentBase* Conn0 = Pipe->GetPipeConnection0();
-				UFGPipeConnectionComponentBase* Conn1 = Pipe->GetPipeConnection1();
+				UFGPipeConnectionComponentBase* Conn0 = Pipe->GetConnection0();
+				UFGPipeConnectionComponentBase* Conn1 = Pipe->GetConnection1();
+				// #405: the fluid-only sub-features below (floor-hole/junction deferred wiring, Extend, manifold)
+				// need the narrowed type. Null for a hyper span — which never trips their guards
+				// (bIsPipeAutoConnectChild / ExtendChainId / bIsManifoldPipe are fluid-only).
+				AFGBuildablePipeline* FluidPipe = Cast<AFGBuildablePipeline>(Pipe);
 				UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 EXTEND:   Conn0=%s @ %s, Conn1=%s @ %s"),
 					Conn0 ? *Conn0->GetName() : TEXT("null"),
 					Conn0 ? *Conn0->GetComponentLocation().ToString() : TEXT("N/A"),
@@ -344,7 +352,7 @@ AActor* ASFPipelineHologram::Construct(TArray<AActor*>& out_children, FNetConstr
 						USFSubsystem* Subsystem = USFSubsystem::Get(GetWorld());
 						if (Subsystem)
 						{
-							Subsystem->RegisterPipeForDeferredWiring(Pipe);
+							Subsystem->RegisterPipeForDeferredWiring(FluidPipe);
 						}
 						
 						UE_LOG(LogSmartHologram, Verbose, TEXT("🔧 PIPE AUTO-CONNECT: Pipe %s built, registered for deferred wiring (%s)"), 
@@ -361,7 +369,7 @@ AActor* ASFPipelineHologram::Construct(TArray<AActor*>& out_children, FNetConstr
 						USFExtendService* ExtendService = Subsystem->GetExtendService();
 						if (ExtendService)
 						{
-							ExtendService->RegisterBuiltPipe(HoloData->ExtendChainId, HoloData->ExtendChainIndex, Pipe, HoloData->bIsInputChain);
+							ExtendService->RegisterBuiltPipe(HoloData->ExtendChainId, HoloData->ExtendChainIndex, FluidPipe, HoloData->bIsInputChain);
 							
 							UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 EXTEND: Pipe %s registered in Construct() for chain %d, index %d (%s)"),
 								*Pipe->GetName(), HoloData->ExtendChainId, HoloData->ExtendChainIndex,
@@ -393,7 +401,7 @@ AActor* ASFPipelineHologram::Construct(TArray<AActor*>& out_children, FNetConstr
 						USFExtendService* ExtendService = Subsystem->GetExtendService();
 						if (ExtendService)
 						{
-							ExtendService->WireManifoldPipe(Pipe, HoloData->ManifoldSourceConnector, HoloData->ManifoldCloneChainId);
+							ExtendService->WireManifoldPipe(FluidPipe, HoloData->ManifoldSourceConnector, HoloData->ManifoldCloneChainId);
 						}
 					}
 				}

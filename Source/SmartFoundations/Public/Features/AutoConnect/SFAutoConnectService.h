@@ -53,10 +53,13 @@ public:
 	/** Maximum pipe length in cm (56.01m - game engine limit) */
 	static constexpr float MAX_PIPE_LENGTH = 5601.0f;
 
-	/** #405: max single-span length for HYPERTUBES (cm). Seeded to the vanilla shared spline cap (~56m);
-	 *  TODO confirm Hologram_PipeHyper.mMaxSplineLength in-editor. Kept as its OWN constant so it can diverge
-	 *  from belt/pipe without touching them. */
-	static constexpr float MAX_HYPERTUBE_LENGTH = 5601.0f;
+	/** #405: max single-span length for HYPERTUBES (cm) = 94m — the chosen held default, a comfort margin under the
+	 *  routable TUBE (spline) cutoff (~95m: 95m builds, 95.5m returns an empty spline). This is the TUBE length, NOT
+	 *  the support spacing: the vanilla Holo_PipeHyper's end SUPPORTS sit ~9600cm apart at max, but its spline runs
+	 *  between INSET end connectors, so the router-buildable tube is shorter. Our stackable poles put the connector
+	 *  AT the pole (no inset), so our pole spacing == the tube length. Doubles as the default X grid spacing for
+	 *  stackable hypertube-pole auto-connect, and the per-segment cap for hypertube walking. */
+	static constexpr float MAX_HYPERTUBE_LENGTH = 9400.0f;
 
 	/** Minimum angle alignment for auto-connect (cos(45°) = 0.707) */
 	static constexpr float MIN_ANGLE_ALIGNMENT = 0.707f;

@@ -307,6 +307,26 @@ void USFSubsystem::RegisterActiveHologram(AFGHologram* Hologram)
 		}
 	}
 
+	// #405: stackable hypertube poles default X spacing to the hypertube single-span cap (9600cm / 96m), not the
+	// belt/pipe 54m, because hypertube spans reach much farther. Separate if (not folded into the #268 gate above)
+	// because hypertube and pipe stackable supports share a hologram class, disambiguated only by build class — the
+	// hypertube branch must own SpacingX. Hypertube poles are never wall poles, so always the X axis.
+	if (USFAutoConnectService::IsStackableHypertubeSupportHologram(Hologram))
+	{
+		if (CounterState.SpacingX == 0)
+		{
+			CounterState.SpacingX = static_cast<int32>(USFAutoConnectService::MAX_HYPERTUBE_LENGTH); // 9600cm = 96m
+
+			if (GridStateService)
+			{
+				GridStateService->UpdateCounterState(CounterState);
+			}
+
+			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 HYPERTUBE POLE: Applied default SpacingX=9600cm for span layout"));
+			UpdateCounterDisplay();
+		}
+	}
+
 	// Smart Auto-Connect: Check if this is a distributor hologram for auto-connect
 	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 DEBUG: Checking hologram type for auto-connect"));
 	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 DEBUG: AutoConnectService available: %s"), AutoConnectService ? TEXT("YES") : TEXT("NO"));
