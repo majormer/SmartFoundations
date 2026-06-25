@@ -53,13 +53,19 @@ public:
 	/** Maximum pipe length in cm (56.01m - game engine limit) */
 	static constexpr float MAX_PIPE_LENGTH = 5601.0f;
 
-	/** #405: max single-span length for HYPERTUBES (cm) = 94m — the chosen held default, a comfort margin under the
-	 *  routable TUBE (spline) cutoff (~95m: 95m builds, 95.5m returns an empty spline). This is the TUBE length, NOT
-	 *  the support spacing: the vanilla Holo_PipeHyper's end SUPPORTS sit ~9600cm apart at max, but its spline runs
-	 *  between INSET end connectors, so the router-buildable tube is shorter. Our stackable poles put the connector
-	 *  AT the pole (no inset), so our pole spacing == the tube length. Doubles as the default X grid spacing for
-	 *  stackable hypertube-pole auto-connect, and the per-segment cap for hypertube walking. */
-	static constexpr float MAX_HYPERTUBE_LENGTH = 9400.0f;
+	/** #405: per-span CAP on the connector-to-connector CHORD (cm) = 96m — the BuildOrUpdateSpan limit, measured as
+	 *  Dist(connectorA, connectorB). The chord runs ~1m LONGER than the pole-to-pole SPACING (the connectors sit
+	 *  ~0.5m outboard of each pole), so a pole spacing of S produces a chord of ~S+1m. Measured: the game router
+	 *  shows the tube up to a 96m chord (95m spacing) and drops it beyond — so this is both the chord cap and the
+	 *  conceptual tube max. */
+	static constexpr float MAX_HYPERTUBE_LENGTH = 9600.0f;
+
+	/** #405: default (and effective max) pole SPACING (cm) = 95m = MAX_HYPERTUBE_LENGTH - 1m. Pole spacing is ~1m
+	 *  less than the connector chord the cap measures, so spacing the poles 1m under the chord cap puts the chord
+	 *  right at the cap and the span shows. MUST stay strictly below MAX_HYPERTUBE_LENGTH (do NOT set them equal) or
+	 *  chord = spacing + 1m would exceed the cap and the DEFAULT span would be skipped. Used for the default X grid
+	 *  spacing (and the future hypertube-walking span default). */
+	static constexpr float MAX_HYPERTUBE_POLE_SPACING = MAX_HYPERTUBE_LENGTH - 100.0f;
 
 	/** Minimum angle alignment for auto-connect (cos(45°) = 0.707) */
 	static constexpr float MIN_ANGLE_ALIGNMENT = 0.707f;

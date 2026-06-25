@@ -315,14 +315,14 @@ void USFSubsystem::RegisterActiveHologram(AFGHologram* Hologram)
 	{
 		if (CounterState.SpacingX == 0)
 		{
-			CounterState.SpacingX = static_cast<int32>(USFAutoConnectService::MAX_HYPERTUBE_LENGTH); // 9600cm = 96m
+			CounterState.SpacingX = static_cast<int32>(USFAutoConnectService::MAX_HYPERTUBE_POLE_SPACING); // 9500cm = 95m (chord cap 96m - 1m connector offset)
 
 			if (GridStateService)
 			{
 				GridStateService->UpdateCounterState(CounterState);
 			}
 
-			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 HYPERTUBE POLE: Applied default SpacingX=9600cm for span layout"));
+			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 HYPERTUBE POLE: Applied default SpacingX=9500cm (chord cap - 1m connector offset) for span layout"));
 			UpdateCounterDisplay();
 		}
 	}
