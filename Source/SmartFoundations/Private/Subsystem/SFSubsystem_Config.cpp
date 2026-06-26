@@ -590,6 +590,10 @@ void USFSubsystem::OnRecipeModeChanged(const FInputActionValue& Value)
 				{
 					CurrentAutoConnectSetting = EAutoConnectSetting::PipeTierMain;
 				}
+				else if (CurrentAutoConnectSetting == EAutoConnectSetting::HypertubeEnabled)
+				{
+					CurrentAutoConnectSetting = EAutoConnectSetting::HypertubeRoutingMode;
+				}
 			}
 
 			// Hypertube poles expose only Enabled + Routing; if the cursor is on a non-hypertube setting
@@ -599,7 +603,11 @@ void USFSubsystem::OnRecipeModeChanged(const FInputActionValue& Value)
 				&& CurrentAutoConnectSetting != EAutoConnectSetting::HypertubeEnabled
 				&& CurrentAutoConnectSetting != EAutoConnectSetting::HypertubeRoutingMode)
 			{
-				CurrentAutoConnectSetting = EAutoConnectSetting::HypertubeEnabled;
+				// During a walk the enable is moot (the run always lays tube): seed onto Routing; otherwise Enabled.
+				const USFWalkService* WalkSvcH = GetWalkService();
+				CurrentAutoConnectSetting = (WalkSvcH && WalkSvcH->IsActive())
+					? EAutoConnectSetting::HypertubeRoutingMode
+					: EAutoConnectSetting::HypertubeEnabled;
 			}
 
 			// Update HUD to show current active setting
@@ -1306,6 +1314,10 @@ void USFSubsystem::CycleAutoConnectSetting()
         else if (CurrentAutoConnectSetting == EAutoConnectSetting::Enabled)
         {
             CurrentAutoConnectSetting = EAutoConnectSetting::PipeTierMain;
+        }
+        else if (CurrentAutoConnectSetting == EAutoConnectSetting::HypertubeEnabled)
+        {
+            CurrentAutoConnectSetting = EAutoConnectSetting::HypertubeRoutingMode;
         }
     }
 
