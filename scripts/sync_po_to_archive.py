@@ -64,21 +64,26 @@ def update_archive(archive_path, translations):
     
     parsed = json.loads(data)
     updated = 0
-    
-    for sub in parsed.get("Subnamespaces", []):
-        for child in sub.get("Children", []):
+
+    # Walk the WHOLE archive tree, not just one level of subnamespaces.
+    # Auto-keyed asset/UDE FText strings live in the archive's ROOT Children
+    # (namespace ""), which the old subnamespace-only loop never visited -- so
+    # their .po translations were silently dropped and shipped as English.
+    # Recurse from the root over both Children and Subnamespaces so every
+    # translated key is applied wherever it sits in the tree.
+    def walk(node):
+        nonlocal updated
+        for child in node.get("Children", []):
             key = child.get("Key", "")
             if key in translations:
-                current_trans = child.get("Translation", {}).get("Text", "")
                 new_trans = translations[key]
-                src = child.get("Source", {}).get("Text", "")
-                
-                # Update if translation is currently the source text (untranslated)
-                # or if it's empty
-                if current_trans == src or current_trans == "" or current_trans != new_trans:
-                    if current_trans != new_trans:
-                        child["Translation"]["Text"] = new_trans
-                        updated += 1
+                if child.get("Translation", {}).get("Text", "") != new_trans:
+                    child.setdefault("Translation", {})["Text"] = new_trans
+                    updated += 1
+        for sub in node.get("Subnamespaces", []):
+            walk(sub)
+
+    walk(parsed)
     
     if updated > 0:
         # Write back as UTF-16 LE with BOM (matching UE's format)
