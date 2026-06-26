@@ -307,10 +307,10 @@ void USFSubsystem::RegisterActiveHologram(AFGHologram* Hologram)
 		}
 	}
 
-	// #405: stackable hypertube poles default X spacing to the hypertube single-span cap (9600cm / 96m), not the
-	// belt/pipe 54m, because hypertube spans reach much farther. Separate if (not folded into the #268 gate above)
-	// because hypertube and pipe stackable supports share a hologram class, disambiguated only by build class — the
-	// hypertube branch must own SpacingX. Hypertube poles are never wall poles, so always the X axis.
+	// #405: stackable hypertube poles default X spacing to the pole-spacing max (9500cm / 95m), not the
+	// belt/pipe 54m, because hypertube spans reach much farther (96m chord cap minus ~1m connector offset).
+	// Separate if (not folded into the #268 gate above) because hypertube and pipe stackable supports share a
+	// hologram class, disambiguated only by build class — the hypertube branch must own SpacingX.
 	if (USFAutoConnectService::IsStackableHypertubeSupportHologram(Hologram))
 	{
 		if (CounterState.SpacingX == 0)
