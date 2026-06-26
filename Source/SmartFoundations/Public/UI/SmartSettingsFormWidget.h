@@ -289,7 +289,7 @@ protected:
 
     // === Hypertube Auto-Connect Controls (#405) ===
 
-    // Container for hypertube auto-connect controls (routing combo + label only; enable is shared with pipe)
+    // Container for hypertube auto-connect controls (enable checkbox + routing combo + label)
     UPROPERTY(meta = (BindWidgetOptional))
     TObjectPtr<UVerticalBox> HypertubeAutoConnectContainer;
 
