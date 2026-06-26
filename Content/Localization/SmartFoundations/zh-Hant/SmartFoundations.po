@@ -2118,3 +2118,63 @@ msgstr "段 {0} 過長 ({1}m > 56m)"
 msgctxt "SmartFoundations,Walk_Invalid_TooSteep"
 msgid "segment {0} too steep ({1}deg > 30deg)"
 msgstr "段 {0} 過陡 ({1}度 > 30度)"
+
+msgctxt "2BBD2D8A4804BE82F72DB0B091876974"
+msgid "Noodle"
+msgstr "麵條式"
+
+msgctxt "7D33892C463173CDF05A0383D92017C8"
+msgid "Straight"
+msgstr "直線"
+
+msgctxt "7D70E1B54E59E0072AA18581782CA4A0"
+msgid "Hypertube Auto-Connect:"
+msgstr "超級管道自動連接:"
+
+msgctxt "B7D7520E4A0B332ED9D87DBC994D5379"
+msgid "Auto"
+msgstr "自動"
+
+msgctxt "C24F4DC44DCA9C1FB249098A51A3B982"
+msgid "Auto 2D"
+msgstr "自動 2D"
+
+msgctxt "C37B40874B51E0F5798841AA27981362"
+msgid "Curve"
+msgstr "曲線"
+
+msgctxt "E0D5AEF140C1253876F13FB56301E909"
+msgid "Horiz→Vert"
+msgstr "水平→垂直"
+
+msgctxt "F9CB428247FA00F2916066950E42FA87"
+msgid "Routing:"
+msgstr "路由:"
+
+msgctxt "SmartFoundations,P.HypertubeRoutingMode"
+msgid "Hypertube Routing Mode"
+msgstr "超級管道路由模式"
+
+msgctxt "SmartFoundations,P.HypertubeRoutingMode.TT"
+msgid "How auto-connected hypertubes are shaped: Auto, 2D, Straight, Curve, Noodle, or Horizontal-to-Vertical."
+msgstr "自動連接的超級管道的塑形方式：自動、2D、直線、曲線、麵條式或水平轉垂直。"
+
+msgctxt "SmartFoundations,P.bHypertubeAutoConnectEnabled"
+msgid "Hypertube Auto-Connect"
+msgstr "超級管道自動連接"
+
+msgctxt "SmartFoundations,P.bHypertubeAutoConnectEnabled.TT"
+msgid "Automatically connect hypertubes between placed supports."
+msgstr "在放置的支架之間自動連接超級管道。"
+
+msgctxt "SmartFoundations,Sec.Hypertube"
+msgid "Hypertube Auto-Connect"
+msgstr "超級管道自動連接"
+
+msgctxt "SmartFoundations,Sec.Hypertube.TT"
+msgid "Automatically run hypertubes between the supports you place."
+msgstr "在你放置的支架之間自動鋪設超級管道。"
+
+msgctxt "SmartFoundations,Walk_Conveyance_Hypertube"
+msgid "Hypertube"
+msgstr "超級管道"

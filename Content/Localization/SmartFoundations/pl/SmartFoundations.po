@@ -2118,3 +2118,63 @@ msgstr "segment {0} za długi ({1}m > 56m)"
 msgctxt "SmartFoundations,Walk_Invalid_TooSteep"
 msgid "segment {0} too steep ({1}deg > 30deg)"
 msgstr "segment {0} za stromy ({1}° > 30°)"
+
+msgctxt "2BBD2D8A4804BE82F72DB0B091876974"
+msgid "Noodle"
+msgstr "Makaron"
+
+msgctxt "7D33892C463173CDF05A0383D92017C8"
+msgid "Straight"
+msgstr "Prosta"
+
+msgctxt "7D70E1B54E59E0072AA18581782CA4A0"
+msgid "Hypertube Auto-Connect:"
+msgstr "Automatyczne łączenie Hypertube:"
+
+msgctxt "B7D7520E4A0B332ED9D87DBC994D5379"
+msgid "Auto"
+msgstr "Auto"
+
+msgctxt "C24F4DC44DCA9C1FB249098A51A3B982"
+msgid "Auto 2D"
+msgstr "Auto 2D"
+
+msgctxt "C37B40874B51E0F5798841AA27981362"
+msgid "Curve"
+msgstr "Łuk"
+
+msgctxt "E0D5AEF140C1253876F13FB56301E909"
+msgid "Horiz→Vert"
+msgstr "Poz→Pion"
+
+msgctxt "F9CB428247FA00F2916066950E42FA87"
+msgid "Routing:"
+msgstr "Trasowanie:"
+
+msgctxt "SmartFoundations,P.HypertubeRoutingMode"
+msgid "Hypertube Routing Mode"
+msgstr "Tryb trasowania Hypertube"
+
+msgctxt "SmartFoundations,P.HypertubeRoutingMode.TT"
+msgid "How auto-connected hypertubes are shaped: Auto, 2D, Straight, Curve, Noodle, or Horizontal-to-Vertical."
+msgstr "Jak kształtowane są automatycznie łączone hyperrury: Auto, 2D, Prosta, Łuk, Makaron lub Poziomo-do-pionu."
+
+msgctxt "SmartFoundations,P.bHypertubeAutoConnectEnabled"
+msgid "Hypertube Auto-Connect"
+msgstr "Automatyczne łączenie Hypertube"
+
+msgctxt "SmartFoundations,P.bHypertubeAutoConnectEnabled.TT"
+msgid "Automatically connect hypertubes between placed supports."
+msgstr "Automatycznie łącz hyperrury między ustawionymi podporami."
+
+msgctxt "SmartFoundations,Sec.Hypertube"
+msgid "Hypertube Auto-Connect"
+msgstr "Automatyczne łączenie Hypertube"
+
+msgctxt "SmartFoundations,Sec.Hypertube.TT"
+msgid "Automatically run hypertubes between the supports you place."
+msgstr "Automatycznie prowadź hyperrury między ustawionymi podporami."
+
+msgctxt "SmartFoundations,Walk_Conveyance_Hypertube"
+msgid "Hypertube"
+msgstr "Hypertube"
