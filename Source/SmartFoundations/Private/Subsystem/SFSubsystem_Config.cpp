@@ -1759,9 +1759,12 @@ bool USFSubsystem::IsCurrentHologramAutoConnectCapable() const
 
 bool USFSubsystem::IsCurrentHologramWalkable() const
 {
-	// Smart Walking seeds from a stackable belt OR pipe support (the tested set; matches the walk's conveyance adapters).
+	// Smart Walking seeds from a stackable belt, pipe, OR hypertube support — matches the walk's conveyance adapters
+	// (belt/pipe/hypertube). The hypertube support keys off its own build class, not IsStackableSupportHologram, so OR
+	// it in explicitly — else the Walk Path button never appears on a held tube pole. #405
 	return AutoConnectService && ActiveHologram.IsValid()
-		&& AutoConnectService->IsStackableSupportHologram(ActiveHologram.Get());
+		&& (AutoConnectService->IsStackableSupportHologram(ActiveHologram.Get())
+			|| USFAutoConnectService::IsStackableHypertubeSupportHologram(ActiveHologram.Get()));
 }
 
 TArray<FString> USFSubsystem::GetDirtyAutoConnectSettings() const

@@ -4,6 +4,7 @@
 #include "Subsystem/SFSubsystem.h"
 #include "Features/Walk/SFWalkService.h"
 #include "Features/Walk/SFWalkTypes.h"
+#include "Features/AutoConnect/SFAutoConnectService.h"  // MAX_HYPERTUBE_POLE_SPACING — the 95 m hypertube Advance cap (#405)
 #include "UI/SFFontLibrary.h"  // SFFont::Get — small multi-script font for the dense table cells
 #include "Blueprint/WidgetLayoutLibrary.h"  // GetViewportScale for DPI-correct drag
 #include "Components/HorizontalBoxSlot.h"
@@ -238,9 +239,15 @@ void USFWalkPanelWidget::Refresh()
 
     const TArray<FSFWalkSegmentView> Views = W->GetSegmentViews();
     const bool bPipe = W->GetConveyanceType() == ESFWalkConveyanceType::Pipe;
+    const bool bHyper = W->GetConveyanceType() == ESFWalkConveyanceType::Hypertube;   // #405: 3rd conveyance — routing only, no tier/direction
+    // #405: per-conveyance Advance cap for the segment spinboxes — hypertube reaches 95 m
+    // (MAX_HYPERTUBE_POLE_SPACING), belts/pipes 54 m (safe max under the 56 m spline limit).
+    const float MaxAdvanceM = (W->GetConveyanceType() == ESFWalkConveyanceType::Hypertube)
+        ? (USFAutoConnectService::MAX_HYPERTUBE_POLE_SPACING / 100.0f)
+        : 54.0f;
     const auto& AC = S->GetAutoConnectRuntimeSettings();
     const int32 Tier = bPipe ? AC.PipeTierMain : AC.BeltTierMain;
-    const int32 RouteMode = bPipe ? AC.PipeRoutingMode : AC.BeltRoutingMode;
+    const int32 RouteMode = bHyper ? AC.HypertubeRoutingMode : (bPipe ? AC.PipeRoutingMode : AC.BeltRoutingMode);
     const float HeadDeg = Views.Num() > 0 ? Views.Last().ExitHeadingDeg : 0.0f;
 
     if (!SegmentListBox)
@@ -313,8 +320,9 @@ void USFWalkPanelWidget::Refresh()
         SummaryArgs.Add(Views.Num());                                       // {0} segment count + plural selector
         SummaryArgs.Add(FText::FromString(SFHeadingToCompass16(HeadDeg)));  // {1} compass (intentionally untranslated)
         SummaryArgs.Add(FMath::RoundToInt(HeadDeg));                        // {2} head heading, degrees
-        SummaryArgs.Add(bPipe ? LOCTEXT("Walk_Conveyance_Pipe", "Pipe")
-                              : LOCTEXT("Walk_Conveyance_Belt", "Belt"));   // {3} conveyance word
+        SummaryArgs.Add(bHyper ? LOCTEXT("Walk_Conveyance_Hypertube", "Hypertube")
+                               : (bPipe ? LOCTEXT("Walk_Conveyance_Pipe", "Pipe")
+                                        : LOCTEXT("Walk_Conveyance_Belt", "Belt")));   // {3} conveyance word
         const FText SummaryText = FText::Format(
             LOCTEXT("Walk_Summary", "{0} {0}|plural(one=segment,other=segments)  ·  head {1} {2} deg  ·  {3}"),
             SummaryArgs);
@@ -324,18 +332,21 @@ void USFWalkPanelWidget::Refresh()
     // Pinned setting dropdowns (mirror the Smart Panel) — apply live to the walk's spans via the auto-connect setters.
     {
         AFGPlayerController* PC = Cast<AFGPlayerController>(GetOwningPlayer());
-        const int32 MaxTier = bPipe ? S->GetHighestUnlockedPipeTier(PC) : S->GetHighestUnlockedBeltTier(PC);
-        TArray<FString> TierOpts;
-        for (int32 t = 0; t <= MaxTier; ++t) { TierOpts.Add(SFTierName(t)); }
-        if (UWidget* TierRow = MakeComboRow(LOCTEXT("Walk_Lbl_Tier", "Tier"), TierOpts, FMath::Clamp(Tier, 0, MaxTier), TierCombo))
+        if (!bHyper)   // hypertube has no tiers (a single tube class) — skip the Tier dropdown
         {
-            Col->AddChildToVerticalBox(TierRow);
-            if (TierCombo) { TierCombo->OnSelectionChanged.AddDynamic(this, &USFWalkPanelWidget::OnTierComboChanged); }
+            const int32 MaxTier = bPipe ? S->GetHighestUnlockedPipeTier(PC) : S->GetHighestUnlockedBeltTier(PC);
+            TArray<FString> TierOpts;
+            for (int32 t = 0; t <= MaxTier; ++t) { TierOpts.Add(SFTierName(t)); }
+            if (UWidget* TierRow = MakeComboRow(LOCTEXT("Walk_Lbl_Tier", "Tier"), TierOpts, FMath::Clamp(Tier, 0, MaxTier), TierCombo))
+            {
+                Col->AddChildToVerticalBox(TierRow);
+                if (TierCombo) { TierCombo->OnSelectionChanged.AddDynamic(this, &USFWalkPanelWidget::OnTierComboChanged); }
+            }
         }
 
-        const int32 RouteMax = bPipe ? 5 : 2;
+        const int32 RouteMax = (bPipe || bHyper) ? 5 : 2;   // hypertube shares the pipe 6-mode set (Auto..H->V)
         TArray<FString> RouteOpts;
-        for (int32 r = 0; r <= RouteMax; ++r) { RouteOpts.Add(SFRoutingName(bPipe, r)); }
+        for (int32 r = 0; r <= RouteMax; ++r) { RouteOpts.Add(SFRoutingName(bPipe || bHyper, r)); }
         if (UWidget* RouteRow = MakeComboRow(LOCTEXT("Walk_Lbl_Routing", "Routing"), RouteOpts, FMath::Clamp(RouteMode, 0, RouteMax), RoutingCombo))
         {
             Col->AddChildToVerticalBox(RouteRow);
@@ -357,7 +368,7 @@ void USFWalkPanelWidget::Refresh()
             }
         }
 
-        if (!bPipe)   // belt direction only (pipes have no direction)
+        if (!bPipe && !bHyper)   // belt direction only (pipes and hypertubes have no direction)
         {
             TArray<FString> DirOpts;
             DirOpts.Add(LOCTEXT("Walk_Opt_Forward",  "Forward").ToString());
@@ -381,7 +392,7 @@ void USFWalkPanelWidget::Refresh()
     }
     for (const FSFWalkSegmentView& V : Views)
     {
-        if (UWidget* Row = MakeSegmentRow(V))
+        if (UWidget* Row = MakeSegmentRow(V, MaxAdvanceM))
         {
             SegmentScroll->AddChild(Row);
         }
@@ -455,7 +466,7 @@ UWidget* USFWalkPanelWidget::MakeCell(const FText& Text, const FLinearColor& Col
     return Cell;
 }
 
-UWidget* USFWalkPanelWidget::MakeSegmentRow(const FSFWalkSegmentView& View)
+UWidget* USFWalkPanelWidget::MakeSegmentRow(const FSFWalkSegmentView& View, float MaxAdvanceM)
 {
     UHorizontalBox* Row = NewObject<UHorizontalBox>(this);
     const FLinearColor Col(0.9f, 0.9f, 0.9f, 1.0f);   // white # / Exit cells (match the headers); the active segment is marked by the ">" prefix
@@ -463,7 +474,7 @@ UWidget* USFWalkPanelWidget::MakeSegmentRow(const FSFWalkSegmentView& View)
     // Fixed-width columns so every row lines up with the header. Advance/Rise/Shift are edited in METERS (the view
     // stores cm); ApplyCellEdit converts back. Turn is degrees.
     AddFixedCell(Row, MakeCell(FString::Printf(TEXT("%s%d"), View.bActive ? TEXT(">") : TEXT(""), View.Index), Col), 34.0f);
-    AddFixedCell(Row, MakeEditCell(View.Index, 0, View.Advance / 100.0f, 1.0f, 54.0f, 1.0f), 84.0f);   // Advance 1–54m: min 1m (no 0-length span), max 54m (belt/pipe safe max under the 56m spline limit); longer = add a segment
+    AddFixedCell(Row, MakeEditCell(View.Index, 0, View.Advance / 100.0f, 1.0f, MaxAdvanceM, 1.0f), 84.0f);   // Advance 1–MaxAdvanceM: min 1m (no 0-length span), max = belt/pipe 54m (safe under the 56m spline limit) or hypertube 95m (#405); longer = add a segment
     AddFixedCell(Row, MakeEditCell(View.Index, 1, View.TurnDegrees, -270.0f, 270.0f, 5.0f), 66.0f);   // up to ±270° — a wide loop that arcs back into itself
     AddFixedCell(Row, MakeEditCell(View.Index, 2, View.Rise / 100.0f, -200.0f, 200.0f, 1.0f), 66.0f);
     AddFixedCell(Row, MakeEditCell(View.Index, 3, View.Shift / 100.0f, -200.0f, 200.0f, 1.0f), 66.0f);
@@ -666,7 +677,8 @@ void USFWalkPanelWidget::OnRoutingComboChanged(FString SelectedItem, ESelectInfo
     USFWalkService* W = S ? S->GetWalkService() : nullptr;
     if (!S || !W || !RoutingCombo) { return; }
     const int32 Idx = RoutingCombo->GetSelectedIndex();
-    if (W->GetConveyanceType() == ESFWalkConveyanceType::Pipe) { S->SetAutoConnectPipeRoutingMode(Idx); }
+    if (W->GetConveyanceType() == ESFWalkConveyanceType::Hypertube) { S->SetAutoConnectHypertubeRoutingMode(Idx); }
+    else if (W->GetConveyanceType() == ESFWalkConveyanceType::Pipe) { S->SetAutoConnectPipeRoutingMode(Idx); }
     else { S->SetAutoConnectBeltRoutingMode(Idx); }
     W->RerouteSpans();
 }

@@ -17,6 +17,7 @@ enum class ESFWalkConveyanceType : uint8
 {
 	Belt = 0,
 	Pipe = 1,
+	Hypertube = 2,
 };
 
 /**
@@ -76,6 +77,10 @@ struct SMARTFOUNDATIONS_API FSFWalkCommitSpec
 
 	/** Pipe indicator (the flow-indicator variant) the client has set. Only meaningful for pipes. */
 	UPROPERTY() bool bPipeIndicator = true;
+
+	/** Hypertube routing mode (0=Auto..5=H2V) the client has set - same install-on-server reason as PipeRoutingMode.
+	 *  Only meaningful when ConveyanceType == Hypertube. */
+	UPROPERTY() int32 HypertubeRoutingMode = 0;
 
 	/** Belt flow direction (0=Forward, 1=Backward) the client has set - the server re-installs it before reconstructing
 	 *  so a reversed belt walk builds reversed on a dedicated server (LinkOrUpdate reads it live; it is NOT derivable

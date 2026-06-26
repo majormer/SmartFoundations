@@ -102,8 +102,9 @@ private:
     /** OnGenerateWidget for the setting combos — black SF-font item text (runtime combos can't InitFont, which is protected). */
     UFUNCTION() UWidget* MakeComboItemWidget(FString Item);
 
-    /** Build one segment-list row (index | Advance | Turn | Rise | Exit heading), highlighting the active. */
-    UWidget* MakeSegmentRow(const FSFWalkSegmentView& View);
+    /** Build one segment-list row (index | Advance | Turn | Rise | Exit heading), highlighting the active.
+     *  MaxAdvanceM caps the Advance spinbox per conveyance (54 m belt/pipe; 95 m hypertube — #405). */
+    UWidget* MakeSegmentRow(const FSFWalkSegmentView& View, float MaxAdvanceM);
 
     /** Build a "[Label  <dropdown>]" combo row; OutCombo receives the UComboBoxString so Refresh can bind it. */
     UWidget* MakeComboRow(const FText& Label, const TArray<FString>& Options, int32 SelectedIndex, TObjectPtr<class UComboBoxString>& OutCombo);
