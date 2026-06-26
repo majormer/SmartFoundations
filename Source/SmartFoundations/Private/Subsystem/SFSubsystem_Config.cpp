@@ -1099,7 +1099,15 @@ UClass* USFSubsystem::GetHypertubeClassFromConfig(AFGPlayerController* PlayerCon
 	// Hypertubes are a SINGLE buildable - no tier, no indicator/clean variant - so unlike GetPipeClassFromConfig
 	// this loads the one class and gates it on the player's unlock (mirrors GetPipeClassForTier's unlock check).
 	static const TCHAR* HyperPath = TEXT("/Game/FactoryGame/Buildable/Factory/PipeHyper/Build_PipeHyper.Build_PipeHyper_C");
-	UClass* HyperClass = LoadObject<UClass>(nullptr, HyperPath);
+	// Cache the resolved class: this runs from span-creation paths (per preview update) and the engine
+	// buildable never changes; TWeakObjectPtr so a GC of the class just reloads instead of dangling.
+	static TWeakObjectPtr<UClass> CachedHyperClass;
+	UClass* HyperClass = CachedHyperClass.Get();
+	if (!HyperClass)
+	{
+		HyperClass = LoadObject<UClass>(nullptr, HyperPath);
+		CachedHyperClass = HyperClass;
+	}
 	if (!HyperClass)
 	{
 		UE_LOG(LogSmartFoundations, Verbose, TEXT("GetHypertubeClassFromConfig: failed to load Build_PipeHyper_C"));
