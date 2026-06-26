@@ -648,8 +648,8 @@ private:
 	// ========================================================================
 	// #405: Stackable HYPERTUBE Child Tracking (Pole-Pair Based)
 	// ========================================================================
-	// Reuses MakePolePairKey. S2b is preview-only (no AddChild/commit); spans live only in this map
-	// and are torn down by RemoveOrphanedHypertubes / CleanupAllStackableHypertubes.
+	// Reuses MakePolePairKey. Spans are AddChild'd into the parent hologram (pipe-parity) and tracked here
+	// so they can be updated/removed when pole-pairs change.
 	struct FStackableHypertubeState
 	{
 		TMap<uint64, TWeakObjectPtr<AFGHologram>> SpansByPolePair;
