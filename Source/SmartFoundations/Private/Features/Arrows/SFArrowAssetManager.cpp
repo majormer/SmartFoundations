@@ -207,15 +207,21 @@ bool FSFArrowAssetManager::IsPointerSafe(const void* Ptr)
 
 	const uintptr_t PtrValue = reinterpret_cast<uintptr_t>(Ptr);
 
-	// Detect invalid/corrupted pointers:
-	// - High addresses (0xFFFF...) = freed memory markers
-	// - Low addresses (< 0x10000) = OS reserved, typically invalid
-	// - Suspicious range (< 16GB) = Likely corrupted on 64-bit systems
-	//   Real UE object pointers are typically > 0x400000000 (beyond 32-bit range)
-	//   Crash report: 0x0000000600000097 (~6GB) was corrupted
+	// Reject only the two values that can never be a live heap object:
+	// - Freed-memory poison markers at the very top of the address space
+	// - The bottom 64KB reserved null page
+	//
+	// Do NOT gate on a minimum address (the old "< 0x400000000 == corrupted, real
+	// UE pointers are > 16GB" rule). Heap/object addresses are allocator- and
+	// platform-dependent: on Linux the heap routinely lives in the low-GB range,
+	// so that rule flagged every valid asset as corrupt and silently disabled arrow
+	// visualization on Linux -- the logged "CORRUPTED 0xD10E7F30 / 0x326FF3A0"
+	// (~3.5GB / ~0.8GB) were perfectly valid RenderData pointers. (The rule also
+	// never caught the ~24GB pointer from the crash it cited.) A pointer's numeric
+	// value can't prove validity; the real guards are the null check and
+	// RenderData->IsInitialized() at the call sites.
 	const bool bIsHighPoison = (PtrValue >= 0xFFFFFFFFFFFFFFF0);
 	const bool bIsLowInvalid = (PtrValue < 0x10000);
-	const bool bIsSuspiciousRange = (PtrValue < 0x400000000);  // < 16GB
 
-	return !(bIsHighPoison || bIsLowInvalid || bIsSuspiciousRange);
+	return !(bIsHighPoison || bIsLowInvalid);
 }
