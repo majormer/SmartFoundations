@@ -92,26 +92,29 @@ namespace SFHypertube
 			return nullptr;
 		}
 
-		// Through-route normals — IDENTICAL geometry to the walk pipe adapter (SFWalkConveyance.cpp ~287-296):
-		// ENTRY leaves the source support along -(its facing) so the tube continues the run's heading THROUGH the
-		// shared support; EXIT arrives at the dest along +(its facing). Both keep the chord's PITCH (Z) so a height
-		// delta doesn't ramp. Not snapped to the chord (that folds the span at a turn). Degenerate facings fall back
-		// to the chord direction. (Hypertube supports are non-wall, so we do not use the RightVector path.)
-		const FVector Dir  = (EndPos - StartPos);
-		const FVector DirN = Dir.GetSafeNormal();
+		// Exit normals via the SHARED resolver — the exact path the stackable-pipe AC uses (#400/#291):
+		// each support's horizontal facing is oriented TOWARD the run, the chord's pitch is kept, and it falls back to
+		// the straight chord when the facing is perpendicular or the run is vertical. Hypertube supports are non-wall
+		// (forward facing, not RightVector). Replaces the old hard-coded -(facing) through-route, which on these
+		// supports aimed the exit AWAY from the destination and ballooned the span into a vertical loop. #405.
+		const FVector Direction = (EndPos - StartPos);
+		const FVector ToTarget  = Direction.GetSafeNormal();
+		const FVector ToSource  = (-Direction).GetSafeNormal();
 
-		FVector StartFwd = FromSupport->GetActorForwardVector();
-		StartFwd.Z = 0.0f; StartFwd = StartFwd.GetSafeNormal();
-		FVector StartNormal = StartFwd.IsNearlyZero() ? DirN : (-StartFwd + FVector(0.0f, 0.0f, DirN.Z)).GetSafeNormal();
+		FVector StartNormal = USFAutoConnectService::ResolveSupportExitNormal(FromSupport, ToTarget, false);
+		FVector EndNormal   = USFAutoConnectService::ResolveSupportExitNormal(ToSupport, ToSource, false);
 
-		FVector EndFwd = ToSupport->GetActorForwardVector();
-		EndFwd.Z = 0.0f; EndFwd = EndFwd.GetSafeNormal();
-		FVector EndNormal = EndFwd.IsNearlyZero() ? -DirN : (EndFwd + FVector(0.0f, 0.0f, DirN.Z)).GetSafeNormal();
+		// FLATTEN the exit tangents: a hypertube must leave its connector HORIZONTALLY and let the router climb to the
+		// next pole's height (the Horiz→Vert shape). ResolveSupportExitNormal bakes in the chord's pitch for pipes
+		// (their #291 no-ramp rule) — for tubes that pitch is exactly the diagonal "straight at the next connector"
+		// exit we don't want, so drop the Z and keep the horizontal heading toward the run. #405.
+		StartNormal.Z = 0.0f; StartNormal = StartNormal.GetSafeNormal();
+		EndNormal.Z   = 0.0f; EndNormal   = EndNormal.GetSafeNormal();
 
-		if (StartNormal.IsNearlyZero()) { StartNormal = DirN; }
-		if (EndNormal.IsNearlyZero())   { EndNormal   = -DirN; }
+		if (StartNormal.IsNearlyZero()) { StartNormal = FVector(ToTarget.X, ToTarget.Y, 0.0f).GetSafeNormal(); }
+		if (EndNormal.IsNearlyZero())   { EndNormal   = FVector(ToSource.X, ToSource.Y, 0.0f).GetSafeNormal(); }
 
-		const int32 RoutingMode = Sub->GetAutoConnectRuntimeSettings().PipeRoutingMode;
+		const int32 RoutingMode = Sub->GetAutoConnectRuntimeSettings().HypertubeRoutingMode;
 
 		UE_LOG(LogSmartHyperSpan, Verbose, TEXT("BuildOrUpdateSpan: Start=%s End=%s | StartN=%s EndN=%s | mode=%d len=%.1f existing=%s"),
 			*StartPos.ToString(), *EndPos.ToString(), *StartNormal.ToString(), *EndNormal.ToString(),

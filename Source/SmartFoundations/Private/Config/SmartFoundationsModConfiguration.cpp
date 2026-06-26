@@ -50,6 +50,15 @@ USmartFoundationsModConfiguration::USmartFoundationsModConfiguration()
 		LOCTEXT("P.PipeIndicator.TT", "Show a flow-direction indicator on auto-connected pipes."), true));
 	RootSection->SectionProperties.Add(TEXT("PipeAutoConnect"), Pipe);
 
+	// ── Hypertube Auto-Connect (sibling section, rendered directly after Pipe) ──
+	UConfigPropertySection* Hypertube = CreateSection(TEXT("HypertubeAutoConnect"), LOCTEXT("Sec.Hypertube", "Hypertube Auto-Connect"),
+		LOCTEXT("Sec.Hypertube.TT", "Automatically run hypertubes between the supports you place."));
+	Hypertube->SectionProperties.Add(TEXT("bHypertubeAutoConnectEnabled"), CreateBoolProperty(TEXT("bHypertubeAutoConnectEnabled"), LOCTEXT("P.bHypertubeAutoConnectEnabled", "Hypertube Auto-Connect"),
+		LOCTEXT("P.bHypertubeAutoConnectEnabled.TT", "Automatically connect hypertubes between placed supports."), true));
+	Hypertube->SectionProperties.Add(TEXT("HypertubeRoutingMode"), CreateIntegerProperty(TEXT("HypertubeRoutingMode"), LOCTEXT("P.HypertubeRoutingMode", "Hypertube Routing Mode"),
+		LOCTEXT("P.HypertubeRoutingMode.TT", "How auto-connected hypertubes are shaped: Auto, 2D, Straight, Curve, Noodle, or Horizontal-to-Vertical."), 0));
+	RootSection->SectionProperties.Add(TEXT("HypertubeAutoConnect"), Hypertube);
+
 	// ── Power Auto-Connect ──
 	UConfigPropertySection* Power = CreateSection(TEXT("PowerAutoConnect"), LOCTEXT("Sec.Power", "Power Auto-Connect"),
 		LOCTEXT("Sec.Power.TT", "Automatically wire power between buildings and power poles as you build."));

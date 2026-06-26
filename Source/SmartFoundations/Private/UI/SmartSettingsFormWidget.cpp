@@ -256,6 +256,7 @@ void USmartSettingsFormWidget::NativeConstruct()
     ConfigureComboBoxStyle(PipeTierMainComboBox);
     ConfigureComboBoxStyle(PipeTierToBuildingComboBox);
     ConfigureComboBoxStyle(PipeRoutingModeComboBox, PipeTierToBuildingComboBox);  // Copy style from To Building
+    ConfigureComboBoxStyle(HypertubeRoutingModeComboBox, PipeRoutingModeComboBox);  // [#405] Copy style from Pipe Routing Mode
     ConfigureComboBoxStyle(BeltRoutingModeComboBox, PipeRoutingModeComboBox);  // Copy style from Pipe Routing Mode
     ConfigureComboBoxStyle(PowerGridAxisComboBox);
     ConfigureComboBoxStyle(PowerReservedComboBox);
@@ -393,6 +394,14 @@ void USmartSettingsFormWidget::NativeConstruct()
     if (PipeRoutingModeComboBox)
     {
         PipeRoutingModeComboBox->OnSelectionChanged.AddDynamic(this, &USmartSettingsFormWidget::OnPipeRoutingModeChanged);
+    }
+    if (HypertubeEnabledCheckBox)
+    {
+        HypertubeEnabledCheckBox->OnCheckStateChanged.AddDynamic(this, &USmartSettingsFormWidget::OnHypertubeEnabledChanged);
+    }
+    if (HypertubeRoutingModeComboBox)
+    {
+        HypertubeRoutingModeComboBox->OnSelectionChanged.AddDynamic(this, &USmartSettingsFormWidget::OnHypertubeRoutingModeChanged);
     }
 
     // Bind power auto-connect controls
@@ -607,6 +616,10 @@ void USmartSettingsFormWidget::PopulateFromCounterState(USFSubsystem* Subsystem)
     {
         PipeAutoConnectContainer->SetVisibility(ESlateVisibility::Collapsed);
     }
+    if (HypertubeAutoConnectContainer)
+    {
+        HypertubeAutoConnectContainer->SetVisibility(ESlateVisibility::Collapsed);
+    }
     if (PowerAutoConnectContainer)
     {
         PowerAutoConnectContainer->SetVisibility(ESlateVisibility::Collapsed);
@@ -697,9 +710,10 @@ void USmartSettingsFormWidget::PopulateFromCounterState(USFSubsystem* Subsystem)
             const bool bIsStackableConveyorPole = USFAutoConnectService::IsBeltSupportHologram(ActiveHologram);
             const bool bIsStackablePipeSupport = AutoConnectService->IsStackablePipelineSupportHologram(ActiveHologram);
             const bool bIsPassthroughPipe = USFAutoConnectService::IsPassthroughPipeHologram(ActiveHologram);
+            const bool bIsStackableHypertubeSupport = AutoConnectService->IsStackableHypertubeSupportHologram(ActiveHologram);
 
             // #405 S1: detection-only probe for the Stackable Hypertube Support (no behavior change yet).
-            if (AutoConnectService->IsStackableHypertubeSupportHologram(ActiveHologram))
+            if (bIsStackableHypertubeSupport)
             {
                 UE_LOG(LogSmartFoundations, Log, TEXT("[Hypertube][#405] Stackable Hypertube Support detected (build=%s) - S1 predicate live."),
                     ActiveHologram->GetBuildClass() ? *ActiveHologram->GetBuildClass()->GetName() : TEXT("?"));
@@ -834,6 +848,29 @@ void USmartSettingsFormWidget::PopulateFromCounterState(USFSubsystem* Subsystem)
                         Settings.bPipeAutoConnectEnabled ? TEXT("On") : TEXT("Off"),
                         *DescribePipeTier(Settings.PipeTierMain),
                         Settings.bPipeIndicator ? TEXT("Normal") : TEXT("Clean"));
+                }
+            }
+
+            if (bIsStackableHypertubeSupport)
+            {
+                bHasAnyAutoConnectContext = true;
+
+                // Show hypertube auto-connect controls (routing style only; enable is shared with pipe)
+                if (HypertubeAutoConnectContainer)
+                {
+                    UpdateHypertubeAutoConnectControls();
+                    HypertubeAutoConnectContainer->SetVisibility(ESlateVisibility::Visible);
+                }
+                else
+                {
+                    if (!AutoConnectLines.IsEmpty())
+                    {
+                        AutoConnectLines += TEXT("\n");
+                    }
+                    AutoConnectLines += FString::Printf(
+                        TEXT("Stackable Hypertube Support: Enabled=%d Routing=%d"),
+                        Settings.bHypertubeAutoConnectEnabled ? 1 : 0,
+                        Settings.HypertubeRoutingMode);
                 }
             }
         }

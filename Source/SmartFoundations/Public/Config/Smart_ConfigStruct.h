@@ -42,6 +42,13 @@ struct FSmart_PipeConfigSection {
 };
 
 USTRUCT(BlueprintType)
+struct FSmart_HypertubeConfigSection {
+    GENERATED_BODY()
+    UPROPERTY(BlueprintReadWrite) bool bHypertubeAutoConnectEnabled{true};
+    UPROPERTY(BlueprintReadWrite) int32 HypertubeRoutingMode{};
+};
+
+USTRUCT(BlueprintType)
 struct FSmart_PowerConfigSection {
     GENERATED_BODY()
     UPROPERTY(BlueprintReadWrite) bool bPowerAutoConnectEnabled{};
@@ -86,6 +93,7 @@ struct FSmart_ConfigStruct_Sections {
     GENERATED_BODY()
     UPROPERTY(BlueprintReadWrite) FSmart_BeltConfigSection BeltAutoConnect;
     UPROPERTY(BlueprintReadWrite) FSmart_PipeConfigSection PipeAutoConnect;
+    UPROPERTY(BlueprintReadWrite) FSmart_HypertubeConfigSection HypertubeAutoConnect;
     UPROPERTY(BlueprintReadWrite) FSmart_PowerConfigSection PowerAutoConnect;
     UPROPERTY(BlueprintReadWrite) FSmart_BuildingBehaviorConfigSection BuildingBehavior;
     UPROPERTY(BlueprintReadWrite) FSmart_HUDConfigSection HUD;
@@ -140,6 +148,15 @@ public:
 
     UPROPERTY(BlueprintReadWrite)
     bool PipeIndicator{};
+
+    // ── Hypertube Auto-Connect ──
+
+    UPROPERTY(BlueprintReadWrite)
+    bool bHypertubeAutoConnectEnabled{true};
+
+    // Hypertube routing mode: 0=Auto, 1=Auto2D, 2=Straight, 3=Curve, 4=Noodle, 5=HorizontalToVertical
+    UPROPERTY(BlueprintReadWrite)
+    int32 HypertubeRoutingMode{};
 
     // ── Power Auto-Connect ──
 
@@ -260,6 +277,10 @@ public:
         ConfigStruct.PipeLevelToBuilding      = Sections.PipeAutoConnect.PipeLevelToBuilding;
         ConfigStruct.PipeRoutingMode          = Sections.PipeAutoConnect.PipeRoutingMode;
         ConfigStruct.PipeIndicator            = Sections.PipeAutoConnect.PipeIndicator;
+
+        // Hypertube Auto-Connect
+        ConfigStruct.bHypertubeAutoConnectEnabled = Sections.HypertubeAutoConnect.bHypertubeAutoConnectEnabled;
+        ConfigStruct.HypertubeRoutingMode         = Sections.HypertubeAutoConnect.HypertubeRoutingMode;
 
         // Power Auto-Connect
         ConfigStruct.bPowerAutoConnectEnabled = Sections.PowerAutoConnect.bPowerAutoConnectEnabled;

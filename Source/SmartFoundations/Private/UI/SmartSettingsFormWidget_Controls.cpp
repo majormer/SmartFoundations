@@ -579,6 +579,52 @@ void USmartSettingsFormWidget::OnPipeRoutingModeChanged(FString SelectedItem, ES
     }
 }
 
+void USmartSettingsFormWidget::OnHypertubeEnabledChanged(bool bIsChecked)
+{
+    if (!CachedSubsystem.IsValid())
+    {
+        return;
+    }
+
+    CachedSubsystem->SetAutoConnectHypertubeEnabled(bIsChecked);
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Hypertube auto-connect enabled changed to %s"), bIsChecked ? TEXT("ON") : TEXT("OFF"));
+
+    if (bApplyImmediately)
+    {
+        CachedSubsystem->TriggerAutoConnectRefresh();
+    }
+}
+
+void USmartSettingsFormWidget::OnHypertubeRoutingModeChanged(FString SelectedItem, ESelectInfo::Type SelectionType)
+{
+    if (SelectionType == ESelectInfo::Direct)
+    {
+        return;  // Ignore programmatic changes
+    }
+
+    if (!CachedSubsystem.IsValid())
+    {
+        return;
+    }
+
+    // Convert display string to routing mode index
+    int32 RoutingMode = 0;
+    if (SelectedItem == TEXT("Auto")) RoutingMode = 0;
+    else if (SelectedItem == TEXT("Auto 2D")) RoutingMode = 1;
+    else if (SelectedItem == TEXT("Straight")) RoutingMode = 2;
+    else if (SelectedItem == TEXT("Curve")) RoutingMode = 3;
+    else if (SelectedItem == TEXT("Noodle")) RoutingMode = 4;
+    else if (SelectedItem == TEXT("Horiz→Vert")) RoutingMode = 5;
+
+    CachedSubsystem->SetAutoConnectHypertubeRoutingMode(RoutingMode);
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Hypertube routing mode changed to %d (%s)"), RoutingMode, *SelectedItem);
+
+    if (bApplyImmediately)
+    {
+        CachedSubsystem->TriggerAutoConnectRefresh();
+    }
+}
+
 // ============================================================================
 // Power Auto-Connect Controls
 // ============================================================================
@@ -1417,6 +1463,40 @@ void USmartSettingsFormWidget::UpdateStackablePipeAutoConnectControls()
 
     UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Updated stackable/floor hole pipe controls - Enabled=%d, Tier=%d, Indicator=%d, RoutingMode=%d, CleanUnlocked=%d"),
         Settings.bPipeAutoConnectEnabled, Settings.PipeTierToBuilding, Settings.bPipeIndicator, Settings.PipeRoutingMode, bCleanPipesUnlocked);
+}
+
+void USmartSettingsFormWidget::UpdateHypertubeAutoConnectControls()
+{
+    if (!CachedSubsystem.IsValid())
+    {
+        return;
+    }
+
+    const auto& Settings = CachedSubsystem->GetAutoConnectRuntimeSettings();
+
+    // Update Enabled checkbox (independent of pipe)
+    if (HypertubeEnabledCheckBox)
+    {
+        HypertubeEnabledCheckBox->SetIsChecked(Settings.bHypertubeAutoConnectEnabled);
+    }
+
+    // Update Routing Mode ComboBox (routing style only)
+    if (HypertubeRoutingModeComboBox)
+    {
+        HypertubeRoutingModeComboBox->ClearOptions();
+        HypertubeRoutingModeComboBox->AddOption(TEXT("Auto"));
+        HypertubeRoutingModeComboBox->AddOption(TEXT("Auto 2D"));
+        HypertubeRoutingModeComboBox->AddOption(TEXT("Straight"));
+        HypertubeRoutingModeComboBox->AddOption(TEXT("Curve"));
+        HypertubeRoutingModeComboBox->AddOption(TEXT("Noodle"));
+        HypertubeRoutingModeComboBox->AddOption(TEXT("Horiz→Vert"));
+
+        int32 ModeIndex = FMath::Clamp(Settings.HypertubeRoutingMode, 0, 5);
+        HypertubeRoutingModeComboBox->SetSelectedIndex(ModeIndex);
+    }
+
+    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Updated hypertube controls - RoutingMode=%d"),
+        Settings.HypertubeRoutingMode);
 }
 
 #undef LOCTEXT_NAMESPACE

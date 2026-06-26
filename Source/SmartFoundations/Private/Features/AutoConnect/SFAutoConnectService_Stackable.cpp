@@ -683,7 +683,7 @@ void USFAutoConnectService::ProcessStackableHypertubeSupports(AFGHologram* Paren
 	}
 
 	const auto& RuntimeSettings = Subsystem->GetAutoConnectRuntimeSettings();
-	if (!RuntimeSettings.bEnabled || !RuntimeSettings.bPipeAutoConnectEnabled)
+	if (!RuntimeSettings.bEnabled || !RuntimeSettings.bHypertubeAutoConnectEnabled)
 	{
 		CleanupAllStackableHypertubes(ParentHologram);
 		return;
