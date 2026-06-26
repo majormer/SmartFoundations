@@ -712,13 +712,6 @@ void USmartSettingsFormWidget::PopulateFromCounterState(USFSubsystem* Subsystem)
             const bool bIsPassthroughPipe = USFAutoConnectService::IsPassthroughPipeHologram(ActiveHologram);
             const bool bIsStackableHypertubeSupport = AutoConnectService->IsStackableHypertubeSupportHologram(ActiveHologram);
 
-            // #405 S1: detection-only probe for the Stackable Hypertube Support (no behavior change yet).
-            if (bIsStackableHypertubeSupport)
-            {
-                UE_LOG(LogSmartFoundations, Log, TEXT("[Hypertube][#405] Stackable Hypertube Support detected (build=%s) - S1 predicate live."),
-                    ActiveHologram->GetBuildClass() ? *ActiveHologram->GetBuildClass()->GetName() : TEXT("?"));
-            }
-
             UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Hologram=%s, IsDistributor=%d, IsPipeJunction=%d, IsPowerPole=%d, IsBeltSupport=%d, IsStackablePipeSupport=%d, IsPassthroughPipe=%d"),
                 *ActiveHologram->GetClass()->GetName(), bIsDistributor, bIsPipeJunction, bIsPowerPole, bIsStackableConveyorPole, bIsStackablePipeSupport, bIsPassthroughPipe);
 
@@ -855,7 +848,7 @@ void USmartSettingsFormWidget::PopulateFromCounterState(USFSubsystem* Subsystem)
             {
                 bHasAnyAutoConnectContext = true;
 
-                // Show hypertube auto-connect controls (routing style only; enable is shared with pipe)
+                // Show hypertube auto-connect controls (enable checkbox + routing style; enable is independent from pipe)
                 if (HypertubeAutoConnectContainer)
                 {
                     UpdateHypertubeAutoConnectControls();
