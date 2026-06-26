@@ -53,6 +53,20 @@ public:
 	/** Maximum pipe length in cm (56.01m - game engine limit) */
 	static constexpr float MAX_PIPE_LENGTH = 5601.0f;
 
+	/** #405: per-span CAP on the connector-to-connector CHORD (cm) = 96m — the BuildOrUpdateSpan limit, measured as
+	 *  Dist(connectorA, connectorB). The chord runs ~1m LONGER than the pole-to-pole SPACING (the connectors sit
+	 *  ~0.5m outboard of each pole), so a pole spacing of S produces a chord of ~S+1m. Measured: the game router
+	 *  shows the tube up to a 96m chord (95m spacing) and drops it beyond — so this is both the chord cap and the
+	 *  conceptual tube max. */
+	static constexpr float MAX_HYPERTUBE_LENGTH = 9600.0f;
+
+	/** #405: default (and effective max) pole SPACING (cm) = 95m = MAX_HYPERTUBE_LENGTH - 1m. Pole spacing is ~1m
+	 *  less than the connector chord the cap measures, so spacing the poles 1m under the chord cap puts the chord
+	 *  right at the cap and the span shows. MUST stay strictly below MAX_HYPERTUBE_LENGTH (do NOT set them equal) or
+	 *  chord = spacing + 1m would exceed the cap and the DEFAULT span would be skipped. Used for the default X grid
+	 *  spacing (and the future hypertube-walking span default). */
+	static constexpr float MAX_HYPERTUBE_POLE_SPACING = MAX_HYPERTUBE_LENGTH - 100.0f;
+
 	/** Minimum angle alignment for auto-connect (cos(45°) = 0.707) */
 	static constexpr float MIN_ANGLE_ALIGNMENT = 0.707f;
 
@@ -225,11 +239,28 @@ public:
 	static bool IsStackablePipelineSupportHologram(AFGHologram* Hologram);
 
 	/**
+	 * #405: Check if a hologram is a stackable HYPERTUBE support (Build_HyperPoleStackable_C).
+	 * It SHARES the Holo_PipelineStackable_C hologram with the stackable pipe support, so detection
+	 * keys off the BUILD class, exactly like IsStackablePipelineSupportHologram.
+	 * @param Hologram The hologram to check
+	 * @return True if this is a stackable hypertube support hologram (Build_HyperPoleStackable_C)
+	 */
+	static bool IsStackableHypertubeSupportHologram(AFGHologram* Hologram);
+
+	/**
 	 * Check if a hologram is any stackable support structure (conveyor pole or pipeline support)
 	 * @param Hologram The hologram to check
 	 * @return True if this is a stackable conveyor pole or stackable pipeline support
 	 */
 	static bool IsStackableSupportHologram(AFGHologram* Hologram);
+
+	/**
+	 * Shared belt/pipe/hypertube support exit-normal resolver: exit each support along its FACING so a
+	 * rotated/arc run BOWS toward the connector normal instead of faceting at a straight chord (#398/#400).
+	 * Wall supports (bUseRightVector) exit PERPENDICULAR (#268). Promoted from a file-local static so the
+	 * hypertube auto-connect slice can reuse it instead of duplicating the geometry.
+	 */
+	static FVector ResolveSupportExitNormal(AFGHologram* Pole, const FVector& Chord, bool bUseRightVector);
 
 	/**
 	 * Check if a hologram is a conveyor ceiling support (Issue #268)
@@ -292,6 +323,20 @@ public:
 	 * @param ParentHologram The parent hologram containing stackable pipeline supports
 	 */
 	void ProcessStackablePipelineSupports(AFGHologram* ParentHologram);
+
+	/**
+	 * #405: Process auto-connect for stackable HYPERTUBE supports (S2b preview). Stackable-only.
+	 * Gathers scaled hypertube support children, pairs adjacent ones along X, renders a preview tube
+	 * per pair via SFHypertube::BuildOrUpdateSpan. Mirrors ProcessStackablePipelineSupports.
+	 */
+	void ProcessStackableHypertubeSupports(AFGHologram* ParentHologram);
+
+	/**
+	 * #405: Tear down ALL tracked stackable hypertube spans across every parent. Hypertube spans are
+	 * AddChild'd into the parent hologram (pipe-parity), so they normally cascade-destroy with the parent;
+	 * this is primarily a shutdown/deinit safety sweep to clear state and remove any stragglers.
+	 */
+	void CleanupAllStackableHypertubesAllParents();
 
 	// ========================================
 	// Floor Hole Pipe Auto-Connect (Issue #187)
@@ -599,7 +644,24 @@ private:
 		TMap<uint64, TWeakObjectPtr<AFGHologram>> PipesByPolePair;
 	};
 	TMap<TWeakObjectPtr<AFGHologram>, FStackablePipeState> StackablePipeStates;
-	
+
+	// ========================================================================
+	// #405: Stackable HYPERTUBE Child Tracking (Pole-Pair Based)
+	// ========================================================================
+	// Reuses MakePolePairKey. Spans are AddChild'd into the parent hologram (pipe-parity) and tracked here
+	// so they can be updated/removed when pole-pairs change.
+	struct FStackableHypertubeState
+	{
+		TMap<uint64, TWeakObjectPtr<AFGHologram>> SpansByPolePair;
+	};
+	TMap<TWeakObjectPtr<AFGHologram>, FStackableHypertubeState> StackableHypertubeStates;
+
+	/** #405: Remove hypertube spans for pole pairs no longer needed */
+	void RemoveOrphanedHypertubes(AFGHologram* ParentHologram, const TSet<uint64>& ActivePolePairs);
+
+	/** #405: Clean up all tracked stackable hypertube children for a parent hologram */
+	void CleanupAllStackableHypertubes(AFGHologram* ParentHologram);
+
 	/** Update or create pipe hologram for a pole pair, returns the pipe hologram */
 	AFGHologram* UpdateOrCreatePipeForPolePair(
 		AFGHologram* ParentHologram,

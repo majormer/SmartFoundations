@@ -25,6 +25,10 @@ DEFINE_LOG_CATEGORY_STATIC(LogSmartWalkBelt, Log, All);
 // Beyond this, LinkOrUpdate refuses the span and the segment shows a gap, exactly like stackable AC's skip-when-too-far.
 static constexpr float SF_WALK_MAX_SPAN_CM = USFAutoConnectService::MAX_PIPE_LENGTH;   // 5601 cm / ~56 m — the vanilla single-span max (same as stackable auto-connect); over this the span is skipped and the segment reds
 
+// #405 hypertube walk: the tube's own connector-to-connector chord cap (96 m), NOT the 56 m pipe cap above —
+// the game router shows the tube up to a 96 m chord and drops it beyond (USFAutoConnectService::MAX_HYPERTUBE_LENGTH).
+static constexpr float SF_WALK_MAX_HYPER_SPAN_CM = USFAutoConnectService::MAX_HYPERTUBE_LENGTH;   // 9600 cm / 96 m
+
 void USFWalkConveyance::SetSubsystem(USFSubsystem* InSubsystem)
 {
     Subsystem = InSubsystem;
@@ -406,4 +410,165 @@ AFGHologram* USFWalkPipeConveyance::LinkOrUpdate(AFGHologram* ExistingSpan, AFGH
     UE_LOG(LogSmartWalkBelt, Log, TEXT("<<< [Pipe] LinkOrUpdate EXIT (CREATE): pipe=%s actor.world=%s | tier=%d class=%s"),
         *GetNameSafe(Pipe), *Pipe->GetActorLocation().ToString(), PipeTier, *GetNameSafe(PipeBuildClass));
     return Pipe;
+}
+
+// ====================================================================================================
+// USFWalkHypertubeConveyance — hypertube adapter (#405). Mirrors the PIPE adapter above (same ASFPipelineHologram
+// span, same routing/cost/snapped-connection path), with four substitutions + Z-flattened exit normals: the 96 m
+// chord cap (SF_WALK_MAX_HYPER_SPAN_CM, not the 56 m pipe cap), the unlock-gated single build class
+// (GetHypertubeClassFromConfig + Recipe_PipeHyper_C), HypertubeRoutingMode, and FLATTENED exit normals (tubes leave
+// the support horizontal and let the game router climb — mirrors SFHypertube::BuildOrUpdateSpan's StartNormal.Z=0).
+// We mirror rather than call BuildOrUpdateSpan because that helper ALWAYS AddChild's the span; the walk preview tick
+// must keep spans standalone and AddChild only at the server commit (bAddChildForBuild).
+// ====================================================================================================
+
+UFGPipeConnectionComponentBase* USFWalkHypertubeConveyance::FirstPipeConnector(AFGHologram* Support)
+{
+    if (!IsValid(Support)) { return nullptr; }
+    TArray<UFGPipeConnectionComponentBase*> Conns;
+    Support->GetComponents<UFGPipeConnectionComponentBase>(Conns);   // catches UFGPipeConnectionComponentHyper (subclass)
+    return Conns.Num() > 0 ? Conns[0] : nullptr;
+}
+
+AFGHologram* USFWalkHypertubeConveyance::LinkOrUpdate(AFGHologram* ExistingSpan, AFGHologram* FromAnchor, AFGHologram* ToAnchor, AFGHologram* ParentForChild, bool bAddChildForBuild, float SegmentTurnDeg)
+{
+    UE_LOG(LogSmartWalkBelt, Log, TEXT(">>> [Hyper] LinkOrUpdate ENTER: existing=%s from=%s to=%s parent(seed)=%s build=%d"),
+        *GetNameSafe(ExistingSpan), *GetNameSafe(FromAnchor), *GetNameSafe(ToAnchor), *GetNameSafe(ParentForChild), bAddChildForBuild ? 1 : 0);
+    USFSubsystem* Sub = Subsystem.Get();
+    if (!Sub || !IsValid(FromAnchor) || !IsValid(ToAnchor))
+    {
+        return ExistingSpan;
+    }
+
+    UFGPipeConnectionComponentBase* FromConn = FirstPipeConnector(FromAnchor);
+    UFGPipeConnectionComponentBase* ToConn = FirstPipeConnector(ToAnchor);
+
+    const FVector StartPos = FromConn ? FromConn->GetComponentLocation() : FromAnchor->GetActorLocation();
+    const FVector EndPos = ToConn ? ToConn->GetComponentLocation() : ToAnchor->GetActorLocation();
+
+    // Hypertube length cap = the 96 m connector chord cap (NOT the 56 m pipe cap): over this the router drops the
+    // tube, so refuse the span (return null) and the caller destroys any now-too-long existing one + reds the segment.
+    if (FVector::Dist(StartPos, EndPos) > SF_WALK_MAX_HYPER_SPAN_CM)
+    {
+        UE_LOG(LogSmartWalkBelt, Warning, TEXT("<<< [Hyper] LinkOrUpdate EXIT: span %.0f cm > %.0f cm cap — skipped (segment too long)"),
+            FVector::Dist(StartPos, EndPos), SF_WALK_MAX_HYPER_SPAN_CM);
+        return nullptr;
+    }
+
+    // ENTRY/EXIT normals from the support facings (same as the pipe adapter), THEN FLATTENED to horizontal — the
+    // hypertube-specific deviation: tubes must leave the support level and let the game router climb (mirrors
+    // SFHypertube::BuildOrUpdateSpan's StartNormal.Z=0 / EndNormal.Z=0). Do NOT keep the chord pitch as pipes do.
+    const FVector Dir = (EndPos - StartPos);
+    const FVector DirN = Dir.GetSafeNormal();
+    FVector StartFwd = IsValid(FromAnchor) ? FromAnchor->GetActorForwardVector() : FVector::ZeroVector;
+    StartFwd.Z = 0.0f; StartFwd = StartFwd.GetSafeNormal();
+    FVector StartNormal = StartFwd.IsNearlyZero() ? FVector(DirN.X, DirN.Y, 0.0f).GetSafeNormal() : (-StartFwd);
+    FVector EndFwd = IsValid(ToAnchor) ? ToAnchor->GetActorForwardVector() : FVector::ZeroVector;
+    EndFwd.Z = 0.0f; EndFwd = EndFwd.GetSafeNormal();
+    FVector EndNormal = EndFwd.IsNearlyZero() ? FVector(-DirN.X, -DirN.Y, 0.0f).GetSafeNormal() : EndFwd;
+    if (StartNormal.IsNearlyZero()) { StartNormal = FVector(DirN.X, DirN.Y, 0.0f).GetSafeNormal(); }
+    if (EndNormal.IsNearlyZero())   { EndNormal   = FVector(-DirN.X, -DirN.Y, 0.0f).GetSafeNormal(); }
+
+    const int32 RoutingMode = Sub->GetAutoConnectRuntimeSettings().HypertubeRoutingMode;
+    UE_LOG(LogSmartWalkBelt, Log, TEXT("  [Hyper] LinkOrUpdate routing: StartPos=%s EndPos=%s | StartN=%s EndN=%s | mode=%d len=%.1f turn=%.0f"),
+        *StartPos.ToString(), *EndPos.ToString(), *StartNormal.ToString(), *EndNormal.ToString(),
+        RoutingMode, Dir.Size(), SegmentTurnDeg);
+
+    // Update path: re-route an existing tube to follow moved anchors (steering / back-up).
+    if (ASFPipelineHologram* Existing = Cast<ASFPipelineHologram>(ExistingSpan))
+    {
+        Existing->SetActorLocation(StartPos);
+        Existing->ApplyPipeBuildModeRouting(RoutingMode, StartPos, StartNormal, EndPos, EndNormal);
+        Existing->TriggerMeshGeneration();
+        Existing->ForceApplyHologramMaterial();
+        UE_LOG(LogSmartWalkBelt, Log, TEXT("<<< [Hyper] LinkOrUpdate EXIT (UPDATE): tube=%s"), *GetNameSafe(Existing));
+        return Existing;
+    }
+
+    // Create path: resolve the single, unlock-gated hypertube build class (Build_PipeHyper_C) + its recipe (cost).
+    AFGPlayerController* PC = nullptr;
+    if (UWorld* W = ToAnchor->GetWorld())
+    {
+        PC = Cast<AFGPlayerController>(W->GetFirstPlayerController());
+    }
+    UClass* HyperBuildClass = Sub->GetHypertubeClassFromConfig(PC);
+    if (!HyperBuildClass)
+    {
+        return nullptr;
+    }
+
+    UWorld* World = ToAnchor->GetWorld();
+    if (!World)
+    {
+        return nullptr;
+    }
+
+    FActorSpawnParameters SpawnParams;
+    SpawnParams.Owner = ToAnchor->GetOwner();
+    SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+    SpawnParams.bDeferConstruction = true;
+
+    ASFPipelineHologram* Tube = World->SpawnActor<ASFPipelineHologram>(
+        ASFPipelineHologram::StaticClass(), StartPos, FRotator::ZeroRotator, SpawnParams);
+    if (!Tube)
+    {
+        return nullptr;
+    }
+
+    Tube->SetReplicates(false);
+    Tube->SetReplicateMovement(false);
+    Tube->SetBuildClass(HyperBuildClass);
+    if (UClass* HyperRecipeClass = LoadObject<UClass>(nullptr, TEXT("/Game/FactoryGame/Recipes/Buildings/Recipe_PipeHyper.Recipe_PipeHyper_C")))
+    {
+        Tube->SetRecipe(TSubclassOf<UFGRecipe>(HyperRecipeClass));   // length-based GetCost needs the recipe (else free tubes)
+    }
+    Tube->Tags.AddUnique(FName(TEXT("SF_StackableChild")));
+
+    USFHologramDataService::DisableValidation(Tube);
+    USFHologramDataService::MarkAsChild(Tube, ToAnchor, ESFChildHologramType::WalkSegment);
+
+    if (FSFHologramData* HoloData = USFHologramDataService::GetOrCreateData(Tube))
+    {
+        HoloData->bIsStackablePipe = true;   // the hypertube connector IS a UFGPipeConnectionComponentBase — reuse the fields
+        HoloData->StackablePipeConn0 = FromConn;
+        HoloData->StackablePipeConn1 = ToConn;
+        HoloData->StackablePipeIndex = 0;
+    }
+
+    Tube->FinishSpawning(FTransform(StartPos));
+
+    if (FromConn || ToConn)
+    {
+        if (FProperty* SnappedProp = AFGPipelineHologram::StaticClass()->FindPropertyByName(TEXT("mSnappedConnectionComponents")))
+        {
+            if (void* PropAddr = SnappedProp->ContainerPtrToValuePtr<void>(Tube))
+            {
+                UFGPipeConnectionComponentBase** SnappedArray = static_cast<UFGPipeConnectionComponentBase**>(PropAddr);
+                if (SnappedArray)
+                {
+                    SnappedArray[0] = FromConn;
+                    SnappedArray[1] = ToConn;
+                }
+            }
+        }
+    }
+
+    Tube->ApplyPipeBuildModeRouting(RoutingMode, StartPos, StartNormal, EndPos, EndNormal);
+    Tube->SetActorHiddenInGame(false);
+    Tube->SetActorEnableCollision(false);
+    Tube->SetActorTickEnabled(false);
+    Tube->RegisterAllComponents();
+    Tube->SetPlacementMaterialState(EHologramMaterialState::HMS_OK);
+    if (bAddChildForBuild && IsValid(ParentForChild))
+    {
+        // Slice 3 COMMIT (server-side at the construct seam): AddChild so the vanilla scope() cascade builds it.
+        ParentForChild->AddChild(Tube, Tube->GetFName());   // unique child name (NAME_None asserts on duplicates)
+        Tube->ApplyPipeBuildModeRouting(RoutingMode, StartPos, StartNormal, EndPos, EndNormal);   // re-route after AddChild re-bases
+    }
+    Tube->TriggerMeshGeneration();
+    Tube->ForceApplyHologramMaterial();
+
+    UE_LOG(LogSmartWalkBelt, Log, TEXT("<<< [Hyper] LinkOrUpdate EXIT (CREATE): tube=%s actor.world=%s | class=%s"),
+        *GetNameSafe(Tube), *Tube->GetActorLocation().ToString(), *GetNameSafe(HyperBuildClass));
+    return Tube;
 }

@@ -3,6 +3,7 @@
 #include "Features/Walk/SFWalkService.h"
 #include "Features/Walk/SFWalkConveyance.h"
 #include "Features/AutoConnect/SFAutoConnectService.h"   // IsStackablePipelineSupportHologram (seed-type -> conveyance adapter)
+#include "Shared/Conduits/SFConveyanceShape.h"            // shared span shape-validity rules (walk + hypertube AC)
 #include "Subsystem/SFSubsystem.h"
 #include "Subsystem/SFHologramDataService.h"
 #include "Subsystem/SFPositionCalculator.h"
@@ -124,26 +125,35 @@ bool USFWalkService::EnterWalk(AFGHologram* InSeedHologram)
         *OriginFrame.GetLocation().ToString(), OriginFrame.Rotator().Yaw,
         InSeedHologram->IsHologramLocked() ? 1 : 0, InSeedHologram->IsHidden() ? 1 : 0);
 
-    // Select the conveyance adapter from the held buildable: a stackable PIPELINE support lays pipes; otherwise
-    // (a stackable conveyor pole) belts. The chosen type travels in the commit spec so the server reconstructs the
-    // matching span. (Later this generalizes to an ISFWalkConveyance registry for hyper-tubes, tracks, etc.)
-    ConveyanceType = USFAutoConnectService::IsStackablePipelineSupportHologram(InSeedHologram)
-        ? ESFWalkConveyanceType::Pipe
-        : ESFWalkConveyanceType::Belt;
-    if (ConveyanceType == ESFWalkConveyanceType::Pipe)
+    // Select the conveyance adapter from the held buildable: a stackable HYPERTUBE support lays tubes; a stackable
+    // PIPELINE support lays pipes; otherwise (a stackable conveyor pole) belts. The chosen type travels in the commit
+    // spec so the server reconstructs the matching span. NOTE ORDER: the hypertube support SHARES the
+    // Holo_PipelineStackable_C hologram with the pipe support, so IsStackablePipelineSupportHologram also fires on it
+    // — the hypertube test MUST come first or pipe would win and lay pipes for a held hypertube support. (#405)
+    if (USFAutoConnectService::IsStackableHypertubeSupportHologram(InSeedHologram))
     {
+        ConveyanceType = ESFWalkConveyanceType::Hypertube;
+        USFWalkHypertubeConveyance* HyperConveyance = NewObject<USFWalkHypertubeConveyance>(this);
+        HyperConveyance->SetSubsystem(Subsystem.Get());
+        Conveyance = HyperConveyance;
+    }
+    else if (USFAutoConnectService::IsStackablePipelineSupportHologram(InSeedHologram))
+    {
+        ConveyanceType = ESFWalkConveyanceType::Pipe;
         USFWalkPipeConveyance* PipeConveyance = NewObject<USFWalkPipeConveyance>(this);
         PipeConveyance->SetSubsystem(Subsystem.Get());
         Conveyance = PipeConveyance;
     }
     else
     {
+        ConveyanceType = ESFWalkConveyanceType::Belt;
         USFWalkBeltConveyance* BeltConveyance = NewObject<USFWalkBeltConveyance>(this);
         BeltConveyance->SetSubsystem(Subsystem.Get());
         Conveyance = BeltConveyance;
     }
     UE_LOG(LogSmartWalk, Log, TEXT("EnterWalk: conveyance = %s"),
-        ConveyanceType == ESFWalkConveyanceType::Pipe ? TEXT("PIPE") : TEXT("BELT"));
+        ConveyanceType == ESFWalkConveyanceType::Hypertube ? TEXT("HYPERTUBE")
+            : (ConveyanceType == ESFWalkConveyanceType::Pipe ? TEXT("PIPE") : TEXT("BELT")));
 
     // Fresh walk starts single-lane (1×1). The cross-section persists across segments via these counters.
     CrossSectionLanes = 1;
@@ -151,7 +161,11 @@ bool USFWalkService::EnterWalk(AFGHologram* InSeedHologram)
 
     Segments.Reset();
     FSFWalkSegment Seg0;
-    Seg0.Advance = SF_WALK_DEFAULT_ADVANCE_CM;   // start at the 54 m max — nobody builds 1 m segments (new segments still inherit the previous advance, even if reduced)
+    // Per-conveyance default reach: hypertubes span up to 95 m (MAX_HYPERTUBE_POLE_SPACING, 1 m under the 96 m chord
+    // cap); belts/pipes start at the 54 m max. New segments still inherit the previous advance even if reduced. #405
+    Seg0.Advance = (ConveyanceType == ESFWalkConveyanceType::Hypertube)
+        ? USFAutoConnectService::MAX_HYPERTUBE_POLE_SPACING
+        : SF_WALK_DEFAULT_ADVANCE_CM;
     Segments.Add(Seg0);   // segment 0, the first anchor forward
     ActiveIndex = 0;
     bActive = true;
@@ -210,6 +224,7 @@ FSFWalkCommitSpec USFWalkService::BuildCommitSpec() const
         Spec.PipeTier        = AC.PipeTierMain;
         Spec.bPipeIndicator  = AC.bPipeIndicator;
         Spec.BeltDirection   = AC.StackableBeltDirection;
+        Spec.HypertubeRoutingMode = AC.HypertubeRoutingMode;
 
         // Resolve "Auto" (tier 0) to a concrete tier HERE, on the machine that owns the walk — a client (or the
         // listen-host) always has a local player. The server reconstruction runs with NO local PlayerController
@@ -292,8 +307,15 @@ int32 USFWalkService::ReconstructWalkCommitOnServer(AFGHologram* Seed, const FSF
         Sub->SetAutoConnectPipeTierMain(Spec.PipeTier);
         Sub->SetAutoConnectPipeIndicator(Spec.bPipeIndicator);
         Sub->SetAutoConnectStackableBeltDirection(Spec.BeltDirection);
+        Sub->SetAutoConnectHypertubeRoutingMode(Spec.HypertubeRoutingMode);
 
-        if (Spec.ConveyanceType == ESFWalkConveyanceType::Pipe)
+        if (Spec.ConveyanceType == ESFWalkConveyanceType::Hypertube)
+        {
+            USFWalkHypertubeConveyance* H = NewObject<USFWalkHypertubeConveyance>(this);
+            H->SetSubsystem(Sub);
+            BuildConveyance = H;
+        }
+        else if (Spec.ConveyanceType == ESFWalkConveyanceType::Pipe)
         {
             USFWalkPipeConveyance* P = NewObject<USFWalkPipeConveyance>(this);
             P->SetSubsystem(Sub);
@@ -871,32 +893,26 @@ FString USFWalkService::GetSegmentShapeError(int32 Index) const
     AFGHologram* A = Prev[0].Get();
     AFGHologram* B = Cur[0].Get();
     if (!IsValid(A) || !IsValid(B)) { return FString(); }
-    const FVector PA = A->GetActorLocation();
-    const FVector PB = B->GetActorLocation();
-    const float Dist = FVector::Dist(PA, PB);
-    // Length: a single span can't exceed the vanilla max spline length (mirrors SFAutoConnectService_Stackable's cap).
-    if (Dist > USFAutoConnectService::MAX_PIPE_LENGTH)
+    // Shared span SHAPE rules (belt/pipe/hyper). Walk POLICY: any invalid segment blocks the commit
+    // (see HasInvalidSegmentShape). Belt gets the 30deg slope gate; pipe is exempt (routes at any angle).
+    // Map the active conveyance to its shared SHAPE kind + its OWN length cap. Hypertube uses the 96 m chord cap
+    // (MAX_HYPERTUBE_LENGTH), not the 56 m pipe/belt cap; the validator skips the belt-only 30deg slope gate for
+    // both pipe and hypertube (tubes climb steeply by design). #405
+    SFConveyanceShape::EKind Kind = SFConveyanceShape::EKind::Belt;
+    float MaxLenCm = USFAutoConnectService::MAX_PIPE_LENGTH;
+    switch (GetConveyanceType())
     {
-        FFormatOrderedArguments Args;
-        Args.Add(Index + 1);
-        Args.Add(FMath::RoundToInt(Dist / 100.0f));
-        return FText::Format(NSLOCTEXT("SmartFoundations", "Walk_Invalid_TooLong", "segment {0} too long ({1}m > 56m)"), Args).ToString();
+    case ESFWalkConveyanceType::Hypertube:
+        Kind = SFConveyanceShape::EKind::Hypertube;
+        MaxLenCm = USFAutoConnectService::MAX_HYPERTUBE_LENGTH;
+        break;
+    case ESFWalkConveyanceType::Pipe:
+        Kind = SFConveyanceShape::EKind::Pipe;
+        break;
+    default:
+        break;
     }
-    // Vertical slope: BELTS can't climb steeper than 30deg from horizontal (mirrors auto-connect: asin(|dir.Z|) > 30).
-    // PIPES are exempt — they route fine at steep/vertical angles depending on the routing mode.
-    if (GetConveyanceType() != ESFWalkConveyanceType::Pipe)
-    {
-        const FVector Dir = (PB - PA).GetSafeNormal();
-        const float SlopeDeg = FMath::RadiansToDegrees(FMath::Asin(FMath::Abs(Dir.Z)));
-        if (SlopeDeg > 30.0f)
-        {
-            FFormatOrderedArguments Args;
-            Args.Add(Index + 1);
-            Args.Add(FMath::RoundToInt(SlopeDeg));
-            return FText::Format(NSLOCTEXT("SmartFoundations", "Walk_Invalid_TooSteep", "segment {0} too steep ({1}deg > 30deg)"), Args).ToString();
-        }
-    }
-    return FString();
+    return SFConveyanceShape::EvaluateSpan(A->GetActorLocation(), B->GetActorLocation(), Kind, MaxLenCm, Index + 1);
 }
 
 bool USFWalkService::IsSegmentShapeValid(int32 Index) const

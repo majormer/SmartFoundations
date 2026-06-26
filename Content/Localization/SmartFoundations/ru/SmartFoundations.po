@@ -2118,3 +2118,63 @@ msgstr "сегмент {0} слишком длинный ({1}м > 56м)"
 msgctxt "SmartFoundations,Walk_Invalid_TooSteep"
 msgid "segment {0} too steep ({1}deg > 30deg)"
 msgstr "сегмент {0} слишком крутой ({1}° > 30°)"
+
+msgctxt "2BBD2D8A4804BE82F72DB0B091876974"
+msgid "Noodle"
+msgstr "Лапша"
+
+msgctxt "7D33892C463173CDF05A0383D92017C8"
+msgid "Straight"
+msgstr "Прямая"
+
+msgctxt "7D70E1B54E59E0072AA18581782CA4A0"
+msgid "Hypertube Auto-Connect:"
+msgstr "Автоподключение гипертруб:"
+
+msgctxt "B7D7520E4A0B332ED9D87DBC994D5379"
+msgid "Auto"
+msgstr "Авто"
+
+msgctxt "C24F4DC44DCA9C1FB249098A51A3B982"
+msgid "Auto 2D"
+msgstr "Авто 2D"
+
+msgctxt "C37B40874B51E0F5798841AA27981362"
+msgid "Curve"
+msgstr "Дуга"
+
+msgctxt "E0D5AEF140C1253876F13FB56301E909"
+msgid "Horiz→Vert"
+msgstr "Гориз→Верт"
+
+msgctxt "F9CB428247FA00F2916066950E42FA87"
+msgid "Routing:"
+msgstr "Маршрутизация:"
+
+msgctxt "SmartFoundations,P.HypertubeRoutingMode"
+msgid "Hypertube Routing Mode"
+msgstr "Режим маршрутизации гипертруб"
+
+msgctxt "SmartFoundations,P.HypertubeRoutingMode.TT"
+msgid "How auto-connected hypertubes are shaped: Auto, 2D, Straight, Curve, Noodle, or Horizontal-to-Vertical."
+msgstr "Форма автоматически подключаемых гипертруб: авто, 2D, прямая, дуга, лапша или из горизонтали в вертикаль."
+
+msgctxt "SmartFoundations,P.bHypertubeAutoConnectEnabled"
+msgid "Hypertube Auto-Connect"
+msgstr "Автоподключение гипертруб"
+
+msgctxt "SmartFoundations,P.bHypertubeAutoConnectEnabled.TT"
+msgid "Automatically connect hypertubes between placed supports."
+msgstr "Автоматически соединять гипертрубы между размещаемыми опорами."
+
+msgctxt "SmartFoundations,Sec.Hypertube"
+msgid "Hypertube Auto-Connect"
+msgstr "Автоподключение гипертруб"
+
+msgctxt "SmartFoundations,Sec.Hypertube.TT"
+msgid "Automatically run hypertubes between the supports you place."
+msgstr "Автоматически прокладывать гипертрубы между размещаемыми опорами."
+
+msgctxt "SmartFoundations,Walk_Conveyance_Hypertube"
+msgid "Hypertube"
+msgstr "Гипертруба"

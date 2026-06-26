@@ -138,6 +138,9 @@ public:
 	 */
 	void OnStackablePipelineSupportsChanged();
 
+	/** #405: Notify the orchestrator that stackable HYPERTUBE supports changed (100ms coalesce, preview). */
+	void OnStackableHypertubeSupportsChanged();
+
 	// ========================================
 	// Floor Hole Pipe Auto-Connect (Issue #187)
 	// ========================================
@@ -342,6 +345,16 @@ private:
 	
 	/** Run the scheduled stackable pipeline support evaluation */
 	void RunScheduledStackablePipeEvaluation();
+
+	// Debounce state (#405: Stackable Hypertube Supports)
+	FTimerHandle StackableHypertubeEvalTimerHandle;
+	bool bStackableHypertubeEvalScheduled = false;
+
+	/** #405: Schedule stackable hypertube support evaluation with debouncing */
+	void ScheduleStackableHypertubeEvaluation();
+
+	/** #405: Run the scheduled stackable hypertube support evaluation */
+	void RunScheduledStackableHypertubeEvaluation();
 
 	// Debounce state (Stackable Conveyor Poles - Issue #220)
 	FTimerHandle StackableBeltEvalTimerHandle;

@@ -533,6 +533,7 @@ void USFSubsystem::OnRecipeModeChanged(const FInputActionValue& Value)
 	// - Factories: Recipe Mode (select recipes)
 
 	bool bIsAutoConnectHologram = false;
+	bool bIsStackableHypertube = false;
 	if (ActiveHologram.IsValid() && AutoConnectService)
 	{
 		bool bIsDistributor = AutoConnectService->IsDistributorHologram(ActiveHologram.Get());
@@ -541,8 +542,9 @@ void USFSubsystem::OnRecipeModeChanged(const FInputActionValue& Value)
 		bool bIsStackableBelt = USFAutoConnectService::IsBeltSupportHologram(ActiveHologram.Get());
 		bool bIsPowerPole = AutoConnectService->IsPowerPoleHologram(ActiveHologram.Get());
 		bool bIsPassthroughPipe = USFAutoConnectService::IsPassthroughPipeHologram(ActiveHologram.Get());
+		bIsStackableHypertube = USFAutoConnectService::IsStackableHypertubeSupportHologram(ActiveHologram.Get());
 
-		bIsAutoConnectHologram = bIsDistributor || bIsPipeJunction || bIsStackablePipe || bIsStackableBelt || bIsPowerPole || bIsPassthroughPipe;
+		bIsAutoConnectHologram = bIsDistributor || bIsPipeJunction || bIsStackablePipe || bIsStackableBelt || bIsPowerPole || bIsPassthroughPipe || bIsStackableHypertube;
 
 		FString BuildClassName = ActiveHologram->GetBuildClass() ? ActiveHologram->GetBuildClass()->GetName() : TEXT("NULL");
 		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT(" OnRecipeModeChanged: Hologram=%s, BuildClass=%s, Distributor=%d, PipeJunction=%d, StackablePipe=%d, BeltSupport=%d, PowerPole=%d, PassthroughPipe=%d, IsAutoConnect=%d"),
@@ -588,6 +590,24 @@ void USFSubsystem::OnRecipeModeChanged(const FInputActionValue& Value)
 				{
 					CurrentAutoConnectSetting = EAutoConnectSetting::PipeTierMain;
 				}
+				else if (CurrentAutoConnectSetting == EAutoConnectSetting::HypertubeEnabled)
+				{
+					CurrentAutoConnectSetting = EAutoConnectSetting::HypertubeRoutingMode;
+				}
+			}
+
+			// Hypertube poles expose only Enabled + Routing; if the cursor is on a non-hypertube setting
+			// (left over from a belt/pipe pole), seed it onto a hypertube setting so the first U-hold shows the
+			// right control instead of a stale one (parallels the Smart Walking seed above).
+			if (bIsStackableHypertube
+				&& CurrentAutoConnectSetting != EAutoConnectSetting::HypertubeEnabled
+				&& CurrentAutoConnectSetting != EAutoConnectSetting::HypertubeRoutingMode)
+			{
+				// During a walk the enable is moot (the run always lays tube): seed onto Routing; otherwise Enabled.
+				const USFWalkService* WalkSvcH = GetWalkService();
+				CurrentAutoConnectSetting = (WalkSvcH && WalkSvcH->IsActive())
+					? EAutoConnectSetting::HypertubeRoutingMode
+					: EAutoConnectSetting::HypertubeEnabled;
 			}
 
 			// Update HUD to show current active setting
@@ -1074,6 +1094,45 @@ UClass* USFSubsystem::GetPipeClassFromConfig(int32 ConfigTier, bool bWithIndicat
 	return PipeClass;
 }
 
+UClass* USFSubsystem::GetHypertubeClassFromConfig(AFGPlayerController* PlayerController)
+{
+	// Hypertubes are a SINGLE buildable - no tier, no indicator/clean variant - so unlike GetPipeClassFromConfig
+	// this loads the one class and gates it on the player's unlock (mirrors GetPipeClassForTier's unlock check).
+	static const TCHAR* HyperPath = TEXT("/Game/FactoryGame/Buildable/Factory/PipeHyper/Build_PipeHyper.Build_PipeHyper_C");
+	// Cache the resolved class: this runs from span-creation paths (per preview update) and the engine
+	// buildable never changes; TWeakObjectPtr so a GC of the class just reloads instead of dangling.
+	static TWeakObjectPtr<UClass> CachedHyperClass;
+	UClass* HyperClass = CachedHyperClass.Get();
+	if (!HyperClass)
+	{
+		HyperClass = LoadObject<UClass>(nullptr, HyperPath);
+		CachedHyperClass = HyperClass;
+	}
+	if (!HyperClass)
+	{
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("GetHypertubeClassFromConfig: failed to load Build_PipeHyper_C"));
+		return nullptr;
+	}
+
+	if (PlayerController)
+	{
+		if (UWorld* World = PlayerController->GetWorld())
+		{
+			if (AFGRecipeManager* RecipeManager = AFGRecipeManager::Get(World))
+			{
+				TSubclassOf<AFGBuildable> HyperBuildableClass = HyperClass;
+				if (!RecipeManager->IsBuildingAvailable(HyperBuildableClass))
+				{
+					UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("GetHypertubeClassFromConfig: hypertube not unlocked yet"));
+					return nullptr;   // not researched - prevents building an unavailable hypertube
+				}
+			}
+		}
+	}
+
+	return HyperClass;
+}
+
 void USFSubsystem::CycleAutoConnectSetting()
 {
     // Check context (Belt vs Pipe Junction vs Stackable Pipe vs Stackable Belt vs Power)
@@ -1081,12 +1140,14 @@ void USFSubsystem::CycleAutoConnectSetting()
     bool bIsStackablePipe = false;
     bool bIsStackableBelt = false;
     bool bIsPowerPole = false;
+    bool bIsStackableHypertube = false;
     if (ActiveHologram.IsValid() && AutoConnectService)
     {
         bIsPipeJunction = AutoConnectService->IsPipelineJunctionHologram(ActiveHologram.Get());
         bIsStackablePipe = AutoConnectService->IsPipeSupportHologram(ActiveHologram.Get());
         bIsStackableBelt = USFAutoConnectService::IsBeltSupportHologram(ActiveHologram.Get());
         bIsPowerPole = AutoConnectService->IsPowerPoleHologram(ActiveHologram.Get());
+        bIsStackableHypertube = USFAutoConnectService::IsStackableHypertubeSupportHologram(ActiveHologram.Get());
     }
 
     if (bIsPowerPole)
@@ -1153,6 +1214,22 @@ void USFSubsystem::CycleAutoConnectSetting()
         default:
             // If on unrelated setting, jump to first pipe setting
             CurrentAutoConnectSetting = EAutoConnectSetting::Enabled;
+            break;
+        }
+    }
+    else if (bIsStackableHypertube)
+    {
+        // Stackable Hypertube cycle: Enabled -> Routing Mode -> wrap (independent enable flag).
+        switch (CurrentAutoConnectSetting)
+        {
+        case EAutoConnectSetting::HypertubeEnabled:
+            CurrentAutoConnectSetting = EAutoConnectSetting::HypertubeRoutingMode;
+            break;
+        case EAutoConnectSetting::HypertubeRoutingMode:
+            CurrentAutoConnectSetting = EAutoConnectSetting::HypertubeEnabled;
+            break;
+        default:
+            CurrentAutoConnectSetting = EAutoConnectSetting::HypertubeEnabled;
             break;
         }
     }
@@ -1246,6 +1323,10 @@ void USFSubsystem::CycleAutoConnectSetting()
         {
             CurrentAutoConnectSetting = EAutoConnectSetting::PipeTierMain;
         }
+        else if (CurrentAutoConnectSetting == EAutoConnectSetting::HypertubeEnabled)
+        {
+            CurrentAutoConnectSetting = EAutoConnectSetting::HypertubeRoutingMode;
+        }
     }
 
     // [AC-HUD #403 diag] Log-level: shows whether the Num0 cycle actually reaches Pipe Routing Mode on a pipe support
@@ -1326,6 +1407,19 @@ void USFSubsystem::AdjustAutoConnectSetting(int32 Delta)
         }
         break;
 
+    case EAutoConnectSetting::HypertubeEnabled:
+        AutoConnectRuntimeSettings.bHypertubeAutoConnectEnabled = !AutoConnectRuntimeSettings.bHypertubeAutoConnectEnabled;
+        break;
+
+    case EAutoConnectSetting::HypertubeRoutingMode:
+        // Cycle through 0=Auto..5=HorizontalToVertical
+        AutoConnectRuntimeSettings.HypertubeRoutingMode = (AutoConnectRuntimeSettings.HypertubeRoutingMode + Delta) % 6;
+        if (AutoConnectRuntimeSettings.HypertubeRoutingMode < 0)
+        {
+            AutoConnectRuntimeSettings.HypertubeRoutingMode += 6;
+        }
+        break;
+
     case EAutoConnectSetting::StackableBeltEnabled:
         // Toggle stackable conveyor pole belt auto-connect
         AutoConnectRuntimeSettings.bStackableBeltEnabled = !AutoConnectRuntimeSettings.bStackableBeltEnabled;
@@ -1402,6 +1496,12 @@ void USFSubsystem::AdjustAutoConnectSetting(int32 Delta)
             // Stackable pipe supports: trigger re-processing of pipe previews
             AutoConnectService->ProcessStackablePipelineSupports(ActiveHologram.Get());
             UE_LOG(LogSmartFoundations, Log, TEXT("[AC-HUD] reprocess -> stackable PIPE supports (pipeMode=%d)"), AutoConnectRuntimeSettings.PipeRoutingMode);
+        }
+        else if (USFAutoConnectService::IsStackableHypertubeSupportHologram(ActiveHologram.Get()))
+        {
+            // #405: Stackable hypertube supports — re-process preview tubes on settings change
+            AutoConnectService->ProcessStackableHypertubeSupports(ActiveHologram.Get());
+            UE_LOG(LogSmartFoundations, Log, TEXT("[AC-HUD] reprocess -> stackable HYPERTUBE supports (hyperMode=%d)"), AutoConnectRuntimeSettings.HypertubeRoutingMode);
         }
         else if (USFAutoConnectService::IsPassthroughPipeHologram(ActiveHologram.Get()))
         {
@@ -1579,6 +1679,25 @@ FString USFSubsystem::GetAutoConnectSettingDisplayString() const
         }
         break;
 
+    case EAutoConnectSetting::HypertubeEnabled:
+        SettingName = TEXT("Hypertube AC");
+        SettingValue = AutoConnectRuntimeSettings.bHypertubeAutoConnectEnabled ? TEXT("ON") : TEXT("OFF");
+        break;
+
+    case EAutoConnectSetting::HypertubeRoutingMode:
+        SettingName = TEXT("Hypertube Routing");
+        switch (AutoConnectRuntimeSettings.HypertubeRoutingMode)
+        {
+        case 0: SettingValue = TEXT("Auto"); break;
+        case 1: SettingValue = TEXT("Auto 2D"); break;
+        case 2: SettingValue = TEXT("Straight"); break;
+        case 3: SettingValue = TEXT("Curve"); break;
+        case 4: SettingValue = TEXT("Noodle"); break;
+        case 5: SettingValue = TEXT("Horiz→Vert"); break;
+        default: SettingValue = TEXT("Auto"); break;
+        }
+        break;
+
     case EAutoConnectSetting::StackableBeltEnabled:
         SettingName = TEXT("Stackable Belt Auto-Connect");
         SettingValue = AutoConnectRuntimeSettings.bStackableBeltEnabled ? TEXT("ON") : TEXT("OFF");
@@ -1652,14 +1771,20 @@ bool USFSubsystem::IsCurrentHologramAutoConnectCapable() const
 	       AutoConnectService->IsPipeSupportHologram(Hologram) ||   // #403: pipe supports (stackable/regular/wall) were
 	                                                                //   missing here, so the HUD suppressed the whole
 	                                                                //   auto-connect settings section for them (belt worked)
-	       USFAutoConnectService::IsPassthroughPipeHologram(Hologram);
+	       USFAutoConnectService::IsPassthroughPipeHologram(Hologram) ||
+	       USFAutoConnectService::IsStackableHypertubeSupportHologram(Hologram);  // #405: hypertube supports were
+	                                                                              //   missing here too, so the HUD
+	                                                                              //   suppressed the settings overlay
 }
 
 bool USFSubsystem::IsCurrentHologramWalkable() const
 {
-	// Smart Walking seeds from a stackable belt OR pipe support (the tested set; matches the walk's conveyance adapters).
+	// Smart Walking seeds from a stackable belt, pipe, OR hypertube support — matches the walk's conveyance adapters
+	// (belt/pipe/hypertube). The hypertube support keys off its own build class, not IsStackableSupportHologram, so OR
+	// it in explicitly — else the Walk Path button never appears on a held tube pole. #405
 	return AutoConnectService && ActiveHologram.IsValid()
-		&& AutoConnectService->IsStackableSupportHologram(ActiveHologram.Get());
+		&& (AutoConnectService->IsStackableSupportHologram(ActiveHologram.Get())
+			|| USFAutoConnectService::IsStackableHypertubeSupportHologram(ActiveHologram.Get()));
 }
 
 TArray<FString> USFSubsystem::GetDirtyAutoConnectSettings() const
@@ -1678,6 +1803,7 @@ TArray<FString> USFSubsystem::GetDirtyAutoConnectSettings() const
 	bool bIsStackableSupport = false;   // belt supports (stackable/ceiling/wall/regular conveyor pole)
 	bool bIsPipeSupport = false;        // #403: pipe supports (stackable/regular/wall) → show PIPE settings
 	bool bIsPassthroughPipe = false;
+	bool bIsStackableHypertube = false; // #405: hypertube supports → show HYPERTUBE settings
 	if (ActiveHologram.IsValid() && AutoConnectService)
 	{
 		AFGHologram* Hologram = ActiveHologram.Get();
@@ -1687,6 +1813,7 @@ TArray<FString> USFSubsystem::GetDirtyAutoConnectSettings() const
 		bIsStackableSupport = USFAutoConnectService::IsBeltSupportHologram(Hologram);
 		bIsPipeSupport = AutoConnectService->IsPipeSupportHologram(Hologram);
 		bIsPassthroughPipe = USFAutoConnectService::IsPassthroughPipeHologram(Hologram);
+		bIsStackableHypertube = USFAutoConnectService::IsStackableHypertubeSupportHologram(Hologram);
 	}
 
 	// CRITICAL FIX: Only show settings relevant to current hologram type
@@ -1784,6 +1911,32 @@ TArray<FString> USFSubsystem::GetDirtyAutoConnectSettings() const
 		if (RuntimeRangeMeters != CachedConfig.PowerConnectRange)
 		{
 			DirtySettings.Add(FString::Printf(TEXT("Building Range: %dm"), RuntimeRangeMeters));
+		}
+	}
+	else if (bIsStackableHypertube)
+	{
+		// Hypertube supports (#405): show only hypertube settings (enable + routing).
+		// Strings MUST match GetAutoConnectSettingDisplayString so the active-setting highlight lines up.
+		if (AutoConnectRuntimeSettings.bHypertubeAutoConnectEnabled != CachedConfig.bHypertubeAutoConnectEnabled)
+		{
+			DirtySettings.Add(FString::Printf(TEXT("Hypertube AC: %s"),
+				AutoConnectRuntimeSettings.bHypertubeAutoConnectEnabled ? TEXT("ON") : TEXT("OFF")));
+		}
+
+		if (AutoConnectRuntimeSettings.HypertubeRoutingMode != CachedConfig.HypertubeRoutingMode)
+		{
+			FString RouteText;
+			switch (AutoConnectRuntimeSettings.HypertubeRoutingMode)
+			{
+			case 0: RouteText = TEXT("Auto"); break;
+			case 1: RouteText = TEXT("Auto 2D"); break;
+			case 2: RouteText = TEXT("Straight"); break;
+			case 3: RouteText = TEXT("Curve"); break;
+			case 4: RouteText = TEXT("Noodle"); break;
+			case 5: RouteText = TEXT("Horiz→Vert"); break;
+			default: RouteText = TEXT("Auto"); break;
+			}
+			DirtySettings.Add(FString::Printf(TEXT("Hypertube Routing: %s"), *RouteText));
 		}
 	}
 
@@ -1944,6 +2097,34 @@ void USFSubsystem::SetAutoConnectPipeRoutingMode(int32 Mode)
 	default: ModeName = TEXT("Auto"); break;
 	}
 	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Pipe routing mode set to: %s (%d)"), *ModeName, AutoConnectRuntimeSettings.PipeRoutingMode);
+}
+
+void USFSubsystem::SetAutoConnectHypertubeEnabled(bool bEnabled)
+{
+	AutoConnectRuntimeSettings.bHypertubeAutoConnectEnabled = bEnabled;
+	AutoConnectRuntimeSettings.bInitialized = true;
+	UpdateCounterDisplay();
+	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Hypertube auto-connect enabled set to: %s"), bEnabled ? TEXT("ON") : TEXT("OFF"));
+}
+
+void USFSubsystem::SetAutoConnectHypertubeRoutingMode(int32 Mode)
+{
+	AutoConnectRuntimeSettings.HypertubeRoutingMode = FMath::Clamp(Mode, 0, 5);
+	AutoConnectRuntimeSettings.bInitialized = true;
+	UpdateCounterDisplay();
+
+	FString ModeName;
+	switch (AutoConnectRuntimeSettings.HypertubeRoutingMode)
+	{
+	case 0: ModeName = TEXT("Auto"); break;
+	case 1: ModeName = TEXT("Auto 2D"); break;
+	case 2: ModeName = TEXT("Straight"); break;
+	case 3: ModeName = TEXT("Curve"); break;
+	case 4: ModeName = TEXT("Noodle"); break;
+	case 5: ModeName = TEXT("Horiz→Vert"); break;
+	default: ModeName = TEXT("Auto"); break;
+	}
+	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Hypertube routing mode set to: %s (%d)"), *ModeName, AutoConnectRuntimeSettings.HypertubeRoutingMode);
 }
 
 // ========================================

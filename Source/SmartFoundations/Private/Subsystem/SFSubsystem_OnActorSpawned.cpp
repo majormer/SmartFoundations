@@ -749,6 +749,91 @@ void USFSubsystem::OnActorSpawned(AActor* SpawnedActor)
 	}
 
 	// ========================================
+	// ========================================================================
+	// #405: STACKABLE HYPERTUBE — distance-connect pass (run-interior safety net)
+	// ========================================================================
+	// Construct-time coincidence wiring (ASFPipelineHologram::Construct, base-cast #405) joins span ENDPOINTS,
+	// but is unreliable at run INTERIORS (the shared middle support, where span-A.Conn1 meets span-B.Conn0) —
+	// the same #364 issue the fluid stackable pipe solves with a deterministic distance pass. Mirror it here,
+	// base-typed (AFGBuildablePipeBase / GetConnection0/1) so it works for AFGBuildablePipeHyper, with NO fluid
+	// AFGPipeNetwork merge (hypertubes have no fluid network — SetConnection alone is sufficient).
+	bool bIsStackableHyperSupport = SpawnedClassName.Contains(TEXT("HyperPoleStackable")) &&
+	                                SpawnedClassName.StartsWith(TEXT("Build_"));
+
+	static TWeakObjectPtr<AFGHologram> LastHyperBuildHologram;
+	static bool bHypersAlreadyBuiltForThisPlacement = false;
+	if (ActiveHologram.Get() != LastHyperBuildHologram.Get())
+	{
+		LastHyperBuildHologram = ActiveHologram;
+		bHypersAlreadyBuiltForThisPlacement = false;
+	}
+
+	if (bIsStackableHyperSupport && ActiveHologram.IsValid() && !bHypersAlreadyBuiltForThisPlacement)
+	{
+		if (FArrayProperty* HyperChildrenProp = FindFProperty<FArrayProperty>(AFGHologram::StaticClass(), TEXT("mChildren")))
+		{
+			if (TArray<AFGHologram*>* HyperChildren = HyperChildrenProp->ContainerPtrToValuePtr<TArray<AFGHologram*>>(ActiveHologram.Get()))
+			{
+				// PHASE 1: build all hyper spans (Construct is idempotent via bHasBeenConstructed — returns the
+				// already-cascaded actor), collect them base-typed (exclude any fluid pipe sharing this path).
+				TArray<AFGBuildablePipeBase*> BuiltHypers;
+				for (AFGHologram* Child : *HyperChildren)
+				{
+					if (Child && Child->Tags.Contains(FName(TEXT("SF_StackableChild"))))
+					{
+						TArray<AActor*> HyperChildActors;
+						FNetConstructionID HyperDummyID;
+						if (AActor* Built = Child->Construct(HyperChildActors, HyperDummyID))
+						{
+							AFGBuildablePipeBase* Hyper = Cast<AFGBuildablePipeBase>(Built);
+							if (Hyper && !Cast<AFGBuildablePipeline>(Hyper))
+							{
+								BuiltHypers.Add(Hyper);
+							}
+						}
+					}
+				}
+
+				// PHASE 2: join span-to-span by plain distance (50cm), base-typed. No network merge.
+				int32 HyperConnectionsMade = 0;
+				for (AFGBuildablePipeBase* Span : BuiltHypers)
+				{
+					UFGPipeConnectionComponentBase* SpanConns[] = { Span->GetConnection0(), Span->GetConnection1() };
+					for (UFGPipeConnectionComponentBase* Conn : SpanConns)
+					{
+						if (!Conn || Conn->IsConnected()) continue;
+						bool bConnected = false;
+						for (AFGBuildablePipeBase* Other : BuiltHypers)
+						{
+							if (Other == Span) continue;
+							UFGPipeConnectionComponentBase* OtherConns[] = { Other->GetConnection0(), Other->GetConnection1() };
+							for (UFGPipeConnectionComponentBase* OtherConn : OtherConns)
+							{
+								if (OtherConn && !OtherConn->IsConnected() &&
+									FVector::DistSquared(Conn->GetComponentLocation(), OtherConn->GetComponentLocation()) < 2500.0f)
+								{
+									Conn->SetConnection(OtherConn);
+									HyperConnectionsMade++;
+									bConnected = true;
+									break;
+								}
+							}
+							if (bConnected) break;
+						}
+					}
+				}
+
+				if (BuiltHypers.Num() > 0)
+				{
+					UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("STACKABLE HYPER BUILD: %d span(s), %d connection(s)"),
+						BuiltHypers.Num(), HyperConnectionsMade);
+					bHypersAlreadyBuiltForThisPlacement = true;
+				}
+			}
+		}
+	}
+
+	// ========================================
 	// DISTRIBUTOR-CHILD BELT: Deferred manifold wiring (block below)
 	// ========================================
 	// Stacked-pole belts are wired at Construct (STACK-CHAIN handler in

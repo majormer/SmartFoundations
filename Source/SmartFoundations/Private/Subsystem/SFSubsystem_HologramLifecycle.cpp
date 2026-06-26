@@ -307,6 +307,26 @@ void USFSubsystem::RegisterActiveHologram(AFGHologram* Hologram)
 		}
 	}
 
+	// #405: stackable hypertube poles default X spacing to the pole-spacing max (9500cm / 95m), not the
+	// belt/pipe 54m, because hypertube spans reach much farther (96m chord cap minus ~1m connector offset).
+	// Separate if (not folded into the #268 gate above) because hypertube and pipe stackable supports share a
+	// hologram class, disambiguated only by build class — the hypertube branch must own SpacingX.
+	if (USFAutoConnectService::IsStackableHypertubeSupportHologram(Hologram))
+	{
+		if (CounterState.SpacingX == 0)
+		{
+			CounterState.SpacingX = static_cast<int32>(USFAutoConnectService::MAX_HYPERTUBE_POLE_SPACING); // 9500cm = 95m (chord cap 96m - 1m connector offset)
+
+			if (GridStateService)
+			{
+				GridStateService->UpdateCounterState(CounterState);
+			}
+
+			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 HYPERTUBE POLE: Applied default SpacingX=9500cm (chord cap - 1m connector offset) for span layout"));
+			UpdateCounterDisplay();
+		}
+	}
+
 	// Smart Auto-Connect: Check if this is a distributor hologram for auto-connect
 	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 DEBUG: Checking hologram type for auto-connect"));
 	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 DEBUG: AutoConnectService available: %s"), AutoConnectService ? TEXT("YES") : TEXT("NO"));
@@ -656,6 +676,9 @@ void USFSubsystem::UnregisterActiveHologram(AFGHologram* Hologram)
 			AutoConnectService->ClearBeltPreviewHelpers();
 			// Clear all pipe managers (previews are managed by auto-connect service now)
 			AutoConnectService->ClearAllPipeManagers();
+			// #405: Stackable HYPERTUBE spans are AddChild'd into the parent (pipe-parity), so vanilla
+			// cascade-destroys them with the parent on cancel/holster/held-buildable change — no explicit
+			// sweep is needed at this chokepoint, exactly like stackable pipe/belt spans.
 		}
 
 		// Clean up EXTEND service children when hologram is cancelled

@@ -1,8 +1,8 @@
 # <img src="https://github.com/majormer/SmartFoundations/blob/main/images/Smart-Logo.png?raw=true" width="150" alt="Smart! Logo"> Smart! Mod
 
-![Status](https://img.shields.io/badge/Status-Released-brightgreen) ![Version](https://img.shields.io/badge/Version-33.0.0-blue) ![Satisfactory](https://img.shields.io/badge/Satisfactory-1.2-blue) ![Engine](https://img.shields.io/badge/Engine-UE%205.6-blue) ![SML](https://img.shields.io/badge/SML-3.12-blue) ![Multiplayer](https://img.shields.io/badge/Multiplayer-Supported-brightgreen) ![AI Assisted Development Used](https://img.shields.io/badge/AI%20Assisted%20Development%20Used-Disclosure%20Below-blue)
+![Status](https://img.shields.io/badge/Status-Released-brightgreen) ![Version](https://img.shields.io/badge/Version-33.1.0-blue) ![Satisfactory](https://img.shields.io/badge/Satisfactory-1.2-blue) ![Engine](https://img.shields.io/badge/Engine-UE%205.6-blue) ![SML](https://img.shields.io/badge/SML-3.12-blue) ![Multiplayer](https://img.shields.io/badge/Multiplayer-Supported-brightgreen) ![AI Assisted Development Used](https://img.shields.io/badge/AI%20Assisted%20Development%20Used-Disclosure%20Below-blue)
 
-> **Multiplayer note:** As of v32.0.0, every Smart! feature works in multiplayer on dedicated servers (Windows and Linux) — including **Smart Walking**, new in v33.0.0. If you hit something odd in a multiplayer session, please report it on [GitHub](https://github.com/majormer/SmartFoundations/issues) or [Discord](https://discord.gg/SgXY4CwXYw).
+> **Multiplayer note:** As of v32.0.0, every Smart! feature works in multiplayer on dedicated servers (Windows and Linux) — including **Smart Walking** and the new-in-v33.1.0 **Hyper Tube** support. If you hit something odd in a multiplayer session, please report it on [GitHub](https://github.com/majormer/SmartFoundations/issues) or [Discord](https://discord.gg/SgXY4CwXYw).
 
 **Quick links:** [Watch videos](#-watch-smart-in-action) • [First-time setup](#-first-time-setup) • [Extend explained](#-extend-explained-copy-an-existing-manifold) • [Supported buildings](#-supported-buildings) • [Wiki](https://github.com/majormer/SmartFoundations/wiki) • [Discord](https://discord.gg/SgXY4CwXYw) • [Report bugs](https://github.com/majormer/SmartFoundations/issues) • [Source](https://github.com/majormer/SmartFoundations)
 
@@ -113,18 +113,21 @@ See [LICENSE.md](https://github.com/majormer/SmartFoundations/blob/main/LICENSE.
 
 ---
 
-## 📰 What's New in v33.0.0: Smart Walking
+## 📰 What's New in v33.1.0: Hyper Tubes
 
-**Current Release:** v33.0.0 introduces **Smart Walking** — a whole new build mode. Where scaling stamps out a rigid, uniform grid, Smart Walking lays down a *path*: a connected run that walks forward one segment at a time, and each segment can round a corner, climb a slope, or shift aside. One continuous run of belts or pipes routes exactly where you want it while you stay put and watch the leading edge crawl across the map through the Smart! Camera. See the [full changelog](https://github.com/majormer/SmartFoundations/blob/main/CHANGELOG.md) for all the details.
+**Current Release:** v33.1.0 brings **Hyper Tubes** into the Smart! family. Both **Auto-Connect** and **Smart Walking** now understand **Stackable Hyper Tube Supports** — scale out a row of them and Smart! lays the hyper tube run between them automatically, or walk a steered hyper tube route that turns and climbs, exactly the way you already do with belts and pipes. See the [full changelog](https://github.com/majormer/SmartFoundations/blob/main/CHANGELOG.md) for all the details.
 
-### Smart Walking — steer a connected run that turns, climbs, and walks to its destination
+### Hyper Tubes — Auto-Connect and Smart Walking support
 
-Hold a stackable conveyor pole or pipeline support on the build gun, press `K` to open the Smart! Panel, and click **Smart Walking** to begin. Scroll to advance and lay each new segment; steer the active segment to turn, rise, shift, and set its spacing; back up to undo a segment; and commit the whole run in one build. Turns sweep all the way around to a near-full loop, and **both belts and pipes** are supported — belts get tier, flow direction, and routing; pipes get tier, routing, and a Normal-vs-Clean style. A Smart Walking panel (toggle with `K`) lists every segment in an editable table, with each segment's exit heading shown as a 16-point compass bearing. The full material cost is charged on commit, and the whole preview turns red when you can't afford the run; a segment that runs too long, or (for belts) climbs too steeply, is flagged and can't be committed. With the **Smart! Camera** companion mod, the picture-in-picture latches onto the head of the run and follows it across the map. Works in single-player and multiplayer, and the whole feature is translated across ~20 languages. Designed to extend to hyper-tubes and more in future updates.
+Place **Stackable Hyper Tube Supports** and Smart! treats them like the conveyor poles and pipeline supports it already knows. Scale a row of them and **Auto-Connect** lays the hyper tube run between consecutive supports for you. Or hold one, press `K`, and start a **Smart Walking** run that steers a hyper tube around corners and up slopes — with its own routing style and the same red-when-invalid feedback you get on belt and pipe runs. All of the new on-screen text is translated across Smart!'s ~20 supported languages, and it works in single-player and multiplayer.
 
-### Also new in v33.0.0
+### Also in v33.1.0
 
-- **Broader translation coverage** across all of Smart!'s ~20 languages — more of the Smart! Panel, the in-build HUD, and the keybind hints now appear in your language. Spot something that reads wrong? Translation corrections are welcome on the [GitHub issue tracker](https://github.com/majormer/SmartFoundations/issues).
-- **Smart! Panel refresh** — a new Smart Walking button, the panel now closes with a clear **X** in the top-right corner, and the Apply/Reset buttons are bigger.
+- **Build axis arrows return on Linux** — the X/Y/Z direction arrows Smart! draws above a hologram weren't appearing for players on Linux; they now load and draw correctly. (Issue #415, reported by regnare on the Smart! Discord)
+
+### Previously, in v33.0.0: Smart Walking
+
+v33.0.0 introduced **Smart Walking** — a build mode that lays a single connected run that turns, climbs, and routes to a destination, instead of a rigid uniform grid. Hold a stackable conveyor pole or pipeline support, press `K`, and click **Smart Walking**; scroll to advance and lay each segment, steer the leading segment to turn/rise/shift, back up to undo, and commit the whole run in one build. Belts and pipes are both supported, an editable Smart Walking panel lists every segment with a compass exit heading, and with the **Smart! Camera** the picture-in-picture follows the head of the run across the map. (Hyper Tubes, above, are the v33.1.0 extension of this mode.) The v33.0.0 release also refreshed the **Smart! Panel** (a Smart Walking button, an **X** to close, bigger Apply/Reset) and broadened **translation coverage** across all ~20 languages.
 
 ### Also in the v32.x line
 
@@ -204,7 +207,7 @@ Examples:
 - Scale a row of splitters near production inputs and Smart! can preview belts into those machines.
 - Scale pipeline junctions near pipe inputs and Smart! can route pipes.
 - Scale power poles near buildings and Smart! can wire them.
-- Scale stackable conveyor or pipeline supports and Smart! can connect the supports in a line.
+- Scale stackable conveyor, pipeline, or hyper tube supports and Smart! can connect the supports in a line.
 
 Auto-Connect is conservative. If a connection angle or distance does not look valid, Smart! may refuse to create it rather than produce a broken layout.
 
@@ -252,7 +255,7 @@ Hold a stackable conveyor pole or pipeline support, press `K`, and click **Smart
 - **Back up** to undo the last segment.
 - **Commit** the whole run in one build, paying the normal material cost.
 
-Belts and pipes are both supported, with the run's tier, routing, and (for belts) flow direction set once for the whole path. The optional Smart Walking panel (`K`) lists every segment in an editable table with a compass exit heading. With the Smart! Camera companion mod, the picture-in-picture follows the head of the run so you can route across the map without leaving your spot. Smart Walking works in single-player and on dedicated servers.
+Belts, pipes, and hyper tubes are all supported, with the run's tier, routing, and (for belts) flow direction set once for the whole path. The optional Smart Walking panel (`K`) lists every segment in an editable table with a compass exit heading. With the Smart! Camera companion mod, the picture-in-picture follows the head of the run so you can route across the map without leaving your spot. Smart Walking works in single-player and on dedicated servers.
 
 ---
 
@@ -562,7 +565,7 @@ Some vanilla placements are multi-step or drag-based and do not fit Smart!'s gri
 - Railways and train signals.
 - Blueprints as Smart-scaled buildables.
 
-Smart! can still create belts, pipes, lifts, and wires as part of Auto-Connect, Extend, or Smart Walking. They are just not usually the primary item you scale directly.
+Smart! can still create belts, pipes, hyper tubes, lifts, and wires as part of Auto-Connect, Extend, or Smart Walking. They are just not usually the primary item you scale directly.
 
 ---
 

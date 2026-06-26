@@ -287,6 +287,24 @@ protected:
     UPROPERTY(meta = (BindWidgetOptional))
     TObjectPtr<UTextBlock> PipeRoutingModeLabel;
 
+    // === Hypertube Auto-Connect Controls (#405) ===
+
+    // Container for hypertube auto-connect controls (enable checkbox + routing combo + label)
+    UPROPERTY(meta = (BindWidgetOptional))
+    TObjectPtr<UVerticalBox> HypertubeAutoConnectContainer;
+
+    // Hypertube auto-connect enabled checkbox (independent of pipe)
+    UPROPERTY(meta = (BindWidgetOptional))
+    TObjectPtr<UCheckBox> HypertubeEnabledCheckBox;
+
+    // Hypertube routing mode ComboBox (Auto, Auto2D, Straight, Curve, Noodle, HorizontalToVertical)
+    UPROPERTY(meta = (BindWidgetOptional))
+    TObjectPtr<UComboBoxString> HypertubeRoutingModeComboBox;
+
+    // Hypertube routing mode label
+    UPROPERTY(meta = (BindWidgetOptional))
+    TObjectPtr<UTextBlock> HypertubeRoutingModeLabel;
+
     // === Power Auto-Connect Controls ===
     
     // Container for power auto-connect controls (visibility toggled based on hologram type)
@@ -699,7 +717,10 @@ private:
     
     // Update stackable pipe support auto-connect controls from runtime settings
     void UpdateStackablePipeAutoConnectControls();
-    
+
+    // Update hypertube auto-connect controls from runtime settings (#405)
+    void UpdateHypertubeAutoConnectControls();
+
     // Pipe enabled checkbox changed
     UFUNCTION()
     void OnPipeEnabledChanged(bool bIsChecked);
@@ -719,7 +740,15 @@ private:
     // Pipe routing mode ComboBox changed
     UFUNCTION()
     void OnPipeRoutingModeChanged(FString SelectedItem, ESelectInfo::Type SelectionType);
-    
+
+    // Hypertube enabled checkbox changed (#405)
+    UFUNCTION()
+    void OnHypertubeEnabledChanged(bool bIsChecked);
+
+    // Hypertube routing mode ComboBox changed (#405)
+    UFUNCTION()
+    void OnHypertubeRoutingModeChanged(FString SelectedItem, ESelectInfo::Type SelectionType);
+
     // Cached list of unlocked pipe tiers (0=Auto, 1-2=Mk1-Mk2)
     TArray<int32> CachedPipeTiers;
     

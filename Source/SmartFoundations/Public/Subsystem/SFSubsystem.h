@@ -1151,6 +1151,8 @@ public:
 		PipeTierToBuilding,     // Pipe tier for building connections (junction-to-building)
 		PipeIndicator,          // Pipe style: Normal (with indicators) vs Clean (no indicators)
 		PipeRoutingMode,        // Pipe routing mode: Auto, 2D, Straight, Curve
+		HypertubeEnabled,       // Hypertube auto-connect enable toggle
+		HypertubeRoutingMode,   // Hypertube routing mode: Auto, 2D, Straight, Curve, Noodle, H→V
 		StackableBeltEnabled,   // Stackable Pole: Belt auto-connect on/off
 		StackableBeltTier,      // Stackable Pole: Belt tier (reuses BeltTierMain value)
 		StackableBeltDirection, // Stackable Pole: Belt direction (Forward/Backward)
@@ -1178,7 +1180,9 @@ public:
 		int32 PipeTierToBuilding = 0;  // 0=Auto, 1-2=Mk1-Mk2
 		bool bPipeIndicator = true;    // true=Normal (with indicators), false=Clean (no indicators)
 		int32 PipeRoutingMode = 0;     // 0=Auto, 1=Auto2D, 2=Straight, 3=Curve, 4=Noodle, 5=HorizontalToVertical (matches vanilla)
-		
+		bool bHypertubeAutoConnectEnabled = true;  // Hypertube auto-connect enabled (independent of pipe)
+		int32 HypertubeRoutingMode = 0; // 0=Auto..5=HorizontalToVertical (own setting; consumed by SFHypertubeSpanBuilder)
+
 		// Stackable Pole Settings (shared for belt/pipe support structures)
 		bool bStackableBeltEnabled = true;  // Stackable conveyor pole belt auto-connect enabled
 		int32 StackableBeltDirection = 0;   // Belt direction: 0=Forward (along grid X+), 1=Backward (against grid X-)
@@ -1208,7 +1212,9 @@ public:
 			PipeTierToBuilding = Config.PipeLevelToBuilding;
 			bPipeIndicator = Config.PipeIndicator;
 			PipeRoutingMode = Config.PipeRoutingMode;
-			
+			bHypertubeAutoConnectEnabled = Config.bHypertubeAutoConnectEnabled;
+			HypertubeRoutingMode = Config.HypertubeRoutingMode;
+
 			// Power settings from config
 			bConnectPower = Config.bPowerAutoConnectEnabled;
 			bExtendPower = Config.bExtendPowerEnabled;
@@ -1237,6 +1243,8 @@ public:
 				&& PipeTierToBuilding == O.PipeTierToBuilding
 				&& bPipeIndicator == O.bPipeIndicator
 				&& PipeRoutingMode == O.PipeRoutingMode
+				&& bHypertubeAutoConnectEnabled == O.bHypertubeAutoConnectEnabled
+				&& HypertubeRoutingMode == O.HypertubeRoutingMode
 				&& bConnectPower == O.bConnectPower
 				&& bExtendPower == O.bExtendPower
 				&& bExtendDaisyChain == O.bExtendDaisyChain
@@ -1366,6 +1374,12 @@ public:
 	
 	/** Set pipe routing mode (0=Auto, 1=Auto2D, 2=Straight, 3=Curve, 4=Noodle, 5=HorizontalToVertical) */
 	void SetAutoConnectPipeRoutingMode(int32 Mode);
+
+	/** Set hypertube auto-connect enabled */
+	void SetAutoConnectHypertubeEnabled(bool bEnabled);
+
+	/** Set hypertube routing mode (0=Auto, 1=Auto2D, 2=Straight, 3=Curve, 4=Noodle, 5=HorizontalToVertical) */
+	void SetAutoConnectHypertubeRoutingMode(int32 Mode);
 	
 	/** Get highest unlocked pipe tier for current player */
 	int32 GetHighestUnlockedPipeTier(AFGPlayerController* PlayerController);
@@ -1511,6 +1525,10 @@ public:
 	 * @return Pipe class if available, nullptr if tier unavailable/locked (disables that pipe category)
 	 */
 	UClass* GetPipeClassFromConfig(int32 ConfigTier, bool bWithIndicator, AFGPlayerController* PlayerController);
+
+	/** #405: resolve the single hypertube buildable class (Build_PipeHyper_C), unlock-gated. Hypertubes have
+	 *  no tier/indicator, so this is the one-class analog of GetPipeClassFromConfig. Null if not unlocked. */
+	UClass* GetHypertubeClassFromConfig(AFGPlayerController* PlayerController);
 
 private:
 

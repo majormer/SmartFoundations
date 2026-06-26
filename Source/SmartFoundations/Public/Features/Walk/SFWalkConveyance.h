@@ -78,3 +78,27 @@ private:
     /** First pipe connector on a pipeline-support hologram, or null. */
     static class UFGPipeConnectionComponentBase* FirstPipeConnector(AFGHologram* Support);
 };
+
+/**
+ * Hypertube conveyance (#405): the spanning element is an ASFPipelineHologram routed between two stackable
+ * hypertube supports' pipe connectors. Mirrors USFWalkPipeConveyance — the hypertube connector
+ * (UFGPipeConnectionComponentHyper) is a UFGPipeConnectionComponentBase, so FirstPipeConnector catches it — and
+ * the shipped hypertube auto-connect span (SFHypertube::BuildOrUpdateSpan), differing only in: the 96 m length
+ * cap (MAX_HYPERTUBE_LENGTH, not the 56 m pipe cap), the unlock-gated single build class
+ * (USFSubsystem::GetHypertubeClassFromConfig + Recipe_PipeHyper_C), the HypertubeRoutingMode, and the exit
+ * normals being FLATTENED to horizontal (tubes leave level and let the router climb). We mirror the pipe adapter
+ * rather than call BuildOrUpdateSpan directly because that helper ALWAYS AddChild's the span; the walk's preview
+ * tick must keep preview spans standalone and AddChild only at the server commit (bAddChildForBuild).
+ */
+UCLASS()
+class SMARTFOUNDATIONS_API USFWalkHypertubeConveyance : public USFWalkConveyance
+{
+    GENERATED_BODY()
+
+public:
+    virtual AFGHologram* LinkOrUpdate(AFGHologram* ExistingSpan, AFGHologram* FromAnchor, AFGHologram* ToAnchor, AFGHologram* ParentForChild, bool bAddChildForBuild = false, float SegmentTurnDeg = 0.0f) override;
+
+private:
+    /** First pipe connector on a hypertube-support hologram (UFGPipeConnectionComponentHyper, a UFGPipeConnectionComponentBase), or null. */
+    static class UFGPipeConnectionComponentBase* FirstPipeConnector(AFGHologram* Support);
+};

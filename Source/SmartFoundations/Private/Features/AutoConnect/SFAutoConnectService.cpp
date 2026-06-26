@@ -1572,6 +1572,25 @@ bool USFAutoConnectService::IsStackablePipelineSupportHologram(AFGHologram* Holo
 	return ClassName.Contains(TEXT("PipeSupportStackable"));
 }
 
+bool USFAutoConnectService::IsStackableHypertubeSupportHologram(AFGHologram* Hologram)
+{
+	if (!Hologram)
+	{
+		return false;
+	}
+
+	UClass* BuildClass = Hologram->GetBuildClass();
+	if (!BuildClass)
+	{
+		return false;
+	}
+
+	// #405: the Stackable Hypertube Support (Build_HyperPoleStackable_C) SHARES the
+	// Holo_PipelineStackable_C hologram with the stackable pipe support, so match the BUILD class -
+	// NOT the hologram class (mirrors IsStackablePipelineSupportHologram's PipeSupportStackable match).
+	return BuildClass->GetName().Contains(TEXT("HyperPoleStackable"));
+}
+
 bool USFAutoConnectService::IsStackableSupportHologram(AFGHologram* Hologram)
 {
 	return IsStackableConveyorPoleHologram(Hologram) || IsStackablePipelineSupportHologram(Hologram);
