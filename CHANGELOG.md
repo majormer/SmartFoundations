@@ -9,19 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [33.1.0] - Unreleased
+## [33.1.0] - 2026-06-26
 
 > *Hyper Tubes join the Smart! family.* Auto-Connect and Smart Walking now understand stackable hypertube supports — scale out a line of them and Smart! lays the hypertube run between them, or walk a steered hypertube route the same way you already do with belts and pipes.
 
 ### Added
 
-- **Hyper Tubes — Auto-Connect and Smart Walking support** - Smart! now works with **Stackable Hypertube Supports**. Scale out a row of them and Auto-Connect lays the hypertube run between consecutive supports automatically, just like it already does for conveyor poles and pipeline supports; and Smart Walking can steer a hypertube run that turns and climbs, the same way it walks belts and pipes. (Issue #405)
+- **Hyper Tubes — Auto-Connect and Smart Walking support** - Smart! now works with **Stackable Hypertube Supports**. Scale out a row of them and Auto-Connect lays the hypertube run between consecutive supports automatically, just like it already does for conveyor poles and pipeline supports; and Smart Walking can steer a hypertube run that turns and climbs, the same way it walks belts and pipes. All the new on-screen text is translated across Smart!'s 20 supported languages. (Issue #405)
 
 ### Fixed
 
 - **Build axis arrows now appear on Linux** - On Linux, the X / Y / Z build-direction arrows that Smart! draws above a hologram while you build or scale never showed up. Smart!'s safety check for the arrow meshes relied on an assumption that holds on Windows but not on Linux, so it mistook the perfectly good arrow meshes for corrupted data and skipped them every time, leaving you with no axis arrows. The arrows now load and draw on Linux - this was a display-only issue that never affected Windows and never caused a crash. We don't have a Linux setup to test on our end, so this ships for feedback: if you play on Linux, let us know whether the build arrows are back. (Issue #415, reported by regnare on the Smart! Discord)
-- **More of Smart!'s menus now display in your language** - A range of Smart!'s on-screen text - config-menu dropdown options, various panel and menu labels, and other built-in strings - was already translated but had been showing in English regardless of your game language. It now displays correctly in your language across all 20 supported languages.
-
 ---
 
 ## [33.0.0] - 2026-06-24
