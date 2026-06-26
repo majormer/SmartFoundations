@@ -332,9 +332,9 @@ public:
 	void ProcessStackableHypertubeSupports(AFGHologram* ParentHologram);
 
 	/**
-	 * #405: Tear down ALL tracked stackable hypertube preview spans across every parent. Hypertube spans are
-	 * S2b preview-only (NOT AddChild'd), so unlike stackable pipe/belt spans they do NOT auto-destroy with the
-	 * parent hologram. Call on build cancel / holster / held-buildable change to avoid orphaned spans.
+	 * #405: Tear down ALL tracked stackable hypertube spans across every parent. Hypertube spans are
+	 * AddChild'd into the parent hologram (pipe-parity), so they normally cascade-destroy with the parent;
+	 * this is primarily a shutdown/deinit safety sweep to clear state and remove any stragglers.
 	 */
 	void CleanupAllStackableHypertubesAllParents();
 
