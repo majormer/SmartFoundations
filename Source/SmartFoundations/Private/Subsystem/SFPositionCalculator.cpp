@@ -366,8 +366,11 @@ FVector FSFPositionCalculator::CalculateRotationOffset(
 	// - Forward movement should always extend AWAY from the parent
 	const float RotationStepDeg = CounterState.RotationZ;
 	
-	// Arc length per child along the curve (cumulative building width + spacing)
-	const float ArcLength = ItemSize.X + static_cast<float>(CounterState.SpacingX);
+	// Arc length per child along the PROGRESSION axis (cumulative building width + spacing): it must
+	// follow the rotation axis so Spacing applies along the direction the rows/clones fan out.
+	// (Bug: was X-only, so a Y-axis rotation ignored Spacing Y and collapsed the rows to a tiny radius.)
+	const float ArcLength = (CounterState.RotationAxis == ESFScaleAxis::Y ? ItemSize.Y : ItemSize.X)
+		+ static_cast<float>(CounterState.RotationAxis == ESFScaleAxis::Y ? CounterState.SpacingY : CounterState.SpacingX);
 	
 	// Magnitude of per-step angle in radians (always positive for radius math)
 	const float StepRadians = FMath::Abs(FMath::DegreesToRadians(RotationStepDeg));
