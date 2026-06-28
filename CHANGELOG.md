@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [33.1.1] - 2026-06-28
+
+> *A quick rotation fix: the Y-axis build-up now spaces its rows properly.*
+
+### Fixed
+
+- **Rotation along the Y axis now spaces its rows correctly** - With the Rotation transform set to build up along the **Y axis** (rows fanning out around the vertical), the **Spacing Y** value was ignored, so the rows collapsed into a tight, overlapping fan instead of spreading out. Smart! was always measuring the arc spacing along X regardless of the chosen axis; it now follows Y, so Spacing Y spreads the rotated rows the same way it does on the X axis. (Issue #419)
+
+---
+
 ## [33.1.0] - 2026-06-26
 
 > *Hyper Tubes join the Smart! family.* Auto-Connect and Smart Walking now understand stackable hypertube supports — scale out a line of them and Smart! lays the hypertube run between them, or walk a steered hypertube route the same way you already do with belts and pipes.
