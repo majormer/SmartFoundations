@@ -1024,11 +1024,16 @@ public:
     /** Determine if it's safe to actually destroy children without racing build gun validation */
     bool CanSafelyDestroyChildren() const;
 
-	/** Disable vanilla Build Gun mapping context to prevent conflicts with Smart! wheel input */
-	void DisableVanillaBuildGunContext();
-
-	/** Re-enable vanilla Build Gun mapping context when Smart! modifiers released */
-	void EnableVanillaBuildGunContext();
+	/** [#162/#429] Should the wheel's build-gun scroll (rotation) be suppressed for this hologram?
+	 * True while Smart! "owns the moment" on its active hologram: a modal window is open (anything in
+	 * IsAnyModalFeatureActive - a future hold+wheel mode that registers there inherits suppression
+	 * automatically) or Smart! owns the hologram lock (modifier lock / auto-hold). A lock the USER
+	 * engaged (vanilla Hold, InfiniteNudge) is not ours to police, so vanilla/IN locked behavior
+	 * stands there. Queried by the UFGBuildGunStateBuild::Scroll_Implementation hook
+	 * (SFGameInstanceModule): cancelling at that chokepoint sits BELOW the input layer, so it also
+	 * starves scroll-driven rotation from other mods' AFGHologram::Scroll hooks (InfiniteNudge)
+	 * that no input-context removal could reach. */
+	bool ShouldSuppressBuildGunScroll(const AFGHologram* BuildGunHologram) const;
 
 	/** Whether a flush has been scheduled for next tick */
 	bool bPendingDestroyScheduled = false;

@@ -48,6 +48,22 @@ void USFSubsystem::TryReleaseHologramLock()
     }
 }
 
+bool USFSubsystem::ShouldSuppressBuildGunScroll(const AFGHologram* BuildGunHologram) const
+{
+    // Only speak for the hologram Smart! is actively managing.
+    if (!BuildGunHologram || ActiveHologram.Get() != BuildGunHologram)
+    {
+        return false;
+    }
+
+    // IsAnyModalFeatureActive covers the open modifier window even when the lock was NOT acquired
+    // (vanilla hold already owned it when the modifier went down). bLockedByModifier/bAutoHoldActive
+    // cover Smart!-owned locks outside a window (auto-hold after a grid change): InfiniteNudge treats
+    // ANY locked hologram as rotatable/scalable per-child, which shears a Smart! grid apart - so while
+    // the lock is ours, the wheel stays Smart!'s. A user-engaged lock falls through to vanilla/IN.
+    return IsAnyModalFeatureActive() || bLockedByModifier || bAutoHoldActive;
+}
+
 bool USFSubsystem::IsAnyModalFeatureActive() const
 {
     // Phase 0: Forward to InputHandler module (Task #61.6)

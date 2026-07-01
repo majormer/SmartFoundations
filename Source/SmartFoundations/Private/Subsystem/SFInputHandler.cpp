@@ -68,9 +68,6 @@ void FSFInputHandler::SetSmartContextActive(bool bActive)
 	else
 	{
 		InputSubsystem->RemoveMappingContext(SmartContext);
-		// If we had pulled the vanilla build-gun context for modifier handling, restore it
-		// rather than stranding it removed with no hologram to release it.
-		EnableVanillaBuildGunContext();
 	}
 	bSmartContextActive = bActive;
 	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Smart! Input Mapping Context %s (hologram-scoped, priority 100)"),
@@ -245,109 +242,6 @@ FVector FSFInputHandler::GetNativeNudgeOffset(AFGHologram* Hologram) const
 	// This is the offset applied by Arrow keys (X,Y) and PageUp/PageDown (Z)
 	// Uses AFGHologram::GetHologramNudgeOffset() API
 	return Hologram->GetHologramNudgeOffset();
-}
-
-void FSFInputHandler::DisableVanillaBuildGunContext()
-{
-	USFSubsystem* Subsystem = OwnerSubsystem.Get();
-	if (!Subsystem)
-	{
-		return;
-	}
-
-	AFGPlayerController* PlayerController = Subsystem->GetWorld()->GetFirstPlayerController<AFGPlayerController>();
-	if (!PlayerController)
-	{
-		return;
-	}
-
-	UEnhancedInputLocalPlayerSubsystem* InputSubsystem = PlayerController->GetLocalPlayer()->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>();
-	if (!InputSubsystem)
-	{
-		return;
-	}
-
-	// Find and remove vanilla Build Gun context (the parent context that handles rotation)
-	// Try standard path
-	FSoftObjectPath VanillaBuildGunPath(TEXT("/Game/FactoryGame/Inputs/Equipment/Buildgun/Build/MC_BuildGunBuild.MC_BuildGunBuild"));
-	UFGInputMappingContext* VanillaContext = Cast<UFGInputMappingContext>(VanillaBuildGunPath.TryLoad());
-
-	if (!VanillaContext)
-	{
-		// Try alternative path (just in case)
-		VanillaBuildGunPath = FSoftObjectPath(TEXT("/Game/FactoryGame/Inputs/Equipment/Buildgun/MC_BuildGun.MC_BuildGun"));
-		VanillaContext = Cast<UFGInputMappingContext>(VanillaBuildGunPath.TryLoad());
-	}
-
-	if (VanillaContext)
-	{
-		// Issue #272: Query current priority BEFORE removing so we can restore at the same priority
-		int32 FoundPriority = 0;
-		if (InputSubsystem->HasMappingContext(VanillaContext, FoundPriority))
-		{
-			CachedVanillaContextPriority = FoundPriority;
-			bVanillaContextRemoved = true;
-			InputSubsystem->RemoveMappingContext(VanillaContext);
-			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🚫 Disabled vanilla Build Gun context (priority=%d, prevents rotation while Smart! active) - %s"), FoundPriority, *VanillaContext->GetName());
-		}
-		else
-		{
-			UE_LOG(LogSmartFoundations, Verbose, TEXT("⚠️ DisableVanillaBuildGunContext: Context found but not active: %s"), *VanillaContext->GetName());
-		}
-	}
-	else
-	{
-		UE_LOG(LogSmartFoundations, Verbose, TEXT("❌ DisableVanillaBuildGunContext: Failed to load vanilla context! Paths checked: MC_BuildGunBuild, MC_BuildGun"));
-	}
-}
-
-void FSFInputHandler::EnableVanillaBuildGunContext()
-{
-	USFSubsystem* Subsystem = OwnerSubsystem.Get();
-	if (!Subsystem)
-	{
-		return;
-	}
-
-	AFGPlayerController* PlayerController = Subsystem->GetWorld()->GetFirstPlayerController<AFGPlayerController>();
-	if (!PlayerController)
-	{
-		return;
-	}
-
-	UEnhancedInputLocalPlayerSubsystem* InputSubsystem = PlayerController->GetLocalPlayer()->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>();
-	if (!InputSubsystem)
-	{
-		return;
-	}
-
-	// Re-add vanilla Build Gun context at its normal priority
-	FSoftObjectPath VanillaBuildGunPath(TEXT("/Game/FactoryGame/Inputs/Equipment/Buildgun/Build/MC_BuildGunBuild.MC_BuildGunBuild"));
-	UFGInputMappingContext* VanillaContext = Cast<UFGInputMappingContext>(VanillaBuildGunPath.TryLoad());
-
-	if (!VanillaContext)
-	{
-		VanillaBuildGunPath = FSoftObjectPath(TEXT("/Game/FactoryGame/Inputs/Equipment/Buildgun/MC_BuildGun.MC_BuildGun"));
-		VanillaContext = Cast<UFGInputMappingContext>(VanillaBuildGunPath.TryLoad());
-	}
-
-	if (VanillaContext)
-	{
-		if (!InputSubsystem->HasMappingContext(VanillaContext))
-		{
-			// Issue #272: Restore at the SAME priority we found it at before removal
-			// Re-adding at a different priority changes the priority stack, which can
-			// cause user-rebound keys (e.g., RMB as Hold) to be overridden by build menu actions
-			const int32 RestorePriority = (bVanillaContextRemoved && CachedVanillaContextPriority >= 0) ? CachedVanillaContextPriority : 0;
-			InputSubsystem->AddMappingContext(VanillaContext, RestorePriority);
-			bVanillaContextRemoved = false;
-			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("✅ Re-enabled vanilla Build Gun context (priority=%d, rotation restored) - %s"), RestorePriority, *VanillaContext->GetName());
-		}
-	}
-	else
-	{
-		UE_LOG(LogSmartFoundations, Verbose, TEXT("❌ EnableVanillaBuildGunContext: Failed to load vanilla context"));
-	}
 }
 
 // ========================================

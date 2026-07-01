@@ -11,10 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [33.1.3] - 2026-07-01
 
-> *A bug-fix patch: auto-connect belts no longer vanish when you turn off distributor chaining.*
+> *A bug-fix patch: auto-connect belts no longer vanish when you turn off distributor chaining, and Smart! now plays nice with Infinite Nudge's mouse-wheel rotation.*
 
 ### Fixed
 
+- **Infinite Nudge no longer rotates your building while you scale with Smart!** - With the Infinite Nudge mod installed, holding a Smart! modifier (X/Z) and scrolling to scale ALSO rotated the hologram at the same time - and changing your keybinds didn't help. It turned out not to be a keybind clash at all: Smart! holds the building in place while you scale, and Infinite Nudge treats any held building as "scroll to rotate." The mouse wheel is now reserved for Smart! whenever Smart! is the one holding the building - while a modifier is held, and while Auto-Hold keeps your grid pinned (where Infinite Nudge's rotation would twist each piece of the grid individually). A building **you** lock yourself keeps full Infinite Nudge scroll behavior, and everything is untouched when Infinite Nudge isn't installed. (Issue #162)
 - **Turning off Chain no longer erases your auto-connect belts to the factory** - With Auto-Connect running on a row of distributors (splitters/mergers), turning off the **Chain** setting - which should only remove the manifold lane linking the distributors to each other - also made the belts running from each distributor to your factory buildings flash briefly and then disappear entirely, even though those connections were still valid. The two kinds of belt were being tracked together internally, so clearing one could wipe out the other. Chain now only removes the manifold lane; the belts to your buildings stay put. (Issue #436)
 
 ---

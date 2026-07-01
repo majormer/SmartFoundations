@@ -443,24 +443,6 @@ void USFSubsystem::CleanupWidgets()
     UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Widgets cleaned up"));
 }
 
-void USFSubsystem::DisableVanillaBuildGunContext()
-{
-	// Phase 0: Forward to InputHandler module (Task #61.6)
-	if (InputHandler)
-	{
-		InputHandler->DisableVanillaBuildGunContext();
-	}
-}
-
-void USFSubsystem::EnableVanillaBuildGunContext()
-{
-	// Phase 0: Forward to InputHandler module (Task #61.6)
-	if (InputHandler)
-	{
-		InputHandler->EnableVanillaBuildGunContext();
-	}
-}
-
 // ========================================
 // Recipe Copying System Implementation
 // ========================================
