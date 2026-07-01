@@ -982,6 +982,13 @@ private:
 	 * @return true if any of X/Z modifiers, Spacing, Steps, or Stagger modes are active */
 	bool IsAnyModalFeatureActive() const;
 
+	/** [#296] If the build gun is in a Zoop/Vertical Zoop mode while a Smart! grid is scaled out,
+	 * snap it back to the hologram's default build mode. In a zoop mode, primary fire doesn't
+	 * construct the scaled grid - it silently discards it - so the mode is a pure footgun while
+	 * Smart! scaling drives the multi-placement. No-op unless the active hologram is actually in
+	 * a zoop mode (covers Vertical Zoop via the AFGFoundationHologram override). */
+	void ResetZoopBuildModeForScaling();
+
 public:
 	/** Try to acquire hologram lock for Smart! features (Task 52)
 	 * Only locks if not already locked by vanilla hold system
