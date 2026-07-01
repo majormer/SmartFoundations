@@ -14,6 +14,7 @@
 #include "FGPowerConnectionComponent.h"
 #include "Buildables/FGBuildable.h"
 #include "Buildables/FGBuildableWire.h"
+#include "Shared/Power/SFWireDesignerRegistration.h"  // [#421] designer containment for direct-spawned wires
 #include "FGBlueprintProxy.h"
 #include "Hologram/FGPoleHologram.h"            // #354: mPoleVariationIndex / mBuildStep
 #include "Hologram/FGConveyorPoleHologram.h"
@@ -864,6 +865,14 @@ int32 SpawnWirePlanPostConstruct(AActor* BuiltParent, const TArray<AActor*>& Out
 				// registered one side; bare Destroy leaves a dead entry in that connection's
 				// SaveGame'd wire list (asserts on the owner's next dismantle / after reload).
 				IFGDismantleInterface::Execute_Dismantle(NewWire);
+			continue;
+		}
+
+		// [#421] Designer containment: a direct-spawned wire must join the designer's
+		// contained list or it vanishes from saved blueprints while the poles keep their
+		// SaveGame'd references to it. The helper dismantles a designer-wall-spanning wire.
+		if (!SFWireDesigner::RegisterSpawnedWire(NewWire))
+		{
 			continue;
 		}
 

@@ -28,6 +28,7 @@
 #include "Config/Smart_ConfigStruct.h"
 #include "FGCentralStorageSubsystem.h"
 #include "FGDismantleInterface.h"
+#include "Shared/Power/SFWireDesignerRegistration.h"  // [#421] designer registration for direct-spawned wires
 
 FSFPowerAutoConnectManager::FSFPowerAutoConnectManager()
 {
@@ -1266,18 +1267,33 @@ void FSFPowerAutoConnectManager::OnPowerPoleBuilt(AFGBuildablePowerPole* BuiltPo
 				bool bConnected = NewWire->Connect(BuiltConn, NearbyConn);
 				if (bConnected)
 				{
-					UE_LOG(LogSmartAutoConnect, Verbose, TEXT("⚡ OnPowerPoleBuilt: Spawned and connected wire between %s and %s"), 
-						*BuiltPole->GetName(), *NearbyPole->GetName());
-					ConnectionsMade++;
-					PoleToPoleConnectionsMade++;
+					// [#421] A direct-spawned wire never went through the hologram-construct pipeline,
+					// so inside a Blueprint Designer it was missing from the designer's contained list:
+					// the blueprint saved poles with SaveGame'd references to a wire it didn't contain
+					// -> phantom pole connections + per-tick RebuildCircuit repair spam + save
+					// corruption on placement (dedicated servers surfaced it first). Register it with
+					// the designer like a built wire; the helper dismantles a designer-wall-spanning
+					// wire itself, so no extra cleanup here.
+					if (SFWireDesigner::RegisterSpawnedWire(NewWire))
+					{
+						UE_LOG(LogSmartAutoConnect, Verbose, TEXT("⚡ OnPowerPoleBuilt: Spawned and connected wire between %s and %s"),
+							*BuiltPole->GetName(), *NearbyPole->GetName());
+						ConnectionsMade++;
+						PoleToPoleConnectionsMade++;
+					}
+					else
+					{
+						UE_LOG(LogSmartAutoConnect, Warning, TEXT("⚡ OnPowerPoleBuilt: wire %s <-> %s spanned the Blueprint Designer wall - dismantled (#421)"),
+							*BuiltPole->GetName(), *NearbyPole->GetName());
+					}
 				}
 				else
 				{
 					UE_LOG(LogSmartAutoConnect, Verbose, TEXT("⚡ OnPowerPoleBuilt: Wire spawned but Connect() failed - destroying"));
 					// [NULL-WIRE GUARD] Dismantle, not Destroy: a failed Connect may still have
-				// registered one side; bare Destroy leaves a dead entry in that connection's
-				// SaveGame'd wire list (asserts on the owner's next dismantle / after reload).
-				IFGDismantleInterface::Execute_Dismantle(NewWire);
+					// registered one side; bare Destroy leaves a dead entry in that connection's
+					// SaveGame'd wire list (asserts on the owner's next dismantle / after reload).
+					IFGDismantleInterface::Execute_Dismantle(NewWire);
 				}
 			}
 			else
@@ -1494,12 +1510,23 @@ void FSFPowerAutoConnectManager::OnPowerPoleBuilt(AFGBuildablePowerPole* BuiltPo
 			UFGCircuitConnectionComponent* PoleCircuitConn = PoleCircuitConns[0];
 			if (PoleCircuitConn && PowerWire->Connect(PoleCircuitConn, BuildingConn))
 			{
-				UE_LOG(LogSmartAutoConnect, Verbose, TEXT("⚡ OnPowerPoleBuilt: Connected to building %s (deducted cables)"), 
-					*Building->GetName());
-				BuildingConnectionsMade++;
-				
-				// Remove from cached connections so other poles don't try to connect
-				Subsystem->CommittedBuildingConnections.Remove(Building);
+				// [#421] Same designer registration as the pole-to-pole path above: a direct-spawned
+				// wire must join the designer's contained list or it vanishes from saved blueprints.
+				// On a designer-wall mismatch the helper dismantles the wire itself.
+				if (SFWireDesigner::RegisterSpawnedWire(PowerWire))
+				{
+					UE_LOG(LogSmartAutoConnect, Verbose, TEXT("⚡ OnPowerPoleBuilt: Connected to building %s (deducted cables)"),
+						*Building->GetName());
+					BuildingConnectionsMade++;
+
+					// Remove from cached connections so other poles don't try to connect
+					Subsystem->CommittedBuildingConnections.Remove(Building);
+				}
+				else
+				{
+					UE_LOG(LogSmartAutoConnect, Warning, TEXT("⚡ OnPowerPoleBuilt: wire to building %s spanned the Blueprint Designer wall - dismantled (#421)"),
+						*Building->GetName());
+				}
 			}
 			else
 			{

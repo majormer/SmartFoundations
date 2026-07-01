@@ -7,6 +7,7 @@
 
 #include "Features/Extend/SFExtendWiringServiceImpl.h"
 #include "FGDismantleInterface.h"
+#include "Shared/Power/SFWireDesignerRegistration.h"  // [#421] designer containment for direct-spawned wires
 
 bool USFExtendWiringService::HasPendingPostBuildWiring() const
 {
@@ -495,6 +496,7 @@ void USFExtendWiringService::WireBuiltChildConnections(AFGBuildableFactory* NewF
 
             if (NewWire->Connect(PumpPowerConn, PoleConn))
             {
+                SFWireDesigner::RegisterSpawnedWire(NewWire);  // [#421] designer containment (no-op outside a designer)
                 ++PumpsWired;
                 UE_LOG(LogSmartExtend, VeryVerbose, TEXT("⚡ EXTEND Phase 3.8b (#288): wired pump %s → pole %s (pole now at %d/%d)"),
                     *ClonePump->GetName(), *ClonePole->GetName(),

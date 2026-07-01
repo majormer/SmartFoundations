@@ -8,6 +8,7 @@
 
 #include "Features/Extend/SFExtendWiringServiceImpl.h"
 #include "FGUnlockSubsystem.h"  // Issue #344: detect Upgraded Power Connectors (daisy-chain) unlock
+#include "Shared/Power/SFWireDesignerRegistration.h"  // [#421] designer containment for direct-spawned wires
 
 int32 USFExtendWiringService::GenerateAndExecuteWiring(AFGBuildableFactory* NewFactory)
 {
@@ -955,6 +956,7 @@ int32 USFExtendWiringService::GenerateAndExecuteWiring(AFGBuildableFactory* NewF
                     bool bConnected = NewWire->Connect(FactoryConn, PoleConn);
                     if (bConnected)
                     {
+                        SFWireDesigner::RegisterSpawnedWire(NewWire);  // [#421] designer containment (no-op outside a designer)
                         PowerWiredCount++;
                         SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("⚡ EXTEND Power Wire: Connected clone factory %s ↔ clone pole %s"),
                             *NewFactory->GetName(), *ClonePole->GetName());
@@ -1001,6 +1003,7 @@ int32 USFExtendWiringService::GenerateAndExecuteWiring(AFGBuildableFactory* NewF
                     bool bConnected = NewWire->Connect(SourceConn, CloneConn);
                     if (bConnected)
                     {
+                        SFWireDesigner::RegisterSpawnedWire(NewWire);  // [#421] designer containment (no-op outside a designer)
                         PowerWiredCount++;
                         SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("⚡ EXTEND Power Wire: Connected source pole %s ↔ clone pole %s"),
                             *SourcePole->GetName(), *ClonePole->GetName());
@@ -1095,6 +1098,7 @@ int32 USFExtendWiringService::GenerateAndExecuteWiring(AFGBuildableFactory* NewF
 
             if (NewWire->Connect(A, B))
             {
+                SFWireDesigner::RegisterSpawnedWire(NewWire);  // [#421] designer containment (no-op outside a designer)
                 return true;
             }
 
@@ -1467,6 +1471,7 @@ int32 USFExtendWiringService::GenerateAndExecuteWiring(AFGBuildableFactory* NewF
                         bool bConnected = NewWire->Connect(FactoryCircuitConns[0], PoleCircuitConns[0]);
                         if (bConnected)
                         {
+                            SFWireDesigner::RegisterSpawnedWire(NewWire);  // [#421] designer containment (no-op outside a designer)
                             ClonePowerWired++;
                             SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("⚡ SCALED EXTEND Power: Connected %s ↔ %s"),
                                 *CloneFactory->GetName(), *ClonePole->GetName());
@@ -1552,6 +1557,7 @@ int32 USFExtendWiringService::GenerateAndExecuteWiring(AFGBuildableFactory* NewF
 
             if (NewWire->Connect(PumpPowerConn, PoleConn))
             {
+                SFWireDesigner::RegisterSpawnedWire(NewWire);  // [#421] designer containment (no-op outside a designer)
                 ClonePowerWired++;
                 UE_LOG(LogSmartExtend, VeryVerbose, TEXT("⚡ SCALED EXTEND Pump Power: Clone[%d] connected pump %s ↔ pole %s"),
                     CloneIdx, *ClonePump->GetName(), *ClonePole->GetName());
@@ -1643,6 +1649,7 @@ int32 USFExtendWiringService::GenerateAndExecuteWiring(AFGBuildableFactory* NewF
                         bool bConnected = ChainWire->Connect(ConnsA[0], ConnsB[0]);
                         if (bConnected)
                         {
+                            SFWireDesigner::RegisterSpawnedWire(ChainWire);  // [#421] designer containment (no-op outside a designer)
                             ChainWiredCount++;
                             SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("⚡ POWER CHAIN: Connected %s ↔ %s (pole_%d, link %d)"),
                                 *PoleA->GetName(), *PoleB->GetName(), PoleIdx, j);
@@ -1801,6 +1808,7 @@ int32 USFExtendWiringService::GenerateAndExecuteWiring(AFGBuildableFactory* NewF
                             WireClass, Row[i]->GetActorLocation(), FRotator::ZeroRotator, SpawnParams);
                         if (Wire && Wire->Connect(A, B))
                         {
+                            SFWireDesigner::RegisterSpawnedWire(Wire);  // [#421] designer containment (no-op outside a designer)
                             DaisyWired++;
                         }
                         else if (Wire)
