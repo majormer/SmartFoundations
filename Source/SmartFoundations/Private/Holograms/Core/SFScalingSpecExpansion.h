@@ -27,6 +27,14 @@ namespace SFScalingSpecExpansion
 	bool CaptureScalingSpec(AFGHologram* Hologram, FSFScalingSpec& OutSpec);
 
 	/**
+	 * Client-side (#428): true unless this is a scalable water extractor with at least one grid cell
+	 * NOT over valid water. The fire hook calls this BEFORE staging the spec / destroying the preview
+	 * children and cancels the build if it returns false — matching single-player, where a disqualified
+	 * water-pump grid child blocks the whole placement.
+	 */
+	bool AreAllWaterCellsValid(AFGHologram* Parent);
+
+	/**
 	 * Server-side: expand the spec into one child hologram per non-origin grid cell, parented to
 	 * Parent via the vanilla AFGHologram::SpawnChildHologramFromRecipe path, positioned with
 	 * FSFPositionCalculator (the same math the client preview uses). Returns the number spawned.

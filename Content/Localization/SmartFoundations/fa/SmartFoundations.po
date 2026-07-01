@@ -160,8 +160,8 @@ msgid "*Zoop Active - Scaling Disabled"
 msgstr "*Zoop فعال - مقیاس‌گذاری غیرفعال"
 
 msgctxt "SmartFoundations,HUD_SmartDisabled"
-msgid "*Smart Disabled (double-tap to re-enable)"
-msgstr "*Smart غیرفعال (دوبار بزنید برای فعال‌سازی)"
+msgid "*Smart: Scaling only (double-tap to re-enable)"
+msgstr "*Smart: فقط مقیاس‌گذاری (دوبار بزنید برای فعال‌سازی)"
 
 msgctxt "SmartFoundations,HUD_AutoConnectDisabled"
 msgid "*Auto-Connect Disabled (double-tap to re-enable)"

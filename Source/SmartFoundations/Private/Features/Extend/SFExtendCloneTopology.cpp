@@ -546,9 +546,79 @@ FSFCloneTopology FSFCloneTopology::FromSource(const FSFSourceTopology& Source, c
     // Blueprint decorators with no connections. They need to be cloned at their world-offset
     // transform so the cloned belts/pipes pass through matching decorations and snap-point
     // consumption happens on the cloned wall.
+    //
+    // #wall-hole-orphan: a wall hole decorates one specific conduit segment. If that conduit's chain is
+    // EXCLUDED from the clone — a blocked distributor lane (both Output1/Input1 occupied), so the
+    // splitter + its belts never clone — the hole must drop with it, else it orphans onto the source
+    // building, decorating whatever it lands on (e.g. a pipe, reading as a stray pipe wall hole). Match
+    // by WORLD POSITION, not actor id: in MP the wall-hole discovery that would stamp an owner id runs on
+    // the SERVER while this clone plan runs on the CLIENT, and the two use independent actor-id spaces
+    // (server conduits Build_...460xxx, client chains Build_...469xxx) so an owner id never matches. World
+    // coordinates ARE identical on both, so we drop a hole that physically sits on an excluded segment.
+    struct FSFExclSeg { FVector A; FVector B; };
+    TArray<FSFExclSeg> ExcludedSegs;
+    auto CollectExcludedChainGeometry = [&ExcludedSegs, &IsBeltDistributorLaneBlocked](const TArray<FSFSourceChain>& Chains)
+    {
+        for (const FSFSourceChain& Chain : Chains)
+        {
+            // Mirror ProcessChain's skip conditions (SFExtendCloneTopology.cpp ~261-270): a chain whose
+            // distributor is absent, or whose Output1/Input1 lane connectors are both occupied, is
+            // excluded from the clone entirely — its distributor + segments never build.
+            const bool bExcluded = Chain.Distributor.Id.IsEmpty() || IsBeltDistributorLaneBlocked(Chain);
+            if (!bExcluded) continue;
+            for (const FSFSourceSegment& Seg : Chain.Segments)
+            {
+                if (Seg.bHasSplineData && Seg.SplineData.Points.Num() >= 2)
+                {
+                    ExcludedSegs.Add({ Seg.SplineData.Points[0].World.ToFVector(),
+                                       Seg.SplineData.Points.Last().World.ToFVector() });
+                }
+                else
+                {
+                    const FVector C = Seg.Transform.Location.ToFVector();
+                    ExcludedSegs.Add({ C, C });
+                }
+            }
+        }
+    };
+    CollectExcludedChainGeometry(Source.BeltInputChains);
+    CollectExcludedChainGeometry(Source.BeltOutputChains);
+    CollectExcludedChainGeometry(Source.PipeInputChains);
+    CollectExcludedChainGeometry(Source.PipeOutputChains);
+
+    auto PointToSegDistSq = [](const FVector& P, const FVector& A, const FVector& B) -> float
+    {
+        const FVector AB = B - A;
+        const double L2 = AB.SizeSquared();
+        if (L2 < 1.0) return static_cast<float>(FVector::DistSquared(P, A));
+        const double T = FMath::Clamp(FVector::DotProduct(P - A, AB) / L2, 0.0, 1.0);
+        return static_cast<float>(FVector::DistSquared(P, A + T * AB));
+    };
+    // The hole's center sits on its conduit; 200cm covers wall-hole pivot/Z offset with margin while
+    // staying well below the gap to any kept chain.
+    constexpr float OnExcludedSqCm = 200.0f * 200.0f;
+
     int32 WallHoleCloneIndex = 0;
     for (const FSFSourceSegment& WallSeg : Source.WallHoles)
     {
+        // #wall-hole-orphan: drop a hole that physically sits on an excluded chain's segment (blocked
+        // lane) — else it orphans onto the source building after that belt/pipe fails to clone. (Warning
+        // level so the decision surfaces in the log; temporary diagnostic — strip before release.)
+        const FVector HoleLoc = WallSeg.Transform.Location.ToFVector();
+        float BestSq = TNumericLimits<float>::Max();
+        for (const FSFExclSeg& S : ExcludedSegs)
+        {
+            BestSq = FMath::Min(BestSq, PointToSegDistSq(HoleLoc, S.A, S.B));
+        }
+        const bool bOnExcluded = !ExcludedSegs.IsEmpty() && BestSq <= OnExcludedSqCm;
+        if (bOnExcluded)
+        {
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log,
+                TEXT("🔧 EXTEND: Dropping wall hole %s (class=%s) — sits on an excluded (blocked-lane) chain segment (%.0fcm)"),
+                *WallSeg.Id, *WallSeg.Class, FMath::Sqrt(BestSq));
+            continue;
+        }
+
         FSFCloneHologram WallHolo;
         WallHolo.HologramId = FString::Printf(TEXT("wall_hole_%d"), WallHoleCloneIndex);
         WallHolo.Role = TEXT("wall_hole");

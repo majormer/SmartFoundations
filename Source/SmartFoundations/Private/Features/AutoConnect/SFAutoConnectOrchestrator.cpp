@@ -1120,7 +1120,7 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 			}
 
 			// Try both orientations: A→B and B→A. Choose the one with better facing.
-			struct FManifoldOption { UFGFactoryConnectionComponent* Out; UFGFactoryConnectionComponent* In; AFGHologram* StoreOn; float Dot; };
+			struct FManifoldOption { UFGFactoryConnectionComponent* Out; UFGFactoryConnectionComponent* In; AFGHologram* StoreOn; float Dot; float Distance; int32 Index; };
 			TArray<FManifoldOption> Options;
 			// Option 1: Source → Target
 			if (A_MiddleOut && B_BackIn)
@@ -1128,7 +1128,7 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 				const FVector SrcPos = A_MiddleOut->GetComponentLocation();
 				const FVector TgtPos = B_BackIn->GetComponentLocation();
 				const float Dot = FVector::DotProduct(A_MiddleOut->GetConnectorNormal(), (TgtPos - SrcPos).GetSafeNormal());
-				Options.Add({A_MiddleOut, B_BackIn, SourceDistributor, Dot});
+				Options.Add({A_MiddleOut, B_BackIn, SourceDistributor, Dot, static_cast<float>(FVector::Dist(SrcPos, TgtPos)), 0});
 			}
 			// Option 2: Target → Source (only if target has middle out and source has back in)
 			if (B_MiddleOut && A_BackIn)
@@ -1136,11 +1136,18 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 				const FVector SrcPos = B_MiddleOut->GetComponentLocation();
 				const FVector TgtPos = A_BackIn->GetComponentLocation();
 				const float Dot = FVector::DotProduct(B_MiddleOut->GetConnectorNormal(), (TgtPos - SrcPos).GetSafeNormal());
-				Options.Add({B_MiddleOut, A_BackIn, TargetDistributor, Dot});
+				Options.Add({B_MiddleOut, A_BackIn, TargetDistributor, Dot, static_cast<float>(FVector::Dist(SrcPos, TgtPos)), 1});
 			}
 
 			// Pick the best facing option
-			Options.Sort([](const FManifoldOption& L, const FManifoldOption& R){ return L.Dot > R.Dot; });
+			// #424: deterministic tie-break on near-equal facing (closer pair, then lower index) so the
+			// chosen orientation doesn't flicker/crossover between evaluations.
+			Options.Sort([](const FManifoldOption& L, const FManifoldOption& R)
+			{
+				if (FMath::Abs(L.Dot - R.Dot) > 0.01f) return L.Dot > R.Dot;
+				if (!FMath::IsNearlyEqual(L.Distance, R.Distance, 1.0f)) return L.Distance < R.Distance;
+				return L.Index < R.Index;
+			});
 			bool bLinked = false;
 			for (const FManifoldOption& Opt : Options)
 			{
@@ -1326,7 +1333,7 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 			}
 
 			// Try both orientations: A→B and B→A. Choose the one with better facing (SAME AS SPLITTERS)
-			struct FManifoldOption { UFGFactoryConnectionComponent* Out; UFGFactoryConnectionComponent* In; AFGHologram* StoreOn; float Dot; };
+			struct FManifoldOption { UFGFactoryConnectionComponent* Out; UFGFactoryConnectionComponent* In; AFGHologram* StoreOn; float Dot; float Distance; int32 Index; };
 			TArray<FManifoldOption> Options;
 			// Option 1: Source → Target
 			if (A_MiddleOut && B_BackIn)
@@ -1334,7 +1341,7 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 				const FVector SrcPos = A_MiddleOut->GetComponentLocation();
 				const FVector TgtPos = B_BackIn->GetComponentLocation();
 				const float Dot = FVector::DotProduct(A_MiddleOut->GetConnectorNormal(), (TgtPos - SrcPos).GetSafeNormal());
-				Options.Add({A_MiddleOut, B_BackIn, SourceMerger, Dot});
+				Options.Add({A_MiddleOut, B_BackIn, SourceMerger, Dot, static_cast<float>(FVector::Dist(SrcPos, TgtPos)), 0});
 			}
 			// Option 2: Target → Source (only if target has middle out and source has back in)
 			if (B_MiddleOut && A_BackIn)
@@ -1342,11 +1349,18 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 				const FVector SrcPos = B_MiddleOut->GetComponentLocation();
 				const FVector TgtPos = A_BackIn->GetComponentLocation();
 				const float Dot = FVector::DotProduct(B_MiddleOut->GetConnectorNormal(), (TgtPos - SrcPos).GetSafeNormal());
-				Options.Add({B_MiddleOut, A_BackIn, TargetMerger, Dot});
+				Options.Add({B_MiddleOut, A_BackIn, TargetMerger, Dot, static_cast<float>(FVector::Dist(SrcPos, TgtPos)), 1});
 			}
 
 			// Pick the best facing option (SAME AS SPLITTERS)
-			Options.Sort([](const FManifoldOption& L, const FManifoldOption& R){ return L.Dot > R.Dot; });
+			// #424: deterministic tie-break on near-equal facing (closer pair, then lower index) so the
+			// chosen orientation doesn't flicker/crossover between evaluations.
+			Options.Sort([](const FManifoldOption& L, const FManifoldOption& R)
+			{
+				if (FMath::Abs(L.Dot - R.Dot) > 0.01f) return L.Dot > R.Dot;
+				if (!FMath::IsNearlyEqual(L.Distance, R.Distance, 1.0f)) return L.Distance < R.Distance;
+				return L.Index < R.Index;
+			});
 			bool bLinked = false;
 			for (const FManifoldOption& Opt : Options)
 			{

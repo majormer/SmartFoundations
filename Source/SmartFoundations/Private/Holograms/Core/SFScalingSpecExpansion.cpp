@@ -24,6 +24,8 @@
 #include "HAL/IConsoleManager.h"
 #include "FGDismantleInterface.h"
 #include "Hologram/FGPipelinePoleHologram.h"
+#include "Hologram/FGWaterPumpHologram.h"                  // #428: MP water-extractor crash fix
+#include "Holograms/Logistics/SFWaterPumpChildHologram.h"  // #428
 
 // MP spec-based construction. ON by default - the mod must be self-contained (no launch options /
 // ini edits for players; Saved/Engine.ini is rewritten by the game's diff-config system anyway).
@@ -40,6 +42,27 @@ static TAutoConsoleVariable<int32> CVarSFMPSpecConstruction(
 
 namespace SFScalingSpecExpansion
 {
+
+bool AreAllWaterCellsValid(AFGHologram* Parent)
+{
+	// #428: water extractors get ASFWaterPumpChildHologram preview cells, each running its own water
+	// validation. The MP spec path destroys these previews and fires a childless parent, so the
+	// per-cell disqualifier never blocks the build; the fire hook calls this to refuse a fire whose
+	// grid cells fall on land (matching SP). Non-water-pumps are not gated.
+	if (!Parent || !Parent->IsA(AFGWaterPumpHologram::StaticClass()))
+	{
+		return true;
+	}
+	for (AFGHologram* Child : Parent->GetHologramChildren())
+	{
+		const ASFWaterPumpChildHologram* WaterChild = Cast<ASFWaterPumpChildHologram>(Child);
+		if (WaterChild && !WaterChild->ValidateWaterPosition())
+		{
+			return false; // a grid cell is not over valid water
+		}
+	}
+	return true;
+}
 
 bool IsSpecConstructionEnabled()
 {
@@ -264,20 +287,60 @@ int32 ExpandScalingSpecIntoChildren(AFGHologram* Parent, const FSFScalingSpec& S
 				// [#365] Designer context for designer-resident spec grids (MP has designers too)
 				AFGBuildableBlueprintDesigner* CellDesigner = Parent->GetBlueprintDesigner();
 
-				AFGHologram* Child = AFGHologram::SpawnChildHologramFromRecipe(
-					Parent, ChildName, Recipe, HoloOwner, CellLoc,
-					[CellRot, CellDesigner](AFGHologram* NewChild)
+				// #428: Water extractors must use the Smart child class. SpawnChildHologramFromRecipe
+				// resolves Build_WaterPump_C to the VANILLA AFGWaterPumpHologram, whose ConfigureActor
+				// asserts on a null mSnappedExtractableResource (grid children never snap a resource —
+				// the parent owns the binding). ASFWaterPumpChildHologram overrides ConfigureActor to skip
+				// that assert; without it an MP client placing a row of water extractors crashes the
+				// authority. AFGWaterPumpHologram has a private ctor, so it can't come from recipe
+				// resolution — spawn the Smart child explicitly (mirrors the SP grid spawner,
+				// SFHologramHelperService.cpp:885-941).
+				AFGHologram* Child = nullptr;
+				UWorld* SpawnWorld = Parent->GetWorld();
+				if (Parent->IsA(AFGWaterPumpHologram::StaticClass()) && SpawnWorld)
+				{
+					FActorSpawnParameters SpawnParams;
+					// #428: do NOT set SpawnParams.Name to ChildName. The per-cell name (SFSpecCell_X_Y_Z)
+					// is deterministic, so on a repeat build attempt an explicit name that is still taken by
+					// a lingering actor FATALS ("Cannot generate unique name", LevelActor.cpp:585). Let UE
+					// auto-name the actor (SpawnChildHologramFromRecipe does the same); AddChild still keys on ChildName.
+					SpawnParams.Owner = HoloOwner;
+					SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+					SpawnParams.bDeferConstruction = true;
+
+					ASFWaterPumpChildHologram* WaterPumpChild = SpawnWorld->SpawnActor<ASFWaterPumpChildHologram>(
+						ASFWaterPumpChildHologram::StaticClass(), CellLoc, CellRot, SpawnParams);
+					if (WaterPumpChild)
 					{
-						if (NewChild)
+						WaterPumpChild->SetChildBuildClass(Parent->GetBuildClass());
+						WaterPumpChild->SetRecipe(Recipe);
+						WaterPumpChild->FinishSpawning(FTransform(CellRot, CellLoc));
+						Parent->AddChild(WaterPumpChild, ChildName);
+						WaterPumpChild->Tags.AddUnique(FName(TEXT("SF_GridChild")));
+						if (CellDesigner)
 						{
-							NewChild->SetActorRotation(CellRot);
-							NewChild->Tags.AddUnique(FName(TEXT("SF_GridChild")));
-							if (CellDesigner)
-							{
-								NewChild->SetInsideBlueprintDesigner(CellDesigner);
-							}
+							WaterPumpChild->SetInsideBlueprintDesigner(CellDesigner);
 						}
-					});
+						Child = WaterPumpChild;
+					}
+				}
+				else
+				{
+					Child = AFGHologram::SpawnChildHologramFromRecipe(
+						Parent, ChildName, Recipe, HoloOwner, CellLoc,
+						[CellRot, CellDesigner](AFGHologram* NewChild)
+						{
+							if (NewChild)
+							{
+								NewChild->SetActorRotation(CellRot);
+								NewChild->Tags.AddUnique(FName(TEXT("SF_GridChild")));
+								if (CellDesigner)
+								{
+									NewChild->SetInsideBlueprintDesigner(CellDesigner);
+								}
+							}
+						});
+				}
 
 				if (Child)
 				{

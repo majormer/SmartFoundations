@@ -1102,10 +1102,13 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 							if (JConnType == BConnType) continue;
 							
 							FVector BuildingConnPos = BuildingConn->GetComponentLocation();
-							float Distance = FVector::Dist2D(JunctionLocation, BuildingConnPos);
+							// #425: gate distance/direction on the OPPOSITE CONNECTOR, not the junction center, so
+							// the scoring matches the facing validation below (center-vs-connector offset can
+							// otherwise admit/reject the wrong building connector on large or rotated junctions).
+							float Distance = FVector::Dist2D(OppositeJunctionConn->GetComponentLocation(), BuildingConnPos);
 							
 							// Scoring: distance + alignment penalty (same formula as Side A)
-							FVector DirToB = (BuildingConnPos - JunctionLocation).GetSafeNormal();
+							FVector DirToB = (BuildingConnPos - OppositeJunctionConn->GetComponentLocation()).GetSafeNormal();
 							float FwdDot = FMath::Abs(FVector::DotProduct(DirToB, JunctionForward));
 							float RtDot = FMath::Abs(FVector::DotProduct(DirToB, JunctionRight));
 							float MaxAlign = FMath::Max(FwdDot, RtDot);

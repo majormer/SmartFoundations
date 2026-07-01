@@ -324,8 +324,9 @@ void USFUpgradeExecutionService::GatherUpgradeTargets()
 		{
 			AFGBuildablePipeline* Pipe = *It;
 			if (!Pipe) continue;
-			// Exclude pumps (they inherit from AFGBuildablePipeline in some variants) and junctions
-			if (Cast<AFGBuildablePipelinePump>(Pipe)) continue;
+			// Exclude pumps and junctions. They are AFGBuildablePipelineAttachment subclasses, NOT
+			// AFGBuildablePipeline, so the TActorIterator above never yields them; the class-name check
+			// below is a defensive backstop for oddly-named (e.g. modded) pipeline variants. (#430)
 			const FString PipeClassName = Pipe->GetClass()->GetName();
 			if (PipeClassName.Contains(TEXT("Pump")) || PipeClassName.Contains(TEXT("Junction")))
 			{
@@ -1223,14 +1224,37 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 		// Set blueprint designer (like MassUpgrade)
 		LiftHologram->SetInsideBlueprintDesigner(OldLift->GetBlueprintDesigner());
 
-		// Copy the top transform (lift height) from old lift using reflection
-		if (OldLift->GetConnection1())
+		// #399: Copy the lift's AUTHORITATIVE top transform (mTopTransform). Its Z SIGN encodes flow
+		// direction (up vs down); |Z| is the height. Source it from OldLift->GetTopTransform(), NOT the
+		// output connector's relative transform: on a lift snapped to a floor-hole passthrough the
+		// connector is inset into the foundation, so its relative Z has the wrong magnitude and can carry
+		// the wrong SIGN, flipping the rebuilt lift. Every Extend lift site already uses GetTopTransform().
 		{
-			FTransform TopTransform = OldLift->GetConnection1()->GetRelativeTransform();
+			FTransform TopTransform = OldLift->GetTopTransform();
 			if (FStructProperty* TopTransformProp = FindFProperty<FStructProperty>(AFGConveyorLiftHologram::StaticClass(), TEXT("mTopTransform")))
 			{
 				void* ValuePtr = TopTransformProp->ContainerPtrToValuePtr<void>(LiftHologram);
 				TopTransformProp->CopySingleValue(ValuePtr, &TopTransform);
+			}
+		}
+
+		// #399: Carry the old lift's snapped floor-hole passthroughs onto the upgrade hologram (index
+		// [0]=bottom, [1]=top). Without this, a floor-hole-through lift loses all passthrough context, so
+		// vanilla re-resolves its forced normal / mesh mode from the synthetic upgrade hit and flips the
+		// lift (and mangles the whole run). Mirrors the Extend path (SFExtendCloneSpawner.cpp:1407-1428).
+		// MP-safe: the upgrade batch is host-authoritative and this reads the OLD lift's own same-machine
+		// passthrough actors, so nothing crosses the client/server actor-id boundary.
+		{
+			TArray<AFGBuildablePassthrough*> SnappedPassthroughs = OldLift->GetSnappedPassthroughs();
+			if (SnappedPassthroughs.Num() > 0)
+			{
+				if (FProperty* SnappedProp = AFGConveyorLiftHologram::StaticClass()->FindPropertyByName(TEXT("mSnappedPassthroughs")))
+				{
+					if (TArray<AFGBuildablePassthrough*>* HoloPassthroughs = SnappedProp->ContainerPtrToValuePtr<TArray<AFGBuildablePassthrough*>>(LiftHologram))
+					{
+						*HoloPassthroughs = SnappedPassthroughs;
+					}
+				}
 			}
 		}
 
@@ -1257,13 +1281,16 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 			// Calculate net cost for this lift
 			TMap<TSubclassOf<UFGItemDescriptor>, int32> LiftItemCost;
 
-			// Get cost from hologram
-			float LiftRefundMultiplier = OldLift->GetDismantleRefundReturnsMultiplier();
+			// Get cost from hologram (length-aware for lifts, same as the belt/pipe branches).
+			// #432: do NOT scale by GetDismantleRefundReturnsMultiplier() — that is the dismantle-refund
+			// segment count, not a build-cost factor, and GetBaseCost() is already length-aware, so
+			// applying it double-charges tall / floor-hole lift upgrades (can trip the out-of-funds abort).
+			// The refund is subtracted separately below (GetDismantleRefundReturns).
 			for (const FItemAmount& ItemAmount : LiftHologram->GetBaseCost())
 			{
 				if (ItemAmount.ItemClass)
 				{
-					LiftItemCost.FindOrAdd(ItemAmount.ItemClass) += FMath::CeilToInt(ItemAmount.Amount * LiftRefundMultiplier);
+					LiftItemCost.FindOrAdd(ItemAmount.ItemClass) += ItemAmount.Amount;
 				}
 			}
 
