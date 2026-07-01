@@ -1261,31 +1261,20 @@ void FSFPowerAutoConnectManager::OnPowerPoleBuilt(AFGBuildablePowerPole* BuiltPo
 			FActorSpawnParameters SpawnParams;
 			SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 			
-			AFGBuildableWire* NewWire = BuiltPole->GetWorld()->SpawnActor<AFGBuildableWire>(WireClass, BuiltPole->GetActorLocation(), FRotator::ZeroRotator, SpawnParams);
+			// [#421] Designer-aware spawn: derives the endpoints' Blueprint Designer and stamps it
+			// pre-BeginPlay (vanilla check()s the timing), so the wire serializes into blueprints
+			// like a hand-built one. Returns null for a designer-wall-spanning pair.
+			AFGBuildableWire* NewWire = SFWireDesigner::SpawnWireForEndpoints(
+				BuiltPole->GetWorld(), WireClass, BuiltPole->GetActorLocation(), BuiltConn, NearbyConn);
 			if (NewWire)
 			{
 				bool bConnected = NewWire->Connect(BuiltConn, NearbyConn);
 				if (bConnected)
 				{
-					// [#421] A direct-spawned wire never went through the hologram-construct pipeline,
-					// so inside a Blueprint Designer it was missing from the designer's contained list:
-					// the blueprint saved poles with SaveGame'd references to a wire it didn't contain
-					// -> phantom pole connections + per-tick RebuildCircuit repair spam + save
-					// corruption on placement (dedicated servers surfaced it first). Register it with
-					// the designer like a built wire; the helper dismantles a designer-wall-spanning
-					// wire itself, so no extra cleanup here.
-					if (SFWireDesigner::RegisterSpawnedWire(NewWire))
-					{
-						UE_LOG(LogSmartAutoConnect, Verbose, TEXT("⚡ OnPowerPoleBuilt: Spawned and connected wire between %s and %s"),
-							*BuiltPole->GetName(), *NearbyPole->GetName());
-						ConnectionsMade++;
-						PoleToPoleConnectionsMade++;
-					}
-					else
-					{
-						UE_LOG(LogSmartAutoConnect, Warning, TEXT("⚡ OnPowerPoleBuilt: wire %s <-> %s spanned the Blueprint Designer wall - dismantled (#421)"),
-							*BuiltPole->GetName(), *NearbyPole->GetName());
-					}
+					UE_LOG(LogSmartAutoConnect, Verbose, TEXT("⚡ OnPowerPoleBuilt: Spawned and connected wire between %s and %s"),
+						*BuiltPole->GetName(), *NearbyPole->GetName());
+					ConnectionsMade++;
+					PoleToPoleConnectionsMade++;
 				}
 				else
 				{
@@ -1496,37 +1485,25 @@ void FSFPowerAutoConnectManager::OnPowerPoleBuilt(AFGBuildablePowerPole* BuiltPo
 			continue;
 		}
 		
-		FActorSpawnParameters SpawnParams;
-		SpawnParams.bDeferConstruction = true;
-		AFGBuildableWire* PowerWire = BuiltPole->GetWorld()->SpawnActor<AFGBuildableWire>(PowerLineClass, SpawnParams);
+		// [#421] Designer-aware spawn (defer -> stamp designer pre-BeginPlay -> finish);
+		// null for a designer-wall-spanning pair.
+		AFGBuildableWire* PowerWire = SFWireDesigner::SpawnWireForEndpoints(
+			BuiltPole->GetWorld(), PowerLineClass, PoleLoc, PoleCircuitConns[0], BuildingConn);
 		
 		if (PowerWire)
 		{
-			FTransform WireTransform(FRotator::ZeroRotator, PoleLoc);
-			PowerWire->FinishSpawning(WireTransform);
 			PowerWire->OnBuildEffectFinished();
 			
 			// Use the circuit connection we already have from distance calculation
 			UFGCircuitConnectionComponent* PoleCircuitConn = PoleCircuitConns[0];
 			if (PoleCircuitConn && PowerWire->Connect(PoleCircuitConn, BuildingConn))
 			{
-				// [#421] Same designer registration as the pole-to-pole path above: a direct-spawned
-				// wire must join the designer's contained list or it vanishes from saved blueprints.
-				// On a designer-wall mismatch the helper dismantles the wire itself.
-				if (SFWireDesigner::RegisterSpawnedWire(PowerWire))
-				{
-					UE_LOG(LogSmartAutoConnect, Verbose, TEXT("⚡ OnPowerPoleBuilt: Connected to building %s (deducted cables)"),
-						*Building->GetName());
-					BuildingConnectionsMade++;
+				UE_LOG(LogSmartAutoConnect, Verbose, TEXT("⚡ OnPowerPoleBuilt: Connected to building %s (deducted cables)"),
+					*Building->GetName());
+				BuildingConnectionsMade++;
 
-					// Remove from cached connections so other poles don't try to connect
-					Subsystem->CommittedBuildingConnections.Remove(Building);
-				}
-				else
-				{
-					UE_LOG(LogSmartAutoConnect, Warning, TEXT("⚡ OnPowerPoleBuilt: wire to building %s spanned the Blueprint Designer wall - dismantled (#421)"),
-						*Building->GetName());
-				}
+				// Remove from cached connections so other poles don't try to connect
+				Subsystem->CommittedBuildingConnections.Remove(Building);
 			}
 			else
 			{

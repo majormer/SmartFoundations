@@ -486,8 +486,8 @@ void USFExtendWiringService::WireBuiltChildConnections(AFGBuildableFactory* NewF
 
             FActorSpawnParameters WireSpawnParams;
             WireSpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-            AFGBuildableWire* NewWire = GetWorld()->SpawnActor<AFGBuildableWire>(
-                PumpWireClass, ClonePump->GetActorLocation(), FRotator::ZeroRotator, WireSpawnParams);
+            AFGBuildableWire* NewWire = SFWireDesigner::SpawnWireForEndpoints(  // [#421] designer-aware spawn
+                GetWorld(), PumpWireClass, ClonePump->GetActorLocation(), PumpPowerConn, PoleConn);
             if (!NewWire)
             {
                 ++PumpsSkipped;
@@ -496,7 +496,6 @@ void USFExtendWiringService::WireBuiltChildConnections(AFGBuildableFactory* NewF
 
             if (NewWire->Connect(PumpPowerConn, PoleConn))
             {
-                SFWireDesigner::RegisterSpawnedWire(NewWire);  // [#421] designer containment (no-op outside a designer)
                 ++PumpsWired;
                 UE_LOG(LogSmartExtend, VeryVerbose, TEXT("⚡ EXTEND Phase 3.8b (#288): wired pump %s → pole %s (pole now at %d/%d)"),
                     *ClonePump->GetName(), *ClonePole->GetName(),

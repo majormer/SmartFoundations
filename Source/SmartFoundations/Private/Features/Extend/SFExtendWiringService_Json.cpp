@@ -948,15 +948,14 @@ int32 USFExtendWiringService::GenerateAndExecuteWiring(AFGBuildableFactory* NewF
                 FActorSpawnParameters SpawnParams;
                 SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-                AFGBuildableWire* NewWire = GetWorld()->SpawnActor<AFGBuildableWire>(
-                    WireClass, ClonePole->GetActorLocation(), FRotator::ZeroRotator, SpawnParams);
+                AFGBuildableWire* NewWire = SFWireDesigner::SpawnWireForEndpoints(  // [#421] designer-aware spawn
+                    GetWorld(), WireClass, ClonePole->GetActorLocation(), FactoryConn, PoleConn);
 
                 if (NewWire)
                 {
                     bool bConnected = NewWire->Connect(FactoryConn, PoleConn);
                     if (bConnected)
                     {
-                        SFWireDesigner::RegisterSpawnedWire(NewWire);  // [#421] designer containment (no-op outside a designer)
                         PowerWiredCount++;
                         SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("⚡ EXTEND Power Wire: Connected clone factory %s ↔ clone pole %s"),
                             *NewFactory->GetName(), *ClonePole->GetName());
@@ -995,15 +994,14 @@ int32 USFExtendWiringService::GenerateAndExecuteWiring(AFGBuildableFactory* NewF
                 FActorSpawnParameters SpawnParams;
                 SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-                AFGBuildableWire* NewWire = GetWorld()->SpawnActor<AFGBuildableWire>(
-                    WireClass, SourcePole->GetActorLocation(), FRotator::ZeroRotator, SpawnParams);
+                AFGBuildableWire* NewWire = SFWireDesigner::SpawnWireForEndpoints(  // [#421] designer-aware spawn
+                    GetWorld(), WireClass, SourcePole->GetActorLocation(), SourceConn, CloneConn);
 
                 if (NewWire)
                 {
                     bool bConnected = NewWire->Connect(SourceConn, CloneConn);
                     if (bConnected)
                     {
-                        SFWireDesigner::RegisterSpawnedWire(NewWire);  // [#421] designer containment (no-op outside a designer)
                         PowerWiredCount++;
                         SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("⚡ EXTEND Power Wire: Connected source pole %s ↔ clone pole %s"),
                             *SourcePole->GetName(), *ClonePole->GetName());
@@ -1089,8 +1087,8 @@ int32 USFExtendWiringService::GenerateAndExecuteWiring(AFGBuildableFactory* NewF
             SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
             const FVector SpawnLocation = A->GetOwner() ? A->GetOwner()->GetActorLocation() : FVector::ZeroVector;
-            AFGBuildableWire* NewWire = GetWorld()->SpawnActor<AFGBuildableWire>(
-                WireClass, SpawnLocation, FRotator::ZeroRotator, SpawnParams);
+            AFGBuildableWire* NewWire = SFWireDesigner::SpawnWireForEndpoints(  // [#421] designer-aware spawn
+                GetWorld(), WireClass, SpawnLocation, A, B);
             if (!NewWire)
             {
                 return false;
@@ -1098,7 +1096,6 @@ int32 USFExtendWiringService::GenerateAndExecuteWiring(AFGBuildableFactory* NewF
 
             if (NewWire->Connect(A, B))
             {
-                SFWireDesigner::RegisterSpawnedWire(NewWire);  // [#421] designer containment (no-op outside a designer)
                 return true;
             }
 
@@ -1463,15 +1460,14 @@ int32 USFExtendWiringService::GenerateAndExecuteWiring(AFGBuildableFactory* NewF
                     FActorSpawnParameters SpawnParams;
                     SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-                    AFGBuildableWire* NewWire = GetWorld()->SpawnActor<AFGBuildableWire>(
-                        WireClass, ClonePole->GetActorLocation(), FRotator::ZeroRotator, SpawnParams);
+                    AFGBuildableWire* NewWire = SFWireDesigner::SpawnWireForEndpoints(  // [#421] designer-aware spawn
+                        GetWorld(), WireClass, ClonePole->GetActorLocation(), FactoryCircuitConns[0], PoleCircuitConns[0]);
 
                     if (NewWire)
                     {
                         bool bConnected = NewWire->Connect(FactoryCircuitConns[0], PoleCircuitConns[0]);
                         if (bConnected)
                         {
-                            SFWireDesigner::RegisterSpawnedWire(NewWire);  // [#421] designer containment (no-op outside a designer)
                             ClonePowerWired++;
                             SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("⚡ SCALED EXTEND Power: Connected %s ↔ %s"),
                                 *CloneFactory->GetName(), *ClonePole->GetName());
@@ -1548,8 +1544,8 @@ int32 USFExtendWiringService::GenerateAndExecuteWiring(AFGBuildableFactory* NewF
 
             FActorSpawnParameters SpawnParams;
             SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-            AFGBuildableWire* NewWire = GetWorld()->SpawnActor<AFGBuildableWire>(
-                WireClass, ClonePump->GetActorLocation(), FRotator::ZeroRotator, SpawnParams);
+            AFGBuildableWire* NewWire = SFWireDesigner::SpawnWireForEndpoints(  // [#421] designer-aware spawn
+                GetWorld(), WireClass, ClonePump->GetActorLocation(), PumpPowerConn, PoleConn);
             if (!NewWire)
             {
                 continue;
@@ -1557,7 +1553,6 @@ int32 USFExtendWiringService::GenerateAndExecuteWiring(AFGBuildableFactory* NewF
 
             if (NewWire->Connect(PumpPowerConn, PoleConn))
             {
-                SFWireDesigner::RegisterSpawnedWire(NewWire);  // [#421] designer containment (no-op outside a designer)
                 ClonePowerWired++;
                 UE_LOG(LogSmartExtend, VeryVerbose, TEXT("⚡ SCALED EXTEND Pump Power: Clone[%d] connected pump %s ↔ pole %s"),
                     CloneIdx, *ClonePump->GetName(), *ClonePole->GetName());
@@ -1641,15 +1636,14 @@ int32 USFExtendWiringService::GenerateAndExecuteWiring(AFGBuildableFactory* NewF
                     FActorSpawnParameters SpawnParams;
                     SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-                    AFGBuildableWire* ChainWire = GetWorld()->SpawnActor<AFGBuildableWire>(
-                        WireClass, PoleA->GetActorLocation(), FRotator::ZeroRotator, SpawnParams);
+                    AFGBuildableWire* ChainWire = SFWireDesigner::SpawnWireForEndpoints(  // [#421] designer-aware spawn
+                        GetWorld(), WireClass, PoleA->GetActorLocation(), ConnsA[0], ConnsB[0]);
 
                     if (ChainWire)
                     {
                         bool bConnected = ChainWire->Connect(ConnsA[0], ConnsB[0]);
                         if (bConnected)
                         {
-                            SFWireDesigner::RegisterSpawnedWire(ChainWire);  // [#421] designer containment (no-op outside a designer)
                             ChainWiredCount++;
                             SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("⚡ POWER CHAIN: Connected %s ↔ %s (pole_%d, link %d)"),
                                 *PoleA->GetName(), *PoleB->GetName(), PoleIdx, j);
@@ -1804,11 +1798,10 @@ int32 USFExtendWiringService::GenerateAndExecuteWiring(AFGBuildableFactory* NewF
 
                         FActorSpawnParameters SpawnParams;
                         SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-                        AFGBuildableWire* Wire = GetWorld()->SpawnActor<AFGBuildableWire>(
-                            WireClass, Row[i]->GetActorLocation(), FRotator::ZeroRotator, SpawnParams);
+                        AFGBuildableWire* Wire = SFWireDesigner::SpawnWireForEndpoints(  // [#421] designer-aware spawn
+                            GetWorld(), WireClass, Row[i]->GetActorLocation(), A, B);
                         if (Wire && Wire->Connect(A, B))
                         {
-                            SFWireDesigner::RegisterSpawnedWire(Wire);  // [#421] designer containment (no-op outside a designer)
                             DaisyWired++;
                         }
                         else if (Wire)
