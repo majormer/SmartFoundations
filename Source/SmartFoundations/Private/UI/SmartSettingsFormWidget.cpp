@@ -710,10 +710,13 @@ void USmartSettingsFormWidget::PopulateFromCounterState(USFSubsystem* Subsystem)
             const bool bIsStackableConveyorPole = USFAutoConnectService::IsBeltSupportHologram(ActiveHologram);
             const bool bIsStackablePipeSupport = AutoConnectService->IsStackablePipelineSupportHologram(ActiveHologram);
             const bool bIsPassthroughPipe = USFAutoConnectService::IsPassthroughPipeHologram(ActiveHologram);
+            // #404: wall pipeline supports are AC-capable (they route ToBuilding like stackable
+            // supports) but were the one pipe type missing from the section gate below.
+            const bool bIsWallPipelineSupport = USFAutoConnectService::IsWallPipelineSupportHologram(ActiveHologram);
             const bool bIsStackableHypertubeSupport = AutoConnectService->IsStackableHypertubeSupportHologram(ActiveHologram);
 
-            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Hologram=%s, IsDistributor=%d, IsPipeJunction=%d, IsPowerPole=%d, IsBeltSupport=%d, IsStackablePipeSupport=%d, IsPassthroughPipe=%d"),
-                *ActiveHologram->GetClass()->GetName(), bIsDistributor, bIsPipeJunction, bIsPowerPole, bIsStackableConveyorPole, bIsStackablePipeSupport, bIsPassthroughPipe);
+            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Hologram=%s, IsDistributor=%d, IsPipeJunction=%d, IsPowerPole=%d, IsBeltSupport=%d, IsStackablePipeSupport=%d, IsPassthroughPipe=%d, IsWallPipeSupport=%d"),
+                *ActiveHologram->GetClass()->GetName(), bIsDistributor, bIsPipeJunction, bIsPowerPole, bIsStackableConveyorPole, bIsStackablePipeSupport, bIsPassthroughPipe, bIsWallPipelineSupport);
 
             if (bIsDistributor)
             {
@@ -817,11 +820,12 @@ void USmartSettingsFormWidget::PopulateFromCounterState(USFSubsystem* Subsystem)
                 }
             }
 
-            if (bIsStackablePipeSupport || bIsPassthroughPipe)
+            if (bIsStackablePipeSupport || bIsPassthroughPipe || bIsWallPipelineSupport)
             {
                 bHasAnyAutoConnectContext = true;
 
-                // Show pipe auto-connect controls (shared for stackable pipe supports and floor holes)
+                // Show pipe auto-connect controls (shared for stackable/wall pipe supports and floor
+                // holes - all three connect ToBuilding only, which is the tier this panel shows)
                 if (PipeAutoConnectContainer)
                 {
                     PopulatePipeTierComboBoxes();
@@ -837,7 +841,8 @@ void USmartSettingsFormWidget::PopulateFromCounterState(USFSubsystem* Subsystem)
                     }
                     AutoConnectLines += FString::Printf(
                         TEXT("%s: %s, Tier=%s, Style=%s"),
-                        bIsPassthroughPipe ? TEXT("Floor Hole Pipe") : TEXT("Stackable Pipe Support"),
+                        bIsPassthroughPipe ? TEXT("Floor Hole Pipe")
+                            : (bIsWallPipelineSupport ? TEXT("Wall Pipe Support") : TEXT("Stackable Pipe Support")),
                         Settings.bPipeAutoConnectEnabled ? TEXT("On") : TEXT("Off"),
                         *DescribePipeTier(Settings.PipeTierMain),
                         Settings.bPipeIndicator ? TEXT("Normal") : TEXT("Clean"));
