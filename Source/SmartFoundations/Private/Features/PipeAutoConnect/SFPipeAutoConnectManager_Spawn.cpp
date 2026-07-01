@@ -113,13 +113,28 @@ void FSFPipeAutoConnectManager::EvaluatePipeConnections(AFGHologram* ParentJunct
 		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("   🔗 Input[%d]: Chaining %d junctions in manifold"),
 			InputIndex, JunctionsInGroup.Num());
 		
-		// Sort junctions by their X coordinate for left-to-right chaining (horizontal manifold)
+		// #423: Sort junctions along the manifold's DOMINANT run axis (X vs Y), not always world-X, so a
+		// manifold running along Y (or a rotated / restore-preview lane) chains in order instead of
+		// scrambling and wrapping. Mirrors the belt path's dominant-axis pick.
 		TArray<AFGHologram*> SortedJunctions = JunctionsInGroup;
-		
-		SortedJunctions.Sort([](const AFGHologram& A, const AFGHologram& B)
 		{
-			return A.GetActorLocation().X < B.GetActorLocation().X; // Left to right
-		});
+			double MinX = TNumericLimits<double>::Max(), MaxX = TNumericLimits<double>::Lowest();
+			double MinY = MinX, MaxY = MaxX;
+			for (const AFGHologram* J : SortedJunctions)
+			{
+				if (!J) continue;
+				const FVector P = J->GetActorLocation();
+				MinX = FMath::Min(MinX, P.X); MaxX = FMath::Max(MaxX, P.X);
+				MinY = FMath::Min(MinY, P.Y); MaxY = FMath::Max(MaxY, P.Y);
+			}
+			const bool bSortByY = (MaxY - MinY) > (MaxX - MinX);
+			SortedJunctions.Sort([bSortByY](const AFGHologram& A, const AFGHologram& B)
+			{
+				const FVector PA = A.GetActorLocation();
+				const FVector PB = B.GetActorLocation();
+				return bSortByY ? (PA.Y < PB.Y) : (PA.X < PB.X);
+			});
+		}
 		
 		// Chain adjacent junctions sequentially
 		for (int32 i = 0; i < SortedJunctions.Num() - 1; i++)

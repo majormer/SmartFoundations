@@ -260,7 +260,7 @@ TPair<FString, FString> USFHudService::BuildCounterDisplayLines() const
 	{
 		if (Subsystem->IsSmartDisabledForCurrentAction() && Subsystem->IsExtendDisabled())
 		{
-			Lines.Add(LOCTEXT("HUD_SmartDisabled", "*Smart Disabled (double-tap to re-enable)").ToString());
+			Lines.Add(LOCTEXT("HUD_SmartDisabled", "*Smart: Scaling only (double-tap to re-enable)").ToString());
 		}
 		else if (Subsystem->IsSmartDisabledForCurrentAction())
 		{

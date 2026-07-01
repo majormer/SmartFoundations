@@ -45,11 +45,11 @@ public:
 	/** Public setter for build class (mBuildClass is protected on AFGHologram) */
 	void SetChildBuildClass(UClass* InBuildClass) { mBuildClass = InBuildClass; }
 
-protected:
 	/**
 	 * Smart!'s own water validation — replaces vanilla CheckMinimumDepth() for children.
 	 * Checks if this hologram's position is inside any AFGWaterVolume using EncompassesPoint().
-	 * Adds UFGCDNeedsWaterVolume disqualifier if not over water.
+	 * Public so the MP fire-gate (#428) can refuse a client build whose grid cells fall on land,
+	 * before the spec is staged and the previews destroyed.
 	 * @return true if over valid water, false if over land
 	 */
 	bool ValidateWaterPosition() const;

@@ -9,6 +9,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [33.1.2] - 2026-06-30
+
+> *A bug-fix patch: a multiplayer water-extractor crash, auto-connect routing when you Extend off a Smart Restore, a stray wall hole left behind when you Extend a blocked lane, a few auto-connect manifold fixes, a clearer disable message, and two conveyor-lift upgrade fixes (a through-floor lift flipping, and tall lifts being over-charged).*
+
+### Fixed
+
+- **Multiplayer: placing a row of water extractors no longer crashes** - In multiplayer, using Smart! to scale out a row of **water extractors** instantly crashed the game the moment you clicked to build - on both a player host and a dedicated server. The scaled copies were being built on the host without the special handling water extractors need, so they hit a fatal error. They're now built correctly, and a row of water extractors places without crashing. (Issue #428, reported by Infarctus on the Smart! Discord)
+- **Auto-connect routes correctly when you Extend off a Smart Restore** - Scaling an Extend directly off a Smart Restore preview - before placing the first copy - could route the auto-connected belts and pipes between buildings the wrong way, looping them back on themselves into impossible shapes, even though the same Extend worked fine if you placed one copy first. The restored layout's connection directions are now kept instead of being overridden. (Issue #422, reported by Don on the Smart! Discord)
+- **Pipe manifolds connect in order on Y-axis and rotated runs** - A row of pipe junctions running along the Y axis (or a rotated run) could be linked in the wrong order, so the connecting pipes crossed over each other instead of joining neighbor-to-neighbor. They now chain in run order regardless of direction, the way belt manifolds already did. (Issue #423)
+- **Belt manifolds no longer flip their connections** - When a splitter/merger manifold's two possible link directions were nearly equal, the chosen direction could flip between frames and occasionally cross the manifold belts. The choice is now stable. (Issue #424)
+- **Pipe auto-connect picks the right connector on large or rotated junctions** - On bigger or rotated pipe junctions, the opposite-side search measured from the junction's center rather than its actual connector, so it could occasionally accept or reject the wrong building connection. It now measures from the connector itself. (Issue #425)
+- **The double-tap disable message now reads "Smart: Scaling only"** - Double-tapping Num 0 turns off Auto-Connect and Extend for one build, but scaling keeps working - yet the on-screen message read "Smart Disabled," which over-claimed. It now reads "Smart: Scaling only," so it's clear that scaling is still active. (Issue #426)
+- **Extend no longer leaves a stray wall hole behind on a lane it can't rebuild** - When you Extend a building and one of its belt or pipe lanes can't be reconnected - for example, the splitter feeding that lane already has its manifold connection used up, so the copied belts have nowhere to plug in - Smart! correctly skips cloning that lane's splitter and belts. But the wall-hole decoration for the lane was still placed, stranded on the original building where it didn't belong (and because it could land on top of a pipe, it looked like a stray pipe wall hole). The wall hole is now dropped along with the lane it belongs to. (Issue #431)
+- **Upgrading a conveyor lift through a floor hole no longer flips it** - Using Smart! to upgrade a conveyor lift that passes through a floor hole could rebuild it flipped: the run reversed to run downward, its geometry scrambled, and the lift at the bottom disappeared. Smart! wasn't carrying the lift's flow direction and its floor-hole connections across the rebuild. Lifts now keep their direction and their floor-hole passthroughs when upgraded - whether the hole is at one end or both. (Issue #399)
+- **Upgrading a tall conveyor lift no longer over-charges you** - Smart! was charging too much to upgrade a conveyor lift: the cost got scaled by the lift's height a second time, so a tall or floor-hole lift could cost several times its real price - sometimes enough to trip an "out of materials" stop that halted the rest of your upgrade. Lift upgrades now charge the correct amount, the same way belt and pipe upgrades already did. (Issue #432)
+
+---
+
 ## [33.1.1] - 2026-06-28
 
 > *A quick rotation fix: the Y-axis build-up now spaces its rows properly.*

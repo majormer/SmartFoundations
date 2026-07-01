@@ -156,8 +156,8 @@ msgid "*Zoop Active - Scaling Disabled"
 msgstr "*Зуп активен — масштабирование отключено"
 
 msgctxt "SmartFoundations,HUD_SmartDisabled"
-msgid "*Smart Disabled (double-tap to re-enable)"
-msgstr "*Smart отключён (двойное нажатие для включения)"
+msgid "*Smart: Scaling only (double-tap to re-enable)"
+msgstr "*Smart: только масштабирование (двойное нажатие для включения)"
 
 msgctxt "SmartFoundations,HUD_AutoConnectDisabled"
 msgid "*Auto-Connect Disabled (double-tap to re-enable)"

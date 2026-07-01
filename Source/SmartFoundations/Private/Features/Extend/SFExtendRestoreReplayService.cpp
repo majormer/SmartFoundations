@@ -79,35 +79,31 @@ namespace
 {
     constexpr float SF_RESTORED_PARENT_TRANSFORM_TOLERANCE = 0.1f;
 
-    uint8 AlignRestoredLaneNormals(FSFCloneHologram& Holo, const FVector& Start, const FVector& End)
+    // #422: Re-derive the lane endpoint normals from GEOMETRY (the lane's own world endpoints) instead
+    // of trusting the captured normals. A preset captured on an MP client has poisoned lane normals: the
+    // distributor connection data is server-only (IsConnected()/GetConnection() are null on a client), so
+    // the capture's connector selection falls back to a distance tiebreak and can bake a REVERSED normal,
+    // which makes the spline router loop the belt/pipe back on itself (the U-turn / wrap symptom). The
+    // lane's two endpoints already sit ON the real connectors, so the chord direction IS the router-
+    // convention facing: StartNormal points outward-along the lane, EndNormal outward-against it (both the
+    // belt and pipe spline routers require dot(StartNormal, LaneDir) > 0 and dot(EndNormal, LaneDir) < 0).
+    // Geometry-only — it never reads the poisoned connection data, so it is correct on a client, repairs
+    // poisoned presets, and is a no-op on already-correct ones. Degenerate (zero-length) lanes untouched.
+    void DeriveRestoredLaneNormals(FSFCloneHologram& Holo, const FVector& Start, const FVector& End)
     {
         if (!Holo.bIsLaneSegment || (Holo.LaneSegmentType != TEXT("belt") && Holo.LaneSegmentType != TEXT("pipe")))
         {
-            return 0;
+            return;
         }
 
         const FVector LaneDirection = (End - Start).GetSafeNormal();
         if (LaneDirection.IsNearlyZero())
         {
-            return 0;
+            return;
         }
 
-        uint8 FlippedMask = 0;
-        const FVector StartNormal = Holo.LaneStartNormal.ToFVector();
-        if (!StartNormal.IsNearlyZero() && FVector::DotProduct(StartNormal.GetSafeNormal(), LaneDirection) < -0.01f)
-        {
-            Holo.LaneStartNormal = FSFVec3(-StartNormal);
-            FlippedMask |= 1;
-        }
-
-        const FVector EndNormal = Holo.LaneEndNormal.ToFVector();
-        if (!EndNormal.IsNearlyZero() && FVector::DotProduct(EndNormal.GetSafeNormal(), -LaneDirection) < -0.01f)
-        {
-            Holo.LaneEndNormal = FSFVec3(-EndNormal);
-            FlippedMask |= 2;
-        }
-
-        return FlippedMask;
+        Holo.LaneStartNormal = FSFVec3(LaneDirection);
+        Holo.LaneEndNormal = FSFVec3(-LaneDirection);
     }
 
     void KickRestoredPreviewParent(AFGHologram* ParentHologram)
@@ -600,8 +596,19 @@ FSFCloneTopology USFExtendRestoreReplayService::BuildRestoredCloneTopologyForCur
 
         if (Holo.bIsLaneSegment)
         {
-            Holo.LaneStartNormal = FSFVec3(RotationDelta.RotateVector(Holo.LaneStartNormal.ToFVector()));
-            Holo.LaneEndNormal = FSFVec3(RotationDelta.RotateVector(Holo.LaneEndNormal.ToFVector()));
+            // #422: re-derive lane normals from the (already world-transformed) endpoints rather than the
+            // poisoned captured normals; degenerate <2-point lanes keep the rotated fallback.
+            if (Holo.bHasSplineData && Holo.SplineData.Points.Num() >= 2)
+            {
+                DeriveRestoredLaneNormals(Holo,
+                    Holo.SplineData.Points[0].World.ToFVector(),
+                    Holo.SplineData.Points.Last().World.ToFVector());
+            }
+            else
+            {
+                Holo.LaneStartNormal = FSFVec3(RotationDelta.RotateVector(Holo.LaneStartNormal.ToFVector()));
+                Holo.LaneEndNormal = FSFVec3(RotationDelta.RotateVector(Holo.LaneEndNormal.ToFVector()));
+            }
         }
     }
 
@@ -761,7 +768,7 @@ FSFCloneTopology USFExtendRestoreReplayService::BuildRestoredCloneTopologyForCur
                                 Holo.LaneEndNormal = FSFVec3(Placement.RotationOffset.RotateVector(Holo.LaneEndNormal.ToFVector()));
                             }
 
-                            const uint8 FlippedLaneNormalMask = AlignRestoredLaneNormals(Holo, NewStart, NewEnd);
+                            DeriveRestoredLaneNormals(Holo, NewStart, NewEnd);
                             const float NewLength = FVector::Dist(NewStart, NewEnd);
                             Holo.Transform = FSFTransform(NewStart, (NewEnd - NewStart).Rotation());
                             Holo.SplineData.Length = NewLength;
@@ -779,16 +786,12 @@ FSFCloneTopology USFExtendRestoreReplayService::BuildRestoredCloneTopologyForCur
                                 *PreviousPrefix,
                                 *Prefix,
                                 NewLength);
-                            if (FlippedLaneNormalMask != 0)
-                            {
-                                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log,
-                                    TEXT("[SmartRestore][Extend] Restored lane normals aligned: id=%s type=%s grid=(%d,%d) flipMask=%d"),
-                                    *Holo.HologramId,
-                                    *Holo.LaneSegmentType,
-                                    X,
-                                    Y,
-                                    static_cast<int32>(FlippedLaneNormalMask));
-                            }
+                            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log,
+                                TEXT("[SmartRestore][Extend] Restored lane normals re-derived from endpoints (#422): id=%s type=%s grid=(%d,%d)"),
+                                *Holo.HologramId,
+                                *Holo.LaneSegmentType,
+                                X,
+                                Y);
                         }
                         else
                         {

@@ -1134,42 +1134,25 @@ void USFExtendTopologyService::DiscoverWallPassthroughs(AFGBuildable* SourceBuil
         ManifoldBounds.Min.X, ManifoldBounds.Min.Y, ManifoldBounds.Min.Z,
         ManifoldBounds.Max.X, ManifoldBounds.Max.Y, ManifoldBounds.Max.Z);
 
-    // Step 1: Gather every connection-point world location in this source's chains.
+    // Step 1: Reconstruct this source's chain pipe/belt SEGMENTS (not connector vertices).
     //
-    // When a player builds a belt or pipe through a wall, they place the wall hole first,
-    // then snap belt A to one face and belt B to the opposite face. Belt A's Output connector
-    // and Belt B's Input connector end up co-located at the wall hole's center plane, and
-    // are directly wired connector-to-connector. The wall hole is a SnapOnly decoration that
-    // sits at that shared connector location but is not part of the connection graph.
+    // A wall hole physically wraps the conduit that passes through it — its center sits ON that
+    // pipe/belt. The legitimacy question is therefore "does the hole lie on one of THIS source's own
+    // chain segments", NOT "is the hole near some chain connector". The connector-proximity test fails
+    // on a shared manifold: at the junction the source's and the neighbour's connectors cluster
+    // together, so a neighbour's wall hole lands within range of the source's junction connector even
+    // though it interrupts the neighbour's tap, ~5 m past the junction (live-confirmed: the foreign
+    // hole sits on Build_PipelineMK2 ...245/...243, the x=260200 neighbour tap, not the source's run).
     //
-    // So: probe every connector on every chain belt/pipe actor. A wall hole for our manifold
-    // will sit within ~150cm of one of these points (belt connectors are ~50cm from the wall
-    // hole's center plane; safe margin covers Mk variants and Pipeline support offsets).
-    TArray<FVector> JunctionPoints;
-    JunctionPoints.Reserve(64);
+    // We rebuild each segment from its two connection components' WORLD locations — GetComponentLocation,
+    // which (unlike GetConnection) is valid on an MP client too — and later test point-to-segment
+    // distance with the projection clamped to the segment, so a hole near a shared connector but off
+    // every source segment is rejected.
+    struct FSFChainSeg { FVector A; FVector B; };
+    TArray<FSFChainSeg> Segments;
+    Segments.Reserve(64);
 
-    auto GatherBeltConnectors = [&JunctionPoints](const TArray<FSFConnectionChainNode>& Chains)
-    {
-        for (const FSFConnectionChainNode& Chain : Chains)
-        {
-            for (const TWeakObjectPtr<AFGBuildableConveyorBase>& Weak : Chain.Conveyors)
-            {
-                AFGBuildableConveyorBase* Belt = Weak.Get();
-                if (!IsValid(Belt)) continue;
-
-                TArray<UFGFactoryConnectionComponent*> Connectors;
-                Belt->GetComponents<UFGFactoryConnectionComponent>(Connectors);
-                for (UFGFactoryConnectionComponent* C : Connectors)
-                {
-                    if (C)
-                    {
-                        JunctionPoints.Add(C->GetComponentLocation());
-                    }
-                }
-            }
-        }
-    };
-    auto GatherPipeConnectors = [&JunctionPoints](const TArray<FSFPipeConnectionChainNode>& Chains)
+    auto AddPipeSegments = [&Segments](const TArray<FSFPipeConnectionChainNode>& Chains)
     {
         for (const FSFPipeConnectionChainNode& Chain : Chains)
         {
@@ -1178,35 +1161,48 @@ void USFExtendTopologyService::DiscoverWallPassthroughs(AFGBuildable* SourceBuil
                 AFGBuildablePipeline* Pipe = Weak.Get();
                 if (!IsValid(Pipe)) continue;
 
-                TArray<UFGPipeConnectionComponent*> Connectors;
-                Pipe->GetComponents<UFGPipeConnectionComponent>(Connectors);
-                for (UFGPipeConnectionComponent* C : Connectors)
+                TArray<UFGPipeConnectionComponent*> Conns;
+                Pipe->GetComponents<UFGPipeConnectionComponent>(Conns);
+                if (Conns.Num() >= 2 && Conns[0] && Conns[1])
                 {
-                    if (C)
-                    {
-                        JunctionPoints.Add(C->GetComponentLocation());
-                    }
+                    Segments.Add({ Conns[0]->GetComponentLocation(), Conns[1]->GetComponentLocation() });
                 }
             }
         }
     };
-    GatherBeltConnectors(CachedTopology.InputChains);
-    GatherBeltConnectors(CachedTopology.OutputChains);
-    GatherPipeConnectors(CachedTopology.PipeInputChains);
-    GatherPipeConnectors(CachedTopology.PipeOutputChains);
-
-    if (JunctionPoints.Num() == 0)
+    auto AddBeltSegments = [&Segments](const TArray<FSFConnectionChainNode>& Chains)
     {
-        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("🔧 EXTEND: Wall hole discovery skipped - no chain connectors to probe"));
+        for (const FSFConnectionChainNode& Chain : Chains)
+        {
+            for (const TWeakObjectPtr<AFGBuildableConveyorBase>& Weak : Chain.Conveyors)
+            {
+                AFGBuildableConveyorBase* Belt = Weak.Get();
+                if (!IsValid(Belt)) continue;
+
+                TArray<UFGFactoryConnectionComponent*> Conns;
+                Belt->GetComponents<UFGFactoryConnectionComponent>(Conns);
+                if (Conns.Num() >= 2 && Conns[0] && Conns[1])
+                {
+                    Segments.Add({ Conns[0]->GetComponentLocation(), Conns[1]->GetComponentLocation() });
+                }
+            }
+        }
+    };
+    AddBeltSegments(CachedTopology.InputChains);
+    AddBeltSegments(CachedTopology.OutputChains);
+    AddPipeSegments(CachedTopology.PipeInputChains);
+    AddPipeSegments(CachedTopology.PipeOutputChains);
+
+    if (Segments.Num() == 0)
+    {
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("🔧 EXTEND: Wall hole discovery skipped - no chain segments to probe"));
         return;
     }
 
-    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("🔧 EXTEND: Probing %d chain connector(s) for adjacent wall holes"),
-        JunctionPoints.Num());
-
-    // Step 2: Single world sweep to collect wall-hole candidates inside the manifold bounds.
-    // Class-name suffix filter covers Build_ConveyorWallHole_C, Build_PipelineSupportWallHole_C,
-    // and any future Mk variants ending in "WallHole_C".
+    // Step 2: Single world sweep to collect wall-hole candidates inside the (padded) manifold bounds.
+    // Class-name suffix filter covers Build_ConveyorWallHole_C, Build_PipelineSupportWallHole_C and any
+    // future Mk variants ending in "WallHole_C". Bounds is only a cheap pre-filter; the segment test
+    // below is the real gate.
     TArray<AFGBuildable*> Candidates;
     int32 Scanned = 0;
     for (TActorIterator<AFGBuildable> It(World); It; ++It)
@@ -1238,46 +1234,51 @@ void USFExtendTopologyService::DiscoverWallPassthroughs(AFGBuildable* SourceBuil
         return;
     }
 
-    // Step 3: Accept a wall hole if ANY chain connector is within ProbeRadius of its center.
-    // 150cm covers belt-connector offset (~50cm from wall-hole center plane) plus some margin
-    // for Pipeline support variants and snap tolerances.
-    constexpr float ProbeRadiusCm = 150.0f;
-    constexpr float ProbeRadiusSqCm = ProbeRadiusCm * ProbeRadiusCm;
+    // Step 3: Accept a wall hole ONLY if its center lies ON a source-chain segment — the conduit that
+    // passes through it. Point-to-SEGMENT distance with the projection clamped to the segment, so a hole
+    // merely near a shared-junction connector (but off every source segment) is rejected.
+    auto PointToSegDistSq = [](const FVector& P, const FVector& A, const FVector& B) -> float
+    {
+        const FVector AB = B - A;
+        const double L2 = AB.SizeSquared();
+        if (L2 < 1.0) return static_cast<float>(FVector::DistSquared(P, A));
+        const double T = FMath::Clamp(FVector::DotProduct(P - A, AB) / L2, 0.0, 1.0);
+        return static_cast<float>(FVector::DistSquared(P, A + T * AB));
+    };
 
-    int32 SkippedNoConnector = 0;
+    // The hole's center sits on the conduit axis; 150cm covers wall-hole pivot offset, Mk variants and
+    // snap tolerance while staying far below the ~5m gap to a neighbour module's tap across a junction.
+    constexpr float OnSegmentCm = 150.0f;
+    constexpr float OnSegmentSqCm = OnSegmentCm * OnSegmentCm;
+
+    int32 SkippedOffSegment = 0;
     for (AFGBuildable* Candidate : Candidates)
     {
         const FVector WallLoc = Candidate->GetActorLocation();
 
-        // Find the nearest chain connector.
+        // Find the distance to the nearest source-chain segment.
         float BestDistSq = TNumericLimits<float>::Max();
-        for (const FVector& ConnectorLoc : JunctionPoints)
+        for (const FSFChainSeg& S : Segments)
         {
-            const float DistSq = FVector::DistSquared(WallLoc, ConnectorLoc);
-            if (DistSq < BestDistSq)
-            {
-                BestDistSq = DistSq;
-            }
+            BestDistSq = FMath::Min(BestDistSq, PointToSegDistSq(WallLoc, S.A, S.B));
         }
 
-        if (BestDistSq > ProbeRadiusSqCm)
+        if (BestDistSq > OnSegmentSqCm)
         {
-            SkippedNoConnector++;
-            UE_LOG(LogSmartExtend, Verbose,
-                TEXT("🔧 EXTEND: Skipping wall hole %s (class=%s) at (%.0f,%.0f,%.0f) — nearest chain connector %.0fcm away (> %.0fcm)"),
-                *Candidate->GetName(), *Candidate->GetClass()->GetName(),
-                WallLoc.X, WallLoc.Y, WallLoc.Z,
-                FMath::Sqrt(BestDistSq), ProbeRadiusCm);
+            SkippedOffSegment++;
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log,
+                TEXT("🔧 EXTEND: Skipping wall hole %s at (%.0f,%.0f,%.0f) — %.0fcm off nearest chain segment (> %.0fcm)"),
+                *Candidate->GetName(), WallLoc.X, WallLoc.Y, WallLoc.Z, FMath::Sqrt(BestDistSq), OnSegmentCm);
             continue;
         }
 
         CachedTopology.WallPassthroughs.Add(Candidate);
 
-        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("🔧 EXTEND: Discovered wall hole %s (class=%s) at (%.0f,%.0f,%.0f) — nearest connector %.0fcm away"),
-            *Candidate->GetName(), *Candidate->GetClass()->GetName(),
-            WallLoc.X, WallLoc.Y, WallLoc.Z, FMath::Sqrt(BestDistSq));
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log,
+            TEXT("🔧 EXTEND: Discovered wall hole %s at (%.0f,%.0f,%.0f) — on chain segment (%.0fcm)"),
+            *Candidate->GetName(), WallLoc.X, WallLoc.Y, WallLoc.Z, FMath::Sqrt(BestDistSq));
     }
 
-    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("🔧 EXTEND: Wall hole discovery complete - found %d wall hole(s) (scanned %d buildables, %d candidates in bounds, skipped %d without nearby connector)"),
-        CachedTopology.WallPassthroughs.Num(), Scanned, Candidates.Num(), SkippedNoConnector);
+    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("🔧 EXTEND: Wall hole discovery complete - found %d wall hole(s) (scanned %d buildables, %d candidates in bounds, skipped %d off-segment)"),
+        CachedTopology.WallPassthroughs.Num(), Scanned, Candidates.Num(), SkippedOffSegment);
 }

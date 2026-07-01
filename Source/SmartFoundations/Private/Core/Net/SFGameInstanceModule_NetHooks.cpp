@@ -377,6 +377,24 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 					SFScalingSpecExpansion::CaptureScalingSpec(Holo, Spec);
 					SFScalingSpecExpansion::CaptureConduitPlan(Holo, Spec);
 
+					// #428: every water-extractor grid cell must be over water. The client preview reds
+					// out land cells, but the spec path destroys those previews and fires a childless
+					// parent, so the per-cell disqualifier would never block the build and the server
+					// would rebuild extractors on land. Refuse the fire here (matching SP, where a
+					// disqualified grid child blocks the whole placement); the previews are still alive.
+					if (!SFScalingSpecExpansion::AreAllWaterCellsValid(Holo))
+					{
+						UE_LOG(LogSmartFoundations, Verbose,
+							TEXT("[MP-SPEC] #428 Refused client fire: a water-extractor grid cell is not over deep water."));
+						if (GEngine)
+						{
+							GEngine->AddOnScreenDebugMessage(-1, 6.0f, FColor::Orange,
+								TEXT("Smart!: every water extractor must be placed on deep water."));
+						}
+						scope.Cancel();
+						return;
+					}
+
 					// [MP-334] Reliable-RPC ceiling guard: a very large belt plan could overflow
 					// Server_StageScalingSpec the same way the construct message itself once did
 					// (a silently dropped staging RPC would leave the server constructing a bare
