@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [33.1.3] - 2026-07-01
+
+> *A bug-fix patch: auto-connect belts no longer vanish when you turn off distributor chaining.*
+
+### Fixed
+
+- **Turning off Chain no longer erases your auto-connect belts to the factory** - With Auto-Connect running on a row of distributors (splitters/mergers), turning off the **Chain** setting - which should only remove the manifold lane linking the distributors to each other - also made the belts running from each distributor to your factory buildings flash briefly and then disappear entirely, even though those connections were still valid. The two kinds of belt were being tracked together internally, so clearing one could wipe out the other. Chain now only removes the manifold lane; the belts to your buildings stay put. (Issue #436)
+
+---
+
 ## [33.1.2] - 2026-06-30
 
 > *A bug-fix patch: a multiplayer water-extractor crash, auto-connect routing when you Extend off a Smart Restore, a stray wall hole left behind when you Extend a blocked lane, a few auto-connect manifold fixes, a clearer disable message, and two conveyor-lift upgrade fixes (a through-floor lift flipping, and tall lifts being over-charged).*
