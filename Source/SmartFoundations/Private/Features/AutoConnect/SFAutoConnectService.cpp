@@ -943,7 +943,7 @@ void USFAutoConnectService::CleanupDistributorPreviews(AFGHologram* DistributorH
 	
 	// Find belt previews for this distributor
 	TArray<TSharedPtr<FBeltPreviewHelper>>* Previews = DistributorBeltPreviews.Find(DistributorHologram);
-	
+
 	if (!Previews)
 	{
 		// No previews to clean up
@@ -1219,6 +1219,86 @@ TArray<TSharedPtr<FBeltPreviewHelper>>* USFAutoConnectService::GetBeltPreviews(A
 	return DistributorBeltPreviews.Find(DistributorHologram);
 }
 
+// #436: manifold-only counterparts - see DistributorManifoldBeltPreviews field comment in the header.
+void USFAutoConnectService::CleanupManifoldDistributorPreviews(AFGHologram* DistributorHologram)
+{
+	if (!DistributorHologram)
+	{
+		return;
+	}
+
+	TArray<TSharedPtr<FBeltPreviewHelper>>* Previews = DistributorManifoldBeltPreviews.Find(DistributorHologram);
+	if (!Previews)
+	{
+		return;
+	}
+
+	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🗑️ Cleaning up %d MANIFOLD belt previews for distributor: %s"),
+		Previews->Num(), *DistributorHologram->GetName());
+
+	for (TSharedPtr<FBeltPreviewHelper>& Helper : *Previews)
+	{
+		if (Helper.IsValid())
+		{
+			Helper->DestroyPreview();
+		}
+	}
+
+	DistributorManifoldBeltPreviews.Remove(DistributorHologram);
+}
+
+void USFAutoConnectService::StoreManifoldBeltPreviews(AFGHologram* DistributorHologram, const TArray<TSharedPtr<FBeltPreviewHelper>>& Previews)
+{
+	if (!DistributorHologram)
+	{
+		return;
+	}
+
+	if (Previews.Num() > 0)
+	{
+		DistributorManifoldBeltPreviews.Emplace(DistributorHologram, Previews);
+	}
+	else
+	{
+		DistributorManifoldBeltPreviews.Remove(DistributorHologram);
+	}
+}
+
+TArray<TSharedPtr<FBeltPreviewHelper>>* USFAutoConnectService::GetManifoldBeltPreviews(AFGHologram* DistributorHologram)
+{
+	if (!DistributorHologram)
+	{
+		return nullptr;
+	}
+
+	return DistributorManifoldBeltPreviews.Find(DistributorHologram);
+}
+
+void USFAutoConnectService::HideManifoldDistributorPreviews(AFGHologram* DistributorHologram)
+{
+	if (!DistributorHologram)
+	{
+		return;
+	}
+
+	TArray<TSharedPtr<FBeltPreviewHelper>>* Previews = DistributorManifoldBeltPreviews.Find(DistributorHologram);
+	if (!Previews)
+	{
+		return;
+	}
+
+	for (TSharedPtr<FBeltPreviewHelper>& Helper : *Previews)
+	{
+		if (Helper.IsValid())
+		{
+			Helper->HidePreview();
+		}
+	}
+
+	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🙈 Hid %d MANIFOLD belt previews for %s (chain disabled mid-aim)"),
+		Previews->Num(), *DistributorHologram->GetName());
+}
+
 const TArray<TSharedPtr<FBeltPreviewHelper>>* USFAutoConnectService::GetBeltPreviews(const AFGHologram* DistributorHologram) const
 {
 	if (!DistributorHologram)
@@ -1240,37 +1320,57 @@ TArray<FItemAmount> USFAutoConnectService::GetBeltPreviewsCost(const AFGHologram
 		return TotalCost;
 	}
 
-	// Use const overload - no const_cast needed
+	// Use const overload - no const_cast needed. #436: sum SIDE (this distributor's own belts to
+	// buildings) and MANIFOLD (distributor-to-distributor) previews - two separate maps now, see
+	// DistributorManifoldBeltPreviews field comment - so a distributor with only manifold belts still
+	// gets its cost counted here instead of silently reporting zero.
 	const TArray<TSharedPtr<FBeltPreviewHelper>>* Previews = GetBeltPreviews(DistributorHologram);
-	if (!Previews)
+	const TArray<TSharedPtr<FBeltPreviewHelper>>* ManifoldPreviews = DistributorManifoldBeltPreviews.Find(const_cast<AFGHologram*>(DistributorHologram));
+	if (!Previews && !ManifoldPreviews)
 	{
-		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("💰 GetBeltPreviewsCost: No belt previews found for %s"), 
+		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("💰 GetBeltPreviewsCost: No belt previews found for %s"),
 			*DistributorHologram->GetName());
 		return TotalCost;
 	}
-	
+
 	// Accumulate costs from all belt previews
 	TMap<TSubclassOf<UFGItemDescriptor>, int32> CostMap;
 	int32 ValidCount = 0;
-	
-	for (const TSharedPtr<FBeltPreviewHelper>& Preview : *Previews)
+
+	// bVisibleOnly: manifold previews are HIDDEN (not destroyed) while the Chain setting is off
+	// mid-aim (see HideManifoldDistributorPreviews) - a hidden preview won't be built, so it must
+	// not be charged either.
+	auto AccumulateFrom = [&CostMap, &ValidCount](const TArray<TSharedPtr<FBeltPreviewHelper>>* Source, bool bVisibleOnly)
 	{
-		if (!Preview.IsValid() || !Preview->IsPreviewValid())
+		if (!Source)
 		{
-			continue;
+			return;
 		}
-		
-		ValidCount++;
-		TArray<FItemAmount> PreviewCost = Preview->GetPreviewCost();
-		for (const FItemAmount& Cost : PreviewCost)
+		for (const TSharedPtr<FBeltPreviewHelper>& Preview : *Source)
 		{
-			if (Cost.ItemClass)
+			if (!Preview.IsValid() || !Preview->IsPreviewValid())
 			{
-				int32& CurrentAmount = CostMap.FindOrAdd(Cost.ItemClass, 0);
-				CurrentAmount += Cost.Amount;
+				continue;
+			}
+			if (bVisibleOnly && !Preview->IsPreviewVisible())
+			{
+				continue;
+			}
+
+			ValidCount++;
+			TArray<FItemAmount> PreviewCost = Preview->GetPreviewCost();
+			for (const FItemAmount& Cost : PreviewCost)
+			{
+				if (Cost.ItemClass)
+				{
+					int32& CurrentAmount = CostMap.FindOrAdd(Cost.ItemClass, 0);
+					CurrentAmount += Cost.Amount;
+				}
 			}
 		}
-	}
+	};
+	AccumulateFrom(Previews, false);
+	AccumulateFrom(ManifoldPreviews, true);
 	
 	// Convert map back to array
 	for (const TPair<TSubclassOf<UFGItemDescriptor>, int32>& Pair : CostMap)

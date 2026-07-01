@@ -853,7 +853,7 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 				// Previously this just reused the preview without updating, causing stale positions
 				// when parent moves without child distributors
 				ExistingPreview->UpdatePreview(OutputConnector, InputConnector);
-				
+
 				Previews.Add(ExistingPreview);
 				TotalPreviewsCreated++;
 				UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   ♻️ UPDATED & REUSING BELT: %s -> %s (Dist: %s)"),
@@ -863,7 +863,7 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 			
 			UE_LOG(LogSmartAutoConnect, Verbose, TEXT("   🔧 BUILDING BELT: %s -> %s (Dist: %s)"),
 				*GetNameSafe(OutputConnector), *GetNameSafe(InputConnector), *Distributor->GetName());
-			
+
 			// Use the service to create the actual belt preview
 			TSharedPtr<FBeltPreviewHelper> Preview;
 			bool bSuccess = AutoConnectService->CreateOrUpdateBeltPreview(
@@ -975,6 +975,33 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 		if (!Subsystem->GetAutoConnectRuntimeSettings().bChainDistributors)
 		{
 			UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🎯 Orchestrator: Skipping manifold connections (bChainDistributors=false)"));
+
+			// #436: HIDE (never Destroy) manifold previews when chaining is disabled mid-aim.
+			// Destroy()ing a belt hologram during an active session is what knocks SIBLING belt
+			// actors to world origin one frame later (log-proven: FlushPendingDestroy frame N ->
+			// every freshly spawned side belt at origin frame N+1) - so mid-session teardown must
+			// be non-destructive. Hidden previews are excluded from cost; if the player re-enables
+			// Chain, ConnectAnyConnectors' UpdatePreview un-hides them. Real destruction happens on
+			// session teardown via ClearAllPreviews -> CleanupManifoldDistributorPreviews.
+			for (AFGHologram* Distributor : Distributors)
+			{
+				AutoConnectService->HideManifoldDistributorPreviews(Distributor);
+			}
+
+			// #436 ROOT CAUSE of "Chain off removes the factory belts too": this early return
+			// (which PREDATES the #436 fix work) also skipped the finalize pass at the END of this
+			// function - the one that locks belt children to a locked parent
+			// (FinalizeBeltChildrenVisibility -> LockHologramPosition). Vanilla's hologram lock is
+			// the thing that holds a belt child at its position between evaluations; unlocked side
+			// belts lose the frame-order race after the force-recreate churn destroys their previous
+			// generation, and end up parked at world origin (invisible). With Chain ON the tail ran
+			// and locked them - which is exactly why only the Chain-OFF path ever looked broken.
+			// Run the SAME finalize before returning. (FinalizeBeltChildrenVisibility itself gates
+			// the manifold set on bChainDistributors, so this cannot un-hide the previews hidden above.)
+			for (AFGHologram* Distributor : Distributors)
+			{
+				AutoConnectService->FinalizeBeltChildrenVisibility(Distributor);
+			}
 			return; // Skip manifold connections when disabled
 		}
 	}
@@ -1510,12 +1537,13 @@ void USFAutoConnectOrchestrator::ClearAllPreviews()
 	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🎯 Orchestrator: Clearing belt previews for %d distributors"), 
 		Distributors.Num());
 
-	// Clean up belt previews for each distributor
+	// Clean up belt previews for each distributor (#436: side-connection AND manifold maps are separate)
 	for (AFGHologram* Distributor : Distributors)
 	{
 		AutoConnectService->CleanupDistributorPreviews(Distributor);
+		AutoConnectService->CleanupManifoldDistributorPreviews(Distributor);
 	}
-	
+
 	// CRITICAL: Also clear pipe previews if parent is a pipeline junction
 	// This ensures pipe previews are destroyed when build is cancelled/recipe changed
 	if (ParentHologram.IsValid() && USFAutoConnectService::IsPipelineJunctionHologram(ParentHologram.Get()))
