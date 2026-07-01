@@ -574,8 +574,20 @@ bool ASFPipelineHologram::TryUseBuildModeRouting(
 		}
 		break;
 	case 5:
-		// [#383] Horizontal->Vertical transition routing.
-		HorizontalAndVerticalRouteSpline(true, StartPos, StartNormal, EndPos, EndNormal);
+		// [#383] Horizontal->Vertical transition routing. The bool picks WHICH END gets the
+		// horizontal leg (true = horizontal out of START, vertical rise near END). It was
+		// hardcoded true, which is only correct when the start connector is the horizontal one -
+		// a floor-hole pipe starts at the hole's VERTICAL connector with the building's
+		// horizontal connector at the end, so the route left the hole sideways and rammed the
+		// machine connector at a diagonal instead of exiting it straight (#404 follow-up).
+		// Derive the leg order from the endpoint normals: a vertical start with a horizontal
+		// end flips to vertical-first; every other combination keeps the old horizontal-first.
+		{
+			const bool bStartVertical = FMath::Abs(StartNormal.Z) > 0.7f;
+			const bool bEndVertical = FMath::Abs(EndNormal.Z) > 0.7f;
+			const bool bHorizontalFirst = !(bStartVertical && !bEndVertical);
+			HorizontalAndVerticalRouteSpline(bHorizontalFirst, StartPos, StartNormal, EndPos, EndNormal);
+		}
 		break;
 	case 0:
 	default:
