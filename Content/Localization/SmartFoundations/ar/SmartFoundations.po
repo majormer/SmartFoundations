@@ -2044,8 +2044,8 @@ msgid "Upgrade Panel"
 msgstr "لوحة الترقية"
 
 msgctxt "SmartFoundations,Walk_Invalid_TooLong"
-msgid "segment {0} too long ({1}m > 56m)"
-msgstr "المقطع {0} طويل جداً ({1}م > 56م)"
+msgid "segment {0} too long ({1}m > {2}m)"
+msgstr "المقطع {0} طويل جداً ({1}م > {2}م)"
 
 msgctxt "SmartFoundations,Walk_Invalid_TooSteep"
 msgid "segment {0} too steep ({1}deg > 30deg)"

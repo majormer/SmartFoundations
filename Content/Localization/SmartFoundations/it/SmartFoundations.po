@@ -2112,8 +2112,8 @@ msgid "Upgrade Panel"
 msgstr "Pannello miglioramento"
 
 msgctxt "SmartFoundations,Walk_Invalid_TooLong"
-msgid "segment {0} too long ({1}m > 56m)"
-msgstr "segmento {0} troppo lungo ({1}m > 56m)"
+msgid "segment {0} too long ({1}m > {2}m)"
+msgstr "segmento {0} troppo lungo ({1}m > {2}m)"
 
 msgctxt "SmartFoundations,Walk_Invalid_TooSteep"
 msgid "segment {0} too steep ({1}deg > 30deg)"

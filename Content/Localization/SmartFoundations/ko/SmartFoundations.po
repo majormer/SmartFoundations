@@ -2112,8 +2112,8 @@ msgid "Upgrade Panel"
 msgstr "업그레이드 패널"
 
 msgctxt "SmartFoundations,Walk_Invalid_TooLong"
-msgid "segment {0} too long ({1}m > 56m)"
-msgstr "세그먼트 {0} 너무 긺 ({1}m > 56m)"
+msgid "segment {0} too long ({1}m > {2}m)"
+msgstr "세그먼트 {0} 너무 긺 ({1}m > {2}m)"
 
 msgctxt "SmartFoundations,Walk_Invalid_TooSteep"
 msgid "segment {0} too steep ({1}deg > 30deg)"

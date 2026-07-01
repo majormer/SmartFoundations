@@ -14,8 +14,8 @@
  *
  * The RULES live here; each feature keeps its own POLICY: the walk blocks the whole run on ANY
  * invalid span, while auto-connect just SKIPS the one over-length pair. Callers pass MaxLenCm
- * (belt/pipe use the vanilla ~56 m spline cap; hypertube passes its own), so this header carries no
- * Feature dependency.
+ * (belt/pipe use the vanilla ~56 m spline cap; hypertube passes its own ~95 m cap), so this header
+ * carries no Feature dependency. The over-length message reports the caller's actual cap (#417).
  */
 namespace SFConveyanceShape
 {
@@ -31,12 +31,15 @@ namespace SFConveyanceShape
 		const float Dist = FVector::Dist(A, B);
 		if (Dist > MaxLenCm)
 		{
-			// NOTE: keeps the walk's existing loc key + "> 56m" wording (no re-translation). Belt/pipe/hyper
-			// caps are all ~56 m today; if a kind's cap ever diverges, give it its own message key then.
+			// [#417] The cap is a format argument, NOT baked into the string: hypertube's cap (~95 m)
+			// diverged from the belt/pipe ~56 m vanilla spline cap, and the old hard-coded "> 56m"
+			// under-reported the hypertube limit. Source-string change = the 20 non-English cultures
+			// need this one key re-translated (done alongside this change in Localization/).
 			FFormatOrderedArguments Args;
 			Args.Add(OneBasedIndex);
 			Args.Add(FMath::RoundToInt(Dist / 100.0f));
-			return FText::Format(NSLOCTEXT("SmartFoundations", "Walk_Invalid_TooLong", "segment {0} too long ({1}m > 56m)"), Args).ToString();
+			Args.Add(FMath::RoundToInt(MaxLenCm / 100.0f));
+			return FText::Format(NSLOCTEXT("SmartFoundations", "Walk_Invalid_TooLong", "segment {0} too long ({1}m > {2}m)"), Args).ToString();
 		}
 		if (Kind == EKind::Belt)
 		{
