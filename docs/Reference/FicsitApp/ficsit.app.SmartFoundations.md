@@ -1,6 +1,6 @@
 # <img src="https://github.com/majormer/SmartFoundations/blob/main/images/Smart-Logo.png?raw=true" width="150" alt="Smart! Logo"> Smart! Mod
 
-![Status](https://img.shields.io/badge/Status-Released-brightgreen) ![Version](https://img.shields.io/badge/Version-33.1.1-blue) ![Satisfactory](https://img.shields.io/badge/Satisfactory-1.2-blue) ![Engine](https://img.shields.io/badge/Engine-UE%205.6-blue) ![SML](https://img.shields.io/badge/SML-3.12-blue) ![Multiplayer](https://img.shields.io/badge/Multiplayer-Supported-brightgreen) ![AI Assisted Development Used](https://img.shields.io/badge/AI%20Assisted%20Development%20Used-Disclosure%20Below-blue)
+![Status](https://img.shields.io/badge/Status-Released-brightgreen) ![Version](https://img.shields.io/badge/Version-33.1.2-blue) ![Satisfactory](https://img.shields.io/badge/Satisfactory-1.2-blue) ![Engine](https://img.shields.io/badge/Engine-UE%205.6-blue) ![SML](https://img.shields.io/badge/SML-3.12-blue) ![Multiplayer](https://img.shields.io/badge/Multiplayer-Supported-brightgreen) ![AI Assisted Development Used](https://img.shields.io/badge/AI%20Assisted%20Development%20Used-Disclosure%20Below-blue)
 
 > **Multiplayer note:** As of v32.0.0, every Smart! feature works in multiplayer on dedicated servers (Windows and Linux) — including **Smart Walking** and the new-in-v33.1.0 **Hyper Tube** support. If you hit something odd in a multiplayer session, please report it on [GitHub](https://github.com/majormer/SmartFoundations/issues) or [Discord](https://discord.gg/SgXY4CwXYw).
 
@@ -123,6 +123,7 @@ Place **Stackable Hyper Tube Supports** and Smart! treats them like the conveyor
 
 ### Also in the v33.1 line
 
+- **Bug-fix patch** (v33.1.2) — Smart Upgrade of a conveyor lift running through a floor hole no longer flips it or over-charges tall lifts; a multiplayer water-extractor placement crash is fixed; Extend no longer strands a wall hole on a lane it can't rebuild; plus several Auto-Connect manifold ordering and connector fixes and a clearer double-tap disable message. (Issues #399, #432, #428, #431, #422, #423, #424, #425, #426)
 - **Rotation along the Y axis spaces its rows correctly** (v33.1.1) — with the Rotation transform building up along the Y axis, the Spacing Y value was being ignored and the rows bunched into an overlapping fan; spacing now follows the Y axis the way it already does on X. (Issue #419)
 - **Build axis arrows return on Linux** (v33.1.0) — the X/Y/Z direction arrows Smart! draws above a hologram weren't appearing for players on Linux; they now load and draw correctly. (Issue #415, reported by regnare on the Smart! Discord)
 
