@@ -1410,11 +1410,17 @@ void USFAutoConnectService::UpdatePipePreviews(AFGHologram* JunctionHologram)
 
 	// Get runtime settings from subsystem
 	const auto& RuntimeSettings = Subsystem->GetAutoConnectRuntimeSettings();
-	
+
 	// Check if pipe auto-connect is enabled
 	if (!RuntimeSettings.bPipeAutoConnectEnabled)
 	{
-		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("UpdatePipePreviews: Pipe auto-connect disabled in runtime settings"));
+		// [#450] Clear any previews already drawn before returning. Toggling pipe auto-connect
+		// off via the HUD re-evaluates through here with force=false (unlike the belt toggle,
+		// which force-recreates and clears up front) - so without this, existing junction pipe
+		// previews lingered on screen after disabling. Clearing at the disabled gate fixes it for
+		// every re-eval path that funnels through UpdatePipePreviews, not just the toggle entry.
+		ClearPipePreviews(JunctionHologram);
+		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("UpdatePipePreviews: Pipe auto-connect disabled - cleared previews and skipping"));
 		return;
 	}
 
