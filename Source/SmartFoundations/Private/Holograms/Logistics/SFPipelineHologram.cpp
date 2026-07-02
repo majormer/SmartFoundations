@@ -595,6 +595,51 @@ bool ASFPipelineHologram::TryUseBuildModeRouting(
 		break;
 	}
 
+	// [#437] Endpoint-tangent repair. The vanilla routers seed the END tangents from the raw
+	// UNIT connector normals we pass (observed live via /api/splines: |tangent| = 1 and 25 on a
+	// 1316cm floor-hole span, where a healthy Hermite tangent is ~40% of the span). A straight
+	// span renders straight regardless of tangent magnitude - which is why junction/stackable
+	// runs never showed it - but on a BENT span (floor hole: vertical exit, horizontal arrival)
+	// a near-zero tangent collapses the exit stiffness: the pipe leaves the connector for only a
+	// few cm before beelining at the far endpoint, rendering as the reported self-clipping
+	// twist. Repair only DEGENERATE endpoint tangents: rescale to a distance-proportional
+	// magnitude preserving direction and all interior points; healthy router output is the
+	// router's intended shape and is left untouched.
+	if (mSplineData.Num() >= 2)
+	{
+		const float SpanCm = FVector::Distance(StartPos, EndPos);
+		const float DesiredTangent = FMath::Clamp(SpanCm * 0.4f, 100.0f, 600.0f);
+		const FTransform ActorXf = GetActorTransform();
+
+		auto RepairEndpointTangent = [DesiredTangent, this](FSplinePointData& Point, const FVector& LocalFallbackDir, const TCHAR* Which)
+		{
+			const float CurrentMag = FMath::Max(Point.ArriveTangent.Size(), Point.LeaveTangent.Size());
+			if (CurrentMag >= DesiredTangent * 0.1f)
+			{
+				return; // healthy, router-scaled tangent - keep the router's shape
+			}
+			FVector Dir = Point.LeaveTangent.GetSafeNormal();
+			if (Dir.IsNearlyZero()) { Dir = Point.ArriveTangent.GetSafeNormal(); }
+			if (Dir.IsNearlyZero()) { Dir = LocalFallbackDir; }
+			if (Dir.IsNearlyZero())
+			{
+				return;
+			}
+			Point.ArriveTangent = Dir * DesiredTangent;
+			Point.LeaveTangent = Dir * DesiredTangent;
+			UE_LOG(LogSmartHologram, Verbose,
+				TEXT("[PipeRoute] #437 repaired degenerate %s tangent (was %.1f, now %.1f) %s"),
+				Which, CurrentMag, DesiredTangent, *GetName());
+		};
+
+		// Tangents live in hologram-LOCAL space; the passed normals are WORLD. Convert for the
+		// zero-tangent fallback (floor-hole children spawn unrotated, but extend lanes don't).
+		const FVector LocalStartDir = ActorXf.InverseTransformVectorNoScale(StartNormal).GetSafeNormal();
+		const FVector LocalEndDir = ActorXf.InverseTransformVectorNoScale(-EndNormal).GetSafeNormal();
+		RepairEndpointTangent(mSplineData[0], LocalStartDir, TEXT("start"));
+		RepairEndpointTangent(mSplineData.Last(), LocalEndDir, TEXT("end"));
+	}
+
 	// Ensure spline component is updated from mSplineData.
 	// We explicitly call the base spline hologram impl, same pattern used elsewhere in Smart.
 	AFGSplineHologram::UpdateSplineComponent();
