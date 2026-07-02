@@ -565,8 +565,70 @@ bool ASFPipelineHologram::TryUseBuildModeRouting(
 		return false;
 	}
 
-	// Select routing mode (set by HUD auto-connect settings).
+	// [#437 round 3] USE VANILLA FOR REAL: set the game's OWN build-mode descriptor and hand the
+	// route to the top-level AutoRouteSpline, letting vanilla's dispatch pick its internal route
+	// function - no hand-picked leaf calls to drift out of sync with the game. This is the exact
+	// belt pattern (#380): C++-spawned holograms have NULL BP-default descriptors, so they are
+	// lazily copied from the REAL pipeline hologram's CDO first. NOTE: the old [#383] finding
+	// that "descriptor + AutoRouteSpline always routed Auto" for pipes is suspect - it predates
+	// the CDO descriptor copy, so SetBuildModeOverride was almost certainly no-oping on null.
+	// If live validation shows pipes' AutoRouteSpline is genuinely not mode-aware, the leaf
+	// dispatch below remains as the fallback (it runs whenever no descriptor resolves).
+	if (!mBuildModeAuto || !mBuildModeAuto2D || !mBuildModeStraight || !mBuildModeCurve || !mBuildModeNoodle || !mBuildModeHorzToVert)
+	{
+		if (const TSubclassOf<AActor> BuildClass = GetBuildClass())
+		{
+			if (const AFGBuildable* BuildableCDO = Cast<AFGBuildable>(BuildClass->GetDefaultObject()))
+			{
+				if (BuildableCDO->mHologramClass)
+				{
+					if (const AFGPipelineHologram* HoloCDO = Cast<AFGPipelineHologram>(BuildableCDO->mHologramClass->GetDefaultObject()))
+					{
+						if (!mBuildModeAuto)       { mBuildModeAuto = HoloCDO->mBuildModeAuto; }
+						if (!mBuildModeAuto2D)     { mBuildModeAuto2D = HoloCDO->mBuildModeAuto2D; }
+						if (!mBuildModeStraight)   { mBuildModeStraight = HoloCDO->mBuildModeStraight; }
+						if (!mBuildModeCurve)      { mBuildModeCurve = HoloCDO->mBuildModeCurve; }
+						if (!mBuildModeNoodle)     { mBuildModeNoodle = HoloCDO->mBuildModeNoodle; }
+						if (!mBuildModeHorzToVert) { mBuildModeHorzToVert = HoloCDO->mBuildModeHorzToVert; }
+					}
+				}
+			}
+		}
+	}
+
+	TSubclassOf<UFGHologramBuildModeDescriptor> ModeDesc = nullptr;
+	switch (RoutingMode)
+	{
+	case 0: ModeDesc = mBuildModeAuto; break;
+	case 1: ModeDesc = mBuildModeAuto2D; break;
+	case 2: ModeDesc = mBuildModeStraight; break;
+	case 3: ModeDesc = mBuildModeCurve; break;
+	case 4: ModeDesc = mBuildModeNoodle; break;
+	case 5: ModeDesc = mBuildModeHorzToVert; break;
+	default: break;
+	}
+
+	bool bDescriptorRouted = false;
+	if (ModeDesc)
+	{
+		SetBuildModeOverride(ModeDesc);
+		AutoRouteSpline(StartPos, StartNormal, EndPos, EndNormal);
+		AFGSplineHologram::UpdateSplineComponent();
+
+		const int32 DescPoints = mSplineData.Num();
+		const float DescLen = mSplineComponent->GetSplineLength();
+		bDescriptorRouted = (DescPoints >= 2 && DescLen >= 50.0f);
+		// Log at Log level while #437 validates: the point count is the mode-awareness tell
+		// (H2V should give the 6-point riser/elbow shape here, not a 2-point Auto route).
+		UE_LOG(LogSmartHologram, Log,
+			TEXT("[PipeRoute] DESCRIPTOR path %s (mode=%d desc=%s points=%d len=%.0f) %s"),
+			bDescriptorRouted ? TEXT("used") : TEXT("STUB - falling through to leaf dispatch"),
+			RoutingMode, *ModeDesc->GetName(), DescPoints, DescLen, *GetName());
+	}
+
+	// FALLBACK: direct leaf-function dispatch (descriptor unavailable or vanilla returned a stub).
 	// 0=Auto, 1=Auto2D, 2=Straight, 3=Curve, 4=Noodle, 5=HorizontalToVertical
+	if (!bDescriptorRouted)
 	switch (RoutingMode)
 	{
 	case 1:
