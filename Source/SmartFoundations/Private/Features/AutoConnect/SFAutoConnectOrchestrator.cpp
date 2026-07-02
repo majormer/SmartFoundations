@@ -145,26 +145,30 @@ void USFAutoConnectOrchestrator::OnPipeJunctionsMoved()
 	SchedulePipeEvaluation(false);
 }
 
-void USFAutoConnectOrchestrator::OnPipeGridChanged()
+void USFAutoConnectOrchestrator::OnPipeGridChanged(bool bForceRecreate)
 {
-	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🎯 Orchestrator: Pipe grid changed - scheduling re-evaluation"));
-	
+	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🎯 Orchestrator: Pipe grid changed - scheduling re-evaluation (force=%d)"), bForceRecreate ? 1 : 0);
+
 	// CRITICAL FIX: Clear evaluation flag for grid changes (same as belt fix above)
 	if (bIsEvaluatingPipes)
 	{
 		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("   🔓 Clearing evaluation flag for pipe grid change (was blocking)"));
 		bIsEvaluatingPipes = false;
-		
+
 		// Also clear the cooldown timer since we're forcing a new evaluation anyway
 		if (ParentHologram.IsValid() && ParentHologram->GetWorld())
 		{
 			ParentHologram->GetWorld()->GetTimerManager().ClearTimer(PipeCooldownTimer);
 		}
 	}
-	
-	// ISSUE #235: Don't force recreate for grid changes - child holograms persist and update in place
-	// Force recreate was needed for old FPipePreviewHelper system but causes flashing with child holograms
-	SchedulePipeEvaluation(false);
+
+	// ISSUE #235: for GRID/MOVEMENT changes, don't force recreate - child holograms persist and
+	// update in place (force-recreate caused flashing with the child-hologram system).
+	// [#451] But a SETTINGS change (tier/style/routing) must force-recreate: the in-place path
+	// leans on per-child build-class-change detection that doesn't cover every junction child
+	// uniformly, so a style/tier/route change otherwise rebuilds some children and leaves others
+	// stale (the reported overlapping-preview tangle). ForceRefresh passes true here.
+	SchedulePipeEvaluation(bForceRecreate);
 }
 
 void USFAutoConnectOrchestrator::OnPowerPolesMoved()
@@ -206,8 +210,12 @@ void USFAutoConnectOrchestrator::ForceRefresh()
 	
 	// Trigger re-evaluation of all connection types with force recreate
 	// This ensures previews are updated with new settings (tier, routing mode, etc.)
+	// [#451] Pass force=true to the pipe path: ForceRefresh is only called from settings changes
+	// (TriggerAutoConnectRefresh), never from movement, so force-recreating here rebuilds a changed
+	// pipe tier/style/route cleanly without reintroducing the #235 movement-flashing (which stays on
+	// the non-force OnPipeJunctionsMoved path). OnGridChanged (belts) already forces.
 	OnGridChanged();
-	OnPipeGridChanged();
+	OnPipeGridChanged(/*bForceRecreate=*/true);
 	OnPowerGridChanged();
 	OnStackableConveyorPolesChanged();
 	OnStackablePipelineSupportsChanged();

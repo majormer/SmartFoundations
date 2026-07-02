@@ -1468,8 +1468,11 @@ void USFSubsystem::AdjustAutoConnectSetting(int32 Delta)
             USFAutoConnectOrchestrator* Orchestrator = GetOrCreateOrchestrator(ActiveHologram.Get());
             if (Orchestrator)
             {
-                // Force recreation of all pipe previews with new settings
-                Orchestrator->OnPipeGridChanged();
+                // [#451] Force recreation of all pipe previews with new settings. HUD SETTINGS
+                // change (tier/style/routing via Num0), so pass force=true - the old non-force call
+                // claimed "Force recreated" in its log while actually running the in-place path,
+                // which is why HUD pipe routing/style changes didn't fully apply.
+                Orchestrator->OnPipeGridChanged(/*bForceRecreate=*/true);
                 UE_LOG(LogSmartFoundations, VeryVerbose, TEXT(" Orchestrator: Force recreated pipe previews after settings change"));
             }
         }

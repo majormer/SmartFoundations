@@ -107,8 +107,12 @@ public:
 	/**
 	 * Notify the orchestrator that the pipe grid has changed (children added/removed).
 	 * This will trigger a full re-evaluation of pipe connections.
+	 * [#451] bForceRecreate: settings-driven refreshes (tier/style/routing from the panel or HUD)
+	 * pass true to clear + rebuild every junction preview, so a changed build class/route actually
+	 * lands. Movement/grid callers pass false (the #235 anti-flash in-place path). The belt side
+	 * already forces on settings change via OnGridChanged -> ScheduleEvaluation(true).
 	 */
-	void OnPipeGridChanged();
+	void OnPipeGridChanged(bool bForceRecreate = false);
 
 	/**
 	 * Notify the orchestrator that power poles have moved.
