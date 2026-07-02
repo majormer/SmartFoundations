@@ -610,7 +610,13 @@ bool ASFPipelineHologram::TryUseBuildModeRouting(
 			const bool bStartVertical = FMath::Abs(StartNormal.Z) > 0.7f;
 			const bool bEndVertical = FMath::Abs(EndNormal.Z) > 0.7f;
 			const bool bHorizontalFirst = !(bStartVertical && !bEndVertical);
-			HorizontalAndVerticalRouteSpline(bHorizontalFirst, StartPos, StartNormal, EndPos, EndNormal);
+			// [#437 round 2] Use the NEW vanilla H2V router. The old HorizontalAndVerticalRouteSpline
+			// emits a degenerate route (one 10cm point then a beeline); the build gun's own H2V route,
+			// captured live from a hand-built hole-to-machine span, is the multi-point riser/elbow/
+			// level-run/connector-stub shape that only ...New produces. Ground truth: 6 points -
+			// 100cm straight riser out of the hole (tangents 10), elbow to connector height (163),
+			// level run (496), 100cm connector stub (50/1) - all C1-continuous.
+			HorizontalAndVerticalRouteSplineNew(bHorizontalFirst, StartPos, StartNormal, EndPos, EndNormal);
 		}
 		break;
 	case 0:
@@ -644,17 +650,29 @@ bool ASFPipelineHologram::TryUseBuildModeRouting(
 	// comparison that surfaced the "Invalid Pipe Shape!" rejection).
 	if (mSplineData.Num() >= 2)
 	{
-		const float SpanCm = FVector::Distance(StartPos, EndPos);
-		const float DesiredTangent = FMath::Clamp(SpanCm * 0.4f, 100.0f, 600.0f);
 		const FTransform ActorXf = GetActorTransform();
 
-		auto RepairEndpointTangent = [DesiredTangent, this](FSplinePointData& Point, const FVector& LocalFallbackDir, const TCHAR* Which)
+		// [#437 round 2] The repair threshold is PER-SEGMENT, not per-span. Ground truth from a
+		// hand-built vanilla H2V route: vanilla legitimately uses SMALL endpoint tangents on its
+		// short straight connector stubs (leave=10 on a 100cm riser) - those are healthy and must
+		// not be inflated (a span-proportional rescale would balloon them to ~500 and wreck the
+		// straight stub). A tangent is only degenerate relative to the segment it shapes: fire
+		// only when it is under 5% of the distance to the NEIGHBORING point (the 1-25 tangents on
+		// a 1300cm beeline segment that caused the original twist), and rescale proportional to
+		// that same segment.
+		auto RepairEndpointTangent = [this](FSplinePointData& Point, const FSplinePointData& Neighbor, const FVector& LocalFallbackDir, const TCHAR* Which)
 		{
-			const float CurrentMag = FMath::Max(Point.ArriveTangent.Size(), Point.LeaveTangent.Size());
-			if (CurrentMag >= DesiredTangent * 0.1f)
+			const float SegLen = FVector::Dist(Point.Location, Neighbor.Location);
+			if (SegLen < KINDA_SMALL_NUMBER)
 			{
-				return; // healthy, router-scaled tangent - keep the router's shape
+				return;
 			}
+			const float CurrentMag = FMath::Max(Point.ArriveTangent.Size(), Point.LeaveTangent.Size());
+			if (CurrentMag >= SegLen * 0.05f)
+			{
+				return; // healthy relative to its own segment - keep the router's shape
+			}
+			const float DesiredTangent = FMath::Clamp(SegLen * 0.4f, 50.0f, 600.0f);
 			FVector Dir = Point.LeaveTangent.GetSafeNormal();
 			if (Dir.IsNearlyZero()) { Dir = Point.ArriveTangent.GetSafeNormal(); }
 			if (Dir.IsNearlyZero()) { Dir = LocalFallbackDir; }
@@ -665,16 +683,16 @@ bool ASFPipelineHologram::TryUseBuildModeRouting(
 			Point.ArriveTangent = Dir * DesiredTangent;
 			Point.LeaveTangent = Dir * DesiredTangent;
 			UE_LOG(LogSmartHologram, Verbose,
-				TEXT("[PipeRoute] #437 repaired degenerate %s tangent (was %.1f, now %.1f) %s"),
-				Which, CurrentMag, DesiredTangent, *GetName());
+				TEXT("[PipeRoute] #437 repaired degenerate %s tangent (was %.1f, now %.1f, seg=%.0f) %s"),
+				Which, CurrentMag, DesiredTangent, SegLen, *GetName());
 		};
 
 		// Tangents live in hologram-LOCAL space; the passed normals are WORLD. Convert for the
 		// zero-tangent fallback (floor-hole children spawn unrotated, but extend lanes don't).
 		const FVector LocalStartDir = ActorXf.InverseTransformVectorNoScale(StartNormal).GetSafeNormal();
 		const FVector LocalEndDir = ActorXf.InverseTransformVectorNoScale(-EndNormal).GetSafeNormal();
-		RepairEndpointTangent(mSplineData[0], LocalStartDir, TEXT("start"));
-		RepairEndpointTangent(mSplineData.Last(), LocalEndDir, TEXT("end"));
+		RepairEndpointTangent(mSplineData[0], mSplineData[1], LocalStartDir, TEXT("start"));
+		RepairEndpointTangent(mSplineData.Last(), mSplineData[mSplineData.Num() - 2], LocalEndDir, TEXT("end"));
 	}
 
 	// Ensure spline component is updated from mSplineData.
@@ -705,39 +723,20 @@ bool ASFPipelineHologram::TryUseBuildModeRouting(
 	return true;
 }
 
-bool ASFPipelineHologram::RouteWithStraightExit(float ExitStubCm, const FVector& StartPos, const FVector& ExitNormal,
+bool ASFPipelineHologram::RouteWithStraightExit(float /*ExitStubCm - retired, see below*/, const FVector& StartPos, const FVector& ExitNormal,
 	const FVector& EndPos, const FVector& EndNormal)
 {
 	bRoutedShapeInvalid = false;
 
-	// Keep the stub sane on short spans (never eat more than a quarter of the run).
-	const float SpanCm = FVector::Dist(StartPos, EndPos);
-	const float StubCm = FMath::Min(ExitStubCm, FMath::Max(SpanCm * 0.25f, 25.0f));
-	const FVector StubEnd = StartPos + ExitNormal * StubCm;
-
-	// Route from the stub's END - the router never sees the hole face, so no routing mode can
-	// bend the exit. The exit vector still seeds the router's start tangent.
-	if (!TryUseBuildModeRouting(StubEnd, ExitNormal, EndPos, EndNormal))
+	// [#437 round 2] NO forced exit stub. Ground truth (live capture of a hand-built vanilla H2V
+	// route from this exact hole) shows the correct router builds its own ~100cm straight riser
+	// out of the hole face and its own connector stub at the far end - the earlier bolted-on 1m
+	// stub duplicated that and compounded the real defect (the OLD H2V router; case 5 now calls
+	// HorizontalAndVerticalRouteSplineNew). Route directly from the hole face; the exit vector
+	// seeds the router's start tangent, exactly like a hand-built pipe leaving a passthrough.
+	if (!TryUseBuildModeRouting(StartPos, ExitNormal, EndPos, EndNormal))
 	{
 		return false;
-	}
-
-	// Prepend the straight stub in the spline's LOCAL space, and force the router's first point
-	// to ARRIVE along the exit vector so hole -> stub-end renders as a true straight.
-	if (mSplineComponent && mSplineData.Num() >= 2)
-	{
-		const FTransform Xf = mSplineComponent->GetComponentTransform();
-		const FVector LocalDir = Xf.InverseTransformVectorNoScale(ExitNormal).GetSafeNormal();
-
-		FSplinePointData Stub;
-		Stub.Location = Xf.InverseTransformPosition(StartPos);
-		Stub.ArriveTangent = LocalDir * StubCm;
-		Stub.LeaveTangent = LocalDir * StubCm;
-		mSplineData.Insert(Stub, 0);
-		mSplineData[1].ArriveTangent = LocalDir * StubCm;
-
-		AFGSplineHologram::UpdateSplineComponent();
-		mBuildSplineData = mSplineData;
 	}
 
 	// [#437] Honor vanilla's shape validity instead of force-rendering a shape it would reject:

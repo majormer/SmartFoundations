@@ -98,14 +98,14 @@ public:
 
 	void SetRoutingMode(int32 InRoutingMode) { RoutingMode = InRoutingMode; }
 
-	/** [#437] Floor-hole routing: route with a MANDATORY straight exit stub. The pipe leaves the
-	 *  hole face along ExitNormal for up to ExitStubCm (clamped on short spans) before the
-	 *  configured router takes over from the stub's end - matching how a pipe exits a passthrough
-	 *  when hand-built: straight out first, then the routing takes it where it needs to go. The
-	 *  exit vector still seeds the router's start tangent. After routing, the produced shape is
-	 *  validated against vanilla's minimum bend radius (mMinBendRadius); on violation the child is
-	 *  flagged (IsRoutedShapeInvalid) and CheckValidPlacement paints it invalid with vanilla's own
-	 *  "Invalid Pipe Shape" disqualifier instead of force-rendering a shape vanilla would reject.
+	/** [#437] Floor-hole routing: route from the passthrough face with the exit vector seeding the
+	 *  router's start tangent. NO forced stub is added (round 2): the correct vanilla routers build
+	 *  their own straight riser out of the face and their own connector stub at the far end
+	 *  (ground truth: live capture of a hand-built H2V route). The first param is retired and
+	 *  ignored. After routing, the produced shape is validated against vanilla's minimum bend
+	 *  radius (mMinBendRadius); on violation the child is flagged (IsRoutedShapeInvalid) and
+	 *  CheckValidPlacement paints it invalid with vanilla's own "Invalid Pipe Shape" disqualifier
+	 *  instead of force-rendering a shape vanilla would reject.
 	 *  @return true if a spline was produced (valid OR flagged-invalid); false if routing failed
 	 *          entirely (caller falls back to its hand-rolled spline). */
 	bool RouteWithStraightExit(float ExitStubCm, const FVector& StartPos, const FVector& ExitNormal,

@@ -993,13 +993,14 @@ ASFPipelineHologram* FSFPipeAutoConnectManager::SpawnPipeChildAtPosition(
 	
 	PipeChild->SetRoutingMode(RuntimeSettings.PipeRoutingMode);
 
-	// [#437] Floor-hole pipes route with a MANDATORY 1m straight exit stub out of the hole face
-	// (straight up from the top / straight down from the bottom) before the configured router
-	// takes over - matching hand-built passthrough behavior. The helper also validates the routed
-	// shape against vanilla's minimum bend radius and flags the child invalid (vanilla's own
-	// "Invalid Pipe Shape" disqualifier via CheckValidPlacement) instead of force-rendering a
-	// shape vanilla would reject.
-	if (!PipeChild->RouteWithStraightExit(100.0f, StartPos, StartNormal, EndPos, EndNormal))
+	// [#437] Floor-hole pipes route from the hole face with the exit vector (straight up from the
+	// top / straight down from the bottom) seeding the router's start tangent - the correct
+	// vanilla routers build their own straight riser out of the face (round 2: no forced stub,
+	// per live comparison against a hand-built route). The helper also validates the routed shape
+	// against vanilla's minimum bend radius and flags the child invalid (vanilla's own "Invalid
+	// Pipe Shape" disqualifier via CheckValidPlacement) instead of force-rendering a shape vanilla
+	// would reject.
+	if (!PipeChild->RouteWithStraightExit(0.0f, StartPos, StartNormal, EndPos, EndNormal))
 	{
 		const float Distance = FVector::Dist(StartPos, EndPos);
 		const float SmallTangent = 50.0f;
