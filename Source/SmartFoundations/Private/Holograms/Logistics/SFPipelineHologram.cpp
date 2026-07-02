@@ -69,6 +69,18 @@ void ASFPipelineHologram::CheckValidPlacement()
 {
 	if (GetParentHologram())
 	{
+		// [#437] A routed-invalid shape wins over the normal child preview mirroring: paint the
+		// child invalid with vanilla's OWN disqualifier so the player sees the same "Invalid Pipe
+		// Shape" a hand-built pipe of this shape produces, and firing is blocked until the routing
+		// mode changes or the hologram moves somewhere the shape is valid.
+		if (bRoutedShapeInvalid)
+		{
+			ResetConstructDisqualifiers();
+			AddConstructDisqualifier(UFGCDPipeInvalidShape::StaticClass());
+			SetPlacementMaterialState(EHologramMaterialState::HMS_ERROR);
+			return;
+		}
+
 		UE_LOG(LogSmartHologram, VeryVerbose, TEXT("Pipe child preview - skipping placement validation"));
 		// The build gun derives preview red/cyan from construct disqualifiers, not from
 		// SetPlacementMaterialState. Carry the parent's "unaffordable" disqualifier so the
@@ -691,6 +703,94 @@ bool ASFPipelineHologram::TryUseBuildModeRouting(
 		RoutingMode, NewSplinePoints, NewSplineLength, *GetName());
 
 	return true;
+}
+
+bool ASFPipelineHologram::RouteWithStraightExit(float ExitStubCm, const FVector& StartPos, const FVector& ExitNormal,
+	const FVector& EndPos, const FVector& EndNormal)
+{
+	bRoutedShapeInvalid = false;
+
+	// Keep the stub sane on short spans (never eat more than a quarter of the run).
+	const float SpanCm = FVector::Dist(StartPos, EndPos);
+	const float StubCm = FMath::Min(ExitStubCm, FMath::Max(SpanCm * 0.25f, 25.0f));
+	const FVector StubEnd = StartPos + ExitNormal * StubCm;
+
+	// Route from the stub's END - the router never sees the hole face, so no routing mode can
+	// bend the exit. The exit vector still seeds the router's start tangent.
+	if (!TryUseBuildModeRouting(StubEnd, ExitNormal, EndPos, EndNormal))
+	{
+		return false;
+	}
+
+	// Prepend the straight stub in the spline's LOCAL space, and force the router's first point
+	// to ARRIVE along the exit vector so hole -> stub-end renders as a true straight.
+	if (mSplineComponent && mSplineData.Num() >= 2)
+	{
+		const FTransform Xf = mSplineComponent->GetComponentTransform();
+		const FVector LocalDir = Xf.InverseTransformVectorNoScale(ExitNormal).GetSafeNormal();
+
+		FSplinePointData Stub;
+		Stub.Location = Xf.InverseTransformPosition(StartPos);
+		Stub.ArriveTangent = LocalDir * StubCm;
+		Stub.LeaveTangent = LocalDir * StubCm;
+		mSplineData.Insert(Stub, 0);
+		mSplineData[1].ArriveTangent = LocalDir * StubCm;
+
+		AFGSplineHologram::UpdateSplineComponent();
+		mBuildSplineData = mSplineData;
+	}
+
+	// [#437] Honor vanilla's shape validity instead of force-rendering a shape it would reject:
+	// vanilla invalidates a pipe whose bend radius drops below mMinBendRadius ("Invalid Pipe
+	// Shape!" - reproduced live by hand-building the identical floor-hole span in Auto 2D).
+	// CheckValidPlacement turns the flag into the SAME disqualifier on this child.
+	const float MinRadiusCm = ComputeMinRoutedBendRadiusCm();
+	if (MinRadiusCm < mMinBendRadius)
+	{
+		bRoutedShapeInvalid = true;
+		UE_LOG(LogSmartHologram, Verbose,
+			TEXT("[PipeRoute] #437 routed shape INVALID (min bend radius %.0f < %.0f, mode=%d) %s"),
+			MinRadiusCm, mMinBendRadius, RoutingMode, *GetName());
+	}
+
+	return true;
+}
+
+float ASFPipelineHologram::ComputeMinRoutedBendRadiusCm() const
+{
+	if (!mSplineComponent)
+	{
+		return TNumericLimits<float>::Max();
+	}
+
+	const float Len = mSplineComponent->GetSplineLength();
+	constexpr float StepCm = 25.0f;
+	if (Len < StepCm * 2.0f)
+	{
+		return TNumericLimits<float>::Max();
+	}
+
+	// Discrete curvature: circumradius of each triple of samples 25cm apart along the spline
+	// (R = abc / (4 * Area)). The minimum over the run approximates the tightest bend, which is
+	// what vanilla's mMinBendRadius shape check gates on.
+	float MinRadius = TNumericLimits<float>::Max();
+	for (float D = StepCm; D <= Len - StepCm; D += StepCm)
+	{
+		const FVector A = mSplineComponent->GetLocationAtDistanceAlongSpline(D - StepCm, ESplineCoordinateSpace::Local);
+		const FVector B = mSplineComponent->GetLocationAtDistanceAlongSpline(D, ESplineCoordinateSpace::Local);
+		const FVector C = mSplineComponent->GetLocationAtDistanceAlongSpline(D + StepCm, ESplineCoordinateSpace::Local);
+
+		const float SideA = FVector::Dist(B, C);
+		const float SideB = FVector::Dist(A, C);
+		const float SideC = FVector::Dist(A, B);
+		const float DoubleArea = FVector::CrossProduct(B - A, C - A).Size();
+		if (DoubleArea < KINDA_SMALL_NUMBER)
+		{
+			continue; // locally straight
+		}
+		MinRadius = FMath::Min(MinRadius, (SideA * SideB * SideC) / (2.0f * DoubleArea));
+	}
+	return MinRadius;
 }
 
 void ASFPipelineHologram::SetPlacementMaterialState(EHologramMaterialState materialState)

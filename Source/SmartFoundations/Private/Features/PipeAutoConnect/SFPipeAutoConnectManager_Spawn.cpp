@@ -992,8 +992,14 @@ ASFPipelineHologram* FSFPipeAutoConnectManager::SpawnPipeChildAtPosition(
 	}
 	
 	PipeChild->SetRoutingMode(RuntimeSettings.PipeRoutingMode);
-	
-	if (!PipeChild->TryUseBuildModeRouting(StartPos, StartNormal, EndPos, EndNormal))
+
+	// [#437] Floor-hole pipes route with a MANDATORY 1m straight exit stub out of the hole face
+	// (straight up from the top / straight down from the bottom) before the configured router
+	// takes over - matching hand-built passthrough behavior. The helper also validates the routed
+	// shape against vanilla's minimum bend radius and flags the child invalid (vanilla's own
+	// "Invalid Pipe Shape" disqualifier via CheckValidPlacement) instead of force-rendering a
+	// shape vanilla would reject.
+	if (!PipeChild->RouteWithStraightExit(100.0f, StartPos, StartNormal, EndPos, EndNormal))
 	{
 		const float Distance = FVector::Dist(StartPos, EndPos);
 		const float SmallTangent = 50.0f;
@@ -1200,18 +1206,21 @@ void FSFPipeAutoConnectManager::ProcessFloorHolePipes(AFGHologram* ParentHologra
 				if (LocalReservedConnectors.Contains(BuildingConn)) continue;
 				
 				FVector BuildingConnPos = BuildingConn->GetComponentLocation();
-				
-				// Pick whichever floor hole endpoint (top or bottom) is closer to this connector
-				float DistTop = FVector::Dist(TopPos, BuildingConnPos);
-				float DistBottom = FVector::Dist(BottomPos, BuildingConnPos);
-				bool bTopCloser = (DistTop <= DistBottom);
-				float Distance = bTopCloser ? DistTop : DistBottom;
-				
+
+				// [#437] Face selection is by HEIGHT, not 3D distance: a connector above the
+				// hole's top routes from the TOP face (exit straight up), one below the bottom
+				// routes from the BOTTOM face (exit straight down) - matching how a passthrough
+				// is used. A connector within the foundation's height band takes the vertically
+				// nearer face. 3D distance still ranks candidate connectors against each other.
+				const bool bTop = BuildingConnPos.Z >= (TopPos.Z + BottomPos.Z) * 0.5f;
+				const FVector FacePos = bTop ? TopPos : BottomPos;
+				const float Distance = FVector::Dist(FacePos, BuildingConnPos);
+
 				if (Distance < BestDistance)
 				{
 					BestDistance = Distance;
 					BestBuildingConn = BuildingConn;
-					bUseTopEndpoint = bTopCloser;
+					bUseTopEndpoint = bTop;
 				}
 			}
 		}

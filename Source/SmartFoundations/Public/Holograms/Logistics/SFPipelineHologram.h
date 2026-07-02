@@ -97,6 +97,22 @@ public:
 	                                     const FVector& EndPos, const FVector& EndNormal);
 
 	void SetRoutingMode(int32 InRoutingMode) { RoutingMode = InRoutingMode; }
+
+	/** [#437] Floor-hole routing: route with a MANDATORY straight exit stub. The pipe leaves the
+	 *  hole face along ExitNormal for up to ExitStubCm (clamped on short spans) before the
+	 *  configured router takes over from the stub's end - matching how a pipe exits a passthrough
+	 *  when hand-built: straight out first, then the routing takes it where it needs to go. The
+	 *  exit vector still seeds the router's start tangent. After routing, the produced shape is
+	 *  validated against vanilla's minimum bend radius (mMinBendRadius); on violation the child is
+	 *  flagged (IsRoutedShapeInvalid) and CheckValidPlacement paints it invalid with vanilla's own
+	 *  "Invalid Pipe Shape" disqualifier instead of force-rendering a shape vanilla would reject.
+	 *  @return true if a spline was produced (valid OR flagged-invalid); false if routing failed
+	 *          entirely (caller falls back to its hand-rolled spline). */
+	bool RouteWithStraightExit(float ExitStubCm, const FVector& StartPos, const FVector& ExitNormal,
+	                           const FVector& EndPos, const FVector& EndNormal);
+
+	/** [#437] Did the last RouteWithStraightExit produce a shape vanilla would reject? */
+	bool IsRoutedShapeInvalid() const { return bRoutedShapeInvalid; }
     
     // Get the 6-point build spline (not the 2-point preview spline)
     const TArray<FSplinePointData>& GetBuildSplineData() const { return mBuildSplineData; }
@@ -123,6 +139,14 @@ protected:
 private:
     float PreviewLengthCm = 0.0f;
 	int32 RoutingMode = 0;
+
+	/** [#437] Set by RouteWithStraightExit when the routed shape violates vanilla's minimum bend
+	 *  radius; CheckValidPlacement turns it into UFGCDPipeInvalidShape + HMS_ERROR. */
+	bool bRoutedShapeInvalid = false;
+
+	/** [#437] Minimum bend radius of the current routed spline (cm), via discrete circumradius
+	 *  sampling. Max float when effectively straight/too short to bend. */
+	float ComputeMinRoutedBendRadiusCm() const;
     
     // Store the perfect 6-point build spline separately
     // Preview uses simple 2-point, build uses this 6-point
