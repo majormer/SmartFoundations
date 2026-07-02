@@ -92,9 +92,9 @@ Smart! also has an **Auto-Hold** setting that locks the hologram automatically a
 
 ## What Is The Infinite Nudge Issue?
 
-Infinite Nudge is a common compatibility topic.
+**Fixed in v33.2.0.** Older versions of Smart! had a conflict with Infinite Nudge: holding a Smart! modifier (X/Z) to scale a grid could also rotate the hologram at the same time, because Smart!'s own temporary lock on the building was read by Infinite Nudge as "ready to scroll-rotate." As of v33.2.0, Smart! only claims the scroll wheel for the moments it's actually managing the building (a modifier held, or Auto-Hold keeping a scaled grid pinned) — a building you lock yourself still works with Infinite Nudge exactly as it always has.
 
-If Smart! controls, placement, or nudging behave strangely, test with Infinite Nudge and Infinite Zoop disabled. Smart! watches the build gun's nudge/placement state while managing its own previews, so overlapping build-gun mods can interfere with each other.
+If you are on v33.2.0 or later and still see odd wheel/rotation behavior with Infinite Nudge or another build-gun mod installed, please report it — that would be a new conflict, not the one described above.
 
 ## Why Did Auto-Connect Skip Belts, Pipes, Or Power?
 

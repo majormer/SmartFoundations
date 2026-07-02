@@ -628,8 +628,8 @@ bool ASFPipelineHologram::TryUseBuildModeRouting(
 	// real fix needs to either detect the invalid-shape condition and synthesize a compliant
 	// intermediate bend point (mirroring what a vanilla support pole provides), or decline the
 	// auto-connection outright for geometry this sharp. See the #437 issue thread for the full
-	// investigation (three routing-mode spline captures via SmartMCP /api/splines + the vanilla
-	// manual-build comparison that surfaced the "Invalid Pipe Shape!" rejection).
+	// investigation (live spline captures across routing modes + the vanilla manual-build
+	// comparison that surfaced the "Invalid Pipe Shape!" rejection).
 	if (mSplineData.Num() >= 2)
 	{
 		const float SpanCm = FVector::Distance(StartPos, EndPos);
