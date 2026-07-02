@@ -259,6 +259,14 @@ void USmartSettingsFormWidget::OnBeltChainChanged(bool bIsChecked)
 
     CachedSubsystem->SetAutoConnectBeltChain(bIsChecked);
     UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Belt chain changed to %d"), bIsChecked);
+
+    // [#452] Refresh previews like every sibling belt handler - this was the lone belt-side
+    // panel control that changed the setting without re-evaluating, so the Chain toggle didn't
+    // apply until the next incidental re-eval (e.g. a nudge).
+    if (bApplyImmediately)
+    {
+        CachedSubsystem->TriggerAutoConnectRefresh();
+    }
 }
 
 void USmartSettingsFormWidget::OnStackableBeltDirectionChanged(FString SelectedItem, ESelectInfo::Type SelectionType)
@@ -547,6 +555,15 @@ void USmartSettingsFormWidget::OnPipeIndicatorChanged(bool bIsChecked)
 
     CachedSubsystem->SetAutoConnectPipeIndicator(bIsChecked);
     UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Pipe indicator changed to %d (%s)"), bIsChecked, bIsChecked ? TEXT("Normal") : TEXT("Clean"));
+
+    // [#451] Refresh previews like the other pipe handlers - the style (Normal/Clean) toggle was
+    // the lone pipe-side panel control that skipped this, so a style change didn't apply until an
+    // incidental re-eval. Combined with the force-recreate fix in the pipe refresh path, the new
+    // style now rebuilds cleanly instead of leaving stale/mismatched previews.
+    if (bApplyImmediately)
+    {
+        CachedSubsystem->TriggerAutoConnectRefresh();
+    }
 }
 
 void USmartSettingsFormWidget::OnPipeRoutingModeChanged(FString SelectedItem, ESelectInfo::Type SelectionType)
