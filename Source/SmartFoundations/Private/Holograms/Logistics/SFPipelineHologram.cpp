@@ -1231,7 +1231,23 @@ void ASFPipelineHologram::TriggerMeshGeneration()
 			// Normalize tangents to segment length for proper mesh scaling
 			StartTangent = StartTangent.GetSafeNormal() * SegmentLength;
 			EndTangent = EndTangent.GetSafeNormal() * SegmentLength;
-			
+
+			// [#404 follow-up] SplineUpDir defaults to +Z; a VERTICAL segment (tangent parallel to
+			// the up-dir) degenerates the roll frame and the mesh visibly twists/pinches. Floor-hole
+			// pipes are the one AC span with a vertical section (straight up out of the hole), which
+			// is why only they rendered "twisted at the hole" in every routing mode. Give vertical
+			// segments a horizontal roll reference; keep the +Z default everywhere else (any
+			// horizontal axis is a valid roll reference for a round pipe).
+			const FVector SegmentDir = (EndPos - StartPos).GetSafeNormal();
+			if (FMath::Abs(SegmentDir.Z) > 0.95f)
+			{
+				MeshComp->SetSplineUpDir(FVector::ForwardVector, false);
+			}
+			else
+			{
+				MeshComp->SetSplineUpDir(FVector::UpVector, false);
+			}
+
 			MeshComp->SetStartAndEnd(StartPos, StartTangent, EndPos, EndTangent, true);
 			MeshComp->SetVisibility(true, true);
 			MeshComp->MarkRenderStateDirty();
