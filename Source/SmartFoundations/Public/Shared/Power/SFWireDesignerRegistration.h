@@ -75,12 +75,23 @@ namespace SFWireDesigner
 
 		// Authority only (the vanilla check() demands it): the server owns containment. A pure
 		// client-side spawn (preview-grade) skips the mark - matching pre-fix behavior there.
-		if (DesignerA && World->GetNetMode() != NM_Client)
+		const bool bStampDesigner = (DesignerA != nullptr && World->GetNetMode() != NM_Client);
+		if (bStampDesigner)
 		{
 			Wire->SetInsideBlueprintDesigner(DesignerA);
 		}
 
 		Wire->FinishSpawning(SpawnTransform);
+
+		if (bStampDesigner)
+		{
+			// The pre-BeginPlay mark alone is NOT enough: live-validated 2026-07-01 that a stamped
+			// wire still doesn't serialize into the saved blueprint - the contained-list
+			// registration vanilla does for hologram-built buildables happens in the construct
+			// pipeline, not BeginPlay. Register explicitly; the designer's contained list is what
+			// SaveBlueprint serializes ("This way we don't need to gather them to serialize").
+			DesignerA->OnBuildableConstructedInsideDesigner(Wire);
+		}
 		return Wire;
 	}
 }
