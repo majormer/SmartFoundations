@@ -137,6 +137,27 @@ public:
 	const TArray<TSharedPtr<FBeltPreviewHelper>>* GetBeltPreviews(const AFGHologram* DistributorHologram) const;
 
 	/**
+	 * #436: MANIFOLD-only counterparts of CleanupDistributorPreviews/StoreBeltPreviews/GetBeltPreviews.
+	 * Deliberately separate storage (DistributorManifoldBeltPreviews) so ConnectAnyConnectors' store
+	 * calls never collide with Phase 4's side-connection store calls on the same distributor - see the
+	 * DistributorManifoldBeltPreviews field comment for why the collision mattered.
+	 */
+	void CleanupManifoldDistributorPreviews(AFGHologram* DistributorHologram);
+	void StoreManifoldBeltPreviews(AFGHologram* DistributorHologram, const TArray<TSharedPtr<FBeltPreviewHelper>>& Previews);
+	TArray<TSharedPtr<FBeltPreviewHelper>>* GetManifoldBeltPreviews(AFGHologram* DistributorHologram);
+
+	/**
+	 * #436: HIDE (not destroy) a distributor's manifold previews. Used when the Chain setting turns
+	 * off mid-aim: Destroy()ing a belt hologram while sibling previews are mid-(re)spawn is what
+	 * knocks the SIBLINGS' actors to world origin (the observed flash-then-vanish), so during an
+	 * active build session manifold previews are hidden instead. Hidden previews are excluded from
+	 * GetBeltPreviewsCost; ConnectAnyConnectors' UpdatePreview() un-hides them if chaining returns.
+	 * Actual destruction still happens via CleanupManifoldDistributorPreviews on session teardown
+	 * (ClearAllPreviews).
+	 */
+	void HideManifoldDistributorPreviews(AFGHologram* DistributorHologram);
+
+	/**
 	 * Calculate the total cost of all belt previews for a distributor
 	 * @param DistributorHologram The distributor hologram
 	 * @return Array of item costs for all belt previews
@@ -600,8 +621,22 @@ private:
 	/** Owning subsystem */
 	USFSubsystem* Subsystem = nullptr;
 
-	/** Cached preview helpers per distributor */
+	/** Cached preview helpers per distributor - SIDE connections (distributor -> building), owned by
+	 * the orchestrator's Phase 4. */
 	TMap<AFGHologram*, TArray<TSharedPtr<FBeltPreviewHelper>>> DistributorBeltPreviews;
+
+	/** #436: Cached preview helpers per distributor - MANIFOLD connections (distributor -> distributor),
+	 * owned by ConnectAnyConnectors. Deliberately a SEPARATE map from DistributorBeltPreviews (mirrors
+	 * the existing ManifoldReservedInputs/Outputs vs ReservedInputs split, and its "don't pollute
+	 * building pairings" rationale). Phase 4 and ConnectAnyConnectors used to share ONE map: each
+	 * called StoreBeltPreviews() with its OWN belt list only, and TMap::Emplace does a wholesale
+	 * overwrite - so every side-connection-only store from Phase 4 silently dropped whatever manifold
+	 * belt ConnectAnyConnectors had appended (and vice versa), destructing its FBeltPreviewHelper
+	 * (shared_ptr refcount -> 0 -> ~FConduitPreviewHelper() -> DestroyPreview() -> QueueChildForDestroy())
+	 * as an unrelated side effect while the OTHER category's belt (a sibling AddChild'd to the SAME
+	 * distributor) was mid-(re)spawn on the SAME evaluation pass. That collision was what actually reset
+	 * the sibling belt's position - not anything specific to auto-connect's own belt-creation code. */
+	TMap<AFGHologram*, TArray<TSharedPtr<FBeltPreviewHelper>>> DistributorManifoldBeltPreviews;
 
 
 	/** Pipe auto-connect managers per junction */

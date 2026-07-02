@@ -19,8 +19,15 @@ class USFSubsystem;
  * Responsibilities:
  * - Enhanced Input action binding and lifecycle management
  * - Input state tracking (modifiers, modal features)
- * - Vanilla Build Gun context management (disable during wheel input)
  * - Deferred input setup and rebinding
+ *
+ * [#162/#429] Wheel-rotation suppression during modifier windows is NOT handled here anymore.
+ * The old approach (remove the vanilla MC_BuildGunBuild mapping context, cache its priority,
+ * restore on release - the #272 machinery) had been dead code for a while: rotation suppression
+ * actually rode on the hologram lock (vanilla ignores wheel-rotate while locked). It is now the
+ * UFGBuildGunStateBuild::Scroll_Implementation hook in SFGameInstanceModule, gated by
+ * USFSubsystem::ShouldSuppressBuildGunScroll - which also suppresses other mods' scroll-driven
+ * rotation (InfiniteNudge) that no input-context surgery could reach.
  * 
  * Dependencies:
  * - Calls back to USFSubsystem for actual feature logic
@@ -84,16 +91,6 @@ public:
 	FVector GetNativeNudgeOffset(class AFGHologram* Hologram) const;
 
 	// ========================================
-	// Vanilla Build Gun Context Management
-	// ========================================
-
-	/** Disable vanilla Build Gun mapping context to prevent wheel input conflicts */
-	void DisableVanillaBuildGunContext();
-
-	/** Re-enable vanilla Build Gun mapping context */
-	void EnableVanillaBuildGunContext();
-
-	// ========================================
 	// Enhanced Input Action Handlers
 	// ========================================
 
@@ -150,13 +147,6 @@ private:
 	/** Modifier key state for Z-axis wheel detection */
 	bool bModifierScaleXActive = false;
 	bool bModifierScaleYActive = false;
-
-	/** Vanilla Build Gun context priority tracking (Issue #272)
-	 * When we remove the vanilla context to prevent rotation, we must restore
-	 * it at the SAME priority. Re-adding at priority 0 changes the priority
-	 * stack, causing RMB (Hold) to be overridden by the build menu action. */
-	int32 CachedVanillaContextPriority = -1;
-	bool bVanillaContextRemoved = false;
 
 	/** Feature mode state */
 	bool bSpacingModeActive = false;

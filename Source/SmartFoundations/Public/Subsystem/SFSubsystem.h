@@ -982,6 +982,13 @@ private:
 	 * @return true if any of X/Z modifiers, Spacing, Steps, or Stagger modes are active */
 	bool IsAnyModalFeatureActive() const;
 
+	/** [#296] If the build gun is in a Zoop/Vertical Zoop mode while a Smart! grid is scaled out,
+	 * snap it back to the hologram's default build mode. In a zoop mode, primary fire doesn't
+	 * construct the scaled grid - it silently discards it - so the mode is a pure footgun while
+	 * Smart! scaling drives the multi-placement. No-op unless the active hologram is actually in
+	 * a zoop mode (covers Vertical Zoop via the AFGFoundationHologram override). */
+	void ResetZoopBuildModeForScaling();
+
 public:
 	/** Try to acquire hologram lock for Smart! features (Task 52)
 	 * Only locks if not already locked by vanilla hold system
@@ -1024,11 +1031,16 @@ public:
     /** Determine if it's safe to actually destroy children without racing build gun validation */
     bool CanSafelyDestroyChildren() const;
 
-	/** Disable vanilla Build Gun mapping context to prevent conflicts with Smart! wheel input */
-	void DisableVanillaBuildGunContext();
-
-	/** Re-enable vanilla Build Gun mapping context when Smart! modifiers released */
-	void EnableVanillaBuildGunContext();
+	/** [#162/#429] Should the wheel's build-gun scroll (rotation) be suppressed for this hologram?
+	 * True while Smart! "owns the moment" on its active hologram: a modal window is open (anything in
+	 * IsAnyModalFeatureActive - a future hold+wheel mode that registers there inherits suppression
+	 * automatically) or Smart! owns the hologram lock (modifier lock / auto-hold). A lock the USER
+	 * engaged (vanilla Hold, InfiniteNudge) is not ours to police, so vanilla/IN locked behavior
+	 * stands there. Queried by the UFGBuildGunStateBuild::Scroll_Implementation hook
+	 * (SFGameInstanceModule): cancelling at that chokepoint sits BELOW the input layer, so it also
+	 * starves scroll-driven rotation from other mods' AFGHologram::Scroll hooks (InfiniteNudge)
+	 * that no input-context removal could reach. */
+	bool ShouldSuppressBuildGunScroll(const AFGHologram* BuildGunHologram) const;
 
 	/** Whether a flush has been scheduled for next tick */
 	bool bPendingDestroyScheduled = false;

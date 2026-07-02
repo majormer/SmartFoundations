@@ -2109,8 +2109,8 @@ msgid "Upgrade Panel"
 msgstr "Панел за надграждане"
 
 msgctxt "SmartFoundations,Walk_Invalid_TooLong"
-msgid "segment {0} too long ({1}m > 56m)"
-msgstr "сегмент {0} е твърде дълъг ({1}м > 56м)"
+msgid "segment {0} too long ({1}m > {2}m)"
+msgstr "сегмент {0} е твърде дълъг ({1}м > {2}м)"
 
 msgctxt "SmartFoundations,Walk_Invalid_TooSteep"
 msgid "segment {0} too steep ({1}deg > 30deg)"

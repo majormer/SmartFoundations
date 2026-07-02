@@ -1,6 +1,6 @@
 # <img src="https://github.com/majormer/SmartFoundations/blob/main/images/Smart-Logo.png?raw=true" width="150" alt="Smart! Logo"> Smart! Mod
 
-![Status](https://img.shields.io/badge/Status-Released-brightgreen) ![Version](https://img.shields.io/badge/Version-33.1.2-blue) ![Satisfactory](https://img.shields.io/badge/Satisfactory-1.2-blue) ![Engine](https://img.shields.io/badge/Engine-UE%205.6-blue) ![SML](https://img.shields.io/badge/SML-3.12-blue) ![Multiplayer](https://img.shields.io/badge/Multiplayer-Supported-brightgreen) ![AI Assisted Development Used](https://img.shields.io/badge/AI%20Assisted%20Development%20Used-Disclosure%20Below-blue)
+![Status](https://img.shields.io/badge/Status-Released-brightgreen) ![Version](https://img.shields.io/badge/Version-33.2.0-blue) ![Satisfactory](https://img.shields.io/badge/Satisfactory-1.2-blue) ![Engine](https://img.shields.io/badge/Engine-UE%205.6-blue) ![SML](https://img.shields.io/badge/SML-3.12-blue) ![Multiplayer](https://img.shields.io/badge/Multiplayer-Supported-brightgreen) ![AI Assisted Development Used](https://img.shields.io/badge/AI%20Assisted%20Development%20Used-Disclosure%20Below-blue)
 
 > **Multiplayer note:** As of v32.0.0, every Smart! feature works in multiplayer on dedicated servers (Windows and Linux) — including **Smart Walking** and the new-in-v33.1.0 **Hyper Tube** support. If you hit something odd in a multiplayer session, please report it on [GitHub](https://github.com/majormer/SmartFoundations/issues) or [Discord](https://discord.gg/SgXY4CwXYw).
 
@@ -113,13 +113,26 @@ See [LICENSE.md](https://github.com/majormer/SmartFoundations/blob/main/LICENSE.
 
 ---
 
-## 📰 What's New in v33.1.0: Hyper Tubes
+## 📰 What's New in v33.2.0: Playing Nice with Other Mods
 
-**Current Release:** v33.1.0 brings **Hyper Tubes** into the Smart! family. Both **Auto-Connect** and **Smart Walking** now understand **Stackable Hyper Tube Supports** — scale out a row of them and Smart! lays the hyper tube run between them automatically, or walk a steered hyper tube route that turns and climbs, exactly the way you already do with belts and pipes. See the [full changelog](https://github.com/majormer/SmartFoundations/blob/main/CHANGELOG.md) for all the details.
+**Current Release:** v33.2.0 changes how Smart! shares the mouse wheel with other mods while it's holding a building — the fix for a long-standing conflict with **Infinite Nudge**, where scaling with a Smart! modifier held would also spin the building. Alongside that, this release rolls up a batch of Auto-Connect, Blueprint Designer, and build-mode bug fixes. See the [full changelog](https://github.com/majormer/SmartFoundations/blob/main/CHANGELOG.md) for all the details.
 
-### Hyper Tubes — Auto-Connect and Smart Walking support
+### Infinite Nudge compatibility
 
-Place **Stackable Hyper Tube Supports** and Smart! treats them like the conveyor poles and pipeline supports it already knows. Scale a row of them and **Auto-Connect** lays the hyper tube run between consecutive supports for you. Or hold one, press `K`, and start a **Smart Walking** run that steers a hyper tube around corners and up slopes — with its own routing style and the same red-when-invalid feedback you get on belt and pipe runs. All of the new on-screen text is translated across Smart!'s ~20 supported languages, and it works in single-player and multiplayer.
+Holding a Smart! modifier (X/Z) to scale a grid while **Infinite Nudge** was installed would also rotate the hologram at the same time — not a keybind conflict, but Smart!'s own temporary lock on the building being read by Infinite Nudge as "ready to scroll-rotate." Smart! now claims the scroll wheel only for the moments it's actually managing the building (a modifier held, or Auto-Hold keeping a scaled grid pinned); everything else, including a building you lock yourself, keeps working with Infinite Nudge exactly as before.
+
+### Also in the v33.2 line
+
+- **Blueprints with auto-connected power wires no longer corrupt circuits on dedicated servers** — wires Smart! creates inside a Blueprint Designer are now saved into the blueprint correctly. (Issue #421, reported by SonarClouds)
+- **Zoop and Vertical build modes no longer swallow a scaled Smart! grid** on placement. (Issue #296, reported by SysC0mp)
+- **The Smart Panel shows pipe auto-connect settings for wall pipe supports**, matching stackable supports and floor-hole pipes. (Issue #404)
+- **The hyper tube "too long" message reports its real ~95m limit** instead of the belt/pipe 56m cap. (Issue #417)
+- **Turning off Chain no longer erases auto-connect belts to your factory buildings**, only the manifold lane between distributors. (Issue #436)
+- **Floor-hole pipe auto-connect renders less distorted** in every routing mode — a full fix is still in progress. (Issue #437, reported by tendrils)
+
+### Previously, in v33.1.0: Hyper Tubes
+
+v33.1.0 brought **Hyper Tubes** into the Smart! family. Both **Auto-Connect** and **Smart Walking** understand **Stackable Hyper Tube Supports** — scale out a row of them and Smart! lays the hyper tube run between them automatically, or walk a steered hyper tube route that turns and climbs, exactly the way you already do with belts and pipes. Place **Stackable Hyper Tube Supports** and Smart! treats them like the conveyor poles and pipeline supports it already knows; hold one, press `K`, and start a **Smart Walking** run that steers a hyper tube around corners and up slopes, with its own routing style and the same red-when-invalid feedback you get on belt and pipe runs.
 
 ### Also in the v33.1 line
 

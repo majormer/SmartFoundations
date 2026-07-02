@@ -1027,13 +1027,36 @@ bool USFAutoConnectService::ConnectAnyConnectors(
         return false;
     }
 
-	// Get existing previews for storage hologram
-	TArray<TSharedPtr<FBeltPreviewHelper>>* ExistingPreviews = GetBeltPreviews(StorageHologram);
+	// #436: use the MANIFOLD-only preview map (DistributorManifoldBeltPreviews), not the side-connection
+	// map GetBeltPreviews()/StoreBeltPreviews() that Phase 4 owns. Both used to share one map: each
+	// caller's store overwrote the WHOLE array with only its own belts, so every Phase-4-only store
+	// silently destructed whatever manifold belt this function had appended moments earlier (or vice
+	// versa) - collateral damage to a sibling AddChild'd to the same distributor mid-(re)spawn. See the
+	// DistributorManifoldBeltPreviews field comment in SFAutoConnectService.h.
+	TArray<TSharedPtr<FBeltPreviewHelper>>* ExistingPreviews = GetManifoldBeltPreviews(StorageHologram);
 	TArray<TSharedPtr<FBeltPreviewHelper>> UpdatedPreviews;
-	
+
 	if (ExistingPreviews)
 	{
 		UpdatedPreviews = *ExistingPreviews;
+	}
+
+	// DEDUPLICATION (same pattern as the orchestrator's Phase 4): reuse an existing manifold preview
+	// for this connector pair instead of appending a duplicate. Before the #436 map split the shared
+	// map's wholesale overwrite happened to dispose of stale entries (destructively - that WAS the
+	// bug); with a dedicated map the array must not grow one belt per evaluation pass.
+	for (const TSharedPtr<FBeltPreviewHelper>& Existing : UpdatedPreviews)
+	{
+		if (Existing.IsValid() &&
+			Existing->GetOutputConnector() == OutputConnector &&
+			Existing->GetInputConnector() == InputConnector)
+		{
+			Existing->UpdatePreview(OutputConnector, InputConnector);
+			StoreConnectorPair(StorageHologram, OutputConnector, InputConnector);
+			UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   ♻️ Reusing MANIFOLD belt preview %s → %s"),
+				*OutputConnector->GetName(), *InputConnector->GetName());
+			return true;
+		}
 	}
 
 	// Create new preview (used for manifold connections from orchestrator)
@@ -1063,9 +1086,9 @@ bool USFAutoConnectService::ConnectAnyConnectors(
 		// Store connector pair for build handoff
 		StoreConnectorPair(StorageHologram, OutputConnector, InputConnector);
 		
-		// Add to array and store
+		// Add to array and store (manifold-only map - see comment above)
 		UpdatedPreviews.Add(NewPreview);
-		StoreBeltPreviews(StorageHologram, UpdatedPreviews);
+		StoreManifoldBeltPreviews(StorageHologram, UpdatedPreviews);
 		
 		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   ✅ Connected %s → %s (stored on %s)"),
 			*OutputConnector->GetName(), *InputConnector->GetName(), *StorageHologram->GetName());

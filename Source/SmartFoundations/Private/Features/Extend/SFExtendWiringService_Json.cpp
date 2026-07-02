@@ -8,6 +8,7 @@
 
 #include "Features/Extend/SFExtendWiringServiceImpl.h"
 #include "FGUnlockSubsystem.h"  // Issue #344: detect Upgraded Power Connectors (daisy-chain) unlock
+#include "Shared/Power/SFWireDesignerRegistration.h"  // [#421] designer containment for direct-spawned wires
 
 int32 USFExtendWiringService::GenerateAndExecuteWiring(AFGBuildableFactory* NewFactory)
 {
@@ -947,8 +948,8 @@ int32 USFExtendWiringService::GenerateAndExecuteWiring(AFGBuildableFactory* NewF
                 FActorSpawnParameters SpawnParams;
                 SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-                AFGBuildableWire* NewWire = GetWorld()->SpawnActor<AFGBuildableWire>(
-                    WireClass, ClonePole->GetActorLocation(), FRotator::ZeroRotator, SpawnParams);
+                AFGBuildableWire* NewWire = SFWireDesigner::SpawnWireForEndpoints(  // [#421] designer-aware spawn
+                    GetWorld(), WireClass, ClonePole->GetActorLocation(), FactoryConn, PoleConn);
 
                 if (NewWire)
                 {
@@ -993,8 +994,8 @@ int32 USFExtendWiringService::GenerateAndExecuteWiring(AFGBuildableFactory* NewF
                 FActorSpawnParameters SpawnParams;
                 SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-                AFGBuildableWire* NewWire = GetWorld()->SpawnActor<AFGBuildableWire>(
-                    WireClass, SourcePole->GetActorLocation(), FRotator::ZeroRotator, SpawnParams);
+                AFGBuildableWire* NewWire = SFWireDesigner::SpawnWireForEndpoints(  // [#421] designer-aware spawn
+                    GetWorld(), WireClass, SourcePole->GetActorLocation(), SourceConn, CloneConn);
 
                 if (NewWire)
                 {
@@ -1086,8 +1087,8 @@ int32 USFExtendWiringService::GenerateAndExecuteWiring(AFGBuildableFactory* NewF
             SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
             const FVector SpawnLocation = A->GetOwner() ? A->GetOwner()->GetActorLocation() : FVector::ZeroVector;
-            AFGBuildableWire* NewWire = GetWorld()->SpawnActor<AFGBuildableWire>(
-                WireClass, SpawnLocation, FRotator::ZeroRotator, SpawnParams);
+            AFGBuildableWire* NewWire = SFWireDesigner::SpawnWireForEndpoints(  // [#421] designer-aware spawn
+                GetWorld(), WireClass, SpawnLocation, A, B);
             if (!NewWire)
             {
                 return false;
@@ -1459,8 +1460,8 @@ int32 USFExtendWiringService::GenerateAndExecuteWiring(AFGBuildableFactory* NewF
                     FActorSpawnParameters SpawnParams;
                     SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-                    AFGBuildableWire* NewWire = GetWorld()->SpawnActor<AFGBuildableWire>(
-                        WireClass, ClonePole->GetActorLocation(), FRotator::ZeroRotator, SpawnParams);
+                    AFGBuildableWire* NewWire = SFWireDesigner::SpawnWireForEndpoints(  // [#421] designer-aware spawn
+                        GetWorld(), WireClass, ClonePole->GetActorLocation(), FactoryCircuitConns[0], PoleCircuitConns[0]);
 
                     if (NewWire)
                     {
@@ -1543,8 +1544,8 @@ int32 USFExtendWiringService::GenerateAndExecuteWiring(AFGBuildableFactory* NewF
 
             FActorSpawnParameters SpawnParams;
             SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-            AFGBuildableWire* NewWire = GetWorld()->SpawnActor<AFGBuildableWire>(
-                WireClass, ClonePump->GetActorLocation(), FRotator::ZeroRotator, SpawnParams);
+            AFGBuildableWire* NewWire = SFWireDesigner::SpawnWireForEndpoints(  // [#421] designer-aware spawn
+                GetWorld(), WireClass, ClonePump->GetActorLocation(), PumpPowerConn, PoleConn);
             if (!NewWire)
             {
                 continue;
@@ -1635,8 +1636,8 @@ int32 USFExtendWiringService::GenerateAndExecuteWiring(AFGBuildableFactory* NewF
                     FActorSpawnParameters SpawnParams;
                     SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-                    AFGBuildableWire* ChainWire = GetWorld()->SpawnActor<AFGBuildableWire>(
-                        WireClass, PoleA->GetActorLocation(), FRotator::ZeroRotator, SpawnParams);
+                    AFGBuildableWire* ChainWire = SFWireDesigner::SpawnWireForEndpoints(  // [#421] designer-aware spawn
+                        GetWorld(), WireClass, PoleA->GetActorLocation(), ConnsA[0], ConnsB[0]);
 
                     if (ChainWire)
                     {
@@ -1797,8 +1798,8 @@ int32 USFExtendWiringService::GenerateAndExecuteWiring(AFGBuildableFactory* NewF
 
                         FActorSpawnParameters SpawnParams;
                         SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-                        AFGBuildableWire* Wire = GetWorld()->SpawnActor<AFGBuildableWire>(
-                            WireClass, Row[i]->GetActorLocation(), FRotator::ZeroRotator, SpawnParams);
+                        AFGBuildableWire* Wire = SFWireDesigner::SpawnWireForEndpoints(  // [#421] designer-aware spawn
+                            GetWorld(), WireClass, Row[i]->GetActorLocation(), A, B);
                         if (Wire && Wire->Connect(A, B))
                         {
                             DaisyWired++;

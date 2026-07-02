@@ -118,6 +118,10 @@ void USFGameInstanceModule::DispatchLifecycleEvent(ELifecyclePhase Phase)
 		// [#368/#279] Wire the orphaned holster cleanup to the real build-gun unequip event.
 		RegisterBuildGunUnequipHook();
 
+		// [#162/#429] Consume wheel rotation at the build-gun chokepoint while Smart! owns the
+		// moment (fixes the InfiniteNudge rotate-while-scaling conflict). See the header comment.
+		RegisterBuildGunScrollSuppressionHook();
+
 	}
 }
 
@@ -456,5 +460,47 @@ void USFGameInstanceModule::RegisterBuildGunUnequipHook()
 		});
 
 	UE_LOG(LogSmartFoundations, Verbose, TEXT("[#392] AFGBuildGun::UnEquip hook registered (holster recipe + clipboard clear)"));
+}
+
+void USFGameInstanceModule::RegisterBuildGunScrollSuppressionHook()
+{
+	// [#162/#429] Scroll_Implementation is a virtual override -> must be SUBSCRIBE_METHOD_VIRTUAL
+	// with a CDO sample (plain SUBSCRIBE_METHOD compiles but fatal-asserts at install). The lambda
+	// runs BEFORE the original; scope.Cancel() swallows the delta so neither vanilla rotation nor
+	// Server_Scroll nor AFGHologram::Scroll (InfiniteNudge's hook point) ever run. When we don't
+	// cancel, the original auto-forwards and the wheel is fully vanilla.
+	SUBSCRIBE_METHOD_VIRTUAL(UFGBuildGunStateBuild::Scroll_Implementation,
+		GetMutableDefault<UFGBuildGunStateBuild>(),
+		[](auto& scope, UFGBuildGunStateBuild* self, int32 delta)
+		{
+			if (!self)
+			{
+				return;
+			}
+			AFGBuildGun* Gun = self->GetBuildGun();
+			UWorld* World = Gun ? Gun->GetWorld() : nullptr;
+			if (!World)
+			{
+				return;
+			}
+
+			// Local player only - never police a remote player's build gun on a listen host.
+			// (On a dedicated server ActiveHologram is never set, so the gate below stays false.)
+			APlayerController* LocalPC = World->GetFirstPlayerController();
+			APawn* LocalPawn = (LocalPC && LocalPC->IsLocalController()) ? LocalPC->GetPawn() : nullptr;
+			APawn* InstigatorPawn = Gun->GetInstigator();
+			if (LocalPawn && InstigatorPawn && InstigatorPawn != LocalPawn)
+			{
+				return;
+			}
+
+			USFSubsystem* Subsystem = USFSubsystem::Get(World);
+			if (Subsystem && Subsystem->ShouldSuppressBuildGunScroll(self->GetHologram()))
+			{
+				scope.Cancel();
+			}
+		});
+
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("[#162] UFGBuildGunStateBuild::Scroll_Implementation hook registered (wheel-rotation suppression while Smart! owns the hologram)"));
 }
 

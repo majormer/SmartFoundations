@@ -1387,41 +1387,60 @@ void USFAutoConnectService::FinalizeBeltChildrenVisibility(AFGHologram* ParentHo
 		return;
 	}
 	
-	// Get belt previews for this distributor
+	// Get belt previews for this distributor. #436: side-connection and manifold belts now live in
+	// SEPARATE maps (see DistributorManifoldBeltPreviews field comment) - finalize BOTH, or the
+	// manifold lane belts spawn but never get made visible/material-matched (the happy-path
+	// "manifold lanes don't show" regression from the initial map split).
 	TArray<TSharedPtr<FBeltPreviewHelper>>* Previews = DistributorBeltPreviews.Find(ParentHologram);
-	if (!Previews || Previews->Num() == 0)
+	TArray<TSharedPtr<FBeltPreviewHelper>>* ManifoldPreviews = DistributorManifoldBeltPreviews.Find(ParentHologram);
+	if ((!Previews || Previews->Num() == 0) && (!ManifoldPreviews || ManifoldPreviews->Num() == 0))
 	{
 		return;
 	}
-	
+
 	// Finalize visibility and locking for all belt children (matches stackable pattern)
 	bool bParentLocked = ParentHologram->IsHologramLocked();
 	EHologramMaterialState ParentMaterialState = ParentHologram->GetHologramMaterialState();
-	
-	for (const TSharedPtr<FBeltPreviewHelper>& Preview : *Previews)
+
+	auto FinalizeSet = [bParentLocked, ParentMaterialState](const TArray<TSharedPtr<FBeltPreviewHelper>>* Set)
 	{
-		if (Preview.IsValid() && Preview->IsPreviewValid())
+		if (!Set)
 		{
-			AFGSplineHologram* BeltChild = Preview->GetHologram();
-			if (BeltChild)
+			return;
+		}
+		for (const TSharedPtr<FBeltPreviewHelper>& Preview : *Set)
+		{
+			if (Preview.IsValid() && Preview->IsPreviewValid())
 			{
-				// Ensure visibility (critical for locked parent updates)
-				BeltChild->SetActorHiddenInGame(false);
-				
-				// Match parent's material state (valid/invalid)
-				BeltChild->SetPlacementMaterialState(ParentMaterialState);
-				
-				// Match parent's lock state
-				if (bParentLocked && !BeltChild->IsHologramLocked())
+				AFGSplineHologram* BeltChild = Preview->GetHologram();
+				if (BeltChild)
 				{
-					BeltChild->LockHologramPosition(true);
+					// Ensure visibility (critical for locked parent updates)
+					BeltChild->SetActorHiddenInGame(false);
+
+					// Match parent's material state (valid/invalid)
+					BeltChild->SetPlacementMaterialState(ParentMaterialState);
+
+					// Match parent's lock state
+					if (bParentLocked && !BeltChild->IsHologramLocked())
+					{
+						BeltChild->LockHologramPosition(true);
+					}
 				}
 			}
 		}
+	};
+	FinalizeSet(Previews);
+	// Manifold previews are only finalized (and un-hidden) while distributor chaining is enabled;
+	// with Chain off they are deliberately HIDDEN mid-aim (HideManifoldDistributorPreviews) and this
+	// pass must not flip them back on.
+	if (Subsystem && Subsystem->GetAutoConnectRuntimeSettings().bChainDistributors)
+	{
+		FinalizeSet(ManifoldPreviews);
 	}
-	
-	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("✅ Finalized visibility for %d belt children of %s (locked=%d)"), 
-		Previews->Num(), *ParentHologram->GetName(), bParentLocked ? 1 : 0);
+
+	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("✅ Finalized visibility for %d side + %d manifold belt children of %s (locked=%d)"),
+		Previews ? Previews->Num() : 0, ManifoldPreviews ? ManifoldPreviews->Num() : 0, *ParentHologram->GetName(), bParentLocked ? 1 : 0);
 }
 
 void USFAutoConnectService::ProcessPowerPoles(AFGHologram* ParentHologram)

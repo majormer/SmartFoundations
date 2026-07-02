@@ -90,6 +90,23 @@ protected:
 	 */
 	void RegisterBuildGunUnequipHook();
 
+	/**
+	 * [#162/#429] Hook UFGBuildGunStateBuild::Scroll_Implementation to consume the wheel's rotation
+	 * delta while Smart! owns the moment (modal window open, or Smart!-owned hologram lock incl.
+	 * auto-hold - see USFSubsystem::ShouldSuppressBuildGunScroll). This chokepoint sits BELOW the
+	 * input layer: every wheel-driven rotation funnels through it regardless of which mapping
+	 * context delivered the scroll, covering both vanilla paths (the per-hologram
+	 * AFGHologram::Scroll/ScrollRotate chain AND the build-state's player-relative re-push via
+	 * mPlayerRelativeScrollRotation) - and, because AFGHologram::Scroll is then never called, it
+	 * also starves InfiniteNudge's Scroll hook, which rotates any LOCKED hologram (Smart!'s own
+	 * modifier lock was what activated it - the #162 conflict). Cancelling also prevents
+	 * Server_Scroll from firing (MP-safe); gated to the local player's build gun. Replaces the
+	 * old MC_BuildGunBuild context-removal machinery (#272), which had no callers - suppression
+	 * de facto rode on the hologram lock alone (vanilla ignores wheel-rotate while locked).
+	 * Approach proven in-game by the Air Build mod (AirBuildHologramHook.cpp).
+	 */
+	void RegisterBuildGunScrollSuppressionHook();
+
 	/** Smart! Configuration blueprint - registered with SML for in-game menu access */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Smart! Configuration")
 	TSubclassOf<class UModConfiguration> SmartConfigClass;

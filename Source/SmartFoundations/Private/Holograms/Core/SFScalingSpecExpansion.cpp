@@ -14,6 +14,7 @@
 #include "FGPowerConnectionComponent.h"
 #include "Buildables/FGBuildable.h"
 #include "Buildables/FGBuildableWire.h"
+#include "Shared/Power/SFWireDesignerRegistration.h"  // [#421] designer containment for direct-spawned wires
 #include "FGBlueprintProxy.h"
 #include "Hologram/FGPoleHologram.h"            // #354: mPoleVariationIndex / mBuildStep
 #include "Hologram/FGConveyorPoleHologram.h"
@@ -847,8 +848,8 @@ int32 SpawnWirePlanPostConstruct(AActor* BuiltParent, const TArray<AActor*>& Out
 		// connection components. Unconnected wires self-destruct, so Connect failure -> Destroy.
 		FActorSpawnParameters SpawnParams;
 		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-		AFGBuildableWire* NewWire = World->SpawnActor<AFGBuildableWire>(
-			*Entry.BuildClass, Entry.WireStart, FRotator::ZeroRotator, SpawnParams);
+		AFGBuildableWire* NewWire = SFWireDesigner::SpawnWireForEndpoints(  // [#421] designer-aware spawn
+			World, *Entry.BuildClass, Entry.WireStart, C0, C1);
 		if (!NewWire)
 		{
 			UE_LOG(LogSmartFoundations, VeryVerbose,

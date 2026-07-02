@@ -7,6 +7,7 @@
 
 #include "Features/Extend/SFExtendWiringServiceImpl.h"
 #include "FGDismantleInterface.h"
+#include "Shared/Power/SFWireDesignerRegistration.h"  // [#421] designer containment for direct-spawned wires
 
 bool USFExtendWiringService::HasPendingPostBuildWiring() const
 {
@@ -485,8 +486,8 @@ void USFExtendWiringService::WireBuiltChildConnections(AFGBuildableFactory* NewF
 
             FActorSpawnParameters WireSpawnParams;
             WireSpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-            AFGBuildableWire* NewWire = GetWorld()->SpawnActor<AFGBuildableWire>(
-                PumpWireClass, ClonePump->GetActorLocation(), FRotator::ZeroRotator, WireSpawnParams);
+            AFGBuildableWire* NewWire = SFWireDesigner::SpawnWireForEndpoints(  // [#421] designer-aware spawn
+                GetWorld(), PumpWireClass, ClonePump->GetActorLocation(), PumpPowerConn, PoleConn);
             if (!NewWire)
             {
                 ++PumpsSkipped;

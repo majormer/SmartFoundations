@@ -574,13 +574,95 @@ bool ASFPipelineHologram::TryUseBuildModeRouting(
 		}
 		break;
 	case 5:
-		// [#383] Horizontal->Vertical transition routing.
-		HorizontalAndVerticalRouteSpline(true, StartPos, StartNormal, EndPos, EndNormal);
+		// [#383] Horizontal->Vertical transition routing. The bool picks WHICH END gets the
+		// horizontal leg (true = horizontal out of START, vertical rise near END). It was
+		// hardcoded true, which is only correct when the start connector is the horizontal one -
+		// a floor-hole pipe starts at the hole's VERTICAL connector with the building's
+		// horizontal connector at the end, so the route left the hole sideways and rammed the
+		// machine connector at a diagonal instead of exiting it straight (#404 follow-up).
+		// Derive the leg order from the endpoint normals: a vertical start with a horizontal
+		// end flips to vertical-first; every other combination keeps the old horizontal-first.
+		//
+		// [#437 2026-07-02] This is a genuine, narrowly-scoped bug fix (independent of the
+		// tangent-repair block below) and is NOT the primary cause of the floor-hole "twisted
+		// pipe" reports - see the #437 issue thread for the actual root cause: hand-building the
+		// IDENTICAL floor-hole-to-building span in Auto 2D mode was rejected by vanilla itself
+		// ("Invalid Pipe Shape!"). Smart's floor-hole child spawns with
+		// USFHologramDataService::DisableValidation(), so it renders the shape anyway instead of
+		// respecting that rejection. The real fix is structural (detect the invalid-shape case
+		// and either synthesize a compliant intermediate bend point or decline the connection),
+		// not yet implemented. This leg-order fix and the tangent repair below are safety nets
+		// that reduce the severity of the rendered artifact; they do not address the underlying
+		// invalid-shape condition.
+		{
+			const bool bStartVertical = FMath::Abs(StartNormal.Z) > 0.7f;
+			const bool bEndVertical = FMath::Abs(EndNormal.Z) > 0.7f;
+			const bool bHorizontalFirst = !(bStartVertical && !bEndVertical);
+			HorizontalAndVerticalRouteSpline(bHorizontalFirst, StartPos, StartNormal, EndPos, EndNormal);
+		}
 		break;
 	case 0:
 	default:
 		AutoRouteSpline(StartPos, StartNormal, EndPos, EndNormal);
 		break;
+	}
+
+	// [#437] Endpoint-tangent repair. The vanilla routers seed the END tangents from the raw
+	// UNIT connector normals we pass (observed live via /api/splines: |tangent| = 1 and 25 on a
+	// 1316cm floor-hole span, where a healthy Hermite tangent is ~40% of the span). A straight
+	// span renders straight regardless of tangent magnitude - which is why junction/stackable
+	// runs never showed it - but on a BENT span (floor hole: vertical exit, horizontal arrival)
+	// a near-zero tangent collapses the exit stiffness: the pipe leaves the connector for only a
+	// few cm before beelining at the far endpoint, rendering as the reported self-clipping
+	// twist. Repair only DEGENERATE endpoint tangents: rescale to a distance-proportional
+	// magnitude preserving direction and all interior points; healthy router output is the
+	// router's intended shape and is left untouched.
+	//
+	// [#437 2026-07-02 - IMPORTANT CONTEXT] This is a PARTIAL MITIGATION, not the root-cause
+	// fix. Hand-building the identical floor-hole span in Auto 2D was rejected by vanilla itself
+	// with "Invalid Pipe Shape!" - vanilla's own router does not consider a single-span
+	// vertical-to-horizontal bend without an intermediate control point (e.g. a support pole)
+	// buildable. Smart's floor-hole child disables placement validation, so it renders the
+	// degenerate/invalid shape instead of refusing it. This repair only smooths the rendered
+	// symptom (tangent magnitude) of that invalid state - it does not make the shape valid. A
+	// real fix needs to either detect the invalid-shape condition and synthesize a compliant
+	// intermediate bend point (mirroring what a vanilla support pole provides), or decline the
+	// auto-connection outright for geometry this sharp. See the #437 issue thread for the full
+	// investigation (live spline captures across routing modes + the vanilla manual-build
+	// comparison that surfaced the "Invalid Pipe Shape!" rejection).
+	if (mSplineData.Num() >= 2)
+	{
+		const float SpanCm = FVector::Distance(StartPos, EndPos);
+		const float DesiredTangent = FMath::Clamp(SpanCm * 0.4f, 100.0f, 600.0f);
+		const FTransform ActorXf = GetActorTransform();
+
+		auto RepairEndpointTangent = [DesiredTangent, this](FSplinePointData& Point, const FVector& LocalFallbackDir, const TCHAR* Which)
+		{
+			const float CurrentMag = FMath::Max(Point.ArriveTangent.Size(), Point.LeaveTangent.Size());
+			if (CurrentMag >= DesiredTangent * 0.1f)
+			{
+				return; // healthy, router-scaled tangent - keep the router's shape
+			}
+			FVector Dir = Point.LeaveTangent.GetSafeNormal();
+			if (Dir.IsNearlyZero()) { Dir = Point.ArriveTangent.GetSafeNormal(); }
+			if (Dir.IsNearlyZero()) { Dir = LocalFallbackDir; }
+			if (Dir.IsNearlyZero())
+			{
+				return;
+			}
+			Point.ArriveTangent = Dir * DesiredTangent;
+			Point.LeaveTangent = Dir * DesiredTangent;
+			UE_LOG(LogSmartHologram, Verbose,
+				TEXT("[PipeRoute] #437 repaired degenerate %s tangent (was %.1f, now %.1f) %s"),
+				Which, CurrentMag, DesiredTangent, *GetName());
+		};
+
+		// Tangents live in hologram-LOCAL space; the passed normals are WORLD. Convert for the
+		// zero-tangent fallback (floor-hole children spawn unrotated, but extend lanes don't).
+		const FVector LocalStartDir = ActorXf.InverseTransformVectorNoScale(StartNormal).GetSafeNormal();
+		const FVector LocalEndDir = ActorXf.InverseTransformVectorNoScale(-EndNormal).GetSafeNormal();
+		RepairEndpointTangent(mSplineData[0], LocalStartDir, TEXT("start"));
+		RepairEndpointTangent(mSplineData.Last(), LocalEndDir, TEXT("end"));
 	}
 
 	// Ensure spline component is updated from mSplineData.
@@ -1219,7 +1301,31 @@ void ASFPipelineHologram::TriggerMeshGeneration()
 			// Normalize tangents to segment length for proper mesh scaling
 			StartTangent = StartTangent.GetSafeNormal() * SegmentLength;
 			EndTangent = EndTangent.GetSafeNormal() * SegmentLength;
-			
+
+			// [#404 follow-up] SplineUpDir defaults to +Z; a VERTICAL segment (tangent parallel to
+			// the up-dir) degenerates the roll frame and the mesh visibly twists/pinches. Floor-hole
+			// pipes are the one AC span with a vertical section (straight up out of the hole), which
+			// is why only they rendered "twisted at the hole" in every routing mode. Give vertical
+			// segments a horizontal roll reference; keep the +Z default everywhere else (any
+			// horizontal axis is a valid roll reference for a round pipe).
+			//
+			// [#437 2026-07-02] Real, narrowly-scoped fix, but downstream of the actual root
+			// cause - see the tangent-repair comment in ApplyPipeBuildModeRouting (above in this
+			// file) and the #437 issue thread. Vanilla itself rejects this span shape
+			// ("Invalid Pipe Shape!" on a manual build); Smart renders it anyway because floor-hole
+			// children disable placement validation. This fix only cleans up ONE symptom (mesh
+			// roll) of that unvalidated, degenerate spline - it does not make the underlying shape
+			// valid, and does not fully resolve the reported twist on its own.
+			const FVector SegmentDir = (EndPos - StartPos).GetSafeNormal();
+			if (FMath::Abs(SegmentDir.Z) > 0.95f)
+			{
+				MeshComp->SetSplineUpDir(FVector::ForwardVector, false);
+			}
+			else
+			{
+				MeshComp->SetSplineUpDir(FVector::UpVector, false);
+			}
+
 			MeshComp->SetStartAndEnd(StartPos, StartTangent, EndPos, EndTangent, true);
 			MeshComp->SetVisibility(true, true);
 			MeshComp->MarkRenderStateDirty();

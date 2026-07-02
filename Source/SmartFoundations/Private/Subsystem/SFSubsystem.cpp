@@ -12,6 +12,7 @@
 #include "UI/SFWalkPanelWidget.h"
 #include "Blueprint/UserWidget.h"
 #include "GameFramework/PlayerController.h"  // FInputModeGameAndUI/GameOnly for the Walk panel show/hide
+#include "Hologram/FGBuildableHologram.h"    // [#296] IsInZoopBuildMode / GetDefaultBuildGunMode
 
 USFSubsystem::USFSubsystem() : Super()
 {
@@ -1550,6 +1551,22 @@ void USFSubsystem::ApplyAxisScaling(ESFScaleAxis Axis, int32 StepDelta, const TC
 	UpdateCounterState(CounterState);
 
 	// ========================================
+	// 6.5 Zoop/Vertical Build-Mode Reset (Issue #296)
+	// ========================================
+	// In a Zoop/Vertical Zoop build mode, primary fire doesn't construct the scaled grid - it
+	// silently discards it (the reported "it just removes everything"). The mode is meaningless
+	// while Smart! scaling drives the multi-placement, so snap back to the hologram's default
+	// mode the moment the grid expands. Deliberately NOT gated by the auto-hold config below:
+	// zoop + scaled grid is broken in every configuration.
+	{
+		const FIntVector& ZoopCheckGrid = CounterState.GridCounters;
+		if (FMath::Abs(ZoopCheckGrid.X) > 1 || FMath::Abs(ZoopCheckGrid.Y) > 1 || FMath::Abs(ZoopCheckGrid.Z) > 1)
+		{
+			ResetZoopBuildModeForScaling();
+		}
+	}
+
+	// ========================================
 	// 7. Auto-Hold after Grid Modification (Issue #273)
 	// ========================================
 	// When bAutoHoldOnGridChange is enabled: lock the hologram whenever grid > 1x1x1.
@@ -1604,6 +1621,39 @@ void USFSubsystem::ApplyAxisScaling(ESFScaleAxis Axis, int32 StepDelta, const TC
 			}
 		}
 	}
+}
+
+void USFSubsystem::ResetZoopBuildModeForScaling()
+{
+	// [#296] Only interfere when there is a REAL mode conflict: the active hologram reports it is
+	// currently in a zoop build mode (IsInZoopBuildMode is the vanilla predicate; the
+	// AFGFoundationHologram override also covers Vertical Zoop). A player in Default - or any
+	// other non-zoop mode - is never touched, and vanilla zoop without Smart! scaling is unaffected.
+	AFGBuildableHologram* BuildableHolo = Cast<AFGBuildableHologram>(ActiveHologram.Get());
+	if (!BuildableHolo || !BuildableHolo->IsInZoopBuildMode())
+	{
+		return;
+	}
+
+	TSubclassOf<UFGHologramBuildModeDescriptor> DefaultMode = BuildableHolo->GetDefaultBuildGunMode();
+	if (!DefaultMode)
+	{
+		return;
+	}
+
+	// SetCurrentBuildGunMode is the same public entry the vanilla mode-select UI uses - it fires
+	// OnBuildGunModeChanged (clearing zoop instances) and handles the server RPC in MP.
+	AFGPlayerController* PC = GetLastController();
+	AFGCharacterPlayer* Character = PC ? Cast<AFGCharacterPlayer>(PC->GetCharacter()) : nullptr;
+	AFGBuildGun* BuildGun = Character ? Character->GetBuildGun() : nullptr;
+	if (!BuildGun)
+	{
+		return;
+	}
+
+	BuildGun->SetCurrentBuildGunMode(DefaultMode);
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("[#296] Zoop build mode reset to default (%s) - Smart! grid scaling owns placement"),
+		*DefaultMode->GetName());
 }
 
 void USFSubsystem::OnScaleXChanged(const FInputActionValue& Value)

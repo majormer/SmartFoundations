@@ -28,6 +28,7 @@
 #include "Config/Smart_ConfigStruct.h"
 #include "FGCentralStorageSubsystem.h"
 #include "FGDismantleInterface.h"
+#include "Shared/Power/SFWireDesignerRegistration.h"  // [#421] designer registration for direct-spawned wires
 
 FSFPowerAutoConnectManager::FSFPowerAutoConnectManager()
 {
@@ -1260,13 +1261,17 @@ void FSFPowerAutoConnectManager::OnPowerPoleBuilt(AFGBuildablePowerPole* BuiltPo
 			FActorSpawnParameters SpawnParams;
 			SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 			
-			AFGBuildableWire* NewWire = BuiltPole->GetWorld()->SpawnActor<AFGBuildableWire>(WireClass, BuiltPole->GetActorLocation(), FRotator::ZeroRotator, SpawnParams);
+			// [#421] Designer-aware spawn: derives the endpoints' Blueprint Designer and stamps it
+			// pre-BeginPlay (vanilla check()s the timing), so the wire serializes into blueprints
+			// like a hand-built one. Returns null for a designer-wall-spanning pair.
+			AFGBuildableWire* NewWire = SFWireDesigner::SpawnWireForEndpoints(
+				BuiltPole->GetWorld(), WireClass, BuiltPole->GetActorLocation(), BuiltConn, NearbyConn);
 			if (NewWire)
 			{
 				bool bConnected = NewWire->Connect(BuiltConn, NearbyConn);
 				if (bConnected)
 				{
-					UE_LOG(LogSmartAutoConnect, Verbose, TEXT("⚡ OnPowerPoleBuilt: Spawned and connected wire between %s and %s"), 
+					UE_LOG(LogSmartAutoConnect, Verbose, TEXT("⚡ OnPowerPoleBuilt: Spawned and connected wire between %s and %s"),
 						*BuiltPole->GetName(), *NearbyPole->GetName());
 					ConnectionsMade++;
 					PoleToPoleConnectionsMade++;
@@ -1275,9 +1280,9 @@ void FSFPowerAutoConnectManager::OnPowerPoleBuilt(AFGBuildablePowerPole* BuiltPo
 				{
 					UE_LOG(LogSmartAutoConnect, Verbose, TEXT("⚡ OnPowerPoleBuilt: Wire spawned but Connect() failed - destroying"));
 					// [NULL-WIRE GUARD] Dismantle, not Destroy: a failed Connect may still have
-				// registered one side; bare Destroy leaves a dead entry in that connection's
-				// SaveGame'd wire list (asserts on the owner's next dismantle / after reload).
-				IFGDismantleInterface::Execute_Dismantle(NewWire);
+					// registered one side; bare Destroy leaves a dead entry in that connection's
+					// SaveGame'd wire list (asserts on the owner's next dismantle / after reload).
+					IFGDismantleInterface::Execute_Dismantle(NewWire);
 				}
 			}
 			else
@@ -1480,24 +1485,23 @@ void FSFPowerAutoConnectManager::OnPowerPoleBuilt(AFGBuildablePowerPole* BuiltPo
 			continue;
 		}
 		
-		FActorSpawnParameters SpawnParams;
-		SpawnParams.bDeferConstruction = true;
-		AFGBuildableWire* PowerWire = BuiltPole->GetWorld()->SpawnActor<AFGBuildableWire>(PowerLineClass, SpawnParams);
+		// [#421] Designer-aware spawn (defer -> stamp designer pre-BeginPlay -> finish);
+		// null for a designer-wall-spanning pair.
+		AFGBuildableWire* PowerWire = SFWireDesigner::SpawnWireForEndpoints(
+			BuiltPole->GetWorld(), PowerLineClass, PoleLoc, PoleCircuitConns[0], BuildingConn);
 		
 		if (PowerWire)
 		{
-			FTransform WireTransform(FRotator::ZeroRotator, PoleLoc);
-			PowerWire->FinishSpawning(WireTransform);
 			PowerWire->OnBuildEffectFinished();
 			
 			// Use the circuit connection we already have from distance calculation
 			UFGCircuitConnectionComponent* PoleCircuitConn = PoleCircuitConns[0];
 			if (PoleCircuitConn && PowerWire->Connect(PoleCircuitConn, BuildingConn))
 			{
-				UE_LOG(LogSmartAutoConnect, Verbose, TEXT("⚡ OnPowerPoleBuilt: Connected to building %s (deducted cables)"), 
+				UE_LOG(LogSmartAutoConnect, Verbose, TEXT("⚡ OnPowerPoleBuilt: Connected to building %s (deducted cables)"),
 					*Building->GetName());
 				BuildingConnectionsMade++;
-				
+
 				// Remove from cached connections so other poles don't try to connect
 				Subsystem->CommittedBuildingConnections.Remove(Building);
 			}
