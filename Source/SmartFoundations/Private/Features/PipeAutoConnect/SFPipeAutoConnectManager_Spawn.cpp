@@ -1104,9 +1104,19 @@ void FSFPipeAutoConnectManager::ProcessFloorHolePipes(AFGHologram* ParentHologra
 	}
 	
 	// Collect all floor hole holograms (parent + children)
+	// [#453] Only treat the parent as a floor hole if it actually IS one. This runs off
+	// ForceRefresh (the Smart Panel's TriggerAutoConnectRefresh), which fires floor-hole
+	// processing for ANY held hologram - so on a pipeline-junction grid the junction parent was
+	// being processed as a floor hole (default thickness, endpoint below itself) and spawned a
+	// spurious FloorHolePipe dropping out its bottom. Children were already filtered by
+	// IsPassthroughPipeHologram; the parent was not. The HUD path never hit this because its
+	// junction re-eval calls only OnPipeGridChanged, not the floor-hole path.
 	TArray<AFGHologram*> AllFloorHoles;
-	AllFloorHoles.Add(ParentHologram);
-	
+	if (USFAutoConnectService::IsPassthroughPipeHologram(ParentHologram))
+	{
+		AllFloorHoles.Add(ParentHologram);
+	}
+
 	FSFHologramHelperService* HologramHelper = Subsystem->GetHologramHelper();
 	if (HologramHelper)
 	{
