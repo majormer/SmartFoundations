@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [33.2.1] - Unreleased
+
+### Fixed
+
+- **Turning off pipe auto-connect now clears the pipe previews right away** - Holding a pipeline junction near your factory buildings and switching auto-connect off from the HUD left the preview pipes hanging on screen as if they were still connected. (Belts already cleared correctly; pipes were the holdout.) Toggling pipe auto-connect off now removes those previews immediately, matching how belts behave. (Issue #450)
+
+---
+
 ## [33.2.0] - 2026-07-02
 
 > *Smart! now plays nice with Infinite Nudge's mouse-wheel rotation - the reason this is a minor version bump instead of a patch - plus a round of auto-connect and build-mode bug fixes: belts no longer vanish when you turn off distributor chaining, blueprints with auto-connected power poles work on dedicated servers, Zoop mode no longer eats your scaled grid, wall pipe supports get their panel settings back, and the hyper tube length error tells the truth.*
