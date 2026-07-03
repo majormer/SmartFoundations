@@ -9,7 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [33.2.1] - Unreleased
+## [33.3.0] - Unreleased
+
+> *(Version note: this release was originally scoped as patch 33.2.1; it became minor 33.3.0 when the auto-connect routing convergence landed on top of the bug fixes below.)*
 
 ### Fixed
 
