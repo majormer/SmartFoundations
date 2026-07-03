@@ -238,7 +238,7 @@ bool ASFConveyorBeltHologram::ApplyBeltBuildModeRouting(int32 BeltRoutingMode,
     // vanilla path no-op and fall back to the flat AutoRouteSplineWithNormals (diagnostic: vanilla=0).
     // Lazily copy them from the belt's REAL hologram CDO: build class -> buildable CDO -> mHologramClass
     // -> its CDO. mBuildMode* are reached via the AccessTransformers friend on AFGConveyorBeltHologram.
-    if (!mBuildModeCurve || !mBuildModeStraight)
+    if (!mBuildModeCurve || !mBuildModeStraight || !CachedDefaultBuildMode)
     {
         if (const TSubclassOf<AActor> BuildClass = GetBuildClass())
         {
@@ -250,6 +250,11 @@ bool ASFConveyorBeltHologram::ApplyBeltBuildModeRouting(int32 BeltRoutingMode,
                     {
                         if (!mBuildModeCurve)    { mBuildModeCurve = HoloCDO->mBuildModeCurve; }
                         if (!mBuildModeStraight) { mBuildModeStraight = HoloCDO->mBuildModeStraight; }
+                        // [#414] The belt's DEFAULT build mode too: mode 0 previously routed with
+                        // NO build mode set (C++-spawned holograms have none), the same null-mode
+                        // state that degraded every pipe route until #437. Copy the real
+                        // hologram's default so Default-mode lanes route with legitimate state.
+                        if (!CachedDefaultBuildMode) { CachedDefaultBuildMode = HoloCDO->GetDefaultBuildGunMode(); }
                     }
                 }
             }
@@ -268,8 +273,14 @@ bool ASFConveyorBeltHologram::ApplyBeltBuildModeRouting(int32 BeltRoutingMode,
         TSubclassOf<UFGHologramBuildModeDescriptor> ModeDesc = nullptr;
         if (BeltRoutingMode == 1)      { ModeDesc = mBuildModeCurve; }
         else if (BeltRoutingMode == 2) { ModeDesc = mBuildModeStraight; }
+        // [#414] Default (0) now routes with the belt's REAL default build mode instead of NO mode:
+        // a C++-spawned hologram has no build mode at all, and vanilla's routing internals degrade
+        // in that state (proven live for pipes in #437 - degenerate 2-point routes). Belts appeared
+        // fine on straight spans, where degradation is invisible; rotated/bent lanes (#396) are the
+        // suspected symptom.
+        else if (BeltRoutingMode == 0) { ModeDesc = CachedDefaultBuildMode; }
 
-        // Default (0) uses the belt's native build mode (no override). Curve/Straight override it.
+        // Default (0) with no resolvable default descriptor keeps the legacy no-override route.
         if (ModeDesc || BeltRoutingMode == 0)
         {
             if (ModeDesc) { SetBuildModeOverride(ModeDesc); }
