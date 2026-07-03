@@ -127,8 +127,10 @@ holdout). Remaining roadmap:
 - **Retire the `ScalingChildIntendedTransforms` re-apply tax**: with drift blocked everywhere
   except Tier-3, the N-tick refresh only earns its keep for stackables. Measure, then shrink its
   scope or remove it.
-- **Coordinate-keyed positioning** (the Y-growth full-refresh): separate spec,
-  `docs/Sprints/ScalingPerformance_CoordinateKeying_Spec.md`.
+- **Coordinate-keyed positioning** (the Y-growth full-refresh): **implemented 2026-07-03**
+  (`USFGridCoordComponent` — every grid child carries its unsigned cell; positioning batch and
+  stackable-AC neighbor maps read it instead of decoding spawn order; shrink evicts vanished
+  cells). Pending in-game validation.
 
 ## How to add a Tier-2 family
 
