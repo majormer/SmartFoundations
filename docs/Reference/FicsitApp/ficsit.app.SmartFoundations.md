@@ -1,6 +1,6 @@
 # <img src="https://github.com/majormer/SmartFoundations/blob/main/images/Smart-Logo.png?raw=true" width="150" alt="Smart! Logo"> Smart! Mod
 
-![Status](https://img.shields.io/badge/Status-Released-brightgreen) ![Version](https://img.shields.io/badge/Version-33.3.0-blue) ![Satisfactory](https://img.shields.io/badge/Satisfactory-1.2-blue) ![Engine](https://img.shields.io/badge/Engine-UE%205.6-blue) ![SML](https://img.shields.io/badge/SML-3.12-blue) ![Multiplayer](https://img.shields.io/badge/Multiplayer-Supported-brightgreen) ![AI Assisted Development Used](https://img.shields.io/badge/AI%20Assisted%20Development%20Used-Disclosure%20Below-blue)
+![Status](https://img.shields.io/badge/Status-Released-brightgreen) ![Version](https://img.shields.io/badge/Version-33.4.0-blue) ![Satisfactory](https://img.shields.io/badge/Satisfactory-1.2-blue) ![Engine](https://img.shields.io/badge/Engine-UE%205.6-blue) ![SML](https://img.shields.io/badge/SML-3.12-blue) ![Multiplayer](https://img.shields.io/badge/Multiplayer-Supported-brightgreen) ![AI Assisted Development Used](https://img.shields.io/badge/AI%20Assisted%20Development%20Used-Disclosure%20Below-blue)
 
 > **Multiplayer note:** As of v32.0.0, every Smart! feature works in multiplayer on dedicated servers (Windows and Linux) — including **Smart Walking** and the new-in-v33.1.0 **Hyper Tube** support. If you hit something odd in a multiplayer session, please report it on [GitHub](https://github.com/majormer/SmartFoundations/issues) or [Discord](https://discord.gg/SgXY4CwXYw).
 
@@ -113,21 +113,26 @@ See [LICENSE.md](https://github.com/majormer/SmartFoundations/blob/main/LICENSE.
 
 ---
 
-## 📰 What's New in v33.3.0: Real Routing, Everywhere
+## 📰 What's New in v33.4.0: Scaling at Scale
 
-**Current Release:** v33.3.0 puts all of Smart!'s auto-connect belt, pipe, and hyper tube routing onto the *game's own* routing. Chasing down a twisted floor-hole pipe uncovered that Smart!'s conduit previews had been routing with no build mode set — a state the game's routing never expects — which quietly degraded route shapes. This release fixes that at the root and converges every routed path onto the real thing. See the [full changelog](https://github.com/majormer/SmartFoundations/blob/main/CHANGELOG.md) for all the details.
+**Current Release:** v33.4.0 is a scaling performance release. Large grids used to get sluggish and eventually near-unusable once you pushed past a couple thousand buildings, because every previewed building was being nudged back into place every frame. Smart! now gives each previewed building a stable identity so it holds its own position — which makes grids of *tens of thousands* stay responsive, and unlocks the rest of the improvements below. See the [full changelog](https://github.com/majormer/SmartFoundations/blob/main/CHANGELOG.md) for all the details.
 
-### Auto-connect routing runs on the game's own routing
+### Large-scale building is dramatically smoother
 
-Every auto-connect belt, pipe, and hyper tube now routes through the game's real routing with the correct build mode active, so each routing style produces the same shape you'd get building it by hand. Floor-hole pipes in particular finally behave: they leave the top of a hole straight up (or the bottom straight down), rise or drop to the connector height, and enter the building connector straight on. And when a routing style genuinely can't produce a buildable shape, the preview turns red with the game's own **"Invalid Pipe Shape"** message — the same answer vanilla gives — instead of silently building a bad pipe. Extend manifold lanes, the last path still hand-rolling their splines, now route through the game's router too (honoring your routing mode, bowing naturally with length, no more odd ramp on sloped manifolds).
+Scale far higher than before and keep moving around freely while you do it. Growing a grid now only adds the new row, column, or stack — everything you already placed stays put instead of the whole preview refreshing. And jumping straight to a very large grid fills in progressively over a moment or two instead of locking the game up while everything spawns at once.
 
-### Also in v33.3.0
+### Big grids build in multiplayer without dropping anyone
 
-- **A non-default pipe or belt routing mode now stays shown on the HUD**, matching how your other settings already persist. (Issue #454)
-- **Smart Panel pipe setting changes rebuild the previews cleanly** — no more stale, overlapping pipe previews when you change tier, style, or routing. (Issue #451)
-- **The belt Chain toggle in the Smart Panel updates previews immediately.** (Issue #452)
-- **Turning off pipe auto-connect from the HUD clears the pipe previews right away.** (Issue #450)
-- **No more stray pipe dropping out the bottom of a pipeline junction** when toggling auto-connect in the Smart Panel. (Issue #453)
+The headline fix for server play: committing a very large scaled build on a dedicated server could previously freeze the server long enough that every connected player timed out and got disconnected (even though the build itself completed and saved). Large builds are now constructed in the background over a few moments, so the server stays responsive and nobody gets kicked — the buildings appear progressively as they're built.
+
+### Also in v33.4.0
+
+- **Fixed a crash** when scaling a rotated wall grid that looped back on itself (a silo-style shape) and then scaling it back down. (Issue #418)
+- **Cleaner previews** — scaled grids no longer show a scattering of stray white outline boxes over every building. (Issue #418)
+
+### Previously, in v33.3.0: Real Routing, Everywhere
+
+v33.3.0 put all of Smart!'s auto-connect belt, pipe, and hyper tube routing onto the *game's own* routing — with the correct build mode active, so each routing style produces the same shape you'd get building it by hand. Floor-hole pipes finally behave, and when a routing style genuinely can't produce a buildable shape, the preview turns red with the game's own **"Invalid Pipe Shape"** message instead of silently building a bad pipe. It also fixed a batch of Smart Panel / HUD auto-connect preview issues (Issues #450, #451, #452, #453, #454).
 
 ### Previously, in v33.2.0: Playing Nice with Other Mods
 

@@ -43,6 +43,14 @@ Scaling is active for supported single-click buildables. It uses vanilla hologra
 6. `USFGridSpawnerService::UpdateChildPositions` uses `FSFPositionCalculator` and the current transform counters to place every child.
 7. Vanilla construction builds the parent and its registered children, with costs flowing through the normal hologram child list.
 
+## Performance Model (33.4.0, #418)
+
+Three properties keep large grids usable; see the code for the details (each site is thoroughly commented).
+
+- **Cell-based identity.** Every grid child carries a `USFGridCoordComponent` holding its unsigned grid cell (parent = `[0,0,0]`), rather than being identified by its slot in the spawn-order array. `RegenerateChildHologramGrid` runs a reconcile pass each regen (evict out-of-bounds cells, adopt unassigned, compute free cells), so growing/shrinking any axis is a cell set-difference that only touches genuinely-changed cells. The positioning batch and the stackable auto-connect neighbor maps read the cell directly. This is what stopped an inner-axis (Y) grow from re-positioning the whole grid.
+- **Drift-proof children.** Grid children hold their own position (they no-op the vanilla parent-propagation `SetHologramLocationAndRotation`); see [DESIGN_Scaling_ChildTypeSelection.md](./DESIGN_Scaling_ChildTypeSelection.md) for which child class each type gets.
+- **Time-sliced bulk work.** The preview spawn burst yields at a per-frame budget and continues on the next `USFSubsystem::Tick` (`bSpawnContinuationPending`). In multiplayer, large spec construction on the authority is deferred across server frames (`SFScalingSpecExpansion::ShouldDeferSpecExpansion` / `BeginDeferredSpecExpansion`) so the server keeps servicing the net driver instead of blocking one long frame and timing out clients.
+
 ## Counter Model
 
 Scaling dimensions are stored in `FSFCounterState::GridCounters` as an `FIntVector`.

@@ -34,6 +34,10 @@ The exact direction follows the buildable's rotation. If you rotate the hologram
 
 Smart! can grow a grid in the opposite direction by using negative values. This is useful when the starting point is on the far side of a layout and you want the grid to grow back toward you.
 
+## Large Grids
+
+Smart! is built to scale far. Grids of many thousands of buildings stay responsive, and growing a grid only adds the new part — everything you already placed stays put instead of the whole preview redrawing. Jumping straight to a very large grid fills in progressively over a moment or two rather than freezing while everything appears at once. (Extremely large grids are still bounded by how much the game engine can hold at one time; Smart! will warn you as you approach that limit.)
+
 ## Supported Buildables
 
 Smart! works best with standard buildables that have a known size and normal placement behavior. Some special Satisfactory holograms are more complicated and may need dedicated Smart! support.
