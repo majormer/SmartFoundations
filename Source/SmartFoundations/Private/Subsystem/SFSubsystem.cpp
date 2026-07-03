@@ -907,6 +907,19 @@ void USFSubsystem::Tick(float DeltaTime)
 	if (HologramHelper)
 	{
 		HologramHelper->TickProgressiveBatchReposition(DeltaTime);
+
+		// #418: continue a budget-truncated spawn burst. RegenerateChildHologramGrid clears the
+		// flag on entry and its reconcile pass re-derives exactly the missing cells, so this
+		// converges (at least one child spawns per slice) and self-cancels when the hologram
+		// changes or the grid completes.
+		if (HologramHelper->IsSpawnContinuationPending() && ActiveHologram.IsValid())
+		{
+			if (USFGridSpawnerService* Spawner = GetGridSpawnerService())
+			{
+				Spawner->RegenerateChildHologramGrid();
+			}
+		}
+
 		if (!HologramHelper->IsProgressiveBatchActive() && ActiveHologram.IsValid())
 		{
 			HologramHelper->TickTrackedScalingChildTransformRefresh(ActiveHologram.Get());

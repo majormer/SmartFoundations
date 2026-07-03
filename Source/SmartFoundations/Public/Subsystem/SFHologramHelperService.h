@@ -38,6 +38,13 @@ public:
 	/** Maximum number of grid children before engine crash (UObject limit protection) */
 	static constexpr int32 GRID_CHILDREN_HARD_CAP = 2000;
 
+	/** #418: per-frame wall-clock budget for the preview-child spawn burst. A Smart Panel stack
+	 *  jump used to spawn 15K-45K children in ONE frame (multi-second freeze); the spawn loop now
+	 *  yields at this budget and USFSubsystem::Tick re-runs the regen until the grid completes -
+	 *  safe because the coordinate-keying reconcile pass makes repeated regens converge on
+	 *  exactly the missing cells. */
+	static constexpr double GRID_SPAWN_FRAME_BUDGET_MS = 8.0;
+
 	/** Threshold for triggering large grid destruction warning */
 	static constexpr int32 LARGE_GRID_WARNING_THRESHOLD = 100;
 
@@ -348,6 +355,10 @@ public:
 	 */
 	bool IsProgressiveBatchActive() const { return bProgressiveBatchActive; }
 
+	/** #418: true when a spawn slice hit GRID_SPAWN_FRAME_BUDGET_MS with children still to
+	 *  spawn; USFSubsystem::Tick re-runs the grid regen until this clears. */
+	bool IsSpawnContinuationPending() const { return bSpawnContinuationPending; }
+
 	/**
 	 * Get current batch progress
 	 * @return Progress from 0.0 to 1.0
@@ -458,6 +469,10 @@ private:
 
 	/** Flag indicating progressive batch is active */
 	bool bProgressiveBatchActive = false;
+
+	/** #418: spawn burst was budget-truncated; the next regen continues it (see
+	 *  GRID_SPAWN_FRAME_BUDGET_MS). Cleared at the top of every RegenerateChildHologramGrid. */
+	bool bSpawnContinuationPending = false;
 
 	// ========================================
 	// UObject Warning System State (Phase 5)

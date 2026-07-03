@@ -4,6 +4,7 @@
 #include "SmartFoundations.h"
 #include "Subsystem/SFHologramHelperServiceImpl.h"
 #include "Holograms/Logistics/SFPipelinePoleChildHologram.h"
+#include "Features/Scaling/SFGridCoordComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/StaticMesh.h"
 
@@ -190,6 +191,10 @@ void FSFHologramHelperService::RegenerateChildHologramGrid(
 	{
 		return;
 	}
+
+	// #418: every regen owns its own continuation decision; the spawn loop below re-sets this
+	// if it hits the frame budget with children still missing.
+	bSpawnContinuationPending = false;
 
 	// Issue #160: Detect vanilla Zoop and force 1x1x1 grid to prevent overlapping holograms
 	// When Zoop is active (mDesiredZoop != 0), both Smart! and Zoop would create children,
@@ -404,6 +409,109 @@ void FSFHologramHelperService::RegenerateChildHologramGrid(
 
 	int32 CurrentChildren = SpawnedChildren.Num();
 
+	// #418 coordinate keying - RECONCILE PASS (runs before the count-delta branches). One sweep
+	// over the children decides everything from CELLS, not counts:
+	//   - children whose cell fell OUTSIDE the new grid bounds are evicted here (also covers
+	//     mixed axis changes like X-shrink + Y-grow in a single Smart Panel apply, which the
+	//     count-delta branches alone mis-handle);
+	//   - children without a cell adopt a free cell (self-heal; normally none);
+	//   - FreeCells = cell universe minus occupied cells, canonical Z->X->Y order, ready for
+	//     the spawn branch below.
+	// CRASH-SAFE eviction ordering: remove from SpawnedChildren FIRST, then queue.
+	// QueueChildForDestroy itself calls SpawnedChildren.Remove(Child), so queue-then-RemoveAt
+	// double-removes and indexes one past the end (the walls-silo "1438 into 1438" crash).
+	TArray<FIntVector> FreeCells;
+	{
+		const int32 CellXCount = FMath::Abs(GridCounters.X);
+		const int32 CellYCount = FMath::Abs(GridCounters.Y);
+		const int32 CellZCount = FMath::Abs(GridCounters.Z);
+
+		TSet<FIntVector> OccupiedCells;
+		TArray<TWeakObjectPtr<AFGHologram>> UnassignedChildren;
+		bool bEvictedAny = false;
+		for (int32 Idx = SpawnedChildren.Num() - 1; Idx >= 0; --Idx)
+		{
+			const TWeakObjectPtr<AFGHologram> Candidate = SpawnedChildren[Idx];  // BY VALUE - the array mutates below
+			if (!Candidate.IsValid())
+			{
+				continue;  // stale entries were scrubbed above
+			}
+
+			FIntVector Cell;
+			if (!USFGridCoordComponent::TryGetCell(Candidate.Get(), Cell))
+			{
+				UnassignedChildren.Add(Candidate);
+				continue;
+			}
+
+			if (Cell.X >= CellXCount || Cell.Y >= CellYCount || Cell.Z >= CellZCount)
+			{
+				SpawnedChildren.RemoveAt(Idx);  // FIRST - see ordering note above
+				UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Evicting out-of-bounds cell [%d,%d,%d] child %s"),
+					Cell.X, Cell.Y, Cell.Z, *Candidate->GetName());
+				QueueChildForDestroy(Candidate.Get());
+				bEvictedAny = true;
+			}
+			else
+			{
+				OccupiedCells.Add(Cell);
+			}
+		}
+
+		for (int32 Z = 0; Z < CellZCount; ++Z)
+		{
+			for (int32 X = 0; X < CellXCount; ++X)
+			{
+				for (int32 Y = 0; Y < CellYCount; ++Y)
+				{
+					if (X == 0 && Y == 0 && Z == 0)
+					{
+						continue; // parent cell - never assigned to a child
+					}
+					const FIntVector Cell(X, Y, Z);
+					if (!OccupiedCells.Contains(Cell))
+					{
+						FreeCells.Add(Cell);
+					}
+				}
+			}
+		}
+
+		// Children that predate coordinate keying (or lost their component) adopt free cells
+		// first so they re-enter the stable-identity model. Normally empty.
+		for (const TWeakObjectPtr<AFGHologram>& Unassigned : UnassignedChildren)
+		{
+			if (FreeCells.Num() == 0)
+			{
+				break;
+			}
+			USFGridCoordComponent::AssignCell(Unassigned.Get(), FreeCells[0]);
+			FreeCells.RemoveAt(0);
+		}
+
+		if (bEvictedAny)
+		{
+			CurrentChildren = SpawnedChildren.Num();
+
+			// Evicted children may carry cached auto-connect belt costs - clear them so the
+			// parent's next cost aggregation doesn't include destroyed previews.
+			if (USFSubsystem* Subsystem = USFSubsystem::Get(ParentHologram->GetWorld()))
+			{
+				if (USFAutoConnectService* AutoConnect = Subsystem->GetAutoConnectService())
+				{
+					for (const TWeakObjectPtr<AFGHologram>& RemovedChild : PendingDestroyChildren)
+					{
+						if (RemovedChild.IsValid())
+						{
+							AutoConnect->ClearBeltCostsForDistributor(RemovedChild.Get());
+						}
+					}
+				}
+			}
+		}
+	}
+	int32 NextFreeCell = 0;
+
 	// Track if grid changed for belt preview cleanup
 	int32 ToSpawn = 0;
 	int32 ToRemove = 0;
@@ -450,8 +558,28 @@ void FSFHologramHelperService::RegenerateChildHologramGrid(
 		// Check if this is a water extractor for extra logging
 		bool bIsWaterExtractor = ParentHologram->IsA(AFGWaterPumpHologram::StaticClass());
 
+		// #418 coordinate keying: FreeCells was computed by the reconcile pass above (cell
+		// universe minus occupied, canonical Z->X->Y order). New children bind to those cells;
+		// existing children keep theirs, so their targets are untouched by this regen.
+
+		// #418: time-budget the spawn burst. A Smart Panel stack jump used to spawn 15K-45K
+		// children in ONE frame (multi-second client freeze). Now the loop yields at
+		// GRID_SPAWN_FRAME_BUDGET_MS and USFSubsystem::Tick re-runs the regen next frame - the
+		// reconcile pass re-derives exactly the still-missing cells, so repeated regens converge.
+		const double SpawnSliceStart = FPlatformTime::Seconds();
+		const double SpawnSliceBudget = GRID_SPAWN_FRAME_BUDGET_MS / 1000.0;
+
 		for (int32 i = 0; i < ToSpawn; ++i)
 		{
+			if (i > 0 && (i & 7) == 0
+				&& (FPlatformTime::Seconds() - SpawnSliceStart) >= SpawnSliceBudget)
+			{
+				bSpawnContinuationPending = true;
+				UE_LOG(LogSmartFoundations, Verbose,
+					TEXT("RegenerateChildHologramGrid: spawn budget reached after %d/%d children - continuing next frame."),
+					i, ToSpawn);
+				break;
+			}
 			// Use global counter for unique names (prevents collisions when children are destroyed and respawned)
 			FName ChildName = FName(*FString::Printf(TEXT("GridChild_%d"), ChildSpawnCounter++));
 
@@ -888,6 +1016,19 @@ void FSFHologramHelperService::RegenerateChildHologramGrid(
 
 				SpawnedChildren.Add(ChildHologram);
 
+				// #418 coordinate keying: bind the child to its grid cell (its identity from here
+				// on). Applies to every tier - Smart classes and vanilla-delegate stackables alike.
+				if (NextFreeCell < FreeCells.Num())
+				{
+					USFGridCoordComponent::AssignCell(ChildHologram, FreeCells[NextFreeCell++]);
+				}
+				else
+				{
+					UE_LOG(LogSmartFoundations, Verbose,
+						TEXT("RegenerateChildHologramGrid: no free cell for spawned child %s (freeCells=%d, toSpawn=%d) - child stays unassigned until next regen"),
+						*ChildName.ToString(), FreeCells.Num(), ToSpawn);
+				}
+
 				// Log child hologram lock state for Task 38 diagnostics
 				const bool bChildLocked = ChildHologram->IsHologramLocked();
 				const bool bChildCanLock = ChildHologram->CanLockHologram();
@@ -947,6 +1088,10 @@ void FSFHologramHelperService::RegenerateChildHologramGrid(
 
 		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("RegenerateChildHologramGrid: Removing %d excess children..."), ToRemove);
 
+		// #418: the reconcile pass above already evicted every out-of-bounds cell, so reaching
+		// this branch means cell bookkeeping is inconsistent (e.g. duplicate cells). Trim LIFO -
+		// Pop FIRST, then queue (QueueChildForDestroy's internal Remove becomes a no-op) - so
+		// the child count converges; cell identity self-heals on the next regen.
 		for (int32 i = 0; i < ToRemove; ++i)
 		{
 			if (SpawnedChildren.Num() > 0)
@@ -954,7 +1099,7 @@ void FSFHologramHelperService::RegenerateChildHologramGrid(
 				TWeakObjectPtr<AFGHologram> ChildToRemove = SpawnedChildren.Pop();
 				if (ChildToRemove.IsValid())
 				{
-					UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Queueing child for destroy: %s"), *ChildToRemove->GetName());
+					UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Queueing child for destroy (LIFO trim): %s"), *ChildToRemove->GetName());
 					QueueChildForDestroy(ChildToRemove.Get());
 				}
 			}

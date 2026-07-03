@@ -7,6 +7,7 @@
 
 #include "Features/AutoConnect/SFAutoConnectServiceImpl.h"
 #include "Features/HypertubeAutoConnect/SFHypertubeSpanBuilder.h"   // #405: SFHypertube::BuildOrUpdateSpan (new slice)
+#include "Features/Scaling/SFGridCoordComponent.h"                  // #418: children carry their own grid cell
 
 // Shared belt/pipe auto-connect exit-normal resolver (#398 belts, #400 pipes, + wall hardening). Exits each support
 // along its FACING so a rotated/arc run BOWS toward the connector normal instead of a straight chord that facets at
@@ -196,26 +197,16 @@ void USFAutoConnectService::ProcessStackableConveyorPoles(AFGHologram* ParentHol
 	// Parent is at [0,0,0]
 	GridToHologram.Add(PackGridPos(0, 0, 0), ParentHologram);
 	
-	// Map children to their grid positions based on spawn order
-	// Spawn order: Z → X → Y, skipping [0,0,0]
-	int32 ChildIndex = 0;
-	for (int32 Z = 0; Z < ZCount && ChildIndex < SpawnedChildren.Num(); ++Z)
+	// #418 coordinate keying: children carry their own grid cell (USFGridCoordComponent) - read
+	// it directly instead of re-deriving cells from spawn order, which silently mis-mapped
+	// neighbors whenever an inner grid axis grew mid-placement.
+	for (const TWeakObjectPtr<AFGHologram>& ChildPtr : SpawnedChildren)
 	{
-		for (int32 X = 0; X < XCount && ChildIndex < SpawnedChildren.Num(); ++X)
+		FIntVector Cell;
+		if (ChildPtr.IsValid() && IsBeltSupportHologram(ChildPtr.Get())
+			&& USFGridCoordComponent::TryGetCell(ChildPtr.Get(), Cell))
 		{
-			for (int32 Y = 0; Y < YCount && ChildIndex < SpawnedChildren.Num(); ++Y)
-			{
-				if (X == 0 && Y == 0 && Z == 0)
-				{
-					continue; // Skip parent position
-				}
-				
-				if (SpawnedChildren[ChildIndex].IsValid() && IsBeltSupportHologram(SpawnedChildren[ChildIndex].Get()))
-				{
-					GridToHologram.Add(PackGridPos(X, Y, Z), SpawnedChildren[ChildIndex].Get());
-				}
-				ChildIndex++;
-			}
+			GridToHologram.Add(PackGridPos(Cell.X, Cell.Y, Cell.Z), ChildPtr.Get());
 		}
 	}
 	
@@ -507,26 +498,16 @@ void USFAutoConnectService::ProcessStackablePipelineSupports(AFGHologram* Parent
 	// Parent is at [0,0,0]
 	GridToHologram.Add(PackGridPos(0, 0, 0), ParentHologram);
 	
-	// Map children to their grid positions based on spawn order
-	// Spawn order: Z → X → Y, skipping [0,0,0]
-	int32 ChildIndex = 0;
-	for (int32 Z = 0; Z < ZCount && ChildIndex < SpawnedChildren.Num(); ++Z)
+	// #418 coordinate keying: children carry their own grid cell (USFGridCoordComponent) - read
+	// it directly instead of re-deriving cells from spawn order, which silently mis-mapped
+	// neighbors whenever an inner grid axis grew mid-placement.
+	for (const TWeakObjectPtr<AFGHologram>& ChildPtr : SpawnedChildren)
 	{
-		for (int32 X = 0; X < XCount && ChildIndex < SpawnedChildren.Num(); ++X)
+		FIntVector Cell;
+		if (ChildPtr.IsValid() && IsPipeSupportHologram(ChildPtr.Get())
+			&& USFGridCoordComponent::TryGetCell(ChildPtr.Get(), Cell))
 		{
-			for (int32 Y = 0; Y < YCount && ChildIndex < SpawnedChildren.Num(); ++Y)
-			{
-				if (X == 0 && Y == 0 && Z == 0)
-				{
-					continue; // Skip parent position
-				}
-				
-				if (SpawnedChildren[ChildIndex].IsValid() && IsPipeSupportHologram(SpawnedChildren[ChildIndex].Get()))
-				{
-					GridToHologram.Add(PackGridPos(X, Y, Z), SpawnedChildren[ChildIndex].Get());
-				}
-				ChildIndex++;
-			}
+			GridToHologram.Add(PackGridPos(Cell.X, Cell.Y, Cell.Z), ChildPtr.Get());
 		}
 	}
 	
@@ -711,23 +692,16 @@ void USFAutoConnectService::ProcessStackableHypertubeSupports(AFGHologram* Paren
 
 	GridToHologram.Add(PackGridPos(0, 0, 0), ParentHologram);
 
-	int32 ChildIndex = 0;
-	for (int32 Z = 0; Z < ZCount && ChildIndex < SpawnedChildren.Num(); ++Z)
+	// #418 coordinate keying: children carry their own grid cell (USFGridCoordComponent) - read
+	// it directly instead of re-deriving cells from spawn order, which silently mis-mapped
+	// neighbors whenever an inner grid axis grew mid-placement.
+	for (const TWeakObjectPtr<AFGHologram>& ChildPtr : SpawnedChildren)
 	{
-		for (int32 X = 0; X < XCount && ChildIndex < SpawnedChildren.Num(); ++X)
+		FIntVector Cell;
+		if (ChildPtr.IsValid() && IsStackableHypertubeSupportHologram(ChildPtr.Get())
+			&& USFGridCoordComponent::TryGetCell(ChildPtr.Get(), Cell))
 		{
-			for (int32 Y = 0; Y < YCount && ChildIndex < SpawnedChildren.Num(); ++Y)
-			{
-				if (X == 0 && Y == 0 && Z == 0)
-				{
-					continue;
-				}
-				if (SpawnedChildren[ChildIndex].IsValid() && IsStackableHypertubeSupportHologram(SpawnedChildren[ChildIndex].Get()))
-				{
-					GridToHologram.Add(PackGridPos(X, Y, Z), SpawnedChildren[ChildIndex].Get());
-				}
-				ChildIndex++;
-			}
+			GridToHologram.Add(PackGridPos(Cell.X, Cell.Y, Cell.Z), ChildPtr.Get());
 		}
 	}
 
