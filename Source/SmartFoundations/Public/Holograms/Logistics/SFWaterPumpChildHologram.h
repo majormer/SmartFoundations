@@ -35,6 +35,8 @@ public:
 
 	// Begin AFGHologram Interface
 	virtual void CheckValidPlacement() override;
+	/** #418: no-op — blocks vanilla parent-propagation resets; Smart! positions via SetActorLocation. */
+	virtual void SetHologramLocationAndRotation(const FHitResult& hitResult) override;
 	virtual AActor* Construct(TArray<AActor*>& out_children, FNetConstructionID constructionID) override;
 	// End AFGHologram Interface
 

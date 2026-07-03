@@ -36,6 +36,17 @@ void ASFWaterPumpChildHologram::CheckValidPlacement()
 	}
 }
 
+void ASFWaterPumpChildHologram::SetHologramLocationAndRotation(const FHitResult& hitResult)
+{
+	// #418: Block vanilla parent propagation from repositioning this child — the same no-op every
+	// other Smart grid child class uses. Smart! positions children via SetActorLocation. This was
+	// the LAST Smart child class without the override: parent propagation dragged pump children
+	// toward the hit result each frame, so the tick-driven water check sometimes ran against the
+	// wrong (reset) location between intended-transform re-apply passes. ValidateWaterPosition()
+	// keys entirely off GetActorLocation(), so blocking vanilla repositioning makes the water
+	// validation strictly more correct.
+}
+
 void ASFWaterPumpChildHologram::ConfigureActor(AFGBuildable* inBuildable) const
 {
 	// Skip AFGResourceExtractorHologram::ConfigureActor which asserts mSnappedExtractableResource.

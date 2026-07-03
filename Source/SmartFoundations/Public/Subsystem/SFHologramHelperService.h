@@ -498,8 +498,14 @@ private:
 	void CompleteBatchReposition();
 
 	/**
-	 * Spawn a single child hologram at specified position/rotation
-	 * 
+	 * Spawn a single child hologram at specified position/rotation.
+	 *
+	 * VANILLA-DELEGATE path (Tier 3, docs/Features/Scaling/DESIGN_Scaling_ChildTypeSelection.md):
+	 * spawns the recipe's own vanilla hologram class. Only STACKABLE conveyor/pipe/hypertube
+	 * supports use this - their vanilla holograms carry stack/connection behavior the stackable
+	 * AC preview depends on (#341/#354/#364). Vanilla children have no drift override and rely
+	 * on the intended-transform re-apply to hold position.
+	 *
 	 * @param ParentHologram Parent to spawn from
 	 * @param ChildName Unique name for child (prevents collision assertions)
 	 * @param Position World position for child
@@ -511,6 +517,23 @@ private:
 		FName ChildName,
 		const FVector& Position,
 		const FRotator& Rotation
+	);
+
+	/**
+	 * #418 Tier 1 (docs/Features/Scaling/DESIGN_Scaling_ChildTypeSelection.md): spawn the generic
+	 * drift-proof grid child (ASFBuildableChildHologram) for any plain-buildable parent -
+	 * foundations, walls, lights, machines, and every type without an explicit Tier-2 branch.
+	 * The child no-ops SetHologramLocationAndRotation (blocks vanilla parent-propagation resets),
+	 * always validates OK, skips clearance, hides the ClearanceBox visualization mesh (the "white
+	 * lines"), and carries the parent's stored production recipe so scaled machines keep their
+	 * selected recipe (constraint C1).
+	 *
+	 * @return Spawned child hologram, or nullptr if failed
+	 */
+	AFGHologram* SpawnBuildableChildHologram(
+		AFGHologram* ParentHologram,
+		FName ChildName,
+		const FVector& SpawnLocation
 	);
 
 public:
