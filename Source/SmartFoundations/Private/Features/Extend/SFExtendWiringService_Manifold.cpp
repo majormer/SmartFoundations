@@ -560,6 +560,90 @@ void USFExtendWiringService::WireManifoldBelt(AFGBuildableConveyorBelt* BuiltBel
         BuiltBelt->GetConveyorBucketID());
 }
 
+// [#401/#414] Route a manifold lane through the ENGINE router and return WORLD-space spline data
+// ready for the built actor (Respline / GetMutableSplinePointData - both consume the same space
+// the legacy hand-rolled points used). The manifold lanes were the last routed lane path still
+// hand-rolling a fixed-tangent 2-point spline on the BUILT actor (no routing-mode support,
+// length-independent x100 bow, slope ramp on non-flat manifolds). A transient routing hologram -
+// the same classes every auto-connect preview uses, running the descriptor-correct engine path -
+// computes the real route, is harvested, and destroyed. Normals are the connectors' OUTWARD
+// facings (the router negates the end side internally, like every other lane path).
+static bool RouteManifoldSpanViaEngine(UWorld* World, UClass* ConduitBuildClass, bool bIsPipe,
+	const FVector& StartPos, const FVector& StartNormal, const FVector& EndPos, const FVector& EndNormal,
+	TArray<FSplinePointData>& OutWorldSplineData)
+{
+	if (!World || !ConduitBuildClass)
+	{
+		return false;
+	}
+
+	FActorSpawnParameters Params;
+	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+	OutWorldSplineData.Reset();
+	AFGHologram* ToDestroy = nullptr;
+	const TArray<FSplinePointData>* LocalData = nullptr;
+	FTransform SplineXf = FTransform::Identity;
+
+	if (bIsPipe)
+	{
+		ASFPipelineHologram* Pipe = World->SpawnActor<ASFPipelineHologram>(ASFPipelineHologram::StaticClass(), StartPos, FRotator::ZeroRotator, Params);
+		if (!Pipe)
+		{
+			return false;
+		}
+		Pipe->SetReplicates(false);
+		Pipe->SetActorHiddenInGame(true);
+		Pipe->SetActorEnableCollision(false);
+		Pipe->SetBuildClass(ConduitBuildClass);
+		Pipe->RoutePipeLaneWithConfiguredMode(StartPos, StartNormal, EndPos, EndNormal);
+		LocalData = &Pipe->GetSplineData();
+		SplineXf = Pipe->GetSplineComponent() ? Pipe->GetSplineComponent()->GetComponentTransform() : Pipe->GetActorTransform();
+		ToDestroy = Pipe;
+	}
+	else
+	{
+		ASFConveyorBeltHologram* Belt = World->SpawnActor<ASFConveyorBeltHologram>(ASFConveyorBeltHologram::StaticClass(), StartPos, FRotator::ZeroRotator, Params);
+		if (!Belt)
+		{
+			return false;
+		}
+		Belt->SetReplicates(false);
+		Belt->SetActorHiddenInGame(true);
+		Belt->SetActorEnableCollision(false);
+		Belt->SetBuildClass(ConduitBuildClass);
+		Belt->RouteLaneWithConfiguredMode(StartPos, StartNormal, EndPos, EndNormal);
+		LocalData = &Belt->GetSplineData();
+		SplineXf = Belt->GetSplineComponent() ? Belt->GetSplineComponent()->GetComponentTransform() : Belt->GetActorTransform();
+		ToDestroy = Belt;
+	}
+
+	if (LocalData)
+	{
+		for (const FSplinePointData& Local : *LocalData)
+		{
+			FSplinePointData WorldPoint;
+			WorldPoint.Location = SplineXf.TransformPosition(Local.Location);
+			WorldPoint.ArriveTangent = SplineXf.TransformVectorNoScale(Local.ArriveTangent);
+			WorldPoint.LeaveTangent = SplineXf.TransformVectorNoScale(Local.LeaveTangent);
+			OutWorldSplineData.Add(WorldPoint);
+		}
+	}
+	if (ToDestroy)
+	{
+		ToDestroy->Destroy();
+	}
+
+	if (OutWorldSplineData.Num() < 2)
+	{
+		SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Warning,
+			TEXT("RouteManifoldSpanViaEngine: engine route produced %d points - caller falls back to the legacy 2-point spline"),
+			OutWorldSplineData.Num());
+		return false;
+	}
+	return true;
+}
+
 bool USFExtendWiringService::CreateManifoldBelt(UFGFactoryConnectionComponent* FromConnector, UFGFactoryConnectionComponent* ToConnector)
 {
     if (!FromConnector || !ToConnector)
@@ -597,19 +681,26 @@ bool USFExtendWiringService::CreateManifoldBelt(UFGFactoryConnectionComponent* F
     FVector StartForward = FromConnector->GetForwardVector();
     FVector EndForward = -ToConnector->GetForwardVector();  // Negate for facing inward
 
-    // Create spline data (simple 2-point belt)
+    // [#401/#414] Engine-route the manifold lane (honors the player's belt routing mode,
+    // length-aware bows, and chord pitch on sloped manifolds). The router takes OUTWARD
+    // connector normals. Falls back to the legacy fixed-tangent 2-point spline on failure.
     TArray<FSplinePointData> SplineData;
-    FSplinePointData StartPoint;
-    StartPoint.Location = StartPos;
-    StartPoint.ArriveTangent = StartForward * 100.0f;
-    StartPoint.LeaveTangent = StartForward * 100.0f;
-    SplineData.Add(StartPoint);
+    if (!RouteManifoldSpanViaEngine(World, BeltClass, /*bIsPipe=*/false,
+        StartPos, StartForward, EndPos, ToConnector->GetForwardVector(), SplineData))
+    {
+        SplineData.Reset();
+        FSplinePointData StartPoint;
+        StartPoint.Location = StartPos;
+        StartPoint.ArriveTangent = StartForward * 100.0f;
+        StartPoint.LeaveTangent = StartForward * 100.0f;
+        SplineData.Add(StartPoint);
 
-    FSplinePointData EndPoint;
-    EndPoint.Location = EndPos;
-    EndPoint.ArriveTangent = EndForward * 100.0f;
-    EndPoint.LeaveTangent = EndForward * 100.0f;
-    SplineData.Add(EndPoint);
+        FSplinePointData EndPoint;
+        EndPoint.Location = EndPos;
+        EndPoint.ArriveTangent = EndForward * 100.0f;
+        EndPoint.LeaveTangent = EndForward * 100.0f;
+        SplineData.Add(EndPoint);
+    }
 
     // Spawn belt
     FActorSpawnParameters SpawnParams;
@@ -699,19 +790,26 @@ bool USFExtendWiringService::CreateManifoldPipe(UFGPipeConnectionComponentBase* 
     FVector StartForward = FromConnector->GetForwardVector();
     FVector EndForward = -ToConnector->GetForwardVector();
 
-    // Create spline data (simple 2-point pipe)
+    // [#401/#414] Engine-route the manifold lane (honors the player's pipe routing mode,
+    // length-aware bows, and chord pitch on sloped manifolds). The router takes OUTWARD
+    // connector normals. Falls back to the legacy fixed-tangent 2-point spline on failure.
     TArray<FSplinePointData> SplineData;
-    FSplinePointData StartPoint;
-    StartPoint.Location = StartPos;
-    StartPoint.ArriveTangent = StartForward * 100.0f;
-    StartPoint.LeaveTangent = StartForward * 100.0f;
-    SplineData.Add(StartPoint);
+    if (!RouteManifoldSpanViaEngine(World, PipeClass, /*bIsPipe=*/true,
+        StartPos, StartForward, EndPos, ToConnector->GetForwardVector(), SplineData))
+    {
+        SplineData.Reset();
+        FSplinePointData StartPoint;
+        StartPoint.Location = StartPos;
+        StartPoint.ArriveTangent = StartForward * 100.0f;
+        StartPoint.LeaveTangent = StartForward * 100.0f;
+        SplineData.Add(StartPoint);
 
-    FSplinePointData EndPoint;
-    EndPoint.Location = EndPos;
-    EndPoint.ArriveTangent = EndForward * 100.0f;
-    EndPoint.LeaveTangent = EndForward * 100.0f;
-    SplineData.Add(EndPoint);
+        FSplinePointData EndPoint;
+        EndPoint.Location = EndPos;
+        EndPoint.ArriveTangent = EndForward * 100.0f;
+        EndPoint.LeaveTangent = EndForward * 100.0f;
+        SplineData.Add(EndPoint);
+    }
 
     // Spawn pipe with DEFERRED construction (same technique as BuildExtendPipeAndReturn)
     FActorSpawnParameters SpawnParams;
