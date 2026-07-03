@@ -5,7 +5,7 @@ date: 2026-04-24
 status: Active
 category: Features
 tags: [scaling, grid, child_holograms, buildable_size_registry]
-related: [../Transforms/IMPL_Transforms_CurrentFlow.md, ../SmartPanel/IMPL_SmartPanel_CurrentFlow.md]
+related: [./DESIGN_Scaling_ChildTypeSelection.md, ../Transforms/IMPL_Transforms_CurrentFlow.md, ../SmartPanel/IMPL_SmartPanel_CurrentFlow.md]
 ---
 
 # Smart Scaling Current Flow
