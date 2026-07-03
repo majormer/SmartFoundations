@@ -608,27 +608,27 @@ bool ASFPipelineHologram::TryUseBuildModeRouting(
 	default: break;
 	}
 
-	bool bDescriptorRouted = false;
+	// [#437 round 4 - live-validated finding] Setting the descriptor MATTERS but is not enough on
+	// its own. With the descriptor set, routing all six modes through the top-level
+	// AutoRouteSpline produced IDENTICAL output (points=6 len=1526 for every mode, logged live)
+	// - pipes' AutoRouteSpline does NOT dispatch on the build mode; the per-mode dispatch lives
+	// in the build-gun-driven SetHologramLocationAndRotation, which we cannot call without a
+	// build gun. The original [#383] finding stands (owned: round 3 re-litigated it and lost).
+	// HOWEVER: the descriptor state is what fixed the previously-degenerate output - vanilla's
+	// route internals misbehave on a hologram with NO build mode set, which a C++-spawned
+	// hologram never had. So the correct architecture = vanilla's mode state (descriptor) + the
+	// SAME per-mode leaf dispatch vanilla's own SetHologramLocationAndRotation performs. The
+	// leaf functions ARE the real vanilla routing; we only replicate the one switch above them.
 	if (ModeDesc)
 	{
 		SetBuildModeOverride(ModeDesc);
-		AutoRouteSpline(StartPos, StartNormal, EndPos, EndNormal);
-		AFGSplineHologram::UpdateSplineComponent();
-
-		const int32 DescPoints = mSplineData.Num();
-		const float DescLen = mSplineComponent->GetSplineLength();
-		bDescriptorRouted = (DescPoints >= 2 && DescLen >= 50.0f);
-		// Log at Log level while #437 validates: the point count is the mode-awareness tell
-		// (H2V should give the 6-point riser/elbow shape here, not a 2-point Auto route).
-		UE_LOG(LogSmartHologram, Log,
-			TEXT("[PipeRoute] DESCRIPTOR path %s (mode=%d desc=%s points=%d len=%.0f) %s"),
-			bDescriptorRouted ? TEXT("used") : TEXT("STUB - falling through to leaf dispatch"),
-			RoutingMode, *ModeDesc->GetName(), DescPoints, DescLen, *GetName());
 	}
+	UE_LOG(LogSmartHologram, Log,
+		TEXT("[PipeRoute] mode=%d desc=%s -> leaf dispatch %s"),
+		RoutingMode, ModeDesc ? *ModeDesc->GetName() : TEXT("NONE"), *GetName());
 
-	// FALLBACK: direct leaf-function dispatch (descriptor unavailable or vanilla returned a stub).
+	// Vanilla's own per-mode route functions, running with legitimate mode state.
 	// 0=Auto, 1=Auto2D, 2=Straight, 3=Curve, 4=Noodle, 5=HorizontalToVertical
-	if (!bDescriptorRouted)
 	switch (RoutingMode)
 	{
 	case 1:
