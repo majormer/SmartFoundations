@@ -56,41 +56,10 @@ public:
 		const FVector& AnchorOffset = FVector::ZeroVector
 	) const;
 
-	/**
-	 * Update positions for all child holograms in grid
-	 * 
-	 * @param Children Array of child hologram weak pointers
-	 * @param CounterState Current counter values
-	 * @param ParentLocation Parent hologram location
-	 * @param ParentRotation Parent hologram rotation
-	 * @param ItemSize Building dimensions
-	 */
-	void UpdateChildPositions(
-		const TArray<TWeakObjectPtr<AFGHologram>>& Children,
-		const FSFCounterState& CounterState,
-		const FVector& ParentLocation,
-		const FRotator& ParentRotation,
-		const FVector& ItemSize
-	);
-
-	/**
-	 * Update child positions to match parent transform changes
-	 * Optimized version that only updates if parent moved
-	 * 
-	 * @param Children Array of child holograms
-	 * @param CounterState Counter values
-	 * @param CurrentTransform Current parent transform
-	 * @param LastKnownTransform Last cached transform (for change detection)
-	 * @param ItemSize Building dimensions
-	 * @return true if positions were updated, false if no change
-	 */
-	bool UpdateChildrenForCurrentTransform(
-		const TArray<TWeakObjectPtr<AFGHologram>>& Children,
-		const FSFCounterState& CounterState,
-		const FTransform& CurrentTransform,
-		FTransform& LastKnownTransform,
-		const FVector& ItemSize
-	);
+	// #418: the array-walking UpdateChildPositions / UpdateChildrenForCurrentTransform pair was
+	// removed - DEAD code (no callers; the live positioning path is
+	// USFGridSpawnerService::UpdateChildPositions) and the last copy of the
+	// spawn-order->coordinate decode that coordinate keying (USFGridCoordComponent) retired.
 
 	// ========================================
 	// Native Nudge Coordination (PRD Requirement)

@@ -4,6 +4,9 @@
 #include "SmartFoundations.h"
 #include "Subsystem/SFHologramHelperServiceImpl.h"
 #include "Holograms/Logistics/SFPipelinePoleChildHologram.h"
+#include "Features/Scaling/SFGridCoordComponent.h"
+#include "Components/StaticMeshComponent.h"
+#include "Engine/StaticMesh.h"
 
 namespace
 {
@@ -189,6 +192,10 @@ void FSFHologramHelperService::RegenerateChildHologramGrid(
 		return;
 	}
 
+	// #418: every regen owns its own continuation decision; the spawn loop below re-sets this
+	// if it hits the frame budget with children still missing.
+	bSpawnContinuationPending = false;
+
 	// Issue #160: Detect vanilla Zoop and force 1x1x1 grid to prevent overlapping holograms
 	// When Zoop is active (mDesiredZoop != 0), both Smart! and Zoop would create children,
 	// resulting in duplicate buildings at the same location.
@@ -266,6 +273,15 @@ void FSFHologramHelperService::RegenerateChildHologramGrid(
 
 	// Task 38: Log parent lock state during grid regeneration
 	const bool bParentLocked = ParentHologram->IsHologramLocked();
+
+	// #418 Tier true-up: decide the child spawn strategy once per regen. STACKABLE
+	// conveyor/pipe/hypertube supports are the only family left on vanilla child holograms
+	// (Tier 3 vanilla-delegate) - their vanilla holograms carry the stack/connection behavior
+	// the stackable AC preview builds against (#341/#354/#364). Build-class-based check, same
+	// predicate family the stackable AC uses. Every parent type not caught by an explicit
+	// Tier-2 branch below goes through the generic drift-proof ASFBuildableChildHologram
+	// (Tier 1, docs/Features/Scaling/DESIGN_Scaling_ChildTypeSelection.md).
+	const bool bVanillaDelegateChildren = USFAutoConnectService::IsStackableSupportHologram(ParentHologram);
 
 	// Phase 0: Forward grid size validation to ValidationService (Task #61.6)
 	int32 ChildrenNeeded = 0;
@@ -393,6 +409,109 @@ void FSFHologramHelperService::RegenerateChildHologramGrid(
 
 	int32 CurrentChildren = SpawnedChildren.Num();
 
+	// #418 coordinate keying - RECONCILE PASS (runs before the count-delta branches). One sweep
+	// over the children decides everything from CELLS, not counts:
+	//   - children whose cell fell OUTSIDE the new grid bounds are evicted here (also covers
+	//     mixed axis changes like X-shrink + Y-grow in a single Smart Panel apply, which the
+	//     count-delta branches alone mis-handle);
+	//   - children without a cell adopt a free cell (self-heal; normally none);
+	//   - FreeCells = cell universe minus occupied cells, canonical Z->X->Y order, ready for
+	//     the spawn branch below.
+	// CRASH-SAFE eviction ordering: remove from SpawnedChildren FIRST, then queue.
+	// QueueChildForDestroy itself calls SpawnedChildren.Remove(Child), so queue-then-RemoveAt
+	// double-removes and indexes one past the end (the walls-silo "1438 into 1438" crash).
+	TArray<FIntVector> FreeCells;
+	{
+		const int32 CellXCount = FMath::Abs(GridCounters.X);
+		const int32 CellYCount = FMath::Abs(GridCounters.Y);
+		const int32 CellZCount = FMath::Abs(GridCounters.Z);
+
+		TSet<FIntVector> OccupiedCells;
+		TArray<TWeakObjectPtr<AFGHologram>> UnassignedChildren;
+		bool bEvictedAny = false;
+		for (int32 Idx = SpawnedChildren.Num() - 1; Idx >= 0; --Idx)
+		{
+			const TWeakObjectPtr<AFGHologram> Candidate = SpawnedChildren[Idx];  // BY VALUE - the array mutates below
+			if (!Candidate.IsValid())
+			{
+				continue;  // stale entries were scrubbed above
+			}
+
+			FIntVector Cell;
+			if (!USFGridCoordComponent::TryGetCell(Candidate.Get(), Cell))
+			{
+				UnassignedChildren.Add(Candidate);
+				continue;
+			}
+
+			if (Cell.X >= CellXCount || Cell.Y >= CellYCount || Cell.Z >= CellZCount)
+			{
+				SpawnedChildren.RemoveAt(Idx);  // FIRST - see ordering note above
+				UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Evicting out-of-bounds cell [%d,%d,%d] child %s"),
+					Cell.X, Cell.Y, Cell.Z, *Candidate->GetName());
+				QueueChildForDestroy(Candidate.Get());
+				bEvictedAny = true;
+			}
+			else
+			{
+				OccupiedCells.Add(Cell);
+			}
+		}
+
+		for (int32 Z = 0; Z < CellZCount; ++Z)
+		{
+			for (int32 X = 0; X < CellXCount; ++X)
+			{
+				for (int32 Y = 0; Y < CellYCount; ++Y)
+				{
+					if (X == 0 && Y == 0 && Z == 0)
+					{
+						continue; // parent cell - never assigned to a child
+					}
+					const FIntVector Cell(X, Y, Z);
+					if (!OccupiedCells.Contains(Cell))
+					{
+						FreeCells.Add(Cell);
+					}
+				}
+			}
+		}
+
+		// Children that predate coordinate keying (or lost their component) adopt free cells
+		// first so they re-enter the stable-identity model. Normally empty.
+		for (const TWeakObjectPtr<AFGHologram>& Unassigned : UnassignedChildren)
+		{
+			if (FreeCells.Num() == 0)
+			{
+				break;
+			}
+			USFGridCoordComponent::AssignCell(Unassigned.Get(), FreeCells[0]);
+			FreeCells.RemoveAt(0);
+		}
+
+		if (bEvictedAny)
+		{
+			CurrentChildren = SpawnedChildren.Num();
+
+			// Evicted children may carry cached auto-connect belt costs - clear them so the
+			// parent's next cost aggregation doesn't include destroyed previews.
+			if (USFSubsystem* Subsystem = USFSubsystem::Get(ParentHologram->GetWorld()))
+			{
+				if (USFAutoConnectService* AutoConnect = Subsystem->GetAutoConnectService())
+				{
+					for (const TWeakObjectPtr<AFGHologram>& RemovedChild : PendingDestroyChildren)
+					{
+						if (RemovedChild.IsValid())
+						{
+							AutoConnect->ClearBeltCostsForDistributor(RemovedChild.Get());
+						}
+					}
+				}
+			}
+		}
+	}
+	int32 NextFreeCell = 0;
+
 	// Track if grid changed for belt preview cleanup
 	int32 ToSpawn = 0;
 	int32 ToRemove = 0;
@@ -439,8 +558,28 @@ void FSFHologramHelperService::RegenerateChildHologramGrid(
 		// Check if this is a water extractor for extra logging
 		bool bIsWaterExtractor = ParentHologram->IsA(AFGWaterPumpHologram::StaticClass());
 
+		// #418 coordinate keying: FreeCells was computed by the reconcile pass above (cell
+		// universe minus occupied, canonical Z->X->Y order). New children bind to those cells;
+		// existing children keep theirs, so their targets are untouched by this regen.
+
+		// #418: time-budget the spawn burst. A Smart Panel stack jump used to spawn 15K-45K
+		// children in ONE frame (multi-second client freeze). Now the loop yields at
+		// GRID_SPAWN_FRAME_BUDGET_MS and USFSubsystem::Tick re-runs the regen next frame - the
+		// reconcile pass re-derives exactly the still-missing cells, so repeated regens converge.
+		const double SpawnSliceStart = FPlatformTime::Seconds();
+		const double SpawnSliceBudget = GRID_SPAWN_FRAME_BUDGET_MS / 1000.0;
+
 		for (int32 i = 0; i < ToSpawn; ++i)
 		{
+			if (i > 0 && (i & 7) == 0
+				&& (FPlatformTime::Seconds() - SpawnSliceStart) >= SpawnSliceBudget)
+			{
+				bSpawnContinuationPending = true;
+				UE_LOG(LogSmartFoundations, Verbose,
+					TEXT("RegenerateChildHologramGrid: spawn budget reached after %d/%d children - continuing next frame."),
+					i, ToSpawn);
+				break;
+			}
 			// Use global counter for unique names (prevents collisions when children are destroyed and respawned)
 			FName ChildName = FName(*FString::Printf(TEXT("GridChild_%d"), ChildSpawnCounter++));
 
@@ -522,61 +661,6 @@ void FSFHologramHelperService::RegenerateChildHologramGrid(
 							*Recipe->GetName(), *ParentHologram->GetBuildClass()->GetName());
 					}
 					ChildHologram = PassthroughChild;
-				}
-			}
-			else if (ParentHologram->IsA(AFGCeilingLightHologram::StaticClass()))
-			{
-				// Issue #200: Ceiling lights check ceiling snapping in CheckValidPlacement.
-				// Children can't satisfy this. Use ASFBuildableChildHologram which always passes.
-				UWorld* SpawnWorld = WorldContext.Get();
-				if (SpawnWorld)
-				{
-					FActorSpawnParameters SpawnParams;
-					SpawnParams.Name = ChildName;
-					SpawnParams.Owner = ParentHologram->GetOwner();
-					SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-					SpawnParams.bDeferConstruction = true;
-
-					ASFBuildableChildHologram* BuildableChild = SpawnWorld->SpawnActor<ASFBuildableChildHologram>(
-						ASFBuildableChildHologram::StaticClass(),
-						SpawnLocation,
-						FRotator::ZeroRotator,
-						SpawnParams);
-
-					if (BuildableChild)
-					{
-						BuildableChild->SetChildBuildClass(ParentHologram->GetBuildClass());
-						BuildableChild->SetRecipe(Recipe);
-						BuildableChild->FinishSpawning(FTransform(FRotator::ZeroRotator, SpawnLocation));
-						ParentHologram->AddChild(BuildableChild, ChildName);
-
-						USFHologramDataService::DisableValidation(BuildableChild);
-						USFHologramDataService::MarkAsChild(BuildableChild, ParentHologram, ESFChildHologramType::ScalingGrid);
-
-						if (BuildableChild->IsHologramLocked())
-						{
-							BuildableChild->LockHologramPosition(false);
-						}
-						BuildableChild->SetActorHiddenInGame(false);
-						BuildableChild->SetActorEnableCollision(false);
-
-						TArray<UPrimitiveComponent*> Primitives;
-						BuildableChild->GetComponents<UPrimitiveComponent>(Primitives);
-						for (UPrimitiveComponent* PrimComp : Primitives)
-						{
-							PrimComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-						}
-
-						BuildableChild->SetActorTickEnabled(false);
-						BuildableChild->RegisterAllComponents();
-						BuildableChild->SetPlacementMaterialState(EHologramMaterialState::HMS_OK);
-						BuildableChild->Tags.AddUnique(FName(TEXT("SF_GridChild")));
-
-						UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("  BUILDABLE CHILD: Spawned %s at %s (recipe=%s, buildClass=%s)"),
-							*ChildName.ToString(), *SpawnLocation.ToString(),
-							*Recipe->GetName(), *ParentHologram->GetBuildClass()->GetName());
-					}
-					ChildHologram = BuildableChild;
 				}
 			}
 			else if (ParentHologram->IsA(AFGFloodlightHologram::StaticClass()))
@@ -826,62 +910,6 @@ void FSFHologramHelperService::RegenerateChildHologramGrid(
 					ChildHologram = SignChild;
 				}
 			}
-			else if (ParentHologram->IsA(AFGWallAttachmentHologram::StaticClass()))
-			{
-				// Issue #268: Wall attachments (conveyor ceiling supports, wall conveyor poles)
-				// check wall/ceiling snapping in CheckValidPlacement.
-				// Children can't satisfy this. Use ASFBuildableChildHologram which always passes.
-				UWorld* SpawnWorld = WorldContext.Get();
-				if (SpawnWorld)
-				{
-					FActorSpawnParameters SpawnParams;
-					SpawnParams.Name = ChildName;
-					SpawnParams.Owner = ParentHologram->GetOwner();
-					SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-					SpawnParams.bDeferConstruction = true;
-
-					ASFBuildableChildHologram* BuildableChild = SpawnWorld->SpawnActor<ASFBuildableChildHologram>(
-						ASFBuildableChildHologram::StaticClass(),
-						SpawnLocation,
-						FRotator::ZeroRotator,
-						SpawnParams);
-
-					if (BuildableChild)
-					{
-						BuildableChild->SetChildBuildClass(ParentHologram->GetBuildClass());
-						BuildableChild->SetRecipe(Recipe);
-						BuildableChild->FinishSpawning(FTransform(FRotator::ZeroRotator, SpawnLocation));
-						ParentHologram->AddChild(BuildableChild, ChildName);
-
-						USFHologramDataService::DisableValidation(BuildableChild);
-						USFHologramDataService::MarkAsChild(BuildableChild, ParentHologram, ESFChildHologramType::ScalingGrid);
-
-						if (BuildableChild->IsHologramLocked())
-						{
-							BuildableChild->LockHologramPosition(false);
-						}
-						BuildableChild->SetActorHiddenInGame(false);
-						BuildableChild->SetActorEnableCollision(false);
-
-						TArray<UPrimitiveComponent*> Primitives;
-						BuildableChild->GetComponents<UPrimitiveComponent>(Primitives);
-						for (UPrimitiveComponent* PrimComp : Primitives)
-						{
-							PrimComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-						}
-
-						BuildableChild->SetActorTickEnabled(false);
-						BuildableChild->RegisterAllComponents();
-						BuildableChild->SetPlacementMaterialState(EHologramMaterialState::HMS_OK);
-						BuildableChild->Tags.AddUnique(FName(TEXT("SF_GridChild")));
-
-						UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("  WALL ATTACHMENT CHILD: Spawned %s at %s (recipe=%s, buildClass=%s)"),
-							*ChildName.ToString(), *SpawnLocation.ToString(),
-							*Recipe->GetName(), *ParentHologram->GetBuildClass()->GetName());
-					}
-					ChildHologram = BuildableChild;
-				}
-			}
 			else if (ParentHologram->IsA(AFGWaterPumpHologram::StaticClass()))
 			{
 				// Issue #197: Water pumps need custom child hologram for water validation.
@@ -940,26 +968,33 @@ void FSFHologramHelperService::RegenerateChildHologramGrid(
 					ChildHologram = WaterPumpChild;
 				}
 			}
+			else if (bVanillaDelegateChildren)
+			{
+				// Tier 3 vanilla-delegate: STACKABLE conveyor/pipe/hypertube supports keep the
+				// recipe's own vanilla child hologram - it carries the stack/connection behavior
+				// the stackable AC preview builds against (#341/#354/#364). Routing these through
+				// the generic Tier-1 child is possible future work, gated on validating series-run
+				// wiring against ASFBuildableChildHologram children.
+				ChildHologram = SpawnChildHologram(ParentHologram, ChildName, SpawnLocation, FRotator::ZeroRotator);
+			}
 			else
 			{
-				// Normal spawn for non-passthrough holograms
-				ChildHologram = SpawnChildHologram(ParentHologram, ChildName, SpawnLocation, FRotator::ZeroRotator);
+				// #418 Tier 1: every remaining parent type gets the generic drift-proof child
+				// (foundations, walls, ceiling lights, wall attachments, machines, storage, ...).
+				// Consolidates the former per-type branches (#200 ceiling, #268 wall, #418
+				// foundation) and replaces the raw-vanilla default that drifted to origin.
+				// See SpawnBuildableChildHologram for the full configuration.
+				ChildHologram = SpawnBuildableChildHologram(ParentHologram, ChildName, SpawnLocation);
 			}
 
 			if (ChildHologram)
 			{
-				// Issue #187/#200/#197: Passthrough, buildable, and water pump children are fully configured during
-				// their custom spawn paths above (tag, collision, validation, data service, tick).
-				// Skip generic setup for them — it would re-enable collision and override material state.
-				const bool bIsCustomChild = ParentHologram->IsA(AFGPassthroughHologram::StaticClass())
-					|| ParentHologram->IsA(AFGCeilingLightHologram::StaticClass())
-					|| ParentHologram->IsA(AFGFloodlightHologram::StaticClass())
-					|| ParentHologram->IsA(AFGWallAttachmentHologram::StaticClass())
-					|| ParentHologram->IsA(AFGWaterPumpHologram::StaticClass())
-					|| USFAutoConnectService::IsRegularConveyorPoleHologram(ParentHologram)   // #354
-					|| USFAutoConnectService::IsRegularPipelinePoleHologram(ParentHologram);  // #364
-
-				if (!bIsCustomChild)
+				// #418 Tier true-up: every Smart child class is fully configured during its spawn
+				// branch (tag, collision, validation, data service, tick). Only vanilla-delegate
+				// children (stackable supports) still need the legacy generic setup here — the
+				// Smart branches must NOT get it (it would re-enable collision and override
+				// material state).
+				if (bVanillaDelegateChildren)
 				{
 					// Tag for Smart! ownership to aid future resync/cleanup
 					ChildHologram->Tags.AddUnique(FName(TEXT("SF_GridChild")));
@@ -980,6 +1015,19 @@ void FSFHologramHelperService::RegenerateChildHologramGrid(
 				}
 
 				SpawnedChildren.Add(ChildHologram);
+
+				// #418 coordinate keying: bind the child to its grid cell (its identity from here
+				// on). Applies to every tier - Smart classes and vanilla-delegate stackables alike.
+				if (NextFreeCell < FreeCells.Num())
+				{
+					USFGridCoordComponent::AssignCell(ChildHologram, FreeCells[NextFreeCell++]);
+				}
+				else
+				{
+					UE_LOG(LogSmartFoundations, Verbose,
+						TEXT("RegenerateChildHologramGrid: no free cell for spawned child %s (freeCells=%d, toSpawn=%d) - child stays unassigned until next regen"),
+						*ChildName.ToString(), FreeCells.Num(), ToSpawn);
+				}
 
 				// Log child hologram lock state for Task 38 diagnostics
 				const bool bChildLocked = ChildHologram->IsHologramLocked();
@@ -1040,6 +1088,10 @@ void FSFHologramHelperService::RegenerateChildHologramGrid(
 
 		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("RegenerateChildHologramGrid: Removing %d excess children..."), ToRemove);
 
+		// #418: the reconcile pass above already evicted every out-of-bounds cell, so reaching
+		// this branch means cell bookkeeping is inconsistent (e.g. duplicate cells). Trim LIFO -
+		// Pop FIRST, then queue (QueueChildForDestroy's internal Remove becomes a no-op) - so
+		// the child count converges; cell identity self-heals on the next regen.
 		for (int32 i = 0; i < ToRemove; ++i)
 		{
 			if (SpawnedChildren.Num() > 0)
@@ -1047,7 +1099,7 @@ void FSFHologramHelperService::RegenerateChildHologramGrid(
 				TWeakObjectPtr<AFGHologram> ChildToRemove = SpawnedChildren.Pop();
 				if (ChildToRemove.IsValid())
 				{
-					UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Queueing child for destroy: %s"), *ChildToRemove->GetName());
+					UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Queueing child for destroy (LIFO trim): %s"), *ChildToRemove->GetName());
 					QueueChildForDestroy(ChildToRemove.Get());
 				}
 			}
@@ -1129,15 +1181,12 @@ void FSFHologramHelperService::RegenerateChildHologramGrid(
 	}
 	else
 	{
-		// Parent is unlocked - ensure children are ticking for dynamic validation
-		// Issue #200: Ceiling lights and wall floodlights have CheckValidPlacement() overrides
-		// that check ceiling/wall snapping. Children can't satisfy these, so keep tick disabled.
-		// Note: Water pumps are NOT included here — they need tick for water volume validation.
-		const bool bKeepTickDisabled = ParentHologram->IsA(AFGCeilingLightHologram::StaticClass())
-			|| ParentHologram->IsA(AFGFloodlightHologram::StaticClass())
-			|| ParentHologram->IsA(AFGWallAttachmentHologram::StaticClass())
-			|| USFAutoConnectService::IsRegularConveyorPoleHologram(ParentHologram)   // #354
-			|| USFAutoConnectService::IsRegularPipelinePoleHologram(ParentHologram);  // #364
+		// #418 Tier true-up: Smart child classes stub validation (or, for water pumps, run their
+		// own) — ticking them buys nothing and cost real frame time at 40K+ children. Keep tick
+		// OFF for everything except water pump children (their per-frame water-volume check needs
+		// tick) and vanilla-delegate stackable children (preserve vanilla dynamic validation).
+		const bool bKeepTickDisabled = !bVanillaDelegateChildren
+			&& !ParentHologram->IsA(AFGWaterPumpHologram::StaticClass());
 		for (const TWeakObjectPtr<AFGHologram>& ChildPtr : SpawnedChildren)
 		{
 			if (ChildPtr.IsValid())

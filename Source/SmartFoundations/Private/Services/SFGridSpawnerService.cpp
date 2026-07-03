@@ -17,6 +17,7 @@
 #include "Hologram/FGWallAttachmentHologram.h"
 #include "Holograms/Logistics/SFWaterPumpChildHologram.h"
 #include "Data/SFBuildableSizeRegistry.h"
+#include "Features/Scaling/SFGridCoordComponent.h"
 #include "SmartFoundations.h"
 #include "FGPlayerController.h"
 #include "FGCharacterPlayer.h"
@@ -321,40 +322,32 @@ void USFGridSpawnerService::UpdateChildPositions()
     UE_LOG(LogSmartGrid, VeryVerbose, TEXT("   Grid dimensions: %dx%dx%d, directions: [%d,%d,%d]"),
         XCount, YCount, ZCount, XDir, YDir, ZDir);
 
-    // Pre-compute grid indices for progressive batching
+    // #418 coordinate keying: build the positioning batch from each child's OWN grid cell
+    // (USFGridCoordComponent) instead of re-deriving cells from array order against the CURRENT
+    // grid dimensions. The old decode made YCount the divisor of every child's cell, so growing
+    // the inner axis (Y) remapped every existing child -> full-grid visible refresh. Cells are
+    // stored unsigned; direction is applied here from the live counters, so flipping a scale
+    // direction repositions children correctly without changing their identity.
     TArray<FSFHologramHelperService::FGridIndex> GridIndices;
     GridIndices.Reserve(SpawnedChildren.Num());
 
-    int32 ChildIndex = 0;
-    for (int32 Z = 0; Z < ZCount; ++Z)
+    for (int32 ChildArrayIndex = 0; ChildArrayIndex < SpawnedChildren.Num(); ++ChildArrayIndex)
     {
-        for (int32 X = 0; X < XCount; ++X)
+        const TWeakObjectPtr<AFGHologram>& ChildPtr = SpawnedChildren[ChildArrayIndex];
+        FIntVector Cell;
+        if (!ChildPtr.IsValid() || !USFGridCoordComponent::TryGetCell(ChildPtr.Get(), Cell))
         {
-            for (int32 Y = 0; Y < YCount; ++Y)
-            {
-                if (X == 0 && Y == 0 && Z == 0)
-                {
-                    UE_LOG(LogSmartGrid, VeryVerbose, TEXT("      Skipping parent position [0,0,0]"));
-                    continue;
-                }
-
-                if (ChildIndex >= SpawnedChildren.Num())
-                {
-                    UE_LOG(LogSmartGrid, VeryVerbose, TEXT("      Breaking: ChildIndex %d >= SpawnedChildren %d"),
-                        ChildIndex, SpawnedChildren.Num());
-                    break;
-                }
-
-                FSFHologramHelperService::FGridIndex GridIndex;
-                GridIndex.X = X * XDir;
-                GridIndex.Y = Y * YDir;
-                GridIndex.Z = Z * ZDir;
-                GridIndex.ChildArrayIndex = ChildIndex;
-                GridIndices.Add(GridIndex);
-
-                ChildIndex++;
-            }
+            // No cell yet (child predates assignment; picked up on the next regen) - skip
+            // rather than guess a position from array order.
+            continue;
         }
+
+        FSFHologramHelperService::FGridIndex GridIndex;
+        GridIndex.X = Cell.X * XDir;
+        GridIndex.Y = Cell.Y * YDir;
+        GridIndex.Z = Cell.Z * ZDir;
+        GridIndex.ChildArrayIndex = ChildArrayIndex;
+        GridIndices.Add(GridIndex);
     }
 
     UE_LOG(LogSmartGrid, VeryVerbose, TEXT("   Pre-computed %d grid indices for progressive batch"), GridIndices.Num());
@@ -483,7 +476,16 @@ void USFGridSpawnerService::UpdateChildPositions()
         }
         // Issue #171: Use actor transforms directly for ALL children instead of
         // SetHologramLocationAndRotation, which floor-traces/snaps and applies offsets.
-        ChildHologram->SetActorLocationAndRotation(ChildPosition, ChildRotation);
+        // #418 coordinate keying: cells are stable, so on a pure grow an existing child's target
+        // transform is IDENTICAL - skip the actor move (and its transform/render churn) when the
+        // child is already in place. Intended-transform tracking still runs unconditionally so
+        // the Tier-3 drift re-apply always has a current target.
+        const bool bAlreadyPlaced = ChildHologram->GetActorLocation().Equals(ChildPosition, 0.1f)
+            && ChildHologram->GetActorRotation().Equals(ChildRotation, 0.05f);
+        if (!bAlreadyPlaced)
+        {
+            ChildHologram->SetActorLocationAndRotation(ChildPosition, ChildRotation);
+        }
         HologramHelper->TrackScalingChildTransform(ChildHologram, ChildPosition, ChildRotation);
 
         // Check position AFTER API call

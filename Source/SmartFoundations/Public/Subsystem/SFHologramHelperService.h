@@ -38,6 +38,13 @@ public:
 	/** Maximum number of grid children before engine crash (UObject limit protection) */
 	static constexpr int32 GRID_CHILDREN_HARD_CAP = 2000;
 
+	/** #418: per-frame wall-clock budget for the preview-child spawn burst. A Smart Panel stack
+	 *  jump used to spawn 15K-45K children in ONE frame (multi-second freeze); the spawn loop now
+	 *  yields at this budget and USFSubsystem::Tick re-runs the regen until the grid completes -
+	 *  safe because the coordinate-keying reconcile pass makes repeated regens converge on
+	 *  exactly the missing cells. */
+	static constexpr double GRID_SPAWN_FRAME_BUDGET_MS = 8.0;
+
 	/** Threshold for triggering large grid destruction warning */
 	static constexpr int32 LARGE_GRID_WARNING_THRESHOLD = 100;
 
@@ -348,6 +355,10 @@ public:
 	 */
 	bool IsProgressiveBatchActive() const { return bProgressiveBatchActive; }
 
+	/** #418: true when a spawn slice hit GRID_SPAWN_FRAME_BUDGET_MS with children still to
+	 *  spawn; USFSubsystem::Tick re-runs the grid regen until this clears. */
+	bool IsSpawnContinuationPending() const { return bSpawnContinuationPending; }
+
 	/**
 	 * Get current batch progress
 	 * @return Progress from 0.0 to 1.0
@@ -426,8 +437,17 @@ private:
 		TWeakObjectPtr<AFGHologram> ParentHologram;
 		
 		// Batch config
-		int32 ChildrenPerFrame = 200;
-		
+		// #418: ChildrenPerFrame is now a per-frame SAFETY CEILING, not the primary throttle.
+		// The primary throttle is FrameTimeBudgetMs: each frame places children until the time
+		// budget is spent, then yields. Placement got cheap once foundation children moved to the
+		// ASFBuildableChildHologram override (no more per-frame drift re-apply cascade), so a fixed
+		// 200/frame count needlessly stretched a 30K-child regrow to ~2.5s. The time budget auto-tunes
+		// to hardware and to future per-child cost (e.g. connectors for constraint C2).
+		int32 ChildrenPerFrame = 4000;
+
+		// Per-frame wall-clock budget (ms) for placement. Frame yields once this is exceeded.
+		double FrameTimeBudgetMs = 2.0;
+
 		// Reset to default state
 		void Reset()
 		{
@@ -439,7 +459,8 @@ private:
 			StartTime = 0.0;
 			FrameCount = 0;
 			ParentHologram.Reset();
-			ChildrenPerFrame = 200;
+			ChildrenPerFrame = 4000;
+			FrameTimeBudgetMs = 2.0;
 		}
 	};
 
@@ -448,6 +469,10 @@ private:
 
 	/** Flag indicating progressive batch is active */
 	bool bProgressiveBatchActive = false;
+
+	/** #418: spawn burst was budget-truncated; the next regen continues it (see
+	 *  GRID_SPAWN_FRAME_BUDGET_MS). Cleared at the top of every RegenerateChildHologramGrid. */
+	bool bSpawnContinuationPending = false;
 
 	// ========================================
 	// UObject Warning System State (Phase 5)
@@ -488,8 +513,14 @@ private:
 	void CompleteBatchReposition();
 
 	/**
-	 * Spawn a single child hologram at specified position/rotation
-	 * 
+	 * Spawn a single child hologram at specified position/rotation.
+	 *
+	 * VANILLA-DELEGATE path (Tier 3, docs/Features/Scaling/DESIGN_Scaling_ChildTypeSelection.md):
+	 * spawns the recipe's own vanilla hologram class. Only STACKABLE conveyor/pipe/hypertube
+	 * supports use this - their vanilla holograms carry stack/connection behavior the stackable
+	 * AC preview depends on (#341/#354/#364). Vanilla children have no drift override and rely
+	 * on the intended-transform re-apply to hold position.
+	 *
 	 * @param ParentHologram Parent to spawn from
 	 * @param ChildName Unique name for child (prevents collision assertions)
 	 * @param Position World position for child
@@ -501,6 +532,23 @@ private:
 		FName ChildName,
 		const FVector& Position,
 		const FRotator& Rotation
+	);
+
+	/**
+	 * #418 Tier 1 (docs/Features/Scaling/DESIGN_Scaling_ChildTypeSelection.md): spawn the generic
+	 * drift-proof grid child (ASFBuildableChildHologram) for any plain-buildable parent -
+	 * foundations, walls, lights, machines, and every type without an explicit Tier-2 branch.
+	 * The child no-ops SetHologramLocationAndRotation (blocks vanilla parent-propagation resets),
+	 * always validates OK, skips clearance, hides the ClearanceBox visualization mesh (the "white
+	 * lines"), and carries the parent's stored production recipe so scaled machines keep their
+	 * selected recipe (constraint C1).
+	 *
+	 * @return Spawned child hologram, or nullptr if failed
+	 */
+	AFGHologram* SpawnBuildableChildHologram(
+		AFGHologram* ParentHologram,
+		FName ChildName,
+		const FVector& SpawnLocation
 	);
 
 public:

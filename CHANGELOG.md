@@ -9,6 +9,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [33.4.0] - 2026-07-03
+
+> *A scaling performance release: large grids are dramatically smoother, growing a grid no longer refreshes the whole preview, huge grids fill in progressively instead of freezing, and - the big one - large grids now build on dedicated servers without disconnecting everyone. Plus a scaling crash fix and cleaner previews.*
+
+### Changed
+
+- **Large-scale building is dramatically more performant** - Scaling to big grids used to get sluggish and eventually near-unusable somewhere around a couple thousand foundations, because every previewed building was being nudged back into place every frame. Previewed buildings now hold their position on their own, so grids of tens of thousands stay responsive - you can scale far higher than before and still move around freely while you do it. (Issue #418)
+- **Growing a grid only adds the new part, instead of redrawing everything** - Adding a row or column (or a stack) to an existing grid used to visibly refresh every building in the preview. Now only the newly-added cells appear; everything you already placed stays put and untouched. (Issue #418)
+- **Huge grids fill in progressively instead of freezing** - Jumping straight to a very large grid (for example bumping a big grid up several stacks at once in the Smart Panel) used to lock the game up for a few seconds while everything spawned at once. The preview now fills in smoothly over a moment or two, so the game stays interactive the whole time. (Issue #418)
+
+### Fixed
+
+- **Large grids now build on dedicated servers without kicking everyone** - Committing a very large scaled build on a multiplayer server could freeze the server long enough that every connected player timed out and got disconnected - even though the build itself completed and saved. Big builds are now constructed in the background over a few moments so the server stays responsive and nobody gets dropped; the buildings appear progressively as they're built. (Issue #418)
+- **Fixed a crash when shrinking certain rotated grids** - Scaling a rotated wall grid that curved back on itself (a silo-style loop) and then scaling it back down could crash the game. (Issue #418)
+- **Cleaner scaled previews** - Scaled grids no longer show a scattering of stray white outline boxes over every previewed building. (Issue #418)
+
+---
+
 ## [33.3.0] - 2026-07-03
 
 > *A routing release: all auto-connect belt, pipe, and hyper tube routing now runs on the game's own routing (and shows the game's own "Invalid Pipe Shape" error when a shape can't be built), floor-hole pipes finally route like a hand-built pipe, and a batch of Smart Panel / HUD auto-connect preview fixes. (Originally scoped as patch 33.2.1; it became minor 33.3.0 when the routing convergence landed on top of the bug fixes.)*

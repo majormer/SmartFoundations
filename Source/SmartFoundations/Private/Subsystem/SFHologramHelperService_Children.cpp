@@ -7,6 +7,8 @@
 
 #include "Subsystem/SFHologramHelperServiceImpl.h"
 #include "SmartFoundations.h"
+#include "Components/StaticMeshComponent.h"
+#include "Engine/StaticMesh.h"
 
 void FSFHologramHelperService::ApplyScalingDelta(
 	AFGHologram* Hologram,
@@ -670,21 +672,37 @@ void FSFHologramHelperService::TickProgressiveBatchReposition(float DeltaTime)
 	BatchState.FrameCount++;
 
 	const int32 StartIndex = BatchState.CurrentIndex;
-	const int32 EndIndex = FMath::Min(
+
+	// #418: Time-budgeted placement. Place children until the per-frame wall-clock budget is
+	// spent (FrameTimeBudgetMs) or the safety ceiling (ChildrenPerFrame) is reached, whichever
+	// comes first. Since foundation children moved to the ASFBuildableChildHologram override,
+	// each UpdateCallback is a cheap SetActorLocationAndRotation (no drift-reapply cascade), so
+	// the budget lets fast hardware drain thousands per frame instead of a fixed 200.
+	const int32 HardCeiling = FMath::Min(
 		StartIndex + BatchState.ChildrenPerFrame,
 		BatchState.TotalChildren
 	);
+	const double FrameStart = FPlatformTime::Seconds();
+	const double BudgetSeconds = BatchState.FrameTimeBudgetMs / 1000.0;
 
-	// Process this frame's batch
-	for (int32 i = StartIndex; i < EndIndex; ++i)
+	int32 i = StartIndex;
+	for (; i < HardCeiling; ++i)
 	{
 		if (BatchState.UpdateCallback)
 		{
 			BatchState.UpdateCallback(i);
 		}
+
+		// Check the time budget every 64 placements to keep the clock reads cheap.
+		if ((i & 63) == 0 && (FPlatformTime::Seconds() - FrameStart) >= BudgetSeconds)
+		{
+			++i;
+			break;
+		}
 	}
 
-	BatchState.CurrentIndex = EndIndex;
+	BatchState.CurrentIndex = i;
+	const int32 EndIndex = i;
 
 	// Log progress (verbose to avoid spam)
 	const float Progress = (float)EndIndex / BatchState.TotalChildren * 100.0f;
@@ -956,6 +974,119 @@ AFGHologram* FSFHologramHelperService::SpawnChildHologram(
 	}
 
 	return ChildHologram;
+}
+
+AFGHologram* FSFHologramHelperService::SpawnBuildableChildHologram(
+	AFGHologram* ParentHologram,
+	FName ChildName,
+	const FVector& SpawnLocation
+)
+{
+	// #418 Tier 1 (docs/Features/Scaling/DESIGN_Scaling_ChildTypeSelection.md): the generic
+	// drift-proof grid child. ASFBuildableChildHologram no-ops SetHologramLocationAndRotation so
+	// vanilla parent propagation cannot reset the child toward the hit result - the root cause of
+	// the historical "children jump to origin". Construction is generic (mBuildClass via
+	// AFGBuildableHologram::Construct) and cost aggregates through the recipe (constraint C1).
+	// Consolidates the previously-identical ceiling-light (#200), wall-attachment (#268), and
+	// foundation (#418) spawn branches, and replaces the raw-vanilla default for every other
+	// plain buildable (machines, walls, storage, ...).
+
+	if (!ParentHologram || !IsValid(ParentHologram))
+	{
+		return nullptr;
+	}
+
+	TSubclassOf<UFGRecipe> Recipe = ParentHologram->GetRecipe();
+	if (!Recipe)
+	{
+		return nullptr;
+	}
+
+	UWorld* SpawnWorld = WorldContext.Get();
+	if (!SpawnWorld)
+	{
+		return nullptr;
+	}
+
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.Name = ChildName;
+	SpawnParams.Owner = ParentHologram->GetOwner();
+	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	SpawnParams.bDeferConstruction = true;
+
+	ASFBuildableChildHologram* BuildableChild = SpawnWorld->SpawnActor<ASFBuildableChildHologram>(
+		ASFBuildableChildHologram::StaticClass(),
+		SpawnLocation,
+		FRotator::ZeroRotator,
+		SpawnParams);
+
+	if (!BuildableChild)
+	{
+		return nullptr;
+	}
+
+	BuildableChild->SetChildBuildClass(ParentHologram->GetBuildClass());
+	BuildableChild->SetRecipe(Recipe);
+	BuildableChild->FinishSpawning(FTransform(FRotator::ZeroRotator, SpawnLocation));
+	ParentHologram->AddChild(BuildableChild, ChildName);
+
+	USFHologramDataService::DisableValidation(BuildableChild);
+	USFHologramDataService::MarkAsChild(BuildableChild, ParentHologram, ESFChildHologramType::ScalingGrid);
+
+	// Carry the parent's STORED production recipe (machines scaled after the player picked a
+	// recipe) so the built child gets it too; fall back to the build recipe. Mirrors the
+	// vanilla-delegate SpawnChildHologram above; consumed hologram-agnostically in
+	// SFSubsystem_OnActorSpawned via the hologram data service.
+	USFSubsystem* Subsystem = USFSubsystem::Get(ParentHologram->GetWorld());
+	if (Subsystem && Subsystem->bHasStoredProductionRecipe && Subsystem->StoredProductionRecipe)
+	{
+		USFHologramDataService::StoreRecipe(BuildableChild, Subsystem->StoredProductionRecipe);
+	}
+	else
+	{
+		USFHologramDataService::StoreRecipe(BuildableChild, Recipe);
+	}
+
+	if (BuildableChild->IsHologramLocked())
+	{
+		BuildableChild->LockHologramPosition(false);
+	}
+	BuildableChild->SetActorHiddenInGame(false);
+	BuildableChild->SetActorEnableCollision(false);
+
+	TArray<UPrimitiveComponent*> Primitives;
+	BuildableChild->GetComponents<UPrimitiveComponent>(Primitives);
+	for (UPrimitiveComponent* PrimComp : Primitives)
+	{
+		PrimComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
+
+	BuildableChild->SetActorTickEnabled(false);
+	BuildableChild->RegisterAllComponents();
+	BuildableChild->SetPlacementMaterialState(EHologramMaterialState::HMS_OK);
+	BuildableChild->Tags.AddUnique(FName(TEXT("SF_GridChild")));
+
+	// #418: hide vanilla's ClearanceBox visualization mesh (the "white lines" peppering scaled
+	// grids; confirmed via SmartMCP component inspection - each child renders exactly the build
+	// mesh + a ClearanceBox static mesh). Matched by mesh asset name so the build mesh is never
+	// touched; a harmless no-op for types without a clearance mesh.
+	TArray<UStaticMeshComponent*> ChildMeshes;
+	BuildableChild->GetComponents<UStaticMeshComponent>(ChildMeshes);
+	for (UStaticMeshComponent* MeshComp : ChildMeshes)
+	{
+		const UStaticMesh* Mesh = MeshComp ? MeshComp->GetStaticMesh() : nullptr;
+		if (Mesh && Mesh->GetName().Equals(TEXT("ClearanceBox")))
+		{
+			MeshComp->SetVisibility(false);
+			MeshComp->SetHiddenInGame(true);
+		}
+	}
+
+	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("SpawnBuildableChildHologram: %s for parent %s (recipe=%s, buildClass=%s)"),
+		*ChildName.ToString(), *ParentHologram->GetName(),
+		*Recipe->GetName(), *ParentHologram->GetBuildClass()->GetName());
+
+	return BuildableChild;
 }
 
 void FSFHologramHelperService::DestroyAllChildren()

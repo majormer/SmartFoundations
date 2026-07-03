@@ -21,6 +21,7 @@ Some modded or unusual buildables may not scale correctly until Smart! has expli
 Smart! works in multiplayer on dedicated servers. Every Smart! feature — Grid Scaling, Auto-Connect (belts, pipes, and power), Extend, Smart Upgrade, Smart Restore, and Smart Dismantle — works when you play as a client, with normal build costs. Everything Smart! places is a standard, fully replicated game building: other players see it, can use it, and can dismantle it, just as if you had built it by hand.
 
 - **Dedicated servers:** both Windows and Linux are supported.
+- **Large grids build progressively:** committing a very large scaled build constructs it in the background over a few moments, so the server stays responsive and no one is disconnected while it builds.
 - **For server admins:** install the same Smart! version on the server and on every client. The Mod Manager keeps these matched when you update.
 - **Smart Camera** (the companion mod) also works in multiplayer.
 
