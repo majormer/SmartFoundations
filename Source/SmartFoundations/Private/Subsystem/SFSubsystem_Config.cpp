@@ -1832,6 +1832,25 @@ TArray<FString> USFSubsystem::GetDirtyAutoConnectSettings() const
 			DirtySettings.Add(FString::Printf(TEXT("Pipe Style: %s"),
 				AutoConnectRuntimeSettings.bPipeIndicator ? TEXT("Normal") : TEXT("Clean")));
 		}
+
+		// A non-default routing mode persists on the HUD like every other deviating setting.
+		// Strings MUST match GetAutoConnectSettingDisplayString (case PipeRoutingMode) so the
+		// active-setting '*' highlight lines up when cycling with Num0.
+		if (AutoConnectRuntimeSettings.PipeRoutingMode != CachedConfig.PipeRoutingMode)
+		{
+			FString RouteText;
+			switch (AutoConnectRuntimeSettings.PipeRoutingMode)
+			{
+			case 0: RouteText = TEXT("Auto"); break;
+			case 1: RouteText = TEXT("Auto 2D"); break;
+			case 2: RouteText = TEXT("Straight"); break;
+			case 3: RouteText = TEXT("Curve"); break;
+			case 4: RouteText = TEXT("Noodle"); break;
+			case 5: RouteText = TEXT("Horiz→Vert"); break;
+			default: RouteText = TEXT("Auto"); break;
+			}
+			DirtySettings.Add(FString::Printf(TEXT("Pipe Routing: %s"), *RouteText));
+		}
 	}
 	else if (bIsDistributor || bIsStackableSupport)
 	{
@@ -1860,6 +1879,21 @@ TArray<FString> USFSubsystem::GetDirtyAutoConnectSettings() const
 		{
 			DirtySettings.Add(FString::Printf(TEXT("Chain Distributors: %s"),
 				AutoConnectRuntimeSettings.bChainDistributors ? TEXT("ON") : TEXT("OFF")));
+		}
+
+		// A non-default routing mode persists on the HUD like every other deviating setting.
+		// Strings MUST match GetAutoConnectSettingDisplayString (case BeltRoutingMode).
+		if (AutoConnectRuntimeSettings.BeltRoutingMode != CachedConfig.BeltRoutingMode)
+		{
+			FString RouteText;
+			switch (AutoConnectRuntimeSettings.BeltRoutingMode)
+			{
+			case 0: RouteText = TEXT("Default"); break;
+			case 1: RouteText = TEXT("Curve"); break;
+			case 2: RouteText = TEXT("Straight"); break;
+			default: RouteText = TEXT("Default"); break;
+			}
+			DirtySettings.Add(FString::Printf(TEXT("Belt Routing: %s"), *RouteText));
 		}
 	}
 	else if (bIsPowerPole)
