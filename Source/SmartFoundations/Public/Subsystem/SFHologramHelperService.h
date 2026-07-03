@@ -426,8 +426,17 @@ private:
 		TWeakObjectPtr<AFGHologram> ParentHologram;
 		
 		// Batch config
-		int32 ChildrenPerFrame = 200;
-		
+		// #418: ChildrenPerFrame is now a per-frame SAFETY CEILING, not the primary throttle.
+		// The primary throttle is FrameTimeBudgetMs: each frame places children until the time
+		// budget is spent, then yields. Placement got cheap once foundation children moved to the
+		// ASFBuildableChildHologram override (no more per-frame drift re-apply cascade), so a fixed
+		// 200/frame count needlessly stretched a 30K-child regrow to ~2.5s. The time budget auto-tunes
+		// to hardware and to future per-child cost (e.g. connectors for constraint C2).
+		int32 ChildrenPerFrame = 4000;
+
+		// Per-frame wall-clock budget (ms) for placement. Frame yields once this is exceeded.
+		double FrameTimeBudgetMs = 2.0;
+
 		// Reset to default state
 		void Reset()
 		{
@@ -439,7 +448,8 @@ private:
 			StartTime = 0.0;
 			FrameCount = 0;
 			ParentHologram.Reset();
-			ChildrenPerFrame = 200;
+			ChildrenPerFrame = 4000;
+			FrameTimeBudgetMs = 2.0;
 		}
 	};
 

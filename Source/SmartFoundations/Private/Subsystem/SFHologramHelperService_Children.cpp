@@ -670,21 +670,37 @@ void FSFHologramHelperService::TickProgressiveBatchReposition(float DeltaTime)
 	BatchState.FrameCount++;
 
 	const int32 StartIndex = BatchState.CurrentIndex;
-	const int32 EndIndex = FMath::Min(
+
+	// #418: Time-budgeted placement. Place children until the per-frame wall-clock budget is
+	// spent (FrameTimeBudgetMs) or the safety ceiling (ChildrenPerFrame) is reached, whichever
+	// comes first. Since foundation children moved to the ASFBuildableChildHologram override,
+	// each UpdateCallback is a cheap SetActorLocationAndRotation (no drift-reapply cascade), so
+	// the budget lets fast hardware drain thousands per frame instead of a fixed 200.
+	const int32 HardCeiling = FMath::Min(
 		StartIndex + BatchState.ChildrenPerFrame,
 		BatchState.TotalChildren
 	);
+	const double FrameStart = FPlatformTime::Seconds();
+	const double BudgetSeconds = BatchState.FrameTimeBudgetMs / 1000.0;
 
-	// Process this frame's batch
-	for (int32 i = StartIndex; i < EndIndex; ++i)
+	int32 i = StartIndex;
+	for (; i < HardCeiling; ++i)
 	{
 		if (BatchState.UpdateCallback)
 		{
 			BatchState.UpdateCallback(i);
 		}
+
+		// Check the time budget every 64 placements to keep the clock reads cheap.
+		if ((i & 63) == 0 && (FPlatformTime::Seconds() - FrameStart) >= BudgetSeconds)
+		{
+			++i;
+			break;
+		}
 	}
 
-	BatchState.CurrentIndex = EndIndex;
+	BatchState.CurrentIndex = i;
+	const int32 EndIndex = i;
 
 	// Log progress (verbose to avoid spam)
 	const float Progress = (float)EndIndex / BatchState.TotalChildren * 100.0f;

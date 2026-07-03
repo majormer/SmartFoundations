@@ -4,6 +4,8 @@
 #include "SmartFoundations.h"
 #include "Subsystem/SFHologramHelperServiceImpl.h"
 #include "Holograms/Logistics/SFPipelinePoleChildHologram.h"
+#include "Components/StaticMeshComponent.h"
+#include "Engine/StaticMesh.h"
 
 namespace
 {
@@ -940,6 +942,85 @@ void FSFHologramHelperService::RegenerateChildHologramGrid(
 					ChildHologram = WaterPumpChild;
 				}
 			}
+			else if (ParentHologram->IsA(AFGFoundationHologram::StaticClass()))
+			{
+				// Issue #418: foundation grid children were raw vanilla AFGHologram (via
+				// SpawnChildHologram). Vanilla parent propagation calls SetHologramLocationAndRotation
+				// on every child each frame — resetting foundation children toward the hit result
+				// (the "jump to origin" that forced the O(N) ScalingChildIntendedTransforms re-apply
+				// tax). ASFBuildableChildHologram overrides SetHologramLocationAndRotation to a no-op,
+				// so the child stays where Smart! placed it. Cost still traces from the recipe
+				// (SetRecipe below) via AFGBuildableHologram::GetCost (constraint C1).
+				UWorld* SpawnWorld = WorldContext.Get();
+				if (SpawnWorld)
+				{
+					FActorSpawnParameters SpawnParams;
+					SpawnParams.Name = ChildName;
+					SpawnParams.Owner = ParentHologram->GetOwner();
+					SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+					SpawnParams.bDeferConstruction = true;
+
+					ASFBuildableChildHologram* FoundationChild = SpawnWorld->SpawnActor<ASFBuildableChildHologram>(
+						ASFBuildableChildHologram::StaticClass(),
+						SpawnLocation,
+						FRotator::ZeroRotator,
+						SpawnParams);
+
+					if (FoundationChild)
+					{
+						FoundationChild->SetChildBuildClass(ParentHologram->GetBuildClass());
+						FoundationChild->SetRecipe(Recipe);
+						FoundationChild->FinishSpawning(FTransform(FRotator::ZeroRotator, SpawnLocation));
+						ParentHologram->AddChild(FoundationChild, ChildName);
+
+						USFHologramDataService::DisableValidation(FoundationChild);
+						USFHologramDataService::MarkAsChild(FoundationChild, ParentHologram, ESFChildHologramType::ScalingGrid);
+
+						if (FoundationChild->IsHologramLocked())
+						{
+							FoundationChild->LockHologramPosition(false);
+						}
+						FoundationChild->SetActorHiddenInGame(false);
+						FoundationChild->SetActorEnableCollision(false);
+
+						TArray<UPrimitiveComponent*> Primitives;
+						FoundationChild->GetComponents<UPrimitiveComponent>(Primitives);
+						for (UPrimitiveComponent* PrimComp : Primitives)
+						{
+							PrimComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+						}
+
+						FoundationChild->SetActorTickEnabled(false);
+						FoundationChild->RegisterAllComponents();
+						FoundationChild->SetPlacementMaterialState(EHologramMaterialState::HMS_OK);
+						FoundationChild->Tags.AddUnique(FName(TEXT("SF_GridChild")));
+
+						// #418: SFBuildableChildHologram (a full AFGBuildableHologram) renders vanilla's
+						// clearance-box visualization mesh on top of the foundation mesh — the "white lines"
+						// peppering a scaled grid. Confirmed via SmartMCP component inspection: each child
+						// carries exactly two visible primitives, the foundation mesh (SM_Foundation_*) and
+						// a StaticMeshComponent whose asset is "ClearanceBox". Hide the clearance-box mesh on
+						// children (the active parent hologram keeps its own). Matched by mesh asset name so
+						// the foundation build mesh is never touched.
+						TArray<UStaticMeshComponent*> ChildMeshes;
+						FoundationChild->GetComponents<UStaticMeshComponent>(ChildMeshes);
+						for (UStaticMeshComponent* MeshComp : ChildMeshes)
+						{
+							const UStaticMesh* Mesh = MeshComp ? MeshComp->GetStaticMesh() : nullptr;
+							if (Mesh && Mesh->GetName().Equals(TEXT("ClearanceBox")))
+							{
+								MeshComp->SetVisibility(false);
+								MeshComp->SetHiddenInGame(true);
+							}
+						}
+
+						UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("  FOUNDATION CHILD (#418 override): Spawned %s at %s (recipe=%s, buildClass=%s)"),
+							*ChildName.ToString(), *SpawnLocation.ToString(),
+							*Recipe->GetName(), *ParentHologram->GetBuildClass()->GetName());
+					}
+					ChildHologram = FoundationChild;
+				}
+			}
 			else
 			{
 				// Normal spawn for non-passthrough holograms
@@ -956,6 +1037,7 @@ void FSFHologramHelperService::RegenerateChildHologramGrid(
 					|| ParentHologram->IsA(AFGFloodlightHologram::StaticClass())
 					|| ParentHologram->IsA(AFGWallAttachmentHologram::StaticClass())
 					|| ParentHologram->IsA(AFGWaterPumpHologram::StaticClass())
+					|| ParentHologram->IsA(AFGFoundationHologram::StaticClass())              // #418
 					|| USFAutoConnectService::IsRegularConveyorPoleHologram(ParentHologram)   // #354
 					|| USFAutoConnectService::IsRegularPipelinePoleHologram(ParentHologram);  // #364
 
