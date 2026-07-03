@@ -51,30 +51,34 @@ types. A hundred machine variants all share the generic class.
 
 | Tier | When it applies | Child class | Count |
 |------|-----------------|-------------|-------|
-| **1 — Generic** | Plain buildables whose vanilla hologram does no essential specialized construction (foundations, walls, ceiling lights, machines, storage, pillars, most single-click buildables). | `ASFBuildableChildHologram` | **one class, unbounded types** |
+| **1 — Generic** | Plain buildables whose vanilla hologram does no essential specialized construction (foundations, walls, ceiling lights, wall attachments, machines, storage, pillars — every type without an explicit Tier-2 branch). **This is the default.** | `ASFBuildableChildHologram` | **one class, unbounded types** |
 | **2 — Specialized family** | Buildables whose vanilla hologram does essential work the generic path cannot replicate. Each family subclasses its specific vanilla hologram + adds the three overrides. | one per family (see map) | ~6 |
-| **3 — Default fallback** | Unknown / not-yet-classified types. | *Currently* raw vanilla (drifts — see Known Gap); *target* is the Tier-1 generic class. | one path |
+| **3 — Vanilla-delegate** | STACKABLE conveyor/pipe/hypertube supports ONLY (explicit `IsStackableSupportHologram` branch): their vanilla holograms carry the stack/connection behavior the stackable AC preview builds against (#341/#354/#364). These children have no drift override and rely on the intended-transform re-apply. | recipe's own vanilla hologram via `SpawnChildHologram` | one path, three build classes |
 
 ## Current dispatch map
 
-As implemented in `RegenerateChildHologramGrid` (in evaluation order):
+As implemented in `RegenerateChildHologramGrid` (in evaluation order, since the #418 tier true-up):
 
 | Parent hologram (predicate) | Child class | Tier | Provenance |
 |---|---|---|---|
 | `AFGPassthroughHologram` | `ASFPassthroughChildHologram` | 2 | #187 |
-| `AFGCeilingLightHologram` | `ASFBuildableChildHologram` | 1 | |
 | `AFGFloodlightHologram` | `ASFFloodlightChildHologram` | 2 | aim/angle step |
 | `IsRegularConveyorPoleHologram(...)` | `ASFConveyorPoleChildHologram` | 2 | #354 (gated off the *stackable* pole) |
 | `IsRegularPipelinePoleHologram(...)` | `ASFPipelinePoleChildHologram` | 2 | #364 |
 | `AFGStandaloneSignHologram` | `ASFStandaloneSignChildHologram` | 2 | sign text |
-| `AFGWallAttachmentHologram` | `ASFBuildableChildHologram` | 1 | #268 |
-| `AFGWaterPumpHologram` | `ASFWaterPumpChildHologram` | 2 | #197 / #428 (water-volume validation, tick kept ON) |
-| `AFGFoundationHologram` | `ASFBuildableChildHologram` | 1 | #418 |
-| *(generic `else`)* | `SpawnChildHologram(...)` → raw vanilla per-recipe hologram | 3 | **drifts — see Known Gap** |
+| `AFGWaterPumpHologram` | `ASFWaterPumpChildHologram` | 2 | #197 / #428 (water-volume validation, tick kept ON; drift override added with #418) |
+| `IsStackableSupportHologram(...)` | recipe's own vanilla hologram (`SpawnChildHologram`) | 3 | #341/#354/#364 — stackable AC preview depends on vanilla child behavior |
+| *(generic `else` — everything remaining)* | `ASFBuildableChildHologram` (`SpawnBuildableChildHologram`) | 1 | #418 — consolidates the former #200 ceiling-light, #268 wall-attachment, and #418 foundation branches; replaces the raw-vanilla default that drifted |
 
-Fully-configured Tier-1/2 children are exempted from the generic post-spawn setup via the
-`bIsCustomChild` guard in the same function (it would otherwise re-enable collision and clobber
-material state).
+Only vanilla-delegate (Tier-3) children receive the legacy generic post-spawn setup
+(`bVanillaDelegateChildren` guard); Smart children are fully configured in their spawn paths and
+must not get it (it would re-enable collision and clobber material state).
+
+**Tick policy** (same function, unlocked-parent sweep): tick stays OFF for all Smart children —
+Tier-1 stubs validation and Tier-2 mostly does too, so ticking bought nothing and cost real frame
+time at 40K+ children. Exceptions: water pump children (tick ON — per-frame water-volume check)
+and Tier-3 vanilla children (tick ON — preserve vanilla dynamic validation). A locked parent
+disables tick on everything.
 
 ## Decision procedure for a new buildable type
 
@@ -109,15 +113,22 @@ non-conduit buildables (foundations, walls, machines — the bulk of scaling), T
 because their connectors come from the *constructed* buildable, and stackable-AC keys off the grid
 position map rather than the child's hologram class.
 
-## Known gap (roadmap)
+## Status & roadmap
 
-The Tier-3 `else` still spawns the raw vanilla hologram, which has none of the overrides — so those
-children **drift** and lean on the legacy `ScalingChildIntendedTransforms` + N-tick refresh tax to be
-dragged back into place. **Planned:** route the `else` through Tier 1 (`ASFBuildableChildHologram`),
-folding in the stored-production-recipe copy the current generic path performs
-(`SFHologramHelperService_Children.cpp` `SpawnChildHologram`, ~lines 938–955) so scaled machines keep
-their selected recipe. That single change makes every plain buildable drift-proof and lets the refresh
-tax be retired (measure first). Tracked under #418.
+**The Tier-1 widening landed with the #418 true-up** (2026-07-03): the generic `else` now routes
+through `SpawnBuildableChildHologram` — every plain buildable is drift-proof, carries the stored
+production recipe (scaled machines keep their selected recipe), and hides the ClearanceBox mesh.
+All seven Smart child classes now have the drift override (the water pump child was the last
+holdout). Remaining roadmap:
+
+- **Stackable supports → Tier 1** (optional): the family checks are build-class-name based, so
+  Tier-1 children would still be recognized — but the stackable AC preview builds belt/pipe spans
+  against vanilla child behavior, so this move is gated on validating series-run wiring end-to-end.
+- **Retire the `ScalingChildIntendedTransforms` re-apply tax**: with drift blocked everywhere
+  except Tier-3, the N-tick refresh only earns its keep for stackables. Measure, then shrink its
+  scope or remove it.
+- **Coordinate-keyed positioning** (the Y-growth full-refresh): separate spec,
+  `docs/Sprints/ScalingPerformance_CoordinateKeying_Spec.md`.
 
 ## How to add a Tier-2 family
 
