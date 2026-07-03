@@ -13,6 +13,7 @@
 
 class AFGHologram;
 class UFGRecipe;
+struct FNetConstructionID;
 
 namespace SFScalingSpecExpansion
 {
@@ -41,6 +42,27 @@ namespace SFScalingSpecExpansion
 	 */
 	int32 ExpandScalingSpecIntoChildren(AFGHologram* Parent, const FSFScalingSpec& Spec,
 		TSubclassOf<UFGRecipe> Recipe);
+
+	/**
+	 * [#418-MP] Should this spec skip the inline expansion and build DEFERRED (time-sliced across
+	 * server frames)? True for large conduit-free, designer-free grids. Inline expansion +
+	 * construction of a ~45K-cell grid blocked one server frame for ~57s (live incident
+	 * 2026-07-03) - past the client's 30s net timeout, so every client was dropped mid-build.
+	 * Conduit-plan specs (#334) and designer-resident grids stay inline: their correctness
+	 * depends on the vanilla child-construct ordering at the seam, and both are small in practice.
+	 */
+	bool ShouldDeferSpecExpansion(AFGHologram* Parent, const FSFScalingSpec& Spec);
+
+	/**
+	 * [#418-MP] Begin the deferred expansion: capture everything BY VALUE at the Construct seam
+	 * (the parent hologram dies when its Construct returns), then a world-timer loop constructs
+	 * cells under a per-frame time budget so the server tick keeps servicing the net driver.
+	 * Cells are spawned standalone (no parent to attach to), multi-step properties carried by a
+	 * hidden template hologram, and each cell is Construct()ed + destroyed in place - the same
+	 * per-cell semantics as the inline path, spread over frames.
+	 */
+	void BeginDeferredSpecExpansion(AFGHologram* Parent, const FSFScalingSpec& Spec,
+		TSubclassOf<UFGRecipe> Recipe, const FNetConstructionID& ConstructionID);
 
 	/**
 	 * Client-side (#334): capture the auto-connect conduit wiring plan (belts, pipes, stackable

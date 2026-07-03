@@ -22,6 +22,7 @@
 #include "Hologram/FGStandaloneSignHologram.h"  // #192: mBuildStep
 #include "Engine/World.h"
 #include "EngineUtils.h"
+#include "TimerManager.h"   // [#418-MP] deferred time-sliced spec expansion
 #include "HAL/IConsoleManager.h"
 #include "FGDismantleInterface.h"
 #include "Hologram/FGPipelinePoleHologram.h"
@@ -208,6 +209,274 @@ static void SF_SyncMultiStepPropertiesToChild(AFGHologram* Parent, AFGHologram* 
 				StepProp->ContainerPtrToValuePtr<void>(Parent));
 		}
 	}
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// [#418-MP] Deferred, time-sliced spec expansion.
+//
+// A large staged grid expanded + constructed INLINE at the Construct seam blocks the server game
+// thread for the whole build. Live incident 2026-07-03: ~45K foundation cells = one 56.9-second
+// server frame -> the net driver never ticked -> every client hit the 30s connection timeout and
+// was dropped (the build itself completed and persisted - correctness was never the problem,
+// only duration). Past the cell threshold the seam captures everything BY VALUE (the parent
+// hologram dies when its Construct returns) and a world-timer loop constructs cells under a
+// per-frame time budget, so the server keeps ticking and connections stay alive while the grid
+// fills in over a few dozen seconds.
+//
+// KNOWN WINDOW: a save or server shutdown mid-job persists only the cells built so far; the
+// remainder of the job is lost (the player paid at fire time). Accepted for now - the inline
+// path's alternative was a guaranteed all-client disconnect.
+namespace
+{
+	struct FSFDeferredSpecJob
+	{
+		TWeakObjectPtr<UWorld> World;
+		FSFScalingSpec Spec;
+		TSubclassOf<UFGRecipe> Recipe;
+		FNetConstructionID ConstructionID;
+		FVector ParentLoc = FVector::ZeroVector;
+		FRotator ParentRot = FRotator::ZeroRotator;
+		bool bWaterPumpCells = false;
+		TWeakObjectPtr<AActor> HoloOwner;
+		TWeakObjectPtr<APawn> Instigator;
+		/** Carries the parent's multi-step choices (pole height / floodlight angle / sign step)
+		 *  across frames - the parent hologram itself is gone. Hidden, never constructed. */
+		TWeakObjectPtr<AFGHologram> TemplateHologram;
+
+		// Grid geometry + resume cursor (XI innermost - same order as the inline loop).
+		int32 NX = 1, NY = 1, NZ = 1, SgnX = 1, SgnY = 1, SgnZ = 1;
+		int32 XI = 0, YI = 0, ZI = 0;
+		int32 LinearIndex = 0;
+		int32 CellsBuilt = 0;
+		int32 CellsFailed = 0;
+		int32 TotalCells = 0;
+		int32 LastLoggedDecile = 0;
+	};
+
+	/** Inline expansion past this many CHILD cells starves the net driver; defer instead. */
+	constexpr int32 SFSpecDeferThresholdCells = 1000;
+
+	/** Per-frame wall-clock budget for deferred cell construction. 15ms leaves the rest of a
+	 *  30fps server frame for gameplay + net; a 45K-cell grid drains in roughly a minute
+	 *  WITHOUT ever starving the net driver. */
+	constexpr double SFSpecDeferBudgetMs = 15.0;
+
+	/** Advance the ZI/YI/XI cursor one cell (XI innermost). Returns false when past the end. */
+	bool AdvanceSpecCursor(FSFDeferredSpecJob& Job)
+	{
+		++Job.XI;
+		if (Job.XI >= Job.NX) { Job.XI = 0; ++Job.YI; }
+		if (Job.YI >= Job.NY) { Job.YI = 0; ++Job.ZI; }
+		return Job.ZI < Job.NZ;
+	}
+
+	/** Build the cell at the current cursor - mirrors the inline loop body of
+	 *  ExpandScalingSpecIntoChildren 1:1, except the cell hologram is standalone (no parent to
+	 *  attach to) and is Construct()ed + destroyed here instead of by the vanilla child loop. */
+	bool BuildOneDeferredCell(FSFDeferredSpecJob& Job, UWorld* World)
+	{
+		const FSFCounterState& C = Job.Spec.Counters;
+		const int32 GX = Job.XI * Job.SgnX;
+		const int32 GY = Job.YI * Job.SgnY;
+		const int32 GZ = Job.ZI * Job.SgnZ;
+
+		// AnchorOffset deliberately NOT passed (ZeroVector) - same reasoning as the inline path:
+		// direct actor transforms expect the FINAL world position.
+		FSFPositionCalculator Calc;
+		const FVector CellLoc = Calc.CalculateChildPosition(
+			GX, GY, GZ, Job.ParentLoc, Job.ParentRot,
+			Job.Spec.ItemSize, C, Job.LinearIndex, FVector::ZeroVector);
+		++Job.LinearIndex;
+
+		// [#363]/[#372] rotation-mode yaw - identical to the inline path.
+		FRotator CellRot = Job.ParentRot;
+		if (!FMath::IsNearlyZero(C.RotationZ))
+		{
+			const int32 RotProgress = (C.RotationAxis == ESFScaleAxis::Y) ? -GY : GX;
+			CellRot.Yaw += RotProgress * C.RotationZ;
+		}
+
+		AFGHologram* Cell = nullptr;
+		if (Job.bWaterPumpCells)
+		{
+			// #428: water extractors must use the Smart child class (vanilla pump hologram
+			// asserts on null mSnappedExtractableResource in ConfigureActor). No explicit
+			// SpawnParams.Name (#428: deterministic names FATAL on a repeat build attempt).
+			FActorSpawnParameters SpawnParams;
+			SpawnParams.Owner = Job.HoloOwner.Get();
+			SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+			SpawnParams.bDeferConstruction = true;
+
+			ASFWaterPumpChildHologram* Pump = World->SpawnActor<ASFWaterPumpChildHologram>(
+				ASFWaterPumpChildHologram::StaticClass(), CellLoc, CellRot, SpawnParams);
+			if (Pump)
+			{
+				Pump->SetChildBuildClass(Job.Spec.BuildClass);
+				Pump->SetRecipe(Job.Recipe);
+				Pump->SetConstructionInstigator(Job.Instigator.Get());
+				Pump->FinishSpawning(FTransform(CellRot, CellLoc));
+				Pump->Tags.AddUnique(FName(TEXT("SF_GridChild")));
+			}
+			Cell = Pump;
+		}
+		else
+		{
+			const FRotator RotForSpawn = CellRot;
+			Cell = AFGHologram::SpawnHologramFromRecipe(
+				Job.Recipe, Job.HoloOwner.Get(), CellLoc, Job.Instigator.Get(),
+				[RotForSpawn](AFGHologram* NewCell)
+				{
+					if (NewCell)
+					{
+						NewCell->SetActorRotation(RotForSpawn);
+						NewCell->Tags.AddUnique(FName(TEXT("SF_GridChild")));
+					}
+				});
+		}
+
+		if (!Cell)
+		{
+			return false;
+		}
+
+		// Multi-step parents: copy the player's step-2 choice from the template (which holds the
+		// dead parent's values) so the cell builds with it - same as the inline path's
+		// parent-to-child sync.
+		if (AFGHologram* Template = Job.TemplateHologram.Get())
+		{
+			SF_SyncMultiStepPropertiesToChild(Template, Cell);
+		}
+
+		// Exact grid transform; server validation passed at fire time (same as inline).
+		Cell->SetActorLocationAndRotation(CellLoc, CellRot);
+
+		TArray<AActor*> CellChildren;
+		AActor* Built = Cell->Construct(CellChildren, Job.ConstructionID);
+		Cell->Destroy();
+		return Built != nullptr;
+	}
+
+	void TickDeferredSpecJob(TSharedPtr<FSFDeferredSpecJob> Job)
+	{
+		UWorld* World = Job->World.Get();
+		if (!World)
+		{
+			// World teardown mid-job: drop (see KNOWN WINDOW above).
+			return;
+		}
+
+		const double SliceStart = FPlatformTime::Seconds();
+		const double Budget = SFSpecDeferBudgetMs / 1000.0;
+		bool bMore = true;
+		int32 CellsThisSlice = 0;
+		while (bMore)
+		{
+			// (0,0,0) is the parent buildable itself (built at the seam), never a cell.
+			if (!(Job->XI == 0 && Job->YI == 0 && Job->ZI == 0))
+			{
+				if (BuildOneDeferredCell(*Job, World))
+				{
+					++Job->CellsBuilt;
+				}
+				else
+				{
+					++Job->CellsFailed;
+				}
+				++CellsThisSlice;
+			}
+			bMore = AdvanceSpecCursor(*Job);
+
+			if (bMore && CellsThisSlice > 0 && (CellsThisSlice & 7) == 0
+				&& (FPlatformTime::Seconds() - SliceStart) >= Budget)
+			{
+				break;
+			}
+		}
+
+		const int32 Done = Job->CellsBuilt + Job->CellsFailed;
+		const int32 Decile = (Job->TotalCells > 0) ? (10 * Done) / Job->TotalCells : 10;
+		if (Decile > Job->LastLoggedDecile)
+		{
+			Job->LastLoggedDecile = Decile;
+			UE_LOG(LogSmartFoundations, Display,
+				TEXT("[MP-SPEC] Deferred expansion progress: %d/%d cells (%d failed)."),
+				Done, Job->TotalCells, Job->CellsFailed);
+		}
+
+		if (bMore)
+		{
+			World->GetTimerManager().SetTimerForNextTick(
+				FTimerDelegate::CreateLambda([Job]() { TickDeferredSpecJob(Job); }));
+		}
+		else
+		{
+			if (AFGHologram* Template = Job->TemplateHologram.Get())
+			{
+				Template->Destroy();
+			}
+			UE_LOG(LogSmartFoundations, Display,
+				TEXT("[MP-SPEC] Deferred expansion COMPLETE: %d/%d cells built (%d failed)."),
+				Job->CellsBuilt, Job->TotalCells, Job->CellsFailed);
+		}
+	}
+}
+
+bool ShouldDeferSpecExpansion(AFGHologram* Parent, const FSFScalingSpec& Spec)
+{
+	return Parent
+		&& Spec.bValid
+		&& Spec.ConduitPlan.Num() == 0
+		&& Parent->GetBlueprintDesigner() == nullptr
+		&& (Spec.CellCount() - 1) > SFSpecDeferThresholdCells;
+}
+
+void BeginDeferredSpecExpansion(AFGHologram* Parent, const FSFScalingSpec& Spec,
+	TSubclassOf<UFGRecipe> Recipe, const FNetConstructionID& ConstructionID)
+{
+	UWorld* World = Parent ? Parent->GetWorld() : nullptr;
+	if (!World || !Spec.bValid || !Recipe)
+	{
+		return;
+	}
+
+	TSharedPtr<FSFDeferredSpecJob> Job = MakeShared<FSFDeferredSpecJob>();
+	Job->World = World;
+	Job->Spec = Spec;
+	Job->Recipe = Recipe;
+	Job->ConstructionID = ConstructionID;
+	Job->ParentLoc = Parent->GetActorLocation();
+	Job->ParentRot = Parent->GetActorRotation();
+	Job->bWaterPumpCells = Parent->IsA(AFGWaterPumpHologram::StaticClass());
+	Job->HoloOwner = Parent->GetOwner();
+	Job->Instigator = Parent->GetConstructionInstigator();
+
+	const FSFCounterState& C = Spec.Counters;
+	Job->NX = FMath::Max(1, FMath::Abs(C.GridCounters.X));
+	Job->NY = FMath::Max(1, FMath::Abs(C.GridCounters.Y));
+	Job->NZ = FMath::Max(1, FMath::Abs(C.GridCounters.Z));
+	Job->SgnX = (C.GridCounters.X < 0) ? -1 : 1;
+	Job->SgnY = (C.GridCounters.Y < 0) ? -1 : 1;
+	Job->SgnZ = (C.GridCounters.Z < 0) ? -1 : 1;
+	Job->TotalCells = Spec.CellCount() - 1;
+
+	// One hidden template hologram carries the parent's multi-step choices across frames; it is
+	// never constructed and dies with the job.
+	if (AFGHologram* Template = AFGHologram::SpawnHologramFromRecipe(
+		Recipe, Parent->GetOwner(), Job->ParentLoc, Parent->GetConstructionInstigator()))
+	{
+		SF_SyncMultiStepPropertiesToChild(Parent, Template);
+		Template->SetActorHiddenInGame(true);
+		Template->SetActorEnableCollision(false);
+		Template->SetActorTickEnabled(false);
+		Job->TemplateHologram = Template;
+	}
+
+	UE_LOG(LogSmartFoundations, Display,
+		TEXT("[MP-SPEC] Deferring expansion of %d cells for %s (%.0fms/frame budget) - inline expansion past ~%d cells starves the net driver and disconnects clients."),
+		Job->TotalCells, *Parent->GetName(), SFSpecDeferBudgetMs, SFSpecDeferThresholdCells);
+
+	World->GetTimerManager().SetTimerForNextTick(
+		FTimerDelegate::CreateLambda([Job]() { TickDeferredSpecJob(Job); }));
 }
 
 int32 ExpandScalingSpecIntoChildren(AFGHologram* Parent, const FSFScalingSpec& Spec,

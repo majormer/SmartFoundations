@@ -548,7 +548,19 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 			{
 				if (CountGridChildren(self) == 0)
 				{
-					SFScalingSpecExpansion::ExpandScalingSpecIntoChildren(self, Spec, self->GetRecipe());
+					// [#418-MP] Past the cell threshold, expansion + construction is DEFERRED and
+					// time-sliced across server frames: inline it blocked one server frame ~57s at
+					// ~45K cells and timed out every client connection (2026-07-03). Conduit-plan
+					// (#334) and designer-resident grids keep the inline path - their correctness
+					// depends on the vanilla child-construct ordering at this seam.
+					if (SFScalingSpecExpansion::ShouldDeferSpecExpansion(self, Spec))
+					{
+						SFScalingSpecExpansion::BeginDeferredSpecExpansion(self, Spec, self->GetRecipe(), constructionID);
+					}
+					else
+					{
+						SFScalingSpecExpansion::ExpandScalingSpecIntoChildren(self, Spec, self->GetRecipe());
+					}
 				}
 
 				// [MP-334] Server-side auto-connect belt wiring: replay the CLIENT'S staged belt
