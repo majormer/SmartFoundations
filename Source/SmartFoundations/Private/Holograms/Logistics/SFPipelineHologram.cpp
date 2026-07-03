@@ -565,15 +565,12 @@ bool ASFPipelineHologram::TryUseBuildModeRouting(
 		return false;
 	}
 
-	// [#437 round 3] USE VANILLA FOR REAL: set the game's OWN build-mode descriptor and hand the
-	// route to the top-level AutoRouteSpline, letting vanilla's dispatch pick its internal route
-	// function - no hand-picked leaf calls to drift out of sync with the game. This is the exact
-	// belt pattern (#380): C++-spawned holograms have NULL BP-default descriptors, so they are
-	// lazily copied from the REAL pipeline hologram's CDO first. NOTE: the old [#383] finding
-	// that "descriptor + AutoRouteSpline always routed Auto" for pipes is suspect - it predates
-	// the CDO descriptor copy, so SetBuildModeOverride was almost certainly no-oping on null.
-	// If live validation shows pipes' AutoRouteSpline is genuinely not mode-aware, the leaf
-	// dispatch below remains as the fallback (it runs whenever no descriptor resolves).
+	bRoutedShapeInvalid = false;
+
+	// [#437] Vanilla mode state: C++-spawned holograms have NULL BP-default descriptors AND no
+	// active build mode, and vanilla's routing internals degrade badly in that state (live-proven:
+	// degenerate 2-point routes). Lazily copy the descriptors from the REAL pipeline hologram's
+	// CDO (the belt #380 pattern) so every route below runs with legitimate mode state.
 	if (!mBuildModeAuto || !mBuildModeAuto2D || !mBuildModeStraight || !mBuildModeCurve || !mBuildModeNoodle || !mBuildModeHorzToVert)
 	{
 		if (const TSubclassOf<AActor> BuildClass = GetBuildClass())
@@ -590,6 +587,10 @@ bool ASFPipelineHologram::TryUseBuildModeRouting(
 						if (!mBuildModeCurve)      { mBuildModeCurve = HoloCDO->mBuildModeCurve; }
 						if (!mBuildModeNoodle)     { mBuildModeNoodle = HoloCDO->mBuildModeNoodle; }
 						if (!mBuildModeHorzToVert) { mBuildModeHorzToVert = HoloCDO->mBuildModeHorzToVert; }
+						// [#414] Bend-radius fidelity: this C++-spawned instance carries the C++
+						// class defaults; the real hologram BP may tune the radii (esp. hypertubes).
+						if (HoloCDO->mMinBendRadius > 0.0f) { mMinBendRadius = HoloCDO->mMinBendRadius; }
+						if (HoloCDO->mBendRadius > 0.0f)    { mBendRadius = HoloCDO->mBendRadius; }
 					}
 				}
 			}
@@ -778,6 +779,20 @@ bool ASFPipelineHologram::TryUseBuildModeRouting(
 	// Use the same routed spline for build.
 	mBuildSplineData = mSplineData;
 
+	// [#437/#414] Honor vanilla's shape validity on EVERY routed pipe/hypertube span, not just
+	// floor holes: vanilla invalidates a pipe whose bend radius drops below mMinBendRadius
+	// ("Invalid Pipe Shape!" - reproduced live by hand-building a floor-hole span in Auto 2D).
+	// CheckValidPlacement turns the flag into the SAME disqualifier on this child. Straight and
+	// gently-curved spans sample as effectively-infinite radius and never flag.
+	const float MinRadiusCm = ComputeMinRoutedBendRadiusCm();
+	if (MinRadiusCm < mMinBendRadius)
+	{
+		bRoutedShapeInvalid = true;
+		UE_LOG(LogSmartHologram, Verbose,
+			TEXT("[PipeRoute] routed shape INVALID (min bend radius %.0f < %.0f, mode=%d) %s"),
+			MinRadiusCm, mMinBendRadius, RoutingMode, *GetName());
+	}
+
 	UE_LOG(LogSmartHologram, Verbose,
 		TEXT("[PipeRoute] IN-GAME used (mode=%d points=%d len=%.0f) %s"),
 		RoutingMode, NewSplinePoints, NewSplineLength, *GetName());
@@ -785,36 +800,15 @@ bool ASFPipelineHologram::TryUseBuildModeRouting(
 	return true;
 }
 
-bool ASFPipelineHologram::RouteWithStraightExit(float /*ExitStubCm - retired, see below*/, const FVector& StartPos, const FVector& ExitNormal,
+bool ASFPipelineHologram::RouteWithStraightExit(float /*ExitStubCm - retired*/, const FVector& StartPos, const FVector& ExitNormal,
 	const FVector& EndPos, const FVector& EndNormal)
 {
-	bRoutedShapeInvalid = false;
-
-	// [#437 round 2] NO forced exit stub. Ground truth (live capture of a hand-built vanilla H2V
-	// route from this exact hole) shows the correct router builds its own ~100cm straight riser
-	// out of the hole face and its own connector stub at the far end - the earlier bolted-on 1m
-	// stub duplicated that and compounded the real defect (the OLD H2V router; case 5 now calls
-	// HorizontalAndVerticalRouteSplineNew). Route directly from the hole face; the exit vector
-	// seeds the router's start tangent, exactly like a hand-built pipe leaving a passthrough.
-	if (!TryUseBuildModeRouting(StartPos, ExitNormal, EndPos, EndNormal))
-	{
-		return false;
-	}
-
-	// [#437] Honor vanilla's shape validity instead of force-rendering a shape it would reject:
-	// vanilla invalidates a pipe whose bend radius drops below mMinBendRadius ("Invalid Pipe
-	// Shape!" - reproduced live by hand-building the identical floor-hole span in Auto 2D).
-	// CheckValidPlacement turns the flag into the SAME disqualifier on this child.
-	const float MinRadiusCm = ComputeMinRoutedBendRadiusCm();
-	if (MinRadiusCm < mMinBendRadius)
-	{
-		bRoutedShapeInvalid = true;
-		UE_LOG(LogSmartHologram, Verbose,
-			TEXT("[PipeRoute] #437 routed shape INVALID (min bend radius %.0f < %.0f, mode=%d) %s"),
-			MinRadiusCm, mMinBendRadius, RoutingMode, *GetName());
-	}
-
-	return true;
+	// [#414] Thin shim, kept only for call-site stability: the forced exit stub was removed in
+	// #437 round 2 (the real routers build their own riser/connector stubs), and the shape
+	// validation moved INTO TryUseBuildModeRouting so all pipe/hypertube spans get it. The exit
+	// vector seeds the router's start tangent, exactly like a hand-built pipe leaving a
+	// passthrough.
+	return TryUseBuildModeRouting(StartPos, ExitNormal, EndPos, EndNormal);
 }
 
 float ASFPipelineHologram::ComputeMinRoutedBendRadiusCm() const
