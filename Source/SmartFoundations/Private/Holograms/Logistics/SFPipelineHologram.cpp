@@ -69,6 +69,18 @@ void ASFPipelineHologram::CheckValidPlacement()
 {
 	if (GetParentHologram())
 	{
+		// [#437] A routed-invalid shape wins over the normal child preview mirroring: paint the
+		// child invalid with vanilla's OWN disqualifier so the player sees the same "Invalid Pipe
+		// Shape" a hand-built pipe of this shape produces, and firing is blocked until the routing
+		// mode changes or the hologram moves somewhere the shape is valid.
+		if (bRoutedShapeInvalid)
+		{
+			ResetConstructDisqualifiers();
+			AddConstructDisqualifier(UFGCDPipeInvalidShape::StaticClass());
+			SetPlacementMaterialState(EHologramMaterialState::HMS_ERROR);
+			return;
+		}
+
 		UE_LOG(LogSmartHologram, VeryVerbose, TEXT("Pipe child preview - skipping placement validation"));
 		// The build gun derives preview red/cyan from construct disqualifiers, not from
 		// SetPlacementMaterialState. Carry the parent's "unaffordable" disqualifier so the
@@ -553,7 +565,70 @@ bool ASFPipelineHologram::TryUseBuildModeRouting(
 		return false;
 	}
 
-	// Select routing mode (set by HUD auto-connect settings).
+	bRoutedShapeInvalid = false;
+
+	// [#437] Vanilla mode state: C++-spawned holograms have NULL BP-default descriptors AND no
+	// active build mode, and vanilla's routing internals degrade badly in that state (live-proven:
+	// degenerate 2-point routes). Lazily copy the descriptors from the REAL pipeline hologram's
+	// CDO (the belt #380 pattern) so every route below runs with legitimate mode state.
+	if (!mBuildModeAuto || !mBuildModeAuto2D || !mBuildModeStraight || !mBuildModeCurve || !mBuildModeNoodle || !mBuildModeHorzToVert)
+	{
+		if (const TSubclassOf<AActor> BuildClass = GetBuildClass())
+		{
+			if (const AFGBuildable* BuildableCDO = Cast<AFGBuildable>(BuildClass->GetDefaultObject()))
+			{
+				if (BuildableCDO->mHologramClass)
+				{
+					if (const AFGPipelineHologram* HoloCDO = Cast<AFGPipelineHologram>(BuildableCDO->mHologramClass->GetDefaultObject()))
+					{
+						if (!mBuildModeAuto)       { mBuildModeAuto = HoloCDO->mBuildModeAuto; }
+						if (!mBuildModeAuto2D)     { mBuildModeAuto2D = HoloCDO->mBuildModeAuto2D; }
+						if (!mBuildModeStraight)   { mBuildModeStraight = HoloCDO->mBuildModeStraight; }
+						if (!mBuildModeCurve)      { mBuildModeCurve = HoloCDO->mBuildModeCurve; }
+						if (!mBuildModeNoodle)     { mBuildModeNoodle = HoloCDO->mBuildModeNoodle; }
+						if (!mBuildModeHorzToVert) { mBuildModeHorzToVert = HoloCDO->mBuildModeHorzToVert; }
+						// [#414] Bend-radius fidelity: this C++-spawned instance carries the C++
+						// class defaults; the real hologram BP may tune the radii (esp. hypertubes).
+						if (HoloCDO->mMinBendRadius > 0.0f) { mMinBendRadius = HoloCDO->mMinBendRadius; }
+						if (HoloCDO->mBendRadius > 0.0f)    { mBendRadius = HoloCDO->mBendRadius; }
+					}
+				}
+			}
+		}
+	}
+
+	TSubclassOf<UFGHologramBuildModeDescriptor> ModeDesc = nullptr;
+	switch (RoutingMode)
+	{
+	case 0: ModeDesc = mBuildModeAuto; break;
+	case 1: ModeDesc = mBuildModeAuto2D; break;
+	case 2: ModeDesc = mBuildModeStraight; break;
+	case 3: ModeDesc = mBuildModeCurve; break;
+	case 4: ModeDesc = mBuildModeNoodle; break;
+	case 5: ModeDesc = mBuildModeHorzToVert; break;
+	default: break;
+	}
+
+	// [#437 round 4 - live-validated finding] Setting the descriptor MATTERS but is not enough on
+	// its own. With the descriptor set, routing all six modes through the top-level
+	// AutoRouteSpline produced IDENTICAL output (points=6 len=1526 for every mode, logged live)
+	// - pipes' AutoRouteSpline does NOT dispatch on the build mode; the per-mode dispatch lives
+	// in the build-gun-driven SetHologramLocationAndRotation, which we cannot call without a
+	// build gun. The original [#383] finding stands (owned: round 3 re-litigated it and lost).
+	// HOWEVER: the descriptor state is what fixed the previously-degenerate output - vanilla's
+	// route internals misbehave on a hologram with NO build mode set, which a C++-spawned
+	// hologram never had. So the correct architecture = vanilla's mode state (descriptor) + the
+	// SAME per-mode leaf dispatch vanilla's own SetHologramLocationAndRotation performs. The
+	// leaf functions ARE the real vanilla routing; we only replicate the one switch above them.
+	if (ModeDesc)
+	{
+		SetBuildModeOverride(ModeDesc);
+	}
+	UE_LOG(LogSmartHologram, Log,
+		TEXT("[PipeRoute] mode=%d desc=%s -> leaf dispatch %s"),
+		RoutingMode, ModeDesc ? *ModeDesc->GetName() : TEXT("NONE"), *GetName());
+
+	// Vanilla's own per-mode route functions, running with legitimate mode state.
 	// 0=Auto, 1=Auto2D, 2=Straight, 3=Curve, 4=Noodle, 5=HorizontalToVertical
 	switch (RoutingMode)
 	{
@@ -598,7 +673,13 @@ bool ASFPipelineHologram::TryUseBuildModeRouting(
 			const bool bStartVertical = FMath::Abs(StartNormal.Z) > 0.7f;
 			const bool bEndVertical = FMath::Abs(EndNormal.Z) > 0.7f;
 			const bool bHorizontalFirst = !(bStartVertical && !bEndVertical);
-			HorizontalAndVerticalRouteSpline(bHorizontalFirst, StartPos, StartNormal, EndPos, EndNormal);
+			// [#437 round 2] Use the NEW vanilla H2V router. The old HorizontalAndVerticalRouteSpline
+			// emits a degenerate route (one 10cm point then a beeline); the build gun's own H2V route,
+			// captured live from a hand-built hole-to-machine span, is the multi-point riser/elbow/
+			// level-run/connector-stub shape that only ...New produces. Ground truth: 6 points -
+			// 100cm straight riser out of the hole (tangents 10), elbow to connector height (163),
+			// level run (496), 100cm connector stub (50/1) - all C1-continuous.
+			HorizontalAndVerticalRouteSplineNew(bHorizontalFirst, StartPos, StartNormal, EndPos, EndNormal);
 		}
 		break;
 	case 0:
@@ -632,17 +713,29 @@ bool ASFPipelineHologram::TryUseBuildModeRouting(
 	// comparison that surfaced the "Invalid Pipe Shape!" rejection).
 	if (mSplineData.Num() >= 2)
 	{
-		const float SpanCm = FVector::Distance(StartPos, EndPos);
-		const float DesiredTangent = FMath::Clamp(SpanCm * 0.4f, 100.0f, 600.0f);
 		const FTransform ActorXf = GetActorTransform();
 
-		auto RepairEndpointTangent = [DesiredTangent, this](FSplinePointData& Point, const FVector& LocalFallbackDir, const TCHAR* Which)
+		// [#437 round 2] The repair threshold is PER-SEGMENT, not per-span. Ground truth from a
+		// hand-built vanilla H2V route: vanilla legitimately uses SMALL endpoint tangents on its
+		// short straight connector stubs (leave=10 on a 100cm riser) - those are healthy and must
+		// not be inflated (a span-proportional rescale would balloon them to ~500 and wreck the
+		// straight stub). A tangent is only degenerate relative to the segment it shapes: fire
+		// only when it is under 5% of the distance to the NEIGHBORING point (the 1-25 tangents on
+		// a 1300cm beeline segment that caused the original twist), and rescale proportional to
+		// that same segment.
+		auto RepairEndpointTangent = [this](FSplinePointData& Point, const FSplinePointData& Neighbor, const FVector& LocalFallbackDir, const TCHAR* Which)
 		{
-			const float CurrentMag = FMath::Max(Point.ArriveTangent.Size(), Point.LeaveTangent.Size());
-			if (CurrentMag >= DesiredTangent * 0.1f)
+			const float SegLen = FVector::Dist(Point.Location, Neighbor.Location);
+			if (SegLen < KINDA_SMALL_NUMBER)
 			{
-				return; // healthy, router-scaled tangent - keep the router's shape
+				return;
 			}
+			const float CurrentMag = FMath::Max(Point.ArriveTangent.Size(), Point.LeaveTangent.Size());
+			if (CurrentMag >= SegLen * 0.05f)
+			{
+				return; // healthy relative to its own segment - keep the router's shape
+			}
+			const float DesiredTangent = FMath::Clamp(SegLen * 0.4f, 50.0f, 600.0f);
 			FVector Dir = Point.LeaveTangent.GetSafeNormal();
 			if (Dir.IsNearlyZero()) { Dir = Point.ArriveTangent.GetSafeNormal(); }
 			if (Dir.IsNearlyZero()) { Dir = LocalFallbackDir; }
@@ -653,16 +746,16 @@ bool ASFPipelineHologram::TryUseBuildModeRouting(
 			Point.ArriveTangent = Dir * DesiredTangent;
 			Point.LeaveTangent = Dir * DesiredTangent;
 			UE_LOG(LogSmartHologram, Verbose,
-				TEXT("[PipeRoute] #437 repaired degenerate %s tangent (was %.1f, now %.1f) %s"),
-				Which, CurrentMag, DesiredTangent, *GetName());
+				TEXT("[PipeRoute] #437 repaired degenerate %s tangent (was %.1f, now %.1f, seg=%.0f) %s"),
+				Which, CurrentMag, DesiredTangent, SegLen, *GetName());
 		};
 
 		// Tangents live in hologram-LOCAL space; the passed normals are WORLD. Convert for the
 		// zero-tangent fallback (floor-hole children spawn unrotated, but extend lanes don't).
 		const FVector LocalStartDir = ActorXf.InverseTransformVectorNoScale(StartNormal).GetSafeNormal();
 		const FVector LocalEndDir = ActorXf.InverseTransformVectorNoScale(-EndNormal).GetSafeNormal();
-		RepairEndpointTangent(mSplineData[0], LocalStartDir, TEXT("start"));
-		RepairEndpointTangent(mSplineData.Last(), LocalEndDir, TEXT("end"));
+		RepairEndpointTangent(mSplineData[0], mSplineData[1], LocalStartDir, TEXT("start"));
+		RepairEndpointTangent(mSplineData.Last(), mSplineData[mSplineData.Num() - 2], LocalEndDir, TEXT("end"));
 	}
 
 	// Ensure spline component is updated from mSplineData.
@@ -686,11 +779,73 @@ bool ASFPipelineHologram::TryUseBuildModeRouting(
 	// Use the same routed spline for build.
 	mBuildSplineData = mSplineData;
 
+	// [#437/#414] Honor vanilla's shape validity on EVERY routed pipe/hypertube span, not just
+	// floor holes: vanilla invalidates a pipe whose bend radius drops below mMinBendRadius
+	// ("Invalid Pipe Shape!" - reproduced live by hand-building a floor-hole span in Auto 2D).
+	// CheckValidPlacement turns the flag into the SAME disqualifier on this child. Straight and
+	// gently-curved spans sample as effectively-infinite radius and never flag.
+	const float MinRadiusCm = ComputeMinRoutedBendRadiusCm();
+	if (MinRadiusCm < mMinBendRadius)
+	{
+		bRoutedShapeInvalid = true;
+		UE_LOG(LogSmartHologram, Verbose,
+			TEXT("[PipeRoute] routed shape INVALID (min bend radius %.0f < %.0f, mode=%d) %s"),
+			MinRadiusCm, mMinBendRadius, RoutingMode, *GetName());
+	}
+
 	UE_LOG(LogSmartHologram, Verbose,
 		TEXT("[PipeRoute] IN-GAME used (mode=%d points=%d len=%.0f) %s"),
 		RoutingMode, NewSplinePoints, NewSplineLength, *GetName());
 
 	return true;
+}
+
+bool ASFPipelineHologram::RouteWithStraightExit(float /*ExitStubCm - retired*/, const FVector& StartPos, const FVector& ExitNormal,
+	const FVector& EndPos, const FVector& EndNormal)
+{
+	// [#414] Thin shim, kept only for call-site stability: the forced exit stub was removed in
+	// #437 round 2 (the real routers build their own riser/connector stubs), and the shape
+	// validation moved INTO TryUseBuildModeRouting so all pipe/hypertube spans get it. The exit
+	// vector seeds the router's start tangent, exactly like a hand-built pipe leaving a
+	// passthrough.
+	return TryUseBuildModeRouting(StartPos, ExitNormal, EndPos, EndNormal);
+}
+
+float ASFPipelineHologram::ComputeMinRoutedBendRadiusCm() const
+{
+	if (!mSplineComponent)
+	{
+		return TNumericLimits<float>::Max();
+	}
+
+	const float Len = mSplineComponent->GetSplineLength();
+	constexpr float StepCm = 25.0f;
+	if (Len < StepCm * 2.0f)
+	{
+		return TNumericLimits<float>::Max();
+	}
+
+	// Discrete curvature: circumradius of each triple of samples 25cm apart along the spline
+	// (R = abc / (4 * Area)). The minimum over the run approximates the tightest bend, which is
+	// what vanilla's mMinBendRadius shape check gates on.
+	float MinRadius = TNumericLimits<float>::Max();
+	for (float D = StepCm; D <= Len - StepCm; D += StepCm)
+	{
+		const FVector A = mSplineComponent->GetLocationAtDistanceAlongSpline(D - StepCm, ESplineCoordinateSpace::Local);
+		const FVector B = mSplineComponent->GetLocationAtDistanceAlongSpline(D, ESplineCoordinateSpace::Local);
+		const FVector C = mSplineComponent->GetLocationAtDistanceAlongSpline(D + StepCm, ESplineCoordinateSpace::Local);
+
+		const float SideA = FVector::Dist(B, C);
+		const float SideB = FVector::Dist(A, C);
+		const float SideC = FVector::Dist(A, B);
+		const float DoubleArea = FVector::CrossProduct(B - A, C - A).Size();
+		if (DoubleArea < KINDA_SMALL_NUMBER)
+		{
+			continue; // locally straight
+		}
+		MinRadius = FMath::Min(MinRadius, (SideA * SideB * SideC) / (2.0f * DoubleArea));
+	}
+	return MinRadius;
 }
 
 void ASFPipelineHologram::SetPlacementMaterialState(EHologramMaterialState materialState)

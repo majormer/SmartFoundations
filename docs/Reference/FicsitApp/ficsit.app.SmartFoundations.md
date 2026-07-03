@@ -1,6 +1,6 @@
 # <img src="https://github.com/majormer/SmartFoundations/blob/main/images/Smart-Logo.png?raw=true" width="150" alt="Smart! Logo"> Smart! Mod
 
-![Status](https://img.shields.io/badge/Status-Released-brightgreen) ![Version](https://img.shields.io/badge/Version-33.2.0-blue) ![Satisfactory](https://img.shields.io/badge/Satisfactory-1.2-blue) ![Engine](https://img.shields.io/badge/Engine-UE%205.6-blue) ![SML](https://img.shields.io/badge/SML-3.12-blue) ![Multiplayer](https://img.shields.io/badge/Multiplayer-Supported-brightgreen) ![AI Assisted Development Used](https://img.shields.io/badge/AI%20Assisted%20Development%20Used-Disclosure%20Below-blue)
+![Status](https://img.shields.io/badge/Status-Released-brightgreen) ![Version](https://img.shields.io/badge/Version-33.3.0-blue) ![Satisfactory](https://img.shields.io/badge/Satisfactory-1.2-blue) ![Engine](https://img.shields.io/badge/Engine-UE%205.6-blue) ![SML](https://img.shields.io/badge/SML-3.12-blue) ![Multiplayer](https://img.shields.io/badge/Multiplayer-Supported-brightgreen) ![AI Assisted Development Used](https://img.shields.io/badge/AI%20Assisted%20Development%20Used-Disclosure%20Below-blue)
 
 > **Multiplayer note:** As of v32.0.0, every Smart! feature works in multiplayer on dedicated servers (Windows and Linux) — including **Smart Walking** and the new-in-v33.1.0 **Hyper Tube** support. If you hit something odd in a multiplayer session, please report it on [GitHub](https://github.com/majormer/SmartFoundations/issues) or [Discord](https://discord.gg/SgXY4CwXYw).
 
@@ -113,13 +113,25 @@ See [LICENSE.md](https://github.com/majormer/SmartFoundations/blob/main/LICENSE.
 
 ---
 
-## 📰 What's New in v33.2.0: Playing Nice with Other Mods
+## 📰 What's New in v33.3.0: Real Routing, Everywhere
 
-**Current Release:** v33.2.0 changes how Smart! shares the mouse wheel with other mods while it's holding a building — the fix for a long-standing conflict with **Infinite Nudge**, where scaling with a Smart! modifier held would also spin the building. Alongside that, this release rolls up a batch of Auto-Connect, Blueprint Designer, and build-mode bug fixes. See the [full changelog](https://github.com/majormer/SmartFoundations/blob/main/CHANGELOG.md) for all the details.
+**Current Release:** v33.3.0 puts all of Smart!'s auto-connect belt, pipe, and hyper tube routing onto the *game's own* routing. Chasing down a twisted floor-hole pipe uncovered that Smart!'s conduit previews had been routing with no build mode set — a state the game's routing never expects — which quietly degraded route shapes. This release fixes that at the root and converges every routed path onto the real thing. See the [full changelog](https://github.com/majormer/SmartFoundations/blob/main/CHANGELOG.md) for all the details.
 
-### Infinite Nudge compatibility
+### Auto-connect routing runs on the game's own routing
 
-Holding a Smart! modifier (X/Z) to scale a grid while **Infinite Nudge** was installed would also rotate the hologram at the same time — not a keybind conflict, but Smart!'s own temporary lock on the building being read by Infinite Nudge as "ready to scroll-rotate." Smart! now claims the scroll wheel only for the moments it's actually managing the building (a modifier held, or Auto-Hold keeping a scaled grid pinned); everything else, including a building you lock yourself, keeps working with Infinite Nudge exactly as before.
+Every auto-connect belt, pipe, and hyper tube now routes through the game's real routing with the correct build mode active, so each routing style produces the same shape you'd get building it by hand. Floor-hole pipes in particular finally behave: they leave the top of a hole straight up (or the bottom straight down), rise or drop to the connector height, and enter the building connector straight on. And when a routing style genuinely can't produce a buildable shape, the preview turns red with the game's own **"Invalid Pipe Shape"** message — the same answer vanilla gives — instead of silently building a bad pipe. Extend manifold lanes, the last path still hand-rolling their splines, now route through the game's router too (honoring your routing mode, bowing naturally with length, no more odd ramp on sloped manifolds).
+
+### Also in v33.3.0
+
+- **A non-default pipe or belt routing mode now stays shown on the HUD**, matching how your other settings already persist. (Issue #454)
+- **Smart Panel pipe setting changes rebuild the previews cleanly** — no more stale, overlapping pipe previews when you change tier, style, or routing. (Issue #451)
+- **The belt Chain toggle in the Smart Panel updates previews immediately.** (Issue #452)
+- **Turning off pipe auto-connect from the HUD clears the pipe previews right away.** (Issue #450)
+- **No more stray pipe dropping out the bottom of a pipeline junction** when toggling auto-connect in the Smart Panel. (Issue #453)
+
+### Previously, in v33.2.0: Playing Nice with Other Mods
+
+v33.2.0 changed how Smart! shares the mouse wheel with other mods while it's holding a building — the fix for a long-standing conflict with **Infinite Nudge**, where scaling with a Smart! modifier held would also spin the building. Smart! now claims the scroll wheel only for the moments it's actually managing the building (a modifier held, or Auto-Hold keeping a scaled grid pinned); everything else, including a building you lock yourself, keeps working with Infinite Nudge exactly as before.
 
 ### Also in the v33.2 line
 

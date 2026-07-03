@@ -1468,8 +1468,11 @@ void USFSubsystem::AdjustAutoConnectSetting(int32 Delta)
             USFAutoConnectOrchestrator* Orchestrator = GetOrCreateOrchestrator(ActiveHologram.Get());
             if (Orchestrator)
             {
-                // Force recreation of all pipe previews with new settings
-                Orchestrator->OnPipeGridChanged();
+                // [#451] Force recreation of all pipe previews with new settings. HUD SETTINGS
+                // change (tier/style/routing via Num0), so pass force=true - the old non-force call
+                // claimed "Force recreated" in its log while actually running the in-place path,
+                // which is why HUD pipe routing/style changes didn't fully apply.
+                Orchestrator->OnPipeGridChanged(/*bForceRecreate=*/true);
                 UE_LOG(LogSmartFoundations, VeryVerbose, TEXT(" Orchestrator: Force recreated pipe previews after settings change"));
             }
         }
@@ -1829,6 +1832,25 @@ TArray<FString> USFSubsystem::GetDirtyAutoConnectSettings() const
 			DirtySettings.Add(FString::Printf(TEXT("Pipe Style: %s"),
 				AutoConnectRuntimeSettings.bPipeIndicator ? TEXT("Normal") : TEXT("Clean")));
 		}
+
+		// A non-default routing mode persists on the HUD like every other deviating setting.
+		// Strings MUST match GetAutoConnectSettingDisplayString (case PipeRoutingMode) so the
+		// active-setting '*' highlight lines up when cycling with Num0.
+		if (AutoConnectRuntimeSettings.PipeRoutingMode != CachedConfig.PipeRoutingMode)
+		{
+			FString RouteText;
+			switch (AutoConnectRuntimeSettings.PipeRoutingMode)
+			{
+			case 0: RouteText = TEXT("Auto"); break;
+			case 1: RouteText = TEXT("Auto 2D"); break;
+			case 2: RouteText = TEXT("Straight"); break;
+			case 3: RouteText = TEXT("Curve"); break;
+			case 4: RouteText = TEXT("Noodle"); break;
+			case 5: RouteText = TEXT("Horiz→Vert"); break;
+			default: RouteText = TEXT("Auto"); break;
+			}
+			DirtySettings.Add(FString::Printf(TEXT("Pipe Routing: %s"), *RouteText));
+		}
 	}
 	else if (bIsDistributor || bIsStackableSupport)
 	{
@@ -1857,6 +1879,21 @@ TArray<FString> USFSubsystem::GetDirtyAutoConnectSettings() const
 		{
 			DirtySettings.Add(FString::Printf(TEXT("Chain Distributors: %s"),
 				AutoConnectRuntimeSettings.bChainDistributors ? TEXT("ON") : TEXT("OFF")));
+		}
+
+		// A non-default routing mode persists on the HUD like every other deviating setting.
+		// Strings MUST match GetAutoConnectSettingDisplayString (case BeltRoutingMode).
+		if (AutoConnectRuntimeSettings.BeltRoutingMode != CachedConfig.BeltRoutingMode)
+		{
+			FString RouteText;
+			switch (AutoConnectRuntimeSettings.BeltRoutingMode)
+			{
+			case 0: RouteText = TEXT("Default"); break;
+			case 1: RouteText = TEXT("Curve"); break;
+			case 2: RouteText = TEXT("Straight"); break;
+			default: RouteText = TEXT("Default"); break;
+			}
+			DirtySettings.Add(FString::Printf(TEXT("Belt Routing: %s"), *RouteText));
 		}
 	}
 	else if (bIsPowerPole)

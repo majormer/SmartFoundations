@@ -992,8 +992,15 @@ ASFPipelineHologram* FSFPipeAutoConnectManager::SpawnPipeChildAtPosition(
 	}
 	
 	PipeChild->SetRoutingMode(RuntimeSettings.PipeRoutingMode);
-	
-	if (!PipeChild->TryUseBuildModeRouting(StartPos, StartNormal, EndPos, EndNormal))
+
+	// [#437] Floor-hole pipes route from the hole face with the exit vector (straight up from the
+	// top / straight down from the bottom) seeding the router's start tangent - the correct
+	// vanilla routers build their own straight riser out of the face (round 2: no forced stub,
+	// per live comparison against a hand-built route). The helper also validates the routed shape
+	// against vanilla's minimum bend radius and flags the child invalid (vanilla's own "Invalid
+	// Pipe Shape" disqualifier via CheckValidPlacement) instead of force-rendering a shape vanilla
+	// would reject.
+	if (!PipeChild->RouteWithStraightExit(0.0f, StartPos, StartNormal, EndPos, EndNormal))
 	{
 		const float Distance = FVector::Dist(StartPos, EndPos);
 		const float SmallTangent = 50.0f;
@@ -1104,9 +1111,19 @@ void FSFPipeAutoConnectManager::ProcessFloorHolePipes(AFGHologram* ParentHologra
 	}
 	
 	// Collect all floor hole holograms (parent + children)
+	// [#453] Only treat the parent as a floor hole if it actually IS one. This runs off
+	// ForceRefresh (the Smart Panel's TriggerAutoConnectRefresh), which fires floor-hole
+	// processing for ANY held hologram - so on a pipeline-junction grid the junction parent was
+	// being processed as a floor hole (default thickness, endpoint below itself) and spawned a
+	// spurious FloorHolePipe dropping out its bottom. Children were already filtered by
+	// IsPassthroughPipeHologram; the parent was not. The HUD path never hit this because its
+	// junction re-eval calls only OnPipeGridChanged, not the floor-hole path.
 	TArray<AFGHologram*> AllFloorHoles;
-	AllFloorHoles.Add(ParentHologram);
-	
+	if (USFAutoConnectService::IsPassthroughPipeHologram(ParentHologram))
+	{
+		AllFloorHoles.Add(ParentHologram);
+	}
+
 	FSFHologramHelperService* HologramHelper = Subsystem->GetHologramHelper();
 	if (HologramHelper)
 	{
@@ -1190,18 +1207,21 @@ void FSFPipeAutoConnectManager::ProcessFloorHolePipes(AFGHologram* ParentHologra
 				if (LocalReservedConnectors.Contains(BuildingConn)) continue;
 				
 				FVector BuildingConnPos = BuildingConn->GetComponentLocation();
-				
-				// Pick whichever floor hole endpoint (top or bottom) is closer to this connector
-				float DistTop = FVector::Dist(TopPos, BuildingConnPos);
-				float DistBottom = FVector::Dist(BottomPos, BuildingConnPos);
-				bool bTopCloser = (DistTop <= DistBottom);
-				float Distance = bTopCloser ? DistTop : DistBottom;
-				
+
+				// [#437] Face selection is by HEIGHT, not 3D distance: a connector above the
+				// hole's top routes from the TOP face (exit straight up), one below the bottom
+				// routes from the BOTTOM face (exit straight down) - matching how a passthrough
+				// is used. A connector within the foundation's height band takes the vertically
+				// nearer face. 3D distance still ranks candidate connectors against each other.
+				const bool bTop = BuildingConnPos.Z >= (TopPos.Z + BottomPos.Z) * 0.5f;
+				const FVector FacePos = bTop ? TopPos : BottomPos;
+				const float Distance = FVector::Dist(FacePos, BuildingConnPos);
+
 				if (Distance < BestDistance)
 				{
 					BestDistance = Distance;
 					BestBuildingConn = BuildingConn;
-					bUseTopEndpoint = bTopCloser;
+					bUseTopEndpoint = bTop;
 				}
 			}
 		}

@@ -97,6 +97,22 @@ public:
 	                                     const FVector& EndPos, const FVector& EndNormal);
 
 	void SetRoutingMode(int32 InRoutingMode) { RoutingMode = InRoutingMode; }
+
+	/** [#437] Floor-hole routing: route from the passthrough face with the exit vector seeding the
+	 *  router's start tangent. NO forced stub is added (round 2): the correct vanilla routers build
+	 *  their own straight riser out of the face and their own connector stub at the far end
+	 *  (ground truth: live capture of a hand-built H2V route). The first param is retired and
+	 *  ignored. After routing, the produced shape is validated against vanilla's minimum bend
+	 *  radius (mMinBendRadius); on violation the child is flagged (IsRoutedShapeInvalid) and
+	 *  CheckValidPlacement paints it invalid with vanilla's own "Invalid Pipe Shape" disqualifier
+	 *  instead of force-rendering a shape vanilla would reject.
+	 *  @return true if a spline was produced (valid OR flagged-invalid); false if routing failed
+	 *          entirely (caller falls back to its hand-rolled spline). */
+	bool RouteWithStraightExit(float ExitStubCm, const FVector& StartPos, const FVector& ExitNormal,
+	                           const FVector& EndPos, const FVector& EndNormal);
+
+	/** [#437] Did the last RouteWithStraightExit produce a shape vanilla would reject? */
+	bool IsRoutedShapeInvalid() const { return bRoutedShapeInvalid; }
     
     // Get the 6-point build spline (not the 2-point preview spline)
     const TArray<FSplinePointData>& GetBuildSplineData() const { return mBuildSplineData; }
@@ -123,6 +139,14 @@ protected:
 private:
     float PreviewLengthCm = 0.0f;
 	int32 RoutingMode = 0;
+
+	/** [#437] Set by RouteWithStraightExit when the routed shape violates vanilla's minimum bend
+	 *  radius; CheckValidPlacement turns it into UFGCDPipeInvalidShape + HMS_ERROR. */
+	bool bRoutedShapeInvalid = false;
+
+	/** [#437] Minimum bend radius of the current routed spline (cm), via discrete circumradius
+	 *  sampling. Max float when effectively straight/too short to bend. */
+	float ComputeMinRoutedBendRadiusCm() const;
     
     // Store the perfect 6-point build spline separately
     // Preview uses simple 2-point, build uses this 6-point

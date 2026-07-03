@@ -180,6 +180,11 @@ private:
 
 	int32 RoutingMode = 0;
 	bool bLastVanillaPlacementValid = true;
+
+	/** [#414] The belt's DEFAULT build-mode descriptor, lazily copied from the real hologram's CDO
+	 *  (like mBuildModeCurve/Straight). Mode-0 routing sets this so Default-mode lanes stop routing
+	 *  with NO build mode - the null state that degraded pipe routes until #437. */
+	TSubclassOf<class UFGHologramBuildModeDescriptor> CachedDefaultBuildMode;
 	
 	// Track if PostHologramPlacement has already been called for Extend children
 	// Vanilla parent hologram calls this repeatedly during tick, but we only want to run it once
