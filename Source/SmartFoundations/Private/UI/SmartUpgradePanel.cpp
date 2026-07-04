@@ -11,6 +11,13 @@ void USmartUpgradePanel::NativeDestruct()
 	// [UPGRADE-MP] The traversal-result delegate is static (the panel news up a throwaway
 	// traversal service per scan) - unbind so a dead widget is never broadcast to.
 	USFUpgradeTraversalService::OnClientTraversalResultReceived.RemoveAll(this);
+
+	// [#456] Kill the deferred post-upgrade refresh timer so it can't fire on a closed panel.
+	if (UWorld* World = GetWorld())
+	{
+		World->GetTimerManager().ClearTimer(TraversalRefreshTimerHandle);
+	}
+
 	Super::NativeDestruct();
 }
 
@@ -165,8 +172,8 @@ void USmartUpgradePanel::NativeConstruct()
 
 		// Style dropdown items for readability on dark background
 		FTableRowStyle RadiusItemStyle = RadiusTargetTierComboBox->GetItemStyle();
-		RadiusItemStyle.TextColor = FSlateColor(FLinearColor(0.9f, 0.9f, 0.9f, 1.0f));
-		RadiusItemStyle.SelectedTextColor = FSlateColor(FLinearColor(1.0f, 0.6f, 0.2f, 1.0f));
+		RadiusItemStyle.TextColor = FSlateColor(SFPanelStyle::LightText);
+		RadiusItemStyle.SelectedTextColor = FSlateColor(SFPanelStyle::Accent);
 		RadiusItemStyle.ActiveBrush.DrawAs = ESlateBrushDrawType::Box;
 		RadiusItemStyle.ActiveHoveredBrush.DrawAs = ESlateBrushDrawType::Box;
 		RadiusItemStyle.InactiveBrush.DrawAs = ESlateBrushDrawType::Box;
@@ -194,8 +201,8 @@ void USmartUpgradePanel::NativeConstruct()
 
 		// Style dropdown items for readability on dark background
 		FTableRowStyle TraversalItemStyle = TraversalTargetTierComboBox->GetItemStyle();
-		TraversalItemStyle.TextColor = FSlateColor(FLinearColor(0.9f, 0.9f, 0.9f, 1.0f));
-		TraversalItemStyle.SelectedTextColor = FSlateColor(FLinearColor(1.0f, 0.6f, 0.2f, 1.0f));
+		TraversalItemStyle.TextColor = FSlateColor(SFPanelStyle::LightText);
+		TraversalItemStyle.SelectedTextColor = FSlateColor(SFPanelStyle::Accent);
 		TraversalItemStyle.ActiveBrush.DrawAs = ESlateBrushDrawType::Box;
 		TraversalItemStyle.ActiveHoveredBrush.DrawAs = ESlateBrushDrawType::Box;
 		TraversalItemStyle.InactiveBrush.DrawAs = ESlateBrushDrawType::Box;
@@ -254,6 +261,30 @@ void USmartUpgradePanel::NativeConstruct()
 	if (SharedCloseButton)
 	{
 		SharedCloseButton->OnClicked.AddDynamic(this, &USmartUpgradePanel::OnCloseButtonClicked);
+	}
+
+	// Align the BP buttons to the shared Smart! scheme (SFPanelStyle - same dark/orange language
+	// as the Smart Panel and Smart Restore). Labels are forced light so a dark BP label can't go
+	// invisible on the new dark fill (the exact Restore round-1 bug). Primary action = accent.
+	{
+		auto StylePanelButton = [](UButton* Btn, bool bAccent)
+		{
+			if (!Btn)
+			{
+				return;
+			}
+			Btn->SetStyle(SFPanelStyle::MakeButtonStyle(bAccent));
+			if (UTextBlock* Label = Cast<UTextBlock>(Btn->GetChildAt(0)))
+			{
+				Label->SetColorAndOpacity(FSlateColor(SFPanelStyle::LightText));
+			}
+		};
+		StylePanelButton(RadiusScanButton, /*bAccent*/ false);
+		StylePanelButton(EntireMapButton, /*bAccent*/ false);
+		StylePanelButton(TraversalScanButton, /*bAccent*/ false);
+		StylePanelButton(SharedCancelButton, /*bAccent*/ false);
+		StylePanelButton(SharedCloseButton, /*bAccent*/ false);
+		StylePanelButton(SharedUpgradeButton, /*bAccent*/ true);
 	}
 
 	// Initialize shared status
@@ -432,11 +463,12 @@ void USmartUpgradePanel::OnUpgradeButtonClicked()
 		SelectedTier, TargetTier, bIsTraversalMode);
 
 	// Validate target tier
-	// In traversal mode, we upgrade everything below target tier, so just need valid target
-	// In radius mode, target must be greater than source
+	// In traversal mode, SelectedTier == 0 sweeps everything below the target (just needs a
+	// valid target); [#456] a specific source-tier row needs a target above that tier.
+	// In radius mode, target must be greater than source.
 	if (bIsTraversalMode)
 	{
-		if (TargetTier <= 1)
+		if (TargetTier <= 1 || (SelectedTier > 0 && TargetTier <= SelectedTier))
 		{
 			if (StatusText)
 			{
@@ -466,15 +498,18 @@ void USmartUpgradePanel::OnUpgradeButtonClicked()
 	// Check if we're in traversal mode with valid results
 	if ((ActiveTab == ESmartUpgradeTab::Traversal) && CachedTraversalResult.IsValid())
 	{
-		// Use specific buildables from traversal scan
+		// Use specific buildables from traversal scan. [#456] With a specific source tier
+		// selected, pre-filter here so the RCO payload on huge networks only carries the
+		// relevant actors - execution re-filters by SourceTier anyway (defense in depth).
 		for (const FSFUpgradeAuditEntry& Entry : CachedTraversalResult.Entries)
 		{
-			if (Entry.Buildable.IsValid())
+			if (Entry.Buildable.IsValid() && (SelectedTier == 0 || Entry.CurrentTier == SelectedTier))
 			{
 				Params.SpecificBuildables.Add(Entry.Buildable);
 			}
 		}
-		UE_LOG(LogSmartUI, VeryVerbose, TEXT("Upgrade Panel: Using %d buildables from traversal scan"), Params.SpecificBuildables.Num());
+		UE_LOG(LogSmartUI, VeryVerbose, TEXT("Upgrade Panel: Using %d buildables from traversal scan (source tier %d)"),
+			Params.SpecificBuildables.Num(), SelectedTier);
 	}
 	else
 	{
@@ -491,7 +526,15 @@ void USmartUpgradePanel::OnUpgradeButtonClicked()
 	FString FamilyName = USFUpgradeAuditService::GetFamilyDisplayName(SelectedFamily);
 	if (StatusText)
 	{
-		StatusText->SetText(FText::Format(LOCTEXT("Upgrade_Upgrading", "Upgrading {0} Mk.{1} \u2192 Mk.{2}..."), FText::FromString(FamilyName), FText::AsNumber(SelectedTier), FText::AsNumber(TargetTier)));
+		// [#456] SelectedTier == 0 is the network sweep - "Mk.0" was nonsense there.
+		if (SelectedTier > 0)
+		{
+			StatusText->SetText(FText::Format(LOCTEXT("Upgrade_Upgrading", "Upgrading {0} Mk.{1} \u2192 Mk.{2}..."), FText::FromString(FamilyName), FText::AsNumber(SelectedTier), FText::AsNumber(TargetTier)));
+		}
+		else
+		{
+			StatusText->SetText(FText::Format(LOCTEXT("Upgrade_UpgradingSweep", "Upgrading {0} \u2192 Mk.{1}..."), FText::FromString(FamilyName), FText::AsNumber(TargetTier)));
+		}
 	}
 
 	// [UPGRADE-MP] On a network client the whole execution pipeline (hologram replacement, actor
@@ -726,7 +769,7 @@ void USmartUpgradePanel::UpdateAuditUI(const FSFUpgradeAuditResult& Result)
 			SectionHeader->SetText(FText::FromString(SectionName));
 			// FactoryFont is a single-face font (no Bold weight); the orange color distinguishes the header.
 			SectionHeader->SetFont(SFFont::Get(12));
-			SectionHeader->SetColorAndOpacity(FSlateColor(FLinearColor(0.886f, 0.498f, 0.118f, 1.0f))); // Orange
+			SectionHeader->SetColorAndOpacity(FSlateColor(SFPanelStyle::Accent));
 
 			UVerticalBoxSlot* HeaderSlot = ActiveResultsContainer->AddChildToVerticalBox(SectionHeader);
 			if (HeaderSlot)
@@ -765,10 +808,10 @@ void USmartUpgradePanel::UpdateAuditUI(const FSFUpgradeAuditResult& Result)
 						DisplayName = FString::Printf(TEXT("%s Mk.%d"), *SectionName, Bucket.Tier);
 					}
 
-					// Row text color
+					// Row text color (shared palette: light = has upgradeables, dim = nothing to do)
 					FLinearColor RowTextColor = UpgradeableCount > 0
-						? FLinearColor(1.0f, 1.0f, 1.0f, 1.0f)
-						: FLinearColor(0.5f, 0.5f, 0.5f, 1.0f);
+						? SFPanelStyle::LightText
+						: SFPanelStyle::DimText;
 
 					// --- Border wrapper for selection highlighting ---
 					UBorder* RowBorder = NewObject<UBorder>(this);
@@ -801,7 +844,7 @@ void USmartUpgradePanel::UpdateAuditUI(const FSFUpgradeAuditResult& Result)
 					UTextBlock* SepText = NewObject<UTextBlock>(this);
 					SepText->SetText(LOCTEXT("Upgrade_Separator", " x "));
 					SepText->SetFont(RowFont);
-					SepText->SetColorAndOpacity(FSlateColor(FLinearColor(0.6f, 0.6f, 0.6f, 1.0f)));
+					SepText->SetColorAndOpacity(FSlateColor(SFPanelStyle::DimText));
 
 					UHorizontalBoxSlot* SepSlot = RowHBox->AddChildToHorizontalBox(SepText);
 					if (SepSlot)
@@ -929,7 +972,17 @@ FReply USmartUpgradePanel::NativeOnMouseButtonDown(const FGeometry& InGeometry, 
 					WidgetLocalPos.Y >= 0 && WidgetLocalPos.Y <= WidgetSize.Y)
 				{
 					const FRowData& Data = Pair.Value;
-					OnRowSelected(Data.Family, Data.Tier);
+					// [#456] Traversal rows select a SOURCE tier within the scanned network
+					// (Tier 0 = the sweep row); OnRowSelected searches CachedAuditResult, which
+					// is the radius scan's data - wrong lookup for network rows.
+					if (ActiveTab == ESmartUpgradeTab::Traversal)
+					{
+						OnTraversalRowSelected(Data.Tier);
+					}
+					else
+					{
+						OnRowSelected(Data.Family, Data.Tier);
+					}
 					return FReply::Handled();
 				}
 			}

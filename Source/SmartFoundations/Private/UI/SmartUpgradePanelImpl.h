@@ -12,6 +12,7 @@
 #include "SmartFoundations.h"
 #include "SFLogMacros.h"
 #include "UI/SFFontLibrary.h"
+#include "UI/SFPanelStyle.h"
 #include "Constants/SFAssetPaths.h"
 #include "FGPlayerController.h"
 #include "Subsystem/SFSubsystem.h"
@@ -39,6 +40,8 @@
 #include "Buildables/FGBuildable.h"
 #include "Equipment/FGBuildGunBuild.h"
 #include "EngineUtils.h"
+#include "AbstractInstanceManager.h"
+#include "InstanceData.h"
 
 #include "Features/Upgrade/SFUpgradeAuditService.h"
 

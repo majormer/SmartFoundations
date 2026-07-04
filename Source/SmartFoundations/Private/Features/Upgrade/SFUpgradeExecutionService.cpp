@@ -254,17 +254,26 @@ void USFUpgradeExecutionService::GatherUpgradeTargets()
 		{
 			if (AFGBuildable* Buildable = WeakBuildable.Get())
 			{
-				// Add all buildables below the target tier (they will be upgraded)
-				int32 BuildableTier = USFUpgradeTraversalService::GetBuildableTier(Buildable);
-				if (BuildableTier < CurrentParams.TargetTier && BuildableTier > 0)
+				// [#456] SourceTier > 0 = the user picked a specific tier row in the network scan:
+				// upgrade ONLY that tier. SourceTier == 0 keeps the legacy sweep (everything below
+				// the target tier).
+				const int32 BuildableTier = USFUpgradeTraversalService::GetBuildableTier(Buildable);
+				if (BuildableTier <= 0)
+				{
+					continue;
+				}
+				const bool bMatch = (CurrentParams.SourceTier > 0)
+					? (BuildableTier == CurrentParams.SourceTier)
+					: (BuildableTier < CurrentParams.TargetTier);
+				if (bMatch)
 				{
 					PendingUpgrades.Add(Buildable);
 				}
 			}
 		}
 
-		UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: Filtered to %d targets below tier %d"),
-			PendingUpgrades.Num(), CurrentParams.TargetTier);
+		UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: Filtered to %d targets (source tier %d, target tier %d)"),
+			PendingUpgrades.Num(), CurrentParams.SourceTier, CurrentParams.TargetTier);
 
 		if (IsConveyorUpgradeFamily(CurrentParams.Family))
 		{
@@ -469,8 +478,12 @@ void USFUpgradeExecutionService::NormalizeConveyorUpgradeTargets(bool bRespectRa
 			const int32 Tier = USFUpgradeTraversalService::GetBuildableTier(Conveyor);
 			if (Tier <= 0 || Tier >= CurrentParams.TargetTier) continue;
 
-			// Radius mode still honors SourceTier as the user's requested source tier.
-			if (!CurrentParams.HasSpecificBuildables() && CurrentParams.SourceTier > 0 && Tier != CurrentParams.SourceTier)
+			// [#456] Honor SourceTier in BOTH radius and network modes. The cohort re-expansion
+			// above pulls in every connected conveyor regardless of tier, so this filter is what
+			// keeps "Mk2 -> Mk3 only" from sweeping the Mk3/Mk4 belts in the same run. The old
+			// !HasSpecificBuildables() gate here is exactly why network scans couldn't tier-target.
+			// SourceTier == 0 = "all tiers below target" (filter inert; legacy sweep).
+			if (CurrentParams.SourceTier > 0 && Tier != CurrentParams.SourceTier)
 			{
 				continue;
 			}

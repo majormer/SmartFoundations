@@ -10,6 +10,7 @@
 #include "Buildables/FGBuildableConveyorLift.h"
 #include "Buildables/FGBuildablePipeline.h"
 #include "Buildables/FGBuildablePipelinePump.h"
+#include "Buildables/FGBuildablePipelineJunction.h"
 #include "Buildables/FGBuildablePowerPole.h"
 #include "Buildables/FGBuildableFactory.h"
 #include "Buildables/FGBuildableSplitterSmart.h"
@@ -502,33 +503,81 @@ void USFUpgradeTraversalService::TraversePipelineNetwork(
 		{
 			TraversePipelineNetwork(PartnerPipeline, Config, VisitedSet, OutBuildables);
 		}
-		// Check if we should cross through pumps
-		else if (Config.bCrossPumps && Cast<AFGBuildablePipelinePump>(PartnerBuildable))
+		// Cross pipe attachments (pumps per bCrossPumps; junctions always - pure passthrough, #456).
+		else if (ShouldCrossPipeAttachment(PartnerBuildable, Config))
 		{
-			// Mark pump as visited
-			VisitedSet.Add(PartnerBuildable);
+			CrossPipeAttachment(PartnerBuildable, Config, VisitedSet, OutBuildables);
+		}
+	}
+}
 
-			// Get all pipe connections from pump and continue
-			TArray<UFGPipeConnectionComponent*> PumpConns = GetPipeConnections(PartnerBuildable);
-			for (UFGPipeConnectionComponent* PumpConn : PumpConns)
-			{
-				if (!PumpConn || PumpConn == PartnerConn)
-				{
-					continue;
-				}
+bool USFUpgradeTraversalService::ShouldCrossPipeAttachment(AFGBuildable* Buildable, const FSFTraversalConfig& Config) const
+{
+	if (!Buildable)
+	{
+		return false;
+	}
+	// Junctions (cross/T) are pure topology - always cross so a scan reaches the whole pipe run.
+	if (Cast<AFGBuildablePipelineJunction>(Buildable))
+	{
+		return true;
+	}
+	// Pumps stay behind the existing config toggle.
+	if (Config.bCrossPumps && Cast<AFGBuildablePipelinePump>(Buildable))
+	{
+		return true;
+	}
+	return false;
+}
 
-				UFGPipeConnectionComponent* NextPartnerConn = Cast<UFGPipeConnectionComponent>(PumpConn->GetConnection());
-				if (!NextPartnerConn)
-				{
-					continue;
-				}
+void USFUpgradeTraversalService::CrossPipeAttachment(
+	AFGBuildable* Attachment,
+	const FSFTraversalConfig& Config,
+	TSet<AFGBuildable*>& VisitedSet,
+	TArray<AFGBuildable*>& OutBuildables)
+{
+	// Attachments are crossed, not collected: mark visited but do NOT add to OutBuildables (a pump
+	// or junction is never an upgrade target). Marking visited also breaks attachment-chain cycles.
+	if (!Attachment || VisitedSet.Contains(Attachment))
+	{
+		return;
+	}
+	VisitedSet.Add(Attachment);
 
-				AActor* NextOwner = NextPartnerConn->GetOwner();
-				if (AFGBuildablePipeline* NextPipeline = Cast<AFGBuildablePipeline>(NextOwner))
-				{
-					TraversePipelineNetwork(NextPipeline, Config, VisitedSet, OutBuildables);
-				}
-			}
+	if (OutBuildables.Num() >= Config.MaxTraversalCount)
+	{
+		return;
+	}
+
+	// Step through to whatever hangs off this attachment's other connections. The connection we
+	// arrived on leads back to an already-visited pipe, so the VisitedSet check skips it.
+	for (UFGPipeConnectionComponent* Conn : GetPipeConnections(Attachment))
+	{
+		if (!Conn)
+		{
+			continue;
+		}
+
+		UFGPipeConnectionComponent* PartnerConn = Cast<UFGPipeConnectionComponent>(Conn->GetConnection());
+		if (!PartnerConn)
+		{
+			continue;
+		}
+
+		AFGBuildable* PartnerBuildable = Cast<AFGBuildable>(PartnerConn->GetOwner());
+		if (!PartnerBuildable || VisitedSet.Contains(PartnerBuildable))
+		{
+			continue;
+		}
+
+		if (AFGBuildablePipeline* NextPipeline = Cast<AFGBuildablePipeline>(PartnerBuildable))
+		{
+			TraversePipelineNetwork(NextPipeline, Config, VisitedSet, OutBuildables);
+		}
+		// Chain through consecutive attachments (junction->junction, junction->pump).
+		else if (ShouldCrossPipeAttachment(PartnerBuildable, Config))
+		{
+			CrossPipeAttachment(PartnerBuildable, Config, VisitedSet, OutBuildables);
 		}
 	}
 }

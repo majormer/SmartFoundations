@@ -28,6 +28,10 @@
 			"Name": "SML",
 			"Enabled": true,
 			"SemVersion": "^3.12.0"
+		},
+		{
+			"Name": "AbstractInstance",
+			"Enabled": true
 		}
 	],
 	"SemVersion": "33.4.0",
