@@ -9,6 +9,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [33.5.0] - Unreleased
+
+> *A Smart Restore redesign and a smarter Smart Upgrade: Restore is rebuilt into two clear tabs - Grid Presets and Modules - docked to the Smart Panel, and Smart Upgrade's network scan gains precise tier-to-tier targeting plus fixes for aiming, pipe junctions, and refreshing after an upgrade.*
+
+### Added
+
+- **Smart Upgrade's network scan can now upgrade one tier at a time** - Scanning a connected belt/pipe/pole network for upgrades used to only let you pick a *target* tier and then upgrade **everything** below it. You can now pick a specific source tier - for example, bump only your Mk.2 belts to Mk.3 and leave the Mk.4s untouched - matching the tier control the radius scan already had. Click a tier in the scan results to target just that tier, or pick **All tiers** to upgrade everything below the target as before. (Issue #456, requested by Infarctus on the Smart! Discord)
+
+### Changed
+
+- **Smart Restore is redesigned into two clear tabs: Grid Presets and Modules** - The old Restore panel mixed two very different things together and was hard to follow. It's now split into two tabs, docked to the Smart Panel as a single unit. **Grid Presets** save and reload everything you set up in the Smart Panel - grid size, spacing, steps, stagger, rotation, the building and its recipe, and your auto-connect settings - as named presets you can load back with one click, ready to fine-tune or build. **Modules** capture a whole Extend manifold - a wired unit of buildings with their belts and pipes - that you can then stamp down repeatedly and rescale on the fly. Each tab shows a plain-language summary of what a preset or module contains, and both still support sharing via import/export codes. (Issue #427)
+- **The Smart Upgrade panel now matches the Smart Panel's look** - The Upgrade panel's colors and buttons were inconsistent with the rest of Smart!; it now uses the same dark theme and orange accents. (Issue #456)
+
+### Fixed
+
+- **Network scan no longer depends on which tier you're holding** - With the Smart Upgrade panel open (you're already holding a belt, pipe, or power line), aiming at a belt/pipe/pole and pressing **Scan Network** only found a target if you happened to be holding a *different-tier* belt than the one you were pointing at - hold a matching tier and it found nothing. It now anchors on whatever you're aiming at, whatever tier you have in hand. (Issue #456)
+- **Network scan follows pipes through junctions** - A network scan stopped at cross and T pipe junctions, so it missed every pipe on the far sides and under-counted the network. It now crosses junctions - and chains of them - to walk the whole connected pipe run. (Issue #456)
+- **Network scan results refresh on their own after an upgrade** - After upgrading part of a scanned network, the results kept showing the old tier counts until you manually scanned again. They now refresh automatically, including for players on a multiplayer server. (Issue #456)
+- **Power pole auto-connect wires follow the grid again** - After the 33.4.0 scaling update, auto-connected power lines across a grid of poles came out crossing diagonally instead of running neatly along the rows or columns, and no Grid Axis setting (Auto, X, Y, or X+Y) lined up with the grid. The wiring now follows the grid correctly for every axis mode. (Issue #459)
+
+---
+
 ## [33.4.0] - 2026-07-03
 
 > *A scaling performance release: large grids are dramatically smoother, growing a grid no longer refreshes the whole preview, huge grids fill in progressively instead of freezing, and - the big one - large grids now build on dedicated servers without disconnecting everyone. Plus a scaling crash fix and cleaner previews.*
