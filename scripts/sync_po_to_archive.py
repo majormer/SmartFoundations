@@ -17,28 +17,52 @@ import sys
 BASE = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "Content", "Localization", "SmartFoundations"))
 LANGS = ["de","es","fr","it","ja","ko","pl","pt-BR","ru","zh-Hans","zh-Hant","tr","bg","hu","no","uk","vi","ar","fa","th"]
 
+def _po_unescape(s):
+    r"""Turn .po escape sequences (\n, \t, \r, \", \\) into their literal chars.
+
+    The .po stores an embedded quote as \" and a line break as \n; the archive
+    (and the compiled .locres) must hold the real characters, so every captured
+    value has to be unescaped before it is written back.
+    """
+    out = []
+    i = 0
+    while i < len(s):
+        c = s[i]
+        if c == "\\" and i + 1 < len(s):
+            nxt = s[i + 1]
+            out.append({"n": "\n", "t": "\t", "r": "\r", '"': '"', "\\": "\\"}.get(nxt, nxt))
+            i += 2
+        else:
+            out.append(c)
+            i += 1
+    return "".join(out)
+
+
 def parse_po(path):
-    """Parse .po file into dict of {key: msgstr}."""
+    """Parse .po file into dict of {key: msgstr}, with values unescaped."""
     translations = {}
     with open(path, "r", encoding="utf-8") as f:
         content = f.read()
-    
-    # Match msgctxt + msgid + msgstr blocks
-    pattern = r'msgctxt\s+"([^"]+)"\s+msgid\s+"([^"]*?)"\s+msgstr\s+"([^"]*?)"'
+
+    # Match msgctxt + msgid + msgstr blocks. The value captures allow escaped
+    # characters ( \" \\ \n ) so a string that embeds a quote or newline -- e.g.
+    # the HUD Module prompts *Module "{0}": ... and multi-line dialog text --
+    # parses in full instead of truncating at the first inner quote.
+    pattern = r'msgctxt\s+"((?:[^"\\]|\\.)*)"\s+msgid\s+"((?:[^"\\]|\\.)*)"\s+msgstr\s+"((?:[^"\\]|\\.)*)"'
     for match in re.finditer(pattern, content):
-        ctx = match.group(1)
-        msgid = match.group(2)
-        msgstr = match.group(3)
-        
+        ctx = _po_unescape(match.group(1))
+        msgid = _po_unescape(match.group(2))
+        msgstr = _po_unescape(match.group(3))
+
         # Extract key from context "SmartFoundations,KeyName"
         if "," in ctx:
             key = ctx.split(",", 1)[1]
         else:
             key = ctx
-        
-        if msgstr and msgstr != msgid:  # Only if actually translated
+
+        if msgstr and msgstr != msgid:  # Only if actually translated (identical = source fallback)
             translations[key] = msgstr
-    
+
     return translations
 
 def update_archive(archive_path, translations):
