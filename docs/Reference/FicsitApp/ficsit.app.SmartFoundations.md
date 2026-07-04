@@ -1,6 +1,6 @@
 # <img src="https://github.com/majormer/SmartFoundations/blob/main/images/Smart-Logo.png?raw=true" width="150" alt="Smart! Logo"> Smart! Mod
 
-![Status](https://img.shields.io/badge/Status-Released-brightgreen) ![Version](https://img.shields.io/badge/Version-33.4.0-blue) ![Satisfactory](https://img.shields.io/badge/Satisfactory-1.2-blue) ![Engine](https://img.shields.io/badge/Engine-UE%205.6-blue) ![SML](https://img.shields.io/badge/SML-3.12-blue) ![Multiplayer](https://img.shields.io/badge/Multiplayer-Supported-brightgreen) ![AI Assisted Development Used](https://img.shields.io/badge/AI%20Assisted%20Development%20Used-Disclosure%20Below-blue)
+![Status](https://img.shields.io/badge/Status-Released-brightgreen) ![Version](https://img.shields.io/badge/Version-33.5.0-blue) ![Satisfactory](https://img.shields.io/badge/Satisfactory-1.2-blue) ![Engine](https://img.shields.io/badge/Engine-UE%205.6-blue) ![SML](https://img.shields.io/badge/SML-3.12-blue) ![Multiplayer](https://img.shields.io/badge/Multiplayer-Supported-brightgreen) ![AI Assisted Development Used](https://img.shields.io/badge/AI%20Assisted%20Development%20Used-Disclosure%20Below-blue)
 
 > **Multiplayer note:** As of v32.0.0, every Smart! feature works in multiplayer on dedicated servers (Windows and Linux) — including **Smart Walking** and the new-in-v33.1.0 **Hyper Tube** support. If you hit something odd in a multiplayer session, please report it on [GitHub](https://github.com/majormer/SmartFoundations/issues) or [Discord](https://discord.gg/SgXY4CwXYw).
 
@@ -113,22 +113,29 @@ See [LICENSE.md](https://github.com/majormer/SmartFoundations/blob/main/LICENSE.
 
 ---
 
-## 📰 What's New in v33.4.0: Scaling at Scale
+## 📰 What's New in v33.5.0: Restore, Reorganized
 
-**Current Release:** v33.4.0 is a scaling performance release. Large grids used to get sluggish and eventually near-unusable once you pushed past a couple thousand buildings, because every previewed building was being nudged back into place every frame. Smart! now gives each previewed building a stable identity so it holds its own position — which makes grids of *tens of thousands* stay responsive, and unlocks the rest of the improvements below. See the [full changelog](https://github.com/majormer/SmartFoundations/blob/main/CHANGELOG.md) for all the details.
+**Current Release:** v33.5.0 rebuilds Smart Restore into two clear tabs — **Grid Presets** and **Modules** — docked to the Smart Panel, and gives Smart Upgrade's network scan precise **tier-to-tier** targeting. Rounded out with a batch of scaling and auto-connect fixes. See the [full changelog](https://github.com/majormer/SmartFoundations/blob/main/CHANGELOG.md) for all the details.
 
-### Large-scale building is dramatically smoother
+### Smart Restore, reorganized into Grid Presets and Modules
 
-Scale far higher than before and keep moving around freely while you do it. Growing a grid now only adds the new row, column, or stack — everything you already placed stays put instead of the whole preview refreshing. And jumping straight to a very large grid fills in progressively over a moment or two instead of locking the game up while everything spawns at once.
+The old Restore panel mixed two very different things together and was hard to follow. It's now split into two tabs, docked to the Smart Panel as a single unit. **Grid Presets** save everything you set up in the Smart Panel — grid size, spacing, steps, stagger, rotation, the building and its recipe, and your auto-connect settings — as named presets you load back with one click, ready to fine-tune or build. **Modules** capture a whole Extend manifold — a wired unit of buildings with their belts and pipes — that you can stamp down repeatedly and rescale on the fly. Each tab shows a plain-language summary of what a preset or module holds, and both still support sharing via import/export codes.
 
-### Big grids build in multiplayer without dropping anyone
+### Smart Upgrade goes tier-to-tier
 
-The headline fix for server play: committing a very large scaled build on a dedicated server could previously freeze the server long enough that every connected player timed out and got disconnected (even though the build itself completed and saved). Large builds are now constructed in the background over a few moments, so the server stays responsive and nobody gets kicked — the buildings appear progressively as they're built.
+Smart Upgrade's network scan used to only let you pick a *target* tier and then upgrade **everything** below it. Now you can pick a specific *source* tier as well — bump only your Mk.2 belts to Mk.3 and leave the Mk.4s untouched — matching the tier control the radius scan already had. It also fixes aiming (the scan now anchors on whatever you point at, whatever tier you're holding), follows pipes through cross and T junctions, and refreshes its results automatically after an upgrade.
 
-### Also in v33.4.0
+### Also in v33.5.0
 
-- **Fixed a crash** when scaling a rotated wall grid that looped back on itself (a silo-style shape) and then scaling it back down. (Issue #418)
-- **Cleaner previews** — scaled grids no longer show a scattering of stray white outline boxes over every building. (Issue #418)
+- **Power pole auto-connect wires follow the grid again** after the 33.4.0 scaling update — every Grid Axis mode lines up instead of running diagonally. (Issue #459)
+- **Reverse-scaling a Restore module** no longer wires its manifold belts backward. (Issue #460)
+- **Scaled conveyor lift floor holes sit flush** on dedicated servers instead of building a half-step too high. (Issue #458)
+- **Zooping a sign** no longer collides with Smart scaling — Smart stands aside for the Zoop, the same way it does for foundations. (Issue #330)
+- **Middle-click-sampling a factory** no longer blocks placing it in a Blueprint Designer. (Issue #461, reported by Tonka Beans)
+
+### Previously, in v33.4.0: Scaling at Scale
+
+v33.4.0 was a scaling performance release: previewed buildings hold their own position instead of being nudged back every frame, so grids of *tens of thousands* stay responsive; growing a grid only adds the new part instead of redrawing everything; huge grids fill in progressively instead of freezing; and — the big one — large grids build on dedicated servers without freezing the server and dropping every connected player. (Issue #418)
 
 ### Previously, in v33.3.0: Real Routing, Everywhere
 
