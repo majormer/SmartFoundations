@@ -7,6 +7,20 @@
 #include "HUD/SFHUDTypes.h" // for FSFCounterState
 #include "SFGridStateService.generated.h"
 
+/**
+ * [#217] Per-transform scroll-wheel increments, resolved from config (quantized/floored/clamped)
+ * and cached on the subsystem. Distance fields are centimeters (grid state is integer cm); rotation
+ * is degrees. Shared 1:1 by the grid path and the Smart Walking path (Advance=Spacing, Rise=Steps,
+ * Shift=Stagger, Turn=Rotation). Defaults mirror the previous hardcoded behavior.
+ */
+struct FSFScrollIncrements
+{
+    int32 SpacingCm = 50;
+    int32 StepsCm = 50;
+    int32 StaggerCm = 50;
+    float RotationDeg = 5.0f;
+};
+
 UCLASS()
 class SMARTFOUNDATIONS_API USFGridStateService : public UObject
 {
@@ -94,11 +108,11 @@ public:
         return PreviousValue;
     }
 
-    // Modal adjustment helpers (mouse wheel / value increase/decrease)
-    void AdjustSpacing(FSFCounterState& State, ESFScaleAxis Axis, int32 AccumulatedSteps, int32 Direction)
+    // Modal adjustment helpers (mouse wheel / value increase/decrease).
+    // [#217] The per-notch increment is passed in (config-driven) rather than hardcoded.
+    void AdjustSpacing(FSFCounterState& State, ESFScaleAxis Axis, int32 AccumulatedSteps, int32 Direction, int32 IncrementCm)
     {
-        constexpr int32 INCREMENT = 50;
-        const int32 Delta = Direction * INCREMENT * AccumulatedSteps;
+        const int32 Delta = Direction * IncrementCm * AccumulatedSteps;
         switch (Axis)
         {
         case ESFScaleAxis::X: State.SpacingX += Delta; break;
@@ -108,10 +122,9 @@ public:
         }
     }
 
-    void AdjustSteps(FSFCounterState& State, ESFScaleAxis Axis, int32 AccumulatedSteps, int32 Direction)
+    void AdjustSteps(FSFCounterState& State, ESFScaleAxis Axis, int32 AccumulatedSteps, int32 Direction, int32 IncrementCm)
     {
-        constexpr int32 INCREMENT = 50;
-        const int32 Delta = Direction * INCREMENT * AccumulatedSteps;
+        const int32 Delta = Direction * IncrementCm * AccumulatedSteps;
         switch (Axis)
         {
         case ESFScaleAxis::X: State.StepsX += Delta; break;
@@ -120,10 +133,9 @@ public:
         }
     }
 
-    void AdjustStagger(FSFCounterState& State, ESFScaleAxis Axis, int32 AccumulatedSteps, int32 Direction)
+    void AdjustStagger(FSFCounterState& State, ESFScaleAxis Axis, int32 AccumulatedSteps, int32 Direction, int32 IncrementCm)
     {
-        constexpr int32 INCREMENT = 50;
-        const int32 Delta = Direction * INCREMENT * AccumulatedSteps;
+        const int32 Delta = Direction * IncrementCm * AccumulatedSteps;
         switch (Axis)
         {
         case ESFScaleAxis::X:  State.StaggerX  += Delta; break;
@@ -134,14 +146,12 @@ public:
         }
     }
 
-    void AdjustRotation(FSFCounterState& State, ESFScaleAxis Axis, int32 AccumulatedSteps, int32 Direction)
+    void AdjustRotation(FSFCounterState& State, ESFScaleAxis Axis, int32 AccumulatedSteps, int32 Direction, float IncrementDeg)
     {
-        // Rotation uses degrees, 5° per step for fine control.
         // Axis here is the PROGRESSION axis (X-clones vs Y-rows) and does NOT affect the
         // yaw angle value — the single RotationZ angle is always adjusted regardless of Axis.
         (void)Axis;
-        constexpr float INCREMENT = 5.0f;
-        const float Delta = Direction * INCREMENT * AccumulatedSteps;
+        const float Delta = Direction * IncrementDeg * AccumulatedSteps;
         State.RotationZ += Delta;
     }
 
@@ -161,26 +171,27 @@ public:
         bool bSpacingModeActive,
         bool bStepsModeActive,
         bool bStaggerModeActive,
-        bool bRotationModeActive = false)
+        bool bRotationModeActive,
+        const FSFScrollIncrements& Inc)
     {
         if (bSpacingModeActive)
         {
-            AdjustSpacing(State, State.SpacingAxis, AccumulatedSteps, Direction);
+            AdjustSpacing(State, State.SpacingAxis, AccumulatedSteps, Direction, Inc.SpacingCm);
             return EValueAdjustResult::CountersChanged;
         }
         if (bStepsModeActive)
         {
-            AdjustSteps(State, State.StepsAxis, AccumulatedSteps, Direction);
+            AdjustSteps(State, State.StepsAxis, AccumulatedSteps, Direction, Inc.StepsCm);
             return EValueAdjustResult::CountersChanged;
         }
         if (bStaggerModeActive)
         {
-            AdjustStagger(State, State.StaggerAxis, AccumulatedSteps, Direction);
+            AdjustStagger(State, State.StaggerAxis, AccumulatedSteps, Direction, Inc.StaggerCm);
             return EValueAdjustResult::CountersChanged;
         }
         if (bRotationModeActive)
         {
-            AdjustRotation(State, State.RotationAxis, AccumulatedSteps, Direction);
+            AdjustRotation(State, State.RotationAxis, AccumulatedSteps, Direction, Inc.RotationDeg);
             return EValueAdjustResult::CountersChanged;
         }
         if (bRecipeModeActive)

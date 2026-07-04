@@ -1386,13 +1386,15 @@ bool USFSubsystem::RouteWalkValueAdjust(int32 AccumulatedSteps, int32 Direction)
 		return false;
 	}
 
-	// #356 reframe: the active transform modal acts on the ACTIVE segment, not the grid. (Increments are tunable.)
+	// #356 reframe: the active transform modal acts on the ACTIVE segment, not the grid.
+	// [#217] Walk maps 1:1 to the grid transforms and SHARES the same configured increments
+	// (Advance=Spacing, Turn=Rotation, Rise=Steps, Shift=Stagger). Defaults 0.5 m / 5°.
 	const float Steps = static_cast<float>(FMath::Max(1, AccumulatedSteps)) * static_cast<float>(Direction);
 	float dAdvance = 0.0f, dTurn = 0.0f, dRise = 0.0f, dShift = 0.0f;
-	if (bSpacingModeActive)       { dAdvance = Steps * 100.0f; }   // Spacing  → segment gap   (1 m / step)
-	else if (bRotationModeActive) { dTurn    = Steps * 15.0f;  }   // Rotation → segment turn  (15 deg / step)
-	else if (bStepsModeActive)    { dRise    = Steps * 100.0f; }   // Steps    → segment rise  (1 m / step)
-	else if (bStaggerModeActive)  { dShift   = Steps * 100.0f; }   // Stagger  → segment shift (1 m / step)
+	if (bSpacingModeActive)       { dAdvance = Steps * CachedScrollIncrements.SpacingCm;   }  // Spacing  → segment gap  (cm)
+	else if (bRotationModeActive) { dTurn    = Steps * CachedScrollIncrements.RotationDeg; }  // Rotation → segment turn (deg)
+	else if (bStepsModeActive)    { dRise    = Steps * CachedScrollIncrements.StepsCm;     }  // Steps    → segment rise  (cm)
+	else if (bStaggerModeActive)  { dShift   = Steps * CachedScrollIncrements.StaggerCm;   }  // Stagger  → segment shift (cm)
 	else
 	{
 		// No transform modal → a plain Scale-X value-adjust ADVANCES (up) / BACKS UP (down) the walk, segment by
@@ -1887,7 +1889,8 @@ void USFSubsystem::OnValueIncreased(const FInputActionValue& Value)
             bSpacingModeActive,
             bStepsModeActive,
             bStaggerModeActive,
-            bRotationModeActive);
+            bRotationModeActive,
+            CachedScrollIncrements);  // [#217] config-driven per-notch increments
 
         if (Result == USFGridStateService::EValueAdjustResult::CountersChanged)
         {
@@ -1958,7 +1961,8 @@ void USFSubsystem::OnMouseWheelChanged(const FInputActionValue& Value)
             bSpacingModeActive,
             bStepsModeActive,
             bStaggerModeActive,
-            bRotationModeActive);
+            bRotationModeActive,
+            CachedScrollIncrements);  // [#217] config-driven per-notch increments
 
         if (Result == USFGridStateService::EValueAdjustResult::CountersChanged)
         {
@@ -2026,7 +2030,8 @@ void USFSubsystem::OnValueDecreased(const FInputActionValue& Value)
             bSpacingModeActive,
             bStepsModeActive,
             bStaggerModeActive,
-            bRotationModeActive);
+            bRotationModeActive,
+            CachedScrollIncrements);  // [#217] config-driven per-notch increments
 
         if (Result == USFGridStateService::EValueAdjustResult::CountersChanged)
         {
