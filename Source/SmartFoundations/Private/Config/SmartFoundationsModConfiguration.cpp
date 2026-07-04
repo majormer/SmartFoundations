@@ -72,6 +72,21 @@ USmartFoundationsModConfiguration::USmartFoundationsModConfiguration()
 		LOCTEXT("P.PowerConnectReserved.TT", "Number of pole connection slots to leave free for your own manual wiring."), 2));
 	RootSection->SectionProperties.Add(TEXT("PowerAutoConnect"), Power);
 
+	// ── Scaling Settings (#217 scroll increments) ──
+	// Base C++ archetype only carries keys + defaults (survives cooking). The renderable slider
+	// bounds (0.1-8 m / 0.5-90 deg) live on the Smart_Config Blueprint override's BP_ConfigPropertyFloat.
+	UConfigPropertySection* Scaling = CreateSection(TEXT("ScalingSettings"), LOCTEXT("Sec.Scaling", "Scaling Settings"),
+		LOCTEXT("Sec.Scaling.TT", "How much each mouse-wheel notch changes a grid transform. Also used by Extend, Restore, and Smart Walking."));
+	Scaling->SectionProperties.Add(TEXT("SpacingIncrement"),  CreateFloatProperty(TEXT("SpacingIncrement"),  LOCTEXT("P.SpacingIncrement", "Spacing Increment (m)"),
+		LOCTEXT("P.SpacingIncrement.TT", "Meters of spacing added per scroll notch (also Extend spacing and walk segment advance)."), 0.5f));
+	Scaling->SectionProperties.Add(TEXT("StepsIncrement"),    CreateFloatProperty(TEXT("StepsIncrement"),    LOCTEXT("P.StepsIncrement", "Steps Increment (m)"),
+		LOCTEXT("P.StepsIncrement.TT", "Meters of stepping added per scroll notch (also walk segment rise)."), 0.5f));
+	Scaling->SectionProperties.Add(TEXT("StaggerIncrement"),  CreateFloatProperty(TEXT("StaggerIncrement"),  LOCTEXT("P.StaggerIncrement", "Stagger Increment (m)"),
+		LOCTEXT("P.StaggerIncrement.TT", "Meters of stagger added per scroll notch (also walk segment shift)."), 0.5f));
+	Scaling->SectionProperties.Add(TEXT("RotationIncrement"), CreateFloatProperty(TEXT("RotationIncrement"), LOCTEXT("P.RotationIncrement", "Rotation Increment (deg)"),
+		LOCTEXT("P.RotationIncrement.TT", "Degrees of rotation added per scroll notch (also walk segment turn)."), 5.0f));
+	RootSection->SectionProperties.Add(TEXT("ScalingSettings"), Scaling);
+
 	// ── Building Behavior ──
 	UConfigPropertySection* Building = CreateSection(TEXT("BuildingBehavior"), LOCTEXT("Sec.Building", "Building Behavior"),
 		LOCTEXT("Sec.Building.TT", "How Extend, auto-hold, and Apply behave while building."));
@@ -154,6 +169,7 @@ UConfigPropertyFloat* USmartFoundationsModConfiguration::CreateFloatProperty(con
 	Property->DisplayName = InDisplayName;
 	Property->Tooltip = Tooltip;
 	Property->Value = Value;
+	Property->DefaultValue = Value;  // [#217] so Mods-menu "reset to default" restores the intended value (was 0)
 	Property->bRequiresWorldReload = false;
 	Property->bHidden = false;
 	return Property;

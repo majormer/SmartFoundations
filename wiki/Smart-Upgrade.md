@@ -23,7 +23,7 @@ Use it when you want to upgrade many belts, lifts, pipes, or power poles without
 1. Open the Smart Upgrade Panel with `K` while holding a belt, lift, pipe, or wire/power line.
 2. Choose a scan mode.
 3. Scan nearby items or a connected network.
-4. Pick the family and target tier.
+4. Pick the family and target tier — and, on a network scan, optionally a single source tier to upgrade just that tier.
 5. Review the material cost.
 6. Run the upgrade.
 
@@ -39,7 +39,16 @@ Smart Upgrade can scan:
 - The whole map by using radius `0`.
 - A connected network starting from an anchor buildable.
 
-Network traversal is useful when you want to upgrade one belt line, pipe line, or power network without touching unrelated nearby items.
+Network traversal is useful when you want to upgrade one belt line, pipe line, or power network without touching unrelated nearby items. The scan anchors on whatever you aim at — whatever tier you happen to be holding — follows pipes through cross and T junctions, and refreshes its results automatically after an upgrade (including for players on a multiplayer server).
+
+## Tier-to-Tier Targeting
+
+A network scan lists the tiers it found in the connected run, and lets you choose which to upgrade:
+
+- Click a specific tier — for example **Mk.2** — to upgrade **only** that tier to your target. Bump your Mk.2 belts to Mk.3 and leave the Mk.4s untouched.
+- Pick **All tiers** to upgrade everything below the target at once (the original behavior).
+
+This matches the tier control the radius scan already had.
 
 ## Costs And Refunds
 

@@ -97,8 +97,8 @@ void USmartUpgradePanel::OnRowSelected(ESFUpgradeFamily Family, int32 Tier)
 	SelectedFamily = Family;
 	SelectedTier = Tier;
 
-	// Highlight selected row, dim others
-	const FLinearColor SelectedBgColor(0.886f, 0.498f, 0.118f, 0.3f);  // Translucent orange
+	// Highlight selected row, dim others (translucent Smart! accent)
+	const FLinearColor SelectedBgColor(SFPanelStyle::Accent.R, SFPanelStyle::Accent.G, SFPanelStyle::Accent.B, 0.3f);
 	const FLinearColor DefaultBgColor(0.0f, 0.0f, 0.0f, 0.0f);         // Transparent
 
 	for (const auto& Pair : RowDataMap)
@@ -195,8 +195,27 @@ void USmartUpgradePanel::OnUpgradeCompleted(const FSFUpgradeExecutionResult& Res
 		}
 	}
 
-	// Refresh audit to show updated counts
-	RefreshAudit();
+	// Refresh so the results reflect the new state. Network mode re-walks the (now-upgraded)
+	// network from a re-acquired anchor; radius mode re-runs the radius audit. [#456]
+	if (ActiveTab == ESmartUpgradeTab::Traversal)
+	{
+		// On a network client the upgraded actors have not replicated yet when this result RPC
+		// arrives, so an immediate re-acquire finds no seed and the refresh silently no-ops (MP
+		// field report 2026-07-04). Defer + retry until replication catches up. Host/SP is
+		// synchronous - the new actors already exist - so refresh straight away.
+		if (GetWorld() && GetWorld()->GetNetMode() == NM_Client)
+		{
+			BeginDeferredTraversalRefresh();
+		}
+		else if (!RefreshTraversalScan() && SharedStatusText)
+		{
+			SharedStatusText->SetText(LOCTEXT("Upgrade_RescanAim", "Upgrade complete - aim at the network and Scan again"));
+		}
+	}
+	else
+	{
+		RefreshAudit();
+	}
 }
 
 void USmartUpgradePanel::OnTargetTierChanged(FString SelectedItem, ESelectInfo::Type SelectionType)
@@ -238,10 +257,11 @@ void USmartUpgradePanel::PopulateTargetTierDropdown()
 	// Clear existing options
 	ActiveComboBox->ClearOptions();
 
-	// In traversal mode, SelectedTier may be 0 (multiple tiers in network)
-	// In that case, populate all tiers above 1
+	// In traversal mode, SelectedTier == 0 is the "All tiers" sweep row (multiple tiers in
+	// network) - offer every target from Mk.2 up. [#456] A specific selected source tier
+	// floors the target options above it, exactly like radius mode.
 	bool bIsTraversalMode = (ActiveTab == ESmartUpgradeTab::Traversal);
-	int32 MinSourceTier = bIsTraversalMode ? 1 : SelectedTier;
+	int32 MinSourceTier = (bIsTraversalMode && SelectedTier == 0) ? 1 : SelectedTier;
 
 	if (SelectedFamily == ESFUpgradeFamily::None)
 	{
@@ -357,7 +377,11 @@ void USmartUpgradePanel::UpdateCostDisplay()
 
 		for (const FSFUpgradeAuditEntry& Entry : CachedTraversalResult.Entries)
 		{
-			if (Entry.CurrentTier < CachedTargetTier && Entry.CurrentTier > 0)
+			// [#456] SelectedTier > 0 = cost only the picked source tier; 0 = the legacy sweep.
+			const bool bTierMatch = (SelectedTier > 0)
+				? (Entry.CurrentTier == SelectedTier && Entry.CurrentTier < CachedTargetTier)
+				: (Entry.CurrentTier < CachedTargetTier && Entry.CurrentTier > 0);
+			if (bTierMatch)
 			{
 				ESFUpgradeFamily EntryFamily = USFUpgradeTraversalService::GetUpgradeFamily(Entry.Buildable.Get());
 				FamilyCounts.FindOrAdd(EntryFamily)++;
@@ -694,29 +718,23 @@ void USmartUpgradePanel::SwitchToTab(ESmartUpgradeTab NewTab)
 		TraversalContent->SetVisibility(bTraversalTab ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
 	}
 
-	// Update tab button appearance (visual feedback for active/inactive)
-	const FLinearColor ActiveTabColor(0.886f, 0.498f, 0.118f, 1.0f);    // Satisfactory orange
-	const FLinearColor InactiveTabColor(0.15f, 0.15f, 0.18f, 1.0f);     // Dark gray
-	const FLinearColor ActiveTextColor(1.0f, 1.0f, 1.0f, 1.0f);         // White
-	const FLinearColor InactiveTextColor(0.6f, 0.6f, 0.6f, 1.0f);       // Dim gray
-
+	// Update tab button appearance - shared Smart! scheme (mirrors Restore's SetActiveRestoreTab):
+	// active tab = orange accent fill with a near-black label, idle = dark fill with a light label.
 	if (RadiusTabButton)
 	{
-		RadiusTabButton->SetBackgroundColor(bRadiusTab ? ActiveTabColor : InactiveTabColor);
+		RadiusTabButton->SetStyle(SFPanelStyle::MakeButtonStyle(bRadiusTab));
 	}
 	if (TraversalTabButton)
 	{
-		TraversalTabButton->SetBackgroundColor(bTraversalTab ? ActiveTabColor : InactiveTabColor);
+		TraversalTabButton->SetStyle(SFPanelStyle::MakeButtonStyle(bTraversalTab));
 	}
-
-	// Update tab text colors
 	if (UTextBlock* RadiusText = RadiusTabButton ? Cast<UTextBlock>(RadiusTabButton->GetChildAt(0)) : nullptr)
 	{
-		RadiusText->SetColorAndOpacity(FSlateColor(bRadiusTab ? ActiveTextColor : InactiveTextColor));
+		RadiusText->SetColorAndOpacity(FSlateColor(bRadiusTab ? SFPanelStyle::NearBlackText : SFPanelStyle::LightText));
 	}
 	if (UTextBlock* TraversalText = TraversalTabButton ? Cast<UTextBlock>(TraversalTabButton->GetChildAt(0)) : nullptr)
 	{
-		TraversalText->SetColorAndOpacity(FSlateColor(bTraversalTab ? ActiveTextColor : InactiveTextColor));
+		TraversalText->SetColorAndOpacity(FSlateColor(bTraversalTab ? SFPanelStyle::NearBlackText : SFPanelStyle::LightText));
 	}
 
 	// Update shared status text based on tab
@@ -768,7 +786,10 @@ void USmartUpgradePanel::OnTraversalScanClicked()
 	// Get the upgrade target from the current hologram - the game already knows what we're aiming at
 	AFGBuildable* AnchorBuildable = nullptr;
 
-	FVector HologramLocation = FVector::ZeroVector;
+	// The active build-gun hologram (if any). Captured so the fallback trace can IGNORE it -
+	// otherwise, when holding a matching-tier belt, the snapped preview sits right where you aim
+	// and the trace hits the hologram instead of the belt behind it (#456 field report).
+	AFGHologram* ActiveHologram = nullptr;
 	AFGCharacterPlayer* Character = Cast<AFGCharacterPlayer>(PC->GetPawn());
 	if (Character)
 	{
@@ -776,14 +797,13 @@ void USmartUpgradePanel::OnTraversalScanClicked()
 		if (BuildGun)
 		{
 			UFGBuildGunStateBuild* BuildState = Cast<UFGBuildGunStateBuild>(BuildGun->GetCurrentState());
-			AFGHologram* Hologram = BuildState ? BuildState->GetHologram() : nullptr;
-			if (Hologram)
+			ActiveHologram = BuildState ? BuildState->GetHologram() : nullptr;
+			if (ActiveHologram)
 			{
-				// Save hologram location for fallback search
-				HologramLocation = Hologram->GetActorLocation();
-
-				// GetUpgradedActor returns the buildable being targeted for upgrade (only when placement is valid)
-				AActor* UpgradeTarget = Hologram->GetUpgradedActor();
+				// GetUpgradedActor returns the buildable being targeted for upgrade, but ONLY when
+				// the held gun would replace it (a different tier - upgrade OR downgrade). Holding
+				// the SAME tier leaves the gun in plain build mode and this returns null.
+				AActor* UpgradeTarget = ActiveHologram->GetUpgradedActor();
 				AnchorBuildable = Cast<AFGBuildable>(UpgradeTarget);
 
 				if (AnchorBuildable)
@@ -795,48 +815,91 @@ void USmartUpgradePanel::OnTraversalScanClicked()
 		}
 	}
 
-	// Fallback: If hologram didn't give us a target (e.g. same-tier),
-	// use line trace to find hit point and search for nearest upgradeable buildable
+	// Fallback: the hologram's GetUpgradedActor() only yields a target when the held build gun would
+	// REPLACE what you're aiming at - i.e. a DIFFERENT belt tier. The Upgrade Panel only opens while
+	// you hold a conduit (belt/pipe/power line, IsUpgradeCapableContext), so in practice the failing
+	// case is aiming at a MATCHING-tier belt, which returned nothing (#456 field report). Resolve the
+	// aim independently of the held tier, mirroring the Extend detection trace (SFSubsystem): player
+	// view point + ECC_WorldStatic (hits buildings, not just visibility) + ignore the pawn AND the
+	// active hologram (its snapped preview otherwise blocks the trace in the matching-tier case).
 	if (!AnchorBuildable)
 	{
-		FHitResult HitResult;
-		FVector StartLocation = PC->PlayerCameraManager->GetCameraLocation();
-		FVector EndLocation = StartLocation + PC->PlayerCameraManager->GetCameraRotation().Vector() * 5000.0f;
+		FVector ViewLoc;
+		FRotator ViewRot;
+		PC->GetPlayerViewPoint(ViewLoc, ViewRot);
+		const FVector StartLocation = ViewLoc;
+		const FVector EndLocation = StartLocation + ViewRot.Vector() * 5000.0f;
 
 		FCollisionQueryParams QueryParams;
 		QueryParams.AddIgnoredActor(PC->GetPawn());
-
-		// Line trace to get hit point (even if it hits instanced mesh manager)
-		if (GetWorld()->LineTraceSingleByChannel(HitResult, StartLocation, EndLocation, ECC_Visibility, QueryParams))
+		if (ActiveHologram)
 		{
-			// Use actor iteration to find nearest upgradeable buildable to hit point
-			// This works around instanced mesh rendering where physics queries return wrong actor
-			FVector SearchPoint = HitResult.ImpactPoint;
-			float SearchRadius = 300.0f;
-			float ClosestDist = FLT_MAX;
+			QueryParams.AddIgnoredActor(ActiveHologram);
+		}
 
-			for (TActorIterator<AFGBuildable> It(GetWorld()); It; ++It)
+		FHitResult HitResult;
+		if (GetWorld()->LineTraceSingleByChannel(HitResult, StartLocation, EndLocation, ECC_WorldStatic, QueryParams))
+		{
+			// Real-actor buildings (machines, poles) report themselves directly.
+			AnchorBuildable = Cast<AFGBuildable>(HitResult.GetActor());
+			if (AnchorBuildable && USFUpgradeTraversalService::GetUpgradeFamily(AnchorBuildable) == ESFUpgradeFamily::None)
 			{
-				AFGBuildable* Buildable = *It;
-				if (!Buildable) continue;
+				AnchorBuildable = nullptr;
+			}
 
-				float Dist = FVector::Dist(SearchPoint, Buildable->GetActorLocation());
-				if (Dist < SearchRadius)
+			// Belts/pipes are AbstractInstance-rendered: the trace reports the shared instance
+			// manager as the hit actor, so resolve the specific instance to its owning buildable
+			// (the same mechanism the game's dismantle aim uses - exact, no distance guessing).
+			if (!AnchorBuildable)
+			{
+				if (AAbstractInstanceManager* InstanceManager = AAbstractInstanceManager::GetInstanceManager(this))
 				{
-					// Only consider upgradeable types
-					ESFUpgradeFamily Family = USFUpgradeTraversalService::GetUpgradeFamily(Buildable);
-					if (Family != ESFUpgradeFamily::None && Dist < ClosestDist)
+					FInstanceHandle Handle;
+					if (InstanceManager->ResolveHit(HitResult, Handle))
 					{
-						ClosestDist = Dist;
-						AnchorBuildable = Buildable;
+						if (AFGBuildable* ResolvedBuildable = Cast<AFGBuildable>(AAbstractInstanceManager::GetOwnerByHandle(Handle)))
+						{
+							if (USFUpgradeTraversalService::GetUpgradeFamily(ResolvedBuildable) != ESFUpgradeFamily::None)
+							{
+								AnchorBuildable = ResolvedBuildable;
+								UE_LOG(LogSmartUI, VeryVerbose, TEXT("Upgrade Panel: Resolved aim to buildable via instance manager: %s"),
+									*AnchorBuildable->GetClass()->GetName());
+							}
+						}
 					}
 				}
 			}
 
-			if (AnchorBuildable)
+			// Final safety net: nearest upgradeable buildable to the impact point.
+			if (!AnchorBuildable)
 			{
-				UE_LOG(LogSmartUI, VeryVerbose, TEXT("Upgrade Panel: Found buildable near aim point: %s (dist: %.1f)"),
-					*AnchorBuildable->GetClass()->GetName(), ClosestDist);
+				FVector SearchPoint = HitResult.ImpactPoint;
+				float SearchRadius = 300.0f;
+				float ClosestDist = FLT_MAX;
+
+				for (TActorIterator<AFGBuildable> It(GetWorld()); It; ++It)
+				{
+					AFGBuildable* Buildable = *It;
+					if (!Buildable) continue;
+
+					float Dist = FVector::Dist(SearchPoint, Buildable->GetActorLocation());
+					if (Dist < SearchRadius)
+					{
+						// Only consider upgradeable types
+						ESFUpgradeFamily Family = USFUpgradeTraversalService::GetUpgradeFamily(Buildable);
+						if (Family != ESFUpgradeFamily::None && Dist < ClosestDist)
+						{
+							ClosestDist = Dist;
+							AnchorBuildable = Buildable;
+						}
+					}
+				}
+
+				if (AnchorBuildable)
+				{
+					UE_LOG(LogSmartUI, VeryVerbose, TEXT("Upgrade Panel: Found buildable near aim point: %s (dist: %.1f)"),
+						*AnchorBuildable->GetClass()->GetName(), ClosestDist);
+				}
 			}
 		}
 	}
@@ -872,8 +935,25 @@ void USmartUpgradePanel::OnTraversalScanClicked()
 		return;
 	}
 
-	// Update anchor text
+	RunTraversalScanFromAnchor(AnchorBuildable);
+}
+
+void USmartUpgradePanel::RunTraversalScanFromAnchor(AFGBuildable* AnchorBuildable)
+{
+	if (!AnchorBuildable)
+	{
+		return;
+	}
+	AFGPlayerController* PC = Cast<AFGPlayerController>(GetOwningPlayer());
+	if (!PC)
+	{
+		return;
+	}
+
+	// Remember the anchor + its location (the location survives the anchor being replaced by its
+	// own upgrade, so the post-upgrade refresh can re-seed the walk - #456).
 	TraversalAnchor = AnchorBuildable;
+	TraversalAnchorLocation = AnchorBuildable->GetActorLocation();
 	if (TraversalAnchorText)
 	{
 		int32 Tier = USFUpgradeTraversalService::GetBuildableTier(AnchorBuildable);
@@ -937,8 +1017,105 @@ void USmartUpgradePanel::OnTraversalScanClicked()
 	UpdateTraversalUI(CachedTraversalResult);
 }
 
+bool USmartUpgradePanel::RefreshTraversalScan()
+{
+	// Re-acquire a network seed. Prefer the original anchor if it survived; otherwise the upgrade
+	// replaced it (and possibly the whole run) with new actors - fall back to any still-valid
+	// scanned entry, then to the nearest upgradeable buildable to where the anchor was (the new
+	// belts spawn in-place, so this lands on one of them).
+	AFGBuildable* NewAnchor = TraversalAnchor.IsValid() ? TraversalAnchor.Get() : nullptr;
+
+	if (!NewAnchor)
+	{
+		for (const FSFUpgradeAuditEntry& Entry : CachedTraversalResult.Entries)
+		{
+			if (Entry.Buildable.IsValid())
+			{
+				NewAnchor = Entry.Buildable.Get();
+				break;
+			}
+		}
+	}
+
+	if (!NewAnchor && GetWorld())
+	{
+		// Cap the search so a fully-replaced network re-seeds on a nearby new belt rather than
+		// grabbing something across the map if nothing survived close by.
+		constexpr float MaxReacquireDistSq = 1000.0f * 1000.0f;  // 10m
+		float ClosestDistSq = MaxReacquireDistSq;
+		for (TActorIterator<AFGBuildable> It(GetWorld()); It; ++It)
+		{
+			AFGBuildable* Buildable = *It;
+			if (!Buildable) continue;
+			if (USFUpgradeTraversalService::GetUpgradeFamily(Buildable) == ESFUpgradeFamily::None) continue;
+
+			const float DistSq = FVector::DistSquared(TraversalAnchorLocation, Buildable->GetActorLocation());
+			if (DistSq < ClosestDistSq)
+			{
+				ClosestDistSq = DistSq;
+				NewAnchor = Buildable;
+			}
+		}
+	}
+
+	if (NewAnchor)
+	{
+		RunTraversalScanFromAnchor(NewAnchor);
+		return true;
+	}
+	return false;
+}
+
+void USmartUpgradePanel::BeginDeferredTraversalRefresh()
+{
+	UWorld* World = GetWorld();
+	if (!World)
+	{
+		return;
+	}
+
+	TraversalRefreshAttempts = 0;
+	TWeakObjectPtr<USmartUpgradePanel> WeakThis(this);
+	World->GetTimerManager().SetTimer(TraversalRefreshTimerHandle,
+		FTimerDelegate::CreateLambda([WeakThis]()
+		{
+			USmartUpgradePanel* Self = WeakThis.Get();
+			if (!Self)
+			{
+				return;
+			}
+			UWorld* TimerWorld = Self->GetWorld();
+			if (!TimerWorld)
+			{
+				return;
+			}
+
+			Self->TraversalRefreshAttempts++;
+			// Each attempt re-acquires a (now hopefully replicated) seed and kicks an async server
+			// scan. A fresh result clears this timer in OnClientTraversalResult, so we normally stop
+			// as soon as the server answers; the attempt cap is the backstop.
+			Self->RefreshTraversalScan();
+
+			if (Self->TraversalRefreshAttempts >= 5)
+			{
+				TimerWorld->GetTimerManager().ClearTimer(Self->TraversalRefreshTimerHandle);
+				if (Self->SharedStatusText)
+				{
+					Self->SharedStatusText->SetText(LOCTEXT("Upgrade_RescanAim", "Upgrade complete - aim at the network and Scan again"));
+				}
+			}
+		}),
+		0.6f, /*bLoop*/ true, /*FirstDelay*/ 0.6f);
+}
+
 void USmartUpgradePanel::OnClientTraversalResult(const FSFTraversalResult& Result)
 {
+	// A fresh server result arrived - stop any deferred post-upgrade refresh retries (#456 MP).
+	if (UWorld* World = GetWorld())
+	{
+		World->GetTimerManager().ClearTimer(TraversalRefreshTimerHandle);
+	}
+
 	CachedTraversalResult = Result;
 	UpdateTraversalUI(CachedTraversalResult);
 }
@@ -965,36 +1142,88 @@ void USmartUpgradePanel::UpdateTraversalUI(const FSFTraversalResult& Result)
 		SharedStatusText->SetText(FoundText);
 	}
 
-	// Clear existing results
+	// [#456] Rebuild the tier breakdown as SELECTABLE source-tier rows (they were display-only
+	// text, which is why network scans could only ever sweep "everything below target"). Row
+	// shape mirrors the radius audit rows; RowDataMap drives the shared click hit-test.
+	RowDataMap.Empty();
 	if (TraversalResultsContainer)
 	{
 		TraversalResultsContainer->ClearChildren();
-	}
 
-	// Build tier breakdown display
-	if (TraversalResultsContainer)
-	{
-		// Create a text block for tier breakdown
-		for (const auto& TierPair : Result.CountByTier)
+		const FSlateFontInfo RowFont = SFFont::Get(11);
+
+		auto AddTraversalRow = [&](int32 Tier, int32 Count, const FString& TierLabel, const FString& Tooltip)
 		{
-			int32 Tier = TierPair.Key;
-			int32 Count = TierPair.Value;
+			UBorder* RowBorder = NewObject<UBorder>(this);
+			RowBorder->SetBrushColor(FLinearColor(0.0f, 0.0f, 0.0f, 0.0f));
+			RowBorder->SetPadding(FMargin(2.0f, 1.0f, 2.0f, 1.0f));
+			RowBorder->SetToolTipText(FText::FromString(Tooltip));
 
-			UTextBlock* TierText = NewObject<UTextBlock>(this);
-			TierText->SetText(FText::FromString(FString::Printf(TEXT("  Mk%d: %d"), Tier, Count)));
-			TierText->SetFont(SFFont::Get(12));
-			TierText->SetColorAndOpacity(FSlateColor(FLinearColor::White));
+			UHorizontalBox* RowHBox = NewObject<UHorizontalBox>(this);
 
-			TraversalResultsContainer->AddChild(TierText);
+			UTextBlock* CountText = NewObject<UTextBlock>(this);
+			CountText->SetText(FText::FromString(FString::Printf(TEXT("%d"), Count)));
+			CountText->SetFont(RowFont);
+			CountText->SetColorAndOpacity(FSlateColor(SFPanelStyle::LightText));
+			CountText->SetJustification(ETextJustify::Right);
+
+			USizeBox* CountSizeBox = NewObject<USizeBox>(this);
+			CountSizeBox->SetWidthOverride(50.0f);
+			CountSizeBox->AddChild(CountText);
+			if (UHorizontalBoxSlot* CountSlot = RowHBox->AddChildToHorizontalBox(CountSizeBox))
+			{
+				CountSlot->SetVerticalAlignment(VAlign_Center);
+			}
+
+			UTextBlock* SepText = NewObject<UTextBlock>(this);
+			SepText->SetText(LOCTEXT("Upgrade_Separator", " x "));
+			SepText->SetFont(RowFont);
+			SepText->SetColorAndOpacity(FSlateColor(SFPanelStyle::DimText));
+			if (UHorizontalBoxSlot* SepSlot = RowHBox->AddChildToHorizontalBox(SepText))
+			{
+				SepSlot->SetVerticalAlignment(VAlign_Center);
+			}
+
+			UTextBlock* NameText = NewObject<UTextBlock>(this);
+			NameText->SetText(FText::FromString(TierLabel));
+			NameText->SetFont(RowFont);
+			NameText->SetColorAndOpacity(FSlateColor(SFPanelStyle::LightText));
+			if (UHorizontalBoxSlot* NameSlot = RowHBox->AddChildToHorizontalBox(NameText))
+			{
+				NameSlot->SetVerticalAlignment(VAlign_Center);
+			}
+
+			RowBorder->AddChild(RowHBox);
+			TraversalResultsContainer->AddChildToVerticalBox(RowBorder);
+			RowDataMap.Add(RowBorder, FRowData{Result.Family, Tier, TierLabel});
+		};
+
+		// Sweep row first (Tier 0 = legacy "everything below the chosen target"; stays the default).
+		AddTraversalRow(0, Result.TotalCount,
+			LOCTEXT("Upgrade_AllTiersRow", "All tiers").ToString(),
+			LOCTEXT("Upgrade_AllTiersTooltip", "Upgrade every tier below the chosen target").ToString());
+
+		// One selectable row per tier present in the network, ascending.
+		TArray<int32> Tiers;
+		Result.CountByTier.GetKeys(Tiers);
+		Tiers.Sort();
+		for (int32 Tier : Tiers)
+		{
+			const int32 Count = Result.CountByTier[Tier];
+			if (Count <= 0)
+			{
+				continue;
+			}
+			const FString TierLabel = FString::Printf(TEXT("Mk.%d"), Tier);
+			AddTraversalRow(Tier, Count, TierLabel,
+				FText::Format(LOCTEXT("Upgrade_TierRowTooltip", "Upgrade only Mk.{0} in this network"), FText::AsNumber(Tier)).ToString());
 		}
 	}
 
-	// Set selected family from result
-	SelectedFamily = Result.Family;
-	SelectedTier = 0; // Will be set when user selects target tier
-
-	// Populate target tier dropdown
-	PopulateTargetTierDropdown();
+	// Default to the sweep row so the panel works with zero clicks, exactly like before #456.
+	// This sets SelectedFamily/SelectedTier, highlights the row, populates the target dropdown,
+	// refreshes cost, and gates the upgrade button.
+	OnTraversalRowSelected(0);
 
 	// Show the tier dropdown for traversal tab
 	if (TraversalTargetTierComboBox)
@@ -1002,20 +1231,85 @@ void USmartUpgradePanel::UpdateTraversalUI(const FSFTraversalResult& Result)
 		TraversalTargetTierComboBox->SetVisibility(ESlateVisibility::Visible);
 	}
 
-	// Update cost display for traversal results
-	UpdateCostDisplay();
+	UE_LOG(LogSmartUI, VeryVerbose, TEXT("Upgrade Panel: Traversal scan complete - %d items, %d upgradeable"),
+		Result.TotalCount, Result.UpgradeableCount);
+}
 
-	// Enable upgrade button if there are upgradeable items
-	if (Result.UpgradeableCount > 0)
+void USmartUpgradePanel::OnTraversalRowSelected(int32 Tier)
+{
+	if (!CachedTraversalResult.IsValid())
 	{
-		if (SharedUpgradeButton)
+		return;
+	}
+
+	SelectedFamily = CachedTraversalResult.Family;
+	SelectedTier = Tier;
+
+	// Highlight the selected row (same treatment as the radius rows).
+	const FLinearColor SelectedBgColor(SFPanelStyle::Accent.R, SFPanelStyle::Accent.G, SFPanelStyle::Accent.B, 0.3f);
+	const FLinearColor DefaultBgColor(0.0f, 0.0f, 0.0f, 0.0f);
+	for (const auto& Pair : RowDataMap)
+	{
+		if (UBorder* RowBorder = Cast<UBorder>(Pair.Key))
 		{
-			SharedUpgradeButton->SetIsEnabled(true);
+			RowBorder->SetBrushColor(Pair.Value.Tier == Tier ? SelectedBgColor : DefaultBgColor);
 		}
 	}
 
-	UE_LOG(LogSmartUI, VeryVerbose, TEXT("Upgrade Panel: Traversal scan complete - %d items, %d upgradeable"),
-		Result.TotalCount, Result.UpgradeableCount);
+	// Gate the upgrade button on the selection actually containing upgradeable members.
+	bool bHasUpgradeable = false;
+	for (const FSFUpgradeAuditEntry& Entry : CachedTraversalResult.Entries)
+	{
+		if (Entry.IsUpgradeable() && (Tier == 0 || Entry.CurrentTier == Tier))
+		{
+			bHasUpgradeable = true;
+			break;
+		}
+	}
+	if (SharedUpgradeButton)
+	{
+		SharedUpgradeButton->SetIsEnabled(bHasUpgradeable);
+	}
+
+	// Nearest-instance readout for a specific tier (mirrors the radius row behavior).
+	if (Tier > 0 && StatusText)
+	{
+		APlayerController* PC = GetOwningPlayer();
+		if (PC && PC->GetPawn())
+		{
+			const FVector PlayerLocation = PC->GetPawn()->GetActorLocation();
+			float ClosestDistSq = FLT_MAX;
+			FVector ClosestLocation = FVector::ZeroVector;
+			bool bFoundAny = false;
+			for (const FSFUpgradeAuditEntry& Entry : CachedTraversalResult.Entries)
+			{
+				if (Entry.CurrentTier != Tier)
+				{
+					continue;
+				}
+				const float DistSq = FVector::DistSquared(PlayerLocation, Entry.Location);
+				if (DistSq < ClosestDistSq)
+				{
+					ClosestDistSq = DistSq;
+					ClosestLocation = Entry.Location;
+					bFoundAny = true;
+				}
+			}
+			if (bFoundAny)
+			{
+				StatusText->SetText(FText::Format(LOCTEXT("Upgrade_NearestTier", "Nearest Mk.{0}: {1}m {2}"),
+					FText::AsNumber(Tier),
+					FText::FromString(FString::Printf(TEXT("%.0f"), FMath::Sqrt(ClosestDistSq) / 100.0f)),
+					FText::FromString(GetCardinalDirection(PlayerLocation, ClosestLocation))));
+			}
+		}
+	}
+
+	PopulateTargetTierDropdown();
+	UpdateCostDisplay();
+
+	UE_LOG(LogSmartUI, VeryVerbose, TEXT("Upgrade Panel: Traversal row selected - Tier=%d upgradeable=%d"),
+		Tier, bHasUpgradeable ? 1 : 0);
 }
 
 #undef LOCTEXT_NAMESPACE

@@ -17,6 +17,7 @@
 #include "Features/Extend/SFExtendCommitSpec.h"   // [EXTEND-MP] staged Extend commit
 #include "Features/Walk/SFWalkCommitSpec.h"        // Smart Walking (#356 Slice 3) staged walk commit
 #include "Config/Smart_ConfigStruct.h"
+#include "Services/SFGridStateService.h"           // [#217] FSFScrollIncrements (by-value member)
 
 // Service includes - needed for FSFBuildingMetadata and FSplinePointData struct members
 #include "Services/SFRecipeManagementService.h"
@@ -1060,6 +1061,13 @@ public:
 
 	/** Cached configuration loaded on startup */
 	struct FSmart_ConfigStruct CachedConfig;
+
+	/** [#217] Converted/quantized/clamped scroll increments, refreshed whenever CachedConfig is.
+	 *  Read by the grid value-adjust path and the Smart Walking value-adjust path. */
+	FSFScrollIncrements CachedScrollIncrements;
+
+	/** [#217] Recompute CachedScrollIncrements from CachedConfig (call after any CachedConfig refresh). */
+	void RefreshScrollIncrements();
 
 	/** Has configuration been loaded yet */
 	bool bConfigLoaded = false;

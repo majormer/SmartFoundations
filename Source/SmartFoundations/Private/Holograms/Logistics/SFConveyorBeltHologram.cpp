@@ -306,6 +306,33 @@ void ASFConveyorBeltHologram::PostHologramPlacement(const FHitResult& hitResult,
         
         SF_EXTEND_DIAGNOSTIC_LOG(LogSmartHologram, Log, TEXT("🎯 BELT PostHologramPlacement: Extend child %s - calling Super once for connection wiring"), *GetName());
         Super::PostHologramPlacement(hitResult, callForChildren);
+
+        // Module replay (#427): with a RAW VANILLA parent the per-tick PostHologramPlacement
+        // cascade consumes this once-gate DURING PREVIEW, handing vanilla the PARENT's hit
+        // result - vanilla resets mSplineData to the unstarted 2-zero-point state and the
+        // JSON-authored route vanishes (belts invisible; pipes skip vanilla here entirely and
+        // survive). The normal Extend preview never cascades (Smart parent blocks it), so the
+        // one call there happens at construct with sane state. Keep the vanilla call (its
+        // connection-commit side effects are load-bearing at construct) but restore the
+        // Smart-authored route from the SetSplineDataAndUpdate backup if vanilla wiped it.
+        if (mSplineComponent && mSplineComponent->GetSplineLength() <= KINDA_SMALL_NUMBER)
+        {
+            if (FSFHologramData* HoloData = USFHologramDataRegistry::GetData(this))
+            {
+                if (HoloData->bHasBackupSplineData && HoloData->BackupSplineData.Num() >= 2)
+                {
+                    mSplineData = HoloData->BackupSplineData;
+                    AFGSplineHologram::UpdateSplineComponent();
+                    TriggerMeshGeneration();
+                    ForceApplyHologramMaterial();
+                    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartHologram, Log,
+                        TEXT("Belt %s spline wiped by vanilla PostHologramPlacement - restored %d points, lengthCm=%.0f"),
+                        *GetName(),
+                        HoloData->BackupSplineData.Num(),
+                        mSplineComponent->GetSplineLength());
+                }
+            }
+        }
         return;
     }
 
@@ -758,12 +785,21 @@ AActor* ASFConveyorBeltHologram::Construct(TArray<AActor*>& out_children, FNetCo
 
 void ASFConveyorBeltHologram::SetHologramLocationAndRotation(const FHitResult& hitResult)
 {
-    // PHASE 2 CHANGE: Belt children now move WITH the parent (like distributors)
-    // Previously we blocked parent movement, but now belts are true children
-    // The spline data is in local coordinates, so it moves with the actor
-    
+    // For EXTEND child belts, skip vanilla's SetHologramLocationAndRotation entirely (mirrors
+    // ASFPipelineHologram - the belt was the ONLY spline child without this guard). The Module
+    // replay preview (#427) seeds children under the build gun's RAW VANILLA factory hologram;
+    // its per-tick propagation reaches us with the PARENT's hit result, and vanilla belt code
+    // regenerates mSplineData from that hit - wiping the JSON-authored route back to the
+    // unstarted 2-zero-point state (zero-length, invisible belt; pipes in the same preview
+    // survived because they skip). The normal Extend preview never hit this because
+    // ASFFactoryHologram blocks propagation while Extend is active. Position is managed by the
+    // extend service (ChildIntendedPositions / RefreshChildPositions), same as pipes/distributors.
+    if (Tags.Contains(FName(TEXT("SF_ExtendChild"))))
+    {
+        return;
+    }
+
     // For Auto-Connect belts (no parent): Normal behavior
-    // For EXTEND belt children (has parent): Also normal - let parent move us
     Super::SetHologramLocationAndRotation(hitResult);
 }
 

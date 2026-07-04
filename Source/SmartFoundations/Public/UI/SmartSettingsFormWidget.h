@@ -25,6 +25,8 @@
 // Forward declarations
 class USFSubsystem;
 class UCanvasPanelSlot;
+class UWidgetSwitcher;
+struct FSFCloneTopology;
 
 /**
  * Smart! Settings Form Widget
@@ -420,6 +422,35 @@ protected:
 
     UPROPERTY(meta = (BindWidgetOptional))
     TObjectPtr<UTextBlock> RestoreSectionHeader;
+
+    // === #427 Restore redesign: tabbed Restore region (built PROGRAMMATICALLY at construct) ===
+    // BuildRestoreTabUI() replaces RestoreSidePanel's designer content with a two-tab layout
+    // (Grid Presets | Modules), reparenting the still-relevant bound widgets (dropdown, name/
+    // description inputs, action buttons) into the new structure. The Blueprint asset is left
+    // untouched - the only designer dependency is the RestoreSidePanel border itself. Everything
+    // below is created in C++ (same pattern as CreateRecipeDetailRow / the Walk panel).
+
+    UPROPERTY() TObjectPtr<UWidgetSwitcher> RestoreTabSwitcher;
+    UPROPERTY() TObjectPtr<UButton> GridPresetsTabButton;
+    UPROPERTY() TObjectPtr<UButton> ModulesTabButton;
+    UPROPERTY() TObjectPtr<UTextBlock> GridPresetsTabLabel;
+    UPROPERTY() TObjectPtr<UTextBlock> ModulesTabLabel;
+
+    // Grid Presets tab
+    UPROPERTY() TObjectPtr<UTextBlock> GridPresetDetailsText;
+    UPROPERTY() TObjectPtr<UButton> LoadToPanelBtn;
+    UPROPERTY() TObjectPtr<UTextBlock> LoadToPanelBtnLabel;
+
+    // Modules tab
+    UPROPERTY() TObjectPtr<UTextBlock> ClipboardSummaryText;
+    UPROPERTY() TObjectPtr<UEditableTextBox> ModuleNameInput;
+    UPROPERTY() TObjectPtr<UComboBoxString> ModuleDropdown;
+    UPROPERTY() TObjectPtr<UTextBlock> ModuleDetailsText;
+    UPROPERTY() TObjectPtr<UButton> ModuleApplyBtn;
+    UPROPERTY() TObjectPtr<UTextBlock> ModuleApplyBtnLabel;
+    UPROPERTY() TObjectPtr<UButton> ModuleDeleteBtn;
+    UPROPERTY() TObjectPtr<UButton> ModuleExportBtn;
+    UPROPERTY() TObjectPtr<UButton> ModuleImportBtn;
     
     // === Confirmation Dialog Widgets ===
     
@@ -471,9 +502,9 @@ private:
     // Cached reference to subsystem for apply
     TWeakObjectPtr<USFSubsystem> CachedSubsystem;
 
-    // Dragging support
+    // Dragging support. [#427/Q8] The Restore side panel no longer drags independently - it is
+    // DOCKED to the main panel (one draggable unit); UpdateRestoreDockPosition keeps it attached.
     bool bIsDragging = false;
-    bool bIsDraggingRestorePanel = false;
     FVector2D DragOffset = FVector2D::ZeroVector;
 
     // Cached canvas slots for dragging. [#352 restructure] The panel is ONE canvas child
@@ -571,6 +602,66 @@ private:
 
     UFUNCTION()
     void OnRestoreSectionToggleClicked();
+
+    // === #427 tabbed Restore handlers ===
+
+    UFUNCTION()
+    void OnGridPresetsTabClicked();
+
+    UFUNCTION()
+    void OnModulesTabClicked();
+
+    UFUNCTION()
+    void OnLoadToPanelClicked();
+
+    UFUNCTION()
+    void OnModuleApplyClicked();
+
+    UFUNCTION()
+    void OnModuleDeleteClicked();
+
+    UFUNCTION()
+    void OnModuleExportClicked();
+
+    UFUNCTION()
+    void OnModuleImportClicked();
+
+    UFUNCTION()
+    void OnModuleSelectionChanged(FString SelectedItem, ESelectInfo::Type SelectionType);
+
+    /** #427: build the two-tab Restore UI inside RestoreSidePanel (see member block above). */
+    void BuildRestoreTabUI();
+
+    /** Switch the visible Restore tab (0 = Grid Presets, 1 = Modules) + tab button accents. */
+    void SetActiveRestoreTab(int32 TabIndex);
+
+    /** [Q8] Dock the Restore side panel to the main panel's right edge - one draggable unit. */
+    void UpdateRestoreDockPosition();
+
+    /** Refresh the Modules list (kind-filtered) from disk. */
+    void RefreshModuleDropdown(const FString& PreferredSelection = FString());
+
+    /** Read-only details for the selected Grid Preset / Module. */
+    void UpdateGridPresetDetails(const FString& PresetName);
+    void UpdateModuleDetails(const FString& ModuleName);
+
+    /** Live "Extend clipboard" staging-slot description (#427 capture visibility). */
+    void UpdateClipboardSlot();
+
+    /** Role-grouped per-unit composition, e.g. "1 distributor, 6 belt segments, 1 lift". */
+    FString SummarizeTopologyByRole(const FSFCloneTopology& Topology) const;
+
+    /** "Recipe_ConstructorMk1_C" -> "Constructor" (falls back to the raw name). */
+    FString FriendlyBuildingNameFromRecipeName(const FString& RecipeClassName) const;
+
+    /** Parse the panel inputs into a counter state WITHOUT committing (#427 flush-then-capture). */
+    FSFCounterState ReadPanelCounterState() const;
+
+    /** Styled programmatic action button (style copied from an existing BP button). */
+    UButton* MakeRestoreActionButton(const FText& Label, UButton* StyleReference, UTextBlock** OutLabel = nullptr);
+
+    int32 ActiveRestoreTabIndex = 0;
+    FTimerHandle ClipboardRefreshTimerHandle;
 
     // Refresh the preset dropdown from disk
     void RefreshPresetDropdown(const FString& PreferredSelection = FString());

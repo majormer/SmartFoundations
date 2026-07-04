@@ -54,7 +54,7 @@ public class SmartFoundations : ModuleRules
 
 		// FactoryGame plugins
 		PublicDependencyModuleNames.AddRange(new string[] {
-			//"AbstractInstance",
+			"AbstractInstance",  // #456: resolve instanced-mesh hits (belts/pipes/poles) to their owning buildable
 			//"InstancedSplinesComponent",
 			//"SignificanceISPC"
 		});

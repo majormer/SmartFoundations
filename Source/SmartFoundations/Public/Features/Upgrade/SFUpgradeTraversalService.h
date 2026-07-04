@@ -160,6 +160,21 @@ private:
 		TSet<AFGBuildable*>& VisitedSet,
 		TArray<AFGBuildable*>& OutBuildables);
 
+	/**
+	 * Cross a pipe attachment (pump or junction): step through it to the pipes on its other
+	 * connections. Attachments are not upgrade targets - only passed through. Recurses with
+	 * TraversePipelineNetwork so attachment CHAINS (junction->junction, junction->pump) are fully
+	 * followed rather than dead-ending at the second attachment.
+	 */
+	void CrossPipeAttachment(
+		AFGBuildable* Attachment,
+		const FSFTraversalConfig& Config,
+		TSet<AFGBuildable*>& VisitedSet,
+		TArray<AFGBuildable*>& OutBuildables);
+
+	/** Whether a pipe neighbor is a crossable attachment: junctions always, pumps per bCrossPumps. */
+	bool ShouldCrossPipeAttachment(AFGBuildable* Buildable, const FSFTraversalConfig& Config) const;
+
 	/** Traverse power pole network */
 	void TraversePowerNetwork(
 		AFGBuildablePowerPole* StartPole,

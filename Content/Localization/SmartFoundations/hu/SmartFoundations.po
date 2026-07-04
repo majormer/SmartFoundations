@@ -2175,3 +2175,351 @@ msgstr "Hipercsövek automatikus kiépítése az elhelyezett tartók között."
 msgctxt "SmartFoundations,Walk_Conveyance_Hypertube"
 msgid "Hypertube"
 msgstr "Hipercső"
+
+msgctxt "SmartFoundations,HUD_Module_HoldPrompt"
+msgid "*Module \"{0}\": equip its source building to place it"
+msgstr "*Modul \"{0}\": vedd elő a forrásépületét az elhelyezéshez"
+
+msgctxt "SmartFoundations,HUD_Module_Ready"
+msgid "*Module \"{0}\": scroll to scale, fire to stamp (repeatable)"
+msgstr "*Modul \"{0}\": görgetéssel méretezd, tűzzel bélyegezd (ismételhető)"
+
+msgctxt "SmartFoundations,HUD_Module_Unnamed"
+msgid "Module"
+msgstr "Modul"
+
+msgctxt "SmartFoundations,P.RotationIncrement"
+msgid "Rotation Increment (deg)"
+msgstr "Forgatás lépésköze (fok)"
+
+msgctxt "SmartFoundations,P.RotationIncrement.TT"
+msgid "Degrees of rotation added per scroll notch (also walk segment turn)."
+msgstr "Görgetési kattanásonként hozzáadott forgatási fok (a séta szakaszfordulója is)."
+
+msgctxt "SmartFoundations,P.SpacingIncrement"
+msgid "Spacing Increment (m)"
+msgstr "Térköz lépésköze (m)"
+
+msgctxt "SmartFoundations,P.SpacingIncrement.TT"
+msgid "Meters of spacing added per scroll notch (also Extend spacing and walk segment advance)."
+msgstr "Görgetési kattanásonként hozzáadott térköz méterben (a Kiterjesztés térköze és a séta szakaszléptetése is)."
+
+msgctxt "SmartFoundations,P.StaggerIncrement"
+msgid "Stagger Increment (m)"
+msgstr "Eltolás lépésköze (m)"
+
+msgctxt "SmartFoundations,P.StaggerIncrement.TT"
+msgid "Meters of stagger added per scroll notch (also walk segment shift)."
+msgstr "Görgetési kattanásonként hozzáadott eltolás méterben (a séta szakasztolása is)."
+
+msgctxt "SmartFoundations,P.StepsIncrement"
+msgid "Steps Increment (m)"
+msgstr "Lépcsők lépésköze (m)"
+
+msgctxt "SmartFoundations,P.StepsIncrement.TT"
+msgid "Meters of stepping added per scroll notch (also walk segment rise)."
+msgstr "Görgetési kattanásonként hozzáadott lépcsőzés méterben (a séta szakaszemelkedése is)."
+
+msgctxt "SmartFoundations,Panel_Restore_UpdateMessage"
+msgid "Overwrite preset '{0}' with the current panel values?"
+msgstr "Felülírod a(z) '{0}' előbeállítást az aktuális panelértékekkel?"
+
+msgctxt "SmartFoundations,Panel_Restore_UpdateTitle"
+msgid "Update Preset"
+msgstr "Előbeállítás frissítése"
+
+msgctxt "SmartFoundations,Restore_ApplyAndBuild"
+msgid "Apply & Build"
+msgstr "Alkalmaz és épít"
+
+msgctxt "SmartFoundations,Restore_Clipboard_Empty"
+msgid "None yet. Preview or build a Smart Extend and it will appear here, ready to save."
+msgstr "Még semmi. Előnézd meg vagy építs egy Smart Kiterjesztést, és itt megjelenik, mentésre készen."
+
+msgctxt "SmartFoundations,Restore_Clipboard_Header"
+msgid "Extend clipboard"
+msgstr "Kiterjesztés vágólap"
+
+msgctxt "SmartFoundations,Restore_Clipboard_Ready"
+msgid "{0} manifold - {1}\nReady to save. (Replaced by your next Extend; lost on exit.)"
+msgstr "{0} elosztó - {1}\nMentésre kész. (A következő Kiterjesztés felülírja; kilépéskor elveszik.)"
+
+msgctxt "SmartFoundations,Restore_Clipboard_ReplayActive"
+msgid "A restored Module is active - finish stamping before capturing a new Extend."
+msgstr "Egy visszaállított Modul aktív - fejezd be a bélyegzést, mielőtt új Kiterjesztést rögzítesz."
+
+msgctxt "SmartFoundations,Restore_Clipboard_UnknownSource"
+msgid "Extend"
+msgstr "Kiterjesztés"
+
+msgctxt "SmartFoundations,Restore_Details_Building"
+msgid "Building"
+msgstr "Épület"
+
+msgctxt "SmartFoundations,Restore_Details_Created"
+msgid "Created"
+msgstr "Létrehozva"
+
+msgctxt "SmartFoundations,Restore_Details_EachUnit"
+msgid "Each unit"
+msgstr "Egységenként"
+
+msgctxt "SmartFoundations,Restore_Details_Grid"
+msgid "Grid"
+msgstr "Rács"
+
+msgctxt "SmartFoundations,Restore_Details_NoRecipe"
+msgid "No recipe"
+msgstr "Nincs recept"
+
+msgctxt "SmartFoundations,Restore_Details_Recipe"
+msgid "Recipe"
+msgstr "Recept"
+
+msgctxt "SmartFoundations,Restore_Details_Requires"
+msgid "Requires"
+msgstr "Igényel"
+
+msgctxt "SmartFoundations,Restore_Details_Rotation"
+msgid "rotation"
+msgstr "forgatás"
+
+msgctxt "SmartFoundations,Restore_Details_Source"
+msgid "Source"
+msgstr "Forrás"
+
+msgctxt "SmartFoundations,Restore_Details_Spacing"
+msgid "spacing"
+msgstr "térköz"
+
+msgctxt "SmartFoundations,Restore_Details_Stagger"
+msgid "stagger"
+msgstr "eltolás"
+
+msgctxt "SmartFoundations,Restore_Details_Steps"
+msgid "steps"
+msgstr "lépcsők"
+
+msgctxt "SmartFoundations,Restore_Details_Transforms"
+msgid "Transforms"
+msgstr "Transzformációk"
+
+msgctxt "SmartFoundations,Restore_EmptyTopology"
+msgid "no parts"
+msgstr "nincs elem"
+
+msgctxt "SmartFoundations,Restore_ExportCode"
+msgid "Export Code"
+msgstr "Kód exportálása"
+
+msgctxt "SmartFoundations,Restore_ImportCode"
+msgid "Import Code"
+msgstr "Kód importálása"
+
+msgctxt "SmartFoundations,Restore_LoadFailed"
+msgid "Could not load '{0}'.\n{1}"
+msgstr "Nem sikerült betölteni: '{0}'.\n{1}"
+
+msgctxt "SmartFoundations,Restore_LoadToPanel"
+msgid "Load to Panel"
+msgstr "Betöltés a Panelre"
+
+msgctxt "SmartFoundations,Restore_LoadedApplied"
+msgid "Loaded and applied '{0}'."
+msgstr "'{0}' betöltve és alkalmazva."
+
+msgctxt "SmartFoundations,Restore_LoadedStaged"
+msgid "Loaded '{0}' into the panel - fine-tune, then Apply."
+msgstr "'{0}' betöltve a panelre - finomhangold, majd Alkalmaz."
+
+msgctxt "SmartFoundations,Restore_ModuleApply"
+msgid "Apply"
+msgstr "Alkalmaz"
+
+msgctxt "SmartFoundations,Restore_ModuleApplyMessage"
+msgid "Rebuild this saved layout ({0} parts) and switch to {1}? Hold {1} to stamp it; scroll to scale."
+msgstr "Újraépíted ezt a mentett elrendezést ({0} elem) és átváltasz erre: {1}? Tartsd nyomva a(z) {1} gombot a bélyegzéshez; görgetéssel méretezz."
+
+msgctxt "SmartFoundations,Restore_ModuleApplyTitle"
+msgid "Apply Module"
+msgstr "Modul alkalmazása"
+
+msgctxt "SmartFoundations,Restore_ModuleDelete"
+msgid "Delete"
+msgstr "Törlés"
+
+msgctxt "SmartFoundations,Restore_ModuleDeleteMessage"
+msgid "Delete Module '{0}'?"
+msgstr "Törlöd a(z) '{0}' Modult?"
+
+msgctxt "SmartFoundations,Restore_ModuleDeleteTitle"
+msgid "Delete Module"
+msgstr "Modul törlése"
+
+msgctxt "SmartFoundations,Restore_ModuleExport"
+msgid "Export Code"
+msgstr "Kód exportálása"
+
+msgctxt "SmartFoundations,Restore_ModuleImport"
+msgid "Import Code"
+msgstr "Kód importálása"
+
+msgctxt "SmartFoundations,Restore_ModuleLibrary"
+msgid "Saved Modules:"
+msgstr "Mentett Modulok:"
+
+msgctxt "SmartFoundations,Restore_ModuleName_Hint"
+msgid "New Module name"
+msgstr "Új Modul neve"
+
+msgctxt "SmartFoundations,Restore_NoBuildingCaptured"
+msgid "none captured"
+msgstr "nincs rögzítve"
+
+msgctxt "SmartFoundations,Restore_NoModules"
+msgid "No Modules yet.\nPreview or build a Smart Extend, then save it from the clipboard above."
+msgstr "Még nincsenek Modulok.\nElőnézd meg vagy építs egy Smart Kiterjesztést, majd mentsd el a fenti vágólapról."
+
+msgctxt "SmartFoundations,Restore_NoPresetSelected"
+msgid "No preset selected.\nSave the current panel below, or import a shared code."
+msgstr "Nincs előbeállítás kiválasztva.\nMentsd el az alábbi aktuális panelt, vagy importálj egy megosztott kódot."
+
+msgctxt "SmartFoundations,Restore_NoSelection"
+msgid "Select a preset first."
+msgstr "Először válassz egy előbeállítást."
+
+msgctxt "SmartFoundations,Restore_PresetDesc_Hint"
+msgid "Description (optional)"
+msgstr "Leírás (opcionális)"
+
+msgctxt "SmartFoundations,Restore_PresetName_Hint"
+msgid "New preset name"
+msgstr "Új előbeállítás neve"
+
+msgctxt "SmartFoundations,Restore_SaveAsModule"
+msgid "Save as Module"
+msgstr "Mentés Modulként"
+
+msgctxt "SmartFoundations,Restore_SaveCard"
+msgid "Save current panel as a new preset:"
+msgstr "Aktuális panel mentése új előbeállításként:"
+
+msgctxt "SmartFoundations,Restore_SaveFailed"
+msgid "Could not save '{0}' - check the log (name may collide with another preset's file)."
+msgstr "Nem sikerült menteni: '{0}' - ellenőrizd a naplót (a név ütközhet egy másik előbeállítás fájljával)."
+
+msgctxt "SmartFoundations,Restore_SaveFromPanel"
+msgid "Save from Panel"
+msgstr "Mentés a Panelről"
+
+msgctxt "SmartFoundations,Restore_SaveNeedsName"
+msgid "Enter a name in the 'New preset name' field below, then press Save from Panel."
+msgstr "Írj be egy nevet az alábbi 'Új előbeállítás neve' mezőbe, majd nyomd meg a Mentés a Panelről gombot."
+
+msgctxt "SmartFoundations,Restore_SavedAck"
+msgid "Saved '{0}'.\n{1}"
+msgstr "'{0}' mentve.\n{1}"
+
+msgctxt "SmartFoundations,Restore_ShareCard"
+msgid "Share:"
+msgstr "Megosztás:"
+
+msgctxt "SmartFoundations,Restore_Tab_GridPresets"
+msgid "Grid Presets"
+msgstr "Rács-előbeállítások"
+
+msgctxt "SmartFoundations,Restore_Tab_Modules"
+msgid "Modules"
+msgstr "Modulok"
+
+msgctxt "SmartFoundations,Restore_Title"
+msgid "Smart Restore"
+msgstr "Smart Visszaállítás"
+
+msgctxt "SmartFoundations,Role_Belt"
+msgid "belt"
+msgstr "szalag"
+
+msgctxt "SmartFoundations,Role_Belts"
+msgid "belts"
+msgstr "szalag"
+
+msgctxt "SmartFoundations,Role_Distributor"
+msgid "distributor"
+msgstr "elosztó"
+
+msgctxt "SmartFoundations,Role_Distributors"
+msgid "distributors"
+msgstr "elosztó"
+
+msgctxt "SmartFoundations,Role_Junction"
+msgid "junction"
+msgstr "csomópont"
+
+msgctxt "SmartFoundations,Role_Junctions"
+msgid "junctions"
+msgstr "csomópont"
+
+msgctxt "SmartFoundations,Role_Lift"
+msgid "lift"
+msgstr "lift"
+
+msgctxt "SmartFoundations,Role_Lifts"
+msgid "lifts"
+msgstr "lift"
+
+msgctxt "SmartFoundations,Role_Pipe"
+msgid "pipe"
+msgstr "cső"
+
+msgctxt "SmartFoundations,Role_Pipes"
+msgid "pipes"
+msgstr "cső"
+
+msgctxt "SmartFoundations,Role_PowerPole"
+msgid "power pole"
+msgstr "villanypózna"
+
+msgctxt "SmartFoundations,Role_PowerPoles"
+msgid "power poles"
+msgstr "villanypózna"
+
+msgctxt "SmartFoundations,Role_Wire"
+msgid "wire"
+msgstr "vezeték"
+
+msgctxt "SmartFoundations,Role_Wires"
+msgid "wires"
+msgstr "vezeték"
+
+msgctxt "SmartFoundations,Sec.Scaling"
+msgid "Scaling Settings"
+msgstr "Méretezési beállítások"
+
+msgctxt "SmartFoundations,Sec.Scaling.TT"
+msgid "How much each mouse-wheel notch changes a grid transform. Also used by Extend, Restore, and Smart Walking."
+msgstr "Mennyit változtat egy egérgörgő-kattanás egy rácstranszformáción. A Kiterjesztés, a Visszaállítás és a Smart Séta is használja."
+
+msgctxt "SmartFoundations,Upgrade_AllTiersRow"
+msgid "All tiers"
+msgstr "Minden szint"
+
+msgctxt "SmartFoundations,Upgrade_AllTiersTooltip"
+msgid "Upgrade every tier below the chosen target"
+msgstr "Minden szint fejlesztése a kiválasztott cél alatt"
+
+msgctxt "SmartFoundations,Upgrade_NearestTier"
+msgid "Nearest Mk.{0}: {1}m {2}"
+msgstr "Legközelebbi Mk.{0}: {1}m {2}"
+
+msgctxt "SmartFoundations,Upgrade_RescanAim"
+msgid "Upgrade complete - aim at the network and Scan again"
+msgstr "Fejlesztés kész - célozz a hálózatra és Szkennelj újra"
+
+msgctxt "SmartFoundations,Upgrade_TierRowTooltip"
+msgid "Upgrade only Mk.{0} in this network"
+msgstr "Csak a(z) Mk.{0} fejlesztése ebben a hálózatban"
+
+msgctxt "SmartFoundations,Upgrade_UpgradingSweep"
+msgid "Upgrading {0} → Mk.{1}..."
+msgstr "Fejlesztés: {0} → Mk.{1}..."

@@ -239,6 +239,7 @@ void USFSubsystem::LoadConfiguration()
 
 	// ConfigManager is available, load config
 	CachedConfig = FSmart_ConfigStruct::GetActiveConfig(this);
+	RefreshScrollIncrements();  // [#217] keep the cached scroll increments in sync
 
 	// Initialize runtime arrow visibility from config (Issue #146)
 	// This can be toggled during runtime with Num1, but starts with config value
@@ -263,6 +264,34 @@ void USFSubsystem::LoadConfiguration()
 		bArrowsRuntimeVisible ? TEXT("true") : TEXT("false"),
 		CachedConfig.bShowArrowOrbit ? TEXT("true") : TEXT("false"),
 		CachedConfig.bShowArrowLabels ? TEXT("true") : TEXT("false"));
+}
+
+void USFSubsystem::RefreshScrollIncrements()
+{
+	// [#217] Resolve the configured per-notch increments into the cached, ready-to-apply struct.
+	// Distance settings are meters in config; quantize to 0.1 m, clamp 0.1-8 m, convert to cm, and
+	// floor at 1 cm so a notch is never a no-op (mirrors AirBuild's ReachStep handling). Rotation is
+	// degrees: quantize to 0.5°, clamp 0.5-90°. The read-time clamp is authoritative for hand-edited
+	// config files (the menu slider bounds are UX only).
+	//
+	// PHASE-1 (#217 landed): SpacingIncrement/StepsIncrement/StaggerIncrement/RotationIncrement are
+	// flat config fields that are not yet section-filled, so they read as their defaults (0.5 m / 5°)
+	// - i.e. the previous hardcoded behavior. PHASE-2 (batch with #427's Smart_Config work) wires the
+	// section-fill + archetype + renderable BP widgets so these become menu-editable; no change needed
+	// here (this already reads CachedConfig.*).
+	auto DistCm = [](float Meters) -> int32
+	{
+		const float Quantized = FMath::RoundToFloat(FMath::Clamp(Meters, 0.1f, 8.0f) * 10.0f) / 10.0f;
+		return FMath::Max(1, FMath::RoundToInt(Quantized * 100.0f));
+	};
+	CachedScrollIncrements.SpacingCm = DistCm(CachedConfig.SpacingIncrement);
+	CachedScrollIncrements.StepsCm   = DistCm(CachedConfig.StepsIncrement);
+	CachedScrollIncrements.StaggerCm = DistCm(CachedConfig.StaggerIncrement);
+	CachedScrollIncrements.RotationDeg = FMath::Max(0.5f,
+		FMath::RoundToFloat(FMath::Clamp(CachedConfig.RotationIncrement, 0.5f, 90.0f) * 2.0f) / 2.0f);
+
+	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("[#217] Scroll increments: Spacing=%dcm Steps=%dcm Stagger=%dcm Rotation=%.1f°"),
+		CachedScrollIncrements.SpacingCm, CachedScrollIncrements.StepsCm, CachedScrollIncrements.StaggerCm, CachedScrollIncrements.RotationDeg);
 }
 
 void USFSubsystem::CleanupStateForWorldTransition()
@@ -1976,6 +2005,7 @@ void USFSubsystem::ResetAutoConnectRuntimeSettings()
 	FSmart_ConfigStruct FreshConfig = FSmart_ConfigStruct::GetActiveConfig(this);
 	AutoConnectRuntimeSettings.InitFromConfig(FreshConfig);  // clears bInitialized -> back to config-tracking
 	CachedConfig = FreshConfig;                              // new baseline for future change detection
+	RefreshScrollIncrements();                               // [#217] resync cached scroll increments
 
 	// Issue #257: Refresh Extend enabled state from fresh config (independent of the override above)
 	bExtendEnabledByConfig = FreshConfig.bExtendEnabled;

@@ -16,13 +16,49 @@
 
 #include "CoreMinimal.h"
 #include "Features/Extend/SFExtendCloneTopology.h"
+#include "Features/Scaling/SFScalingTypes.h"
+#include "Features/Spacing/SFSpacingTypes.h"
 #include "SFRestoreTypes.generated.h"
 
-/** Current preset format version. Increment when fields are added/changed. */
-static constexpr int32 SF_RESTORE_PRESET_VERSION = 2;
+/**
+ * Preset format versioning rules (#427):
+ * - ADDITIVE change (new optional field with a safe default) -> bump SF_RESTORE_PRESET_VERSION only.
+ * - BREAKING change (renamed/removed field, changed meaning)  -> bump the version AND add a branch
+ *   to the migration chain in JsonToPreset so every older on-disk/shared preset still loads.
+ * - NEVER reorder or remove serialized enum tokens; append only.
+ * - Missing fields on migration must default to the LEGACY-IMPLICIT value (what the code did before
+ *   the field existed), NOT to a struct default chosen for new presets. Example: RotationAxis
+ *   defaults to X because pre-#372 rotation always progressed along X.
+ *
+ * Version history:
+ *   1 -> original release format.
+ *   2 -> Extend clone topology embedded (bHasExtendTopology + extendCloneTopology).
+ *   3 -> #427: PresetKind discriminant (Grid Preset vs Module), axis/mode selector capture
+ *        (spacingMode/spacingAxis/stepsAxis/staggerAxis/rotationAxis as string tokens),
+ *        explicit production-recipe state (hasProductionRecipe - "No recipe" is a first-class
+ *        restorable value, distinct from the legacy "don't touch" empty string).
+ */
+static constexpr int32 SF_RESTORE_PRESET_VERSION = 3;
 
-/** Compact sharing format prefix */
+/** Compact sharing format prefix. The digit is a frozen literal (it identifies "a Smart Restore
+ *  code", it is NOT the preset version - that lives in the body JSON's "version" field). */
 static const FString SF_RESTORE_EXPORT_PREFIX = TEXT("SR1:");
+
+/**
+ * Preset kind discriminant (#427): drives the Grid Presets / Modules tab split in the Restore UI.
+ * - GridPreset: a full snapshot of the Smart Panel's values (grid + transforms + recipes +
+ *   auto-connect). Restoring populates the panel like the user typed the values.
+ * - Module: a captured Extend manifold unit (factory + connections up to the distributors/
+ *   junctions). Restoring enters the rescalable stamp session (replay).
+ * Kind is DERIVED, never trusted from data: NormalizeKind() runs after every load, capture, and
+ * import, so the flag/topology pair can never desync.
+ */
+UENUM(BlueprintType)
+enum class ESFRestorePresetKind : uint8
+{
+	GridPreset = 0 UMETA(DisplayName = "Grid Preset"),
+	Module = 1 UMETA(DisplayName = "Module")
+};
 
 /**
  * Capture flags — which field groups the user chose to include when saving.
@@ -148,10 +184,28 @@ struct FSFRestorePreset
 
 	UPROPERTY() float RotationZ = 0.0f;
 
+	// === Axis / mode selectors (v3, #427 lossless capture) ===
+	// Captured with their owning group's flag. Defaults are the LEGACY-IMPLICIT values (what
+	// pre-v3 behavior was), so migrated v2 presets restore exactly as the day they were saved -
+	// especially RotationAxis (#419/#372: pre-field rotation always progressed along X).
+
+	UPROPERTY() ESFSpacingMode SpacingMode = ESFSpacingMode::None;
+	UPROPERTY() ESFScaleAxis SpacingAxis = ESFScaleAxis::X;
+	UPROPERTY() ESFScaleAxis StepsAxis = ESFScaleAxis::X;
+	UPROPERTY() ESFScaleAxis StaggerAxis = ESFScaleAxis::ZX;
+	UPROPERTY() ESFScaleAxis RotationAxis = ESFScaleAxis::X;
+
 	// === Recipe (stored when CaptureFlags.bRecipe is true) ===
 
 	/** Recipe class name (e.g. "Recipe_Screw_C"). Empty if no recipe captured. */
 	UPROPERTY() FString RecipeClassName;
+
+	/** v3 (#427): explicit production-recipe state. True = RecipeClassName is a deliberate
+	 *  selection; false = "No recipe" was the captured state and restore ACTIVELY CLEARS the
+	 *  production recipe (via the same path as the panel's Clear Recipe button). Migrated v2
+	 *  presets with an empty RecipeClassName get CaptureFlags.bRecipe=false instead, preserving
+	 *  their legacy "don't touch" semantics. */
+	UPROPERTY() bool bHasProductionRecipe = false;
 
 	// === Auto-Connect (stored when CaptureFlags.bAutoConnect is true) ===
 
@@ -162,10 +216,30 @@ struct FSFRestorePreset
 	UPROPERTY() bool bHasExtendTopology = false;
 	UPROPERTY() FSFCloneTopology ExtendCloneTopology;
 
+	// === Kind (v3, #427) ===
+
+	/** Grid Preset vs Module. DERIVED - see NormalizeKind(). */
+	UPROPERTY() ESFRestorePresetKind PresetKind = ESFRestorePresetKind::GridPreset;
+
 	// === Metadata ===
 
 	UPROPERTY() int32 Version = SF_RESTORE_PRESET_VERSION;
 	UPROPERTY() FString Description;
 	UPROPERTY() FString CreatedAt;
 	UPROPERTY() FString UpdatedAt;
+
+	/**
+	 * #427: the single chokepoint that keeps Kind authoritative. Kind is derived from topology
+	 * presence; bHasExtendTopology is kept as the derived back-compat shim. Called after every
+	 * load, capture, AND import - an imported code carrying extendCloneTopology is correctly
+	 * classified Module regardless of what its kind field claimed.
+	 */
+	void NormalizeKind()
+	{
+		const bool bIsModule = ExtendCloneTopology.ChildHolograms.Num() > 0;
+		PresetKind = bIsModule ? ESFRestorePresetKind::Module : ESFRestorePresetKind::GridPreset;
+		bHasExtendTopology = bIsModule;
+	}
+
+	bool IsModule() const { return PresetKind == ESFRestorePresetKind::Module; }
 };

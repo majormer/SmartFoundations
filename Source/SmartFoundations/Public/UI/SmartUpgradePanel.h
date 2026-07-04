@@ -100,7 +100,7 @@ protected:
 	TObjectPtr<class UButton> TraversalTabButton;
 
 	// [Track E] The Triage tab's tooling/handlers were removed. The widgets remain in the Blueprint
-	// (a clean delete via AdaMCP left dangling variable GUIDs that fail cook), so we keep the tab
+	// (a clean editor delete left dangling variable GUIDs that fail cook), so we keep the tab
 	// button + content bound here only to COLLAPSE them at construct - the tab is hidden, never wired.
 	UPROPERTY(meta = (BindWidgetOptional))
 	TObjectPtr<class UButton> TriageTabButton;
@@ -248,6 +248,29 @@ private:
 	/** Update traversal UI with results */
 	void UpdateTraversalUI(const FSFTraversalResult& Result);
 
+	/**
+	 * [#456] Network-scan source-tier row clicked. Tier > 0 = upgrade ONLY that tier;
+	 * Tier == 0 = the "All tiers below target" sweep row (legacy behavior, default selection).
+	 * Lightweight counterpart to OnRowSelected - reads CachedTraversalResult, not CachedAuditResult.
+	 */
+	void OnTraversalRowSelected(int32 Tier);
+
+	/** [#456] Run the network walk from a resolved anchor (config read + SP/MP dispatch). Shared by
+	 *  the Scan button and the post-upgrade refresh. */
+	void RunTraversalScanFromAnchor(AFGBuildable* AnchorBuildable);
+
+	/** [#456] Re-run the network scan after an upgrade so the tier rows/costs reflect the new state.
+	 *  Re-acquires the anchor (the old one may have been replaced by its own upgrade) from the still-
+	 *  valid scan entries, else by proximity to the remembered anchor location.
+	 *  @return true if a valid anchor was found and a scan was kicked; false if no seed was available. */
+	bool RefreshTraversalScan();
+
+	/** [#456] Client-side deferred refresh: on a network client the upgraded actors have not
+	 *  replicated yet when the result RPC arrives, so re-acquiring an anchor immediately finds nothing
+	 *  (the auto-refresh silently no-ops - MP field report). Retry on a short timer until a fresh
+	 *  result lands (OnClientTraversalResult clears the timer) or the attempts are exhausted. */
+	void BeginDeferredTraversalRefresh();
+
 	/** [UPGRADE-MP] Server-walked traversal result arrived on this client */
 	void OnClientTraversalResult(const FSFTraversalResult& Result);
 
@@ -257,6 +280,14 @@ private:
 	/** Traversal anchor buildable (set when player aims at something) */
 	UPROPERTY()
 	TWeakObjectPtr<AFGBuildable> TraversalAnchor;
+
+	/** [#456] World location of the last traversal anchor - remembered so the post-upgrade refresh
+	 *  can re-acquire a network seed even when the anchor belt was replaced by its own upgrade. */
+	FVector TraversalAnchorLocation = FVector::ZeroVector;
+
+	/** [#456] Deferred client-refresh retry timer + attempt counter (MP post-upgrade replication race). */
+	FTimerHandle TraversalRefreshTimerHandle;
+	int32 TraversalRefreshAttempts = 0;
 
 	/** Cached traversal result */
 	FSFTraversalResult CachedTraversalResult;

@@ -2268,6 +2268,22 @@ ASFFactoryHologram* USFExtendService::SwapToSmartFactoryHologram(AFGHologram* Va
     // Now finish spawning - this will call BeginPlay with mBuildClass properly set
     CustomHologram->FinishSpawning(FTransform(VanillaHologram->GetActorRotation(), VanillaHologram->GetActorLocation()));
 
+    // [#461] Carry the vanilla hologram's blueprint-placeability onto the swapped hologram.
+    // mCanBePlacedInBlueprintDesigner is "initialized on spawn" by the build gun's hologram setup
+    // (FGHologram.h) - which this deferred SpawnActorDeferred path bypasses - so without this the
+    // swapped ASFFactoryHologram keeps the CDO default (not placeable) and vanilla adds
+    // FGCDNotAllowedInBlueprint inside a Blueprint Designer. RestoreOriginalHologram doesn't swap
+    // back, so the lingering swapped hologram carries the bad flag even after Extend deactivates
+    // (repro: middle-click Sample an Extend-valid factory, then place into a designer). Copied AFTER
+    // FinishSpawning so nothing in the spawn/BeginPlay path can clobber it.
+    if (FProperty* BpPlaceableProp = AFGHologram::StaticClass()->FindPropertyByName(TEXT("mCanBePlacedInBlueprintDesigner")))
+    {
+        BpPlaceableProp->CopyCompleteValue(
+            BpPlaceableProp->ContainerPtrToValuePtr<void>(CustomHologram),
+            BpPlaceableProp->ContainerPtrToValuePtr<void>(VanillaHologram)
+        );
+    }
+
     // The build state has mHologram as a UPROPERTY - use reflection to set it
     // This is the key: we replace the build gun's hologram pointer with our custom one
     FProperty* HologramProp = BuildState->GetClass()->FindPropertyByName(TEXT("mHologram"));

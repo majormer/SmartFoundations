@@ -45,6 +45,17 @@ Use these settings to control power cable previews.
 
 - Auto-Hold on grid change locks the hologram after you modify the grid, so a large preview doesn't move accidentally. **On by default** (as of 32.1.2) — turn it off here if you'd rather the hologram stay free to reposition, and the vanilla Hold key releases any individual lock.
 
+## Scaling Settings
+
+How much each mouse-wheel notch changes a grid transform. These four increments are shared by Grid scaling, Extend, Restore, and Smart Walking, so tuning them here changes the feel everywhere you scroll to build. (Added in 33.5.0.)
+
+- **Spacing Increment** (m) — meters of spacing added per scroll notch (also Extend spacing and a Walk segment's advance).
+- **Steps Increment** (m) — meters of stepping per notch (also a Walk segment's rise).
+- **Stagger Increment** (m) — meters of stagger per notch (also a Walk segment's shift).
+- **Rotation Increment** (deg) — degrees of rotation per notch (also a Walk segment's turn).
+
+Defaults are 0.5 m and 5°. The distance increments accept 0.1–8 m; rotation accepts 0.5–90°.
+
 ## Smart Panel
 
 - Apply Immediately controls whether panel changes take effect as you edit or wait for the Apply button.

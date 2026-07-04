@@ -2175,3 +2175,351 @@ msgstr "Kjør hypertuber automatisk mellom støttene du plasserer."
 msgctxt "SmartFoundations,Walk_Conveyance_Hypertube"
 msgid "Hypertube"
 msgstr "Hypertube"
+
+msgctxt "SmartFoundations,HUD_Module_HoldPrompt"
+msgid "*Module \"{0}\": equip its source building to place it"
+msgstr "*Modul \"{0}\": ta i bruk kildebygningen for å plassere den"
+
+msgctxt "SmartFoundations,HUD_Module_Ready"
+msgid "*Module \"{0}\": scroll to scale, fire to stamp (repeatable)"
+msgstr "*Modul \"{0}\": scroll for å skalere, avfyr for å stemple (gjentakbart)"
+
+msgctxt "SmartFoundations,HUD_Module_Unnamed"
+msgid "Module"
+msgstr "Modul"
+
+msgctxt "SmartFoundations,P.RotationIncrement"
+msgid "Rotation Increment (deg)"
+msgstr "Rotasjonsøkning (°)"
+
+msgctxt "SmartFoundations,P.RotationIncrement.TT"
+msgid "Degrees of rotation added per scroll notch (also walk segment turn)."
+msgstr "Grader rotasjon lagt til per scroll-hakk (også svingen på gangsegment)."
+
+msgctxt "SmartFoundations,P.SpacingIncrement"
+msgid "Spacing Increment (m)"
+msgstr "Avstandsøkning (m)"
+
+msgctxt "SmartFoundations,P.SpacingIncrement.TT"
+msgid "Meters of spacing added per scroll notch (also Extend spacing and walk segment advance)."
+msgstr "Meter avstand lagt til per scroll-hakk (også Utvidelse-avstand og fremrykk på gangsegment)."
+
+msgctxt "SmartFoundations,P.StaggerIncrement"
+msgid "Stagger Increment (m)"
+msgstr "Forskyvningsøkning (m)"
+
+msgctxt "SmartFoundations,P.StaggerIncrement.TT"
+msgid "Meters of stagger added per scroll notch (also walk segment shift)."
+msgstr "Meter forskyvning lagt til per scroll-hakk (også forskyvning på gangsegment)."
+
+msgctxt "SmartFoundations,P.StepsIncrement"
+msgid "Steps Increment (m)"
+msgstr "Trinnøkning (m)"
+
+msgctxt "SmartFoundations,P.StepsIncrement.TT"
+msgid "Meters of stepping added per scroll notch (also walk segment rise)."
+msgstr "Meter trinn lagt til per scroll-hakk (også stigning på gangsegment)."
+
+msgctxt "SmartFoundations,Panel_Restore_UpdateMessage"
+msgid "Overwrite preset '{0}' with the current panel values?"
+msgstr "Overskrive forhåndsinnstilling '{0}' med gjeldende panelverdier?"
+
+msgctxt "SmartFoundations,Panel_Restore_UpdateTitle"
+msgid "Update Preset"
+msgstr "Oppdater forhåndsinnstilling"
+
+msgctxt "SmartFoundations,Restore_ApplyAndBuild"
+msgid "Apply & Build"
+msgstr "Bruk og bygg"
+
+msgctxt "SmartFoundations,Restore_Clipboard_Empty"
+msgid "None yet. Preview or build a Smart Extend and it will appear here, ready to save."
+msgstr "Ingen ennå. Forhåndsvis eller bygg en Smart Utvidelse, så vises den her, klar til å lagres."
+
+msgctxt "SmartFoundations,Restore_Clipboard_Header"
+msgid "Extend clipboard"
+msgstr "Utvidelse-utklippstavle"
+
+msgctxt "SmartFoundations,Restore_Clipboard_Ready"
+msgid "{0} manifold - {1}\nReady to save. (Replaced by your next Extend; lost on exit.)"
+msgstr "{0} manifold - {1}\nKlar til å lagres. (Erstattes av din neste Utvidelse; går tapt ved avslutning.)"
+
+msgctxt "SmartFoundations,Restore_Clipboard_ReplayActive"
+msgid "A restored Module is active - finish stamping before capturing a new Extend."
+msgstr "En gjenopprettet modul er aktiv - fullfør stemplingen før du fanger en ny Utvidelse."
+
+msgctxt "SmartFoundations,Restore_Clipboard_UnknownSource"
+msgid "Extend"
+msgstr "Utvidelse"
+
+msgctxt "SmartFoundations,Restore_Details_Building"
+msgid "Building"
+msgstr "Bygning"
+
+msgctxt "SmartFoundations,Restore_Details_Created"
+msgid "Created"
+msgstr "Opprettet"
+
+msgctxt "SmartFoundations,Restore_Details_EachUnit"
+msgid "Each unit"
+msgstr "Per enhet"
+
+msgctxt "SmartFoundations,Restore_Details_Grid"
+msgid "Grid"
+msgstr "Rutenett"
+
+msgctxt "SmartFoundations,Restore_Details_NoRecipe"
+msgid "No recipe"
+msgstr "Ingen oppskrift"
+
+msgctxt "SmartFoundations,Restore_Details_Recipe"
+msgid "Recipe"
+msgstr "Oppskrift"
+
+msgctxt "SmartFoundations,Restore_Details_Requires"
+msgid "Requires"
+msgstr "Krever"
+
+msgctxt "SmartFoundations,Restore_Details_Rotation"
+msgid "rotation"
+msgstr "rotasjon"
+
+msgctxt "SmartFoundations,Restore_Details_Source"
+msgid "Source"
+msgstr "Kilde"
+
+msgctxt "SmartFoundations,Restore_Details_Spacing"
+msgid "spacing"
+msgstr "avstand"
+
+msgctxt "SmartFoundations,Restore_Details_Stagger"
+msgid "stagger"
+msgstr "forskyvning"
+
+msgctxt "SmartFoundations,Restore_Details_Steps"
+msgid "steps"
+msgstr "trinn"
+
+msgctxt "SmartFoundations,Restore_Details_Transforms"
+msgid "Transforms"
+msgstr "Transformasjoner"
+
+msgctxt "SmartFoundations,Restore_EmptyTopology"
+msgid "no parts"
+msgstr "ingen deler"
+
+msgctxt "SmartFoundations,Restore_ExportCode"
+msgid "Export Code"
+msgstr "Eksporter kode"
+
+msgctxt "SmartFoundations,Restore_ImportCode"
+msgid "Import Code"
+msgstr "Importer kode"
+
+msgctxt "SmartFoundations,Restore_LoadFailed"
+msgid "Could not load '{0}'.\n{1}"
+msgstr "Kunne ikke laste '{0}'.\n{1}"
+
+msgctxt "SmartFoundations,Restore_LoadToPanel"
+msgid "Load to Panel"
+msgstr "Last til panel"
+
+msgctxt "SmartFoundations,Restore_LoadedApplied"
+msgid "Loaded and applied '{0}'."
+msgstr "Lastet og brukte '{0}'."
+
+msgctxt "SmartFoundations,Restore_LoadedStaged"
+msgid "Loaded '{0}' into the panel - fine-tune, then Apply."
+msgstr "Lastet '{0}' inn i panelet - finjuster, og bruk deretter."
+
+msgctxt "SmartFoundations,Restore_ModuleApply"
+msgid "Apply"
+msgstr "Bruk"
+
+msgctxt "SmartFoundations,Restore_ModuleApplyMessage"
+msgid "Rebuild this saved layout ({0} parts) and switch to {1}? Hold {1} to stamp it; scroll to scale."
+msgstr "Bygg om denne lagrede utformingen ({0} deler) og bytt til {1}? Hold {1} for å stemple den; scroll for å skalere."
+
+msgctxt "SmartFoundations,Restore_ModuleApplyTitle"
+msgid "Apply Module"
+msgstr "Bruk modul"
+
+msgctxt "SmartFoundations,Restore_ModuleDelete"
+msgid "Delete"
+msgstr "Slett"
+
+msgctxt "SmartFoundations,Restore_ModuleDeleteMessage"
+msgid "Delete Module '{0}'?"
+msgstr "Slette modul '{0}'?"
+
+msgctxt "SmartFoundations,Restore_ModuleDeleteTitle"
+msgid "Delete Module"
+msgstr "Slett modul"
+
+msgctxt "SmartFoundations,Restore_ModuleExport"
+msgid "Export Code"
+msgstr "Eksporter kode"
+
+msgctxt "SmartFoundations,Restore_ModuleImport"
+msgid "Import Code"
+msgstr "Importer kode"
+
+msgctxt "SmartFoundations,Restore_ModuleLibrary"
+msgid "Saved Modules:"
+msgstr "Lagrede moduler:"
+
+msgctxt "SmartFoundations,Restore_ModuleName_Hint"
+msgid "New Module name"
+msgstr "Nytt modulnavn"
+
+msgctxt "SmartFoundations,Restore_NoBuildingCaptured"
+msgid "none captured"
+msgstr "ingen fanget"
+
+msgctxt "SmartFoundations,Restore_NoModules"
+msgid "No Modules yet.\nPreview or build a Smart Extend, then save it from the clipboard above."
+msgstr "Ingen moduler ennå.\nForhåndsvis eller bygg en Smart Utvidelse, og lagre den deretter fra utklippstavlen ovenfor."
+
+msgctxt "SmartFoundations,Restore_NoPresetSelected"
+msgid "No preset selected.\nSave the current panel below, or import a shared code."
+msgstr "Ingen forhåndsinnstilling valgt.\nLagre gjeldende panel nedenfor, eller importer en delt kode."
+
+msgctxt "SmartFoundations,Restore_NoSelection"
+msgid "Select a preset first."
+msgstr "Velg en forhåndsinnstilling først."
+
+msgctxt "SmartFoundations,Restore_PresetDesc_Hint"
+msgid "Description (optional)"
+msgstr "Beskrivelse (valgfritt)"
+
+msgctxt "SmartFoundations,Restore_PresetName_Hint"
+msgid "New preset name"
+msgstr "Nytt forhåndsinnstillingsnavn"
+
+msgctxt "SmartFoundations,Restore_SaveAsModule"
+msgid "Save as Module"
+msgstr "Lagre som modul"
+
+msgctxt "SmartFoundations,Restore_SaveCard"
+msgid "Save current panel as a new preset:"
+msgstr "Lagre gjeldende panel som en ny forhåndsinnstilling:"
+
+msgctxt "SmartFoundations,Restore_SaveFailed"
+msgid "Could not save '{0}' - check the log (name may collide with another preset's file)."
+msgstr "Kunne ikke lagre '{0}' - sjekk loggen (navnet kan kollidere med filen til en annen forhåndsinnstilling)."
+
+msgctxt "SmartFoundations,Restore_SaveFromPanel"
+msgid "Save from Panel"
+msgstr "Lagre fra panel"
+
+msgctxt "SmartFoundations,Restore_SaveNeedsName"
+msgid "Enter a name in the 'New preset name' field below, then press Save from Panel."
+msgstr "Skriv inn et navn i feltet 'Nytt forhåndsinnstillingsnavn' nedenfor, og trykk deretter Lagre fra panelet."
+
+msgctxt "SmartFoundations,Restore_SavedAck"
+msgid "Saved '{0}'.\n{1}"
+msgstr "Lagret '{0}'.\n{1}"
+
+msgctxt "SmartFoundations,Restore_ShareCard"
+msgid "Share:"
+msgstr "Del:"
+
+msgctxt "SmartFoundations,Restore_Tab_GridPresets"
+msgid "Grid Presets"
+msgstr "Rutenett-forhåndsinnstillinger"
+
+msgctxt "SmartFoundations,Restore_Tab_Modules"
+msgid "Modules"
+msgstr "Moduler"
+
+msgctxt "SmartFoundations,Restore_Title"
+msgid "Smart Restore"
+msgstr "Smart Gjenoppretting"
+
+msgctxt "SmartFoundations,Role_Belt"
+msgid "belt"
+msgstr "bånd"
+
+msgctxt "SmartFoundations,Role_Belts"
+msgid "belts"
+msgstr "bånd"
+
+msgctxt "SmartFoundations,Role_Distributor"
+msgid "distributor"
+msgstr "fordeler"
+
+msgctxt "SmartFoundations,Role_Distributors"
+msgid "distributors"
+msgstr "fordelere"
+
+msgctxt "SmartFoundations,Role_Junction"
+msgid "junction"
+msgstr "knutepunkt"
+
+msgctxt "SmartFoundations,Role_Junctions"
+msgid "junctions"
+msgstr "knutepunkter"
+
+msgctxt "SmartFoundations,Role_Lift"
+msgid "lift"
+msgstr "heis"
+
+msgctxt "SmartFoundations,Role_Lifts"
+msgid "lifts"
+msgstr "heiser"
+
+msgctxt "SmartFoundations,Role_Pipe"
+msgid "pipe"
+msgstr "rør"
+
+msgctxt "SmartFoundations,Role_Pipes"
+msgid "pipes"
+msgstr "rør"
+
+msgctxt "SmartFoundations,Role_PowerPole"
+msgid "power pole"
+msgstr "strømstolpe"
+
+msgctxt "SmartFoundations,Role_PowerPoles"
+msgid "power poles"
+msgstr "strømstolper"
+
+msgctxt "SmartFoundations,Role_Wire"
+msgid "wire"
+msgstr "kabel"
+
+msgctxt "SmartFoundations,Role_Wires"
+msgid "wires"
+msgstr "kabler"
+
+msgctxt "SmartFoundations,Sec.Scaling"
+msgid "Scaling Settings"
+msgstr "Skaleringsinnstillinger"
+
+msgctxt "SmartFoundations,Sec.Scaling.TT"
+msgid "How much each mouse-wheel notch changes a grid transform. Also used by Extend, Restore, and Smart Walking."
+msgstr "Hvor mye hvert mushjul-hakk endrer en rutenetttransformasjon. Brukes også av Utvidelse, Gjenoppretting og Smart gange."
+
+msgctxt "SmartFoundations,Upgrade_AllTiersRow"
+msgid "All tiers"
+msgstr "Alle nivåer"
+
+msgctxt "SmartFoundations,Upgrade_AllTiersTooltip"
+msgid "Upgrade every tier below the chosen target"
+msgstr "Oppgrader alle nivåer under det valgte målet"
+
+msgctxt "SmartFoundations,Upgrade_NearestTier"
+msgid "Nearest Mk.{0}: {1}m {2}"
+msgstr "Nærmeste Mk.{0}: {1}m {2}"
+
+msgctxt "SmartFoundations,Upgrade_RescanAim"
+msgid "Upgrade complete - aim at the network and Scan again"
+msgstr "Oppgradering fullført - sikt på nettverket og skann igjen"
+
+msgctxt "SmartFoundations,Upgrade_TierRowTooltip"
+msgid "Upgrade only Mk.{0} in this network"
+msgstr "Oppgrader bare Mk.{0} i dette nettverket"
+
+msgctxt "SmartFoundations,Upgrade_UpgradingSweep"
+msgid "Upgrading {0} → Mk.{1}..."
+msgstr "Oppgraderer {0} → Mk.{1}..."

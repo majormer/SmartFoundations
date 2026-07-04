@@ -2183,3 +2183,351 @@ msgstr "Automatically run hypertubes between the supports you place."
 msgctxt "SmartFoundations,Walk_Conveyance_Hypertube"
 msgid "Hypertube"
 msgstr "Hypertube"
+
+msgctxt "SmartFoundations,HUD_Module_HoldPrompt"
+msgid "*Module \"{0}\": equip its source building to place it"
+msgstr "*Module \"{0}\": equip its source building to place it"
+
+msgctxt "SmartFoundations,HUD_Module_Ready"
+msgid "*Module \"{0}\": scroll to scale, fire to stamp (repeatable)"
+msgstr "*Module \"{0}\": scroll to scale, fire to stamp (repeatable)"
+
+msgctxt "SmartFoundations,HUD_Module_Unnamed"
+msgid "Module"
+msgstr "Module"
+
+msgctxt "SmartFoundations,P.RotationIncrement"
+msgid "Rotation Increment (deg)"
+msgstr "Rotation Increment (deg)"
+
+msgctxt "SmartFoundations,P.RotationIncrement.TT"
+msgid "Degrees of rotation added per scroll notch (also walk segment turn)."
+msgstr "Degrees of rotation added per scroll notch (also walk segment turn)."
+
+msgctxt "SmartFoundations,P.SpacingIncrement"
+msgid "Spacing Increment (m)"
+msgstr "Spacing Increment (m)"
+
+msgctxt "SmartFoundations,P.SpacingIncrement.TT"
+msgid "Meters of spacing added per scroll notch (also Extend spacing and walk segment advance)."
+msgstr "Meters of spacing added per scroll notch (also Extend spacing and walk segment advance)."
+
+msgctxt "SmartFoundations,P.StaggerIncrement"
+msgid "Stagger Increment (m)"
+msgstr "Stagger Increment (m)"
+
+msgctxt "SmartFoundations,P.StaggerIncrement.TT"
+msgid "Meters of stagger added per scroll notch (also walk segment shift)."
+msgstr "Meters of stagger added per scroll notch (also walk segment shift)."
+
+msgctxt "SmartFoundations,P.StepsIncrement"
+msgid "Steps Increment (m)"
+msgstr "Steps Increment (m)"
+
+msgctxt "SmartFoundations,P.StepsIncrement.TT"
+msgid "Meters of stepping added per scroll notch (also walk segment rise)."
+msgstr "Meters of stepping added per scroll notch (also walk segment rise)."
+
+msgctxt "SmartFoundations,Panel_Restore_UpdateMessage"
+msgid "Overwrite preset '{0}' with the current panel values?"
+msgstr "Overwrite preset '{0}' with the current panel values?"
+
+msgctxt "SmartFoundations,Panel_Restore_UpdateTitle"
+msgid "Update Preset"
+msgstr "Update Preset"
+
+msgctxt "SmartFoundations,Restore_ApplyAndBuild"
+msgid "Apply & Build"
+msgstr "Apply & Build"
+
+msgctxt "SmartFoundations,Restore_Clipboard_Empty"
+msgid "None yet. Preview or build a Smart Extend and it will appear here, ready to save."
+msgstr "None yet. Preview or build a Smart Extend and it will appear here, ready to save."
+
+msgctxt "SmartFoundations,Restore_Clipboard_Header"
+msgid "Extend clipboard"
+msgstr "Extend clipboard"
+
+msgctxt "SmartFoundations,Restore_Clipboard_Ready"
+msgid "{0} manifold - {1}\nReady to save. (Replaced by your next Extend; lost on exit.)"
+msgstr "{0} manifold - {1}\nReady to save. (Replaced by your next Extend; lost on exit.)"
+
+msgctxt "SmartFoundations,Restore_Clipboard_ReplayActive"
+msgid "A restored Module is active - finish stamping before capturing a new Extend."
+msgstr "A restored Module is active - finish stamping before capturing a new Extend."
+
+msgctxt "SmartFoundations,Restore_Clipboard_UnknownSource"
+msgid "Extend"
+msgstr "Extend"
+
+msgctxt "SmartFoundations,Restore_Details_Building"
+msgid "Building"
+msgstr "Building"
+
+msgctxt "SmartFoundations,Restore_Details_Created"
+msgid "Created"
+msgstr "Created"
+
+msgctxt "SmartFoundations,Restore_Details_EachUnit"
+msgid "Each unit"
+msgstr "Each unit"
+
+msgctxt "SmartFoundations,Restore_Details_Grid"
+msgid "Grid"
+msgstr "Grid"
+
+msgctxt "SmartFoundations,Restore_Details_NoRecipe"
+msgid "No recipe"
+msgstr "No recipe"
+
+msgctxt "SmartFoundations,Restore_Details_Recipe"
+msgid "Recipe"
+msgstr "Recipe"
+
+msgctxt "SmartFoundations,Restore_Details_Requires"
+msgid "Requires"
+msgstr "Requires"
+
+msgctxt "SmartFoundations,Restore_Details_Rotation"
+msgid "rotation"
+msgstr "rotation"
+
+msgctxt "SmartFoundations,Restore_Details_Source"
+msgid "Source"
+msgstr "Source"
+
+msgctxt "SmartFoundations,Restore_Details_Spacing"
+msgid "spacing"
+msgstr "spacing"
+
+msgctxt "SmartFoundations,Restore_Details_Stagger"
+msgid "stagger"
+msgstr "stagger"
+
+msgctxt "SmartFoundations,Restore_Details_Steps"
+msgid "steps"
+msgstr "steps"
+
+msgctxt "SmartFoundations,Restore_Details_Transforms"
+msgid "Transforms"
+msgstr "Transforms"
+
+msgctxt "SmartFoundations,Restore_EmptyTopology"
+msgid "no parts"
+msgstr "no parts"
+
+msgctxt "SmartFoundations,Restore_ExportCode"
+msgid "Export Code"
+msgstr "Export Code"
+
+msgctxt "SmartFoundations,Restore_ImportCode"
+msgid "Import Code"
+msgstr "Import Code"
+
+msgctxt "SmartFoundations,Restore_LoadFailed"
+msgid "Could not load '{0}'.\n{1}"
+msgstr "Could not load '{0}'.\n{1}"
+
+msgctxt "SmartFoundations,Restore_LoadToPanel"
+msgid "Load to Panel"
+msgstr "Load to Panel"
+
+msgctxt "SmartFoundations,Restore_LoadedApplied"
+msgid "Loaded and applied '{0}'."
+msgstr "Loaded and applied '{0}'."
+
+msgctxt "SmartFoundations,Restore_LoadedStaged"
+msgid "Loaded '{0}' into the panel - fine-tune, then Apply."
+msgstr "Loaded '{0}' into the panel - fine-tune, then Apply."
+
+msgctxt "SmartFoundations,Restore_ModuleApply"
+msgid "Apply"
+msgstr "Apply"
+
+msgctxt "SmartFoundations,Restore_ModuleApplyMessage"
+msgid "Rebuild this saved layout ({0} parts) and switch to {1}? Hold {1} to stamp it; scroll to scale."
+msgstr "Rebuild this saved layout ({0} parts) and switch to {1}? Hold {1} to stamp it; scroll to scale."
+
+msgctxt "SmartFoundations,Restore_ModuleApplyTitle"
+msgid "Apply Module"
+msgstr "Apply Module"
+
+msgctxt "SmartFoundations,Restore_ModuleDelete"
+msgid "Delete"
+msgstr "Delete"
+
+msgctxt "SmartFoundations,Restore_ModuleDeleteMessage"
+msgid "Delete Module '{0}'?"
+msgstr "Delete Module '{0}'?"
+
+msgctxt "SmartFoundations,Restore_ModuleDeleteTitle"
+msgid "Delete Module"
+msgstr "Delete Module"
+
+msgctxt "SmartFoundations,Restore_ModuleExport"
+msgid "Export Code"
+msgstr "Export Code"
+
+msgctxt "SmartFoundations,Restore_ModuleImport"
+msgid "Import Code"
+msgstr "Import Code"
+
+msgctxt "SmartFoundations,Restore_ModuleLibrary"
+msgid "Saved Modules:"
+msgstr "Saved Modules:"
+
+msgctxt "SmartFoundations,Restore_ModuleName_Hint"
+msgid "New Module name"
+msgstr "New Module name"
+
+msgctxt "SmartFoundations,Restore_NoBuildingCaptured"
+msgid "none captured"
+msgstr "none captured"
+
+msgctxt "SmartFoundations,Restore_NoModules"
+msgid "No Modules yet.\nPreview or build a Smart Extend, then save it from the clipboard above."
+msgstr "No Modules yet.\nPreview or build a Smart Extend, then save it from the clipboard above."
+
+msgctxt "SmartFoundations,Restore_NoPresetSelected"
+msgid "No preset selected.\nSave the current panel below, or import a shared code."
+msgstr "No preset selected.\nSave the current panel below, or import a shared code."
+
+msgctxt "SmartFoundations,Restore_NoSelection"
+msgid "Select a preset first."
+msgstr "Select a preset first."
+
+msgctxt "SmartFoundations,Restore_PresetDesc_Hint"
+msgid "Description (optional)"
+msgstr "Description (optional)"
+
+msgctxt "SmartFoundations,Restore_PresetName_Hint"
+msgid "New preset name"
+msgstr "New preset name"
+
+msgctxt "SmartFoundations,Restore_SaveAsModule"
+msgid "Save as Module"
+msgstr "Save as Module"
+
+msgctxt "SmartFoundations,Restore_SaveCard"
+msgid "Save current panel as a new preset:"
+msgstr "Save current panel as a new preset:"
+
+msgctxt "SmartFoundations,Restore_SaveFailed"
+msgid "Could not save '{0}' - check the log (name may collide with another preset's file)."
+msgstr "Could not save '{0}' - check the log (name may collide with another preset's file)."
+
+msgctxt "SmartFoundations,Restore_SaveFromPanel"
+msgid "Save from Panel"
+msgstr "Save from Panel"
+
+msgctxt "SmartFoundations,Restore_SaveNeedsName"
+msgid "Enter a name in the 'New preset name' field below, then press Save from Panel."
+msgstr "Enter a name in the 'New preset name' field below, then press Save from Panel."
+
+msgctxt "SmartFoundations,Restore_SavedAck"
+msgid "Saved '{0}'.\n{1}"
+msgstr "Saved '{0}'.\n{1}"
+
+msgctxt "SmartFoundations,Restore_ShareCard"
+msgid "Share:"
+msgstr "Share:"
+
+msgctxt "SmartFoundations,Restore_Tab_GridPresets"
+msgid "Grid Presets"
+msgstr "Grid Presets"
+
+msgctxt "SmartFoundations,Restore_Tab_Modules"
+msgid "Modules"
+msgstr "Modules"
+
+msgctxt "SmartFoundations,Restore_Title"
+msgid "Smart Restore"
+msgstr "Smart Restore"
+
+msgctxt "SmartFoundations,Role_Belt"
+msgid "belt"
+msgstr "belt"
+
+msgctxt "SmartFoundations,Role_Belts"
+msgid "belts"
+msgstr "belts"
+
+msgctxt "SmartFoundations,Role_Distributor"
+msgid "distributor"
+msgstr "distributor"
+
+msgctxt "SmartFoundations,Role_Distributors"
+msgid "distributors"
+msgstr "distributors"
+
+msgctxt "SmartFoundations,Role_Junction"
+msgid "junction"
+msgstr "junction"
+
+msgctxt "SmartFoundations,Role_Junctions"
+msgid "junctions"
+msgstr "junctions"
+
+msgctxt "SmartFoundations,Role_Lift"
+msgid "lift"
+msgstr "lift"
+
+msgctxt "SmartFoundations,Role_Lifts"
+msgid "lifts"
+msgstr "lifts"
+
+msgctxt "SmartFoundations,Role_Pipe"
+msgid "pipe"
+msgstr "pipe"
+
+msgctxt "SmartFoundations,Role_Pipes"
+msgid "pipes"
+msgstr "pipes"
+
+msgctxt "SmartFoundations,Role_PowerPole"
+msgid "power pole"
+msgstr "power pole"
+
+msgctxt "SmartFoundations,Role_PowerPoles"
+msgid "power poles"
+msgstr "power poles"
+
+msgctxt "SmartFoundations,Role_Wire"
+msgid "wire"
+msgstr "wire"
+
+msgctxt "SmartFoundations,Role_Wires"
+msgid "wires"
+msgstr "wires"
+
+msgctxt "SmartFoundations,Sec.Scaling"
+msgid "Scaling Settings"
+msgstr "Scaling Settings"
+
+msgctxt "SmartFoundations,Sec.Scaling.TT"
+msgid "How much each mouse-wheel notch changes a grid transform. Also used by Extend, Restore, and Smart Walking."
+msgstr "How much each mouse-wheel notch changes a grid transform. Also used by Extend, Restore, and Smart Walking."
+
+msgctxt "SmartFoundations,Upgrade_AllTiersRow"
+msgid "All tiers"
+msgstr "All tiers"
+
+msgctxt "SmartFoundations,Upgrade_AllTiersTooltip"
+msgid "Upgrade every tier below the chosen target"
+msgstr "Upgrade every tier below the chosen target"
+
+msgctxt "SmartFoundations,Upgrade_NearestTier"
+msgid "Nearest Mk.{0}: {1}m {2}"
+msgstr "Nearest Mk.{0}: {1}m {2}"
+
+msgctxt "SmartFoundations,Upgrade_RescanAim"
+msgid "Upgrade complete - aim at the network and Scan again"
+msgstr "Upgrade complete - aim at the network and Scan again"
+
+msgctxt "SmartFoundations,Upgrade_TierRowTooltip"
+msgid "Upgrade only Mk.{0} in this network"
+msgstr "Upgrade only Mk.{0} in this network"
+
+msgctxt "SmartFoundations,Upgrade_UpgradingSweep"
+msgid "Upgrading {0} → Mk.{1}..."
+msgstr "Upgrading {0} → Mk.{1}..."

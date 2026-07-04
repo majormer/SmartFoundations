@@ -2110,3 +2110,351 @@ msgstr "اجرای خودکار هایپرتیوب‌ها بین پایه‌ها
 msgctxt "SmartFoundations,Walk_Conveyance_Hypertube"
 msgid "Hypertube"
 msgstr "هایپرتیوب"
+
+msgctxt "SmartFoundations,HUD_Module_HoldPrompt"
+msgid "*Module \"{0}\": equip its source building to place it"
+msgstr "*ماژول \"{0}\": ساختمان منبع آن را در دست بگیرید تا قرار داده شود"
+
+msgctxt "SmartFoundations,HUD_Module_Ready"
+msgid "*Module \"{0}\": scroll to scale, fire to stamp (repeatable)"
+msgstr "*ماژول \"{0}\": برای مقیاس بچرخانید، برای مهر کردن شلیک کنید (تکرارپذیر)"
+
+msgctxt "SmartFoundations,HUD_Module_Unnamed"
+msgid "Module"
+msgstr "ماژول"
+
+msgctxt "SmartFoundations,P.RotationIncrement"
+msgid "Rotation Increment (deg)"
+msgstr "افزایش چرخش (درجه)"
+
+msgctxt "SmartFoundations,P.RotationIncrement.TT"
+msgid "Degrees of rotation added per scroll notch (also walk segment turn)."
+msgstr "درجه چرخش افزوده‌شده در هر چرخش چرخ ماوس (همچنین چرخش قطعه پیاده‌روی)."
+
+msgctxt "SmartFoundations,P.SpacingIncrement"
+msgid "Spacing Increment (m)"
+msgstr "افزایش فاصله (متر)"
+
+msgctxt "SmartFoundations,P.SpacingIncrement.TT"
+msgid "Meters of spacing added per scroll notch (also Extend spacing and walk segment advance)."
+msgstr "متر فاصله افزوده‌شده در هر چرخش چرخ ماوس (همچنین فاصله گسترش و پیشروی قطعه پیاده‌روی)."
+
+msgctxt "SmartFoundations,P.StaggerIncrement"
+msgid "Stagger Increment (m)"
+msgstr "افزایش جابجایی (متر)"
+
+msgctxt "SmartFoundations,P.StaggerIncrement.TT"
+msgid "Meters of stagger added per scroll notch (also walk segment shift)."
+msgstr "متر جابجایی افزوده‌شده در هر چرخش چرخ ماوس (همچنین جابجایی قطعه پیاده‌روی)."
+
+msgctxt "SmartFoundations,P.StepsIncrement"
+msgid "Steps Increment (m)"
+msgstr "افزایش پله (متر)"
+
+msgctxt "SmartFoundations,P.StepsIncrement.TT"
+msgid "Meters of stepping added per scroll notch (also walk segment rise)."
+msgstr "متر پله افزوده‌شده در هر چرخش چرخ ماوس (همچنین ارتفاع قطعه پیاده‌روی)."
+
+msgctxt "SmartFoundations,Panel_Restore_UpdateMessage"
+msgid "Overwrite preset '{0}' with the current panel values?"
+msgstr "پیش‌تنظیم '{0}' با مقادیر پنل فعلی بازنویسی شود؟"
+
+msgctxt "SmartFoundations,Panel_Restore_UpdateTitle"
+msgid "Update Preset"
+msgstr "به‌روزرسانی پیش‌تنظیم"
+
+msgctxt "SmartFoundations,Restore_ApplyAndBuild"
+msgid "Apply & Build"
+msgstr "اعمال و ساخت"
+
+msgctxt "SmartFoundations,Restore_Clipboard_Empty"
+msgid "None yet. Preview or build a Smart Extend and it will appear here, ready to save."
+msgstr "هنوز هیچ. یک گسترش Smart را پیش‌نمایش یا بسازید تا اینجا نمایان و آماده ذخیره شود."
+
+msgctxt "SmartFoundations,Restore_Clipboard_Header"
+msgid "Extend clipboard"
+msgstr "کلیپ‌بورد گسترش"
+
+msgctxt "SmartFoundations,Restore_Clipboard_Ready"
+msgid "{0} manifold - {1}\nReady to save. (Replaced by your next Extend; lost on exit.)"
+msgstr "منیفولد {0} - {1}\nآماده ذخیره. (با گسترش بعدی شما جایگزین می‌شود؛ هنگام خروج از دست می‌رود.)"
+
+msgctxt "SmartFoundations,Restore_Clipboard_ReplayActive"
+msgid "A restored Module is active - finish stamping before capturing a new Extend."
+msgstr "یک ماژول بازیابی‌شده فعال است - پیش از ثبت گسترش جدید، مهر کردن را تمام کنید."
+
+msgctxt "SmartFoundations,Restore_Clipboard_UnknownSource"
+msgid "Extend"
+msgstr "گسترش"
+
+msgctxt "SmartFoundations,Restore_Details_Building"
+msgid "Building"
+msgstr "ساختمان"
+
+msgctxt "SmartFoundations,Restore_Details_Created"
+msgid "Created"
+msgstr "ایجادشده"
+
+msgctxt "SmartFoundations,Restore_Details_EachUnit"
+msgid "Each unit"
+msgstr "هر واحد"
+
+msgctxt "SmartFoundations,Restore_Details_Grid"
+msgid "Grid"
+msgstr "شبکه"
+
+msgctxt "SmartFoundations,Restore_Details_NoRecipe"
+msgid "No recipe"
+msgstr "بدون دستور"
+
+msgctxt "SmartFoundations,Restore_Details_Recipe"
+msgid "Recipe"
+msgstr "دستور"
+
+msgctxt "SmartFoundations,Restore_Details_Requires"
+msgid "Requires"
+msgstr "نیازمند"
+
+msgctxt "SmartFoundations,Restore_Details_Rotation"
+msgid "rotation"
+msgstr "چرخش"
+
+msgctxt "SmartFoundations,Restore_Details_Source"
+msgid "Source"
+msgstr "منبع"
+
+msgctxt "SmartFoundations,Restore_Details_Spacing"
+msgid "spacing"
+msgstr "فاصله"
+
+msgctxt "SmartFoundations,Restore_Details_Stagger"
+msgid "stagger"
+msgstr "جابجایی"
+
+msgctxt "SmartFoundations,Restore_Details_Steps"
+msgid "steps"
+msgstr "پله‌ها"
+
+msgctxt "SmartFoundations,Restore_Details_Transforms"
+msgid "Transforms"
+msgstr "تبدیل‌ها"
+
+msgctxt "SmartFoundations,Restore_EmptyTopology"
+msgid "no parts"
+msgstr "بدون قطعه"
+
+msgctxt "SmartFoundations,Restore_ExportCode"
+msgid "Export Code"
+msgstr "خروجی کد"
+
+msgctxt "SmartFoundations,Restore_ImportCode"
+msgid "Import Code"
+msgstr "ورود کد"
+
+msgctxt "SmartFoundations,Restore_LoadFailed"
+msgid "Could not load '{0}'.\n{1}"
+msgstr "بارگذاری '{0}' ممکن نشد.\n{1}"
+
+msgctxt "SmartFoundations,Restore_LoadToPanel"
+msgid "Load to Panel"
+msgstr "بارگذاری در پنل"
+
+msgctxt "SmartFoundations,Restore_LoadedApplied"
+msgid "Loaded and applied '{0}'."
+msgstr "'{0}' بارگذاری و اعمال شد."
+
+msgctxt "SmartFoundations,Restore_LoadedStaged"
+msgid "Loaded '{0}' into the panel - fine-tune, then Apply."
+msgstr "'{0}' در پنل بارگذاری شد - تنظیم دقیق کنید، سپس اعمال بزنید."
+
+msgctxt "SmartFoundations,Restore_ModuleApply"
+msgid "Apply"
+msgstr "اعمال"
+
+msgctxt "SmartFoundations,Restore_ModuleApplyMessage"
+msgid "Rebuild this saved layout ({0} parts) and switch to {1}? Hold {1} to stamp it; scroll to scale."
+msgstr "این چیدمان ذخیره‌شده ({0} قطعه) بازسازی و به {1} تغییر کند؟ برای مهر کردن {1} را نگه دارید؛ برای مقیاس بچرخانید."
+
+msgctxt "SmartFoundations,Restore_ModuleApplyTitle"
+msgid "Apply Module"
+msgstr "اعمال ماژول"
+
+msgctxt "SmartFoundations,Restore_ModuleDelete"
+msgid "Delete"
+msgstr "حذف"
+
+msgctxt "SmartFoundations,Restore_ModuleDeleteMessage"
+msgid "Delete Module '{0}'?"
+msgstr "ماژول '{0}' حذف شود؟"
+
+msgctxt "SmartFoundations,Restore_ModuleDeleteTitle"
+msgid "Delete Module"
+msgstr "حذف ماژول"
+
+msgctxt "SmartFoundations,Restore_ModuleExport"
+msgid "Export Code"
+msgstr "خروجی کد"
+
+msgctxt "SmartFoundations,Restore_ModuleImport"
+msgid "Import Code"
+msgstr "ورود کد"
+
+msgctxt "SmartFoundations,Restore_ModuleLibrary"
+msgid "Saved Modules:"
+msgstr "ماژول‌های ذخیره‌شده:"
+
+msgctxt "SmartFoundations,Restore_ModuleName_Hint"
+msgid "New Module name"
+msgstr "نام ماژول جدید"
+
+msgctxt "SmartFoundations,Restore_NoBuildingCaptured"
+msgid "none captured"
+msgstr "هیچ‌کدام ثبت نشد"
+
+msgctxt "SmartFoundations,Restore_NoModules"
+msgid "No Modules yet.\nPreview or build a Smart Extend, then save it from the clipboard above."
+msgstr "هنوز ماژولی وجود ندارد.\nیک گسترش Smart را پیش‌نمایش یا بسازید، سپس آن را از کلیپ‌بورد بالا ذخیره کنید."
+
+msgctxt "SmartFoundations,Restore_NoPresetSelected"
+msgid "No preset selected.\nSave the current panel below, or import a shared code."
+msgstr "پیش‌تنظیمی انتخاب نشده است.\nپنل فعلی را در پایین ذخیره کنید یا یک کد اشتراکی وارد کنید."
+
+msgctxt "SmartFoundations,Restore_NoSelection"
+msgid "Select a preset first."
+msgstr "ابتدا یک پیش‌تنظیم انتخاب کنید."
+
+msgctxt "SmartFoundations,Restore_PresetDesc_Hint"
+msgid "Description (optional)"
+msgstr "توضیحات (اختیاری)"
+
+msgctxt "SmartFoundations,Restore_PresetName_Hint"
+msgid "New preset name"
+msgstr "نام پیش‌تنظیم جدید"
+
+msgctxt "SmartFoundations,Restore_SaveAsModule"
+msgid "Save as Module"
+msgstr "ذخیره به‌عنوان ماژول"
+
+msgctxt "SmartFoundations,Restore_SaveCard"
+msgid "Save current panel as a new preset:"
+msgstr "ذخیره پنل فعلی به‌عنوان پیش‌تنظیم جدید:"
+
+msgctxt "SmartFoundations,Restore_SaveFailed"
+msgid "Could not save '{0}' - check the log (name may collide with another preset's file)."
+msgstr "ذخیره '{0}' ممکن نشد - گزارش را بررسی کنید (نام ممکن است با فایل پیش‌تنظیم دیگری تداخل داشته باشد)."
+
+msgctxt "SmartFoundations,Restore_SaveFromPanel"
+msgid "Save from Panel"
+msgstr "ذخیره از پنل"
+
+msgctxt "SmartFoundations,Restore_SaveNeedsName"
+msgid "Enter a name in the 'New preset name' field below, then press Save from Panel."
+msgstr "نامی در فیلد 'نام پیش‌تنظیم جدید' در پایین وارد کنید، سپس از پنل ذخیره را بزنید."
+
+msgctxt "SmartFoundations,Restore_SavedAck"
+msgid "Saved '{0}'.\n{1}"
+msgstr "'{0}' ذخیره شد.\n{1}"
+
+msgctxt "SmartFoundations,Restore_ShareCard"
+msgid "Share:"
+msgstr "اشتراک:"
+
+msgctxt "SmartFoundations,Restore_Tab_GridPresets"
+msgid "Grid Presets"
+msgstr "پیش‌تنظیم‌های شبکه"
+
+msgctxt "SmartFoundations,Restore_Tab_Modules"
+msgid "Modules"
+msgstr "ماژول‌ها"
+
+msgctxt "SmartFoundations,Restore_Title"
+msgid "Smart Restore"
+msgstr "بازیابی Smart"
+
+msgctxt "SmartFoundations,Role_Belt"
+msgid "belt"
+msgstr "نوار"
+
+msgctxt "SmartFoundations,Role_Belts"
+msgid "belts"
+msgstr "نوارها"
+
+msgctxt "SmartFoundations,Role_Distributor"
+msgid "distributor"
+msgstr "توزیع‌کننده"
+
+msgctxt "SmartFoundations,Role_Distributors"
+msgid "distributors"
+msgstr "توزیع‌کننده‌ها"
+
+msgctxt "SmartFoundations,Role_Junction"
+msgid "junction"
+msgstr "اتصال"
+
+msgctxt "SmartFoundations,Role_Junctions"
+msgid "junctions"
+msgstr "اتصالات"
+
+msgctxt "SmartFoundations,Role_Lift"
+msgid "lift"
+msgstr "آسانسور نقاله"
+
+msgctxt "SmartFoundations,Role_Lifts"
+msgid "lifts"
+msgstr "آسانسورهای نقاله"
+
+msgctxt "SmartFoundations,Role_Pipe"
+msgid "pipe"
+msgstr "لوله"
+
+msgctxt "SmartFoundations,Role_Pipes"
+msgid "pipes"
+msgstr "لوله‌ها"
+
+msgctxt "SmartFoundations,Role_PowerPole"
+msgid "power pole"
+msgstr "تیر برق"
+
+msgctxt "SmartFoundations,Role_PowerPoles"
+msgid "power poles"
+msgstr "تیرهای برق"
+
+msgctxt "SmartFoundations,Role_Wire"
+msgid "wire"
+msgstr "سیم"
+
+msgctxt "SmartFoundations,Role_Wires"
+msgid "wires"
+msgstr "سیم‌ها"
+
+msgctxt "SmartFoundations,Sec.Scaling"
+msgid "Scaling Settings"
+msgstr "تنظیمات مقیاس‌گذاری"
+
+msgctxt "SmartFoundations,Sec.Scaling.TT"
+msgid "How much each mouse-wheel notch changes a grid transform. Also used by Extend, Restore, and Smart Walking."
+msgstr "میزان تغییر هر چرخش چرخ ماوس روی یک تبدیل شبکه. همچنین توسط گسترش، بازیابی و پیاده‌روی Smart استفاده می‌شود."
+
+msgctxt "SmartFoundations,Upgrade_AllTiersRow"
+msgid "All tiers"
+msgstr "همه سطوح"
+
+msgctxt "SmartFoundations,Upgrade_AllTiersTooltip"
+msgid "Upgrade every tier below the chosen target"
+msgstr "ارتقای هر سطح زیر هدف انتخاب‌شده"
+
+msgctxt "SmartFoundations,Upgrade_NearestTier"
+msgid "Nearest Mk.{0}: {1}m {2}"
+msgstr "نزدیک‌ترین Mk.{0}: {1}متر {2}"
+
+msgctxt "SmartFoundations,Upgrade_RescanAim"
+msgid "Upgrade complete - aim at the network and Scan again"
+msgstr "ارتقا کامل شد - به شبکه نشانه بگیرید و دوباره اسکن کنید"
+
+msgctxt "SmartFoundations,Upgrade_TierRowTooltip"
+msgid "Upgrade only Mk.{0} in this network"
+msgstr "ارتقای فقط Mk.{0} در این شبکه"
+
+msgctxt "SmartFoundations,Upgrade_UpgradingSweep"
+msgid "Upgrading {0} → Mk.{1}..."
+msgstr "در حال ارتقای {0} ← Mk.{1}..."

@@ -2178,3 +2178,351 @@ msgstr "Executar automaticamente hipertubos entre os suportes que você coloca."
 msgctxt "SmartFoundations,Walk_Conveyance_Hypertube"
 msgid "Hypertube"
 msgstr "Hipertubo"
+
+msgctxt "SmartFoundations,HUD_Module_HoldPrompt"
+msgid "*Module \"{0}\": equip its source building to place it"
+msgstr "*Módulo \"{0}\": equipe o prédio de origem para posicioná-lo"
+
+msgctxt "SmartFoundations,HUD_Module_Ready"
+msgid "*Module \"{0}\": scroll to scale, fire to stamp (repeatable)"
+msgstr "*Módulo \"{0}\": role para escalar, atire para carimbar (repetível)"
+
+msgctxt "SmartFoundations,HUD_Module_Unnamed"
+msgid "Module"
+msgstr "Módulo"
+
+msgctxt "SmartFoundations,P.RotationIncrement"
+msgid "Rotation Increment (deg)"
+msgstr "Incremento de Rotação (°)"
+
+msgctxt "SmartFoundations,P.RotationIncrement.TT"
+msgid "Degrees of rotation added per scroll notch (also walk segment turn)."
+msgstr "Graus de rotação adicionados por incremento de rolagem (também curva de segmento na caminhada)."
+
+msgctxt "SmartFoundations,P.SpacingIncrement"
+msgid "Spacing Increment (m)"
+msgstr "Incremento de Espaçamento (m)"
+
+msgctxt "SmartFoundations,P.SpacingIncrement.TT"
+msgid "Meters of spacing added per scroll notch (also Extend spacing and walk segment advance)."
+msgstr "Metros de espaçamento adicionados por incremento de rolagem (também espaçamento da Extensão e avanço de segmento na caminhada)."
+
+msgctxt "SmartFoundations,P.StaggerIncrement"
+msgid "Stagger Increment (m)"
+msgstr "Incremento de Defasagem (m)"
+
+msgctxt "SmartFoundations,P.StaggerIncrement.TT"
+msgid "Meters of stagger added per scroll notch (also walk segment shift)."
+msgstr "Metros de defasagem adicionados por incremento de rolagem (também deslocamento de segmento na caminhada)."
+
+msgctxt "SmartFoundations,P.StepsIncrement"
+msgid "Steps Increment (m)"
+msgstr "Incremento de Degraus (m)"
+
+msgctxt "SmartFoundations,P.StepsIncrement.TT"
+msgid "Meters of stepping added per scroll notch (also walk segment rise)."
+msgstr "Metros de degrau adicionados por incremento de rolagem (também subida de segmento na caminhada)."
+
+msgctxt "SmartFoundations,Panel_Restore_UpdateMessage"
+msgid "Overwrite preset '{0}' with the current panel values?"
+msgstr "Sobrescrever o preset '{0}' com os valores atuais do painel?"
+
+msgctxt "SmartFoundations,Panel_Restore_UpdateTitle"
+msgid "Update Preset"
+msgstr "Atualizar Preset"
+
+msgctxt "SmartFoundations,Restore_ApplyAndBuild"
+msgid "Apply & Build"
+msgstr "Aplicar e Construir"
+
+msgctxt "SmartFoundations,Restore_Clipboard_Empty"
+msgid "None yet. Preview or build a Smart Extend and it will appear here, ready to save."
+msgstr "Nada ainda. Visualize ou construa uma Smart Extensão e ela aparecerá aqui, pronta para salvar."
+
+msgctxt "SmartFoundations,Restore_Clipboard_Header"
+msgid "Extend clipboard"
+msgstr "Área de transferência da Extensão"
+
+msgctxt "SmartFoundations,Restore_Clipboard_Ready"
+msgid "{0} manifold - {1}\nReady to save. (Replaced by your next Extend; lost on exit.)"
+msgstr "manifold {0} - {1}\nPronto para salvar. (Substituído pela sua próxima Extensão; perdido ao sair.)"
+
+msgctxt "SmartFoundations,Restore_Clipboard_ReplayActive"
+msgid "A restored Module is active - finish stamping before capturing a new Extend."
+msgstr "Um Módulo restaurado está ativo - termine de carimbar antes de capturar uma nova Extensão."
+
+msgctxt "SmartFoundations,Restore_Clipboard_UnknownSource"
+msgid "Extend"
+msgstr "Extensão"
+
+msgctxt "SmartFoundations,Restore_Details_Building"
+msgid "Building"
+msgstr "Prédio"
+
+msgctxt "SmartFoundations,Restore_Details_Created"
+msgid "Created"
+msgstr "Criado"
+
+msgctxt "SmartFoundations,Restore_Details_EachUnit"
+msgid "Each unit"
+msgstr "Cada unidade"
+
+msgctxt "SmartFoundations,Restore_Details_Grid"
+msgid "Grid"
+msgstr "Grade"
+
+msgctxt "SmartFoundations,Restore_Details_NoRecipe"
+msgid "No recipe"
+msgstr "Sem receita"
+
+msgctxt "SmartFoundations,Restore_Details_Recipe"
+msgid "Recipe"
+msgstr "Receita"
+
+msgctxt "SmartFoundations,Restore_Details_Requires"
+msgid "Requires"
+msgstr "Requer"
+
+msgctxt "SmartFoundations,Restore_Details_Rotation"
+msgid "rotation"
+msgstr "rotação"
+
+msgctxt "SmartFoundations,Restore_Details_Source"
+msgid "Source"
+msgstr "Origem"
+
+msgctxt "SmartFoundations,Restore_Details_Spacing"
+msgid "spacing"
+msgstr "espaçamento"
+
+msgctxt "SmartFoundations,Restore_Details_Stagger"
+msgid "stagger"
+msgstr "defasagem"
+
+msgctxt "SmartFoundations,Restore_Details_Steps"
+msgid "steps"
+msgstr "degraus"
+
+msgctxt "SmartFoundations,Restore_Details_Transforms"
+msgid "Transforms"
+msgstr "Transformações"
+
+msgctxt "SmartFoundations,Restore_EmptyTopology"
+msgid "no parts"
+msgstr "sem partes"
+
+msgctxt "SmartFoundations,Restore_ExportCode"
+msgid "Export Code"
+msgstr "Exportar Código"
+
+msgctxt "SmartFoundations,Restore_ImportCode"
+msgid "Import Code"
+msgstr "Importar Código"
+
+msgctxt "SmartFoundations,Restore_LoadFailed"
+msgid "Could not load '{0}'.\n{1}"
+msgstr "Não foi possível carregar '{0}'.\n{1}"
+
+msgctxt "SmartFoundations,Restore_LoadToPanel"
+msgid "Load to Panel"
+msgstr "Carregar no Painel"
+
+msgctxt "SmartFoundations,Restore_LoadedApplied"
+msgid "Loaded and applied '{0}'."
+msgstr "'{0}' carregado e aplicado."
+
+msgctxt "SmartFoundations,Restore_LoadedStaged"
+msgid "Loaded '{0}' into the panel - fine-tune, then Apply."
+msgstr "'{0}' carregado no painel - ajuste e Aplique."
+
+msgctxt "SmartFoundations,Restore_ModuleApply"
+msgid "Apply"
+msgstr "Aplicar"
+
+msgctxt "SmartFoundations,Restore_ModuleApplyMessage"
+msgid "Rebuild this saved layout ({0} parts) and switch to {1}? Hold {1} to stamp it; scroll to scale."
+msgstr "Reconstruir este layout salvo ({0} partes) e mudar para {1}? Segure {1} para carimbá-lo; role para escalar."
+
+msgctxt "SmartFoundations,Restore_ModuleApplyTitle"
+msgid "Apply Module"
+msgstr "Aplicar Módulo"
+
+msgctxt "SmartFoundations,Restore_ModuleDelete"
+msgid "Delete"
+msgstr "Excluir"
+
+msgctxt "SmartFoundations,Restore_ModuleDeleteMessage"
+msgid "Delete Module '{0}'?"
+msgstr "Excluir o Módulo '{0}'?"
+
+msgctxt "SmartFoundations,Restore_ModuleDeleteTitle"
+msgid "Delete Module"
+msgstr "Excluir Módulo"
+
+msgctxt "SmartFoundations,Restore_ModuleExport"
+msgid "Export Code"
+msgstr "Exportar Código"
+
+msgctxt "SmartFoundations,Restore_ModuleImport"
+msgid "Import Code"
+msgstr "Importar Código"
+
+msgctxt "SmartFoundations,Restore_ModuleLibrary"
+msgid "Saved Modules:"
+msgstr "Módulos salvos:"
+
+msgctxt "SmartFoundations,Restore_ModuleName_Hint"
+msgid "New Module name"
+msgstr "Nome do novo Módulo"
+
+msgctxt "SmartFoundations,Restore_NoBuildingCaptured"
+msgid "none captured"
+msgstr "nada capturado"
+
+msgctxt "SmartFoundations,Restore_NoModules"
+msgid "No Modules yet.\nPreview or build a Smart Extend, then save it from the clipboard above."
+msgstr "Nenhum Módulo ainda.\nVisualize ou construa uma Smart Extensão e salve-a a partir da área de transferência acima."
+
+msgctxt "SmartFoundations,Restore_NoPresetSelected"
+msgid "No preset selected.\nSave the current panel below, or import a shared code."
+msgstr "Nenhum preset selecionado.\nSalve o painel atual abaixo ou importe um código compartilhado."
+
+msgctxt "SmartFoundations,Restore_NoSelection"
+msgid "Select a preset first."
+msgstr "Selecione um preset primeiro."
+
+msgctxt "SmartFoundations,Restore_PresetDesc_Hint"
+msgid "Description (optional)"
+msgstr "Descrição (opcional)"
+
+msgctxt "SmartFoundations,Restore_PresetName_Hint"
+msgid "New preset name"
+msgstr "Nome do novo preset"
+
+msgctxt "SmartFoundations,Restore_SaveAsModule"
+msgid "Save as Module"
+msgstr "Salvar como Módulo"
+
+msgctxt "SmartFoundations,Restore_SaveCard"
+msgid "Save current panel as a new preset:"
+msgstr "Salvar o painel atual como novo preset:"
+
+msgctxt "SmartFoundations,Restore_SaveFailed"
+msgid "Could not save '{0}' - check the log (name may collide with another preset's file)."
+msgstr "Não foi possível salvar '{0}' - verifique o log (o nome pode colidir com o arquivo de outro preset)."
+
+msgctxt "SmartFoundations,Restore_SaveFromPanel"
+msgid "Save from Panel"
+msgstr "Salvar do Painel"
+
+msgctxt "SmartFoundations,Restore_SaveNeedsName"
+msgid "Enter a name in the 'New preset name' field below, then press Save from Panel."
+msgstr "Digite um nome no campo 'Nome do novo preset' abaixo e pressione Salvar no Painel."
+
+msgctxt "SmartFoundations,Restore_SavedAck"
+msgid "Saved '{0}'.\n{1}"
+msgstr "'{0}' salvo.\n{1}"
+
+msgctxt "SmartFoundations,Restore_ShareCard"
+msgid "Share:"
+msgstr "Compartilhar:"
+
+msgctxt "SmartFoundations,Restore_Tab_GridPresets"
+msgid "Grid Presets"
+msgstr "Presets de Grade"
+
+msgctxt "SmartFoundations,Restore_Tab_Modules"
+msgid "Modules"
+msgstr "Módulos"
+
+msgctxt "SmartFoundations,Restore_Title"
+msgid "Smart Restore"
+msgstr "Smart Restaurar"
+
+msgctxt "SmartFoundations,Role_Belt"
+msgid "belt"
+msgstr "esteira"
+
+msgctxt "SmartFoundations,Role_Belts"
+msgid "belts"
+msgstr "esteiras"
+
+msgctxt "SmartFoundations,Role_Distributor"
+msgid "distributor"
+msgstr "distribuidor"
+
+msgctxt "SmartFoundations,Role_Distributors"
+msgid "distributors"
+msgstr "distribuidores"
+
+msgctxt "SmartFoundations,Role_Junction"
+msgid "junction"
+msgstr "junção"
+
+msgctxt "SmartFoundations,Role_Junctions"
+msgid "junctions"
+msgstr "junções"
+
+msgctxt "SmartFoundations,Role_Lift"
+msgid "lift"
+msgstr "elevador"
+
+msgctxt "SmartFoundations,Role_Lifts"
+msgid "lifts"
+msgstr "elevadores"
+
+msgctxt "SmartFoundations,Role_Pipe"
+msgid "pipe"
+msgstr "tubo"
+
+msgctxt "SmartFoundations,Role_Pipes"
+msgid "pipes"
+msgstr "tubos"
+
+msgctxt "SmartFoundations,Role_PowerPole"
+msgid "power pole"
+msgstr "poste elétrico"
+
+msgctxt "SmartFoundations,Role_PowerPoles"
+msgid "power poles"
+msgstr "postes elétricos"
+
+msgctxt "SmartFoundations,Role_Wire"
+msgid "wire"
+msgstr "fio"
+
+msgctxt "SmartFoundations,Role_Wires"
+msgid "wires"
+msgstr "fios"
+
+msgctxt "SmartFoundations,Sec.Scaling"
+msgid "Scaling Settings"
+msgstr "Configurações de Escala"
+
+msgctxt "SmartFoundations,Sec.Scaling.TT"
+msgid "How much each mouse-wheel notch changes a grid transform. Also used by Extend, Restore, and Smart Walking."
+msgstr "Quanto cada incremento da roda do mouse altera uma transformação da grade. Também usado por Extensão, Restaurar e Smart Caminhada."
+
+msgctxt "SmartFoundations,Upgrade_AllTiersRow"
+msgid "All tiers"
+msgstr "Todos os níveis"
+
+msgctxt "SmartFoundations,Upgrade_AllTiersTooltip"
+msgid "Upgrade every tier below the chosen target"
+msgstr "Melhorar todos os níveis abaixo do alvo escolhido"
+
+msgctxt "SmartFoundations,Upgrade_NearestTier"
+msgid "Nearest Mk.{0}: {1}m {2}"
+msgstr "Mk.{0} mais próximo: {1}m {2}"
+
+msgctxt "SmartFoundations,Upgrade_RescanAim"
+msgid "Upgrade complete - aim at the network and Scan again"
+msgstr "Melhoria concluída - mire na rede e Escaneie novamente"
+
+msgctxt "SmartFoundations,Upgrade_TierRowTooltip"
+msgid "Upgrade only Mk.{0} in this network"
+msgstr "Melhorar apenas Mk.{0} nesta rede"
+
+msgctxt "SmartFoundations,Upgrade_UpgradingSweep"
+msgid "Upgrading {0} → Mk.{1}..."
+msgstr "Melhorando {0} → Mk.{1}..."

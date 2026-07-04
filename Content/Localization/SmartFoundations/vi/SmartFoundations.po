@@ -2175,3 +2175,351 @@ msgstr "Tự động chạy hypertube giữa các trụ đỡ bạn đặt."
 msgctxt "SmartFoundations,Walk_Conveyance_Hypertube"
 msgid "Hypertube"
 msgstr "Hypertube"
+
+msgctxt "SmartFoundations,HUD_Module_HoldPrompt"
+msgid "*Module \"{0}\": equip its source building to place it"
+msgstr "*Module \"{0}\": trang bị tòa nhà nguồn để đặt nó"
+
+msgctxt "SmartFoundations,HUD_Module_Ready"
+msgid "*Module \"{0}\": scroll to scale, fire to stamp (repeatable)"
+msgstr "*Module \"{0}\": cuộn để co giãn, bắn để đóng dấu (lặp lại được)"
+
+msgctxt "SmartFoundations,HUD_Module_Unnamed"
+msgid "Module"
+msgstr "Module"
+
+msgctxt "SmartFoundations,P.RotationIncrement"
+msgid "Rotation Increment (deg)"
+msgstr "Bước xoay (độ)"
+
+msgctxt "SmartFoundations,P.RotationIncrement.TT"
+msgid "Degrees of rotation added per scroll notch (also walk segment turn)."
+msgstr "Số độ xoay thêm vào mỗi nấc cuộn (cũng là góc rẽ đoạn đi bộ)."
+
+msgctxt "SmartFoundations,P.SpacingIncrement"
+msgid "Spacing Increment (m)"
+msgstr "Bước khoảng cách (m)"
+
+msgctxt "SmartFoundations,P.SpacingIncrement.TT"
+msgid "Meters of spacing added per scroll notch (also Extend spacing and walk segment advance)."
+msgstr "Số mét khoảng cách thêm vào mỗi nấc cuộn (cũng là khoảng cách Mở rộng và bước tiến đoạn đi bộ)."
+
+msgctxt "SmartFoundations,P.StaggerIncrement"
+msgid "Stagger Increment (m)"
+msgstr "Bước lệch (m)"
+
+msgctxt "SmartFoundations,P.StaggerIncrement.TT"
+msgid "Meters of stagger added per scroll notch (also walk segment shift)."
+msgstr "Số mét lệch thêm vào mỗi nấc cuộn (cũng là dịch chuyển đoạn đi bộ)."
+
+msgctxt "SmartFoundations,P.StepsIncrement"
+msgid "Steps Increment (m)"
+msgstr "Bước bậc (m)"
+
+msgctxt "SmartFoundations,P.StepsIncrement.TT"
+msgid "Meters of stepping added per scroll notch (also walk segment rise)."
+msgstr "Số mét bậc thêm vào mỗi nấc cuộn (cũng là độ nâng đoạn đi bộ)."
+
+msgctxt "SmartFoundations,Panel_Restore_UpdateMessage"
+msgid "Overwrite preset '{0}' with the current panel values?"
+msgstr "Ghi đè cài đặt sẵn '{0}' bằng giá trị bảng hiện tại?"
+
+msgctxt "SmartFoundations,Panel_Restore_UpdateTitle"
+msgid "Update Preset"
+msgstr "Cập nhật cài đặt sẵn"
+
+msgctxt "SmartFoundations,Restore_ApplyAndBuild"
+msgid "Apply & Build"
+msgstr "Áp dụng & Xây"
+
+msgctxt "SmartFoundations,Restore_Clipboard_Empty"
+msgid "None yet. Preview or build a Smart Extend and it will appear here, ready to save."
+msgstr "Chưa có gì. Xem trước hoặc xây một Smart Mở rộng và nó sẽ hiện ở đây, sẵn sàng để lưu."
+
+msgctxt "SmartFoundations,Restore_Clipboard_Header"
+msgid "Extend clipboard"
+msgstr "Bộ nhớ tạm Mở rộng"
+
+msgctxt "SmartFoundations,Restore_Clipboard_Ready"
+msgid "{0} manifold - {1}\nReady to save. (Replaced by your next Extend; lost on exit.)"
+msgstr "{0} ống góp - {1}\nSẵn sàng để lưu. (Bị thay bởi Mở rộng tiếp theo; mất khi thoát.)"
+
+msgctxt "SmartFoundations,Restore_Clipboard_ReplayActive"
+msgid "A restored Module is active - finish stamping before capturing a new Extend."
+msgstr "Một Module đã khôi phục đang hoạt động - hoàn tất đóng dấu trước khi bắt một Mở rộng mới."
+
+msgctxt "SmartFoundations,Restore_Clipboard_UnknownSource"
+msgid "Extend"
+msgstr "Mở rộng"
+
+msgctxt "SmartFoundations,Restore_Details_Building"
+msgid "Building"
+msgstr "Tòa nhà"
+
+msgctxt "SmartFoundations,Restore_Details_Created"
+msgid "Created"
+msgstr "Đã tạo"
+
+msgctxt "SmartFoundations,Restore_Details_EachUnit"
+msgid "Each unit"
+msgstr "Mỗi đơn vị"
+
+msgctxt "SmartFoundations,Restore_Details_Grid"
+msgid "Grid"
+msgstr "Lưới"
+
+msgctxt "SmartFoundations,Restore_Details_NoRecipe"
+msgid "No recipe"
+msgstr "Không có công thức"
+
+msgctxt "SmartFoundations,Restore_Details_Recipe"
+msgid "Recipe"
+msgstr "Công thức"
+
+msgctxt "SmartFoundations,Restore_Details_Requires"
+msgid "Requires"
+msgstr "Yêu cầu"
+
+msgctxt "SmartFoundations,Restore_Details_Rotation"
+msgid "rotation"
+msgstr "xoay"
+
+msgctxt "SmartFoundations,Restore_Details_Source"
+msgid "Source"
+msgstr "Nguồn"
+
+msgctxt "SmartFoundations,Restore_Details_Spacing"
+msgid "spacing"
+msgstr "khoảng cách"
+
+msgctxt "SmartFoundations,Restore_Details_Stagger"
+msgid "stagger"
+msgstr "lệch"
+
+msgctxt "SmartFoundations,Restore_Details_Steps"
+msgid "steps"
+msgstr "bậc"
+
+msgctxt "SmartFoundations,Restore_Details_Transforms"
+msgid "Transforms"
+msgstr "Biến đổi"
+
+msgctxt "SmartFoundations,Restore_EmptyTopology"
+msgid "no parts"
+msgstr "không có bộ phận"
+
+msgctxt "SmartFoundations,Restore_ExportCode"
+msgid "Export Code"
+msgstr "Xuất mã"
+
+msgctxt "SmartFoundations,Restore_ImportCode"
+msgid "Import Code"
+msgstr "Nhập mã"
+
+msgctxt "SmartFoundations,Restore_LoadFailed"
+msgid "Could not load '{0}'.\n{1}"
+msgstr "Không thể tải '{0}'.\n{1}"
+
+msgctxt "SmartFoundations,Restore_LoadToPanel"
+msgid "Load to Panel"
+msgstr "Tải vào Bảng"
+
+msgctxt "SmartFoundations,Restore_LoadedApplied"
+msgid "Loaded and applied '{0}'."
+msgstr "Đã tải và áp dụng '{0}'."
+
+msgctxt "SmartFoundations,Restore_LoadedStaged"
+msgid "Loaded '{0}' into the panel - fine-tune, then Apply."
+msgstr "Đã tải '{0}' vào bảng - tinh chỉnh, rồi Áp dụng."
+
+msgctxt "SmartFoundations,Restore_ModuleApply"
+msgid "Apply"
+msgstr "Áp dụng"
+
+msgctxt "SmartFoundations,Restore_ModuleApplyMessage"
+msgid "Rebuild this saved layout ({0} parts) and switch to {1}? Hold {1} to stamp it; scroll to scale."
+msgstr "Xây lại bố cục đã lưu này ({0} bộ phận) và chuyển sang {1}? Giữ {1} để đóng dấu; cuộn để co giãn."
+
+msgctxt "SmartFoundations,Restore_ModuleApplyTitle"
+msgid "Apply Module"
+msgstr "Áp dụng Module"
+
+msgctxt "SmartFoundations,Restore_ModuleDelete"
+msgid "Delete"
+msgstr "Xóa"
+
+msgctxt "SmartFoundations,Restore_ModuleDeleteMessage"
+msgid "Delete Module '{0}'?"
+msgstr "Xóa Module '{0}'?"
+
+msgctxt "SmartFoundations,Restore_ModuleDeleteTitle"
+msgid "Delete Module"
+msgstr "Xóa Module"
+
+msgctxt "SmartFoundations,Restore_ModuleExport"
+msgid "Export Code"
+msgstr "Xuất mã"
+
+msgctxt "SmartFoundations,Restore_ModuleImport"
+msgid "Import Code"
+msgstr "Nhập mã"
+
+msgctxt "SmartFoundations,Restore_ModuleLibrary"
+msgid "Saved Modules:"
+msgstr "Module đã lưu:"
+
+msgctxt "SmartFoundations,Restore_ModuleName_Hint"
+msgid "New Module name"
+msgstr "Tên Module mới"
+
+msgctxt "SmartFoundations,Restore_NoBuildingCaptured"
+msgid "none captured"
+msgstr "chưa bắt được"
+
+msgctxt "SmartFoundations,Restore_NoModules"
+msgid "No Modules yet.\nPreview or build a Smart Extend, then save it from the clipboard above."
+msgstr "Chưa có Module nào.\nXem trước hoặc xây một Smart Mở rộng, rồi lưu nó từ bộ nhớ tạm bên trên."
+
+msgctxt "SmartFoundations,Restore_NoPresetSelected"
+msgid "No preset selected.\nSave the current panel below, or import a shared code."
+msgstr "Chưa chọn cài đặt sẵn.\nLưu bảng hiện tại bên dưới, hoặc nhập một mã chia sẻ."
+
+msgctxt "SmartFoundations,Restore_NoSelection"
+msgid "Select a preset first."
+msgstr "Chọn một cài đặt sẵn trước."
+
+msgctxt "SmartFoundations,Restore_PresetDesc_Hint"
+msgid "Description (optional)"
+msgstr "Mô tả (tùy chọn)"
+
+msgctxt "SmartFoundations,Restore_PresetName_Hint"
+msgid "New preset name"
+msgstr "Tên cài đặt sẵn mới"
+
+msgctxt "SmartFoundations,Restore_SaveAsModule"
+msgid "Save as Module"
+msgstr "Lưu thành Module"
+
+msgctxt "SmartFoundations,Restore_SaveCard"
+msgid "Save current panel as a new preset:"
+msgstr "Lưu bảng hiện tại thành cài đặt sẵn mới:"
+
+msgctxt "SmartFoundations,Restore_SaveFailed"
+msgid "Could not save '{0}' - check the log (name may collide with another preset's file)."
+msgstr "Không thể lưu '{0}' - kiểm tra nhật ký (tên có thể trùng với tệp của cài đặt sẵn khác)."
+
+msgctxt "SmartFoundations,Restore_SaveFromPanel"
+msgid "Save from Panel"
+msgstr "Lưu từ Bảng"
+
+msgctxt "SmartFoundations,Restore_SaveNeedsName"
+msgid "Enter a name in the 'New preset name' field below, then press Save from Panel."
+msgstr "Nhập tên vào ô 'Tên cài đặt sẵn mới' bên dưới, rồi nhấn Lưu từ Bảng."
+
+msgctxt "SmartFoundations,Restore_SavedAck"
+msgid "Saved '{0}'.\n{1}"
+msgstr "Đã lưu '{0}'.\n{1}"
+
+msgctxt "SmartFoundations,Restore_ShareCard"
+msgid "Share:"
+msgstr "Chia sẻ:"
+
+msgctxt "SmartFoundations,Restore_Tab_GridPresets"
+msgid "Grid Presets"
+msgstr "Cài đặt sẵn lưới"
+
+msgctxt "SmartFoundations,Restore_Tab_Modules"
+msgid "Modules"
+msgstr "Module"
+
+msgctxt "SmartFoundations,Restore_Title"
+msgid "Smart Restore"
+msgstr "Smart Khôi phục"
+
+msgctxt "SmartFoundations,Role_Belt"
+msgid "belt"
+msgstr "băng tải"
+
+msgctxt "SmartFoundations,Role_Belts"
+msgid "belts"
+msgstr "băng tải"
+
+msgctxt "SmartFoundations,Role_Distributor"
+msgid "distributor"
+msgstr "bộ phân phối"
+
+msgctxt "SmartFoundations,Role_Distributors"
+msgid "distributors"
+msgstr "bộ phân phối"
+
+msgctxt "SmartFoundations,Role_Junction"
+msgid "junction"
+msgstr "điểm nối"
+
+msgctxt "SmartFoundations,Role_Junctions"
+msgid "junctions"
+msgstr "điểm nối"
+
+msgctxt "SmartFoundations,Role_Lift"
+msgid "lift"
+msgstr "thang máy"
+
+msgctxt "SmartFoundations,Role_Lifts"
+msgid "lifts"
+msgstr "thang máy"
+
+msgctxt "SmartFoundations,Role_Pipe"
+msgid "pipe"
+msgstr "ống"
+
+msgctxt "SmartFoundations,Role_Pipes"
+msgid "pipes"
+msgstr "ống"
+
+msgctxt "SmartFoundations,Role_PowerPole"
+msgid "power pole"
+msgstr "cột điện"
+
+msgctxt "SmartFoundations,Role_PowerPoles"
+msgid "power poles"
+msgstr "cột điện"
+
+msgctxt "SmartFoundations,Role_Wire"
+msgid "wire"
+msgstr "dây điện"
+
+msgctxt "SmartFoundations,Role_Wires"
+msgid "wires"
+msgstr "dây điện"
+
+msgctxt "SmartFoundations,Sec.Scaling"
+msgid "Scaling Settings"
+msgstr "Cài đặt co giãn"
+
+msgctxt "SmartFoundations,Sec.Scaling.TT"
+msgid "How much each mouse-wheel notch changes a grid transform. Also used by Extend, Restore, and Smart Walking."
+msgstr "Mỗi nấc con lăn chuột thay đổi biến đổi lưới bao nhiêu. Cũng dùng cho Mở rộng, Khôi phục và Smart Walking."
+
+msgctxt "SmartFoundations,Upgrade_AllTiersRow"
+msgid "All tiers"
+msgstr "Tất cả các cấp"
+
+msgctxt "SmartFoundations,Upgrade_AllTiersTooltip"
+msgid "Upgrade every tier below the chosen target"
+msgstr "Nâng cấp mọi cấp dưới mục tiêu đã chọn"
+
+msgctxt "SmartFoundations,Upgrade_NearestTier"
+msgid "Nearest Mk.{0}: {1}m {2}"
+msgstr "Mk.{0} gần nhất: {1}m {2}"
+
+msgctxt "SmartFoundations,Upgrade_RescanAim"
+msgid "Upgrade complete - aim at the network and Scan again"
+msgstr "Nâng cấp hoàn tất - ngắm vào mạng và Quét lại"
+
+msgctxt "SmartFoundations,Upgrade_TierRowTooltip"
+msgid "Upgrade only Mk.{0} in this network"
+msgstr "Chỉ nâng cấp Mk.{0} trong mạng này"
+
+msgctxt "SmartFoundations,Upgrade_UpgradingSweep"
+msgid "Upgrading {0} → Mk.{1}..."
+msgstr "Đang nâng cấp {0} → Mk.{1}..."

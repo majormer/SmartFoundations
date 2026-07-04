@@ -274,13 +274,34 @@ TPair<FString, FString> USFHudService::BuildCounterDisplayLines() const
 
 	if (Subsystem->IsRestoredExtendModeActive())
 	{
+		// [#427] Module stamp-session banner: the previously invisible replay session, surfaced.
+		// Two states: READY (holding the matching source building - scroll to scale, fire to
+		// stamp, repeatable) vs PROMPT (not holding it - say WHICH building to equip). Exits are
+		// the familiar Smart patterns (switch building/recipe, holster), so no extra affordance.
 		USFRestoreService* RestoreSvc = Subsystem->GetRestoreService();
+		USFExtendService* ExtendSvc = Subsystem->GetExtendService();
 		const FString PresetName = (RestoreSvc && RestoreSvc->IsRestoreSessionActive())
 			? RestoreSvc->GetActiveRestorePresetName()
 			: FString();
-		Lines.Add(PresetName.IsEmpty()
-			? LOCTEXT("HUD_RestoreActive", "*Restore Active").ToString()
-			: FText::Format(LOCTEXT("HUD_RestorePreset", "*Restore: {0}"), FText::FromString(PresetName)).ToString());
+		const FText NameText = FText::FromString(PresetName.IsEmpty()
+			? LOCTEXT("HUD_Module_Unnamed", "Module").ToString()
+			: PresetName);
+
+		const bool bHoldingSource = ExtendSvc
+			&& ExtendSvc->IsHologramCompatibleWithRestoredCloneTopology(Subsystem->GetActiveHologram())
+			&& Subsystem->GetActiveHologram() != nullptr;
+		if (bHoldingSource)
+		{
+			Lines.Add(FText::Format(
+				LOCTEXT("HUD_Module_Ready", "*Module \"{0}\": scroll to scale, fire to stamp (repeatable)"),
+				NameText).ToString());
+		}
+		else
+		{
+			Lines.Add(FText::Format(
+				LOCTEXT("HUD_Module_HoldPrompt", "*Module \"{0}\": equip its source building to place it"),
+				NameText).ToString());
+		}
 	}
 
 	// Lift height display (for conveyor lifts and pipe lifts)

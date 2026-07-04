@@ -699,17 +699,53 @@ FSFCloneTopology USFExtendRestoreReplayService::BuildRestoredCloneTopologyForCur
                             continue;
                         }
                         Holo.HologramId = Prefix + Holo.HologramId;
+
+                        // [#460] Restore scaling is bidirectional on X (unlike Extend's abs-lock). Clone
+                        // POSITIONS are sign-aware (CalculateRestoredScaledClonePlacement), but a source-
+                        // chained lane's endpoint roles were assigned purely by cell index (source end ->
+                        // previous cell, clone end -> current cell). Scaling OPPOSITE the captured chain
+                        // direction mirrors the positions while the roles stay fixed, wiring the belt
+                        // Input->Output backward. Detect the reversed case from the lane's captured flow
+                        // vector (source end -> clone end) vs the current previous->current placement
+                        // direction, then treat the physically-upstream clone (the one whose output feeds
+                        // this lane) as such so flow stays Output->Input. Defaults preserve native behavior.
+                        const bool bLaneSourceChained = Holo.bIsLaneSegment
+                            && (OriginalC0Target.StartsWith(TEXT("source:")) || OriginalC1Target.StartsWith(TEXT("source:")));
+                        const FString* UpstreamPrefix = &PreviousPrefix;
+                        const FString* DownstreamPrefix = &Prefix;
+                        FVector UpstreamCenter = PreviousFactoryCenter;
+                        FVector DownstreamCenter = CurrentFactoryCenter;
+                        const FRestoredScaledClonePlacement* UpstreamPlacement = &PreviousPlacement;
+                        const FRestoredScaledClonePlacement* DownstreamPlacement = &Placement;
+                        if (bLaneSourceChained && Holo.bHasSplineData && Holo.SplineData.Points.Num() >= 2)
+                        {
+                            const FVector CapStart = Holo.SplineData.Points[0].World.ToFVector();
+                            const FVector CapEnd = Holo.SplineData.Points.Last().World.ToFVector();
+                            const FVector CapturedDownstream = OriginalC0Target.StartsWith(TEXT("source:"))
+                                ? (CapEnd - CapStart)   // source at start: captured flow runs start -> end
+                                : (CapStart - CapEnd);  // source at end:   captured flow runs end -> start
+                            const FVector CurrentChainDir = CurrentFactoryCenter - PreviousFactoryCenter;
+                            if (FVector::DotProduct(CurrentChainDir, CapturedDownstream) < 0.0f)
+                            {
+                                Swap(UpstreamPrefix, DownstreamPrefix);
+                                Swap(UpstreamCenter, DownstreamCenter);
+                                Swap(UpstreamPlacement, DownstreamPlacement);
+                            }
+                        }
+
                         if (Holo.bIsLaneSegment && OriginalC0Target.StartsWith(TEXT("source:")))
                         {
-                            Holo.CloneConnections.ConveyorAny0.Target = PrefixInternalTarget(PreviousPrefix, OriginalC1Target);
-                            Holo.CloneConnections.ConveyorAny1.Target = PrefixInternalTarget(Prefix, OriginalC1Target);
+                            // C0 = source/output end -> upstream clone; C1 = clone/input end -> downstream.
+                            Holo.CloneConnections.ConveyorAny0.Target = PrefixInternalTarget(*UpstreamPrefix, OriginalC1Target);
+                            Holo.CloneConnections.ConveyorAny1.Target = PrefixInternalTarget(*DownstreamPrefix, OriginalC1Target);
                             Holo.LaneFromDistributorId = Holo.CloneConnections.ConveyorAny0.Target;
                             Holo.LaneToDistributorId = Holo.CloneConnections.ConveyorAny1.Target;
                         }
                         else if (Holo.bIsLaneSegment && OriginalC1Target.StartsWith(TEXT("source:")))
                         {
-                            Holo.CloneConnections.ConveyorAny0.Target = PrefixInternalTarget(Prefix, OriginalC0Target);
-                            Holo.CloneConnections.ConveyorAny1.Target = PrefixInternalTarget(PreviousPrefix, OriginalC0Target);
+                            // C1 = source/output end -> upstream clone; C0 = clone/input end -> downstream.
+                            Holo.CloneConnections.ConveyorAny0.Target = PrefixInternalTarget(*DownstreamPrefix, OriginalC0Target);
+                            Holo.CloneConnections.ConveyorAny1.Target = PrefixInternalTarget(*UpstreamPrefix, OriginalC0Target);
                             Holo.LaneFromDistributorId = Holo.CloneConnections.ConveyorAny0.Target;
                             Holo.LaneToDistributorId = Holo.CloneConnections.ConveyorAny1.Target;
                         }
@@ -733,39 +769,43 @@ FSFCloneTopology USFExtendRestoreReplayService::BuildRestoredCloneTopologyForCur
                             const FVector BaseStart = Holo.SplineData.Points[0].World.ToFVector();
                             const FVector BaseEnd = Holo.SplineData.Points.Last().World.ToFVector();
 
-                            auto MoveSourceEndpointToPreviousClone = [&](const FVector& SourceEndpoint) -> FVector
+                            // [#460] Anchor the source (output) end at the upstream clone and the clone
+                            // (input) end at the downstream clone - upstream/downstream already account
+                            // for a reversed scale direction (see the chaining block above), so the belt
+                            // spline runs Output->Input in both scale directions.
+                            auto MoveSourceEndpoint = [&](const FVector& SourceEndpoint) -> FVector
                             {
                                 const FVector RelativeToSourceFactory = SourceEndpoint - RestoredSourceFactoryLocation;
-                                return PreviousFactoryCenter + PreviousPlacement.RotationOffset.RotateVector(RelativeToSourceFactory);
+                                return UpstreamCenter + UpstreamPlacement->RotationOffset.RotateVector(RelativeToSourceFactory);
                             };
-                            auto MoveCloneEndpointToCurrentClone = [&](const FVector& CloneEndpoint) -> FVector
+                            auto MoveCloneEndpoint = [&](const FVector& CloneEndpoint) -> FVector
                             {
                                 const FVector RelativeToParentFactory = CloneEndpoint - ParentLocation;
-                                return CurrentFactoryCenter + Placement.RotationOffset.RotateVector(RelativeToParentFactory);
+                                return DownstreamCenter + DownstreamPlacement->RotationOffset.RotateVector(RelativeToParentFactory);
                             };
 
                             FVector NewStart = BaseStart;
                             FVector NewEnd = BaseEnd;
                             if (bSourceAtStart)
                             {
-                                NewStart = MoveSourceEndpointToPreviousClone(BaseStart);
-                                NewEnd = MoveCloneEndpointToCurrentClone(BaseEnd);
-                                Holo.LaneStartNormal = FSFVec3(PreviousPlacement.RotationOffset.RotateVector(Holo.LaneStartNormal.ToFVector()));
-                                Holo.LaneEndNormal = FSFVec3(Placement.RotationOffset.RotateVector(Holo.LaneEndNormal.ToFVector()));
+                                NewStart = MoveSourceEndpoint(BaseStart);
+                                NewEnd = MoveCloneEndpoint(BaseEnd);
+                                Holo.LaneStartNormal = FSFVec3(UpstreamPlacement->RotationOffset.RotateVector(Holo.LaneStartNormal.ToFVector()));
+                                Holo.LaneEndNormal = FSFVec3(DownstreamPlacement->RotationOffset.RotateVector(Holo.LaneEndNormal.ToFVector()));
                             }
                             else if (bSourceAtEnd)
                             {
-                                NewStart = MoveCloneEndpointToCurrentClone(BaseStart);
-                                NewEnd = MoveSourceEndpointToPreviousClone(BaseEnd);
-                                Holo.LaneStartNormal = FSFVec3(Placement.RotationOffset.RotateVector(Holo.LaneStartNormal.ToFVector()));
-                                Holo.LaneEndNormal = FSFVec3(PreviousPlacement.RotationOffset.RotateVector(Holo.LaneEndNormal.ToFVector()));
+                                NewStart = MoveCloneEndpoint(BaseStart);
+                                NewEnd = MoveSourceEndpoint(BaseEnd);
+                                Holo.LaneStartNormal = FSFVec3(DownstreamPlacement->RotationOffset.RotateVector(Holo.LaneStartNormal.ToFVector()));
+                                Holo.LaneEndNormal = FSFVec3(UpstreamPlacement->RotationOffset.RotateVector(Holo.LaneEndNormal.ToFVector()));
                             }
                             else
                             {
-                                NewStart = MoveCloneEndpointToCurrentClone(BaseStart);
-                                NewEnd = MoveCloneEndpointToCurrentClone(BaseEnd);
-                                Holo.LaneStartNormal = FSFVec3(Placement.RotationOffset.RotateVector(Holo.LaneStartNormal.ToFVector()));
-                                Holo.LaneEndNormal = FSFVec3(Placement.RotationOffset.RotateVector(Holo.LaneEndNormal.ToFVector()));
+                                NewStart = MoveCloneEndpoint(BaseStart);
+                                NewEnd = MoveCloneEndpoint(BaseEnd);
+                                Holo.LaneStartNormal = FSFVec3(DownstreamPlacement->RotationOffset.RotateVector(Holo.LaneStartNormal.ToFVector()));
+                                Holo.LaneEndNormal = FSFVec3(DownstreamPlacement->RotationOffset.RotateVector(Holo.LaneEndNormal.ToFVector()));
                             }
 
                             DeriveRestoredLaneNormals(Holo, NewStart, NewEnd);

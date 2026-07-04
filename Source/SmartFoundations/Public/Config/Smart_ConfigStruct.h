@@ -58,6 +58,17 @@ struct FSmart_PowerConfigSection {
 };
 
 USTRUCT(BlueprintType)
+struct FSmart_ScalingSettingsConfigSection {
+    GENERATED_BODY()
+    // [#217] Per-notch scroll increments (meters / degrees). Field names must match the config
+    // asset's "ScalingSettings" section leaf keys.
+    UPROPERTY(BlueprintReadWrite) float SpacingIncrement{0.5f};
+    UPROPERTY(BlueprintReadWrite) float StepsIncrement{0.5f};
+    UPROPERTY(BlueprintReadWrite) float StaggerIncrement{0.5f};
+    UPROPERTY(BlueprintReadWrite) float RotationIncrement{5.0f};
+};
+
+USTRUCT(BlueprintType)
 struct FSmart_BuildingBehaviorConfigSection {
     GENERATED_BODY()
     UPROPERTY(BlueprintReadWrite) bool bExtendEnabled{true};
@@ -95,6 +106,7 @@ struct FSmart_ConfigStruct_Sections {
     UPROPERTY(BlueprintReadWrite) FSmart_PipeConfigSection PipeAutoConnect;
     UPROPERTY(BlueprintReadWrite) FSmart_HypertubeConfigSection HypertubeAutoConnect;
     UPROPERTY(BlueprintReadWrite) FSmart_PowerConfigSection PowerAutoConnect;
+    UPROPERTY(BlueprintReadWrite) FSmart_ScalingSettingsConfigSection ScalingSettings;
     UPROPERTY(BlueprintReadWrite) FSmart_BuildingBehaviorConfigSection BuildingBehavior;
     UPROPERTY(BlueprintReadWrite) FSmart_HUDConfigSection HUD;
     UPROPERTY(BlueprintReadWrite) FSmart_ArrowsConfigSection Arrows;
@@ -219,6 +231,23 @@ public:
     UPROPERTY(BlueprintReadWrite)
     bool bApplyImmediately{};
 
+    // ── Scaling Settings (#217 scroll increments) ──
+    // How much each mouse-wheel notch changes a transform. Distance settings are METERS (converted
+    // to cm at read); rotation is DEGREES. These drive the grid AND (shared 1:1) Extend, Restore,
+    // and Smart Walking. Defaults preserve the previous hardcoded grid behavior (0.5 m / 5°).
+    // Filled from the config asset's "ScalingSettings" section (FSmart_ScalingSettingsConfigSection).
+    UPROPERTY(BlueprintReadWrite)
+    float SpacingIncrement{0.5f};
+
+    UPROPERTY(BlueprintReadWrite)
+    float StepsIncrement{0.5f};
+
+    UPROPERTY(BlueprintReadWrite)
+    float StaggerIncrement{0.5f};
+
+    UPROPERTY(BlueprintReadWrite)
+    float RotationIncrement{5.0f};
+
     // ── HUD (set and forget) ──
 
     UPROPERTY(BlueprintReadWrite)
@@ -287,6 +316,12 @@ public:
         ConfigStruct.PowerConnectMode         = Sections.PowerAutoConnect.PowerConnectMode;
         ConfigStruct.PowerConnectRange        = Sections.PowerAutoConnect.PowerConnectRange;
         ConfigStruct.PowerConnectReserved     = Sections.PowerAutoConnect.PowerConnectReserved;
+
+        // Scaling Settings (#217 scroll increments)
+        ConfigStruct.SpacingIncrement         = Sections.ScalingSettings.SpacingIncrement;
+        ConfigStruct.StepsIncrement           = Sections.ScalingSettings.StepsIncrement;
+        ConfigStruct.StaggerIncrement         = Sections.ScalingSettings.StaggerIncrement;
+        ConfigStruct.RotationIncrement        = Sections.ScalingSettings.RotationIncrement;
 
         // Building Behavior (Extend + Scaling + Smart Panel)
         ConfigStruct.bExtendEnabled           = Sections.BuildingBehavior.bExtendEnabled;

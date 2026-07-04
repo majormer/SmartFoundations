@@ -199,11 +199,16 @@ void FSFHologramHelperService::RegenerateChildHologramGrid(
 	// Issue #160: Detect vanilla Zoop and force 1x1x1 grid to prevent overlapping holograms
 	// When Zoop is active (mDesiredZoop != 0), both Smart! and Zoop would create children,
 	// resulting in duplicate buildings at the same location.
-	if (AFGFactoryBuildingHologram* FactoryBuildingHolo = Cast<AFGFactoryBuildingHologram>(ParentHologram))
+	// Issue #330: cast to AFGBuildableHologram (was AFGFactoryBuildingHologram). The zoop API
+	// (GetZoopInstanceTransforms / mDesiredZoop) is declared on AFGBuildableHologram, so this now
+	// also covers standalone signs/billboards - AFGStandaloneSignHologram is AFGGenericBuildableHologram,
+	// NOT a factory building, so the narrower cast skipped it and sign zoop + Smart scaling could collide.
+	// Non-zooping holograms return an empty transform array below, so their behavior is unchanged.
+	if (AFGBuildableHologram* ZoopableHolo = Cast<AFGBuildableHologram>(ParentHologram))
 	{
 		// Access mDesiredZoop - non-zero means Zoop is active
 		// Note: mDesiredZoop is protected, but we can check via GetZoopInstanceTransforms()
-		const TArray<FTransform>& ZoopTransforms = FactoryBuildingHolo->GetZoopInstanceTransforms();
+		const TArray<FTransform>& ZoopTransforms = ZoopableHolo->GetZoopInstanceTransforms();
 		if (ZoopTransforms.Num() > 0)
 		{
 			// Zoop is active - set flag for HUD display
@@ -244,7 +249,7 @@ void FSFHologramHelperService::RegenerateChildHologramGrid(
 	}
 	else
 	{
-		// Not a factory building hologram - clear Zoop flag
+		// Not a buildable hologram - clear Zoop flag
 		bZoopActive = false;
 	}
 
