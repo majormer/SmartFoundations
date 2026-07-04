@@ -2,7 +2,7 @@
 	"AcceptsAnyRemoteVersion": true,
 	"FileVersion": 3,
 	"Version": 33,
-	"VersionName": "33.5.1",
+	"VersionName": "33.5.2",
 	"FriendlyName": "Smart!",
 	"Description": "Advanced hologram control for precision building - Rebuilt for Satisfactory 1.2",
 	"Category": "Modding",
@@ -32,10 +32,10 @@
 		{
 			"Name": "AbstractInstance",
 			"Enabled": true,
-			"BaseGame": true
+			"BasePlugin": true
 		}
 	],
-	"SemVersion": "33.5.1",
+	"SemVersion": "33.5.2",
 	"GameVersion": ">=491125",
 	"LocalizationTargets": [
 		{

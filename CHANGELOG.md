@@ -9,13 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [33.5.1] - 2026-07-04
+## [33.5.2] - 2026-07-04
 
-> *A packaging-only patch: 33.5.0 couldn't be published to the mod repository, so 33.5.1 is that release with the upload fixed. No gameplay changes.*
+> *A packaging-only patch: earlier 33.5.x builds couldn't be published to the mod repository, so 33.5.2 is the release with the upload fixed. No gameplay changes.*
 
 ### Fixed
 
-- **The release publishes to the mod repository again** - 33.5.0's package declared a base-game engine plugin (AbstractInstance, used internally by the new Smart Upgrade network scan) as though it were a separate mod dependency, which the mod repository rejected on upload. It's now flagged as a base-game dependency so the repository ignores it. Packaging only - 33.5.1 is 33.5.0 with nothing else changed.
+- **The release publishes to the mod repository again** - the 33.5.0 build declared a base-game engine plugin (AbstractInstance, used internally by the new Smart Upgrade network scan) as though it were a separate mod dependency, which the mod repository rejected on upload. It's now correctly flagged as a base-game plugin so the repository ignores it. Packaging only - 33.5.2 is the 33.5.0 feature set with nothing else changed.
 
 ---
 

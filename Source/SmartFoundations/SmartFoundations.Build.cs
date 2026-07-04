@@ -53,10 +53,12 @@ public class SmartFoundations : ModuleRules
 		});
 
 		// FactoryGame (base-game) plugins. Link the module here, AND list the plugin in
-		// SmartFoundations.uplugin's "Plugins" array with "BaseGame": true. That flag tells
-		// SMR/ficsit.app to ignore it as a mod dependency; without it (or if omitted entirely),
-		// SMR tries to resolve the base-game plugin as a mod -> "ent: mod not found" on upload
-		// (bit us in 33.5.0; fix per mircearoata). Listing it also silences UBT's missing-dependency warning.
+		// SmartFoundations.uplugin's "Plugins" array with "BasePlugin": true. Alpakit reads that
+		// EXACT field (ModMetadataObject.cpp: TryGetBoolField("BasePlugin")) and excludes the
+		// dependency from the SMR mod-dependency list; without it (or with the wrong name, e.g.
+		// "BaseGame"), ficsit.app tries to resolve the base-game plugin as a mod -> "ent: mod not
+		// found" on upload (bit 33.5.0-33.5.1). The field is "BasePlugin", exactly as SML.uplugin
+		// uses for its EnhancedInput dependency. Listing it also silences UBT's missing-dep warning.
 		PublicDependencyModuleNames.AddRange(new string[] {
 			"AbstractInstance",  // #456: resolve instanced-mesh hits (belts/pipes/poles) to their owning buildable
 			//"InstancedSplinesComponent",
