@@ -1,6 +1,6 @@
 # <img src="https://github.com/majormer/SmartFoundations/blob/main/images/Smart-Logo.png?raw=true" width="150" alt="Smart! Logo"> Smart! Mod
 
-![Status](https://img.shields.io/badge/Status-Released-brightgreen) ![Version](https://img.shields.io/badge/Version-33.5.0-blue) ![Satisfactory](https://img.shields.io/badge/Satisfactory-1.2-blue) ![Engine](https://img.shields.io/badge/Engine-UE%205.6-blue) ![SML](https://img.shields.io/badge/SML-3.12-blue) ![Multiplayer](https://img.shields.io/badge/Multiplayer-Supported-brightgreen) ![AI Assisted Development Used](https://img.shields.io/badge/AI%20Assisted%20Development%20Used-Disclosure%20Below-blue)
+![Status](https://img.shields.io/badge/Status-Released-brightgreen) ![Version](https://img.shields.io/badge/Version-33.5.1-blue) ![Satisfactory](https://img.shields.io/badge/Satisfactory-1.2-blue) ![Engine](https://img.shields.io/badge/Engine-UE%205.6-blue) ![SML](https://img.shields.io/badge/SML-3.12-blue) ![Multiplayer](https://img.shields.io/badge/Multiplayer-Supported-brightgreen) ![AI Assisted Development Used](https://img.shields.io/badge/AI%20Assisted%20Development%20Used-Disclosure%20Below-blue)
 
 > **Multiplayer note:** As of v32.0.0, every Smart! feature works in multiplayer on dedicated servers (Windows and Linux) — including **Smart Walking** and the new-in-v33.1.0 **Hyper Tube** support. If you hit something odd in a multiplayer session, please report it on [GitHub](https://github.com/majormer/SmartFoundations/issues) or [Discord](https://discord.gg/SgXY4CwXYw).
 
@@ -113,9 +113,9 @@ See [LICENSE.md](https://github.com/majormer/SmartFoundations/blob/main/LICENSE.
 
 ---
 
-## 📰 What's New in v33.5.0: Restore, Reorganized
+## 📰 What's New in v33.5.1: Restore, Reorganized
 
-**Current Release:** v33.5.0 rebuilds Smart Restore into two clear tabs — **Grid Presets** and **Modules** — docked to the Smart Panel, and gives Smart Upgrade's network scan precise **tier-to-tier** targeting. Rounded out with a batch of scaling and auto-connect fixes. See the [full changelog](https://github.com/majormer/SmartFoundations/blob/main/CHANGELOG.md) for all the details.
+**Current Release:** v33.5.1 rebuilds Smart Restore into two clear tabs — **Grid Presets** and **Modules** — docked to the Smart Panel, and gives Smart Upgrade's network scan precise **tier-to-tier** targeting. Rounded out with a batch of scaling and auto-connect fixes. See the [full changelog](https://github.com/majormer/SmartFoundations/blob/main/CHANGELOG.md) for all the details.
 
 ### Smart Restore, reorganized into Grid Presets and Modules
 
@@ -125,7 +125,7 @@ The old Restore panel mixed two very different things together and was hard to f
 
 Smart Upgrade's network scan used to only let you pick a *target* tier and then upgrade **everything** below it. Now you can pick a specific *source* tier as well — bump only your Mk.2 belts to Mk.3 and leave the Mk.4s untouched — matching the tier control the radius scan already had. It also fixes aiming (the scan now anchors on whatever you point at, whatever tier you're holding), follows pipes through cross and T junctions, and refreshes its results automatically after an upgrade.
 
-### Also in v33.5.0
+### Also in v33.5.1
 
 - **Power pole auto-connect wires follow the grid again** after the 33.4.0 scaling update — every Grid Axis mode lines up instead of running diagonally. (Issue #459)
 - **Reverse-scaling a Restore module** no longer wires its manifold belts backward. (Issue #460)

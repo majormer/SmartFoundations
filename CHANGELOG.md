@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [33.5.1] - 2026-07-04
+
+> *A packaging-only patch: 33.5.0 couldn't be published to the mod repository, so 33.5.1 is that release with the upload fixed. No gameplay changes.*
+
+### Fixed
+
+- **The release publishes to the mod repository again** - 33.5.0's package declared a base-game engine plugin (AbstractInstance, used internally by the new Smart Upgrade network scan) as though it were a separate mod dependency, which the mod repository rejected on upload. It's now flagged as a base-game dependency so the repository ignores it. Packaging only - 33.5.1 is 33.5.0 with nothing else changed.
+
+---
+
 ## [33.5.0] - 2026-07-04
 
 > *A Smart Restore redesign and a smarter Smart Upgrade: Restore is rebuilt into two clear tabs - Grid Presets and Modules - docked to the Smart Panel, and Smart Upgrade's network scan gains precise tier-to-tier targeting plus fixes for aiming, pipe junctions, and refreshing after an upgrade.*
