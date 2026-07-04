@@ -28,6 +28,9 @@
 #include "Hologram/FGPipelinePoleHologram.h"
 #include "Hologram/FGWaterPumpHologram.h"                  // #428: MP water-extractor crash fix
 #include "Holograms/Logistics/SFWaterPumpChildHologram.h"  // #428
+#include "Hologram/FGPassthroughHologram.h"                  // #458: MP floor-hole thickness/snap parity
+#include "Holograms/Logistics/SFPassthroughChildHologram.h"  // #458
+#include "UObject/UnrealType.h"                              // #458: FFloatProperty reflection
 
 // MP spec-based construction. ON by default - the mod must be self-contained (no launch options /
 // ini edits for players; Saved/Engine.ini is rewritten by the game's diff-config system anyway).
@@ -592,6 +595,51 @@ int32 ExpandScalingSpecIntoChildren(AFGHologram* Parent, const FSFScalingSpec& S
 							WaterPumpChild->SetInsideBlueprintDesigner(CellDesigner);
 						}
 						Child = WaterPumpChild;
+					}
+				}
+				else if (Parent->IsA(AFGPassthroughHologram::StaticClass()) && SpawnWorld)
+				{
+					// #458: Conveyor lift/pipe FLOOR HOLES (passthroughs). SpawnChildHologramFromRecipe
+					// below resolves Build_FoundationPassthrough_*_C to the VANILLA AFGPassthroughHologram,
+					// which (a) runs its own SetHologramLocationAndRotation snap during Construct and
+					// (b) never receives the parent's snapped foundation thickness. On a dedicated server
+					// the client's SP-style preview looks correct, but the authority builds these clones
+					// mis-centered (half-step elevated) because they default to the shortest thickness and
+					// re-snap freely. ASFPassthroughChildHologram no-ops the snap and carries the propagated
+					// thickness, exactly as the SP grid spawner does (Issue #187,
+					// SFHologramHelperService.cpp) - mirror that here so SP and MP agree.
+					FActorSpawnParameters SpawnParams;
+					SpawnParams.Owner = HoloOwner;
+					SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+					SpawnParams.bDeferConstruction = true;
+
+					ASFPassthroughChildHologram* PassthroughChild = SpawnWorld->SpawnActor<ASFPassthroughChildHologram>(
+						ASFPassthroughChildHologram::StaticClass(), CellLoc, CellRot, SpawnParams);
+					if (PassthroughChild)
+					{
+						PassthroughChild->SetBuildClass(Parent->GetBuildClass());
+						PassthroughChild->SetRecipe(Recipe);
+						PassthroughChild->FinishSpawning(FTransform(CellRot, CellLoc));
+						Parent->AddChild(PassthroughChild, ChildName);
+						PassthroughChild->Tags.AddUnique(FName(TEXT("SF_GridChild")));
+						if (CellDesigner)
+						{
+							PassthroughChild->SetInsideBlueprintDesigner(CellDesigner);
+						}
+
+						// Issue #187/#458: propagate the parent's snapped foundation thickness so the clone
+						// seats at the foundation's vertical center. mSnappedBuildingThickness is protected;
+						// on the authority we only need the value for ConfigureActor to hand to the buildable,
+						// so write it directly via reflection (the client-only preview mesh rebuild that
+						// SetSnappedThickness performs is unnecessary on the construction path).
+						if (FFloatProperty* ThickProp = CastField<FFloatProperty>(
+								Parent->GetClass()->FindPropertyByName(FName(TEXT("mSnappedBuildingThickness")))))
+						{
+							const float ParentThickness = ThickProp->GetPropertyValue_InContainer(Parent);
+							ThickProp->SetPropertyValue_InContainer(PassthroughChild, ParentThickness);
+						}
+
+						Child = PassthroughChild;
 					}
 				}
 				else
