@@ -1536,62 +1536,44 @@ TArray<FPowerPoleGridNode> USFAutoConnectService::AnalyzeGridTopology(const TArr
 	}
 	
 	const FSFCounterState& CounterState = SmartSubsystem->GetCounterState();
-	int32 XCount = FMath::Abs(CounterState.GridCounters.X);
-	int32 YCount = FMath::Abs(CounterState.GridCounters.Y);
-	int32 ZCount = FMath::Abs(CounterState.GridCounters.Z);
-	int32 XDir = CounterState.GridCounters.X >= 0 ? 1 : -1;
-	int32 YDir = CounterState.GridCounters.Y >= 0 ? 1 : -1;
-	int32 ZDir = CounterState.GridCounters.Z >= 0 ? 1 : -1;
-	
-	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("⚡ AnalyzeGridTopology: Grid dimensions %dx%dx%d, dirs [%d,%d,%d]"),
-		XCount, YCount, ZCount, XDir, YDir, ZDir);
-	
-	// Build a map from grid position to pole hologram
-	// AllPoles[0] = parent at (0,0,0)
-	// AllPoles[1+] = children in Z→X→Y spawn order (skipping 0,0,0)
+	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("⚡ AnalyzeGridTopology: Grid dimensions %dx%dx%d"),
+		FMath::Abs(CounterState.GridCounters.X), FMath::Abs(CounterState.GridCounters.Y), FMath::Abs(CounterState.GridCounters.Z));
+
+	// Build a map from grid cell to pole hologram.
+	// #459: children carry their own UNSIGNED grid cell via USFGridCoordComponent (#418 coordinate
+	// keying) - read it directly instead of decoding the cell from array index. GetHologramChildren()
+	// is no longer in strict Z→X→Y spawn order since the time-budget batcher / deferred construction
+	// landed, so the old index decode mis-mapped every pole and made the power lines wire diagonally
+	// across the grid regardless of Grid Axis mode. Mirrors the belt-support sibling fixed at the same
+	// time (ProcessStackable*Supports, ~line 200). Cells are unsigned, so neighbors step by +/-1 below.
 	TMap<FIntVector, AFGHologram*> GridPositionToPole;
 	TMap<AFGHologram*, FIntVector> PoleToGridPosition;
-	
-	// Parent is always at (0,0,0)
+
+	// Parent is always at cell (0,0,0) and never carries a coord component (it is the grid origin).
 	if (AllPoles.Num() > 0 && AllPoles[0])
 	{
-		FIntVector ParentPos(0, 0, 0);
+		const FIntVector ParentPos(0, 0, 0);
 		GridPositionToPole.Add(ParentPos, AllPoles[0]);
 		PoleToGridPosition.Add(AllPoles[0], ParentPos);
 	}
-	
-	// Children are spawned in Z→X→Y order, skipping (0,0,0)
-	int32 ChildIndex = 0;
-	for (int32 Z = 0; Z < ZCount; ++Z)
+
+	// Children (AllPoles[1..]) self-report their cell. Skip any that never got keyed (they simply
+	// go unwired rather than being mis-mapped).
+	for (int32 PoleIndex = 1; PoleIndex < AllPoles.Num(); ++PoleIndex)
 	{
-		for (int32 X = 0; X < XCount; ++X)
+		AFGHologram* Pole = AllPoles[PoleIndex];
+		if (!Pole)
 		{
-			for (int32 Y = 0; Y < YCount; ++Y)
-			{
-				if (X == 0 && Y == 0 && Z == 0)
-				{
-					continue; // Skip parent position
-				}
-				
-				int32 ArrayIndex = ChildIndex + 1; // +1 because parent is at index 0
-				if (ArrayIndex >= AllPoles.Num())
-				{
-					break;
-				}
-				
-				AFGHologram* Pole = AllPoles[ArrayIndex];
-				if (Pole)
-				{
-					FIntVector GridPos(X * XDir, Y * YDir, Z * ZDir);
-					GridPositionToPole.Add(GridPos, Pole);
-					PoleToGridPosition.Add(Pole, GridPos);
-				}
-				
-				ChildIndex++;
-			}
+			continue;
+		}
+		FIntVector Cell;
+		if (USFGridCoordComponent::TryGetCell(Pole, Cell))
+		{
+			GridPositionToPole.Add(Cell, Pole);
+			PoleToGridPosition.Add(Pole, Cell);
 		}
 	}
-	
+
 	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("⚡ AnalyzeGridTopology: Mapped %d poles to grid positions"), PoleToGridPosition.Num());
 	
 	// Now find neighbors by grid position (adjacent = differ by 1 in exactly one axis)
@@ -1614,10 +1596,10 @@ TArray<FPowerPoleGridNode> USFAutoConnectService::AnalyzeGridTopology(const TArr
 		Node.Pole = Pole;
 		Node.GridPosition = FIntVector2(GridPos.X, GridPos.Y);
 		
-		// Find X-axis neighbors (differ by 1 in X, same Y and Z)
-		FIntVector XPosNeighbor(GridPos.X + XDir, GridPos.Y, GridPos.Z);
-		FIntVector XNegNeighbor(GridPos.X - XDir, GridPos.Y, GridPos.Z);
-		
+		// Find X-axis neighbors (differ by 1 in X, same Y and Z). Cells are unsigned, so step +/-1.
+		FIntVector XPosNeighbor(GridPos.X + 1, GridPos.Y, GridPos.Z);
+		FIntVector XNegNeighbor(GridPos.X - 1, GridPos.Y, GridPos.Z);
+
 		if (AFGHologram** XPosPtr = GridPositionToPole.Find(XPosNeighbor))
 		{
 			Node.XAxisNeighbors.Add(*XPosPtr);
@@ -1626,10 +1608,10 @@ TArray<FPowerPoleGridNode> USFAutoConnectService::AnalyzeGridTopology(const TArr
 		{
 			Node.XAxisNeighbors.Add(*XNegPtr);
 		}
-		
-		// Find Y-axis neighbors (differ by 1 in Y, same X and Z)
-		FIntVector YPosNeighbor(GridPos.X, GridPos.Y + YDir, GridPos.Z);
-		FIntVector YNegNeighbor(GridPos.X, GridPos.Y - YDir, GridPos.Z);
+
+		// Find Y-axis neighbors (differ by 1 in Y, same X and Z).
+		FIntVector YPosNeighbor(GridPos.X, GridPos.Y + 1, GridPos.Z);
+		FIntVector YNegNeighbor(GridPos.X, GridPos.Y - 1, GridPos.Z);
 		
 		if (AFGHologram** YPosPtr = GridPositionToPole.Find(YPosNeighbor))
 		{
