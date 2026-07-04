@@ -35,6 +35,81 @@ namespace
 {
 	constexpr int32 SF_RESTORE_MIN_SUPPORTED_PRESET_VERSION = 1;
 
+	// ── #427 v3 string tokens ────────────────────────────────────────────────
+	// New v3 enum fields serialize as STABLE STRING TOKENS, never raw ints, so reordering a C++
+	// enum can never remap meaning in saved/shared presets. Unknown token -> the field's
+	// legacy-implicit default. APPEND-ONLY: never rename or remove a token.
+
+	const TCHAR* AxisToToken(ESFScaleAxis Axis)
+	{
+		switch (Axis)
+		{
+		case ESFScaleAxis::Y:  return TEXT("y");
+		case ESFScaleAxis::Z:  return TEXT("z");
+		case ESFScaleAxis::ZX: return TEXT("zx");
+		case ESFScaleAxis::ZY: return TEXT("zy");
+		case ESFScaleAxis::X:
+		default:               return TEXT("x");
+		}
+	}
+
+	ESFScaleAxis TokenToAxis(const FString& Token, ESFScaleAxis Default)
+	{
+		if (Token == TEXT("x"))  return ESFScaleAxis::X;
+		if (Token == TEXT("y"))  return ESFScaleAxis::Y;
+		if (Token == TEXT("z"))  return ESFScaleAxis::Z;
+		if (Token == TEXT("zx")) return ESFScaleAxis::ZX;
+		if (Token == TEXT("zy")) return ESFScaleAxis::ZY;
+		return Default;
+	}
+
+	const TCHAR* SpacingModeToToken(ESFSpacingMode Mode)
+	{
+		switch (Mode)
+		{
+		case ESFSpacingMode::X:    return TEXT("x");
+		case ESFSpacingMode::XY:   return TEXT("xy");
+		case ESFSpacingMode::XYZ:  return TEXT("xyz");
+		case ESFSpacingMode::None:
+		default:                   return TEXT("none");
+		}
+	}
+
+	ESFSpacingMode TokenToSpacingMode(const FString& Token, ESFSpacingMode Default)
+	{
+		if (Token == TEXT("none")) return ESFSpacingMode::None;
+		if (Token == TEXT("x"))    return ESFSpacingMode::X;
+		if (Token == TEXT("xy"))   return ESFSpacingMode::XY;
+		if (Token == TEXT("xyz"))  return ESFSpacingMode::XYZ;
+		return Default;
+	}
+
+	/**
+	 * #427 migration chain (v1/v2 -> v3). Runs IN-MEMORY on every load/import; files rewrite as
+	 * v3 lazily on the next save (SavePreset stamps the current version). Missing fields keep
+	 * their LEGACY-IMPLICIT values - the axis/mode struct defaults already ARE those values
+	 * (RotationAxis=X is the pre-#372 behavior, so old rotation-fan presets restore correctly).
+	 */
+	void MigratePresetToCurrentVersion(FSFRestorePreset& Preset)
+	{
+		if (Preset.Version < 3)
+		{
+			// Production recipe: v2 had no explicit "none". Under v3 semantics an empty recipe
+			// ACTIVELY CLEARS - but v2's semantics were "skip / don't touch". Preserve legacy
+			// behavior by turning the group flag off for recipe-less v2 presets; v3-authored
+			// presets always carry the explicit state.
+			Preset.bHasProductionRecipe = !Preset.RecipeClassName.IsEmpty();
+			if (!Preset.bHasProductionRecipe)
+			{
+				Preset.CaptureFlags.bRecipe = false;
+			}
+			Preset.Version = SF_RESTORE_PRESET_VERSION;
+		}
+
+		// The single Kind chokepoint - after EVERY load/import path (see SFRestoreTypes.h).
+		Preset.NormalizeKind();
+	}
+
 	FSFCounterState BuildCounterStateFromPreset(const FSFCounterState& CurrentState, const FSFRestorePreset& Preset)
 	{
 		FSFCounterState State = CurrentState;
@@ -49,12 +124,15 @@ namespace
 			State.SpacingX = Preset.SpacingX;
 			State.SpacingY = Preset.SpacingY;
 			State.SpacingZ = Preset.SpacingZ;
+			State.SpacingMode = Preset.SpacingMode;
+			State.SpacingAxis = Preset.SpacingAxis;
 		}
 
 		if (Preset.CaptureFlags.bSteps)
 		{
 			State.StepsX = Preset.StepsX;
 			State.StepsY = Preset.StepsY;
+			State.StepsAxis = Preset.StepsAxis;
 		}
 
 		if (Preset.CaptureFlags.bStagger)
@@ -63,11 +141,13 @@ namespace
 			State.StaggerY = Preset.StaggerY;
 			State.StaggerZX = Preset.StaggerZX;
 			State.StaggerZY = Preset.StaggerZY;
+			State.StaggerAxis = Preset.StaggerAxis;
 		}
 
 		if (Preset.CaptureFlags.bRotation)
 		{
 			State.RotationZ = Preset.RotationZ;
+			State.RotationAxis = Preset.RotationAxis;
 		}
 
 		return State;
@@ -437,6 +517,17 @@ FSFRestorePreset USFRestoreService::CaptureCurrentState(
 	const FString& Name,
 	const FSFRestoreCaptureFlags& CaptureFlags) const
 {
+	// Committed subsystem state. The Smart Panel Save path uses CapturePanelState instead so
+	// typed-but-unapplied inputs are captured (#427 flush-then-capture).
+	const FSFCounterState State = Subsystem.IsValid() ? Subsystem->GetCounterState() : FSFCounterState();
+	return CapturePanelState(Name, CaptureFlags, State);
+}
+
+FSFRestorePreset USFRestoreService::CapturePanelState(
+	const FString& Name,
+	const FSFRestoreCaptureFlags& CaptureFlags,
+	const FSFCounterState& State) const
+{
 	FSFRestorePreset Preset;
 	Preset.Name = Name;
 	Preset.CaptureFlags = CaptureFlags;
@@ -475,9 +566,8 @@ FSFRestorePreset USFRestoreService::CaptureCurrentState(
 		}
 	}
 
-	// Counter state fields
-	const FSFCounterState& State = Subsystem->GetCounterState();
-
+	// Counter state fields (State: committed subsystem state, or the panel's parsed on-screen
+	// values when called via the #427 flush-then-capture path)
 	if (CaptureFlags.bGrid)
 	{
 		Preset.GridCounters = State.GridCounters;
@@ -488,12 +578,15 @@ FSFRestorePreset USFRestoreService::CaptureCurrentState(
 		Preset.SpacingX = State.SpacingX;
 		Preset.SpacingY = State.SpacingY;
 		Preset.SpacingZ = State.SpacingZ;
+		Preset.SpacingMode = State.SpacingMode;
+		Preset.SpacingAxis = State.SpacingAxis;
 	}
 
 	if (CaptureFlags.bSteps)
 	{
 		Preset.StepsX = State.StepsX;
 		Preset.StepsY = State.StepsY;
+		Preset.StepsAxis = State.StepsAxis;
 	}
 
 	if (CaptureFlags.bStagger)
@@ -502,16 +595,22 @@ FSFRestorePreset USFRestoreService::CaptureCurrentState(
 		Preset.StaggerY = State.StaggerY;
 		Preset.StaggerZX = State.StaggerZX;
 		Preset.StaggerZY = State.StaggerZY;
+		Preset.StaggerAxis = State.StaggerAxis;
 	}
 
 	if (CaptureFlags.bRotation)
 	{
 		Preset.RotationZ = State.RotationZ;
+		Preset.RotationAxis = State.RotationAxis;
 	}
 
-	// Production recipe (separate from the building recipe used to select what to build)
+	// Production recipe (separate from the building recipe used to select what to build).
+	// #427: "No recipe" is a first-class captured state - bHasProductionRecipe=false means the
+	// preset deliberately restores to no production recipe (restore actively clears), not
+	// "don't touch".
 	if (CaptureFlags.bRecipe)
 	{
+		Preset.bHasProductionRecipe = false;
 		TSubclassOf<UFGRecipe> ActiveRecipe = Subsystem->GetActiveRecipe();
 		if (ActiveRecipe)
 		{
@@ -524,6 +623,7 @@ FSFRestorePreset USFRestoreService::CaptureCurrentState(
 					if (Recipe == ActiveRecipe)
 					{
 						Preset.RecipeClassName = ActiveRecipe->GetName();
+						Preset.bHasProductionRecipe = true;
 						break;
 					}
 				}
@@ -557,7 +657,6 @@ FSFRestorePreset USFRestoreService::CaptureCurrentState(
 			TSharedPtr<FSFCloneTopology> CloneTopology = ExtendSvc->GetLastCloneTopology();
 			if (CloneTopology.IsValid() && CloneTopology->ChildHolograms.Num() > 0)
 			{
-				Preset.bHasExtendTopology = true;
 				Preset.ExtendCloneTopology = *CloneTopology;
 				SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
 					TEXT("[SmartRestore] CaptureCurrentState included staged Extend topology: preset='%s' childHolograms=%d"),
@@ -567,8 +666,11 @@ FSFRestorePreset USFRestoreService::CaptureCurrentState(
 		}
 	}
 
-	SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("[SmartRestore] Captured preset '%s' (building: %s)"),
-		*Name, *Preset.BuildingClassName);
+	// #427 Kind chokepoint: derive GridPreset/Module from topology presence.
+	Preset.NormalizeKind();
+
+	SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("[SmartRestore] Captured preset '%s' (building: %s, kind: %s)"),
+		*Name, *Preset.BuildingClassName, Preset.IsModule() ? TEXT("Module") : TEXT("GridPreset"));
 
 	return Preset;
 }
@@ -577,7 +679,7 @@ FSFRestorePreset USFRestoreService::CaptureCurrentState(
 // Apply
 // ============================================================================
 
-bool USFRestoreService::ApplyPreset(const FSFRestorePreset& Preset)
+bool USFRestoreService::ApplyPreset(const FSFRestorePreset& Preset, bool bIncludeCounterState)
 {
 	if (!Subsystem.IsValid())
 	{
@@ -610,15 +712,31 @@ bool USFRestoreService::ApplyPreset(const FSFRestorePreset& Preset)
 		}
 	}
 
-	// 2. Apply counter state fields (only those with capture flag set)
-	FSFCounterState State = BuildCounterStateFromPreset(Subsystem->GetCounterState(), Preset);
+	// 2. Apply counter state fields (only those with capture flag set). #427: the Grid Preset
+	// panel flow passes bIncludeCounterState=false - values go to the PANEL as pending and the
+	// panel's own apply path commits them, honoring the Apply Immediately toggle. Module apply
+	// keeps true: the replay session seeds its scalable size from the preset's counters.
+	if (bIncludeCounterState)
+	{
+		FSFCounterState State = BuildCounterStateFromPreset(Subsystem->GetCounterState(), Preset);
+		Subsystem->UpdateCounterState(State);
+	}
 
-	Subsystem->UpdateCounterState(State);
+	// 3a. #427 explicit "No recipe": a v3 preset that captured no production recipe ACTIVELY
+	// clears it - the same path as the panel's Clear Recipe button. (Migrated v2 presets with an
+	// empty recipe had bRecipe forced off, preserving their legacy "don't touch" semantics.)
+	if (Preset.CaptureFlags.bRecipe && !Preset.bHasProductionRecipe)
+	{
+		Subsystem->ClearAllRecipes();
+		Subsystem->ApplyRecipeToParentHologram();
+		SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
+			TEXT("[SmartRestore] Applied explicit 'No recipe' from preset '%s'"), *Preset.Name);
+	}
 
 	// 3. Apply production recipe
 	// Find the recipe class by name and use SetActiveRecipeByClass, which
 	// resolves the correct index in SortedFilteredRecipes internally.
-	if (Preset.CaptureFlags.bRecipe && !Preset.RecipeClassName.IsEmpty())
+	if (Preset.CaptureFlags.bRecipe && Preset.bHasProductionRecipe && !Preset.RecipeClassName.IsEmpty())
 	{
 		if (USFRecipeManagementService* RecipeSvc = Subsystem->GetRecipeManagementService())
 		{
@@ -1033,6 +1151,9 @@ TSharedPtr<FJsonObject> USFRestoreService::PresetToJson(const FSFRestorePreset& 
 	Root->SetStringField(TEXT("name"), Preset.Name);
 	Root->SetStringField(TEXT("buildingClassName"), Preset.BuildingClassName);
 	Root->SetNumberField(TEXT("version"), Preset.Version);
+	// #427 v3: kind token (informational on read - Kind is always re-derived from topology
+	// presence via NormalizeKind, so a hand-edited kind can never desync from the data).
+	Root->SetStringField(TEXT("kind"), Preset.IsModule() ? TEXT("module") : TEXT("gridPreset"));
 	Root->SetStringField(TEXT("description"), Preset.Description);
 	Root->SetStringField(TEXT("createdAt"), Preset.CreatedAt);
 	Root->SetStringField(TEXT("updatedAt"), Preset.UpdatedAt);
@@ -1070,6 +1191,8 @@ TSharedPtr<FJsonObject> USFRestoreService::PresetToJson(const FSFRestorePreset& 
 		Spacing->SetNumberField(TEXT("x"), Preset.SpacingX);
 		Spacing->SetNumberField(TEXT("y"), Preset.SpacingY);
 		Spacing->SetNumberField(TEXT("z"), Preset.SpacingZ);
+		Spacing->SetStringField(TEXT("mode"), SpacingModeToToken(Preset.SpacingMode));
+		Spacing->SetStringField(TEXT("axis"), AxisToToken(Preset.SpacingAxis));
 		Root->SetObjectField(TEXT("spacing"), Spacing);
 	}
 
@@ -1078,6 +1201,7 @@ TSharedPtr<FJsonObject> USFRestoreService::PresetToJson(const FSFRestorePreset& 
 		TSharedPtr<FJsonObject> Steps = MakeShared<FJsonObject>();
 		Steps->SetNumberField(TEXT("x"), Preset.StepsX);
 		Steps->SetNumberField(TEXT("y"), Preset.StepsY);
+		Steps->SetStringField(TEXT("axis"), AxisToToken(Preset.StepsAxis));
 		Root->SetObjectField(TEXT("steps"), Steps);
 	}
 
@@ -1088,17 +1212,25 @@ TSharedPtr<FJsonObject> USFRestoreService::PresetToJson(const FSFRestorePreset& 
 		Stagger->SetNumberField(TEXT("y"), Preset.StaggerY);
 		Stagger->SetNumberField(TEXT("zx"), Preset.StaggerZX);
 		Stagger->SetNumberField(TEXT("zy"), Preset.StaggerZY);
+		Stagger->SetStringField(TEXT("axis"), AxisToToken(Preset.StaggerAxis));
 		Root->SetObjectField(TEXT("stagger"), Stagger);
 	}
 
 	if (Preset.CaptureFlags.bRotation)
 	{
 		Root->SetNumberField(TEXT("rotationZ"), Preset.RotationZ);
+		// [#372/#419] progression axis - the geometry-affecting selector the v2 format dropped.
+		Root->SetStringField(TEXT("rotationAxis"), AxisToToken(Preset.RotationAxis));
 	}
 
-	if (Preset.CaptureFlags.bRecipe && !Preset.RecipeClassName.IsEmpty())
+	if (Preset.CaptureFlags.bRecipe)
 	{
-		Root->SetStringField(TEXT("recipeClassName"), Preset.RecipeClassName);
+		// #427: explicit production-recipe state ("No recipe" is a restorable value).
+		Root->SetBoolField(TEXT("hasProductionRecipe"), Preset.bHasProductionRecipe);
+		if (Preset.bHasProductionRecipe && !Preset.RecipeClassName.IsEmpty())
+		{
+			Root->SetStringField(TEXT("recipeClassName"), Preset.RecipeClassName);
+		}
 	}
 
 	if (Preset.CaptureFlags.bAutoConnect)
@@ -1170,17 +1302,20 @@ bool USFRestoreService::JsonToPreset(const TSharedPtr<FJsonObject>& JsonObj, FSF
 		(*MetadataObj)->TryGetStringField(TEXT("updatedAt"), OutPreset.UpdatedAt);
 	}
 
-	// Capture flags
+	// Capture flags. #427: TryGetBoolField with the struct defaults - these flags gate whether
+	// every other group is read, so they were the ONE place the graceful-degradation contract
+	// leaked (GetBoolField hard-fails on a missing key; a future/partial code would lose whole
+	// groups instead of defaulting).
 	const TSharedPtr<FJsonObject>* FlagsObj = nullptr;
 	if (JsonObj->TryGetObjectField(TEXT("captureFlags"), FlagsObj) && FlagsObj && (*FlagsObj).IsValid())
 	{
-		OutPreset.CaptureFlags.bGrid = (*FlagsObj)->GetBoolField(TEXT("grid"));
-		OutPreset.CaptureFlags.bSpacing = (*FlagsObj)->GetBoolField(TEXT("spacing"));
-		OutPreset.CaptureFlags.bSteps = (*FlagsObj)->GetBoolField(TEXT("steps"));
-		OutPreset.CaptureFlags.bStagger = (*FlagsObj)->GetBoolField(TEXT("stagger"));
-		OutPreset.CaptureFlags.bRotation = (*FlagsObj)->GetBoolField(TEXT("rotation"));
-		OutPreset.CaptureFlags.bRecipe = (*FlagsObj)->GetBoolField(TEXT("recipe"));
-		OutPreset.CaptureFlags.bAutoConnect = (*FlagsObj)->GetBoolField(TEXT("autoConnect"));
+		(*FlagsObj)->TryGetBoolField(TEXT("grid"), OutPreset.CaptureFlags.bGrid);
+		(*FlagsObj)->TryGetBoolField(TEXT("spacing"), OutPreset.CaptureFlags.bSpacing);
+		(*FlagsObj)->TryGetBoolField(TEXT("steps"), OutPreset.CaptureFlags.bSteps);
+		(*FlagsObj)->TryGetBoolField(TEXT("stagger"), OutPreset.CaptureFlags.bStagger);
+		(*FlagsObj)->TryGetBoolField(TEXT("rotation"), OutPreset.CaptureFlags.bRotation);
+		(*FlagsObj)->TryGetBoolField(TEXT("recipe"), OutPreset.CaptureFlags.bRecipe);
+		(*FlagsObj)->TryGetBoolField(TEXT("autoConnect"), OutPreset.CaptureFlags.bAutoConnect);
 	}
 
 	// Conditional fields
@@ -1200,6 +1335,9 @@ bool USFRestoreService::JsonToPreset(const TSharedPtr<FJsonObject>& JsonObj, FSF
 		if ((*SpacingObj)->TryGetNumberField(TEXT("x"), Val)) OutPreset.SpacingX = static_cast<int32>(Val);
 		if ((*SpacingObj)->TryGetNumberField(TEXT("y"), Val)) OutPreset.SpacingY = static_cast<int32>(Val);
 		if ((*SpacingObj)->TryGetNumberField(TEXT("z"), Val)) OutPreset.SpacingZ = static_cast<int32>(Val);
+		FString Token;
+		if ((*SpacingObj)->TryGetStringField(TEXT("mode"), Token)) OutPreset.SpacingMode = TokenToSpacingMode(Token, OutPreset.SpacingMode);
+		if ((*SpacingObj)->TryGetStringField(TEXT("axis"), Token)) OutPreset.SpacingAxis = TokenToAxis(Token, OutPreset.SpacingAxis);
 	}
 
 	const TSharedPtr<FJsonObject>* StepsObj = nullptr;
@@ -1208,6 +1346,8 @@ bool USFRestoreService::JsonToPreset(const TSharedPtr<FJsonObject>& JsonObj, FSF
 		double Val;
 		if ((*StepsObj)->TryGetNumberField(TEXT("x"), Val)) OutPreset.StepsX = static_cast<int32>(Val);
 		if ((*StepsObj)->TryGetNumberField(TEXT("y"), Val)) OutPreset.StepsY = static_cast<int32>(Val);
+		FString Token;
+		if ((*StepsObj)->TryGetStringField(TEXT("axis"), Token)) OutPreset.StepsAxis = TokenToAxis(Token, OutPreset.StepsAxis);
 	}
 
 	const TSharedPtr<FJsonObject>* StaggerObj = nullptr;
@@ -1218,17 +1358,25 @@ bool USFRestoreService::JsonToPreset(const TSharedPtr<FJsonObject>& JsonObj, FSF
 		if ((*StaggerObj)->TryGetNumberField(TEXT("y"), Val)) OutPreset.StaggerY = static_cast<int32>(Val);
 		if ((*StaggerObj)->TryGetNumberField(TEXT("zx"), Val)) OutPreset.StaggerZX = static_cast<int32>(Val);
 		if ((*StaggerObj)->TryGetNumberField(TEXT("zy"), Val)) OutPreset.StaggerZY = static_cast<int32>(Val);
+		FString Token;
+		if ((*StaggerObj)->TryGetStringField(TEXT("axis"), Token)) OutPreset.StaggerAxis = TokenToAxis(Token, OutPreset.StaggerAxis);
 	}
 
 	if (OutPreset.CaptureFlags.bRotation)
 	{
 		double Val = 0.0;
 		if (JsonObj->TryGetNumberField(TEXT("rotationZ"), Val)) OutPreset.RotationZ = static_cast<float>(Val);
+		FString Token;
+		if (JsonObj->TryGetStringField(TEXT("rotationAxis"), Token)) OutPreset.RotationAxis = TokenToAxis(Token, OutPreset.RotationAxis);
 	}
 
 	if (OutPreset.CaptureFlags.bRecipe)
 	{
 		JsonObj->TryGetStringField(TEXT("recipeClassName"), OutPreset.RecipeClassName);
+		// Defensive default: derive from presence, then let an explicit field override. A v3 code
+		// missing the field (hand-edited) must not silently clear the user's recipe.
+		OutPreset.bHasProductionRecipe = !OutPreset.RecipeClassName.IsEmpty();
+		JsonObj->TryGetBoolField(TEXT("hasProductionRecipe"), OutPreset.bHasProductionRecipe);
 	}
 
 	const TSharedPtr<FJsonObject>* ACObj = nullptr;
@@ -1255,6 +1403,10 @@ bool USFRestoreService::JsonToPreset(const TSharedPtr<FJsonObject>& JsonObj, FSF
 	{
 		OutPreset.bHasExtendTopology = JsonToCloneTopology(*ExtendTopologyObj, OutPreset.ExtendCloneTopology);
 	}
+
+	// #427: migrate older versions in-place (legacy-implicit defaults, recipe-skip semantics)
+	// and run the Kind chokepoint. Every load/import path funnels through here.
+	MigratePresetToCurrentVersion(OutPreset);
 
 	return true;
 }
@@ -1535,7 +1687,11 @@ FSFRestorePreset USFRestoreService::ImportFromString(const FString& Encoded, boo
 {
 	bOutSuccess = false;
 
-	if (!Encoded.StartsWith(SF_RESTORE_EXPORT_PREFIX))
+	// #427: a stray leading space or trailing newline from the clipboard used to fail the prefix
+	// check silently - trim before anything else.
+	const FString Trimmed = Encoded.TrimStartAndEnd();
+
+	if (!Trimmed.StartsWith(SF_RESTORE_EXPORT_PREFIX))
 	{
 		SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Warning,
 			TEXT("[SmartRestore] ImportFromString: Unknown format prefix"));
@@ -1543,7 +1699,7 @@ FSFRestorePreset USFRestoreService::ImportFromString(const FString& Encoded, boo
 	}
 
 	// Strip prefix, decode Base64
-	const FString Base64Part = Encoded.Mid(SF_RESTORE_EXPORT_PREFIX.Len());
+	const FString Base64Part = Trimmed.Mid(SF_RESTORE_EXPORT_PREFIX.Len());
 	FString JsonString;
 	if (!FBase64::Decode(Base64Part, JsonString))
 	{
@@ -1746,6 +1902,7 @@ FSFRestorePreset USFRestoreService::ImportFromLastExtend(
 			if (FactoryRecipe)
 			{
 				Preset.RecipeClassName = FactoryRecipe->GetName();
+				Preset.bHasProductionRecipe = true;
 			}
 		}
 	}
@@ -1761,7 +1918,6 @@ FSFRestorePreset USFRestoreService::ImportFromLastExtend(
 	TSharedPtr<FSFCloneTopology> CloneTopology = ExtendSvc->GetLastCloneTopology();
 	if (CloneTopology.IsValid() && CloneTopology->ChildHolograms.Num() > 0)
 	{
-		Preset.bHasExtendTopology = true;
 		Preset.ExtendCloneTopology = *CloneTopology;
 		SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
 			TEXT("[SmartRestore] Captured Extend clone topology with %d child holograms"),
@@ -1773,6 +1929,9 @@ FSFRestorePreset USFRestoreService::ImportFromLastExtend(
 			TEXT("[SmartRestore] ImportFromLastExtend: No clone topology available to capture"));
 		return FSFRestorePreset();
 	}
+
+	// #427 Kind chokepoint: this preset now carries a topology, so it IS a Module.
+	Preset.NormalizeKind();
 
 	FString UnlockFailureReason;
 	if (!ValidatePresetUnlocks(Preset, UnlockFailureReason))

@@ -13,6 +13,10 @@
 
 void USmartSettingsFormWidget::OnApplyPresetClicked()
 {
+    // #427 Grid Preset "Apply & Build": switch the build gun to the preset's building and apply
+    // recipe/auto-connect (service), then RESTORE = SET THE PANEL - values go in as pending and
+    // the panel's own apply path commits them, honoring the Apply Immediately toggle. A restored
+    // preset behaves exactly like the user typed those values (per-build one-shot, #371).
     if (!CachedSubsystem.IsValid() || !PresetDropdown)
     {
         return;
@@ -37,18 +41,22 @@ void USmartSettingsFormWidget::OnApplyPresetClicked()
         return;
     }
 
-    if (RestoreSvc->ApplyPreset(Preset))
+    if (RestoreSvc->ApplyPreset(Preset, /*bIncludeCounterState*/ false))
     {
-        const bool bWasApplyImmediately = bApplyImmediately;
-        const bool bWasApplyImmediatelyEnabled = ApplyImmediatelyCheckBox ? ApplyImmediatelyCheckBox->GetIsEnabled() : true;
-        PopulateFromCounterState(CachedSubsystem.Get());
-        bApplyImmediately = bWasApplyImmediately;
-        if (ApplyImmediatelyCheckBox)
+        // Stage the preset's values into the panel inputs (pending, uncommitted).
+        PopulateSmartPanelFromPreset(Preset);
+
+        if (bApplyImmediately)
         {
-            ApplyImmediatelyCheckBox->SetIsChecked(bApplyImmediately);
-            ApplyImmediatelyCheckBox->SetIsEnabled(bWasApplyImmediatelyEnabled);
+            // Commit like pressing Apply (includes the large-grid confirmation gate).
+            OnApplyButtonClicked();
         }
-        CacheCurrentStateAsApplied();
+        else
+        {
+            SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
+                TEXT("[SmartRestore][UI] Preset '%s' staged in panel (Apply Immediately off - fine-tune then Apply)"),
+                *Preset.Name);
+        }
     }
 }
 
@@ -68,12 +76,32 @@ void USmartSettingsFormWidget::OnSavePresetClicked()
     const FString Name = PresetNameInput->GetText().ToString().TrimStartAndEnd();
     if (Name.IsEmpty())
     {
+        // #427: no silent no-ops - the empty-name save was the classic "I pressed Save and
+        // nothing happened" (FoundationFun, 2026-07-03). Tell the user what's missing.
+        if (GridPresetDetailsText)
+        {
+            GridPresetDetailsText->SetText(LOCTEXT("Restore_SaveNeedsName",
+                "Enter a name in the 'New preset name' field below, then press Save from Panel."));
+        }
         return;
     }
 
+    // #427 flush-then-capture: Save records what's ON SCREEN (the parsed panel inputs), not the
+    // possibly-stale committed state. Grid-tab saves are always pure Grid Presets - strip any
+    // staged Extend topology so a save during a Module stamp session can't silently become a
+    // Module (the Modules tab owns that flow).
+    auto CaptureGridPresetFromPanel = [this](USFRestoreService* Svc, const FString& PresetName) -> FSFRestorePreset
+    {
+        FSFRestorePreset Preset = Svc->CapturePanelState(PresetName, GetCaptureFlags(), ReadPanelCounterState());
+        Preset.ExtendCloneTopology = FSFCloneTopology();
+        Preset.NormalizeKind();
+        Preset.Description = GetPresetDescriptionText();
+        return Preset;
+    };
+
     if (RestoreSvc->PresetExists(Name))
     {
-        PendingConfirmCallback = [this, Name]()
+        PendingConfirmCallback = [this, Name, CaptureGridPresetFromPanel]()
         {
             USFRestoreService* Svc = CachedSubsystem.IsValid() ? CachedSubsystem->GetRestoreService() : nullptr;
             if (!Svc)
@@ -81,8 +109,7 @@ void USmartSettingsFormWidget::OnSavePresetClicked()
                 return;
             }
 
-            FSFRestorePreset Preset = Svc->CaptureCurrentState(Name, GetCaptureFlags());
-            Preset.Description = GetPresetDescriptionText();
+            const FSFRestorePreset Preset = CaptureGridPresetFromPanel(Svc, Name);
             if (Svc->SavePreset(Preset))
             {
                 RefreshPresetDropdown(Name);
@@ -96,11 +123,22 @@ void USmartSettingsFormWidget::OnSavePresetClicked()
         return;
     }
 
-    FSFRestorePreset Preset = RestoreSvc->CaptureCurrentState(Name, GetCaptureFlags());
-    Preset.Description = GetPresetDescriptionText();
+    const FSFRestorePreset Preset = CaptureGridPresetFromPanel(RestoreSvc, Name);
     if (RestoreSvc->SavePreset(Preset))
     {
+        // Refresh selects the new preset; prepend an explicit acknowledgement to its details.
         RefreshPresetDropdown(Name);
+        if (GridPresetDetailsText)
+        {
+            GridPresetDetailsText->SetText(FText::Format(LOCTEXT("Restore_SavedAck", "Saved '{0}'.\n{1}"),
+                FText::FromString(Name), GridPresetDetailsText->GetText()));
+        }
+    }
+    else if (GridPresetDetailsText)
+    {
+        GridPresetDetailsText->SetText(FText::Format(LOCTEXT("Restore_SaveFailed",
+            "Could not save '{0}' - check the log (name may collide with another preset's file)."),
+            FText::FromString(Name)));
     }
 }
 
@@ -139,7 +177,10 @@ void USmartSettingsFormWidget::OnDeletePresetClicked()
 
 void USmartSettingsFormWidget::OnUpdatePresetClicked()
 {
-    if (!CachedSubsystem.IsValid() || !PresetDropdown)
+    // #427: Update now CONFIRMS before clobbering (it was the one destructive action without a
+    // dialog - Save-overwrite and Delete both had one), captures the ON-SCREEN panel values
+    // (flush-then-capture), and stays a pure Grid Preset (topology stripped).
+    if (!CachedSubsystem.IsValid() || !PresetDropdown || bWaitingForConfirmation)
     {
         return;
     }
@@ -156,12 +197,28 @@ void USmartSettingsFormWidget::OnUpdatePresetClicked()
         return;
     }
 
-    FSFRestorePreset Preset = RestoreSvc->CaptureCurrentState(SelectedName, GetCaptureFlags());
-    Preset.Description = GetPresetDescriptionText();
-    if (RestoreSvc->SavePreset(Preset))
+    PendingConfirmCallback = [this, SelectedName]()
     {
-        RefreshPresetDropdown(SelectedName);
-    }
+        USFRestoreService* Svc = CachedSubsystem.IsValid() ? CachedSubsystem->GetRestoreService() : nullptr;
+        if (!Svc)
+        {
+            return;
+        }
+
+        FSFRestorePreset Preset = Svc->CapturePanelState(SelectedName, GetCaptureFlags(), ReadPanelCounterState());
+        Preset.ExtendCloneTopology = FSFCloneTopology();
+        Preset.NormalizeKind();
+        Preset.Description = GetPresetDescriptionText();
+        if (Svc->SavePreset(Preset))
+        {
+            RefreshPresetDropdown(SelectedName);
+        }
+    };
+    bWaitingForConfirmation = true;
+    ShowConfirmationDialog(
+        LOCTEXT("Panel_Restore_UpdateTitle", "Update Preset").ToString(),
+        FText::Format(LOCTEXT("Panel_Restore_UpdateMessage", "Overwrite preset '{0}' with the current panel values?"), FText::FromString(SelectedName)).ToString(),
+        FLinearColor(1.0f, 0.6f, 0.0f, 1.0f));
 }
 
 void USmartSettingsFormWidget::OnExportPresetClicked()
@@ -223,101 +280,86 @@ void USmartSettingsFormWidget::OnImportPresetClicked()
 
     if (RestoreSvc->SavePreset(Preset))
     {
-        RefreshPresetDropdown(Preset.Name);
+        // #427: route by kind - a pasted Module code lands on (and switches to) the Modules tab,
+        // a Grid Preset code on the Grid Presets tab. The code self-identifies via its topology.
+        if (Preset.IsModule())
+        {
+            RefreshModuleDropdown(Preset.Name);
+            SetActiveRestoreTab(1);
+        }
+        else
+        {
+            RefreshPresetDropdown(Preset.Name);
+            SetActiveRestoreTab(0);
+        }
     }
 }
 
 void USmartSettingsFormWidget::OnImportFromExtendClicked()
 {
-    UpdateExtendImportButtonState();
-
-    if (!CachedSubsystem.IsValid() || !PresetNameInput)
+    // #427 "Save as Module": promote the Extend clipboard (the transient capture buffer - a live
+    // preview counts, not just a built Extend) into a saved Module in the library. Capture + save
+    // ONLY - no apply. Applying is the library's explicit Apply action, which enters the stamp
+    // session. Replaces the old flow that captured AND immediately applied.
+    if (!CachedSubsystem.IsValid())
     {
-        SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Warning,
-            TEXT("[SmartRestore][UI] ImportFromExtend clicked but widget state is invalid: CachedSubsystem=%d PresetNameInput=%d"),
-            CachedSubsystem.IsValid() ? 1 : 0,
-            PresetNameInput ? 1 : 0);
         return;
     }
 
     USFRestoreService* RestoreSvc = CachedSubsystem->GetRestoreService();
     if (!RestoreSvc || !RestoreSvc->IsLastExtendAvailable())
     {
+        UpdateClipboardSlot();
         SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Warning,
-            TEXT("[SmartRestore][UI] ImportFromExtend unavailable: RestoreSvc=%s LastExtendAvailable=%d"),
+            TEXT("[SmartRestore][UI] Save-as-Module unavailable: RestoreSvc=%s LastExtendAvailable=%d"),
             RestoreSvc ? TEXT("valid") : TEXT("null"),
             RestoreSvc ? (RestoreSvc->IsLastExtendAvailable() ? 1 : 0) : 0);
         return;
     }
 
-    FString Name = PresetNameInput->GetText().ToString().TrimStartAndEnd();
+    FString Name = ModuleNameInput ? ModuleNameInput->GetText().ToString().TrimStartAndEnd() : FString();
     if (Name.IsEmpty())
     {
-        Name = FString::Printf(TEXT("Extend Source %s"), *FDateTime::Now().ToString(TEXT("%Y%m%d-%H%M%S")));
-        PresetNameInput->SetText(FText::FromString(Name));
+        Name = FString::Printf(TEXT("Module %s"), *FDateTime::Now().ToString(TEXT("%Y%m%d-%H%M%S")));
+        if (ModuleNameInput)
+        {
+            ModuleNameInput->SetText(FText::FromString(Name));
+        }
     }
 
     bool bSuccess = false;
-    FSFRestorePreset Preset = RestoreSvc->ImportFromLastExtend(Name, GetCaptureFlags(), bSuccess);
+    FSFRestorePreset Preset = RestoreSvc->ImportFromLastExtend(Name, FSFRestoreCaptureFlags(), bSuccess);
     if (!bSuccess)
     {
         SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Warning,
-            TEXT("[SmartRestore][UI] ImportFromLastExtend failed for preset '%s'"),
-            *Name);
+            TEXT("[SmartRestore][UI] Save-as-Module: ImportFromLastExtend failed for '%s'"), *Name);
         return;
     }
 
+    // Unit semantics: a Module stores ONE clone unit at 1x1x1; applying re-enters the scalable
+    // session and you size it there (capture-at-1-clone is a fully useful Module).
     Preset.CaptureFlags.bGrid = true;
     Preset.GridCounters = FIntVector(1, 1, 1);
-    Preset.Description = GetPresetDescriptionText();
 
-    const bool bApplied = RestoreSvc->ApplyPreset(Preset);
-    SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
-        TEXT("[SmartRestore][UI] ImportFromExtend staged for editing: preset='%s' applied=%d hasTopology=%d childHolograms=%d grid=(%d,%d,%d)"),
-        *Name,
-        bApplied ? 1 : 0,
-        Preset.bHasExtendTopology ? 1 : 0,
-        Preset.ExtendCloneTopology.ChildHolograms.Num(),
-        Preset.GridCounters.X,
-        Preset.GridCounters.Y,
-        Preset.GridCounters.Z);
-
-    if (bApplied)
+    if (RestoreSvc->SavePreset(Preset))
     {
-        const bool bWasApplyImmediately = bApplyImmediately;
-        const bool bWasApplyImmediatelyEnabled = ApplyImmediatelyCheckBox ? ApplyImmediatelyCheckBox->GetIsEnabled() : true;
-        PopulateFromCounterState(CachedSubsystem.Get());
-        bApplyImmediately = bWasApplyImmediately;
-        if (ApplyImmediatelyCheckBox)
-        {
-            ApplyImmediatelyCheckBox->SetIsChecked(bApplyImmediately);
-            ApplyImmediatelyCheckBox->SetIsEnabled(bWasApplyImmediatelyEnabled);
-        }
-        CacheCurrentStateAsApplied();
+        SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
+            TEXT("[SmartRestore][UI] Saved Module '%s' (%d parts) - no apply; use the library's Apply to stamp it"),
+            *Name, Preset.ExtendCloneTopology.ChildHolograms.Num());
+        RefreshModuleDropdown(Name);
+        SetActiveRestoreTab(1);
+        UpdateClipboardSlot();
     }
 }
 
 void USmartSettingsFormWidget::OnPresetSelectionChanged(FString SelectedItem, ESelectInfo::Type SelectionType)
 {
-    UpdateRestorePresetDetails(SelectedItem);
-
-    if (SelectionType == ESelectInfo::Direct || !CachedSubsystem.IsValid() || SelectedItem.IsEmpty())
-    {
-        return;
-    }
-
-    USFRestoreService* RestoreSvc = CachedSubsystem->GetRestoreService();
-    if (!RestoreSvc)
-    {
-        return;
-    }
-
-    bool bFound = false;
-    const FSFRestorePreset Preset = RestoreSvc->LoadPreset(SelectedItem, bFound);
-    if (bFound)
-    {
-        PopulateSmartPanelFromPreset(Preset);
-    }
+    // #427: selecting ONLY shows details (read-only pane). The old auto-load into the panel is
+    // gone - it made users believe selection had already applied the preset. Loading is now the
+    // explicit "Load to Panel" action; committing is "Apply & Build". Note: the old
+    // UpdateRestorePresetDetails is deliberately NOT called - it wrote the selected preset's
+    // description into the AUTHORING input (the overloaded-description-box bug).
+    UpdateGridPresetDetails(SelectedItem);
 }
 
 void USmartSettingsFormWidget::OnRestoreSectionToggleClicked()
@@ -330,10 +372,21 @@ void USmartSettingsFormWidget::OnRestoreSectionToggleClicked()
 
     const bool bVisible = RestorePanel->GetVisibility() != ESlateVisibility::Collapsed;
     RestorePanel->SetVisibility(bVisible ? ESlateVisibility::Collapsed : ESlateVisibility::Visible);
+
+    // [#427] On open: dock to the main panel and refresh both tabs + the clipboard slot.
+    if (!bVisible)
+    {
+        UpdateRestoreDockPosition();
+        RefreshPresetDropdown();
+        RefreshModuleDropdown();
+        UpdateClipboardSlot();
+    }
 }
 
 void USmartSettingsFormWidget::RefreshPresetDropdown(const FString& PreferredSelection)
 {
+    // #427: this list is the GRID PRESETS tab - kind-filtered. Modules live in their own list
+    // (RefreshModuleDropdown); the tab itself conveys the kind, so no per-row marker is needed.
     if (!PresetDropdown || !CachedSubsystem.IsValid())
     {
         return;
@@ -348,10 +401,14 @@ void USmartSettingsFormWidget::RefreshPresetDropdown(const FString& PreferredSel
     const FString PreviousSelection = PresetDropdown->GetSelectedOption();
     PresetDropdown->ClearOptions();
 
-    const TArray<FString> Names = RestoreSvc->GetPresetNames();
-    for (const FString& Name : Names)
+    TArray<FString> Names;
+    for (const FSFRestorePreset& Preset : RestoreSvc->LoadAllPresets())
     {
-        PresetDropdown->AddOption(Name);
+        if (!Preset.IsModule())
+        {
+            Names.Add(Preset.Name);
+            PresetDropdown->AddOption(Preset.Name);
+        }
     }
 
     FString SelectionToApply;
@@ -363,21 +420,16 @@ void USmartSettingsFormWidget::RefreshPresetDropdown(const FString& PreferredSel
     {
         SelectionToApply = PreviousSelection;
     }
+    else if (Names.Num() > 0)
+    {
+        SelectionToApply = Names[0];
+    }
 
     if (!SelectionToApply.IsEmpty())
     {
         PresetDropdown->SetSelectedOption(SelectionToApply);
-        UpdateRestorePresetDetails(SelectionToApply);
     }
-    else if (Names.Num() > 0)
-    {
-        PresetDropdown->SetSelectedIndex(0);
-        UpdateRestorePresetDetails(Names[0]);
-    }
-    else
-    {
-        UpdateRestorePresetDetails(FString());
-    }
+    UpdateGridPresetDetails(SelectionToApply);
 }
 
 void USmartSettingsFormWidget::UpdateRestorePresetDetails(const FString& PresetName)
@@ -473,6 +525,9 @@ FSFCounterState USmartSettingsFormWidget::BuildPendingCounterStateFromPreset(con
     if (Preset.CaptureFlags.bRotation)
     {
         State.RotationZ = Preset.RotationZ;
+        // [#372/#419] progression axis rides with rotation; PopulateCounterInputsFromState
+        // reflects it into RotationAxisComboBox so it round-trips through the panel apply.
+        State.RotationAxis = Preset.RotationAxis;
     }
 
     return State;
@@ -586,33 +641,28 @@ FString USmartSettingsFormWidget::FormatPresetTimestampForDisplay(const FString&
 
 FSFRestoreCaptureFlags USmartSettingsFormWidget::GetCaptureFlags() const
 {
-    FSFRestoreCaptureFlags Flags;
-    Flags.bGrid = CaptureGridCheckBox ? CaptureGridCheckBox->IsChecked() : true;
-    Flags.bSpacing = CaptureSpacingCheckBox ? CaptureSpacingCheckBox->IsChecked() : true;
-    Flags.bSteps = CaptureStepsCheckBox ? CaptureStepsCheckBox->IsChecked() : true;
-    Flags.bStagger = CaptureStaggerCheckBox ? CaptureStaggerCheckBox->IsChecked() : true;
-    Flags.bRotation = CaptureRotationCheckBox ? CaptureRotationCheckBox->IsChecked() : true;
-    Flags.bRecipe = CaptureRecipeCheckBox ? CaptureRecipeCheckBox->IsChecked() : true;
-    Flags.bAutoConnect = CaptureAutoConnectCheckBox ? CaptureAutoConnectCheckBox->IsChecked() : true;
-    return Flags;
+    // #427 FULL SNAPSHOT (decided): a Grid Preset is a complete snapshot of the panel - grid,
+    // transforms, axis/mode selectors, recipes, and auto-connect. The selective 7-checkbox
+    // capture is retired from the UI (the checkboxes are orphaned by the tab rebuild); OLD
+    // partial presets still restore only their captured groups via their stored flags.
+    return FSFRestoreCaptureFlags();
 }
 
 void USmartSettingsFormWidget::UpdateExtendImportButtonState()
 {
-    if (!ImportFromExtendBtn)
-    {
-        return;
-    }
-
-    USFRestoreService* RestoreSvc = CachedSubsystem.IsValid() ? CachedSubsystem->GetRestoreService() : nullptr;
-    ImportFromExtendBtn->SetIsEnabled(RestoreSvc && RestoreSvc->IsLastExtendAvailable());
+    // [#427] The old greyed-with-no-reason Import-from-Extend button became the "Save as Module"
+    // action inside the visible clipboard slot, which shows WHY it's unavailable.
+    UpdateClipboardSlot();
     UpdateRestoreButtonTextColors();
 }
 
 void USmartSettingsFormWidget::UpdateRestoreButtonTextColors()
 {
+    // #427 restyle: the Restore buttons now use the DARK Smart-Panel-aligned style, so their
+    // labels are LIGHT (the old black-on-light scheme became black-on-dark = invisible).
+    const FSlateColor LightText(FLinearColor(0.9f, 0.9f, 0.9f, 1.0f));
+    const FSlateColor DisabledText(FLinearColor(0.45f, 0.45f, 0.45f, 1.0f));
     const FSlateColor BlackText(FLinearColor::Black);
-    const FSlateColor DisabledImportText(FLinearColor(0.55f, 0.55f, 0.55f, 1.0f));
 
     auto SetTextColor = [this](const TCHAR* WidgetName, const FSlateColor& Color)
     {
@@ -622,16 +672,18 @@ void USmartSettingsFormWidget::UpdateRestoreButtonTextColors()
         }
     };
 
+    // These two live on the MAIN panel's light-grey buttons - keep black there.
     SetTextColor(TEXT("RestoreSectionHeader"), BlackText);
-    SetTextColor(TEXT("WalkPathLabel"), BlackText);   // #356 entry button — match Smart Restore (the recursive light-grey pass in NativeConstruct would otherwise leave its label grey)
-    SetTextColor(TEXT("ApplyPresetBtnText"), BlackText);
-    SetTextColor(TEXT("SavePresetBtnText"), BlackText);
-    SetTextColor(TEXT("DeletePresetBtnText"), BlackText);
-    SetTextColor(TEXT("UpdatePresetBtnText"), BlackText);
-    SetTextColor(TEXT("ExportPresetBtnText"), BlackText);
-    SetTextColor(TEXT("ImportPresetBtnText"), BlackText);
+    SetTextColor(TEXT("WalkPathLabel"), BlackText);   // #356 entry button on the main panel
+
+    SetTextColor(TEXT("ApplyPresetBtnText"), LightText);   // orphaned (Apply & Build retired), harmless
+    SetTextColor(TEXT("SavePresetBtnText"), LightText);
+    SetTextColor(TEXT("DeletePresetBtnText"), LightText);
+    SetTextColor(TEXT("UpdatePresetBtnText"), LightText);
+    SetTextColor(TEXT("ExportPresetBtnText"), LightText);
+    SetTextColor(TEXT("ImportPresetBtnText"), LightText);
     SetTextColor(TEXT("ImportFromExtendBtnText"),
-        ImportFromExtendBtn && ImportFromExtendBtn->GetIsEnabled() ? BlackText : DisabledImportText);
+        ImportFromExtendBtn && ImportFromExtendBtn->GetIsEnabled() ? LightText : DisabledText);
 }
 
 void USmartSettingsFormWidget::CloseForm()
@@ -719,16 +771,14 @@ void USmartSettingsFormWidget::OnResetButtonClicked()
     OnApplyButtonClicked();
 }
 
-void USmartSettingsFormWidget::ApplyCurrentValues()
+FSFCounterState USmartSettingsFormWidget::ReadPanelCounterState() const
 {
-    if (!CachedSubsystem.IsValid())
-    {
-        UE_LOG(LogSmartFoundations, Verbose, TEXT("Settings Form: No cached subsystem reference"));
-        return;
-    }
-
-    // Parse values from editable text inputs
-    FSFCounterState NewState = CachedSubsystem->GetCounterState();
+    // Parse the panel inputs into a counter state WITHOUT committing anything. Shared by the
+    // panel apply path and the #427 flush-then-capture Save path (so Save records what's on
+    // screen, side-effect free).
+    FSFCounterState NewState = CachedSubsystem.IsValid()
+        ? CachedSubsystem->GetCounterState()
+        : FSFCounterState();
 
     // Read Grid values from SpinBox (absolute count, apply direction from toggle state)
     if (GridXInput)
@@ -795,6 +845,27 @@ void USmartSettingsFormWidget::ApplyCurrentValues()
         NewState.RotationZ = RotationZInput->GetValue();
     }
 
+    // [#372/#427] The rotation progression axis combo is a PENDING input like the spinboxes -
+    // read it here so a preset's staged axis commits with Apply (and Save captures it).
+    if (RotationAxisComboBox)
+    {
+        NewState.RotationAxis = RotationAxisComboBox->GetSelectedIndex() == 1 ? ESFScaleAxis::Y : ESFScaleAxis::X;
+    }
+
+    return NewState;
+}
+
+void USmartSettingsFormWidget::ApplyCurrentValues()
+{
+    if (!CachedSubsystem.IsValid())
+    {
+        UE_LOG(LogSmartFoundations, Verbose, TEXT("Settings Form: No cached subsystem reference"));
+        return;
+    }
+
+    // Parse values from the panel inputs (shared with the flush-then-capture Save path)
+    FSFCounterState NewState = ReadPanelCounterState();
+
     // Log parsed values before applying
     UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Parsed values - Grid[%d,%d,%d] Spacing[%d,%d,%d] Steps[%d,%d] Stagger[%d,%d,%d,%d] Rotation[%.1f]"),
         NewState.GridCounters.X, NewState.GridCounters.Y, NewState.GridCounters.Z,
@@ -848,22 +919,8 @@ FReply USmartSettingsFormWidget::NativeOnMouseButtonDown(const FGeometry& InGeom
 
         const FVector2D LocalMouse = InGeometry.AbsoluteToLocal(InMouseEvent.GetScreenSpacePosition());
 
-        if (RestoreSidePanelSlot && RestoreSidePanel && RestoreSidePanel->GetVisibility() != ESlateVisibility::Collapsed)
-        {
-            const FVector2D RestorePos = RestoreSidePanelSlot->GetPosition();
-            const FVector2D RestoreSize = RestoreSidePanelSlot->GetSize();
-            const bool bMouseOverRestorePanel =
-                LocalMouse.X >= RestorePos.X && LocalMouse.X <= RestorePos.X + RestoreSize.X &&
-                LocalMouse.Y >= RestorePos.Y && LocalMouse.Y <= RestorePos.Y + RestoreSize.Y;
-
-            if (bMouseOverRestorePanel)
-            {
-                bIsDraggingRestorePanel = true;
-                DragOffset = LocalMouse - RestorePos;
-                return FReply::Handled();
-            }
-        }
-
+        // [#427/Q8] The Restore panel is DOCKED - a right-drag anywhere (including over the
+        // Restore region) moves the whole unit via the main panel's slot.
         if (BackgroundPanelSlot)
         {
             bIsDragging = true;
@@ -880,7 +937,6 @@ FReply USmartSettingsFormWidget::NativeOnMouseButtonUp(const FGeometry& InGeomet
     if (InMouseEvent.GetEffectingButton() == EKeys::RightMouseButton)
     {
         bIsDragging = false;
-        bIsDraggingRestorePanel = false;
     }
 
     return Super::NativeOnMouseButtonUp(InGeometry, InMouseEvent);
@@ -888,18 +944,13 @@ FReply USmartSettingsFormWidget::NativeOnMouseButtonUp(const FGeometry& InGeomet
 
 FReply USmartSettingsFormWidget::NativeOnMouseMove(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
 {
-    if (bIsDraggingRestorePanel && RestoreSidePanelSlot)
-    {
-        const FVector2D LocalMouse = InGeometry.AbsoluteToLocal(InMouseEvent.GetScreenSpacePosition());
-        RestoreSidePanelSlot->SetPosition(LocalMouse - DragOffset);
-        return FReply::Handled();
-    }
-
     if (bIsDragging && BackgroundPanelSlot)
     {
         // [#352 restructure] The panel is one canvas child; dragging moves one slot.
+        // [#427/Q8] The Restore side panel rides along - one draggable unit.
         const FVector2D LocalMouse = InGeometry.AbsoluteToLocal(InMouseEvent.GetScreenSpacePosition());
         BackgroundPanelSlot->SetPosition(LocalMouse - DragOffset);
+        UpdateRestoreDockPosition();
     }
 
     return Super::NativeOnMouseMove(InGeometry, InMouseEvent);

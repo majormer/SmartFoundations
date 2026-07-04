@@ -418,11 +418,24 @@ void USmartSettingsFormWidget::NativeConstruct()
         PowerReservedComboBox->OnSelectionChanged.AddDynamic(this, &USmartSettingsFormWidget::OnPowerReservedChanged);
     }
 
-    // Cache the two draggable canvas slots. [#352 restructure] Header and content now live
+    // Cache the two canvas slots. [#352 restructure] Header and content now live
     // INSIDE BackgroundPanel (real layout containers; content under a layout-true ScaleBox),
     // so the panel drags as one slot and ComboBox popups anchor where they render.
+    // [#427/Q8] The Restore side panel no longer drags on its own - it is DOCKED to the main
+    // panel (UpdateRestoreDockPosition) so the two move as one unit.
     BackgroundPanelSlot     = Cast<UCanvasPanelSlot>(BackgroundPanel->Slot);
     RestoreSidePanelSlot    = RestoreSidePanel ? Cast<UCanvasPanelSlot>(RestoreSidePanel->Slot) : nullptr;
+
+    // [#427] Rebuild the Restore region as the two-tab (Grid Presets | Modules) layout and dock it.
+    // Docking uses RENDERED geometry, which doesn't exist until the first layout pass - dock again
+    // next tick (same pattern as FitHeaderButtonRow).
+    BuildRestoreTabUI();
+    UpdateRestoreDockPosition();
+    if (UWorld* DockWorld = GetWorld())
+    {
+        DockWorld->GetTimerManager().SetTimerForNextTick(
+            FTimerDelegate::CreateUObject(this, &USmartSettingsFormWidget::UpdateRestoreDockPosition));
+    }
 
     // ========== DARK THEME STYLING ==========
 
@@ -512,6 +525,14 @@ void USmartSettingsFormWidget::NativeConstruct()
         // Panel labels now live in the Blueprint, re-keyed to their original LOCTEXT keys so existing
         // translations still resolve (gathered from assets). Only the non-localized "X" glyph stays in code.
         SetLabel(TEXT("CloseButtonText"), FText::FromString(TEXT("X")));  // glyph close button (top-right of header), not a localized word
+
+        // [#427] Restore redesign relabels: the reparented BP buttons take their new roles.
+        // (New keys - English until the next localization gather.)
+        SetLabel(TEXT("ApplyPresetBtnText"), LOCTEXT("Restore_ApplyAndBuild", "Apply & Build"));
+        SetLabel(TEXT("SavePresetBtnText"), LOCTEXT("Restore_SaveFromPanel", "Save from Panel"));
+        SetLabel(TEXT("ExportPresetBtnText"), LOCTEXT("Restore_ExportCode", "Export Code"));
+        SetLabel(TEXT("ImportPresetBtnText"), LOCTEXT("Restore_ImportCode", "Import Code"));
+        SetLabel(TEXT("ImportFromExtendBtnText"), LOCTEXT("Restore_SaveAsModule", "Save as Module"));
     }
 
     UpdateRestoreButtonTextColors();

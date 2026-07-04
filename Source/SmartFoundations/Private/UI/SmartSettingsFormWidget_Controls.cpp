@@ -822,6 +822,12 @@ void USmartSettingsFormWidget::UpdateGridDirectionLabel(UTextBlock* Label, bool 
 
 void USmartSettingsFormWidget::NativeDestruct()
 {
+    // [#427] Stop the live Extend-clipboard refresh.
+    if (UWorld* World = GetWorld())
+    {
+        World->GetTimerManager().ClearTimer(ClipboardRefreshTimerHandle);
+    }
+
     Super::NativeDestruct();
 }
 

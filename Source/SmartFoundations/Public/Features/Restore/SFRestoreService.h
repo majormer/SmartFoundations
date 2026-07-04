@@ -25,6 +25,7 @@
 #include "SFRestoreService.generated.h"
 
 class USFSubsystem;
+struct FSFCounterState;
 
 UCLASS()
 class SMARTFOUNDATIONS_API USFRestoreService : public UObject
@@ -52,19 +53,37 @@ public:
 		const FString& Name,
 		const FSFRestoreCaptureFlags& CaptureFlags) const;
 
+	/**
+	 * #427 flush-then-capture: capture with an explicit counter-state snapshot instead of the
+	 * committed subsystem state. The Smart Panel is apply-on-commit, so typed-but-unapplied
+	 * spinbox values haven't reached GetCounterState() yet - the widget parses its inputs into
+	 * a state and passes it here, so Save records what's ON SCREEN (no side effects, no grid
+	 * regeneration). Everything else (recipes, auto-connect, topology) reads live as usual.
+	 * (Not a CaptureCurrentState overload: UHT forbids overloading a UFUNCTION name.)
+	 */
+	FSFRestorePreset CapturePanelState(
+		const FString& Name,
+		const FSFRestoreCaptureFlags& CaptureFlags,
+		const FSFCounterState& OverrideCounterState) const;
+
 	// ==================== Apply ====================
 
 	/**
 	 * Apply a preset to the current Smart Panel state.
-	 * Auto-switches the build gun to the preset's building class.
+	 * Auto-switches the build gun to the preset's building class (for Modules this IS the
+	 * auto-equip: the manifold previews immediately around the equipped source building).
 	 * Fields whose CaptureFlag was false when saved are left untouched.
 	 *
 	 * @param Preset  The preset to apply
+	 * @param bIncludeCounterState  When false, the counter state (grid/transforms) is NOT pushed
+	 *        into the subsystem - #427 Grid Preset apply populates the PANEL instead and lets the
+	 *        panel's own apply path commit (honoring Apply Immediately). Module apply passes true:
+	 *        the replay session seeds its scalable size from the preset's counters.
 	 * @return true if the preset was applied successfully, false if the
 	 *         building class is unavailable or recipe lookup failed
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Smart|Restore")
-	bool ApplyPreset(const FSFRestorePreset& Preset);
+	bool ApplyPreset(const FSFRestorePreset& Preset, bool bIncludeCounterState = true);
 
 	// ==================== Persistence (JSON) ====================
 
@@ -140,6 +159,11 @@ public:
 	const FString& GetActiveRestorePresetName() const { return ActiveRestorePresetName; }
 	void ClearActiveRestoreSession(const TCHAR* Reason);
 
+	/** Validate that all preset recipes/buildables are unlocked in the current game state.
+	 *  Public since #427: the Restore UI's details panes show availability ("Requires X") and
+	 *  disable Apply from the same check that gates the apply itself. */
+	bool ValidatePresetUnlocks(const FSFRestorePreset& Preset, FString& OutFailureReason) const;
+
 private:
 	TWeakObjectPtr<USFSubsystem> Subsystem;
 	bool bRestoreSessionActive = false;
@@ -159,9 +183,6 @@ private:
 
 	/** Get the full file path for a preset by name */
 	FString GetPresetFilePath(const FString& Name) const;
-
-	/** Validate that all preset recipes/buildables are unlocked in the current game state. */
-	bool ValidatePresetUnlocks(const FSFRestorePreset& Preset, FString& OutFailureReason) const;
 
 	void ReplayExtendTopologyWhenHologramReady(TSharedRef<const FSFRestorePreset> Preset, int32 AttemptsRemaining, int32 SettleTicksRemaining);
 };
