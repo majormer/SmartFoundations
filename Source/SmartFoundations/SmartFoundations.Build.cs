@@ -52,10 +52,11 @@ public class SmartFoundations : ModuleRules
 			"Json"
 		});
 
-		// FactoryGame (base-game) plugins. These are module-only dependencies: link them here,
-		// but do NOT list them in SmartFoundations.uplugin's "Plugins" array. They ship with and
-		// are enabled by the base game, and a .uplugin dependency entry gets read by SMR/ficsit.app
-		// as a *mod* dependency it can't resolve -> "ent: mod not found" on upload (bit us in 33.5.0).
+		// FactoryGame (base-game) plugins. Link the module here, AND list the plugin in
+		// SmartFoundations.uplugin's "Plugins" array with "BaseGame": true. That flag tells
+		// SMR/ficsit.app to ignore it as a mod dependency; without it (or if omitted entirely),
+		// SMR tries to resolve the base-game plugin as a mod -> "ent: mod not found" on upload
+		// (bit us in 33.5.0; fix per mircearoata). Listing it also silences UBT's missing-dependency warning.
 		PublicDependencyModuleNames.AddRange(new string[] {
 			"AbstractInstance",  // #456: resolve instanced-mesh hits (belts/pipes/poles) to their owning buildable
 			//"InstancedSplinesComponent",
