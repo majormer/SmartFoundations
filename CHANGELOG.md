@@ -9,23 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [33.5.2] - 2026-07-04
-
-> *A packaging-only patch: earlier 33.5.x builds couldn't be published to the mod repository, so 33.5.2 is the release with the upload fixed. No gameplay changes.*
-
-### Fixed
-
-- **The release publishes to the mod repository again** - the 33.5.0 build declared a base-game engine plugin (AbstractInstance, used internally by the new Smart Upgrade network scan) as though it were a separate mod dependency, which the mod repository rejected on upload. It's now correctly flagged as a base-game plugin so the repository ignores it. Packaging only - 33.5.2 is the 33.5.0 feature set with nothing else changed.
-
----
-
-## [33.5.0] - 2026-07-04
+## [33.5.0] - 2026-07-05
 
 > *A Smart Restore redesign and a smarter Smart Upgrade: Restore is rebuilt into two clear tabs - Grid Presets and Modules - docked to the Smart Panel, and Smart Upgrade's network scan gains precise tier-to-tier targeting plus fixes for aiming, pipe junctions, and refreshing after an upgrade.*
 
 ### Added
 
 - **Smart Upgrade's network scan can now upgrade one tier at a time** - Scanning a connected belt/pipe/pole network for upgrades used to only let you pick a *target* tier and then upgrade **everything** below it. You can now pick a specific source tier - for example, bump only your Mk.2 belts to Mk.3 and leave the Mk.4s untouched - matching the tier control the radius scan already had. Click a tier in the scan results to target just that tier, or pick **All tiers** to upgrade everything below the target as before. (Issue #456, requested by Infarctus on the Smart! Discord)
+- **You can set how much each scroll notch changes a transform** - Spacing, Steps, Stagger, and Rotation now have their own configurable per-notch increments in the mod settings (under **Building Behavior**), so you can tune how far one mouse-wheel notch moves each transform instead of the fixed 0.5 m / 5°. The same increments drive Extend, Restore, and Smart Walking. (Issue #217)
 
 ### Changed
 

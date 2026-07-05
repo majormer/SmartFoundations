@@ -72,20 +72,11 @@ USmartFoundationsModConfiguration::USmartFoundationsModConfiguration()
 		LOCTEXT("P.PowerConnectReserved.TT", "Number of pole connection slots to leave free for your own manual wiring."), 2));
 	RootSection->SectionProperties.Add(TEXT("PowerAutoConnect"), Power);
 
-	// ── Scaling Settings (#217 scroll increments) ──
-	// Base C++ archetype only carries keys + defaults (survives cooking). The renderable slider
-	// bounds (0.1-8 m / 0.5-90 deg) live on the Smart_Config Blueprint override's BP_ConfigPropertyFloat.
-	UConfigPropertySection* Scaling = CreateSection(TEXT("ScalingSettings"), LOCTEXT("Sec.Scaling", "Scaling Settings"),
-		LOCTEXT("Sec.Scaling.TT", "How much each mouse-wheel notch changes a grid transform. Also used by Extend, Restore, and Smart Walking."));
-	Scaling->SectionProperties.Add(TEXT("SpacingIncrement"),  CreateFloatProperty(TEXT("SpacingIncrement"),  LOCTEXT("P.SpacingIncrement", "Spacing Increment (m)"),
-		LOCTEXT("P.SpacingIncrement.TT", "Meters of spacing added per scroll notch (also Extend spacing and walk segment advance)."), 0.5f));
-	Scaling->SectionProperties.Add(TEXT("StepsIncrement"),    CreateFloatProperty(TEXT("StepsIncrement"),    LOCTEXT("P.StepsIncrement", "Steps Increment (m)"),
-		LOCTEXT("P.StepsIncrement.TT", "Meters of stepping added per scroll notch (also walk segment rise)."), 0.5f));
-	Scaling->SectionProperties.Add(TEXT("StaggerIncrement"),  CreateFloatProperty(TEXT("StaggerIncrement"),  LOCTEXT("P.StaggerIncrement", "Stagger Increment (m)"),
-		LOCTEXT("P.StaggerIncrement.TT", "Meters of stagger added per scroll notch (also walk segment shift)."), 0.5f));
-	Scaling->SectionProperties.Add(TEXT("RotationIncrement"), CreateFloatProperty(TEXT("RotationIncrement"), LOCTEXT("P.RotationIncrement", "Rotation Increment (deg)"),
-		LOCTEXT("P.RotationIncrement.TT", "Degrees of rotation added per scroll notch (also walk segment turn)."), 5.0f));
-	RootSection->SectionProperties.Add(TEXT("ScalingSettings"), Scaling);
+	// [#217 / AV-FP fix] The scroll-increment properties moved OUT of a dedicated "ScalingSettings"
+	// section and INTO Building Behavior below. A new config USTRUCT (FSmart_ScalingSettingsConfigSection)
+	// emitted the reflection chunk that tipped the mod's aggregate reflection over BitDefender's
+	// Gen:Variant.Lazy ML threshold; folding into an existing section drops it back under. Keys and
+	// defaults are unchanged - only the containing section differs (menu heading now "Building Behavior").
 
 	// ── Building Behavior ──
 	UConfigPropertySection* Building = CreateSection(TEXT("BuildingBehavior"), LOCTEXT("Sec.Building", "Building Behavior"),
@@ -102,6 +93,15 @@ USmartFoundationsModConfiguration::USmartFoundationsModConfiguration()
 		LOCTEXT("P.bAutoHoldOnGridChange.TT", "Automatically lock the hologram in place after any grid change. Press the Hold key to release it."), true));  // [#279] default ON
 	Building->SectionProperties.Add(TEXT("bApplyImmediately"),     CreateBoolProperty(TEXT("bApplyImmediately"),     LOCTEXT("P.bApplyImmediately", "Apply Immediately"),
 		LOCTEXT("P.bApplyImmediately.TT", "Apply Smart Panel changes instantly instead of clicking the Apply button."), false));
+	// [#217 / AV-FP fix] Scroll increments (formerly their own "Scaling Settings" section). Keys/defaults unchanged.
+	Building->SectionProperties.Add(TEXT("SpacingIncrement"),  CreateFloatProperty(TEXT("SpacingIncrement"),  LOCTEXT("P.SpacingIncrement", "Spacing Increment (m)"),
+		LOCTEXT("P.SpacingIncrement.TT", "Meters of spacing added per scroll notch (also Extend spacing and walk segment advance)."), 0.5f));
+	Building->SectionProperties.Add(TEXT("StepsIncrement"),    CreateFloatProperty(TEXT("StepsIncrement"),    LOCTEXT("P.StepsIncrement", "Steps Increment (m)"),
+		LOCTEXT("P.StepsIncrement.TT", "Meters of stepping added per scroll notch (also walk segment rise)."), 0.5f));
+	Building->SectionProperties.Add(TEXT("StaggerIncrement"),  CreateFloatProperty(TEXT("StaggerIncrement"),  LOCTEXT("P.StaggerIncrement", "Stagger Increment (m)"),
+		LOCTEXT("P.StaggerIncrement.TT", "Meters of stagger added per scroll notch (also walk segment shift)."), 0.5f));
+	Building->SectionProperties.Add(TEXT("RotationIncrement"), CreateFloatProperty(TEXT("RotationIncrement"), LOCTEXT("P.RotationIncrement", "Rotation Increment (deg)"),
+		LOCTEXT("P.RotationIncrement.TT", "Degrees of rotation added per scroll notch (also walk segment turn)."), 5.0f));
 	RootSection->SectionProperties.Add(TEXT("BuildingBehavior"), Building);
 
 	// ── HUD ──
