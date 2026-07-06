@@ -136,28 +136,64 @@ void FSFPipeAutoConnectManager::EvaluatePipeConnections(AFGHologram* ParentJunct
 			});
 		}
 		
-		// Chain adjacent junctions sequentially
+		// Chain junctions ONWARD in the lane - not necessarily to the immediate next member.
+		// [#464] Mirrors the belt manifold lookahead: a staggered two-level lane interleaves BOTH
+		// levels along the run, so the consecutive pair is cross-level (too steep / not facing) and
+		// the old i->i+1-only pairing dropped the manifold link entirely. Each junction now considers
+		// the next few lane members as continuation candidates, preferring its OWN level
+		// (LevelAffinityPenalty) then proximity: a zigzag lane resolves into two flat interleaved
+		// manifolds, while flat and gently-stepped lanes keep chaining consecutively (their best
+		// candidate IS i+1).
+		constexpr int32 PipeManifoldLookahead = 3;
 		for (int32 i = 0; i < SortedJunctions.Num() - 1; i++)
 		{
 			AFGHologram* SourceJunction = SortedJunctions[i];
-			AFGHologram* TargetJunction = SortedJunctions[i + 1];
-			
-			if (!SourceJunction || !TargetJunction)
+			if (!SourceJunction)
 			{
 				continue;
 			}
-			
-			UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      Chaining %s → %s"), 
-				*SourceJunction->GetName(), *TargetJunction->GetName());
-			
-			// Find best facing connector pair between the two junctions
+			const FVector SourceJunctionPos = SourceJunction->GetActorLocation();
+
+			// Candidate continuation targets: same level first, then nearest
+			TArray<int32> CandidateIndices;
+			for (int32 j = i + 1; j < SortedJunctions.Num() && j <= i + PipeManifoldLookahead; j++)
+			{
+				if (SortedJunctions[j])
+				{
+					CandidateIndices.Add(j);
+				}
+			}
+			CandidateIndices.Sort([&SortedJunctions, &SourceJunctionPos](int32 IdxA, int32 IdxB)
+			{
+				const FVector PA = SortedJunctions[IdxA]->GetActorLocation();
+				const FVector PB = SortedJunctions[IdxB]->GetActorLocation();
+				const float KeyA = USFAutoConnectService::LevelAffinityPenalty(SourceJunctionPos, PA) + FVector::Dist(SourceJunctionPos, PA);
+				const float KeyB = USFAutoConnectService::LevelAffinityPenalty(SourceJunctionPos, PB) + FVector::Dist(SourceJunctionPos, PB);
+				return KeyA < KeyB;
+			});
+
+			AFGHologram* TargetJunction = nullptr;
 			UFGPipeConnectionComponent* SourceConnector = nullptr;
 			UFGPipeConnectionComponent* TargetConnector = nullptr;
-			FindBestManifoldConnectorPair(SourceJunction, TargetJunction, SourceConnector, TargetConnector);
-			
-			if (!SourceConnector || !TargetConnector)
+			for (int32 CandidateIdx : CandidateIndices)
 			{
-				UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("         ❌ No valid connector pair for manifold"));
+				AFGHologram* Candidate = SortedJunctions[CandidateIdx];
+				UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      Chaining %s → %s (lookahead +%d)"),
+					*SourceJunction->GetName(), *Candidate->GetName(), CandidateIdx - i);
+
+				// Find best facing connector pair between the two junctions
+				FindBestManifoldConnectorPair(SourceJunction, Candidate, SourceConnector, TargetConnector);
+				if (SourceConnector && TargetConnector)
+				{
+					TargetJunction = Candidate;
+					break;
+				}
+				UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("         ❌ No valid connector pair - trying next candidate"));
+			}
+
+			if (!TargetJunction || !SourceConnector || !TargetConnector)
+			{
+				UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("         ❌ No valid manifold continuation within lookahead"));
 				continue;  // Don't add to ValidManifoldSources - will be cleaned up at end
 			}
 			

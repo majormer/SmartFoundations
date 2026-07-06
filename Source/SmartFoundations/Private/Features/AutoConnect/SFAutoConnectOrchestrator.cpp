@@ -1104,125 +1104,160 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("   🔗 Input%d lane: Connecting %d splitters in manifold (sorted spatially)"),
 			InputIndex, SplittersInLane.Num());
 		
-		// Connect each splitter to the next one in the lane
+		// Get BACK input for a distributor (input facing opposite actor forward)
+		auto GetBackInput = [](AFGHologram* Distro) -> UFGFactoryConnectionComponent*
+		{
+			TArray<UFGFactoryConnectionComponent*> Connectors;
+			Distro->GetComponents<UFGFactoryConnectionComponent>(Connectors);
+			UFGFactoryConnectionComponent* BackInput = nullptr;
+			const FVector Fwd = Distro->GetActorForwardVector();
+			float BestDotLocal = 1.0f; // most negative
+			for (UFGFactoryConnectionComponent* C : Connectors)
+			{
+				if (C && C->GetDirection() == EFactoryConnectionDirection::FCD_INPUT)
+				{
+					const float Dot = FVector::DotProduct(C->GetForwardVector(), Fwd);
+					if (!BackInput || Dot < BestDotLocal)
+					{
+						BestDotLocal = Dot;
+						BackInput = C;
+					}
+				}
+			}
+			return BackInput;
+		};
+
+		// Connect each splitter ONWARD in the lane - not necessarily to the immediate next member.
+		// [#464] A staggered two-level run interleaves BOTH levels along one lane, so the consecutive
+		// pair is cross-level and its belt is too steep (e.g. 2m rise over a 2-3m gap = 34-45°) - the
+		// old i->i+1-only pairing then dropped the link entirely, leaving zigzag lanes with NO manifold.
+		// Each splitter now considers the next few lane members as continuation candidates, preferring
+		// its OWN level (LevelAffinityPenalty) then proximity: a zigzag lane resolves into two flat
+		// interleaved manifolds (1-3-5... and 2-4-6..., each passing under/over the other level's
+		// splitters), while flat and gently-stepped lanes chain consecutively as before (their best
+		// candidate IS i+1). Reservation sets keep the interleaved chains from crossing.
+		constexpr int32 ManifoldLookahead = 3;
 		for (int32 i = 0; i < SplittersInLane.Num() - 1; i++)
 		{
 			AFGHologram* SourceDistributor = SplittersInLane[i];
-			AFGHologram* TargetDistributor = SplittersInLane[i + 1];
-			
-			// Find middle outputs/inputs for both directions
+
 			UFGFactoryConnectionComponent* A_MiddleOut = AutoConnectService->FindMiddleConnector(SourceDistributor);
-			UFGFactoryConnectionComponent* B_MiddleOut = AutoConnectService->FindMiddleConnector(TargetDistributor);
 			if (!A_MiddleOut || A_MiddleOut->GetDirection() != EFactoryConnectionDirection::FCD_OUTPUT)
 			{
 				UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      ❌ %s has no middle output"), *SourceDistributor->GetName());
 				continue;
 			}
-			if (!B_MiddleOut || B_MiddleOut->GetDirection() != EFactoryConnectionDirection::FCD_OUTPUT)
-			{
-				UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      ℹ️ %s has no middle output (may be merger)"), *TargetDistributor->GetName());
-			}
+			UFGFactoryConnectionComponent* A_BackIn = GetBackInput(SourceDistributor);
+			const FVector SourcePos = SourceDistributor->GetActorLocation();
 
-			// Get BACK inputs for both distributors (inputs facing opposite actor forward)
-			auto GetBackInput = [](AFGHologram* Distro) -> UFGFactoryConnectionComponent*
+			// Candidate continuation targets: same level first, then nearest
+			TArray<int32> CandidateIndices;
+			for (int32 j = i + 1; j < SplittersInLane.Num() && j <= i + ManifoldLookahead; j++)
 			{
-				TArray<UFGFactoryConnectionComponent*> Connectors;
-				Distro->GetComponents<UFGFactoryConnectionComponent>(Connectors);
-				UFGFactoryConnectionComponent* BackInput = nullptr;
-				const FVector Fwd = Distro->GetActorForwardVector();
-				float BestDotLocal = 1.0f; // most negative
-				for (UFGFactoryConnectionComponent* C : Connectors)
+				CandidateIndices.Add(j);
+			}
+			CandidateIndices.Sort([&SplittersInLane, &SourcePos](int32 IdxA, int32 IdxB)
+			{
+				const FVector PA = SplittersInLane[IdxA]->GetActorLocation();
+				const FVector PB = SplittersInLane[IdxB]->GetActorLocation();
+				const float KeyA = USFAutoConnectService::LevelAffinityPenalty(SourcePos, PA) + FVector::Dist(SourcePos, PA);
+				const float KeyB = USFAutoConnectService::LevelAffinityPenalty(SourcePos, PB) + FVector::Dist(SourcePos, PB);
+				return KeyA < KeyB;
+			});
+
+			bool bLinked = false;
+			for (int32 CandidateIdx : CandidateIndices)
+			{
+				AFGHologram* TargetDistributor = SplittersInLane[CandidateIdx];
+
+				UFGFactoryConnectionComponent* B_MiddleOut = AutoConnectService->FindMiddleConnector(TargetDistributor);
+				if (!B_MiddleOut || B_MiddleOut->GetDirection() != EFactoryConnectionDirection::FCD_OUTPUT)
 				{
-					if (C && C->GetDirection() == EFactoryConnectionDirection::FCD_INPUT)
+					UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      ℹ️ %s has no middle output (may be merger)"), *TargetDistributor->GetName());
+					B_MiddleOut = nullptr;
+				}
+				UFGFactoryConnectionComponent* B_BackIn = GetBackInput(TargetDistributor);
+				if (!B_BackIn)
+				{
+					UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      ❌ Target %s has no back input"), *TargetDistributor->GetName());
+					continue;
+				}
+
+				// Try both orientations: A→B and B→A. Choose the one with better facing.
+				struct FManifoldOption { UFGFactoryConnectionComponent* Out; UFGFactoryConnectionComponent* In; AFGHologram* StoreOn; float Dot; float Distance; int32 Index; };
+				TArray<FManifoldOption> Options;
+				// Option 1: Source → Target
+				if (A_MiddleOut && B_BackIn)
+				{
+					const FVector SrcPos = A_MiddleOut->GetComponentLocation();
+					const FVector TgtPos = B_BackIn->GetComponentLocation();
+					const float Dot = FVector::DotProduct(A_MiddleOut->GetConnectorNormal(), (TgtPos - SrcPos).GetSafeNormal());
+					Options.Add({A_MiddleOut, B_BackIn, SourceDistributor, Dot, static_cast<float>(FVector::Dist(SrcPos, TgtPos)), 0});
+				}
+				// Option 2: Target → Source (only if target has middle out and source has back in)
+				if (B_MiddleOut && A_BackIn)
+				{
+					const FVector SrcPos = B_MiddleOut->GetComponentLocation();
+					const FVector TgtPos = A_BackIn->GetComponentLocation();
+					const float Dot = FVector::DotProduct(B_MiddleOut->GetConnectorNormal(), (TgtPos - SrcPos).GetSafeNormal());
+					Options.Add({B_MiddleOut, A_BackIn, TargetDistributor, Dot, static_cast<float>(FVector::Dist(SrcPos, TgtPos)), 1});
+				}
+
+				// Pick the best facing option
+				// #424: deterministic tie-break on near-equal facing (closer pair, then lower index) so the
+				// chosen orientation doesn't flicker/crossover between evaluations.
+				Options.Sort([](const FManifoldOption& L, const FManifoldOption& R)
+				{
+					if (FMath::Abs(L.Dot - R.Dot) > 0.01f) return L.Dot > R.Dot;
+					if (!FMath::IsNearlyEqual(L.Distance, R.Distance, 1.0f)) return L.Distance < R.Distance;
+					return L.Index < R.Index;
+				});
+				for (const FManifoldOption& Opt : Options)
+				{
+					if (Opt.Dot < 0.2f)
 					{
-						const float Dot = FVector::DotProduct(C->GetForwardVector(), Fwd);
-						if (!BackInput || Dot < BestDotLocal)
-						{
-							BestDotLocal = Dot;
-							BackInput = C;
-						}
+						UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      ⏭️ Skipping option: poor facing alignment (dot=%.2f)"), Opt.Dot);
+						continue;
+					}
+					if (ManifoldReservedInputs.Contains(Opt.In))
+					{
+						UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      ⏭️ Manifold target input already reserved - skip option"));
+						continue;
+					}
+					if (ManifoldReservedOutputs.Contains(Opt.Out))
+					{
+						UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      ⏭️ Manifold source output already reserved - skip option"));
+						continue;
+					}
+
+					UE_LOG(LogSmartAutoConnect, Verbose, TEXT("      🔗 MANIFOLD BELT: %s.%s → %s.%s [Input%d lane, lookahead +%d] (dot=%.2f)"),
+						*Opt.StoreOn->GetName(),
+						*Opt.Out->GetName(),
+						*Cast<AFGHologram>(Opt.In->GetOwner())->GetName(),
+						*Opt.In->GetName(),
+						InputIndex,
+						CandidateIdx - i,
+						Opt.Dot);
+
+					// Create connection with normal angle validation
+					if (AutoConnectService->ConnectAnyConnectors(Opt.Out, Opt.In, Opt.StoreOn, false))
+					{
+						ManifoldReservedInputs.Add(Opt.In, Opt.StoreOn);
+						ManifoldReservedOutputs.Add(Opt.Out, Opt.StoreOn);
+						bLinked = true;
+						break;
 					}
 				}
-				return BackInput;
-			};
 
-			UFGFactoryConnectionComponent* A_BackIn = GetBackInput(SourceDistributor);
-			UFGFactoryConnectionComponent* B_BackIn = GetBackInput(TargetDistributor);
-			if (!B_BackIn)
-			{
-				UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      ❌ Target %s has no back input"), *TargetDistributor->GetName());
-				continue;
-			}
-
-			// Try both orientations: A→B and B→A. Choose the one with better facing.
-			struct FManifoldOption { UFGFactoryConnectionComponent* Out; UFGFactoryConnectionComponent* In; AFGHologram* StoreOn; float Dot; float Distance; int32 Index; };
-			TArray<FManifoldOption> Options;
-			// Option 1: Source → Target
-			if (A_MiddleOut && B_BackIn)
-			{
-				const FVector SrcPos = A_MiddleOut->GetComponentLocation();
-				const FVector TgtPos = B_BackIn->GetComponentLocation();
-				const float Dot = FVector::DotProduct(A_MiddleOut->GetConnectorNormal(), (TgtPos - SrcPos).GetSafeNormal());
-				Options.Add({A_MiddleOut, B_BackIn, SourceDistributor, Dot, static_cast<float>(FVector::Dist(SrcPos, TgtPos)), 0});
-			}
-			// Option 2: Target → Source (only if target has middle out and source has back in)
-			if (B_MiddleOut && A_BackIn)
-			{
-				const FVector SrcPos = B_MiddleOut->GetComponentLocation();
-				const FVector TgtPos = A_BackIn->GetComponentLocation();
-				const float Dot = FVector::DotProduct(B_MiddleOut->GetConnectorNormal(), (TgtPos - SrcPos).GetSafeNormal());
-				Options.Add({B_MiddleOut, A_BackIn, TargetDistributor, Dot, static_cast<float>(FVector::Dist(SrcPos, TgtPos)), 1});
-			}
-
-			// Pick the best facing option
-			// #424: deterministic tie-break on near-equal facing (closer pair, then lower index) so the
-			// chosen orientation doesn't flicker/crossover between evaluations.
-			Options.Sort([](const FManifoldOption& L, const FManifoldOption& R)
-			{
-				if (FMath::Abs(L.Dot - R.Dot) > 0.01f) return L.Dot > R.Dot;
-				if (!FMath::IsNearlyEqual(L.Distance, R.Distance, 1.0f)) return L.Distance < R.Distance;
-				return L.Index < R.Index;
-			});
-			bool bLinked = false;
-			for (const FManifoldOption& Opt : Options)
-			{
-				if (Opt.Dot < 0.2f)
+				if (bLinked)
 				{
-					UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      ⏭️ Skipping option: poor facing alignment (dot=%.2f)"), Opt.Dot);
-					continue;
-				}
-				if (ManifoldReservedInputs.Contains(Opt.In))
-				{
-					UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      ⏭️ Manifold target input already reserved - skip option"));
-					continue;
-				}
-				if (ManifoldReservedOutputs.Contains(Opt.Out))
-				{
-					UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      ⏭️ Manifold source output already reserved - skip option"));
-					continue;
-				}
-
-				UE_LOG(LogSmartAutoConnect, Verbose, TEXT("      🔗 MANIFOLD BELT: %s.%s → %s.%s [Input%d lane] (dot=%.2f)"),
-					*Opt.StoreOn->GetName(),
-					*Opt.Out->GetName(),
-					*Cast<AFGHologram>(Opt.In->GetOwner())->GetName(),
-					*Opt.In->GetName(),
-					InputIndex,
-					Opt.Dot);
-
-				// Create connection with normal angle validation
-				if (AutoConnectService->ConnectAnyConnectors(Opt.Out, Opt.In, Opt.StoreOn, false))
-				{
-					ManifoldReservedInputs.Add(Opt.In, Opt.StoreOn);
-					ManifoldReservedOutputs.Add(Opt.Out, Opt.StoreOn);
-					bLinked = true;
 					break;
 				}
 			}
 
 			if (!bLinked)
 			{
-				UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      ℹ️ No valid manifold orientation found for this pair"));
+				UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      ℹ️ No valid manifold continuation found within lookahead"));
 			}
 		}
 	}
@@ -1314,22 +1349,20 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("   🔗 Output%d lane: Connecting %d mergers in manifold (sorted spatially)"),
 			OutputIndex, MergersInLane.Num());
 		
-		// Connect each pair of adjacent mergers in the lane
-		// SAME PATTERN AS SPLITTERS: Try both orientations, pick best facing
+		// Connect each merger ONWARD in the lane - not necessarily to the immediate next member.
+		// [#464] Same lookahead as the splitter manifold above: on a staggered two-level lane the
+		// consecutive pair is cross-level/too steep, so each merger considers the next few lane
+		// members, preferring its own level then proximity (zigzag lanes resolve into two flat
+		// interleaved manifolds; flat/stepped lanes keep chaining consecutively).
+		constexpr int32 MergerManifoldLookahead = 3;
 		for (int32 i = 0; i < MergersInLane.Num() - 1; i++)
 		{
 			AFGHologram* SourceMerger = MergersInLane[i];
-			AFGHologram* TargetMerger = MergersInLane[i + 1];
-			
+
 			// Get connectors
 			// For mergers: single output, back input
 			// Note: Mergers only have 1 output, so just find it directly
 			UFGFactoryConnectionComponent* A_MiddleOut = nullptr;
-			UFGFactoryConnectionComponent* A_BackIn = nullptr;
-			UFGFactoryConnectionComponent* B_MiddleOut = nullptr;
-			UFGFactoryConnectionComponent* B_BackIn = nullptr;
-			
-			// Find outputs (mergers have only 1)
 			TArray<UFGFactoryConnectionComponent*> SourceOutputs;
 			SourceMerger->GetComponents<UFGFactoryConnectionComponent>(SourceOutputs);
 			for (UFGFactoryConnectionComponent* C : SourceOutputs)
@@ -1340,100 +1373,127 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 					break;
 				}
 			}
-			
-			TArray<UFGFactoryConnectionComponent*> TargetOutputs;
-			TargetMerger->GetComponents<UFGFactoryConnectionComponent>(TargetOutputs);
-			for (UFGFactoryConnectionComponent* C : TargetOutputs)
-			{
-				if (C && C->GetDirection() == EFactoryConnectionDirection::FCD_OUTPUT)
-				{
-					B_MiddleOut = C;
-					break;
-				}
-			}
-			
-			// Find back inputs using FindMiddleConnector (for mergers, it returns the back input)
-			A_BackIn = AutoConnectService->FindMiddleConnector(SourceMerger);
-			B_BackIn = AutoConnectService->FindMiddleConnector(TargetMerger);
-			
+			// Find back input using FindMiddleConnector (for mergers, it returns the back input)
+			UFGFactoryConnectionComponent* A_BackIn = AutoConnectService->FindMiddleConnector(SourceMerger);
+
 			if (!A_MiddleOut)
 			{
 				UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      ❌ Source %s has no middle output"), *SourceMerger->GetName());
 				continue;
 			}
-			if (!B_BackIn)
-			{
-				UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      ❌ Target %s has no back input"), *TargetMerger->GetName());
-				continue;
-			}
+			const FVector SourcePos = SourceMerger->GetActorLocation();
 
-			// Try both orientations: A→B and B→A. Choose the one with better facing (SAME AS SPLITTERS)
-			struct FManifoldOption { UFGFactoryConnectionComponent* Out; UFGFactoryConnectionComponent* In; AFGHologram* StoreOn; float Dot; float Distance; int32 Index; };
-			TArray<FManifoldOption> Options;
-			// Option 1: Source → Target
-			if (A_MiddleOut && B_BackIn)
+			// Candidate continuation targets: same level first, then nearest
+			TArray<int32> CandidateIndices;
+			for (int32 j = i + 1; j < MergersInLane.Num() && j <= i + MergerManifoldLookahead; j++)
 			{
-				const FVector SrcPos = A_MiddleOut->GetComponentLocation();
-				const FVector TgtPos = B_BackIn->GetComponentLocation();
-				const float Dot = FVector::DotProduct(A_MiddleOut->GetConnectorNormal(), (TgtPos - SrcPos).GetSafeNormal());
-				Options.Add({A_MiddleOut, B_BackIn, SourceMerger, Dot, static_cast<float>(FVector::Dist(SrcPos, TgtPos)), 0});
+				CandidateIndices.Add(j);
 			}
-			// Option 2: Target → Source (only if target has middle out and source has back in)
-			if (B_MiddleOut && A_BackIn)
+			CandidateIndices.Sort([&MergersInLane, &SourcePos](int32 IdxA, int32 IdxB)
 			{
-				const FVector SrcPos = B_MiddleOut->GetComponentLocation();
-				const FVector TgtPos = A_BackIn->GetComponentLocation();
-				const float Dot = FVector::DotProduct(B_MiddleOut->GetConnectorNormal(), (TgtPos - SrcPos).GetSafeNormal());
-				Options.Add({B_MiddleOut, A_BackIn, TargetMerger, Dot, static_cast<float>(FVector::Dist(SrcPos, TgtPos)), 1});
-			}
-
-			// Pick the best facing option (SAME AS SPLITTERS)
-			// #424: deterministic tie-break on near-equal facing (closer pair, then lower index) so the
-			// chosen orientation doesn't flicker/crossover between evaluations.
-			Options.Sort([](const FManifoldOption& L, const FManifoldOption& R)
-			{
-				if (FMath::Abs(L.Dot - R.Dot) > 0.01f) return L.Dot > R.Dot;
-				if (!FMath::IsNearlyEqual(L.Distance, R.Distance, 1.0f)) return L.Distance < R.Distance;
-				return L.Index < R.Index;
+				const FVector PA = MergersInLane[IdxA]->GetActorLocation();
+				const FVector PB = MergersInLane[IdxB]->GetActorLocation();
+				const float KeyA = USFAutoConnectService::LevelAffinityPenalty(SourcePos, PA) + FVector::Dist(SourcePos, PA);
+				const float KeyB = USFAutoConnectService::LevelAffinityPenalty(SourcePos, PB) + FVector::Dist(SourcePos, PB);
+				return KeyA < KeyB;
 			});
+
 			bool bLinked = false;
-			for (const FManifoldOption& Opt : Options)
+			for (int32 CandidateIdx : CandidateIndices)
 			{
-				if (Opt.Dot < 0.2f)
+				AFGHologram* TargetMerger = MergersInLane[CandidateIdx];
+
+				UFGFactoryConnectionComponent* B_MiddleOut = nullptr;
+				TArray<UFGFactoryConnectionComponent*> TargetOutputs;
+				TargetMerger->GetComponents<UFGFactoryConnectionComponent>(TargetOutputs);
+				for (UFGFactoryConnectionComponent* C : TargetOutputs)
 				{
-					UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      ⏭️ Skipping option: poor facing alignment (dot=%.2f)"), Opt.Dot);
-					continue;
+					if (C && C->GetDirection() == EFactoryConnectionDirection::FCD_OUTPUT)
+					{
+						B_MiddleOut = C;
+						break;
+					}
 				}
-				if (ManifoldReservedInputs.Contains(Opt.In))
+				UFGFactoryConnectionComponent* B_BackIn = AutoConnectService->FindMiddleConnector(TargetMerger);
+				if (!B_BackIn)
 				{
-					UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      ⏭️ Manifold target input already reserved - skip option"));
-					continue;
-				}
-				if (ManifoldReservedOutputs.Contains(Opt.Out))
-				{
-					UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      ⏭️ Manifold source output already reserved - skip option"));
+					UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      ❌ Target %s has no back input"), *TargetMerger->GetName());
 					continue;
 				}
 
-				UE_LOG(LogSmartAutoConnect, Verbose, TEXT("      🔗 MERGER MANIFOLD: %s → %s [Output%d lane] (dot=%.2f)"),
-					*Opt.StoreOn->GetName(),
-					*Cast<AFGHologram>(Opt.In->GetOwner())->GetName(),
-					OutputIndex,
-					Opt.Dot);
-
-				// Create connection with normal angle validation (SAME AS SPLITTERS)
-				if (AutoConnectService->ConnectAnyConnectors(Opt.Out, Opt.In, Opt.StoreOn, false))
+				// Try both orientations: A→B and B→A. Choose the one with better facing (SAME AS SPLITTERS)
+				struct FManifoldOption { UFGFactoryConnectionComponent* Out; UFGFactoryConnectionComponent* In; AFGHologram* StoreOn; float Dot; float Distance; int32 Index; };
+				TArray<FManifoldOption> Options;
+				// Option 1: Source → Target
+				if (A_MiddleOut && B_BackIn)
 				{
-					ManifoldReservedInputs.Add(Opt.In, Opt.StoreOn);
-					ManifoldReservedOutputs.Add(Opt.Out, Opt.StoreOn);
-					bLinked = true;
+					const FVector SrcPos = A_MiddleOut->GetComponentLocation();
+					const FVector TgtPos = B_BackIn->GetComponentLocation();
+					const float Dot = FVector::DotProduct(A_MiddleOut->GetConnectorNormal(), (TgtPos - SrcPos).GetSafeNormal());
+					Options.Add({A_MiddleOut, B_BackIn, SourceMerger, Dot, static_cast<float>(FVector::Dist(SrcPos, TgtPos)), 0});
+				}
+				// Option 2: Target → Source (only if target has middle out and source has back in)
+				if (B_MiddleOut && A_BackIn)
+				{
+					const FVector SrcPos = B_MiddleOut->GetComponentLocation();
+					const FVector TgtPos = A_BackIn->GetComponentLocation();
+					const float Dot = FVector::DotProduct(B_MiddleOut->GetConnectorNormal(), (TgtPos - SrcPos).GetSafeNormal());
+					Options.Add({B_MiddleOut, A_BackIn, TargetMerger, Dot, static_cast<float>(FVector::Dist(SrcPos, TgtPos)), 1});
+				}
+
+				// Pick the best facing option (SAME AS SPLITTERS)
+				// #424: deterministic tie-break on near-equal facing (closer pair, then lower index) so the
+				// chosen orientation doesn't flicker/crossover between evaluations.
+				Options.Sort([](const FManifoldOption& L, const FManifoldOption& R)
+				{
+					if (FMath::Abs(L.Dot - R.Dot) > 0.01f) return L.Dot > R.Dot;
+					if (!FMath::IsNearlyEqual(L.Distance, R.Distance, 1.0f)) return L.Distance < R.Distance;
+					return L.Index < R.Index;
+				});
+				for (const FManifoldOption& Opt : Options)
+				{
+					if (Opt.Dot < 0.2f)
+					{
+						UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      ⏭️ Skipping option: poor facing alignment (dot=%.2f)"), Opt.Dot);
+						continue;
+					}
+					if (ManifoldReservedInputs.Contains(Opt.In))
+					{
+						UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      ⏭️ Manifold target input already reserved - skip option"));
+						continue;
+					}
+					if (ManifoldReservedOutputs.Contains(Opt.Out))
+					{
+						UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      ⏭️ Manifold source output already reserved - skip option"));
+						continue;
+					}
+
+					UE_LOG(LogSmartAutoConnect, Verbose, TEXT("      🔗 MERGER MANIFOLD: %s → %s [Output%d lane, lookahead +%d] (dot=%.2f)"),
+						*Opt.StoreOn->GetName(),
+						*Cast<AFGHologram>(Opt.In->GetOwner())->GetName(),
+						OutputIndex,
+						CandidateIdx - i,
+						Opt.Dot);
+
+					// Create connection with normal angle validation (SAME AS SPLITTERS)
+					if (AutoConnectService->ConnectAnyConnectors(Opt.Out, Opt.In, Opt.StoreOn, false))
+					{
+						ManifoldReservedInputs.Add(Opt.In, Opt.StoreOn);
+						ManifoldReservedOutputs.Add(Opt.Out, Opt.StoreOn);
+						bLinked = true;
+						break;
+					}
+				}
+
+				if (bLinked)
+				{
 					break;
 				}
 			}
 
 			if (!bLinked)
 			{
-				UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      ℹ️ No valid manifold orientation found for this pair"));
+				UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      ℹ️ No valid manifold continuation found within lookahead"));
 			}
 		}
 	}
@@ -1842,14 +1902,19 @@ void USFAutoConnectOrchestrator::CollectPotentialConnections(
 					float AngleDegrees = FMath::RadiansToDegrees(FMath::Acos(FMath::Clamp(AngleCosine, -1.0f, 1.0f)));
 					
 					// Score: Heavily weight angle (straighter = much better), then distance
-					// A 0° connection at 2000cm should beat a 30° connection at 1000cm
-					float Score = AngleDegrees * 100.0f + ActualDistance * 0.1f;
-					
+					// A 0° connection at 2000cm should beat a 30° connection at 1000cm.
+					// [#464] Plus level affinity: two-sided stagger can bring an adjacent LEVEL's
+					// port to a lower angle than the same-level port, so without this term the
+					// global assignment wired belts across floors. Same-level always wins; cross-
+					// level remains a fallback when no same-level candidate exists.
+					const float LevelPenalty = USFAutoConnectService::LevelAffinityPenalty(DistConnectorPos, BuildingConnectorPos);
+					float Score = AngleDegrees * 100.0f + ActualDistance * 0.1f + LevelPenalty;
+
 					// Log for debugging
-					UE_LOG(LogSmartAutoConnect, VeryVerbose, 
-						TEXT("   📐 %s -> %s: Angle=%.1f° Dist=%.0fcm Score=%.0f"),
+					UE_LOG(LogSmartAutoConnect, VeryVerbose,
+						TEXT("   📐 %s -> %s: Angle=%.1f° Dist=%.0fcm ΔZ=%.0fcm LevelPenalty=%.0f Score=%.0f"),
 						*BestSideConnector->GetName(), *BuildingConnector->GetName(),
-						AngleDegrees, ActualDistance, Score);
+						AngleDegrees, ActualDistance, FMath::Abs(DistConnectorPos.Z - BuildingConnectorPos.Z), LevelPenalty, Score);
 					
 					// Create the potential connection
 					FPotentialConnection Connection;

@@ -594,16 +594,20 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 			// SCORING: Calculate weighted score based on distance and alignment
 			// This prevents "crossing" pipes by penalizing misaligned connections
 			FVector DirToBuilding = (BuildingLocation - JunctionLocation).GetSafeNormal();
-			
+
 			// Check alignment with junction's cardinal axes
 			float ForwardDot = FMath::Abs(FVector::DotProduct(DirToBuilding, JunctionForward));
 			float RightDot = FMath::Abs(FVector::DotProduct(DirToBuilding, JunctionRight));
 			float MaxAlignment = FMath::Max(ForwardDot, RightDot);
-			
+
 			// Angle Penalty: 1.0 (perfectly aligned) -> 0.0 (misaligned)
 			// Penalty multiplier: 10.0 (same as belts)
+			// [#464] Plus level affinity (same fix as belts): the XY distance is Z-blind, so a
+			// staggered other-level connector could out-score the same-level one. Same-level wins;
+			// cross-level stays a valid fallback when no same-level candidate exists.
 			float AnglePenalty = 1.0f - MaxAlignment;
-			float Score = Distance * (1.0f + AnglePenalty * 10.0f);
+			float Score = Distance * (1.0f + AnglePenalty * 10.0f)
+				+ USFAutoConnectService::LevelAffinityPenalty(JunctionLocation, BuildingLocation);
 			
 			// Only proceed if this score beats our current best
 			if (Score < BestScore)
@@ -1108,12 +1112,15 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 							float Distance = FVector::Dist2D(OppositeJunctionConn->GetComponentLocation(), BuildingConnPos);
 							
 							// Scoring: distance + alignment penalty (same formula as Side A)
+							// [#464] Plus level affinity (same fix as belts): prefer same-level building
+							// connectors; cross-level remains a fallback.
 							FVector DirToB = (BuildingConnPos - OppositeJunctionConn->GetComponentLocation()).GetSafeNormal();
 							float FwdDot = FMath::Abs(FVector::DotProduct(DirToB, JunctionForward));
 							float RtDot = FMath::Abs(FVector::DotProduct(DirToB, JunctionRight));
 							float MaxAlign = FMath::Max(FwdDot, RtDot);
 							float AngPen = 1.0f - MaxAlign;
-							float Score = Distance * (1.0f + AngPen * 10.0f);
+							float Score = Distance * (1.0f + AngPen * 10.0f)
+								+ USFAutoConnectService::LevelAffinityPenalty(OppositeJunctionConn->GetComponentLocation(), BuildingConnPos);
 							
 							if (Score < BestBScore)
 							{
