@@ -58,6 +58,9 @@ struct FSFAutoConnectSkipSummary
 	int32 BeltsInvalidShape = 0;
 	/** Belt manifold links where a same-level continuation existed but the link failed (shape/ports taken) */
 	int32 BeltLanesBlocked = 0;
+	/** Pipe junction->building connections the game rejected as an invalid routed shape
+	 *  (UFGCDPipeInvalidShape - routed min bend radius below vanilla's limit) */
+	int32 PipesInvalidShape = 0;
 	/** Pipe junction pairings that won selection but exceeded the max connection distance */
 	int32 PipesTooFar = 0;
 	/** Pipe junction pairings that won selection but were under the min distance for their angle */
@@ -65,9 +68,9 @@ struct FSFAutoConnectSkipSummary
 
 	void ResetBeltBuilding() { BeltsTooSteep = 0; BeltsInvalidShape = 0; }
 	void ResetBeltManifold() { BeltLanesBlocked = 0; }
-	void ResetPipes() { PipesTooFar = 0; PipesTooClose = 0; }
+	void ResetPipes() { PipesInvalidShape = 0; PipesTooFar = 0; PipesTooClose = 0; }
 	int32 BeltTotal() const { return BeltsTooSteep + BeltsInvalidShape + BeltLanesBlocked; }
-	int32 PipeTotal() const { return PipesTooFar + PipesTooClose; }
+	int32 PipeTotal() const { return PipesInvalidShape + PipesTooFar + PipesTooClose; }
 };
 
 UCLASS()
@@ -103,13 +106,15 @@ public:
 	/** Penalty multiplier for angle misalignment in scoring */
 	static constexpr float ANGLE_PENALTY_MULTIPLIER = 10.0f;
 
-	/** [#466] Facing SANITY limit (deg) for belt previews - NOT a shape gate. Belt shape validity
-	 *  is judged by VANILLA on the routed spline (FGCDConveyorTooSteep / FGCDConveyorInvalidShape
-	 *  via CheckValidPlacement), because the belt is a curve: the old fixed 30° straight-chord
-	 *  test rejected steep-but-buildable S-curves the player could place by hand (stacked
-	 *  splitters close to a machine). This generous limit only prevents spawning previews for
-	 *  connector pairs that point away from each other (reach-behind / wrong side). */
-	static constexpr float BELT_FACING_SANITY_ANGLE = 80.0f;
+	/** [#466] Facing SANITY limit (deg) for BELT and PIPE previews - NOT a shape gate. Shape
+	 *  validity is judged by the GAME on the routed spline: belts via CheckValidPlacement
+	 *  (FGCDConveyorTooSteep / FGCDConveyorInvalidShape), pipes via the routed min-bend-radius
+	 *  check (UFGCDPipeInvalidShape / IsRoutedShapeInvalid). A conduit is a curve, so the old
+	 *  fixed 30° straight-chord test rejected steep-but-buildable runs the player could place by
+	 *  hand (stacked splitters/junctions close to a machine). This generous limit only prevents
+	 *  spawning previews for connector pairs that point away from each other (reach-behind /
+	 *  wrong side); belt and pipe paths share it so their gates don't diverge. */
+	static constexpr float FACING_SANITY_ANGLE = 80.0f;
 
 	/** [#464] Vertical tolerance (cm) within which two positions count as the same build LEVEL.
 	 *  Same-floor variance between a distributor and a building's belt port is < ~1.2m; distinct
@@ -499,7 +504,7 @@ public:
 		UFGFactoryConnectionComponent* OutputConnector,
 		UFGFactoryConnectionComponent* InputConnector,
 		TSharedPtr<FBeltPreviewHelper>& BeltHelper,
-		float MaxAngleDegrees = BELT_FACING_SANITY_ANGLE,
+		float MaxAngleDegrees = FACING_SANITY_ANGLE,
 		bool bSkipAngleValidation = false,
 		AFGHologram* ParentDistributor = nullptr);
 

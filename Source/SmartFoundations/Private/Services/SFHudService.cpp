@@ -307,6 +307,11 @@ TPair<FString, FString> USFHudService::BuildCounterDisplayLines() const
 		if (Skips.PipeTotal() > 0)
 		{
 			TArray<FString> Reasons;
+			if (Skips.PipesInvalidShape > 0)
+			{
+				Reasons.Add(FText::Format(LOCTEXT("HUD_SkipReason_InvalidShape", "invalid shape ({0})"),
+					Skips.PipesInvalidShape).ToString());
+			}
 			if (Skips.PipesTooFar > 0)
 			{
 				Reasons.Add(FText::Format(LOCTEXT("HUD_SkipReason_TooFar", "too far ({0})"),

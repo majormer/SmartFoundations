@@ -742,7 +742,7 @@ TArray<TSharedPtr<FBeltPreviewHelper>> USFAutoConnectService::ProcessSingleDistr
 								*ClosestConnector->GetName(), ClosestDistance, *BuildingConnector->GetName());
 							
 							// Use unified function: splitter output → building input
-							if (!CreateOrUpdateBeltPreview(ClosestConnector, BuildingConnector, BeltPreviewHelpers[HelperIndex], BELT_FACING_SANITY_ANGLE, false, DistributorHologram))
+							if (!CreateOrUpdateBeltPreview(ClosestConnector, BuildingConnector, BeltPreviewHelpers[HelperIndex], FACING_SANITY_ANGLE, false, DistributorHologram))
 							{
 								// Preview failed - skip to next building (helper will be cleaned up later)
 								continue;
@@ -766,7 +766,7 @@ TArray<TSharedPtr<FBeltPreviewHelper>> USFAutoConnectService::ProcessSingleDistr
 								*BuildingConnector->GetName(), ClosestDistance, *ClosestConnector->GetName());
 							
 							// Use unified function: building output → merger input
-							if (!CreateOrUpdateBeltPreview(BuildingConnector, ClosestConnector, BeltPreviewHelpers[HelperIndex], BELT_FACING_SANITY_ANGLE, false, DistributorHologram))
+							if (!CreateOrUpdateBeltPreview(BuildingConnector, ClosestConnector, BeltPreviewHelpers[HelperIndex], FACING_SANITY_ANGLE, false, DistributorHologram))
 							{
 								// Preview failed - skip to next building (helper will be cleaned up later)
 								continue;
@@ -801,7 +801,7 @@ TArray<TSharedPtr<FBeltPreviewHelper>> USFAutoConnectService::ProcessSingleDistr
 						
 						// Use unified function: splitter output → building input
 						TSharedPtr<FBeltPreviewHelper> BeltHelper;
-						if (!CreateOrUpdateBeltPreview(ClosestConnector, BuildingConnector, BeltHelper, BELT_FACING_SANITY_ANGLE, false, DistributorHologram))
+						if (!CreateOrUpdateBeltPreview(ClosestConnector, BuildingConnector, BeltHelper, FACING_SANITY_ANGLE, false, DistributorHologram))
 						{
 							// Preview failed - skip this building
 							continue;
@@ -829,7 +829,7 @@ TArray<TSharedPtr<FBeltPreviewHelper>> USFAutoConnectService::ProcessSingleDistr
 						
 						// Use unified function: building output → merger input
 						TSharedPtr<FBeltPreviewHelper> BeltHelper;
-						if (!CreateOrUpdateBeltPreview(BuildingConnector, ClosestConnector, BeltHelper, BELT_FACING_SANITY_ANGLE, false, DistributorHologram))
+						if (!CreateOrUpdateBeltPreview(BuildingConnector, ClosestConnector, BeltHelper, FACING_SANITY_ANGLE, false, DistributorHologram))
 						{
 							// Preview failed - skip this building
 							continue;
@@ -895,7 +895,7 @@ bool USFAutoConnectService::CreateOrUpdateBeltPreview(
     UFGFactoryConnectionComponent* OutputConnector,
     UFGFactoryConnectionComponent* InputConnector,
     TSharedPtr<FBeltPreviewHelper>& BeltHelper,
-	float MaxAngleDegrees /* = BELT_FACING_SANITY_ANGLE */,
+	float MaxAngleDegrees /* = FACING_SANITY_ANGLE */,
     bool bSkipAngleValidation /* = false */,
     AFGHologram* ParentDistributor /* = nullptr */)
 {
@@ -1110,7 +1110,7 @@ bool USFAutoConnectService::ConnectAnyConnectors(
 		OutputConnector,
 		InputConnector,
 		NewPreview,
-		BELT_FACING_SANITY_ANGLE,
+		FACING_SANITY_ANGLE,
 		bSkipAngleValidation
 	);
 

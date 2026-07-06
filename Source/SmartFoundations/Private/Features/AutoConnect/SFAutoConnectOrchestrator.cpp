@@ -950,7 +950,7 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 						OutputConnector,
 						InputConnector,
 						Preview,
-						USFAutoConnectService::BELT_FACING_SANITY_ANGLE,
+						USFAutoConnectService::FACING_SANITY_ANGLE,
 						false,  // bSkipAngleValidation
 						Distributor  // ParentDistributor
 					) && Preview.IsValid();
@@ -2053,12 +2053,12 @@ void USFAutoConnectOrchestrator::CollectPotentialConnections(
 						ToBuilding.X, ToBuilding.Y, ToBuilding.Z,
 						AngleDegrees, Distance);
 					
-					// [#466] Facing SANITY only - matches BELT_FACING_SANITY_ANGLE used by
+					// [#466] Facing SANITY only - matches FACING_SANITY_ANGLE used by
 					// CreateOrUpdateBeltPreview. Belt SHAPE validity (too steep / bad curve) is
 					// judged by vanilla on the routed spline in Phase 4, because the belt is a
 					// curve and a straight-chord angle test rejects steep-but-buildable S-curves
 					// the player could place by hand (stacked splitters close to a machine).
-					if (AngleDegrees > USFAutoConnectService::BELT_FACING_SANITY_ANGLE)
+					if (AngleDegrees > USFAutoConnectService::FACING_SANITY_ANGLE)
 					{
 						TotalValidationsFailed++;
 						// Skip-summary: this side connector reached a building port but even the
