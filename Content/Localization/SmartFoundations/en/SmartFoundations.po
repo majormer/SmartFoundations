@@ -2531,3 +2531,31 @@ msgstr "Upgrade only Mk.{0} in this network"
 msgctxt "SmartFoundations,Upgrade_UpgradingSweep"
 msgid "Upgrading {0} → Mk.{1}..."
 msgstr "Upgrading {0} → Mk.{1}..."
+
+msgctxt "SmartFoundations,HUD_BeltsSkipped"
+msgid "*{0} belt connection(s) skipped: {1}"
+msgstr "*{0} belt connection(s) skipped: {1}"
+
+msgctxt "SmartFoundations,HUD_PipesSkipped"
+msgid "*{0} pipe connection(s) skipped: {1}"
+msgstr "*{0} pipe connection(s) skipped: {1}"
+
+msgctxt "SmartFoundations,HUD_SkipReason_InvalidShape"
+msgid "invalid shape ({0})"
+msgstr "invalid shape ({0})"
+
+msgctxt "SmartFoundations,HUD_SkipReason_LaneBlocked"
+msgid "lane blocked ({0})"
+msgstr "lane blocked ({0})"
+
+msgctxt "SmartFoundations,HUD_SkipReason_TooClose"
+msgid "too close ({0})"
+msgstr "too close ({0})"
+
+msgctxt "SmartFoundations,HUD_SkipReason_TooFar"
+msgid "too far ({0})"
+msgstr "too far ({0})"
+
+msgctxt "SmartFoundations,HUD_SkipReason_TooSteep"
+msgid "too steep ({0})"
+msgstr "too steep ({0})"

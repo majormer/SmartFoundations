@@ -115,7 +115,11 @@ See [LICENSE.md](https://github.com/majormer/SmartFoundations/blob/main/LICENSE.
 
 ## 📰 What's New in v33.5.4: Auto-Connect on Stacked Grids
 
-**Current Release:** v33.5.4 makes Auto-Connect far more reliable on stacked, multi-level distributor grids. Connections now stay on their own level instead of running diagonally between floors, the belt and pipe "lanes" between splitters and mergers fill in on every level, and port choices are stable and repeatable — identical machines connect identically, and growing a grid no longer reshuffles connections you'd already set up. The HUD also now tells you, right while you're aiming, whenever a connection had to be skipped and why. See the [full changelog](https://github.com/majormer/SmartFoundations/blob/main/CHANGELOG.md) for all the details.
+**Current Release:** v33.5.4 makes Auto-Connect far more reliable on stacked, multi-level distributor grids. Connections now stay on their own level instead of running diagonally between floors, the belt and pipe "lanes" between splitters and mergers fill in on every level, port choices are stable and repeatable — identical machines connect identically, and growing a grid no longer reshuffles connections you'd already set up — and belts and pipes now connect anywhere the game itself would let you place one by hand. The HUD also now tells you, right while you're aiming, whenever a connection had to be skipped and why. See the [full changelog](https://github.com/majormer/SmartFoundations/blob/main/CHANGELOG.md) for all the details.
+
+### Belts and pipes connect wherever you could place one by hand
+
+Auto-Connect used to reject a belt or pipe whenever the straight line between two connectors was too steep — even when a real conveyor or pipe would just run out flat and curve to reach it. A stack of splitters (or pipe junctions) placed close to a machine would leave its upper members unconnected until you moved the stack away or staggered it. Now the game itself judges the actual routed shape: if it's a belt or pipe you could place manually, Smart! builds it.
 
 ### Auto-Connect stays on the level it should
 
