@@ -484,6 +484,20 @@ void USFSubsystem::RegisterActiveHologram(AFGHologram* Hologram)
 
 			UE_LOG(LogSmartFoundations, Verbose, TEXT("⚠️ CACHED BUILDING SIZE: %s via %s fallback (unknown buildable - consider adding to registry)"),
 				*CachedBuildingSize.ToString(), *CurrentAdapter->GetAdapterTypeName());
+
+			// [#168] One-shot VISIBLE footprint report for blueprint composites (Log level -
+			// Verbose is stripped in Shipping). Answers research-doc Q8.3: if this reads back the
+			// ~8m fallback cube for a clearly larger blueprint, mLocalBounds wasn't valid yet and
+			// the bounds read needs to move later in the lifecycle.
+			if (bIsBlueprintComposite)
+			{
+				const bool bLooksLikeFallback = FMath::IsNearlyEqual(CachedBuildingSize.X, 800.0f, 1.0f)
+					&& FMath::IsNearlyEqual(CachedBuildingSize.Y, 800.0f, 1.0f);
+				UE_LOG(LogSmartFoundations, Log,
+					TEXT("[#168] Blueprint footprint cached: %s %s"),
+					*CachedBuildingSize.ToString(),
+					bLooksLikeFallback ? TEXT("(LOOKS LIKE 8m FALLBACK - mLocalBounds may not be ready)") : TEXT("(from mLocalBounds)"));
+			}
 		}
 
 		// Task 52 FIX: Reset lock ownership for new hologram

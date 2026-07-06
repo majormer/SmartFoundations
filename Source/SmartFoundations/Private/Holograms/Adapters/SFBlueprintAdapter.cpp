@@ -21,13 +21,16 @@ FBoxSphereBounds FSFBlueprintAdapter::GetBuildingBounds() const
 		const FBox LocalBounds = Blueprint->mLocalBounds;
 		if (LocalBounds.IsValid && LocalBounds.GetExtent().GetMax() > 1.0)
 		{
-			SF_LOG_ADAPTER(Normal, TEXT("FSFBlueprintAdapter: bounds size=%s (from mLocalBounds)"),
+			// Hot path (queried repeatedly during scaling) - keep quiet. The one-shot visible
+			// footprint report lives at the lifecycle cache point (see [#168] in
+			// SFSubsystem_HologramLifecycle.cpp).
+			SF_LOG_ADAPTER(VeryVerbose, TEXT("FSFBlueprintAdapter: bounds size=%s (from mLocalBounds)"),
 				*(LocalBounds.GetExtent() * 2.0).ToString());
 			return FBoxSphereBounds(LocalBounds);
 		}
 
-		UE_LOG(LogSmartHologram, Log,
-			TEXT("[#168] FSFBlueprintAdapter: mLocalBounds not valid yet on %s - falling back to 8m cube"),
+		SF_LOG_ADAPTER(VeryVerbose,
+			TEXT("FSFBlueprintAdapter: mLocalBounds not valid yet on %s - falling back to 8m cube"),
 			*Blueprint->GetName());
 	}
 
