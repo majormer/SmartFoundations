@@ -40,6 +40,32 @@ struct FPowerPoleGridNode
  * - Implement manifold chaining logic (priority 1: distributor chains, priority 2: buildings)
  * - Handle both parent and child distributor holograms
  */
+/**
+ * Per-evaluation tally of auto-connect connections that were SELECTED but then dropped by a
+ * validity gate (shape/distance). Invalid previews stay hidden and the build stays valid;
+ * the HUD reads this summary so the player can see that something didn't connect and why,
+ * instead of belts/pipes silently vanishing. Counters only track would-have connections
+ * (a pairing that won selection, or a manifold link with a same-level continuation available),
+ * NOT speculative candidates from the radius scan - that keeps the reported number honest.
+ */
+struct FSFAutoConnectSkipSummary
+{
+	/** Belt side connectors with an in-range building port where every option exceeded the belt angle gate */
+	int32 BeltsTooSteep = 0;
+	/** Belt manifold links where a same-level continuation existed but the link failed (shape/ports taken) */
+	int32 BeltLanesBlocked = 0;
+	/** Pipe junction pairings that won selection but exceeded the max connection distance */
+	int32 PipesTooFar = 0;
+	/** Pipe junction pairings that won selection but were under the min distance for their angle */
+	int32 PipesTooClose = 0;
+
+	void ResetBeltBuilding() { BeltsTooSteep = 0; }
+	void ResetBeltManifold() { BeltLanesBlocked = 0; }
+	void ResetPipes() { PipesTooFar = 0; PipesTooClose = 0; }
+	int32 BeltTotal() const { return BeltsTooSteep + BeltLanesBlocked; }
+	int32 PipeTotal() const { return PipesTooFar + PipesTooClose; }
+};
+
 UCLASS()
 class SMARTFOUNDATIONS_API USFAutoConnectService : public UObject
 {
@@ -72,6 +98,35 @@ public:
 
 	/** Penalty multiplier for angle misalignment in scoring */
 	static constexpr float ANGLE_PENALTY_MULTIPLIER = 10.0f;
+
+	/** [#464] Vertical tolerance (cm) within which two positions count as the same build LEVEL.
+	 *  Same-floor variance between a distributor and a building's belt port is < ~1.2m; distinct
+	 *  grid levels / stack steps are >= 2m apart, so 150cm cleanly separates the two populations. */
+	static constexpr float SAME_LEVEL_TOLERANCE = 150.0f;
+
+	/** [#464] Flat score penalty for a distributor<->building connection that crosses build levels.
+	 *  Larger than the maximum achievable geometric score at every scoring site (orchestrator global
+	 *  scoring maxes at ~3.3k; the per-distributor selection score maxes at ~10k), so ANY same-level
+	 *  candidate strictly outranks ANY cross-level one. Cross-level stays a valid FALLBACK (penalty,
+	 *  not filter): layouts with no same-level option - e.g. a stacked splitter tower feeding one
+	 *  machine's ground-level ports - are penalized uniformly, so their ranking is unchanged. */
+	static constexpr float CROSS_LEVEL_PENALTY = 100000.0f;
+
+	/** [#464] Additive score penalty preferring same-level distributor<->building connections.
+	 *  Two-sided stagger on a multi-level grid can bring an adjacent LEVEL's port to a lower
+	 *  belt angle than the same-level port, so purely geometric scores (angle+distance) picked
+	 *  cross-level belts. Beyond the flat tier penalty, the +DeltaZ tail makes nearer levels
+	 *  beat farther ones among cross-level fallbacks. Distributor<->distributor manifold
+	 *  chaining must NOT use this - vertical manifolds are legitimate. */
+	static float LevelAffinityPenalty(const FVector& A, const FVector& B)
+	{
+		const float DeltaZ = FMath::Abs(A.Z - B.Z);
+		return (DeltaZ > SAME_LEVEL_TOLERANCE) ? (CROSS_LEVEL_PENALTY + DeltaZ) : 0.0f;
+	}
+
+	/** Skip tally for the current evaluation - written by the belt orchestrator and pipe manager, read by the HUD */
+	FSFAutoConnectSkipSummary& GetSkipSummary() { return SkipSummary; }
+	const FSFAutoConnectSkipSummary& GetSkipSummary() const { return SkipSummary; }
 
 	USFAutoConnectService();
 
@@ -620,6 +675,9 @@ private:
 
 	/** Owning subsystem */
 	USFSubsystem* Subsystem = nullptr;
+
+	/** Skip tally for the current evaluation (see FSFAutoConnectSkipSummary) */
+	FSFAutoConnectSkipSummary SkipSummary;
 
 	/** Cached preview helpers per distributor - SIDE connections (distributor -> building), owned by
 	 * the orchestrator's Phase 4. */

@@ -121,6 +121,12 @@ void FSFPipeAutoConnectManager::ProcessAllJunctions(AFGHologram* ParentJunctionH
 	// This prevents junctions from fighting over connectors and causing flickering
 	// Clear any stale reservations from previous frames, but keep the map instance
 	ReservedConnectors.Empty();
+
+	// Skip-summary: fresh pipe tally per evaluation (read by the HUD)
+	if (AutoConnectService)
+	{
+		AutoConnectService->GetSkipSummary().ResetPipes();
+	}
 	
 	// Track which connector index the parent uses (for child restrictions)
 	int32 ParentConnectorIdx = INDEX_NONE;
@@ -594,16 +600,20 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 			// SCORING: Calculate weighted score based on distance and alignment
 			// This prevents "crossing" pipes by penalizing misaligned connections
 			FVector DirToBuilding = (BuildingLocation - JunctionLocation).GetSafeNormal();
-			
+
 			// Check alignment with junction's cardinal axes
 			float ForwardDot = FMath::Abs(FVector::DotProduct(DirToBuilding, JunctionForward));
 			float RightDot = FMath::Abs(FVector::DotProduct(DirToBuilding, JunctionRight));
 			float MaxAlignment = FMath::Max(ForwardDot, RightDot);
-			
+
 			// Angle Penalty: 1.0 (perfectly aligned) -> 0.0 (misaligned)
 			// Penalty multiplier: 10.0 (same as belts)
+			// [#464] Plus level affinity (same fix as belts): the XY distance is Z-blind, so a
+			// staggered other-level connector could out-score the same-level one. Same-level wins;
+			// cross-level stays a valid fallback when no same-level candidate exists.
 			float AnglePenalty = 1.0f - MaxAlignment;
-			float Score = Distance * (1.0f + AnglePenalty * 10.0f);
+			float Score = Distance * (1.0f + AnglePenalty * 10.0f)
+				+ USFAutoConnectService::LevelAffinityPenalty(JunctionLocation, BuildingLocation);
 			
 			// Only proceed if this score beats our current best
 			if (Score < BestScore)
@@ -742,6 +752,11 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 		constexpr float MaxConnectionDistance = 2500.0f; // 25m
 		if (BestDistance > MaxConnectionDistance)
 		{
+			// Skip-summary: this pairing won selection and was dropped only by the distance gate
+			if (AutoConnectService)
+			{
+				AutoConnectService->GetSkipSummary().PipesTooFar++;
+			}
 			UE_LOG(LogSmartAutoConnect, Verbose,
 				TEXT("   ❌ Best connection rejected: too far (%.1fm > %.1fm limit)"),
 				BestDistance / 100.0f, MaxConnectionDistance / 100.0f);
@@ -778,6 +793,11 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 		
 		if (BestDistance < EffectiveMinDistance)
 		{
+			// Skip-summary: this pairing won selection and was dropped only by the min-distance gate
+			if (AutoConnectService)
+			{
+				AutoConnectService->GetSkipSummary().PipesTooClose++;
+			}
 			UE_LOG(LogSmartAutoConnect, Verbose,
 				TEXT("   ❌ Best connection rejected: too close (%.1fm < %.1fm minimum at %.1f° angle)"),
 				BestDistance / 100.0f, EffectiveMinDistance / 100.0f, AngleDegrees);
@@ -1108,12 +1128,15 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 							float Distance = FVector::Dist2D(OppositeJunctionConn->GetComponentLocation(), BuildingConnPos);
 							
 							// Scoring: distance + alignment penalty (same formula as Side A)
+							// [#464] Plus level affinity (same fix as belts): prefer same-level building
+							// connectors; cross-level remains a fallback.
 							FVector DirToB = (BuildingConnPos - OppositeJunctionConn->GetComponentLocation()).GetSafeNormal();
 							float FwdDot = FMath::Abs(FVector::DotProduct(DirToB, JunctionForward));
 							float RtDot = FMath::Abs(FVector::DotProduct(DirToB, JunctionRight));
 							float MaxAlign = FMath::Max(FwdDot, RtDot);
 							float AngPen = 1.0f - MaxAlign;
-							float Score = Distance * (1.0f + AngPen * 10.0f);
+							float Score = Distance * (1.0f + AngPen * 10.0f)
+								+ USFAutoConnectService::LevelAffinityPenalty(OppositeJunctionConn->GetComponentLocation(), BuildingConnPos);
 							
 							if (Score < BestBScore)
 							{

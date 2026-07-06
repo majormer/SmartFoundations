@@ -1,6 +1,6 @@
 # <img src="https://github.com/majormer/SmartFoundations/blob/main/images/Smart-Logo.png?raw=true" width="150" alt="Smart! Logo"> Smart! Mod
 
-![Status](https://img.shields.io/badge/Status-Released-brightgreen) ![Version](https://img.shields.io/badge/Version-33.5.3-blue) ![Satisfactory](https://img.shields.io/badge/Satisfactory-1.2-blue) ![Engine](https://img.shields.io/badge/Engine-UE%205.6-blue) ![SML](https://img.shields.io/badge/SML-3.12-blue) ![Multiplayer](https://img.shields.io/badge/Multiplayer-Supported-brightgreen) ![AI Assisted Development Used](https://img.shields.io/badge/AI%20Assisted%20Development%20Used-Disclosure%20Below-blue)
+![Status](https://img.shields.io/badge/Status-Released-brightgreen) ![Version](https://img.shields.io/badge/Version-33.5.4-blue) ![Satisfactory](https://img.shields.io/badge/Satisfactory-1.2-blue) ![Engine](https://img.shields.io/badge/Engine-UE%205.6-blue) ![SML](https://img.shields.io/badge/SML-3.12-blue) ![Multiplayer](https://img.shields.io/badge/Multiplayer-Supported-brightgreen) ![AI Assisted Development Used](https://img.shields.io/badge/AI%20Assisted%20Development%20Used-Disclosure%20Below-blue)
 
 > **Multiplayer note:** As of v32.0.0, every Smart! feature works in multiplayer on dedicated servers (Windows and Linux) — including **Smart Walking** and the new-in-v33.1.0 **Hyper Tube** support. If you hit something odd in a multiplayer session, please report it on [GitHub](https://github.com/majormer/SmartFoundations/issues) or [Discord](https://discord.gg/SgXY4CwXYw).
 
@@ -113,9 +113,27 @@ See [LICENSE.md](https://github.com/majormer/SmartFoundations/blob/main/LICENSE.
 
 ---
 
-## 📰 What's New in v33.5.3: Restore, Reorganized
+## 📰 What's New in v33.5.4: Auto-Connect on Stacked Grids
 
-**Current Release:** v33.5.3 rebuilds Smart Restore into two clear tabs — **Grid Presets** and **Modules** — docked to the Smart Panel, and gives Smart Upgrade's network scan precise **tier-to-tier** targeting. You can also now tune how much each mouse-wheel notch moves a transform. Rounded out with a batch of scaling and auto-connect fixes. See the [full changelog](https://github.com/majormer/SmartFoundations/blob/main/CHANGELOG.md) for all the details.
+**Current Release:** v33.5.4 makes Auto-Connect far more reliable on stacked, multi-level distributor grids. Connections now stay on their own level instead of running diagonally between floors, the belt and pipe "lanes" between splitters and mergers fill in on every level, and port choices are stable and repeatable — identical machines connect identically, and growing a grid no longer reshuffles connections you'd already set up. The HUD also now tells you, right while you're aiming, whenever a connection had to be skipped and why. See the [full changelog](https://github.com/majormer/SmartFoundations/blob/main/CHANGELOG.md) for all the details.
+
+### Auto-Connect stays on the level it should
+
+When you scale a grid of splitters or mergers across two or more height levels (especially with stagger), Auto-Connect used to sometimes wire a distributor to a machine or neighbor on a *different* level, producing steep diagonal belts and crossovers — and the connecting "lanes" between distributors could come up short or go missing. Connections now strongly prefer the same level (only reaching across when there's genuinely no same-level option), and those lanes form consistently on every level.
+
+### Port choices you can rely on
+
+Identical machines in a row could each pick a *different* input/output port for no visible reason, and simply scaling a grid larger could reshuffle the ports on machines earlier in the line. Port selection is now deterministic: identical layouts connect identically, and growing a grid leaves already-correct connections undisturbed.
+
+### The HUD tells you what got skipped
+
+When a belt or pipe connection can't be made, it used to just be silently absent. The Smart! HUD now shows a short summary while you aim — for example, *"2 belt connection(s) skipped: too steep"* — so you know something didn't connect and why. Nothing is blocked; the rest of the grid still builds.
+
+---
+
+## 📦 Previously: v33.5.3 — Restore, Reorganized
+
+v33.5.3 rebuilt Smart Restore into two clear tabs — **Grid Presets** and **Modules** — docked to the Smart Panel, gave Smart Upgrade's network scan precise **tier-to-tier** targeting, and added configurable per-notch scroll increments.
 
 ### Smart Restore, reorganized into Grid Presets and Modules
 

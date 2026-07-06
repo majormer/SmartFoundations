@@ -439,8 +439,12 @@ TArray<TSharedPtr<FBeltPreviewHelper>> USFAutoConnectService::ProcessSingleDistr
 					// Heavy penalty for misalignment (Factor 10.0) to overcome depth differences
 					// e.g. Straight (1.0) -> Score = Dist * 1.0
 					// e.g. Angled (0.9) -> Score = Dist * 2.0
+					// [#464] Plus level affinity: the XY distance is Z-blind, so a staggered
+					// upper-floor input could out-score the same-level one. Same-level wins;
+					// cross-level (e.g. a stacked splitter tower over ground ports) stays a fallback.
 					float AnglePenalty = 1.0f - MaxAlignment;
-					float Score = DistanceToSplitterXY * (1.0f + AnglePenalty * ANGLE_PENALTY_MULTIPLIER);
+					float Score = DistanceToSplitterXY * (1.0f + AnglePenalty * ANGLE_PENALTY_MULTIPLIER)
+						+ LevelAffinityPenalty(SplitterPos, BuildingInputPos);
 
 					if (Score < ClosestBuildingInputDistance)
 					{
@@ -594,8 +598,10 @@ TArray<TSharedPtr<FBeltPreviewHelper>> USFAutoConnectService::ProcessSingleDistr
 					}
 					
 					// Score = Distance * (1 + Penalty)
+					// [#464] Plus level affinity - same-level building outputs win; cross-level is a fallback.
 					float AnglePenalty = 1.0f - MaxAlignment;
-					float Score = DistanceToMerger * (1.0f + AnglePenalty * ANGLE_PENALTY_MULTIPLIER);
+					float Score = DistanceToMerger * (1.0f + AnglePenalty * ANGLE_PENALTY_MULTIPLIER)
+						+ LevelAffinityPenalty(MergerPos, BuildingOutputPos);
 
 					if (Score < ClosestBuildingOutputDistance)
 					{

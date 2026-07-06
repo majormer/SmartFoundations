@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [33.5.4] - 2026-07-06
+
+> *Auto-Connect gets more reliable on stacked, multi-level grids: connections stay on their own level, the belt and pipe lanes between distributors fill in properly, and port choices are now stable and repeatable. The HUD also tells you, up front, when a connection had to be skipped and why.*
+
+### Added
+
+- **The HUD now tells you when Auto-Connect had to skip a connection** - When a belt or pipe connection can't be made, it's always been silently absent, leaving you to notice the gap yourself. The Smart! HUD now shows a short summary while you're aiming - for example, *"2 belt connection(s) skipped: too steep"* - so you know something didn't connect and why (too steep, too far, or a lane that couldn't be completed). Nothing is blocked: the rest of the grid still builds, you're just told what's missing. The line only appears when something was actually skipped.
+
+### Fixed
+
+- **Auto-Connect no longer invents connections between levels on staggered, multi-level grids** - When you scaled a grid of splitters or mergers across two or more height levels (especially with stagger), belts and pipes could connect a distributor to a machine or neighbor on a *different* level instead of the matching one on its own level, producing steep diagonal runs and crossovers. Connections now strongly prefer the same level, only reaching across levels when there's genuinely no same-level option. (Issue #464, reported by dmeyster on the Smart! Discord)
+- **The belt and pipe "lanes" between stacked distributors now connect reliably** - On multi-level grids, the connecting runs *between* splitters (or between mergers) along each level could come up short or go missing entirely, leaving isolated distributors. Those lanes now form consistently on every level. (Issue #464)
+- **Auto-Connect port choices are now stable and repeatable** - Identical machines in a row could each pick a *different* input/output port for no visible reason, and simply scaling a grid larger could reshuffle the ports on machines earlier in the line that you'd already set up. Port selection is now deterministic: identical layouts connect identically, and growing a grid no longer disturbs connections that were already correct. (Issue #464)
+
 ## [33.5.3] - 2026-07-05
 
 > *A Smart Restore redesign and a smarter Smart Upgrade: Restore is rebuilt into two clear tabs - Grid Presets and Modules - docked to the Smart Panel, and Smart Upgrade's network scan gains precise tier-to-tier targeting plus fixes for aiming, pipe junctions, and refreshing after an upgrade.*
