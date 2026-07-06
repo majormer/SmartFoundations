@@ -121,6 +121,12 @@ void FSFPipeAutoConnectManager::ProcessAllJunctions(AFGHologram* ParentJunctionH
 	// This prevents junctions from fighting over connectors and causing flickering
 	// Clear any stale reservations from previous frames, but keep the map instance
 	ReservedConnectors.Empty();
+
+	// Skip-summary: fresh pipe tally per evaluation (read by the HUD)
+	if (AutoConnectService)
+	{
+		AutoConnectService->GetSkipSummary().ResetPipes();
+	}
 	
 	// Track which connector index the parent uses (for child restrictions)
 	int32 ParentConnectorIdx = INDEX_NONE;
@@ -746,6 +752,11 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 		constexpr float MaxConnectionDistance = 2500.0f; // 25m
 		if (BestDistance > MaxConnectionDistance)
 		{
+			// Skip-summary: this pairing won selection and was dropped only by the distance gate
+			if (AutoConnectService)
+			{
+				AutoConnectService->GetSkipSummary().PipesTooFar++;
+			}
 			UE_LOG(LogSmartAutoConnect, Verbose,
 				TEXT("   ❌ Best connection rejected: too far (%.1fm > %.1fm limit)"),
 				BestDistance / 100.0f, MaxConnectionDistance / 100.0f);
@@ -782,6 +793,11 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 		
 		if (BestDistance < EffectiveMinDistance)
 		{
+			// Skip-summary: this pairing won selection and was dropped only by the min-distance gate
+			if (AutoConnectService)
+			{
+				AutoConnectService->GetSkipSummary().PipesTooClose++;
+			}
 			UE_LOG(LogSmartAutoConnect, Verbose,
 				TEXT("   ❌ Best connection rejected: too close (%.1fm < %.1fm minimum at %.1f° angle)"),
 				BestDistance / 100.0f, EffectiveMinDistance / 100.0f, AngleDegrees);

@@ -43,11 +43,31 @@ struct FPotentialConnection
 	
 	/** Whether this is a valid connection candidate */
 	bool bIsValid = false;
-	
-	/** For sorting - lower score = better connection */
+
+	/** Connector world positions captured at collect time - used for deterministic tie-breaking */
+	FVector DistributorConnectorPos = FVector::ZeroVector;
+	FVector BuildingConnectorPos = FVector::ZeroVector;
+
+	/** For sorting - lower score = better connection.
+	 *  [#464] Near-equal scores MUST tie-break deterministically by geometry: on a uniform grid
+	 *  dozens of candidates score identically, and TArray::Sort is an unstable quicksort, so a
+	 *  score-only comparison made port assignment arbitrary AND rescale-dependent (scaling 6->7
+	 *  towers reshuffled building 2's ports). Ties resolve bottom-up, then along the run, then
+	 *  by building port position, so identical towers always resolve their fans identically.
+	 *  Keys are QUANTIZED (0.5-score / 1cm buckets) rather than tolerance-compared: tolerance
+	 *  comparisons aren't transitive and would violate the sort's strict-weak-ordering contract. */
 	bool operator<(const FPotentialConnection& Other) const
 	{
-		return Score < Other.Score;
+		const auto Q = [](double V) -> int64 { return static_cast<int64>(FMath::RoundToDouble(V)); };
+		const int64 ScoreA = Q(Score * 2.0);
+		const int64 ScoreB = Q(Other.Score * 2.0);
+		if (ScoreA != ScoreB) return ScoreA < ScoreB;
+		if (Q(DistributorConnectorPos.Z) != Q(Other.DistributorConnectorPos.Z)) return Q(DistributorConnectorPos.Z) < Q(Other.DistributorConnectorPos.Z);
+		if (Q(DistributorConnectorPos.X) != Q(Other.DistributorConnectorPos.X)) return Q(DistributorConnectorPos.X) < Q(Other.DistributorConnectorPos.X);
+		if (Q(DistributorConnectorPos.Y) != Q(Other.DistributorConnectorPos.Y)) return Q(DistributorConnectorPos.Y) < Q(Other.DistributorConnectorPos.Y);
+		if (Q(BuildingConnectorPos.Z) != Q(Other.BuildingConnectorPos.Z)) return Q(BuildingConnectorPos.Z) < Q(Other.BuildingConnectorPos.Z);
+		if (Q(BuildingConnectorPos.X) != Q(Other.BuildingConnectorPos.X)) return Q(BuildingConnectorPos.X) < Q(Other.BuildingConnectorPos.X);
+		return Q(BuildingConnectorPos.Y) < Q(Other.BuildingConnectorPos.Y);
 	}
 };
 
@@ -203,6 +223,11 @@ private:
 
 	/** Shared input reservation map - tracks which distributor claimed which building input */
 	TMap<UFGFactoryConnectionComponent*, AFGHologram*> ReservedInputs;
+
+	/** Skip-summary tracking: side connectors that reached an in-range building port during collect
+	 * but were rejected by the belt angle gate. Members still unassigned after global assignment
+	 * count as "too steep" skips in the HUD tally. Cleared at each EvaluateConnections(). */
+	TSet<UFGFactoryConnectionComponent*> AngleRejectedSideConnectors;
 
 	/** Manifold reservation map - tracks distributor→distributor chaining inputs separately */
 	TMap<UFGFactoryConnectionComponent*, AFGHologram*> ManifoldReservedInputs;

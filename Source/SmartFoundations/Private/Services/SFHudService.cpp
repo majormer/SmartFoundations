@@ -3,6 +3,7 @@
 #include "Services/SFHudService.h"
 // NOTE: SFDeferredCostService removed - child holograms automatically aggregate costs via GetCost()
 #include "Subsystem/SFSubsystem.h"
+#include "Features/AutoConnect/SFAutoConnectService.h"
 #include "Features/Extend/SFExtendService.h"
 #include "Features/Restore/SFRestoreService.h"
 #include "Features/Walk/SFWalkService.h"
@@ -269,6 +270,50 @@ TPair<FString, FString> USFHudService::BuildCounterDisplayLines() const
 		else
 		{
 			Lines.Add(LOCTEXT("HUD_ExtendDisabled", "*Extend Disabled").ToString());
+		}
+	}
+
+	// Auto-connect skip summary: connections that were selected but dropped by a validity gate
+	// (shape/distance). The invalid previews stay hidden and the build stays valid - this line
+	// notifies the player that something didn't connect, and why, instead of silent vanishing.
+	// Gated on AC capability so a leftover tally never shows against an unrelated hologram.
+	if (USFAutoConnectService* AutoConnectService = Subsystem->IsCurrentHologramAutoConnectCapable()
+		? Subsystem->GetAutoConnectService() : nullptr)
+	{
+		const FSFAutoConnectSkipSummary& Skips = AutoConnectService->GetSkipSummary();
+
+		if (Skips.BeltTotal() > 0)
+		{
+			TArray<FString> Reasons;
+			if (Skips.BeltsTooSteep > 0)
+			{
+				Reasons.Add(FText::Format(LOCTEXT("HUD_SkipReason_TooSteep", "too steep ({0})"),
+					Skips.BeltsTooSteep).ToString());
+			}
+			if (Skips.BeltLanesBlocked > 0)
+			{
+				Reasons.Add(FText::Format(LOCTEXT("HUD_SkipReason_LaneBlocked", "lane blocked ({0})"),
+					Skips.BeltLanesBlocked).ToString());
+			}
+			Lines.Add(FText::Format(LOCTEXT("HUD_BeltsSkipped", "*{0} belt connection(s) skipped: {1}"),
+				Skips.BeltTotal(), FText::FromString(FString::Join(Reasons, TEXT(", ")))).ToString());
+		}
+
+		if (Skips.PipeTotal() > 0)
+		{
+			TArray<FString> Reasons;
+			if (Skips.PipesTooFar > 0)
+			{
+				Reasons.Add(FText::Format(LOCTEXT("HUD_SkipReason_TooFar", "too far ({0})"),
+					Skips.PipesTooFar).ToString());
+			}
+			if (Skips.PipesTooClose > 0)
+			{
+				Reasons.Add(FText::Format(LOCTEXT("HUD_SkipReason_TooClose", "too close ({0})"),
+					Skips.PipesTooClose).ToString());
+			}
+			Lines.Add(FText::Format(LOCTEXT("HUD_PipesSkipped", "*{0} pipe connection(s) skipped: {1}"),
+				Skips.PipeTotal(), FText::FromString(FString::Join(Reasons, TEXT(", ")))).ToString());
 		}
 	}
 

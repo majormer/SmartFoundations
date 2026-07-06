@@ -233,8 +233,14 @@ void USFAutoConnectOrchestrator::Cleanup()
 		// #405: hypertube spans are AddChild'd (vanilla cascade-destroys them with the parent), but sweep any
 		// stragglers and clear the state map here as a race-free Deinitialize/shutdown net (timer cleared below).
 		AutoConnectService->CleanupAllStackableHypertubesAllParents();
+
+		// Skip-summary: zero the HUD tally so a torn-down grid's skips never linger onto the next hologram
+		AutoConnectService->GetSkipSummary().ResetBeltBuilding();
+		AutoConnectService->GetSkipSummary().ResetBeltManifold();
+		AutoConnectService->GetSkipSummary().ResetPipes();
 	}
 	ReservedInputs.Empty();
+	AngleRejectedSideConnectors.Empty();
 	
 	// Clear timers if active
 	if (ParentHologram.IsValid() && ParentHologram->GetWorld())
@@ -717,6 +723,12 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 		return;
 	}
 
+	// Skip-summary: fresh tally per evaluation (read by the HUD). Reset before any early
+	// exit so a disabled/empty evaluation reports zero skips instead of stale counts.
+	AutoConnectService->GetSkipSummary().ResetBeltBuilding();
+	AutoConnectService->GetSkipSummary().ResetBeltManifold();
+	AngleRejectedSideConnectors.Empty();
+
 	// Issue #246: Check if belt auto-connect is enabled in runtime settings
 	// This respects the global config setting (bAutoConnectEnabled) which initializes runtime settings
 	if (USFSubsystem* Subsystem = AutoConnectService->GetSubsystem())
@@ -751,7 +763,11 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 	
 	if (AllConnections.Num() == 0)
 	{
-		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("   ⚠️ No potential connections found"));
+		// Nothing assignable at all - every angle-only rejection is a skipped connection
+		// (e.g. a whole splitter stack too close to its machine: all candidates too steep).
+		AutoConnectService->GetSkipSummary().BeltsTooSteep += AngleRejectedSideConnectors.Num();
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("   ⚠️ No potential connections found (%d angle-only rejections)"),
+			AngleRejectedSideConnectors.Num());
 		return;
 	}
 
@@ -815,6 +831,17 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 	}
 	
 	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🎯 GLOBAL SCORING: Made %d optimal assignments"), TotalAssignments);
+
+	// Skip-summary: side connectors that reached a building port but whose every option failed
+	// the angle gate, and that got no assignment at all - these are the belts the player would
+	// see silently missing (e.g. the top of a splitter stack too close to its machine).
+	for (UFGFactoryConnectionComponent* RejectedConnector : AngleRejectedSideConnectors)
+	{
+		if (!AssignedDistributorConnectors.Contains(RejectedConnector))
+		{
+			AutoConnectService->GetSkipSummary().BeltsTooSteep++;
+		}
+	}
 
 	// ========================================
 	// PHASE 4: Create belt previews for assigned connections
@@ -1016,32 +1043,80 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 	
 	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🔗 Manifold Detection: Evaluating %d distributors for chaining"), Distributors.Num());
 
-	// Build lanes per input index from BUILDING reservations
+	// [#464] Build manifold lanes GEOMETRICALLY: (lateral lane index, Z level cluster).
+	// Lanes were previously grouped by the building connector's NAME index ("Input2") - a proxy
+	// for "same physical lane" that broke whenever the global building assignment handed two
+	// stacked splitters swapped port indices: the cross-level member then competed for back
+	// inputs inside the wrong lane and orphaned a legitimate member (missing lane belts).
+	// Membership still requires a building reservation (same population as before); only the
+	// grouping key changed from port name to geometry.
+	//
+	// The lateral axis is the NON-dominant parent-local axis (same dominant-axis logic the
+	// per-lane chain sort uses). CalculateDistributorLaneIndex is unsuitable here: it indexes
+	// positions along local X, which IS the run axis on X-scaled grids - keying on it put every
+	// run position in its own "lane" and dissolved the manifolds entirely.
+	float MinLX = TNumericLimits<float>::Max(), MaxLX = TNumericLimits<float>::Lowest();
+	float MinLY = TNumericLimits<float>::Max(), MaxLY = TNumericLimits<float>::Lowest();
+	for (AFGHologram* LaneDistributor : Distributors)
+	{
+		if (!LaneDistributor) continue;
+		const FVector LP = ParentTransform.InverseTransformPosition(LaneDistributor->GetActorLocation());
+		MinLX = FMath::Min(MinLX, static_cast<float>(LP.X)); MaxLX = FMath::Max(MaxLX, static_cast<float>(LP.X));
+		MinLY = FMath::Min(MinLY, static_cast<float>(LP.Y)); MaxLY = FMath::Max(MaxLY, static_cast<float>(LP.Y));
+	}
+	const bool bRunIsLocalX = (MaxLX - MinLX) >= (MaxLY - MinLY);
+
+	TArray<float> LaneLateralCoords;
+	auto LateralIndexOf = [&LaneLateralCoords](float Coord) -> int32
+	{
+		constexpr float LateralTolerance = 100.0f; // side-by-side lane spacing is >= ~2m
+		for (int32 Idx = 0; Idx < LaneLateralCoords.Num(); Idx++)
+		{
+			if (FMath::Abs(LaneLateralCoords[Idx] - Coord) <= LateralTolerance)
+			{
+				return Idx;
+			}
+		}
+		LaneLateralCoords.Add(Coord);
+		return LaneLateralCoords.Num() - 1;
+	};
+
+	TArray<float> LaneLevelZs;
+	auto LevelIndexOf = [&LaneLevelZs](float Z) -> int32
+	{
+		for (int32 LevelIdx = 0; LevelIdx < LaneLevelZs.Num(); LevelIdx++)
+		{
+			if (FMath::Abs(LaneLevelZs[LevelIdx] - Z) <= USFAutoConnectService::SAME_LEVEL_TOLERANCE)
+			{
+				return LevelIdx;
+			}
+		}
+		LaneLevelZs.Add(Z);
+		return LaneLevelZs.Num() - 1;
+	};
+
+	// Composite geometric lane key: which side-by-side lane + which level
+	auto LaneKeyOf = [&](AFGHologram* LaneDistributor) -> int32
+	{
+		const FVector LP = ParentTransform.InverseTransformPosition(LaneDistributor->GetActorLocation());
+		const int32 LateralLane = LateralIndexOf(static_cast<float>(bRunIsLocalX ? LP.Y : LP.X));
+		const int32 LevelIndex = LevelIndexOf(static_cast<float>(LaneDistributor->GetActorLocation().Z));
+		return LateralLane * 1024 + LevelIndex;
+	};
+
 	TMap<int32, TArray<AFGHologram*>> DistributorsByInputIndex;
 	for (const auto& Pair : ReservedInputs)
 	{
-		UFGFactoryConnectionComponent* BuildingInput = Pair.Key;
 		AFGHologram* Distributor = Pair.Value;
-
-		// Extract input index from connector name (e.g., "Input0" → 0, "Input1" → 1)
-		FString ConnectorName = BuildingInput->GetName();
-		int32 InputIndex = -1;
-		if (ConnectorName.Contains(TEXT("Input")))
+		if (!Distributor || !USFAutoConnectService::IsSplitterHologram(Distributor))
 		{
-			FString IndexStr = ConnectorName.Replace(TEXT("Input"), TEXT(""));
-			InputIndex = FCString::Atoi(*IndexStr);
+			continue;
 		}
 
-		if (InputIndex >= 0)
+		TArray<AFGHologram*>& LaneMembers = DistributorsByInputIndex.FindOrAdd(LaneKeyOf(Distributor));
+		if (!LaneMembers.Contains(Distributor))
 		{
-			if (!DistributorsByInputIndex.Contains(InputIndex))
-			{
-				DistributorsByInputIndex.Add(InputIndex, TArray<AFGHologram*>());
-			}
-			if (!DistributorsByInputIndex[InputIndex].Contains(Distributor))
-			{
-				DistributorsByInputIndex[InputIndex].Add(Distributor);
-			}
+			LaneMembers.Add(Distributor);
 		}
 	}
 	
@@ -1050,7 +1125,7 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 	ManifoldReservedOutputs.Empty();
 	
 	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("   📊 Found %d input index groups for manifold chaining"), DistributorsByInputIndex.Num());
-	
+
 	// Get parent transform for spatial sorting
 	const FTransform SortTransform = ParentHologram.IsValid() ? ParentHologram->GetActorTransform() : FTransform::Identity;
 	
@@ -1152,9 +1227,14 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 
 			// Candidate continuation targets: same level first, then nearest
 			TArray<int32> CandidateIndices;
+			bool bHadSameLevelCandidate = false;
 			for (int32 j = i + 1; j < SplittersInLane.Num() && j <= i + ManifoldLookahead; j++)
 			{
 				CandidateIndices.Add(j);
+				if (USFAutoConnectService::LevelAffinityPenalty(SourcePos, SplittersInLane[j]->GetActorLocation()) == 0.0f)
+				{
+					bHadSameLevelCandidate = true;
+				}
 			}
 			CandidateIndices.Sort([&SplittersInLane, &SourcePos](int32 IdxA, int32 IdxB)
 			{
@@ -1257,44 +1337,36 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 
 			if (!bLinked)
 			{
+				// Skip-summary: only count when a same-level continuation was available and the
+				// link still failed (ports taken / shape) - a chain TAIL whose only neighbors are
+				// on other levels is the expected end of an interleaved lane, not a missing belt.
+				if (bHadSameLevelCandidate)
+				{
+					AutoConnectService->GetSkipSummary().BeltLanesBlocked++;
+				}
 				UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      ℹ️ No valid manifold continuation found within lookahead"));
 			}
 		}
 	}
-	
+
 	// ========================================
-	// MERGER MANIFOLD CONNECTIONS: Group mergers by building OUTPUT index
-	// Mergers collect from buildings, so we group by which OUTPUT they're connected to
+	// MERGER MANIFOLD CONNECTIONS: geometric lanes (same key as splitters)
+	// [#464] Group mergers by (lateral lane, Z level) rather than building OUTPUT port name -
+	// port-name grouping broke when the building assignment handed stacked mergers swapped
+	// output indices, contaminating a lane with a cross-level member.
 	TMap<int32, TArray<AFGHologram*>> MergersByOutputIndex;
 	for (const auto& Pair : ReservedInputs)
 	{
-		UFGFactoryConnectionComponent* Connector = Pair.Key;
 		AFGHologram* Distributor = Pair.Value;
-		
+
 		// Check if this is a merger (building output → merger input)
-		if (!AutoConnectService->IsMergerHologram(Distributor))
+		if (!Distributor || !AutoConnectService->IsMergerHologram(Distributor))
 			continue;
-		
-		// For mergers, the "reserved input" is actually a building OUTPUT
-		// Extract output index from connector name (e.g., "Output0" → 0, "Output1" → 1)
-		FString ConnectorName = Connector->GetName();
-		int32 OutputIndex = -1;
-		if (ConnectorName.Contains(TEXT("Output")))
+
+		TArray<AFGHologram*>& LaneMembers = MergersByOutputIndex.FindOrAdd(LaneKeyOf(Distributor));
+		if (!LaneMembers.Contains(Distributor))
 		{
-			FString IndexStr = ConnectorName.Replace(TEXT("Output"), TEXT(""));
-			OutputIndex = FCString::Atoi(*IndexStr);
-		}
-		
-		if (OutputIndex >= 0)
-		{
-			if (!MergersByOutputIndex.Contains(OutputIndex))
-			{
-				MergersByOutputIndex.Add(OutputIndex, TArray<AFGHologram*>());
-			}
-			if (!MergersByOutputIndex[OutputIndex].Contains(Distributor))
-			{
-				MergersByOutputIndex[OutputIndex].Add(Distributor);
-			}
+			LaneMembers.Add(Distributor);
 		}
 	}
 	
@@ -1385,9 +1457,14 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 
 			// Candidate continuation targets: same level first, then nearest
 			TArray<int32> CandidateIndices;
+			bool bHadSameLevelCandidate = false;
 			for (int32 j = i + 1; j < MergersInLane.Num() && j <= i + MergerManifoldLookahead; j++)
 			{
 				CandidateIndices.Add(j);
+				if (USFAutoConnectService::LevelAffinityPenalty(SourcePos, MergersInLane[j]->GetActorLocation()) == 0.0f)
+				{
+					bHadSameLevelCandidate = true;
+				}
 			}
 			CandidateIndices.Sort([&MergersInLane, &SourcePos](int32 IdxA, int32 IdxB)
 			{
@@ -1493,11 +1570,16 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 
 			if (!bLinked)
 			{
+				// Skip-summary: same tail-vs-blocked distinction as the splitter manifold above.
+				if (bHadSameLevelCandidate)
+				{
+					AutoConnectService->GetSkipSummary().BeltLanesBlocked++;
+				}
 				UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      ℹ️ No valid manifold continuation found within lookahead"));
 			}
 		}
 	}
-	
+
 	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🎯 Orchestrator: Manifold evaluation complete"));
 
 	// Build connection pairings map from BUILDING reservation data only
@@ -1866,6 +1948,16 @@ void USFAutoConnectOrchestrator::CollectPotentialConnections(
 					if (AngleDegrees > 30.0f)
 					{
 						TotalValidationsFailed++;
+						// Skip-summary: this side connector reached a building port but the shape
+						// was invalid. If it ends the evaluation unassigned, it counts as a skipped
+						// connection ("too steep") in the HUD tally. Only track connectors actually
+						// FACING the port (<= 90°) - a connector pointing away from the building
+						// (one-sided builds: the whole far column) is the expected wrong side of
+						// the splitter, not a would-have connection.
+						if (AngleDegrees <= 90.0f)
+						{
+							AngleRejectedSideConnectors.Add(DistConnector);
+						}
 						continue;
 					}
 					
@@ -1926,6 +2018,9 @@ void USFAutoConnectOrchestrator::CollectPotentialConnections(
 					Connection.DistributorLaneIndex = DistributorLane;
 					Connection.BuildingInputIndex = BuildingInputIndex;
 					Connection.bIsValid = true;
+					// [#464] For deterministic tie-breaking in the global sort
+					Connection.DistributorConnectorPos = DistConnectorPos;
+					Connection.BuildingConnectorPos = BuildingConnectorPos;
 					
 					OutConnections.Add(Connection);
 				}
