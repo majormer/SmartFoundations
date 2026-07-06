@@ -660,8 +660,8 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 						FVector JunctionPos = JunctionConn->GetComponentLocation();
 						FVector BuildingConnPos = BuildingConn->GetComponentLocation();
 						FVector JunctionToBuildingDir = (BuildingConnPos - JunctionPos).GetSafeNormal();
-						bool bJunctionAngleValid = FSFPipeConnectorFinder::IsConnectionAngleValid(JunctionConn, JunctionToBuildingDir, 30.0f);
-						bool bBuildingAngleValid = FSFPipeConnectorFinder::IsConnectionAngleValid(BuildingConn, -JunctionToBuildingDir, 30.0f);
+						bool bJunctionAngleValid = FSFPipeConnectorFinder::IsConnectionAngleValid(JunctionConn, JunctionToBuildingDir, USFAutoConnectService::FACING_SANITY_ANGLE);
+						bool bBuildingAngleValid = FSFPipeConnectorFinder::IsConnectionAngleValid(BuildingConn, -JunctionToBuildingDir, USFAutoConnectService::FACING_SANITY_ANGLE);
 						
 						// OPPOSITE-FACING CHECK: Connectors must face toward each other (dot product < 0)
 						FVector JunctionNormal = JunctionConn->GetConnectorNormal();
@@ -1149,8 +1149,8 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 								bool bNormalsOpp = (FVector::DotProduct(JNorm, BNorm) < 0.0f);
 								bool bBFaces = (FVector::DotProduct(BNorm, (OppositeConnPos - BuildingConnPos).GetSafeNormal()) > 0.5f);
 								bool bJFaces = (FVector::DotProduct(JNorm, J2B) > 0.5f);
-								bool bJAngle = FSFPipeConnectorFinder::IsConnectionAngleValid(OppositeJunctionConn, J2B, 30.0f);
-								bool bBAngle = FSFPipeConnectorFinder::IsConnectionAngleValid(BuildingConn, -J2B, 30.0f);
+								bool bJAngle = FSFPipeConnectorFinder::IsConnectionAngleValid(OppositeJunctionConn, J2B, USFAutoConnectService::FACING_SANITY_ANGLE);
+								bool bBAngle = FSFPipeConnectorFinder::IsConnectionAngleValid(BuildingConn, -J2B, USFAutoConnectService::FACING_SANITY_ANGLE);
 								
 								if (bNormalsOpp && bBFaces && bJFaces && bJAngle && bBAngle)
 								{

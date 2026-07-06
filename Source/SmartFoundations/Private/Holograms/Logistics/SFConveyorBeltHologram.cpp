@@ -178,29 +178,41 @@ void ASFConveyorBeltHologram::CheckValidPlacement()
         // FGCDInitializing appears because we check placement before hologram fully initializes
         int32 RealDisqualifierCount = 0;
         FString DisqualifierNames;
+        bLastRejectTooSteep = false;
+        bLastRejectInvalidShape = false;
         for (const TSubclassOf<UFGConstructDisqualifier>& Disqualifier : Disqualifiers)
         {
             if (Disqualifier)
             {
                 FString Name = Disqualifier->GetName();
                 DisqualifierNames += Name + TEXT(", ");
-                
+
                 // Skip only timing artifacts - NOT geometry issues
                 // FGCDInitializing: appears because we check placement before hologram fully initializes
                 // FGCDEncroachingSoftClearance: preview may temporarily overlap other objects during positioning
-                // 
+                //
                 // DO NOT skip these - they indicate real problems that should reject the connection:
                 // FGCDConveyorInvalidShape: belt routing is invalid (crazy curves, S-bends, etc.)
                 // FGCDConveyorTooSteep: belt angle exceeds vanilla limits
-                if (Name == TEXT("FGCDInitializing") || 
+                if (Name == TEXT("FGCDInitializing") ||
                     Name == TEXT("FGCDEncroachingSoftClearance"))
                 {
                     continue;
                 }
+                // [#466] Record WHICH vanilla verdict fired so auto-connect can report the real
+                // reason in the HUD skip summary and retry a different pairing.
+                if (Name.Contains(TEXT("TooSteep")))
+                {
+                    bLastRejectTooSteep = true;
+                }
+                else if (Name.Contains(TEXT("InvalidShape")))
+                {
+                    bLastRejectInvalidShape = true;
+                }
                 RealDisqualifierCount++;
             }
         }
-        
+
         bLastVanillaPlacementValid = (RealDisqualifierCount == 0);
 
         // Log detailed disqualifier info for debugging

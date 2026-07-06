@@ -39,12 +39,15 @@ Auto-Connect skips connections when it cannot safely make them.
 
 When this happens, the Smart! HUD shows a short summary while you aim — for example, *"2 belt connection(s) skipped: too steep"* — so you can see that something didn't connect and why. The rest of the grid still builds; only the connection it couldn't make is left out.
 
+Belts and pipes connect anywhere the game itself would let you place one by hand, so "too steep" or "invalid shape" now only appears when the conveyor or pipe genuinely can't be routed — not just because the connectors are at an awkward angle. If a connection is skipped, it usually means the same manual belt or pipe wouldn't build either.
+
 Common reasons:
 
 - Auto-Connect is disabled.
 - The tier setting is not right.
 - The connector is **too far** away.
-- The angle is **too steep** for a valid belt or pipe.
+- The belt is **too steep** to build (the game itself would reject the conveyor).
+- The belt shape is **invalid** (the routed curve can't be built).
 - The connector direction is incompatible.
 - A **lane** between distributors couldn't be completed.
 - The power pole has no free connection slots.

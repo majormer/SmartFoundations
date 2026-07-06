@@ -50,20 +50,27 @@ struct FPowerPoleGridNode
  */
 struct FSFAutoConnectSkipSummary
 {
-	/** Belt side connectors with an in-range building port where every option exceeded the belt angle gate */
+	/** Belt connections vanilla rejected as too steep (FGCDConveyorTooSteep), plus side connectors
+	 *  whose every in-range option failed even the generous facing filter while still pointing at
+	 *  the port */
 	int32 BeltsTooSteep = 0;
+	/** Belt connections vanilla rejected as an invalid routed shape (FGCDConveyorInvalidShape) */
+	int32 BeltsInvalidShape = 0;
 	/** Belt manifold links where a same-level continuation existed but the link failed (shape/ports taken) */
 	int32 BeltLanesBlocked = 0;
+	/** Pipe junction->building connections the game rejected as an invalid routed shape
+	 *  (UFGCDPipeInvalidShape - routed min bend radius below vanilla's limit) */
+	int32 PipesInvalidShape = 0;
 	/** Pipe junction pairings that won selection but exceeded the max connection distance */
 	int32 PipesTooFar = 0;
 	/** Pipe junction pairings that won selection but were under the min distance for their angle */
 	int32 PipesTooClose = 0;
 
-	void ResetBeltBuilding() { BeltsTooSteep = 0; }
+	void ResetBeltBuilding() { BeltsTooSteep = 0; BeltsInvalidShape = 0; }
 	void ResetBeltManifold() { BeltLanesBlocked = 0; }
-	void ResetPipes() { PipesTooFar = 0; PipesTooClose = 0; }
-	int32 BeltTotal() const { return BeltsTooSteep + BeltLanesBlocked; }
-	int32 PipeTotal() const { return PipesTooFar + PipesTooClose; }
+	void ResetPipes() { PipesInvalidShape = 0; PipesTooFar = 0; PipesTooClose = 0; }
+	int32 BeltTotal() const { return BeltsTooSteep + BeltsInvalidShape + BeltLanesBlocked; }
+	int32 PipeTotal() const { return PipesInvalidShape + PipesTooFar + PipesTooClose; }
 };
 
 UCLASS()
@@ -99,6 +106,16 @@ public:
 	/** Penalty multiplier for angle misalignment in scoring */
 	static constexpr float ANGLE_PENALTY_MULTIPLIER = 10.0f;
 
+	/** [#466] Facing SANITY limit (deg) for BELT and PIPE previews - NOT a shape gate. Shape
+	 *  validity is judged by the GAME on the routed spline: belts via CheckValidPlacement
+	 *  (FGCDConveyorTooSteep / FGCDConveyorInvalidShape), pipes via the routed min-bend-radius
+	 *  check (UFGCDPipeInvalidShape / IsRoutedShapeInvalid). A conduit is a curve, so the old
+	 *  fixed 30° straight-chord test rejected steep-but-buildable runs the player could place by
+	 *  hand (stacked splitters/junctions close to a machine). This generous limit only prevents
+	 *  spawning previews for connector pairs that point away from each other (reach-behind /
+	 *  wrong side); belt and pipe paths share it so their gates don't diverge. */
+	static constexpr float FACING_SANITY_ANGLE = 80.0f;
+
 	/** [#464] Vertical tolerance (cm) within which two positions count as the same build LEVEL.
 	 *  Same-floor variance between a distributor and a building's belt port is < ~1.2m; distinct
 	 *  grid levels / stack steps are >= 2m apart, so 150cm cleanly separates the two populations. */
@@ -127,6 +144,11 @@ public:
 	/** Skip tally for the current evaluation - written by the belt orchestrator and pipe manager, read by the HUD */
 	FSFAutoConnectSkipSummary& GetSkipSummary() { return SkipSummary; }
 	const FSFAutoConnectSkipSummary& GetSkipSummary() const { return SkipSummary; }
+
+	/** [#466] Why the LAST CreateOrUpdateBeltPreview call declined (vanilla verdicts). Both false
+	 *  when the last call succeeded, or failed for a non-shape reason (facing/short/helper). */
+	bool WasLastBeltRejectTooSteep() const { return bLastBeltRejectTooSteep; }
+	bool WasLastBeltRejectInvalidShape() const { return bLastBeltRejectInvalidShape; }
 
 	USFAutoConnectService();
 
@@ -482,7 +504,7 @@ public:
 		UFGFactoryConnectionComponent* OutputConnector,
 		UFGFactoryConnectionComponent* InputConnector,
 		TSharedPtr<FBeltPreviewHelper>& BeltHelper,
-		float MaxAngleDegrees = 30.0f,
+		float MaxAngleDegrees = FACING_SANITY_ANGLE,
 		bool bSkipAngleValidation = false,
 		AFGHologram* ParentDistributor = nullptr);
 
@@ -678,6 +700,10 @@ private:
 
 	/** Skip tally for the current evaluation (see FSFAutoConnectSkipSummary) */
 	FSFAutoConnectSkipSummary SkipSummary;
+
+	/** [#466] Vanilla verdicts from the last CreateOrUpdateBeltPreview decline */
+	bool bLastBeltRejectTooSteep = false;
+	bool bLastBeltRejectInvalidShape = false;
 
 	/** Cached preview helpers per distributor - SIDE connections (distributor -> building), owned by
 	 * the orchestrator's Phase 4. */

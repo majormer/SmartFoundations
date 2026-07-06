@@ -742,7 +742,7 @@ TArray<TSharedPtr<FBeltPreviewHelper>> USFAutoConnectService::ProcessSingleDistr
 								*ClosestConnector->GetName(), ClosestDistance, *BuildingConnector->GetName());
 							
 							// Use unified function: splitter output → building input
-							if (!CreateOrUpdateBeltPreview(ClosestConnector, BuildingConnector, BeltPreviewHelpers[HelperIndex], 30.0f, false, DistributorHologram))
+							if (!CreateOrUpdateBeltPreview(ClosestConnector, BuildingConnector, BeltPreviewHelpers[HelperIndex], FACING_SANITY_ANGLE, false, DistributorHologram))
 							{
 								// Preview failed - skip to next building (helper will be cleaned up later)
 								continue;
@@ -766,7 +766,7 @@ TArray<TSharedPtr<FBeltPreviewHelper>> USFAutoConnectService::ProcessSingleDistr
 								*BuildingConnector->GetName(), ClosestDistance, *ClosestConnector->GetName());
 							
 							// Use unified function: building output → merger input
-							if (!CreateOrUpdateBeltPreview(BuildingConnector, ClosestConnector, BeltPreviewHelpers[HelperIndex], 30.0f, false, DistributorHologram))
+							if (!CreateOrUpdateBeltPreview(BuildingConnector, ClosestConnector, BeltPreviewHelpers[HelperIndex], FACING_SANITY_ANGLE, false, DistributorHologram))
 							{
 								// Preview failed - skip to next building (helper will be cleaned up later)
 								continue;
@@ -801,7 +801,7 @@ TArray<TSharedPtr<FBeltPreviewHelper>> USFAutoConnectService::ProcessSingleDistr
 						
 						// Use unified function: splitter output → building input
 						TSharedPtr<FBeltPreviewHelper> BeltHelper;
-						if (!CreateOrUpdateBeltPreview(ClosestConnector, BuildingConnector, BeltHelper, 30.0f, false, DistributorHologram))
+						if (!CreateOrUpdateBeltPreview(ClosestConnector, BuildingConnector, BeltHelper, FACING_SANITY_ANGLE, false, DistributorHologram))
 						{
 							// Preview failed - skip this building
 							continue;
@@ -829,7 +829,7 @@ TArray<TSharedPtr<FBeltPreviewHelper>> USFAutoConnectService::ProcessSingleDistr
 						
 						// Use unified function: building output → merger input
 						TSharedPtr<FBeltPreviewHelper> BeltHelper;
-						if (!CreateOrUpdateBeltPreview(BuildingConnector, ClosestConnector, BeltHelper, 30.0f, false, DistributorHologram))
+						if (!CreateOrUpdateBeltPreview(BuildingConnector, ClosestConnector, BeltHelper, FACING_SANITY_ANGLE, false, DistributorHologram))
 						{
 							// Preview failed - skip this building
 							continue;
@@ -895,10 +895,14 @@ bool USFAutoConnectService::CreateOrUpdateBeltPreview(
     UFGFactoryConnectionComponent* OutputConnector,
     UFGFactoryConnectionComponent* InputConnector,
     TSharedPtr<FBeltPreviewHelper>& BeltHelper,
-	float MaxAngleDegrees /* = 30.f */,
+	float MaxAngleDegrees /* = FACING_SANITY_ANGLE */,
     bool bSkipAngleValidation /* = false */,
     AFGHologram* ParentDistributor /* = nullptr */)
 {
+    // [#466] Reset the per-call vanilla verdicts; set below only when vanilla declines the shape
+    bLastBeltRejectTooSteep = false;
+    bLastBeltRejectInvalidShape = false;
+
     if (!OutputConnector || !InputConnector)
     {
         UE_LOG(LogSmartAutoConnect, Verbose, TEXT("CreateOrUpdateBeltPreview: Invalid connectors"));
@@ -1013,6 +1017,29 @@ bool USFAutoConnectService::CreateOrUpdateBeltPreview(
         return false;
     }
 
+    // [#466] VANILLA IS THE SHAPE ARBITER. The chord-angle test above is only a facing sanity
+    // filter now - the belt is a routed spline, and only the game's own placement check can say
+    // whether that curve is buildable (FGCDConveyorTooSteep / FGCDConveyorInvalidShape). Force a
+    // synchronous check on the just-routed spline; if the player couldn't place this belt by
+    // hand, decline the preview. The caller retries another pairing or reports the skip; the
+    // next scale/transform/nudge re-evaluates from scratch.
+    if (ASFConveyorBeltHologram* BeltHolo = Cast<ASFConveyorBeltHologram>(BeltHelper->GetHologram()))
+    {
+        BeltHolo->CheckValidPlacement();
+        if (!BeltHolo->GetLastVanillaPlacementValid())
+        {
+            bLastBeltRejectTooSteep = BeltHolo->WasLastRejectTooSteep();
+            bLastBeltRejectInvalidShape = BeltHolo->WasLastRejectInvalidShape();
+            UE_LOG(LogSmartAutoConnect, Verbose,
+                TEXT("   ❌ BELT REJECTED - VANILLA SHAPE: %s → %s (tooSteep=%d invalidShape=%d)"),
+                *OutputConnector->GetName(), *InputConnector->GetName(),
+                bLastBeltRejectTooSteep ? 1 : 0, bLastBeltRejectInvalidShape ? 1 : 0);
+            BeltHelper->DestroyPreview();
+            BeltHelper.Reset();
+            return false;
+        }
+    }
+
     UE_LOG(LogSmartAutoConnect, Verbose,
         TEXT("   ✅ BELT CREATED: %s → %s (Length: %.1f cm, In %.1f° / Out %.1f° ≤ %.1f°)"),
         *OutputConnector->GetName(), *InputConnector->GetName(),
@@ -1083,7 +1110,7 @@ bool USFAutoConnectService::ConnectAnyConnectors(
 		OutputConnector,
 		InputConnector,
 		NewPreview,
-		30.0f,
+		FACING_SANITY_ANGLE,
 		bSkipAngleValidation
 	);
 

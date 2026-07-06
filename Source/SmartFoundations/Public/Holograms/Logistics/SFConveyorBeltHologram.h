@@ -156,6 +156,11 @@ public:
 	void SetRoutingMode(int32 InRoutingMode) { RoutingMode = InRoutingMode; }
 	bool GetLastVanillaPlacementValid() const { return bLastVanillaPlacementValid; }
 
+	/** [#466] Which vanilla verdict rejected the last placement check - lets auto-connect report
+	 *  the REAL reason (and retry another pairing) instead of inferring from chord angles. */
+	bool WasLastRejectTooSteep() const { return bLastRejectTooSteep; }
+	bool WasLastRejectInvalidShape() const { return bLastRejectInvalidShape; }
+
 protected:
 	// Override ConfigureActor to initialize mesh assets from build class
 	virtual void ConfigureActor(class AFGBuildable* inBuildable) const override;
@@ -180,6 +185,10 @@ private:
 
 	int32 RoutingMode = 0;
 	bool bLastVanillaPlacementValid = true;
+
+	/** [#466] Set by CheckValidPlacement from the vanilla disqualifier list */
+	bool bLastRejectTooSteep = false;
+	bool bLastRejectInvalidShape = false;
 
 	/** [#414] The belt's DEFAULT build-mode descriptor, lazily copied from the real hologram's CDO
 	 *  (like mBuildModeCurve/Straight). Mode-0 routing sets this so Default-mode lanes stop routing

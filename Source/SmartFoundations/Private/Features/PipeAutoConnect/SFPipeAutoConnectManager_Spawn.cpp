@@ -913,7 +913,27 @@ ASFPipelineHologram* FSFPipeAutoConnectManager::SpawnPipeChild(
 	// Trigger mesh generation AFTER AddChild (matches stackable pipe pattern exactly)
 	PipeChild->TriggerMeshGeneration();
 	PipeChild->ForceApplyHologramMaterial();
-	
+
+	// [#466] THE GAME IS THE SHAPE ARBITER (belt/pipe parity). TryUseBuildModeRouting above set
+	// bRoutedShapeInvalid if the routed spline's min bend radius dropped below vanilla's limit -
+	// the SAME "Invalid Pipe Shape!" a hand-built pipe of this shape produces. The old fixed 30°
+	// chord gate (now relaxed to FACING_SANITY_ANGLE) used to pre-reject steep-but-buildable runs;
+	// now we route first and decline only what the game itself won't build. Mirrors the belt
+	// CreateOrUpdateBeltPreview arbiter so the two paths don't diverge.
+	if (PipeChild->IsRoutedShapeInvalid())
+	{
+		// Tally building connections only (manifold declines just vanish, like belt lanes)
+		if (!bIsManifold && Subsystem && Subsystem->GetAutoConnectService())
+		{
+			Subsystem->GetAutoConnectService()->GetSkipSummary().PipesInvalidShape++;
+		}
+		UE_LOG(LogSmartAutoConnect, Verbose,
+			TEXT("🔧 PIPE CHILD: DECLINED (invalid routed shape) %s [%s]"),
+			*ParentJunction->GetName(), bIsManifold ? TEXT("Manifold") : TEXT("Building"));
+		RemovePipeChild(ParentJunction, PipeChild);
+		return nullptr;
+	}
+
 	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🔧 PIPE CHILD: Created %s for %s → %s (%s, Mk%d %s, Recipe=%s)"),
 		*ChildName.ToString(),
 		*ParentJunction->GetName(),
@@ -922,7 +942,7 @@ ASFPipelineHologram* FSFPipeAutoConnectManager::SpawnPipeChild(
 		ActualTier,
 		bWithIndicator ? TEXT("Normal") : TEXT("Clean"),
 		PipeRecipe ? *PipeRecipe->GetName() : TEXT("NULL"));
-	
+
 	return PipeChild;
 }
 
