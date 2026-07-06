@@ -48,6 +48,12 @@ Install the same Smart! version on the server and on every client; the Mod Manag
 
 Yes. Smart! runs on Satisfactory 1.2 — it was rebuilt for the 1.2 engine and is the current supported version. If you are coming from a 1.1 build, just update Smart! through the Mod Manager.
 
+## Why Doesn't Smart! Load On My Dedicated Server After Updating To 1.2?
+
+As of Satisfactory 1.2, every mod except SML must live in `FactoryGame/Mods/GameFeatures/` instead of the flat `FactoryGame/Mods/` layout 1.1 used. The Satisfactory Mod Manager moves your existing mods into the new folder automatically when it updates them for 1.2, but if you deploy to your dedicated server by hand (copying files yourself instead of letting the Mod Manager manage the server), that move does not happen on its own. The server keeps looking in the old location, the mod fails to load, and any companion mod that depends on it (Smart Camera, for example) fails too.
+
+Fix: move `Mods/SmartFoundations` into `Mods/GameFeatures/SmartFoundations` on the server yourself (create the `GameFeatures` folder if it is missing), or let the Mod Manager handle server deployment so this happens automatically on every update.
+
 ## Why Do My Controls Do Nothing?
 
 Check the simple things first:
