@@ -668,6 +668,77 @@ void FSFHologramHelperService::RegenerateChildHologramGrid(
 					ChildHologram = PassthroughChild;
 				}
 			}
+			else if (AFGBlueprintHologram* ParentBlueprint = Cast<AFGBlueprintHologram>(ParentHologram))
+			{
+				// [#168] BLUEPRINT COMPOSITES. The generic ASFBuildableChildHologram below can neither
+				// render nor construct a blueprint's contents (that's the old "only the parent places"
+				// break). Spawn the PARENT'S OWN hologram class (Holo_Blueprint_C or subclass) so the
+				// copy carries the configured blueprint build modes - including the game's own blueprint
+				// auto-connect - then stage it with the parent's descriptor. Connections between copies
+				// are the GAME's job (FGBlueprintOpenConnectionManager), never Smart wiring.
+				UWorld* SpawnWorld = WorldContext.Get();
+				if (SpawnWorld)
+				{
+					FActorSpawnParameters SpawnParams;
+					SpawnParams.Name = ChildName;
+					SpawnParams.Owner = ParentHologram->GetOwner();
+					SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+					SpawnParams.bDeferConstruction = true;
+
+					AFGBlueprintHologram* BlueprintChild = SpawnWorld->SpawnActor<AFGBlueprintHologram>(
+						ParentHologram->GetClass(),
+						SpawnLocation,
+						FRotator::ZeroRotator,
+						SpawnParams);
+
+					if (BlueprintChild)
+					{
+						BlueprintChild->SetRecipe(Recipe);
+						BlueprintChild->FinishSpawning(FTransform(FRotator::ZeroRotator, SpawnLocation));
+						ParentHologram->AddChild(BlueprintChild, ChildName);
+
+						// Stage the copy: descriptor + blueprint world load = contents render and
+						// the child constructs through its own AFGBlueprintHologram::Construct.
+						if (ParentBlueprint->mBlueprintDescriptor)
+						{
+							BlueprintChild->SetBlueprintDescriptor(ParentBlueprint->mBlueprintDescriptor);
+							BlueprintChild->LoadBlueprintToOtherWorld();
+							UE_LOG(LogSmartFoundations, Log,
+								TEXT("[#168] Staged blueprint child %s from descriptor %s"),
+								*ChildName.ToString(), *GetNameSafe(ParentBlueprint->mBlueprintDescriptor));
+						}
+						else
+						{
+							UE_LOG(LogSmartFoundations, Warning,
+								TEXT("[#168] Parent blueprint hologram %s has no descriptor - child %s left unstaged"),
+								*ParentHologram->GetName(), *ChildName.ToString());
+						}
+
+						USFHologramDataService::DisableValidation(BlueprintChild);
+						USFHologramDataService::MarkAsChild(BlueprintChild, ParentHologram, ESFChildHologramType::ScalingGrid);
+
+						if (BlueprintChild->IsHologramLocked())
+						{
+							BlueprintChild->LockHologramPosition(false);
+						}
+						BlueprintChild->SetActorHiddenInGame(false);
+						BlueprintChild->SetActorEnableCollision(false);
+
+						TArray<UPrimitiveComponent*> Primitives;
+						BlueprintChild->GetComponents<UPrimitiveComponent>(Primitives);
+						for (UPrimitiveComponent* PrimComp : Primitives)
+						{
+							PrimComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+						}
+
+						BlueprintChild->SetActorTickEnabled(false);
+						BlueprintChild->RegisterAllComponents();
+						BlueprintChild->SetPlacementMaterialState(EHologramMaterialState::HMS_OK);
+						BlueprintChild->Tags.AddUnique(FName(TEXT("SF_GridChild")));
+					}
+					ChildHologram = BlueprintChild;
+				}
+			}
 			else if (ParentHologram->IsA(AFGFloodlightHologram::StaticClass()))
 			{
 				// Issue #200: Wall floodlights check wall snapping in CheckValidPlacement.

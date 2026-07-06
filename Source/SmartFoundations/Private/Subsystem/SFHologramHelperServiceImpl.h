@@ -15,6 +15,7 @@
 #include "Hologram/FGFactoryHologram.h"
 #include "Hologram/FGBuildableHologram.h"
 #include "Hologram/FGPassthroughHologram.h"
+#include "Hologram/FGBlueprintHologram.h"  // [#168] blueprint composite grid children
 #include "Components/BoxComponent.h"
 #include "Components/PrimitiveComponent.h"
 #include "Holograms/Core/SFSmartChildHologram.h"
