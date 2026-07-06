@@ -679,6 +679,7 @@ int32 ExpandScalingSpecIntoChildren(AFGHologram* Parent, const FSFScalingSpec& S
 							if (ParentBlueprintCell->mBlueprintDescriptor)
 							{
 								BlueprintCell->SetBlueprintDescriptor(ParentBlueprintCell->mBlueprintDescriptor);
+								BlueprintCell->mBlueprintDescName = ParentBlueprintCell->mBlueprintDescName;  // [#168] proxy identity (see preview spawner)
 								BlueprintCell->LoadBlueprintToOtherWorld();
 								// No AlignBuildableRootWithBounds: LoadBlueprintToOtherWorld aligns
 								// internally; a second call displaces the root off the grid (live

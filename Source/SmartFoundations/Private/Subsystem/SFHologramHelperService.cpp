@@ -706,6 +706,11 @@ void FSFHologramHelperService::RegenerateChildHologramGrid(
 						if (ParentBlueprint->mBlueprintDescriptor)
 						{
 							BlueprintChild->SetBlueprintDescriptor(ParentBlueprint->mBlueprintDescriptor);
+							// [#168] Blueprint IDENTITY: the proxy resolves its descriptor by NAME
+							// (mBlueprintName <- hologram mBlueprintDescName, normally set by the
+							// build gun's blueprint flow). Without it, child-built proxies are
+							// anonymous - invisible to vanilla snap/auto-connect/dismantle naming.
+							BlueprintChild->mBlueprintDescName = ParentBlueprint->mBlueprintDescName;
 							BlueprintChild->LoadBlueprintToOtherWorld();
 							// NOTE: do NOT call AlignBuildableRootWithBounds here - live measurement
 							// (2026-07-06) showed it displaces the child ROOT off Smart's grid by a

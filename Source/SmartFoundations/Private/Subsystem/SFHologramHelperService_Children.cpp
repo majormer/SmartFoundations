@@ -951,6 +951,7 @@ AFGHologram* FSFHologramHelperService::SpawnChildHologram(
 			if (ParentBlueprint->mBlueprintDescriptor)
 			{
 				ChildBlueprint->SetBlueprintDescriptor(ParentBlueprint->mBlueprintDescriptor);
+				ChildBlueprint->mBlueprintDescName = ParentBlueprint->mBlueprintDescName;  // [#168] proxy identity (see preview spawner)
 				ChildBlueprint->LoadBlueprintToOtherWorld();
 				// No AlignBuildableRootWithBounds: LoadBlueprintToOtherWorld aligns internally;
 				// a second call displaces the root off the grid (live measurement 2026-07-06).
