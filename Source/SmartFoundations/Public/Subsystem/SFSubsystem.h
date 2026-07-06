@@ -185,6 +185,14 @@ public:
     float& AccessBaselineHeightZRef() { return BaselineHeightZ; }
     const FVector& GetCachedAnchorOffset() const { return CachedAnchorOffset; }
 
+    /** [#168] Smart! Blueprints: measured per-blueprint content-convention delta between the
+     *  PARENT hologram (root re-seated by the interactive build-gun flow) and a freshly staged
+     *  CLONE (natural LoadBlueprintToOtherWorld convention). Applied in child positioning
+     *  (rotated into the parent frame) so clone contents tile exactly like the parent's.
+     *  Measured at first child staging; zeroed on hologram registration. */
+    const FVector& GetBlueprintChildContentDelta() const { return BlueprintChildContentDelta; }
+    void SetBlueprintChildContentDelta(const FVector& InDelta) { BlueprintChildContentDelta = InDelta; }
+
 	// ========================================
 	// RPC Handler Methods (Called by SFRCO)
 	// ========================================
@@ -623,6 +631,9 @@ protected:
 	
 	/** Cached anchor offset for attachment-type pivot compensation (from registry profile) */
 	FVector CachedAnchorOffset = FVector::ZeroVector;
+
+	/** [#168] Smart! Blueprints: per-blueprint clone content-convention delta (see accessor) */
+	FVector BlueprintChildContentDelta = FVector::ZeroVector;
 
 	/** Cached multi-step hologram properties for child sync (Issue #200)
 	 * Tracks parent's fixture angle and build step to detect changes and propagate to children */

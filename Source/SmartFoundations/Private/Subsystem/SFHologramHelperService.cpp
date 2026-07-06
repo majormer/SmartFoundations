@@ -710,10 +710,13 @@ void FSFHologramHelperService::RegenerateChildHologramGrid(
 							// NOTE: do NOT call AlignBuildableRootWithBounds here - live measurement
 							// (2026-07-06) showed it displaces the child ROOT off Smart's grid by a
 							// second alignment (LoadBlueprintToOtherWorld already aligns internally).
-							// [#168-DIAG] One-shot content-convention probe: compare the first
+							// [#168] Content-convention measurement: the PARENT's root was re-seated
+							// by the interactive build-gun flow; a freshly staged clone carries the
+							// natural LoadBlueprintToOtherWorld convention. Compare the first
 							// blueprint-world buildable's visual-root offset (root -> contents) for
-							// parent vs child. A nonzero delta is the exact per-copy offset to
-							// compensate in positioning. TEMP until the offset fix lands.
+							// parent vs child: the delta (constant per blueprint; measured
+							// (+100,-400,0) live 2026-07-06) is the exact per-copy correction the
+							// child positioning applies so clone contents tile like the parent's.
 							{
 								FVector ParentAnchor = FVector::ZeroVector;
 								FVector ChildAnchor = FVector::ZeroVector;
@@ -725,11 +728,16 @@ void FSFHologramHelperService::RegenerateChildHologramGrid(
 								{
 									if (Pair.Value) { ChildAnchor = Pair.Value->GetRelativeLocation(); break; }
 								}
+								const FVector ContentDelta = ParentAnchor - ChildAnchor;
+								if (USFSubsystem* DeltaSubsystem = USFSubsystem::Get(SpawnWorld))
+								{
+									DeltaSubsystem->SetBlueprintChildContentDelta(ContentDelta);
+								}
 								UE_LOG(LogSmartFoundations, Log,
 									TEXT("[#168] Staged blueprint child %s from descriptor %s | anchorRel parent=%s child=%s delta=%s"),
 									*ChildName.ToString(), *GetNameSafe(ParentBlueprint->mBlueprintDescriptor),
 									*ParentAnchor.ToString(), *ChildAnchor.ToString(),
-									*(ParentAnchor - ChildAnchor).ToString());
+									*ContentDelta.ToString());
 							}
 						}
 						else

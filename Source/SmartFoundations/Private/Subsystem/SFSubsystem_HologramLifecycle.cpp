@@ -421,6 +421,9 @@ void USFSubsystem::RegisterActiveHologram(AFGHologram* Hologram)
 		// Priority: Use validated registry dimensions if available, otherwise fall back to adapter bounds
 		bool bBuildingSupportsScaling = true;  // Default to true for unknown buildings (safe fallback)
 
+		// [#168] Fresh hologram, fresh blueprint clone-convention delta (measured at first staging)
+		BlueprintChildContentDelta = FVector::ZeroVector;
+
 		if (USFBuildableSizeRegistry::HasProfile(BuildUClass))
 		{
 			// Use validated dimensions from registry
