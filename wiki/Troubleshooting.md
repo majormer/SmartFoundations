@@ -37,16 +37,19 @@ To adjust transforms with mouse wheel:
 
 Auto-Connect skips connections when it cannot safely make them.
 
+When this happens, the Smart! HUD shows a short summary while you aim — for example, *"2 belt connection(s) skipped: too steep"* — so you can see that something didn't connect and why. The rest of the grid still builds; only the connection it couldn't make is left out.
+
 Common reasons:
 
 - Auto-Connect is disabled.
 - The tier setting is not right.
-- The connector is too far away.
-- The angle is not valid.
+- The connector is **too far** away.
+- The angle is **too steep** for a valid belt or pipe.
 - The connector direction is incompatible.
+- A **lane** between distributors couldn't be completed.
 - The power pole has no free connection slots.
 
-Try placing a smaller test layout to see which part is confusing the preview.
+If a connection is skipped as too steep or too far, moving the grid a little further from the building, or reducing the height offset between levels, usually brings it into range. Try placing a smaller test layout to see which part is confusing the preview.
 
 ## Extend Does Not Start
 

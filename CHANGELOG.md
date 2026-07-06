@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [Unreleased]
+## [33.5.4] - 2026-07-06
 
 > *Auto-Connect gets more reliable on stacked, multi-level grids: connections stay on their own level, the belt and pipe lanes between distributors fill in properly, and port choices are now stable and repeatable. The HUD also tells you, up front, when a connection had to be skipped and why.*
 
