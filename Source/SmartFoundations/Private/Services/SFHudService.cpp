@@ -290,6 +290,11 @@ TPair<FString, FString> USFHudService::BuildCounterDisplayLines() const
 				Reasons.Add(FText::Format(LOCTEXT("HUD_SkipReason_TooSteep", "too steep ({0})"),
 					Skips.BeltsTooSteep).ToString());
 			}
+			if (Skips.BeltsInvalidShape > 0)
+			{
+				Reasons.Add(FText::Format(LOCTEXT("HUD_SkipReason_InvalidShape", "invalid shape ({0})"),
+					Skips.BeltsInvalidShape).ToString());
+			}
 			if (Skips.BeltLanesBlocked > 0)
 			{
 				Reasons.Add(FText::Format(LOCTEXT("HUD_SkipReason_LaneBlocked", "lane blocked ({0})"),

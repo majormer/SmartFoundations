@@ -2,6 +2,7 @@
 
 #include "Features/AutoConnect/SFAutoConnectOrchestrator.h"
 #include "Features/AutoConnect/SFAutoConnectService.h"
+#include "Holograms/Logistics/SFConveyorBeltHologram.h"
 #include "SmartFoundations.h"
 #include "SFLogMacros.h"
 #include "Subsystem/SFSubsystem.h"
@@ -858,59 +859,154 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 		TArray<TSharedPtr<FBeltPreviewHelper>>* ExistingPreviews = AutoConnectService->GetBeltPreviews(Distributor);
 		TArray<TSharedPtr<FBeltPreviewHelper>> Previews;
 		
-		for (const FPotentialConnection& Conn : Assignments)
+		// [#466] Vanilla-arbited creation with retry. The belt routes as a spline and VANILLA
+		// judges the shape (inside CreateOrUpdateBeltPreview / on the reused preview below). If
+		// vanilla declines the assigned pairing, try the next-best unassigned candidate for the
+		// same distributor connector (bounded). A pairing that stays invalid is dropped and
+		// tallied in the HUD skip summary; the next scale/transform/nudge re-evaluates fresh.
+		for (int32 AssignIdx = 0; AssignIdx < Assignments.Num(); AssignIdx++)
 		{
-			// Determine output/input based on distributor type (splitter vs merger)
-			bool bIsSplitter = USFAutoConnectService::IsSplitterHologram(Distributor);
-			
-			UFGFactoryConnectionComponent* OutputConnector = bIsSplitter ? Conn.DistributorConnector : Conn.BuildingConnector;
-			UFGFactoryConnectionComponent* InputConnector = bIsSplitter ? Conn.BuildingConnector : Conn.DistributorConnector;
-			
-			// DEDUPLICATION: Check if we already have a belt preview for this connector pair
-			TSharedPtr<FBeltPreviewHelper> ExistingPreview;
-			if (ExistingPreviews)
+			FPotentialConnection Conn = Assignments[AssignIdx];
+			const bool bIsSplitter = USFAutoConnectService::IsSplitterHologram(Distributor);
+
+			constexpr int32 MaxPairAttempts = 3;
+			TSet<UFGFactoryConnectionComponent*> TriedBuildingConnectors;
+			TSharedPtr<FBeltPreviewHelper> Preview;
+			bool bTooSteep = false;
+			bool bInvalidShape = false;
+			bool bValid = false;
+
+			for (int32 Attempt = 0; Attempt < MaxPairAttempts; Attempt++)
 			{
-				for (const TSharedPtr<FBeltPreviewHelper>& Existing : *ExistingPreviews)
+				TriedBuildingConnectors.Add(Conn.BuildingConnector);
+				UFGFactoryConnectionComponent* OutputConnector = bIsSplitter ? Conn.DistributorConnector : Conn.BuildingConnector;
+				UFGFactoryConnectionComponent* InputConnector = bIsSplitter ? Conn.BuildingConnector : Conn.DistributorConnector;
+
+				// DEDUPLICATION: Check if we already have a belt preview for this connector pair
+				Preview.Reset();
+				bTooSteep = false;
+				bInvalidShape = false;
+				int32 ExistingIndex = INDEX_NONE;
+				if (ExistingPreviews)
 				{
-					if (Existing.IsValid() &&
-						Existing->GetOutputConnector() == OutputConnector &&
-						Existing->GetInputConnector() == InputConnector)
+					for (int32 ExistingIdx = 0; ExistingIdx < ExistingPreviews->Num(); ExistingIdx++)
 					{
-						ExistingPreview = Existing;
-						break;
+						const TSharedPtr<FBeltPreviewHelper>& Existing = (*ExistingPreviews)[ExistingIdx];
+						if (Existing.IsValid() &&
+							Existing->GetOutputConnector() == OutputConnector &&
+							Existing->GetInputConnector() == InputConnector)
+						{
+							Preview = Existing;
+							ExistingIndex = ExistingIdx;
+							break;
+						}
 					}
 				}
-			}
-			
-			if (ExistingPreview.IsValid())
-			{
-				// CRITICAL FIX: Update existing belt preview with new connector positions
-				// Previously this just reused the preview without updating, causing stale positions
-				// when parent moves without child distributors
-				ExistingPreview->UpdatePreview(OutputConnector, InputConnector);
 
-				Previews.Add(ExistingPreview);
-				TotalPreviewsCreated++;
-				UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   ♻️ UPDATED & REUSING BELT: %s -> %s (Dist: %s)"),
-					*GetNameSafe(OutputConnector), *GetNameSafe(InputConnector), *Distributor->GetName());
-				continue;
-			}
-			
-			UE_LOG(LogSmartAutoConnect, Verbose, TEXT("   🔧 BUILDING BELT: %s -> %s (Dist: %s)"),
-				*GetNameSafe(OutputConnector), *GetNameSafe(InputConnector), *Distributor->GetName());
+				if (Preview.IsValid())
+				{
+					// CRITICAL FIX: Update existing belt preview with new connector positions
+					// Previously this just reused the preview without updating, causing stale positions
+					// when parent moves without child distributors
+					Preview->UpdatePreview(OutputConnector, InputConnector);
 
-			// Use the service to create the actual belt preview
-			TSharedPtr<FBeltPreviewHelper> Preview;
-			bool bSuccess = AutoConnectService->CreateOrUpdateBeltPreview(
-				OutputConnector,
-				InputConnector,
-				Preview,
-				30.0f,  // MaxAngleDegrees
-				false,  // bSkipAngleValidation
-				Distributor  // ParentDistributor
-			);
-			
-			if (bSuccess && Preview.IsValid())
+					// [#466] Re-judge the reused preview - endpoints may have moved into a shape
+					// vanilla no longer accepts
+					if (ASFConveyorBeltHologram* Belt = Cast<ASFConveyorBeltHologram>(Preview->GetHologram()))
+					{
+						Belt->CheckValidPlacement();
+						bValid = Belt->GetLastVanillaPlacementValid();
+						if (!bValid)
+						{
+							bTooSteep = Belt->WasLastRejectTooSteep();
+							bInvalidShape = Belt->WasLastRejectInvalidShape();
+							Preview->DestroyPreview();
+							if (ExistingIndex != INDEX_NONE)
+							{
+								ExistingPreviews->RemoveAt(ExistingIndex);
+							}
+							Preview.Reset();
+						}
+					}
+					else
+					{
+						bValid = true;
+					}
+
+					if (bValid)
+					{
+						UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   ♻️ UPDATED & REUSING BELT: %s -> %s (Dist: %s)"),
+							*GetNameSafe(OutputConnector), *GetNameSafe(InputConnector), *Distributor->GetName());
+					}
+				}
+				else
+				{
+					UE_LOG(LogSmartAutoConnect, Verbose, TEXT("   🔧 BUILDING BELT: %s -> %s (Dist: %s)"),
+						*GetNameSafe(OutputConnector), *GetNameSafe(InputConnector), *Distributor->GetName());
+
+					// Use the service to create the actual belt preview (vanilla judges the routed
+					// spline inside and declines invalid shapes)
+					bValid = AutoConnectService->CreateOrUpdateBeltPreview(
+						OutputConnector,
+						InputConnector,
+						Preview,
+						USFAutoConnectService::BELT_FACING_SANITY_ANGLE,
+						false,  // bSkipAngleValidation
+						Distributor  // ParentDistributor
+					) && Preview.IsValid();
+
+					if (!bValid)
+					{
+						bTooSteep = AutoConnectService->WasLastBeltRejectTooSteep();
+						bInvalidShape = AutoConnectService->WasLastBeltRejectInvalidShape();
+						Preview.Reset();
+					}
+				}
+
+				if (bValid)
+				{
+					break;
+				}
+
+				UE_LOG(LogSmartAutoConnect, Verbose, TEXT("      ❌ BELT DECLINED (tooSteep=%d invalidShape=%d) - releasing pairing %s -> %s"),
+					bTooSteep ? 1 : 0, bInvalidShape ? 1 : 0,
+					*GetNameSafe(Conn.DistributorConnector), *GetNameSafe(Conn.BuildingConnector));
+
+				// Release the declined pairing so another distributor may still use the port
+				AssignedBuildingConnectors.Remove(Conn.BuildingConnector);
+				ReservedInputs.Remove(Conn.BuildingConnector);
+
+				// Find the next-best unassigned candidate for this distributor connector
+				const FPotentialConnection* NextCandidate = nullptr;
+				for (const FPotentialConnection& Cand : AllConnections)
+				{
+					if (Cand.DistributorConnector != Conn.DistributorConnector)
+					{
+						continue;
+					}
+					if (TriedBuildingConnectors.Contains(Cand.BuildingConnector) ||
+						AssignedBuildingConnectors.Contains(Cand.BuildingConnector))
+					{
+						continue;
+					}
+					NextCandidate = &Cand;
+					break;
+				}
+
+				if (!NextCandidate)
+				{
+					break;
+				}
+
+				// Reserve the replacement pairing and try again
+				Conn = *NextCandidate;
+				AssignedBuildingConnectors.Add(Conn.BuildingConnector);
+				ReservedInputs.Add(Conn.BuildingConnector, Conn.Distributor);
+				UE_LOG(LogSmartAutoConnect, Verbose, TEXT("      🔁 RETRY with next candidate: %s -> %s"),
+					*GetNameSafe(Conn.DistributorConnector), *GetNameSafe(Conn.BuildingConnector));
+			}
+
+			if (bValid && Preview.IsValid())
 			{
 				Previews.Add(Preview);
 				TotalPreviewsCreated++;
@@ -918,8 +1014,22 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 			}
 			else
 			{
-				UE_LOG(LogSmartAutoConnect, Verbose, TEXT("      ❌ BUILDING BELT FAILED: bSuccess=%d, Preview=%s"),
-					bSuccess, Preview.IsValid() ? TEXT("Valid") : TEXT("Invalid"));
+				// Out of candidates (or attempts) - drop the connection and tell the player why.
+				// Facing/short/helper failures aren't tallied here: the collect-phase tracker
+				// covers facing, and vanilla verdicts are what the HUD reports.
+				if (bTooSteep)
+				{
+					AutoConnectService->GetSkipSummary().BeltsTooSteep++;
+				}
+				else if (bInvalidShape)
+				{
+					AutoConnectService->GetSkipSummary().BeltsInvalidShape++;
+				}
+				AssignedBuildingConnectors.Remove(Conn.BuildingConnector);
+				ReservedInputs.Remove(Conn.BuildingConnector);
+				AssignedDistributorConnectors.Remove(Conn.DistributorConnector);
+				UE_LOG(LogSmartAutoConnect, Verbose, TEXT("      ❌ BUILDING BELT DROPPED after retries (tooSteep=%d invalidShape=%d)"),
+					bTooSteep ? 1 : 0, bInvalidShape ? 1 : 0);
 			}
 		}
 		
@@ -1943,17 +2053,20 @@ void USFAutoConnectOrchestrator::CollectPotentialConnections(
 						ToBuilding.X, ToBuilding.Y, ToBuilding.Z,
 						AngleDegrees, Distance);
 					
-					// Skip connectors that exceed our maximum allowed belt connector angle.
-					// This must match the MaxAngleDegrees used for CreateOrUpdateBeltPreview.
-					if (AngleDegrees > 30.0f)
+					// [#466] Facing SANITY only - matches BELT_FACING_SANITY_ANGLE used by
+					// CreateOrUpdateBeltPreview. Belt SHAPE validity (too steep / bad curve) is
+					// judged by vanilla on the routed spline in Phase 4, because the belt is a
+					// curve and a straight-chord angle test rejects steep-but-buildable S-curves
+					// the player could place by hand (stacked splitters close to a machine).
+					if (AngleDegrees > USFAutoConnectService::BELT_FACING_SANITY_ANGLE)
 					{
 						TotalValidationsFailed++;
-						// Skip-summary: this side connector reached a building port but the shape
-						// was invalid. If it ends the evaluation unassigned, it counts as a skipped
-						// connection ("too steep") in the HUD tally. Only track connectors actually
-						// FACING the port (<= 90°) - a connector pointing away from the building
-						// (one-sided builds: the whole far column) is the expected wrong side of
-						// the splitter, not a would-have connection.
+						// Skip-summary: this side connector reached a building port but even the
+						// generous facing filter rejected it. If it ends the evaluation unassigned,
+						// it counts as a skipped connection ("too steep") in the HUD tally. Only
+						// track connectors actually FACING the port (<= 90°) - a connector pointing
+						// away from the building (one-sided builds: the whole far column) is the
+						// expected wrong side of the splitter, not a would-have connection.
 						if (AngleDegrees <= 90.0f)
 						{
 							AngleRejectedSideConnectors.Add(DistConnector);
