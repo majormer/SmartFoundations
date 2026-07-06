@@ -16,6 +16,7 @@
 #include "Buildables/FGBuildableWire.h"
 #include "Shared/Power/SFWireDesignerRegistration.h"  // [#421] designer containment for direct-spawned wires
 #include "FGBlueprintProxy.h"
+#include "Hologram/FGBlueprintHologram.h"       // [#168] Smart! Blueprints: staged blueprint grid cells
 #include "Hologram/FGPoleHologram.h"            // #354: mPoleVariationIndex / mBuildStep
 #include "Hologram/FGConveyorPoleHologram.h"
 #include "Hologram/FGFloodlightHologram.h"      // #200: mFixtureAngle / mBuildStep
@@ -662,6 +663,37 @@ int32 ExpandScalingSpecIntoChildren(AFGHologram* Parent, const FSFScalingSpec& S
 
 				if (Child)
 				{
+					// [#168] SMART! BLUEPRINTS - stage blueprint grid cells for CONSTRUCTION.
+					// The spec-construction model strips the staged PREVIEW children and re-expands
+					// here at fire time (authority path, SP included), so the recipe-spawned cell is
+					// an EMPTY Holo_Blueprint_C: without the descriptor + a loaded blueprint world its
+					// Construct places nothing - "only the parent builds". Stage it exactly like the
+					// preview spawner does, and apply vanilla's own root-bounds alignment (the parent
+					// received it through the interactive flow; unaligned clones render/build offset).
+					// Stage BEFORE the exact grid transform below so the grid has the final word on
+					// the root position.
+					if (AFGBlueprintHologram* ParentBlueprintCell = Cast<AFGBlueprintHologram>(Parent))
+					{
+						if (AFGBlueprintHologram* BlueprintCell = Cast<AFGBlueprintHologram>(Child))
+						{
+							if (ParentBlueprintCell->mBlueprintDescriptor)
+							{
+								BlueprintCell->SetBlueprintDescriptor(ParentBlueprintCell->mBlueprintDescriptor);
+								BlueprintCell->LoadBlueprintToOtherWorld();
+								BlueprintCell->AlignBuildableRootWithBounds();
+								UE_LOG(LogSmartFoundations, Log,
+									TEXT("[#168] Staged blueprint spec cell %s from descriptor %s"),
+									*Child->GetName(), *GetNameSafe(ParentBlueprintCell->mBlueprintDescriptor));
+							}
+							else
+							{
+								UE_LOG(LogSmartFoundations, Warning,
+									TEXT("[#168] Blueprint parent %s has no descriptor - spec cell %s will construct EMPTY"),
+									*Parent->GetName(), *Child->GetName());
+							}
+						}
+					}
+
 					// Exact grid transform. No placement/validation pass is needed: expansion runs
 					// inside Construct, AFTER server validation has already passed on the parent -
 					// fresh children are constructed directly and never validated. (Live-test finding

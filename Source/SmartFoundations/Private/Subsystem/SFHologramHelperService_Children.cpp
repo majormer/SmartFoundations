@@ -952,6 +952,8 @@ AFGHologram* FSFHologramHelperService::SpawnChildHologram(
 			{
 				ChildBlueprint->SetBlueprintDescriptor(ParentBlueprint->mBlueprintDescriptor);
 				ChildBlueprint->LoadBlueprintToOtherWorld();
+				// Match the parent's root-bounds alignment (see the preview spawner branch)
+				ChildBlueprint->AlignBuildableRootWithBounds();
 				UE_LOG(LogSmartFoundations, Log,
 					TEXT("[#168] Staged blueprint child %s from descriptor %s"),
 					*ChildName.ToString(), *GetNameSafe(ParentBlueprint->mBlueprintDescriptor));

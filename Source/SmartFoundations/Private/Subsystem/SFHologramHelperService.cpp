@@ -707,6 +707,10 @@ void FSFHologramHelperService::RegenerateChildHologramGrid(
 						{
 							BlueprintChild->SetBlueprintDescriptor(ParentBlueprint->mBlueprintDescriptor);
 							BlueprintChild->LoadBlueprintToOtherWorld();
+							// Vanilla's own root-bounds alignment: the PARENT received this through
+							// the interactive build-gun flow; without it the clone's contents render
+							// offset from its grid cell.
+							BlueprintChild->AlignBuildableRootWithBounds();
 							UE_LOG(LogSmartFoundations, Log,
 								TEXT("[#168] Staged blueprint child %s from descriptor %s"),
 								*ChildName.ToString(), *GetNameSafe(ParentBlueprint->mBlueprintDescriptor));
