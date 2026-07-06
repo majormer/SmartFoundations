@@ -680,7 +680,9 @@ int32 ExpandScalingSpecIntoChildren(AFGHologram* Parent, const FSFScalingSpec& S
 							{
 								BlueprintCell->SetBlueprintDescriptor(ParentBlueprintCell->mBlueprintDescriptor);
 								BlueprintCell->LoadBlueprintToOtherWorld();
-								BlueprintCell->AlignBuildableRootWithBounds();
+								// No AlignBuildableRootWithBounds: LoadBlueprintToOtherWorld aligns
+								// internally; a second call displaces the root off the grid (live
+								// measurement 2026-07-06).
 								UE_LOG(LogSmartFoundations, Log,
 									TEXT("[#168] Staged blueprint spec cell %s from descriptor %s"),
 									*Child->GetName(), *GetNameSafe(ParentBlueprintCell->mBlueprintDescriptor));

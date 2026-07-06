@@ -855,6 +855,59 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 			}
 		});
 
+	// ── [#168] SMART! BLUEPRINTS: construct the scaled blueprint grid children.
+	// AFGBlueprintHologram::Construct is a SELF-CONTAINED override: it builds the blueprint's
+	// own contents and never enters the AFGBuildableHologram::Construct body (Hook B above) nor
+	// the base child-construct loop - so the SF_GridChild blueprint children Smart scaling
+	// attaches were silently discarded at fire time ("only the parent builds"; live-confirmed
+	// 2026-07-06: no construct-seam log for a blueprint parent). Hook the blueprint body
+	// directly: run the original, then construct each staged blueprint grid child with the same
+	// construction id. Authority path (SP owns it outright); MP client construct-messaging for
+	// blueprint grids is an explicit follow-up slice.
+	AFGBlueprintHologram* BlueprintHologramCDO = GetMutableDefault<AFGBlueprintHologram>();
+	SUBSCRIBE_METHOD_VIRTUAL(AFGBlueprintHologram::Construct, BlueprintHologramCDO,
+		[](auto& scope, AFGBlueprintHologram* self, TArray<AActor*>& out_children, FNetConstructionID constructionID)
+		{
+			static const FName BlueprintGridChildTag(TEXT("SF_GridChild"));
+
+			// Snapshot the staged blueprint children BEFORE the original runs - construction
+			// tears hologram state down as it goes.
+			TArray<AFGBlueprintHologram*> BlueprintChildren;
+			if (self && self->HasAuthority())
+			{
+				for (AFGHologram* Child : self->GetHologramChildren())
+				{
+					if (Child && Child->ActorHasTag(BlueprintGridChildTag))
+					{
+						if (AFGBlueprintHologram* BlueprintChild = Cast<AFGBlueprintHologram>(Child))
+						{
+							BlueprintChildren.Add(BlueprintChild);
+						}
+					}
+				}
+			}
+
+			scope(self, out_children, constructionID);
+
+			for (AFGBlueprintHologram* BlueprintChild : BlueprintChildren)
+			{
+				if (!IsValid(BlueprintChild))
+				{
+					continue;
+				}
+				TArray<AActor*> ChildBuilt;
+				AActor* BuiltMain = BlueprintChild->Construct(ChildBuilt, constructionID);
+				if (BuiltMain)
+				{
+					out_children.Add(BuiltMain);
+				}
+				out_children.Append(ChildBuilt);
+				UE_LOG(LogSmartFoundations, Log,
+					TEXT("[#168] Constructed blueprint grid child %s -> %s (+%d actors)"),
+					*BlueprintChild->GetName(), *GetNameSafe(BuiltMain), ChildBuilt.Num());
+			}
+		});
+
 	// ── Hook C: group membership assignment, pre-BeginPlay. ConfigureActor is called by the
 	// hologram on the deferred-spawned buildable BEFORE FinishSpawning/BeginPlay - the only window
 	// where lightweight-eligible buildables (foundations etc.) can join a blueprint proxy, because

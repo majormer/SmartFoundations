@@ -707,13 +707,30 @@ void FSFHologramHelperService::RegenerateChildHologramGrid(
 						{
 							BlueprintChild->SetBlueprintDescriptor(ParentBlueprint->mBlueprintDescriptor);
 							BlueprintChild->LoadBlueprintToOtherWorld();
-							// Vanilla's own root-bounds alignment: the PARENT received this through
-							// the interactive build-gun flow; without it the clone's contents render
-							// offset from its grid cell.
-							BlueprintChild->AlignBuildableRootWithBounds();
-							UE_LOG(LogSmartFoundations, Log,
-								TEXT("[#168] Staged blueprint child %s from descriptor %s"),
-								*ChildName.ToString(), *GetNameSafe(ParentBlueprint->mBlueprintDescriptor));
+							// NOTE: do NOT call AlignBuildableRootWithBounds here - live measurement
+							// (2026-07-06) showed it displaces the child ROOT off Smart's grid by a
+							// second alignment (LoadBlueprintToOtherWorld already aligns internally).
+							// [#168-DIAG] One-shot content-convention probe: compare the first
+							// blueprint-world buildable's visual-root offset (root -> contents) for
+							// parent vs child. A nonzero delta is the exact per-copy offset to
+							// compensate in positioning. TEMP until the offset fix lands.
+							{
+								FVector ParentAnchor = FVector::ZeroVector;
+								FVector ChildAnchor = FVector::ZeroVector;
+								for (const auto& Pair : ParentBlueprint->mBuildableToNewRoot)
+								{
+									if (Pair.Value) { ParentAnchor = Pair.Value->GetRelativeLocation(); break; }
+								}
+								for (const auto& Pair : BlueprintChild->mBuildableToNewRoot)
+								{
+									if (Pair.Value) { ChildAnchor = Pair.Value->GetRelativeLocation(); break; }
+								}
+								UE_LOG(LogSmartFoundations, Log,
+									TEXT("[#168] Staged blueprint child %s from descriptor %s | anchorRel parent=%s child=%s delta=%s"),
+									*ChildName.ToString(), *GetNameSafe(ParentBlueprint->mBlueprintDescriptor),
+									*ParentAnchor.ToString(), *ChildAnchor.ToString(),
+									*(ParentAnchor - ChildAnchor).ToString());
+							}
 						}
 						else
 						{
