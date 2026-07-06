@@ -693,6 +693,10 @@ void FSFHologramHelperService::RegenerateChildHologramGrid(
 
 					if (BlueprintChild)
 					{
+						// mBuildClass MUST be set before FinishSpawning: AFGHologram::BeginPlay
+						// asserts on it (FGHologram.cpp:288), and SetRecipe alone does not derive it
+						// on a raw deferred SpawnActor (vanilla's SpawnHologramFromRecipe sets both).
+						BlueprintChild->SetBuildClass(ParentHologram->GetBuildClass());
 						BlueprintChild->SetRecipe(Recipe);
 						BlueprintChild->FinishSpawning(FTransform(FRotator::ZeroRotator, SpawnLocation));
 						ParentHologram->AddChild(BlueprintChild, ChildName);
