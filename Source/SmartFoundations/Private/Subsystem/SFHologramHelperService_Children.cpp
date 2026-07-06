@@ -9,6 +9,7 @@
 #include "SmartFoundations.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/StaticMesh.h"
+#include "Hologram/FGBlueprintHologram.h"  // [#168] blueprint child staging
 
 void FSFHologramHelperService::ApplyScalingDelta(
 	AFGHologram* Hologram,
@@ -935,6 +936,40 @@ AFGHologram* FSFHologramHelperService::SpawnChildHologram(
 	// Note: Children may appear red (validation failed) but still place correctly
 	USFHologramDataService::DisableValidation(ChildHologram);
 	USFHologramDataService::MarkAsChild(ChildHologram, ParentHologram, ESFChildHologramType::ScalingGrid);
+
+	// [#168] BLUEPRINT COMPOSITE STAGING - the fix for "only the parent places".
+	// SpawnChildHologramFromRecipe creates an EMPTY AFGBlueprintHologram (recipe only, no
+	// blueprint): without a descriptor + a staged blueprint world it renders nothing and
+	// constructs nothing - the original #166 break. Point the child at the parent's blueprint
+	// and stage it; construction then flows through the child's own
+	// AFGBlueprintHologram::Construct, and connections between copies are handled by the
+	// GAME's blueprint auto-connect, never by Smart wiring.
+	if (AFGBlueprintHologram* ParentBlueprint = Cast<AFGBlueprintHologram>(ParentHologram))
+	{
+		if (AFGBlueprintHologram* ChildBlueprint = Cast<AFGBlueprintHologram>(ChildHologram))
+		{
+			if (ParentBlueprint->mBlueprintDescriptor)
+			{
+				ChildBlueprint->SetBlueprintDescriptor(ParentBlueprint->mBlueprintDescriptor);
+				ChildBlueprint->LoadBlueprintToOtherWorld();
+				UE_LOG(LogSmartFoundations, Log,
+					TEXT("[#168] Staged blueprint child %s from descriptor %s"),
+					*ChildName.ToString(), *GetNameSafe(ParentBlueprint->mBlueprintDescriptor));
+			}
+			else
+			{
+				UE_LOG(LogSmartFoundations, Warning,
+					TEXT("[#168] Parent blueprint hologram %s has no descriptor - child %s left unstaged"),
+					*ParentHologram->GetName(), *ChildName.ToString());
+			}
+		}
+		else if (ChildHologram)
+		{
+			UE_LOG(LogSmartFoundations, Warning,
+				TEXT("[#168] Parent is a blueprint but spawned child %s is %s - not staged"),
+				*ChildName.ToString(), *ChildHologram->GetClass()->GetName());
+		}
+	}
 
 	// Copy parent's STORED recipe to child (not parent's current recipe)
 	// Get stored recipe from subsystem (where StoreProductionRecipeFromBuilding stores it)

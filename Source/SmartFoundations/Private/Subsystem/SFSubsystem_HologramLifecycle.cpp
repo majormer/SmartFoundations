@@ -462,12 +462,19 @@ void USFSubsystem::RegisterActiveHologram(AFGHologram* Hologram)
 			CachedAnchorOffset = FVector::ZeroVector;
 
 			// Validate and clamp to reasonable range
+			// [#168] Blueprint composites are exempt from the modded-buildable sanity clamp:
+			// designer footprints legitimately reach 64m (Mk3), and truncating the size breaks
+			// the edge-to-edge tiling that lets vanilla's blueprint auto-connect wire the seams.
+			const bool bIsBlueprintComposite = Cast<AFGBlueprintHologram>(Hologram) != nullptr;
 			const float MaxReasonableSize = 2000.0f; // 20 meters
 			if (CachedBuildingSize.X > 1.f && CachedBuildingSize.Y > 1.f && CachedBuildingSize.Z > 1.f)
 			{
-				CachedBuildingSize.X = FMath::Min(CachedBuildingSize.X, MaxReasonableSize);
-				CachedBuildingSize.Y = FMath::Min(CachedBuildingSize.Y, MaxReasonableSize);
-				CachedBuildingSize.Z = FMath::Min(CachedBuildingSize.Z, MaxReasonableSize);
+				if (!bIsBlueprintComposite)
+				{
+					CachedBuildingSize.X = FMath::Min(CachedBuildingSize.X, MaxReasonableSize);
+					CachedBuildingSize.Y = FMath::Min(CachedBuildingSize.Y, MaxReasonableSize);
+					CachedBuildingSize.Z = FMath::Min(CachedBuildingSize.Z, MaxReasonableSize);
+				}
 			}
 			else
 			{
@@ -1622,15 +1629,19 @@ TSharedPtr<ISFHologramAdapter> USFSubsystem::CreateHologramAdapter(AFGHologram* 
 	// Child holograms are swapped in SpawnChildHologram function
 
 	// ========================================
-	// CRITICAL: Detect vanilla blueprint holograms FIRST (Issue #166)
-	// Blueprint placement must not be scaled - it would break the blueprint system
+	// [#168] Vanilla blueprint holograms are now SCALABLE (was the #166 hard-exclusion)
 	// ========================================
-	if (Cast<AFGBlueprintHologram>(Hologram))
+	// The #166 break was naive cloning: children spawned from the blueprint recipe were EMPTY
+	// (no descriptor, nothing staged), so "only the parent placed". The blueprint adapter sizes
+	// the grid from the composite's own mLocalBounds, and SpawnChildHologram stages each child
+	// (descriptor copy + LoadBlueprintToOtherWorld) - the piece the #166-era path lacked.
+	// Connections between copies are the GAME's job (blueprint auto-connect), not Smart's.
+	if (AFGBlueprintHologram* BlueprintHolo = Cast<AFGBlueprintHologram>(Hologram))
 	{
-		UE_LOG(LogSmartFoundations, Verbose,
-			TEXT("Detected Blueprint hologram (%s) - Smart! features disabled (blueprint placement)"),
+		UE_LOG(LogSmartFoundations, Log,
+			TEXT("[#168] Blueprint hologram (%s) - creating Blueprint adapter (scaleable blueprints)"),
 			*Hologram->GetName());
-		return MakeShared<FSFUnsupportedAdapter>(Hologram, TEXT("Blueprint"));
+		return MakeShared<FSFBlueprintAdapter>(BlueprintHolo);
 	}
 
 	// Check for custom logistics holograms first (most specific)
