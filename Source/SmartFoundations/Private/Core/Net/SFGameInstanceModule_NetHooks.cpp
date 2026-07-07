@@ -384,12 +384,16 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 					// disqualified grid child blocks the whole placement); the previews are still alive.
 					if (!SFScalingSpecExpansion::AreAllWaterCellsValid(Holo))
 					{
-						UE_LOG(LogSmartFoundations, Verbose,
+						UE_LOG(LogSmartFoundations, Log,
 							TEXT("[MP-SPEC] #428 Refused client fire: a water-extractor grid cell is not over deep water."));
 						if (GEngine)
 						{
 							GEngine->AddOnScreenDebugMessage(-1, 6.0f, FColor::Orange,
 								TEXT("Smart!: every water extractor must be placed on deep water."));
+						}
+						if (USFSubsystem* NoticeSS = USFSubsystem::Get(World))
+						{
+							NoticeSS->ShowSmartNotice(TEXT("Every water extractor must be placed on deep water."));
 						}
 						scope.Cancel();
 						return;
@@ -408,7 +412,7 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 					}
 					if (PlanBytesEstimate > 45000)
 					{
-						UE_LOG(LogSmartFoundations, Verbose,
+						UE_LOG(LogSmartFoundations, Log,
 							TEXT("[MP-334] Refused client fire: conduit plan too large to stage reliably (%d conduits, ~%d bytes). Build in smaller sections."),
 							Spec.ConduitPlan.Num(), PlanBytesEstimate);
 						if (GEngine)
@@ -416,6 +420,12 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 							GEngine->AddOnScreenDebugMessage(-1, 6.0f, FColor::Orange,
 								FString::Printf(TEXT("Smart!: too many auto-connect belts/pipes/wires for one multiplayer placement (%d). Build in smaller sections."),
 									Spec.ConduitPlan.Num()));
+						}
+						if (USFSubsystem* NoticeSS = USFSubsystem::Get(World))
+						{
+							NoticeSS->ShowSmartNotice(FString::Printf(
+								TEXT("Too many auto-connect belts/pipes for one multiplayer placement (%d). Build in smaller sections."),
+								Spec.ConduitPlan.Num()));
 						}
 						scope.Cancel();
 						return;
@@ -436,7 +446,7 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 						const int64 TotalActorEstimate = static_cast<int64>(Spec.CellCount()) * ActorsPerCopy;
 						if (TotalActorEstimate > SF_MP_BLUEPRINT_ACTOR_CAP)
 						{
-							UE_LOG(LogSmartFoundations, Verbose,
+							UE_LOG(LogSmartFoundations, Log,
 								TEXT("[#168-MP] Refused client blueprint-grid fire: ~%lld buildings (%d copies x %d each) exceeds the per-placement cap (%d). Build in smaller sections."),
 								TotalActorEstimate, Spec.CellCount(), ActorsPerCopy, SF_MP_BLUEPRINT_ACTOR_CAP);
 							if (GEngine)
@@ -444,6 +454,12 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 								GEngine->AddOnScreenDebugMessage(-1, 6.0f, FColor::Orange,
 									FString::Printf(TEXT("Smart!: blueprint grid too large for one multiplayer placement (~%lld buildings, max ~%d). Build in smaller sections."),
 										TotalActorEstimate, SF_MP_BLUEPRINT_ACTOR_CAP));
+							}
+							if (USFSubsystem* NoticeSS = USFSubsystem::Get(World))
+							{
+								NoticeSS->ShowSmartNotice(FString::Printf(
+									TEXT("Blueprint grid too large for one multiplayer placement (~%lld buildings, max ~%d). Build in smaller sections."),
+									TotalActorEstimate, SF_MP_BLUEPRINT_ACTOR_CAP));
 							}
 							scope.Cancel();
 							return;
@@ -586,7 +602,7 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 			// Oversized: refuse the fire BEFORE vanilla serializes/sends. The active hologram + preview stay
 			// live (no teardown, no orphaned previews, no dropped RPC, no server crash). The player scales
 			// down and places in smaller sections.
-			UE_LOG(LogSmartFoundations, Verbose,
+			UE_LOG(LogSmartFoundations, Log,
 				TEXT("[MP-CHUNK] Refused oversized client grid: %d cells (> %d). One construct can't carry this many over the wire safely; build in smaller sections."),
 				TotalCells, SF_MP_OVERSIZED_CELLS);
 
@@ -595,6 +611,12 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 				GEngine->AddOnScreenDebugMessage(-1, 6.0f, FColor::Orange,
 					FString::Printf(TEXT("Smart!: grid too large for multiplayer (%d cells, max ~%d). Build in smaller sections."),
 						TotalCells, SF_MP_OVERSIZED_CELLS));
+			}
+			if (USFSubsystem* NoticeSS = USFSubsystem::Get(World))
+			{
+				NoticeSS->ShowSmartNotice(FString::Printf(
+					TEXT("Grid too large for multiplayer (%d cells, max ~%d). Build in smaller sections."),
+					TotalCells, SF_MP_OVERSIZED_CELLS));
 			}
 
 			scope.Cancel(); // suppress the fire -> nothing is serialized or sent; the grid stays live.

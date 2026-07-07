@@ -193,6 +193,23 @@ public:
     const FVector& GetBlueprintChildContentDelta() const { return BlueprintChildContentDelta; }
     void SetBlueprintChildContentDelta(const FVector& InDelta) { BlueprintChildContentDelta = InDelta; }
 
+    /** [#168-MP] Transient player-facing notice rendered by the Smart HUD (e.g. a refused
+     *  multiplayer fire: grid over the per-placement caps). GEngine on-screen debug messages do
+     *  NOT render in Shipping builds - every MP guard that relied on them was silently invisible
+     *  (live 2026-07-07: six refused fires read as "the build stopped triggering"). The HUD is
+     *  the surface players actually see while aiming; the refused grid stays live, so the notice
+     *  shows exactly when it's actionable. */
+    void ShowSmartNotice(const FString& Text, float Seconds = 8.0f)
+    {
+        SmartNoticeText = Text;
+        SmartNoticeExpiry = GetWorld() ? GetWorld()->GetTimeSeconds() + Seconds : 0.0;
+        UpdateCounterDisplay();
+    }
+    FString GetActiveSmartNotice() const
+    {
+        return (GetWorld() && GetWorld()->GetTimeSeconds() < SmartNoticeExpiry) ? SmartNoticeText : FString();
+    }
+
 	// ========================================
 	// RPC Handler Methods (Called by SFRCO)
 	// ========================================
@@ -652,6 +669,10 @@ protected:
 	 *  into blueprint building, cleared when a non-blueprint hologram registers, so repeated
 	 *  pickups and post-fire respawns keep the player's own spacing. */
 	bool bBlueprintSpacingDefaultApplied = false;
+
+	/** [#168-MP] Transient HUD notice state (see ShowSmartNotice) */
+	FString SmartNoticeText;
+	double SmartNoticeExpiry = 0.0;
 
 	/** Cached multi-step hologram properties for child sync (Issue #200)
 	 * Tracks parent's fixture angle and build step to detect changes and propagate to children */

@@ -327,6 +327,17 @@ TPair<FString, FString> USFHudService::BuildCounterDisplayLines() const
 		}
 	}
 
+	// [#168-MP] Transient guard notice (e.g. a refused multiplayer fire: grid over the
+	// per-placement caps). GEngine debug messages don't render in Shipping - this HUD line is
+	// the surface players actually see; the refused grid stays live while it shows.
+	{
+		const FString Notice = Subsystem->GetActiveSmartNotice();
+		if (!Notice.IsEmpty())
+		{
+			Lines.Add(FString::Printf(TEXT("*%s"), *Notice));
+		}
+	}
+
 	if (Subsystem->IsRestoredExtendModeActive())
 	{
 		// [#427] Module stamp-session banner: the previously invisible replay session, surfaced.
