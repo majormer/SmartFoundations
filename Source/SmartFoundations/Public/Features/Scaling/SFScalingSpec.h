@@ -121,6 +121,15 @@ struct SMARTFOUNDATIONS_API FSFScalingSpec
 	UPROPERTY()
 	TSubclassOf<class UFGRecipe> ProductionRecipe = nullptr;
 
+	/** [#168-MP] Smart! Blueprints: the client-measured blueprint clone content-convention delta
+	 *  (parent-local, cm). Clone content sits offset from the grid anchor by a per-blueprint
+	 *  constant (a LoadBlueprintToOtherWorld convention); the client's previews - and the conduit
+	 *  plan captured FROM those previews - already include this correction, so the server's
+	 *  re-expanded copies must apply the SAME value or every copy (and every planned seam conduit
+	 *  endpoint) lands off by it. Zero for non-blueprint grids. */
+	UPROPERTY()
+	FVector BlueprintContentDelta = FVector::ZeroVector;
+
 	/** True once populated from a live grid; the server only expands when valid. */
 	UPROPERTY()
 	bool bValid = false;

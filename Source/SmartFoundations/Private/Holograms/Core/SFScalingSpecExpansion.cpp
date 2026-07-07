@@ -113,6 +113,17 @@ bool CaptureScalingSpec(AFGHologram* Hologram, FSFScalingSpec& OutSpec)
 	OutSpec.Counters = Counters;
 	OutSpec.ItemSize = Profile.DefaultSize;
 	OutSpec.AnchorOffset = Profile.AnchorOffset;
+	// [#168-MP] Blueprint composites have NO registry profile - the fallback 8x8x4m would hand the
+	// server a wrong grid pitch entirely. The subsystem's cached size IS what positioned the client
+	// preview (the blueprint adapter's mLocalBounds footprint, cached at registration); carry it,
+	// plus the measured clone content-convention delta the preview corrected every child by - the
+	// captured conduit plan below is only valid against copies at those exact positions.
+	if (Hologram->IsA<AFGBlueprintHologram>())
+	{
+		OutSpec.ItemSize = SS->GetCachedBuildingSize();
+		OutSpec.AnchorOffset = FVector::ZeroVector;
+		OutSpec.BlueprintContentDelta = SS->GetBlueprintChildContentDelta();
+	}
 	OutSpec.BuildClass = Hologram->GetBuildClass();
 	// [#368] Carry the player's remembered production recipe so the SERVER applies it to the
 	// authoritative manufacturer build (recipe memory is client-side only; this is the sole crossing
@@ -536,10 +547,19 @@ int32 ExpandScalingSpecIntoChildren(AFGHologram* Parent, const FSFScalingSpec& S
 				// registry anchor pre-lowers attachment types (splitters/mergers/pipe junctions,
 				// AnchorOffset.Z ~ -100cm) by their compensation - live finding 2026-06-09: spec
 				// grid children sank half-height while the parent sat correctly.
-				const FVector CellLoc = Calc.CalculateChildPosition(
+				FVector CellLoc = Calc.CalculateChildPosition(
 					GX, GY, GZ, ParentLoc, ParentRot,
 					Spec.ItemSize, C, LinearIndex, FVector::ZeroVector);
 				++LinearIndex;
+
+				// [#168-MP] Blueprint copies: apply the client-measured content-convention delta in
+				// the PARENT frame - the same correction the client preview applied per child
+				// (USFGridSpawnerService::UpdateChildPositions) - so the server's copies land at the
+				// exact world positions the captured seam-conduit plan was routed against.
+				if (!Spec.BlueprintContentDelta.IsZero() && Parent->IsA<AFGBlueprintHologram>())
+				{
+					CellLoc += ParentRot.RotateVector(Spec.BlueprintContentDelta);
+				}
 
 				// [#363] Rotation mode: each cell rotates progressively along the arc, exactly
 				// like SP's grid spawner. The calculator already curves the POSITIONS from the

@@ -420,6 +420,35 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 						scope.Cancel();
 						return;
 					}
+
+					// [#168-MP] Blueprint grids are actor-HEAVY: every copy re-builds the blueprint's
+					// full contents server-side, and a seam-wired blueprint grid always carries a
+					// conduit plan, which excludes it from the deferred time-sliced path
+					// (ShouldDeferSpecExpansion requires an empty plan) - so the whole expansion runs
+					// inline in ONE server frame. Cap the total expanded-actor estimate so one fire
+					// cannot hitch the server into client timeouts (#418's failure mode: ~1.3ms per
+					// actor; 2000 actors ~ 2.5s worst case). Conservative first number - tune with
+					// live dedi data before release.
+					if (const AFGBlueprintHologram* BlueprintHolo = Cast<AFGBlueprintHologram>(Holo))
+					{
+						constexpr int32 SF_MP_BLUEPRINT_ACTOR_CAP = 2000;
+						const int32 ActorsPerCopy = FMath::Max(1, BlueprintHolo->mBuildableToNewRoot.Num());
+						const int64 TotalActorEstimate = static_cast<int64>(Spec.CellCount()) * ActorsPerCopy;
+						if (TotalActorEstimate > SF_MP_BLUEPRINT_ACTOR_CAP)
+						{
+							UE_LOG(LogSmartFoundations, Verbose,
+								TEXT("[#168-MP] Refused client blueprint-grid fire: ~%lld buildings (%d copies x %d each) exceeds the per-placement cap (%d). Build in smaller sections."),
+								TotalActorEstimate, Spec.CellCount(), ActorsPerCopy, SF_MP_BLUEPRINT_ACTOR_CAP);
+							if (GEngine)
+							{
+								GEngine->AddOnScreenDebugMessage(-1, 6.0f, FColor::Orange,
+									FString::Printf(TEXT("Smart!: blueprint grid too large for one multiplayer placement (~%lld buildings, max ~%d). Build in smaller sections."),
+										TotalActorEstimate, SF_MP_BLUEPRINT_ACTOR_CAP));
+							}
+							scope.Cancel();
+							return;
+						}
+					}
 				}
 			}
 

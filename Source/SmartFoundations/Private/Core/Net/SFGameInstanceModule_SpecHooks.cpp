@@ -866,11 +866,47 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 	// blueprint grids is an explicit follow-up slice.
 	AFGBlueprintHologram* BlueprintHologramCDO = GetMutableDefault<AFGBlueprintHologram>();
 	SUBSCRIBE_METHOD_VIRTUAL(AFGBlueprintHologram::Construct, BlueprintHologramCDO,
-		[](auto& scope, AFGBlueprintHologram* self, TArray<AActor*>& out_children, FNetConstructionID constructionID)
+		[=](auto& scope, AFGBlueprintHologram* self, TArray<AActor*>& out_children, FNetConstructionID constructionID)
 		{
 			static const FName BlueprintGridChildTag(TEXT("SF_GridChild"));
 			static const FName SeamBeltTag(TEXT("SF_BeltAutoConnectChild"));
 			static const FName SeamPipeTag(TEXT("SF_PipeAutoConnectChild"));
+
+			// ── [#168-MP] SERVER-SIDE RE-EXPANSION for blueprint parents. A network client's fire
+			// strips the SF_GridChild copies + seam conduits and stages the spec (the standard
+			// spec-construction model), but the generic re-expansion lives in Hook B's
+			// AFGBuildableHologram::Construct body - which this SELF-CONTAINED override never
+			// enters. Consume + expand HERE instead: grid copies first (the expansion's blueprint
+			// cell staging loads each copy's blueprint world), then the client's captured conduit
+			// plan (seam belts/pipes ride the same #334 plan as every other auto-connect family) -
+			// appended after the copies so the construct loops below fire them against BUILT
+			// actors. Deliberately NO group proxy (unlike Hook B): blueprint copies create their
+			// own per-copy proxies - the individual-dismantle model the feature ships with.
+			// SP is untouched: nothing stages a spec outside a network-client fire, and the
+			// preview children (present in SP) suppress expansion via CountGridChildren.
+			if (self && self->HasAuthority() && SFScalingSpecExpansion::IsSpecConstructionEnabled())
+			{
+				FSFScalingSpec BlueprintSpec;
+				if (FindStagedSpec(self, BlueprintSpec, /*bConsume=*/true) && BlueprintSpec.bValid)
+				{
+					if (CountGridChildren(self) == 0)
+					{
+						const int32 Expanded = SFScalingSpecExpansion::ExpandScalingSpecIntoChildren(
+							self, BlueprintSpec, self->GetRecipe());
+						UE_LOG(LogSmartFoundations, Log,
+							TEXT("[#168-MP] Blueprint construct seam %s: expanded %d grid cop%s server-side (delta=%s)."),
+							*self->GetName(), Expanded, Expanded == 1 ? TEXT("y") : TEXT("ies"),
+							*BlueprintSpec.BlueprintContentDelta.ToCompactString());
+					}
+					const int32 Conduits = SFScalingSpecExpansion::SpawnConduitPlanChildren(self, BlueprintSpec);
+					if (Conduits > 0)
+					{
+						UE_LOG(LogSmartFoundations, Log,
+							TEXT("[#168-MP] Blueprint construct seam %s: staged %d seam conduit(s) from the client plan."),
+							*self->GetName(), Conduits);
+					}
+				}
+			}
 
 			// Snapshot the staged blueprint children BEFORE the original runs - construction
 			// tears hologram state down as it goes. [#168] Seam CONDUIT children (the belt/pipe
