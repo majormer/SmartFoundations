@@ -413,6 +413,140 @@ void USFSubsystem::ClearStackablePipeBuildCache()
 // Called from SFPipelineHologram::Construct() to register pipes for deferred wiring.
 // This bypasses OnActorSpawned timing issues where tags are added AFTER the spawn delegate fires.
 
+int32 USFSubsystem::WireBlueprintSeamPipe(AFGBuildablePipeline* Pipe)
+{
+	if (!Pipe || !GetWorld())
+	{
+		return 0;
+	}
+
+	// [#168] Synchronous seam-pipe wiring. Mirrors the belt seam path (immediate proximity scan
+	// against BUILT actors), but adds explicit network MERGE — SetConnection alone leaves the two
+	// copies' pipe networks separate, so fluid wouldn't cross without this (the deferred junction
+	// path only MarkForFullRebuild's, which is why seam pipes built but never flowed).
+	const float WiringRadius = 100.0f;   // 1m — matches the deferred junction tolerance
+	int32 Wired = 0;
+
+	auto WireEndpoint = [this, Pipe, WiringRadius, &Wired](UFGPipeConnectionComponent* OwnConn)
+	{
+		if (!OwnConn)
+		{
+			return;
+		}
+		// Vanilla's Construct wires the built pipe to its SNAPPED connections — which for a seam
+		// pipe are the clone HOLOGRAM's dup connector components (set for pole suppression). That
+		// "connection" reports IsConnected()==true right now and dangles the moment the hologram
+		// dies, which silently skipped all real wiring (live 2026-07-07: every seam pipe logged
+		// wired 0/2 with no search — final state unconnected). A peer owned by a hologram (or by
+		// anything that is not a BUILT buildable) is bogus: clear it and wire to the real world.
+		if (OwnConn->IsConnected())
+		{
+			UFGPipeConnectionComponentBase* Peer = OwnConn->GetConnection();
+			AActor* PeerOwner = Peer ? Peer->GetOwner() : nullptr;
+			if (!PeerOwner || PeerOwner->IsA<AFGHologram>() || !PeerOwner->IsA<AFGBuildable>())
+			{
+				UE_LOG(LogSmartAutoConnect, Log, TEXT("[#168] Seam pipe %s endpoint %s: clearing bogus hologram-peer connection (%s) before real wiring"),
+					*Pipe->GetName(), *OwnConn->GetName(), *GetNameSafe(PeerOwner));
+				OwnConn->ClearConnection();
+			}
+			else
+			{
+				return; // genuinely wired to a built actor — leave it
+			}
+		}
+		const FVector SearchLoc = OwnConn->GetComponentLocation();
+		UFGPipeConnectionComponent* BestMatch = nullptr;
+		float BestDist = WiringRadius;
+		for (TActorIterator<AFGBuildable> It(GetWorld()); It; ++It)
+		{
+			AFGBuildable* Buildable = *It;
+			if (Buildable == Pipe)
+			{
+				continue;
+			}
+			TArray<UFGPipeConnectionComponent*> Connectors;
+			Buildable->GetComponents<UFGPipeConnectionComponent>(Connectors);
+			for (UFGPipeConnectionComponent* Conn : Connectors)
+			{
+				if (!Conn || Conn->IsConnected())
+				{
+					continue;
+				}
+				if (Conn->GetPipeConnectionType() == EPipeConnectionType::PCT_SNAP_ONLY)
+				{
+					continue;
+				}
+				if (!OwnConn->CanConnectTo(Conn))
+				{
+					continue;   // producer/consumer/any compatibility — vanilla's own rule
+				}
+				const float Dist = FVector::Dist(SearchLoc, Conn->GetComponentLocation());
+				if (Dist < BestDist)
+				{
+					BestDist = Dist;
+					BestMatch = Conn;
+				}
+			}
+		}
+		if (BestMatch)
+		{
+			OwnConn->SetConnection(BestMatch);
+			Wired++;
+			UE_LOG(LogSmartAutoConnect, Log, TEXT("[#168] Seam pipe %s wired -> %s.%s (dist=%.1f)"),
+				*Pipe->GetName(), *GetNameSafe(BestMatch->GetOwner()), *BestMatch->GetName(), BestDist);
+		}
+		else
+		{
+			UE_LOG(LogSmartAutoConnect, Log, TEXT("[#168] Seam pipe %s: NO connector within %.0fcm of endpoint %s @ %s"),
+				*Pipe->GetName(), WiringRadius, *OwnConn->GetName(), *SearchLoc.ToString());
+		}
+	};
+
+	WireEndpoint(Pipe->GetPipeConnection0());
+	WireEndpoint(Pipe->GetPipeConnection1());
+
+	// Merge the now-joined networks so fluid actually crosses the seam.
+	if (Wired > 0)
+	{
+		if (AFGPipeSubsystem* PipeSubsystem = AFGPipeSubsystem::Get(GetWorld()))
+		{
+			auto MergeAt = [PipeSubsystem, Pipe](UFGPipeConnectionComponent* OwnConn)
+			{
+				if (!OwnConn || !OwnConn->IsConnected())
+				{
+					return;
+				}
+				UFGPipeConnectionComponent* Other = Cast<UFGPipeConnectionComponent>(OwnConn->GetConnection());
+				if (!Other)
+				{
+					return;
+				}
+				const int32 NetA = OwnConn->GetPipeNetworkID();
+				const int32 NetB = Other->GetPipeNetworkID();
+				AFGPipeNetwork* NetworkA = (NetA != INDEX_NONE) ? PipeSubsystem->FindPipeNetwork(NetA) : nullptr;
+				if (NetA != NetB && NetA != INDEX_NONE && NetB != INDEX_NONE)
+				{
+					if (AFGPipeNetwork* NetworkB = PipeSubsystem->FindPipeNetwork(NetB))
+					{
+						if (NetworkA)
+						{
+							NetworkA->MergeNetworks(NetworkB);
+						}
+					}
+				}
+				if (NetworkA)
+				{
+					NetworkA->MarkForFullRebuild();
+				}
+			};
+			MergeAt(Pipe->GetPipeConnection0());
+			MergeAt(Pipe->GetPipeConnection1());
+		}
+	}
+
+	return Wired;
+}
+
 void USFSubsystem::RegisterPipeForDeferredWiring(AFGBuildablePipeline* Pipe)
 {
 	if (!Pipe)

@@ -2,6 +2,8 @@
 
 #include "Holograms/Logistics/SFPipelineHologram.h"
 #include "SmartFoundations.h"
+#include "SFLogMacros.h"                       // [#168] LogSmartAutoConnect for seam-pipe wiring
+#include "Hologram/FGBlueprintHologram.h"      // [#168] blueprint-seam parent discriminator
 #include "Buildables/FGBuildablePipeline.h"
 #include "Buildables/FGBuildablePipeBase.h"   // #405: common base of fluid pipe + hypertube — read the spline mesh by base cast
 #include "Components/SplineMeshComponent.h"
@@ -364,7 +366,21 @@ AActor* ASFPipelineHologram::Construct(TArray<AActor*>& out_children, FNetConstr
 						USFSubsystem* Subsystem = USFSubsystem::Get(GetWorld());
 						if (Subsystem)
 						{
-							Subsystem->RegisterPipeForDeferredWiring(FluidPipe);
+							// [#168] A blueprint SEAM pipe (parent is the blueprint hologram) wires
+							// SYNCHRONOUSLY: our Construct hook builds every blueprint copy BEFORE the
+							// seam conduits, so the neighbor connectors already exist this frame, and the
+							// sync path also MERGES the two copies' pipe networks (the deferred junction
+							// path only marks for rebuild — seam pipes built but fluid never crossed).
+							if (Cast<AFGBlueprintHologram>(GetParentHologram()))
+							{
+								const int32 SeamWired = Subsystem->WireBlueprintSeamPipe(FluidPipe);
+								UE_LOG(LogSmartAutoConnect, Log, TEXT("[#168] Seam pipe %s wired %d/2 endpoints synchronously"),
+									*Pipe->GetName(), SeamWired);
+							}
+							else
+							{
+								Subsystem->RegisterPipeForDeferredWiring(FluidPipe);
+							}
 						}
 						
 						UE_LOG(LogSmartHologram, Verbose, TEXT("🔧 PIPE AUTO-CONNECT: Pipe %s built, registered for deferred wiring (%s)"), 
