@@ -35,6 +35,7 @@ void USFAutoConnectService::Shutdown()
 {
 	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("SFAutoConnectService shutting down"));
 	ClearBeltPreviewHelpers();
+	CleanupAllBlueprintSeamsAllParents();   // [#168] seam conduit previews + table cache
 	Subsystem = nullptr;
 }
 

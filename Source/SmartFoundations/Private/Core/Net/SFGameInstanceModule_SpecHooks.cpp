@@ -869,20 +869,34 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 		[](auto& scope, AFGBlueprintHologram* self, TArray<AActor*>& out_children, FNetConstructionID constructionID)
 		{
 			static const FName BlueprintGridChildTag(TEXT("SF_GridChild"));
+			static const FName SeamBeltTag(TEXT("SF_BeltAutoConnectChild"));
+			static const FName SeamPipeTag(TEXT("SF_PipeAutoConnectChild"));
 
 			// Snapshot the staged blueprint children BEFORE the original runs - construction
-			// tears hologram state down as it goes.
+			// tears hologram state down as it goes. [#168] Seam CONDUIT children (the belt/pipe
+			// previews seam auto-connect AddChild'd to this parent) are snapshotted too: the
+			// blueprint Construct override never runs the base child-construct loop, so without
+			// this they'd be silently discarded at fire exactly like the grid children were.
 			TArray<AFGBlueprintHologram*> BlueprintChildren;
+			TArray<AFGHologram*> SeamConduitChildren;
 			if (self && self->HasAuthority())
 			{
 				for (AFGHologram* Child : self->GetHologramChildren())
 				{
-					if (Child && Child->ActorHasTag(BlueprintGridChildTag))
+					if (!Child)
+					{
+						continue;
+					}
+					if (Child->ActorHasTag(BlueprintGridChildTag))
 					{
 						if (AFGBlueprintHologram* BlueprintChild = Cast<AFGBlueprintHologram>(Child))
 						{
 							BlueprintChildren.Add(BlueprintChild);
 						}
+					}
+					else if (Child->ActorHasTag(SeamBeltTag) || Child->ActorHasTag(SeamPipeTag))
+					{
+						SeamConduitChildren.Add(Child);
 					}
 				}
 			}
@@ -905,6 +919,27 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 				UE_LOG(LogSmartFoundations, Log,
 					TEXT("[#168] Constructed blueprint grid child %s -> %s (+%d actors)"),
 					*BlueprintChild->GetName(), *GetNameSafe(BuiltMain), ChildBuilt.Num());
+			}
+
+			// [#168] Seam conduits fire AFTER every blueprint copy so their SF-tagged Construct
+			// paths wire geometrically against just-BUILT actors (the same ordering contract the
+			// scaling-spec expansion relies on).
+			for (AFGHologram* Conduit : SeamConduitChildren)
+			{
+				if (!IsValid(Conduit))
+				{
+					continue;
+				}
+				TArray<AActor*> ConduitBuilt;
+				AActor* BuiltMain = Conduit->Construct(ConduitBuilt, constructionID);
+				if (BuiltMain)
+				{
+					out_children.Add(BuiltMain);
+				}
+				out_children.Append(ConduitBuilt);
+				UE_LOG(LogSmartFoundations, Log,
+					TEXT("[#168] Constructed blueprint seam conduit %s -> %s (+%d actors)"),
+					*Conduit->GetName(), *GetNameSafe(BuiltMain), ConduitBuilt.Num());
 			}
 		});
 

@@ -228,6 +228,11 @@ void USFGridSpawnerService::UpdateChildPositions()
                 {
                     Orchestrator->OnFloorHolePipesChanged();
                 }
+                // [#168] Smart! Blueprints: seam conduits orphan-clean when the grid empties
+                if (Cast<AFGBlueprintHologram>(Parent))
+                {
+                    Orchestrator->OnBlueprintSeamsChanged();
+                }
                 UE_LOG(LogSmartGrid, VeryVerbose, TEXT("   🎯 Orchestrator: Triggered cleanup for valid types (no children)"));
             }
         }
@@ -652,6 +657,11 @@ void USFGridSpawnerService::UpdateChildPositions()
                 {
                     Orchestrator->OnFloorHolePipesChanged();
                 }
+                // [#168] Smart! Blueprints: children are definitively positioned — evaluate seams
+                if (Cast<AFGBlueprintHologram>(Parent))
+                {
+                    Orchestrator->OnBlueprintSeamsChanged();
+                }
 
                 UE_LOG(LogSmartGrid, VeryVerbose, TEXT("   🎯 Orchestrator: Grid updates triggered in CompletionCallback"));
             }
@@ -784,6 +794,11 @@ void USFGridSpawnerService::UpdateChildrenForCurrentTransform()
                         if (USFAutoConnectService::IsPassthroughPipeHologram(ParentLater))
                         {
                             Orchestrator->OnFloorHolePipesChanged();
+                        }
+                        // [#168] Smart! Blueprints: transforms move endpoints — re-route seams
+                        if (Cast<AFGBlueprintHologram>(ParentLater))
+                        {
+                            Orchestrator->OnBlueprintSeamsChanged();
                         }
 
                         UE_LOG(LogSmartGrid, VeryVerbose, TEXT("   🎯 Orchestrator: Movement updates triggered (next tick)"));

@@ -1540,6 +1540,15 @@ void USFSubsystem::AdjustAutoConnectSetting(int32 Delta)
                 UE_LOG(LogSmartFoundations, VeryVerbose, TEXT(" Orchestrator: Force recreated power previews after settings change"));
             }
         }
+        else if (Cast<AFGBlueprintHologram>(ActiveHologram.Get()))
+        {
+            // [#168] Smart! Blueprints: a tier/style change alters the conduit CLASS, and the seam
+            // helpers only recreate their hologram on destroy — cleanup-then-reprocess so the new
+            // class lands (the #451 lesson: in-place updates don't apply class changes).
+            AutoConnectService->CleanupAllBlueprintSeams(ActiveHologram.Get());
+            AutoConnectService->ProcessBlueprintSeams(ActiveHologram.Get());
+            UE_LOG(LogSmartFoundations, Log, TEXT("[AC-HUD] reprocess -> blueprint seams"));
+        }
     }
 
     // Smart Walking (#356): a walk in progress reads these auto-connect settings (belt routing mode, tier) when it
@@ -1786,6 +1795,8 @@ bool USFSubsystem::IsCurrentHologramAutoConnectCapable() const
 	                                                                //   missing here, so the HUD suppressed the whole
 	                                                                //   auto-connect settings section for them (belt worked)
 	       USFAutoConnectService::IsPassthroughPipeHologram(Hologram) ||
+	       Cast<AFGBlueprintHologram>(Hologram) != nullptr ||                     // [#168] blueprint seam auto-connect:
+	                                                                              //   HUD shows AC settings + seam skips
 	       USFAutoConnectService::IsStackableHypertubeSupportHologram(Hologram);  // #405: hypertube supports were
 	                                                                              //   missing here too, so the HUD
 	                                                                              //   suppressed the settings overlay
