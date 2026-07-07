@@ -2551,3 +2551,19 @@ msgstr ""
 msgctxt "SmartFoundations,HUD_SkipReason_TooSteep"
 msgid "too steep ({0})"
 msgstr ""
+
+msgctxt "SmartFoundations,MP_Notice_BlueprintGridTooLarge"
+msgid "Blueprint grid too large for one multiplayer placement (~{0} buildings, max ~{1}). Build in smaller sections."
+msgstr "A tervrajzrács túl nagy egy többjátékos elhelyezéshez (~{0} épület, max. ~{1}). Építsd kisebb szakaszokban."
+
+msgctxt "SmartFoundations,MP_Notice_GridTooLarge"
+msgid "Grid too large for multiplayer ({0} cells, max ~{1}). Build in smaller sections."
+msgstr "A rács túl nagy a többjátékos módhoz ({0} cella, max. ~{1}). Építsd kisebb szakaszokban."
+
+msgctxt "SmartFoundations,MP_Notice_TooManyConduits"
+msgid "Too many auto-connect belts/pipes for one multiplayer placement ({0}). Build in smaller sections."
+msgstr "Túl sok automatikusan csatlakoztatott szalag/cső egy többjátékos elhelyezéshez ({0}). Építsd kisebb szakaszokban."
+
+msgctxt "SmartFoundations,MP_Notice_WaterExtractorDeepWater"
+msgid "Every water extractor must be placed on deep water."
+msgstr "Minden vízkitermelőt mély vízre kell helyezni."

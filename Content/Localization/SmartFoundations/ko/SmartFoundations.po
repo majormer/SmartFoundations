@@ -2554,3 +2554,19 @@ msgstr ""
 msgctxt "SmartFoundations,HUD_SkipReason_TooSteep"
 msgid "too steep ({0})"
 msgstr ""
+
+msgctxt "SmartFoundations,MP_Notice_BlueprintGridTooLarge"
+msgid "Blueprint grid too large for one multiplayer placement (~{0} buildings, max ~{1}). Build in smaller sections."
+msgstr "청사진 격자가 멀티플레이어 배치 한 번에 비해 너무 큽니다(~{0}개 건물, 최대 ~{1}). 더 작은 구획으로 나눠 건설하세요."
+
+msgctxt "SmartFoundations,MP_Notice_GridTooLarge"
+msgid "Grid too large for multiplayer ({0} cells, max ~{1}). Build in smaller sections."
+msgstr "격자가 멀티플레이어에 비해 너무 큽니다({0}칸, 최대 ~{1}). 더 작은 구획으로 나눠 건설하세요."
+
+msgctxt "SmartFoundations,MP_Notice_TooManyConduits"
+msgid "Too many auto-connect belts/pipes for one multiplayer placement ({0}). Build in smaller sections."
+msgstr "멀티플레이어 배치 한 번에 자동 연결 벨트/파이프가 너무 많습니다({0}). 더 작은 구획으로 나눠 건설하세요."
+
+msgctxt "SmartFoundations,MP_Notice_WaterExtractorDeepWater"
+msgid "Every water extractor must be placed on deep water."
+msgstr "모든 취수 펌프는 깊은 물 위에 설치해야 합니다."
