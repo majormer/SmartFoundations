@@ -36,8 +36,9 @@ class UFGPipeConnectionComponent;
  * convention mismatch as the clone content delta.) Originals still provide OPENNESS and belt
  * flow direction, which are frame-free. For the +X seam, open connectors on the +X face
  * pointing +X are matched against −X-face connectors pointing −X in the same local (Y,Z) lane;
- * same independently for Y and Z. Z pairs are computed from day one (axis-uniform, free) but
- * the v1 spawner services X/Y only (Z pipes = v1.5, Z belts need lift previews = v2).
+ * same independently for Y and Z. The spawner services X/Y for belts+pipes and Z for PIPES
+ * (vertical pipes route natively — stacked towers self-connect); Z BELT pairs stay cached but
+ * unserviced until conveyor-lift previews exist (v2).
  */
 
 /** Blueprint-local seam axis. Grid X/Y/Z map onto these 1:1 (clones share the parent's rotation). */

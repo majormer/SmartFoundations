@@ -194,8 +194,22 @@ void USFAutoConnectService::ProcessBlueprintSeams(AFGHologram* ParentHologram)
 		}
 	};
 
-	// ---- Walk every adjacent clone pair along X and Y (Z deferred: pipes v1.5, belt-lifts v2) ----
-	for (int32 AxisIndex = 0; AxisIndex < 2; ++AxisIndex)
+	// [#168] Per-axis + silent-skip diagnostics: the first Z-seam field test produced ZERO Z
+	// conduits with no tally and no log — every silent continue below now counts, and the first
+	// Z pipe pair per eval dumps its geometry, so a dead axis is readable straight off one eval.
+	int32 PlacedByAxis[3] = { 0, 0, 0 };
+	int32 SkipCellMissing = 0;
+	int32 SkipResolveFail = 0;
+	int32 SkipGapShort = 0;
+	int32 SkipPreviewInvalid = 0;
+	bool bLoggedZGeometry = false;
+
+	// ---- Walk every adjacent clone pair along X, Y, and Z.
+	// Z services PIPES only: pipes run vertical natively, so a bottom copy's up-facing port
+	// wires straight to the copy above (stacked-tower fabric). Belt Z pairs stay in the table
+	// but are skipped — vertical belt transport is a conveyor LIFT, preview machinery Smart
+	// doesn't have yet (v2). ----
+	for (int32 AxisIndex = 0; AxisIndex < 3; ++AxisIndex)
 	{
 		const ESFSeamAxis Axis = static_cast<ESFSeamAxis>(AxisIndex);
 		if (Table->NumPairsForAxis(Axis) == 0)
@@ -210,13 +224,16 @@ void USFAutoConnectService::ProcessBlueprintSeams(AFGHologram* ParentHologram)
 				{
 					if (Axis == ESFSeamAxis::X && X >= XCount - 1) continue;
 					if (Axis == ESFSeamAxis::Y && Y >= YCount - 1) continue;
+					if (Axis == ESFSeamAxis::Z && Z >= ZCount - 1) continue;
 
 					AFGBlueprintHologram* const* CellAPtr = GridToClone.Find(PackGridPos(X, Y, Z));
-					AFGBlueprintHologram* const* CellBPtr = (Axis == ESFSeamAxis::X)
-						? GridToClone.Find(PackGridPos(X + 1, Y, Z))
-						: GridToClone.Find(PackGridPos(X, Y + 1, Z));
+					AFGBlueprintHologram* const* CellBPtr =
+						(Axis == ESFSeamAxis::X) ? GridToClone.Find(PackGridPos(X + 1, Y, Z)) :
+						(Axis == ESFSeamAxis::Y) ? GridToClone.Find(PackGridPos(X, Y + 1, Z)) :
+						                           GridToClone.Find(PackGridPos(X, Y, Z + 1));
 					if (!CellAPtr || !CellBPtr || !*CellAPtr || !*CellBPtr)
 					{
+						SkipCellMissing++;
 						continue;
 					}
 					const bool bAIsLower = LocalAxisCoord(*CellAPtr, Axis) <= LocalAxisCoord(*CellBPtr, Axis);
@@ -231,6 +248,10 @@ void USFAutoConnectService::ProcessBlueprintSeams(AFGHologram* ParentHologram)
 						{
 							continue;
 						}
+						if (Axis == ESFSeamAxis::Z && !Pair.bIsPipe)
+						{
+							continue; // vertical belts = conveyor lifts (v2); pair stays cached
+						}
 						const FSeamKey Key(ClonePairKey, PairIndex);
 
 						// From (output) lives on the lower clone when flow crosses the +face;
@@ -244,11 +265,13 @@ void USFAutoConnectService::ProcessBlueprintSeams(AFGHologram* ParentHologram)
 							UFGFactoryConnectionComponent* ToConnector = FSFBlueprintSeamService::ResolveBeltConnector(ToClone, Pair.ToIndex, Pair.ToOriginalName);
 							if (!FromConnector || !ToConnector)
 							{
+								SkipResolveFail++;
 								continue;
 							}
 							const float Gap = FVector::Dist(FromConnector->GetComponentLocation(), ToConnector->GetComponentLocation());
 							if (Gap < SEAM_MIN_CONDUIT_LENGTH)
 							{
+								SkipGapShort++;
 								continue; // flush tiling — no conduit fits (known v1 gap, see header note)
 							}
 
@@ -272,6 +295,7 @@ void USFAutoConnectService::ProcessBlueprintSeams(AFGHologram* ParentHologram)
 								}
 								ActiveKeys.Add(Key);
 								BeltsPlaced++;
+								PlacedByAxis[AxisIndex]++;
 							}
 							else
 							{
@@ -293,14 +317,29 @@ void USFAutoConnectService::ProcessBlueprintSeams(AFGHologram* ParentHologram)
 							UFGPipeConnectionComponent* ToConnector = FSFBlueprintSeamService::ResolvePipeConnector(ToClone, Pair.ToIndex, Pair.ToOriginalName);
 							if (!FromConnector || !ToConnector)
 							{
+								SkipResolveFail++;
 								continue;
 							}
 							const FVector FromPos = FromConnector->GetComponentLocation();
 							const FVector ToPos = ToConnector->GetComponentLocation();
 							const float Gap = FVector::Dist(FromPos, ToPos);
+							if (Axis == ESFSeamAxis::Z && !bLoggedZGeometry)
+							{
+								bLoggedZGeometry = true;
+								UE_LOG(LogSmartAutoConnect, Log, TEXT("[#168] Z-seam sample: %s[%d] @ %s -> %s[%d] @ %s gap=%.0f (min=%.0f max=%.0f)"),
+									*GetNameSafe(FromClone), Pair.FromIndex, *FromPos.ToCompactString(),
+									*GetNameSafe(ToClone), Pair.ToIndex, *ToPos.ToCompactString(),
+									Gap, SEAM_MIN_CONDUIT_LENGTH, MAX_PIPE_LENGTH);
+							}
 							if (Gap < SEAM_MIN_CONDUIT_LENGTH)
 							{
-								continue; // flush tiling
+								// Not just flush tiling: a blueprint whose ports sit deep inside its bounds can
+								// leave <0.5m between mating ports even at 1m spacing (live 2026-07-07: FluidGrid
+								// Z seams silently dead until the player widened spacing). Report it — the HUD's
+								// "too close" tells the player the fix is more spacing.
+								SkipSummary.PipesTooClose++;
+								SkipGapShort++;
+								continue;
 							}
 
 							auto DestroySeamPipe = [&State, &Key]()
@@ -344,6 +383,7 @@ void USFAutoConnectService::ProcessBlueprintSeams(AFGHologram* ParentHologram)
 							ASFPipelineHologram* PipeHologram = Helper->GetTypedHologram();
 							if (!PipeHologram || !Helper->IsPreviewValid())
 							{
+								SkipPreviewInvalid++;
 								Helper->DestroyPreview();
 								State.PipesBySeamKey.Remove(Key);
 								continue;
@@ -361,6 +401,7 @@ void USFAutoConnectService::ProcessBlueprintSeams(AFGHologram* ParentHologram)
 							PipeHologram->ForceApplyHologramMaterial();
 							ActiveKeys.Add(Key);
 							PipesPlaced++;
+							PlacedByAxis[AxisIndex]++;
 						}
 					}
 				}
@@ -417,11 +458,13 @@ void USFAutoConnectService::ProcessBlueprintSeams(AFGHologram* ParentHologram)
 		if (Entry.Value.IsValid()) { FinalizeConduit(Entry.Value->GetHologram()); }
 	}
 
-	UE_LOG(LogSmartAutoConnect, Log, TEXT("[#168] Seams evaluated for %s: grid[%d,%d,%d] clones=%d pairs=%d -> belts=%d pipes=%d (skips: steep=%d shape=%d pipeShape=%d pipeFar=%d)"),
+	UE_LOG(LogSmartAutoConnect, Log, TEXT("[#168] Seams evaluated for %s: grid[%d,%d,%d] clones=%d pairs=%d -> belts=%d pipes=%d axis[X=%d Y=%d Z=%d] (skips: steep=%d shape=%d pipeShape=%d pipeFar=%d | silent: cell=%d resolve=%d gap=%d preview=%d)"),
 		*ParentHologram->GetName(), XCount, YCount, ZCount, GridToClone.Num(), Table->Pairs.Num(),
 		BeltsPlaced, PipesPlaced,
+		PlacedByAxis[0], PlacedByAxis[1], PlacedByAxis[2],
 		SkipSummary.BeltsTooSteep, SkipSummary.BeltsInvalidShape,
-		SkipSummary.PipesInvalidShape, SkipSummary.PipesTooFar);
+		SkipSummary.PipesInvalidShape, SkipSummary.PipesTooFar,
+		SkipCellMissing, SkipResolveFail, SkipGapShort, SkipPreviewInvalid);
 }
 
 void USFAutoConnectService::CleanupAllBlueprintSeams(AFGHologram* ParentHologram)
