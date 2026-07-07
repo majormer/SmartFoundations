@@ -1105,7 +1105,7 @@ AFGHologram* FSFHologramHelperService::SpawnBuildableChildHologram(
 	BuildableChild->Tags.AddUnique(FName(TEXT("SF_GridChild")));
 
 	// #418: hide vanilla's ClearanceBox visualization mesh (the "white lines" peppering scaled
-	// grids; confirmed via SmartMCP component inspection - each child renders exactly the build
+	// grids; confirmed via in-game component inspection - each child renders exactly the build
 	// mesh + a ClearanceBox static mesh). Matched by mesh asset name so the build mesh is never
 	// touched; a harmless no-op for types without a clearance mesh.
 	TArray<UStaticMeshComponent*> ChildMeshes;

@@ -738,7 +738,7 @@ void FSFHologramHelperService::RegenerateChildHologramGrid(
 								{
 									DeltaSubsystem->SetBlueprintChildContentDelta(ContentDelta);
 								}
-								UE_LOG(LogSmartFoundations, Log,
+								UE_LOG(LogSmartFoundations, Verbose,
 									TEXT("[#168] Staged blueprint child %s from descriptor %s | anchorRel parent=%s child=%s delta=%s"),
 									*ChildName.ToString(), *GetNameSafe(ParentBlueprint->mBlueprintDescriptor),
 									*ParentAnchor.ToString(), *ChildAnchor.ToString(),

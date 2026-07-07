@@ -443,7 +443,7 @@ void USFSubsystem::RegisterActiveHologram(AFGHologram* Hologram)
 					GridStateService->UpdateCounterState(CounterState);
 				}
 				UpdateCounterDisplay();
-				UE_LOG(LogSmartFoundations, Log, TEXT("[#168] Blueprint pickup: spacing defaulted to 1m/1m/1m (room for seam conduits)"));
+				UE_LOG(LogSmartFoundations, Verbose, TEXT("[#168] Blueprint pickup: spacing defaulted to 1m/1m/1m (room for seam conduits)"));
 			}
 		}
 		else
@@ -523,7 +523,7 @@ void USFSubsystem::RegisterActiveHologram(AFGHologram* Hologram)
 			{
 				const bool bLooksLikeFallback = FMath::IsNearlyEqual(CachedBuildingSize.X, 800.0f, 1.0f)
 					&& FMath::IsNearlyEqual(CachedBuildingSize.Y, 800.0f, 1.0f);
-				UE_LOG(LogSmartFoundations, Log,
+				UE_LOG(LogSmartFoundations, Verbose,
 					TEXT("[#168] Blueprint footprint cached: %s %s"),
 					*CachedBuildingSize.ToString(),
 					bLooksLikeFallback ? TEXT("(LOOKS LIKE 8m FALLBACK - mLocalBounds may not be ready)") : TEXT("(from mLocalBounds)"));

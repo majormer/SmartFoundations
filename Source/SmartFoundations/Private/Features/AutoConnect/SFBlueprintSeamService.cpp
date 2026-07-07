@@ -134,13 +134,13 @@ UFGFactoryConnectionComponent* FSFBlueprintSeamService::ResolveBeltConnector(AFG
 	GetDuplicatedBeltConnectors(Clone, Connectors);
 	if (!Connectors.IsValidIndex(Index))
 	{
-		UE_LOG(LogSmartAutoConnect, Log, TEXT("[#168] Seam resolve FAILED: belt index %d out of range (%d dups) on %s"),
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("[#168] Seam resolve FAILED: belt index %d out of range (%d dups) on %s"),
 			Index, Connectors.Num(), *GetNameSafe(Clone));
 		return nullptr;
 	}
 	if (!DupNameMatchesOriginal(Connectors[Index], ExpectedOriginalName))
 	{
-		UE_LOG(LogSmartAutoConnect, Log, TEXT("[#168] Seam resolve MISMATCH: belt index %d on %s is %s, expected suffix %s — enumeration order diverged, pair skipped"),
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("[#168] Seam resolve MISMATCH: belt index %d on %s is %s, expected suffix %s — enumeration order diverged, pair skipped"),
 			Index, *GetNameSafe(Clone), *GetNameSafe(Connectors[Index]), *ExpectedOriginalName.ToString());
 		return nullptr;
 	}
@@ -153,13 +153,13 @@ UFGPipeConnectionComponent* FSFBlueprintSeamService::ResolvePipeConnector(AFGBlu
 	GetDuplicatedPipeConnectors(Clone, Connectors);
 	if (!Connectors.IsValidIndex(Index))
 	{
-		UE_LOG(LogSmartAutoConnect, Log, TEXT("[#168] Seam resolve FAILED: pipe index %d out of range (%d dups) on %s"),
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("[#168] Seam resolve FAILED: pipe index %d out of range (%d dups) on %s"),
 			Index, Connectors.Num(), *GetNameSafe(Clone));
 		return nullptr;
 	}
 	if (!DupNameMatchesOriginal(Connectors[Index], ExpectedOriginalName))
 	{
-		UE_LOG(LogSmartAutoConnect, Log, TEXT("[#168] Seam resolve MISMATCH: pipe index %d on %s is %s, expected suffix %s — enumeration order diverged, pair skipped"),
+		UE_LOG(LogSmartAutoConnect, Warning, TEXT("[#168] Seam resolve MISMATCH: pipe index %d on %s is %s, expected suffix %s — enumeration order diverged, pair skipped"),
 			Index, *GetNameSafe(Clone), *GetNameSafe(Connectors[Index]), *ExpectedOriginalName.ToString());
 		return nullptr;
 	}
@@ -271,13 +271,13 @@ bool FSFBlueprintSeamService::BuildSeamTable(AFGBlueprintHologram* Blueprint, FS
 	// blueprint pairs unexpectedly (local pos + outward normal in the hologram/grid frame).
 	for (const FSeamConnector& C : BeltConnectors)
 	{
-		UE_LOG(LogSmartAutoConnect, Log, TEXT("[#168]   belt conn [%d]%s local=(%.0f,%.0f,%.0f) normal=(%.2f,%.2f,%.2f) out=%d in=%d"),
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("[#168]   belt conn [%d]%s local=(%.0f,%.0f,%.0f) normal=(%.2f,%.2f,%.2f) out=%d in=%d"),
 			C.Index, *C.OriginalName.ToString(), C.Pos.X, C.Pos.Y, C.Pos.Z, C.Normal.X, C.Normal.Y, C.Normal.Z,
 			C.bCanOutput ? 1 : 0, C.bCanInput ? 1 : 0);
 	}
 	for (const FSeamConnector& C : PipeConnectors)
 	{
-		UE_LOG(LogSmartAutoConnect, Log, TEXT("[#168]   pipe conn [%d]%s local=(%.0f,%.0f,%.0f) normal=(%.2f,%.2f,%.2f) type=%d"),
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("[#168]   pipe conn [%d]%s local=(%.0f,%.0f,%.0f) normal=(%.2f,%.2f,%.2f) type=%d"),
 			C.Index, *C.OriginalName.ToString(), C.Pos.X, C.Pos.Y, C.Pos.Z, C.Normal.X, C.Normal.Y, C.Normal.Z,
 			static_cast<int32>(C.PipeType));
 	}
@@ -297,14 +297,14 @@ bool FSFBlueprintSeamService::BuildSeamTable(AFGBlueprintHologram* Blueprint, FS
 	OutTable.bComputed = true;
 
 	// ---- [#168] FR1 validation dump ----
-	UE_LOG(LogSmartAutoConnect, Log, TEXT("[#168] Seam table for '%s': %d pairs (X=%d Y=%d Z=%d) from %d open belt / %d open pipe connectors (%d/%d dups)"),
+	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("[#168] Seam table for '%s': %d pairs (X=%d Y=%d Z=%d) from %d open belt / %d open pipe connectors (%d/%d dups)"),
 		*OutTable.BlueprintName.ToString(), OutTable.Pairs.Num(),
 		OutTable.NumPairsForAxis(ESFSeamAxis::X), OutTable.NumPairsForAxis(ESFSeamAxis::Y), OutTable.NumPairsForAxis(ESFSeamAxis::Z),
 		BeltConnectors.Num(), PipeConnectors.Num(), OutTable.BeltConnectorCount, OutTable.PipeConnectorCount);
 	for (int32 PairIndex = 0; PairIndex < OutTable.Pairs.Num(); ++PairIndex)
 	{
 		const FSFBlueprintSeamPair& Pair = OutTable.Pairs[PairIndex];
-		UE_LOG(LogSmartAutoConnect, Log, TEXT("[#168]   pair %d: axis=%s %s from=[%d]%s to=[%d]%s flow=%s"),
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("[#168]   pair %d: axis=%s %s from=[%d]%s to=[%d]%s flow=%s"),
 			PairIndex, AxisName(Pair.Axis), Pair.bIsPipe ? TEXT("PIPE") : TEXT("BELT"),
 			Pair.FromIndex, *Pair.FromOriginalName.ToString(),
 			Pair.ToIndex, *Pair.ToOriginalName.ToString(),

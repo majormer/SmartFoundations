@@ -978,7 +978,7 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 					out_children.Add(BuiltMain);
 				}
 				out_children.Append(ChildBuilt);
-				UE_LOG(LogSmartFoundations, Log,
+				UE_LOG(LogSmartFoundations, Verbose,
 					TEXT("[#168] Constructed blueprint grid child %s -> %s (+%d actors)"),
 					*BlueprintChild->GetName(), *GetNameSafe(BuiltMain), ChildBuilt.Num());
 			}
@@ -999,7 +999,7 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 					out_children.Add(BuiltMain);
 				}
 				out_children.Append(ConduitBuilt);
-				UE_LOG(LogSmartFoundations, Log,
+				UE_LOG(LogSmartFoundations, Verbose,
 					TEXT("[#168] Constructed blueprint seam conduit %s -> %s (+%d actors)"),
 					*Conduit->GetName(), *GetNameSafe(BuiltMain), ConduitBuilt.Num());
 			}

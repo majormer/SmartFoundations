@@ -374,7 +374,7 @@ AActor* ASFPipelineHologram::Construct(TArray<AActor*>& out_children, FNetConstr
 							if (Cast<AFGBlueprintHologram>(GetParentHologram()))
 							{
 								const int32 SeamWired = Subsystem->WireBlueprintSeamPipe(FluidPipe);
-								UE_LOG(LogSmartAutoConnect, Log, TEXT("[#168] Seam pipe %s wired %d/2 endpoints synchronously"),
+								UE_LOG(LogSmartAutoConnect, Verbose, TEXT("[#168] Seam pipe %s wired %d/2 endpoints synchronously"),
 									*Pipe->GetName(), SeamWired);
 							}
 							else

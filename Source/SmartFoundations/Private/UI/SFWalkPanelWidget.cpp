@@ -25,7 +25,7 @@
 
 #define LOCTEXT_NAMESPACE "SmartFoundations"   // walk-panel UI strings gather into the same namespace as the rest of the mod
 
-// Dark rounded button style matching the Smart Panel's buttons (CloseButton/Apply/Reset, captured via AdaMCP
+// Dark rounded button style matching the Smart Panel's buttons (CloseButton/Apply/Reset
 // describe_widget). Without it, a built UButton falls back to the default LIGHT-GREY Slate style, which is what
 // made the gold "X" / labels read poorly. Values are the Smart Panel CloseButton's exact WidgetStyle brushes.
 static FButtonStyle SFPanelButtonStyle()

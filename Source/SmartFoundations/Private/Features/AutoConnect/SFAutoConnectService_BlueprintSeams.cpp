@@ -50,7 +50,7 @@ const FSFBlueprintSeamTable* USFAutoConnectService::FindOrBuildSeamTable(AFGBlue
 		{
 			return Existing;
 		}
-		UE_LOG(LogSmartAutoConnect, Log, TEXT("[#168] Seam table for '%s' is stale (dups %d/%d -> %d/%d) — recomputing"),
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("[#168] Seam table for '%s' is stale (dups %d/%d -> %d/%d) — recomputing"),
 			*BlueprintName.ToString(), Existing->BeltConnectorCount, Existing->PipeConnectorCount, BeltDups.Num(), PipeDups.Num());
 	}
 
@@ -286,8 +286,8 @@ void USFAutoConnectService::ProcessBlueprintSeams(AFGHologram* ParentHologram)
 								// Update-in-place re-ROUTES but never re-MESHES: FinalizeSpawn runs
 								// TriggerMeshGeneration on creation only, so a transformed seam kept
 								// rendering its OLD geometry while actor+spline were already correct
-								// (live 2026-07-07, SmartMCP spline dump). Same post-route regen as
-								// the stackable update path.
+								// (live 2026-07-07, in-game spline inspection). Same post-route regen
+								// as the stackable update path.
 								if (ASFConveyorBeltHologram* BeltHologram = Cast<ASFConveyorBeltHologram>(Helper->GetHologram()))
 								{
 									BeltHologram->TriggerMeshGeneration();
@@ -326,7 +326,7 @@ void USFAutoConnectService::ProcessBlueprintSeams(AFGHologram* ParentHologram)
 							if (Axis == ESFSeamAxis::Z && !bLoggedZGeometry)
 							{
 								bLoggedZGeometry = true;
-								UE_LOG(LogSmartAutoConnect, Log, TEXT("[#168] Z-seam sample: %s[%d] @ %s -> %s[%d] @ %s gap=%.0f (min=%.0f max=%.0f)"),
+								UE_LOG(LogSmartAutoConnect, Verbose, TEXT("[#168] Z-seam sample: %s[%d] @ %s -> %s[%d] @ %s gap=%.0f (min=%.0f max=%.0f)"),
 									*GetNameSafe(FromClone), Pair.FromIndex, *FromPos.ToCompactString(),
 									*GetNameSafe(ToClone), Pair.ToIndex, *ToPos.ToCompactString(),
 									Gap, SEAM_MIN_CONDUIT_LENGTH, MAX_PIPE_LENGTH);
@@ -458,7 +458,7 @@ void USFAutoConnectService::ProcessBlueprintSeams(AFGHologram* ParentHologram)
 		if (Entry.Value.IsValid()) { FinalizeConduit(Entry.Value->GetHologram()); }
 	}
 
-	UE_LOG(LogSmartAutoConnect, Log, TEXT("[#168] Seams evaluated for %s: grid[%d,%d,%d] clones=%d pairs=%d -> belts=%d pipes=%d axis[X=%d Y=%d Z=%d] (skips: steep=%d shape=%d pipeShape=%d pipeFar=%d | silent: cell=%d resolve=%d gap=%d preview=%d)"),
+	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("[#168] Seams evaluated for %s: grid[%d,%d,%d] clones=%d pairs=%d -> belts=%d pipes=%d axis[X=%d Y=%d Z=%d] (skips: steep=%d shape=%d pipeShape=%d pipeFar=%d | silent: cell=%d resolve=%d gap=%d preview=%d)"),
 		*ParentHologram->GetName(), XCount, YCount, ZCount, GridToClone.Num(), Table->Pairs.Num(),
 		BeltsPlaced, PipesPlaced,
 		PlacedByAxis[0], PlacedByAxis[1], PlacedByAxis[2],
@@ -494,7 +494,7 @@ void USFAutoConnectService::CleanupAllBlueprintSeams(AFGHologram* ParentHologram
 	BlueprintSeamStates.Remove(ParentHologram);
 	if (Destroyed > 0)
 	{
-		UE_LOG(LogSmartAutoConnect, Log, TEXT("[#168] Cleaned up %d seam conduit previews for %s"), Destroyed, *GetNameSafe(ParentHologram));
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("[#168] Cleaned up %d seam conduit previews for %s"), Destroyed, *GetNameSafe(ParentHologram));
 	}
 }
 

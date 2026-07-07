@@ -445,7 +445,7 @@ int32 USFSubsystem::WireBlueprintSeamPipe(AFGBuildablePipeline* Pipe)
 			AActor* PeerOwner = Peer ? Peer->GetOwner() : nullptr;
 			if (!PeerOwner || PeerOwner->IsA<AFGHologram>() || !PeerOwner->IsA<AFGBuildable>())
 			{
-				UE_LOG(LogSmartAutoConnect, Log, TEXT("[#168] Seam pipe %s endpoint %s: clearing bogus hologram-peer connection (%s) before real wiring"),
+				UE_LOG(LogSmartAutoConnect, Verbose, TEXT("[#168] Seam pipe %s endpoint %s: clearing bogus hologram-peer connection (%s) before real wiring"),
 					*Pipe->GetName(), *OwnConn->GetName(), *GetNameSafe(PeerOwner));
 				OwnConn->ClearConnection();
 			}
@@ -492,12 +492,12 @@ int32 USFSubsystem::WireBlueprintSeamPipe(AFGBuildablePipeline* Pipe)
 		{
 			OwnConn->SetConnection(BestMatch);
 			Wired++;
-			UE_LOG(LogSmartAutoConnect, Log, TEXT("[#168] Seam pipe %s wired -> %s.%s (dist=%.1f)"),
+			UE_LOG(LogSmartAutoConnect, Verbose, TEXT("[#168] Seam pipe %s wired -> %s.%s (dist=%.1f)"),
 				*Pipe->GetName(), *GetNameSafe(BestMatch->GetOwner()), *BestMatch->GetName(), BestDist);
 		}
 		else
 		{
-			UE_LOG(LogSmartAutoConnect, Log, TEXT("[#168] Seam pipe %s: NO connector within %.0fcm of endpoint %s @ %s"),
+			UE_LOG(LogSmartAutoConnect, Verbose, TEXT("[#168] Seam pipe %s: NO connector within %.0fcm of endpoint %s @ %s"),
 				*Pipe->GetName(), WiringRadius, *OwnConn->GetName(), *SearchLoc.ToString());
 		}
 	};

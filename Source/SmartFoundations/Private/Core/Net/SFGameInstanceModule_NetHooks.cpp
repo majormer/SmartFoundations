@@ -393,7 +393,8 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 						}
 						if (USFSubsystem* NoticeSS = USFSubsystem::Get(World))
 						{
-							NoticeSS->ShowSmartNotice(TEXT("Every water extractor must be placed on deep water."));
+							NoticeSS->ShowSmartNotice(NSLOCTEXT("SmartFoundations", "MP_Notice_WaterExtractorDeepWater",
+									"Every water extractor must be placed on deep water.").ToString());
 						}
 						scope.Cancel();
 						return;
@@ -423,9 +424,10 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 						}
 						if (USFSubsystem* NoticeSS = USFSubsystem::Get(World))
 						{
-							NoticeSS->ShowSmartNotice(FString::Printf(
-								TEXT("Too many auto-connect belts/pipes for one multiplayer placement (%d). Build in smaller sections."),
-								Spec.ConduitPlan.Num()));
+							NoticeSS->ShowSmartNotice(FText::Format(
+								NSLOCTEXT("SmartFoundations", "MP_Notice_TooManyConduits",
+									"Too many auto-connect belts/pipes for one multiplayer placement ({0}). Build in smaller sections."),
+								Spec.ConduitPlan.Num()).ToString());
 						}
 						scope.Cancel();
 						return;
@@ -457,9 +459,10 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 							}
 							if (USFSubsystem* NoticeSS = USFSubsystem::Get(World))
 							{
-								NoticeSS->ShowSmartNotice(FString::Printf(
-									TEXT("Blueprint grid too large for one multiplayer placement (~%lld buildings, max ~%d). Build in smaller sections."),
-									TotalActorEstimate, SF_MP_BLUEPRINT_ACTOR_CAP));
+								NoticeSS->ShowSmartNotice(FText::Format(
+									NSLOCTEXT("SmartFoundations", "MP_Notice_BlueprintGridTooLarge",
+										"Blueprint grid too large for one multiplayer placement (~{0} buildings, max ~{1}). Build in smaller sections."),
+									TotalActorEstimate, SF_MP_BLUEPRINT_ACTOR_CAP).ToString());
 							}
 							scope.Cancel();
 							return;
@@ -614,9 +617,10 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 			}
 			if (USFSubsystem* NoticeSS = USFSubsystem::Get(World))
 			{
-				NoticeSS->ShowSmartNotice(FString::Printf(
-					TEXT("Grid too large for multiplayer (%d cells, max ~%d). Build in smaller sections."),
-					TotalCells, SF_MP_OVERSIZED_CELLS));
+				NoticeSS->ShowSmartNotice(FText::Format(
+					NSLOCTEXT("SmartFoundations", "MP_Notice_GridTooLarge",
+						"Grid too large for multiplayer ({0} cells, max ~{1}). Build in smaller sections."),
+					TotalCells, SF_MP_OVERSIZED_CELLS).ToString());
 			}
 
 			scope.Cancel(); // suppress the fire -> nothing is serialized or sent; the grid stays live.
