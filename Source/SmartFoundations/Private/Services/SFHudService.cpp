@@ -300,7 +300,7 @@ TPair<FString, FString> USFHudService::BuildCounterDisplayLines() const
 				Reasons.Add(FText::Format(LOCTEXT("HUD_SkipReason_LaneBlocked", "lane blocked ({0})"),
 					Skips.BeltLanesBlocked).ToString());
 			}
-			Lines.Add(FText::Format(LOCTEXT("HUD_BeltsSkipped", "*{0} belt connection(s) skipped: {1}"),
+			Lines.Add(FString(SFHud::WarningLinePrefix) + FText::Format(LOCTEXT("HUD_BeltsSkipped", "*{0} belt connection(s) skipped: {1}"),
 				Skips.BeltTotal(), FText::FromString(FString::Join(Reasons, TEXT(", ")))).ToString());
 		}
 
@@ -322,7 +322,7 @@ TPair<FString, FString> USFHudService::BuildCounterDisplayLines() const
 				Reasons.Add(FText::Format(LOCTEXT("HUD_SkipReason_TooClose", "too close ({0})"),
 					Skips.PipesTooClose).ToString());
 			}
-			Lines.Add(FText::Format(LOCTEXT("HUD_PipesSkipped", "*{0} pipe connection(s) skipped: {1}"),
+			Lines.Add(FString(SFHud::WarningLinePrefix) + FText::Format(LOCTEXT("HUD_PipesSkipped", "*{0} pipe connection(s) skipped: {1}"),
 				Skips.PipeTotal(), FText::FromString(FString::Join(Reasons, TEXT(", ")))).ToString());
 		}
 	}
@@ -334,7 +334,7 @@ TPair<FString, FString> USFHudService::BuildCounterDisplayLines() const
 		const FString Notice = Subsystem->GetActiveSmartNotice();
 		if (!Notice.IsEmpty())
 		{
-			Lines.Add(FString::Printf(TEXT("*%s"), *Notice));
+			Lines.Add(FString(SFHud::WarningLinePrefix) + Notice);
 		}
 	}
 

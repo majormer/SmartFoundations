@@ -15,6 +15,15 @@ class UTextBlock;
 class UImage;
 class UTexture2D;
 
+namespace SFHud
+{
+	// A HUD line whose text begins with this sentinel renders in a fixed, theme-independent
+	// warning red - used for Auto-Connect skip summaries ("2 belt connection(s) skipped: too
+	// steep") and guard notices. The sentinel is stripped before the line is displayed.
+	// Non-printing (SOH, U+0001) so it can never collide with real (localized) message text.
+	inline constexpr const TCHAR* WarningLinePrefix = TEXT("\x01");
+}
+
 /**
  * UMG-based HUD overlay for Smart! grid counters and status display.
  * 
