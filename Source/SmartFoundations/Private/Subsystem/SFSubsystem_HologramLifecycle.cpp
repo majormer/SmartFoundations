@@ -426,15 +426,21 @@ void USFSubsystem::RegisterActiveHologram(AFGHologram* Hologram)
 
 		// [#168] Smart! Blueprints spacing default: seam belts/pipes need a physical GAP to
 		// exist (a conduit under ~0.5m can't be built, and flush tiling leaves no room), so
-		// picking up a blueprint defaults spacing to 1m on every axis. Applied only on the
-		// TRANSITION into blueprint building - the post-fire hologram respawn and repeated
-		// blueprint pickups keep whatever the player has since set (including 0 for a
-		// deliberate flush grid).
-		if (Cast<AFGBlueprintHologram>(Hologram))
+		// picking up a blueprint defaults spacing to 1m on every axis. This is only a
+		// STARTING POINT for the build session: keyed on the blueprint's identity
+		// (mBlueprintDescName), it never re-applies while the SAME blueprint stays in play
+		// (post-fire respawns, build-menu round trips), so an explicit player override -
+		// including 0 for a deliberate flush grid - sticks for the whole session. The session
+		// ends and the default re-arms when the player starts over: recipe change (a different
+		// hologram registers, below/else) or build-gun holster (OnBuildGunUnequipped). Only
+		// global settings persist between builds. Mirrors the distributor auto-connect
+		// context-spacing model (apply once per target identity, overridable).
+		if (AFGBlueprintHologram* BlueprintHologram = Cast<AFGBlueprintHologram>(Hologram))
 		{
-			if (!bBlueprintSpacingDefaultApplied)
+			const FString BlueprintId = BlueprintHologram->mBlueprintDescName;
+			if (BlueprintId != BlueprintSpacingDefaultAppliedFor)
 			{
-				bBlueprintSpacingDefaultApplied = true;
+				BlueprintSpacingDefaultAppliedFor = BlueprintId;
 				CounterState.SpacingX = 100;
 				CounterState.SpacingY = 100;
 				CounterState.SpacingZ = 100;
@@ -443,12 +449,15 @@ void USFSubsystem::RegisterActiveHologram(AFGHologram* Hologram)
 					GridStateService->UpdateCounterState(CounterState);
 				}
 				UpdateCounterDisplay();
-				UE_LOG(LogSmartFoundations, Verbose, TEXT("[#168] Blueprint pickup: spacing defaulted to 1m/1m/1m (room for seam conduits)"));
+				UE_LOG(LogSmartFoundations, Verbose, TEXT("[#168] Blueprint '%s' pickup: spacing defaulted to 1m/1m/1m (room for seam conduits; override sticks for this build session)"),
+					*BlueprintId);
 			}
 		}
 		else
 		{
-			bBlueprintSpacingDefaultApplied = false;
+			// Recipe changed away from blueprints: the blueprint build session is over, re-arm
+			// the spacing default for the next pickup (even of the same blueprint).
+			BlueprintSpacingDefaultAppliedFor.Empty();
 		}
 
 		if (USFBuildableSizeRegistry::HasProfile(BuildUClass))
@@ -1526,6 +1535,11 @@ void USFSubsystem::OnBuildGunUnequipped()
 	ExitWalkMode();
 
 	AbortRestoreSession(TEXT("Build gun unequipped"));
+
+	// [#168] Putting the build gun away ends the build session: per-session transform defaults
+	// re-arm, so the next blueprint pickup re-applies the 1m spacing starting point. (Player
+	// overrides only live while the build is in play; global settings are what persist.)
+	BlueprintSpacingDefaultAppliedFor.Empty();
 
 	// Reset recipe sampling subscription flag
 	bHasSubscribedToRecipeSampled = false;

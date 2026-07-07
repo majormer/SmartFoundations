@@ -665,10 +665,13 @@ protected:
 	/** [#168] Smart! Blueprints: per-blueprint clone content-convention delta (see accessor) */
 	FVector BlueprintChildContentDelta = FVector::ZeroVector;
 
-	/** [#168] One-shot latch for the 1m/1m/1m blueprint spacing default - set on the transition
-	 *  into blueprint building, cleared when a non-blueprint hologram registers, so repeated
-	 *  pickups and post-fire respawns keep the player's own spacing. */
-	bool bBlueprintSpacingDefaultApplied = false;
+	/** [#168] Identity (mBlueprintDescName) of the blueprint whose BUILD SESSION owns the current
+	 *  spacing values. The 1m/1m/1m default is a starting point applied once per session; while
+	 *  the same blueprint stays in play (fire respawns, menu round trips) the player's override
+	 *  (including 0) sticks. Cleared - re-arming the default - when the session ends: recipe
+	 *  change away (RegisterActiveHologram else-branch) or holster (OnBuildGunUnequipped).
+	 *  Only global settings persist between builds. Empty = no session. */
+	FString BlueprintSpacingDefaultAppliedFor;
 
 	/** [#168-MP] Transient HUD notice state (see ShowSmartNotice) */
 	FString SmartNoticeText;
