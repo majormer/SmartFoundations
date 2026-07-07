@@ -898,6 +898,26 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 							*self->GetName(), Expanded, Expanded == 1 ? TEXT("y") : TEXT("ies"),
 							*BlueprintSpec.BlueprintContentDelta.ToCompactString());
 					}
+					// [#168-MP] Shift the conduit plan by the rotated content delta: the server-side
+					// blueprint CONTENT (parent + copies, staged fresh without the client's
+					// interactive root-seating) lands uniformly one content-delta from where the
+					// client's preview content stood - internally perfectly tiled, just translated
+					// (live 2026-07-07: every seam pipe missed its port by exactly (+100,+100,0) =
+					// the delta, both ends, after the basis fix removed the pitch drift). The
+					// content cannot move (the parent is vanilla-placed), so move the PLAN with it.
+					if (BlueprintSpec.ConduitPlan.Num() > 0 && !BlueprintSpec.BlueprintContentDelta.IsZero())
+					{
+						const FVector PlanShift = self->GetActorRotation().RotateVector(BlueprintSpec.BlueprintContentDelta);
+						for (FSFConduitPlanEntry& Entry : BlueprintSpec.ConduitPlan)
+						{
+							Entry.Location += PlanShift;
+							Entry.WireStart += PlanShift;
+							Entry.WireEnd += PlanShift;
+						}
+						UE_LOG(LogSmartFoundations, Log,
+							TEXT("[#168-MP] Blueprint construct seam %s: conduit plan shifted by %s (content-delta alignment)."),
+							*self->GetName(), *PlanShift.ToCompactString());
+					}
 					const int32 Conduits = SFScalingSpecExpansion::SpawnConduitPlanChildren(self, BlueprintSpec);
 					if (Conduits > 0)
 					{
