@@ -174,6 +174,26 @@ void USFAutoConnectService::ProcessBlueprintSeams(AFGHologram* ParentHologram)
 		return (Axis == ESFSeamAxis::X) ? Local.X : (Axis == ESFSeamAxis::Y) ? Local.Y : Local.Z;
 	};
 
+	// The conduit routers reposition their actor with SetActorLocation, which is a NO-OP on a
+	// LOCKED hologram — and the finalize pass below locks every seam conduit while the parent is
+	// locked (i.e. always, during scaling). Without this unlock, the first evaluation placed the
+	// conduit and every later one (spacing/steps/stagger) updated only the spline data while the
+	// actor stayed at the OLD seam (live 2026-07-07: 10m spacing left belts floating at the 2m
+	// positions). Same unlock -> move/route -> relock contract as the stackable update-in-place.
+	auto UnlockForUpdate = [](FConduitPreviewHelper* Helper)
+	{
+		if (Helper)
+		{
+			if (AFGSplineHologram* Conduit = Helper->GetHologram())
+			{
+				if (Conduit->IsHologramLocked())
+				{
+					Conduit->LockHologramPosition(false);
+				}
+			}
+		}
+	};
+
 	// ---- Walk every adjacent clone pair along X and Y (Z deferred: pipes v1.5, belt-lifts v2) ----
 	for (int32 AxisIndex = 0; AxisIndex < 2; ++AxisIndex)
 	{
@@ -237,8 +257,19 @@ void USFAutoConnectService::ProcessBlueprintSeams(AFGHologram* ParentHologram)
 							{
 								Helper = MakeShared<FBeltPreviewHelper>(GetWorld(), BeltTier, ParentHologram);
 							}
+							UnlockForUpdate(Helper.Get());
 							if (CreateOrUpdateBeltPreview(FromConnector, ToConnector, Helper, FACING_SANITY_ANGLE, false, ParentHologram))
 							{
+								// Update-in-place re-ROUTES but never re-MESHES: FinalizeSpawn runs
+								// TriggerMeshGeneration on creation only, so a transformed seam kept
+								// rendering its OLD geometry while actor+spline were already correct
+								// (live 2026-07-07, SmartMCP spline dump). Same post-route regen as
+								// the stackable update path.
+								if (ASFConveyorBeltHologram* BeltHologram = Cast<ASFConveyorBeltHologram>(Helper->GetHologram()))
+								{
+									BeltHologram->TriggerMeshGeneration();
+									BeltHologram->ForceApplyHologramMaterial();
+								}
 								ActiveKeys.Add(Key);
 								BeltsPlaced++;
 							}
@@ -308,6 +339,7 @@ void USFAutoConnectService::ProcessBlueprintSeams(AFGHologram* ParentHologram)
 							{
 								Helper = MakeShared<FPipePreviewHelper>(GetWorld(), PipeTier, bWithIndicator, ParentHologram);
 							}
+							UnlockForUpdate(Helper.Get());
 							Helper->UpdatePreview(FromConnector, ToConnector);
 							ASFPipelineHologram* PipeHologram = Helper->GetTypedHologram();
 							if (!PipeHologram || !Helper->IsPreviewValid())
@@ -324,6 +356,9 @@ void USFAutoConnectService::ProcessBlueprintSeams(AFGHologram* ParentHologram)
 								State.PipesBySeamKey.Remove(Key);
 								continue;
 							}
+							// Post-route mesh regen — see the belt branch note (creation-only meshing).
+							PipeHologram->TriggerMeshGeneration();
+							PipeHologram->ForceApplyHologramMaterial();
 							ActiveKeys.Add(Key);
 							PipesPlaced++;
 						}
