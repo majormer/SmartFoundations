@@ -9,7 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [33.5.4] - 2026-07-06
+## [34.0.0] - Unreleased
+
+> *Smart! Blueprints: scale your own blueprints into a grid, and Smart! wires the belts and pipes between the copies for you. Lay down a whole tiled factory - dozens of blueprint copies, connected across every seam - in a single placement, including the two-dimensional grid connections the game's own blueprint auto-connect can't do.*
+
+### Added
+
+- **Smart! Blueprints - scale a blueprint into a connected grid** - Blueprints could never be scaled with Smart! before; holding one and scrolling did nothing. Now a held blueprint scales into a grid of copies just like any other building - along X, Y, and Z, with spacing and stepping - and Smart! automatically connects the belts and pipes that reach the edge of each copy to the matching connectors on its neighbors. Design a blueprint whose belts (or pipes) run up to its border, then stamp out a 4x2, a 3x3, or any grid you like: every seam between copies is wired in one placement, the connecting belts and pipes are previewed and priced before you build, and any connection the game itself couldn't route is skipped and reported on the HUD just like the rest of Auto-Connect. Because Smart! wires the copies together directly, an interior copy can connect on all four sides at once - a true two-dimensional fabric of blueprints, which the game's built-in blueprint auto-connect can't produce. (Issue #168)
 
 > *Auto-Connect gets more reliable on stacked, multi-level grids: connections stay on their own level, the belt and pipe lanes between distributors fill in properly, port choices are stable and repeatable, and belts and pipes now connect wherever the game itself would let you place one by hand. The HUD also tells you, up front, when a connection had to be skipped and why.*
 
