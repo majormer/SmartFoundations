@@ -13,6 +13,7 @@
 #include "Hologram/FGCeilingLightHologram.h"
 #include "Hologram/FGFloodlightHologram.h"
 #include "Hologram/FGWallAttachmentHologram.h"
+#include "Hologram/FGBlueprintHologram.h"   // #168: blueprint grid copies skip floor checks
 #include "Features/AutoConnect/SFAutoConnectService.h"   // #354: IsRegularConveyorPoleHologram
 #include "Engine/World.h"
 #include "Kismet/KismetSystemLibrary.h"
@@ -230,13 +231,19 @@ bool FSFValidationService::ShouldEnableFloorValidation(
 	const bool bIsCeilingLight = ParentHologram->IsA(AFGCeilingLightHologram::StaticClass());
 	const bool bIsFloodlight = ParentHologram->IsA(AFGFloodlightHologram::StaticClass());
 	const bool bIsWallAttachment = ParentHologram->IsA(AFGWallAttachmentHologram::StaticClass());
+	// Issue #168: blueprint grid copies are positioned by Smart!, not floor-snapped. A copy
+	// straddling a foundation edge (or over void) fails vanilla CheckValidFloor() with
+	// "Surface is too uneven" and the parent aggregates it - the whole grid goes red. Vanilla
+	// itself allows floating blueprint placement (vertical nudge), so copies skip the check.
+	// Only CHILDREN are gated here; the aimed parent keeps vanilla floor behavior.
+	const bool bIsBlueprint = ParentHologram->IsA(AFGBlueprintHologram::StaticClass());
 	const bool bIsRegularPole = USFAutoConnectService::IsRegularConveyorPoleHologram(ParentHologram)   // #354
 		|| USFAutoConnectService::IsRegularPipelinePoleHologram(ParentHologram);  // #364: standard pipeline support
-	if (bIsConveyorAttachment || bIsPipeAttachment || bIsPassthrough || bIsPowerPole || bIsCeilingLight || bIsFloodlight || bIsWallAttachment || bIsRegularPole)
+	if (bIsConveyorAttachment || bIsPipeAttachment || bIsPassthrough || bIsPowerPole || bIsCeilingLight || bIsFloodlight || bIsWallAttachment || bIsBlueprint || bIsRegularPole)
 	{
 		UE_LOG(LogSmartFoundations, VeryVerbose,
-			TEXT("ValidationService: Floor validation disabled - Hologram type requires it (ConveyorAttachment=%d, PipeAttachment=%d, Passthrough=%d, PowerPole=%d, CeilingLight=%d, Floodlight=%d, WallAttachment=%d, RegularPole=%d)"),
-			bIsConveyorAttachment, bIsPipeAttachment, bIsPassthrough, bIsPowerPole, bIsCeilingLight, bIsFloodlight, bIsWallAttachment, bIsRegularPole);
+			TEXT("ValidationService: Floor validation disabled - Hologram type requires it (ConveyorAttachment=%d, PipeAttachment=%d, Passthrough=%d, PowerPole=%d, CeilingLight=%d, Floodlight=%d, WallAttachment=%d, Blueprint=%d, RegularPole=%d)"),
+			bIsConveyorAttachment, bIsPipeAttachment, bIsPassthrough, bIsPowerPole, bIsCeilingLight, bIsFloodlight, bIsWallAttachment, bIsBlueprint, bIsRegularPole);
 		return false;  // Always disable for these types
 	}
 	

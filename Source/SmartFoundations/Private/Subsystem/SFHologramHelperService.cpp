@@ -753,6 +753,18 @@ void FSFHologramHelperService::RegenerateChildHologramGrid(
 						}
 
 						USFHologramDataService::DisableValidation(BlueprintChild);
+						// [#168] Suppress the vanilla floor check on grid copies. A blueprint
+						// hologram inherits AFGBuildableHologram::CheckValidFloor, which the parent's
+						// validation pass runs on every child - a copy straddling a foundation edge (or
+						// over void) samples an "uneven" floor and raises FGCDInvalidFloor, which the
+						// parent aggregates and the whole grid goes red ("Surface is too uneven!").
+						// Same root cause and same lever as the conveyor-attachment / pipe-junction
+						// family (see FSFValidationService::ShouldEnableFloorValidation): the copies
+						// are positioned by Smart!, not floor-snapped, so they must not floor-check.
+						// The aimed PARENT keeps vanilla behavior. Applies to the MP client preview
+						// too (same staging path); the server constructs post-validation and never
+						// floor-checks the expanded children.
+						BlueprintChild->SetNeedsValidFloor(false);
 						USFHologramDataService::MarkAsChild(BlueprintChild, ParentHologram, ESFChildHologramType::ScalingGrid);
 
 						if (BlueprintChild->IsHologramLocked())
