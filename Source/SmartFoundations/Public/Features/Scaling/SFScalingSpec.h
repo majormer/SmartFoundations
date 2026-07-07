@@ -130,6 +130,26 @@ struct SMARTFOUNDATIONS_API FSFScalingSpec
 	UPROPERTY()
 	FVector BlueprintContentDelta = FVector::ZeroVector;
 
+	/** [#168-MP] Smart! Blueprints: the client preview grid's ACTUAL per-axis cell basis vectors
+	 *  (world space, cm) - measured from the live preview children at fire time, delta-removed.
+	 *  Cell (i,j,k) = parent + i*BasisX + j*BasisY + k*BasisZ + rotated delta. Carried because the
+	 *  server-side position calculator provably disagrees with the client preview pitch for
+	 *  blueprint composites (live 2026-07-07: seam pipes drifted exactly one spacing unit per grid
+	 *  step in X/Y on a 3x5x3 dedi build - copies at calculator pitch, conduit plan at preview
+	 *  pitch). The client's previews are the plan; positions are part of the plan (#334 rule) -
+	 *  reconstruct, don't re-derive. Zero vector for an axis = no child on that axis (unused). */
+	UPROPERTY()
+	FVector CellBasisX = FVector::ZeroVector;
+
+	UPROPERTY()
+	FVector CellBasisY = FVector::ZeroVector;
+
+	UPROPERTY()
+	FVector CellBasisZ = FVector::ZeroVector;
+
+	UPROPERTY()
+	bool bHasCellBasis = false;
+
 	/** True once populated from a live grid; the server only expands when valid. */
 	UPROPERTY()
 	bool bValid = false;

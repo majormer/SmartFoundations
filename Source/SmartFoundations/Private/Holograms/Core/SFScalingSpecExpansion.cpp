@@ -17,6 +17,7 @@
 #include "Shared/Power/SFWireDesignerRegistration.h"  // [#421] designer containment for direct-spawned wires
 #include "FGBlueprintProxy.h"
 #include "Hologram/FGBlueprintHologram.h"       // [#168] Smart! Blueprints: staged blueprint grid cells
+#include "Features/Scaling/SFGridCoordComponent.h"  // [#168-MP] cell-basis capture from live preview children
 #include "Hologram/FGPoleHologram.h"            // #354: mPoleVariationIndex / mBuildStep
 #include "Hologram/FGConveyorPoleHologram.h"
 #include "Hologram/FGFloodlightHologram.h"      // #200: mFixtureAngle / mBuildStep
@@ -123,6 +124,49 @@ bool CaptureScalingSpec(AFGHologram* Hologram, FSFScalingSpec& OutSpec)
 		OutSpec.ItemSize = SS->GetCachedBuildingSize();
 		OutSpec.AnchorOffset = FVector::ZeroVector;
 		OutSpec.BlueprintContentDelta = SS->GetBlueprintChildContentDelta();
+
+		// [#168-MP] Measure the preview grid's ACTUAL cell basis from the live children - the
+		// server-side calculator provably disagrees with the client preview pitch for composites
+		// (live 2026-07-07: one spacing unit of drift per grid step), and the conduit plan is only
+		// valid at the preview's exact positions. Basis = (unit-cell child pos - parent pos) with
+		// the per-child content delta removed, so the server can reconstruct cell (i,j,k) affinely.
+		// Steps tilt a basis vector and are captured for free; STAGGER is parity-based (not affine)
+		// - blueprints don't support it, but guard anyway by refusing the basis when set.
+		const FRotator ParentRotForBasis = Hologram->GetActorRotation();
+		const FVector RotatedDelta = ParentRotForBasis.RotateVector(OutSpec.BlueprintContentDelta);
+		const FVector ParentLocForBasis = Hologram->GetActorLocation();
+		const bool bStaggerActive = Counters.StaggerX != 0 || Counters.StaggerY != 0
+			|| Counters.StaggerZX != 0 || Counters.StaggerZY != 0;
+		// Rotation mode curves cell positions per index (arc) - also not affine. Both fall back
+		// to the calculator path (positions may drift there; those modes are not in the blueprint
+		// adapter's supported feature set).
+		const bool bRotationActive = !FMath::IsNearlyZero(Counters.RotationZ);
+		if (!bStaggerActive && !bRotationActive)
+		{
+			int32 AxesFound = 0;
+			for (AFGHologram* Child : Hologram->GetHologramChildren())
+			{
+				FIntVector Cell;
+				if (!Child || !Child->Tags.Contains(FName(TEXT("SF_GridChild")))
+					|| !USFGridCoordComponent::TryGetCell(Child, Cell))
+				{
+					continue;
+				}
+				const FVector Basis = Child->GetActorLocation() - ParentLocForBasis - RotatedDelta;
+				if (Cell == FIntVector(1, 0, 0)) { OutSpec.CellBasisX = Basis; ++AxesFound; }
+				else if (Cell == FIntVector(0, 1, 0)) { OutSpec.CellBasisY = Basis; ++AxesFound; }
+				else if (Cell == FIntVector(0, 0, 1)) { OutSpec.CellBasisZ = Basis; ++AxesFound; }
+			}
+			OutSpec.bHasCellBasis = AxesFound > 0;
+			if (OutSpec.bHasCellBasis)
+			{
+				UE_LOG(LogSmartFoundations, Log,
+					TEXT("[#168-MP] Captured blueprint cell basis: X=%s Y=%s Z=%s delta=%s (calculator would have used pitch from ItemSize=%s)"),
+					*OutSpec.CellBasisX.ToCompactString(), *OutSpec.CellBasisY.ToCompactString(),
+					*OutSpec.CellBasisZ.ToCompactString(), *OutSpec.BlueprintContentDelta.ToCompactString(),
+					*OutSpec.ItemSize.ToCompactString());
+			}
+		}
 	}
 	OutSpec.BuildClass = Hologram->GetBuildClass();
 	// [#368] Carry the player's remembered production recipe so the SERVER applies it to the
@@ -552,13 +596,28 @@ int32 ExpandScalingSpecIntoChildren(AFGHologram* Parent, const FSFScalingSpec& S
 					Spec.ItemSize, C, LinearIndex, FVector::ZeroVector);
 				++LinearIndex;
 
-				// [#168-MP] Blueprint copies: apply the client-measured content-convention delta in
-				// the PARENT frame - the same correction the client preview applied per child
-				// (USFGridSpawnerService::UpdateChildPositions) - so the server's copies land at the
-				// exact world positions the captured seam-conduit plan was routed against.
-				if (!Spec.BlueprintContentDelta.IsZero() && Parent->IsA<AFGBlueprintHologram>())
+				// [#168-MP] Blueprint copies: RECONSTRUCT the client preview's exact cell position
+				// instead of re-deriving it. The captured world-space basis (per-axis child offsets,
+				// delta-removed) + the content delta reproduce the preview affinely: cell(i,j,k) =
+				// parent + i*BX + j*BY + k*BZ + rotated delta. The calculator path provably drifts
+				// one spacing unit per grid step vs the preview for composites (live 2026-07-07 dedi
+				// build: every seam pipe missed its port by exactly that drift), and the conduit
+				// plan is only valid at the preview's positions - #334's rule: positions are part of
+				// the plan. Unsigned loop indices: direction is baked into the measured basis.
+				if (Parent->IsA<AFGBlueprintHologram>())
 				{
-					CellLoc += ParentRot.RotateVector(Spec.BlueprintContentDelta);
+					if (Spec.bHasCellBasis)
+					{
+						CellLoc = ParentLoc
+							+ XI * Spec.CellBasisX
+							+ YI * Spec.CellBasisY
+							+ ZI * Spec.CellBasisZ
+							+ ParentRot.RotateVector(Spec.BlueprintContentDelta);
+					}
+					else if (!Spec.BlueprintContentDelta.IsZero())
+					{
+						CellLoc += ParentRot.RotateVector(Spec.BlueprintContentDelta);
+					}
 				}
 
 				// [#363] Rotation mode: each cell rotates progressively along the arc, exactly
