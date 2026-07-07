@@ -532,7 +532,20 @@ public:
 	 */
 	void RegisterPipeForDeferredWiring(class AFGBuildablePipeline* Pipe);
 
-	/** 
+	/**
+	 * [#168] Wire a blueprint SEAM pipe SYNCHRONOUSLY at construct — the pipe analog of the belt
+	 * seam wiring (ASFConveyorBeltHologram::Construct's immediate 50cm scan). Both endpoints scan
+	 * for a nearby unconnected, direction-compatible pipe connector on an already-BUILT actor and
+	 * SetConnection, then the joined networks are merged + marked for rebuild so fluid flows.
+	 * Unlike RegisterPipeForDeferredWiring (next-tick timer + static queue, for the junction path's
+	 * unpredictable build order), the seam conduits construct AFTER every blueprint copy, so exact
+	 * in-frame wiring is both safe and more reliable — and it merges networks, which the deferred
+	 * path never does.
+	 * @return number of endpoints wired (0-2).
+	 */
+	int32 WireBlueprintSeamPipe(class AFGBuildablePipeline* Pipe);
+
+	/**
 	 * Planned building connections from preview phase (for build-time execution)
 	 * Key: Building that should be connected (weak pointer to avoid dangling refs)
 	 * Value: Location of the pole hologram that won the bid for this building
@@ -634,6 +647,11 @@ protected:
 
 	/** [#168] Smart! Blueprints: per-blueprint clone content-convention delta (see accessor) */
 	FVector BlueprintChildContentDelta = FVector::ZeroVector;
+
+	/** [#168] One-shot latch for the 1m/1m/1m blueprint spacing default - set on the transition
+	 *  into blueprint building, cleared when a non-blueprint hologram registers, so repeated
+	 *  pickups and post-fire respawns keep the player's own spacing. */
+	bool bBlueprintSpacingDefaultApplied = false;
 
 	/** Cached multi-step hologram properties for child sync (Issue #200)
 	 * Tracks parent's fixture angle and build step to detect changes and propagate to children */

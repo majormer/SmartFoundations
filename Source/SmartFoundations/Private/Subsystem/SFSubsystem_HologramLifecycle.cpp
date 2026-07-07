@@ -424,6 +424,33 @@ void USFSubsystem::RegisterActiveHologram(AFGHologram* Hologram)
 		// [#168] Fresh hologram, fresh blueprint clone-convention delta (measured at first staging)
 		BlueprintChildContentDelta = FVector::ZeroVector;
 
+		// [#168] Smart! Blueprints spacing default: seam belts/pipes need a physical GAP to
+		// exist (a conduit under ~0.5m can't be built, and flush tiling leaves no room), so
+		// picking up a blueprint defaults spacing to 1m on every axis. Applied only on the
+		// TRANSITION into blueprint building - the post-fire hologram respawn and repeated
+		// blueprint pickups keep whatever the player has since set (including 0 for a
+		// deliberate flush grid).
+		if (Cast<AFGBlueprintHologram>(Hologram))
+		{
+			if (!bBlueprintSpacingDefaultApplied)
+			{
+				bBlueprintSpacingDefaultApplied = true;
+				CounterState.SpacingX = 100;
+				CounterState.SpacingY = 100;
+				CounterState.SpacingZ = 100;
+				if (GridStateService)
+				{
+					GridStateService->UpdateCounterState(CounterState);
+				}
+				UpdateCounterDisplay();
+				UE_LOG(LogSmartFoundations, Log, TEXT("[#168] Blueprint pickup: spacing defaulted to 1m/1m/1m (room for seam conduits)"));
+			}
+		}
+		else
+		{
+			bBlueprintSpacingDefaultApplied = false;
+		}
+
 		if (USFBuildableSizeRegistry::HasProfile(BuildUClass))
 		{
 			// Use validated dimensions from registry
