@@ -898,25 +898,31 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 							*self->GetName(), Expanded, Expanded == 1 ? TEXT("y") : TEXT("ies"),
 							*BlueprintSpec.BlueprintContentDelta.ToCompactString());
 					}
-					// [#168-MP] Shift the conduit plan by the rotated content delta: the server-side
-					// blueprint CONTENT (parent + copies, staged fresh without the client's
-					// interactive root-seating) lands uniformly one content-delta from where the
-					// client's preview content stood - internally perfectly tiled, just translated
-					// (live 2026-07-07: every seam pipe missed its port by exactly (+100,+100,0) =
-					// the delta, both ends, after the basis fix removed the pitch drift). The
-					// content cannot move (the parent is vanilla-placed), so move the PLAN with it.
-					if (BlueprintSpec.ConduitPlan.Num() > 0 && !BlueprintSpec.BlueprintContentDelta.IsZero())
+					// [#168-MP] Shift the conduit plan by the MEASURED parent-convention difference:
+					// the plan is routed in the client world (content anchored at the client
+					// parent's convention, carried in the spec); the server world anchors at the
+					// SERVER parent's convention, measured here. Zero when they agree - they
+					// provably vary per blueprint and staging context (live 2026-07-07: a carried
+					// constant fixed FluidGrid and broke TestBP by exactly itself). Cells align to
+					// the same measured parent anchor inside the expansion, so world + plan agree.
+					if (BlueprintSpec.ConduitPlan.Num() > 0)
 					{
-						const FVector PlanShift = self->GetActorRotation().RotateVector(BlueprintSpec.BlueprintContentDelta);
-						for (FSFConduitPlanEntry& Entry : BlueprintSpec.ConduitPlan)
+						const FVector ServerParentAnchor = SFScalingSpecExpansion::MeasureBlueprintContentAnchor(self);
+						const FVector PlanShift = self->GetActorRotation().RotateVector(
+							ServerParentAnchor - BlueprintSpec.ClientParentAnchorRel);
+						if (!PlanShift.IsNearlyZero(0.5f))
 						{
-							Entry.Location += PlanShift;
-							Entry.WireStart += PlanShift;
-							Entry.WireEnd += PlanShift;
+							for (FSFConduitPlanEntry& Entry : BlueprintSpec.ConduitPlan)
+							{
+								Entry.Location += PlanShift;
+								Entry.WireStart += PlanShift;
+								Entry.WireEnd += PlanShift;
+							}
 						}
 						UE_LOG(LogSmartFoundations, Log,
-							TEXT("[#168-MP] Blueprint construct seam %s: conduit plan shifted by %s (content-delta alignment)."),
-							*self->GetName(), *PlanShift.ToCompactString());
+							TEXT("[#168-MP] Blueprint construct seam %s: plan shift %s (serverAnchor=%s clientAnchor=%s)."),
+							*self->GetName(), *PlanShift.ToCompactString(),
+							*ServerParentAnchor.ToCompactString(), *BlueprintSpec.ClientParentAnchorRel.ToCompactString());
 					}
 					const int32 Conduits = SFScalingSpecExpansion::SpawnConduitPlanChildren(self, BlueprintSpec);
 					if (Conduits > 0)

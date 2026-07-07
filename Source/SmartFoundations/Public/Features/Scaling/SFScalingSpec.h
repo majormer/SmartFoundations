@@ -150,6 +150,14 @@ struct SMARTFOUNDATIONS_API FSFScalingSpec
 	UPROPERTY()
 	bool bHasCellBasis = false;
 
+	/** [#168-MP] The CLIENT parent hologram's measured content anchor (hologram-local): the
+	 *  convention every copy's content - and the conduit plan routed against it - is anchored to
+	 *  in the client world. The server measures ITS parent's anchor at the construct seam and
+	 *  shifts the conduit plan by the rotated difference (zero when the conventions agree; they
+	 *  provably vary per blueprint and staging context - live 2026-07-07). */
+	UPROPERTY()
+	FVector ClientParentAnchorRel = FVector::ZeroVector;
+
 	/** True once populated from a live grid; the server only expands when valid. */
 	UPROPERTY()
 	bool bValid = false;

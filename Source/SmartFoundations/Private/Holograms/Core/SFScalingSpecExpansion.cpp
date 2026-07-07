@@ -89,6 +89,21 @@ bool IsSpecConstructionEnabled()
 	return bEnabled;
 }
 
+FVector MeasureBlueprintContentAnchor(AFGBlueprintHologram* Blueprint)
+{
+	if (Blueprint)
+	{
+		for (const auto& Pair : Blueprint->mBuildableToNewRoot)
+		{
+			if (Pair.Value)
+			{
+				return Pair.Value->GetRelativeLocation();
+			}
+		}
+	}
+	return FVector::ZeroVector;
+}
+
 bool CaptureScalingSpec(AFGHologram* Hologram, FSFScalingSpec& OutSpec)
 {
 	if (!Hologram)
@@ -124,6 +139,10 @@ bool CaptureScalingSpec(AFGHologram* Hologram, FSFScalingSpec& OutSpec)
 		OutSpec.ItemSize = SS->GetCachedBuildingSize();
 		OutSpec.AnchorOffset = FVector::ZeroVector;
 		OutSpec.BlueprintContentDelta = SS->GetBlueprintChildContentDelta();
+		// [#168-MP] The CLIENT world (and the conduit plan routed in it) anchors every copy's
+		// content at the PARENT's convention. Carried so the server can MEASURE its own parent's
+		// convention and shift the plan by the measured difference (zero when they agree).
+		OutSpec.ClientParentAnchorRel = MeasureBlueprintContentAnchor(Cast<AFGBlueprintHologram>(Hologram));
 
 		// [#168-MP] Measure the preview grid's ACTUAL cell basis from the live children - the
 		// server-side calculator provably disagrees with the client preview pitch for composites
@@ -566,6 +585,15 @@ int32 ExpandScalingSpecIntoChildren(AFGHologram* Parent, const FSFScalingSpec& S
 
 	FSFPositionCalculator Calc;
 	AActor* HoloOwner = Parent->GetOwner();
+
+	// [#168-MP] The SERVER parent's measured content anchor - the tiling reference every staged
+	// cell aligns to below. Measured, never inferred: staging conventions vary per blueprint and
+	// per context (see MeasureBlueprintContentAnchor).
+	FVector ServerParentAnchor = FVector::ZeroVector;
+	if (AFGBlueprintHologram* ParentBlueprintForAnchor = Cast<AFGBlueprintHologram>(Parent))
+	{
+		ServerParentAnchor = MeasureBlueprintContentAnchor(ParentBlueprintForAnchor);
+	}
 	int32 SpawnedChildren = 0;
 	int32 LinearIndex = 0;
 
@@ -606,13 +634,17 @@ int32 ExpandScalingSpecIntoChildren(AFGHologram* Parent, const FSFScalingSpec& S
 				// the plan. Unsigned loop indices: direction is baked into the measured basis.
 				if (Parent->IsA<AFGBlueprintHologram>())
 				{
+					// Grid SLOT only (pure measured pitch). Content alignment is applied after the
+					// cell stages below, from MEASURED anchors - the staging convention varies per
+					// blueprint and per context, so no carried constant is trustworthy (live
+					// 2026-07-07: the carried delta fixed FluidGrid and broke TestBP by the same
+					// amount).
 					if (Spec.bHasCellBasis)
 					{
 						CellLoc = ParentLoc
 							+ XI * Spec.CellBasisX
 							+ YI * Spec.CellBasisY
-							+ ZI * Spec.CellBasisZ
-							+ ParentRot.RotateVector(Spec.BlueprintContentDelta);
+							+ ZI * Spec.CellBasisZ;
 					}
 					else if (!Spec.BlueprintContentDelta.IsZero())
 					{
@@ -763,9 +795,20 @@ int32 ExpandScalingSpecIntoChildren(AFGHologram* Parent, const FSFScalingSpec& S
 								// No AlignBuildableRootWithBounds: LoadBlueprintToOtherWorld aligns
 								// internally; a second call displaces the root off the grid (live
 								// measurement 2026-07-06).
-								UE_LOG(LogSmartFoundations, Log,
-									TEXT("[#168] Staged blueprint spec cell %s from descriptor %s"),
-									*Child->GetName(), *GetNameSafe(ParentBlueprintCell->mBlueprintDescriptor));
+								// [#168-MP] MEASURED content alignment: seat this cell so its CONTENT
+								// tiles exactly with the SERVER parent's content - cell position =
+								// grid slot + rotated (parentAnchor - cellAnchor). Replaces the
+								// carried client delta, which proved context-dependent (fixed
+								// FluidGrid, broke TestBP by the same amount, live 2026-07-07).
+								{
+									const FVector CellAnchor = MeasureBlueprintContentAnchor(BlueprintCell);
+									const FVector AnchorFix = ParentRot.RotateVector(ServerParentAnchor - CellAnchor);
+									CellLoc += AnchorFix;
+									UE_LOG(LogSmartFoundations, Log,
+										TEXT("[#168] Staged blueprint spec cell %s | anchors parent=%s cell=%s fix=%s"),
+										*Child->GetName(), *ServerParentAnchor.ToCompactString(),
+										*CellAnchor.ToCompactString(), *AnchorFix.ToCompactString());
+								}
 							}
 							else
 							{

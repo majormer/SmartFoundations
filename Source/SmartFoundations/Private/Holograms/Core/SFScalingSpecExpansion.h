@@ -95,4 +95,15 @@ namespace SFScalingSpecExpansion
 	 */
 	int32 SpawnWirePlanPostConstruct(AActor* BuiltParent, const TArray<AActor*>& OutChildren,
 		const FSFScalingSpec& Spec, class AFGBlueprintProxy* GroupProxy);
+
+	/**
+	 * [#168-MP] Measure a staged blueprint hologram's CONTENT ANCHOR: the first blueprint-world
+	 * buildable's visual-root offset relative to the hologram actor (hologram-local). The staging
+	 * convention VARIES - by blueprint AND by staging context (client interactive flow vs client
+	 * preview child vs server construct-message parent vs server spec cell; live 2026-07-07:
+	 * FluidGrid's server world sat one delta off the client plan, TestBP's sat exactly on it) -
+	 * so alignment must be MEASURED per hologram, never inferred from a carried constant.
+	 * Returns ZeroVector when unstaged/empty.
+	 */
+	FVector MeasureBlueprintContentAnchor(class AFGBlueprintHologram* Blueprint);
 }
