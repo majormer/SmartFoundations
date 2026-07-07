@@ -73,6 +73,17 @@ blueprint children (and the seam conduit children — see §3), runs the origina
 child with the same construction id. Seam conduits fire **after** every copy so they wire against
 BUILT actors.
 
+**Floor validation is disabled on copies.** A blueprint hologram inherits
+`AFGBuildableHologram::CheckValidFloor`, which the parent's validation pass runs on every child. A
+copy positioned by Smart! over a foundation edge (or void) samples an "uneven" floor and raises
+`FGCDInvalidFloor`; the parent aggregates it and the whole grid goes red ("Surface is too uneven!").
+Copies are placed by Smart!, not floor-snapped, so `FSFValidationService::ShouldEnableFloorValidation`
+lists `AFGBlueprintHologram` in its always-disable family (alongside conveyor attachments #245, power
+poles #203, passthroughs #187) and the grid spawner keeps every child's `mNeedsValidFloor=false`. This
+runs on **every** grid/transform re-evaluation, not just staging (the shared `UpdateChildPositions`
+loop re-arms the flag otherwise). Only CHILDREN are exempted — the **aimed parent** keeps vanilla
+floor behavior, matching vanilla's own rule that a blueprint can float only via vertical nudge.
+
 ---
 
 ## 3. Seam auto-connect — the model
@@ -156,14 +167,22 @@ in the existing `FSFAutoConnectSkipSummary` (too steep / invalid shape / too far
   The evaluator services Z for **pipes** — pipes run vertical natively, so a bottom copy's up-facing
   port wires to the copy above (stacked towers). **Belt Z pairs stay cached but unserviced**: vertical
   belt transport is a conveyor LIFT, preview machinery Smart does not have yet (real v2 work).
-- **Spacing default:** picking up a blueprint defaults spacing to **1 m on every axis** (seam conduits
-  need a physical gap — a conduit under ~0.5 m can't be built). One-shot latch
-  (`bBlueprintSpacingDefaultApplied`): applied only on the transition INTO blueprint building, so
-  post-fire respawns and repeated pickups keep whatever the player set (including 0 for a deliberate
-  flush grid).
+- **Spacing default (session-scoped, overridable):** picking up a blueprint defaults spacing to **1 m
+  on every axis** (seam conduits need a physical gap — a conduit under ~0.5 m can't be built). This is
+  a **starting point**, not a floor: it is keyed on the blueprint's identity
+  (`BlueprintSpacingDefaultAppliedFor` = `mBlueprintDescName`) and applied **once per build session**,
+  so while the same blueprint stays in play — fire respawns, build-menu round trips — the player's own
+  spacing (including **0** for a deliberate flush grid) sticks. The session ends and the default
+  re-arms when the player *starts over*: recipe change away (the `RegisterActiveHologram` else-branch
+  clears the key) or build-gun holster (`OnBuildGunUnequipped` clears it). Only global settings persist
+  between builds. This mirrors the distributor auto-connect context-spacing model (apply once per
+  target identity, overridable). The earlier bool latch re-armed on every re-registration — which
+  happens constantly — so an explicit 0 kept snapping back to 1 m; identity-keying fixed that.
 - **"Too close":** a blueprint whose ports sit deep inside its bounds can leave <0.5 m between mating
   ports even at 1 m spacing. Those skips report as **"too close"** on the HUD (widen spacing) rather
-  than vanishing silently.
+  than vanishing silently. Skip-summary lines render in a **fixed warning-red** (theme-independent, via
+  the `SFHud::WarningLinePrefix` sentinel), and the tally resets on every hologram registration so a
+  cancelled grid's skips never bleed onto the next unrelated buildable's HUD.
 
 Known v1 gap: at flush tiling (<0.5 m port gap) no conduit fits, and coincident ports are not
 direct-wired.
@@ -235,3 +254,6 @@ join/fire and the HUD guard notices all working.
 | SP+MP construct hook | `Core/Net/SFGameInstanceModule_SpecHooks.cpp` (blueprint `Construct` hook) |
 | MP fire guards + notices | `Core/Net/SFGameInstanceModule_NetHooks.cpp` |
 | MP spec (basis/anchor) | `Public/Features/Scaling/SFScalingSpec.h`, `SFScalingSpecExpansion.cpp` |
+| Floor-check exemption (copies) | `SFValidationService.cpp` (`ShouldEnableFloorValidation` family list) |
+| Session spacing default | `SFSubsystem_HologramLifecycle.cpp` (`BlueprintSpacingDefaultAppliedFor`; cleared in `OnBuildGunUnequipped`) |
+| Warning-red HUD lines | `SFHudService.cpp` (sentinel prepend), `HUD/SFHudWidget.cpp` (fixed red), `SFHud::WarningLinePrefix` |
