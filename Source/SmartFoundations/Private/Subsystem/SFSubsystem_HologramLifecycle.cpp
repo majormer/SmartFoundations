@@ -145,6 +145,15 @@ void USFSubsystem::RegisterActiveHologram(AFGHologram* Hologram)
 
 	CurrentScalingOffset = FVector::ZeroVector;
 
+	// Skip tallies belong to the PREVIOUS hologram's evaluations. Without this, cancelling a
+	// placement whose evaluation tallied skips (e.g. a Smart! Blueprint grid with "too steep"
+	// seams) leaves those counts on the HUD for the next, unrelated buildable - which may
+	// never run an evaluation that would reset them (a 1x1x1 pole evaluates nothing).
+	if (AutoConnectService)
+	{
+		AutoConnectService->GetSkipSummary().ResetAll();
+	}
+
 	// Clear recipe cache when switching to new hologram type
 	if (SortedFilteredRecipes.Num() > 0)
 	{
