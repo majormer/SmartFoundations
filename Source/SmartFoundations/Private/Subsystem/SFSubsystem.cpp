@@ -1687,10 +1687,13 @@ static void SF_ResolvePlayerRelativeAxes(float ViewYawDeg, float BuildingYawDeg,
 	// Relative facing in [-180, 180]: 0 = looking along the building's forward, +90 = to its right.
 	const float Rel = FMath::UnwindDegrees(ViewYawDeg - BuildingYawDeg);
 	const float A = FMath::Abs(Rel);
-	if (A <= 45.0f)        { PrimAxis = ESFScaleAxis::X; PrimSign = -1; LatAxis = ESFScaleAxis::Y; LatSign = +1; }  // facing forward
-	else if (A >= 135.0f)  { PrimAxis = ESFScaleAxis::X; PrimSign = +1; LatAxis = ESFScaleAxis::Y; LatSign = -1; }  // facing backward
-	else if (Rel > 0.0f)   { PrimAxis = ESFScaleAxis::Y; PrimSign = -1; LatAxis = ESFScaleAxis::X; LatSign = -1; }  // facing right
-	else                   { PrimAxis = ESFScaleAxis::Y; PrimSign = +1; LatAxis = ESFScaleAxis::X; LatSign = +1; }  // facing left
+	// Signs derived from two confirmed anchors (2026-07-07, facing forward): primary scroll-up = grow
+	// AWAY (X,-1); lateral scroll-up = grow RIGHT (Y,-1). The building frame that satisfies both is
+	// grid -X = forward, grid -Y = right; the other three cardinals are that frame rotated 90 degrees.
+	if (A <= 45.0f)        { PrimAxis = ESFScaleAxis::X; PrimSign = -1; LatAxis = ESFScaleAxis::Y; LatSign = -1; }  // facing forward
+	else if (A >= 135.0f)  { PrimAxis = ESFScaleAxis::X; PrimSign = +1; LatAxis = ESFScaleAxis::Y; LatSign = +1; }  // facing backward
+	else if (Rel > 0.0f)   { PrimAxis = ESFScaleAxis::Y; PrimSign = -1; LatAxis = ESFScaleAxis::X; LatSign = +1; }  // facing right
+	else                   { PrimAxis = ESFScaleAxis::Y; PrimSign = +1; LatAxis = ESFScaleAxis::X; LatSign = -1; }  // facing left
 }
 
 void USFSubsystem::OnScaleXChanged(const FInputActionValue& Value)
