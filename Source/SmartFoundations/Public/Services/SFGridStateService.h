@@ -148,10 +148,14 @@ public:
 
     void AdjustRotation(FSFCounterState& State, ESFScaleAxis Axis, int32 AccumulatedSteps, int32 Direction, float IncrementDeg)
     {
-        // Axis here is the PROGRESSION axis (X-clones vs Y-rows) and does NOT affect the
-        // yaw angle value — the single RotationZ angle is always adjusted regardless of Axis.
-        (void)Axis;
-        const float Delta = Direction * IncrementDeg * AccumulatedSteps;
+        // The PROGRESSION axis (X-clones vs Y-rows) doesn't change the angle magnitude, but the Y
+        // progression swaps the X/Y roles in the arc parametrization (a reflection) - so the SAME
+        // stored RotationZ sign curls the OPPOSITE way on Y vs X. Negate the delta for Y so scroll-up
+        // curls RIGHT consistently on both axes ("away = right"). [#209 feel-test, 2026-07-07]
+        // (Side effect: the stored RotationZ sign is inverted for Y-rows, so the HUD shows a negative
+        //  angle for a right curl there - cosmetic; the curl direction is what matters.)
+        const int32 CurlDir = (Axis == ESFScaleAxis::Y) ? -Direction : Direction;
+        const float Delta = CurlDir * IncrementDeg * AccumulatedSteps;
         State.RotationZ += Delta;
     }
 
