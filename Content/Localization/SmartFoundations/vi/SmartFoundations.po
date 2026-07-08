@@ -2551,3 +2551,19 @@ msgstr ""
 msgctxt "SmartFoundations,HUD_SkipReason_TooSteep"
 msgid "too steep ({0})"
 msgstr ""
+
+msgctxt "SmartFoundations,MP_Notice_BlueprintGridTooLarge"
+msgid "Blueprint grid too large for one multiplayer placement (~{0} buildings, max ~{1}). Build in smaller sections."
+msgstr "Lưới bản thiết kế quá lớn cho một lần đặt nhiều người chơi (~{0} công trình, tối đa ~{1}). Hãy xây theo từng phần nhỏ hơn."
+
+msgctxt "SmartFoundations,MP_Notice_GridTooLarge"
+msgid "Grid too large for multiplayer ({0} cells, max ~{1}). Build in smaller sections."
+msgstr "Lưới quá lớn cho chế độ nhiều người chơi ({0} ô, tối đa ~{1}). Hãy xây theo từng phần nhỏ hơn."
+
+msgctxt "SmartFoundations,MP_Notice_TooManyConduits"
+msgid "Too many auto-connect belts/pipes for one multiplayer placement ({0}). Build in smaller sections."
+msgstr "Quá nhiều băng chuyền/đường ống tự động kết nối cho một lần đặt nhiều người chơi ({0}). Hãy xây theo từng phần nhỏ hơn."
+
+msgctxt "SmartFoundations,MP_Notice_WaterExtractorDeepWater"
+msgid "Every water extractor must be placed on deep water."
+msgstr "Mỗi máy bơm nước phải được đặt trên vùng nước sâu."

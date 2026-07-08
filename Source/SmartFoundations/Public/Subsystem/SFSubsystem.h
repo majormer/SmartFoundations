@@ -185,6 +185,31 @@ public:
     float& AccessBaselineHeightZRef() { return BaselineHeightZ; }
     const FVector& GetCachedAnchorOffset() const { return CachedAnchorOffset; }
 
+    /** [#168] Smart! Blueprints: measured per-blueprint content-convention delta between the
+     *  PARENT hologram (root re-seated by the interactive build-gun flow) and a freshly staged
+     *  CLONE (natural LoadBlueprintToOtherWorld convention). Applied in child positioning
+     *  (rotated into the parent frame) so clone contents tile exactly like the parent's.
+     *  Measured at first child staging; zeroed on hologram registration. */
+    const FVector& GetBlueprintChildContentDelta() const { return BlueprintChildContentDelta; }
+    void SetBlueprintChildContentDelta(const FVector& InDelta) { BlueprintChildContentDelta = InDelta; }
+
+    /** [#168-MP] Transient player-facing notice rendered by the Smart HUD (e.g. a refused
+     *  multiplayer fire: grid over the per-placement caps). GEngine on-screen debug messages do
+     *  NOT render in Shipping builds - every MP guard that relied on them was silently invisible
+     *  (live 2026-07-07: six refused fires read as "the build stopped triggering"). The HUD is
+     *  the surface players actually see while aiming; the refused grid stays live, so the notice
+     *  shows exactly when it's actionable. */
+    void ShowSmartNotice(const FString& Text, float Seconds = 8.0f)
+    {
+        SmartNoticeText = Text;
+        SmartNoticeExpiry = GetWorld() ? GetWorld()->GetTimeSeconds() + Seconds : 0.0;
+        UpdateCounterDisplay();
+    }
+    FString GetActiveSmartNotice() const
+    {
+        return (GetWorld() && GetWorld()->GetTimeSeconds() < SmartNoticeExpiry) ? SmartNoticeText : FString();
+    }
+
 	// ========================================
 	// RPC Handler Methods (Called by SFRCO)
 	// ========================================
@@ -524,7 +549,20 @@ public:
 	 */
 	void RegisterPipeForDeferredWiring(class AFGBuildablePipeline* Pipe);
 
-	/** 
+	/**
+	 * [#168] Wire a blueprint SEAM pipe SYNCHRONOUSLY at construct — the pipe analog of the belt
+	 * seam wiring (ASFConveyorBeltHologram::Construct's immediate 50cm scan). Both endpoints scan
+	 * for a nearby unconnected, direction-compatible pipe connector on an already-BUILT actor and
+	 * SetConnection, then the joined networks are merged + marked for rebuild so fluid flows.
+	 * Unlike RegisterPipeForDeferredWiring (next-tick timer + static queue, for the junction path's
+	 * unpredictable build order), the seam conduits construct AFTER every blueprint copy, so exact
+	 * in-frame wiring is both safe and more reliable — and it merges networks, which the deferred
+	 * path never does.
+	 * @return number of endpoints wired (0-2).
+	 */
+	int32 WireBlueprintSeamPipe(class AFGBuildablePipeline* Pipe);
+
+	/**
 	 * Planned building connections from preview phase (for build-time execution)
 	 * Key: Building that should be connected (weak pointer to avoid dangling refs)
 	 * Value: Location of the pole hologram that won the bid for this building
@@ -623,6 +661,21 @@ protected:
 	
 	/** Cached anchor offset for attachment-type pivot compensation (from registry profile) */
 	FVector CachedAnchorOffset = FVector::ZeroVector;
+
+	/** [#168] Smart! Blueprints: per-blueprint clone content-convention delta (see accessor) */
+	FVector BlueprintChildContentDelta = FVector::ZeroVector;
+
+	/** [#168] Identity (mBlueprintDescName) of the blueprint whose BUILD SESSION owns the current
+	 *  spacing values. The 1m/1m/1m default is a starting point applied once per session; while
+	 *  the same blueprint stays in play (fire respawns, menu round trips) the player's override
+	 *  (including 0) sticks. Cleared - re-arming the default - when the session ends: recipe
+	 *  change away (RegisterActiveHologram else-branch) or holster (OnBuildGunUnequipped).
+	 *  Only global settings persist between builds. Empty = no session. */
+	FString BlueprintSpacingDefaultAppliedFor;
+
+	/** [#168-MP] Transient HUD notice state (see ShowSmartNotice) */
+	FString SmartNoticeText;
+	double SmartNoticeExpiry = 0.0;
 
 	/** Cached multi-step hologram properties for child sync (Issue #200)
 	 * Tracks parent's fixture angle and build step to detect changes and propagate to children */

@@ -668,6 +668,127 @@ void FSFHologramHelperService::RegenerateChildHologramGrid(
 					ChildHologram = PassthroughChild;
 				}
 			}
+			else if (AFGBlueprintHologram* ParentBlueprint = Cast<AFGBlueprintHologram>(ParentHologram))
+			{
+				// [#168] BLUEPRINT COMPOSITES. The generic ASFBuildableChildHologram below can neither
+				// render nor construct a blueprint's contents (that's the old "only the parent places"
+				// break). Spawn the PARENT'S OWN hologram class (Holo_Blueprint_C or subclass) so the
+				// copy carries the configured blueprint build modes - including the game's own blueprint
+				// auto-connect - then stage it with the parent's descriptor. Connections between copies
+				// are the GAME's job (FGBlueprintOpenConnectionManager), never Smart wiring.
+				UWorld* SpawnWorld = WorldContext.Get();
+				if (SpawnWorld)
+				{
+					FActorSpawnParameters SpawnParams;
+					SpawnParams.Name = ChildName;
+					SpawnParams.Owner = ParentHologram->GetOwner();
+					SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+					SpawnParams.bDeferConstruction = true;
+
+					AFGBlueprintHologram* BlueprintChild = SpawnWorld->SpawnActor<AFGBlueprintHologram>(
+						ParentHologram->GetClass(),
+						SpawnLocation,
+						FRotator::ZeroRotator,
+						SpawnParams);
+
+					if (BlueprintChild)
+					{
+						// mBuildClass MUST be set before FinishSpawning: AFGHologram::BeginPlay
+						// asserts on it (FGHologram.cpp:288), and SetRecipe alone does not derive it
+						// on a raw deferred SpawnActor (vanilla's SpawnHologramFromRecipe sets both).
+						BlueprintChild->SetBuildClass(ParentHologram->GetBuildClass());
+						BlueprintChild->SetRecipe(Recipe);
+						BlueprintChild->FinishSpawning(FTransform(FRotator::ZeroRotator, SpawnLocation));
+						ParentHologram->AddChild(BlueprintChild, ChildName);
+
+						// Stage the copy: descriptor + blueprint world load = contents render and
+						// the child constructs through its own AFGBlueprintHologram::Construct.
+						if (ParentBlueprint->mBlueprintDescriptor)
+						{
+							BlueprintChild->SetBlueprintDescriptor(ParentBlueprint->mBlueprintDescriptor);
+							// [#168] Blueprint IDENTITY: the proxy resolves its descriptor by NAME
+							// (mBlueprintName <- hologram mBlueprintDescName, normally set by the
+							// build gun's blueprint flow). Without it, child-built proxies are
+							// anonymous - invisible to vanilla snap/auto-connect/dismantle naming.
+							BlueprintChild->mBlueprintDescName = ParentBlueprint->mBlueprintDescName;
+							BlueprintChild->LoadBlueprintToOtherWorld();
+							// NOTE: do NOT call AlignBuildableRootWithBounds here - live measurement
+							// (2026-07-06) showed it displaces the child ROOT off Smart's grid by a
+							// second alignment (LoadBlueprintToOtherWorld already aligns internally).
+							// [#168] Content-convention measurement: the PARENT's root was re-seated
+							// by the interactive build-gun flow; a freshly staged clone carries the
+							// natural LoadBlueprintToOtherWorld convention. Compare the first
+							// blueprint-world buildable's visual-root offset (root -> contents) for
+							// parent vs child: the delta (constant per blueprint; measured
+							// (+100,-400,0) live 2026-07-06) is the exact per-copy correction the
+							// child positioning applies so clone contents tile like the parent's.
+							{
+								FVector ParentAnchor = FVector::ZeroVector;
+								FVector ChildAnchor = FVector::ZeroVector;
+								for (const auto& Pair : ParentBlueprint->mBuildableToNewRoot)
+								{
+									if (Pair.Value) { ParentAnchor = Pair.Value->GetRelativeLocation(); break; }
+								}
+								for (const auto& Pair : BlueprintChild->mBuildableToNewRoot)
+								{
+									if (Pair.Value) { ChildAnchor = Pair.Value->GetRelativeLocation(); break; }
+								}
+								const FVector ContentDelta = ParentAnchor - ChildAnchor;
+								if (USFSubsystem* DeltaSubsystem = USFSubsystem::Get(SpawnWorld))
+								{
+									DeltaSubsystem->SetBlueprintChildContentDelta(ContentDelta);
+								}
+								UE_LOG(LogSmartFoundations, Verbose,
+									TEXT("[#168] Staged blueprint child %s from descriptor %s | anchorRel parent=%s child=%s delta=%s"),
+									*ChildName.ToString(), *GetNameSafe(ParentBlueprint->mBlueprintDescriptor),
+									*ParentAnchor.ToString(), *ChildAnchor.ToString(),
+									*ContentDelta.ToString());
+							}
+						}
+						else
+						{
+							UE_LOG(LogSmartFoundations, Warning,
+								TEXT("[#168] Parent blueprint hologram %s has no descriptor - child %s left unstaged"),
+								*ParentHologram->GetName(), *ChildName.ToString());
+						}
+
+						USFHologramDataService::DisableValidation(BlueprintChild);
+						// [#168] Suppress the vanilla floor check on grid copies. A blueprint
+						// hologram inherits AFGBuildableHologram::CheckValidFloor, which the parent's
+						// validation pass runs on every child - a copy straddling a foundation edge (or
+						// over void) samples an "uneven" floor and raises FGCDInvalidFloor, which the
+						// parent aggregates and the whole grid goes red ("Surface is too uneven!").
+						// Same root cause and same lever as the conveyor-attachment / pipe-junction
+						// family (see FSFValidationService::ShouldEnableFloorValidation): the copies
+						// are positioned by Smart!, not floor-snapped, so they must not floor-check.
+						// The aimed PARENT keeps vanilla behavior. Applies to the MP client preview
+						// too (same staging path); the server constructs post-validation and never
+						// floor-checks the expanded children.
+						BlueprintChild->SetNeedsValidFloor(false);
+						USFHologramDataService::MarkAsChild(BlueprintChild, ParentHologram, ESFChildHologramType::ScalingGrid);
+
+						if (BlueprintChild->IsHologramLocked())
+						{
+							BlueprintChild->LockHologramPosition(false);
+						}
+						BlueprintChild->SetActorHiddenInGame(false);
+						BlueprintChild->SetActorEnableCollision(false);
+
+						TArray<UPrimitiveComponent*> Primitives;
+						BlueprintChild->GetComponents<UPrimitiveComponent>(Primitives);
+						for (UPrimitiveComponent* PrimComp : Primitives)
+						{
+							PrimComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+						}
+
+						BlueprintChild->SetActorTickEnabled(false);
+						BlueprintChild->RegisterAllComponents();
+						BlueprintChild->SetPlacementMaterialState(EHologramMaterialState::HMS_OK);
+						BlueprintChild->Tags.AddUnique(FName(TEXT("SF_GridChild")));
+					}
+					ChildHologram = BlueprintChild;
+				}
+			}
 			else if (ParentHologram->IsA(AFGFloodlightHologram::StaticClass()))
 			{
 				// Issue #200: Wall floodlights check wall snapping in CheckValidPlacement.

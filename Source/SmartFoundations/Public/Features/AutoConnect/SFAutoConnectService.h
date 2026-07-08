@@ -8,6 +8,7 @@
 #include "Buildables/FGBuildable.h"
 #include "Hologram/FGHologram.h"
 #include "Features/AutoConnect/Preview/BeltPreviewHelper.h"
+#include "Features/AutoConnect/SFBlueprintSeamService.h"
 // NOTE: SFBeltCostProxyHologram.h removed - child holograms automatically aggregate costs via GetCost()
 #include "SFAutoConnectService.generated.h"
 
@@ -15,6 +16,8 @@
 class USFSubsystem;
 class FSFPipeAutoConnectManager;
 class FSFPowerAutoConnectManager;
+class FPipePreviewHelper;
+class AFGBlueprintHologram;
 
 /**
  * Power pole grid node for topology analysis
@@ -69,6 +72,10 @@ struct FSFAutoConnectSkipSummary
 	void ResetBeltBuilding() { BeltsTooSteep = 0; BeltsInvalidShape = 0; }
 	void ResetBeltManifold() { BeltLanesBlocked = 0; }
 	void ResetPipes() { PipesInvalidShape = 0; PipesTooFar = 0; PipesTooClose = 0; }
+	/** Full reset - tallies belong to ONE hologram's evaluations. The hologram lifecycle
+	 *  clears everything on registration so a cancelled placement's skips (e.g. a Smart!
+	 *  Blueprint grid) can't bleed onto the next, unrelated buildable's HUD. */
+	void ResetAll() { ResetBeltBuilding(); ResetBeltManifold(); ResetPipes(); }
 	int32 BeltTotal() const { return BeltsTooSteep + BeltsInvalidShape + BeltLanesBlocked; }
 	int32 PipeTotal() const { return PipesInvalidShape + PipesTooFar + PipesTooClose; }
 };
@@ -435,6 +442,25 @@ public:
 	 * this is primarily a shutdown/deinit safety sweep to clear state and remove any stragglers.
 	 */
 	void CleanupAllStackableHypertubesAllParents();
+
+	// ========================================
+	// [#168] Smart! Blueprints — Seam Auto-Connect
+	// ========================================
+
+	/**
+	 * [#168] Evaluate + spawn seam conduit previews for a scaled BLUEPRINT grid: for every
+	 * adjacent clone pair along X and Y, the cached pair table (FSFBlueprintSeamService) is
+	 * resolved by connector INDEX on the two clones and fed to the existing belt/pipe preview
+	 * machinery (vanilla shape arbiters + skip HUD + AddChild cost aggregation inherited).
+	 * Z pairs are cached but not serviced in v1 (pipes v1.5, belt-lifts v2).
+	 */
+	void ProcessBlueprintSeams(AFGHologram* ParentHologram);
+
+	/** [#168] Destroy all seam conduit previews for one blueprint parent */
+	void CleanupAllBlueprintSeams(AFGHologram* ParentHologram);
+
+	/** [#168] Shutdown/teardown sweep across every tracked blueprint parent */
+	void CleanupAllBlueprintSeamsAllParents();
 
 	// ========================================
 	// Floor Hole Pipe Auto-Connect (Issue #187)
@@ -827,7 +853,31 @@ private:
 
 	/** Remove belts for pole pairs that are no longer needed */
 	void RemoveOrphanedBelts(AFGHologram* ParentHologram, const TSet<uint64>& ActivePolePairs);
-	
+
 	/** Clean up all tracked stackable belt children for a parent hologram */
 	void CleanupAllStackableBelts(AFGHologram* ParentHologram);
+
+	// ========================================================================
+	// [#168] Smart! Blueprints — Seam Auto-Connect State
+	// ========================================================================
+	// Seam previews are keyed by (clone-pair key, pair-table index) so they update in place
+	// through transforms (same pair, moved endpoints) and orphan-remove when the grid shrinks
+	// or a pair goes dormant (vanilla declined the shape).
+
+	/** Pair-table cache, keyed by blueprint descriptor name — computed once per blueprint (FR1). */
+	TMap<FName, FSFBlueprintSeamTable> BlueprintSeamTables;
+
+	/** (clone-pair key from MakePolePairKey, index into the pair table) */
+	using FSeamKey = TPair<uint64, int32>;
+
+	struct FBlueprintSeamState
+	{
+		TMap<FSeamKey, TSharedPtr<FBeltPreviewHelper>> BeltsBySeamKey;
+		TMap<FSeamKey, TSharedPtr<FPipePreviewHelper>> PipesBySeamKey;
+	};
+	TMap<TWeakObjectPtr<AFGHologram>, FBlueprintSeamState> BlueprintSeamStates;
+
+	/** Find the cached table for this blueprint, building it lazily (invalidated if the dup
+	 *  connector population changed — blueprint re-saved mid-session under the same name). */
+	const FSFBlueprintSeamTable* FindOrBuildSeamTable(AFGBlueprintHologram* ParentBlueprint);
 };

@@ -88,6 +88,7 @@
 #include "Holograms/Adapters/SFSmartBuildableAdapter.h"
 #include "Holograms/Adapters/SFSmartLogisticsAdapter.h"
 #include "Holograms/Adapters/SFGenericAdapter.h"
+#include "Holograms/Adapters/SFBlueprintAdapter.h"
 #include "Holograms/Adapters/SFWallAdapter.h"
 #include "Holograms/Adapters/SFPillarAdapter.h"
 #include "Holograms/Adapters/SFWaterExtractorAdapter.h"

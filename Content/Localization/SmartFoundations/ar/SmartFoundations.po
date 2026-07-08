@@ -2486,3 +2486,19 @@ msgstr ""
 msgctxt "SmartFoundations,HUD_SkipReason_TooSteep"
 msgid "too steep ({0})"
 msgstr ""
+
+msgctxt "SmartFoundations,MP_Notice_BlueprintGridTooLarge"
+msgid "Blueprint grid too large for one multiplayer placement (~{0} buildings, max ~{1}). Build in smaller sections."
+msgstr "شبكة المخطط كبيرة جدًا لعملية وضع واحدة في اللعب الجماعي (~{0} مبنى، بحد أقصى ~{1}). ابنِ على أقسام أصغر."
+
+msgctxt "SmartFoundations,MP_Notice_GridTooLarge"
+msgid "Grid too large for multiplayer ({0} cells, max ~{1}). Build in smaller sections."
+msgstr "الشبكة كبيرة جدًا للعب الجماعي ({0} خلية، بحد أقصى ~{1}). ابنِ على أقسام أصغر."
+
+msgctxt "SmartFoundations,MP_Notice_TooManyConduits"
+msgid "Too many auto-connect belts/pipes for one multiplayer placement ({0}). Build in smaller sections."
+msgstr "عدد كبير جدًا من السيور/الأنابيب ذاتية التوصيل لعملية وضع واحدة في اللعب الجماعي ({0}). ابنِ على أقسام أصغر."
+
+msgctxt "SmartFoundations,MP_Notice_WaterExtractorDeepWater"
+msgid "Every water extractor must be placed on deep water."
+msgstr "يجب وضع كل مستخرج مياه على مياه عميقة."

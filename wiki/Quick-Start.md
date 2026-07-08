@@ -36,6 +36,7 @@ If you prefer mouse wheel control, hold a Smart modifier:
 - Build a row of constructors with extra spacing.
 - Use Steps to make a ramp-like foundation pattern.
 - Use Auto-Connect with a small row of splitters and machines.
+- Scale one of your own blueprints into a small grid and watch the belts/pipes wire between the copies ([Smart Blueprints](Smart-Blueprints)).
 - Use Extend after you have one working production module.
 
 ## What Smart! Does Not Do

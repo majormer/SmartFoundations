@@ -165,6 +165,10 @@ public:
 	/** #405: Notify the orchestrator that stackable HYPERTUBE supports changed (100ms coalesce, preview). */
 	void OnStackableHypertubeSupportsChanged();
 
+	/** [#168] Notify the orchestrator that a scaled BLUEPRINT grid changed or moved —
+	 *  re-evaluates the seam conduits (100ms coalesce, mirrors the stackable pipe cadence). */
+	void OnBlueprintSeamsChanged();
+
 	// ========================================
 	// Floor Hole Pipe Auto-Connect (Issue #187)
 	// ========================================
@@ -378,6 +382,16 @@ private:
 	// Debounce state (#405: Stackable Hypertube Supports)
 	FTimerHandle StackableHypertubeEvalTimerHandle;
 	bool bStackableHypertubeEvalScheduled = false;
+
+	// Debounce state ([#168]: Smart! Blueprints seams)
+	FTimerHandle BlueprintSeamEvalTimerHandle;
+	bool bBlueprintSeamEvalScheduled = false;
+
+	/** [#168] Schedule blueprint seam evaluation with debouncing */
+	void ScheduleBlueprintSeamEvaluation();
+
+	/** [#168] Run the scheduled blueprint seam evaluation */
+	void RunScheduledBlueprintSeamEvaluation();
 
 	/** #405: Schedule stackable hypertube support evaluation with debouncing */
 	void ScheduleStackableHypertubeEvaluation();

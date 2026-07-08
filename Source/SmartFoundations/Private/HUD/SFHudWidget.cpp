@@ -342,6 +342,16 @@ void USFHudWidget::UpdateContent(const TArray<FString>& Lines, UTexture2D* Recip
 			continue;
 		}
 
+		// ---- Warning marker (fixed red, theme-independent) ----
+		// Auto-Connect skip summaries and guard notices carry SFHud::WarningLinePrefix so they
+		// always read as red regardless of the active HUD theme. Checked before the asterisk
+		// so these lines get warning-red instead of the theme's Active color.
+		bool bIsWarning = LineText.StartsWith(SFHud::WarningLinePrefix);
+		if (bIsWarning)
+		{
+			LineText.RemoveFromStart(SFHud::WarningLinePrefix);
+		}
+
 		// ---- Active marker (asterisk) ----
 		bool bIsActive = LineText.Contains(TEXT("*"));
 		if (bIsActive)
@@ -374,7 +384,14 @@ void USFHudWidget::UpdateContent(const TArray<FString>& Lines, UTexture2D* Recip
 
 		// Color logic
 		const bool bIsHeader = (i == 0);
-		if (bIsHeader)
+		if (bIsWarning)
+		{
+			// Fixed warning red, deliberately NOT from the theme palette - a skipped
+			// connection must read the same (and unmistakably) under every theme.
+			static const FLinearColor WarningRed(0.95f, 0.20f, 0.15f, 1.0f);
+			Block->SetColorAndOpacity(FSlateColor(WarningRed));
+		}
+		else if (bIsHeader)
 		{
 			Block->SetColorAndOpacity(FSlateColor(CurrentTheme.HeaderText));
 		}

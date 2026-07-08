@@ -145,6 +145,15 @@ void USFSubsystem::RegisterActiveHologram(AFGHologram* Hologram)
 
 	CurrentScalingOffset = FVector::ZeroVector;
 
+	// Skip tallies belong to the PREVIOUS hologram's evaluations. Without this, cancelling a
+	// placement whose evaluation tallied skips (e.g. a Smart! Blueprint grid with "too steep"
+	// seams) leaves those counts on the HUD for the next, unrelated buildable - which may
+	// never run an evaluation that would reset them (a 1x1x1 pole evaluates nothing).
+	if (AutoConnectService)
+	{
+		AutoConnectService->GetSkipSummary().ResetAll();
+	}
+
 	// Clear recipe cache when switching to new hologram type
 	if (SortedFilteredRecipes.Num() > 0)
 	{
@@ -421,6 +430,45 @@ void USFSubsystem::RegisterActiveHologram(AFGHologram* Hologram)
 		// Priority: Use validated registry dimensions if available, otherwise fall back to adapter bounds
 		bool bBuildingSupportsScaling = true;  // Default to true for unknown buildings (safe fallback)
 
+		// [#168] Fresh hologram, fresh blueprint clone-convention delta (measured at first staging)
+		BlueprintChildContentDelta = FVector::ZeroVector;
+
+		// [#168] Smart! Blueprints spacing default: seam belts/pipes need a physical GAP to
+		// exist (a conduit under ~0.5m can't be built, and flush tiling leaves no room), so
+		// picking up a blueprint defaults spacing to 1m on every axis. This is only a
+		// STARTING POINT for the build session: keyed on the blueprint's identity
+		// (mBlueprintDescName), it never re-applies while the SAME blueprint stays in play
+		// (post-fire respawns, build-menu round trips), so an explicit player override -
+		// including 0 for a deliberate flush grid - sticks for the whole session. The session
+		// ends and the default re-arms when the player starts over: recipe change (a different
+		// hologram registers, below/else) or build-gun holster (OnBuildGunUnequipped). Only
+		// global settings persist between builds. Mirrors the distributor auto-connect
+		// context-spacing model (apply once per target identity, overridable).
+		if (AFGBlueprintHologram* BlueprintHologram = Cast<AFGBlueprintHologram>(Hologram))
+		{
+			const FString BlueprintId = BlueprintHologram->mBlueprintDescName;
+			if (BlueprintId != BlueprintSpacingDefaultAppliedFor)
+			{
+				BlueprintSpacingDefaultAppliedFor = BlueprintId;
+				CounterState.SpacingX = 100;
+				CounterState.SpacingY = 100;
+				CounterState.SpacingZ = 100;
+				if (GridStateService)
+				{
+					GridStateService->UpdateCounterState(CounterState);
+				}
+				UpdateCounterDisplay();
+				UE_LOG(LogSmartFoundations, Verbose, TEXT("[#168] Blueprint '%s' pickup: spacing defaulted to 1m/1m/1m (room for seam conduits; override sticks for this build session)"),
+					*BlueprintId);
+			}
+		}
+		else
+		{
+			// Recipe changed away from blueprints: the blueprint build session is over, re-arm
+			// the spacing default for the next pickup (even of the same blueprint).
+			BlueprintSpacingDefaultAppliedFor.Empty();
+		}
+
 		if (USFBuildableSizeRegistry::HasProfile(BuildUClass))
 		{
 			// Use validated dimensions from registry
@@ -462,12 +510,19 @@ void USFSubsystem::RegisterActiveHologram(AFGHologram* Hologram)
 			CachedAnchorOffset = FVector::ZeroVector;
 
 			// Validate and clamp to reasonable range
+			// [#168] Blueprint composites are exempt from the modded-buildable sanity clamp:
+			// designer footprints legitimately reach 64m (Mk3), and truncating the size breaks
+			// the edge-to-edge tiling that lets vanilla's blueprint auto-connect wire the seams.
+			const bool bIsBlueprintComposite = Cast<AFGBlueprintHologram>(Hologram) != nullptr;
 			const float MaxReasonableSize = 2000.0f; // 20 meters
 			if (CachedBuildingSize.X > 1.f && CachedBuildingSize.Y > 1.f && CachedBuildingSize.Z > 1.f)
 			{
-				CachedBuildingSize.X = FMath::Min(CachedBuildingSize.X, MaxReasonableSize);
-				CachedBuildingSize.Y = FMath::Min(CachedBuildingSize.Y, MaxReasonableSize);
-				CachedBuildingSize.Z = FMath::Min(CachedBuildingSize.Z, MaxReasonableSize);
+				if (!bIsBlueprintComposite)
+				{
+					CachedBuildingSize.X = FMath::Min(CachedBuildingSize.X, MaxReasonableSize);
+					CachedBuildingSize.Y = FMath::Min(CachedBuildingSize.Y, MaxReasonableSize);
+					CachedBuildingSize.Z = FMath::Min(CachedBuildingSize.Z, MaxReasonableSize);
+				}
 			}
 			else
 			{
@@ -477,6 +532,20 @@ void USFSubsystem::RegisterActiveHologram(AFGHologram* Hologram)
 
 			UE_LOG(LogSmartFoundations, Verbose, TEXT("⚠️ CACHED BUILDING SIZE: %s via %s fallback (unknown buildable - consider adding to registry)"),
 				*CachedBuildingSize.ToString(), *CurrentAdapter->GetAdapterTypeName());
+
+			// [#168] One-shot VISIBLE footprint report for blueprint composites (Log level -
+			// Verbose is stripped in Shipping). Answers research-doc Q8.3: if this reads back the
+			// ~8m fallback cube for a clearly larger blueprint, mLocalBounds wasn't valid yet and
+			// the bounds read needs to move later in the lifecycle.
+			if (bIsBlueprintComposite)
+			{
+				const bool bLooksLikeFallback = FMath::IsNearlyEqual(CachedBuildingSize.X, 800.0f, 1.0f)
+					&& FMath::IsNearlyEqual(CachedBuildingSize.Y, 800.0f, 1.0f);
+				UE_LOG(LogSmartFoundations, Verbose,
+					TEXT("[#168] Blueprint footprint cached: %s %s"),
+					*CachedBuildingSize.ToString(),
+					bLooksLikeFallback ? TEXT("(LOOKS LIKE 8m FALLBACK - mLocalBounds may not be ready)") : TEXT("(from mLocalBounds)"));
+			}
 		}
 
 		// Task 52 FIX: Reset lock ownership for new hologram
@@ -1476,6 +1545,11 @@ void USFSubsystem::OnBuildGunUnequipped()
 
 	AbortRestoreSession(TEXT("Build gun unequipped"));
 
+	// [#168] Putting the build gun away ends the build session: per-session transform defaults
+	// re-arm, so the next blueprint pickup re-applies the 1m spacing starting point. (Player
+	// overrides only live while the build is in play; global settings are what persist.)
+	BlueprintSpacingDefaultAppliedFor.Empty();
+
 	// Reset recipe sampling subscription flag
 	bHasSubscribedToRecipeSampled = false;
 
@@ -1622,15 +1696,19 @@ TSharedPtr<ISFHologramAdapter> USFSubsystem::CreateHologramAdapter(AFGHologram* 
 	// Child holograms are swapped in SpawnChildHologram function
 
 	// ========================================
-	// CRITICAL: Detect vanilla blueprint holograms FIRST (Issue #166)
-	// Blueprint placement must not be scaled - it would break the blueprint system
+	// [#168] Vanilla blueprint holograms are now SCALABLE (was the #166 hard-exclusion)
 	// ========================================
-	if (Cast<AFGBlueprintHologram>(Hologram))
+	// The #166 break was naive cloning: children spawned from the blueprint recipe were EMPTY
+	// (no descriptor, nothing staged), so "only the parent placed". The blueprint adapter sizes
+	// the grid from the composite's own mLocalBounds, and SpawnChildHologram stages each child
+	// (descriptor copy + LoadBlueprintToOtherWorld) - the piece the #166-era path lacked.
+	// Connections between copies are the GAME's job (blueprint auto-connect), not Smart's.
+	if (AFGBlueprintHologram* BlueprintHolo = Cast<AFGBlueprintHologram>(Hologram))
 	{
-		UE_LOG(LogSmartFoundations, Verbose,
-			TEXT("Detected Blueprint hologram (%s) - Smart! features disabled (blueprint placement)"),
+		UE_LOG(LogSmartFoundations, Log,
+			TEXT("[#168] Blueprint hologram (%s) - creating Blueprint adapter (scaleable blueprints)"),
 			*Hologram->GetName());
-		return MakeShared<FSFUnsupportedAdapter>(Hologram, TEXT("Blueprint"));
+		return MakeShared<FSFBlueprintAdapter>(BlueprintHolo);
 	}
 
 	// Check for custom logistics holograms first (most specific)

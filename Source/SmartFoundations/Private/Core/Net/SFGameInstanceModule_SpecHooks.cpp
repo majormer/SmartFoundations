@@ -855,6 +855,156 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 			}
 		});
 
+	// ── [#168] SMART! BLUEPRINTS: construct the scaled blueprint grid children.
+	// AFGBlueprintHologram::Construct is a SELF-CONTAINED override: it builds the blueprint's
+	// own contents and never enters the AFGBuildableHologram::Construct body (Hook B above) nor
+	// the base child-construct loop - so the SF_GridChild blueprint children Smart scaling
+	// attaches were silently discarded at fire time ("only the parent builds"; live-confirmed
+	// 2026-07-06: no construct-seam log for a blueprint parent). Hook the blueprint body
+	// directly: run the original, then construct each staged blueprint grid child with the same
+	// construction id. Authority path (SP owns it outright); MP client construct-messaging for
+	// blueprint grids is an explicit follow-up slice.
+	AFGBlueprintHologram* BlueprintHologramCDO = GetMutableDefault<AFGBlueprintHologram>();
+	SUBSCRIBE_METHOD_VIRTUAL(AFGBlueprintHologram::Construct, BlueprintHologramCDO,
+		[=](auto& scope, AFGBlueprintHologram* self, TArray<AActor*>& out_children, FNetConstructionID constructionID)
+		{
+			static const FName BlueprintGridChildTag(TEXT("SF_GridChild"));
+			static const FName SeamBeltTag(TEXT("SF_BeltAutoConnectChild"));
+			static const FName SeamPipeTag(TEXT("SF_PipeAutoConnectChild"));
+
+			// ── [#168-MP] SERVER-SIDE RE-EXPANSION for blueprint parents. A network client's fire
+			// strips the SF_GridChild copies + seam conduits and stages the spec (the standard
+			// spec-construction model), but the generic re-expansion lives in Hook B's
+			// AFGBuildableHologram::Construct body - which this SELF-CONTAINED override never
+			// enters. Consume + expand HERE instead: grid copies first (the expansion's blueprint
+			// cell staging loads each copy's blueprint world), then the client's captured conduit
+			// plan (seam belts/pipes ride the same #334 plan as every other auto-connect family) -
+			// appended after the copies so the construct loops below fire them against BUILT
+			// actors. Deliberately NO group proxy (unlike Hook B): blueprint copies create their
+			// own per-copy proxies - the individual-dismantle model the feature ships with.
+			// SP is untouched: nothing stages a spec outside a network-client fire, and the
+			// preview children (present in SP) suppress expansion via CountGridChildren.
+			if (self && self->HasAuthority() && SFScalingSpecExpansion::IsSpecConstructionEnabled())
+			{
+				FSFScalingSpec BlueprintSpec;
+				if (FindStagedSpec(self, BlueprintSpec, /*bConsume=*/true) && BlueprintSpec.bValid)
+				{
+					if (CountGridChildren(self) == 0)
+					{
+						const int32 Expanded = SFScalingSpecExpansion::ExpandScalingSpecIntoChildren(
+							self, BlueprintSpec, self->GetRecipe());
+						UE_LOG(LogSmartFoundations, Log,
+							TEXT("[#168-MP] Blueprint construct seam %s: expanded %d grid cop%s server-side (delta=%s)."),
+							*self->GetName(), Expanded, Expanded == 1 ? TEXT("y") : TEXT("ies"),
+							*BlueprintSpec.BlueprintContentDelta.ToCompactString());
+					}
+					// [#168-MP] Shift the conduit plan by the MEASURED parent-convention difference:
+					// the plan is routed in the client world (content anchored at the client
+					// parent's convention, carried in the spec); the server world anchors at the
+					// SERVER parent's convention, measured here. Zero when they agree - they
+					// provably vary per blueprint and staging context (live 2026-07-07: a carried
+					// constant fixed FluidGrid and broke TestBP by exactly itself). Cells align to
+					// the same measured parent anchor inside the expansion, so world + plan agree.
+					if (BlueprintSpec.ConduitPlan.Num() > 0)
+					{
+						const FVector ServerParentAnchor = SFScalingSpecExpansion::MeasureBlueprintContentAnchor(self);
+						const FVector PlanShift = self->GetActorRotation().RotateVector(
+							ServerParentAnchor - BlueprintSpec.ClientParentAnchorRel);
+						if (!PlanShift.IsNearlyZero(0.5f))
+						{
+							for (FSFConduitPlanEntry& Entry : BlueprintSpec.ConduitPlan)
+							{
+								Entry.Location += PlanShift;
+								Entry.WireStart += PlanShift;
+								Entry.WireEnd += PlanShift;
+							}
+						}
+						UE_LOG(LogSmartFoundations, Log,
+							TEXT("[#168-MP] Blueprint construct seam %s: plan shift %s (serverAnchor=%s clientAnchor=%s)."),
+							*self->GetName(), *PlanShift.ToCompactString(),
+							*ServerParentAnchor.ToCompactString(), *BlueprintSpec.ClientParentAnchorRel.ToCompactString());
+					}
+					const int32 Conduits = SFScalingSpecExpansion::SpawnConduitPlanChildren(self, BlueprintSpec);
+					if (Conduits > 0)
+					{
+						UE_LOG(LogSmartFoundations, Log,
+							TEXT("[#168-MP] Blueprint construct seam %s: staged %d seam conduit(s) from the client plan."),
+							*self->GetName(), Conduits);
+					}
+				}
+			}
+
+			// Snapshot the staged blueprint children BEFORE the original runs - construction
+			// tears hologram state down as it goes. [#168] Seam CONDUIT children (the belt/pipe
+			// previews seam auto-connect AddChild'd to this parent) are snapshotted too: the
+			// blueprint Construct override never runs the base child-construct loop, so without
+			// this they'd be silently discarded at fire exactly like the grid children were.
+			TArray<AFGBlueprintHologram*> BlueprintChildren;
+			TArray<AFGHologram*> SeamConduitChildren;
+			if (self && self->HasAuthority())
+			{
+				for (AFGHologram* Child : self->GetHologramChildren())
+				{
+					if (!Child)
+					{
+						continue;
+					}
+					if (Child->ActorHasTag(BlueprintGridChildTag))
+					{
+						if (AFGBlueprintHologram* BlueprintChild = Cast<AFGBlueprintHologram>(Child))
+						{
+							BlueprintChildren.Add(BlueprintChild);
+						}
+					}
+					else if (Child->ActorHasTag(SeamBeltTag) || Child->ActorHasTag(SeamPipeTag))
+					{
+						SeamConduitChildren.Add(Child);
+					}
+				}
+			}
+
+			scope(self, out_children, constructionID);
+
+			for (AFGBlueprintHologram* BlueprintChild : BlueprintChildren)
+			{
+				if (!IsValid(BlueprintChild))
+				{
+					continue;
+				}
+				TArray<AActor*> ChildBuilt;
+				AActor* BuiltMain = BlueprintChild->Construct(ChildBuilt, constructionID);
+				if (BuiltMain)
+				{
+					out_children.Add(BuiltMain);
+				}
+				out_children.Append(ChildBuilt);
+				UE_LOG(LogSmartFoundations, Verbose,
+					TEXT("[#168] Constructed blueprint grid child %s -> %s (+%d actors)"),
+					*BlueprintChild->GetName(), *GetNameSafe(BuiltMain), ChildBuilt.Num());
+			}
+
+			// [#168] Seam conduits fire AFTER every blueprint copy so their SF-tagged Construct
+			// paths wire geometrically against just-BUILT actors (the same ordering contract the
+			// scaling-spec expansion relies on).
+			for (AFGHologram* Conduit : SeamConduitChildren)
+			{
+				if (!IsValid(Conduit))
+				{
+					continue;
+				}
+				TArray<AActor*> ConduitBuilt;
+				AActor* BuiltMain = Conduit->Construct(ConduitBuilt, constructionID);
+				if (BuiltMain)
+				{
+					out_children.Add(BuiltMain);
+				}
+				out_children.Append(ConduitBuilt);
+				UE_LOG(LogSmartFoundations, Verbose,
+					TEXT("[#168] Constructed blueprint seam conduit %s -> %s (+%d actors)"),
+					*Conduit->GetName(), *GetNameSafe(BuiltMain), ConduitBuilt.Num());
+			}
+		});
+
 	// ── Hook C: group membership assignment, pre-BeginPlay. ConfigureActor is called by the
 	// hologram on the deferred-spawned buildable BEFORE FinishSpawning/BeginPlay - the only window
 	// where lightweight-eligible buildables (foundations etc.) can join a blueprint proxy, because

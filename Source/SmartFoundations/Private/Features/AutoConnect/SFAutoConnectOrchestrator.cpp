@@ -222,6 +222,7 @@ void USFAutoConnectOrchestrator::ForceRefresh()
 	OnStackablePipelineSupportsChanged();
 	OnStackableHypertubeSupportsChanged();
 	OnFloorHolePipesChanged();
+	OnBlueprintSeamsChanged();   // [#168] blueprint seam conduits pick up tier/style changes
 }
 
 void USFAutoConnectOrchestrator::Cleanup()
@@ -234,6 +235,10 @@ void USFAutoConnectOrchestrator::Cleanup()
 		// #405: hypertube spans are AddChild'd (vanilla cascade-destroys them with the parent), but sweep any
 		// stragglers and clear the state map here as a race-free Deinitialize/shutdown net (timer cleared below).
 		AutoConnectService->CleanupAllStackableHypertubesAllParents();
+
+		// [#168] Blueprint seam conduits are AddChild'd too (cascade-destroyed with the parent);
+		// sweep stragglers + clear the seam state/table caches on teardown.
+		AutoConnectService->CleanupAllBlueprintSeamsAllParents();
 
 		// Skip-summary: zero the HUD tally so a torn-down grid's skips never linger onto the next hologram
 		AutoConnectService->GetSkipSummary().ResetBeltBuilding();
@@ -257,6 +262,7 @@ void USFAutoConnectOrchestrator::Cleanup()
 		World->GetTimerManager().ClearTimer(StackableBeltEvalTimerHandle);
 		World->GetTimerManager().ClearTimer(FloorHolePipeEvalTimerHandle);
 		World->GetTimerManager().ClearTimer(StackableHypertubeEvalTimerHandle);
+		World->GetTimerManager().ClearTimer(BlueprintSeamEvalTimerHandle);
 	}
 	
 	bIsEvaluatingBelts = false;
@@ -269,6 +275,7 @@ void USFAutoConnectOrchestrator::Cleanup()
 	bStackableBeltEvalScheduled = false;
 	bFloorHolePipeEvalScheduled = false;
 	bStackableHypertubeEvalScheduled = false;
+	bBlueprintSeamEvalScheduled = false;
 	bForceRecreatePending = false;
 	bPipeForceRecreatePending = false;
 	bPowerForceRecreatePending = false;
@@ -555,6 +562,44 @@ void USFAutoConnectOrchestrator::RunScheduledStackableBeltEvaluation()
 	// STACK-CHAIN handler in ASFConveyorBeltHologram::Construct (THESIS §6.9–§6.13); the old
 	// preview-cache handoff (CacheStackableBeltPreviewsForBuild) is gone.
 	AutoConnectService->ProcessStackableConveyorPoles(ParentHologram.Get());
+}
+
+// ========================================
+// [#168] Smart! Blueprints — Seam Auto-Connect
+// ========================================
+
+void USFAutoConnectOrchestrator::OnBlueprintSeamsChanged()
+{
+	ScheduleBlueprintSeamEvaluation();
+}
+
+void USFAutoConnectOrchestrator::ScheduleBlueprintSeamEvaluation()
+{
+	if (!ParentHologram.IsValid() || !ParentHologram->GetWorld())
+	{
+		RunScheduledBlueprintSeamEvaluation();
+		return;
+	}
+
+	// Clear + reschedule on every change so only the LAST of a rapid scale/spacing burst
+	// evaluates (mirrors the stackable pipe coalescing).
+	UWorld* World = ParentHologram->GetWorld();
+	World->GetTimerManager().ClearTimer(BlueprintSeamEvalTimerHandle);
+
+	bBlueprintSeamEvalScheduled = true;
+	FTimerDelegate D;
+	D.BindUObject(this, &USFAutoConnectOrchestrator::RunScheduledBlueprintSeamEvaluation);
+	World->GetTimerManager().SetTimer(BlueprintSeamEvalTimerHandle, D, 0.10f, /*bLoop=*/false);
+}
+
+void USFAutoConnectOrchestrator::RunScheduledBlueprintSeamEvaluation()
+{
+	bBlueprintSeamEvalScheduled = false;
+	if (!AutoConnectService || !ParentHologram.IsValid())
+	{
+		return;
+	}
+	AutoConnectService->ProcessBlueprintSeams(ParentHologram.Get());
 }
 
 void USFAutoConnectOrchestrator::OnStackablePipelineSupportsChanged()

@@ -16,6 +16,8 @@
 #include "Buildables/FGBuildableWire.h"
 #include "Shared/Power/SFWireDesignerRegistration.h"  // [#421] designer containment for direct-spawned wires
 #include "FGBlueprintProxy.h"
+#include "Hologram/FGBlueprintHologram.h"       // [#168] Smart! Blueprints: staged blueprint grid cells
+#include "Features/Scaling/SFGridCoordComponent.h"  // [#168-MP] cell-basis capture from live preview children
 #include "Hologram/FGPoleHologram.h"            // #354: mPoleVariationIndex / mBuildStep
 #include "Hologram/FGConveyorPoleHologram.h"
 #include "Hologram/FGFloodlightHologram.h"      // #200: mFixtureAngle / mBuildStep
@@ -87,6 +89,21 @@ bool IsSpecConstructionEnabled()
 	return bEnabled;
 }
 
+FVector MeasureBlueprintContentAnchor(AFGBlueprintHologram* Blueprint)
+{
+	if (Blueprint)
+	{
+		for (const auto& Pair : Blueprint->mBuildableToNewRoot)
+		{
+			if (Pair.Value)
+			{
+				return Pair.Value->GetRelativeLocation();
+			}
+		}
+	}
+	return FVector::ZeroVector;
+}
+
 bool CaptureScalingSpec(AFGHologram* Hologram, FSFScalingSpec& OutSpec)
 {
 	if (!Hologram)
@@ -112,6 +129,64 @@ bool CaptureScalingSpec(AFGHologram* Hologram, FSFScalingSpec& OutSpec)
 	OutSpec.Counters = Counters;
 	OutSpec.ItemSize = Profile.DefaultSize;
 	OutSpec.AnchorOffset = Profile.AnchorOffset;
+	// [#168-MP] Blueprint composites have NO registry profile - the fallback 8x8x4m would hand the
+	// server a wrong grid pitch entirely. The subsystem's cached size IS what positioned the client
+	// preview (the blueprint adapter's mLocalBounds footprint, cached at registration); carry it,
+	// plus the measured clone content-convention delta the preview corrected every child by - the
+	// captured conduit plan below is only valid against copies at those exact positions.
+	if (Hologram->IsA<AFGBlueprintHologram>())
+	{
+		OutSpec.ItemSize = SS->GetCachedBuildingSize();
+		OutSpec.AnchorOffset = FVector::ZeroVector;
+		OutSpec.BlueprintContentDelta = SS->GetBlueprintChildContentDelta();
+		// [#168-MP] The CLIENT world (and the conduit plan routed in it) anchors every copy's
+		// content at the PARENT's convention. Carried so the server can MEASURE its own parent's
+		// convention and shift the plan by the measured difference (zero when they agree).
+		OutSpec.ClientParentAnchorRel = MeasureBlueprintContentAnchor(Cast<AFGBlueprintHologram>(Hologram));
+
+		// [#168-MP] Measure the preview grid's ACTUAL cell basis from the live children - the
+		// server-side calculator provably disagrees with the client preview pitch for composites
+		// (live 2026-07-07: one spacing unit of drift per grid step), and the conduit plan is only
+		// valid at the preview's exact positions. Basis = (unit-cell child pos - parent pos) with
+		// the per-child content delta removed, so the server can reconstruct cell (i,j,k) affinely.
+		// Steps tilt a basis vector and are captured for free; STAGGER is parity-based (not affine)
+		// - blueprints don't support it, but guard anyway by refusing the basis when set.
+		const FRotator ParentRotForBasis = Hologram->GetActorRotation();
+		const FVector RotatedDelta = ParentRotForBasis.RotateVector(OutSpec.BlueprintContentDelta);
+		const FVector ParentLocForBasis = Hologram->GetActorLocation();
+		const bool bStaggerActive = Counters.StaggerX != 0 || Counters.StaggerY != 0
+			|| Counters.StaggerZX != 0 || Counters.StaggerZY != 0;
+		// Rotation mode curves cell positions per index (arc) - also not affine. Both fall back
+		// to the calculator path (positions may drift there; those modes are not in the blueprint
+		// adapter's supported feature set).
+		const bool bRotationActive = !FMath::IsNearlyZero(Counters.RotationZ);
+		if (!bStaggerActive && !bRotationActive)
+		{
+			int32 AxesFound = 0;
+			for (AFGHologram* Child : Hologram->GetHologramChildren())
+			{
+				FIntVector Cell;
+				if (!Child || !Child->Tags.Contains(FName(TEXT("SF_GridChild")))
+					|| !USFGridCoordComponent::TryGetCell(Child, Cell))
+				{
+					continue;
+				}
+				const FVector Basis = Child->GetActorLocation() - ParentLocForBasis - RotatedDelta;
+				if (Cell == FIntVector(1, 0, 0)) { OutSpec.CellBasisX = Basis; ++AxesFound; }
+				else if (Cell == FIntVector(0, 1, 0)) { OutSpec.CellBasisY = Basis; ++AxesFound; }
+				else if (Cell == FIntVector(0, 0, 1)) { OutSpec.CellBasisZ = Basis; ++AxesFound; }
+			}
+			OutSpec.bHasCellBasis = AxesFound > 0;
+			if (OutSpec.bHasCellBasis)
+			{
+				UE_LOG(LogSmartFoundations, Log,
+					TEXT("[#168-MP] Captured blueprint cell basis: X=%s Y=%s Z=%s delta=%s (calculator would have used pitch from ItemSize=%s)"),
+					*OutSpec.CellBasisX.ToCompactString(), *OutSpec.CellBasisY.ToCompactString(),
+					*OutSpec.CellBasisZ.ToCompactString(), *OutSpec.BlueprintContentDelta.ToCompactString(),
+					*OutSpec.ItemSize.ToCompactString());
+			}
+		}
+	}
 	OutSpec.BuildClass = Hologram->GetBuildClass();
 	// [#368] Carry the player's remembered production recipe so the SERVER applies it to the
 	// authoritative manufacturer build (recipe memory is client-side only; this is the sole crossing
@@ -510,6 +585,15 @@ int32 ExpandScalingSpecIntoChildren(AFGHologram* Parent, const FSFScalingSpec& S
 
 	FSFPositionCalculator Calc;
 	AActor* HoloOwner = Parent->GetOwner();
+
+	// [#168-MP] The SERVER parent's measured content anchor - the tiling reference every staged
+	// cell aligns to below. Measured, never inferred: staging conventions vary per blueprint and
+	// per context (see MeasureBlueprintContentAnchor).
+	FVector ServerParentAnchor = FVector::ZeroVector;
+	if (AFGBlueprintHologram* ParentBlueprintForAnchor = Cast<AFGBlueprintHologram>(Parent))
+	{
+		ServerParentAnchor = MeasureBlueprintContentAnchor(ParentBlueprintForAnchor);
+	}
 	int32 SpawnedChildren = 0;
 	int32 LinearIndex = 0;
 
@@ -535,10 +619,38 @@ int32 ExpandScalingSpecIntoChildren(AFGHologram* Parent, const FSFScalingSpec& S
 				// registry anchor pre-lowers attachment types (splitters/mergers/pipe junctions,
 				// AnchorOffset.Z ~ -100cm) by their compensation - live finding 2026-06-09: spec
 				// grid children sank half-height while the parent sat correctly.
-				const FVector CellLoc = Calc.CalculateChildPosition(
+				FVector CellLoc = Calc.CalculateChildPosition(
 					GX, GY, GZ, ParentLoc, ParentRot,
 					Spec.ItemSize, C, LinearIndex, FVector::ZeroVector);
 				++LinearIndex;
+
+				// [#168-MP] Blueprint copies: RECONSTRUCT the client preview's exact cell position
+				// instead of re-deriving it. The captured world-space basis (per-axis child offsets,
+				// delta-removed) + the content delta reproduce the preview affinely: cell(i,j,k) =
+				// parent + i*BX + j*BY + k*BZ + rotated delta. The calculator path provably drifts
+				// one spacing unit per grid step vs the preview for composites (live 2026-07-07 dedi
+				// build: every seam pipe missed its port by exactly that drift), and the conduit
+				// plan is only valid at the preview's positions - #334's rule: positions are part of
+				// the plan. Unsigned loop indices: direction is baked into the measured basis.
+				if (Parent->IsA<AFGBlueprintHologram>())
+				{
+					// Grid SLOT only (pure measured pitch). Content alignment is applied after the
+					// cell stages below, from MEASURED anchors - the staging convention varies per
+					// blueprint and per context, so no carried constant is trustworthy (live
+					// 2026-07-07: the carried delta fixed FluidGrid and broke TestBP by the same
+					// amount).
+					if (Spec.bHasCellBasis)
+					{
+						CellLoc = ParentLoc
+							+ XI * Spec.CellBasisX
+							+ YI * Spec.CellBasisY
+							+ ZI * Spec.CellBasisZ;
+					}
+					else if (!Spec.BlueprintContentDelta.IsZero())
+					{
+						CellLoc += ParentRot.RotateVector(Spec.BlueprintContentDelta);
+					}
+				}
 
 				// [#363] Rotation mode: each cell rotates progressively along the arc, exactly
 				// like SP's grid spawner. The calculator already curves the POSITIONS from the
@@ -662,6 +774,51 @@ int32 ExpandScalingSpecIntoChildren(AFGHologram* Parent, const FSFScalingSpec& S
 
 				if (Child)
 				{
+					// [#168] SMART! BLUEPRINTS - stage blueprint grid cells for CONSTRUCTION.
+					// The spec-construction model strips the staged PREVIEW children and re-expands
+					// here at fire time (authority path, SP included), so the recipe-spawned cell is
+					// an EMPTY Holo_Blueprint_C: without the descriptor + a loaded blueprint world its
+					// Construct places nothing - "only the parent builds". Stage it exactly like the
+					// preview spawner does, and apply vanilla's own root-bounds alignment (the parent
+					// received it through the interactive flow; unaligned clones render/build offset).
+					// Stage BEFORE the exact grid transform below so the grid has the final word on
+					// the root position.
+					if (AFGBlueprintHologram* ParentBlueprintCell = Cast<AFGBlueprintHologram>(Parent))
+					{
+						if (AFGBlueprintHologram* BlueprintCell = Cast<AFGBlueprintHologram>(Child))
+						{
+							if (ParentBlueprintCell->mBlueprintDescriptor)
+							{
+								BlueprintCell->SetBlueprintDescriptor(ParentBlueprintCell->mBlueprintDescriptor);
+								BlueprintCell->mBlueprintDescName = ParentBlueprintCell->mBlueprintDescName;  // [#168] proxy identity (see preview spawner)
+								BlueprintCell->LoadBlueprintToOtherWorld();
+								// No AlignBuildableRootWithBounds: LoadBlueprintToOtherWorld aligns
+								// internally; a second call displaces the root off the grid (live
+								// measurement 2026-07-06).
+								// [#168-MP] MEASURED content alignment: seat this cell so its CONTENT
+								// tiles exactly with the SERVER parent's content - cell position =
+								// grid slot + rotated (parentAnchor - cellAnchor). Replaces the
+								// carried client delta, which proved context-dependent (fixed
+								// FluidGrid, broke TestBP by the same amount, live 2026-07-07).
+								{
+									const FVector CellAnchor = MeasureBlueprintContentAnchor(BlueprintCell);
+									const FVector AnchorFix = ParentRot.RotateVector(ServerParentAnchor - CellAnchor);
+									CellLoc += AnchorFix;
+									UE_LOG(LogSmartFoundations, Log,
+										TEXT("[#168] Staged blueprint spec cell %s | anchors parent=%s cell=%s fix=%s"),
+										*Child->GetName(), *ServerParentAnchor.ToCompactString(),
+										*CellAnchor.ToCompactString(), *AnchorFix.ToCompactString());
+								}
+							}
+							else
+							{
+								UE_LOG(LogSmartFoundations, Warning,
+									TEXT("[#168] Blueprint parent %s has no descriptor - spec cell %s will construct EMPTY"),
+									*Parent->GetName(), *Child->GetName());
+							}
+						}
+					}
+
 					// Exact grid transform. No placement/validation pass is needed: expansion runs
 					// inside Construct, AFTER server validation has already passed on the parent -
 					// fresh children are constructed directly and never validated. (Live-test finding

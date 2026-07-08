@@ -12,6 +12,7 @@
 - [Grid Scaling](Grid-Scaling)
 - [Transforms](Transforms)
 - [Auto-Connect](Auto-Connect)
+- [Smart Blueprints](Smart-Blueprints)
 - [Extend](Extend)
 - [Smart Restore](Smart-Restore)
 - [Smart Upgrade](Smart-Upgrade)

@@ -10,6 +10,7 @@
 #include "Holograms/Adapters/ISFHologramAdapter.h"
 #include "Hologram/FGWaterPumpHologram.h"
 #include "Hologram/FGBuildableHologram.h"
+#include "Hologram/FGBlueprintHologram.h"  // [#168] blueprint clone content-convention correction
 #include "Holograms/Logistics/SFConveyorBeltHologram.h"
 #include "Holograms/Logistics/SFPassthroughChildHologram.h"
 #include "Hologram/FGCeilingLightHologram.h"
@@ -227,6 +228,11 @@ void USFGridSpawnerService::UpdateChildPositions()
                 {
                     Orchestrator->OnFloorHolePipesChanged();
                 }
+                // [#168] Smart! Blueprints: seam conduits orphan-clean when the grid empties
+                if (Cast<AFGBlueprintHologram>(Parent))
+                {
+                    Orchestrator->OnBlueprintSeamsChanged();
+                }
                 UE_LOG(LogSmartGrid, VeryVerbose, TEXT("   🎯 Orchestrator: Triggered cleanup for valid types (no children)"));
             }
         }
@@ -429,6 +435,20 @@ void USFGridSpawnerService::UpdateChildPositions()
                 GridIndex.ChildArrayIndex,
                 FVector::ZeroVector  // ZERO - Prevent double-compensation with the direct actor transform path
             );
+        }
+
+        // [#168] SMART! BLUEPRINTS - content-convention correction. The parent's root was
+        // re-seated by the interactive build-gun flow; clones carry the natural staged
+        // convention, so their CONTENTS hang off the root shifted by a constant per-blueprint
+        // delta (measured at staging, e.g. (+100,-400,0)). Shift the clone ROOT by the delta
+        // (rotated into the parent frame) so preview AND construction - both root-derived -
+        // tile exactly like the parent.
+        {
+            const FVector BlueprintContentDelta = SS->GetBlueprintChildContentDelta();
+            if (!BlueprintContentDelta.IsZero() && Cast<AFGBlueprintHologram>(ChildHologram))
+            {
+                ChildPosition += ParentRotation.RotateVector(BlueprintContentDelta);
+            }
         }
 
         // === COMPREHENSIVE DIAGNOSTIC LOGGING ===
@@ -637,6 +657,11 @@ void USFGridSpawnerService::UpdateChildPositions()
                 {
                     Orchestrator->OnFloorHolePipesChanged();
                 }
+                // [#168] Smart! Blueprints: children are definitively positioned — evaluate seams
+                if (Cast<AFGBlueprintHologram>(Parent))
+                {
+                    Orchestrator->OnBlueprintSeamsChanged();
+                }
 
                 UE_LOG(LogSmartGrid, VeryVerbose, TEXT("   🎯 Orchestrator: Grid updates triggered in CompletionCallback"));
             }
@@ -769,6 +794,11 @@ void USFGridSpawnerService::UpdateChildrenForCurrentTransform()
                         if (USFAutoConnectService::IsPassthroughPipeHologram(ParentLater))
                         {
                             Orchestrator->OnFloorHolePipesChanged();
+                        }
+                        // [#168] Smart! Blueprints: transforms move endpoints — re-route seams
+                        if (Cast<AFGBlueprintHologram>(ParentLater))
+                        {
+                            Orchestrator->OnBlueprintSeamsChanged();
                         }
 
                         UE_LOG(LogSmartGrid, VeryVerbose, TEXT("   🎯 Orchestrator: Movement updates triggered (next tick)"));
