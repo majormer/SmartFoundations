@@ -2,7 +2,7 @@
 title: Controls Simplification — Scope & Design
 type: SCOPE
 date: 2026-07-07
-status: Draft (pre-spike)
+status: Design locked (pre-spike)
 category: Development
 issue: 209
 tags: [input, controls, ux, player-relative, scaling, spacing, steps, stagger, rotation]
@@ -11,44 +11,76 @@ related: [../Features/AutoConnect/IMPL_SmartBlueprints_CurrentFlow.md]
 
 # Controls Simplification (#209) — Scope & Design
 
-**Status: exploratory.** This records the design direction agreed in evaluation. It is
-deliberately spike-shaped — several decisions below can only be settled by *feel* in-game, and
-are flagged as open. Nothing here is committed until a throwaway spike validates the core.
+Issue #209 (ShadedPL, migrated) asks to cut Smart!'s keybind count and make scaling
+directional/intuitive. The evaluation reframed it from "remove keybinds" into **two separable
+levers over the existing transform system**, neither of which changes stored state, layout,
+multiplayer, or presets. The design below is settled; the remaining unknowns are *feel* (latch
+timing, hysteresis), which only a spike can answer.
 
-Issue #209 (ShadedPL, migrated from the old tracker) asks to cut Smart!'s keybind count and make
-scaling directional/intuitive. The evaluation reframed it from "remove keybinds" into **two
-separable levers** over the existing transform system, neither of which changes state, layout,
-multiplayer, or presets.
+---
+
+## Decisions (locked 2026-07-07)
+
+| Decision | Call | Notes |
+|---|---|---|
+| Player Relative rollout | **Opt-in** (default OFF + toggle) | Existing muscle memory untouched; flip default later if it proves out |
+| Direction selection | **Numpad cluster + facing + scroll, all live** | Fwd/back · left/right · up/down; numpad keys **rebindable** (no-10-key users) |
+| Value input | **Keep scroll AND +/− keys** | Increase/Decrease stay; more conservative than the reporter's max |
+| Radial menu | **Declined** | Smart Panel (K) already does it; that part is *done* |
+| HUD axis colors | **Removed** | Theme handles look; single-color values |
+| HUD axis labels | **Keep absolute X/Y/Z** (no Forward/Lateral relabel) | See "feedback model" — the preview is the feedback, not the label |
+| Arrow graphic | **Kept** | Orientation cue; needed by the Panel context anyway |
+| Scope boundary | **Player Relative is world-context only** | The Panel is frozen → no facing → stays absolute X/Y/Z |
 
 ---
 
 ## 1. The core model: every transform is `(value, axis)`
 
-The state already decomposes every transform into a magnitude plus an axis. The axis enum is even
-*named* in player terms today (`X = "Forward/Back"`, `Y = "Left/Right"`, `Z = "Up/Down"`) — the
-original design wanted player-relative semantics and settled for fixed building axes.
+State already decomposes every transform into a magnitude + an axis. Everything funnels through one
+call: `ApplyAxisScaling(ESFScaleAxis Axis, int32 signedDelta)`, pushing `GridCounters[Axis]` by a
+signed delta. **`GridCounters` is a signed `FIntVector`** — negative components already mean "grow
+toward −axis" (what #168 leaned on). So direction is a first-class *layout* concept, and the redesign
+is an *input-layer* remap of "which axis + sign does this input pick," not a scaling rewrite.
 
 | Transform | Value field(s) | Axis field |
 |---|---|---|
-| Scaling | `GridCounters` (signed `FIntVector` — negative = grow toward −axis) | modifier-chosen today |
+| Scaling | `GridCounters` (signed) | modifier-chosen today → numpad/facing |
 | Spacing | `SpacingX/Y/Z` | `SpacingAxis` |
 | Steps | `StepsX/Y` | `StepsAxis` |
 | Stagger | `StaggerX/Y/ZX/ZY` | `StaggerAxis` |
 | Rotation | `RotationZ` (deg) | `RotationAxis` (progression) |
 
-Everything funnels through one call: `ApplyAxisScaling(ESFScaleAxis Axis, int32 signedDelta)`, which
-pushes `GridCounters[Axis]` by a signed delta. **Direction (including negative) is already a
-first-class layout concept** — this is what #168 leaned on for −X/−Y grids. So the redesign is an
-*input-layer* remap of "which axis + sign does this input select," not a rewrite of scaling.
+The axis enum is even named in player terms already (`X = "Forward/Back"`, `Y = "Left/Right"`,
+`Z = "Up/Down"`) — the original design wanted player-relative and settled for fixed axes.
 
 ---
 
-## 2. Lever A — Directional-pad axis selector
+## 2. Two input surfaces, one source of truth
 
-Replace axis **cycling** and the **increase/decrease** keys with a directional pad. While a mode is
-held, a direction key picks the axis + sign directly; scroll (or repeated taps) sets magnitude.
+The critical architecture, clarified by the Smart Panel interaction:
 
-| Held mode | Forward (e.g. Num8/2) | Lateral (Num4/6) | Vertical (Num9/3 · PgUp/Dn) |
+| Surface | Context | Axis model |
+|---|---|---|
+| **World scaling** (numpad + facing + scroll) | You can look / move | **Player Relative** — input resolves to an absolute axis via facing |
+| **Smart Panel (K)** | Player frozen, UI open | **Absolute X/Y/Z, always** — typed into X/Y/Z fields directly |
+
+Both write the **same absolute state** (`GridCounters.X/Y/Z`, `SpacingX/Y/Z`, …). Player Relative is
+an input-time convenience in the world context *only*; the Panel writes absolute axes directly and
+needs **zero** player-relative work. This is why the absolute axes and the arrow graphic survive —
+they're ground truth (the Panel edits them; the arrows orient them). Player Relative removes the
+*need to consciously track* axes while scaling in the world, not their existence.
+
+---
+
+## 3. Lever A — Directional selection (numpad + facing + scroll)
+
+While a transform mode is held, three inputs cooperate:
+- **Facing** sets the primary axis (look where you want it to grow).
+- **Numpad cluster** explicitly picks any axis+sign: fwd/back · left/right · up/down. **Rebindable**
+  so no-10-key users can remap to arrows + two keys.
+- **Scroll** (and the retained **+/− keys**) set magnitude.
+
+| Held mode | Fwd (Num8/2) | Lateral (Num4/6) | Vertical (Num9/3 · PgUp/Dn) |
 |---|---|---|---|
 | Scaling | grow array fwd/back | grow left/right | grow up/down |
 | Spacing | fwd gap | lateral gap | vertical gap |
@@ -56,114 +88,99 @@ held, a direction key picks the axis + sign directly; scroll (or repeated taps) 
 | Stagger | offset rows fwd/back | offset rows left/right | vertical stagger |
 | Rotation | progress angle per fwd-clone | per lateral-row | (n/a) |
 
-This is what lets **Cycle Mode**, **Increase value**, and **Decrease value** be deleted.
-
-**Open:** dedicated numpad vs. context-sensitive arrows (Nudge when no mode held, axis-select while a
-mode is held). Arrows are Nudge today; reusing them is tempting but overloads a key.
+Because the numpad picks the axis directly, **Scale X/Y modifiers and Cycle Mode are removed.** The
+**+/− keys stay** (value input decision).
 
 ---
 
-## 3. Lever B — "Player Relative" (global boolean)
+## 4. Lever B — "Player Relative" (opt-in global boolean, world-context only)
 
-A single setting. When on, a directional input resolves against the **player's view** (quantized to
-the nearest building cardinal) instead of the building's fixed axes. It is one shared resolver
-consumed by every transform — it does not fork per-transform.
+A single setting, default OFF. When on, a directional input resolves against the **player's view**
+(quantized to the nearest building cardinal) instead of the building's fixed axes.
 
-**Critical implementation call: resolve at INPUT time, not layout time.** When you press a direction,
-map facing → a concrete building axis and write *that* into the state (`SpacingAxis = Y`, etc.). Never
-rotate at layout time. Consequences:
+**Resolve at INPUT time, not layout time.** On press, map facing → a concrete building axis and write
+*that* into the state. Never rotate at layout time. Consequences:
+- State stays absolute → **no schema change; presets/Restore replay identically; MP untouched**.
+- The latch is automatic — you set the axis on press; turning afterward doesn't scramble a build.
+- The whole feature is a boolean over the input→axis-selection code in the world context.
 
-- State stays building-relative → **no schema change; presets/Restore replay identically; MP untouched**
-  (the spec already carries concrete axes).
-- The "latch" is automatic — you set the axis on press; turning your head afterward doesn't scramble
-  an in-progress build.
-- The whole feature is a boolean over the input→axis-selection code. Nothing downstream changes.
+**Z is invariant** (up is up). Composition with building rotation: resolve against the building's
+*local* axes (which already rotate with it), so the layers don't double-rotate. Look-down / steep
+pitch: fall back to last valid yaw or building forward; input-time latching hides most of it.
 
-**Z is invariant** — up is up regardless of facing; Player Relative only ever swaps forward↔lateral.
-
-**Composition with building rotation:** resolve facing against the building's *local* axes (which
-already rotate with the building), so the two layers don't double-rotate.
-
-**Look-down / steep pitch** (wall/ceiling builds): yaw ill-defined looking straight down → fall back
-to last valid yaw or the building's forward. Input-time latching hides most of this.
+### Feedback model (why X/Y/Z labels never change)
+The player's confirmation is **spatial**: the preview array visibly grows in the direction they
+aimed. That is the primary feedback, not the HUD counter. So the HUD keeps absolute **X/Y/Z** labels
+everywhere (world *and* Panel — one vocabulary, no translation), and Player Relative silently changes
+*what your scroll does*, not *what the HUD calls things*. Relabeling to Forward/Lateral would only
+create a two-vocabulary mismatch with the Panel for no feedback gain.
 
 ---
 
-## 4. Handedness — one rule: "away is right"
-
-Locked convention, consistent across every transform:
+## 5. Handedness — one rule: "away is right"
 
 | Scroll | Lateral (scale / spacing / stagger) | Rotation |
 |---|---|---|
 | **Away (+)** | grow / offset to **screen-right** | curl **out-right** (clockwise) |
 | **In (−)** | to **screen-left** | curl **out-left** (counter-clockwise) |
 
-This *already matches* the rotation code: `// Positive RotationZ = Clockwise (user expectation)` /
-`// Rotation > 0: Curves right`. So rotation needs no convention flip — the lateral transforms adopt
-rotation's handedness, and Player Relative reads "right" as screen-right. The array progresses "out"
-(the forward direction) and curls left/right off that run, so forward-growth, lateral-growth, and
-rotation-curl all agree on "away" and "right" for a given view.
-
-**Verify in the spike:** the "away = positive `AxisValue`" link is a mouse-wheel IMC binding, not a
-code guarantee. The entire "away = right" chain rests on it — confirm it first, it's the kind of
-inversion that silently flips everything.
+This already matches the rotation code (`// Positive RotationZ = Clockwise`, `// Rotation > 0:
+Curves right`), so rotation needs no flip — the lateral transforms adopt rotation's handedness.
+**Spike must verify** the "away = positive `AxisValue`" mouse-wheel binding in the IMC — the whole
+chain rests on it, and it's the kind of inversion that silently flips everything.
 
 ---
 
-## 5. Keybind delta (the payoff)
+## 6. HUD
+
+- **Remove per-axis colors** on the grid readout (the theme handles look → single-color values).
+- **Keep absolute X/Y/Z labels** (see feedback model).
+- **Keep the arrow graphic** as an orientation cue (Toggle Arrows key may stay).
+
+---
+
+## 7. Keybind delta
 
 | Disposition | Control | Why |
 |---|---|---|
-| **Add** | Scaling mode; **Player Relative** toggle (setting) | one mode key + the boolean |
-| Keep | Spacing / Steps / Stagger / Rotation mode; Recipe / Auto-Connect | unchanged |
-| **Remove** | Scale X / Y modifiers | direction from facing (Lever B) |
-| **Remove** | direction arrows (as scale-direction) | direction from facing |
-| **Remove** | Cycle Mode | directional pad picks axis (Lever A) |
-| **Remove** | Increase / Decrease value | directional pad / scroll sets value (Lever A) |
-| **Remove** | Toggle Arrows | direction implicit → HUD can drop axis colors |
+| **Add** | Scaling-mode key | one hold-key for scaling |
+| **Add** | Player Relative toggle (setting) | opt-in boolean |
+| **Add** | Numpad directional cluster (rebindable) | explicit axis+sign selection |
+| Keep | Spacing / Steps / Stagger / Rotation mode keys | unchanged |
+| Keep | Increase / Decrease value keys | value-input decision |
+| Keep | Arrow graphic / orientation | ground-truth + Panel context |
+| Keep | Recipe / Auto-Connect | via the Smart Panel (radial declined) |
+| **Remove** | Scale X / Y modifiers | numpad/facing pick the axis |
+| **Remove** | Cycle Mode | numpad picks the axis directly |
 
-The HUD simplification the reporter asked for ("one-color values back") falls out of Lever B: with
-axes view-relative, the HUD shows **Forward / Lateral / Vertical** (the enum's existing display
-names) instead of colored X/Y/Z.
-
----
-
-## 6. Open questions (need a decision or a spike)
-
-1. **Default on or opt-in?** Player Relative changes the default feel. Precision builders who scale a
-   fixed world axis regardless of gaze now must physically face it (input-time latch softens this).
-   Do we ship it default-on, or default-off with the boolean, or keep a "classic controls" scheme?
-   *A classic scheme roughly doubles input maintenance forever — decide deliberately.* **This is the
-   one to get the reporter's and testers' read on.**
-2. Directional pad: numpad vs. context-sensitive arrows.
-3. Z control: modifier vs. PgUp/Dn (looking up/down to scale vertically is awkward).
-4. Latch/hysteresis specifics (45° flip band) — feel, not logic.
-5. Radial menu for Recipe / Auto-Connect — orthogonal; likely a later phase, uncertain value.
+More modest than the reporter's maximal cut, but coherent and low-risk (opt-in, familiar +/− kept).
 
 ---
 
-## 7. Risk & effort
+## 8. What's left — the spike (feel, not logic)
 
-| Area | Effort | Risk |
-|---|---|---|
-| facing → (axis, sign) resolver + input-time write | **M** | Med — 45° hysteresis, negative-axis sign (the #168 cell-order family) |
-| Directional-pad routing (replaces cycle / inc-dec) | **M** | Med — coupled input state |
-| IMC asset surgery + `PlayerMappableKeySettings` names | **M** | **High-fiddly** — breaks the settings screen if wrong (SmartCamera-brackets lesson) |
-| HUD relabel + drop axis colors / arrows | **M** | Low |
-| Player Relative setting plumbing | **S** | Low — one boolean, input layer only |
-| Backward-compat / classic mode | **M–L** | **Highest — UX, not code** (see open Q1) |
-| Loc + wiki (control labels, Controls.md, Settings-Reference.md) | **S** | Low |
-| Radial menu (deferred) | **L** | Med |
-
-**Verdict:** XL overall as a full redesign, but the *core* is a contained input-layer spike. Biggest
-risk is the UX/compat decision, not the implementation.
-
----
-
-## 8. Recommended first step — spike, don't spec further
+The design is closed on paper. Only *feel* remains, and it's spike-shaped:
+1. **Latch timing** — sample facing on mode-enter (recommended) vs first-scroll vs continuous.
+2. **Hysteresis** — the 45° flip band so the axis doesn't twitch as you look around.
+3. **Handedness sanity** — confirm "away = right" bottom-to-top (incl. the IMC wheel-sign link).
 
 Wire a **facing → (axis, sign) resolver with input-time write** in front of the existing
 `ApplyAxisScaling`, leave the old modifiers working alongside it, and *feel* it for ten minutes.
-Because downstream is untouched, the spike is ~1–2 days and answers the only questions that matter
-(latch timing, hysteresis, the precision trade-off, handedness inversion) better than more analysis.
-Keep the two levers separable in the spike so each can be judged on its own.
+Downstream is untouched, so the spike is ~1–2 days and answers the only open questions better than
+more analysis. Keep the two levers separable so each is judged on its own.
+
+---
+
+## 9. Risk & effort
+
+| Area | Effort | Risk |
+|---|---|---|
+| facing → (axis, sign) resolver + input-time write | **M** | Med — 45° hysteresis, negative-axis sign (#168 cell-order family) |
+| Numpad directional routing (replaces X/Y mods + Cycle) | **M** | Med — coupled input state; rebinding surface |
+| IMC asset surgery + `PlayerMappableKeySettings` names | **M** | **High-fiddly** — breaks the settings screen if wrong (SmartCamera-brackets lesson) |
+| HUD: drop axis colors (keep labels + arrows) | **S** | Low |
+| Player Relative setting plumbing | **S** | Low — one boolean, world-input layer only |
+| Loc + wiki (Controls.md, Settings-Reference.md) | **S** | Low |
+
+**Verdict:** M–L overall (down from XL — opt-in kills the classic-mode maintenance burden, and the
+radial is gone). The core is a contained input-layer spike; no downstream, state, MP, or Panel work.
