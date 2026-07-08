@@ -1671,25 +1671,26 @@ void USFSubsystem::ResetZoopBuildModeForScaling()
 		*DefaultMode->GetName());
 }
 
-// [#209] Player Relative Controls - FIRST-CUT resolver (SPIKE, feel-pending).
-// Maps the player's facing (relative to the held building) to a grid axis + sign, quantized to the
-// nearest cardinal, so the primary scale grows toward where the player looks. This is the minimal
-// wiring the #209 scope doc calls for: a facing -> (axis, sign) resolver in front of ApplyAxisScaling,
-// gated on the opt-in setting, leaving the classic modifiers working. NOT YET DONE and to be settled
-// in-game per the design: (1) the cardinal->axis/sign handedness ("away = right") - the sign choices
-// below are a reasonable first guess to be confirmed or flipped once it's felt; (2) latch-on-mode-enter
-// vs per-input resolution (this resolves per-input - simplest, may need a latch); (3) a 45-degree
-// hysteresis band so the axis doesn't twitch at the boundary. Returns false if inputs are unusable.
-static bool SF_ResolvePlayerRelativeAxis(float ViewYawDeg, float BuildingYawDeg, ESFScaleAxis& OutAxis, int32& OutSign)
+// [#209] Player Relative Controls - resolver (SPIKE, feel loop in progress).
+// Maps the player's facing (relative to the held building) to a PERPENDICULAR PAIR of grid axes,
+// quantized to the nearest cardinal: the PRIMARY (scroll grows it toward/away along your line of
+// sight) and the LATERAL (scroll grows it to your left/right). Wired in front of ApplyAxisScaling,
+// gated on the opt-in setting. Primary and lateral are always different axes, so the two scale
+// modifiers rotate together and never collide (fixes "Z-modifier does the same as X" when facing
+// sideways). Sign convention (verified/tuned in-game): scroll UP = grow AWAY (forward) and to the
+// RIGHT. Forward/back is CONFIRMED (2026-07-07: the +1 first-cut was inverted, so away = -1 on X).
+// Left/right lateral signs are the current best guess - flip per feel. Still pending: latch-on-enter
+// vs per-input (this is per-input) and a 45-degree hysteresis band.
+static void SF_ResolvePlayerRelativeAxes(float ViewYawDeg, float BuildingYawDeg,
+	ESFScaleAxis& PrimAxis, int32& PrimSign, ESFScaleAxis& LatAxis, int32& LatSign)
 {
 	// Relative facing in [-180, 180]: 0 = looking along the building's forward, +90 = to its right.
 	const float Rel = FMath::UnwindDegrees(ViewYawDeg - BuildingYawDeg);
 	const float A = FMath::Abs(Rel);
-	if (A <= 45.0f)        { OutAxis = ESFScaleAxis::X; OutSign = +1; }  // facing forward  -> grow +X (forward)
-	else if (A >= 135.0f)  { OutAxis = ESFScaleAxis::X; OutSign = -1; }  // facing backward -> grow -X
-	else if (Rel > 0.0f)   { OutAxis = ESFScaleAxis::Y; OutSign = +1; }  // facing right    -> grow +Y (verify sign)
-	else                   { OutAxis = ESFScaleAxis::Y; OutSign = -1; }  // facing left     -> grow -Y (verify sign)
-	return true;
+	if (A <= 45.0f)        { PrimAxis = ESFScaleAxis::X; PrimSign = -1; LatAxis = ESFScaleAxis::Y; LatSign = +1; }  // facing forward
+	else if (A >= 135.0f)  { PrimAxis = ESFScaleAxis::X; PrimSign = +1; LatAxis = ESFScaleAxis::Y; LatSign = -1; }  // facing backward
+	else if (Rel > 0.0f)   { PrimAxis = ESFScaleAxis::Y; PrimSign = -1; LatAxis = ESFScaleAxis::X; LatSign = -1; }  // facing right
+	else                   { PrimAxis = ESFScaleAxis::Y; PrimSign = +1; LatAxis = ESFScaleAxis::X; LatSign = +1; }  // facing left
 }
 
 void USFSubsystem::OnScaleXChanged(const FInputActionValue& Value)
@@ -1743,40 +1744,45 @@ void USFSubsystem::OnScaleXChanged(const FInputActionValue& Value)
 	// Capture rotation BEFORE scaling to detect if vanilla wheel rotation interfered
 	const FRotator RotationBefore = ActiveHologram->GetActorRotation();
 
+	// [#209] Player Relative: resolve the PRIMARY (line-of-sight) + LATERAL (side) axes ONCE from
+	// facing, so the X-modifier and Z(Y)-modifier become a perpendicular pair that rotates with the
+	// player and never collide. When the setting is off, these stay the classic X/Y with sign +1, so
+	// the branches below behave exactly as before (non-destructive).
+	ESFScaleAxis PrimAxis = ESFScaleAxis::X; int32 PrimSign = +1;
+	ESFScaleAxis LatAxis  = ESFScaleAxis::Y; int32 LatSign  = +1;
+	const bool bPlayerRel = FSmart_ConfigStruct::GetActiveConfig(this).bPlayerRelativeControls;
+	if (bPlayerRel)
+	{
+		if (APlayerController* PC = GetWorld() ? GetWorld()->GetFirstPlayerController() : nullptr)
+		{
+			SF_ResolvePlayerRelativeAxes(PC->GetControlRotation().Yaw,
+				ActiveHologram->GetActorRotation().Yaw, PrimAxis, PrimSign, LatAxis, LatSign);
+		}
+	}
+
 	// MODIFIER PRIORITY: Check modifiers first to determine which axis to scale
 	if (bModifierScaleXActive && bModifierScaleYActive)
 	{
-		// Both modifiers held → Scale Z-axis
-		LastAxisInput = ELastAxisInput::Z;  // Both modifiers = Z axis
+		// Both modifiers held → Scale Z-axis (vertical - never player-relative; up is up)
+		LastAxisInput = ELastAxisInput::Z;
 		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Scale Z: %.2f (direction: %d) [X+Z modifiers]"), AxisValue, Direction);
 		ApplyAxisScaling(ESFScaleAxis::Z, Direction, TEXT("Scale Z"));
 	}
 	else if (bModifierScaleXActive)
 	{
-		// X modifier held → Scale X-axis. [#209] When Player Relative is ON, this PRIMARY scale
-		// instead grows toward the player's facing (resolver above). Non-destructive: only this
-		// primary path remaps; the Y-modifier and Z (both-modifier) paths are untouched. Opt-in.
-		ESFScaleAxis PrimaryAxis = ESFScaleAxis::X;
-		int32 PrimarySign = +1;
-		if (FSmart_ConfigStruct::GetActiveConfig(this).bPlayerRelativeControls)
-		{
-			if (APlayerController* PC = GetWorld() ? GetWorld()->GetFirstPlayerController() : nullptr)
-			{
-				SF_ResolvePlayerRelativeAxis(PC->GetControlRotation().Yaw,
-					ActiveHologram->GetActorRotation().Yaw, PrimaryAxis, PrimarySign);
-			}
-		}
-		LastAxisInput = (PrimaryAxis == ESFScaleAxis::Y) ? ELastAxisInput::Y : ELastAxisInput::X;
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Scale X: %.2f (dir: %d) [X modifier] PR axis=%d sign=%d"),
-			AxisValue, Direction, (int32)PrimaryAxis, PrimarySign);
-		ApplyAxisScaling(PrimaryAxis, Direction * PrimarySign, TEXT("Scale X (player-relative)"));
+		// X modifier → PRIMARY (line-of-sight) axis when Player Relative is on, else classic X.
+		LastAxisInput = (PrimAxis == ESFScaleAxis::Y) ? ELastAxisInput::Y : ELastAxisInput::X;
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Scale primary: %.2f (dir: %d) [X mod] PR=%d axis=%d sign=%d"),
+			AxisValue, Direction, bPlayerRel, (int32)PrimAxis, PrimSign);
+		ApplyAxisScaling(PrimAxis, Direction * PrimSign, TEXT("Scale primary (player-relative)"));
 	}
 	else if (bModifierScaleYActive)
 	{
-		// Z modifier held → Scale Y-axis
-		LastAxisInput = ELastAxisInput::Y;  // Y modifier still held = Y axis
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Scale Y: %.2f (direction: %d) [Z modifier]"), AxisValue, Direction);
-		ApplyAxisScaling(ESFScaleAxis::Y, Direction, TEXT("Scale Y"));
+		// Z modifier → LATERAL (side) axis when Player Relative is on, else classic Y.
+		LastAxisInput = (LatAxis == ESFScaleAxis::X) ? ELastAxisInput::X : ELastAxisInput::Y;
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Scale lateral: %.2f (dir: %d) [Z mod] PR=%d axis=%d sign=%d"),
+			AxisValue, Direction, bPlayerRel, (int32)LatAxis, LatSign);
+		ApplyAxisScaling(LatAxis, Direction * LatSign, TEXT("Scale lateral (player-relative)"));
 	}
 	else
 	{
