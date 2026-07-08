@@ -71,6 +71,7 @@ struct FSmart_BuildingBehaviorConfigSection {
     UPROPERTY(BlueprintReadWrite) bool bExtendDaisyChainPoleless{true};
     UPROPERTY(BlueprintReadWrite) bool bAutoHoldOnGridChange{true};  // [#279] default ON (restores pre-config behavior)
     UPROPERTY(BlueprintReadWrite) bool bApplyImmediately{};
+    UPROPERTY(BlueprintReadWrite) bool bPlayerRelativeControls{};    // [#209] global; world-context scaling relative to facing (Panel stays absolute)
     // [#217 / AV-FP fix] Scroll increments folded in here - no new USTRUCT, keeps config reflection under the AV threshold.
     UPROPERTY(BlueprintReadWrite) float SpacingIncrement{0.5f};
     UPROPERTY(BlueprintReadWrite) float StepsIncrement{0.5f};
@@ -230,6 +231,12 @@ public:
     UPROPERTY(BlueprintReadWrite)
     bool bApplyImmediately{};
 
+    // [#209] Player Relative Controls: while building in the world, scaling and the other
+    // transforms resolve relative to the direction you're facing (the Smart Panel, being a
+    // frozen UI, always stays absolute X/Y/Z). Global setting, default OFF (opt-in).
+    UPROPERTY(BlueprintReadWrite)
+    bool bPlayerRelativeControls{};
+
     // ── Scaling Settings (#217 scroll increments) ──
     // How much each mouse-wheel notch changes a transform. Distance settings are METERS (converted
     // to cm at read); rotation is DEGREES. These drive the grid AND (shared 1:1) Extend, Restore,
@@ -329,6 +336,7 @@ public:
         ConfigStruct.bExtendDaisyChainPoleless = Sections.BuildingBehavior.bExtendDaisyChainPoleless;
         ConfigStruct.bAutoHoldOnGridChange    = Sections.BuildingBehavior.bAutoHoldOnGridChange;
         ConfigStruct.bApplyImmediately        = Sections.BuildingBehavior.bApplyImmediately;
+        ConfigStruct.bPlayerRelativeControls  = Sections.BuildingBehavior.bPlayerRelativeControls;
 
         // HUD
         ConfigStruct.bShowHUD                 = Sections.HUD.bShowHUD;
