@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [34.0.0] - Unreleased
+## [34.0.0] - 2026-07-07
 
 > *Smart! Blueprints: scale your own blueprints into a grid, and Smart! wires the belts and pipes between the copies for you. Lay down a whole tiled factory - dozens of blueprint copies, connected across every seam - in a single placement, including the two-dimensional grid connections the game's own blueprint auto-connect can't do.*
 
