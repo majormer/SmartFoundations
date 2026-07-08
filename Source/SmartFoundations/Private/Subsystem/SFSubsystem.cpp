@@ -1696,6 +1696,28 @@ static void SF_ResolvePlayerRelativeAxes(float ViewYawDeg, float BuildingYawDeg,
 	else                   { PrimAxis = ESFScaleAxis::Y; PrimSign = +1; LatAxis = ESFScaleAxis::X; LatSign = -1; }  // facing left
 }
 
+// [#209] Compute the player-relative primary+lateral axes for the active hologram (reads the opt-in
+// setting + the player's view yaw + the building yaw). Returns whether Player Relative is on; when off
+// (or no hologram), outputs are the classic (X,+1)/(Y,+1) so callers behave exactly as before. Shared
+// by the wheel+modifier path (OnScaleXChanged) and the direct numpad paths (NumPad8/5 -> primary via
+// OnScaleXChanged's no-modifier branch; NumPad6/4 -> lateral via OnScaleYChanged).
+static bool SF_ComputePlayerRelativeAxes(USFSubsystem* SS, AFGHologram* Holo,
+	ESFScaleAxis& PrimAxis, int32& PrimSign, ESFScaleAxis& LatAxis, int32& LatSign)
+{
+	PrimAxis = ESFScaleAxis::X; PrimSign = +1;
+	LatAxis  = ESFScaleAxis::Y; LatSign  = +1;
+	if (!SS || !Holo || !FSmart_ConfigStruct::GetActiveConfig(SS).bPlayerRelativeControls)
+	{
+		return false;
+	}
+	if (APlayerController* PC = SS->GetWorld() ? SS->GetWorld()->GetFirstPlayerController() : nullptr)
+	{
+		SF_ResolvePlayerRelativeAxes(PC->GetControlRotation().Yaw, Holo->GetActorRotation().Yaw,
+			PrimAxis, PrimSign, LatAxis, LatSign);
+	}
+	return true;
+}
+
 void USFSubsystem::OnScaleXChanged(const FInputActionValue& Value)
 {
 	// Scaled Extend (Issue #265): Allow X scaling during extend mode.
@@ -1748,20 +1770,11 @@ void USFSubsystem::OnScaleXChanged(const FInputActionValue& Value)
 	const FRotator RotationBefore = ActiveHologram->GetActorRotation();
 
 	// [#209] Player Relative: resolve the PRIMARY (line-of-sight) + LATERAL (side) axes ONCE from
-	// facing, so the X-modifier and Z(Y)-modifier become a perpendicular pair that rotates with the
-	// player and never collide. When the setting is off, these stay the classic X/Y with sign +1, so
-	// the branches below behave exactly as before (non-destructive).
-	ESFScaleAxis PrimAxis = ESFScaleAxis::X; int32 PrimSign = +1;
-	ESFScaleAxis LatAxis  = ESFScaleAxis::Y; int32 LatSign  = +1;
-	const bool bPlayerRel = FSmart_ConfigStruct::GetActiveConfig(this).bPlayerRelativeControls;
-	if (bPlayerRel)
-	{
-		if (APlayerController* PC = GetWorld() ? GetWorld()->GetFirstPlayerController() : nullptr)
-		{
-			SF_ResolvePlayerRelativeAxes(PC->GetControlRotation().Yaw,
-				ActiveHologram->GetActorRotation().Yaw, PrimAxis, PrimSign, LatAxis, LatSign);
-		}
-	}
+	// facing, so the modifiers AND the direct numpad keys become a perpendicular pair that rotates
+	// with the player and never collide. Off (or no hologram) -> classic X/Y, so the branches below
+	// are non-destructive.
+	ESFScaleAxis PrimAxis, LatAxis; int32 PrimSign, LatSign;
+	const bool bPlayerRel = SF_ComputePlayerRelativeAxes(this, ActiveHologram.Get(), PrimAxis, PrimSign, LatAxis, LatSign);
 
 	// MODIFIER PRIORITY: Check modifiers first to determine which axis to scale
 	if (bModifierScaleXActive && bModifierScaleYActive)
@@ -1789,10 +1802,13 @@ void USFSubsystem::OnScaleXChanged(const FInputActionValue& Value)
 	}
 	else
 	{
-		// No modifiers → Default X-axis behavior
-		LastAxisInput = ELastAxisInput::X;
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Scale X: %.2f (direction: %d)"), AxisValue, Direction);
-		ApplyAxisScaling(ESFScaleAxis::X, Direction, TEXT("Scale X"));
+		// No modifiers → classic X, OR the PRIMARY axis under Player Relative. This is the branch the
+		// direct numpad keys fire: NumPad8 (forward = wheel-up analog) / NumPad5 (backward = wheel-down),
+		// so they follow facing exactly like the X-modifier + wheel.
+		LastAxisInput = (PrimAxis == ESFScaleAxis::Y) ? ELastAxisInput::Y : ELastAxisInput::X;
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Scale primary(nomod): %.2f (dir: %d) PR=%d axis=%d sign=%d"),
+			AxisValue, Direction, bPlayerRel, (int32)PrimAxis, PrimSign);
+		ApplyAxisScaling(PrimAxis, Direction * PrimSign, TEXT("Scale primary (nomod)"));
 	}
 
 	// Fix rotation leak: undo any vanilla rotation that leaked through during scaling.
@@ -1839,12 +1855,15 @@ void USFSubsystem::OnScaleYChanged(const FInputActionValue& Value)
 		return;
 	}
 
-	// No modifiers → Default Y-axis behavior
+	// No modifiers → classic Y, OR the LATERAL axis under Player Relative. NumPad6 (right = wheel-up
+	// analog) / NumPad4 (left = wheel-down) fire here, so they follow facing like the Z-modifier + wheel.
 	const int32 Direction = AxisValue > 0.0f ? +1 : -1;
-	LastAxisInput = ELastAxisInput::Y;
-
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Scale Y: %.2f (direction: %d)"), AxisValue, Direction);
-	ApplyAxisScaling(ESFScaleAxis::Y, Direction, TEXT("Scale Y"));
+	ESFScaleAxis PrimAxis, LatAxis; int32 PrimSign, LatSign;
+	const bool bPlayerRel = SF_ComputePlayerRelativeAxes(this, ActiveHologram.Get(), PrimAxis, PrimSign, LatAxis, LatSign);
+	LastAxisInput = (LatAxis == ESFScaleAxis::X) ? ELastAxisInput::X : ELastAxisInput::Y;
+	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Scale lateral(nomod): %.2f (dir: %d) PR=%d axis=%d sign=%d"),
+		AxisValue, Direction, bPlayerRel, (int32)LatAxis, LatSign);
+	ApplyAxisScaling(LatAxis, Direction * LatSign, TEXT("Scale lateral (nomod)"));
 }
 
 void USFSubsystem::OnScaleZChanged(const FInputActionValue& Value)
