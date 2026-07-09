@@ -57,11 +57,12 @@ adding PR state (e.g. the stagger family selector is runtime, not global).
   axis. Selecting a different target without a numpad is via **Cycle Axis / double-tap** (§5).
 - **Keyboard / numpad** — numpad directions select the target **directly** (Num8/5 primary, Num6/4
   lateral, Num9/3 vertical); mode-hold keys; Cycle Axis / double-tap advance.
-- **HUD** — the active-target **highlight follows facing** (not the cycled axis), and navigation
-  prompts relabel ("Num0 / re-tap: next direction"; stagger adds "9/3: stack/flat"). Labels stay
-  absolute X/Y/Z/ZX/ZY — only the highlight + prompt logic branches. (`SFHudService` highlight is
-  today `bIsActive = (mode && cycledAxis == thisAxis)`; under PR it compares the **facing-mapped**
-  axis of the current target.)
+- **HUD** — the active-target **highlight follows facing**, and the **ACTIVE transform row is
+  labeled by its ROLE**: `Spacing [Forward]*` / `[Lateral]` / `[Vertical]`; stagger shows
+  family + role (`Stagger [Stack/Forward]*`). The role is what re-tap cycles and what the wheel
+  drives — labeling it is the feedback that makes the cycle player-relative. **(2026-07-09 revision
+  of the keep-absolute-labels rule: ACTIVE row only, PR only, no axis descriptor.)** Inactive value
+  rows keep absolute X/Y/Z/ZX/ZY labels; the Panel is untouched.
 
 ## 5. The Unified Target Model
 
@@ -154,18 +155,19 @@ deliberate change** (stagger navigation — needs a changelog note):
 | Num6/4 in modal | grid Y scaling — **unchanged** (never dead: the numpad scales the grid while a transform key is held) |
 | Num9/3 in modal | grid Z scaling — unchanged for spacing/steps/rotation; **stagger: family select (9 = Stack, 3 = Flat)** — part of the stagger change |
 
-### 5.3 Sign policy (the resolver returns axis **and** sign)
+### 5.3 Wheel sign policy — per ROLE (maintainer spec 2026-07-09)
 
-Facing quantization yields `(axis, sign)`. Whether the sign multiplies the delta depends on the
-transform's value semantics — this is per-transform, not global:
+The resolver returns `(axis, sign)`; the sign policy is **per role**, not per transform:
 
-| Transform | Value means | Facing-sign applied? |
+| Role | Wheel-up means | Sign |
 |---|---|---|
-| Scaling | grow direction | **Yes** (shipped, feel-confirmed) |
-| Spacing | gap magnitude (symmetric) | **No** |
-| Steps | rise per cell along the run (`StepsX * X` — **signed** cell index) | **Yes** — else facing the −axis way, "up" descends going away. *Feel-verify.* |
-| Stagger | drift direction (`Stagger* * signed index`) | **Yes** — "leans right" must mean right regardless of facing. *Feel-verify.* |
-| Rotation | curl direction (away = right; classic Y-negation already in) | **Compose with resolver sign — feel-verify** (highest-risk sign in the set) |
+| **Forward** (all transforms) | grow/rise/curl/lean the run **in the direction you face** — standing at the anchor it stretches away; from the far end looking back, up **pulls it toward you** (spacing contracts) | facing × expansion direction (`PrimSign × sign(grid counter)`) |
+| **Lateral / Vertical** — spacing | more gap | +1 (plain magnitude — the perpendicular facing isn't represented) |
+| **Lateral** — steps / rotation | more rise / curl, toward the run's own far end | counter sign only (view-independent) |
+| **Lateral drift** — stagger | leans to **your right** | `LatSign × sign(progression counter)` — the one signed lateral; a lean's *direction* is its meaning |
+
+Scaling keeps its shipped scheme (facing-signed grow, feel-confirmed). Rotation's resolver sign
+composes with the classic Y-negation — **feel-verify** remains the gate for steps/stagger/rotation.
 
 ### 5.4 State and lifetime
 
