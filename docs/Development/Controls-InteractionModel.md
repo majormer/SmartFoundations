@@ -96,11 +96,11 @@ quick re-grip advances one more.
 - No collision with **double-tap Num0** (temporary Smart disable) — different keys.
 - A single stray tap just flickers the mode on/off, as it does today (harmless).
 - **Stagger** has *two* orthogonal selectors (direction + family), so each gets its own gesture —
-  and the assignment differs per control mode (classic's was **feel-tested 2026-07-09**):
-  **classic** re-tap `Y` = direction within the family (ZX↔ZY / X↔Y), Num0 = family (Z on/off);
-  **PR** re-tap `Y` = family flip, Num0 = drift-slot advance (keeping Num0's every-transform meaning
-  there). Either way, all four modes are reachable with no numpad. *Open: whether PR should adopt
-  classic's swapped assignment when PR stagger gets feel-tested.*
+  **identical in both control modes** (classic feel-tested 2026-07-09, PR aligned the same day):
+  **Num0 = family (Z on/off)**, **re-tap `Y` = direction within the family** (classic ZX↔ZY / X↔Y,
+  PR fwd-drift↔side-drift). All four modes are reachable with no numpad. This makes stagger the one
+  transform where PR's Num0 does *not* advance the target slot — the family is the bigger mental
+  switch and gets the dedicated key; the drift slot rides re-tap and Num6/4.
 
 **Default mode keys** (rebindable): `;` Spacing · `I` Steps · `Y` Stagger · `,` Rotation · `U` Recipe
 · `X`/`Z` scale modifiers · Num0 Cycle Axis · Num8/5 increase/decrease · Num1 Arrows · `K` Panel.
@@ -119,7 +119,7 @@ always means the same thing).
 | Spacing | fwd → side → vert | fwd ± | side ± | vert ± |
 | Steps | fwd → side | fwd ± | side ± | *(no-op — steps are vertical)* |
 | Rotation | fwd-prog → side-prog | fwd ± | side ± | *(no-op)* |
-| Stagger | fwd-drift ↔ side-drift *(within family)* | fwd-drift ± *(current family)* | side-drift ± *(current family)* | **family select: 9 = Stack, 3 = Flat** |
+| Stagger | fwd-drift ↔ side-drift *(re-tap only — **Num0 = family Z-toggle**)* | fwd-drift ± *(current family)* | side-drift ± *(current family)* | **family select: 9 = Stack, 3 = Flat** |
 
 In PR, **increase/decrease ≡ forward/backward** (Num8/5 are the increase/decrease bindings; PR
 defines "increase" as "grow toward intent"). The **wheel is the generic adjuster** for the current
@@ -130,12 +130,11 @@ target — that plus Num0/re-tap is the complete wheel-only path.
 of one 4-way cycle:
 
 - **Family = the build context** — **Stack** (the vertical pile leans: classic ZX/ZY) vs **Flat** (a
-  horizontal run drifts: classic X/Y). Classic: **Num0** toggles it (Z on/off) and **Num9/3** jump
-  direct (9 = Stack, 3 = Flat) — both preserve your direction pick. PR: **re-tap `Y`** flips it, or
-  Num9/3 direct. Default **Stack** — with axis X, that's exactly today's ZX-first default.
-- **Direction within the family** (classic X↔Y / PR fwd-drift↔side-drift) — classic: **re-tap `Y`**;
-  PR: **Num0** (the slot advance, as in every transform) or **Num6/4** direct-select of the side
-  member (PR-only).
+  horizontal run drifts: classic X/Y). **Num0** toggles it (Z on/off) and **Num9/3** jump direct
+  (9 = Stack, 3 = Flat) — both preserve your direction pick, in both control modes. Default
+  **Stack** — with axis X, that's exactly today's ZX-first default.
+- **Direction within the family** (classic X↔Y / PR fwd-drift↔side-drift) — **re-tap `Y`** in both
+  modes; PR additionally direct-selects the side member with **Num6/4**.
 - **The stored state does not change.** `StaggerAxis` keeps its four values {ZX, ZY, X, Y}; family
   and axis are *projections* of it — the family toggle rewrites ZX↔X / ZY↔Y, the axis toggle
   rewrites ZX↔ZY / X↔Y. All four counters still compound simultaneously; presets/Restore/MP capture
@@ -213,14 +212,13 @@ changelog note); Cycle Axis = target-cycler in PR (not a no-op — wheel-only ac
 this); **re-tap** (tap, re-grip within ~300 ms) = advance target, replacing the double-tap-on-hold
 question — hold-to-activate stays, no toggle rework, lands with the core pass; PR numpad = compass
 profile with select-and-adjust (PR-only — classic modal numpad keeps its grid-scaling behavior);
-classic keeps Num8/5 = current-axis ± untouched and gains re-tap; **classic stagger gestures
-feel-tested 2026-07-09: Num0 = family (Z on/off), re-tap `Y` = direction within the family** (PR
-keeps the opposite assignment — Num0 = drift advance, re-tap = family — pending PR feel-test).
+classic keeps Num8/5 = current-axis ± untouched and gains re-tap; **stagger gestures identical in
+both modes (classic feel-tested + PR aligned 2026-07-09): Num0 = family (Z on/off), re-tap `Y` =
+direction within the family**.
 
 **Feel-verify list (first build):** steps facing-sign (rise-away), stagger drift signs, rotation
 curl under resolved progression (highest risk), re-tap threshold (~300 ms), wheel-continues-on-last-
-selected-target, HUD highlight following facing while a mode is held, **PR stagger gesture
-assignment** (classic swapped to Num0 = family / re-tap = direction — decide whether PR matches),
-classic stagger retrain (HUD prompt clarity).
+selected-target, HUD highlight following facing while a mode is held, classic stagger retrain (HUD
+prompt clarity).
 
 See the [scope doc](209-controls-simplification-scope.md) for the live decision log.
