@@ -9,6 +9,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [34.1.0] - Unreleased
+
+> *Player Relative Controls: an optional way to build in the direction you're looking, so the grid grows toward where you face instead of along fixed compass axes.*
+
+### Added
+
+- **Player Relative Controls (optional, off by default)** - A new setting under Building Behavior. Turn it on and building follows your view instead of the world's fixed axes: scroll to grow the array toward wherever you're looking, glance to the side to extend it sideways, and the numpad becomes a compass - Num8/Num5 mean away from and toward you, Num6/Num4 mean to your right and left, Num9/Num3 mean up and down. This applies to scaling and to the spacing, steps, stagger, and rotation adjustments, so the whole grid responds to where you're aiming. Prefer the mouse? While you hold a transform key, the HUD names what the wheel is driving in view terms - Forward, Lateral, or Vertical - and re-tapping the key switches between them. Scrolling up on Forward always grows the build in the direction you're facing: from the near end it stretches away, and if you walk to the far end and look back, scrolling up pulls it toward you. Your existing controls are untouched when the setting is off, and the Smart Panel keeps its familiar X/Y/Z values either way.
+- **Re-tap a transform key to switch axis** - While holding a transform key (Spacing, Steps, Rotation), quickly release and re-press it to jump to the next axis - no more reaching for Num0 mid-build. Works in both classic and Player Relative controls (in Player Relative it steps through Forward, Lateral, and Vertical). Re-tapping the Stagger key switches its lean direction; Num0 toggles its Stack/Flat family (see below).
+
+### Changed
+
+- **Stagger navigation is now two families instead of one long cycle** - Stagger's four patterns are grouped by what you're building: **Stack** (a vertical pile that leans as it rises) and **Flat** (a row that drifts sideways as it runs). Num0 toggles between Stack and Flat, re-tapping the Stagger key switches direction within the family, and Num9/Num3 jump straight to Stack or Flat. Same four patterns as before and your saved presets are unaffected - they're just quicker to reach than cycling through all four.
+
+> **A heads-up on controls:** Player Relative is off by default, so nothing about how you build changes unless you turn it on - but once you do, it genuinely rewires the muscle memory for using Smart! out in the world (not the Smart Panel, which stays exactly as it was). The scroll wheel and numpad follow where you're looking instead of fixed compass axes, so give yourself a few builds to settle in - it tends to click quickly. We're keeping it opt-in for now while people try it, and depending on your feedback and how it feels in practice, a future update may make Player Relative the default for Smart!'s in-world controls.
+
+---
+
 ## [34.0.0] - 2026-07-07
 
 > *Smart! Blueprints: scale your own blueprints into a grid, and Smart! wires the belts and pipes between the copies for you. Lay down a whole tiled factory - dozens of blueprint copies, connected across every seam - in a single placement, including the two-dimensional grid connections the game's own blueprint auto-connect can't do.*
