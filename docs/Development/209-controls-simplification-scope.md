@@ -11,6 +11,10 @@ related: [../Features/AutoConnect/IMPL_SmartBlueprints_CurrentFlow.md]
 
 # Controls Simplification (#209) — Scope & Design
 
+> **Durable companion:** [`Controls-InteractionModel.md`](Controls-InteractionModel.md) — the
+> three-surfaces model (Smart Panel · Mouse Wheel · Keyboard/numpad + runtime HUD) and the rule that
+> PR must keep all three aligned. That doc is the framework; this doc is the #209 decision log.
+
 Issue #209 (ShadedPL, migrated) asks to cut Smart!'s keybind count and make scaling
 directional/intuitive. The evaluation reframed it from "remove keybinds" into **two separable
 levers over the existing transform system**, neither of which changes stored state, layout,
@@ -27,7 +31,8 @@ timing, hysteresis), which only a spike can answer.
 | Direction selection | **Numpad cluster + facing + scroll, all live** | Fwd/back · left/right · up/down; numpad keys **rebindable** (no-10-key users) |
 | Value input | **Keep scroll AND +/− keys** | Increase/Decrease stay; more conservative than the reporter's max |
 | Radial menu | **Declined** | Smart Panel (K) already does it; that part is *done* |
-| HUD axis colors | **Removed** | Theme handles look; single-color values |
+| HUD axis colors | **KEPT** (reversed 2026-07-08) | Stay as the Smart Panel's absolute-axis reference; not worth changing |
+| Keybind removal (Scale X/Y mods, Cycle Mode) | **OUT of scope** (dropped 2026-07-08) | Additive is final; players can clear bindings they don't want |
 | HUD axis labels | **Keep absolute X/Y/Z** (no Forward/Lateral relabel) | See "feedback model" — the preview is the feedback, not the label |
 | Arrow graphic | **Kept** | Orientation cue; needed by the Panel context anyway |
 | Scope boundary | **Player Relative is world-context only** | The Panel is frozen → no facing → stays absolute X/Y/Z |
