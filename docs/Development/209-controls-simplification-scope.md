@@ -35,9 +35,10 @@ timing, hysteresis), which only a spike can answer.
 | Keybind removal (Scale X/Y mods, Cycle Mode) | **OUT of scope** (dropped 2026-07-08) | Additive is final; players can clear bindings they don't want |
 | PR extends to spacing/steps/stagger/rotation | **YES** (2026-07-09) | Unified Target Model — see [Controls-InteractionModel §5](Controls-InteractionModel.md) |
 | Cycle Axis under PR | **Target-cycler, NOT no-op** (2026-07-09) | Wheel-only (no numpad) players need a numpad-free selector |
-| Stagger — BOTH modes | **2×2 factoring confirmed** (2026-07-09): family (Stack/Flat, default Stack) × axis; stored 4-state unchanged (projections); Num0 = axis within family; Num9/3 = family direct | 4-way cycle was the artificial part; classic and PR become structurally identical |
+| Stagger — BOTH modes | **2×2 factoring confirmed** (2026-07-09): family (Stack/Flat, default Stack) × direction; stored 4-state unchanged (projections); Num9/3 = family direct | 4-way cycle was the artificial part; classic and PR become structurally identical |
 | Double-tap mode key | **Re-tap gesture** (tap, re-grip < ~300 ms = advance target), core pass | Solves double-tap-on-hold with timestamps only; also speeds classic |
-| Stagger re-tap `Y` = family flip | **OPTION — decide at feel-test** | Each stagger selector gets its own gesture (Num0 axis / re-tap family); full no-numpad reach |
+| Stagger gestures (classic) | **FEEL-TESTED 2026-07-09: Num0 = family toggle (Z on/off), re-tap `Y` = direction within family** (swap of the first cut) | Family = the bigger mental switch, deserves the dedicated key; full no-numpad reach |
+| Stagger gestures (PR) | Num0 = drift-slot advance, re-tap `Y` = family flip — **open: align with classic's swap when PR is feel-tested** | Keeps Num0's every-transform meaning in PR; asymmetry vs classic flagged |
 | Numpad in PR modal | **Compass profile, select-and-adjust** (8/5 fwd, 6/4 side, 9/3 vert) | Matches feel-approved scaling spike; wheel continues on last pick |
 | Classic mode | **Num8/5 = current-axis ± UNCHANGED**; gains re-tap. Modal Num6/4/9/3 keep their existing grid-scaling behavior (they were never dead — direct-select is PR-only). **Deliberate stagger changes: Num0 = axis-within-family (was 4-way cycle), Num9/3 = family select, re-tap = family flip** — changelog note | Zero regression outside stagger |
 | Facing-sign per transform | Scaling YES · Spacing NO · Steps/Stagger YES · Rotation compose | Signed cell-index math (`Steps*X`, `Stagger*X`); feel-verify list in model doc §7 |
