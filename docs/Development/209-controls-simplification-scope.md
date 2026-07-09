@@ -39,7 +39,7 @@ timing, hysteresis), which only a spike can answer.
 | Double-tap mode key | **Re-tap gesture** (tap, re-grip < ~300 ms = advance target), core pass | Solves double-tap-on-hold with timestamps only; also speeds classic |
 | Stagger re-tap `Y` = family flip | **OPTION — decide at feel-test** | Each stagger selector gets its own gesture (Num0 axis / re-tap family); full no-numpad reach |
 | Numpad in PR modal | **Compass profile, select-and-adjust** (8/5 fwd, 6/4 side, 9/3 vert) | Matches feel-approved scaling spike; wheel continues on last pick |
-| Classic mode | **Num8/5 = current-axis ± UNCHANGED**; gains re-tap + modal Num6/4/9/3. **One deliberate change: stagger Num0 = axis-within-family (was 4-way cycle)** — changelog note | Zero regression elsewhere; dead keys become pure additions |
+| Classic mode | **Num8/5 = current-axis ± UNCHANGED**; gains re-tap. Modal Num6/4/9/3 keep their existing grid-scaling behavior (they were never dead — direct-select is PR-only). **Deliberate stagger changes: Num0 = axis-within-family (was 4-way cycle), Num9/3 = family select, re-tap = family flip** — changelog note | Zero regression outside stagger |
 | Facing-sign per transform | Scaling YES · Spacing NO · Steps/Stagger YES · Rotation compose | Signed cell-index math (`Steps*X`, `Stagger*X`); feel-verify list in model doc §7 |
 | HUD axis labels | **Keep absolute X/Y/Z** (no Forward/Lateral relabel) | See "feedback model" — the preview is the feedback, not the label |
 | Arrow graphic | **Kept** | Orientation cue; needed by the Panel context anyway |

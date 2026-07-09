@@ -78,9 +78,11 @@ profile** (what the direction keys mean).
 | **Selectors** | Num0 cycle · **re-tap mode key** (new) | Num0 cycle · re-tap · **numpad directions** (select + adjust) |
 | **HUD highlight** | the current axis | the current target's **resolved** axis (follows facing) |
 
-Because the machinery is shared, classic mode inherits two pure additions for free (no behavior
-change to anything that works today): the **re-tap gesture** and, where noted below, numpad
-direct-select in modal (currently dead there).
+Because the machinery is shared, classic mode inherits the **re-tap gesture** for free. (Note: in
+classic modal the directional numpad keys are *not* dead — they scale the grid while a transform key
+is held, and that behavior is preserved. Numpad direct-select of transform targets is **PR-only**;
+the sole classic exception is stagger's Num9/3 = family select, part of the deliberate stagger
+navigation change.)
 
 ### 5.1 The re-tap gesture (resolves double-tap-on-a-hold-key)
 
@@ -105,7 +107,9 @@ quick re-grip advances one more.
 
 **PR profile** — numpad = compass (matches the feel-approved scaling spike: 8/5 = away/toward,
 6/4 = right/left, 9/3 = up/down). Direction keys **select and adjust** — the wheel continues on
-whatever you last picked.
+whatever you last picked. While a transform key is held, the direction keys drive **that transform**
+(in classic they scale the grid during modals; under PR, release the mode key to scale — the compass
+always means the same thing).
 
 | Mode | Targets (Num0 / re-tap cycle) | Num8/5 | Num6/4 | Num9/3 |
 |---|---|---|---|---|
@@ -143,10 +147,10 @@ deliberate change** (stagger navigation — needs a changelog note):
 | Input | Classic behavior |
 |---|---|
 | Wheel / Num8/5 | current axis ± — **unchanged** (Num8 on a cycled-to-Z spacing still adjusts Z) |
-| Num0 | cycle axis — unchanged for spacing/steps/rotation; **stagger: X↔Y within family** (was the 4-way cycle — the one deliberate classic change) |
-| **Re-tap mode key** | cycle axis — **new** (stagger option: re-tap `Y` = family flip, §5.1) |
-| **Num6/4 in modal** | select Y + adjust — **new** (dead today; stagger: the side/Y member of the current family) |
-| **Num9/3 in modal** | spacing: select Z + adjust — **new**; steps/rotation: no-op; **stagger: family select (9 = Stack, 3 = Flat)** |
+| Num0 | cycle axis — unchanged for spacing/steps/rotation; **stagger: X↔Y within family** (was the 4-way cycle — the deliberate classic change) |
+| **Re-tap mode key** | cycle axis — **new**; stagger: **family flip** (Stack ↔ Flat, §5.1) |
+| Num6/4 in modal | grid Y scaling — **unchanged** (never dead: the numpad scales the grid while a transform key is held) |
+| Num9/3 in modal | grid Z scaling — unchanged for spacing/steps/rotation; **stagger: family select (9 = Stack, 3 = Flat)** — part of the stagger change |
 
 ### 5.3 Sign policy (the resolver returns axis **and** sign)
 
@@ -205,11 +209,10 @@ the stored 4-state, default Stack; Num0 = axis toggle within family; Num9/3 = fa
 changelog note); Cycle Axis = target-cycler in PR (not a no-op — wheel-only accessibility forces
 this); **re-tap** (tap, re-grip within ~300 ms) = advance target, replacing the double-tap-on-hold
 question — hold-to-activate stays, no toggle rework, lands with the core pass; PR numpad = compass
-profile with select-and-adjust; classic keeps Num8/5 = current-axis ± untouched and gains re-tap +
-modal Num6/4/9/3.
-
-**Option (decide at feel-test):** stagger re-tap `Y` = **family flip** instead of the axis alias
-(§5.1) — gives each stagger selector its own gesture and full no-numpad reach.
+profile with select-and-adjust (PR-only — classic modal numpad keeps its grid-scaling behavior);
+classic keeps Num8/5 = current-axis ± untouched and gains re-tap; **stagger re-tap = family flip**
+(implemented as the default — each stagger selector gets its own gesture and full no-numpad reach;
+demote to the axis alias only if feel-test rejects it).
 
 **Feel-verify list (first build):** steps facing-sign (rise-away), stagger drift signs, rotation
 curl under resolved progression (highest risk), re-tap threshold (~300 ms), wheel-continues-on-last-
