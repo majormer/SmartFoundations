@@ -952,6 +952,25 @@ void USFSubsystem::Tick(float DeltaTime)
 		WalkService->RefreshWalkValidity();
 	}
 
+	// [#209] Player Relative: the HUD's active-axis highlight is facing-resolved, and turning the
+	// camera doesn't touch counter state - so while a transform mode is held, refresh the HUD when
+	// the resolved target changes (once per 90-degree facing change; no state or layout touched).
+	if (ActiveHologram.IsValid() &&
+		(bSpacingModeActive || bStepsModeActive || bStaggerModeActive || bRotationModeActive) &&
+		IsPlayerRelativeEnabled())
+	{
+		const ESFScaleAxis Effective =
+			  bSpacingModeActive ? GetEffectiveSpacingAxis()
+			: bStepsModeActive   ? GetEffectiveStepsAxis()
+			: bStaggerModeActive ? GetEffectiveStaggerAxis()
+			:                      GetEffectiveRotationAxis();
+		if (Effective != LastHudEffectiveAxis)
+		{
+			LastHudEffectiveAxis = Effective;
+			UpdateCounterDisplay();
+		}
+	}
+
 	// Issue #160: Continuous Zoop detection
 	// When Zoop is activated mid-placement (click-and-drag), we need to detect it
 	// and force grid to 1x1x1 even if no Smart! scaling input occurred.
@@ -1718,6 +1737,236 @@ static bool SF_ComputePlayerRelativeAxes(USFSubsystem* SS, AFGHologram* Holo,
 	return true;
 }
 
+// [#209] Map a target slot to the concrete (axis, sign) using the facing-resolved primary/lateral
+// pair. Vertical is view-invariant (up is up).
+static void SF_ResolveSlot(USFSubsystem::ESFPlayerRelativeSlot Slot,
+	ESFScaleAxis PrimAxis, int32 PrimSign, ESFScaleAxis LatAxis, int32 LatSign,
+	ESFScaleAxis& OutAxis, int32& OutSign)
+{
+	switch (Slot)
+	{
+	case USFSubsystem::ESFPlayerRelativeSlot::Side:     OutAxis = LatAxis;           OutSign = LatSign; break;
+	case USFSubsystem::ESFPlayerRelativeSlot::Vertical: OutAxis = ESFScaleAxis::Z;   OutSign = +1;      break;
+	default:                                            OutAxis = PrimAxis;          OutSign = PrimSign; break;
+	}
+}
+
+// [#209] Stagger: resolve (family, drift slot, facing) -> the concrete 4-state member + drift sign.
+// Each stagger mode is (progression x horizontal drift): Stack leans the vertical pile along the
+// drift axis (ZX drifts X, ZY drifts Y); Flat drifts a horizontal run (StaggerX drifts Y, StaggerY
+// drifts X). The drift AXIS is what the player picks (away/toward = primary, right/left = lateral);
+// the family picks which progression carries it.
+static void SF_ResolveStaggerTarget(bool bStackFamily, USFSubsystem::ESFPlayerRelativeSlot DriftSlot,
+	ESFScaleAxis PrimAxis, int32 PrimSign, ESFScaleAxis LatAxis, int32 LatSign,
+	ESFScaleAxis& OutAxis, int32& OutSign)
+{
+	const ESFScaleAxis DriftAxis = (DriftSlot == USFSubsystem::ESFPlayerRelativeSlot::Side) ? LatAxis : PrimAxis;
+	OutSign = (DriftSlot == USFSubsystem::ESFPlayerRelativeSlot::Side) ? LatSign : PrimSign;
+	if (bStackFamily)
+	{
+		OutAxis = (DriftAxis == ESFScaleAxis::X) ? ESFScaleAxis::ZX : ESFScaleAxis::ZY;
+	}
+	else
+	{
+		// Flat: the member whose DRIFT is the picked axis (StaggerY drifts X, StaggerX drifts Y).
+		OutAxis = (DriftAxis == ESFScaleAxis::X) ? ESFScaleAxis::Y : ESFScaleAxis::X;
+	}
+}
+
+bool USFSubsystem::IsPlayerRelativeEnabled() const
+{
+	return FSmart_ConfigStruct::GetActiveConfig(const_cast<USFSubsystem*>(this)).bPlayerRelativeControls;
+}
+
+// [#209] Grid counters are never 0 (forbidden value); 1 = single cell (treated as +).
+static int32 SF_SignNonZero(int32 V) { return V < 0 ? -1 : +1; }
+
+static int32 SF_GridCounterFor(const FSFCounterState& S, ESFScaleAxis Axis)
+{
+	switch (Axis)
+	{
+	case ESFScaleAxis::X: return S.GridCounters.X;
+	case ESFScaleAxis::Y: return S.GridCounters.Y;
+	case ESFScaleAxis::Z: return S.GridCounters.Z;
+	default: return 1;
+	}
+}
+
+bool USFSubsystem::ResolvePlayerRelativeModalTarget(bool bSelectSlot, ESFPlayerRelativeSlot DesiredSlot,
+	ESFScaleAxis& OutAxis, int32& OutSign)
+{
+	if (!(bSpacingModeActive || bStepsModeActive || bStaggerModeActive || bRotationModeActive))
+	{
+		return false;
+	}
+	ESFScaleAxis PrimAxis, LatAxis; int32 PrimSign, LatSign;
+	if (!SF_ComputePlayerRelativeAxes(this, ActiveHologram.Get(), PrimAxis, PrimSign, LatAxis, LatSign))
+	{
+		return false;
+	}
+
+	ESFPlayerRelativeSlot* Slot =
+		  bSpacingModeActive ? &PlayerRelativeSlots.Spacing
+		: bStepsModeActive   ? &PlayerRelativeSlots.Steps
+		: bStaggerModeActive ? &PlayerRelativeSlots.Stagger
+		:                      &PlayerRelativeSlots.Rotation;
+	if (bSelectSlot)
+	{
+		// Only spacing has a vertical target (steps ARE vertical; rotation is yaw; stagger's
+		// vertical key selects the family instead - handled by the caller).
+		if (DesiredSlot == ESFPlayerRelativeSlot::Vertical && !bSpacingModeActive)
+		{
+			return false;
+		}
+		*Slot = DesiredSlot;
+	}
+
+	if (bStaggerModeActive)
+	{
+		const bool bStack = USFGridStateService::IsStaggerStackFamily(CounterState.StaggerAxis);
+		SF_ResolveStaggerTarget(bStack, *Slot, PrimAxis, PrimSign, LatAxis, LatSign, OutAxis, OutSign);
+		// [#209] Drift sign (maintainer-spec 2026-07-09): the resolved facing sign of the DRIFT
+		// axis composes with the PROGRESSION axis' expansion direction (the offset rides SIGNED
+		// cell indices). Forward-drift: up = leans AWAY from you; Lateral-drift: up = leans to
+		// your RIGHT (the one signed lateral - a lean's direction IS its meaning).
+		const ESFScaleAxis ProgressionAxis =
+			  (OutAxis == ESFScaleAxis::ZX || OutAxis == ESFScaleAxis::ZY) ? ESFScaleAxis::Z
+			: (OutAxis == ESFScaleAxis::X) ? ESFScaleAxis::X
+			:                                ESFScaleAxis::Y;
+		OutSign *= SF_SignNonZero(SF_GridCounterFor(CounterState, ProgressionAxis));
+		// Input-time write: park the stored 4-state on the member being driven. The family
+		// projection rides it, and presets capture "last used" exactly as classic does.
+		CounterState.StaggerAxis = OutAxis;
+	}
+	else
+	{
+		SF_ResolveSlot(*Slot, PrimAxis, PrimSign, LatAxis, LatSign, OutAxis, OutSign);
+		// [#209] Per-role wheel sign (maintainer-spec 2026-07-09):
+		//  - FORWARD: scroll-up = grow the run in the direction you FACE. That is the facing sign
+		//    x the direction the array actually expands (grid-counter sign): at the anchor looking
+		//    along the run, up stretches it away; from the far end looking back, up pulls it
+		//    toward you (spacing contracts, steps rise toward you, rotation curls the near end).
+		//  - LATERAL/VERTICAL: plain magnitude (up = more) - you are not looking along them, so
+		//    there is no directional intuition to honor. Steps/rotation lateral keep the run's own
+		//    expansion sign (view-independent: up = more toward the far end).
+		if (*Slot == ESFPlayerRelativeSlot::Forward)
+		{
+			OutSign *= SF_SignNonZero(SF_GridCounterFor(CounterState, OutAxis));
+		}
+		else if (bSpacingModeActive)
+		{
+			OutSign = +1;
+		}
+		else
+		{
+			OutSign = SF_SignNonZero(SF_GridCounterFor(CounterState, OutAxis));
+		}
+	}
+	return true;
+}
+
+void USFSubsystem::AdvancePlayerRelativeSlot()
+{
+	using ESlot = ESFPlayerRelativeSlot;
+	if (bSpacingModeActive)
+	{
+		PlayerRelativeSlots.Spacing =
+			  (PlayerRelativeSlots.Spacing == ESlot::Forward) ? ESlot::Side
+			: (PlayerRelativeSlots.Spacing == ESlot::Side)    ? ESlot::Vertical
+			:                                                   ESlot::Forward;
+	}
+	else if (bStepsModeActive)
+	{
+		PlayerRelativeSlots.Steps = (PlayerRelativeSlots.Steps == ESlot::Forward) ? ESlot::Side : ESlot::Forward;
+	}
+	else if (bStaggerModeActive)
+	{
+		PlayerRelativeSlots.Stagger = (PlayerRelativeSlots.Stagger == ESlot::Forward) ? ESlot::Side : ESlot::Forward;
+	}
+	else if (bRotationModeActive)
+	{
+		PlayerRelativeSlots.Rotation = (PlayerRelativeSlots.Rotation == ESlot::Forward) ? ESlot::Side : ESlot::Forward;
+	}
+	else
+	{
+		return;
+	}
+	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("[#209] Player Relative target advanced (spacing=%d steps=%d stagger=%d rotation=%d)"),
+		(int32)PlayerRelativeSlots.Spacing, (int32)PlayerRelativeSlots.Steps,
+		(int32)PlayerRelativeSlots.Stagger, (int32)PlayerRelativeSlots.Rotation);
+	UpdateCounterDisplay(); // highlight moves; values didn't change
+}
+
+void USFSubsystem::SetStaggerFamilyProjection(bool bStack)
+{
+	if (GridStateService)
+	{
+		GridStateService->SetStaggerFamily(CounterState, bStack);
+	}
+	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("[#209] Stagger family: %s (axis now %s)"),
+		bStack ? TEXT("Stack (vertical pile leans)") : TEXT("Flat (horizontal run drifts)"),
+		*UEnum::GetValueAsString(CounterState.StaggerAxis));
+	UpdateCounterState(CounterState);
+}
+
+void USFSubsystem::ToggleStaggerFamilyProjection()
+{
+	SetStaggerFamilyProjection(!USFGridStateService::IsStaggerStackFamily(CounterState.StaggerAxis));
+}
+
+ESFScaleAxis USFSubsystem::GetEffectiveSpacingAxis() const
+{
+	USFSubsystem* Self = const_cast<USFSubsystem*>(this);
+	ESFScaleAxis PrimAxis, LatAxis; int32 PrimSign, LatSign;
+	if (!SF_ComputePlayerRelativeAxes(Self, Self->ActiveHologram.Get(), PrimAxis, PrimSign, LatAxis, LatSign))
+	{
+		return CounterState.SpacingAxis;
+	}
+	ESFScaleAxis Axis; int32 Sign;
+	SF_ResolveSlot(PlayerRelativeSlots.Spacing, PrimAxis, PrimSign, LatAxis, LatSign, Axis, Sign);
+	return Axis;
+}
+
+ESFScaleAxis USFSubsystem::GetEffectiveStepsAxis() const
+{
+	USFSubsystem* Self = const_cast<USFSubsystem*>(this);
+	ESFScaleAxis PrimAxis, LatAxis; int32 PrimSign, LatSign;
+	if (!SF_ComputePlayerRelativeAxes(Self, Self->ActiveHologram.Get(), PrimAxis, PrimSign, LatAxis, LatSign))
+	{
+		return CounterState.StepsAxis;
+	}
+	ESFScaleAxis Axis; int32 Sign;
+	SF_ResolveSlot(PlayerRelativeSlots.Steps, PrimAxis, PrimSign, LatAxis, LatSign, Axis, Sign);
+	return Axis;
+}
+
+ESFScaleAxis USFSubsystem::GetEffectiveStaggerAxis() const
+{
+	USFSubsystem* Self = const_cast<USFSubsystem*>(this);
+	ESFScaleAxis PrimAxis, LatAxis; int32 PrimSign, LatSign;
+	if (!SF_ComputePlayerRelativeAxes(Self, Self->ActiveHologram.Get(), PrimAxis, PrimSign, LatAxis, LatSign))
+	{
+		return CounterState.StaggerAxis;
+	}
+	ESFScaleAxis Axis; int32 Sign;
+	SF_ResolveStaggerTarget(USFGridStateService::IsStaggerStackFamily(CounterState.StaggerAxis),
+		PlayerRelativeSlots.Stagger, PrimAxis, PrimSign, LatAxis, LatSign, Axis, Sign);
+	return Axis;
+}
+
+ESFScaleAxis USFSubsystem::GetEffectiveRotationAxis() const
+{
+	USFSubsystem* Self = const_cast<USFSubsystem*>(this);
+	ESFScaleAxis PrimAxis, LatAxis; int32 PrimSign, LatSign;
+	if (!SF_ComputePlayerRelativeAxes(Self, Self->ActiveHologram.Get(), PrimAxis, PrimSign, LatAxis, LatSign))
+	{
+		return CounterState.RotationAxis;
+	}
+	ESFScaleAxis Axis; int32 Sign;
+	SF_ResolveSlot(PlayerRelativeSlots.Rotation, PrimAxis, PrimSign, LatAxis, LatSign, Axis, Sign);
+	return Axis;
+}
+
 void USFSubsystem::OnScaleXChanged(const FInputActionValue& Value)
 {
 	// Scaled Extend (Issue #265): Allow X scaling during extend mode.
@@ -1858,6 +2107,27 @@ void USFSubsystem::OnScaleYChanged(const FInputActionValue& Value)
 	// No modifiers → classic Y, OR the LATERAL axis under Player Relative. NumPad6 (right = wheel-up
 	// analog) / NumPad4 (left = wheel-down) fire here, so they follow facing like the Z-modifier + wheel.
 	const int32 Direction = AxisValue > 0.0f ? +1 : -1;
+
+	// [#209] Player Relative: while a modal transform is held, Num6/4 SELECT the SIDE target (to
+	// your right/left) and adjust it - the wheel keeps driving that pick. Classic modal keeps
+	// today's behavior below (the numpad still scales the grid while a transform key is held).
+	if (GridStateService)
+	{
+		ESFScaleAxis OvAxis; int32 OvSign;
+		if (ResolvePlayerRelativeModalTarget(/*bSelectSlot*/ true, ESFPlayerRelativeSlot::Side, OvAxis, OvSign))
+		{
+			const auto Result = GridStateService->DispatchValueAdjust(
+				CounterState, /*AccumulatedSteps*/ 1, Direction,
+				bRecipeModeActive, bSpacingModeActive, bStepsModeActive, bStaggerModeActive, bRotationModeActive,
+				CachedScrollIncrements, /*bUseAxisOverride*/ true, OvAxis, OvSign);
+			if (Result == USFGridStateService::EValueAdjustResult::CountersChanged)
+			{
+				UpdateCounterState(CounterState);
+			}
+			return;
+		}
+	}
+
 	ESFScaleAxis PrimAxis, LatAxis; int32 PrimSign, LatSign;
 	const bool bPlayerRel = SF_ComputePlayerRelativeAxes(this, ActiveHologram.Get(), PrimAxis, PrimSign, LatAxis, LatSign);
 	LastAxisInput = (LatAxis == ESFScaleAxis::X) ? ELastAxisInput::X : ELastAxisInput::Y;
@@ -1901,6 +2171,41 @@ void USFSubsystem::OnScaleZChanged(const FInputActionValue& Value)
 
     // No modifiers → Default Z-axis behavior
     const int32 Direction = AxisValue > 0.0f ? +1 : -1;
+
+    // [#209] Stagger family select - BOTH control modes: Num9 = Stack (the vertical pile leans),
+    // Num3 = Flat (a horizontal run drifts). Direct select (idempotent), keeps the axis pick.
+    // Part of the stagger 2x2 navigation change; replaces Z grid scaling while Stagger is held.
+    if (bStaggerModeActive && GridStateService)
+    {
+        SetStaggerFamilyProjection(/*bStack*/ Direction > 0);
+        return;
+    }
+
+    // [#209] Player Relative: vertical is a real target only for Spacing (steps ARE vertical,
+    // rotation is yaw-only) - select it and adjust. For steps/rotation the key is swallowed so
+    // the compass stays consistent instead of falling back to Z grid scaling. Classic modal
+    // (PR off) falls through: Num9/3 keep scaling the Z grid as they always have.
+    if (IsPlayerRelativeEnabled() &&
+        (bSpacingModeActive || bStepsModeActive || bRotationModeActive))
+    {
+        if (bSpacingModeActive && GridStateService)
+        {
+            ESFScaleAxis OvAxis; int32 OvSign;
+            if (ResolvePlayerRelativeModalTarget(/*bSelectSlot*/ true, ESFPlayerRelativeSlot::Vertical, OvAxis, OvSign))
+            {
+                const auto Result = GridStateService->DispatchValueAdjust(
+                    CounterState, /*AccumulatedSteps*/ 1, Direction,
+                    bRecipeModeActive, bSpacingModeActive, bStepsModeActive, bStaggerModeActive, bRotationModeActive,
+                    CachedScrollIncrements, /*bUseAxisOverride*/ true, OvAxis, OvSign);
+                if (Result == USFGridStateService::EValueAdjustResult::CountersChanged)
+                {
+                    UpdateCounterState(CounterState);
+                }
+            }
+        }
+        return;
+    }
+
     LastAxisInput = ELastAxisInput::Z;
     UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Scale Z: %.2f (direction: %d)"), AxisValue, Direction);
     ApplyAxisScaling(ESFScaleAxis::Z, Direction, TEXT("Scale Z"));
@@ -1943,6 +2248,12 @@ void USFSubsystem::OnValueIncreased(const FInputActionValue& Value)
     // Unified modal routing via GridStateService dispatcher
     if (GridStateService)
     {
+        // [#209] Player Relative: Num8/5 (increase/decrease) SELECT the FORWARD target - "grow
+        // away/toward" is what +/- means under PR - and adjust it; the wheel keeps driving that
+        // pick. Off (or no hologram/modal) -> classic cycled-axis behavior, unchanged.
+        ESFScaleAxis OvAxis = ESFScaleAxis::X; int32 OvSign = +1;
+        const bool bPR = ResolvePlayerRelativeModalTarget(/*bSelectSlot*/ true, ESFPlayerRelativeSlot::Forward, OvAxis, OvSign);
+
         const auto Result = GridStateService->DispatchValueAdjust(
             CounterState,
             /*AccumulatedSteps*/ 1,
@@ -1952,7 +2263,8 @@ void USFSubsystem::OnValueIncreased(const FInputActionValue& Value)
             bStepsModeActive,
             bStaggerModeActive,
             bRotationModeActive,
-            CachedScrollIncrements);  // [#217] config-driven per-notch increments
+            CachedScrollIncrements,  // [#217] config-driven per-notch increments
+            /*bUseAxisOverride*/ bPR, OvAxis, OvSign);
 
         if (Result == USFGridStateService::EValueAdjustResult::CountersChanged)
         {
@@ -2015,6 +2327,12 @@ void USFSubsystem::OnMouseWheelChanged(const FInputActionValue& Value)
     // Unified modal routing via GridStateService dispatcher
     if (GridStateService)
     {
+        // [#209] Player Relative: the wheel drives the CURRENT target (forward by default, or
+        // whatever the numpad/Num0/re-tap last selected), resolved against facing at input time.
+        // Off (or no hologram/modal) -> classic cycled axis, unchanged.
+        ESFScaleAxis OvAxis = ESFScaleAxis::X; int32 OvSign = +1;
+        const bool bPR = ResolvePlayerRelativeModalTarget(/*bSelectSlot*/ false, ESFPlayerRelativeSlot::Forward, OvAxis, OvSign);
+
         const auto Result = GridStateService->DispatchValueAdjust(
             CounterState,
             AccumulatedSteps,
@@ -2024,7 +2342,8 @@ void USFSubsystem::OnMouseWheelChanged(const FInputActionValue& Value)
             bStepsModeActive,
             bStaggerModeActive,
             bRotationModeActive,
-            CachedScrollIncrements);  // [#217] config-driven per-notch increments
+            CachedScrollIncrements,  // [#217] config-driven per-notch increments
+            /*bUseAxisOverride*/ bPR, OvAxis, OvSign);
 
         if (Result == USFGridStateService::EValueAdjustResult::CountersChanged)
         {
@@ -2084,6 +2403,11 @@ void USFSubsystem::OnValueDecreased(const FInputActionValue& Value)
     // Unified modal routing via GridStateService dispatcher
     if (GridStateService)
     {
+        // [#209] Player Relative: Num5 selects the FORWARD target and shrinks it, mirroring
+        // OnValueIncreased. Off (or no hologram/modal) -> classic cycled-axis behavior.
+        ESFScaleAxis OvAxis = ESFScaleAxis::X; int32 OvSign = +1;
+        const bool bPR = ResolvePlayerRelativeModalTarget(/*bSelectSlot*/ true, ESFPlayerRelativeSlot::Forward, OvAxis, OvSign);
+
         const auto Result = GridStateService->DispatchValueAdjust(
             CounterState,
             /*AccumulatedSteps*/ 1,
@@ -2093,7 +2417,8 @@ void USFSubsystem::OnValueDecreased(const FInputActionValue& Value)
             bStepsModeActive,
             bStaggerModeActive,
             bRotationModeActive,
-            CachedScrollIncrements);  // [#217] config-driven per-notch increments
+            CachedScrollIncrements,  // [#217] config-driven per-notch increments
+            /*bUseAxisOverride*/ bPR, OvAxis, OvSign);
 
         if (Result == USFGridStateService::EValueAdjustResult::CountersChanged)
         {

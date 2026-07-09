@@ -8,6 +8,11 @@
 #include "Subsystem/SFSubsystemImpl.h"
 #include "Features/Walk/SFWalkService.h"
 
+// [#209] Re-tap window: a mode-key press this soon after its own release advances the transform
+// target (stagger: flips the family) - the numpad-free "next axis" gesture. Hold semantics are
+// untouched; a single stray tap just flickers the mode on/off as it always has.
+static constexpr double SFModeKeyReTapSeconds = 0.3;
+
 
 // ========================================
 // Hologram Lock Ownership Helpers (Task 52)
@@ -223,6 +228,13 @@ void USFSubsystem::OnSpacingModeChanged(const FInputActionValue& Value)
     }
     if (bSpacingModeActive)
     {
+        // [#209] Re-tap (quick release -> re-press) advances the spacing target (classic: next
+        // axis; Player Relative: next slot) - same operation as Num0, no numpad needed.
+        if (FPlatformTime::Seconds() - LastSpacingModeReleaseSeconds < SFModeKeyReTapSeconds)
+        {
+            OnCycleAxis();
+        }
+
         UE_LOG(LogSmartFoundations, Verbose, TEXT("\U0001F527 Spacing Mode: ACTIVE (Semicolon held) - Current axis: %s"),
             *UEnum::GetValueAsString(CounterState.SpacingAxis));
         UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   Counters: X=%d cm, Y=%d cm, Z=%d cm"),
@@ -233,6 +245,7 @@ void USFSubsystem::OnSpacingModeChanged(const FInputActionValue& Value)
     }
     else
     {
+        LastSpacingModeReleaseSeconds = FPlatformTime::Seconds();
         UE_LOG(LogSmartFoundations, Verbose, TEXT("\U0001F527 Spacing Mode: Inactive (Semicolon released)"));
 
         // Try to release lock (Task 52 - centralized)
@@ -262,6 +275,12 @@ void USFSubsystem::OnStepsModeChanged(const FInputActionValue& Value)
     }
     if (bStepsModeActive)
     {
+        // [#209] Re-tap advances the steps target (classic: X/Y toggle; PR: fwd/side slot).
+        if (FPlatformTime::Seconds() - LastStepsModeReleaseSeconds < SFModeKeyReTapSeconds)
+        {
+            OnCycleAxis();
+        }
+
         // X-axis: Columns (constant X) step up based on X position
         // Y-axis: Rows (constant Y) step up based on Y position
         const TCHAR* AxisName = (CounterState.StepsAxis == ESFScaleAxis::X) ? TEXT("X (columns)") : TEXT("Y (rows)");
@@ -275,6 +294,7 @@ void USFSubsystem::OnStepsModeChanged(const FInputActionValue& Value)
     }
     else
     {
+        LastStepsModeReleaseSeconds = FPlatformTime::Seconds();
         UE_LOG(LogSmartFoundations, Verbose, TEXT("🔧 Steps Mode: Inactive (I released)"));
 
         // Try to release lock (Task 52 - centralized)
@@ -297,6 +317,22 @@ void USFSubsystem::OnCycleAxis()
     {
         // Auto-Connect Settings mode: Cycle to next setting
         CycleAutoConnectSetting();
+    }
+    // [#209] Player Relative: Num0 (and re-tap) advance the active transform's TARGET SLOT -
+    // fwd -> side (-> vert for spacing) - the numpad-free selector. STAGGER is the one exception,
+    // aligned with classic: Num0 toggles the FAMILY (Z on/off) and the drift direction rides
+    // re-tap/Num6/4 - the family is the bigger mental switch and gets the dedicated key.
+    else if ((bSpacingModeActive || bStepsModeActive || bStaggerModeActive || bRotationModeActive)
+             && IsPlayerRelativeEnabled())
+    {
+        if (bStaggerModeActive)
+        {
+            ToggleStaggerFamilyProjection();
+        }
+        else
+        {
+            AdvancePlayerRelativeSlot();
+        }
     }
     else if (bSpacingModeActive)
     {
@@ -331,10 +367,14 @@ void USFSubsystem::OnCycleAxis()
     }
     else if (bStaggerModeActive)
     {
-        // Stagger mode: Cycle X → Y → ZX → ZY via service
+        // [#209] Stagger navigates as FAMILY x AXIS. Classic: Num0 toggles the FAMILY (Z on/off -
+        // ZX<->X / ZY<->Y, keeping the direction) and a stagger-key re-tap toggles the direction
+        // within it; Num9/3 jump straight to Stack/Flat. Replaces the old ZX -> ZY -> X -> Y 4-way
+        // cycle - same four modes, stored state unchanged. [feel-tested swap, 2026-07-09]
         if (GridStateService)
         {
-            GridStateService->CycleStaggerAxis(CounterState);
+            GridStateService->SetStaggerFamily(CounterState,
+                !USFGridStateService::IsStaggerStackFamily(CounterState.StaggerAxis));
         }
 
 		const TCHAR* AxisName = TEXT("Unknown");
@@ -531,18 +571,33 @@ void USFSubsystem::OnStaggerModeChanged(const FInputActionValue& Value)
 	}
 	if (bStaggerModeActive)
 	{
-		// Stagger only uses X and Y axes (lateral grid offset)
-		const TCHAR* AxisName = (CounterState.StaggerAxis == ESFScaleAxis::X) ? TEXT("X (sideways curve)") : TEXT("Y (forward curve)");
-		const int32 CurrentCounter = (CounterState.StaggerAxis == ESFScaleAxis::X) ? CounterState.StaggerX : CounterState.StaggerY;
+		// [#209] Stagger's two selectors each get a gesture, IDENTICAL in both control modes
+		// (classic feel-tested, PR aligned): re-tap = DIRECTION within the family (classic
+		// ZX<->ZY / X<->Y, PR fwd<->side drift), Num0 = FAMILY (Z on/off). All four modes are
+		// reachable with no numpad.
+		if (FPlatformTime::Seconds() - LastStaggerModeReleaseSeconds < SFModeKeyReTapSeconds)
+		{
+			if (IsPlayerRelativeEnabled())
+			{
+				AdvancePlayerRelativeSlot();
+			}
+			else if (GridStateService)
+			{
+				GridStateService->ToggleStaggerAxisInFamily(CounterState);
+				UpdateCounterState(CounterState);
+			}
+		}
 
-		UE_LOG(LogSmartFoundations, Verbose, TEXT(" Stagger Mode: ACTIVE (Y held) - Axis: %s"), AxisName);
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   Current counter: %d units (Num0 to toggle X/Y)"), CurrentCounter);
+		UE_LOG(LogSmartFoundations, Verbose, TEXT(" Stagger Mode: ACTIVE (Y held) - Axis: %s"),
+			*UEnum::GetValueAsString(CounterState.StaggerAxis));
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("   (Num0/re-tap: axis in family | Num9/3: Stack/Flat family)"));
 
 		// Try to acquire lock (Task 52 - centralized)
 		TryAcquireHologramLock();
 	}
 	else
 	{
+		LastStaggerModeReleaseSeconds = FPlatformTime::Seconds();
 		// Try to release lock (Task 52 - centralized)
 		TryReleaseHologramLock();
 	}
@@ -565,6 +620,12 @@ void USFSubsystem::OnRotationModeChanged(const FInputActionValue& Value)
 	}
 	if (bRotationModeActive)
 	{
+		// [#209] Re-tap advances the rotation progression target (classic: X/Y; PR: fwd/side).
+		if (FPlatformTime::Seconds() - LastRotationModeReleaseSeconds < SFModeKeyReTapSeconds)
+		{
+			OnCycleAxis();
+		}
+
 		// Rotation is ALWAYS yaw (horizontal arc, upright). Num0 toggles the PROGRESSION axis:
 		// X (the run curves as it extends) vs Y (the rows fan out).
 		const TCHAR* ProgressDesc = (CounterState.RotationAxis == ESFScaleAxis::Y)
@@ -578,6 +639,7 @@ void USFSubsystem::OnRotationModeChanged(const FInputActionValue& Value)
 	}
 	else
 	{
+		LastRotationModeReleaseSeconds = FPlatformTime::Seconds();
 		// Try to release lock (Task 52 - centralized)
 		TryReleaseHologramLock();
 	}

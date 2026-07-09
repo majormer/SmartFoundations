@@ -28,6 +28,18 @@
 
 #define LOCTEXT_NAMESPACE "SmartFoundations"
 
+// [#209] Player Relative: label for the ACTIVE transform row - the view-relative ROLE the wheel is
+// driving (re-tap cycles it). Inactive value rows keep their absolute axis labels.
+static FText SF_PlayerRelativeRoleLabel(USFSubsystem::ESFPlayerRelativeSlot Slot)
+{
+	switch (Slot)
+	{
+	case USFSubsystem::ESFPlayerRelativeSlot::Side:     return LOCTEXT("HUD_RoleLateral", "Lateral");
+	case USFSubsystem::ESFPlayerRelativeSlot::Vertical: return LOCTEXT("HUD_RoleVertical", "Vertical");
+	default:                                            return LOCTEXT("HUD_RoleForward", "Forward");
+	}
+}
+
 void USFHudService::Initialize(USFSubsystem* InSubsystem)
 {
 	Subsystem = InSubsystem;
@@ -606,7 +618,10 @@ TPair<FString, FString> USFHudService::BuildCounterDisplayLines() const
 	{
 	// Spacing lines
 	const bool bSpacingActive = Subsystem->IsSpacingModeActive();
-	const ESFScaleAxis SpacingAxis = Subsystem->GetCurrentSpacingAxis();
+	const ESFScaleAxis SpacingAxis = Subsystem->GetEffectiveSpacingAxis();
+	// [#209] Player Relative: the ACTIVE row is labeled by its ROLE (Forward/Lateral/Vertical -
+	// what the wheel drives; re-tap cycles it). Inactive rows keep absolute axis labels.
+	const bool bPRRoles = Subsystem->IsPlayerRelativeEnabled();
     // Show when value is non-zero (negatives allowed) or while held on active axis
     const bool bShowSpacingX = (State.SpacingX != 0) || (bSpacingActive && SpacingAxis == ESFScaleAxis::X);
     const bool bShowSpacingY = (State.SpacingY != 0) || (bSpacingActive && SpacingAxis == ESFScaleAxis::Y);
@@ -616,25 +631,52 @@ TPair<FString, FString> USFHudService::BuildCounterDisplayLines() const
 	if (bShowSpacingX)
 	{
 		const bool bIsActive = (bSpacingActive && SpacingAxis == ESFScaleAxis::X);
-		Lines.Add(FText::Format(LOCTEXT("HUD_SpacingX", "Spacing [X]{0}: {1}m"),
-			FText::FromString(bIsActive ? TEXT("*") : TEXT("")),
-			FText::FromString(FString::Printf(TEXT("%.1f"), State.SpacingX / 100.0f))).ToString());
+		if (bIsActive && bPRRoles)
+		{
+			Lines.Add(FText::Format(LOCTEXT("HUD_SpacingRole", "Spacing [{0}]*: {1}m"),
+				SF_PlayerRelativeRoleLabel(Subsystem->GetSpacingRole()),
+				FText::FromString(FString::Printf(TEXT("%.1f"), State.SpacingX / 100.0f))).ToString());
+		}
+		else
+		{
+			Lines.Add(FText::Format(LOCTEXT("HUD_SpacingX", "Spacing [X]{0}: {1}m"),
+				FText::FromString(bIsActive ? TEXT("*") : TEXT("")),
+				FText::FromString(FString::Printf(TEXT("%.1f"), State.SpacingX / 100.0f))).ToString());
+		}
 		bAnySpacingPrinted = true;
 	}
 	if (bShowSpacingY)
 	{
 		const bool bIsActive = (bSpacingActive && SpacingAxis == ESFScaleAxis::Y);
-		Lines.Add(FText::Format(LOCTEXT("HUD_SpacingY", "Spacing [Y]{0}: {1}m"),
-			FText::FromString(bIsActive ? TEXT("*") : TEXT("")),
-			FText::FromString(FString::Printf(TEXT("%.1f"), State.SpacingY / 100.0f))).ToString());
+		if (bIsActive && bPRRoles)
+		{
+			Lines.Add(FText::Format(LOCTEXT("HUD_SpacingRole", "Spacing [{0}]*: {1}m"),
+				SF_PlayerRelativeRoleLabel(Subsystem->GetSpacingRole()),
+				FText::FromString(FString::Printf(TEXT("%.1f"), State.SpacingY / 100.0f))).ToString());
+		}
+		else
+		{
+			Lines.Add(FText::Format(LOCTEXT("HUD_SpacingY", "Spacing [Y]{0}: {1}m"),
+				FText::FromString(bIsActive ? TEXT("*") : TEXT("")),
+				FText::FromString(FString::Printf(TEXT("%.1f"), State.SpacingY / 100.0f))).ToString());
+		}
 		bAnySpacingPrinted = true;
 	}
 	if (bShowSpacingZ)
 	{
 		const bool bIsActive = (bSpacingActive && SpacingAxis == ESFScaleAxis::Z);
-		Lines.Add(FText::Format(LOCTEXT("HUD_SpacingZ", "Spacing [Z]{0}: {1}m"),
-			FText::FromString(bIsActive ? TEXT("*") : TEXT("")),
-			FText::FromString(FString::Printf(TEXT("%.1f"), State.SpacingZ / 100.0f))).ToString());
+		if (bIsActive && bPRRoles)
+		{
+			Lines.Add(FText::Format(LOCTEXT("HUD_SpacingRole", "Spacing [{0}]*: {1}m"),
+				SF_PlayerRelativeRoleLabel(Subsystem->GetSpacingRole()),
+				FText::FromString(FString::Printf(TEXT("%.1f"), State.SpacingZ / 100.0f))).ToString());
+		}
+		else
+		{
+			Lines.Add(FText::Format(LOCTEXT("HUD_SpacingZ", "Spacing [Z]{0}: {1}m"),
+				FText::FromString(bIsActive ? TEXT("*") : TEXT("")),
+				FText::FromString(FString::Printf(TEXT("%.1f"), State.SpacingZ / 100.0f))).ToString());
+		}
 		bAnySpacingPrinted = true;
 	}
 	if (bSpacingActive && !bAnySpacingPrinted)
@@ -644,7 +686,7 @@ TPair<FString, FString> USFHudService::BuildCounterDisplayLines() const
 
 	// Steps lines
 	const bool bStepsActive = Subsystem->IsStepsModeActive();
-	const ESFScaleAxis StepsAxis = Subsystem->GetCurrentStepsAxis();
+	const ESFScaleAxis StepsAxis = Subsystem->GetEffectiveStepsAxis();
     // Show when value is non-zero (negatives allowed) or while held on active axis
     const bool bShowStepsX = (State.StepsX != 0) || (bStepsActive && StepsAxis == ESFScaleAxis::X);
     const bool bShowStepsY = (State.StepsY != 0) || (bStepsActive && StepsAxis == ESFScaleAxis::Y);
@@ -652,17 +694,35 @@ TPair<FString, FString> USFHudService::BuildCounterDisplayLines() const
 	if (bShowStepsX)
 	{
 		const bool bIsActive = (bStepsActive && StepsAxis == ESFScaleAxis::X);
-		Lines.Add(FText::Format(LOCTEXT("HUD_StepsX", "Steps [X]{0}: {1}m columns"),
-			FText::FromString(bIsActive ? TEXT("*") : TEXT("")),
-			FText::FromString(FString::Printf(TEXT("%.1f"), State.StepsX / 100.0f))).ToString());
+		if (bIsActive && bPRRoles)
+		{
+			Lines.Add(FText::Format(LOCTEXT("HUD_StepsRole", "Steps [{0}]*: {1}m"),
+				SF_PlayerRelativeRoleLabel(Subsystem->GetStepsRole()),
+				FText::FromString(FString::Printf(TEXT("%.1f"), State.StepsX / 100.0f))).ToString());
+		}
+		else
+		{
+			Lines.Add(FText::Format(LOCTEXT("HUD_StepsX", "Steps [X]{0}: {1}m columns"),
+				FText::FromString(bIsActive ? TEXT("*") : TEXT("")),
+				FText::FromString(FString::Printf(TEXT("%.1f"), State.StepsX / 100.0f))).ToString());
+		}
 		bAnyStepsPrinted = true;
 	}
 	if (bShowStepsY)
 	{
 		const bool bIsActive = (bStepsActive && StepsAxis == ESFScaleAxis::Y);
-		Lines.Add(FText::Format(LOCTEXT("HUD_StepsY", "Steps [Y]{0}: {1}m rows"),
-			FText::FromString(bIsActive ? TEXT("*") : TEXT("")),
-			FText::FromString(FString::Printf(TEXT("%.1f"), State.StepsY / 100.0f))).ToString());
+		if (bIsActive && bPRRoles)
+		{
+			Lines.Add(FText::Format(LOCTEXT("HUD_StepsRole", "Steps [{0}]*: {1}m"),
+				SF_PlayerRelativeRoleLabel(Subsystem->GetStepsRole()),
+				FText::FromString(FString::Printf(TEXT("%.1f"), State.StepsY / 100.0f))).ToString());
+		}
+		else
+		{
+			Lines.Add(FText::Format(LOCTEXT("HUD_StepsY", "Steps [Y]{0}: {1}m rows"),
+				FText::FromString(bIsActive ? TEXT("*") : TEXT("")),
+				FText::FromString(FString::Printf(TEXT("%.1f"), State.StepsY / 100.0f))).ToString());
+		}
 		bAnyStepsPrinted = true;
 	}
 	if (bStepsActive && !bAnyStepsPrinted)
@@ -672,43 +732,85 @@ TPair<FString, FString> USFHudService::BuildCounterDisplayLines() const
 
 	// Stagger lines (suppress entirely during Extend — stagger is blocked)
 	const bool bStaggerActive = !bIsExtendActive && Subsystem->IsStaggerModeActive();
-	const ESFScaleAxis StaggerAxis = Subsystem->GetCurrentStaggerAxis();
+	const ESFScaleAxis StaggerAxis = Subsystem->GetEffectiveStaggerAxis();
     // Show when value is non-zero (negatives allowed) or while held on active axis
     const bool bShowStaggerX = !bIsExtendActive && ((State.StaggerX != 0) || (bStaggerActive && StaggerAxis == ESFScaleAxis::X));
     const bool bShowStaggerY = !bIsExtendActive && ((State.StaggerY != 0) || (bStaggerActive && StaggerAxis == ESFScaleAxis::Y));
     const bool bShowStaggerZX = !bIsExtendActive && ((State.StaggerZX != 0) || (bStaggerActive && StaggerAxis == ESFScaleAxis::ZX));
     const bool bShowStaggerZY = !bIsExtendActive && ((State.StaggerZY != 0) || (bStaggerActive && StaggerAxis == ESFScaleAxis::ZY));
 	bool bAnyStaggerPrinted = false;
+	// [#209] PR active-row label carries family + role ("Stagger [Stack/Forward]*") - with the
+	// axis token replaced by the role, Stack/Flat would otherwise vanish from the HUD (and Num0
+	// toggles it, so it must stay visible).
+	const FText StaggerFamilyLabel = (StaggerAxis == ESFScaleAxis::ZX || StaggerAxis == ESFScaleAxis::ZY)
+		? LOCTEXT("HUD_StaggerFamilyStack", "Stack")
+		: LOCTEXT("HUD_StaggerFamilyFlat", "Flat");
 	if (bShowStaggerX)
 	{
 		const bool bIsActive = (bStaggerActive && StaggerAxis == ESFScaleAxis::X);
-		Lines.Add(FText::Format(LOCTEXT("HUD_StaggerX", "Stagger [X]{0}: {1}m sideways"),
-			FText::FromString(bIsActive ? TEXT("*") : TEXT("")),
-			FText::FromString(FString::Printf(TEXT("%.1f"), State.StaggerX / 100.0f))).ToString());
+		if (bIsActive && bPRRoles)
+		{
+			Lines.Add(FText::Format(LOCTEXT("HUD_StaggerRole", "Stagger [{0}/{1}]*: {2}m"),
+				StaggerFamilyLabel, SF_PlayerRelativeRoleLabel(Subsystem->GetStaggerRole()),
+				FText::FromString(FString::Printf(TEXT("%.1f"), State.StaggerX / 100.0f))).ToString());
+		}
+		else
+		{
+			Lines.Add(FText::Format(LOCTEXT("HUD_StaggerX", "Stagger [X]{0}: {1}m sideways"),
+				FText::FromString(bIsActive ? TEXT("*") : TEXT("")),
+				FText::FromString(FString::Printf(TEXT("%.1f"), State.StaggerX / 100.0f))).ToString());
+		}
 		bAnyStaggerPrinted = true;
 	}
 	if (bShowStaggerY)
 	{
 		const bool bIsActive = (bStaggerActive && StaggerAxis == ESFScaleAxis::Y);
-		Lines.Add(FText::Format(LOCTEXT("HUD_StaggerY", "Stagger [Y]{0}: {1}m forward"),
-			FText::FromString(bIsActive ? TEXT("*") : TEXT("")),
-			FText::FromString(FString::Printf(TEXT("%.1f"), State.StaggerY / 100.0f))).ToString());
+		if (bIsActive && bPRRoles)
+		{
+			Lines.Add(FText::Format(LOCTEXT("HUD_StaggerRole", "Stagger [{0}/{1}]*: {2}m"),
+				StaggerFamilyLabel, SF_PlayerRelativeRoleLabel(Subsystem->GetStaggerRole()),
+				FText::FromString(FString::Printf(TEXT("%.1f"), State.StaggerY / 100.0f))).ToString());
+		}
+		else
+		{
+			Lines.Add(FText::Format(LOCTEXT("HUD_StaggerY", "Stagger [Y]{0}: {1}m forward"),
+				FText::FromString(bIsActive ? TEXT("*") : TEXT("")),
+				FText::FromString(FString::Printf(TEXT("%.1f"), State.StaggerY / 100.0f))).ToString());
+		}
 		bAnyStaggerPrinted = true;
 	}
 	if (bShowStaggerZX)
 	{
 		const bool bIsActive = (bStaggerActive && StaggerAxis == ESFScaleAxis::ZX);
-		Lines.Add(FText::Format(LOCTEXT("HUD_StaggerZX", "Stagger [ZX]{0}: {1}m shift forward"),
-			FText::FromString(bIsActive ? TEXT("*") : TEXT("")),
-			FText::FromString(FString::Printf(TEXT("%.1f"), State.StaggerZX / 100.0f))).ToString());
+		if (bIsActive && bPRRoles)
+		{
+			Lines.Add(FText::Format(LOCTEXT("HUD_StaggerRole", "Stagger [{0}/{1}]*: {2}m"),
+				StaggerFamilyLabel, SF_PlayerRelativeRoleLabel(Subsystem->GetStaggerRole()),
+				FText::FromString(FString::Printf(TEXT("%.1f"), State.StaggerZX / 100.0f))).ToString());
+		}
+		else
+		{
+			Lines.Add(FText::Format(LOCTEXT("HUD_StaggerZX", "Stagger [ZX]{0}: {1}m shift forward"),
+				FText::FromString(bIsActive ? TEXT("*") : TEXT("")),
+				FText::FromString(FString::Printf(TEXT("%.1f"), State.StaggerZX / 100.0f))).ToString());
+		}
 		bAnyStaggerPrinted = true;
 	}
 	if (bShowStaggerZY)
 	{
 		const bool bIsActive = (bStaggerActive && StaggerAxis == ESFScaleAxis::ZY);
-		Lines.Add(FText::Format(LOCTEXT("HUD_StaggerZY", "Stagger [ZY]{0}: {1}m shift sideways"),
-			FText::FromString(bIsActive ? TEXT("*") : TEXT("")),
-			FText::FromString(FString::Printf(TEXT("%.1f"), State.StaggerZY / 100.0f))).ToString());
+		if (bIsActive && bPRRoles)
+		{
+			Lines.Add(FText::Format(LOCTEXT("HUD_StaggerRole", "Stagger [{0}/{1}]*: {2}m"),
+				StaggerFamilyLabel, SF_PlayerRelativeRoleLabel(Subsystem->GetStaggerRole()),
+				FText::FromString(FString::Printf(TEXT("%.1f"), State.StaggerZY / 100.0f))).ToString());
+		}
+		else
+		{
+			Lines.Add(FText::Format(LOCTEXT("HUD_StaggerZY", "Stagger [ZY]{0}: {1}m shift sideways"),
+				FText::FromString(bIsActive ? TEXT("*") : TEXT("")),
+				FText::FromString(FString::Printf(TEXT("%.1f"), State.StaggerZY / 100.0f))).ToString());
+		}
 		bAnyStaggerPrinted = true;
 	}
 	if (bStaggerActive && !bAnyStaggerPrinted)
@@ -720,8 +822,12 @@ TPair<FString, FString> USFHudService::BuildCounterDisplayLines() const
 	// PROGRESSION axis (X-clones vs Y-rows), never Z. Show the row whenever rotation is active
 	// or a non-zero angle is set — NOT gated on a specific axis value.
 	const bool bRotationActive = Subsystem->IsRotationModeActive();
-	const ESFScaleAxis RotationAxis = Subsystem->GetCurrentRotationAxis();
-	const TCHAR* RotationAxisLabel = (RotationAxis == ESFScaleAxis::Y) ? TEXT("Y") : TEXT("X");
+	const ESFScaleAxis RotationAxis = Subsystem->GetEffectiveRotationAxis();
+	// [#209] Under PR while held, the label is the ROLE (Forward/Lateral progression); otherwise
+	// the absolute progression axis.
+	const FText RotationAxisLabelText = (bRotationActive && Subsystem->IsPlayerRelativeEnabled())
+		? SF_PlayerRelativeRoleLabel(Subsystem->GetRotationRole())
+		: FText::FromString((RotationAxis == ESFScaleAxis::Y) ? TEXT("Y") : TEXT("X"));
 	const bool bShowRotationZ = !FMath::IsNearlyZero(State.RotationZ) || bRotationActive;
 	bool bAnyRotationPrinted = false;
 	if (bShowRotationZ)
@@ -741,7 +847,7 @@ TPair<FString, FString> USFHudService::BuildCounterDisplayLines() const
 		if (Radius > 0.0f && BuildingsPerCircle > 0)
 		{
 			Lines.Add(FText::Format(LOCTEXT("HUD_RotationZFull", "Rotation [{0}]{1}: {2}\u00B0 (R={3}m, {4}/circle)"),
-				FText::FromString(RotationAxisLabel),
+				RotationAxisLabelText,
 				FText::FromString(bIsActive ? TEXT("*") : TEXT("")),
 				FText::FromString(FString::Printf(TEXT("%.1f"), State.RotationZ)),
 				FText::FromString(FString::Printf(TEXT("%.1f"), Radius)),
@@ -750,7 +856,7 @@ TPair<FString, FString> USFHudService::BuildCounterDisplayLines() const
 		else
 		{
 			Lines.Add(FText::Format(LOCTEXT("HUD_RotationZ", "Rotation [{0}]{1}: {2}\u00B0"),
-				FText::FromString(RotationAxisLabel),
+				RotationAxisLabelText,
 				FText::FromString(bIsActive ? TEXT("*") : TEXT("")),
 				FText::FromString(FString::Printf(TEXT("%.1f"), State.RotationZ))).ToString());
 		}

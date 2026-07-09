@@ -58,15 +58,36 @@ public:
         State.StepsAxis = (State.StepsAxis == ESFScaleAxis::X) ? ESFScaleAxis::Y : ESFScaleAxis::X;
     }
 
-    void CycleStaggerAxis(FSFCounterState& State)
+    // [#209] Stagger's four modes navigate as FAMILY x AXIS instead of one 4-way cycle. The stored
+    // 4-state is unchanged - family and axis are projections of it, so presets/Restore/MP replay
+    // identically. Family = build context: Stack (ZX/ZY - a vertical pile leans) vs Flat (X/Y - a
+    // horizontal run drifts). Default ZX = (Stack, X), same as the old ZX-first cycle.
+    static bool IsStaggerStackFamily(ESFScaleAxis Axis)
     {
-        // Cycle order: ZX → ZY → X → Y (ZX first for auto-connect distributor grids)
+        return Axis == ESFScaleAxis::ZX || Axis == ESFScaleAxis::ZY;
+    }
+
+    void ToggleStaggerAxisInFamily(FSFCounterState& State)
+    {
         switch (State.StaggerAxis)
         {
         case ESFScaleAxis::ZX: State.StaggerAxis = ESFScaleAxis::ZY; break;
-        case ESFScaleAxis::ZY: State.StaggerAxis = ESFScaleAxis::X;  break;
+        case ESFScaleAxis::ZY: State.StaggerAxis = ESFScaleAxis::ZX; break;
         case ESFScaleAxis::X:  State.StaggerAxis = ESFScaleAxis::Y;  break;
-        case ESFScaleAxis::Y:  default: State.StaggerAxis = ESFScaleAxis::ZX; break;
+        case ESFScaleAxis::Y:  default: State.StaggerAxis = ESFScaleAxis::X; break;
+        }
+    }
+
+    void SetStaggerFamily(FSFCounterState& State, bool bStack)
+    {
+        // Direct select (idempotent), preserving the axis component: X<->ZX, Y<->ZY.
+        switch (State.StaggerAxis)
+        {
+        case ESFScaleAxis::X:  if (bStack)  { State.StaggerAxis = ESFScaleAxis::ZX; } break;
+        case ESFScaleAxis::Y:  if (bStack)  { State.StaggerAxis = ESFScaleAxis::ZY; } break;
+        case ESFScaleAxis::ZX: if (!bStack) { State.StaggerAxis = ESFScaleAxis::X;  } break;
+        case ESFScaleAxis::ZY: if (!bStack) { State.StaggerAxis = ESFScaleAxis::Y;  } break;
+        default: break;
         }
     }
 
@@ -176,26 +197,39 @@ public:
         bool bStepsModeActive,
         bool bStaggerModeActive,
         bool bRotationModeActive,
-        const FSFScrollIncrements& Inc)
+        const FSFScrollIncrements& Inc,
+        // [#209] Player Relative: when set, the transform is applied on OverrideAxis (the player's
+        // current target ROLE - Forward/Lateral/Vertical - resolved from facing at input time)
+        // instead of the cycled per-mode axis. OverrideSign is the fully-resolved per-role wheel
+        // sign computed by the caller (USFSubsystem::ResolvePlayerRelativeModalTarget owns the
+        // policy: Forward = facing x expansion-direction so scroll-up grows the run you face;
+        // Lateral/Vertical = magnitude, except stagger's lateral drift which stays view-signed).
+        // Off (default) = classic cycled-axis behavior, unchanged.
+        bool bUseAxisOverride = false,
+        ESFScaleAxis OverrideAxis = ESFScaleAxis::X,
+        int32 OverrideSign = +1)
     {
+        const int32 SignedDir = bUseAxisOverride ? Direction * OverrideSign : Direction;
         if (bSpacingModeActive)
         {
-            AdjustSpacing(State, State.SpacingAxis, AccumulatedSteps, Direction, Inc.SpacingCm);
+            AdjustSpacing(State, bUseAxisOverride ? OverrideAxis : State.SpacingAxis, AccumulatedSteps, SignedDir, Inc.SpacingCm);
             return EValueAdjustResult::CountersChanged;
         }
         if (bStepsModeActive)
         {
-            AdjustSteps(State, State.StepsAxis, AccumulatedSteps, Direction, Inc.StepsCm);
+            AdjustSteps(State, bUseAxisOverride ? OverrideAxis : State.StepsAxis, AccumulatedSteps, SignedDir, Inc.StepsCm);
             return EValueAdjustResult::CountersChanged;
         }
         if (bStaggerModeActive)
         {
-            AdjustStagger(State, State.StaggerAxis, AccumulatedSteps, Direction, Inc.StaggerCm);
+            AdjustStagger(State, bUseAxisOverride ? OverrideAxis : State.StaggerAxis, AccumulatedSteps, SignedDir, Inc.StaggerCm);
             return EValueAdjustResult::CountersChanged;
         }
         if (bRotationModeActive)
         {
-            AdjustRotation(State, State.RotationAxis, AccumulatedSteps, Direction, Inc.RotationDeg);
+            // The resolver's sign composes with AdjustRotation's own Y-negation to keep the curl
+            // "away = right". [#209 feel-verify - highest-risk sign]
+            AdjustRotation(State, bUseAxisOverride ? OverrideAxis : State.RotationAxis, AccumulatedSteps, SignedDir, Inc.RotationDeg);
             return EValueAdjustResult::CountersChanged;
         }
         if (bRecipeModeActive)

@@ -431,6 +431,27 @@ public:
   ESFScaleAxis GetCurrentStaggerAxis() const { return GetCounterState().StaggerAxis; }
   ESFScaleAxis GetCurrentRotationAxis() const { return GetCounterState().RotationAxis; }
 
+  // [#209] The axis the next wheel notch will drive, for the HUD highlight. Classic = the cycled
+  // axis (same as GetCurrent*); Player Relative = the mode's current target slot resolved against
+  // the player's facing RIGHT NOW, so the highlight follows the view live. (SFSubsystem.cpp)
+  ESFScaleAxis GetEffectiveSpacingAxis() const;
+  ESFScaleAxis GetEffectiveStepsAxis() const;
+  ESFScaleAxis GetEffectiveStaggerAxis() const;
+  ESFScaleAxis GetEffectiveRotationAxis() const;
+
+  /** [#209] Player Relative master switch (Smart_Config, read live). */
+  bool IsPlayerRelativeEnabled() const;
+
+  /** [#209] View-relative target slot: which direction (relative to the player) an input drives. */
+  enum class ESFPlayerRelativeSlot : uint8 { Forward, Side, Vertical };
+
+  // [#209] Current target ROLE per transform, for the HUD's active-row label under Player
+  // Relative (Forward/Lateral/Vertical - re-tap cycles it; the label is the player's feedback).
+  ESFPlayerRelativeSlot GetSpacingRole() const  { return PlayerRelativeSlots.Spacing; }
+  ESFPlayerRelativeSlot GetStepsRole() const    { return PlayerRelativeSlots.Steps; }
+  ESFPlayerRelativeSlot GetStaggerRole() const  { return PlayerRelativeSlots.Stagger; }
+  ESFPlayerRelativeSlot GetRotationRole() const { return PlayerRelativeSlots.Rotation; }
+
   // Modifier accessors for scaling highlight (implemented in .cpp due to forward declarations)
   bool IsModifierScaleXActive() const;
   bool IsModifierScaleYActive() const;
@@ -646,6 +667,55 @@ protected:
 
     /** Last axis input for arrow highlighting (non-replicated, local visualization state) */
     ELastAxisInput LastAxisInput = ELastAxisInput::None;
+
+    // ========================================
+    // [#209] Player Relative target state (the ESFPlayerRelativeSlot enum is public, above)
+    // ========================================
+
+    /**
+     * Per-transform current target slot under Player Relative. Runtime-only - deliberately NOT in
+     * FSFCounterState, so presets/Restore/MP never capture a view-dependent slot. Stagger's FAMILY
+     * (Stack/Flat) is absolute build context and lives in the stored StaggerAxis 4-state instead
+     * (family = projection; see USFGridStateService::SetStaggerFamily). Reset on build-gun holster.
+     */
+    struct FSFPlayerRelativeSlots
+    {
+        ESFPlayerRelativeSlot Spacing  = ESFPlayerRelativeSlot::Forward;
+        ESFPlayerRelativeSlot Steps    = ESFPlayerRelativeSlot::Forward;   // Forward/Side only
+        ESFPlayerRelativeSlot Stagger  = ESFPlayerRelativeSlot::Forward;   // drift within the family
+        ESFPlayerRelativeSlot Rotation = ESFPlayerRelativeSlot::Forward;   // Forward/Side only
+    };
+    FSFPlayerRelativeSlots PlayerRelativeSlots;
+
+    /**
+     * [#209] Re-tap detection: a mode-key press within SFModeKeyReTapSeconds of its release
+     * advances the transform target (stagger: flips the family). Real-time seconds.
+     */
+    double LastSpacingModeReleaseSeconds  = -1000.0;
+    double LastStepsModeReleaseSeconds    = -1000.0;
+    double LastStaggerModeReleaseSeconds  = -1000.0;
+    double LastRotationModeReleaseSeconds = -1000.0;
+
+    /** [#209] Last facing-resolved axis the HUD highlighted; Tick refreshes the HUD when it moves. */
+    ESFScaleAxis LastHudEffectiveAxis = ESFScaleAxis::X;
+
+    /**
+     * [#209] For the active modal transform under Player Relative: optionally select a slot
+     * (bSelectSlot - the wheel keeps driving it afterwards), then resolve it to a concrete
+     * (axis, sign) for DispatchValueAdjust. Stagger resolves within the stored family and writes
+     * the concrete member back to StaggerAxis (input-time write). Returns false when Player
+     * Relative is off, no modal transform is active, or the slot doesn't exist for the mode
+     * (vertical outside spacing) - callers fall through to classic behavior.
+     */
+    bool ResolvePlayerRelativeModalTarget(bool bSelectSlot, ESFPlayerRelativeSlot DesiredSlot,
+        ESFScaleAxis& OutAxis, int32& OutSign);
+
+    /** [#209] Num0/re-tap under Player Relative: advance the active mode's target slot. */
+    void AdvancePlayerRelativeSlot();
+
+    /** [#209] Stagger family (Stack/Flat) projection on StaggerAxis - direct set + flip (both control modes). */
+    void SetStaggerFamilyProjection(bool bStack);
+    void ToggleStaggerFamilyProjection();
 
 	/** Cached hologram transform to detect movement (optimization: only update arrows when hologram moves) */
 	FTransform LastHologramTransform;
