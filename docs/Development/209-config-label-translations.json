@@ -1,0 +1,87 @@
+{
+ "_source": {
+  "Config_PlayerRelativeControls": "Player Relative Controls:",
+  "Config_PlayerRelativeControls_Tooltip": "Scale and the other transforms follow the direction you're facing while building. The Smart Panel stays fixed X/Y/Z. Off = classic axis controls."
+ },
+ "_note": "Asset FText (Smart_Config). Apply after release Gather assigns keys, or set the two FTexts to these keys in the editor Details panel, then apply_translations.py.",
+ "de": {
+  "Config_PlayerRelativeControls": "Spielerrelative Steuerung:",
+  "Config_PlayerRelativeControls_Tooltip": "Skalierung und die anderen Transformationen folgen beim Bauen deiner Blickrichtung. Das Smart-Panel bleibt fest bei X/Y/Z. Aus = klassische Achsensteuerung."
+ },
+ "es": {
+  "Config_PlayerRelativeControls": "Controles relativos al jugador:",
+  "Config_PlayerRelativeControls_Tooltip": "El escalado y las demás transformaciones siguen la dirección hacia la que miras al construir. El Panel Smart mantiene fijos X/Y/Z. Desactivado = controles de ejes clásicos."
+ },
+ "fr": {
+  "Config_PlayerRelativeControls": "Commandes relatives au joueur :",
+  "Config_PlayerRelativeControls_Tooltip": "La mise à l'échelle et les autres transformations suivent la direction de votre regard pendant la construction. Le panneau Smart reste fixe en X/Y/Z. Désactivé = commandes d'axes classiques."
+ },
+ "it": {
+  "Config_PlayerRelativeControls": "Controlli relativi al giocatore:",
+  "Config_PlayerRelativeControls_Tooltip": "Il ridimensionamento e le altre trasformazioni seguono la direzione verso cui guardi mentre costruisci. Il Pannello Smart resta fisso su X/Y/Z. Disattivato = controlli degli assi classici."
+ },
+ "ja": {
+  "Config_PlayerRelativeControls": "プレイヤー相対操作:",
+  "Config_PlayerRelativeControls_Tooltip": "建築中、拡張やその他の変形が向いている方向に追従します。スマートパネルはX/Y/Z固定のままです。オフ = 従来の軸操作。"
+ },
+ "ko": {
+  "Config_PlayerRelativeControls": "플레이어 상대 조작:",
+  "Config_PlayerRelativeControls_Tooltip": "건설 중 배율과 다른 변형이 바라보는 방향을 따릅니다. 스마트 패널은 X/Y/Z로 고정됩니다. 끄면 기존 축 조작."
+ },
+ "pl": {
+  "Config_PlayerRelativeControls": "Sterowanie względem gracza:",
+  "Config_PlayerRelativeControls_Tooltip": "Skalowanie i pozostałe przekształcenia podążają za kierunkiem, w którym patrzysz podczas budowania. Panel Smart pozostaje stały w X/Y/Z. Wyłączone = klasyczne sterowanie osiami."
+ },
+ "pt-BR": {
+  "Config_PlayerRelativeControls": "Controles relativos ao jogador:",
+  "Config_PlayerRelativeControls_Tooltip": "O dimensionamento e as outras transformações seguem a direção para onde você olha ao construir. O Painel Smart permanece fixo em X/Y/Z. Desativado = controles de eixo clássicos."
+ },
+ "ru": {
+  "Config_PlayerRelativeControls": "Управление относительно игрока:",
+  "Config_PlayerRelativeControls_Tooltip": "Масштабирование и другие преобразования следуют за направлением вашего взгляда при строительстве. Панель Smart остаётся фиксированной по X/Y/Z. Выкл. = классическое управление осями."
+ },
+ "zh-Hans": {
+  "Config_PlayerRelativeControls": "玩家相对控制：",
+  "Config_PlayerRelativeControls_Tooltip": "建造时，缩放和其他变换会跟随你面朝的方向。Smart 面板保持固定的 X/Y/Z。关闭 = 经典轴向控制。"
+ },
+ "zh-Hant": {
+  "Config_PlayerRelativeControls": "玩家相對控制：",
+  "Config_PlayerRelativeControls_Tooltip": "建造時，縮放和其他變換會跟隨你面朝的方向。Smart 面板保持固定的 X/Y/Z。關閉 = 經典軸向控制。"
+ },
+ "tr": {
+  "Config_PlayerRelativeControls": "Oyuncuya Göre Kontroller:",
+  "Config_PlayerRelativeControls_Tooltip": "İnşa ederken ölçekleme ve diğer dönüşümler baktığın yönü izler. Smart Paneli X/Y/Z sabit kalır. Kapalı = klasik eksen kontrolleri."
+ },
+ "bg": {
+  "Config_PlayerRelativeControls": "Управление спрямо играча:",
+  "Config_PlayerRelativeControls_Tooltip": "Мащабирането и другите трансформации следват посоката, в която гледаш, докато строиш. Smart панелът остава фиксиран по X/Y/Z. Изключено = класическо управление по оси."
+ },
+ "hu": {
+  "Config_PlayerRelativeControls": "Játékoshoz viszonyított vezérlés:",
+  "Config_PlayerRelativeControls_Tooltip": "Építés közben a méretezés és a többi átalakítás azt az irányt követi, amerre nézel. A Smart panel fixen X/Y/Z marad. Kikapcsolva = klasszikus tengelyvezérlés."
+ },
+ "no": {
+  "Config_PlayerRelativeControls": "Spillerrelative kontroller:",
+  "Config_PlayerRelativeControls_Tooltip": "Skalering og de andre transformasjonene følger retningen du ser i mens du bygger. Smart-panelet holder seg fast på X/Y/Z. Av = klassisk aksestyring."
+ },
+ "uk": {
+  "Config_PlayerRelativeControls": "Керування відносно гравця:",
+  "Config_PlayerRelativeControls_Tooltip": "Масштабування та інші перетворення слідують за напрямком вашого погляду під час будівництва. Панель Smart залишається фіксованою за X/Y/Z. Вимк. = класичне керування осями."
+ },
+ "vi": {
+  "Config_PlayerRelativeControls": "Điều khiển tương đối theo người chơi:",
+  "Config_PlayerRelativeControls_Tooltip": "Khi xây dựng, việc chỉnh tỉ lệ và các phép biến đổi khác đi theo hướng bạn đang nhìn. Bảng Smart vẫn cố định X/Y/Z. Tắt = điều khiển trục cổ điển."
+ },
+ "ar": {
+  "Config_PlayerRelativeControls": "التحكم النسبي للاعب:",
+  "Config_PlayerRelativeControls_Tooltip": "أثناء البناء، يتبع التحجيم والتحويلات الأخرى الاتجاه الذي تنظر إليه. تبقى لوحة Smart ثابتة على X/Y/Z. إيقاف = التحكم الكلاسيكي بالمحاور."
+ },
+ "fa": {
+  "Config_PlayerRelativeControls": "کنترل نسبی بازیکن:",
+  "Config_PlayerRelativeControls_Tooltip": "هنگام ساخت، مقیاس‌بندی و دیگر تبدیل‌ها از جهتی که به آن نگاه می‌کنید پیروی می‌کنند. پنل Smart روی X/Y/Z ثابت می‌ماند. خاموش = کنترل کلاسیک محورها."
+ },
+ "th": {
+  "Config_PlayerRelativeControls": "การควบคุมสัมพัทธ์กับผู้เล่น:",
+  "Config_PlayerRelativeControls_Tooltip": "ขณะก่อสร้าง การปรับขนาดและการแปลงอื่น ๆ จะไปตามทิศที่คุณหันหน้าไป แผง Smart จะคงที่ที่ X/Y/Z ปิด = การควบคุมแกนแบบคลาสสิก"
+ }
+}
