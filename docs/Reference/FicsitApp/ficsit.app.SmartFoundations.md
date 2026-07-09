@@ -4,7 +4,7 @@
 
 > **Multiplayer note:** As of v32.0.0, every Smart! feature works in multiplayer on dedicated servers (Windows and Linux) — including **Smart Walking** and the new-in-v33.1.0 **Hyper Tube** support. If you hit something odd in a multiplayer session, please report it on [GitHub](https://github.com/majormer/SmartFoundations/issues) or [Discord](https://discord.gg/SgXY4CwXYw).
 
-**Quick links:** [Watch videos](#-watch-smart-in-action) • [First-time setup](#-first-time-setup) • [Extend explained](#-extend-explained-copy-an-existing-manifold) • [Supported buildings](#-supported-buildings) • [Wiki](https://github.com/majormer/SmartFoundations/wiki) • [Discord](https://discord.gg/SgXY4CwXYw) • [Report bugs](https://github.com/majormer/SmartFoundations/issues) • [Source](https://github.com/majormer/SmartFoundations)
+**Quick links:** [Watch the trailer](https://www.youtube.com/watch?v=FTlTEfIbBxw) • [First-time setup](https://github.com/majormer/SmartFoundations/wiki/Quick-Start) • [Wiki](https://github.com/majormer/SmartFoundations/wiki) • [Discord](https://discord.gg/SgXY4CwXYw) • [Report bugs](https://github.com/majormer/SmartFoundations/issues) • [Source](https://github.com/majormer/SmartFoundations)
 
 ---
 
@@ -44,7 +44,7 @@ If you are new, videos explain Smart! much faster than a list of controls.
 |:---:|:---:|
 | [![Smart! Feature Spotlight](https://github.com/majormer/SmartFoundations/blob/main/images/enderprise-spotlight.jpg?raw=true)](https://www.youtube.com/watch?v=U5PNgasYbP8) | [![Smart V22 Overview](https://github.com/majormer/SmartFoundations/blob/main/images/v22-overview.jpg?raw=true)](https://www.youtube.com/watch?v=QZVNIQXYnNg) |
 
-More videos are listed near the bottom of this page in [More Videos](#-more-videos).
+More videos are listed in the More Videos section near the bottom of this page.
 
 ---
 
@@ -288,7 +288,7 @@ Extend can copy:
 - Recipes and supported distributor configuration.
 - Connections needed to make the cloned module work.
 
-Extend is one of Smart!'s most powerful features, but it needs a valid source layout. See [Extend Explained](#-extend-explained-copy-an-existing-manifold) below.
+Extend is one of Smart!'s most powerful features, but it needs a valid source layout. See the Extend Explained section further down this page.
 
 ### 5. Smart Upgrade
 
