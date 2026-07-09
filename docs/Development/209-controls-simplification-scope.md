@@ -35,10 +35,11 @@ timing, hysteresis), which only a spike can answer.
 | Keybind removal (Scale X/Y mods, Cycle Mode) | **OUT of scope** (dropped 2026-07-08) | Additive is final; players can clear bindings they don't want |
 | PR extends to spacing/steps/stagger/rotation | **YES** (2026-07-09) | Unified Target Model — see [Controls-InteractionModel §5](Controls-InteractionModel.md) |
 | Cycle Axis under PR | **Target-cycler, NOT no-op** (2026-07-09) | Wheel-only (no numpad) players need a numpad-free selector |
-| Stagger under PR | **Two families = build context** (Stack default / Flat), 4-slot cycle, Num9/3 family select | 4 modes ≠ 3 numpad axes; family × drift covers all four |
+| Stagger — BOTH modes | **2×2 factoring confirmed** (2026-07-09): family (Stack/Flat, default Stack) × axis; stored 4-state unchanged (projections); Num0 = axis within family; Num9/3 = family direct | 4-way cycle was the artificial part; classic and PR become structurally identical |
 | Double-tap mode key | **Re-tap gesture** (tap, re-grip < ~300 ms = advance target), core pass | Solves double-tap-on-hold with timestamps only; also speeds classic |
+| Stagger re-tap `Y` = family flip | **OPTION — decide at feel-test** | Each stagger selector gets its own gesture (Num0 axis / re-tap family); full no-numpad reach |
 | Numpad in PR modal | **Compass profile, select-and-adjust** (8/5 fwd, 6/4 side, 9/3 vert) | Matches feel-approved scaling spike; wheel continues on last pick |
-| Classic mode | **Num8/5 = current-axis ± UNCHANGED**; gains re-tap + modal Num6/4/9/3 (stagger cycle-only) | Zero regression; dead keys become pure additions |
+| Classic mode | **Num8/5 = current-axis ± UNCHANGED**; gains re-tap + modal Num6/4/9/3. **One deliberate change: stagger Num0 = axis-within-family (was 4-way cycle)** — changelog note | Zero regression elsewhere; dead keys become pure additions |
 | Facing-sign per transform | Scaling YES · Spacing NO · Steps/Stagger YES · Rotation compose | Signed cell-index math (`Steps*X`, `Stagger*X`); feel-verify list in model doc §7 |
 | HUD axis labels | **Keep absolute X/Y/Z** (no Forward/Lateral relabel) | See "feedback model" — the preview is the feedback, not the label |
 | Arrow graphic | **Kept** | Orientation cue; needed by the Panel context anyway |

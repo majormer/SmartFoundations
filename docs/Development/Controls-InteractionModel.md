@@ -93,6 +93,13 @@ quick re-grip advances one more.
 - Works identically in classic (the original "double-tap `;` to switch spacing axis" wish) and PR.
 - No collision with **double-tap Num0** (temporary Smart disable) — different keys.
 - A single stray tap just flickers the mode on/off, as it does today (harmless).
+- **Stagger option (feel-test):** since stagger has *two* orthogonal selectors (axis + family), its
+  re-tap can flip the **family** (re-tap `Y` = Stack ↔ Flat) instead of aliasing Num0's axis toggle —
+  giving each selector its own gesture (Num0 = axis, re-tap = family, Num9/3 = family direct,
+  Num6/4 = axis direct) **and** full 4-slot reach with no numpad at all.
+
+**Default mode keys** (rebindable): `;` Spacing · `I` Steps · `Y` Stagger · `,` Rotation · `U` Recipe
+· `X`/`Z` scale modifiers · Num0 Cycle Axis · Num8/5 increase/decrease · Num1 Arrows · `K` Panel.
 
 ### 5.2 Per-transform targets and numpad profiles
 
@@ -106,26 +113,40 @@ whatever you last picked.
 | Spacing | fwd → side → vert | fwd ± | side ± | vert ± |
 | Steps | fwd → side | fwd ± | side ± | *(no-op — steps are vertical)* |
 | Rotation | fwd-prog → side-prog | fwd ± | side ± | *(no-op)* |
-| Stagger | V·fwd → V·side → H·fwd → H·side | fwd-drift ± *(current family)* | side-drift ± *(current family)* | **family select: 9 = Stack, 3 = Flat** |
+| Stagger | fwd-drift ↔ side-drift *(within family)* | fwd-drift ± *(current family)* | side-drift ± *(current family)* | **family select: 9 = Stack, 3 = Flat** |
 
 In PR, **increase/decrease ≡ forward/backward** (Num8/5 are the increase/decrease bindings; PR
 defines "increase" as "grow toward intent"). The **wheel is the generic adjuster** for the current
 target — that plus Num0/re-tap is the complete wheel-only path.
 
-**Stagger, resolved:** the four modes are (progression × horizontal drift): V = the vertical stack
-leans, H = a horizontal run drifts. The **family is the build context** (stack vs flat grid — default
-**Vertical**, matching the classic ZX-first cycle); the **direction keys are the drift** (away/toward,
-right/left), facing-resolved. Family select (Num9/3) preserves the drift sub-slot (V·side → `3` →
-H·side). The 4-slot cycle crosses families, so wheel-only players reach all four.
+**Stagger — the 2×2 factoring (BOTH modes, confirmed 2026-07-09):** the four stagger modes are
+(progression × horizontal drift), and both classic and PR navigate them as **family × axis** instead
+of one 4-way cycle:
 
-**Classic profile** — unchanged where it has behavior today, extended where it's dead:
+- **Family = the build context** — **Stack** (the vertical pile leans: classic ZX/ZY) vs **Flat** (a
+  horizontal run drifts: classic X/Y). Selected by **Num9/3 direct** (9 = Stack, 3 = Flat; preserves
+  your axis/drift pick when jumping) and optionally **re-tap `Y`** (§5.1). Default **Stack** — with
+  axis X, that's exactly today's ZX-first default.
+- **Axis** (classic X↔Y / PR fwd-drift↔side-drift) — **Num0** toggles it *within* the family;
+  **Num6/4** select the side/Y member directly.
+- **The stored state does not change.** `StaggerAxis` keeps its four values {ZX, ZY, X, Y}; family
+  and axis are *projections* of it — the family toggle rewrites ZX↔X / ZY↔Y, the axis toggle
+  rewrites ZX↔ZY / X↔Y. All four counters still compound simultaneously; presets/Restore/MP capture
+  and replay exactly what they do today.
+
+This deletes stagger's special-case status: it becomes a 2-slot transform like steps/rotation, plus
+one orthogonal toggle, identical in shape across classic and PR.
+
+**Classic profile** — unchanged where it has behavior today, extended where it's dead, with **one
+deliberate change** (stagger navigation — needs a changelog note):
 
 | Input | Classic behavior |
 |---|---|
 | Wheel / Num8/5 | current axis ± — **unchanged** (Num8 on a cycled-to-Z spacing still adjusts Z) |
-| Num0 | cycle axis — unchanged |
-| **Re-tap mode key** | cycle axis — **new** |
-| **Num6/4, Num9/3 in modal** | select Y / select Z + adjust — **new** (dead today; pure addition). *Exception: stagger stays cycle-only (4 modes don't map to 3 keys).* |
+| Num0 | cycle axis — unchanged for spacing/steps/rotation; **stagger: X↔Y within family** (was the 4-way cycle — the one deliberate classic change) |
+| **Re-tap mode key** | cycle axis — **new** (stagger option: re-tap `Y` = family flip, §5.1) |
+| **Num6/4 in modal** | select Y + adjust — **new** (dead today; stagger: the side/Y member of the current family) |
+| **Num9/3 in modal** | spacing: select Z + adjust — **new**; steps/rotation: no-op; **stagger: family select (9 = Stack, 3 = Flat)** |
 
 ### 5.3 Sign policy (the resolver returns axis **and** sign)
 
@@ -142,11 +163,15 @@ transform's value semantics — this is per-transform, not global:
 
 ### 5.4 State and lifetime
 
-- PR targets live in a **new runtime struct** on the subsystem (per-transform current slot + stagger
-  family) — **not** in `FSFCounterState`, so presets/Restore/MP never see them (a view-dependent slot
-  is meaningless to save).
-- Reset to defaults (all **fwd**; stagger family **Vertical**) on build-gun clear / recipe change —
-  the same lifetime as other runtime HUD state (§3).
+- PR's **view-dependent** targets (the per-transform fwd/side/vert slot) live in a **new runtime
+  struct** on the subsystem — **not** in `FSFCounterState`, so presets/Restore/MP never see them (a
+  view-dependent slot is meaningless to save).
+- The **stagger family is NOT view-dependent** (Stack vs Flat is build context) — it lives in the
+  existing stored `StaggerAxis` 4-state as a projection (§5.2), shared by classic and PR, persisting
+  and preset-captured exactly as that field does today. PR resolves its drift slot *within* the
+  stored family and writes the concrete 4-state back at input time.
+- PR slots reset to defaults (all **fwd**) on build-gun clear / recipe change — the same lifetime as
+  other runtime HUD state (§3).
 - Classic per-mode axes stay in counter state exactly as today.
 - HUD highlight must **refresh while a transform mode is held** in PR (facing changes don't touch
   counter state, so the existing change-driven redraw won't follow the player's turn — tick-gated
@@ -174,15 +199,21 @@ When adding or changing a control, verify:
 ## 7. Status & open questions
 
 **Locked:** PR is opt-in (global default off); Panel stays absolute; HUD keeps absolute labels; no
-latch; stagger two-family (family = build context, default Vertical), 4-slot cycle, Num9/3 = family
-select; Cycle Axis = target-cycler in PR (not a no-op — wheel-only accessibility forces this);
-**re-tap** (tap, re-grip within ~300 ms) = advance target, replacing the double-tap-on-hold question
-— hold-to-activate stays, no toggle rework, lands with the core pass; PR numpad = compass profile
-with select-and-adjust; classic keeps Num8/5 = current-axis ± untouched and gains re-tap + modal
-Num6/4/9/3 (except stagger, which stays cycle-only).
+latch; **stagger 2×2 factoring in BOTH modes** (family = build context Stack/Flat as a projection of
+the stored 4-state, default Stack; Num0 = axis toggle within family; Num9/3 = family direct select)
+— the **one deliberate classic behavior change** of the effort (Num0 was the 4-way cycle; needs a
+changelog note); Cycle Axis = target-cycler in PR (not a no-op — wheel-only accessibility forces
+this); **re-tap** (tap, re-grip within ~300 ms) = advance target, replacing the double-tap-on-hold
+question — hold-to-activate stays, no toggle rework, lands with the core pass; PR numpad = compass
+profile with select-and-adjust; classic keeps Num8/5 = current-axis ± untouched and gains re-tap +
+modal Num6/4/9/3.
+
+**Option (decide at feel-test):** stagger re-tap `Y` = **family flip** instead of the axis alias
+(§5.1) — gives each stagger selector its own gesture and full no-numpad reach.
 
 **Feel-verify list (first build):** steps facing-sign (rise-away), stagger drift signs, rotation
 curl under resolved progression (highest risk), re-tap threshold (~300 ms), wheel-continues-on-last-
-selected-target, HUD highlight following facing while a mode is held.
+selected-target, HUD highlight following facing while a mode is held, stagger family/axis navigation
+(incl. the re-tap-`Y` family-flip option), classic stagger retrain (HUD prompt clarity).
 
 See the [scope doc](209-controls-simplification-scope.md) for the live decision log.
