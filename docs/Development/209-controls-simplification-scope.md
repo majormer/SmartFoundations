@@ -33,6 +33,13 @@ timing, hysteresis), which only a spike can answer.
 | Radial menu | **Declined** | Smart Panel (K) already does it; that part is *done* |
 | HUD axis colors | **KEPT** (reversed 2026-07-08) | Stay as the Smart Panel's absolute-axis reference; not worth changing |
 | Keybind removal (Scale X/Y mods, Cycle Mode) | **OUT of scope** (dropped 2026-07-08) | Additive is final; players can clear bindings they don't want |
+| PR extends to spacing/steps/stagger/rotation | **YES** (2026-07-09) | Unified Target Model — see [Controls-InteractionModel §5](Controls-InteractionModel.md) |
+| Cycle Axis under PR | **Target-cycler, NOT no-op** (2026-07-09) | Wheel-only (no numpad) players need a numpad-free selector |
+| Stagger under PR | **Two families = build context** (Stack default / Flat), 4-slot cycle, Num9/3 family select | 4 modes ≠ 3 numpad axes; family × drift covers all four |
+| Double-tap mode key | **Re-tap gesture** (tap, re-grip < ~300 ms = advance target), core pass | Solves double-tap-on-hold with timestamps only; also speeds classic |
+| Numpad in PR modal | **Compass profile, select-and-adjust** (8/5 fwd, 6/4 side, 9/3 vert) | Matches feel-approved scaling spike; wheel continues on last pick |
+| Classic mode | **Num8/5 = current-axis ± UNCHANGED**; gains re-tap + modal Num6/4/9/3 (stagger cycle-only) | Zero regression; dead keys become pure additions |
+| Facing-sign per transform | Scaling YES · Spacing NO · Steps/Stagger YES · Rotation compose | Signed cell-index math (`Steps*X`, `Stagger*X`); feel-verify list in model doc §7 |
 | HUD axis labels | **Keep absolute X/Y/Z** (no Forward/Lateral relabel) | See "feedback model" — the preview is the feedback, not the label |
 | Arrow graphic | **Kept** | Orientation cue; needed by the Panel context anyway |
 | Scope boundary | **Player Relative is world-context only** | The Panel is frozen → no facing → stays absolute X/Y/Z |
