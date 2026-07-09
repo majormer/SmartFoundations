@@ -310,7 +310,8 @@ void USFHintBarService::InjectSmartHints()
 	static const TSet<FString> SmartHintKeys = {
 		TEXT("Hint_ScaleX"), TEXT("Hint_ScaleY"), TEXT("Hint_ScaleZ"),
 		TEXT("Hint_Spacing"), TEXT("Hint_Steps"), TEXT("Hint_Stagger"), TEXT("Hint_Rotation"),
-		TEXT("Hint_CycleMode"), TEXT("Hint_Recipe"), TEXT("Hint_SmartPanel"), TEXT("Hint_UpgradePanel")
+		TEXT("Hint_CycleMode"), TEXT("Hint_StaggerFamily"), TEXT("Hint_Recipe"),
+		TEXT("Hint_SmartPanel"), TEXT("Hint_UpgradePanel")
 	};
 	auto IsSmartHint = [](const FText& ActionText) -> bool
 	{
@@ -336,8 +337,11 @@ void USFHintBarService::InjectSmartHints()
 	// everything else → full set.
 	const bool bNowUpgrade = Subsystem.IsValid() && Subsystem->IsUpgradeCapableContext();
 	const bool bNowExtend = Subsystem.IsValid() && Subsystem->IsExtendModeActive();
+	// [#209] While Stagger is held, Num0 toggles the Stack/Flat family (not the axis) - the hint
+	// reflects that. Held-mode is part of the rebuild fingerprint so the label swaps on Y down/up.
+	const bool bNowStagger = Subsystem.IsValid() && Subsystem->IsStaggerModeActive();
 
-	const uint32 ContextFingerprint = (bNowUpgrade ? 1 : 0) | (bNowExtend ? 2 : 0);
+	const uint32 ContextFingerprint = (bNowUpgrade ? 1 : 0) | (bNowExtend ? 2 : 0) | (bNowStagger ? 4 : 0);
 	const bool bContextChanged = (ContextFingerprint != LastContextFingerprint);
 
 	if (bAlreadyPresent && !bContextChanged)
@@ -396,8 +400,18 @@ void USFHintBarService::InjectSmartHints()
 		}
 		SmartHints.Add({ NSLOCTEXT("SmartFoundations", "Hint_Rotation", "Rotation"),
 			FText::FromString(FString::Printf(TEXT("%s + Scroll"), *ResolveKeyText(IA_RotationMode).ToString())) });
-		SmartHints.Add({ NSLOCTEXT("SmartFoundations", "Hint_CycleMode", "Cycle Mode"),
-			ResolveKeyText(IA_CycleAxis) });
+		// [#209] Num0's meaning: Stagger held -> toggle Stack/Flat family; otherwise -> cycle the
+		// axis (classic) / target direction (Player Relative).
+		if (bNowStagger)
+		{
+			SmartHints.Add({ NSLOCTEXT("SmartFoundations", "Hint_StaggerFamily", "Stack / Flat"),
+				ResolveKeyText(IA_CycleAxis) });
+		}
+		else
+		{
+			SmartHints.Add({ NSLOCTEXT("SmartFoundations", "Hint_CycleMode", "Cycle Mode"),
+				ResolveKeyText(IA_CycleAxis) });
+		}
 		SmartHints.Add({ NSLOCTEXT("SmartFoundations", "Hint_Recipe", "Recipe"),
 			ResolveKeyText(IA_RecipeMode) });
 		SmartHints.Add({ NSLOCTEXT("SmartFoundations", "Hint_SmartPanel", "Smart Panel"),
