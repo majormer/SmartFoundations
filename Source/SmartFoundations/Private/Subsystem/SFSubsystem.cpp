@@ -1861,6 +1861,18 @@ bool USFSubsystem::ResolvePlayerRelativeModalTarget(bool bSelectSlot, ESFPlayerR
 		{
 			OutSign = SF_SignNonZero(SF_GridCounterFor(CounterState, OutAxis));
 		}
+
+		// [#209] Rotation's progression axis is MUTUALLY EXCLUSIVE (curve the run you face vs fan
+		// your side rows) - unlike spacing's additive gaps, only one is active. The slot SELECTS it,
+		// so it must be written to state (Forward -> facing axis, Lateral -> perpendicular). Without
+		// this the progression was stuck at its default and Forward/Lateral only flipped the angle
+		// sign, so they looked identical. Writing it also re-aligns AdjustRotation's Y-negation with
+		// the live progression, restoring the classic "away = right" handedness. (Rotation is X/Y
+		// only - Vertical is rejected above for non-spacing modes, so RotationAxis stays valid.)
+		if (bRotationModeActive)
+		{
+			CounterState.RotationAxis = OutAxis;
+		}
 	}
 	return true;
 }
