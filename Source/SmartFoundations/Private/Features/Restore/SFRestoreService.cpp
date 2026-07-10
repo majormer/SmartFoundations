@@ -418,6 +418,21 @@ namespace
 		Obj->SetStringField(TEXT("laneSegmentType"), Holo.LaneSegmentType);
 		Obj->SetObjectField(TEXT("laneStartNormal"), VecToJson(Holo.LaneStartNormal));
 		Obj->SetObjectField(TEXT("laneEndNormal"), VecToJson(Holo.LaneEndNormal));
+		// [#477] Captured appearance - written only when captured: uncaptured children emit no
+		// "customization" object (additive schema; loaders without the field simply ignore it).
+		if (Holo.Customization.bCaptured)
+		{
+			TSharedPtr<FJsonObject> Custom = MakeShared<FJsonObject>();
+			Custom->SetStringField(TEXT("swatchClass"), Holo.Customization.SwatchClass);
+			Custom->SetStringField(TEXT("patternClass"), Holo.Customization.PatternClass);
+			Custom->SetStringField(TEXT("materialClass"), Holo.Customization.MaterialClass);
+			Custom->SetStringField(TEXT("skinClass"), Holo.Customization.SkinClass);
+			Custom->SetStringField(TEXT("paintFinishClass"), Holo.Customization.PaintFinishClass);
+			Custom->SetStringField(TEXT("overridePrimary"), Holo.Customization.OverridePrimary.ToString());
+			Custom->SetStringField(TEXT("overrideSecondary"), Holo.Customization.OverrideSecondary.ToString());
+			Custom->SetNumberField(TEXT("patternRotation"), Holo.Customization.PatternRotation);
+			Obj->SetObjectField(TEXT("customization"), Custom);
+		}
 		return Obj;
 	}
 
@@ -456,6 +471,21 @@ namespace
 		Obj->TryGetStringField(TEXT("laneSegmentType"), OutHolo.LaneSegmentType);
 		if (Obj->TryGetObjectField(TEXT("laneStartNormal"), Child) && Child) JsonToVec(*Child, OutHolo.LaneStartNormal);
 		if (Obj->TryGetObjectField(TEXT("laneEndNormal"), Child) && Child) JsonToVec(*Child, OutHolo.LaneEndNormal);
+		// [#477] Captured appearance - absent in pre-#477 presets, leaving bCaptured=false (the
+		// spawner then falls back to the legacy live-actor harvest).
+		if (Obj->TryGetObjectField(TEXT("customization"), Child) && Child)
+		{
+			OutHolo.Customization.bCaptured = true;
+			(*Child)->TryGetStringField(TEXT("swatchClass"), OutHolo.Customization.SwatchClass);
+			(*Child)->TryGetStringField(TEXT("patternClass"), OutHolo.Customization.PatternClass);
+			(*Child)->TryGetStringField(TEXT("materialClass"), OutHolo.Customization.MaterialClass);
+			(*Child)->TryGetStringField(TEXT("skinClass"), OutHolo.Customization.SkinClass);
+			(*Child)->TryGetStringField(TEXT("paintFinishClass"), OutHolo.Customization.PaintFinishClass);
+			FString ColorStr;
+			if ((*Child)->TryGetStringField(TEXT("overridePrimary"), ColorStr)) { OutHolo.Customization.OverridePrimary.InitFromString(ColorStr); }
+			if ((*Child)->TryGetStringField(TEXT("overrideSecondary"), ColorStr)) { OutHolo.Customization.OverrideSecondary.InitFromString(ColorStr); }
+			if ((*Child)->TryGetNumberField(TEXT("patternRotation"), Val)) OutHolo.Customization.PatternRotation = static_cast<uint8>(Val);
+		}
 	}
 
 	TSharedPtr<FJsonObject> CloneTopologyToJson(const FSFCloneTopology& Topology)
