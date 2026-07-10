@@ -293,9 +293,17 @@ public:
         FSmart_ConfigStruct ConfigStruct{};
         FSmart_ConfigStruct_Sections Sections{};
         FConfigId ConfigId{"SmartFoundations", ""};
-        if (const UWorld* World = GEngine->GetWorldFromContextObject(WorldContext, EGetWorldErrorMode::ReturnNull)) {
-            UConfigManager* ConfigManager = World->GetGameInstance()->GetSubsystem<UConfigManager>();
-            ConfigManager->FillConfigurationStruct(ConfigId, FDynamicStructInfo{FSmart_ConfigStruct_Sections::StaticStruct(), &Sections});
+        // Null-guard the whole chain: during world teardown / engine PreExit the GameInstance's
+        // subsystems (incl. UConfigManager) are already deinitialized while subsystem Deinitialize
+        // code can still run display/cleanup paths that read config. Returning defaults there is
+        // correct; dereferencing was an exit crash (EXCEPTION_ACCESS_VIOLATION in
+        // FillConfigurationStruct via USFSubsystem::Deinitialize -> UpdateCounterDisplay, 2026-07-09).
+        if (const UWorld* World = GEngine ? GEngine->GetWorldFromContextObject(WorldContext, EGetWorldErrorMode::ReturnNull) : nullptr) {
+            if (UGameInstance* GameInstance = World->GetGameInstance()) {
+                if (UConfigManager* ConfigManager = GameInstance->GetSubsystem<UConfigManager>()) {
+                    ConfigManager->FillConfigurationStruct(ConfigId, FDynamicStructInfo{FSmart_ConfigStruct_Sections::StaticStruct(), &Sections});
+                }
+            }
         }
 
         // Belt Auto-Connect
