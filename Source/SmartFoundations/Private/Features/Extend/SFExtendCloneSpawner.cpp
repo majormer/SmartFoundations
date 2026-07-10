@@ -195,6 +195,33 @@ int32 FSFCloneTopology::SpawnChildHolograms(
     {
         if (PoleNode.PowerPole.IsValid()) CaptureCustomization(Cast<AFGBuildable>(PoleNode.PowerPole.Get()));
     }
+    // [#475] Passthroughs (pipe floor holes / wall holes) and inline pipe attachments (valves /
+    // pumps) were missing from this harvest - the chain walk traverses THROUGH passthroughs
+    // without listing them as chain members, and attachments were only captured for flow limits -
+    // so their clones never found a SourceCustomizationMap entry and always built default metal
+    // while the painted source kept its swatch. Harvested here: chain-embedded passthroughs
+    // (belt + pipe, both directions), the spatially-discovered pipe/wall hole collections, and
+    // the pipe chains' inline attachments.
+    for (const FSFConnectionChainNode& Chain : Topology.InputChains)
+    {
+        for (const auto& Pass : Chain.Passthroughs) { if (Pass.IsValid()) CaptureCustomization(Pass.Get()); }
+    }
+    for (const FSFConnectionChainNode& Chain : Topology.OutputChains)
+    {
+        for (const auto& Pass : Chain.Passthroughs) { if (Pass.IsValid()) CaptureCustomization(Pass.Get()); }
+    }
+    for (const FSFPipeConnectionChainNode& Chain : Topology.PipeInputChains)
+    {
+        for (const auto& Pass : Chain.Passthroughs) { if (Pass.IsValid()) CaptureCustomization(Pass.Get()); }
+        for (const auto& Att : Chain.PipeAttachments) { if (Att.IsValid()) CaptureCustomization(Att.Get()); }
+    }
+    for (const FSFPipeConnectionChainNode& Chain : Topology.PipeOutputChains)
+    {
+        for (const auto& Pass : Chain.Passthroughs) { if (Pass.IsValid()) CaptureCustomization(Pass.Get()); }
+        for (const auto& Att : Chain.PipeAttachments) { if (Att.IsValid()) CaptureCustomization(Att.Get()); }
+    }
+    for (const auto& Pass : Topology.PipePassthroughs) { if (Pass.IsValid()) CaptureCustomization(Pass.Get()); }
+    for (const auto& Pass : Topology.WallPassthroughs) { if (Pass.IsValid()) CaptureCustomization(Pass.Get()); }
     SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("🎨 JSON SPAWN: Captured customization data from %d source actors"), SourceCustomizationMap.Num());
     
     // Build lane segment color lookup: distributor name → customization from the first belt/pipe
