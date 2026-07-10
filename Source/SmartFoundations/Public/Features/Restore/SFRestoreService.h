@@ -164,10 +164,33 @@ public:
 	 *  disable Apply from the same check that gates the apply itself. */
 	bool ValidatePresetUnlocks(const FSFRestorePreset& Preset, FString& OutFailureReason) const;
 
+	// === [#473] Recently-used restores (session-only) ===
+
+	/** Step the recently-applied preset list while U is held: +1 = older (Num9), -1 = newer
+	 *  (Num3). Wraps both ways; the first step of a hold arms the MOST RECENT entry. Arming works
+	 *  exactly like panel-Apply (build-gun switch, values, module replay) - the click still
+	 *  places. Entries that were deleted or fail to arm are SILENTLY dropped from the list and the
+	 *  step continues in the same direction (maintainer decision, 2026-07-09). */
+	void CycleRecentPreset(int32 Direction);
+
+	/** The U-hold ended. The list order is frozen while a hold walks it (alt-tab semantics - a
+	 *  stable walk needs a stable order); this commits the last gesture-armed preset's recency to
+	 *  the front and resets the cursor. */
+	void OnRecentCycleHoldReleased();
+
 private:
 	TWeakObjectPtr<USFSubsystem> Subsystem;
 	bool bRestoreSessionActive = false;
 	FString ActiveRestorePresetName;
+
+	// [#473] Session-only MRU of successfully applied preset names (newest first, unique, cap 8).
+	// Deliberately NOT persisted and NOT a setting - nothing survives a game restart.
+	TArray<FString> RecentPresetNames;
+	int32 RecentCycleIndex = INDEX_NONE;   // cursor during a U-hold walk; INDEX_NONE = not walking
+	FString PendingRecentArmName;          // gesture-armed; recency commits on U release
+	bool bGestureApplyInProgress = false;  // keeps ApplyPreset from reordering mid-walk
+	static constexpr int32 MaxRecentPresets = 8;
+	void RecordRecentPreset(const FString& Name);
 
 	/** Get or create the preset storage directory */
 	FString GetPresetsDir() const;
@@ -185,4 +208,18 @@ private:
 	FString GetPresetFilePath(const FString& Name) const;
 
 	void ReplayExtendTopologyWhenHologramReady(TSharedRef<const FSFRestorePreset> Preset, int32 AttemptsRemaining, int32 SettleTicksRemaining);
+
+	/** [#473] Grid-preset arm from the recents gesture: the captured VALUES can't land
+	 *  synchronously - ApplyPreset's build-gun switch spawns the new hologram over the next
+	 *  ticks and its registration resets per-build state; ApplyPreset also never regenerates
+	 *  the child grid (the panel's own Apply does that). Mirrors the module replay's
+	 *  retry/settle deferral, then commits counter state + AC settings + regenerates.
+	 *  ExpectedSerial guards staleness: the deferral aborts only when a NEWER arm superseded it.
+	 *  (It must NOT key on ActiveRestorePresetName - registration-time cleanup of a previous
+	 *  module session legitimately empties that name, which is exactly the module->grid-preset
+	 *  cycle path.) */
+	void ApplyPresetValuesWhenHologramReady(TSharedRef<const FSFRestorePreset> Preset, uint64 ExpectedSerial, int32 AttemptsRemaining, int32 SettleTicksRemaining);
+
+	/** [#473] Bumped by every ApplyPreset - any newer arm supersedes pending value-deferrals. */
+	uint64 ArmSerial = 0;
 };

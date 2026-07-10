@@ -2606,3 +2606,19 @@ msgstr "계단 [{0}]*: {1}m"
 msgctxt "SmartFoundations,HUD_StaggerRole"
 msgid "Stagger [{0}/{1}]*: {2}m"
 msgstr "엇갈림 [{0}/{1}]*: {2}m"
+
+msgctxt "SmartFoundations,Restore_RecentArmed"
+msgid "Restore: {0} ({1}/{2}) - {3}"
+msgstr "복원: {0} ({1}/{2}) - {3}"
+
+msgctxt "SmartFoundations,Restore_RecentKindGrid"
+msgid "grid preset"
+msgstr "그리드 프리셋"
+
+msgctxt "SmartFoundations,Restore_RecentKindModule"
+msgid "module"
+msgstr "모듈"
+
+msgctxt "SmartFoundations,Restore_RecentNone"
+msgid "No recent restores this session - apply one from the Smart Panel first"
+msgstr "이 세션에 최근 복원이 없습니다 - 먼저 Smart 패널에서 적용하세요"

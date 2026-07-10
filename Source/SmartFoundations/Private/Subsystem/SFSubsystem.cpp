@@ -2193,6 +2193,22 @@ void USFSubsystem::OnScaleZChanged(const FInputActionValue& Value)
         return;
     }
 
+    // [#473] Recently-used restore cycling: while U is held (Recipe mode on factories, Auto-Connect
+    // Settings mode on poles/distributors), Num9 steps to an OLDER recently-applied restore and
+    // Num3 back toward newer (wraps; the first press arms the MOST RECENT). Arming works exactly
+    // like panel-Apply - the click still places, so chaining is U+Num9, click, U+Num9, click.
+    // Replaces Z grid scaling during the U-hold (practically unused there; same repurposing class
+    // as stagger's Num9/3 above).
+    if ((bRecipeModeActive || bAutoConnectSettingsModeActive) &&
+        !bSpacingModeActive && !bStepsModeActive && !bStaggerModeActive && !bRotationModeActive)
+    {
+        if (USFRestoreService* Restore = GetRestoreService())
+        {
+            Restore->CycleRecentPreset(Direction > 0 ? +1 : -1);
+        }
+        return;
+    }
+
     // [#209] Player Relative: vertical is a real target only for Spacing (steps ARE vertical,
     // rotation is yaw-only) - select it and adjust. For steps/rotation the key is swallowed so
     // the compass stays consistent instead of falling back to Z grid scaling. Classic modal

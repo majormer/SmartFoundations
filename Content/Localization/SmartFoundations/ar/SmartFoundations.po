@@ -2538,3 +2538,19 @@ msgstr "خطوات [{0}]*: {1}م"
 msgctxt "SmartFoundations,HUD_StaggerRole"
 msgid "Stagger [{0}/{1}]*: {2}m"
 msgstr "تداخل [{0}/{1}]*: {2}م"
+
+msgctxt "SmartFoundations,Restore_RecentArmed"
+msgid "Restore: {0} ({1}/{2}) - {3}"
+msgstr "استعادة: {0} ({1}/{2}) - {3}"
+
+msgctxt "SmartFoundations,Restore_RecentKindGrid"
+msgid "grid preset"
+msgstr "إعداد شبكة مسبق"
+
+msgctxt "SmartFoundations,Restore_RecentKindModule"
+msgid "module"
+msgstr "وحدة"
+
+msgctxt "SmartFoundations,Restore_RecentNone"
+msgid "No recent restores this session - apply one from the Smart Panel first"
+msgstr "لا توجد استعادات حديثة في هذه الجلسة - طبّق واحدة من لوحة Smart أولاً"

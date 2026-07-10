@@ -2603,3 +2603,19 @@ msgstr "Сходинки [{0}]*: {1}м"
 msgctxt "SmartFoundations,HUD_StaggerRole"
 msgid "Stagger [{0}/{1}]*: {2}m"
 msgstr "Зміщення [{0}/{1}]*: {2}м"
+
+msgctxt "SmartFoundations,Restore_RecentArmed"
+msgid "Restore: {0} ({1}/{2}) - {3}"
+msgstr "Відновлення: {0} ({1}/{2}) - {3}"
+
+msgctxt "SmartFoundations,Restore_RecentKindGrid"
+msgid "grid preset"
+msgstr "пресет сітки"
+
+msgctxt "SmartFoundations,Restore_RecentKindModule"
+msgid "module"
+msgstr "модуль"
+
+msgctxt "SmartFoundations,Restore_RecentNone"
+msgid "No recent restores this session - apply one from the Smart Panel first"
+msgstr "Немає нещодавніх відновлень у цій сесії - спочатку застосуйте одне через Smart Панель"

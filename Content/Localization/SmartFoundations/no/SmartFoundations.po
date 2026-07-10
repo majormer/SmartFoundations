@@ -2603,3 +2603,19 @@ msgstr "Trinn [{0}]*: {1}m"
 msgctxt "SmartFoundations,HUD_StaggerRole"
 msgid "Stagger [{0}/{1}]*: {2}m"
 msgstr "Forskyvning [{0}/{1}]*: {2}m"
+
+msgctxt "SmartFoundations,Restore_RecentArmed"
+msgid "Restore: {0} ({1}/{2}) - {3}"
+msgstr "Gjenoppretting: {0} ({1}/{2}) - {3}"
+
+msgctxt "SmartFoundations,Restore_RecentKindGrid"
+msgid "grid preset"
+msgstr "rutenett-forhåndsinnstilling"
+
+msgctxt "SmartFoundations,Restore_RecentKindModule"
+msgid "module"
+msgstr "modul"
+
+msgctxt "SmartFoundations,Restore_RecentNone"
+msgid "No recent restores this session - apply one from the Smart Panel first"
+msgstr "Ingen nylige gjenopprettinger i denne økten - bruk en fra Smart Panel først"

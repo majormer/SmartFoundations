@@ -2603,3 +2603,19 @@ msgstr "Bậc [{0}]*: {1}m"
 msgctxt "SmartFoundations,HUD_StaggerRole"
 msgid "Stagger [{0}/{1}]*: {2}m"
 msgstr "Lệch [{0}/{1}]*: {2}m"
+
+msgctxt "SmartFoundations,Restore_RecentArmed"
+msgid "Restore: {0} ({1}/{2}) - {3}"
+msgstr "Khôi phục: {0} ({1}/{2}) - {3}"
+
+msgctxt "SmartFoundations,Restore_RecentKindGrid"
+msgid "grid preset"
+msgstr "cài đặt sẵn lưới"
+
+msgctxt "SmartFoundations,Restore_RecentKindModule"
+msgid "module"
+msgstr "mô-đun"
+
+msgctxt "SmartFoundations,Restore_RecentNone"
+msgid "No recent restores this session - apply one from the Smart Panel first"
+msgstr "Chưa có khôi phục gần đây trong phiên này - hãy áp dụng một cái từ Bảng Smart trước"

@@ -2538,3 +2538,19 @@ msgstr "پله‌ها [{0}]*: {1}متر"
 msgctxt "SmartFoundations,HUD_StaggerRole"
 msgid "Stagger [{0}/{1}]*: {2}m"
 msgstr "جابجایی [{0}/{1}]*: {2}متر"
+
+msgctxt "SmartFoundations,Restore_RecentArmed"
+msgid "Restore: {0} ({1}/{2}) - {3}"
+msgstr "بازیابی: {0} ({1}/{2}) - {3}"
+
+msgctxt "SmartFoundations,Restore_RecentKindGrid"
+msgid "grid preset"
+msgstr "پیش‌تنظیم شبکه"
+
+msgctxt "SmartFoundations,Restore_RecentKindModule"
+msgid "module"
+msgstr "ماژول"
+
+msgctxt "SmartFoundations,Restore_RecentNone"
+msgid "No recent restores this session - apply one from the Smart Panel first"
+msgstr "بازیابی اخیری در این نشست نیست - ابتدا یکی را از پنل Smart اعمال کنید"
