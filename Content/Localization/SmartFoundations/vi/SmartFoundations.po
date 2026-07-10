@@ -2567,3 +2567,55 @@ msgstr "Quá nhiều băng chuyền/đường ống tự động kết nối cho
 msgctxt "SmartFoundations,MP_Notice_WaterExtractorDeepWater"
 msgid "Every water extractor must be placed on deep water."
 msgstr "Mỗi máy bơm nước phải được đặt trên vùng nước sâu."
+
+msgctxt "SmartFoundations,HUD_RoleForward"
+msgid "Forward"
+msgstr "Trước"
+
+msgctxt "SmartFoundations,HUD_RoleLateral"
+msgid "Lateral"
+msgstr "Ngang"
+
+msgctxt "SmartFoundations,HUD_RoleVertical"
+msgid "Vertical"
+msgstr "Dọc"
+
+msgctxt "SmartFoundations,HUD_StaggerFamilyStack"
+msgid "Stack"
+msgstr "Chồng"
+
+msgctxt "SmartFoundations,HUD_StaggerFamilyFlat"
+msgid "Flat"
+msgstr "Phẳng"
+
+msgctxt "SmartFoundations,Hint_StaggerFamily"
+msgid "Stack / Flat"
+msgstr "Chồng / Phẳng"
+
+msgctxt "SmartFoundations,HUD_SpacingRole"
+msgid "Spacing [{0}]*: {1}m"
+msgstr "Khoảng cách [{0}]*: {1}m"
+
+msgctxt "SmartFoundations,HUD_StepsRole"
+msgid "Steps [{0}]*: {1}m"
+msgstr "Bậc [{0}]*: {1}m"
+
+msgctxt "SmartFoundations,HUD_StaggerRole"
+msgid "Stagger [{0}/{1}]*: {2}m"
+msgstr "Lệch [{0}/{1}]*: {2}m"
+
+msgctxt "SmartFoundations,Restore_RecentArmed"
+msgid "Restore: {0} ({1}/{2}) - {3}"
+msgstr "Khôi phục: {0} ({1}/{2}) - {3}"
+
+msgctxt "SmartFoundations,Restore_RecentKindGrid"
+msgid "grid preset"
+msgstr "cài đặt sẵn lưới"
+
+msgctxt "SmartFoundations,Restore_RecentKindModule"
+msgid "module"
+msgstr "mô-đun"
+
+msgctxt "SmartFoundations,Restore_RecentNone"
+msgid "No recent restores this session - apply one from the Smart Panel first"
+msgstr "Chưa có khôi phục gần đây trong phiên này - hãy áp dụng một cái từ Bảng Smart trước"

@@ -2570,3 +2570,55 @@ msgstr "Bir çok oyunculu yerleştirme için çok fazla otomatik bağlanan bant/
 msgctxt "SmartFoundations,MP_Notice_WaterExtractorDeepWater"
 msgid "Every water extractor must be placed on deep water."
 msgstr "Her su çıkarıcı derin suyun üzerine yerleştirilmelidir."
+
+msgctxt "SmartFoundations,HUD_RoleForward"
+msgid "Forward"
+msgstr "İleri"
+
+msgctxt "SmartFoundations,HUD_RoleLateral"
+msgid "Lateral"
+msgstr "Yana"
+
+msgctxt "SmartFoundations,HUD_RoleVertical"
+msgid "Vertical"
+msgstr "Dikey"
+
+msgctxt "SmartFoundations,HUD_StaggerFamilyStack"
+msgid "Stack"
+msgstr "Yığın"
+
+msgctxt "SmartFoundations,HUD_StaggerFamilyFlat"
+msgid "Flat"
+msgstr "Düz"
+
+msgctxt "SmartFoundations,Hint_StaggerFamily"
+msgid "Stack / Flat"
+msgstr "Yığın / Düz"
+
+msgctxt "SmartFoundations,HUD_SpacingRole"
+msgid "Spacing [{0}]*: {1}m"
+msgstr "Aralık [{0}]*: {1}m"
+
+msgctxt "SmartFoundations,HUD_StepsRole"
+msgid "Steps [{0}]*: {1}m"
+msgstr "Adımlar [{0}]*: {1}m"
+
+msgctxt "SmartFoundations,HUD_StaggerRole"
+msgid "Stagger [{0}/{1}]*: {2}m"
+msgstr "Kaydırma [{0}/{1}]*: {2}m"
+
+msgctxt "SmartFoundations,Restore_RecentArmed"
+msgid "Restore: {0} ({1}/{2}) - {3}"
+msgstr "Geri Yükle: {0} ({1}/{2}) - {3}"
+
+msgctxt "SmartFoundations,Restore_RecentKindGrid"
+msgid "grid preset"
+msgstr "ızgara ön ayarı"
+
+msgctxt "SmartFoundations,Restore_RecentKindModule"
+msgid "module"
+msgstr "modül"
+
+msgctxt "SmartFoundations,Restore_RecentNone"
+msgid "No recent restores this session - apply one from the Smart Panel first"
+msgstr "Bu oturumda yakın zamanda geri yükleme yok - önce Smart Panel'den bir tane uygula"

@@ -2570,3 +2570,55 @@ msgstr "Trop de convoyeurs/tuyaux à connexion automatique pour un placement mul
 msgctxt "SmartFoundations,MP_Notice_WaterExtractorDeepWater"
 msgid "Every water extractor must be placed on deep water."
 msgstr "Chaque extracteur d'eau doit être placé sur de l'eau profonde."
+
+msgctxt "SmartFoundations,HUD_RoleForward"
+msgid "Forward"
+msgstr "Avant"
+
+msgctxt "SmartFoundations,HUD_RoleLateral"
+msgid "Lateral"
+msgstr "Latéral"
+
+msgctxt "SmartFoundations,HUD_RoleVertical"
+msgid "Vertical"
+msgstr "Vertical"
+
+msgctxt "SmartFoundations,HUD_StaggerFamilyStack"
+msgid "Stack"
+msgstr "Pile"
+
+msgctxt "SmartFoundations,HUD_StaggerFamilyFlat"
+msgid "Flat"
+msgstr "Plat"
+
+msgctxt "SmartFoundations,Hint_StaggerFamily"
+msgid "Stack / Flat"
+msgstr "Pile / Plat"
+
+msgctxt "SmartFoundations,HUD_SpacingRole"
+msgid "Spacing [{0}]*: {1}m"
+msgstr "Espacement [{0}]* : {1}m"
+
+msgctxt "SmartFoundations,HUD_StepsRole"
+msgid "Steps [{0}]*: {1}m"
+msgstr "Marches [{0}]* : {1}m"
+
+msgctxt "SmartFoundations,HUD_StaggerRole"
+msgid "Stagger [{0}/{1}]*: {2}m"
+msgstr "Décalage [{0}/{1}]* : {2}m"
+
+msgctxt "SmartFoundations,Restore_RecentArmed"
+msgid "Restore: {0} ({1}/{2}) - {3}"
+msgstr "Restauration : {0} ({1}/{2}) - {3}"
+
+msgctxt "SmartFoundations,Restore_RecentKindGrid"
+msgid "grid preset"
+msgstr "préréglage de grille"
+
+msgctxt "SmartFoundations,Restore_RecentKindModule"
+msgid "module"
+msgstr "module"
+
+msgctxt "SmartFoundations,Restore_RecentNone"
+msgid "No recent restores this session - apply one from the Smart Panel first"
+msgstr "Aucune restauration récente dans cette session - appliquez-en une d'abord depuis le Panneau Smart"

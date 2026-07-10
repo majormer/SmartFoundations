@@ -2567,3 +2567,55 @@ msgstr "Твърде много автоматично свързани лент
 msgctxt "SmartFoundations,MP_Notice_WaterExtractorDeepWater"
 msgid "Every water extractor must be placed on deep water."
 msgstr "Всеки водочерпател трябва да се постави върху дълбока вода."
+
+msgctxt "SmartFoundations,HUD_RoleForward"
+msgid "Forward"
+msgstr "Напред"
+
+msgctxt "SmartFoundations,HUD_RoleLateral"
+msgid "Lateral"
+msgstr "Встрани"
+
+msgctxt "SmartFoundations,HUD_RoleVertical"
+msgid "Vertical"
+msgstr "Вертикал"
+
+msgctxt "SmartFoundations,HUD_StaggerFamilyStack"
+msgid "Stack"
+msgstr "Купчина"
+
+msgctxt "SmartFoundations,HUD_StaggerFamilyFlat"
+msgid "Flat"
+msgstr "Плоско"
+
+msgctxt "SmartFoundations,Hint_StaggerFamily"
+msgid "Stack / Flat"
+msgstr "Купчина / Плоско"
+
+msgctxt "SmartFoundations,HUD_SpacingRole"
+msgid "Spacing [{0}]*: {1}m"
+msgstr "Разстояние [{0}]*: {1}м"
+
+msgctxt "SmartFoundations,HUD_StepsRole"
+msgid "Steps [{0}]*: {1}m"
+msgstr "Стъпки [{0}]*: {1}м"
+
+msgctxt "SmartFoundations,HUD_StaggerRole"
+msgid "Stagger [{0}/{1}]*: {2}m"
+msgstr "Изместване [{0}/{1}]*: {2}м"
+
+msgctxt "SmartFoundations,Restore_RecentArmed"
+msgid "Restore: {0} ({1}/{2}) - {3}"
+msgstr "Възстановяване: {0} ({1}/{2}) - {3}"
+
+msgctxt "SmartFoundations,Restore_RecentKindGrid"
+msgid "grid preset"
+msgstr "пресет за мрежа"
+
+msgctxt "SmartFoundations,Restore_RecentKindModule"
+msgid "module"
+msgstr "модул"
+
+msgctxt "SmartFoundations,Restore_RecentNone"
+msgid "No recent restores this session - apply one from the Smart Panel first"
+msgstr "Няма скорошни възстановявания в тази сесия - първо приложете едно от Smart Панела"

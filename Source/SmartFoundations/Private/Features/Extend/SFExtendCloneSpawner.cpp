@@ -23,6 +23,7 @@
 #include "FGConveyorChainActor.h"
 #include "FGRecipe.h"
 #include "FGRecipeManager.h"
+#include "FGCustomizationRecipe.h"  // [#477] unlock validation for captured customization
 #include "FGPlayerController.h"
 #include "Components/SplineComponent.h"
 #include "Hologram/FGHologram.h"
@@ -161,6 +162,34 @@ int32 FSFCloneTopology::SpawnChildHolograms(
     static int32 JsonSpawnCounter = 0;
     const EHologramMaterialState ParentMaterialState = ParentHologram->GetHologramMaterialState();
     
+    // [#477 review] Strip customization descriptors the local player hasn't unlocked. Preset
+    // JSON can name ANY descriptor path; Smart stays vanilla-neutral by applying only what the
+    // player could paint themselves. Fails OPEN for descriptors with no customization recipe
+    // (default swatches are not recipe-gated). Live-sampled data is exempt - it copies paint
+    // that already exists in this world.
+    const auto StripLockedCustomization = [World](FFactoryCustomizationData& Data)
+    {
+        AFGRecipeManager* RecipeManager = World ? AFGRecipeManager::Get(World) : nullptr;
+        if (!RecipeManager)
+        {
+            return;
+        }
+        const auto IsLocked = [RecipeManager](TSubclassOf<UFGFactoryCustomizationDescriptor> Desc) -> bool
+        {
+            if (!Desc)
+            {
+                return false;
+            }
+            const TSubclassOf<UFGCustomizationRecipe> Recipe = RecipeManager->GetCustomizationRecipeFromDesc(Desc);
+            return Recipe && !RecipeManager->IsCustomizationRecipeAvailable(Recipe);
+        };
+        if (IsLocked(Data.SwatchDesc))   { Data.SwatchDesc = nullptr; }
+        if (IsLocked(Data.PatternDesc))  { Data.PatternDesc = nullptr; }
+        if (IsLocked(Data.MaterialDesc)) { Data.MaterialDesc = nullptr; }
+        if (IsLocked(Data.SkinDesc))     { Data.SkinDesc = nullptr; }
+        if (IsLocked(Data.OverrideColorData.PaintFinish)) { Data.OverrideColorData.PaintFinish = nullptr; }
+    };
+
     // Build customization lookup from source actors so clones inherit source colors, not parent's
     TMap<FString, FFactoryCustomizationData> SourceCustomizationMap;
     const FSFExtendTopology& Topology = ExtendService->GetCurrentTopology();
@@ -195,6 +224,33 @@ int32 FSFCloneTopology::SpawnChildHolograms(
     {
         if (PoleNode.PowerPole.IsValid()) CaptureCustomization(Cast<AFGBuildable>(PoleNode.PowerPole.Get()));
     }
+    // [#475] Passthroughs (pipe floor holes / wall holes) and inline pipe attachments (valves /
+    // pumps) were missing from this harvest - the chain walk traverses THROUGH passthroughs
+    // without listing them as chain members, and attachments were only captured for flow limits -
+    // so their clones never found a SourceCustomizationMap entry and always built default metal
+    // while the painted source kept its swatch. Harvested here: chain-embedded passthroughs
+    // (belt + pipe, both directions), the spatially-discovered pipe/wall hole collections, and
+    // the pipe chains' inline attachments.
+    for (const FSFConnectionChainNode& Chain : Topology.InputChains)
+    {
+        for (const auto& Pass : Chain.Passthroughs) { if (Pass.IsValid()) CaptureCustomization(Pass.Get()); }
+    }
+    for (const FSFConnectionChainNode& Chain : Topology.OutputChains)
+    {
+        for (const auto& Pass : Chain.Passthroughs) { if (Pass.IsValid()) CaptureCustomization(Pass.Get()); }
+    }
+    for (const FSFPipeConnectionChainNode& Chain : Topology.PipeInputChains)
+    {
+        for (const auto& Pass : Chain.Passthroughs) { if (Pass.IsValid()) CaptureCustomization(Pass.Get()); }
+        for (const auto& Att : Chain.PipeAttachments) { if (Att.IsValid()) CaptureCustomization(Att.Get()); }
+    }
+    for (const FSFPipeConnectionChainNode& Chain : Topology.PipeOutputChains)
+    {
+        for (const auto& Pass : Chain.Passthroughs) { if (Pass.IsValid()) CaptureCustomization(Pass.Get()); }
+        for (const auto& Att : Chain.PipeAttachments) { if (Att.IsValid()) CaptureCustomization(Att.Get()); }
+    }
+    for (const auto& Pass : Topology.PipePassthroughs) { if (Pass.IsValid()) CaptureCustomization(Pass.Get()); }
+    for (const auto& Pass : Topology.WallPassthroughs) { if (Pass.IsValid()) CaptureCustomization(Pass.Get()); }
     SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("🎨 JSON SPAWN: Captured customization data from %d source actors"), SourceCustomizationMap.Num());
     
     // Build lane segment color lookup: distributor name → customization from the first belt/pipe
@@ -246,6 +302,8 @@ int32 FSFCloneTopology::SpawnChildHolograms(
     
     UE_LOG(LogSmartExtend, VeryVerbose, TEXT("🔧 JSON SPAWN: Starting spawn of %d child holograms"), ChildHolograms.Num());
     
+    // [#477] Scrapeable customization-resolution tally (Log-level summary after the loop).
+    int32 CustomCaptured = 0, CustomLive = 0, CustomDefault = 0;
     for (const FSFCloneHologram& ChildData : ChildHolograms)
     {
         AFGHologram* SpawnedHologram = nullptr;
@@ -1267,11 +1325,14 @@ int32 FSFCloneTopology::SpawnChildHolograms(
             
             // Apply customization (color/swatch) to clone hologram
             // Without this, children inherit the parent hologram's color (e.g., refinery's caterium swatch)
+            // [#477] Preference order: the customization CAPTURED INTO the record at topology-build
+            // time (replays from saved presets after restarts/worlds with no live source actor),
+            // then the legacy live-actor harvest (old presets with bCaptured=false), then defaults.
             if (ChildData.bIsLaneSegment)
             {
-                // Lane segments: inherit color from existing belt/pipe on the other side of the
-                // source distributor. If no infrastructure exists there, use defaults instead of
-                // the factory building's color. Look up by the source distributor's actor name.
+                // Lane segments: appearance of the belt/pipe on the other side of the source
+                // distributor. If nothing was captured and no live infrastructure exists, use
+                // defaults instead of the factory building's color.
                 if (AFGBuildableHologram* BuildableHolo = Cast<AFGBuildableHologram>(SpawnedHologram))
                 {
                     // Extract source distributor name from LaneFromDistributorId or LaneToDistributorId
@@ -1281,18 +1342,30 @@ int32 FSFCloneTopology::SpawnChildHolograms(
                         SourceDistName = ChildData.LaneFromDistributorId;
                     else if (!ChildData.LaneToDistributorId.IsEmpty() && !ChildData.LaneToDistributorId.Contains(TEXT("clone_")))
                         SourceDistName = ChildData.LaneToDistributorId;
-                    
-                    if (const FFactoryCustomizationData* LaneCustom = LaneColorMap.Find(SourceDistName))
+
+                    FFactoryCustomizationData Captured;
+                    if (ChildData.Customization.ApplyTo(Captured))
+                    {
+                        StripLockedCustomization(Captured);
+                        BuildableHolo->SetCustomizationData(Captured);
+                        ++CustomCaptured;
+                        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("🎨 LANE COLOR: %s from captured record [#477]"),
+                            *ChildData.HologramId);
+                    }
+                    else if (const FFactoryCustomizationData* LaneCustom = LaneColorMap.Find(SourceDistName))
                     {
                         BuildableHolo->SetCustomizationData(*LaneCustom);
+                        ++CustomLive;
                         SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("🎨 LANE COLOR: %s inherits color from belt/pipe near distributor %s"),
                             *ChildData.HologramId, *SourceDistName);
                     }
                     else
                     {
-                        // No existing infrastructure to sample — use default customization
-                        // (explicitly reset so lane doesn't inherit factory building's color)
+                        // No captured record and no live infrastructure to sample — use default
+                        // customization (explicitly reset so the lane doesn't inherit the factory
+                        // building's color)
                         BuildableHolo->SetCustomizationData(FFactoryCustomizationData());
+                        ++CustomDefault;
                         SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("🎨 LANE COLOR: %s using defaults (no infrastructure near distributor %s)"),
                             *ChildData.HologramId, *SourceDistName);
                     }
@@ -1300,12 +1373,20 @@ int32 FSFCloneTopology::SpawnChildHolograms(
             }
             else if (!ChildData.SourceId.IsEmpty())
             {
-                // Non-lane clones: inherit color from their specific source actor
-                if (const FFactoryCustomizationData* SourceCustom = SourceCustomizationMap.Find(ChildData.SourceId))
+                // Non-lane clones: captured record first, then the live source actor's data
+                if (AFGBuildableHologram* BuildableHolo = Cast<AFGBuildableHologram>(SpawnedHologram))
                 {
-                    if (AFGBuildableHologram* BuildableHolo = Cast<AFGBuildableHologram>(SpawnedHologram))
+                    FFactoryCustomizationData Captured;
+                    if (ChildData.Customization.ApplyTo(Captured))
+                    {
+                        StripLockedCustomization(Captured);
+                        BuildableHolo->SetCustomizationData(Captured);
+                        ++CustomCaptured;
+                    }
+                    else if (const FFactoryCustomizationData* SourceCustom = SourceCustomizationMap.Find(ChildData.SourceId))
                     {
                         BuildableHolo->SetCustomizationData(*SourceCustom);
+                        ++CustomLive;
                     }
                 }
             }
@@ -1434,6 +1515,11 @@ int32 FSFCloneTopology::SpawnChildHolograms(
         SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Warning, TEXT("🔗 JSON SPAWN PASS 2: Linked %d lifts to passthroughs"), LiftsLinked);
     }
     
+    // [#477] Scrapeable Log-level summary (per spawn batch, not per child - Shipping strips
+    // Verbose; the per-child lines above are Verbose diagnostic detail). "captured" = replayed from
+    // the record, which works with NO live source (e.g. a saved preset after restart).
+    UE_LOG(LogSmartExtend, Log, TEXT("[#477] Customization applied: captured=%d live-harvest=%d default=%d (of %d spawned)"),
+        CustomCaptured, CustomLive, CustomDefault, SpawnedCount);
     return SpawnedCount;
 }
 

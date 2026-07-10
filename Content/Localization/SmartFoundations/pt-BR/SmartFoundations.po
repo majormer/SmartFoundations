@@ -2570,3 +2570,55 @@ msgstr "Esteiras/tubulações de conexão automática em excesso para uma coloca
 msgctxt "SmartFoundations,MP_Notice_WaterExtractorDeepWater"
 msgid "Every water extractor must be placed on deep water."
 msgstr "Cada extrator de água deve ser colocado em água profunda."
+
+msgctxt "SmartFoundations,HUD_RoleForward"
+msgid "Forward"
+msgstr "Frente"
+
+msgctxt "SmartFoundations,HUD_RoleLateral"
+msgid "Lateral"
+msgstr "Lateral"
+
+msgctxt "SmartFoundations,HUD_RoleVertical"
+msgid "Vertical"
+msgstr "Vertical"
+
+msgctxt "SmartFoundations,HUD_StaggerFamilyStack"
+msgid "Stack"
+msgstr "Pilha"
+
+msgctxt "SmartFoundations,HUD_StaggerFamilyFlat"
+msgid "Flat"
+msgstr "Plano"
+
+msgctxt "SmartFoundations,Hint_StaggerFamily"
+msgid "Stack / Flat"
+msgstr "Pilha / Plano"
+
+msgctxt "SmartFoundations,HUD_SpacingRole"
+msgid "Spacing [{0}]*: {1}m"
+msgstr "Espaçamento [{0}]*: {1}m"
+
+msgctxt "SmartFoundations,HUD_StepsRole"
+msgid "Steps [{0}]*: {1}m"
+msgstr "Degraus [{0}]*: {1}m"
+
+msgctxt "SmartFoundations,HUD_StaggerRole"
+msgid "Stagger [{0}/{1}]*: {2}m"
+msgstr "Defasagem [{0}/{1}]*: {2}m"
+
+msgctxt "SmartFoundations,Restore_RecentArmed"
+msgid "Restore: {0} ({1}/{2}) - {3}"
+msgstr "Restaurar: {0} ({1}/{2}) - {3}"
+
+msgctxt "SmartFoundations,Restore_RecentKindGrid"
+msgid "grid preset"
+msgstr "preset de grade"
+
+msgctxt "SmartFoundations,Restore_RecentKindModule"
+msgid "module"
+msgstr "módulo"
+
+msgctxt "SmartFoundations,Restore_RecentNone"
+msgid "No recent restores this session - apply one from the Smart Panel first"
+msgstr "Nenhuma restauração recente nesta sessão - aplique uma pelo Painel Smart primeiro"

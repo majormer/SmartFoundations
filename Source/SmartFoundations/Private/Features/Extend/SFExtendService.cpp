@@ -814,6 +814,17 @@ bool USFExtendService::BuildCommitSpecForMP(AFGHologram* ParentHologram, FSFExte
         for (const FSFCloneHologram& Holo : Template.ChildHolograms)
         {
             BytesEstimate += 400 + Holo.SplineData.Points.Num() * 80;
+            // [#477] Captured customization rides the same reliable RPC: five class-path strings
+            // (UTF-16 on the wire) + colors/rotation/flags. Model it so a richly customized
+            // template can't pass this guard yet overflow the actual payload.
+            if (Holo.Customization.bCaptured)
+            {
+                BytesEstimate += 64 + 2 * (Holo.Customization.SwatchClass.Len()
+                    + Holo.Customization.PatternClass.Len()
+                    + Holo.Customization.MaterialClass.Len()
+                    + Holo.Customization.SkinClass.Len()
+                    + Holo.Customization.PaintFinishClass.Len());
+            }
         }
         if (BytesEstimate > 45000)
         {

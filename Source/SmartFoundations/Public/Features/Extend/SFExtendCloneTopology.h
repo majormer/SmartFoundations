@@ -184,6 +184,35 @@ struct FSFConnections
 // ============================================================================
 
 /**
+ * [#477] Appearance captured from a source actor at topology-BUILD time (descriptor class paths +
+ * override colors), so saved presets replay paint without any live source actor. Additive:
+ * bCaptured=false (old presets / uncaptured records) makes ApplyTo a no-op and the spawner falls
+ * back to the legacy live-actor harvest. Class paths (not raw pointers) keep the record
+ * JSON-serializable and MP-safe; they resolve via TryLoadClass at apply time.
+ */
+USTRUCT(BlueprintType)
+struct FSFCapturedCustomization
+{
+    GENERATED_BODY()
+
+    UPROPERTY() bool bCaptured = false;
+    UPROPERTY() FString SwatchClass;
+    UPROPERTY() FString PatternClass;
+    UPROPERTY() FString MaterialClass;
+    UPROPERTY() FString SkinClass;
+    UPROPERTY() FString PaintFinishClass;
+    UPROPERTY() FLinearColor OverridePrimary = FLinearColor(0.f, 0.f, 0.f, 1.f);
+    UPROPERTY() FLinearColor OverrideSecondary = FLinearColor(0.f, 0.f, 0.f, 1.f);
+    UPROPERTY() uint8 PatternRotation = 0;
+
+    /** Snapshot a live actor's customization (defined in SFExtendCloneTopology.cpp). */
+    void CaptureFrom(const struct FFactoryCustomizationData& Data);
+
+    /** Rebuild customization data; returns false when nothing was captured. */
+    bool ApplyTo(struct FFactoryCustomizationData& Out) const;
+};
+
+/**
  * Source segment (belt, lift, or pipe in a chain)
  */
 USTRUCT(BlueprintType)
@@ -224,6 +253,9 @@ struct FSFSourceSegment
     // source pump's directly-connected pole is itself inside the manifold (i.e. also
     // present in FSFSourceTopology::PowerPoles); out-of-manifold poles are ignored.
     UPROPERTY() FString ConnectedPowerPoleSourceId;
+
+    // [#477] Appearance captured while the source actor is alive.
+    UPROPERTY() FSFCapturedCustomization Customization;
 };
 
 /**
@@ -233,7 +265,7 @@ USTRUCT(BlueprintType)
 struct FSFSourceDistributor
 {
     GENERATED_BODY()
-    
+
     UPROPERTY() FString Id;
     UPROPERTY() FString Class;
     UPROPERTY() FString RecipeClass;
@@ -241,6 +273,14 @@ struct FSFSourceDistributor
     UPROPERTY() FString ConnectorUsed;  // Which connector connects to this chain
     UPROPERTY() TArray<FString> ConnectedConnectors;  // Connectors already connected to something (for lane selection)
     UPROPERTY() TMap<FString, FVector> ConnectorWorldPositions;  // Actual world positions of each connector
+
+    // [#477] Appearance captured while the source actor is alive.
+    UPROPERTY() FSFCapturedCustomization Customization;
+    // [#477] Resolved LANE appearance, sampled at capture time from the first belt/pipe of this
+    // distributor's chain (the same source the live LaneColorMap uses). Lanes are GENERATED
+    // segments with no source actor, and the far-side infrastructure can't be resampled after
+    // the session ends - so their look must be decided here.
+    UPROPERTY() FSFCapturedCustomization LaneCustomization;
 };
 
 /**
@@ -291,6 +331,9 @@ struct FSFSourcePowerPole
     UPROPERTY() FSFVec3 PoleConnectorWorld;              // Source pole's power connector world location
     UPROPERTY() FSFVec3 FactoryConnectorWorld;          // Source factory's power connector world location
     UPROPERTY() bool bHasConnectorWorld = false;        // True when both connector positions were captured
+
+    // [#477] Appearance captured while the source actor is alive.
+    UPROPERTY() FSFCapturedCustomization Customization;
 };
 
 /**
@@ -343,6 +386,10 @@ struct FSFCloneHologram
     UPROPERTY() FString SourceClass;        // Original build class
     UPROPERTY() FString SourceChain;        // Which chain: "belt_input_0"
     UPROPERTY() int32 SourceSegmentIndex = -1;  // Position in source chain (-1 for distributors)
+
+    // [#477] Appearance captured at topology-build time - replays without live source actors
+    // (saved presets across restarts/worlds, MP). bCaptured=false = legacy live-harvest fallback.
+    UPROPERTY() FSFCapturedCustomization Customization;
     
     // Hologram spawning data
     UPROPERTY() FString HologramClass;      // "ASFConveyorAttachmentChildHologram", "ASFConveyorBeltHologram"

@@ -2,6 +2,7 @@
 
 #include "Features/Extend/SFExtendCloneTopology.h"
 #include "Features/Extend/SFExtendService.h"
+#include "FGFactoryColoringTypes.h"  // [#477] FFactoryCustomizationData capture
 #include "Misc/DateTime.h"
 
 // Satisfactory includes
@@ -273,6 +274,7 @@ FSFCloneTopology FSFCloneTopology::FromSource(const FSFSourceTopology& Source, c
         FSFCloneHologram DistHolo;
         DistHolo.Role = TEXT("distributor");
         DistHolo.SourceId = Chain.Distributor.Id;
+        DistHolo.Customization = Chain.Distributor.Customization;  // [#477]
         DistHolo.SourceClass = Chain.Distributor.Class;
         DistHolo.SourceChain = Chain.ChainId;
         DistHolo.SourceSegmentIndex = -1;
@@ -298,6 +300,7 @@ FSFCloneTopology FSFCloneTopology::FromSource(const FSFSourceTopology& Source, c
             
             FSFCloneHologram SegHolo;
             SegHolo.SourceId = Seg.Id;
+            SegHolo.Customization = Seg.Customization;  // [#477]
             SegHolo.SourceClass = Seg.Class;
             SegHolo.SourceChain = Chain.ChainId;
             SegHolo.SourceSegmentIndex = i;
@@ -402,6 +405,7 @@ FSFCloneTopology FSFCloneTopology::FromSource(const FSFSourceTopology& Source, c
         PoleHolo.HologramId = FString::Printf(TEXT("power_pole_%d"), PowerPoleIndex);
         PoleHolo.Role = TEXT("power_pole");
         PoleHolo.SourceId = SourcePole.Id;
+        PoleHolo.Customization = SourcePole.Customization;  // [#477]
         PoleHolo.SourceClass = SourcePole.Class;
         PoleHolo.SourceChain = TEXT("");  // Not part of a chain
         PoleHolo.SourceSegmentIndex = -1;
@@ -523,6 +527,7 @@ FSFCloneTopology FSFCloneTopology::FromSource(const FSFSourceTopology& Source, c
         PassHolo.HologramId = FString::Printf(TEXT("passthrough_%d"), PassthroughCloneIndex);
         PassHolo.Role = TEXT("passthrough");
         PassHolo.SourceId = PassSeg.Id;
+        PassHolo.Customization = PassSeg.Customization;  // [#477]
         PassHolo.SourceClass = PassSeg.Class;
         PassHolo.SourceChain = TEXT("");  // Not part of a chain
         PassHolo.SourceSegmentIndex = -1;
@@ -623,6 +628,7 @@ FSFCloneTopology FSFCloneTopology::FromSource(const FSFSourceTopology& Source, c
         WallHolo.HologramId = FString::Printf(TEXT("wall_hole_%d"), WallHoleCloneIndex);
         WallHolo.Role = TEXT("wall_hole");
         WallHolo.SourceId = WallSeg.Id;
+        WallHolo.Customization = WallSeg.Customization;  // [#477]
         WallHolo.SourceClass = WallSeg.Class;
         WallHolo.SourceChain = TEXT("");  // Not part of a chain
         WallHolo.SourceSegmentIndex = -1;
@@ -969,6 +975,9 @@ FSFCloneTopology FSFCloneTopology::FromSource(const FSFSourceTopology& Source, c
         LaneHolo.Role = TEXT("lane_segment");
         LaneHolo.SourceId = TEXT("");  // Generated, not captured
         LaneHolo.SourceClass = TEXT("");
+        // [#477] Lanes have no source actor; their appearance was resolved at capture time from
+        // the first belt/pipe of this distributor's chain (LaneCustomization on the source record).
+        LaneHolo.Customization = Distributor.LaneCustomization;
         LaneHolo.SourceChain = TEXT("");
         LaneHolo.SourceSegmentIndex = -1;
         LaneHolo.bConstructible = true;
@@ -1087,6 +1096,13 @@ namespace CaptureHelpers
         // Use GetName() to match the format used by connection targets
         return Actor->GetName();
     }
+
+    // [#477] Class -> path string (empty for null); keeps records JSON/MP serializable.
+    FString ClassPathOrEmpty(const UClass* Cls)
+    {
+        return Cls ? Cls->GetPathName() : FString();
+    }
+
     
     FString GetRecipeClassName(TSubclassOf<UFGRecipe> Recipe)
     {
@@ -1203,6 +1219,13 @@ namespace CaptureHelpers
             AFGBuildable* Dist = Chain.Distributor.Get();
             Result.Distributor.Id = GetActorId(Dist);
             Result.Distributor.Class = Dist->GetClass()->GetName();
+            Result.Distributor.Customization.CaptureFrom(Dist->GetCustomizationData_Implementation());
+            // [#477] Lane appearance: sample the chain's first belt NOW (same source the live
+            // LaneColorMap uses) - lanes are generated segments and can't be resampled later.
+            if (Chain.Conveyors.Num() > 0 && Chain.Conveyors[0].IsValid())
+            {
+                Result.Distributor.LaneCustomization.CaptureFrom(Chain.Conveyors[0]->GetCustomizationData_Implementation());
+            }
             // Get recipe directly from distributor actor (Chain.DistributorRecipe may not be populated)
             Result.Distributor.RecipeClass = GetRecipeClassName(Dist->GetBuiltWithRecipe());
             Result.Distributor.Transform = FSFTransform(Dist->GetActorLocation(), Dist->GetActorRotation());
@@ -1234,6 +1257,7 @@ namespace CaptureHelpers
             Seg.Index = i;
             Seg.Id = GetActorId(Conveyor);
             Seg.Class = Conveyor->GetClass()->GetName();
+            Seg.Customization.CaptureFrom(Conveyor->GetCustomizationData_Implementation());
             Seg.RecipeClass = GetRecipeClassName(Conveyor->GetBuiltWithRecipe());
             Seg.Transform = FSFTransform(Conveyor->GetActorLocation(), Conveyor->GetActorRotation());
             
@@ -1313,6 +1337,12 @@ namespace CaptureHelpers
             AFGBuildable* Junc = Chain.Junction.Get();
             Result.Distributor.Id = GetActorId(Junc);
             Result.Distributor.Class = Junc->GetClass()->GetName();
+            Result.Distributor.Customization.CaptureFrom(Junc->GetCustomizationData_Implementation());
+            // [#477] Lane appearance from the chain's first pipe (see belt-distributor note).
+            if (Chain.Pipelines.Num() > 0 && Chain.Pipelines[0].IsValid())
+            {
+                Result.Distributor.LaneCustomization.CaptureFrom(Chain.Pipelines[0]->GetCustomizationData_Implementation());
+            }
             // Get recipe directly from junction actor (Chain.JunctionRecipe may not be populated)
             Result.Distributor.RecipeClass = GetRecipeClassName(Junc->GetBuiltWithRecipe());
             Result.Distributor.Transform = FSFTransform(Junc->GetActorLocation(), Junc->GetActorRotation());
@@ -1360,6 +1390,7 @@ namespace CaptureHelpers
             Seg.Type = TEXT("pipe");
             Seg.Id = GetActorId(Pipe);
             Seg.Class = Pipe->GetClass()->GetName();
+            Seg.Customization.CaptureFrom(Pipe->GetCustomizationData_Implementation());
             Seg.RecipeClass = GetRecipeClassName(Pipe->GetBuiltWithRecipe());
             Seg.Transform = FSFTransform(Pipe->GetActorLocation(), Pipe->GetActorRotation());
             
@@ -1398,6 +1429,7 @@ namespace CaptureHelpers
             PassSeg.Type = TEXT("passthrough");
             PassSeg.Id = GetActorId(Passthrough);
             PassSeg.Class = Passthrough->GetClass()->GetName();
+            PassSeg.Customization.CaptureFrom(Passthrough->GetCustomizationData_Implementation());
             PassSeg.RecipeClass = GetRecipeClassName(Passthrough->GetBuiltWithRecipe());
             PassSeg.Transform = FSFTransform(Passthrough->GetActorLocation(), Passthrough->GetActorRotation());
             
@@ -1420,6 +1452,7 @@ namespace CaptureHelpers
             AttSeg.Type = TEXT("pipe_attachment");
             AttSeg.Id = GetActorId(Attachment);
             AttSeg.Class = Attachment->GetClass()->GetName();
+            AttSeg.Customization.CaptureFrom(Attachment->GetCustomizationData_Implementation());
             AttSeg.RecipeClass = GetRecipeClassName(Attachment->GetBuiltWithRecipe());
             AttSeg.Transform = FSFTransform(Attachment->GetActorLocation(), Attachment->GetActorRotation());
             
@@ -1520,6 +1553,7 @@ FSFSourceTopology FSFSourceTopology::CaptureFromTopology(const FSFExtendTopology
         FSFSourcePowerPole SourcePole;
         SourcePole.Id = GetActorId(Pole);
         SourcePole.Class = Pole->GetClass()->GetName();
+        SourcePole.Customization.CaptureFrom(Pole->GetCustomizationData_Implementation());
         SourcePole.RecipeClass = GetRecipeClassName(Pole->GetBuiltWithRecipe());
         SourcePole.Transform = FSFTransform(Pole->GetActorLocation(), Pole->GetActorRotation());
         SourcePole.RelativeOffset = FSFVec3(PowerNode.RelativeOffset);
@@ -1552,6 +1586,7 @@ FSFSourceTopology FSFSourceTopology::CaptureFromTopology(const FSFExtendTopology
         PassSeg.Type = TEXT("passthrough");
         PassSeg.Id = GetActorId(Passthrough);
         PassSeg.Class = Passthrough->GetClass()->GetName();
+        PassSeg.Customization.CaptureFrom(Passthrough->GetCustomizationData_Implementation());
         PassSeg.RecipeClass = GetRecipeClassName(Passthrough->GetBuiltWithRecipe());
         PassSeg.Transform = FSFTransform(Passthrough->GetActorLocation(), Passthrough->GetActorRotation());
         
@@ -1582,6 +1617,7 @@ FSFSourceTopology FSFSourceTopology::CaptureFromTopology(const FSFExtendTopology
         WallSeg.Type = TEXT("wall_hole");
         WallSeg.Id = GetActorId(WallHole);
         WallSeg.Class = WallHole->GetClass()->GetName();
+        WallSeg.Customization.CaptureFrom(WallHole->GetCustomizationData_Implementation());
         WallSeg.RecipeClass = GetRecipeClassName(WallHole->GetBuiltWithRecipe());
         WallSeg.Transform = FSFTransform(WallHole->GetActorLocation(), WallHole->GetActorRotation());
 
@@ -1838,4 +1874,73 @@ int32 FSFCloneTopology::WireChildHologramConnections(
     UE_LOG(LogSmartExtend, VeryVerbose, TEXT("🔌 WIRE: Completed - wired %d connections"), WiredCount);
     
     return WiredCount;
+}
+
+// ============================================================================
+// [#477] FSFCapturedCustomization - capture/apply (see SFExtendCloneTopology.h)
+// ============================================================================
+
+void FSFCapturedCustomization::CaptureFrom(const FFactoryCustomizationData& Data)
+{
+	bCaptured = true;
+	SwatchClass = Data.SwatchDesc ? Data.SwatchDesc->GetPathName() : FString();
+	PatternClass = Data.PatternDesc ? Data.PatternDesc->GetPathName() : FString();
+	MaterialClass = Data.MaterialDesc ? Data.MaterialDesc->GetPathName() : FString();
+	SkinClass = Data.SkinDesc ? Data.SkinDesc->GetPathName() : FString();
+	PaintFinishClass = Data.OverrideColorData.PaintFinish ? Data.OverrideColorData.PaintFinish->GetPathName() : FString();
+	OverridePrimary = Data.OverrideColorData.PrimaryColor;
+	OverrideSecondary = Data.OverrideColorData.SecondaryColor;
+	PatternRotation = Data.PatternRotation;
+}
+
+bool FSFCapturedCustomization::ApplyTo(FFactoryCustomizationData& Out) const
+{
+	if (!bCaptured)
+	{
+		return false;
+	}
+
+	// Typed loads: the class must exist AND be the right descriptor kind (guards hand-edited or
+	// mod-removed paths). If ANY non-empty path fails to resolve, report failure instead of a
+	// partial look - the caller then tries the live-actor harvest (correct in-session) or ends
+	// at honest defaults (post-restart with a missing descriptor mod). [#477 review finding]
+	FFactoryCustomizationData Result;
+	bool bAllResolved = true;
+	if (!SwatchClass.IsEmpty())
+	{
+		Result.SwatchDesc = FSoftClassPath(SwatchClass).TryLoadClass<UFGFactoryCustomizationDescriptor_Swatch>();
+		bAllResolved &= (Result.SwatchDesc != nullptr);
+	}
+	if (!PatternClass.IsEmpty())
+	{
+		Result.PatternDesc = FSoftClassPath(PatternClass).TryLoadClass<UFGFactoryCustomizationDescriptor_Pattern>();
+		bAllResolved &= (Result.PatternDesc != nullptr);
+	}
+	if (!MaterialClass.IsEmpty())
+	{
+		Result.MaterialDesc = FSoftClassPath(MaterialClass).TryLoadClass<UFGFactoryCustomizationDescriptor_Material>();
+		bAllResolved &= (Result.MaterialDesc != nullptr);
+	}
+	if (!SkinClass.IsEmpty())
+	{
+		Result.SkinDesc = FSoftClassPath(SkinClass).TryLoadClass<UFGFactoryCustomizationDescriptor_Skin>();
+		bAllResolved &= (Result.SkinDesc != nullptr);
+	}
+	if (!PaintFinishClass.IsEmpty())
+	{
+		Result.OverrideColorData.PaintFinish = FSoftClassPath(PaintFinishClass).TryLoadClass<UFGFactoryCustomizationDescriptor_PaintFinish>();
+		bAllResolved &= (Result.OverrideColorData.PaintFinish != nullptr);
+	}
+	if (!bAllResolved)
+	{
+		UE_LOG(LogSmartExtend, Warning,
+			TEXT("[#477] Captured customization has unresolvable descriptor path(s) (swatch='%s' pattern='%s' material='%s' skin='%s' finish='%s') - falling back."),
+			*SwatchClass, *PatternClass, *MaterialClass, *SkinClass, *PaintFinishClass);
+		return false;
+	}
+	Result.OverrideColorData.PrimaryColor = OverridePrimary;
+	Result.OverrideColorData.SecondaryColor = OverrideSecondary;
+	Result.PatternRotation = PatternRotation;
+	Out = Result;
+	return true;
 }

@@ -662,6 +662,17 @@ void USFSubsystem::OnRecipeModeChanged(const FInputActionValue& Value)
 			RecipeManagementService->OnRecipeModeChanged(Value);
 		}
 	}
+
+	// [#473] End of a U-hold (either mode): commit the recency of the last gesture-armed restore
+	// and reset the cycle cursor - the recents list is frozen while a hold walks it (alt-tab
+	// semantics), so the reorder happens here.
+	if (!bPressed)
+	{
+		if (USFRestoreService* Restore = GetRestoreService())
+		{
+			Restore->OnRecentCycleHoldReleased();
+		}
+	}
 }
 
 void USFSubsystem::AddRecipeToUnlocked(TSubclassOf<UFGRecipe> Recipe)

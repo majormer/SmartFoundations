@@ -418,6 +418,21 @@ namespace
 		Obj->SetStringField(TEXT("laneSegmentType"), Holo.LaneSegmentType);
 		Obj->SetObjectField(TEXT("laneStartNormal"), VecToJson(Holo.LaneStartNormal));
 		Obj->SetObjectField(TEXT("laneEndNormal"), VecToJson(Holo.LaneEndNormal));
+		// [#477] Captured appearance - written only when captured: uncaptured children emit no
+		// "customization" object (additive schema; loaders without the field simply ignore it).
+		if (Holo.Customization.bCaptured)
+		{
+			TSharedPtr<FJsonObject> Custom = MakeShared<FJsonObject>();
+			Custom->SetStringField(TEXT("swatchClass"), Holo.Customization.SwatchClass);
+			Custom->SetStringField(TEXT("patternClass"), Holo.Customization.PatternClass);
+			Custom->SetStringField(TEXT("materialClass"), Holo.Customization.MaterialClass);
+			Custom->SetStringField(TEXT("skinClass"), Holo.Customization.SkinClass);
+			Custom->SetStringField(TEXT("paintFinishClass"), Holo.Customization.PaintFinishClass);
+			Custom->SetStringField(TEXT("overridePrimary"), Holo.Customization.OverridePrimary.ToString());
+			Custom->SetStringField(TEXT("overrideSecondary"), Holo.Customization.OverrideSecondary.ToString());
+			Custom->SetNumberField(TEXT("patternRotation"), Holo.Customization.PatternRotation);
+			Obj->SetObjectField(TEXT("customization"), Custom);
+		}
 		return Obj;
 	}
 
@@ -456,6 +471,21 @@ namespace
 		Obj->TryGetStringField(TEXT("laneSegmentType"), OutHolo.LaneSegmentType);
 		if (Obj->TryGetObjectField(TEXT("laneStartNormal"), Child) && Child) JsonToVec(*Child, OutHolo.LaneStartNormal);
 		if (Obj->TryGetObjectField(TEXT("laneEndNormal"), Child) && Child) JsonToVec(*Child, OutHolo.LaneEndNormal);
+		// [#477] Captured appearance - absent in pre-#477 presets, leaving bCaptured=false (the
+		// spawner then falls back to the legacy live-actor harvest).
+		if (Obj->TryGetObjectField(TEXT("customization"), Child) && Child)
+		{
+			OutHolo.Customization.bCaptured = true;
+			(*Child)->TryGetStringField(TEXT("swatchClass"), OutHolo.Customization.SwatchClass);
+			(*Child)->TryGetStringField(TEXT("patternClass"), OutHolo.Customization.PatternClass);
+			(*Child)->TryGetStringField(TEXT("materialClass"), OutHolo.Customization.MaterialClass);
+			(*Child)->TryGetStringField(TEXT("skinClass"), OutHolo.Customization.SkinClass);
+			(*Child)->TryGetStringField(TEXT("paintFinishClass"), OutHolo.Customization.PaintFinishClass);
+			FString ColorStr;
+			if ((*Child)->TryGetStringField(TEXT("overridePrimary"), ColorStr)) { OutHolo.Customization.OverridePrimary.InitFromString(ColorStr); }
+			if ((*Child)->TryGetStringField(TEXT("overrideSecondary"), ColorStr)) { OutHolo.Customization.OverrideSecondary.InitFromString(ColorStr); }
+			if ((*Child)->TryGetNumberField(TEXT("patternRotation"), Val)) OutHolo.Customization.PatternRotation = static_cast<uint8>(Val);
+		}
 	}
 
 	TSharedPtr<FJsonObject> CloneTopologyToJson(const FSFCloneTopology& Topology)
@@ -699,6 +729,7 @@ bool USFRestoreService::ApplyPreset(const FSFRestorePreset& Preset, bool bInclud
 
 	ActiveRestorePresetName = Preset.Name;
 	bRestoreSessionActive = Preset.bHasExtendTopology;
+	++ArmSerial;  // [#473] supersede any pending deferred value-apply from an earlier arm
 
 	// 1. Switch build gun to the preset's building
 	if (!Preset.BuildingClassName.IsEmpty())
@@ -794,7 +825,197 @@ bool USFRestoreService::ApplyPreset(const FSFRestorePreset& Preset, bool bInclud
 	}
 
 	SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("[SmartRestore] Applied preset '%s'"), *Preset.Name);
+	RecordRecentPreset(Preset.Name);  // [#473] every successful apply feeds the recents list
 	return true;
+}
+
+// === [#473] Recently-used restores (session-only) ===
+
+void USFRestoreService::RecordRecentPreset(const FString& Name)
+{
+	// Cycle steps commit their recency on U release instead (OnRecentCycleHoldReleased) - the
+	// walk needs the list order frozen while the hold steps through it.
+	if (bGestureApplyInProgress || Name.IsEmpty())
+	{
+		return;
+	}
+	RecentPresetNames.Remove(Name);
+	RecentPresetNames.Insert(Name, 0);
+	if (RecentPresetNames.Num() > MaxRecentPresets)
+	{
+		RecentPresetNames.SetNum(MaxRecentPresets);
+	}
+	RecentCycleIndex = INDEX_NONE;  // a fresh apply restarts any walk at the newest entry
+}
+
+void USFRestoreService::CycleRecentPreset(int32 Direction)
+{
+	Direction = (Direction >= 0) ? +1 : -1;
+
+	while (RecentPresetNames.Num() > 0)
+	{
+		const int32 Num = RecentPresetNames.Num();
+		if (RecentCycleIndex == INDEX_NONE)
+		{
+			// First step of the hold: newest when walking older (Num9), oldest when walking newer.
+			RecentCycleIndex = (Direction > 0) ? 0 : Num - 1;
+		}
+		else
+		{
+			RecentCycleIndex = ((RecentCycleIndex + Direction) % Num + Num) % Num;
+		}
+
+		const FString Name = RecentPresetNames[RecentCycleIndex];
+		bool bFound = false;
+		const FSFRestorePreset Preset = LoadPreset(Name, bFound);
+		if (bFound)
+		{
+			// Modules seed their replay session from the counters (include them here); grid
+			// presets get their values DEFERRED below instead - writing them now would race the
+			// build-gun switch (the new hologram's registration resets per-build state).
+			bGestureApplyInProgress = true;
+			const bool bApplied = ApplyPreset(Preset, /*bIncludeCounterState*/ Preset.bHasExtendTopology);
+			bGestureApplyInProgress = false;
+			if (bApplied)
+			{
+				if (!Preset.bHasExtendTopology)
+				{
+					// [#473] Grid preset: commit values + regenerate once the switched build
+					// gun's hologram is ready (same deferral the module replay uses). Guarded
+					// by the arm serial ApplyPreset just stamped.
+					ApplyPresetValuesWhenHologramReady(MakeShared<FSFRestorePreset>(Preset), ArmSerial, 12, 2);
+				}
+				PendingRecentArmName = Name;
+				const FText Kind = (Preset.PresetKind == ESFRestorePresetKind::Module)
+					? NSLOCTEXT("SmartFoundations", "Restore_RecentKindModule", "module")
+					: NSLOCTEXT("SmartFoundations", "Restore_RecentKindGrid", "grid preset");
+				if (Subsystem.IsValid())
+				{
+					Subsystem->ShowSmartNotice(
+						FText::Format(
+							NSLOCTEXT("SmartFoundations", "Restore_RecentArmed", "Restore: {0} ({1}/{2}) - {3}"),
+							FText::FromString(Preset.Name),
+							FText::AsNumber(RecentCycleIndex + 1),
+							FText::AsNumber(RecentPresetNames.Num()),
+							Kind).ToString(),
+						4.0f);
+				}
+				return;
+			}
+		}
+
+		// [#473] Silently drop entries that were deleted or can't arm right now (locked recipe,
+		// missing building, ...) and keep stepping in the same direction (maintainer decision).
+		SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
+			TEXT("[SmartRestore][#473] Dropping recent '%s' (missing or failed to arm)"), *Name);
+		RecentPresetNames.RemoveAt(RecentCycleIndex);
+		// Walking older: the next-older entry slid into this slot - step back one so the loop's
+		// +1 lands on it (index -1 == INDEX_NONE re-enters the first-step branch, which resolves
+		// to slot 0: exactly the element that slid down). Walking newer: the loop's -1 from the
+		// unchanged index lands on the next-newer entry, with the modulo handling the wrap.
+		if (Direction > 0)
+		{
+			RecentCycleIndex -= 1;
+		}
+	}
+
+	if (Subsystem.IsValid())
+	{
+		Subsystem->ShowSmartNotice(
+			NSLOCTEXT("SmartFoundations", "Restore_RecentNone",
+				"No recent restores this session - apply one from the Smart Panel first").ToString(),
+			4.0f);
+	}
+}
+
+void USFRestoreService::OnRecentCycleHoldReleased()
+{
+	RecentCycleIndex = INDEX_NONE;
+	if (!PendingRecentArmName.IsEmpty())
+	{
+		const FString Name = PendingRecentArmName;
+		PendingRecentArmName.Empty();
+		RecordRecentPreset(Name);
+	}
+}
+
+void USFRestoreService::ApplyPresetValuesWhenHologramReady(TSharedRef<const FSFRestorePreset> Preset, uint64 ExpectedSerial, int32 AttemptsRemaining, int32 SettleTicksRemaining)
+{
+	// Staleness guard: only a NEWER arm supersedes this deferral. Deliberately NOT keyed on
+	// ActiveRestorePresetName - when cycling module -> grid preset, the new hologram's
+	// registration tears down the module's restored-Extend session, and that cleanup empties
+	// the name (SFSubsystem_HologramLifecycle "changed away from restored Extend source").
+	// That teardown is correct AND this deferral must still run after it.
+	if (!Subsystem.IsValid() || ArmSerial != ExpectedSerial)
+	{
+		return;
+	}
+
+	Subsystem->PollForActiveHologram();
+	AFGHologram* ActiveHologram = Subsystem->GetActiveHologram();
+	if (IsActiveHologramReadyForPreset(ActiveHologram, *Preset))
+	{
+		if (SettleTicksRemaining > 0)
+		{
+			UWorld* World = Subsystem->GetWorld();
+			if (!World)
+			{
+				return;
+			}
+			TWeakObjectPtr<USFRestoreService> WeakThis(this);
+			FTimerDelegate SettleDelegate;
+			SettleDelegate.BindLambda([WeakThis, Preset, ExpectedSerial, AttemptsRemaining, SettleTicksRemaining]()
+			{
+				if (WeakThis.IsValid())
+				{
+					WeakThis->ApplyPresetValuesWhenHologramReady(Preset, ExpectedSerial, AttemptsRemaining, SettleTicksRemaining - 1);
+				}
+			});
+			World->GetTimerManager().SetTimerForNextTick(SettleDelegate);
+			return;
+		}
+
+		// The panel's ApplyCurrentValues in miniature: commit the captured values, then
+		// regenerate the child grid - UpdateCounterState alone spawns/repositions nothing.
+		// AC settings are re-applied too: hologram registration reset the runtime settings
+		// AFTER ApplyPreset had applied them (ResetAutoConnectRuntimeSettings on register).
+		Subsystem->UpdateCounterState(BuildCounterStateFromPreset(Subsystem->GetCounterState(), *Preset));
+		if (Preset->CaptureFlags.bAutoConnect)
+		{
+			Subsystem->SetAutoConnectRuntimeSettingsFromPreset(Preset->AutoConnect);
+		}
+		if (!Subsystem->IsExtendModeActive())
+		{
+			Subsystem->RegenerateChildHologramGrid();
+		}
+		SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
+			TEXT("[SmartRestore][#473] Deferred grid-preset values applied for '%s' (hologram %s)"),
+			*Preset->Name, *GetNameSafe(ActiveHologram));
+		return;
+	}
+
+	if (AttemptsRemaining <= 0)
+	{
+		SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Warning,
+			TEXT("[SmartRestore][#473] Gave up waiting for hologram for grid preset '%s'"), *Preset->Name);
+		return;
+	}
+
+	UWorld* World = Subsystem->GetWorld();
+	if (!World)
+	{
+		return;
+	}
+	TWeakObjectPtr<USFRestoreService> WeakThis(this);
+	FTimerDelegate RetryDelegate;
+	RetryDelegate.BindLambda([WeakThis, Preset, ExpectedSerial, AttemptsRemaining, SettleTicksRemaining]()
+	{
+		if (WeakThis.IsValid())
+		{
+			WeakThis->ApplyPresetValuesWhenHologramReady(Preset, ExpectedSerial, AttemptsRemaining - 1, SettleTicksRemaining);
+		}
+	});
+	World->GetTimerManager().SetTimerForNextTick(RetryDelegate);
 }
 
 bool USFRestoreService::ValidatePresetUnlocks(const FSFRestorePreset& Preset, FString& OutFailureReason) const

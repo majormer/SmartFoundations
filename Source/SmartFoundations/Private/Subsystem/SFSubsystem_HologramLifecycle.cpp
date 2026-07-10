@@ -1550,6 +1550,10 @@ void USFSubsystem::OnBuildGunUnequipped()
 	// overrides only live while the build is in play; global settings are what persist.)
 	BlueprintSpacingDefaultAppliedFor.Empty();
 
+	// [#209] Player Relative target slots are per-build-session state - reset to Forward. (The
+	// stagger FAMILY persists: it rides the stored StaggerAxis exactly like the classic axes.)
+	PlayerRelativeSlots = {};
+
 	// Reset recipe sampling subscription flag
 	bHasSubscribedToRecipeSampled = false;
 

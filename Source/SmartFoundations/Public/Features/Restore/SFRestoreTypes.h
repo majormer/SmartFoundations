@@ -37,8 +37,12 @@
  *        (spacingMode/spacingAxis/stepsAxis/staggerAxis/rotationAxis as string tokens),
  *        explicit production-recipe state (hasProductionRecipe - "No recipe" is a first-class
  *        restorable value, distinct from the legacy "don't touch" empty string).
+ *   4 -> #477: per-clone captured customization on child holograms ("customization" object:
+ *        swatch/pattern/material/skin/paint-finish class paths + override colors + pattern
+ *        rotation). Absent object = legacy-implicit bCaptured=false (the spawner falls back to
+ *        the live-actor harvest). Additive - no migration branch needed.
  */
-static constexpr int32 SF_RESTORE_PRESET_VERSION = 3;
+static constexpr int32 SF_RESTORE_PRESET_VERSION = 4;
 
 /** Compact sharing format prefix. The digit is a frozen literal (it identifies "a Smart Restore
  *  code", it is NOT the preset version - that lives in the body JSON's "version" field). */
