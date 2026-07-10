@@ -1729,6 +1729,14 @@ static bool SF_ComputePlayerRelativeAxes(USFSubsystem* SS, AFGHologram* Holo,
 	{
 		return false;
 	}
+	// [#209/#356] Smart Walking is SEGMENT-relative by design: the walk owns scale/value input
+	// with its own meanings (Scale-X = advance/back, Y = lanes, Z = stack) and its own HUD.
+	// Player Relative resolution is disabled WHOLESALE during a walk so facing can never remap
+	// which walk control a key drives (e.g. Num6/4 flipping from lane-adjust to advance/back).
+	if (USFWalkService* Walk = SS->GetWalkService(); Walk && Walk->IsActive())
+	{
+		return false;
+	}
 	if (APlayerController* PC = SS->GetWorld() ? SS->GetWorld()->GetFirstPlayerController() : nullptr)
 	{
 		SF_ResolvePlayerRelativeAxes(PC->GetControlRotation().Yaw, Holo->GetActorRotation().Yaw,
@@ -2187,7 +2195,8 @@ void USFSubsystem::OnScaleZChanged(const FInputActionValue& Value)
     // [#209] Stagger family select - BOTH control modes: Num9 = Stack (the vertical pile leans),
     // Num3 = Flat (a horizontal run drifts). Direct select (idempotent), keeps the axis pick.
     // Part of the stagger 2x2 navigation change; replaces Z grid scaling while Stagger is held.
-    if (bStaggerModeActive && GridStateService)
+    // NOT during Smart Walking: walk repurposes Z scaling as stack count (ApplyAxisScaling below).
+    if (bStaggerModeActive && GridStateService && !(WalkService && WalkService->IsActive()))
     {
         SetStaggerFamilyProjection(/*bStack*/ Direction > 0);
         return;
@@ -2214,6 +2223,7 @@ void USFSubsystem::OnScaleZChanged(const FInputActionValue& Value)
     // the compass stays consistent instead of falling back to Z grid scaling. Classic modal
     // (PR off) falls through: Num9/3 keep scaling the Z grid as they always have.
     if (IsPlayerRelativeEnabled() &&
+        !(WalkService && WalkService->IsActive()) &&
         (bSpacingModeActive || bStepsModeActive || bRotationModeActive))
     {
         if (bSpacingModeActive && GridStateService)

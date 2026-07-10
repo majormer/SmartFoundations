@@ -323,7 +323,8 @@ void USFSubsystem::OnCycleAxis()
     // aligned with classic: Num0 toggles the FAMILY (Z on/off) and the drift direction rides
     // re-tap/Num6/4 - the family is the bigger mental switch and gets the dedicated key.
     else if ((bSpacingModeActive || bStepsModeActive || bStaggerModeActive || bRotationModeActive)
-             && IsPlayerRelativeEnabled())
+             && IsPlayerRelativeEnabled()
+             && !(WalkService && WalkService->IsActive()))  // walk ignores PR target slots - classic below
     {
         if (bStaggerModeActive)
         {
@@ -577,7 +578,7 @@ void USFSubsystem::OnStaggerModeChanged(const FInputActionValue& Value)
 		// reachable with no numpad.
 		if (FPlatformTime::Seconds() - LastStaggerModeReleaseSeconds < SFModeKeyReTapSeconds)
 		{
-			if (IsPlayerRelativeEnabled())
+			if (IsPlayerRelativeEnabled() && !(WalkService && WalkService->IsActive()))
 			{
 				AdvancePlayerRelativeSlot();
 			}

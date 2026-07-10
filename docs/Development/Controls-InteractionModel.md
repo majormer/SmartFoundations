@@ -187,8 +187,15 @@ composes with the classic Y-negation — **feel-verify** remains the gate for st
 
 ### 5.5 Explicitly out of scope (align later, tracked)
 
-- **Extend** direction cycling (has its own fwd/right/back/left semantics) — review against PR later.
-- **Smart Walking** segment modals (segment-relative, not player-relative) — unaffected.
+- **Extend** direction cycling stays building-relative (manifold alignment) — PR never forks it.
+  Extend's fixed X=chain / Y=rows *feature* meanings vs PR's facing map, the live-vs-restored
+  X-sign mismatch, and the ignored Vertical target during Extend are tracked in **#478**.
+- **Smart Walking** is segment-relative, and that isolation is **enforced in code** (2026-07-09):
+  `SF_ComputePlayerRelativeAxes` returns classic axes whenever a walk is active — one choke point
+  disabling PR resolution wholesale (scaling, modal targets, HUD highlight, tick refresh) — plus
+  walk gates on the Num9/3 stagger-family/vertical branches, PR slot cycling, and stagger re-tap,
+  so every key keeps its walk meaning (Scale-X = advance, Y = lanes, Z = stack). Lesson: a scope
+  statement about feature isolation needs an enforcement point, not an input-routing assumption.
 - **Auto-Connect settings mode** (own Num0 meaning) — untouched.
 
 ## 6. Alignment invariant (the checklist)
