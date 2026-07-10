@@ -1,6 +1,6 @@
 # <img src="https://github.com/majormer/SmartFoundations/blob/main/images/Smart-Logo.png?raw=true" width="150" alt="Smart! Logo"> Smart! Mod
 
-![Status](https://img.shields.io/badge/Status-Released-brightgreen) ![Version](https://img.shields.io/badge/Version-34.0.0-blue) ![Satisfactory](https://img.shields.io/badge/Satisfactory-1.2-blue) ![Engine](https://img.shields.io/badge/Engine-UE%205.6-blue) ![SML](https://img.shields.io/badge/SML-3.12-blue) ![Multiplayer](https://img.shields.io/badge/Multiplayer-Supported-brightgreen) ![AI Assisted Development Used](https://img.shields.io/badge/AI%20Assisted%20Development%20Used-Disclosure%20Below-blue)
+![Status](https://img.shields.io/badge/Status-Released-brightgreen) ![Version](https://img.shields.io/badge/Version-34.1.0-blue) ![Satisfactory](https://img.shields.io/badge/Satisfactory-1.2-blue) ![Engine](https://img.shields.io/badge/Engine-UE%205.6-blue) ![SML](https://img.shields.io/badge/SML-3.12-blue) ![Multiplayer](https://img.shields.io/badge/Multiplayer-Supported-brightgreen) ![AI Assisted Development Used](https://img.shields.io/badge/AI%20Assisted%20Development%20Used-Disclosure%20Below-blue)
 
 > **Multiplayer note:** As of v32.0.0, every Smart! feature works in multiplayer on dedicated servers (Windows and Linux) — including **Smart Walking** and the new-in-v33.1.0 **Hyper Tube** support. If you hit something odd in a multiplayer session, please report it on [GitHub](https://github.com/majormer/SmartFoundations/issues) or [Discord](https://discord.gg/SgXY4CwXYw).
 
@@ -113,21 +113,27 @@ See [LICENSE.md](https://github.com/majormer/SmartFoundations/blob/main/LICENSE.
 
 ---
 
-## 📰 What's New in v34.0.0: Smart! Blueprints
+## 📰 What's New in v34.1.0: Player Relative Controls
 
-**Current Release:** v34.0.0 introduces **Smart! Blueprints** — scale one of *your own* blueprints into a grid, and Smart! automatically runs the belts and pipes between the copies for you. Design a blueprint whose conveyors or pipes reach its edge, then stamp out a 4×2, a 3×3, or any grid you like: every seam between copies is wired in a single placement, previewed and priced before you build. It works in single-player and multiplayer. See the [full changelog](https://github.com/majormer/SmartFoundations/blob/main/CHANGELOG.md) for all the details.
+**Current Release:** v34.1.0 adds **Player Relative Controls** — an optional way to build in the direction you're *looking* instead of along fixed compass axes — plus quick re-placement of recent Smart Restores, and paint that finally follows your cloned and restored builds. It's opt-in and off by default, so nothing changes until you switch it on. See the [full changelog](https://github.com/majormer/SmartFoundations/blob/main/CHANGELOG.md) for everything.
 
-### Scale a blueprint into a connected grid
+### Build where you're looking
 
-Blueprints could never be scaled with Smart! before — holding one and scrolling did nothing. Now a held blueprint scales into a grid of copies just like any other building, along X, Y, and Z with spacing and steps, and Smart! connects the belts and pipes that reach each copy's edge to the matching connectors on its neighbours. Picking up a blueprint even sets spacing to 1 m automatically so the connecting runs have room to exist.
+Turn on **Player Relative Controls** (under Building Behavior in the mod settings) and the build grid follows your view: scroll to grow the array toward wherever you're facing, or glance to the side to extend it sideways — no more stopping to remember which way is "X." The numpad becomes a compass (Num8/Num5 away and toward you, Num6/Num4 to your right and left, Num9/Num3 up and down), and it applies to scaling *and* to spacing, steps, stagger, and rotation. Prefer the mouse? While you hold a transform key the HUD names what the wheel is driving — Forward, Lateral, or Vertical — and a quick re-tap of the key switches between them. Your classic controls are untouched when it's off, and the Smart Panel keeps its familiar X/Y/Z either way.
 
-### The 2D fabric the game can't do
+### Chain your recent restores without the panel
 
-Because Smart! wires the copies together directly, an interior copy connects on **all four sides at once** — a true two-dimensional grid of connected blueprints, which the game's built-in blueprint auto-connect can't produce on its own. Pipes go one further: they also connect **vertically**, so a blueprint with pipe ports on its roof and floor stacks into a self-connected tower when you scale it up.
+Placing the same Smart Restore over and over used to mean reopening the Smart Panel and clicking Apply every time. Now, while you hold the Recipe/Settings key (U), **Num9 steps through the restores you've applied this session** (newest first) and Num3 steps back — each one arms exactly like pressing Apply, so repeating a layout is just aim, click, U+Num9, aim, click.
 
-### Every copy is a real blueprint
+### Restores and clones remember their paint
 
-Each copy is a genuine, independent blueprint instance — not a merged blob. Dismantle one and you remove just that copy, leaving the rest of the grid (and the connecting belts and pipes) in place. And if a grid comes out missing its connections, the HUD tells you why — usually *"too close"*, meaning you just need a little more spacing.
+Cloned pipe floor holes, wall holes, valves, and pumps used to come out bare metal even when the source was painted — now they inherit its full customization (swatch, pattern, material, skin) like every other part. And a saved restore preset now **remembers the paint of every piece** and replays it faithfully even after a game restart or in another world, where before it could only borrow colors from buildings still standing nearby.
+
+---
+
+## 📦 Previously: v34.0.0 — Smart! Blueprints
+
+v34.0.0 introduced **Smart! Blueprints** — scale one of *your own* blueprints into a grid and Smart! runs the belts and pipes between the copies for you. Design a blueprint whose conveyors or pipes reach its edge, then stamp out a 4×2, a 3×3, or any grid: every seam between copies is wired in a single placement (including the true two-dimensional connections the game's own blueprint auto-connect can't do, plus vertical pipe stacking), each copy stays a real independent blueprint you can dismantle on its own, and it all works in single-player and multiplayer.
 
 ---
 

@@ -44,6 +44,7 @@ Use these settings to control power cable previews.
 ## Scaling
 
 - Auto-Hold on grid change locks the hologram after you modify the grid, so a large preview doesn't move accidentally. **On by default** (as of 32.1.2) — turn it off here if you'd rather the hologram stay free to reposition, and the vanilla Hold key releases any individual lock.
+- **Player Relative Controls** — makes building follow the direction you're looking instead of fixed compass axes: the mouse wheel grows the build toward wherever you're facing, and the numpad becomes a compass (away/toward, right/left, up/down). Applies to scaling, spacing, steps, stagger, and rotation. **Off by default** — your classic controls are unchanged until you turn it on, and the Smart Panel always stays on fixed X/Y/Z. See [Controls](Controls) for the full breakdown. (Added in 34.1.0.)
 
 ## Scroll Increments
 

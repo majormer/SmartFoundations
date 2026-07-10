@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [34.1.0] - Unreleased
+## [34.1.0] - 2026-07-10
 
 > *Player Relative Controls: an optional way to build in the direction you're looking, so the grid grows toward where you face instead of along fixed compass axes.*
 
