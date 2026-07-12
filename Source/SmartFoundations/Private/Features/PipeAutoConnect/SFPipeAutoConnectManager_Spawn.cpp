@@ -13,6 +13,7 @@
 #include "Subsystem/SFHologramHelperService.h"
 #include "Features/AutoConnect/SFAutoConnectService.h"
 #include "Features/PipeAutoConnect/SFPipeConnectorFinder.h"
+#include "Shared/Conduits/SFDistributorTopology.h"
 #include "Data/SFBuildableSizeRegistry.h"
 #include "Buildables/FGBuildable.h"
 #include "Buildables/FGBuildableFactory.h"
@@ -34,15 +35,14 @@ void FSFPipeAutoConnectManager::EvaluatePipeConnections(AFGHologram* ParentJunct
 	}
 
 	// Phase 2: Manifold connections (junction-to-junction chaining)
-	// Group junctions by which building pipe INPUT INDEX they connect to (not specific connector instance)
+	// Group junctions by the stable building connector name (not component-array order).
 	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🔗 Pipe Manifolds: Evaluating junction-to-junction chains"));
 	
 	// Track which junctions will be valid sources in this evaluation
 	// Any existing manifold pipe whose source is NOT in this set should be cleaned up
 	TSet<AFGHologram*> ValidManifoldSources;
 	
-	// Build map: Building Input Index → List of Junctions connected to that input
-	TMap<int32, TArray<AFGHologram*>> JunctionsByInputIndex;
+	TMap<FName, TArray<AFGHologram*>> JunctionsByPortName;
 	
 	for (const auto& Pair : ReservedConnectors)
 	{
@@ -61,34 +61,24 @@ void FSFPipeAutoConnectManager::EvaluatePipeConnections(AFGHologram* ParentJunct
 			continue;
 		}
 		
-		// Find which input/output index this connector is on the building
-		TArray<UFGPipeConnectionComponent*> BuildingPipeConnectors;
-		BuildingActor->GetComponents<UFGPipeConnectionComponent>(BuildingPipeConnectors);
+		const FName ConnectorName = BuildingConnector->GetFName();
+		JunctionsByPortName.FindOrAdd(ConnectorName).Add(Junction);
 		
-		int32 ConnectorIndex = BuildingPipeConnectors.IndexOfByKey(BuildingConnector);
-		if (ConnectorIndex == INDEX_NONE)
-		{
-			continue;
-		}
-		
-		// Add junction to this input index's group (e.g., all Input0 junctions together)
-		JunctionsByInputIndex.FindOrAdd(ConnectorIndex).Add(Junction);
-		
-		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      Junction %s → Building %s Input[%d]"),
-			*Junction->GetName(), *BuildingActor->GetName(), ConnectorIndex);
+		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      Junction %s → Building %s.%s"),
+			*Junction->GetName(), *BuildingActor->GetName(), *ConnectorName.ToString());
 	}
 	
 	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🔗 Pipe Manifolds: Found %d input index groups"),
-		JunctionsByInputIndex.Num());
+		JunctionsByPortName.Num());
 	
 	// For each input index group, chain the junctions together
-	for (const auto& Group : JunctionsByInputIndex)
+	for (const auto& Group : JunctionsByPortName)
 	{
-		int32 InputIndex = Group.Key;
+		const FName InputPortName = Group.Key;
 		const TArray<AFGHologram*>& JunctionsInGroup = Group.Value;
 		
-		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("   📋 Input[%d]: %d junction(s)"),
-			InputIndex, JunctionsInGroup.Num());
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("   📋 Port[%s]: %d junction(s)"),
+			*InputPortName.ToString(), JunctionsInGroup.Num());
 		
 		if (JunctionsInGroup.Num() < 2)
 		{
@@ -110,8 +100,8 @@ void FSFPipeAutoConnectManager::EvaluatePipeConnections(AFGHologram* ParentJunct
 			continue; // Need at least 2 junctions to chain
 		}
 		
-		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("   🔗 Input[%d]: Chaining %d junctions in manifold"),
-			InputIndex, JunctionsInGroup.Num());
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("   🔗 Port[%s]: Chaining %d junctions in manifold"),
+			*InputPortName.ToString(), JunctionsInGroup.Num());
 		
 		// #423: Sort junctions along the manifold's DOMINANT run axis (X vs Y), not always world-X, so a
 		// manifold running along Y (or a rotated / restore-preview lane) chains in order instead of
@@ -406,147 +396,6 @@ void FSFPipeAutoConnectManager::EvaluatePipeConnections(AFGHologram* ParentJunct
 	}
 }
 
-int32 FSFPipeAutoConnectManager::GetConnectorIndex(AFGHologram* JunctionHologram, UFGPipeConnectionComponent* Connector)
-{
-	if (!JunctionHologram || !Connector)
-	{
-		return INDEX_NONE;
-	}
-	
-	TArray<UFGPipeConnectionComponent*> JunctionConnectors;
-	FSFPipeConnectorFinder::GetJunctionConnectors(JunctionHologram, JunctionConnectors);
-	
-	return JunctionConnectors.IndexOfByKey(Connector);
-}
-
-int32 FSFPipeAutoConnectManager::GetOppositeConnectorIndex(int32 Index, int32 TotalConnectors)
-{
-	// DEPRECATED: Hardcoded mapping doesn't match physical connector layout.
-	// GetComponents() ordering is arbitrary — use GetOppositeConnectorByNormal() instead.
-	// Keeping for API compatibility but prefer the normal-based version.
-	if (TotalConnectors == 4)
-	{
-		if (Index == 0) return 2;
-		if (Index == 1) return 3;
-		if (Index == 2) return 0;
-		if (Index == 3) return 1;
-	}
-	return Index;
-}
-
-int32 FSFPipeAutoConnectManager::GetOppositeConnectorByNormal(
-	int32 SourceIndex,
-	const TArray<UFGPipeConnectionComponent*>& Connectors)
-{
-	// Issue #206 fix: Find the connector whose normal is most opposite to the source connector's normal.
-	// GetComponents() ordering is arbitrary and doesn't correspond to physical positions,
-	// so we must use actual world-space normals to find the true physical opposite.
-	if (SourceIndex < 0 || SourceIndex >= Connectors.Num() || !Connectors[SourceIndex])
-	{
-		return INDEX_NONE;
-	}
-	
-	FVector SourceNormal = Connectors[SourceIndex]->GetConnectorNormal();
-	int32 BestIdx = INDEX_NONE;
-	float BestDot = 1.0f; // Want most negative dot product (most opposite direction)
-	
-	for (int32 i = 0; i < Connectors.Num(); i++)
-	{
-		if (i == SourceIndex || !Connectors[i]) continue;
-		
-		FVector ConnNormal = Connectors[i]->GetConnectorNormal();
-		float Dot = FVector::DotProduct(SourceNormal, ConnNormal);
-		if (Dot < BestDot)
-		{
-			BestDot = Dot;
-			BestIdx = i;
-		}
-	}
-	
-	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   GetOppositeByNormal: Source[%d] Normal=(%.2f,%.2f,%.2f) → Opposite[%d] Dot=%.2f"),
-		SourceIndex, SourceNormal.X, SourceNormal.Y, SourceNormal.Z, BestIdx, BestDot);
-	
-	return BestIdx;
-}
-
-UFGPipeConnectionComponent* FSFPipeAutoConnectManager::FindAvailableManifoldConnector(AFGHologram* JunctionHologram)
-{
-	if (!JunctionHologram)
-	{
-		return nullptr;
-	}
-	
-	// Get all connectors on this junction
-	TArray<UFGPipeConnectionComponent*> JunctionConnectors;
-	FSFPipeConnectorFinder::GetJunctionConnectors(JunctionHologram, JunctionConnectors);
-	
-	if (JunctionConnectors.Num() < 2)
-	{
-		// Issue #320: pipe junctions vary in port count (Cross = 4, T-Junction = 3). A manifold
-		// needs at least a building port + one side port; the perpendicular-port search below is
-		// geometry-driven (by connector normal), so any count >= 2 works.
-		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("Junction %s has %d pipe connectors (need >= 2)"),
-			*JunctionHologram->GetName(), JunctionConnectors.Num());
-		return JunctionConnectors.Num() > 0 ? JunctionConnectors[0] : nullptr;
-	}
-	
-	// Find which connector this junction is using for its building connection (Phase 1)
-	int32 BuildingConnectorIdx = INDEX_NONE;
-	int32* StoredIdx = ParentConnectorIndices.Find(JunctionHologram);
-	if (StoredIdx)
-	{
-		BuildingConnectorIdx = *StoredIdx;
-	}
-	
-	if (BuildingConnectorIdx == INDEX_NONE || BuildingConnectorIdx >= JunctionConnectors.Num())
-	{
-		// No building connection yet, use first connector for manifold
-		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("            No building connection found, using connector 0 for manifold"));
-		return JunctionConnectors[0];
-	}
-	
-	// Get the building-connected port's direction
-	UFGPipeConnectionComponent* BuildingPort = JunctionConnectors[BuildingConnectorIdx];
-	FVector BuildingPortNormal = BuildingPort->GetConnectorNormal();
-	
-	// Find a connector that's PERPENDICULAR to the building port (side port, not opposite)
-	// We want dot product ≈ 0 (perpendicular), not ≈ -1 (opposite)
-	UFGPipeConnectionComponent* BestManifoldPort = nullptr;
-	float BestPerpendicularScore = -1.0f; // Higher score = more perpendicular
-	
-	for (int32 i = 0; i < JunctionConnectors.Num(); i++)
-	{
-		if (i == BuildingConnectorIdx)
-		{
-			continue; // Skip the building-connected port itself
-		}
-		
-		UFGPipeConnectionComponent* CandidatePort = JunctionConnectors[i];
-		FVector CandidateNormal = CandidatePort->GetConnectorNormal();
-		
-		// Calculate how perpendicular this port is (dot product close to 0 is best)
-		float DotProduct = FVector::DotProduct(BuildingPortNormal, CandidateNormal);
-		float PerpendicularScore = 1.0f - FMath::Abs(DotProduct); // 1.0 = perfect perpendicular, 0.0 = parallel/opposite
-		
-		if (PerpendicularScore > BestPerpendicularScore)
-		{
-			BestPerpendicularScore = PerpendicularScore;
-			BestManifoldPort = CandidatePort;
-		}
-	}
-	
-	if (BestManifoldPort)
-	{
-		int32 ManifoldIdx = JunctionConnectors.IndexOfByKey(BestManifoldPort);
-		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("            Building on connector %d, using perpendicular connector %d for manifold (score=%.2f)"), 
-			BuildingConnectorIdx, ManifoldIdx, BestPerpendicularScore);
-		return BestManifoldPort;
-	}
-	
-	// Fallback: return any available connector (should never reach here)
-	return JunctionConnectors.Num() > 0 ? JunctionConnectors[0] : nullptr;
-}
-
 void FSFPipeAutoConnectManager::FindBestManifoldConnectorPair(
 	AFGHologram* SourceJunction,
 	AFGHologram* TargetJunction,
@@ -561,147 +410,80 @@ void FSFPipeAutoConnectManager::FindBestManifoldConnectorPair(
 		return;
 	}
 	
-	// Get all connectors on both junctions
 	TArray<UFGPipeConnectionComponent*> SourceConnectors;
 	TArray<UFGPipeConnectionComponent*> TargetConnectors;
 	FSFPipeConnectorFinder::GetJunctionConnectors(SourceJunction, SourceConnectors);
 	FSFPipeConnectorFinder::GetJunctionConnectors(TargetJunction, TargetConnectors);
-	
-	if (SourceConnectors.Num() < 2 || TargetConnectors.Num() < 2)
+
+	const FName* SourceFactoryPort = ParentConnectorNames.Find(SourceJunction);
+	const FName* TargetFactoryPort = ParentConnectorNames.Find(TargetJunction);
+	if (!SourceFactoryPort || !TargetFactoryPort) return;
+
+	const FSFDistributorPortTopology SourceTopology =
+		FSFDistributorTopologyResolver::Resolve(SourceJunction->GetBuildClass(), *SourceFactoryPort);
+	const FSFDistributorPortTopology TargetTopology =
+		FSFDistributorTopologyResolver::Resolve(TargetJunction->GetBuildClass(), *TargetFactoryPort);
+	if ((SourceTopology.bRecognized && !SourceTopology.bValidManifold) ||
+		(TargetTopology.bRecognized && !TargetTopology.bValidManifold))
 	{
-		// Issue #320: pipe junctions vary in port count (Cross = 4, T-Junction = 3). The pairing
-		// below is geometry-driven (facing/alignment by connector normal), so any count >= 2 is fine.
-		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("Manifold: a junction has too few pipe connectors (Source=%d, Target=%d, need >= 2)"),
-			SourceConnectors.Num(), TargetConnectors.Num());
 		return;
 	}
-	
-	// Get which connectors are used for building connections
-	int32 SourceBuildingIdx = INDEX_NONE;
-	int32 TargetBuildingIdx = INDEX_NONE;
-	
-	int32* SourceStoredIdx = ParentConnectorIndices.Find(SourceJunction);
-	if (SourceStoredIdx) SourceBuildingIdx = *SourceStoredIdx;
-	
-	int32* TargetStoredIdx = ParentConnectorIndices.Find(TargetJunction);
-	if (TargetStoredIdx) TargetBuildingIdx = *TargetStoredIdx;
-	
-	// Calculate direction vector between junctions
-	FVector SourcePos = SourceJunction->GetActorLocation();
-	FVector TargetPos = TargetJunction->GetActorLocation();
-	FVector DirectionToTarget = (TargetPos - SourcePos).GetSafeNormal();
-	
-	// Find best connector pair that faces toward each other
-	// IMPORTANT: Use deterministic tie-breaking to prevent manifold crossover when junctions
-	// are positioned symmetrically between connectors. When scores are equal, prefer:
-	// 1. Lower source connector index (consistent ordering)
-	// 2. Lower target connector index (consistent ordering)
-	float BestScore = -1.0f;
-	int32 BestSrcIdx = INDEX_NONE;
-	int32 BestTgtIdx = INDEX_NONE;
-	
-	for (int32 SrcIdx = 0; SrcIdx < SourceConnectors.Num(); SrcIdx++)
+
+	auto FindByName = [](const TArray<UFGPipeConnectionComponent*>& Connectors, FName Name)
 	{
-		// Skip if this is the building-connected port
-		if (SrcIdx == SourceBuildingIdx)
+		return Connectors.FindByPredicate([Name](const UFGPipeConnectionComponent* Connector)
 		{
-			continue;
-		}
-		
-		UFGPipeConnectionComponent* SrcConn = SourceConnectors[SrcIdx];
-		if (!SrcConn) continue;
-		
-		FVector SrcNormal = SrcConn->GetConnectorNormal();
-		
-		// How well does this source connector face toward the target?
-		float SrcAlignment = FVector::DotProduct(SrcNormal, DirectionToTarget);
-		
-		// Skip if not generally facing target direction (dot < 0.3)
-		if (SrcAlignment < 0.3f)
+			return Connector && Connector->GetFName() == Name;
+		});
+	};
+
+	TArray<UFGPipeConnectionComponent*> SourceCandidates;
+	TArray<UFGPipeConnectionComponent*> TargetCandidates;
+	if (SourceTopology.bRecognized && TargetTopology.bRecognized)
+	{
+		if (UFGPipeConnectionComponent* const* Connector = FindByName(SourceConnectors, SourceTopology.LanePortA)) SourceCandidates.Add(*Connector);
+		if (UFGPipeConnectionComponent* const* Connector = FindByName(SourceConnectors, SourceTopology.LanePortB)) SourceCandidates.Add(*Connector);
+		if (UFGPipeConnectionComponent* const* Connector = FindByName(TargetConnectors, TargetTopology.LanePortA)) TargetCandidates.Add(*Connector);
+		if (UFGPipeConnectionComponent* const* Connector = FindByName(TargetConnectors, TargetTopology.LanePortB)) TargetCandidates.Add(*Connector);
+	}
+	else
+	{
+		// Unknown/modded junctions retain the old geometric fallback, but the factory port is excluded.
+		for (UFGPipeConnectionComponent* Connector : SourceConnectors)
+			if (Connector && Connector->GetFName() != *SourceFactoryPort) SourceCandidates.Add(Connector);
+		for (UFGPipeConnectionComponent* Connector : TargetConnectors)
+			if (Connector && Connector->GetFName() != *TargetFactoryPort) TargetCandidates.Add(Connector);
+	}
+
+	const FVector DirectionToTarget = (TargetJunction->GetActorLocation() - SourceJunction->GetActorLocation()).GetSafeNormal();
+	float BestScore = 0.30f;
+	FString BestKey;
+	for (UFGPipeConnectionComponent* SourceConnector : SourceCandidates)
+	{
+		const float SourceAlignment = FVector::DotProduct(SourceConnector->GetConnectorNormal(), DirectionToTarget);
+		if (SourceAlignment < 0.30f) continue;
+		for (UFGPipeConnectionComponent* TargetConnector : TargetCandidates)
 		{
-			continue;
-		}
-		
-		for (int32 TgtIdx = 0; TgtIdx < TargetConnectors.Num(); TgtIdx++)
-		{
-			// Skip if this is the building-connected port
-			if (TgtIdx == TargetBuildingIdx)
+			const float TargetAlignment = FVector::DotProduct(TargetConnector->GetConnectorNormal(), -DirectionToTarget);
+			if (TargetAlignment < 0.30f) continue;
+			const float Facing = -FVector::DotProduct(SourceConnector->GetConnectorNormal(), TargetConnector->GetConnectorNormal());
+			const float Score = (SourceAlignment + TargetAlignment + Facing) / 3.0f;
+			const FString Key = SourceConnector->GetName() + TEXT("|") + TargetConnector->GetName();
+			if (Score > BestScore + KINDA_SMALL_NUMBER ||
+				(FMath::IsNearlyEqual(Score, BestScore) && (BestKey.IsEmpty() || Key < BestKey)))
 			{
-				continue;
-			}
-			
-			UFGPipeConnectionComponent* TgtConn = TargetConnectors[TgtIdx];
-			if (!TgtConn) continue;
-			
-			FVector TgtNormal = TgtConn->GetConnectorNormal();
-			
-			// How well does this target connector face back toward source?
-			float TgtAlignment = FVector::DotProduct(TgtNormal, -DirectionToTarget);
-			
-			// Skip if not generally facing source direction (dot < 0.3)
-			if (TgtAlignment < 0.3f)
-			{
-				continue;
-			}
-			
-			// Check that connectors face toward each other (normals should be opposite)
-			float FacingScore = -FVector::DotProduct(SrcNormal, TgtNormal);
-			
-			// Combined score: alignment + facing
-			float TotalScore = (SrcAlignment + TgtAlignment + FacingScore) / 3.0f;
-			
-			// Calculate total distance for this connector pair (used for tie-breaking)
-			FVector SrcConnWorld = SrcConn->GetComponentLocation();
-			FVector TgtConnWorld = TgtConn->GetComponentLocation();
-			float PairDistance = FVector::Dist(SrcConnWorld, TgtConnWorld);
-			
-			// Deterministic tie-breaking when scores are nearly equal:
-			// 1. Prefer shorter distance (closer junctions claim connectors first)
-			// 2. If still tied, prefer lower connector indices (stable ordering)
-			const float ScoreEpsilon = 0.001f;
-			const float DistanceEpsilon = 1.0f; // 1cm tolerance for distance comparison
-			bool bIsBetterScore = TotalScore > BestScore + ScoreEpsilon;
-			bool bIsTiedScore = FMath::Abs(TotalScore - BestScore) <= ScoreEpsilon;
-			
-			// For tie-breaking: shorter distance wins, then lower indices
-			bool bWinsTieBreaker = false;
-			if (bIsTiedScore && BestSrcIdx != INDEX_NONE)
-			{
-				// Calculate best pair's distance for comparison
-				FVector BestSrcWorld = SourceConnectors[BestSrcIdx]->GetComponentLocation();
-				FVector BestTgtWorld = TargetConnectors[BestTgtIdx]->GetComponentLocation();
-				float BestDistance = FVector::Dist(BestSrcWorld, BestTgtWorld);
-				
-				bool bShorterDistance = PairDistance < BestDistance - DistanceEpsilon;
-				bool bSameDistance = FMath::Abs(PairDistance - BestDistance) <= DistanceEpsilon;
-				bool bLowerIndices = (SrcIdx < BestSrcIdx || (SrcIdx == BestSrcIdx && TgtIdx < BestTgtIdx));
-				
-				bWinsTieBreaker = bShorterDistance || (bSameDistance && bLowerIndices);
-			}
-			
-			if (bIsBetterScore || bWinsTieBreaker)
-			{
-				BestScore = TotalScore;
-				BestSrcIdx = SrcIdx;
-				BestTgtIdx = TgtIdx;
-				OutSourceConnector = SrcConn;
-				OutTargetConnector = TgtConn;
-				
-				UE_LOG(LogSmartAutoConnect, VeryVerbose, 
-					TEXT("            Better pair: Src[%d]→Tgt[%d] (SrcAlign=%.2f TgtAlign=%.2f Facing=%.2f Total=%.2f Dist=%.1f%s)"),
-					SrcIdx, TgtIdx, SrcAlignment, TgtAlignment, FacingScore, TotalScore, PairDistance,
-					bWinsTieBreaker ? TEXT(" [tie-break]") : TEXT(""));
+				BestScore = Score;
+				BestKey = Key;
+				OutSourceConnector = SourceConnector;
+				OutTargetConnector = TargetConnector;
 			}
 		}
 	}
-	
+
 	if (OutSourceConnector && OutTargetConnector)
 	{
-		int32 FinalSrcIdx = SourceConnectors.IndexOfByKey(OutSourceConnector);
-		int32 FinalTgtIdx = TargetConnectors.IndexOfByKey(OutTargetConnector);
-		UE_LOG(LogSmartAutoConnect, Verbose,
-			TEXT("         ✅ Selected manifold pair: Src[%d]→Tgt[%d] (score=%.2f)"),
-			FinalSrcIdx, FinalTgtIdx, BestScore);
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("         Selected named manifold pair: %s -> %s (score=%.2f)"),
+			*OutSourceConnector->GetName(), *OutTargetConnector->GetName(), BestScore);
 	}
 }
 
@@ -1358,4 +1140,3 @@ void FSFPipeAutoConnectManager::ClearFloorHolePipePreviews()
 	}
 	FloorHolePipeChildren.Empty();
 }
-

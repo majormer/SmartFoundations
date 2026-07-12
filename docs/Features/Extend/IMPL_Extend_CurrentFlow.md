@@ -5,7 +5,7 @@ date: 2026-04-24
 status: Active
 category: Features
 tags: [extend, scaled_extend, manifold, topology, transforms, wiring]
-related: [../Scaling/IMPL_Scaling_CurrentFlow.md, ../Transforms/IMPL_Transforms_CurrentFlow.md, ../AutoConnect/IMPL_AutoConnect_CurrentFlow.md]
+related: [../Scaling/IMPL_Scaling_CurrentFlow.md, ../Transforms/IMPL_Transforms_CurrentFlow.md, ../AutoConnect/IMPL_AutoConnect_CurrentFlow.md, ../../Reference/REF_DistributorPortTopology.md]
 ---
 
 # Smart Extend Current Flow
@@ -71,6 +71,12 @@ See [../Transforms/IMPL_Transforms_CurrentFlow.md](../Transforms/IMPL_Transforms
 ## Wiring and Stabilization
 
 Extend does not rely on every preview-time snapped connection surviving vanilla construction. The post-build wiring manifest is the authoritative repair step for final connections.
+
+Distributor connector identity and built/hologram parity are defined in [Distributor Port Topology Reference](../../Reference/REF_DistributorPortTopology.md). Extend capture, clone planning, multiplayer reconstruction, and Restore replay must preserve those stable named ports end to end.
+
+Extend source capture records the distributor class, factory-side connector name, occupied connector names, and connector world positions. Clone planning resolves the two eligible lane ports from the shared named topology before creating distributor or segment holograms; an invalid recognized orientation drops the whole branch before preview and cost generation. `LaneFromConnector` and `LaneToConnector` already carry those exact names through the wiring manifest, multiplayer server reconstruction, and Restore JSON, so this contract does not require a schema migration.
+
+Branch-owned attachments follow the same exclusion decision. Inline pumps and valves are chain segments and disappear with an excluded branch. Floor holes preserve the stable actor IDs of their top/bottom snapped conduits and are omitted when all snapped owners belong to excluded chains. Wall holes have no logical connection ownership, so their existing conduit-segment overlap test determines whether they belong to an excluded branch. Power poles are captured independently from the source factory's own power connection and remain valid even when an unrelated pipe branch is excluded.
 
 | System | Post-build handling |
 |--------|---------------------|

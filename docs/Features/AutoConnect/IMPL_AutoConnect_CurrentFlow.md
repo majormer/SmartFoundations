@@ -5,7 +5,7 @@ date: 2026-04-24
 status: Active
 category: Features
 tags: [autoconnect, belts, pipes, power, previews, child_holograms]
-related: [../Scaling/IMPL_Scaling_CurrentFlow.md, ../SmartPanel/IMPL_SmartPanel_CurrentFlow.md]
+related: [../Scaling/IMPL_Scaling_CurrentFlow.md, ../SmartPanel/IMPL_SmartPanel_CurrentFlow.md, ../../Reference/REF_DistributorPortTopology.md]
 ---
 
 # Smart AutoConnect Current Flow
@@ -65,6 +65,10 @@ Important behavior:
 ## Pipe AutoConnect
 
 Pipe AutoConnect is handled by `FSFPipeAutoConnectManager`. It scans pipe junction holograms, looks for compatible pipe connectors, and creates `FPipePreviewHelper` previews. It also handles floor-hole pipe previews and can route around stackable/ceiling support layouts.
+
+The stable named-port layouts for pipe junctions, splitters, and mergers are defined in [Distributor Port Topology Reference](../../Reference/REF_DistributorPortTopology.md). Use that contract instead of component enumeration order when assigning distributor roles.
+
+For recognized pipeline junctions, Pipe Auto-Connect stores the factory-side component name, resolves the exact opposite factory port and two manifold-lane ports from the shared topology contract, and only uses geometry to order separate junction actors along a row. A T-Junction orientation without both perpendicular lane ports is discarded before child previews, costs, or manifold wiring are created. Unknown junction classes may use the conservative geometric fallback, but cannot alter the named vanilla maps.
 
 Important behavior:
 

@@ -8,6 +8,7 @@
 #include "Subsystem/SFHologramHelperService.h"
 #include "Features/AutoConnect/SFAutoConnectService.h"
 #include "Features/PipeAutoConnect/SFPipeConnectorFinder.h"
+#include "Shared/Conduits/SFDistributorTopology.h"
 #include "Data/SFBuildableSizeRegistry.h"
 #include "Buildables/FGBuildable.h"
 #include "Buildables/FGBuildableFactory.h"
@@ -128,8 +129,8 @@ void FSFPipeAutoConnectManager::ProcessAllJunctions(AFGHologram* ParentJunctionH
 		AutoConnectService->GetSkipSummary().ResetPipes();
 	}
 	
-	// Track which connector index the parent uses (for child restrictions)
-	int32 ParentConnectorIdx = INDEX_NONE;
+	// Track the stable named factory-side port the parent uses (for child restrictions).
+	FName ParentConnectorName = NAME_None;
 	
 	// Track parent connection type to restrict children (e.g. if parent connects to Output, children can only connect to Output)
 	EPipeConnectionType ParentConnectionType = EPipeConnectionType::PCT_ANY;
@@ -153,12 +154,11 @@ void FSFPipeAutoConnectManager::ProcessAllJunctions(AFGHologram* ParentJunctionH
 		{
 			ProcessPipeJunctions(Junction, &ReservedConnectors, nullptr);
 			
-			// Store parent's chosen connector index for child restrictions
-			int32* StoredIdx = ParentConnectorIndices.Find(ParentJunctionHologram);
-			if (StoredIdx)
+			// Store parent's chosen named port for child restrictions.
+			if (const FName* StoredName = ParentConnectorNames.Find(ParentJunctionHologram))
 			{
-				ParentConnectorIdx = *StoredIdx;
-				UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   Parent using connector index %d"), ParentConnectorIdx);
+				ParentConnectorName = *StoredName;
+				UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   Parent using connector %s"), *ParentConnectorName.ToString());
 			}
 			
 			// Capture parent connection type (Input/Output) from child hologram or legacy preview
@@ -296,30 +296,30 @@ void FSFPipeAutoConnectManager::ProcessAllJunctions(AFGHologram* ParentJunctionH
 				}
 			}
 		}
-		// For children: restrict to parent's connector index and its opposite
-		else if (ParentConnectorIdx != INDEX_NONE)
+		// For children: restrict to the same named factory port and its mapped opposite.
+		else if (!ParentConnectorName.IsNone())
 		{
-			TArray<UFGPipeConnectionComponent*> JunctionConnectors;
-			FSFPipeConnectorFinder::GetJunctionConnectors(Junction, JunctionConnectors);
-			
-			// Issue #206: Use normal-based opposite detection instead of hardcoded index mapping
-			int32 OppositeIdx = GetOppositeConnectorByNormal(ParentConnectorIdx, JunctionConnectors);
-			TArray<int32> AllowedIndices = { ParentConnectorIdx, OppositeIdx };
-			
-			UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   Restricting child to indices %d, %d (opposite by normal)"), 
-				ParentConnectorIdx, OppositeIdx);
+			const FSFDistributorPortTopology ParentTopology =
+				FSFDistributorTopologyResolver::Resolve(ParentJunctionHologram->GetBuildClass(), ParentConnectorName);
+			TArray<FName> AllowedNames = { ParentConnectorName };
+			if (ParentTopology.bRecognized && !ParentTopology.OppositeFactoryPort.IsNone())
+			{
+				AllowedNames.Add(ParentTopology.OppositeFactoryPort);
+			}
+			UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   Restricting child to mapped factory ports %s"),
+				*FString::JoinBy(AllowedNames, TEXT(", "), [](FName Name) { return Name.ToString(); }));
 			
 			// Pass parent connection type constraint if available
 			const EPipeConnectionType* TypeConstraint = bParentHasConnection ? &ParentConnectionType : nullptr;
 			
-			ProcessPipeJunctions(Junction, &ReservedConnectors, &AllowedIndices, TypeConstraint);
+			ProcessPipeJunctions(Junction, &ReservedConnectors, &AllowedNames, TypeConstraint);
 		}
 		else
 		{
 			// Fallback: process child normally (no parent restrictions available yet)
 			// Still pass type constraint if available, though unlikely if parent index not set
-			UE_LOG(LogSmartAutoConnect, Verbose, TEXT("   🔧 PIPE: Processing child %s without parent restrictions (ParentConnectorIdx=%d)"), 
-				*Junction->GetName(), ParentConnectorIdx);
+			UE_LOG(LogSmartAutoConnect, Verbose, TEXT("   🔧 PIPE: Processing child %s without parent named-port restrictions"),
+				*Junction->GetName());
 			const EPipeConnectionType* TypeConstraint = bParentHasConnection ? &ParentConnectionType : nullptr;
 			ProcessPipeJunctions(Junction, &ReservedConnectors, nullptr, TypeConstraint);
 		}
@@ -392,7 +392,7 @@ void FSFPipeAutoConnectManager::ProcessAllJunctions(AFGHologram* ParentJunctionH
 void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 	AFGHologram* ParentJunctionHologram, 
 	TMap<UFGPipeConnectionComponent*, AFGHologram*>* SharedReservedConnectors,
-	const TArray<int32>* AllowedConnectorIndices,
+	const TArray<FName>* AllowedConnectorNames,
 	const EPipeConnectionType* AllowedConnectionType)
 {
 	if (!ParentJunctionHologram || !Subsystem || !AutoConnectService)
@@ -646,10 +646,11 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 						continue;
 					}
 					
-					// RESTRICTION: Check if this connector index is allowed (for child junctions)
-					if (AllowedConnectorIndices && !AllowedConnectorIndices->Contains(JunctionIdx))
+					// RESTRICTION: Component names are stable across parent/child holograms; indices are not.
+					if (AllowedConnectorNames && !AllowedConnectorNames->Contains(JunctionConn->GetFName()))
 					{
-						UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      Skipping junction connector %d (not in allowed indices)"), JunctionIdx);
+						UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      Skipping junction connector %s (not in allowed named ports)"),
+							*JunctionConn->GetName());
 						continue;
 					}
 
@@ -836,15 +837,75 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 		UE_LOG(LogSmartAutoConnect, Verbose,
 			TEXT("   ✅ Valid connection found: Distance %.1fm"), BestDistance / 100.0f);
 		
-		// Track which connector index this junction is using (for child restrictions)
-		int32 ChosenConnectorIdx = GetConnectorIndex(ParentJunctionHologram, BestJunctionConnector);
-		if (ChosenConnectorIdx != INDEX_NONE)
+		const FName ChosenConnectorName = BestJunctionConnector->GetFName();
+		const FSFDistributorPortTopology ChosenTopology =
+			FSFDistributorTopologyResolver::Resolve(ParentJunctionHologram->GetBuildClass(), ChosenConnectorName);
+		if (ChosenTopology.bRecognized && !ChosenTopology.bValidManifold)
 		{
-			ParentConnectorIndices.Add(ParentJunctionHologram, ChosenConnectorIdx);
-			UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   Tracking connector index %d for junction %s (Side A: %s → %s)"), 
-				ChosenConnectorIdx, *ParentJunctionHologram->GetName(),
-				*BestJunctionConnector->GetName(), *BestBuildingConnector->GetName());
+			UE_LOG(LogSmartAutoConnect, Log,
+				TEXT("Pipe Auto-Connect: discarding invalid distributor branch %s.%s (missing perpendicular lane port)"),
+				*GetNameSafe(ParentJunctionHologram->GetBuildClass()), *ChosenConnectorName.ToString());
+			if (TWeakObjectPtr<ASFPipelineHologram>* Child = BuildingPipeChildren.Find(ParentJunctionHologram); Child && Child->IsValid())
+			{
+				RemovePipeChild(ParentJunctionHologram, Child->Get());
+			}
+			if (TWeakObjectPtr<ASFPipelineHologram>* Child = BuildingPipeChildrenB.Find(ParentJunctionHologram); Child && Child->IsValid())
+			{
+				RemovePipeChild(ParentJunctionHologram, Child->Get());
+			}
+			if (TWeakObjectPtr<ASFPipelineHologram>* Child = ManifoldPipeChildren.Find(ParentJunctionHologram); Child && Child->IsValid())
+			{
+				RemovePipeChild(ParentJunctionHologram, Child->Get());
+			}
+			TArray<AFGHologram*> IncomingManifoldSources;
+			for (const auto& Pair : ManifoldTargetJunctions)
+			{
+				if (Pair.Value.Get() == ParentJunctionHologram) IncomingManifoldSources.Add(Pair.Key);
+			}
+			for (AFGHologram* SourceJunction : IncomingManifoldSources)
+			{
+				if (TWeakObjectPtr<ASFPipelineHologram>* Child = ManifoldPipeChildren.Find(SourceJunction); Child && Child->IsValid())
+				{
+					RemovePipeChild(SourceJunction, Child->Get());
+				}
+				ManifoldPipeChildren.Remove(SourceJunction);
+				ManifoldTargetJunctions.Remove(SourceJunction);
+				if (TSharedPtr<FPipePreviewHelper>* Preview = ManifoldPipePreviews.Find(SourceJunction); Preview && Preview->IsValid())
+				{
+					(*Preview)->DestroyPreview();
+				}
+				ManifoldPipePreviews.Remove(SourceJunction);
+			}
+			if (TSharedPtr<FPipePreviewHelper>* Preview = JunctionPipePreviews.Find(ParentJunctionHologram); Preview && Preview->IsValid())
+			{
+				(*Preview)->DestroyPreview();
+			}
+			if (TSharedPtr<FPipePreviewHelper>* Preview = ManifoldPipePreviews.Find(ParentJunctionHologram); Preview && Preview->IsValid())
+			{
+				(*Preview)->DestroyPreview();
+			}
+			BuildingPipeChildren.Remove(ParentJunctionHologram);
+			BuildingPipeChildrenB.Remove(ParentJunctionHologram);
+			ManifoldPipeChildren.Remove(ParentJunctionHologram);
+			ManifoldTargetJunctions.Remove(ParentJunctionHologram);
+			JunctionPipePreviews.Remove(ParentJunctionHologram);
+			ManifoldPipePreviews.Remove(ParentJunctionHologram);
+			ParentConnectorNames.Remove(ParentJunctionHologram);
+			ParentConnectorNamesB.Remove(ParentJunctionHologram);
+			if (SharedReservedConnectors)
+			{
+				for (auto It = SharedReservedConnectors->CreateIterator(); It; ++It)
+				{
+					if (It.Value() == ParentJunctionHologram) It.RemoveCurrent();
+				}
+			}
+			return;
 		}
+
+		ParentConnectorNames.Add(ParentJunctionHologram, ChosenConnectorName);
+		const int32 ChosenConnectorIdx = JunctionConnectors.IndexOfByKey(BestJunctionConnector);
+		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   Tracking connector %s for junction %s (Side A → %s)"),
+			*ChosenConnectorName.ToString(), *ParentJunctionHologram->GetName(), *BestBuildingConnector->GetName());
 		
 		UE_LOG(LogSmartAutoConnect, VeryVerbose,
 			TEXT("PipeAutoConnectManager::ProcessPipeJunctions - Selected pair: JunctionConn=%s (idx=%d) BuildingConn=%s Dist=%.1f cm"),
@@ -1081,7 +1142,12 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 			// junction connector for a building on the other side.
 			// ========================================
 			{
-				int32 OppositeIdx = GetOppositeConnectorByNormal(ChosenConnectorIdx, JunctionConnectors);
+				const FName OppositeName = ChosenTopology.bRecognized ? ChosenTopology.OppositeFactoryPort : NAME_None;
+				const int32 OppositeIdx = JunctionConnectors.IndexOfByPredicate(
+					[OppositeName](const UFGPipeConnectionComponent* Connector)
+					{
+						return Connector && Connector->GetFName() == OppositeName;
+					});
 				
 				UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   SIDE B: ChosenIdx=%d OppositeIdx=%d TotalConnectors=%d NearbyBuildings=%d"),
 					ChosenConnectorIdx, OppositeIdx, JunctionConnectors.Num(), NearbyBuildings.Num());
@@ -1196,7 +1262,7 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 					
 					if (bSideBValid)
 					{
-						ParentConnectorIndicesB.Add(ParentJunctionHologram, OppositeIdx);
+						ParentConnectorNamesB.Add(ParentJunctionHologram, OppositeJunctionConn->GetFName());
 						
 						// Create or update Side B child
 						TWeakObjectPtr<ASFPipelineHologram>* ExistingChildB = BuildingPipeChildrenB.Find(ParentJunctionHologram);
@@ -1367,8 +1433,8 @@ void FSFPipeAutoConnectManager::ClearPipePreviews()
 	ManifoldPipePreviews.Empty();
 	
 	LastJunctionTransforms.Empty();  // Clear transform cache
-	ParentConnectorIndices.Empty();  // Clear connector index tracking
-	ParentConnectorIndicesB.Empty(); // Issue #206: Clear Side B connector index tracking
+	ParentConnectorNames.Empty();
+	ParentConnectorNamesB.Empty();
 	ReservedConnectors.Empty();      // Clear persistent connector reservations
 }
 
@@ -1573,8 +1639,8 @@ void FSFPipeAutoConnectManager::CleanupOrphanedPreviews(const TArray<AFGHologram
 		JunctionPipePreviews.Remove(Junction);
 		ManifoldPipePreviews.Remove(Junction);
 		LastJunctionTransforms.Remove(Junction);
-		ParentConnectorIndices.Remove(Junction);
-		ParentConnectorIndicesB.Remove(Junction);  // Issue #206
+		ParentConnectorNames.Remove(Junction);
+		ParentConnectorNamesB.Remove(Junction);
 		
 		// Unreserve any connectors claimed by this orphaned junction
 		for (auto It = ReservedConnectors.CreateIterator(); It; ++It)

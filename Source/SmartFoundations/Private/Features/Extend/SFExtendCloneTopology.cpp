@@ -41,6 +41,7 @@
 #include "Subsystem/SFHologramDataService.h"
 #include "Subsystem/SFSubsystem.h"
 #include "Data/SFHologramDataRegistry.h"
+#include "Shared/Conduits/SFDistributorTopology.h"
 
 // Issue #345: approximate height (cm) of a power connector above a pole/factory origin, used to lift
 // the previewed cable catenary off the base so it reads like the real pole-top wiring. Tuned in-game.
@@ -138,19 +139,62 @@ FSFCloneTopology FSFCloneTopology::FromSource(const FSFSourceTopology& Source, c
     int32 PassthroughIndex = 0;
     int32 PipeAttachmentIndex = 0;  // Issue #288
     
-    // Helper: check if a belt distributor's manifold lane connectors are both occupied (Issue #277)
-    // Splitters/mergers use Output1/Input1 for manifold lanes. If both are occupied by factory
-    // connections, no lane segment can be created and the chain should be excluded entirely.
-    // Does not apply to pipe junctions (they use geometric connector selection).
-    auto IsBeltDistributorLaneBlocked = [](const FSFSourceChain& Chain) -> bool
+    auto ResolveDistributorTopology = [](const FSFSourceChain& Chain)
     {
-        // Only check belt distributors (splitters/mergers), not pipe junctions
-        if (Chain.Distributor.Class.Contains(TEXT("Junction"))) return false;
-        
-        bool bOutput1Occupied = Chain.Distributor.ConnectedConnectors.Contains(TEXT("Output1"));
-        bool bInput1Occupied = Chain.Distributor.ConnectedConnectors.Contains(TEXT("Input1"));
-        return bOutput1Occupied && bInput1Occupied;
+        return FSFDistributorTopologyResolver::Resolve(
+            Chain.Distributor.Class, FName(*Chain.Distributor.ConnectorUsed));
     };
+
+    // A recognized orientation with no complete perpendicular lane is not a partial clone: the
+    // distributor and every segment in that branch must be absent from preview, cost, and wiring.
+    TSet<FString> InvalidDistributorIds;
+    auto FindInvalidDistributors = [&InvalidDistributorIds, &ResolveDistributorTopology](const TArray<FSFSourceChain>& Chains)
+    {
+        for (const FSFSourceChain& Chain : Chains)
+        {
+            const FSFDistributorPortTopology Topology = ResolveDistributorTopology(Chain);
+            if (Topology.bRecognized && !Topology.bValidManifold && !Chain.Distributor.Id.IsEmpty())
+            {
+                InvalidDistributorIds.Add(Chain.Distributor.Id);
+            }
+        }
+    };
+    FindInvalidDistributors(Source.BeltInputChains);
+    FindInvalidDistributors(Source.BeltOutputChains);
+    FindInvalidDistributors(Source.PipeInputChains);
+    FindInvalidDistributors(Source.PipeOutputChains);
+
+    auto IsDistributorBranchInvalid = [&InvalidDistributorIds](const FSFSourceChain& Chain)
+    {
+        return InvalidDistributorIds.Contains(Chain.Distributor.Id);
+    };
+
+    auto IsBeltDistributorLaneBlocked = [&ResolveDistributorTopology](const FSFSourceChain& Chain) -> bool
+    {
+        const FSFDistributorPortTopology Topology = ResolveDistributorTopology(Chain);
+        if (!Topology.bRecognized || !FSFDistributorTopologyResolver::IsBelt(Topology.Kind)) return false;
+        return Chain.Distributor.ConnectedConnectors.Contains(Topology.LaneOutputPort.ToString()) &&
+            Chain.Distributor.ConnectedConnectors.Contains(Topology.LaneInputPort.ToString());
+    };
+
+    TSet<FString> ExcludedSegmentIds;
+    auto CollectExcludedSegmentIds = [&ExcludedSegmentIds, &IsDistributorBranchInvalid, &IsBeltDistributorLaneBlocked](const TArray<FSFSourceChain>& Chains)
+    {
+        for (const FSFSourceChain& Chain : Chains)
+        {
+            const bool bExcluded = Chain.Distributor.Id.IsEmpty() ||
+                IsDistributorBranchInvalid(Chain) || IsBeltDistributorLaneBlocked(Chain);
+            if (!bExcluded) continue;
+            for (const FSFSourceSegment& Segment : Chain.Segments)
+            {
+                if (!Segment.Id.IsEmpty()) ExcludedSegmentIds.Add(Segment.Id);
+            }
+        }
+    };
+    CollectExcludedSegmentIds(Source.BeltInputChains);
+    CollectExcludedSegmentIds(Source.BeltOutputChains);
+    CollectExcludedSegmentIds(Source.PipeInputChains);
+    CollectExcludedSegmentIds(Source.PipeOutputChains);
     
     auto BuildMapping = [&](const FSFSourceChain& Chain)
     {
@@ -159,6 +203,13 @@ FSFCloneTopology FSFCloneTopology::FromSource(const FSFSourceTopology& Source, c
         if (Chain.Distributor.Id.IsEmpty())
         {
             SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("\u26a0\ufe0f EXTEND: Skipping chain '%s' - no physical distributor (terminates directly at factory)"), *Chain.ChainId);
+            return;
+        }
+
+        if (IsDistributorBranchInvalid(Chain))
+        {
+            UE_LOG(LogSmartExtend, Log, TEXT("Extend: discarding invalid distributor branch %s.%s (missing complete perpendicular lane)"),
+                *Chain.Distributor.Class, *Chain.Distributor.ConnectorUsed);
             return;
         }
         
@@ -260,6 +311,11 @@ FSFCloneTopology FSFCloneTopology::FromSource(const FSFSourceTopology& Source, c
     {
         // Skip chains without a physical distributor (Issue #277)
         if (Chain.Distributor.Id.IsEmpty())
+        {
+            return;
+        }
+
+        if (IsDistributorBranchInvalid(Chain))
         {
             return;
         }
@@ -523,6 +579,26 @@ FSFCloneTopology FSFCloneTopology::FromSource(const FSFSourceTopology& Source, c
     int32 PassthroughCloneIndex = 0;
     for (const FSFSourceSegment& PassSeg : Source.PipePassthroughs)
     {
+        bool bHasRelatedOwner = false;
+        bool bHasKeptOwner = false;
+        for (const FString& RelatedSourceId : PassSeg.RelatedSourceIds)
+        {
+            if (RelatedSourceId.IsEmpty()) continue;
+            bHasRelatedOwner = true;
+            if (!ExcludedSegmentIds.Contains(RelatedSourceId))
+            {
+                bHasKeptOwner = true;
+                break;
+            }
+        }
+        if (bHasRelatedOwner && !bHasKeptOwner)
+        {
+            UE_LOG(LogSmartExtend, Log,
+                TEXT("Extend: dropping floor hole %s because all snapped conduit owners belong to an excluded branch"),
+                *PassSeg.Id);
+            continue;
+        }
+
         FSFCloneHologram PassHolo;
         PassHolo.HologramId = FString::Printf(TEXT("passthrough_%d"), PassthroughCloneIndex);
         PassHolo.Role = TEXT("passthrough");
@@ -562,14 +638,15 @@ FSFCloneTopology FSFCloneTopology::FromSource(const FSFSourceTopology& Source, c
     // coordinates ARE identical on both, so we drop a hole that physically sits on an excluded segment.
     struct FSFExclSeg { FVector A; FVector B; };
     TArray<FSFExclSeg> ExcludedSegs;
-    auto CollectExcludedChainGeometry = [&ExcludedSegs, &IsBeltDistributorLaneBlocked](const TArray<FSFSourceChain>& Chains)
+    auto CollectExcludedChainGeometry = [&ExcludedSegs, &IsBeltDistributorLaneBlocked, &IsDistributorBranchInvalid](const TArray<FSFSourceChain>& Chains)
     {
         for (const FSFSourceChain& Chain : Chains)
         {
             // Mirror ProcessChain's skip conditions (SFExtendCloneTopology.cpp ~261-270): a chain whose
             // distributor is absent, or whose Output1/Input1 lane connectors are both occupied, is
             // excluded from the clone entirely — its distributor + segments never build.
-            const bool bExcluded = Chain.Distributor.Id.IsEmpty() || IsBeltDistributorLaneBlocked(Chain);
+            const bool bExcluded = Chain.Distributor.Id.IsEmpty() ||
+                IsDistributorBranchInvalid(Chain) || IsBeltDistributorLaneBlocked(Chain);
             if (!bExcluded) continue;
             for (const FSFSourceSegment& Seg : Chain.Segments)
             {
@@ -650,9 +727,8 @@ FSFCloneTopology FSFCloneTopology::FromSource(const FSFSourceTopology& Source, c
     // For each unique distributor, check if it has an open lane-eligible connection.
     // If so, generate a lane segment to connect the source distributor to its clone.
     // 
-    // Lane-eligible connections:
-    // - Splitters/Mergers: Output1 (source) → Input1 (clone)
-    // - Pipeline Junctions: Closest open connection pair (geometric)
+    // Lane-eligible connections are resolved from the distributor class + factory-side named port.
+    // Geometry only orders the two mapped lane ports toward/away from the clone.
     // ========================================================================
     
     // Collect unique distributors (avoid duplicates from multiple chains)
@@ -664,6 +740,11 @@ FSFCloneTopology FSFCloneTopology::FromSource(const FSFSourceTopology& Source, c
     {
         // Skip chains without a physical distributor (Issue #277)
         if (Chain.Distributor.Id.IsEmpty())
+        {
+            return;
+        }
+
+        if (IsDistributorBranchInvalid(Chain))
         {
             return;
         }
@@ -743,8 +824,6 @@ FSFCloneTopology FSFCloneTopology::FromSource(const FSFSourceTopology& Source, c
         FVector LaneStartNormal = FVector::ForwardVector;   // Connector facing direction at start
         FVector LaneEndNormal = -FVector::ForwardVector;    // Connector facing direction at end
         
-        bool bIsMerger = Distributor.Class.Contains(TEXT("Merger"));
-        
         if (bIsPipeJunction)
         {
             // Look up the clone's actual transform from the already-generated hologram
@@ -765,73 +844,57 @@ FSFCloneTopology FSFCloneTopology::FromSource(const FSFSourceTopology& Source, c
             // instead of hardcoded offsets - this ensures accurate spline generation
             const TMap<FString, FVector>& SourceConnectorPositions = Distributor.ConnectorWorldPositions;
             
-            // Geometry-driven lane connector selection (Issue #320).
-            // Do NOT assume a 4-connector Cross. Derive each connector's facing direction
-            // from its ACTUAL captured world position relative to the junction centre, and
-            // pick the manifold-backbone pair purely from geometry. This handles the Cross,
-            // the 3-port T-Junction, and any future junction with zero hard-coded connector
-            // names or offsets. The clone is a copy of the source, so its connector layout
-            // is the source's local offsets re-applied at the clone transform.
             const FString FactoryConnector = Distributor.ConnectorUsed;
-
-            // Manifold axis: from the source junction toward the clone (the backbone runs this way).
             const FVector ManifoldAxis = (CloneDistLocation - SourceDistCenter).GetSafeNormal();
-
-            // Source backbone port (#384): pick against a ROTATION-STABLE axis. On a rotated extend the
-            // per-clone offset (ManifoldAxis) arcs ~5deg/clone away from the source's fixed connectors,
-            // so by ~clone 14 the source port falls below FacingThreshold and the lane is dropped. When
-            // the caller passes the extend's principal forward axis, use it so every clone selects the
-            // SAME source backbone port no matter how far the chain has curved. Zero -> legacy behavior.
             const FVector SourceFacingAxis = PrincipalAxisWorld.IsNearlyZero()
                 ? ManifoldAxis : PrincipalAxisWorld.GetSafeNormal();
-
-            // Require a real facing toward/away the manifold axis (~within 72 deg) so the
-            // perpendicular stem and the factory tap are never mistaken for a backbone port.
             const float FacingThreshold = 0.30f;
-
             FString BestSourceConn, BestCloneConn;
             FVector BestSourcePos = FVector::ZeroVector, BestClonePos = FVector::ZeroVector;
             FVector BestSourceNormal = FVector::ZeroVector, BestCloneNormal = FVector::ZeroVector;
-
-            // SOURCE backbone connector: free (not the factory tap, not already connected)
-            // whose outward facing best points toward the clone.
             float BestSourceFacing = FacingThreshold;
-            for (const auto& Pair : SourceConnectorPositions)
+
+            const FSFDistributorPortTopology Topology = FSFDistributorTopologyResolver::Resolve(
+                Distributor.Class, FName(*FactoryConnector));
+            TArray<FString> LaneCandidates;
+            if (Topology.bRecognized)
             {
-                if (Pair.Key == FactoryConnector) { continue; }
-                if (Distributor.ConnectedConnectors.Contains(Pair.Key)) { continue; }
-                const FVector Normal = (Pair.Value - SourceDistCenter).GetSafeNormal();
+                LaneCandidates = { Topology.LanePortA.ToString(), Topology.LanePortB.ToString() };
+            }
+            else
+            {
+                SourceConnectorPositions.GetKeys(LaneCandidates);
+                LaneCandidates.Remove(FactoryConnector);
+            }
+
+            for (const FString& ConnectorName : LaneCandidates)
+            {
+                const FVector* ConnectorPosition = SourceConnectorPositions.Find(ConnectorName);
+                if (!ConnectorPosition || Distributor.ConnectedConnectors.Contains(ConnectorName)) continue;
+                const FVector Normal = (*ConnectorPosition - SourceDistCenter).GetSafeNormal();
                 const float Facing = FVector::DotProduct(Normal, SourceFacingAxis);
                 if (Facing > BestSourceFacing)
                 {
                     BestSourceFacing = Facing;
-                    BestSourceConn = Pair.Key;
-                    BestSourcePos = Pair.Value;
+                    BestSourceConn = ConnectorName;
+                    BestSourcePos = *ConnectorPosition;
                     BestSourceNormal = Normal;
                 }
             }
 
-            // CLONE backbone connector (#384): must be the port OPPOSITE the source's chosen
-            // backbone port in the source's OWN layout, so the manifold stays a straight
-            // pass-through no matter how far the clone is rotated. Picking by world-facing
-            // toward the source (the old approach) flips to an ADJACENT port once the clone
-            // rotates past ~45deg - the moment a perpendicular port happens to face the source
-            // better than the true backbone-opposite port - which is the connector cross-over.
-            // The clone is a rotated copy of the source, so we select the source-layout port
-            // most anti-parallel to the source's port, then place it at the clone transform.
             float BestCloneOpposition = -2.0f;
-            for (const auto& Pair : SourceConnectorPositions)
+            for (const FString& ConnectorName : LaneCandidates)
             {
-                if (Pair.Key == FactoryConnector) { continue; }
-                if (Pair.Key == BestSourceConn) { continue; }
-                const FVector SourceLayoutNormal = (Pair.Value - SourceDistCenter).GetSafeNormal();
+                const FVector* ConnectorPosition = SourceConnectorPositions.Find(ConnectorName);
+                if (!ConnectorPosition || ConnectorName == BestSourceConn) continue;
+                const FVector SourceLayoutNormal = (*ConnectorPosition - SourceDistCenter).GetSafeNormal();
                 const float Opposition = FVector::DotProduct(SourceLayoutNormal, -BestSourceNormal);
                 if (Opposition > BestCloneOpposition)
                 {
                     BestCloneOpposition = Opposition;
-                    const FVector LocalOffset = SourceRotation.UnrotateVector(Pair.Value - SourceDistCenter);
+                    const FVector LocalOffset = SourceRotation.UnrotateVector(*ConnectorPosition - SourceDistCenter);
                     const FVector CloneWorld = CloneDistLocation + CloneDistRotation.RotateVector(LocalOffset);
-                    BestCloneConn = Pair.Key;
+                    BestCloneConn = ConnectorName;
                     BestClonePos = CloneWorld;
                     BestCloneNormal = (CloneWorld - CloneDistLocation).GetSafeNormal();
                 }
@@ -856,9 +919,7 @@ FSFCloneTopology FSFCloneTopology::FromSource(const FSFSourceTopology& Source, c
             LaneStartNormal = BestSourceNormal;
             LaneEndNormal = BestCloneNormal;
 
-            // The clone port is the backbone-OPPOSITE of the source port (opposition ~1.0), so the
-            // manifold stays a straight pass-through regardless of clone rotation (#384).
-            UE_LOG(LogSmartExtend, VeryVerbose, TEXT("PIPE LANE (geom) %s: axis=(%.2f,%.2f,%.2f) Source.%s facing=%.2f -> Clone.%s opposition=%.2f (cloneRot=%.0f)"),
+            UE_LOG(LogSmartExtend, VeryVerbose, TEXT("PIPE LANE (named) %s: axis=(%.2f,%.2f,%.2f) Source.%s facing=%.2f -> Clone.%s opposition=%.2f (cloneRot=%.0f)"),
                 *DistributorId, ManifoldAxis.X, ManifoldAxis.Y, ManifoldAxis.Z,
                 *BestSourceConn, BestSourceFacing,
                 *BestCloneConn, BestCloneOpposition, CloneDistRotation.Yaw);
@@ -880,18 +941,25 @@ FSFCloneTopology FSFCloneTopology::FromSource(const FSFSourceTopology& Source, c
                 }
             }
             
-            // Connector offsets in local space for splitters/mergers:
-            // Input1 = -100 X (back), Output1 = +100 X (front, opposite Input1)
-            // Output2 = +100 Y (right), Output3 = -100 Y (left)
-            // Per REF_Manifold_Technical.md: Lane always uses Output1 and Input1
-            FVector LocalOutput1Offset = FVector(100.0f, 0.0f, 0.0f);
-            FVector LocalInput1Offset = FVector(-100.0f, 0.0f, 0.0f);
-            
-            // Calculate connector world positions using each distributor's actual rotation
-            FVector SourceOutput1 = SourceDistCenter + SourceRotation.RotateVector(LocalOutput1Offset);
-            FVector SourceInput1 = SourceDistCenter + SourceRotation.RotateVector(LocalInput1Offset);
-            FVector CloneOutput1 = CloneDistLocation + CloneDistRotation.RotateVector(LocalOutput1Offset);
-            FVector CloneInput1 = CloneDistLocation + CloneDistRotation.RotateVector(LocalInput1Offset);
+            const FSFDistributorPortTopology Topology = FSFDistributorTopologyResolver::Resolve(
+                Distributor.Class, FName(*Distributor.ConnectorUsed));
+            const FString OutputPort = Topology.bRecognized ? Topology.LaneOutputPort.ToString() : TEXT("Output1");
+            const FString InputPort = Topology.bRecognized ? Topology.LaneInputPort.ToString() : TEXT("Input1");
+            const FVector* CapturedOutput = Distributor.ConnectorWorldPositions.Find(OutputPort);
+            const FVector* CapturedInput = Distributor.ConnectorWorldPositions.Find(InputPort);
+            if ((Topology.bRecognized && !Topology.bValidManifold) || !CapturedOutput || !CapturedInput)
+            {
+                UE_LOG(LogSmartExtend, Warning, TEXT("BELT LANE: Missing named topology/positions for %s.%s"),
+                    *Distributor.Class, *Distributor.ConnectorUsed);
+                continue;
+            }
+
+            const FVector SourceOutput1 = *CapturedOutput;
+            const FVector SourceInput1 = *CapturedInput;
+            const FVector LocalOutputOffset = SourceRotation.UnrotateVector(SourceOutput1 - SourceDistCenter);
+            const FVector LocalInputOffset = SourceRotation.UnrotateVector(SourceInput1 - SourceDistCenter);
+            const FVector CloneOutput1 = CloneDistLocation + CloneDistRotation.RotateVector(LocalOutputOffset);
+            const FVector CloneInput1 = CloneDistLocation + CloneDistRotation.RotateVector(LocalInputOffset);
             
             UE_LOG(LogSmartExtend, VeryVerbose, TEXT("🛤️ BELT LANE: Source center=(%.0f,%.0f) rot=%.0f, Clone center=(%.0f,%.0f) rot=%.0f"),
                 SourceDistCenter.X, SourceDistCenter.Y, SourceRotation.Yaw,
@@ -908,8 +976,8 @@ FSFCloneTopology FSFCloneTopology::FromSource(const FSFSourceTopology& Source, c
             float Dist2 = FVector::Dist(CloneOutput1, SourceInput1);
             
             // Check if source connectors are already connected (skip manifold if so)
-            bool bSourceOutput1Connected = Distributor.ConnectedConnectors.Contains(TEXT("Output1"));
-            bool bSourceInput1Connected = Distributor.ConnectedConnectors.Contains(TEXT("Input1"));
+            bool bSourceOutput1Connected = Distributor.ConnectedConnectors.Contains(OutputPort);
+            bool bSourceInput1Connected = Distributor.ConnectedConnectors.Contains(InputPort);
             
             // Determine which option is valid based on source connector availability
             bool bOption1Valid = !bSourceOutput1Connected;  // Source Output1 → Clone Input1
@@ -925,10 +993,8 @@ FSFCloneTopology FSFCloneTopology::FromSource(const FSFSourceTopology& Source, c
             
             LaneType = TEXT("belt");
             
-            // Connector normal directions in local space
-            // Output1 faces +X (forward), Input1 faces -X (backward)
-            FVector Output1NormalLocal = FVector(1.0f, 0.0f, 0.0f);
-            FVector Input1NormalLocal = FVector(-1.0f, 0.0f, 0.0f);
+            const FVector OutputNormalLocal = SourceRotation.UnrotateVector((SourceOutput1 - SourceDistCenter).GetSafeNormal());
+            const FVector InputNormalLocal = SourceRotation.UnrotateVector((SourceInput1 - SourceDistCenter).GetSafeNormal());
             
             // Choose the closest valid option
             if (bOption1Valid && (!bOption2Valid || Dist1 <= Dist2))
@@ -937,14 +1003,14 @@ FSFCloneTopology FSFCloneTopology::FromSource(const FSFSourceTopology& Source, c
                 SplineStartPos = SourceOutput1;
                 SplineEndPos = CloneInput1;
                 Conn0Target = FString::Printf(TEXT("source:%s"), *DistributorId);
-                Conn0Connector = TEXT("Output1");
+                Conn0Connector = OutputPort;
                 Conn1Target = DistributorHologramId;
-                Conn1Connector = TEXT("Input1");
+                Conn1Connector = InputPort;
                 
                 // Start normal = Source Output1 facing direction
                 // End normal = Clone Input1 facing direction
-                LaneStartNormal = SourceRotation.RotateVector(Output1NormalLocal);
-                LaneEndNormal = CloneDistRotation.RotateVector(Input1NormalLocal);
+                LaneStartNormal = SourceRotation.RotateVector(OutputNormalLocal);
+                LaneEndNormal = CloneDistRotation.RotateVector(InputNormalLocal);
                 
                 UE_LOG(LogSmartExtend, VeryVerbose, TEXT("🛤️ BELT LANE: Source.Output1(%.0f,%.0f)→Clone.Input1(%.0f,%.0f) (dist=%.1f vs %.1f)"),
                     SourceOutput1.X, SourceOutput1.Y, CloneInput1.X, CloneInput1.Y, Dist1, Dist2);
@@ -955,14 +1021,14 @@ FSFCloneTopology FSFCloneTopology::FromSource(const FSFSourceTopology& Source, c
                 SplineStartPos = CloneOutput1;
                 SplineEndPos = SourceInput1;
                 Conn0Target = DistributorHologramId;
-                Conn0Connector = TEXT("Output1");
+                Conn0Connector = OutputPort;
                 Conn1Target = FString::Printf(TEXT("source:%s"), *DistributorId);
-                Conn1Connector = TEXT("Input1");
+                Conn1Connector = InputPort;
                 
                 // Start normal = Clone Output1 facing direction
                 // End normal = Source Input1 facing direction
-                LaneStartNormal = CloneDistRotation.RotateVector(Output1NormalLocal);
-                LaneEndNormal = SourceRotation.RotateVector(Input1NormalLocal);
+                LaneStartNormal = CloneDistRotation.RotateVector(OutputNormalLocal);
+                LaneEndNormal = SourceRotation.RotateVector(InputNormalLocal);
                 
                 UE_LOG(LogSmartExtend, VeryVerbose, TEXT("🛤️ BELT LANE: Clone.Output1(%.0f,%.0f)→Source.Input1(%.0f,%.0f) (dist=%.1f vs %.1f)"),
                     CloneOutput1.X, CloneOutput1.Y, SourceInput1.X, SourceInput1.Y, Dist2, Dist1);
@@ -1071,12 +1137,11 @@ FSFCloneTopology FSFCloneTopology::FromSource(const FSFSourceTopology& Source, c
         
         Result.ChildHolograms.Add(LaneHolo);
         
-        UE_LOG(LogSmartExtend, VeryVerbose, TEXT("🛤️ LANE: Generated %s lane %s.%s → %s.%s (type=%s, merger=%d)"),
+        UE_LOG(LogSmartExtend, VeryVerbose, TEXT("🛤️ LANE: Generated %s lane %s.%s → %s.%s (type=%s)"),
             *LaneHolo.HologramId,
             *Conn0Target, *Conn0Connector,
             *Conn1Target, *Conn1Connector,
-            *LaneHolo.LaneSegmentType,
-            bIsMerger ? 1 : 0);
+            *LaneHolo.LaneSegmentType);
     }
     
     UE_LOG(LogSmartExtend, VeryVerbose, TEXT("🛤️ LANE: Generated %d manifold lane segments"), LaneSegmentIndex);
@@ -1240,9 +1305,14 @@ namespace CaptureHelpers
             Dist->GetComponents<UFGFactoryConnectionComponent>(DistConnectors);
             for (UFGFactoryConnectionComponent* DistConn : DistConnectors)
             {
-                if (DistConn && DistConn->IsConnected())
+                if (DistConn)
                 {
-                    Result.Distributor.ConnectedConnectors.Add(DistConn->GetFName().ToString());
+                    const FString ConnectorName = DistConn->GetFName().ToString();
+                    Result.Distributor.ConnectorWorldPositions.Add(ConnectorName, DistConn->GetComponentLocation());
+                    if (DistConn->IsConnected())
+                    {
+                        Result.Distributor.ConnectedConnectors.Add(ConnectorName);
+                    }
                 }
             }
         }
@@ -1589,6 +1659,20 @@ FSFSourceTopology FSFSourceTopology::CaptureFromTopology(const FSFExtendTopology
         PassSeg.Customization.CaptureFrom(Passthrough->GetCustomizationData_Implementation());
         PassSeg.RecipeClass = GetRecipeClassName(Passthrough->GetBuiltWithRecipe());
         PassSeg.Transform = FSFTransform(Passthrough->GetActorLocation(), Passthrough->GetActorRotation());
+
+        if (AFGBuildablePassthrough* TypedPassthrough = Cast<AFGBuildablePassthrough>(Passthrough))
+        {
+            const UFGConnectionComponent* TopConnection = TypedPassthrough->GetTopSnappedConnection<UFGConnectionComponent>();
+            const UFGConnectionComponent* BottomConnection = TypedPassthrough->GetBottomSnappedConnection<UFGConnectionComponent>();
+            if (AActor* TopOwner = TopConnection ? TopConnection->GetOwner() : nullptr)
+            {
+                PassSeg.RelatedSourceIds.AddUnique(GetActorId(TopOwner));
+            }
+            if (AActor* BottomOwner = BottomConnection ? BottomConnection->GetOwner() : nullptr)
+            {
+                PassSeg.RelatedSourceIds.AddUnique(GetActorId(BottomOwner));
+            }
+        }
         
         // Read mSnappedBuildingThickness via reflection (protected member on AFGBuildablePassthrough)
         FFloatProperty* ThickProp = CastField<FFloatProperty>(

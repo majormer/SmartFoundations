@@ -227,6 +227,10 @@ struct FSFSourceSegment
     UPROPERTY() FString RecipeClass;    // Recipe class name
     UPROPERTY() FSFTransform Transform;
     UPROPERTY() FSFConnections Connections;
+
+    // Spatial attachments (floor holes) are outside the logical conduit chain. Capture the
+    // snapped conduit actor IDs so clone planning can drop the attachment with an excluded branch.
+    UPROPERTY() TArray<FString> RelatedSourceIds;
     
     // Chain actor info (for belts/lifts - helps debug chain groupings)
     UPROPERTY() FString ChainActorName;     // Name of AFGConveyorChainActor
