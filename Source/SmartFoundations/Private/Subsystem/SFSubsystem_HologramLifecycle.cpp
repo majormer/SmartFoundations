@@ -408,7 +408,7 @@ void USFSubsystem::RegisterActiveHologram(AFGHologram* Hologram)
 		// Recipe Copying System - Use existing stored recipe
 		// ========================================
 
-		// Recipe storage should only come from existing buildings via StoreProductionRecipeFromBuilding
+		// Implicit recipe storage comes from vanilla-authorized building settings samples.
 		// Holograms only have build recipes, not production recipes
 		// We preserve any existing stored production recipe for inheritance
 
@@ -859,18 +859,6 @@ void USFSubsystem::PollForActiveHologram()
 			ResetCounters();
 		}
 		return;
-	}
-
-	// Subscribe to recipe sampling delegate for recipe copying (only once!)
-	if (BuildGun && IsValid(BuildGun) && !bHasSubscribedToRecipeSampled)
-	{
-		BuildGun->mOnRecipeSampled.AddDynamic(this, &USFSubsystem::OnBuildGunRecipeSampled);
-		bHasSubscribedToRecipeSampled = true;
-		UE_LOG(LogSmartFoundations, Verbose, TEXT("RECIPE COPYING: Subscribed to build gun's OnRecipeSampled delegate"));
-	}
-	else if (!bHasSubscribedToRecipeSampled)
-	{
-		UE_LOG(LogSmartFoundations, Verbose, TEXT("RECIPE COPYING: BuildGun is invalid, cannot subscribe to recipe sampling delegate"));
 	}
 
 	// Check if we're in build state
@@ -1553,9 +1541,6 @@ void USFSubsystem::OnBuildGunUnequipped()
 	// [#209] Player Relative target slots are per-build-session state - reset to Forward. (The
 	// stagger FAMILY persists: it rides the stored StaggerAxis exactly like the classic axes.)
 	PlayerRelativeSlots = {};
-
-	// Reset recipe sampling subscription flag
-	bHasSubscribedToRecipeSampled = false;
 
 	// Log contexts at unequip
 	LogActiveInputContexts(TEXT("BuildGunUnequipped"));

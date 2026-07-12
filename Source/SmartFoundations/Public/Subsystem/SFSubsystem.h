@@ -837,9 +837,6 @@ protected:
     /** Current hologram adapter for grid calculations */
     TSharedPtr<class ISFHologramAdapter> CurrentAdapter;
 
-    /** Flag to prevent repeated delegate subscriptions */
-    bool bHasSubscribedToRecipeSampled = false;
-
     /** Last item size we logged (to avoid spam). Logged when it changes beyond a small tolerance. */
     TUniquePtr<FSFArrowModule_StaticMesh> ArrowModule;
     
@@ -1214,9 +1211,6 @@ public:
 	UPROPERTY(Transient)
 	bool bHasStoredProductionRecipe = false;
 	
-	/** Store production recipe from source building during middle mouse sampling */
-	void StoreProductionRecipeFromBuilding(class AFGBuildable* SourceBuilding);
-
 	/** Apply stored production recipe to target building after construction */
 	void ApplyStoredProductionRecipeToBuilding(class AFGBuildable* TargetBuilding);
 
@@ -1274,10 +1268,6 @@ public:
 	/** Check if building is a production building that supports recipes */
 	bool IsProductionBuilding(class AFGBuildable* Building) const;
 
-	/** Called when build gun samples a recipe (middle-mouse, Ctrl+C, or Copy Settings button) */
-	UFUNCTION()
-	void OnBuildGunRecipeSampled(TSubclassOf<class UFGRecipe> SampledRecipe);
-	
 	// ========================================
 	// Auto-Connect Settings Mode (Context-Aware U Button)
 	// ========================================

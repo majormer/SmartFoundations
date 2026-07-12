@@ -91,6 +91,13 @@ protected:
 	void RegisterBuildGunUnequipHook();
 
 	/**
+	 * [#489] Observe vanilla's authoritative MMB clipboard path. Reset stale implicit Smart state
+	 * before actor sampling, capture from the supplied actor only when vanilla actually creates
+	 * manufacturer clipboard settings, then emit one summary after the sample completes.
+	 */
+	void RegisterBuildGunClipboardSampleHook();
+
+	/**
 	 * [#162/#429] Hook UFGBuildGunStateBuild::Scroll_Implementation to consume the wheel's rotation
 	 * delta while Smart! owns the moment (modal window open, or Smart!-owned hologram lock incl.
 	 * auto-hold - see USFSubsystem::ShouldSuppressBuildGunScroll). This chokepoint sits BELOW the

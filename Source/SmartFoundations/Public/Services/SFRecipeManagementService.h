@@ -116,14 +116,17 @@ public:
 	void ClearAllRecipes();
 
 	// ========================================
-	// Recipe Sampling (Middle-Click)
+	// Implicit Settings Sampling (Middle-Click)
 	// ========================================
 
-	/** Store production recipe from source building during middle mouse sampling */
-	void StoreProductionRecipeFromBuilding(AFGBuildable* SourceBuilding);
+	/** Reset only settings inherited by an implicit MMB sample; explicit Smart recipe picks survive. */
+	void BeginImplicitSettingsSample();
 
-	/** Called when build gun samples a recipe (middle-mouse, Ctrl+C, or Copy Settings button) */
-	void OnBuildGunRecipeSampled(TSubclassOf<UFGRecipe> SampledRecipe);
+	/** Capture settings after vanilla authorizes clipboard sampling for this manufacturer. */
+	void CaptureVanillaSampledProductionSettings(class AFGBuildableManufacturer* SourceBuilding);
+
+	/** Emit one validation summary after vanilla's complete actor-sampling operation returns. */
+	void FinishImplicitSettingsSample(AActor* SampledActor) const;
 
 	/** Clear stored production recipe (clears everything: recipe + shards + somersloops) */
 	void ClearStoredProductionRecipe();
@@ -262,6 +265,7 @@ private:
 
 	/** Source of the current active recipe */
 	ESFRecipeSource ActiveRecipeSource = ESFRecipeSource::None;
+	bool bCapturedImplicitSettingsThisSample = false;
 
 	/** Array of all discovered/unlocked recipes */
 	UPROPERTY(Transient)

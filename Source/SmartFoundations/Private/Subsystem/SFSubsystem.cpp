@@ -583,9 +583,6 @@ void USFSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 
 	UE_LOG(LogSmartFoundations, Verbose, TEXT("Smart! Subsystem: Initialize() called"));
 
-	// Reset recipe sampling subscription flag for safety
-	bHasSubscribedToRecipeSampled = false;
-
 	// NOTE: Config loading deferred until first hologram registration
 	// ConfigManager subsystem may not be available during Initialize()
 

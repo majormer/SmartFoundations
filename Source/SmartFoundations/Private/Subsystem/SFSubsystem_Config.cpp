@@ -476,15 +476,6 @@ void USFSubsystem::CleanupWidgets()
 // Recipe Copying System Implementation
 // ========================================
 
-void USFSubsystem::StoreProductionRecipeFromBuilding(AFGBuildable* SourceBuilding)
-{
-	// Delegate to recipe management service
-	if (RecipeManagementService)
-	{
-		RecipeManagementService->StoreProductionRecipeFromBuilding(SourceBuilding);
-	}
-}
-
 void USFSubsystem::ApplyStoredProductionRecipeToBuilding(AFGBuildable* TargetBuilding)
 {
 	// Delegate to recipe management service
@@ -519,15 +510,6 @@ void USFSubsystem::ClearStoredProductionRecipe()
 	if (RecipeManagementService)
 	{
 		RecipeManagementService->ClearStoredProductionRecipe();
-	}
-}
-
-void USFSubsystem::OnBuildGunRecipeSampled(TSubclassOf<UFGRecipe> SampledRecipe)
-{
-	// Delegate to recipe management service
-	if (RecipeManagementService)
-	{
-		RecipeManagementService->OnBuildGunRecipeSampled(SampledRecipe);
 	}
 }
 

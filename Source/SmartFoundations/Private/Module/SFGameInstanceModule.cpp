@@ -22,6 +22,7 @@
 // SML hooking for cost aggregation and blueprint construct
 #include "Patching/NativeHookManager.h"
 #include "Subsystem/SFSubsystem.h"
+#include "Services/SFRecipeManagementService.h"
 #include "Services/SFChainActorService.h"  // [CHAIN-FIX] post-construct chain-hygiene sweep
 #include "Features/AutoConnect/SFAutoConnectService.h"
 #include "Features/Extend/SFExtendService.h"
@@ -117,6 +118,9 @@ void USFGameInstanceModule::DispatchLifecycleEvent(ELifecyclePhase Phase)
 
 		// [#368/#279] Wire the orphaned holster cleanup to the real build-gun unequip event.
 		RegisterBuildGunUnequipHook();
+
+		// [#489] Let vanilla's clipboard decision govern implicit recipe/shard/Somersloop capture.
+		RegisterBuildGunClipboardSampleHook();
 
 		// [#162/#429] Consume wheel rotation at the build-gun chokepoint while Smart! owns the
 		// moment (fixes the InfiniteNudge rotate-while-scaling conflict). See the header comment.
@@ -462,6 +466,67 @@ void USFGameInstanceModule::RegisterBuildGunUnequipHook()
 	UE_LOG(LogSmartFoundations, Verbose, TEXT("[#392] AFGBuildGun::UnEquip hook registered (holster recipe + clipboard clear)"));
 }
 
+static USFRecipeManagementService* SF_GetLocalRecipeService(UFGBuildGunStateBuild* BuildState)
+{
+	AFGBuildGun* Gun = BuildState ? BuildState->GetBuildGun() : nullptr;
+	AFGCharacterPlayer* Player = Gun ? Gun->GetInstigatorCharacter() : nullptr;
+	if (!Player || !Player->IsLocallyControlled())
+	{
+		return nullptr;
+	}
+
+	USFSubsystem* Subsystem = USFSubsystem::Get(Gun->GetWorld());
+	return Subsystem ? Subsystem->GetRecipeManagementService() : nullptr;
+}
+
+void USFGameInstanceModule::RegisterBuildGunClipboardSampleHook()
+{
+	// Reset before vanilla makes its copy decision. If the gameplay option is OFF,
+	// SampleClipboardSettingsFromActor is never reached and the reset is the final state.
+	SUBSCRIBE_METHOD_VIRTUAL(
+		UFGBuildGunStateBuild::OnActorSampled_Implementation,
+		GetMutableDefault<UFGBuildGunStateBuild>(),
+		[](auto& scope, UFGBuildGunStateBuild* self, AActor* actor)
+		{
+			if (USFRecipeManagementService* RecipeService = SF_GetLocalRecipeService(self))
+			{
+				RecipeService->BeginImplicitSettingsSample();
+			}
+		});
+
+	// This non-virtual function is vanilla's authoritative settings-copy seam. Its presence in the
+	// current actor-sampling call means the gameplay preference allowed copying; the resulting
+	// manufacturer clipboard verifies that the sampled actor supplied compatible factory settings.
+	SUBSCRIBE_METHOD_AFTER(
+		UFGBuildGunStateBuild::SampleClipboardSettingsFromActor,
+		[](UFGBuildGunStateBuild* self, AActor* actor)
+		{
+			USFRecipeManagementService* RecipeService = SF_GetLocalRecipeService(self);
+			AFGBuildableManufacturer* Manufacturer = Cast<AFGBuildableManufacturer>(actor);
+			UFGManufacturerClipboardSettings* Clipboard = self
+				? Cast<UFGManufacturerClipboardSettings>(self->mSampledClipboardSettings)
+				: nullptr;
+			if (RecipeService && Manufacturer && Clipboard)
+			{
+				RecipeService->CaptureVanillaSampledProductionSettings(Manufacturer);
+			}
+		});
+
+	SUBSCRIBE_METHOD_VIRTUAL_AFTER(
+		UFGBuildGunStateBuild::OnActorSampled_Implementation,
+		GetMutableDefault<UFGBuildGunStateBuild>(),
+		[](UFGBuildGunStateBuild* self, AActor* actor)
+		{
+			if (USFRecipeManagementService* RecipeService = SF_GetLocalRecipeService(self))
+			{
+				RecipeService->FinishImplicitSettingsSample(actor);
+			}
+		});
+
+	UE_LOG(LogSmartFoundations, Verbose,
+		TEXT("[#489] Build-gun clipboard sampling hooks registered (vanilla-authoritative MMB settings capture)"));
+}
+
 void USFGameInstanceModule::RegisterBuildGunScrollSuppressionHook()
 {
 	// [#162/#429] Scroll_Implementation is a virtual override -> must be SUBSCRIBE_METHOD_VIRTUAL
@@ -503,4 +568,3 @@ void USFGameInstanceModule::RegisterBuildGunScrollSuppressionHook()
 
 	UE_LOG(LogSmartFoundations, Verbose, TEXT("[#162] UFGBuildGunStateBuild::Scroll_Implementation hook registered (wheel-rotation suppression while Smart! owns the hologram)"));
 }
-

@@ -416,34 +416,49 @@ void USFRecipeManagementService::ClearAllRecipes()
 }
 
 // ========================================
-// Recipe Sampling (Middle-Click)
+// Implicit Settings Sampling (Middle-Click)
 // ========================================
 
-void USFRecipeManagementService::StoreProductionRecipeFromBuilding(AFGBuildable* SourceBuilding)
+void USFRecipeManagementService::BeginImplicitSettingsSample()
+{
+	bCapturedImplicitSettingsThisSample = false;
+
+	// MMB with vanilla setting-copy disabled must not inherit settings from a previous MMB sample.
+	// A recipe deliberately chosen through U/the Smart Panel is a separate contract and survives.
+	if (ActiveRecipeSource == ESFRecipeSource::Copied)
+	{
+		ClearStoredProductionRecipe();
+	}
+	else
+	{
+		ClearStoredShardState();
+		if (Subsystem)
+		{
+			Subsystem->UpdateCounterDisplay();
+		}
+	}
+}
+
+void USFRecipeManagementService::CaptureVanillaSampledProductionSettings(AFGBuildableManufacturer* SourceBuilding)
 {
 	if (!SourceBuilding || !IsValid(SourceBuilding))
 	{
-		UE_LOG(LogSmartFoundations, Verbose, TEXT("🍽️ Cannot store recipe - source building is invalid"));
 		return;
 	}
-	
-	// Clear any existing stored recipe
-	ClearStoredProductionRecipe();
-	
-	// Check if this is a production building that supports recipes
+
+	// The caller has already verified that vanilla produced manufacturer clipboard settings for
+	// this exact actor. Do not perform a second trace or independently read the gameplay option.
 	if (!IsProductionBuilding(SourceBuilding))
 	{
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🍽️ Building is not a production building, skipping recipe storage"));
 		return;
 	}
+
+	bCapturedImplicitSettingsThisSample = true;
 	
 	// Try to get the production recipe from the building
 	TSubclassOf<UFGRecipe> ProductionRecipe = nullptr;
 	
-	if (auto Manufacturer = Cast<AFGBuildableManufacturer>(SourceBuilding))
-	{
-		ProductionRecipe = Manufacturer->GetCurrentRecipe();
-	}
+	ProductionRecipe = SourceBuilding->GetCurrentRecipe();
 	
 	if (ProductionRecipe)
 	{
@@ -600,47 +615,17 @@ void USFRecipeManagementService::ApplyStoredProductionRecipeToBuilding(AFGBuilda
 	}
 }
 
-void USFRecipeManagementService::OnBuildGunRecipeSampled(TSubclassOf<UFGRecipe> SampledRecipe)
+void USFRecipeManagementService::FinishImplicitSettingsSample(AActor* SampledActor) const
 {
-	if (!SampledRecipe || !Subsystem)
-	{
-		return;
-	}
-	
-	// The delegate gives us the construction recipe, but we need the production recipe
-	// Find the building under the player's crosshair
-	AFGPlayerController* PC = Subsystem->GetLastPlayerController();
-	if (!PC)
-	{
-		return;
-	}
-	
-	AFGCharacterPlayer* Character = Cast<AFGCharacterPlayer>(PC->GetPawn());
-	if (!Character)
-	{
-		return;
-	}
-	
-	// Trace from camera to find the building
-	FVector CameraLocation;
-	FRotator CameraRotation;
-	PC->GetPlayerViewPoint(CameraLocation, CameraRotation);
-	FVector TraceEnd = CameraLocation + (CameraRotation.Vector() * 10000.0f); // 100m range
-	
-	FHitResult HitResult;
-	FCollisionQueryParams QueryParams;
-	QueryParams.AddIgnoredActor(Character);
-	
-	if (Subsystem->GetWorld()->LineTraceSingleByChannel(HitResult, CameraLocation, TraceEnd, ECC_Visibility, QueryParams))
-	{
-		// Check if we hit a production building
-		AFGBuildable* HitBuilding = Cast<AFGBuildable>(HitResult.GetActor());
-		if (HitBuilding && IsProductionBuilding(HitBuilding))
-		{
-			// Store the building's current production recipe
-			StoreProductionRecipeFromBuilding(HitBuilding);
-		}
-	}
+	UE_LOG(LogSmartFoundations, Log,
+		TEXT("[#489] MMB settings sample: actor=%s vanillaCopy=%s recipe=%s shards=%d potential=%.0f%% somersloop=%s boost=%.0f%%"),
+		*GetNameSafe(SampledActor),
+		bCapturedImplicitSettingsThisSample ? TEXT("YES") : TEXT("NO"),
+		bCapturedImplicitSettingsThisSample ? *GetNameSafe(StoredProductionRecipe) : TEXT("None"),
+		bCapturedImplicitSettingsThisSample ? StoredOverclockShardCount : 0,
+		bCapturedImplicitSettingsThisSample && bHasStoredPotential ? StoredPotential * 100.0f : 100.0f,
+		bCapturedImplicitSettingsThisSample ? *GetNameSafe(StoredProductionBoostShardClass) : TEXT("None"),
+		bCapturedImplicitSettingsThisSample && bHasStoredProductionBoost ? StoredProductionBoost * 100.0f : 100.0f);
 }
 
 void USFRecipeManagementService::ClearStoredProductionRecipe()
@@ -702,7 +687,7 @@ void USFRecipeManagementService::ClearStoredProductionRecipe()
 	}
 
 	// [#368] NOTE: intentionally does NOT touch the vanilla build-gun clipboard here. The middle-click
-	// sample handler (StoreProductionRecipeFromBuilding) routes through this reset, and clearing the
+	// sample flow routes through this reset, and clearing the
 	// clipboard would wipe the recipe vanilla's own sample just populated (breaking vanilla Ctrl+V).
 	// The clipboard is cleared at the deliberate sites instead: ClearAllRecipes (Num0/panel) and the
 	// holster path (OnBuildGunUnequipped).
