@@ -9,6 +9,7 @@
 #include "Hologram/FGPipelinePoleHologram.h"
 #include "Holograms/Logistics/SFPipelinePoleChildHologram.h"
 #include "Features/Walk/SFWalkService.h"   // GetSeedHologram() for the held-buildable-changed walk cancel
+#include "Shared/Conduits/SFConveyanceConstants.h"
 
 
 // Hologram management with enhanced logging
@@ -291,10 +292,12 @@ void USFSubsystem::RegisterActiveHologram(AFGHologram* Hologram)
 		}
 	}
 
-	// Apply default spacing for belt/pipe support poles (User Request, Issue #268)
-	// Sets 54m (5400cm) spacing to facilitate bus building
-	// Wall conveyor poles scale along Y, so default spacing goes on Y axis for them
-	if (USFAutoConnectService::IsStackableSupportHologram(Hologram) || USFAutoConnectService::IsBeltSupportHologram(Hologram) || USFAutoConnectService::IsPipeSupportHologram(Hologram))
+	// Apply default spacing for belt/pipe support poles (Issues #268, #488).
+	// Grid spacing is the gap after the buildable footprint, so belt supports derive their gap from the
+	// shared 56m interval. Wall supports scale along Y; the other support families scale along X.
+	const bool bBeltSupport = USFAutoConnectService::IsBeltSupportHologram(Hologram);
+	const bool bPipeSupport = USFAutoConnectService::IsPipeSupportHologram(Hologram);
+	if (bBeltSupport || bPipeSupport)
 	{
 		const bool bWallPole = USFAutoConnectService::IsWallConveyorPoleHologram(Hologram)
 			|| USFAutoConnectService::IsWallPipelineSupportHologram(Hologram);  // #364: wall pipe supports scale along Y too
@@ -302,7 +305,7 @@ void USFSubsystem::RegisterActiveHologram(AFGHologram* Hologram)
 
 		if (SpacingAxis == 0)
 		{
-			SpacingAxis = 5400; // 54m (belts vanish at 55m due to belt length limit)
+			SpacingAxis = USFAutoConnectService::GetDefaultConveyanceSupportGridSpacing(Hologram);
 
 			// Sync the updated state back to GridStateService if it exists
 			if (GridStateService)
@@ -310,14 +313,12 @@ void USFSubsystem::RegisterActiveHologram(AFGHologram* Hologram)
 				GridStateService->UpdateCounterState(CounterState);
 			}
 
-			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 SUPPORT POLE: Applied default Spacing%s=5400cm for bus layout"),
-				bWallPole ? TEXT("Y") : TEXT("X"));
 			UpdateCounterDisplay();
 		}
 	}
 
 	// #405: stackable hypertube poles default X spacing to the pole-spacing max (9500cm / 95m), not the
-	// belt/pipe 54m, because hypertube spans reach much farther (96m chord cap minus ~1m connector offset).
+	// belt/pipe defaults, because hypertube spans reach much farther (96m chord cap minus ~1m connector offset).
 	// Separate if (not folded into the #268 gate above) because hypertube and pipe stackable supports share a
 	// hologram class, disambiguated only by build class — the hypertube branch must own SpacingX.
 	if (USFAutoConnectService::IsStackableHypertubeSupportHologram(Hologram))

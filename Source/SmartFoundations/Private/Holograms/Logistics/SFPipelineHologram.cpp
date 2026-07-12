@@ -864,6 +864,13 @@ float ASFPipelineHologram::ComputeMinRoutedBendRadiusCm() const
 	return MinRadius;
 }
 
+bool ASFPipelineHologram::ValidateCurrentSpline(float MaxSplineLengthCm, bool& OutTooLong)
+{
+	OutTooLong = mSplineComponent && mSplineComponent->GetSplineLength() > MaxSplineLengthCm;
+	bRoutedShapeInvalid = ComputeMinRoutedBendRadiusCm() < mMinBendRadius;
+	return !OutTooLong && !bRoutedShapeInvalid;
+}
+
 void ASFPipelineHologram::SetPlacementMaterialState(EHologramMaterialState materialState)
 {
 	Super::SetPlacementMaterialState(materialState);

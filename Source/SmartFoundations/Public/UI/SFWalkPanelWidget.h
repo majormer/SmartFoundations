@@ -103,7 +103,7 @@ private:
     UFUNCTION() UWidget* MakeComboItemWidget(FString Item);
 
     /** Build one segment-list row (index | Advance | Turn | Rise | Exit heading), highlighting the active.
-     *  MaxAdvanceM caps the Advance spinbox per conveyance (54 m belt/pipe; 95 m hypertube — #405). */
+     *  MaxAdvanceM caps the Advance spinbox per conveyance (56 m belt/pipe; 95 m hypertube — #405, #488). */
     UWidget* MakeSegmentRow(const FSFWalkSegmentView& View, float MaxAdvanceM);
 
     /** Build a "[Label  <dropdown>]" combo row; OutCombo receives the UComboBoxString so Refresh can bind it. */

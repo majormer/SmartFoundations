@@ -3,6 +3,7 @@
 #include "Features/Walk/SFWalkService.h"
 #include "Features/Walk/SFWalkConveyance.h"
 #include "Features/AutoConnect/SFAutoConnectService.h"   // IsStackablePipelineSupportHologram (seed-type -> conveyance adapter)
+#include "Holograms/Logistics/SFPipelineHologram.h"
 #include "Shared/Conduits/SFConveyanceShape.h"            // shared span shape-validity rules (walk + hypertube AC)
 #include "Subsystem/SFSubsystem.h"
 #include "Subsystem/SFHologramDataService.h"
@@ -14,9 +15,11 @@
 #include "FGPlayerController.h"           // resolve "Auto" belt/pipe tier client-side (the server has no local PC)
 #include "FGInventoryComponent.h"
 #include "FGCentralStorageSubsystem.h"
+#include "FGConstructDisqualifier.h"
 #include "Resources/FGItemDescriptor.h"  // UFGItemDescriptor key for the cost tally
 #include "GameFramework/Pawn.h"
 #include "GameFramework/Controller.h"
+#include "Components/SplineComponent.h"
 #include "HAL/IConsoleManager.h"
 #include "UObject/UnrealType.h"   // FArrayProperty / FindFProperty for the safe-teardown reflection unlink
 
@@ -95,7 +98,6 @@ void USFWalkService::Initialize(USFSubsystem* InSubsystem)
 // reversed — a segment that wants the same point should just be dropped, so the floor is 1 m. (Turn is NOT capped:
 // a 180° reversal is valid; the belt router pairs the connectors for it — see SFWalkConveyance::LinkOrUpdate.)
 static constexpr float SF_WALK_MIN_ADVANCE_CM     = 100.0f;    // 1 m floor (no 0-length spans)
-static constexpr float SF_WALK_DEFAULT_ADVANCE_CM = 5400.0f;   // first segment starts at the 54 m max — nobody walks at 1 m
 static constexpr float SF_WALK_MAX_TURN_DEG       = 270.0f;    // a single segment can spiral up to a 270° loop (vanilla-valid wide arc); beyond that just wraps/overlaps
 
 bool USFWalkService::EnterWalk(AFGHologram* InSeedHologram)
@@ -162,10 +164,11 @@ bool USFWalkService::EnterWalk(AFGHologram* InSeedHologram)
     Segments.Reset();
     FSFWalkSegment Seg0;
     // Per-conveyance default reach: hypertubes span up to 95 m (MAX_HYPERTUBE_POLE_SPACING, 1 m under the 96 m chord
-    // cap); belts/pipes start at the 54 m max. New segments still inherit the previous advance even if reduced. #405
+    // cap); belts/pipes start at the seven-foundation 56 m interval. New segments still inherit the
+    // previous advance even if reduced. #405 #488
     Seg0.Advance = (ConveyanceType == ESFWalkConveyanceType::Hypertube)
         ? USFAutoConnectService::MAX_HYPERTUBE_POLE_SPACING
-        : SF_WALK_DEFAULT_ADVANCE_CM;
+        : SFConveyanceConstants::DefaultBeltPipeSupportIntervalCm;
     Segments.Add(Seg0);   // segment 0, the first anchor forward
     ActiveIndex = 0;
     bActive = true;
@@ -912,7 +915,64 @@ FString USFWalkService::GetSegmentShapeError(int32 Index) const
     default:
         break;
     }
-    return SFConveyanceShape::EvaluateSpan(A->GetActorLocation(), B->GetActorLocation(), Kind, MaxLenCm, Index + 1);
+    const FString ChordError = SFConveyanceShape::EvaluateSpan(A->GetActorLocation(), B->GetActorLocation(), Kind, MaxLenCm, Index + 1);
+    if (!ChordError.IsEmpty()) { return ChordError; }
+
+    // The vanilla limit applies to the routed spline, not merely the anchor chord. A 56m straight
+    // segment is valid; turns or other transforms can lengthen the generated belt beyond 56m or
+    // produce another invalid vanilla shape. Surface that verdict and block the walk commit. #488
+    if (Kind == SFConveyanceShape::EKind::Belt)
+    {
+        for (const TWeakObjectPtr<AFGHologram>& WeakSpan : Segments[Index].Spans)
+        {
+            ASFConveyorBeltHologram* Belt = Cast<ASFConveyorBeltHologram>(WeakSpan.Get());
+            if (!Belt) { continue; }
+
+            if (const USplineComponent* Spline = Belt->GetSplineComponent())
+            {
+                if (Spline->GetSplineLength() > MaxLenCm)
+                {
+                    return UFGConstructDisqualifier::GetDisqualifyingText(UFGCDConveyorTooLong::StaticClass()).ToString();
+                }
+            }
+
+            USFHologramDataService::EnableValidation(Belt);
+            Belt->CheckValidPlacement();
+            TArray<TSubclassOf<UFGConstructDisqualifier>> Disqualifiers;
+            Belt->GetConstructDisqualifiers(Disqualifiers);
+            USFHologramDataService::DisableValidation(Belt);
+            Belt->ResetConstructDisqualifiers();
+
+            for (const TSubclassOf<UFGConstructDisqualifier>& Disqualifier : Disqualifiers)
+            {
+                if (Disqualifier == UFGCDConveyorTooLong::StaticClass()
+                    || Disqualifier == UFGCDConveyorTooSteep::StaticClass()
+                    || Disqualifier == UFGCDConveyorInvalidShape::StaticClass())
+                {
+                    return UFGConstructDisqualifier::GetDisqualifyingText(Disqualifier).ToString();
+                }
+            }
+        }
+    }
+	else if (Kind == SFConveyanceShape::EKind::Pipe)
+	{
+		for (const TWeakObjectPtr<AFGHologram>& WeakSpan : Segments[Index].Spans)
+		{
+			ASFPipelineHologram* Pipe = Cast<ASFPipelineHologram>(WeakSpan.Get());
+			if (!Pipe) { continue; }
+
+			bool bTooLong = false;
+			if (!Pipe->ValidateCurrentSpline(MaxLenCm, bTooLong))
+			{
+				const TSubclassOf<UFGConstructDisqualifier> Disqualifier = bTooLong
+					? UFGCDPipeTooLong::StaticClass()
+					: UFGCDPipeInvalidShape::StaticClass();
+				return UFGConstructDisqualifier::GetDisqualifyingText(Disqualifier).ToString();
+			}
+		}
+	}
+
+    return FString();
 }
 
 bool USFWalkService::IsSegmentShapeValid(int32 Index) const

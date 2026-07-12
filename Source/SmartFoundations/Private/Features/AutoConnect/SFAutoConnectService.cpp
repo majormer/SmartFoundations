@@ -13,6 +13,9 @@
 
 #include "Features/AutoConnect/SFAutoConnectService.h"
 #include "Features/AutoConnect/SFAutoConnectServiceImpl.h"
+#include "Data/SFBuildableSizeRegistry.h"
+#include "Shared/Conduits/SFConveyanceConstants.h"
+#include "Hologram/FGBuildableHologram.h"
 
 USFAutoConnectService::USFAutoConnectService()
 	: Subsystem(nullptr)
@@ -37,6 +40,24 @@ void USFAutoConnectService::Shutdown()
 	ClearBeltPreviewHelpers();
 	CleanupAllBlueprintSeamsAllParents();   // [#168] seam conduit previews + table cache
 	Subsystem = nullptr;
+}
+
+int32 USFAutoConnectService::GetDefaultConveyanceSupportGridSpacing(const AFGHologram* Hologram)
+{
+	AFGHologram* MutableHologram = const_cast<AFGHologram*>(Hologram);
+	const AFGBuildableHologram* BuildableHologram = Cast<AFGBuildableHologram>(Hologram);
+	if (!BuildableHologram
+		|| (!IsBeltSupportHologram(MutableHologram) && !IsPipeSupportHologram(MutableHologram)))
+	{
+		return 0;
+	}
+
+	const FVector SupportSize = USFBuildableSizeRegistry::GetSizeForHologram(BuildableHologram);
+	const bool bWallPole = IsWallConveyorPoleHologram(MutableHologram)
+		|| IsWallPipelineSupportHologram(MutableHologram);
+	const float FootprintAlongScaleAxis = bWallPole ? SupportSize.Y : SupportSize.X;
+	return FMath::RoundToInt(FMath::Max(0.0f,
+		SFConveyanceConstants::DefaultBeltPipeSupportIntervalCm - FootprintAlongScaleAxis));
 }
 
 void USFAutoConnectService::ClearBeltPreviewHelpers()
