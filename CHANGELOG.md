@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [34.1.1] - Unreleased
+
+> *A fix for power, pipe, and belt auto-connect stomping spacing you set by hand.*
+
+### Fixed
+
+- **Auto-connect no longer resets spacing you've already adjusted** - When you scaled a run of power poles (or pipe junctions, or belt distributors) near your factory and then set the spacing yourself, Auto-Connect could snap it back to its own default the moment the array's nearest building changed - most visibly, spacing past a certain width would jump back to a smaller value as you kept scrolling. Auto-Connect now only picks spacing for you until you adjust it yourself; once you've dialed in a value, it leaves it alone for the rest of that placement. Its smart default still applies on the first connection, as before. (Issue #480, reported by Raudoc on the Smart! Discord)
+
+---
+
 ## [34.1.0] - 2026-07-10
 
 > *Player Relative Controls: an optional way to build in the direction you're looking, so the grid grows toward where you face instead of along fixed compass axes.*

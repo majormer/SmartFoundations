@@ -224,7 +224,8 @@ void FSFPipeAutoConnectManager::ProcessAllJunctions(AFGHologram* ParentJunctionH
 				if (Building)
 				{
 					UClass* CurrentBuildingClass = Building->GetClass();
-					
+					FSFCounterState CurrentState = Subsystem->GetCounterState();
+
 					// Check if we should apply spacing adjustment
 					bool bShouldApply = false;
 					if (!bContextSpacingApplied)
@@ -235,43 +236,58 @@ void FSFPipeAutoConnectManager::ProcessAllJunctions(AFGHologram* ParentJunctionH
 					}
 					else if (LastTargetBuildingClass.IsValid() && LastTargetBuildingClass.Get() != CurrentBuildingClass)
 					{
-						// Building changed - reset and apply new spacing
-						bShouldApply = true;
-						UE_LOG(LogSmartAutoConnect, Verbose, TEXT("   🎯 CONTEXT-AWARE SPACING: Target building changed (%s → %s), re-adjusting"),
-							*LastTargetBuildingClass->GetName(), *CurrentBuildingClass->GetName());
+						// Building changed - only re-adjust if the user hasn't since manually
+						// changed spacing away from what we last auto-applied. Otherwise the
+						// nearest-building assignment flipping mid-scale would stomp deliberate
+						// user input.
+						const bool bUserModifiedSpacing =
+							!FMath::IsNearlyEqual(CurrentState.SpacingX, LastAppliedSpacingX, 1.0f) ||
+							!FMath::IsNearlyEqual(CurrentState.SpacingY, LastAppliedSpacingY, 1.0f);
+
+						if (!bUserModifiedSpacing)
+						{
+							bShouldApply = true;
+							UE_LOG(LogSmartAutoConnect, Verbose, TEXT("   🎯 CONTEXT-AWARE SPACING: Target building changed (%s → %s), re-adjusting"),
+								*LastTargetBuildingClass->GetName(), *CurrentBuildingClass->GetName());
+						}
+						else
+						{
+							UE_LOG(LogSmartAutoConnect, Verbose, TEXT("   🎯 CONTEXT-AWARE SPACING: Target building changed but user has manually adjusted spacing (%.0f x %.0f vs last-applied %.0f x %.0f) - skipping"),
+								static_cast<float>(CurrentState.SpacingX), static_cast<float>(CurrentState.SpacingY), LastAppliedSpacingX, LastAppliedSpacingY);
+						}
 					}
 					else
 					{
 						UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   🎯 CONTEXT-AWARE SPACING: Skipping (already applied, user can fine-tune)"));
 					}
-					
+
 					if (bShouldApply)
 					{
 						// Query building size from registry
 						USFBuildableSizeRegistry::Initialize();
 						FSFBuildableSizeProfile Profile = USFBuildableSizeRegistry::GetProfile(CurrentBuildingClass);
-						
+
 						// Calculate connector spacing: Building width minus 3m buffer
 						// This accounts for the width of the pipe junction itself
 						// Example: Manufacturer is 18m wide, but connectors are 15m apart (18m - 3m = 15m)
 						float BuildingWidth = Profile.DefaultSize.X - 300.0f;  // 300cm = 3m buffer for junction width
-						
+
 						if (BuildingWidth > 0.0f)
 						{
-							// Get current counter state
-							FSFCounterState NewState = Subsystem->GetCounterState();
-							
 							// Set both X and Y spacing to building width (junctions are orientation-agnostic)
+							FSFCounterState NewState = CurrentState;
 							NewState.SpacingX = FMath::RoundToInt(BuildingWidth);
 							NewState.SpacingY = FMath::RoundToInt(BuildingWidth);
-							
+
 							// Update state (triggers HUD refresh and child repositioning)
 							Subsystem->UpdateCounterState(NewState);
-							
-							// Mark as applied and track building class
+
+							// Mark as applied and track building class + the spacing we set
 							bContextSpacingApplied = true;
 							LastTargetBuildingClass = CurrentBuildingClass;
-							
+							LastAppliedSpacingX = NewState.SpacingX;
+							LastAppliedSpacingY = NewState.SpacingY;
+
 							UE_LOG(LogSmartAutoConnect, Verbose, TEXT("   🎯 CONTEXT-AWARE SPACING: Auto-adjusted pipes to %.1fm x %.1fm (building: %s, width: %.0fcm)"),
 								BuildingWidth / 100.0f, BuildingWidth / 100.0f,
 								*CurrentBuildingClass->GetName(), BuildingWidth);

@@ -207,6 +207,10 @@ private:
 	// Context-aware spacing tracking (mirrors belt orchestrator)
 	bool bContextSpacingApplied = false;
 	TWeakObjectPtr<UClass> LastTargetBuildingClass;
+	// Spacing values we last auto-applied, so a target-building change doesn't clobber
+	// spacing the user has since adjusted manually
+	float LastAppliedSpacingX = -1.0f;
+	float LastAppliedSpacingY = -1.0f;
 	
 	// Counter for unique child names
 	static int32 PipeChildCounter;
