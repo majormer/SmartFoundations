@@ -439,6 +439,7 @@ public:
   ESFScaleAxis GetEffectiveStepsAxis() const;
   ESFScaleAxis GetEffectiveStaggerAxis() const;
   ESFScaleAxis GetEffectiveRotationAxis() const;
+  ELastAxisInput GetEffectiveArrowAxisInput(int32* OutDirectionSign = nullptr) const;
 
   /** [#209] Player Relative master switch (Smart_Config, read live). */
   bool IsPlayerRelativeEnabled() const;
@@ -734,6 +735,9 @@ protected:
 
 	/** Cached axis input to detect changes (optimization: only update visibility when input changes) */
 	ELastAxisInput LastKnownAxisInput = ELastAxisInput::None;
+
+	/** Cached PR role direction for arrow orientation (0 preserves classic orientation). */
+	int32 LastKnownArrowDirectionSign = 0;
 	
 	/** Cached child count to detect grid structure changes (triggers arrow position updates) */
 	int32 LastChildCount = 0;

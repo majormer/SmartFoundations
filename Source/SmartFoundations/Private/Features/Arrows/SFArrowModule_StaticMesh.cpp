@@ -438,7 +438,8 @@ void FSFArrowModule_StaticMesh::Cleanup()
 	UE_LOG(LogSmartArrows, Verbose, TEXT("FSFArrowModule_StaticMesh: Cleaned up (Task #58: async loads cancelled, Task #67: dynamic materials cleared)"));
 }
 
-void FSFArrowModule_StaticMesh::UpdateArrows(UWorld* World, const FTransform& BaseTransform, ELastAxisInput HighlightedAxis, bool bVisible)
+void FSFArrowModule_StaticMesh::UpdateArrows(UWorld* World, const FTransform& BaseTransform,
+	ELastAxisInput HighlightedAxis, bool bVisible, int32 DirectionSign)
 {
 	// Log update frequency to diagnose UObject creation
 	static int32 UpdateCount = 0;
@@ -551,17 +552,30 @@ void FSFArrowModule_StaticMesh::UpdateArrows(UWorld* World, const FTransform& Ba
 		}
 	}
 
-	// Mesh primitives point up (+Z in local space), rotated to point along axes
+	// The cone asset's visible tip points along local -Z. For explicit PR directions, rotate
+	// that tip toward the requested local axis; the legacy rotations remain unchanged otherwise.
 	// X-axis: Pitch -90, Yaw 180 — arrow points in grid expansion direction
 	// Y-axis: Roll -90 — point along +Y
 	// Z-axis: No rotation — point up
 	
 	FRotator RotationX = FRotator(-90.0f, 180.0f, 0.0f);
+	if (HighlightedAxis == ELastAxisInput::X && DirectionSign != 0)
+	{
+		RotationX = FQuat::FindBetweenNormals(FVector::UpVector,
+			-FVector::ForwardVector * DirectionSign).Rotator();
+	}
 	UpdateSingleArrow(ArrowX.Get(), ShaftX.Get(), RelativeLocation, RotationX, ELastAxisInput::X, HighlightedAxis);
 	
 	FRotator RotationY = FRotator(0.0f, 0.0f, -90.0f);
+	if (HighlightedAxis == ELastAxisInput::Y && DirectionSign != 0)
+	{
+		RotationY = FQuat::FindBetweenNormals(FVector::UpVector,
+			-FVector::RightVector * DirectionSign).Rotator();
+	}
 	UpdateSingleArrow(ArrowY.Get(), ShaftY.Get(), RelativeLocation, RotationY, ELastAxisInput::Y, HighlightedAxis);
 	
+	// Vertical is view-invariant. Keep the legacy orientation, which visibly points up, even when
+	// both scaling modifiers are held under Player Relative controls.
 	FRotator RotationZ = FRotator::ZeroRotator;
 	UpdateSingleArrow(ArrowZ.Get(), ShaftZ.Get(), RelativeLocation, RotationZ, ELastAxisInput::Z, HighlightedAxis);
 

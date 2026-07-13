@@ -702,9 +702,16 @@ void USFSubsystem::TickArrows()
 
 		FTransform CurrentTransform = CurrentAdapter->GetBaseTransform();
 
-	// Check if transform, axis input, or grid structure changed
+	// The Panel is absolute, but world controls may resolve to a different building axis as the
+	// player turns under Player Relative Controls. Derive the display axis every arrow tick so the
+	// preview never waits for a wheel event to catch up.
+	int32 EffectiveArrowDirectionSign = 0;
+	const ELastAxisInput EffectiveArrowAxis = GetEffectiveArrowAxisInput(&EffectiveArrowDirectionSign);
+
+	// Check if transform, effective axis input, or grid structure changed
 	const bool bTransformChanged = !CurrentTransform.Equals(LastHologramTransform);
-	const bool bAxisInputChanged = (LastAxisInput != LastKnownAxisInput);
+	const bool bAxisInputChanged = (EffectiveArrowAxis != LastKnownAxisInput);
+	const bool bArrowDirectionChanged = (EffectiveArrowDirectionSign != LastKnownArrowDirectionSign);
 
 	int32 CurrentChildCount = 0;
 	if (AFGHologram* Hologram = GetActiveHologram())
@@ -714,13 +721,14 @@ void USFSubsystem::TickArrows()
 	const bool bChildCountChanged = (CurrentChildCount != LastChildCount);
 
 	// Only update full arrows if something changed (optimization)
-	if (bTransformChanged || bAxisInputChanged || bChildCountChanged)
+	if (bTransformChanged || bAxisInputChanged || bArrowDirectionChanged || bChildCountChanged)
 	{
-		ArrowModule->UpdateArrows(World, CurrentTransform, LastAxisInput, true);
+		ArrowModule->UpdateArrows(World, CurrentTransform, EffectiveArrowAxis, true, EffectiveArrowDirectionSign);
 
 		// Update cache
 		LastHologramTransform = CurrentTransform;
-		LastKnownAxisInput = LastAxisInput;
+		LastKnownAxisInput = EffectiveArrowAxis;
+		LastKnownArrowDirectionSign = EffectiveArrowDirectionSign;
 		LastChildCount = CurrentChildCount;
 
 			// Log updates (only when changes occur)
@@ -1882,6 +1890,38 @@ static int32 SF_GridCounterFor(const FSFCounterState& S, ESFScaleAxis Axis)
 	}
 }
 
+static void SF_ResolvePlayerRelativeModalAxisAndSign(const FSFCounterState& State,
+	USFSubsystem::ESFPlayerRelativeSlot Slot, bool bSpacingMode, bool bStaggerMode,
+	ESFScaleAxis PrimAxis, int32 PrimSign, ESFScaleAxis LatAxis, int32 LatSign,
+	ESFScaleAxis& OutAxis, int32& OutSign)
+{
+	if (bStaggerMode)
+	{
+		const bool bStack = USFGridStateService::IsStaggerStackFamily(State.StaggerAxis);
+		SF_ResolveStaggerTarget(bStack, Slot, PrimAxis, PrimSign, LatAxis, LatSign, OutAxis, OutSign);
+		const ESFScaleAxis ProgressionAxis =
+			  (OutAxis == ESFScaleAxis::ZX || OutAxis == ESFScaleAxis::ZY) ? ESFScaleAxis::Z
+			: (OutAxis == ESFScaleAxis::X) ? ESFScaleAxis::X
+			:                                ESFScaleAxis::Y;
+		OutSign *= SF_SignNonZero(SF_GridCounterFor(State, ProgressionAxis));
+		return;
+	}
+
+	SF_ResolveSlot(Slot, PrimAxis, PrimSign, LatAxis, LatSign, OutAxis, OutSign);
+	if (Slot == USFSubsystem::ESFPlayerRelativeSlot::Forward)
+	{
+		OutSign *= SF_SignNonZero(SF_GridCounterFor(State, OutAxis));
+	}
+	else if (bSpacingMode)
+	{
+		OutSign = +1;
+	}
+	else
+	{
+		OutSign = SF_SignNonZero(SF_GridCounterFor(State, OutAxis));
+	}
+}
+
 bool USFSubsystem::ResolvePlayerRelativeModalTarget(bool bSelectSlot, ESFPlayerRelativeSlot DesiredSlot,
 	ESFScaleAxis& OutAxis, int32& OutSign)
 {
@@ -1911,47 +1951,17 @@ bool USFSubsystem::ResolvePlayerRelativeModalTarget(bool bSelectSlot, ESFPlayerR
 		*Slot = DesiredSlot;
 	}
 
+	SF_ResolvePlayerRelativeModalAxisAndSign(CounterState, *Slot, bSpacingModeActive,
+		bStaggerModeActive, PrimAxis, PrimSign, LatAxis, LatSign, OutAxis, OutSign);
+
 	if (bStaggerModeActive)
 	{
-		const bool bStack = USFGridStateService::IsStaggerStackFamily(CounterState.StaggerAxis);
-		SF_ResolveStaggerTarget(bStack, *Slot, PrimAxis, PrimSign, LatAxis, LatSign, OutAxis, OutSign);
-		// [#209] Drift sign (maintainer-spec 2026-07-09): the resolved facing sign of the DRIFT
-		// axis composes with the PROGRESSION axis' expansion direction (the offset rides SIGNED
-		// cell indices). Forward-drift: up = leans AWAY from you; Lateral-drift: up = leans to
-		// your RIGHT (the one signed lateral - a lean's direction IS its meaning).
-		const ESFScaleAxis ProgressionAxis =
-			  (OutAxis == ESFScaleAxis::ZX || OutAxis == ESFScaleAxis::ZY) ? ESFScaleAxis::Z
-			: (OutAxis == ESFScaleAxis::X) ? ESFScaleAxis::X
-			:                                ESFScaleAxis::Y;
-		OutSign *= SF_SignNonZero(SF_GridCounterFor(CounterState, ProgressionAxis));
 		// Input-time write: park the stored 4-state on the member being driven. The family
 		// projection rides it, and presets capture "last used" exactly as classic does.
 		CounterState.StaggerAxis = OutAxis;
 	}
 	else
 	{
-		SF_ResolveSlot(*Slot, PrimAxis, PrimSign, LatAxis, LatSign, OutAxis, OutSign);
-		// [#209] Per-role wheel sign (maintainer-spec 2026-07-09):
-		//  - FORWARD: scroll-up = grow the run in the direction you FACE. That is the facing sign
-		//    x the direction the array actually expands (grid-counter sign): at the anchor looking
-		//    along the run, up stretches it away; from the far end looking back, up pulls it
-		//    toward you (spacing contracts, steps rise toward you, rotation curls the near end).
-		//  - LATERAL/VERTICAL: plain magnitude (up = more) - you are not looking along them, so
-		//    there is no directional intuition to honor. Steps/rotation lateral keep the run's own
-		//    expansion sign (view-independent: up = more toward the far end).
-		if (*Slot == ESFPlayerRelativeSlot::Forward)
-		{
-			OutSign *= SF_SignNonZero(SF_GridCounterFor(CounterState, OutAxis));
-		}
-		else if (bSpacingModeActive)
-		{
-			OutSign = +1;
-		}
-		else
-		{
-			OutSign = SF_SignNonZero(SF_GridCounterFor(CounterState, OutAxis));
-		}
-
 		// [#209] Rotation's progression axis is MUTUALLY EXCLUSIVE (curve the run you face vs fan
 		// your side rows) - unlike spacing's additive gaps, only one is active. The slot SELECTS it,
 		// so it must be written to state (Forward -> facing axis, Lateral -> perpendicular). Without
@@ -2067,6 +2077,107 @@ ESFScaleAxis USFSubsystem::GetEffectiveRotationAxis() const
 	ESFScaleAxis Axis; int32 Sign;
 	SF_ResolveSlot(PlayerRelativeSlots.Rotation, PrimAxis, PrimSign, LatAxis, LatSign, Axis, Sign);
 	return Axis;
+}
+
+ELastAxisInput USFSubsystem::GetEffectiveArrowAxisInput(int32* OutDirectionSign) const
+{
+	if (OutDirectionSign)
+	{
+		*OutDirectionSign = 0;
+	}
+
+	// The Smart Panel is the absolute X/Y/Z surface. It must retain the same building-relative
+	// arrows regardless of the global Player Relative setting.
+	if (!IsPlayerRelativeEnabled()
+		|| (SettingsFormWidget.IsValid() && SettingsFormWidget->IsInViewport())
+		|| !ActiveHologram.IsValid())
+	{
+		return LastAxisInput;
+	}
+
+	auto ToArrowAxis = [](ESFScaleAxis Axis) -> ELastAxisInput
+	{
+		switch (Axis)
+		{
+		case ESFScaleAxis::X: return ELastAxisInput::X;
+		case ESFScaleAxis::Y: return ELastAxisInput::Y;
+		case ESFScaleAxis::Z: return ELastAxisInput::Z;
+		default: return ELastAxisInput::None;
+		}
+	};
+
+	ESFScaleAxis PrimaryAxis, LateralAxis;
+	int32 PrimarySign, LateralSign;
+	if (!SF_ComputePlayerRelativeAxes(const_cast<USFSubsystem*>(this), ActiveHologram.Get(),
+		PrimaryAxis, PrimarySign, LateralAxis, LateralSign))
+	{
+		return LastAxisInput;
+	}
+
+	// Transform modals own the wheel while active. The arrow communicates the selected ROLE's
+	// positive direction, not the current counter sign: Forward always points forward, Side always
+	// points right, and Vertical always points up. Wheel-down adjusts against that arrow.
+	if (bSpacingModeActive || bStepsModeActive || bStaggerModeActive || bRotationModeActive)
+	{
+		const ESFPlayerRelativeSlot Slot =
+			  bSpacingModeActive ? PlayerRelativeSlots.Spacing
+			: bStepsModeActive   ? PlayerRelativeSlots.Steps
+			: bStaggerModeActive ? PlayerRelativeSlots.Stagger
+			:                      PlayerRelativeSlots.Rotation;
+		ESFScaleAxis ModalAxis;
+		int32 ModalSign;
+		SF_ResolvePlayerRelativeModalAxisAndSign(CounterState, Slot, bSpacingModeActive,
+			bStaggerModeActive, PrimaryAxis, PrimarySign, LateralAxis, LateralSign,
+			ModalAxis, ModalSign);
+		if (OutDirectionSign)
+		{
+			*OutDirectionSign =
+				  Slot == ESFPlayerRelativeSlot::Side     ? LateralSign
+				: Slot == ESFPlayerRelativeSlot::Vertical ? +1
+				:                                           PrimarySign;
+		}
+
+		if (bStaggerModeActive)
+		{
+			// Stagger stores family + progression, while the arrow communicates the horizontal drift.
+			switch (ModalAxis)
+			{
+			case ESFScaleAxis::ZX: return ELastAxisInput::X;
+			case ESFScaleAxis::ZY: return ELastAxisInput::Y;
+			case ESFScaleAxis::X:  return ELastAxisInput::Y;
+			case ESFScaleAxis::Y:  return ELastAxisInput::X;
+			default: return ELastAxisInput::None;
+			}
+		}
+		return ToArrowAxis(ModalAxis);
+	}
+
+	if (bModifierScaleXActive && bModifierScaleYActive)
+	{
+		if (OutDirectionSign)
+		{
+			*OutDirectionSign = +1;
+		}
+		return ELastAxisInput::Z;
+	}
+	if (bModifierScaleXActive)
+	{
+		if (OutDirectionSign)
+		{
+			*OutDirectionSign = PrimarySign;
+		}
+		return ToArrowAxis(PrimaryAxis);
+	}
+	if (bModifierScaleYActive)
+	{
+		if (OutDirectionSign)
+		{
+			*OutDirectionSign = LateralSign;
+		}
+		return ToArrowAxis(LateralAxis);
+	}
+
+	return LastAxisInput;
 }
 
 void USFSubsystem::OnScaleXChanged(const FInputActionValue& Value)

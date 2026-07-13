@@ -673,7 +673,9 @@ void USFSubsystem::OnToggleArrows()
 			if (bArrowsRuntimeVisible)
 			{
 				// Force redraw when enabling - show arrows immediately
-				ArrowModule->UpdateArrows(World, CurrentTransform, LastAxisInput, true);
+				int32 ArrowDirectionSign = 0;
+				const ELastAxisInput ArrowAxis = GetEffectiveArrowAxisInput(&ArrowDirectionSign);
+				ArrowModule->UpdateArrows(World, CurrentTransform, ArrowAxis, true, ArrowDirectionSign);
 				UE_LOG(LogSmartFoundations, Verbose, TEXT("Arrows: Forced redraw on visibility enable"));
 			}
 			else
@@ -685,7 +687,7 @@ void USFSubsystem::OnToggleArrows()
 
 			// Update cache to prevent immediate redraw in next Tick
 			LastHologramTransform = CurrentTransform;
-			LastKnownAxisInput = LastAxisInput;
+			LastKnownAxisInput = GetEffectiveArrowAxisInput(&LastKnownArrowDirectionSign);
 			LastChildCount = 0;  // Reset child count when toggling visibility
 		}
 	}
