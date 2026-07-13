@@ -79,6 +79,7 @@ struct FSFRestoreAutoConnectState;
 // Smart! hologram forward declarations
 class ASFBuildableHologram;
 class ASFFactoryHologram;
+class ASFWireHologram;
 class ASFLogisticsHologram;
 class ASFFoundationHologram;
 class USmartSettingsFormWidget;
@@ -644,6 +645,17 @@ protected:
 	/** Currently active hologram for scaling operations */
 	UPROPERTY(BlueprintReadOnly, Category = "Smart! State")
 	TWeakObjectPtr<AFGHologram> ActiveHologram;
+
+	/** #487: transient power-chain previews belong to the active scaling session, not to a
+	 * particular factory hologram subclass. Vanilla factory holograms are the normal scaling path. */
+	UPROPERTY(Transient)
+	TArray<TObjectPtr<ASFWireHologram>> ScaleDaisyChainPreviews;
+
+	TArray<TPair<FVector, FVector>> CachedScaleDaisyChainSpans;
+	TWeakObjectPtr<AFGHologram> ScaleDaisyChainPreviewOwner;
+
+	void RefreshScaleDaisyChainPreviews();
+	void DestroyScaleDaisyChainPreviews();
 
 	/** Current scaling offset accumulator (DEPRECATED - use GridCounters) */
 	UPROPERTY(BlueprintReadOnly, Category = "Smart! Scaling")
@@ -1322,6 +1334,7 @@ public:
 		
 		// Power Settings
 		bool bConnectPower = true;     // Power auto-connect enabled
+		bool bScaleDaisyChainPower = true; // Scale factories/generators with building-to-building power along local X (Issue #487)
 		bool bExtendPower = true;      // Include power poles when using Extend (Issue #229)
 		bool bExtendDaisyChain = true; // Daisy-chain building power along the extend lane when unlocked (Issue #344)
 		bool bExtendDaisyChainPoleless = true; // Start a new daisy chain when the source is pole-less and unwired (Issue #344)
@@ -1350,6 +1363,9 @@ public:
 
 			// Power settings from config
 			bConnectPower = Config.bPowerAutoConnectEnabled;
+			// The persistent Power Auto-Connect switch is the global master. A deliberate
+			// per-build Panel override may subsequently turn this effective value back on.
+			bScaleDaisyChainPower = Config.bPowerAutoConnectEnabled && Config.bScaleDaisyChainPower;
 			bExtendPower = Config.bExtendPowerEnabled;
 			bExtendDaisyChain = Config.bExtendDaisyChainPower;
 			bExtendDaisyChainPoleless = Config.bExtendDaisyChainPoleless;
@@ -1379,6 +1395,7 @@ public:
 				&& bHypertubeAutoConnectEnabled == O.bHypertubeAutoConnectEnabled
 				&& HypertubeRoutingMode == O.HypertubeRoutingMode
 				&& bConnectPower == O.bConnectPower
+				&& bScaleDaisyChainPower == O.bScaleDaisyChainPower
 				&& bExtendPower == O.bExtendPower
 				&& bExtendDaisyChain == O.bExtendDaisyChain
 				&& bExtendDaisyChainPoleless == O.bExtendDaisyChainPoleless
@@ -1414,6 +1431,12 @@ public:
 	
 	/** Check if current hologram is an auto-connect capable type (distributor, pipe junction, power pole, stackable support) */
 	bool IsCurrentHologramAutoConnectCapable() const;
+
+	/** [#487] True when the hologram is a factory/generator and upgraded connectors are unlocked. */
+	bool IsScaleDaisyChainAvailable(AFGHologram* Hologram = nullptr) const;
+
+	/** [#487] Whether the per-build daisy override differs from the effective global default. */
+	bool IsScaleDaisyChainPowerOverrideDirty() const;
 
 	/** Check if the current hologram can SEED a Smart Walk (a stackable belt/pipe support) — gates the Walk Path button. */
 	bool IsCurrentHologramWalkable() const;
@@ -1530,6 +1553,9 @@ public:
 	
 	/** Set power reserved slots (0-5) */
 	void SetAutoConnectPowerReserved(int32 Reserved);
+
+	/** [#487] Set the per-build factory daisy-chain override. */
+	void SetScaleDaisyChainPowerEnabled(bool bEnabled);
 	
 	/** Trigger auto-connect preview refresh (for Apply Immediately mode) */
 	void TriggerAutoConnectRefresh();

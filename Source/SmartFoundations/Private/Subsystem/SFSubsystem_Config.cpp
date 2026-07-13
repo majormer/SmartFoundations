@@ -7,6 +7,8 @@
 
 #include "Subsystem/SFSubsystemImpl.h"
 #include "Features/Walk/SFWalkService.h"
+#include "Buildables/FGBuildableFactory.h"
+#include "FGUnlockSubsystem.h"
 
 
 // ========================================
@@ -1795,6 +1797,26 @@ bool USFSubsystem::IsCurrentHologramAutoConnectCapable() const
 	                                                                              //   suppressed the settings overlay
 }
 
+bool USFSubsystem::IsScaleDaisyChainAvailable(AFGHologram* Hologram) const
+{
+	AFGHologram* Candidate = Hologram ? Hologram : ActiveHologram.Get();
+	UClass* BuildClass = Candidate ? Candidate->GetBuildClass() : nullptr;
+	if (!BuildClass || !BuildClass->IsChildOf(AFGBuildableFactory::StaticClass()))
+	{
+		return false;
+	}
+
+	UWorld* World = Candidate->GetWorld();
+	AFGUnlockSubsystem* Unlocks = World ? AFGUnlockSubsystem::Get(World) : nullptr;
+	return Unlocks && Unlocks->IsCircuitDaisyChainingUnlocked();
+}
+
+bool USFSubsystem::IsScaleDaisyChainPowerOverrideDirty() const
+{
+	const bool bGlobalDefault = CachedConfig.bPowerAutoConnectEnabled && CachedConfig.bScaleDaisyChainPower;
+	return AutoConnectRuntimeSettings.bScaleDaisyChainPower != bGlobalDefault;
+}
+
 bool USFSubsystem::IsCurrentHologramWalkable() const
 {
 	// Smart Walking seeds from a stackable belt, pipe, OR hypertube support — matches the walk's conveyance adapters
@@ -2216,6 +2238,15 @@ void USFSubsystem::SetAutoConnectPowerReserved(int32 Reserved)
 	AutoConnectRuntimeSettings.bInitialized = true;
 	UpdateCounterDisplay();
 	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Power reserved slots set to: %d"), AutoConnectRuntimeSettings.PowerReserved);
+}
+
+void USFSubsystem::SetScaleDaisyChainPowerEnabled(bool bEnabled)
+{
+	AutoConnectRuntimeSettings.bScaleDaisyChainPower = bEnabled;
+	AutoConnectRuntimeSettings.bInitialized = true;
+	UpdateCounterDisplay();
+	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Scale daisy-chain power override set to: %s"),
+		bEnabled ? TEXT("ON") : TEXT("OFF"));
 }
 
 void USFSubsystem::TriggerAutoConnectRefresh()

@@ -52,6 +52,7 @@ USTRUCT(BlueprintType)
 struct FSmart_PowerConfigSection {
     GENERATED_BODY()
     UPROPERTY(BlueprintReadWrite) bool bPowerAutoConnectEnabled{};
+    UPROPERTY(BlueprintReadWrite) bool bScaleDaisyChainPower{true};
     UPROPERTY(BlueprintReadWrite) int32 PowerConnectMode{};
     UPROPERTY(BlueprintReadWrite) int32 PowerConnectRange{};
     UPROPERTY(BlueprintReadWrite) int32 PowerConnectReserved{};
@@ -174,6 +175,11 @@ public:
 
     UPROPERTY(BlueprintReadWrite)
     bool bPowerAutoConnectEnabled{};
+
+    // Scale daisy-chain power: when scaling factories/generators and Upgraded Power Connectors is
+    // unlocked, wire adjacent grid cells building-to-building along local X (Issue #487).
+    UPROPERTY(BlueprintReadWrite)
+    bool bScaleDaisyChainPower{true};
 
     UPROPERTY(BlueprintReadWrite)
     int32 PowerConnectMode{};
@@ -327,6 +333,7 @@ public:
 
         // Power Auto-Connect
         ConfigStruct.bPowerAutoConnectEnabled = Sections.PowerAutoConnect.bPowerAutoConnectEnabled;
+        ConfigStruct.bScaleDaisyChainPower    = Sections.PowerAutoConnect.bScaleDaisyChainPower;
         ConfigStruct.PowerConnectMode         = Sections.PowerAutoConnect.PowerConnectMode;
         ConfigStruct.PowerConnectRange        = Sections.PowerAutoConnect.PowerConnectRange;
         ConfigStruct.PowerConnectReserved     = Sections.PowerAutoConnect.PowerConnectReserved;

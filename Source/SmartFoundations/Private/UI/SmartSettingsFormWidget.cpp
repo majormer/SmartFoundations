@@ -409,6 +409,11 @@ void USmartSettingsFormWidget::NativeConstruct()
     {
         PowerEnabledCheckBox->OnCheckStateChanged.AddDynamic(this, &USmartSettingsFormWidget::OnPowerEnabledChanged);
     }
+    if (ScaleDaisyChainPowerCheckBox)
+    {
+        ScaleDaisyChainPowerCheckBox->OnCheckStateChanged.AddDynamic(
+            this, &USmartSettingsFormWidget::OnScaleDaisyChainPowerChanged);
+    }
     if (PowerGridAxisComboBox)
     {
         PowerGridAxisComboBox->OnSelectionChanged.AddDynamic(this, &USmartSettingsFormWidget::OnPowerGridAxisChanged);
@@ -728,6 +733,7 @@ void USmartSettingsFormWidget::PopulateFromCounterState(USFSubsystem* Subsystem)
             const bool bIsDistributor = AutoConnectService->IsDistributorHologram(ActiveHologram);
             const bool bIsPipeJunction = AutoConnectService->IsPipelineJunctionHologram(ActiveHologram);
             const bool bIsPowerPole = AutoConnectService->IsPowerPoleHologram(ActiveHologram);
+            const bool bIsScaleDaisyAvailable = SubsystemPtr->IsScaleDaisyChainAvailable(ActiveHologram);
             const bool bIsStackableConveyorPole = USFAutoConnectService::IsBeltSupportHologram(ActiveHologram);
             const bool bIsStackablePipeSupport = AutoConnectService->IsStackablePipelineSupportHologram(ActiveHologram);
             const bool bIsPassthroughPipe = USFAutoConnectService::IsPassthroughPipeHologram(ActiveHologram);
@@ -793,6 +799,18 @@ void USmartSettingsFormWidget::PopulateFromCounterState(USFSubsystem* Subsystem)
             {
                 bHasAnyAutoConnectContext = true;
 
+                for (const FName RowName : {FName(TEXT("PowerEnabledRow")), FName(TEXT("PowerGridAxisRow")), FName(TEXT("PowerReservedRow"))})
+                {
+                    if (UWidget* Row = GetWidgetFromName(RowName))
+                    {
+                        Row->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
+                    }
+                }
+                if (UWidget* DaisyRow = GetWidgetFromName(TEXT("ScaleDaisyChainPowerRow")))
+                {
+                    DaisyRow->SetVisibility(ESlateVisibility::Collapsed);
+                }
+
                 // Show power auto-connect controls instead of summary text
                 if (PowerAutoConnectContainer)
                 {
@@ -812,6 +830,38 @@ void USmartSettingsFormWidget::PopulateFromCounterState(USFSubsystem* Subsystem)
                         Settings.bConnectPower ? TEXT("On") : TEXT("Off"),
                         Settings.PowerReserved,
                         *DescribePowerAxis(Settings.PowerGridAxis));
+                }
+            }
+
+            if (bIsScaleDaisyAvailable)
+            {
+                bHasAnyAutoConnectContext = true;
+
+                for (const FName RowName : {FName(TEXT("PowerEnabledRow")), FName(TEXT("PowerGridAxisRow")), FName(TEXT("PowerReservedRow"))})
+                {
+                    if (UWidget* Row = GetWidgetFromName(RowName))
+                    {
+                        Row->SetVisibility(ESlateVisibility::Collapsed);
+                    }
+                }
+                if (UWidget* DaisyRow = GetWidgetFromName(TEXT("ScaleDaisyChainPowerRow")))
+                {
+                    DaisyRow->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
+                }
+
+                if (PowerAutoConnectContainer)
+                {
+                    UpdatePowerAutoConnectControls();
+                    PowerAutoConnectContainer->SetVisibility(ESlateVisibility::Visible);
+                }
+                else
+                {
+                    if (!AutoConnectLines.IsEmpty())
+                    {
+                        AutoConnectLines += TEXT("\n");
+                    }
+                    AutoConnectLines += FString::Printf(TEXT("Daisy-Chain Power: %s"),
+                        Settings.bScaleDaisyChainPower ? TEXT("On") : TEXT("Off"));
                 }
             }
 

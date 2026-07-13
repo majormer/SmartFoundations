@@ -574,6 +574,21 @@ TPair<FString, FString> USFHudService::BuildCounterDisplayLines() const
 		}
 	}
 
+	// Issue #487: factory daisy chaining is a per-build Smart Panel override, not part of the
+	// U-held pole settings cycle (factories use U for recipes). Keep the HUD passive: show the
+	// effective value when an X chain is planned or when the player has overridden the default.
+	if (AFGHologram* ActiveHologram = Subsystem->GetActiveHologram();
+		ActiveHologram && Subsystem->IsScaleDaisyChainAvailable(ActiveHologram))
+	{
+		const bool bPlanned = FMath::Abs(Subsystem->GetCounterState().GridCounters.X) >= 2;
+		if (bPlanned || Subsystem->IsScaleDaisyChainPowerOverrideDirty())
+		{
+			const bool bEnabled = Subsystem->GetAutoConnectRuntimeSettings().bScaleDaisyChainPower;
+			Lines.Add(FText::Format(LOCTEXT("HUD_ScaleDaisyChain", "Power Chain: {0}"),
+				FText::FromString(bEnabled ? TEXT("ON") : TEXT("OFF"))).ToString());
+		}
+	}
+
 	// Value-adjust readout. While walking, these scroll controls drive the ACTIVE SEGMENT (RouteWalkValueAdjust),
 	// so show that segment's LIVE adjusters here instead of the grid counter — which the walk never touches, so it
 	// sat frozen (the "spacing/rotation/steps not updating" report). Off-walk it's the grid as before. '*' marks the

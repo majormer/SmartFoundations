@@ -174,6 +174,11 @@ struct SMARTFOUNDATIONS_API FSFScalingSpec
 	UPROPERTY()
 	TArray<FItemAmount> ConduitPlanCost;
 
+	/** [#487] Client-selected per-build override for scale-time factory daisy chaining. Carried
+	 *  explicitly because a dedicated server must not substitute its own global config. */
+	UPROPERTY()
+	bool bScaleDaisyChainPower = false;
+
 	/** Total cells described by the spec (product of |counters|, each treated as >=1). */
 	int32 CellCount() const
 	{

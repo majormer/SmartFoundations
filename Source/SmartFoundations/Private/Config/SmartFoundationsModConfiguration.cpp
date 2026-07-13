@@ -64,6 +64,8 @@ USmartFoundationsModConfiguration::USmartFoundationsModConfiguration()
 		LOCTEXT("Sec.Power.TT", "Automatically wire power between buildings and power poles as you build."));
 	Power->SectionProperties.Add(TEXT("bPowerAutoConnectEnabled"), CreateBoolProperty(TEXT("bPowerAutoConnectEnabled"), LOCTEXT("P.bPowerAutoConnectEnabled", "Power Auto-Connect"),
 		LOCTEXT("P.bPowerAutoConnectEnabled.TT", "Automatically wire power between placed buildings and nearby power poles."), true));
+	Power->SectionProperties.Add(TEXT("bScaleDaisyChainPower"), CreateBoolProperty(TEXT("bScaleDaisyChainPower"), LOCTEXT("P.bScaleDaisyChainPower", "Scale Daisy-Chain Power"),
+		LOCTEXT("P.bScaleDaisyChainPower.TT", "When Upgraded Power Connectors is unlocked, scaling factories and generators wires adjacent buildings together along the grid X axis."), true));
 	Power->SectionProperties.Add(TEXT("PowerConnectMode"),        CreateIntegerProperty(TEXT("PowerConnectMode"),       LOCTEXT("P.PowerConnectMode", "Grid Axis"),
 		LOCTEXT("P.PowerConnectMode.TT", "Which directions power poles connect: Auto, X only, Y only, or both X and Y."), 0));
 	Power->SectionProperties.Add(TEXT("PowerConnectRange"),       CreateIntegerProperty(TEXT("PowerConnectRange"),      LOCTEXT("P.PowerConnectRange", "Connection Range"),

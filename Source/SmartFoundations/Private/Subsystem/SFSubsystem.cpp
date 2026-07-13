@@ -13,6 +13,10 @@
 #include "Blueprint/UserWidget.h"
 #include "GameFramework/PlayerController.h"  // FInputModeGameAndUI/GameOnly for the Walk panel show/hide
 #include "Hologram/FGBuildableHologram.h"    // [#296] IsInZoopBuildMode / GetDefaultBuildGunMode
+#include "Holograms/Core/SFScalingSpecExpansion.h"
+#include "Holograms/Power/SFWireHologram.h"
+#include "Constants/SFAssetPaths.h"
+#include "Buildables/FGBuildableWire.h"
 
 USFSubsystem::USFSubsystem() : Super()
 {
@@ -769,6 +773,7 @@ void USFSubsystem::InitializeWidgets()
 
 void USFSubsystem::Deinitialize()
 {
+	DestroyScaleDaisyChainPreviews();
 	// BUG FIX (Issue #148): Clear static input caches during world cleanup
 	// Must be done FIRST before any other cleanup to prevent accessing stale cached objects
 	USFInputRegistry::ClearInputCache();
@@ -897,8 +902,88 @@ void USFSubsystem::Deinitialize()
 // Tick (Phase 4)
 // ========================================
 
+void USFSubsystem::RefreshScaleDaisyChainPreviews()
+{
+	AFGHologram* Parent = ActiveHologram.Get();
+	TArray<TPair<FVector, FVector>> DesiredSpans;
+	SFScalingSpecExpansion::GetScaleDaisyChainPowerSpans(Parent, DesiredSpans);
+
+	bool bChanged = ScaleDaisyChainPreviewOwner.Get() != Parent
+		|| DesiredSpans.Num() != CachedScaleDaisyChainSpans.Num()
+		|| DesiredSpans.Num() != ScaleDaisyChainPreviews.Num();
+	if (!bChanged)
+	{
+		for (int32 Index = 0; Index < DesiredSpans.Num(); ++Index)
+		{
+			if (!DesiredSpans[Index].Key.Equals(CachedScaleDaisyChainSpans[Index].Key, 0.5f)
+				|| !DesiredSpans[Index].Value.Equals(CachedScaleDaisyChainSpans[Index].Value, 0.5f))
+			{
+				bChanged = true;
+				break;
+			}
+		}
+	}
+	if (!bChanged)
+	{
+		return;
+	}
+
+	DestroyScaleDaisyChainPreviews();
+	ScaleDaisyChainPreviewOwner = Parent;
+	CachedScaleDaisyChainSpans = DesiredSpans;
+	if (!Parent || DesiredSpans.IsEmpty() || !GetWorld())
+	{
+		return;
+	}
+
+	UClass* WireClass = LoadClass<AFGBuildableWire>(nullptr, SFAssetPaths::PowerLineBuildClass);
+	if (!WireClass)
+	{
+		return;
+	}
+
+	for (const TPair<FVector, FVector>& Span : DesiredSpans)
+	{
+		const FVector Midpoint = (Span.Key + Span.Value) * 0.5f;
+		FActorSpawnParameters Params;
+		Params.Owner = Parent;
+		Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+		Params.bDeferConstruction = true;
+		ASFWireHologram* Preview = GetWorld()->SpawnActor<ASFWireHologram>(
+			ASFWireHologram::StaticClass(), Midpoint, FRotator::ZeroRotator, Params);
+		if (!Preview)
+		{
+			continue;
+		}
+		Preview->SetBuildClass(WireClass);
+		Preview->Tags.AddUnique(FName(TEXT("SF_ScaleDaisyPreview")));
+		Preview->FinishSpawning(FTransform(FRotator::ZeroRotator, Midpoint), true);
+		Preview->SetupWirePreviewFromPositions(Span.Key, Span.Value);
+		Preview->SetPlacementMaterialState(EHologramMaterialState::HMS_OK);
+		Preview->SetActorEnableCollision(false);
+		Preview->SetActorTickEnabled(false);
+		ScaleDaisyChainPreviews.Add(Preview);
+	}
+}
+
+void USFSubsystem::DestroyScaleDaisyChainPreviews()
+{
+	for (ASFWireHologram* Preview : ScaleDaisyChainPreviews)
+	{
+		if (IsValid(Preview))
+		{
+			Preview->Destroy();
+		}
+	}
+	ScaleDaisyChainPreviews.Reset();
+	CachedScaleDaisyChainSpans.Reset();
+	ScaleDaisyChainPreviewOwner.Reset();
+}
+
 void USFSubsystem::Tick(float DeltaTime)
 {
+	RefreshScaleDaisyChainPreviews();
+
 	// Phase 4 Performance Optimization: Progressive Batch Reposition
 	// Process progressive batch if active
 	if (HologramHelper)
