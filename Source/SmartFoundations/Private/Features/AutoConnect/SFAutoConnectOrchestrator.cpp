@@ -1982,6 +1982,10 @@ void USFAutoConnectOrchestrator::CollectPotentialConnections(
 	{
 		return;
 	}
+	const float NearbyLogisticsRange = Subsystem->GetAutoConnectRuntimeSettings().NearbyLogisticsRange;
+	// Candidate actors are discovered by collision overlap, then connector pairs are capped exactly
+	// below. Preserve headroom for large factories whose actor origin is farther away than a port.
+	const float BuildingSearchRadius = NearbyLogisticsRange + 1500.0f;
 	
 	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🎯 GLOBAL SCORING: Collecting potential connections from %d distributors"), Distributors.Num());
 	
@@ -2014,7 +2018,7 @@ void USFAutoConnectOrchestrator::CollectPotentialConnections(
 		FVector DistributorPos = Distributor->GetActorLocation();
 		
 		// Find compatible buildings nearby
-		TArray<AFGBuildable*> NearbyBuildings = Subsystem->FindNearbyBuildings(DistributorPos, 2500.0f);
+		TArray<AFGBuildable*> NearbyBuildings = Subsystem->FindNearbyBuildings(DistributorPos, BuildingSearchRadius);
 		TotalBuildingsFound += NearbyBuildings.Num();
 		
 		// Get distributor's side connectors
@@ -2098,7 +2102,7 @@ void USFAutoConnectOrchestrator::CollectPotentialConnections(
 					FVector DistConnectorNormal = DistConnector->GetConnectorNormal();
 					
 					float Distance = FVector::Dist(DistConnectorPos, BuildingConnectorPos);
-					if (Distance > 2500.0f)
+					if (Distance > NearbyLogisticsRange)
 					{
 						TotalValidationsFailed++;
 						continue; // Too far

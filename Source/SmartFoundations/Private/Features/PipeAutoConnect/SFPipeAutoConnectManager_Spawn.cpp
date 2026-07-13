@@ -1012,7 +1012,8 @@ void FSFPipeAutoConnectManager::ProcessFloorHolePipes(AFGHologram* ParentHologra
 		
 		// Find nearby buildings with unconnected pipe connectors
 		TArray<AFGBuildable*> NearbyBuildings;
-		FSFPipeConnectorFinder::FindNearbyPipeBuildings(FloorHole, 2500.0f, NearbyBuildings);
+		const float BuildingSearchRadius = RuntimeSettings.NearbyLogisticsRange + 1500.0f;
+		FSFPipeConnectorFinder::FindNearbyPipeBuildings(FloorHole, BuildingSearchRadius, NearbyBuildings);
 		
 		// Search for best building connector (not already reserved by another floor hole)
 		UFGPipeConnectionComponent* BestBuildingConn = nullptr;
@@ -1054,6 +1055,7 @@ void FSFPipeAutoConnectManager::ProcessFloorHolePipes(AFGHologram* ParentHologra
 				const bool bTop = BuildingConnPos.Z >= (TopPos.Z + BottomPos.Z) * 0.5f;
 				const FVector FacePos = bTop ? TopPos : BottomPos;
 				const float Distance = FVector::Dist(FacePos, BuildingConnPos);
+				if (Distance > RuntimeSettings.NearbyLogisticsRange) continue;
 
 				if (Distance < BestDistance)
 				{
@@ -1065,10 +1067,9 @@ void FSFPipeAutoConnectManager::ProcessFloorHolePipes(AFGHologram* ParentHologra
 		}
 		
 		// Validate distance constraints
-		constexpr float MaxConnectionDistance = 2500.0f;
 		constexpr float MinConnectionDistance = 50.0f;
 		
-		if (!BestBuildingConn || BestDistance > MaxConnectionDistance || BestDistance < MinConnectionDistance)
+		if (!BestBuildingConn || BestDistance > RuntimeSettings.NearbyLogisticsRange || BestDistance < MinConnectionDistance)
 		{
 			// No valid connection found — clean up any existing child
 			TWeakObjectPtr<ASFPipelineHologram>* Existing = FloorHolePipeChildren.Find(FloorHole);

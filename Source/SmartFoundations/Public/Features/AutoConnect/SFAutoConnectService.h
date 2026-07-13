@@ -652,9 +652,6 @@ public:
 	/** Stored connector pairs for build handoff, keyed by distributor hologram */
 	TMap<AFGHologram*, TArray<TPair<UFGFactoryConnectionComponent*, UFGFactoryConnectionComponent*>>> StoredConnectorPairs;
 
-	/** Search radius for finding compatible buildings (in cm) */
-	static constexpr float BUILDING_SEARCH_RADIUS = 2500.0f; // 25 meters
-
 	// ========================================
 	// Connector Management (Public for Orchestrator access)
 	// ========================================

@@ -424,9 +424,10 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 		return;
 	}
 
-	// Search radius accounts for large buildings with offset connectors (e.g., refinery at 3000cm tall)
-	// Building center might be far, but connectors could still be close
-	constexpr float SearchRadius = 4000.0f; // 40m - generous radius for building centers, actual connector distance checked later
+	const float NearbyLogisticsRange = Subsystem->GetAutoConnectRuntimeSettings().NearbyLogisticsRange;
+	// Broad phase retains the historical 15m center/port headroom for large factories. Exact
+	// connector-to-connector distance is the candidate-selection cap below.
+	const float SearchRadius = NearbyLogisticsRange + 1500.0f;
 
 	TArray<AFGBuildable*> NearbyBuildings;
 	FSFPipeConnectorFinder::FindNearbyPipeBuildings(ParentJunctionHologram, SearchRadius, NearbyBuildings);
@@ -611,7 +612,6 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 			}
 
 			FVector BuildingLocation = BuildingConn->GetComponentLocation();
-			float Distance = FVector::Dist2D(JunctionLocation, BuildingLocation);
 
 			// SCORING: Calculate weighted score based on distance and alignment
 			// This prevents "crossing" pipes by penalizing misaligned connections
@@ -624,15 +624,9 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 
 			// Angle Penalty: 1.0 (perfectly aligned) -> 0.0 (misaligned)
 			// Penalty multiplier: 10.0 (same as belts)
-			// [#464] Plus level affinity (same fix as belts): the XY distance is Z-blind, so a
-			// staggered other-level connector could out-score the same-level one. Same-level wins;
-			// cross-level stays a valid fallback when no same-level candidate exists.
+			// [#464] Plus level affinity: same-level wins; cross-level stays a valid fallback
+			// when no same-level candidate exists.
 			float AnglePenalty = 1.0f - MaxAlignment;
-			float Score = Distance * (1.0f + AnglePenalty * 10.0f)
-				+ USFAutoConnectService::LevelAffinityPenalty(JunctionLocation, BuildingLocation);
-			
-			// Only proceed if this score beats our current best
-			if (Score < BestScore)
 			{
 				UFGPipeConnectionComponent* ClosestJunctionConn = nullptr;
 				float BestJunctionDistSq = TNumericLimits<float>::Max();
@@ -670,7 +664,11 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 						continue;
 					}
 
-					float JunctionDistSq = FVector::DistSquared2D(JunctionConn->GetComponentLocation(), BuildingLocation);
+					float JunctionDistSq = FVector::DistSquared(JunctionConn->GetComponentLocation(), BuildingLocation);
+					if (JunctionDistSq > FMath::Square(NearbyLogisticsRange))
+					{
+						continue;
+					}
 					if (JunctionDistSq < BestJunctionDistSq)
 					{
 						// ANGLE VALIDATION: Check both junction and building connector angles (30° max)
@@ -718,14 +716,20 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 				// Only update best pair if we found a valid junction connector
 				if (ClosestJunctionConn)
 				{
-					BestScore = Score; // Update best score
-					BestActualDistance = Distance;
-					BestJunctionConnector = ClosestJunctionConn;
-					BestBuildingConnector = BuildingConn;
-					
-					UE_LOG(LogSmartAutoConnect, VeryVerbose, 
-						TEXT("      New best candidate: Score=%.0f (Dist=%.0f, Align=%.2f)"), 
-						BestScore, Distance, MaxAlignment);
+					const float PairDistance = FMath::Sqrt(BestJunctionDistSq);
+					const float PairScore = PairDistance * (1.0f + AnglePenalty * 10.0f)
+						+ USFAutoConnectService::LevelAffinityPenalty(ClosestJunctionConn->GetComponentLocation(), BuildingLocation);
+					if (PairScore < BestScore)
+					{
+						BestScore = PairScore;
+						BestActualDistance = PairDistance;
+						BestJunctionConnector = ClosestJunctionConn;
+						BestBuildingConnector = BuildingConn;
+
+						UE_LOG(LogSmartAutoConnect, VeryVerbose,
+							TEXT("      New best candidate: Score=%.0f (Dist=%.0f, Align=%.2f)"),
+							BestScore, PairDistance, MaxAlignment);
+					}
 				}
 			}
 		}
@@ -765,9 +769,8 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 	{
 		float BestDistance = BestActualDistance;
 		
-		// Enforce maximum connection distance (25m - slightly larger than belt limit to account for vertical offset)
-		constexpr float MaxConnectionDistance = 2500.0f; // 25m
-		if (BestDistance > MaxConnectionDistance)
+		// Defensive final gate; candidates outside the configured range are filtered before scoring.
+		if (BestDistance > NearbyLogisticsRange)
 		{
 			// Skip-summary: this pairing won selection and was dropped only by the distance gate
 			if (AutoConnectService)
@@ -776,7 +779,7 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 			}
 			UE_LOG(LogSmartAutoConnect, Verbose,
 				TEXT("   ❌ Best connection rejected: too far (%.1fm > %.1fm limit)"),
-				BestDistance / 100.0f, MaxConnectionDistance / 100.0f);
+				BestDistance / 100.0f, NearbyLogisticsRange / 100.0f);
 			
 			// Clean up any existing child hologram for this junction (moved out of range)
 			TWeakObjectPtr<ASFPipelineHologram>* ExistingChild = BuildingPipeChildren.Find(ParentJunctionHologram);
@@ -1207,7 +1210,8 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 							// #425: gate distance/direction on the OPPOSITE CONNECTOR, not the junction center, so
 							// the scoring matches the facing validation below (center-vs-connector offset can
 							// otherwise admit/reject the wrong building connector on large or rotated junctions).
-							float Distance = FVector::Dist2D(OppositeJunctionConn->GetComponentLocation(), BuildingConnPos);
+							float Distance = FVector::Dist(OppositeJunctionConn->GetComponentLocation(), BuildingConnPos);
+							if (Distance > NearbyLogisticsRange) continue;
 							
 							// Scoring: distance + alignment penalty (same formula as Side A)
 							// [#464] Plus level affinity (same fix as belts): prefer same-level building
@@ -1245,13 +1249,12 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 					}
 					
 					// Validate distance for Side B (same thresholds as Side A)
-					constexpr float MaxDist = 2500.0f;
 					constexpr float MinDistAngled = 200.0f;
 					constexpr float MinDistStraight = 50.0f;
 					constexpr float StraightThresh = 10.0f;
 					
 					bool bSideBValid = false;
-					if (BestBConn && BestBDist <= MaxDist)
+					if (BestBConn && BestBDist <= NearbyLogisticsRange)
 					{
 						FVector J2B = (BestBConn->GetComponentLocation() - OppositeJunctionConn->GetComponentLocation()).GetSafeNormal();
 						float AngRad = FMath::Acos(FMath::Clamp(FVector::DotProduct(OppositeJunctionConn->GetConnectorNormal(), J2B), -1.0f, 1.0f));

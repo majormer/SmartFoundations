@@ -31,7 +31,7 @@ void USFAutoConnectService::Init(USFSubsystem* InSubsystem)
 	}
 	
 	Subsystem = InSubsystem;
-	UE_LOG(LogSmartAutoConnect, Log, TEXT("Auto-Connect Service initialized with BUILDING_SEARCH_RADIUS=%.0f cm"), BUILDING_SEARCH_RADIUS);
+	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("Auto-Connect Service initialized"));
 }
 
 void USFAutoConnectService::Shutdown()
@@ -397,10 +397,12 @@ void USFAutoConnectService::FindCompatibleBuildingsForDistributor(AFGHologram* D
 		return;
 	}
 	
-	// Search for nearby buildings
+	// This legacy discovery feeds manifold processing; building connections are selected by the
+	// orchestrator. Keep its broad phase aligned with the configured connector-pair range.
 	FVector DistributorLocation = DistributorHologram->GetActorLocation();
-	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   🔍 Searching for buildings within %.0f cm radius"), BUILDING_SEARCH_RADIUS);
-	TArray<AFGBuildable*> NearbyBuildings = Subsystem->FindNearbyBuildings(DistributorLocation, BUILDING_SEARCH_RADIUS);
+	const float BuildingSearchRadius = Subsystem->GetAutoConnectRuntimeSettings().NearbyLogisticsRange + 1500.0f;
+	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   🔍 Searching for buildings within %.0f cm radius"), BuildingSearchRadius);
+	TArray<AFGBuildable*> NearbyBuildings = Subsystem->FindNearbyBuildings(DistributorLocation, BuildingSearchRadius);
 	
 	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   Found %d nearby buildings"), NearbyBuildings.Num());
 	

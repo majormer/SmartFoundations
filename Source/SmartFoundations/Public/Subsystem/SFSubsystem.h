@@ -1319,6 +1319,8 @@ public:
 	/** Temporary runtime overrides for current placement (reset when hologram changes) */
 	struct FAutoConnectRuntimeSettings
 	{
+		bool bBlueprintSeamAutoConnectEnabled = true; // Blueprint copy seams, independent of nearby belt/pipe masters
+		float NearbyLogisticsRange = 2500.0f; // Connector-to-connector candidate cap in cm (1-56m)
 		bool bEnabled = true;          // Belt auto-connect enabled
 		int32 BeltTierMain = 0;        // 0=Auto, 1-6=Mk1-Mk6
 		int32 BeltTierToBuilding = 0;  // 0=Auto, 1-6=Mk1-Mk6
@@ -1351,6 +1353,8 @@ public:
 		/** Initialize from config */
 		void InitFromConfig(const FSmart_ConfigStruct& Config)
 		{
+			bBlueprintSeamAutoConnectEnabled = Config.bBlueprintSeamAutoConnectEnabled;
+			NearbyLogisticsRange = static_cast<float>(FMath::Clamp(Config.NearbyLogisticsRange, 1, 56)) * 100.0f;
 			bEnabled = Config.bAutoConnectEnabled;
 			BeltTierMain = Config.BeltLevelMain;
 			BeltTierToBuilding = Config.BeltLevelToBuilding;
@@ -1385,7 +1389,9 @@ public:
 		 *  global config has changed since the runtime settings were last synced to it. */
 		bool EqualsConfigDerived(const FAutoConnectRuntimeSettings& O) const
 		{
-			return bEnabled == O.bEnabled
+			return bBlueprintSeamAutoConnectEnabled == O.bBlueprintSeamAutoConnectEnabled
+				&& NearbyLogisticsRange == O.NearbyLogisticsRange
+				&& bEnabled == O.bEnabled
 				&& BeltTierMain == O.BeltTierMain
 				&& BeltTierToBuilding == O.BeltTierToBuilding
 				&& bChainDistributors == O.bChainDistributors

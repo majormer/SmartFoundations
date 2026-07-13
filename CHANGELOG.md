@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > *A fix for power, pipe, and belt auto-connect stomping spacing you set by hand.*
 
+### Added
+
+- **Blueprint connections can now stay on when regular Auto-Connect is off** - A new **Blueprint Auto-Connect** settings section gives scaled blueprint seams their own switch, independent of normal Belt and Pipe Auto-Connect. A separate **Auto-Connect Behavior** section adds a **Nearby Logistics Range** slider for limiting how far splitters, mergers, pipe junctions, and pipe floor holes reach toward factory ports; it defaults to the existing 25 m behavior and can be reduced to keep Auto-Connect out of neighboring factory groups. Blueprint seams, manifold lanes, support runs, hypertubes, power connections, and Extend layouts keep their own existing rules. (Issue #476, requested by onipn with refinement from Grim on the Smart! Discord)
+
 ### Fixed
 
 - **Auto-connect no longer resets spacing you've already adjusted** - When you scaled a run of power poles (or pipe junctions, or belt distributors) near your factory and then set the spacing yourself, Auto-Connect could snap it back to its own default the moment the array's nearest building changed - most visibly, spacing past a certain width would jump back to a smaller value as you kept scrolling. Auto-Connect now only picks spacing for you until you adjust it yourself; once you've dialed in a value, it leaves it alone for the rest of that placement. Its smart default still applies on the first connection, as before. (Issue #480, reported by Raudoc on the Smart! Discord)

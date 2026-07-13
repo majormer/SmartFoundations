@@ -82,7 +82,7 @@ void USFAutoConnectService::ProcessBlueprintSeams(AFGHologram* ParentHologram)
 		return;
 	}
 	const auto& RuntimeSettings = Subsystem->GetAutoConnectRuntimeSettings();
-	if (!RuntimeSettings.bEnabled)
+	if (!RuntimeSettings.bBlueprintSeamAutoConnectEnabled)
 	{
 		CleanupAllBlueprintSeams(ParentHologram);
 		return;
@@ -156,7 +156,6 @@ void USFAutoConnectService::ProcessBlueprintSeams(AFGHologram* ParentHologram)
 		if (PipeTier == 0) { PipeTier = 2; }
 	}
 	const bool bWithIndicator = RuntimeSettings.bPipeIndicator;
-	const bool bPipesEnabled = RuntimeSettings.bPipeAutoConnectEnabled;
 
 	FBlueprintSeamState& State = BlueprintSeamStates.FindOrAdd(ParentHologram);
 	TSet<FSeamKey> ActiveKeys;
@@ -311,7 +310,7 @@ void USFAutoConnectService::ProcessBlueprintSeams(AFGHologram* ParentHologram)
 								State.BeltsBySeamKey.Remove(Key);
 							}
 						}
-						else if (bPipesEnabled)
+						else
 						{
 							UFGPipeConnectionComponent* FromConnector = FSFBlueprintSeamService::ResolvePipeConnector(FromClone, Pair.FromIndex, Pair.FromOriginalName);
 							UFGPipeConnectionComponent* ToConnector = FSFBlueprintSeamService::ResolvePipeConnector(ToClone, Pair.ToIndex, Pair.ToOriginalName);

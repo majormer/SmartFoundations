@@ -21,6 +21,18 @@
 // ── Section mirror sub-structs (field names must match the config asset's leaf keys) ──
 
 USTRUCT(BlueprintType)
+struct FSmart_BlueprintAutoConnectConfigSection {
+    GENERATED_BODY()
+    UPROPERTY(BlueprintReadWrite) bool bBlueprintSeamAutoConnectEnabled{true};
+};
+
+USTRUCT(BlueprintType)
+struct FSmart_AutoConnectBehaviorConfigSection {
+    GENERATED_BODY()
+    UPROPERTY(BlueprintReadWrite) int32 NearbyLogisticsRange{25};
+};
+
+USTRUCT(BlueprintType)
 struct FSmart_BeltConfigSection {
     GENERATED_BODY()
     UPROPERTY(BlueprintReadWrite) bool bAutoConnectEnabled{};
@@ -107,6 +119,8 @@ struct FSmart_ConfigStruct_Sections {
     UPROPERTY(BlueprintReadWrite) FSmart_PipeConfigSection PipeAutoConnect;
     UPROPERTY(BlueprintReadWrite) FSmart_HypertubeConfigSection HypertubeAutoConnect;
     UPROPERTY(BlueprintReadWrite) FSmart_PowerConfigSection PowerAutoConnect;
+    UPROPERTY(BlueprintReadWrite) FSmart_BlueprintAutoConnectConfigSection BlueprintAutoConnect;
+    UPROPERTY(BlueprintReadWrite) FSmart_AutoConnectBehaviorConfigSection AutoConnectBehavior;
     // [#217 / AV-FP fix] ScalingSettings section member removed; scroll increments live in BuildingBehavior.
     UPROPERTY(BlueprintReadWrite) FSmart_BuildingBehaviorConfigSection BuildingBehavior;
     UPROPERTY(BlueprintReadWrite) FSmart_HUDConfigSection HUD;
@@ -119,6 +133,14 @@ USTRUCT(BlueprintType)
 struct FSmart_ConfigStruct {
     GENERATED_BODY()
 public:
+
+    // ── Blueprint Auto-Connect ──
+
+    UPROPERTY(BlueprintReadWrite)
+    bool bBlueprintSeamAutoConnectEnabled{true};
+
+    UPROPERTY(BlueprintReadWrite)
+    int32 NearbyLogisticsRange{25};
 
     // ── Belt Auto-Connect ──
 
@@ -311,6 +333,12 @@ public:
                 }
             }
         }
+
+        // Blueprint Auto-Connect
+        ConfigStruct.bBlueprintSeamAutoConnectEnabled = Sections.BlueprintAutoConnect.bBlueprintSeamAutoConnectEnabled;
+
+        // Auto-Connect Behavior
+        ConfigStruct.NearbyLogisticsRange = Sections.AutoConnectBehavior.NearbyLogisticsRange;
 
         // Belt Auto-Connect
         ConfigStruct.bAutoConnectEnabled      = Sections.BeltAutoConnect.bAutoConnectEnabled;

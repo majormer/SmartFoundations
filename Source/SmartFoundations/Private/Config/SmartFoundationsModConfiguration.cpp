@@ -74,6 +74,22 @@ USmartFoundationsModConfiguration::USmartFoundationsModConfiguration()
 		LOCTEXT("P.PowerConnectReserved.TT", "Number of pole connection slots to leave free for your own manual wiring."), 2));
 	RootSection->SectionProperties.Add(TEXT("PowerAutoConnect"), Power);
 
+	// ── Blueprint Auto-Connect ──
+	UConfigPropertySection* BlueprintAutoConnect = CreateSection(TEXT("BlueprintAutoConnect"), LOCTEXT("Sec.BlueprintAutoConnect", "Blueprint Auto-Connect"),
+		LOCTEXT("Sec.BlueprintAutoConnect.TT", "Controls connections between adjacent copies of scaled blueprints."));
+	BlueprintAutoConnect->SectionProperties.Add(TEXT("bBlueprintSeamAutoConnectEnabled"), CreateBoolProperty(TEXT("bBlueprintSeamAutoConnectEnabled"),
+		LOCTEXT("P.bBlueprintSeamAutoConnectEnabled", "Blueprint Seam Auto-Connect"),
+		LOCTEXT("P.bBlueprintSeamAutoConnectEnabled.TT", "Connect belts and pipes across adjacent copies when scaling a blueprint, independently of nearby Belt and Pipe Auto-Connect."), true));
+	RootSection->SectionProperties.Add(TEXT("BlueprintAutoConnect"), BlueprintAutoConnect);
+
+	// ── Auto-Connect Behavior ──
+	UConfigPropertySection* AutoConnectBehavior = CreateSection(TEXT("AutoConnectBehavior"), LOCTEXT("Sec.AutoConnectBehavior", "Auto-Connect Behavior"),
+		LOCTEXT("Sec.AutoConnectBehavior.TT", "Controls behavior shared by nearby belt and pipe Auto-Connect."));
+	AutoConnectBehavior->SectionProperties.Add(TEXT("NearbyLogisticsRange"), CreateIntegerProperty(TEXT("NearbyLogisticsRange"),
+		LOCTEXT("P.NearbyLogisticsRange", "Nearby Logistics Range (m)"),
+		LOCTEXT("P.NearbyLogisticsRange.TT", "Maximum connector-to-connector distance for nearby factory belt and pipe Auto-Connect. Blueprint seams and manifold lanes are unaffected."), 25));
+	RootSection->SectionProperties.Add(TEXT("AutoConnectBehavior"), AutoConnectBehavior);
+
 	// [#217 / AV-FP fix] The scroll-increment properties moved OUT of a dedicated "ScalingSettings"
 	// section and INTO Building Behavior below. A new config USTRUCT (FSmart_ScalingSettingsConfigSection)
 	// emitted the reflection chunk that tipped the mod's aggregate reflection over BitDefender's
