@@ -210,125 +210,21 @@ Build by keybind and mouse wheel, or by the Smart Panel — they share one state
 → [Controls](https://github.com/majormer/SmartFoundations/wiki/Controls) • [Controller & Steam Deck](https://github.com/majormer/SmartFoundations/wiki/Controller-and-Steam-Deck)
 
 ---
-## 🔄 Extend Explained: Copy an Existing Manifold
+## 🔄 Extend Explained
 
-Extend is easiest to understand if you think of it as **copying a finished factory cell**.
+Extend copies a **finished factory cell** — a building plus the belts, pipes, splitters, mergers, and power around it — and continues the pattern in the direction you choose. It works best when the source module is clean: connections at the edges, a clear through-line, and side branches facing the right way.
 
-In vanilla Satisfactory, middle-clicking a building copies that building into your build gun. Smart! builds on that idea:
-
-> If you are holding the same type of building and aim it at an existing building of that type, Smart! can treat that as: “copy this building and the connected module around it.”
-
-### Basic Extend steps
-
-1. Build one working factory module first.
-2. Middle-click the main factory building, or otherwise equip the same building type.
-3. Aim the hologram at the existing source building.
-4. Smart! shows an Extend preview if the source layout can be copied.
-5. Use the mouse wheel to choose the side/direction.
-6. Use Smart! scaling controls if you want multiple copies or rows.
-7. Click to place the clone.
-
-### What counts as a good source module?
-
-A good Extend source is a clean, repeatable manifold cell:
-
-```text
-Main belt line → splitter → factory input
-Factory output → merger → output belt line
-```
-
-For many buildings, the repeatable module is:
-
-- A factory building in the middle.
-- Splitters feeding its inputs.
-- Mergers collecting its outputs.
-- Belts or pipes arranged so the source module can continue into the next module.
-- Power poles close enough to be considered part of the module.
-
-### Why splitter and merger side ports matter
-
-For Extend manifolds, factories should usually connect to the **side ports** of splitters and mergers.
-
-The reason is geometry:
-
-- A splitter or merger has ports that form a straight-through line.
-- Those opposite ports are best used for the manifold's continuing belt line.
-- The side port is the branch that goes into or out of the factory.
-- When Smart! clones the module, it needs the next cloned splitter or merger to connect cleanly to the next one.
-
-If a factory uses a port that has an opposite port on the other side, that port may be needed for the manifold line. The next cloned module would require a belt to turn at an invalid or unreliable angle.
-
-A simple rule of thumb:
-
-> **Use the splitter/merger side facing the factory for the factory connection. Leave the straight-through direction for the manifold line.**
-
-### Valid manifold mental model
-
-```text
-Good pattern:
-
-Input belt line ── Splitter ── continues to next splitter
-                    │
-                    ▼
-                 Factory
-                    │
-                    ▼
-Output belt line ─ Merger ── continues to next merger
-```
-
-In this pattern, Extend can understand two things:
-
-- The straight line is the chain that continues to the next copy.
-- The side branch belongs to the factory being cloned.
-
-### Patterns that may fail
-
-Extend may refuse or produce incomplete previews when:
-
-- The factory is connected to the through-line side of a splitter or merger.
-- One belt is reversed compared to the others in the same manifold direction.
-- Splitters or mergers are rotated inconsistently.
-- Connections cross, backtrack, or require sharp angles.
-- The source module is too tangled for Smart! to determine what belongs to one repeatable cell.
-
-If Extend does not preview what you expect, try simplifying the source module into a cleaner manifold cell first.
-
-### Scaled Extend
-
-After Extend activates, Smart! scaling can create multiple clones at once.
-
-Examples:
-
-- Extend one constructor module into a row of constructors.
-- Extend a refinery module across several repeated processing lines.
-- Clone a nuclear pasta production cell into additional rows.
-
-You can increase spacing to leave room for extra feed belts or mergers, or scale on another axis to create multiple rows.
+The wiki [Extend](https://github.com/majormer/SmartFoundations/wiki/Extend) page walks through the steps, what makes a good source module, the valid-manifold mental model, and the patterns that can fail.
 
 ---
 
 ## 🔌 Auto-Connect Explained
 
-Auto-Connect is not magic routing. It is Smart! making a best effort based on nearby connectors, directions, distance, and game validation rules.
+Auto-Connect is not magic routing — it is a best effort based on nearby connectors, directions, distance, and the game's own validation. If a connection does not look valid, Smart! leaves it open rather than build something broken.
 
-### Use Auto-Connect for:
-
-- Rows of splitters feeding rows of machines.
-- Rows of mergers collecting outputs.
-- Pipeline junctions feeding refineries, packagers, blenders, and other pipe buildings.
-- Power poles near buildings.
-- Stackable conveyor and pipeline supports.
-
-### Tips for reliable Auto-Connect
-
-- Keep distributors aligned with the buildings they feed.
-- Use consistent rotations across a row.
-- Keep distances reasonable.
-- Avoid crossing belts and pipes in the preview.
-- Use double-tap `Num0` when you want one placement without Auto-Connect.
+The wiki [Auto-Connect](https://github.com/majormer/SmartFoundations/wiki/Auto-Connect) page covers what it connects and tips for reliable results.
 
 ---
-
 ## 🎮 Controls
 
 Smart! uses **native Satisfactory keybinds**, customizable in **Options > Controls > Mods**. The essentials: press `K` for the Smart Panel, use the numpad (or hold an axis key and scroll) to size the grid, and hold a transform key — `;` spacing, `I` steps, `Y` stagger, `,` rotation — while scrolling to shape it.
