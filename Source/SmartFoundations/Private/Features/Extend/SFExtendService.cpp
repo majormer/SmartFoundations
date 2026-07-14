@@ -25,6 +25,7 @@
 
 #include "Features/Extend/SFExtendService.h"
 #include "Engine/OverlapResult.h"
+#include "Features/Extend/SFExtendControlFrame.h"
 #include "Features/Extend/SFExtendDetectionService.h"
 #include "Features/Extend/SFExtendTopologyService.h"
 #include "Features/Extend/SFExtendHologramService.h"
@@ -176,6 +177,7 @@ void USFExtendService::ClearExtendState()
         bHasValidTarget = false;
         bExtendCommitted = false;
         bExtendManualHold = false;  // #342: clear manual pin on teardown
+        bSuppressCommitOnCounterSync = false;  // a latch pending on a cancelled debounced rebuild must not suppress the next session's first real scale action
 
         // Now safe to restore pre-Extend counter snapshot
         if (bHasCounterSnapshot && Subsystem.IsValid())
@@ -264,6 +266,45 @@ ESFExtendDirection USFExtendService::GetExtendDirection() const
     return ESFExtendDirection::Right; // Fallback
 }
 
+void USFExtendService::SynchronizeDirectionFromCounterState(const FSFCounterState& State)
+{
+    if (!DetectionService)
+    {
+        return;
+    }
+
+    const ESFExtendDirection CounterDirection = State.GridCounters.X < 0
+        ? ESFExtendDirection::Left
+        : ESFExtendDirection::Right;
+    if (DetectionService->GetExtendDirection() != CounterDirection)
+    {
+        DetectionService->SetExtendDirection(CounterDirection);
+    }
+}
+
+bool USFExtendService::SynchronizeChainCounterToDirection()
+{
+    if (!Subsystem.IsValid() || !DetectionService)
+    {
+        return false;
+    }
+
+    FSFCounterState State = Subsystem->GetCounterState();
+    const int32 Magnitude = FMath::Max(1, FMath::Abs(State.GridCounters.X));
+    const int32 SignedMagnitude = DetectionService->GetExtendDirection() == ESFExtendDirection::Left
+        ? -Magnitude
+        : Magnitude;
+    if (State.GridCounters.X == SignedMagnitude)
+    {
+        return false;
+    }
+
+    State.GridCounters.X = SignedMagnitude;
+    bSuppressCommitOnCounterSync = true;  // programmatic sign/magnitude sync, not a user scale action
+    Subsystem->UpdateCounterState(State);
+    return true;
+}
+
 void USFExtendService::CycleExtendDirection(int32 Delta)
 {
     // Only cycle if we have a valid target (automatic mode)
@@ -297,6 +338,7 @@ void USFExtendService::CycleExtendDirection(int32 Delta)
             SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT(" EXTEND: Cannot cycle - only one valid direction (%s)"),
                 CurrentDir == ESFExtendDirection::Right ? TEXT("Right") : TEXT("Left"));
         }
+        SynchronizeChainCounterToDirection();
         return;
     }
 
@@ -315,12 +357,13 @@ void USFExtendService::CycleExtendDirection(int32 Delta)
     }
 
     DetectionService->SetExtendDirection(NewDirection);
+    const bool bCounterStateRefreshed = SynchronizeChainCounterToDirection();
 
     UE_LOG(LogSmartExtend, VeryVerbose, TEXT(" EXTEND: Direction changed to %s"),
         NewDirection == ESFExtendDirection::Right ? TEXT("Right") : TEXT("Left"));
 
     // Immediately refresh hologram position with new direction
-    if (CurrentExtendHologram.IsValid())
+    if (!bCounterStateRefreshed && CurrentExtendHologram.IsValid())
     {
         RefreshExtension(CurrentExtendHologram.Get());
 
@@ -1521,6 +1564,7 @@ bool USFExtendService::TryExtendFromBuilding(AFGBuildable* HitBuilding, AFGHolog
     bHasValidTarget = true;  // EXTEND is now active!
     bExtendCommitted = false;  // Not committed until first scale action (allows middle-click sampling)
     bExtendManualHold = false;  // #342: fresh Extend starts un-pinned; a deliberate Hold-key press toggles it on
+    bSuppressCommitOnCounterSync = false;  // fresh session — never inherit a stale latch
 
     // Snapshot the current grid counters so we can restore them when Extend deactivates.
     // This prevents normal scaling from inheriting Extend's counter values (X=3, spacing=200, etc.)
@@ -1578,55 +1622,27 @@ bool USFExtendService::TryExtendFromBuilding(AFGBuildable* HitBuilding, AFGHolog
     // Track which hologram we've set up for EXTEND
     CurrentExtendHologram = ActiveHologram;
 
+    // Swapping the hologram can publish the pre-Extend counter state through the subsystem and
+    // temporarily drive the selector from its stale X sign. Preserve the side selected above and
+    // make signed Chain state authoritative before the first placement or logistics preview.
+    if (DetectionService)
+    {
+        DetectionService->SetExtendDirection(CurrentDir);
+    }
+    SynchronizeChainCounterToDirection();
+
     // Lock the hologram
     ActiveHologram->LockHologramPosition(true);
     UE_LOG(LogSmartExtend, VeryVerbose, TEXT("🔄 EXTEND: Locked hologram %s"), *ActiveHologram->GetClass()->GetName());
 
-    FVector SourceLocation = HitBuilding->GetActorLocation();
-    FRotator SourceRotation = HitBuilding->GetActorRotation();
-
-    // Get building size from registry (accurate dimensions)
-    // NOTE: Do NOT add clearance padding here - scaling doesn't use it and buildings
-    // should be flush when extended. The registry sizes are accurate for flush placement.
-    USFBuildableSizeRegistry::Initialize();
-    FSFBuildableSizeProfile Profile = USFBuildableSizeRegistry::GetProfile(HitBuilding->GetClass());
-    FVector BuildingSize = Profile.DefaultSize;
-
-    // Calculate offset based on direction
-    FVector Offset = GetDirectionOffset(BuildingSize, SourceRotation);
-
-    // Position the hologram at the offset location
-    FVector NewLocation = SourceLocation + Offset;
-
-    // Use SetActorLocation directly - our custom hologram blocks SetHologramLocationAndRotation
-    // from the build gun when EXTEND is active, so we can position freely
-    ActiveHologram->SetActorLocation(NewLocation);
-    ActiveHologram->SetActorRotation(SourceRotation);
-
-    // CRITICAL: Toggle lock to force validity recheck after repositioning
-    // Without this, the hologram shows as invalid (red) because validity was cached at old position
-    ActiveHologram->LockHologramPosition(false);
-    ActiveHologram->LockHologramPosition(true);
-
-    UE_LOG(LogSmartExtend, VeryVerbose, TEXT("🔄 EXTEND: Positioned hologram at offset (%.1f, %.1f, %.1f) - LOCKED"),
-        Offset.X, Offset.Y, Offset.Z);
+    // Position the parent through the same signed Chain/Rows placement path used by scaled clones,
+    // Restore, and the logistics previews. The former selector-based calculation used a separate
+    // local axis and could mirror only the factory while its belts/distributors landed correctly.
+    RefreshExtension(ActiveHologram, true);
 
     // Phase 2: Create belt preview holograms for cloned infrastructure
     // MUST be after hologram is positioned so CloneOffset is correct
     CreateBeltPreviews(ActiveHologram);
-
-    // Initialize grid X to 1 (parent clone only). User scrolls to add more.
-    // GetExtendCloneCount maps X directly (X=1 → 1 clone = parent only).
-    // MUST be after CurrentExtendHologram is set.
-    if (Subsystem.IsValid())
-    {
-        FSFCounterState State = Subsystem->GetCounterState();
-        if (FMath::Abs(State.GridCounters.X) < 1)
-        {
-            State.GridCounters.X = 1;
-            Subsystem->UpdateCounterState(State);
-        }
-    }
 
     return true;
 }
@@ -1697,6 +1713,30 @@ EHologramMaterialState USFExtendService::ResolveChildPreviewMaterialState(const 
     return EHologramMaterialState::HMS_OK;
 }
 
+bool USFExtendService::HandleHologramLockToggle(AFGHologram* Hologram)
+{
+    if (!IsExtendModeActive() || !IsCurrentExtendHologram(Hologram) || Hologram->IsHologramLocked())
+    {
+        return false;
+    }
+
+    if (!bExtendManualHold)
+    {
+        // First Hold press pins an uncommitted Extend preview for inspection (#342).
+        bExtendManualHold = true;
+        Hologram->LockHologramPosition(true);
+        return true;
+    }
+
+    // A second Hold press is an explicit release. Tear down immediately instead of relying on a
+    // later look-away trace: from one side the trace can continue hitting the source building and
+    // RefreshExtension would otherwise re-lock forever. Reuse the post-build target cooldown so
+    // that same source cannot reactivate Extend while it remains under the crosshair.
+    LastBuiltFromBuilding = CurrentExtendTarget;
+    ClearExtendState();
+    return true;
+}
+
 void USFExtendService::RefreshExtension(AFGHologram* SourceHologram, bool bForceRefresh)
 {
     if (!bHasValidTarget || !CurrentExtendTarget.IsValid())
@@ -1736,7 +1776,8 @@ void USFExtendService::RefreshExtension(AFGHologram* SourceHologram, bool bForce
     FSFBuildableSizeProfile Profile = USFBuildableSizeRegistry::GetProfile(HitBuilding->GetClass());
     FVector BuildingSize = Profile.DefaultSize;
 
-    // Calculate offset based on current direction
+    // Before the signed counter is initialized during activation, the selector provides the
+    // building-relative fallback. Once active, the canonical control frame below owns placement.
     FVector Offset = GetDirectionOffset(BuildingSize, SourceRotation);
 
     // Issue #265: Apply spacing, steps, and rotation to clone 1 (parent hologram) when extend is active
@@ -1744,41 +1785,15 @@ void USFExtendService::RefreshExtension(AFGHologram* SourceHologram, bool bForce
     if (Subsystem.IsValid())
     {
         const FSFCounterState& State = Subsystem->GetCounterState();
-        ESFExtendDirection CurrentDir = DetectionService ? DetectionService->GetExtendDirection() : ESFExtendDirection::Right;
-        float DirSign = (CurrentDir == ESFExtendDirection::Right) ? 1.0f : -1.0f;
-
-        bool bRotationActive = !FMath::IsNearlyZero(State.RotationZ);
-
-        if (bRotationActive)
-        {
-            // Arc/radial placement for clone 1 (CloneIndex=1)
-            float ArcLength = BuildingSize.X + static_cast<float>(State.SpacingX);
-            float StepRadians = FMath::Abs(FMath::DegreesToRadians(State.RotationZ));
-            float Radius = (StepRadians > KINDA_SMALL_NUMBER) ? ArcLength / StepRadians : 0.0f;
-
-            float AngleDeg = State.RotationZ;  // CloneIndex=1 → 1 * RotationZ
-            float AngleRad = FMath::DegreesToRadians(AngleDeg);
-            float SignRotation = (State.RotationZ >= 0.0f) ? 1.0f : -1.0f;
-
-            // Arc position in local space — matches CalculateRotationOffset pattern:
-            //   X = SignX * R * Sin(|θ|)              (direction determines forward/backward)
-            //   Y = SignRotation * (R - R*Cos(|θ|))   (NO direction sign — canonical)
-            //   Rotation = AngleDeg * DirSign          (sign baked into angle)
-            FVector ArcLocal;
-            ArcLocal.X = DirSign * Radius * FMath::Sin(FMath::Abs(AngleRad));
-            ArcLocal.Y = SignRotation * (Radius - Radius * FMath::Cos(FMath::Abs(AngleRad)));
-            ArcLocal.Z = static_cast<float>(State.StepsX);
-
-            Offset = SourceRotation.RotateVector(ArcLocal);
-            Clone1Rotation = SourceRotation + FRotator(0.0f, AngleDeg * DirSign, 0.0f);
-        }
-        else if (State.SpacingX != 0 || State.StepsX != 0)
-        {
-            // Linear placement with spacing/steps
-            FVector SpacingLocal(DirSign * static_cast<float>(State.SpacingX), 0.0f, 0.0f);
-            Offset += SourceRotation.RotateVector(SpacingLocal);
-            Offset.Z += static_cast<float>(State.StepsX);
-        }
+        const FSFExtendCellPlacement Placement = CalculateExtendCellPlacement(
+            SourceRotation,
+            BuildingSize,
+            BuildingSize.Y,
+            State,
+            1,
+            0);
+        Offset = Placement.WorldOffset;
+        Clone1Rotation = SourceRotation + Placement.RotationOffset;
     }
 
     // Update hologram position
@@ -1801,20 +1816,10 @@ void USFExtendService::RefreshExtension(AFGHologram* SourceHologram, bool bForce
         ActiveHologram->SetHologramLocationAndRotation(FloorHit);
     }
 
-    // CRITICAL: Ensure hologram stays locked — and (#342) detect a deliberate Hold press here.
-    // Extend re-locks every frame, which masks the player's unlock from a once-per-frame subsystem
-    // poll. So we catch it at the exact point we'd otherwise blindly re-lock: after activation the
-    // hologram is always locked on entry, so finding it UNLOCKED means the player pressed Hold (H) →
-    // TOGGLE the manual pin. We then always re-assert the lock so the next frame sees a clean locked
-    // state (no repeated toggling), and the lock itself stays on as before. The pin only changes
-    // stickiness (bExtendManualHold feeds the look-away keep-alive), never the scale-commit, so scaled
-    // Extend / transforms are untouched.
+    // Extend owns placement while active. The Hold-key pin toggle is handled directly at the build
+    // state's lock seam; this is only a defensive lock assertion for non-input state changes.
     if (!ActiveHologram->IsHologramLocked())
     {
-        bExtendManualHold = !bExtendManualHold;
-        UE_LOG(LogSmartExtend, Verbose, TEXT("📌 EXTEND: manual hold %s — preview %s"),
-            bExtendManualHold ? TEXT("ENGAGED") : TEXT("RELEASED"),
-            bExtendManualHold ? TEXT("pinned (look around to check clearance)") : TEXT("tracking"));
         ActiveHologram->LockHologramPosition(true);
     }
 

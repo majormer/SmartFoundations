@@ -10,6 +10,7 @@
 
 #include "Features/Extend/SFExtendRestoreReplayService.h"
 #include "Features/Extend/SFExtendService.h"
+#include "Features/Extend/SFExtendControlFrame.h"
 #include "Features/Extend/SFExtendDetectionService.h"
 #include "Features/Extend/SFExtendTopologyService.h"
 #include "Features/Extend/SFExtendHologramService.h"
@@ -205,61 +206,18 @@ namespace
             BuildingSize = USFBuildableSizeRegistry::GetProfile(BuildClass).DefaultSize;
         }
 
-        const FRotator ParentRotation = ParentHologram->GetActorRotation();
-
-        // [Restore-dir] Smart Restore scaling is BIDIRECTIONAL on X - and that is INTENTIONALLY different
-        // from normal scaled extend (which abs-locks to the picked Right/Left side). Scrolling X positive
-        // extends +X; scrolling negative extends -X. So direction follows the grid-counter SIGN here, while
-        // magnitude is the absolute count (the X loop runs Max(1, Abs(GridCounters.X))). We deliberately do
-        // NOT fold in the captured pattern's saved side: multiplying by sign(CapturedLocalStep.X) re-locked
-        // the run to the saved direction and inverted the scroll for Left-saved patterns (the "wrong
-        // direction" report), and seeding from 1.0 removed the sign entirely so it could only go one way.
-        // World orientation is applied downstream by ParentRotation.RotateVector, so the sign needs no
-        // captured-rotation correction. The Y branch below keeps its own grid sign for the same reason.
-        const float XDirectionSign = (State.GridCounters.X < 0) ? -1.0f : 1.0f;
-
-        const float StepDistance = FMath::Max(1.0f, BuildingSize.X + static_cast<float>(State.SpacingX));
-        FVector LocalOffset = FVector::ZeroVector;
-
-        if (!FMath::IsNearlyZero(State.RotationZ))
-        {
-            const float StepRadians = FMath::Abs(FMath::DegreesToRadians(State.RotationZ));
-            const float Radius = (StepRadians > KINDA_SMALL_NUMBER) ? StepDistance / StepRadians : 0.0f;
-            const float SignRotation = (State.RotationZ >= 0.0f) ? 1.0f : -1.0f;
-
-            auto OffsetAtCloneIndex = [&](int32 CloneIndex) -> FVector
-            {
-                const float AngleDeg = static_cast<float>(CloneIndex) * State.RotationZ;
-                const float AbsAngleRad = FMath::Abs(FMath::DegreesToRadians(AngleDeg));
-
-                FVector Offset;
-                Offset.X = XDirectionSign * Radius * FMath::Sin(AbsAngleRad);
-                Offset.Y = SignRotation * (Radius - Radius * FMath::Cos(AbsAngleRad));
-                Offset.Z = static_cast<float>(State.StepsX * CloneIndex);
-                return Offset;
-            };
-
-            const FVector ParentCloneOffset = OffsetAtCloneIndex(1);
-            const FVector TargetCloneOffset = OffsetAtCloneIndex(GridX + 1);
-            LocalOffset = TargetCloneOffset - ParentCloneOffset;
-            Placement.RotationOffset = FRotator(0.0f, State.RotationZ * XDirectionSign * static_cast<float>(GridX), 0.0f);
-        }
-        else
-        {
-            LocalOffset.X = XDirectionSign * StepDistance * static_cast<float>(GridX);
-            LocalOffset.Z = static_cast<float>(State.StepsX * GridX);
-        }
-
-        if (GridY != 0)
-        {
-            const float YSign = State.GridCounters.Y < 0 ? -1.0f : 1.0f;
-            const float RowDistance = FMath::Max(1.0f, BuildingSize.Y + static_cast<float>(State.SpacingY));
-            LocalOffset.Y += RowDistance * static_cast<float>(GridY) * YSign;
-            LocalOffset.Z += static_cast<float>(State.StepsY * GridY);
-        }
-
-        Placement.WorldOffset = ParentRotation.RotateVector(FVector(LocalOffset.X, LocalOffset.Y, 0.0f));
-        Placement.WorldOffset.Z += LocalOffset.Z;
+        const float EffectiveRowHeight = CalculateExtendEffectiveRowHeight(BuildingSize, TemplateTopology);
+        const FSFExtendCellPlacement CellPlacement = CalculateExtendCellPlacement(
+            ParentHologram->GetActorRotation(),
+            BuildingSize,
+            EffectiveRowHeight,
+            State,
+            GridX + 1,
+            GridY,
+            1,
+            0);
+        Placement.WorldOffset = CellPlacement.WorldOffset;
+        Placement.RotationOffset = CellPlacement.RotationOffset;
         return Placement;
     }
 

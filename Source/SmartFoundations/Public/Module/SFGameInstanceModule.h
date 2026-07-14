@@ -114,6 +114,10 @@ protected:
 	 */
 	void RegisterBuildGunScrollSuppressionHook();
 
+	/** #342: observe the build state's authoritative Hold-key lock toggle so Extend pinning does
+	 * not depend on briefly seeing an unlocked hologram during a later frame update. */
+	void RegisterExtendHologramLockHook();
+
 	/** Smart! Configuration blueprint - registered with SML for in-game menu access */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Smart! Configuration")
 	TSubclassOf<class UModConfiguration> SmartConfigClass;

@@ -7,6 +7,7 @@
  */
 
 #include "Features/Extend/SFExtendWiringServiceImpl.h"
+#include "Features/Extend/SFExtendControlFrame.h"
 #include "FGUnlockSubsystem.h"  // Issue #344: detect Upgraded Power Connectors (daisy-chain) unlock
 #include "Shared/Power/SFWireDesignerRegistration.h"  // [#421] designer containment for direct-spawned wires
 
@@ -293,64 +294,19 @@ int32 USFExtendWiringService::GenerateAndExecuteWiring(AFGBuildableFactory* NewF
             const FSFCounterState& State = Subsystem->GetCounterState();
             const FVector ParentLocation = ExtendService->StoredCloneTopology->ParentTransform.Location.ToFVector();
             const FRotator ParentRotation = ExtendService->StoredCloneTopology->ParentTransform.Rotation.ToFRotator();
-            float XDirectionSign = State.GridCounters.X < 0 ? -1.0f : 1.0f;
-
-            const FSFCloneTopology* TemplateTopology = ExtendService->RestoredCloneTopologyTemplate.IsValid()
-                ? ExtendService->RestoredCloneTopologyTemplate.Get()
-                : nullptr;
-            if (TemplateTopology)
-            {
-                const FRotator OriginalParentRotation = TemplateTopology->ParentTransform.Rotation.ToFRotator();
-                const FRotator RotationDelta = ParentRotation - OriginalParentRotation;
-                const FVector CapturedStep = RotationDelta.RotateVector(TemplateTopology->WorldOffset.ToFVector());
-                const FVector CapturedLocalStep = ParentRotation.UnrotateVector(CapturedStep);
-                if (!FMath::IsNearlyZero(CapturedLocalStep.X))
-                {
-                    XDirectionSign *= FMath::Sign(CapturedLocalStep.X);
-                }
-            }
-
-            const float StepDistance = FMath::Max(1.0f, BuildingSize.X + static_cast<float>(State.SpacingX));
-            FVector LocalOffset = FVector::ZeroVector;
-
-            if (!FMath::IsNearlyZero(State.RotationZ))
-            {
-                const float StepRadians = FMath::Abs(FMath::DegreesToRadians(State.RotationZ));
-                const float Radius = (StepRadians > KINDA_SMALL_NUMBER) ? StepDistance / StepRadians : 0.0f;
-                const float SignRotation = (State.RotationZ >= 0.0f) ? 1.0f : -1.0f;
-
-                auto OffsetAtCloneIndex = [&](int32 CloneIndex) -> FVector
-                {
-                    const float AngleDeg = static_cast<float>(CloneIndex) * State.RotationZ;
-                    const float AbsAngleRad = FMath::Abs(FMath::DegreesToRadians(AngleDeg));
-
-                    FVector Offset;
-                    Offset.X = XDirectionSign * Radius * FMath::Sin(AbsAngleRad);
-                    Offset.Y = SignRotation * (Radius - Radius * FMath::Cos(AbsAngleRad));
-                    Offset.Z = static_cast<float>(State.StepsX * CloneIndex);
-                    return Offset;
-                };
-
-                const FVector ParentCloneOffset = OffsetAtCloneIndex(1);
-                const FVector TargetCloneOffset = OffsetAtCloneIndex(GridX + 1);
-                LocalOffset = TargetCloneOffset - ParentCloneOffset;
-            }
-            else
-            {
-                LocalOffset.X = XDirectionSign * StepDistance * static_cast<float>(GridX);
-                LocalOffset.Z = static_cast<float>(State.StepsX * GridX);
-            }
-
-            if (GridY != 0)
-            {
-                const float YSign = State.GridCounters.Y < 0 ? -1.0f : 1.0f;
-                const float RowDistance = FMath::Max(1.0f, BuildingSize.Y + static_cast<float>(State.SpacingY));
-                LocalOffset.Y += RowDistance * static_cast<float>(GridY) * YSign;
-                LocalOffset.Z += static_cast<float>(State.StepsY * GridY);
-            }
-
-            OutLocation = ParentLocation + ParentRotation.RotateVector(FVector(LocalOffset.X, LocalOffset.Y, 0.0f));
-            OutLocation.Z += LocalOffset.Z;
+            const float EffectiveRowHeight = CalculateExtendEffectiveRowHeight(
+                BuildingSize,
+                ExtendService->StoredCloneTopology.Get());
+            const FSFExtendCellPlacement Placement = CalculateExtendCellPlacement(
+                ParentRotation,
+                BuildingSize,
+                EffectiveRowHeight,
+                State,
+                GridX + 1,
+                GridY,
+                1,
+                0);
+            OutLocation = ParentLocation + Placement.WorldOffset;
             return true;
         };
 
@@ -1891,4 +1847,3 @@ AFGBuildable* USFExtendWiringService::GetSourceBuildableByName(const FString& Ac
 }
 
 // ==================== Scaled Extend (Issue #265) ====================
-

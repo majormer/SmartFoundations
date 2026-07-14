@@ -86,6 +86,16 @@ void USFSubsystem::RegisterActiveHologram(AFGHologram* Hologram)
 			*GetNameSafe(Hologram->GetBuildClass()));
 	}
 
+	// Extend replaces the vanilla factory hologram with a Smart hologram, then the normal poll
+	// registers that same actor on the following tick. This is an identity-preserving handoff,
+	// not a new recipe selection, so its signed Chain/Rows state must survive registration.
+	const bool bLiveExtendActiveAtRegister =
+		ExtendService &&
+		ExtendService->IsExtendModeActive() &&
+		ExtendService->IsCurrentExtendHologram(Hologram);
+	const bool bPreserveExtendStateAtRegister =
+		bRestoredExtendActiveAtRegister || bLiveExtendActiveAtRegister;
+
 	// Reset auto-connect runtime settings when hologram changes
 	ResetAutoConnectRuntimeSettings();
 
@@ -179,9 +189,9 @@ void USFSubsystem::RegisterActiveHologram(AFGHologram* Hologram)
 	}
 
 	// Reset all counters for new hologram (centralized - Task 51).
-	// Restored Extend presets are edited as a sticky staged graph; vanilla may recreate
-	// the parent hologram while aiming, so preserve Smart transform state across that swap.
-	if (!bRestoredExtendActiveAtRegister)
+	// Restored Extend presets and the live Extend hologram swap both retain the current
+	// signed transform state across identity-preserving registrations.
+	if (!bPreserveExtendStateAtRegister)
 	{
 		ResetCounters();
 	}
@@ -210,7 +220,7 @@ void USFSubsystem::RegisterActiveHologram(AFGHologram* Hologram)
 	{
 		HudService->ResetState();
 	}
-	if (bRestoredExtendActiveAtRegister)
+	if (bPreserveExtendStateAtRegister)
 	{
 		UpdateCounterDisplay();
 	}

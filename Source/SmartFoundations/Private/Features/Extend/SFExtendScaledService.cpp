@@ -12,6 +12,7 @@
 #include "Engine/World.h"        // UWorld::GetTimerManager for the rebuild debounce (#383/#384 perf)
 #include "TimerManager.h"        // FTimerManager::SetTimer/ClearTimer/IsTimerActive
 #include "Features/Extend/SFExtendService.h"
+#include "Features/Extend/SFExtendControlFrame.h"
 #include "Features/Extend/SFExtendDetectionService.h"
 #include "Features/Extend/SFExtendTopologyService.h"
 #include "Features/Extend/SFExtendHologramService.h"
@@ -147,18 +148,31 @@ void USFExtendScaledService::RebuildScaledExtendNow()
         return;
     }
 
-    // First scale action commits to Extend (enables sticky behavior)
+    // First scale action commits to Extend (enables sticky behavior). A rebuild triggered only
+    // by the activation/direction-cycle counter sync is not a user action and must not commit,
+    // or look-away release breaks on the side whose Chain sign differs from the prior counter.
     if (!Owner->bExtendCommitted)
     {
-        Owner->bExtendCommitted = true;
-        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("⚡ SCALED EXTEND: Committed (first scale action)"));
+        if (Owner->bSuppressCommitOnCounterSync)
+        {
+            Owner->bSuppressCommitOnCounterSync = false;
+        }
+        else
+        {
+            Owner->bExtendCommitted = true;
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("⚡ SCALED EXTEND: Committed (first scale action)"));
+        }
+    }
+    else
+    {
+        Owner->bSuppressCommitOnCounterSync = false;
     }
 
     int32 CloneCount = Owner->GetExtendCloneCount();
     int32 RowCount = Owner->GetExtendRowCount();
 
     SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("⚡ SCALED EXTEND: State changed - X=%d (clones=%d), Y=%d (rows=%d)"),
-        CloneCount + 1, CloneCount, RowCount, RowCount);
+        CloneCount, CloneCount, RowCount, RowCount);
 
     // Clear all existing previews (both primary clone infrastructure and scaled extend clones)
     Owner->ClearBeltPreviews();
@@ -190,8 +204,7 @@ void USFExtendScaledService::RebuildScaledExtendNow()
         const FSFCounterState& State = Owner->Subsystem->GetCounterState();
         if (!FMath::IsNearlyZero(State.RotationZ))
         {
-            ESFExtendDirection CurDir = Owner->DetectionService ? Owner->DetectionService->GetExtendDirection() : ESFExtendDirection::Right;
-            float DirSignRot = (CurDir == ESFExtendDirection::Right) ? 1.0f : -1.0f;
+            const float DirSignRot = FSFExtendControlFrame::FromState(State).ChainSign;
             FRotator Clone1RotOffset(0.0f, State.RotationZ * DirSignRot, 0.0f);
             FVector FactoryCenter = Owner->CurrentExtendHologram->GetActorLocation();
 
@@ -407,54 +420,14 @@ void USFExtendScaledService::CalculateScaledExtendPositions()
 
     FRotator SourceRotation = SourceBuilding->GetActorRotation();
 
-    // Calculate effective Y row height from topology extent (prevents row overlap).
-    // Infrastructure (distributors, belts, pipes) may extend beyond the factory's Y footprint.
-    float EffectiveRowHeight = BuildingSize.Y;
-    if (Owner->StoredCloneTopology.IsValid() && Owner->StoredCloneTopology->ChildHolograms.Num() > 0)
-    {
-        FVector CloneOffset = Owner->StoredCloneTopology->WorldOffset.ToFVector();
-        FVector CloneFactoryCenter = SourceBuilding->GetActorLocation() + CloneOffset;
-        FRotator InvRot = SourceRotation.GetInverse();
-
-        float MinLocalY = 0.0f, MaxLocalY = 0.0f;
-        for (const FSFCloneHologram& Holo : Owner->StoredCloneTopology->ChildHolograms)
-        {
-            if (Holo.bIsLaneSegment) continue;  // Lane segments span between clones, not relevant
-            FVector WorldPos = Holo.Transform.Location.ToFVector();
-            FVector LocalPos = InvRot.RotateVector(WorldPos - CloneFactoryCenter);
-
-            // Expand bounds by half the building's Y width to use edges instead of centers.
-            // Distributors (splitters/mergers/junctions) are the outermost infrastructure
-            // and are ~200cm wide (half = 100cm). Belt/pipe segments are thin and don't
-            // contribute meaningfully. Without Owner, ~4m shortfall from center-to-center.
-            float HalfY = 0.0f;
-            if (Holo.Role == TEXT("distributor"))
-            {
-                HalfY = 200.0f;  // Splitters/mergers are ~400cm wide, half = 200cm
-            }
-
-            MinLocalY = FMath::Min(MinLocalY, LocalPos.Y - HalfY);
-            MaxLocalY = FMath::Max(MaxLocalY, LocalPos.Y + HalfY);
-        }
-        float TopologyYExtent = MaxLocalY - MinLocalY;
-        EffectiveRowHeight = FMath::Max(BuildingSize.Y, TopologyYExtent);
-
-        if (TopologyYExtent > BuildingSize.Y)
-        {
-            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("⚡ SCALED EXTEND: Topology Y extent (%.0f) > BuildingSize.Y (%.0f) — using topology extent for row spacing"),
-                TopologyYExtent, BuildingSize.Y);
-        }
-    }
+    // Infrastructure can extend beyond the factory footprint. The same calculation is used by
+    // Restore so identical signed counters produce identical row placement.
+    const float EffectiveRowHeight = CalculateExtendEffectiveRowHeight(
+        BuildingSize,
+        Owner->StoredCloneTopology.Get());
 
     int32 CloneCount = Owner->GetExtendCloneCount();
     int32 RowCount = Owner->GetExtendRowCount();
-
-    // Get extend direction offset (perpendicular to belt flow)
-    ESFExtendDirection CurrentDir = Owner->DetectionService ? Owner->DetectionService->GetExtendDirection() : ESFExtendDirection::Right;
-    float XDirectionSign = (CurrentDir == ESFExtendDirection::Right) ? 1.0f : -1.0f;
-
-    // Determine Y direction sign (negative Y = opposite perpendicular)
-    int32 YDir = (Owner->Subsystem->GetCounterState().GridCounters.Y >= 0) ? 1 : -1;
 
     // [#366] Designer-bounds clamp. When extending a designer-resident building, a clone whose
     // position falls outside the Blueprint Designer volume can never construct (vanilla refuses
@@ -483,45 +456,10 @@ void USFExtendScaledService::CalculateScaledExtendPositions()
             SeedClone.GridY = Row;
             SeedClone.bIsSeed = true;
 
-            // [#372] Y-progression: the seed (GridX=0) is the row's anchor ON the fanned arc, not
-            // a parallel lane. Place it at the row arc anchor with the row yaw so the whole row
-            // fans out from the source. X-progression keeps the original parallel-lane seed.
-            const bool bSeedProgressY = (State.RotationAxis == ESFScaleAxis::Y)
-                && !FMath::IsNearlyZero(State.RotationZ);
-            if (bSeedProgressY)
-            {
-                float ArcLength = BuildingSize.X + static_cast<float>(State.SpacingX);
-                float StepRadians = FMath::Abs(FMath::DegreesToRadians(State.RotationZ));
-                float Radius = (StepRadians > KINDA_SMALL_NUMBER) ? ArcLength / StepRadians : 0.0f;
-
-                float AngleDeg = static_cast<float>(Row) * State.RotationZ;
-                float AbsAngleRad = FMath::Abs(FMath::DegreesToRadians(AngleDeg));
-                float SignRotation = (State.RotationZ >= 0.0f) ? 1.0f : -1.0f;
-                const float SignY = static_cast<float>(YDir);
-
-                FVector RowAnchor;
-                RowAnchor.X = SignRotation * (Radius - Radius * FMath::Cos(AbsAngleRad));  // curve in local X
-                RowAnchor.Y = SignY * Radius * FMath::Sin(AbsAngleRad);                    // forward along local Y
-                RowAnchor.Z = State.StepsY * Row;                                          // terraced rise per row
-
-                SeedClone.WorldOffset = SourceRotation.RotateVector(FVector(RowAnchor.X, RowAnchor.Y, 0.0f));
-                SeedClone.WorldOffset.Z += RowAnchor.Z;
-                SeedClone.RotationOffset = FRotator(0.0f, AngleDeg, 0.0f);  // pure yaw
-            }
-            else
-            {
-                // Seed position: offset in Y direction (perpendicular to extend direction)
-                // Y direction is perpendicular to X (extend) direction
-                FVector YOffset = FVector(0.0f, EffectiveRowHeight * Row * YDir, 0.0f);
-                // Add Y spacing
-                YOffset.Y += State.SpacingY * Row * YDir;
-                // Add Y steps (vertical offset per row for terraced look)
-                float YSteps = State.StepsY * Row;
-
-                SeedClone.WorldOffset = SourceRotation.RotateVector(YOffset);
-                SeedClone.WorldOffset.Z += YSteps;
-                SeedClone.RotationOffset = FRotator::ZeroRotator;
-            }
+            const FSFExtendCellPlacement SeedPlacement = CalculateExtendCellPlacement(
+                SourceRotation, BuildingSize, EffectiveRowHeight, State, 0, Row);
+            SeedClone.WorldOffset = SeedPlacement.WorldOffset;
+            SeedClone.RotationOffset = SeedPlacement.RotationOffset;
 
             if (IsCloneInDesignerBounds(SeedClone))  // [#366] skip clones outside the designer volume
             {
@@ -542,107 +480,10 @@ void USFExtendScaledService::CalculateScaledExtendPositions()
             ExtendClone.GridY = Row;
             ExtendClone.bIsSeed = false;
 
-            // Check if rotation is active
-            bool bRotationActive = !FMath::IsNearlyZero(State.RotationZ);
-
-            // [#372] Rotation PROGRESSION axis: the cumulative (always-yaw) angle builds up either
-            // per X-clone (default — the run curves as it extends) or per Y-row (rows fan out).
-            // The angle value (RotationZ) is identical in both; only WHICH index drives it changes.
-            const bool bProgressY = (State.RotationAxis == ESFScaleAxis::Y);
-            const int32 ProgressIndex = bProgressY ? Row : CloneIndex;
-
-            FVector CloneOffset;
-            FRotator CloneRotation = FRotator::ZeroRotator;
-
-            if (bRotationActive)
-            {
-                // Arc/radial placement - cumulative rotation per progression step.
-                // Each step rotates by RotationZ degrees; rotation is ALWAYS pure yaw (upright).
-                float ArcLength = BuildingSize.X + static_cast<float>(State.SpacingX);
-                float StepRadians = FMath::Abs(FMath::DegreesToRadians(State.RotationZ));
-                float Radius = (StepRadians > KINDA_SMALL_NUMBER) ? ArcLength / StepRadians : 0.0f;
-
-                float AngleDeg = static_cast<float>(ProgressIndex) * State.RotationZ;
-                float AngleRad = FMath::DegreesToRadians(AngleDeg);
-                float SignRotation = (State.RotationZ >= 0.0f) ? 1.0f : -1.0f;
-                float AbsAngleRad = FMath::Abs(AngleRad);
-                float SignX = XDirectionSign;
-
-                if (!bProgressY)
-                {
-                    // X-PROGRESSION (default, behavior-preserving): arc advances along local X
-                    // (the extend direction), curves in local Y. Driven by CloneIndex.
-                    //   X = SignX * R * Sin(|θ|)              (direction determines forward/backward)
-                    //   Y = SignRotation * (R - R*Cos(|θ|))   (NO direction sign — canonical)
-                    //   Rotation = AngleDeg * XDirectionSign  (sign baked into angle)
-                    CloneOffset.X = SignX * Radius * FMath::Sin(AbsAngleRad);
-                    CloneOffset.Y = SignRotation * (Radius - Radius * FMath::Cos(AbsAngleRad));
-                    CloneOffset.Z = 0.0f;
-
-                    // Apply steps (vertical offset per clone)
-                    CloneOffset.Z += State.StepsX * CloneIndex;
-
-                    CloneRotation = FRotator(0.0f, AngleDeg * XDirectionSign, 0.0f);
-
-                    // Add Y row offset (parallel lanes). Only meaningful for X-progression:
-                    // in Y-progression the row IS the arc-forward, so this must not be applied.
-                    if (Row > 0)
-                    {
-                        CloneOffset.Y += EffectiveRowHeight * Row * YDir + State.SpacingY * Row * YDir;
-                        CloneOffset.Z += State.StepsY * Row;
-                    }
-                }
-                else
-                {
-                    // Y-PROGRESSION (new): the ROWS fan out around the vertical axis. The arc-forward/
-                    // curve axes swap vs the X path — the arc advances along local Y (driven by Row)
-                    // and curves in local X. Each row sits at cumulative yaw (Row * RotationZ); the
-                    // row's own clones then march forward along that rotated extend direction.
-                    //   Row anchor:  Y = SignY * R * Sin(|θ|),  X = SignRotation * (R - R*Cos(|θ|))
-                    // where the forward sign follows the Y row direction (YDir) just as the X path's
-                    // forward follows XDirectionSign.
-                    const float SignY = static_cast<float>(YDir);
-                    FVector RowAnchor;
-                    RowAnchor.X = SignRotation * (Radius - Radius * FMath::Cos(AbsAngleRad));
-                    RowAnchor.Y = SignY * Radius * FMath::Sin(AbsAngleRad);
-                    RowAnchor.Z = State.StepsY * Row;  // terraced rows still rise per Row
-
-                    // Per-clone forward along the row's rotated extend direction (local X spun by yaw).
-                    // The yaw applied to the row is AngleDeg (pure yaw); rotate the linear extend
-                    // vector by it so clones within the row stay rigid with the fanned row.
-                    const float Forward = BuildingSize.X * CloneIndex + State.SpacingX * CloneIndex;
-                    FVector LocalExtend(XDirectionSign * Forward, 0.0f, 0.0f);
-                    const FRotator RowYaw(0.0f, AngleDeg, 0.0f);
-                    FVector RotatedExtend = RowYaw.RotateVector(LocalExtend);
-
-                    CloneOffset.X = RowAnchor.X + RotatedExtend.X;
-                    CloneOffset.Y = RowAnchor.Y + RotatedExtend.Y;
-                    CloneOffset.Z = RowAnchor.Z + State.StepsX * CloneIndex;
-
-                    CloneRotation = FRotator(0.0f, AngleDeg, 0.0f);
-                }
-            }
-            else
-            {
-                // Linear placement - simple offset along extend direction
-                CloneOffset.X = XDirectionSign * (BuildingSize.X * CloneIndex + State.SpacingX * CloneIndex);
-                CloneOffset.Y = 0.0f;
-                CloneOffset.Z = State.StepsX * CloneIndex;  // Steps = vertical offset per clone
-
-                // Add Y row offset (parallel lanes) - linear (no rotation) path.
-                if (Row > 0)
-                {
-                    CloneOffset.Y += EffectiveRowHeight * Row * YDir + State.SpacingY * Row * YDir;
-                    CloneOffset.Z += State.StepsY * Row;
-                }
-            }
-
-            // Rotate offset by source building rotation to get world space
-            ExtendClone.WorldOffset = SourceRotation.RotateVector(CloneOffset);
-            // Preserve Z offset (steps) without rotation
-            ExtendClone.WorldOffset.Z = CloneOffset.Z;
-
-            ExtendClone.RotationOffset = CloneRotation;
+            const FSFExtendCellPlacement Placement = CalculateExtendCellPlacement(
+                SourceRotation, BuildingSize, EffectiveRowHeight, State, CloneIndex, Row);
+            ExtendClone.WorldOffset = Placement.WorldOffset;
+            ExtendClone.RotationOffset = Placement.RotationOffset;
 
             if (IsCloneInDesignerBounds(ExtendClone))  // [#366] skip clones outside the designer volume
             {

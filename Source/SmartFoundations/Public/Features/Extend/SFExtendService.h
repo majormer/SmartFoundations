@@ -133,7 +133,7 @@ public:
      */
     void OnScaledExtendStateChanged();
 
-    /** Get the current extend clone count (X counter - 1, since X=1 means source only) */
+    /** Get the current extend clone count (|X| = buildings being placed; X=1 is the single parent preview) */
     UFUNCTION(BlueprintCallable, Category = "Smart|Extend")
     int32 GetExtendCloneCount() const;
 
@@ -216,6 +216,12 @@ public:
     /** Cycle to next/previous direction (called from mouse wheel) */
     UFUNCTION(BlueprintCallable, Category = "Smart|Extend")
     void CycleExtendDirection(int32 Delta);
+
+    /** Keep the building-relative selector aligned when input writes a signed Chain counter. */
+    void SynchronizeDirectionFromCounterState(const FSFCounterState& State);
+
+    /** Apply the current building-relative selector to the signed Chain counter. Returns true if updated. */
+    bool SynchronizeChainCounterToDirection();
 
     /** Get offset vector for current direction based on building size */
     UFUNCTION(BlueprintCallable, Category = "Smart|Extend")
@@ -347,13 +353,22 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Smart|Extend")
     void RefreshExtension(AFGHologram* SourceHologram, bool bForceRefresh = false);
 
-    /** #342: manual Extend hold ("pin"). The vanilla Hold key (H) toggles this via the lock-release
-     *  detection in PollForActiveHologram, so the player can freeze the current Extend preview
+    /** #342: manual Extend hold ("pin"). The vanilla Hold key (H) toggles this at the build-state
+     *  lock seam, so the player can freeze the current Extend preview
      *  unchanged and look around to verify clearance. Tracked SEPARATELY from bExtendCommitted (the
      *  scale-action commit) so toggling the pin never disturbs scaled Extend / transform behaviour;
      *  either flag makes Extend sticky. */
     void SetExtendManualHold(bool bHold) { bExtendManualHold = bHold; }
     bool IsExtendManualHoldActive() const { return bExtendManualHold; }
+
+    /** Handle a vanilla Hold-key unlock for the active Extend hologram. */
+    bool HandleHologramLockToggle(AFGHologram* Hologram);
+
+    /** True when this is the hologram currently owned by the live Extend session. */
+    bool IsCurrentExtendHologram(const AFGHologram* Hologram) const
+    {
+        return Hologram && CurrentExtendHologram.Get() == Hologram;
+    }
 
     /** Clean up all extension child holograms */
     UFUNCTION(BlueprintCallable, Category = "Smart|Extend")
@@ -764,6 +779,14 @@ private:
      *  Before committing, looking away deactivates Extend normally (allows middle-click sampling).
      *  After committing, sticky extend keeps Extend alive when looking away. */
     bool bExtendCommitted = false;
+
+    /** [#478] SynchronizeChainCounterToDirection writes the signed Chain counter through
+     *  UpdateCounterState, which is indistinguishable from a user scale action at the scaled
+     *  service's commit site — without this latch, activating Extend on the side whose sign
+     *  differs from the pre-Extend counter silently commits (sticky), so look-away never
+     *  releases the locked preview. Set just before the programmatic counter write; consumed
+     *  by the next scaled rebuild instead of committing. */
+    bool bSuppressCommitOnCounterSync = false;
 
     /** #342: true when the player deliberately pinned the current Extend with the vanilla Hold key (H).
      *  Independent of bExtendCommitted; either makes Extend sticky. Kept separate so toggling the manual

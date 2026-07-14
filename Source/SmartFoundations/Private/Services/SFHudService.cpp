@@ -40,6 +40,19 @@ static FText SF_PlayerRelativeRoleLabel(USFSubsystem::ESFPlayerRelativeSlot Slot
 	}
 }
 
+static FText SF_TransformRoleLabel(
+	USFSubsystem::ESFPlayerRelativeSlot Slot,
+	bool bExtendActive)
+{
+	if (bExtendActive)
+	{
+		return Slot == USFSubsystem::ESFPlayerRelativeSlot::Side
+			? LOCTEXT("HUD_RoleRows", "Rows")
+			: LOCTEXT("HUD_RoleChain", "Chain");
+	}
+	return SF_PlayerRelativeRoleLabel(Slot);
+}
+
 void USFHudService::Initialize(USFSubsystem* InSubsystem)
 {
 	Subsystem = InSubsystem;
@@ -403,9 +416,11 @@ TPair<FString, FString> USFHudService::BuildCounterDisplayLines() const
 
 			if (CloneCount > 0 || RowCount > 1)
 			{
-				// Show Scaled Extend mode with clone count
+				// Show Extend with the number of buildings actually being placed. CloneCount is
+				// already the total (|X|: parent preview + additional scaled clones) — the source
+				// building is not part of the build and must not be counted.
 				FString ExtendLine = FText::Format(LOCTEXT("HUD_ExtendScaled", "*Extend: {0}x{1}"),
-					FText::AsNumber(CloneCount + 1), FText::AsNumber(RowCount)).ToString();
+					FText::AsNumber(CloneCount), FText::AsNumber(RowCount)).ToString();
 				if (!ExtendSvc->IsScaledExtendValid())
 				{
 					FString Reason = ExtendSvc->GetScaledExtendInvalidReason();
@@ -649,7 +664,7 @@ TPair<FString, FString> USFHudService::BuildCounterDisplayLines() const
 		if (bIsActive && bPRRoles)
 		{
 			Lines.Add(FText::Format(LOCTEXT("HUD_SpacingRole", "Spacing [{0}]*: {1}m"),
-				SF_PlayerRelativeRoleLabel(Subsystem->GetSpacingRole()),
+				SF_TransformRoleLabel(Subsystem->GetSpacingRole(), bIsExtendActive),
 				FText::FromString(FString::Printf(TEXT("%.1f"), State.SpacingX / 100.0f))).ToString());
 		}
 		else
@@ -666,7 +681,7 @@ TPair<FString, FString> USFHudService::BuildCounterDisplayLines() const
 		if (bIsActive && bPRRoles)
 		{
 			Lines.Add(FText::Format(LOCTEXT("HUD_SpacingRole", "Spacing [{0}]*: {1}m"),
-				SF_PlayerRelativeRoleLabel(Subsystem->GetSpacingRole()),
+				SF_TransformRoleLabel(Subsystem->GetSpacingRole(), bIsExtendActive),
 				FText::FromString(FString::Printf(TEXT("%.1f"), State.SpacingY / 100.0f))).ToString());
 		}
 		else
@@ -683,7 +698,7 @@ TPair<FString, FString> USFHudService::BuildCounterDisplayLines() const
 		if (bIsActive && bPRRoles)
 		{
 			Lines.Add(FText::Format(LOCTEXT("HUD_SpacingRole", "Spacing [{0}]*: {1}m"),
-				SF_PlayerRelativeRoleLabel(Subsystem->GetSpacingRole()),
+				SF_TransformRoleLabel(Subsystem->GetSpacingRole(), bIsExtendActive),
 				FText::FromString(FString::Printf(TEXT("%.1f"), State.SpacingZ / 100.0f))).ToString());
 		}
 		else
@@ -712,7 +727,7 @@ TPair<FString, FString> USFHudService::BuildCounterDisplayLines() const
 		if (bIsActive && bPRRoles)
 		{
 			Lines.Add(FText::Format(LOCTEXT("HUD_StepsRole", "Steps [{0}]*: {1}m"),
-				SF_PlayerRelativeRoleLabel(Subsystem->GetStepsRole()),
+				SF_TransformRoleLabel(Subsystem->GetStepsRole(), bIsExtendActive),
 				FText::FromString(FString::Printf(TEXT("%.1f"), State.StepsX / 100.0f))).ToString());
 		}
 		else
@@ -729,7 +744,7 @@ TPair<FString, FString> USFHudService::BuildCounterDisplayLines() const
 		if (bIsActive && bPRRoles)
 		{
 			Lines.Add(FText::Format(LOCTEXT("HUD_StepsRole", "Steps [{0}]*: {1}m"),
-				SF_PlayerRelativeRoleLabel(Subsystem->GetStepsRole()),
+				SF_TransformRoleLabel(Subsystem->GetStepsRole(), bIsExtendActive),
 				FText::FromString(FString::Printf(TEXT("%.1f"), State.StepsY / 100.0f))).ToString());
 		}
 		else
@@ -841,7 +856,7 @@ TPair<FString, FString> USFHudService::BuildCounterDisplayLines() const
 	// [#209] Under PR while held, the label is the ROLE (Forward/Lateral progression); otherwise
 	// the absolute progression axis.
 	const FText RotationAxisLabelText = (bRotationActive && Subsystem->IsPlayerRelativeEnabled())
-		? SF_PlayerRelativeRoleLabel(Subsystem->GetRotationRole())
+		? SF_TransformRoleLabel(Subsystem->GetRotationRole(), bIsExtendActive)
 		: FText::FromString((RotationAxis == ESFScaleAxis::Y) ? TEXT("Y") : TEXT("X"));
 	const bool bShowRotationZ = !FMath::IsNearlyZero(State.RotationZ) || bRotationActive;
 	bool bAnyRotationPrinted = false;
