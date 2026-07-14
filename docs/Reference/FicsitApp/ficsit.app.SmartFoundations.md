@@ -44,7 +44,7 @@ If you are new, videos explain Smart! much faster than a list of controls.
 |:---:|:---:|
 | [![Smart! Feature Spotlight](https://github.com/majormer/SmartFoundations/blob/main/images/enderprise-spotlight.jpg?raw=true)](https://www.youtube.com/watch?v=U5PNgasYbP8) | [![Smart V22 Overview](https://github.com/majormer/SmartFoundations/blob/main/images/v22-overview.jpg?raw=true)](https://www.youtube.com/watch?v=QZVNIQXYnNg) |
 
-More videos are listed in the More Videos section near the bottom of this page.
+More videos — community reviews, tutorials, and legacy-version overviews — are collected on the **[Videos & Tutorials wiki page](https://github.com/majormer/SmartFoundations/wiki/Videos-and-Tutorials)**.
 
 ---
 
@@ -586,46 +586,6 @@ Support is completely optional, but if Smart! saves you time and you want to hel
 - **Share examples:** Screenshots and videos help other players understand what Smart! can do.
 
 No pressure. Smart! remains a community-focused project, and every kind of support helps.
-
----
-
-## 🎥 More Videos
-
-Smart! has had quite a few videos made for it, and the project is grateful for every creator who helped show players what the mod can do.
-
-### Smart! for Satisfactory 1.1+
-
-These videos cover the rebuilt Smart! mod for current Satisfactory/SML versions.
-
-| Video | Creator | Link |
-|---|---|---|
-| Smart! Feature Spotlight | [Enderprise Architecture](https://www.youtube.com/@EnderpriseArchitecture) | https://www.youtube.com/watch?v=U5PNgasYbP8 |
-| Smart V22 Overview | [RightMindGamming](https://www.youtube.com/@rightmindgamming) | https://www.youtube.com/watch?v=QZVNIQXYnNg |
-
-### Legacy Smart! feature videos
-
-These videos are for older Smart! versions. Some controls or details may differ, but they are still useful for seeing the kinds of layouts Smart! was built to support.
-
-| Video | Link |
-|---|---|
-| Version 21 - Improved Nudge Mode Overview | https://www.youtube.com/watch?v=NyYymsMa5Gg |
-| Version 20 Overview and Tutorial | https://www.youtube.com/watch?v=R1nEiSfskPA |
-| Preview of the camera feature | https://youtu.be/bPHYtuWp2aI |
-| Preview of the lift height counter feature | https://youtu.be/ZMSZaEa-3No |
-| Version 17 | https://youtu.be/vKPQ5YPPsU8 |
-| Version 16 | https://youtu.be/MmkfqByx0i0 |
-| Version 15 | https://youtu.be/jxfJR3ullJI |
-| Version 14 | https://youtu.be/-HbCKSABeWE |
-| Version 12 | https://youtu.be/thC8RvniApQ |
-| Version 11 | https://youtu.be/5qE3G4KbJXM |
-
-### Community reviews
-
-| Review | Creator | Link |
-|---|---|---|
-| Mod review | [ImKibitz](https://www.youtube.com/channel/UCz9qw5nupdzCGwHwQiqs7qA) | https://youtu.be/JSL6kSgzYJk |
-| In-depth review | [Magenty](https://www.youtube.com/channel/UCL8hC7X4mpAKdoP5gwdKkBQ) | https://youtu.be/O7jHpKhhqaY |
-| First review | [TotalXclipse](https://www.youtube.com/channel/UC2SNK_S7tvROHS_KJdIiEFg) | https://youtu.be/wIfhqBxiufk |
 
 ---
 
