@@ -721,6 +721,13 @@ void USmartSettingsFormWidget::PopulateFromCounterState(USFSubsystem* Subsystem)
 
     FString AutoConnectLines;
     bool bHasAnyAutoConnectContext = false;
+    // [#494] Drives ONLY the recipe-section exclusion below. bHasAnyAutoConnectContext gained a
+    // second setter in 34.2.0 - the #487 Scale Daisy-Chain row, which is available on FACTORIES
+    // and generators - so reusing it to exclude "auto-connect holograms" from the recipe section
+    // silently removed the recipe selector from every production building. This flag keeps the
+    // exclusion's original semantics: true only for LOGISTICS holograms (distributors, junctions,
+    // poles, supports, passthroughs), which never carry production recipes.
+    bool bIsLogisticsAutoConnectHologram = false;
 
     UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Checking auto-connect context..."));
 
@@ -741,6 +748,12 @@ void USmartSettingsFormWidget::PopulateFromCounterState(USFSubsystem* Subsystem)
             // supports) but were the one pipe type missing from the section gate below.
             const bool bIsWallPipelineSupport = USFAutoConnectService::IsWallPipelineSupportHologram(ActiveHologram);
             const bool bIsStackableHypertubeSupport = AutoConnectService->IsStackableHypertubeSupportHologram(ActiveHologram);
+
+            // [#494] Logistics holograms only - deliberately NOT bIsScaleDaisyAvailable, which is
+            // true for recipe-bearing factories. See the flag's declaration comment.
+            bIsLogisticsAutoConnectHologram = bIsDistributor || bIsPipeJunction || bIsPowerPole
+                || bIsStackableConveyorPole || bIsStackablePipeSupport || bIsPassthroughPipe
+                || bIsWallPipelineSupport || bIsStackableHypertubeSupport;
 
             UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Hologram=%s, IsDistributor=%d, IsPipeJunction=%d, IsPowerPole=%d, IsBeltSupport=%d, IsStackablePipeSupport=%d, IsPassthroughPipe=%d, IsWallPipeSupport=%d"),
                 *ActiveHologram->GetClass()->GetName(), bIsDistributor, bIsPipeJunction, bIsPowerPole, bIsStackableConveyorPole, bIsStackablePipeSupport, bIsPassthroughPipe, bIsWallPipelineSupport);
@@ -976,16 +989,19 @@ void USmartSettingsFormWidget::PopulateFromCounterState(USFSubsystem* Subsystem)
         if (UClass* HologramClass = ActiveHologram->GetBuildClass())
         {
             // Check if this is a production building by checking class hierarchy
-            // BUT exclude auto-connect holograms (distributors, pipe junctions, power poles)
-            // which may inherit from AFGBuildableFactory but don't use recipes
+            // BUT exclude LOGISTICS auto-connect holograms (distributors, pipe junctions, power
+            // poles, supports) which may inherit from AFGBuildableFactory but don't use recipes.
+            // [#494] Must NOT use bHasAnyAutoConnectContext here: the #487 Scale Daisy-Chain row
+            // sets it for factories/generators too, which removed the recipe selector from every
+            // production building in 34.2.0.
             bIsProductionBuilding = HologramClass->IsChildOf(AFGBuildableFactory::StaticClass())
-                                    && !bHasAnyAutoConnectContext;
+                                    && !bIsLogisticsAutoConnectHologram;
             if (ActiveRecipe)
             {
                 bIsCompatible = SubsystemPtr->IsRecipeCompatibleWithHologram(ActiveRecipe, HologramClass);
             }
-            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Recipe compatibility check - HologramClass=%s, bIsProductionBuilding=%d, bIsCompatible=%d, bHasAutoConnectContext=%d"),
-                *HologramClass->GetName(), bIsProductionBuilding, bIsCompatible, bHasAnyAutoConnectContext);
+            UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Recipe compatibility check - HologramClass=%s, bIsProductionBuilding=%d, bIsCompatible=%d, bIsLogisticsHologram=%d, bHasAutoConnectContext=%d"),
+                *HologramClass->GetName(), bIsProductionBuilding, bIsCompatible, bIsLogisticsAutoConnectHologram, bHasAnyAutoConnectContext);
         }
     }
     else

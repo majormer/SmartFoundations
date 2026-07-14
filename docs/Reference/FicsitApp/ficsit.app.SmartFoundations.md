@@ -1,6 +1,6 @@
 # <img src="https://github.com/majormer/SmartFoundations/blob/main/images/Smart-Logo.png?raw=true" width="150" alt="Smart! Logo"> Smart! Mod
 
-![Status](https://img.shields.io/badge/Status-Released-brightgreen) ![Version](https://img.shields.io/badge/Version-34.2.0-blue) ![Satisfactory](https://img.shields.io/badge/Satisfactory-1.2-blue) ![Engine](https://img.shields.io/badge/Engine-UE%205.6-blue) ![SML](https://img.shields.io/badge/SML-3.12-blue) ![Multiplayer](https://img.shields.io/badge/Multiplayer-Supported-brightgreen) ![AI Assisted Development Used](https://img.shields.io/badge/AI%20Assisted%20Development%20Used-Disclosure%20Below-blue)
+![Status](https://img.shields.io/badge/Status-Released-brightgreen) ![Version](https://img.shields.io/badge/Version-34.2.1-blue) ![Satisfactory](https://img.shields.io/badge/Satisfactory-1.2-blue) ![Engine](https://img.shields.io/badge/Engine-UE%205.6-blue) ![SML](https://img.shields.io/badge/SML-3.12-blue) ![Multiplayer](https://img.shields.io/badge/Multiplayer-Supported-brightgreen) ![AI Assisted Development Used](https://img.shields.io/badge/AI%20Assisted%20Development%20Used-Disclosure%20Below-blue)
 
 > **Multiplayer note:** As of v32.0.0, every Smart! feature works in multiplayer on dedicated servers (Windows and Linux) — including **Smart Walking** and the new-in-v33.1.0 **Hyper Tube** support. If you hit something odd in a multiplayer session, please report it on [GitHub](https://github.com/majormer/SmartFoundations/issues) or [Discord](https://discord.gg/SgXY4CwXYw).
 
@@ -115,7 +115,9 @@ See [LICENSE.md](https://github.com/majormer/SmartFoundations/blob/main/LICENSE.
 
 ## 📰 What's New in v34.2.0: Controller support, auto power daisy-chaining, and a big fix run
 
-**Current Release:** v34.2.0 brings **Tap to Toggle Transform Modes** — the piece that makes Smart! genuinely usable on a controller and Steam Deck — plus **automatic power daisy-chaining while you scale**, a **blueprint-only Auto-Connect switch**, and a run of Extend and Smart Upgrade fixes, including a material-duplication bug and dedicated-server recipe copying. See the [full changelog](https://github.com/majormer/SmartFoundations/blob/main/CHANGELOG.md) for everything.
+**Current Release:** v34.2.1 is a hotfix that restores the recipe selector in the Smart Panel on factories (a regression in v34.2.0). Everything below is from the v34.2.0 feature release.
+
+v34.2.0 brings **Tap to Toggle Transform Modes** — the piece that makes Smart! genuinely usable on a controller and Steam Deck — plus **automatic power daisy-chaining while you scale**, a **blueprint-only Auto-Connect switch**, and a run of Extend and Smart Upgrade fixes, including a material-duplication bug and dedicated-server recipe copying. See the [full changelog](https://github.com/majormer/SmartFoundations/blob/main/CHANGELOG.md) for everything.
 
 ### Build Smart! on a controller or Steam Deck
 
