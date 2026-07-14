@@ -130,6 +130,10 @@ void USFGameInstanceModule::DispatchLifecycleEvent(ELifecyclePhase Phase)
 		// unlock-detection it replaces false-pinned Extend on one side of a chain.
 		RegisterExtendHologramLockHook();
 
+		// [#470] Registry-disabled validation must actually disable vanilla child holograms'
+		// CheckValidPlacement (false creature/materials errors on scaled Extend). See header.
+		RegisterManagedHologramValidationHook();
+
 	}
 }
 
@@ -596,4 +600,36 @@ void USFGameInstanceModule::RegisterExtendHologramLockHook()
 
 	UE_LOG(LogSmartFoundations, Verbose,
 		TEXT("[#478] UFGBuildGunStateBuild::ToggleHologramPositionLock hook registered (deterministic Extend pin toggle)"));
+}
+
+void USFGameInstanceModule::RegisterManagedHologramValidationHook()
+{
+	// Runs BEFORE the vanilla body; Cancel() skips it entirely. Fires only for holograms whose
+	// vtable resolves to AFGBuildableHologram::CheckValidPlacement — every vanilla buildable
+	// hologram (and BP subclass) but none of Smart's overriding classes, which already consult
+	// the registry themselves. The registry lookup is a pointer-keyed map probe: cheap enough
+	// for the per-frame validation cascade.
+	SUBSCRIBE_METHOD_VIRTUAL(AFGBuildableHologram::CheckValidPlacement,
+		GetMutableDefault<AFGBuildableHologram>(),
+		[](auto& scope, AFGBuildableHologram* self)
+		{
+			if (!self)
+			{
+				return;
+			}
+			if (const FSFHologramData* Data = USFHologramDataRegistry::GetData(self))
+			{
+				if (!Data->bNeedToCheckPlacement)
+				{
+					// Managed preview child: the owning Smart parent carries aggregate validity.
+					// Clear residual disqualifiers (a pre-registration validation pass may have
+					// left some) so a stale flag cannot survive indefinitely once we cancel.
+					self->ResetConstructDisqualifiers();
+					scope.Cancel();
+				}
+			}
+		});
+
+	UE_LOG(LogSmartFoundations, Verbose,
+		TEXT("[#470] AFGBuildableHologram::CheckValidPlacement hook registered (registry-disabled validation now covers vanilla child holograms)"));
 }

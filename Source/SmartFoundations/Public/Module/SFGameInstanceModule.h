@@ -124,6 +124,23 @@ protected:
 	 */
 	void RegisterExtendHologramLockHook();
 
+	/**
+	 * [#470] Make Smart's validation-disabled registry flag ACTUALLY reach vanilla hologram
+	 * classes. Scaled Extend (and grid scaling) spawn vanilla holograms (e.g. FGFactoryHologram)
+	 * as managed preview children and mark them bNeedToCheckPlacement=false — but only Smart's
+	 * own hologram subclasses consult that registry, so vanilla children still ran the full
+	 * vanilla CheckValidPlacement. Hiding their clearance BOX did not disable vanilla's
+	 * creature-encroachment overlap query, so a scaled Extend clone could flag
+	 * FGCDEncroachingCreature with no creature anywhere; its ERROR material state then cascaded
+	 * into its child belts' preview mirror, which re-labels any error FGCDUnaffordable — the
+	 * reported false "A creature is in the way!" + "Missing materials!" pair (live-confirmed via
+	 * SmartMCP on the reporter's save). Hooks AFGBuildableHologram::CheckValidPlacement (the
+	 * implementation vanilla children execute; Smart subclasses override it natively and already
+	 * self-check the registry) and cancels validation for registry-disabled holograms — the
+	 * managing parent owns their aggregate validity, same policy as the Extend parent itself.
+	 */
+	void RegisterManagedHologramValidationHook();
+
 	/** Smart! Configuration blueprint - registered with SML for in-game menu access */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Smart! Configuration")
 	TSubclassOf<class UModConfiguration> SmartConfigClass;
