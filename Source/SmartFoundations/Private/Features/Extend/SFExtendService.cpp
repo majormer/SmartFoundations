@@ -301,9 +301,6 @@ bool USFExtendService::SynchronizeChainCounterToDirection()
 
     State.GridCounters.X = SignedMagnitude;
     bSuppressCommitOnCounterSync = true;  // programmatic sign/magnitude sync, not a user scale action
-    // [#478 temp] Shipping-visible: the side-dependent programmatic write.
-    UE_LOG(LogSmartExtend, Log, TEXT("[#478] Chain counter sync: X -> %d (dir=%s), latch armed"),
-        SignedMagnitude, DetectionService->GetExtendDirection() == ESFExtendDirection::Left ? TEXT("Left") : TEXT("Right"));
     Subsystem->UpdateCounterState(State);
     return true;
 }
@@ -1390,15 +1387,6 @@ bool USFExtendService::TryExtendFromBuilding(AFGBuildable* HitBuilding, AFGHolog
             if (bExtendCommitted || bExtendManualHold)
             {
                 // Committed (scale action) or manually pinned (Hold key, #342) — keep Extend alive, maintain preview
-                // [#478 temp] Shipping-visible: WHY look-away is being ignored (throttled).
-                static double LastKeepAliveLog = 0;
-                const double KeepAliveNow = FPlatformTime::Seconds();
-                if (KeepAliveNow - LastKeepAliveLog > 1.0)
-                {
-                    UE_LOG(LogSmartExtend, Log, TEXT("[#478] Look-away IGNORED: committed=%d manualHold=%d target=%s"),
-                        bExtendCommitted ? 1 : 0, bExtendManualHold ? 1 : 0, *GetNameSafe(CurrentExtendTarget.Get()));
-                    LastKeepAliveLog = KeepAliveNow;
-                }
                 if (CurrentExtendHologram.IsValid())
                 {
                     RefreshExtension(CurrentExtendHologram.Get());
@@ -1409,8 +1397,6 @@ bool USFExtendService::TryExtendFromBuilding(AFGBuildable* HitBuilding, AFGHolog
             {
                 // Not committed — deactivate Extend so user can sample/build elsewhere
                 SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("🔄 EXTEND: Deactivating (not committed, looked away)"));
-                // [#478 temp] Shipping-visible: normal look-away release.
-                UE_LOG(LogSmartExtend, Log, TEXT("[#478] Look-away RELEASE: target=%s"), *GetNameSafe(CurrentExtendTarget.Get()));
                 ClearExtendState();
                 return false;
             }
@@ -1747,7 +1733,7 @@ bool USFExtendService::HandleHologramLockToggle(AFGHologram* Hologram)
     // bExtendCommitted is never touched, so H cannot un-stick a scaled Extend.
     bExtendManualHold = !bExtendManualHold;
     Hologram->LockHologramPosition(true);
-    UE_LOG(LogSmartExtend, Log, TEXT("[#478] Hold key: pin %s"),  // [#478 temp] Log-level for validation; demote to Verbose after
+    UE_LOG(LogSmartExtend, Verbose, TEXT("EXTEND: Hold pin %s"),
         bExtendManualHold ? TEXT("ON (sticky, inspect freely)") : TEXT("OFF (transient, look-away releases)"));
     return true;
 }

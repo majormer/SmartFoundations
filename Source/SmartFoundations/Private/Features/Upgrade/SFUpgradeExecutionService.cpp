@@ -9,52 +9,6 @@ namespace
 	{
 		return Family == ESFUpgradeFamily::Belt || Family == ESFUpgradeFamily::Lift;
 	}
-
-	// [#485 temp] Compact item-list formatting for the Shipping-visible accounting capture.
-	FString SF485_CostToString(const TArray<FItemAmount>& Items)
-	{
-		FString Out;
-		for (const FItemAmount& It : Items)
-		{
-			if (!It.ItemClass)
-			{
-				continue;
-			}
-			if (!Out.IsEmpty())
-			{
-				Out += TEXT(", ");
-			}
-			Out += FString::Printf(TEXT("%dx%s"), It.Amount, *UFGItemDescriptor::GetItemName(It.ItemClass).ToString());
-		}
-		return Out.IsEmpty() ? FString(TEXT("(none)")) : Out;
-	}
-
-	// [#485 temp] Same, for the net/ledger maps. bNegate flips sign for refund-side printing.
-	FString SF485_MapToString(const TMap<TSubclassOf<UFGItemDescriptor>, int32>& Items, bool bPositiveOnly = false, bool bNegativeOnly = false)
-	{
-		FString Out;
-		for (const auto& Pair : Items)
-		{
-			if (!Pair.Key || Pair.Value == 0)
-			{
-				continue;
-			}
-			if (bPositiveOnly && Pair.Value < 0)
-			{
-				continue;
-			}
-			if (bNegativeOnly && Pair.Value > 0)
-			{
-				continue;
-			}
-			if (!Out.IsEmpty())
-			{
-				Out += TEXT(", ");
-			}
-			Out += FString::Printf(TEXT("%dx%s"), FMath::Abs(Pair.Value), *UFGItemDescriptor::GetItemName(Pair.Key).ToString());
-		}
-		return Out.IsEmpty() ? FString(TEXT("(none)")) : Out;
-	}
 }
 
 void USFUpgradeExecutionService::Initialize(USFSubsystem* InSubsystem)
@@ -130,10 +84,6 @@ int32 USFUpgradeExecutionService::PrepareUpgradeSettlement(AFGBuildable* Old, TS
 		return 0;
 	}
 
-	// [#485 temp] Per-target settlement evidence (Log level - Shipping strips Verbose).
-	UE_LOG(LogSmartUpgrade, Log, TEXT("[#485] %s: settling charge={%s} refund={%s}"),
-		*GetNameSafe(Old), *SF485_MapToString(Charge), *SF485_MapToString(Refund));
-
 	// Split the net delta by sign: positives are reserved before Construct, negatives are
 	// granted only after success.
 	TMap<TSubclassOf<UFGItemDescriptor>, int32> Net = Charge;
@@ -170,7 +120,7 @@ int32 USFUpgradeExecutionService::PrepareUpgradeSettlement(AFGBuildable* Old, TS
 		}
 		if (Available < Entry.Value)
 		{
-			UE_LOG(LogSmartUpgrade, Log, TEXT("[#485] %s: cannot afford - need %d %s, have %d (aborting batch)"),
+			UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: cannot afford %s - need %d %s, have %d (aborting batch)"),
 				*GetNameSafe(Old), Entry.Value, *UFGItemDescriptor::GetItemName(Entry.Key).ToString(), Available);
 			return -1;
 		}
@@ -194,7 +144,6 @@ void USFUpgradeExecutionService::ReserveUpgradeCharge(const FSFUpgradeSettlement
 	{
 		UFGInventoryLibrary::GrabItemsFromInventoryAndCentralStorage(
 			PlayerInventory, CentralStorage, bTakeFromInventoryFirst, Entry.Key, Entry.Value);
-		BatchChargedTotals.FindOrAdd(Entry.Key) += Entry.Value;  // [#485 temp]
 	}
 }
 
@@ -212,8 +161,7 @@ void USFUpgradeExecutionService::RollbackUpgradeCharge(const FSFUpgradeSettlemen
 		{
 			OverflowItems.FindOrAdd(Entry.Key) += Entry.Value - Added;
 		}
-		BatchChargedTotals.FindOrAdd(Entry.Key) -= Entry.Value;  // [#485 temp]
-		UE_LOG(LogSmartUpgrade, Log, TEXT("[#485] Construct failed after reservation - returned %d %s (%d to crate)"),
+		UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: construct failed after reservation - returned %d %s (%d to crate)"),
 			Entry.Value, *UFGItemDescriptor::GetItemName(Entry.Key).ToString(), Entry.Value - Added);
 	}
 }
@@ -232,7 +180,6 @@ void USFUpgradeExecutionService::GrantUpgradeRefund(const FSFUpgradeSettlementLe
 		{
 			OverflowItems.FindOrAdd(Entry.Key) += Entry.Value - Added;
 		}
-		BatchRefundedTotals.FindOrAdd(Entry.Key) += Entry.Value;  // [#485 temp]
 	}
 }
 
@@ -349,8 +296,6 @@ void USFUpgradeExecutionService::StartUpgrade(const FSFUpgradeExecutionParams& P
 	bChainCached = false;
 	AccumulatedCosts.Empty();  // Reset accumulated costs
 	OverflowItems.Empty();     // Reset overflow items
-	BatchChargedTotals.Empty();   // [#485 temp] reset accounting ledger
-	BatchRefundedTotals.Empty();  // [#485 temp]
 	OldToNewConveyorMap.Empty(); // Reset old->new mapping for batch connection fixes
 	OldToNewBuildableMap.Empty(); // Reset general old->new mapping (Option A/B)
 	SavedConnectionPairs.Empty(); // Reset saved connection pairs
@@ -428,15 +373,6 @@ void USFUpgradeExecutionService::StartUpgrade(const FSFUpgradeExecutionParams& P
 	{
 		WorkingResult.ErrorMessage = TEXT("Ran out of materials - partial upgrade completed");
 	}
-
-	// [#485 temp] Batch accounting summary (belt family feeds the ledger; other families TBD).
-	UE_LOG(LogSmartUpgrade, Log,
-		TEXT("[#485] BATCH SUMMARY: planned=%d success=%d fail=%d skip=%d fundsAbort=%s | charged={%s} refunded={%s} overflow={%s}"),
-		PendingUpgrades.Num(), WorkingResult.SuccessCount, WorkingResult.FailCount, WorkingResult.SkipCount,
-		bAbortedDueToFunds ? TEXT("yes") : TEXT("no"),
-		*SF485_MapToString(BatchChargedTotals),
-		*SF485_MapToString(BatchRefundedTotals),
-		*SF485_MapToString(OverflowItems));
 
 	// Complete immediately
 	CompleteUpgrade();
@@ -1022,10 +958,6 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 		// Settlement is transactional: charge reserved before Construct, refund granted after.
 		FSFUpgradeSettlementLedger Ledger;
 		{
-			// [#485 temp] Cross-check: what the old defect path would have priced.
-			UE_LOG(LogSmartUpgrade, Log, TEXT("[#485] Belt %s (len=%.1fm): hologram GetBaseCost = %s (not used for settlement)"),
-				*OldBelt->GetName(), OldBelt->GetLength() / 100.0f, *SF485_CostToString(Hologram->GetBaseCost()));
-
 			const int32 PrepResult = PrepareUpgradeSettlement(OldBelt, ActualTargetRecipe, PlayerChar, Ledger);
 			if (PrepResult != 1)
 			{
@@ -1040,10 +972,6 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 		{
 			UE_LOG(LogSmartUpgrade, VeryVerbose, TEXT("⚙️ STEP 5: Calling GenerateAndUpdateSpline..."));
 			BeltHologram->GenerateAndUpdateSpline(HitResult);
-			// [#485 temp] Re-price now that the real spline exists. Any divergence from the
-			// PRE-spline line above is the exact amount execution under/over-charged.
-			UE_LOG(LogSmartUpgrade, Log, TEXT("[#485] Belt %s: POST-spline GetBaseCost = %s"),
-				*OldBelt->GetName(), *SF485_CostToString(BeltHologram->GetBaseCost()));
 			UE_LOG(LogSmartUpgrade, VeryVerbose, TEXT("⚙️ STEP 5: GenerateAndUpdateSpline complete"));
 		}
 
@@ -1227,13 +1155,10 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 		SmartHolo->SetSplineDataAndUpdate(SplineData);
 
 		// [#485] Exact settlement (geometry-derived, shared with the panel). The pipe hologram's
-		// GetBaseCost IS length-aware here (real spline copied above) - the temp log cross-checks
-		// the planner against it so any divergence surfaces before release.
+		// GetBaseCost is length-aware here (real spline copied above), but the planner is the single
+		// pricing source so panel and execution can never diverge.
 		FSFUpgradeSettlementLedger Ledger;
 		{
-			UE_LOG(LogSmartUpgrade, Log, TEXT("[#485] Pipe %s: hologram GetBaseCost = %s (cross-check)"),
-				*OldPipe->GetName(), *SF485_CostToString(SmartHolo->GetBaseCost()));
-
 			const int32 PrepResult = PrepareUpgradeSettlement(OldPipe, ActualTargetRecipe, PlayerChar, Ledger);
 			if (PrepResult != 1)
 			{
@@ -1386,13 +1311,9 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 
 		// [#485] Exact settlement (geometry-derived, shared with the panel). Charge = target recipe
 		// x the old lift's own refund multiplier - the SAME factor its refund uses, applied to the
-		// bare recipe (NOT on top of hologram GetBaseCost - that was the #432 double-charge). The
-		// temp log cross-checks the lift hologram's own length-aware cost against the planner.
+		// bare recipe (NOT on top of hologram GetBaseCost - that was the #432 double-charge).
 		FSFUpgradeSettlementLedger Ledger;
 		{
-			UE_LOG(LogSmartUpgrade, Log, TEXT("[#485] Lift %s: hologram GetBaseCost = %s (cross-check)"),
-				*OldLift->GetName(), *SF485_CostToString(LiftHologram->GetBaseCost()));
-
 			const int32 PrepResult = PrepareUpgradeSettlement(OldLift, ActualTargetRecipe, PlayerChar, Ledger);
 			if (PrepResult != 1)
 			{

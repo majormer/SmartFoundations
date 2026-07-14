@@ -161,8 +161,6 @@ void USFExtendScaledService::RebuildScaledExtendNow()
     if (Owner->bSuppressCommitOnCounterSync)
     {
         Owner->bSuppressCommitOnCounterSync = false;
-        // [#478 temp] Shipping-visible: programmatic sync rebuild, commitment untouched.
-        UE_LOG(LogSmartExtend, Log, TEXT("[#478] Rebuild: commitment unchanged (programmatic counter sync)"));
     }
     else
     {
@@ -170,10 +168,8 @@ void USFExtendScaledService::RebuildScaledExtendNow()
         if (Owner->bExtendCommitted != bScaledBeyondSingle)
         {
             Owner->bExtendCommitted = bScaledBeyondSingle;
-            // [#478 temp] Shipping-visible: the ONLY place scale-commitment changes.
-            UE_LOG(LogSmartExtend, Log, TEXT("[#478] Rebuild: EXTEND %s (grid %dx%d)"),
-                bScaledBeyondSingle ? TEXT("COMMITTED (scaled beyond single clone)") : TEXT("UNCOMMITTED (back to single clone)"),
-                CloneCount, RowCount);
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("⚡ SCALED EXTEND: commitment %s (grid %dx%d)"),
+                bScaledBeyondSingle ? TEXT("engaged") : TEXT("released"), CloneCount, RowCount);
         }
     }
 
