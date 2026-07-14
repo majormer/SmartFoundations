@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [34.2.1] - 2026-07-14
+
+> *A hotfix for the recipe selector disappearing from the Smart Panel on factories.*
+
+### Fixed
+
+- **The recipe selector is back in the Smart Panel on factories** - 34.2.0 accidentally hid the recipe picker for every production building (constructors, refineries, and the rest). The new Scale Daisy-Chain Power row shares the panel's "is this a logistics building" check, and adding it made factories look like logistics buildings to the recipe section, which collapsed it. Factories now show their recipe controls again, with the Daisy-Chain Power row still present, and logistics buildings still correctly hide the recipe section. (Issue #494, reported by Infarctus on the Smart! Discord)
+
+---
+
 ## [34.2.0] - 2026-07-14
 
 > *Tap-to-toggle controls for Steam Deck, automatic power daisy-chaining while scaling, a blueprint-only Auto-Connect switch - plus a run of Extend and Smart Upgrade fixes, including a material-duplication bug and dedicated-server recipe copying.*
