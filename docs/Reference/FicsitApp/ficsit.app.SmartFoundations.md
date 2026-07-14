@@ -169,21 +169,6 @@ What each feature does at a glance — follow a **Guide** link for the full how-
 | **Controls** | Keybinds and mouse, optional Player Relative building, and controller / Steam Deck support. | [Controls](https://github.com/majormer/SmartFoundations/wiki/Controls) |
 
 ---
-## 🔄 Extend Explained
-
-Extend copies a **finished factory cell** — a building plus the belts, pipes, splitters, mergers, and power around it — and continues the pattern in the direction you choose. It works best when the source module is clean: connections at the edges, a clear through-line, and side branches facing the right way.
-
-The wiki [Extend](https://github.com/majormer/SmartFoundations/wiki/Extend) page walks through the steps, what makes a good source module, the valid-manifold mental model, and the patterns that can fail.
-
----
-
-## 🔌 Auto-Connect Explained
-
-Auto-Connect is not magic routing — it is a best effort based on nearby connectors, directions, distance, and the game's own validation. If a connection does not look valid, Smart! leaves it open rather than build something broken.
-
-The wiki [Auto-Connect](https://github.com/majormer/SmartFoundations/wiki/Auto-Connect) page covers what it connects and tips for reliable results.
-
----
 ## 🎮 Controls
 
 Smart! uses **native Satisfactory keybinds**, customizable in **Options > Controls > Mods**. The essentials: press `K` for the Smart Panel, use the numpad (or hold an axis key and scroll) to size the grid, and hold a transform key — `;` spacing, `I` steps, `Y` stagger, `,` rotation — while scrolling to shape it.
