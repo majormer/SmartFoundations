@@ -329,170 +329,18 @@ Auto-Connect is not magic routing. It is Smart! making a best effort based on ne
 
 ---
 
-## 🎮 Controls and Feature Instructions
+## 🎮 Controls
 
-Smart! uses **native Satisfactory keybinds** that can be customized in **Options > Controls > Mods**.
+Smart! uses **native Satisfactory keybinds**, customizable in **Options > Controls > Mods**. The essentials: press `K` for the Smart Panel, use the numpad (or hold an axis key and scroll) to size the grid, and hold a transform key — `;` spacing, `I` steps, `Y` stagger, `,` rotation — while scrolling to shape it.
 
-> **Looking for the complete keybind list?** The [Controls](https://github.com/majormer/SmartFoundations/wiki/Controls) and [Settings Reference](https://github.com/majormer/SmartFoundations/wiki/Settings-Reference) wiki pages are generated from the mod's code and are the most accurate, always-current reference. The tables below cover the everyday controls.
+The complete, always-current reference lives on the wiki, generated from the mod's own code:
 
-### Grid Scaling
+- **[Controls](https://github.com/majormer/SmartFoundations/wiki/Controls)** — every keybind and mode.
+- **[Settings Reference](https://github.com/majormer/SmartFoundations/wiki/Settings-Reference)** — every mod setting.
+- **[Smart Panel & HUD](https://github.com/majormer/SmartFoundations/wiki/Smart-Panel-and-HUD)** — the on-screen panel and overlay.
+- **[Controller & Steam Deck](https://github.com/majormer/SmartFoundations/wiki/Controller-and-Steam-Deck)** — controller and radial-menu setups.
 
-Use Grid Scaling when you want to place multiple copies of the current buildable.
-
-| Action | Default Key | Description |
-|---|---|---|
-| Increase/Decrease X | `NumPad 8` / `NumPad 5` | Adjust grid width |
-| Increase/Decrease Y | `NumPad 6` / `NumPad 4` | Adjust grid depth |
-| Increase/Decrease Z | `NumPad 9` / `NumPad 3` | Adjust grid height or layers |
-| Adjust X with modifier | Hold `X` + `Scroll Wheel` or `NumPad 8/5` | Adjust X count using the shared increase/decrease controls |
-| Adjust Y with modifier | Hold `Z` + `Scroll Wheel` or `NumPad 8/5` | Adjust Y count using the shared increase/decrease controls |
-| Adjust Z with modifier | Hold `X` + `Z` + `Scroll Wheel` or `NumPad 8/5` | Adjust Z count using the shared increase/decrease controls |
-
-**How to use it:** Equip a buildable, increase the X/Y/Z counts until the preview matches the layout you want, then click once to place the grid.
-
-### Spacing Mode
-
-Use Spacing when the copies are too close together or you want room for walkways, belts, pipes, or decoration.
-
-| Action | Default Key | Description |
-|---|---|---|
-| Activate Spacing Mode | Hold `;` | Enables spacing adjustments while held |
-| Increase/Decrease Spacing | `Scroll Wheel` or `NumPad 8/5` while holding `;` | Adjust spacing on the active spacing axis |
-| Cycle Axis | `Num0` while holding `;` | Switch between X, Y, and Z spacing axes |
-
-**How to use it:** Hold `;`, adjust spacing with the mouse wheel, and press `Num0` while still holding `;` to change which axis you are spacing.
-
-### Steps Mode
-
-Use Steps to make each copy progressively higher or lower than the last one.
-
-| Action | Default Key | Description |
-|---|---|---|
-| Activate Steps Mode | Hold `I` | Enables step adjustments while held |
-| Increase/Decrease Steps | `Scroll Wheel` or `NumPad 8/5` while holding `I` | Adjust vertical rise on the active step axis |
-| Cycle Axis | `Num0` while holding `I` | Switch between X and Y step axes |
-
-**How to use it:** Hold `I`, adjust the height change, and place the preview when it forms the stair, ramp, or terraced layout you want.
-
-### Stagger Mode
-
-Use Stagger to offset rows or layers instead of placing every copy in a perfect rectangle.
-
-| Action | Default Key | Description |
-|---|---|---|
-| Activate Stagger Mode | Hold `Y` | Enables stagger adjustments while held |
-| Increase/Decrease Stagger | `Scroll Wheel` or `NumPad 8/5` while holding `Y` | Adjust offset on the active stagger axis |
-| Cycle Axis | `Num0` while holding `Y` | Switch between X, Y, ZX, and ZY stagger axes |
-
-**Stagger axes:**
-
-- **X/Y:** Horizontal offsets for diagonal or shifted rows.
-- **ZX/ZY:** Vertical lean patterns where higher layers shift sideways or forward.
-
-### Recipe Selection Mode
-
-Use Recipe Selection to choose the production recipe before placing a scaled group of machines.
-
-| Action | Default Key | Description |
-|---|---|---|
-| Activate Recipe Mode | Hold `U` while aiming a production building hologram | Enables recipe selection for that building type |
-| Next/Previous Recipe | `Scroll Wheel` or `NumPad 8/5` while holding `U` | Cycle available recipes |
-| Clear Manual Selection | `Num0` while holding `U` | Clear the manually selected recipe |
-
-**How to use it:** Aim a production building hologram, hold `U`, choose the recipe, release `U`, and place the grid. Smart! applies the selected recipe to the placed machines.
-
-### Auto-Connect Settings
-
-Use Auto-Connect settings when aiming a splitter, merger, pipe junction, or power pole hologram.
-
-| Action | Default Key | Description |
-|---|---|---|
-| Activate Auto-Connect Settings | Hold `U` while aiming a supported logistics or power hologram | Enables context-specific Auto-Connect settings |
-| Cycle Setting | `Num0` while holding `U` | Switch between available Auto-Connect options |
-| Increase/Decrease Value | `Scroll Wheel` or `NumPad 8/5` while holding `U` | Change the selected setting |
-| Session Toggle | Double-tap `Num0` with no modifiers | Toggle all Smart Auto-Connect and Extend off for the session, then double-tap again to re-enable |
-
-**For belt distributors:** Enable/disable Auto-Connect, distributor-to-distributor connections, and distributor-to-building belt tier selection.
-
-**For pipe junctions:** Enable/disable Auto-Connect, junction-to-junction pipe connections, junction-to-building pipe tier selection, and routing options.
-
-**For power poles:** Enable/disable power Auto-Connect, adjust connection range, and reserve power slots.
-
-### Smart! Panel
-
-Use the Smart! Panel when you prefer visual controls instead of keybinds.
-
-| Action | Default Key | Description |
-|---|---|---|
-| Toggle Smart! Panel | `K` | Opens or closes the context-sensitive panel |
-| Apply Changes | Click **Apply** | Applies panel changes to the hologram preview |
-| Cancel/Close | `Escape` | Closes the panel without applying uncommitted changes |
-
-**K is context-sensitive:**
-
-- Holding a **belt, lift, pipe, power line, or wall outlet** opens the **Smart Upgrade Panel**.
-- Holding most other buildables opens the **Smart! Panel** for grid, spacing, recipe, and Auto-Connect settings.
-
-> **Power note:** To upgrade a power grid, aim while holding a **Power Line** instead of a Power Pole. This keeps `K` available for scaling power poles through the Smart! Panel.
-
-### Rotation Transform
-
-Use Rotation Transform for arcs, curved roads, spiral-like ramps, and radial layouts.
-
-| Action | Default Key | Description |
-|---|---|---|
-| Activate Rotation Mode | Hold `,` | Enables rotation adjustments while held |
-| Increase/Decrease Rotation | `Scroll Wheel` or `NumPad 8/5` while holding `,` | Adjust rotation step in degrees |
-
-**How to use it:** Hold `,`, choose a rotation angle, then scale X to preview an arc. Add Y scaling for parallel curved lanes.
-
-### Visual Aids
-
-| Action | Default Key | Description |
-|---|---|---|
-| Toggle Arrows | `NumPad 1` | Show or hide axis direction arrows on holograms |
-
-### Smart Upgrade Instructions
-
-Use Smart Upgrade when you want to replace existing infrastructure with a different tier.
-
-1. Hold a belt, lift, pipe, power line, or wall outlet hologram.
-2. Press `K` to open the Smart Upgrade Panel.
-3. Choose radius mode or network traversal mode.
-4. Select the target tier or family.
-5. Review the cost preview.
-6. Execute the upgrade.
-
-Smart Upgrade supports belts, lifts, pipes, power poles, and wall outlets. It deducts the net material cost after refunds and aborts safely if materials are insufficient.
-
-### Extend Instructions
-
-Use Extend when you want to copy a working factory module.
-
-1. Build a clean source module first.
-2. Equip the same factory building type as the source building.
-3. Aim the hologram at the source building.
-4. Wait for the Extend preview.
-5. Use the mouse wheel to choose the side or direction.
-6. Use X/Y scaling if you want multiple copies or rows.
-7. Click to place the clone.
-
-For manifolds, connect factories to splitter/merger side ports and leave the straight-through ports for the continuing manifold line.
-
-### Smart Walking Instructions
-
-Use Smart Walking to lay one connected belt or pipe run that turns, climbs, and routes where you want it.
-
-1. Hold a stackable **conveyor pole** or **pipeline support** on the build gun.
-2. Press `K` to open the Smart! Panel, then click **Smart Walking**. (The button is hidden when the held buildable cannot be walked.)
-3. **Advance** the run with the scaling control to drop each new segment.
-4. **Steer the active segment** with the rotation, spacing, steps, and stagger controls to turn, set spacing, rise, and shift.
-5. **Back up** to undo the last segment.
-6. Press `K` any time to open the Smart Walking panel and edit any segment in a table.
-7. **Commit** the run in one build, paying the normal material cost. (The preview turns red if you cannot afford it, or if a segment is too long or too steep.)
-
-The keys match your scaling controls and can be customized in **Options > Controls > Mods**. See the [Controls](https://github.com/majormer/SmartFoundations/wiki/Controls) wiki page for the always-current list.
-
+---
 ## 📦 Supported Buildings
 
 Smart! supports many buildables, especially those with normal single-click placement.
