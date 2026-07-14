@@ -244,6 +244,12 @@ private:
 
 	/** Overflow items that couldn't fit in inventory (for crate spawning) */
 	TMap<TSubclassOf<class UFGItemDescriptor>, int32> OverflowItems;
+
+	/** [#485 temp] Batch material ledger for the accounting capture (Log level — Shipping strips
+	 *  Verbose). Charged = items actually deducted; Refunded = items actually credited (incl.
+	 *  overflow). Remove with the rest of the #485 diagnostics once the planner ships. */
+	TMap<TSubclassOf<class UFGItemDescriptor>, int32> BatchChargedTotals;
+	TMap<TSubclassOf<class UFGItemDescriptor>, int32> BatchRefundedTotals;
 	
 	/** Map of old conveyor -> new conveyor for fixing inter-connected upgrades */
 	TMap<class AFGBuildableConveyorBase*, class AFGBuildableConveyorBase*> OldToNewConveyorMap;

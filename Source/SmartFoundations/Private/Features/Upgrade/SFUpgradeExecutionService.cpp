@@ -9,6 +9,52 @@ namespace
 	{
 		return Family == ESFUpgradeFamily::Belt || Family == ESFUpgradeFamily::Lift;
 	}
+
+	// [#485 temp] Compact item-list formatting for the Shipping-visible accounting capture.
+	FString SF485_CostToString(const TArray<FItemAmount>& Items)
+	{
+		FString Out;
+		for (const FItemAmount& It : Items)
+		{
+			if (!It.ItemClass)
+			{
+				continue;
+			}
+			if (!Out.IsEmpty())
+			{
+				Out += TEXT(", ");
+			}
+			Out += FString::Printf(TEXT("%dx%s"), It.Amount, *UFGItemDescriptor::GetItemName(It.ItemClass).ToString());
+		}
+		return Out.IsEmpty() ? FString(TEXT("(none)")) : Out;
+	}
+
+	// [#485 temp] Same, for the net/ledger maps. bNegate flips sign for refund-side printing.
+	FString SF485_MapToString(const TMap<TSubclassOf<UFGItemDescriptor>, int32>& Items, bool bPositiveOnly = false, bool bNegativeOnly = false)
+	{
+		FString Out;
+		for (const auto& Pair : Items)
+		{
+			if (!Pair.Key || Pair.Value == 0)
+			{
+				continue;
+			}
+			if (bPositiveOnly && Pair.Value < 0)
+			{
+				continue;
+			}
+			if (bNegativeOnly && Pair.Value > 0)
+			{
+				continue;
+			}
+			if (!Out.IsEmpty())
+			{
+				Out += TEXT(", ");
+			}
+			Out += FString::Printf(TEXT("%dx%s"), FMath::Abs(Pair.Value), *UFGItemDescriptor::GetItemName(Pair.Key).ToString());
+		}
+		return Out.IsEmpty() ? FString(TEXT("(none)")) : Out;
+	}
 }
 
 void USFUpgradeExecutionService::Initialize(USFSubsystem* InSubsystem)
@@ -130,6 +176,8 @@ void USFUpgradeExecutionService::StartUpgrade(const FSFUpgradeExecutionParams& P
 	bChainCached = false;
 	AccumulatedCosts.Empty();  // Reset accumulated costs
 	OverflowItems.Empty();     // Reset overflow items
+	BatchChargedTotals.Empty();   // [#485 temp] reset accounting ledger
+	BatchRefundedTotals.Empty();  // [#485 temp]
 	OldToNewConveyorMap.Empty(); // Reset old->new mapping for batch connection fixes
 	OldToNewBuildableMap.Empty(); // Reset general old->new mapping (Option A/B)
 	SavedConnectionPairs.Empty(); // Reset saved connection pairs
@@ -207,6 +255,15 @@ void USFUpgradeExecutionService::StartUpgrade(const FSFUpgradeExecutionParams& P
 	{
 		WorkingResult.ErrorMessage = TEXT("Ran out of materials - partial upgrade completed");
 	}
+
+	// [#485 temp] Batch accounting summary (belt family feeds the ledger; other families TBD).
+	UE_LOG(LogSmartUpgrade, Log,
+		TEXT("[#485] BATCH SUMMARY: planned=%d success=%d fail=%d skip=%d fundsAbort=%s | charged={%s} refunded={%s} overflow={%s}"),
+		PendingUpgrades.Num(), WorkingResult.SuccessCount, WorkingResult.FailCount, WorkingResult.SkipCount,
+		bAbortedDueToFunds ? TEXT("yes") : TEXT("no"),
+		*SF485_MapToString(BatchChargedTotals),
+		*SF485_MapToString(BatchRefundedTotals),
+		*SF485_MapToString(OverflowItems));
 
 	// Complete immediately
 	CompleteUpgrade();
@@ -794,6 +851,10 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 
 			// Get cost from hologram (length-aware for belts)
 			TArray<FItemAmount> BaseCost = Hologram->GetBaseCost();
+			// [#485 temp] This read happens BEFORE GenerateAndUpdateSpline — capture what execution
+			// actually prices so it can be compared against the post-spline re-price logged below.
+			UE_LOG(LogSmartUpgrade, Log, TEXT("[#485] Belt %s (len=%.1fm): PRE-spline GetBaseCost = %s"),
+				*OldBelt->GetName(), OldBelt->GetLength() / 100.0f, *SF485_CostToString(BaseCost));
 			UE_LOG(LogSmartUpgrade, VeryVerbose, TEXT("Belt upgrade cost: Hologram->GetBaseCost() returned %d items"), BaseCost.Num());
 			for (const FItemAmount& ItemAmount : BaseCost)
 			{
@@ -829,6 +890,12 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 				}
 			}
 
+			// [#485 temp] Per-belt settlement: what this belt is about to charge vs refund.
+			UE_LOG(LogSmartUpgrade, Log, TEXT("[#485] Belt %s: settling charge={%s} refund={%s}"),
+				*OldBelt->GetName(),
+				*SF485_MapToString(ItemCost, /*bPositiveOnly=*/true),
+				*SF485_MapToString(ItemCost, /*bPositiveOnly=*/false, /*bNegativeOnly=*/true));
+
 			// Check if player can afford this item
 			UWorld* CostWorld = Subsystem ? Subsystem->GetWorld() : nullptr;
 			AFGCentralStorageSubsystem* CentralStorage = CostWorld ? AFGCentralStorageSubsystem::Get(CostWorld) : nullptr;
@@ -862,12 +929,14 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 				{
 					UFGInventoryLibrary::GrabItemsFromInventoryAndCentralStorage(
 						PlayerInventory, CentralStorage, bTakeFromInventoryFirst, Entry.Key, Entry.Value);
+					BatchChargedTotals.FindOrAdd(Entry.Key) += Entry.Value;  // [#485 temp]
 					UE_LOG(LogSmartUpgrade, VeryVerbose, TEXT("Belt upgrade: Deducted %d %s"),
 						Entry.Value, *UFGItemDescriptor::GetItemName(Entry.Key).ToString());
 				}
 				else if (Entry.Value < 0 && Entry.Key)
 				{
 					int32 RefundAmount = -Entry.Value;
+					BatchRefundedTotals.FindOrAdd(Entry.Key) += RefundAmount;  // [#485 temp]
 					int32 Added = PlayerInventory->AddStack(FInventoryStack(RefundAmount, Entry.Key), true);
 					if (Added < RefundAmount)
 					{
@@ -891,6 +960,10 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 		{
 			UE_LOG(LogSmartUpgrade, VeryVerbose, TEXT("⚙️ STEP 5: Calling GenerateAndUpdateSpline..."));
 			BeltHologram->GenerateAndUpdateSpline(HitResult);
+			// [#485 temp] Re-price now that the real spline exists. Any divergence from the
+			// PRE-spline line above is the exact amount execution under/over-charged.
+			UE_LOG(LogSmartUpgrade, Log, TEXT("[#485] Belt %s: POST-spline GetBaseCost = %s"),
+				*OldBelt->GetName(), *SF485_CostToString(BeltHologram->GetBaseCost()));
 			UE_LOG(LogSmartUpgrade, VeryVerbose, TEXT("⚙️ STEP 5: GenerateAndUpdateSpline complete"));
 		}
 

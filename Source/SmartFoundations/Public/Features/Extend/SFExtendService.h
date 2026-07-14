@@ -353,16 +353,13 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Smart|Extend")
     void RefreshExtension(AFGHologram* SourceHologram, bool bForceRefresh = false);
 
-    /** #342: manual Extend hold ("pin"). The vanilla Hold key (H) toggles this at the build-state
-     *  lock seam, so the player can freeze the current Extend preview
+    /** #342: manual Extend hold ("pin"). The vanilla Hold key (H) toggles this through the
+     *  unlock detection in RefreshExtension, so the player can freeze the current Extend preview
      *  unchanged and look around to verify clearance. Tracked SEPARATELY from bExtendCommitted (the
      *  scale-action commit) so toggling the pin never disturbs scaled Extend / transform behaviour;
      *  either flag makes Extend sticky. */
     void SetExtendManualHold(bool bHold) { bExtendManualHold = bHold; }
     bool IsExtendManualHoldActive() const { return bExtendManualHold; }
-
-    /** Handle a vanilla Hold-key unlock for the active Extend hologram. */
-    bool HandleHologramLockToggle(AFGHologram* Hologram);
 
     /** True when this is the hologram currently owned by the live Extend session. */
     bool IsCurrentExtendHologram(const AFGHologram* Hologram) const

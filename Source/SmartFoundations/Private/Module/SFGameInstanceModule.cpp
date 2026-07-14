@@ -126,9 +126,6 @@ void USFGameInstanceModule::DispatchLifecycleEvent(ELifecyclePhase Phase)
 		// moment (fixes the InfiniteNudge rotate-while-scaling conflict). See the header comment.
 		RegisterBuildGunScrollSuppressionHook();
 
-		// #342: capture Hold directly; polling the transient unlocked state is aim/tick-order dependent.
-		RegisterExtendHologramLockHook();
-
 	}
 }
 
@@ -570,29 +567,4 @@ void USFGameInstanceModule::RegisterBuildGunScrollSuppressionHook()
 		});
 
 	UE_LOG(LogSmartFoundations, Verbose, TEXT("[#162] UFGBuildGunStateBuild::Scroll_Implementation hook registered (wheel-rotation suppression while Smart! owns the hologram)"));
-}
-
-void USFGameInstanceModule::RegisterExtendHologramLockHook()
-{
-	SUBSCRIBE_METHOD_AFTER(
-		UFGBuildGunStateBuild::ToggleHologramPositionLock,
-		[](UFGBuildGunStateBuild* self)
-		{
-			if (!self)
-			{
-				return;
-			}
-
-			AFGBuildGun* Gun = self->GetBuildGun();
-			UWorld* World = Gun ? Gun->GetWorld() : nullptr;
-			USFSubsystem* Subsystem = World ? USFSubsystem::Get(World) : nullptr;
-			USFExtendService* ExtendService = Subsystem ? Subsystem->GetExtendService() : nullptr;
-			if (ExtendService)
-			{
-				ExtendService->HandleHologramLockToggle(self->GetHologram());
-			}
-		});
-
-	UE_LOG(LogSmartFoundations, Verbose,
-		TEXT("[#342] UFGBuildGunStateBuild::ToggleHologramPositionLock hook registered (deterministic Extend pin toggle)"));
 }

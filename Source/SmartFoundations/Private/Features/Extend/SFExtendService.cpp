@@ -1713,30 +1713,6 @@ EHologramMaterialState USFExtendService::ResolveChildPreviewMaterialState(const 
     return EHologramMaterialState::HMS_OK;
 }
 
-bool USFExtendService::HandleHologramLockToggle(AFGHologram* Hologram)
-{
-    if (!IsExtendModeActive() || !IsCurrentExtendHologram(Hologram) || Hologram->IsHologramLocked())
-    {
-        return false;
-    }
-
-    if (!bExtendManualHold)
-    {
-        // First Hold press pins an uncommitted Extend preview for inspection (#342).
-        bExtendManualHold = true;
-        Hologram->LockHologramPosition(true);
-        return true;
-    }
-
-    // A second Hold press is an explicit release. Tear down immediately instead of relying on a
-    // later look-away trace: from one side the trace can continue hitting the source building and
-    // RefreshExtension would otherwise re-lock forever. Reuse the post-build target cooldown so
-    // that same source cannot reactivate Extend while it remains under the crosshair.
-    LastBuiltFromBuilding = CurrentExtendTarget;
-    ClearExtendState();
-    return true;
-}
-
 void USFExtendService::RefreshExtension(AFGHologram* SourceHologram, bool bForceRefresh)
 {
     if (!bHasValidTarget || !CurrentExtendTarget.IsValid())
@@ -1816,10 +1792,14 @@ void USFExtendService::RefreshExtension(AFGHologram* SourceHologram, bool bForce
         ActiveHologram->SetHologramLocationAndRotation(FloorHit);
     }
 
-    // Extend owns placement while active. The Hold-key pin toggle is handled directly at the build
-    // state's lock seam; this is only a defensive lock assertion for non-input state changes.
+    // #342: Extend re-locks every frame, so an unlocked active hologram means the player pressed
+    // Hold. Toggle the manual pin before restoring the placement lock.
     if (!ActiveHologram->IsHologramLocked())
     {
+        bExtendManualHold = !bExtendManualHold;
+        UE_LOG(LogSmartExtend, Verbose, TEXT("EXTEND: manual hold %s - preview %s"),
+            bExtendManualHold ? TEXT("ENGAGED") : TEXT("RELEASED"),
+            bExtendManualHold ? TEXT("pinned") : TEXT("tracking"));
         ActiveHologram->LockHologramPosition(true);
     }
 
