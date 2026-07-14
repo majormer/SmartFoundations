@@ -353,13 +353,21 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Smart|Extend")
     void RefreshExtension(AFGHologram* SourceHologram, bool bForceRefresh = false);
 
-    /** #342: manual Extend hold ("pin"). The vanilla Hold key (H) toggles this through the
-     *  unlock detection in RefreshExtension, so the player can freeze the current Extend preview
-     *  unchanged and look around to verify clearance. Tracked SEPARATELY from bExtendCommitted (the
-     *  scale-action commit) so toggling the pin never disturbs scaled Extend / transform behaviour;
-     *  either flag makes Extend sticky. */
+    /** #342: manual Extend hold ("pin"). The vanilla Hold key (H) toggles this via
+     *  HandleHologramLockToggle (deterministic hook at the build state's lock seam), so the player
+     *  can freeze the current Extend preview unchanged and look around to verify clearance.
+     *  Tracked SEPARATELY from bExtendCommitted (the scale-action commit) so toggling the pin never
+     *  disturbs scaled Extend / transform behaviour; either flag makes Extend sticky. */
     void SetExtendManualHold(bool bHold) { bExtendManualHold = bHold; }
     bool IsExtendManualHoldActive() const { return bExtendManualHold; }
+
+    /** [#478] Deterministic Hold-key (H) handling for the active Extend hologram, called AFTER
+     *  vanilla's ToggleHologramPositionLock unlocked it. TOGGLES the manual pin per the Extend
+     *  intent model: pin ON = deliberate commit of a non-scaled Extend (sticky, inspect from any
+     *  angle); pin OFF = back to transient (look-away releases). The positional lock is always
+     *  re-asserted — Extend owns placement while active. Never touches bExtendCommitted, so H can
+     *  never un-stick a scaled Extend. Returns true when the press was consumed for Extend. */
+    bool HandleHologramLockToggle(AFGHologram* Hologram);
 
     /** True when this is the hologram currently owned by the live Extend session. */
     bool IsCurrentExtendHologram(const AFGHologram* Hologram) const
@@ -772,9 +780,12 @@ private:
     /** Flag indicating EXTEND was active and needs final cleanup when build gun leaves build mode */
     bool bNeedsFinalCleanup = false;
 
-    /** Whether the user has committed to Extend by performing a scale action.
-     *  Before committing, looking away deactivates Extend normally (allows middle-click sampling).
-     *  After committing, sticky extend keeps Extend alive when looking away. */
+    /** Whether the user has committed to Extend by scaling beyond a single clone. FOLLOWS the
+     *  scaled state (grid >1 on Chain or Rows), it is not a one-way latch: scaling back to a
+     *  single clone returns the session to transient, where looking away deactivates Extend
+     *  normally (allows middle-click sampling) and the Hold pin (H) is the explicit way to keep
+     *  it. While committed, sticky extend keeps Extend alive when looking away until the build
+     *  gun goes away. */
     bool bExtendCommitted = false;
 
     /** [#478] SynchronizeChainCounterToDirection writes the signed Chain counter through

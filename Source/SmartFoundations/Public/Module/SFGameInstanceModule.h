@@ -114,6 +114,16 @@ protected:
 	 */
 	void RegisterBuildGunScrollSuppressionHook();
 
+	/**
+	 * [#478/#342] Hook UFGBuildGunStateBuild::ToggleHologramPositionLock (AFTER) so the vanilla
+	 * Hold key (H) toggles the Extend manual pin DETERMINISTICALLY. The previous poll — treating
+	 * any unlocked frame seen by RefreshExtension as a Hold press — was aim/tick-order dependent,
+	 * and the activation-time Chain-sign sync could reach it before the hologram was locked,
+	 * silently pinning Extend on one side of a chain only. Delegates to
+	 * USFExtendService::HandleHologramLockToggle; a no-op outside an active Extend session.
+	 */
+	void RegisterExtendHologramLockHook();
+
 	/** Smart! Configuration blueprint - registered with SML for in-game menu access */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Smart! Configuration")
 	TSubclassOf<class UModConfiguration> SmartConfigClass;

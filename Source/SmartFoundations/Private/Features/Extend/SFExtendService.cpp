@@ -301,6 +301,9 @@ bool USFExtendService::SynchronizeChainCounterToDirection()
 
     State.GridCounters.X = SignedMagnitude;
     bSuppressCommitOnCounterSync = true;  // programmatic sign/magnitude sync, not a user scale action
+    // [#478 temp] Shipping-visible: the side-dependent programmatic write.
+    UE_LOG(LogSmartExtend, Log, TEXT("[#478] Chain counter sync: X -> %d (dir=%s), latch armed"),
+        SignedMagnitude, DetectionService->GetExtendDirection() == ESFExtendDirection::Left ? TEXT("Left") : TEXT("Right"));
     Subsystem->UpdateCounterState(State);
     return true;
 }
@@ -1387,6 +1390,15 @@ bool USFExtendService::TryExtendFromBuilding(AFGBuildable* HitBuilding, AFGHolog
             if (bExtendCommitted || bExtendManualHold)
             {
                 // Committed (scale action) or manually pinned (Hold key, #342) — keep Extend alive, maintain preview
+                // [#478 temp] Shipping-visible: WHY look-away is being ignored (throttled).
+                static double LastKeepAliveLog = 0;
+                const double KeepAliveNow = FPlatformTime::Seconds();
+                if (KeepAliveNow - LastKeepAliveLog > 1.0)
+                {
+                    UE_LOG(LogSmartExtend, Log, TEXT("[#478] Look-away IGNORED: committed=%d manualHold=%d target=%s"),
+                        bExtendCommitted ? 1 : 0, bExtendManualHold ? 1 : 0, *GetNameSafe(CurrentExtendTarget.Get()));
+                    LastKeepAliveLog = KeepAliveNow;
+                }
                 if (CurrentExtendHologram.IsValid())
                 {
                     RefreshExtension(CurrentExtendHologram.Get());
@@ -1397,6 +1409,8 @@ bool USFExtendService::TryExtendFromBuilding(AFGBuildable* HitBuilding, AFGHolog
             {
                 // Not committed — deactivate Extend so user can sample/build elsewhere
                 SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("🔄 EXTEND: Deactivating (not committed, looked away)"));
+                // [#478 temp] Shipping-visible: normal look-away release.
+                UE_LOG(LogSmartExtend, Log, TEXT("[#478] Look-away RELEASE: target=%s"), *GetNameSafe(CurrentExtendTarget.Get()));
                 ClearExtendState();
                 return false;
             }
@@ -1622,6 +1636,15 @@ bool USFExtendService::TryExtendFromBuilding(AFGBuildable* HitBuilding, AFGHolog
     // Track which hologram we've set up for EXTEND
     CurrentExtendHologram = ActiveHologram;
 
+    // Lock the hologram BEFORE the signed-counter sync below. That sync triggers a scaled
+    // rebuild whose RefreshExtension runs REENTRANTLY, mid-activation — and RefreshExtension
+    // treats an unlocked active hologram as a player Hold press (#342 pin). Locking first means
+    // the reentrant pass finds a locked hologram; otherwise the side of the chain whose Chain
+    // sign differs from the prior counter silently engaged the pin at activation, making Extend
+    // sticky on that one side ("auto-lock") while the other side released on look-away normally.
+    ActiveHologram->LockHologramPosition(true);
+    UE_LOG(LogSmartExtend, VeryVerbose, TEXT("🔄 EXTEND: Locked hologram %s"), *ActiveHologram->GetClass()->GetName());
+
     // Swapping the hologram can publish the pre-Extend counter state through the subsystem and
     // temporarily drive the selector from its stale X sign. Preserve the side selected above and
     // make signed Chain state authoritative before the first placement or logistics preview.
@@ -1630,10 +1653,6 @@ bool USFExtendService::TryExtendFromBuilding(AFGBuildable* HitBuilding, AFGHolog
         DetectionService->SetExtendDirection(CurrentDir);
     }
     SynchronizeChainCounterToDirection();
-
-    // Lock the hologram
-    ActiveHologram->LockHologramPosition(true);
-    UE_LOG(LogSmartExtend, VeryVerbose, TEXT("🔄 EXTEND: Locked hologram %s"), *ActiveHologram->GetClass()->GetName());
 
     // Position the parent through the same signed Chain/Rows placement path used by scaled clones,
     // Restore, and the logistics previews. The former selector-based calculation used a separate
@@ -1711,6 +1730,26 @@ EHologramMaterialState USFExtendService::ResolveChildPreviewMaterialState(const 
         }
     }
     return EHologramMaterialState::HMS_OK;
+}
+
+bool USFExtendService::HandleHologramLockToggle(AFGHologram* Hologram)
+{
+    // Only consume the press when vanilla just UNLOCKED the hologram Extend owns: while Extend is
+    // active the hologram is always locked, so an H press always lands here as locked->unlocked.
+    if (!IsExtendModeActive() || !IsCurrentExtendHologram(Hologram) || Hologram->IsHologramLocked())
+    {
+        return false;
+    }
+
+    // Toggle the pin per the Extend intent model: ON = deliberate commit of a non-scaled Extend
+    // (sticky - walk around and inspect from any angle); OFF = back to transient, so moving the
+    // crosshair off the source releases normally. The positional lock is always re-asserted;
+    // bExtendCommitted is never touched, so H cannot un-stick a scaled Extend.
+    bExtendManualHold = !bExtendManualHold;
+    Hologram->LockHologramPosition(true);
+    UE_LOG(LogSmartExtend, Log, TEXT("[#478] Hold key: pin %s"),  // [#478 temp] Log-level for validation; demote to Verbose after
+        bExtendManualHold ? TEXT("ON (sticky, inspect freely)") : TEXT("OFF (transient, look-away releases)"));
+    return true;
 }
 
 void USFExtendService::RefreshExtension(AFGHologram* SourceHologram, bool bForceRefresh)
@@ -1792,14 +1831,13 @@ void USFExtendService::RefreshExtension(AFGHologram* SourceHologram, bool bForce
         ActiveHologram->SetHologramLocationAndRotation(FloorHit);
     }
 
-    // #342: Extend re-locks every frame, so an unlocked active hologram means the player pressed
-    // Hold. Toggle the manual pin before restoring the placement lock.
+    // Extend owns placement while active, so re-assert the lock defensively — but NEVER treat an
+    // unlocked frame as player intent here. Poll-based Hold detection was aim/tick-order dependent
+    // and mid-activation refreshes (the Chain-sign sync rebuild) reach this line before activation
+    // has locked the hologram, which silently pinned Extend on exactly one side of a chain. The
+    // Hold key is handled deterministically at the build state's lock seam (HandleHologramLockToggle).
     if (!ActiveHologram->IsHologramLocked())
     {
-        bExtendManualHold = !bExtendManualHold;
-        UE_LOG(LogSmartExtend, Verbose, TEXT("EXTEND: manual hold %s - preview %s"),
-            bExtendManualHold ? TEXT("ENGAGED") : TEXT("RELEASED"),
-            bExtendManualHold ? TEXT("pinned") : TEXT("tracking"));
         ActiveHologram->LockHologramPosition(true);
     }
 

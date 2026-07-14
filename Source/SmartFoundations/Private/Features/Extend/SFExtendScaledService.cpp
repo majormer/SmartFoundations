@@ -148,28 +148,34 @@ void USFExtendScaledService::RebuildScaledExtendNow()
         return;
     }
 
-    // First scale action commits to Extend (enables sticky behavior). A rebuild triggered only
-    // by the activation/direction-cycle counter sync is not a user action and must not commit,
-    // or look-away release breaks on the side whose Chain sign differs from the prior counter.
-    if (!Owner->bExtendCommitted)
+    int32 CloneCount = Owner->GetExtendCloneCount();
+    int32 RowCount = Owner->GetExtendRowCount();
+
+    // Commitment FOLLOWS the scaled state rather than latching one-way: a grid beyond a single
+    // clone is the deliberate, persistent Extend (sticky until the build gun goes away); scaling
+    // BACK to a single clone returns the session to transient — look-away releases, and the Hold
+    // pin (H) is available again. The one-way latch left Extend permanently stuck after a scale
+    // up/down round trip. A rebuild triggered by the activation/direction-cycle counter sync is
+    // not a user action and must not change commitment either way, or look-away release breaks on
+    // the side whose Chain sign differs from the prior counter.
+    if (Owner->bSuppressCommitOnCounterSync)
     {
-        if (Owner->bSuppressCommitOnCounterSync)
-        {
-            Owner->bSuppressCommitOnCounterSync = false;
-        }
-        else
-        {
-            Owner->bExtendCommitted = true;
-            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("⚡ SCALED EXTEND: Committed (first scale action)"));
-        }
+        Owner->bSuppressCommitOnCounterSync = false;
+        // [#478 temp] Shipping-visible: programmatic sync rebuild, commitment untouched.
+        UE_LOG(LogSmartExtend, Log, TEXT("[#478] Rebuild: commitment unchanged (programmatic counter sync)"));
     }
     else
     {
-        Owner->bSuppressCommitOnCounterSync = false;
+        const bool bScaledBeyondSingle = CloneCount > 1 || RowCount > 1;
+        if (Owner->bExtendCommitted != bScaledBeyondSingle)
+        {
+            Owner->bExtendCommitted = bScaledBeyondSingle;
+            // [#478 temp] Shipping-visible: the ONLY place scale-commitment changes.
+            UE_LOG(LogSmartExtend, Log, TEXT("[#478] Rebuild: EXTEND %s (grid %dx%d)"),
+                bScaledBeyondSingle ? TEXT("COMMITTED (scaled beyond single clone)") : TEXT("UNCOMMITTED (back to single clone)"),
+                CloneCount, RowCount);
+        }
     }
-
-    int32 CloneCount = Owner->GetExtendCloneCount();
-    int32 RowCount = Owner->GetExtendRowCount();
 
     SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("⚡ SCALED EXTEND: State changed - X=%d (clones=%d), Y=%d (rows=%d)"),
         CloneCount, CloneCount, RowCount, RowCount);
