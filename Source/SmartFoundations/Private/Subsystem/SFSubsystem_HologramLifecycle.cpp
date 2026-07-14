@@ -9,6 +9,7 @@
 #include "Hologram/FGPipelinePoleHologram.h"
 #include "Holograms/Logistics/SFPipelinePoleChildHologram.h"
 #include "Features/Walk/SFWalkService.h"   // GetSeedHologram() for the held-buildable-changed walk cancel
+#include "Shared/Conduits/SFConveyanceConstants.h"
 
 
 // Hologram management with enhanced logging
@@ -83,6 +84,27 @@ void USFSubsystem::RegisterActiveHologram(AFGHologram* Hologram)
 			TEXT("[SmartRestore][Extend] Dropped restored topology for incompatible active hologram: hologram=%s buildClass=%s"),
 			*GetNameSafe(Hologram),
 			*GetNameSafe(Hologram->GetBuildClass()));
+	}
+
+	// Extend replaces the vanilla factory hologram with a Smart hologram, then the normal poll
+	// registers that same actor on the following tick. This is an identity-preserving handoff,
+	// not a new recipe selection, so its signed Chain/Rows state must survive registration.
+	const bool bLiveExtendActiveAtRegister =
+		ExtendService &&
+		ExtendService->IsExtendModeActive() &&
+		ExtendService->IsCurrentExtendHologram(Hologram);
+	const bool bPreserveExtendStateAtRegister =
+		bRestoredExtendActiveAtRegister || bLiveExtendActiveAtRegister;
+
+	// [#482] Latch compatibility across hologram registrations: vanilla destroys and recreates
+	// the hologram after every placement, and a compatible latch should survive that (matching
+	// how a physically held key rides the replacement). A DIFFERENT build class is a new build
+	// decision - clear the latch rather than carry a stale mode (notably Recipe onto a
+	// non-factory, whose U context changes entirely).
+	if (LatchedTransformMode != ESFLatchedTransformMode::None
+		&& Hologram && Hologram->GetBuildClass() != LatchedModeBuildClass)
+	{
+		ClearLatchedTransformMode(TEXT("incompatible hologram registered"));
 	}
 
 	// Reset auto-connect runtime settings when hologram changes
@@ -178,9 +200,9 @@ void USFSubsystem::RegisterActiveHologram(AFGHologram* Hologram)
 	}
 
 	// Reset all counters for new hologram (centralized - Task 51).
-	// Restored Extend presets are edited as a sticky staged graph; vanilla may recreate
-	// the parent hologram while aiming, so preserve Smart transform state across that swap.
-	if (!bRestoredExtendActiveAtRegister)
+	// Restored Extend presets and the live Extend hologram swap both retain the current
+	// signed transform state across identity-preserving registrations.
+	if (!bPreserveExtendStateAtRegister)
 	{
 		ResetCounters();
 	}
@@ -209,7 +231,7 @@ void USFSubsystem::RegisterActiveHologram(AFGHologram* Hologram)
 	{
 		HudService->ResetState();
 	}
-	if (bRestoredExtendActiveAtRegister)
+	if (bPreserveExtendStateAtRegister)
 	{
 		UpdateCounterDisplay();
 	}
@@ -291,10 +313,12 @@ void USFSubsystem::RegisterActiveHologram(AFGHologram* Hologram)
 		}
 	}
 
-	// Apply default spacing for belt/pipe support poles (User Request, Issue #268)
-	// Sets 54m (5400cm) spacing to facilitate bus building
-	// Wall conveyor poles scale along Y, so default spacing goes on Y axis for them
-	if (USFAutoConnectService::IsStackableSupportHologram(Hologram) || USFAutoConnectService::IsBeltSupportHologram(Hologram) || USFAutoConnectService::IsPipeSupportHologram(Hologram))
+	// Apply default spacing for belt/pipe support poles (Issues #268, #488).
+	// Grid spacing is the gap after the buildable footprint, so belt supports derive their gap from the
+	// shared 56m interval. Wall supports scale along Y; the other support families scale along X.
+	const bool bBeltSupport = USFAutoConnectService::IsBeltSupportHologram(Hologram);
+	const bool bPipeSupport = USFAutoConnectService::IsPipeSupportHologram(Hologram);
+	if (bBeltSupport || bPipeSupport)
 	{
 		const bool bWallPole = USFAutoConnectService::IsWallConveyorPoleHologram(Hologram)
 			|| USFAutoConnectService::IsWallPipelineSupportHologram(Hologram);  // #364: wall pipe supports scale along Y too
@@ -302,7 +326,7 @@ void USFSubsystem::RegisterActiveHologram(AFGHologram* Hologram)
 
 		if (SpacingAxis == 0)
 		{
-			SpacingAxis = 5400; // 54m (belts vanish at 55m due to belt length limit)
+			SpacingAxis = USFAutoConnectService::GetDefaultConveyanceSupportGridSpacing(Hologram);
 
 			// Sync the updated state back to GridStateService if it exists
 			if (GridStateService)
@@ -310,14 +334,12 @@ void USFSubsystem::RegisterActiveHologram(AFGHologram* Hologram)
 				GridStateService->UpdateCounterState(CounterState);
 			}
 
-			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 SUPPORT POLE: Applied default Spacing%s=5400cm for bus layout"),
-				bWallPole ? TEXT("Y") : TEXT("X"));
 			UpdateCounterDisplay();
 		}
 	}
 
 	// #405: stackable hypertube poles default X spacing to the pole-spacing max (9500cm / 95m), not the
-	// belt/pipe 54m, because hypertube spans reach much farther (96m chord cap minus ~1m connector offset).
+	// belt/pipe defaults, because hypertube spans reach much farther (96m chord cap minus ~1m connector offset).
 	// Separate if (not folded into the #268 gate above) because hypertube and pipe stackable supports share a
 	// hologram class, disambiguated only by build class — the hypertube branch must own SpacingX.
 	if (USFAutoConnectService::IsStackableHypertubeSupportHologram(Hologram))
@@ -408,7 +430,7 @@ void USFSubsystem::RegisterActiveHologram(AFGHologram* Hologram)
 		// Recipe Copying System - Use existing stored recipe
 		// ========================================
 
-		// Recipe storage should only come from existing buildings via StoreProductionRecipeFromBuilding
+		// Implicit recipe storage comes from vanilla-authorized building settings samples.
 		// Holograms only have build recipes, not production recipes
 		// We preserve any existing stored production recipe for inheritance
 
@@ -859,18 +881,6 @@ void USFSubsystem::PollForActiveHologram()
 			ResetCounters();
 		}
 		return;
-	}
-
-	// Subscribe to recipe sampling delegate for recipe copying (only once!)
-	if (BuildGun && IsValid(BuildGun) && !bHasSubscribedToRecipeSampled)
-	{
-		BuildGun->mOnRecipeSampled.AddDynamic(this, &USFSubsystem::OnBuildGunRecipeSampled);
-		bHasSubscribedToRecipeSampled = true;
-		UE_LOG(LogSmartFoundations, Verbose, TEXT("RECIPE COPYING: Subscribed to build gun's OnRecipeSampled delegate"));
-	}
-	else if (!bHasSubscribedToRecipeSampled)
-	{
-		UE_LOG(LogSmartFoundations, Verbose, TEXT("RECIPE COPYING: BuildGun is invalid, cannot subscribe to recipe sampling delegate"));
 	}
 
 	// Check if we're in build state
@@ -1554,9 +1564,6 @@ void USFSubsystem::OnBuildGunUnequipped()
 	// stagger FAMILY persists: it rides the stored StaggerAxis exactly like the classic axes.)
 	PlayerRelativeSlots = {};
 
-	// Reset recipe sampling subscription flag
-	bHasSubscribedToRecipeSampled = false;
-
 	// Log contexts at unequip
 	LogActiveInputContexts(TEXT("BuildGunUnequipped"));
 
@@ -1581,6 +1588,9 @@ void USFSubsystem::OnBuildGunUnequipped()
 	// Issue #198: Reset one-shot Smart disable flag when build gun is unequipped
 	ResetSmartDisableFlag();
 
+	// [#482] Unequip is a hard latch boundary.
+	ClearLatchedTransformMode(TEXT("build gun unequipped"));
+
 	// Issue #208/#209: User requested that sampled recipes and items (Shards/Somersloops)
 	// should NOT persist across build gun sessions to avoid accidentally applying them
 	// to unrelated builds later. We clear them on unequip.
@@ -1603,6 +1613,12 @@ void USFSubsystem::OnBuildGunStateChanged(const FString& NewStateName, const FSt
 {
 	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔄 BUILD GUN STATE CHANGE: %s -> %s"), *OldStateName, *NewStateName);
 	LastBuildGunState = NewStateName;
+
+	// [#482] A latched transform mode only makes sense while actively building.
+	if (OldStateName == TEXT("BGS_BUILD") && NewStateName != TEXT("BGS_BUILD"))
+	{
+		ClearLatchedTransformMode(TEXT("build gun left build state"));
+	}
 
 	// Log contexts at every state change
 	LogActiveInputContexts(FString::Printf(TEXT("StateChange_%s"), *NewStateName));

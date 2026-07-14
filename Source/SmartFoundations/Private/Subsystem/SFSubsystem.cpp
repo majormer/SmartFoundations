@@ -13,6 +13,10 @@
 #include "Blueprint/UserWidget.h"
 #include "GameFramework/PlayerController.h"  // FInputModeGameAndUI/GameOnly for the Walk panel show/hide
 #include "Hologram/FGBuildableHologram.h"    // [#296] IsInZoopBuildMode / GetDefaultBuildGunMode
+#include "Holograms/Core/SFScalingSpecExpansion.h"
+#include "Holograms/Power/SFWireHologram.h"
+#include "Constants/SFAssetPaths.h"
+#include "Buildables/FGBuildableWire.h"
 
 USFSubsystem::USFSubsystem() : Super()
 {
@@ -393,6 +397,13 @@ void USFSubsystem::UpdateCounterState(const FSFCounterState& NewState)
 	// This handles spacing, steps, rotation adjustments via DispatchValueAdjust path
 	if (IsExtendModeActive() && ExtendService)
 	{
+		// [#482] Stagger has no meaning during Extend (its hold path is gated off); a stagger
+		// latch engaged BEFORE Extend activated must not survive into the Extend session.
+		if (LatchedTransformMode == ESFLatchedTransformMode::Stagger)
+		{
+			ClearLatchedTransformMode(TEXT("Extend activated"));
+		}
+		ExtendService->SynchronizeDirectionFromCounterState(NewState);
 		ExtendService->OnScaledExtendStateChanged();
 	}
 	else if (ExtendService)
@@ -583,9 +594,6 @@ void USFSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 
 	UE_LOG(LogSmartFoundations, Verbose, TEXT("Smart! Subsystem: Initialize() called"));
 
-	// Reset recipe sampling subscription flag for safety
-	bHasSubscribedToRecipeSampled = false;
-
 	// NOTE: Config loading deferred until first hologram registration
 	// ConfigManager subsystem may not be available during Initialize()
 
@@ -701,9 +709,16 @@ void USFSubsystem::TickArrows()
 
 		FTransform CurrentTransform = CurrentAdapter->GetBaseTransform();
 
-	// Check if transform, axis input, or grid structure changed
+	// The Panel is absolute, but world controls may resolve to a different building axis as the
+	// player turns under Player Relative Controls. Derive the display axis every arrow tick so the
+	// preview never waits for a wheel event to catch up.
+	int32 EffectiveArrowDirectionSign = 0;
+	const ELastAxisInput EffectiveArrowAxis = GetEffectiveArrowAxisInput(&EffectiveArrowDirectionSign);
+
+	// Check if transform, effective axis input, or grid structure changed
 	const bool bTransformChanged = !CurrentTransform.Equals(LastHologramTransform);
-	const bool bAxisInputChanged = (LastAxisInput != LastKnownAxisInput);
+	const bool bAxisInputChanged = (EffectiveArrowAxis != LastKnownAxisInput);
+	const bool bArrowDirectionChanged = (EffectiveArrowDirectionSign != LastKnownArrowDirectionSign);
 
 	int32 CurrentChildCount = 0;
 	if (AFGHologram* Hologram = GetActiveHologram())
@@ -713,13 +728,14 @@ void USFSubsystem::TickArrows()
 	const bool bChildCountChanged = (CurrentChildCount != LastChildCount);
 
 	// Only update full arrows if something changed (optimization)
-	if (bTransformChanged || bAxisInputChanged || bChildCountChanged)
+	if (bTransformChanged || bAxisInputChanged || bArrowDirectionChanged || bChildCountChanged)
 	{
-		ArrowModule->UpdateArrows(World, CurrentTransform, LastAxisInput, true);
+		ArrowModule->UpdateArrows(World, CurrentTransform, EffectiveArrowAxis, true, EffectiveArrowDirectionSign);
 
 		// Update cache
 		LastHologramTransform = CurrentTransform;
-		LastKnownAxisInput = LastAxisInput;
+		LastKnownAxisInput = EffectiveArrowAxis;
+		LastKnownArrowDirectionSign = EffectiveArrowDirectionSign;
 		LastChildCount = CurrentChildCount;
 
 			// Log updates (only when changes occur)
@@ -772,6 +788,7 @@ void USFSubsystem::InitializeWidgets()
 
 void USFSubsystem::Deinitialize()
 {
+	DestroyScaleDaisyChainPreviews();
 	// BUG FIX (Issue #148): Clear static input caches during world cleanup
 	// Must be done FIRST before any other cleanup to prevent accessing stale cached objects
 	USFInputRegistry::ClearInputCache();
@@ -900,8 +917,88 @@ void USFSubsystem::Deinitialize()
 // Tick (Phase 4)
 // ========================================
 
+void USFSubsystem::RefreshScaleDaisyChainPreviews()
+{
+	AFGHologram* Parent = ActiveHologram.Get();
+	TArray<TPair<FVector, FVector>> DesiredSpans;
+	SFScalingSpecExpansion::GetScaleDaisyChainPowerSpans(Parent, DesiredSpans);
+
+	bool bChanged = ScaleDaisyChainPreviewOwner.Get() != Parent
+		|| DesiredSpans.Num() != CachedScaleDaisyChainSpans.Num()
+		|| DesiredSpans.Num() != ScaleDaisyChainPreviews.Num();
+	if (!bChanged)
+	{
+		for (int32 Index = 0; Index < DesiredSpans.Num(); ++Index)
+		{
+			if (!DesiredSpans[Index].Key.Equals(CachedScaleDaisyChainSpans[Index].Key, 0.5f)
+				|| !DesiredSpans[Index].Value.Equals(CachedScaleDaisyChainSpans[Index].Value, 0.5f))
+			{
+				bChanged = true;
+				break;
+			}
+		}
+	}
+	if (!bChanged)
+	{
+		return;
+	}
+
+	DestroyScaleDaisyChainPreviews();
+	ScaleDaisyChainPreviewOwner = Parent;
+	CachedScaleDaisyChainSpans = DesiredSpans;
+	if (!Parent || DesiredSpans.IsEmpty() || !GetWorld())
+	{
+		return;
+	}
+
+	UClass* WireClass = LoadClass<AFGBuildableWire>(nullptr, SFAssetPaths::PowerLineBuildClass);
+	if (!WireClass)
+	{
+		return;
+	}
+
+	for (const TPair<FVector, FVector>& Span : DesiredSpans)
+	{
+		const FVector Midpoint = (Span.Key + Span.Value) * 0.5f;
+		FActorSpawnParameters Params;
+		Params.Owner = Parent;
+		Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+		Params.bDeferConstruction = true;
+		ASFWireHologram* Preview = GetWorld()->SpawnActor<ASFWireHologram>(
+			ASFWireHologram::StaticClass(), Midpoint, FRotator::ZeroRotator, Params);
+		if (!Preview)
+		{
+			continue;
+		}
+		Preview->SetBuildClass(WireClass);
+		Preview->Tags.AddUnique(FName(TEXT("SF_ScaleDaisyPreview")));
+		Preview->FinishSpawning(FTransform(FRotator::ZeroRotator, Midpoint), true);
+		Preview->SetupWirePreviewFromPositions(Span.Key, Span.Value);
+		Preview->SetPlacementMaterialState(EHologramMaterialState::HMS_OK);
+		Preview->SetActorEnableCollision(false);
+		Preview->SetActorTickEnabled(false);
+		ScaleDaisyChainPreviews.Add(Preview);
+	}
+}
+
+void USFSubsystem::DestroyScaleDaisyChainPreviews()
+{
+	for (ASFWireHologram* Preview : ScaleDaisyChainPreviews)
+	{
+		if (IsValid(Preview))
+		{
+			Preview->Destroy();
+		}
+	}
+	ScaleDaisyChainPreviews.Reset();
+	CachedScaleDaisyChainSpans.Reset();
+	ScaleDaisyChainPreviewOwner.Reset();
+}
+
 void USFSubsystem::Tick(float DeltaTime)
 {
+	RefreshScaleDaisyChainPreviews();
+
 	// Phase 4 Performance Optimization: Progressive Batch Reposition
 	// Process progressive batch if active
 	if (HologramHelper)
@@ -1506,7 +1603,17 @@ void USFSubsystem::ApplyAxisScaling(ESFScaleAxis Axis, int32 StepDelta, const TC
 	// ========================================
 
 	int32 PreviousValue = 0;
-	if (GridStateService)
+	if (IsExtendModeActive() && Axis == ESFScaleAxis::X)
+	{
+		PreviousValue = CounterState.GridCounters.X;
+		const int32 CurrentSign = PreviousValue < 0 ? -1 : 1;
+		const int32 Candidate = PreviousValue + StepDelta;
+		CounterState.GridCounters.X = Candidate == 0 || (Candidate < 0 ? -1 : 1) != CurrentSign
+			? CurrentSign
+			: Candidate;
+		GridCounters = CounterState.GridCounters;
+	}
+	else if (GridStateService)
 	{
 		PreviousValue = GridStateService->ApplyAxisScaling(CounterState, Axis, StepDelta);
 		GridCounters = CounterState.GridCounters;  // Sync deprecated mirror
@@ -1800,6 +1907,38 @@ static int32 SF_GridCounterFor(const FSFCounterState& S, ESFScaleAxis Axis)
 	}
 }
 
+static void SF_ResolvePlayerRelativeModalAxisAndSign(const FSFCounterState& State,
+	USFSubsystem::ESFPlayerRelativeSlot Slot, bool bSpacingMode, bool bStaggerMode,
+	ESFScaleAxis PrimAxis, int32 PrimSign, ESFScaleAxis LatAxis, int32 LatSign,
+	ESFScaleAxis& OutAxis, int32& OutSign)
+{
+	if (bStaggerMode)
+	{
+		const bool bStack = USFGridStateService::IsStaggerStackFamily(State.StaggerAxis);
+		SF_ResolveStaggerTarget(bStack, Slot, PrimAxis, PrimSign, LatAxis, LatSign, OutAxis, OutSign);
+		const ESFScaleAxis ProgressionAxis =
+			  (OutAxis == ESFScaleAxis::ZX || OutAxis == ESFScaleAxis::ZY) ? ESFScaleAxis::Z
+			: (OutAxis == ESFScaleAxis::X) ? ESFScaleAxis::X
+			:                                ESFScaleAxis::Y;
+		OutSign *= SF_SignNonZero(SF_GridCounterFor(State, ProgressionAxis));
+		return;
+	}
+
+	SF_ResolveSlot(Slot, PrimAxis, PrimSign, LatAxis, LatSign, OutAxis, OutSign);
+	if (Slot == USFSubsystem::ESFPlayerRelativeSlot::Forward)
+	{
+		OutSign *= SF_SignNonZero(SF_GridCounterFor(State, OutAxis));
+	}
+	else if (bSpacingMode)
+	{
+		OutSign = +1;
+	}
+	else
+	{
+		OutSign = SF_SignNonZero(SF_GridCounterFor(State, OutAxis));
+	}
+}
+
 bool USFSubsystem::ResolvePlayerRelativeModalTarget(bool bSelectSlot, ESFPlayerRelativeSlot DesiredSlot,
 	ESFScaleAxis& OutAxis, int32& OutSign)
 {
@@ -1818,50 +1957,28 @@ bool USFSubsystem::ResolvePlayerRelativeModalTarget(bool bSelectSlot, ESFPlayerR
 		: bStepsModeActive   ? &PlayerRelativeSlots.Steps
 		: bStaggerModeActive ? &PlayerRelativeSlots.Stagger
 		:                      &PlayerRelativeSlots.Rotation;
+	const bool bExtendActive = IsExtendModeActive();
 	if (bSelectSlot)
 	{
 		// Only spacing has a vertical target (steps ARE vertical; rotation is yaw; stagger's
-		// vertical key selects the family instead - handled by the caller).
-		if (DesiredSlot == ESFPlayerRelativeSlot::Vertical && !bSpacingModeActive)
+		// vertical key selects the family instead - handled by the caller). Extend has no
+		// vertical target: its stable control frame is Chain (X) and Rows (Y).
+		if (DesiredSlot == ESFPlayerRelativeSlot::Vertical && (!bSpacingModeActive || bExtendActive))
 		{
 			return false;
 		}
 		*Slot = DesiredSlot;
 	}
-
-	if (bStaggerModeActive)
+	else if (bExtendActive && *Slot == ESFPlayerRelativeSlot::Vertical)
 	{
-		const bool bStack = USFGridStateService::IsStaggerStackFamily(CounterState.StaggerAxis);
-		SF_ResolveStaggerTarget(bStack, *Slot, PrimAxis, PrimSign, LatAxis, LatSign, OutAxis, OutSign);
-		// [#209] Drift sign (maintainer-spec 2026-07-09): the resolved facing sign of the DRIFT
-		// axis composes with the PROGRESSION axis' expansion direction (the offset rides SIGNED
-		// cell indices). Forward-drift: up = leans AWAY from you; Lateral-drift: up = leans to
-		// your RIGHT (the one signed lateral - a lean's direction IS its meaning).
-		const ESFScaleAxis ProgressionAxis =
-			  (OutAxis == ESFScaleAxis::ZX || OutAxis == ESFScaleAxis::ZY) ? ESFScaleAxis::Z
-			: (OutAxis == ESFScaleAxis::X) ? ESFScaleAxis::X
-			:                                ESFScaleAxis::Y;
-		OutSign *= SF_SignNonZero(SF_GridCounterFor(CounterState, ProgressionAxis));
-		// Input-time write: park the stored 4-state on the member being driven. The family
-		// projection rides it, and presets capture "last used" exactly as classic does.
-		CounterState.StaggerAxis = OutAxis;
+		// A spacing slot selected before entering Extend must not keep driving Z invisibly.
+		*Slot = ESFPlayerRelativeSlot::Forward;
 	}
-	else
+
+	if (bExtendActive)
 	{
-		SF_ResolveSlot(*Slot, PrimAxis, PrimSign, LatAxis, LatSign, OutAxis, OutSign);
-		// [#209] Per-role wheel sign (maintainer-spec 2026-07-09):
-		//  - FORWARD: scroll-up = grow the run in the direction you FACE. That is the facing sign
-		//    x the direction the array actually expands (grid-counter sign): at the anchor looking
-		//    along the run, up stretches it away; from the far end looking back, up pulls it
-		//    toward you (spacing contracts, steps rise toward you, rotation curls the near end).
-		//  - LATERAL/VERTICAL: plain magnitude (up = more) - you are not looking along them, so
-		//    there is no directional intuition to honor. Steps/rotation lateral keep the run's own
-		//    expansion sign (view-independent: up = more toward the far end).
-		if (*Slot == ESFPlayerRelativeSlot::Forward)
-		{
-			OutSign *= SF_SignNonZero(SF_GridCounterFor(CounterState, OutAxis));
-		}
-		else if (bSpacingModeActive)
+		OutAxis = *Slot == ESFPlayerRelativeSlot::Side ? ESFScaleAxis::Y : ESFScaleAxis::X;
+		if (bSpacingModeActive)
 		{
 			OutSign = +1;
 		}
@@ -1869,7 +1986,24 @@ bool USFSubsystem::ResolvePlayerRelativeModalTarget(bool bSelectSlot, ESFPlayerR
 		{
 			OutSign = SF_SignNonZero(SF_GridCounterFor(CounterState, OutAxis));
 		}
+		if (bRotationModeActive)
+		{
+			CounterState.RotationAxis = OutAxis;
+		}
+		return true;
+	}
 
+	SF_ResolvePlayerRelativeModalAxisAndSign(CounterState, *Slot, bSpacingModeActive,
+		bStaggerModeActive, PrimAxis, PrimSign, LatAxis, LatSign, OutAxis, OutSign);
+
+	if (bStaggerModeActive)
+	{
+		// Input-time write: park the stored 4-state on the member being driven. The family
+		// projection rides it, and presets capture "last used" exactly as classic does.
+		CounterState.StaggerAxis = OutAxis;
+	}
+	else
+	{
 		// [#209] Rotation's progression axis is MUTUALLY EXCLUSIVE (curve the run you face vs fan
 		// your side rows) - unlike spacing's additive gaps, only one is active. The slot SELECTS it,
 		// so it must be written to state (Forward -> facing axis, Lateral -> perpendicular). Without
@@ -1890,10 +2024,18 @@ void USFSubsystem::AdvancePlayerRelativeSlot()
 	using ESlot = ESFPlayerRelativeSlot;
 	if (bSpacingModeActive)
 	{
-		PlayerRelativeSlots.Spacing =
-			  (PlayerRelativeSlots.Spacing == ESlot::Forward) ? ESlot::Side
-			: (PlayerRelativeSlots.Spacing == ESlot::Side)    ? ESlot::Vertical
-			:                                                   ESlot::Forward;
+		if (IsExtendModeActive())
+		{
+			PlayerRelativeSlots.Spacing =
+				PlayerRelativeSlots.Spacing == ESlot::Forward ? ESlot::Side : ESlot::Forward;
+		}
+		else
+		{
+			PlayerRelativeSlots.Spacing =
+				  (PlayerRelativeSlots.Spacing == ESlot::Forward) ? ESlot::Side
+				: (PlayerRelativeSlots.Spacing == ESlot::Side)    ? ESlot::Vertical
+				:                                                   ESlot::Forward;
+		}
 	}
 	else if (bStepsModeActive)
 	{
@@ -1936,6 +2078,12 @@ void USFSubsystem::ToggleStaggerFamilyProjection()
 
 ESFScaleAxis USFSubsystem::GetEffectiveSpacingAxis() const
 {
+	if (IsExtendModeActive())
+	{
+		return PlayerRelativeSlots.Spacing == ESFPlayerRelativeSlot::Side
+			? ESFScaleAxis::Y
+			: ESFScaleAxis::X;
+	}
 	USFSubsystem* Self = const_cast<USFSubsystem*>(this);
 	ESFScaleAxis PrimAxis, LatAxis; int32 PrimSign, LatSign;
 	if (!SF_ComputePlayerRelativeAxes(Self, Self->ActiveHologram.Get(), PrimAxis, PrimSign, LatAxis, LatSign))
@@ -1949,6 +2097,12 @@ ESFScaleAxis USFSubsystem::GetEffectiveSpacingAxis() const
 
 ESFScaleAxis USFSubsystem::GetEffectiveStepsAxis() const
 {
+	if (IsExtendModeActive())
+	{
+		return PlayerRelativeSlots.Steps == ESFPlayerRelativeSlot::Side
+			? ESFScaleAxis::Y
+			: ESFScaleAxis::X;
+	}
 	USFSubsystem* Self = const_cast<USFSubsystem*>(this);
 	ESFScaleAxis PrimAxis, LatAxis; int32 PrimSign, LatSign;
 	if (!SF_ComputePlayerRelativeAxes(Self, Self->ActiveHologram.Get(), PrimAxis, PrimSign, LatAxis, LatSign))
@@ -1976,6 +2130,12 @@ ESFScaleAxis USFSubsystem::GetEffectiveStaggerAxis() const
 
 ESFScaleAxis USFSubsystem::GetEffectiveRotationAxis() const
 {
+	if (IsExtendModeActive())
+	{
+		return PlayerRelativeSlots.Rotation == ESFPlayerRelativeSlot::Side
+			? ESFScaleAxis::Y
+			: ESFScaleAxis::X;
+	}
 	USFSubsystem* Self = const_cast<USFSubsystem*>(this);
 	ESFScaleAxis PrimAxis, LatAxis; int32 PrimSign, LatSign;
 	if (!SF_ComputePlayerRelativeAxes(Self, Self->ActiveHologram.Get(), PrimAxis, PrimSign, LatAxis, LatSign))
@@ -1985,6 +2145,144 @@ ESFScaleAxis USFSubsystem::GetEffectiveRotationAxis() const
 	ESFScaleAxis Axis; int32 Sign;
 	SF_ResolveSlot(PlayerRelativeSlots.Rotation, PrimAxis, PrimSign, LatAxis, LatSign, Axis, Sign);
 	return Axis;
+}
+
+ELastAxisInput USFSubsystem::GetEffectiveArrowAxisInput(int32* OutDirectionSign) const
+{
+	if (OutDirectionSign)
+	{
+		*OutDirectionSign = 0;
+	}
+
+	// The Smart Panel is the absolute X/Y/Z surface. It must retain the same building-relative
+	// arrows regardless of the global Player Relative setting.
+	if (!IsPlayerRelativeEnabled()
+		|| (SettingsFormWidget.IsValid() && SettingsFormWidget->IsInViewport())
+		|| !ActiveHologram.IsValid())
+	{
+		return LastAxisInput;
+	}
+
+	auto ToArrowAxis = [](ESFScaleAxis Axis) -> ELastAxisInput
+	{
+		switch (Axis)
+		{
+		case ESFScaleAxis::X: return ELastAxisInput::X;
+		case ESFScaleAxis::Y: return ELastAxisInput::Y;
+		case ESFScaleAxis::Z: return ELastAxisInput::Z;
+		default: return ELastAxisInput::None;
+		}
+	};
+
+	ESFScaleAxis PrimaryAxis, LateralAxis;
+	int32 PrimarySign, LateralSign;
+	if (!SF_ComputePlayerRelativeAxes(const_cast<USFSubsystem*>(this), ActiveHologram.Get(),
+		PrimaryAxis, PrimarySign, LateralAxis, LateralSign))
+	{
+		return LastAxisInput;
+	}
+
+	auto PlayerRelativeSignForAxis = [PrimaryAxis, PrimarySign, LateralSign](ESFScaleAxis Axis) -> int32
+	{
+		return Axis == PrimaryAxis ? PrimarySign : LateralSign;
+	};
+
+	if (IsExtendModeActive())
+	{
+		if (bModifierScaleXActive && bModifierScaleYActive)
+		{
+			if (OutDirectionSign) { *OutDirectionSign = +1; }
+			return ELastAxisInput::Z;
+		}
+
+		ESFScaleAxis ExtendAxis = ESFScaleAxis::X;
+		bool bHasExtendTarget = false;
+		if (bSpacingModeActive || bStepsModeActive || bRotationModeActive)
+		{
+			const ESFPlayerRelativeSlot Slot =
+				  bSpacingModeActive ? PlayerRelativeSlots.Spacing
+				: bStepsModeActive   ? PlayerRelativeSlots.Steps
+				:                      PlayerRelativeSlots.Rotation;
+			ExtendAxis = Slot == ESFPlayerRelativeSlot::Side ? ESFScaleAxis::Y : ESFScaleAxis::X;
+			bHasExtendTarget = true;
+		}
+		else if (bModifierScaleXActive || bModifierScaleYActive)
+		{
+			ExtendAxis = bModifierScaleYActive ? ESFScaleAxis::Y : ESFScaleAxis::X;
+			bHasExtendTarget = true;
+		}
+
+		if (bHasExtendTarget)
+		{
+			if (OutDirectionSign) { *OutDirectionSign = PlayerRelativeSignForAxis(ExtendAxis); }
+			return ToArrowAxis(ExtendAxis);
+		}
+	}
+
+	// Transform modals own the wheel while active. The arrow communicates the selected ROLE's
+	// positive direction, not the current counter sign: Forward always points forward, Side always
+	// points right, and Vertical always points up. Wheel-down adjusts against that arrow.
+	if (bSpacingModeActive || bStepsModeActive || bStaggerModeActive || bRotationModeActive)
+	{
+		const ESFPlayerRelativeSlot Slot =
+			  bSpacingModeActive ? PlayerRelativeSlots.Spacing
+			: bStepsModeActive   ? PlayerRelativeSlots.Steps
+			: bStaggerModeActive ? PlayerRelativeSlots.Stagger
+			:                      PlayerRelativeSlots.Rotation;
+		ESFScaleAxis ModalAxis;
+		int32 ModalSign;
+		SF_ResolvePlayerRelativeModalAxisAndSign(CounterState, Slot, bSpacingModeActive,
+			bStaggerModeActive, PrimaryAxis, PrimarySign, LateralAxis, LateralSign,
+			ModalAxis, ModalSign);
+		if (OutDirectionSign)
+		{
+			*OutDirectionSign =
+				  Slot == ESFPlayerRelativeSlot::Side     ? LateralSign
+				: Slot == ESFPlayerRelativeSlot::Vertical ? +1
+				:                                           PrimarySign;
+		}
+
+		if (bStaggerModeActive)
+		{
+			// Stagger stores family + progression, while the arrow communicates the horizontal drift.
+			switch (ModalAxis)
+			{
+			case ESFScaleAxis::ZX: return ELastAxisInput::X;
+			case ESFScaleAxis::ZY: return ELastAxisInput::Y;
+			case ESFScaleAxis::X:  return ELastAxisInput::Y;
+			case ESFScaleAxis::Y:  return ELastAxisInput::X;
+			default: return ELastAxisInput::None;
+			}
+		}
+		return ToArrowAxis(ModalAxis);
+	}
+
+	if (bModifierScaleXActive && bModifierScaleYActive)
+	{
+		if (OutDirectionSign)
+		{
+			*OutDirectionSign = +1;
+		}
+		return ELastAxisInput::Z;
+	}
+	if (bModifierScaleXActive)
+	{
+		if (OutDirectionSign)
+		{
+			*OutDirectionSign = PrimarySign;
+		}
+		return ToArrowAxis(PrimaryAxis);
+	}
+	if (bModifierScaleYActive)
+	{
+		if (OutDirectionSign)
+		{
+			*OutDirectionSign = LateralSign;
+		}
+		return ToArrowAxis(LateralAxis);
+	}
+
+	return LastAxisInput;
 }
 
 void USFSubsystem::OnScaleXChanged(const FInputActionValue& Value)
@@ -2044,9 +2342,32 @@ void USFSubsystem::OnScaleXChanged(const FInputActionValue& Value)
 	// are non-destructive.
 	ESFScaleAxis PrimAxis, LatAxis; int32 PrimSign, LatSign;
 	const bool bPlayerRel = SF_ComputePlayerRelativeAxes(this, ActiveHologram.Get(), PrimAxis, PrimSign, LatAxis, LatSign);
+	auto PlayerRelativeSignForAxis = [PrimAxis, PrimSign, LatSign](ESFScaleAxis Axis) -> int32
+	{
+		return Axis == PrimAxis ? PrimSign : LatSign;
+	};
+
+	if (IsExtendModeActive())
+	{
+		if (bModifierScaleXActive && bModifierScaleYActive)
+		{
+			return;
+		}
+
+		const bool bRowsTarget = bModifierScaleYActive;
+		const ESFScaleAxis ExtendAxis = bRowsTarget ? ESFScaleAxis::Y : ESFScaleAxis::X;
+		const int32 ExtendSign = bRowsTarget
+			? -PlayerRelativeSignForAxis(ESFScaleAxis::Y)
+			: (CounterState.GridCounters.X < 0 ? -1 : 1);
+		LastAxisInput = bRowsTarget ? ELastAxisInput::Y : ELastAxisInput::X;
+		ApplyAxisScaling(
+			ExtendAxis,
+			Direction * ExtendSign,
+			bRowsTarget ? TEXT("Scale Rows (Extend PR)") : TEXT("Scale Chain (Extend PR)"));
+	}
 
 	// MODIFIER PRIORITY: Check modifiers first to determine which axis to scale
-	if (bModifierScaleXActive && bModifierScaleYActive)
+	else if (bModifierScaleXActive && bModifierScaleYActive)
 	{
 		// Both modifiers held → Scale Z-axis (vertical - never player-relative; up is up)
 		LastAxisInput = ELastAxisInput::Z;
@@ -2150,6 +2471,13 @@ void USFSubsystem::OnScaleYChanged(const FInputActionValue& Value)
 
 	ESFScaleAxis PrimAxis, LatAxis; int32 PrimSign, LatSign;
 	const bool bPlayerRel = SF_ComputePlayerRelativeAxes(this, ActiveHologram.Get(), PrimAxis, PrimSign, LatAxis, LatSign);
+	if (IsExtendModeActive())
+	{
+		const int32 RowsSign = PrimAxis == ESFScaleAxis::Y ? PrimSign : LatSign;
+		LastAxisInput = ELastAxisInput::Y;
+		ApplyAxisScaling(ESFScaleAxis::Y, Direction * -RowsSign, TEXT("Scale Rows (Extend PR)"));
+		return;
+	}
 	LastAxisInput = (LatAxis == ESFScaleAxis::X) ? ELastAxisInput::X : ELastAxisInput::Y;
 	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Scale lateral(nomod): %.2f (dir: %d) PR=%d axis=%d sign=%d"),
 		AxisValue, Direction, bPlayerRel, (int32)LatAxis, LatSign);

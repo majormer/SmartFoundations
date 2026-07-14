@@ -7,6 +7,8 @@
 
 #include "Subsystem/SFSubsystemImpl.h"
 #include "Features/Walk/SFWalkService.h"
+#include "Buildables/FGBuildableFactory.h"
+#include "FGUnlockSubsystem.h"
 
 
 // ========================================
@@ -476,15 +478,6 @@ void USFSubsystem::CleanupWidgets()
 // Recipe Copying System Implementation
 // ========================================
 
-void USFSubsystem::StoreProductionRecipeFromBuilding(AFGBuildable* SourceBuilding)
-{
-	// Delegate to recipe management service
-	if (RecipeManagementService)
-	{
-		RecipeManagementService->StoreProductionRecipeFromBuilding(SourceBuilding);
-	}
-}
-
 void USFSubsystem::ApplyStoredProductionRecipeToBuilding(AFGBuildable* TargetBuilding)
 {
 	// Delegate to recipe management service
@@ -519,15 +512,6 @@ void USFSubsystem::ClearStoredProductionRecipe()
 	if (RecipeManagementService)
 	{
 		RecipeManagementService->ClearStoredProductionRecipe();
-	}
-}
-
-void USFSubsystem::OnBuildGunRecipeSampled(TSubclassOf<UFGRecipe> SampledRecipe)
-{
-	// Delegate to recipe management service
-	if (RecipeManagementService)
-	{
-		RecipeManagementService->OnBuildGunRecipeSampled(SampledRecipe);
 	}
 }
 
@@ -637,6 +621,16 @@ void USFSubsystem::OnRecipeModeChanged(const FInputActionValue& Value)
 	}
 	else
 	{
+		// [#482] Tap-to-toggle policy applies to FACTORY Recipe only - U on an auto-connect
+		// hologram (the branch above) is a HUD-menu interaction, not a transform modal, and
+		// latching it would also pin the Restore recency walk open indefinitely. Consumed
+		// events (incl. releases in latch mode) skip the [#473] recency commit below; a latched
+		// Recipe session commits it once when the latch ends instead.
+		if (HandleLatchTransformModeInput(ESFLatchedTransformMode::Recipe, Value))
+		{
+			return;
+		}
+
 		// Recipe Mode for factory buildings
 		bRecipeModeActive = bPressed;
 		bAutoConnectSettingsModeActive = false;  // Ensure auto-connect settings mode is off
@@ -1813,6 +1807,26 @@ bool USFSubsystem::IsCurrentHologramAutoConnectCapable() const
 	                                                                              //   suppressed the settings overlay
 }
 
+bool USFSubsystem::IsScaleDaisyChainAvailable(AFGHologram* Hologram) const
+{
+	AFGHologram* Candidate = Hologram ? Hologram : ActiveHologram.Get();
+	UClass* BuildClass = Candidate ? Candidate->GetBuildClass() : nullptr;
+	if (!BuildClass || !BuildClass->IsChildOf(AFGBuildableFactory::StaticClass()))
+	{
+		return false;
+	}
+
+	UWorld* World = Candidate->GetWorld();
+	AFGUnlockSubsystem* Unlocks = World ? AFGUnlockSubsystem::Get(World) : nullptr;
+	return Unlocks && Unlocks->IsCircuitDaisyChainingUnlocked();
+}
+
+bool USFSubsystem::IsScaleDaisyChainPowerOverrideDirty() const
+{
+	const bool bGlobalDefault = CachedConfig.bPowerAutoConnectEnabled && CachedConfig.bScaleDaisyChainPower;
+	return AutoConnectRuntimeSettings.bScaleDaisyChainPower != bGlobalDefault;
+}
+
 bool USFSubsystem::IsCurrentHologramWalkable() const
 {
 	// Smart Walking seeds from a stackable belt, pipe, OR hypertube support — matches the walk's conveyance adapters
@@ -2234,6 +2248,15 @@ void USFSubsystem::SetAutoConnectPowerReserved(int32 Reserved)
 	AutoConnectRuntimeSettings.bInitialized = true;
 	UpdateCounterDisplay();
 	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Power reserved slots set to: %d"), AutoConnectRuntimeSettings.PowerReserved);
+}
+
+void USFSubsystem::SetScaleDaisyChainPowerEnabled(bool bEnabled)
+{
+	AutoConnectRuntimeSettings.bScaleDaisyChainPower = bEnabled;
+	AutoConnectRuntimeSettings.bInitialized = true;
+	UpdateCounterDisplay();
+	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Scale daisy-chain power override set to: %s"),
+		bEnabled ? TEXT("ON") : TEXT("OFF"));
 }
 
 void USFSubsystem::TriggerAutoConnectRefresh()

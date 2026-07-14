@@ -5,7 +5,7 @@ date: 2026-04-24
 status: Active
 category: Features
 tags: [autoconnect, belts, pipes, power, previews, child_holograms]
-related: [../Scaling/IMPL_Scaling_CurrentFlow.md, ../SmartPanel/IMPL_SmartPanel_CurrentFlow.md]
+related: [../Scaling/IMPL_Scaling_CurrentFlow.md, ../SmartPanel/IMPL_SmartPanel_CurrentFlow.md, ../../Reference/REF_DistributorPortTopology.md]
 ---
 
 # Smart AutoConnect Current Flow
@@ -23,6 +23,25 @@ AutoConnect creates preview and child holograms that connect scaled logistics an
 | Power AutoConnect | Active | Creates power-line previews between poles and to powered buildings while respecting connection capacity. |
 
 AutoConnect for belts and pipes is coordinated through the active hologram and child-hologram system. Power AutoConnect is the exception: it directly spawns `AFGBuildableWire` actors (with its own cable cost deduction) after pole/building construction, so not all AutoConnect output flows through child-hologram construction. See the construction-order migration note (audit F039) before changing these paths for 1.2.
+
+## Configuration Boundaries
+
+Two configuration sections establish separate boundaries:
+
+- **Blueprint Auto-Connect** owns **Blueprint Seam Auto-Connect**, which independently enables the belt and pipe conduits Smart creates
+  between scaled blueprint copies. The normal Belt and Pipe Auto-Connect master switches do not gate
+  blueprint seams. Their tier, style, and routing choices still supply the conduit recipe and shape.
+- **Auto-Connect Behavior** owns **Nearby Logistics Range**, a connector-to-connector candidate cap, in meters, for
+  distributor-to-factory belts and pipe-junction/floor-hole-to-factory pipes. It defaults to 25 m
+  and is clamped to 1-56 m.
+
+Nearby Logistics Range does not redefine topology. It does not apply to blueprint seams, distributor
+manifold lanes, stackable support runs, hypertubes, Extend, power poles, or factory daisy chains.
+Power retains its separate connection-range setting. The configured range can reject a candidate,
+but it can never authorize a belt or pipe that the vanilla spline rules consider too long or invalid.
+
+Building discovery is a broad phase with center-to-port headroom for large factories; acceptance is
+always measured between the actual logistics connectors (or a floor-hole face and the factory port).
 
 ## Primary Code Files
 
@@ -58,6 +77,7 @@ Important behavior:
 
 - Distributor-to-distributor connections are preferred where they form a chain.
 - Distributor-to-building connections fill compatible nearby inputs/outputs.
+- Distributor-to-building candidates must be within Nearby Logistics Range at their actual ports.
 - Stackable conveyor poles can create horizontal belt previews between adjacent supports.
 - Preview creation respects belt tier settings and belt length limits.
 - Chain actor stabilization is handled after build by the shared chain actor service where topology changes require it.
@@ -66,9 +86,14 @@ Important behavior:
 
 Pipe AutoConnect is handled by `FSFPipeAutoConnectManager`. It scans pipe junction holograms, looks for compatible pipe connectors, and creates `FPipePreviewHelper` previews. It also handles floor-hole pipe previews and can route around stackable/ceiling support layouts.
 
+The stable named-port layouts for pipe junctions, splitters, and mergers are defined in [Distributor Port Topology Reference](../../Reference/REF_DistributorPortTopology.md). Use that contract instead of component enumeration order when assigning distributor roles.
+
+For recognized pipeline junctions, Pipe Auto-Connect stores the factory-side component name, resolves the exact opposite factory port and two manifold-lane ports from the shared topology contract, and only uses geometry to order separate junction actors along a row. A T-Junction orientation without both perpendicular lane ports is discarded before child previews, costs, or manifold wiring are created. Unknown junction classes may use the conservative geometric fallback, but cannot alter the named vanilla maps.
+
 Important behavior:
 
 - Pipe tier and indicator/no-indicator style come from runtime settings.
+- Junction Side A, Side B, and floor-hole factory candidates use the same Nearby Logistics Range.
 - Junction chains are evaluated with connector pairing logic rather than only nearest-distance matching.
 - Pipe network rebuilds are required after built connections so fluid simulation sees the final topology.
 

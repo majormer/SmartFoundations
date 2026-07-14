@@ -387,9 +387,9 @@ void USmartUpgradePanel::UpdateCostDisplay()
 				FamilyCounts.FindOrAdd(EntryFamily)++;
 				TotalUpgradeable++;
 
-				// Calculate cost for this item
+				// Calculate cost for this item ([#485] exact per-actor geometry pricing)
 				TMap<TSubclassOf<UFGItemDescriptor>, int32> ItemCost;
-				if (CalculateUpgradeCost(EntryFamily, Entry.CurrentTier, CachedTargetTier, 1, ItemCost))
+				if (CalculateUpgradeCostForEntry(Entry, EntryFamily, CachedTargetTier, ItemCost))
 				{
 					for (const auto& Pair : ItemCost)
 					{
@@ -460,10 +460,30 @@ void USmartUpgradePanel::UpdateCostDisplay()
 					ItemCount += Bucket.Count;
 
 					TMap<TSubclassOf<UFGItemDescriptor>, int32> FamilyNetCost;
-					if (!CalculateUpgradeCost(FamilyResult.Family, SelectedTier, CachedTargetTier, Bucket.Count, FamilyNetCost))
+					bool bBucketPriced = false;
+					if (Bucket.Entries.Num() > 0)
 					{
-						bCostAvailable = false;
-						break;
+						// [#485] Exact per-actor pricing: each belt/pipe/lift contributes its
+						// length-derived cost instead of one flat recipe unit.
+						bBucketPriced = true;
+						for (const FSFUpgradeAuditEntry& Entry : Bucket.Entries)
+						{
+							if (!CalculateUpgradeCostForEntry(Entry, FamilyResult.Family, CachedTargetTier, FamilyNetCost))
+							{
+								bBucketPriced = false;
+								break;
+							}
+						}
+					}
+					if (!bBucketPriced)
+					{
+						// Count-only audit (no entries) or a stale entry: legacy count-based estimate.
+						FamilyNetCost.Empty();
+						if (!CalculateUpgradeCost(FamilyResult.Family, SelectedTier, CachedTargetTier, Bucket.Count, FamilyNetCost))
+						{
+							bCostAvailable = false;
+							break;
+						}
 					}
 
 					for (const auto& Pair : FamilyNetCost)
@@ -685,6 +705,41 @@ bool USmartUpgradePanel::CalculateUpgradeCost(ESFUpgradeFamily Family, int32 Sou
 	}
 
 	return true;
+}
+
+bool USmartUpgradePanel::CalculateUpgradeCostForEntry(const FSFUpgradeAuditEntry& Entry, ESFUpgradeFamily Family, int32 TargetTier, TMap<TSubclassOf<UFGItemDescriptor>, int32>& OutNetCost) const
+{
+	// [#485] One pricing source for display and execution: the execution service's
+	// geometry-derived settlement (target recipe x the buildable's vanilla length multiplier
+	// vs its actual dismantle refund). The old recipe-delta arithmetic under-stated belt,
+	// pipe, and lift costs by the full length factor (a 96m belt run showed 14 units where
+	// the real cost was 50).
+	AFGBuildable* TargetBuildable = Entry.Buildable.Get();
+	USFSubsystem* SmartSubsystem = USFSubsystem::Get(GetWorld());
+	USFUpgradeExecutionService* ExecutionService = SmartSubsystem ? SmartSubsystem->GetUpgradeExecutionService() : nullptr;
+	if (TargetBuildable && ExecutionService)
+	{
+		if (TSubclassOf<UFGRecipe> TargetRecipe = ExecutionService->GetUpgradeRecipe(Family, TargetTier))
+		{
+			TMap<TSubclassOf<UFGItemDescriptor>, int32> Charge;
+			TMap<TSubclassOf<UFGItemDescriptor>, int32> Refund;
+			if (ExecutionService->ComputeUpgradeSettlement(TargetBuildable, TargetRecipe, Charge, Refund))
+			{
+				for (const auto& Pair : Charge)
+				{
+					OutNetCost.FindOrAdd(Pair.Key) += Pair.Value;
+				}
+				for (const auto& Pair : Refund)
+				{
+					OutNetCost.FindOrAdd(Pair.Key) -= Pair.Value;
+				}
+				return true;
+			}
+		}
+	}
+
+	// Stale actor or unavailable service: legacy single-unit recipe-delta estimate.
+	return CalculateUpgradeCost(Family, Entry.CurrentTier, TargetTier, 1, OutNetCost);
 }
 
 void USmartUpgradePanel::OnRadiusTabClicked()

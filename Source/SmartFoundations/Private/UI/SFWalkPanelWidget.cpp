@@ -241,10 +241,10 @@ void USFWalkPanelWidget::Refresh()
     const bool bPipe = W->GetConveyanceType() == ESFWalkConveyanceType::Pipe;
     const bool bHyper = W->GetConveyanceType() == ESFWalkConveyanceType::Hypertube;   // #405: 3rd conveyance — routing only, no tier/direction
     // #405: per-conveyance Advance cap for the segment spinboxes — hypertube reaches 95 m
-    // (MAX_HYPERTUBE_POLE_SPACING), belts/pipes 54 m (safe max under the 56 m spline limit).
+    // (MAX_HYPERTUBE_POLE_SPACING), belts/pipes the seven-foundation 56 m support interval.
     const float MaxAdvanceM = (W->GetConveyanceType() == ESFWalkConveyanceType::Hypertube)
         ? (USFAutoConnectService::MAX_HYPERTUBE_POLE_SPACING / 100.0f)
-        : 54.0f;
+        : (SFConveyanceConstants::DefaultBeltPipeSupportIntervalCm / 100.0f);
     const auto& AC = S->GetAutoConnectRuntimeSettings();
     const int32 Tier = bPipe ? AC.PipeTierMain : AC.BeltTierMain;
     const int32 RouteMode = bHyper ? AC.HypertubeRoutingMode : (bPipe ? AC.PipeRoutingMode : AC.BeltRoutingMode);
@@ -474,7 +474,7 @@ UWidget* USFWalkPanelWidget::MakeSegmentRow(const FSFWalkSegmentView& View, floa
     // Fixed-width columns so every row lines up with the header. Advance/Rise/Shift are edited in METERS (the view
     // stores cm); ApplyCellEdit converts back. Turn is degrees.
     AddFixedCell(Row, MakeCell(FString::Printf(TEXT("%s%d"), View.bActive ? TEXT(">") : TEXT(""), View.Index), Col), 34.0f);
-    AddFixedCell(Row, MakeEditCell(View.Index, 0, View.Advance / 100.0f, 1.0f, MaxAdvanceM, 1.0f), 84.0f);   // Advance 1–MaxAdvanceM: min 1m (no 0-length span), max = belt/pipe 54m (safe under the 56m spline limit) or hypertube 95m (#405); longer = add a segment
+    AddFixedCell(Row, MakeEditCell(View.Index, 0, View.Advance / 100.0f, 1.0f, MaxAdvanceM, 1.0f), 84.0f);   // Advance 1–MaxAdvanceM: min 1m (no 0-length span), max = belt/pipe 56m or hypertube 95m (#405, #488); longer = add a segment
     AddFixedCell(Row, MakeEditCell(View.Index, 1, View.TurnDegrees, -270.0f, 270.0f, 5.0f), 66.0f);   // up to ±270° — a wide loop that arcs back into itself
     AddFixedCell(Row, MakeEditCell(View.Index, 2, View.Rise / 100.0f, -200.0f, 200.0f, 1.0f), 66.0f);
     AddFixedCell(Row, MakeEditCell(View.Index, 3, View.Shift / 100.0f, -200.0f, 200.0f, 1.0f), 66.0f);

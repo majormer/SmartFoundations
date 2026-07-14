@@ -311,6 +311,12 @@ private:
 	 */
 	bool CalculateUpgradeCost(ESFUpgradeFamily Family, int32 SourceTier, int32 TargetTier, int32 ItemCount, TMap<TSubclassOf<UFGItemDescriptor>, int32>& OutNetCost) const;
 
+	/** [#485] Exact per-actor estimate: prices this entry's buildable with the SAME
+	 *  geometry-derived settlement execution charges (ComputeUpgradeSettlement), so belts,
+	 *  pipes, and lifts count length instead of one flat recipe unit per actor. Falls back
+	 *  to the recipe-delta arithmetic above when the actor or service is unavailable. */
+	bool CalculateUpgradeCostForEntry(const FSFUpgradeAuditEntry& Entry, ESFUpgradeFamily Family, int32 TargetTier, TMap<TSubclassOf<UFGItemDescriptor>, int32>& OutNetCost) const;
+
 	/** Current radius in meters for area-based operations */
 	float CurrentRadiusMeters = 100.0f;
 

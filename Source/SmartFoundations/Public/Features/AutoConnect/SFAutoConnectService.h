@@ -90,8 +90,11 @@ public:
 	// Constants
 	// ========================================
 
-	/** Maximum pipe length in cm (56.01m - game engine limit) */
-	static constexpr float MAX_PIPE_LENGTH = 5601.0f;
+	/** Maximum belt/pipe span in cm. The 56m default is valid; anything longer is rejected. */
+	static constexpr float MAX_PIPE_LENGTH = 5600.0f;
+
+	/** Convert the shared 56 m belt/pipe-support interval into this support's grid gap. */
+	static int32 GetDefaultConveyanceSupportGridSpacing(const AFGHologram* Hologram);
 
 	/** #405: per-span CAP on the connector-to-connector CHORD (cm) = 96m — the BuildOrUpdateSpan limit, measured as
 	 *  Dist(connectorA, connectorB). The chord runs ~1m LONGER than the pole-to-pole SPACING (the connectors sit
@@ -648,9 +651,6 @@ public:
 
 	/** Stored connector pairs for build handoff, keyed by distributor hologram */
 	TMap<AFGHologram*, TArray<TPair<UFGFactoryConnectionComponent*, UFGFactoryConnectionComponent*>>> StoredConnectorPairs;
-
-	/** Search radius for finding compatible buildings (in cm) */
-	static constexpr float BUILDING_SEARCH_RADIUS = 2500.0f; // 25 meters
 
 	// ========================================
 	// Connector Management (Public for Orchestrator access)

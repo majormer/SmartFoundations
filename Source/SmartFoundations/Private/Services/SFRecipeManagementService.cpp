@@ -2,6 +2,7 @@
 
 #include "SFRecipeManagementService.h"
 #include "SmartFoundations.h"
+#include "Features/Extend/SFExtendCommitSpec.h"  // [#484] FSFFactorySettingsSnapshot
 #include "Subsystem/SFSubsystem.h"
 #include "Subsystem/SFHologramDataService.h"
 #include "Data/SFHologramDataRegistry.h"
@@ -416,34 +417,49 @@ void USFRecipeManagementService::ClearAllRecipes()
 }
 
 // ========================================
-// Recipe Sampling (Middle-Click)
+// Implicit Settings Sampling (Middle-Click)
 // ========================================
 
-void USFRecipeManagementService::StoreProductionRecipeFromBuilding(AFGBuildable* SourceBuilding)
+void USFRecipeManagementService::BeginImplicitSettingsSample()
+{
+	bCapturedImplicitSettingsThisSample = false;
+
+	// MMB with vanilla setting-copy disabled must not inherit settings from a previous MMB sample.
+	// A recipe deliberately chosen through U/the Smart Panel is a separate contract and survives.
+	if (ActiveRecipeSource == ESFRecipeSource::Copied)
+	{
+		ClearStoredProductionRecipe();
+	}
+	else
+	{
+		ClearStoredShardState();
+		if (Subsystem)
+		{
+			Subsystem->UpdateCounterDisplay();
+		}
+	}
+}
+
+void USFRecipeManagementService::CaptureVanillaSampledProductionSettings(AFGBuildableManufacturer* SourceBuilding)
 {
 	if (!SourceBuilding || !IsValid(SourceBuilding))
 	{
-		UE_LOG(LogSmartFoundations, Verbose, TEXT("🍽️ Cannot store recipe - source building is invalid"));
 		return;
 	}
-	
-	// Clear any existing stored recipe
-	ClearStoredProductionRecipe();
-	
-	// Check if this is a production building that supports recipes
+
+	// The caller has already verified that vanilla produced manufacturer clipboard settings for
+	// this exact actor. Do not perform a second trace or independently read the gameplay option.
 	if (!IsProductionBuilding(SourceBuilding))
 	{
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🍽️ Building is not a production building, skipping recipe storage"));
 		return;
 	}
+
+	bCapturedImplicitSettingsThisSample = true;
 	
 	// Try to get the production recipe from the building
 	TSubclassOf<UFGRecipe> ProductionRecipe = nullptr;
 	
-	if (auto Manufacturer = Cast<AFGBuildableManufacturer>(SourceBuilding))
-	{
-		ProductionRecipe = Manufacturer->GetCurrentRecipe();
-	}
+	ProductionRecipe = SourceBuilding->GetCurrentRecipe();
 	
 	if (ProductionRecipe)
 	{
@@ -569,6 +585,85 @@ void USFRecipeManagementService::StoreProductionRecipeFromBuilding(AFGBuildable*
 	}
 }
 
+void USFRecipeManagementService::CaptureFactorySettingsSnapshot(FSFFactorySettingsSnapshot& OutSnapshot) const
+{
+	OutSnapshot = FSFFactorySettingsSnapshot();
+	if (bHasStoredProductionRecipe && StoredProductionRecipe)
+	{
+		OutSnapshot.bHasRecipe = true;
+		OutSnapshot.Recipe = StoredProductionRecipe;
+	}
+	if (bHasStoredPotential && StoredOverclockShardClass)
+	{
+		OutSnapshot.bHasPotential = true;
+		OutSnapshot.Potential = StoredPotential;
+		OutSnapshot.OverclockShardClass = StoredOverclockShardClass;
+		OutSnapshot.OverclockShardCount = StoredOverclockShardCount;
+	}
+	if (bHasStoredProductionBoost && StoredProductionBoostShardClass)
+	{
+		OutSnapshot.bHasProductionBoost = true;
+		OutSnapshot.ProductionBoost = StoredProductionBoost;
+		OutSnapshot.ProductionBoostShardClass = StoredProductionBoostShardClass;
+	}
+}
+
+void USFRecipeManagementService::InstallFactorySettingsSnapshot(const FSFFactorySettingsSnapshot& Snapshot, UClass* CommitBuildClass)
+{
+	// The snapshot is AUTHORITATIVE for this commit: absent settings mean the commit's factories
+	// get NONE - never inherit whatever a previous commit installed. The additive-only first
+	// version leaked state live (2026-07-14): with vanilla's sample setting OFF the snapshot
+	// shipped empty, the install no-op'd, and the clones received the PREVIOUS test's recipe
+	// straight from this service's stale stored state. On a listen host this install (like the
+	// old Restore-recipe install before it) also overwrites the host player's own sampled state
+	// when a remote client's commit lands - a pre-existing shared-service trade-off; the
+	// reported environment (dedicated server) has no local player.
+	if (Snapshot.bHasRecipe && Snapshot.Recipe)
+	{
+		// Same install the RESTORE commit already used - also syncs the subsystem mirror fields
+		// (StoredProductionRecipe / bHasStoredProductionRecipe) the scaled spawner reads.
+		ClearStoredShardState();  // shard fields re-install below only when the snapshot carries them
+		StoreProductionRecipeClass(Snapshot.Recipe);
+	}
+	else
+	{
+		ClearStoredProductionRecipe();  // clears recipe AND shard/somersloop state
+	}
+
+	// Server-side sanity on client-shipped values: clamp to vanilla's reachable ranges rather
+	// than trusting the floats/counts blindly. The descriptor classes are already constrained to
+	// UFGPowerShardDescriptor by the property system.
+	if (Snapshot.bHasPotential && Snapshot.OverclockShardClass)
+	{
+		StoredPotential = FMath::Clamp(Snapshot.Potential, 1.0f, 2.5f);
+		bHasStoredPotential = true;
+		StoredOverclockShardClass = Snapshot.OverclockShardClass;
+		StoredOverclockShardCount = FMath::Clamp(Snapshot.OverclockShardCount, 0, 3);
+	}
+	if (Snapshot.bHasProductionBoost && Snapshot.ProductionBoostShardClass)
+	{
+		StoredProductionBoost = FMath::Clamp(Snapshot.ProductionBoost, 1.0f, 2.0f);
+		bHasStoredProductionBoost = true;
+		StoredProductionBoostShardClass = Snapshot.ProductionBoostShardClass;
+	}
+	if (bHasStoredPotential || bHasStoredProductionBoost)
+	{
+		// Align the shard session to NOW and record the commit's build class, so the session
+		// gating (and OnNewBuildSession's same-class carry-over) treats this exactly like a
+		// local sample instead of discarding it as stale.
+		++CurrentBuildSessionId;
+		ShardSessionId = CurrentBuildSessionId;
+		ShardSourceBuildClass = CommitBuildClass;
+	}
+
+	UE_LOG(LogSmartFoundations, Verbose,
+		TEXT("[#484] Installed commit factory settings: recipe=%s potential=%s(%.2f, shards=%d) boost=%s(%.2f) buildClass=%s"),
+		Snapshot.bHasRecipe ? *GetNameSafe(Snapshot.Recipe) : TEXT("(none)"),
+		Snapshot.bHasPotential ? TEXT("yes") : TEXT("no"), Snapshot.Potential, Snapshot.OverclockShardCount,
+		Snapshot.bHasProductionBoost ? TEXT("yes") : TEXT("no"), Snapshot.ProductionBoost,
+		*GetNameSafe(CommitBuildClass));
+}
+
 void USFRecipeManagementService::OnRecipeModeChanged(const FInputActionValue& Value)
 {
 	// Toggle recipe mode state
@@ -600,47 +695,17 @@ void USFRecipeManagementService::ApplyStoredProductionRecipeToBuilding(AFGBuilda
 	}
 }
 
-void USFRecipeManagementService::OnBuildGunRecipeSampled(TSubclassOf<UFGRecipe> SampledRecipe)
+void USFRecipeManagementService::FinishImplicitSettingsSample(AActor* SampledActor) const
 {
-	if (!SampledRecipe || !Subsystem)
-	{
-		return;
-	}
-	
-	// The delegate gives us the construction recipe, but we need the production recipe
-	// Find the building under the player's crosshair
-	AFGPlayerController* PC = Subsystem->GetLastPlayerController();
-	if (!PC)
-	{
-		return;
-	}
-	
-	AFGCharacterPlayer* Character = Cast<AFGCharacterPlayer>(PC->GetPawn());
-	if (!Character)
-	{
-		return;
-	}
-	
-	// Trace from camera to find the building
-	FVector CameraLocation;
-	FRotator CameraRotation;
-	PC->GetPlayerViewPoint(CameraLocation, CameraRotation);
-	FVector TraceEnd = CameraLocation + (CameraRotation.Vector() * 10000.0f); // 100m range
-	
-	FHitResult HitResult;
-	FCollisionQueryParams QueryParams;
-	QueryParams.AddIgnoredActor(Character);
-	
-	if (Subsystem->GetWorld()->LineTraceSingleByChannel(HitResult, CameraLocation, TraceEnd, ECC_Visibility, QueryParams))
-	{
-		// Check if we hit a production building
-		AFGBuildable* HitBuilding = Cast<AFGBuildable>(HitResult.GetActor());
-		if (HitBuilding && IsProductionBuilding(HitBuilding))
-		{
-			// Store the building's current production recipe
-			StoreProductionRecipeFromBuilding(HitBuilding);
-		}
-	}
+	UE_LOG(LogSmartFoundations, Log,
+		TEXT("[#489] MMB settings sample: actor=%s vanillaCopy=%s recipe=%s shards=%d potential=%.0f%% somersloop=%s boost=%.0f%%"),
+		*GetNameSafe(SampledActor),
+		bCapturedImplicitSettingsThisSample ? TEXT("YES") : TEXT("NO"),
+		bCapturedImplicitSettingsThisSample ? *GetNameSafe(StoredProductionRecipe) : TEXT("None"),
+		bCapturedImplicitSettingsThisSample ? StoredOverclockShardCount : 0,
+		bCapturedImplicitSettingsThisSample && bHasStoredPotential ? StoredPotential * 100.0f : 100.0f,
+		bCapturedImplicitSettingsThisSample ? *GetNameSafe(StoredProductionBoostShardClass) : TEXT("None"),
+		bCapturedImplicitSettingsThisSample && bHasStoredProductionBoost ? StoredProductionBoost * 100.0f : 100.0f);
 }
 
 void USFRecipeManagementService::ClearStoredProductionRecipe()
@@ -702,7 +767,7 @@ void USFRecipeManagementService::ClearStoredProductionRecipe()
 	}
 
 	// [#368] NOTE: intentionally does NOT touch the vanilla build-gun clipboard here. The middle-click
-	// sample handler (StoreProductionRecipeFromBuilding) routes through this reset, and clearing the
+	// sample flow routes through this reset, and clearing the
 	// clipboard would wipe the recipe vanilla's own sample just populated (breaking vanilla Ctrl+V).
 	// The clipboard is cleared at the deliberate sites instead: ClearAllRecipes (Num0/panel) and the
 	// holster path (OnBuildGunUnequipped).

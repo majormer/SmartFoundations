@@ -677,7 +677,9 @@ void USFGridSpawnerService::UpdateChildPositions()
                     FTransform CurrentTransform = SS->GetCurrentAdapter()->GetBaseTransform();
                     if (FSFArrowModule_StaticMesh* ArrowModule = SS->GetArrowModule())
                     {
-                        ArrowModule->UpdateArrows(World, CurrentTransform, SS->GetLastAxisInput(), true);
+                        int32 ArrowDirectionSign = 0;
+                        const ELastAxisInput ArrowAxis = SS->GetEffectiveArrowAxisInput(&ArrowDirectionSign);
+                        ArrowModule->UpdateArrows(World, CurrentTransform, ArrowAxis, true, ArrowDirectionSign);
                         UE_LOG(LogSmartGrid, Verbose, TEXT("   Arrows updated after child positioning"));
                     }
                 }

@@ -8,6 +8,66 @@
 #include "Features/AutoConnect/SFAutoConnectServiceImpl.h"
 #include "Features/HypertubeAutoConnect/SFHypertubeSpanBuilder.h"   // #405: SFHypertube::BuildOrUpdateSpan (new slice)
 #include "Features/Scaling/SFGridCoordComponent.h"                  // #418: children carry their own grid cell
+#include "Components/SplineComponent.h"
+
+namespace
+{
+	bool ValidateSupportBeltRoute(AFGHologram* ParentHologram, ASFConveyorBeltHologram* BeltHologram)
+	{
+		if (!ParentHologram || !BeltHologram)
+		{
+			return false;
+		}
+
+		const USplineComponent* Spline = BeltHologram->GetSplineComponent();
+		const float SplineLength = Spline ? Spline->GetSplineLength() : 0.0f;
+		if (SplineLength > USFAutoConnectService::MAX_PIPE_LENGTH)
+		{
+			ParentHologram->AddConstructDisqualifier(UFGCDConveyorTooLong::StaticClass());
+			BeltHologram->SetPlacementMaterialState(EHologramMaterialState::HMS_ERROR);
+			return false;
+		}
+
+		// Reuse the same synchronous vanilla verdict used by distributor Auto-Connect. The tag selects
+		// ASFConveyorBeltHologram's validation branch even though this is a parented preview child.
+		BeltHologram->Tags.AddUnique(FName(TEXT("SF_BeltAutoConnectChild")));
+		BeltHologram->CheckValidPlacement();
+		if (!BeltHologram->GetLastVanillaPlacementValid())
+		{
+			ParentHologram->AddConstructDisqualifier(BeltHologram->WasLastRejectTooSteep()
+				? UFGCDConveyorTooSteep::StaticClass()
+				: UFGCDConveyorInvalidShape::StaticClass());
+			BeltHologram->SetPlacementMaterialState(EHologramMaterialState::HMS_ERROR);
+			return false;
+		}
+
+		return true;
+	}
+
+	bool ValidateSupportPipeRoute(AFGHologram* ParentHologram, ASFPipelineHologram* PipeHologram)
+	{
+		if (!ParentHologram || !PipeHologram)
+		{
+			return false;
+		}
+
+		bool bTooLong = false;
+		if (!PipeHologram->ValidateCurrentSpline(USFAutoConnectService::MAX_PIPE_LENGTH, bTooLong))
+		{
+			const TSubclassOf<UFGConstructDisqualifier> Disqualifier = bTooLong
+				? UFGCDPipeTooLong::StaticClass()
+				: UFGCDPipeInvalidShape::StaticClass();
+			ParentHologram->AddConstructDisqualifier(Disqualifier);
+			PipeHologram->ResetConstructDisqualifiers();
+			PipeHologram->AddConstructDisqualifier(Disqualifier);
+			PipeHologram->SetPlacementMaterialState(EHologramMaterialState::HMS_ERROR);
+			return false;
+		}
+
+		PipeHologram->ResetConstructDisqualifiers();
+		return true;
+	}
+}
 
 // Shared belt/pipe auto-connect exit-normal resolver (#398 belts, #400 pipes, + wall hardening). Exits each support
 // along its FACING so a rotated/arc run BOWS toward the connector normal instead of a straight chord that facets at
@@ -248,6 +308,7 @@ void USFAutoConnectService::ProcessStackableConveyorPoles(AFGHologram* ParentHol
 				// Distance restriction: >56m is too far (game engine limit)
 				if (Distance > MAX_PIPE_LENGTH)
 				{
+					ParentHologram->AddConstructDisqualifier(UFGCDConveyorTooLong::StaticClass());
 					UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🚧 Belt skipped: distance %.1f cm > 56m between [%d,%d,%d] and [%d,%d,%d]"),
 						Distance, X, Y, Z, X + 1, Y, Z);
 					continue;
@@ -259,6 +320,7 @@ void USFAutoConnectService::ProcessStackableConveyorPoles(AFGHologram* ParentHol
 				float AngleDegrees = FMath::RadiansToDegrees(FMath::Asin(VerticalComponent));
 				if (AngleDegrees > 30.0f)
 				{
+					ParentHologram->AddConstructDisqualifier(UFGCDConveyorTooSteep::StaticClass());
 					UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🚧 Belt skipped: angle %.1f° > 30° between [%d,%d,%d] and [%d,%d,%d]"),
 						AngleDegrees, X, Y, Z, X + 1, Y, Z);
 					continue;
@@ -549,19 +611,9 @@ void USFAutoConnectService::ProcessStackablePipelineSupports(AFGHologram* Parent
 				// Distance restriction: >56m is too far (game engine limit)
 				if (Distance > MAX_PIPE_LENGTH)
 				{
+					ParentHologram->AddConstructDisqualifier(UFGCDPipeTooLong::StaticClass());
 					UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🔧 Pipe skipped: distance %.1f cm > 56m between [%d,%d,%d] and next along %hs"),
 						Distance, X, Y, Z, bConnectAlongY ? "Y" : "X");
-					continue;
-				}
-
-				// Angle restriction: >30° from horizontal
-				FVector DirectionVec = (Pos2 - Pos1).GetSafeNormal();
-				float VerticalComponent = FMath::Abs(DirectionVec.Z);
-				float AngleDegrees = FMath::RadiansToDegrees(FMath::Asin(VerticalComponent));
-				if (AngleDegrees > 30.0f)
-				{
-					UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🔧 Pipe skipped: angle %.1f° > 30° between [%d,%d,%d] and next along %hs"),
-						AngleDegrees, X, Y, Z, bConnectAlongY ? "Y" : "X");
 					continue;
 				}
 				
@@ -997,6 +1049,7 @@ AFGHologram* USFAutoConnectService::UpdateOrCreatePipeForPolePair(
 	// Skip if too long (game engine limit)
 	if (Distance > MAX_PIPE_LENGTH)
 	{
+		ParentHologram->AddConstructDisqualifier(UFGCDPipeTooLong::StaticClass());
 		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🔧 STACKABLE PIPE: Skipping pipe %d - distance %.1f exceeds max %.1f"),
 			PipeIndex, Distance, MAX_PIPE_LENGTH);
 		return nullptr;
@@ -1131,6 +1184,7 @@ AFGHologram* USFAutoConnectService::UpdateOrCreatePipeForPolePair(
 			{
 				ExistingPipe->SetSplineDataAndUpdate(SplinePoints);
 			}
+			ValidateSupportPipeRoute(ParentHologram, ExistingPipe);
 			
 			// Step 3: Ensure visibility state is correct
 			ExistingPipe->SetActorHiddenInGame(false);
@@ -1251,6 +1305,7 @@ AFGHologram* USFAutoConnectService::UpdateOrCreatePipeForPolePair(
 	PipeChild->SetPlacementMaterialState(EHologramMaterialState::HMS_OK);
 	
 	ParentHologram->AddChild(PipeChild, ChildName);
+	ValidateSupportPipeRoute(ParentHologram, PipeChild);
 	
 	PipeChild->TriggerMeshGeneration();
 	PipeChild->ForceApplyHologramMaterial();
@@ -1806,6 +1861,7 @@ AFGHologram* USFAutoConnectService::UpdateOrCreateBeltForPolePair(
 				// [#380] Drive the vanilla build-mode descriptors so Curve/Straight actually take effect
 				// (shared with Extend lanes); falls back to AutoRouteSplineWithNormals internally.
 				ExistingBelt->ApplyBeltBuildModeRouting(BeltRoutingMode, StartPos, StartNormal, EndPos, EndNormal);
+				ValidateSupportBeltRoute(ParentHologram, ExistingBelt);
 				
 				ExistingBelt->SetActorHiddenInGame(false);
 				ExistingBelt->SetPlacementMaterialState(ParentHologram->GetHologramMaterialState());
@@ -1913,6 +1969,7 @@ AFGHologram* USFAutoConnectService::UpdateOrCreateBeltForPolePair(
 	BeltChild->SetPlacementMaterialState(EHologramMaterialState::HMS_OK);
 	
 	ParentHologram->AddChild(BeltChild, ChildName);
+	ValidateSupportBeltRoute(ParentHologram, BeltChild);
 	
 	BeltChild->TriggerMeshGeneration();
 	BeltChild->ForceApplyHologramMaterial();
@@ -2012,4 +2069,3 @@ void USFAutoConnectService::CleanupAllStackableBelts(AFGHologram* ParentHologram
 	State->BeltsByPolePair.Empty();
 	StackableBeltStates.Remove(ParentHologram);
 }
-

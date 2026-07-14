@@ -21,6 +21,18 @@
 // ── Section mirror sub-structs (field names must match the config asset's leaf keys) ──
 
 USTRUCT(BlueprintType)
+struct FSmart_BlueprintAutoConnectConfigSection {
+    GENERATED_BODY()
+    UPROPERTY(BlueprintReadWrite) bool bBlueprintSeamAutoConnectEnabled{true};
+};
+
+USTRUCT(BlueprintType)
+struct FSmart_AutoConnectBehaviorConfigSection {
+    GENERATED_BODY()
+    UPROPERTY(BlueprintReadWrite) int32 NearbyLogisticsRange{25};
+};
+
+USTRUCT(BlueprintType)
 struct FSmart_BeltConfigSection {
     GENERATED_BODY()
     UPROPERTY(BlueprintReadWrite) bool bAutoConnectEnabled{};
@@ -52,6 +64,7 @@ USTRUCT(BlueprintType)
 struct FSmart_PowerConfigSection {
     GENERATED_BODY()
     UPROPERTY(BlueprintReadWrite) bool bPowerAutoConnectEnabled{};
+    UPROPERTY(BlueprintReadWrite) bool bScaleDaisyChainPower{true};
     UPROPERTY(BlueprintReadWrite) int32 PowerConnectMode{};
     UPROPERTY(BlueprintReadWrite) int32 PowerConnectRange{};
     UPROPERTY(BlueprintReadWrite) int32 PowerConnectReserved{};
@@ -72,6 +85,7 @@ struct FSmart_BuildingBehaviorConfigSection {
     UPROPERTY(BlueprintReadWrite) bool bAutoHoldOnGridChange{true};  // [#279] default ON (restores pre-config behavior)
     UPROPERTY(BlueprintReadWrite) bool bApplyImmediately{};
     UPROPERTY(BlueprintReadWrite) bool bPlayerRelativeControls{};    // [#209] global; world-context scaling relative to facing (Panel stays absolute)
+    UPROPERTY(BlueprintReadWrite) bool bToggleTransformModes{};      // [#482] tap-to-toggle (latch) transform modes for controller/accessibility; default OFF
     // [#217 / AV-FP fix] Scroll increments folded in here - no new USTRUCT, keeps config reflection under the AV threshold.
     UPROPERTY(BlueprintReadWrite) float SpacingIncrement{0.5f};
     UPROPERTY(BlueprintReadWrite) float StepsIncrement{0.5f};
@@ -106,6 +120,8 @@ struct FSmart_ConfigStruct_Sections {
     UPROPERTY(BlueprintReadWrite) FSmart_PipeConfigSection PipeAutoConnect;
     UPROPERTY(BlueprintReadWrite) FSmart_HypertubeConfigSection HypertubeAutoConnect;
     UPROPERTY(BlueprintReadWrite) FSmart_PowerConfigSection PowerAutoConnect;
+    UPROPERTY(BlueprintReadWrite) FSmart_BlueprintAutoConnectConfigSection BlueprintAutoConnect;
+    UPROPERTY(BlueprintReadWrite) FSmart_AutoConnectBehaviorConfigSection AutoConnectBehavior;
     // [#217 / AV-FP fix] ScalingSettings section member removed; scroll increments live in BuildingBehavior.
     UPROPERTY(BlueprintReadWrite) FSmart_BuildingBehaviorConfigSection BuildingBehavior;
     UPROPERTY(BlueprintReadWrite) FSmart_HUDConfigSection HUD;
@@ -118,6 +134,14 @@ USTRUCT(BlueprintType)
 struct FSmart_ConfigStruct {
     GENERATED_BODY()
 public:
+
+    // ── Blueprint Auto-Connect ──
+
+    UPROPERTY(BlueprintReadWrite)
+    bool bBlueprintSeamAutoConnectEnabled{true};
+
+    UPROPERTY(BlueprintReadWrite)
+    int32 NearbyLogisticsRange{25};
 
     // ── Belt Auto-Connect ──
 
@@ -174,6 +198,11 @@ public:
 
     UPROPERTY(BlueprintReadWrite)
     bool bPowerAutoConnectEnabled{};
+
+    // Scale daisy-chain power: when scaling factories/generators and Upgraded Power Connectors is
+    // unlocked, wire adjacent grid cells building-to-building along local X (Issue #487).
+    UPROPERTY(BlueprintReadWrite)
+    bool bScaleDaisyChainPower{true};
 
     UPROPERTY(BlueprintReadWrite)
     int32 PowerConnectMode{};
@@ -236,6 +265,14 @@ public:
     // frozen UI, always stays absolute X/Y/Z). Global setting, default OFF (opt-in).
     UPROPERTY(BlueprintReadWrite)
     bool bPlayerRelativeControls{};
+
+    // [#482] Tap-to-toggle (latching) transform modes: tap a transform key (Spacing/Steps/
+    // Stagger/Rotation, or U on a factory) to latch the mode on; tap again to release; tap a
+    // different one to switch. For controller/Steam Input radial menus and accessibility -
+    // those send momentary taps and cannot hold a key. Default OFF (opt-in): when off, the
+    // hold-to-activate behavior is untouched. Read live at the input event.
+    UPROPERTY(BlueprintReadWrite)
+    bool bToggleTransformModes{};
 
     // ── Scaling Settings (#217 scroll increments) ──
     // How much each mouse-wheel notch changes a transform. Distance settings are METERS (converted
@@ -306,6 +343,12 @@ public:
             }
         }
 
+        // Blueprint Auto-Connect
+        ConfigStruct.bBlueprintSeamAutoConnectEnabled = Sections.BlueprintAutoConnect.bBlueprintSeamAutoConnectEnabled;
+
+        // Auto-Connect Behavior
+        ConfigStruct.NearbyLogisticsRange = Sections.AutoConnectBehavior.NearbyLogisticsRange;
+
         // Belt Auto-Connect
         ConfigStruct.bAutoConnectEnabled      = Sections.BeltAutoConnect.bAutoConnectEnabled;
         ConfigStruct.bAutoConnectDistributors = Sections.BeltAutoConnect.bAutoConnectDistributors;
@@ -327,6 +370,7 @@ public:
 
         // Power Auto-Connect
         ConfigStruct.bPowerAutoConnectEnabled = Sections.PowerAutoConnect.bPowerAutoConnectEnabled;
+        ConfigStruct.bScaleDaisyChainPower    = Sections.PowerAutoConnect.bScaleDaisyChainPower;
         ConfigStruct.PowerConnectMode         = Sections.PowerAutoConnect.PowerConnectMode;
         ConfigStruct.PowerConnectRange        = Sections.PowerAutoConnect.PowerConnectRange;
         ConfigStruct.PowerConnectReserved     = Sections.PowerAutoConnect.PowerConnectReserved;
@@ -345,6 +389,7 @@ public:
         ConfigStruct.bAutoHoldOnGridChange    = Sections.BuildingBehavior.bAutoHoldOnGridChange;
         ConfigStruct.bApplyImmediately        = Sections.BuildingBehavior.bApplyImmediately;
         ConfigStruct.bPlayerRelativeControls  = Sections.BuildingBehavior.bPlayerRelativeControls;
+        ConfigStruct.bToggleTransformModes    = Sections.BuildingBehavior.bToggleTransformModes;  // [#482]
 
         // HUD
         ConfigStruct.bShowHUD                 = Sections.HUD.bShowHUD;

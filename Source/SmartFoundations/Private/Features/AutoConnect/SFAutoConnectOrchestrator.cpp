@@ -22,6 +22,8 @@ void USFAutoConnectOrchestrator::Initialize(AFGHologram* InParentHologram, USFAu
 	// Reset context-aware spacing state for new placement
 	bContextSpacingApplied = false;
 	LastTargetBuildingClass.Reset();
+	LastAppliedSpacingX = -1.0f;
+	LastAppliedSpacingY = -1.0f;
 
 	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🎯 Auto-Connect Orchestrator initialized for %s"), 
 		*InParentHologram->GetName());
@@ -1093,40 +1095,55 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 				if (Building)
 				{
 					UClass* CurrentBuildingClass = Building->GetClass();
-					
+					USFSubsystem* Subsystem = AutoConnectService->GetSubsystem();
+
 					bool bShouldApply = false;
 					if (!bContextSpacingApplied)
 					{
 						bShouldApply = true;
 						UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   🎯 CONTEXT-AWARE SPACING: First connection detected"));
 					}
-					else if (LastTargetBuildingClass.IsValid() && LastTargetBuildingClass.Get() != CurrentBuildingClass)
+					else if (LastTargetBuildingClass.IsValid() && LastTargetBuildingClass.Get() != CurrentBuildingClass && Subsystem)
 					{
-						bShouldApply = true;
-						UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   🎯 CONTEXT-AWARE SPACING: Target building changed"));
+						// Only re-adjust if the user hasn't since manually changed spacing
+						// away from what we last auto-applied - otherwise the nearest-building
+						// assignment flipping mid-scale would stomp deliberate user input.
+						FSFCounterState CurrentState = Subsystem->GetCounterState();
+						const bool bUserModifiedSpacing =
+							!FMath::IsNearlyEqual(CurrentState.SpacingX, LastAppliedSpacingX, 1.0f) ||
+							!FMath::IsNearlyEqual(CurrentState.SpacingY, LastAppliedSpacingY, 1.0f);
+
+						if (!bUserModifiedSpacing)
+						{
+							bShouldApply = true;
+							UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   🎯 CONTEXT-AWARE SPACING: Target building changed"));
+						}
+						else
+						{
+							UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   🎯 CONTEXT-AWARE SPACING: Target building changed but user has manually adjusted spacing - skipping"));
+						}
 					}
-					
-					if (bShouldApply)
+
+					if (bShouldApply && Subsystem)
 					{
 						USFBuildableSizeRegistry::Initialize();
 						FSFBuildableSizeProfile Profile = USFBuildableSizeRegistry::GetProfile(CurrentBuildingClass);
 						float BuildingWidth = Profile.DefaultSize.X - 400.0f;
-						
+
 						if (BuildingWidth > 0.0f)
 						{
-							if (USFSubsystem* Subsystem = AutoConnectService->GetSubsystem())
-							{
-								FSFCounterState NewState = Subsystem->GetCounterState();
-								NewState.SpacingX = FMath::RoundToInt(BuildingWidth);
-								NewState.SpacingY = FMath::RoundToInt(BuildingWidth);
-								Subsystem->UpdateCounterState(NewState);
-								
-								bContextSpacingApplied = true;
-								LastTargetBuildingClass = CurrentBuildingClass;
-								
-								UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   🎯 CONTEXT-AWARE SPACING: Auto-adjusted to %.1fm"),
-									BuildingWidth / 100.0f);
-							}
+							FSFCounterState NewState = Subsystem->GetCounterState();
+							NewState.SpacingX = FMath::RoundToInt(BuildingWidth);
+							NewState.SpacingY = FMath::RoundToInt(BuildingWidth);
+							Subsystem->UpdateCounterState(NewState);
+
+							bContextSpacingApplied = true;
+							LastTargetBuildingClass = CurrentBuildingClass;
+							LastAppliedSpacingX = NewState.SpacingX;
+							LastAppliedSpacingY = NewState.SpacingY;
+
+							UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   🎯 CONTEXT-AWARE SPACING: Auto-adjusted to %.1fm"),
+								BuildingWidth / 100.0f);
 						}
 					}
 				}
@@ -1965,6 +1982,10 @@ void USFAutoConnectOrchestrator::CollectPotentialConnections(
 	{
 		return;
 	}
+	const float NearbyLogisticsRange = Subsystem->GetAutoConnectRuntimeSettings().NearbyLogisticsRange;
+	// Candidate actors are discovered by collision overlap, then connector pairs are capped exactly
+	// below. Preserve headroom for large factories whose actor origin is farther away than a port.
+	const float BuildingSearchRadius = NearbyLogisticsRange + 1500.0f;
 	
 	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🎯 GLOBAL SCORING: Collecting potential connections from %d distributors"), Distributors.Num());
 	
@@ -1997,7 +2018,7 @@ void USFAutoConnectOrchestrator::CollectPotentialConnections(
 		FVector DistributorPos = Distributor->GetActorLocation();
 		
 		// Find compatible buildings nearby
-		TArray<AFGBuildable*> NearbyBuildings = Subsystem->FindNearbyBuildings(DistributorPos, 2500.0f);
+		TArray<AFGBuildable*> NearbyBuildings = Subsystem->FindNearbyBuildings(DistributorPos, BuildingSearchRadius);
 		TotalBuildingsFound += NearbyBuildings.Num();
 		
 		// Get distributor's side connectors
@@ -2081,7 +2102,7 @@ void USFAutoConnectOrchestrator::CollectPotentialConnections(
 					FVector DistConnectorNormal = DistConnector->GetConnectorNormal();
 					
 					float Distance = FVector::Dist(DistConnectorPos, BuildingConnectorPos);
-					if (Distance > 2500.0f)
+					if (Distance > NearbyLogisticsRange)
 					{
 						TotalValidationsFailed++;
 						continue; // Too far

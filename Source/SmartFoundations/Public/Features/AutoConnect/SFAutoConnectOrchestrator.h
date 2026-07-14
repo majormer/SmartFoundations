@@ -269,6 +269,10 @@ private:
 	/** Context-aware spacing: Track which building class spacing was adjusted for (reset if target changes) */
 	TWeakObjectPtr<UClass> LastTargetBuildingClass;
 
+	/** Spacing values we last auto-applied, so a target-building change doesn't clobber spacing the user has since adjusted manually */
+	float LastAppliedSpacingX = -1.0f;
+	float LastAppliedSpacingY = -1.0f;
+
 	/**
 	 * Clear the belt evaluation flag after cooldown period.
 	 */

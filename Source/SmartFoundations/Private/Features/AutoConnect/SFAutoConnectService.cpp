@@ -13,6 +13,9 @@
 
 #include "Features/AutoConnect/SFAutoConnectService.h"
 #include "Features/AutoConnect/SFAutoConnectServiceImpl.h"
+#include "Data/SFBuildableSizeRegistry.h"
+#include "Shared/Conduits/SFConveyanceConstants.h"
+#include "Hologram/FGBuildableHologram.h"
 
 USFAutoConnectService::USFAutoConnectService()
 	: Subsystem(nullptr)
@@ -28,7 +31,7 @@ void USFAutoConnectService::Init(USFSubsystem* InSubsystem)
 	}
 	
 	Subsystem = InSubsystem;
-	UE_LOG(LogSmartAutoConnect, Log, TEXT("Auto-Connect Service initialized with BUILDING_SEARCH_RADIUS=%.0f cm"), BUILDING_SEARCH_RADIUS);
+	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("Auto-Connect Service initialized"));
 }
 
 void USFAutoConnectService::Shutdown()
@@ -37,6 +40,24 @@ void USFAutoConnectService::Shutdown()
 	ClearBeltPreviewHelpers();
 	CleanupAllBlueprintSeamsAllParents();   // [#168] seam conduit previews + table cache
 	Subsystem = nullptr;
+}
+
+int32 USFAutoConnectService::GetDefaultConveyanceSupportGridSpacing(const AFGHologram* Hologram)
+{
+	AFGHologram* MutableHologram = const_cast<AFGHologram*>(Hologram);
+	const AFGBuildableHologram* BuildableHologram = Cast<AFGBuildableHologram>(Hologram);
+	if (!BuildableHologram
+		|| (!IsBeltSupportHologram(MutableHologram) && !IsPipeSupportHologram(MutableHologram)))
+	{
+		return 0;
+	}
+
+	const FVector SupportSize = USFBuildableSizeRegistry::GetSizeForHologram(BuildableHologram);
+	const bool bWallPole = IsWallConveyorPoleHologram(MutableHologram)
+		|| IsWallPipelineSupportHologram(MutableHologram);
+	const float FootprintAlongScaleAxis = bWallPole ? SupportSize.Y : SupportSize.X;
+	return FMath::RoundToInt(FMath::Max(0.0f,
+		SFConveyanceConstants::DefaultBeltPipeSupportIntervalCm - FootprintAlongScaleAxis));
 }
 
 void USFAutoConnectService::ClearBeltPreviewHelpers()
@@ -376,10 +397,12 @@ void USFAutoConnectService::FindCompatibleBuildingsForDistributor(AFGHologram* D
 		return;
 	}
 	
-	// Search for nearby buildings
+	// This legacy discovery feeds manifold processing; building connections are selected by the
+	// orchestrator. Keep its broad phase aligned with the configured connector-pair range.
 	FVector DistributorLocation = DistributorHologram->GetActorLocation();
-	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   🔍 Searching for buildings within %.0f cm radius"), BUILDING_SEARCH_RADIUS);
-	TArray<AFGBuildable*> NearbyBuildings = Subsystem->FindNearbyBuildings(DistributorLocation, BUILDING_SEARCH_RADIUS);
+	const float BuildingSearchRadius = Subsystem->GetAutoConnectRuntimeSettings().NearbyLogisticsRange + 1500.0f;
+	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   🔍 Searching for buildings within %.0f cm radius"), BuildingSearchRadius);
+	TArray<AFGBuildable*> NearbyBuildings = Subsystem->FindNearbyBuildings(DistributorLocation, BuildingSearchRadius);
 	
 	UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   Found %d nearby buildings"), NearbyBuildings.Num());
 	

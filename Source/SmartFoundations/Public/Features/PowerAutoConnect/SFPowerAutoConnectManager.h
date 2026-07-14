@@ -186,6 +186,10 @@ private:
 	// Context-aware spacing tracking (mirrors pipe auto-connect)
 	bool bContextSpacingApplied = false;
 	TWeakObjectPtr<UClass> LastTargetBuildingClass;
+	// Spacing values we last auto-applied, so a target-building change doesn't clobber
+	// spacing the user has since adjusted manually
+	float LastAppliedSpacingX = -1.0f;
+	float LastAppliedSpacingY = -1.0f;
 	
 	// Note: PlannedBuildingConnections is stored on USFSubsystem so it's shared
 	// between service managers (preview phase) and the build phase.

@@ -138,27 +138,14 @@ private:
 	 * Called by ProcessAllJunctions with shared reservation map.
 	 * @param ParentJunctionHologram - The junction to process
 	 * @param SharedReservedConnectors - Shared map to prevent connector conflicts
-	 * @param AllowedConnectorIndices - Optional list of junction connector indices this hologram can use (for child restrictions)
+	 * @param AllowedConnectorNames - Optional stable connector names this hologram can use (for child restrictions)
 	 * @param AllowedConnectionType - Optional constraint: only connect to this type of building connector (Input/Output)
 	 */
 	void ProcessPipeJunctions(
 		AFGHologram* ParentJunctionHologram, 
 		TMap<UFGPipeConnectionComponent*, AFGHologram*>* SharedReservedConnectors = nullptr,
-		const TArray<int32>* AllowedConnectorIndices = nullptr,
+		const TArray<FName>* AllowedConnectorNames = nullptr,
 		const EPipeConnectionType* AllowedConnectionType = nullptr);
-	
-	/** Helper: Get connector index in junction's connector array */
-	int32 GetConnectorIndex(AFGHologram* JunctionHologram, UFGPipeConnectionComponent* Connector);
-	
-	/** Helper: Get opposite connector index (for 4-way junctions: 0↔2, 1↔3) */
-	static int32 GetOppositeConnectorIndex(int32 Index, int32 TotalConnectors);
-	
-	/** Issue #206: Find the connector physically opposite the source by comparing world-space normals.
-	 *  GetComponents() ordering is arbitrary — this finds the true physical opposite. */
-	static int32 GetOppositeConnectorByNormal(int32 SourceIndex, const TArray<UFGPipeConnectionComponent*>& Connectors);
-	
-	/** Helper: Find an available connector on a junction for manifold chaining (not used for building connection) */
-	UFGPipeConnectionComponent* FindAvailableManifoldConnector(AFGHologram* JunctionHologram);
 	
 	/** 
 	 * Helper: Find best facing connector pair for manifold connection between two junctions.
@@ -195,10 +182,9 @@ private:
 	// Track junction transforms to detect movement
 	TMap<AFGHologram*, FTransform> LastJunctionTransforms;
 	
-	// Track which connector index the parent junction uses (to restrict children)
-	TMap<AFGHologram*, int32> ParentConnectorIndices;
-	// Issue #206: Track second connector index for opposite-side connections
-	TMap<AFGHologram*, int32> ParentConnectorIndicesB;
+	// Stable named factory-side ports selected for each junction. Component array ordering is not topology.
+	TMap<AFGHologram*, FName> ParentConnectorNames;
+	TMap<AFGHologram*, FName> ParentConnectorNamesB;
 	
 	// CRITICAL: Persistent connector reservation map to prevent flickering
 	// Must persist between frames so multiple junctions don't fight over the same connectors
@@ -207,6 +193,10 @@ private:
 	// Context-aware spacing tracking (mirrors belt orchestrator)
 	bool bContextSpacingApplied = false;
 	TWeakObjectPtr<UClass> LastTargetBuildingClass;
+	// Spacing values we last auto-applied, so a target-building change doesn't clobber
+	// spacing the user has since adjusted manually
+	float LastAppliedSpacingX = -1.0f;
+	float LastAppliedSpacingY = -1.0f;
 	
 	// Counter for unique child names
 	static int32 PipeChildCounter;

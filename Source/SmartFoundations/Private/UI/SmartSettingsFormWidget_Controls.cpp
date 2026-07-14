@@ -707,6 +707,11 @@ void USmartSettingsFormWidget::UpdatePowerAutoConnectControls()
         PowerEnabledCheckBox->SetIsChecked(Settings.bConnectPower);
     }
 
+    if (ScaleDaisyChainPowerCheckBox)
+    {
+        ScaleDaisyChainPowerCheckBox->SetIsChecked(Settings.bScaleDaisyChainPower);
+    }
+
     // Update Grid Axis ComboBox
     if (PowerGridAxisComboBox)
     {
@@ -737,6 +742,18 @@ void USmartSettingsFormWidget::OnPowerEnabledChanged(bool bIsChecked)
     {
         CachedSubsystem->TriggerAutoConnectRefresh();
     }
+}
+
+void USmartSettingsFormWidget::OnScaleDaisyChainPowerChanged(bool bIsChecked)
+{
+    if (!CachedSubsystem.IsValid())
+    {
+        return;
+    }
+
+    CachedSubsystem->SetScaleDaisyChainPowerEnabled(bIsChecked);
+    UE_LOG(LogSmartFoundations, VeryVerbose,
+        TEXT("Settings Form: Scale daisy-chain power changed to %d"), bIsChecked);
 }
 
 void USmartSettingsFormWidget::OnPowerGridAxisChanged(FString SelectedItem, ESelectInfo::Type SelectionType)
@@ -1523,4 +1540,3 @@ void USmartSettingsFormWidget::UpdateHypertubeAutoConnectControls()
 }
 
 #undef LOCTEXT_NAMESPACE
-

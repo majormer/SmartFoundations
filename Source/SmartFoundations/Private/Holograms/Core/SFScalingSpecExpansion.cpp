@@ -11,10 +11,15 @@
 #include "Holograms/Logistics/SFConveyorBeltHologram.h"
 #include "Holograms/Logistics/SFPipelineHologram.h"
 #include "Holograms/Power/SFWireHologram.h"
+#include "Constants/SFAssetPaths.h"
 #include "FGPowerConnectionComponent.h"
+#include "FGCircuitConnectionComponent.h"
+#include "FGUnlockSubsystem.h"
 #include "Buildables/FGBuildable.h"
+#include "Buildables/FGBuildableFactory.h"
 #include "Buildables/FGBuildableWire.h"
 #include "Shared/Power/SFWireDesignerRegistration.h"  // [#421] designer containment for direct-spawned wires
+#include "Resources/FGItemDescriptor.h"
 #include "FGBlueprintProxy.h"
 #include "Hologram/FGBlueprintHologram.h"       // [#168] Smart! Blueprints: staged blueprint grid cells
 #include "Features/Scaling/SFGridCoordComponent.h"  // [#168-MP] cell-basis capture from live preview children
@@ -1003,6 +1008,255 @@ void CaptureConduitPlan(AFGHologram* Hologram, FSFScalingSpec& InOutSpec)
 			TEXT("[MP-334] Client fire: captured conduit plan - %d belt(s), %d pipe(s), %d stackable belt(s), %d stackable pipe(s), %d wire(s) (%d cost item type(s))."),
 			PerKind[0], PerKind[1], PerKind[2], PerKind[3], PerKind[4], InOutSpec.ConduitPlanCost.Num());
 	}
+
+	SF_MergePlanCost(InOutSpec, GetScaleDaisyChainPowerCost(Hologram));
+	if (USFSubsystem* SS = Hologram ? USFSubsystem::Get(Hologram->GetWorld()) : nullptr)
+	{
+		InOutSpec.bScaleDaisyChainPower = SS->GetAutoConnectRuntimeSettings().bScaleDaisyChainPower;
+	}
+}
+
+namespace
+{
+	struct FSFScaleDaisyTarget
+	{
+		AActor* Actor = nullptr;
+		UFGCircuitConnectionComponent* Connection = nullptr;
+		FVector Location = FVector::ZeroVector;
+	};
+
+	bool SF_IsScaleDaisyChainEnabled(UObject* WorldContext, bool bRequested)
+	{
+		if (!WorldContext || !bRequested)
+		{
+			return false;
+		}
+
+		UWorld* World = WorldContext->GetWorld();
+		AFGUnlockSubsystem* Unlocks = World ? AFGUnlockSubsystem::Get(World) : nullptr;
+		return Unlocks && Unlocks->IsCircuitDaisyChainingUnlocked();
+	}
+
+	UFGCircuitConnectionComponent* SF_FirstCircuitConnection(AActor* Actor)
+	{
+		if (!IsValid(Actor))
+		{
+			return nullptr;
+		}
+
+		TArray<UFGCircuitConnectionComponent*> Connections;
+		Actor->GetComponents<UFGCircuitConnectionComponent>(Connections);
+		return Connections.Num() > 0 ? Connections[0] : nullptr;
+	}
+
+	bool SF_AlreadyConnected(UFGCircuitConnectionComponent* A, UFGCircuitConnectionComponent* B)
+	{
+		if (!A || !B)
+		{
+			return false;
+		}
+
+		TArray<UFGCircuitConnectionComponent*> Existing;
+		A->GetConnections(Existing);
+		return Existing.Contains(B);
+	}
+
+	bool SF_CanUseCircuitForDaisy(UFGCircuitConnectionComponent* Connection)
+	{
+		return Connection && Connection->GetNumFreeConnections() > 0;
+	}
+
+	bool SF_IsScaleDaisyEligibleClass(UClass* BuildClass)
+	{
+		// AFGBuildableGenerator derives from AFGBuildableFactory. This boundary also keeps
+		// circuit-bearing infrastructure (power towers, switches, and lights) out of the
+		// scale-time factory chain while remaining compatible with modded factory classes.
+		return BuildClass && BuildClass->IsChildOf(AFGBuildableFactory::StaticClass());
+	}
+
+	void SF_AddScaleDaisyTarget(AActor* Actor, UClass* BuildClass, TArray<FSFScaleDaisyTarget>& OutTargets)
+	{
+		if (!IsValid(Actor) || !BuildClass)
+		{
+			return;
+		}
+		if (const AFGHologram* Hologram = Cast<AFGHologram>(Actor))
+		{
+			if (Hologram->GetBuildClass() != BuildClass)
+			{
+				return;
+			}
+		}
+		else if (Actor->GetClass() != BuildClass)
+		{
+			return;
+		}
+
+		UFGCircuitConnectionComponent* Connection = SF_FirstCircuitConnection(Actor);
+		if (!Connection)
+		{
+			return;
+		}
+
+		FSFScaleDaisyTarget Target;
+		Target.Actor = Actor;
+		Target.Connection = Connection;
+		Target.Location = Actor->GetActorLocation();
+		OutTargets.Add(Target);
+	}
+
+	void SF_GroupScaleDaisyRows(
+		const TArray<FSFScaleDaisyTarget>& Targets,
+		const FVector& Origin,
+		const FRotator& Rotation,
+		TMap<FIntPoint, TArray<FSFScaleDaisyTarget>>& OutRows)
+	{
+		const FVector RowAxis = Rotation.RotateVector(FVector(0.f, 1.f, 0.f));
+		const FVector UpAxis = Rotation.RotateVector(FVector(0.f, 0.f, 1.f));
+
+		for (const FSFScaleDaisyTarget& Target : Targets)
+		{
+			const FVector Offset = Target.Location - Origin;
+			const int32 RowKey = FMath::RoundToInt(FVector::DotProduct(Offset, RowAxis) / 100.0f);
+			const int32 LayerKey = FMath::RoundToInt(FVector::DotProduct(Offset, UpAxis) / 100.0f);
+			OutRows.FindOrAdd(FIntPoint(RowKey, LayerKey)).Add(Target);
+		}
+
+		const FVector LaneAxis = Rotation.RotateVector(FVector(1.f, 0.f, 0.f));
+		for (auto& RowPair : OutRows)
+		{
+			TArray<FSFScaleDaisyTarget>& Row = RowPair.Value;
+			Row.Sort([&](const FSFScaleDaisyTarget& A, const FSFScaleDaisyTarget& B)
+			{
+				return FVector::DotProduct(A.Location - Origin, LaneAxis)
+					< FVector::DotProduct(B.Location - Origin, LaneAxis);
+			});
+		}
+	}
+
+	UClass* SF_GetScaleDaisyWireClass()
+	{
+		return LoadClass<AFGBuildableWire>(nullptr, SFAssetPaths::PowerLineBuildClass);
+	}
+
+	const AFGBuildableWire* SF_GetScaleDaisyWireDefaults()
+	{
+		UClass* WireClass = SF_GetScaleDaisyWireClass();
+		return WireClass ? Cast<AFGBuildableWire>(WireClass->GetDefaultObject()) : nullptr;
+	}
+
+	bool SF_IsValidScaleDaisySpan(float DistanceCm)
+	{
+		const AFGBuildableWire* WireDefaults = SF_GetScaleDaisyWireDefaults();
+		return WireDefaults && DistanceCm > 0.0f
+			&& (WireDefaults->mMaxLength <= 0.0f || DistanceCm <= WireDefaults->mMaxLength);
+	}
+
+	TSubclassOf<UFGItemDescriptor> SF_GetCableItemClass()
+	{
+		return LoadClass<UFGItemDescriptor>(
+			nullptr,
+			TEXT("/Game/FactoryGame/Resource/Parts/Cable/Desc_Cable.Desc_Cable_C"));
+	}
+
+	void SF_AddScaleDaisyCableCost(float DistanceCm, TArray<FItemAmount>& OutCost)
+	{
+		const AFGBuildableWire* WireDefaults = SF_GetScaleDaisyWireDefaults();
+		TSubclassOf<UFGItemDescriptor> CableClass = SF_GetCableItemClass();
+		if (!WireDefaults || !*CableClass || !SF_IsValidScaleDaisySpan(DistanceCm))
+		{
+			return;
+		}
+
+		const int32 CablesNeeded = WireDefaults->mLengthPerCost > 0.0f
+			? FMath::Max(1, FMath::CeilToInt(DistanceCm / WireDefaults->mLengthPerCost))
+			: 1;
+		for (FItemAmount& Existing : OutCost)
+		{
+			if (Existing.ItemClass == CableClass)
+			{
+				Existing.Amount += CablesNeeded;
+				return;
+			}
+		}
+
+		FItemAmount CableCost;
+		CableCost.ItemClass = CableClass;
+		CableCost.Amount = CablesNeeded;
+		OutCost.Add(CableCost);
+	}
+}
+
+TArray<FItemAmount> GetScaleDaisyChainPowerCost(AFGHologram* Parent)
+{
+	TArray<FItemAmount> Cost;
+	TArray<TPair<FVector, FVector>> Spans;
+	GetScaleDaisyChainPowerSpans(Parent, Spans);
+	for (const TPair<FVector, FVector>& Span : Spans)
+	{
+		SF_AddScaleDaisyCableCost(FVector::Dist(Span.Key, Span.Value), Cost);
+	}
+	return Cost;
+}
+
+void GetScaleDaisyChainPowerSpans(AFGHologram* Parent, TArray<TPair<FVector, FVector>>& OutSpans)
+{
+	OutSpans.Reset();
+	USFSubsystem* SS = Parent ? USFSubsystem::Get(Parent->GetWorld()) : nullptr;
+	const bool bRequested = SS && SS->GetAutoConnectRuntimeSettings().bScaleDaisyChainPower;
+	if (!Parent || !SS || !SS->IsScaleDaisyChainAvailable(Parent)
+		|| SS->IsExtendModeActive() || !SF_IsScaleDaisyChainEnabled(Parent, bRequested))
+	{
+		return;
+	}
+
+	const FSFCounterState Counters = SS->GetCounterState();
+	if (FMath::Abs(Counters.GridCounters.X) < 2)
+	{
+		return;
+	}
+
+	UClass* BuildClass = Parent->GetBuildClass();
+	if (!SF_IsScaleDaisyEligibleClass(BuildClass))
+	{
+		return;
+	}
+
+	TArray<FSFScaleDaisyTarget> Targets;
+	SF_AddScaleDaisyTarget(Parent, BuildClass, Targets);
+	for (AFGHologram* Child : Parent->GetHologramChildren())
+	{
+		if (Child && Child->Tags.Contains(FName(TEXT("SF_GridChild"))))
+		{
+			SF_AddScaleDaisyTarget(Child, BuildClass, Targets);
+		}
+	}
+
+	if (Targets.Num() < 2)
+	{
+		return;
+	}
+
+	TMap<FIntPoint, TArray<FSFScaleDaisyTarget>> Rows;
+	SF_GroupScaleDaisyRows(Targets, Parent->GetActorLocation(), Parent->GetActorRotation(), Rows);
+
+	for (const auto& RowPair : Rows)
+	{
+		const TArray<FSFScaleDaisyTarget>& Row = RowPair.Value;
+		for (int32 i = 0; i + 1 < Row.Num(); ++i)
+		{
+			if (!Row[i].Connection || !Row[i + 1].Connection)
+			{
+				continue;
+			}
+			const FVector Start = Row[i].Connection->GetComponentLocation();
+			const FVector End = Row[i + 1].Connection->GetComponentLocation();
+			if (SF_IsValidScaleDaisySpan(FVector::Dist(Start, End)))
+			{
+				OutSpans.Emplace(Start, End);
+			}
+		}
+	}
 }
 
 // Resolve the circuit connection component nearest to a captured wire-endpoint location among
@@ -1361,6 +1615,98 @@ int32 SpawnWirePlanPostConstruct(AActor* BuiltParent, const TArray<AActor*>& Out
 			Built, WireEntries, *GetNameSafe(BuiltParent));
 	}
 
+	return Built;
+}
+
+int32 SpawnScaleDaisyChainPowerPostConstruct(AActor* BuiltParent, const TArray<AActor*>& OutChildren,
+	const FSFCounterState& Counters, bool bEnabled, AFGBlueprintProxy* GroupProxy)
+{
+	UWorld* World = BuiltParent ? BuiltParent->GetWorld() : nullptr;
+	if (!World || !SF_IsScaleDaisyChainEnabled(BuiltParent, bEnabled) || FMath::Abs(Counters.GridCounters.X) < 2)
+	{
+		return 0;
+	}
+
+	UClass* BuildClass = BuiltParent->GetClass();
+	if (!SF_IsScaleDaisyEligibleClass(BuildClass))
+	{
+		return 0;
+	}
+
+	TArray<FSFScaleDaisyTarget> Targets;
+	SF_AddScaleDaisyTarget(BuiltParent, BuildClass, Targets);
+	for (AActor* Child : OutChildren)
+	{
+		SF_AddScaleDaisyTarget(Child, BuildClass, Targets);
+	}
+	if (Targets.Num() < 2)
+	{
+		return 0;
+	}
+
+	UClass* WireClass = SF_GetScaleDaisyWireClass();
+	if (!WireClass)
+	{
+		return 0;
+	}
+
+	TMap<FIntPoint, TArray<FSFScaleDaisyTarget>> Rows;
+	SF_GroupScaleDaisyRows(Targets, BuiltParent->GetActorLocation(), BuiltParent->GetActorRotation(), Rows);
+
+	int32 Built = 0;
+	for (auto& RowPair : Rows)
+	{
+		TArray<FSFScaleDaisyTarget>& Row = RowPair.Value;
+		if (Row.Num() < 2)
+		{
+			continue;
+		}
+
+		for (int32 i = 0; i + 1 < Row.Num(); ++i)
+		{
+			UFGCircuitConnectionComponent* A = Row[i].Connection;
+			UFGCircuitConnectionComponent* B = Row[i + 1].Connection;
+			if (!A || !B || A == B)
+			{
+				continue;
+			}
+			const float DistanceCm = FVector::Dist(A->GetComponentLocation(), B->GetComponentLocation());
+			if (!SF_IsValidScaleDaisySpan(DistanceCm))
+			{
+				continue;
+			}
+
+			if (SF_AlreadyConnected(A, B))
+			{
+				continue;
+			}
+			if (!SF_CanUseCircuitForDaisy(A) || !SF_CanUseCircuitForDaisy(B))
+			{
+				continue;
+			}
+
+			AFGBuildableWire* Wire = SFWireDesigner::SpawnWireForEndpoints(
+				World, WireClass, Row[i].Location, A, B);
+			if (!Wire)
+			{
+				continue;
+			}
+
+			if (!Wire->Connect(A, B))
+			{
+				IFGDismantleInterface::Execute_Dismantle(Wire);
+				continue;
+			}
+
+			if (GroupProxy && !Wire->GetBlueprintProxy())
+			{
+				Wire->SetBlueprintProxy(GroupProxy);
+				GroupProxy->RegisterBuildable(Wire);
+			}
+
+			++Built;
+		}
+	}
 	return Built;
 }
 

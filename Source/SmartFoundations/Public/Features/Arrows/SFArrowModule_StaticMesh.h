@@ -108,12 +108,14 @@ public:
 	 * @param HologramTransform Current hologram transform
 	 * @param LastAxis Last axis that was manipulated
 	 * @param bVisible Whether arrows should be shown
+	 * @param DirectionSign Explicit local-axis direction (-1/+1), or 0 to preserve classic orientation
 	 */
 	void UpdateArrows(
 		UWorld* World,
 		const FTransform& HologramTransform,
 		ELastAxisInput LastAxis,
-		bool bVisible
+		bool bVisible,
+		int32 DirectionSign = 0
 	);
 
 	/**

@@ -74,6 +74,17 @@ namespace SFScalingSpecExpansion
 	void CaptureConduitPlan(AFGHologram* Hologram, FSFScalingSpec& InOutSpec);
 
 	/**
+	 * Issue #487: estimate the extra cable cost for scale-time building-to-building power
+	 * daisy-chains. Uses the live preview grid (parent + SF_GridChild holograms) and the same
+	 * local-X row policy used by construction. Returns empty when disabled, locked, unsupported,
+	 * or not a multi-cell X grid.
+	 */
+	TArray<struct FItemAmount> GetScaleDaisyChainPowerCost(AFGHologram* Parent);
+
+	/** [#487] Return the valid world-space connector spans used by both preview and cost. */
+	void GetScaleDaisyChainPowerSpans(AFGHologram* Parent, TArray<TPair<FVector, FVector>>& OutSpans);
+
+	/**
 	 * Server-side (#334): replay the staged conduit plan as fresh tagged child holograms of the
 	 * constructing parent (the same spawn recipes the client preview pipeline uses, minus the
 	 * client-only visuals). MUST be called AFTER ExpandScalingSpecIntoChildren so the conduits sit
@@ -95,6 +106,14 @@ namespace SFScalingSpecExpansion
 	 */
 	int32 SpawnWirePlanPostConstruct(AActor* BuiltParent, const TArray<AActor*>& OutChildren,
 		const FSFScalingSpec& Spec, class AFGBlueprintProxy* GroupProxy);
+
+	/**
+	 * Issue #487: after a scaled factory/generator grid exists, wire adjacent copies
+	 * building-to-building along local X, one independent chain per Y/Z row. Uses unlock-aware
+	 * connector capacity and the same designer-aware direct wire spawn as other Smart power paths.
+	 */
+	int32 SpawnScaleDaisyChainPowerPostConstruct(AActor* BuiltParent, const TArray<AActor*>& OutChildren,
+		const FSFCounterState& Counters, bool bEnabled, class AFGBlueprintProxy* GroupProxy = nullptr);
 
 	/**
 	 * [#168-MP] Measure a staged blueprint hologram's CONTENT ANCHOR: the first blueprint-world

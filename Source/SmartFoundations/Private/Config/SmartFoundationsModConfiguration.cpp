@@ -64,6 +64,8 @@ USmartFoundationsModConfiguration::USmartFoundationsModConfiguration()
 		LOCTEXT("Sec.Power.TT", "Automatically wire power between buildings and power poles as you build."));
 	Power->SectionProperties.Add(TEXT("bPowerAutoConnectEnabled"), CreateBoolProperty(TEXT("bPowerAutoConnectEnabled"), LOCTEXT("P.bPowerAutoConnectEnabled", "Power Auto-Connect"),
 		LOCTEXT("P.bPowerAutoConnectEnabled.TT", "Automatically wire power between placed buildings and nearby power poles."), true));
+	Power->SectionProperties.Add(TEXT("bScaleDaisyChainPower"), CreateBoolProperty(TEXT("bScaleDaisyChainPower"), LOCTEXT("P.bScaleDaisyChainPower", "Scale Daisy-Chain Power"),
+		LOCTEXT("P.bScaleDaisyChainPower.TT", "When Upgraded Power Connectors is unlocked, scaling factories and generators wires adjacent buildings together along the grid X axis."), true));
 	Power->SectionProperties.Add(TEXT("PowerConnectMode"),        CreateIntegerProperty(TEXT("PowerConnectMode"),       LOCTEXT("P.PowerConnectMode", "Grid Axis"),
 		LOCTEXT("P.PowerConnectMode.TT", "Which directions power poles connect: Auto, X only, Y only, or both X and Y."), 0));
 	Power->SectionProperties.Add(TEXT("PowerConnectRange"),       CreateIntegerProperty(TEXT("PowerConnectRange"),      LOCTEXT("P.PowerConnectRange", "Connection Range"),
@@ -71,6 +73,22 @@ USmartFoundationsModConfiguration::USmartFoundationsModConfiguration()
 	Power->SectionProperties.Add(TEXT("PowerConnectReserved"),    CreateIntegerProperty(TEXT("PowerConnectReserved"),   LOCTEXT("P.PowerConnectReserved", "Connections to Keep Free"),
 		LOCTEXT("P.PowerConnectReserved.TT", "Number of pole connection slots to leave free for your own manual wiring."), 2));
 	RootSection->SectionProperties.Add(TEXT("PowerAutoConnect"), Power);
+
+	// ── Blueprint Auto-Connect ──
+	UConfigPropertySection* BlueprintAutoConnect = CreateSection(TEXT("BlueprintAutoConnect"), LOCTEXT("Sec.BlueprintAutoConnect", "Blueprint Auto-Connect"),
+		LOCTEXT("Sec.BlueprintAutoConnect.TT", "Controls connections between adjacent copies of scaled blueprints."));
+	BlueprintAutoConnect->SectionProperties.Add(TEXT("bBlueprintSeamAutoConnectEnabled"), CreateBoolProperty(TEXT("bBlueprintSeamAutoConnectEnabled"),
+		LOCTEXT("P.bBlueprintSeamAutoConnectEnabled", "Blueprint Seam Auto-Connect"),
+		LOCTEXT("P.bBlueprintSeamAutoConnectEnabled.TT", "Connect belts and pipes across adjacent copies when scaling a blueprint, independently of nearby Belt and Pipe Auto-Connect."), true));
+	RootSection->SectionProperties.Add(TEXT("BlueprintAutoConnect"), BlueprintAutoConnect);
+
+	// ── Auto-Connect Behavior ──
+	UConfigPropertySection* AutoConnectBehavior = CreateSection(TEXT("AutoConnectBehavior"), LOCTEXT("Sec.AutoConnectBehavior", "Auto-Connect Behavior"),
+		LOCTEXT("Sec.AutoConnectBehavior.TT", "Controls behavior shared by nearby belt and pipe Auto-Connect."));
+	AutoConnectBehavior->SectionProperties.Add(TEXT("NearbyLogisticsRange"), CreateIntegerProperty(TEXT("NearbyLogisticsRange"),
+		LOCTEXT("P.NearbyLogisticsRange", "Nearby Logistics Range (m)"),
+		LOCTEXT("P.NearbyLogisticsRange.TT", "Maximum connector-to-connector distance for nearby factory belt and pipe Auto-Connect. Blueprint seams and manifold lanes are unaffected."), 25));
+	RootSection->SectionProperties.Add(TEXT("AutoConnectBehavior"), AutoConnectBehavior);
 
 	// [#217 / AV-FP fix] The scroll-increment properties moved OUT of a dedicated "ScalingSettings"
 	// section and INTO Building Behavior below. A new config USTRUCT (FSmart_ScalingSettingsConfigSection)
@@ -93,6 +111,9 @@ USmartFoundationsModConfiguration::USmartFoundationsModConfiguration()
 		LOCTEXT("P.bAutoHoldOnGridChange.TT", "Automatically lock the hologram in place after any grid change. Press the Hold key to release it."), true));  // [#279] default ON
 	Building->SectionProperties.Add(TEXT("bApplyImmediately"),     CreateBoolProperty(TEXT("bApplyImmediately"),     LOCTEXT("P.bApplyImmediately", "Apply Immediately"),
 		LOCTEXT("P.bApplyImmediately.TT", "Apply Smart Panel changes instantly instead of clicking the Apply button."), false));
+	// [#482] Controller/accessibility: latch transform modes on a tap instead of requiring a hold.
+	Building->SectionProperties.Add(TEXT("bToggleTransformModes"), CreateBoolProperty(TEXT("bToggleTransformModes"), LOCTEXT("P.bToggleTransformModes", "Tap to Toggle Transform Modes"),
+		LOCTEXT("P.bToggleTransformModes.TT", "Tap a transform key (Spacing, Steps, Stagger, Rotation, or Recipe on a factory) to switch the mode on; tap it again to switch it off. Made for controllers and Steam Input radial menus, which cannot hold a key. Off keeps the normal hold-to-use behavior."), false));
 	// [#217 / AV-FP fix] Scroll increments (formerly their own "Scaling Settings" section). Keys/defaults unchanged.
 	Building->SectionProperties.Add(TEXT("SpacingIncrement"),  CreateFloatProperty(TEXT("SpacingIncrement"),  LOCTEXT("P.SpacingIncrement", "Spacing Increment (m)"),
 		LOCTEXT("P.SpacingIncrement.TT", "Meters of spacing added per scroll notch (also Extend spacing and walk segment advance)."), 0.5f));

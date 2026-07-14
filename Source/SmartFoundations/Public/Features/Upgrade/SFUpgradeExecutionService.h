@@ -168,7 +168,44 @@ public:
 	/** Get the buildable class for a family/tier combination */
 	TSubclassOf<AFGBuildable> GetBuildableClass(ESFUpgradeFamily Family, int32 Tier) const;
 
+	/** [#485] Exact, geometry-derived settlement for upgrading one buildable to TargetRecipe.
+	 *  Charge = target recipe ingredients x the buildable's own vanilla dismantle-refund
+	 *  multiplier (the per-length cost factor for belts/pipes/lifts; 1 for poles/outlets).
+	 *  Refund = the buildable's actual GetDismantleRefundReturns (already length-multiplied,
+	 *  build cost only - contents are a separate vanilla API and are never refunded here).
+	 *  The SINGLE pricing source for both the panel estimate and execution settlement, so the
+	 *  displayed cost can never drift from what execution charges. Must be called while the
+	 *  old buildable is intact (before PreUpgrade/Dismantle). */
+	bool ComputeUpgradeSettlement(AFGBuildable* Old, TSubclassOf<class UFGRecipe> TargetRecipe,
+		TMap<TSubclassOf<class UFGItemDescriptor>, int32>& OutCharge,
+		TMap<TSubclassOf<class UFGItemDescriptor>, int32>& OutRefund) const;
+
 private:
+	/** [#485] One target's inventory settlement, split for transactional ordering:
+	 *  net-positive items are reserved (deducted) BEFORE Construct and rolled back if it fails;
+	 *  net-negative items (refunds) are granted only AFTER the replacement is built and the old
+	 *  target retired. Prevents the charge/refund leak where a failed construct kept the refund. */
+	struct FSFUpgradeSettlementLedger
+	{
+		TMap<TSubclassOf<class UFGItemDescriptor>, int32> NetCharge;
+		TMap<TSubclassOf<class UFGItemDescriptor>, int32> NetRefund;
+		bool bFreeBuild = true;
+	};
+
+	/** Price one target and check net affordability against inventory + Dimensional Depot.
+	 *  @return 1 = ready (or free build), 0 = pricing failed, -1 = cannot afford (abort batch) */
+	int32 PrepareUpgradeSettlement(AFGBuildable* Old, TSubclassOf<class UFGRecipe> TargetRecipe,
+		class AFGCharacterPlayer* PlayerChar, FSFUpgradeSettlementLedger& OutLedger) const;
+
+	/** Deduct the ledger's net charge (inventory-vs-depot order follows the player preference). */
+	void ReserveUpgradeCharge(const FSFUpgradeSettlementLedger& Ledger, class AFGCharacterPlayer* PlayerChar);
+
+	/** Return a reserved charge after a failed construct (overflow goes to the crate). */
+	void RollbackUpgradeCharge(const FSFUpgradeSettlementLedger& Ledger, class AFGCharacterPlayer* PlayerChar);
+
+	/** Grant the ledger's net refund after a successful upgrade (overflow goes to the crate). */
+	void GrantUpgradeRefund(const FSFUpgradeSettlementLedger& Ledger, class AFGCharacterPlayer* PlayerChar);
+
 	/** Process a single upgrade in the batch
 	 * @return 1 = success, 0 = failed, -1 = out of funds (abort remaining)
 	 */
@@ -244,7 +281,7 @@ private:
 
 	/** Overflow items that couldn't fit in inventory (for crate spawning) */
 	TMap<TSubclassOf<class UFGItemDescriptor>, int32> OverflowItems;
-	
+
 	/** Map of old conveyor -> new conveyor for fixing inter-connected upgrades */
 	TMap<class AFGBuildableConveyorBase*, class AFGBuildableConveyorBase*> OldToNewConveyorMap;
 

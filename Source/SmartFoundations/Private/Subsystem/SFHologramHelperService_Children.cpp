@@ -975,7 +975,7 @@ AFGHologram* FSFHologramHelperService::SpawnChildHologram(
 	}
 
 	// Copy parent's STORED recipe to child (not parent's current recipe)
-	// Get stored recipe from subsystem (where StoreProductionRecipeFromBuilding stores it)
+	// Get the stored production recipe selected explicitly or captured by vanilla-authorized sampling.
 	USFSubsystem* Subsystem = USFSubsystem::Get(ParentHologram->GetWorld());
 	TSubclassOf<UFGRecipe> ParentStoredRecipe = nullptr;
 	if (Subsystem && Subsystem->bHasStoredProductionRecipe)
@@ -1173,4 +1173,3 @@ void FSFHologramHelperService::DestroyAllChildren()
 	bInMassDestruction = false;
 	bSuppressChildUpdates = false;
 }
-

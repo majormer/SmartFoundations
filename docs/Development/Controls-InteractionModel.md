@@ -33,7 +33,9 @@ sense on the numpad (row 3) but strands the wheel-only player (row 2) is incompl
 
 Every transform is `(value, axis)`. State is stored **absolute** (`FSFCounterState`: `GridCounters`,
 `Spacing*`, `Steps*`, `Stagger*`, `RotationZ`, and the per-mode `*Axis` selectors). **PR resolves
-facing → a concrete absolute axis at INPUT time** and writes that. So:
+facing → a concrete absolute axis at INPUT time** and writes that. Extend is the deliberate
+context exception: its X/Y storage has stable **Chain/Rows** meanings, resolved at input time
+without exposing those storage axes in the runtime HUD. So:
 
 - No schema change; **presets / Smart Restore / multiplayer replay identically**.
 - The Panel keeps absolute **X/Y/Z** labels everywhere (one vocabulary, no translation).
@@ -185,11 +187,13 @@ composes with the classic Y-negation — **feel-verify** remains the gate for st
   counter state, so the existing change-driven redraw won't follow the player's turn — tick-gated
   refresh, only while a mode key is down).
 
-### 5.5 Explicitly out of scope (align later, tracked)
+### 5.5 Context-specific controls
 
 - **Extend** direction cycling stays building-relative (manifold alignment) — PR never forks it.
-  Extend's fixed X=chain / Y=rows *feature* meanings vs PR's facing map, the live-vs-restored
-  X-sign mismatch, and the ignored Vertical target during Extend are tracked in **#478**.
+  While Extend is active, runtime transform targets are **Chain/Rows**, backed by signed X/Y state.
+  The Left/Right selector owns the Chain sign, and every live/Restore placement path consumes that
+  same signed state. Spacing, Steps, and Rotation cycle only Chain ↔ Rows; Vertical is unavailable.
+  The Smart Panel remains the absolute X/Y editor. This exception is implemented by **#478**.
 - **Smart Walking** is segment-relative, and that isolation is **enforced in code** (2026-07-09):
   `SF_ComputePlayerRelativeAxes` returns classic axes whenever a walk is active — one choke point
   disabling PR resolution wholesale (scaling, modal targets, HUD highlight, tick refresh) — plus

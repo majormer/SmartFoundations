@@ -18,9 +18,6 @@
 #include "Engine/World.h"
 #include "Kismet/KismetSystemLibrary.h"
 
-// Known spacing constraints
-static constexpr int32 MAX_SPACING_FOR_BELT = 5400; // Conveyor belt pole spacing cap
-
 FSFValidationService::FSFValidationService()
 {
 }
@@ -281,12 +278,13 @@ int32 FSFValidationService::GetMaxSpacingForHologram(const AFGHologram* Hologram
 		return INT_MAX;
 	}
 	
-	// Check if hologram is a conveyor attachment (belt poles have spacing cap)
-	// This will need proper type checking once we extract the logic
-	FString HologramClassName = Hologram->GetClass()->GetName();
-	if (HologramClassName.Contains(TEXT("Conveyor")))
+	// Belt-support grid spacing is a gap, not the anchor-to-anchor interval. Derive it from the
+	// support footprint so standard, stackable, ceiling, and wall variants all land 56m apart. #488
+	AFGHologram* MutableHologram = const_cast<AFGHologram*>(Hologram);
+	if (USFAutoConnectService::IsBeltSupportHologram(MutableHologram)
+		|| USFAutoConnectService::IsPipeSupportHologram(MutableHologram))
 	{
-		return MAX_SPACING_FOR_BELT;
+		return USFAutoConnectService::GetDefaultConveyanceSupportGridSpacing(Hologram);
 	}
 	
 	// Default: no spacing limit

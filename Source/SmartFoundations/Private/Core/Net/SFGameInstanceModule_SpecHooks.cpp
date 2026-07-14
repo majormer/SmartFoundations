@@ -412,6 +412,38 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 				return;
 			}
 
+			// #487 standalone/listen-host preview: normal factory scaling keeps the vanilla
+			// FGFactoryHologram, so charge the subsystem-owned daisy-chain spans here rather than
+			// relying on the Extend-only ASFFactoryHologram replacement.
+			if (USFSubsystem* SS = USFSubsystem::Get(self->GetWorld());
+				SS && SS->GetActiveHologram() == MutableSelf && !SS->IsExtendModeActive())
+			{
+				const TArray<FItemAmount> DaisyCost = SFScalingSpecExpansion::GetScaleDaisyChainPowerCost(MutableSelf);
+				if (!DaisyCost.IsEmpty())
+				{
+					TArray<FItemAmount> Total = scope(self, includeChildren);
+					for (const FItemAmount& Extra : DaisyCost)
+					{
+						bool bMerged = false;
+						for (FItemAmount& Existing : Total)
+						{
+							if (Existing.ItemClass == Extra.ItemClass)
+							{
+								Existing.Amount += Extra.Amount;
+								bMerged = true;
+								break;
+							}
+						}
+						if (!bMerged)
+						{
+							Total.Add(Extra);
+						}
+					}
+					scope.Override(Total);
+					return;
+				}
+			}
+
 			FSFScalingSpec Spec;
 			if (!FindStagedSpec(self, Spec, /*bConsume=*/false) || CountGridChildren(MutableSelf) > 0)
 			{
@@ -510,6 +542,27 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 						{
 							ChildHolo->SetInsideBlueprintDesigner(Designer);
 						}
+					}
+				}
+			}
+
+			// #487 standalone/listen-host construction has no staged network spec. Wrap the normal
+			// vanilla parent construct while its Smart grid children and counters still exist, then
+			// use the same post-construct primitive as the authoritative staged path below.
+			if (self && self->HasAuthority())
+			{
+				if (USFSubsystem* SS = USFSubsystem::Get(self->GetWorld());
+					SS && SS->GetActiveHologram() == self && !SS->IsExtendModeActive())
+				{
+					const FSFCounterState Counters = SS->GetCounterState();
+					const bool bDaisyEnabled = SS->GetAutoConnectRuntimeSettings().bScaleDaisyChainPower;
+					if (bDaisyEnabled && FMath::Abs(Counters.GridCounters.X) >= 2)
+					{
+						AActor* BuiltParent = scope(self, out_children, constructionID);
+						SFScalingSpecExpansion::SpawnScaleDaisyChainPowerPostConstruct(
+							BuiltParent, out_children, Counters, true, nullptr);
+						scope.Override(BuiltParent);
+						return;
 					}
 				}
 			}
@@ -642,8 +695,9 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 			// authority (mCurrentRecipe is server-authoritative and replicates to every client).
 			// Applied to the parent and every spec-expanded grid child. Post-scope is a proven seam
 			// for operating on freshly built actors (the Extend wiring pass below runs here too).
-			// Scaling path only: Extend clones inherit the SOURCE building's recipe via the server
-			// topology walk, and the Restore sub-path carries its own (RestoreProductionRecipe).
+			// Scaling path only: Extend and Restore commits ship their own FactorySettings
+			// snapshot, installed into the server's recipe service in ReconstructCommitOnServer
+			// (#484) so the reconstruction pipeline applies it exactly like the SP preview.
 			if (bHasScaling && Spec.ProductionRecipe)
 			{
 				UWorld* const RecipeWorld = self->GetWorld();
@@ -800,6 +854,8 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 			if (bHasScaling)
 			{
 				SFScalingSpecExpansion::SpawnWirePlanPostConstruct(BuiltParent, out_children, Spec, GroupProxy);
+				SFScalingSpecExpansion::SpawnScaleDaisyChainPowerPostConstruct(
+					BuiltParent, out_children, Spec.Counters, Spec.bScaleDaisyChainPower, GroupProxy);
 			}
 
 			if (GroupProxy)

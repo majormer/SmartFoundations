@@ -39,6 +39,14 @@ grants `FSFBlueprintAdapter` access). `GetBuildingBounds()` returns those bounds
 back to an 800³ cube if unavailable. Bounds are valid only after `LoadBlueprintToOtherWorld` stages
 the blueprint, so timing matters (the adapter reads them at registration, after staging).
 
+**Configuration boundary.** Smart-created blueprint seam conduits have their own
+**Blueprint Seam Auto-Connect** master setting under **Blueprint Auto-Connect**. It is independent of
+the normal Belt and Pipe Auto-Connect master switches, so a player can disable nearby factory
+connections while retaining deterministic connections between scaled blueprint copies. Belt/pipe
+tier, style, and routing settings still choose the seam conduit recipe and shape. **Nearby Logistics
+Range**, under the separate **Auto-Connect Behavior** section, does not apply to blueprint seams because their endpoints come from the
+blueprint topology rather than a proximity search.
+
 **Key files:** `Public/Holograms/Adapters/SFBlueprintAdapter.h/.cpp`, the gate swap in
 `Private/Subsystem/SFSubsystem_HologramLifecycle.cpp` (~line 1656).
 

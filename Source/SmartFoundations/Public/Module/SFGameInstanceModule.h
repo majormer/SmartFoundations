@@ -91,6 +91,13 @@ protected:
 	void RegisterBuildGunUnequipHook();
 
 	/**
+	 * [#489] Observe vanilla's authoritative MMB clipboard path. Reset stale implicit Smart state
+	 * before actor sampling, capture from the supplied actor only when vanilla actually creates
+	 * manufacturer clipboard settings, then emit one summary after the sample completes.
+	 */
+	void RegisterBuildGunClipboardSampleHook();
+
+	/**
 	 * [#162/#429] Hook UFGBuildGunStateBuild::Scroll_Implementation to consume the wheel's rotation
 	 * delta while Smart! owns the moment (modal window open, or Smart!-owned hologram lock incl.
 	 * auto-hold - see USFSubsystem::ShouldSuppressBuildGunScroll). This chokepoint sits BELOW the
@@ -106,6 +113,33 @@ protected:
 	 * Approach proven in-game by the Air Build mod (AirBuildHologramHook.cpp).
 	 */
 	void RegisterBuildGunScrollSuppressionHook();
+
+	/**
+	 * [#478/#342] Hook UFGBuildGunStateBuild::ToggleHologramPositionLock (AFTER) so the vanilla
+	 * Hold key (H) toggles the Extend manual pin DETERMINISTICALLY. The previous poll — treating
+	 * any unlocked frame seen by RefreshExtension as a Hold press — was aim/tick-order dependent,
+	 * and the activation-time Chain-sign sync could reach it before the hologram was locked,
+	 * silently pinning Extend on one side of a chain only. Delegates to
+	 * USFExtendService::HandleHologramLockToggle; a no-op outside an active Extend session.
+	 */
+	void RegisterExtendHologramLockHook();
+
+	/**
+	 * [#470] Make Smart's validation-disabled registry flag ACTUALLY reach vanilla hologram
+	 * classes. Scaled Extend (and grid scaling) spawn vanilla holograms (e.g. FGFactoryHologram)
+	 * as managed preview children and mark them bNeedToCheckPlacement=false — but only Smart's
+	 * own hologram subclasses consult that registry, so vanilla children still ran the full
+	 * vanilla CheckValidPlacement. Hiding their clearance BOX did not disable vanilla's
+	 * creature-encroachment overlap query, so a scaled Extend clone could flag
+	 * FGCDEncroachingCreature with no creature anywhere; its ERROR material state then cascaded
+	 * into its child belts' preview mirror, which re-labels any error FGCDUnaffordable — the
+	 * reported false "A creature is in the way!" + "Missing materials!" pair (live-confirmed via
+	 * SmartMCP on the reporter's save). Hooks AFGBuildableHologram::CheckValidPlacement (the
+	 * implementation vanilla children execute; Smart subclasses override it natively and already
+	 * self-check the registry) and cancels validation for registry-disabled holograms — the
+	 * managing parent owns their aggregate validity, same policy as the Extend parent itself.
+	 */
+	void RegisterManagedHologramValidationHook();
 
 	/** Smart! Configuration blueprint - registered with SML for in-game menu access */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Smart! Configuration")

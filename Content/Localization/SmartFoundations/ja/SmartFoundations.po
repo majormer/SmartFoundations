@@ -2529,31 +2529,31 @@ msgstr "{0} → Mk.{1} にアップグレード中..."
 
 msgctxt "SmartFoundations,HUD_BeltsSkipped"
 msgid "*{0} belt connection(s) skipped: {1}"
-msgstr ""
+msgstr "*ベルト接続を{0}件スキップ: {1}"
 
 msgctxt "SmartFoundations,HUD_PipesSkipped"
 msgid "*{0} pipe connection(s) skipped: {1}"
-msgstr ""
+msgstr "*パイプ接続を{0}件スキップ: {1}"
 
 msgctxt "SmartFoundations,HUD_SkipReason_InvalidShape"
 msgid "invalid shape ({0})"
-msgstr ""
+msgstr "無効な形状 ({0})"
 
 msgctxt "SmartFoundations,HUD_SkipReason_LaneBlocked"
 msgid "lane blocked ({0})"
-msgstr ""
+msgstr "レーンが塞がっています ({0})"
 
 msgctxt "SmartFoundations,HUD_SkipReason_TooClose"
 msgid "too close ({0})"
-msgstr ""
+msgstr "近すぎます ({0})"
 
 msgctxt "SmartFoundations,HUD_SkipReason_TooFar"
 msgid "too far ({0})"
-msgstr ""
+msgstr "遠すぎます ({0})"
 
 msgctxt "SmartFoundations,HUD_SkipReason_TooSteep"
 msgid "too steep ({0})"
-msgstr ""
+msgstr "急すぎます ({0})"
 
 msgctxt "SmartFoundations,MP_Notice_BlueprintGridTooLarge"
 msgid "Blueprint grid too large for one multiplayer placement (~{0} buildings, max ~{1}). Build in smaller sections."
@@ -2622,3 +2622,67 @@ msgstr "モジュール"
 msgctxt "SmartFoundations,Restore_RecentNone"
 msgid "No recent restores this session - apply one from the Smart Panel first"
 msgstr "このセッションに最近のリストアはありません - まずSmartパネルから適用してください"
+
+msgctxt "7D7230F74AFBCA6BF4F61B81C23EC15C"
+msgid "Daisy-Chain Power:"
+msgstr "電力の数珠つなぎ:"
+
+msgctxt "SmartFoundations,HUD_RoleChain"
+msgid "Chain"
+msgstr "チェーン"
+
+msgctxt "SmartFoundations,HUD_RoleRows"
+msgid "Rows"
+msgstr "行"
+
+msgctxt "SmartFoundations,HUD_ScaleDaisyChain"
+msgid "Power Chain: {0}"
+msgstr "電力チェーン: {0}"
+
+msgctxt "SmartFoundations,P.NearbyLogisticsRange"
+msgid "Nearby Logistics Range (m)"
+msgstr "近接ロジスティクス範囲 (m)"
+
+msgctxt "SmartFoundations,P.NearbyLogisticsRange.TT"
+msgid "Maximum connector-to-connector distance for nearby factory belt and pipe Auto-Connect. Blueprint seams and manifold lanes are unaffected."
+msgstr "近くの工場のベルトとパイプの自動接続における、コネクタ間の最大距離。設計図の継ぎ目とマニフォールドのレーンには影響しません。"
+
+msgctxt "SmartFoundations,P.bBlueprintSeamAutoConnectEnabled"
+msgid "Blueprint Seam Auto-Connect"
+msgstr "設計図の継ぎ目の自動接続"
+
+msgctxt "SmartFoundations,P.bBlueprintSeamAutoConnectEnabled.TT"
+msgid "Connect belts and pipes across adjacent copies when scaling a blueprint, independently of nearby Belt and Pipe Auto-Connect."
+msgstr "設計図をスケールする際、隣接するコピー間でベルトとパイプを接続します。近くのベルトとパイプの自動接続とは独立しています。"
+
+msgctxt "SmartFoundations,P.bScaleDaisyChainPower"
+msgid "Scale Daisy-Chain Power"
+msgstr "スケール時に電力を数珠つなぎ"
+
+msgctxt "SmartFoundations,P.bScaleDaisyChainPower.TT"
+msgid "When Upgraded Power Connectors is unlocked, scaling factories and generators wires adjacent buildings together along the grid X axis."
+msgstr "強化型電力コネクタが解除されている場合、工場や発電機をスケールすると、グリッドのX軸に沿って隣接する建物同士が配線されます。"
+
+msgctxt "SmartFoundations,P.bToggleTransformModes"
+msgid "Tap to Toggle Transform Modes"
+msgstr "タップで変形モードを切り替え"
+
+msgctxt "SmartFoundations,P.bToggleTransformModes.TT"
+msgid "Tap a transform key (Spacing, Steps, Stagger, Rotation, or Recipe on a factory) to switch the mode on; tap it again to switch it off. Made for controllers and Steam Input radial menus, which cannot hold a key. Off keeps the normal hold-to-use behavior."
+msgstr "変形キー(間隔、段差、ずらし、回転、または工場でのレシピ)をタップするとモードがオンになり、もう一度タップするとオフになります。キーを押し続けられないコントローラーやSteam入力のラジアルメニュー向けです。オフでは通常の長押し動作になります。"
+
+msgctxt "SmartFoundations,Sec.AutoConnectBehavior"
+msgid "Auto-Connect Behavior"
+msgstr "自動接続の挙動"
+
+msgctxt "SmartFoundations,Sec.AutoConnectBehavior.TT"
+msgid "Controls behavior shared by nearby belt and pipe Auto-Connect."
+msgstr "近くのベルトとパイプの自動接続が共有する挙動を制御します。"
+
+msgctxt "SmartFoundations,Sec.BlueprintAutoConnect"
+msgid "Blueprint Auto-Connect"
+msgstr "設計図の自動接続"
+
+msgctxt "SmartFoundations,Sec.BlueprintAutoConnect.TT"
+msgid "Controls connections between adjacent copies of scaled blueprints."
+msgstr "スケールした設計図の隣接するコピー間の接続を制御します。"

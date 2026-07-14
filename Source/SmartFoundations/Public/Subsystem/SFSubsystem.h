@@ -25,6 +25,7 @@
 
 // TUniquePtr member includes - complete type required for destructor generation
 #include "Subsystem/SFInputHandler.h"
+#include "Input/SFLatchedTransform.h"              // [#482] tap-to-toggle transform mode policy
 #include "Subsystem/SFPositionCalculator.h"
 #include "Subsystem/SFValidationService.h"
 #include "Subsystem/SFHologramHelperService.h"
@@ -79,6 +80,7 @@ struct FSFRestoreAutoConnectState;
 // Smart! hologram forward declarations
 class ASFBuildableHologram;
 class ASFFactoryHologram;
+class ASFWireHologram;
 class ASFLogisticsHologram;
 class ASFFoundationHologram;
 class USmartSettingsFormWidget;
@@ -438,6 +440,7 @@ public:
   ESFScaleAxis GetEffectiveStepsAxis() const;
   ESFScaleAxis GetEffectiveStaggerAxis() const;
   ESFScaleAxis GetEffectiveRotationAxis() const;
+  ELastAxisInput GetEffectiveArrowAxisInput(int32* OutDirectionSign = nullptr) const;
 
   /** [#209] Player Relative master switch (Smart_Config, read live). */
   bool IsPlayerRelativeEnabled() const;
@@ -645,6 +648,17 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = "Smart! State")
 	TWeakObjectPtr<AFGHologram> ActiveHologram;
 
+	/** #487: transient power-chain previews belong to the active scaling session, not to a
+	 * particular factory hologram subclass. Vanilla factory holograms are the normal scaling path. */
+	UPROPERTY(Transient)
+	TArray<TObjectPtr<ASFWireHologram>> ScaleDaisyChainPreviews;
+
+	TArray<TPair<FVector, FVector>> CachedScaleDaisyChainSpans;
+	TWeakObjectPtr<AFGHologram> ScaleDaisyChainPreviewOwner;
+
+	void RefreshScaleDaisyChainPreviews();
+	void DestroyScaleDaisyChainPreviews();
+
 	/** Current scaling offset accumulator (DEPRECATED - use GridCounters) */
 	UPROPERTY(BlueprintReadOnly, Category = "Smart! Scaling")
 	FVector CurrentScalingOffset = FVector::ZeroVector;
@@ -722,6 +736,9 @@ protected:
 
 	/** Cached axis input to detect changes (optimization: only update visibility when input changes) */
 	ELastAxisInput LastKnownAxisInput = ELastAxisInput::None;
+
+	/** Cached PR role direction for arrow orientation (0 preserves classic orientation). */
+	int32 LastKnownArrowDirectionSign = 0;
 	
 	/** Cached child count to detect grid structure changes (triggers arrow position updates) */
 	int32 LastChildCount = 0;
@@ -836,9 +853,6 @@ protected:
 
     /** Current hologram adapter for grid calculations */
     TSharedPtr<class ISFHologramAdapter> CurrentAdapter;
-
-    /** Flag to prevent repeated delegate subscriptions */
-    bool bHasSubscribedToRecipeSampled = false;
 
     /** Last item size we logged (to avoid spam). Logged when it changes beyond a small tolerance. */
     TUniquePtr<FSFArrowModule_StaticMesh> ArrowModule;
@@ -1092,6 +1106,41 @@ private:
 	bool bStaggerModeActive = false;
 	bool bRotationModeActive = false;
 
+	// ==================== [#482] Tap-to-toggle (latching) transform modes ====================
+	// Optional activation-policy layer (bToggleTransformModes, default OFF, read live per event)
+	// for controllers/Steam Input radial menus, which send momentary taps and cannot hold a key.
+	// The latch records POLICY only: the effective state still lives in the same mode booleans
+	// (subsystem + FSFInputHandler mirrors), so the HUD, wheel suppression, lock ownership,
+	// Player Relative, Walking, and Extend all consume the identical predicates in both modes.
+	// Pure decision logic lives in SFLatchedTransform.h (unit-tested).
+
+	/** The currently latched mode; None when unlatched or the setting is off. */
+	ESFLatchedTransformMode LatchedTransformMode = ESFLatchedTransformMode::None;
+
+	/** Build class active when the latch engaged - a REPLACEMENT hologram of the same class
+	 *  (vanilla's post-build recreate) keeps the latch; a different class clears it. */
+	UPROPERTY(Transient)
+	TObjectPtr<UClass> LatchedModeBuildClass = nullptr;
+
+	/** Run one raw modal input event through the latch policy. Returns true when the event was
+	 *  consumed (latch mode) - the caller's hold path must then be skipped entirely. Returns
+	 *  false when the setting is off (after clearing any stale latch), so the hold path runs
+	 *  byte-for-byte unchanged. */
+	bool HandleLatchTransformModeInput(ESFLatchedTransformMode TappedMode, const FInputActionValue& Value);
+
+	/** Apply a latch transition: updates BOTH mode-boolean stores exactly once, dispatches the
+	 *  Recipe service enter/exit (incl. the Restore recency commit on exit), and acquires the
+	 *  hologram lock on None->mode / releases it on mode->None (switches keep it held). */
+	void ApplyLatchedTransformMode(ESFLatchedTransformMode NewMode, const TCHAR* Reason);
+
+	/** Clear any active latch (lifecycle boundaries: build gun leaves BGS_BUILD or unequips,
+	 *  incompatible hologram registers, Smart Panel opens, setting turned off mid-latch). */
+	void ClearLatchedTransformMode(const TCHAR* Reason);
+
+	/** Set one mode's effective booleans in both stores without hold-path side effects
+	 *  (no re-tap timestamps, no per-press lock calls). */
+	void SetLatchedModeFlags(ESFLatchedTransformMode Mode, bool bActive);
+
 	/** Smart Walking top-level mode (#356). Mutually exclusive with grid-scaling; routes scale input to WalkService. */
 	bool bWalkModeActive = false;
 
@@ -1214,9 +1263,6 @@ public:
 	UPROPERTY(Transient)
 	bool bHasStoredProductionRecipe = false;
 	
-	/** Store production recipe from source building during middle mouse sampling */
-	void StoreProductionRecipeFromBuilding(class AFGBuildable* SourceBuilding);
-
 	/** Apply stored production recipe to target building after construction */
 	void ApplyStoredProductionRecipeToBuilding(class AFGBuildable* TargetBuilding);
 
@@ -1274,10 +1320,6 @@ public:
 	/** Check if building is a production building that supports recipes */
 	bool IsProductionBuilding(class AFGBuildable* Building) const;
 
-	/** Called when build gun samples a recipe (middle-mouse, Ctrl+C, or Copy Settings button) */
-	UFUNCTION()
-	void OnBuildGunRecipeSampled(TSubclassOf<class UFGRecipe> SampledRecipe);
-	
 	// ========================================
 	// Auto-Connect Settings Mode (Context-Aware U Button)
 	// ========================================
@@ -1313,6 +1355,8 @@ public:
 	/** Temporary runtime overrides for current placement (reset when hologram changes) */
 	struct FAutoConnectRuntimeSettings
 	{
+		bool bBlueprintSeamAutoConnectEnabled = true; // Blueprint copy seams, independent of nearby belt/pipe masters
+		float NearbyLogisticsRange = 2500.0f; // Connector-to-connector candidate cap in cm (1-56m)
 		bool bEnabled = true;          // Belt auto-connect enabled
 		int32 BeltTierMain = 0;        // 0=Auto, 1-6=Mk1-Mk6
 		int32 BeltTierToBuilding = 0;  // 0=Auto, 1-6=Mk1-Mk6
@@ -1332,6 +1376,7 @@ public:
 		
 		// Power Settings
 		bool bConnectPower = true;     // Power auto-connect enabled
+		bool bScaleDaisyChainPower = true; // Scale factories/generators with building-to-building power along local X (Issue #487)
 		bool bExtendPower = true;      // Include power poles when using Extend (Issue #229)
 		bool bExtendDaisyChain = true; // Daisy-chain building power along the extend lane when unlocked (Issue #344)
 		bool bExtendDaisyChainPoleless = true; // Start a new daisy chain when the source is pole-less and unwired (Issue #344)
@@ -1344,6 +1389,8 @@ public:
 		/** Initialize from config */
 		void InitFromConfig(const FSmart_ConfigStruct& Config)
 		{
+			bBlueprintSeamAutoConnectEnabled = Config.bBlueprintSeamAutoConnectEnabled;
+			NearbyLogisticsRange = static_cast<float>(FMath::Clamp(Config.NearbyLogisticsRange, 1, 56)) * 100.0f;
 			bEnabled = Config.bAutoConnectEnabled;
 			BeltTierMain = Config.BeltLevelMain;
 			BeltTierToBuilding = Config.BeltLevelToBuilding;
@@ -1360,6 +1407,9 @@ public:
 
 			// Power settings from config
 			bConnectPower = Config.bPowerAutoConnectEnabled;
+			// The persistent Power Auto-Connect switch is the global master. A deliberate
+			// per-build Panel override may subsequently turn this effective value back on.
+			bScaleDaisyChainPower = Config.bPowerAutoConnectEnabled && Config.bScaleDaisyChainPower;
 			bExtendPower = Config.bExtendPowerEnabled;
 			bExtendDaisyChain = Config.bExtendDaisyChainPower;
 			bExtendDaisyChainPoleless = Config.bExtendDaisyChainPoleless;
@@ -1375,7 +1425,9 @@ public:
 		 *  global config has changed since the runtime settings were last synced to it. */
 		bool EqualsConfigDerived(const FAutoConnectRuntimeSettings& O) const
 		{
-			return bEnabled == O.bEnabled
+			return bBlueprintSeamAutoConnectEnabled == O.bBlueprintSeamAutoConnectEnabled
+				&& NearbyLogisticsRange == O.NearbyLogisticsRange
+				&& bEnabled == O.bEnabled
 				&& BeltTierMain == O.BeltTierMain
 				&& BeltTierToBuilding == O.BeltTierToBuilding
 				&& bChainDistributors == O.bChainDistributors
@@ -1389,6 +1441,7 @@ public:
 				&& bHypertubeAutoConnectEnabled == O.bHypertubeAutoConnectEnabled
 				&& HypertubeRoutingMode == O.HypertubeRoutingMode
 				&& bConnectPower == O.bConnectPower
+				&& bScaleDaisyChainPower == O.bScaleDaisyChainPower
 				&& bExtendPower == O.bExtendPower
 				&& bExtendDaisyChain == O.bExtendDaisyChain
 				&& bExtendDaisyChainPoleless == O.bExtendDaisyChainPoleless
@@ -1424,6 +1477,12 @@ public:
 	
 	/** Check if current hologram is an auto-connect capable type (distributor, pipe junction, power pole, stackable support) */
 	bool IsCurrentHologramAutoConnectCapable() const;
+
+	/** [#487] True when the hologram is a factory/generator and upgraded connectors are unlocked. */
+	bool IsScaleDaisyChainAvailable(AFGHologram* Hologram = nullptr) const;
+
+	/** [#487] Whether the per-build daisy override differs from the effective global default. */
+	bool IsScaleDaisyChainPowerOverrideDirty() const;
 
 	/** Check if the current hologram can SEED a Smart Walk (a stackable belt/pipe support) — gates the Walk Path button. */
 	bool IsCurrentHologramWalkable() const;
@@ -1540,6 +1599,9 @@ public:
 	
 	/** Set power reserved slots (0-5) */
 	void SetAutoConnectPowerReserved(int32 Reserved);
+
+	/** [#487] Set the per-build factory daisy-chain override. */
+	void SetScaleDaisyChainPowerEnabled(bool bEnabled);
 	
 	/** Trigger auto-connect preview refresh (for Apply Immediately mode) */
 	void TriggerAutoConnectRefresh();

@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Shared/Conduits/SFConveyanceConstants.h"
 #include "SFWalkTypes.generated.h"
 
 class AFGHologram;
@@ -26,11 +27,10 @@ struct SMARTFOUNDATIONS_API FSFWalkSegment
 {
     GENERATED_BODY()
 
-    /** Forward advance to this anchor along the current heading, in cm. (maps to Spacing) Defaults to the
-     *  auto-connect max stackable-pole spacing (MAX_SPACING_FOR_BELT = 5400 cm / 54 m, the safe margin under the
-     *  ~56 m belt cap) so the run uses the full belt range like auto-connect until the user shrinks it. */
+    /** Forward advance to this anchor along the current heading, in cm. (maps to Spacing). Defaults to the
+     *  seven-foundation 56 m conveyor-support interval. Routed-shape validation remains authoritative. */
     UPROPERTY(BlueprintReadWrite, Category = "Smart Walking")
-    float Advance = 5400.0f;
+    float Advance = SFConveyanceConstants::DefaultBeltPipeSupportIntervalCm;
 
     /** Yaw turn applied at the END of this segment (heading for the next leg), degrees, right = positive. (maps to Rotation) */
     UPROPERTY(BlueprintReadWrite, Category = "Smart Walking")

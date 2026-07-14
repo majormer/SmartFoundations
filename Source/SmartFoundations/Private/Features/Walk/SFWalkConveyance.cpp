@@ -18,12 +18,10 @@
 DEFINE_LOG_CATEGORY_STATIC(LogSmartWalkBelt, Log, All);
 
 // Walk span cap (CHORD / straight pole-to-pole distance). The vanilla belt+pipe limit is mMaxSplineLength = 5600.1 cm
-// (~56m; FGConveyorBeltHologram.h:175 / FGPipelineHologram.h:206, SAME for both) and it is on the CURVED SPLINE length;
-// we measure the straight chord, and a turn makes the spline LONGER than the chord. Reserve ~2m (cap the chord ~54m) so
-// the routed spline stays under the vanilla limit — this matches the ~54m practical max observed in-game. (Stackable AC
-// uses the full ~56m chord because its grid belts are straight; the walk curves on turns, so it needs the margin.)
-// Beyond this, LinkOrUpdate refuses the span and the segment shows a gap, exactly like stackable AC's skip-when-too-far.
-static constexpr float SF_WALK_MAX_SPAN_CM = USFAutoConnectService::MAX_PIPE_LENGTH;   // 5601 cm / ~56 m — the vanilla single-span max (same as stackable auto-connect); over this the span is skipped and the segment reds
+// (~56m; FGConveyorBeltHologram.h:175 / FGPipelineHologram.h:206, SAME for both). The default 56m support interval is
+// valid for a straight seven-foundation run; turns, rise, or shift can make the routed span exceed this separate cap.
+// Beyond it, LinkOrUpdate refuses the span and the segment shows a gap, matching stackable AC's skip-when-too-far.
+static constexpr float SF_WALK_MAX_SPAN_CM = USFAutoConnectService::MAX_PIPE_LENGTH;   // 5600 cm / 56 m — the single-span max (same as stackable auto-connect); over this the span is skipped and the segment reds
 
 // #405 hypertube walk: the tube's own connector-to-connector chord cap (96 m), NOT the 56 m pipe cap above —
 // the game router shows the tube up to a 96 m chord and drops it beyond (USFAutoConnectService::MAX_HYPERTUBE_LENGTH).
@@ -274,8 +272,8 @@ AFGHologram* USFWalkPipeConveyance::LinkOrUpdate(AFGHologram* ExistingSpan, AFGH
     const FVector StartPos = FromConn ? FromConn->GetComponentLocation() : FromAnchor->GetActorLocation();
     const FVector EndPos = ToConn ? ToConn->GetComponentLocation() : ToAnchor->GetActorLocation();
 
-    // Pipe length cap (see SF_WALK_MAX_SPAN_CM above): same ~54m chord cap as belts (the vanilla 56m limit is on the
-    // curved spline). Refuse an over-long span (return null, no pipe); the caller destroys any now-too-long existing one.
+    // Pipe length cap (see SF_WALK_MAX_SPAN_CM above). Refuse an over-long span (return null, no pipe); the caller
+    // destroys any now-too-long existing one.
     if (FVector::Dist(StartPos, EndPos) > SF_WALK_MAX_SPAN_CM)
     {
         UE_LOG(LogSmartWalkBelt, Warning, TEXT("<<< [Pipe] LinkOrUpdate EXIT: span %.0f cm > %.0f cm cap — skipped (segment too long)"),

@@ -570,7 +570,8 @@ void FSFPowerAutoConnectManager::ProcessBuildingConnections(const TArray<AFGHolo
 			if (ClosestBuilding)
 			{
 				UClass* CurrentBuildingClass = ClosestBuilding->GetClass();
-				
+				FSFCounterState CurrentState = Subsystem->GetCounterState();
+
 				// Check if we should apply spacing adjustment
 				bool bShouldApply = false;
 				if (!bContextSpacingApplied)
@@ -581,10 +582,25 @@ void FSFPowerAutoConnectManager::ProcessBuildingConnections(const TArray<AFGHolo
 				}
 				else if (LastTargetBuildingClass.IsValid() && LastTargetBuildingClass.Get() != CurrentBuildingClass)
 				{
-					// Building changed - reset and apply new spacing
-					bShouldApply = true;
-					UE_LOG(LogSmartAutoConnect, Verbose, TEXT("   ⚡ CONTEXT-AWARE SPACING: Target building changed (%s → %s), re-adjusting"),
-						*LastTargetBuildingClass->GetName(), *CurrentBuildingClass->GetName());
+					// Building changed - only re-adjust if the user hasn't since manually
+					// changed spacing away from what we last auto-applied. Otherwise the
+					// nearest-building assignment flipping mid-scale (e.g. while dragging
+					// the array past another building) would stomp deliberate user input.
+					const bool bUserModifiedSpacing =
+						!FMath::IsNearlyEqual(CurrentState.SpacingX, LastAppliedSpacingX, 1.0f) ||
+						!FMath::IsNearlyEqual(CurrentState.SpacingY, LastAppliedSpacingY, 1.0f);
+
+					if (!bUserModifiedSpacing)
+					{
+						bShouldApply = true;
+						UE_LOG(LogSmartAutoConnect, Verbose, TEXT("   ⚡ CONTEXT-AWARE SPACING: Target building changed (%s → %s), re-adjusting"),
+							*LastTargetBuildingClass->GetName(), *CurrentBuildingClass->GetName());
+					}
+					else
+					{
+						UE_LOG(LogSmartAutoConnect, Verbose, TEXT("   ⚡ CONTEXT-AWARE SPACING: Target building changed but user has manually adjusted spacing (%.0f x %.0f vs last-applied %.0f x %.0f) - skipping"),
+							static_cast<float>(CurrentState.SpacingX), static_cast<float>(CurrentState.SpacingY), LastAppliedSpacingX, LastAppliedSpacingY);
+					}
 				}
 				else
 				{
@@ -604,20 +620,22 @@ void FSFPowerAutoConnectManager::ProcessBuildingConnections(const TArray<AFGHolo
 					
 					if (BuildingWidth > 0.0f)
 					{
-						// Get current counter state
-						FSFCounterState NewState = Subsystem->GetCounterState();
-						
 						// Set both X and Y spacing to building width (poles are orientation-agnostic)
+						FSFCounterState NewState = CurrentState;
 						NewState.SpacingX = FMath::RoundToInt(BuildingWidth);
 						NewState.SpacingY = FMath::RoundToInt(BuildingWidth);
-						
+
 						// Update state (triggers HUD refresh and child repositioning)
 						Subsystem->UpdateCounterState(NewState);
-						
-						// Mark as applied and track building class
+
+						// Mark as applied and track building class + the spacing we set,
+						// so a later target-building change can tell if the user has since
+						// customized spacing before deciding to re-apply
 						bContextSpacingApplied = true;
 						LastTargetBuildingClass = CurrentBuildingClass;
-						
+						LastAppliedSpacingX = NewState.SpacingX;
+						LastAppliedSpacingY = NewState.SpacingY;
+
 						UE_LOG(LogSmartAutoConnect, Verbose, TEXT("   ⚡ CONTEXT-AWARE SPACING: Auto-adjusted poles to %.1fm x %.1fm (building: %s, width: %.0fcm)"),
 							BuildingWidth / 100.0f, BuildingWidth / 100.0f,
 							*CurrentBuildingClass->GetName(), BuildingWidth);
@@ -1587,6 +1605,8 @@ void FSFPowerAutoConnectManager::ResetSpacingState()
 {
 	bContextSpacingApplied = false;
 	LastTargetBuildingClass = nullptr;
+	LastAppliedSpacingX = -1.0f;
+	LastAppliedSpacingY = -1.0f;
 	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("⚡ ResetSpacingState: Reset spacing tracking"));
 }
 

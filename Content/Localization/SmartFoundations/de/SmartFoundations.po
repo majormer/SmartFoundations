@@ -2529,31 +2529,31 @@ msgstr "{0} → Mk.{1} wird aufgerüstet..."
 
 msgctxt "SmartFoundations,HUD_BeltsSkipped"
 msgid "*{0} belt connection(s) skipped: {1}"
-msgstr ""
+msgstr "*{0} Bandverbindung(en) übersprungen: {1}"
 
 msgctxt "SmartFoundations,HUD_PipesSkipped"
 msgid "*{0} pipe connection(s) skipped: {1}"
-msgstr ""
+msgstr "*{0} Rohrverbindung(en) übersprungen: {1}"
 
 msgctxt "SmartFoundations,HUD_SkipReason_InvalidShape"
 msgid "invalid shape ({0})"
-msgstr ""
+msgstr "ungültige Form ({0})"
 
 msgctxt "SmartFoundations,HUD_SkipReason_LaneBlocked"
 msgid "lane blocked ({0})"
-msgstr ""
+msgstr "Bahn blockiert ({0})"
 
 msgctxt "SmartFoundations,HUD_SkipReason_TooClose"
 msgid "too close ({0})"
-msgstr ""
+msgstr "zu nah ({0})"
 
 msgctxt "SmartFoundations,HUD_SkipReason_TooFar"
 msgid "too far ({0})"
-msgstr ""
+msgstr "zu weit ({0})"
 
 msgctxt "SmartFoundations,HUD_SkipReason_TooSteep"
 msgid "too steep ({0})"
-msgstr ""
+msgstr "zu steil ({0})"
 
 msgctxt "SmartFoundations,MP_Notice_BlueprintGridTooLarge"
 msgid "Blueprint grid too large for one multiplayer placement (~{0} buildings, max ~{1}). Build in smaller sections."
@@ -2622,3 +2622,67 @@ msgstr "Modul"
 msgctxt "SmartFoundations,Restore_RecentNone"
 msgid "No recent restores this session - apply one from the Smart Panel first"
 msgstr "Keine kürzlichen Wiederherstellungen in dieser Sitzung - wende zuerst eine über die Smart-Steuerung an"
+
+msgctxt "7D7230F74AFBCA6BF4F61B81C23EC15C"
+msgid "Daisy-Chain Power:"
+msgstr "Strom durchschleifen:"
+
+msgctxt "SmartFoundations,HUD_RoleChain"
+msgid "Chain"
+msgstr "Kette"
+
+msgctxt "SmartFoundations,HUD_RoleRows"
+msgid "Rows"
+msgstr "Reihen"
+
+msgctxt "SmartFoundations,HUD_ScaleDaisyChain"
+msgid "Power Chain: {0}"
+msgstr "Stromkette: {0}"
+
+msgctxt "SmartFoundations,P.NearbyLogisticsRange"
+msgid "Nearby Logistics Range (m)"
+msgstr "Reichweite nahegelegener Logistik (m)"
+
+msgctxt "SmartFoundations,P.NearbyLogisticsRange.TT"
+msgid "Maximum connector-to-connector distance for nearby factory belt and pipe Auto-Connect. Blueprint seams and manifold lanes are unaffected."
+msgstr "Maximaler Anschluss-zu-Anschluss-Abstand für das automatische Verbinden von Bändern und Rohren nahegelegener Fabriken. Bauplan-Nähte und Verteilerbahnen sind nicht betroffen."
+
+msgctxt "SmartFoundations,P.bBlueprintSeamAutoConnectEnabled"
+msgid "Blueprint Seam Auto-Connect"
+msgstr "Bauplan-Naht Auto-Verbinden"
+
+msgctxt "SmartFoundations,P.bBlueprintSeamAutoConnectEnabled.TT"
+msgid "Connect belts and pipes across adjacent copies when scaling a blueprint, independently of nearby Belt and Pipe Auto-Connect."
+msgstr "Verbindet Bänder und Rohre über benachbarte Kopien beim Skalieren eines Bauplans, unabhängig vom Auto-Verbinden nahegelegener Bänder und Rohre."
+
+msgctxt "SmartFoundations,P.bScaleDaisyChainPower"
+msgid "Scale Daisy-Chain Power"
+msgstr "Strom beim Skalieren durchschleifen"
+
+msgctxt "SmartFoundations,P.bScaleDaisyChainPower.TT"
+msgid "When Upgraded Power Connectors is unlocked, scaling factories and generators wires adjacent buildings together along the grid X axis."
+msgstr "Wenn verbesserte Stromanschlüsse freigeschaltet sind, verdrahtet das Skalieren von Fabriken und Generatoren benachbarte Gebäude entlang der Raster-X-Achse miteinander."
+
+msgctxt "SmartFoundations,P.bToggleTransformModes"
+msgid "Tap to Toggle Transform Modes"
+msgstr "Transformationsmodi per Tippen umschalten"
+
+msgctxt "SmartFoundations,P.bToggleTransformModes.TT"
+msgid "Tap a transform key (Spacing, Steps, Stagger, Rotation, or Recipe on a factory) to switch the mode on; tap it again to switch it off. Made for controllers and Steam Input radial menus, which cannot hold a key. Off keeps the normal hold-to-use behavior."
+msgstr "Tippe auf eine Transformationstaste (Abstand, Stufen, Versatz, Rotation oder Rezept bei einer Fabrik), um den Modus einzuschalten; tippe erneut, um ihn auszuschalten. Gedacht für Controller und Steam-Input-Radialmenüs, die keine Taste halten können. Aus behält das normale Halten-Verhalten bei."
+
+msgctxt "SmartFoundations,Sec.AutoConnectBehavior"
+msgid "Auto-Connect Behavior"
+msgstr "Auto-Verbinden-Verhalten"
+
+msgctxt "SmartFoundations,Sec.AutoConnectBehavior.TT"
+msgid "Controls behavior shared by nearby belt and pipe Auto-Connect."
+msgstr "Steuert das Verhalten, das das Auto-Verbinden nahegelegener Bänder und Rohre teilen."
+
+msgctxt "SmartFoundations,Sec.BlueprintAutoConnect"
+msgid "Blueprint Auto-Connect"
+msgstr "Bauplan Auto-Verbinden"
+
+msgctxt "SmartFoundations,Sec.BlueprintAutoConnect.TT"
+msgid "Controls connections between adjacent copies of scaled blueprints."
+msgstr "Steuert die Verbindungen zwischen benachbarten Kopien skalierter Baupläne."

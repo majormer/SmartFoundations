@@ -316,6 +316,10 @@ protected:
     // Power auto-connect enabled checkbox
     UPROPERTY(meta = (BindWidgetOptional))
     TObjectPtr<UCheckBox> PowerEnabledCheckBox;
+
+    // Per-build factory/generator daisy-chain override (#487)
+    UPROPERTY(meta = (BindWidgetOptional))
+    TObjectPtr<UCheckBox> ScaleDaisyChainPowerCheckBox;
     
     // Power grid axis ComboBox (Auto, X, Y, X+Y)
     UPROPERTY(meta = (BindWidgetOptional))
@@ -860,6 +864,9 @@ private:
     // Power enabled checkbox changed
     UFUNCTION()
     void OnPowerEnabledChanged(bool bIsChecked);
+
+    UFUNCTION()
+    void OnScaleDaisyChainPowerChanged(bool bIsChecked);
     
     // Power grid axis ComboBox changed
     UFUNCTION()

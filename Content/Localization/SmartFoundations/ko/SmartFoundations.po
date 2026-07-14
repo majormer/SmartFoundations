@@ -2529,31 +2529,31 @@ msgstr "{0} → Mk.{1} 업그레이드 중..."
 
 msgctxt "SmartFoundations,HUD_BeltsSkipped"
 msgid "*{0} belt connection(s) skipped: {1}"
-msgstr ""
+msgstr "*벨트 연결 {0}개 건너뜀: {1}"
 
 msgctxt "SmartFoundations,HUD_PipesSkipped"
 msgid "*{0} pipe connection(s) skipped: {1}"
-msgstr ""
+msgstr "*파이프 연결 {0}개 건너뜀: {1}"
 
 msgctxt "SmartFoundations,HUD_SkipReason_InvalidShape"
 msgid "invalid shape ({0})"
-msgstr ""
+msgstr "잘못된 형태 ({0})"
 
 msgctxt "SmartFoundations,HUD_SkipReason_LaneBlocked"
 msgid "lane blocked ({0})"
-msgstr ""
+msgstr "레인 막힘 ({0})"
 
 msgctxt "SmartFoundations,HUD_SkipReason_TooClose"
 msgid "too close ({0})"
-msgstr ""
+msgstr "너무 가까움 ({0})"
 
 msgctxt "SmartFoundations,HUD_SkipReason_TooFar"
 msgid "too far ({0})"
-msgstr ""
+msgstr "너무 멂 ({0})"
 
 msgctxt "SmartFoundations,HUD_SkipReason_TooSteep"
 msgid "too steep ({0})"
-msgstr ""
+msgstr "너무 가파름 ({0})"
 
 msgctxt "SmartFoundations,MP_Notice_BlueprintGridTooLarge"
 msgid "Blueprint grid too large for one multiplayer placement (~{0} buildings, max ~{1}). Build in smaller sections."
@@ -2622,3 +2622,67 @@ msgstr "모듈"
 msgctxt "SmartFoundations,Restore_RecentNone"
 msgid "No recent restores this session - apply one from the Smart Panel first"
 msgstr "이 세션에 최근 복원이 없습니다 - 먼저 Smart 패널에서 적용하세요"
+
+msgctxt "7D7230F74AFBCA6BF4F61B81C23EC15C"
+msgid "Daisy-Chain Power:"
+msgstr "전력 데이지 체인:"
+
+msgctxt "SmartFoundations,HUD_RoleChain"
+msgid "Chain"
+msgstr "체인"
+
+msgctxt "SmartFoundations,HUD_RoleRows"
+msgid "Rows"
+msgstr "행"
+
+msgctxt "SmartFoundations,HUD_ScaleDaisyChain"
+msgid "Power Chain: {0}"
+msgstr "전력 체인: {0}"
+
+msgctxt "SmartFoundations,P.NearbyLogisticsRange"
+msgid "Nearby Logistics Range (m)"
+msgstr "인접 물류 범위 (m)"
+
+msgctxt "SmartFoundations,P.NearbyLogisticsRange.TT"
+msgid "Maximum connector-to-connector distance for nearby factory belt and pipe Auto-Connect. Blueprint seams and manifold lanes are unaffected."
+msgstr "인근 공장의 벨트와 파이프 자동 연결에 사용되는 커넥터 간 최대 거리입니다. 청사진 이음새와 매니폴드 레인은 영향을 받지 않습니다."
+
+msgctxt "SmartFoundations,P.bBlueprintSeamAutoConnectEnabled"
+msgid "Blueprint Seam Auto-Connect"
+msgstr "청사진 이음새 자동 연결"
+
+msgctxt "SmartFoundations,P.bBlueprintSeamAutoConnectEnabled.TT"
+msgid "Connect belts and pipes across adjacent copies when scaling a blueprint, independently of nearby Belt and Pipe Auto-Connect."
+msgstr "청사진을 확장할 때 인접한 복사본 사이의 벨트와 파이프를 연결합니다. 인근 벨트 및 파이프 자동 연결과는 별개로 작동합니다."
+
+msgctxt "SmartFoundations,P.bScaleDaisyChainPower"
+msgid "Scale Daisy-Chain Power"
+msgstr "확장 시 전력 데이지 체인"
+
+msgctxt "SmartFoundations,P.bScaleDaisyChainPower.TT"
+msgid "When Upgraded Power Connectors is unlocked, scaling factories and generators wires adjacent buildings together along the grid X axis."
+msgstr "강화형 전력 커넥터가 해금되면, 공장과 발전기를 확장할 때 그리드 X축을 따라 인접한 건물들이 서로 배선됩니다."
+
+msgctxt "SmartFoundations,P.bToggleTransformModes"
+msgid "Tap to Toggle Transform Modes"
+msgstr "탭하여 변형 모드 전환"
+
+msgctxt "SmartFoundations,P.bToggleTransformModes.TT"
+msgid "Tap a transform key (Spacing, Steps, Stagger, Rotation, or Recipe on a factory) to switch the mode on; tap it again to switch it off. Made for controllers and Steam Input radial menus, which cannot hold a key. Off keeps the normal hold-to-use behavior."
+msgstr "변형 키(간격, 계단, 엇갈림, 회전, 또는 공장의 레시피)를 탭하면 모드가 켜지고, 다시 탭하면 꺼집니다. 키를 누르고 있을 수 없는 컨트롤러와 Steam 입력 방사형 메뉴를 위한 기능입니다. 끄면 일반적인 길게 누르기 동작이 유지됩니다."
+
+msgctxt "SmartFoundations,Sec.AutoConnectBehavior"
+msgid "Auto-Connect Behavior"
+msgstr "자동 연결 동작"
+
+msgctxt "SmartFoundations,Sec.AutoConnectBehavior.TT"
+msgid "Controls behavior shared by nearby belt and pipe Auto-Connect."
+msgstr "인근 벨트와 파이프 자동 연결이 공유하는 동작을 제어합니다."
+
+msgctxt "SmartFoundations,Sec.BlueprintAutoConnect"
+msgid "Blueprint Auto-Connect"
+msgstr "청사진 자동 연결"
+
+msgctxt "SmartFoundations,Sec.BlueprintAutoConnect.TT"
+msgid "Controls connections between adjacent copies of scaled blueprints."
+msgstr "확장된 청사진의 인접한 복사본 사이의 연결을 제어합니다."

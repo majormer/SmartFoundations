@@ -8,6 +8,7 @@
 #include "Subsystem/SFHologramHelperService.h"
 #include "Features/AutoConnect/SFAutoConnectService.h"
 #include "Features/PipeAutoConnect/SFPipeConnectorFinder.h"
+#include "Shared/Conduits/SFDistributorTopology.h"
 #include "Data/SFBuildableSizeRegistry.h"
 #include "Buildables/FGBuildable.h"
 #include "Buildables/FGBuildableFactory.h"
@@ -128,8 +129,8 @@ void FSFPipeAutoConnectManager::ProcessAllJunctions(AFGHologram* ParentJunctionH
 		AutoConnectService->GetSkipSummary().ResetPipes();
 	}
 	
-	// Track which connector index the parent uses (for child restrictions)
-	int32 ParentConnectorIdx = INDEX_NONE;
+	// Track the stable named factory-side port the parent uses (for child restrictions).
+	FName ParentConnectorName = NAME_None;
 	
 	// Track parent connection type to restrict children (e.g. if parent connects to Output, children can only connect to Output)
 	EPipeConnectionType ParentConnectionType = EPipeConnectionType::PCT_ANY;
@@ -153,12 +154,11 @@ void FSFPipeAutoConnectManager::ProcessAllJunctions(AFGHologram* ParentJunctionH
 		{
 			ProcessPipeJunctions(Junction, &ReservedConnectors, nullptr);
 			
-			// Store parent's chosen connector index for child restrictions
-			int32* StoredIdx = ParentConnectorIndices.Find(ParentJunctionHologram);
-			if (StoredIdx)
+			// Store parent's chosen named port for child restrictions.
+			if (const FName* StoredName = ParentConnectorNames.Find(ParentJunctionHologram))
 			{
-				ParentConnectorIdx = *StoredIdx;
-				UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   Parent using connector index %d"), ParentConnectorIdx);
+				ParentConnectorName = *StoredName;
+				UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   Parent using connector %s"), *ParentConnectorName.ToString());
 			}
 			
 			// Capture parent connection type (Input/Output) from child hologram or legacy preview
@@ -224,7 +224,8 @@ void FSFPipeAutoConnectManager::ProcessAllJunctions(AFGHologram* ParentJunctionH
 				if (Building)
 				{
 					UClass* CurrentBuildingClass = Building->GetClass();
-					
+					FSFCounterState CurrentState = Subsystem->GetCounterState();
+
 					// Check if we should apply spacing adjustment
 					bool bShouldApply = false;
 					if (!bContextSpacingApplied)
@@ -235,43 +236,58 @@ void FSFPipeAutoConnectManager::ProcessAllJunctions(AFGHologram* ParentJunctionH
 					}
 					else if (LastTargetBuildingClass.IsValid() && LastTargetBuildingClass.Get() != CurrentBuildingClass)
 					{
-						// Building changed - reset and apply new spacing
-						bShouldApply = true;
-						UE_LOG(LogSmartAutoConnect, Verbose, TEXT("   🎯 CONTEXT-AWARE SPACING: Target building changed (%s → %s), re-adjusting"),
-							*LastTargetBuildingClass->GetName(), *CurrentBuildingClass->GetName());
+						// Building changed - only re-adjust if the user hasn't since manually
+						// changed spacing away from what we last auto-applied. Otherwise the
+						// nearest-building assignment flipping mid-scale would stomp deliberate
+						// user input.
+						const bool bUserModifiedSpacing =
+							!FMath::IsNearlyEqual(CurrentState.SpacingX, LastAppliedSpacingX, 1.0f) ||
+							!FMath::IsNearlyEqual(CurrentState.SpacingY, LastAppliedSpacingY, 1.0f);
+
+						if (!bUserModifiedSpacing)
+						{
+							bShouldApply = true;
+							UE_LOG(LogSmartAutoConnect, Verbose, TEXT("   🎯 CONTEXT-AWARE SPACING: Target building changed (%s → %s), re-adjusting"),
+								*LastTargetBuildingClass->GetName(), *CurrentBuildingClass->GetName());
+						}
+						else
+						{
+							UE_LOG(LogSmartAutoConnect, Verbose, TEXT("   🎯 CONTEXT-AWARE SPACING: Target building changed but user has manually adjusted spacing (%.0f x %.0f vs last-applied %.0f x %.0f) - skipping"),
+								static_cast<float>(CurrentState.SpacingX), static_cast<float>(CurrentState.SpacingY), LastAppliedSpacingX, LastAppliedSpacingY);
+						}
 					}
 					else
 					{
 						UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   🎯 CONTEXT-AWARE SPACING: Skipping (already applied, user can fine-tune)"));
 					}
-					
+
 					if (bShouldApply)
 					{
 						// Query building size from registry
 						USFBuildableSizeRegistry::Initialize();
 						FSFBuildableSizeProfile Profile = USFBuildableSizeRegistry::GetProfile(CurrentBuildingClass);
-						
+
 						// Calculate connector spacing: Building width minus 3m buffer
 						// This accounts for the width of the pipe junction itself
 						// Example: Manufacturer is 18m wide, but connectors are 15m apart (18m - 3m = 15m)
 						float BuildingWidth = Profile.DefaultSize.X - 300.0f;  // 300cm = 3m buffer for junction width
-						
+
 						if (BuildingWidth > 0.0f)
 						{
-							// Get current counter state
-							FSFCounterState NewState = Subsystem->GetCounterState();
-							
 							// Set both X and Y spacing to building width (junctions are orientation-agnostic)
+							FSFCounterState NewState = CurrentState;
 							NewState.SpacingX = FMath::RoundToInt(BuildingWidth);
 							NewState.SpacingY = FMath::RoundToInt(BuildingWidth);
-							
+
 							// Update state (triggers HUD refresh and child repositioning)
 							Subsystem->UpdateCounterState(NewState);
-							
-							// Mark as applied and track building class
+
+							// Mark as applied and track building class + the spacing we set
 							bContextSpacingApplied = true;
 							LastTargetBuildingClass = CurrentBuildingClass;
-							
+							LastAppliedSpacingX = NewState.SpacingX;
+							LastAppliedSpacingY = NewState.SpacingY;
+
 							UE_LOG(LogSmartAutoConnect, Verbose, TEXT("   🎯 CONTEXT-AWARE SPACING: Auto-adjusted pipes to %.1fm x %.1fm (building: %s, width: %.0fcm)"),
 								BuildingWidth / 100.0f, BuildingWidth / 100.0f,
 								*CurrentBuildingClass->GetName(), BuildingWidth);
@@ -280,30 +296,30 @@ void FSFPipeAutoConnectManager::ProcessAllJunctions(AFGHologram* ParentJunctionH
 				}
 			}
 		}
-		// For children: restrict to parent's connector index and its opposite
-		else if (ParentConnectorIdx != INDEX_NONE)
+		// For children: restrict to the same named factory port and its mapped opposite.
+		else if (!ParentConnectorName.IsNone())
 		{
-			TArray<UFGPipeConnectionComponent*> JunctionConnectors;
-			FSFPipeConnectorFinder::GetJunctionConnectors(Junction, JunctionConnectors);
-			
-			// Issue #206: Use normal-based opposite detection instead of hardcoded index mapping
-			int32 OppositeIdx = GetOppositeConnectorByNormal(ParentConnectorIdx, JunctionConnectors);
-			TArray<int32> AllowedIndices = { ParentConnectorIdx, OppositeIdx };
-			
-			UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   Restricting child to indices %d, %d (opposite by normal)"), 
-				ParentConnectorIdx, OppositeIdx);
+			const FSFDistributorPortTopology ParentTopology =
+				FSFDistributorTopologyResolver::Resolve(ParentJunctionHologram->GetBuildClass(), ParentConnectorName);
+			TArray<FName> AllowedNames = { ParentConnectorName };
+			if (ParentTopology.bRecognized && !ParentTopology.OppositeFactoryPort.IsNone())
+			{
+				AllowedNames.Add(ParentTopology.OppositeFactoryPort);
+			}
+			UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   Restricting child to mapped factory ports %s"),
+				*FString::JoinBy(AllowedNames, TEXT(", "), [](FName Name) { return Name.ToString(); }));
 			
 			// Pass parent connection type constraint if available
 			const EPipeConnectionType* TypeConstraint = bParentHasConnection ? &ParentConnectionType : nullptr;
 			
-			ProcessPipeJunctions(Junction, &ReservedConnectors, &AllowedIndices, TypeConstraint);
+			ProcessPipeJunctions(Junction, &ReservedConnectors, &AllowedNames, TypeConstraint);
 		}
 		else
 		{
 			// Fallback: process child normally (no parent restrictions available yet)
 			// Still pass type constraint if available, though unlikely if parent index not set
-			UE_LOG(LogSmartAutoConnect, Verbose, TEXT("   🔧 PIPE: Processing child %s without parent restrictions (ParentConnectorIdx=%d)"), 
-				*Junction->GetName(), ParentConnectorIdx);
+			UE_LOG(LogSmartAutoConnect, Verbose, TEXT("   🔧 PIPE: Processing child %s without parent named-port restrictions"),
+				*Junction->GetName());
 			const EPipeConnectionType* TypeConstraint = bParentHasConnection ? &ParentConnectionType : nullptr;
 			ProcessPipeJunctions(Junction, &ReservedConnectors, nullptr, TypeConstraint);
 		}
@@ -376,7 +392,7 @@ void FSFPipeAutoConnectManager::ProcessAllJunctions(AFGHologram* ParentJunctionH
 void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 	AFGHologram* ParentJunctionHologram, 
 	TMap<UFGPipeConnectionComponent*, AFGHologram*>* SharedReservedConnectors,
-	const TArray<int32>* AllowedConnectorIndices,
+	const TArray<FName>* AllowedConnectorNames,
 	const EPipeConnectionType* AllowedConnectionType)
 {
 	if (!ParentJunctionHologram || !Subsystem || !AutoConnectService)
@@ -408,9 +424,10 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 		return;
 	}
 
-	// Search radius accounts for large buildings with offset connectors (e.g., refinery at 3000cm tall)
-	// Building center might be far, but connectors could still be close
-	constexpr float SearchRadius = 4000.0f; // 40m - generous radius for building centers, actual connector distance checked later
+	const float NearbyLogisticsRange = Subsystem->GetAutoConnectRuntimeSettings().NearbyLogisticsRange;
+	// Broad phase retains the historical 15m center/port headroom for large factories. Exact
+	// connector-to-connector distance is the candidate-selection cap below.
+	const float SearchRadius = NearbyLogisticsRange + 1500.0f;
 
 	TArray<AFGBuildable*> NearbyBuildings;
 	FSFPipeConnectorFinder::FindNearbyPipeBuildings(ParentJunctionHologram, SearchRadius, NearbyBuildings);
@@ -595,7 +612,6 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 			}
 
 			FVector BuildingLocation = BuildingConn->GetComponentLocation();
-			float Distance = FVector::Dist2D(JunctionLocation, BuildingLocation);
 
 			// SCORING: Calculate weighted score based on distance and alignment
 			// This prevents "crossing" pipes by penalizing misaligned connections
@@ -608,15 +624,9 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 
 			// Angle Penalty: 1.0 (perfectly aligned) -> 0.0 (misaligned)
 			// Penalty multiplier: 10.0 (same as belts)
-			// [#464] Plus level affinity (same fix as belts): the XY distance is Z-blind, so a
-			// staggered other-level connector could out-score the same-level one. Same-level wins;
-			// cross-level stays a valid fallback when no same-level candidate exists.
+			// [#464] Plus level affinity: same-level wins; cross-level stays a valid fallback
+			// when no same-level candidate exists.
 			float AnglePenalty = 1.0f - MaxAlignment;
-			float Score = Distance * (1.0f + AnglePenalty * 10.0f)
-				+ USFAutoConnectService::LevelAffinityPenalty(JunctionLocation, BuildingLocation);
-			
-			// Only proceed if this score beats our current best
-			if (Score < BestScore)
 			{
 				UFGPipeConnectionComponent* ClosestJunctionConn = nullptr;
 				float BestJunctionDistSq = TNumericLimits<float>::Max();
@@ -630,10 +640,11 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 						continue;
 					}
 					
-					// RESTRICTION: Check if this connector index is allowed (for child junctions)
-					if (AllowedConnectorIndices && !AllowedConnectorIndices->Contains(JunctionIdx))
+					// RESTRICTION: Component names are stable across parent/child holograms; indices are not.
+					if (AllowedConnectorNames && !AllowedConnectorNames->Contains(JunctionConn->GetFName()))
 					{
-						UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      Skipping junction connector %d (not in allowed indices)"), JunctionIdx);
+						UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("      Skipping junction connector %s (not in allowed named ports)"),
+							*JunctionConn->GetName());
 						continue;
 					}
 
@@ -653,7 +664,11 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 						continue;
 					}
 
-					float JunctionDistSq = FVector::DistSquared2D(JunctionConn->GetComponentLocation(), BuildingLocation);
+					float JunctionDistSq = FVector::DistSquared(JunctionConn->GetComponentLocation(), BuildingLocation);
+					if (JunctionDistSq > FMath::Square(NearbyLogisticsRange))
+					{
+						continue;
+					}
 					if (JunctionDistSq < BestJunctionDistSq)
 					{
 						// ANGLE VALIDATION: Check both junction and building connector angles (30° max)
@@ -701,14 +716,20 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 				// Only update best pair if we found a valid junction connector
 				if (ClosestJunctionConn)
 				{
-					BestScore = Score; // Update best score
-					BestActualDistance = Distance;
-					BestJunctionConnector = ClosestJunctionConn;
-					BestBuildingConnector = BuildingConn;
-					
-					UE_LOG(LogSmartAutoConnect, VeryVerbose, 
-						TEXT("      New best candidate: Score=%.0f (Dist=%.0f, Align=%.2f)"), 
-						BestScore, Distance, MaxAlignment);
+					const float PairDistance = FMath::Sqrt(BestJunctionDistSq);
+					const float PairScore = PairDistance * (1.0f + AnglePenalty * 10.0f)
+						+ USFAutoConnectService::LevelAffinityPenalty(ClosestJunctionConn->GetComponentLocation(), BuildingLocation);
+					if (PairScore < BestScore)
+					{
+						BestScore = PairScore;
+						BestActualDistance = PairDistance;
+						BestJunctionConnector = ClosestJunctionConn;
+						BestBuildingConnector = BuildingConn;
+
+						UE_LOG(LogSmartAutoConnect, VeryVerbose,
+							TEXT("      New best candidate: Score=%.0f (Dist=%.0f, Align=%.2f)"),
+							BestScore, PairDistance, MaxAlignment);
+					}
 				}
 			}
 		}
@@ -748,9 +769,8 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 	{
 		float BestDistance = BestActualDistance;
 		
-		// Enforce maximum connection distance (25m - slightly larger than belt limit to account for vertical offset)
-		constexpr float MaxConnectionDistance = 2500.0f; // 25m
-		if (BestDistance > MaxConnectionDistance)
+		// Defensive final gate; candidates outside the configured range are filtered before scoring.
+		if (BestDistance > NearbyLogisticsRange)
 		{
 			// Skip-summary: this pairing won selection and was dropped only by the distance gate
 			if (AutoConnectService)
@@ -759,7 +779,7 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 			}
 			UE_LOG(LogSmartAutoConnect, Verbose,
 				TEXT("   ❌ Best connection rejected: too far (%.1fm > %.1fm limit)"),
-				BestDistance / 100.0f, MaxConnectionDistance / 100.0f);
+				BestDistance / 100.0f, NearbyLogisticsRange / 100.0f);
 			
 			// Clean up any existing child hologram for this junction (moved out of range)
 			TWeakObjectPtr<ASFPipelineHologram>* ExistingChild = BuildingPipeChildren.Find(ParentJunctionHologram);
@@ -820,15 +840,75 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 		UE_LOG(LogSmartAutoConnect, Verbose,
 			TEXT("   ✅ Valid connection found: Distance %.1fm"), BestDistance / 100.0f);
 		
-		// Track which connector index this junction is using (for child restrictions)
-		int32 ChosenConnectorIdx = GetConnectorIndex(ParentJunctionHologram, BestJunctionConnector);
-		if (ChosenConnectorIdx != INDEX_NONE)
+		const FName ChosenConnectorName = BestJunctionConnector->GetFName();
+		const FSFDistributorPortTopology ChosenTopology =
+			FSFDistributorTopologyResolver::Resolve(ParentJunctionHologram->GetBuildClass(), ChosenConnectorName);
+		if (ChosenTopology.bRecognized && !ChosenTopology.bValidManifold)
 		{
-			ParentConnectorIndices.Add(ParentJunctionHologram, ChosenConnectorIdx);
-			UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   Tracking connector index %d for junction %s (Side A: %s → %s)"), 
-				ChosenConnectorIdx, *ParentJunctionHologram->GetName(),
-				*BestJunctionConnector->GetName(), *BestBuildingConnector->GetName());
+			UE_LOG(LogSmartAutoConnect, Log,
+				TEXT("Pipe Auto-Connect: discarding invalid distributor branch %s.%s (missing perpendicular lane port)"),
+				*GetNameSafe(ParentJunctionHologram->GetBuildClass()), *ChosenConnectorName.ToString());
+			if (TWeakObjectPtr<ASFPipelineHologram>* Child = BuildingPipeChildren.Find(ParentJunctionHologram); Child && Child->IsValid())
+			{
+				RemovePipeChild(ParentJunctionHologram, Child->Get());
+			}
+			if (TWeakObjectPtr<ASFPipelineHologram>* Child = BuildingPipeChildrenB.Find(ParentJunctionHologram); Child && Child->IsValid())
+			{
+				RemovePipeChild(ParentJunctionHologram, Child->Get());
+			}
+			if (TWeakObjectPtr<ASFPipelineHologram>* Child = ManifoldPipeChildren.Find(ParentJunctionHologram); Child && Child->IsValid())
+			{
+				RemovePipeChild(ParentJunctionHologram, Child->Get());
+			}
+			TArray<AFGHologram*> IncomingManifoldSources;
+			for (const auto& Pair : ManifoldTargetJunctions)
+			{
+				if (Pair.Value.Get() == ParentJunctionHologram) IncomingManifoldSources.Add(Pair.Key);
+			}
+			for (AFGHologram* SourceJunction : IncomingManifoldSources)
+			{
+				if (TWeakObjectPtr<ASFPipelineHologram>* Child = ManifoldPipeChildren.Find(SourceJunction); Child && Child->IsValid())
+				{
+					RemovePipeChild(SourceJunction, Child->Get());
+				}
+				ManifoldPipeChildren.Remove(SourceJunction);
+				ManifoldTargetJunctions.Remove(SourceJunction);
+				if (TSharedPtr<FPipePreviewHelper>* Preview = ManifoldPipePreviews.Find(SourceJunction); Preview && Preview->IsValid())
+				{
+					(*Preview)->DestroyPreview();
+				}
+				ManifoldPipePreviews.Remove(SourceJunction);
+			}
+			if (TSharedPtr<FPipePreviewHelper>* Preview = JunctionPipePreviews.Find(ParentJunctionHologram); Preview && Preview->IsValid())
+			{
+				(*Preview)->DestroyPreview();
+			}
+			if (TSharedPtr<FPipePreviewHelper>* Preview = ManifoldPipePreviews.Find(ParentJunctionHologram); Preview && Preview->IsValid())
+			{
+				(*Preview)->DestroyPreview();
+			}
+			BuildingPipeChildren.Remove(ParentJunctionHologram);
+			BuildingPipeChildrenB.Remove(ParentJunctionHologram);
+			ManifoldPipeChildren.Remove(ParentJunctionHologram);
+			ManifoldTargetJunctions.Remove(ParentJunctionHologram);
+			JunctionPipePreviews.Remove(ParentJunctionHologram);
+			ManifoldPipePreviews.Remove(ParentJunctionHologram);
+			ParentConnectorNames.Remove(ParentJunctionHologram);
+			ParentConnectorNamesB.Remove(ParentJunctionHologram);
+			if (SharedReservedConnectors)
+			{
+				for (auto It = SharedReservedConnectors->CreateIterator(); It; ++It)
+				{
+					if (It.Value() == ParentJunctionHologram) It.RemoveCurrent();
+				}
+			}
+			return;
 		}
+
+		ParentConnectorNames.Add(ParentJunctionHologram, ChosenConnectorName);
+		const int32 ChosenConnectorIdx = JunctionConnectors.IndexOfByKey(BestJunctionConnector);
+		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   Tracking connector %s for junction %s (Side A → %s)"),
+			*ChosenConnectorName.ToString(), *ParentJunctionHologram->GetName(), *BestBuildingConnector->GetName());
 		
 		UE_LOG(LogSmartAutoConnect, VeryVerbose,
 			TEXT("PipeAutoConnectManager::ProcessPipeJunctions - Selected pair: JunctionConn=%s (idx=%d) BuildingConn=%s Dist=%.1f cm"),
@@ -1065,7 +1145,12 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 			// junction connector for a building on the other side.
 			// ========================================
 			{
-				int32 OppositeIdx = GetOppositeConnectorByNormal(ChosenConnectorIdx, JunctionConnectors);
+				const FName OppositeName = ChosenTopology.bRecognized ? ChosenTopology.OppositeFactoryPort : NAME_None;
+				const int32 OppositeIdx = JunctionConnectors.IndexOfByPredicate(
+					[OppositeName](const UFGPipeConnectionComponent* Connector)
+					{
+						return Connector && Connector->GetFName() == OppositeName;
+					});
 				
 				UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("   SIDE B: ChosenIdx=%d OppositeIdx=%d TotalConnectors=%d NearbyBuildings=%d"),
 					ChosenConnectorIdx, OppositeIdx, JunctionConnectors.Num(), NearbyBuildings.Num());
@@ -1125,7 +1210,8 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 							// #425: gate distance/direction on the OPPOSITE CONNECTOR, not the junction center, so
 							// the scoring matches the facing validation below (center-vs-connector offset can
 							// otherwise admit/reject the wrong building connector on large or rotated junctions).
-							float Distance = FVector::Dist2D(OppositeJunctionConn->GetComponentLocation(), BuildingConnPos);
+							float Distance = FVector::Dist(OppositeJunctionConn->GetComponentLocation(), BuildingConnPos);
+							if (Distance > NearbyLogisticsRange) continue;
 							
 							// Scoring: distance + alignment penalty (same formula as Side A)
 							// [#464] Plus level affinity (same fix as belts): prefer same-level building
@@ -1163,13 +1249,12 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 					}
 					
 					// Validate distance for Side B (same thresholds as Side A)
-					constexpr float MaxDist = 2500.0f;
 					constexpr float MinDistAngled = 200.0f;
 					constexpr float MinDistStraight = 50.0f;
 					constexpr float StraightThresh = 10.0f;
 					
 					bool bSideBValid = false;
-					if (BestBConn && BestBDist <= MaxDist)
+					if (BestBConn && BestBDist <= NearbyLogisticsRange)
 					{
 						FVector J2B = (BestBConn->GetComponentLocation() - OppositeJunctionConn->GetComponentLocation()).GetSafeNormal();
 						float AngRad = FMath::Acos(FMath::Clamp(FVector::DotProduct(OppositeJunctionConn->GetConnectorNormal(), J2B), -1.0f, 1.0f));
@@ -1180,7 +1265,7 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 					
 					if (bSideBValid)
 					{
-						ParentConnectorIndicesB.Add(ParentJunctionHologram, OppositeIdx);
+						ParentConnectorNamesB.Add(ParentJunctionHologram, OppositeJunctionConn->GetFName());
 						
 						// Create or update Side B child
 						TWeakObjectPtr<ASFPipelineHologram>* ExistingChildB = BuildingPipeChildrenB.Find(ParentJunctionHologram);
@@ -1351,8 +1436,8 @@ void FSFPipeAutoConnectManager::ClearPipePreviews()
 	ManifoldPipePreviews.Empty();
 	
 	LastJunctionTransforms.Empty();  // Clear transform cache
-	ParentConnectorIndices.Empty();  // Clear connector index tracking
-	ParentConnectorIndicesB.Empty(); // Issue #206: Clear Side B connector index tracking
+	ParentConnectorNames.Empty();
+	ParentConnectorNamesB.Empty();
 	ReservedConnectors.Empty();      // Clear persistent connector reservations
 }
 
@@ -1557,8 +1642,8 @@ void FSFPipeAutoConnectManager::CleanupOrphanedPreviews(const TArray<AFGHologram
 		JunctionPipePreviews.Remove(Junction);
 		ManifoldPipePreviews.Remove(Junction);
 		LastJunctionTransforms.Remove(Junction);
-		ParentConnectorIndices.Remove(Junction);
-		ParentConnectorIndicesB.Remove(Junction);  // Issue #206
+		ParentConnectorNames.Remove(Junction);
+		ParentConnectorNamesB.Remove(Junction);
 		
 		// Unreserve any connectors claimed by this orphaned junction
 		for (auto It = ReservedConnectors.CreateIterator(); It; ++It)
