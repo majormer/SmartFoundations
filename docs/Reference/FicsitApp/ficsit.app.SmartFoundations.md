@@ -202,9 +202,8 @@ Some vanilla placements are multi-step or drag-based and do not fit Smart!'s gri
 - Conveyor lifts as direct grid items.
 - Power lines and hypertubes as direct grid items.
 - Railways and train signals.
-- Blueprints as Smart-scaled buildables.
 
-Smart! can still create belts, pipes, hyper tubes, lifts, and wires as part of Auto-Connect, Extend, or Smart Walking. They are just not usually the primary item you scale directly.
+Smart! can still create belts, pipes, hyper tubes, lifts, and wires as part of Auto-Connect, Extend, or Smart Walking. They are just not usually the primary item you scale directly. Your own **blueprints** can be scaled into a grid with the seams auto-connected — see [Smart! Blueprints](https://github.com/majormer/SmartFoundations/wiki/Blueprints).
 
 ---
 
