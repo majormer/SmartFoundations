@@ -113,119 +113,14 @@ See [LICENSE.md](https://github.com/majormer/SmartFoundations/blob/main/LICENSE.
 
 ---
 
-## 📰 What's New in v34.2.0: Controller support, auto power daisy-chaining, and a big fix run
+## 📰 What's New
 
-**Current Release:** v34.2.1 is a hotfix that restores the recipe selector in the Smart Panel on factories (a regression in v34.2.0). Everything below is from the v34.2.0 feature release.
+Smart! is actively developed. For the highlights of the latest release and the full history of every version, see the **[changelog](https://github.com/majormer/SmartFoundations/blob/main/CHANGELOG.md)**.
 
-v34.2.0 brings **Tap to Toggle Transform Modes** — the piece that makes Smart! genuinely usable on a controller and Steam Deck — plus **automatic power daisy-chaining while you scale**, a **blueprint-only Auto-Connect switch**, and a run of Extend and Smart Upgrade fixes, including a material-duplication bug and dedicated-server recipe copying. See the [full changelog](https://github.com/majormer/SmartFoundations/blob/main/CHANGELOG.md) for everything.
-
-### Build Smart! on a controller or Steam Deck
-
-Smart!'s transform modes (Spacing, Steps, Stagger, Rotation, and factory Recipe) have always been *hold-to-use* — you hold the key while scrolling. That's fine on a keyboard but impossible from a Steam Input radial menu, which can only send a quick tap. The new **Tap to Toggle Transform Modes** setting (Building Behavior, off by default) changes that: tap a mode to switch it on, tap again to switch it off, or tap a different one to change modes. A single "Smart Modes" radial now drives the whole modal surface, tap by tap. Putting the build gun away, changing buildings, or opening a panel always releases the mode, and turning the setting off restores the classic hold behavior exactly. There's a new [Controller & Steam Deck](https://github.com/majormer/SmartFoundations/wiki/Controller-and-Steam-Deck) wiki page with a full Deck layout to get you started.
-
-### Power that daisy-chains itself as you scale
-
-Once Upgraded Power Connectors are unlocked, scaling a factory or generator along Smart's X axis can now **wire each copy to the next one automatically** — the common manifold layout, without a separate Extend pass. The default lives under Power Auto-Connect settings, the Smart Panel can override it for the current build, and it respects each connector's real capacity instead of forcing an invalid cable.
-
-### A blueprint-only Auto-Connect switch
-
-Scaled blueprint seams now have their **own** Auto-Connect toggle, independent of normal Belt and Pipe Auto-Connect — keep your blueprint copies wiring together while regular auto-connect stays off. A new **Nearby Logistics Range** slider also lets you rein in how far splitters, mergers, and pipe junctions reach toward factory ports, to keep Auto-Connect out of neighboring factory groups.
-
-### Fixes worth calling out
-
-- **Smart Upgrade now charges the real cost of belts, pipes, and lifts.** Batch-upgrading a long belt line used to price it as if every belt were one short segment — a fraction of the true cost — while still refunding the old belts in full, effectively creating free materials. Costs are now exact and length-based, the panel estimate matches what you pay, and a failed upgrade returns its materials cleanly.
-- **Extend copies recipes to every copy on dedicated servers.** Extending a sampled machine to more than one copy on a dedi used to leave the extras recipe-less; the sampled recipe (and Power Shard / Somersloop settings) now travel with the build so every copy matches single-player.
-- **Scaled Extend no longer reports phantom "creature in the way" or "missing materials"** errors when there's neither, and **Extend releases predictably on both sides of a machine row.**
+Curious about a feature you saw mentioned? The **[Wiki](https://github.com/majormer/SmartFoundations/wiki)** has a page for each one.
 
 ---
 
-## 📦 Previously: v34.1.0 — Player Relative Controls
-
-v34.1.0 added **Player Relative Controls** — an optional way to build in the direction you're *looking* instead of along fixed compass axes: scroll to grow the array toward wherever you're facing, with the numpad acting as a compass. It also added quick re-placement of recent Smart Restores (hold U, Num9/Num3 to step through the ones you've applied this session) and made paint follow cloned and restored builds — including pipe floor holes, valves, and pumps, and saved presets that remember every piece's paint across game restarts.
-
----
-
-## 📦 Previously: v34.0.0 — Smart! Blueprints
-
-v34.0.0 introduced **Smart! Blueprints** — scale one of *your own* blueprints into a grid and Smart! runs the belts and pipes between the copies for you. Design a blueprint whose conveyors or pipes reach its edge, then stamp out a 4×2, a 3×3, or any grid: every seam between copies is wired in a single placement (including the true two-dimensional connections the game's own blueprint auto-connect can't do, plus vertical pipe stacking), each copy stays a real independent blueprint you can dismantle on its own, and it all works in single-player and multiplayer.
-
----
-
-## 📦 Previously: v33.5.4 — Auto-Connect on Stacked Grids
-
-v33.5.4 made Auto-Connect far more reliable on stacked, multi-level distributor grids: connections stay on their own level instead of running diagonally between floors, the belt and pipe "lanes" between splitters and mergers fill in on every level, port choices became stable and repeatable (identical machines connect identically, and growing a grid no longer reshuffles connections you'd already set up), and belts and pipes now connect anywhere the game itself would let you place one by hand. The HUD also began telling you, right while you aim, whenever a connection had to be skipped and why.
-
----
-
-## 📦 Previously: v33.5.3 — Restore, Reorganized
-
-v33.5.3 rebuilt Smart Restore into two clear tabs — **Grid Presets** and **Modules** — docked to the Smart Panel, gave Smart Upgrade's network scan precise **tier-to-tier** targeting, and added configurable per-notch scroll increments.
-
-### Smart Restore, reorganized into Grid Presets and Modules
-
-The old Restore panel mixed two very different things together and was hard to follow. It's now split into two tabs, docked to the Smart Panel as a single unit. **Grid Presets** save everything you set up in the Smart Panel — grid size, spacing, steps, stagger, rotation, the building and its recipe, and your auto-connect settings — as named presets you load back with one click, ready to fine-tune or build. **Modules** capture a whole Extend manifold — a wired unit of buildings with their belts and pipes — that you can stamp down repeatedly and rescale on the fly. Each tab shows a plain-language summary of what a preset or module holds, and both still support sharing via import/export codes.
-
-### Smart Upgrade goes tier-to-tier
-
-Smart Upgrade's network scan used to only let you pick a *target* tier and then upgrade **everything** below it. Now you can pick a specific *source* tier as well — bump only your Mk.2 belts to Mk.3 and leave the Mk.4s untouched — matching the tier control the radius scan already had. It also fixes aiming (the scan now anchors on whatever you point at, whatever tier you're holding), follows pipes through cross and T junctions, and refreshes its results automatically after an upgrade.
-
-### Also in v33.5.3
-
-- **Configurable scroll increments** — Spacing, Steps, Stagger, and Rotation each get their own per-notch increment under **Building Behavior** in the mod settings, instead of the fixed 0.5 m / 5°. Drives Extend, Restore, and Smart Walking too. (Issue #217)
-- **Power pole auto-connect wires follow the grid again** after the 33.4.0 scaling update — every Grid Axis mode lines up instead of running diagonally. (Issue #459)
-- **Reverse-scaling a Restore module** no longer wires its manifold belts backward. (Issue #460)
-- **Scaled conveyor lift floor holes sit flush** on dedicated servers instead of building a half-step too high. (Issue #458)
-- **Zooping a sign** no longer collides with Smart scaling — Smart stands aside for the Zoop, the same way it does for foundations. (Issue #330)
-- **Middle-click-sampling a factory** no longer blocks placing it in a Blueprint Designer. (Issue #461, reported by Tonka Beans)
-
-### Previously, in v33.4.0: Scaling at Scale
-
-v33.4.0 was a scaling performance release: previewed buildings hold their own position instead of being nudged back every frame, so grids of *tens of thousands* stay responsive; growing a grid only adds the new part instead of redrawing everything; huge grids fill in progressively instead of freezing; and — the big one — large grids build on dedicated servers without freezing the server and dropping every connected player. (Issue #418)
-
-### Previously, in v33.3.0: Real Routing, Everywhere
-
-v33.3.0 put all of Smart!'s auto-connect belt, pipe, and hyper tube routing onto the *game's own* routing — with the correct build mode active, so each routing style produces the same shape you'd get building it by hand. Floor-hole pipes finally behave, and when a routing style genuinely can't produce a buildable shape, the preview turns red with the game's own **"Invalid Pipe Shape"** message instead of silently building a bad pipe. It also fixed a batch of Smart Panel / HUD auto-connect preview issues (Issues #450, #451, #452, #453, #454).
-
-### Previously, in v33.2.0: Playing Nice with Other Mods
-
-v33.2.0 changed how Smart! shares the mouse wheel with other mods while it's holding a building — the fix for a long-standing conflict with **Infinite Nudge**, where scaling with a Smart! modifier held would also spin the building. Smart! now claims the scroll wheel only for the moments it's actually managing the building (a modifier held, or Auto-Hold keeping a scaled grid pinned); everything else, including a building you lock yourself, keeps working with Infinite Nudge exactly as before.
-
-### Also in the v33.2 line
-
-- **Blueprints with auto-connected power wires no longer corrupt circuits on dedicated servers** — wires Smart! creates inside a Blueprint Designer are now saved into the blueprint correctly. (Issue #421, reported by SonarClouds)
-- **Zoop and Vertical build modes no longer swallow a scaled Smart! grid** on placement. (Issue #296, reported by SysC0mp)
-- **The Smart Panel shows pipe auto-connect settings for wall pipe supports**, matching stackable supports and floor-hole pipes. (Issue #404)
-- **The hyper tube "too long" message reports its real ~95m limit** instead of the belt/pipe 56m cap. (Issue #417)
-- **Turning off Chain no longer erases auto-connect belts to your factory buildings**, only the manifold lane between distributors. (Issue #436)
-- **Floor-hole pipe auto-connect renders less distorted** in every routing mode — a full fix is still in progress. (Issue #437, reported by tendrils)
-
-### Previously, in v33.1.0: Hyper Tubes
-
-v33.1.0 brought **Hyper Tubes** into the Smart! family. Both **Auto-Connect** and **Smart Walking** understand **Stackable Hyper Tube Supports** — scale out a row of them and Smart! lays the hyper tube run between them automatically, or walk a steered hyper tube route that turns and climbs, exactly the way you already do with belts and pipes. Place **Stackable Hyper Tube Supports** and Smart! treats them like the conveyor poles and pipeline supports it already knows; hold one, press `K`, and start a **Smart Walking** run that steers a hyper tube around corners and up slopes, with its own routing style and the same red-when-invalid feedback you get on belt and pipe runs.
-
-### Also in the v33.1 line
-
-- **Bug-fix patch** (v33.1.2) — Smart Upgrade of a conveyor lift running through a floor hole no longer flips it or over-charges tall lifts; a multiplayer water-extractor placement crash is fixed; Extend no longer strands a wall hole on a lane it can't rebuild; plus several Auto-Connect manifold ordering and connector fixes and a clearer double-tap disable message. (Issues #399, #432, #428, #431, #422, #423, #424, #425, #426)
-- **Rotation along the Y axis spaces its rows correctly** (v33.1.1) — with the Rotation transform building up along the Y axis, the Spacing Y value was being ignored and the rows bunched into an overlapping fan; spacing now follows the Y axis the way it already does on X. (Issue #419)
-- **Build axis arrows return on Linux** (v33.1.0) — the X/Y/Z direction arrows Smart! draws above a hologram weren't appearing for players on Linux; they now load and draw correctly. (Issue #415, reported by regnare on the Smart! Discord)
-
-### Previously, in v33.0.0: Smart Walking
-
-v33.0.0 introduced **Smart Walking** — a build mode that lays a single connected run that turns, climbs, and routes to a destination, instead of a rigid uniform grid. Hold a stackable conveyor pole or pipeline support, press `K`, and click **Smart Walking**; scroll to advance and lay each segment, steer the leading segment to turn/rise/shift, back up to undo, and commit the whole run in one build. Belts and pipes are both supported, an editable Smart Walking panel lists every segment with a compass exit heading, and with the **Smart! Camera** the picture-in-picture follows the head of the run across the map. (Hyper Tubes, above, are the v33.1.0 extension of this mode.) The v33.0.0 release also refreshed the **Smart! Panel** (a Smart Walking button, an **X** to close, bigger Apply/Reset) and broadened **translation coverage** across all ~20 languages.
-
-### Also in the v32.x line
-
-- **v32.1.x** — recipe handling in blueprints and multiplayer, stackable-pipeline scaling, Extend clearance, the remembered recipe clearing with the build gun, the Smart Camera and Smart Restore following Extend runs, belt/pipe routing modes taking effect, progressive rotation along the X *run* or the Y *rows*, Smart! inside the Blueprint Designer, Pipeline/Wall Supports joining the scaling family, and a big logging-noise cleanup. See the [changelog](https://github.com/majormer/SmartFoundations/blob/main/CHANGELOG.md) for the full per-patch detail.
-- **v32.0.0 — Multiplayer.** Every Smart! feature works when you play as a client on a dedicated server (**Windows and Linux**) — grid scaling, auto-connect, Extend, Smart Upgrade, Smart Restore, and Smart Dismantle — with normal build costs charged exactly as the preview shows. Install the same Smart! version on the server and on every client (the mod manager keeps these paired).
-
-### Earlier in the 31.x line: Satisfactory 1.2
-
-- **Rebuilt for Satisfactory 1.2** (v31.0.0) — Smart! was migrated to Unreal Engine 5.6 and the plugin model that 1.2 uses. Every Smart! feature carried over, and 1.2's new Pipeline T-Junction works everywhere Smart! handles pipes. (One-time note: settings were reorganized in 31.0.0, so saved Smart! settings reset to defaults the first time you load a 31.x-or-later build from 30.x or earlier.)
-- **Extend can daisy-chain building power** (v31.0.0) — once you research Upgraded Power Connectors, Extending a row of buildings wires power directly building-to-building along the lane, with settings to control it under Options > Mods > Smart!.
-- **Rock-solid belt runs between conveyor poles** (v31.1.0) — standard Conveyor Poles joined the auto-connect family, and auto-connected belt runs across pole lines were rebuilt to transport correctly and survive save/reload, fixing a long-standing stall/crash risk.
-- Plus a series of quality fixes across 31.0.1–31.1.0: free building in Creative Mode, power-cable previews for Extend, corrected auto-connect costs, and Smart! Panel fixes — all in the [changelog](https://github.com/majormer/SmartFoundations/blob/main/CHANGELOG.md).
-
----
 ## 🛠️ First-Time Setup
 
 Smart! has many keybinds, but you do not need to learn them all immediately.
@@ -257,92 +152,64 @@ Keybinds can be changed in Satisfactory's controls menu.
 
 ## 🧱 Core Features
 
-### 1. Grid Scaling
+Each feature below has a full guide on the **[Wiki](https://github.com/majormer/SmartFoundations/wiki)** — follow the link under any feature for step-by-step instructions.
 
-Grid Scaling is the core Smart! feature.
+### Grid Scaling
 
-Instead of placing one buildable, you place a grid of the same buildable:
+Instead of placing one buildable, place a whole grid of it: `10 × 10` foundations, a row of constructors, a wall of storage containers, power poles, pipeline junctions, or vertical stacks where the building supports it. Scale on X, Y, and Z independently, preview before placing, and pay the normal material cost for every item in the grid.
+→ [Grid Scaling](https://github.com/majormer/SmartFoundations/wiki/Grid-Scaling)
 
-- `10 × 10` foundations.
-- A row of constructors.
-- A wall of storage containers.
-- Multiple power poles or pipeline junctions.
-- Vertical stacks where the building supports it.
+### Spacing, Steps, Stagger, and Rotation
 
-You can scale on X, Y, and Z independently. Smart! shows a preview before placement and charges the normal material cost for every item in the grid.
+Shape how the grid lays out: **Spacing** adds gaps, **Steps** raises each copy progressively for stairs and terraces, **Stagger** offsets rows or columns for diagonal and compact patterns, and **Rotation** creates arcs, curves, and circular layouts. Useful for both factory efficiency and aesthetic building.
+→ [Transforms](https://github.com/majormer/SmartFoundations/wiki/Transforms)
 
-### 2. Spacing, Steps, Stagger, and Rotation
+### Auto-Connect
 
-Smart! can modify how the grid is laid out:
+When Smart! can safely infer your intent, it previews the belts, pipes, or power lines between what you place — belts into machines from a row of splitters, pipes from junctions, power between poles, or connected runs across stackable supports. It is conservative: if a connection does not look valid, it is left open rather than built broken.
+→ [Auto-Connect](https://github.com/majormer/SmartFoundations/wiki/Auto-Connect)
 
-- **Spacing:** Add or remove gaps between buildables.
-- **Steps:** Raise or lower each copy progressively, useful for stairs, ramps, and terraced layouts.
-- **Stagger:** Offset every row or column, useful for diagonal-looking layouts and compact factory patterns.
-- **Rotation transform:** Create arcs, curves, circular roads, and spiral-like layouts.
+### Smart! Blueprints
 
-These tools are useful for both factory efficiency and aesthetic building.
+Scale one of your own blueprints into a grid and Smart! wires the belts and pipes between the copies for you — including the true two-dimensional seams the game's own blueprint auto-connect can't make, plus vertical pipe stacking. Each copy stays a real, independent blueprint you can dismantle on its own.
+→ [Blueprints](https://github.com/majormer/SmartFoundations/wiki/Blueprints)
 
-### 3. Auto-Connect
+### Extend
 
-Auto-Connect creates belts, pipes, or power lines when Smart! can safely understand your intent.
+Copy an existing factory module instead of starting a blank grid. Aim at one working block — its building, nearby splitters/mergers, belts, lifts, pipes, floor holes, pumps, power, recipe, and distributor configuration — and Smart! previews the next copy, wired to match.
+→ [Extend](https://github.com/majormer/SmartFoundations/wiki/Extend)
 
-Examples:
+### Smart Upgrade
 
-- Scale a row of splitters near production inputs and Smart! can preview belts into those machines.
-- Scale pipeline junctions near pipe inputs and Smart! can route pipes.
-- Scale power poles near buildings and Smart! can wire them.
-- Scale stackable conveyor, pipeline, or hyper tube supports and Smart! can connect the supports in a line.
+Replace infrastructure in batches after you unlock better tiers. Hold a belt, lift, pipe, power line, or wall outlet, scan by radius or along a connected network, preview the exact material cost, and upgrade many items at once. Supports conveyor belts and lifts, pipelines, and power poles and outlets.
+→ [Smart Upgrade](https://github.com/majormer/SmartFoundations/wiki/Smart-Upgrade)
 
-Auto-Connect is conservative. If a connection angle or distance does not look valid, Smart! may refuse to create it rather than produce a broken layout.
+### Smart Restore Presets
 
-### 4. Extend
+Save, apply, share, and replay Smart Panel setups. A preset can capture grid size, spacing, steps, stagger, rotation, recipe, auto-connect settings, and a whole restored Extend module layout. Save from the Smart Panel's `Presets >>` button, apply later, export/import shared presets (checked against your unlocks), or turn your last Extend layout into a reusable preset.
+→ [Smart Restore](https://github.com/majormer/SmartFoundations/wiki/Smart-Restore)
 
-Extend copies an existing factory module instead of creating a blank grid.
+### Smart Walking
 
-Use it when you already built one working block and want another copy of that same block.
+A build mode for a single connected run that turns, climbs, and routes to a destination instead of a rigid grid. Hold a stackable pole or pipeline support, open the Smart Panel, and click **Smart Walking**: advance one segment at a time, steer the leading segment, back up to undo, and commit the whole run in one build. Belts, pipes, and hyper tubes are supported.
+→ [Smart Walking](https://github.com/majormer/SmartFoundations/wiki/Smart-Walking)
 
-Extend can copy:
+### Smart Dismantle
 
-- The selected factory building.
-- Nearby splitters, mergers, belts, lifts, junctions, pipes, wall holes, floor holes, pumps, valves, and power poles when they belong to the source module.
-- Recipes and supported distributor configuration.
-- Connections needed to make the cloned module work.
+Remove Smart-built placements as a unit. Smart! groups its placements into vanilla blueprint proxies, so you can clear a whole grid or module with the game's own Blueprint Dismantle mode instead of picking it apart one building at a time.
+→ [Smart Dismantle](https://github.com/majormer/SmartFoundations/wiki/Smart-Dismantle)
 
-Extend is one of Smart!'s most powerful features, but it needs a valid source layout. See the Extend Explained section further down this page.
+### Smart Panel & HUD
 
-### 5. Smart Upgrade
+Prefer a form over keybinds? Press `K` for the Smart Panel — set every grid, spacing, transform, recipe, and auto-connect value directly, then Apply. The on-screen HUD shows your current grid, transforms, and recipe as you build.
+→ [Smart Panel and HUD](https://github.com/majormer/SmartFoundations/wiki/Smart-Panel-and-HUD)
 
-Smart Upgrade helps replace infrastructure after you unlock better tiers.
+### Controls: keyboard, mouse, and controller
 
-Open it while holding a belt, lift, pipe, power line, or wall outlet. You can scan by radius or follow a connected network, preview the material cost, and upgrade many items at once.
-
-Supported upgrade families include:
-
-- Conveyor belts and lifts.
-- Pipelines.
-- Power poles and wall outlets.
-
-### 6. Smart Restore Presets
-
-Smart Restore is a preset system for saving, applying, sharing, and replaying Smart Panel setups.
-
-Presets can capture grid size, spacing, steps, stagger, rotation, production recipe, auto-connect settings, and a restored Extend topology — a whole factory module layout. Use the Smart Panel's `Presets >>` button to save your current setup, apply a saved setup later, export or import a shared preset, or turn the last Extend layout you built into a reusable preset. Shared presets are checked against your current unlocks before they can be imported or applied.
-
-### 7. Smart Walking
-
-Smart Walking is a build mode for laying a single connected run that turns, climbs, and routes to a destination — instead of a rigid uniform grid.
-
-Hold a stackable conveyor pole or pipeline support, press `K`, and click **Smart Walking**. Then:
-
-- **Advance** the run one segment at a time, laying a pole-and-belt (or pipe) cross-section as you go.
-- **Steer the active segment** — turn to round a corner, rise for a slope, shift sideways, or set its spacing — using the same in-world controls you already use for scaling. Only the leading segment moves; everything behind it stays locked.
-- **Back up** to undo the last segment.
-- **Commit** the whole run in one build, paying the normal material cost.
-
-Belts, pipes, and hyper tubes are all supported, with the run's tier, routing, and (for belts) flow direction set once for the whole path. The optional Smart Walking panel (`K`) lists every segment in an editable table with a compass exit heading. With the Smart! Camera companion mod, the picture-in-picture follows the head of the run so you can route across the map without leaving your spot. Smart Walking works in single-player and on dedicated servers.
+Build by keybind and mouse wheel, or by the Smart Panel — they share one state, so use whichever fits the moment. **Player Relative Controls** (optional) let the grid grow in the direction you're facing instead of fixed compass axes. **Tap to Toggle Transform Modes** (optional) makes Smart! more usable on a controller or Steam Deck by latching a mode with a tap instead of a hold.
+→ [Controls](https://github.com/majormer/SmartFoundations/wiki/Controls) • [Controller & Steam Deck](https://github.com/majormer/SmartFoundations/wiki/Controller-and-Steam-Deck)
 
 ---
-
 ## 🔄 Extend Explained: Copy an Existing Manifold
 
 Extend is easiest to understand if you think of it as **copying a finished factory cell**.
