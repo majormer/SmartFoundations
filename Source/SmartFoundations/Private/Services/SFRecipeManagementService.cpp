@@ -2,6 +2,7 @@
 
 #include "SFRecipeManagementService.h"
 #include "SmartFoundations.h"
+#include "Features/Extend/SFExtendCommitSpec.h"  // [#484] FSFFactorySettingsSnapshot
 #include "Subsystem/SFSubsystem.h"
 #include "Subsystem/SFHologramDataService.h"
 #include "Data/SFHologramDataRegistry.h"
@@ -582,6 +583,72 @@ void USFRecipeManagementService::CaptureVanillaSampledProductionSettings(AFGBuil
 				ShardSessionId, *GetNameSafe(ShardSourceBuildClass));
 		}
 	}
+}
+
+void USFRecipeManagementService::CaptureFactorySettingsSnapshot(FSFFactorySettingsSnapshot& OutSnapshot) const
+{
+	OutSnapshot = FSFFactorySettingsSnapshot();
+	if (bHasStoredProductionRecipe && StoredProductionRecipe)
+	{
+		OutSnapshot.bHasRecipe = true;
+		OutSnapshot.Recipe = StoredProductionRecipe;
+	}
+	if (bHasStoredPotential && StoredOverclockShardClass)
+	{
+		OutSnapshot.bHasPotential = true;
+		OutSnapshot.Potential = StoredPotential;
+		OutSnapshot.OverclockShardClass = StoredOverclockShardClass;
+		OutSnapshot.OverclockShardCount = StoredOverclockShardCount;
+	}
+	if (bHasStoredProductionBoost && StoredProductionBoostShardClass)
+	{
+		OutSnapshot.bHasProductionBoost = true;
+		OutSnapshot.ProductionBoost = StoredProductionBoost;
+		OutSnapshot.ProductionBoostShardClass = StoredProductionBoostShardClass;
+	}
+}
+
+void USFRecipeManagementService::InstallFactorySettingsSnapshot(const FSFFactorySettingsSnapshot& Snapshot, UClass* CommitBuildClass)
+{
+	if (Snapshot.bHasRecipe && Snapshot.Recipe)
+	{
+		// Same install the RESTORE commit already used - also syncs the subsystem mirror fields
+		// (StoredProductionRecipe / bHasStoredProductionRecipe) the scaled spawner reads.
+		StoreProductionRecipeClass(Snapshot.Recipe);
+	}
+
+	// Server-side sanity on client-shipped values: clamp to vanilla's reachable ranges rather
+	// than trusting the floats/counts blindly. The descriptor classes are already constrained to
+	// UFGPowerShardDescriptor by the property system.
+	if (Snapshot.bHasPotential && Snapshot.OverclockShardClass)
+	{
+		StoredPotential = FMath::Clamp(Snapshot.Potential, 1.0f, 2.5f);
+		bHasStoredPotential = true;
+		StoredOverclockShardClass = Snapshot.OverclockShardClass;
+		StoredOverclockShardCount = FMath::Clamp(Snapshot.OverclockShardCount, 0, 3);
+	}
+	if (Snapshot.bHasProductionBoost && Snapshot.ProductionBoostShardClass)
+	{
+		StoredProductionBoost = FMath::Clamp(Snapshot.ProductionBoost, 1.0f, 2.0f);
+		bHasStoredProductionBoost = true;
+		StoredProductionBoostShardClass = Snapshot.ProductionBoostShardClass;
+	}
+	if (bHasStoredPotential || bHasStoredProductionBoost)
+	{
+		// Align the shard session to NOW and record the commit's build class, so the session
+		// gating (and OnNewBuildSession's same-class carry-over) treats this exactly like a
+		// local sample instead of discarding it as stale.
+		++CurrentBuildSessionId;
+		ShardSessionId = CurrentBuildSessionId;
+		ShardSourceBuildClass = CommitBuildClass;
+	}
+
+	UE_LOG(LogSmartFoundations, Verbose,
+		TEXT("[#484] Installed commit factory settings: recipe=%s potential=%s(%.2f, shards=%d) boost=%s(%.2f) buildClass=%s"),
+		Snapshot.bHasRecipe ? *GetNameSafe(Snapshot.Recipe) : TEXT("(none)"),
+		Snapshot.bHasPotential ? TEXT("yes") : TEXT("no"), Snapshot.Potential, Snapshot.OverclockShardCount,
+		Snapshot.bHasProductionBoost ? TEXT("yes") : TEXT("no"), Snapshot.ProductionBoost,
+		*GetNameSafe(CommitBuildClass));
 }
 
 void USFRecipeManagementService::OnRecipeModeChanged(const FInputActionValue& Value)

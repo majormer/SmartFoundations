@@ -884,12 +884,11 @@ bool USFExtendService::BuildCommitSpecForMP(AFGHologram* ParentHologram, FSFExte
         if (Subsystem.IsValid())
         {
             OutSpec.RestoreCounterState = Subsystem->GetCounterState();
+            // [#484] Ship the captured factory settings (recipe + shard/boost, presence-flagged).
+            // Replaces the old recipe-only RestoreProductionRecipe field.
             if (USFRecipeManagementService* RecipeSvc = Subsystem->GetRecipeManagementService())
             {
-                if (RecipeSvc->HasStoredProductionRecipe())
-                {
-                    OutSpec.RestoreProductionRecipe = RecipeSvc->GetStoredProductionRecipe();
-                }
+                RecipeSvc->CaptureFactorySettingsSnapshot(OutSpec.FactorySettings);
             }
         }
         OutSpec.bValid = true;
@@ -925,6 +924,15 @@ bool USFExtendService::BuildCommitSpecForMP(AFGHologram* ParentHologram, FSFExte
         OutSpec.PipeTierMain = Subsystem->GetAutoConnectRuntimeSettings().PipeTierMain;
         OutSpec.bPipeIndicator = Subsystem->GetAutoConnectRuntimeSettings().bPipeIndicator;
         OutSpec.CounterState = Subsystem->GetCounterState();
+        // [#484] Ship the captured factory settings with LIVE commits too. The dedi never ran the
+        // client's MMB sample, so its recipe service was empty and every scaled clone built
+        // recipe-less (count=1 worked only via vanilla's per-player clipboard paste on the parent,
+        // #368). Capture reads the same stored state SP applies - and inherits the #489 vanilla
+        // "Sample Building Copies Settings" gate for free.
+        if (USFRecipeManagementService* RecipeSvc = Subsystem->GetRecipeManagementService())
+        {
+            RecipeSvc->CaptureFactorySettingsSnapshot(OutSpec.FactorySettings);
+        }
     }
     GetScaledClonePlanForCommit(OutSpec.ScaledClones);
     OutSpec.bValid = true;
@@ -948,18 +956,23 @@ int32 USFExtendService::ReconstructCommitOnServer(AFGHologram* ParentHologram, c
     // (StoredCloneTopology / JsonSpawnedHolograms / RestoredScaledFactoryPreviewLocations) the
     // post-construct wiring pass consumes. Mirrors how the scaled commit reuses
     // SpawnScaledExtendPreviews via SpawnCloneSetsForServerCommit.
+    // [#484] Install the commit's factory settings into THIS process's recipe service FIRST -
+    // for live and Restore commits alike. The reconstruction pipelines below read the service's
+    // stored state exactly like the SP preview does (StoreRecipe onto each scaled clone hologram,
+    // the post-build apply paths), so installing here makes the dedi behave identically to SP.
+    if (Subsystem.IsValid())
+    {
+        if (USFRecipeManagementService* RecipeSvc = Subsystem->GetRecipeManagementService())
+        {
+            RecipeSvc->InstallFactorySettingsSnapshot(Spec.FactorySettings, Spec.BuildClass);
+        }
+    }
+
     if (Spec.bIsRestore)
     {
         if (Subsystem.IsValid())
         {
             Subsystem->UpdateCounterState(Spec.RestoreCounterState);
-            if (Spec.RestoreProductionRecipe)
-            {
-                if (USFRecipeManagementService* RecipeSvc = Subsystem->GetRecipeManagementService())
-                {
-                    RecipeSvc->StoreProductionRecipeClass(Spec.RestoreProductionRecipe);
-                }
-            }
         }
 
         const bool bReplayed = ReplayRestoreCloneTopology(ParentHologram, Spec.RestoreTemplate);

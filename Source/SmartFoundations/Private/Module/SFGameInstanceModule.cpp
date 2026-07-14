@@ -32,6 +32,7 @@
 #include "Equipment/FGBuildGun.h"             // [#368] AFGBuildGun::GetBuildGunStateFor / EBuildGunState
 #include "FGCharacterPlayer.h"                // [#368] AFGCharacterPlayer::GetBuildGun
 #include "Buildables/FGBuildableManufacturer.h" // [#368] UFGManufacturerClipboardSettings
+#include "FGGameUserSettings.h" // [#484] FG.SampleCopySettings fallback gate on remote clients
 #include "FGRecipe.h"                         // [#368] UFGRecipe
 #include "Core/Net/SFNetworkHelper.h"     // FSFNetworkHelper::IsClient
 #include "Engine/Engine.h"                     // GEngine on-screen message
@@ -527,6 +528,33 @@ void USFGameInstanceModule::RegisterBuildGunClipboardSampleHook()
 		{
 			if (USFRecipeManagementService* RecipeService = SF_GetLocalRecipeService(self))
 			{
+				// [#484] Remote-client fallback: on NM_Client, vanilla only populates the SERVER's
+				// clipboard (Server_SampleClipboardSettingsFromActor); the local
+				// SampleClipboardSettingsFromActor seam the capture hook above observes never runs,
+				// so an MP client captured NOTHING (live-proven: vanillaCopy=NO on every MP sample,
+				// and every Extend commit shipped empty factory settings). Honor the SAME vanilla
+				// preference by reading FG.SampleCopySettings directly - the one case #489's
+				// "never read the option independently" rule cannot hold, because the seam that
+				// rule relies on does not exist client-side. mCurrentRecipe is replicated, so the
+				// capture reads real state; shard inventories may not be replicated when never
+				// interacted with, in which case the capture degrades to recipe-only.
+				if (!RecipeService->CapturedImplicitSettingsThisSample())
+				{
+					AFGBuildGun* Gun = self->GetBuildGun();
+					UWorld* World = Gun ? Gun->GetWorld() : nullptr;
+					AFGBuildableManufacturer* Manufacturer = Cast<AFGBuildableManufacturer>(actor);
+					if (World && World->GetNetMode() == NM_Client && Manufacturer)
+					{
+						// FG.SampleCopySettings is registered as a BOOL option: GetBoolOptionValue
+						// reads it correctly while GetIntOptionValue returns 0 even when it is ON
+						// (live-diagnosed 2026-07-14 - the int read silently failed this gate).
+						UFGGameUserSettings* UserSettings = UFGGameUserSettings::GetFGGameUserSettings();
+						if (UserSettings && UserSettings->GetBoolOptionValue(TEXT("FG.SampleCopySettings")))
+						{
+							RecipeService->CaptureVanillaSampledProductionSettings(Manufacturer);
+						}
+					}
+				}
 				RecipeService->FinishImplicitSettingsSample(actor);
 			}
 		});

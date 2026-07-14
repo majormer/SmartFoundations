@@ -128,6 +128,11 @@ public:
 	/** Emit one validation summary after vanilla's complete actor-sampling operation returns. */
 	void FinishImplicitSettingsSample(AActor* SampledActor) const;
 
+	/** [#484] Whether this sample operation already captured settings (the local clipboard seam
+	 *  ran). False on a remote client, where vanilla only populates the SERVER's clipboard - the
+	 *  caller then falls back to reading the vanilla preference directly. */
+	bool CapturedImplicitSettingsThisSample() const { return bCapturedImplicitSettingsThisSample; }
+
 	/** Clear stored production recipe (clears everything: recipe + shards + somersloops) */
 	void ClearStoredProductionRecipe();
 
@@ -145,6 +150,22 @@ public:
 
 	/** Clear only stored shard/somersloop state (does NOT clear recipe) */
 	void ClearStoredShardState();
+
+	/** [#484] Copy the captured factory settings (recipe / shards / Somersloop, with presence
+	 *  flags) into a value-only snapshot for an Extend/Restore MP commit. Reads the same stored
+	 *  state the SP apply paths consume, so what ships is exactly what SP would have applied -
+	 *  including nothing at all when vanilla's "Sample Building Copies Settings" gated the
+	 *  capture off (#489). */
+	void CaptureFactorySettingsSnapshot(struct FSFFactorySettingsSnapshot& OutSnapshot) const;
+
+	/** [#484] Server-side: install a commit's factory settings snapshot into THIS service's
+	 *  stored state, so the reconstruction pipeline (StoreRecipe on clone holograms, the
+	 *  post-build apply paths) behaves identically to the client's SP preview. Aligns the shard
+	 *  session id to the current session so session gating cannot discard the commit's state.
+	 *  A snapshot with no presence flags clears nothing and installs nothing.
+	 *  @param CommitBuildClass The commit's parent build class - recorded as the shard source
+	 *         class so OnNewBuildSession's same-class carry-over keeps the state alive. */
+	void InstallFactorySettingsSnapshot(const struct FSFFactorySettingsSnapshot& Snapshot, UClass* CommitBuildClass);
 
 	/** Notify that a new build session started (new parent hologram registered).
 	 * Increments the session ID so stale shard state from previous sessions won't apply.

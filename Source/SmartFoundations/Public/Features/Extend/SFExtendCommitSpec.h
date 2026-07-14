@@ -11,6 +11,54 @@
 #include "SFExtendCommitSpec.generated.h"
 
 class UFGRecipe;
+class UFGPowerShardDescriptor;
+
+/**
+ * [#484] Value-only snapshot of the sampled factory settings a commit's factories should receive.
+ * The recipe service's captured state (recipe / Power Shards / Somersloop) is CLIENT-LOCAL
+ * transient state: a dedicated server never performed the client's MMB sample, so its
+ * reconstruction pipeline read empty service state and every scaled Extend clone built
+ * recipe-less (count=1 worked only because the PARENT rides vanilla's per-player clipboard
+ * paste, #368). This snapshot ships the settings with the commit; the server installs it into
+ * its own recipe service before reconstruction, so the SAME spawn/apply pipeline the SP preview
+ * uses behaves identically on the authority. Presence flags distinguish "not captured" from
+ * "captured default". Capture upstream is gated by vanilla's "Sample Building Copies Settings"
+ * (#489), which this inherits by reading the same stored service state.
+ */
+USTRUCT()
+struct SMARTFOUNDATIONS_API FSFFactorySettingsSnapshot
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	bool bHasRecipe = false;
+
+	/** Asset class - package-map safe. */
+	UPROPERTY()
+	TSubclassOf<UFGRecipe> Recipe = nullptr;
+
+	UPROPERTY()
+	bool bHasPotential = false;
+
+	/** Requested overclock (1.0 = 100%). Applied only as far as transferred shards allow. */
+	UPROPERTY()
+	float Potential = 1.0f;
+
+	UPROPERTY()
+	TSubclassOf<UFGPowerShardDescriptor> OverclockShardClass = nullptr;
+
+	UPROPERTY()
+	int32 OverclockShardCount = 0;
+
+	UPROPERTY()
+	bool bHasProductionBoost = false;
+
+	UPROPERTY()
+	float ProductionBoost = 1.0f;
+
+	UPROPERTY()
+	TSubclassOf<UFGPowerShardDescriptor> ProductionBoostShardClass = nullptr;
+};
 
 /**
  * The staged Extend commit a CLIENT ships to the server right before firing the build gun
@@ -143,10 +191,12 @@ struct SMARTFOUNDATIONS_API FSFExtendCommitSpec
 	UPROPERTY()
 	FSFCounterState RestoreCounterState;
 
-	/** The preset's production recipe for the restored factories (asset class - package-map
-	 *  safe). Null when the preset carried none. */
+	/** [#484] Sampled factory settings the commit's factories should receive - LIVE and RESTORE
+	 *  commits alike (replaces the old recipe-only RestoreProductionRecipe field). The server
+	 *  installs this into its recipe service before reconstruction; presence flags say what was
+	 *  actually captured. */
 	UPROPERTY()
-	TSubclassOf<UFGRecipe> RestoreProductionRecipe = nullptr;
+	FSFFactorySettingsSnapshot FactorySettings;
 
 	/** True once populated from a live Extend session. */
 	UPROPERTY()

@@ -695,8 +695,9 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 			// authority (mCurrentRecipe is server-authoritative and replicates to every client).
 			// Applied to the parent and every spec-expanded grid child. Post-scope is a proven seam
 			// for operating on freshly built actors (the Extend wiring pass below runs here too).
-			// Scaling path only: Extend clones inherit the SOURCE building's recipe via the server
-			// topology walk, and the Restore sub-path carries its own (RestoreProductionRecipe).
+			// Scaling path only: Extend and Restore commits ship their own FactorySettings
+			// snapshot, installed into the server's recipe service in ReconstructCommitOnServer
+			// (#484) so the reconstruction pipeline applies it exactly like the SP preview.
 			if (bHasScaling && Spec.ProductionRecipe)
 			{
 				UWorld* const RecipeWorld = self->GetWorld();
