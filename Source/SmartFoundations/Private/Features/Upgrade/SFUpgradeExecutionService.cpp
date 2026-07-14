@@ -63,6 +63,179 @@ void USFUpgradeExecutionService::Initialize(USFSubsystem* InSubsystem)
 	UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: Initialized"));
 }
 
+bool USFUpgradeExecutionService::ComputeUpgradeSettlement(AFGBuildable* Old, TSubclassOf<UFGRecipe> TargetRecipe,
+	TMap<TSubclassOf<UFGItemDescriptor>, int32>& OutCharge,
+	TMap<TSubclassOf<UFGItemDescriptor>, int32>& OutRefund) const
+{
+	if (!IsValid(Old) || !TargetRecipe)
+	{
+		return false;
+	}
+
+	const UFGRecipe* TargetCDO = TargetRecipe->GetDefaultObject<UFGRecipe>();
+	if (!TargetCDO)
+	{
+		return false;
+	}
+
+	// Refund: vanilla's own consolidated, length-multiplied build-cost return (never contents).
+	TArray<FInventoryStack> Refunds;
+	Old->GetDismantleRefundReturns(Refunds);
+	for (const FInventoryStack& Stack : Refunds)
+	{
+		if (Stack.Item.GetItemClass())
+		{
+			OutRefund.FindOrAdd(Stack.Item.GetItemClass()) += Stack.NumItems;
+		}
+	}
+
+	// Charge: target recipe scaled by the SAME vanilla per-length multiplier the refund used
+	// (protected; AccessTransformers friend). Belts/pipes/lifts share the length rule across
+	// tiers, so the OLD buildable's multiplier is the exact factor for the SAME-geometry
+	// replacement; simple buildables return 1. Charging the hologram's GetBaseCost instead is
+	// exactly the #485 defect: the synthetic upgrade flow never gives the belt hologram real
+	// spline geometry, so it priced every belt as one recipe unit regardless of length.
+	const int32 LengthMultiplier = FMath::Max(1, Old->GetDismantleRefundReturnsMultiplier());
+	for (const FItemAmount& Ingredient : TargetCDO->GetIngredients())
+	{
+		if (Ingredient.ItemClass)
+		{
+			OutCharge.FindOrAdd(Ingredient.ItemClass) += Ingredient.Amount * LengthMultiplier;
+		}
+	}
+	return true;
+}
+
+int32 USFUpgradeExecutionService::PrepareUpgradeSettlement(AFGBuildable* Old, TSubclassOf<UFGRecipe> TargetRecipe,
+	AFGCharacterPlayer* PlayerChar, FSFUpgradeSettlementLedger& OutLedger) const
+{
+	OutLedger = FSFUpgradeSettlementLedger();
+
+	UFGInventoryComponent* PlayerInventory = PlayerChar ? PlayerChar->GetInventory() : nullptr;
+	if (!PlayerInventory)
+	{
+		return 0;
+	}
+	if (PlayerInventory->GetNoBuildCost())
+	{
+		OutLedger.bFreeBuild = true;
+		return 1;
+	}
+	OutLedger.bFreeBuild = false;
+
+	TMap<TSubclassOf<UFGItemDescriptor>, int32> Charge;
+	TMap<TSubclassOf<UFGItemDescriptor>, int32> Refund;
+	if (!ComputeUpgradeSettlement(Old, TargetRecipe, Charge, Refund))
+	{
+		return 0;
+	}
+
+	// [#485 temp] Per-target settlement evidence (Log level - Shipping strips Verbose).
+	UE_LOG(LogSmartUpgrade, Log, TEXT("[#485] %s: settling charge={%s} refund={%s}"),
+		*GetNameSafe(Old), *SF485_MapToString(Charge), *SF485_MapToString(Refund));
+
+	// Split the net delta by sign: positives are reserved before Construct, negatives are
+	// granted only after success.
+	TMap<TSubclassOf<UFGItemDescriptor>, int32> Net = Charge;
+	for (const auto& Pair : Refund)
+	{
+		Net.FindOrAdd(Pair.Key) -= Pair.Value;
+	}
+	for (const auto& Pair : Net)
+	{
+		if (!Pair.Key || Pair.Value == 0)
+		{
+			continue;
+		}
+		if (Pair.Value > 0)
+		{
+			OutLedger.NetCharge.Add(Pair.Key, Pair.Value);
+		}
+		else
+		{
+			OutLedger.NetRefund.Add(Pair.Key, -Pair.Value);
+		}
+	}
+
+	// Net-based affordability (inventory + Dimensional Depot), matching the pre-existing
+	// player-facing behavior: same-material tier changes only need the difference.
+	UWorld* World = Subsystem ? Subsystem->GetWorld() : nullptr;
+	AFGCentralStorageSubsystem* CentralStorage = World ? AFGCentralStorageSubsystem::Get(World) : nullptr;
+	for (const auto& Entry : OutLedger.NetCharge)
+	{
+		int32 Available = PlayerInventory->GetNumItems(Entry.Key);
+		if (CentralStorage)
+		{
+			Available += CentralStorage->GetNumItemsFromCentralStorage(Entry.Key);
+		}
+		if (Available < Entry.Value)
+		{
+			UE_LOG(LogSmartUpgrade, Log, TEXT("[#485] %s: cannot afford - need %d %s, have %d (aborting batch)"),
+				*GetNameSafe(Old), Entry.Value, *UFGItemDescriptor::GetItemName(Entry.Key).ToString(), Available);
+			return -1;
+		}
+	}
+	return 1;
+}
+
+void USFUpgradeExecutionService::ReserveUpgradeCharge(const FSFUpgradeSettlementLedger& Ledger, AFGCharacterPlayer* PlayerChar)
+{
+	if (Ledger.bFreeBuild || !PlayerChar)
+	{
+		return;
+	}
+	UFGInventoryComponent* PlayerInventory = PlayerChar->GetInventory();
+	UWorld* World = Subsystem ? Subsystem->GetWorld() : nullptr;
+	AFGCentralStorageSubsystem* CentralStorage = World ? AFGCentralStorageSubsystem::Get(World) : nullptr;
+	AFGPlayerState* PlayerState = PlayerChar->GetPlayerState<AFGPlayerState>();
+	const bool bTakeFromInventoryFirst = PlayerState ? PlayerState->GetTakeFromInventoryBeforeCentralStorage() : true;
+
+	for (const auto& Entry : Ledger.NetCharge)
+	{
+		UFGInventoryLibrary::GrabItemsFromInventoryAndCentralStorage(
+			PlayerInventory, CentralStorage, bTakeFromInventoryFirst, Entry.Key, Entry.Value);
+		BatchChargedTotals.FindOrAdd(Entry.Key) += Entry.Value;  // [#485 temp]
+	}
+}
+
+void USFUpgradeExecutionService::RollbackUpgradeCharge(const FSFUpgradeSettlementLedger& Ledger, AFGCharacterPlayer* PlayerChar)
+{
+	if (Ledger.bFreeBuild || !PlayerChar)
+	{
+		return;
+	}
+	UFGInventoryComponent* PlayerInventory = PlayerChar->GetInventory();
+	for (const auto& Entry : Ledger.NetCharge)
+	{
+		const int32 Added = PlayerInventory ? PlayerInventory->AddStack(FInventoryStack(Entry.Value, Entry.Key), true) : 0;
+		if (Added < Entry.Value)
+		{
+			OverflowItems.FindOrAdd(Entry.Key) += Entry.Value - Added;
+		}
+		BatchChargedTotals.FindOrAdd(Entry.Key) -= Entry.Value;  // [#485 temp]
+		UE_LOG(LogSmartUpgrade, Log, TEXT("[#485] Construct failed after reservation - returned %d %s (%d to crate)"),
+			Entry.Value, *UFGItemDescriptor::GetItemName(Entry.Key).ToString(), Entry.Value - Added);
+	}
+}
+
+void USFUpgradeExecutionService::GrantUpgradeRefund(const FSFUpgradeSettlementLedger& Ledger, AFGCharacterPlayer* PlayerChar)
+{
+	if (Ledger.bFreeBuild || !PlayerChar)
+	{
+		return;
+	}
+	UFGInventoryComponent* PlayerInventory = PlayerChar->GetInventory();
+	for (const auto& Entry : Ledger.NetRefund)
+	{
+		const int32 Added = PlayerInventory ? PlayerInventory->AddStack(FInventoryStack(Entry.Value, Entry.Key), true) : 0;
+		if (Added < Entry.Value)
+		{
+			OverflowItems.FindOrAdd(Entry.Key) += Entry.Value - Added;
+		}
+		BatchRefundedTotals.FindOrAdd(Entry.Key) += Entry.Value;  // [#485 temp]
+	}
+}
+
 void USFUpgradeExecutionService::Cleanup()
 {
 	CancelUpgrade();
@@ -842,115 +1015,22 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 		}
 		UE_LOG(LogSmartUpgrade, VeryVerbose, TEXT("⚙️ STEP 4: DoMultiStepPlacement complete"));
 
-		// STEP 5.5: Check affordability and deduct costs per-item
-		bool bNoCost = PlayerInventory->GetNoBuildCost();
-		if (!bNoCost)
+		// STEP 5.5 [#485]: Price exactly from the old belt's geometry and check affordability.
+		// The hologram's GetBaseCost is unusable here: the synthetic upgrade flow never gives it
+		// real spline data, so it priced every belt as ONE recipe unit regardless of length while
+		// the refund stayed length-correct (a 72% undercharge + duplication on the 96m test rig).
+		// Settlement is transactional: charge reserved before Construct, refund granted after.
+		FSFUpgradeSettlementLedger Ledger;
 		{
-			// Calculate net cost for this item
-			TMap<TSubclassOf<UFGItemDescriptor>, int32> ItemCost;
+			// [#485 temp] Cross-check: what the old defect path would have priced.
+			UE_LOG(LogSmartUpgrade, Log, TEXT("[#485] Belt %s (len=%.1fm): hologram GetBaseCost = %s (not used for settlement)"),
+				*OldBelt->GetName(), OldBelt->GetLength() / 100.0f, *SF485_CostToString(Hologram->GetBaseCost()));
 
-			// Get cost from hologram (length-aware for belts)
-			TArray<FItemAmount> BaseCost = Hologram->GetBaseCost();
-			// [#485 temp] This read happens BEFORE GenerateAndUpdateSpline — capture what execution
-			// actually prices so it can be compared against the post-spline re-price logged below.
-			UE_LOG(LogSmartUpgrade, Log, TEXT("[#485] Belt %s (len=%.1fm): PRE-spline GetBaseCost = %s"),
-				*OldBelt->GetName(), OldBelt->GetLength() / 100.0f, *SF485_CostToString(BaseCost));
-			UE_LOG(LogSmartUpgrade, VeryVerbose, TEXT("Belt upgrade cost: Hologram->GetBaseCost() returned %d items"), BaseCost.Num());
-			for (const FItemAmount& ItemAmount : BaseCost)
+			const int32 PrepResult = PrepareUpgradeSettlement(OldBelt, ActualTargetRecipe, PlayerChar, Ledger);
+			if (PrepResult != 1)
 			{
-				if (ItemAmount.ItemClass)
-				{
-					ItemCost.FindOrAdd(ItemAmount.ItemClass) += ItemAmount.Amount;
-					UE_LOG(LogSmartUpgrade, VeryVerbose, TEXT("  New belt cost: +%d %s"),
-						ItemAmount.Amount, *UFGItemDescriptor::GetItemName(ItemAmount.ItemClass).ToString());
-				}
-			}
-
-			// Get refund from old buildable
-			TArray<FInventoryStack> Refunds;
-			OldBelt->GetDismantleRefundReturns(Refunds);
-			UE_LOG(LogSmartUpgrade, VeryVerbose, TEXT("Belt upgrade refund: GetDismantleRefundReturns() returned %d items"), Refunds.Num());
-			for (const FInventoryStack& Stack : Refunds)
-			{
-				if (Stack.Item.GetItemClass())
-				{
-					ItemCost.FindOrAdd(Stack.Item.GetItemClass()) -= Stack.NumItems;
-					UE_LOG(LogSmartUpgrade, VeryVerbose, TEXT("  Old belt refund: -%d %s"),
-						Stack.NumItems, *UFGItemDescriptor::GetItemName(Stack.Item.GetItemClass()).ToString());
-				}
-			}
-
-			// Log net cost
-			for (const auto& Entry : ItemCost)
-			{
-				if (Entry.Key)
-				{
-					UE_LOG(LogSmartUpgrade, VeryVerbose, TEXT("  Net cost: %d %s"),
-						Entry.Value, *UFGItemDescriptor::GetItemName(Entry.Key).ToString());
-				}
-			}
-
-			// [#485 temp] Per-belt settlement: what this belt is about to charge vs refund.
-			UE_LOG(LogSmartUpgrade, Log, TEXT("[#485] Belt %s: settling charge={%s} refund={%s}"),
-				*OldBelt->GetName(),
-				*SF485_MapToString(ItemCost, /*bPositiveOnly=*/true),
-				*SF485_MapToString(ItemCost, /*bPositiveOnly=*/false, /*bNegativeOnly=*/true));
-
-			// Check if player can afford this item
-			UWorld* CostWorld = Subsystem ? Subsystem->GetWorld() : nullptr;
-			AFGCentralStorageSubsystem* CentralStorage = CostWorld ? AFGCentralStorageSubsystem::Get(CostWorld) : nullptr;
-
-			for (const auto& Entry : ItemCost)
-			{
-				if (Entry.Value > 0 && Entry.Key)
-				{
-					int32 Available = PlayerInventory->GetNumItems(Entry.Key);
-					if (CentralStorage)
-					{
-						Available += CentralStorage->GetNumItemsFromCentralStorage(Entry.Key);
-					}
-					if (Available < Entry.Value)
-					{
-						UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: Cannot afford upgrade - need %d %s, have %d"),
-							Entry.Value, *UFGItemDescriptor::GetItemName(Entry.Key).ToString(), Available);
-						Hologram->Destroy();
-						return -1;  // Out of funds - abort remaining
-					}
-				}
-			}
-
-			// Deduct costs immediately
-			AFGPlayerState* PlayerState = PlayerChar->GetPlayerState<AFGPlayerState>();
-			bool bTakeFromInventoryFirst = PlayerState ? PlayerState->GetTakeFromInventoryBeforeCentralStorage() : true;
-
-			for (const auto& Entry : ItemCost)
-			{
-				if (Entry.Value > 0 && Entry.Key)
-				{
-					UFGInventoryLibrary::GrabItemsFromInventoryAndCentralStorage(
-						PlayerInventory, CentralStorage, bTakeFromInventoryFirst, Entry.Key, Entry.Value);
-					BatchChargedTotals.FindOrAdd(Entry.Key) += Entry.Value;  // [#485 temp]
-					UE_LOG(LogSmartUpgrade, VeryVerbose, TEXT("Belt upgrade: Deducted %d %s"),
-						Entry.Value, *UFGItemDescriptor::GetItemName(Entry.Key).ToString());
-				}
-				else if (Entry.Value < 0 && Entry.Key)
-				{
-					int32 RefundAmount = -Entry.Value;
-					BatchRefundedTotals.FindOrAdd(Entry.Key) += RefundAmount;  // [#485 temp]
-					int32 Added = PlayerInventory->AddStack(FInventoryStack(RefundAmount, Entry.Key), true);
-					if (Added < RefundAmount)
-					{
-						int32 Overflow = RefundAmount - Added;
-						OverflowItems.FindOrAdd(Entry.Key) += Overflow;
-						UE_LOG(LogSmartUpgrade, Verbose, TEXT("Belt upgrade: Refund overflow - %d/%d %s added, %d to crate"),
-							Added, RefundAmount, *UFGItemDescriptor::GetItemName(Entry.Key).ToString(), Overflow);
-					}
-					else
-					{
-						UE_LOG(LogSmartUpgrade, VeryVerbose, TEXT("Belt upgrade: Refunded %d %s"),
-							RefundAmount, *UFGItemDescriptor::GetItemName(Entry.Key).ToString());
-					}
-				}
+				Hologram->Destroy();
+				return PrepResult == -1 ? -1 : 0;  // -1 = out of funds, abort remaining
 			}
 		}
 
@@ -973,6 +1053,9 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 			PreDestroyChainActors.Add(OldChain);
 		}
 
+		// [#485] Reserve the net charge now that all preflight passed; refund waits for success.
+		ReserveUpgradeCharge(Ledger, PlayerChar);
+
 		// STEP 7: Let vanilla prepare the old belt for upgrade before constructing the replacement.
 		// PreUpgrade is documented as the hook that clears connections/state that can interfere
 		// with upgrades; calling it after Construct leaves the replacement born into stale chain state.
@@ -991,6 +1074,7 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 		if (!NewBelt)
 		{
 			UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: Construct failed for %s"), *OldBelt->GetName());
+			RollbackUpgradeCharge(Ledger, PlayerChar);  // [#485] failed target earns no refund
 			return 0;
 		}
 		UE_LOG(LogSmartUpgrade, VeryVerbose, TEXT("⚙️ STEP 6: Construct() created new belt: %s"), *NewBelt->GetName());
@@ -1064,6 +1148,9 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 		}
 		OldBelt->Destroy();
 		UE_LOG(LogSmartUpgrade, VeryVerbose, TEXT("⚙️ STEP 9: Old belt destroyed"));
+
+		// [#485] Replacement is live and the old belt retired - the refund is now earned.
+		GrantUpgradeRefund(Ledger, PlayerChar);
 
 		// Track upgraded conveyor
 		UpgradedConveyors.Add(NewBelt);
@@ -1139,90 +1226,24 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 		// Set up spline data from old pipe
 		SmartHolo->SetSplineDataAndUpdate(SplineData);
 
-		// Check affordability and deduct costs per-item for pipe
-		UFGInventoryComponent* PipePlayerInventory = PlayerChar->GetInventory();
-		bool bPipeNoCost = PipePlayerInventory ? PipePlayerInventory->GetNoBuildCost() : false;
-		if (!bPipeNoCost)
+		// [#485] Exact settlement (geometry-derived, shared with the panel). The pipe hologram's
+		// GetBaseCost IS length-aware here (real spline copied above) - the temp log cross-checks
+		// the planner against it so any divergence surfaces before release.
+		FSFUpgradeSettlementLedger Ledger;
 		{
-			// Calculate net cost for this pipe
-			TMap<TSubclassOf<UFGItemDescriptor>, int32> PipeItemCost;
+			UE_LOG(LogSmartUpgrade, Log, TEXT("[#485] Pipe %s: hologram GetBaseCost = %s (cross-check)"),
+				*OldPipe->GetName(), *SF485_CostToString(SmartHolo->GetBaseCost()));
 
-			// Get cost from hologram (length-aware for pipes)
-			TArray<FItemAmount> PipeBaseCost = SmartHolo->GetBaseCost();
-			for (const FItemAmount& ItemAmount : PipeBaseCost)
+			const int32 PrepResult = PrepareUpgradeSettlement(OldPipe, ActualTargetRecipe, PlayerChar, Ledger);
+			if (PrepResult != 1)
 			{
-				if (ItemAmount.ItemClass)
-				{
-					PipeItemCost.FindOrAdd(ItemAmount.ItemClass) += ItemAmount.Amount;
-				}
-			}
-
-			// Get refund from old pipe
-			TArray<FInventoryStack> PipeRefunds;
-			OldPipe->GetDismantleRefundReturns(PipeRefunds);
-			for (const FInventoryStack& Stack : PipeRefunds)
-			{
-				if (Stack.Item.GetItemClass())
-				{
-					PipeItemCost.FindOrAdd(Stack.Item.GetItemClass()) -= Stack.NumItems;
-				}
-			}
-
-			// Check if player can afford this pipe
-			UWorld* PipeCostWorld = Subsystem ? Subsystem->GetWorld() : nullptr;
-			AFGCentralStorageSubsystem* PipeCentralStorage = PipeCostWorld ? AFGCentralStorageSubsystem::Get(PipeCostWorld) : nullptr;
-
-			for (const auto& Entry : PipeItemCost)
-			{
-				if (Entry.Value > 0 && Entry.Key)
-				{
-					int32 Available = PipePlayerInventory->GetNumItems(Entry.Key);
-					if (PipeCentralStorage)
-					{
-						Available += PipeCentralStorage->GetNumItemsFromCentralStorage(Entry.Key);
-					}
-					if (Available < Entry.Value)
-					{
-						UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: Cannot afford pipe upgrade - need %d %s, have %d"),
-							Entry.Value, *UFGItemDescriptor::GetItemName(Entry.Key).ToString(), Available);
-						SmartHolo->Destroy();
-						return -1;  // Out of funds - abort remaining
-					}
-				}
-			}
-
-			// Deduct costs immediately
-			AFGPlayerState* PipePlayerState = PlayerChar->GetPlayerState<AFGPlayerState>();
-			bool bPipeTakeFromInventoryFirst = PipePlayerState ? PipePlayerState->GetTakeFromInventoryBeforeCentralStorage() : true;
-
-			for (const auto& Entry : PipeItemCost)
-			{
-				if (Entry.Value > 0 && Entry.Key)
-				{
-					UFGInventoryLibrary::GrabItemsFromInventoryAndCentralStorage(
-						PipePlayerInventory, PipeCentralStorage, bPipeTakeFromInventoryFirst, Entry.Key, Entry.Value);
-					UE_LOG(LogSmartUpgrade, VeryVerbose, TEXT("Pipe upgrade: Deducted %d %s"),
-						Entry.Value, *UFGItemDescriptor::GetItemName(Entry.Key).ToString());
-				}
-				else if (Entry.Value < 0 && Entry.Key)
-				{
-					int32 RefundAmount = -Entry.Value;
-					int32 Added = PipePlayerInventory->AddStack(FInventoryStack(RefundAmount, Entry.Key), true);
-					if (Added < RefundAmount)
-					{
-						int32 Overflow = RefundAmount - Added;
-						OverflowItems.FindOrAdd(Entry.Key) += Overflow;
-						UE_LOG(LogSmartUpgrade, Verbose, TEXT("Pipe upgrade: Refund overflow - %d/%d %s added, %d to crate"),
-							Added, RefundAmount, *UFGItemDescriptor::GetItemName(Entry.Key).ToString(), Overflow);
-					}
-					else
-					{
-						UE_LOG(LogSmartUpgrade, VeryVerbose, TEXT("Pipe upgrade: Refunded %d %s"),
-							RefundAmount, *UFGItemDescriptor::GetItemName(Entry.Key).ToString());
-					}
-				}
+				SmartHolo->Destroy();
+				return PrepResult == -1 ? -1 : 0;  // -1 = out of funds, abort remaining
 			}
 		}
+
+		// [#485] Reserve the net charge; refund waits for a successful construct.
+		ReserveUpgradeCharge(Ledger, PlayerChar);
 
 		// Construct the new pipe
 		TArray<AActor*> ConstructedChildren;
@@ -1235,6 +1256,7 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 		if (!NewPipe)
 		{
 			UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: Construct failed for pipe %s"), *OldPipe->GetName());
+			RollbackUpgradeCharge(Ledger, PlayerChar);  // [#485] failed target earns no refund
 			return 0;
 		}
 
@@ -1262,6 +1284,9 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 			if (ChildActor) ChildActor->Destroy();
 		}
 		OldPipe->Destroy();
+
+		// [#485] Replacement is live and the old pipe retired - the refund is now earned.
+		GrantUpgradeRefund(Ledger, PlayerChar);
 
 		// Track old->new mapping for post-upgrade validation / pipe batch fix
 		OldToNewBuildableMap.Add(OldPipe, NewPipe);
@@ -1359,93 +1384,25 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 			return 0;
 		}
 
-		// Check affordability and deduct costs per-item for lift
-		UFGInventoryComponent* LiftPlayerInventory = PlayerChar->GetInventory();
-		bool bLiftNoCost = LiftPlayerInventory ? LiftPlayerInventory->GetNoBuildCost() : false;
-		if (!bLiftNoCost)
+		// [#485] Exact settlement (geometry-derived, shared with the panel). Charge = target recipe
+		// x the old lift's own refund multiplier - the SAME factor its refund uses, applied to the
+		// bare recipe (NOT on top of hologram GetBaseCost - that was the #432 double-charge). The
+		// temp log cross-checks the lift hologram's own length-aware cost against the planner.
+		FSFUpgradeSettlementLedger Ledger;
 		{
-			// Calculate net cost for this lift
-			TMap<TSubclassOf<UFGItemDescriptor>, int32> LiftItemCost;
+			UE_LOG(LogSmartUpgrade, Log, TEXT("[#485] Lift %s: hologram GetBaseCost = %s (cross-check)"),
+				*OldLift->GetName(), *SF485_CostToString(LiftHologram->GetBaseCost()));
 
-			// Get cost from hologram (length-aware for lifts, same as the belt/pipe branches).
-			// #432: do NOT scale by GetDismantleRefundReturnsMultiplier() — that is the dismantle-refund
-			// segment count, not a build-cost factor, and GetBaseCost() is already length-aware, so
-			// applying it double-charges tall / floor-hole lift upgrades (can trip the out-of-funds abort).
-			// The refund is subtracted separately below (GetDismantleRefundReturns).
-			for (const FItemAmount& ItemAmount : LiftHologram->GetBaseCost())
+			const int32 PrepResult = PrepareUpgradeSettlement(OldLift, ActualTargetRecipe, PlayerChar, Ledger);
+			if (PrepResult != 1)
 			{
-				if (ItemAmount.ItemClass)
-				{
-					LiftItemCost.FindOrAdd(ItemAmount.ItemClass) += ItemAmount.Amount;
-				}
-			}
-
-			// Get refund from old lift
-			TArray<FInventoryStack> LiftRefunds;
-			OldLift->GetDismantleRefundReturns(LiftRefunds);
-			for (const FInventoryStack& Stack : LiftRefunds)
-			{
-				if (Stack.Item.GetItemClass())
-				{
-					LiftItemCost.FindOrAdd(Stack.Item.GetItemClass()) -= Stack.NumItems;
-				}
-			}
-
-			// Check if player can afford this lift
-			UWorld* LiftCostWorld = Subsystem ? Subsystem->GetWorld() : nullptr;
-			AFGCentralStorageSubsystem* LiftCentralStorage = LiftCostWorld ? AFGCentralStorageSubsystem::Get(LiftCostWorld) : nullptr;
-
-			for (const auto& Entry : LiftItemCost)
-			{
-				if (Entry.Value > 0 && Entry.Key)
-				{
-					int32 Available = LiftPlayerInventory->GetNumItems(Entry.Key);
-					if (LiftCentralStorage)
-					{
-						Available += LiftCentralStorage->GetNumItemsFromCentralStorage(Entry.Key);
-					}
-					if (Available < Entry.Value)
-					{
-						UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: Cannot afford lift upgrade - need %d %s, have %d"),
-							Entry.Value, *UFGItemDescriptor::GetItemName(Entry.Key).ToString(), Available);
-						LiftHologram->Destroy();
-						return -1;  // Out of funds - abort remaining
-					}
-				}
-			}
-
-			// Deduct costs immediately
-			AFGPlayerState* LiftPlayerState = PlayerChar->GetPlayerState<AFGPlayerState>();
-			bool bLiftTakeFromInventoryFirst = LiftPlayerState ? LiftPlayerState->GetTakeFromInventoryBeforeCentralStorage() : true;
-
-			for (const auto& Entry : LiftItemCost)
-			{
-				if (Entry.Value > 0 && Entry.Key)
-				{
-					UFGInventoryLibrary::GrabItemsFromInventoryAndCentralStorage(
-						LiftPlayerInventory, LiftCentralStorage, bLiftTakeFromInventoryFirst, Entry.Key, Entry.Value);
-					UE_LOG(LogSmartUpgrade, Verbose, TEXT("Lift upgrade: Deducted %d %s"),
-						Entry.Value, *UFGItemDescriptor::GetItemName(Entry.Key).ToString());
-				}
-				else if (Entry.Value < 0 && Entry.Key)
-				{
-					int32 RefundAmount = -Entry.Value;
-					int32 Added = LiftPlayerInventory->AddStack(FInventoryStack(RefundAmount, Entry.Key), true);
-					if (Added < RefundAmount)
-					{
-						int32 Overflow = RefundAmount - Added;
-						OverflowItems.FindOrAdd(Entry.Key) += Overflow;
-						UE_LOG(LogSmartUpgrade, Verbose, TEXT("Lift upgrade: Refund overflow - %d/%d %s added, %d to crate"),
-							Added, RefundAmount, *UFGItemDescriptor::GetItemName(Entry.Key).ToString(), Overflow);
-					}
-					else
-					{
-						UE_LOG(LogSmartUpgrade, Verbose, TEXT("Lift upgrade: Refunded %d %s"),
-							RefundAmount, *UFGItemDescriptor::GetItemName(Entry.Key).ToString());
-					}
-				}
+				LiftHologram->Destroy();
+				return PrepResult == -1 ? -1 : 0;  // -1 = out of funds, abort remaining
 			}
 		}
+
+		// [#485] Reserve the net charge; refund waits for a successful construct.
+		ReserveUpgradeCharge(Ledger, PlayerChar);
 
 		// Capture chain actor from old lift before PreUpgrade clears upgrade-sensitive state.
 		if (AFGConveyorChainActor* OldChain = OldLift->GetConveyorChainActor())
@@ -1468,6 +1425,7 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 		if (!NewLift)
 		{
 			UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: Construct failed for lift %s"), *OldLift->GetName());
+			RollbackUpgradeCharge(Ledger, PlayerChar);  // [#485] failed target earns no refund
 			return 0;
 		}
 
@@ -1529,6 +1487,9 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 			OldLift->SetLifeSpan(0.001f);
 		}
 
+		// [#485] Replacement is live and the old lift retired - the refund is now earned.
+		GrantUpgradeRefund(Ledger, PlayerChar);
+
 		// Track upgraded conveyor for chain rebuild
 		UpgradedConveyors.Add(NewLift);
 
@@ -1548,90 +1509,15 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 			*OldPole->GetName(), *OldPole->GetClass()->GetName(),
 			static_cast<int32>(ActualFamily), CurrentParams.TargetTier);
 
-		// Check affordability and deduct costs per-item for pole
-		UFGInventoryComponent* PolePlayerInventory = PlayerChar->GetInventory();
-		bool bPoleNoCost = PolePlayerInventory ? PolePlayerInventory->GetNoBuildCost() : false;
-		if (!bPoleNoCost)
+		// [#485] Exact settlement (shared with the panel; multiplier is 1 for simple buildables,
+		// so poles/outlets keep their recipe-delta pricing). Transactional: charge reserved
+		// before Construct, refund granted after success.
+		FSFUpgradeSettlementLedger Ledger;
 		{
-			// Calculate net cost for this pole using recipe-based costs
-			TMap<TSubclassOf<UFGItemDescriptor>, int32> PoleItemCost;
-
-			// Get cost from target recipe
-			const UFGRecipe* TargetCDO = ActualTargetRecipe->GetDefaultObject<UFGRecipe>();
-			if (TargetCDO)
+			const int32 PrepResult = PrepareUpgradeSettlement(OldPole, ActualTargetRecipe, PlayerChar, Ledger);
+			if (PrepResult != 1)
 			{
-				for (const FItemAmount& ItemAmount : TargetCDO->GetIngredients())
-				{
-					if (ItemAmount.ItemClass)
-					{
-						PoleItemCost.FindOrAdd(ItemAmount.ItemClass) += ItemAmount.Amount;
-					}
-				}
-			}
-
-			// Get refund from old pole
-			TArray<FInventoryStack> PoleRefunds;
-			OldPole->GetDismantleRefundReturns(PoleRefunds);
-			for (const FInventoryStack& Stack : PoleRefunds)
-			{
-				if (Stack.Item.GetItemClass())
-				{
-					PoleItemCost.FindOrAdd(Stack.Item.GetItemClass()) -= Stack.NumItems;
-				}
-			}
-
-			// Check if player can afford this pole
-			UWorld* PoleCostWorld = Subsystem ? Subsystem->GetWorld() : nullptr;
-			AFGCentralStorageSubsystem* PoleCentralStorage = PoleCostWorld ? AFGCentralStorageSubsystem::Get(PoleCostWorld) : nullptr;
-
-			for (const auto& Entry : PoleItemCost)
-			{
-				if (Entry.Value > 0 && Entry.Key)
-				{
-					int32 Available = PolePlayerInventory->GetNumItems(Entry.Key);
-					if (PoleCentralStorage)
-					{
-						Available += PoleCentralStorage->GetNumItemsFromCentralStorage(Entry.Key);
-					}
-					if (Available < Entry.Value)
-					{
-						UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: Cannot afford pole upgrade - need %d %s, have %d"),
-							Entry.Value, *UFGItemDescriptor::GetItemName(Entry.Key).ToString(), Available);
-						return -1;  // Out of funds - abort remaining
-					}
-				}
-			}
-
-			// Deduct costs immediately
-			AFGPlayerState* PolePlayerState = PlayerChar->GetPlayerState<AFGPlayerState>();
-			bool bPoleTakeFromInventoryFirst = PolePlayerState ? PolePlayerState->GetTakeFromInventoryBeforeCentralStorage() : true;
-
-			for (const auto& Entry : PoleItemCost)
-			{
-				if (Entry.Value > 0 && Entry.Key)
-				{
-					UFGInventoryLibrary::GrabItemsFromInventoryAndCentralStorage(
-						PolePlayerInventory, PoleCentralStorage, bPoleTakeFromInventoryFirst, Entry.Key, Entry.Value);
-					UE_LOG(LogSmartUpgrade, Verbose, TEXT("Pole upgrade: Deducted %d %s"),
-						Entry.Value, *UFGItemDescriptor::GetItemName(Entry.Key).ToString());
-				}
-				else if (Entry.Value < 0 && Entry.Key)
-				{
-					int32 RefundAmount = -Entry.Value;
-					int32 Added = PolePlayerInventory->AddStack(FInventoryStack(RefundAmount, Entry.Key), true);
-					if (Added < RefundAmount)
-					{
-						int32 Overflow = RefundAmount - Added;
-						OverflowItems.FindOrAdd(Entry.Key) += Overflow;
-						UE_LOG(LogSmartUpgrade, Verbose, TEXT("Pole upgrade: Refund overflow - %d/%d %s added, %d to crate"),
-							Added, RefundAmount, *UFGItemDescriptor::GetItemName(Entry.Key).ToString(), Overflow);
-					}
-					else
-					{
-						UE_LOG(LogSmartUpgrade, VeryVerbose, TEXT("Pole upgrade: Refunded %d %s"),
-							RefundAmount, *UFGItemDescriptor::GetItemName(Entry.Key).ToString());
-					}
-				}
+				return PrepResult == -1 ? -1 : 0;  // -1 = out of funds, abort remaining
 			}
 		}
 
@@ -1669,6 +1555,9 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 		}
 		UE_LOG(LogSmartUpgrade, VeryVerbose, TEXT("UpgradeExecutionService: TryUpgrade succeeded for %s"), *OldPole->GetName());
 
+		// [#485] Reserve the net charge; refund waits for a successful construct.
+		ReserveUpgradeCharge(Ledger, PlayerChar);
+
 		// Construct the new pole
 		TArray<AActor*> ConstructedChildren;
 		FNetConstructionID ConstructionID = BuildableSubsystem ? BuildableSubsystem->GetNewNetConstructionID() : FNetConstructionID();
@@ -1680,6 +1569,7 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 		if (!NewPole)
 		{
 			UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: Construct failed for pole %s"), *OldPole->GetName());
+			RollbackUpgradeCharge(Ledger, PlayerChar);  // [#485] failed target earns no refund
 			return 0;
 		}
 
@@ -1698,6 +1588,9 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 			}
 		}
 		OldPole->Destroy();
+
+		// [#485] Replacement is live and the old pole retired - the refund is now earned.
+		GrantUpgradeRefund(Ledger, PlayerChar);
 
 		// Track old->new mapping for post-upgrade validation
 		OldToNewBuildableMap.Add(OldPole, NewPole);
