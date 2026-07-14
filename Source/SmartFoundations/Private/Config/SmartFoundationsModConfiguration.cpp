@@ -111,6 +111,9 @@ USmartFoundationsModConfiguration::USmartFoundationsModConfiguration()
 		LOCTEXT("P.bAutoHoldOnGridChange.TT", "Automatically lock the hologram in place after any grid change. Press the Hold key to release it."), true));  // [#279] default ON
 	Building->SectionProperties.Add(TEXT("bApplyImmediately"),     CreateBoolProperty(TEXT("bApplyImmediately"),     LOCTEXT("P.bApplyImmediately", "Apply Immediately"),
 		LOCTEXT("P.bApplyImmediately.TT", "Apply Smart Panel changes instantly instead of clicking the Apply button."), false));
+	// [#482] Controller/accessibility: latch transform modes on a tap instead of requiring a hold.
+	Building->SectionProperties.Add(TEXT("bToggleTransformModes"), CreateBoolProperty(TEXT("bToggleTransformModes"), LOCTEXT("P.bToggleTransformModes", "Tap to Toggle Transform Modes"),
+		LOCTEXT("P.bToggleTransformModes.TT", "Tap a transform key (Spacing, Steps, Stagger, Rotation, or Recipe on a factory) to switch the mode on; tap it again to switch it off. Made for controllers and Steam Input radial menus, which cannot hold a key. Off keeps the normal hold-to-use behavior."), false));
 	// [#217 / AV-FP fix] Scroll increments (formerly their own "Scaling Settings" section). Keys/defaults unchanged.
 	Building->SectionProperties.Add(TEXT("SpacingIncrement"),  CreateFloatProperty(TEXT("SpacingIncrement"),  LOCTEXT("P.SpacingIncrement", "Spacing Increment (m)"),
 		LOCTEXT("P.SpacingIncrement.TT", "Meters of spacing added per scroll notch (also Extend spacing and walk segment advance)."), 0.5f));

@@ -85,6 +85,7 @@ struct FSmart_BuildingBehaviorConfigSection {
     UPROPERTY(BlueprintReadWrite) bool bAutoHoldOnGridChange{true};  // [#279] default ON (restores pre-config behavior)
     UPROPERTY(BlueprintReadWrite) bool bApplyImmediately{};
     UPROPERTY(BlueprintReadWrite) bool bPlayerRelativeControls{};    // [#209] global; world-context scaling relative to facing (Panel stays absolute)
+    UPROPERTY(BlueprintReadWrite) bool bToggleTransformModes{};      // [#482] tap-to-toggle (latch) transform modes for controller/accessibility; default OFF
     // [#217 / AV-FP fix] Scroll increments folded in here - no new USTRUCT, keeps config reflection under the AV threshold.
     UPROPERTY(BlueprintReadWrite) float SpacingIncrement{0.5f};
     UPROPERTY(BlueprintReadWrite) float StepsIncrement{0.5f};
@@ -265,6 +266,14 @@ public:
     UPROPERTY(BlueprintReadWrite)
     bool bPlayerRelativeControls{};
 
+    // [#482] Tap-to-toggle (latching) transform modes: tap a transform key (Spacing/Steps/
+    // Stagger/Rotation, or U on a factory) to latch the mode on; tap again to release; tap a
+    // different one to switch. For controller/Steam Input radial menus and accessibility -
+    // those send momentary taps and cannot hold a key. Default OFF (opt-in): when off, the
+    // hold-to-activate behavior is untouched. Read live at the input event.
+    UPROPERTY(BlueprintReadWrite)
+    bool bToggleTransformModes{};
+
     // ── Scaling Settings (#217 scroll increments) ──
     // How much each mouse-wheel notch changes a transform. Distance settings are METERS (converted
     // to cm at read); rotation is DEGREES. These drive the grid AND (shared 1:1) Extend, Restore,
@@ -380,6 +389,7 @@ public:
         ConfigStruct.bAutoHoldOnGridChange    = Sections.BuildingBehavior.bAutoHoldOnGridChange;
         ConfigStruct.bApplyImmediately        = Sections.BuildingBehavior.bApplyImmediately;
         ConfigStruct.bPlayerRelativeControls  = Sections.BuildingBehavior.bPlayerRelativeControls;
+        ConfigStruct.bToggleTransformModes    = Sections.BuildingBehavior.bToggleTransformModes;  // [#482]
 
         // HUD
         ConfigStruct.bShowHUD                 = Sections.HUD.bShowHUD;

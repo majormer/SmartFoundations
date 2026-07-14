@@ -621,6 +621,16 @@ void USFSubsystem::OnRecipeModeChanged(const FInputActionValue& Value)
 	}
 	else
 	{
+		// [#482] Tap-to-toggle policy applies to FACTORY Recipe only - U on an auto-connect
+		// hologram (the branch above) is a HUD-menu interaction, not a transform modal, and
+		// latching it would also pin the Restore recency walk open indefinitely. Consumed
+		// events (incl. releases in latch mode) skip the [#473] recency commit below; a latched
+		// Recipe session commits it once when the latch ends instead.
+		if (HandleLatchTransformModeInput(ESFLatchedTransformMode::Recipe, Value))
+		{
+			return;
+		}
+
 		// Recipe Mode for factory buildings
 		bRecipeModeActive = bPressed;
 		bAutoConnectSettingsModeActive = false;  // Ensure auto-connect settings mode is off

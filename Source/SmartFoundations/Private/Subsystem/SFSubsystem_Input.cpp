@@ -215,6 +215,12 @@ FVector USFSubsystem::GetFurthestTopHologramPosition() const
 
 void USFSubsystem::OnSpacingModeChanged(const FInputActionValue& Value)
 {
+    // [#482] Tap-to-toggle policy (opt-in): consumes the event entirely when the setting is ON.
+    if (HandleLatchTransformModeInput(ESFLatchedTransformMode::Spacing, Value))
+    {
+        return;
+    }
+
     // Phase 0: Delegate input processing to InputHandler (Task #61.6)
     if (InputHandler)
     {
@@ -262,6 +268,12 @@ void USFSubsystem::OnSpacingCycleAxis()
 
 void USFSubsystem::OnStepsModeChanged(const FInputActionValue& Value)
 {
+    // [#482] Tap-to-toggle policy (opt-in): consumes the event entirely when the setting is ON.
+    if (HandleLatchTransformModeInput(ESFLatchedTransformMode::Steps, Value))
+    {
+        return;
+    }
+
     // Phase 0: Delegate input processing to InputHandler (Task #61.6)
     if (InputHandler)
     {
@@ -559,6 +571,13 @@ void USFSubsystem::OnStaggerModeChanged(const FInputActionValue& Value)
 		return;
 	}
 
+	// [#482] Tap-to-toggle policy (opt-in): consumes the event entirely when the setting is ON.
+	// Sits AFTER the Extend gate so stagger can never latch during an active Extend.
+	if (HandleLatchTransformModeInput(ESFLatchedTransformMode::Stagger, Value))
+	{
+		return;
+	}
+
 	// Phase 0: Delegate input processing to InputHandler (Task #61.6)
 	if (InputHandler)
 	{
@@ -607,6 +626,12 @@ void USFSubsystem::OnStaggerModeChanged(const FInputActionValue& Value)
 void USFSubsystem::OnRotationModeChanged(const FInputActionValue& Value)
 {
 	// Scaled Extend (Issue #265): Allow rotation mode during extend.
+
+	// [#482] Tap-to-toggle policy (opt-in): consumes the event entirely when the setting is ON.
+	if (HandleLatchTransformModeInput(ESFLatchedTransformMode::Rotation, Value))
+	{
+		return;
+	}
 
 	// Phase 0: Delegate input processing to InputHandler (Task #61.6)
 	if (InputHandler)
@@ -736,6 +761,10 @@ void USFSubsystem::OnToggleSettingsForm()
 {
 	UE_LOG(LogSmartFoundations, Verbose, TEXT("!!! K KEY PRESSED !!! (OnToggleSettingsForm)"));
 	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("INPUT EVENT: Settings Form Toggle (Phase 0 validation)"));
+
+	// [#482] The Smart Panel (and Upgrade/Walk panels) are separate direct-control surfaces;
+	// opening one ends the latched modal rather than leaving a hidden mode to revive on close.
+	ClearLatchedTransformMode(TEXT("panel toggled"));
 
 	// Smart Walking (#356): while a walk is engaged, K toggles the WALK panel in lieu of the Smart Panel (hide to steer
 	// with a clean screen / restore to review the segment path). The walk seed is a belt/pipe — itself upgrade-capable —
@@ -1052,4 +1081,128 @@ void USFSubsystem::OnUpgradePanelCloseClicked()
 	}
 
 	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Upgrade Panel: Closed via close button"));
+}
+
+// ==================== [#482] Tap-to-toggle (latching) transform modes ====================
+// Optional activation-policy layer for controllers/Steam Input radial menus (momentary taps
+// cannot hold a key). Pure decisions live in SFLatchedTransform.h (unit-tested); this block
+// applies them to the real mode booleans, the FSFInputHandler mirrors, the hologram lock, the
+// HUD, and the Recipe service. Guarantee: with bToggleTransformModes OFF (the default), every
+// event falls through to the pre-existing hold path byte-for-byte.
+
+bool USFSubsystem::HandleLatchTransformModeInput(ESFLatchedTransformMode TappedMode, const FInputActionValue& Value)
+{
+	const bool bSettingOn = FSmart_ConfigStruct::GetActiveConfig(this).bToggleTransformModes;
+	const FSFLatchInputDecision Decision = SFLatchedTransform::DecideInput(
+		bSettingOn, Value.Get<bool>(), LatchedTransformMode, TappedMode);
+
+	if (Decision.bClearStaleLatch)
+	{
+		// Setting was turned off while a latch existed - never leave a mode stuck.
+		ClearLatchedTransformMode(TEXT("setting turned off"));
+	}
+	if (!Decision.bConsume)
+	{
+		return false;  // hold path runs unchanged
+	}
+	if (Decision.NewMode != LatchedTransformMode)
+	{
+		ApplyLatchedTransformMode(Decision.NewMode, TEXT("tap"));
+	}
+	return true;
+}
+
+void USFSubsystem::ApplyLatchedTransformMode(ESFLatchedTransformMode NewMode, const TCHAR* Reason)
+{
+	const ESFLatchedTransformMode OldMode = LatchedTransformMode;
+	if (OldMode == NewMode)
+	{
+		return;
+	}
+	LatchedTransformMode = NewMode;
+	LatchedModeBuildClass = (NewMode != ESFLatchedTransformMode::None && ActiveHologram.IsValid())
+		? ActiveHologram->GetBuildClass()
+		: nullptr;
+
+	// Set the NEW mode's flags before clearing the OLD mode's, so IsAnyModalFeatureActive never
+	// reads all-inactive mid-switch (a window where a lock release could slip through).
+	if (NewMode != ESFLatchedTransformMode::None)
+	{
+		SetLatchedModeFlags(NewMode, true);
+	}
+	if (OldMode != ESFLatchedTransformMode::None)
+	{
+		SetLatchedModeFlags(OldMode, false);
+	}
+
+	// Lock ownership: acquire on None->mode, release on mode->None; a mode SWITCH keeps the
+	// lock held throughout (no flicker, and Auto-Hold ownership is respected by the helpers).
+	if (OldMode == ESFLatchedTransformMode::None)
+	{
+		TryAcquireHologramLock();
+	}
+	else if (NewMode == ESFLatchedTransformMode::None)
+	{
+		TryReleaseHologramLock();
+	}
+
+	UpdateCounterDisplay();
+
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("[#482] Latch: %s -> %s (%s)"),
+		SFLatchedTransform::ToString(OldMode), SFLatchedTransform::ToString(NewMode), Reason);
+}
+
+void USFSubsystem::ClearLatchedTransformMode(const TCHAR* Reason)
+{
+	if (LatchedTransformMode != ESFLatchedTransformMode::None)
+	{
+		ApplyLatchedTransformMode(ESFLatchedTransformMode::None, Reason);
+	}
+}
+
+void USFSubsystem::SetLatchedModeFlags(ESFLatchedTransformMode Mode, bool bActive)
+{
+	const FInputActionValue SynthValue(bActive);
+	switch (Mode)
+	{
+	case ESFLatchedTransformMode::Spacing:
+		bSpacingModeActive = bActive;
+		if (InputHandler) { InputHandler->OnSpacingModeChanged(SynthValue); }
+		break;
+	case ESFLatchedTransformMode::Steps:
+		bStepsModeActive = bActive;
+		if (InputHandler) { InputHandler->OnStepsModeChanged(SynthValue); }
+		break;
+	case ESFLatchedTransformMode::Stagger:
+		bStaggerModeActive = bActive;
+		if (InputHandler) { InputHandler->OnStaggerModeChanged(SynthValue); }
+		break;
+	case ESFLatchedTransformMode::Rotation:
+		bRotationModeActive = bActive;
+		if (InputHandler) { InputHandler->OnRotationModeChanged(SynthValue); }
+		break;
+	case ESFLatchedTransformMode::Recipe:
+		// Recipe mode has no FSFInputHandler mirror (matches the hold path); it dispatches to
+		// the recipe service instead. Ending a latched Recipe session matches a U release:
+		// commit the recency of the last gesture-armed restore exactly once ([#473] semantics).
+		bRecipeModeActive = bActive;
+		if (bActive)
+		{
+			bAutoConnectSettingsModeActive = false;
+		}
+		if (RecipeManagementService)
+		{
+			RecipeManagementService->OnRecipeModeChanged(SynthValue);
+		}
+		if (!bActive)
+		{
+			if (USFRestoreService* Restore = GetRestoreService())
+			{
+				Restore->OnRecentCycleHoldReleased();
+			}
+		}
+		break;
+	default:
+		break;
+	}
 }

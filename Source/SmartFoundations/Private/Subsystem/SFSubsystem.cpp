@@ -397,6 +397,12 @@ void USFSubsystem::UpdateCounterState(const FSFCounterState& NewState)
 	// This handles spacing, steps, rotation adjustments via DispatchValueAdjust path
 	if (IsExtendModeActive() && ExtendService)
 	{
+		// [#482] Stagger has no meaning during Extend (its hold path is gated off); a stagger
+		// latch engaged BEFORE Extend activated must not survive into the Extend session.
+		if (LatchedTransformMode == ESFLatchedTransformMode::Stagger)
+		{
+			ClearLatchedTransformMode(TEXT("Extend activated"));
+		}
 		ExtendService->SynchronizeDirectionFromCounterState(NewState);
 		ExtendService->OnScaledExtendStateChanged();
 	}

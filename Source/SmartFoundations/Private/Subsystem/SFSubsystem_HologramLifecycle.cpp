@@ -96,6 +96,17 @@ void USFSubsystem::RegisterActiveHologram(AFGHologram* Hologram)
 	const bool bPreserveExtendStateAtRegister =
 		bRestoredExtendActiveAtRegister || bLiveExtendActiveAtRegister;
 
+	// [#482] Latch compatibility across hologram registrations: vanilla destroys and recreates
+	// the hologram after every placement, and a compatible latch should survive that (matching
+	// how a physically held key rides the replacement). A DIFFERENT build class is a new build
+	// decision - clear the latch rather than carry a stale mode (notably Recipe onto a
+	// non-factory, whose U context changes entirely).
+	if (LatchedTransformMode != ESFLatchedTransformMode::None
+		&& Hologram && Hologram->GetBuildClass() != LatchedModeBuildClass)
+	{
+		ClearLatchedTransformMode(TEXT("incompatible hologram registered"));
+	}
+
 	// Reset auto-connect runtime settings when hologram changes
 	ResetAutoConnectRuntimeSettings();
 
@@ -1577,6 +1588,9 @@ void USFSubsystem::OnBuildGunUnequipped()
 	// Issue #198: Reset one-shot Smart disable flag when build gun is unequipped
 	ResetSmartDisableFlag();
 
+	// [#482] Unequip is a hard latch boundary.
+	ClearLatchedTransformMode(TEXT("build gun unequipped"));
+
 	// Issue #208/#209: User requested that sampled recipes and items (Shards/Somersloops)
 	// should NOT persist across build gun sessions to avoid accidentally applying them
 	// to unrelated builds later. We clear them on unequip.
@@ -1599,6 +1613,12 @@ void USFSubsystem::OnBuildGunStateChanged(const FString& NewStateName, const FSt
 {
 	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔄 BUILD GUN STATE CHANGE: %s -> %s"), *OldStateName, *NewStateName);
 	LastBuildGunState = NewStateName;
+
+	// [#482] A latched transform mode only makes sense while actively building.
+	if (OldStateName == TEXT("BGS_BUILD") && NewStateName != TEXT("BGS_BUILD"))
+	{
+		ClearLatchedTransformMode(TEXT("build gun left build state"));
+	}
 
 	// Log contexts at every state change
 	LogActiveInputContexts(FString::Printf(TEXT("StateChange_%s"), *NewStateName));

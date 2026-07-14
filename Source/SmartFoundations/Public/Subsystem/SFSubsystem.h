@@ -25,6 +25,7 @@
 
 // TUniquePtr member includes - complete type required for destructor generation
 #include "Subsystem/SFInputHandler.h"
+#include "Input/SFLatchedTransform.h"              // [#482] tap-to-toggle transform mode policy
 #include "Subsystem/SFPositionCalculator.h"
 #include "Subsystem/SFValidationService.h"
 #include "Subsystem/SFHologramHelperService.h"
@@ -1104,6 +1105,41 @@ private:
 	bool bStepsModeActive = false;
 	bool bStaggerModeActive = false;
 	bool bRotationModeActive = false;
+
+	// ==================== [#482] Tap-to-toggle (latching) transform modes ====================
+	// Optional activation-policy layer (bToggleTransformModes, default OFF, read live per event)
+	// for controllers/Steam Input radial menus, which send momentary taps and cannot hold a key.
+	// The latch records POLICY only: the effective state still lives in the same mode booleans
+	// (subsystem + FSFInputHandler mirrors), so the HUD, wheel suppression, lock ownership,
+	// Player Relative, Walking, and Extend all consume the identical predicates in both modes.
+	// Pure decision logic lives in SFLatchedTransform.h (unit-tested).
+
+	/** The currently latched mode; None when unlatched or the setting is off. */
+	ESFLatchedTransformMode LatchedTransformMode = ESFLatchedTransformMode::None;
+
+	/** Build class active when the latch engaged - a REPLACEMENT hologram of the same class
+	 *  (vanilla's post-build recreate) keeps the latch; a different class clears it. */
+	UPROPERTY(Transient)
+	TObjectPtr<UClass> LatchedModeBuildClass = nullptr;
+
+	/** Run one raw modal input event through the latch policy. Returns true when the event was
+	 *  consumed (latch mode) - the caller's hold path must then be skipped entirely. Returns
+	 *  false when the setting is off (after clearing any stale latch), so the hold path runs
+	 *  byte-for-byte unchanged. */
+	bool HandleLatchTransformModeInput(ESFLatchedTransformMode TappedMode, const FInputActionValue& Value);
+
+	/** Apply a latch transition: updates BOTH mode-boolean stores exactly once, dispatches the
+	 *  Recipe service enter/exit (incl. the Restore recency commit on exit), and acquires the
+	 *  hologram lock on None->mode / releases it on mode->None (switches keep it held). */
+	void ApplyLatchedTransformMode(ESFLatchedTransformMode NewMode, const TCHAR* Reason);
+
+	/** Clear any active latch (lifecycle boundaries: build gun leaves BGS_BUILD or unequips,
+	 *  incompatible hologram registers, Smart Panel opens, setting turned off mid-latch). */
+	void ClearLatchedTransformMode(const TCHAR* Reason);
+
+	/** Set one mode's effective booleans in both stores without hold-path side effects
+	 *  (no re-tap timestamps, no per-press lock calls). */
+	void SetLatchedModeFlags(ESFLatchedTransformMode Mode, bool bActive);
 
 	/** Smart Walking top-level mode (#356). Mutually exclusive with grid-scaling; routes scale input to WalkService. */
 	bool bWalkModeActive = false;
