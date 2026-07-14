@@ -152,62 +152,21 @@ Keybinds can be changed in Satisfactory's controls menu.
 
 ## 🧱 Core Features
 
-Each feature below has a full guide on the **[Wiki](https://github.com/majormer/SmartFoundations/wiki)** — follow the link under any feature for step-by-step instructions.
+What each feature does at a glance — follow a **Guide** link for the full how-to on the wiki.
 
-### Grid Scaling
-
-Instead of placing one buildable, place a whole grid of it: `10 × 10` foundations, a row of constructors, a wall of storage containers, power poles, pipeline junctions, or vertical stacks where the building supports it. Scale on X, Y, and Z independently, preview before placing, and pay the normal material cost for every item in the grid.
-→ [Grid Scaling](https://github.com/majormer/SmartFoundations/wiki/Grid-Scaling)
-
-### Spacing, Steps, Stagger, and Rotation
-
-Shape how the grid lays out: **Spacing** adds gaps, **Steps** raises each copy progressively for stairs and terraces, **Stagger** offsets rows or columns for diagonal and compact patterns, and **Rotation** creates arcs, curves, and circular layouts. Useful for both factory efficiency and aesthetic building.
-→ [Transforms](https://github.com/majormer/SmartFoundations/wiki/Transforms)
-
-### Auto-Connect
-
-When Smart! can safely infer your intent, it previews the belts, pipes, or power lines between what you place — belts into machines from a row of splitters, pipes from junctions, power between poles, or connected runs across stackable supports. It is conservative: if a connection does not look valid, it is left open rather than built broken.
-→ [Auto-Connect](https://github.com/majormer/SmartFoundations/wiki/Auto-Connect)
-
-### Smart! Blueprints
-
-Scale one of your own blueprints into a grid and Smart! wires the belts and pipes between the copies for you — including the true two-dimensional seams the game's own blueprint auto-connect can't make, plus vertical pipe stacking. Each copy stays a real, independent blueprint you can dismantle on its own.
-→ [Blueprints](https://github.com/majormer/SmartFoundations/wiki/Blueprints)
-
-### Extend
-
-Copy an existing factory module instead of starting a blank grid. Aim at one working block — its building, nearby splitters/mergers, belts, lifts, pipes, floor holes, pumps, power, recipe, and distributor configuration — and Smart! previews the next copy, wired to match.
-→ [Extend](https://github.com/majormer/SmartFoundations/wiki/Extend)
-
-### Smart Upgrade
-
-Replace infrastructure in batches after you unlock better tiers. Hold a belt, lift, pipe, power line, or wall outlet, scan by radius or along a connected network, preview the exact material cost, and upgrade many items at once. Supports conveyor belts and lifts, pipelines, and power poles and outlets.
-→ [Smart Upgrade](https://github.com/majormer/SmartFoundations/wiki/Smart-Upgrade)
-
-### Smart Restore Presets
-
-Save, apply, share, and replay Smart Panel setups. A preset can capture grid size, spacing, steps, stagger, rotation, recipe, auto-connect settings, and a whole restored Extend module layout. Save from the Smart Panel's `Presets >>` button, apply later, export/import shared presets (checked against your unlocks), or turn your last Extend layout into a reusable preset.
-→ [Smart Restore](https://github.com/majormer/SmartFoundations/wiki/Smart-Restore)
-
-### Smart Walking
-
-A build mode for a single connected run that turns, climbs, and routes to a destination instead of a rigid grid. Hold a stackable pole or pipeline support, open the Smart Panel, and click **Smart Walking**: advance one segment at a time, steer the leading segment, back up to undo, and commit the whole run in one build. Belts, pipes, and hyper tubes are supported.
-→ [Smart Walking](https://github.com/majormer/SmartFoundations/wiki/Smart-Walking)
-
-### Smart Dismantle
-
-Remove Smart-built placements as a unit. Smart! groups its placements into vanilla blueprint proxies, so you can clear a whole grid or module with the game's own Blueprint Dismantle mode instead of picking it apart one building at a time.
-→ [Smart Dismantle](https://github.com/majormer/SmartFoundations/wiki/Smart-Dismantle)
-
-### Smart Panel & HUD
-
-Prefer a form over keybinds? Press `K` for the Smart Panel — set every grid, spacing, transform, recipe, and auto-connect value directly, then Apply. The on-screen HUD shows your current grid, transforms, and recipe as you build.
-→ [Smart Panel and HUD](https://github.com/majormer/SmartFoundations/wiki/Smart-Panel-and-HUD)
-
-### Controls: keyboard, mouse, and controller
-
-Build by keybind and mouse wheel, or by the Smart Panel — they share one state, so use whichever fits the moment. **Player Relative Controls** (optional) let the grid grow in the direction you're facing instead of fixed compass axes. **Tap to Toggle Transform Modes** (optional) makes Smart! more usable on a controller or Steam Deck by latching a mode with a tap instead of a hold.
-→ [Controls](https://github.com/majormer/SmartFoundations/wiki/Controls) • [Controller & Steam Deck](https://github.com/majormer/SmartFoundations/wiki/Controller-and-Steam-Deck)
+| Feature | What it does | Guide |
+|---|---|---|
+| **Grid Scaling** | Place a whole grid of a buildable in one action, scaled on X, Y, and Z. | [Grid Scaling](https://github.com/majormer/SmartFoundations/wiki/Grid-Scaling) |
+| **Spacing, Steps, Stagger, Rotation** | Shape the grid: add gaps, step heights for stairs, offset rows, or curve it into arcs. | [Transforms](https://github.com/majormer/SmartFoundations/wiki/Transforms) |
+| **Auto-Connect** | Preview the belts, pipes, and power between what you place, when Smart! can infer it safely. | [Auto-Connect](https://github.com/majormer/SmartFoundations/wiki/Auto-Connect) |
+| **Smart! Blueprints** | Scale your own blueprint into a grid with the seams between copies auto-wired. | [Blueprints](https://github.com/majormer/SmartFoundations/wiki/Blueprints) |
+| **Extend** | Copy an existing factory module — building, logistics, power, recipe — and continue the pattern. | [Extend](https://github.com/majormer/SmartFoundations/wiki/Extend) |
+| **Smart Upgrade** | Batch-upgrade belts, lifts, pipes, and poles after you unlock better tiers. | [Smart Upgrade](https://github.com/majormer/SmartFoundations/wiki/Smart-Upgrade) |
+| **Smart Restore** | Save, share, and replay panel setups and whole factory modules. | [Smart Restore](https://github.com/majormer/SmartFoundations/wiki/Smart-Restore) |
+| **Smart Walking** | Lay a single connected run that turns, climbs, and routes to a destination. | [Smart Walking](https://github.com/majormer/SmartFoundations/wiki/Smart-Walking) |
+| **Smart Dismantle** | Remove Smart-built groups in one action with the game's Blueprint Dismantle. | [Smart Dismantle](https://github.com/majormer/SmartFoundations/wiki/Smart-Dismantle) |
+| **Smart Panel & HUD** | A form for every control (`K`), plus an on-screen overlay while you build. | [Smart Panel & HUD](https://github.com/majormer/SmartFoundations/wiki/Smart-Panel-and-HUD) |
+| **Controls** | Keybinds and mouse, optional Player Relative building, and controller / Steam Deck support. | [Controls](https://github.com/majormer/SmartFoundations/wiki/Controls) |
 
 ---
 ## 🔄 Extend Explained
