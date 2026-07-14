@@ -610,11 +610,24 @@ void USFRecipeManagementService::CaptureFactorySettingsSnapshot(FSFFactorySettin
 
 void USFRecipeManagementService::InstallFactorySettingsSnapshot(const FSFFactorySettingsSnapshot& Snapshot, UClass* CommitBuildClass)
 {
+	// The snapshot is AUTHORITATIVE for this commit: absent settings mean the commit's factories
+	// get NONE - never inherit whatever a previous commit installed. The additive-only first
+	// version leaked state live (2026-07-14): with vanilla's sample setting OFF the snapshot
+	// shipped empty, the install no-op'd, and the clones received the PREVIOUS test's recipe
+	// straight from this service's stale stored state. On a listen host this install (like the
+	// old Restore-recipe install before it) also overwrites the host player's own sampled state
+	// when a remote client's commit lands - a pre-existing shared-service trade-off; the
+	// reported environment (dedicated server) has no local player.
 	if (Snapshot.bHasRecipe && Snapshot.Recipe)
 	{
 		// Same install the RESTORE commit already used - also syncs the subsystem mirror fields
 		// (StoredProductionRecipe / bHasStoredProductionRecipe) the scaled spawner reads.
+		ClearStoredShardState();  // shard fields re-install below only when the snapshot carries them
 		StoreProductionRecipeClass(Snapshot.Recipe);
+	}
+	else
+	{
+		ClearStoredProductionRecipe();  // clears recipe AND shard/somersloop state
 	}
 
 	// Server-side sanity on client-shipped values: clamp to vanilla's reachable ranges rather
