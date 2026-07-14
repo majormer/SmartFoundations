@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [34.2.0] - Unreleased
+## [34.2.0] - 2026-07-14
 
 > *Tap-to-toggle controls for Steam Deck, automatic power daisy-chaining while scaling, a blueprint-only Auto-Connect switch - plus a run of Extend and Smart Upgrade fixes, including a material-duplication bug and dedicated-server recipe copying.*
 

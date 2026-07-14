@@ -2526,31 +2526,31 @@ msgstr "Оновлення {0} → Mk.{1}..."
 
 msgctxt "SmartFoundations,HUD_BeltsSkipped"
 msgid "*{0} belt connection(s) skipped: {1}"
-msgstr ""
+msgstr "*Пропущено стрічкових з'єднань: {0}: {1}"
 
 msgctxt "SmartFoundations,HUD_PipesSkipped"
 msgid "*{0} pipe connection(s) skipped: {1}"
-msgstr ""
+msgstr "*Пропущено трубних з'єднань: {0}: {1}"
 
 msgctxt "SmartFoundations,HUD_SkipReason_InvalidShape"
 msgid "invalid shape ({0})"
-msgstr ""
+msgstr "неприпустима форма ({0})"
 
 msgctxt "SmartFoundations,HUD_SkipReason_LaneBlocked"
 msgid "lane blocked ({0})"
-msgstr ""
+msgstr "лінію заблоковано ({0})"
 
 msgctxt "SmartFoundations,HUD_SkipReason_TooClose"
 msgid "too close ({0})"
-msgstr ""
+msgstr "надто близько ({0})"
 
 msgctxt "SmartFoundations,HUD_SkipReason_TooFar"
 msgid "too far ({0})"
-msgstr ""
+msgstr "надто далеко ({0})"
 
 msgctxt "SmartFoundations,HUD_SkipReason_TooSteep"
 msgid "too steep ({0})"
-msgstr ""
+msgstr "надто круто ({0})"
 
 msgctxt "SmartFoundations,MP_Notice_BlueprintGridTooLarge"
 msgid "Blueprint grid too large for one multiplayer placement (~{0} buildings, max ~{1}). Build in smaller sections."
@@ -2619,3 +2619,67 @@ msgstr "модуль"
 msgctxt "SmartFoundations,Restore_RecentNone"
 msgid "No recent restores this session - apply one from the Smart Panel first"
 msgstr "Немає нещодавніх відновлень у цій сесії - спочатку застосуйте одне через Smart Панель"
+
+msgctxt "7D7230F74AFBCA6BF4F61B81C23EC15C"
+msgid "Daisy-Chain Power:"
+msgstr "Ланцюг живлення:"
+
+msgctxt "SmartFoundations,HUD_RoleChain"
+msgid "Chain"
+msgstr "Ланцюг"
+
+msgctxt "SmartFoundations,HUD_RoleRows"
+msgid "Rows"
+msgstr "Ряди"
+
+msgctxt "SmartFoundations,HUD_ScaleDaisyChain"
+msgid "Power Chain: {0}"
+msgstr "Ланцюг живлення: {0}"
+
+msgctxt "SmartFoundations,P.NearbyLogisticsRange"
+msgid "Nearby Logistics Range (m)"
+msgstr "Радіус ближньої логістики (м)"
+
+msgctxt "SmartFoundations,P.NearbyLogisticsRange.TT"
+msgid "Maximum connector-to-connector distance for nearby factory belt and pipe Auto-Connect. Blueprint seams and manifold lanes are unaffected."
+msgstr "Максимальна відстань між конекторами для автоз'єднання стрічок і труб ближніх фабрик. Шви креслень і лінії колекторів не зачіпаються."
+
+msgctxt "SmartFoundations,P.bBlueprintSeamAutoConnectEnabled"
+msgid "Blueprint Seam Auto-Connect"
+msgstr "Автоз'єднання швів креслення"
+
+msgctxt "SmartFoundations,P.bBlueprintSeamAutoConnectEnabled.TT"
+msgid "Connect belts and pipes across adjacent copies when scaling a blueprint, independently of nearby Belt and Pipe Auto-Connect."
+msgstr "З'єднує стрічки й труби між сусідніми копіями під час масштабування креслення, незалежно від автоз'єднання ближніх стрічок і труб."
+
+msgctxt "SmartFoundations,P.bScaleDaisyChainPower"
+msgid "Scale Daisy-Chain Power"
+msgstr "Ланцюг живлення під час масштабування"
+
+msgctxt "SmartFoundations,P.bScaleDaisyChainPower.TT"
+msgid "When Upgraded Power Connectors is unlocked, scaling factories and generators wires adjacent buildings together along the grid X axis."
+msgstr "Коли розблоковано покращені силові конектори, масштабування фабрик і генераторів з'єднує сусідні будівлі вздовж осі X сітки."
+
+msgctxt "SmartFoundations,P.bToggleTransformModes"
+msgid "Tap to Toggle Transform Modes"
+msgstr "Перемикати режими трансформації дотиком"
+
+msgctxt "SmartFoundations,P.bToggleTransformModes.TT"
+msgid "Tap a transform key (Spacing, Steps, Stagger, Rotation, or Recipe on a factory) to switch the mode on; tap it again to switch it off. Made for controllers and Steam Input radial menus, which cannot hold a key. Off keeps the normal hold-to-use behavior."
+msgstr "Торкніться клавіші трансформації (Інтервал, Сходинки, Зсув, Обертання або Рецепт на фабриці), щоб увімкнути режим; торкніться ще раз, щоб вимкнути. Створено для контролерів і радіальних меню Steam Input, які не можуть утримувати клавішу. Вимкнено зберігає звичайну поведінку з утриманням."
+
+msgctxt "SmartFoundations,Sec.AutoConnectBehavior"
+msgid "Auto-Connect Behavior"
+msgstr "Поведінка автоз'єднання"
+
+msgctxt "SmartFoundations,Sec.AutoConnectBehavior.TT"
+msgid "Controls behavior shared by nearby belt and pipe Auto-Connect."
+msgstr "Керує поведінкою, спільною для автоз'єднання ближніх стрічок і труб."
+
+msgctxt "SmartFoundations,Sec.BlueprintAutoConnect"
+msgid "Blueprint Auto-Connect"
+msgstr "Автоз'єднання креслень"
+
+msgctxt "SmartFoundations,Sec.BlueprintAutoConnect.TT"
+msgid "Controls connections between adjacent copies of scaled blueprints."
+msgstr "Керує з'єднаннями між сусідніми копіями масштабованих креслень."

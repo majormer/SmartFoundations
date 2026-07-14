@@ -2461,31 +2461,31 @@ msgstr "กำลังอัพเกรด {0} → Mk.{1}..."
 
 msgctxt "SmartFoundations,HUD_BeltsSkipped"
 msgid "*{0} belt connection(s) skipped: {1}"
-msgstr ""
+msgstr "*ข้ามการเชื่อมต่อสายพาน {0} จุด: {1}"
 
 msgctxt "SmartFoundations,HUD_PipesSkipped"
 msgid "*{0} pipe connection(s) skipped: {1}"
-msgstr ""
+msgstr "*ข้ามการเชื่อมต่อท่อ {0} จุด: {1}"
 
 msgctxt "SmartFoundations,HUD_SkipReason_InvalidShape"
 msgid "invalid shape ({0})"
-msgstr ""
+msgstr "รูปทรงไม่ถูกต้อง ({0})"
 
 msgctxt "SmartFoundations,HUD_SkipReason_LaneBlocked"
 msgid "lane blocked ({0})"
-msgstr ""
+msgstr "เลนถูกกีดขวาง ({0})"
 
 msgctxt "SmartFoundations,HUD_SkipReason_TooClose"
 msgid "too close ({0})"
-msgstr ""
+msgstr "ใกล้เกินไป ({0})"
 
 msgctxt "SmartFoundations,HUD_SkipReason_TooFar"
 msgid "too far ({0})"
-msgstr ""
+msgstr "ไกลเกินไป ({0})"
 
 msgctxt "SmartFoundations,HUD_SkipReason_TooSteep"
 msgid "too steep ({0})"
-msgstr ""
+msgstr "ชันเกินไป ({0})"
 
 msgctxt "SmartFoundations,MP_Notice_BlueprintGridTooLarge"
 msgid "Blueprint grid too large for one multiplayer placement (~{0} buildings, max ~{1}). Build in smaller sections."
@@ -2554,3 +2554,67 @@ msgstr "โมดูล"
 msgctxt "SmartFoundations,Restore_RecentNone"
 msgid "No recent restores this session - apply one from the Smart Panel first"
 msgstr "ยังไม่มีการ Restore ล่าสุดในเซสชันนี้ - ใช้จาก Smart แผงควบคุมก่อน"
+
+msgctxt "7D7230F74AFBCA6BF4F61B81C23EC15C"
+msgid "Daisy-Chain Power:"
+msgstr "เชื่อมพลังงานแบบลูกโซ่:"
+
+msgctxt "SmartFoundations,HUD_RoleChain"
+msgid "Chain"
+msgstr "โซ่"
+
+msgctxt "SmartFoundations,HUD_RoleRows"
+msgid "Rows"
+msgstr "แถว"
+
+msgctxt "SmartFoundations,HUD_ScaleDaisyChain"
+msgid "Power Chain: {0}"
+msgstr "โซ่พลังงาน: {0}"
+
+msgctxt "SmartFoundations,P.NearbyLogisticsRange"
+msgid "Nearby Logistics Range (m)"
+msgstr "ระยะโลจิสติกส์ใกล้เคียง (ม.)"
+
+msgctxt "SmartFoundations,P.NearbyLogisticsRange.TT"
+msgid "Maximum connector-to-connector distance for nearby factory belt and pipe Auto-Connect. Blueprint seams and manifold lanes are unaffected."
+msgstr "ระยะห่างสูงสุดระหว่างจุดเชื่อมต่อสำหรับการเชื่อมต่ออัตโนมัติของสายพานและท่อของโรงงานใกล้เคียง รอยต่อพิมพ์เขียวและเลนแมนิโฟลด์จะไม่ได้รับผลกระทบ"
+
+msgctxt "SmartFoundations,P.bBlueprintSeamAutoConnectEnabled"
+msgid "Blueprint Seam Auto-Connect"
+msgstr "เชื่อมต่อรอยต่อพิมพ์เขียวอัตโนมัติ"
+
+msgctxt "SmartFoundations,P.bBlueprintSeamAutoConnectEnabled.TT"
+msgid "Connect belts and pipes across adjacent copies when scaling a blueprint, independently of nearby Belt and Pipe Auto-Connect."
+msgstr "เชื่อมต่อสายพานและท่อระหว่างสำเนาที่อยู่ติดกันเมื่อปรับขนาดพิมพ์เขียว โดยเป็นอิสระจากการเชื่อมต่อสายพานและท่อใกล้เคียงอัตโนมัติ"
+
+msgctxt "SmartFoundations,P.bScaleDaisyChainPower"
+msgid "Scale Daisy-Chain Power"
+msgstr "เชื่อมพลังงานแบบลูกโซ่เมื่อปรับขนาด"
+
+msgctxt "SmartFoundations,P.bScaleDaisyChainPower.TT"
+msgid "When Upgraded Power Connectors is unlocked, scaling factories and generators wires adjacent buildings together along the grid X axis."
+msgstr "เมื่อปลดล็อกตัวเชื่อมต่อพลังงานขั้นสูงแล้ว การปรับขนาดโรงงานและเครื่องกำเนิดไฟฟ้าจะเดินสายเชื่อมอาคารที่อยู่ติดกันไปตามแกน X ของกริด"
+
+msgctxt "SmartFoundations,P.bToggleTransformModes"
+msgid "Tap to Toggle Transform Modes"
+msgstr "แตะเพื่อสลับโหมดการแปลง"
+
+msgctxt "SmartFoundations,P.bToggleTransformModes.TT"
+msgid "Tap a transform key (Spacing, Steps, Stagger, Rotation, or Recipe on a factory) to switch the mode on; tap it again to switch it off. Made for controllers and Steam Input radial menus, which cannot hold a key. Off keeps the normal hold-to-use behavior."
+msgstr "แตะปุ่มการแปลง (ระยะห่าง, ขั้น, สลับเหลื่อม, การหมุน หรือสูตรบนโรงงาน) เพื่อเปิดโหมด แตะอีกครั้งเพื่อปิด ออกแบบมาสำหรับคอนโทรลเลอร์และเมนูเรเดียลของ Steam Input ซึ่งไม่สามารถกดปุ่มค้างได้ เมื่อปิดจะคงพฤติกรรมกดค้างตามปกติไว้"
+
+msgctxt "SmartFoundations,Sec.AutoConnectBehavior"
+msgid "Auto-Connect Behavior"
+msgstr "พฤติกรรมการเชื่อมต่ออัตโนมัติ"
+
+msgctxt "SmartFoundations,Sec.AutoConnectBehavior.TT"
+msgid "Controls behavior shared by nearby belt and pipe Auto-Connect."
+msgstr "ควบคุมพฤติกรรมที่ใช้ร่วมกันโดยการเชื่อมต่อสายพานและท่อใกล้เคียงอัตโนมัติ"
+
+msgctxt "SmartFoundations,Sec.BlueprintAutoConnect"
+msgid "Blueprint Auto-Connect"
+msgstr "เชื่อมต่อพิมพ์เขียวอัตโนมัติ"
+
+msgctxt "SmartFoundations,Sec.BlueprintAutoConnect.TT"
+msgid "Controls connections between adjacent copies of scaled blueprints."
+msgstr "ควบคุมการเชื่อมต่อระหว่างสำเนาที่อยู่ติดกันของพิมพ์เขียวที่ปรับขนาด"

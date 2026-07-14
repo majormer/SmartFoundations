@@ -1,6 +1,6 @@
 # <img src="https://github.com/majormer/SmartFoundations/blob/main/images/Smart-Logo.png?raw=true" width="150" alt="Smart! Logo"> Smart! Mod
 
-![Status](https://img.shields.io/badge/Status-Released-brightgreen) ![Version](https://img.shields.io/badge/Version-34.1.0-blue) ![Satisfactory](https://img.shields.io/badge/Satisfactory-1.2-blue) ![Engine](https://img.shields.io/badge/Engine-UE%205.6-blue) ![SML](https://img.shields.io/badge/SML-3.12-blue) ![Multiplayer](https://img.shields.io/badge/Multiplayer-Supported-brightgreen) ![AI Assisted Development Used](https://img.shields.io/badge/AI%20Assisted%20Development%20Used-Disclosure%20Below-blue)
+![Status](https://img.shields.io/badge/Status-Released-brightgreen) ![Version](https://img.shields.io/badge/Version-34.2.0-blue) ![Satisfactory](https://img.shields.io/badge/Satisfactory-1.2-blue) ![Engine](https://img.shields.io/badge/Engine-UE%205.6-blue) ![SML](https://img.shields.io/badge/SML-3.12-blue) ![Multiplayer](https://img.shields.io/badge/Multiplayer-Supported-brightgreen) ![AI Assisted Development Used](https://img.shields.io/badge/AI%20Assisted%20Development%20Used-Disclosure%20Below-blue)
 
 > **Multiplayer note:** As of v32.0.0, every Smart! feature works in multiplayer on dedicated servers (Windows and Linux) — including **Smart Walking** and the new-in-v33.1.0 **Hyper Tube** support. If you hit something odd in a multiplayer session, please report it on [GitHub](https://github.com/majormer/SmartFoundations/issues) or [Discord](https://discord.gg/SgXY4CwXYw).
 
@@ -113,21 +113,33 @@ See [LICENSE.md](https://github.com/majormer/SmartFoundations/blob/main/LICENSE.
 
 ---
 
-## 📰 What's New in v34.1.0: Player Relative Controls
+## 📰 What's New in v34.2.0: Controller support, auto power daisy-chaining, and a big fix run
 
-**Current Release:** v34.1.0 adds **Player Relative Controls** — an optional way to build in the direction you're *looking* instead of along fixed compass axes — plus quick re-placement of recent Smart Restores, and paint that finally follows your cloned and restored builds. It's opt-in and off by default, so nothing changes until you switch it on. See the [full changelog](https://github.com/majormer/SmartFoundations/blob/main/CHANGELOG.md) for everything.
+**Current Release:** v34.2.0 brings **Tap to Toggle Transform Modes** — the piece that makes Smart! genuinely usable on a controller and Steam Deck — plus **automatic power daisy-chaining while you scale**, a **blueprint-only Auto-Connect switch**, and a run of Extend and Smart Upgrade fixes, including a material-duplication bug and dedicated-server recipe copying. See the [full changelog](https://github.com/majormer/SmartFoundations/blob/main/CHANGELOG.md) for everything.
 
-### Build where you're looking
+### Build Smart! on a controller or Steam Deck
 
-Turn on **Player Relative Controls** (under Building Behavior in the mod settings) and the build grid follows your view: scroll to grow the array toward wherever you're facing, or glance to the side to extend it sideways — no more stopping to remember which way is "X." The numpad becomes a compass (Num8/Num5 away and toward you, Num6/Num4 to your right and left, Num9/Num3 up and down), and it applies to scaling *and* to spacing, steps, stagger, and rotation. Prefer the mouse? While you hold a transform key the HUD names what the wheel is driving — Forward, Lateral, or Vertical — and a quick re-tap of the key switches between them. Your classic controls are untouched when it's off, and the Smart Panel keeps its familiar X/Y/Z either way.
+Smart!'s transform modes (Spacing, Steps, Stagger, Rotation, and factory Recipe) have always been *hold-to-use* — you hold the key while scrolling. That's fine on a keyboard but impossible from a Steam Input radial menu, which can only send a quick tap. The new **Tap to Toggle Transform Modes** setting (Building Behavior, off by default) changes that: tap a mode to switch it on, tap again to switch it off, or tap a different one to change modes. A single "Smart Modes" radial now drives the whole modal surface, tap by tap. Putting the build gun away, changing buildings, or opening a panel always releases the mode, and turning the setting off restores the classic hold behavior exactly. There's a new [Controller & Steam Deck](https://github.com/majormer/SmartFoundations/wiki/Controller-and-Steam-Deck) wiki page with a full Deck layout to get you started.
 
-### Chain your recent restores without the panel
+### Power that daisy-chains itself as you scale
 
-Placing the same Smart Restore over and over used to mean reopening the Smart Panel and clicking Apply every time. Now, while you hold the Recipe/Settings key (U), **Num9 steps through the restores you've applied this session** (newest first) and Num3 steps back — each one arms exactly like pressing Apply, so repeating a layout is just aim, click, U+Num9, aim, click.
+Once Upgraded Power Connectors are unlocked, scaling a factory or generator along Smart's X axis can now **wire each copy to the next one automatically** — the common manifold layout, without a separate Extend pass. The default lives under Power Auto-Connect settings, the Smart Panel can override it for the current build, and it respects each connector's real capacity instead of forcing an invalid cable.
 
-### Restores and clones remember their paint
+### A blueprint-only Auto-Connect switch
 
-Cloned pipe floor holes, wall holes, valves, and pumps used to come out bare metal even when the source was painted — now they inherit its full customization (swatch, pattern, material, skin) like every other part. And a saved restore preset now **remembers the paint of every piece** and replays it faithfully even after a game restart or in another world, where before it could only borrow colors from buildings still standing nearby.
+Scaled blueprint seams now have their **own** Auto-Connect toggle, independent of normal Belt and Pipe Auto-Connect — keep your blueprint copies wiring together while regular auto-connect stays off. A new **Nearby Logistics Range** slider also lets you rein in how far splitters, mergers, and pipe junctions reach toward factory ports, to keep Auto-Connect out of neighboring factory groups.
+
+### Fixes worth calling out
+
+- **Smart Upgrade now charges the real cost of belts, pipes, and lifts.** Batch-upgrading a long belt line used to price it as if every belt were one short segment — a fraction of the true cost — while still refunding the old belts in full, effectively creating free materials. Costs are now exact and length-based, the panel estimate matches what you pay, and a failed upgrade returns its materials cleanly.
+- **Extend copies recipes to every copy on dedicated servers.** Extending a sampled machine to more than one copy on a dedi used to leave the extras recipe-less; the sampled recipe (and Power Shard / Somersloop settings) now travel with the build so every copy matches single-player.
+- **Scaled Extend no longer reports phantom "creature in the way" or "missing materials"** errors when there's neither, and **Extend releases predictably on both sides of a machine row.**
+
+---
+
+## 📦 Previously: v34.1.0 — Player Relative Controls
+
+v34.1.0 added **Player Relative Controls** — an optional way to build in the direction you're *looking* instead of along fixed compass axes: scroll to grow the array toward wherever you're facing, with the numpad acting as a compass. It also added quick re-placement of recent Smart Restores (hold U, Num9/Num3 to step through the ones you've applied this session) and made paint follow cloned and restored builds — including pipe floor holes, valves, and pumps, and saved presets that remember every piece's paint across game restarts.
 
 ---
 
