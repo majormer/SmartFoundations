@@ -8,6 +8,22 @@
 
 ---
 
+## 🚀 What is Smart!?
+
+Smart! is a building-assist mod for Satisfactory. It helps you place repeated layouts faster while still using normal Satisfactory buildings and normal material costs.
+
+If you already know Satisfactory, think of Smart! as a set of building tools for the jobs vanilla building makes repetitive:
+
+- **Place a grid at once** instead of clicking one foundation, wall, machine, or storage container at a time.
+- **Adjust spacing, height steps, stagger, and rotation** before you place the build.
+- **Auto-connect belts, pipes, and power** when Smart! can safely infer the intended layout.
+- **Copy a working factory module** with its belts, pipes, power poles, recipes, and distributor configuration.
+- **Upgrade existing infrastructure in batches** instead of replacing belts, lifts, pipes, and poles one by one.
+
+Smart! does **not** create custom production machines or free materials. It places and upgrades standard game buildables for you.
+
+---
+
 ## 🎬 Videos
 
 **New to Smart!?** The [**official trailer**](https://www.youtube.com/watch?v=FTlTEfIbBxw) is a four-minute tour of everything it does.
@@ -27,22 +43,6 @@
 | [![Smart! Feature Spotlight](https://i.ytimg.com/vi/U5PNgasYbP8/mqdefault.jpg)](https://www.youtube.com/watch?v=U5PNgasYbP8) | [![Smart V22 Overview](https://i.ytimg.com/vi/QZVNIQXYnNg/mqdefault.jpg)](https://www.youtube.com/watch?v=QZVNIQXYnNg) |
 
 More videos — community reviews and legacy-version overviews — are on the [Videos & Tutorials wiki page](https://github.com/majormer/SmartFoundations/wiki/Videos-and-Tutorials).
-
----
-
-## 🚀 What is Smart!?
-
-Smart! is a building-assist mod for Satisfactory. It helps you place repeated layouts faster while still using normal Satisfactory buildings and normal material costs.
-
-If you already know Satisfactory, think of Smart! as a set of building tools for the jobs vanilla building makes repetitive:
-
-- **Place a grid at once** instead of clicking one foundation, wall, machine, or storage container at a time.
-- **Adjust spacing, height steps, stagger, and rotation** before you place the build.
-- **Auto-connect belts, pipes, and power** when Smart! can safely infer the intended layout.
-- **Copy a working factory module** with its belts, pipes, power poles, recipes, and distributor configuration.
-- **Upgrade existing infrastructure in batches** instead of replacing belts, lifts, pipes, and poles one by one.
-
-Smart! does **not** create custom production machines or free materials. It places and upgrades standard game buildables for you.
 
 ---
 
