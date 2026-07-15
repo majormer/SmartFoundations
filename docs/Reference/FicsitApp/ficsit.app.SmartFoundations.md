@@ -95,7 +95,7 @@ Smart! is **source-available**, not open source: the code is published for trans
 ## ⚡ Getting Started
 
 1. **Equip a buildable** and press `K` for the Smart Panel (or use the keybinds).
-2. **Set a grid** — say `3 × 3 × 1` foundations — and check the preview in the world.
+2. **Set a grid** — say `3 × 3 × 1` foundations — then **close the Smart Panel** and check the preview in the world. (You cannot place while the panel is open.)
 3. **Click once** to place the whole layout at normal material cost.
 4. Have a working module? Hold the same building over it and pick a direction to **Extend** the pattern.
 
@@ -124,27 +124,11 @@ The complete, always-current reference lives on the wiki, generated from the mod
 
 ## 📦 Supported Buildings
 
-Smart! supports many buildables, especially those with normal single-click placement.
+If a building places with **one click** in vanilla, Smart! can usually scale it into a grid — foundations and walls, production machines, storage, power poles and generators, splitters/mergers/pipes/valves, and most signs and lights.
 
-### Commonly supported categories
+Drag-based or multi-step placements (manual belts and pipes, conveyor lifts, power lines, hypertubes, railways) are not grid-scaled directly, though Smart! still creates them through Auto-Connect, Extend, and Smart Walking. A few world-tied buildings (miners, water extractors) are restricted.
 
-- Foundations, ramps, walls, barriers, railings, walkways, and catwalks.
-- Production buildings such as constructors, assemblers, manufacturers, smelters, foundries, refineries, packagers, blenders, converters, quantum encoders, and particle accelerators.
-- Storage containers and fluid buffers.
-- Power poles, power towers, switches, generators, and power storage.
-- Splitters, mergers, smart splitters, programmable splitters, priority mergers, stackable supports, pipeline junctions, pumps, valves, wall holes, and floor holes.
-- Many signs, billboards, lights, and factory organization pieces.
-
-### Not supported by design
-
-Some vanilla placements are multi-step or drag-based and do not fit Smart!'s grid-placement model:
-
-- Manual belts and pipes as direct grid items.
-- Conveyor lifts as direct grid items.
-- Power lines and hypertubes as direct grid items.
-- Railways and train signals.
-
-Smart! can still create belts, pipes, hypertubes, lifts, and wires as part of Auto-Connect, Extend, or Smart Walking. They are just not usually the primary item you scale directly. Your own **blueprints** can be scaled into a grid with the seams auto-connected — see [Smart! Blueprints](https://github.com/majormer/SmartFoundations/wiki/Blueprints).
+See the full breakdown — supported categories, what's not, and why — on the **[Supported Buildings wiki page](https://github.com/majormer/SmartFoundations/wiki/Supported-Buildings)**.
 
 ---
 
