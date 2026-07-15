@@ -8,15 +8,25 @@
 
 ---
 
-<div align="center">
+## 🎬 Videos
 
-### ▶ [Watch the Official Smart! Trailer](https://www.youtube.com/watch?v=FTlTEfIbBxw)
+**New to Smart!?** The [**official trailer**](https://www.youtube.com/watch?v=FTlTEfIbBxw) is a four-minute tour of everything it does.
 
-[![Watch the official Smart! trailer](https://img.youtube.com/vi/FTlTEfIbBxw/maxresdefault.jpg)](https://www.youtube.com/watch?v=FTlTEfIbBxw)
+[![Watch the official Smart! trailer](https://i.ytimg.com/vi/FTlTEfIbBxw/mqdefault.jpg)](https://www.youtube.com/watch?v=FTlTEfIbBxw)
 
-**New to Smart!? Start here — a four-minute tour of everything it does.**
+**Official tutorial series** — step-by-step deep dives on the current build. More episodes are in production; see the [full roadmap](https://github.com/majormer/SmartFoundations/wiki/Videos-and-Tutorials) or the [YouTube playlist](https://www.youtube.com/playlist?list=PLUr0oVkBNPOY).
 
-</div>
+| Ep 2 — Grid Scaling | Ep 3 — Transforms |
+|:---:|:---:|
+| [![Grid Scaling](https://i.ytimg.com/vi/TVowO9mHJHw/mqdefault.jpg)](https://www.youtube.com/watch?v=TVowO9mHJHw) | [![Transforms](https://i.ytimg.com/vi/MHbUxe4F9Iw/mqdefault.jpg)](https://www.youtube.com/watch?v=MHbUxe4F9Iw) |
+
+**Community spotlights** — [Enderprise Architecture](https://www.youtube.com/@EnderpriseArchitecture) and [RightMindGamming](https://www.youtube.com/@rightmindgamming).
+
+| Smart! Feature Spotlight | Smart V22 Overview |
+|:---:|:---:|
+| [![Smart! Feature Spotlight](https://i.ytimg.com/vi/U5PNgasYbP8/mqdefault.jpg)](https://www.youtube.com/watch?v=U5PNgasYbP8) | [![Smart V22 Overview](https://i.ytimg.com/vi/QZVNIQXYnNg/mqdefault.jpg)](https://www.youtube.com/watch?v=QZVNIQXYnNg) |
+
+More videos — community reviews and legacy-version overviews — are on the [Videos & Tutorials wiki page](https://github.com/majormer/SmartFoundations/wiki/Videos-and-Tutorials).
 
 ---
 
@@ -33,26 +43,6 @@ If you already know Satisfactory, think of Smart! as a set of building tools for
 - **Upgrade existing infrastructure in batches** instead of replacing belts, lifts, pipes, and poles one by one.
 
 Smart! does **not** create custom production machines or free materials. It places and upgrades standard game buildables for you.
-
----
-
-## 🎬 Watch Smart! in Action
-
-If you are new, videos explain Smart! much faster than a list of controls.
-
-| Smart! Feature Spotlight by [Enderprise Architecture](https://www.youtube.com/@EnderpriseArchitecture) | Smart V22 Overview by [RightMindGamming](https://www.youtube.com/@rightmindgamming) |
-|:---:|:---:|
-| [![Smart! Feature Spotlight](https://github.com/majormer/SmartFoundations/blob/main/images/enderprise-spotlight.jpg?raw=true)](https://www.youtube.com/watch?v=U5PNgasYbP8) | [![Smart V22 Overview](https://github.com/majormer/SmartFoundations/blob/main/images/v22-overview.jpg?raw=true)](https://www.youtube.com/watch?v=QZVNIQXYnNg) |
-
-### Official Tutorial Series
-
-*Smart! — The Complete Guide.* Step-by-step deep dives on the current build. More episodes are in production — see the full roadmap on the **[Videos & Tutorials wiki page](https://github.com/majormer/SmartFoundations/wiki/Videos-and-Tutorials)** or the **[YouTube playlist](https://www.youtube.com/playlist?list=PLUr0oVkBNPOY)**.
-
-| Overview | Ep 2 — Grid Scaling | Ep 3 — Transforms |
-|:---:|:---:|:---:|
-| [![Smart! overview](https://i.ytimg.com/vi/FTlTEfIbBxw/mqdefault.jpg)](https://www.youtube.com/watch?v=FTlTEfIbBxw) | [![Grid Scaling](https://i.ytimg.com/vi/TVowO9mHJHw/mqdefault.jpg)](https://www.youtube.com/watch?v=TVowO9mHJHw) | [![Transforms](https://i.ytimg.com/vi/MHbUxe4F9Iw/mqdefault.jpg)](https://www.youtube.com/watch?v=MHbUxe4F9Iw) |
-
-More videos — community reviews, tutorials, and legacy-version overviews — are collected on the **[Videos & Tutorials wiki page](https://github.com/majormer/SmartFoundations/wiki/Videos-and-Tutorials)**.
 
 ---
 
