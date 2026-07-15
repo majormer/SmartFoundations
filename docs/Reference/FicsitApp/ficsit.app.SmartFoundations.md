@@ -2,7 +2,7 @@
 
 ![Status](https://img.shields.io/badge/Status-Released-brightgreen) ![Version](https://img.shields.io/badge/Version-34.2.1-blue) ![Satisfactory](https://img.shields.io/badge/Satisfactory-1.2-blue) ![Engine](https://img.shields.io/badge/Engine-UE%205.6-blue) ![SML](https://img.shields.io/badge/SML-3.12-blue) ![Multiplayer](https://img.shields.io/badge/Multiplayer-Supported-brightgreen) ![AI Assisted Development Used](https://img.shields.io/badge/AI%20Assisted%20Development%20Used-Disclosure%20Below-blue)
 
-> **Multiplayer note:** As of v32.0.0, every Smart! feature works in multiplayer on dedicated servers (Windows and Linux) — including **Smart Walking** and the new-in-v33.1.0 **Hyper Tube** support. If you hit something odd in a multiplayer session, please report it on [GitHub](https://github.com/majormer/SmartFoundations/issues) or [Discord](https://discord.gg/SgXY4CwXYw).
+> **Multiplayer note:** As of v32.0.0, every Smart! feature works in multiplayer on dedicated servers (Windows and Linux) — including **Smart Walking** and the new-in-v33.1.0 **hypertube** support. If you hit something odd in a multiplayer session, please report it on [GitHub](https://github.com/majormer/SmartFoundations/issues) or [Discord](https://discord.gg/SgXY4CwXYw).
 
 **Quick links:** [Watch the trailer](https://www.youtube.com/watch?v=FTlTEfIbBxw) • [First-time setup](https://github.com/majormer/SmartFoundations/wiki/Quick-Start) • [Wiki](https://github.com/majormer/SmartFoundations/wiki) • [Discord](https://discord.gg/SgXY4CwXYw) • [Report bugs](https://github.com/majormer/SmartFoundations/issues) • [Source](https://github.com/majormer/SmartFoundations)
 
@@ -10,9 +10,9 @@
 
 ## 🚀 What is Smart!?
 
-Smart! is a building-assist mod for Satisfactory. It helps you place repeated layouts faster while still using normal Satisfactory buildings and normal material costs.
+**Stop building by hand.** Smart! turns hundreds of repetitive build-gun clicks into one — place a whole grid of foundations, machines, or storage at once, with the belts, pipes, and power wired for you. It uses standard Satisfactory buildings at normal material costs; it just removes the tedium.
 
-If you already know Satisfactory, think of Smart! as a set of building tools for the jobs vanilla building makes repetitive:
+Think of it as a set of building tools for the jobs vanilla building makes repetitive:
 
 - **Place a grid at once** instead of clicking one foundation, wall, machine, or storage container at a time.
 - **Adjust spacing, height steps, stagger, and rotation** before you place the build.
@@ -46,6 +46,26 @@ More videos — community reviews and legacy-version overviews — are on the [V
 
 ---
 
+## 🧱 Core Features
+
+What each feature does at a glance — follow a **Guide** link for the full how-to on the wiki.
+
+| Feature | What it does | Guide |
+|---|---|---|
+| **Grid Scaling** | Place a whole grid of a buildable in one action, scaled on X, Y, and Z. | [Grid Scaling](https://github.com/majormer/SmartFoundations/wiki/Grid-Scaling) |
+| **Spacing, Steps, Stagger, Rotation** | Shape the grid: add gaps, step heights for stairs, offset rows, or curve it into arcs. | [Transforms](https://github.com/majormer/SmartFoundations/wiki/Transforms) |
+| **Auto-Connect** | Preview the belts, pipes, and power between what you place, when Smart! can infer it safely. | [Auto-Connect](https://github.com/majormer/SmartFoundations/wiki/Auto-Connect) |
+| **Smart! Blueprints** | Scale your own blueprint into a grid with the seams between copies auto-wired. | [Blueprints](https://github.com/majormer/SmartFoundations/wiki/Blueprints) |
+| **Extend** | Copy an existing factory module — building, logistics, power, recipe — and continue the pattern. | [Extend](https://github.com/majormer/SmartFoundations/wiki/Extend) |
+| **Smart Upgrade** | Batch-upgrade belts, lifts, pipes, and poles after you unlock better tiers. | [Smart Upgrade](https://github.com/majormer/SmartFoundations/wiki/Smart-Upgrade) |
+| **Smart Restore** | Save, share, and replay panel setups and whole factory modules. | [Smart Restore](https://github.com/majormer/SmartFoundations/wiki/Smart-Restore) |
+| **Smart Walking** | Lay a single connected run that turns, climbs, and routes to a destination. | [Smart Walking](https://github.com/majormer/SmartFoundations/wiki/Smart-Walking) |
+| **Smart Dismantle** | Remove Smart-built groups in one action with the game's Blueprint Dismantle. | [Smart Dismantle](https://github.com/majormer/SmartFoundations/wiki/Smart-Dismantle) |
+| **Smart Panel & HUD** | A form for every control (`K`), plus an on-screen overlay while you build. | [Smart Panel & HUD](https://github.com/majormer/SmartFoundations/wiki/Smart-Panel-and-HUD) |
+| **Controls** | Keybinds and mouse, optional Player Relative building, and controller / Steam Deck support. | [Controls](https://github.com/majormer/SmartFoundations/wiki/Controls) |
+
+---
+
 ## 🧭 Should You Install Smart!?
 
 Smart! is useful if you enjoy designing factories but do not enjoy repeating the same placement action hundreds of times.
@@ -66,21 +86,9 @@ Smart! is useful if you enjoy designing factories but do not enjoy repeating the
 - A creative-mode replacement.
 - Perfect compatibility with every modded buildable or every other building-assist mod.
 
-### Source Availability
+### Source availability
 
-Smart! is **source-available**, not open source. The source code is published to support community transparency, code review, and pull request contributions. It is **not** published for reuse in other projects or redistribution of modified builds.
-
-**What you can do:**
-- View and study the source code for learning
-- Submit contributions via pull requests
-- Build locally for testing contributions
-
-**What requires permission:**
-- Redistribution of modified builds
-- Reuse in other mods or projects
-- Publication of derivative Smart!-like mods
-
-See [LICENSE.md](https://github.com/majormer/SmartFoundations/blob/main/LICENSE.md) for the full terms. Source available as of April 26, 2026.
+Smart! is **source-available**, not open source: the code is published for transparency, review, and pull-request contributions — not for reuse or redistribution of modified builds. See [LICENSE.md](https://github.com/majormer/SmartFoundations/blob/main/LICENSE.md) for the full terms. (Source available as of April 26, 2026.)
 
 ---
 
@@ -91,14 +99,6 @@ See [LICENSE.md](https://github.com/majormer/SmartFoundations/blob/main/LICENSE.
 3. **Preview the full layout** before committing.
 4. **Click once** to place the whole layout, paying normal material costs.
 5. For existing factory modules, use **Extend** by holding the same building type over an existing building and selecting a valid direction.
-
----
-
-## 📰 What's New
-
-Smart! is actively developed. For the highlights of the latest release and the full history of every version, see the **[changelog](https://github.com/majormer/SmartFoundations/blob/main/CHANGELOG.md)**.
-
-Curious about a feature you saw mentioned? The **[Wiki](https://github.com/majormer/SmartFoundations/wiki)** has a page for each one.
 
 ---
 
@@ -116,32 +116,18 @@ Smart! has many keybinds, but you do not need to learn them all immediately.
 6. Place it.
 7. Try Spacing, Steps, and Stagger after the basic grid makes sense.
 
-The default keybinds are in the **Controls** section below; keybinds can be changed in **Options > Controls > Mods**.
+See the **Controls** section below for where to find settings and keybinds.
 
 ---
 
-## 🧱 Core Features
+## 🎮 Controls & Settings
 
-What each feature does at a glance — follow a **Guide** link for the full how-to on the wiki.
+**Where to find things:**
 
-| Feature | What it does | Guide |
-|---|---|---|
-| **Grid Scaling** | Place a whole grid of a buildable in one action, scaled on X, Y, and Z. | [Grid Scaling](https://github.com/majormer/SmartFoundations/wiki/Grid-Scaling) |
-| **Spacing, Steps, Stagger, Rotation** | Shape the grid: add gaps, step heights for stairs, offset rows, or curve it into arcs. | [Transforms](https://github.com/majormer/SmartFoundations/wiki/Transforms) |
-| **Auto-Connect** | Preview the belts, pipes, and power between what you place, when Smart! can infer it safely. | [Auto-Connect](https://github.com/majormer/SmartFoundations/wiki/Auto-Connect) |
-| **Smart! Blueprints** | Scale your own blueprint into a grid with the seams between copies auto-wired. | [Blueprints](https://github.com/majormer/SmartFoundations/wiki/Blueprints) |
-| **Extend** | Copy an existing factory module — building, logistics, power, recipe — and continue the pattern. | [Extend](https://github.com/majormer/SmartFoundations/wiki/Extend) |
-| **Smart Upgrade** | Batch-upgrade belts, lifts, pipes, and poles after you unlock better tiers. | [Smart Upgrade](https://github.com/majormer/SmartFoundations/wiki/Smart-Upgrade) |
-| **Smart Restore** | Save, share, and replay panel setups and whole factory modules. | [Smart Restore](https://github.com/majormer/SmartFoundations/wiki/Smart-Restore) |
-| **Smart Walking** | Lay a single connected run that turns, climbs, and routes to a destination. | [Smart Walking](https://github.com/majormer/SmartFoundations/wiki/Smart-Walking) |
-| **Smart Dismantle** | Remove Smart-built groups in one action with the game's Blueprint Dismantle. | [Smart Dismantle](https://github.com/majormer/SmartFoundations/wiki/Smart-Dismantle) |
-| **Smart Panel & HUD** | A form for every control (`K`), plus an on-screen overlay while you build. | [Smart Panel & HUD](https://github.com/majormer/SmartFoundations/wiki/Smart-Panel-and-HUD) |
-| **Controls** | Keybinds and mouse, optional Player Relative building, and controller / Steam Deck support. | [Controls](https://github.com/majormer/SmartFoundations/wiki/Controls) |
+- **Settings** — Main Menu → **Mods → Smart!**. Changes made here **persist between saves and between sessions**.
+- **Keybinds** — Main Menu → **Options → Keybindings → "Smart! Mod Controls"** section. Rebind any Smart! key here.
 
----
-## 🎮 Controls
-
-Smart! uses **native Satisfactory keybinds**, customizable in **Options > Controls > Mods**. The essentials: press `K` for the Smart Panel, use the numpad (or hold an axis key and scroll) to size the grid, and hold a transform key — `;` spacing, `I` steps, `Y` stagger, `,` rotation — while scrolling to shape it.
+Smart! uses **native Satisfactory keybinds**. The essentials: press `K` for the Smart Panel, use the numpad (or hold an axis key and scroll) to size the grid, and hold a transform key — `;` spacing, `I` steps, `Y` stagger, `,` rotation — while scrolling to shape it.
 
 The complete, always-current reference lives on the wiki, generated from the mod's own code:
 
@@ -152,6 +138,7 @@ The complete, always-current reference lives on the wiki, generated from the mod
 - **[Glossary](https://github.com/majormer/SmartFoundations/wiki/Glossary)** — hologram, grid, manifold, distributor, and other terms.
 
 ---
+
 ## 📦 Supported Buildings
 
 Smart! supports many buildables, especially those with normal single-click placement.
@@ -174,7 +161,7 @@ Some vanilla placements are multi-step or drag-based and do not fit Smart!'s gri
 - Power lines and hypertubes as direct grid items.
 - Railways and train signals.
 
-Smart! can still create belts, pipes, hyper tubes, lifts, and wires as part of Auto-Connect, Extend, or Smart Walking. They are just not usually the primary item you scale directly. Your own **blueprints** can be scaled into a grid with the seams auto-connected — see [Smart! Blueprints](https://github.com/majormer/SmartFoundations/wiki/Blueprints).
+Smart! can still create belts, pipes, hypertubes, lifts, and wires as part of Auto-Connect, Extend, or Smart Walking. They are just not usually the primary item you scale directly. Your own **blueprints** can be scaled into a grid with the seams auto-connected — see [Smart! Blueprints](https://github.com/majormer/SmartFoundations/wiki/Blueprints).
 
 ---
 
@@ -208,15 +195,7 @@ Start with the **wiki** for how-to guides, then the Discord for support, example
 
 > The Smart! wiki and issue tracker now live on the main source repository above. They previously lived in a separate issue-tracker repository, before Smart! became source-available — please use the links here rather than any older tracker links you may have bookmarked.
 
-**Bug reports use structured issue forms** — pick the type that fits: bug, crash, compatibility, Blueprint Designer, feature request, or a Satisfactory 1.2 report. (Blank issues are disabled; the form walks you through it.) Each form prompts for the details below, so it helps to have them ready:
-
-- Smart! version and SML version.
-- Satisfactory version and branch (for example, 1.2 stable, CL 491125).
-- Session type (single-player or multiplayer) and save type.
-- Steps to reproduce, what you expected, and what actually happened.
-- Logs — `FactoryGame.log`, plus the crash-reporter text for crashes.
-- Any other mods you have installed.
-- Screenshots or video. For Extend issues, a screenshot from above is especially helpful.
+**Bug reports use guided issue forms** — pick the type that fits (bug, crash, compatibility, Blueprint Designer, feature request, or a Satisfactory 1.2 report) and the form walks you through the details it needs: Smart! and SML versions, Satisfactory version, session type, reproduction steps, logs, and any other mods installed. For Extend issues, a screenshot from above is especially helpful. (Blank issues are disabled; the form guides you.)
 
 ---
 
@@ -267,51 +246,17 @@ No. Smart! is a different system. It can place grids and factory modules in ways
 
 ### Does Smart! work in multiplayer?
 
-Yes — as of v32.0.0, every Smart! feature works in multiplayer on dedicated servers (Windows and Linux). Install the same Smart! version on the server and on every client. Multiplayer support is new, so if something behaves differently in a multiplayer session than in single-player, that's a bug — please report it with clear reproduction steps.
+Yes — as of v32.0.0, every Smart! feature works in multiplayer on dedicated servers (Windows and Linux). Install the same Smart! version on the server and on every client. If something behaves differently in a multiplayer session than in single-player, that's a bug — please report it with clear reproduction steps.
 
-### Why did Extend not copy my layout?
-
-Usually one of these is true:
-
-- You are not holding the same building type as the source building.
-- The source module is not a clean repeatable manifold cell.
-- Splitter or merger factory connections are using a through-line port instead of a side branch.
-- Rotations or belt directions are inconsistent.
-- The preview direction needs to be changed with the mouse wheel.
+**More questions?** The [wiki FAQ](https://github.com/majormer/SmartFoundations/wiki/FAQ) covers controls, Auto-Connect, Extend, Smart Upgrade, Smart Walking, and common troubleshooting in detail.
 
 ---
 
 ## 👥 Credits
 
-Smart! exists because of Alex's original concepts, the current rebuild, testers, translators, content creators, and community members.
+Smart! exists thanks to **Alex** (original concept and project advisor), **Finalomega** (lead developer and documentation for the current rebuild), and **Raudoc2K1** and **Shaded** (support, testing, and moderation) — along with the original contributors, testers, translators, and content creators who shaped it.
 
-### Current Team
-
-- **Alex** - Original Smart! concept creator and Project Advisor, providing guidance, counsel, and permission for the Satisfactory 1.1 continuation.
-- **Finalomega** - Lead Developer and Documentation Writer for the Satisfactory 1.1 rebuild.
-- **Raudoc2K1** - Support Staff, Tester, Discord Moderator, and Content Creator. Also known as RightMindGamming on [YouTube](https://www.youtube.com/channel/UCfy5lG-teOehpD9oYLjT7rA) and [Twitch](https://www.twitch.tv/rightmindgamming).
-- **Shaded** - Support Staff, Tester, and Discord Moderator.
-
-### Original Contributors
-
-- **Robb** - Update 8 port with partial functionality, SML expertise, and advice.
-- **Deantendo** - Created the amazing mod icon.
-- **HWEEKS** - Original description author.
-
-### Testers
-
-Special thanks to the testers from the Smart! Discord who helped shape the v22-v29 rebuild with feedback, bug reports, and validation:
-
-- **Raudoc2K1**
-- **Shaded**
-- **PerseusDemigod**
-- **-Alejandro** - Creator of *Early Free Blueprint Designer* and *Faster Hypertube Entrances*.
-- **drewfarms**
-- **Serjevski**
-
-### Thanks from Alex
-
-Huge thanks to **Marcio** for all his help from the beginning of my path as mod creator, **TwoTwoEleven** for his awesome code examples from MM, to **Archengius** for his fine example of overriding the default buildings and to **Mircea** for some fine thoughts. Thanks **jay96** for your amazing idea about arrows.
+See the full credits, including original contributors and the tester roll, on the [History & Credits wiki page](https://github.com/majormer/SmartFoundations/wiki/History-and-Credits).
 
 ---
 
