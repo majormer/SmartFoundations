@@ -103,7 +103,7 @@ That is the whole loop. For the keyboard flow, first experiments, and a full wal
 
 ---
 
-## 🎮 Controls & Settings
+## 🎮 Controls, Settings & Reference
 
 **Where to find things:**
 
@@ -112,23 +112,14 @@ That is the whole loop. For the keyboard flow, first experiments, and a full wal
 
 Smart! uses **native Satisfactory keybinds**. The essentials: press `K` for the Smart Panel, use the numpad (or hold an axis key and scroll) to size the grid, and hold a transform key — `;` spacing, `I` steps, `Y` stagger, `,` rotation — while scrolling to shape it.
 
-The complete, always-current reference lives on the wiki, generated from the mod's own code:
+The full details live on the wiki:
 
 - **[Controls](https://github.com/majormer/SmartFoundations/wiki/Controls)** — every keybind and mode.
 - **[Settings Reference](https://github.com/majormer/SmartFoundations/wiki/Settings-Reference)** — every mod setting.
 - **[Smart Panel & HUD](https://github.com/majormer/SmartFoundations/wiki/Smart-Panel-and-HUD)** — the on-screen panel and overlay.
 - **[Controller & Steam Deck](https://github.com/majormer/SmartFoundations/wiki/Controller-and-Steam-Deck)** — controller and radial-menu setups.
 - **[Glossary](https://github.com/majormer/SmartFoundations/wiki/Glossary)** — hologram, grid, manifold, distributor, and other terms.
-
----
-
-## 📦 Supported Buildings
-
-If a building places with **one click** in vanilla, Smart! can usually scale it into a grid — foundations and walls, production machines, storage, power poles and generators, splitters/mergers/pipes/valves, and most signs and lights.
-
-Drag-based or multi-step placements (manual belts and pipes, conveyor lifts, power lines, hypertubes, railways) are not grid-scaled directly, though Smart! still creates them through Auto-Connect, Extend, and Smart Walking. A few world-tied buildings (miners, water extractors) are restricted.
-
-See the full breakdown — supported categories, what's not, and why — on the **[Supported Buildings wiki page](https://github.com/majormer/SmartFoundations/wiki/Supported-Buildings)**.
+- **[Supported Buildings](https://github.com/majormer/SmartFoundations/wiki/Supported-Buildings)** — what Smart! scales into a grid, builds through other features, or does not handle yet.
 
 ---
 
