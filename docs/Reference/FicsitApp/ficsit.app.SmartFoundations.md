@@ -92,31 +92,14 @@ Smart! is **source-available**, not open source: the code is published for trans
 
 ---
 
-## ⚡ The 60-Second Version
+## ⚡ Getting Started
 
-1. **Equip a buildable** in the build gun.
-2. **Change the Smart grid** with the Smart! keybinds or press `K` to use the Smart Panel.
-3. **Preview the full layout** before committing.
-4. **Click once** to place the whole layout, paying normal material costs.
-5. For existing factory modules, use **Extend** by holding the same building type over an existing building and selecting a valid direction.
+1. **Equip a buildable** and press `K` for the Smart Panel (or use the keybinds).
+2. **Set a grid** — say `3 × 3 × 1` foundations — and check the preview in the world.
+3. **Click once** to place the whole layout at normal material cost.
+4. Have a working module? Hold the same building over it and pick a direction to **Extend** the pattern.
 
----
-
-## 🛠️ First-Time Setup
-
-Smart! has many keybinds, but you do not need to learn them all immediately.
-
-### Recommended first use
-
-1. Install Smart! with Satisfactory Mod Manager.
-2. Start with a simple item like foundations.
-3. Equip a foundation.
-4. Press `K` to open the Smart Panel.
-5. Set a small grid such as `3 × 3 × 1`.
-6. Place it.
-7. Try Spacing, Steps, and Stagger after the basic grid makes sense.
-
-See the **Controls** section below for where to find settings and keybinds.
+That is the whole loop. For the keyboard flow, first experiments, and a full walkthrough, see the **[Quick Start wiki page](https://github.com/majormer/SmartFoundations/wiki/Quick-Start)**. Settings and keybind locations are in **Controls & Settings** below.
 
 ---
 
