@@ -259,7 +259,7 @@ Smart! places normal game buildings, so your placed factories should remain. You
 
 ### Does Smart! work with blueprints?
 
-Smart! focuses on live build gun placement and factory modules. Blueprint scaling is not the same system and is not treated as a normal Smart-scaled buildable.
+Yes. **Smart! Blueprints** scales your own saved blueprints into a grid and auto-connects the belt and pipe seams between neighboring copies — each copy stays a normal, independent blueprint you can dismantle on its own. See the [Blueprints guide](https://github.com/majormer/SmartFoundations/wiki/Blueprints).
 
 ### Does Smart! replace Zoop?
 
