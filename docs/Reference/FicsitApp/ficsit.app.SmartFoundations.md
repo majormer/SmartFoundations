@@ -46,23 +46,6 @@ More videos — community reviews and legacy-version overviews — are on the [V
 
 ---
 
-## 🧠 Key Terms
-
-Smart! uses a few Satisfactory and factory-building terms throughout this page.
-
-| Term | Meaning |
-|---|---|
-| **Hologram** | The blue/orange build preview you see before placing a building. Smart! changes the hologram preview before you click. |
-| **Grid** | A repeated layout of the same buildable, such as `10 × 10 × 1` foundations or a row of constructors. |
-| **Axis** | A direction Smart! can scale or offset: X for width, Y for depth, and Z for height. |
-| **Distributor** | A belt logistics building that distributes items, usually a splitter, merger, smart splitter, programmable splitter, or priority merger. |
-| **Manifold** | A repeated factory layout where a main belt or pipe line runs past several machines, and each machine branches off that line through a splitter, merger, or junction. |
-| **Factory module** | One repeatable chunk of a factory, usually one machine plus its nearby belts, pipes, splitters, mergers, power pole, recipe, and related connections. |
-| **Extend** | Smart!'s feature for copying an existing factory module and continuing it in a chosen direction. |
-| **Auto-Connect** | Smart!'s feature for creating belts, pipes, or power lines automatically when the preview layout has clear, valid connection targets. |
-| **Through-line** | The straight part of a manifold that continues to the next splitter, merger, junction, or machine module. |
-| **Side branch** | The branch from the manifold's through-line into or out of a factory building. For Extend, this is usually the splitter/merger side port facing the factory. |
-
 ## 🧭 Should You Install Smart!?
 
 Smart! is useful if you enjoy designing factories but do not enjoy repeating the same placement action hundreds of times.
@@ -133,18 +116,7 @@ Smart! has many keybinds, but you do not need to learn them all immediately.
 6. Place it.
 7. Try Spacing, Steps, and Stagger after the basic grid makes sense.
 
-### Important controls to learn first
-
-| Action | What it is for |
-|---|---|
-| `K` | Open the Smart Panel for visual controls |
-| Scale X / Y / Z | Change how many items are placed across each axis |
-| Spacing mode | Change the gap between placed items |
-| Steps mode | Add height changes across a grid |
-| Stagger mode | Offset rows for diagonal or shifted patterns |
-| Double-tap `Num0` | Toggle Smart Auto-Connect and Extend off (and on again) for the session |
-
-Keybinds can be changed in Satisfactory's controls menu.
+The default keybinds are in the **Controls** section below; keybinds can be changed in **Options > Controls > Mods**.
 
 ---
 
@@ -177,6 +149,7 @@ The complete, always-current reference lives on the wiki, generated from the mod
 - **[Settings Reference](https://github.com/majormer/SmartFoundations/wiki/Settings-Reference)** — every mod setting.
 - **[Smart Panel & HUD](https://github.com/majormer/SmartFoundations/wiki/Smart-Panel-and-HUD)** — the on-screen panel and overlay.
 - **[Controller & Steam Deck](https://github.com/majormer/SmartFoundations/wiki/Controller-and-Steam-Deck)** — controller and radial-menu setups.
+- **[Glossary](https://github.com/majormer/SmartFoundations/wiki/Glossary)** — hologram, grid, manifold, distributor, and other terms.
 
 ---
 ## 📦 Supported Buildings
