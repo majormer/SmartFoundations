@@ -44,6 +44,14 @@ If you are new, videos explain Smart! much faster than a list of controls.
 |:---:|:---:|
 | [![Smart! Feature Spotlight](https://github.com/majormer/SmartFoundations/blob/main/images/enderprise-spotlight.jpg?raw=true)](https://www.youtube.com/watch?v=U5PNgasYbP8) | [![Smart V22 Overview](https://github.com/majormer/SmartFoundations/blob/main/images/v22-overview.jpg?raw=true)](https://www.youtube.com/watch?v=QZVNIQXYnNg) |
 
+### Official Tutorial Series
+
+*Smart! — The Complete Guide.* Step-by-step deep dives on the current build. More episodes are in production — see the full roadmap on the **[Videos & Tutorials wiki page](https://github.com/majormer/SmartFoundations/wiki/Videos-and-Tutorials)** or the **[YouTube playlist](https://www.youtube.com/playlist?list=PLUr0oVkBNPOY)**.
+
+| Overview | Ep 2 — Grid Scaling | Ep 3 — Transforms |
+|:---:|:---:|:---:|
+| [![Smart! overview](https://i.ytimg.com/vi/FTlTEfIbBxw/mqdefault.jpg)](https://www.youtube.com/watch?v=FTlTEfIbBxw) | [![Grid Scaling](https://i.ytimg.com/vi/TVowO9mHJHw/mqdefault.jpg)](https://www.youtube.com/watch?v=TVowO9mHJHw) | [![Transforms](https://i.ytimg.com/vi/MHbUxe4F9Iw/mqdefault.jpg)](https://www.youtube.com/watch?v=MHbUxe4F9Iw) |
+
 More videos — community reviews, tutorials, and legacy-version overviews — are collected on the **[Videos & Tutorials wiki page](https://github.com/majormer/SmartFoundations/wiki/Videos-and-Tutorials)**.
 
 ---
