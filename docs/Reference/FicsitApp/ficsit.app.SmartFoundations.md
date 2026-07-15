@@ -10,17 +10,17 @@
 
 ## 🚀 What is Smart!?
 
-**Stop building by hand.** Smart! turns hundreds of repetitive build-gun clicks into one — place a whole grid of foundations, machines, or storage at once, with the belts, pipes, and power wired for you. It uses standard Satisfactory buildings at normal material costs; it just removes the tedium.
+**Stop building by hand.** Smart! turns hundreds of repetitive build-gun clicks into one — size up a whole grid of foundations, machines, or storage, shape it before you commit, and place it all in a single click. Smart! can even auto-wire the belts, pipes, and power between the pieces.
 
-Think of it as a set of building tools for the jobs vanilla building makes repetitive:
+It handles the parts of factory building that get repetitive:
 
-- **Place a grid at once** instead of clicking one foundation, wall, machine, or storage container at a time.
-- **Adjust spacing, height steps, stagger, and rotation** before you place the build.
-- **Auto-connect belts, pipes, and power** when Smart! can safely infer the intended layout.
-- **Copy a working factory module** with its belts, pipes, power poles, recipes, and distributor configuration.
-- **Upgrade existing infrastructure in batches** instead of replacing belts, lifts, pipes, and poles one by one.
+- **Place a whole grid at once** instead of one foundation, wall, machine, or storage container at a time.
+- **Shape the build** with spacing, height steps, stagger, and rotation before you place it.
+- **Auto-connect belts, pipes, and power** when Smart! can safely infer the layout.
+- **Copy a working factory module** — belts, pipes, power, recipe, and distributor settings and all — and repeat it down the line.
+- **Batch-upgrade** belts, lifts, pipes, and poles in one pass after you unlock better tiers.
 
-Smart! does **not** create custom production machines or free materials. It places and upgrades standard game buildables for you.
+Everything Smart! places is a standard Satisfactory building at normal material cost. It does **not** add custom machines or free resources — it just removes the tedium.
 
 ---
 
