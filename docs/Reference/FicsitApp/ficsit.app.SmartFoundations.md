@@ -177,7 +177,7 @@ Support is completely optional, but if Smart! saves you time and you want to hel
 
 - **Direct support via Ko-fi:** [Support Finalomega on Ko-fi](https://ko-fi.com/finalomega)
 - **Help test releases:** Join Discord and provide feedback on prerelease builds.
-- **Report bugs clearly:** Include reproduction steps, screenshots, versions, and save context when possible.
+- **Report bugs clearly:** Open an issue on [GitHub](https://github.com/majormer/SmartFoundations/issues) with reproduction steps, screenshots, versions, and save context when possible.
 - **Share examples:** Screenshots and videos help other players understand what Smart! can do.
 
 No pressure. Smart! remains a community-focused project, and every kind of support helps.
