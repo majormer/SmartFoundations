@@ -606,6 +606,10 @@ void USFWalkService::RebuildOriginHolograms()
 {
     AFGHologram* Seed = SeedHologram.Get();
 
+    // #497: origin cell set changes — cost totals need a re-sum and the cells need a fresh paint.
+    bWalkCostDirty = true;
+    LastAppliedOriginState = -1;
+
     // Tear down previously-spawned origin cells — but NEVER the seed (cell 0,0), which the build gun owns.
     for (const TWeakObjectPtr<AFGHologram>& WeakHolo : OriginHolograms)
     {
@@ -813,30 +817,38 @@ bool USFWalkService::CanAffordWalk() const
 
     // Sum the cost of every walk hologram (poles + spans + origin cells) EXCLUDING the seed (OriginHolograms[0], which
     // the build gun charges separately). Walk holograms are standalone (not AddChild'd), so sum each one's own GetCost.
-    TMap<TSubclassOf<UFGItemDescriptor>, int32> Totals;
-    auto AddCost = [&Totals](AFGHologram* H)
+    // #497: the sum is CACHED — GetCost per span does spline-length math (and the pipe fallback scans
+    // the recipe list), and this ran every frame. The hologram set only changes at the mutation points
+    // (segment spawn/destroy, span relink, origin rebuild), which set bWalkCostDirty. Per frame we only
+    // re-check availability against the cached totals (inventory contents change independently).
+    if (bWalkCostDirty)
     {
-        if (!IsValid(H)) { return; }
-        for (const FItemAmount& IA : H->GetCost(/*includeChildren=*/false))
+        CachedWalkCostTotals.Reset();
+        auto AddCost = [this](AFGHologram* H)
         {
-            if (IA.ItemClass && IA.Amount > 0)
+            if (!IsValid(H)) { return; }
+            for (const FItemAmount& IA : H->GetCost(/*includeChildren=*/false))
             {
-                Totals.FindOrAdd(IA.ItemClass) += IA.Amount;
+                if (IA.ItemClass && IA.Amount > 0)
+                {
+                    CachedWalkCostTotals.FindOrAdd(IA.ItemClass) += IA.Amount;
+                }
             }
+        };
+        for (int32 i = 1; i < OriginHolograms.Num(); ++i)   // skip [0] = seed
+        {
+            AddCost(OriginHolograms[i].Get());
         }
-    };
-    for (int32 i = 1; i < OriginHolograms.Num(); ++i)   // skip [0] = seed
-    {
-        AddCost(OriginHolograms[i].Get());
-    }
-    for (const FSFWalkSegment& Seg : Segments)
-    {
-        for (const TWeakObjectPtr<AFGHologram>& W : Seg.Holograms) { AddCost(W.Get()); }
-        for (const TWeakObjectPtr<AFGHologram>& W : Seg.Spans)     { AddCost(W.Get()); }
+        for (const FSFWalkSegment& Seg : Segments)
+        {
+            for (const TWeakObjectPtr<AFGHologram>& W : Seg.Holograms) { AddCost(W.Get()); }
+            for (const TWeakObjectPtr<AFGHologram>& W : Seg.Spans)     { AddCost(W.Get()); }
+        }
+        bWalkCostDirty = false;
     }
 
     AFGCentralStorageSubsystem* CentralStorage = AFGCentralStorageSubsystem::Get(GetWorld());
-    for (const TPair<TSubclassOf<UFGItemDescriptor>, int32>& Pair : Totals)
+    for (const TPair<TSubclassOf<UFGItemDescriptor>, int32>& Pair : CachedWalkCostTotals)
     {
         int32 Available = Inventory->GetNumItems(Pair.Key);
         if (CentralStorage)
@@ -1017,13 +1029,24 @@ void USFWalkService::RefreshWalkValidity()
     bool bAnyInvalidShape = false;
     for (int32 SegIdx = 0; SegIdx < Segments.Num(); ++SegIdx)
     {
-        const FSFWalkSegment& Seg = Segments[SegIdx];
+        FSFWalkSegment& Seg = Segments[SegIdx];
         // Invalid SHAPE = span too long (>56m) or, for belts, too steep (>30deg from horizontal). Red that segment's
         // poles AND span (mirrors the auto-connect length/slope restrictions; pipes skip the slope cap). A too-long
         // segment has no span (LinkOrUpdate skips it), but its poles still red so the gap reads as invalid, not missing.
         const bool bShapeValid = IsSegmentShapeValid(SegIdx);
         if (!bShapeValid) { bAnyInvalidShape = true; }
         const EHologramMaterialState SegState = (bAfford && bShapeValid) ? EHologramMaterialState::HMS_OK : EHologramMaterialState::HMS_ERROR;
+
+        // #497 repaint-on-transition: painting every pole+span every frame repainted every spline mesh
+        // per frame (render-proxy churn). The holograms are tick- and validation-disabled, so nothing
+        // re-adds disqualifiers or resets materials between our paints — apply only when the segment's
+        // state actually changes (or its holograms were just (re)spawned, which resets the sentinel).
+        if (Seg.LastAppliedSegState == static_cast<int8>(SegState))
+        {
+            continue;
+        }
+        Seg.LastAppliedSegState = static_cast<int8>(SegState);
+
         for (const TWeakObjectPtr<AFGHologram>& WeakHolo : Seg.Holograms)
         {
             if (AFGHologram* Holo = WeakHolo.Get())
@@ -1043,19 +1066,25 @@ void USFWalkService::RefreshWalkValidity()
     }
     // Origin cross-section cells too — but skip cell 0 (the seed); handled below.
     AFGHologram* SeedH = SeedHologram.Get();
-    for (const TWeakObjectPtr<AFGHologram>& WeakHolo : OriginHolograms)
+    if (LastAppliedOriginState != static_cast<int8>(State))
     {
-        if (AFGHologram* Holo = WeakHolo.Get())
+        LastAppliedOriginState = static_cast<int8>(State);
+        for (const TWeakObjectPtr<AFGHologram>& WeakHolo : OriginHolograms)
         {
-            if (Holo == SeedH) { continue; }
-            Holo->ResetConstructDisqualifiers();
-            Holo->SetPlacementMaterialState(State);
+            if (AFGHologram* Holo = WeakHolo.Get())
+            {
+                if (Holo == SeedH) { continue; }
+                Holo->ResetConstructDisqualifiers();
+                Holo->SetPlacementMaterialState(State);
+            }
         }
     }
 
     // The SEED (parent) is the build gun's own hologram — it only knows its own 1-pole cost, so it stays cyan even when
     // the TOTAL walk is unaffordable. Force it red too when broke (parent AND children red); when affordable, leave it
-    // to the build gun's own validation so we don't fight it.
+    // to the build gun's own validation so we don't fight it. (#497: deliberately still per-frame —
+    // vanilla actively revalidates the HELD hologram each frame and would flip it back to cyan; this
+    // is one hologram, not the O(N) sweep the segment gate above removes.)
     if ((!bAfford || bAnyInvalidShape) && SeedH)
     {
         SeedH->SetPlacementMaterialState(EHologramMaterialState::HMS_ERROR);
@@ -1208,6 +1237,12 @@ void USFWalkService::UpdateSegmentSpans(int32 Index)
         Seg.Spans[PoleIdx] = NewSpan;
         if (NewSpan) { ++Made; }
     }
+
+    // #497: span set/geometry changed — cost totals need a re-sum, and this segment's holograms need
+    // their initial paint on the next validity pass (fresh spans spawn unpainted by the gate).
+    bWalkCostDirty = true;
+    Seg.LastAppliedSegState = -1;
+
     UE_LOG(LogSmartWalk, Verbose, TEXT("  UpdateSegmentSpans[%d]: %d span(s) over %d cells"), Index, Made, Count);
 }
 
@@ -1240,6 +1275,9 @@ void USFWalkService::RepositionFrom(int32 StartIndex)
 
 void USFWalkService::DestroySegmentHolograms(FSFWalkSegment& Segment)
 {
+    // #497: hologram set shrinks — cost totals need a re-sum.
+    bWalkCostDirty = true;
+
     UE_LOG(LogSmartWalk, Verbose, TEXT("  DestroySegmentHolograms: belts=%d holos=%d"),
         Segment.Spans.Num(), Segment.Holograms.Num());
     for (const TWeakObjectPtr<AFGHologram>& WeakBelt : Segment.Spans)
