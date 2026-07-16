@@ -114,35 +114,18 @@ namespace
             return;
         }
 
-        const FVector Location = ParentHologram->GetActorLocation();
-        const FRotator Rotation = ParentHologram->GetActorRotation();
-        const bool bWasLocked = ParentHologram->IsHologramLocked();
-
-        FHitResult SyntheticHit;
-        SyntheticHit.bBlockingHit = true;
-        SyntheticHit.Location = Location;
-        SyntheticHit.ImpactPoint = Location;
-        SyntheticHit.ImpactNormal = FVector::UpVector;
-        SyntheticHit.Normal = FVector::UpVector;
-        SyntheticHit.TraceStart = Location + FVector(0.0f, 0.0f, 100.0f);
-        SyntheticHit.TraceEnd = Location - FVector(0.0f, 0.0f, 100.0f);
-        SyntheticHit.Distance = 100.0f;
-        ParentHologram->SetHologramLocationAndRotation(SyntheticHit);
-
-        ParentHologram->SetActorLocation(Location);
-        ParentHologram->SetActorRotation(Rotation);
-        if (USceneComponent* Root = ParentHologram->GetRootComponent())
-        {
-            Root->SetWorldLocation(Location);
-            Root->SetWorldRotation(Rotation);
-            Root->MarkRenderStateDirty();
-        }
-
+        // #497: this used to rewrite the parent's own transform back onto itself (actor + root +
+        // MarkRenderStateDirty), feed it a synthetic hit (a no-op for locked Smart parents, whose
+        // SetHologramLocationAndRotation early-outs while locked), and toggle
+        // LockHologramPosition(off/on) EVERY movement frame. The lock toggle was the worst part:
+        // LockHologramPosition spawns build-gun UI widgets and drives UObject growth (the reason the
+        // #418 child paths bypass it), and it re-fires third-party locked-hologram hooks per frame
+        // (the #162 Infinite Nudge interaction class). None of it changed any state the parent didn't
+        // already have — the parent was moved by the build gun itself this frame. All that's needed
+        // before the topology re-derive below is fresh component world transforms for the connector
+        // positions, plus keeping the preview visible.
         ParentHologram->SetActorHiddenInGame(false);
         ParentHologram->UpdateComponentTransforms();
-
-        ParentHologram->LockHologramPosition(!bWasLocked);
-        ParentHologram->LockHologramPosition(bWasLocked);
     }
 
     void ScrubInvalidHologramChildren(AFGHologram* ParentHologram, const TCHAR* Context)
@@ -458,13 +441,14 @@ void USFExtendRestoreReplayService::TickRestoredCloneTopology(float DeltaTime)
                 IntendedRot = *FoundRot;
             }
 
-            Child->SetActorLocation(IntendedPos);
-            Child->SetActorRotation(IntendedRot);
-            if (USceneComponent* Root = Child->GetRootComponent())
+            // #497: one transform write. The old actor-write + separate root-write +
+            // MarkRenderStateDirty tripled the render-transform updates per child per movement
+            // frame; a single SetActorLocationAndRotation moves the root and dirties render
+            // transforms itself. Skip children already in place (rotation-only parent turns still
+            // pass through the rotation check).
+            if (!Child->GetActorLocation().Equals(IntendedPos, 0.5f) || !Child->GetActorRotation().Equals(IntendedRot, 0.1f))
             {
-                Root->SetWorldLocation(IntendedPos);
-                Root->SetWorldRotation(IntendedRot);
-                Root->MarkRenderStateDirty();
+                Child->SetActorLocationAndRotation(IntendedPos, IntendedRot);
             }
             Owner->HologramService->TrackChildHologram(Child, IntendedPos, IntendedRot);
         }
