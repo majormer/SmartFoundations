@@ -760,6 +760,11 @@ private:
     EHologramMaterialState LastSyncedExtendChildMaterialState = EHologramMaterialState::HMS_OK;
     bool bExtendChildMaterialStateSynced = false;
 
+    /** #497 clone reuse: deep copy of the clone-1 topology BEFORE any scaled-clone merge, captured
+     *  after the full rebuild's rotation pass. Every merge rebuilds StoredCloneTopology from a fresh
+     *  copy of this base, so incremental (count-only) rebuilds can re-merge without re-deriving. */
+    TSharedPtr<FSFCloneTopology> ScaledExtendBaseTopology;
+
     /** Reason why current configuration is invalid (empty if valid) */
     FString ScaledExtendInvalidReason;
 

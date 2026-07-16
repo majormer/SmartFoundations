@@ -176,21 +176,36 @@ void USFExtendScaledService::RebuildScaledExtendNow()
     SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("⚡ SCALED EXTEND: State changed - X=%d (clones=%d), Y=%d (rows=%d)"),
         CloneCount, CloneCount, RowCount, RowCount);
 
-    // Clear all existing previews (both primary clone infrastructure and scaled extend clones)
-    Owner->ClearBeltPreviews();
-    ClearScaledExtendClones();
+    // #497 clone reuse: when ONLY the grid counts changed (same direction signs, spacing, steps,
+    // stagger, rotation, same target), existing clones' index-keyed positions are unaffected — run
+    // the incremental diff (spawn added cells, destroy removed cells, touch nothing else) instead of
+    // the destroy-all + respawn-all below. A scroll from 7→8 copies now spawns ONE clone instead of
+    // tearing down and regenerating every factory, belt and pipe of all 8 (the scroll spike).
+    const FSFCounterState* NowState = Owner->Subsystem.IsValid() ? &Owner->Subsystem->GetCounterState() : nullptr;
+    const bool bCountOnly = NowState
+        && bHasLastRebuildState
+        && LastRebuildTarget.IsValid()
+        && LastRebuildTarget.Get() == Owner->CurrentExtendTarget.Get()
+        && IsCountOnlyChange(*NowState);
 
-    // CRITICAL: Refresh hologram position BEFORE creating belt previews.
-    // Owner->RefreshExtension applies spacing/steps to clone 1's position.
-    // Owner->CreateBeltPreviews derives infrastructure positions from the parent hologram's
-    // current location (CloneOffset = HologramPos - SourcePos), so the hologram
-    // must be at the correct position first.
-    // Force refresh even if inspection lock is active - grid changes should always apply
-    Owner->RefreshExtension(Owner->CurrentExtendHologram.Get(), true);
+    if (!bCountOnly)
+    {
+        // Clear all existing previews (both primary clone infrastructure and scaled extend clones)
+        Owner->ClearBeltPreviews();
+        ClearScaledExtendClones();
 
-    // Now recreate the primary clone's infrastructure (clone 1 = parent hologram position)
-    // This is the existing single-clone Extend behavior
-    Owner->CreateBeltPreviews(Owner->CurrentExtendHologram.Get());
+        // CRITICAL: Refresh hologram position BEFORE creating belt previews.
+        // Owner->RefreshExtension applies spacing/steps to clone 1's position.
+        // Owner->CreateBeltPreviews derives infrastructure positions from the parent hologram's
+        // current location (CloneOffset = HologramPos - SourcePos), so the hologram
+        // must be at the correct position first.
+        // Force refresh even if inspection lock is active - grid changes should always apply
+        Owner->RefreshExtension(Owner->CurrentExtendHologram.Get(), true);
+
+        // Now recreate the primary clone's infrastructure (clone 1 = parent hologram position)
+        // This is the existing single-clone Extend behavior
+        Owner->CreateBeltPreviews(Owner->CurrentExtendHologram.Get());
+    }
 
     // Apply rigid body rotation to clone 1's infrastructure when rotation is active.
     // Owner->CreateBeltPreviews positions infrastructure based on source topology + translation,
@@ -201,7 +216,9 @@ void USFExtendScaledService::RebuildScaledExtendNow()
     // 1. Rotate topology data (positions, spline points, normals)
     // 2. Reposition spawned holograms from rotated topology
     // 3. Regenerate spline meshes at correct positions
-    if (Owner->Subsystem.IsValid() && Owner->StoredCloneTopology.IsValid())
+    // (#497: skipped on the count-only path — rotation is unchanged there, and clone 1's topology
+    // was already rotated by the last full rebuild.)
+    if (!bCountOnly && Owner->Subsystem.IsValid() && Owner->StoredCloneTopology.IsValid())
     {
         const FSFCounterState& State = Owner->Subsystem->GetCounterState();
         if (!FMath::IsNearlyZero(State.RotationZ))
@@ -353,44 +370,81 @@ void USFExtendScaledService::RebuildScaledExtendNow()
         }
     }
 
+    if (!bCountOnly)
+    {
+        // #497: capture the clone-1 base topology (post-rotation) so every merge — full or
+        // incremental — can rebuild the merged StoredCloneTopology from a fresh copy of it.
+        Owner->ScaledExtendBaseTopology = Owner->StoredCloneTopology.IsValid()
+            ? MakeShared<FSFCloneTopology>(*Owner->StoredCloneTopology)
+            : nullptr;
+    }
+    else
+    {
+        // #497 incremental diff: recompute the clone metadata for the new counts, carry the spawned
+        // previews of surviving (GridX,GridY) cells across, and destroy only the removed cells.
+        TArray<FSFScaledExtendClone> OldClones = MoveTemp(Owner->ScaledExtendClones);
+        Owner->ScaledExtendClones.Reset();
+
+        if (CloneCount > 1 || RowCount > 1)
+        {
+            CalculateScaledExtendPositions();
+            for (FSFScaledExtendClone& NewClone : Owner->ScaledExtendClones)
+            {
+                for (FSFScaledExtendClone& Old : OldClones)
+                {
+                    if (Old.GridX == NewClone.GridX && Old.GridY == NewClone.GridY && Old.SpawnedHolograms.Num() > 0)
+                    {
+                        NewClone.SpawnedHolograms = MoveTemp(Old.SpawnedHolograms);
+                        NewClone.CloneTopology = Old.CloneTopology;
+                        Old.SpawnedHolograms.Reset();
+                        Old.CloneTopology.Reset();
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Anything left holding holograms was removed by the shrink — tear those down only.
+        DestroyClonePreviewHolograms(OldClones);
+
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("⚡ SCALED EXTEND: Count-only diff — %d clones after resize"),
+            Owner->ScaledExtendClones.Num());
+    }
+
     // If we have additional clones beyond the first, calculate and spawn them
     if (CloneCount > 1 || RowCount > 1)
     {
-        // Calculate positions for additional clones (everything beyond clone 1 in row 0)
-        CalculateScaledExtendPositions();
+        if (!bCountOnly)
+        {
+            // Calculate positions for additional clones (everything beyond clone 1 in row 0).
+            // (The count-only path already recomputed the metadata in the diff above.)
+            CalculateScaledExtendPositions();
+        }
 
         // Validate constraints (belt/pipe lengths, angles, and Issue #288 pole capacity)
         Owner->bScaledExtendValid = ValidateScaledExtendConstraints() && ValidatePowerCapacity();
 
         if (Owner->bScaledExtendValid)
         {
-            // Spawn factory holograms + infrastructure for additional clones
+            // Spawn factory holograms + infrastructure for additional clones. On the count-only
+            // path the loop skips clones whose previews survived the diff — only new cells spawn.
             SpawnScaledExtendPreviews();
 
-            // Phase 6: Merge all scaled extend clone topologies into Owner->StoredCloneTopology.
-            // The existing wiring system uses Owner->StoredCloneTopology to generate wiring manifests.
-            // Without Owner merge, only clone 1's topology is available for post-build wiring.
-            if (Owner->StoredCloneTopology.IsValid())
-            {
-                int32 MergedCount = 0;
-                for (const FSFScaledExtendClone& Clone : Owner->ScaledExtendClones)
-                {
-                    if (Clone.CloneTopology.IsValid())
-                    {
-                        for (const FSFCloneHologram& Holo : Clone.CloneTopology->ChildHolograms)
-                        {
-                            Owner->StoredCloneTopology->ChildHolograms.Add(Holo);
-                            MergedCount++;
-                        }
-                    }
-                }
-                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("⚡ SCALED EXTEND Phase 6: Merged %d holograms from %d clones into StoredCloneTopology (total: %d)"),
-                    MergedCount, Owner->ScaledExtendClones.Num(), Owner->StoredCloneTopology->ChildHolograms.Num());
-            }
+            // Phase 6: merge all clone topologies onto the clone-1 base (non-destructive re-merge;
+            // the wiring system reads Owner->StoredCloneTopology to generate wiring manifests).
+            RemergeScaledTopologyFromBase();
         }
         else
         {
             SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Warning, TEXT("⚡ SCALED EXTEND: Configuration invalid - %s"), *Owner->ScaledExtendInvalidReason);
+
+            if (bCountOnly)
+            {
+                // Match the full path's invalid presentation (no clone previews): the survivors were
+                // kept by the diff above, but an invalid configuration must not show them.
+                DestroyClonePreviewHolograms(Owner->ScaledExtendClones);
+                RemergeScaledTopologyFromBase();
+            }
 
             // Phase 7: Invalidate the grid - set hologram material to red/error
             if (Owner->CurrentExtendHologram.IsValid())
@@ -400,7 +454,26 @@ void USFExtendScaledService::RebuildScaledExtendNow()
             }
         }
     }
+    else if (bCountOnly)
+    {
+        // Shrunk back to a single clone: all previews were torn down by the diff; the stored
+        // topology returns to the clone-1 base.
+        Owner->bScaledExtendValid = true;
+        Owner->ScaledExtendInvalidReason.Empty();
+        RemergeScaledTopologyFromBase();
+    }
 
+    // #497: record the geometry inputs of this rebuild for the next count-only diff.
+    if (NowState)
+    {
+        LastRebuildCounterState = *NowState;
+        bHasLastRebuildState = true;
+        LastRebuildTarget = Owner->CurrentExtendTarget;
+    }
+    else
+    {
+        bHasLastRebuildState = false;
+    }
 }
 
 void USFExtendScaledService::CalculateScaledExtendPositions()
@@ -556,6 +629,13 @@ void USFExtendScaledService::SpawnScaledExtendPreviews()
     for (int32 i = 0; i < Owner->ScaledExtendClones.Num(); i++)
     {
         FSFScaledExtendClone& Clone = Owner->ScaledExtendClones[i];
+
+        // #497 clone reuse: a count-only rebuild re-enters this loop with surviving clones intact —
+        // their previews are already spawned, positioned, and routed. Only new grid cells spawn.
+        if (Clone.SpawnedHolograms.Num() > 0)
+        {
+            continue;
+        }
 
         // Calculate world position for Owner clone's factory building
         FVector CloneWorldPos = SourceLocation + Clone.WorldOffset;
@@ -1084,18 +1164,11 @@ void USFExtendScaledService::SpawnScaledExtendPreviews()
     }
 }
 
-void USFExtendScaledService::ClearScaledExtendClones()
+void USFExtendScaledService::DestroyClonePreviewHolograms(TArray<FSFScaledExtendClone>& Clones)
 {
-    if (Owner->ScaledExtendClones.Num() == 0)
-    {
-        return;
-    }
-
-    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("⚡ SCALED EXTEND: Clearing %d clone sets"), Owner->ScaledExtendClones.Num());
-
-    // CRITICAL: Remove all scaled extend children from parent hologram's mChildren array
-    // BEFORE destroying them. Without Owner, destroyed holograms leave dangling pointers
-    // in mChildren, causing crash in AFGHologram::ResetConstructDisqualifiers during tick.
+    // CRITICAL: Remove the affected scaled extend children from the parent hologram's mChildren array
+    // BEFORE destroying them. Without this, destroyed holograms leave dangling pointers in mChildren,
+    // causing a crash in AFGHologram::ResetConstructDisqualifiers during tick.
     if (Owner->CurrentExtendHologram.IsValid())
     {
         AFGHologram* Parent = Owner->CurrentExtendHologram.Get();
@@ -1106,7 +1179,7 @@ void USFExtendScaledService::ClearScaledExtendClones()
             {
                 // Collect all hologram pointers we're about to destroy
                 TSet<AFGHologram*> ToRemove;
-                for (const FSFScaledExtendClone& Clone : Owner->ScaledExtendClones)
+                for (const FSFScaledExtendClone& Clone : Clones)
                 {
                     for (const auto& Pair : Clone.SpawnedHolograms)
                     {
@@ -1142,7 +1215,7 @@ void USFExtendScaledService::ClearScaledExtendClones()
     // cleanup when player aims away). IsValid(rawPtr) on freed memory is undefined behavior.
     // TWeakObjectPtr::IsValid() uses the UObject index system and is safe against GC'd objects.
     TArray<TWeakObjectPtr<AFGHologram>> WeakHologramsToDestroy;
-    for (FSFScaledExtendClone& Clone : Owner->ScaledExtendClones)
+    for (FSFScaledExtendClone& Clone : Clones)
     {
         for (auto& Pair : Clone.SpawnedHolograms)
         {
@@ -1154,7 +1227,6 @@ void USFExtendScaledService::ClearScaledExtendClones()
         Clone.SpawnedHolograms.Empty();
         Clone.CloneTopology.Reset();
     }
-    Owner->ScaledExtendClones.Empty();
 
     // Destroy using weak pointers (safe against already-destroyed/GC'd objects)
     for (TWeakObjectPtr<AFGHologram>& WeakHolo : WeakHologramsToDestroy)
@@ -1167,9 +1239,80 @@ void USFExtendScaledService::ClearScaledExtendClones()
             Holo->Destroy();
         }
     }
+}
+
+void USFExtendScaledService::ClearScaledExtendClones()
+{
+    // #497: a full clear invalidates the count-only diff — the next rebuild must run the full path.
+    bHasLastRebuildState = false;
+
+    if (Owner->ScaledExtendClones.Num() == 0)
+    {
+        return;
+    }
+
+    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("⚡ SCALED EXTEND: Clearing %d clone sets"), Owner->ScaledExtendClones.Num());
+
+    DestroyClonePreviewHolograms(Owner->ScaledExtendClones);
+    Owner->ScaledExtendClones.Empty();
 
     Owner->bScaledExtendValid = true;
     Owner->ScaledExtendInvalidReason.Empty();
+}
+
+bool USFExtendScaledService::IsCountOnlyChange(const FSFCounterState& NowState) const
+{
+    const FSFCounterState& Last = LastRebuildCounterState;
+    auto SameSign = [](int32 A, int32 B) { return (A >= 0) == (B >= 0); };
+
+    // Clone positions are INDEX-keyed: with identical direction (counter signs), spacing, steps,
+    // stagger, and rotation, an existing clone's placement does not depend on how many clones exist —
+    // growing/shrinking the count leaves survivors exactly where they are. The axis-SELECTION fields
+    // (SpacingAxis/StepsAxis/StaggerAxis) are HUD state, not geometry, and are deliberately excluded.
+    return SameSign(NowState.GridCounters.X, Last.GridCounters.X)
+        && SameSign(NowState.GridCounters.Y, Last.GridCounters.Y)
+        && SameSign(NowState.GridCounters.Z, Last.GridCounters.Z)
+        && NowState.SpacingX == Last.SpacingX
+        && NowState.SpacingY == Last.SpacingY
+        && NowState.SpacingZ == Last.SpacingZ
+        && NowState.SpacingMode == Last.SpacingMode
+        && NowState.StepsX == Last.StepsX
+        && NowState.StepsY == Last.StepsY
+        && NowState.StaggerX == Last.StaggerX
+        && NowState.StaggerY == Last.StaggerY
+        && NowState.StaggerZX == Last.StaggerZX
+        && NowState.StaggerZY == Last.StaggerZY
+        && FMath::IsNearlyEqual(NowState.RotationZ, Last.RotationZ)
+        && NowState.RotationAxis == Last.RotationAxis;
+}
+
+void USFExtendScaledService::RemergeScaledTopologyFromBase()
+{
+    // #497: rebuild the merged topology non-destructively. The old Phase-6 merge appended clone
+    // topologies INTO the shared clone-1 topology in place, which only stayed correct because the
+    // full rebuild re-derived it every time; the incremental path re-merges from the preserved base.
+    if (!Owner->ScaledExtendBaseTopology.IsValid())
+    {
+        return;
+    }
+
+    Owner->StoredCloneTopology = MakeShared<FSFCloneTopology>(*Owner->ScaledExtendBaseTopology);
+
+    int32 MergedCount = 0;
+    for (const FSFScaledExtendClone& Clone : Owner->ScaledExtendClones)
+    {
+        if (Clone.CloneTopology.IsValid())
+        {
+            for (const FSFCloneHologram& Holo : Clone.CloneTopology->ChildHolograms)
+            {
+                Owner->StoredCloneTopology->ChildHolograms.Add(Holo);
+                MergedCount++;
+            }
+        }
+    }
+
+    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("⚡ SCALED EXTEND: Re-merged %d clone holograms onto base (total: %d)"),
+        MergedCount, Owner->StoredCloneTopology->ChildHolograms.Num());
 }
 
 bool USFExtendScaledService::ValidateScaledExtendConstraints()

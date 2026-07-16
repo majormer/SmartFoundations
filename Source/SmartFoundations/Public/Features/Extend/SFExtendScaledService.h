@@ -21,8 +21,10 @@
 
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
+#include "HUD/SFHUDTypes.h"   // FSFCounterState (#497: cached rebuild inputs for the count-only diff)
 #include "SFExtendScaledService.generated.h"
 
+class AFGBuildable;
 class AFGHologram;
 class ASFConveyorBeltHologram;
 class ASFPipelineHologram;
@@ -100,6 +102,26 @@ private:
 
     /** Validate belt/pipe constraints between consecutive clones */
     bool ValidateScaledExtendConstraints();
+
+    /** #497 clone reuse: true when only the GridCounters MAGNITUDES changed since the last rebuild —
+     *  same signs (direction), same spacing/steps/stagger/rotation. Existing clones' positions are
+     *  index-keyed and unaffected by the count, so the rebuild can diff instead of destroy-all. */
+    bool IsCountOnlyChange(const FSFCounterState& NowState) const;
+
+    /** #497: destroy the spawned preview holograms of the given clones (mChildren unlink first, then
+     *  weak-ptr destroy, then BeltPreviewHolograms removal) WITHOUT touching array membership.
+     *  Shared by the full clear and the incremental shrink path. */
+    void DestroyClonePreviewHolograms(TArray<FSFScaledExtendClone>& Clones);
+
+    /** #497: rebuild Owner->StoredCloneTopology = fresh copy of the clone-1 base + every clone's
+     *  topology appended. Non-destructive (the old Phase-6 merge mutated the shared base in place,
+     *  which only worked because the full rebuild recreated it each time). */
+    void RemergeScaledTopologyFromBase();
+
+    /** #497: geometry inputs of the last completed rebuild, for the count-only diff. */
+    FSFCounterState LastRebuildCounterState;
+    bool bHasLastRebuildState = false;
+    TWeakObjectPtr<AFGBuildable> LastRebuildTarget;
 
     /** Owning extend service (source of all shared scaled/wiring state; friended) */
     UPROPERTY()
