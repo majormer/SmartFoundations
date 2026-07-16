@@ -949,7 +949,7 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 					{
 						const int32 Expanded = SFScalingSpecExpansion::ExpandScalingSpecIntoChildren(
 							self, BlueprintSpec, self->GetRecipe());
-						UE_LOG(LogSmartFoundations, Log,
+						UE_LOG(LogSmartFoundations, Verbose,
 							TEXT("[#168-MP] Blueprint construct seam %s: expanded %d grid cop%s server-side (delta=%s)."),
 							*self->GetName(), Expanded, Expanded == 1 ? TEXT("y") : TEXT("ies"),
 							*BlueprintSpec.BlueprintContentDelta.ToCompactString());
@@ -975,7 +975,7 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 								Entry.WireEnd += PlanShift;
 							}
 						}
-						UE_LOG(LogSmartFoundations, Log,
+						UE_LOG(LogSmartFoundations, Verbose,
 							TEXT("[#168-MP] Blueprint construct seam %s: plan shift %s (serverAnchor=%s clientAnchor=%s)."),
 							*self->GetName(), *PlanShift.ToCompactString(),
 							*ServerParentAnchor.ToCompactString(), *BlueprintSpec.ClientParentAnchorRel.ToCompactString());
@@ -983,7 +983,7 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 					const int32 Conduits = SFScalingSpecExpansion::SpawnConduitPlanChildren(self, BlueprintSpec);
 					if (Conduits > 0)
 					{
-						UE_LOG(LogSmartFoundations, Log,
+						UE_LOG(LogSmartFoundations, Verbose,
 							TEXT("[#168-MP] Blueprint construct seam %s: staged %d seam conduit(s) from the client plan."),
 							*self->GetName(), Conduits);
 					}

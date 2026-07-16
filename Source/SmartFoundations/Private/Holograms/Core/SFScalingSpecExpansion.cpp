@@ -184,7 +184,7 @@ bool CaptureScalingSpec(AFGHologram* Hologram, FSFScalingSpec& OutSpec)
 			OutSpec.bHasCellBasis = AxesFound > 0;
 			if (OutSpec.bHasCellBasis)
 			{
-				UE_LOG(LogSmartFoundations, Log,
+				UE_LOG(LogSmartFoundations, Verbose,
 					TEXT("[#168-MP] Captured blueprint cell basis: X=%s Y=%s Z=%s delta=%s (calculator would have used pitch from ItemSize=%s)"),
 					*OutSpec.CellBasisX.ToCompactString(), *OutSpec.CellBasisY.ToCompactString(),
 					*OutSpec.CellBasisZ.ToCompactString(), *OutSpec.BlueprintContentDelta.ToCompactString(),
@@ -809,7 +809,7 @@ int32 ExpandScalingSpecIntoChildren(AFGHologram* Parent, const FSFScalingSpec& S
 									const FVector CellAnchor = MeasureBlueprintContentAnchor(BlueprintCell);
 									const FVector AnchorFix = ParentRot.RotateVector(ServerParentAnchor - CellAnchor);
 									CellLoc += AnchorFix;
-									UE_LOG(LogSmartFoundations, Log,
+									UE_LOG(LogSmartFoundations, Verbose,
 										TEXT("[#168] Staged blueprint spec cell %s | anchors parent=%s cell=%s fix=%s"),
 										*Child->GetName(), *ServerParentAnchor.ToCompactString(),
 										*CellAnchor.ToCompactString(), *AnchorFix.ToCompactString());

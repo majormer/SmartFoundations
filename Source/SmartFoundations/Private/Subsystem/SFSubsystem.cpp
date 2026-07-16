@@ -1274,11 +1274,11 @@ void USFSubsystem::CheckForPlayerController()
 
 void USFSubsystem::EnterWalkMode()
 {
-	UE_LOG(LogSmartFoundations, Log, TEXT(">>> [Walk] EnterWalkMode ENTER: bWalkModeActive=%d active=%s"),
+	UE_LOG(LogSmartFoundations, Verbose, TEXT(">>> [Walk] EnterWalkMode ENTER: bWalkModeActive=%d active=%s"),
 		bWalkModeActive ? 1 : 0, *GetNameSafe(ActiveHologram.Get()));
 	if (bWalkModeActive)
 	{
-		UE_LOG(LogSmartFoundations, Log, TEXT("<<< [Walk] EnterWalkMode EXIT: already active"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("<<< [Walk] EnterWalkMode EXIT: already active"));
 		return;
 	}
 
@@ -1288,7 +1288,7 @@ void USFSubsystem::EnterWalkMode()
 		UE_LOG(LogSmartFoundations, Warning, TEXT("<<< [Walk] EnterWalkMode EXIT: no active hologram to seed a Path"));
 		return;
 	}
-	UE_LOG(LogSmartFoundations, Log, TEXT("  [Walk] EnterWalkMode: seed=%s world=%s yaw=%.1f locked=%d | counter before reset=%s"),
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("  [Walk] EnterWalkMode: seed=%s world=%s yaw=%.1f locked=%d | counter before reset=%s"),
 		*GetNameSafe(Seed), *Seed->GetActorLocation().ToString(), Seed->GetActorRotation().Yaw,
 		Seed->IsHologramLocked() ? 1 : 0, *GetCounterState().GridCounters.ToString());
 
@@ -1326,7 +1326,7 @@ void USFSubsystem::EnterWalkMode()
 
 void USFSubsystem::ExitWalkMode()
 {
-	UE_LOG(LogSmartFoundations, Log, TEXT(">>> [Walk] ExitWalkMode ENTER: bWalkModeActive=%d active=%s"),
+	UE_LOG(LogSmartFoundations, Verbose, TEXT(">>> [Walk] ExitWalkMode ENTER: bWalkModeActive=%d active=%s"),
 		bWalkModeActive ? 1 : 0, *GetNameSafe(ActiveHologram.Get()));
 	if (!bWalkModeActive)
 	{
@@ -1520,7 +1520,7 @@ bool USFSubsystem::RouteWalkValueAdjust(int32 AccumulatedSteps, int32 Direction)
 		else                { WalkService->BackUp(); }
 		if (WalkPanelWidget.IsValid()) { WalkPanelWidget->Refresh(); }
 		UpdateCounterDisplay();
-		UE_LOG(LogSmartFoundations, Log, TEXT("[Walk] value-adjust (steps=%d dir=%d) -> %s"),
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("[Walk] value-adjust (steps=%d dir=%d) -> %s"),
 			AccumulatedSteps, Direction, Direction >= 0 ? TEXT("advance") : TEXT("back-up"));
 		return true;
 	}
@@ -1571,7 +1571,7 @@ void USFSubsystem::ApplyAxisScaling(ESFScaleAxis Axis, int32 StepDelta, const TC
 		}
 		if (WalkPanelWidget.IsValid()) { WalkPanelWidget->Refresh(); }
 		UpdateCounterDisplay();
-		UE_LOG(LogSmartFoundations, Log, TEXT("[Walk] ApplyAxisScaling axis=%d delta=%d (X=advance/back, Y=lanes, Z=stacks)"),
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("[Walk] ApplyAxisScaling axis=%d delta=%d (X=advance/back, Y=lanes, Z=stacks)"),
 			static_cast<int32>(Axis), StepDelta);
 		return;
 	}

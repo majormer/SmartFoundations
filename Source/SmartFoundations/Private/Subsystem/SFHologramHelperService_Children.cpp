@@ -955,7 +955,7 @@ AFGHologram* FSFHologramHelperService::SpawnChildHologram(
 				ChildBlueprint->LoadBlueprintToOtherWorld();
 				// No AlignBuildableRootWithBounds: LoadBlueprintToOtherWorld aligns internally;
 				// a second call displaces the root off the grid (live measurement 2026-07-06).
-				UE_LOG(LogSmartFoundations, Log,
+				UE_LOG(LogSmartFoundations, Verbose,
 					TEXT("[#168] Staged blueprint child %s from descriptor %s"),
 					*ChildName.ToString(), *GetNameSafe(ParentBlueprint->mBlueprintDescriptor));
 			}

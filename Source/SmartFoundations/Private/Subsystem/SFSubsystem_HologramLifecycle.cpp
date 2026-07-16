@@ -1725,7 +1725,7 @@ TSharedPtr<ISFHologramAdapter> USFSubsystem::CreateHologramAdapter(AFGHologram* 
 	// Connections between copies are the GAME's job (blueprint auto-connect), not Smart's.
 	if (AFGBlueprintHologram* BlueprintHolo = Cast<AFGBlueprintHologram>(Hologram))
 	{
-		UE_LOG(LogSmartFoundations, Log,
+		UE_LOG(LogSmartFoundations, Verbose,
 			TEXT("[#168] Blueprint hologram (%s) - creating Blueprint adapter (scaleable blueprints)"),
 			*Hologram->GetName());
 		return MakeShared<FSFBlueprintAdapter>(BlueprintHolo);

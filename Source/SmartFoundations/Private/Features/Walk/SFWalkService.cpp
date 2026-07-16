@@ -78,7 +78,7 @@ static void SF_LogPlacement(const TCHAR* Tag, int32 Index, AFGHologram* Holo, co
     }
     const FVector SeedLoc = IsValid(Seed) ? Seed->GetActorLocation() : FVector::ZeroVector;
     const FVector Delta   = WLoc - IntendedWorld.GetLocation();
-    UE_LOG(LogSmartWalk, Log,
+    UE_LOG(LogSmartWalk, Verbose,
         TEXT("  [PLACE] %s[%d] %s | intended.world=%s yaw=%.1f | actual.world=%s yaw=%.1f | actual.local=%s yaw=%.1f (attached=%d) | seed.world=%s | delta(actual-intended)=%s |delta|=%.1f"),
         Tag, Index, *GetNameSafe(Holo),
         *IntendedWorld.GetLocation().ToString(), IntendedWorld.Rotator().Yaw,
@@ -91,7 +91,7 @@ static void SF_LogPlacement(const TCHAR* Tag, int32 Index, AFGHologram* Holo, co
 void USFWalkService::Initialize(USFSubsystem* InSubsystem)
 {
     Subsystem = InSubsystem;
-    UE_LOG(LogSmartWalk, Log, TEXT("Initialize: subsystem=%s"), *GetNameSafe(InSubsystem));
+    UE_LOG(LogSmartWalk, Verbose, TEXT("Initialize: subsystem=%s"), *GetNameSafe(InSubsystem));
 }
 
 // Per-segment guard (also enforced in the Walk panel spinbox). A 0-length first/edited span tangles and can build
@@ -102,13 +102,13 @@ static constexpr float SF_WALK_MAX_TURN_DEG       = 270.0f;    // a single segme
 
 bool USFWalkService::EnterWalk(AFGHologram* InSeedHologram)
 {
-    UE_LOG(LogSmartWalk, Log, TEXT(">>> EnterWalk ENTER: seed=%s valid=%d recipe=%s bActive=%d"),
+    UE_LOG(LogSmartWalk, Verbose, TEXT(">>> EnterWalk ENTER: seed=%s valid=%d recipe=%s bActive=%d"),
         *GetNameSafe(InSeedHologram), IsValid(InSeedHologram) ? 1 : 0,
         IsValid(InSeedHologram) ? *GetNameSafe(InSeedHologram->GetRecipe()) : TEXT("n/a"), bActive ? 1 : 0);
 
     if (bActive)
     {
-        UE_LOG(LogSmartWalk, Log, TEXT("<<< EnterWalk EXIT: already active"));
+        UE_LOG(LogSmartWalk, Verbose, TEXT("<<< EnterWalk EXIT: already active"));
         return true;
     }
 
@@ -123,7 +123,7 @@ bool USFWalkService::EnterWalk(AFGHologram* InSeedHologram)
     // transform auto-connect uses (FSFPositionCalculator, in AccumulateFrame), which derives "forward" from the
     // pole's Yaw — so the walk extends the exact direction auto-connect would, no bespoke axis math needed.
     OriginFrame = InSeedHologram->GetActorTransform();
-    UE_LOG(LogSmartWalk, Log, TEXT("EnterWalk: OriginFrame(seed.world) loc=%s yaw=%.1f | seed locked=%d hidden=%d"),
+    UE_LOG(LogSmartWalk, Verbose, TEXT("EnterWalk: OriginFrame(seed.world) loc=%s yaw=%.1f | seed locked=%d hidden=%d"),
         *OriginFrame.GetLocation().ToString(), OriginFrame.Rotator().Yaw,
         InSeedHologram->IsHologramLocked() ? 1 : 0, InSeedHologram->IsHidden() ? 1 : 0);
 
@@ -153,7 +153,7 @@ bool USFWalkService::EnterWalk(AFGHologram* InSeedHologram)
         BeltConveyance->SetSubsystem(Subsystem.Get());
         Conveyance = BeltConveyance;
     }
-    UE_LOG(LogSmartWalk, Log, TEXT("EnterWalk: conveyance = %s"),
+    UE_LOG(LogSmartWalk, Verbose, TEXT("EnterWalk: conveyance = %s"),
         ConveyanceType == ESFWalkConveyanceType::Hypertube ? TEXT("HYPERTUBE")
             : (ConveyanceType == ESFWalkConveyanceType::Pipe ? TEXT("PIPE") : TEXT("BELT")));
 
@@ -177,21 +177,21 @@ bool USFWalkService::EnterWalk(AFGHologram* InSeedHologram)
     RebuildOriginHolograms();
     SpawnSegmentHologram(0);
 
-    UE_LOG(LogSmartWalk, Log, TEXT("<<< EnterWalk EXIT: seeded Path at %s, segments=%d active=%d"),
+    UE_LOG(LogSmartWalk, Verbose, TEXT("<<< EnterWalk EXIT: seeded Path at %s, segments=%d active=%d"),
         *OriginFrame.GetLocation().ToString(), Segments.Num(), ActiveIndex);
     return true;
 }
 
 void USFWalkService::ExitWalk(bool bCommit)
 {
-    UE_LOG(LogSmartWalk, Log, TEXT(">>> ExitWalk ENTER: bActive=%d segments=%d bCommit=%d"), bActive ? 1 : 0, Segments.Num(), bCommit ? 1 : 0);
+    UE_LOG(LogSmartWalk, Verbose, TEXT(">>> ExitWalk ENTER: bActive=%d segments=%d bCommit=%d"), bActive ? 1 : 0, Segments.Num(), bCommit ? 1 : 0);
     // Slice 3: the ACTUAL build is the parameters-only commit spec the server reconstructs (staged at the fire
     // hook via Server_StageWalkCommit -> ReconstructWalkCommitOnServer). The client side only ever needs to tear
     // down its standalone PREVIEW holograms - whether we committed (server is building from the spec) or cancelled.
     ClearAll();
     SeedHologram = nullptr;
     bActive = false;
-    UE_LOG(LogSmartWalk, Log, TEXT("<<< ExitWalk EXIT: preview torn down"));
+    UE_LOG(LogSmartWalk, Verbose, TEXT("<<< ExitWalk EXIT: preview torn down"));
 }
 
 FSFWalkCommitSpec USFWalkService::BuildCommitSpec() const
@@ -282,7 +282,7 @@ FSFWalkCommitSpec USFWalkService::BuildCommitSpec() const
 
 int32 USFWalkService::ReconstructWalkCommitOnServer(AFGHologram* Seed, const FSFWalkCommitSpec& Spec)
 {
-    UE_LOG(LogSmartWalk, Log, TEXT(">>> ReconstructWalkCommitOnServer ENTER: seed=%s segments=%d"),
+    UE_LOG(LogSmartWalk, Verbose, TEXT(">>> ReconstructWalkCommitOnServer ENTER: seed=%s segments=%d"),
         *GetNameSafe(Seed), Spec.Segments.Num());
     if (!IsValid(Seed) || Spec.Segments.Num() == 0)
     {
@@ -432,18 +432,18 @@ int32 USFWalkService::ReconstructWalkCommitOnServer(AFGHologram* Seed, const FSF
         }
     }
 
-    UE_LOG(LogSmartWalk, Log, TEXT("<<< ReconstructWalkCommitOnServer EXIT: %d pole(s) + %d span(s) AddChild'd to %s; vanilla construct will build them"),
+    UE_LOG(LogSmartWalk, Verbose, TEXT("<<< ReconstructWalkCommitOnServer EXIT: %d pole(s) + %d span(s) AddChild'd to %s; vanilla construct will build them"),
         Spawned, Spans, *GetNameSafe(Seed));
     return Spawned + Spans;
 }
 
 void USFWalkService::CommitActiveAndAdvance()
 {
-    UE_LOG(LogSmartWalk, Log, TEXT(">>> CommitActiveAndAdvance ENTER: bActive=%d segments=%d active=%d"),
+    UE_LOG(LogSmartWalk, Verbose, TEXT(">>> CommitActiveAndAdvance ENTER: bActive=%d segments=%d active=%d"),
         bActive ? 1 : 0, Segments.Num(), ActiveIndex);
     if (!bActive)
     {
-        UE_LOG(LogSmartWalk, Log, TEXT("<<< CommitActiveAndAdvance EXIT: not active"));
+        UE_LOG(LogSmartWalk, Verbose, TEXT("<<< CommitActiveAndAdvance EXIT: not active"));
         return;
     }
 
@@ -472,17 +472,17 @@ void USFWalkService::CommitActiveAndAdvance()
     ActiveIndex = Segments.Num() - 1;
     SpawnSegmentHologram(ActiveIndex);
 
-    UE_LOG(LogSmartWalk, Log, TEXT("<<< CommitActiveAndAdvance EXIT: now %d segments, active=%d (inherited adv=%.0f turn=%.0f rise=%.0f shift=%.0f)"),
+    UE_LOG(LogSmartWalk, Verbose, TEXT("<<< CommitActiveAndAdvance EXIT: now %d segments, active=%d (inherited adv=%.0f turn=%.0f rise=%.0f shift=%.0f)"),
         Segments.Num(), ActiveIndex, NewSeg.Advance, NewSeg.TurnDegrees, NewSeg.Rise, NewSeg.Shift);
 }
 
 void USFWalkService::BackUp()
 {
-    UE_LOG(LogSmartWalk, Log, TEXT(">>> BackUp ENTER: bActive=%d segments=%d active=%d"),
+    UE_LOG(LogSmartWalk, Verbose, TEXT(">>> BackUp ENTER: bActive=%d segments=%d active=%d"),
         bActive ? 1 : 0, Segments.Num(), ActiveIndex);
     if (!bActive || Segments.Num() <= 1)
     {
-        UE_LOG(LogSmartWalk, Log, TEXT("<<< BackUp EXIT: nothing to pop (keep >=1 segment)"));
+        UE_LOG(LogSmartWalk, Verbose, TEXT("<<< BackUp EXIT: nothing to pop (keep >=1 segment)"));
         return;   // keep at least the seed segment
     }
 
@@ -490,7 +490,7 @@ void USFWalkService::BackUp()
     Segments.Pop();
     ActiveIndex = Segments.Num() - 1;
 
-    UE_LOG(LogSmartWalk, Log, TEXT("<<< BackUp EXIT: now %d segments, active=%d"), Segments.Num(), ActiveIndex);
+    UE_LOG(LogSmartWalk, Verbose, TEXT("<<< BackUp EXIT: now %d segments, active=%d"), Segments.Num(), ActiveIndex);
 }
 
 void USFWalkService::SetActiveAdjusters(float Advance, float TurnDegrees, float Rise, float Shift)
@@ -501,7 +501,7 @@ void USFWalkService::SetActiveAdjusters(float Advance, float TurnDegrees, float 
     }
 
     FSFWalkSegment& Seg = Segments[ActiveIndex];
-    UE_LOG(LogSmartWalk, Log, TEXT(">>> SetActiveAdjusters ENTER: active=%d old(adv=%.0f turn=%.0f rise=%.0f shift=%.0f) -> new(adv=%.0f turn=%.0f rise=%.0f shift=%.0f)"),
+    UE_LOG(LogSmartWalk, Verbose, TEXT(">>> SetActiveAdjusters ENTER: active=%d old(adv=%.0f turn=%.0f rise=%.0f shift=%.0f) -> new(adv=%.0f turn=%.0f rise=%.0f shift=%.0f)"),
         ActiveIndex, Seg.Advance, Seg.TurnDegrees, Seg.Rise, Seg.Shift, Advance, TurnDegrees, Rise, Shift);
     Seg.Advance = FMath::Max(Advance, SF_WALK_MIN_ADVANCE_CM);   // min 1 m — no 0-length spans
     Seg.TurnDegrees = FMath::Clamp(TurnDegrees, -SF_WALK_MAX_TURN_DEG, SF_WALK_MAX_TURN_DEG);   // up to a 270° loop
@@ -510,7 +510,7 @@ void USFWalkService::SetActiveAdjusters(float Advance, float TurnDegrees, float 
 
     // Re-derive every frame from this segment forward (forward kinematics).
     RepositionFrom(ActiveIndex);
-    UE_LOG(LogSmartWalk, Log, TEXT("<<< SetActiveAdjusters EXIT: repositioned from %d"), ActiveIndex);
+    UE_LOG(LogSmartWalk, Verbose, TEXT("<<< SetActiveAdjusters EXIT: repositioned from %d"), ActiveIndex);
 }
 
 void USFWalkService::SetSegmentAtIndex(int32 Index, float Advance, float TurnDegrees, float Rise, float Shift)
@@ -528,17 +528,17 @@ void USFWalkService::SetSegmentAtIndex(int32 Index, float Advance, float TurnDeg
 
     // Re-derive + reposition every frame from this segment forward (committed-segment edit → live downstream rebuild).
     RepositionFrom(Index);
-    UE_LOG(LogSmartWalk, Log, TEXT("[Walk] SetSegmentAtIndex %d -> adv=%.0f turn=%.0f rise=%.0f shift=%.0f"),
+    UE_LOG(LogSmartWalk, Verbose, TEXT("[Walk] SetSegmentAtIndex %d -> adv=%.0f turn=%.0f rise=%.0f shift=%.0f"),
         Index, Advance, TurnDegrees, Rise, Shift);
 }
 
 void USFWalkService::NudgeActive(float dAdvance, float dTurn, float dRise, float dShift)
 {
-    UE_LOG(LogSmartWalk, Log, TEXT(">>> NudgeActive ENTER: active=%d deltas(dAdv=%.0f dTurn=%.0f dRise=%.0f dShift=%.0f) bActive=%d"),
+    UE_LOG(LogSmartWalk, Verbose, TEXT(">>> NudgeActive ENTER: active=%d deltas(dAdv=%.0f dTurn=%.0f dRise=%.0f dShift=%.0f) bActive=%d"),
         ActiveIndex, dAdvance, dTurn, dRise, dShift, bActive ? 1 : 0);
     if (!bActive || !Segments.IsValidIndex(ActiveIndex))
     {
-        UE_LOG(LogSmartWalk, Log, TEXT("<<< NudgeActive EXIT: not active / invalid active index"));
+        UE_LOG(LogSmartWalk, Verbose, TEXT("<<< NudgeActive EXIT: not active / invalid active index"));
         return;
     }
 
@@ -566,7 +566,7 @@ void USFWalkService::AdjustCrossSection(int32 DeltaLanes, int32 DeltaStacks)
     const int32 OldStacks = CrossSectionStacks;
     CrossSectionLanes  = GridStep(CrossSectionLanes, DeltaLanes);
     CrossSectionStacks = GridStep(CrossSectionStacks, DeltaStacks);
-    UE_LOG(LogSmartWalk, Log, TEXT(">>> AdjustCrossSection: laneCtr %d->%d  stackCtr %d->%d  (d=%d,%d) segments=%d"),
+    UE_LOG(LogSmartWalk, Verbose, TEXT(">>> AdjustCrossSection: laneCtr %d->%d  stackCtr %d->%d  (d=%d,%d) segments=%d"),
         OldLanes, CrossSectionLanes, OldStacks, CrossSectionStacks, DeltaLanes, DeltaStacks, Segments.Num());
 
     if (OldLanes == CrossSectionLanes && OldStacks == CrossSectionStacks)
@@ -586,7 +586,7 @@ void USFWalkService::AdjustCrossSection(int32 DeltaLanes, int32 DeltaStacks)
 
 void USFWalkService::RebuildHolograms()
 {
-    UE_LOG(LogSmartWalk, Log, TEXT(">>> RebuildHolograms: segments=%d cross-section=%dx%d"),
+    UE_LOG(LogSmartWalk, Verbose, TEXT(">>> RebuildHolograms: segments=%d cross-section=%dx%d"),
         Segments.Num(), CrossSectionLanes, CrossSectionStacks);
     // The origin cross-section is segment 0's predecessor — rebuild it FIRST so segment 0's belts find its cells.
     RebuildOriginHolograms();
@@ -599,7 +599,7 @@ void USFWalkService::RebuildHolograms()
     {
         SpawnSegmentHologram(i);
     }
-    UE_LOG(LogSmartWalk, Log, TEXT("<<< RebuildHolograms done"));
+    UE_LOG(LogSmartWalk, Verbose, TEXT("<<< RebuildHolograms done"));
 }
 
 void USFWalkService::RebuildOriginHolograms()
@@ -643,7 +643,7 @@ void USFWalkService::RebuildOriginHolograms()
             OriginHolograms.Add(SpawnOnePole(Pose, /*Index*/ -1, SignedLane, SignedStack));
         }
     }
-    UE_LOG(LogSmartWalk, Log, TEXT("RebuildOriginHolograms: %d origin cells (cell0=seed=%s)"),
+    UE_LOG(LogSmartWalk, Verbose, TEXT("RebuildOriginHolograms: %d origin cells (cell0=seed=%s)"),
         OriginHolograms.Num(), *GetNameSafe(Seed));
 }
 
@@ -660,7 +660,7 @@ FTransform USFWalkService::AccumulateFrame(const TArray<FSFWalkSegment>& Segs, c
     const int32 Last = FMath::Min(EndIndex, Segs.Num() - 1);
     if (bTrace)
     {
-        UE_LOG(LogSmartWalk, Log, TEXT("  [KIN] AccumulateFrame: origin.world=%s yaw=%.1f  endIndex=%d  (resolving to last=%d of %d segs)"),
+        UE_LOG(LogSmartWalk, Verbose, TEXT("  [KIN] AccumulateFrame: origin.world=%s yaw=%.1f  endIndex=%d  (resolving to last=%d of %d segs)"),
             *Loc.ToString(), Rot.Yaw, EndIndex, Last, Segs.Num());
     }
     for (int32 i = 0; i <= Last; ++i)
@@ -684,13 +684,13 @@ FTransform USFWalkService::AccumulateFrame(const TArray<FSFWalkSegment>& Segs, c
 
         if (bTrace)
         {
-            UE_LOG(LogSmartWalk, Log, TEXT("  [KIN]   step %d: adv=%.0f turn=%.0f rise=%.0f | preLoc=%s preYaw=%.1f -> postLoc=%s postYaw=%.1f (step delta=%s)"),
+            UE_LOG(LogSmartWalk, Verbose, TEXT("  [KIN]   step %d: adv=%.0f turn=%.0f rise=%.0f | preLoc=%s preYaw=%.1f -> postLoc=%s postYaw=%.1f (step delta=%s)"),
                 i, S.Advance, S.TurnDegrees, S.Rise, *PreLoc.ToString(), PreRot.Yaw, *Loc.ToString(), Rot.Yaw, *(Loc - PreLoc).ToString());
         }
     }
     if (bTrace)
     {
-        UE_LOG(LogSmartWalk, Log, TEXT("  [KIN] AccumulateFrame RESULT: world=%s yaw=%.1f"), *Loc.ToString(), Rot.Yaw);
+        UE_LOG(LogSmartWalk, Verbose, TEXT("  [KIN] AccumulateFrame RESULT: world=%s yaw=%.1f"), *Loc.ToString(), Rot.Yaw);
     }
     return FTransform(Rot, Loc);
 }
@@ -723,7 +723,7 @@ FString USFWalkService::RunSelfTest()
         TEXT("%s — head=(%.1f, %.1f, %.1f) yaw=%.1f  | expected=(-2400.0, 0.0, 0.0) yaw=0.0"),
         (bPosOk && bYawOk) ? TEXT("PASS") : TEXT("FAIL"), P.X, P.Y, P.Z, Yaw);
 
-    UE_LOG(LogSmartWalk, Log, TEXT("[SelfTest] %s"), *Result);
+    UE_LOG(LogSmartWalk, Verbose, TEXT("[SelfTest] %s"), *Result);
     return Result;
 }
 
@@ -1084,7 +1084,7 @@ void USFWalkService::SpawnSegmentHologram(int32 Index)
     const int32 LaneSign  = (Seg.NumLanes  >= 1) ? 1 : -1;
     const int32 StackSign = (Seg.NumStacks >= 1) ? 1 : -1;
     const FTransform Center = FrameAtIndex(Index, /*bTrace*/ true);
-    UE_LOG(LogSmartWalk, Log, TEXT(">>> SpawnSegmentHologram[%d] ENTER: cross-section %dx%d (lanesCtr=%d stacksCtr=%d) center.world=%s yaw=%.1f"),
+    UE_LOG(LogSmartWalk, Verbose, TEXT(">>> SpawnSegmentHologram[%d] ENTER: cross-section %dx%d (lanesCtr=%d stacksCtr=%d) center.world=%s yaw=%.1f"),
         Index, Lanes, Stacks, Seg.NumLanes, Seg.NumStacks, *Center.GetLocation().ToString(), Center.Rotator().Yaw);
 
     // Spawn the full lane×stack cross-section at this segment's center frame. Flat index = laneRow*Stacks + stackRow.
@@ -1101,7 +1101,7 @@ void USFWalkService::SpawnSegmentHologram(int32 Index)
         }
     }
 
-    UE_LOG(LogSmartWalk, Log, TEXT("<<< SpawnSegmentHologram[%d] EXIT: spawned %d poles"), Index, Seg.Holograms.Num());
+    UE_LOG(LogSmartWalk, Verbose, TEXT("<<< SpawnSegmentHologram[%d] EXIT: spawned %d poles"), Index, Seg.Holograms.Num());
 
     // Link this segment's cross-section to its predecessor's with one belt per cell.
     UpdateSegmentSpans(Index);
@@ -1208,13 +1208,13 @@ void USFWalkService::UpdateSegmentSpans(int32 Index)
         Seg.Spans[PoleIdx] = NewSpan;
         if (NewSpan) { ++Made; }
     }
-    UE_LOG(LogSmartWalk, Log, TEXT("  UpdateSegmentSpans[%d]: %d span(s) over %d cells"), Index, Made, Count);
+    UE_LOG(LogSmartWalk, Verbose, TEXT("  UpdateSegmentSpans[%d]: %d span(s) over %d cells"), Index, Made, Count);
 }
 
 void USFWalkService::RepositionFrom(int32 StartIndex)
 {
     const int32 From = FMath::Max(0, StartIndex);
-    UE_LOG(LogSmartWalk, Log, TEXT(">>> RepositionFrom ENTER: startIndex=%d (clamped=%d) segments=%d"),
+    UE_LOG(LogSmartWalk, Verbose, TEXT(">>> RepositionFrom ENTER: startIndex=%d (clamped=%d) segments=%d"),
         StartIndex, From, Segments.Num());
     for (int32 i = From; i < Segments.Num(); ++i)
     {
@@ -1235,12 +1235,12 @@ void USFWalkService::RepositionFrom(int32 StartIndex)
         // Re-route this segment's belts; iterating in order means the predecessor poles are already repositioned.
         UpdateSegmentSpans(i);
     }
-    UE_LOG(LogSmartWalk, Log, TEXT("<<< RepositionFrom EXIT"));
+    UE_LOG(LogSmartWalk, Verbose, TEXT("<<< RepositionFrom EXIT"));
 }
 
 void USFWalkService::DestroySegmentHolograms(FSFWalkSegment& Segment)
 {
-    UE_LOG(LogSmartWalk, Log, TEXT("  DestroySegmentHolograms: belts=%d holos=%d"),
+    UE_LOG(LogSmartWalk, Verbose, TEXT("  DestroySegmentHolograms: belts=%d holos=%d"),
         Segment.Spans.Num(), Segment.Holograms.Num());
     for (const TWeakObjectPtr<AFGHologram>& WeakBelt : Segment.Spans)
     {
@@ -1257,7 +1257,7 @@ void USFWalkService::DestroySegmentHolograms(FSFWalkSegment& Segment)
 
 void USFWalkService::ClearAll()
 {
-    UE_LOG(LogSmartWalk, Log, TEXT(">>> ClearAll ENTER: segments=%d originCells=%d"), Segments.Num(), OriginHolograms.Num());
+    UE_LOG(LogSmartWalk, Verbose, TEXT(">>> ClearAll ENTER: segments=%d originCells=%d"), Segments.Num(), OriginHolograms.Num());
     for (FSFWalkSegment& Seg : Segments)
     {
         DestroySegmentHolograms(Seg);
@@ -1275,7 +1275,7 @@ void USFWalkService::ClearAll()
     }
     OriginHolograms.Reset();
     ActiveIndex = INDEX_NONE;
-    UE_LOG(LogSmartWalk, Log, TEXT("<<< ClearAll EXIT"));
+    UE_LOG(LogSmartWalk, Verbose, TEXT("<<< ClearAll EXIT"));
 }
 
 // ============================================================================
