@@ -562,28 +562,24 @@ void USFExtendScaledService::SpawnScaledExtendPreviews()
         FRotator CloneWorldRot = SourceRotation + Clone.RotationOffset;
 
         // === Step 1: Spawn factory building hologram for Owner clone ===
-        // Use the same mechanism as normal grid scaling (SpawnChildHologramFromRecipe)
+        // #497: spawn through the #418 Tier-1 helper (drift-proof ASFBuildableChildHologram) instead
+        // of the pre-#418 SpawnChildHologramFromRecipe. Raw vanilla factory children were repositioned
+        // by vanilla parent propagation every frame — the reason Extend needed a per-frame position
+        // re-apply. The helper also handles validation-off, collision-off (all primitives, superseding
+        // the old clearance-box loop), tick-off, HMS_OK, stored-production-recipe carry, and the
+        // ClearanceBox mesh hide.
         static int32 ScaledExtendChildCounter = 0;
         FName ChildName = *FString::Printf(TEXT("SE_Factory_%d_%d_%d"), Clone.GridX, Clone.GridY, ScaledExtendChildCounter++);
 
-        AFGHologram* FactoryHologram = AFGHologram::SpawnChildHologramFromRecipe(
-            ParentHologram,
-            ChildName,
-            ParentHologram->GetRecipe(),
-            ParentHologram->GetOwner() ? ParentHologram->GetOwner() : ParentHologram,
-            CloneWorldPos,
-            nullptr
-        );
+        FSFHologramHelperService* HologramHelper = Owner->Subsystem.IsValid() ? Owner->Subsystem->GetHologramHelper() : nullptr;
+        AFGHologram* FactoryHologram = HologramHelper
+            ? HologramHelper->SpawnBuildableChildHologram(ParentHologram, ChildName, CloneWorldPos)
+            : nullptr;
 
         if (FactoryHologram)
         {
-            // Position and rotate the factory hologram
-            FactoryHologram->SetActorLocation(CloneWorldPos);
-            FactoryHologram->SetActorRotation(CloneWorldRot);
-
-            // Mark as child and disable validation (same as normal grid scaling)
-            USFHologramDataService::DisableValidation(FactoryHologram);
-            USFHologramDataService::MarkAsChild(FactoryHologram, ParentHologram, ESFChildHologramType::ScalingGrid);
+            // Position and rotate the factory hologram (helper spawns at location, zero rotation)
+            FactoryHologram->SetActorLocationAndRotation(CloneWorldPos, CloneWorldRot);
 
             // [#365] Carry the designer context so designer-resident scaled-extend factories
             // register with the designer (vanilla copies hologram->buildable at construct).
@@ -591,31 +587,6 @@ void USFExtendScaledService::SpawnScaledExtendPreviews()
             {
                 FactoryHologram->SetInsideBlueprintDesigner(Designer);
             }
-
-            // Copy stored recipe to Owner clone
-            if (Owner->Subsystem.IsValid() && Owner->Subsystem->bHasStoredProductionRecipe)
-            {
-                USFHologramDataService::StoreRecipe(FactoryHologram, Owner->Subsystem->StoredProductionRecipe);
-            }
-
-            // Force valid appearance
-            FactoryHologram->SetPlacementMaterialState(EHologramMaterialState::HMS_OK);
-            FactoryHologram->SetActorTickEnabled(false);
-
-            // CRITICAL: Disable clearance detection on child factory holograms.
-            // Vanilla CheckValidPlacement on the parent iterates mChildren and calls
-            // CheckValidPlacement on each. These vanilla FGFactoryHologram children have
-            // full clearance boxes that overlap with nearby buildings when rotated,
-            // causing "Encroaching another object's clearance!" on the parent.
-            // Disabling collision on their clearance detector prevents overlap detection.
-            TArray<UBoxComponent*> BoxComponents;
-            FactoryHologram->GetComponents<UBoxComponent>(BoxComponents);
-            for (UBoxComponent* Box : BoxComponents)
-            {
-                Box->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-                Box->SetGenerateOverlapEvents(false);
-            }
-            // Box collision disabling above is sufficient to prevent clearance overlap detection
 
             // Tag as Smart! child so Owner->HologramService's mChildren filter catches it
             FactoryHologram->Tags.AddUnique(FName(TEXT("SF_ExtendChild")));

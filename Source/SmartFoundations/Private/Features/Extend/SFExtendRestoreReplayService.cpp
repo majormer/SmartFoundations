@@ -898,13 +898,15 @@ int32 USFExtendRestoreReplayService::SpawnRestoredScaledFactoryHolograms(AFGHolo
             static int32 RestoredScaledFactoryCounter = 0;
             const FName ChildName(*FString::Printf(TEXT("RestoredFactory_%d_%d_%d"), X, Y, RestoredScaledFactoryCounter++));
 
-            AFGHologram* FactoryHologram = AFGHologram::SpawnChildHologramFromRecipe(
-                ParentHologram,
-                ChildName,
-                ParentHologram->GetRecipe(),
-                ParentHologram->GetOwner() ? ParentHologram->GetOwner() : ParentHologram,
-                FactoryLocation,
-                nullptr);
+            // #497: spawn through the #418 Tier-1 helper (drift-proof ASFBuildableChildHologram)
+            // instead of the pre-#418 SpawnChildHologramFromRecipe. Raw vanilla factory children were
+            // repositioned by vanilla parent propagation every frame. The helper handles validation-off,
+            // collision-off (all primitives, superseding the old clearance-box loop), tick-off, HMS_OK,
+            // and the ClearanceBox mesh hide.
+            FSFHologramHelperService* HologramHelper = Owner->Subsystem.IsValid() ? Owner->Subsystem->GetHologramHelper() : nullptr;
+            AFGHologram* FactoryHologram = HologramHelper
+                ? HologramHelper->SpawnBuildableChildHologram(ParentHologram, ChildName, FactoryLocation)
+                : nullptr;
 
             if (!FactoryHologram)
             {
@@ -917,18 +919,10 @@ int32 USFExtendRestoreReplayService::SpawnRestoredScaledFactoryHolograms(AFGHolo
                 continue;
             }
 
-            FactoryHologram->SetActorLocation(FactoryLocation);
-            FactoryHologram->SetActorRotation(ParentRotation + Placement.RotationOffset);
-            FactoryHologram->SetActorHiddenInGame(false);
-            if (USceneComponent* Root = FactoryHologram->GetRootComponent())
-            {
-                Root->SetWorldLocation(FactoryLocation);
-                Root->SetWorldRotation(ParentRotation + Placement.RotationOffset);
-                Root->MarkRenderStateDirty();
-            }
+            FactoryHologram->SetActorLocationAndRotation(FactoryLocation, ParentRotation + Placement.RotationOffset);
             FactoryHologram->UpdateComponentTransforms();
             FactoryHologram->Tags.AddUnique(FName(TEXT("SF_ExtendChild")));
-            USFHologramDataService::DisableValidation(FactoryHologram);
+            // Restore tracks these as ExtendClone (the helper marked them ScalingGrid) — re-mark.
             USFHologramDataService::MarkAsChild(FactoryHologram, ParentHologram, ESFChildHologramType::ExtendClone);
 
             if (USFRecipeManagementService* RecipeSvc = Owner->Subsystem->GetRecipeManagementService())
@@ -944,16 +938,6 @@ int32 USFExtendRestoreReplayService::SpawnRestoredScaledFactoryHolograms(AFGHolo
                 FactoryData->JsonCloneId = FactoryId;
             }
 
-            TArray<UBoxComponent*> BoxComponents;
-            FactoryHologram->GetComponents<UBoxComponent>(BoxComponents);
-            for (UBoxComponent* Box : BoxComponents)
-            {
-                Box->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-                Box->SetGenerateOverlapEvents(false);
-            }
-
-            FactoryHologram->SetPlacementMaterialState(EHologramMaterialState::HMS_OK);
-            FactoryHologram->SetActorTickEnabled(false);
             OutSpawnedHolograms.Add(FactoryId, FactoryHologram);
             Owner->RestoredScaledFactoryPreviewLocations.Add(FactoryId, FactoryLocation);
             SpawnedFactories++;

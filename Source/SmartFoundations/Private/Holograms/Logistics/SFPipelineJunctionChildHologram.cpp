@@ -13,6 +13,13 @@ ASFPipelineJunctionChildHologram::ASFPipelineJunctionChildHologram()
     // Minimal constructor - most behavior handled by base class
 }
 
+void ASFPipelineJunctionChildHologram::SetHologramLocationAndRotation(const FHitResult& hitResult)
+{
+    // #497 drift-proof no-op: the clone topology owns the transform. Vanilla parent propagation calls
+    // this on every mChildren entry per frame and would reposition the junction toward the parent
+    // hit result — the reason the extend service historically re-applied positions every frame.
+}
+
 void ASFPipelineJunctionChildHologram::CheckValidPlacement()
 {
     // Check data structure for validation control

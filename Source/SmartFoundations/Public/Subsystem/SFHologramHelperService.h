@@ -534,6 +534,7 @@ private:
 		const FRotator& Rotation
 	);
 
+public:
 	/**
 	 * #418 Tier 1 (docs/Features/Scaling/DESIGN_Scaling_ChildTypeSelection.md): spawn the generic
 	 * drift-proof grid child (ASFBuildableChildHologram) for any plain-buildable parent -
@@ -543,6 +544,10 @@ private:
 	 * lines"), and carries the parent's stored production recipe so scaled machines keep their
 	 * selected recipe (constraint C1).
 	 *
+	 * Public since #497: Scaled Extend + Restore factory clone previews spawn through this too -
+	 * they were the last raw-vanilla children (pre-#418 SpawnChildHologramFromRecipe), whose
+	 * per-frame vanilla repositioning forced the extend drift re-apply loop.
+	 *
 	 * @return Spawned child hologram, or nullptr if failed
 	 */
 	AFGHologram* SpawnBuildableChildHologram(
@@ -551,7 +556,6 @@ private:
 		const FVector& SpawnLocation
 	);
 
-public:
 	/**
 	 * Destroy all current child holograms
 	 * Helper for regenerating grid. Public: also used by the MP spec-construction fire hook to

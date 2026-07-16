@@ -22,7 +22,11 @@ public:
     
     // Override validation to check data structure flags
     virtual void CheckValidPlacement() override;
-    
+
+    // #497 drift-proof: the clone topology owns the transform — block vanilla parent propagation
+    // from repositioning this child every frame (same contract as the other *ChildHologram classes).
+    virtual void SetHologramLocationAndRotation(const FHitResult& hitResult) override;
+
     // Override Construct to register built distributor for EXTEND wiring
     virtual AActor* Construct(TArray<AActor*>& out_children, FNetConstructionID constructionID) override;
     

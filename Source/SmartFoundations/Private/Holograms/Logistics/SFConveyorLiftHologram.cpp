@@ -48,14 +48,19 @@ void ASFConveyorLiftHologram::Destroyed()
 
 void ASFConveyorLiftHologram::SetHologramLocationAndRotation(const FHitResult& hitResult)
 {
-    Super::SetHologramLocationAndRotation(hitResult);
-    
-    // Skip HUD updates for child holograms (EXTEND children)
+    // #497: extend children are positioned by Smart (SetActorLocation from the clone topology) and
+    // must be DRIFT-PROOF: vanilla parent propagation calls this on every mChildren entry per frame,
+    // and letting Super run repositioned the lift toward the parent hit result — which is why the
+    // extend service needed a per-frame position reapply. Same early-return contract as the belt
+    // (SFConveyorBeltHologram) and pipe (SFPipelineHologram) SF_ExtendChild guards; the lift was the
+    // one conduit class still calling Super unconditionally.
     if (Tags.Contains(FName(TEXT("SF_ExtendChild"))))
     {
         return;
     }
-    
+
+    Super::SetHologramLocationAndRotation(hitResult);
+
     // Get lift height from mTopTransform (relative Z position)
     FTransform TopTransform = GetTopTransform();
     float CurrentHeight = TopTransform.GetTranslation().Z;
