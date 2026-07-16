@@ -1919,71 +1919,70 @@ void USFExtendService::RefreshExtension(AFGHologram* SourceHologram, bool bForce
     // so the build gun's per-frame validation cascade can no longer reset them to cyan.
     ExtendChildMaterialState = ExtendMaterialState;
 
-    // CRITICAL: Force child holograms back to their intended positions every frame
-    // The engine's parent hologram tick resets children to origin via SetHologramLocationAndRotation
-    // We counteract this by forcing them back to where we want them
-
     // Delegate basic position/rotation refresh to HologramService
     if (HologramService)
     {
         HologramService->RefreshChildPositions();
     }
 
-    TSet<AFGHologram*> SyncedMaterialChildren;
-    auto SyncExtendPreviewMaterialState = [&](AFGHologram* Child)
+    // #497 set-once: sweep the child previews only when the authoritative state actually CHANGES.
+    // Children are painted at spawn (clone spawner / CreateBeltPreviews), so re-sweeping an unchanged
+    // state every frame only re-dirtied every spline-mesh render proxy — the render-thread/GPU churn
+    // behind the Extend frame loss. The per-hologram set-once guards (belt/pipe/lift/factory) are the
+    // second layer; this gate removes even the per-child Super::SetPlacementMaterialState calls.
+    if (!bExtendChildMaterialStateSynced || ExtendMaterialState != LastSyncedExtendChildMaterialState)
     {
-        if (!IsValid(Child) || SyncedMaterialChildren.Contains(Child))
-        {
-            return;
-        }
+        LastSyncedExtendChildMaterialState = ExtendMaterialState;
+        bExtendChildMaterialStateSynced = true;
 
-        SyncedMaterialChildren.Add(Child);
-        Child->SetActorHiddenInGame(false);
-        Child->SetPlacementMaterialState(ExtendMaterialState);
-
-        if (ASFConveyorLiftHologram* LiftChild = Cast<ASFConveyorLiftHologram>(Child))
+        TSet<AFGHologram*> SyncedMaterialChildren;
+        auto SyncExtendPreviewMaterialState = [&](AFGHologram* Child)
         {
-            LiftChild->ForceApplyHologramMaterial();
-        }
-        else if (ASFConveyorBeltHologram* BeltChild = Cast<ASFConveyorBeltHologram>(Child))
-        {
-            BeltChild->ForceApplyHologramMaterial();
-        }
-        else if (ASFPipelineHologram* PipeChild = Cast<ASFPipelineHologram>(Child))
-        {
-            PipeChild->ForceApplyHologramMaterial();
-        }
-
-        // Prevent child preview validation from immediately repainting spline previews.
-        Child->SetActorTickEnabled(false);
-    };
-
-    for (FSFScaledExtendClone& Clone : ScaledExtendClones)
-    {
-        for (auto& SpawnedPair : Clone.SpawnedHolograms)
-        {
-            if (SpawnedPair.Value.IsValid())
+            if (!IsValid(Child) || SyncedMaterialChildren.Contains(Child))
             {
-                SyncExtendPreviewMaterialState(SpawnedPair.Value.Get());
+                return;
+            }
+
+            SyncedMaterialChildren.Add(Child);
+            Child->SetActorHiddenInGame(false);
+            Child->SetPlacementMaterialState(ExtendMaterialState);
+
+            if (ASFConveyorLiftHologram* LiftChild = Cast<ASFConveyorLiftHologram>(Child))
+            {
+                LiftChild->ForceApplyHologramMaterial();
+            }
+
+            // Prevent child preview validation from immediately repainting spline previews.
+            Child->SetActorTickEnabled(false);
+        };
+
+        for (FSFScaledExtendClone& Clone : ScaledExtendClones)
+        {
+            for (auto& SpawnedPair : Clone.SpawnedHolograms)
+            {
+                if (SpawnedPair.Value.IsValid())
+                {
+                    SyncExtendPreviewMaterialState(SpawnedPair.Value.Get());
+                }
             }
         }
-    }
 
-    for (AFGHologram* Child : BeltPreviewHolograms)
-    {
-        SyncExtendPreviewMaterialState(Child);
-    }
-
-    for (const auto& SpawnedPair : JsonSpawnedHolograms)
-    {
-        SyncExtendPreviewMaterialState(SpawnedPair.Value);
-    }
-
-    if (HologramService)
-    {
-        for (AFGHologram* Child : HologramService->GetTrackedChildren())
+        for (AFGHologram* Child : BeltPreviewHolograms)
         {
             SyncExtendPreviewMaterialState(Child);
+        }
+
+        for (const auto& SpawnedPair : JsonSpawnedHolograms)
+        {
+            SyncExtendPreviewMaterialState(SpawnedPair.Value);
+        }
+
+        if (HologramService)
+        {
+            for (AFGHologram* Child : HologramService->GetTrackedChildren())
+            {
+                SyncExtendPreviewMaterialState(Child);
+            }
         }
     }
 
@@ -2031,44 +2030,9 @@ void USFExtendService::RefreshExtension(AFGHologram* SourceHologram, bool bForce
             AFGHologram* Child = BeltPreviewHolograms[i];
             if (IsValid(Child))
             {
-                // CRITICAL: Refresh material state for belt children
-                // Vanilla's hologram system may reset material state, so we need to re-apply
-                if (ASFConveyorBeltHologram* BeltChild = Cast<ASFConveyorBeltHologram>(Child))
-                {
-                    // Re-apply current parent state to spline meshes.
-                    BeltChild->SetPlacementMaterialState(ExtendMaterialState);
-                    BeltChild->ForceApplyHologramMaterial();
-
-                    // Ensure visibility
-                    BeltChild->SetActorHiddenInGame(false);
-                    TArray<USplineMeshComponent*> SplineMeshComps;
-                    BeltChild->GetComponents<USplineMeshComponent>(SplineMeshComps);
-
-                    // Log spline mesh state for debugging (only first belt, every 2 seconds)
-                    static double LastBeltMeshLog = 0;
-                    if (i == 1 && Now - LastBeltMeshLog > 2.0)  // Child[1] is first belt
-                    {
-                        LastBeltMeshLog = Now;
-                        UE_LOG(LogSmartExtend, VeryVerbose, TEXT("🎯 BELT REFRESH: %s has %d SplineMeshComponents"),
-                            *BeltChild->GetName(), SplineMeshComps.Num());
-                        for (int32 SMIdx = 0; SMIdx < SplineMeshComps.Num() && SMIdx < 2; SMIdx++)
-                        {
-                            USplineMeshComponent* SMC = SplineMeshComps[SMIdx];
-                            UE_LOG(LogSmartExtend, VeryVerbose, TEXT("🎯 BELT REFRESH:   SMC[%d]: Mesh=%s, Visible=%d, WorldPos=%s"),
-                                SMIdx,
-                                SMC->GetStaticMesh() ? *SMC->GetStaticMesh()->GetName() : TEXT("NULL"),
-                                SMC->IsVisible() ? 1 : 0,
-                                *SMC->GetComponentLocation().ToString());
-                        }
-                    }
-
-                    for (USplineMeshComponent* SMC : SplineMeshComps)
-                    {
-                        SMC->SetVisibility(true, true);
-                        SMC->SetHiddenInGame(false);
-                    }
-                }
-
+                // #497: this block is diagnostics only now. The former material/visibility re-apply
+                // ("vanilla may reset material state") is superseded by the set-once contract:
+                // children are painted at spawn + mesh generation, and re-swept only on state change.
                 UE_LOG(LogSmartExtend, VeryVerbose, TEXT("🔄 EXTEND Child[%d]: Pos=%s Hidden=%d MatState=%d"),
                     i, *Child->GetActorLocation().ToString(),
                     Child->IsHidden() ? 1 : 0,

@@ -617,35 +617,8 @@ void ASFConveyorBeltHologram::StopContinuousPositionCorrection()
 
 void ASFConveyorBeltHologram::ForceApplyHologramMaterial()
 {
-    EHologramMaterialState CurrentState = GetHologramMaterialState();
-    
-    // Call our overridden SetPlacementMaterialState which properly applies
-    // hologram materials to dynamically created spline mesh components.
-    SetPlacementMaterialState(CurrentState);
-    
-    // DEBUG: Log what materials are actually on the spline meshes
-    TArray<USplineMeshComponent*> SplineMeshes;
-    GetComponents<USplineMeshComponent>(SplineMeshes);
-    
-    UE_LOG(LogSmartHologram, Verbose, TEXT("🎨 ForceApplyHologramMaterial: Applied material state %d, found %d spline meshes"),
-        (int32)CurrentState, SplineMeshes.Num());
-    
-    for (int32 i = 0; i < SplineMeshes.Num(); i++)
-    {
-        USplineMeshComponent* SplineMesh = SplineMeshes[i];
-        if (SplineMesh)
-        {
-            UMaterialInterface* Mat = SplineMesh->GetMaterial(0);
-            UStaticMesh* Mesh = SplineMesh->GetStaticMesh();
-            
-            UE_LOG(LogSmartHologram, VeryVerbose, TEXT("   [%d] Mesh=%s, Material=%s, Visible=%d, Hidden=%d, RenderCustomDepth=%d"),
-                i,
-                Mesh ? *Mesh->GetName() : TEXT("NULL"),
-                Mat ? *Mat->GetName() : TEXT("NULL"),
-                SplineMesh->IsVisible(),
-                SplineMesh->bHiddenInGame,
-                SplineMesh->bRenderCustomDepth);
-        }
-    }
+    // "Force" per the contract: bypass the #497 set-once guard so an explicit caller (post
+    // mesh-generation fixups) always gets a full sweep even when the state value is unchanged.
+    ApplySplineMeshMaterialState(GetHologramMaterialState());
 }
 

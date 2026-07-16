@@ -875,16 +875,30 @@ void ASFPipelineHologram::SetPlacementMaterialState(EHologramMaterialState mater
 {
 	Super::SetPlacementMaterialState(materialState);
 
+	// #497 set-once: the sweep dirties the render proxy of EVERY spline mesh. Extend/Walk call this
+	// per frame with an unchanged state, forcing the render thread to rebuild all proxies every frame
+	// (the GPU-side lag). Once a state has been swept it holds — skip same-state re-calls. Meshes
+	// created later are painted by TriggerMeshGeneration's trailing ApplySplineMeshMaterialState.
+	if (bSplineMaterialStateApplied && materialState == LastAppliedSplineMaterialState)
+	{
+		return;
+	}
+
+	ApplySplineMeshMaterialState(materialState);
+}
+
+void ASFPipelineHologram::ApplySplineMeshMaterialState(EHologramMaterialState materialState)
+{
 	TArray<USplineMeshComponent*> MeshComps;
 	GetComponents<USplineMeshComponent>(MeshComps);
 	const uint8 StencilValue = GetStencilForHologramMaterialState(materialState);
-	
-	// If no spline meshes are present, skip the rest to avoid log spam
+
+	// No meshes yet: leave the guard unarmed so the next call (or mesh generation) paints them.
 	if (MeshComps.Num() == 0)
 	{
 		return;
 	}
-	
+
 	for (USplineMeshComponent* Mesh : MeshComps)
 	{
 		if (Mesh)
@@ -892,14 +906,17 @@ void ASFPipelineHologram::SetPlacementMaterialState(EHologramMaterialState mater
 			Mesh->SetRenderCustomDepth(true);
 			Mesh->SetCustomDepthStencilValue(StencilValue);
 			Mesh->SetCustomDepthStencilWriteMask(ERendererStencilMask::ERSM_Default);
-			
+
 			// Force render state update
 			Mesh->MarkRenderStateDirty();
 			Mesh->SetVisibility(true, true);
 			Mesh->SetHiddenInGame(false);
 		}
 	}
-	
+
+	LastAppliedSplineMaterialState = materialState;
+	bSplineMaterialStateApplied = true;
+
 	UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🎨 PIPE SetPlacementMaterialState: State=%d, SplineMeshes=%d, Stencil=%d"),
 		(int32)materialState,
 		MeshComps.Num(),
@@ -1290,31 +1307,9 @@ void ASFPipelineHologram::SetSplineDataAndUpdate(const TArray<FSplinePointData>&
 
 void ASFPipelineHologram::ForceApplyHologramMaterial()
 {
-	SetPlacementMaterialState(GetHologramMaterialState());
-
-	TArray<USplineMeshComponent*> SplineMeshes;
-	GetComponents<USplineMeshComponent>(SplineMeshes);
-	
-	UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🎨 PIPE ForceApplyHologramMaterial: Applied state %d to %d spline meshes"),
-		(int32)GetHologramMaterialState(),
-		SplineMeshes.Num());
-	
-	for (int32 i = 0; i < SplineMeshes.Num(); i++)
-	{
-		USplineMeshComponent* SplineMesh = SplineMeshes[i];
-		if (SplineMesh)
-		{
-			UStaticMesh* Mesh = SplineMesh->GetStaticMesh();
-			UMaterialInterface* Mat = SplineMesh->GetMaterial(0);
-			
-			UE_LOG(LogSmartHologram, VeryVerbose, TEXT("   [%d] Mesh=%s, Material=%s, Visible=%d, Hidden=%d"),
-				i,
-				Mesh ? *Mesh->GetName() : TEXT("NULL"),
-				Mat ? *Mat->GetName() : TEXT("NULL"),
-				SplineMesh->IsVisible(),
-				SplineMesh->bHiddenInGame);
-		}
-	}
+	// "Force" per the contract: bypass the #497 set-once guard so an explicit caller (post
+	// mesh-generation fixups) always gets a full sweep even when the state value is unchanged.
+	ApplySplineMeshMaterialState(GetHologramMaterialState());
 }
 
 void ASFPipelineHologram::TriggerMeshGeneration()
@@ -1519,8 +1514,9 @@ void ASFPipelineHologram::TriggerMeshGeneration()
 	UE_LOG(LogSmartHologram, Verbose, TEXT("🔧 PIPE TriggerMeshGeneration: Created %d segments of %.1f cm each"), 
 		MeshComps.Num(), SegmentLength);
 	
-	// Apply the current hologram material state to newly created mesh components.
-	SetPlacementMaterialState(GetHologramMaterialState());
+	// Apply the current hologram material state to newly created mesh components. Must bypass the
+	// #497 set-once guard: the mesh SET just changed even though the state value may not have.
+	ApplySplineMeshMaterialState(GetHologramMaterialState());
 	
 	// Check actor position
 	FVector ActorLoc = GetActorLocation();

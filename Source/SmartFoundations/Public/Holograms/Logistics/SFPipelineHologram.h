@@ -148,7 +148,19 @@ protected:
      */
     virtual void ConfigureActor(class AFGBuildable* inBuildable) const override;
 
+public:
+	/**
+	 * #497: Unconditionally sweep every spline mesh with the stencil/visibility setup for the given
+	 * state, bypassing the set-once guard in SetPlacementMaterialState. Only for the moments the mesh
+	 * SET changes (TriggerMeshGeneration) or a caller explicitly forces (ForceApplyHologramMaterial).
+	 */
+	void ApplySplineMeshMaterialState(EHologramMaterialState materialState);
+
 private:
+	/** #497 set-once guard: the state last swept onto the spline meshes (and whether any sweep ran). */
+	EHologramMaterialState LastAppliedSplineMaterialState = EHologramMaterialState::HMS_OK;
+	bool bSplineMaterialStateApplied = false;
+
     float PreviewLengthCm = 0.0f;
 	int32 RoutingMode = 0;
 

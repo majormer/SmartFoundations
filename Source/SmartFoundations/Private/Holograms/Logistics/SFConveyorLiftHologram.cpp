@@ -518,7 +518,15 @@ void ASFConveyorLiftHologram::ForceApplyHologramMaterial()
 {
     // Get the current material state
     EHologramMaterialState CurrentState = GetHologramMaterialState();
-    
+
+    // #497 set-once: re-applying an unchanged material to every mesh slot + MarkRenderStateDirty per
+    // frame forced continuous render-proxy rebuilds. Lift meshes are static (not regenerated like
+    // belt/pipe spline meshes), so once a state is applied it holds until the state changes.
+    if (bLiftMaterialStateApplied && CurrentState == LastAppliedLiftMaterialState)
+    {
+        return;
+    }
+
     // Apply to all static mesh components
     TArray<UStaticMeshComponent*> MeshComps;
     GetComponents<UStaticMeshComponent>(MeshComps);
@@ -552,5 +560,8 @@ void ASFConveyorLiftHologram::ForceApplyHologramMaterial()
                 MeshComp->MarkRenderStateDirty();
             }
         }
+
+        LastAppliedLiftMaterialState = CurrentState;
+        bLiftMaterialStateApplied = true;
     }
 }

@@ -68,6 +68,10 @@ public:
 private:
     /** Cached lift height for change detection */
     float CachedLiftHeight = 0.0f;
+
+    /** #497 set-once guard: last material state force-applied to the lift meshes. */
+    EHologramMaterialState LastAppliedLiftMaterialState = EHologramMaterialState::HMS_OK;
+    bool bLiftMaterialStateApplied = false;
     
     /**
      * Set the snapped connection components for this lift.

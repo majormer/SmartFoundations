@@ -376,11 +376,25 @@ void ASFConveyorBeltHologram::SetPlacementMaterialState(EHologramMaterialState m
     // Let the base class update stencil/render depth
     Super::SetPlacementMaterialState(materialState);
 
+    // #497 set-once: the sweep below dirties the render proxy of EVERY spline mesh. Extend/Walk call
+    // this per frame with an unchanged state, which forced the render thread to rebuild all proxies
+    // every frame (the GPU-side lag). Once a state has been swept it holds — skip same-state re-calls.
+    // Meshes created later are painted by TriggerMeshGeneration's trailing ApplySplineMeshMaterialState.
+    if (bSplineMaterialStateApplied && materialState == LastAppliedSplineMaterialState)
+    {
+        return;
+    }
+
+    ApplySplineMeshMaterialState(materialState);
+}
+
+void ASFConveyorBeltHologram::ApplySplineMeshMaterialState(EHologramMaterialState materialState)
+{
     TArray<USplineMeshComponent*> MeshComps;
     GetComponents<USplineMeshComponent>(MeshComps);
     const uint8 StencilValue = GetStencilForHologramMaterialState(materialState);
 
-    // If no spline meshes are present, skip the rest to avoid log spam
+    // No meshes yet: leave the guard unarmed so the next call (or mesh generation) paints them.
     if (MeshComps.Num() == 0)
     {
         return;
@@ -393,13 +407,16 @@ void ASFConveyorBeltHologram::SetPlacementMaterialState(EHologramMaterialState m
             Mesh->SetRenderCustomDepth(true);
             Mesh->SetCustomDepthStencilValue(StencilValue);
             Mesh->SetCustomDepthStencilWriteMask(ERendererStencilMask::ERSM_Default);
-            
+
             // Force render state update
             Mesh->MarkRenderStateDirty();
             Mesh->SetVisibility(true, true);
             Mesh->SetHiddenInGame(false);
         }
     }
+
+    LastAppliedSplineMaterialState = materialState;
+    bSplineMaterialStateApplied = true;
 
     UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🎨 BELT SetPlacementMaterialState: State=%d, SplineMeshes=%d, Stencil=%d"),
         (int32)materialState,
@@ -1181,8 +1198,9 @@ void ASFConveyorBeltHologram::TriggerMeshGeneration()
     UE_LOG(LogSmartHologram, Verbose, TEXT("🎯 BELT TriggerMeshGeneration: Created %d segments of %.1f cm each"),
         MeshComps.Num(), SegmentLength);
     
-    // Apply the current hologram material state to newly generated meshes.
-    SetPlacementMaterialState(GetHologramMaterialState());
+    // Apply the current hologram material state to newly generated meshes. Must bypass the #497
+    // set-once guard: the mesh SET just changed even though the state value may not have.
+    ApplySplineMeshMaterialState(GetHologramMaterialState());
 }
 
 // Override ConfigureActor to let parent class handle mesh initialization

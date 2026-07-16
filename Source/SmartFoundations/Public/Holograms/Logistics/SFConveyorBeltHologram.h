@@ -145,6 +145,15 @@ public:
 	// Force hologram material to be applied to all mesh components
 	// Call this after TriggerMeshGeneration() to ensure spline meshes have correct hologram material
 	void ForceApplyHologramMaterial();
+
+	/**
+	 * #497: Unconditionally sweep every spline mesh with the stencil/visibility setup for the given
+	 * state, bypassing the set-once guard in SetPlacementMaterialState. Only for the two moments the
+	 * mesh SET changes (TriggerMeshGeneration) or a caller explicitly forces (ForceApplyHologramMaterial);
+	 * everything else goes through SetPlacementMaterialState, which skips the sweep when the state is
+	 * already applied — repainting per frame was the render-proxy churn behind the Extend GPU lag.
+	 */
+	void ApplySplineMeshMaterialState(EHologramMaterialState materialState);
 	
 	/**
 	 * Set the snapped connection components for this belt hologram.
@@ -208,4 +217,9 @@ private:
 	// Vanilla parent hologram calls this repeatedly during tick, but we only want to run it once
 	// to establish snapped connections - subsequent calls crash due to garbage collected spline data
 	bool bPostHologramPlacementCalled = false;
+
+	/** #497 set-once guard: the state last swept onto the spline meshes (and whether any sweep ran).
+	 *  Meshes created after a sweep are painted by TriggerMeshGeneration's trailing apply. */
+	EHologramMaterialState LastAppliedSplineMaterialState = EHologramMaterialState::HMS_OK;
+	bool bSplineMaterialStateApplied = false;
 };

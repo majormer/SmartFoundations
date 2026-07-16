@@ -55,8 +55,15 @@ protected:
     // Recipe copying implementation
     virtual void ApplyStoredRecipe(AActor* Building) const;
     virtual bool IsProductionBuilding(AActor* Building) const;
-    
+
     // Common helper functions (inherited from buildable holograms)
     virtual void LogSmartActivity(const FString& Activity) const;
     virtual void SetSmartMetadata(int32 GroupIndex, int32 ChildIndex);
+
+private:
+    /** #497 set-once guard: last state fanned out to Smart children. RefreshExtension re-asserts the
+     *  parent state several times per frame; re-cascading an unchanged state repainted every child's
+     *  spline meshes every frame. Children spawned later are painted at spawn by their spawner. */
+    EHologramMaterialState LastCascadedChildMaterialState = EHologramMaterialState::HMS_OK;
+    bool bChildMaterialStateCascaded = false;
 };

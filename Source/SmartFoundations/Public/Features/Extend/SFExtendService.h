@@ -754,6 +754,12 @@ private:
     /** Authoritative material state for Extend child previews; set each RefreshExtension. */
     EHologramMaterialState ExtendChildMaterialState = EHologramMaterialState::HMS_OK;
 
+    /** #497 set-once: last state swept across the child previews by RefreshExtension. The sweep now
+     *  runs only when this changes — children are painted at spawn, so re-sweeping an unchanged state
+     *  every frame only churned render proxies (the Extend GPU lag). */
+    EHologramMaterialState LastSyncedExtendChildMaterialState = EHologramMaterialState::HMS_OK;
+    bool bExtendChildMaterialStateSynced = false;
+
     /** Reason why current configuration is invalid (empty if valid) */
     FString ScaledExtendInvalidReason;
 

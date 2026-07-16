@@ -217,56 +217,33 @@ void USFExtendHologramService::ClearBeltPreviews()
 
 void USFExtendHologramService::RefreshChildPositions()
 {
-    const EHologramMaterialState ParentMaterialState = CurrentParentHologram.IsValid()
-        ? CurrentParentHologram->GetHologramMaterialState()
-        : EHologramMaterialState::HMS_OK;
-
-    // Force child holograms back to their intended positions every frame
+    // #497: this loop used to unconditionally rewrite every child's transform, MarkRenderStateDirty
+    // its root, and force-reapply its material EVERY FRAME — the per-child render-proxy churn behind
+    // the Extend GPU lag. It is now the same drift-check the #418 grid refresh uses: skip children
+    // already at their intended transform (0.5 cm / 0.1°); only a genuinely drifted child is moved.
+    // Material is no longer touched here at all — children are painted at spawn, at mesh generation,
+    // and on state CHANGE by RefreshExtension's gated sweep.
     for (AFGHologram* Child : TrackedChildren)
     {
-        if (IsValid(Child))
+        if (!IsValid(Child))
         {
-            if (FVector* IntendedPos = ChildIntendedPositions.Find(Child))
-            {
-                Child->SetActorLocation(*IntendedPos);
-            }
-            if (FRotator* IntendedRot = ChildIntendedRotations.Find(Child))
-            {
-                Child->SetActorRotation(*IntendedRot);
-            }
-
-            // Also update root component to ensure mesh moves
-            if (USceneComponent* ChildRoot = Child->GetRootComponent())
-            {
-                if (FVector* IntendedPos = ChildIntendedPositions.Find(Child))
-                {
-                    ChildRoot->SetWorldLocation(*IntendedPos);
-                }
-                if (FRotator* IntendedRot = ChildIntendedRotations.Find(Child))
-                {
-                    ChildRoot->SetWorldRotation(*IntendedRot);
-                }
-                ChildRoot->MarkRenderStateDirty();
-            }
-
-            // Keep JSON-spawned children visually aligned with the parent result.
-            // They do not run normal validation/cost checks while tick-disabled.
-            Child->SetActorHiddenInGame(false);
-            Child->SetPlacementMaterialState(ParentMaterialState);
-
-            if (ASFConveyorLiftHologram* LiftChild = Cast<ASFConveyorLiftHologram>(Child))
-            {
-                LiftChild->ForceApplyHologramMaterial();
-            }
-            else if (ASFConveyorBeltHologram* BeltChild = Cast<ASFConveyorBeltHologram>(Child))
-            {
-                BeltChild->ForceApplyHologramMaterial();
-            }
-            else if (ASFPipelineHologram* PipeChild = Cast<ASFPipelineHologram>(Child))
-            {
-                PipeChild->ForceApplyHologramMaterial();
-            }
+            continue;
         }
+
+        const FVector* IntendedPos = ChildIntendedPositions.Find(Child);
+        const FRotator* IntendedRot = ChildIntendedRotations.Find(Child);
+
+        const bool bLocationDrifted = IntendedPos && !Child->GetActorLocation().Equals(*IntendedPos, 0.5f);
+        const bool bRotationDrifted = IntendedRot && !Child->GetActorRotation().Equals(*IntendedRot, 0.1f);
+        if (!bLocationDrifted && !bRotationDrifted)
+        {
+            continue;
+        }
+
+        Child->SetActorLocationAndRotation(
+            IntendedPos ? *IntendedPos : Child->GetActorLocation(),
+            IntendedRot ? *IntendedRot : Child->GetActorRotation());
+        Child->SetActorHiddenInGame(false);
     }
 }
 
