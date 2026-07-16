@@ -24,6 +24,9 @@ public:
 
 	virtual void BeginPlay() override;
 	virtual TArray<FItemAmount> GetCost(bool includeChildren) const override;
+	// #497: null-recipe guard — scale-daisy wire previews carry no recipe; skip vanilla GetBaseCost's
+	// GetIngredients(nullptr) warning (synchronous per-frame disk-write spam). See GetCost for the length cost.
+	virtual TArray<FItemAmount> GetBaseCost() const override;
 	virtual AActor* Construct(TArray<AActor*>& out_children, FNetConstructionID constructionID) override;
 	virtual void CheckValidPlacement() override;
 	virtual void SetPlacementMaterialState(EHologramMaterialState materialState) override;

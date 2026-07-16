@@ -26,6 +26,19 @@ void ASFWireHologram::BeginPlay()
 	UE_LOG(LogSmartHologram, VeryVerbose, TEXT("⚡ SFWireHologram::BeginPlay - %s"), *GetName());
 }
 
+TArray<FItemAmount> ASFWireHologram::GetBaseCost() const
+{
+	// #497: scale-daisy/auto-connect wire previews are spawned without a recipe (mRecipe == null); their
+	// cost is length-based and computed in GetCost. Vanilla AFGHologram::GetBaseCost would call
+	// UFGRecipe::GetIngredients(nullptr), logging "FGRecipe::GetIngredients: class was nullpeter" per wire
+	// per frame — synchronous disk writes (UE log + Sentry breadcrumb) that stutter the game. Skip it.
+	if (!GetRecipe())
+	{
+		return TArray<FItemAmount>();
+	}
+	return Super::GetBaseCost();
+}
+
 TArray<FItemAmount> ASFWireHologram::GetCost(bool includeChildren) const
 {
 	TArray<FItemAmount> Cost;

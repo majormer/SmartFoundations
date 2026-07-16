@@ -75,7 +75,7 @@ AFGHologram* USFWalkBeltConveyance::LinkOrUpdate(AFGHologram* ExistingSpan, AFGH
     // then builds no belt for that segment (mirrors stackable AC's skip-when-too-far).
     if (FVector::Dist(StartPos, EndPos) > SF_WALK_MAX_SPAN_CM)
     {
-        UE_LOG(LogSmartWalkBelt, Warning, TEXT("<<< LinkOrUpdate EXIT: belt span %.0f cm > %.0f cm cap — skipped (segment too long)"),
+        UE_LOG(LogSmartWalkBelt, Verbose, TEXT("<<< LinkOrUpdate EXIT: belt span %.0f cm > %.0f cm cap — skipped (segment too long)"),
             FVector::Dist(StartPos, EndPos), SF_WALK_MAX_SPAN_CM);
         return nullptr;
     }
@@ -276,7 +276,7 @@ AFGHologram* USFWalkPipeConveyance::LinkOrUpdate(AFGHologram* ExistingSpan, AFGH
     // destroys any now-too-long existing one.
     if (FVector::Dist(StartPos, EndPos) > SF_WALK_MAX_SPAN_CM)
     {
-        UE_LOG(LogSmartWalkBelt, Warning, TEXT("<<< [Pipe] LinkOrUpdate EXIT: span %.0f cm > %.0f cm cap — skipped (segment too long)"),
+        UE_LOG(LogSmartWalkBelt, Verbose, TEXT("<<< [Pipe] LinkOrUpdate EXIT: span %.0f cm > %.0f cm cap — skipped (segment too long)"),
             FVector::Dist(StartPos, EndPos), SF_WALK_MAX_SPAN_CM);
         return nullptr;
     }
@@ -448,7 +448,7 @@ AFGHologram* USFWalkHypertubeConveyance::LinkOrUpdate(AFGHologram* ExistingSpan,
     // tube, so refuse the span (return null) and the caller destroys any now-too-long existing one + reds the segment.
     if (FVector::Dist(StartPos, EndPos) > SF_WALK_MAX_HYPER_SPAN_CM)
     {
-        UE_LOG(LogSmartWalkBelt, Warning, TEXT("<<< [Hyper] LinkOrUpdate EXIT: span %.0f cm > %.0f cm cap — skipped (segment too long)"),
+        UE_LOG(LogSmartWalkBelt, Verbose, TEXT("<<< [Hyper] LinkOrUpdate EXIT: span %.0f cm > %.0f cm cap — skipped (segment too long)"),
             FVector::Dist(StartPos, EndPos), SF_WALK_MAX_HYPER_SPAN_CM);
         return nullptr;
     }

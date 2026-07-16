@@ -208,7 +208,7 @@ FSFCloneTopology FSFCloneTopology::FromSource(const FSFSourceTopology& Source, c
 
         if (IsDistributorBranchInvalid(Chain))
         {
-            UE_LOG(LogSmartExtend, Log, TEXT("Extend: discarding invalid distributor branch %s.%s (missing complete perpendicular lane)"),
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("Extend: discarding invalid distributor branch %s.%s (missing complete perpendicular lane)"),
                 *Chain.Distributor.Class, *Chain.Distributor.ConnectorUsed);
             return;
         }
@@ -593,7 +593,7 @@ FSFCloneTopology FSFCloneTopology::FromSource(const FSFSourceTopology& Source, c
         }
         if (bHasRelatedOwner && !bHasKeptOwner)
         {
-            UE_LOG(LogSmartExtend, Log,
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log,
                 TEXT("Extend: dropping floor hole %s because all snapped conduit owners belong to an excluded branch"),
                 *PassSeg.Id);
             continue;
@@ -949,7 +949,7 @@ FSFCloneTopology FSFCloneTopology::FromSource(const FSFSourceTopology& Source, c
             const FVector* CapturedInput = Distributor.ConnectorWorldPositions.Find(InputPort);
             if ((Topology.bRecognized && !Topology.bValidManifold) || !CapturedOutput || !CapturedInput)
             {
-                UE_LOG(LogSmartExtend, Warning, TEXT("BELT LANE: Missing named topology/positions for %s.%s"),
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Warning, TEXT("BELT LANE: Missing named topology/positions for %s.%s"),
                     *Distributor.Class, *Distributor.ConnectorUsed);
                 continue;
             }

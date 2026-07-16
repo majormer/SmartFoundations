@@ -79,6 +79,19 @@ void ASFConveyorLiftHologram::SetHologramLocationAndRotation(const FHitResult& h
     }
 }
 
+TArray<FItemAmount> ASFConveyorLiftHologram::GetBaseCost() const
+{
+    // #497: Preview lift children can carry a null mRecipe. Vanilla AFGHologram::GetBaseCost would call
+    // UFGRecipe::GetIngredients(nullptr), which logs "FGRecipe::GetIngredients: class was nullpeter" once
+    // per child per frame — each line a synchronous disk write (UE log + Sentry breadcrumb) that stutters
+    // the game. A null recipe has no base cost, so skip vanilla (which returns empty anyway, just noisily).
+    if (!GetRecipe())
+    {
+        return TArray<FItemAmount>();
+    }
+    return Super::GetBaseCost();
+}
+
 void ASFConveyorLiftHologram::CheckValidPlacement()
 {
     // For child lift previews: Skip validation and force valid state

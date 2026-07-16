@@ -815,6 +815,21 @@ void ASFConveyorBeltHologram::SetHologramLocationAndRotation(const FHitResult& h
     Super::SetHologramLocationAndRotation(hitResult);
 }
 
+TArray<FItemAmount> ASFConveyorBeltHologram::GetBaseCost() const
+{
+	// #497: Preview belt children are commonly spawned without a recipe (mRecipe == null); their cost is
+	// length-based and computed in GetCost. Vanilla AFGHologram::GetBaseCost would call
+	// UFGRecipe::GetIngredients(nullptr), which logs "FGRecipe::GetIngredients: class was nullpeter"
+	// once per child per frame (~89/frame in a conveyor blueprint) — each line a synchronous disk write
+	// via the UE log + Sentry breadcrumb, the confirmed source of the Extend stutter/frame-loss.
+	// A null recipe has no base cost, so skip vanilla entirely (which returns empty anyway, just noisily).
+	if (!GetRecipe())
+	{
+		return TArray<FItemAmount>();
+	}
+	return Super::GetBaseCost();
+}
+
 TArray<FItemAmount> ASFConveyorBeltHologram::GetCost(bool includeChildren) const
 {
 	UE_LOG(LogSmartHologram, VeryVerbose, TEXT("💰 BELT GetCost() CALLED on %s (includeChildren=%d)"), *GetName(), includeChildren);

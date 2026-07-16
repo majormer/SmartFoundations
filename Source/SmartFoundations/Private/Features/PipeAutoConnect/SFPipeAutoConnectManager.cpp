@@ -845,7 +845,7 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 			FSFDistributorTopologyResolver::Resolve(ParentJunctionHologram->GetBuildClass(), ChosenConnectorName);
 		if (ChosenTopology.bRecognized && !ChosenTopology.bValidManifold)
 		{
-			UE_LOG(LogSmartAutoConnect, Log,
+			UE_LOG(LogSmartAutoConnect, Verbose,
 				TEXT("Pipe Auto-Connect: discarding invalid distributor branch %s.%s (missing perpendicular lane port)"),
 				*GetNameSafe(ParentJunctionHologram->GetBuildClass()), *ChosenConnectorName.ToString());
 			if (TWeakObjectPtr<ASFPipelineHologram>* Child = BuildingPipeChildren.Find(ParentJunctionHologram); Child && Child->IsValid())

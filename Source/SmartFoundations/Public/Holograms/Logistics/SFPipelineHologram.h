@@ -59,6 +59,15 @@ public:
      */
     virtual TArray<FItemAmount> GetCost(bool includeChildren) const override;
 
+    /**
+     * #497: Preview pipe children frequently carry a null mRecipe (their real cost comes from spline
+     * length in GetCost, not a base recipe). Vanilla AFGHologram::GetBaseCost would then call
+     * UFGRecipe::GetIngredients(nullptr) and log a warning every frame per child — filling the log with
+     * synchronous disk writes (Sentry breadcrumbs) and stuttering the game. A null recipe has no base
+     * cost, so short-circuit to empty in that case; otherwise defer to vanilla.
+     */
+    virtual TArray<FItemAmount> GetBaseCost() const override;
+
     USplineComponent* GetSplineComponent() const { return mSplineComponent; }
 
     void SetBuildClass(UClass* InBuildClass) { mBuildClass = InBuildClass; }

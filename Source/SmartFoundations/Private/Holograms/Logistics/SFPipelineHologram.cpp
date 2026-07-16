@@ -640,7 +640,7 @@ bool ASFPipelineHologram::TryUseBuildModeRouting(
 	{
 		SetBuildModeOverride(ModeDesc);
 	}
-	UE_LOG(LogSmartHologram, Log,
+	UE_LOG(LogSmartHologram, Verbose,
 		TEXT("[PipeRoute] mode=%d desc=%s -> leaf dispatch %s"),
 		RoutingMode, ModeDesc ? *ModeDesc->GetName() : TEXT("NONE"), *GetName());
 
@@ -1669,6 +1669,21 @@ void ASFPipelineHologram::ConfigureActor(class AFGBuildable* inBuildable) const
 				i, *PipeSplineData[i].Location.ToString());
 		}
 	}
+}
+
+TArray<FItemAmount> ASFPipelineHologram::GetBaseCost() const
+{
+	// #497: Preview pipe children are commonly spawned without a recipe (mRecipe == null); their cost is
+	// length-based and computed in GetCost. Vanilla AFGHologram::GetBaseCost would call
+	// UFGRecipe::GetIngredients(nullptr), which logs "FGRecipe::GetIngredients: class was nullpeter"
+	// once per child per frame (~89/frame in a conveyor blueprint) — each line a synchronous disk write
+	// via the UE log + Sentry breadcrumb, the confirmed source of the Extend stutter/frame-loss.
+	// A null recipe has no base cost, so skip vanilla entirely (which returns empty anyway, just noisily).
+	if (!GetRecipe())
+	{
+		return TArray<FItemAmount>();
+	}
+	return Super::GetBaseCost();
 }
 
 TArray<FItemAmount> ASFPipelineHologram::GetCost(bool includeChildren) const

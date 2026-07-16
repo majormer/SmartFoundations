@@ -26,7 +26,15 @@ public:
     
     /** Override placement validation to always succeed for child hologram preview */
     virtual void CheckValidPlacement() override;
-    
+
+    /**
+     * #497: Preview lift children can carry a null mRecipe. Vanilla AFGHologram::GetBaseCost would then
+     * call UFGRecipe::GetIngredients(nullptr) and log a warning every frame per child — synchronous disk
+     * writes (Sentry breadcrumbs) that stutter the game. A null recipe has no base cost, so return empty
+     * in that case; otherwise defer to vanilla.
+     */
+    virtual TArray<FItemAmount> GetBaseCost() const override;
+
     /** 
      * Override Construct to build lift when used as EXTEND child.
      * When tagged with SF_ExtendChild, this builds the lift via vanilla mechanism.
