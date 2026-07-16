@@ -374,9 +374,14 @@ void USFExtendScaledService::RebuildScaledExtendNow()
     {
         // #497: capture the clone-1 base topology (post-rotation) so every merge — full or
         // incremental — can rebuild the merged StoredCloneTopology from a fresh copy of it.
-        Owner->ScaledExtendBaseTopology = Owner->StoredCloneTopology.IsValid()
-            ? MakeShared<FSFCloneTopology>(*Owner->StoredCloneTopology)
-            : nullptr;
+        if (Owner->StoredCloneTopology.IsValid())
+        {
+            Owner->ScaledExtendBaseTopology = MakeShared<FSFCloneTopology>(*Owner->StoredCloneTopology);
+        }
+        else
+        {
+            Owner->ScaledExtendBaseTopology.Reset();
+        }
     }
     else
     {
