@@ -963,15 +963,21 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 				// ancestor-predicate build) still burned 74% in this body on PARENTED holograms:
 				// something slips the predicate and code inspection says it shouldn't. Name the
 				// first pass-throughs that have a parent: class, parent chain, tag count.
+				// Log pass-throughs that are parented OR carry tags — catches BOTH failure legs:
+				// tag missing (lines show tags=0 with a parent) and parent pointer null (lines
+				// show parent=None with tags>0). Ordinary held holograms are neither -> filtered.
 				static int32 SFGridHookDiagBudget = 30;
-				if (SFGridHookDiagBudget > 0 && self && self->GetParentHologram() != nullptr)
+				if (SFGridHookDiagBudget > 0 && self &&
+					(self->GetParentHologram() != nullptr || self->Tags.Num() > 0))
 				{
 					--SFGridHookDiagBudget;
 					const AFGHologram* P = self->GetParentHologram();
 					const AFGHologram* GP = P ? P->GetParentHologram() : nullptr;
+					FString TagList;
+					for (const FName& T : self->Tags) { TagList += T.ToString() + TEXT(","); }
 					UE_LOG(LogSmartFoundations, Warning,
-						TEXT("[#497 GRIDHOOK] pass-through %s (%s) tags=%d | parent=%s (%s) ptags=%d | grandparent=%s"),
-						*self->GetName(), *self->GetClass()->GetName(), self->Tags.Num(),
+						TEXT("[#497 GRIDHOOK] pass-through %s (%s) tags=[%s] | parent=%s (%s) ptags=%d | grandparent=%s"),
+						*self->GetName(), *self->GetClass()->GetName(), *TagList,
 						*GetNameSafe(P), P ? *P->GetClass()->GetName() : TEXT("-"), P ? P->Tags.Num() : -1,
 						*GetNameSafe(GP));
 				}
