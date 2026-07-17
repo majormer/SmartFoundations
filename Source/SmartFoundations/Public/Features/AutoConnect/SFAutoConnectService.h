@@ -782,11 +782,42 @@ private:
 	
 	/** Generate a unique key for a pole pair (order-independent) */
 	static uint64 MakePolePairKey(const AFGHologram* PoleA, const AFGHologram* PoleB);
-	
+
+	/**
+	 * [#497] Route signature for a stackable pole-pair conduit. The update-in-place paths used to
+	 * unlock -> reroute -> remesh -> relock every existing pair on EVERY debounced eval (10-20 Hz
+	 * during a scaling drag) even when nothing changed. Vanilla LockHologramPosition broadcasts an
+	 * actor-representation update whose UI listener instantiates a UMG widget per call — at
+	 * hundreds of pairs that allocation storm hit the 2.1M UObject cap and crashed the game
+	 * (maintainer repro: ~4x6 stacked conveyor poles scaled out ~10 lines on X). When the stored
+	 * signature matches, the whole update is skipped.
+	 */
+	struct FSFStackableRouteSig
+	{
+		FVector Start = FVector::ZeroVector;
+		FVector End = FVector::ZeroVector;
+		FVector StartNormal = FVector::ZeroVector;
+		FVector EndNormal = FVector::ZeroVector;
+		int32 RoutingMode = -1;
+		UClass* BuildClass = nullptr;
+
+		bool Matches(const FSFStackableRouteSig& Other) const
+		{
+			return BuildClass == Other.BuildClass
+				&& RoutingMode == Other.RoutingMode
+				&& Start.Equals(Other.Start, 0.1f)
+				&& End.Equals(Other.End, 0.1f)
+				&& StartNormal.Equals(Other.StartNormal, 0.001f)
+				&& EndNormal.Equals(Other.EndNormal, 0.001f);
+		}
+	};
+
 	/** Per-parent map of pole-pair keys to their pipe holograms */
 	struct FStackablePipeState
 	{
 		TMap<uint64, TWeakObjectPtr<AFGHologram>> PipesByPolePair;
+		/** [#497] Last routed signature per pair — matching updates are skipped entirely. */
+		TMap<uint64, FSFStackableRouteSig> RouteSigByPolePair;
 	};
 	TMap<TWeakObjectPtr<AFGHologram>, FStackablePipeState> StackablePipeStates;
 
@@ -836,6 +867,8 @@ private:
 	struct FStackableBeltState
 	{
 		TMap<uint64, TWeakObjectPtr<AFGHologram>> BeltsByPolePair;
+		/** [#497] Last routed signature per pair — matching updates are skipped entirely. */
+		TMap<uint64, FSFStackableRouteSig> RouteSigByPolePair;
 	};
 	TMap<TWeakObjectPtr<AFGHologram>, FStackableBeltState> StackableBeltStates;
 	
