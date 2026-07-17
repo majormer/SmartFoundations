@@ -85,4 +85,10 @@ private:
 	 * The auto-connect path leaves this false (its wire is re-created on preview updates).
 	 */
 	bool bUseAbsoluteMeshTransform = false;
+
+public:
+	/** [#497] Block vanilla's locked-parent nudge cascade — it bypasses SetHologramLocationAndRotation
+	 *  and dragged every extend child to world origin each tick (see the .cpp override). */
+	virtual void SetHologramNudgeLocation() override;
+
 };

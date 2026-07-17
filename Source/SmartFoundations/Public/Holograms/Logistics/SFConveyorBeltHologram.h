@@ -235,4 +235,10 @@ private:
 	 *  GetCost (load-bearing: it repairs previews vanilla resets) still runs when needed. */
 	mutable TArray<FItemAmount> CachedSelfCost;
 	mutable bool bSelfCostCacheValid = false;
+
+public:
+	/** [#497] Block vanilla's locked-parent nudge cascade — it bypasses SetHologramLocationAndRotation
+	 *  and dragged every extend child to world origin each tick (see the .cpp override). */
+	virtual void SetHologramNudgeLocation() override;
+
 };

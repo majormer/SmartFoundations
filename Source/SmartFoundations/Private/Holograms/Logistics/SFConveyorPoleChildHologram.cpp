@@ -39,3 +39,15 @@ void ASFConveyorPoleChildHologram::Destroyed()
 	USFHologramDataRegistry::ClearData(this);
 	Super::Destroyed();
 }
+
+void ASFConveyorPoleChildHologram::SetHologramNudgeLocation()
+{
+	// [#497] Vanilla's locked-parent placement path (UFGBuildGunStateBuild::TickState ->
+	// AFGHologram::UpdateHologramPlacement (FGHologram.cpp:440) -> SetHologramNudgeLocation
+	// (FGHologram.cpp:2120)) cascades through mChildren with a PLAIN SetActorLocation of
+	// lock-location + nudge offset - bypassing the SetHologramLocationAndRotation no-op entirely.
+	// Extend locks its parent, children never capture a lock location (ZeroVector), so the cascade
+	// dragged every child to world origin every tick (caught by the #497 origin-trap stack dump).
+	// Smart owns this child's transform; parent nudges are propagated by Smart's own
+	// transform-change follow. No-op, mirroring the #418 drift contract.
+}

@@ -40,4 +40,10 @@ public:
 
 	/** Public setter for build class (mBuildClass is protected) */
 	void SetChildBuildClass(UClass* InBuildClass) { mBuildClass = InBuildClass; }
+
+public:
+	/** [#497] Block vanilla's locked-parent nudge cascade — it bypasses SetHologramLocationAndRotation
+	 *  and dragged every extend child to world origin each tick (see the .cpp override). */
+	virtual void SetHologramNudgeLocation() override;
+
 };

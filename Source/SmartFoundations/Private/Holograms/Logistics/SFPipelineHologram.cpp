@@ -1879,3 +1879,16 @@ TArray<FItemAmount> ASFPipelineHologram::GetCost(bool includeChildren) const
 	}
 	return TotalCost;
 }
+
+void ASFPipelineHologram::SetHologramNudgeLocation()
+{
+	// [#497] Extend children: block vanilla's locked-parent nudge cascade, which bypasses the
+	// SF_ExtendChild SetHologramLocationAndRotation guard via plain SetActorLocation and dragged
+	// every extend child to world origin each tick (origin-trap stack: FGBuildGunBuild.cpp:320 ->
+	// FGHologram.cpp:440 -> :2120). Non-extend instances keep vanilla behavior.
+	if (Tags.Contains(FName(TEXT("SF_ExtendChild"))))
+	{
+		return;
+	}
+	Super::SetHologramNudgeLocation();
+}
