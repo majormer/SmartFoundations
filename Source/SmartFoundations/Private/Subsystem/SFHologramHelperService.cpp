@@ -1130,6 +1130,27 @@ void FSFHologramHelperService::RegenerateChildHologramGrid(
 					ChildHologram->SetPlacementMaterialState(ParentHologram->GetHologramMaterialState());
 					// Force components to register and become visible
 					ChildHologram->RegisterAllComponents();
+
+					// [#497] Strip the child's clearance records. Vanilla CheckClearance on the
+					// ROOT builds a COMBINED clearance volume including every child's records —
+					// with thousands of vanilla-delegate children ringed across hundreds of
+					// meters, the single per-frame overlap query spans the whole ring and visits
+					// most of the physics tree (captures 6-10: root clearance = 10-second
+					// frames; diag round 3 proved the burner is the root, validated with a
+					// combined volume). #418 Tier-1/2 placeholder children carry NO clearance
+					// data, which is exactly why foundation grids never showed this — mirror
+					// that contract for the vanilla delegates. Their build-time collision and
+					// connectors are untouched; grid members overlapping each other is intended.
+					{
+						static FArrayProperty* ClearanceProp = FindFProperty<FArrayProperty>(
+							AFGHologram::StaticClass(), TEXT("mClearanceData"));
+						if (ClearanceProp)
+						{
+							FScriptArrayHelper ClearanceHelper(ClearanceProp,
+								ClearanceProp->ContainerPtrToValuePtr<void>(ChildHologram));
+							ClearanceHelper.EmptyValues();
+						}
+					}
 				}
 
 				// Phase 4 CRITICAL FIX: Disable ticking for locked children to eliminate per-frame validation overhead
