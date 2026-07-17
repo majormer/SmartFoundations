@@ -44,7 +44,11 @@ struct SMARTFOUNDATIONS_API FSFHologramData {
     
     UPROPERTY()
     bool bIsChildHologram = false;
-    
+
+    /** [#497 ORIGIN-TRAP — TEMPORARY DIAGNOSTIC] Whether the origin-move stack-dump trap is already
+     *  bound to this hologram's root (guards double-binding when a child is re-marked). */
+    bool bOriginTrapInstalled = false;
+
     // Recipe copying support
     UPROPERTY()
     TSubclassOf<UFGRecipe> StoredRecipe = nullptr;
