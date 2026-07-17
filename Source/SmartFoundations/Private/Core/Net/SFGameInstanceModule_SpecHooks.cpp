@@ -963,12 +963,21 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 				// ancestor-predicate build) still burned 74% in this body on PARENTED holograms:
 				// something slips the predicate and code inspection says it shouldn't. Name the
 				// first pass-throughs that have a parent: class, parent chain, tag count.
-				// Capture 10: clearance burned 80% with the parented-OR-tagged filter logging
-				// NOTHING — the burners fail BOTH legs. No more assumptions: log the first 30
-				// pass-throughs unconditionally; during a stackable repro they dominate the call
-				// volume, so the 30 lines will be them.
+				// Round 3 of this diag: unconditional logging burned the whole budget on the HELD
+				// ROOT (one pass-through per frame from its own TickState validation) before the
+				// grid ever scaled. The burners are child-level calls — many per frame. Log only
+				// the 2nd+ pass-through within a single frame: root-only frames stay silent, burn
+				// frames get named.
 				static int32 SFGridHookDiagBudget = 100;
-				if (SFGridHookDiagBudget > 0 && self)
+				static uint64 SFGridHookDiagLastFrame = 0;
+				static int32 SFGridHookDiagCallsThisFrame = 0;
+				if (GFrameCounter != SFGridHookDiagLastFrame)
+				{
+					SFGridHookDiagLastFrame = GFrameCounter;
+					SFGridHookDiagCallsThisFrame = 0;
+				}
+				++SFGridHookDiagCallsThisFrame;
+				if (SFGridHookDiagBudget > 0 && self && SFGridHookDiagCallsThisFrame >= 2)
 				{
 					--SFGridHookDiagBudget;
 					const AFGHologram* P = self->GetParentHologram();
