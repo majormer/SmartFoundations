@@ -454,6 +454,9 @@ FSFCloneTopology FSFCloneTopology::FromSource(const FSFSourceTopology& Source, c
     // ========================================================================
     // PHASE 2.5: Generate Power Pole Clone Holograms (Issue #229)
     // ========================================================================
+    // [#498] Clone-space pole connector positions by pole HologramId, recorded while the poles are
+    // emitted — PHASE 2.7 anchors each pump's cable preview to its own pole's connector.
+    TMap<FString, FVector> PoleCloneConnectorWorldById;
     int32 PowerPoleIndex = 0;
     for (const FSFSourcePowerPole& SourcePole : Source.PowerPoles)
     {
@@ -479,7 +482,14 @@ FSFCloneTopology FSFCloneTopology::FromSource(const FSFSourceTopology& Source, c
         
         SourceIdToHologramId.Add(SourcePole.Id, PoleHolo.HologramId);
         Result.ChildHolograms.Add(PoleHolo);
-        
+
+        // [#498] Record the clone pole's connector world position (same derivation the cable
+        // previews below use) so PHASE 2.7 can anchor pump cables to it.
+        PoleCloneConnectorWorldById.Add(PoleHolo.HologramId,
+            SourcePole.bHasConnectorWorld
+                ? SourcePole.PoleConnectorWorld.ToFVector() + Offset
+                : PoleHolo.Transform.Location.ToFVector() + FVector(0.f, 0.f, SFWireConnectorHeightCm));
+
         // Wire cost hologram 1: Clone factory ↔ Clone pole
         // Distance = RelativeOffset magnitude (same relative position in clone)
         {
@@ -570,7 +580,58 @@ FSFCloneTopology FSFCloneTopology::FromSource(const FSFSourceTopology& Source, c
         
         PowerPoleIndex++;
     }
-    
+
+    // ========================================================================
+    // PHASE 2.7: Pump → pole cable cost/preview holograms (#498)
+    // ========================================================================
+    // Powered pipe attachments (pumps) get their REAL power line at build time (Phase 3.8b wires
+    // pump → its clone pole), but nothing represented that cable in the PREVIEW: clone pumps showed
+    // bare power connectors and the extend quote missed the cable's length-based cost. Emit one
+    // wire_cost child per powered pump — the same preview-only channel as the factory/daisy cables
+    // above, so the visible catenary and the cost (endpoints drive GetWireLength → GetCost) ride the
+    // established path. Both endpoints are clone-internal: the prefix pass scopes the id and the
+    // rigid rotation passes translate/rotate it exactly like wire_factory_pole. Valves and pumps
+    // whose source had no cable (empty ConnectedPowerPoleHologramId) emit nothing, mirroring 3.8b.
+    {
+        TArray<FSFCloneHologram> PumpCableHolos;
+        for (const FSFCloneHologram& AttHolo : Result.ChildHolograms)
+        {
+            if (AttHolo.Role != TEXT("pipe_attachment") || AttHolo.ConnectedPowerPoleHologramId.IsEmpty())
+            {
+                continue;
+            }
+            const FVector* PoleConnW = PoleCloneConnectorWorldById.Find(AttHolo.ConnectedPowerPoleHologramId);
+            if (!PoleConnW)
+            {
+                continue;  // pole outside the captured manifold — 3.8b skips these too
+            }
+
+            const FVector PumpW = AttHolo.Transform.Location.ToFVector();
+
+            FSFCloneHologram WireHolo;
+            WireHolo.HologramId = TEXT("wire_pump_") + AttHolo.HologramId;
+            WireHolo.Role = TEXT("wire_cost");
+            WireHolo.SourceId = AttHolo.SourceId;
+            WireHolo.SourceClass = TEXT("Build_PowerLine_C");
+            WireHolo.HologramClass = TEXT("ASFWireHologram");
+            WireHolo.BuildClass = TEXT("Build_PowerLine_C");
+            WireHolo.RecipeClass = TEXT("Recipe_PowerLine_C");
+            WireHolo.Transform = AttHolo.Transform;
+            WireHolo.bConstructible = false;
+            WireHolo.bPreviewOnly = true;
+            WireHolo.bHasSplineData = true;
+            WireHolo.SplineData.Length = FVector::Dist(PumpW, *PoleConnW);
+
+            FSFSplinePoint PtPump; PtPump.World = FSFVec3(PumpW);
+            FSFSplinePoint PtPole; PtPole.World = FSFVec3(*PoleConnW);
+            WireHolo.SplineData.Points.Add(PtPump);
+            WireHolo.SplineData.Points.Add(PtPole);
+
+            PumpCableHolos.Add(WireHolo);
+        }
+        Result.ChildHolograms.Append(PumpCableHolos);
+    }
+
     // ========================================================================
     // PHASE 2.6: Generate Pipe Passthrough Clone Holograms (Issue #260)
     // ========================================================================

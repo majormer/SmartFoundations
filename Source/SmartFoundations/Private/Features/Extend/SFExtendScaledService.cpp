@@ -960,6 +960,19 @@ void USFExtendScaledService::SpawnScaledExtendPreviews()
             // Prefix hologram ID
             Holo.HologramId = ClonePrefix + Holo.HologramId;
 
+            // [#498] The pump→pole power linkage is a clone-INTERNAL reference and must be prefixed
+            // like every other internal id. Left unprefixed, "power_pole_N" resolves against the flat
+            // JsonBuiltActors map to the PARENT module's pole (the only unprefixed registration), so
+            // Phase 3.8b wired every clone's pumps across to the parent's pole — and the per-clone
+            // corrective pass (SFExtendWiringService_Json.cpp, prefixed CloneBuiltActors) missed on
+            // the unprefixed id and silently no-op'd. Also fixes ValidatePowerCapacity's per-pole
+            // pump tally, which compares this field against the (prefixed) pole HologramIds. The
+            // restored-scaled path already does this (PrefixInternalTarget in the restore replay).
+            if (!Holo.ConnectedPowerPoleHologramId.IsEmpty())
+            {
+                Holo.ConnectedPowerPoleHologramId = ClonePrefix + Holo.ConnectedPowerPoleHologramId;
+            }
+
             // === Conn0 target resolution ===
             if (OrigConn0Target == TEXT("parent"))
             {
