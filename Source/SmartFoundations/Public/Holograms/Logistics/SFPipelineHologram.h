@@ -156,10 +156,20 @@ public:
 	 */
 	void ApplySplineMeshMaterialState(EHologramMaterialState materialState);
 
+	/** #497: invalidate the cached GetCost result — call after any spline/route/build-class change. */
+	void InvalidateCostCache() { bSelfCostCacheValid = false; }
+
 private:
 	/** #497 set-once guard: the state last swept onto the spline meshes (and whether any sweep ran). */
 	EHologramMaterialState LastAppliedSplineMaterialState = EHologramMaterialState::HMS_OK;
 	bool bSplineMaterialStateApplied = false;
+
+	/** #497 (77×1 = 3 fps profile): cached self cost — see ASFConveyorBeltHologram::CachedSelfCost.
+	 *  The pipe fallback is the worst offender: it scanned ALL available recipes per call, and the
+	 *  cost walks run it per pipe per frame. Consumed only for SF_ExtendChild previews with a healthy
+	 *  spline so the #357 zero-spline restoration inside GetCost still runs when needed. */
+	mutable TArray<FItemAmount> CachedSelfCost;
+	mutable bool bSelfCostCacheValid = false;
 
     float PreviewLengthCm = 0.0f;
 	int32 RoutingMode = 0;

@@ -33,6 +33,7 @@
 
 void ASFConveyorBeltHologram::SetupBeltSpline(UFGFactoryConnectionComponent* StartConnector, UFGFactoryConnectionComponent* EndConnector)
 {
+    InvalidateCostCache();  // #497: spline (and therefore length-based cost) is changing
     if (!StartConnector || !EndConnector)
     {
         UE_LOG(LogSmartHologram, Verbose, TEXT("SetupBeltSpline: Invalid connectors"));
@@ -316,6 +317,7 @@ bool ASFConveyorBeltHologram::ApplyBeltBuildModeRouting(int32 BeltRoutingMode,
 void ASFConveyorBeltHologram::AutoRouteSplineWithNormals(const FVector& StartPos, const FVector& StartNormal,
                                                           const FVector& EndPos, const FVector& EndNormal)
 {
+    InvalidateCostCache();  // #497: spline (and therefore length-based cost) is changing
     UE_LOG(LogSmartHologram, Verbose, TEXT("🔍 AutoRouteSplineWithNormals: Routing belt spline with VANILLA 4-POINT structure"));
     
     // Use vanilla 4-point spline structure (same as SetupBeltSpline)
@@ -403,6 +405,7 @@ bool ASFConveyorBeltHologram::TryUseBuildModeRouting(
 	const FVector& EndPos,
 	const FVector& EndNormal)
 {
+    InvalidateCostCache();  // #497: spline (and therefore length-based cost) is changing
 	if (!mSplineComponent)
 	{
 		UE_LOG(LogSmartHologram, Verbose, TEXT("🔍 TryUseBuildModeRouting FAILED: No mSplineComponent on %s"), *GetName());
@@ -505,6 +508,7 @@ bool ASFConveyorBeltHologram::TryUseBuildModeRouting(
 
 void ASFConveyorBeltHologram::SetSplineDataAndUpdate(const TArray<FSplinePointData>& InSplineData)
 {
+    InvalidateCostCache();  // #497: spline (and therefore length-based cost) is changing
     UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 SetSplineDataAndUpdate: Setting %d spline points on %s"), InSplineData.Num(), *GetName());
     
     // Log input data

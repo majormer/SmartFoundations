@@ -561,6 +561,7 @@ bool ASFPipelineHologram::ApplyPipeBuildModeRouting(int32 PipeRoutingMode,
 void ASFPipelineHologram::RoutePipeLaneWithConfiguredMode(const FVector& StartPos, const FVector& StartNormal,
 	const FVector& EndPos, const FVector& EndNormal)
 {
+	InvalidateCostCache();  // #497: spline (and therefore length-based cost) is changing
 	int32 PipeRoutingMode = 0;
 	if (USFSubsystem* SmartSubsystem = USFSubsystem::Get(GetWorld()))
 	{
@@ -575,6 +576,7 @@ bool ASFPipelineHologram::TryUseBuildModeRouting(
 	const FVector& EndPos,
 	const FVector& EndNormal)
 {
+	InvalidateCostCache();  // #497: spline (and therefore length-based cost) is changing
 	if (!mSplineComponent)
 	{
 		UE_LOG(LogSmartHologram, Verbose, TEXT("[PipeRoute] FALLBACK — no spline component %s"), *GetName());
@@ -819,6 +821,7 @@ bool ASFPipelineHologram::TryUseBuildModeRouting(
 bool ASFPipelineHologram::RouteWithStraightExit(float /*ExitStubCm - retired*/, const FVector& StartPos, const FVector& ExitNormal,
 	const FVector& EndPos, const FVector& EndNormal)
 {
+	InvalidateCostCache();  // #497: spline (and therefore length-based cost) is changing
 	// [#414] Thin shim, kept only for call-site stability: the forced exit stub was removed in
 	// #437 round 2 (the real routers build their own riser/connector stubs), and the shape
 	// validation moved INTO TryUseBuildModeRouting so all pipe/hypertube spans get it. The exit
@@ -925,6 +928,7 @@ void ASFPipelineHologram::ApplySplineMeshMaterialState(EHologramMaterialState ma
 
 void ASFPipelineHologram::SetupPipeSpline(UFGPipeConnectionComponentBase* StartConnector, UFGPipeConnectionComponentBase* EndConnector)
 {
+	InvalidateCostCache();  // #497: spline (and therefore length-based cost) is changing
 	if (!StartConnector || !EndConnector)
 	{
 		UE_LOG(LogSmartHologram, Verbose, TEXT("SetupPipeSpline: Invalid connectors"));
@@ -1271,6 +1275,7 @@ void ASFPipelineHologram::ConfigureComponents(AFGBuildable* inBuildable) const
 
 void ASFPipelineHologram::SetSplineDataAndUpdate(const TArray<FSplinePointData>& InSplineData)
 {
+	InvalidateCostCache();  // #497: spline (and therefore length-based cost) is changing
 	UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 PIPE SetSplineDataAndUpdate: Setting %d spline points on %s"), InSplineData.Num(), *GetName());
 	
 	// Copy spline data
@@ -1314,6 +1319,7 @@ void ASFPipelineHologram::ForceApplyHologramMaterial()
 
 void ASFPipelineHologram::TriggerMeshGeneration()
 {
+	InvalidateCostCache();  // #497: spline (and therefore length-based cost) is changing
 	UE_LOG(LogSmartHologram, Verbose, TEXT("🔧 PIPE TriggerMeshGeneration: %s - mSplineData has %d points"), *GetName(), mSplineData.Num());
 	
 	if (!mSplineComponent)
@@ -1685,7 +1691,17 @@ TArray<FItemAmount> ASFPipelineHologram::GetBaseCost() const
 TArray<FItemAmount> ASFPipelineHologram::GetCost(bool includeChildren) const
 {
 	UE_LOG(LogSmartHologram, VeryVerbose, TEXT("💰 PIPE GetCost() CALLED on %s (includeChildren=%d)"), *GetName(), includeChildren);
-	
+
+	// #497 cost cache (see header). The health check stays IN FRONT of the cache: a vanilla-reset
+	// (zero-length) spline must fall through to the full path so the #357 defensive restoration
+	// below still repairs the preview. Gated to extend preview children — they have no hologram
+	// children of their own, so the includeChildren flag cannot change the result.
+	const bool bSplineHealthy = mSplineComponent && mSplineComponent->GetSplineLength() > KINDA_SMALL_NUMBER;
+	if (bSelfCostCacheValid && bSplineHealthy && Tags.Contains(FName(TEXT("SF_ExtendChild"))))
+	{
+		return CachedSelfCost;
+	}
+
 	// Get base cost from parent. In Satisfactory 1.2 vanilla AFGPipelineHologram::GetCost already
 	// returns the length-based pipe material cost.
 	TArray<FItemAmount> TotalCost = Super::GetCost(includeChildren);
@@ -1697,6 +1713,11 @@ TArray<FItemAmount> ASFPipelineHologram::GetCost(bool includeChildren) const
 	if (TotalCost.Num() > 0)
 	{
 		UE_LOG(LogSmartHologram, VeryVerbose, TEXT("💰 PIPE GetCost: using vanilla cost (%d item types), skipping manual calc"), TotalCost.Num());
+		if (bSplineHealthy)
+		{
+			CachedSelfCost = TotalCost;
+			bSelfCostCacheValid = true;
+		}
 		return TotalCost;
 	}
 
@@ -1848,5 +1869,13 @@ TArray<FItemAmount> ASFPipelineHologram::GetCost(bool includeChildren) const
 	}
 	
 	UE_LOG(LogSmartHologram, VeryVerbose, TEXT("💰 PIPE GetCost() RETURNING %d item types"), TotalCost.Num());
+
+	// #497: cache the computed fallback cost while the spline is healthy (a zero-length spline
+	// leaves the cache invalid so the restoration path gets another chance next call).
+	if (mSplineComponent && mSplineComponent->GetSplineLength() > KINDA_SMALL_NUMBER)
+	{
+		CachedSelfCost = TotalCost;
+		bSelfCostCacheValid = true;
+	}
 	return TotalCost;
 }

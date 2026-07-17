@@ -850,7 +850,17 @@ TArray<FItemAmount> ASFConveyorBeltHologram::GetBaseCost() const
 TArray<FItemAmount> ASFConveyorBeltHologram::GetCost(bool includeChildren) const
 {
 	UE_LOG(LogSmartHologram, VeryVerbose, TEXT("💰 BELT GetCost() CALLED on %s (includeChildren=%d)"), *GetName(), includeChildren);
-	
+
+	// #497 cost cache (see header). The health check stays IN FRONT of the cache: a vanilla-reset
+	// (zero-length) spline must fall through to the full path so the #357 defensive restoration
+	// below still repairs the preview. Gated to extend preview children — they have no hologram
+	// children of their own, so the includeChildren flag cannot change the result.
+	const bool bSplineHealthy = mSplineComponent && mSplineComponent->GetSplineLength() > KINDA_SMALL_NUMBER;
+	if (bSelfCostCacheValid && bSplineHealthy && Tags.Contains(FName(TEXT("SF_ExtendChild"))))
+	{
+		return CachedSelfCost;
+	}
+
 	// Get base cost from parent. In Satisfactory 1.2 vanilla AFGConveyorBeltHologram::GetCost already
 	// returns the length-based belt material cost.
 	TArray<FItemAmount> TotalCost = Super::GetCost(includeChildren);
@@ -863,6 +873,11 @@ TArray<FItemAmount> ASFConveyorBeltHologram::GetCost(bool includeChildren) const
 	if (TotalCost.Num() > 0)
 	{
 		UE_LOG(LogSmartHologram, VeryVerbose, TEXT("💰 BELT GetCost: using vanilla cost (%d item types), skipping manual calc"), TotalCost.Num());
+		if (bSplineHealthy)
+		{
+			CachedSelfCost = TotalCost;
+			bSelfCostCacheValid = true;
+		}
 		return TotalCost;
 	}
 
@@ -998,11 +1013,20 @@ TArray<FItemAmount> ASFConveyorBeltHologram::GetCost(bool includeChildren) const
 	}
 	
 	UE_LOG(LogSmartHologram, VeryVerbose, TEXT("💰 BELT: Returning %d item types"), TotalCost.Num());
+
+	// #497: cache the computed fallback cost while the spline is healthy (a zero-length spline
+	// leaves the cache invalid so the restoration path gets another chance next call).
+	if (mSplineComponent && mSplineComponent->GetSplineLength() > KINDA_SMALL_NUMBER)
+	{
+		CachedSelfCost = TotalCost;
+		bSelfCostCacheValid = true;
+	}
 	return TotalCost;
 }
 
 void ASFConveyorBeltHologram::TriggerMeshGeneration()
 {
+    InvalidateCostCache();  // #497: spline (and therefore length-based cost) is changing
     UE_LOG(LogSmartHologram, Verbose, TEXT("🎯 BELT TriggerMeshGeneration CALLED on %s - mSplineData has %d points"), *GetName(), mSplineData.Num());
     
     if (!mSplineComponent)

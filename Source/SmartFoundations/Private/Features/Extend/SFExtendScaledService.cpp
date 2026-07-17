@@ -468,6 +468,13 @@ void USFExtendScaledService::RebuildScaledExtendNow()
         RemergeScaledTopologyFromBase();
     }
 
+    // #497: one-shot position re-assert now that the preview set is (re)built — replaces the
+    // former per-frame reapply in RefreshExtension.
+    if (Owner->HologramService)
+    {
+        Owner->HologramService->RefreshChildPositions();
+    }
+
     // #497: record the geometry inputs of this rebuild for the next count-only diff.
     if (NowState)
     {

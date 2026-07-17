@@ -1672,6 +1672,17 @@ bool USFExtendService::CanAffordExtendCost(AFGHologram* Hologram, UFGInventoryCo
         return true;  // Can't evaluate -> never block.
     }
 
+    // #497 frame-memo: this runs up to three times per frame (vanilla ValidatePlacementAndCost →
+    // our CheckCanAfford, RefreshExtension's own ValidatePlacementAndCost, and RefreshExtension's
+    // direct call), each triggering the FULL GetCost(includeChildren) walk over every preview
+    // child — measured as the dominant game-thread cost at 77×1. One real walk per frame keeps
+    // the #357 side effect below; the repeats return the memo.
+    if (LastAffordabilityFrame == GFrameCounter)
+    {
+        return bLastAffordabilityResult;
+    }
+    LastAffordabilityFrame = GFrameCounter;
+
     // #357: ALWAYS run the parent cost walk every frame, even under No Build Cost. Beyond
     // computing affordability, GetCost(includeChildren=true) walks the child holograms, and
     // that per-frame walk is what KEEPS THE EXTEND CHILD BELT PREVIEWS ALIVE. The internal
@@ -1694,6 +1705,7 @@ bool USFExtendService::CanAffordExtendCost(AFGHologram* Hologram, UFGInventoryCo
     // (We still ran GetCost above for its preview-keep-alive side effect.)
     if (Inventory->GetNoBuildCost())
     {
+        bLastAffordabilityResult = true;
         return true;
     }
 
@@ -1710,9 +1722,11 @@ bool USFExtendService::CanAffordExtendCost(AFGHologram* Hologram, UFGInventoryCo
         }
         if (Available < Item.Amount)
         {
+            bLastAffordabilityResult = false;
             return false;
         }
     }
+    bLastAffordabilityResult = true;
     return true;
 }
 
@@ -1919,11 +1933,12 @@ void USFExtendService::RefreshExtension(AFGHologram* SourceHologram, bool bForce
     // so the build gun's per-frame validation cascade can no longer reset them to cyan.
     ExtendChildMaterialState = ExtendMaterialState;
 
-    // Delegate basic position/rotation refresh to HologramService
-    if (HologramService)
-    {
-        HologramService->RefreshChildPositions();
-    }
+    // #497 (77×1 profile): the per-frame RefreshChildPositions call is gone. Every extend child is
+    // drift-proof (Item 2) and the parent blocks vanilla propagation while extend is active, yet the
+    // drift-check was finding sub-tolerance mismatches and physically moving children EVERY frame —
+    // each move propagating through the spline-mesh component trees into Chaos kinematic updates
+    // (~15% of the game thread at 77 modules). Positions are now re-asserted once per rebuild
+    // (CreateBeltPreviews / RebuildScaledExtendNow); the restore replay keeps its own per-tick call.
 
     // #497 set-once: sweep the child previews only when the authoritative state actually CHANGES.
     // Children are painted at spawn (clone spawner / CreateBeltPreviews), so re-sweeping an unchanged
@@ -2451,6 +2466,10 @@ void USFExtendService::CreateBeltPreviews(AFGHologram* ParentHologram)
                 ChildIntendedRotations.Add(Child, *Rot);
             }
         }
+
+        // #497: one-shot position re-assert now that the preview set is (re)built — replaces the
+        // former per-frame reapply in RefreshExtension (see the comment there).
+        HologramService->RefreshChildPositions();
     }
 }
 

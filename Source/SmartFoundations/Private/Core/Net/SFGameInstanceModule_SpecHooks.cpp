@@ -323,6 +323,15 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 			{
 				return;
 			}
+			// [#497] Child holograms can never be a staged-commit root: scaling/extend specs stage on
+			// the held (root) hologram and walk seeds are standalone. The build gun's per-frame cost
+			// walk calls GetCost on EVERY AddChild'd preview child (thousands at high Extend counts),
+			// and each pass through this hook constructed an FSFExtendCommitSpec probe + ran the
+			// staged-commit lookups below — measured as real per-frame overhead at 77×1. Bail first.
+			if (self->GetParentHologram() != nullptr)
+			{
+				return;
+			}
 			AFGHologram* MutableSelf = const_cast<AFGHologram*>(self);
 			if (!MutableSelf->HasAuthority())
 			{

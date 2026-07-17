@@ -765,6 +765,13 @@ private:
      *  copy of this base, so incremental (count-only) rebuilds can re-merge without re-deriving. */
     TSharedPtr<FSFCloneTopology> ScaledExtendBaseTopology;
 
+    /** #497 (77×1 = 3 fps profile): frame-memo for CanAffordExtendCost. Vanilla's per-frame
+     *  ValidatePlacementAndCost (via our CheckCanAfford) and RefreshExtension each ran the FULL
+     *  GetCost(includeChildren) child walk — the single walk per frame is kept (its #357 preview
+     *  keep-alive side effect is load-bearing), the duplicates return this memo. */
+    mutable uint64 LastAffordabilityFrame = MAX_uint64;
+    mutable bool bLastAffordabilityResult = true;
+
     /** Reason why current configuration is invalid (empty if valid) */
     FString ScaledExtendInvalidReason;
 

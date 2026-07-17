@@ -154,6 +154,9 @@ public:
 	 * already applied — repainting per frame was the render-proxy churn behind the Extend GPU lag.
 	 */
 	void ApplySplineMeshMaterialState(EHologramMaterialState materialState);
+
+	/** #497: invalidate the cached GetCost result — call after any spline/route/build-class change. */
+	void InvalidateCostCache() { bSelfCostCacheValid = false; }
 	
 	/**
 	 * Set the snapped connection components for this belt hologram.
@@ -222,4 +225,14 @@ private:
 	 *  Meshes created after a sweep are painted by TriggerMeshGeneration's trailing apply. */
 	EHologramMaterialState LastAppliedSplineMaterialState = EHologramMaterialState::HMS_OK;
 	bool bSplineMaterialStateApplied = false;
+
+	/** #497 (77×1 = 3 fps profile): cached self cost. The build gun's cost panel, vanilla
+	 *  CheckCanAfford, and the extend affordability check EACH walk every preview child's GetCost
+	 *  per frame; the belt/pipe fallback (recipe lookups + spline math + allocations) measured as
+	 *  the dominant game-thread cost at 77 modules. The result only changes when the spline/route/
+	 *  class changes — invalidated at every mutation point via InvalidateCostCache(). Consumed only
+	 *  for SF_ExtendChild previews with a healthy spline, so the #357 zero-spline restoration inside
+	 *  GetCost (load-bearing: it repairs previews vanilla resets) still runs when needed. */
+	mutable TArray<FItemAmount> CachedSelfCost;
+	mutable bool bSelfCostCacheValid = false;
 };
