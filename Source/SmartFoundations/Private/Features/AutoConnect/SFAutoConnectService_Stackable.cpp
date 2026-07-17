@@ -1294,6 +1294,8 @@ AFGHologram* USFAutoConnectService::UpdateOrCreatePipeForPolePair(
 		HoloData->StackablePipeIndex = PipeIndex;
 	}
 	
+	// [#497] BEFORE FinishSpawning: inert clearance-detector registration (see belt path).
+	PipeChild->SetActorEnableCollision(false);
 	PipeChild->FinishSpawning(FTransform(StartPos));
 	
 	// Set snapped connections for validation
@@ -1985,6 +1987,11 @@ AFGHologram* USFAutoConnectService::UpdateOrCreateBeltForPolePair(
 	BeltChild->SetReplicateMovement(false);
 	BeltChild->SetBuildClass(BeltBuildClass);
 	BeltChild->Tags.AddUnique(FName(TEXT("SF_StackableChild")));
+	// [#497] BEFORE FinishSpawning: with actor collision already off, BeginPlay registers the
+	// clearance detector inert — no overlap storm against thousands of sibling detectors (the
+	// old post-spawn SetActorEnableCollision(false) paid the storm TWICE: registration at
+	// BeginPlay, teardown at the disable; capture 13).
+	BeltChild->SetActorEnableCollision(false);
 
 	// [#331] Propagate the Blueprint Designer context: vanilla copies the hologram's designer
 	// onto the constructed buildable (pre-BeginPlay), so a Smart-spawned hologram that lacks it

@@ -1151,6 +1151,13 @@ void FSFHologramHelperService::RegenerateChildHologramGrid(
 							ClearanceHelper.EmptyValues();
 						}
 					}
+
+					// [#497] Also kill the clearance-DETECTOR overlap box (BeginPlay created it
+					// before the strip above could run): thousands of detectors form a quadratic
+					// overlap-pair database that every spawn and collision toggle pays linear
+					// scans over (capture 13). The delegate's MESH collision stays on for the
+					// stackable AC; only the detector's overlap events die.
+					USFHologramDataService::DisableClearanceDetector(ChildHologram);
 				}
 
 				// Phase 4 CRITICAL FIX: Disable ticking for locked children to eliminate per-frame validation overhead

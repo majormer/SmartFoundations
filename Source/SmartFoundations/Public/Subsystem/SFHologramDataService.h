@@ -30,6 +30,16 @@ public:
      * whenever the parent's own last-set state is what's wanted.
      */
     static EHologramMaterialState GetRawPlacementMaterialState(const AFGHologram* Hologram);
+
+    /**
+     * [#497] Disable a hologram's clearance-detector box. Every hologram spawns one at BeginPlay
+     * (SetupClearanceDetector) and it generates pairwise overlap EVENTS against every other
+     * detector in range — at thousands of Smart preview children the pair database goes
+     * quadratic, and every spawn/collision-toggle pays linear list scans over it (capture 13:
+     * belt-create overlap storms + the root's per-frame hidden-toggle re-registration were the
+     * frame). Smart children never consume detector overlaps; kill the component's collision.
+     */
+    static void DisableClearanceDetector(AFGHologram* Hologram);
     
     // Set validation control flags
     static void DisableValidation(AFGHologram* Hologram);

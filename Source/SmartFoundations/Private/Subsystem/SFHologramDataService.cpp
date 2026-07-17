@@ -3,6 +3,7 @@
 #include "Subsystem/SFHologramDataService.h"
 #include "SmartFoundations.h"
 #include "Hologram/FGHologram.h"
+#include "Components/BoxComponent.h"   // [#497] DisableClearanceDetector
 #include "Logging/LogMacros.h"
 
 EHologramMaterialState USFHologramDataService::GetRawPlacementMaterialState(const AFGHologram* Hologram)
@@ -19,6 +20,19 @@ EHologramMaterialState USFHologramDataService::GetRawPlacementMaterialState(cons
         return *StateProp->ContainerPtrToValuePtr<EHologramMaterialState>(Hologram);
     }
     return EHologramMaterialState::HMS_OK;
+}
+
+void USFHologramDataService::DisableClearanceDetector(AFGHologram* Hologram)
+{
+    if (!Hologram)
+    {
+        return;
+    }
+    if (UBoxComponent* Detector = Hologram->GetClearanceDetector())
+    {
+        Detector->SetGenerateOverlapEvents(false);
+        Detector->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    }
 }
 
 FSFHologramData* USFHologramDataService::GetOrCreateData(AFGHologram* Hologram) {
