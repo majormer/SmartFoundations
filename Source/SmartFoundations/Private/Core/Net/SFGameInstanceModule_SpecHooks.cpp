@@ -963,33 +963,45 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 				// ancestor-predicate build) still burned 74% in this body on PARENTED holograms:
 				// something slips the predicate and code inspection says it shouldn't. Name the
 				// first pass-throughs that have a parent: class, parent chain, tag count.
-				// Round 3 of this diag: unconditional logging burned the whole budget on the HELD
-				// ROOT (one pass-through per frame from its own TickState validation) before the
-				// grid ever scaled. The burners are child-level calls — many per frame. Log only
-				// the 2nd+ pass-through within a single frame: root-only frames stay silent, burn
-				// frames get named.
-				static int32 SFGridHookDiagBudget = 100;
-				static uint64 SFGridHookDiagLastFrame = 0;
-				static int32 SFGridHookDiagCallsThisFrame = 0;
-				if (GFrameCounter != SFGridHookDiagLastFrame)
+				// Round 4: COUNTING diag. Rounds 1-3 kept getting eaten by the held root (which
+				// legitimately passes through twice per frame). Two hypotheses remain: (A) the
+				// root's own 2 clearance queries each return thousands of hits (huge-hit-array
+				// profile), or (B) thousands of children pass through uncancelled. Count both
+				// sides per frame and emit a one-line summary every ~256 frames; name the first
+				// 10 pass-throughs that are 3rd+ in their frame (the root maxes at 2).
+				static uint64 SFGridDiagFrame = 0;
+				static int32 SFGridDiagPassesThisFrame = 0;
+				static uint64 SFGridDiagTotalPasses = 0;
+				static int32 SFGridDiagMaxPassesPerFrame = 0;
+				static int32 SFGridDiagNameBudget = 10;
+				static uint64 SFGridDiagLastSummaryFrame = 0;
+				if (GFrameCounter != SFGridDiagFrame)
 				{
-					SFGridHookDiagLastFrame = GFrameCounter;
-					SFGridHookDiagCallsThisFrame = 0;
+					SFGridDiagMaxPassesPerFrame = FMath::Max(SFGridDiagMaxPassesPerFrame, SFGridDiagPassesThisFrame);
+					SFGridDiagFrame = GFrameCounter;
+					SFGridDiagPassesThisFrame = 0;
+					if (GFrameCounter - SFGridDiagLastSummaryFrame >= 256)
+					{
+						SFGridDiagLastSummaryFrame = GFrameCounter;
+						UE_LOG(LogSmartFoundations, Warning,
+							TEXT("[#497 GRIDHOOK] STATS f=%llu totalPasses=%llu maxPassesPerFrame=%d"),
+							GFrameCounter, SFGridDiagTotalPasses, SFGridDiagMaxPassesPerFrame);
+						SFGridDiagMaxPassesPerFrame = 0;
+					}
 				}
-				++SFGridHookDiagCallsThisFrame;
-				if (SFGridHookDiagBudget > 0 && self && SFGridHookDiagCallsThisFrame >= 2)
+				++SFGridDiagPassesThisFrame;
+				++SFGridDiagTotalPasses;
+				if (SFGridDiagNameBudget > 0 && self && SFGridDiagPassesThisFrame >= 3)
 				{
-					--SFGridHookDiagBudget;
+					--SFGridDiagNameBudget;
 					const AFGHologram* P = self->GetParentHologram();
-					const AFGHologram* GP = P ? P->GetParentHologram() : nullptr;
 					FString TagList;
 					for (const FName& T : self->Tags) { TagList += T.ToString() + TEXT(","); }
 					UE_LOG(LogSmartFoundations, Warning,
-						TEXT("[#497 GRIDHOOK] f=%llu pass-through %s (%s) tags=[%s] | parent=%s (%s) ptags=%d | grandparent=%s"),
+						TEXT("[#497 GRIDHOOK] f=%llu 3rd+ pass-through %s (%s) tags=[%s] | parent=%s (%s)"),
 						GFrameCounter,
 						*self->GetName(), *self->GetClass()->GetName(), *TagList,
-						*GetNameSafe(P), P ? *P->GetClass()->GetName() : TEXT("-"), P ? P->Tags.Num() : -1,
-						*GetNameSafe(GP));
+						*GetNameSafe(P), P ? *P->GetClass()->GetName() : TEXT("-"));
 				}
 				scope(self);
 			});
