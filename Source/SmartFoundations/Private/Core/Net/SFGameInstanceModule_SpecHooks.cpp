@@ -80,17 +80,20 @@ static bool SFIsSmartGridMegaRoot(const AFGHologram* Holo)
 	{
 		return false;
 	}
-	const TArray<AFGHologram*> Kids = Holo->GetHologramChildren();
-	if (Kids.Num() < 64)
+	// Smart's subsystem tracks exactly which hologram it is actively scaling, and Smart's OWN
+	// tracked-children list holds the grid. STATSv2 proved vanilla mChildren is nearly EMPTY
+	// for a stackable mega-grid (rootKids=0-5 at thousands of tracked children) — the grid
+	// delegates are never AddChild'd — so both earlier predicate legs (mChildren tag probe,
+	// mChildren count threshold) were structurally unable to fire. It also means vanilla's
+	// clearance query treats every collision-enabled grid child as a FOREIGN body: thousands
+	// of hits to filter and process per query, the measured ~5 s.
+	USFSubsystem* SmartSubsystem = USFSubsystem::Get(Holo->GetWorld());
+	if (!SmartSubsystem || SmartSubsystem->GetActiveHologram() != Holo)
 	{
 		return false;
 	}
-	// Authoritative check: Smart's subsystem tracks exactly which hologram it is actively
-	// scaling. (The first version probed the leading mChildren for SF_GridChild, but the
-	// early entries of a big grid's child array are not necessarily grid delegates — AC belts
-	// and other additions land there too — and the cancel silently never fired.)
-	USFSubsystem* SmartSubsystem = USFSubsystem::Get(Holo->GetWorld());
-	return SmartSubsystem && SmartSubsystem->GetActiveHologram() == Holo;
+	FSFHologramHelperService* HologramHelper = SmartSubsystem->GetHologramHelper();
+	return HologramHelper && HologramHelper->GetSpawnedChildren().Num() >= 64;
 }
 
 // [#497] True when this hologram is a Smart-positioned grid child OR any descendant of one.
