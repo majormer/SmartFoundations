@@ -5,6 +5,22 @@
 #include "Hologram/FGHologram.h"
 #include "Logging/LogMacros.h"
 
+EHologramMaterialState USFHologramDataService::GetRawPlacementMaterialState(const AFGHologram* Hologram)
+{
+    if (!Hologram)
+    {
+        return EHologramMaterialState::HMS_OK;
+    }
+    // Cached reflection: mPlacementMaterialState is a protected replicated UPROPERTY with no
+    // non-aggregating public getter (see header comment for why the vanilla getter is O(children)).
+    static FProperty* StateProp = AFGHologram::StaticClass()->FindPropertyByName(TEXT("mPlacementMaterialState"));
+    if (StateProp)
+    {
+        return *StateProp->ContainerPtrToValuePtr<EHologramMaterialState>(Hologram);
+    }
+    return EHologramMaterialState::HMS_OK;
+}
+
 FSFHologramData* USFHologramDataService::GetOrCreateData(AFGHologram* Hologram) {
     if (!Hologram) return nullptr;
     

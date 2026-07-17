@@ -390,7 +390,7 @@ void USFAutoConnectService::ProcessStackableConveyorPoles(AFGHologram* ParentHol
 			{
 				AFGHologram* Belt = Pair.Value.Get();
 				Belt->SetActorHiddenInGame(false);
-				Belt->SetPlacementMaterialState(ParentHologram->GetHologramMaterialState());
+				Belt->SetPlacementMaterialState(USFHologramDataService::GetRawPlacementMaterialState(ParentHologram));
 				
 				if (bParentLocked && !Belt->IsHologramLocked())
 				{
@@ -669,7 +669,7 @@ void USFAutoConnectService::ProcessStackablePipelineSupports(AFGHologram* Parent
 	if (FinalState)
 	{
 		bool bParentLocked = ParentHologram->IsHologramLocked();
-		EHologramMaterialState ParentMaterialState = ParentHologram->GetHologramMaterialState();
+		EHologramMaterialState ParentMaterialState = USFHologramDataService::GetRawPlacementMaterialState(ParentHologram);
 		
 		for (auto& Pair : FinalState->PipesByPolePair)
 		{
@@ -821,7 +821,7 @@ void USFAutoConnectService::ProcessStackableHypertubeSupports(AFGHologram* Paren
 	if (FinalState)
 	{
 		const bool bParentLocked = ParentHologram->IsHologramLocked();
-		const EHologramMaterialState ParentMaterialState = ParentHologram->GetHologramMaterialState();
+		const EHologramMaterialState ParentMaterialState = USFHologramDataService::GetRawPlacementMaterialState(ParentHologram);
 		for (auto& Pair : FinalState->SpansByPolePair)
 		{
 			if (Pair.Value.IsValid())
@@ -1181,7 +1181,7 @@ AFGHologram* USFAutoConnectService::UpdateOrCreatePipeForPolePair(
 				if (LastSig->Matches(RouteSig))
 				{
 					ExistingPipe->SetActorHiddenInGame(false);
-					ExistingPipe->SetPlacementMaterialState(ParentHologram->GetHologramMaterialState());
+					ExistingPipe->SetPlacementMaterialState(USFHologramDataService::GetRawPlacementMaterialState(ParentHologram));
 					return ExistingPipe;
 				}
 			}
@@ -1210,7 +1210,7 @@ AFGHologram* USFAutoConnectService::UpdateOrCreatePipeForPolePair(
 			
 			// Step 3: Ensure visibility state is correct
 			ExistingPipe->SetActorHiddenInGame(false);
-			ExistingPipe->SetPlacementMaterialState(ParentHologram->GetHologramMaterialState());
+			ExistingPipe->SetPlacementMaterialState(USFHologramDataService::GetRawPlacementMaterialState(ParentHologram));
 			
 			// Step 4: Regenerate mesh and apply hologram material
 			ExistingPipe->TriggerMeshGeneration();
@@ -1466,7 +1466,7 @@ void USFAutoConnectService::FinalizeBeltChildrenVisibility(AFGHologram* ParentHo
 
 	// Finalize visibility and locking for all belt children (matches stackable pattern)
 	bool bParentLocked = ParentHologram->IsHologramLocked();
-	EHologramMaterialState ParentMaterialState = ParentHologram->GetHologramMaterialState();
+	EHologramMaterialState ParentMaterialState = USFHologramDataService::GetRawPlacementMaterialState(ParentHologram);
 
 	auto FinalizeSet = [bParentLocked, ParentMaterialState](const TArray<TSharedPtr<FBeltPreviewHelper>>* Set)
 	{
@@ -1905,7 +1905,7 @@ AFGHologram* USFAutoConnectService::UpdateOrCreateBeltForPolePair(
 					{
 						// Idempotent/cheap upkeep only (material state early-outs on same state).
 						ExistingBelt->SetActorHiddenInGame(false);
-						ExistingBelt->SetPlacementMaterialState(ParentHologram->GetHologramMaterialState());
+						ExistingBelt->SetPlacementMaterialState(USFHologramDataService::GetRawPlacementMaterialState(ParentHologram));
 						return ExistingBelt;
 					}
 				}
@@ -1926,7 +1926,7 @@ AFGHologram* USFAutoConnectService::UpdateOrCreateBeltForPolePair(
 				ValidateSupportBeltRoute(ParentHologram, ExistingBelt);
 
 				ExistingBelt->SetActorHiddenInGame(false);
-				ExistingBelt->SetPlacementMaterialState(ParentHologram->GetHologramMaterialState());
+				ExistingBelt->SetPlacementMaterialState(USFHologramDataService::GetRawPlacementMaterialState(ParentHologram));
 				ExistingBelt->TriggerMeshGeneration();
 				ExistingBelt->ForceApplyHologramMaterial();
 

@@ -13,6 +13,7 @@
 #include "Resources/FGBuildingDescriptor.h"
 #include "DrawDebugHelpers.h"
 #include "Data/SFHologramDataRegistry.h"
+#include "Subsystem/SFHologramDataService.h"   // [#497] GetRawPlacementMaterialState (O(1) parent-state read)
 #include "Hologram/FGHologram.h"
 #include "FGConstructDisqualifier.h"
 #include "Features/Extend/SFExtendService.h"
@@ -405,7 +406,10 @@ void ASFConveyorBeltHologram::SetPlacementMaterialState(EHologramMaterialState m
     {
         if (AFGHologram* Parent = GetParentHologram())
         {
-            if (Parent->GetHologramMaterialState() != EHologramMaterialState::HMS_OK)
+            // Raw read, NOT GetHologramMaterialState(): the vanilla getter walks the child array
+            // per call, which made this guard quadratic at scale (13-second frames at 8,238
+            // children). See USFHologramDataService::GetRawPlacementMaterialState.
+            if (USFHologramDataService::GetRawPlacementMaterialState(Parent) != EHologramMaterialState::HMS_OK)
             {
                 return;
             }

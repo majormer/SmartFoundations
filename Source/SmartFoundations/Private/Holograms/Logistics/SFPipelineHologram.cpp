@@ -12,6 +12,7 @@
 #include "FGPipeSubsystem.h"
 #include "FGPipeNetwork.h"
 #include "Data/SFHologramDataRegistry.h"
+#include "Subsystem/SFHologramDataService.h"   // [#497] GetRawPlacementMaterialState (O(1) parent-state read)
 #include "Features/Extend/SFExtendService.h"
 #include "Subsystem/SFSubsystem.h"
 #include "FGConstructDisqualifier.h"
@@ -885,7 +886,9 @@ void ASFPipelineHologram::SetPlacementMaterialState(EHologramMaterialState mater
 	{
 		if (AFGHologram* Parent = GetParentHologram())
 		{
-			if (Parent->GetHologramMaterialState() != EHologramMaterialState::HMS_OK)
+			// Raw read, NOT GetHologramMaterialState(): the vanilla getter walks the child array
+			// per call — quadratic at scale (see USFHologramDataService::GetRawPlacementMaterialState).
+			if (USFHologramDataService::GetRawPlacementMaterialState(Parent) != EHologramMaterialState::HMS_OK)
 			{
 				return;
 			}
