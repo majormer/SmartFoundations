@@ -902,6 +902,39 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 	// client was refused server-side (live 2026-06-10: FGCDEncroachingClearance from
 	// ValidatePlacementAndCost). Mirror SP: when a staged Extend commit exists for this hologram,
 	// clear the disqualifiers after vanilla evaluates them.
+	// ── [#497] Vanilla-delegate grid children (Tier-3 stackable supports, SF_GridChild tag):
+	// two vanilla per-frame paths scale O(children) and burned the game thread at a 3,600-pole
+	// stackable grid (capture 6: 54% per-child CheckClearance Chaos overlaps, 21% reposition
+	// tug-of-war paying UpdateOverlaps on collision-enabled children):
+	//  1) ValidatePlacementAndCost recurses every child -> CheckValidPlacement -> CheckClearance
+	//     overlap query per child per frame. Smart child classes no-op validation (#354); the
+	//     vanilla-delegate classes can't be overridden, so cancel at the hook seam.
+	//  2) The locked-parent nudge cascade (blocked on Smart classes in 78f3e06) still drags
+	//     vanilla-delegate children every tick, and the Phase-4 refresh drags them back.
+	//     Cancel the child-side nudge for tagged children; the parent's own nudge still moves
+	//     children through Smart's transform follow.
+	{
+		static const FName SFGridChildTag(TEXT("SF_GridChild"));
+		SUBSCRIBE_METHOD_VIRTUAL(AFGBuildableHologram::CheckValidPlacement, BuildableHologramCDO,
+			[](auto& scope, AFGBuildableHologram* self)
+			{
+				if (self && self->GetParentHologram() != nullptr && self->Tags.Contains(SFGridChildTag))
+				{
+					return; // Smart-positioned child: skip vanilla validation entirely
+				}
+				scope(self);
+			});
+		SUBSCRIBE_METHOD_VIRTUAL(AFGHologram::SetHologramNudgeLocation, HologramCDO,
+			[](auto& scope, AFGHologram* self)
+			{
+				if (self && self->GetParentHologram() != nullptr && self->Tags.Contains(SFGridChildTag))
+				{
+					return; // block the locked-parent nudge cascade for Smart-positioned children
+				}
+				scope(self);
+			});
+	}
+
 	// NOTE: hooked at the AFGBuildableHologram override, NOT the AFGHologram base -
 	// &AFGHologram::CheckValidPlacement resolves to an unhookable import thunk (live dedi
 	// startup FATAL 2026-06-10: "resulting function still points to a thunk"). The override
