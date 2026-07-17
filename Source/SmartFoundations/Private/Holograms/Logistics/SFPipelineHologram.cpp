@@ -876,16 +876,17 @@ bool ASFPipelineHologram::ValidateCurrentSpline(float MaxSplineLengthCm, bool& O
 
 void ASFPipelineHologram::SetPlacementMaterialState(EHologramMaterialState materialState)
 {
-	Super::SetPlacementMaterialState(materialState);
-
-	// #497 set-once: the sweep dirties the render proxy of EVERY spline mesh. Extend/Walk call this
-	// per frame with an unchanged state, forcing the render thread to rebuild all proxies every frame
-	// (the GPU-side lag). Once a state has been swept it holds — skip same-state re-calls. Meshes
-	// created later are painted by TriggerMeshGeneration's trailing ApplySplineMeshMaterialState.
+	// #497 set-once: BOTH the vanilla Super sweep and our spline sweep dirty render proxies, so the
+	// early-out must come BEFORE Super (capture 4: per-frame parent cascade with unchanged state ran
+	// the unguarded Super on every child every frame — render-thread proxy churn at rest). Once a
+	// state has been swept it holds. Meshes created later are painted by TriggerMeshGeneration's
+	// trailing ApplySplineMeshMaterialState.
 	if (bSplineMaterialStateApplied && materialState == LastAppliedSplineMaterialState)
 	{
 		return;
 	}
+
+	Super::SetPlacementMaterialState(materialState);
 
 	ApplySplineMeshMaterialState(materialState);
 }

@@ -167,6 +167,16 @@ void ASFConveyorBeltHologram::Tick(float DeltaSeconds)
 
 void ASFConveyorBeltHologram::CheckValidPlacement()
 {
+    // [#497] Stackable AC belts are Smart-routed previews between poles the parent already
+    // validates; vanilla per-frame validation on them is pure cost — capture 4 (1,134-pole grid
+    // at rest) showed CheckClearance Chaos overlap queries per belt per frame from the parent's
+    // ValidatePlacementAndCost recursion. Validation is disabled for these children by design
+    // (DisableValidation at spawn); skip vanilla entirely.
+    if (GetParentHologram() && Tags.Contains(FName(TEXT("SF_StackableChild"))))
+    {
+        return;
+    }
+
     if (GetParentHologram() && Tags.Contains(FName(TEXT("SF_BeltAutoConnectChild"))))
     {
         Super::CheckValidPlacement();
@@ -384,17 +394,20 @@ void ASFConveyorBeltHologram::PostHologramPlacement(const FHitResult& hitResult,
 
 void ASFConveyorBeltHologram::SetPlacementMaterialState(EHologramMaterialState materialState)
 {
-    // Let the base class update stencil/render depth
-    Super::SetPlacementMaterialState(materialState);
-
-    // #497 set-once: the sweep below dirties the render proxy of EVERY spline mesh. Extend/Walk call
-    // this per frame with an unchanged state, which forced the render thread to rebuild all proxies
-    // every frame (the GPU-side lag). Once a state has been swept it holds — skip same-state re-calls.
-    // Meshes created later are painted by TriggerMeshGeneration's trailing ApplySplineMeshMaterialState.
+    // #497 set-once: BOTH the vanilla Super sweep and our spline sweep dirty render proxies. The
+    // early-out must come BEFORE Super — capture 4 (1,134-pole stackable grid at rest) showed the
+    // parent cascade calling this per frame per belt with an unchanged state, and the unguarded
+    // Super::SetPlacementMaterialState alone re-applied materials to every component each frame
+    // (render-thread spline-mesh churn + texture-streaming churn = the idle lag). Once a state has
+    // been swept it holds. Meshes created later are painted by TriggerMeshGeneration's trailing
+    // ApplySplineMeshMaterialState.
     if (bSplineMaterialStateApplied && materialState == LastAppliedSplineMaterialState)
     {
         return;
     }
+
+    // Let the base class update stencil/render depth
+    Super::SetPlacementMaterialState(materialState);
 
     ApplySplineMeshMaterialState(materialState);
 }
