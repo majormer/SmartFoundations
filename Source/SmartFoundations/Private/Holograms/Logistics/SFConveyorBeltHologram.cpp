@@ -394,6 +394,24 @@ void ASFConveyorBeltHologram::PostHologramPlacement(const FHitResult& hitResult,
 
 void ASFConveyorBeltHologram::SetPlacementMaterialState(EHologramMaterialState materialState)
 {
+    // [#497] Child previews: vanilla runs TWO per-frame writers with CONFLICTING values — the
+    // parent cascade writes the parent's state (red while unaffordable/blocked) and per-child
+    // ValidatePlacementAndCost writes the child's own validity (OK — Smart children skip
+    // validation). The pair oscillates red<->OK every frame, defeating the set-once gate below and
+    // rebuilding every spline proxy per frame (capture 5, 1,200-pole grid: 1 fps at rest). Reject
+    // the "child is fine" write while the parent shows a problem; non-OK states always pass so a
+    // child can still paint its own error (e.g. #437 routed-shape-invalid).
+    if (materialState == EHologramMaterialState::HMS_OK)
+    {
+        if (AFGHologram* Parent = GetParentHologram())
+        {
+            if (Parent->GetHologramMaterialState() != EHologramMaterialState::HMS_OK)
+            {
+                return;
+            }
+        }
+    }
+
     // #497 set-once: BOTH the vanilla Super sweep and our spline sweep dirty render proxies. The
     // early-out must come BEFORE Super — capture 4 (1,134-pole stackable grid at rest) showed the
     // parent cascade calling this per frame per belt with an unchanged state, and the unguarded

@@ -876,6 +876,22 @@ bool ASFPipelineHologram::ValidateCurrentSpline(float MaxSplineLengthCm, bool& O
 
 void ASFPipelineHologram::SetPlacementMaterialState(EHologramMaterialState materialState)
 {
+	// [#497] Child previews: vanilla's parent cascade and per-child ValidatePlacementAndCost write
+	// CONFLICTING states every frame (parent red vs child OK), oscillating past the set-once gate
+	// and rebuilding every spline proxy per frame (capture 5 — also covers hypertube spans, which
+	// are ASFPipelineHologram). Reject the "child is fine" write while the parent shows a problem;
+	// non-OK states always pass so #437 routed-shape-invalid can still paint its own error.
+	if (materialState == EHologramMaterialState::HMS_OK)
+	{
+		if (AFGHologram* Parent = GetParentHologram())
+		{
+			if (Parent->GetHologramMaterialState() != EHologramMaterialState::HMS_OK)
+			{
+				return;
+			}
+		}
+	}
+
 	// #497 set-once: BOTH the vanilla Super sweep and our spline sweep dirty render proxies, so the
 	// early-out must come BEFORE Super (capture 4: per-frame parent cascade with unchanged state ran
 	// the unguarded Super on every child every frame — render-thread proxy churn at rest). Once a
