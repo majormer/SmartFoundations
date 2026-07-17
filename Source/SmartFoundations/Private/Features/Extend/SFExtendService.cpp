@@ -1933,12 +1933,19 @@ void USFExtendService::RefreshExtension(AFGHologram* SourceHologram, bool bForce
     // so the build gun's per-frame validation cascade can no longer reset them to cyan.
     ExtendChildMaterialState = ExtendMaterialState;
 
-    // #497 (77×1 profile): the per-frame RefreshChildPositions call is gone. Every extend child is
-    // drift-proof (Item 2) and the parent blocks vanilla propagation while extend is active, yet the
-    // drift-check was finding sub-tolerance mismatches and physically moving children EVERY frame —
-    // each move propagating through the spline-mesh component trees into Chaos kinematic updates
-    // (~15% of the game thread at 77 modules). Positions are now re-asserted once per rebuild
-    // (CreateBeltPreviews / RebuildScaledExtendNow); the restore replay keeps its own per-tick call.
+    // #497: this per-frame reapply is LOAD-BEARING — do not remove it again. Removing it (Item 6,
+    // first attempt) left EVERY extend child at world origin (SmartMCP: 67/68 holograms at exactly
+    // 0,0,0; only wires still rendered because their catenary meshes draw from stored endpoints).
+    // Something in vanilla resets AddChild'd extend children to origin after the rebuild even though
+    // every child class no-ops SetHologramLocationAndRotation and the parent blocks propagation —
+    // the same unidentified mover the belt Tick's origin-snap correction and the old "continuous
+    // position correction" timer were built to fight. Until that mover is found and blocked at the
+    // source, this drift-check (cheap when nothing moved: compare + skip) is the repair that keeps
+    // previews placed — and it must run every frame, not once per rebuild.
+    if (HologramService)
+    {
+        HologramService->RefreshChildPositions();
+    }
 
     // #497 set-once: sweep the child previews only when the authoritative state actually CHANGES.
     // Children are painted at spawn (clone spawner / CreateBeltPreviews), so re-sweeping an unchanged
@@ -2467,8 +2474,8 @@ void USFExtendService::CreateBeltPreviews(AFGHologram* ParentHologram)
             }
         }
 
-        // #497: one-shot position re-assert now that the preview set is (re)built — replaces the
-        // former per-frame reapply in RefreshExtension (see the comment there).
+        // #497: immediate position assert now that the preview set is (re)built, so children are
+        // placed this frame rather than one RefreshExtension tick later.
         HologramService->RefreshChildPositions();
     }
 }
