@@ -66,6 +66,29 @@
 // 2026-06-09: "no grouping persists" on spec-built foundation grids).
 static TWeakObjectPtr<AFGBlueprintProxy> GSFActiveSpecGroupProxy;
 
+// [#497] True when this hologram is a Smart-positioned grid child OR any descendant of one.
+// The Tier-3 vanilla-delegate children carry the SF_GridChild tag, but vanilla stackable-pole
+// holograms spawn their OWN stack-segment children under them (capture 8: the per-frame
+// clearance burn survived the self-tag predicate because the burning holograms were these
+// untagged grandchildren). Walk the parent chain — 2-3 hops, trivially cheaper than the
+// vanilla validation/nudge work the callers cancel.
+static bool SFIsSmartGridChildOrDescendant(const AFGHologram* Holo)
+{
+	static const FName SFGridChildTagName(TEXT("SF_GridChild"));
+	if (!Holo || Holo->GetParentHologram() == nullptr)
+	{
+		return false;
+	}
+	for (const AFGHologram* H = Holo; H; H = H->GetParentHologram())
+	{
+		if (H->Tags.Contains(SFGridChildTagName))
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
 void USFGameInstanceModule::RegisterSpecConstructionHooks()
 {
 	static const FName GridChildTag(TEXT("SF_GridChild"));
@@ -915,11 +938,10 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 	//     Cancel the child-side nudge for tagged children; the parent's own nudge still moves
 	//     children through Smart's transform follow.
 	{
-		static const FName SFGridChildTag(TEXT("SF_GridChild"));
 		SUBSCRIBE_METHOD_VIRTUAL(AFGBuildableHologram::CheckValidPlacement, BuildableHologramCDO,
 			[](auto& scope, AFGBuildableHologram* self)
 			{
-				if (self && self->GetParentHologram() != nullptr && self->Tags.Contains(SFGridChildTag))
+				if (SFIsSmartGridChildOrDescendant(self))
 				{
 					return; // Smart-positioned child: skip vanilla validation entirely
 				}
@@ -928,12 +950,12 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 		// SML virtual hooks bind ONE function body, not the whole vtable slot: the stackable pole
 		// children dispatch to the AFGFactoryBuildingHologram OVERRIDE and never enter the
 		// AFGBuildableHologram body above (capture 7: clearance burn survived the first hook).
-		// Hook the override too; both cancels share the tag+parented predicate.
+		// Hook the override too; all cancels share the ancestor-tag predicate.
 		AFGFactoryBuildingHologram* FactoryBuildingHologramCDO = GetMutableDefault<AFGFactoryBuildingHologram>();
 		SUBSCRIBE_METHOD_VIRTUAL(AFGFactoryBuildingHologram::CheckValidPlacement, FactoryBuildingHologramCDO,
 			[](auto& scope, AFGFactoryBuildingHologram* self)
 			{
-				if (self && self->GetParentHologram() != nullptr && self->Tags.Contains(SFGridChildTag))
+				if (SFIsSmartGridChildOrDescendant(self))
 				{
 					return; // Smart-positioned child: skip vanilla validation entirely
 				}
@@ -942,7 +964,7 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 		SUBSCRIBE_METHOD_VIRTUAL(AFGHologram::SetHologramNudgeLocation, HologramCDO,
 			[](auto& scope, AFGHologram* self)
 			{
-				if (self && self->GetParentHologram() != nullptr && self->Tags.Contains(SFGridChildTag))
+				if (SFIsSmartGridChildOrDescendant(self))
 				{
 					return; // block the locked-parent nudge cascade for Smart-positioned children
 				}
