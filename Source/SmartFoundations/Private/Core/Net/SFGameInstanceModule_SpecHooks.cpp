@@ -66,6 +66,37 @@
 // 2026-06-09: "no grouping persists" on spec-built foundation grids).
 static TWeakObjectPtr<AFGBlueprintProxy> GSFActiveSpecGroupProxy;
 
+// [#497] True when this hologram is the ROOT of a large Smart grid (unparented, with many
+// SF_GridChild children). Vanilla CheckClearance passes the hologram's ENTIRE child tree as
+// ignored actors to the overlap query, and the physics filter checks every overlap candidate
+// against that list linearly — O(candidates x children), quadratic in grid size. Counting diag
+// round 4 proved the burner is exactly the root's 1-2 queries per frame (maxPassesPerFrame=2,
+// 10-second frames at ~12K children). Above the threshold, skip the root's vanilla clearance:
+// affordability red is computed separately (CheckCanAfford), and Smart grids place their
+// members by design. Normal single-building behavior below the threshold is untouched.
+static bool SFIsSmartGridMegaRoot(const AFGHologram* Holo)
+{
+	static const FName SFGridChildTagName(TEXT("SF_GridChild"));
+	if (!Holo || Holo->GetParentHologram() != nullptr)
+	{
+		return false;
+	}
+	const TArray<AFGHologram*>& Kids = Holo->GetHologramChildren();
+	if (Kids.Num() < 64)
+	{
+		return false;
+	}
+	const int32 Probe = FMath::Min(Kids.Num(), 8);
+	for (int32 i = 0; i < Probe; ++i)
+	{
+		if (Kids[i] && Kids[i]->Tags.Contains(SFGridChildTagName))
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
 // [#497] True when this hologram is a Smart-positioned grid child OR any descendant of one.
 // The Tier-3 vanilla-delegate children carry the SF_GridChild tag, but vanilla stackable-pole
 // holograms spawn their OWN stack-segment children under them (capture 8: the per-frame
@@ -945,6 +976,10 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 				{
 					return; // Smart-positioned child: skip vanilla validation entirely
 				}
+				if (SFIsSmartGridMegaRoot(self))
+				{
+					return; // mega-grid root: vanilla clearance is O(candidates x children)
+				}
 				scope(self);
 			});
 		// SML virtual hooks bind ONE function body, not the whole vtable slot: the stackable pole
@@ -958,6 +993,10 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 				if (SFIsSmartGridChildOrDescendant(self))
 				{
 					return; // Smart-positioned child: skip vanilla validation entirely
+				}
+				if (SFIsSmartGridMegaRoot(self))
+				{
+					return; // mega-grid root: vanilla clearance is O(candidates x children)
 				}
 				// [#497 GRIDHOOK DIAG — TEMPORARY, remove with the answer] Capture 9 (on the
 				// ancestor-predicate build) still burned 74% in this body on PARENTED holograms:
