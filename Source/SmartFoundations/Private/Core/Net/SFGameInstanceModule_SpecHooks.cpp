@@ -76,25 +76,21 @@ static TWeakObjectPtr<AFGBlueprintProxy> GSFActiveSpecGroupProxy;
 // members by design. Normal single-building behavior below the threshold is untouched.
 static bool SFIsSmartGridMegaRoot(const AFGHologram* Holo)
 {
-	static const FName SFGridChildTagName(TEXT("SF_GridChild"));
 	if (!Holo || Holo->GetParentHologram() != nullptr)
 	{
 		return false;
 	}
-	const TArray<AFGHologram*>& Kids = Holo->GetHologramChildren();
+	const TArray<AFGHologram*> Kids = Holo->GetHologramChildren();
 	if (Kids.Num() < 64)
 	{
 		return false;
 	}
-	const int32 Probe = FMath::Min(Kids.Num(), 8);
-	for (int32 i = 0; i < Probe; ++i)
-	{
-		if (Kids[i] && Kids[i]->Tags.Contains(SFGridChildTagName))
-		{
-			return true;
-		}
-	}
-	return false;
+	// Authoritative check: Smart's subsystem tracks exactly which hologram it is actively
+	// scaling. (The first version probed the leading mChildren for SF_GridChild, but the
+	// early entries of a big grid's child array are not necessarily grid delegates — AC belts
+	// and other additions land there too — and the cancel silently never fired.)
+	USFSubsystem* SmartSubsystem = USFSubsystem::Get(Holo->GetWorld());
+	return SmartSubsystem && SmartSubsystem->GetActiveHologram() == Holo;
 }
 
 // [#497] True when this hologram is a Smart-positioned grid child OR any descendant of one.
