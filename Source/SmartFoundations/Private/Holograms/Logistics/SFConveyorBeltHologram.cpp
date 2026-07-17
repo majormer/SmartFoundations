@@ -317,7 +317,18 @@ void ASFConveyorBeltHologram::PostHologramPlacement(const FHitResult& hitResult,
         }
         
         SF_EXTEND_DIAGNOSTIC_LOG(LogSmartHologram, Log, TEXT("🎯 BELT PostHologramPlacement: Extend child %s - calling Super once for connection wiring"), *GetName());
+        // [#497] Vanilla's one allowed call runs GenerateAndUpdateSpline with the PARENT's hit
+        // result, and that does SetActorLocationAndRotation on this belt to that hit — world
+        // origin during preview (origin-trap confirmed: FGConveyorBeltHologram.cpp:1624). The
+        // connection-commit side effects are load-bearing (see below); the move is not. Save
+        // the Smart-authored transform and put it back if vanilla relocated us.
+        const FTransform SmartAuthoredTransform = GetActorTransform();
         Super::PostHologramPlacement(hitResult, callForChildren);
+        if (!GetActorLocation().Equals(SmartAuthoredTransform.GetLocation(), 0.5f) ||
+            !GetActorQuat().Equals(SmartAuthoredTransform.GetRotation(), 0.001f))
+        {
+            SetActorTransform(SmartAuthoredTransform);
+        }
 
         // Module replay (#427): with a RAW VANILLA parent the per-tick PostHologramPlacement
         // cascade consumes this once-gate DURING PREVIEW, handing vanilla the PARENT's hit
