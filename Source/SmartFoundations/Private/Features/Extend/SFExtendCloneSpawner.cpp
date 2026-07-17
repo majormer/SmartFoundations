@@ -539,12 +539,15 @@ int32 FSFCloneTopology::SpawnChildHolograms(
                     FTransform TopTransform = ChildData.LiftData.TopTransform.ToFTransform();
                     LiftChild->SetTopTransform(TopTransform);
                     
-                    // Force mesh rebuild by simulating a location update
+                    // Force mesh rebuild by simulating a location update.
+                    // [#497] Must go through RebuildExtendPreviewMeshes: the SF_ExtendChild tag is
+                    // already on (added before FinishSpawning), so a plain SetHologramLocationAndRotation
+                    // hits the drift-proof early-return and the lift preview stays a default stub.
                     FHitResult DummyHit;
                     DummyHit.Location = Location;
                     DummyHit.ImpactPoint = Location;
                     DummyHit.ImpactNormal = FVector::UpVector;
-                    LiftChild->SetHologramLocationAndRotation(DummyHit);
+                    LiftChild->RebuildExtendPreviewMeshes(DummyHit);
                     
                     // SetHologramLocationAndRotation may have reset mTopTransform - restore it
                     LiftChild->SetTopTransform(TopTransform);

@@ -84,6 +84,18 @@ void ASFConveyorLiftHologram::SetHologramLocationAndRotation(const FHitResult& h
     }
 }
 
+void ASFConveyorLiftHologram::RebuildExtendPreviewMeshes(const FHitResult& hitResult)
+{
+    // [#497] The SF_ExtendChild early-return above drift-proofs this lift against vanilla's
+    // per-frame parent propagation — but it also swallowed the clone spawner's own one-shot
+    // "force mesh rebuild" call, leaving extend lift previews as default unraised stubs
+    // (mTopTransform set, mesh stack never rebuilt from it; builds were unaffected). This
+    // is the deliberate bypass for that one Smart-driven call: vanilla rebuilds the
+    // bottom/mid/top mesh stack from the current mTopTransform. The spawner re-asserts
+    // mTopTransform and restores the actor transform right after, as it always has.
+    Super::SetHologramLocationAndRotation(hitResult);
+}
+
 TArray<FItemAmount> ASFConveyorLiftHologram::GetBaseCost() const
 {
     // #497: Preview lift children can carry a null mRecipe. Vanilla AFGHologram::GetBaseCost would call

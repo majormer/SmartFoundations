@@ -55,6 +55,14 @@ public:
     
     /** Force apply hologram material to all mesh components */
     void ForceApplyHologramMaterial();
+
+    /**
+     * [#497] One-shot vanilla mesh rebuild for extend children, bypassing the SF_ExtendChild
+     * drift-proof guard in SetHologramLocationAndRotation. The clone spawner calls this once
+     * after SetTopTransform so vanilla arranges the bottom/mid/top mesh stack from it; the
+     * per-frame parent propagation stays blocked.
+     */
+    void RebuildExtendPreviewMeshes(const FHitResult& hitResult);
     
     /** Public wrapper to set build class before spawning */
     void SetBuildClass(UClass* InBuildClass) { mBuildClass = InBuildClass; }
