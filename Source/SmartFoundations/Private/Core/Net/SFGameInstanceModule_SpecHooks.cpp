@@ -19,6 +19,7 @@
 #include "Hologram/FGBuildableHologram.h"
 #include "Hologram/FGBlueprintHologram.h"
 #include "Hologram/FGConveyorPoleHologram.h"      // #341: belt-support parent hologram (covers stackable/wall/ceiling)
+#include "Hologram/FGFactoryBuildingHologram.h"   // [#497] grid-child validation cancel at the override the poles dispatch to
 #include "Hologram/FGPoleHologram.h"              // [MP-SPEC] multi-step gate: pole height step
 #include "Hologram/FGFloodlightHologram.h"        // [MP-SPEC] multi-step gate: floodlight angle step
 #include "Hologram/FGStandaloneSignHologram.h"    // [MP-SPEC] multi-step gate: sign height step
@@ -917,6 +918,20 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 		static const FName SFGridChildTag(TEXT("SF_GridChild"));
 		SUBSCRIBE_METHOD_VIRTUAL(AFGBuildableHologram::CheckValidPlacement, BuildableHologramCDO,
 			[](auto& scope, AFGBuildableHologram* self)
+			{
+				if (self && self->GetParentHologram() != nullptr && self->Tags.Contains(SFGridChildTag))
+				{
+					return; // Smart-positioned child: skip vanilla validation entirely
+				}
+				scope(self);
+			});
+		// SML virtual hooks bind ONE function body, not the whole vtable slot: the stackable pole
+		// children dispatch to the AFGFactoryBuildingHologram OVERRIDE and never enter the
+		// AFGBuildableHologram body above (capture 7: clearance burn survived the first hook).
+		// Hook the override too; both cancels share the tag+parented predicate.
+		AFGFactoryBuildingHologram* FactoryBuildingHologramCDO = GetMutableDefault<AFGFactoryBuildingHologram>();
+		SUBSCRIBE_METHOD_VIRTUAL(AFGFactoryBuildingHologram::CheckValidPlacement, FactoryBuildingHologramCDO,
+			[](auto& scope, AFGFactoryBuildingHologram* self)
 			{
 				if (self && self->GetParentHologram() != nullptr && self->Tags.Contains(SFGridChildTag))
 				{
