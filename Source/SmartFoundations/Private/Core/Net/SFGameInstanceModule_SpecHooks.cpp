@@ -1010,6 +1010,18 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 				static int32 SFGridDiagMaxPassesPerFrame = 0;
 				static int32 SFGridDiagNameBudget = 10;
 				static uint64 SFGridDiagLastSummaryFrame = 0;
+				// v2: also report the mega-root predicate's inputs for the last unparented
+				// pass-through — child count, subsystem presence, active-hologram match — so a
+				// predicate miss names its failing leg, and the "v2" tag proves the binary is
+				// fresh (a stale "STATS " line means the build didn't recompile).
+				static int32 SFGridDiagLastRootKids = -1;
+				static int32 SFGridDiagLastRootActive = -1;
+				if (self && self->GetParentHologram() == nullptr)
+				{
+					SFGridDiagLastRootKids = self->GetHologramChildren().Num();
+					USFSubsystem* DiagSS = USFSubsystem::Get(self->GetWorld());
+					SFGridDiagLastRootActive = DiagSS ? (DiagSS->GetActiveHologram() == self ? 1 : 0) : -1;
+				}
 				if (GFrameCounter != SFGridDiagFrame)
 				{
 					SFGridDiagMaxPassesPerFrame = FMath::Max(SFGridDiagMaxPassesPerFrame, SFGridDiagPassesThisFrame);
@@ -1019,8 +1031,9 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 					{
 						SFGridDiagLastSummaryFrame = GFrameCounter;
 						UE_LOG(LogSmartFoundations, Warning,
-							TEXT("[#497 GRIDHOOK] STATS f=%llu totalPasses=%llu maxPassesPerFrame=%d"),
-							GFrameCounter, SFGridDiagTotalPasses, SFGridDiagMaxPassesPerFrame);
+							TEXT("[#497 GRIDHOOK] STATSv2 f=%llu totalPasses=%llu maxPassesPerFrame=%d rootKids=%d rootActiveMatch=%d"),
+							GFrameCounter, SFGridDiagTotalPasses, SFGridDiagMaxPassesPerFrame,
+							SFGridDiagLastRootKids, SFGridDiagLastRootActive);
 						SFGridDiagMaxPassesPerFrame = 0;
 					}
 				}
