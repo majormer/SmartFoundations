@@ -1019,11 +1019,14 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 				// fresh (a stale "STATS " line means the build didn't recompile).
 				static int32 SFGridDiagLastRootKids = -1;
 				static int32 SFGridDiagLastRootActive = -1;
+				static int32 SFGridDiagLastTrackedKids = -1;
 				if (self && self->GetParentHologram() == nullptr)
 				{
 					SFGridDiagLastRootKids = self->GetHologramChildren().Num();
 					USFSubsystem* DiagSS = USFSubsystem::Get(self->GetWorld());
 					SFGridDiagLastRootActive = DiagSS ? (DiagSS->GetActiveHologram() == self ? 1 : 0) : -1;
+					FSFHologramHelperService* DiagHelper = DiagSS ? DiagSS->GetHologramHelper() : nullptr;
+					SFGridDiagLastTrackedKids = DiagHelper ? DiagHelper->GetSpawnedChildren().Num() : -1;
 				}
 				if (GFrameCounter != SFGridDiagFrame)
 				{
@@ -1034,9 +1037,9 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 					{
 						SFGridDiagLastSummaryFrame = GFrameCounter;
 						UE_LOG(LogSmartFoundations, Warning,
-							TEXT("[#497 GRIDHOOK] STATSv2 f=%llu totalPasses=%llu maxPassesPerFrame=%d rootKids=%d rootActiveMatch=%d"),
+							TEXT("[#497 GRIDHOOK] STATSv3 f=%llu totalPasses=%llu maxPassesPerFrame=%d rootKids=%d rootActiveMatch=%d trackedKids=%d"),
 							GFrameCounter, SFGridDiagTotalPasses, SFGridDiagMaxPassesPerFrame,
-							SFGridDiagLastRootKids, SFGridDiagLastRootActive);
+							SFGridDiagLastRootKids, SFGridDiagLastRootActive, SFGridDiagLastTrackedKids);
 						SFGridDiagMaxPassesPerFrame = 0;
 					}
 				}
