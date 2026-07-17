@@ -959,6 +959,22 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 				{
 					return; // Smart-positioned child: skip vanilla validation entirely
 				}
+				// [#497 GRIDHOOK DIAG — TEMPORARY, remove with the answer] Capture 9 (on the
+				// ancestor-predicate build) still burned 74% in this body on PARENTED holograms:
+				// something slips the predicate and code inspection says it shouldn't. Name the
+				// first pass-throughs that have a parent: class, parent chain, tag count.
+				static int32 SFGridHookDiagBudget = 30;
+				if (SFGridHookDiagBudget > 0 && self && self->GetParentHologram() != nullptr)
+				{
+					--SFGridHookDiagBudget;
+					const AFGHologram* P = self->GetParentHologram();
+					const AFGHologram* GP = P ? P->GetParentHologram() : nullptr;
+					UE_LOG(LogSmartFoundations, Warning,
+						TEXT("[#497 GRIDHOOK] pass-through %s (%s) tags=%d | parent=%s (%s) ptags=%d | grandparent=%s"),
+						*self->GetName(), *self->GetClass()->GetName(), self->Tags.Num(),
+						*GetNameSafe(P), P ? *P->GetClass()->GetName() : TEXT("-"), P ? P->Tags.Num() : -1,
+						*GetNameSafe(GP));
+				}
 				scope(self);
 			});
 		SUBSCRIBE_METHOD_VIRTUAL(AFGHologram::SetHologramNudgeLocation, HologramCDO,
