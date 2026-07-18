@@ -111,7 +111,39 @@ void FSFPipeAutoConnectManager::ProcessAllJunctions(AFGHologram* ParentJunctionH
 	{
 		return;
 	}
-	
+
+	// [#500] Route-signature skip (#497 L1 analog, mirrors the belt orchestrator): the
+	// debounced eval fires repeatedly during a held drag and re-scores every junction against
+	// every candidate connector even when nothing moved. Skip when the parent transform + lock
+	// state, junction count, first/last junction positions (catches spacing/stagger moves at
+	// constant count), and pipe settings are unchanged. Existing previews stand.
+	{
+		const bool bParentLockedNow = ParentJunctionHologram->IsHologramLocked();
+		const float RangeNow = Subsystem->GetAutoConnectRuntimeSettings().NearbyLogisticsRange;
+		const FTransform ParentTransformNow = ParentJunctionHologram->GetActorTransform();
+		const FVector FirstLoc = AllJunctions[0] ? AllJunctions[0]->GetActorLocation() : FVector::ZeroVector;
+		const FVector LastLoc = AllJunctions.Last() ? AllJunctions.Last()->GetActorLocation() : FVector::ZeroVector;
+
+		if (bHasLastEvalSignature
+			&& AllJunctions.Num() == LastEvalJunctionCount
+			&& bParentLockedNow == bLastEvalParentLocked
+			&& RangeNow == LastEvalLogisticsRange
+			&& ParentTransformNow.Equals(LastEvalParentTransform, 0.5f)
+			&& FirstLoc.Equals(LastEvalFirstJunctionLoc, 0.5f)
+			&& LastLoc.Equals(LastEvalLastJunctionLoc, 0.5f))
+		{
+			UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🔧 PIPE: eval skipped - route signature unchanged (%d junctions)"), AllJunctions.Num());
+			return;
+		}
+		bHasLastEvalSignature = true;
+		LastEvalParentTransform = ParentTransformNow;
+		bLastEvalParentLocked = bParentLockedNow;
+		LastEvalJunctionCount = AllJunctions.Num();
+		LastEvalFirstJunctionLoc = FirstLoc;
+		LastEvalLastJunctionLoc = LastLoc;
+		LastEvalLogisticsRange = RangeNow;
+	}
+
 	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🔧 PIPE: Processing %d junctions with shared connector reservation"), AllJunctions.Num());
 	
 	// CRITICAL: Clean up pipe previews for junctions that no longer exist (removed children)

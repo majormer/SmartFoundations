@@ -943,6 +943,36 @@ void USFSubsystem::RefreshScaleDaisyChainPreviews()
 		return;
 	}
 
+	// [#500] Reuse existing previews when the span COUNT is unchanged: during a drag the spans
+	// move every frame, and the old path destroyed + respawned every wire actor per frame — the
+	// last un-debounced actor churn in the AC family (#497 audit item 3, capture-2 scene-churn
+	// signature). SetupWirePreviewFromPositions re-caches the endpoints and rebuilds the
+	// catenary mesh in place; only a count/owner change or a dead actor forces a full rebuild.
+	if (Parent && Parent == ScaleDaisyChainPreviewOwner.Get()
+		&& DesiredSpans.Num() == ScaleDaisyChainPreviews.Num()
+		&& !DesiredSpans.IsEmpty())
+	{
+		bool bAllValid = true;
+		for (ASFWireHologram* Preview : ScaleDaisyChainPreviews)
+		{
+			if (!IsValid(Preview))
+			{
+				bAllValid = false;
+				break;
+			}
+		}
+		if (bAllValid)
+		{
+			for (int32 Index = 0; Index < DesiredSpans.Num(); ++Index)
+			{
+				ScaleDaisyChainPreviews[Index]->SetupWirePreviewFromPositions(
+					DesiredSpans[Index].Key, DesiredSpans[Index].Value);
+			}
+			CachedScaleDaisyChainSpans = DesiredSpans;
+			return;
+		}
+	}
+
 	DestroyScaleDaisyChainPreviews();
 	ScaleDaisyChainPreviewOwner = Parent;
 	CachedScaleDaisyChainSpans = DesiredSpans;
