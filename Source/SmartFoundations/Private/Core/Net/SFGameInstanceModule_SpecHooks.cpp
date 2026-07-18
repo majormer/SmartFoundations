@@ -997,66 +997,6 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 				{
 					return; // mega-grid root: vanilla clearance is O(candidates x children)
 				}
-				// [#497 GRIDHOOK DIAG — TEMPORARY, remove with the answer] Capture 9 (on the
-				// ancestor-predicate build) still burned 74% in this body on PARENTED holograms:
-				// something slips the predicate and code inspection says it shouldn't. Name the
-				// first pass-throughs that have a parent: class, parent chain, tag count.
-				// Round 4: COUNTING diag. Rounds 1-3 kept getting eaten by the held root (which
-				// legitimately passes through twice per frame). Two hypotheses remain: (A) the
-				// root's own 2 clearance queries each return thousands of hits (huge-hit-array
-				// profile), or (B) thousands of children pass through uncancelled. Count both
-				// sides per frame and emit a one-line summary every ~256 frames; name the first
-				// 10 pass-throughs that are 3rd+ in their frame (the root maxes at 2).
-				static uint64 SFGridDiagFrame = 0;
-				static int32 SFGridDiagPassesThisFrame = 0;
-				static uint64 SFGridDiagTotalPasses = 0;
-				static int32 SFGridDiagMaxPassesPerFrame = 0;
-				static int32 SFGridDiagNameBudget = 10;
-				static uint64 SFGridDiagLastSummaryFrame = 0;
-				// v2: also report the mega-root predicate's inputs for the last unparented
-				// pass-through — child count, subsystem presence, active-hologram match — so a
-				// predicate miss names its failing leg, and the "v2" tag proves the binary is
-				// fresh (a stale "STATS " line means the build didn't recompile).
-				static int32 SFGridDiagLastRootKids = -1;
-				static int32 SFGridDiagLastRootActive = -1;
-				static int32 SFGridDiagLastTrackedKids = -1;
-				if (self && self->GetParentHologram() == nullptr)
-				{
-					SFGridDiagLastRootKids = self->GetHologramChildren().Num();
-					USFSubsystem* DiagSS = USFSubsystem::Get(self->GetWorld());
-					SFGridDiagLastRootActive = DiagSS ? (DiagSS->GetActiveHologram() == self ? 1 : 0) : -1;
-					FSFHologramHelperService* DiagHelper = DiagSS ? DiagSS->GetHologramHelper() : nullptr;
-					SFGridDiagLastTrackedKids = DiagHelper ? DiagHelper->GetSpawnedChildren().Num() : -1;
-				}
-				if (GFrameCounter != SFGridDiagFrame)
-				{
-					SFGridDiagMaxPassesPerFrame = FMath::Max(SFGridDiagMaxPassesPerFrame, SFGridDiagPassesThisFrame);
-					SFGridDiagFrame = GFrameCounter;
-					SFGridDiagPassesThisFrame = 0;
-					if (GFrameCounter - SFGridDiagLastSummaryFrame >= 256)
-					{
-						SFGridDiagLastSummaryFrame = GFrameCounter;
-						UE_LOG(LogSmartFoundations, Warning,
-							TEXT("[#497 GRIDHOOK] STATSv3 f=%llu totalPasses=%llu maxPassesPerFrame=%d rootKids=%d rootActiveMatch=%d trackedKids=%d"),
-							GFrameCounter, SFGridDiagTotalPasses, SFGridDiagMaxPassesPerFrame,
-							SFGridDiagLastRootKids, SFGridDiagLastRootActive, SFGridDiagLastTrackedKids);
-						SFGridDiagMaxPassesPerFrame = 0;
-					}
-				}
-				++SFGridDiagPassesThisFrame;
-				++SFGridDiagTotalPasses;
-				if (SFGridDiagNameBudget > 0 && self && SFGridDiagPassesThisFrame >= 3)
-				{
-					--SFGridDiagNameBudget;
-					const AFGHologram* P = self->GetParentHologram();
-					FString TagList;
-					for (const FName& T : self->Tags) { TagList += T.ToString() + TEXT(","); }
-					UE_LOG(LogSmartFoundations, Warning,
-						TEXT("[#497 GRIDHOOK] f=%llu 3rd+ pass-through %s (%s) tags=[%s] | parent=%s (%s)"),
-						GFrameCounter,
-						*self->GetName(), *self->GetClass()->GetName(), *TagList,
-						*GetNameSafe(P), P ? *P->GetClass()->GetName() : TEXT("-"));
-				}
 				scope(self);
 			});
 		SUBSCRIBE_METHOD_VIRTUAL(AFGHologram::SetHologramNudgeLocation, HologramCDO,
