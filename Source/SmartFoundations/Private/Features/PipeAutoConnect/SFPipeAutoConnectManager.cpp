@@ -338,7 +338,7 @@ void FSFPipeAutoConnectManager::ProcessAllJunctions(AFGHologram* ParentJunctionH
 	// When parent is locked (during nudging), vanilla may hide children.
 	// Ensure ALL tracked pipes have correct visibility regardless of updates.
 	bool bParentLocked = ParentJunctionHologram->IsHologramLocked();
-	EHologramMaterialState ParentMaterialState = ParentJunctionHologram->GetHologramMaterialState();
+	EHologramMaterialState ParentMaterialState = USFHologramDataService::GetRawPlacementMaterialState(ParentJunctionHologram);
 	
 	// Refresh building pipe children (Side A)
 	for (auto& Pair : BuildingPipeChildren)
@@ -1099,7 +1099,7 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 						PipeChild->LockHologramPosition(true);
 					}
 					PipeChild->SetActorHiddenInGame(false);
-					PipeChild->SetPlacementMaterialState(ParentJunctionHologram->GetHologramMaterialState());
+					PipeChild->SetPlacementMaterialState(USFHologramDataService::GetRawPlacementMaterialState(ParentJunctionHologram));
 					
 					UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🔧 PIPE CHILD: Updated existing child for junction %s (parentLocked=%d, childRelocked=%d)"), 
 						*ParentJunctionHologram->GetName(), bParentLocked ? 1 : 0, bParentLocked ? 1 : 0);
@@ -1320,7 +1320,7 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 								
 								if (bPLocked) PipeChildB->LockHologramPosition(true);
 								PipeChildB->SetActorHiddenInGame(false);
-								PipeChildB->SetPlacementMaterialState(ParentJunctionHologram->GetHologramMaterialState());
+								PipeChildB->SetPlacementMaterialState(USFHologramDataService::GetRawPlacementMaterialState(ParentJunctionHologram));
 							}
 						}
 						else

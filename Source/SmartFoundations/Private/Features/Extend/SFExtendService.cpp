@@ -1922,7 +1922,7 @@ void USFExtendService::RefreshExtension(AFGHologram* SourceHologram, bool bForce
         // Defensive: if unaffordable, ensure the parent reflects ERROR (the SetPlacementMaterialState
         // above already applied ExtendMaterialState; this guards against a stale OK state).
         if (ExtendMaterialState == EHologramMaterialState::HMS_ERROR
-            && ActiveHologram->GetHologramMaterialState() != EHologramMaterialState::HMS_ERROR)
+            && USFHologramDataService::GetRawPlacementMaterialState(ActiveHologram) != EHologramMaterialState::HMS_ERROR)
         {
             ActiveHologram->SetPlacementMaterialState(EHologramMaterialState::HMS_ERROR);
         }
@@ -2058,7 +2058,7 @@ void USFExtendService::RefreshExtension(AFGHologram* SourceHologram, bool bForce
                 UE_LOG(LogSmartExtend, VeryVerbose, TEXT("🔄 EXTEND Child[%d]: Pos=%s Hidden=%d MatState=%d"),
                     i, *Child->GetActorLocation().ToString(),
                     Child->IsHidden() ? 1 : 0,
-                    (int32)Child->GetHologramMaterialState());
+                    (int32)USFHologramDataService::GetRawPlacementMaterialState(Child));
             }
             else
             {

@@ -89,6 +89,9 @@ void FConduitPreviewHelper::EnsureSpawned(const FVector& SpawnLocation)
 	}
 
 	// Finish spawning
+	// [#497 L5] BEFORE FinishSpawning: BeginPlay registers the clearance detector inert
+	// (the existing post-spawn disable below then finds nothing to tear down).
+	SpawnedHologram->SetActorEnableCollision(false);
 	SpawnedHologram->FinishSpawning(FTransform(SpawnLocation));
 
 	// Setup spline routing (type-specific)

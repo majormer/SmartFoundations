@@ -328,7 +328,7 @@ void FSFPipeAutoConnectManager::EvaluatePipeConnections(AFGHologram* ParentJunct
 					PipeChild->LockHologramPosition(true);
 				}
 				PipeChild->SetActorHiddenInGame(false);
-				PipeChild->SetPlacementMaterialState(SourceJunction->GetHologramMaterialState());
+				PipeChild->SetPlacementMaterialState(USFHologramDataService::GetRawPlacementMaterialState(SourceJunction));
 				
 				// Update target junction tracking (in case target changed)
 				ManifoldTargetJunctions.Add(SourceJunction, TargetJunction);
@@ -598,6 +598,8 @@ ASFPipelineHologram* FSFPipeAutoConnectManager::SpawnPipeChild(
 	
 	// Finish spawning (matches stackable pipe pattern)
 	PipeChild->FinishSpawning(FTransform(StartPos));
+	// [#497 L5] This child keeps its collision; kill only the clearance-detector overlap box.
+	USFHologramDataService::DisableClearanceDetector(PipeChild);
 	
 	// Set snapped connections via reflection (like stackable pipes)
 	FProperty* SnappedProp = AFGPipelineHologram::StaticClass()->FindPropertyByName(TEXT("mSnappedConnectionComponents"));
@@ -679,7 +681,7 @@ ASFPipelineHologram* FSFPipeAutoConnectManager::SpawnPipeChild(
 	PipeChild->SetActorEnableCollision(false);
 	PipeChild->SetActorTickEnabled(false);
 	PipeChild->RegisterAllComponents();
-	PipeChild->SetPlacementMaterialState(ParentJunction->GetHologramMaterialState());
+	PipeChild->SetPlacementMaterialState(USFHologramDataService::GetRawPlacementMaterialState(ParentJunction));
 	
 	// CRITICAL: Sync lock state with parent at spawn time (from stackable pipe pattern)
 	// Children must match parent's lock state for proper visibility and position updates
@@ -815,6 +817,8 @@ ASFPipelineHologram* FSFPipeAutoConnectManager::SpawnPipeChildAtPosition(
 	}
 	
 	PipeChild->FinishSpawning(FTransform(StartPos));
+	// [#497 L5] This child keeps its collision; kill only the clearance-detector overlap box.
+	USFHologramDataService::DisableClearanceDetector(PipeChild);
 	
 	// Set snapped connections — only target side (index 1) has a real connector
 	FProperty* SnappedProp = AFGPipelineHologram::StaticClass()->FindPropertyByName(TEXT("mSnappedConnectionComponents"));
@@ -892,7 +896,7 @@ ASFPipelineHologram* FSFPipeAutoConnectManager::SpawnPipeChildAtPosition(
 	PipeChild->SetActorEnableCollision(false);
 	PipeChild->SetActorTickEnabled(false);
 	PipeChild->RegisterAllComponents();
-	PipeChild->SetPlacementMaterialState(ParentHologram->GetHologramMaterialState());
+	PipeChild->SetPlacementMaterialState(USFHologramDataService::GetRawPlacementMaterialState(ParentHologram));
 	
 	bool bParentLocked = ParentHologram->IsHologramLocked();
 	if (bParentLocked)

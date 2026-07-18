@@ -12,6 +12,7 @@
 //                     as SP does. (Net seam: Hook B → SpawnConduitPlanChildren, SFGameInstanceModule_SpecHooks.cpp)
 
 #include "Features/AutoConnect/SFAutoConnectService.h"
+#include "Subsystem/SFHologramDataService.h"   // [#497 L4] O(1) raw material-state reads
 #include "Features/AutoConnect/SFAutoConnectServiceImpl.h"
 #include "Data/SFBuildableSizeRegistry.h"
 #include "Shared/Conduits/SFConveyanceConstants.h"
@@ -126,7 +127,7 @@ void USFAutoConnectService::OnDistributorHologramUpdated(AFGHologram* ParentHolo
 	
 		// VISIBILITY & LOCKING: Ensure all belt children match parent's state (matches stackable pattern)
 		bool bParentLocked = ParentHologram->IsHologramLocked();
-		EHologramMaterialState ParentMaterialState = ParentHologram->GetHologramMaterialState();
+		EHologramMaterialState ParentMaterialState = USFHologramDataService::GetRawPlacementMaterialState(ParentHologram);
 	
 		for (const TSharedPtr<FBeltPreviewHelper>& Preview : Previews)
 		{

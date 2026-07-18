@@ -17,6 +17,7 @@
  */
 
 #include "Features/AutoConnect/SFAutoConnectServiceImpl.h"
+#include "Subsystem/SFHologramDataService.h"   // [#497 L4] O(1) raw material-state reads
 #include "Features/AutoConnect/SFBlueprintSeamService.h"
 #include "Features/PipeAutoConnect/PipePreviewHelper.h"
 #include "Features/Scaling/SFGridCoordComponent.h"
@@ -434,7 +435,7 @@ void USFAutoConnectService::ProcessBlueprintSeams(AFGHologram* ParentHologram)
 
 	// ---- Visibility / material / lock sync (mirrors the stackable finalize pass) ----
 	const bool bParentLocked = ParentHologram->IsHologramLocked();
-	const EHologramMaterialState ParentMaterialState = ParentHologram->GetHologramMaterialState();
+	const EHologramMaterialState ParentMaterialState = USFHologramDataService::GetRawPlacementMaterialState(ParentHologram);
 	auto FinalizeConduit = [bParentLocked, ParentMaterialState](AFGSplineHologram* Conduit)
 	{
 		if (!Conduit)

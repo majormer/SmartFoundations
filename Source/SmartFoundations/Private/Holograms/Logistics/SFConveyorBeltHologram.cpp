@@ -239,7 +239,7 @@ void ASFConveyorBeltHologram::CheckValidPlacement()
 
         if (AFGHologram* Parent = GetParentHologram())
         {
-            if (Parent->GetHologramMaterialState() == EHologramMaterialState::HMS_ERROR)
+            if (USFHologramDataService::GetRawPlacementMaterialState(Parent) == EHologramMaterialState::HMS_ERROR)
             {
                 DesiredState = EHologramMaterialState::HMS_ERROR;
             }

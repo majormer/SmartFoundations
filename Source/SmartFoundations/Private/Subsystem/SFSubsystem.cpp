@@ -972,6 +972,9 @@ void USFSubsystem::RefreshScaleDaisyChainPreviews()
 		}
 		Preview->SetBuildClass(WireClass);
 		Preview->Tags.AddUnique(FName(TEXT("SF_ScaleDaisyPreview")));
+		// [#497 L5] BEFORE FinishSpawning: BeginPlay registers the clearance detector inert
+		// (the existing post-spawn disable below then finds nothing to tear down).
+		Preview->SetActorEnableCollision(false);
 		Preview->FinishSpawning(FTransform(FRotator::ZeroRotator, Midpoint), true);
 		Preview->SetupWirePreviewFromPositions(Span.Key, Span.Value);
 		Preview->SetPlacementMaterialState(EHologramMaterialState::HMS_OK);

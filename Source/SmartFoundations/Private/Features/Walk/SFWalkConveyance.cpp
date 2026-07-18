@@ -208,6 +208,9 @@ AFGHologram* USFWalkBeltConveyance::LinkOrUpdate(AFGHologram* ExistingSpan, AFGH
         HoloData->StackChainIndex = 0;
     }
 
+    // [#497 L5] BEFORE FinishSpawning: BeginPlay registers the clearance detector inert
+    // (the existing post-spawn disable below then finds nothing to tear down).
+    Belt->SetActorEnableCollision(false);
     Belt->FinishSpawning(FTransform(StartPos));
     Belt->SetSnappedConnections(FromConn, ToConn);
     Belt->ApplyBeltBuildModeRouting(RoutingMode, StartPos, StartNormal, EndPos, EndNormal);
@@ -370,6 +373,9 @@ AFGHologram* USFWalkPipeConveyance::LinkOrUpdate(AFGHologram* ExistingSpan, AFGH
         HoloData->StackablePipeIndex = 0;
     }
 
+    // [#497 L5] BEFORE FinishSpawning: BeginPlay registers the clearance detector inert
+    // (the existing post-spawn disable below then finds nothing to tear down).
+    Pipe->SetActorEnableCollision(false);
     Pipe->FinishSpawning(FTransform(StartPos));
 
     // Pre-wire the snapped connections. ASFPipelineHologram has no SetSnappedConnections method, so set the vanilla
@@ -533,6 +539,9 @@ AFGHologram* USFWalkHypertubeConveyance::LinkOrUpdate(AFGHologram* ExistingSpan,
         HoloData->StackablePipeIndex = 0;
     }
 
+    // [#497 L5] BEFORE FinishSpawning: BeginPlay registers the clearance detector inert
+    // (the existing post-spawn disable below then finds nothing to tear down).
+    Tube->SetActorEnableCollision(false);
     Tube->FinishSpawning(FTransform(StartPos));
 
     if (FromConn || ToConn)
