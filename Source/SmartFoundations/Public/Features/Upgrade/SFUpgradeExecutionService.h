@@ -282,6 +282,13 @@ private:
 	/** Overflow items that couldn't fit in inventory (for crate spawning) */
 	TMap<TSubclassOf<class UFGItemDescriptor>, int32> OverflowItems;
 
+	/** Settlement audit: per-batch item totals actually taken (net of rollbacks) and actually
+	 * granted, logged in one line per item type when the batch completes. Turns "I don't think
+	 * the refund matched" reports into exact numbers (maintainer report 2026-07-17: Mk3→Mk4
+	 * container drain — likely the 100-vs-200 stack-size illusion, but now it's measurable). */
+	TMap<TSubclassOf<class UFGItemDescriptor>, int32> BatchChargedTotals;
+	TMap<TSubclassOf<class UFGItemDescriptor>, int32> BatchRefundedTotals;
+
 	/** Map of old conveyor -> new conveyor for fixing inter-connected upgrades */
 	TMap<class AFGBuildableConveyorBase*, class AFGBuildableConveyorBase*> OldToNewConveyorMap;
 

@@ -144,6 +144,7 @@ void USFUpgradeExecutionService::ReserveUpgradeCharge(const FSFUpgradeSettlement
 	{
 		UFGInventoryLibrary::GrabItemsFromInventoryAndCentralStorage(
 			PlayerInventory, CentralStorage, bTakeFromInventoryFirst, Entry.Key, Entry.Value);
+		BatchChargedTotals.FindOrAdd(Entry.Key) += Entry.Value;
 	}
 }
 
@@ -161,6 +162,7 @@ void USFUpgradeExecutionService::RollbackUpgradeCharge(const FSFUpgradeSettlemen
 		{
 			OverflowItems.FindOrAdd(Entry.Key) += Entry.Value - Added;
 		}
+		BatchChargedTotals.FindOrAdd(Entry.Key) -= Entry.Value;
 		UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: construct failed after reservation - returned %d %s (%d to crate)"),
 			Entry.Value, *UFGItemDescriptor::GetItemName(Entry.Key).ToString(), Entry.Value - Added);
 	}
@@ -180,6 +182,7 @@ void USFUpgradeExecutionService::GrantUpgradeRefund(const FSFUpgradeSettlementLe
 		{
 			OverflowItems.FindOrAdd(Entry.Key) += Entry.Value - Added;
 		}
+		BatchRefundedTotals.FindOrAdd(Entry.Key) += Entry.Value;
 	}
 }
 
@@ -296,6 +299,8 @@ void USFUpgradeExecutionService::StartUpgrade(const FSFUpgradeExecutionParams& P
 	bChainCached = false;
 	AccumulatedCosts.Empty();  // Reset accumulated costs
 	OverflowItems.Empty();     // Reset overflow items
+	BatchChargedTotals.Empty();   // Settlement audit
+	BatchRefundedTotals.Empty();  // Settlement audit
 	OldToNewConveyorMap.Empty(); // Reset old->new mapping for batch connection fixes
 	OldToNewBuildableMap.Empty(); // Reset general old->new mapping (Option A/B)
 	SavedConnectionPairs.Empty(); // Reset saved connection pairs
@@ -1620,6 +1625,26 @@ void USFUpgradeExecutionService::CompleteUpgrade()
 				UE_LOG(LogSmartUpgrade, VeryVerbose, TEXT("UpgradeExecutionService: Spawned overflow crate with %d item types"),
 					Stacks.Num());
 			}
+		}
+	}
+	// Settlement audit: one Display line per item type - exact charged/refunded/crated totals
+	// for the whole batch. Item conservation is structural (same length multiplier both sides);
+	// this line exists so any "the refund felt short" report becomes numbers in the log.
+	for (const auto& Entry : BatchChargedTotals)
+	{
+		if (Entry.Key && Entry.Value != 0)
+		{
+			UE_LOG(LogSmartUpgrade, Display, TEXT("UPGRADE SETTLEMENT: charged %d x %s"),
+				Entry.Value, *UFGItemDescriptor::GetItemName(Entry.Key).ToString());
+		}
+	}
+	for (const auto& Entry : BatchRefundedTotals)
+	{
+		if (Entry.Key && Entry.Value != 0)
+		{
+			const int32* Crated = OverflowItems.Find(Entry.Key);
+			UE_LOG(LogSmartUpgrade, Display, TEXT("UPGRADE SETTLEMENT: refunded %d x %s (%d of those in the overflow crate)"),
+				Entry.Value, *UFGItemDescriptor::GetItemName(Entry.Key).ToString(), Crated ? *Crated : 0);
 		}
 	}
 	OverflowItems.Empty();
