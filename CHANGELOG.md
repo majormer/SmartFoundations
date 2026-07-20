@@ -9,6 +9,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [34.3.0] - 2026-07-20
+
+> *The big preview-performance release: Extend, Scaled Extend, Restore, Smart Walking, and every Auto-Connect family got the same deep performance pass that foundations received in 33.4.0 - plus a crash fix for scaling stackable pole grids and correct power wiring for Scaled Extend pumps.*
+
+### Fixed
+
+- **Scaling a stackable conveyor pole grid with Auto-Connect no longer crashes the game** - Scaling a stacked pole setup out to a large grid could hit Unreal's object limit and crash to desktop ("Maximum number of UObjects exceeded"). The cause was preview belts being unlocked and relocked over and over behind the scenes, each cycle quietly allocating UI objects faster than the engine could clean them up. Belt and pipe previews between poles now only update when something about their route actually changed. (Issue #499)
+- **Scaled Extend water pumps now wire to their own module's power pole** - Extending a water-extractor module and scaling it out connected every copy's pumps back to the ORIGINAL module's pole, overloading it while the cloned poles sat unused, and the preview didn't show or price the pump cables at all. Each module's pumps now connect to that module's own pole, the cable preview renders, and the quote includes the cable cost. (Issue #498, found during 34.3.0 testing)
+- **Placing an Extend preview near a big factory no longer stutters from runaway logging** - Extending near dense factories could silently write hundreds of log lines per second to disk (a 286 MB log file in one session), each one stalling the game. The noisy internal warning is fixed at its source. (Issue #497, reported by BlackTiger on the Satisfactory Modding Discord)
+
+### Performance
+
+- **Every preview system now follows the "never touch it again" contract from the 33.4.0 foundation release** (Issue #497, continuing #418):
+  - **Extend and Scaled Extend** - Large Extends (dozens of modules, thousands of preview holograms) no longer drop the framerate while held: per-frame repainting, repositioning, cost recalculation, and lock churn are gone. Scrolling a Scaled Extend up or down now reuses the existing preview modules instead of rebuilding everything. Extending 77 modules deep used to sit at ~3 fps; the per-frame work behind that is eliminated.
+  - **Stackable pole grids** - The showcase number: a 5,000-pole stackable preview used to take over five minutes to appear (and could crash); an 8,000-pole grid now spawns in under a minute, and the framerate stays interactive while it's up.
+  - **Belt, pipe-junction, and stackable Auto-Connect** - Connection evaluation now skips entirely when nothing changed since the last pass (same aim, same grid, same settings) instead of re-scoring every candidate connection 10-20 times per second while you hold a preview.
+  - **Scale Daisy-Chain Power** - The preview cables now follow your drag by updating in place instead of being destroyed and respawned every frame.
+  - **Smart Walking and Restore** - The same set-once material and cached-cost rules apply, so long walks and restored layouts stop paying per-frame overhead.
+- **Smart Upgrade batches now log an exact settlement summary** - After each batch, the log records precisely how many items were charged and refunded (and how much of the refund went to the overflow crate), so any "the refund looked short" moment can be checked against real numbers. Tip: refunded materials that don't fit in your inventory arrive in a dismantle crate at your feet - and remember stack sizes differ, so an equal-count refund can fill fewer slots than what you spent.
+
+---
+
 ## [34.2.1] - 2026-07-14
 
 > *A hotfix for the recipe selector disappearing from the Smart Panel on factories.*
