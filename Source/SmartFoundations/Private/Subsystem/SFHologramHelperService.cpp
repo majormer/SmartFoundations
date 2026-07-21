@@ -42,7 +42,7 @@ FSFHologramHelperService::~FSFHologramHelperService()
 void FSFHologramHelperService::Initialize(UWorld* InWorld)
 {
 	WorldContext = InWorld;
-	UE_LOG(LogSmartFoundations, Log, TEXT("HologramHelperService: Initialized"));
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("HologramHelperService: Initialized"));
 }
 
 void FSFHologramHelperService::Shutdown()
@@ -747,7 +747,7 @@ void FSFHologramHelperService::RegenerateChildHologramGrid(
 						}
 						else
 						{
-							UE_LOG(LogSmartFoundations, Warning,
+							UE_LOG(LogSmartFoundations, Verbose,
 								TEXT("[#168] Parent blueprint hologram %s has no descriptor - child %s left unstaged"),
 								*ParentHologram->GetName(), *ChildName.ToString());
 						}

@@ -384,7 +384,7 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 					// disqualified grid child blocks the whole placement); the previews are still alive.
 					if (!SFScalingSpecExpansion::AreAllWaterCellsValid(Holo))
 					{
-						UE_LOG(LogSmartFoundations, Log,
+						UE_LOG(LogSmartFoundations, Verbose,
 							TEXT("[MP-SPEC] #428 Refused client fire: a water-extractor grid cell is not over deep water."));
 						if (GEngine)
 						{
@@ -413,7 +413,7 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 					}
 					if (PlanBytesEstimate > 45000)
 					{
-						UE_LOG(LogSmartFoundations, Log,
+						UE_LOG(LogSmartFoundations, Verbose,
 							TEXT("[MP-334] Refused client fire: conduit plan too large to stage reliably (%d conduits, ~%d bytes). Build in smaller sections."),
 							Spec.ConduitPlan.Num(), PlanBytesEstimate);
 						if (GEngine)
@@ -448,7 +448,7 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 						const int64 TotalActorEstimate = static_cast<int64>(Spec.CellCount()) * ActorsPerCopy;
 						if (TotalActorEstimate > SF_MP_BLUEPRINT_ACTOR_CAP)
 						{
-							UE_LOG(LogSmartFoundations, Log,
+							UE_LOG(LogSmartFoundations, Verbose,
 								TEXT("[#168-MP] Refused client blueprint-grid fire: ~%lld buildings (%d copies x %d each) exceeds the per-placement cap (%d). Build in smaller sections."),
 								TotalActorEstimate, Spec.CellCount(), ActorsPerCopy, SF_MP_BLUEPRINT_ACTOR_CAP);
 							if (GEngine)
@@ -605,7 +605,7 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 			// Oversized: refuse the fire BEFORE vanilla serializes/sends. The active hologram + preview stay
 			// live (no teardown, no orphaned previews, no dropped RPC, no server crash). The player scales
 			// down and places in smaller sections.
-			UE_LOG(LogSmartFoundations, Log,
+			UE_LOG(LogSmartFoundations, Verbose,
 				TEXT("[MP-CHUNK] Refused oversized client grid: %d cells (> %d). One construct can't carry this many over the wire safely; build in smaller sections."),
 				TotalCells, SF_MP_OVERSIZED_CELLS);
 

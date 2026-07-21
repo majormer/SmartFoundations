@@ -602,7 +602,7 @@ void USFSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	UWorld* World = GetWorld();
 	if (!World)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("Smart! Subsystem: No world in Initialize() - cannot start timers"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("Smart! Subsystem: No world in Initialize() - cannot start timers"));
 		return;
 	}
 
@@ -1280,7 +1280,7 @@ void USFSubsystem::SetupPlayerInput(AFGPlayerController* PlayerController)
 	}
 	else
 	{
-		UE_LOG(LogSmartFoundations, Error, TEXT("SetupPlayerInput: InputHandler module not initialized"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("SetupPlayerInput: InputHandler module not initialized"));
 	}
 }
 
@@ -1318,7 +1318,7 @@ void USFSubsystem::EnterWalkMode()
 	AFGHologram* Seed = ActiveHologram.Get();
 	if (!Seed)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("<<< [Walk] EnterWalkMode EXIT: no active hologram to seed a Path"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("<<< [Walk] EnterWalkMode EXIT: no active hologram to seed a Path"));
 		return;
 	}
 	UE_LOG(LogSmartFoundations, Verbose, TEXT("  [Walk] EnterWalkMode: seed=%s world=%s yaw=%.1f locked=%d | counter before reset=%s"),
@@ -1347,7 +1347,7 @@ void USFSubsystem::EnterWalkMode()
 	{
 		bWalkModeActive = true;
 		UpdateCounterDisplay();   // surface the walk's segment state in the build HUD immediately
-		UE_LOG(LogSmartFoundations, Log, TEXT("Smart Walking: entered (seed locked, grid children cleared)"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("Smart Walking: entered (seed locked, grid children cleared)"));
 	}
 	else
 	{
@@ -1384,7 +1384,7 @@ void USFSubsystem::ExitWalkMode()
 	}
 	bWalkModeActive = false;
 	UpdateCounterDisplay();   // walk is gone → HUD falls back to the normal grid counter
-	UE_LOG(LogSmartFoundations, Log, TEXT("Smart Walking: exited"));
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("Smart Walking: exited"));
 }
 
 void USFSubsystem::ToggleWalkMode()

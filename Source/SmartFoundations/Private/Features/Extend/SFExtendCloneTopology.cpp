@@ -2078,7 +2078,7 @@ bool FSFCapturedCustomization::ApplyTo(FFactoryCustomizationData& Out) const
 	}
 	if (!bAllResolved)
 	{
-		UE_LOG(LogSmartExtend, Warning,
+		UE_LOG(LogSmartExtend, Verbose,
 			TEXT("[#477] Captured customization has unresolvable descriptor path(s) (swatch='%s' pattern='%s' material='%s' skin='%s' finish='%s') - falling back."),
 			*SwatchClass, *PatternClass, *MaterialClass, *SkinClass, *PaintFinishClass);
 		return false;

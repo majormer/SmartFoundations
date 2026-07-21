@@ -52,7 +52,7 @@ void USFHintBarService::Initialize(USFSubsystem* InSubsystem)
 	}
 	else
 	{
-		UE_LOG(LogSmartUI, Error, TEXT("HintBarService: Failed to load Struct_KeybindingHint"));
+		UE_LOG(LogSmartUI, Verbose, TEXT("HintBarService: Failed to load Struct_KeybindingHint"));
 	}
 
 	// Load input actions and mapping context for keybind resolution
@@ -194,7 +194,7 @@ UUserWidget* USFHintBarService::FindWidgetBuildMode() const
 		if (!bWarnedOnce)
 		{
 			bWarnedOnce = true;
-			UE_LOG(LogSmartUI, Warning, TEXT("HintBarService: Failed to load Widget_BuildMode class (further occurrences suppressed; expected on dedicated servers)"));
+			UE_LOG(LogSmartUI, Verbose, TEXT("HintBarService: Failed to load Widget_BuildMode class (further occurrences suppressed; expected on dedicated servers)"));
 		}
 		return nullptr;
 	}

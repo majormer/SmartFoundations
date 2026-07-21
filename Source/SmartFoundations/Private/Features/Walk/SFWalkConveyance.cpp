@@ -50,7 +50,7 @@ AFGHologram* USFWalkBeltConveyance::LinkOrUpdate(AFGHologram* ExistingSpan, AFGH
     USFSubsystem* Sub = Subsystem.Get();
     if (!Sub || !IsValid(FromAnchor) || !IsValid(ToAnchor))
     {
-        UE_LOG(LogSmartWalkBelt, Warning, TEXT("<<< LinkOrUpdate EXIT: invalid sub/anchors (sub=%d from=%d to=%d)"),
+        UE_LOG(LogSmartWalkBelt, Verbose, TEXT("<<< LinkOrUpdate EXIT: invalid sub/anchors (sub=%d from=%d to=%d)"),
             Sub ? 1 : 0, IsValid(FromAnchor) ? 1 : 0, IsValid(ToAnchor) ? 1 : 0);
         return ExistingSpan;
     }

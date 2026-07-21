@@ -481,7 +481,7 @@ namespace
 		if (Decile > Job->LastLoggedDecile)
 		{
 			Job->LastLoggedDecile = Decile;
-			UE_LOG(LogSmartFoundations, Display,
+			UE_LOG(LogSmartFoundations, Verbose,
 				TEXT("[MP-SPEC] Deferred expansion progress: %d/%d cells (%d failed)."),
 				Done, Job->TotalCells, Job->CellsFailed);
 		}
@@ -497,7 +497,7 @@ namespace
 			{
 				Template->Destroy();
 			}
-			UE_LOG(LogSmartFoundations, Display,
+			UE_LOG(LogSmartFoundations, Verbose,
 				TEXT("[MP-SPEC] Deferred expansion COMPLETE: %d/%d cells built (%d failed)."),
 				Job->CellsBuilt, Job->TotalCells, Job->CellsFailed);
 		}
@@ -554,7 +554,7 @@ void BeginDeferredSpecExpansion(AFGHologram* Parent, const FSFScalingSpec& Spec,
 		Job->TemplateHologram = Template;
 	}
 
-	UE_LOG(LogSmartFoundations, Display,
+	UE_LOG(LogSmartFoundations, Verbose,
 		TEXT("[MP-SPEC] Deferring expansion of %d cells for %s (%.0fms/frame budget) - inline expansion past ~%d cells starves the net driver and disconnects clients."),
 		Job->TotalCells, *Parent->GetName(), SFSpecDeferBudgetMs, SFSpecDeferThresholdCells);
 
@@ -817,7 +817,7 @@ int32 ExpandScalingSpecIntoChildren(AFGHologram* Parent, const FSFScalingSpec& S
 							}
 							else
 							{
-								UE_LOG(LogSmartFoundations, Warning,
+								UE_LOG(LogSmartFoundations, Verbose,
 									TEXT("[#168] Blueprint parent %s has no descriptor - spec cell %s will construct EMPTY"),
 									*Parent->GetName(), *Child->GetName());
 							}

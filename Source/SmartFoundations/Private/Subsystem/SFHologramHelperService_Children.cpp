@@ -961,14 +961,14 @@ AFGHologram* FSFHologramHelperService::SpawnChildHologram(
 			}
 			else
 			{
-				UE_LOG(LogSmartFoundations, Warning,
+				UE_LOG(LogSmartFoundations, Verbose,
 					TEXT("[#168] Parent blueprint hologram %s has no descriptor - child %s left unstaged"),
 					*ParentHologram->GetName(), *ChildName.ToString());
 			}
 		}
 		else if (ChildHologram)
 		{
-			UE_LOG(LogSmartFoundations, Warning,
+			UE_LOG(LogSmartFoundations, Verbose,
 				TEXT("[#168] Parent is a blueprint but spawned child %s is %s - not staged"),
 				*ChildName.ToString(), *ChildHologram->GetClass()->GetName());
 		}

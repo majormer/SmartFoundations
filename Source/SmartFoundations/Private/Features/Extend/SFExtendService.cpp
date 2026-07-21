@@ -134,7 +134,7 @@ void USFExtendService::Initialize(USFSubsystem* InSubsystem)
     ScaledService = NewObject<USFExtendScaledService>(this);
     ScaledService->Initialize(this);
 
-    UE_LOG(LogSmartExtend, Log, TEXT("Smart!: SFExtendService initialized (with DetectionService, TopologyService, HologramService, WiringService, DiagnosticsService, RestoreReplayService, and ScaledService)"));
+    UE_LOG(LogSmartExtend, Verbose, TEXT("Smart!: SFExtendService initialized (with DetectionService, TopologyService, HologramService, WiringService, DiagnosticsService, RestoreReplayService, and ScaledService)"));
 }
 
 // ==================== Mode Management ====================
@@ -871,7 +871,7 @@ bool USFExtendService::BuildCommitSpecForMP(AFGHologram* ParentHologram, FSFExte
         }
         if (BytesEstimate > 45000)
         {
-            UE_LOG(LogSmartExtend, Warning,
+            UE_LOG(LogSmartExtend, Verbose,
                 TEXT("[EXTEND-MP] Restore commit refused: preset template too large to stage reliably (%d children, ~%d bytes)."),
                 Template.ChildHolograms.Num(), BytesEstimate);
             return false;

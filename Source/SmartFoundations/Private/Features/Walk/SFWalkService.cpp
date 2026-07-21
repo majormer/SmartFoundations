@@ -62,7 +62,7 @@ static void SF_LogPlacement(const TCHAR* Tag, int32 Index, AFGHologram* Holo, co
 {
     if (!IsValid(Holo))
     {
-        UE_LOG(LogSmartWalk, Warning, TEXT("  [PLACE] %s[%d]: hologram INVALID"), Tag, Index);
+        UE_LOG(LogSmartWalk, Verbose, TEXT("  [PLACE] %s[%d]: hologram INVALID"), Tag, Index);
         return;
     }
     const FVector  WLoc = Holo->GetActorLocation();
@@ -114,7 +114,7 @@ bool USFWalkService::EnterWalk(AFGHologram* InSeedHologram)
 
     if (!IsValid(InSeedHologram) || !InSeedHologram->GetRecipe())
     {
-        UE_LOG(LogSmartWalk, Warning, TEXT("<<< EnterWalk EXIT: invalid seed hologram or no recipe"));
+        UE_LOG(LogSmartWalk, Verbose, TEXT("<<< EnterWalk EXIT: invalid seed hologram or no recipe"));
         return false;
     }
 
@@ -291,7 +291,7 @@ int32 USFWalkService::ReconstructWalkCommitOnServer(AFGHologram* Seed, const FSF
     TSubclassOf<UFGRecipe> Recipe = Seed->GetRecipe();
     if (!Recipe)
     {
-        UE_LOG(LogSmartWalk, Warning, TEXT("<<< ReconstructWalkCommitOnServer: seed has no recipe"));
+        UE_LOG(LogSmartWalk, Verbose, TEXT("<<< ReconstructWalkCommitOnServer: seed has no recipe"));
         return 0;
     }
     AActor* Owner = Seed->GetOwner();
@@ -1101,7 +1101,7 @@ void USFWalkService::SpawnSegmentHologram(int32 Index)
     AFGHologram* Seed = SeedHologram.Get();
     if (!IsValid(Seed) || !Seed->GetRecipe())
     {
-        UE_LOG(LogSmartWalk, Warning, TEXT("SpawnSegmentHologram[%d]: seed hologram/recipe invalid"), Index);
+        UE_LOG(LogSmartWalk, Verbose, TEXT("SpawnSegmentHologram[%d]: seed hologram/recipe invalid"), Index);
         return;
     }
 
@@ -1155,7 +1155,7 @@ AFGHologram* USFWalkService::SpawnOnePole(const FTransform& Pose, int32 Index, i
         Recipe, BuildGunOwner ? BuildGunOwner : Seed, Pose.GetLocation(), HologramInstigator);
     if (!IsValid(Holo))
     {
-        UE_LOG(LogSmartWalk, Warning, TEXT("  SpawnOnePole seg%d L%d S%d: SpawnHologramFromRecipe returned null"), Index, Lane, Stack);
+        UE_LOG(LogSmartWalk, Verbose, TEXT("  SpawnOnePole seg%d L%d S%d: SpawnHologramFromRecipe returned null"), Index, Lane, Stack);
         return nullptr;
     }
 

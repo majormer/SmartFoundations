@@ -61,7 +61,7 @@ bool FSFArrowModule_StaticMesh::Initialize(UWorld* World, UObject* Outer, USFSub
 {
 	if (!World || !Outer)
 	{
-		UE_LOG(LogSmartArrows, Error, TEXT("FSFArrowModule_StaticMesh::Initialize: Invalid World or Outer"));
+		UE_LOG(LogSmartArrows, Verbose, TEXT("FSFArrowModule_StaticMesh::Initialize: Invalid World or Outer"));
 		return false;
 	}
 
@@ -73,7 +73,7 @@ bool FSFArrowModule_StaticMesh::Initialize(UWorld* World, UObject* Outer, USFSub
 	if (World->GetNetMode() == NM_DedicatedServer)
 	{
 		bDisabledOnDedicatedServer = true;
-		UE_LOG(LogSmartArrows, Display, TEXT("FSFArrowModule_StaticMesh: disabled on dedicated server (client cosmetics)."));
+		UE_LOG(LogSmartArrows, Verbose, TEXT("FSFArrowModule_StaticMesh: disabled on dedicated server (client cosmetics)."));
 		return true;
 	}
 
@@ -85,7 +85,7 @@ bool FSFArrowModule_StaticMesh::Initialize(UWorld* World, UObject* Outer, USFSub
 	}
 	else
 	{
-		UE_LOG(LogSmartArrows, Warning, TEXT("Initialize: No subsystem reference provided, bounds calculation will use fallbacks"));
+		UE_LOG(LogSmartArrows, Verbose, TEXT("Initialize: No subsystem reference provided, bounds calculation will use fallbacks"));
 	}
 
 	// Task #58: Start async asset loading
@@ -778,7 +778,7 @@ bool FSFArrowModule_StaticMesh::LoadAssets()
 	
 	if (!ArrowMesh.IsValid())
 	{
-		UE_LOG(LogSmartArrows, Error, TEXT("Failed to load arrow mesh from /Engine/BasicShapes/Cone"));
+		UE_LOG(LogSmartArrows, Verbose, TEXT("Failed to load arrow mesh from /Engine/BasicShapes/Cone"));
 		return false;
 	}
 
@@ -791,7 +791,7 @@ bool FSFArrowModule_StaticMesh::LoadAssets()
 
 	if (!MaterialX.IsValid())
 	{
-		UE_LOG(LogSmartArrows, Warning, TEXT("Failed to load material, arrows will use default"));
+		UE_LOG(LogSmartArrows, Verbose, TEXT("Failed to load material, arrows will use default"));
 	}
 
 	UE_LOG(LogSmartArrows, Verbose, TEXT("FSFArrowModule_StaticMesh: Assets loaded successfully"));

@@ -354,7 +354,7 @@ void USFSubsystem::InitializeHologramCleanup()
 	}
 	else
 	{
-		UE_LOG(LogSmartFoundations, Error, TEXT(" Failed to Initialize Hologram Cleanup: World is null."));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT(" Failed to Initialize Hologram Cleanup: World is null."));
 	}
 }
 
@@ -1347,7 +1347,7 @@ void USFSubsystem::CycleAutoConnectSetting()
 
     // [AC-HUD #403 diag] Log-level: shows whether the Num0 cycle actually reaches Pipe Routing Mode on a pipe support
     // (and which type branch was taken) vs belt - the static path is symmetric so this isolates the runtime divergence.
-    UE_LOG(LogSmartFoundations, Log, TEXT("[AC-HUD] cycled -> %s (pipe=%d belt=%d junction=%d power=%d)"),
+    UE_LOG(LogSmartFoundations, Verbose, TEXT("[AC-HUD] cycled -> %s (pipe=%d belt=%d junction=%d power=%d)"),
         *GetAutoConnectSettingDisplayString(), bIsStackablePipe, bIsStackableBelt, bIsPipeJunction, bIsPowerPole);
     UpdateCounterDisplay();
 }
@@ -1479,7 +1479,7 @@ void USFSubsystem::AdjustAutoConnectSetting(int32 Delta)
 
     // [AC-HUD #403 diag] Log-level so a pipe-vs-belt HUD routing test is traceable (the static path is symmetric;
     // this confirms at runtime whether the adjust fires for a pipe support + which value it set).
-    UE_LOG(LogSmartFoundations, Log, TEXT("[AC-HUD] adjusted -> %s (beltMode=%d pipeMode=%d)"),
+    UE_LOG(LogSmartFoundations, Verbose, TEXT("[AC-HUD] adjusted -> %s (beltMode=%d pipeMode=%d)"),
         *GetAutoConnectSettingDisplayString(), AutoConnectRuntimeSettings.BeltRoutingMode, AutoConnectRuntimeSettings.PipeRoutingMode);
 
     // Trigger immediate re-evaluation of previews with new settings
@@ -1514,13 +1514,13 @@ void USFSubsystem::AdjustAutoConnectSetting(int32 Delta)
         {
             // Stackable pipe supports: trigger re-processing of pipe previews
             AutoConnectService->ProcessStackablePipelineSupports(ActiveHologram.Get());
-            UE_LOG(LogSmartFoundations, Log, TEXT("[AC-HUD] reprocess -> stackable PIPE supports (pipeMode=%d)"), AutoConnectRuntimeSettings.PipeRoutingMode);
+            UE_LOG(LogSmartFoundations, Verbose, TEXT("[AC-HUD] reprocess -> stackable PIPE supports (pipeMode=%d)"), AutoConnectRuntimeSettings.PipeRoutingMode);
         }
         else if (USFAutoConnectService::IsStackableHypertubeSupportHologram(ActiveHologram.Get()))
         {
             // #405: Stackable hypertube supports — re-process preview tubes on settings change
             AutoConnectService->ProcessStackableHypertubeSupports(ActiveHologram.Get());
-            UE_LOG(LogSmartFoundations, Log, TEXT("[AC-HUD] reprocess -> stackable HYPERTUBE supports (hyperMode=%d)"), AutoConnectRuntimeSettings.HypertubeRoutingMode);
+            UE_LOG(LogSmartFoundations, Verbose, TEXT("[AC-HUD] reprocess -> stackable HYPERTUBE supports (hyperMode=%d)"), AutoConnectRuntimeSettings.HypertubeRoutingMode);
         }
         else if (USFAutoConnectService::IsPassthroughPipeHologram(ActiveHologram.Get()))
         {
@@ -1532,7 +1532,7 @@ void USFSubsystem::AdjustAutoConnectSetting(int32 Delta)
         {
             // Belt support poles (stackable, ceiling, wall): trigger re-processing of belt previews
             AutoConnectService->ProcessStackableConveyorPoles(ActiveHologram.Get());
-            UE_LOG(LogSmartFoundations, Log, TEXT("[AC-HUD] reprocess -> belt supports (beltMode=%d)"), AutoConnectRuntimeSettings.BeltRoutingMode);
+            UE_LOG(LogSmartFoundations, Verbose, TEXT("[AC-HUD] reprocess -> belt supports (beltMode=%d)"), AutoConnectRuntimeSettings.BeltRoutingMode);
         }
         else if (AutoConnectService->IsPowerPoleHologram(ActiveHologram.Get()))
         {
@@ -1552,7 +1552,7 @@ void USFSubsystem::AdjustAutoConnectSetting(int32 Delta)
             // class lands (the #451 lesson: in-place updates don't apply class changes).
             AutoConnectService->CleanupAllBlueprintSeams(ActiveHologram.Get());
             AutoConnectService->ProcessBlueprintSeams(ActiveHologram.Get());
-            UE_LOG(LogSmartFoundations, Log, TEXT("[AC-HUD] reprocess -> blueprint seams"));
+            UE_LOG(LogSmartFoundations, Verbose, TEXT("[AC-HUD] reprocess -> blueprint seams"));
         }
     }
 

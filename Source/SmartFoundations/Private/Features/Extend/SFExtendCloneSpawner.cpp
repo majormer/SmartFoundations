@@ -1556,7 +1556,7 @@ int32 FSFCloneTopology::SpawnChildHolograms(
     // [#477] Scrapeable Log-level summary (per spawn batch, not per child - Shipping strips
     // Verbose; the per-child lines above are Verbose diagnostic detail). "captured" = replayed from
     // the record, which works with NO live source (e.g. a saved preset after restart).
-    UE_LOG(LogSmartExtend, Log, TEXT("[#477] Customization applied: captured=%d live-harvest=%d default=%d (of %d spawned)"),
+    UE_LOG(LogSmartExtend, Verbose, TEXT("[#477] Customization applied: captured=%d live-harvest=%d default=%d (of %d spawned)"),
         CustomCaptured, CustomLive, CustomDefault, SpawnedCount);
     return SpawnedCount;
 }

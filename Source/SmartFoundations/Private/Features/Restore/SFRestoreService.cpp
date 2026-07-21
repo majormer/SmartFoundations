@@ -536,7 +536,7 @@ namespace
 void USFRestoreService::Initialize(USFSubsystem* InSubsystem)
 {
 	Subsystem = InSubsystem;
-	UE_LOG(LogSmartFoundations, Log, TEXT("[SmartRestore] Service initialized"));
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("[SmartRestore] Service initialized"));
 }
 
 // ============================================================================

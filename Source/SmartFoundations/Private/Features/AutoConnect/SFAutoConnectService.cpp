@@ -27,7 +27,7 @@ void USFAutoConnectService::Init(USFSubsystem* InSubsystem)
 {
 	if (!InSubsystem)
 	{
-		UE_LOG(LogSmartAutoConnect, Error, TEXT("SFAutoConnectService::Init: Subsystem is null"));
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("SFAutoConnectService::Init: Subsystem is null"));
 		return;
 	}
 	

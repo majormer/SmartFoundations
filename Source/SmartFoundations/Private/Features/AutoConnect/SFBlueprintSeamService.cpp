@@ -140,7 +140,7 @@ UFGFactoryConnectionComponent* FSFBlueprintSeamService::ResolveBeltConnector(AFG
 	}
 	if (!DupNameMatchesOriginal(Connectors[Index], ExpectedOriginalName))
 	{
-		UE_LOG(LogSmartAutoConnect, Warning, TEXT("[#168] Seam resolve MISMATCH: belt index %d on %s is %s, expected suffix %s — enumeration order diverged, pair skipped"),
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("[#168] Seam resolve MISMATCH: belt index %d on %s is %s, expected suffix %s — enumeration order diverged, pair skipped"),
 			Index, *GetNameSafe(Clone), *GetNameSafe(Connectors[Index]), *ExpectedOriginalName.ToString());
 		return nullptr;
 	}
@@ -159,7 +159,7 @@ UFGPipeConnectionComponent* FSFBlueprintSeamService::ResolvePipeConnector(AFGBlu
 	}
 	if (!DupNameMatchesOriginal(Connectors[Index], ExpectedOriginalName))
 	{
-		UE_LOG(LogSmartAutoConnect, Warning, TEXT("[#168] Seam resolve MISMATCH: pipe index %d on %s is %s, expected suffix %s — enumeration order diverged, pair skipped"),
+		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("[#168] Seam resolve MISMATCH: pipe index %d on %s is %s, expected suffix %s — enumeration order diverged, pair skipped"),
 			Index, *GetNameSafe(Clone), *GetNameSafe(Connectors[Index]), *ExpectedOriginalName.ToString());
 		return nullptr;
 	}
