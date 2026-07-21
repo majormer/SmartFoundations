@@ -14,10 +14,9 @@ separable. It exists so the codebase stays cheap to own over a long support life
 bugs are easy to locate (multiplayer-only ones especially), and adding a feature is a
 deliberate act of filling in known slots rather than splicing into shared files.
 
-> **Status:** This is the **target** state. The tree does not fully conform yet; the
-> gaps are listed in [§7](#7-current-gaps). Migration is tracked as separate work — new
-> and changed code should follow this policy now; existing code is brought into
-> conformance feature by feature.
+> **Status:** This is the **target** state. The tree does not fully conform yet.
+> Migration gaps are tracked separately from this durable policy; new and changed code
+> should follow it now, and existing code is brought into conformance feature by feature.
 
 ---
 
@@ -56,11 +55,13 @@ Code is organized on two axes:
 This keeps the shared layer small and intentional, and keeps each feature legible on its
 own.
 
-**A note on holograms (a common misread):** the hologram base hierarchy
-(`ASFSmartHologram` → `ASFFactoryHologram` → the child-hologram tree) and any hologram used
-by two or more features are legitimately **shared** and stay in `Holograms/`. Do not push base
-classes down into a feature slice. Only a hologram specific to exactly one feature (e.g. that
-feature's own preview hologram) belongs in its `Features/<Name>/Holograms/`.
+**A note on holograms (a common misread):** Smart! extends multiple branches of the
+vanilla hierarchy: for example, `ASFSmartHologram` extends `AFGHologram`,
+`ASFBuildableHologram` extends `AFGBuildableHologram`, and `ASFFactoryHologram` extends
+`AFGFactoryHologram`. These shared bases/adapters and any hologram used by two or more
+features legitimately stay in `Holograms/`; they are not one Smart!-only inheritance chain.
+Only a hologram specific to exactly one feature belongs in its
+`Features/<Name>/Holograms/`.
 
 ---
 
@@ -75,7 +76,9 @@ Canonical layout (both `Private/` and `Public/`):
 
 ```
 SmartFoundations/
-  Core/                 module class, logging, constants, small shared helpers
+  Config/               shared configuration types and access helpers
+  Constants/            header-only shared constants and asset paths
+  Core/                 small shared helpers and networking foundations
     Net/                shared networking foundation: RCO base, network helpers,
                         the construct/replication hook registrar
   Data/                 shared data assets and registries
@@ -86,6 +89,8 @@ SmartFoundations/
   UI/                   shared UI shell (Smart Panel, settings form)
   HUD/                  shared HUD infrastructure
   Input/                shared input infrastructure
+  Logging/              logging macros, categories, and runtime filtering
+  Module/               game-instance startup and registration
   Features/
     <Name>/             one vertical slice
       <Name>Service.*   the feature's logic
@@ -182,9 +187,10 @@ shape below is the template; a feature only includes the parts it needs.
 2. **Logic:** `<Name>Service` (and concern-named partials if it grows).
 3. **Holograms / UI / Data:** feature-specific ones go in the feature's `Holograms/`,
    `UI/`, `Data/`. Shared bases stay in the shared layer (§2 rule).
-4. **Registration:** wire the feature in at the central subsystem's documented
-   registration point — the subsystem discovers features through that seam, so adding one
-   does not mean editing unrelated subsystem code.
+4. **Ownership and registration:** add the feature's owned service/state to `USFSubsystem`
+  and initialize it in the subsystem lifecycle alongside the existing feature services.
+  Keep the wiring limited to that ownership seam; do not spread feature initialization
+  through unrelated subsystem paths.
 5. **Multiplayer story, up front (§5):** decide the authority model before writing the
    build path. Network-only code goes in `Features/<Name>/Net/`; unavoidable inline
    branches get `[MP-*]` tags; the feature ships with a divergence map even if it starts

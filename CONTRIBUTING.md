@@ -14,7 +14,7 @@ Thank you for your interest in contributing to Smart! Contributions are welcome 
 ## Before You Submit a Pull Request
 
 1. **Open an issue first** for anything beyond a small, obvious fix. This avoids wasted effort if a proposed change conflicts with the project direction.
-2. **Follow the code conventions** described in `AGENTS.md` — naming, logging levels, include order, and service patterns.
+2. **Follow the project's established conventions** and nearby code. Start with the public [architecture map](docs/ARCHITECTURE.md) and [code organization policy](docs/Development/CodeOrganization.md), and use Epic's C++ coding standard for naming and formatting.
 3. **Do not add build outputs** (`Binaries/`, `Intermediate/`, `Saved/`) or IDE-specific files to your branch.
 4. **Test your changes** locally using Alpakit before submitting.
 5. **Keep pull requests focused.** One change per PR makes review faster and merge conflicts smaller.
