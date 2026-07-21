@@ -88,8 +88,10 @@ cancelled above a swarm-size threshold (`SFIsSmartGridMegaRoot`).
 - `TransformUpdated` + `FPlatformStackWalk::StackWalkAndDump` finds any mystery mover in one
   repro — but REMOVE it immediately; each dump is tens of ms and becomes the hitch (and a
   restored-later transform still transiently trips a location trap).
-- SmartMCP reads `mChildren` via reflection — compare like-for-like moments before drawing
-  architecture conclusions from count mismatches.
+- Live hologram inspection reads `mChildren` by reflection, the same array vanilla walks — so
+  compare like-for-like MOMENTS before drawing architecture conclusions from a count mismatch
+  (a starved spawner makes two snapshots disagree for reasons that have nothing to do with
+  structure).
 
 ## Application status (2026-07-17, branch perf/497-perframe-performance)
 

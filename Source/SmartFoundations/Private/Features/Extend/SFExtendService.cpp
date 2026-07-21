@@ -1934,7 +1934,7 @@ void USFExtendService::RefreshExtension(AFGHologram* SourceHologram, bool bForce
     ExtendChildMaterialState = ExtendMaterialState;
 
     // #497: this per-frame reapply is LOAD-BEARING — do not remove it again. Removing it (Item 6,
-    // first attempt) left EVERY extend child at world origin (SmartMCP: 67/68 holograms at exactly
+    // first attempt) left EVERY extend child at world origin (live inspection: 67/68 holograms at exactly
     // 0,0,0; only wires still rendered because their catenary meshes draw from stored endpoints).
     // Something in vanilla resets AddChild'd extend children to origin after the rebuild even though
     // every child class no-ops SetHologramLocationAndRotation and the parent blocks propagation —

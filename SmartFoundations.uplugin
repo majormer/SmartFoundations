@@ -35,7 +35,7 @@
 			"BasePlugin": true
 		}
 	],
-	"SemVersion": "34.2.1",
+	"SemVersion": "34.3.0",
 	"GameVersion": ">=491125",
 	"LocalizationTargets": [
 		{
