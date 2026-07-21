@@ -13,6 +13,13 @@ ASFPipelineJunctionChildHologram::ASFPipelineJunctionChildHologram()
     // Minimal constructor - most behavior handled by base class
 }
 
+void ASFPipelineJunctionChildHologram::SetHologramLocationAndRotation(const FHitResult& hitResult)
+{
+    // #497 drift-proof no-op: the clone topology owns the transform. Vanilla parent propagation calls
+    // this on every mChildren entry per frame and would reposition the junction toward the parent
+    // hit result — the reason the extend service historically re-applied positions every frame.
+}
+
 void ASFPipelineJunctionChildHologram::CheckValidPlacement()
 {
     // Check data structure for validation control
@@ -95,4 +102,16 @@ bool ASFPipelineJunctionChildHologram::ShouldSkipValidation() const
     }
 
     return false; // Default to validation if no data structure
+}
+
+void ASFPipelineJunctionChildHologram::SetHologramNudgeLocation()
+{
+	// [#497] Vanilla's locked-parent placement path (UFGBuildGunStateBuild::TickState ->
+	// AFGHologram::UpdateHologramPlacement (FGHologram.cpp:440) -> SetHologramNudgeLocation
+	// (FGHologram.cpp:2120)) cascades through mChildren with a PLAIN SetActorLocation of
+	// lock-location + nudge offset - bypassing the SetHologramLocationAndRotation no-op entirely.
+	// Extend locks its parent, children never capture a lock location (ZeroVector), so the cascade
+	// dragged every child to world origin every tick (caught by the #497 origin-trap stack dump).
+	// Smart owns this child's transform; parent nudges are propagated by Smart's own
+	// transform-change follow. No-op, mirroring the #418 drift contract.
 }

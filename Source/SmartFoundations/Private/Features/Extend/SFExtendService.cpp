@@ -134,7 +134,7 @@ void USFExtendService::Initialize(USFSubsystem* InSubsystem)
     ScaledService = NewObject<USFExtendScaledService>(this);
     ScaledService->Initialize(this);
 
-    UE_LOG(LogSmartExtend, Log, TEXT("Smart!: SFExtendService initialized (with DetectionService, TopologyService, HologramService, WiringService, DiagnosticsService, RestoreReplayService, and ScaledService)"));
+    UE_LOG(LogSmartExtend, Verbose, TEXT("Smart!: SFExtendService initialized (with DetectionService, TopologyService, HologramService, WiringService, DiagnosticsService, RestoreReplayService, and ScaledService)"));
 }
 
 // ==================== Mode Management ====================
@@ -871,7 +871,7 @@ bool USFExtendService::BuildCommitSpecForMP(AFGHologram* ParentHologram, FSFExte
         }
         if (BytesEstimate > 45000)
         {
-            UE_LOG(LogSmartExtend, Warning,
+            UE_LOG(LogSmartExtend, Verbose,
                 TEXT("[EXTEND-MP] Restore commit refused: preset template too large to stage reliably (%d children, ~%d bytes)."),
                 Template.ChildHolograms.Num(), BytesEstimate);
             return false;
@@ -1672,6 +1672,17 @@ bool USFExtendService::CanAffordExtendCost(AFGHologram* Hologram, UFGInventoryCo
         return true;  // Can't evaluate -> never block.
     }
 
+    // #497 frame-memo: this runs up to three times per frame (vanilla ValidatePlacementAndCost →
+    // our CheckCanAfford, RefreshExtension's own ValidatePlacementAndCost, and RefreshExtension's
+    // direct call), each triggering the FULL GetCost(includeChildren) walk over every preview
+    // child — measured as the dominant game-thread cost at 77×1. One real walk per frame keeps
+    // the #357 side effect below; the repeats return the memo.
+    if (LastAffordabilityFrame == GFrameCounter)
+    {
+        return bLastAffordabilityResult;
+    }
+    LastAffordabilityFrame = GFrameCounter;
+
     // #357: ALWAYS run the parent cost walk every frame, even under No Build Cost. Beyond
     // computing affordability, GetCost(includeChildren=true) walks the child holograms, and
     // that per-frame walk is what KEEPS THE EXTEND CHILD BELT PREVIEWS ALIVE. The internal
@@ -1694,6 +1705,7 @@ bool USFExtendService::CanAffordExtendCost(AFGHologram* Hologram, UFGInventoryCo
     // (We still ran GetCost above for its preview-keep-alive side effect.)
     if (Inventory->GetNoBuildCost())
     {
+        bLastAffordabilityResult = true;
         return true;
     }
 
@@ -1710,9 +1722,11 @@ bool USFExtendService::CanAffordExtendCost(AFGHologram* Hologram, UFGInventoryCo
         }
         if (Available < Item.Amount)
         {
+            bLastAffordabilityResult = false;
             return false;
         }
     }
+    bLastAffordabilityResult = true;
     return true;
 }
 
@@ -1908,7 +1922,7 @@ void USFExtendService::RefreshExtension(AFGHologram* SourceHologram, bool bForce
         // Defensive: if unaffordable, ensure the parent reflects ERROR (the SetPlacementMaterialState
         // above already applied ExtendMaterialState; this guards against a stale OK state).
         if (ExtendMaterialState == EHologramMaterialState::HMS_ERROR
-            && ActiveHologram->GetHologramMaterialState() != EHologramMaterialState::HMS_ERROR)
+            && USFHologramDataService::GetRawPlacementMaterialState(ActiveHologram) != EHologramMaterialState::HMS_ERROR)
         {
             ActiveHologram->SetPlacementMaterialState(EHologramMaterialState::HMS_ERROR);
         }
@@ -1919,71 +1933,78 @@ void USFExtendService::RefreshExtension(AFGHologram* SourceHologram, bool bForce
     // so the build gun's per-frame validation cascade can no longer reset them to cyan.
     ExtendChildMaterialState = ExtendMaterialState;
 
-    // CRITICAL: Force child holograms back to their intended positions every frame
-    // The engine's parent hologram tick resets children to origin via SetHologramLocationAndRotation
-    // We counteract this by forcing them back to where we want them
-
-    // Delegate basic position/rotation refresh to HologramService
+    // #497: this per-frame reapply is LOAD-BEARING — do not remove it again. Removing it (Item 6,
+    // first attempt) left EVERY extend child at world origin (SmartMCP: 67/68 holograms at exactly
+    // 0,0,0; only wires still rendered because their catenary meshes draw from stored endpoints).
+    // Something in vanilla resets AddChild'd extend children to origin after the rebuild even though
+    // every child class no-ops SetHologramLocationAndRotation and the parent blocks propagation —
+    // the same unidentified mover the belt Tick's origin-snap correction and the old "continuous
+    // position correction" timer were built to fight. Until that mover is found and blocked at the
+    // source, this drift-check (cheap when nothing moved: compare + skip) is the repair that keeps
+    // previews placed — and it must run every frame, not once per rebuild.
     if (HologramService)
     {
         HologramService->RefreshChildPositions();
     }
 
-    TSet<AFGHologram*> SyncedMaterialChildren;
-    auto SyncExtendPreviewMaterialState = [&](AFGHologram* Child)
+    // #497 set-once: sweep the child previews only when the authoritative state actually CHANGES.
+    // Children are painted at spawn (clone spawner / CreateBeltPreviews), so re-sweeping an unchanged
+    // state every frame only re-dirtied every spline-mesh render proxy — the render-thread/GPU churn
+    // behind the Extend frame loss. The per-hologram set-once guards (belt/pipe/lift/factory) are the
+    // second layer; this gate removes even the per-child Super::SetPlacementMaterialState calls.
+    if (!bExtendChildMaterialStateSynced || ExtendMaterialState != LastSyncedExtendChildMaterialState)
     {
-        if (!IsValid(Child) || SyncedMaterialChildren.Contains(Child))
-        {
-            return;
-        }
+        LastSyncedExtendChildMaterialState = ExtendMaterialState;
+        bExtendChildMaterialStateSynced = true;
 
-        SyncedMaterialChildren.Add(Child);
-        Child->SetActorHiddenInGame(false);
-        Child->SetPlacementMaterialState(ExtendMaterialState);
-
-        if (ASFConveyorLiftHologram* LiftChild = Cast<ASFConveyorLiftHologram>(Child))
+        TSet<AFGHologram*> SyncedMaterialChildren;
+        auto SyncExtendPreviewMaterialState = [&](AFGHologram* Child)
         {
-            LiftChild->ForceApplyHologramMaterial();
-        }
-        else if (ASFConveyorBeltHologram* BeltChild = Cast<ASFConveyorBeltHologram>(Child))
-        {
-            BeltChild->ForceApplyHologramMaterial();
-        }
-        else if (ASFPipelineHologram* PipeChild = Cast<ASFPipelineHologram>(Child))
-        {
-            PipeChild->ForceApplyHologramMaterial();
-        }
-
-        // Prevent child preview validation from immediately repainting spline previews.
-        Child->SetActorTickEnabled(false);
-    };
-
-    for (FSFScaledExtendClone& Clone : ScaledExtendClones)
-    {
-        for (auto& SpawnedPair : Clone.SpawnedHolograms)
-        {
-            if (SpawnedPair.Value.IsValid())
+            if (!IsValid(Child) || SyncedMaterialChildren.Contains(Child))
             {
-                SyncExtendPreviewMaterialState(SpawnedPair.Value.Get());
+                return;
+            }
+
+            SyncedMaterialChildren.Add(Child);
+            Child->SetActorHiddenInGame(false);
+            Child->SetPlacementMaterialState(ExtendMaterialState);
+
+            if (ASFConveyorLiftHologram* LiftChild = Cast<ASFConveyorLiftHologram>(Child))
+            {
+                LiftChild->ForceApplyHologramMaterial();
+            }
+
+            // Prevent child preview validation from immediately repainting spline previews.
+            Child->SetActorTickEnabled(false);
+        };
+
+        for (FSFScaledExtendClone& Clone : ScaledExtendClones)
+        {
+            for (auto& SpawnedPair : Clone.SpawnedHolograms)
+            {
+                if (SpawnedPair.Value.IsValid())
+                {
+                    SyncExtendPreviewMaterialState(SpawnedPair.Value.Get());
+                }
             }
         }
-    }
 
-    for (AFGHologram* Child : BeltPreviewHolograms)
-    {
-        SyncExtendPreviewMaterialState(Child);
-    }
-
-    for (const auto& SpawnedPair : JsonSpawnedHolograms)
-    {
-        SyncExtendPreviewMaterialState(SpawnedPair.Value);
-    }
-
-    if (HologramService)
-    {
-        for (AFGHologram* Child : HologramService->GetTrackedChildren())
+        for (AFGHologram* Child : BeltPreviewHolograms)
         {
             SyncExtendPreviewMaterialState(Child);
+        }
+
+        for (const auto& SpawnedPair : JsonSpawnedHolograms)
+        {
+            SyncExtendPreviewMaterialState(SpawnedPair.Value);
+        }
+
+        if (HologramService)
+        {
+            for (AFGHologram* Child : HologramService->GetTrackedChildren())
+            {
+                SyncExtendPreviewMaterialState(Child);
+            }
         }
     }
 
@@ -2031,48 +2052,13 @@ void USFExtendService::RefreshExtension(AFGHologram* SourceHologram, bool bForce
             AFGHologram* Child = BeltPreviewHolograms[i];
             if (IsValid(Child))
             {
-                // CRITICAL: Refresh material state for belt children
-                // Vanilla's hologram system may reset material state, so we need to re-apply
-                if (ASFConveyorBeltHologram* BeltChild = Cast<ASFConveyorBeltHologram>(Child))
-                {
-                    // Re-apply current parent state to spline meshes.
-                    BeltChild->SetPlacementMaterialState(ExtendMaterialState);
-                    BeltChild->ForceApplyHologramMaterial();
-
-                    // Ensure visibility
-                    BeltChild->SetActorHiddenInGame(false);
-                    TArray<USplineMeshComponent*> SplineMeshComps;
-                    BeltChild->GetComponents<USplineMeshComponent>(SplineMeshComps);
-
-                    // Log spline mesh state for debugging (only first belt, every 2 seconds)
-                    static double LastBeltMeshLog = 0;
-                    if (i == 1 && Now - LastBeltMeshLog > 2.0)  // Child[1] is first belt
-                    {
-                        LastBeltMeshLog = Now;
-                        UE_LOG(LogSmartExtend, VeryVerbose, TEXT("🎯 BELT REFRESH: %s has %d SplineMeshComponents"),
-                            *BeltChild->GetName(), SplineMeshComps.Num());
-                        for (int32 SMIdx = 0; SMIdx < SplineMeshComps.Num() && SMIdx < 2; SMIdx++)
-                        {
-                            USplineMeshComponent* SMC = SplineMeshComps[SMIdx];
-                            UE_LOG(LogSmartExtend, VeryVerbose, TEXT("🎯 BELT REFRESH:   SMC[%d]: Mesh=%s, Visible=%d, WorldPos=%s"),
-                                SMIdx,
-                                SMC->GetStaticMesh() ? *SMC->GetStaticMesh()->GetName() : TEXT("NULL"),
-                                SMC->IsVisible() ? 1 : 0,
-                                *SMC->GetComponentLocation().ToString());
-                        }
-                    }
-
-                    for (USplineMeshComponent* SMC : SplineMeshComps)
-                    {
-                        SMC->SetVisibility(true, true);
-                        SMC->SetHiddenInGame(false);
-                    }
-                }
-
+                // #497: this block is diagnostics only now. The former material/visibility re-apply
+                // ("vanilla may reset material state") is superseded by the set-once contract:
+                // children are painted at spawn + mesh generation, and re-swept only on state change.
                 UE_LOG(LogSmartExtend, VeryVerbose, TEXT("🔄 EXTEND Child[%d]: Pos=%s Hidden=%d MatState=%d"),
                     i, *Child->GetActorLocation().ToString(),
                     Child->IsHidden() ? 1 : 0,
-                    (int32)Child->GetHologramMaterialState());
+                    (int32)USFHologramDataService::GetRawPlacementMaterialState(Child));
             }
             else
             {
@@ -2487,6 +2473,10 @@ void USFExtendService::CreateBeltPreviews(AFGHologram* ParentHologram)
                 ChildIntendedRotations.Add(Child, *Rot);
             }
         }
+
+        // #497: immediate position assert now that the preview set is (re)built, so children are
+        // placed this frame rather than one RefreshExtension tick later.
+        HologramService->RefreshChildPositions();
     }
 }
 

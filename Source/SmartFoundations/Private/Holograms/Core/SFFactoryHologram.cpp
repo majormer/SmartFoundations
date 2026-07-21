@@ -229,6 +229,17 @@ void ASFFactoryHologram::SetPlacementMaterialState(EHologramMaterialState materi
 {
     Super::SetPlacementMaterialState(materialState);
 
+    // #497 set-once: Extend's per-frame refresh re-asserts the parent state several times a frame;
+    // fanning an UNCHANGED state out to every Smart child repainted all their spline meshes every
+    // frame (render-proxy churn = the Extend GPU lag). Cascade only on actual change — children
+    // created later get their material applied at spawn by the clone spawner.
+    if (bChildMaterialStateCascaded && materialState == LastCascadedChildMaterialState)
+    {
+        return;
+    }
+    LastCascadedChildMaterialState = materialState;
+    bChildMaterialStateCascaded = true;
+
     for (AFGHologram* Child : mChildren)
     {
         if (!IsValid(Child))

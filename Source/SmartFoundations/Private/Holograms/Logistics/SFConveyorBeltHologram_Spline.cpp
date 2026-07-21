@@ -17,7 +17,6 @@
 #include "FGRecipe.h"
 #include "FGRecipeManager.h"
 #include "Resources/FGBuildingDescriptor.h"
-#include "DrawDebugHelpers.h"
 #include "Data/SFHologramDataRegistry.h"
 #include "Hologram/FGHologram.h"
 #include "Subsystem/SFSubsystem.h"  // [#380] read configured BeltRoutingMode for lane belts
@@ -33,6 +32,7 @@
 
 void ASFConveyorBeltHologram::SetupBeltSpline(UFGFactoryConnectionComponent* StartConnector, UFGFactoryConnectionComponent* EndConnector)
 {
+    InvalidateCostCache();  // #497: spline (and therefore length-based cost) is changing
     if (!StartConnector || !EndConnector)
     {
         UE_LOG(LogSmartHologram, Verbose, TEXT("SetupBeltSpline: Invalid connectors"));
@@ -316,6 +316,7 @@ bool ASFConveyorBeltHologram::ApplyBeltBuildModeRouting(int32 BeltRoutingMode,
 void ASFConveyorBeltHologram::AutoRouteSplineWithNormals(const FVector& StartPos, const FVector& StartNormal,
                                                           const FVector& EndPos, const FVector& EndNormal)
 {
+    InvalidateCostCache();  // #497: spline (and therefore length-based cost) is changing
     UE_LOG(LogSmartHologram, Verbose, TEXT("🔍 AutoRouteSplineWithNormals: Routing belt spline with VANILLA 4-POINT structure"));
     
     // Use vanilla 4-point spline structure (same as SetupBeltSpline)
@@ -403,6 +404,7 @@ bool ASFConveyorBeltHologram::TryUseBuildModeRouting(
 	const FVector& EndPos,
 	const FVector& EndNormal)
 {
+    InvalidateCostCache();  // #497: spline (and therefore length-based cost) is changing
 	if (!mSplineComponent)
 	{
 		UE_LOG(LogSmartHologram, Verbose, TEXT("🔍 TryUseBuildModeRouting FAILED: No mSplineComponent on %s"), *GetName());
@@ -505,6 +507,7 @@ bool ASFConveyorBeltHologram::TryUseBuildModeRouting(
 
 void ASFConveyorBeltHologram::SetSplineDataAndUpdate(const TArray<FSplinePointData>& InSplineData)
 {
+    InvalidateCostCache();  // #497: spline (and therefore length-based cost) is changing
     UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 SetSplineDataAndUpdate: Setting %d spline points on %s"), InSplineData.Num(), *GetName());
     
     // Log input data
@@ -617,35 +620,8 @@ void ASFConveyorBeltHologram::StopContinuousPositionCorrection()
 
 void ASFConveyorBeltHologram::ForceApplyHologramMaterial()
 {
-    EHologramMaterialState CurrentState = GetHologramMaterialState();
-    
-    // Call our overridden SetPlacementMaterialState which properly applies
-    // hologram materials to dynamically created spline mesh components.
-    SetPlacementMaterialState(CurrentState);
-    
-    // DEBUG: Log what materials are actually on the spline meshes
-    TArray<USplineMeshComponent*> SplineMeshes;
-    GetComponents<USplineMeshComponent>(SplineMeshes);
-    
-    UE_LOG(LogSmartHologram, Verbose, TEXT("🎨 ForceApplyHologramMaterial: Applied material state %d, found %d spline meshes"),
-        (int32)CurrentState, SplineMeshes.Num());
-    
-    for (int32 i = 0; i < SplineMeshes.Num(); i++)
-    {
-        USplineMeshComponent* SplineMesh = SplineMeshes[i];
-        if (SplineMesh)
-        {
-            UMaterialInterface* Mat = SplineMesh->GetMaterial(0);
-            UStaticMesh* Mesh = SplineMesh->GetStaticMesh();
-            
-            UE_LOG(LogSmartHologram, VeryVerbose, TEXT("   [%d] Mesh=%s, Material=%s, Visible=%d, Hidden=%d, RenderCustomDepth=%d"),
-                i,
-                Mesh ? *Mesh->GetName() : TEXT("NULL"),
-                Mat ? *Mat->GetName() : TEXT("NULL"),
-                SplineMesh->IsVisible(),
-                SplineMesh->bHiddenInGame,
-                SplineMesh->bRenderCustomDepth);
-        }
-    }
+    // "Force" per the contract: bypass the #497 set-once guard so an explicit caller (post
+    // mesh-generation fixups) always gets a full sweep even when the state value is unchanged.
+    ApplySplineMeshMaterialState(GetHologramMaterialState());
 }
 

@@ -204,7 +204,7 @@ void USFHudWidget::BuildWidgetTree()
 {
 	if (!WidgetTree)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("SFHudWidget::BuildWidgetTree: WidgetTree is null!"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("SFHudWidget::BuildWidgetTree: WidgetTree is null!"));
 		return;
 	}
 	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("SFHudWidget::BuildWidgetTree: Starting (scale=%.1f)"), CachedScale);

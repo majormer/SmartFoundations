@@ -59,6 +59,15 @@ public:
      */
     virtual TArray<FItemAmount> GetCost(bool includeChildren) const override;
 
+    /**
+     * #497: Preview pipe children frequently carry a null mRecipe (their real cost comes from spline
+     * length in GetCost, not a base recipe). Vanilla AFGHologram::GetBaseCost would then call
+     * UFGRecipe::GetIngredients(nullptr) and log a warning every frame per child — filling the log with
+     * synchronous disk writes (Sentry breadcrumbs) and stuttering the game. A null recipe has no base
+     * cost, so short-circuit to empty in that case; otherwise defer to vanilla.
+     */
+    virtual TArray<FItemAmount> GetBaseCost() const override;
+
     USplineComponent* GetSplineComponent() const { return mSplineComponent; }
 
     void SetBuildClass(UClass* InBuildClass) { mBuildClass = InBuildClass; }
@@ -139,7 +148,29 @@ protected:
      */
     virtual void ConfigureActor(class AFGBuildable* inBuildable) const override;
 
+public:
+	/**
+	 * #497: Unconditionally sweep every spline mesh with the stencil/visibility setup for the given
+	 * state, bypassing the set-once guard in SetPlacementMaterialState. Only for the moments the mesh
+	 * SET changes (TriggerMeshGeneration) or a caller explicitly forces (ForceApplyHologramMaterial).
+	 */
+	void ApplySplineMeshMaterialState(EHologramMaterialState materialState);
+
+	/** #497: invalidate the cached GetCost result — call after any spline/route/build-class change. */
+	void InvalidateCostCache() { bSelfCostCacheValid = false; }
+
 private:
+	/** #497 set-once guard: the state last swept onto the spline meshes (and whether any sweep ran). */
+	EHologramMaterialState LastAppliedSplineMaterialState = EHologramMaterialState::HMS_OK;
+	bool bSplineMaterialStateApplied = false;
+
+	/** #497 (77×1 = 3 fps profile): cached self cost — see ASFConveyorBeltHologram::CachedSelfCost.
+	 *  The pipe fallback is the worst offender: it scanned ALL available recipes per call, and the
+	 *  cost walks run it per pipe per frame. Consumed only for SF_ExtendChild previews with a healthy
+	 *  spline so the #357 zero-spline restoration inside GetCost still runs when needed. */
+	mutable TArray<FItemAmount> CachedSelfCost;
+	mutable bool bSelfCostCacheValid = false;
+
     float PreviewLengthCm = 0.0f;
 	int32 RoutingMode = 0;
 
@@ -163,4 +194,10 @@ private:
     // Returning nullptr crashes vanilla's InternalConstructHologram
     UPROPERTY()
     TWeakObjectPtr<AActor> ConstructedActor;
+
+public:
+	/** [#497] Block vanilla's locked-parent nudge cascade — it bypasses SetHologramLocationAndRotation
+	 *  and dragged every extend child to world origin each tick (see the .cpp override). */
+	virtual void SetHologramNudgeLocation() override;
+
 };

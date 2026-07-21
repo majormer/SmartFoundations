@@ -697,7 +697,7 @@ void USFRecipeManagementService::ApplyStoredProductionRecipeToBuilding(AFGBuilda
 
 void USFRecipeManagementService::FinishImplicitSettingsSample(AActor* SampledActor) const
 {
-	UE_LOG(LogSmartFoundations, Log,
+	UE_LOG(LogSmartFoundations, Verbose,
 		TEXT("[#489] MMB settings sample: actor=%s vanillaCopy=%s recipe=%s shards=%d potential=%.0f%% somersloop=%s boost=%.0f%%"),
 		*GetNameSafe(SampledActor),
 		bCapturedImplicitSettingsThisSample ? TEXT("YES") : TEXT("NO"),

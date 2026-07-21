@@ -45,12 +45,12 @@ UFGFactoryConnectionComponent* USFWalkBeltConveyance::FirstConnector(AFGHologram
 
 AFGHologram* USFWalkBeltConveyance::LinkOrUpdate(AFGHologram* ExistingSpan, AFGHologram* FromAnchor, AFGHologram* ToAnchor, AFGHologram* ParentForChild, bool bAddChildForBuild, float SegmentTurnDeg)
 {
-    UE_LOG(LogSmartWalkBelt, Log, TEXT(">>> LinkOrUpdate ENTER: existing=%s from=%s to=%s parent(seed)=%s build=%d"),
+    UE_LOG(LogSmartWalkBelt, Verbose, TEXT(">>> LinkOrUpdate ENTER: existing=%s from=%s to=%s parent(seed)=%s build=%d"),
         *GetNameSafe(ExistingSpan), *GetNameSafe(FromAnchor), *GetNameSafe(ToAnchor), *GetNameSafe(ParentForChild), bAddChildForBuild ? 1 : 0);
     USFSubsystem* Sub = Subsystem.Get();
     if (!Sub || !IsValid(FromAnchor) || !IsValid(ToAnchor))
     {
-        UE_LOG(LogSmartWalkBelt, Warning, TEXT("<<< LinkOrUpdate EXIT: invalid sub/anchors (sub=%d from=%d to=%d)"),
+        UE_LOG(LogSmartWalkBelt, Verbose, TEXT("<<< LinkOrUpdate EXIT: invalid sub/anchors (sub=%d from=%d to=%d)"),
             Sub ? 1 : 0, IsValid(FromAnchor) ? 1 : 0, IsValid(ToAnchor) ? 1 : 0);
         return ExistingSpan;
     }
@@ -75,7 +75,7 @@ AFGHologram* USFWalkBeltConveyance::LinkOrUpdate(AFGHologram* ExistingSpan, AFGH
     // then builds no belt for that segment (mirrors stackable AC's skip-when-too-far).
     if (FVector::Dist(StartPos, EndPos) > SF_WALK_MAX_SPAN_CM)
     {
-        UE_LOG(LogSmartWalkBelt, Warning, TEXT("<<< LinkOrUpdate EXIT: belt span %.0f cm > %.0f cm cap — skipped (segment too long)"),
+        UE_LOG(LogSmartWalkBelt, Verbose, TEXT("<<< LinkOrUpdate EXIT: belt span %.0f cm > %.0f cm cap — skipped (segment too long)"),
             FVector::Dist(StartPos, EndPos), SF_WALK_MAX_SPAN_CM);
         return nullptr;
     }
@@ -125,7 +125,7 @@ AFGHologram* USFWalkBeltConveyance::LinkOrUpdate(AFGHologram* ExistingSpan, AFGH
     if (EndNormal.IsNearlyZero())   { EndNormal   = -DirN; }
 
     const int32 RoutingMode = Sub->GetAutoConnectRuntimeSettings().BeltRoutingMode;
-    UE_LOG(LogSmartWalkBelt, Log, TEXT("  LinkOrUpdate routing: StartPos.world=%s EndPos.world=%s | StartN=%s EndN=%s | mode=%d len=%.1f turn=%.0f | fromConn=%s toConn=%s"),
+    UE_LOG(LogSmartWalkBelt, Verbose, TEXT("  LinkOrUpdate routing: StartPos.world=%s EndPos.world=%s | StartN=%s EndN=%s | mode=%d len=%.1f turn=%.0f | fromConn=%s toConn=%s"),
         *StartPos.ToString(), *EndPos.ToString(), *StartNormal.ToString(), *EndNormal.ToString(),
         RoutingMode, Dir.Size(), SegmentTurnDeg, FromConn ? TEXT("yes") : TEXT("NULL"), ToConn ? TEXT("yes") : TEXT("NULL"));
 
@@ -137,7 +137,7 @@ AFGHologram* USFWalkBeltConveyance::LinkOrUpdate(AFGHologram* ExistingSpan, AFGH
         Existing->ApplyBeltBuildModeRouting(RoutingMode, StartPos, StartNormal, EndPos, EndNormal);
         Existing->TriggerMeshGeneration();
         Existing->ForceApplyHologramMaterial();
-        UE_LOG(LogSmartWalkBelt, Log, TEXT("<<< LinkOrUpdate EXIT (UPDATE): belt=%s actor.world=%s"),
+        UE_LOG(LogSmartWalkBelt, Verbose, TEXT("<<< LinkOrUpdate EXIT (UPDATE): belt=%s actor.world=%s"),
             *GetNameSafe(Existing), *Existing->GetActorLocation().ToString());
         return Existing;
     }
@@ -208,6 +208,9 @@ AFGHologram* USFWalkBeltConveyance::LinkOrUpdate(AFGHologram* ExistingSpan, AFGH
         HoloData->StackChainIndex = 0;
     }
 
+    // [#497 L5] BEFORE FinishSpawning: BeginPlay registers the clearance detector inert
+    // (the existing post-spawn disable below then finds nothing to tear down).
+    Belt->SetActorEnableCollision(false);
     Belt->FinishSpawning(FTransform(StartPos));
     Belt->SetSnappedConnections(FromConn, ToConn);
     Belt->ApplyBeltBuildModeRouting(RoutingMode, StartPos, StartNormal, EndPos, EndNormal);
@@ -234,7 +237,7 @@ AFGHologram* USFWalkBeltConveyance::LinkOrUpdate(AFGHologram* ExistingSpan, AFGH
     Belt->TriggerMeshGeneration();
     Belt->ForceApplyHologramMaterial();
 
-    UE_LOG(LogSmartWalkBelt, Log, TEXT("<<< LinkOrUpdate EXIT (CREATE): belt=%s actor.world=%s | tier=%d class=%s"),
+    UE_LOG(LogSmartWalkBelt, Verbose, TEXT("<<< LinkOrUpdate EXIT (CREATE): belt=%s actor.world=%s | tier=%d class=%s"),
         *GetNameSafe(Belt), *Belt->GetActorLocation().ToString(), BeltTier, *GetNameSafe(BeltBuildClass));
     return Belt;
 }
@@ -258,7 +261,7 @@ UFGPipeConnectionComponentBase* USFWalkPipeConveyance::FirstPipeConnector(AFGHol
 
 AFGHologram* USFWalkPipeConveyance::LinkOrUpdate(AFGHologram* ExistingSpan, AFGHologram* FromAnchor, AFGHologram* ToAnchor, AFGHologram* ParentForChild, bool bAddChildForBuild, float SegmentTurnDeg)
 {
-    UE_LOG(LogSmartWalkBelt, Log, TEXT(">>> [Pipe] LinkOrUpdate ENTER: existing=%s from=%s to=%s parent(seed)=%s build=%d"),
+    UE_LOG(LogSmartWalkBelt, Verbose, TEXT(">>> [Pipe] LinkOrUpdate ENTER: existing=%s from=%s to=%s parent(seed)=%s build=%d"),
         *GetNameSafe(ExistingSpan), *GetNameSafe(FromAnchor), *GetNameSafe(ToAnchor), *GetNameSafe(ParentForChild), bAddChildForBuild ? 1 : 0);
     USFSubsystem* Sub = Subsystem.Get();
     if (!Sub || !IsValid(FromAnchor) || !IsValid(ToAnchor))
@@ -276,7 +279,7 @@ AFGHologram* USFWalkPipeConveyance::LinkOrUpdate(AFGHologram* ExistingSpan, AFGH
     // destroys any now-too-long existing one.
     if (FVector::Dist(StartPos, EndPos) > SF_WALK_MAX_SPAN_CM)
     {
-        UE_LOG(LogSmartWalkBelt, Warning, TEXT("<<< [Pipe] LinkOrUpdate EXIT: span %.0f cm > %.0f cm cap — skipped (segment too long)"),
+        UE_LOG(LogSmartWalkBelt, Verbose, TEXT("<<< [Pipe] LinkOrUpdate EXIT: span %.0f cm > %.0f cm cap — skipped (segment too long)"),
             FVector::Dist(StartPos, EndPos), SF_WALK_MAX_SPAN_CM);
         return nullptr;
     }
@@ -298,7 +301,7 @@ AFGHologram* USFWalkPipeConveyance::LinkOrUpdate(AFGHologram* ExistingSpan, AFGH
     if (EndNormal.IsNearlyZero())   { EndNormal   = -DirN; }
 
     const int32 RoutingMode = Sub->GetAutoConnectRuntimeSettings().PipeRoutingMode;
-    UE_LOG(LogSmartWalkBelt, Log, TEXT("  [Pipe] LinkOrUpdate routing: StartPos=%s EndPos=%s | StartN=%s EndN=%s | mode=%d len=%.1f turn=%.0f"),
+    UE_LOG(LogSmartWalkBelt, Verbose, TEXT("  [Pipe] LinkOrUpdate routing: StartPos=%s EndPos=%s | StartN=%s EndN=%s | mode=%d len=%.1f turn=%.0f"),
         *StartPos.ToString(), *EndPos.ToString(), *StartNormal.ToString(), *EndNormal.ToString(),
         RoutingMode, Dir.Size(), SegmentTurnDeg);
 
@@ -309,7 +312,7 @@ AFGHologram* USFWalkPipeConveyance::LinkOrUpdate(AFGHologram* ExistingSpan, AFGH
         Existing->ApplyPipeBuildModeRouting(RoutingMode, StartPos, StartNormal, EndPos, EndNormal);
         Existing->TriggerMeshGeneration();
         Existing->ForceApplyHologramMaterial();
-        UE_LOG(LogSmartWalkBelt, Log, TEXT("<<< [Pipe] LinkOrUpdate EXIT (UPDATE): pipe=%s"), *GetNameSafe(Existing));
+        UE_LOG(LogSmartWalkBelt, Verbose, TEXT("<<< [Pipe] LinkOrUpdate EXIT (UPDATE): pipe=%s"), *GetNameSafe(Existing));
         return Existing;
     }
 
@@ -370,6 +373,9 @@ AFGHologram* USFWalkPipeConveyance::LinkOrUpdate(AFGHologram* ExistingSpan, AFGH
         HoloData->StackablePipeIndex = 0;
     }
 
+    // [#497 L5] BEFORE FinishSpawning: BeginPlay registers the clearance detector inert
+    // (the existing post-spawn disable below then finds nothing to tear down).
+    Pipe->SetActorEnableCollision(false);
     Pipe->FinishSpawning(FTransform(StartPos));
 
     // Pre-wire the snapped connections. ASFPipelineHologram has no SetSnappedConnections method, so set the vanilla
@@ -405,7 +411,7 @@ AFGHologram* USFWalkPipeConveyance::LinkOrUpdate(AFGHologram* ExistingSpan, AFGH
     Pipe->TriggerMeshGeneration();
     Pipe->ForceApplyHologramMaterial();
 
-    UE_LOG(LogSmartWalkBelt, Log, TEXT("<<< [Pipe] LinkOrUpdate EXIT (CREATE): pipe=%s actor.world=%s | tier=%d class=%s"),
+    UE_LOG(LogSmartWalkBelt, Verbose, TEXT("<<< [Pipe] LinkOrUpdate EXIT (CREATE): pipe=%s actor.world=%s | tier=%d class=%s"),
         *GetNameSafe(Pipe), *Pipe->GetActorLocation().ToString(), PipeTier, *GetNameSafe(PipeBuildClass));
     return Pipe;
 }
@@ -430,7 +436,7 @@ UFGPipeConnectionComponentBase* USFWalkHypertubeConveyance::FirstPipeConnector(A
 
 AFGHologram* USFWalkHypertubeConveyance::LinkOrUpdate(AFGHologram* ExistingSpan, AFGHologram* FromAnchor, AFGHologram* ToAnchor, AFGHologram* ParentForChild, bool bAddChildForBuild, float SegmentTurnDeg)
 {
-    UE_LOG(LogSmartWalkBelt, Log, TEXT(">>> [Hyper] LinkOrUpdate ENTER: existing=%s from=%s to=%s parent(seed)=%s build=%d"),
+    UE_LOG(LogSmartWalkBelt, Verbose, TEXT(">>> [Hyper] LinkOrUpdate ENTER: existing=%s from=%s to=%s parent(seed)=%s build=%d"),
         *GetNameSafe(ExistingSpan), *GetNameSafe(FromAnchor), *GetNameSafe(ToAnchor), *GetNameSafe(ParentForChild), bAddChildForBuild ? 1 : 0);
     USFSubsystem* Sub = Subsystem.Get();
     if (!Sub || !IsValid(FromAnchor) || !IsValid(ToAnchor))
@@ -448,7 +454,7 @@ AFGHologram* USFWalkHypertubeConveyance::LinkOrUpdate(AFGHologram* ExistingSpan,
     // tube, so refuse the span (return null) and the caller destroys any now-too-long existing one + reds the segment.
     if (FVector::Dist(StartPos, EndPos) > SF_WALK_MAX_HYPER_SPAN_CM)
     {
-        UE_LOG(LogSmartWalkBelt, Warning, TEXT("<<< [Hyper] LinkOrUpdate EXIT: span %.0f cm > %.0f cm cap — skipped (segment too long)"),
+        UE_LOG(LogSmartWalkBelt, Verbose, TEXT("<<< [Hyper] LinkOrUpdate EXIT: span %.0f cm > %.0f cm cap — skipped (segment too long)"),
             FVector::Dist(StartPos, EndPos), SF_WALK_MAX_HYPER_SPAN_CM);
         return nullptr;
     }
@@ -468,7 +474,7 @@ AFGHologram* USFWalkHypertubeConveyance::LinkOrUpdate(AFGHologram* ExistingSpan,
     if (EndNormal.IsNearlyZero())   { EndNormal   = FVector(-DirN.X, -DirN.Y, 0.0f).GetSafeNormal(); }
 
     const int32 RoutingMode = Sub->GetAutoConnectRuntimeSettings().HypertubeRoutingMode;
-    UE_LOG(LogSmartWalkBelt, Log, TEXT("  [Hyper] LinkOrUpdate routing: StartPos=%s EndPos=%s | StartN=%s EndN=%s | mode=%d len=%.1f turn=%.0f"),
+    UE_LOG(LogSmartWalkBelt, Verbose, TEXT("  [Hyper] LinkOrUpdate routing: StartPos=%s EndPos=%s | StartN=%s EndN=%s | mode=%d len=%.1f turn=%.0f"),
         *StartPos.ToString(), *EndPos.ToString(), *StartNormal.ToString(), *EndNormal.ToString(),
         RoutingMode, Dir.Size(), SegmentTurnDeg);
 
@@ -479,7 +485,7 @@ AFGHologram* USFWalkHypertubeConveyance::LinkOrUpdate(AFGHologram* ExistingSpan,
         Existing->ApplyPipeBuildModeRouting(RoutingMode, StartPos, StartNormal, EndPos, EndNormal);
         Existing->TriggerMeshGeneration();
         Existing->ForceApplyHologramMaterial();
-        UE_LOG(LogSmartWalkBelt, Log, TEXT("<<< [Hyper] LinkOrUpdate EXIT (UPDATE): tube=%s"), *GetNameSafe(Existing));
+        UE_LOG(LogSmartWalkBelt, Verbose, TEXT("<<< [Hyper] LinkOrUpdate EXIT (UPDATE): tube=%s"), *GetNameSafe(Existing));
         return Existing;
     }
 
@@ -533,6 +539,9 @@ AFGHologram* USFWalkHypertubeConveyance::LinkOrUpdate(AFGHologram* ExistingSpan,
         HoloData->StackablePipeIndex = 0;
     }
 
+    // [#497 L5] BEFORE FinishSpawning: BeginPlay registers the clearance detector inert
+    // (the existing post-spawn disable below then finds nothing to tear down).
+    Tube->SetActorEnableCollision(false);
     Tube->FinishSpawning(FTransform(StartPos));
 
     if (FromConn || ToConn)
@@ -566,7 +575,7 @@ AFGHologram* USFWalkHypertubeConveyance::LinkOrUpdate(AFGHologram* ExistingSpan,
     Tube->TriggerMeshGeneration();
     Tube->ForceApplyHologramMaterial();
 
-    UE_LOG(LogSmartWalkBelt, Log, TEXT("<<< [Hyper] LinkOrUpdate EXIT (CREATE): tube=%s actor.world=%s | class=%s"),
+    UE_LOG(LogSmartWalkBelt, Verbose, TEXT("<<< [Hyper] LinkOrUpdate EXIT (CREATE): tube=%s actor.world=%s | class=%s"),
         *GetNameSafe(Tube), *Tube->GetActorLocation().ToString(), *GetNameSafe(HyperBuildClass));
     return Tube;
 }

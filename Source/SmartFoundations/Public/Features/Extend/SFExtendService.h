@@ -754,6 +754,24 @@ private:
     /** Authoritative material state for Extend child previews; set each RefreshExtension. */
     EHologramMaterialState ExtendChildMaterialState = EHologramMaterialState::HMS_OK;
 
+    /** #497 set-once: last state swept across the child previews by RefreshExtension. The sweep now
+     *  runs only when this changes — children are painted at spawn, so re-sweeping an unchanged state
+     *  every frame only churned render proxies (the Extend GPU lag). */
+    EHologramMaterialState LastSyncedExtendChildMaterialState = EHologramMaterialState::HMS_OK;
+    bool bExtendChildMaterialStateSynced = false;
+
+    /** #497 clone reuse: deep copy of the clone-1 topology BEFORE any scaled-clone merge, captured
+     *  after the full rebuild's rotation pass. Every merge rebuilds StoredCloneTopology from a fresh
+     *  copy of this base, so incremental (count-only) rebuilds can re-merge without re-deriving. */
+    TSharedPtr<FSFCloneTopology> ScaledExtendBaseTopology;
+
+    /** #497 (77×1 = 3 fps profile): frame-memo for CanAffordExtendCost. Vanilla's per-frame
+     *  ValidatePlacementAndCost (via our CheckCanAfford) and RefreshExtension each ran the FULL
+     *  GetCost(includeChildren) child walk — the single walk per frame is kept (its #357 preview
+     *  keep-alive side effect is load-bearing), the duplicates return this memo. */
+    mutable uint64 LastAffordabilityFrame = MAX_uint64;
+    mutable bool bLastAffordabilityResult = true;
+
     /** Reason why current configuration is invalid (empty if valid) */
     FString ScaledExtendInvalidReason;
 

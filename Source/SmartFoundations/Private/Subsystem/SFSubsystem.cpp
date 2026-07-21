@@ -602,7 +602,7 @@ void USFSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	UWorld* World = GetWorld();
 	if (!World)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("Smart! Subsystem: No world in Initialize() - cannot start timers"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("Smart! Subsystem: No world in Initialize() - cannot start timers"));
 		return;
 	}
 
@@ -943,6 +943,36 @@ void USFSubsystem::RefreshScaleDaisyChainPreviews()
 		return;
 	}
 
+	// [#500] Reuse existing previews when the span COUNT is unchanged: during a drag the spans
+	// move every frame, and the old path destroyed + respawned every wire actor per frame — the
+	// last un-debounced actor churn in the AC family (#497 audit item 3, capture-2 scene-churn
+	// signature). SetupWirePreviewFromPositions re-caches the endpoints and rebuilds the
+	// catenary mesh in place; only a count/owner change or a dead actor forces a full rebuild.
+	if (Parent && Parent == ScaleDaisyChainPreviewOwner.Get()
+		&& DesiredSpans.Num() == ScaleDaisyChainPreviews.Num()
+		&& !DesiredSpans.IsEmpty())
+	{
+		bool bAllValid = true;
+		for (ASFWireHologram* Preview : ScaleDaisyChainPreviews)
+		{
+			if (!IsValid(Preview))
+			{
+				bAllValid = false;
+				break;
+			}
+		}
+		if (bAllValid)
+		{
+			for (int32 Index = 0; Index < DesiredSpans.Num(); ++Index)
+			{
+				ScaleDaisyChainPreviews[Index]->SetupWirePreviewFromPositions(
+					DesiredSpans[Index].Key, DesiredSpans[Index].Value);
+			}
+			CachedScaleDaisyChainSpans = DesiredSpans;
+			return;
+		}
+	}
+
 	DestroyScaleDaisyChainPreviews();
 	ScaleDaisyChainPreviewOwner = Parent;
 	CachedScaleDaisyChainSpans = DesiredSpans;
@@ -972,6 +1002,9 @@ void USFSubsystem::RefreshScaleDaisyChainPreviews()
 		}
 		Preview->SetBuildClass(WireClass);
 		Preview->Tags.AddUnique(FName(TEXT("SF_ScaleDaisyPreview")));
+		// [#497 L5] BEFORE FinishSpawning: BeginPlay registers the clearance detector inert
+		// (the existing post-spawn disable below then finds nothing to tear down).
+		Preview->SetActorEnableCollision(false);
 		Preview->FinishSpawning(FTransform(FRotator::ZeroRotator, Midpoint), true);
 		Preview->SetupWirePreviewFromPositions(Span.Key, Span.Value);
 		Preview->SetPlacementMaterialState(EHologramMaterialState::HMS_OK);
@@ -1247,7 +1280,7 @@ void USFSubsystem::SetupPlayerInput(AFGPlayerController* PlayerController)
 	}
 	else
 	{
-		UE_LOG(LogSmartFoundations, Error, TEXT("SetupPlayerInput: InputHandler module not initialized"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("SetupPlayerInput: InputHandler module not initialized"));
 	}
 }
 
@@ -1274,21 +1307,21 @@ void USFSubsystem::CheckForPlayerController()
 
 void USFSubsystem::EnterWalkMode()
 {
-	UE_LOG(LogSmartFoundations, Log, TEXT(">>> [Walk] EnterWalkMode ENTER: bWalkModeActive=%d active=%s"),
+	UE_LOG(LogSmartFoundations, Verbose, TEXT(">>> [Walk] EnterWalkMode ENTER: bWalkModeActive=%d active=%s"),
 		bWalkModeActive ? 1 : 0, *GetNameSafe(ActiveHologram.Get()));
 	if (bWalkModeActive)
 	{
-		UE_LOG(LogSmartFoundations, Log, TEXT("<<< [Walk] EnterWalkMode EXIT: already active"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("<<< [Walk] EnterWalkMode EXIT: already active"));
 		return;
 	}
 
 	AFGHologram* Seed = ActiveHologram.Get();
 	if (!Seed)
 	{
-		UE_LOG(LogSmartFoundations, Warning, TEXT("<<< [Walk] EnterWalkMode EXIT: no active hologram to seed a Path"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("<<< [Walk] EnterWalkMode EXIT: no active hologram to seed a Path"));
 		return;
 	}
-	UE_LOG(LogSmartFoundations, Log, TEXT("  [Walk] EnterWalkMode: seed=%s world=%s yaw=%.1f locked=%d | counter before reset=%s"),
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("  [Walk] EnterWalkMode: seed=%s world=%s yaw=%.1f locked=%d | counter before reset=%s"),
 		*GetNameSafe(Seed), *Seed->GetActorLocation().ToString(), Seed->GetActorRotation().Yaw,
 		Seed->IsHologramLocked() ? 1 : 0, *GetCounterState().GridCounters.ToString());
 
@@ -1314,7 +1347,7 @@ void USFSubsystem::EnterWalkMode()
 	{
 		bWalkModeActive = true;
 		UpdateCounterDisplay();   // surface the walk's segment state in the build HUD immediately
-		UE_LOG(LogSmartFoundations, Log, TEXT("Smart Walking: entered (seed locked, grid children cleared)"));
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("Smart Walking: entered (seed locked, grid children cleared)"));
 	}
 	else
 	{
@@ -1326,7 +1359,7 @@ void USFSubsystem::EnterWalkMode()
 
 void USFSubsystem::ExitWalkMode()
 {
-	UE_LOG(LogSmartFoundations, Log, TEXT(">>> [Walk] ExitWalkMode ENTER: bWalkModeActive=%d active=%s"),
+	UE_LOG(LogSmartFoundations, Verbose, TEXT(">>> [Walk] ExitWalkMode ENTER: bWalkModeActive=%d active=%s"),
 		bWalkModeActive ? 1 : 0, *GetNameSafe(ActiveHologram.Get()));
 	if (!bWalkModeActive)
 	{
@@ -1351,7 +1384,7 @@ void USFSubsystem::ExitWalkMode()
 	}
 	bWalkModeActive = false;
 	UpdateCounterDisplay();   // walk is gone → HUD falls back to the normal grid counter
-	UE_LOG(LogSmartFoundations, Log, TEXT("Smart Walking: exited"));
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("Smart Walking: exited"));
 }
 
 void USFSubsystem::ToggleWalkMode()
@@ -1520,7 +1553,7 @@ bool USFSubsystem::RouteWalkValueAdjust(int32 AccumulatedSteps, int32 Direction)
 		else                { WalkService->BackUp(); }
 		if (WalkPanelWidget.IsValid()) { WalkPanelWidget->Refresh(); }
 		UpdateCounterDisplay();
-		UE_LOG(LogSmartFoundations, Log, TEXT("[Walk] value-adjust (steps=%d dir=%d) -> %s"),
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("[Walk] value-adjust (steps=%d dir=%d) -> %s"),
 			AccumulatedSteps, Direction, Direction >= 0 ? TEXT("advance") : TEXT("back-up"));
 		return true;
 	}
@@ -1571,7 +1604,7 @@ void USFSubsystem::ApplyAxisScaling(ESFScaleAxis Axis, int32 StepDelta, const TC
 		}
 		if (WalkPanelWidget.IsValid()) { WalkPanelWidget->Refresh(); }
 		UpdateCounterDisplay();
-		UE_LOG(LogSmartFoundations, Log, TEXT("[Walk] ApplyAxisScaling axis=%d delta=%d (X=advance/back, Y=lanes, Z=stacks)"),
+		UE_LOG(LogSmartFoundations, Verbose, TEXT("[Walk] ApplyAxisScaling axis=%d delta=%d (X=advance/back, Y=lanes, Z=stacks)"),
 			static_cast<int32>(Axis), StepDelta);
 		return;
 	}

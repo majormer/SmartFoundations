@@ -390,7 +390,7 @@ void USFAutoConnectService::ProcessStackableConveyorPoles(AFGHologram* ParentHol
 			{
 				AFGHologram* Belt = Pair.Value.Get();
 				Belt->SetActorHiddenInGame(false);
-				Belt->SetPlacementMaterialState(ParentHologram->GetHologramMaterialState());
+				Belt->SetPlacementMaterialState(USFHologramDataService::GetRawPlacementMaterialState(ParentHologram));
 				
 				if (bParentLocked && !Belt->IsHologramLocked())
 				{
@@ -669,7 +669,7 @@ void USFAutoConnectService::ProcessStackablePipelineSupports(AFGHologram* Parent
 	if (FinalState)
 	{
 		bool bParentLocked = ParentHologram->IsHologramLocked();
-		EHologramMaterialState ParentMaterialState = ParentHologram->GetHologramMaterialState();
+		EHologramMaterialState ParentMaterialState = USFHologramDataService::GetRawPlacementMaterialState(ParentHologram);
 		
 		for (auto& Pair : FinalState->PipesByPolePair)
 		{
@@ -821,7 +821,7 @@ void USFAutoConnectService::ProcessStackableHypertubeSupports(AFGHologram* Paren
 	if (FinalState)
 	{
 		const bool bParentLocked = ParentHologram->IsHologramLocked();
-		const EHologramMaterialState ParentMaterialState = ParentHologram->GetHologramMaterialState();
+		const EHologramMaterialState ParentMaterialState = USFHologramDataService::GetRawPlacementMaterialState(ParentHologram);
 		for (auto& Pair : FinalState->SpansByPolePair)
 		{
 			if (Pair.Value.IsValid())
@@ -1155,30 +1155,52 @@ AFGHologram* USFAutoConnectService::UpdateOrCreatePipeForPolePair(
 				
 				ExistingPipe->Destroy();
 				State.PipesByPolePair.Remove(PairKey);
+				State.RouteSigByPolePair.Remove(PairKey);
 				ExistingPipePtr = nullptr;  // Fall through to create new pipe
 			}
 			else
 			{
+			int32 PipeRoutingMode = 0;
+			if (USFSubsystem* SmartSubsystem = USFSubsystem::Get(GetWorld()))
+			{
+				PipeRoutingMode = SmartSubsystem->GetAutoConnectRuntimeSettings().PipeRoutingMode;
+			}
+
+			// [#497] Skip the whole unlock -> reroute -> remesh -> relock when nothing changed —
+			// same UObject-storm fix as the belt path (LockHologramPosition broadcasts a
+			// representation update that creates a UMG widget per call; see FSFStackableRouteSig).
+			FSFStackableRouteSig RouteSig;
+			RouteSig.Start = StartPos;
+			RouteSig.End = EndPos;
+			RouteSig.StartNormal = StartNormal;
+			RouteSig.EndNormal = EndNormal;
+			RouteSig.RoutingMode = PipeRoutingMode;
+			RouteSig.BuildClass = CurrentBuildClass;
+			if (const FSFStackableRouteSig* LastSig = State.RouteSigByPolePair.Find(PairKey))
+			{
+				if (LastSig->Matches(RouteSig))
+				{
+					ExistingPipe->SetActorHiddenInGame(false);
+					ExistingPipe->SetPlacementMaterialState(USFHologramDataService::GetRawPlacementMaterialState(ParentHologram));
+					return ExistingPipe;
+				}
+			}
+
 			// ========================================================================
 			// GRID SCALING PATTERN: Temporary unlock -> Update -> Restore lock
 			// Same pattern as SFGridSpawnerService uses for grid children visibility
 			// ========================================================================
 			bool bParentLocked = ParentHologram->IsHologramLocked();
 			bool bPipeWasLocked = ExistingPipe->IsHologramLocked();
-			
+
 			// Step 1: Temporarily unlock for positioning (same as TemporarilyUnlockChild)
 			if (bParentLocked && bPipeWasLocked)
 			{
 				ExistingPipe->LockHologramPosition(false);
 			}
-			
+
 			// Step 2: Update position and spline data
 			ExistingPipe->SetActorLocation(StartPos);
-			int32 PipeRoutingMode = 0;
-			if (USFSubsystem* SmartSubsystem = USFSubsystem::Get(GetWorld()))
-			{
-				PipeRoutingMode = SmartSubsystem->GetAutoConnectRuntimeSettings().PipeRoutingMode;
-			}
 			// [#383] Drive the vanilla pipe build-mode descriptors (all six modes); falls back internally.
 			if (!ExistingPipe->ApplyPipeBuildModeRouting(PipeRoutingMode, StartPos, StartNormal, EndPos, EndNormal))
 			{
@@ -1188,7 +1210,7 @@ AFGHologram* USFAutoConnectService::UpdateOrCreatePipeForPolePair(
 			
 			// Step 3: Ensure visibility state is correct
 			ExistingPipe->SetActorHiddenInGame(false);
-			ExistingPipe->SetPlacementMaterialState(ParentHologram->GetHologramMaterialState());
+			ExistingPipe->SetPlacementMaterialState(USFHologramDataService::GetRawPlacementMaterialState(ParentHologram));
 			
 			// Step 4: Regenerate mesh and apply hologram material
 			ExistingPipe->TriggerMeshGeneration();
@@ -1200,8 +1222,10 @@ AFGHologram* USFAutoConnectService::UpdateOrCreatePipeForPolePair(
 			{
 				ExistingPipe->LockHologramPosition(true);
 			}
-			
-			UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🔧 STACKABLE PIPE: Updated existing pipe %s for pair 0x%016llX (locked=%d)"), 
+
+			State.RouteSigByPolePair.Add(PairKey, RouteSig);
+
+			UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🔧 STACKABLE PIPE: Updated existing pipe %s for pair 0x%016llX (locked=%d)"),
 				*ExistingPipe->GetName(), PairKey, bParentLocked ? 1 : 0);
 			
 			return ExistingPipe;
@@ -1270,6 +1294,8 @@ AFGHologram* USFAutoConnectService::UpdateOrCreatePipeForPolePair(
 		HoloData->StackablePipeIndex = PipeIndex;
 	}
 	
+	// [#497] BEFORE FinishSpawning: inert clearance-detector registration (see belt path).
+	PipeChild->SetActorEnableCollision(false);
 	PipeChild->FinishSpawning(FTransform(StartPos));
 	
 	// Set snapped connections for validation
@@ -1312,7 +1338,19 @@ AFGHologram* USFAutoConnectService::UpdateOrCreatePipeForPolePair(
 	
 	// Track by pole-pair key
 	State.PipesByPolePair.Add(PairKey, PipeChild);
-	
+
+	// [#497] Record the routed signature so unchanged pairs skip the whole update next eval.
+	{
+		FSFStackableRouteSig CreatedSig;
+		CreatedSig.Start = StartPos;
+		CreatedSig.End = EndPos;
+		CreatedSig.StartNormal = StartNormal;
+		CreatedSig.EndNormal = EndNormal;
+		CreatedSig.RoutingMode = PipeRoutingMode;
+		CreatedSig.BuildClass = PipeBuildClass;
+		State.RouteSigByPolePair.Add(PairKey, CreatedSig);
+	}
+
 	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🔧 STACKABLE PIPE: Created new pipe %s for pair 0x%016llX (dist=%.1f)"),
 		*ChildName.ToString(), PairKey, Distance);
 	
@@ -1365,6 +1403,7 @@ void USFAutoConnectService::RemoveOrphanedPipes(AFGHologram* ParentHologram, con
 	for (uint64 Key : KeysToRemove)
 	{
 		State->PipesByPolePair.Remove(Key);
+		State->RouteSigByPolePair.Remove(Key);
 	}
 }
 
@@ -1429,7 +1468,7 @@ void USFAutoConnectService::FinalizeBeltChildrenVisibility(AFGHologram* ParentHo
 
 	// Finalize visibility and locking for all belt children (matches stackable pattern)
 	bool bParentLocked = ParentHologram->IsHologramLocked();
-	EHologramMaterialState ParentMaterialState = ParentHologram->GetHologramMaterialState();
+	EHologramMaterialState ParentMaterialState = USFHologramDataService::GetRawPlacementMaterialState(ParentHologram);
 
 	auto FinalizeSet = [bParentLocked, ParentMaterialState](const TArray<TSharedPtr<FBeltPreviewHelper>>* Set)
 	{
@@ -1839,43 +1878,70 @@ AFGHologram* USFAutoConnectService::UpdateOrCreateBeltForPolePair(
 				
 				ExistingBelt->Destroy();
 				State.BeltsByPolePair.Remove(PairKey);
+				State.RouteSigByPolePair.Remove(PairKey);
 				ExistingBeltPtr = nullptr;
 			}
 			else
 			{
-				// Update existing belt position and spline
-				bool bParentLocked = ParentHologram->IsHologramLocked();
-				bool bBeltWasLocked = ExistingBelt->IsHologramLocked();
-				
-				if (bParentLocked && bBeltWasLocked)
-				{
-					ExistingBelt->LockHologramPosition(false);
-				}
-				
-				ExistingBelt->SetActorLocation(StartPos);
 				int32 BeltRoutingMode = 0;
 				if (USFSubsystem* SmartSubsystem = USFSubsystem::Get(GetWorld()))
 				{
 					BeltRoutingMode = SmartSubsystem->GetAutoConnectRuntimeSettings().BeltRoutingMode;
 				}
+
+				// [#497] Skip the whole unlock -> reroute -> remesh -> relock when nothing changed.
+				// The relock churn wasn't just wasted CPU: vanilla LockHologramPosition broadcasts an
+				// actor-representation update whose UI listener creates a UMG widget per call — at
+				// hundreds of pairs per debounced eval that allocation storm hit the 2.1M UObject cap
+				// (fatal). During a scaling drag existing pairs never move; only new pairs route.
+				FSFStackableRouteSig RouteSig;
+				RouteSig.Start = StartPos;
+				RouteSig.End = EndPos;
+				RouteSig.StartNormal = StartNormal;
+				RouteSig.EndNormal = EndNormal;
+				RouteSig.RoutingMode = BeltRoutingMode;
+				RouteSig.BuildClass = CurrentBuildClass;
+				if (const FSFStackableRouteSig* LastSig = State.RouteSigByPolePair.Find(PairKey))
+				{
+					if (LastSig->Matches(RouteSig))
+					{
+						// Idempotent/cheap upkeep only (material state early-outs on same state).
+						ExistingBelt->SetActorHiddenInGame(false);
+						ExistingBelt->SetPlacementMaterialState(USFHologramDataService::GetRawPlacementMaterialState(ParentHologram));
+						return ExistingBelt;
+					}
+				}
+
+				// Update existing belt position and spline
+				bool bParentLocked = ParentHologram->IsHologramLocked();
+				bool bBeltWasLocked = ExistingBelt->IsHologramLocked();
+
+				if (bParentLocked && bBeltWasLocked)
+				{
+					ExistingBelt->LockHologramPosition(false);
+				}
+
+				ExistingBelt->SetActorLocation(StartPos);
 				// [#380] Drive the vanilla build-mode descriptors so Curve/Straight actually take effect
 				// (shared with Extend lanes); falls back to AutoRouteSplineWithNormals internally.
 				ExistingBelt->ApplyBeltBuildModeRouting(BeltRoutingMode, StartPos, StartNormal, EndPos, EndNormal);
 				ValidateSupportBeltRoute(ParentHologram, ExistingBelt);
-				
+
 				ExistingBelt->SetActorHiddenInGame(false);
-				ExistingBelt->SetPlacementMaterialState(ParentHologram->GetHologramMaterialState());
+				ExistingBelt->SetPlacementMaterialState(USFHologramDataService::GetRawPlacementMaterialState(ParentHologram));
 				ExistingBelt->TriggerMeshGeneration();
 				ExistingBelt->ForceApplyHologramMaterial();
-				
+
 				if (bParentLocked)
 				{
 					ExistingBelt->LockHologramPosition(true);
 				}
-				
-				UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🚧 STACKABLE BELT: Updated existing belt %s for pair 0x%016llX"), 
+
+				State.RouteSigByPolePair.Add(PairKey, RouteSig);
+
+				UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🚧 STACKABLE BELT: Updated existing belt %s for pair 0x%016llX"),
 					*ExistingBelt->GetName(), PairKey);
-				
+
 				return ExistingBelt;
 			}
 		}
@@ -1921,6 +1987,11 @@ AFGHologram* USFAutoConnectService::UpdateOrCreateBeltForPolePair(
 	BeltChild->SetReplicateMovement(false);
 	BeltChild->SetBuildClass(BeltBuildClass);
 	BeltChild->Tags.AddUnique(FName(TEXT("SF_StackableChild")));
+	// [#497] BEFORE FinishSpawning: with actor collision already off, BeginPlay registers the
+	// clearance detector inert — no overlap storm against thousands of sibling detectors (the
+	// old post-spawn SetActorEnableCollision(false) paid the storm TWICE: registration at
+	// BeginPlay, teardown at the disable; capture 13).
+	BeltChild->SetActorEnableCollision(false);
 
 	// [#331] Propagate the Blueprint Designer context: vanilla copies the hologram's designer
 	// onto the constructed buildable (pre-BeginPlay), so a Smart-spawned hologram that lacks it
@@ -1976,7 +2047,19 @@ AFGHologram* USFAutoConnectService::UpdateOrCreateBeltForPolePair(
 	
 	// Track by pole-pair key
 	State.BeltsByPolePair.Add(PairKey, BeltChild);
-	
+
+	// [#497] Record the routed signature so unchanged pairs skip the whole update next eval.
+	{
+		FSFStackableRouteSig CreatedSig;
+		CreatedSig.Start = StartPos;
+		CreatedSig.End = EndPos;
+		CreatedSig.StartNormal = StartNormal;
+		CreatedSig.EndNormal = EndNormal;
+		CreatedSig.RoutingMode = BeltRoutingMode;
+		CreatedSig.BuildClass = BeltBuildClass;
+		State.RouteSigByPolePair.Add(PairKey, CreatedSig);
+	}
+
 	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🚧 STACKABLE BELT: Created new belt %s for pair 0x%016llX"),
 		*ChildName.ToString(), PairKey);
 	
@@ -2027,6 +2110,7 @@ void USFAutoConnectService::RemoveOrphanedBelts(AFGHologram* ParentHologram, con
 	for (uint64 Key : KeysToRemove)
 	{
 		State->BeltsByPolePair.Remove(Key);
+		State->RouteSigByPolePair.Remove(Key);
 	}
 }
 

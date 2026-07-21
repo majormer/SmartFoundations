@@ -24,6 +24,9 @@ public:
 
 	virtual void BeginPlay() override;
 	virtual TArray<FItemAmount> GetCost(bool includeChildren) const override;
+	// #497: null-recipe guard — scale-daisy wire previews carry no recipe; skip vanilla GetBaseCost's
+	// GetIngredients(nullptr) warning (synchronous per-frame disk-write spam). See GetCost for the length cost.
+	virtual TArray<FItemAmount> GetBaseCost() const override;
 	virtual AActor* Construct(TArray<AActor*>& out_children, FNetConstructionID constructionID) override;
 	virtual void CheckValidPlacement() override;
 	virtual void SetPlacementMaterialState(EHologramMaterialState materialState) override;
@@ -82,4 +85,10 @@ private:
 	 * The auto-connect path leaves this false (its wire is re-created on preview updates).
 	 */
 	bool bUseAbsoluteMeshTransform = false;
+
+public:
+	/** [#497] Block vanilla's locked-parent nudge cascade — it bypasses SetHologramLocationAndRotation
+	 *  and dragged every extend child to world origin each tick (see the .cpp override). */
+	virtual void SetHologramNudgeLocation() override;
+
 };

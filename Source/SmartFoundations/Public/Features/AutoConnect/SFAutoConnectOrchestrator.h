@@ -228,6 +228,22 @@ private:
 	/** Shared input reservation map - tracks which distributor claimed which building input */
 	TMap<UFGFactoryConnectionComponent*, AFGHologram*> ReservedInputs;
 
+	/** [#500] Route signature of the last completed evaluation (#497 L1 analog): the debounced
+	 * eval fires 10-20x/s during a held drag and re-scores O(distributors x connectors) even
+	 * when nothing moved. When the signature matches, the whole evaluation is skipped and the
+	 * existing previews stand. Fields cover every input that can change the result: parent
+	 * transform + lock state (finalize repaints on lock), distributor count AND first/last
+	 * distributor positions (catches spacing/stagger moves at constant count), belt tier and
+	 * routing mode. */
+	bool bHasLastEvalSignature = false;
+	FTransform LastEvalParentTransform;
+	bool bLastEvalParentLocked = false;
+	int32 LastEvalDistributorCount = -1;
+	FVector LastEvalFirstDistributorLoc = FVector::ZeroVector;
+	FVector LastEvalLastDistributorLoc = FVector::ZeroVector;
+	int32 LastEvalBeltTier = -1;
+	int32 LastEvalRoutingMode = -1;
+
 	/** Skip-summary tracking: side connectors that reached an in-range building port during collect
 	 * but were rejected by the belt angle gate. Members still unassigned after global assignment
 	 * count as "too steep" skips in the HUD tally. Cleared at each EvaluateConnections(). */

@@ -773,6 +773,9 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 
 	// Skip-summary: fresh tally per evaluation (read by the HUD). Reset before any early
 	// exit so a disabled/empty evaluation reports zero skips instead of stale counts.
+	// [#500] Snapshot first: a route-signature skip below keeps the PREVIOUS evaluation's
+	// previews, so it must keep that evaluation's HUD tally too (not report zero).
+	const auto SavedSkipSummary = AutoConnectService->GetSkipSummary();
 	AutoConnectService->GetSkipSummary().ResetBeltBuilding();
 	AutoConnectService->GetSkipSummary().ResetBeltManifold();
 	AngleRejectedSideConnectors.Empty();
@@ -799,6 +802,47 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 	}
 
 	const FTransform ParentTransform = ParentHologram.IsValid() ? ParentHologram->GetActorTransform() : FTransform::Identity;
+
+	// [#500] Route-signature skip (#497 L1 analog): skip the whole re-collect + re-score +
+	// re-preview pass when nothing that can change the result has changed since the last
+	// completed evaluation. See the member comment for the covered inputs; a genuinely new
+	// nearby building without any hologram movement is the one uncovered case, and the next
+	// aim move re-evaluates. The existing previews (and their finalize state) stand.
+	{
+		const bool bParentLockedNow = ParentHologram.IsValid() && ParentHologram->IsHologramLocked();
+		int32 BeltTierNow = -1;
+		int32 RoutingModeNow = -1;
+		if (USFSubsystem* SigSubsystem = AutoConnectService->GetSubsystem())
+		{
+			const auto& SigSettings = SigSubsystem->GetAutoConnectRuntimeSettings();
+			BeltTierNow = SigSettings.BeltTierMain;
+			RoutingModeNow = SigSettings.BeltRoutingMode;
+		}
+		const FVector FirstLoc = Distributors[0] ? Distributors[0]->GetActorLocation() : FVector::ZeroVector;
+		const FVector LastLoc = Distributors.Last() ? Distributors.Last()->GetActorLocation() : FVector::ZeroVector;
+
+		if (bHasLastEvalSignature
+			&& Distributors.Num() == LastEvalDistributorCount
+			&& bParentLockedNow == bLastEvalParentLocked
+			&& BeltTierNow == LastEvalBeltTier
+			&& RoutingModeNow == LastEvalRoutingMode
+			&& ParentTransform.Equals(LastEvalParentTransform, 0.5f)
+			&& FirstLoc.Equals(LastEvalFirstDistributorLoc, 0.5f)
+			&& LastLoc.Equals(LastEvalLastDistributorLoc, 0.5f))
+		{
+			AutoConnectService->GetSkipSummary() = SavedSkipSummary;
+			UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🎯 Orchestrator: eval skipped - route signature unchanged (%d distributors)"), Distributors.Num());
+			return;
+		}
+		bHasLastEvalSignature = true;
+		LastEvalParentTransform = ParentTransform;
+		bLastEvalParentLocked = bParentLockedNow;
+		LastEvalDistributorCount = Distributors.Num();
+		LastEvalFirstDistributorLoc = FirstLoc;
+		LastEvalLastDistributorLoc = LastLoc;
+		LastEvalBeltTier = BeltTierNow;
+		LastEvalRoutingMode = RoutingModeNow;
+	}
 
 	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🎯 Orchestrator: Evaluating connections for %d distributors using GLOBAL SCORING"),
 		Distributors.Num());

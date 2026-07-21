@@ -203,6 +203,8 @@ namespace SFHypertube
 			HoloData->StackablePipeIndex = 0;
 		}
 
+		// [#497] BEFORE FinishSpawning: inert clearance-detector registration (see belt path).
+		Span->SetActorEnableCollision(false);
 		Span->FinishSpawning(FTransform(StartPos));
 
 		// Pre-wire the snapped connections by reflection. ASFPipelineHologram exposes SetSnappedConnections(), but

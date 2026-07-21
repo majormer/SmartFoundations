@@ -45,4 +45,10 @@ public:
     /** Set foundation thickness and rebuild mesh so child matches the parent's height.
      *  Caller reads parent thickness via UE reflection (protected access workaround). */
     void SetSnappedThickness(float InThickness);
+
+public:
+	/** [#497] Block vanilla's locked-parent nudge cascade — it bypasses SetHologramLocationAndRotation
+	 *  and dragged every extend child to world origin each tick (see the .cpp override). */
+	virtual void SetHologramNudgeLocation() override;
+
 };

@@ -48,14 +48,19 @@ void ASFConveyorLiftHologram::Destroyed()
 
 void ASFConveyorLiftHologram::SetHologramLocationAndRotation(const FHitResult& hitResult)
 {
-    Super::SetHologramLocationAndRotation(hitResult);
-    
-    // Skip HUD updates for child holograms (EXTEND children)
+    // #497: extend children are positioned by Smart (SetActorLocation from the clone topology) and
+    // must be DRIFT-PROOF: vanilla parent propagation calls this on every mChildren entry per frame,
+    // and letting Super run repositioned the lift toward the parent hit result — which is why the
+    // extend service needed a per-frame position reapply. Same early-return contract as the belt
+    // (SFConveyorBeltHologram) and pipe (SFPipelineHologram) SF_ExtendChild guards; the lift was the
+    // one conduit class still calling Super unconditionally.
     if (Tags.Contains(FName(TEXT("SF_ExtendChild"))))
     {
         return;
     }
-    
+
+    Super::SetHologramLocationAndRotation(hitResult);
+
     // Get lift height from mTopTransform (relative Z position)
     FTransform TopTransform = GetTopTransform();
     float CurrentHeight = TopTransform.GetTranslation().Z;
@@ -77,6 +82,31 @@ void ASFConveyorLiftHologram::SetHologramLocationAndRotation(const FHitResult& h
             }
         }
     }
+}
+
+void ASFConveyorLiftHologram::RebuildExtendPreviewMeshes(const FHitResult& hitResult)
+{
+    // [#497] The SF_ExtendChild early-return above drift-proofs this lift against vanilla's
+    // per-frame parent propagation — but it also swallowed the clone spawner's own one-shot
+    // "force mesh rebuild" call, leaving extend lift previews as default unraised stubs
+    // (mTopTransform set, mesh stack never rebuilt from it; builds were unaffected). This
+    // is the deliberate bypass for that one Smart-driven call: vanilla rebuilds the
+    // bottom/mid/top mesh stack from the current mTopTransform. The spawner re-asserts
+    // mTopTransform and restores the actor transform right after, as it always has.
+    Super::SetHologramLocationAndRotation(hitResult);
+}
+
+TArray<FItemAmount> ASFConveyorLiftHologram::GetBaseCost() const
+{
+    // #497: Preview lift children can carry a null mRecipe. Vanilla AFGHologram::GetBaseCost would call
+    // UFGRecipe::GetIngredients(nullptr), which logs "FGRecipe::GetIngredients: class was nullpeter" once
+    // per child per frame — each line a synchronous disk write (UE log + Sentry breadcrumb) that stutters
+    // the game. A null recipe has no base cost, so skip vanilla (which returns empty anyway, just noisily).
+    if (!GetRecipe())
+    {
+        return TArray<FItemAmount>();
+    }
+    return Super::GetBaseCost();
 }
 
 void ASFConveyorLiftHologram::CheckValidPlacement()
@@ -505,7 +535,15 @@ void ASFConveyorLiftHologram::ForceApplyHologramMaterial()
 {
     // Get the current material state
     EHologramMaterialState CurrentState = GetHologramMaterialState();
-    
+
+    // #497 set-once: re-applying an unchanged material to every mesh slot + MarkRenderStateDirty per
+    // frame forced continuous render-proxy rebuilds. Lift meshes are static (not regenerated like
+    // belt/pipe spline meshes), so once a state is applied it holds until the state changes.
+    if (bLiftMaterialStateApplied && CurrentState == LastAppliedLiftMaterialState)
+    {
+        return;
+    }
+
     // Apply to all static mesh components
     TArray<UStaticMeshComponent*> MeshComps;
     GetComponents<UStaticMeshComponent>(MeshComps);
@@ -539,5 +577,21 @@ void ASFConveyorLiftHologram::ForceApplyHologramMaterial()
                 MeshComp->MarkRenderStateDirty();
             }
         }
+
+        LastAppliedLiftMaterialState = CurrentState;
+        bLiftMaterialStateApplied = true;
     }
+}
+
+void ASFConveyorLiftHologram::SetHologramNudgeLocation()
+{
+	// [#497] Extend children: block vanilla's locked-parent nudge cascade, which bypasses the
+	// SF_ExtendChild SetHologramLocationAndRotation guard via plain SetActorLocation and dragged
+	// every extend child to world origin each tick (origin-trap stack: FGBuildGunBuild.cpp:320 ->
+	// FGHologram.cpp:440 -> :2120). Non-extend instances keep vanilla behavior.
+	if (Tags.Contains(FName(TEXT("SF_ExtendChild"))))
+	{
+		return;
+	}
+	Super::SetHologramNudgeLocation();
 }

@@ -26,6 +26,19 @@ void ASFWireHologram::BeginPlay()
 	UE_LOG(LogSmartHologram, VeryVerbose, TEXT("⚡ SFWireHologram::BeginPlay - %s"), *GetName());
 }
 
+TArray<FItemAmount> ASFWireHologram::GetBaseCost() const
+{
+	// #497: scale-daisy/auto-connect wire previews are spawned without a recipe (mRecipe == null); their
+	// cost is length-based and computed in GetCost. Vanilla AFGHologram::GetBaseCost would call
+	// UFGRecipe::GetIngredients(nullptr), logging "FGRecipe::GetIngredients: class was nullpeter" per wire
+	// per frame — synchronous disk writes (UE log + Sentry breadcrumb) that stutter the game. Skip it.
+	if (!GetRecipe())
+	{
+		return TArray<FItemAmount>();
+	}
+	return Super::GetBaseCost();
+}
+
 TArray<FItemAmount> ASFWireHologram::GetCost(bool includeChildren) const
 {
 	TArray<FItemAmount> Cost;
@@ -406,3 +419,16 @@ void ASFWireHologram::CreateWireMeshWithCatenary(const FVector& StartPos, const 
 	UE_LOG(LogSmartHologram, VeryVerbose, TEXT("⚡ Wire mesh configured: Length=%.1f cm, Scale=%.2f"), Length, ScaleFactor);
 }
 
+
+void ASFWireHologram::SetHologramNudgeLocation()
+{
+	// [#497] Extend children: block vanilla's locked-parent nudge cascade, which bypasses the
+	// SF_ExtendChild SetHologramLocationAndRotation guard via plain SetActorLocation and dragged
+	// every extend child to world origin each tick (origin-trap stack: FGBuildGunBuild.cpp:320 ->
+	// FGHologram.cpp:440 -> :2120). Non-extend instances keep vanilla behavior.
+	if (Tags.Contains(FName(TEXT("SF_ExtendChild"))))
+	{
+		return;
+	}
+	Super::SetHologramNudgeLocation();
+}

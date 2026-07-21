@@ -65,6 +65,11 @@ struct SMARTFOUNDATIONS_API FSFWalkSegment
     UPROPERTY(Transient)
     TArray<TWeakObjectPtr<AFGHologram>> Spans;
 
+    /** #497 repaint-on-transition: the material state last applied to this segment's poles+spans by
+     *  RefreshWalkValidity (-1 = unset, forces a paint). Reset whenever the segment's holograms change
+     *  (spawn/respawn/span relink) so fresh holograms always get their initial paint. Runtime only. */
+    int8 LastAppliedSegState = -1;
+
     /**
      * Local-frame delta this segment applies to the running frame.
      * Translation = advance/shift/rise along the CURRENT heading; rotation = the heading turn applied AFTER,

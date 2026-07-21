@@ -67,7 +67,16 @@ public:
      * @return Belt material cost based on length and tier
      */
     virtual TArray<FItemAmount> GetCost(bool includeChildren) const override;
-    
+
+    /**
+     * #497: Preview belt children frequently carry a null mRecipe (their real cost comes from spline
+     * length in GetCost, not a base recipe). Vanilla AFGHologram::GetBaseCost would then call
+     * UFGRecipe::GetIngredients(nullptr) and log a warning every frame per child — filling the log with
+     * synchronous disk writes (Sentry breadcrumbs) and stuttering the game. A null recipe has no base
+     * cost, so short-circuit to empty in that case; otherwise defer to vanilla.
+     */
+    virtual TArray<FItemAmount> GetBaseCost() const override;
+
     // Custom method to set up belt spline between two connectors
 	void SetupBeltSpline(UFGFactoryConnectionComponent* StartConnector, UFGFactoryConnectionComponent* EndConnector);
 	
@@ -136,6 +145,18 @@ public:
 	// Force hologram material to be applied to all mesh components
 	// Call this after TriggerMeshGeneration() to ensure spline meshes have correct hologram material
 	void ForceApplyHologramMaterial();
+
+	/**
+	 * #497: Unconditionally sweep every spline mesh with the stencil/visibility setup for the given
+	 * state, bypassing the set-once guard in SetPlacementMaterialState. Only for the two moments the
+	 * mesh SET changes (TriggerMeshGeneration) or a caller explicitly forces (ForceApplyHologramMaterial);
+	 * everything else goes through SetPlacementMaterialState, which skips the sweep when the state is
+	 * already applied — repainting per frame was the render-proxy churn behind the Extend GPU lag.
+	 */
+	void ApplySplineMeshMaterialState(EHologramMaterialState materialState);
+
+	/** #497: invalidate the cached GetCost result — call after any spline/route/build-class change. */
+	void InvalidateCostCache() { bSelfCostCacheValid = false; }
 	
 	/**
 	 * Set the snapped connection components for this belt hologram.
@@ -199,4 +220,25 @@ private:
 	// Vanilla parent hologram calls this repeatedly during tick, but we only want to run it once
 	// to establish snapped connections - subsequent calls crash due to garbage collected spline data
 	bool bPostHologramPlacementCalled = false;
+
+	/** #497 set-once guard: the state last swept onto the spline meshes (and whether any sweep ran).
+	 *  Meshes created after a sweep are painted by TriggerMeshGeneration's trailing apply. */
+	EHologramMaterialState LastAppliedSplineMaterialState = EHologramMaterialState::HMS_OK;
+	bool bSplineMaterialStateApplied = false;
+
+	/** #497 (77×1 = 3 fps profile): cached self cost. The build gun's cost panel, vanilla
+	 *  CheckCanAfford, and the extend affordability check EACH walk every preview child's GetCost
+	 *  per frame; the belt/pipe fallback (recipe lookups + spline math + allocations) measured as
+	 *  the dominant game-thread cost at 77 modules. The result only changes when the spline/route/
+	 *  class changes — invalidated at every mutation point via InvalidateCostCache(). Consumed only
+	 *  for SF_ExtendChild previews with a healthy spline, so the #357 zero-spline restoration inside
+	 *  GetCost (load-bearing: it repairs previews vanilla resets) still runs when needed. */
+	mutable TArray<FItemAmount> CachedSelfCost;
+	mutable bool bSelfCostCacheValid = false;
+
+public:
+	/** [#497] Block vanilla's locked-parent nudge cascade — it bypasses SetHologramLocationAndRotation
+	 *  and dragged every extend child to world origin each tick (see the .cpp override). */
+	virtual void SetHologramNudgeLocation() override;
+
 };

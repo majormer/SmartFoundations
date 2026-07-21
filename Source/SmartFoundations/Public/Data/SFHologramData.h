@@ -44,7 +44,7 @@ struct SMARTFOUNDATIONS_API FSFHologramData {
     
     UPROPERTY()
     bool bIsChildHologram = false;
-    
+
     // Recipe copying support
     UPROPERTY()
     TSubclassOf<UFGRecipe> StoredRecipe = nullptr;

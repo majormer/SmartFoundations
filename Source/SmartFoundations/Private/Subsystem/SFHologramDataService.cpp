@@ -3,7 +3,37 @@
 #include "Subsystem/SFHologramDataService.h"
 #include "SmartFoundations.h"
 #include "Hologram/FGHologram.h"
+#include "Components/BoxComponent.h"   // [#497] DisableClearanceDetector
 #include "Logging/LogMacros.h"
+
+EHologramMaterialState USFHologramDataService::GetRawPlacementMaterialState(const AFGHologram* Hologram)
+{
+    if (!Hologram)
+    {
+        return EHologramMaterialState::HMS_OK;
+    }
+    // Cached reflection: mPlacementMaterialState is a protected replicated UPROPERTY with no
+    // non-aggregating public getter (see header comment for why the vanilla getter is O(children)).
+    static FProperty* StateProp = AFGHologram::StaticClass()->FindPropertyByName(TEXT("mPlacementMaterialState"));
+    if (StateProp)
+    {
+        return *StateProp->ContainerPtrToValuePtr<EHologramMaterialState>(Hologram);
+    }
+    return EHologramMaterialState::HMS_OK;
+}
+
+void USFHologramDataService::DisableClearanceDetector(AFGHologram* Hologram)
+{
+    if (!Hologram)
+    {
+        return;
+    }
+    if (UBoxComponent* Detector = Hologram->GetClearanceDetector())
+    {
+        Detector->SetGenerateOverlapEvents(false);
+        Detector->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    }
+}
 
 FSFHologramData* USFHologramDataService::GetOrCreateData(AFGHologram* Hologram) {
     if (!Hologram) return nullptr;
@@ -41,8 +71,8 @@ void USFHologramDataService::MarkAsChild(AFGHologram* ChildHologram, AFGHologram
         Data->bIsChildHologram = true;
         Data->ParentHologram = ParentHologram;
         Data->ChildType = ChildType;
-        
-        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("MarkAsChild: Marked %s as child of %s (type: %d)"), 
+
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("MarkAsChild: Marked %s as child of %s (type: %d)"),
             *ChildHologram->GetName(), *ParentHologram->GetName(), (int32)ChildType);
     }
 }

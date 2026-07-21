@@ -227,4 +227,14 @@ private:
     int32 CrossSectionStacks = 1;
 
     bool bActive = false;
+
+    /** #497: cached walk cost totals. GetCost on every pole+span (spline-length math, and the pipe
+     *  fallback even scans the recipe list) ran EVERY FRAME inside CanAffordWalk; the hologram set only
+     *  changes at the four mutation points (segment spawn/destroy, span relink, origin rebuild), which
+     *  mark this dirty. Per-frame cost = an availability check against the cached totals. */
+    mutable TMap<TSubclassOf<class UFGItemDescriptor>, int32> CachedWalkCostTotals;
+    mutable bool bWalkCostDirty = true;
+
+    /** #497 repaint-on-transition state for the origin cross-section cells (-1 = unset). */
+    int8 LastAppliedOriginState = -1;
 };

@@ -955,20 +955,20 @@ AFGHologram* FSFHologramHelperService::SpawnChildHologram(
 				ChildBlueprint->LoadBlueprintToOtherWorld();
 				// No AlignBuildableRootWithBounds: LoadBlueprintToOtherWorld aligns internally;
 				// a second call displaces the root off the grid (live measurement 2026-07-06).
-				UE_LOG(LogSmartFoundations, Log,
+				UE_LOG(LogSmartFoundations, Verbose,
 					TEXT("[#168] Staged blueprint child %s from descriptor %s"),
 					*ChildName.ToString(), *GetNameSafe(ParentBlueprint->mBlueprintDescriptor));
 			}
 			else
 			{
-				UE_LOG(LogSmartFoundations, Warning,
+				UE_LOG(LogSmartFoundations, Verbose,
 					TEXT("[#168] Parent blueprint hologram %s has no descriptor - child %s left unstaged"),
 					*ParentHologram->GetName(), *ChildName.ToString());
 			}
 		}
 		else if (ChildHologram)
 		{
-			UE_LOG(LogSmartFoundations, Warning,
+			UE_LOG(LogSmartFoundations, Verbose,
 				TEXT("[#168] Parent is a blueprint but spawned child %s is %s - not staged"),
 				*ChildName.ToString(), *ChildHologram->GetClass()->GetName());
 		}

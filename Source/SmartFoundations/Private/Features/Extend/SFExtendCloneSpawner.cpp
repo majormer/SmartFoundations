@@ -160,7 +160,7 @@ int32 FSFCloneTopology::SpawnChildHolograms(
     
     int32 SpawnedCount = 0;
     static int32 JsonSpawnCounter = 0;
-    const EHologramMaterialState ParentMaterialState = ParentHologram->GetHologramMaterialState();
+    const EHologramMaterialState ParentMaterialState = USFHologramDataService::GetRawPlacementMaterialState(ParentHologram);
     
     // [#477 review] Strip customization descriptors the local player hasn't unlocked. Preset
     // JSON can name ANY descriptor path; Smart stays vanilla-neutral by applying only what the
@@ -348,6 +348,9 @@ int32 FSFCloneTopology::SpawnChildHolograms(
                 DistributorChild->SetBuildClass(BuildClass);
                 DistributorChild->SetRecipe(Recipe);
                 
+                // [#497 L5] BEFORE FinishSpawning: BeginPlay registers the clearance detector inert
+                // (the existing post-spawn disable below then finds nothing to tear down).
+                DistributorChild->SetActorEnableCollision(false);
                 DistributorChild->FinishSpawning(FTransform(Rotation, Location));
                 
                 // Add as child IMMEDIATELY after FinishSpawning (matches working EXTEND code)
@@ -432,6 +435,9 @@ int32 FSFCloneTopology::SpawnChildHolograms(
                 SFPropagateDesignerToClone(BeltChild, ParentHologram);
 
 
+                // [#497 L5] BEFORE FinishSpawning: BeginPlay registers the clearance detector inert
+                // (the existing post-spawn disable below then finds nothing to tear down).
+                BeltChild->SetActorEnableCollision(false);
                 BeltChild->FinishSpawning(FTransform(Rotation, Location));
                 BeltChild->SetActorLocation(Location);
                 BeltChild->SetActorRotation(Rotation);
@@ -532,6 +538,8 @@ int32 FSFCloneTopology::SpawnChildHolograms(
                 SFPropagateDesignerToClone(LiftChild, ParentHologram);
                 
                 LiftChild->FinishSpawning(FTransform(Rotation, Location));
+                // [#497 L5] This child keeps its collision; kill only the clearance-detector overlap box.
+                USFHologramDataService::DisableClearanceDetector(LiftChild);
                 
                 // Apply lift top transform and force mesh rebuild (critical for visibility)
                 if (ChildData.bHasLiftData)
@@ -539,12 +547,15 @@ int32 FSFCloneTopology::SpawnChildHolograms(
                     FTransform TopTransform = ChildData.LiftData.TopTransform.ToFTransform();
                     LiftChild->SetTopTransform(TopTransform);
                     
-                    // Force mesh rebuild by simulating a location update
+                    // Force mesh rebuild by simulating a location update.
+                    // [#497] Must go through RebuildExtendPreviewMeshes: the SF_ExtendChild tag is
+                    // already on (added before FinishSpawning), so a plain SetHologramLocationAndRotation
+                    // hits the drift-proof early-return and the lift preview stays a default stub.
                     FHitResult DummyHit;
                     DummyHit.Location = Location;
                     DummyHit.ImpactPoint = Location;
                     DummyHit.ImpactNormal = FVector::UpVector;
-                    LiftChild->SetHologramLocationAndRotation(DummyHit);
+                    LiftChild->RebuildExtendPreviewMeshes(DummyHit);
                     
                     // SetHologramLocationAndRotation may have reset mTopTransform - restore it
                     LiftChild->SetTopTransform(TopTransform);
@@ -648,6 +659,9 @@ int32 FSFCloneTopology::SpawnChildHolograms(
                 USFHologramDataService::MarkAsChild(PipeChild, ParentHologram, ESFChildHologramType::ExtendClone);
                 SFPropagateDesignerToClone(PipeChild, ParentHologram);
                 
+                // [#497 L5] BEFORE FinishSpawning: BeginPlay registers the clearance detector inert
+                // (the existing post-spawn disable below then finds nothing to tear down).
+                PipeChild->SetActorEnableCollision(false);
                 PipeChild->FinishSpawning(FTransform(Rotation, Location));
                 PipeChild->SetActorLocation(Location);
                 PipeChild->SetActorRotation(Rotation);
@@ -723,6 +737,9 @@ int32 FSFCloneTopology::SpawnChildHolograms(
                 PassChild->SetBuildClass(BuildClass);
                 PassChild->SetRecipe(Recipe);
                 
+                // [#497 L5] BEFORE FinishSpawning: BeginPlay registers the clearance detector inert
+                // (the existing post-spawn disable below then finds nothing to tear down).
+                PassChild->SetActorEnableCollision(false);
                 PassChild->FinishSpawning(FTransform(Rotation, Location));
                 
                 ParentHologram->AddChild(PassChild, ChildName);
@@ -802,6 +819,9 @@ int32 FSFCloneTopology::SpawnChildHolograms(
                 AttChild->SetBuildClass(BuildClass);
                 AttChild->SetRecipe(Recipe);
                 
+                // [#497 L5] BEFORE FinishSpawning: BeginPlay registers the clearance detector inert
+                // (the existing post-spawn disable below then finds nothing to tear down).
+                AttChild->SetActorEnableCollision(false);
                 AttChild->FinishSpawning(FTransform(Rotation, Location));
                 
                 ParentHologram->AddChild(AttChild, ChildName);
@@ -877,6 +897,9 @@ int32 FSFCloneTopology::SpawnChildHolograms(
                 PoleChild->SetBuildClass(BuildClass);
                 PoleChild->SetRecipe(Recipe);
                 
+                // [#497 L5] BEFORE FinishSpawning: BeginPlay registers the clearance detector inert
+                // (the existing post-spawn disable below then finds nothing to tear down).
+                PoleChild->SetActorEnableCollision(false);
                 PoleChild->FinishSpawning(FTransform(Rotation, Location));
                 
                 // Add as child IMMEDIATELY after FinishSpawning
@@ -964,6 +987,9 @@ int32 FSFCloneTopology::SpawnChildHolograms(
                 
                 WireChild->Tags.AddUnique(FName(TEXT("SF_ExtendChild")));
                 
+                // [#497 L5] BEFORE FinishSpawning: BeginPlay registers the clearance detector inert
+                // (the existing post-spawn disable below then finds nothing to tear down).
+                WireChild->SetActorEnableCollision(false);
                 WireChild->FinishSpawning(FTransform(Rotation, Location));
                 
                 ParentHologram->AddChild(WireChild, ChildName);
@@ -1071,6 +1097,9 @@ int32 FSFCloneTopology::SpawnChildHolograms(
                     USFHologramDataService::MarkAsChild(PipeLane, ParentHologram, ESFChildHologramType::ExtendClone);
                     SFPropagateDesignerToClone(PipeLane, ParentHologram);
                     
+                    // [#497 L5] BEFORE FinishSpawning: BeginPlay registers the clearance detector inert
+                    // (the existing post-spawn disable below then finds nothing to tear down).
+                    PipeLane->SetActorEnableCollision(false);
                     PipeLane->FinishSpawning(FTransform(Rotation, Location));
                     
                     // Use TryUseBuildModeRouting for pipe lanes (matches belt lane pattern)
@@ -1147,6 +1176,9 @@ int32 FSFCloneTopology::SpawnChildHolograms(
                     USFHologramDataService::MarkAsChild(LiftLane, ParentHologram, ESFChildHologramType::ExtendClone);
                     SFPropagateDesignerToClone(LiftLane, ParentHologram);
                     
+                    // [#497 L5] BEFORE FinishSpawning: BeginPlay registers the clearance detector inert
+                    // (the existing post-spawn disable below then finds nothing to tear down).
+                    LiftLane->SetActorEnableCollision(false);
                     LiftLane->FinishSpawning(FTransform(Rotation, Location));
                     
                     if (ChildData.bHasLiftData)
@@ -1204,6 +1236,9 @@ int32 FSFCloneTopology::SpawnChildHolograms(
                     SFPropagateDesignerToClone(BeltLane, ParentHologram);
 
 
+                    // [#497 L5] BEFORE FinishSpawning: BeginPlay registers the clearance detector inert
+                    // (the existing post-spawn disable below then finds nothing to tear down).
+                    BeltLane->SetActorEnableCollision(false);
                     BeltLane->FinishSpawning(FTransform(Rotation, Location));
                     
                     // [#380] Route honoring the configured belt routing mode (Default/Curve/Straight),
@@ -1277,6 +1312,9 @@ int32 FSFCloneTopology::SpawnChildHolograms(
                 WallChild->SetBuildClass(BuildClass);
                 WallChild->SetRecipe(Recipe);
 
+                // [#497 L5] BEFORE FinishSpawning: BeginPlay registers the clearance detector inert
+                // (the existing post-spawn disable below then finds nothing to tear down).
+                WallChild->SetActorEnableCollision(false);
                 WallChild->FinishSpawning(FTransform(Rotation, Location));
 
                 ParentHologram->AddChild(WallChild, ChildName);
@@ -1518,7 +1556,7 @@ int32 FSFCloneTopology::SpawnChildHolograms(
     // [#477] Scrapeable Log-level summary (per spawn batch, not per child - Shipping strips
     // Verbose; the per-child lines above are Verbose diagnostic detail). "captured" = replayed from
     // the record, which works with NO live source (e.g. a saved preset after restart).
-    UE_LOG(LogSmartExtend, Log, TEXT("[#477] Customization applied: captured=%d live-harvest=%d default=%d (of %d spawned)"),
+    UE_LOG(LogSmartExtend, Verbose, TEXT("[#477] Customization applied: captured=%d live-harvest=%d default=%d (of %d spawned)"),
         CustomCaptured, CustomLive, CustomDefault, SpawnedCount);
     return SpawnedCount;
 }

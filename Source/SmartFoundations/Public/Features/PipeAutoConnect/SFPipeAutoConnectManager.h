@@ -100,6 +100,16 @@ public:
 	const TMap<AFGHologram*, TSharedPtr<FPipePreviewHelper>>& GetManifoldPipePreviews() const { return ManifoldPipePreviews; }
 
 private:
+	/** [#500] Route signature of the last completed junction evaluation (#497 L1 analog) —
+	 * see the belt orchestrator's twin for the covered inputs. */
+	bool bHasLastEvalSignature = false;
+	FTransform LastEvalParentTransform;
+	bool bLastEvalParentLocked = false;
+	int32 LastEvalJunctionCount = -1;
+	FVector LastEvalFirstJunctionLoc = FVector::ZeroVector;
+	FVector LastEvalLastJunctionLoc = FVector::ZeroVector;
+	float LastEvalLogisticsRange = -1.0f;
+
 	/**
 	 * Spawn a pipe child hologram between two connectors.
 	 * Uses real AddChild() for vanilla cost aggregation.

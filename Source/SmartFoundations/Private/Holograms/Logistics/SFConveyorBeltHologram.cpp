@@ -11,8 +11,8 @@
 #include "FGRecipe.h"
 #include "FGRecipeManager.h"
 #include "Resources/FGBuildingDescriptor.h"
-#include "DrawDebugHelpers.h"
 #include "Data/SFHologramDataRegistry.h"
+#include "Subsystem/SFHologramDataService.h"   // [#497] GetRawPlacementMaterialState (O(1) parent-state read)
 #include "Hologram/FGHologram.h"
 #include "FGConstructDisqualifier.h"
 #include "Features/Extend/SFExtendService.h"
@@ -145,28 +145,21 @@ void ASFConveyorBeltHologram::Tick(float DeltaSeconds)
         
         PreviousLocationSample = ActorLoc;
 
-        // DEBUG VISUALIZATION: Draw a bright line along the belt path so we can see if ANYTHING renders
-        if (mSplineComponent->GetNumberOfSplinePoints() >= 2)
-        {
-            const FVector Start = mSplineComponent->GetLocationAtSplinePoint(0, ESplineCoordinateSpace::World);
-            const FVector End = mSplineComponent->GetLocationAtSplinePoint(mSplineComponent->GetNumberOfSplinePoints() - 1, ESplineCoordinateSpace::World);
-            
-            // Draw thick bright cyan line for 0.1 seconds (refreshed every tick)
-            // This is independent of hologram/mesh rendering - if we see this, the world/client is correct
-            if (UWorld* World = GetWorld())
-            {
-                DrawDebugLine(World, Start, End, FColor::Cyan, false, 0.1f, 0, 10.0f);
-                
-                // Also draw boxes at each endpoint
-                DrawDebugBox(World, Start, FVector(50, 50, 50), FColor::Green, false, 0.1f, 0, 5.0f);
-                DrawDebugBox(World, End, FVector(50, 50, 50), FColor::Red, false, 0.1f, 0, 5.0f);
-            }
-        }
     }
 }
 
 void ASFConveyorBeltHologram::CheckValidPlacement()
 {
+    // [#497] Stackable AC belts are Smart-routed previews between poles the parent already
+    // validates; vanilla per-frame validation on them is pure cost — capture 4 (1,134-pole grid
+    // at rest) showed CheckClearance Chaos overlap queries per belt per frame from the parent's
+    // ValidatePlacementAndCost recursion. Validation is disabled for these children by design
+    // (DisableValidation at spawn); skip vanilla entirely.
+    if (GetParentHologram() && Tags.Contains(FName(TEXT("SF_StackableChild"))))
+    {
+        return;
+    }
+
     if (GetParentHologram() && Tags.Contains(FName(TEXT("SF_BeltAutoConnectChild"))))
     {
         Super::CheckValidPlacement();
@@ -228,7 +221,7 @@ void ASFConveyorBeltHologram::CheckValidPlacement()
 
         if (AFGHologram* Parent = GetParentHologram())
         {
-            if (Parent->GetHologramMaterialState() == EHologramMaterialState::HMS_ERROR)
+            if (USFHologramDataService::GetRawPlacementMaterialState(Parent) == EHologramMaterialState::HMS_ERROR)
             {
                 DesiredState = EHologramMaterialState::HMS_ERROR;
             }
@@ -317,7 +310,18 @@ void ASFConveyorBeltHologram::PostHologramPlacement(const FHitResult& hitResult,
         }
         
         SF_EXTEND_DIAGNOSTIC_LOG(LogSmartHologram, Log, TEXT("🎯 BELT PostHologramPlacement: Extend child %s - calling Super once for connection wiring"), *GetName());
+        // [#497] Vanilla's one allowed call runs GenerateAndUpdateSpline with the PARENT's hit
+        // result, and that does SetActorLocationAndRotation on this belt to that hit — world
+        // origin during preview (origin-trap confirmed: FGConveyorBeltHologram.cpp:1624). The
+        // connection-commit side effects are load-bearing (see below); the move is not. Save
+        // the Smart-authored transform and put it back if vanilla relocated us.
+        const FTransform SmartAuthoredTransform = GetActorTransform();
         Super::PostHologramPlacement(hitResult, callForChildren);
+        if (!GetActorLocation().Equals(SmartAuthoredTransform.GetLocation(), 0.5f) ||
+            !GetActorQuat().Equals(SmartAuthoredTransform.GetRotation(), 0.001f))
+        {
+            SetActorTransform(SmartAuthoredTransform);
+        }
 
         // Module replay (#427): with a RAW VANILLA parent the per-tick PostHologramPlacement
         // cascade consumes this once-gate DURING PREVIEW, handing vanilla the PARENT's hit
@@ -373,14 +377,52 @@ void ASFConveyorBeltHologram::PostHologramPlacement(const FHitResult& hitResult,
 
 void ASFConveyorBeltHologram::SetPlacementMaterialState(EHologramMaterialState materialState)
 {
+    // [#497] Child previews: vanilla runs TWO per-frame writers with CONFLICTING values — the
+    // parent cascade writes the parent's state (red while unaffordable/blocked) and per-child
+    // ValidatePlacementAndCost writes the child's own validity (OK — Smart children skip
+    // validation). The pair oscillates red<->OK every frame, defeating the set-once gate below and
+    // rebuilding every spline proxy per frame (capture 5, 1,200-pole grid: 1 fps at rest). Reject
+    // the "child is fine" write while the parent shows a problem; non-OK states always pass so a
+    // child can still paint its own error (e.g. #437 routed-shape-invalid).
+    if (materialState == EHologramMaterialState::HMS_OK)
+    {
+        if (AFGHologram* Parent = GetParentHologram())
+        {
+            // Raw read, NOT GetHologramMaterialState(): the vanilla getter walks the child array
+            // per call, which made this guard quadratic at scale (13-second frames at 8,238
+            // children). See USFHologramDataService::GetRawPlacementMaterialState.
+            if (USFHologramDataService::GetRawPlacementMaterialState(Parent) != EHologramMaterialState::HMS_OK)
+            {
+                return;
+            }
+        }
+    }
+
+    // #497 set-once: BOTH the vanilla Super sweep and our spline sweep dirty render proxies. The
+    // early-out must come BEFORE Super — capture 4 (1,134-pole stackable grid at rest) showed the
+    // parent cascade calling this per frame per belt with an unchanged state, and the unguarded
+    // Super::SetPlacementMaterialState alone re-applied materials to every component each frame
+    // (render-thread spline-mesh churn + texture-streaming churn = the idle lag). Once a state has
+    // been swept it holds. Meshes created later are painted by TriggerMeshGeneration's trailing
+    // ApplySplineMeshMaterialState.
+    if (bSplineMaterialStateApplied && materialState == LastAppliedSplineMaterialState)
+    {
+        return;
+    }
+
     // Let the base class update stencil/render depth
     Super::SetPlacementMaterialState(materialState);
 
+    ApplySplineMeshMaterialState(materialState);
+}
+
+void ASFConveyorBeltHologram::ApplySplineMeshMaterialState(EHologramMaterialState materialState)
+{
     TArray<USplineMeshComponent*> MeshComps;
     GetComponents<USplineMeshComponent>(MeshComps);
     const uint8 StencilValue = GetStencilForHologramMaterialState(materialState);
 
-    // If no spline meshes are present, skip the rest to avoid log spam
+    // No meshes yet: leave the guard unarmed so the next call (or mesh generation) paints them.
     if (MeshComps.Num() == 0)
     {
         return;
@@ -393,13 +435,16 @@ void ASFConveyorBeltHologram::SetPlacementMaterialState(EHologramMaterialState m
             Mesh->SetRenderCustomDepth(true);
             Mesh->SetCustomDepthStencilValue(StencilValue);
             Mesh->SetCustomDepthStencilWriteMask(ERendererStencilMask::ERSM_Default);
-            
+
             // Force render state update
             Mesh->MarkRenderStateDirty();
             Mesh->SetVisibility(true, true);
             Mesh->SetHiddenInGame(false);
         }
     }
+
+    LastAppliedSplineMaterialState = materialState;
+    bSplineMaterialStateApplied = true;
 
     UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🎨 BELT SetPlacementMaterialState: State=%d, SplineMeshes=%d, Stencil=%d"),
         (int32)materialState,
@@ -815,10 +860,35 @@ void ASFConveyorBeltHologram::SetHologramLocationAndRotation(const FHitResult& h
     Super::SetHologramLocationAndRotation(hitResult);
 }
 
+TArray<FItemAmount> ASFConveyorBeltHologram::GetBaseCost() const
+{
+	// #497: Preview belt children are commonly spawned without a recipe (mRecipe == null); their cost is
+	// length-based and computed in GetCost. Vanilla AFGHologram::GetBaseCost would call
+	// UFGRecipe::GetIngredients(nullptr), which logs "FGRecipe::GetIngredients: class was nullpeter"
+	// once per child per frame (~89/frame in a conveyor blueprint) — each line a synchronous disk write
+	// via the UE log + Sentry breadcrumb, the confirmed source of the Extend stutter/frame-loss.
+	// A null recipe has no base cost, so skip vanilla entirely (which returns empty anyway, just noisily).
+	if (!GetRecipe())
+	{
+		return TArray<FItemAmount>();
+	}
+	return Super::GetBaseCost();
+}
+
 TArray<FItemAmount> ASFConveyorBeltHologram::GetCost(bool includeChildren) const
 {
 	UE_LOG(LogSmartHologram, VeryVerbose, TEXT("💰 BELT GetCost() CALLED on %s (includeChildren=%d)"), *GetName(), includeChildren);
-	
+
+	// #497 cost cache (see header). The health check stays IN FRONT of the cache: a vanilla-reset
+	// (zero-length) spline must fall through to the full path so the #357 defensive restoration
+	// below still repairs the preview. Gated to extend preview children — they have no hologram
+	// children of their own, so the includeChildren flag cannot change the result.
+	const bool bSplineHealthy = mSplineComponent && mSplineComponent->GetSplineLength() > KINDA_SMALL_NUMBER;
+	if (bSelfCostCacheValid && bSplineHealthy && Tags.Contains(FName(TEXT("SF_ExtendChild"))))
+	{
+		return CachedSelfCost;
+	}
+
 	// Get base cost from parent. In Satisfactory 1.2 vanilla AFGConveyorBeltHologram::GetCost already
 	// returns the length-based belt material cost.
 	TArray<FItemAmount> TotalCost = Super::GetCost(includeChildren);
@@ -831,6 +901,11 @@ TArray<FItemAmount> ASFConveyorBeltHologram::GetCost(bool includeChildren) const
 	if (TotalCost.Num() > 0)
 	{
 		UE_LOG(LogSmartHologram, VeryVerbose, TEXT("💰 BELT GetCost: using vanilla cost (%d item types), skipping manual calc"), TotalCost.Num());
+		if (bSplineHealthy)
+		{
+			CachedSelfCost = TotalCost;
+			bSelfCostCacheValid = true;
+		}
 		return TotalCost;
 	}
 
@@ -966,11 +1041,20 @@ TArray<FItemAmount> ASFConveyorBeltHologram::GetCost(bool includeChildren) const
 	}
 	
 	UE_LOG(LogSmartHologram, VeryVerbose, TEXT("💰 BELT: Returning %d item types"), TotalCost.Num());
+
+	// #497: cache the computed fallback cost while the spline is healthy (a zero-length spline
+	// leaves the cache invalid so the restoration path gets another chance next call).
+	if (mSplineComponent && mSplineComponent->GetSplineLength() > KINDA_SMALL_NUMBER)
+	{
+		CachedSelfCost = TotalCost;
+		bSelfCostCacheValid = true;
+	}
 	return TotalCost;
 }
 
 void ASFConveyorBeltHologram::TriggerMeshGeneration()
 {
+    InvalidateCostCache();  // #497: spline (and therefore length-based cost) is changing
     UE_LOG(LogSmartHologram, Verbose, TEXT("🎯 BELT TriggerMeshGeneration CALLED on %s - mSplineData has %d points"), *GetName(), mSplineData.Num());
     
     if (!mSplineComponent)
@@ -1166,8 +1250,9 @@ void ASFConveyorBeltHologram::TriggerMeshGeneration()
     UE_LOG(LogSmartHologram, Verbose, TEXT("🎯 BELT TriggerMeshGeneration: Created %d segments of %.1f cm each"),
         MeshComps.Num(), SegmentLength);
     
-    // Apply the current hologram material state to newly generated meshes.
-    SetPlacementMaterialState(GetHologramMaterialState());
+    // Apply the current hologram material state to newly generated meshes. Must bypass the #497
+    // set-once guard: the mesh SET just changed even though the state value may not have.
+    ApplySplineMeshMaterialState(GetHologramMaterialState());
 }
 
 // Override ConfigureActor to let parent class handle mesh initialization
@@ -1895,4 +1980,17 @@ void ASFConveyorBeltHologram::SetSnappedConnections(UFGFactoryConnectionComponen
     {
         SF_EXTEND_DIAGNOSTIC_LOG(LogSmartHologram, Warning, TEXT("🔧 EXTEND Belt: Failed to find mSnappedConnectionComponents property on %s"), *GetName());
     }
+}
+
+void ASFConveyorBeltHologram::SetHologramNudgeLocation()
+{
+	// [#497] Extend children: block vanilla's locked-parent nudge cascade, which bypasses the
+	// SF_ExtendChild SetHologramLocationAndRotation guard via plain SetActorLocation and dragged
+	// every extend child to world origin each tick (origin-trap stack: FGBuildGunBuild.cpp:320 ->
+	// FGHologram.cpp:440 -> :2120). Non-extend instances keep vanilla behavior.
+	if (Tags.Contains(FName(TEXT("SF_ExtendChild"))))
+	{
+		return;
+	}
+	Super::SetHologramNudgeLocation();
 }

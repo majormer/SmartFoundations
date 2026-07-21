@@ -8,7 +8,6 @@
 #include "Data/SFHologramData.h"
 #include "Holograms/Logistics/SFPipelineHologram.h"
 #include "Components/SplineComponent.h"
-#include "DrawDebugHelpers.h"
 #include "FGPlayerController.h"
 #include "FGRecipe.h"
 
@@ -95,7 +94,7 @@ void FPipePreviewHelper::ConfigureHologram(AFGSplineHologram* SpawnedHologram, U
 	UClass* PipeBuildClass = GetBuildClass(Subsystem);
 	if (!PipeBuildClass)
 	{
-		UE_LOG(LogPipePreview, Error, TEXT("Failed to get pipe class for tier=%d (%s)"),
+		UE_LOG(LogPipePreview, Verbose, TEXT("Failed to get pipe class for tier=%d (%s)"),
 			GetTier(), bPipeWithIndicator ? TEXT("Normal") : TEXT("Clean"));
 		return;
 	}
@@ -112,7 +111,7 @@ void FPipePreviewHelper::ConfigureHologram(AFGSplineHologram* SpawnedHologram, U
 	}
 	else
 	{
-		UE_LOG(LogPipePreview, Warning, TEXT("No recipe found for Mk%d pipe (%s)"),
+		UE_LOG(LogPipePreview, Verbose, TEXT("No recipe found for Mk%d pipe (%s)"),
 			ActualTier, bPipeWithIndicator ? TEXT("Normal") : TEXT("Clean"));
 	}
 }
@@ -184,17 +183,12 @@ void FPipePreviewHelper::UpdateSplineEndpoints(UFGPipeConnectionComponent* Start
 	const float Distance = FVector::Dist(StartLoc, EndLoc);
 	const FVector Direction = (EndLoc - StartLoc).GetSafeNormal();
 
-	if (UWorld* LocalWorld = World.Get())
-	{
-		DrawDebugLine(LocalWorld, StartLoc, EndLoc, FColor::Cyan, false, 0.1f, 0, 8.0f);
-	}
-
 	PipeHologram->SetActorLocation(StartLoc);
 
 	USplineComponent* SplineComp = PipeHologram->FindComponentByClass<USplineComponent>();
 	if (!SplineComp)
 	{
-		UE_LOG(LogPipePreview, Warning, TEXT("No spline component found on pipe hologram"));
+		UE_LOG(LogPipePreview, Verbose, TEXT("No spline component found on pipe hologram"));
 		return;
 	}
 

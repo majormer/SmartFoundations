@@ -26,7 +26,15 @@ public:
     
     /** Override placement validation to always succeed for child hologram preview */
     virtual void CheckValidPlacement() override;
-    
+
+    /**
+     * #497: Preview lift children can carry a null mRecipe. Vanilla AFGHologram::GetBaseCost would then
+     * call UFGRecipe::GetIngredients(nullptr) and log a warning every frame per child — synchronous disk
+     * writes (Sentry breadcrumbs) that stutter the game. A null recipe has no base cost, so return empty
+     * in that case; otherwise defer to vanilla.
+     */
+    virtual TArray<FItemAmount> GetBaseCost() const override;
+
     /** 
      * Override Construct to build lift when used as EXTEND child.
      * When tagged with SF_ExtendChild, this builds the lift via vanilla mechanism.
@@ -47,6 +55,14 @@ public:
     
     /** Force apply hologram material to all mesh components */
     void ForceApplyHologramMaterial();
+
+    /**
+     * [#497] One-shot vanilla mesh rebuild for extend children, bypassing the SF_ExtendChild
+     * drift-proof guard in SetHologramLocationAndRotation. The clone spawner calls this once
+     * after SetTopTransform so vanilla arranges the bottom/mid/top mesh stack from it; the
+     * per-frame parent propagation stays blocked.
+     */
+    void RebuildExtendPreviewMeshes(const FHitResult& hitResult);
     
     /** Public wrapper to set build class before spawning */
     void SetBuildClass(UClass* InBuildClass) { mBuildClass = InBuildClass; }
@@ -60,6 +76,10 @@ public:
 private:
     /** Cached lift height for change detection */
     float CachedLiftHeight = 0.0f;
+
+    /** #497 set-once guard: last material state force-applied to the lift meshes. */
+    EHologramMaterialState LastAppliedLiftMaterialState = EHologramMaterialState::HMS_OK;
+    bool bLiftMaterialStateApplied = false;
     
     /**
      * Set the snapped connection components for this lift.
@@ -68,4 +88,10 @@ private:
      * @param Connection1 The connection at the top of the lift (can be nullptr)
      */
     void SetSnappedConnections(UFGFactoryConnectionComponent* Connection0, UFGFactoryConnectionComponent* Connection1);
+
+public:
+	/** [#497] Block vanilla's locked-parent nudge cascade — it bypasses SetHologramLocationAndRotation
+	 *  and dragged every extend child to world origin each tick (see the .cpp override). */
+	virtual void SetHologramNudgeLocation() override;
+
 };

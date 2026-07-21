@@ -19,6 +19,7 @@
 #include "Hologram/FGBuildableHologram.h"
 #include "Hologram/FGBlueprintHologram.h"
 #include "Hologram/FGConveyorPoleHologram.h"      // #341: belt-support parent hologram (covers stackable/wall/ceiling)
+#include "Hologram/FGFactoryBuildingHologram.h"   // [#497] grid-child validation cancel at the override the poles dispatch to
 #include "Hologram/FGPoleHologram.h"              // [MP-SPEC] multi-step gate: pole height step
 #include "Hologram/FGFloodlightHologram.h"        // [MP-SPEC] multi-step gate: floodlight angle step
 #include "Hologram/FGStandaloneSignHologram.h"    // [MP-SPEC] multi-step gate: sign height step
@@ -64,6 +65,59 @@
 // after Construct ends up holding soon-destroyed temp actors and self-destructs (live finding
 // 2026-06-09: "no grouping persists" on spec-built foundation grids).
 static TWeakObjectPtr<AFGBlueprintProxy> GSFActiveSpecGroupProxy;
+
+// [#497] True when this hologram is the ROOT of a large Smart grid (unparented, with many
+// SF_GridChild children). Vanilla CheckClearance passes the hologram's ENTIRE child tree as
+// ignored actors to the overlap query, and the physics filter checks every overlap candidate
+// against that list linearly — O(candidates x children), quadratic in grid size. Counting diag
+// round 4 proved the burner is exactly the root's 1-2 queries per frame (maxPassesPerFrame=2,
+// 10-second frames at ~12K children). Above the threshold, skip the root's vanilla clearance:
+// affordability red is computed separately (CheckCanAfford), and Smart grids place their
+// members by design. Normal single-building behavior below the threshold is untouched.
+static bool SFIsSmartGridMegaRoot(const AFGHologram* Holo)
+{
+	if (!Holo || Holo->GetParentHologram() != nullptr)
+	{
+		return false;
+	}
+	// Smart's subsystem tracks exactly which hologram it is actively scaling, and Smart's OWN
+	// tracked-children list holds the grid. STATSv2 proved vanilla mChildren is nearly EMPTY
+	// for a stackable mega-grid (rootKids=0-5 at thousands of tracked children) — the grid
+	// delegates are never AddChild'd — so both earlier predicate legs (mChildren tag probe,
+	// mChildren count threshold) were structurally unable to fire. It also means vanilla's
+	// clearance query treats every collision-enabled grid child as a FOREIGN body: thousands
+	// of hits to filter and process per query, the measured ~5 s.
+	USFSubsystem* SmartSubsystem = USFSubsystem::Get(Holo->GetWorld());
+	if (!SmartSubsystem || SmartSubsystem->GetActiveHologram() != Holo)
+	{
+		return false;
+	}
+	FSFHologramHelperService* HologramHelper = SmartSubsystem->GetHologramHelper();
+	return HologramHelper && HologramHelper->GetSpawnedChildren().Num() >= 64;
+}
+
+// [#497] True when this hologram is a Smart-positioned grid child OR any descendant of one.
+// The Tier-3 vanilla-delegate children carry the SF_GridChild tag, but vanilla stackable-pole
+// holograms spawn their OWN stack-segment children under them (capture 8: the per-frame
+// clearance burn survived the self-tag predicate because the burning holograms were these
+// untagged grandchildren). Walk the parent chain — 2-3 hops, trivially cheaper than the
+// vanilla validation/nudge work the callers cancel.
+static bool SFIsSmartGridChildOrDescendant(const AFGHologram* Holo)
+{
+	static const FName SFGridChildTagName(TEXT("SF_GridChild"));
+	if (!Holo || Holo->GetParentHologram() == nullptr)
+	{
+		return false;
+	}
+	for (const AFGHologram* H = Holo; H; H = H->GetParentHologram())
+	{
+		if (H->Tags.Contains(SFGridChildTagName))
+		{
+			return true;
+		}
+	}
+	return false;
+}
 
 void USFGameInstanceModule::RegisterSpecConstructionHooks()
 {
@@ -320,6 +374,15 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 		[=](auto& scope, const AFGHologram* self, bool includeChildren)
 		{
 			if (!self || !includeChildren || !SFScalingSpecExpansion::IsSpecConstructionEnabled())
+			{
+				return;
+			}
+			// [#497] Child holograms can never be a staged-commit root: scaling/extend specs stage on
+			// the held (root) hologram and walk seeds are standalone. The build gun's per-frame cost
+			// walk calls GetCost on EVERY AddChild'd preview child (thousands at high Extend counts),
+			// and each pass through this hook constructed an FSFExtendCommitSpec probe + ran the
+			// staged-commit lookups below — measured as real per-frame overhead at 77×1. Bail first.
+			if (self->GetParentHologram() != nullptr)
 			{
 				return;
 			}
@@ -893,6 +956,60 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 	// client was refused server-side (live 2026-06-10: FGCDEncroachingClearance from
 	// ValidatePlacementAndCost). Mirror SP: when a staged Extend commit exists for this hologram,
 	// clear the disqualifiers after vanilla evaluates them.
+	// ── [#497] Vanilla-delegate grid children (Tier-3 stackable supports, SF_GridChild tag):
+	// two vanilla per-frame paths scale O(children) and burned the game thread at a 3,600-pole
+	// stackable grid (capture 6: 54% per-child CheckClearance Chaos overlaps, 21% reposition
+	// tug-of-war paying UpdateOverlaps on collision-enabled children):
+	//  1) ValidatePlacementAndCost recurses every child -> CheckValidPlacement -> CheckClearance
+	//     overlap query per child per frame. Smart child classes no-op validation (#354); the
+	//     vanilla-delegate classes can't be overridden, so cancel at the hook seam.
+	//  2) The locked-parent nudge cascade (blocked on Smart classes in 78f3e06) still drags
+	//     vanilla-delegate children every tick, and the Phase-4 refresh drags them back.
+	//     Cancel the child-side nudge for tagged children; the parent's own nudge still moves
+	//     children through Smart's transform follow.
+	{
+		SUBSCRIBE_METHOD_VIRTUAL(AFGBuildableHologram::CheckValidPlacement, BuildableHologramCDO,
+			[](auto& scope, AFGBuildableHologram* self)
+			{
+				if (SFIsSmartGridChildOrDescendant(self))
+				{
+					return; // Smart-positioned child: skip vanilla validation entirely
+				}
+				if (SFIsSmartGridMegaRoot(self))
+				{
+					return; // mega-grid root: vanilla clearance is O(candidates x children)
+				}
+				scope(self);
+			});
+		// SML virtual hooks bind ONE function body, not the whole vtable slot: the stackable pole
+		// children dispatch to the AFGFactoryBuildingHologram OVERRIDE and never enter the
+		// AFGBuildableHologram body above (capture 7: clearance burn survived the first hook).
+		// Hook the override too; all cancels share the ancestor-tag predicate.
+		AFGFactoryBuildingHologram* FactoryBuildingHologramCDO = GetMutableDefault<AFGFactoryBuildingHologram>();
+		SUBSCRIBE_METHOD_VIRTUAL(AFGFactoryBuildingHologram::CheckValidPlacement, FactoryBuildingHologramCDO,
+			[](auto& scope, AFGFactoryBuildingHologram* self)
+			{
+				if (SFIsSmartGridChildOrDescendant(self))
+				{
+					return; // Smart-positioned child: skip vanilla validation entirely
+				}
+				if (SFIsSmartGridMegaRoot(self))
+				{
+					return; // mega-grid root: vanilla clearance is O(candidates x children)
+				}
+				scope(self);
+			});
+		SUBSCRIBE_METHOD_VIRTUAL(AFGHologram::SetHologramNudgeLocation, HologramCDO,
+			[](auto& scope, AFGHologram* self)
+			{
+				if (SFIsSmartGridChildOrDescendant(self))
+				{
+					return; // block the locked-parent nudge cascade for Smart-positioned children
+				}
+				scope(self);
+			});
+	}
+
 	// NOTE: hooked at the AFGBuildableHologram override, NOT the AFGHologram base -
 	// &AFGHologram::CheckValidPlacement resolves to an unhookable import thunk (live dedi
 	// startup FATAL 2026-06-10: "resulting function still points to a thunk"). The override
@@ -949,7 +1066,7 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 					{
 						const int32 Expanded = SFScalingSpecExpansion::ExpandScalingSpecIntoChildren(
 							self, BlueprintSpec, self->GetRecipe());
-						UE_LOG(LogSmartFoundations, Log,
+						UE_LOG(LogSmartFoundations, Verbose,
 							TEXT("[#168-MP] Blueprint construct seam %s: expanded %d grid cop%s server-side (delta=%s)."),
 							*self->GetName(), Expanded, Expanded == 1 ? TEXT("y") : TEXT("ies"),
 							*BlueprintSpec.BlueprintContentDelta.ToCompactString());
@@ -975,7 +1092,7 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 								Entry.WireEnd += PlanShift;
 							}
 						}
-						UE_LOG(LogSmartFoundations, Log,
+						UE_LOG(LogSmartFoundations, Verbose,
 							TEXT("[#168-MP] Blueprint construct seam %s: plan shift %s (serverAnchor=%s clientAnchor=%s)."),
 							*self->GetName(), *PlanShift.ToCompactString(),
 							*ServerParentAnchor.ToCompactString(), *BlueprintSpec.ClientParentAnchorRel.ToCompactString());
@@ -983,7 +1100,7 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 					const int32 Conduits = SFScalingSpecExpansion::SpawnConduitPlanChildren(self, BlueprintSpec);
 					if (Conduits > 0)
 					{
-						UE_LOG(LogSmartFoundations, Log,
+						UE_LOG(LogSmartFoundations, Verbose,
 							TEXT("[#168-MP] Blueprint construct seam %s: staged %d seam conduit(s) from the client plan."),
 							*self->GetName(), Conduits);
 					}

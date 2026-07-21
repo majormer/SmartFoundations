@@ -24,7 +24,7 @@ FSFInputHandler::~FSFInputHandler()
 void FSFInputHandler::Initialize(USFSubsystem* InOwnerSubsystem)
 {
 	OwnerSubsystem = InOwnerSubsystem;
-	UE_LOG(LogSmartFoundations, Log, TEXT("InputHandler: Initialized"));
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("InputHandler: Initialized"));
 }
 
 void FSFInputHandler::Shutdown()
@@ -37,7 +37,7 @@ void FSFInputHandler::Shutdown()
 	LastController.Reset();
 	bInputSetupCompleted = false;
 
-	UE_LOG(LogSmartFoundations, Log, TEXT("InputHandler: Shutdown complete"));
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("InputHandler: Shutdown complete"));
 }
 
 void FSFInputHandler::SetSmartContextActive(bool bActive)

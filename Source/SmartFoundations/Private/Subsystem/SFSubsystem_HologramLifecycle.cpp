@@ -29,7 +29,7 @@ void USFSubsystem::RegisterActiveHologram(AFGHologram* Hologram)
 		UWorld* World = GetWorld();
 		if (World)
 		{
-			UE_LOG(LogSmartFoundations, Log, TEXT("Smart! Subsystem: Lazy initialization on first hologram registration"));
+			UE_LOG(LogSmartFoundations, Verbose, TEXT("Smart! Subsystem: Lazy initialization on first hologram registration"));
 
 			// Load configuration (deferred from Initialize() to ensure ConfigManager is available)
 			if (!bConfigLoaded)
@@ -45,7 +45,7 @@ void USFSubsystem::RegisterActiveHologram(AFGHologram* Hologram)
 			// Always initialize so Num1 toggle works, but respect config for initial visibility
 			if (ArrowModule && ArrowModule->Initialize(World, this, this))
 			{
-				UE_LOG(LogSmartFoundations, Log, TEXT("✅ Arrow visualization initialized (StaticMeshComponent) - Config: bShowArrows=%s, Runtime: %s"),
+				UE_LOG(LogSmartFoundations, Verbose, TEXT("✅ Arrow visualization initialized (StaticMeshComponent) - Config: bShowArrows=%s, Runtime: %s"),
 					CachedConfig.bShowArrows ? TEXT("true") : TEXT("false"),
 					bArrowsRuntimeVisible ? TEXT("true") : TEXT("false"));
 
@@ -57,11 +57,11 @@ void USFSubsystem::RegisterActiveHologram(AFGHologram* Hologram)
 					0.016f,  // ~60fps
 					true     // Repeat
 				);
-				UE_LOG(LogSmartFoundations, Log, TEXT("Started arrow tick timer"));
+				UE_LOG(LogSmartFoundations, Verbose, TEXT("Started arrow tick timer"));
 			}
 			else
 			{
-				UE_LOG(LogSmartFoundations, Error, TEXT("❌ Failed to initialize arrow visualization"));
+				UE_LOG(LogSmartFoundations, Verbose, TEXT("❌ Failed to initialize arrow visualization"));
 			}
 #else
 			UE_LOG(LogSmartFoundations, Verbose, TEXT("Arrow visualization disabled (SMART_ARROWS_ENABLED=0)"));
@@ -964,7 +964,7 @@ void USFSubsystem::PollForActiveHologram()
 		const bool bDifferentBuildable = (WalkSeed && CurrentHologram && CurrentHologram->GetBuildClass() != WalkSeed->GetBuildClass());
 		if (bSeedGone || bDifferentBuildable)
 		{
-			UE_LOG(LogSmartFoundations, Log, TEXT("[Walk] Held buildable changed (seed=%s current=%s) — exiting walk"),
+			UE_LOG(LogSmartFoundations, Verbose, TEXT("[Walk] Held buildable changed (seed=%s current=%s) — exiting walk"),
 				*GetNameSafe(WalkSeed), *GetNameSafe(CurrentHologram));
 			ExitWalkMode();
 			return;
@@ -1725,7 +1725,7 @@ TSharedPtr<ISFHologramAdapter> USFSubsystem::CreateHologramAdapter(AFGHologram* 
 	// Connections between copies are the GAME's job (blueprint auto-connect), not Smart's.
 	if (AFGBlueprintHologram* BlueprintHolo = Cast<AFGBlueprintHologram>(Hologram))
 	{
-		UE_LOG(LogSmartFoundations, Log,
+		UE_LOG(LogSmartFoundations, Verbose,
 			TEXT("[#168] Blueprint hologram (%s) - creating Blueprint adapter (scaleable blueprints)"),
 			*Hologram->GetName());
 		return MakeShared<FSFBlueprintAdapter>(BlueprintHolo);

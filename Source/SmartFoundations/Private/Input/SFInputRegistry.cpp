@@ -30,7 +30,7 @@ USFInputRegistry::USFInputRegistry()
 
 void USFInputRegistry::InitializeSmartInputSystem()
 {
-	UE_LOG(LogSmartFoundations, Log, TEXT("Smart! Enhanced Input system initialization - SML 3.11.x Blueprint approach"));
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("Smart! Enhanced Input system initialization - SML 3.11.x Blueprint approach"));
 
 	UE_LOG(LogSmartFoundations, Verbose, TEXT("📋 Smart! Gameplay Tags ready for Blueprint binding:"));
 	UE_LOG(LogSmartFoundations, Verbose, TEXT("  - %s (Num8 - Scale Forward)"), *TAG_SCALE_X_POSITIVE);

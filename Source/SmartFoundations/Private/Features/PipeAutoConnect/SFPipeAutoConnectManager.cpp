@@ -111,7 +111,39 @@ void FSFPipeAutoConnectManager::ProcessAllJunctions(AFGHologram* ParentJunctionH
 	{
 		return;
 	}
-	
+
+	// [#500] Route-signature skip (#497 L1 analog, mirrors the belt orchestrator): the
+	// debounced eval fires repeatedly during a held drag and re-scores every junction against
+	// every candidate connector even when nothing moved. Skip when the parent transform + lock
+	// state, junction count, first/last junction positions (catches spacing/stagger moves at
+	// constant count), and pipe settings are unchanged. Existing previews stand.
+	{
+		const bool bParentLockedNow = ParentJunctionHologram->IsHologramLocked();
+		const float RangeNow = Subsystem->GetAutoConnectRuntimeSettings().NearbyLogisticsRange;
+		const FTransform ParentTransformNow = ParentJunctionHologram->GetActorTransform();
+		const FVector FirstLoc = AllJunctions[0] ? AllJunctions[0]->GetActorLocation() : FVector::ZeroVector;
+		const FVector LastLoc = AllJunctions.Last() ? AllJunctions.Last()->GetActorLocation() : FVector::ZeroVector;
+
+		if (bHasLastEvalSignature
+			&& AllJunctions.Num() == LastEvalJunctionCount
+			&& bParentLockedNow == bLastEvalParentLocked
+			&& RangeNow == LastEvalLogisticsRange
+			&& ParentTransformNow.Equals(LastEvalParentTransform, 0.5f)
+			&& FirstLoc.Equals(LastEvalFirstJunctionLoc, 0.5f)
+			&& LastLoc.Equals(LastEvalLastJunctionLoc, 0.5f))
+		{
+			UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🔧 PIPE: eval skipped - route signature unchanged (%d junctions)"), AllJunctions.Num());
+			return;
+		}
+		bHasLastEvalSignature = true;
+		LastEvalParentTransform = ParentTransformNow;
+		bLastEvalParentLocked = bParentLockedNow;
+		LastEvalJunctionCount = AllJunctions.Num();
+		LastEvalFirstJunctionLoc = FirstLoc;
+		LastEvalLastJunctionLoc = LastLoc;
+		LastEvalLogisticsRange = RangeNow;
+	}
+
 	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🔧 PIPE: Processing %d junctions with shared connector reservation"), AllJunctions.Num());
 	
 	// CRITICAL: Clean up pipe previews for junctions that no longer exist (removed children)
@@ -338,7 +370,7 @@ void FSFPipeAutoConnectManager::ProcessAllJunctions(AFGHologram* ParentJunctionH
 	// When parent is locked (during nudging), vanilla may hide children.
 	// Ensure ALL tracked pipes have correct visibility regardless of updates.
 	bool bParentLocked = ParentJunctionHologram->IsHologramLocked();
-	EHologramMaterialState ParentMaterialState = ParentJunctionHologram->GetHologramMaterialState();
+	EHologramMaterialState ParentMaterialState = USFHologramDataService::GetRawPlacementMaterialState(ParentJunctionHologram);
 	
 	// Refresh building pipe children (Side A)
 	for (auto& Pair : BuildingPipeChildren)
@@ -845,7 +877,7 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 			FSFDistributorTopologyResolver::Resolve(ParentJunctionHologram->GetBuildClass(), ChosenConnectorName);
 		if (ChosenTopology.bRecognized && !ChosenTopology.bValidManifold)
 		{
-			UE_LOG(LogSmartAutoConnect, Log,
+			UE_LOG(LogSmartAutoConnect, Verbose,
 				TEXT("Pipe Auto-Connect: discarding invalid distributor branch %s.%s (missing perpendicular lane port)"),
 				*GetNameSafe(ParentJunctionHologram->GetBuildClass()), *ChosenConnectorName.ToString());
 			if (TWeakObjectPtr<ASFPipelineHologram>* Child = BuildingPipeChildren.Find(ParentJunctionHologram); Child && Child->IsValid())
@@ -1099,7 +1131,7 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 						PipeChild->LockHologramPosition(true);
 					}
 					PipeChild->SetActorHiddenInGame(false);
-					PipeChild->SetPlacementMaterialState(ParentJunctionHologram->GetHologramMaterialState());
+					PipeChild->SetPlacementMaterialState(USFHologramDataService::GetRawPlacementMaterialState(ParentJunctionHologram));
 					
 					UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🔧 PIPE CHILD: Updated existing child for junction %s (parentLocked=%d, childRelocked=%d)"), 
 						*ParentJunctionHologram->GetName(), bParentLocked ? 1 : 0, bParentLocked ? 1 : 0);
@@ -1320,7 +1352,7 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 								
 								if (bPLocked) PipeChildB->LockHologramPosition(true);
 								PipeChildB->SetActorHiddenInGame(false);
-								PipeChildB->SetPlacementMaterialState(ParentJunctionHologram->GetHologramMaterialState());
+								PipeChildB->SetPlacementMaterialState(USFHologramDataService::GetRawPlacementMaterialState(ParentJunctionHologram));
 							}
 						}
 						else

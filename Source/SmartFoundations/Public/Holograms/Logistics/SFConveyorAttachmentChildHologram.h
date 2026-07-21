@@ -22,7 +22,11 @@ public:
     
     // Override validation to check data structure flags
     virtual void CheckValidPlacement() override;
-    
+
+    // #497 drift-proof: the clone topology owns the transform — block vanilla parent propagation
+    // from repositioning this child every frame (same contract as the other *ChildHologram classes).
+    virtual void SetHologramLocationAndRotation(const FHitResult& hitResult) override;
+
     // Override Construct to register built distributor for EXTEND wiring
     virtual AActor* Construct(TArray<AActor*>& out_children, FNetConstructionID constructionID) override;
     
@@ -32,4 +36,10 @@ public:
 protected:
     // Check if we should skip validation based on data structure
     bool ShouldSkipValidation() const;
+
+public:
+	/** [#497] Block vanilla's locked-parent nudge cascade — it bypasses SetHologramLocationAndRotation
+	 *  and dragged every extend child to world origin each tick (see the .cpp override). */
+	virtual void SetHologramNudgeLocation() override;
+
 };

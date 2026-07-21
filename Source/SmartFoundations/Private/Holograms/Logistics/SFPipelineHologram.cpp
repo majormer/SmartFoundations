@@ -12,6 +12,7 @@
 #include "FGPipeSubsystem.h"
 #include "FGPipeNetwork.h"
 #include "Data/SFHologramDataRegistry.h"
+#include "Subsystem/SFHologramDataService.h"   // [#497] GetRawPlacementMaterialState (O(1) parent-state read)
 #include "Features/Extend/SFExtendService.h"
 #include "Subsystem/SFSubsystem.h"
 #include "FGConstructDisqualifier.h"
@@ -561,6 +562,7 @@ bool ASFPipelineHologram::ApplyPipeBuildModeRouting(int32 PipeRoutingMode,
 void ASFPipelineHologram::RoutePipeLaneWithConfiguredMode(const FVector& StartPos, const FVector& StartNormal,
 	const FVector& EndPos, const FVector& EndNormal)
 {
+	InvalidateCostCache();  // #497: spline (and therefore length-based cost) is changing
 	int32 PipeRoutingMode = 0;
 	if (USFSubsystem* SmartSubsystem = USFSubsystem::Get(GetWorld()))
 	{
@@ -575,6 +577,7 @@ bool ASFPipelineHologram::TryUseBuildModeRouting(
 	const FVector& EndPos,
 	const FVector& EndNormal)
 {
+	InvalidateCostCache();  // #497: spline (and therefore length-based cost) is changing
 	if (!mSplineComponent)
 	{
 		UE_LOG(LogSmartHologram, Verbose, TEXT("[PipeRoute] FALLBACK — no spline component %s"), *GetName());
@@ -640,7 +643,7 @@ bool ASFPipelineHologram::TryUseBuildModeRouting(
 	{
 		SetBuildModeOverride(ModeDesc);
 	}
-	UE_LOG(LogSmartHologram, Log,
+	UE_LOG(LogSmartHologram, Verbose,
 		TEXT("[PipeRoute] mode=%d desc=%s -> leaf dispatch %s"),
 		RoutingMode, ModeDesc ? *ModeDesc->GetName() : TEXT("NONE"), *GetName());
 
@@ -819,6 +822,7 @@ bool ASFPipelineHologram::TryUseBuildModeRouting(
 bool ASFPipelineHologram::RouteWithStraightExit(float /*ExitStubCm - retired*/, const FVector& StartPos, const FVector& ExitNormal,
 	const FVector& EndPos, const FVector& EndNormal)
 {
+	InvalidateCostCache();  // #497: spline (and therefore length-based cost) is changing
 	// [#414] Thin shim, kept only for call-site stability: the forced exit stub was removed in
 	// #437 round 2 (the real routers build their own riser/connector stubs), and the shape
 	// validation moved INTO TryUseBuildModeRouting so all pipe/hypertube spans get it. The exit
@@ -873,18 +877,51 @@ bool ASFPipelineHologram::ValidateCurrentSpline(float MaxSplineLengthCm, bool& O
 
 void ASFPipelineHologram::SetPlacementMaterialState(EHologramMaterialState materialState)
 {
+	// [#497] Child previews: vanilla's parent cascade and per-child ValidatePlacementAndCost write
+	// CONFLICTING states every frame (parent red vs child OK), oscillating past the set-once gate
+	// and rebuilding every spline proxy per frame (capture 5 — also covers hypertube spans, which
+	// are ASFPipelineHologram). Reject the "child is fine" write while the parent shows a problem;
+	// non-OK states always pass so #437 routed-shape-invalid can still paint its own error.
+	if (materialState == EHologramMaterialState::HMS_OK)
+	{
+		if (AFGHologram* Parent = GetParentHologram())
+		{
+			// Raw read, NOT GetHologramMaterialState(): the vanilla getter walks the child array
+			// per call — quadratic at scale (see USFHologramDataService::GetRawPlacementMaterialState).
+			if (USFHologramDataService::GetRawPlacementMaterialState(Parent) != EHologramMaterialState::HMS_OK)
+			{
+				return;
+			}
+		}
+	}
+
+	// #497 set-once: BOTH the vanilla Super sweep and our spline sweep dirty render proxies, so the
+	// early-out must come BEFORE Super (capture 4: per-frame parent cascade with unchanged state ran
+	// the unguarded Super on every child every frame — render-thread proxy churn at rest). Once a
+	// state has been swept it holds. Meshes created later are painted by TriggerMeshGeneration's
+	// trailing ApplySplineMeshMaterialState.
+	if (bSplineMaterialStateApplied && materialState == LastAppliedSplineMaterialState)
+	{
+		return;
+	}
+
 	Super::SetPlacementMaterialState(materialState);
 
+	ApplySplineMeshMaterialState(materialState);
+}
+
+void ASFPipelineHologram::ApplySplineMeshMaterialState(EHologramMaterialState materialState)
+{
 	TArray<USplineMeshComponent*> MeshComps;
 	GetComponents<USplineMeshComponent>(MeshComps);
 	const uint8 StencilValue = GetStencilForHologramMaterialState(materialState);
-	
-	// If no spline meshes are present, skip the rest to avoid log spam
+
+	// No meshes yet: leave the guard unarmed so the next call (or mesh generation) paints them.
 	if (MeshComps.Num() == 0)
 	{
 		return;
 	}
-	
+
 	for (USplineMeshComponent* Mesh : MeshComps)
 	{
 		if (Mesh)
@@ -892,14 +929,17 @@ void ASFPipelineHologram::SetPlacementMaterialState(EHologramMaterialState mater
 			Mesh->SetRenderCustomDepth(true);
 			Mesh->SetCustomDepthStencilValue(StencilValue);
 			Mesh->SetCustomDepthStencilWriteMask(ERendererStencilMask::ERSM_Default);
-			
+
 			// Force render state update
 			Mesh->MarkRenderStateDirty();
 			Mesh->SetVisibility(true, true);
 			Mesh->SetHiddenInGame(false);
 		}
 	}
-	
+
+	LastAppliedSplineMaterialState = materialState;
+	bSplineMaterialStateApplied = true;
+
 	UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🎨 PIPE SetPlacementMaterialState: State=%d, SplineMeshes=%d, Stencil=%d"),
 		(int32)materialState,
 		MeshComps.Num(),
@@ -908,6 +948,7 @@ void ASFPipelineHologram::SetPlacementMaterialState(EHologramMaterialState mater
 
 void ASFPipelineHologram::SetupPipeSpline(UFGPipeConnectionComponentBase* StartConnector, UFGPipeConnectionComponentBase* EndConnector)
 {
+	InvalidateCostCache();  // #497: spline (and therefore length-based cost) is changing
 	if (!StartConnector || !EndConnector)
 	{
 		UE_LOG(LogSmartHologram, Verbose, TEXT("SetupPipeSpline: Invalid connectors"));
@@ -1254,6 +1295,7 @@ void ASFPipelineHologram::ConfigureComponents(AFGBuildable* inBuildable) const
 
 void ASFPipelineHologram::SetSplineDataAndUpdate(const TArray<FSplinePointData>& InSplineData)
 {
+	InvalidateCostCache();  // #497: spline (and therefore length-based cost) is changing
 	UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 PIPE SetSplineDataAndUpdate: Setting %d spline points on %s"), InSplineData.Num(), *GetName());
 	
 	// Copy spline data
@@ -1290,35 +1332,14 @@ void ASFPipelineHologram::SetSplineDataAndUpdate(const TArray<FSplinePointData>&
 
 void ASFPipelineHologram::ForceApplyHologramMaterial()
 {
-	SetPlacementMaterialState(GetHologramMaterialState());
-
-	TArray<USplineMeshComponent*> SplineMeshes;
-	GetComponents<USplineMeshComponent>(SplineMeshes);
-	
-	UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🎨 PIPE ForceApplyHologramMaterial: Applied state %d to %d spline meshes"),
-		(int32)GetHologramMaterialState(),
-		SplineMeshes.Num());
-	
-	for (int32 i = 0; i < SplineMeshes.Num(); i++)
-	{
-		USplineMeshComponent* SplineMesh = SplineMeshes[i];
-		if (SplineMesh)
-		{
-			UStaticMesh* Mesh = SplineMesh->GetStaticMesh();
-			UMaterialInterface* Mat = SplineMesh->GetMaterial(0);
-			
-			UE_LOG(LogSmartHologram, VeryVerbose, TEXT("   [%d] Mesh=%s, Material=%s, Visible=%d, Hidden=%d"),
-				i,
-				Mesh ? *Mesh->GetName() : TEXT("NULL"),
-				Mat ? *Mat->GetName() : TEXT("NULL"),
-				SplineMesh->IsVisible(),
-				SplineMesh->bHiddenInGame);
-		}
-	}
+	// "Force" per the contract: bypass the #497 set-once guard so an explicit caller (post
+	// mesh-generation fixups) always gets a full sweep even when the state value is unchanged.
+	ApplySplineMeshMaterialState(GetHologramMaterialState());
 }
 
 void ASFPipelineHologram::TriggerMeshGeneration()
 {
+	InvalidateCostCache();  // #497: spline (and therefore length-based cost) is changing
 	UE_LOG(LogSmartHologram, Verbose, TEXT("🔧 PIPE TriggerMeshGeneration: %s - mSplineData has %d points"), *GetName(), mSplineData.Num());
 	
 	if (!mSplineComponent)
@@ -1519,8 +1540,9 @@ void ASFPipelineHologram::TriggerMeshGeneration()
 	UE_LOG(LogSmartHologram, Verbose, TEXT("🔧 PIPE TriggerMeshGeneration: Created %d segments of %.1f cm each"), 
 		MeshComps.Num(), SegmentLength);
 	
-	// Apply the current hologram material state to newly created mesh components.
-	SetPlacementMaterialState(GetHologramMaterialState());
+	// Apply the current hologram material state to newly created mesh components. Must bypass the
+	// #497 set-once guard: the mesh SET just changed even though the state value may not have.
+	ApplySplineMeshMaterialState(GetHologramMaterialState());
 	
 	// Check actor position
 	FVector ActorLoc = GetActorLocation();
@@ -1671,10 +1693,35 @@ void ASFPipelineHologram::ConfigureActor(class AFGBuildable* inBuildable) const
 	}
 }
 
+TArray<FItemAmount> ASFPipelineHologram::GetBaseCost() const
+{
+	// #497: Preview pipe children are commonly spawned without a recipe (mRecipe == null); their cost is
+	// length-based and computed in GetCost. Vanilla AFGHologram::GetBaseCost would call
+	// UFGRecipe::GetIngredients(nullptr), which logs "FGRecipe::GetIngredients: class was nullpeter"
+	// once per child per frame (~89/frame in a conveyor blueprint) — each line a synchronous disk write
+	// via the UE log + Sentry breadcrumb, the confirmed source of the Extend stutter/frame-loss.
+	// A null recipe has no base cost, so skip vanilla entirely (which returns empty anyway, just noisily).
+	if (!GetRecipe())
+	{
+		return TArray<FItemAmount>();
+	}
+	return Super::GetBaseCost();
+}
+
 TArray<FItemAmount> ASFPipelineHologram::GetCost(bool includeChildren) const
 {
 	UE_LOG(LogSmartHologram, VeryVerbose, TEXT("💰 PIPE GetCost() CALLED on %s (includeChildren=%d)"), *GetName(), includeChildren);
-	
+
+	// #497 cost cache (see header). The health check stays IN FRONT of the cache: a vanilla-reset
+	// (zero-length) spline must fall through to the full path so the #357 defensive restoration
+	// below still repairs the preview. Gated to extend preview children — they have no hologram
+	// children of their own, so the includeChildren flag cannot change the result.
+	const bool bSplineHealthy = mSplineComponent && mSplineComponent->GetSplineLength() > KINDA_SMALL_NUMBER;
+	if (bSelfCostCacheValid && bSplineHealthy && Tags.Contains(FName(TEXT("SF_ExtendChild"))))
+	{
+		return CachedSelfCost;
+	}
+
 	// Get base cost from parent. In Satisfactory 1.2 vanilla AFGPipelineHologram::GetCost already
 	// returns the length-based pipe material cost.
 	TArray<FItemAmount> TotalCost = Super::GetCost(includeChildren);
@@ -1686,6 +1733,11 @@ TArray<FItemAmount> ASFPipelineHologram::GetCost(bool includeChildren) const
 	if (TotalCost.Num() > 0)
 	{
 		UE_LOG(LogSmartHologram, VeryVerbose, TEXT("💰 PIPE GetCost: using vanilla cost (%d item types), skipping manual calc"), TotalCost.Num());
+		if (bSplineHealthy)
+		{
+			CachedSelfCost = TotalCost;
+			bSelfCostCacheValid = true;
+		}
 		return TotalCost;
 	}
 
@@ -1837,5 +1889,26 @@ TArray<FItemAmount> ASFPipelineHologram::GetCost(bool includeChildren) const
 	}
 	
 	UE_LOG(LogSmartHologram, VeryVerbose, TEXT("💰 PIPE GetCost() RETURNING %d item types"), TotalCost.Num());
+
+	// #497: cache the computed fallback cost while the spline is healthy (a zero-length spline
+	// leaves the cache invalid so the restoration path gets another chance next call).
+	if (mSplineComponent && mSplineComponent->GetSplineLength() > KINDA_SMALL_NUMBER)
+	{
+		CachedSelfCost = TotalCost;
+		bSelfCostCacheValid = true;
+	}
 	return TotalCost;
+}
+
+void ASFPipelineHologram::SetHologramNudgeLocation()
+{
+	// [#497] Extend children: block vanilla's locked-parent nudge cascade, which bypasses the
+	// SF_ExtendChild SetHologramLocationAndRotation guard via plain SetActorLocation and dragged
+	// every extend child to world origin each tick (origin-trap stack: FGBuildGunBuild.cpp:320 ->
+	// FGHologram.cpp:440 -> :2120). Non-extend instances keep vanilla behavior.
+	if (Tags.Contains(FName(TEXT("SF_ExtendChild"))))
+	{
+		return;
+	}
+	Super::SetHologramNudgeLocation();
 }

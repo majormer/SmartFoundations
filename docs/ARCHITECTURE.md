@@ -1,9 +1,9 @@
 # SmartFoundations — Architecture Map
 
-A 10-minute orientation for maintainers, contributors, and LLMs. Smart! is a Satisfactory
-build-gun enhancement mod (UE5.3 + Satisfactory Mod Loader). This describes *how the code is
-organized and how the pieces talk* — not every detail. It is a living doc; correct it when you
-find drift. For the in-flight simplification effort see [`Audits/Simplification-GOAL.md`](Audits/Simplification-GOAL.md).
+A 10-minute orientation for maintainers and contributors. Smart! is a Satisfactory 1.2
+build-gun enhancement mod built with UE 5.6.1-CSS and Satisfactory Mod Loader 3.12. This
+describes *how the code is organized and how the pieces talk* — not every detail. For the
+rules governing new and relocated code, see the [code organization policy](Development/CodeOrganization.md).
 
 ## Big picture
 
@@ -17,46 +17,66 @@ Player build gun
    ▼
 Smart hologram (ASFFactoryHologram / ASFConveyorBeltHologram / ASFPipelineHologram / ASFWireHologram …)
    │ uses ──────────────► USFSubsystem (facade: shared state + feature services)
-   ▼                          ├── Extend          (Features/Extend/)
-child holograms (grid)        ├── AutoConnect      (belts/pipes/power)
-                              ├── Upgrade          (Features/Upgrade/)
-Smart Panel / Upgrade Panel ──┤   Restore          (Features/Restore/)
-(UI/) ────────────────────────┘   HUD, ChainActor, Recipe, size & hologram data registries
+   ▼                          ├── scaling, spacing, and grid transforms
+child holograms (grid)        ├── belt, pipe, power, and hypertube auto-connect
+                              ├── Extend, Restore, Upgrade, and Smart Walking
+Smart Panel / Upgrade Panel ──┤
+(UI/) ────────────────────────┘   HUD, input, recipes, chain actors, and data registries
 ```
 
 ## Source layout (`Source/SmartFoundations/`)
 
 UE split: `Public/` (headers other code includes) and `Private/` (implementations). By area:
 
-- **`Subsystem/`** — `USFSubsystem` (the central facade/owner) plus low-level helpers (input handling, validation, grid spawning, hologram helpers). *This is the largest, most overloaded area — the #1 decomposition target (T1).*
-- **`Features/<Feature>/`** — self-contained feature services, each owned by the subsystem:
-  - `Extend/` — clone/extend factories: detection, topology walk, clone-topology transform, hologram preview, and post-build wiring. *Largest feature. T1 round 1 split out `SFExtendDiagnosticsService` (before/after snapshots) + `SFExtendRestoreReplayService` (Smart Restore replay); remaining wiring/scaled units mapped in [`Audits/RefactorCompletionPlan.md`](Audits/RefactorCompletionPlan.md).*
-  - `AutoConnect/`, `PipeAutoConnect/`, `PowerAutoConnect/` — auto-route belts / pipes / power between placed buildings.
-  - `Upgrade/` — Smart Upgrade (radius/network audit, traversal, execution, chain-actor repair).
-  - `Restore/` — preset save/apply/share (Smart Restore Enhanced).
-- **`Holograms/`** — Smart subclasses of vanilla `AFGHologram` types (factory, conveyor belt, conveyor lift, pipeline, power pole/wire). They derive grid/scale behavior and spawn **child holograms** for the grid.
-- **`Services/`** — cross-cutting runtime services (HUD, chain-actor invalidation/rebuild, recipe management).
-- **`Data/`** — declarative data: `SFBuildableSizeRegistry_*` (building footprint profiles — 14 files, T3 target) and `SFHologramDataRegistry`.
-- **`UI/`, `HUD/`** — `SmartSettingsFormWidget` (the Smart Panel), `SmartUpgradePanel`, the HUD widget, and `SFFontLibrary` (multi-script UI font, see [`memory`/font notes]). `Constants/SFAssetPaths.h` holds shared FactoryGame asset paths.
-- **`Module/`** — module startup (`SFGameInstanceModule`); `SFRCO` is the remote-call object for server RPCs (multiplayer-relevant; mostly placeholder today).
+- **`Subsystem/`** — `USFSubsystem`, the central facade and owner, plus shared hologram,
+   validation, position, input, and performance helpers.
+- **`Features/<Feature>/`** — feature-owned logic. Current slices are `Arrows`,
+   `AutoConnect`, `Extend`, `HypertubeAutoConnect`, `PipeAutoConnect`,
+   `PowerAutoConnect`, `Restore`, `Scaling`, `Spacing`, `Upgrade`, and `Walk`.
+- **`Holograms/`** — shared hologram behavior and adapters for vanilla hologram families.
+   Smart! extends several branches of the vanilla hierarchy rather than routing every adapter
+   through one Smart! base class. Grid placement uses parent and child holograms.
+- **`Services/`** — cross-feature runtime services for grid state/transforms/spawning, HUD,
+   hints, recipes, chain actors, and diagnostics.
+- **`Data/`** — shared registries and hologram data. Building-size profiles are maintained in
+   `Content/Data/BuildableSizes.csv` and generated into
+   `Private/Data/SFBuildableSizeRegistry_Data.cpp` by `scripts/gen_size_registry.py`.
+- **`Core/Net/`** — shared authority helpers and `SFRCO`, the active remote-call object used by
+   shipped multiplayer paths.
+- **`Input/`, `Logging/`, `Config/`, `Module/`** — input registration and transform state,
+   runtime-filtered logging, configuration types, and game-instance startup.
+- **`UI/`, `HUD/`** — the Smart Panel, Upgrade panel, shared widgets, and runtime HUD.
+- **`Shared/`, `Constants/`** — code shared by multiple features and header-only constants.
 
 ## Runtime model & conventions
 
-- **Facade + services.** `USFSubsystem::Get(World)` is the entry point; it constructs/owns feature services and shared state. Holograms and UI reach features via the subsystem (e.g. `GetExtendService()`). Service init is currently inconsistent (constructor vs `Initialize()` vs lazy) — the T6 service-context epic addresses the resulting ordering bugs.
+- **Facade + services.** `USFSubsystem::Get(World)` is the runtime entry point. The subsystem
+   explicitly owns and initializes feature services and shared state; holograms and UI reach
+   those capabilities through the subsystem (for example, `GetExtendService()`).
 - **Hologram + child-hologram pattern.** A Smart hologram represents the "parent"; grid copies are spawned as child holograms. Affordability/validity (red/cyan) is derived from vanilla **construct disqualifiers**, not `SetPlacementMaterialState` — see the Extend affordability fix in the changelog.
-- **Naming.** C++ types use the `SF`/`USF`/`ASF`/`FSF` prefix; assets use `Smart_`/`SF`. Log via `LogSmartFoundations` today (T7 will introduce per-feature categories declared in `Config/SmartFoundationsLogging.ini`).
+- **Authority and replication.** World mutations run through server-authoritative paths.
+   `SFRCO` carries explicit client-to-server requests, while vanilla construction messages and
+   replicated state cover placement paths. Multiplayer support shipped in v32.0.0.
+- **Naming and logging.** C++ types use the `SF`/`USF`/`ASF`/`FSF` prefix; assets use
+   `Smart_`/`SF`. Logs use `LogSmartFoundations` plus runtime-filtered categories declared in
+   `Config/SmartFoundationsLogging.ini` and implemented by `FSFLogRegistry`.
 - **Access to private engine members** is granted via SML AccessTransformers (`Config/AccessTransformers.ini`), not engine edits.
-- **Localization.** `.po` → `.archive` → `.locres` via `scripts/compile_localization.ps1`; UI uses the runtime multi-script `DescriptionText` font. See [`Audits/Pre1.2CleanupAudit.md`] and the localization dev notes.
+- **Localization.** `.po` → `.archive` → `.locres` via
+   `scripts/compile_localization.ps1`; localization audit and export helpers live in `scripts/`.
 
 ## Build & dev workflow
 
-- **Package/deploy:** Alpakit (`RunUAT PackagePlugin … -DLCName=SmartFoundations -build -CopyToGameDirectory_Windows=<game>`). Close the running game first (it locks the mod DLL).
-- **Editor introspection:** development scripts run Python in the live editor; an in-game diagnostic HTTP API is available for diagnostics and (planned) smoke tests.
-- **Tooling:** `scripts/` holds the localization compile/sync and the loc audit tools.
+- **Package/deploy:** use Alpakit for content changes and release packages. Close the running
+   game before deployment because it locks the mod DLL.
+- **C++ iteration:** build the appropriate Shipping target and deploy its DLL/PDB when no
+   content changed. Client/server networking changes require matching client and server builds.
+- **Tooling:** `scripts/` contains localization, size-registry generation, configuration parity,
+   and smoke-test helpers.
 
 ## Where to start reading
 
-- A feature → its `Features/<Feature>/` folder (the service header documents intent).
+- A feature → its `Features/<Feature>/` folder and, when available, its `docs/Features/` reference.
 - Placement behavior → the relevant `Holograms/` subclass.
 - Panel/HUD → `UI/` + `HUD/`.
-- The big, hard files (today): `SFSubsystem.cpp` (9,227) and `SFExtendService.cpp` (7,718, round 1 done) — being decomposed under the simplification charter. The full per-slice decomposition map is [`Audits/RefactorCompletionPlan.md`](Audits/RefactorCompletionPlan.md).
+- Networking → `Core/Net/`, then any feature-local `Net/` folder and `[MP-*]` divergence map.
+- Ownership and lifecycle → `Subsystem/SFSubsystem.h` and its concern-named implementation files.

@@ -54,4 +54,10 @@ public:
 	 *  reflection (fallback if OnRep_PoleVariationIndex does not refresh). UpdatePoleMesh() is
 	 *  protected on the base. */
 	void RefreshPoleMesh() { UpdatePoleMesh(); }
+
+public:
+	/** [#497] Block vanilla's locked-parent nudge cascade — it bypasses SetHologramLocationAndRotation
+	 *  and dragged every extend child to world origin each tick (see the .cpp override). */
+	virtual void SetHologramNudgeLocation() override;
+
 };
