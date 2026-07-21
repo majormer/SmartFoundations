@@ -11,7 +11,6 @@
 #include "FGRecipe.h"
 #include "FGRecipeManager.h"
 #include "Resources/FGBuildingDescriptor.h"
-#include "DrawDebugHelpers.h"
 #include "Data/SFHologramDataRegistry.h"
 #include "Subsystem/SFHologramDataService.h"   // [#497] GetRawPlacementMaterialState (O(1) parent-state read)
 #include "Hologram/FGHologram.h"
@@ -146,23 +145,6 @@ void ASFConveyorBeltHologram::Tick(float DeltaSeconds)
         
         PreviousLocationSample = ActorLoc;
 
-        // DEBUG VISUALIZATION: Draw a bright line along the belt path so we can see if ANYTHING renders
-        if (mSplineComponent->GetNumberOfSplinePoints() >= 2)
-        {
-            const FVector Start = mSplineComponent->GetLocationAtSplinePoint(0, ESplineCoordinateSpace::World);
-            const FVector End = mSplineComponent->GetLocationAtSplinePoint(mSplineComponent->GetNumberOfSplinePoints() - 1, ESplineCoordinateSpace::World);
-            
-            // Draw thick bright cyan line for 0.1 seconds (refreshed every tick)
-            // This is independent of hologram/mesh rendering - if we see this, the world/client is correct
-            if (UWorld* World = GetWorld())
-            {
-                DrawDebugLine(World, Start, End, FColor::Cyan, false, 0.1f, 0, 10.0f);
-                
-                // Also draw boxes at each endpoint
-                DrawDebugBox(World, Start, FVector(50, 50, 50), FColor::Green, false, 0.1f, 0, 5.0f);
-                DrawDebugBox(World, End, FVector(50, 50, 50), FColor::Red, false, 0.1f, 0, 5.0f);
-            }
-        }
     }
 }
 

@@ -8,7 +8,6 @@
 #include "Data/SFHologramData.h"
 #include "Holograms/Logistics/SFPipelineHologram.h"
 #include "Components/SplineComponent.h"
-#include "DrawDebugHelpers.h"
 #include "FGPlayerController.h"
 #include "FGRecipe.h"
 
@@ -183,11 +182,6 @@ void FPipePreviewHelper::UpdateSplineEndpoints(UFGPipeConnectionComponent* Start
 
 	const float Distance = FVector::Dist(StartLoc, EndLoc);
 	const FVector Direction = (EndLoc - StartLoc).GetSafeNormal();
-
-	if (UWorld* LocalWorld = World.Get())
-	{
-		DrawDebugLine(LocalWorld, StartLoc, EndLoc, FColor::Cyan, false, 0.1f, 0, 8.0f);
-	}
 
 	PipeHologram->SetActorLocation(StartLoc);
 

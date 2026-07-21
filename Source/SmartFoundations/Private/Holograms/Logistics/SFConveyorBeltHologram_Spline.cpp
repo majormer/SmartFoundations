@@ -17,7 +17,6 @@
 #include "FGRecipe.h"
 #include "FGRecipeManager.h"
 #include "Resources/FGBuildingDescriptor.h"
-#include "DrawDebugHelpers.h"
 #include "Data/SFHologramDataRegistry.h"
 #include "Hologram/FGHologram.h"
 #include "Subsystem/SFSubsystem.h"  // [#380] read configured BeltRoutingMode for lane belts

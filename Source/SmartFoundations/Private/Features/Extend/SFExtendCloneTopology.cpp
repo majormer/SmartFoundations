@@ -745,8 +745,8 @@ FSFCloneTopology FSFCloneTopology::FromSource(const FSFSourceTopology& Source, c
     for (const FSFSourceSegment& WallSeg : Source.WallHoles)
     {
         // #wall-hole-orphan: drop a hole that physically sits on an excluded chain's segment (blocked
-        // lane) — else it orphans onto the source building after that belt/pipe fails to clone. (Warning
-        // level so the decision surfaces in the log; temporary diagnostic — strip before release.)
+        // lane) — else it orphans onto the source building after that belt/pipe fails to clone. (Logged
+        // via SF_EXTEND_DIAGNOSTIC_LOG, which forces Verbose — runtime-filtered in shipping.)
         const FVector HoleLoc = WallSeg.Transform.Location.ToFVector();
         float BestSq = TNumericLimits<float>::Max();
         for (const FSFExclSeg& S : ExcludedSegs)
