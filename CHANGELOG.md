@@ -27,7 +27,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Belt, pipe-junction, and stackable Auto-Connect** - Connection evaluation now skips entirely when nothing changed since the last pass (same aim, same grid, same settings) instead of re-scoring every candidate connection 10-20 times per second while you hold a preview.
   - **Scale Daisy-Chain Power** - The preview cables now follow your drag by updating in place instead of being destroyed and respawned every frame.
   - **Smart Walking and Restore** - The same set-once material and cached-cost rules apply, so long walks and restored layouts stop paying per-frame overhead.
-- **Smart Upgrade batches now log an exact settlement summary** - After each batch, the log records precisely how many items were charged and refunded (and how much of the refund went to the overflow crate), so any "the refund looked short" moment can be checked against real numbers. Tip: refunded materials that don't fit in your inventory arrive in a dismantle crate at your feet - and remember stack sizes differ, so an equal-count refund can fill fewer slots than what you spent.
 
 ---
 

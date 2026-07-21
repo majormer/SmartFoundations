@@ -1634,7 +1634,7 @@ void USFUpgradeExecutionService::CompleteUpgrade()
 	{
 		if (Entry.Key && Entry.Value != 0)
 		{
-			UE_LOG(LogSmartUpgrade, Display, TEXT("UPGRADE SETTLEMENT: charged %d x %s"),
+			UE_LOG(LogSmartUpgrade, Verbose, TEXT("UPGRADE SETTLEMENT: charged %d x %s"),
 				Entry.Value, *UFGItemDescriptor::GetItemName(Entry.Key).ToString());
 		}
 	}
@@ -1643,7 +1643,7 @@ void USFUpgradeExecutionService::CompleteUpgrade()
 		if (Entry.Key && Entry.Value != 0)
 		{
 			const int32* Crated = OverflowItems.Find(Entry.Key);
-			UE_LOG(LogSmartUpgrade, Display, TEXT("UPGRADE SETTLEMENT: refunded %d x %s (%d of those in the overflow crate)"),
+			UE_LOG(LogSmartUpgrade, Verbose, TEXT("UPGRADE SETTLEMENT: refunded %d x %s (%d of those in the overflow crate)"),
 				Entry.Value, *UFGItemDescriptor::GetItemName(Entry.Key).ToString(), Crated ? *Crated : 0);
 		}
 	}
