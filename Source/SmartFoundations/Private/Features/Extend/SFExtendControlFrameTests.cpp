@@ -28,9 +28,9 @@ bool FSFExtendControlFrameTest::RunTest(const FString& Parameters)
 		2,
 		1);
 
-	TestEqual(TEXT("Negative Chain uses signed X state"), Placement.WorldOffset.X, -2200.0f);
-	TestEqual(TEXT("Negative Rows uses signed Y state"), Placement.WorldOffset.Y, -1000.0f);
-	TestEqual(TEXT("Chain and Rows steps compose"), Placement.WorldOffset.Z, 125.0f);
+	TestEqual(TEXT("Negative Chain uses signed X state"), Placement.WorldOffset.X, -2200.0);
+	TestEqual(TEXT("Negative Rows uses signed Y state"), Placement.WorldOffset.Y, -1000.0);
+	TestEqual(TEXT("Chain and Rows steps compose"), Placement.WorldOffset.Z, 125.0);
 
 	const FSFExtendCellPlacement RestoredRelative = CalculateExtendCellPlacement(
 		FRotator::ZeroRotator,
@@ -41,9 +41,9 @@ bool FSFExtendControlFrameTest::RunTest(const FString& Parameters)
 		1,
 		1,
 		0);
-	TestEqual(TEXT("Restore origin preserves Chain delta"), RestoredRelative.WorldOffset.X, -2200.0f);
-	TestEqual(TEXT("Restore origin preserves Rows delta"), RestoredRelative.WorldOffset.Y, -1000.0f);
-	TestEqual(TEXT("Restore origin preserves step delta"), RestoredRelative.WorldOffset.Z, 125.0f);
+	TestEqual(TEXT("Restore origin preserves Chain delta"), RestoredRelative.WorldOffset.X, -2200.0);
+	TestEqual(TEXT("Restore origin preserves Rows delta"), RestoredRelative.WorldOffset.Y, -1000.0);
+	TestEqual(TEXT("Restore origin preserves step delta"), RestoredRelative.WorldOffset.Z, 125.0);
 
 	FSFCounterState RotatedState;
 	RotatedState.GridCounters.X = -2;
@@ -55,7 +55,7 @@ bool FSFExtendControlFrameTest::RunTest(const FString& Parameters)
 		1,
 		0);
 	TestTrue(TEXT("Yaw 90 negative Chain has no world X drift"), FMath::IsNearlyZero(RotatedPlacement.WorldOffset.X));
-	TestEqual(TEXT("Yaw 90 negative Chain maps to world -Y"), RotatedPlacement.WorldOffset.Y, -800.0f);
+	TestEqual(TEXT("Yaw 90 negative Chain maps to world -Y"), RotatedPlacement.WorldOffset.Y, -800.0);
 
 	return true;
 }
