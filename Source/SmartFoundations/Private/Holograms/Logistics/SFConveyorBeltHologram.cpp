@@ -2,6 +2,7 @@
 
 #include "Holograms/Logistics/SFConveyorBeltHologram.h"
 #include "SmartFoundations.h"
+#include "Core/Net/SFNetworkHelper.h"   // [#511] IsDedicatedServer - skip cosmetic mesh work
 #include "Components/SplineMeshComponent.h"
 #include "Buildables/FGBuildableConveyorBelt.h"
 #include "Hologram/FGHologramBuildModeDescriptor.h"
@@ -1104,10 +1105,27 @@ void ASFConveyorBeltHologram::TriggerMeshGeneration()
         return;
     }
     
+    // [#511] STOP HERE ON A DEDICATED SERVER. Everything above is data — mSplineData pushed into
+    // the spline component, which construction uses. Everything below builds the VISUAL spline
+    // mesh segments, which a headless server has no use for and, since 1.2.4, cannot survive:
+    // cooked server builds strip static-mesh render data, and SetStaticMesh on a fresh
+    // USplineMeshComponent faulted inside USplineMeshComponent::UpdateBounds (SIGSEGV reading
+    // 0xffffffff00000401), taking the whole server down during auto-connect evaluation.
+    //
+    // Same rule FSFArrowModule_StaticMesh already applies ("client cosmetics ... no render data
+    // under the null renderer"). mSplineMeshes is written back to vanilla purely so the game knows
+    // about the segments; nothing in the construction path reads it.
+    if (FSFNetworkHelper::IsDedicatedServer(GetWorld()))
+    {
+        UE_LOG(LogSmartHologram, Verbose,
+            TEXT("[#511] BELT TriggerMeshGeneration: skipped on dedicated server (client cosmetics)."));
+        return;
+    }
+
     // Get existing mesh components
     TArray<USplineMeshComponent*> MeshComps;
     GetComponents<USplineMeshComponent>(MeshComps);
-    
+
     UE_LOG(LogSmartHologram, Verbose, TEXT("🎯 BELT: Initial mesh components: %d"), MeshComps.Num());
     
     // CRITICAL FIX: Destroy existing mesh components from base class - they don't update properly
