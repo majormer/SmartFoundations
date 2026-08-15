@@ -4,6 +4,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Core/Construction/SFFactorySettingsSnapshot.h"
 #include "HUD/SFHUDTypes.h"   // FSFCounterState (grid + transform counters)
 #include "Components/SplineComponent.h"   // FSplinePointData (CSS engine addition)
 #include "ItemAmount.h"                    // FItemAmount (belt plan cost)
@@ -112,14 +113,10 @@ struct SMARTFOUNDATIONS_API FSFScalingSpec
 	UPROPERTY()
 	TSubclassOf<class AFGBuildable> BuildClass = nullptr;
 
-	/** [#368] The player's remembered production recipe (manual U-select / building sample), carried
-	 *  so the SERVER can apply it to the authoritative manufacturer build. Recipe memory is
-	 *  client-side only (non-replicated); this staged field is the SOLE crossing for a fresh manual
-	 *  placement in multiplayer - on a dedicated server the placing client's recipe never otherwise
-	 *  reaches the authority. Null when nothing is remembered (the server then applies no recipe, so
-	 *  a designer recall / world paste / other-mod spawn - none of which stage a spec - is untouched). */
+	/** [#515-#517] Immutable recipe / Power Shard / Somersloop intent captured with this grid.
+	 *  This replaces the recipe-only crossing so scaling and Extend consume the same contract. */
 	UPROPERTY()
-	TSubclassOf<class UFGRecipe> ProductionRecipe = nullptr;
+	FSFFactorySettingsSnapshot FactorySettings;
 
 	/** [#168-MP] Smart! Blueprints: the client-measured blueprint clone content-convention delta
 	 *  (parent-local, cm). Clone content sits offset from the grid anchor by a per-blueprint

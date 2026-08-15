@@ -22,7 +22,6 @@ public:
     // Factory-specific functionality
     virtual void BeginPlay() override;
     virtual AActor* Construct(TArray<AActor*>& out_children, FNetConstructionID constructionID) override;
-    virtual void ConfigureActor(AFGBuildable* InBuildable) const override;
     
     // CRITICAL: Override to block repositioning when EXTEND/scaling is active
     virtual void SetHologramLocationAndRotation(const FHitResult& hitResult) override;
@@ -52,10 +51,6 @@ public:
     // hologram data registry, so it covers every scalable buildable without hologram swaps.)
 
 protected:
-    // Recipe copying implementation
-    virtual void ApplyStoredRecipe(AActor* Building) const;
-    virtual bool IsProductionBuilding(AActor* Building) const;
-
     // Common helper functions (inherited from buildable holograms)
     virtual void LogSmartActivity(const FString& Activity) const;
     virtual void SetSmartMetadata(int32 GroupIndex, int32 ChildIndex);

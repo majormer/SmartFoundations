@@ -31,7 +31,8 @@
 #include "Patching/NativeHookManager.h"
 #include "Subsystem/SFSubsystem.h"
 #include "Buildables/FGBuildableManufacturer.h"  // [#368] server-authoritative recipe apply
-#include "Services/SFChainActorService.h"  // [CHAIN-FIX] post-construct chain-hygiene sweep
+#include "Services/SFChainActorService.h"
+#include "Services/SFRecipeManagementService.h"  // [CHAIN-FIX] post-construct chain-hygiene sweep
 #include "Features/AutoConnect/SFAutoConnectService.h"
 #include "Features/Extend/SFExtendService.h"
 #include "Features/Walk/SFWalkService.h"   // Smart Walking (#356 Slice 3) server-side commit reconstruction
@@ -44,6 +45,7 @@
 #include "Subsystem/SFHologramHelperService.h"
 #include "Core/Net/SFRCO.h"
 #include "FGPlayerController.h"
+#include "FGCharacterPlayer.h"
 #include "FGBlueprintProxy.h"   // server-side Smart Dismantle group for spec-built grids
 #include "Buildables/FGBuildableFactory.h"   // [EXTEND-MP] commit wiring pass anchor
 #include "TimerManager.h"                    // [EXTEND-MP] next-tick commit wiring pass
@@ -747,59 +749,27 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 
 			GSFActiveSpecGroupProxy.Reset();
 
-			// [#368] Apply the staged remembered production recipe to the built manufacturer(s) with
-			// SERVER AUTHORITY. Manual recipe-memory is client-side only and never reached the
-			// authoritative build on a dedicated server: normal manufacturer placement constructs
-			// through VANILLA holograms server-side (Smart's ConfigureActor recipe-apply only runs on
-			// the Extend-swapped ASFFactoryHologram, not here), and the OnActorSpawned apply path is
-			// correctly gated off when no active hologram exists on the server (#368 gate). So this
-			// construct seam is the ONLY place a manually-remembered recipe both EXISTS
-			// (Spec.ProductionRecipe, shipped client->server on FSFScalingSpec) and can be set with
-			// authority (mCurrentRecipe is server-authoritative and replicates to every client).
-			// Applied to the parent and every spec-expanded grid child. Post-scope is a proven seam
-			// for operating on freshly built actors (the Extend wiring pass below runs here too).
-			// Scaling path only: Extend and Restore commits ship their own FactorySettings
-			// snapshot, installed into the server's recipe service in ReconstructCommitOnServer
-			// (#484) so the reconstruction pipeline applies it exactly like the SP preview.
-			if (bHasScaling && Spec.ProductionRecipe)
+			// [#515-#517] Hand the exact staged value contract to every built factory. The
+			// service-owned queue waits for BeginPlay/inventories and consumes from this instigator.
+			if (bHasScaling || bHasExtend)
 			{
-				UWorld* const RecipeWorld = self->GetWorld();
-				const TSubclassOf<UFGRecipe> RecipeToApply = Spec.ProductionRecipe;
-				// NOTE: [=] (not [RecipeWorld, RecipeToApply]) - this lambda sits inside the
-				// SUBSCRIBE_METHOD_VIRTUAL macro, and a bare multi-capture comma would be parsed as an
-				// extra macro argument (C4002). [=] is comma-free and safe: called synchronously below.
-				auto ApplyServerRecipe = [=](AActor* Built)
+				const FSFFactorySettingsSnapshot& Settings = bHasScaling
+					? Spec.FactorySettings
+					: ExtendSpec.FactorySettings;
+				if (Settings.HasAnySettings())
 				{
-					AFGBuildableManufacturer* Mfg = Cast<AFGBuildableManufacturer>(Built);
-					if (!Mfg)
+					if (USFSubsystem* SS = USFSubsystem::Get(self->GetWorld()))
 					{
-						return;
-					}
-					if (Mfg->HasActorBegunPlay())
-					{
-						Mfg->SetRecipe(RecipeToApply);
-					}
-					else if (RecipeWorld)
-					{
-						// Built but not yet begun play: defer briefly so SetRecipe takes - the same
-						// reason USFRecipeManagementService::ApplyRecipeDelayed retries on
-						// !HasActorBegunPlay. Weak ptr so a dismantle in the gap can't dangle.
-						TWeakObjectPtr<AFGBuildableManufacturer> WeakMfg(Mfg);
-						FTimerHandle DeferHandle;
-						RecipeWorld->GetTimerManager().SetTimer(DeferHandle,
-							[WeakMfg, RecipeToApply]()
+						if (USFRecipeManagementService* RecipeService = SS->GetRecipeManagementService())
+						{
+							AFGCharacterPlayer* Player = Cast<AFGCharacterPlayer>(self->GetConstructionInstigator());
+							RecipeService->QueueFactorySettingsApplication(Cast<AFGBuildable>(BuiltParent), Player, Settings);
+							for (AActor* BuiltChild : out_children)
 							{
-								if (AFGBuildableManufacturer* M = WeakMfg.Get())
-								{
-									M->SetRecipe(RecipeToApply);
-								}
-							}, 0.1f, false);
+								RecipeService->QueueFactorySettingsApplication(Cast<AFGBuildable>(BuiltChild), Player, Settings);
+							}
+						}
 					}
-				};
-				ApplyServerRecipe(BuiltParent);
-				for (AActor* BuiltChild : out_children)
-				{
-					ApplyServerRecipe(BuiltChild);
 				}
 			}
 

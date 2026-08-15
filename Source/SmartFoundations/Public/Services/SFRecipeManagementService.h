@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Core/Construction/SFFactorySettingsSnapshot.h"
 #include "FGRecipe.h"
 #include "Buildables/FGBuildable.h"
 #include "Buildables/FGBuildableManufacturer.h"
@@ -34,6 +35,24 @@ struct FSFBuildingMetadata
 
 	/** Timestamp when building was created */
 	FDateTime CreationTime;
+};
+
+/** One immutable construction contract waiting for actor/inventory readiness. */
+USTRUCT()
+struct FSFPendingFactorySettingsApplication
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	TWeakObjectPtr<class AFGBuildableFactory> Factory;
+
+	UPROPERTY()
+	TWeakObjectPtr<class AFGCharacterPlayer> Player;
+
+	UPROPERTY()
+	FSFFactorySettingsSnapshot Snapshot;
+
+	int32 AttemptNumber = 0;
 };
 
 /**
@@ -339,16 +358,19 @@ private:
 	/** Whether the sampled building had a Somersloop installed */
 	bool bHasStoredProductionBoost = false;
 
-	/** Actual Power Shard descriptor class from sampled building (needed for TryFillPotentialInventory) */
+	/** Actual Power Shard descriptor class from sampled building. */
 	UPROPERTY(Transient)
 	TSubclassOf<class UFGPowerShardDescriptor> StoredOverclockShardClass = nullptr;
 
 	/** Number of overclock shards in the source building (for direct inventory transfer) */
 	int32 StoredOverclockShardCount = 0;
 
-	/** Actual Somersloop descriptor class from sampled building (needed for TryFillPotentialInventory) */
+	/** Actual Somersloop descriptor class from sampled building. */
 	UPROPERTY(Transient)
 	TSubclassOf<class UFGPowerShardDescriptor> StoredProductionBoostShardClass = nullptr;
+
+	/** Number of Somersloops in the source building. */
+	int32 StoredProductionBoostShardCount = 0;
 
 public:
 	/** Get stored overclock potential */
@@ -363,15 +385,20 @@ public:
 	/** Whether the sampled building had Somersloop/production boost */
 	bool HasStoredProductionBoost() const { return bHasStoredProductionBoost; }
 
-	/** Apply stored Power Shard and Somersloop configuration to a placed building (Issue #208/#209)
-	 * Transfers items from player inventory — will not duplicate items.
-	 * @param TargetBuilding The newly placed building to configure
-	 * @param Player The player whose inventory to consume shards/somersloops from
-	 * @return true if any configuration was applied
+	/** Queue stored Power Shard and Somersloop configuration for a placed building.
+	 * Transfers items from player inventory after actor/inventory readiness; never duplicates items.
+	 * @return true when the captured snapshot contains inventory-backed settings to queue
 	 */
 	bool ApplyStoredPotentialToBuilding(AFGBuildable* TargetBuilding, class AFGCharacterPlayer* Player);
 
+	/** Queue the exact value snapshot carried by one construction commit. */
+	void QueueFactorySettingsApplication(AFGBuildable* TargetBuilding, class AFGCharacterPlayer* Player,
+		const FSFFactorySettingsSnapshot& Snapshot);
+
 private:
+	void TickPendingFactorySettingsApplications();
+	bool ApplyFactorySettingsSnapshot(class AFGBuildableFactory* Factory, class AFGCharacterPlayer* Player,
+		const FSFFactorySettingsSnapshot& Snapshot);
 
 	// ========================================
 	// State - Building Registry
@@ -401,4 +428,9 @@ private:
 
 	/** Timer for debounced recipe regeneration */
 	FTimerHandle RecipeRegenerationTimer;
+
+	UPROPERTY(Transient)
+	TArray<FSFPendingFactorySettingsApplication> PendingFactorySettingsApplications;
+
+	FTimerHandle FactorySettingsApplyTimer;
 };

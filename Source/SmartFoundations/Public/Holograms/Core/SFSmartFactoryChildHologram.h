@@ -19,7 +19,6 @@ public:
     virtual void CheckValidPlacement() override;
     
     // Override ConfigureActor for recipe copying
-    virtual void ConfigureActor(class AFGBuildable* inBuildable) const override;
     
     // Cleanup data structure on destruction
     virtual void Destroyed() override;

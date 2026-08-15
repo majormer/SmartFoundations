@@ -139,16 +139,6 @@ AActor* ASFFactoryHologram::Construct(TArray<AActor*>& out_children, FNetConstru
     return BuiltActor;
 }
 
-void ASFFactoryHologram::ConfigureActor(AFGBuildable* InBuildable) const
-{
-    Super::ConfigureActor(InBuildable);
-    
-    if (InBuildable && IsProductionBuilding(InBuildable))
-    {
-        ApplyStoredRecipe(InBuildable);
-    }
-}
-
 void ASFFactoryHologram::SetHologramLocationAndRotation(const FHitResult& hitResult)
 {
     // CRITICAL: When EXTEND mode is active, DON'T let the build gun reposition us
@@ -273,32 +263,6 @@ void ASFFactoryHologram::SetPlacementMaterialState(EHologramMaterialState materi
     }
 }
 
-void ASFFactoryHologram::ApplyStoredRecipe(AActor* Building) const
-{
-    // Get the Smart subsystem to access recipe system
-    if (USFSubsystem* Subsystem = USFSubsystem::Get(this))
-    {
-        // Check if subsystem has a stored recipe
-        if (Subsystem->bHasStoredProductionRecipe && Subsystem->StoredProductionRecipe)
-        {
-            // Apply recipe to production building
-            Subsystem->ApplyStoredProductionRecipeToBuilding(Cast<AFGBuildable>(Building));
-        }
-        else
-        {
-            LogSmartActivity(TEXT("No stored recipe available to apply"));
-        }
-    }
-    else
-    {
-        LogSmartActivity(TEXT("Smart subsystem not available - cannot apply recipe"));
-    }
-}
-
-bool ASFFactoryHologram::IsProductionBuilding(AActor* Building) const
-{
-    return Building && Building->GetClass()->IsChildOf(AFGBuildableFactory::StaticClass());
-}
 
 void ASFFactoryHologram::LogSmartActivity(const FString& Activity) const
 {

@@ -4,6 +4,7 @@
 #include "SmartFoundations.h"
 #include "Hologram/FGHologram.h"
 #include "Subsystem/SFSubsystem.h"
+#include "Services/SFRecipeManagementService.h"
 #include "Subsystem/SFPositionCalculator.h"
 #include "Subsystem/SFHologramDataService.h"
 #include "Data/SFBuildableSizeRegistry.h"
@@ -28,6 +29,7 @@
 #include "Hologram/FGFloodlightHologram.h"      // #200: mFixtureAngle / mBuildStep
 #include "Hologram/FGStandaloneSignHologram.h"  // #192: mBuildStep
 #include "Engine/World.h"
+#include "FGCharacterPlayer.h"
 #include "EngineUtils.h"
 #include "TimerManager.h"   // [#418-MP] deferred time-sliced spec expansion
 #include "HAL/IConsoleManager.h"
@@ -193,12 +195,12 @@ bool CaptureScalingSpec(AFGHologram* Hologram, FSFScalingSpec& OutSpec)
 		}
 	}
 	OutSpec.BuildClass = Hologram->GetBuildClass();
-	// [#368] Carry the player's remembered production recipe so the SERVER applies it to the
-	// authoritative manufacturer build (recipe memory is client-side only; this is the sole crossing
-	// for a fresh manual placement in MP). Null when nothing is remembered -> server applies nothing.
-	// Non-manufacturer placements just carry whatever is remembered; the server-side apply ignores it
-	// via its IsProductionBuilding gate, and the install is restored after the build.
-	OutSpec.ProductionRecipe = SS->GetActiveRecipe();
+	// [#515-#517] Capture one immutable settings contract for the whole construction.
+	// The server consumes this exact value instead of consulting mutable spawn-time service state.
+	if (USFRecipeManagementService* RecipeService = SS->GetRecipeManagementService())
+	{
+		RecipeService->CaptureFactorySettingsSnapshot(OutSpec.FactorySettings);
+	}
 	OutSpec.bValid = true;
 	return true;
 }
@@ -435,6 +437,25 @@ namespace
 
 		TArray<AActor*> CellChildren;
 		AActor* Built = Cell->Construct(CellChildren, Job.ConstructionID);
+
+		// [#515-#517] Deferred cells are built after the parent construct seam has returned,
+		// so enqueue their retained immutable settings contract here.
+		if (Built && Job.Spec.FactorySettings.HasAnySettings())
+		{
+			if (USFSubsystem* SS = USFSubsystem::Get(World))
+			{
+				if (USFRecipeManagementService* RecipeService = SS->GetRecipeManagementService())
+				{
+					AFGCharacterPlayer* Player = Cast<AFGCharacterPlayer>(Job.Instigator.Get());
+					RecipeService->QueueFactorySettingsApplication(Cast<AFGBuildable>(Built), Player, Job.Spec.FactorySettings);
+					for (AActor* BuiltChild : CellChildren)
+					{
+						RecipeService->QueueFactorySettingsApplication(Cast<AFGBuildable>(BuiltChild), Player, Job.Spec.FactorySettings);
+					}
+				}
+			}
+		}
+
 		Cell->Destroy();
 		return Built != nullptr;
 	}

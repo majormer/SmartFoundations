@@ -2,7 +2,7 @@
 
 #include "SFRecipeManagementService.h"
 #include "SmartFoundations.h"
-#include "Features/Extend/SFExtendCommitSpec.h"  // [#484] FSFFactorySettingsSnapshot
+#include "Core/Construction/SFFactorySettingsApplyPolicy.h"
 #include "Subsystem/SFSubsystem.h"
 #include "Subsystem/SFHologramDataService.h"
 #include "Data/SFHologramDataRegistry.h"
@@ -22,6 +22,7 @@
 #include "Resources/FGPowerShardDescriptor.h"
 #include "FGCharacterPlayer.h"
 #include "FGInventoryComponent.h"
+#include "FGItemPickup_Spawnable.h"
 #include "FGFactoryClipboard.h"
 #include "Kismet/GameplayStatics.h"
 #include "TimerManager.h"
@@ -38,6 +39,7 @@ void USFRecipeManagementService::Initialize(USFSubsystem* InSubsystem)
 	ClearAllRecipes();
 	SmartBuildingRegistry.Empty();
 	CurrentPlacementBuildings.Empty();
+	PendingFactorySettingsApplications.Empty();
 	CurrentPlacementGroupID = 0;
 	bBlueprintProxyRecentlySpawned = false;
 	UE_LOG(LogSmartFoundations, Verbose, TEXT("Recipe Management Service: Initialized"));
@@ -92,9 +94,11 @@ void USFRecipeManagementService::Cleanup()
 	ClearAllRecipes();
 	SmartBuildingRegistry.Empty();
 	CurrentPlacementBuildings.Empty();
+	PendingFactorySettingsApplications.Empty();
 	if (Subsystem && Subsystem->GetWorld())
 	{
 		Subsystem->GetWorld()->GetTimerManager().ClearTimer(RecipeRegenerationTimer);
+		Subsystem->GetWorld()->GetTimerManager().ClearTimer(FactorySettingsApplyTimer);
 	}
 	Subsystem = nullptr;
 	UE_LOG(LogSmartFoundations, Verbose, TEXT("Recipe Management Service: Cleaned up"));
@@ -507,13 +511,16 @@ void USFRecipeManagementService::CaptureVanillaSampledProductionSettings(AFGBuil
 	// Issue #208/#209: Capture Power Shard and Somersloop state from source building
 	if (AFGBuildableFactory* Factory = Cast<AFGBuildableFactory>(SourceBuilding))
 	{
-		float SourcePotential = FMath::Max(Factory->GetPendingPotential(), Factory->GetCurrentPotential());
-		float SourceBoost = FMath::Max(Factory->GetPendingProductionBoost(), Factory->GetCurrentProductionBoost());
+		const float RawPotential = FMath::Max(Factory->GetPendingPotential(), Factory->GetCurrentPotential());
+		const float RawBoost = FMath::Max(Factory->GetPendingProductionBoost(), Factory->GetCurrentProductionBoost());
+		const float SourcePotential = FMath::IsFinite(RawPotential) ? RawPotential : 1.0f;
+		const float SourceBoost = FMath::IsFinite(RawBoost) ? RawBoost : 1.0f;
 		
 		// First, extract actual shard descriptor classes from the building's potential inventory
 		StoredOverclockShardClass = nullptr;
 		StoredOverclockShardCount = 0;
 		StoredProductionBoostShardClass = nullptr;
+		StoredProductionBoostShardCount = 0;
 		UFGInventoryComponent* PotentialInv = Factory->GetPotentialInventory();
 		if (PotentialInv)
 		{
@@ -535,10 +542,16 @@ void USFRecipeManagementService::CaptureVanillaSampledProductionSettings(AFGBuil
 					StoredOverclockShardCount += Stack.NumItems;
 					UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⚡ Captured overclock shard: %s x%d (total: %d)"), *ShardClass->GetName(), Stack.NumItems, StoredOverclockShardCount);
 				}
-				else if (ShardType == EPowerShardType::PST_ProductionBoost && !StoredProductionBoostShardClass)
+				else if (ShardType == EPowerShardType::PST_ProductionBoost)
 				{
-					StoredProductionBoostShardClass = ShardClass;
-					UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔮 Captured production boost shard class: %s"), *ShardClass->GetName());
+					if (!StoredProductionBoostShardClass)
+					{
+						StoredProductionBoostShardClass = ShardClass;
+					}
+					if (StoredProductionBoostShardClass == ShardClass)
+					{
+						StoredProductionBoostShardCount += Stack.NumItems;
+					}
 				}
 			}
 		}
@@ -605,6 +618,7 @@ void USFRecipeManagementService::CaptureFactorySettingsSnapshot(FSFFactorySettin
 		OutSnapshot.bHasProductionBoost = true;
 		OutSnapshot.ProductionBoost = StoredProductionBoost;
 		OutSnapshot.ProductionBoostShardClass = StoredProductionBoostShardClass;
+		OutSnapshot.ProductionBoostShardCount = StoredProductionBoostShardCount;
 	}
 }
 
@@ -633,18 +647,19 @@ void USFRecipeManagementService::InstallFactorySettingsSnapshot(const FSFFactory
 	// Server-side sanity on client-shipped values: clamp to vanilla's reachable ranges rather
 	// than trusting the floats/counts blindly. The descriptor classes are already constrained to
 	// UFGPowerShardDescriptor by the property system.
-	if (Snapshot.bHasPotential && Snapshot.OverclockShardClass)
+	if (Snapshot.bHasPotential && Snapshot.OverclockShardClass && FMath::IsFinite(Snapshot.Potential))
 	{
 		StoredPotential = FMath::Clamp(Snapshot.Potential, 1.0f, 2.5f);
-		bHasStoredPotential = true;
-		StoredOverclockShardClass = Snapshot.OverclockShardClass;
 		StoredOverclockShardCount = FMath::Clamp(Snapshot.OverclockShardCount, 0, 3);
+		bHasStoredPotential = StoredPotential > 1.0f && StoredOverclockShardCount > 0;
+		StoredOverclockShardClass = bHasStoredPotential ? Snapshot.OverclockShardClass : nullptr;
 	}
-	if (Snapshot.bHasProductionBoost && Snapshot.ProductionBoostShardClass)
+	if (Snapshot.bHasProductionBoost && Snapshot.ProductionBoostShardClass && FMath::IsFinite(Snapshot.ProductionBoost))
 	{
 		StoredProductionBoost = FMath::Clamp(Snapshot.ProductionBoost, 1.0f, 2.0f);
-		bHasStoredProductionBoost = true;
-		StoredProductionBoostShardClass = Snapshot.ProductionBoostShardClass;
+		StoredProductionBoostShardCount = FMath::Clamp(Snapshot.ProductionBoostShardCount, 0, 2);
+		bHasStoredProductionBoost = StoredProductionBoost > 1.0f && StoredProductionBoostShardCount > 0;
+		StoredProductionBoostShardClass = bHasStoredProductionBoost ? Snapshot.ProductionBoostShardClass : nullptr;
 	}
 	if (bHasStoredPotential || bHasStoredProductionBoost)
 	{
@@ -953,140 +968,18 @@ void USFRecipeManagementService::OnActorSpawned(AActor* SpawnedActor)
 		return;
 	}
 	
-	// Issue #208/#209: Apply Power Shards and Somersloops to scaled child buildings
-	// BOTH must go through a single delayed TryFillPotentialInventory call because:
-	// 1. Immediate calls fail (building's potential inventory not initialized yet)
-	// 2. Separate calls reset the inventory (overclock-only call clears Somersloop)
-	// Guard: Only apply when Smart! is actively scaling (grid > 1x1)
+	// [#515-#517] Local SP/listen construction uses the same immutable queue as the
+	// dedicated-server spec seam. Capture now; never let a delayed callback consult mutable service state.
 	AFGBuildableFactory* FactoryBuilding = Cast<AFGBuildableFactory>(SpawnedActor);
-	bool bIsSmartScaling = Subsystem->IsSmartScalingActive();
-	bool bWantShards = bHasStoredPotential && StoredOverclockShardClass && StoredOverclockShardCount > 0;
-	bool bWantBoost = bHasStoredProductionBoost && StoredProductionBoostShardClass && StoredProductionBoost > 1.0f;
-	bool bSessionMatch = (ShardSessionId == CurrentBuildSessionId);
-	
-	UE_LOG(LogSmartFoundations, Verbose, TEXT("🔍 OnActorSpawned SHARD CHECK: Factory=%s, Scaling=%s, Session=%s (%d==%d), WantShards=%s, WantBoost=%s"),
-		FactoryBuilding ? TEXT("yes") : TEXT("no"), bIsSmartScaling ? TEXT("yes") : TEXT("no"),
-		bSessionMatch ? TEXT("match") : TEXT("MISMATCH"), ShardSessionId, CurrentBuildSessionId,
-		bWantShards ? TEXT("yes") : TEXT("no"), bWantBoost ? TEXT("yes") : TEXT("no"));
-	
-	if (FactoryBuilding && bIsSmartScaling && bSessionMatch && (bWantShards || bWantBoost))
+	AFGHologram* ActiveHologram = Subsystem->GetActiveHologram();
+	if (FactoryBuilding && ActiveHologram)
 	{
-		if (UWorld* TimerWorld = Subsystem->GetWorld())
-		{
-			// Capture all values for the delayed lambda
-			TWeakObjectPtr<AFGBuildableFactory> WeakFactory = FactoryBuilding;
-			float CapturedPotential = StoredPotential;
-			float CapturedBoost = StoredProductionBoost;
-			TSubclassOf<UFGPowerShardDescriptor> CapturedOverclockClass = StoredOverclockShardClass;
-			TSubclassOf<UFGPowerShardDescriptor> CapturedBoostClass = StoredProductionBoostShardClass;
-			bool bCapturedWantShards = bWantShards;
-			bool bCapturedWantBoost = bWantBoost;
-			
-			FTimerHandle TimerHandle;
-			TimerWorld->GetTimerManager().SetTimer(TimerHandle, 
-				[WeakFactory, CapturedPotential, CapturedBoost, CapturedOverclockClass, CapturedBoostClass, bCapturedWantShards, bCapturedWantBoost]()
-			{
-				AFGBuildableFactory* Factory = WeakFactory.Get();
-				if (!Factory) return;
-				
-				AFGCharacterPlayer* Player = Cast<AFGCharacterPlayer>(UGameplayStatics::GetPlayerCharacter(Factory->GetWorld(), 0));
-				if (!Player) return;
-				
-				// Build a SINGLE combined map with both overclock and boost
-				TMap<EPowerShardType, TPair<TSubclassOf<UFGPowerShardDescriptor>, float>> PotentialValues;
-				
-				if (bCapturedWantShards && Factory->GetCanChangePotential())
-				{
-					PotentialValues.Add(EPowerShardType::PST_Overclock, 
-						TPair<TSubclassOf<UFGPowerShardDescriptor>, float>(CapturedOverclockClass, CapturedPotential));
-				}
-				if (bCapturedWantBoost && Factory->CanChangeProductionBoost())
-				{
-					PotentialValues.Add(EPowerShardType::PST_ProductionBoost, 
-						TPair<TSubclassOf<UFGPowerShardDescriptor>, float>(CapturedBoostClass, CapturedBoost));
-				}
-				
-				if (PotentialValues.Num() == 0) return;
-				
-				TMap<EPowerShardType, float> ReachedValues;
-				bool bFilled = Factory->TryFillPotentialInventory(Player, PotentialValues, ReachedValues, false);
-				
-				// Apply overclock if shards were transferred
-				if (bCapturedWantShards)
-				{
-					float NewMax = Factory->GetCurrentMaxPotential();
-					if (NewMax > 1.0f)
-					{
-						Factory->SetPendingPotential(FMath::Min(CapturedPotential, NewMax));
-						UE_LOG(LogSmartFoundations, Verbose, TEXT("⚡ Delayed: Power Shards applied to %s, pending=%.0f%%, max=%.0f%%"),
-							*Factory->GetName(), CapturedPotential * 100.0f, NewMax * 100.0f);
-					}
-					else
-					{
-						UE_LOG(LogSmartFoundations, Verbose, TEXT("⚡ Delayed: Power Shards failed for %s (max=%.0f%%)"),
-							*Factory->GetName(), NewMax * 100.0f);
-					}
-				}
-				
-				// Apply production boost if somersloop was transferred
-				if (bCapturedWantBoost)
-				{
-					float NewMaxBoost = Factory->GetCurrentMaxProductionBoost();
-					if (NewMaxBoost > 1.0f)
-					{
-						Factory->SetPendingProductionBoost(FMath::Min(CapturedBoost, NewMaxBoost));
-						UE_LOG(LogSmartFoundations, Verbose, TEXT("🔮 Delayed: Somersloop applied to %s, pending=%.0f%%, max=%.0f%%"),
-							*Factory->GetName(), CapturedBoost * 100.0f, NewMaxBoost * 100.0f);
-					}
-					else
-					{
-						UE_LOG(LogSmartFoundations, Verbose, TEXT("🔮 Delayed: Somersloop failed for %s (max=%.0f%%)"),
-							*Factory->GetName(), NewMaxBoost * 100.0f);
-					}
-				}
-			}, 0.2f, false);
-		}
-	}
-	
-	// Recipe application: Only process manufacturer buildings
-	AFGBuildableManufacturer* ManufacturerBuilding = Cast<AFGBuildableManufacturer>(SpawnedActor);
-	if (!ManufacturerBuilding)
-	{
-		return;
+		FSFFactorySettingsSnapshot Snapshot;
+		CaptureFactorySettingsSnapshot(Snapshot);
+		AFGCharacterPlayer* Player = Cast<AFGCharacterPlayer>(ActiveHologram->GetConstructionInstigator());
+		QueueFactorySettingsApplication(FactoryBuilding, Player, Snapshot);
 	}
 
-	// [#368] Only apply Smart's remembered recipe to a manufacturer SMART IS ACTIVELY PLACING.
-	// A manufacturer that spawns with no active Smart! hologram came from somewhere else — a
-	// blueprint recalled into the Blueprint Designer, a world blueprint paste, or another mod —
-	// and must keep the recipe it loaded with. Without this gate the 0.1s timer below ran for
-	// EVERY manufacturer and, when no recipe was held (ActiveRecipe == null), cleared the
-	// blueprint's own recipe via SetRecipe(nullptr) — the "blueprint configuration lost" bug.
-	// Gating at spawn time (where the active-hologram state is reliable) replaces the fragile
-	// time-boxed bBlueprintProxyRecentlySpawned guard, which missed designer recall entirely
-	// (no AFGBlueprintProxy world actor spawns) and raced on world placement. It also correctly
-	// PRESERVES recipe application for Smart! placements made inside the Designer (those carry an
-	// active hologram), which a blanket GetBlueprintDesigner() skip would have regressed.
-	if (!Subsystem->GetActiveHologram())
-	{
-		UE_LOG(LogSmartFoundations, Verbose, TEXT("OnActorSpawned: Manufacturer %s spawned with no active Smart! hologram (blueprint/recall origin) - leaving its recipe untouched"),
-			*ManufacturerBuilding->GetName());
-		return;
-	}
-
-	// Apply the ActiveRecipe to the spawned building
-	if (World)
-	{
-		FTimerHandle TimerHandle;
-		FTimerDelegate TimerDelegate;
-		TimerDelegate.BindUFunction(this, TEXT("ApplyRecipeDelayed"), ManufacturerBuilding, ActiveRecipe);
-		World->GetTimerManager().SetTimer(TimerHandle, TimerDelegate, 0.1f, false);
-		
-		if (ActiveRecipe)
-		{
-			UE_LOG(LogSmartFoundations, Verbose, TEXT("OnActorSpawned: Will apply active recipe %s to manufacturer %s"), 
-				*ActiveRecipe->GetName(), *ManufacturerBuilding->GetName());
-		}
-	}
 }
 
 void USFRecipeManagementService::ClearCurrentPlacement()
@@ -1475,12 +1368,84 @@ void USFRecipeManagementService::ClearStoredShardState()
 	StoredOverclockShardClass = nullptr;
 	StoredOverclockShardCount = 0;
 	StoredProductionBoostShardClass = nullptr;
+	StoredProductionBoostShardCount = 0;
 }
 
 void USFRecipeManagementService::GetRecipeDisplayInfo(int32& OutCurrentIndex, int32& OutTotalRecipes) const
 {
 	OutCurrentIndex = CurrentRecipeIndex;
 	OutTotalRecipes = SortedFilteredRecipes.Num();
+}
+
+namespace
+{
+	constexpr int32 SF_FACTORY_SETTINGS_MAX_ATTEMPTS = 25;
+	constexpr float SF_FACTORY_SETTINGS_RETRY_INTERVAL = 0.2f;
+}
+
+void USFRecipeManagementService::QueueFactorySettingsApplication(AFGBuildable* TargetBuilding,
+	AFGCharacterPlayer* Player, const FSFFactorySettingsSnapshot& Snapshot)
+{
+	AFGBuildableFactory* Factory = Cast<AFGBuildableFactory>(TargetBuilding);
+	if (!Factory || !Snapshot.HasAnySettings() || !Subsystem || !Subsystem->GetWorld())
+	{
+		return;
+	}
+
+	PendingFactorySettingsApplications.RemoveAllSwap([Factory](const FSFPendingFactorySettingsApplication& Pending)
+	{
+		return Pending.Factory.Get() == Factory;
+	});
+	FSFPendingFactorySettingsApplication& Pending = PendingFactorySettingsApplications.AddDefaulted_GetRef();
+	Pending.Factory = Factory;
+	Pending.Player = Player;
+	Pending.Snapshot = Snapshot;
+
+	UWorld* World = Subsystem->GetWorld();
+	if (!World->GetTimerManager().IsTimerActive(FactorySettingsApplyTimer))
+	{
+		World->GetTimerManager().SetTimer(FactorySettingsApplyTimer, this,
+			&USFRecipeManagementService::TickPendingFactorySettingsApplications,
+			SF_FACTORY_SETTINGS_RETRY_INTERVAL, true, 0.0f);
+	}
+}
+
+void USFRecipeManagementService::TickPendingFactorySettingsApplications()
+{
+	for (int32 Index = PendingFactorySettingsApplications.Num() - 1; Index >= 0; --Index)
+	{
+		FSFPendingFactorySettingsApplication& Pending = PendingFactorySettingsApplications[Index];
+		AFGBuildableFactory* Factory = Pending.Factory.Get();
+		AFGCharacterPlayer* Player = Pending.Player.Get();
+		++Pending.AttemptNumber;
+		const bool bNeedsInventory = Pending.Snapshot.NeedsInventoryTransfer();
+		const bool bTargetInventoryReady = Factory && Factory->GetPotentialInventory();
+		const bool bPlayerInventoryReady = Player && Player->GetInventory();
+		const ESFFactorySettingsApplyDecision Decision = FSFFactorySettingsApplyPolicy::Decide(
+			IsValid(Factory), Factory && Factory->HasActorBegunPlay(), bNeedsInventory,
+			bTargetInventoryReady, bPlayerInventoryReady, Pending.AttemptNumber, SF_FACTORY_SETTINGS_MAX_ATTEMPTS);
+
+		if (Decision == ESFFactorySettingsApplyDecision::Retry)
+		{
+			continue;
+		}
+		if (Decision == ESFFactorySettingsApplyDecision::Apply)
+		{
+			ApplyFactorySettingsSnapshot(Factory, Player, Pending.Snapshot);
+		}
+		else if (Decision == ESFFactorySettingsApplyDecision::GiveUp)
+		{
+			UE_LOG(LogSmartFoundations, Warning,
+				TEXT("[#515-#517] Factory settings readiness timed out for %s after %d attempts."),
+				*GetNameSafe(Factory), Pending.AttemptNumber);
+		}
+		PendingFactorySettingsApplications.RemoveAtSwap(Index);
+	}
+
+	if (PendingFactorySettingsApplications.IsEmpty() && Subsystem && Subsystem->GetWorld())
+	{
+		Subsystem->GetWorld()->GetTimerManager().ClearTimer(FactorySettingsApplyTimer);
+	}
 }
 
 // Protected accessor to call FillPotentialSlotsInternal on AFGBuildableFactory
@@ -1494,54 +1459,102 @@ public:
 
 bool USFRecipeManagementService::ApplyStoredPotentialToBuilding(AFGBuildable* TargetBuilding, AFGCharacterPlayer* Player)
 {
-	if (!TargetBuilding || !Player)
-	{
-		return false;
-	}
-	
-	AFGBuildableFactory* Factory = Cast<AFGBuildableFactory>(TargetBuilding);
+	FSFFactorySettingsSnapshot Snapshot;
+	CaptureFactorySettingsSnapshot(Snapshot);
+	QueueFactorySettingsApplication(TargetBuilding, Player, Snapshot);
+	return Snapshot.NeedsInventoryTransfer();
+}
+
+bool USFRecipeManagementService::ApplyFactorySettingsSnapshot(AFGBuildableFactory* Factory,
+	AFGCharacterPlayer* Player, const FSFFactorySettingsSnapshot& Snapshot)
+{
 	if (!Factory)
 	{
 		return false;
 	}
-	
-	UFGInventoryComponent* PlayerInv = Player->GetInventory();
-	if (!PlayerInv)
-	{
-		return false;
-	}
-	
+
 	bool bAppliedAnything = false;
-	
-	// Issue #209: Apply Power Shards via FillPotentialSlotsInternal (protected accessor)
-	// TryFillPotentialInventory silently fails for overclock, but this internal method works
-	if (bHasStoredPotential && StoredPotential > 1.0f && Factory->GetCanChangePotential() 
-		&& StoredOverclockShardClass && StoredOverclockShardCount > 0)
+	if (FSFFactorySettingsApplyPolicy::IsRecipeApplicationAllowed(
+		Snapshot.bHasRecipe && Snapshot.Recipe != nullptr,
+		IsRecipeCompatibleWithBuilding(Snapshot.Recipe, Factory)))
 	{
-		int32 TargetShards = StoredOverclockShardCount;
-		TArray<FInventoryStack> ItemsToDrop;
-		
-		static_cast<FFGBuildableFactoryAccessor*>(Factory)->FillPotentialSlotsInternal(
-			PlayerInv, EPowerShardType::PST_Overclock, StoredOverclockShardClass, TargetShards, ItemsToDrop);
-		
-		int32 ShardsTransferred = StoredOverclockShardCount - TargetShards;
-		if (ShardsTransferred > 0)
+		if (AFGBuildableManufacturer* Manufacturer = Cast<AFGBuildableManufacturer>(Factory))
 		{
-			Factory->SetPendingPotential(FMath::Min(StoredPotential, Factory->GetCurrentMaxPotential()));
+			Manufacturer->SetRecipe(Snapshot.Recipe);
 			bAppliedAnything = true;
-			UE_LOG(LogSmartFoundations, Verbose, TEXT("⚡ Power Shards: Transferred %d/%d to %s, pending=%.0f%%, max=%.0f%%"),
-				ShardsTransferred, StoredOverclockShardCount, *TargetBuilding->GetName(),
-				StoredPotential * 100.0f, Factory->GetCurrentMaxPotential() * 100.0f);
-		}
-		else
-		{
-			UE_LOG(LogSmartFoundations, Verbose, TEXT("⚡ Power Shards: Could not transfer to %s (player may be out)"),
-				*TargetBuilding->GetName());
 		}
 	}
-	
-	// Issue #208: Somersloops are handled by PasteSettings in OnActorSpawned (works correctly)
-	// No need to handle them here — PasteSettings transfers Somersloops via the vanilla clipboard path
-	
+
+	UFGInventoryComponent* PlayerInventory = Player ? Player->GetInventory() : nullptr;
+	if (!PlayerInventory)
+	{
+		return bAppliedAnything;
+	}
+
+	auto FillShardType = [Factory, Player, PlayerInventory](EPowerShardType Type,
+		TSubclassOf<UFGPowerShardDescriptor> ShardClass, int32 RequestedCount) -> int32
+	{
+		if (!ShardClass || RequestedCount <= 0
+			|| !FSFFactorySettingsApplyPolicy::IsShardTypeAllowed(
+				Type, UFGPowerShardDescriptor::GetPowerShardType(ShardClass)))
+		{
+			return 0;
+		}
+
+		int32 Remaining = RequestedCount;
+		TArray<FInventoryStack> ItemsToDrop;
+		static_cast<FFGBuildableFactoryAccessor*>(Factory)->FillPotentialSlotsInternal(
+			PlayerInventory, Type, ShardClass, Remaining, ItemsToDrop);
+
+		for (const FInventoryStack& DisplacedStack : ItemsToDrop)
+		{
+			if (!DisplacedStack.HasItems())
+			{
+				continue;
+			}
+
+			const int32 AddedToPlayer = PlayerInventory->AddStack(DisplacedStack, true);
+			const int32 UnreturnedCount = FSFFactorySettingsApplyPolicy::GetUnreturnedItemCount(
+				DisplacedStack.NumItems, AddedToPlayer);
+			if (UnreturnedCount > 0)
+			{
+				FInventoryStack WorldDrop = DisplacedStack;
+				WorldDrop.NumItems = UnreturnedCount;
+				AFGItemPickup_Spawnable::AddItemToWorldStackAtLocation(
+					PlayerInventory, WorldDrop, Player->GetActorLocation(), Player->GetActorRotation());
+			}
+		}
+
+		return RequestedCount - Remaining;
+	};
+
+	if (Snapshot.bHasPotential && FMath::IsFinite(Snapshot.Potential)
+		&& Snapshot.Potential > 1.0f && Factory->GetCanChangePotential())
+	{
+		const int32 Transferred = FillShardType(EPowerShardType::PST_Overclock,
+			Snapshot.OverclockShardClass, FMath::Clamp(Snapshot.OverclockShardCount, 0, 3));
+		float PendingValue = 1.0f;
+		if (Transferred > 0 && FSFFactorySettingsApplyPolicy::TryResolvePendingValue(
+			Snapshot.Potential, Factory->GetCurrentMaxPotential(), PendingValue))
+		{
+			Factory->SetPendingPotential(PendingValue);
+			bAppliedAnything = true;
+		}
+	}
+
+	if (Snapshot.bHasProductionBoost && FMath::IsFinite(Snapshot.ProductionBoost)
+		&& Snapshot.ProductionBoost > 1.0f && Factory->CanChangeProductionBoost())
+	{
+		const int32 Transferred = FillShardType(EPowerShardType::PST_ProductionBoost,
+			Snapshot.ProductionBoostShardClass, FMath::Clamp(Snapshot.ProductionBoostShardCount, 0, 2));
+		float PendingValue = 1.0f;
+		if (Transferred > 0 && FSFFactorySettingsApplyPolicy::TryResolvePendingValue(
+			Snapshot.ProductionBoost, Factory->GetCurrentMaxProductionBoost(), PendingValue))
+		{
+			Factory->SetPendingProductionBoost(PendingValue);
+			bAppliedAnything = true;
+		}
+	}
+
 	return bAppliedAnything;
 }

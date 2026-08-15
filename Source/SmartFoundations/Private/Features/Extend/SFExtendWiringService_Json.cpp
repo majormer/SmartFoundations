@@ -152,32 +152,6 @@ int32 USFExtendWiringService::GenerateAndExecuteWiring(AFGBuildableFactory* NewF
             ExtendService->JsonBuiltActors.Num(),
             ExtendService->RestoredCloneParentHologram.IsValid() ? 1 : 0);
 
-        auto ApplyRecipeToRestoredFactory = [&](AFGBuildableFactory* Factory)
-        {
-            if (!Factory || !Subsystem.IsValid())
-            {
-                return;
-            }
-
-            USFRecipeManagementService* RecipeSvc = Subsystem->GetRecipeManagementService();
-            if (RecipeSvc && RecipeSvc->HasStoredProductionRecipe() && RecipeSvc->GetStoredProductionRecipe())
-            {
-                RecipeSvc->ApplyStoredProductionRecipeToBuilding(Factory);
-                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log,
-                    TEXT("[SmartRestore][Extend] Applied stored recipe %s to restored scaled factory %s"),
-                    *RecipeSvc->GetStoredProductionRecipe()->GetName(),
-                    *Factory->GetName());
-            }
-            else
-            {
-                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log,
-                    TEXT("[SmartRestore][Extend] No stored recipe available for restored scaled factory %s (service=%d, subsystemHas=%d)"),
-                    *Factory->GetName(),
-                    RecipeSvc ? 1 : 0,
-                    Subsystem->bHasStoredProductionRecipe ? 1 : 0);
-            }
-        };
-
         auto MeasureFactoryMatch = [](AFGBuildableFactory* Candidate, const FVector& ExpectedLocation, FString& OutBasis) -> float
         {
             if (!IsValid(Candidate))
@@ -398,7 +372,6 @@ int32 USFExtendWiringService::GenerateAndExecuteWiring(AFGBuildableFactory* NewF
                 : 0.0f;
             if (bExistingIsFactory && (!bHasExpectedLocation || ExistingMatchDistSq <= ExistingFactoryMatchRadiusSq))
             {
-                ApplyRecipeToRestoredFactory(Cast<AFGBuildableFactory>(ExistingMappedActor));
                 UsedRestoredFactoryActors.Add(ExistingMappedActor);
                 SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log,
                     TEXT("[SmartRestore][Extend] Restored scaled factory %s already mapped to %s%s%s"),
@@ -456,7 +429,6 @@ int32 USFExtendWiringService::GenerateAndExecuteWiring(AFGBuildableFactory* NewF
                 CloneIdToBuildable.Add(FactoryId, BestFactory);
                 ExtendService->JsonBuiltActors.Add(FactoryId, BestFactory);
                 UsedRestoredFactoryActors.Add(BestFactory);
-                ApplyRecipeToRestoredFactory(BestFactory);
                 ResolvedRestoredFactoryCount++;
                 SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log,
                     TEXT("[SmartRestore][Extend] Resolved restored scaled factory %s -> %s (dist=%.0fcm via %s)"),
