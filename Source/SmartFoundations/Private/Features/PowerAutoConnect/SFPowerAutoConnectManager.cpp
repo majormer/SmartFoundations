@@ -8,6 +8,7 @@
 //                  (Net seam: Hook B, Core/Net/SFGameInstanceModule_SpecHooks.cpp).
 
 #include "Features/PowerAutoConnect/SFPowerAutoConnectManager.h"
+#include "Core/Helpers/SFBuildEffectHelper.h"
 #include "Subsystem/SFSubsystem.h"
 #include "Features/AutoConnect/SFAutoConnectService.h"
 #include "Hologram/FGHologram.h"
@@ -1510,7 +1511,7 @@ void FSFPowerAutoConnectManager::OnPowerPoleBuilt(AFGBuildablePowerPole* BuiltPo
 		
 		if (PowerWire)
 		{
-			PowerWire->OnBuildEffectFinished();
+			FSFBuildEffectHelper::Finish(PowerWire);
 			
 			// Use the circuit connection we already have from distance calculation
 			UFGCircuitConnectionComponent* PoleCircuitConn = PoleCircuitConns[0];

@@ -1,6 +1,7 @@
 // Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
 #include "Holograms/Logistics/SFPipelineHologram.h"
+#include "Core/Helpers/SFBuildEffectHelper.h"
 #include "SmartFoundations.h"
 #include "Core/Net/SFNetworkHelper.h"   // [#511] IsDedicatedServer - skip cosmetic mesh work
 #include "SFLogMacros.h"                       // [#168] LogSmartAutoConnect for seam-pipe wiring
@@ -292,7 +293,7 @@ AActor* ASFPipelineHologram::Construct(TArray<AActor*>& out_children, FNetConstr
 					}
 					
 					// Finalize the pipe
-					Pipe->OnBuildEffectFinished();
+					FSFBuildEffectHelper::Finish(Pipe);
 					UE_LOG(LogSmartHologram, Verbose, TEXT("🔧 STACKABLE: Pipe %s finalized (index %d)"),
 						*Pipe->GetName(), HoloData->StackablePipeIndex);
 				}
@@ -301,7 +302,7 @@ AActor* ASFPipelineHologram::Construct(TArray<AActor*>& out_children, FNetConstr
 				if (bIsPipeAutoConnectChild && HoloData && HoloData->bIsPipeAutoConnectChild)
 				{
 					// Finalize the pipe
-					Pipe->OnBuildEffectFinished();
+					FSFBuildEffectHelper::Finish(Pipe);
 					
 					// Floor hole pipes (PipeAutoConnectConn0 == nullptr):
 					// Conn1 (building side) is already wired by vanilla's AFGSplineHologram::Construct().

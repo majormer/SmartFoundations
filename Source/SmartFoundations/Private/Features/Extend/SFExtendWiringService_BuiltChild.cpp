@@ -6,6 +6,7 @@
  */
 
 #include "Features/Extend/SFExtendWiringServiceImpl.h"
+#include "Core/Helpers/SFBuildEffectHelper.h"
 #include "FGDismantleInterface.h"
 #include "Shared/Power/SFWireDesignerRegistration.h"  // [#421] designer containment for direct-spawned wires
 
@@ -1508,7 +1509,7 @@ void USFExtendWiringService::WireBuiltChildConnections(AFGBuildableFactory* NewF
                         }
                     }
 
-                    NewBelt->OnBuildEffectFinished();
+                    FSFBuildEffectHelper::Finish(NewBelt);
 
                     // NOTE: Don't call AddConveyor here - the belt chain is still being built.
                     // CreateChainActors() in SFWiringManifest will handle chain creation

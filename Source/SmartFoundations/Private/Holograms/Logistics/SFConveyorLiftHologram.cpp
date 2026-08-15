@@ -1,6 +1,7 @@
 // Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
 #include "Holograms/Logistics/SFConveyorLiftHologram.h"
+#include "Core/Helpers/SFBuildEffectHelper.h"
 #include "SmartFoundations.h"
 #include "Buildables/FGBuildableConveyorLift.h"
 #include "Buildables/FGBuildableConveyorBase.h"
@@ -265,7 +266,7 @@ AActor* ASFConveyorLiftHologram::Construct(TArray<AActor*>& out_children, FNetCo
             // Ensure the lift is properly finalized (matches belt child pattern)
             if (AFGBuildable* Buildable = Cast<AFGBuildable>(BuiltActor))
             {
-                Buildable->OnBuildEffectFinished();
+                FSFBuildEffectHelper::Finish(Buildable);
             }
 
             // Log the mapping for debugging

@@ -1,6 +1,7 @@
 // Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
 #include "Holograms/Logistics/SFConveyorBeltHologram.h"
+#include "Core/Helpers/SFBuildEffectHelper.h"
 #include "SmartFoundations.h"
 #include "Core/Net/SFNetworkHelper.h"   // [#511] IsDedicatedServer - skip cosmetic mesh work
 #include "Components/SplineMeshComponent.h"
@@ -706,7 +707,7 @@ AActor* ASFConveyorBeltHologram::Construct(TArray<AActor*>& out_children, FNetCo
             // Ensure the belt is properly finalized
             if (AFGBuildable* Buildable = Cast<AFGBuildable>(BuiltActor))
             {
-                Buildable->OnBuildEffectFinished();
+                FSFBuildEffectHelper::Finish(Buildable);
             }
             
             // MANIFOLD BELT WIRING: TEMPORARILY DISABLED - causing crash in Factory_UpdateRadioactivity

@@ -6,6 +6,7 @@
  */
 
 #include "Features/Extend/SFExtendWiringServiceImpl.h"
+#include "Core/Helpers/SFBuildEffectHelper.h"
 
 void USFExtendWiringService::WireManifoldConnections(AFGBuildableFactory* SourceFactory, AFGBuildableFactory* CloneFactory)
 {
@@ -727,7 +728,7 @@ bool USFExtendWiringService::CreateManifoldBelt(UFGFactoryConnectionComponent* F
         Belt = ResplinedBelt;
     }
 
-    Belt->OnBuildEffectFinished();
+    FSFBuildEffectHelper::Finish(Belt);
 
     // Connect the belt FIRST
     UFGFactoryConnectionComponent* BeltConn0 = Belt->GetConnection0();
@@ -834,7 +835,7 @@ bool USFExtendWiringService::CreateManifoldPipe(UFGPipeConnectionComponentBase* 
 
     // Finish spawning and signal build complete
     Pipe->FinishSpawning(FTransform(FRotator::ZeroRotator, StartPos));
-    Pipe->OnBuildEffectFinished();
+    FSFBuildEffectHelper::Finish(Pipe);
 
     // Connect the pipe
     UFGPipeConnectionComponent* PipeConn0 = Pipe->GetPipeConnection0();
