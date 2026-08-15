@@ -11,6 +11,7 @@
 #include "Buildables/FGBuildableConveyorLift.h"
 #include "Buildables/FGBuildableConveyorBase.h"
 #include "Features/Upgrade/SFUpgradeExecutionService.h"  // [#376] shared static cohort/radius helpers
+#include "Core/Upgrade/SFConveyorGeometryPolicy.h"
 #include "Buildables/FGBuildablePipeline.h"
 #include "Buildables/FGBuildablePipelinePump.h"
 #include "Buildables/FGBuildablePowerPole.h"
@@ -78,6 +79,16 @@ void USFUpgradeAuditService::Tick(float DeltaTime)
 
 bool USFUpgradeAuditService::StartAudit(const FSFUpgradeAuditParams& Params)
 {
+	float ValidatedRadiusSq = 0.0f;
+	if (!SFConveyorGeometryPolicy::TryResolveRadiusSquared(Params.Origin, Params.Radius, ValidatedRadiusSq))
+	{
+		UE_LOG(LogSmartUpgrade, Warning,
+			TEXT("USFUpgradeAuditService: Rejected invalid scan geometry (origin=%s radius=%g)"),
+			*Params.Origin.ToString(),
+			Params.Radius);
+		return false;
+	}
+
 	if (bAuditInProgress)
 	{
 		UE_LOG(LogSmartUpgrade, Verbose, TEXT("USFUpgradeAuditService: Audit already in progress, canceling previous"));
@@ -394,7 +405,12 @@ void USFUpgradeAuditService::GatherBuildablesToScan()
 		return;
 	}
 
-	const float RadiusSquared = CurrentParams.Radius > 0.0f ? FMath::Square(CurrentParams.Radius) : 0.0f;
+	float RadiusSquared = 0.0f;
+	if (!SFConveyorGeometryPolicy::TryResolveRadiusSquared(CurrentParams.Origin, CurrentParams.Radius, RadiusSquared))
+	{
+		UE_LOG(LogSmartUpgrade, Warning, TEXT("USFUpgradeAuditService: Scan geometry became invalid before gathering"));
+		return;
+	}
 	const bool bRadiusLimited = RadiusSquared > 0.0f;
 
 	// [#376] Memoize per-conveyor cohort "fully inside radius" so each connected cohort is traversed once.
@@ -461,8 +477,8 @@ void USFUpgradeAuditService::GatherBuildablesToScan()
 			}
 			else
 			{
-				float DistSquared = FVector::DistSquared(Buildable->GetActorLocation(), CurrentParams.Origin);
-				if (DistSquared > RadiusSquared)
+				const float DistSquared = FVector::DistSquared(Buildable->GetActorLocation(), CurrentParams.Origin);
+				if (!SFConveyorGeometryPolicy::IsDistanceWithinRadius(DistSquared, RadiusSquared))
 				{
 					continue;
 				}

@@ -43,6 +43,8 @@
 #include "FGRecipe.h"
 #include "FGFactoryConnectionComponent.h"
 #include "FGSplineBuildableInterface.h"
+#include "Components/SplineComponent.h"
+#include "Core/Upgrade/SFConveyorGeometryPolicy.h"
 #include "FGConveyorChainActor.h"
 #include "Equipment/FGBuildGun.h"
 #include "Features/Extend/SFExtendService.h"

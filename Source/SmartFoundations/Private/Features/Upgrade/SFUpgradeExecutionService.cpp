@@ -9,6 +9,113 @@ namespace
 	{
 		return Family == ESFUpgradeFamily::Belt || Family == ESFUpgradeFamily::Lift;
 	}
+
+	struct FSFResolvedConveyorGeometry
+	{
+		AFGBuildableConveyorBase* Conveyor = nullptr;
+		USplineComponent* BeltSpline = nullptr;
+		float ConveyorLength = 0.0f;
+		float SplineLength = 0.0f;
+		ESFConveyorGeometryBackend Backend = ESFConveyorGeometryBackend::Reject;
+	};
+
+	bool TryResolveConveyorGeometry(AFGBuildableConveyorBase* Conveyor, FSFResolvedConveyorGeometry& OutGeometry)
+	{
+		OutGeometry = FSFResolvedConveyorGeometry();
+		const bool bActorValid = IsValid(Conveyor);
+		const bool bHasBegunPlay = bActorValid && Conveyor->HasActorBegunPlay();
+		const float ConveyorLength = bActorValid ? Conveyor->GetLength() : 0.0f;
+
+		AFGBuildableConveyorBelt* Belt = bActorValid ? Cast<AFGBuildableConveyorBelt>(Conveyor) : nullptr;
+		USplineComponent* BeltSpline = Belt ? Belt->GetSplineComponent() : nullptr;
+		const int32 SplinePointCount = IsValid(BeltSpline) ? BeltSpline->GetNumberOfSplinePoints() : 0;
+		const float SplineLength = SplinePointCount >= 2 ? BeltSpline->GetSplineLength() : 0.0f;
+
+		const ESFConveyorGeometryBackend Backend = SFConveyorGeometryPolicy::SelectBackend(
+			bActorValid,
+			bHasBegunPlay,
+			Belt != nullptr,
+			IsValid(BeltSpline),
+			SplinePointCount,
+			ConveyorLength,
+			SplineLength);
+		if (Backend == ESFConveyorGeometryBackend::Reject)
+		{
+			return false;
+		}
+
+		OutGeometry.Conveyor = Conveyor;
+		OutGeometry.BeltSpline = Backend == ESFConveyorGeometryBackend::BeltSpline ? BeltSpline : nullptr;
+		OutGeometry.ConveyorLength = ConveyorLength;
+		OutGeometry.SplineLength = SplineLength;
+		OutGeometry.Backend = Backend;
+		return true;
+	}
+
+	bool TryFindClosestConveyorLocation(AFGBuildableConveyorBase* Conveyor, const FVector& Origin, FVector& OutLocation)
+	{
+		FSFResolvedConveyorGeometry Geometry;
+		if (!TryResolveConveyorGeometry(Conveyor, Geometry))
+		{
+			return false;
+		}
+
+		return SFConveyorGeometryPolicy::TryFindClosestLocation(
+			Geometry.Backend,
+			[&Geometry, &Origin, &OutLocation]()
+			{
+				OutLocation = Geometry.BeltSpline->FindLocationClosestToWorldLocation(
+					Origin,
+					ESplineCoordinateSpace::World);
+				return SFConveyorGeometryPolicy::IsFiniteVector(OutLocation);
+			},
+			[Conveyor, &Geometry, &Origin, &OutLocation]()
+			{
+				const float ClosestOffset = Conveyor->FindOffsetClosestToLocation(Origin);
+				if (!FMath::IsFinite(ClosestOffset))
+				{
+					return false;
+				}
+
+				FVector Direction = FVector::ForwardVector;
+				OutLocation = Conveyor->GetActorLocation();
+				Conveyor->GetLocationAndDirectionAtOffset(
+					FMath::Clamp(ClosestOffset, 0.0f, Geometry.ConveyorLength),
+					OutLocation,
+					Direction);
+				return SFConveyorGeometryPolicy::IsFiniteVector(OutLocation);
+			});
+	}
+
+	bool TrySampleConveyorLocation(AFGBuildableConveyorBase* Conveyor, const float Fraction, FVector& OutLocation)
+	{
+		FSFResolvedConveyorGeometry Geometry;
+		if (!TryResolveConveyorGeometry(Conveyor, Geometry))
+		{
+			return false;
+		}
+
+		const float ClampedFraction = FMath::Clamp(Fraction, 0.0f, 1.0f);
+		return SFConveyorGeometryPolicy::TrySampleLocationAtFraction(
+			Geometry.Backend,
+			[&Geometry, ClampedFraction, &OutLocation]()
+			{
+				OutLocation = Geometry.BeltSpline->GetLocationAtDistanceAlongSpline(
+					Geometry.SplineLength * ClampedFraction,
+					ESplineCoordinateSpace::World);
+				return SFConveyorGeometryPolicy::IsFiniteVector(OutLocation);
+			},
+			[Conveyor, &Geometry, ClampedFraction, &OutLocation]()
+			{
+				FVector Direction = FVector::ForwardVector;
+				OutLocation = Conveyor->GetActorLocation();
+				Conveyor->GetLocationAndDirectionAtOffset(
+					Geometry.ConveyorLength * ClampedFraction,
+					OutLocation,
+					Direction);
+				return SFConveyorGeometryPolicy::IsFiniteVector(OutLocation);
+			});
+	}
 }
 
 void USFUpgradeExecutionService::Initialize(USFSubsystem* InSubsystem)
@@ -251,6 +358,23 @@ void USFUpgradeExecutionService::StartUpgrade(const FSFUpgradeExecutionParams& P
 	if (bUpgradeInProgress)
 	{
 		UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: Upgrade already in progress"));
+		return;
+	}
+
+	if (!Params.HasValidSpecificSelection())
+	{
+		UE_LOG(LogSmartUpgrade, Warning,
+			TEXT("UpgradeExecutionService: Rejected empty explicit traversal selection"));
+		return;
+	}
+
+	float ValidatedRadiusSq = 0.0f;
+	if (!SFConveyorGeometryPolicy::TryResolveRadiusSquared(Params.Origin, Params.Radius, ValidatedRadiusSq))
+	{
+		UE_LOG(LogSmartUpgrade, Warning,
+			TEXT("UpgradeExecutionService: Rejected invalid scan geometry (origin=%s radius=%g)"),
+			*Params.Origin.ToString(),
+			Params.Radius);
 		return;
 	}
 
@@ -547,7 +671,12 @@ void USFUpgradeExecutionService::GatherUpgradeTargets()
 		UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: Exact class match found %d actors"), FoundActors.Num());
 	}
 
-	float RadiusSq = CurrentParams.Radius * CurrentParams.Radius;
+	float RadiusSq = 0.0f;
+	if (!SFConveyorGeometryPolicy::TryResolveRadiusSquared(CurrentParams.Origin, CurrentParams.Radius, RadiusSq))
+	{
+		UE_LOG(LogSmartUpgrade, Warning, TEXT("UpgradeExecutionService: Scan geometry became invalid before target gathering"));
+		return;
+	}
 
 	for (AActor* Actor : FoundActors)
 	{
@@ -560,8 +689,8 @@ void USFUpgradeExecutionService::GatherUpgradeTargets()
 		// Check radius if specified
 		if (!IsConveyorUpgradeFamily(CurrentParams.Family) && CurrentParams.Radius > 0.0f)
 		{
-			float DistSq = FVector::DistSquared(Buildable->GetActorLocation(), CurrentParams.Origin);
-			if (DistSq > RadiusSq)
+			const float DistSq = FVector::DistSquared(Buildable->GetActorLocation(), CurrentParams.Origin);
+			if (!SFConveyorGeometryPolicy::IsDistanceWithinRadius(DistSq, RadiusSq))
 			{
 				continue;
 			}
@@ -730,51 +859,63 @@ void USFUpgradeExecutionService::CollectConnectedConveyorCohort(AFGBuildableConv
 
 bool USFUpgradeExecutionService::ConveyorIntersectsRadius(AFGBuildableConveyorBase* Conveyor) const
 {
-	if (!IsValid(Conveyor) || CurrentParams.Radius <= 0.0f)
+	float RadiusSq = 0.0f;
+	if (!SFConveyorGeometryPolicy::TryResolveRadiusSquared(CurrentParams.Origin, CurrentParams.Radius, RadiusSq))
+	{
+		return false;
+	}
+	if (RadiusSq == 0.0f)
 	{
 		return true;
 	}
 
-	const float RadiusSq = CurrentParams.Radius * CurrentParams.Radius;
-	const float ClosestOffset = FMath::Clamp(Conveyor->FindOffsetClosestToLocation(CurrentParams.Origin), 0.0f, Conveyor->GetLength());
-	FVector ClosestLocation = Conveyor->GetActorLocation();
-	FVector ClosestDirection = FVector::ForwardVector;
-	Conveyor->GetLocationAndDirectionAtOffset(ClosestOffset, ClosestLocation, ClosestDirection);
-
-	return FVector::DistSquared(ClosestLocation, CurrentParams.Origin) <= RadiusSq;
+	return SFConveyorGeometryPolicy::EvaluateIntersection(
+		RadiusSq,
+		[this, Conveyor](float& OutDistanceSq)
+		{
+			FVector ClosestLocation = FVector::ZeroVector;
+			if (!TryFindClosestConveyorLocation(Conveyor, CurrentParams.Origin, ClosestLocation))
+			{
+				return false;
+			}
+			OutDistanceSq = FVector::DistSquared(ClosestLocation, CurrentParams.Origin);
+			return true;
+		});
 }
 
 bool USFUpgradeExecutionService::ConveyorFullyInsideRadius(AFGBuildableConveyorBase* Conveyor) const
 {
-	if (CurrentParams.Radius <= 0.0f)
+	float RadiusSq = 0.0f;
+	if (!SFConveyorGeometryPolicy::TryResolveRadiusSquared(CurrentParams.Origin, CurrentParams.Radius, RadiusSq))
+	{
+		return false;
+	}
+	if (RadiusSq == 0.0f)
 	{
 		return true;
 	}
-	return IsConveyorFullyInsideRadius(Conveyor, CurrentParams.Origin, CurrentParams.Radius * CurrentParams.Radius);
+	return IsConveyorFullyInsideRadius(Conveyor, CurrentParams.Origin, RadiusSq);
 }
 
 bool USFUpgradeExecutionService::IsConveyorFullyInsideRadius(AFGBuildableConveyorBase* Conveyor, const FVector& Origin, float RadiusSq)
 {
-	if (!IsValid(Conveyor) || RadiusSq <= 0.0f)
+	if (!SFConveyorGeometryPolicy::IsFiniteVector(Origin))
 	{
-		return true;
+		return false;
 	}
 
-	const float Length = Conveyor->GetLength();
-	const float SampleOffsets[] = { 0.0f, Length * 0.25f, Length * 0.5f, Length * 0.75f, Length };
-
-	for (float Offset : SampleOffsets)
-	{
-		FVector SampleLocation = Conveyor->GetActorLocation();
-		FVector SampleDirection = FVector::ForwardVector;
-		Conveyor->GetLocationAndDirectionAtOffset(FMath::Clamp(Offset, 0.0f, Length), SampleLocation, SampleDirection);
-		if (FVector::DistSquared(SampleLocation, Origin) > RadiusSq)
+	return SFConveyorGeometryPolicy::EvaluateFullyInside(
+		RadiusSq,
+		[Conveyor, &Origin](const float Fraction, float& OutDistanceSq)
 		{
-			return false;
-		}
-	}
-
-	return true;
+			FVector SampleLocation = FVector::ZeroVector;
+			if (!TrySampleConveyorLocation(Conveyor, Fraction, SampleLocation))
+			{
+				return false;
+			}
+			OutDistanceSq = FVector::DistSquared(SampleLocation, Origin);
+			return true;
+		});
 }
 
 TSubclassOf<UFGRecipe> USFUpgradeExecutionService::GetTargetRecipeForBuildable(AFGBuildable* Buildable, TSubclassOf<UFGRecipe> FallbackRecipe) const
