@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Added protection for the reported rain-occlusion bounds crash during grouped dismantle** - When the game presents box or custom-mesh rain removal with a missing owner or an index outside that owner's current instance count, Smart now discards that unusable lookup instead of forwarding the private removal. This contains the reported box-shape crash path and protects its mesh-shape sibling while the intermittent origin remains under investigation; valid lookups still follow the game's normal removal path. (Issue #514)
+
 - **Smart Upgrade no longer crashes when scanning or upgrading conveyor belts** - Radius scans and their shared audit now use each belt's stable geometric path instead of the game's runtime belt sampler that can crash in Satisfactory 1.2.4. Belts whose geometry is still loading are skipped safely rather than risking a crash or partially upgrading a connected run. Empty or expired traversal selections are also rejected instead of accidentally becoming a save-wide upgrade. (Issue #518, reported by MoanDer on the Smart! Discord)
 
 - **Copied factory settings now finish applying reliably instead of producing broken `NaN` machine values or losing Power Shards and Somersloops** - Smart scaling, Extend, Scaled Extend, and Restore now carry one recipe/shard/boost snapshot through construction, wait for the new machine and its inventories to be ready, and consume the items from the player who placed it. This fixes copied recipes showing invalid rates or power, delayed shard application racing initialization, and Somersloops depending on a fill path that could silently fail. (Issues #515, #516, #517)

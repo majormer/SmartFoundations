@@ -38,6 +38,7 @@
 #include "Features/Walk/SFWalkService.h"   // Smart Walking (#356 Slice 3) server-side commit reconstruction
 #include "Equipment/FGBuildGunBuild.h"        // UFGBuildGunStateBuild::InternalConstructHologram / GetHologram
 #include "Core/Net/SFNetworkHelper.h"     // FSFNetworkHelper::IsClient
+#include "Core/Net/SFRainOcclusionRemovalPolicy.h"  // #514: fail-closed CL 502094 rain ISM removals
 #include "Engine/Engine.h"                     // GEngine on-screen message
 #include "Holograms/Core/SFScalingSpecExpansion.h"
 #include "Data/SFBuildableSizeRegistry.h"
@@ -57,6 +58,8 @@
 #include "Hologram/FGWallAttachmentHologram.h"        // [#364-MP] wall-support server re-validation
 #include "Buildables/FGBuildableBlueprintDesigner.h"  // [#365-MP] designer containment re-derive
 #include "EngineUtils.h"                              // [#365-MP] TActorIterator over designers
+#include "FGRainOcclusionActor.h"               // #514: box/mesh rain-removal lifecycle guards
+#include "Components/InstancedStaticMeshComponent.h" // #514: authoritative owner instance count
 
 // [MP-SPEC] The blueprint proxy for the spec-construct currently executing on the server.
 // Set by the Construct hook around scope() (construction is synchronous + single-threaded);
@@ -208,6 +211,64 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 				}
 			}
 			scope(self);
+		});
+
+	// [#514 / CL 502094] Rain occlusion publicly stores one owner/index lookup per hash for
+	// instance removal. RemoveShape dispatches to private box-sprite and custom-mesh siblings.
+	// The report reaches a private RemoveBoxSprite bounds assertion with index 25 / array size 24.
+	// The proprietary body does not expose which private array asserts or what created that state.
+	// Guard both siblings only at the shared public contract against the owner's live instance count:
+	// valid lookups retain the original path unchanged; missing/dead/out-of-range lookups discard
+	// that unusable hash entry and do not forward the opaque private call. This is intentionally
+	// independent of Smart Dismantle attribution: the reporter had a large mod set and Smart's
+	// EndPlay hook appears in the stack because it invokes vanilla before its own cleanup.
+	static const auto GuardRainOcclusionRemoval = [](
+		URainOcclusionWorldSubsystem* self,
+		const FRainHashKey Hash,
+		const ESFRainOcclusionRemovalPath Path) -> bool
+	{
+		FLookupData* Lookup = self ? self->mLookupTable.Find(Hash) : nullptr;
+		const bool bHasLookup = Lookup != nullptr;
+		UInstancedStaticMeshComponent* Owner = bHasLookup ? Lookup->Owner : nullptr;
+		const bool bHasOwner = IsValid(Owner);
+		const int32 LookupIndex = Lookup ? Lookup->Index : INDEX_NONE;
+		const int32 InstanceCount = bHasOwner ? Owner->GetInstanceCount() : 0;
+		if (SFRainOcclusionRemovalPolicy::DecideForPath(
+			Path, bHasLookup, bHasOwner, LookupIndex, InstanceCount)
+			== ESFRainOcclusionRemovalDecision::Forward)
+		{
+			return false;
+		}
+
+		if (self)
+		{
+			self->mLookupTable.Remove(Hash);
+		}
+		const TCHAR* PathName = Path == ESFRainOcclusionRemovalPath::BoxSprite
+			? TEXT("box") : TEXT("mesh");
+		UE_LOG(LogSmartFoundations, Warning,
+			TEXT("[#514] Rejected inconsistent rain-occlusion lookup (path=%s hash=%llu buildable=%d lookup=%d owner=%d index=%d instances=%d); private removal was not forwarded."),
+			PathName, static_cast<unsigned long long>(Hash.Hash), Hash.bIsFromBuildable ? 1 : 0,
+			bHasLookup ? 1 : 0, bHasOwner ? 1 : 0, LookupIndex, InstanceCount);
+		return true;
+	};
+
+	SUBSCRIBE_METHOD(URainOcclusionWorldSubsystem::RemoveBoxSprite,
+		[](auto& scope, URainOcclusionWorldSubsystem* self, const FRainHashKey Hash)
+		{
+			if (GuardRainOcclusionRemoval(self, Hash, ESFRainOcclusionRemovalPath::BoxSprite))
+			{
+				scope.Cancel();
+			}
+		});
+
+	SUBSCRIBE_METHOD(URainOcclusionWorldSubsystem::RemoveMeshShape,
+		[](auto& scope, URainOcclusionWorldSubsystem* self, const FRainHashKey Hash)
+		{
+			if (GuardRainOcclusionRemoval(self, Hash, ESFRainOcclusionRemovalPath::MeshShape))
+			{
+				scope.Cancel();
+			}
 		});
 
 	SUBSCRIBE_METHOD_VIRTUAL(AFGBuildable::EndPlay, BuildableCDO,
