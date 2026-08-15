@@ -2683,3 +2683,7 @@ msgstr "Автоз'єднання креслень"
 msgctxt "SmartFoundations,Sec.BlueprintAutoConnect.TT"
 msgid "Controls connections between adjacent copies of scaled blueprints."
 msgstr "Керує з'єднаннями між сусідніми копіями масштабованих креслень."
+
+msgctxt "SmartFoundations,Notice_ConstructPayloadTooLarge"
+msgid "Placement too large ({0} KB). Build in smaller sections."
+msgstr ""

@@ -2686,3 +2686,7 @@ msgstr "Auto-conexión de planos"
 msgctxt "SmartFoundations,Sec.BlueprintAutoConnect.TT"
 msgid "Controls connections between adjacent copies of scaled blueprints."
 msgstr "Controla las conexiones entre copias adyacentes de planos escalados."
+
+msgctxt "SmartFoundations,Notice_ConstructPayloadTooLarge"
+msgid "Placement too large ({0} KB). Build in smaller sections."
+msgstr ""

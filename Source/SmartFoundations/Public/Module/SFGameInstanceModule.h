@@ -39,18 +39,16 @@ protected:
 	void RegisterBeltSupportConstructHook();
 
 	/**
-	 * Multiplayer Slice 0 (Phase 1 - construct chunk guard). Hooks UFGBuildGunStateBuild::Server_ConstructHologram
-	 * on the CLIENT (confirmed seam: the client calls this RPC directly; an earlier InternalConstructHologram hook
-	 * never fired). A Smart scaled grid serializes the parent + all child holograms into one
-	 * FConstructHologramMessage.SerializedHologramData blob; past an engine byte ceiling (~64KB, empirical ~135
-	 * cells) the RPC fails to marshal ("Failed to serialize properties") and is dropped -> all-or-nothing failure
-	 * with orphaned previews (no failure callback fires because the server never processed it). This guard reads
-	 * the ACTUAL serialized byte size and cancels the send for an oversized Smart-grid construct, so nothing
-	 * orphans (the preview stays live) and the player is told to build in smaller sections. Engages only for a
-	 * network client (NM_Client) and only for Smart grids (children tagged SF_GridChild) - vanilla placements and
-	 * blueprints are untouched. (Phase 2 will auto-chunk the placement instead of refusing it.)
+	 * Issue #513 construct payload guard. Hooks UFGBuildGunStateBuild::Server_ConstructHologram in every net mode.
+	 * A Smart scaled grid serializes the parent + all child holograms into one
+	 * FConstructHologramMessage.SerializedHologramData blob; above 60,000 bytes it approaches the engine's
+	 * 65,535-byte property/RPC ceiling and can fail or crash before authority processes construction. The guard
+	 * reads the exact serialized byte size and cancels an oversized Smart-grid construct before execution,
+	 * preserving the active preview so the player can scale down. It engages only for grids with direct
+	 * SF_GridChild children. Untagged vanilla placements and unscaled blueprints are untouched; Smart-scaled
+	 * blueprint grids are intentionally protected because their tagged child trees carry the same payload risk.
 	 */
-	void RegisterClientConstructChunkGuardHook();
+	void RegisterConstructPayloadGuardHook();
 
 	/**
 	 * MP Slice 0 SAFETY GUARD. Hooks UFGBuildGunStateBuild::InternalExecuteDuBuildStepInput (the client fire
