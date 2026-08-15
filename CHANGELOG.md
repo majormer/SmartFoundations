@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Oversized Smart grids now stop safely instead of failing or crashing during placement** - Single-player, listen-server, and multiplayer placements whose build data exceeds the safe payload limit are refused before construction. The active preview stays available so the grid can be scaled down and retried. (Issue #513)
 
+- **Auto-connected belts and pipes no longer crash dedicated servers while their previews are created** - Smart! now keeps the route data needed for construction but skips client-only spline rendering on headless servers. This also covers preview finalization paths that previously tried to refresh render state after visual mesh generation had been skipped. (Issue #511)
+
 ---
 
 ## [34.3.0] - 2026-07-20

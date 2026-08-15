@@ -3,7 +3,7 @@
 #include "Holograms/Logistics/SFPipelineHologram.h"
 #include "Core/Helpers/SFBuildEffectHelper.h"
 #include "SmartFoundations.h"
-#include "Core/Net/SFNetworkHelper.h"   // [#511] IsDedicatedServer - skip cosmetic mesh work
+#include "Core/Net/SFVisualSplineMeshPolicy.h"
 #include "SFLogMacros.h"                       // [#168] LogSmartAutoConnect for seam-pipe wiring
 #include "Hologram/FGBlueprintHologram.h"      // [#168] blueprint-seam parent discriminator
 #include "Buildables/FGBuildablePipeline.h"
@@ -1365,6 +1365,15 @@ void ASFPipelineHologram::TriggerMeshGeneration()
 		return;
 	}
 	
+	// [#511] Authoritative spline data is current; everything below loads render assets
+	// and builds cosmetic spline-mesh segments. Cooked dedicated servers have no render data.
+	if (!SFVisualSplineMeshPolicy::ShouldGenerate(GetNetMode()))
+	{
+		UE_LOG(LogSmartHologram, Verbose,
+			TEXT("[#511] PIPE TriggerMeshGeneration: skipped visual meshes on dedicated server."));
+		return;
+	}
+
 	// Get pipe mesh, material, and mesh length from build class CDO - this ensures they match the actual tier
 	UStaticMesh* PipeMesh = nullptr;
 	UMaterialInterface* PipeMaterial = nullptr;
@@ -1424,19 +1433,6 @@ void ASFPipelineHologram::TriggerMeshGeneration()
 	UE_LOG(LogSmartHologram, Verbose, TEXT("🔧 PIPE TriggerMeshGeneration: Need %d segments (%.1f cm each) for %.1f cm spline"), 
 		RequiredSegments, SplineLength / RequiredSegments, SplineLength);
 	
-	// [#511] STOP HERE ON A DEDICATED SERVER — same reasoning as the belt hologram. Everything
-	// above is spline DATA (which construction uses); everything below builds VISUAL spline mesh
-	// segments. Cooked server builds strip static-mesh render data, so SetStaticMesh on a fresh
-	// USplineMeshComponent can fault inside UpdateBounds. The belt is the path that actually
-	// crashed a live server on 1.2.4; the pipe runs the identical pattern and is gated for the
-	// same reason rather than waiting for it to take a server down too.
-	if (FSFNetworkHelper::IsDedicatedServer(GetWorld()))
-	{
-		UE_LOG(LogSmartHologram, Verbose,
-			TEXT("[#511] PIPE TriggerMeshGeneration: skipped on dedicated server (client cosmetics)."));
-		return;
-	}
-
 	// Get existing mesh components - base class creates default ones that may not update properly
 	TArray<USplineMeshComponent*> MeshComps;
 	GetComponents<USplineMeshComponent>(MeshComps);

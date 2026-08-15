@@ -3,7 +3,7 @@
 #include "Holograms/Logistics/SFConveyorBeltHologram.h"
 #include "Core/Helpers/SFBuildEffectHelper.h"
 #include "SmartFoundations.h"
-#include "Core/Net/SFNetworkHelper.h"   // [#511] IsDedicatedServer - skip cosmetic mesh work
+#include "Core/Net/SFVisualSplineMeshPolicy.h"
 #include "Components/SplineMeshComponent.h"
 #include "Buildables/FGBuildableConveyorBelt.h"
 #include "Hologram/FGHologramBuildModeDescriptor.h"
@@ -1116,7 +1116,7 @@ void ASFConveyorBeltHologram::TriggerMeshGeneration()
     // Same rule FSFArrowModule_StaticMesh already applies ("client cosmetics ... no render data
     // under the null renderer"). mSplineMeshes is written back to vanilla purely so the game knows
     // about the segments; nothing in the construction path reads it.
-    if (FSFNetworkHelper::IsDedicatedServer(GetWorld()))
+    if (!SFVisualSplineMeshPolicy::ShouldGenerate(GetNetMode()))
     {
         UE_LOG(LogSmartHologram, Verbose,
             TEXT("[#511] BELT TriggerMeshGeneration: skipped on dedicated server (client cosmetics)."));
