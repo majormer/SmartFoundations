@@ -7,19 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > **Audience note:** This changelog is read by players, not developers. Entries should describe what the user experiences — what was broken, what it felt like, and what's better now. Class names, internal APIs, and implementation details belong in code comments or design docs, not here. Unless an entry says otherwise, changes apply to both single-player and multiplayer.
 
-## [Unreleased]
+## [34.3.1] - 2026-08-16
 
 ### Fixed
 
-- **Added protection for the reported rain-occlusion bounds crash during grouped dismantle** - When the game presents box or custom-mesh rain removal with a missing owner or an index outside that owner's current instance count, Smart now discards that unusable lookup instead of forwarding the private removal. This contains the reported box-shape crash path and protects its mesh-shape sibling while the intermittent origin remains under investigation; valid lookups still follow the game's normal removal path. (Issue #514)
+- **Added protection for the reported rain-occlusion bounds crash during grouped dismantle** - When the game presents box or custom-mesh rain removal with a missing owner or an index outside that owner's current instance count, Smart now discards that unusable lookup instead of forwarding the private removal. This contains the reported box-shape crash path and protects its mesh-shape sibling while the intermittent origin remains under investigation; valid lookups still follow the game's normal removal path. (Issue #514, reported by rokrae)
 
 - **Smart Upgrade no longer crashes when scanning or upgrading conveyor belts** - Radius scans and their shared audit now use each belt's stable geometric path instead of the game's runtime belt sampler that can crash in Satisfactory 1.2.4. Belts whose geometry is still loading are skipped safely rather than risking a crash or partially upgrading a connected run. Empty or expired traversal selections are also rejected instead of accidentally becoming a save-wide upgrade. (Issue #518, reported by MoanDer on the Smart! Discord)
 
-- **Copied factory settings now finish applying reliably instead of producing broken `NaN` machine values or losing Power Shards and Somersloops** - Smart scaling, Extend, Scaled Extend, and Restore now carry one recipe/shard/boost snapshot through construction, wait for the new machine and its inventories to be ready, and consume the items from the player who placed it. This fixes copied recipes showing invalid rates or power, delayed shard application racing initialization, and Somersloops depending on a fill path that could silently fail. (Issues #515, #516, #517)
+- **Copied factory settings now finish applying reliably instead of producing broken `NaN` machine values or losing Power Shards and Somersloops** - Smart scaling, Extend, Scaled Extend, and Restore now carry one recipe/shard/boost snapshot through construction, wait for the new machine and its inventories to be ready, and consume the items from the player who placed it. This fixes copied recipes showing invalid rates or power, delayed shard application racing initialization, and Somersloops depending on a fill path that could silently fail. (Issues #515, #516, #517; reported by Albert071006 and CN.ZX-xuwu on the Smart! Discord)
 
-- **Oversized Smart grids now stop safely instead of failing or crashing during placement** - Single-player, listen-server, and multiplayer placements whose build data exceeds the safe payload limit are refused before construction. The active preview stays available so the grid can be scaled down and retried. (Issue #513)
+- **Oversized Smart grids now stop safely instead of failing or crashing during placement** - Single-player, listen-server, and multiplayer placements whose build data exceeds the safe payload limit are refused before construction. The active preview stays available so the grid can be scaled down and retried. (Issue #513, reported by naitsabessalter-ctrl)
 
-- **Auto-connected belts and pipes no longer crash dedicated servers while their previews are created** - Smart! now keeps the route data needed for construction but skips client-only spline rendering on headless servers. This also covers preview finalization paths that previously tried to refresh render state after visual mesh generation had been skipped. (Issue #511)
+- **Auto-connected belts and pipes no longer crash dedicated servers while their previews are created** - Smart! now keeps the route data needed for construction but skips client-only spline rendering on headless servers. This also covers preview finalization paths that previously tried to refresh render state after visual mesh generation had been skipped. (Issue #511, reported by Oyvind Haga and Arobelco on the Smart! Discord)
 
 ---
 

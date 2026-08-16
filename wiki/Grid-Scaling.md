@@ -36,7 +36,7 @@ Smart! can grow a grid in the opposite direction by using negative values. This 
 
 ## Large Grids
 
-Smart! is built to scale far. Grids of many thousands of buildings stay responsive, and growing a grid only adds the new part — everything you already placed stays put instead of the whole preview redrawing. Jumping straight to a very large grid fills in progressively over a moment or two rather than freezing while everything appears at once. (Extremely large grids are still bounded by how much the game engine can hold at one time; Smart! will warn you as you approach that limit.)
+Smart! is built to scale far. Grids of many thousands of buildings stay responsive, and growing a grid only adds the new part — everything you already placed stays put instead of the whole preview redrawing. Jumping straight to a very large grid fills in progressively over a moment or two rather than freezing while everything appears at once. (Extremely large grids are still bounded by how much the game engine can hold at one time; Smart! will warn you as you approach that limit. If a placement is too large for the game to accept in one click, Smart! now refuses it with a "Placement too large" message instead of failing silently — your preview stays up, so just scale it down a step or two, place, and continue the grid from there.)
 
 ## Supported Buildables
 
