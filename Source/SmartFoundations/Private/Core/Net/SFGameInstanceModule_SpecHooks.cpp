@@ -31,12 +31,14 @@
 #include "Patching/NativeHookManager.h"
 #include "Subsystem/SFSubsystem.h"
 #include "Buildables/FGBuildableManufacturer.h"  // [#368] server-authoritative recipe apply
-#include "Services/SFChainActorService.h"  // [CHAIN-FIX] post-construct chain-hygiene sweep
+#include "Services/SFChainActorService.h"
+#include "Services/SFRecipeManagementService.h"  // [CHAIN-FIX] post-construct chain-hygiene sweep
 #include "Features/AutoConnect/SFAutoConnectService.h"
 #include "Features/Extend/SFExtendService.h"
 #include "Features/Walk/SFWalkService.h"   // Smart Walking (#356 Slice 3) server-side commit reconstruction
 #include "Equipment/FGBuildGunBuild.h"        // UFGBuildGunStateBuild::InternalConstructHologram / GetHologram
 #include "Core/Net/SFNetworkHelper.h"     // FSFNetworkHelper::IsClient
+#include "Core/Net/SFRainOcclusionRemovalPolicy.h"  // #514: fail-closed CL 502094 rain ISM removals
 #include "Engine/Engine.h"                     // GEngine on-screen message
 #include "Holograms/Core/SFScalingSpecExpansion.h"
 #include "Data/SFBuildableSizeRegistry.h"
@@ -44,6 +46,7 @@
 #include "Subsystem/SFHologramHelperService.h"
 #include "Core/Net/SFRCO.h"
 #include "FGPlayerController.h"
+#include "FGCharacterPlayer.h"
 #include "FGBlueprintProxy.h"   // server-side Smart Dismantle group for spec-built grids
 #include "Buildables/FGBuildableFactory.h"   // [EXTEND-MP] commit wiring pass anchor
 #include "TimerManager.h"                    // [EXTEND-MP] next-tick commit wiring pass
@@ -55,6 +58,8 @@
 #include "Hologram/FGWallAttachmentHologram.h"        // [#364-MP] wall-support server re-validation
 #include "Buildables/FGBuildableBlueprintDesigner.h"  // [#365-MP] designer containment re-derive
 #include "EngineUtils.h"                              // [#365-MP] TActorIterator over designers
+#include "FGRainOcclusionActor.h"               // #514: box/mesh rain-removal lifecycle guards
+#include "Components/InstancedStaticMeshComponent.h" // #514: authoritative owner instance count
 
 // [MP-SPEC] The blueprint proxy for the spec-construct currently executing on the server.
 // Set by the Construct hook around scope() (construction is synchronous + single-threaded);
@@ -206,6 +211,64 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 				}
 			}
 			scope(self);
+		});
+
+	// [#514 / CL 502094] Rain occlusion publicly stores one owner/index lookup per hash for
+	// instance removal. RemoveShape dispatches to private box-sprite and custom-mesh siblings.
+	// The report reaches a private RemoveBoxSprite bounds assertion with index 25 / array size 24.
+	// The proprietary body does not expose which private array asserts or what created that state.
+	// Guard both siblings only at the shared public contract against the owner's live instance count:
+	// valid lookups retain the original path unchanged; missing/dead/out-of-range lookups discard
+	// that unusable hash entry and do not forward the opaque private call. This is intentionally
+	// independent of Smart Dismantle attribution: the reporter had a large mod set and Smart's
+	// EndPlay hook appears in the stack because it invokes vanilla before its own cleanup.
+	static const auto GuardRainOcclusionRemoval = [](
+		URainOcclusionWorldSubsystem* self,
+		const FRainHashKey Hash,
+		const ESFRainOcclusionRemovalPath Path) -> bool
+	{
+		FLookupData* Lookup = self ? self->mLookupTable.Find(Hash) : nullptr;
+		const bool bHasLookup = Lookup != nullptr;
+		UInstancedStaticMeshComponent* Owner = bHasLookup ? Lookup->Owner : nullptr;
+		const bool bHasOwner = IsValid(Owner);
+		const int32 LookupIndex = Lookup ? Lookup->Index : INDEX_NONE;
+		const int32 InstanceCount = bHasOwner ? Owner->GetInstanceCount() : 0;
+		if (SFRainOcclusionRemovalPolicy::DecideForPath(
+			Path, bHasLookup, bHasOwner, LookupIndex, InstanceCount)
+			== ESFRainOcclusionRemovalDecision::Forward)
+		{
+			return false;
+		}
+
+		if (self)
+		{
+			self->mLookupTable.Remove(Hash);
+		}
+		const TCHAR* PathName = Path == ESFRainOcclusionRemovalPath::BoxSprite
+			? TEXT("box") : TEXT("mesh");
+		UE_LOG(LogSmartFoundations, Warning,
+			TEXT("[#514] Rejected inconsistent rain-occlusion lookup (path=%s hash=%llu buildable=%d lookup=%d owner=%d index=%d instances=%d); private removal was not forwarded."),
+			PathName, static_cast<unsigned long long>(Hash.Hash), Hash.bIsFromBuildable ? 1 : 0,
+			bHasLookup ? 1 : 0, bHasOwner ? 1 : 0, LookupIndex, InstanceCount);
+		return true;
+	};
+
+	SUBSCRIBE_METHOD(URainOcclusionWorldSubsystem::RemoveBoxSprite,
+		[](auto& scope, URainOcclusionWorldSubsystem* self, const FRainHashKey Hash)
+		{
+			if (GuardRainOcclusionRemoval(self, Hash, ESFRainOcclusionRemovalPath::BoxSprite))
+			{
+				scope.Cancel();
+			}
+		});
+
+	SUBSCRIBE_METHOD(URainOcclusionWorldSubsystem::RemoveMeshShape,
+		[](auto& scope, URainOcclusionWorldSubsystem* self, const FRainHashKey Hash)
+		{
+			if (GuardRainOcclusionRemoval(self, Hash, ESFRainOcclusionRemovalPath::MeshShape))
+			{
+				scope.Cancel();
+			}
 		});
 
 	SUBSCRIBE_METHOD_VIRTUAL(AFGBuildable::EndPlay, BuildableCDO,
@@ -747,59 +810,27 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 
 			GSFActiveSpecGroupProxy.Reset();
 
-			// [#368] Apply the staged remembered production recipe to the built manufacturer(s) with
-			// SERVER AUTHORITY. Manual recipe-memory is client-side only and never reached the
-			// authoritative build on a dedicated server: normal manufacturer placement constructs
-			// through VANILLA holograms server-side (Smart's ConfigureActor recipe-apply only runs on
-			// the Extend-swapped ASFFactoryHologram, not here), and the OnActorSpawned apply path is
-			// correctly gated off when no active hologram exists on the server (#368 gate). So this
-			// construct seam is the ONLY place a manually-remembered recipe both EXISTS
-			// (Spec.ProductionRecipe, shipped client->server on FSFScalingSpec) and can be set with
-			// authority (mCurrentRecipe is server-authoritative and replicates to every client).
-			// Applied to the parent and every spec-expanded grid child. Post-scope is a proven seam
-			// for operating on freshly built actors (the Extend wiring pass below runs here too).
-			// Scaling path only: Extend and Restore commits ship their own FactorySettings
-			// snapshot, installed into the server's recipe service in ReconstructCommitOnServer
-			// (#484) so the reconstruction pipeline applies it exactly like the SP preview.
-			if (bHasScaling && Spec.ProductionRecipe)
+			// [#515-#517] Hand the exact staged value contract to every built factory. The
+			// service-owned queue waits for BeginPlay/inventories and consumes from this instigator.
+			if (bHasScaling || bHasExtend)
 			{
-				UWorld* const RecipeWorld = self->GetWorld();
-				const TSubclassOf<UFGRecipe> RecipeToApply = Spec.ProductionRecipe;
-				// NOTE: [=] (not [RecipeWorld, RecipeToApply]) - this lambda sits inside the
-				// SUBSCRIBE_METHOD_VIRTUAL macro, and a bare multi-capture comma would be parsed as an
-				// extra macro argument (C4002). [=] is comma-free and safe: called synchronously below.
-				auto ApplyServerRecipe = [=](AActor* Built)
+				const FSFFactorySettingsSnapshot& Settings = bHasScaling
+					? Spec.FactorySettings
+					: ExtendSpec.FactorySettings;
+				if (Settings.HasAnySettings())
 				{
-					AFGBuildableManufacturer* Mfg = Cast<AFGBuildableManufacturer>(Built);
-					if (!Mfg)
+					if (USFSubsystem* SS = USFSubsystem::Get(self->GetWorld()))
 					{
-						return;
-					}
-					if (Mfg->HasActorBegunPlay())
-					{
-						Mfg->SetRecipe(RecipeToApply);
-					}
-					else if (RecipeWorld)
-					{
-						// Built but not yet begun play: defer briefly so SetRecipe takes - the same
-						// reason USFRecipeManagementService::ApplyRecipeDelayed retries on
-						// !HasActorBegunPlay. Weak ptr so a dismantle in the gap can't dangle.
-						TWeakObjectPtr<AFGBuildableManufacturer> WeakMfg(Mfg);
-						FTimerHandle DeferHandle;
-						RecipeWorld->GetTimerManager().SetTimer(DeferHandle,
-							[WeakMfg, RecipeToApply]()
+						if (USFRecipeManagementService* RecipeService = SS->GetRecipeManagementService())
+						{
+							AFGCharacterPlayer* Player = Cast<AFGCharacterPlayer>(self->GetConstructionInstigator());
+							RecipeService->QueueFactorySettingsApplication(Cast<AFGBuildable>(BuiltParent), Player, Settings);
+							for (AActor* BuiltChild : out_children)
 							{
-								if (AFGBuildableManufacturer* M = WeakMfg.Get())
-								{
-									M->SetRecipe(RecipeToApply);
-								}
-							}, 0.1f, false);
+								RecipeService->QueueFactorySettingsApplication(Cast<AFGBuildable>(BuiltChild), Player, Settings);
+							}
+						}
 					}
-				};
-				ApplyServerRecipe(BuiltParent);
-				for (AActor* BuiltChild : out_children)
-				{
-					ApplyServerRecipe(BuiltChild);
 				}
 			}
 

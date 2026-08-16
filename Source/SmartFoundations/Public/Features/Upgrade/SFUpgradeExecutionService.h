@@ -50,12 +50,19 @@ struct FSFUpgradeExecutionParams
 	UPROPERTY()
 	TObjectPtr<AFGPlayerController> PlayerController = nullptr;
 
-	/** Specific buildables to upgrade (if provided, ignores Origin/Radius and upgrades these directly) */
+	/** Explicit selection mode; preserved even when filtering leaves an empty traversal payload. */
+	UPROPERTY()
+	bool bUseSpecificBuildables = false;
+
+	/** Specific buildables to upgrade when bUseSpecificBuildables is true. */
 	UPROPERTY()
 	TArray<TWeakObjectPtr<AFGBuildable>> SpecificBuildables;
 
-	/** Whether to use SpecificBuildables instead of radius scan */
-	bool HasSpecificBuildables() const { return SpecificBuildables.Num() > 0; }
+	/** Whether this request intends to use the explicit traversal selection. */
+	bool HasSpecificBuildables() const { return bUseSpecificBuildables; }
+
+	/** Empty explicit selections are invalid and must never fall through to radius mode. */
+	bool HasValidSpecificSelection() const { return !bUseSpecificBuildables || SpecificBuildables.Num() > 0; }
 };
 
 /**

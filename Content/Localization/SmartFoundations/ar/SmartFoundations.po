@@ -2618,3 +2618,7 @@ msgstr "التوصيل التلقائي للمخططات"
 msgctxt "SmartFoundations,Sec.BlueprintAutoConnect.TT"
 msgid "Controls connections between adjacent copies of scaled blueprints."
 msgstr "يتحكّم في الاتصالات بين النسخ المتجاورة للمخططات المُحجّمة."
+
+msgctxt "SmartFoundations,Notice_ConstructPayloadTooLarge"
+msgid "Placement too large ({0} KB). Build in smaller sections."
+msgstr ""

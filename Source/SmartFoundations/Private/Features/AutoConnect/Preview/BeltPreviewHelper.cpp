@@ -1,6 +1,7 @@
 // Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
 #include "Features/AutoConnect/Preview/BeltPreviewHelper.h"
+#include "Core/Net/SFVisualSplineMeshPolicy.h"
 #include "Engine/World.h"
 #include "Components/SplineMeshComponent.h"
 #include "FGRecipe.h"
@@ -131,9 +132,20 @@ void FBeltPreviewHelper::FinalizeSpawn(AFGSplineHologram* SpawnedHologram)
 	BeltHologram->SetActorHiddenInGame(false);
 	BeltHologram->SetActorEnableCollision(false);
 	BeltHologram->RegisterAllComponents();
-	BeltHologram->SetPlacementMaterialState(EHologramMaterialState::HMS_OK);
 
-	// Generate mesh AFTER AddChild (which was already called by base class)
+	// A dedicated server still needs TriggerMeshGeneration to push authoritative spline data, but
+	// SetPlacementMaterialState itself applies spline materials and may dirty render state. Keep the
+	// original client ordering while excluding every cosmetic material/render call on the server.
+	if (!SFVisualSplineMeshPolicy::ShouldGenerate(BeltHologram->GetNetMode()))
+	{
+		BeltHologram->TriggerMeshGeneration();
+		UE_LOG(LogSmartFoundations, VeryVerbose,
+			TEXT("[#511] Belt preview finalized without cosmetic material/render-state work on dedicated server."));
+		return;
+	}
+
+	BeltHologram->SetPlacementMaterialState(EHologramMaterialState::HMS_OK);
+	// Generate mesh AFTER AddChild (which was already called by base class).
 	BeltHologram->TriggerMeshGeneration();
 	BeltHologram->ForceApplyHologramMaterial();
 

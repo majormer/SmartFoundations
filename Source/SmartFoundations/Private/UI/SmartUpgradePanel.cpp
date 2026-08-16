@@ -495,9 +495,20 @@ void USmartUpgradePanel::OnUpgradeButtonClicked()
 	Params.PlayerController = Cast<AFGPlayerController>(PC);  // For cost deduction
 	Params.MaxItems = 0;  // No limit
 
-	// Check if we're in traversal mode with valid results
-	if ((ActiveTab == ESmartUpgradeTab::Traversal) && CachedTraversalResult.IsValid())
+	// Preserve traversal intent independently of the filtered actor count. An empty or stale
+	// traversal result must never collapse into radius=0 (save-wide) mode.
+	if (ActiveTab == ESmartUpgradeTab::Traversal)
 	{
+		Params.bUseSpecificBuildables = true;
+		if (!CachedTraversalResult.IsValid())
+		{
+			if (StatusText)
+			{
+				StatusText->SetText(LOCTEXT("Upgrade_TraversalExpired", "Traversal results are no longer valid; scan again"));
+			}
+			return;
+		}
+
 		// Use specific buildables from traversal scan. [#456] With a specific source tier
 		// selected, pre-filter here so the RCO payload on huge networks only carries the
 		// relevant actors - execution re-filters by SourceTier anyway (defense in depth).
@@ -510,6 +521,14 @@ void USmartUpgradePanel::OnUpgradeButtonClicked()
 		}
 		UE_LOG(LogSmartUI, VeryVerbose, TEXT("Upgrade Panel: Using %d buildables from traversal scan (source tier %d)"),
 			Params.SpecificBuildables.Num(), SelectedTier);
+		if (!Params.HasValidSpecificSelection())
+		{
+			if (StatusText)
+			{
+				StatusText->SetText(LOCTEXT("Upgrade_TraversalEmpty", "No matching traversal buildables remain; scan again"));
+			}
+			return;
+		}
 	}
 	else
 	{

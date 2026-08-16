@@ -44,26 +44,6 @@ AActor* ASFSmartChildHologram::Construct(TArray<AActor*>& out_children, FNetCons
     if (ConstructedActor) {
         UE_LOG(LogSmartHologram, Verbose, TEXT("SFSmartChildHologram::Construct: Successfully constructed %s"),
             *ConstructedActor->GetName());
-        
-        // Check if we have a stored recipe to apply
-        TSubclassOf<UFGRecipe> StoredRecipe = USFHologramDataService::GetStoredRecipe(this);
-        if (StoredRecipe) {
-            UE_LOG(LogSmartHologram, Verbose, TEXT("SFSmartChildHologram::Construct: Applying stored recipe %s to building"),
-                *StoredRecipe->GetName());
-            
-            // Apply the stored recipe to the constructed building
-            if (AFGBuildableManufacturer* ManufacturerBuilding = Cast<AFGBuildableManufacturer>(ConstructedActor))
-            {
-                ManufacturerBuilding->SetRecipe(StoredRecipe);
-                UE_LOG(LogSmartHologram, Verbose, TEXT("SFSmartChildHologram::Construct: Successfully applied recipe to manufacturer building"));
-            }
-            else
-            {
-                UE_LOG(LogSmartHologram, Verbose, TEXT("SFSmartChildHologram::Construct: Constructed building is not a manufacturer, cannot apply recipe"));
-            }
-        } else {
-            UE_LOG(LogSmartHologram, Verbose, TEXT("SFSmartChildHologram::Construct: No stored recipe found"));
-        }
     } else {
         UE_LOG(LogSmartHologram, Verbose, TEXT("SFSmartChildHologram::Construct: Failed to construct building"));
     }

@@ -5,6 +5,7 @@
 #include "Hologram/FGHologram.h"
 #include "Subsystem/SFSubsystem.h"
 #include "Features/Extend/SFExtendService.h"   // [EXTEND-MP] topology walk RPCs
+#include "Core/Upgrade/SFConveyorGeometryPolicy.h"
 #include "FGPlayerController.h"  // AFGPlayerController (don't rely on transitive unity-build includes)
 #include "FGCharacterPlayer.h"   // [#368] resolve the owning pawn for the clipboard sync
 #include "Module/SFGameInstanceModule.h" // [#368] SetBuildStateClipboardRecipe (friend write helper)
@@ -468,8 +469,8 @@ void USFRCO::Server_StartUpgradeAudit_Implementation(FSFUpgradeAuditParams Param
 
 bool USFRCO::Server_StartUpgradeAudit_Validate(FSFUpgradeAuditParams Params)
 {
-	// Basic validation: radius must be non-negative
-	return Params.Radius >= 0.0f;
+	float RadiusSq = 0.0f;
+	return SFConveyorGeometryPolicy::TryResolveRadiusSquared(Params.Origin, Params.Radius, RadiusSq);
 }
 
 void USFRCO::Server_CancelUpgradeAudit_Implementation()
@@ -527,9 +528,11 @@ void USFRCO::Server_StartUpgrade_Implementation(FSFUpgradeExecutionParams Params
 
 bool USFRCO::Server_StartUpgrade_Validate(FSFUpgradeExecutionParams Params)
 {
+	float RadiusSq = 0.0f;
 	return Params.SourceTier >= 0 && Params.SourceTier <= 6
 		&& Params.TargetTier >= 0 && Params.TargetTier <= 6
-		&& Params.Radius >= 0.0f
+		&& Params.HasValidSpecificSelection()
+		&& SFConveyorGeometryPolicy::TryResolveRadiusSquared(Params.Origin, Params.Radius, RadiusSq)
 		&& Params.SpecificBuildables.Num() <= 50000;
 }
 

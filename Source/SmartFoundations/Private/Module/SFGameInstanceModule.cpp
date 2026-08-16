@@ -27,7 +27,7 @@
 #include "Features/AutoConnect/SFAutoConnectService.h"
 #include "Features/Extend/SFExtendService.h"
 
-// MP Slice 0 (Phase 1): client construct chunk guard
+// #513: all-mode construct payload guard
 #include "Equipment/FGBuildGunBuild.h"        // UFGBuildGunStateBuild::InternalConstructHologram / GetHologram
 #include "Equipment/FGBuildGun.h"             // [#368] AFGBuildGun::GetBuildGunStateFor / EBuildGunState
 #include "FGCharacterPlayer.h"                // [#368] AFGCharacterPlayer::GetBuildGun
@@ -105,9 +105,9 @@ void USFGameInstanceModule::DispatchLifecycleEvent(ELifecyclePhase Phase)
 		// one hook covers stackable / wall / ceiling - see RegisterBeltSupportConstructHook).
 		RegisterBeltSupportConstructHook();
 
-		// MP Slice 0 (Phase 1): guard a client against committing an oversized scaled grid in one
-		// construct RPC (the all-or-nothing drop + orphaned-preview bug). Backstop for the chunker below.
-		RegisterClientConstructChunkGuardHook();
+		// #513: refuse an oversized serialized Smart-grid payload before construction in every net mode,
+		// retaining the active preview so the player can scale down. Backstop for the client chunker below.
+		RegisterConstructPayloadGuardHook();
 
 		// MP Slice 0 chunking: shrink an oversized client grid to a fit-in-one-RPC chunk at the fire handler,
 		// before vanilla serializes (Increment 1 = single-chunk proof). See the method comment.

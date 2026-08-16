@@ -1,7 +1,9 @@
 // Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
 #include "Holograms/Logistics/SFPipelineHologram.h"
+#include "Core/Helpers/SFBuildEffectHelper.h"
 #include "SmartFoundations.h"
+#include "Core/Net/SFVisualSplineMeshPolicy.h"
 #include "SFLogMacros.h"                       // [#168] LogSmartAutoConnect for seam-pipe wiring
 #include "Hologram/FGBlueprintHologram.h"      // [#168] blueprint-seam parent discriminator
 #include "Buildables/FGBuildablePipeline.h"
@@ -291,7 +293,7 @@ AActor* ASFPipelineHologram::Construct(TArray<AActor*>& out_children, FNetConstr
 					}
 					
 					// Finalize the pipe
-					Pipe->OnBuildEffectFinished();
+					FSFBuildEffectHelper::Finish(Pipe);
 					UE_LOG(LogSmartHologram, Verbose, TEXT("🔧 STACKABLE: Pipe %s finalized (index %d)"),
 						*Pipe->GetName(), HoloData->StackablePipeIndex);
 				}
@@ -300,7 +302,7 @@ AActor* ASFPipelineHologram::Construct(TArray<AActor*>& out_children, FNetConstr
 				if (bIsPipeAutoConnectChild && HoloData && HoloData->bIsPipeAutoConnectChild)
 				{
 					// Finalize the pipe
-					Pipe->OnBuildEffectFinished();
+					FSFBuildEffectHelper::Finish(Pipe);
 					
 					// Floor hole pipes (PipeAutoConnectConn0 == nullptr):
 					// Conn1 (building side) is already wired by vanilla's AFGSplineHologram::Construct().
@@ -1363,6 +1365,15 @@ void ASFPipelineHologram::TriggerMeshGeneration()
 		return;
 	}
 	
+	// [#511] Authoritative spline data is current; everything below loads render assets
+	// and builds cosmetic spline-mesh segments. Cooked dedicated servers have no render data.
+	if (!SFVisualSplineMeshPolicy::ShouldGenerate(GetNetMode()))
+	{
+		UE_LOG(LogSmartHologram, Verbose,
+			TEXT("[#511] PIPE TriggerMeshGeneration: skipped visual meshes on dedicated server."));
+		return;
+	}
+
 	// Get pipe mesh, material, and mesh length from build class CDO - this ensures they match the actual tier
 	UStaticMesh* PipeMesh = nullptr;
 	UMaterialInterface* PipeMaterial = nullptr;

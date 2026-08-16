@@ -2691,3 +2691,7 @@ msgstr "Blueprint Auto-Connect"
 msgctxt "SmartFoundations,Sec.BlueprintAutoConnect.TT"
 msgid "Controls connections between adjacent copies of scaled blueprints."
 msgstr "Controls connections between adjacent copies of scaled blueprints."
+
+msgctxt "SmartFoundations,Notice_ConstructPayloadTooLarge"
+msgid "Placement too large ({0} KB). Build in smaller sections."
+msgstr "Placement too large ({0} KB). Build in smaller sections."
