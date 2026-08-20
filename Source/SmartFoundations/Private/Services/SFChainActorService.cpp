@@ -883,10 +883,29 @@ int32 USFChainActorService::PurgeZombieChainActors()
 		Chain->Destroy();
 		++PoisonedRemoved;
 	}
+	// [#519] Vanilla's RemoveConveyor dereferences the belt's tick-group ChainActor on its way
+	// into RemoveConveyorChain (live Linux dedi segfault at 0x8, CL 495413). A belt that reports
+	// chainless while its tick group still points at a chain is inconsistent: the pointer is
+	// either dangling (freed chain - the crash) or a live chain mid-rebuild (vanilla owns it).
+	// Either way re-registering here would hand vanilla that pointer - never do it. Pure pointer
+	// read of the tick-group struct; the chain itself is never dereferenced.
+	const auto IsBeltTickGroupChainClear = [BuildableSub](const AFGBuildableConveyorBase* Belt) -> bool
+	{
+		const int32 GuardBucketID = Belt->GetConveyorBucketID();
+		if (!BuildableSub->mConveyorTickGroup.IsValidIndex(GuardBucketID))
+		{
+			return true;
+		}
+		const FConveyorTickGroup* TG = BuildableSub->mConveyorTickGroup[GuardBucketID];
+		return !TG || TG->ChainActor == nullptr;
+	};
+	int32 SkippedInconsistentTickGroups = 0;
+
 	for (AFGBuildableConveyorBase* Belt : PoisonedMemberBelts)
 	{
 		if (!IsValid(Belt) || Belt->IsActorBeingDestroyed()) continue;
 		if (Belt->GetConveyorChainActor() != nullptr) continue;
+		if (!IsBeltTickGroupChainClear(Belt)) { ++SkippedInconsistentTickGroups; continue; }
 		BuildableSub->RemoveConveyor(Belt);
 		BuildableSub->AddConveyor(Belt);
 	}
@@ -920,6 +939,20 @@ int32 USFChainActorService::PurgeZombieChainActors()
 		UE_LOG(LogSmartUpgrade, VeryVerbose,
 			TEXT("[CHAIN-DIAG] Purge force-destroying detached-but-segmented chain %s (segments=%d) — items transfer back to belts"),
 			*Chain->GetName(), Chain->GetNumChainSegments());
+		// [#519] Null every tick group's ChainActor BEFORE the force-destroy, exactly like the
+		// poisoned path above. The block comment above trusted ForceDestroyChainActor to clear
+		// the tick buckets, but a live dedi segfault (#519: RemoveConveyor →
+		// RemoveConveyorChain → SIGSEGV at 0x8 on a dead chain) proves a tick group can still
+		// hold the destroyed chain when the heal loops below re-register member belts.
+		// TObjectPtr in a heap FConveyorTickGroup is not GC-tracked, so once the chain actor is
+		// gone the pointer dangles silently. Nulling first is idempotent if vanilla also does it.
+		for (FConveyorTickGroup* TG : BuildableSub->mConveyorTickGroup)
+		{
+			if (TG && TG->ChainActor == Chain)
+			{
+				BuildableSub->RemoveChainActorFromConveyorGroup(TG);
+			}
+		}
 		BuildableSub->ForceDestroyChainActor(Chain);
 		++ForceDestroyedCount;
 	}
@@ -928,6 +961,7 @@ int32 USFChainActorService::PurgeZombieChainActors()
 	{
 		if (!IsValid(Belt) || Belt->IsActorBeingDestroyed()) continue;
 		if (Belt->GetConveyorChainActor() != nullptr) continue; // still owned by a live chain — fine
+		if (!IsBeltTickGroupChainClear(Belt)) { ++SkippedInconsistentTickGroups; continue; } // [#519]
 		BuildableSub->RemoveConveyor(Belt);
 		BuildableSub->AddConveyor(Belt);
 		++ReRegisteredBelts;
@@ -964,6 +998,15 @@ int32 USFChainActorService::PurgeZombieChainActors()
 			{
 				continue;
 			}
+			// [#519] The crash site: this loop fires from a deferred timer, so the tick group's
+			// ChainActor can point at a chain destroyed (by anyone) since scheduling - and
+			// RemoveConveyor dereferences it. Chainless belt + non-null group chain = inconsistent;
+			// never hand vanilla that pointer.
+			if (TG && TG->ChainActor != nullptr)
+			{
+				++SkippedInconsistentTickGroups;
+				continue;
+			}
 		}
 
 		BuildableSub->RemoveConveyor(Belt);
@@ -981,6 +1024,15 @@ int32 USFChainActorService::PurgeZombieChainActors()
 		UE_LOG(LogSmartUpgrade, Verbose,
 			TEXT("[CHAIN-DIAG] Purge sweep: %d connected-but-chainless belt(s) re-registered total"),
 			HealedChainlessBelts);
+	}
+	if (SkippedInconsistentTickGroups > 0)
+	{
+		// [#519] Warning (not Verbose): each of these is a re-register that would previously have
+		// handed vanilla a possibly-dangling chain pointer. Frequency in the wild tells us whether
+		// the dangling source is fully closed by the pre-destroy tick-group nulling above.
+		UE_LOG(LogSmartUpgrade, Warning,
+			TEXT("[#519] Purge sweep: skipped %d chainless belt(s) whose tick group still holds a chain pointer (inconsistent or dangling; re-register would crash in RemoveConveyor)."),
+			SkippedInconsistentTickGroups);
 	}
 
 	if (Zombies.Num() == 0)
