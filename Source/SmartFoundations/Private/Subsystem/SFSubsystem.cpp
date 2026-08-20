@@ -1106,9 +1106,12 @@ void USFSubsystem::Tick(float DeltaTime)
 	// and force grid to 1x1x1 even if no Smart! scaling input occurred.
 	if (ActiveHologram.IsValid() && HologramHelper)
 	{
-		if (AFGFactoryBuildingHologram* FactoryBuildingHolo = Cast<AFGFactoryBuildingHologram>(ActiveHologram.Get()))
+		// [#523] Widened from AFGFactoryBuildingHologram for #330 parity: the zoop API lives on
+		// AFGBuildableHologram, and the narrower cast skipped zoopable non-factory holograms
+		// (signs/billboards), leaving this mid-placement detection blind to their zoop.
+		if (AFGBuildableHologram* ZoopableHolo = Cast<AFGBuildableHologram>(ActiveHologram.Get()))
 		{
-			const TArray<FTransform>& ZoopTransforms = FactoryBuildingHolo->GetZoopInstanceTransforms();
+			const TArray<FTransform>& ZoopTransforms = ZoopableHolo->GetZoopInstanceTransforms();
 			const bool bZoopNowActive = ZoopTransforms.Num() > 0;
 			const bool bWasZoopActive = HologramHelper->IsZoopActive();
 

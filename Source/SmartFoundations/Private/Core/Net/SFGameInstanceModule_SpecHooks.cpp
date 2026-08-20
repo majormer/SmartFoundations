@@ -752,14 +752,49 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 				}
 			}
 
+			// [#523] Zoop stand-down at the commit seam. The tick-time guard (#160) detects vanilla
+			// zoop and destroys Smart's preview children, but it runs one subsystem tick behind
+			// player input: a build click landing between the zoop drag and Smart's next tick
+			// constructs BOTH vanilla's zoop instances AND Smart's grid children at overlapping
+			// transforms - the "duplicate buildings at the same location" the #160 guard exists to
+			// prevent, and the leading suspect for the duplicated rain-occlusion hash behind
+			// #523/#514. The commit point cannot race input: with zoop live on the constructing
+			// hologram, strip Smart's grid children here, before vanilla's child-construct loop.
+			if (self && self->HasAuthority() && self->GetZoopInstanceTransforms().Num() > 0)
+			{
+				static const FName ZoopStripGridChildTag(TEXT("SF_GridChild"));
+				TArray<AFGHologram*> GridChildrenToStrip;
+				for (AFGHologram* Child : self->GetHologramChildren())
+				{
+					if (Child && Child->Tags.Contains(ZoopStripGridChildTag))
+					{
+						GridChildrenToStrip.Add(Child);
+					}
+				}
+				if (GridChildrenToStrip.Num() > 0)
+				{
+					for (AFGHologram* Child : GridChildrenToStrip)
+					{
+						self->mChildren.Remove(Child);
+						Child->Destroy();
+					}
+					UE_LOG(LogSmartFoundations, Warning,
+						TEXT("[#523] Zoop live at construct on %s: stripped %d Smart grid children before the child-construct loop (tick-time stand-down raced the build click)."),
+						*self->GetName(), GridChildrenToStrip.Num());
+				}
+			}
+
 			// #487 standalone/listen-host construction has no staged network spec. Wrap the normal
 			// vanilla parent construct while its Smart grid children and counters still exist, then
 			// use the same post-construct primitive as the authoritative staged path below.
-			if (self && self->HasAuthority())
+			if (self && self->HasAuthority() && self->GetZoopInstanceTransforms().Num() == 0)
 			{
 				if (USFSubsystem* SS = USFSubsystem::Get(self->GetWorld());
 					SS && SS->GetActiveHologram() == self && !SS->IsExtendModeActive())
 				{
+					// [#523] Gated on zoop being inactive: with zoop live the counters can be stale
+					// (tick-time stand-down raced the click) and daisy-chain power for a grid that
+					// zoop, not Smart, is placing would wire against buildings that don't exist.
 					const FSFCounterState Counters = SS->GetCounterState();
 					const bool bDaisyEnabled = SS->GetAutoConnectRuntimeSettings().bScaleDaisyChainPower;
 					if (bDaisyEnabled && FMath::Abs(Counters.GridCounters.X) >= 2)
@@ -791,6 +826,18 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 			const bool bHasWalk = FindStagedWalkCommit(self, WalkSpec, /*bConsume=*/true);
 			// A committed WALK supersedes the incidental scaling/Extend spec a stackable pole also stages.
 			if (bHasWalk) { bHasScaling = false; bHasExtend = false; }
+			// [#523] With zoop live on the constructing hologram, zoop owns placement: a staged
+			// scaling spec is a stale capture from before the client's tick-time stand-down could
+			// reset the counters. Expanding it would build Smart's grid on top of vanilla's zoop
+			// instances at overlapping transforms. The spec is already consumed above, so it
+			// cannot leak into a later construct; discard it here.
+			if (bHasScaling && self->GetZoopInstanceTransforms().Num() > 0)
+			{
+				UE_LOG(LogSmartFoundations, Warning,
+					TEXT("[#523] Zoop live at construct seam on %s: discarded a stale %d-cell staged scaling spec (zoop owns this placement)."),
+					*self->GetName(), Spec.CellCount());
+				bHasScaling = false;
+			}
 			if (!bHasScaling && !bHasExtend && !bHasWalk)
 			{
 				return; // nothing staged for this instigator/class (e.g. a child in the loop)

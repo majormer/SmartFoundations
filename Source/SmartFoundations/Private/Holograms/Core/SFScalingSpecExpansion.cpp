@@ -128,7 +128,23 @@ bool CaptureScalingSpec(AFGHologram* Hologram, FSFScalingSpec& OutSpec)
 	// Construct hook is also the seam where auto-connect wiring is re-derived with authority, and
 	// a SINGLE distributor with auto-connect belts needs that path as much as a grid does. The
 	// expansion loop simply spawns zero children for a 1-cell spec, and the cost scale is x1.
-	const FSFCounterState Counters = SS->GetCounterState();
+	FSFCounterState Counters = SS->GetCounterState();
+
+	// [#523] Zoop stand-down at capture. The tick-time zoop guard (#160) resets the counters one
+	// subsystem tick behind player input, so a build click racing a zoop drag can capture the
+	// pre-stand-down grid here and stage it - the server would then expand Smart's grid on top of
+	// vanilla's zoop instances at overlapping transforms. Zoop owns placement: capture one cell.
+	if (const AFGBuildableHologram* ZoopableHolo = Cast<AFGBuildableHologram>(Hologram))
+	{
+		if (ZoopableHolo->GetZoopInstanceTransforms().Num() > 0
+			&& Counters.GridCounters != FIntVector(1, 1, 1))
+		{
+			UE_LOG(LogSmartFoundations, Warning,
+				TEXT("[#523] Zoop live at spec capture on %s: forcing a 1x1x1 capture over stale grid counters (%d,%d,%d)."),
+				*Hologram->GetName(), Counters.GridCounters.X, Counters.GridCounters.Y, Counters.GridCounters.Z);
+			Counters.GridCounters = FIntVector(1, 1, 1);
+		}
+	}
 
 	USFBuildableSizeRegistry::Initialize();
 	const FSFBuildableSizeProfile Profile = USFBuildableSizeRegistry::GetProfile(Hologram->GetBuildClass());
