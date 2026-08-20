@@ -39,6 +39,7 @@
 #include "Equipment/FGBuildGunBuild.h"        // UFGBuildGunStateBuild::InternalConstructHologram / GetHologram
 #include "Core/Net/SFNetworkHelper.h"     // FSFNetworkHelper::IsClient
 #include "Core/Net/SFRainOcclusionRemovalPolicy.h"  // #514: fail-closed CL 502094 rain ISM removals
+#include "Core/Net/SFRainOcclusionAdditionPolicy.h" // #523: fail-closed duplicate-registration guard
 #include "Engine/Engine.h"                     // GEngine on-screen message
 #include "Holograms/Core/SFScalingSpecExpansion.h"
 #include "Data/SFBuildableSizeRegistry.h"
@@ -222,11 +223,28 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 	// that unusable hash entry and do not forward the opaque private call. This is intentionally
 	// independent of Smart Dismantle attribution: the reporter had a large mod set and Smart's
 	// EndPlay hook appears in the stack because it invokes vanilla before its own cleanup.
+	// [#523] Synchronous mirror of every rain-occlusion hash Smart has forwarded to the private
+	// add siblings, per subsystem instance. The proprietary bodies defer their ISM/octree work
+	// (ProcessAddsAndRemovals), so no vanilla structure is guaranteed to observe an add at call
+	// time; this mirror is updated inside the add/remove hooks themselves and is therefore exact
+	// at every hook entry regardless of vanilla's internal batching. FObjectKey keeps recycled
+	// subsystem allocations from aliasing; dead worlds are purged when a new subsystem first adds.
+	static TMap<FObjectKey, TSet<FRainHashKey>> RegisteredRainHashes;
+
 	static const auto GuardRainOcclusionRemoval = [](
 		URainOcclusionWorldSubsystem* self,
 		const FRainHashKey Hash,
 		const ESFRainOcclusionRemovalPath Path) -> bool
 	{
+		// Whether the removal forwards (vanilla erases it) or fails closed (we erase it below),
+		// the hash is unregistered either way; keep the #523 mirror in step at call time.
+		if (self)
+		{
+			if (TSet<FRainHashKey>* Registered = RegisteredRainHashes.Find(FObjectKey(self)))
+			{
+				Registered->Remove(Hash);
+			}
+		}
 		FLookupData* Lookup = self ? self->mLookupTable.Find(Hash) : nullptr;
 		const bool bHasLookup = Lookup != nullptr;
 		UInstancedStaticMeshComponent* Owner = bHasLookup ? Lookup->Owner : nullptr;
@@ -266,6 +284,68 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 		[](auto& scope, URainOcclusionWorldSubsystem* self, const FRainHashKey Hash)
 		{
 			if (GuardRainOcclusionRemoval(self, Hash, ESFRainOcclusionRemovalPath::MeshShape))
+			{
+				scope.Cancel();
+			}
+		});
+
+	// [#523 / CL 502094] The add-side counterpart of the #514 removal guard. Zooping ramp walls
+	// can reach the private add siblings twice with the same FRainHashKey and trip vanilla's
+	// bDEBUGIsAddedTwice assertion (FGRainOcclusionActor.cpp:502). A duplicate add that survived
+	// would also clobber the hash's mLookupTable owner/index entry, which is exactly the
+	// inconsistent state the #514 removal guard keeps rejecting, so the two guards close one loop:
+	// nothing registers twice, and nothing inconsistent is removed. The class log line is the
+	// attribution probe for the root cause hunt: it names which buildable produced the duplicate.
+	static const auto GuardRainOcclusionAddition = [](
+		URainOcclusionWorldSubsystem* self,
+		const AFGBuildable* Buildable,
+		const FRainHashKey Hash,
+		const TCHAR* PathName) -> bool
+	{
+		if (!self)
+		{
+			return false;
+		}
+		TSet<FRainHashKey>* Registered = RegisteredRainHashes.Find(FObjectKey(self));
+		if (!Registered)
+		{
+			for (auto It = RegisteredRainHashes.CreateIterator(); It; ++It)
+			{
+				if (!It.Key().ResolveObjectPtr())
+				{
+					It.RemoveCurrent();
+				}
+			}
+			Registered = &RegisteredRainHashes.Add(FObjectKey(self));
+		}
+		if (SFRainOcclusionAdditionPolicy::Decide(Registered->Contains(Hash))
+			== ESFRainOcclusionAdditionDecision::Forward)
+		{
+			Registered->Add(Hash);
+			return false;
+		}
+		UE_LOG(LogSmartFoundations, Warning,
+			TEXT("[#523] Rejected duplicate rain-occlusion registration (path=%s hash=%llu buildable=%d class=%s); private add was not forwarded."),
+			PathName, static_cast<unsigned long long>(Hash.Hash), Hash.bIsFromBuildable ? 1 : 0,
+			Buildable ? *Buildable->GetClass()->GetName() : TEXT("<null>"));
+		return true;
+	};
+
+	SUBSCRIBE_METHOD(URainOcclusionWorldSubsystem::AddBoxSprite,
+		[](auto& scope, URainOcclusionWorldSubsystem* self, const AFGBuildable* Buildable,
+			const FTransform& ActorTransform, FRainHashKey Hash)
+		{
+			if (GuardRainOcclusionAddition(self, Buildable, Hash, TEXT("box")))
+			{
+				scope.Cancel();
+			}
+		});
+
+	SUBSCRIBE_METHOD(URainOcclusionWorldSubsystem::AddMeshShape,
+		[](auto& scope, URainOcclusionWorldSubsystem* self, const AFGBuildable* Buildable,
+			const FSimpleOcclusionData& InstanceData, FRainHashKey Hash)
+		{
+			if (GuardRainOcclusionAddition(self, Buildable, Hash, TEXT("mesh")))
 			{
 				scope.Cancel();
 			}

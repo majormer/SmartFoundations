@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > **Audience note:** This changelog is read by players, not developers. Entries should describe what the user experiences — what was broken, what it felt like, and what's better now. Class names, internal APIs, and implementation details belong in code comments or design docs, not here. Unless an entry says otherwise, changes apply to both single-player and multiplayer.
 
+## [Unreleased]
+
+### Fixed
+
+- **Zooping ramp walls no longer trips the game's "added twice" rain-occlusion crash** - Building could register the same rain-occlusion shape twice, and Satisfactory 1.2.4 now crashes the game when that happens instead of quietly absorbing it. Smart now tracks every shape it lets the game register and drops the duplicate before the game can see it, so the build completes normally. This is the add-side companion of the 34.3.1 dismantle protection: the duplicate registration it blocks is also the leading suspect for the corrupted state behind that dismantle crash, and the new log line records exactly which building caused a duplicate so the remaining root cause can be pinned down from player logs. (Issue #523, reported by melonenbuby on the Smart! Discord; continues issue #514)
+
+---
+
 ## [34.3.1] - 2026-08-16
 
 ### Fixed
