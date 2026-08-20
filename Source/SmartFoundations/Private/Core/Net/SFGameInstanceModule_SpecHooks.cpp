@@ -57,6 +57,8 @@
 #include "FGBuildableSubsystem.h"
 #include "FGConveyorChainActor.h"
 #include "Hologram/FGWallAttachmentHologram.h"        // [#364-MP] wall-support server re-validation
+#include "Hologram/FGPillarHologram.h"                // [#522] pillar server re-validation (dedi floor snap)
+#include "Hologram/FGPassthroughHologram.h"           // [#522] floor-hole server re-validation (dedi foundation snap)
 #include "Buildables/FGBuildableBlueprintDesigner.h"  // [#365-MP] designer containment re-derive
 #include "EngineUtils.h"                              // [#365-MP] TActorIterator over designers
 #include "FGRainOcclusionActor.h"               // #514: box/mesh rain-removal lifecycle guards
@@ -506,6 +508,84 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 				UE_LOG(LogSmartFoundations, Verbose,
 					TEXT("[MP-SPEC] %s: cleared server-side FGCDMustSnapWall for a staged client fire (client validated the wall snap; %d other disqualifier(s) kept)."),
 					*self->GetName(), Disqualifiers.Num());
+			}
+		});
+
+	// ── [#522] Pillar re-validation for staged client fires - the same disease #364-MP fixed for
+	// wall attachments, in a second family. A pillar snapped onto a foundation references the
+	// CLIENT's temporary actor for that lightweight instance (the dedi log shows the server
+	// failing to resolve exactly that GUID: "Unable to resolve default guid from client:
+	// Build_Foundation_..."), so the deserialized server-side hologram loses its snap target and
+	// the CheckValidFloor re-run reports FGCDInvalidFloor - every Smart-scaled pillar over a
+	// foundation is refused, dedi only (SP resolves the actor trivially; against rock/terrain no
+	// actor reference is needed, which is why those placements work). Same trust model as #364:
+	// the client's build gun will not fire a red preview, and a staged spec exists ONLY for a
+	// Smart client fire. Clear exactly FGCDInvalidFloor; every other server check stays.
+	SUBSCRIBE_METHOD_VIRTUAL(AFGBuildableHologram::CheckValidPlacement, BuildableHologramCDO,
+		[=](auto& scope, AFGBuildableHologram* self)
+		{
+			scope(self);
+			if (!self || !self->HasAuthority() || !self->IsA<AFGPillarHologram>())
+			{
+				return;
+			}
+			FSFScalingSpec StagedSpec;
+			if (!FindStagedSpec(self, StagedSpec, /*bConsume=*/false))
+			{
+				return; // not a staged Smart client fire - vanilla/SP validation untouched
+			}
+			TArray<TSubclassOf<UFGConstructDisqualifier>> Disqualifiers;
+			self->GetConstructDisqualifiers(Disqualifiers);
+			if (Disqualifiers.Remove(UFGCDInvalidFloor::StaticClass()) > 0)
+			{
+				self->ResetConstructDisqualifiers();
+				for (const TSubclassOf<UFGConstructDisqualifier>& Disqualifier : Disqualifiers)
+				{
+					self->AddConstructDisqualifier(Disqualifier);
+				}
+				UE_LOG(LogSmartFoundations, Verbose,
+					TEXT("[#522] %s: cleared server-side FGCDInvalidFloor for a staged client fire (client validated the floor snap; %d other disqualifier(s) kept)."),
+					*self->GetName(), Disqualifiers.Num());
+			}
+		});
+
+	// ── [#522] Passthrough (hypertube/pipe floor hole) re-validation for staged client fires.
+	// The passthrough's entire placement contract is the foundation it pierces, and that
+	// reference is the same client-side lightweight temporary that cannot resolve on the server
+	// - the dedi log shows all three snap-shaped refusals (FGCDInvalidFloor / FGCDMustSnap /
+	// FGCDEncroachingSoftClearance, the last because without the resolved foundation the
+	// server clearance-tests the hole against the very slab it should be embedded in). Clear
+	// those three for staged fires; overlap/affordability and every other check stays.
+	AFGPassthroughHologram* PassthroughCDO = GetMutableDefault<AFGPassthroughHologram>();
+	SUBSCRIBE_METHOD_VIRTUAL(AFGPassthroughHologram::CheckValidPlacement, PassthroughCDO,
+		[=](auto& scope, AFGPassthroughHologram* self)
+		{
+			scope(self);
+			if (!self || !self->HasAuthority())
+			{
+				return;
+			}
+			FSFScalingSpec StagedSpec;
+			if (!FindStagedSpec(self, StagedSpec, /*bConsume=*/false))
+			{
+				return; // not a staged Smart client fire - vanilla/SP validation untouched
+			}
+			TArray<TSubclassOf<UFGConstructDisqualifier>> Disqualifiers;
+			self->GetConstructDisqualifiers(Disqualifiers);
+			int32 Cleared = 0;
+			Cleared += Disqualifiers.Remove(UFGCDInvalidFloor::StaticClass());
+			Cleared += Disqualifiers.Remove(UFGCDMustSnap::StaticClass());
+			Cleared += Disqualifiers.Remove(UFGCDEncroachingSoftClearance::StaticClass());
+			if (Cleared > 0)
+			{
+				self->ResetConstructDisqualifiers();
+				for (const TSubclassOf<UFGConstructDisqualifier>& Disqualifier : Disqualifiers)
+				{
+					self->AddConstructDisqualifier(Disqualifier);
+				}
+				UE_LOG(LogSmartFoundations, Verbose,
+					TEXT("[#522] %s: cleared %d server-side snap-shaped disqualifier(s) for a staged client fire (client validated the foundation snap; %d other disqualifier(s) kept)."),
+					*self->GetName(), Cleared, Disqualifiers.Num());
 			}
 		});
 
