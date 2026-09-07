@@ -8,6 +8,8 @@
 //                  (Net seam: Hook B, Core/Net/SFGameInstanceModule_SpecHooks.cpp).
 
 #include "Features/PowerAutoConnect/SFPowerAutoConnectManager.h"
+#include "Features/PowerAutoConnect/SFPowerConnectionPolicy.h"
+#include "Features/PowerAutoConnect/SFPowerBuildingTarget.h"
 #include "Core/Helpers/SFBuildEffectHelper.h"
 #include "Subsystem/SFSubsystem.h"
 #include "Features/AutoConnect/SFAutoConnectService.h"
@@ -49,6 +51,12 @@ void FSFPowerAutoConnectManager::Initialize(USFSubsystem* InSubsystem, USFAutoCo
 
 void FSFPowerAutoConnectManager::ProcessAllPowerPoles(AFGHologram* ParentPoleHologram)
 {
+	if (IsValid(ParentPoleHologram) && ParentPoleHologram->GetBuildClass()
+		&& SFPowerConnectionPolicy::IsWallOutlet(ParentPoleHologram->GetBuildClass()->GetName()))
+	{
+		ProcessWallOutlets(ParentPoleHologram);
+		return;
+	}
 	if (!ParentPoleHologram || !Subsystem || !AutoConnectService)
 	{
 		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("⚡ ProcessAllPowerPoles: Invalid pointers (Parent=%d, Subsystem=%d, Service=%d)"),
@@ -410,27 +418,11 @@ void FSFPowerAutoConnectManager::ProcessBuildingConnections(const TArray<AFGHolo
 		if (!Building || !IsValid(Building)) continue;
 		if (Building->IsA(AFGBuildablePowerPole::StaticClass())) continue;
 		
-		TArray<UActorComponent*> PowerComps;
-		Building->GetComponents(UFGPowerConnectionComponent::StaticClass(), PowerComps);
-		if (PowerComps.Num() == 0) continue;
-		
-		// Get the actual power port location (not building center)
-		// Use first available unconnected port, or first port if all connected
-		FVector PowerPortLoc = Building->GetActorLocation(); // Fallback
-		UFGPowerConnectionComponent* BestPort = nullptr;
-		for (UActorComponent* Comp : PowerComps)
-		{
-			UFGPowerConnectionComponent* PowerConn = Cast<UFGPowerConnectionComponent>(Comp);
-			if (PowerConn)
-			{
-				if (!BestPort || !PowerConn->IsConnected())
-				{
-					BestPort = PowerConn;
-					PowerPortLoc = PowerConn->GetComponentLocation();
-					if (!PowerConn->IsConnected()) break; // Found unconnected, use it
-				}
-			}
-		}
+		// Filter before assigning capacity. Already-connected buildings must not crowd out lights
+		// (or other unconnected consumers) and then fail to produce a preview afterward.
+		UFGPowerConnectionComponent* BestPort = SFPowerBuildingTarget::Find(Building);
+		if (!BestPort) continue;
+		const FVector PowerPortLoc = BestPort->GetComponentLocation();
 		
 		// Check if in range of any pole (use power port location for accurate distance)
 		for (AFGHologram* Pole : AllPoles)
@@ -438,8 +430,8 @@ void FSFPowerAutoConnectManager::ProcessBuildingConnections(const TArray<AFGHolo
 			if (!Pole) continue;
 			UFGPowerConnectionComponent* PoleConn = GetPowerConnection(Pole);
 			FVector PoleLoc = PoleConn ? PoleConn->GetComponentLocation() : Pole->GetActorLocation();
-			float Dist = FVector::Dist(PoleLoc, PowerPortLoc);
-			if (Dist <= RangeCm)
+			if (PoleConn && Pole->GetBlueprintDesigner() == Building->GetBlueprintDesigner()
+				&& SFPowerBuildingTarget::IsWithinRange(PoleLoc, PowerPortLoc, RangeCm))
 			{
 				BuildingPowerPortLocations.Add(Building, PowerPortLoc);
 				break;
@@ -473,7 +465,8 @@ void FSFPowerAutoConnectManager::ProcessBuildingConnections(const TArray<AFGHolo
 			FVector PowerPortLoc = BuildingEntry.Value;
 			
 			float Dist = FVector::Dist(PoleLoc, PowerPortLoc);
-			if (Dist <= RangeCm)
+			if (PoleConn && Pole->GetBlueprintDesigner() == Building->GetBlueprintDesigner()
+				&& SFPowerBuildingTarget::IsWithinRange(PoleLoc, PowerPortLoc, RangeCm))
 			{
 				AllPairs.Add(FPoleBuildingPair(Pole, Building, Dist));
 			}
@@ -656,20 +649,7 @@ bool FSFPowerAutoConnectManager::CreateBuildingPowerLinePreview(AFGHologram* Sou
 
     UFGPowerConnectionComponent* SourceConn = GetPowerConnection(SourcePole);
     
-    // Find best connection on building
-    UFGPowerConnectionComponent* TargetConn = nullptr;
-    TArray<UActorComponent*> Components;
-    TargetBuilding->GetComponents(UFGPowerConnectionComponent::StaticClass(), Components);
-    
-    for (UActorComponent* Comp : Components)
-    {
-        UFGPowerConnectionComponent* Conn = Cast<UFGPowerConnectionComponent>(Comp);
-        if (Conn && (Conn->IsConnected() == 0))
-        {
-            TargetConn = Conn;
-            break; // Just take the first free one
-        }
-    }
+    UFGPowerConnectionComponent* TargetConn = SFPowerBuildingTarget::Find(TargetBuilding);
 
     if (!SourceConn || !TargetConn) return false;
 
@@ -1003,6 +983,7 @@ UFGPowerConnectionComponent* FSFPowerAutoConnectManager::GetPowerConnection(AFGH
 
 void FSFPowerAutoConnectManager::ClearPowerLinePreviews()
 {
+	WallPreviewPositions.Empty();
 	for (auto& Pair : PowerLinePreviews)
 	{
 		for (TSharedPtr<FPowerLinePreviewHelper>& Preview : Pair.Value)
@@ -1057,6 +1038,9 @@ void FSFPowerAutoConnectManager::CleanupOrphanedPreviews(const TArray<AFGHologra
 
 void FSFPowerAutoConnectManager::OnPowerPoleBuilt(AFGBuildablePowerPole* BuiltPole, bool bCostsPreDeducted)
 {
+	// Wall plans construct once at the shared post-construct seam, with exact named ports.
+	// The legacy actor-location queue must never create a second/wrong-face wire.
+	if (IsValid(BuiltPole) && SFPowerConnectionPolicy::IsWallOutlet(BuiltPole->GetClass()->GetName())) return;
 	if (!BuiltPole || !Subsystem)
 	{
 		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("⚡ OnPowerPoleBuilt: Invalid parameters"));
@@ -1411,13 +1395,18 @@ void FSFPowerAutoConnectManager::OnPowerPoleBuilt(AFGBuildablePowerPole* BuiltPo
 			continue;
 		}
 		
-		// Check distance from THIS pole to the building
-		float Distance = FVector::Dist(PoleLoc, Building->GetActorLocation());
+		// The ceiling-light socket is offset from its origin by six metres. Use the same
+		// endpoints as the preview, not actor origins, when accepting the committed wire.
+		UFGPowerConnectionComponent* TargetPort = SFPowerBuildingTarget::Find(Building);
+		UFGPowerConnectionComponent* SourcePort = BuiltPole->FindComponentByClass<UFGPowerConnectionComponent>();
+		if (!TargetPort || !SourcePort || SourcePort->GetNumFreeConnections() <= 0
+			|| BuiltPole->GetBlueprintDesigner() != Building->GetBlueprintDesigner()) continue;
+		const float Distance = FVector::Dist(SourcePort->GetComponentLocation(), TargetPort->GetComponentLocation());
 		
 		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("⚡ OnPowerPoleBuilt: Building %s assigned to THIS pole, distance %.1f (max: %.1f)"), 
 			*Building->GetName(), Distance, RangeCm);
 		
-		if (Distance <= RangeCm)
+		if (SFPowerBuildingTarget::IsWithinRange(SourcePort->GetComponentLocation(), TargetPort->GetComponentLocation(), RangeCm))
 		{
 			BuildingsWithDistance.Add(TPair<AFGBuildable*, float>(Building, Distance));
 			UE_LOG(LogSmartAutoConnect, Verbose, TEXT("⚡ OnPowerPoleBuilt: Building %s is in range (%.1f cm)"), *Building->GetName(), Distance);
@@ -1454,20 +1443,7 @@ void FSFPowerAutoConnectManager::OnPowerPoleBuilt(AFGBuildablePowerPole* BuiltPo
 			break;
 		}
 		
-		// Find an available power connection on the building
-		TArray<UActorComponent*> PowerComps;
-		Building->GetComponents(UFGCircuitConnectionComponent::StaticClass(), PowerComps);
-		
-		UFGCircuitConnectionComponent* BuildingConn = nullptr;
-		for (UActorComponent* Comp : PowerComps)
-		{
-			UFGCircuitConnectionComponent* PowerConn = Cast<UFGCircuitConnectionComponent>(Comp);
-			if (PowerConn && (PowerConn->IsConnected() == 0))
-			{
-				BuildingConn = PowerConn;
-				break;
-			}
-		}
+		UFGCircuitConnectionComponent* BuildingConn = SFPowerBuildingTarget::Find(Building);
 		
 		if (!BuildingConn)
 		{
@@ -1488,6 +1464,9 @@ void FSFPowerAutoConnectManager::OnPowerPoleBuilt(AFGBuildablePowerPole* BuiltPo
 		FVector StartPos = PoleCircuitConns[0]->GetComponentLocation();
 		FVector EndPos = BuildingConn->GetComponentLocation();
 		float Distance = FVector::Dist(StartPos, EndPos);
+		if (PoleCircuitConns[0]->GetNumFreeConnections() <= 0
+			|| !SFPowerBuildingTarget::IsWithinRange(StartPos, EndPos, RangeCm)
+			|| BuiltPole->GetBlueprintDesigner() != Building->GetBlueprintDesigner()) continue;
 		
 		// Deduct cable cost before spawning wire (skip if costs pre-deducted at grid level)
 		if (!bCostsPreDeducted && !DeductCableCost(BuiltPole->GetWorld(), Distance))

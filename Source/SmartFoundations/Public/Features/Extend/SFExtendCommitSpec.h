@@ -44,6 +44,9 @@ struct SMARTFOUNDATIONS_API FSFExtendCommitScaledClone
 	int32 GridY = 0;
 
 	UPROPERTY()
+	int32 GridZ = 0;
+
+	UPROPERTY()
 	bool bIsSeed = false;
 };
 

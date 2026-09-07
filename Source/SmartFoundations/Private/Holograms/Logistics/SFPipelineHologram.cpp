@@ -123,6 +123,14 @@ AActor* ASFPipelineHologram::Construct(TArray<AActor*>& out_children, FNetConstr
 	
 	if (bIsExtendChild || bIsStackableChild || bIsPipeAutoConnectChild)
 	{
+		// #526: refresh the owning parent's designer at the pipe's own commit boundary.
+		// Previews may have been created before the parent entered (or left) a designer;
+		// the direct pipe spawners do not go through the generic conduit helper.
+		// Propagate null as well, so moving out never leaves a stale designer reference.
+		if (AFGHologram* Parent = GetParentHologram())
+		{
+			SetInsideBlueprintDesigner(Parent->GetBlueprintDesigner());
+		}
 		UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 %s: Pipe hologram %s Construct() called - building as child"), 
 			bIsPipeAutoConnectChild ? TEXT("PIPE AUTO-CONNECT") : (bIsStackableChild ? TEXT("STACKABLE") : TEXT("EXTEND")), *GetName());
 		

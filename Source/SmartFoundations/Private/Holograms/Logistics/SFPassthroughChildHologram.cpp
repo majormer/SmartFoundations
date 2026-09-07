@@ -7,11 +7,34 @@
 #include "Data/SFHologramData.h"
 #include "Subsystem/SFSubsystem.h"
 #include "Features/Extend/SFExtendService.h"
+#include "UObject/UnrealType.h"
 
 ASFPassthroughChildHologram::ASFPassthroughChildHologram()
 {
     // Minimal constructor — tick and collision disabled post-spawn (not here)
     // Matches working ASFConveyorAttachmentChildHologram pattern
+}
+
+void ASFPassthroughChildHologram::CopyBlueprintPlacementPermissionFrom(AFGHologram* ParentHologram)
+{
+    if (!IsValid(ParentHologram) || !GetBuildClass()
+        || GetBuildClass() != ParentHologram->GetBuildClass())
+    {
+        return;
+    }
+
+    // #526: raw deferred spawning bypasses the build gun's initialization of this
+    // permission (FGHologram.h). Designer ownership alone does not make the child
+    // placeable: vanilla adds NotAllowedInBlueprint and the parent inherits the failure.
+    // Match the vanilla parent's permission, including false; never authorize a different
+    // buildable or bypass designer bounds/connection checks. Same contract as #461's swap.
+    if (FProperty* PermissionProperty = AFGHologram::StaticClass()->FindPropertyByName(
+        TEXT("mCanBePlacedInBlueprintDesigner")))
+    {
+        PermissionProperty->CopyCompleteValue(
+            PermissionProperty->ContainerPtrToValuePtr<void>(this),
+            PermissionProperty->ContainerPtrToValuePtr<void>(ParentHologram));
+    }
 }
 
 void ASFPassthroughChildHologram::CheckValidPlacement()

@@ -60,15 +60,76 @@ Important behavior:
 - Recipes and configured distributor behavior are copied where the code has explicit support.
 - Post-build wiring is deferred because many vanilla components are not ready at actor-spawn time.
 
+Copied recipe, Power Shard, and Somersloop settings use the shared deferred,
+authority-only application and per-machine inventory budget described in
+[Copied Factory Settings and Item Conservation](../Scaling/IMPL_Scaling_CurrentFlow.md#copied-factory-settings-and-item-conservation).
+This contract also applies to Scaled Extend and Restore; copying settings never
+authorizes creation of unfunded items.
+
 ## Scaled Extend
 
-Scaled Extend is active when Extend mode is active and the clone count or row count is greater than one. `USFExtendService::OnScaledExtendStateChanged` tracks the grid-derived state, and `IsScaledExtendActive` reports whether the enhanced mode is currently in use.
+Scaled Extend is active when Extend mode is active and the clone count, row count, or layer count is greater than one. `USFExtendService::OnScaledExtendStateChanged` tracks the grid-derived state, and `IsScaledExtendActive` reports whether the enhanced mode is currently in use.
 
 Scaled Extend uses the same transform state as Scaling for clone offsets. Spacing, Steps, Stagger, and Z Rotation should be documented as implemented transform inputs. X/Y rotation axes should not be described as active because the current transform pipeline only implements Z rotation.
 
 See [../Transforms/IMPL_Transforms_CurrentFlow.md](../Transforms/IMPL_Transforms_CurrentFlow.md).
 
+### Cell Identity and Vertical Layers
+
+Live Scaled Extend enumerates Chain/Rows/Layers as (X,Y,Z). The existing source
+(0,0,0) is never rebuilt, and (1,0,0) is the held parent. Every other row/layer
+starts with its own X=0 seed. Layer offsets use signed Z times factory height plus
+Spacing Z, in world vertical, while horizontal rotation and steps remain unchanged.
+Stagger remains unavailable in live Extend.
+
+Row pitch is measured from `ScaledExtendBaseTopology`, the preserved single-copy
+layout, never the merged `StoredCloneTopology`. Measuring the merged layout feeds
+previous rows back into the next resize: the #534 reproduction had a 25 m first
+row gap and a 75 m next gap. The count-only path must keep both positions and
+identities independent of the current grid dimensions.
+
+Live cell prefixes are `sc_X_Y_Z_`; they are transient construction identities,
+not the persisted Restore prefix format. Preview reuse compares all three
+coordinates. Logistics and power predecessors are the preceding X cell in the
+same row/layer; seeds have no source-to-clone seam. Multiplayer commits carry
+Grid Z along with XY and the world transform, and authority uses the same spawn
+pipeline. Client and server binaries must be updated together for this schema.
+
+The panel exposes Grid Z and Spacing Z. Both scale modifiers plus wheel and the
+vertical numpad keys scale layers. Spacing cycles through Z in classic mode and
+Chain/Rows/Vertical in Player Relative mode; steps and rotation remain horizontal
+progression targets. The HUD shows the layer count when greater than one.
+
+`SmartFoundations.Extend.Grid3D` covers cell enumeration, count-independent IDs,
+row pitch, and signed vertical placement. Gameplay remains the validation gate
+for actual construction, costs, designer bounds, and multiplayer wiring.
+
 ## Wiring and Stabilization
+
+### Restored Module Layers
+
+Saved modules replay through `SFExtendRestoreReplayService`, independently of live
+Extend's live-target controls. Restore enumerates X, Y, and Z for both factory
+children and their captured infrastructure. The base cell remains the parent;
+additional cells have separate identities. Base-layer IDs retain `rr_X_Y_` compatibility,
+and upper layers use `rr_X_Y_Z_`. Belts and pipes chain along X within each row/layer;
+duplicating a floor does not invent a vertical logistics connection. Pole chains are
+also scoped to their layer.
+
+`SFRestoreGrid::Placement` is shared by preview and post-build factory lookup, and
+the camera uses the same XYZ placement through `CalculateRestoredScaledClonePlacement`.
+Z uses the signed layer index times factory height plus Z spacing, with stack stagger
+in the parent's horizontal frame. Existing XY rotation and steps remain unchanged.
+The stored topology fallback measures row width from the unexpanded template, not
+the full repeated layout.
+
+The failure addressed by #509 was three separate XY-only loops (topology expansion,
+factory spawning, and movement refresh), compounded by XY-only post-build ID parsers.
+Changing only the preview loop would leave upper-floor factory targets unwireable.
+`SmartFoundations.Restore.Grid3D` covers placement and identity invariants; live
+construction and network behavior still require gameplay validation.
+
+### Connection Registration
 
 Extend does not rely on every preview-time snapped connection surviving vanilla construction. The post-build wiring manifest is the authoritative repair step for final connections.
 

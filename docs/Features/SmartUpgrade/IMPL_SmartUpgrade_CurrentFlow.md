@@ -47,6 +47,18 @@ The chain system is the fragile part. Large conveyor upgrades can leave orphaned
 
 ## User-Facing Surfaces
 
+`USFSubsystem::IsUpgradeCapableContext` supplies both the panel route and the HUD hint.
+It prefers the live build gun's current build hologram over the polled `ActiveHologram`
+cache. A resolved gun outside build mode, or a build state without a hologram, clears
+the context instead of falling back to a previous recipe. The cache is used only when
+the live gun cannot be resolved. Otherwise a still-valid old hologram can select the
+wrong panel during the 100 ms polling window (issue #531). This corrects that source
+race; it does not establish the cause of a persistent wrong-panel report.
+
+Pumps, power poles, wall outlets, and stackable supports retain their Smart Panel
+route for scaling; belts, lifts, pipes, and wires retain the Upgrade route. Walk's
+existing panel priority and all transform controls are unchanged.
+
 | Surface | Purpose |
 |---------|---------|
 | **Smart Upgrade Panel** | Family selection, target tier, radius, and execution controls |

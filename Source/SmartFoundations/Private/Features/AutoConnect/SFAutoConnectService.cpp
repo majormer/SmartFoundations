@@ -12,6 +12,7 @@
 //                     as SP does. (Net seam: Hook B → SpawnConduitPlanChildren, SFGameInstanceModule_SpecHooks.cpp)
 
 #include "Features/AutoConnect/SFAutoConnectService.h"
+#include "Features/PowerAutoConnect/SFPowerConnectionPolicy.h"
 #include "Subsystem/SFHologramDataService.h"   // [#497 L4] O(1) raw material-state reads
 #include "Features/AutoConnect/SFAutoConnectServiceImpl.h"
 #include "Data/SFBuildableSizeRegistry.h"
@@ -1656,9 +1657,8 @@ bool USFAutoConnectService::IsPowerPoleHologram(const AFGHologram* Hologram)
 
 	FString ClassName = BuildClass->GetName();
 	
-	// Check if this is a power pole (Mk1, Mk2, or Mk3)
-	// Exclude wall-mounted outlets
-	return ClassName.Contains(TEXT("PowerPoleMk")) && !ClassName.Contains(TEXT("Wall"));
+	return (ClassName.Contains(TEXT("PowerPoleMk")) && !ClassName.Contains(TEXT("Wall")))
+		|| SFPowerConnectionPolicy::IsWallOutlet(ClassName);
 }
 
 // ========================================

@@ -1997,15 +1997,15 @@ bool USFSubsystem::ResolvePlayerRelativeModalTarget(bool bSelectSlot, ESFPlayerR
 	if (bSelectSlot)
 	{
 		// Only spacing has a vertical target (steps ARE vertical; rotation is yaw; stagger's
-		// vertical key selects the family instead - handled by the caller). Extend has no
-		// vertical target: its stable control frame is Chain (X) and Rows (Y).
-		if (DesiredSlot == ESFPlayerRelativeSlot::Vertical && (!bSpacingModeActive || bExtendActive))
+		// vertical key selects the family instead - handled by the caller). Extend spacing
+        // includes vertical layers alongside its stable Chain/Rows frame.
+		if (DesiredSlot == ESFPlayerRelativeSlot::Vertical && !bSpacingModeActive)
 		{
 			return false;
 		}
 		*Slot = DesiredSlot;
 	}
-	else if (bExtendActive && *Slot == ESFPlayerRelativeSlot::Vertical)
+	else if (bExtendActive && !bSpacingModeActive && *Slot == ESFPlayerRelativeSlot::Vertical)
 	{
 		// A spacing slot selected before entering Extend must not keep driving Z invisibly.
 		*Slot = ESFPlayerRelativeSlot::Forward;
@@ -2013,7 +2013,8 @@ bool USFSubsystem::ResolvePlayerRelativeModalTarget(bool bSelectSlot, ESFPlayerR
 
 	if (bExtendActive)
 	{
-		OutAxis = *Slot == ESFPlayerRelativeSlot::Side ? ESFScaleAxis::Y : ESFScaleAxis::X;
+		OutAxis = *Slot == ESFPlayerRelativeSlot::Vertical ? ESFScaleAxis::Z
+            : (*Slot == ESFPlayerRelativeSlot::Side ? ESFScaleAxis::Y : ESFScaleAxis::X);
 		if (bSpacingModeActive)
 		{
 			OutSign = +1;
@@ -2060,12 +2061,6 @@ void USFSubsystem::AdvancePlayerRelativeSlot()
 	using ESlot = ESFPlayerRelativeSlot;
 	if (bSpacingModeActive)
 	{
-		if (IsExtendModeActive())
-		{
-			PlayerRelativeSlots.Spacing =
-				PlayerRelativeSlots.Spacing == ESlot::Forward ? ESlot::Side : ESlot::Forward;
-		}
-		else
 		{
 			PlayerRelativeSlots.Spacing =
 				  (PlayerRelativeSlots.Spacing == ESlot::Forward) ? ESlot::Side
@@ -2116,9 +2111,9 @@ ESFScaleAxis USFSubsystem::GetEffectiveSpacingAxis() const
 {
 	if (IsExtendModeActive())
 	{
-		return PlayerRelativeSlots.Spacing == ESFPlayerRelativeSlot::Side
-			? ESFScaleAxis::Y
-			: ESFScaleAxis::X;
+		if (!IsPlayerRelativeEnabled()) return CounterState.SpacingAxis;
+        return PlayerRelativeSlots.Spacing == ESFPlayerRelativeSlot::Vertical ? ESFScaleAxis::Z
+            : (PlayerRelativeSlots.Spacing == ESFPlayerRelativeSlot::Side ? ESFScaleAxis::Y : ESFScaleAxis::X);
 	}
 	USFSubsystem* Self = const_cast<USFSubsystem*>(this);
 	ESFScaleAxis PrimAxis, LatAxis; int32 PrimSign, LatSign;
@@ -2239,7 +2234,8 @@ ELastAxisInput USFSubsystem::GetEffectiveArrowAxisInput(int32* OutDirectionSign)
 				  bSpacingModeActive ? PlayerRelativeSlots.Spacing
 				: bStepsModeActive   ? PlayerRelativeSlots.Steps
 				:                      PlayerRelativeSlots.Rotation;
-			ExtendAxis = Slot == ESFPlayerRelativeSlot::Side ? ESFScaleAxis::Y : ESFScaleAxis::X;
+			ExtendAxis = Slot == ESFPlayerRelativeSlot::Vertical ? ESFScaleAxis::Z
+                : (Slot == ESFPlayerRelativeSlot::Side ? ESFScaleAxis::Y : ESFScaleAxis::X);
 			bHasExtendTarget = true;
 		}
 		else if (bModifierScaleXActive || bModifierScaleYActive)
@@ -2250,7 +2246,7 @@ ELastAxisInput USFSubsystem::GetEffectiveArrowAxisInput(int32* OutDirectionSign)
 
 		if (bHasExtendTarget)
 		{
-			if (OutDirectionSign) { *OutDirectionSign = PlayerRelativeSignForAxis(ExtendAxis); }
+			if (OutDirectionSign) { *OutDirectionSign = ExtendAxis == ESFScaleAxis::Z ? 1 : PlayerRelativeSignForAxis(ExtendAxis); }
 			return ToArrowAxis(ExtendAxis);
 		}
 	}
@@ -2387,6 +2383,8 @@ void USFSubsystem::OnScaleXChanged(const FInputActionValue& Value)
 	{
 		if (bModifierScaleXActive && bModifierScaleYActive)
 		{
+            LastAxisInput = ELastAxisInput::Z;
+            ApplyAxisScaling(ESFScaleAxis::Z, Direction, TEXT("Scale Z"));
 			return;
 		}
 
@@ -2522,12 +2520,6 @@ void USFSubsystem::OnScaleYChanged(const FInputActionValue& Value)
 
 void USFSubsystem::OnScaleZChanged(const FInputActionValue& Value)
 {
-    // Block scaling while EXTEND is active
-    if (IsExtendModeActive())
-    {
-        return;
-    }
-
     // Phase 0: Delegate input processing to InputHandler (Task #61.6)
     if (InputHandler)
     {

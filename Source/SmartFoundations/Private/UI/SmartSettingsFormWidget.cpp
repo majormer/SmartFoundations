@@ -545,7 +545,7 @@ void USmartSettingsFormWidget::NativeConstruct()
 
     // === Extend Mode Overrides ===
     // Applied AFTER default setup since PopulateFromCounterState runs before NativeConstruct.
-    // Hides unsupported transforms: Grid Z, Spacing Z, all Stagger.
+    // Hides unsupported Stagger transforms; Grid Z and Spacing Z control layers.
     if (bIsExtendMode)
     {
         // Override title
@@ -563,12 +563,6 @@ void USmartSettingsFormWidget::NativeConstruct()
             }
         };
 
-        // Hide Grid Z row (not used in Extend)
-        CollapseByName(TEXT("GridZRow"));
-
-        // Hide Spacing Z row (not used in Extend)
-        CollapseByName(TEXT("SpacingZRow"));
-
         // Hide entire Stagger section (blocked during Extend)
         CollapseByName(TEXT("StaggerSectionHeader"));
         CollapseByName(TEXT("StaggerXRow"));
@@ -576,7 +570,7 @@ void USmartSettingsFormWidget::NativeConstruct()
         CollapseByName(TEXT("StaggerZXRow"));
         CollapseByName(TEXT("StaggerZYRow"));
 
-        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Extend mode overrides applied - title, Grid Z, Spacing Z, Stagger hidden"));
+        UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Extend mode overrides applied - title, Stagger hidden"));
     }
 }
 

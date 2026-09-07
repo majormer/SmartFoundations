@@ -774,6 +774,7 @@ int32 ExpandScalingSpecIntoChildren(AFGHologram* Parent, const FSFScalingSpec& S
 						PassthroughChild->SetBuildClass(Parent->GetBuildClass());
 						PassthroughChild->SetRecipe(Recipe);
 						PassthroughChild->FinishSpawning(FTransform(CellRot, CellLoc));
+						PassthroughChild->CopyBlueprintPlacementPermissionFrom(Parent);
 						Parent->AddChild(PassthroughChild, ChildName);
 						PassthroughChild->Tags.AddUnique(FName(TEXT("SF_GridChild")));
 						if (CellDesigner)
@@ -1003,6 +1004,12 @@ void CaptureConduitPlan(AFGHologram* Hologram, FSFScalingSpec& InOutSpec)
 			Entry.Kind = ESFConduitPlanKind::Wire;
 			Entry.WireStart = C0->GetComponentLocation();
 			Entry.WireEnd = C1->GetComponentLocation();
+			if (Child->Tags.Contains(TEXT("SF_ExactPowerPlan")))
+			{
+				Entry.bExactPowerEndpoints = true;
+				Entry.PowerStart = FSFPowerWireEndpoint::Capture(C0);
+				Entry.PowerEnd = FSFPowerWireEndpoint::Capture(C1);
+			}
 		}
 		else
 		{
@@ -1579,16 +1586,28 @@ int32 SpawnWirePlanPostConstruct(AActor* BuiltParent, const TArray<AActor*>& Out
 			continue;
 		}
 
-		UFGCircuitConnectionComponent* C0 = SF_ResolveCircuitConnectionAt(
-			World, BuiltParent, OutChildren, Entry.WireStart, 100.0f);
-		UFGCircuitConnectionComponent* C1 = SF_ResolveCircuitConnectionAt(
-			World, BuiltParent, OutChildren, Entry.WireEnd, 100.0f);
+		UFGCircuitConnectionComponent* C0 = Entry.bExactPowerEndpoints
+			? Entry.PowerStart.Resolve(BuiltParent, OutChildren)
+			: SF_ResolveCircuitConnectionAt(World, BuiltParent, OutChildren, Entry.WireStart, 100.0f);
+		UFGCircuitConnectionComponent* C1 = Entry.bExactPowerEndpoints
+			? Entry.PowerEnd.Resolve(BuiltParent, OutChildren)
+			: SF_ResolveCircuitConnectionAt(World, BuiltParent, OutChildren, Entry.WireEnd, 100.0f);
 		if (!C0 || !C1 || C0 == C1)
 		{
 			UE_LOG(LogSmartFoundations, VeryVerbose,
 				TEXT("[MP-334] SpawnWirePlanPostConstruct: wire entry %d endpoints unresolved (C0=%s, C1=%s) - skipped."),
 				EntryIndex, *GetNameSafe(C0), *GetNameSafe(C1));
 			continue;
+		}
+
+		// [MP-AUTH] Exact plans recheck native per-port capacity and length on built objects.
+		if (Entry.bExactPowerEndpoints)
+		{
+			const AFGBuildableWire* Defaults = Entry.BuildClass->GetDefaultObject<AFGBuildableWire>();
+			const double Distance = FVector::Dist(C0->GetComponentLocation(), C1->GetComponentLocation());
+			if (!BuiltParent->HasAuthority() || C0->GetOwner() == C1->GetOwner() || C0->IsHidden() || C1->IsHidden()
+				|| C0->GetNumFreeConnections() <= 0 || C1->GetNumFreeConnections() <= 0
+				|| Distance <= 1.0 || Distance > FMath::Min(10000.0f, Defaults->mMaxLength)) continue;
 		}
 
 		// Dedupe: the power manager's OnPowerPoleBuilt also runs server-side during this construct

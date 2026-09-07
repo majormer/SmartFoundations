@@ -141,6 +141,9 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Smart|Extend")
     int32 GetExtendRowCount() const;
 
+    /** Number of vertical layers, including the source layer. */
+    int32 GetExtendLayerCount() const;
+
     /** Check if Scaled Extend is active (extend mode + clone count > 1 or row count > 1) */
     UFUNCTION(BlueprintCallable, Category = "Smart|Extend")
     bool IsScaledExtendActive() const;

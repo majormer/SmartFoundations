@@ -9,7 +9,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Wall outlets support grid scaling and Auto-Connect** - Single- and double-sided Wall Outlets Mk.1, Mk.2, and Mk.3 can now be repeated with Smart's grid and spacing controls, using a 1 m default interval. Auto mode wires one continuous chain through horizontal and vertical grids. Double-sided outlets can supply nearby unconnected buildings from either face, with capacity and reserved slots counted separately per face. Preview wires keep their positions as the grid moves, and built wires retain the selected connections. (Issue #541)
+
+- **Scaled Extend can repeat layouts vertically** - Grid Z now adds layers above or below the source, with adjustable Z spacing through the Smart Panel and existing keyboard/wheel controls. Each floor retains its horizontal machine and logistics layout; no automatic belts or pipes are created between floors. (Issue #540)
+
 ### Fixed
+
+- **Ceiling-light connections use the same range and available slots as their previews** - When placing power poles, already-connected buildings no longer take planned slots away from unconnected ceiling lights and other consumers. Building the pole checks distance between the actual cable sockets, so an offset light socket within range is not rejected because its building center is farther away. The game's connection limits still apply, including the MAM research needed for a second building connection. (Issue #536, reported by Saxtus)
+
+- **Adding Extend rows no longer creates growing gaps** - New rows use the original module footprint instead of the size of the already-expanded preview. Growing or shrinking the grid also keeps each retained copy's wiring identity stable. (Issue #534, reported by Saxtus)
+
+- **Auto-connected pipes and scaled floor holes work inside Blueprint Designers** - Pipes generated from junctions and floor holes retain their designer ownership, addressing pipes omitted from saved blueprints or left behind after clearing the designer. Adding grid copies of a floor hole also no longer causes an otherwise-valid placement to be rejected. (Issue #526, reported by Saxtus)
+
+- **The Smart Panel and Upgrade panel follow the current build-gun selection immediately** - Switching between ordinary buildings and belts, lifts, pipes, or wires no longer briefly uses the previous selection to choose the panel or its HUD hint. (Issue #531, reported by Mia)
+
+- **Saved Smart Restore modules now create their vertical copies** - Grid Z previously increased the displayed total without placing the extra module layers. Restore now carries those layers through factory and infrastructure placement, post-build connection lookup, and camera focus, while preserving each layer's horizontal layout. (Issue #509, reported by @avarvashin2)
+
+- **Copied machines no longer receive unfunded Power Shards or Somersloops** - Each copied machine now checks the player's remaining inventory before filling its slots, including when multiple copies share a limited supply. Already-installed items are retained without charging for them again. Machines can still be built with fewer copied shards or sloops when the player runs out; this change prevents item duplication, rather than adding an all-or-nothing placement requirement. (Issue #524, reported by @DanzaDragon; shard/copy follow-up by @skagr)
+
+- **Dismantle protection now waits for the game's rain bookkeeping to finish** - Smart's rain-occlusion removal checks now use the same worker-completion boundary as the game's own removal code, rather than inspecting state that may still be updating. This hardens the existing protection; the intermittent origin of the reported crash remains under investigation. (Issue #514, reported by rokrae)
 
 - **Smart-scaled pillars and hypertube floor holes can be placed over foundations on dedicated servers again** - On a dedicated server, a Smart-scaled pillar snapped onto a foundation was refused with an "invalid floor" error, and scaled hypertube floor holes were refused with a mix of snap and clearance errors, even though the preview was green - while the same placements worked in single-player and against rocks or terrain. The cause: foundations are lightweight instances, and the reference to the one the client snapped to cannot cross to the server, so the server's re-check saw no floor at all. Smart now recognizes this case for its own placements and accepts the client's validated snap, exactly as it has done for wall-mounted supports since 33.x; all other server-side checks still apply. (Issue #522, reported by melonenbuby)
 

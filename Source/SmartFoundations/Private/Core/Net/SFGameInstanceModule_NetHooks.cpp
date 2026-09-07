@@ -417,11 +417,13 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 					// (a silently dropped staging RPC would leave the server constructing a bare
 					// 1x1). Refuse the fire BEFORE the previews are destroyed - the grid stays
 					// live so the player can place in smaller sections. Conservative estimate:
-					// ~100B fixed + ~80B per spline point per belt (FVectors are doubles in UE5).
+					// Include the reflected endpoint fields even on non-exact entries (they still
+					// serialize), plus name payload headroom and ~80B per spline point.
 					int32 PlanBytesEstimate = 0;
 					for (const FSFConduitPlanEntry& Entry : Spec.ConduitPlan)
 					{
-						PlanBytesEstimate += 100 + Entry.SplinePoints.Num() * 80;
+						PlanBytesEstimate += 384 + Entry.SplinePoints.Num() * 80
+							+ 2 * (Entry.PowerStart.ComponentName.ToString().Len() + Entry.PowerEnd.ComponentName.ToString().Len());
 					}
 					if (PlanBytesEstimate > 45000)
 					{

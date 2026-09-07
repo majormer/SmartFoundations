@@ -51,4 +51,4 @@ applicable family reference here, while treating entries marked Pending as unfin
 | Train platforms | Pending | Initial Train Station evidence captured |
 | Factory buildings | Pending | Not inventoried |
 | Structural buildables | Pending | Not inventoried |
-| Power buildables | Pending | Not inventoried |
+| Power buildables | [Power Connectors](PowerConnectors.md) | Partial: wall outlets and ceiling-light ports; other families pending |

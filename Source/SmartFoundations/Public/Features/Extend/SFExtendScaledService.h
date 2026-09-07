@@ -4,7 +4,7 @@
  * SFExtendScaledService - Scaled Extend (Issue #265)
  *
  * Owns the Scaled Extend planning + preview path: when the player scales the Extend grid
- * (X clones / Y rows / spacing / steps / rotation), this service computes per-clone world
+ * (X clones / Y rows / Z layers / spacing / steps / rotation), this service computes per-clone world
  * offsets, spawns the preview child holograms for every clone set, and validates belt/pipe
  * and power-pole constraints between consecutive clones.
  *
@@ -40,9 +40,10 @@ struct FSFCloneTopology;
  */
 struct FSFScaledExtendClone
 {
-    int32 GridX = 0;  // Grid position (0-based, 0 = first clone)
+    int32 GridX = 0;  // Chain coordinate (0 = seed, 1 = first clone)
     int32 GridY = 0;  // Row index (0 = source row)
-    bool bIsSeed = false;  // Auto-seed clone at (0, Y>0)
+    int32 GridZ = 0;  // Layer index (0 = source layer)
+    bool bIsSeed = false;  // X=0 seed on each added row or layer
     FVector WorldOffset = FVector::ZeroVector;  // Offset from source building
     FRotator RotationOffset = FRotator::ZeroRotator;  // Rotation relative to source
     // GC-safe: weak ptrs never dangle. Raw AFGHologram* here are invisible to GC (plain struct,

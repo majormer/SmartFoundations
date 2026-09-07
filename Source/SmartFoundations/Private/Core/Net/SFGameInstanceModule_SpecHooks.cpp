@@ -238,6 +238,14 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 		const FRainHashKey Hash,
 		const ESFRainOcclusionRemovalPath Path) -> bool
 	{
+		// #514: CL 502094 RemoveBoxSprite waits at RVA 0x968F23 before any
+		// lookup access; RemoveMeshShape delegates to it. A pre-hook otherwise
+		// reads/mutates the lookup before vanilla's worker-completion barrier.
+		// Preserve that boundary even when the guard cancels the original call.
+		if (self)
+		{
+			self->EnsureWTTaskComplete();
+		}
 		// Whether the removal forwards (vanilla erases it) or fails closed (we erase it below),
 		// the hash is unregistered either way; keep the #523 mirror in step at call time.
 		if (self)
@@ -861,6 +869,35 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 					UE_LOG(LogSmartFoundations, Warning,
 						TEXT("[#523] Zoop live at construct on %s: stripped %d Smart grid children before the child-construct loop (tick-time stand-down raced the build click)."),
 						*self->GetName(), GridChildrenToStrip.Num());
+				}
+			}
+
+			// [MP-AUTH] Port-aware power uses the same post-construct plan in standalone/listen
+			// and dedicated play. Local previews already contributed their cost; remove only those
+			// wire children while vanilla builds the grid, avoiding transient unconnected wires.
+			if (self && self->HasAuthority() && self->GetZoopInstanceTransforms().Num() == 0)
+			{
+				if (USFSubsystem* SS = USFSubsystem::Get(self->GetWorld());
+					SS && SS->GetActiveHologram() == self && !SS->IsExtendModeActive())
+				{
+					TArray<AFGHologram*> ExactWireChildren;
+					for (AFGHologram* Child : self->GetHologramChildren())
+						if (IsValid(Child) && Child->Tags.Contains(TEXT("SF_ExactPowerPlan"))) ExactWireChildren.Add(Child);
+					if (!ExactWireChildren.IsEmpty())
+					{
+						FSFScalingSpec LocalPowerPlan;
+						SFScalingSpecExpansion::CaptureConduitPlan(self, LocalPowerPlan);
+						LocalPowerPlan.ConduitPlan.RemoveAll([](const FSFConduitPlanEntry& Entry) { return !Entry.bExactPowerEndpoints; });
+						for (AFGHologram* Child : ExactWireChildren) self->mChildren.Remove(Child);
+						AActor* BuiltParent = scope(self, out_children, constructionID);
+						AFGBuildable* Buildable = Cast<AFGBuildable>(BuiltParent);
+						SFScalingSpecExpansion::SpawnWirePlanPostConstruct(BuiltParent, out_children, LocalPowerPlan,
+							Buildable ? Buildable->GetBlueprintProxy() : nullptr);
+						for (AFGHologram* Child : ExactWireChildren)
+							if (IsValid(Child)) self->mChildren.AddUnique(Child);
+						scope.Override(BuiltParent);
+						return;
+					}
 				}
 			}
 

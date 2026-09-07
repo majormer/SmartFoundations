@@ -102,6 +102,10 @@ public:
 	void DebugLogAllPowerPoleConnections() const;
 
 private:
+	/** Port-aware wall outlet planner; ordinary ground poles retain their existing path. */
+	void ProcessWallOutlets(AFGHologram* Parent);
+	TMap<FPowerLinePreviewHelper*, TPair<FVector, FVector>> WallPreviewPositions;
+
 	/**
 	 * Connect a pole to its X and Y axis neighbors
 	 * @param Pole The power pole to connect

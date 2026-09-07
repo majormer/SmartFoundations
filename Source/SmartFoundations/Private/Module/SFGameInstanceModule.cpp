@@ -26,6 +26,7 @@
 #include "Services/SFChainActorService.h"  // [CHAIN-FIX] post-construct chain-hygiene sweep
 #include "Features/AutoConnect/SFAutoConnectService.h"
 #include "Features/Extend/SFExtendService.h"
+#include "Features/Scaling/SFWallOutletPlacement.h"
 
 // #513: all-mode construct payload guard
 #include "Equipment/FGBuildGunBuild.h"        // UFGBuildGunStateBuild::InternalConstructHologram / GetHologram
@@ -116,6 +117,7 @@ void USFGameInstanceModule::DispatchLifecycleEvent(ELifecyclePhase Phase)
 		// MP spec-based scaling construction (class-agnostic hook path - covers ALL scalable
 		// buildables including BP hologram wrappers, no hologram swap). See the method comment.
 		RegisterSpecConstructionHooks();
+		FSFWallOutletPlacement::RegisterHooks();
 
 		// [#368/#279] Wire the orphaned holster cleanup to the real build-gun unequip event.
 		RegisterBuildGunUnequipHook();

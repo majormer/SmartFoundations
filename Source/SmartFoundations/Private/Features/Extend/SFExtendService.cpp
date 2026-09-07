@@ -14,6 +14,7 @@
 //  2. Commit reconstruct— [MP-AUTH] the server reconstructs the FULL commit from its own graph walk
 //                         (ReconstructCommitOnServer / ReconstructScaledCommitOnServer); topology is
 //                         NEVER shipped from the client (client GetConnection() is null → poisoned wiring).
+//                         Scaled cells carry XYZ identity and world offsets through the commit.
 //  3. Cost charge       — [MP-AUTH] the childless server parent would charge the bare factory only, so
 //                         GetCost is overridden with the client-captured preview cost. (Net seam: Hook A,
 //                         Core/Net/SFGameInstanceModule_SpecHooks.cpp)
@@ -424,8 +425,9 @@ FVector USFExtendService::GetFurthestRestoredCloneWorldPosition(const FVector& F
     const FSFCounterState& State = Subsystem->GetCounterState();
     const int32 FurthestX = FMath::Max(1, FMath::Abs(State.GridCounters.X)) - 1;
     const int32 FurthestY = FMath::Max(1, FMath::Abs(State.GridCounters.Y)) - 1;
+    const int32 FurthestZ = FMath::Max(1, FMath::Abs(State.GridCounters.Z)) - 1;
     const FRestoredScaledClonePlacement Placement = CalculateRestoredScaledClonePlacement(
-        Parent, RestoredCloneTopologyTemplate.Get(), State, FurthestX, FurthestY);
+        Parent, RestoredCloneTopologyTemplate.Get(), State, FurthestX, FurthestY, FurthestZ);
     return Parent->GetActorLocation() + Placement.WorldOffset;
 }
 
@@ -828,6 +830,7 @@ void USFExtendService::GetScaledClonePlanForCommit(TArray<FSFExtendCommitScaledC
         Entry.RotationOffset = Clone.RotationOffset;
         Entry.GridX = Clone.GridX;
         Entry.GridY = Clone.GridY;
+        Entry.GridZ = Clone.GridZ;
         Entry.bIsSeed = Clone.bIsSeed;
         OutClones.Add(Entry);
     }
@@ -1156,6 +1159,7 @@ int32 USFExtendService::ReconstructScaledCommitOnServer(AFGHologram* ParentHolog
         FSFScaledExtendClone Entry;
         Entry.GridX = C.GridX;
         Entry.GridY = C.GridY;
+        Entry.GridZ = C.GridZ;
         Entry.bIsSeed = C.bIsSeed;
         Entry.WorldOffset = C.WorldOffset;
         Entry.RotationOffset = C.RotationOffset;
@@ -2692,9 +2696,14 @@ int32 USFExtendService::GetExtendRowCount() const
     return FMath::Max(1, FMath::Abs(State.GridCounters.Y));
 }
 
+int32 USFExtendService::GetExtendLayerCount() const
+{
+    return Subsystem.IsValid() ? FMath::Max(1, FMath::Abs(Subsystem->GetCounterState().GridCounters.Z)) : 1;
+}
+
 bool USFExtendService::IsScaledExtendActive() const
 {
-    return bHasValidTarget && (GetExtendCloneCount() > 1 || GetExtendRowCount() > 1);
+    return bHasValidTarget && (GetExtendCloneCount() > 1 || GetExtendRowCount() > 1 || GetExtendLayerCount() > 1);
 }
 
 void USFExtendService::OnScaledExtendStateChanged()

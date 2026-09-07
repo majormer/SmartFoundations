@@ -9,6 +9,7 @@
  */
 
 #include "Features/Extend/SFExtendScaledService.h"
+#include "SFScaledExtendGrid.h"
 #include "Engine/World.h"        // UWorld::GetTimerManager for the rebuild debounce (#383/#384 perf)
 #include "TimerManager.h"        // FTimerManager::SetTimer/ClearTimer/IsTimerActive
 #include "Features/Extend/SFExtendService.h"
@@ -150,6 +151,7 @@ void USFExtendScaledService::RebuildScaledExtendNow()
 
     int32 CloneCount = Owner->GetExtendCloneCount();
     int32 RowCount = Owner->GetExtendRowCount();
+    const int32 LayerCount = Owner->GetExtendLayerCount();
 
     // Commitment FOLLOWS the scaled state rather than latching one-way: a grid beyond a single
     // clone is the deliberate, persistent Extend (sticky until the build gun goes away); scaling
@@ -164,7 +166,7 @@ void USFExtendScaledService::RebuildScaledExtendNow()
     }
     else
     {
-        const bool bScaledBeyondSingle = CloneCount > 1 || RowCount > 1;
+        const bool bScaledBeyondSingle = CloneCount > 1 || RowCount > 1 || LayerCount > 1;
         if (Owner->bExtendCommitted != bScaledBeyondSingle)
         {
             Owner->bExtendCommitted = bScaledBeyondSingle;
@@ -390,14 +392,14 @@ void USFExtendScaledService::RebuildScaledExtendNow()
         TArray<FSFScaledExtendClone> OldClones = MoveTemp(Owner->ScaledExtendClones);
         Owner->ScaledExtendClones.Reset();
 
-        if (CloneCount > 1 || RowCount > 1)
+        if (CloneCount > 1 || RowCount > 1 || LayerCount > 1)
         {
             CalculateScaledExtendPositions();
             for (FSFScaledExtendClone& NewClone : Owner->ScaledExtendClones)
             {
                 for (FSFScaledExtendClone& Old : OldClones)
                 {
-                    if (Old.GridX == NewClone.GridX && Old.GridY == NewClone.GridY && Old.SpawnedHolograms.Num() > 0)
+                    if (Old.GridX == NewClone.GridX && Old.GridY == NewClone.GridY && Old.GridZ == NewClone.GridZ && Old.SpawnedHolograms.Num() > 0)
                     {
                         NewClone.SpawnedHolograms = MoveTemp(Old.SpawnedHolograms);
                         NewClone.CloneTopology = Old.CloneTopology;
@@ -417,7 +419,7 @@ void USFExtendScaledService::RebuildScaledExtendNow()
     }
 
     // If we have additional clones beyond the first, calculate and spawn them
-    if (CloneCount > 1 || RowCount > 1)
+    if (CloneCount > 1 || RowCount > 1 || LayerCount > 1)
     {
         if (!bCountOnly)
         {
@@ -511,10 +513,11 @@ void USFExtendScaledService::CalculateScaledExtendPositions()
     // Restore so identical signed counters produce identical row placement.
     const float EffectiveRowHeight = CalculateExtendEffectiveRowHeight(
         BuildingSize,
-        Owner->StoredCloneTopology.Get());
+        Owner->ScaledExtendBaseTopology.Get());
 
     int32 CloneCount = Owner->GetExtendCloneCount();
     int32 RowCount = Owner->GetExtendRowCount();
+    const int32 LayerCount = Owner->GetExtendLayerCount();
 
     // [#366] Designer-bounds clamp. When extending a designer-resident building, a clone whose
     // position falls outside the Blueprint Designer volume can never construct (vanilla refuses
@@ -532,52 +535,21 @@ void USFExtendScaledService::CalculateScaledExtendPositions()
         return BoundsDesigner->IsLocationInsideDesigner(SourceWorldLocation + Clone.WorldOffset);
     };
 
-    // For each row and clone position, calculate the world offset
-    for (int32 Row = 0; Row < RowCount; Row++)
+    // Measure only the unexpanded clone-1 base above (#534). Merged topology includes
+    // previous rows and would make count-only growth feed its own size back into spacing.
+    SFScaledExtendGrid::ForEachAdditionalCell(State, [&](const FIntVector& Cell)
     {
-        // For rows > 0, we need an auto-seed clone at position (0, Row)
-        if (Row > 0)
-        {
-            FSFScaledExtendClone SeedClone;
-            SeedClone.GridX = 0;
-            SeedClone.GridY = Row;
-            SeedClone.bIsSeed = true;
-
-            const FSFExtendCellPlacement SeedPlacement = CalculateExtendCellPlacement(
-                SourceRotation, BuildingSize, EffectiveRowHeight, State, 0, Row);
-            SeedClone.WorldOffset = SeedPlacement.WorldOffset;
-            SeedClone.RotationOffset = SeedPlacement.RotationOffset;
-
-            if (IsCloneInDesignerBounds(SeedClone))  // [#366] skip clones outside the designer volume
-            {
-                Owner->ScaledExtendClones.Add(SeedClone);
-            }
-        }
-
-        // For each clone in Owner row
-        // Row 0: Skip clone 1 (CloneIndex=1) — that's the parent hologram handled by existing flow
-        // Row 1+: Include all clones (1+) since they all need factory holograms
-        int32 StartClone = (Row == 0) ? 1 : 0;  // Row 0 starts at clone 2, other rows start at clone 1
-        for (int32 Clone = StartClone; Clone < CloneCount; Clone++)
-        {
-            int32 CloneIndex = Clone + 1;  // 1-based (clone 1 is adjacent to source/seed)
-
-            FSFScaledExtendClone ExtendClone;
-            ExtendClone.GridX = CloneIndex;
-            ExtendClone.GridY = Row;
-            ExtendClone.bIsSeed = false;
-
-            const FSFExtendCellPlacement Placement = CalculateExtendCellPlacement(
-                SourceRotation, BuildingSize, EffectiveRowHeight, State, CloneIndex, Row);
-            ExtendClone.WorldOffset = Placement.WorldOffset;
-            ExtendClone.RotationOffset = Placement.RotationOffset;
-
-            if (IsCloneInDesignerBounds(ExtendClone))  // [#366] skip clones outside the designer volume
-            {
-                Owner->ScaledExtendClones.Add(ExtendClone);
-            }
-        }
-    }
+        FSFScaledExtendClone Clone;
+        Clone.GridX = Cell.X;
+        Clone.GridY = Cell.Y;
+        Clone.GridZ = Cell.Z;
+        Clone.bIsSeed = Cell.X == 0;
+        const FSFExtendCellPlacement Placement = CalculateExtendCellPlacement(
+            SourceRotation, BuildingSize, EffectiveRowHeight, State, Cell.X, Cell.Y, 0, 0, Cell.Z);
+        Clone.WorldOffset = Placement.WorldOffset;
+        Clone.RotationOffset = Placement.RotationOffset;
+        if (IsCloneInDesignerBounds(Clone)) Owner->ScaledExtendClones.Add(Clone);
+    });
 
     SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("⚡ SCALED EXTEND: Calculated %d clone positions (Clones=%d, Rows=%d)"),
         Owner->ScaledExtendClones.Num(), CloneCount, RowCount);
@@ -641,6 +613,12 @@ void USFExtendScaledService::SpawnScaledExtendPreviews()
     for (int32 i = 0; i < Owner->ScaledExtendClones.Num(); i++)
     {
         FSFScaledExtendClone& Clone = Owner->ScaledExtendClones[i];
+        const bool bPreviousIsParent = Clone.GridX == 2 && Clone.GridY == 0 && Clone.GridZ == 0;
+        const FSFScaledExtendClone* PreviousClone = Owner->ScaledExtendClones.FindByPredicate(
+            [&](const FSFScaledExtendClone& Other)
+            {
+                return Other.GridX == Clone.GridX - 1 && Other.GridY == Clone.GridY && Other.GridZ == Clone.GridZ;
+            });
 
         // #497 clone reuse: a count-only rebuild re-enters this loop with surviving clones intact —
         // their previews are already spawned, positioned, and routed. Only new grid cells spawn.
@@ -661,7 +639,7 @@ void USFExtendScaledService::SpawnScaledExtendPreviews()
         // the old clearance-box loop), tick-off, HMS_OK, stored-production-recipe carry, and the
         // ClearanceBox mesh hide.
         static int32 ScaledExtendChildCounter = 0;
-        FName ChildName = *FString::Printf(TEXT("SE_Factory_%d_%d_%d"), Clone.GridX, Clone.GridY, ScaledExtendChildCounter++);
+        FName ChildName = *FString::Printf(TEXT("SE_Factory_%d_%d_%d_%d"), Clone.GridX, Clone.GridY, Clone.GridZ, ScaledExtendChildCounter++);
 
         FSFHologramHelperService* HologramHelper = Owner->Subsystem.IsValid() ? Owner->Subsystem->GetHologramHelper() : nullptr;
         AFGHologram* FactoryHologram = HologramHelper
@@ -685,7 +663,7 @@ void USFExtendScaledService::SpawnScaledExtendPreviews()
 
             // Set JsonCloneId so the factory registers in Owner->JsonBuiltActors during Construct()
             // This is needed for the wiring system to resolve "sc{i}_factory" references
-            FString FactoryCloneId = FString::Printf(TEXT("sc%d_factory"), i);
+            FString FactoryCloneId = SFScaledExtendGrid::Prefix(Clone.GridX, Clone.GridY, Clone.GridZ) + TEXT("factory");
             FSFHologramData* FactoryHoloData = USFHologramDataRegistry::GetData(FactoryHologram);
             if (!FactoryHoloData)
             {
@@ -816,9 +794,9 @@ void USFExtendScaledService::SpawnScaledExtendPreviews()
             // Seed clones should NOT have lane segments connecting back to the source.
             // The source building already has its own manifold. The next clone's lane
             // will connect TO the seed, not the other way around.
-            if (Clone.bIsSeed)
+            if (Clone.bIsSeed || (!bPreviousIsParent && !PreviousClone))
             {
-                Clone.CloneTopology->ChildHolograms.RemoveAll([](const FSFCloneHologram& H) { return H.bIsLaneSegment; });
+                Clone.CloneTopology->ChildHolograms.RemoveAll([](const FSFCloneHologram& H) { return H.bIsLaneSegment || H.bIsSourceToCloneWire; });
                 SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("⚡ CHAIN: Seed clone - removed lane segments (source already has manifold)"));
             }
             else
@@ -826,7 +804,7 @@ void USFExtendScaledService::SpawnScaledExtendPreviews()
             // Determine previous clone's world offset and rotation
             FVector PrevCloneOffset;
             FRotator PrevCloneRotation = FRotator::ZeroRotator;
-            if (Clone.GridY == 0 && (i == 0 || Owner->ScaledExtendClones[i-1].GridY != Clone.GridY))
+            if (bPreviousIsParent)
             {
                 // First additional clone in row 0 → previous is clone 1 (parent hologram)
                 PrevCloneOffset = Owner->CurrentExtendHologram->GetActorLocation() - Owner->CurrentExtendTarget->GetActorLocation();
@@ -845,8 +823,8 @@ void USFExtendScaledService::SpawnScaledExtendPreviews()
             else
             {
                 // Previous clone in same row
-                PrevCloneOffset = Owner->ScaledExtendClones[i-1].WorldOffset;
-                PrevCloneRotation = Owner->ScaledExtendClones[i-1].RotationOffset;
+                PrevCloneOffset = PreviousClone->WorldOffset;
+                PrevCloneRotation = PreviousClone->RotationOffset;
             }
 
             // Source factory center (needed for rotating source-side around prev clone's factory center)
@@ -944,18 +922,18 @@ void USFExtendScaledService::SpawnScaledExtendPreviews()
         }
 
         // Prefix all hologram IDs and update connection targets for uniqueness
-        FString ClonePrefix = FString::Printf(TEXT("sc%d_"), i);
-        FString FactoryCloneId = FString::Printf(TEXT("sc%d_factory"), i);
+        FString ClonePrefix = SFScaledExtendGrid::Prefix(Clone.GridX, Clone.GridY, Clone.GridZ);
+        FString FactoryCloneId = SFScaledExtendGrid::Prefix(Clone.GridX, Clone.GridY, Clone.GridZ) + TEXT("factory");
 
         // Determine previous clone's prefix for lane segment source-side target updates
         FString PrevClonePrefix;
-        if (Clone.GridY == 0 && (i == 0 || Owner->ScaledExtendClones[i-1].GridY != Clone.GridY))
+        if (bPreviousIsParent)
         {
             PrevClonePrefix = TEXT("");  // Parent hologram's infrastructure has no prefix
         }
-        else if (i > 0)
+        else if (PreviousClone)
         {
-            PrevClonePrefix = FString::Printf(TEXT("sc%d_"), i - 1);
+            PrevClonePrefix = SFScaledExtendGrid::Prefix(Clone.GridX - 1, Clone.GridY, Clone.GridZ);
         }
 
         for (FSFCloneHologram& Holo : Clone.CloneTopology->ChildHolograms)

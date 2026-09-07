@@ -190,10 +190,12 @@ composes with the classic Y-negation — **feel-verify** remains the gate for st
 ### 5.5 Context-specific controls
 
 - **Extend** direction cycling stays building-relative (manifold alignment) — PR never forks it.
-  While Extend is active, runtime transform targets are **Chain/Rows**, backed by signed X/Y state.
+  While Extend is active, horizontal runtime transform targets are **Chain/Rows**, backed by signed X/Y state.
   The Left/Right selector owns the Chain sign, and every live/Restore placement path consumes that
-  same signed state. Spacing, Steps, and Rotation cycle only Chain ↔ Rows; Vertical is unavailable.
-  The Smart Panel remains the absolute X/Y editor. This exception is implemented by **#478**.
+  same signed state. Spacing cycles Chain → Rows → Vertical; Steps and Rotation cycle only Chain ↔ Rows.
+  Grid Z repeats layers in world vertical, reachable with both scale modifiers plus wheel or Num9/3.
+  The Smart Panel remains the absolute X/Y/Z editor. The horizontal exception is implemented by **#478**;
+  layer scaling and vertical spacing are added by **#540**. Stagger remains unavailable in live Extend.
 - **Smart Walking** is segment-relative, and that isolation is **enforced in code** (2026-07-09):
   `SF_ComputePlayerRelativeAxes` returns classic axes whenever a walk is active — one choke point
   disabling PR resolution wholesale (scaling, modal targets, HUD highlight, tick refresh) — plus

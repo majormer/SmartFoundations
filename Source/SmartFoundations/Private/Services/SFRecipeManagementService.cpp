@@ -1,5 +1,10 @@
 // Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
+// SP/MP DIVERGENCE MAP - copied factory settings
+// QueueFactorySettingsApplication / ApplyFactorySettingsSnapshot [MP-AUTH]:
+// SP and server authority apply the shared snapshot; remote clients never mutate
+// the constructed factory's recipe or transfer its shards locally.
+
 #include "SFRecipeManagementService.h"
 #include "SmartFoundations.h"
 #include "Core/Construction/SFFactorySettingsApplyPolicy.h"
@@ -1387,7 +1392,9 @@ void USFRecipeManagementService::QueueFactorySettingsApplication(AFGBuildable* T
 	AFGCharacterPlayer* Player, const FSFFactorySettingsSnapshot& Snapshot)
 {
 	AFGBuildableFactory* Factory = Cast<AFGBuildableFactory>(TargetBuilding);
-	if (!Factory || !Snapshot.HasAnySettings() || !Subsystem || !Subsystem->GetWorld())
+	// [MP-AUTH] Only the construction authority may queue recipe/item mutation.
+	if (!IsValid(Factory) || !Factory->HasAuthority() || !Snapshot.HasAnySettings()
+		|| !Subsystem || !Subsystem->GetWorld())
 	{
 		return;
 	}
@@ -1450,7 +1457,8 @@ void USFRecipeManagementService::TickPendingFactorySettingsApplications()
 
 // Protected accessor to call FillPotentialSlotsInternal on AFGBuildableFactory
 // TryFillPotentialInventory silently fails for overclock shards, but the protected
-// FillPotentialSlotsInternal works correctly with a shard COUNT parameter
+// FillPotentialSlotsInternal takes a shard COUNT, but does not check supply (#524).
+// Every caller must cap the target before invoking this add-then-remove helper.
 class FFGBuildableFactoryAccessor : public AFGBuildableFactory
 {
 public:
@@ -1468,7 +1476,8 @@ bool USFRecipeManagementService::ApplyStoredPotentialToBuilding(AFGBuildable* Ta
 bool USFRecipeManagementService::ApplyFactorySettingsSnapshot(AFGBuildableFactory* Factory,
 	AFGCharacterPlayer* Player, const FSFFactorySettingsSnapshot& Snapshot)
 {
-	if (!Factory)
+	// [MP-AUTH] Recipe and inventory changes belong only to the construction authority.
+	if (!IsValid(Factory) || !Factory->HasAuthority())
 	{
 		return false;
 	}
@@ -1501,7 +1510,26 @@ bool USFRecipeManagementService::ApplyFactorySettingsSnapshot(AFGBuildableFactor
 			return 0;
 		}
 
-		int32 Remaining = RequestedCount;
+		UFGInventoryComponent* PotentialInventory = Factory->GetPotentialInventory();
+		if (!PotentialInventory)
+		{
+			return 0;
+		}
+
+		// #524: CL 502094 FillPotentialSlotsInternal (RVA 0x4E5090) adds to the
+		// machine before calling player Remove, without checking player supply.
+		// Its ref argument is the TOTAL target, including matching installed shards.
+		// Re-budget here for every queued machine, not once for the whole build.
+		const int32 ExistingCount = PotentialInventory->GetNumItems(ShardClass);
+		const int32 AffordableTarget = FSFFactorySettingsApplyPolicy::GetAffordableShardTarget(
+			RequestedCount, ExistingCount, PlayerInventory->GetNumItems(ShardClass));
+		if (AffordableTarget <= ExistingCount)
+		{
+			// No new items can be funded, or the target is already satisfied. Do not
+			// let a repeated application displace existing shards unnecessarily.
+			return AffordableTarget;
+		}
+		int32 Remaining = AffordableTarget;
 		TArray<FInventoryStack> ItemsToDrop;
 		static_cast<FFGBuildableFactoryAccessor*>(Factory)->FillPotentialSlotsInternal(
 			PlayerInventory, Type, ShardClass, Remaining, ItemsToDrop);
@@ -1525,7 +1553,7 @@ bool USFRecipeManagementService::ApplyFactorySettingsSnapshot(AFGBuildableFactor
 			}
 		}
 
-		return RequestedCount - Remaining;
+		return AffordableTarget - Remaining;
 	};
 
 	if (Snapshot.bHasPotential && FMath::IsFinite(Snapshot.Potential)

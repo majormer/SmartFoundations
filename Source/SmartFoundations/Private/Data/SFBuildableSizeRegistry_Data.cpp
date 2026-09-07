@@ -17,7 +17,7 @@ extern FString CurrentSourceFile;
 void USFBuildableSizeRegistry::RegisterDefaultProfiles()
 {
 	CurrentSourceFile = TEXT("BuildableSizes.csv");
-	SF_LOG_ADAPTER(Normal, TEXT("📂 Registering buildable size profiles from generated table (301 rows)"), 301);
+	SF_LOG_ADAPTER(Normal, TEXT("📂 Registering buildable size profiles from generated table (303 rows)"), 303);
 
 	RegisterProfile(TEXT("Build_Roof_Orange_01_C"), FVector(800.0f, 800.0f, 50.0f), false, false, TEXT(""), true);
 	RegisterProfile(TEXT("Build_Roof_Orange_02_C"), FVector(800.0f, 800.0f, 100.0f), false, false, TEXT(""), true);
@@ -166,10 +166,12 @@ void USFBuildableSizeRegistry::RegisterDefaultProfiles()
 	RegisterProfile(TEXT("Build_PowerSwitch_C"), FVector(200.0f, 100.0f, 450.0f), false, true, TEXT(""), true);
 	RegisterProfile(TEXT("Build_PriorityPowerSwitch_C"), FVector(200.0f, 100.0f, 450.0f), false, true, TEXT(""), true);
 	RegisterProfile(TEXT("Build_PowerStorageMk1_C"), FVector(600.0f, 600.0f, 1200.0f), false, true, TEXT(""), true);
-	RegisterProfile(TEXT("Build_PowerPoleWall_C"), FVector(100.0f, 100.0f, 100.0f), false, false, TEXT(""), false);
-	RegisterProfile(TEXT("Build_PowerPoleWallDouble_C"), FVector(100.0f, 100.0f, 100.0f), false, false, TEXT(""), false);
-	RegisterProfile(TEXT("Build_PowerPoleWallDouble_Mk2_C"), FVector(100.0f, 100.0f, 100.0f), false, false, TEXT(""), false);
-	RegisterProfile(TEXT("Build_PowerPoleWallDouble_Mk3_C"), FVector(100.0f, 100.0f, 100.0f), false, false, TEXT(""), false);
+	RegisterProfile(TEXT("Build_PowerPoleWall_C"), FVector(100.0f, 100.0f, 100.0f), false, true, TEXT(""), false);
+	RegisterProfile(TEXT("Build_PowerPoleWall_Mk2_C"), FVector(100.0f, 100.0f, 100.0f), false, true, TEXT(""), false);
+	RegisterProfile(TEXT("Build_PowerPoleWall_Mk3_C"), FVector(100.0f, 100.0f, 100.0f), false, true, TEXT(""), false);
+	RegisterProfile(TEXT("Build_PowerPoleWallDouble_C"), FVector(100.0f, 100.0f, 100.0f), false, true, TEXT(""), false);
+	RegisterProfile(TEXT("Build_PowerPoleWallDouble_Mk2_C"), FVector(100.0f, 100.0f, 100.0f), false, true, TEXT(""), false);
+	RegisterProfile(TEXT("Build_PowerPoleWallDouble_Mk3_C"), FVector(100.0f, 100.0f, 100.0f), false, true, TEXT(""), false);
 	RegisterProfile(TEXT("Build_QuantumEncoder_C"), FVector(2200.0f, 5000.0f, 1450.0f), false, true, TEXT(""), true);
 	RegisterProfile(TEXT("Build_HadronCollider_C"), FVector(3700.0f, 2700.0f, 3200.0f), false, true, TEXT(""), true);
 	RegisterProfile(TEXT("Build_ConstructorMk1_C"), FVector(800.0f, 1000.0f, 800.0f), false, true, TEXT(""), true);

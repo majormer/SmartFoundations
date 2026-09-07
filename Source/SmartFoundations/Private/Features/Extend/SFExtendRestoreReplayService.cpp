@@ -11,6 +11,7 @@
 #include "Features/Extend/SFExtendRestoreReplayService.h"
 #include "Features/Extend/SFExtendService.h"
 #include "Features/Extend/SFExtendControlFrame.h"
+#include "Features/Extend/SFRestoreGrid.h"
 #include "Features/Extend/SFExtendDetectionService.h"
 #include "Features/Extend/SFExtendTopologyService.h"
 #include "Features/Extend/SFExtendHologramService.h"
@@ -174,7 +175,8 @@ namespace
         const FSFCloneTopology* TemplateTopology,
         const FSFCounterState& State,
         int32 GridX,
-        int32 GridY)
+        int32 GridY,
+        int32 GridZ)
     {
         FRestoredScaledClonePlacement Placement;
         if (!ParentHologram)
@@ -190,15 +192,14 @@ namespace
         }
 
         const float EffectiveRowHeight = CalculateExtendEffectiveRowHeight(BuildingSize, TemplateTopology);
-        const FSFExtendCellPlacement CellPlacement = CalculateExtendCellPlacement(
+        const FSFExtendCellPlacement CellPlacement = SFRestoreGrid::Placement(
             ParentHologram->GetActorRotation(),
             BuildingSize,
             EffectiveRowHeight,
             State,
-            GridX + 1,
+            GridX,
             GridY,
-            1,
-            0);
+            GridZ);
         Placement.WorldOffset = CellPlacement.WorldOffset;
         Placement.RotationOffset = CellPlacement.RotationOffset;
         return Placement;
@@ -399,22 +400,24 @@ void USFExtendRestoreReplayService::TickRestoredCloneTopology(float DeltaTime)
             const FSFCounterState& State = Owner->Subsystem->GetCounterState();
             const int32 XCount = FMath::Max(1, FMath::Abs(State.GridCounters.X));
             const int32 YCount = FMath::Max(1, FMath::Abs(State.GridCounters.Y));
-            if (XCount > 1 || YCount > 1)
+            const int32 ZCount = FMath::Max(1, FMath::Abs(State.GridCounters.Z));
+            if (XCount > 1 || YCount > 1 || ZCount > 1)
             {
                 const FSFCloneTopology* TemplateTopology = Owner->RestoredCloneTopologyTemplate.IsValid()
                     ? Owner->RestoredCloneTopologyTemplate.Get()
                     : nullptr;
+                for (int32 Z = 0; Z < ZCount; ++Z)
                 for (int32 Y = 0; Y < YCount; ++Y)
                 {
                     for (int32 X = 0; X < XCount; ++X)
                     {
-                        if (X == 0 && Y == 0)
+                        if (X == 0 && Y == 0 && Z == 0)
                         {
                             continue;
                         }
 
-                        const FRestoredScaledClonePlacement Placement = CalculateRestoredScaledClonePlacement(ParentHologram, TemplateTopology, State, X, Y);
-                        const FString FactoryId = FString::Printf(TEXT("rr_%d_%d_factory"), X, Y);
+                        const FRestoredScaledClonePlacement Placement = CalculateRestoredScaledClonePlacement(ParentHologram, TemplateTopology, State, X, Y, Z);
+                        const FString FactoryId = SFRestoreGrid::Prefix(X, Y, Z) + TEXT("factory");
                         IntendedPositions.Add(FactoryId, ParentLocation + Placement.WorldOffset);
                         IntendedRotations.Add(FactoryId, ParentRotation + Placement.RotationOffset);
                     }
@@ -568,7 +571,8 @@ FSFCloneTopology USFExtendRestoreReplayService::BuildRestoredCloneTopologyForCur
         const FSFCounterState& State = Owner->Subsystem->GetCounterState();
         const int32 XCount = FMath::Max(1, FMath::Abs(State.GridCounters.X));
         const int32 YCount = FMath::Max(1, FMath::Abs(State.GridCounters.Y));
-        if (XCount > 1 || YCount > 1)
+        const int32 ZCount = FMath::Max(1, FMath::Abs(State.GridCounters.Z));
+        if (XCount > 1 || YCount > 1 || ZCount > 1)
         {
             TArray<FSFCloneHologram> ExpandedChildHolograms = ReplayTopology.ChildHolograms;
             const FSFCloneTopology* TemplateTopology = Owner->RestoredCloneTopologyTemplate.IsValid()
@@ -592,20 +596,21 @@ FSFCloneTopology USFExtendRestoreReplayService::BuildRestoredCloneTopologyForCur
                 }
                 return Target;
             };
+            for (int32 Z = 0; Z < ZCount; ++Z)
             for (int32 Y = 0; Y < YCount; ++Y)
             {
                 for (int32 X = 0; X < XCount; ++X)
                 {
-                    if (X == 0 && Y == 0)
+                    if (X == 0 && Y == 0 && Z == 0)
                     {
                         continue;
                     }
 
-                    const FString Prefix = FString::Printf(TEXT("rr_%d_%d_"), X, Y);
+                    const FString Prefix = SFRestoreGrid::Prefix(X, Y, Z);
                     const FString FactoryId = Prefix + TEXT("factory");
-                    const FString PreviousPrefix = ((X - 1) == 0 && Y == 0)
+                    const FString PreviousPrefix = ((X - 1) == 0 && Y == 0 && Z == 0)
                         ? FString()
-                        : FString::Printf(TEXT("rr_%d_%d_"), X - 1, Y);
+                        : SFRestoreGrid::Prefix(X - 1, Y, Z);
                     auto ResolveTargetForCurrentClone = [&](const FString& Target) -> FString
                     {
                         if (Target == TEXT("parent"))
@@ -614,10 +619,10 @@ FSFCloneTopology USFExtendRestoreReplayService::BuildRestoredCloneTopologyForCur
                         }
                         return PrefixInternalTarget(Prefix, Target);
                     };
-                    const FRestoredScaledClonePlacement Placement = CalculateRestoredScaledClonePlacement(ParentHologram, TemplateTopology, State, X, Y);
-                    const FRestoredScaledClonePlacement PreviousPlacement = (X - 1 == 0 && Y == 0)
+                    const FRestoredScaledClonePlacement Placement = CalculateRestoredScaledClonePlacement(ParentHologram, TemplateTopology, State, X, Y, Z);
+                    const FRestoredScaledClonePlacement PreviousPlacement = (X - 1 == 0 && Y == 0 && Z == 0)
                         ? FRestoredScaledClonePlacement()
-                        : CalculateRestoredScaledClonePlacement(ParentHologram, TemplateTopology, State, X - 1, Y);
+                        : CalculateRestoredScaledClonePlacement(ParentHologram, TemplateTopology, State, X - 1, Y, Z);
                     const FVector ParentLocation = ParentHologram->GetActorLocation();
                     const FVector CurrentFactoryCenter = ParentLocation + Placement.WorldOffset;
                     const FVector PreviousFactoryCenter = ParentLocation + PreviousPlacement.WorldOffset;
@@ -851,8 +856,9 @@ int32 USFExtendRestoreReplayService::SpawnRestoredScaledFactoryHolograms(AFGHolo
     const FSFCounterState& State = Owner->Subsystem->GetCounterState();
     const int32 XCount = FMath::Max(1, FMath::Abs(State.GridCounters.X));
     const int32 YCount = FMath::Max(1, FMath::Abs(State.GridCounters.Y));
+    const int32 ZCount = FMath::Max(1, FMath::Abs(State.GridCounters.Z));
     Owner->RestoredScaledFactoryPreviewLocations.Empty();
-    if (XCount <= 1 && YCount <= 1)
+    if (XCount <= 1 && YCount <= 1 && ZCount <= 1)
     {
         SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log,
             TEXT("[SmartRestore][Extend] Restored scaled factories: base parent only parent=%s"),
@@ -867,18 +873,19 @@ int32 USFExtendRestoreReplayService::SpawnRestoredScaledFactoryHolograms(AFGHolo
         : nullptr;
     int32 SpawnedFactories = 0;
 
+    for (int32 Z = 0; Z < ZCount; ++Z)
     for (int32 Y = 0; Y < YCount; ++Y)
     {
         for (int32 X = 0; X < XCount; ++X)
         {
-            if (X == 0 && Y == 0)
+            if (X == 0 && Y == 0 && Z == 0)
             {
                 continue;
             }
 
-            const FRestoredScaledClonePlacement Placement = CalculateRestoredScaledClonePlacement(ParentHologram, TemplateTopology, State, X, Y);
+            const FRestoredScaledClonePlacement Placement = CalculateRestoredScaledClonePlacement(ParentHologram, TemplateTopology, State, X, Y, Z);
             const FVector FactoryLocation = ParentLocation + Placement.WorldOffset;
-            const FString FactoryId = FString::Printf(TEXT("rr_%d_%d_factory"), X, Y);
+            const FString FactoryId = SFRestoreGrid::Prefix(X, Y, Z) + TEXT("factory");
             static int32 RestoredScaledFactoryCounter = 0;
             const FName ChildName(*FString::Printf(TEXT("RestoredFactory_%d_%d_%d"), X, Y, RestoredScaledFactoryCounter++));
 

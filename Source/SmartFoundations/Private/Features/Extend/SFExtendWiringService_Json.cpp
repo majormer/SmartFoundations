@@ -7,7 +7,9 @@
  */
 
 #include "Features/Extend/SFExtendWiringServiceImpl.h"
+#include "SFScaledExtendGrid.h"
 #include "Features/Extend/SFExtendControlFrame.h"
+#include "Features/Extend/SFRestoreGrid.h"
 #include "FGUnlockSubsystem.h"  // Issue #344: detect Upgraded Power Connectors (daisy-chain) unlock
 #include "Shared/Power/SFWireDesignerRegistration.h"  // [#421] designer containment for direct-spawned wires
 
@@ -90,31 +92,20 @@ int32 USFExtendWiringService::GenerateAndExecuteWiring(AFGBuildableFactory* NewF
     // the manifest decides which belt/pipe endpoints are wireable.
     if (ExtendService->bRestoredCloneTopologyActive && ExtendService->StoredCloneTopology.IsValid())
     {
-        auto TryParseRestoredScaledFactoryId = [](const FString& CloneId, int32& OutX, int32& OutY) -> bool
+        auto TryParseRestoredScaledFactoryId = [](const FString& CloneId, FIntVector& OutCell) -> bool
         {
             if (!CloneId.StartsWith(TEXT("rr_")) || !CloneId.EndsWith(TEXT("_factory")))
             {
                 return false;
             }
 
-            FString GridText = CloneId.LeftChop(8).Mid(3);
-            TArray<FString> Parts;
-            GridText.ParseIntoArray(Parts, TEXT("_"), true);
-            if (Parts.Num() != 2)
-            {
-                return false;
-            }
-
-            OutX = FCString::Atoi(*Parts[0]);
-            OutY = FCString::Atoi(*Parts[1]);
-            return true;
+            return SFRestoreGrid::ParsePrefix(CloneId.LeftChop(7), OutCell);
         };
 
         auto IsRestoredScaledFactoryId = [&](const FString& CloneId) -> bool
         {
-            int32 UnusedX = 0;
-            int32 UnusedY = 0;
-            return TryParseRestoredScaledFactoryId(CloneId, UnusedX, UnusedY);
+            FIntVector Cell;
+            return TryParseRestoredScaledFactoryId(CloneId, Cell);
         };
 
         TSet<FString> RequiredFactoryIds;
@@ -247,7 +238,7 @@ int32 USFExtendWiringService::GenerateAndExecuteWiring(AFGBuildableFactory* NewF
             return A < B;
         });
 
-        auto TryCalculateFactoryLocationFromStoredTopology = [&](int32 GridX, int32 GridY, FVector& OutLocation) -> bool
+        auto TryCalculateFactoryLocationFromStoredTopology = [&](const FIntVector& Cell, FVector& OutLocation) -> bool
         {
             if (!ExtendService->StoredCloneTopology.IsValid() || !Subsystem.IsValid())
             {
@@ -270,16 +261,17 @@ int32 USFExtendWiringService::GenerateAndExecuteWiring(AFGBuildableFactory* NewF
             const FRotator ParentRotation = ExtendService->StoredCloneTopology->ParentTransform.Rotation.ToFRotator();
             const float EffectiveRowHeight = CalculateExtendEffectiveRowHeight(
                 BuildingSize,
-                ExtendService->StoredCloneTopology.Get());
-            const FSFExtendCellPlacement Placement = CalculateExtendCellPlacement(
+                ExtendService->RestoredCloneTopologyTemplate.IsValid()
+                    ? ExtendService->RestoredCloneTopologyTemplate.Get()
+                    : ExtendService->StoredCloneTopology.Get());
+            const FSFExtendCellPlacement Placement = SFRestoreGrid::Placement(
                 ParentRotation,
                 BuildingSize,
                 EffectiveRowHeight,
                 State,
-                GridX + 1,
-                GridY,
-                1,
-                0);
+                Cell.X,
+                Cell.Y,
+                Cell.Z);
             OutLocation = ParentLocation + Placement.WorldOffset;
             return true;
         };
@@ -329,9 +321,8 @@ int32 USFExtendWiringService::GenerateAndExecuteWiring(AFGBuildableFactory* NewF
             }
             if (!bHasExpectedLocation && ExtendService->RestoredCloneParentHologram.IsValid() && Subsystem.IsValid())
             {
-                int32 GridX = 0;
-                int32 GridY = 0;
-                if (TryParseRestoredScaledFactoryId(FactoryId, GridX, GridY))
+                FIntVector Cell;
+                if (TryParseRestoredScaledFactoryId(FactoryId, Cell))
                 {
                     const FSFCloneTopology* TemplateTopology = ExtendService->RestoredCloneTopologyTemplate.IsValid()
                         ? ExtendService->RestoredCloneTopologyTemplate.Get()
@@ -340,8 +331,9 @@ int32 USFExtendWiringService::GenerateAndExecuteWiring(AFGBuildableFactory* NewF
                         ExtendService->RestoredCloneParentHologram.Get(),
                         TemplateTopology,
                         Subsystem->GetCounterState(),
-                        GridX,
-                        GridY);
+                        Cell.X,
+                        Cell.Y,
+                        Cell.Z);
                     ExpectedLocation = ExtendService->RestoredCloneParentHologram->GetActorLocation() + Placement.WorldOffset;
                     bHasExpectedLocation = true;
                     SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log,
@@ -352,10 +344,9 @@ int32 USFExtendWiringService::GenerateAndExecuteWiring(AFGBuildableFactory* NewF
             }
             if (!bHasExpectedLocation && Subsystem.IsValid())
             {
-                int32 GridX = 0;
-                int32 GridY = 0;
-                if (TryParseRestoredScaledFactoryId(FactoryId, GridX, GridY)
-                    && TryCalculateFactoryLocationFromStoredTopology(GridX, GridY, ExpectedLocation))
+                FIntVector Cell;
+                if (TryParseRestoredScaledFactoryId(FactoryId, Cell)
+                    && TryCalculateFactoryLocationFromStoredTopology(Cell, ExpectedLocation))
                 {
                     bHasExpectedLocation = true;
                     SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log,
@@ -965,7 +956,7 @@ int32 USFExtendWiringService::GenerateAndExecuteWiring(AFGBuildableFactory* NewF
             FString PoleKey;
             FString Prefix;
             FString SourcePoleId;
-            int32 SortOrder = 0;
+            FIntVector Cell = FIntVector::ZeroValue;
             AFGBuildablePowerPole* Pole = nullptr;
         };
 
@@ -1034,31 +1025,15 @@ int32 USFExtendWiringService::GenerateAndExecuteWiring(AFGBuildableFactory* NewF
             return false;
         };
 
-        auto TryParseRestoredPrefixOrder = [](const FString& Prefix, int32& OutSortOrder) -> bool
+        auto TryParseRestoredPrefixCell = [](const FString& Prefix, FIntVector& OutCell) -> bool
         {
             if (Prefix.IsEmpty())
             {
-                OutSortOrder = 0;
+                OutCell = FIntVector::ZeroValue;
                 return true;
             }
 
-            if (!Prefix.StartsWith(TEXT("rr_")) || !Prefix.EndsWith(TEXT("_")))
-            {
-                return false;
-            }
-
-            FString GridText = Prefix.Mid(3, Prefix.Len() - 4);
-            TArray<FString> Parts;
-            GridText.ParseIntoArray(Parts, TEXT("_"), true);
-            if (Parts.Num() != 2)
-            {
-                return false;
-            }
-
-            const int32 GridX = FCString::Atoi(*Parts[0]);
-            const int32 GridY = FCString::Atoi(*Parts[1]);
-            OutSortOrder = 1 + (GridY * 10000) + GridX;
-            return true;
+            return SFRestoreGrid::ParsePrefix(Prefix, OutCell);
         };
 
         TMap<FString, TArray<FRestoredPowerPoleEntry>> RestoredPolesByKey;
@@ -1076,8 +1051,8 @@ int32 USFExtendWiringService::GenerateAndExecuteWiring(AFGBuildableFactory* NewF
             }
 
             const FString Prefix = Holo.HologramId.Left(PowerPoleMarkerIndex);
-            int32 SortOrder = 0;
-            if (!TryParseRestoredPrefixOrder(Prefix, SortOrder))
+            FIntVector Cell;
+            if (!TryParseRestoredPrefixCell(Prefix, Cell))
             {
                 continue;
             }
@@ -1091,10 +1066,12 @@ int32 USFExtendWiringService::GenerateAndExecuteWiring(AFGBuildableFactory* NewF
 
             FRestoredPowerPoleEntry Entry;
             Entry.CloneId = Holo.HologramId;
-            Entry.PoleKey = Holo.HologramId.Mid(PowerPoleMarkerIndex);
+            // Each vertical layer replays its own horizontal pole chain; do not invent
+            // a cross-floor wire from the last cell below to the first cell above.
+            Entry.PoleKey = FString::Printf(TEXT("%d:"), Cell.Z) + Holo.HologramId.Mid(PowerPoleMarkerIndex);
             Entry.Prefix = Prefix;
             Entry.SourcePoleId = Holo.SourceId;
-            Entry.SortOrder = SortOrder;
+            Entry.Cell = Cell;
             Entry.Pole = BuiltPole;
             RestoredPolesByKey.FindOrAdd(Entry.PoleKey).Add(Entry);
         }
@@ -1104,7 +1081,7 @@ int32 USFExtendWiringService::GenerateAndExecuteWiring(AFGBuildableFactory* NewF
         {
             PoleGroup.Value.Sort([](const FRestoredPowerPoleEntry& A, const FRestoredPowerPoleEntry& B)
             {
-                return A.SortOrder < B.SortOrder;
+                return A.Cell.Y == B.Cell.Y ? A.Cell.X < B.Cell.X : A.Cell.Y < B.Cell.Y;
             });
 
             for (const FRestoredPowerPoleEntry& Entry : PoleGroup.Value)
@@ -1171,13 +1148,16 @@ int32 USFExtendWiringService::GenerateAndExecuteWiring(AFGBuildableFactory* NewF
         // Find ExtendService clone's factory building from built actors
         // The factory hologram was registered as "factory" in the clone's SpawnedHolograms
         // But we need to find the BUILT factory, not the hologram
-        AFGBuildableFactory* CloneFactory = nullptr;
+        const FString CellPrefix = SFScaledExtendGrid::Prefix(Clone.GridX, Clone.GridY, Clone.GridZ);
+        const TObjectPtr<AActor>* Registered = ExtendService->JsonBuiltActors.Find(CellPrefix + TEXT("factory"));
+        AFGBuildableFactory* CloneFactory = Registered ? Cast<AFGBuildableFactory>(*Registered) : nullptr;
+        if (!IsValid(CloneFactory)) CloneFactory = nullptr;
 
         // Search ExtendService->JsonBuiltActors for any factory building near the clone's expected position
         // Clone.WorldOffset is relative to SOURCE building, not clone 1
         FVector SourcePos = ExtendService->CurrentExtendTarget.IsValid() ? ExtendService->CurrentExtendTarget->GetActorLocation() : (NewFactory->GetActorLocation() - ExtendService->ScaledExtendClones[0].WorldOffset);
         FVector ExpectedPos = SourcePos + Clone.WorldOffset;
-        float BestDist = MAX_FLT;
+        float BestDist = CloneFactory ? 0.0f : MAX_FLT;
         for (const auto& BuiltPair : ExtendService->JsonBuiltActors)
         {
             if (AFGBuildableFactory* BuiltFactory = Cast<AFGBuildableFactory>(BuiltPair.Value))
@@ -1215,7 +1195,7 @@ int32 USFExtendWiringService::GenerateAndExecuteWiring(AFGBuildableFactory* NewF
 
         // Per-clone actor map with PREFIXED keys (scopes chain/network rebuilds to this clone).
         TMap<FString, AActor*> CloneBuiltActors;
-        FString ClonePrefix = FString::Printf(TEXT("sc%d_"), CloneIdx);
+        FString ClonePrefix = SFScaledExtendGrid::Prefix(Clone.GridX, Clone.GridY, Clone.GridZ);
         for (const auto& Pair : ExtendService->JsonBuiltActors)
         {
             if (Pair.Key.StartsWith(ClonePrefix) && IsValid(Pair.Value))
@@ -1223,7 +1203,9 @@ int32 USFExtendWiringService::GenerateAndExecuteWiring(AFGBuildableFactory* NewF
                 CloneBuiltActors.Add(Pair.Key, Pair.Value);
             }
         }
-        CloneBuiltActors.Add(FString::Printf(TEXT("sc%d_factory"), CloneIdx), CloneFactory);
+        CloneBuiltActors.Add(ClonePrefix + TEXT("factory"), CloneFactory);
+        // Keep fallback-resolved factories visible to later cells and the row/layer power pass.
+        CloneIdToBuildable.Add(ClonePrefix + TEXT("factory"), CloneFactory);
 
         SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("⚡ SCALED EXTEND Wire: Clone[%d] - %d built actors mapped (factory=%s)"),
             CloneIdx, CloneBuiltActors.Num(), *CloneFactory->GetName());
@@ -1527,33 +1509,22 @@ int32 USFExtendWiringService::GenerateAndExecuteWiring(AFGBuildableFactory* NewF
         int32 ChainWiredCount = 0;
         for (int32 PoleIdx : PoleIndices)
         {
-            // Build ordered list: clone 1 pole, then each scaled clone's pole
-            TArray<AFGBuildablePowerPole*> PoleChain;
-
-            // Clone 1's pole
-            FString Clone1PoleId = FString::Printf(TEXT("power_pole_%d"), PoleIdx);
-            if (AActor* const* Actor = CloneIdToBuildable.Find(Clone1PoleId))
+            // Each edge is keyed by coordinates, never by array order. Missing poles/cells
+            // break the chain instead of jumping a gap or bridging a row/layer boundary.
+            for (int32 j = 0; j < ExtendService->ScaledExtendClones.Num(); ++j)
             {
-                if (AFGBuildablePowerPole* Pole = Cast<AFGBuildablePowerPole>(*Actor))
-                    PoleChain.Add(Pole);
-            }
-
-            // Each scaled clone's pole
-            for (int32 CloneIdx = 0; CloneIdx < ExtendService->ScaledExtendClones.Num(); CloneIdx++)
-            {
-                FString ScPoleId = FString::Printf(TEXT("sc%d_power_pole_%d"), CloneIdx, PoleIdx);
-                if (AActor* const* Actor = CloneIdToBuildable.Find(ScPoleId))
-                {
-                    if (AFGBuildablePowerPole* Pole = Cast<AFGBuildablePowerPole>(*Actor))
-                        PoleChain.Add(Pole);
-                }
-            }
-
-            // Wire consecutive poles in the chain
-            for (int32 j = 0; j < PoleChain.Num() - 1; j++)
-            {
-                AFGBuildablePowerPole* PoleA = PoleChain[j];
-                AFGBuildablePowerPole* PoleB = PoleChain[j + 1];
+                const FSFScaledExtendClone& Cell = ExtendService->ScaledExtendClones[j];
+                if (Cell.bIsSeed) continue;
+                const FString PoleSuffix = FString::Printf(TEXT("power_pole_%d"), PoleIdx);
+                const bool bPreviousIsParent = Cell.GridX == 2 && Cell.GridY == 0 && Cell.GridZ == 0;
+                const FString PreviousId = (bPreviousIsParent ? FString()
+                    : SFScaledExtendGrid::Prefix(Cell.GridX - 1, Cell.GridY, Cell.GridZ)) + PoleSuffix;
+                const FString CurrentId = SFScaledExtendGrid::Prefix(Cell.GridX, Cell.GridY, Cell.GridZ) + PoleSuffix;
+                AActor* const* Previous = CloneIdToBuildable.Find(PreviousId);
+                AActor* const* Current = CloneIdToBuildable.Find(CurrentId);
+                AFGBuildablePowerPole* PoleA = Previous ? Cast<AFGBuildablePowerPole>(*Previous) : nullptr;
+                AFGBuildablePowerPole* PoleB = Current ? Cast<AFGBuildablePowerPole>(*Current) : nullptr;
+                if (!IsValid(PoleA) || !IsValid(PoleB)) continue;
 
                 TArray<UFGCircuitConnectionComponent*> ConnsA, ConnsB;
                 PoleA->GetComponents<UFGCircuitConnectionComponent>(ConnsA);
@@ -1683,11 +1654,27 @@ int32 USFExtendWiringService::GenerateAndExecuteWiring(AFGBuildableFactory* NewF
                 const FVector RowAxis  = Rot.RotateVector(FVector(0.f, 1.f, 0.f)); // perpendicular (rows)
 
                 // Bucket into rows by quantized perpendicular offset (1 m buckets).
-                TMap<int32, TArray<AFGBuildableFactory*>> Rows;
+                TMap<FIntPoint, TArray<AFGBuildableFactory*>> Rows;
                 for (AFGBuildableFactory* B : ChainBuildings)
                 {
                     const FVector Off = B->GetActorLocation() - Origin;
-                    const int32 RowKey = FMath::RoundToInt(FVector::DotProduct(Off, RowAxis) / 100.0f);
+                    FIntPoint RowKey(FMath::RoundToInt(FVector::DotProduct(Off, RowAxis) / 100.0f), 0);
+                    // Live scaled cells have explicit row/layer identity; world-height bucketing
+                    // would split stepped rows and join different floors at crossing heights.
+                    if (!ExtendService->ScaledExtendClones.IsEmpty())
+                    {
+                        RowKey = FIntPoint::ZeroValue; // original source and held parent
+                        for (const FSFScaledExtendClone& Cell : ExtendService->ScaledExtendClones)
+                        {
+                            const FString FactoryId = SFScaledExtendGrid::Prefix(Cell.GridX, Cell.GridY, Cell.GridZ) + TEXT("factory");
+                            AActor* const* Found = CloneIdToBuildable.Find(FactoryId);
+                            if (Found && *Found == B)
+                            {
+                                RowKey = FIntPoint(Cell.GridY, Cell.GridZ);
+                                break;
+                            }
+                        }
+                    }
                     Rows.FindOrAdd(RowKey).Add(B);
                 }
 

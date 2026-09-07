@@ -42,6 +42,9 @@ public:
     /** Public wrapper to set build class before FinishSpawning */
     void SetBuildClass(UClass* InBuildClass) { mBuildClass = InBuildClass; }
 
+    /** After FinishSpawning, inherit the vanilla permission for an identical scaled buildable. */
+    void CopyBlueprintPlacementPermissionFrom(AFGHologram* ParentHologram);
+
     /** Set foundation thickness and rebuild mesh so child matches the parent's height.
      *  Caller reads parent thickness via UE reflection (protected access workaround). */
     void SetSnappedThickness(float InThickness);

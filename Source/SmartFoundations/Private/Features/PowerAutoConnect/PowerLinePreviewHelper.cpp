@@ -54,6 +54,8 @@ bool FPowerLinePreviewHelper::UpdatePreview(UFGPowerConnectionComponent* InStart
 	{
 		return false;
 	}
+	if (ParentPole.IsValid() && PowerLineHologram->GetBlueprintDesigner() != ParentPole->GetBlueprintDesigner())
+		PowerLineHologram->SetInsideBlueprintDesigner(ParentPole->GetBlueprintDesigner());
 
 	// Update endpoints
 	UpdateLineEndpoints(InStartConnection, InEndConnection);
@@ -132,6 +134,7 @@ void FPowerLinePreviewHelper::EnsureSpawned(const FVector& SpawnLocation, UFGPow
 		}
 		
 		// Finish spawning
+		if (ParentPole.IsValid()) NewHologram->SetInsideBlueprintDesigner(ParentPole->GetBlueprintDesigner());
 		NewHologram->FinishSpawning(FTransform(FRotator::ZeroRotator, SpawnLocation), true);
 
 		// Attach as real engine child hologram for vanilla cost aggregation and construction

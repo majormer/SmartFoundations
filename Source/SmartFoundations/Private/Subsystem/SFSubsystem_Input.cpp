@@ -862,22 +862,22 @@ bool USFSubsystem::IsUpgradeCapableContext() const
 {
     AFGHologram* Hologram = ActiveHologram.Get();
 
-    // Fallback: If the 100ms poll hasn't fired yet or cache is stale, check the Build Gun directly
-    if (!Hologram)
+    // The live build gun owns panel context. A still-valid cached hologram can belong to
+    // the previous recipe until the 100ms poll runs; it must not override the new selection.
+    if (AFGPlayerController* PC = GetLastController())
     {
-        AFGPlayerController* PC = GetLastController();
-        if (PC)
+        if (AFGCharacterPlayer* Character = Cast<AFGCharacterPlayer>(PC->GetCharacter()))
         {
-            if (AFGCharacterPlayer* Character = Cast<AFGCharacterPlayer>(PC->GetCharacter()))
+            if (AFGBuildGun* BuildGun = Character->GetBuildGun())
             {
-                if (AFGBuildGun* BuildGun = Character->GetBuildGun())
+                // A resolved gun with no build hologram is authoritative too: do not
+                // resurrect cached upgrade context after leaving build mode.
+                Hologram = nullptr;
+                if (BuildGun->IsInState(EBuildGunState::BGS_BUILD))
                 {
-                    if (BuildGun->IsInState(EBuildGunState::BGS_BUILD))
+                    if (UFGBuildGunStateBuild* BuildState = Cast<UFGBuildGunStateBuild>(BuildGun->GetCurrentState()))
                     {
-                        if (UFGBuildGunStateBuild* BuildState = Cast<UFGBuildGunStateBuild>(BuildGun->GetCurrentState()))
-                        {
-                            Hologram = BuildState->GetHologram();
-                        }
+                        Hologram = BuildState->GetHologram();
                     }
                 }
             }
