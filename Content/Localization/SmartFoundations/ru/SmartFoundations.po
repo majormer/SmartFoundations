@@ -2689,4 +2689,56 @@ msgstr "Управляет соединениями между соседним�
 
 msgctxt "SmartFoundations,Notice_ConstructPayloadTooLarge"
 msgid "Placement too large ({0} KB). Build in smaller sections."
-msgstr ""
+msgstr "Размещение слишком велико ({0} КБ). Стройте меньшими частями."
+
+msgctxt "SmartSession,Disabled"
+msgid "Smart! building assistance disabled. Select a recipe to build normally; use Toggle Smart (Session) to re-enable."
+msgstr "Строительная помощь Smart! отключена. Выберите рецепт, чтобы строить как обычно; используйте «Toggle Smart (Session)», чтобы снова включить её."
+
+msgctxt "SmartSession,Enabled"
+msgid "Smart! building assistance enabled for this session."
+msgstr "Строительная помощь Smart! включена для этой сессии."
+
+msgctxt "SmartFoundations,P.BlueprintSpacingX"
+msgid "Blueprint Default X Spacing (m)"
+msgstr "Интервал чертежа по умолчанию X (м)"
+
+msgctxt "SmartFoundations,P.BlueprintSpacingX.TT"
+msgid "Starting X gap for a new blueprint build session (0-100 m). Zero tiles flush; short gaps may leave no room for seam connections. Panel changes override this for the current session."
+msgstr "Начальный интервал по X для новой сессии строительства чертежа (0-100 м). При нуле копии стыкуются вплотную; при малом интервале может не остаться места для соединений на стыках. Изменения в Smart Панели имеют приоритет в текущей сессии."
+
+msgctxt "SmartFoundations,P.BlueprintSpacingY"
+msgid "Blueprint Default Y Spacing (m)"
+msgstr "Интервал чертежа по умолчанию Y (м)"
+
+msgctxt "SmartFoundations,P.BlueprintSpacingY.TT"
+msgid "Starting Y gap for a new blueprint build session (0-100 m). Zero tiles flush; short gaps may leave no room for seam connections. Panel changes override this for the current session."
+msgstr "Начальный интервал по Y для новой сессии строительства чертежа (0-100 м). При нуле копии стыкуются вплотную; при малом интервале может не остаться места для соединений на стыках. Изменения в Smart Панели имеют приоритет в текущей сессии."
+
+msgctxt "SmartFoundations,P.BlueprintSpacingZ"
+msgid "Blueprint Default Z Spacing (m)"
+msgstr "Интервал чертежа по умолчанию Z (м)"
+
+msgctxt "SmartFoundations,P.BlueprintSpacingZ.TT"
+msgid "Starting Z gap for a new blueprint build session (0-100 m). Zero tiles flush; short gaps may leave no room for seam connections. Panel changes override this for the current session."
+msgstr "Начальный интервал по Z для новой сессии строительства чертежа (0-100 м). При нуле копии стыкуются вплотную; при малом интервале может не остаться места для соединений на стыках. Изменения в Smart Панели имеют приоритет в текущей сессии."
+
+msgctxt "SmartFoundations,P.bPlayerRelativeControls"
+msgid "Player Relative Controls"
+msgstr "Управление относительно игрока"
+
+msgctxt "SmartFoundations,P.bPlayerRelativeControls.TT"
+msgid "Interpret building controls relative to the direction you are facing. The Smart Panel continues to show absolute axes."
+msgstr "Интерпретировать управление строительством относительно направления вашего взгляда. Smart Панель по-прежнему показывает абсолютные оси."
+
+msgctxt "SmartFoundations,Upgrade_AllTiersTooltip_Logistics"
+msgid "Change differing logistics tiers to the target. Power poles and wall outlets only upgrade."
+msgstr "Привести отличающиеся уровни логистики к целевому. Электростолбы и настенные розетки только улучшаются."
+
+msgctxt "SmartFoundations,Upgrade_TraversalEmpty"
+msgid "No matching traversal buildables remain; scan again"
+msgstr "Подходящих объектов в сети не осталось; просканируйте снова"
+
+msgctxt "SmartFoundations,Upgrade_TraversalExpired"
+msgid "Traversal results are no longer valid; scan again"
+msgstr "Результаты сканирования сети устарели; просканируйте снова"

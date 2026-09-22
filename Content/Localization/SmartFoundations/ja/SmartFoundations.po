@@ -2689,4 +2689,56 @@ msgstr "スケールした設計図の隣接するコピー間の接続を制御
 
 msgctxt "SmartFoundations,Notice_ConstructPayloadTooLarge"
 msgid "Placement too large ({0} KB). Build in smaller sections."
-msgstr ""
+msgstr "配置が大きすぎます（{0} KB）。より小さな区画に分けて建築してください。"
+
+msgctxt "SmartSession,Disabled"
+msgid "Smart! building assistance disabled. Select a recipe to build normally; use Toggle Smart (Session) to re-enable."
+msgstr "Smart!の建築アシストを無効にしました。通常どおり建築するにはレシピを選択してください。再度有効にするには「Toggle Smart (Session)」を使用します。"
+
+msgctxt "SmartSession,Enabled"
+msgid "Smart! building assistance enabled for this session."
+msgstr "このセッションでSmart!の建築アシストを有効にしました。"
+
+msgctxt "SmartFoundations,P.BlueprintSpacingX"
+msgid "Blueprint Default X Spacing (m)"
+msgstr "設計図のデフォルトX間隔 (m)"
+
+msgctxt "SmartFoundations,P.BlueprintSpacingX.TT"
+msgid "Starting X gap for a new blueprint build session (0-100 m). Zero tiles flush; short gaps may leave no room for seam connections. Panel changes override this for the current session."
+msgstr "新しい設計図の建築セッション開始時のX間隔（0-100 m）。0では隙間なく並べて配置されます。間隔が短いと継ぎ目の接続を行う余地がなくなる場合があります。Smartパネルでの変更は現在のセッション中はこの設定より優先されます。"
+
+msgctxt "SmartFoundations,P.BlueprintSpacingY"
+msgid "Blueprint Default Y Spacing (m)"
+msgstr "設計図のデフォルトY間隔 (m)"
+
+msgctxt "SmartFoundations,P.BlueprintSpacingY.TT"
+msgid "Starting Y gap for a new blueprint build session (0-100 m). Zero tiles flush; short gaps may leave no room for seam connections. Panel changes override this for the current session."
+msgstr "新しい設計図の建築セッション開始時のY間隔（0-100 m）。0では隙間なく並べて配置されます。間隔が短いと継ぎ目の接続を行う余地がなくなる場合があります。Smartパネルでの変更は現在のセッション中はこの設定より優先されます。"
+
+msgctxt "SmartFoundations,P.BlueprintSpacingZ"
+msgid "Blueprint Default Z Spacing (m)"
+msgstr "設計図のデフォルトZ間隔 (m)"
+
+msgctxt "SmartFoundations,P.BlueprintSpacingZ.TT"
+msgid "Starting Z gap for a new blueprint build session (0-100 m). Zero tiles flush; short gaps may leave no room for seam connections. Panel changes override this for the current session."
+msgstr "新しい設計図の建築セッション開始時のZ間隔（0-100 m）。0では隙間なく並べて配置されます。間隔が短いと継ぎ目の接続を行う余地がなくなる場合があります。Smartパネルでの変更は現在のセッション中はこの設定より優先されます。"
+
+msgctxt "SmartFoundations,P.bPlayerRelativeControls"
+msgid "Player Relative Controls"
+msgstr "プレイヤー基準の操作"
+
+msgctxt "SmartFoundations,P.bPlayerRelativeControls.TT"
+msgid "Interpret building controls relative to the direction you are facing. The Smart Panel continues to show absolute axes."
+msgstr "建築操作を、あなたが向いている方向を基準に解釈します。Smartパネルには引き続き絶対軸が表示されます。"
+
+msgctxt "SmartFoundations,Upgrade_AllTiersTooltip_Logistics"
+msgid "Change differing logistics tiers to the target. Power poles and wall outlets only upgrade."
+msgstr "異なる物流ティアをターゲットに変更します。電柱と壁用電源差込口はアップグレードのみ行われます。"
+
+msgctxt "SmartFoundations,Upgrade_TraversalEmpty"
+msgid "No matching traversal buildables remain; scan again"
+msgstr "一致するネットワークスキャンの建築物が残っていません。再度スキャンしてください"
+
+msgctxt "SmartFoundations,Upgrade_TraversalExpired"
+msgid "Traversal results are no longer valid; scan again"
+msgstr "ネットワークスキャンの結果は無効になりました。再度スキャンしてください"

@@ -2689,4 +2689,56 @@ msgstr "Contrôle les connexions entre copies adjacentes de plans mis à l'éche
 
 msgctxt "SmartFoundations,Notice_ConstructPayloadTooLarge"
 msgid "Placement too large ({0} KB). Build in smaller sections."
-msgstr ""
+msgstr "Placement trop volumineux ({0} Ko). Construisez par sections plus petites."
+
+msgctxt "SmartSession,Disabled"
+msgid "Smart! building assistance disabled. Select a recipe to build normally; use Toggle Smart (Session) to re-enable."
+msgstr "Assistance de construction Smart! désactivée. Sélectionnez une recette pour construire normalement ; utilisez « Toggle Smart (Session) » pour la réactiver."
+
+msgctxt "SmartSession,Enabled"
+msgid "Smart! building assistance enabled for this session."
+msgstr "Assistance de construction Smart! activée pour cette session."
+
+msgctxt "SmartFoundations,P.BlueprintSpacingX"
+msgid "Blueprint Default X Spacing (m)"
+msgstr "Espacement X par défaut des plans (m)"
+
+msgctxt "SmartFoundations,P.BlueprintSpacingX.TT"
+msgid "Starting X gap for a new blueprint build session (0-100 m). Zero tiles flush; short gaps may leave no room for seam connections. Panel changes override this for the current session."
+msgstr "Écart X initial pour une nouvelle session de construction de plan (0-100 m). À zéro, les copies sont accolées ; un faible écart peut ne laisser aucune place aux connexions de jonction. Les changements du Panneau Smart priment pour la session en cours."
+
+msgctxt "SmartFoundations,P.BlueprintSpacingY"
+msgid "Blueprint Default Y Spacing (m)"
+msgstr "Espacement Y par défaut des plans (m)"
+
+msgctxt "SmartFoundations,P.BlueprintSpacingY.TT"
+msgid "Starting Y gap for a new blueprint build session (0-100 m). Zero tiles flush; short gaps may leave no room for seam connections. Panel changes override this for the current session."
+msgstr "Écart Y initial pour une nouvelle session de construction de plan (0-100 m). À zéro, les copies sont accolées ; un faible écart peut ne laisser aucune place aux connexions de jonction. Les changements du Panneau Smart priment pour la session en cours."
+
+msgctxt "SmartFoundations,P.BlueprintSpacingZ"
+msgid "Blueprint Default Z Spacing (m)"
+msgstr "Espacement Z par défaut des plans (m)"
+
+msgctxt "SmartFoundations,P.BlueprintSpacingZ.TT"
+msgid "Starting Z gap for a new blueprint build session (0-100 m). Zero tiles flush; short gaps may leave no room for seam connections. Panel changes override this for the current session."
+msgstr "Écart Z initial pour une nouvelle session de construction de plan (0-100 m). À zéro, les copies sont accolées ; un faible écart peut ne laisser aucune place aux connexions de jonction. Les changements du Panneau Smart priment pour la session en cours."
+
+msgctxt "SmartFoundations,P.bPlayerRelativeControls"
+msgid "Player Relative Controls"
+msgstr "Contrôles relatifs au joueur"
+
+msgctxt "SmartFoundations,P.bPlayerRelativeControls.TT"
+msgid "Interpret building controls relative to the direction you are facing. The Smart Panel continues to show absolute axes."
+msgstr "Interpréter les contrôles de construction par rapport à la direction dans laquelle vous regardez. Le Panneau Smart continue d'afficher les axes absolus."
+
+msgctxt "SmartFoundations,Upgrade_AllTiersTooltip_Logistics"
+msgid "Change differing logistics tiers to the target. Power poles and wall outlets only upgrade."
+msgstr "Changer les niveaux logistiques différents vers la cible. Les poteaux électriques et les distributeurs muraux sont uniquement améliorés."
+
+msgctxt "SmartFoundations,Upgrade_TraversalEmpty"
+msgid "No matching traversal buildables remain; scan again"
+msgstr "Plus aucune construction correspondante issue du parcours ; scannez de nouveau"
+
+msgctxt "SmartFoundations,Upgrade_TraversalExpired"
+msgid "Traversal results are no longer valid; scan again"
+msgstr "Les résultats du parcours ne sont plus valides ; scannez de nouveau"
