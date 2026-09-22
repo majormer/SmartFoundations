@@ -1,0 +1,76 @@
+# Build every shipping target and run the automation tests on the self-hosted runner.
+#
+# The runner lives on the maintainer's machine because a build needs the CSS Unreal engine and a
+# full Satisfactory mod project, which hosted runners do not have. See scripts/ci/README.md.
+#
+# SECURITY: this repository is public. The workflow only runs for pushes to this repository and
+# manual dispatches. It deliberately has no pull_request / pull_request_target trigger, so a pull
+# request from a fork can never execute code on the self-hosted runner.
+
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+    paths-ignore:
+      - "docs/**"
+      - "**/*.md"
+      - ".github/ISSUE_TEMPLATE/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One runner, one CI workspace: queue runs rather than overlapping them.
+concurrency:
+  group: smart-ci
+  cancel-in-progress: false
+
+env:
+  SF_CI_ROOT: ${{ vars.SF_CI_ROOT || 'L:\SFCI\SML' }}
+
+jobs:
+  build-and-test:
+    if: github.repository == 'majormer/SmartFoundations'
+    runs-on: [self-hosted, Windows, X64, smart-ci]
+    timeout-minutes: 240
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - name: Sync the CI workspace to this commit
+        run: |
+          $smart = Join-Path $env:SF_CI_ROOT "Mods\GameFeatures\SmartFoundations"
+          if (-not (Test-Path (Join-Path $env:SF_CI_ROOT ".sfci-workspace"))) {
+            throw "CI workspace '$env:SF_CI_ROOT' is missing. Create it with scripts/ci/New-CIWorkspace.ps1 (see scripts/ci/README.md)."
+          }
+          git -C $smart fetch --force --no-tags origin "+${env:GITHUB_REF}:refs/remotes/ci/head"
+          if ($LASTEXITCODE -ne 0) { throw "git fetch failed" }
+          git -C $smart checkout --force --detach $env:GITHUB_SHA
+          if ($LASTEXITCODE -ne 0) { throw "git checkout failed" }
+          # Remove untracked sources from earlier runs; ignored build outputs (Binaries/, Intermediate/) stay for incremental builds.
+          git -C $smart clean -ffd
+          Write-Host "CI workspace at $(git -C $smart rev-parse --short HEAD)"
+
+      - name: Build all targets
+        run: |
+          $scripts = Join-Path $env:SF_CI_ROOT "Mods\GameFeatures\SmartFoundations\scripts\ci"
+          & (Join-Path $scripts "Invoke-SmartBuild.ps1") -ProjectRoot $env:SF_CI_ROOT -LogDir (Join-Path $env:RUNNER_TEMP "build-logs")
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Run automation tests
+        run: |
+          $scripts = Join-Path $env:SF_CI_ROOT "Mods\GameFeatures\SmartFoundations\scripts\ci"
+          & (Join-Path $scripts "Invoke-SmartTests.ps1") -ProjectRoot $env:SF_CI_ROOT -ReportDir (Join-Path $env:RUNNER_TEMP "automation") -MinimumTests 40
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Upload logs and test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smart-ci-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/build-logs
+            ${{ runner.temp }}/automation
+          if-no-files-found: ignore
+          retention-days: 14

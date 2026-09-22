@@ -8,7 +8,7 @@
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	FSFExtendControlFrameTest,
-	"Smart.Extend.ControlFrame.SignedPlacement",
+	"SmartFoundations.Extend.ControlFrame.SignedPlacement",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
 bool FSFExtendControlFrameTest::RunTest(const FString& Parameters)
