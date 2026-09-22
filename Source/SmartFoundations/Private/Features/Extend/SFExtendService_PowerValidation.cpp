@@ -1,6 +1,7 @@
 // Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 #include "Features/Extend/SFExtendService.h"
 #include "Features/Extend/SFExtendPowerConnections.h"
+#include "Features/Extend/SFExtendCloneTopology.h"
 #include "Data/SFHologramDataRegistry.h"
 #include "Hologram/FGHologram.h"
 #include "Buildables/FGBuildable.h"

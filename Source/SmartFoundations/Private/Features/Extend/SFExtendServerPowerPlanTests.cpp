@@ -3,6 +3,7 @@
 #include "Features/Extend/SFExtendService.h"
 #include "Features/Extend/SFExtendScaledService.h"
 #include "Features/Extend/SFExtendPowerConnections.h"
+#include "Features/Extend/SFExtendCloneTopology.h"
 #include "Misc/AutomationTest.h"
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSFExtendServerPowerPlanTest, "SmartFoundations.Extend.Power.ServerMergedPlan",
