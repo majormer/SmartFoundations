@@ -56,6 +56,12 @@ Do these yourself; they register a machine with GitHub and install a Windows ser
    - `--labels smart-ci` (the workflow targets `self-hosted, Windows, X64, smart-ci`)
    - `--runasservice` and `--windowslogonaccount` / `--windowslogonpassword` for the account above
    - a short install folder such as `C:\actions-runner`
+   **If Windows passwordless sign-in is on** ("only allow Windows Hello sign-in for Microsoft
+   accounts"), Windows rejects password logons for services and `config.cmd --runasservice` fails
+   with *Invalid windows credentials entered* (the runner still registers). Don't install a
+   service: run `run.cmd` in your own session instead, started by a scheduled task at sign-in
+   ("run only when user is logged on", normal privileges, no password). The maintainer's machine
+   uses this setup; the task is named *Smart CI Runner*.
 4. **Lock down the repository** (Settings > Actions > General):
    - Fork pull request workflows: *Require approval for all outside collaborators*
    - Workflow permissions: *Read repository contents*
