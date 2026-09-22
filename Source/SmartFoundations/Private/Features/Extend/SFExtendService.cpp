@@ -15,6 +15,10 @@
 //                         (ReconstructCommitOnServer / ReconstructScaledCommitOnServer); topology is
 //                         NEVER shipped from the client (client GetConnection() is null → poisoned wiring).
 //                         Scaled cells carry XYZ identity and world offsets through the commit.
+//                         After spawning, their topologies merge onto the fresh first-copy base;
+//                         validation and cable materialization must see the same complete plan.
+//                         Only the root may consume the staged request. Request-time validation prepares
+//                         the children once; local scaling power handlers must not intercept that plan.
 //  3. Cost charge       — [MP-AUTH] the childless server parent would charge the bare factory only, so
 //                         GetCost is overridden with the client-captured preview cost. (Net seam: Hook A,
 //                         Core/Net/SFGameInstanceModule_SpecHooks.cpp)
@@ -26,6 +30,7 @@
 
 #include "Features/Extend/SFExtendService.h"
 #include "Engine/OverlapResult.h"
+#include "Misc/ScopeExit.h"
 #include "Features/Extend/SFExtendControlFrame.h"
 #include "Features/Extend/SFExtendDetectionService.h"
 #include "Features/Extend/SFExtendTopologyService.h"
@@ -839,6 +844,11 @@ void USFExtendService::GetScaledClonePlanForCommit(TArray<FSFExtendCommitScaledC
 bool USFExtendService::BuildCommitSpecForMP(AFGHologram* ParentHologram, FSFExtendCommitSpec& OutSpec) const
 {
     OutSpec = FSFExtendCommitSpec();
+    if (Subsystem.IsValid())
+    {
+        OutSpec.bExtendDaisyChain = Subsystem->GetAutoConnectRuntimeSettings().bExtendDaisyChain;
+        OutSpec.bExtendDaisyChainPoleless = Subsystem->GetAutoConnectRuntimeSettings().bExtendDaisyChainPoleless;
+    }
     if (!ParentHologram)
     {
         return false;
@@ -856,10 +866,20 @@ bool USFExtendService::BuildCommitSpecForMP(AFGHologram* ParentHologram, FSFExte
         // Reliable-RPC ceiling guard (same rationale as the conduit-plan guard): a preset
         // template is normally one clone's infrastructure, but refuse anything that could
         // overflow the staging RPC before the previews are destroyed.
-        int32 BytesEstimate = 0;
+        int64 BytesEstimate = 128LL + 2LL * Template.FactoryPower.Connector.Len();
         for (const FSFCloneHologram& Holo : Template.ChildHolograms)
         {
-            BytesEstimate += 400 + Holo.SplineData.Points.Num() * 80;
+            BytesEstimate += 400LL + static_cast<int64>(Holo.SplineData.Points.Num()) * 80;
+            // Exact endpoint identities/capacity maps were added to the reflected template.
+            // Account for them as well as their serialization overhead before staging an RPC.
+            BytesEstimate += 128LL + 2LL * (static_cast<int64>(Holo.PowerConnectorName.Len())
+                + Holo.ConnectedPowerPoleConnectorName.Len() + Holo.FactoryPowerConnectorName.Len()
+                + Holo.PowerFrom.Target.Len() + Holo.PowerFrom.Connector.Len()
+                + Holo.PowerTo.Target.Len() + Holo.PowerTo.Connector.Len()
+                + Holo.PassthroughTop.Target.Len() + Holo.PassthroughTop.Connector.Len()
+                + Holo.PassthroughBottom.Target.Len() + Holo.PassthroughBottom.Connector.Len());
+            for (const auto& Capacity : Holo.PowerPortCapacities)
+                BytesEstimate += 12LL + 2LL * Capacity.Key.Len();
             // [#477] Captured customization rides the same reliable RPC: five class-path strings
             // (UTF-16 on the wire) + colors/rotation/flags. Model it so a richly customized
             // template can't pass this guard yet overflow the actual payload.
@@ -875,7 +895,7 @@ bool USFExtendService::BuildCommitSpecForMP(AFGHologram* ParentHologram, FSFExte
         if (BytesEstimate > 45000)
         {
             UE_LOG(LogSmartExtend, Verbose,
-                TEXT("[EXTEND-MP] Restore commit refused: preset template too large to stage reliably (%d children, ~%d bytes)."),
+                TEXT("[EXTEND-MP] Restore commit refused: preset template too large to stage reliably (%d children, ~%lld bytes)."),
                 Template.ChildHolograms.Num(), BytesEstimate);
             return false;
         }
@@ -946,6 +966,8 @@ bool USFExtendService::BuildCommitSpecForMP(AFGHologram* ParentHologram, FSFExte
 // (Net: Hook B). Derives topology from the server's own graph walk - NEVER from client-shipped data.
 int32 USFExtendService::ReconstructCommitOnServer(AFGHologram* ParentHologram, const FSFExtendCommitSpec& Spec)
 {
+    bScaledExtendValid = false;
+    ScaledExtendInvalidReason = TEXT("Extend commit reconstruction did not complete");
     if (!ParentHologram || !TopologyService)
     {
         return 0;
@@ -971,6 +993,27 @@ int32 USFExtendService::ReconstructCommitOnServer(AFGHologram* ParentHologram, c
         }
     }
 
+    // [MP-SEAM] Planner options belong to the requesting player, not the server defaults.
+    // On a listen server these are also the HOST's live settings, so install the client's
+    // values only for this reconstruction: factory power is captured and priced inside this
+    // call (post-build wiring consumes the priced plan), and a leaked value would change the
+    // host's own Extend daisy-chaining until their config next reloads.
+    TWeakObjectPtr<USFSubsystem> SettingsOwner = Subsystem;
+    const bool bHostDaisyChain = SettingsOwner.IsValid() && SettingsOwner->AutoConnectRuntimeSettings.bExtendDaisyChain;
+    const bool bHostDaisyChainPoleless = SettingsOwner.IsValid() && SettingsOwner->AutoConnectRuntimeSettings.bExtendDaisyChainPoleless;
+    if (SettingsOwner.IsValid())
+    {
+        SettingsOwner->AutoConnectRuntimeSettings.bExtendDaisyChain = Spec.bExtendDaisyChain;
+        SettingsOwner->AutoConnectRuntimeSettings.bExtendDaisyChainPoleless = Spec.bExtendDaisyChainPoleless;
+    }
+    ON_SCOPE_EXIT
+    {
+        if (SettingsOwner.IsValid())
+        {
+            SettingsOwner->AutoConnectRuntimeSettings.bExtendDaisyChain = bHostDaisyChain;
+            SettingsOwner->AutoConnectRuntimeSettings.bExtendDaisyChainPoleless = bHostDaisyChainPoleless;
+        }
+    };
     if (Spec.bIsRestore)
     {
         if (Subsystem.IsValid())
@@ -985,6 +1028,8 @@ int32 USFExtendService::ReconstructCommitOnServer(AFGHologram* ParentHologram, c
             *ParentHologram->GetName(), bReplayed ? 1 : 0, NumChildren,
             Spec.RestoreTemplate.ChildHolograms.Num(),
             Spec.RestoreCounterState.GridCounters.X, Spec.RestoreCounterState.GridCounters.Y);
+        bScaledExtendValid = bReplayed && ValidatePowerCapacity();
+        if (!bReplayed) ScaledExtendInvalidReason = TEXT("Restore commit reconstruction failed");
         return bReplayed ? NumChildren : 0;
     }
 
@@ -1068,7 +1113,7 @@ int32 USFExtendService::ReconstructCommitOnServer(AFGHologram* ParentHologram, c
     // Scaled clone sets ride the same server-derived topology (SpawnScaledExtendPreviews
     // re-captures from the topology service's CurrentTopology, walked above).
     ReconstructScaledCommitOnServer(ParentHologram, Spec.ScaledClones);
-
+    bScaledExtendValid = NumSpawned > 0 && ValidatePowerCapacity();
     return NumSpawned;
 }
 

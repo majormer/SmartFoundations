@@ -9,6 +9,10 @@
  */
 
 #include "Features/Extend/SFExtendRestoreReplayService.h"
+#include "Features/Extend/SFExtendLaneNormals.h"
+#include "Features/Extend/SFExtendPowerConnections.h"
+#include "Features/Extend/SFExtendFactoryPower.h"
+#include "FGUnlockSubsystem.h"
 #include "Features/Extend/SFExtendService.h"
 #include "Features/Extend/SFExtendControlFrame.h"
 #include "Features/Extend/SFRestoreGrid.h"
@@ -27,6 +31,7 @@
 #include "Services/RadarPulse/SFRadarPulseService.h"
 #include "SmartFoundations.h"  // For LogSmartExtend
 #include "Holograms/Core/SFFactoryHologram.h"
+#include "Holograms/Power/SFWireHologram.h"
 #include "Holograms/Logistics/SFConveyorAttachmentChildHologram.h"
 #include "Holograms/Logistics/SFConveyorBeltHologram.h"
 #include "Holograms/Logistics/SFPipelineHologram.h"
@@ -80,33 +85,6 @@
 namespace
 {
     constexpr float SF_RESTORED_PARENT_TRANSFORM_TOLERANCE = 0.1f;
-
-    // #422: Re-derive the lane endpoint normals from GEOMETRY (the lane's own world endpoints) instead
-    // of trusting the captured normals. A preset captured on an MP client has poisoned lane normals: the
-    // distributor connection data is server-only (IsConnected()/GetConnection() are null on a client), so
-    // the capture's connector selection falls back to a distance tiebreak and can bake a REVERSED normal,
-    // which makes the spline router loop the belt/pipe back on itself (the U-turn / wrap symptom). The
-    // lane's two endpoints already sit ON the real connectors, so the chord direction IS the router-
-    // convention facing: StartNormal points outward-along the lane, EndNormal outward-against it (both the
-    // belt and pipe spline routers require dot(StartNormal, LaneDir) > 0 and dot(EndNormal, LaneDir) < 0).
-    // Geometry-only — it never reads the poisoned connection data, so it is correct on a client, repairs
-    // poisoned presets, and is a no-op on already-correct ones. Degenerate (zero-length) lanes untouched.
-    void DeriveRestoredLaneNormals(FSFCloneHologram& Holo, const FVector& Start, const FVector& End)
-    {
-        if (!Holo.bIsLaneSegment || (Holo.LaneSegmentType != TEXT("belt") && Holo.LaneSegmentType != TEXT("pipe")))
-        {
-            return;
-        }
-
-        const FVector LaneDirection = (End - Start).GetSafeNormal();
-        if (LaneDirection.IsNearlyZero())
-        {
-            return;
-        }
-
-        Holo.LaneStartNormal = FSFVec3(LaneDirection);
-        Holo.LaneEndNormal = FSFVec3(-LaneDirection);
-    }
 
     void KickRestoredPreviewParent(AFGHologram* ParentHologram)
     {
@@ -453,10 +431,16 @@ void USFExtendRestoreReplayService::TickRestoredCloneTopology(float DeltaTime)
             {
                 Child->SetActorLocationAndRotation(IntendedPos, IntendedRot);
             }
+            if (ASFWireHologram* Wire = Cast<ASFWireHologram>(Child))
+            {
+                if (const FSFCloneHologram* Plan = SFExtendPowerConnections::Find(&ReplayTopology, Pair.Key))
+                    SFExtendPowerConnections::RefreshPreview(Wire, *Plan);
+            }
             Owner->HologramService->TrackChildHologram(Child, IntendedPos, IntendedRot);
         }
 
         Owner->StoredCloneTopology = MakeShared<FSFCloneTopology>(ReplayTopology);
+        Owner->bScaledExtendValid = SFExtendPowerConnections::ValidateCapacity(ReplayTopology, Owner->ScaledExtendInvalidReason);
         Owner->RestoredCloneLastParentLocation = ParentLocation;
         Owner->RestoredCloneLastParentRotation = ParentRotation;
     }
@@ -498,6 +482,7 @@ FSFCloneTopology USFExtendRestoreReplayService::BuildRestoredCloneTopologyForCur
     FSFCloneTopology ReplayTopology = Owner->RestoredCloneTopologyTemplate.IsValid()
         ? *Owner->RestoredCloneTopologyTemplate
         : FSFCloneTopology();
+    SFExtendPowerConnections::PromoteLegacyRestoreWires(ReplayTopology);
     const FVector OriginalParentLocation = ReplayTopology.ParentTransform.Location.ToFVector();
     const FRotator OriginalParentRotation = ReplayTopology.ParentTransform.Rotation.ToFRotator();
     const FVector NewParentLocation = ParentHologram->GetActorLocation();
@@ -515,6 +500,10 @@ FSFCloneTopology USFExtendRestoreReplayService::BuildRestoredCloneTopologyForCur
         return Rotation + RotationDelta;
     };
 
+    // Recover legacy orientation against the original captured pose before applying
+    // the new parent's transform. Verified captures already carry their socket normals.
+    for (FSFCloneHologram& Lane : ReplayTopology.ChildHolograms)
+        SFExtendLaneNormals::RecoverLegacy(ReplayTopology, Lane);
     ReplayTopology.ParentTransform = FSFTransform(NewParentLocation, NewParentRotation);
 
     for (FSFCloneHologram& Holo : ReplayTopology.ChildHolograms)
@@ -541,22 +530,40 @@ FSFCloneTopology USFExtendRestoreReplayService::BuildRestoredCloneTopologyForCur
 
         if (Holo.bIsLaneSegment)
         {
-            // #422: re-derive lane normals from the (already world-transformed) endpoints rather than the
-            // poisoned captured normals; degenerate <2-point lanes keep the rotated fallback.
+            Holo.LaneStartNormal = FSFVec3(RotationDelta.RotateVector(Holo.LaneStartNormal.ToFVector()));
+            Holo.LaneEndNormal = FSFVec3(RotationDelta.RotateVector(Holo.LaneEndNormal.ToFVector()));
             if (Holo.bHasSplineData && Holo.SplineData.Points.Num() >= 2)
             {
-                DeriveRestoredLaneNormals(Holo,
-                    Holo.SplineData.Points[0].World.ToFVector(),
-                    Holo.SplineData.Points.Last().World.ToFVector());
-            }
-            else
-            {
-                Holo.LaneStartNormal = FSFVec3(RotationDelta.RotateVector(Holo.LaneStartNormal.ToFVector()));
-                Holo.LaneEndNormal = FSFVec3(RotationDelta.RotateVector(Holo.LaneEndNormal.ToFVector()));
+                SFExtendLaneNormals::RepairUnverified(Holo,
+                    Holo.SplineData.Points[0].World.ToFVector(), Holo.SplineData.Points.Last().World.ToFVector());
             }
         }
     }
 
+    TMap<FIntVector, FTransform> FactoryCells;
+    FactoryCells.Add(FIntVector::ZeroValue, ParentHologram->GetActorTransform());
+    // Older presets may lack the socket snapshot. Use the actual native preview
+    // component if present; never fabricate its name or a generic connector height.
+    const FSFExtendFactoryPower NativeFactoryPower = SFExtendFactoryPower::Capture(ParentHologram);
+    if (ReplayTopology.FactoryPower.Connector.IsEmpty())
+        ReplayTopology.FactoryPower = NativeFactoryPower;
+    else if (NativeFactoryPower.Connector == ReplayTopology.FactoryPower.Connector)
+    {
+        // Research can differ from the save where the preset was captured.
+        // Keep the saved continuation intent, but refresh native socket geometry/budget.
+        ReplayTopology.FactoryPower.LocalPosition = NativeFactoryPower.LocalPosition;
+        ReplayTopology.FactoryPower.Capacity = NativeFactoryPower.Capacity;
+        ReplayTopology.FactoryPower.MaxWireLength = NativeFactoryPower.MaxWireLength;
+    }
+    if (Owner->Subsystem.IsValid())
+    {
+        const auto& Settings = Owner->Subsystem->GetAutoConnectRuntimeSettings();
+        const AFGUnlockSubsystem* Unlocks = AFGUnlockSubsystem::Get(ParentHologram->GetWorld());
+        ReplayTopology.FactoryPower.bRequested = SFExtendFactoryPower::IsRequested(ReplayTopology.FactoryPower,
+            Settings.bExtendDaisyChain, Settings.bExtendDaisyChainPoleless,
+            Unlocks && Unlocks->IsCircuitDaisyChainingUnlocked());
+    }
+    else ReplayTopology.FactoryPower.bRequested = false;
     const TArray<FSFCloneHologram> SourceChildHolograms = ReplayTopology.ChildHolograms;
     ReplayTopology.ChildHolograms.RemoveAll([](const FSFCloneHologram& Holo)
     {
@@ -626,6 +633,8 @@ FSFCloneTopology USFExtendRestoreReplayService::BuildRestoredCloneTopologyForCur
                     const FVector ParentLocation = ParentHologram->GetActorLocation();
                     const FVector CurrentFactoryCenter = ParentLocation + Placement.WorldOffset;
                     const FVector PreviousFactoryCenter = ParentLocation + PreviousPlacement.WorldOffset;
+                    FactoryCells.Add(FIntVector(X, Y, Z),
+                        FTransform(ParentHologram->GetActorRotation() + Placement.RotationOffset, CurrentFactoryCenter));
 
                     for (FSFCloneHologram Holo : SourceChildHolograms)
                     {
@@ -702,6 +711,10 @@ FSFCloneTopology USFExtendRestoreReplayService::BuildRestoredCloneTopologyForCur
                             Holo.CloneConnections.ConveyorAny1.Target = ResolveTargetForCurrentClone(OriginalC1Target);
                         }
                         Holo.ConnectedPowerPoleHologramId = PrefixInternalTarget(Prefix, Holo.ConnectedPowerPoleHologramId);
+                        Holo.PowerFrom.Target = ResolveTargetForCurrentClone(Holo.PowerFrom.Target);
+                        Holo.PowerTo.Target = ResolveTargetForCurrentClone(Holo.PowerTo.Target);
+                        Holo.PassthroughTop.Target = PrefixInternalTarget(Prefix, Holo.PassthroughTop.Target);
+                        Holo.PassthroughBottom.Target = PrefixInternalTarget(Prefix, Holo.PassthroughBottom.Target);
                         if (Holo.bHasLiftData)
                         {
                             for (FString& PassthroughCloneId : Holo.LiftData.PassthroughCloneIds)
@@ -755,7 +768,7 @@ FSFCloneTopology USFExtendRestoreReplayService::BuildRestoredCloneTopologyForCur
                                 Holo.LaneEndNormal = FSFVec3(DownstreamPlacement->RotationOffset.RotateVector(Holo.LaneEndNormal.ToFVector()));
                             }
 
-                            DeriveRestoredLaneNormals(Holo, NewStart, NewEnd);
+                            SFExtendLaneNormals::RepairUnverified(Holo, NewStart, NewEnd);
                             const float NewLength = FVector::Dist(NewStart, NewEnd);
                             Holo.Transform = FSFTransform(NewStart, (NewEnd - NewStart).Rotation());
                             Holo.SplineData.Length = NewLength;
@@ -774,7 +787,7 @@ FSFCloneTopology USFExtendRestoreReplayService::BuildRestoredCloneTopologyForCur
                                 *Prefix,
                                 NewLength);
                             SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log,
-                                TEXT("[SmartRestore][Extend] Restored lane normals re-derived from endpoints (#422): id=%s type=%s grid=(%d,%d)"),
+                                TEXT("[SmartRestore][Extend] Restored lane socket normals transformed (legacy recovery where required): id=%s type=%s grid=(%d,%d)"),
                                 *Holo.HologramId,
                                 *Holo.LaneSegmentType,
                                 X,
@@ -819,6 +832,10 @@ FSFCloneTopology USFExtendRestoreReplayService::BuildRestoredCloneTopologyForCur
         }
     }
 
+    SFExtendPowerConnections::AddRestoredChainWires(ReplayTopology);
+    SFExtendFactoryPower::AddRestoreWires(ReplayTopology, FactoryCells);
+    SFExtendPowerConnections::FSocketBudget DaisyBudget;
+    SFExtendPowerConnections::PruneDaisyOverCapacity(ReplayTopology, DaisyBudget);
     return ReplayTopology;
 }
 
@@ -970,6 +987,7 @@ bool USFExtendRestoreReplayService::SpawnRestoredCloneTopology(AFGHologram* Pare
 
     CloneTopology.WireChildHologramConnections(SpawnedHolograms, ParentHologram);
     Owner->StoredCloneTopology = MakeShared<FSFCloneTopology>(CloneTopology);
+    Owner->bScaledExtendValid = SFExtendPowerConnections::ValidateCapacity(CloneTopology, Owner->ScaledExtendInvalidReason);
     Owner->JsonSpawnedHolograms.Reset();
     for (const TPair<FString, AFGHologram*>& Pair : SpawnedHolograms)
     {

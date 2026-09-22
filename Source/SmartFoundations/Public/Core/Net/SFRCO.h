@@ -26,6 +26,9 @@ class SMARTFOUNDATIONS_API USFRCO : public UFGRemoteCallObject
 	GENERATED_BODY()
 
 public:
+	UFUNCTION(Server, Reliable)
+	void Server_SetSmartSessionEnabled(bool bEnabled);
+
 	//~ Begin UFGRemoteCallObject Interface
 	virtual bool ShouldRegisterRemoteCallObject(const class AFGGameMode* GameMode) const override;
 	//~ End UFGRemoteCallObject Interface

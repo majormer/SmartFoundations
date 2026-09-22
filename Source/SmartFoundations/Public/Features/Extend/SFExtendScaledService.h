@@ -79,7 +79,7 @@ public:
     /** [EXTEND-MP] Server-commit entry: run the SAME spawn pipeline the SP preview uses against
      *  the already-installed session state (CurrentExtendTarget/CurrentExtendHologram/topology +
      *  ScaledExtendClones parameters). Used by ReconstructScaledCommitOnServer. */
-    void SpawnCloneSetsForServerCommit() { SpawnScaledExtendPreviews(); }
+    void SpawnCloneSetsForServerCommit();
 
 private:
     /** Calculate world offsets for all clones based on current grid state */

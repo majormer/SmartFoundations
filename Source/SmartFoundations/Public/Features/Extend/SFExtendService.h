@@ -91,6 +91,8 @@ class SMARTFOUNDATIONS_API USFExtendService : public UObject
     // Scaled Extend planning/preview lives in USFExtendScaledService but operates on this
     // service's shared scaled/wiring state (ScaledExtendClones, StoredCloneTopology, etc.) in place.
     friend class USFExtendScaledService;
+    // Narrow test fixture for the server spawn-to-merged-plan boundary.
+    friend class FSFExtendServerPowerPlanTest;
     // Post-build wiring (E-chain / built-child / manifold / JSON) lives in USFExtendWiringService
     // but operates on this service's shared registry maps + StoredCloneTopology in place (slice E2).
     friend class USFExtendWiringService;
@@ -419,6 +421,9 @@ public:
      * @return Number of connections successfully wired
      */
     int32 GenerateAndExecuteWiring(AFGBuildableFactory* NewFactory);
+
+    /** Re-evaluate exact native power sockets/capacity before native affordability/construction. */
+    bool ValidatePowerPlanForConstruction(AFGHologram* Parent, FString& OutReason) const;
 
     /**
      * Register a built conveyor (belt or lift) with its chain ID and index for later wiring.

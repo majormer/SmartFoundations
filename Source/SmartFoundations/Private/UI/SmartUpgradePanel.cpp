@@ -468,7 +468,7 @@ void USmartUpgradePanel::OnUpgradeButtonClicked()
 	// In radius mode, target must be greater than source.
 	if (bIsTraversalMode)
 	{
-		if (TargetTier <= 1 || (SelectedTier > 0 && TargetTier <= SelectedTier))
+		if (!SFUpgradeTierPolicy::IsValidRequest(SelectedTier, TargetTier, true, SFUpgradeTierPolicy::AllowsDowngrade(SelectedFamily)))
 		{
 			if (StatusText)
 			{
@@ -477,7 +477,7 @@ void USmartUpgradePanel::OnUpgradeButtonClicked()
 			return;
 		}
 	}
-	else if (TargetTier <= SelectedTier)
+	else if (!SFUpgradeTierPolicy::IsValidRequest(SelectedTier, TargetTier, false, SFUpgradeTierPolicy::AllowsDowngrade(SelectedFamily)))
 	{
 		FString FamilyName = USFUpgradeAuditService::GetFamilyDisplayName(SelectedFamily);
 		if (StatusText)
@@ -514,7 +514,7 @@ void USmartUpgradePanel::OnUpgradeButtonClicked()
 		// relevant actors - execution re-filters by SourceTier anyway (defense in depth).
 		for (const FSFUpgradeAuditEntry& Entry : CachedTraversalResult.Entries)
 		{
-			if (Entry.Buildable.IsValid() && (SelectedTier == 0 || Entry.CurrentTier == SelectedTier))
+			if (Entry.Buildable.IsValid() && SFUpgradeTierPolicy::Matches(Entry.CurrentTier, SelectedTier, TargetTier, SFUpgradeTierPolicy::AllowsDowngrade(SelectedFamily)))
 			{
 				Params.SpecificBuildables.Add(Entry.Buildable);
 			}

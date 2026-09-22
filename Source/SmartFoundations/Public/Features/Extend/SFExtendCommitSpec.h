@@ -94,6 +94,9 @@ struct SMARTFOUNDATIONS_API FSFExtendCommitSpec
 	UPROPERTY()
 	bool bPipeIndicator = true;
 
+    UPROPERTY() bool bExtendDaisyChain = true;
+    UPROPERTY() bool bExtendDaisyChainPoleless = true;
+
 	/** [#382] Smart Panel counter state (rotation, grid, spacing, steps) the EXTEND re-derivation
 	 *  reads. The server's own counter state is a default mirror (RotationZ=0), so cross-clone math
 	 *  that reads it directly - e.g. the first child's manifold lane to the PREVIOUS (parent)

@@ -9,6 +9,7 @@
  */
 
 #include "Features/Extend/SFExtendScaledService.h"
+#include "Features/Extend/SFExtendPowerConnections.h"
 #include "SFScaledExtendGrid.h"
 #include "Engine/World.h"        // UWorld::GetTimerManager for the rebuild debounce (#383/#384 perf)
 #include "TimerManager.h"        // FTimerManager::SetTimer/ClearTimer/IsTimerActive
@@ -30,6 +31,7 @@
 #include "Services/RadarPulse/SFRadarPulseService.h"
 #include "SmartFoundations.h"  // For LogSmartExtend
 #include "Holograms/Core/SFFactoryHologram.h"
+#include "Holograms/Power/SFWireHologram.h"
 #include "Holograms/Logistics/SFConveyorAttachmentChildHologram.h"
 #include "Holograms/Logistics/SFConveyorBeltHologram.h"
 #include "Holograms/Logistics/SFPipelineHologram.h"
@@ -282,7 +284,11 @@ void USFExtendScaledService::RebuildScaledExtendNow()
                 {
                     const FSFCloneHologram& HoloData = **HoloDataPtr;
 
-                    if (ASFConveyorBeltHologram* Belt = Cast<ASFConveyorBeltHologram>(SpawnedHolo))
+                    if (ASFWireHologram* Wire = Cast<ASFWireHologram>(SpawnedHolo))
+                    {
+                        SFExtendPowerConnections::RefreshPreview(Wire, HoloData);
+                    }
+                    else if (ASFConveyorBeltHologram* Belt = Cast<ASFConveyorBeltHologram>(SpawnedHolo))
                     {
                         if (HoloData.bIsLaneSegment && HoloData.bHasSplineData && HoloData.SplineData.Points.Num() >= 2)
                         {
@@ -369,6 +375,13 @@ void USFExtendScaledService::RebuildScaledExtendNow()
                     Box->SetGenerateOverlapEvents(false);
                 }
             }
+
+            // #546: CreateBeltPreviews validated cable range/capacity against the UNROTATED plan.
+            // The rotation just moved every clone-side cable end, so re-check the plan that will
+            // actually be built; otherwise a 1x1 rotated Extend can preview green and then be
+            // refused by the construct-time check (or preview red when the rotated plan is fine).
+            // Multi-copy grids re-validate again after the merge below.
+            Owner->bScaledExtendValid = ValidatePowerCapacity();
         }
     }
 
@@ -429,7 +442,7 @@ void USFExtendScaledService::RebuildScaledExtendNow()
         }
 
         // Validate constraints (belt/pipe lengths, angles, and Issue #288 pole capacity)
-        Owner->bScaledExtendValid = ValidateScaledExtendConstraints() && ValidatePowerCapacity();
+        Owner->bScaledExtendValid = ValidateScaledExtendConstraints();
 
         if (Owner->bScaledExtendValid)
         {
@@ -440,6 +453,7 @@ void USFExtendScaledService::RebuildScaledExtendNow()
             // Phase 6: merge all clone topologies onto the clone-1 base (non-destructive re-merge;
             // the wiring system reads Owner->StoredCloneTopology to generate wiring manifests).
             RemergeScaledTopologyFromBase();
+            Owner->bScaledExtendValid = ValidatePowerCapacity();
         }
         else
         {
@@ -465,9 +479,8 @@ void USFExtendScaledService::RebuildScaledExtendNow()
     {
         // Shrunk back to a single clone: all previews were torn down by the diff; the stored
         // topology returns to the clone-1 base.
-        Owner->bScaledExtendValid = true;
-        Owner->ScaledExtendInvalidReason.Empty();
         RemergeScaledTopologyFromBase();
+        Owner->bScaledExtendValid = ValidatePowerCapacity();
     }
 
     // #497: immediate position assert now that the preview set is (re)built, so children are
@@ -582,33 +595,33 @@ void USFExtendScaledService::SpawnScaledExtendPreviews()
     // Capture source topology once for cloning
     FSFSourceTopology SourceTopo = FSFSourceTopology::CaptureFromTopology(Topology);
 
-    // [#384] Rotation-stable principal extend axis (world space): the un-arced extend-forward direction,
-    // passed to FromSource so each clone's pipe-lane SOURCE backbone port is chosen against this fixed
-    // axis instead of the per-clone offset - which arcs ~5deg/clone on a rotated extend and otherwise
-    // drops the source connector below the facing threshold past ~clone 14, killing the rest of the lanes.
-    //
-    // Derived from the clone OFFSETS (installed identically on SP and the MP server during commit
-    // reconstruction), NOT from DetectionService: the detection direction is client-only and defaults to
-    // Right on a dedicated server, which would mispick the source port for a LEFT extend (SP/MP divergence,
-    // same trap as #382). The least-rotated non-seed clone points along the extend with negligible arc.
-    FVector PrincipalAxisWorld = FVector::ZeroVector;
-    {
-        float BestYaw = 1.0e30f;
-        for (const FSFScaledExtendClone& C : Owner->ScaledExtendClones)
-        {
-            if (C.bIsSeed) { continue; }
-            const FVector OffsetXY(C.WorldOffset.X, C.WorldOffset.Y, 0.0f);
-            if (OffsetXY.IsNearlyZero()) { continue; }
-            const float AbsYaw = FMath::Abs(C.RotationOffset.Yaw);
-            if (AbsYaw < BestYaw)
-            {
-                BestYaw = AbsYaw;
-                PrincipalAxisWorld = OffsetXY.GetSafeNormal();
-            }
-        }
-    }
+    // The held first clone supplies a stable forward axis for every row and layer.
+    // Choosing the least-rotated additional clone included its lateral row displacement:
+    // at 5 degrees, a 34m row offset made a valid pipe port fail the 0.30 facing threshold.
+    // Parent/source poses are also installed during server reconstruction (#382); do not
+    // use client-only detection direction or an increasingly arced later clone (#384).
+    const FVector PrincipalAxisWorld = SFScaledExtendGrid::PrincipalAxis(
+        SourceLocation, ParentHologram->GetActorLocation());
 
     int32 TotalHologramsSpawned = 0;
+
+    // Socket budget for optional factory daisy links, seeded with every already-accepted cable:
+    // the base (parent) plan plus retained clones on a count-only rebuild. Every clone rebuilds
+    // its cell sockets at full capacity (Step 2 below), so a pole-fed daisy row would otherwise
+    // plan pole + in + out on a two-slot socket and fail the whole plan's capacity check.
+    SFExtendPowerConnections::FSocketBudget DaisyBudget;
+    if (const TSharedPtr<FSFCloneTopology>& Base = Owner->ScaledExtendBaseTopology.IsValid()
+        ? Owner->ScaledExtendBaseTopology : Owner->StoredCloneTopology; Base.IsValid())
+    {
+        SFExtendPowerConnections::ReserveAll(*Base, DaisyBudget);
+    }
+    for (const FSFScaledExtendClone& Retained : Owner->ScaledExtendClones)
+    {
+        if (Retained.SpawnedHolograms.Num() > 0 && Retained.CloneTopology.IsValid())
+        {
+            SFExtendPowerConnections::ReserveAll(*Retained.CloneTopology, DaisyBudget);
+        }
+    }
 
     for (int32 i = 0; i < Owner->ScaledExtendClones.Num(); i++)
     {
@@ -697,7 +710,14 @@ void USFExtendScaledService::SpawnScaledExtendPreviews()
         }
 
         // === Step 2: Spawn infrastructure (belts, distributors, pipes, power) around Owner clone ===
-        Clone.CloneTopology = MakeShared<FSFCloneTopology>(FSFCloneTopology::FromSource(SourceTopo, Clone.WorldOffset, PrincipalAxisWorld));
+        FSFSourceTopology CellSource = SourceTopo;
+        CellSource.Factory.Power.SourceFreeConnections = CellSource.Factory.Power.Capacity;
+        for (FSFSourcePowerPole& Pole : CellSource.PowerPoles)
+        {
+            Pole.bSourceHasFreeConnections = Pole.MaxConnections > 0;
+            Pole.SourceFreeConnections = Pole.MaxConnections;
+        }
+        Clone.CloneTopology = MakeShared<FSFCloneTopology>(FSFCloneTopology::FromSource(CellSource, Clone.WorldOffset, PrincipalAxisWorld));
 
         // === Step 2.25: RIGID BODY ROTATION ===
         // Clone topology is a rigid body relative to the factory building.
@@ -722,7 +742,7 @@ void USFExtendScaledService::SpawnScaledExtendPreviews()
                         FVector StartWorld = Holo.SplineData.Points[0].World.ToFVector();
                         FVector EndWorld = Holo.SplineData.Points.Last().World.ToFVector();
                         FVector LaneDir = EndWorld - StartWorld;
-                        bool bCloneAtEnd = (FVector::DotProduct(LaneDir, Clone.WorldOffset) > 0.0f);
+                        bool bCloneAtEnd = Holo.bIsSourceToCloneWire || (FVector::DotProduct(LaneDir, Clone.WorldOffset) > 0.0f);
 
                         if (bCloneAtEnd)
                         {
@@ -785,6 +805,8 @@ void USFExtendScaledService::SpawnScaledExtendPreviews()
             SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("⚡ RIGID ROTATION: Clone[%d] rotated %d holograms by (%.0f,%.0f,%.0f) around factory center"),
                 i, Clone.CloneTopology->ChildHolograms.Num(), Clone.RotationOffset.Pitch, Clone.RotationOffset.Yaw, Clone.RotationOffset.Roll);
         }
+
+        Clone.CloneTopology->ParentTransform = FSFTransform(CloneWorldPos, CloneWorldRot);
 
         // === Step 2.5: CHAIN TOPOLOGY - Modify lane segments to chain from previous clone ===
         // FromSource creates lane segments from Source(0,0,0) → ThisClone(WorldOffset).
@@ -849,7 +871,7 @@ void USFExtendScaledService::SpawnScaledExtendPreviews()
                     // If lane direction (start→end) aligns with source→clone direction,
                     // then start is at source. If anti-aligned, end is at source.
                     FVector LaneDir = OldEndWorld - OldStartWorld;
-                    bool bSourceAtStart = (FVector::DotProduct(LaneDir, Clone.WorldOffset) > 0.0f);
+                    bool bSourceAtStart = Holo.bIsSourceToCloneWire || (FVector::DotProduct(LaneDir, Clone.WorldOffset) > 0.0f);
 
                     // Helper: compute the previous clone's ROTATED connector position.
                     // The source-side endpoint is at the SOURCE distributor connector.
@@ -958,6 +980,11 @@ void USFExtendScaledService::SpawnScaledExtendPreviews()
                 Holo.ConnectedPowerPoleHologramId = ClonePrefix + Holo.ConnectedPowerPoleHologramId;
             }
 
+            // Shared remap preserves both factory IDs and independent outlet faces.
+            SFExtendPowerConnections::RemapCellTargets(Holo, ClonePrefix, PrevClonePrefix);
+            if (!Holo.PassthroughTop.Target.IsEmpty()) Holo.PassthroughTop.Target = ClonePrefix + Holo.PassthroughTop.Target;
+            if (!Holo.PassthroughBottom.Target.IsEmpty()) Holo.PassthroughBottom.Target = ClonePrefix + Holo.PassthroughBottom.Target;
+
             // === Conn0 target resolution ===
             if (OrigConn0Target == TEXT("parent"))
             {
@@ -992,6 +1019,10 @@ void USFExtendScaledService::SpawnScaledExtendPreviews()
                 Holo.CloneConnections.ConveyorAny1.Target = ClonePrefix + OrigConn1Target;
             }
         }
+
+        // Drop daisy links whose sockets are already filled, before they spawn a preview or
+        // reach the merged build plan (restores 34.3.1's skip-when-full daisy behavior).
+        SFExtendPowerConnections::PruneDaisyOverCapacity(*Clone.CloneTopology, DaisyBudget);
 
         // Spawn infrastructure child holograms
         TMap<FString, AFGHologram*> InfraHolograms;
@@ -1289,6 +1320,21 @@ bool USFExtendScaledService::IsCountOnlyChange(const FSFCounterState& NowState) 
         && NowState.RotationAxis == Last.RotationAxis;
 }
 
+void USFExtendScaledService::SpawnCloneSetsForServerCommit()
+{
+    // [MP-AUTH] The commit has just installed a fresh, rotated first-copy plan.
+    // Preserve it before spawning, as RebuildScaledExtendNow does for a local preview.
+    // Without the merge, scaled wire previews exist (and are priced), but validation
+    // and the post-construct cable materializer see only the first copy's edges.
+    Owner->ScaledExtendBaseTopology.Reset();
+    if (Owner->StoredCloneTopology.IsValid())
+    {
+        Owner->ScaledExtendBaseTopology = MakeShared<FSFCloneTopology>(*Owner->StoredCloneTopology);
+    }
+    SpawnScaledExtendPreviews();
+    RemergeScaledTopologyFromBase();
+}
+
 void USFExtendScaledService::RemergeScaledTopologyFromBase()
 {
     // #497: rebuild the merged topology non-destructively. The old Phase-6 merge appended clone
@@ -1418,56 +1464,6 @@ bool USFExtendScaledService::ValidateScaledExtendConstraints()
 
 bool USFExtendScaledService::ValidatePowerCapacity()
 {
-    // Issue #288: Preview-time check that each cloned power pole can actually
-    // host the connections we plan to make: factory (1) + inter-pole wire back
-    // to source (1) + cloned pumps whose PowerInput was wired to Owner specific
-    // source pole (N). Pumps connected to out-of-manifold poles are excluded
-    // automatically because their ConnectedPowerPoleHologramId is empty.
-    // Called from both regular-Extend and Scaled Extend preview paths so the
-    // 1-clone case gets the same protection as 2+ clones.
-
-    if (!Owner->StoredCloneTopology.IsValid() || Owner->StoredCloneTopology->ChildHolograms.Num() == 0)
-    {
-        return true;  // No topology → no poles → nothing to validate
-    }
-
-    // Tally pumps per clone pole HologramId in a single pass.
-    TMap<FString, int32> PumpsPerClonePole;
-    for (const FSFCloneHologram& Holo : Owner->StoredCloneTopology->ChildHolograms)
-    {
-        if (Holo.Role == TEXT("pipe_attachment") && !Holo.ConnectedPowerPoleHologramId.IsEmpty())
-        {
-            PumpsPerClonePole.FindOrAdd(Holo.ConnectedPowerPoleHologramId) += 1;
-        }
-    }
-
-    // Walk poles; first over-capacity entry aborts with a descriptive reason.
-    for (const FSFCloneHologram& Holo : Owner->StoredCloneTopology->ChildHolograms)
-    {
-        if (Holo.Role != TEXT("power_pole")) continue;
-        if (Holo.PowerPoleMaxConnections <= 0) continue;  // Defensive: no tier data, skip
-
-        const int32 PumpCount = PumpsPerClonePole.FindRef(Holo.HologramId);
-        constexpr int32 FactoryConn = 1;   // clone factory ↔ clone pole
-        constexpr int32 InterPoleConn = 1; // source pole ↔ clone pole (Power Extend)
-        const int32 Projected = FactoryConn + InterPoleConn + PumpCount;
-
-        if (Projected > Holo.PowerPoleMaxConnections)
-        {
-            // Human-readable tier label — we only know the class name, which is
-            // reasonably greppable (Build_PowerPoleMk1_C, Build_PowerPoleWall_C,
-            // etc). Strip the "Build_" prefix and "_C" suffix for the HUD line.
-            FString Tier = Holo.SourceClass;
-            Tier.RemoveFromStart(TEXT("Build_"));
-            Tier.RemoveFromEnd(TEXT("_C"));
-
-            Owner->ScaledExtendInvalidReason = FString::Printf(
-                TEXT("Clone %s needs %d/%d connections (factory + inter-pole + %d pump%s) — upgrade the source pole, or move a pump to another pole"),
-                *Tier, Projected, Holo.PowerPoleMaxConnections, PumpCount, (PumpCount == 1 ? TEXT("") : TEXT("s")));
-            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Warning, TEXT("⚡ EXTEND POWER (#288): INVALID — %s"), *Owner->ScaledExtendInvalidReason);
-            return false;
-        }
-    }
-
-    return true;
+    return !Owner->StoredCloneTopology.IsValid()
+        || SFExtendPowerConnections::ValidateCapacity(*Owner->StoredCloneTopology, Owner->ScaledExtendInvalidReason);
 }

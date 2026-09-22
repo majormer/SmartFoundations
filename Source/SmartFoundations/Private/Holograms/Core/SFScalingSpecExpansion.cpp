@@ -988,6 +988,7 @@ void CaptureConduitPlan(AFGHologram* Hologram, FSFScalingSpec& InOutSpec)
 				continue;
 			}
 			Entry.SplinePoints = PipeHolo->GetSplineData();
+			Entry.PipeColor = PipeHolo->CapturePipeColor();
 		}
 		else if (ASFWireHologram* WireHolo = Cast<ASFWireHologram>(Child))
 		{
@@ -1515,6 +1516,7 @@ int32 SpawnConduitPlanChildren(AFGHologram* Parent, const FSFScalingSpec& Spec)
 			Pipe->SetSplineDataAndUpdate(Entry.SplinePoints);
 			Parent->AddChild(Pipe, Pipe->GetFName());
 			Pipe->SetSplineDataAndUpdate(Entry.SplinePoints);
+			Entry.PipeColor.Apply(Pipe);
 			Conduit = Pipe;
 			break;
 		}

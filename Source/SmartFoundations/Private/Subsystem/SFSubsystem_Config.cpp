@@ -1552,6 +1552,7 @@ void USFSubsystem::AdjustAutoConnectSetting(int32 Delta)
             // class lands (the #451 lesson: in-place updates don't apply class changes).
             AutoConnectService->CleanupAllBlueprintSeams(ActiveHologram.Get());
             AutoConnectService->ProcessBlueprintSeams(ActiveHologram.Get());
+            AutoConnectService->ProcessPowerPoles(ActiveHologram.Get());
             UE_LOG(LogSmartFoundations, Verbose, TEXT("[AC-HUD] reprocess -> blueprint seams"));
         }
     }

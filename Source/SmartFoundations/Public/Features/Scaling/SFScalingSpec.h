@@ -5,6 +5,7 @@
 
 #include "CoreMinimal.h"
 #include "Core/Construction/SFFactorySettingsSnapshot.h"
+#include "Core/Construction/SFPipeColorSnapshot.h"
 #include "HUD/SFHUDTypes.h"   // FSFCounterState (grid + transform counters)
 #include "Components/SplineComponent.h"   // FSplinePointData (CSS engine addition)
 #include "ItemAmount.h"                    // FItemAmount (belt plan cost)
@@ -96,6 +97,10 @@ struct SMARTFOUNDATIONS_API FSFConduitPlanEntry
 	 *  field null so the floor-hole Construct branch (passthrough snap registration) runs. */
 	UPROPERTY()
 	bool bFloorHolePipe = false;
+
+	/** Pipe paint captured from the priced preview, preserved during authority reconstruction. */
+	UPROPERTY()
+	FSFPipeColorSnapshot PipeColor;
 
 	/** Stackable kinds: position in the run (registry StackableBeltIndex / StackablePipeIndex). */
 	UPROPERTY()

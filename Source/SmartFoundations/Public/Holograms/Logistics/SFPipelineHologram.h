@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Hologram/FGPipelineHologram.h"
 #include "FGPipeConnectionComponent.h"
+#include "Core/Construction/SFPipeColorSnapshot.h"
 #include "SFPipelineHologram.generated.h"
 
 /**
@@ -18,6 +19,19 @@ class SMARTFOUNDATIONS_API ASFPipelineHologram : public AFGPipelineHologram
 
 public:
     ASFPipelineHologram();
+
+    FSFPipeColorSnapshot CapturePipeColor() const { return FSFPipeColorSnapshot::Capture(mCustomizationData); }
+
+    /** Restore this preview's original paint before selecting a new auto-connect source. */
+    void ResetAutoConnectCustomization()
+    {
+        if (!bAutoConnectCustomizationCaptured)
+        {
+            AutoConnectBaseCustomization = mCustomizationData;
+            bAutoConnectCustomizationCaptured = true;
+        }
+        SetCustomizationData(AutoConnectBaseCustomization);
+    }
 
     virtual void BeginPlay() override;
     virtual void CheckValidPlacement() override;
@@ -160,6 +174,10 @@ public:
 	void InvalidateCostCache() { bSelfCostCacheValid = false; }
 
 private:
+    UPROPERTY(Transient)
+    FFactoryCustomizationData AutoConnectBaseCustomization;
+    bool bAutoConnectCustomizationCaptured = false;
+
 	/** #497 set-once guard: the state last swept onto the spline meshes (and whether any sweep ran). */
 	EHologramMaterialState LastAppliedSplineMaterialState = EHologramMaterialState::HMS_OK;
 	bool bSplineMaterialStateApplied = false;

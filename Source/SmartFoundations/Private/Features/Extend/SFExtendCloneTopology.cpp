@@ -1,6 +1,9 @@
 // Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
 #include "Features/Extend/SFExtendCloneTopology.h"
+#include "Features/Extend/SFExtendLaneNormals.h"
+#include "Features/Extend/SFExtendPowerConnections.h"
+#include "Features/Extend/SFExtendFactoryPower.h"
 #include "Features/Extend/SFExtendService.h"
 #include "FGFactoryColoringTypes.h"  // [#477] FFactoryCustomizationData capture
 #include "Misc/DateTime.h"
@@ -15,6 +18,8 @@
 #include "Buildables/FGBuildablePassthrough.h"
 #include "Buildables/FGBuildableFactory.h"
 #include "Buildables/FGBuildablePowerPole.h"
+#include "Buildables/FGBuildableWire.h"
+#include "Constants/SFAssetPaths.h"
 #include "FGPowerConnectionComponent.h"  // Issue #288: capture pump's power-pole linkage
 #include "FGFactoryConnectionComponent.h"
 #include "FGPipeConnectionComponent.h"
@@ -53,17 +58,21 @@ static constexpr float SFWireConnectorHeightCm = 600.0f;
 
 void FSFCloneTopology::ApplyRigidYawRotation(const FRotator& RotOffset, const FVector& Center, const FVector& WorldOffsetToClone)
 {
+    // The saved parent pose must describe the same frame as its rotated children.
+    ParentTransform.Location = FSFVec3(Center + RotOffset.RotateVector(ParentTransform.Location.ToFVector() - Center));
+    ParentTransform.Rotation = FSFRot3(ParentTransform.Rotation.ToFRotator() + RotOffset);
     for (FSFCloneHologram& Holo : ChildHolograms)
     {
-        if (Holo.bIsLaneSegment)
+        if (Holo.bIsLaneSegment || Holo.bIsSourceToCloneWire)
         {
-            // Lane segments are ADAPTIVE — only rotate the clone-side endpoint; source-side stays fixed.
+            // Lane segments and source cables are ADAPTIVE — only rotate the clone-side endpoint; source-side stays fixed.
             if (Holo.bHasSplineData && Holo.SplineData.Points.Num() >= 2)
             {
                 FVector StartWorld = Holo.SplineData.Points[0].World.ToFVector();
                 FVector EndWorld = Holo.SplineData.Points.Last().World.ToFVector();
                 FVector LaneDir = EndWorld - StartWorld;
-                bool bCloneAtEnd = (FVector::DotProduct(LaneDir, WorldOffsetToClone) > 0.0f);
+                const bool bCloneAtEnd = Holo.bIsSourceToCloneWire
+                    || (FVector::DotProduct(LaneDir, WorldOffsetToClone) > 0.0f);
 
                 if (bCloneAtEnd)
                 {
@@ -123,6 +132,7 @@ FSFCloneTopology FSFCloneTopology::FromSource(const FSFSourceTopology& Source, c
     Result.SourceFactoryId = Source.Factory.Id;
     Result.ParentBuildClass = Source.Factory.Class;
     Result.ParentTransform = Source.Factory.Transform.WithOffset(Result.WorldOffset);
+    SFExtendFactoryPower::AddSourceWire(Result, Source.Factory);
     
     // Phase 1: Build source ID → hologram identifier mapping
     // Maps source actor IDs to hologram identifiers like "distributor_0", "belt_segment_1", etc.
@@ -269,8 +279,9 @@ FSFCloneTopology FSFCloneTopology::FromSource(const FSFSourceTopology& Source, c
     // here ("power_pole_%d") MUST stay in sync with PHASE 2.5 below.
     for (int32 PoleIdx = 0; PoleIdx < Source.PowerPoles.Num(); PoleIdx++)
     {
-        SourceIdToHologramId.Add(Source.PowerPoles[PoleIdx].Id,
-            FString::Printf(TEXT("power_pole_%d"), PoleIdx));
+        if (!SourceIdToHologramId.Contains(Source.PowerPoles[PoleIdx].Id))
+            SourceIdToHologramId.Add(Source.PowerPoles[PoleIdx].Id,
+                FString::Printf(TEXT("power_pole_%d"), PoleIdx));
     }
     
     // Helper to resolve a connection reference to hologram identifier
@@ -409,6 +420,8 @@ FSFCloneTopology FSFCloneTopology::FromSource(const FSFSourceTopology& Source, c
                 // copies mUserFlowLimit from the source (-1 = unlimited).
                 SegHolo.Role = TEXT("pipe_attachment");
                 SegHolo.UserFlowLimit = Seg.UserFlowLimit;
+                SegHolo.PowerConnectorName = Seg.PowerConnectorName;
+                SegHolo.ConnectedPowerPoleConnectorName = Seg.ConnectedPowerPoleConnectorName;
                 
                 // Issue #288: Resolve the clone pole HologramId for pump power wiring.
                 // Empty in three cases: (a) valve (no PowerInput component), (b) pump
@@ -458,10 +471,12 @@ FSFCloneTopology FSFCloneTopology::FromSource(const FSFSourceTopology& Source, c
     // emitted — PHASE 2.7 anchors each pump's cable preview to its own pole's connector.
     TMap<FString, FVector> PoleCloneConnectorWorldById;
     int32 PowerPoleIndex = 0;
+    TSet<FString> EmittedPowerPoles;
+    TSet<FString> EmittedSourceWireFaces;
     for (const FSFSourcePowerPole& SourcePole : Source.PowerPoles)
     {
         FSFCloneHologram PoleHolo;
-        PoleHolo.HologramId = FString::Printf(TEXT("power_pole_%d"), PowerPoleIndex);
+        PoleHolo.HologramId = SourceIdToHologramId.FindChecked(SourcePole.Id);
         PoleHolo.Role = TEXT("power_pole");
         PoleHolo.SourceId = SourcePole.Id;
         PoleHolo.Customization = SourcePole.Customization;  // [#477]
@@ -474,14 +489,21 @@ FSFCloneTopology FSFCloneTopology::FromSource(const FSFSourceTopology& Source, c
         PoleHolo.Transform = SourcePole.Transform.WithOffset(FSFVec3(Offset));
         PoleHolo.bConstructible = true;
         PoleHolo.bPreviewOnly = false;
-        PoleHolo.PowerPoleMaxConnections = SourcePole.MaxConnections;  // Issue #288
+        PoleHolo.PowerPoleMaxConnections = SourcePole.MaxConnections;
+        PoleHolo.PowerConnectorName = SourcePole.PoleConnectorName;
+        PoleHolo.FactoryPowerConnectorName = SourcePole.FactoryConnectorName;
+        PoleHolo.PowerPortCapacities = SourcePole.PortCapacities;
         
         // Store source pole metadata in a way the spawner can access
         // We encode free connection info into the HologramId for later use
         // (The actual wiring logic uses the registered built actors)
         
         SourceIdToHologramId.Add(SourcePole.Id, PoleHolo.HologramId);
-        Result.ChildHolograms.Add(PoleHolo);
+        if (!EmittedPowerPoles.Contains(PoleHolo.HologramId))
+        {
+            Result.ChildHolograms.Add(PoleHolo);
+            EmittedPowerPoles.Add(PoleHolo.HologramId);
+        }
 
         // [#498] Record the clone pole's connector world position (same derivation the cable
         // previews below use) so PHASE 2.7 can anchor pump cables to it.
@@ -496,6 +518,11 @@ FSFCloneTopology FSFCloneTopology::FromSource(const FSFSourceTopology& Source, c
             float FactoryToPoleDistance = SourcePole.RelativeOffset.ToFVector().Size();
             FSFCloneHologram WireHolo;
             WireHolo.HologramId = FString::Printf(TEXT("wire_factory_pole_%d"), PowerPoleIndex);
+            WireHolo.PowerFrom = FSFConnectionRef(TEXT("parent"), SourcePole.FactoryConnectorName);
+            WireHolo.PowerFromCapacity = SourcePole.FactoryMaxConnections;
+            WireHolo.PowerToCapacity = SourcePole.MaxConnections;
+            WireHolo.PowerMaxLength = SourcePole.PowerMaxLength;
+            WireHolo.PowerTo = FSFConnectionRef(PoleHolo.HologramId, SourcePole.PoleConnectorName);
             WireHolo.Role = TEXT("wire_cost");
             WireHolo.SourceId = SourcePole.Id;
             WireHolo.SourceClass = TEXT("Build_PowerLine_C");
@@ -535,8 +562,10 @@ FSFCloneTopology FSFCloneTopology::FromSource(const FSFSourceTopology& Source, c
         }
 
         // Wire cost hologram 2: Source pole ↔ Clone pole (only if source has free connections)
-        if (SourcePole.bSourceHasFreeConnections)
+        const FString SourceFaceKey = SourcePole.Id + TEXT(".") + SourcePole.PoleConnectorName;
+        if (SourcePole.bSourceHasFreeConnections && !EmittedSourceWireFaces.Contains(SourceFaceKey))
         {
+            EmittedSourceWireFaces.Add(SourceFaceKey);
             float SourceToCloneDistance = Offset.Size();
             FSFCloneHologram WireHolo;
             WireHolo.HologramId = FString::Printf(TEXT("wire_source_clone_%d"), PowerPoleIndex);
@@ -544,6 +573,11 @@ FSFCloneTopology FSFCloneTopology::FromSource(const FSFSourceTopology& Source, c
             // Issue #345: this cable's source end must chain to the previous clone and only its clone end
             // rotates in Scaled Extend (handled by the lane rotation/chain passes via this flag).
             WireHolo.bIsSourceToCloneWire = true;
+            WireHolo.PowerFrom = FSFConnectionRef(TEXT("source:") + SourcePole.Id, SourcePole.PoleConnectorName);
+            WireHolo.PowerFromCapacity = SourcePole.SourceFreeConnections;
+            WireHolo.PowerToCapacity = SourcePole.MaxConnections;
+            WireHolo.PowerMaxLength = SourcePole.PowerMaxLength;
+            WireHolo.PowerTo = FSFConnectionRef(PoleHolo.HologramId, SourcePole.PoleConnectorName);
             WireHolo.SourceId = SourcePole.Id;
             WireHolo.SourceClass = TEXT("Build_PowerLine_C");
             WireHolo.HologramClass = TEXT("ASFWireHologram");
@@ -606,10 +640,36 @@ FSFCloneTopology FSFCloneTopology::FromSource(const FSFSourceTopology& Source, c
                 continue;  // pole outside the captured manifold — 3.8b skips these too
             }
 
-            const FVector PumpW = AttHolo.Transform.Location.ToFVector();
+            FVector PumpW = AttHolo.Transform.Location.ToFVector();
+            FVector ExactPoleW = *PoleConnW;
+            int32 PumpCapacity = -1;
+            float PumpMaxLength = 0;
+            int32 PumpPoleCapacity = -1;
+            auto FindPumpSockets = [&](const TArray<FSFSourceChain>& Chains)
+            {
+                for (const FSFSourceChain& Chain : Chains)
+                for (const FSFSourceSegment& Segment : Chain.Segments)
+                {
+                    if (Segment.Id == AttHolo.SourceId && Segment.bHasPowerConnectorWorld)
+                    {
+                        PumpCapacity = Segment.PowerConnectorCapacity;
+                        PumpMaxLength = Segment.PowerMaxLength;
+                        PumpPoleCapacity = Segment.ConnectedPowerPoleConnectorCapacity;
+                        PumpW = Segment.PowerConnectorWorld.ToFVector() + Offset;
+                        ExactPoleW = Segment.ConnectedPowerPoleConnectorWorld.ToFVector() + Offset;
+                    }
+                }
+            };
+            FindPumpSockets(Source.PipeInputChains);
+            FindPumpSockets(Source.PipeOutputChains);
 
             FSFCloneHologram WireHolo;
             WireHolo.HologramId = TEXT("wire_pump_") + AttHolo.HologramId;
+            WireHolo.PowerFrom = FSFConnectionRef(AttHolo.HologramId, AttHolo.PowerConnectorName);
+            WireHolo.PowerFromCapacity = PumpCapacity;
+            WireHolo.PowerMaxLength = PumpMaxLength;
+            WireHolo.PowerToCapacity = PumpPoleCapacity;
+            WireHolo.PowerTo = FSFConnectionRef(AttHolo.ConnectedPowerPoleHologramId, AttHolo.ConnectedPowerPoleConnectorName);
             WireHolo.Role = TEXT("wire_cost");
             WireHolo.SourceId = AttHolo.SourceId;
             WireHolo.SourceClass = TEXT("Build_PowerLine_C");
@@ -620,10 +680,10 @@ FSFCloneTopology FSFCloneTopology::FromSource(const FSFSourceTopology& Source, c
             WireHolo.bConstructible = false;
             WireHolo.bPreviewOnly = true;
             WireHolo.bHasSplineData = true;
-            WireHolo.SplineData.Length = FVector::Dist(PumpW, *PoleConnW);
+            WireHolo.SplineData.Length = FVector::Dist(PumpW, ExactPoleW);
 
             FSFSplinePoint PtPump; PtPump.World = FSFVec3(PumpW);
-            FSFSplinePoint PtPole; PtPole.World = FSFVec3(*PoleConnW);
+            FSFSplinePoint PtPole; PtPole.World = FSFVec3(ExactPoleW);
             WireHolo.SplineData.Points.Add(PtPump);
             WireHolo.SplineData.Points.Add(PtPole);
 
@@ -637,9 +697,35 @@ FSFCloneTopology FSFCloneTopology::FromSource(const FSFSourceTopology& Source, c
     // ========================================================================
     // Pipe floor holes are NOT in pipe connection chains (pipes pass through physically,
     // not logically). They are discovered spatially and need explicit hologram cloning.
-    int32 PassthroughCloneIndex = 0;
+    auto CopyPassthroughLinks = [&](const FSFSourceSegment& Segment, FSFCloneHologram& Holo)
+    {
+        Holo.Thickness = Segment.Thickness;
+        Holo.bHasPassthroughLinks = Segment.bHasPassthroughLinks;
+        auto Map = [&](const FSFConnectionRef& Ref) -> FSFConnectionRef
+        {
+            const FString* CloneId = SourceIdToHologramId.Find(Ref.Target);
+            return CloneId && !Ref.Connector.IsEmpty() ? FSFConnectionRef(*CloneId, Ref.Connector) : FSFConnectionRef();
+        };
+        Holo.PassthroughTop = Map(Segment.PassthroughTop);
+        Holo.PassthroughBottom = Map(Segment.PassthroughBottom);
+    };
+    // Chain-owned holes were emitted before all segment plans were available.
+    for (FSFCloneHologram& Holo : Result.ChildHolograms)
+    {
+        if (Holo.Role != TEXT("passthrough")) continue;
+        auto CopyChain = [&](const TArray<FSFSourceChain>& Chains)
+        {
+            for (const FSFSourceChain& Chain : Chains)
+                for (const FSFSourceSegment& Segment : Chain.Segments)
+                    if (Segment.Id == Holo.SourceId) CopyPassthroughLinks(Segment, Holo);
+        };
+        CopyChain(Source.PipeInputChains);
+        CopyChain(Source.PipeOutputChains);
+    }
+    int32 PassthroughCloneIndex = PassthroughIndex;
     for (const FSFSourceSegment& PassSeg : Source.PipePassthroughs)
     {
+        if (Result.ChildHolograms.ContainsByPredicate([&](const FSFCloneHologram& Holo) { return Holo.Role == TEXT("passthrough") && Holo.SourceId == PassSeg.Id; })) continue;
         bool bHasRelatedOwner = false;
         bool bHasKeptOwner = false;
         for (const FString& RelatedSourceId : PassSeg.RelatedSourceIds)
@@ -674,7 +760,7 @@ FSFCloneTopology FSFCloneTopology::FromSource(const FSFSourceTopology& Source, c
         PassHolo.Transform = PassSeg.Transform.WithOffset(FSFVec3(Offset));
         PassHolo.bConstructible = true;
         PassHolo.bPreviewOnly = false;
-        PassHolo.Thickness = PassSeg.Thickness;
+        CopyPassthroughLinks(PassSeg, PassHolo);
         
         SourceIdToHologramId.Add(PassSeg.Id, PassHolo.HologramId);
         Result.ChildHolograms.Add(PassHolo);
@@ -1119,6 +1205,7 @@ FSFCloneTopology FSFCloneTopology::FromSource(const FSFSourceTopology& Source, c
         LaneHolo.LaneSegmentType = LaneType;
         LaneHolo.LaneStartNormal = FSFVec3(LaneStartNormal);
         LaneHolo.LaneEndNormal = FSFVec3(LaneEndNormal);
+        SFExtendLaneNormals::VerifyCapture(LaneHolo, Distributor.Class, SourceRotation);
         
         // Lane segments between distributors are ALWAYS belts (or pipes).
         // Conveyor lifts don't make sense for manifold connections — belts handle
@@ -1221,6 +1308,23 @@ namespace CaptureHelpers
         if (!Actor) return TEXT("");
         // Use GetName() to match the format used by connection targets
         return Actor->GetName();
+    }
+
+    void CapturePassthrough(AFGBuildable* Buildable, FSFSourceSegment& Segment)
+    {
+        AFGBuildablePassthrough* Hole = Cast<AFGBuildablePassthrough>(Buildable);
+        if (!Hole) return;
+        Segment.Thickness = Hole->GetSnappedBuildingThickness();
+        if (Hole->GetClass()->GetName() != TEXT("Build_FoundationPassthrough_Pipe_C")) return;
+        Segment.bHasPassthroughLinks = true;
+        auto Capture = [&](UFGConnectionComponent* Connection, FSFConnectionRef& Ref)
+        {
+            if (!IsValid(Connection) || !IsValid(Connection->GetOwner())) return;
+            Ref = FSFConnectionRef(GetActorId(Connection->GetOwner()), Connection->GetName());
+            Segment.RelatedSourceIds.AddUnique(Ref.Target);
+        };
+        Capture(Hole->GetTopSnappedConnection<UFGConnectionComponent>(), Segment.PassthroughTop);
+        Capture(Hole->GetBottomSnappedConnection<UFGConnectionComponent>(), Segment.PassthroughBottom);
     }
 
     // [#477] Class -> path string (empty for null); keeps records JSON/MP serializable.
@@ -1563,6 +1667,7 @@ namespace CaptureHelpers
             PassSeg.Customization.CaptureFrom(Passthrough->GetCustomizationData_Implementation());
             PassSeg.RecipeClass = GetRecipeClassName(Passthrough->GetBuiltWithRecipe());
             PassSeg.Transform = FSFTransform(Passthrough->GetActorLocation(), Passthrough->GetActorRotation());
+        CapturePassthrough(Passthrough, PassSeg);
             
             Result.Segments.Add(PassSeg);
             
@@ -1608,6 +1713,16 @@ namespace CaptureHelpers
                         if (AFGBuildablePowerPole* ConnectedPole = Cast<AFGBuildablePowerPole>(Conn->GetOwner()))
                         {
                             AttSeg.ConnectedPowerPoleSourceId = GetActorId(ConnectedPole);
+                            AttSeg.PowerConnectorName = PumpPowerInput->GetName();
+                            AttSeg.ConnectedPowerPoleConnectorName = Conn->GetName();
+                            AttSeg.PowerConnectorWorld = FSFVec3(PumpPowerInput->GetComponentLocation());
+                            AttSeg.ConnectedPowerPoleConnectorWorld = FSFVec3(Conn->GetComponentLocation());
+                            AttSeg.bHasPowerConnectorWorld = true;
+                            AttSeg.PowerConnectorCapacity = PumpPowerInput->GetMaxNumConnections();
+                            if (UClass* WireClass = LoadClass<AFGBuildableWire>(nullptr, SFAssetPaths::PowerLineBuildClass))
+                                AttSeg.PowerMaxLength = SFExtendPowerConnections::MaxWireLength(
+                                    WireClass->GetDefaultObject<AFGBuildableWire>(), PumpPowerInput, Conn);
+                            AttSeg.ConnectedPowerPoleConnectorCapacity = Conn->GetMaxNumConnections();
                             break;  // pumps have exactly one power connection slot
                         }
                     }
@@ -1641,6 +1756,7 @@ FSFSourceTopology FSFSourceTopology::CaptureFromTopology(const FSFExtendTopology
         Result.Factory.Id = GetActorId(Factory);
         Result.Factory.Class = Factory->GetClass()->GetName();
         Result.Factory.Transform = FSFTransform(Factory->GetActorLocation(), Factory->GetActorRotation());
+        Result.Factory.Power = SFExtendFactoryPower::Capture(Factory);
     }
     
     // Belt input chains
@@ -1695,14 +1811,25 @@ FSFSourceTopology FSFSourceTopology::CaptureFromTopology(const FSFExtendTopology
         // Issue #345: capture the real source connector world positions for an accurate cable preview.
         if (PowerNode.PoleConnector.IsValid())
         {
+            SourcePole.PoleConnectorName = PowerNode.PoleConnector->GetName();
             SourcePole.PoleConnectorWorld = FSFVec3(PowerNode.PoleConnector->GetComponentLocation());
         }
         if (PowerNode.FactoryConnector.IsValid())
         {
+            SourcePole.FactoryConnectorName = PowerNode.FactoryConnector->GetName();
+            SourcePole.FactoryMaxConnections = PowerNode.FactoryConnector->GetMaxNumConnections();
             SourcePole.FactoryConnectorWorld = FSFVec3(PowerNode.FactoryConnector->GetComponentLocation());
         }
         SourcePole.bHasConnectorWorld = PowerNode.PoleConnector.IsValid() && PowerNode.FactoryConnector.IsValid();
+        SourcePole.PowerMaxLength = SFExtendPowerConnections::MaxWireLength(
+            PowerNode.Wire.Get(), PowerNode.FactoryConnector.Get(), PowerNode.PoleConnector.Get());
 
+        TArray<UFGCircuitConnectionComponent*> Ports;
+        Pole->GetComponents(Ports);
+        for (UFGCircuitConnectionComponent* Port : Ports)
+        {
+            if (::IsValid(Port)) SourcePole.PortCapacities.Add(Port->GetName(), Port->GetMaxNumConnections());
+        }
         Result.PowerPoles.Add(SourcePole);
     }
     
@@ -1720,6 +1847,7 @@ FSFSourceTopology FSFSourceTopology::CaptureFromTopology(const FSFExtendTopology
         PassSeg.Customization.CaptureFrom(Passthrough->GetCustomizationData_Implementation());
         PassSeg.RecipeClass = GetRecipeClassName(Passthrough->GetBuiltWithRecipe());
         PassSeg.Transform = FSFTransform(Passthrough->GetActorLocation(), Passthrough->GetActorRotation());
+        CapturePassthrough(Passthrough, PassSeg);
 
         if (AFGBuildablePassthrough* TypedPassthrough = Cast<AFGBuildablePassthrough>(Passthrough))
         {

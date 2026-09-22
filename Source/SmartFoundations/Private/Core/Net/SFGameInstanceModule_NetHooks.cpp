@@ -242,6 +242,22 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 				return;
 			}
 
+			if (USFSubsystem* SessionSS = USFSubsystem::Get(World))
+			{
+				AFGPlayerController* InputPC = Holo->GetConstructionInstigator()
+					? Cast<AFGPlayerController>(Holo->GetConstructionInstigator()->GetController()) : nullptr;
+				const bool bLocalInput = InputPC && InputPC->IsLocalController();
+				if (bLocalInput) SessionSS->SyncSmartSessionStateToAuthority(InputPC);
+				if ((bLocalInput && !SessionSS->IsSmartEnabledForSession())
+					|| (InputPC && !bLocalInput && !SessionSS->IsSmartEnabledForPlayer(InputPC)))
+				{
+					// Opt-out fires remain vanilla: no Smart cell/blueprint actor limits,
+					// no preview capture, and no new staged reconstruction. A listen host's
+					// local switch must never suppress another player's Smart construction.
+					return;
+				}
+			}
+
 			// A step-advance input (multi-step holograms) is NOT a fire: nothing serializes, so
 			// nothing may be captured, staged, stripped, or destroyed here.
 			if (!SF_InputWillConstruct(Holo))
@@ -422,7 +438,11 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 					int32 PlanBytesEstimate = 0;
 					for (const FSFConduitPlanEntry& Entry : Spec.ConduitPlan)
 					{
-						PlanBytesEstimate += 384 + Entry.SplinePoints.Num() * 80
+						// Pipe paint (#527): the color slot always serializes six floats plus two
+						// object refs (~32B). Only captured paint adds swatch/finish refs, which may
+						// resolve to full object paths on first send; charge those only when present
+						// so unpainted plans are not taxed for paint they do not carry.
+						PlanBytesEstimate += 384 + 32 + (Entry.PipeColor.bCaptured ? 256 : 0) + Entry.SplinePoints.Num() * 80
 							+ 2 * (Entry.PowerStart.ComponentName.ToString().Len() + Entry.PowerEnd.ComponentName.ToString().Len());
 					}
 					if (PlanBytesEstimate > 45000)

@@ -120,6 +120,12 @@ UFGInputMappingContext* USFInputRegistry::GetSmartInputMappingContext()
 	return GSmartInputMappingContextCache;
 }
 
+UFGInputMappingContext* USFInputRegistry::GetSmartSessionMappingContext()
+{
+	return LoadObject<UFGInputMappingContext>(nullptr,
+		TEXT("/SmartFoundations/SmartFoundations/Input/Contexts/MC_Smart_Session.MC_Smart_Session"));
+}
+
 void USFInputRegistry::BindInputActionsToSubsystem(USFSubsystem* Subsystem, UFGEnhancedInputComponent* InputComponent)
 {
 	if (!Subsystem || !InputComponent)
@@ -140,6 +146,17 @@ void USFInputRegistry::BindInputActionsToSubsystem(USFSubsystem* Subsystem, UFGE
 	};
 
 	int32 BoundCount = 0;
+	if (UInputAction* ToggleSession = LoadIA(TEXT("/SmartFoundations/SmartFoundations/Input/Actions/IA_Smart_ToggleSession.IA_Smart_ToggleSession")))
+	{
+		TArray<uint32> PreviousBindings;
+		for (const auto& Binding : InputComponent->GetActionEventBindings())
+		{
+			if (Binding->GetAction() == ToggleSession) PreviousBindings.Add(Binding->GetHandle());
+		}
+		for (uint32 Handle : PreviousBindings) InputComponent->RemoveBindingByHandle(Handle);
+		InputComponent->BindAction(ToggleSession, ETriggerEvent::Started, Subsystem, &USFSubsystem::ToggleSmartForSession);
+		++BoundCount;
+	}
 
 	// === Grid Scaling Actions (Axis1D) ===
 	// NOTE: Using Started event for NumPad keys (InputTriggerPressed)

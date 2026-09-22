@@ -42,6 +42,7 @@ public:
 	 * @param ParentPoleHologram The parent hologram containing power poles
 	 */
 	void ProcessAllPowerPoles(AFGHologram* ParentPoleHologram);
+	void ProcessBlueprintPower(AFGHologram* Parent);
 
 	/** Clear all power line preview helpers */
 	void ClearPowerLinePreviews();
@@ -104,6 +105,7 @@ public:
 private:
 	/** Port-aware wall outlet planner; ordinary ground poles retain their existing path. */
 	void ProcessWallOutlets(AFGHologram* Parent);
+	void UpdateExactPreviews(AFGHologram* Parent, const TArray<TPair<UFGPowerConnectionComponent*, UFGPowerConnectionComponent*>>& Desired);
 	TMap<FPowerLinePreviewHelper*, TPair<FVector, FVector>> WallPreviewPositions;
 
 	/**

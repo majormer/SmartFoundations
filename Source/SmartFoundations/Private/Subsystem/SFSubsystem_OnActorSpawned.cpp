@@ -144,6 +144,12 @@ void USFSubsystem::OnActorSpawned(AActor* SpawnedActor)
 						{
 							return;
 						}
+						// Spawn callbacks also run for clone factories and unrelated builds.
+						// Only the exact parent returned by Construct may anchor this plan.
+						if (WeakExtendService->GetBuiltActorByCloneId(TEXT("parent")) != WeakFactory.Get())
+						{
+							return;
+						}
 
 						// [EXTEND-MP] Display level while MP Extend validates: this is the wiring
 						// pass trigger and the dedi log is the only visibility (Verbose stripped).

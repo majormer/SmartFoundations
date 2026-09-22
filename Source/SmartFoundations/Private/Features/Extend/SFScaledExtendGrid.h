@@ -8,6 +8,12 @@
 /** Count-independent cell identities for live Extend; not persisted Restore identities. */
 namespace SFScaledExtendGrid
 {
+    /** The held first clone defines forward; other rows/layers must not bias pipe-port selection. */
+    inline FVector PrincipalAxis(const FVector& SourceLocation, const FVector& ParentLocation)
+    {
+        return (ParentLocation - SourceLocation).GetSafeNormal2D();
+    }
+
     inline FString Prefix(int32 X, int32 Y, int32 Z)
     {
         return FString::Printf(TEXT("sc_%d_%d_%d_"), X, Y, Z);

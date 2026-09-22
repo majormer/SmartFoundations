@@ -11,6 +11,7 @@
 #include "Buildables/FGBuildable.h"
 #include "Buildables/FGBuildableFactory.h"
 #include "Buildables/FGBuildableGenerator.h"
+#include "Hologram/FGBlueprintHologram.h"
 #include "Buildables/FGBuildableConveyorAttachment.h"
 
 void USFAutoConnectOrchestrator::Initialize(AFGHologram* InParentHologram, USFAutoConnectService* InAutoConnectService)
@@ -602,6 +603,7 @@ void USFAutoConnectOrchestrator::RunScheduledBlueprintSeamEvaluation()
 		return;
 	}
 	AutoConnectService->ProcessBlueprintSeams(ParentHologram.Get());
+	if (ParentHologram->IsA<AFGBlueprintHologram>()) AutoConnectService->ProcessPowerPoles(ParentHologram.Get());
 }
 
 void USFAutoConnectOrchestrator::OnStackablePipelineSupportsChanged()
@@ -1920,7 +1922,7 @@ void USFAutoConnectOrchestrator::ClearAllPreviews()
 	}
 
 	// Clear power previews if parent is a power pole
-	if (ParentHologram.IsValid() && USFAutoConnectService::IsPowerPoleHologram(ParentHologram.Get()))
+	if (ParentHologram.IsValid() && (USFAutoConnectService::IsPowerPoleHologram(ParentHologram.Get()) || ParentHologram->IsA<AFGBlueprintHologram>()))
 	{
 		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🎯 Orchestrator: Clearing power previews for pole %s"), 
 			*ParentHologram->GetName());

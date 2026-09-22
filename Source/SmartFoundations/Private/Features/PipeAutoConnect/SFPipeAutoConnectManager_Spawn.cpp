@@ -695,6 +695,7 @@ ASFPipelineHologram* FSFPipeAutoConnectManager::SpawnPipeChild(
 	
 	// Add as child to parent for vanilla cost aggregation (CRITICAL - matches stackable pattern)
 	ParentJunction->AddChild(PipeChild, ChildName);
+	FSFPipeColorSnapshot::Inherit(PipeChild, JunctionConnector, TargetConnector);
 	
 	// Trigger mesh generation AFTER AddChild (matches stackable pipe pattern exactly)
 	PipeChild->TriggerMeshGeneration();
@@ -908,6 +909,7 @@ ASFPipelineHologram* FSFPipeAutoConnectManager::SpawnPipeChildAtPosition(
 	}
 	
 	ParentHologram->AddChild(PipeChild, ChildName);
+	FSFPipeColorSnapshot::Inherit(PipeChild, nullptr, TargetConnector);
 	PipeChild->TriggerMeshGeneration();
 	PipeChild->ForceApplyHologramMaterial();
 	

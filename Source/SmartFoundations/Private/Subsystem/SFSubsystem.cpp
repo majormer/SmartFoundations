@@ -428,7 +428,7 @@ void USFSubsystem::StageScalingSpecForPlayer(APlayerController* PC, const FSFSca
 	{
 		return;
 	}
-	if (Spec.bValid)
+	if (Spec.bValid && IsSmartEnabledForPlayer(PC))
 	{
 		StagedScalingSpecs.Add(PC, Spec);
 	}
@@ -478,7 +478,7 @@ void USFSubsystem::StageExtendCommitForPlayer(APlayerController* PC, const FSFEx
 	{
 		return;
 	}
-	if (Spec.bValid)
+	if (Spec.bValid && IsSmartEnabledForPlayer(PC))
 	{
 		StagedExtendCommits.Add(PC, Spec);
 		StagedExtendCommitTimes.Add(PC, FPlatformTime::Seconds());
@@ -537,7 +537,7 @@ void USFSubsystem::StageWalkCommitForPlayer(APlayerController* PC, const FSFWalk
 	{
 		return;
 	}
-	if (Spec.bValid)
+	if (Spec.bValid && IsSmartEnabledForPlayer(PC))
 	{
 		StagedWalkCommits.Add(PC, Spec);
 		StagedWalkCommitTimes.Add(PC, FPlatformTime::Seconds());

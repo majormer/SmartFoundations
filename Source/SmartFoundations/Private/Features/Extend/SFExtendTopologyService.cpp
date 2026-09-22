@@ -944,33 +944,12 @@ void USFExtendTopologyService::WalkPowerConnections(AFGBuildable* SourceBuilding
             PowerNode.PoleConnector = OtherConn;
             PowerNode.RelativeOffset = PoleLocation - SourceBuilding->GetActorLocation();
 
-            // Determine pole tier (max connections) and count current connections
-            // in one pass over the pole's circuit connectors. Reading the live
-            // value via GetMaxNumConnections() is authoritative and automatically
-            // correct for all pole variants — standard poles (Mk.1/Mk.2/Mk.3),
-            // wall outlets single and double (which match their standard-pole
-            // tier per-instance: WallMk1=4, WallMk2=7, WallMk3=10), and any
-            // future tiers or modded pole classes. The earlier string-match on
-            // "PowerPoleMk2"/"PowerPoleMk3" missed wall-outlet classes named
-            // "PowerPoleWallMk2"/"PowerPoleWallMk3" (the "Wall" token breaks the
-            // substring check), capping them at 4 and making ValidatePowerCapacity
-            // over-restrictive for wall-outlet manifolds. (Issue #288)
-            TArray<UFGCircuitConnectionComponent*> PoleCircuitConns;
-            PowerPole->GetComponents<UFGCircuitConnectionComponent>(PoleCircuitConns);
-            int32 ConnectedCount = 0;
-            int32 MaxConnectionsOnPole = 4;  // Safe default if the pole has no circuit conns (shouldn't happen)
-            for (UFGCircuitConnectionComponent* Conn : PoleCircuitConns)
-            {
-                if (!Conn) continue;
-                MaxConnectionsOnPole = FMath::Max(MaxConnectionsOnPole, Conn->GetMaxNumConnections());
-                if (Conn->IsConnected())
-                {
-                    ConnectedCount++;
-                }
-            }
-            PowerNode.MaxConnections = MaxConnectionsOnPole;
-            PowerNode.SourceFreeConnections = PowerNode.MaxConnections - ConnectedCount;
-            PowerNode.bSourceHasFreeConnections = (PowerNode.SourceFreeConnections > 0);
+            // Capacity belongs to the selected face, not the actor/circuit. Hidden
+            // bridges and IsConnected() are not counts of external cables.
+            const int32 ConnectedCount = OtherConn->GetNumConnections();
+            PowerNode.MaxConnections = OtherConn->GetMaxNumConnections();
+            PowerNode.SourceFreeConnections = FMath::Max(0, PowerNode.MaxConnections - ConnectedCount);
+            PowerNode.bSourceHasFreeConnections = PowerNode.SourceFreeConnections > 0;
 
             CachedTopology.PowerPoles.Add(PowerNode);
 

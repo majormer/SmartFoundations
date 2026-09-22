@@ -759,6 +759,7 @@ void USFSubsystem::OnToggleArrows()
 
 void USFSubsystem::OnToggleSettingsForm()
 {
+	if (!IsSmartEnabledForSession()) return;
 	UE_LOG(LogSmartFoundations, Verbose, TEXT("!!! K KEY PRESSED !!! (OnToggleSettingsForm)"));
 	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("INPUT EVENT: Settings Form Toggle (Phase 0 validation)"));
 

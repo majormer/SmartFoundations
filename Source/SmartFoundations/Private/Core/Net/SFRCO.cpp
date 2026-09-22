@@ -16,6 +16,14 @@
 // UFGRemoteCallObject Interface
 // ========================================
 
+void USFRCO::Server_SetSmartSessionEnabled_Implementation(bool bEnabled)
+{
+	if (USFSubsystem* Subsystem = USFSubsystem::Get(this))
+	{
+		Subsystem->SetSmartEnabledForPlayer(Cast<AFGPlayerController>(GetOuter()), bEnabled);
+	}
+}
+
 bool USFRCO::ShouldRegisterRemoteCallObject(const AFGGameMode* GameMode) const
 {
 	// Always register Smart! RCO - no conditional registration needed

@@ -9,6 +9,7 @@
 #include "Subsystem/SFSubsystem.h"
 #include "Data/SFHologramDataRegistry.h"
 #include "Features/Extend/SFExtendService.h"
+#include "Features/Extend/SFExtendBuiltActors.h"
 #include "Holograms/Logistics/SFConveyorBeltHologram.h"
 #include "Holograms/Logistics/SFConveyorLiftHologram.h"
 #include "Holograms/Logistics/SFPipelineHologram.h"
@@ -82,57 +83,10 @@ AActor* ASFFactoryHologram::Construct(TArray<AActor*>& out_children, FNetConstru
                 *HoloData->JsonCloneId, *BuiltActor->GetName());
         }
         
-        // Register child factory holograms (scaled extend clones 2+).
-        // These are vanilla FGFactoryHologram children whose Construct() doesn't
-        // know about JsonCloneId. Match child holograms to built actors by position.
-        if (ExtService && out_children.Num() > 0 && mChildren.Num() > 0)
+        SFExtendBuiltActors::RegisterChildren(ExtService, this, out_children);
+        if (ExtService && !GetParentHologram() && ExtService->HasPendingPostBuildWiring())
         {
-            for (AFGHologram* ChildHolo : mChildren)
-            {
-                if (!ChildHolo) continue;
-                
-                FSFHologramData* ChildData = USFHologramDataRegistry::GetData(ChildHolo);
-                if (!ChildData || ChildData->JsonCloneId.IsEmpty()) continue;
-                
-                // Issue #288: Skip children that registered themselves during their own
-                // Construct (e.g. ASFPipeAttachmentChildHologram for valves/pumps). The
-                // self-registration knows the exact buildable; this fallback proximity
-                // search can't disambiguate an attachment from a coincident pipe and
-                // would overwrite the correct registration with a neighbouring pipe at
-                // dist=0, breaking Phase 3.8a fluid wiring and Phase 3.8b pump power.
-                if (ExtService->GetBuiltActorByCloneId(ChildData->JsonCloneId) != nullptr)
-                {
-                    continue;
-                }
-                
-                // Find the built actor closest to this child hologram's position
-                FVector ChildPos = ChildHolo->GetActorLocation();
-                AActor* BestMatch = nullptr;
-                float BestDist = 200.0f;  // Max match distance (cm)
-                
-                for (AActor* ChildActor : out_children)
-                {
-                    if (!ChildActor) continue;
-                    float Dist = FVector::Dist(ChildActor->GetActorLocation(), ChildPos);
-                    if (Dist < BestDist)
-                    {
-                        BestDist = Dist;
-                        BestMatch = ChildActor;
-                    }
-                }
-                
-                if (BestMatch)
-                {
-                    ExtService->RegisterJsonBuiltActor(ChildData->JsonCloneId, BestMatch);
-                    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 FACTORY Construct: Registered child %s → %s (dist=%.0f)"),
-                        *ChildData->JsonCloneId, *BestMatch->GetName(), BestDist);
-                }
-                else
-                {
-                    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔧 FACTORY Construct: No match for child %s at (%+.0f,%+.0f,%+.0f)"),
-                        *ChildData->JsonCloneId, ChildPos.X, ChildPos.Y, ChildPos.Z);
-                }
-            }
+            ExtService->RegisterJsonBuiltActor(TEXT("parent"), BuiltActor);
         }
     }
     
@@ -171,6 +125,14 @@ void ASFFactoryHologram::CheckValidPlacement()
     // and don't add any disqualifiers when placement is managed by our code.
     if (USFSubsystem* SmartSubsystem = USFSubsystem::Get(this))
     {
+        if (USFExtendService* ExtendSvc = SmartSubsystem->GetExtendService())
+        {
+            if (ExtendSvc->IsRestoredCloneTopologyActive() && !ExtendSvc->IsScaledExtendValid())
+            {
+                AddConstructDisqualifier(UFGCDInvalidPlacement::StaticClass());
+                return;
+            }
+        }
         if (SmartSubsystem->IsExtendModeActive())
         {
             // Check if scaled extend validation failed (lane segments too long/steep)

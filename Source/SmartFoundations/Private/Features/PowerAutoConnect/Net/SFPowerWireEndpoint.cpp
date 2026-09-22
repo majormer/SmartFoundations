@@ -4,12 +4,18 @@
 #include "Buildables/FGBuildable.h"
 #include "FGCircuitConnectionComponent.h"
 #include "Hologram/FGHologram.h"
+#include "Hologram/FGBlueprintHologram.h"
+#include "FGPowerConnectionComponent.h"
+#include "Features/PowerAutoConnect/SFBlueprintPowerService.h"
+#include "FGBlueprintProxy.h"
 
 FSFPowerWireEndpoint FSFPowerWireEndpoint::Capture(UFGCircuitConnectionComponent* Connection)
 {
     FSFPowerWireEndpoint Result;
     if (!IsValid(Connection) || !IsValid(Connection->GetOwner())) return Result;
     AActor* Owner = Connection->GetOwner();
+    if (Owner->IsA<AFGBlueprintHologram>())
+        return FSFBlueprintPowerService::CaptureEndpoint(Cast<UFGPowerConnectionComponent>(Connection));
     Result.ComponentName = Connection->GetFName();
     Result.OwnerLocation = Owner->GetActorLocation();
     if (AFGHologram* Hologram = Cast<AFGHologram>(Owner))
@@ -44,8 +50,14 @@ UFGCircuitConnectionComponent* FSFPowerWireEndpoint::Resolve(AActor* BuiltParent
                 Match = Candidate;
             }
         };
-        Consider(BuiltParent);
-        for (AActor* Child : BuiltChildren) Consider(Child);
+        const auto ConsiderContent = [&](AActor* Candidate)
+        {
+            Consider(Candidate);
+            if (AFGBlueprintProxy* Proxy = Cast<AFGBlueprintProxy>(Candidate))
+                for (AFGBuildable* Building : Proxy->GetBuildables()) Consider(Building);
+        };
+        ConsiderContent(BuiltParent);
+        for (AActor* Child : BuiltChildren) ConsiderContent(Child);
         if (bAmbiguous) return nullptr;
     }
     if (!IsValid(Match)) return nullptr;

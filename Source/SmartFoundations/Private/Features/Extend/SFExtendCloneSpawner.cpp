@@ -998,7 +998,11 @@ int32 FSFCloneTopology::SpawnChildHolograms(
                 USFHologramDataService::MarkAsChild(WireChild, ParentHologram, ESFChildHologramType::ExtendClone);
                 SFPropagateDesignerToClone(WireChild, ParentHologram);
                 
-                // Store JsonCloneId so the wire registers on build
+                // Priced preview only: the endpoint plan creates the real wire after
+                // its owners exist. Exclude this child from native construction.
+                WireChild->Tags.AddUnique(FName(TEXT("SF_ExtendWirePlan")));
+
+                // Retain identity for preview refresh and construction validation.
                 FSFHologramData* HoloData = USFHologramDataRegistry::GetData(WireChild);
                 if (!HoloData)
                 {

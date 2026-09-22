@@ -1,6 +1,7 @@
 // Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
 #include "Holograms/Logistics/SFConveyorBeltHologram.h"
+#include "SFConveyorBeltGeometry.h"
 #include "Core/Helpers/SFBuildEffectHelper.h"
 #include "SmartFoundations.h"
 #include "Core/Net/SFVisualSplineMeshPolicy.h"
@@ -1460,6 +1461,25 @@ void ASFConveyorBeltHologram::ConfigureActor(class AFGBuildable* inBuildable) co
     }
     
     // ============================================================
+    // #504: AFGBuildableConveyorBelt explicitly requires zero actor rotation.
+    // Native insertion splits can retain local spline data but drop the actor's
+    // rotation on the second half. Bake orientation into the NEW belt's points
+    // and tangents after direction correction, before component setup/registration.
+    // The preview/topology stays in its original frame. This shared construction
+    // boundary also covers Scaled Extend, Restore and authoritative reconstruction;
+    // it never scans or changes existing saved belts, and needs no render resources.
+    if (AFGBuildableConveyorBelt* Belt = Cast<AFGBuildableConveyorBelt>(inBuildable))
+    {
+        if (TArray<FSplinePointData>* Points = Belt->GetMutableSplinePointData())
+        {
+            FTransform BuiltTransform = Belt->GetActorTransform();
+            if (SFConveyorBeltGeometry::BakeActorRotation(BuiltTransform, *Points))
+            {
+                Belt->SetActorTransform(BuiltTransform);
+            }
+        }
+    }
+
     // CRITICAL: Establish connections directly in ConfigureActor
     // ============================================================
     // Snapped connections don't work for belt-to-belt or belt-to-distributor

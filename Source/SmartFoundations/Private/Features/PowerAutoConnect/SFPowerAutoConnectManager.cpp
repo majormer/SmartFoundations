@@ -14,6 +14,7 @@
 #include "Subsystem/SFSubsystem.h"
 #include "Features/AutoConnect/SFAutoConnectService.h"
 #include "Hologram/FGHologram.h"
+#include "Hologram/FGBlueprintHologram.h"
 #include "FGPowerConnectionComponent.h"
 #include "EngineUtils.h"
 #include "Buildables/FGBuildable.h"
@@ -51,6 +52,11 @@ void FSFPowerAutoConnectManager::Initialize(USFSubsystem* InSubsystem, USFAutoCo
 
 void FSFPowerAutoConnectManager::ProcessAllPowerPoles(AFGHologram* ParentPoleHologram)
 {
+	if (IsValid(ParentPoleHologram) && ParentPoleHologram->IsA<AFGBlueprintHologram>())
+	{
+		ProcessBlueprintPower(ParentPoleHologram);
+		return;
+	}
 	if (IsValid(ParentPoleHologram) && ParentPoleHologram->GetBuildClass()
 		&& SFPowerConnectionPolicy::IsWallOutlet(ParentPoleHologram->GetBuildClass()->GetName()))
 	{

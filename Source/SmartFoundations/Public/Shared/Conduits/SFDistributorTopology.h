@@ -40,4 +40,6 @@ public:
 
 	static bool IsPipe(ESFDistributorTopologyKind Kind);
 	static bool IsBelt(ESFDistributorTopologyKind Kind);
+	/** Verified vanilla socket direction; false for missing ports and unknown families. */
+	static bool GetLocalPortDirection(const FString& BuildClassName, FName Port, FVector& OutDirection);
 };
