@@ -51,7 +51,7 @@ def apply_lang(lang, trans_dir, overwrite):
         return (lang, "JSON not an object", 0, 0, 0, [])
 
     with open(popath, "r", encoding="utf-8") as f:
-        lines = f.read().split("\n")
+        lines = f.read().replace("\r\n", "\n").split("\n")
 
     out = []
     cur_ctx = cur_key = cur_msgid = None
@@ -95,7 +95,8 @@ def apply_lang(lang, trans_dir, overwrite):
             continue
         out.append(line)
 
-    with open(popath, "w", encoding="utf-8") as f:
+    # .po files are LF (.gitattributes); text mode on Windows would write CRLF.
+    with open(popath, "w", encoding="utf-8", newline="\n") as f:
         f.write("\n".join(out))
     return (lang, "ok", filled, overwritten, still_empty, warnings)
 
