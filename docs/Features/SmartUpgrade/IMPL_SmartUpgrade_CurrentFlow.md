@@ -20,6 +20,22 @@ related: [SFUpgradeExecutionService.h, SFUpgradeAuditService.h, SFUpgradeTravers
 
 Smart Upgrade can scan and upgrade existing logistics and power infrastructure. The main execution path is synchronous, uses vanilla hologram construction where possible, captures expected connections before destroying actors, repairs connections after replacement, then delegates conveyor chain actor stabilization to `USFChainActorService`.
 
+### Tier replacement in either direction
+
+For belts, lifts, and pipes, the target dropdown permits lower and higher unlocked tiers. Power
+poles and wall outlets remain upgrade-only. A selected source row replaces only that tier;
+the network's All tiers row normalizes differing logistics tiers, but only raises power tiers. The shared
+`SFUpgradeTierPolicy` drives UI quotes, request selection, authority gathering, and conveyor cohort
+normalization. Maximum-tier network rows remain selectable for downgrades even though audit
+`IsUpgradeable()` counts only potential upward upgrades. `SmartFoundations.Upgrade.TierSelection`
+covers these selection boundaries.
+
+Authority checks recipe availability and the actual actor family's direction policy before
+materialization, so mixed-family or All tiers requests cannot lower a power pole or outlet.
+The existing exact net-charge/refund transaction applies in both logistics
+directions, with refunds earned only after successful replacement. No blueprint-group membership
+transfer is added by this path.
+
 The chain system is the fragile part. Large conveyor upgrades can leave orphaned tick groups and slow-materializing chain state. In-game orphan bounce repair is disabled and diagnostic-only because every in-game bounce variant tested during the April 2026 investigation caused crashes. See `RESEARCH_SmartUpgrade_ChainActorInvestigation.md` in the working repository for full crash analysis and findings.
 
 ---

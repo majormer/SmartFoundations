@@ -44,10 +44,10 @@ Extend and Scaled Extend are active. The current implementation is clone-topolog
 4. `FSFSourceTopology` captures the source topology into clone-topology structs.
 5. `FSFCloneTopology::FromSource` generates clone positions from source data and the active offset.
 6. `SFExtendHologramService` spawns child holograms and refreshes them while Extend stays active.
-7. Vanilla build constructs the parent and child holograms.
-8. Built actors register back into `USFExtendService` by clone id.
-9. `FSFWiringManifest` reconnects belts, lifts, pipes, and power after components exist.
-10. Chain actors and pipe networks are stabilized after the topology is built.
+7. A construction-request-scoped check validates the power plan, reconstructing the authoritative multiplayer commit once where applicable. Aiming checks do not reconstruct commits.
+8. Vanilla builds the parent and constructible children. Priced wire previews are temporarily excluded from this child loop; their exact endpoint plan creates the real wires afterward.
+9. Built actors register back into `USFExtendService` by clone id. `FSFWiringManifest` reconnects belts and pipes; the explicit power plan connects named native sockets after owners exist.
+10. Chain actors and pipe networks are stabilized after the topology is built. Wire previews are restored before the native build gun's post-construction cost query.
 
 ## Basic Extend
 
@@ -71,6 +71,18 @@ authorizes creation of unfunded items.
 Scaled Extend is active when Extend mode is active and the clone count, row count, or layer count is greater than one. `USFExtendService::OnScaledExtendStateChanged` tracks the grid-derived state, and `IsScaledExtendActive` reports whether the enhanced mode is currently in use.
 
 Scaled Extend uses the same transform state as Scaling for clone offsets. Spacing, Steps, Stagger, and Z Rotation should be documented as implemented transform inputs. X/Y rotation axes should not be described as active because the current transform pipeline only implements Z rotation.
+
+Pipe-lane source-port selection uses the horizontal displacement from the source factory
+to the held first clone as its fixed principal axis. That pose pair is available both
+locally and during server reconstruction. An additional cell's total world offset is
+not an Extend-forward vector: it also includes its row and layer placement. Choosing
+the least-rotated additional cell previously let a 34 m row offset at 5 degrees turn
+the source-port facing score below the 0.30 threshold, omitting seven of eight pipe
+lanes before spline routing while leaving the parent green. The first-clone axis also
+avoids selecting a different port as later clones arc around the source. The
+`SmartFoundations.Extend.Pipes.RowIndependentAxis` regression exercises the real clone
+planner with both row sides, both Extend directions, layers, distant clones and occupied
+source ports; routing and built connectivity still require native gameplay checks.
 
 See [../Transforms/IMPL_Transforms_CurrentFlow.md](../Transforms/IMPL_Transforms_CurrentFlow.md).
 
@@ -116,7 +128,7 @@ and upper layers use `rr_X_Y_Z_`. Belts and pipes chain along X within each row/
 duplicating a floor does not invent a vertical logistics connection. Pole chains are
 also scoped to their layer.
 
-`SFRestoreGrid::Placement` is shared by preview and post-build factory lookup, and
+`SFRestoreGrid::Placement` defines the preview factory transforms, and
 the camera uses the same XYZ placement through `CalculateRestoredScaledClonePlacement`.
 Z uses the signed layer index times factory height plus Z spacing, with stack stagger
 in the parent's horizontal frame. Existing XY rotation and steps remain unchanged.
@@ -128,6 +140,27 @@ factory spawning, and movement refresh), compounded by XY-only post-build ID par
 Changing only the preview loop would leave upper-floor factory targets unwireable.
 `SmartFoundations.Restore.Grid3D` covers placement and identity invariants; live
 construction and network behavior still require gameplay validation.
+
+### Built Belt Coordinate Frame
+
+FactoryGame's `FGBuildableConveyorBelt.h` explicitly requires zero actor rotation.
+Preview and saved clone topology may retain rotated local spline frames, but
+`ASFConveyorBeltHologram::ConfigureActor` bakes that rotation into the new built
+belt's points and both tangents after native direction correction and before
+component setup and registration. The origin, point order, world-space curve,
+and intended connections are preserved. This construction boundary is shared
+by Extend, Scaled Extend, Restore, and server reconstruction; it does not rewrite
+existing actors on load or change the stored Restore schema.
+
+Violating this contract causes #504: inserting a splitter into an 8 m rotated
+Smart-built lane left the second section at zero yaw with local-X spline data,
+moving its far endpoint 5.44 m from the still-logically-connected merger. A
+same-tier manual belt on the same span used zero actor yaw and split correctly
+(insertion positions differed by 4.62 cm). The private split implementation is
+not available; its observed output and the public class contract establish the
+required representation. `SmartFoundations.Conveyor.CanonicalGeometry` covers
+the captured straight span, coordinate-frame invariance of curved/sloped spans,
+both tangent vectors, neutral input, and repeat application.
 
 ### Connection Registration
 
@@ -144,6 +177,71 @@ Branch-owned attachments follow the same exclusion decision. Inline pumps and va
 | Belts and lifts | Reconnect via factory connection components and stabilize conveyor chain actors. |
 | Pipes | Reconnect via pipe connection components and rebuild pipe networks. |
 | Power | Create cloned wires where source topology and capacity allow it. |
+
+### Exact Constructed Owners
+
+Clone IDs are registered at `ConfigureActor`, with `SFExtendBuiltActors::RegisterChildren`
+providing a fallback restricted to the actual `Construct` result. The fallback requires a unique
+class and full-transform match (1 cm position tolerance), not a nearby world actor. Ambiguous,
+wrong-class, wrong-floor, differently rotated or scaled candidates do not resolve. Duplicate array
+references to the same constructed actor are not separate candidates. The base factory is the
+actual returned parent, never whichever factory happened to trigger a spawn callback first.
+
+This prevents the old Restore 30 m and Scaled Extend 5 m world searches from selecting an existing
+factory as a wiring destination. `SmartFoundations.Extend.ConstructedOwners` covers these selection
+invariants. Native subclass registration and finished connection behavior still require gameplay
+validation; a missing owner must remain missing rather than widening the search.
+
+### Pipe Floor-Hole Attachments
+
+Pipeline floor holes retain native thickness, top/bottom external pipe owner IDs and named ports
+through capture, clone remapping, Restore serialization and cell prefixes. `bHasPassthroughLinks`
+distinguishes an intentionally unattached face from an older preset without attachment metadata.
+Repeated discovery of one source hole is deduplicated before assigning its clone ID.
+
+`SFExtendPassthroughLinks::Apply` considers only uniquely registered, constructible new pipeline
+holes and pipes. A logical face is at the hole's actor-local Z plus/minus half its native thickness,
+transformed into world space. Selection requires a same-cell endpoint within 1 cm in all three
+dimensions and, for captured links, the exact owner and port. Occupied faces are untouched;
+ambiguous matches or two holes claiming one endpoint are rejected. Legacy recovery is limited to
+a unique same-cell geometric match, not a world scan.
+
+The previous XY-only predicate could accept holes 1 m, 10 m and 50 m away vertically while searching
+a 100 m world radius (#542). Both pipe-hole relinking loops now use the scoped helper. The separate
+legacy conveyor-lift passthrough path is not covered by this pipeline-hole contract.
+`SmartFoundations.Extend.Passthrough.ScopedIdentity` and `CapturedPlan` cover selection/capture,
+including thickness, rotated holes, stacked cells, empty captured faces and ambiguity. Proving that
+native fluid connections work and unrelated saved records remain unchanged requires a disposable
+save comparison; these contract tests do not establish that gameplay result.
+
+### Lane Socket Directions
+
+`SFExtendLaneNormals::VerifyCapture` checks connector directions against the shared named distributor
+port catalog. Verified directions rotate with their owners; Restore must not replace them with the
+endpoint chord simply because spacing or steps make the lane diagonal (#545).
+
+For legacy captures, `RecoverLegacy` requires a unique named distributor/pipe-junction owner, a valid
+catalogued port, and agreement with its 100 cm socket geometry. Unknown classes, absent T-junction
+ports, ambiguous owners or mismatched geometry do not become verified. `RepairUnverified` retains
+the earlier #422 chord recovery only for each unverified or invalid endpoint. Verification flags
+and normals persist in the actual Restore JSON.
+
+`SmartFoundations.Restore.Lanes.SocketNormals` and `LegacyRecovery` exercise rotated, offset,
+stepped and stacked layouts and malformed legacy data. Physical routing modes and socket approaches
+remain native gameplay checks, separate from the #504 built-belt coordinate-frame contract.
+
+### Power Endpoint Ownership and Cost
+
+Power plans preserve exact owner/connector pairs and independent per-face budgets (#543/#544).
+Existing source-to-clone endpoints remain fixed when the clone rotates; the clone endpoint and
+stored parent pose move together. First and additional cells use the same remapping and refresh
+their actual catenary preview and cached cost after transformations (#546).
+
+Factory daisy chains are explicit priced edges, including the MAM prerequisite and poleless/continue
+chain options. Restore regenerates adjacent-X edges in each row/layer without bridging missing cells.
+There is no extra inferred post-build factory chain. For native request timing, designer boundaries,
+preview-only wire construction and remaining runtime verification requirements, see
+[Power Connector Construction Contracts](../../Reference/BuildableContracts/PowerConnectors.md#extend-and-restore-construction-boundary).
 
 ## Important Caveats
 

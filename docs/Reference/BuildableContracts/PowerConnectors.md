@@ -79,6 +79,91 @@ preview, especially for the light's six-metre horizontal offset. The regression 
 `SmartFoundations.Power.BuildingTargets` covers eligible/free ports and an offset socket inside
 the configured range whose actor origin would be incorrectly rejected.
 
+## Repeated blueprint power
+
+`FSFBlueprintPowerService` discovers pole sockets in the blueprint's staged content, including
+internally wired poles with spare slots. The native duplicate-to-original connector map supplies
+the exact original component name; socket-relative transforms recover its future owner's pivot
+without depending on blueprint-world anchoring. The identity is content class, original transform,
+and component name, not instance name or nearest preview position. Coincident ambiguous content is
+omitted. `SmartFoundations.Power.BlueprintSocketTransforms` covers rotated owners and both faces.
+
+Internal cables plus hidden bridges define connected groups; staging-world circuit IDs are not
+assumed initialized. Each grid edge gets at most one cable per internal group. Different groups
+remain electrically separate. A deterministic counterpart planner reserves each face's native
+remaining slots, including the cost in slots of the blueprint's own cables. Auto uses a 3D
+serpentine chain; explicit axis modes retain their grid edges. An overlong edge becomes dormant
+instead of choosing a different socket. `SmartFoundations.Power.BlueprintNetworks` covers circuit
+isolation, counterpart identity, 3D routing, limits, and recovery after changing spacing.
+
+`SFPowerAutoConnectManager_Blueprints.cpp` shares the exact-wire preview owner and cleanup path
+with wall outlets. Both Blueprint Seam Auto-Connect and Power Auto-Connect must be enabled.
+The blueprint Construct hook captures exact wires before native construction and materializes
+them after all copies, including their internal cables, exist. Resolution inspects only the
+newly constructed actors and their native blueprint proxies; it does not search unrelated world
+actors. Multiplayer's measured blueprint anchor adjustment also shifts new-owner power endpoints.
+The shared authority materializer rechecks native capacity, distance and designer boundaries.
+Preview cable cost remains in the parent quote, and blueprint-copy dismantle membership is unchanged.
+
+## Extend and Restore construction boundary
+
+Cable plans retain both owner IDs and connector names. Captured socket positions, native per-port
+budgets, and range feed the preview and its cost; authority refreshes these values before accepting
+construction. New clone ports use their new capacity, while an existing source port uses its remaining
+capacity. Planned cables reserve slots together, including both edges on a middle factory or outlet.
+Factory daisy-chain cables belong in this priced plan, not an additional inferred post-build loop.
+
+Server Scaled Extend must preserve the freshly reconstructed first-copy topology, spawn the
+additional cells, then merge their topologies onto that base before validation or materialization.
+Spawning the children alone leaves their cable previews priced but omits their edges from the
+server's capacity check and final wire pass. The local preview already performs this merge.
+`SmartFoundations.Extend.Power.ServerMergedPlan` exercises the server entry's merge boundary with
+pre-generated cell plans, including upper layers, named outlet faces, overbooking in an additional
+cell, and successive requests. It does not simulate native spawning or prove live power flow.
+
+Do not assume native construction charges before calling the hologram's `Construct`. Disassembly of
+the Windows client FactoryGame module for Satisfactory 1.2.4 / CL 502094 establishes this sequence:
+
+- `UFGBuildGunStateBuild::Server_ConstructHologram_Implementation` calls
+  `ValidatePlacementAndCost` at RVA `0x5CD6E5`, then `CanConstruct` at `0x5CD6F1`, and enters
+  `InternalConstructHologram` at `0x5CD866` only on the accepted branch.
+- `InternalConstructHologram` calls the hologram's virtual construction entry at RVA `0x5BE9B3`.
+  It queries the recursive cost later at `0x5BEF67`, then removes each required resource through
+  `GrabItemsFromInventoryAndCentralStorage` at `0x5BEFE2`. It does not perform placement validation
+  before that construction call. This evidence is binary inspection, not a gameplay test; the
+  corresponding development-source bodies are stubs.
+
+Consequently a safe plan check must run before native construction, not just before resource removal.
+The request-scoped Extend validation hook covers the server's validation call; the internal-entry
+hook explicitly validates local requests that have no prepared plan. Nested native calls share the
+same prepared result, separate roots remain independent, and returning from the request discards
+the result. Per-frame aiming must not reconstruct a server commit. Walking intent and native zoop
+take precedence over an incidental stale Extend request.
+
+Staged request lookup and consumption belong only to the root hologram. Clone factories share its
+instigator and build class, so those keys alone do not establish request ownership. The dedicated
+server can also track a remote build gun as `ActiveHologram`; that does not make it a local preview.
+Ordinary scaling power wrappers require a locally controlled instigator, the active root, no
+Extend/Restore session, and no staged or prepared request. Otherwise an early-returning local wrapper
+can bypass the staged consumer and let a child reconstruct its parent's additional copies.
+`SmartFoundations.Net.SpecConstructionOwnership` covers these dispatch guards and same-class child
+rejection. It does not execute native construction; the per-operation `Extend construction` log
+compares prepared and built factory counts for packaged acceptance.
+
+`wire_cost` children are tagged `SF_ExtendWirePlan` and temporarily removed from the native child
+array by `FSFExtendWirePreviewScope`. The exact endpoint plan is their sole materializer. Leaving
+these previews in that array invokes the legacy `ASFWireHologram::Construct` raw-wire path as well,
+creating an unconnected extra actor. The scope retains the preview actors and restores their order
+and geometry before the build gun queries cost after construction. It does not intercept untagged
+wire contracts or remove non-wire children. `PreviewConstructionScope` tests this exclusion,
+nested scope behavior, and restoration without invoking native wire construction.
+
+`SmartFoundations.Extend.Commit.RequestIsolation` verifies scope lifetime and root isolation;
+`CostAgreement` verifies normalized item costs, including duplicate rows, negative quantities, and
+wide aggregation. Neither test executes the native build-gun bodies. Packaged single-player and
+multiplayer acceptance, inventory changes, and legacy preview-port availability remain separate
+verification requirements.
+
 ## Blueprint Designer and cleanup
 
 A wire cannot join different designers or join a designer to the outside world. Preview planning

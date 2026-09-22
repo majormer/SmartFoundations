@@ -49,8 +49,26 @@ without exposing those storage axes in the runtime HUD. So:
 | **Runtime HUD state** | In-memory, per session | Until build-gun clear / recipe change | current target/axis selection, arrows toggle |
 | **Per-build Panel edits** | Panel session | One build, then revert to global | spacing/scale entered in the Panel (#371) |
 
-Only **global config** persists between builds. Runtime and Panel state reset — mirror that when
+Only **global config** persists between game sessions. Runtime and Panel state reset between builds — mirror that when
 adding PR state (e.g. the stagger family selector is runtime, not global).
+
+### Session-wide opt-out
+
+**Toggle Smart (Session)** defaults to **Num Decimal** and is rebindable under Options > Controls > Mods.
+It uses a separate, single-action `UFGInputMappingContext` that remains installed while the
+hologram-scoped building context is removed. This preserves a re-enable route, including for a
+keyboard without a numpad after rebinding. Classic and Player Relative modes share this action.
+
+Disabling closes Smart panels, clears preview assistance, cancels the current native placement,
+and shows a confirmation notification. Selecting a recipe then starts vanilla placement. The
+opt-out survives recipe changes and holstering, but resets on world load; it changes no saved config.
+The owning player's authority state rejects and clears staged Smart grid, Extend, and Walk plans;
+it does not disable other players. Re-enabling does not restore an abandoned plan. A vanilla
+blueprint can be placed while opted out without relaxing the safety limits on Smart payloads.
+
+`SFSubsystem_Session.cpp` owns the transition and controller-keyed synchronization. The independent
+session input context must never be removed by ordinary hologram cleanup. Regression coverage:
+`SmartFoundations.Session.PlayerIsolation` checks stale-plan rejection and independent players.
 
 ## 4. The PR fork, per surface
 

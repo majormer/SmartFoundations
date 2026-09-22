@@ -47,6 +47,15 @@ tier, style, and routing settings still choose the seam conduit recipe and shape
 Range**, under the separate **Auto-Connect Behavior** section, does not apply to blueprint seams because their endpoints come from the
 blueprint topology rather than a proximity search.
 
+Power seams additionally require **Power Auto-Connect**. Pole sockets are grouped by the
+blueprint's internal cables and hidden bridges, so each grid edge receives at most one cable per
+internal circuit without merging separate circuits. Matching socket identity, native remaining
+capacity (per face for double wall outlets), and normal wire length are preserved. Auto mode follows
+a continuous 3D grid chain; axis modes follow their selected edges. Exact wire intent is priced in
+the preview and built after all blueprint copies and internal cables exist, through the shared
+authority materializer. See [Power connector contracts](../../Reference/BuildableContracts/PowerConnectors.md#repeated-blueprint-power)
+for endpoint mapping, failure behavior, and regression coverage.
+
 **Key files:** `Public/Holograms/Adapters/SFBlueprintAdapter.h/.cpp`, the gate swap in
 `Private/Subsystem/SFSubsystem_HologramLifecycle.cpp` (~line 1656).
 
@@ -175,8 +184,11 @@ in the existing `FSFAutoConnectSkipSummary` (too steep / invalid shape / too far
   The evaluator services Z for **pipes** — pipes run vertical natively, so a bottom copy's up-facing
   port wires to the copy above (stacked towers). **Belt Z pairs stay cached but unserviced**: vertical
   belt transport is a conveyor LIFT, preview machinery Smart does not have yet (real v2 work).
-- **Spacing default (session-scoped, overridable):** picking up a blueprint defaults spacing to **1 m
-  on every axis** (seam conduits need a physical gap — a conduit under ~0.5 m can't be built). This is
+- **Spacing default (session-scoped, overridable):** picking up a blueprint reads independent
+  `BlueprintSpacingX/Y/Z` defaults from Building Behavior, in metres. Each defaults to **1 m**;
+  zero permits flush tiling. `SFBlueprintSpacingDefaults::ToCentimeters` clamps file-edited values
+  to 0-100 m before conversion and falls back to 1 m for nonfinite input. Seam conduits still need
+  a physical gap — a conduit under ~0.5 m cannot be built. The configured value is
   a **starting point**, not a floor: it is keyed on the blueprint's identity
   (`BlueprintSpacingDefaultAppliedFor` = `mBlueprintDescName`) and applied **once per build session**,
   so while the same blueprint stays in play — fire respawns, build-menu round trips — the player's own
