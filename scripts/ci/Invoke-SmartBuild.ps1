@@ -16,6 +16,11 @@
 
 .PARAMETER LogDir
     Where per-target UBT logs are written.
+
+.PARAMETER ExtraUbtArgs
+    Additional UnrealBuildTool arguments, defaulting to the SF_UBT_ARGS environment variable. The
+    CI VM sets SF_UBT_ARGS=-AllCores: Hyper-V presents its vCPUs as hyperthreaded pairs, and UBT's
+    default of one compile process per physical core would use only half of them.
 #>
 [CmdletBinding()]
 param(
@@ -28,7 +33,8 @@ param(
         "FactoryServer Linux Shipping"
     ),
     [string]$EngineRoot,
-    [string]$LogDir = (Join-Path $env:TEMP "smart-ci-build")
+    [string]$LogDir = (Join-Path $env:TEMP "smart-ci-build"),
+    [string[]]$ExtraUbtArgs = @(if ($env:SF_UBT_ARGS) { $env:SF_UBT_ARGS -split '\s+' | Where-Object { $_ } })
 )
 
 $ErrorActionPreference = "Stop"
@@ -52,7 +58,7 @@ foreach ($triple in $Targets) {
     $log = Join-Path $LogDir (($parts -join '-') + ".log")
     Write-Host "::group::Build $triple"
     $sw = [Diagnostics.Stopwatch]::StartNew()
-    & $buildBat $parts[0] $parts[1] $parts[2] "-project=$uproject" -WaitMutex -NoHotReloadFromIDE 2>&1 | Tee-Object -FilePath $log
+    & $buildBat $parts[0] $parts[1] $parts[2] "-project=$uproject" -WaitMutex -NoHotReloadFromIDE @ExtraUbtArgs 2>&1 | Tee-Object -FilePath $log
     $exit = $LASTEXITCODE
     $sw.Stop()
     Write-Host "::endgroup::"
