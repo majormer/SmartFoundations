@@ -46,9 +46,15 @@ Network traversal is useful when you want to upgrade one belt line, pipe line, o
 A network scan lists the tiers it found in the connected run, and lets you choose which to upgrade:
 
 - Click a specific tier — for example **Mk.2** — to upgrade **only** that tier to your target. Bump your Mk.2 belts to Mk.3 and leave the Mk.4s untouched.
-- Pick **All tiers** to upgrade everything below the target at once (the original behavior).
+- Pick **All tiers** to bring every differing belt, lift, or pipe tier to the selected target. This can upgrade some tiers and downgrade others in the same run.
 
 This matches the tier control the radius scan already had.
+
+## Downgrading Logistics
+
+Choose a lower unlocked target tier to downgrade belts, conveyor lifts, or pipes. A specific source-tier row changes only that tier; **All tiers** changes every differing logistics tier in the selected network.
+
+Power poles and wall outlets remain upgrade-only, including in an All tiers selection. Downgrades use the same replacement-cost and refund accounting below.
 
 ## Costs And Refunds
 
@@ -59,3 +65,7 @@ If there is overflow from refunds, Smart! can spawn a dismantle crate near you.
 ## Conveyor Warning
 
 Large conveyor upgrades are complicated because Satisfactory groups belts and lifts into conveyor chain actors internally. Smart! includes stabilization and diagnostics, but very large upgrades may still need a save/reload if the game reports unsettled chain state afterward.
+
+---
+
+_Last updated: 2026-10-06 · Smart! v34.4.0_

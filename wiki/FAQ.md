@@ -187,3 +187,7 @@ Include enough detail for someone else to recreate the setup:
 - Whether Infinite Nudge, Infinite Zoop, or another build-gun mod is installed.
 
 For Extend or Auto-Connect issues, include a screenshot of the source layout before placing.
+
+---
+
+_Last updated: 2026-07-14 · Smart! v34.2.1_

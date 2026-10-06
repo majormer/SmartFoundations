@@ -90,7 +90,6 @@ bool FSFArrowModule_StaticMesh::Initialize(UWorld* World, UObject* Outer, USFSub
 
 	// Task #58: Start async asset loading
 	// Assets will be applied when AttachToHologram() is called and they're ready
-	SF_LOG_ARROWS(Normal, TEXT("🚀 Initialize: Starting async asset load (Task #58)..."));
 	
 	bool bLoadStarted = AssetManager.LoadAssetsAsync([this, Outer](bool bSuccess, UStaticMesh* HeadMesh, UStaticMesh* CylinderMesh, UMaterialInterface* Material)
 	{
@@ -106,7 +105,6 @@ bool FSFArrowModule_StaticMesh::Initialize(UWorld* World, UObject* Outer, USFSub
 			
 			if (PendingAttachTarget.IsValid())
 			{
-				SF_LOG_ARROWS(Normal, TEXT("⏳ Initialize: Deferred attachment pending - completing now"));
 				CompleteDeferredAttachment();
 			}
 		}
@@ -249,11 +247,9 @@ bool FSFArrowModule_StaticMesh::AttachToHologram(USceneComponent* HologramRootCo
 	                          FSFArrowAssetManager::IsStaticMeshFullyReady(ShaftMesh.Get()) &&
 	                          FSFArrowAssetManager::IsMaterialFullyReady(MaterialX.Get());
 
-	SF_LOG_ARROWS(Normal, TEXT("🔗 AttachToHologram: Assets ready=%s, attempting attachment"), bAssetsReady ? TEXT("YES") : TEXT("NO"));
 
 	if (bAssetsReady)
 	{
-		SF_LOG_ARROWS(Normal, TEXT("✅ AttachToHologram: Assets ready, applying immediately"));
 		
 		if (!ApplyMeshAndMaterials(ArrowMesh.Get(), ShaftMesh.Get(), MaterialX.Get()))
 		{
@@ -274,13 +270,11 @@ bool FSFArrowModule_StaticMesh::AttachToHologram(USceneComponent* HologramRootCo
 		AttachComp(ShaftX.Get()); AttachComp(ShaftY.Get()); AttachComp(ShaftZ.Get());
 		AttachComp(LabelX.Get()); AttachComp(LabelY.Get()); AttachComp(LabelZ.Get());
 		
-		SF_LOG_ARROWS(Normal, TEXT("✅ AttachToHologram: Arrows + shafts + labels attached"));
 		return true;
 	}
 	else
 	{
 		// ⏳ Assets not ready - defer attachment
-		SF_LOG_ARROWS(Normal, TEXT("⏳ AttachToHologram: Assets not ready yet, deferring attachment (will complete when assets load)"));
 		
 		PendingAttachTarget = HologramRootComponent;
 
@@ -844,11 +838,9 @@ float FSFArrowModule_StaticMesh::GetScaleForAxis(ELastAxisInput Axis, ELastAxisI
 
 void FSFArrowModule_StaticMesh::CompleteDeferredAttachment()
 {
-	SF_LOG_ARROWS(Normal, TEXT("⏳ CompleteDeferredAttachment: Called"));
 	
 	if (!PendingAttachTarget.IsValid())
 	{
-		SF_LOG_ARROWS(Normal, TEXT("⏳ CompleteDeferredAttachment: No pending attachment target"));
 		return;
 	}
 
@@ -867,11 +859,9 @@ void FSFArrowModule_StaticMesh::CompleteDeferredAttachment()
 		!FSFArrowAssetManager::IsStaticMeshFullyReady(ShaftMesh.Get()) ||
 		!FSFArrowAssetManager::IsMaterialFullyReady(MaterialX.Get()))
 	{
-		SF_LOG_ARROWS(Normal, TEXT("⏳ CompleteDeferredAttachment: Assets still not ready, will retry or timeout"));
 		return;
 	}
 	
-	SF_LOG_ARROWS(Normal, TEXT("✅ CompleteDeferredAttachment: Assets NOW ready, applying mesh and materials"));
 
 	if (!ApplyMeshAndMaterials(ArrowMesh.Get(), ShaftMesh.Get(), MaterialX.Get()))
 	{
@@ -900,12 +890,10 @@ void FSFArrowModule_StaticMesh::CompleteDeferredAttachment()
 	}
 
 	PendingAttachTarget.Reset();
-	SF_LOG_ARROWS(Normal, TEXT("✅ CompleteDeferredAttachment: SUCCESS - Arrows attached to hologram"));
 }
 
 bool FSFArrowModule_StaticMesh::ApplyMeshAndMaterials(UStaticMesh* HeadMesh, UStaticMesh* CylinderMesh, UMaterialInterface* Material)
 {
-	SF_LOG_ARROWS(Normal, TEXT("🎨 ApplyMeshAndMaterials: Called (Issue #213: head + shaft)"));
 	
 	if (!ArrowX.IsValid() || !ArrowY.IsValid() || !ArrowZ.IsValid())
 	{
@@ -967,7 +955,6 @@ bool FSFArrowModule_StaticMesh::ApplyMeshAndMaterials(UStaticMesh* HeadMesh, USt
 		if (ShaftZ.IsValid()) ShaftZ.Get()->SetMaterial(0, GetOrCreateDynMat(DynamicShaftMaterialZ, ColorScheme.ColorZ));
 	}
 
-	SF_LOG_ARROWS(Normal, TEXT("✅ ApplyMeshAndMaterials: SUCCESS - heads + shafts have mesh and materials"));
 	return true;
 }
 
@@ -1128,7 +1115,6 @@ void FSFArrowModule_StaticMesh::SetLabelsVisible(bool bVisible)
 
 FHologramBounds FSFArrowModule_StaticMesh::CalculateHologramBounds() const
 {
-	SF_LOG_ARROWS(Normal, TEXT("🔍 CalculateHologramBounds: Starting bounds calculation"));
 	
 	// Default to invalid bounds
 	FHologramBounds InvalidBounds;
@@ -1136,26 +1122,18 @@ FHologramBounds FSFArrowModule_StaticMesh::CalculateHologramBounds() const
 	// Check if we have subsystem reference
 	if (!SubsystemRef.IsValid())
 	{
-		SF_LOG_ARROWS(Normal, TEXT("❌ CalculateHologramBounds: No subsystem reference, using default bounds"));
 		return InvalidBounds;
 	}
 	
-	SF_LOG_ARROWS(Normal, TEXT("✅ CalculateHologramBounds: Subsystem reference valid"));
 	
 	// Get buildable size
 	FVector BuildableSize = GetBuildableSize();
-	SF_LOG_ARROWS(Normal, TEXT("📏 CalculateHologramBounds: Buildable size detected = (%.1f, %.1f, %.1f)"), 
-		BuildableSize.X, BuildableSize.Y, BuildableSize.Z);
 	
 	if (BuildableSize.IsNearlyZero())
 	{
-		SF_LOG_ARROWS(Normal, TEXT("❌ CalculateHologramBounds: Buildable size is zero, using default bounds"));
 		return InvalidBounds;
 	}
 	
-	// Calculate highest child Z for multi-level grids
-	float HighestChildZ = CalculateHighestChildZ();
-	SF_LOG_ARROWS(Normal, TEXT("📐 CalculateHologramBounds: Highest child Z calculated = %.1f"), HighestChildZ);
 	
 	// For arrow positioning, we need the grid height, not world coordinates
 	// Get the actual grid Z dimension from the subsystem
@@ -1218,47 +1196,35 @@ FHologramBounds FSFArrowModule_StaticMesh::CalculateHologramBounds() const
 	
 	FHologramBounds CalculatedBounds(Center, Extents, TopZ);
 	
-	SF_LOG_ARROWS(Normal, TEXT("🎯 CalculateHologramBounds: FINAL RESULTS - Size=(%.1f,%.1f,%.1f) TopZ=%.1f ArrowOffset=%.1f"), 
-		BuildableSize.X, BuildableSize.Y, BuildableSize.Z, TopZ, CalculatedBounds.GetArrowZOffset());
 	
 	return CalculatedBounds;
 }
 
 FVector FSFArrowModule_StaticMesh::GetBuildableSize() const
 {
-	SF_LOG_ARROWS(Normal, TEXT("🔍 GetBuildableSize: Starting buildable size detection"));
 	
 	// Check if we have subsystem reference
 	if (!SubsystemRef.IsValid())
 	{
-		SF_LOG_ARROWS(Normal, TEXT("❌ GetBuildableSize: No subsystem reference, using fallback size"));
 		return FVector(800.0f, 800.0f, 200.0f);  // Default foundation size
 	}
 	
-	SF_LOG_ARROWS(Normal, TEXT("✅ GetBuildableSize: Subsystem reference valid"));
 	
 	// Get active hologram from subsystem
 	AFGHologram* ActiveHologram = SubsystemRef->GetActiveHologram();
 	if (!ActiveHologram)
 	{
-		SF_LOG_ARROWS(Normal, TEXT("❌ GetBuildableSize: No active hologram, using fallback size"));
 		return FVector(800.0f, 800.0f, 200.0f);  // Default foundation size
 	}
 	
-	SF_LOG_ARROWS(Normal, TEXT("✅ GetBuildableSize: Active hologram found"));
 	
 	// Get build class from hologram
 	UClass* BuildClass = ActiveHologram->GetBuildClass();
 	if (!BuildClass)
 	{
-		SF_LOG_ARROWS(Normal, TEXT("❌ GetBuildableSize: No build class, using fallback size"));
 		return FVector(800.0f, 800.0f, 200.0f);  // Default foundation size
 	}
 	
-	// Log the build class for debugging
-	FName ClassName = BuildClass->GetFName();
-	FString ClassNameStr = ClassName.ToString();
-	SF_LOG_ARROWS(Normal, TEXT("🏗️ GetBuildableSize: Build class detected = '%s'"), *ClassNameStr);
 	
 	// Use SFBuildableSizeRegistry to get actual size
 	FSFBuildableSizeProfile Profile = USFBuildableSizeRegistry::GetProfile(BuildClass);
@@ -1266,55 +1232,41 @@ FVector FSFArrowModule_StaticMesh::GetBuildableSize() const
 	
 	if (DetectedSize.IsNearlyZero())
 	{
-		SF_LOG_ARROWS(Normal, TEXT("⚠️ GetBuildableSize: Registry returned zero size for '%s', using default"), *ClassNameStr);
 		DetectedSize = FVector(800.0f, 800.0f, 200.0f);  // Default fallback
 	}
 	else
 	{
-		SF_LOG_ARROWS(Normal, TEXT("✅ GetBuildableSize: Registry returned size = (%.1f, %.1f, %.1f)"), 
-			DetectedSize.X, DetectedSize.Y, DetectedSize.Z);
 	}
 	
-	// Also try to get actual bounds from hologram as additional verification
-	FBox HologramBounds = ActiveHologram->GetComponentsBoundingBox(true);
-	SF_LOG_ARROWS(Normal, TEXT("📦 GetBuildableSize: Actual hologram bounds = (%.1f, %.1f, %.1f)"), 
-		HologramBounds.GetSize().X, HologramBounds.GetSize().Y, HologramBounds.GetSize().Z);
 	
 	return DetectedSize;
 }
 
 float FSFArrowModule_StaticMesh::CalculateHighestChildZ() const
 {
-	SF_LOG_ARROWS(Normal, TEXT("🔍 CalculateHighestChildZ: Starting highest child Z calculation"));
 	
 	// Check if we have subsystem reference
 	if (!SubsystemRef.IsValid())
 	{
-		SF_LOG_ARROWS(Normal, TEXT("❌ CalculateHighestChildZ: No subsystem reference, using single level"));
 		return 200.0f;  // Default single foundation height
 	}
 	
-	SF_LOG_ARROWS(Normal, TEXT("✅ CalculateHighestChildZ: Subsystem reference valid"));
 	
 	// Get active hologram from subsystem
 	AFGHologram* ActiveHologram = SubsystemRef->GetActiveHologram();
 	if (!ActiveHologram)
 	{
-		SF_LOG_ARROWS(Normal, TEXT("❌ CalculateHighestChildZ: No active hologram, using single level"));
 		return 200.0f;  // Default single foundation height
 	}
 	
-	SF_LOG_ARROWS(Normal, TEXT("✅ CalculateHighestChildZ: Active hologram found"));
 	
 	// Get hologram children to determine grid structure
 	const TArray<AFGHologram*>& Children = ActiveHologram->GetHologramChildren();
-	SF_LOG_ARROWS(Normal, TEXT("👶 CalculateHighestChildZ: Found %d hologram children"), Children.Num());
 	
 	if (Children.Num() == 0)
 	{
 		// Single hologram - use its height
 		FVector BuildableSize = GetBuildableSize();
-		SF_LOG_ARROWS(Normal, TEXT("🏠 CalculateHighestChildZ: Single hologram detected, using height=%.1f"), BuildableSize.Z);
 		return BuildableSize.Z;
 	}
 	
@@ -1322,14 +1274,12 @@ float FSFArrowModule_StaticMesh::CalculateHighestChildZ() const
 	float HighestZ = 0.0f;
 	FVector BuildableSize = GetBuildableSize();
 	
-	SF_LOG_ARROWS(Normal, TEXT("🏗️ CalculateHighestChildZ: Multi-hologram grid detected, analyzing %d children"), Children.Num());
 	
 	for (int32 i = 0; i < Children.Num(); i++)
 	{
 		AFGHologram* Child = Children[i];
 		if (!Child) 
 		{
-			SF_LOG_ARROWS(Normal, TEXT("⚠️ CalculateHighestChildZ: Child %d is null, skipping"), i);
 			continue;
 		}
 		
@@ -1339,13 +1289,10 @@ float FSFArrowModule_StaticMesh::CalculateHighestChildZ() const
 		// Calculate child's top Z (position + half height)
 		float ChildTopZ = ChildPosition.Z + (BuildableSize.Z / 2.0f);
 		
-		SF_LOG_ARROWS(Normal, TEXT("📍 CalculateHighestChildZ: Child %d at Z=%.1f, top Z=%.1f"), 
-			i, ChildPosition.Z, ChildTopZ);
 		
 		if (ChildTopZ > HighestZ)
 		{
 			HighestZ = ChildTopZ;
-			SF_LOG_ARROWS(Normal, TEXT("🔺 CalculateHighestChildZ: New highest Z=%.1f from child %d"), HighestZ, i);
 		}
 	}
 	
@@ -1353,11 +1300,8 @@ float FSFArrowModule_StaticMesh::CalculateHighestChildZ() const
 	if (HighestZ == 0.0f)
 	{
 		HighestZ = BuildableSize.Z;
-		SF_LOG_ARROWS(Normal, TEXT("⚠️ CalculateHighestChildZ: No valid children found, using base height=%.1f"), HighestZ);
 	}
 	
-	SF_LOG_ARROWS(Normal, TEXT("🎯 CalculateHighestChildZ: FINAL RESULT - Grid with %d children, highest Z=%.1f"), 
-		Children.Num(), HighestZ);
 	
 	return HighestZ;
 }

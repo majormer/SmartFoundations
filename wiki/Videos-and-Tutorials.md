@@ -44,3 +44,6 @@ These videos are from older Smart! versions. Exact keybinds, UI, and feature det
 - If a video shows Smart Camera behavior, see [Smart Camera](Smart-Camera).
 - If an old feature does not appear in your current Smart! build, check the current wiki pages before assuming it is still active.
 
+---
+
+_Last updated: 2026-07-14 · Smart! v34.2.1_

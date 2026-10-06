@@ -44,3 +44,7 @@ This page tracks the screenshots needed to replace wiki placeholders. Keep scree
 - Use current keybinds and current UI labels.
 - Crop enough context to show the feature, not just the panel.
 - When showing material costs or upgrades, use a small test factory so the counts are readable.
+
+---
+
+_Last updated: 2026-07-14 · Smart! v34.2.1_

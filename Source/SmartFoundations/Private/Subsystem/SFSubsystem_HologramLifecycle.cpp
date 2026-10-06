@@ -12,6 +12,23 @@
 #include "Shared/Conduits/SFConveyanceConstants.h"
 #include "Features/Spacing/SFBlueprintSpacingDefaults.h"
 
+namespace
+{
+void ResetHologramTransitionCounters(USFSubsystem& Subsystem, bool bPreserveBlueprintSpacing)
+{
+	const FSFCounterState PreviousState = Subsystem.GetCounterState();
+	Subsystem.ResetCounters();
+	if (bPreserveBlueprintSpacing)
+	{
+		// A placement replaces the hologram, but continues the same Blueprint spacing session.
+		FSFCounterState NewState = Subsystem.GetCounterState();
+		NewState.SpacingX = PreviousState.SpacingX;
+		NewState.SpacingY = PreviousState.SpacingY;
+		NewState.SpacingZ = PreviousState.SpacingZ;
+		Subsystem.UpdateCounterState(NewState);
+	}
+}
+}
 
 // Hologram management with enhanced logging
 void USFSubsystem::RegisterActiveHologram(AFGHologram* Hologram)
@@ -206,7 +223,10 @@ void USFSubsystem::RegisterActiveHologram(AFGHologram* Hologram)
 	// signed transform state across identity-preserving registrations.
 	if (!bPreserveExtendStateAtRegister)
 	{
-		ResetCounters();
+		const AFGBlueprintHologram* Blueprint = Cast<AFGBlueprintHologram>(Hologram);
+		const bool bSameBlueprintSession = Blueprint && !BlueprintSpacingDefaultAppliedFor.IsEmpty()
+			&& Blueprint->mBlueprintDescName == BlueprintSpacingDefaultAppliedFor;
+		ResetHologramTransitionCounters(*this, bSameBlueprintSession);
 	}
 	else
 	{
@@ -797,7 +817,7 @@ void USFSubsystem::UnregisterActiveHologram(AFGHologram* Hologram)
 		// restored Extend topology is staged for editing across transient aim gaps.
 		if (!IsRestoredExtendModeActive())
 		{
-			ResetCounters();
+			ResetHologramTransitionCounters(*this, !BlueprintSpacingDefaultAppliedFor.IsEmpty());
 		}
 		else
 		{
@@ -1484,8 +1504,8 @@ void USFSubsystem::OnParentHologramDestroyed(AActor* DestroyedActor)
 
 		CurrentAdapter.Reset();
 
-		// Reset all counters (fixes persistence bug - Task 51)
-		ResetCounters();
+		// Reset placement counters while retaining the current Blueprint session's spacing override.
+		ResetHologramTransitionCounters(*this, !BlueprintSpacingDefaultAppliedFor.IsEmpty());
 	}
 }
 

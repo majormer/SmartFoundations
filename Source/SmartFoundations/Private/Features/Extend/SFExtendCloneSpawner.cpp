@@ -5,7 +5,9 @@
 
 #include "Features/Extend/SFExtendCloneTopology.h"
 #include "Features/Extend/SFExtendService.h"
+#include "Features/Extend/Net/SFExtendAuthorityScope.h"
 #include "Misc/DateTime.h"
+#include "GameFramework/Pawn.h"
 
 // Satisfactory includes
 #include "Buildables/FGBuildableConveyorBelt.h"
@@ -1067,7 +1069,17 @@ int32 FSFCloneTopology::SpawnChildHolograms(
             
             // Get belt/pipe tier from auto-connect settings
             USFSubsystem* Subsystem = USFSubsystem::Get(World);
-            AFGPlayerController* PC = World ? World->GetFirstPlayerController<AFGPlayerController>() : nullptr;
+            // [MP-AUTH] Unlock checks belong to the constructing player. The first
+            // controller can be the listen host and must not authorize a remote lane.
+            APawn* Instigator = ParentHologram->GetConstructionInstigator();
+            AFGPlayerController* PC = Instigator
+                ? Cast<AFGPlayerController>(Instigator->GetController()) : nullptr;
+            if (!Instigator && World && !FSFExtendAuthorityScope::IsActive(Subsystem))
+            {
+                // Local aim previews can precede construction-instigator assignment.
+                AFGPlayerController* LocalController = World->GetFirstPlayerController<AFGPlayerController>();
+                if (LocalController && LocalController->IsLocalController()) PC = LocalController;
+            }
             
             if (ChildData.LaneSegmentType == TEXT("pipe"))
             {

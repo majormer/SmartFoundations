@@ -882,6 +882,12 @@ void USmartSettingsFormWidget::ApplyCurrentValues()
     if (!CachedSubsystem->IsExtendModeActive())
     {
         CachedSubsystem->RegenerateChildHologramGrid();
+        // Apply also commits pending Auto-Connect choices. An unchanged grid must
+        // still rebuild routes for a new tier, style, or routing mode.
+        if (!bApplyImmediately)
+        {
+            CachedSubsystem->TriggerAutoConnectRefresh();
+        }
     }
 
     // Refresh recipe details to update grid totals with new grid size

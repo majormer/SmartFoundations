@@ -17,7 +17,7 @@ Workflow: [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml)
 
 | Script | Purpose |
 |---|---|
-| `New-CIWorkspace.ps1` | Create or refresh the isolated CI project copy (default `L:\SFCI\SML`). |
+| `New-CIWorkspace.ps1` | Create or refresh the isolated CI project copy. |
 | `Invoke-SmartBuild.ps1` | Build all targets in a CI workspace. |
 | `Invoke-SmartTests.ps1` | Run the automation tests headless and gate on the report. |
 | `SmartCI.psm1` | Shared helpers. |
@@ -26,8 +26,8 @@ All scripts refuse to run against a folder without the `.sfci-workspace` marker,
 build in a working tree. Run them locally the same way the workflow does:
 
 ```powershell
-.\scripts\ci\Invoke-SmartBuild.ps1 -ProjectRoot L:\SFCI\SML
-.\scripts\ci\Invoke-SmartTests.ps1 -ProjectRoot L:\SFCI\SML
+.\scripts\ci\Invoke-SmartBuild.ps1 -ProjectRoot $env:SF_CI_ROOT
+.\scripts\ci\Invoke-SmartTests.ps1 -ProjectRoot $env:SF_CI_ROOT
 ```
 
 ## Why a separate workspace
@@ -45,10 +45,10 @@ targets, which takes a long time. Later runs are incremental.
 
 Do these yourself; they register a machine with GitHub and install a Windows service.
 
-1. **Create the workspace:** `.\scripts\ci\New-CIWorkspace.ps1`
+1. **Create the workspace:** provide `-DevRoot` and `-CiRoot` to `.\scripts\ci\New-CIWorkspace.ps1`, or set `FACTORYGAME_PROJECT_ROOT` and `SF_CI_ROOT`. Optional `-ExcludeDirectories` (or semicolon-separated `SF_CI_EXCLUDED_DIRECTORIES`) omits local development directories.
 2. **Choose the runner's account.** A standard (non-admin) local account is safest. It needs:
    - read access to the engine (`C:\Program Files\Unreal Engine - CSS`)
-   - full access to `L:\SFCI`
+   - full access to the chosen CI workspace
    - `LINUX_MULTIARCH_ROOT` set in its environment (for the Linux server target)
    - Git on its PATH, and PowerShell 7 (`pwsh`)
 3. **Install the runner:** GitHub > repository Settings > Actions > Runners > New self-hosted
@@ -65,7 +65,7 @@ Do these yourself; they register a machine with GitHub and install a Windows ser
 4. **Lock down the repository** (Settings > Actions > General):
    - Fork pull request workflows: *Require approval for all outside collaborators*
    - Workflow permissions: *Read repository contents*
-5. **Optional:** set a repository variable `SF_CI_ROOT` if the workspace is not at `L:\SFCI\SML`.
+5. **Required:** set the repository variable `SF_CI_ROOT` to the isolated workspace path. Keep machine-specific paths in runner configuration, not in the workflow.
 
 ## Security
 

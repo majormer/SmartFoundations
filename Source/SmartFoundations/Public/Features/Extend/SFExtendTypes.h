@@ -19,6 +19,7 @@
 #include "FGPipeConnectionComponent.h"
 #include "FGPowerConnectionComponent.h"
 #include "FGCircuitConnectionComponent.h"
+#include "Features/Extend/SFExtendCloneTopology.h"
 #include "SFExtendTypes.generated.h"
 
 class AFGBuildable;
@@ -186,6 +187,15 @@ struct FSFPowerChainNode
     {}
 };
 
+/** Exact server owner identity paired with its replicated client actor, when available. */
+USTRUCT()
+struct FSFExtendSourceOwner
+{
+    GENERATED_BODY()
+    UPROPERTY() FString Id;
+    UPROPERTY() TWeakObjectPtr<AFGBuildable> Actor;
+};
+
 /**
  * Complete topology data for a factory building's connections
  */
@@ -237,6 +247,13 @@ struct FSFExtendTopology
     UPROPERTY()
     bool bIsValid = false;
 
+    // [MP-REPL] Conveyor-chain members may have no replicated actor. Send captured
+    // values for geometry, recipes, paint and named endpoints instead of recapturing
+    // incomplete client actors. Commits still reconstruct from the live server graph.
+    UPROPERTY() bool bHasSourceSnapshot = false;
+    UPROPERTY() FSFSourceTopology SourceSnapshot;
+    UPROPERTY() TArray<FSFExtendSourceOwner> SourceOwners;
+
     void Reset()
     {
         SourceBuilding.Reset();
@@ -248,5 +265,8 @@ struct FSFExtendTopology
         PipePassthroughs.Empty();
         WallPassthroughs.Empty();
         bIsValid = false;
+        bHasSourceSnapshot = false;
+        SourceSnapshot = FSFSourceTopology();
+        SourceOwners.Empty();
     }
 };

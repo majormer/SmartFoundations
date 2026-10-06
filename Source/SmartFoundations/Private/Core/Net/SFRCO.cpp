@@ -5,6 +5,7 @@
 #include "Hologram/FGHologram.h"
 #include "Subsystem/SFSubsystem.h"
 #include "Features/Extend/SFExtendService.h"   // [EXTEND-MP] topology walk RPCs
+#include "Features/Extend/Net/SFExtendTopologyQuery.h"
 #include "Core/Upgrade/SFConveyorGeometryPolicy.h"
 #include "FGPlayerController.h"  // AFGPlayerController (don't rely on transitive unity-build includes)
 #include "FGCharacterPlayer.h"   // [#368] resolve the owning pawn for the clipboard sync
@@ -300,28 +301,15 @@ bool USFRCO::Server_StageScalingSpec_Validate(FSFScalingSpec Spec)
 void USFRCO::Server_RequestExtendTopology_Implementation(AFGBuildable* SourceBuilding)
 {
 	USFSubsystem* Subsystem = USFSubsystem::Get(this);
-	USFExtendService* Extend = IsValid(Subsystem) ? Subsystem->GetExtendService() : nullptr;
-	if (!Extend || !IsValid(SourceBuilding))
+	if (!IsValid(Subsystem) || !IsValid(SourceBuilding))
 	{
 		UE_LOG(LogSmartFoundations, Verbose,
-			TEXT("[EXTEND-MP] Server_RequestExtendTopology: missing extend service (%d) or building (%d)"),
-			Extend ? 1 : 0, IsValid(SourceBuilding) ? 1 : 0);
+			TEXT("[EXTEND-MP] Server_RequestExtendTopology: missing subsystem (%d) or building (%d)"),
+			IsValid(Subsystem) ? 1 : 0, IsValid(SourceBuilding) ? 1 : 0);
 		return;
 	}
 
-	FSFExtendTopology Reply;
-	if (Extend->WalkTopology(SourceBuilding))
-	{
-		Reply = Extend->GetCurrentTopology();
-	}
-	else
-	{
-		// Negative reply: tag the building so the client caches "nothing to extend here" briefly
-		// instead of re-requesting every tick while aiming.
-		Reply.Reset();
-		Reply.SourceBuilding = SourceBuilding;
-		Reply.bIsValid = false;
-	}
+	const FSFExtendTopology Reply = SFExtendTopologyQuery::Capture(Subsystem, SourceBuilding);
 
 	UE_LOG(LogSmartFoundations, Verbose,
 		TEXT("[EXTEND-MP] Server walked topology for %s: valid=%d (beltIn=%d beltOut=%d pipeIn=%d pipeOut=%d power=%d)"),

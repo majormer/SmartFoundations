@@ -37,9 +37,13 @@ TArray<TPair<int32, int32>> SFExtendPassthroughLinks::Plan(const TArray<FSFPasst
             const FSFPassthroughEndpoint& Endpoint = Endpoints[Index];
             FString EndpointCell;
             if (!CellPrefix(Endpoint.Identity.Target, EndpointCell) || FaceCell != EndpointCell
-                || Endpoint.Location.ContainsNaN() || !Endpoint.Location.Equals(Face.Location, 1.0)) continue;
+                || Endpoint.Location.ContainsNaN()) continue;
             if (Face.bCaptured && (Endpoint.Identity.Target != Face.CapturedEndpoint.Target
                 || Endpoint.Identity.Connector != Face.CapturedEndpoint.Connector)) continue;
+            // Native construction can inset a snapped endpoint into the foundation. An
+            // exact captured component in this newly built cell remains the intended link;
+            // only legacy recovery needs to infer identity from the outer face's position.
+            if (!Face.bCaptured && !Endpoint.Location.Equals(Face.Location, 1.0)) continue;
             if (Match != INDEX_NONE) { Ambiguous = true; break; }
             Match = Index;
         }

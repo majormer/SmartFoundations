@@ -39,6 +39,14 @@ If you prefer mouse wheel control, hold a Smart modifier:
 - Scale one of your own blueprints into a small grid and watch the belts/pipes wire between the copies ([Smart Blueprints](Smart-Blueprints)).
 - Use Extend after you have one working production module.
 
+## Build Normally For a While
+
+Press **Num Decimal** to disable Smart building assistance for this session, then select a recipe again. You can place normally without changing saved settings. Press the key again to re-enable assistance. See [Smart Assistance](Smart-Assistance), including how to rebind the toggle.
+
 ## What Smart! Does Not Do
 
 Smart! does not create free buildings or resources. If you do not have enough materials, the build will fail just like a normal Satisfactory build.
+
+---
+
+_Last updated: 2026-10-06 · Smart! v34.4.0_

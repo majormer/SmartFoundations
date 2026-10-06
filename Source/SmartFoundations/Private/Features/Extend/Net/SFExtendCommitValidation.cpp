@@ -1,5 +1,7 @@
 // Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 #include "Features/Extend/Net/SFExtendCommitValidation.h"
+#include "Features/Extend/Net/SFExtendAuthorityScope.h"
+#include "Subsystem/SFSubsystem.h"
 #include "Hologram/FGHologram.h"
 
 namespace
@@ -11,7 +13,11 @@ SFExtendCommitValidation::FRequestScope::FRequestScope() : Previous(ActiveReques
 {
     if (!ActiveRequest) ActiveRequest = this;
 }
-SFExtendCommitValidation::FRequestScope::~FRequestScope() { ActiveRequest = Previous; }
+SFExtendCommitValidation::FRequestScope::~FRequestScope()
+{
+    Authority.Reset();
+    ActiveRequest = Previous;
+}
 bool SFExtendCommitValidation::IsRequestActive() { return ActiveRequest != nullptr; }
 const bool* SFExtendCommitValidation::FindPrepared(AFGHologram* Root)
 {
@@ -20,6 +26,16 @@ const bool* SFExtendCommitValidation::FindPrepared(AFGHologram* Root)
 void SFExtendCommitValidation::SetPrepared(AFGHologram* Root, bool Valid)
 {
     if (ActiveRequest) ActiveRequest->Prepared.Add(Root, Valid);
+}
+
+void SFExtendCommitValidation::IsolateAuthority(USFSubsystem* Subsystem, AFGHologram* Root)
+{
+    if (!ActiveRequest || !Root || !Root->HasAuthority() || Root->GetParentHologram()
+        || FSFExtendAuthorityScope::IsActive(Subsystem)
+        || !FSFExtendAuthorityScope::ShouldIsolate(Subsystem, Root->GetConstructionInstigator(), Root->GetBuildClass())) return;
+    FSFExtendCommitSpec Commit;
+    if (Subsystem->PeekExtendCommitForInstigator(Root->GetConstructionInstigator(), Root->GetBuildClass(), Commit))
+        ActiveRequest->Authority = MakeUnique<FSFExtendAuthorityScope>(Subsystem, Root);
 }
 
 bool SFExtendCommitValidation::SameCost(const TArray<FItemAmount>& Preview, const TArray<FItemAmount>& Authoritative)

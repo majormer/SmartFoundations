@@ -71,3 +71,7 @@ Controls:
   - **Y** — the rotation accumulates along the rows, so the **rows** fan out around the vertical instead.
 
 Either way it stays a flat, upright arc — nothing ever tilts or flips. (Smart! rotates around the vertical/yaw axis only; vertical arch rotation is not currently an active feature.)
+
+---
+
+_Last updated: 2026-07-14 · Smart! v34.2.1_

@@ -22,6 +22,23 @@ already-connected building. Filtering must occur before assigning pole capacity:
 connected building can consume an assignment, fail preview creation, and starve another consumer.
 `SFPowerBuildingTarget` shares eligibility and connector-range rules between preview and build.
 
+## Restore preview range validation
+
+Restore may retain a native `AFGFactoryHologram` as its construction parent. Checking only
+`ASFFactoryHologram::CheckValidPlacement` leaves that native root green when its saved cable
+plan exceeds native range. `RegisterManagedHologramValidationHook` invokes native placement
+validation once, then adds `FGCDInvalidPlacement` when `OwnsRestoredPreview` identifies that
+exact parent and `IsScaledExtendValid` is false. The identity check excludes other players'
+previews. Do not replace native validation or remove authority-side cable-plan validation.
+
+Native multiplayer validation of a fully funded two-refinery Restore with 100 m X spacing
+produced `Power cable rr_1_0_wire_factory_daisy exceeds its native length limit`, an invalid
+root, and no inventory change. Applying 3 m spacing cleared the error and constructed two
+refineries with inventory payment equal to the displayed quote. Child preview error relay
+can also add `FGCDUnaffordable` for an inherited placement error; that token alone does not
+prove a material shortage. Compare the actual inventory and quote. This contract is tracked
+with the rotation and range checks in issue #546.
+
 ## Wall outlets
 
 The supported concrete built classes are `Build_PowerPoleWall_C`,
@@ -157,6 +174,21 @@ creating an unconnected extra actor. The scope retains the preview actors and re
 and geometry before the build gun queries cost after construction. It does not intercept untagged
 wire contracts or remove non-wire children. `PreviewConstructionScope` tests this exclusion,
 nested scope behavior, and restoration without invoking native wire construction.
+
+Remote Extend and Restore reconstruction uses `FSFExtendAuthorityScope` across the native
+server request, including validation, construction, synchronous wiring, and the later material
+charge. Its Extend, grid, and recipe services are separate from a listen host's live services.
+Transaction counter updates cannot refresh the host HUD, rebuild its grid, alter its clipboard,
+or consume its Restore/Walking session. Deferred factory settings transfer as immutable
+actor/player/snapshot contracts to the persistent application queue. Request-created preview
+children are detached after payment on every return, including rejected builds; existing native
+companions remain. Topology replies use an independent walker. `HostStateIsolation` exercises
+real rejected Extend/Restore reconstruction, nested and subsequent requests, topology queries,
+preservation of sampled settings, delayed-application queue ownership, and child cleanup after
+the cost window. `NativeRequestFallback` uses an isolated Unreal listen world with real controller
+ownership to exercise player/class selection and fallback scope lifetime through nested native
+request scopes. These tests do not execute the native server RPC or prove live multiplayer
+construction.
 
 `SmartFoundations.Extend.Commit.RequestIsolation` verifies scope lifetime and root isolation;
 `CostAgreement` verifies normalized item costs, including duplicate rows, negative quantities, and

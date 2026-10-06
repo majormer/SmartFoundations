@@ -656,8 +656,17 @@ void USFGameInstanceModule::RegisterManagedHologramValidationHook()
 					// left some) so a stale flag cannot survive indefinitely once we cancel.
 					self->ResetConstructDisqualifiers();
 					scope.Cancel();
+					return;
 				}
 			}
+			scope(self);
+			// Restore can keep a native factory root. Its placement virtual must
+			// reflect the owned Restore plan's validity just like SFFactoryHologram.
+			// Exact parent identity keeps another player's preview out of this gate.
+			USFSubsystem* Subsystem = USFSubsystem::Get(self->GetWorld());
+			USFExtendService* Extend = Subsystem ? Subsystem->GetExtendService() : nullptr;
+			if (Extend && Extend->OwnsRestoredPreview(self) && !Extend->IsScaledExtendValid())
+				self->AddConstructDisqualifier(UFGCDInvalidPlacement::StaticClass());
 		});
 
 	UE_LOG(LogSmartFoundations, Verbose,

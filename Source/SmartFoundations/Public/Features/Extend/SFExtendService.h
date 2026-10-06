@@ -83,6 +83,7 @@ struct FSFWiringManifest;
 UCLASS()
 class SMARTFOUNDATIONS_API USFExtendService : public UObject
 {
+    friend class FSFExtendAuthorityIsolationTest;
     GENERATED_BODY()
 
     // Restore-replay logic lives in USFExtendRestoreReplayService but operates on this
@@ -325,6 +326,10 @@ public:
     void TickRestoredCloneTopology(float DeltaTime);
     void OnRestoredCloneTopologyStateChanged();
     bool IsRestoredCloneTopologyActive() const { return bRestoredCloneTopologyActive; }
+    bool OwnsRestoredPreview(const AFGHologram* Hologram) const
+    {
+        return Hologram && bRestoredCloneTopologyActive && RestoredCloneParentHologram.Get() == Hologram;
+    }
     bool IsHologramCompatibleWithRestoredCloneTopology(AFGHologram* ParentHologram) const;
     void ClearRestoredCloneTopologySession(const TCHAR* Reason);
 

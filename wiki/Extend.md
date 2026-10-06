@@ -36,7 +36,9 @@ When Extend is active, mouse wheel cycles the extension direction as long as no 
 
 Scaled Extend combines Extend with grid controls. Use it when you want several copies or several rows of the same module.
 
-Transforms such as spacing, steps, stagger, and horizontal rotation can affect Scaled Extend layouts in supported cases.
+Use X for the run, Y for additional rows, and **Z for vertical layers**. Z spacing adjusts the distance between floors. Each floor repeats the captured horizontal factory and logistics layout; Smart! does not automatically connect belts or pipes between floors.
+
+Spacing, steps, and horizontal rotation can shape the result. Check each layer before building.
 
 ## What Extend Copies
 
@@ -50,3 +52,11 @@ Depending on the source module and current support, Extend may copy:
 - Power connections.
 
 Always check the preview before building. Complex factory modules can still need manual cleanup.
+
+Copied recipes, Power Shards, and Somersloops use the placing player's inventory. Already installed items are retained; running out of shards or sloops can leave a copied machine with fewer installed items.
+
+On a listen server, a client's Extend or Restore keeps its settings and construction state separate from the host's held preview. Both players should use the same Smart! version.
+
+---
+
+_Last updated: 2026-10-06 · Smart! v34.4.0_

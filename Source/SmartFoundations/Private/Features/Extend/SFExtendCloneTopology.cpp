@@ -1743,6 +1743,16 @@ namespace CaptureHelpers
 
 FSFSourceTopology FSFSourceTopology::CaptureFromTopology(const FSFExtendTopology& Topology)
 {
+    // [MP-CLIENT] Authority captured the complete graph, including conveyor-chain
+    // members with no client actor and connections which do not replicate.
+    if (Topology.bHasSourceSnapshot)
+    {
+        if (Topology.bIsValid && Topology.SourceBuilding.IsValid()
+            && Topology.SourceSnapshot.Factory.Id == Topology.SourceBuilding->GetName())
+            return Topology.SourceSnapshot;
+        return FSFSourceTopology(); // A stale/mismatched reply must not yield a partial local quote.
+    }
+
     using namespace CaptureHelpers;
     
     FSFSourceTopology Result;

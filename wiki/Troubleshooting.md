@@ -81,3 +81,7 @@ When reporting an issue, include:
 - Whether Auto-Connect or Extend was involved.
 - Single-player or multiplayer.
 - Host or client, if multiplayer.
+
+---
+
+_Last updated: 2026-07-14 · Smart! v34.2.1_

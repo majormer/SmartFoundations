@@ -6,6 +6,7 @@
 // the constructed factory's recipe or transfer its shards locally.
 
 #include "SFRecipeManagementService.h"
+#include "Features/Extend/Net/SFExtendAuthorityScope.h"
 #include "SmartFoundations.h"
 #include "Core/Construction/SFFactorySettingsApplyPolicy.h"
 #include "Subsystem/SFSubsystem.h"
@@ -64,6 +65,7 @@ void USFRecipeManagementService::SyncSubsystemRecipeState() const
 
 void USFRecipeManagementService::SyncClipboardRecipe(TSubclassOf<UFGRecipe> Recipe)
 {
+    if (FSFExtendAuthorityScope::IsActive(Subsystem)) return;
 	// [#368] Keep the player's vanilla build-gun clipboard in sync with Smart's chosen recipe so
 	// vanilla's PasteSettings applies the SAME recipe Smart's spec-construction does (otherwise a
 	// stale sampled clipboard overrides a U/Panel pick on the authoritative build). Recipe-pick runs
@@ -238,7 +240,8 @@ void USFRecipeManagementService::SetActiveRecipeByIndex(int32 Index)
 	SyncClipboardRecipe(ActiveRecipe);
 
 	// Debounced regeneration - only if children exist and recipe actually changed
-	AFGHologram* Hologram = Subsystem ? Subsystem->GetActiveHologram() : nullptr;
+	AFGHologram* Hologram = Subsystem && !FSFExtendAuthorityScope::IsActive(Subsystem)
+        ? Subsystem->GetActiveHologram() : nullptr;
 	if (Hologram)
 	{
 		if (Hologram->GetHologramChildren().Num() > 0)
@@ -633,10 +636,8 @@ void USFRecipeManagementService::InstallFactorySettingsSnapshot(const FSFFactory
 	// get NONE - never inherit whatever a previous commit installed. The additive-only first
 	// version leaked state live (2026-07-14): with vanilla's sample setting OFF the snapshot
 	// shipped empty, the install no-op'd, and the clones received the PREVIOUS test's recipe
-	// straight from this service's stale stored state. On a listen host this install (like the
-	// old Restore-recipe install before it) also overwrites the host player's own sampled state
-	// when a remote client's commit lands - a pre-existing shared-service trade-off; the
-	// reported environment (dedicated server) has no local player.
+	// straight from this service's stale stored state. Remote Extend/Restore installs run
+	// on a request-owned service; the listen host's sampled settings remain intact.
 	if (Snapshot.bHasRecipe && Snapshot.Recipe)
 	{
 		// Same install the RESTORE commit already used - also syncs the subsystem mirror fields
@@ -758,7 +759,8 @@ void USFRecipeManagementService::ClearStoredProductionRecipe()
 	// Apply clear to hologram registry and trigger regeneration
 	ApplyRecipeToParentHologram();
 	
-	AFGHologram* Hologram = Subsystem ? Subsystem->GetActiveHologram() : nullptr;
+	AFGHologram* Hologram = Subsystem && !FSFExtendAuthorityScope::IsActive(Subsystem)
+        ? Subsystem->GetActiveHologram() : nullptr;
 	if (Hologram)
 	{
 		if (Hologram->GetHologramChildren().Num() > 0)

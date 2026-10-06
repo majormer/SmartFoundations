@@ -34,6 +34,14 @@ A Module captures a whole **Extend manifold** — a wired unit of buildings with
 
 Each Module shows a summary of its parts (how many belts, pipes, distributors, and so on) so you know what it rebuilds.
 
+## Layers and Saved Modules
+
+Use **Grid Z** to repeat the saved module on additional floors, and **Z spacing** to adjust the floor interval. Each layer rebuilds its captured factories and infrastructure with normal material costs.
+
+Saving after a scaled Extend captures **one complete module**, so it can be repeated again in Restore. If an older module contains extra poles/cables or cannot identify its cable endpoints, recapture it from a working layout. Existing saved layouts are not rewritten automatically.
+
+Pipe floor holes retain their captured top and bottom attachments on the correct floor. Power cables preserve each outlet face and its available slots. A cable beyond the normal game range makes the Restore preview invalid; reduce spacing or adjust the layout before building. A changed source layout or material quote can also require selecting the source again.
+
 ## Sharing Is Progression-Safe
 
 Shared presets and Modules are checked against your current unlocks before they can be imported or applied. If one needs a building, recipe, belt or pipe tier, lift, splitter, merger, power component, or other piece you have not unlocked yet, Smart! rejects it instead of letting you build something you could not place by hand.
@@ -45,3 +53,7 @@ That keeps shared setups honest: importing one never skips progression.
 - [Extend](Extend) — the feature whose manifolds the Modules tab captures.
 - [Smart Panel and HUD](Smart-Panel-and-HUD) — where the Restore dock lives.
 - [Grid Scaling](Grid-Scaling) and [Transforms](Transforms) — what a Grid Preset saves.
+
+---
+
+_Last updated: 2026-10-06 · Smart! v34.4.0_

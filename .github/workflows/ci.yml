@@ -27,7 +27,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  SF_CI_ROOT: ${{ vars.SF_CI_ROOT || 'L:\SFCI\SML' }}
+  SF_CI_ROOT: ${{ vars.SF_CI_ROOT }}
 
 jobs:
   build-and-test:
@@ -40,6 +40,7 @@ jobs:
     steps:
       - name: Sync the CI workspace to this commit
         run: |
+          if (-not $env:SF_CI_ROOT) { throw "Set the SF_CI_ROOT repository variable to the isolated CI workspace." }
           $smart = Join-Path $env:SF_CI_ROOT "Mods\GameFeatures\SmartFoundations"
           if (-not (Test-Path (Join-Path $env:SF_CI_ROOT ".sfci-workspace"))) {
             throw "CI workspace '$env:SF_CI_ROOT' is missing. Create it with scripts/ci/New-CIWorkspace.ps1 (see scripts/ci/README.md)."

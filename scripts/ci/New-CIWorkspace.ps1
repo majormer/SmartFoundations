@@ -12,7 +12,7 @@
       - Intermediate/, Saved/, DerivedDataCache/  (UBT makefiles store absolute paths; rebuilt per workspace)
       - Mods/GameFeatures/*                       (the maintainer's other mods; CI clones Smart itself)
       - Mods/SmartFoundations                     (pre-GameFeatures leftover; would duplicate the plugin name)
-      - Plugins/AdaMCP                            (editor MCP server; would bind a port during CI editor runs)
+      - Additional local plugins named by ExcludeDirectories
 
     Re-running refreshes the engine-side copy (robocopy only copies changed files) and leaves the
     Smart clone and all build outputs in place.
@@ -25,15 +25,24 @@
 
 .PARAMETER RepoUrl
     Smart's repository. HTTPS so the runner account needs no SSH key (the repo is public).
+
+.PARAMETER ExcludeDirectories
+    Extra project-relative directories to omit, such as local development plugins.
+    Defaults to the semicolon-separated SF_CI_EXCLUDED_DIRECTORIES environment variable.
 #>
 [CmdletBinding()]
 param(
-    [string]$DevRoot = "L:\SatisfactoryDevEnvironment\SatisfactoryModLoader",
-    [string]$CiRoot = "L:\SFCI\SML",
-    [string]$RepoUrl = "https://github.com/majormer/SmartFoundations.git"
+    [string]$DevRoot = $env:FACTORYGAME_PROJECT_ROOT,
+    [string]$CiRoot = $env:SF_CI_ROOT,
+    [string]$RepoUrl = "https://github.com/majormer/SmartFoundations.git",
+    [string[]]$ExcludeDirectories = @($env:SF_CI_EXCLUDED_DIRECTORIES -split ';' | Where-Object { $_ })
 )
 
 $ErrorActionPreference = "Stop"
+
+if (-not $DevRoot -or -not $CiRoot) {
+    throw "Provide DevRoot and CiRoot, or set FACTORYGAME_PROJECT_ROOT and SF_CI_ROOT."
+}
 
 if (-not (Test-Path (Join-Path $DevRoot "FactoryGame.uproject"))) {
     throw "DevRoot '$DevRoot' does not contain FactoryGame.uproject."
@@ -48,9 +57,16 @@ $excludeDirs = @(
     "Intermediate", "Saved", "DerivedDataCache", ".git", ".vs",
     (Join-Path $DevRoot "Mods\GameFeatures"),
     (Join-Path $DevRoot "Mods\SmartFoundations"),
-    (Join-Path $DevRoot "Plugins\AdaMCP"),
     (Join-Path $DevRoot 'Plugins\$mod')
 )
+foreach ($relative in $ExcludeDirectories) {
+    $root = [IO.Path]::GetFullPath($DevRoot).TrimEnd('\')
+    $excluded = [IO.Path]::GetFullPath((Join-Path $root $relative))
+    if (-not $excluded.StartsWith($root + '\', [StringComparison]::OrdinalIgnoreCase)) {
+        throw "Excluded directories must stay within DevRoot: '$relative'."
+    }
+    $excludeDirs += $excluded
+}
 Write-Host "Mirroring engine-side project files: $DevRoot -> $CiRoot"
 $robocopyArgs = @($DevRoot, $CiRoot, "/E", "/XD") + $excludeDirs + @("/XF", "*.sln", "/R:1", "/W:1", "/MT:16", "/NFL", "/NDL", "/NP", "/NJH")
 & robocopy @robocopyArgs

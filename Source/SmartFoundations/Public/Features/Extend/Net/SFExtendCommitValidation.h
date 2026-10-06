@@ -4,6 +4,8 @@
 #include "ItemAmount.h"
 
 class AFGHologram;
+class USFSubsystem;
+class FSFExtendAuthorityScope;
 
 namespace SFExtendCommitValidation
 {
@@ -18,9 +20,12 @@ namespace SFExtendCommitValidation
         TMap<TWeakObjectPtr<AFGHologram>, bool> Prepared;
     private:
         FRequestScope* Previous;
+        TUniquePtr<FSFExtendAuthorityScope> Authority;
+        friend void IsolateAuthority(USFSubsystem*, AFGHologram*);
     };
     bool IsRequestActive();
     const bool* FindPrepared(AFGHologram* Root);
     void SetPrepared(AFGHologram* Root, bool Valid);
+    void IsolateAuthority(USFSubsystem* Subsystem, AFGHologram* Root);
     bool SameCost(const TArray<FItemAmount>& Preview, const TArray<FItemAmount>& Authoritative);
 }

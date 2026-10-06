@@ -6,6 +6,7 @@
  */
 
 #include "Subsystem/SFSubsystemImpl.h"
+#include "Features/Extend/Net/SFExtendAuthorityScope.h"
 #include "Features/Walk/SFWalkService.h"
 #include "Buildables/FGBuildableFactory.h"
 #include "FGUnlockSubsystem.h"
@@ -185,6 +186,7 @@ FString USFSubsystem::GetRecipeWithIngredient(TSubclassOf<UFGRecipe> Recipe) con
 
 void USFSubsystem::UpdateCounterDisplay()
 {
+    if (FSFExtendAuthorityScope::IsActive(this)) return;
     // Build formatted strings (Phase B): route through HUD service
     TPair<FString, FString> DisplayLines = HudService
         ? HudService->BuildCounterDisplayLines()

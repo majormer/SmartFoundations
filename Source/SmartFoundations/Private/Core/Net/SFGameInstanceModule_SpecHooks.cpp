@@ -26,6 +26,8 @@
 #include "Hologram/FGStandaloneSignHologram.h"    // [MP-SPEC] multi-step gate: sign height step
 #include "Holograms/Logistics/SFConveyorBeltHologram.h"  // #341: DrainStackBuiltConveyors
 #include "FGConstructDisqualifier.h"
+#include "FGRecipe.h"
+#include "Resources/FGBuildingDescriptor.h"
 #include "FGCentralStorageSubsystem.h"
 #include "FGGameState.h"
 #include "Core/SF_ATAnchor.h"
@@ -38,6 +40,7 @@
 #include "Features/Extend/SFExtendService.h"
 #include "Features/Extend/SFExtendBuiltActors.h"
 #include "Features/Extend/Net/SFExtendCommitValidation.h"
+#include "Features/Extend/Net/SFExtendAuthorityScope.h"
 #include "Features/Extend/SFExtendWirePreviewScope.h"
 #include "Features/Walk/SFWalkService.h"   // Smart Walking (#356 Slice 3) server-side commit reconstruction
 #include "Equipment/FGBuildGunBuild.h"        // UFGBuildGunStateBuild::InternalConstructHologram / GetHologram
@@ -493,6 +496,13 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
     SUBSCRIBE_METHOD(UFGBuildGunStateBuild::InternalConstructHologram,
         [=](auto& scope, UFGBuildGunStateBuild* self, FNetConstructionID Id)
         {
+            USFSubsystem* SS = USFSubsystem::Get(self->GetWorld());
+            AFGHologram* Root = self->GetHologram();
+            TUniquePtr<FSFExtendAuthorityScope> Authority;
+            if (!FSFExtendAuthorityScope::IsActive(SS)
+                && Root && !Root->GetParentHologram()
+                && FSFExtendAuthorityScope::ShouldIsolate(SS, Root->GetConstructionInstigator(), Root->GetBuildClass()))
+                Authority = MakeUnique<FSFExtendAuthorityScope>(SS, Root);
             SFExtendCommitValidation::FRequestScope Request;
             AFGHologram* Holo = self->GetHologram();
             if (IsExtendConstructionRequest(Holo))
@@ -518,12 +528,34 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
     SUBSCRIBE_METHOD_VIRTUAL(UFGBuildGunStateBuild::Server_ConstructHologram_Implementation, BuildStateCDO,
         [](auto& scope, UFGBuildGunStateBuild* self, FNetConstructionID Id, FConstructHologramMessage Data)
         {
+            // [MP-AUTH] Vanilla deserializes the root inside this RPC. Isolate by
+            // its owning pawn through validation, wiring and post-Construct payment.
+            USFSubsystem* SS = USFSubsystem::Get(self->GetWorld());
+            AFGBuildGun* Gun = self->GetBuildGun();
+            UClass* BuildClass = nullptr;
+            if (Data.Recipe)
+            {
+                const TArray<FItemAmount>& Products = Data.Recipe->GetDefaultObject<UFGRecipe>()->GetProducts();
+                if (Products.Num() == 1 && Products[0].ItemClass
+                    && Products[0].ItemClass->IsChildOf(UFGBuildingDescriptor::StaticClass()))
+                    BuildClass = UFGBuildingDescriptor::GetBuildableClass(Products[0].ItemClass.Get());
+            }
+            TUniquePtr<FSFExtendAuthorityScope> Authority;
+            // A recent staged Extend cannot classify a later different recipe's build.
+            // Unknown message classes wait for the exact deserialized-root fallback.
+            if (!FSFExtendAuthorityScope::IsActive(SS)
+                && FSFExtendAuthorityScope::ShouldIsolate(SS, Gun ? Gun->GetInstigator() : nullptr, BuildClass))
+                Authority = MakeUnique<FSFExtendAuthorityScope>(SS);
             SFExtendCommitValidation::FRequestScope Request;
             scope(self, Id, Data);
         });
     SUBSCRIBE_METHOD(AFGHologram::ValidatePlacementAndCost,
         [=](auto& scope, AFGHologram* self, UFGInventoryComponent* Inventory)
         {
+            // Equipment can temporarily have no instigator during server deserialization.
+            // The validated root supplies the exact player/class; retain its authority
+            // scope on the outer request through construction and material payment.
+            SFExtendCommitValidation::IsolateAuthority(USFSubsystem::Get(self->GetWorld()), self);
             if (!SFExtendCommitValidation::IsRequestActive() || !IsExtendConstructionRequest(self))
             {
                 scope(self, Inventory);
@@ -548,10 +580,21 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
                 bool Valid = true;
                 if (Staged) Valid = Extend->ReconstructCommitOnServer(self, Commit) > 0 && Extend->IsScaledExtendValid();
                 Valid = Valid && Extend->ValidatePowerPlanForConstruction(self, Reason);
-                if (Valid && Staged && !SFExtendCommitValidation::SameCost(Commit.Cost, self->GetCost(true)))
+                const TArray<FItemAmount> AuthorityCost = Valid && Staged ? self->GetCost(true) : TArray<FItemAmount>();
+                if (Valid && Staged && !SFExtendCommitValidation::SameCost(Commit.Cost, AuthorityCost))
                 {
                     Valid = false;
                     Reason = TEXT("The source layout or cable quote changed. Re-select the source before building.");
+                    const auto DescribeCost = [](const TArray<FItemAmount>& Cost)
+                    {
+                        FString Result;
+                        for (const FItemAmount& Item : Cost)
+                            Result += FString::Printf(TEXT("%s%s=%d"), Result.IsEmpty() ? TEXT("") : TEXT(","), *GetNameSafe(Item.ItemClass.Get()), Item.Amount);
+                        return Result;
+                    };
+                    UE_LOG(LogSmartFoundations, Warning,
+                        TEXT("Extend quote mismatch: preview=[%s] authority=[%s] children=%d restore=%d"),
+                        *DescribeCost(Commit.Cost), *DescribeCost(AuthorityCost), self->GetHologramChildren().Num(), Commit.bIsRestore);
                 }
                 SFExtendCommitValidation::SetPrepared(self, Valid);
                 if (!Valid)
@@ -801,7 +844,8 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 			{
 				if (USFSubsystem* SS = USFSubsystem::Get(self->GetWorld()))
 				{
-					if (USFWalkService* Walk = SS->GetWalkService(); Walk && Walk->IsActive())
+					if (USFWalkService* Walk = SS->GetWalkService();
+                        !FSFExtendAuthorityScope::IsActive(SS) && Walk && Walk->IsActive())
 					{
 						WalkSpec = Walk->BuildCommitSpec();
 						bHaveWalkCost = WalkSpec.bValid;

@@ -7,6 +7,7 @@
  */
 
 #include "Subsystem/SFSubsystem.h"
+#include "Features/Extend/Net/SFExtendAuthorityScope.h"
 #include "Subsystem/SFSubsystemImpl.h"
 #include "Features/Walk/SFWalkService.h"
 #include "UI/SFWalkPanelWidget.h"
@@ -178,6 +179,7 @@ bool USFSubsystem::ShouldSuppressNormalGridChildren() const
 
 void USFSubsystem::ClearNormalGridChildrenForExtendSuppression(const TCHAR* Context)
 {
+    if (FSFExtendAuthorityScope::IsActive(this)) return;
 	if (!HologramHelper)
 	{
 		return;
@@ -389,6 +391,9 @@ void USFSubsystem::UpdateCounterState(const FSFCounterState& NewState)
 
 	// Mirror GridCounters for legacy API compatibility (non-const ref accessor required)
 	GridCounters = CounterState.GridCounters;  // Sync deprecated mirror
+
+    // [MP-AUTH] Transaction counters never rebuild the host's preview or change its HUD/latch.
+    if (FSFExtendAuthorityScope::IsActive(this)) return;
 
 	// Refresh HUD immediately
 	UpdateCounterDisplay();

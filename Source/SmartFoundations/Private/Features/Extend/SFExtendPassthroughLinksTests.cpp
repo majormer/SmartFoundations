@@ -39,6 +39,11 @@ bool FSFExtendPassthroughLinksTest::RunTest(const FString& Parameters)
         Faces[0].bOccupied = true;
         TestEqual(TEXT("Occupied face cannot be overwritten"), SFExtendPassthroughLinks::Plan(Faces, Endpoints).Num(), 1);
         Faces[0].bOccupied = false;
+        // Native floor-hole construction can inset a snapped pipe endpoint into the
+        // foundation rather than leaving it on the geometric outer face.
+        Endpoints[2].Location.Z -= Thickness * 0.5f;
+        TestEqual(TEXT("Captured identity retains a native inset endpoint"), SFExtendPassthroughLinks::Plan(Faces, Endpoints).Num(), 2);
+        Endpoints[2] = A;
         Faces[0].CapturedEndpoint.Connector = TEXT("Missing");
         TestEqual(TEXT("Wrong named endpoint never falls back to proximity"), SFExtendPassthroughLinks::Plan(Faces, Endpoints).Num(), 1);
         Faces[0].CapturedEndpoint = FSFConnectionRef();

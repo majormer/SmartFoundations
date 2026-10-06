@@ -14,6 +14,7 @@ class AFGBuildablePipeline;
 class AFGBuildableConveyorAttachment;
 class UFGFactoryConnectionComponent;
 class UFGPipeConnectionComponent;
+class UPackageMap;
 
 /**
  * Lightweight vector value used by clone topology structs.
@@ -396,6 +397,10 @@ struct FSFSourceTopology
     
     /** Capture topology from existing CachedTopology struct */
     static FSFSourceTopology CaptureFromTopology(const struct FSFExtendTopology& Topology);
+
+    // [MP-REPL] Explicit bounded value serialization retains maps (socket positions
+    // and independent power-face budgets) which default RPC property layout omits.
+    bool NetSerialize(FArchive& Ar, UPackageMap* Map, bool& bOutSuccess);
     
     /** Check if topology has any chains */
     bool IsValid() const 
@@ -403,6 +408,12 @@ struct FSFSourceTopology
         return BeltInputChains.Num() > 0 || BeltOutputChains.Num() > 0 || 
                PipeInputChains.Num() > 0 || PipeOutputChains.Num() > 0; 
     }
+};
+
+template<>
+struct TStructOpsTypeTraits<FSFSourceTopology> : TStructOpsTypeTraitsBase2<FSFSourceTopology>
+{
+    enum { WithNetSerializer = true };
 };
 
 // ============================================================================
@@ -469,7 +480,10 @@ struct FSFCloneHologram
     UPROPERTY() FString PowerConnectorName;
     UPROPERTY() FString ConnectedPowerPoleConnectorName;
     UPROPERTY() FString FactoryPowerConnectorName;
-    UPROPERTY() TMap<FString, int32> PowerPortCapacities;
+    // Saved reference metadata uses the explicit Restore JSON codec. RPC cable
+    // records below carry their exact endpoint capacities; native RPC property
+    // serialization does not support TMap and must not traverse this local map.
+    TMap<FString, int32> PowerPortCapacities;
     // Exact endpoints of wire_cost entries. Targets are scoped construction IDs,
     // or source:<actor-id> for an existing source. Never a nearest-port query.
     UPROPERTY() FSFConnectionRef PowerFrom;

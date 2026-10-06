@@ -1405,6 +1405,11 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 
 void FSFPipeAutoConnectManager::ClearPipePreviews()
 {
+	// The manager survives a clear. Its previous route signature no longer describes
+	// any previews, so an unchanged placement must be evaluated again after re-enabling
+	// Auto-Connect or changing its tier, style, or routing settings.
+	bHasLastEvalSignature = false;
+
 	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🔧 PIPE: Clearing all pipe children (%d building, %d buildingB, %d manifold, %d floorHole)"), 
 		BuildingPipeChildren.Num(), BuildingPipeChildrenB.Num(), ManifoldPipeChildren.Num(), FloorHolePipeChildren.Num());
 	

@@ -80,6 +80,7 @@ enum class ESFRecipeSource : uint8
 UCLASS()
 class SMARTFOUNDATIONS_API USFRecipeManagementService : public UObject
 {
+    friend class FSFExtendAuthorityScope;
 	GENERATED_BODY()
 
 public:

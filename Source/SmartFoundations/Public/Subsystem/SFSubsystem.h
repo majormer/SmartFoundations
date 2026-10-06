@@ -108,6 +108,8 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSFHologramLifecycleEvent, class A
 UCLASS(BlueprintType, Blueprintable)
 class SMARTFOUNDATIONS_API USFSubsystem : public UWorldSubsystem, public FTickableGameObject
 {
+    friend class FSFExtendAuthorityScope;
+    friend class FSFExtendAuthorityIsolationTest;
 	GENERATED_BODY()
 
 public:

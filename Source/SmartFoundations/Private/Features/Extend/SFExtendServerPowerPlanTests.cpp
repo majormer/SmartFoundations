@@ -54,6 +54,16 @@ bool FSFExtendServerPowerPlanTest::RunTest(const FString& Parameters)
             Owner->StoredCloneTopology->ChildHolograms.Num(), 19);
         TestTrue(TEXT("Server preserves its unexpanded base for the next request"),
             Owner->ScaledExtendBaseTopology.IsValid() && Owner->ScaledExtendBaseTopology->ChildHolograms.Num() == 2);
+        const TSharedPtr<FSFCloneTopology> ModuleUnit = Owner->GetLastCloneTopology();
+        if (TestTrue(TEXT("Module capture returns a retained unit"), ModuleUnit.IsValid()))
+        {
+            TestEqual(TEXT("Module excludes scaled factories and their infrastructure"), ModuleUnit->ChildHolograms.Num(), 2);
+            TestEqual(TEXT("Module retains the exact double-outlet face"), ModuleUnit->ChildHolograms[0].PowerTo.Connector,
+                FString(TEXT("PowerConnection2")));
+            ModuleUnit->ChildHolograms.Reset();
+            TestEqual(TEXT("Module editing cannot mutate the authoritative unit"), Owner->ScaledExtendBaseTopology->ChildHolograms.Num(), 2);
+            TestEqual(TEXT("Module editing cannot mutate the paid construction plan"), Owner->StoredCloneTopology->ChildHolograms.Num(), 19);
+        }
         TSet<FString> Ids;
         for (const FSFCloneHologram& Wire : Owner->StoredCloneTopology->ChildHolograms) Ids.Add(Wire.HologramId);
         TestEqual(TEXT("No duplicate plan records across requests"), Ids.Num(), 19);

@@ -22,6 +22,8 @@ The panel has **Apply**, **Reset**, and **Close** buttons in a row under the hea
 
 > Screenshot placeholder: Smart Settings Form with Auto-Connect settings visible.
 
+With **Apply Immediately** off, **Apply** also rebuilds Auto-Connect previews using your pending choices. For blueprint placements, X/Y/Z spacing changes override the configured defaults for the current blueprint session.
+
 ## HUD
 
 The HUD shows your current Smart! values while building. It is useful when you are adjusting with keybinds instead of the panel.
@@ -47,3 +49,7 @@ Use it for:
 - Running the upgrade.
 
 See [Smart Upgrade](Smart-Upgrade).
+
+---
+
+_Last updated: 2026-10-06 · Smart! v34.4.0_

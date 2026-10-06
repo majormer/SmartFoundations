@@ -6,11 +6,16 @@
  */
 
 #include "Subsystem/SFSubsystemImpl.h"
+#include "Features/Extend/Net/SFExtendAuthorityScope.h"
 #include "Core/Net/SFNetworkHelper.h"  // [#334] authority gate
 
 
 void USFSubsystem::OnActorSpawned(AActor* SpawnedActor)
 {
+    // [MP-AUTH] Staged Extend owns exact actor identity, wiring and factory settings
+    // at the synchronous Construct seam. Local preview observers must not apply
+    // their sampled recipe, connection plans or next-tick wiring to this build.
+    if (FSFExtendAuthorityScope::IsActive(this)) return;
 	// Delegate to recipe management service
 	if (RecipeManagementService)
 	{
