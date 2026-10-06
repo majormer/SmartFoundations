@@ -9,7 +9,7 @@ This page tracks the screenshots needed to replace wiki placeholders. Keep scree
 | Home | Smart! logo or clean in-game shot showing a Smart grid preview with HUD visible |
 | Quick Start | Smart Panel open on a simple foundation hologram with grid values set to `3 x 3 x 1` |
 | Videos and Tutorials | Two thumbnail-style cards for the current Smart! overview videos |
-| Controls | Satisfactory Options > Controls > Mods showing Smart! keybinds |
+| Controls | Satisfactory Options > Keybindings > "Smart! Mod Controls" showing Smart! keybinds |
 
 ## UI
 

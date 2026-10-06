@@ -50,7 +50,7 @@ Controls:
 
 - Hold `Y`.
 - Use `Num 8`, `Num 5`, or mouse wheel.
-- Press `Num 0` to cycle X, Y, ZX, and ZY.
+- Press `Num 0` to toggle between the **Stack** and **Flat** stagger families; re-tap `Y` to switch direction within a family (`Num 9` / `Num 3` jump straight to Stack or Flat).
 
 ## Rotation
 
@@ -74,4 +74,4 @@ Either way it stays a flat, upright arc — nothing ever tilts or flips. (Smart!
 
 ---
 
-_Last updated: 2026-07-14 · Smart! v34.2.1_
+_Last updated: 2026-10-06 · Smart! v34.4.0_

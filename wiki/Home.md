@@ -27,6 +27,7 @@ Start here:
 - [Auto-Connect](Auto-Connect): preview belts, pipes, and power lines automatically.
 - [Smart Blueprints](Smart-Blueprints): scale your own blueprints into a grid, wired together.
 - [Extend](Extend): copy an existing working factory module.
+- [Smart Walking](Smart-Walking): lay a connected belt, pipe, or hypertube run that turns and climbs.
 - [Smart Restore](Smart-Restore): save, share, and replay Smart! setups and whole module layouts.
 - [Smart Upgrade](Smart-Upgrade): upgrade or downgrade belts, lifts, and pipes, or upgrade power poles, in batches.
 - [Smart Dismantle](Smart-Dismantle): dismantle Smart-built groups through vanilla Blueprint Dismantle.

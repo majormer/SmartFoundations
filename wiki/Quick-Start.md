@@ -19,10 +19,10 @@ Smart! will charge the normal material cost for all 9 foundations.
 
 With a buildable hologram active:
 
-- Press `Num 8` to increase X.
-- Press `Num 5` to decrease X.
+- Press `Num 8` or `Num 5` to increase or decrease the active axis (X by default).
 - Press `Num 6` or `Num 4` to adjust Y.
 - Press `Num 9` or `Num 3` to adjust Z.
+- Press `Num 0` to change which axis `Num 8` / `Num 5` adjust.
 
 If you prefer mouse wheel control, hold a Smart modifier:
 
@@ -38,6 +38,7 @@ If you prefer mouse wheel control, hold a Smart modifier:
 - Use Auto-Connect with a small row of splitters and machines.
 - Scale one of your own blueprints into a small grid and watch the belts/pipes wire between the copies ([Smart Blueprints](Smart-Blueprints)).
 - Use Extend after you have one working production module.
+- Try [Smart Walking](Smart-Walking) for a connected belt, pipe, or hypertube run that turns and climbs.
 
 ## Build Normally For a While
 

@@ -24,6 +24,26 @@ The panel has **Apply**, **Reset**, and **Close** buttons in a row under the hea
 
 With **Apply Immediately** off, **Apply** also rebuilds Auto-Connect previews using your pending choices. For blueprint placements, X/Y/Z spacing changes override the configured defaults for the current blueprint session.
 
+## Smart Walking
+
+When you are holding a stackable conveyor pole or pipeline support, the Smart Panel shows a **Smart Walking** button. Click it to start a walk and open the Smart Walking panel.
+
+The panel is an editable table of every segment in the run:
+
+- Advance, turn, rise, and shift values for each segment.
+- Each segment's exit heading, shown as a compass bearing.
+
+It also sets options for the whole path:
+
+- Tier.
+- Routing.
+- Belt flow direction (belts only).
+- Pipe style (pipes only).
+
+See [Smart Walking](Smart-Walking).
+
+> Screenshot placeholder: Smart Walking panel with the segment table open.
+
 ## HUD
 
 The HUD shows your current Smart! values while building. It is useful when you are adjusting with keybinds instead of the panel.
@@ -34,6 +54,8 @@ It can show:
 - Active mode.
 - Selected axis.
 - Transform values.
+
+While you are walking a run, the HUD also shows a compact walk badge with the segment count and current heading.
 
 > Screenshot placeholder: HUD visible while Spacing mode is active.
 

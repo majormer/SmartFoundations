@@ -40,13 +40,13 @@ Do save before changing any mod setup. If you used Smart Camera, remove that com
 
 ## Does Smart! Work In Multiplayer?
 
-Yes. Smart! works in multiplayer on dedicated servers (Windows and Linux). Every feature — scaling, Auto-Connect, Extend, Smart Upgrade, Smart Restore, and Smart Dismantle — works when you play as a client, with normal build costs, and everything Smart! places is a standard replicated building that other players can see, use, and dismantle.
+Yes. Smart! works in multiplayer on dedicated servers (Windows and Linux). Every feature — scaling, Auto-Connect, Extend, Smart Walking, Smart Upgrade, Smart Restore, and Smart Dismantle — works when you play as a client, with normal build costs, and everything Smart! places is a standard replicated building that other players can see, use, and dismantle.
 
 Install the same Smart! version on the server and on every client; the Mod Manager keeps them matched. Multiplayer is newer than single-player, so if something behaves differently in a session than it does solo, please report it. See [Compatibility and Multiplayer](Compatibility-and-Multiplayer).
 
 ## Will Smart! Work With Satisfactory 1.2?
 
-Yes. Smart! runs on Satisfactory 1.2 — it was rebuilt for the 1.2 engine and is the current supported version. If you are coming from a 1.1 build, just update Smart! through the Mod Manager.
+Smart! 34.4.0 requires Satisfactory 1.2.4 / CL 502094 or newer with SML 3.12.x. Older game builds are unsupported; update the game and mods together.
 
 ## Why Doesn't Smart! Load On My Dedicated Server After Updating To 1.2?
 
@@ -60,7 +60,7 @@ Check the simple things first:
 
 - You are holding the build gun.
 - You have an active buildable hologram.
-- The control is still bound under Options > Controls > Mods.
+- The control is still bound under Options > Keybindings > "Smart! Mod Controls".
 - You are not typing into a search box or another UI.
 - The selected buildable is supported by the Smart feature you are trying to use.
 
@@ -137,7 +137,15 @@ Some parts became supported later than Extend itself. For example, power poles, 
 
 Yes. Scaled Extend returned on February 23, 2026.
 
-Activate Extend on a valid source, then use X/Y scaling to add copies and rows. Z scaling, Z spacing, and stagger are hidden while Scaled Extend is active because they do not apply to that topology.
+Activate Extend on a valid source, then use X/Y scaling to add copies and rows. Z scaling adds vertical layers, and Z spacing sets the floor interval. Each layer repeats the horizontal module; Smart! does not automatically connect belts or pipes between floors.
+
+## Can Smart! Build Belt Or Pipe Runs That Turn Corners Or Climb Slopes?
+
+Yes. Smart Walking lays one connected belt or pipe run that turns corners, climbs slopes, and routes to a destination, instead of a straight, uniform grid.
+
+Hold a stackable conveyor pole (for belts) or stackable pipeline support (for pipes), press `K` to open the Smart Panel, then click the **Smart Walking** button. Steer the leading segment forward one piece at a time with the existing scaling controls, then fire the build gun to build the whole run at once, at normal cost.
+
+It works in single-player and as a client on a dedicated server. See [Smart Walking](Smart-Walking).
 
 ## Why Are Miners Or Some Special Buildables Unsupported?
 
@@ -190,4 +198,4 @@ For Extend or Auto-Connect issues, include a screenshot of the source layout bef
 
 ---
 
-_Last updated: 2026-07-14 · Smart! v34.2.1_
+_Last updated: 2026-10-06 · Smart! v34.4.0_

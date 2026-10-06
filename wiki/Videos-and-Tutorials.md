@@ -2,6 +2,33 @@
 
 Videos are often the quickest way to understand what Smart! is trying to do. Some older videos show controls or features that have changed, but they are still useful for seeing the kinds of layouts Smart! was built to support.
 
+## Official Tutorial Series
+
+*Smart! — The Complete Guide.* A hub-and-spoke series: a general-use primer plus a deep-dive per feature. New episodes are still being recorded — the roadmap below shows what is out and what is coming.
+
+▶ **[Full playlist on YouTube](https://www.youtube.com/playlist?list=PLUr0oVkBNPOY)**
+
+### Out now
+
+| | | |
+|---|---|---|
+| [![Smart! overview](https://i.ytimg.com/vi/FTlTEfIbBxw/mqdefault.jpg)](https://www.youtube.com/watch?v=FTlTEfIbBxw) | [![Grid Scaling](https://i.ytimg.com/vi/TVowO9mHJHw/mqdefault.jpg)](https://www.youtube.com/watch?v=TVowO9mHJHw) | [![Transforms](https://i.ytimg.com/vi/MHbUxe4F9Iw/mqdefault.jpg)](https://www.youtube.com/watch?v=MHbUxe4F9Iw) |
+| **Overview** — [Build Bigger Factories with Far Fewer Clicks](https://www.youtube.com/watch?v=FTlTEfIbBxw) | **Ep 2** — [Grid Scaling](https://www.youtube.com/watch?v=TVowO9mHJHw) | **Ep 3** — [Transforms](https://www.youtube.com/watch?v=MHbUxe4F9Iw) |
+
+### Coming soon
+
+Recording in progress — thumbnails and links go live as each episode publishes.
+
+- **Ep 1** — Smart! 101 (General Use) — the primer *(Planned)*
+- **Ep 4** — Auto-Connect: belts, pipes, power, hypertube *(Planned)*
+- **Ep 5** — Smart Walking *(Planned)*
+- **Ep 6** — Extend & Scaled Extend *(Planned)*
+- **Ep 7** — Managing Builds: Upgrade & Dismantle *(Planned)*
+- **Ep 8** — Smart Restore *(Planned)*
+- **Ep 9** — Customizing Smart *(Planned)*
+- **Bonus** — Power-User Tricks & Troubleshooting *(Planned)*
+- **Bonus** — Smart Camera (companion mod) *(Planned)*
+
 ## Current Smart! Videos
 
 These are the best starting points for the rebuilt Smart! mod on current Satisfactory/SML versions.
