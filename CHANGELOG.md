@@ -7,6 +7,93 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > **Audience note:** This changelog is read by players, not developers. Entries should describe what the user experiences — what was broken, what it felt like, and what's better now. Class names, internal APIs, and implementation details belong in code comments or design docs, not here. Unless an entry says otherwise, changes apply to both single-player and multiplayer.
 
+## [34.4.0] - 2026-10-06
+
+### Added
+
+- **Turn Smart building assistance off for a session** - Num Decimal now toggles Smart assistance without changing saved settings. Disabling cancels the current preview; select a recipe again to build normally, including large vanilla blueprints. The toggle survives recipe changes and holstering and can be rebound under Options > Controls > Mods for keyboards without a numpad. Each multiplayer player controls their own assistance. Smart construction payload limits are unchanged. (Issues #529, #510; requested by @msalaba01 and @SonarClouds)
+
+- **Power connections between repeated blueprints** - Blueprint Seam Auto-Connect can now link matching power-pole sockets between grid copies when Power Auto-Connect is enabled. It preserves separate internal circuits and accounts for internal cables and each wall outlet face's remaining slots. Auto mode connects a continuous chain across the grid, including vertical layers; cables outside the normal length limit are omitted. (Issue #501, requested by @snd13)
+
+- **Choose default blueprint spacing on each axis** - Building Behavior now has separate X, Y, and Z blueprint-spacing defaults. Set them to zero for flush floors, or retain gaps for seam connections. The existing 1 m defaults are unchanged, and panel adjustments still last for the current blueprint build session. (Issue #525, requested by @numeralnathan)
+
+- **Smart Upgrade can also downgrade belts, lifts, and pipes** - Select a lower unlocked logistics tier. A specific tier row changes only that tier; the network's All tiers row brings every differing logistics tier to the selected target. Costs and refunds use the existing replacement accounting. Power poles and wall outlets remain upgrade-only, including in All tiers selections. (Issue #506, requested by @nmuhlbauer)
+
+- **Wall outlets support grid scaling and Auto-Connect** - Single- and double-sided Wall Outlets Mk.1, Mk.2, and Mk.3 can now be repeated with Smart's grid and spacing controls, using a 1 m default interval. Auto mode wires one continuous chain through horizontal and vertical grids. Double-sided outlets can supply nearby unconnected buildings from either face, with capacity and reserved slots counted separately per face. Preview wires keep their positions as the grid moves, and built wires retain the selected connections. (Issue #541)
+
+- **Scaled Extend can repeat layouts vertically** - Grid Z now adds layers above or below the source, with adjustable Z spacing through the Smart Panel and existing keyboard/wheel controls. Each floor retains its horizontal machine and logistics layout; no automatic belts or pipes are created between floors. (Issue #540)
+
+### Fixed
+
+- **Generated pipes retain their material cost if a preview loses its recipe** - Smart's fallback now recovers the pipe recipe and matches the game's length-based charge. An unresolved empty quote is no longer saved for later reuse. (Issue #553, found during investigation of #551)
+
+- **Applying pipe settings rebuilds the current previews** - With Apply Immediately off, Apply now refreshes the selected tier, style, and routing. Turning Pipe Auto-Connect off and back on also restores the previews without first moving the junction. (Related issue #551, reported by HerrywOw and Saxtus; the reported duplicate built pipes remain under investigation)
+
+- **Protect the listen-server host's building session when a client uses Extend or Restore** - Remote builds now keep their preview, grid counters, routing, tiers, and sampled machine settings separate from the host's session. Client topology queries also preserve the host's captured layout, and cancelled or rejected requests clean up their own previews. Completed previews release their hold when their root is destroyed, so another source can be selected. Two-player listen-server tests now cover paid scaled Extend, Restore, and host reselection. (Issue #547, reported by @lajizhou1)
+
+- **Multiplayer Extend previews retain the complete source layout** - Optimized conveyor actors and named distributor sockets now survive the source-layout reply. This keeps the client's material quote aligned with server reconstruction and preserves each power outlet face's separate capacity.
+
+- **Scaled Extend preserves the extra copies' power cables on multiplayer servers** - Additional factories and their cloned poles now receive their planned cables instead of only wiring the first copy. The server also checks the complete cable plan against socket capacities before building. Existing unwired builds are not changed automatically. (Related power-plan audits #543, #544)
+
+- **Multiplayer Scaled Extend no longer builds its extra copies twice** - Prepared Extend layouts now stay on their own construction path instead of being intercepted by ordinary grid power handling. This also keeps ordinary grid power connections out of Restore's already-priced cable plan. Existing overlapping buildings are left unchanged.
+
+- **Rotated Scaled Extend keeps pipe lanes in additional rows and levels** - Sideways row spacing no longer changes which junction ports are chosen for the forward pipe lane. This fixes valid rotated grids silently omitting pipe lanes while the overall preview stayed green. (Issue #546 follow-up)
+
+- **Copied pipe floor holes keep their own pipe attachments** - Extend, Scaled Extend, and Restore now match a floor hole to its captured pipe ends on the correct floor, including bottom pipes that the game seats inside the foundation. Copying a layout no longer searches nearby existing holes by horizontal position or overwrites occupied attachments. (Issue #542)
+
+- **Saving a module from a scaled Extend captures one complete unit** - Repeating several copies before using Save as Module no longer saves extra poles and cables with missing factory connections. The saved unit can be scaled again in Restore without a green preview being refused when you build it. Recapture affected older modules from a working layout.
+
+- **Extend and Restore no longer substitute a nearby factory for a missing copy** - Post-build wiring now matches copied factories to the buildings created by that placement. If a copy cannot be identified safely, its connections remain unresolved instead of being redirected to another existing factory nearby.
+
+- **Extend and Restore preserve each power outlet face and its available connections** - Copied cables retain the selected socket instead of choosing the first face of a double-sided outlet. Planned cables share that face's actual connection budget, including factory daisy chains and research-dependent limits. Cable previews contribute to the price without creating extra unconnected wires. A changed source layout, cable quote, or invalid socket plan is refused before construction; re-select the source to refresh it. Older saved layouts whose cable endpoints cannot be identified safely may need to be recaptured from the original build. (Issues #543, #544)
+
+- **Restored belt and pipe lanes retain their socket directions** - Rotating, stepping, or offsetting a saved layout no longer replaces valid socket directions with the diagonal between its endpoints. Older captures retain compatibility recovery where a socket direction cannot be established. (Issue #545)
+
+- **Rotating an Extend preview keeps existing power connections anchored** - The existing source end of a cable stays fixed while its copied end moves with the new layout. First and additional copies refresh their cable shape, price, and range checks consistently, and saved layouts retain the updated parent orientation. (Issue #546)
+
+- **Restore shows an invalid preview when copied power cables exceed the game's range** - Large spacing now turns the native factory preview red before placement, matching the server's refusal. Reducing the spacing restores normal building; rejected layouts do not take materials. (Issue #546 follow-up)
+
+- **Auto-connected pipes retain their source pipe's paint** - Generated pipes inherit paint from a connected pipe, including across multiplayer construction. A fitting inherits paint only when its connected pipes agree. Retargeting a preview to a connection without a paint source restores its original paint instead of carrying a previous pipe's color forward. (Issue #527, reported by @Saxtus)
+
+- **Adding splitters or mergers no longer turns newly Smart-built belts sideways** - Belts created through Extend, Scaled Extend, Restore, and Smart Auto-Connect retain their route when another splitter or merger is inserted. This fix applies to newly created belts; existing belts are left unchanged and should continue working. If an older belt turns sideways or forms an unexpected fork when you insert a splitter or merger, dismantle the affected belt sections and rebuild them, either manually or with the updated Smart! tools. There is no need to replace working belts. (Issue #504, reported by CN.ZX-xuwu)
+
+- **Ceiling-light connections use the same range and available slots as their previews** - When placing power poles, already-connected buildings no longer take planned slots away from unconnected ceiling lights and other consumers. Building the pole checks distance between the actual cable sockets, so an offset light socket within range is not rejected because its building center is farther away. The game's connection limits still apply, including the MAM research needed for a second building connection. (Issue #536, reported by Saxtus)
+
+- **Adding Extend rows no longer creates growing gaps** - New rows use the original module footprint instead of the size of the already-expanded preview. Growing or shrinking the grid also keeps each retained copy's wiring identity stable. (Issue #534, reported by Saxtus)
+
+- **Auto-connected pipes and scaled floor holes work inside Blueprint Designers** - Pipes generated from junctions and floor holes retain their designer ownership, addressing pipes omitted from saved blueprints or left behind after clearing the designer. Adding grid copies of a floor hole also no longer causes an otherwise-valid placement to be rejected. (Issue #526, reported by Saxtus)
+
+- **The Smart Panel and Upgrade panel follow the current build-gun selection immediately** - Switching between ordinary buildings and belts, lifts, pipes, or wires no longer briefly uses the previous selection to choose the panel or its HUD hint. (Issue #531, reported by Mia)
+
+- **Saved Smart Restore modules now create their vertical copies** - Grid Z previously increased the displayed total without placing the extra module layers. Restore now carries those layers through factory and infrastructure placement, post-build connection lookup, and camera focus, while preserving each layer's horizontal layout. (Issue #509, reported by @avarvashin2)
+
+- **Copied machines no longer receive unfunded Power Shards or Somersloops** - Each copied machine now checks the player's remaining inventory before filling its slots, including when multiple copies share a limited supply. Already-installed items are retained without charging for them again. Machines can still be built with fewer copied shards or sloops when the player runs out; this change prevents item duplication, rather than adding an all-or-nothing placement requirement. (Issue #524, reported by @DanzaDragon; shard/copy follow-up by @skagr)
+
+- **Dismantle protection now waits for the game's rain bookkeeping to finish** - Smart's rain-occlusion removal checks now use the same worker-completion boundary as the game's own removal code, rather than inspecting state that may still be updating. This hardens the existing protection; the intermittent origin of the reported crash remains under investigation. (Issue #514, reported by rokrae)
+
+- **Smart-scaled pillars and hypertube floor holes can be placed over foundations on dedicated servers again** - On a dedicated server, a Smart-scaled pillar snapped onto a foundation was refused with an "invalid floor" error, and scaled hypertube floor holes were refused with a mix of snap and clearance errors, even though the preview was green - while the same placements worked in single-player and against rocks or terrain. The cause: foundations are lightweight instances, and the reference to the one the client snapped to cannot cross to the server, so the server's re-check saw no floor at all. Smart now recognizes this case for its own placements and accepts the client's validated snap, exactly as it has done for wall-mounted supports since 33.x; all other server-side checks still apply. (Issue #522, reported by @LukasKrah and melonenbuby)
+
+- **Dedicated servers no longer crash during the belt health sweep after belts are removed** - Smart runs a periodic sweep that repairs belt bookkeeping the game can leave behind after upgrades and dismantles. That sweep runs on a short delay, and a belt group's chain reference could die in the gap - most visibly around removing belts, including in the Blueprint Designer - so the repair itself then handed the game a dead reference and crashed the server. The sweep now clears each chain reference before destroying it and refuses to re-register any belt whose group still points at a chain, logging what it skipped instead of crashing. (Issue #519, reported by @FeepingCreature and reincarnated as a sloth on the Smart! Discord)
+
+- **Using the game's zoop right after Smart scaling no longer builds duplicate buildings on top of each other** - Smart is designed to stand down the moment you start a zoop, but that stand-down ran slightly behind your input: clicking to build in the instant between starting a zoop drag and Smart noticing it could construct both the zoop's buildings and Smart's scaled copies at the same spots. Smart now enforces the stand-down at the moment of construction, which cannot be outraced: with a zoop active, Smart's scaled copies are dropped and zoop alone places the buildings, in single-player and multiplayer alike. Smart's zoop detection also now covers zoopable signs and billboards, not just factory buildings. (Issue #523, reported by melonenbuby on the Smart! Discord; continues issues #514 and #160)
+
+- **Added protection against the game's "added twice" rain-occlusion crash after dismantling and rebuilding** - 34.3.1's protection against the dismantle crash (#514) could leave the dismantled building's rain-occlusion shape behind in the game's rain system. Building something at the same spot afterwards, sometimes seconds later and sometimes much later, could register that shape a second time and trigger a Satisfactory 1.2.4 assertion. Smart now tracks forwarded registrations, including shapes its dismantle protection had to leave behind, and drops duplicate registrations before the game sees them. A skipped duplicate can leave a building without rain coverage. The log records the building involved; the underlying rain-bookkeeping problem remains under investigation. (Issue #523, reported by melonenbuby, skybyke, and LukasKrah; continues issue #514)
+
+### Changed
+
+- **Requires Satisfactory 1.2.4 / CL 502094 or newer** - The minimum supported game build now matches the production version used for this release. Older game builds are no longer supported.
+
+- **Updated translations in all 20 supported non-English languages** - The new session-toggle notices, blueprint-spacing options, Player Relative Controls descriptions, and Smart Upgrade messages now have translations and updated language resources.
+
+### Known issues
+
+- Intermittent rain/dismantle crashes remain under investigation despite the additional protection. (Issue #514)
+- Reported overlapping or doubled pipes have not been reproduced in the failing reporter setup. The preview refresh fixes above do not establish that this case is resolved. (Issue #551)
+- Industrial Evolution buildings with custom placement behavior still need compatibility investigation. (Issue #552)
+- A broader report of free blueprint placement is not confirmed fixed by the generated-pipe cost correction. Please include Smart!/SML/game versions, session type, blueprint and save context when reporting it.
+
+---
+
 ## [34.3.1] - 2026-08-16
 
 ### Fixed

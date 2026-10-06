@@ -112,3 +112,24 @@ bool FSFDistributorTopologyResolver::IsBelt(ESFDistributorTopologyKind Kind)
 {
 	return Kind == ESFDistributorTopologyKind::BeltSplitter || Kind == ESFDistributorTopologyKind::BeltMerger;
 }
+
+bool FSFDistributorTopologyResolver::GetLocalPortDirection(const FString& ClassName, FName Port, FVector& Out)
+{
+	Out = FVector::ZeroVector;
+	const ESFDistributorTopologyKind Kind = Resolve(ClassName, NAME_None).Kind;
+	if (IsPipe(Kind))
+	{
+		if (Port == Connection0) Out = -FVector::ForwardVector;
+		else if (Port == Connection1) Out = FVector::ForwardVector;
+		else if (Port == Connection2) Out = Kind == ESFDistributorTopologyKind::PipeT ? -FVector::RightVector : FVector::RightVector;
+		else if (Port == Connection3 && Kind == ESFDistributorTopologyKind::PipeCross) Out = -FVector::RightVector;
+	}
+	else if (IsBelt(Kind))
+	{
+		if (Port == Input1) Out = -FVector::ForwardVector;
+		else if (Port == Output1) Out = FVector::ForwardVector;
+		else if (Port == (Kind == ESFDistributorTopologyKind::BeltSplitter ? Output2 : Input2)) Out = FVector::RightVector;
+		else if (Port == (Kind == ESFDistributorTopologyKind::BeltSplitter ? Output3 : Input3)) Out = -FVector::RightVector;
+	}
+	return !Out.IsNearlyZero();
+}

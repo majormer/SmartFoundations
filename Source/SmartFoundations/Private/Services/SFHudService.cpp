@@ -44,7 +44,7 @@ static FText SF_TransformRoleLabel(
 	USFSubsystem::ESFPlayerRelativeSlot Slot,
 	bool bExtendActive)
 {
-	if (bExtendActive)
+	if (bExtendActive && Slot != USFSubsystem::ESFPlayerRelativeSlot::Vertical)
 	{
 		return Slot == USFSubsystem::ESFPlayerRelativeSlot::Side
 			? LOCTEXT("HUD_RoleRows", "Rows")
@@ -413,14 +413,16 @@ TPair<FString, FString> USFHudService::BuildCounterDisplayLines() const
 		{
 			int32 CloneCount = ExtendSvc->GetExtendCloneCount();
 			int32 RowCount = ExtendSvc->GetExtendRowCount();
+            const int32 LayerCount = ExtendSvc->GetExtendLayerCount();
 
-			if (CloneCount > 0 || RowCount > 1)
+			if (CloneCount > 0 || RowCount > 1 || LayerCount > 1)
 			{
 				// Show Extend with the number of buildings actually being placed. CloneCount is
 				// already the total (|X|: parent preview + additional scaled clones) — the source
 				// building is not part of the build and must not be counted.
 				FString ExtendLine = FText::Format(LOCTEXT("HUD_ExtendScaled", "*Extend: {0}x{1}"),
 					FText::AsNumber(CloneCount), FText::AsNumber(RowCount)).ToString();
+                if (LayerCount > 1) ExtendLine += FString::Printf(TEXT("x%d"), LayerCount);
 				if (!ExtendSvc->IsScaledExtendValid())
 				{
 					FString Reason = ExtendSvc->GetScaledExtendInvalidReason();
@@ -656,7 +658,7 @@ TPair<FString, FString> USFHudService::BuildCounterDisplayLines() const
     const bool bShowSpacingX = (State.SpacingX != 0) || (bSpacingActive && SpacingAxis == ESFScaleAxis::X);
     const bool bShowSpacingY = (State.SpacingY != 0) || (bSpacingActive && SpacingAxis == ESFScaleAxis::Y);
     const bool bIsExtendActive = Subsystem->IsExtendModeActive();
-    const bool bShowSpacingZ = !bIsExtendActive && ((State.SpacingZ != 0) || (bSpacingActive && SpacingAxis == ESFScaleAxis::Z));
+    const bool bShowSpacingZ = ((State.SpacingZ != 0) || (bSpacingActive && SpacingAxis == ESFScaleAxis::Z));
 	bool bAnySpacingPrinted = false;
 	if (bShowSpacingX)
 	{

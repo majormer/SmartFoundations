@@ -83,6 +83,7 @@ struct FSFWiringManifest;
 UCLASS()
 class SMARTFOUNDATIONS_API USFExtendService : public UObject
 {
+    friend class FSFExtendAuthorityIsolationTest;
     GENERATED_BODY()
 
     // Restore-replay logic lives in USFExtendRestoreReplayService but operates on this
@@ -91,6 +92,8 @@ class SMARTFOUNDATIONS_API USFExtendService : public UObject
     // Scaled Extend planning/preview lives in USFExtendScaledService but operates on this
     // service's shared scaled/wiring state (ScaledExtendClones, StoredCloneTopology, etc.) in place.
     friend class USFExtendScaledService;
+    // Narrow test fixture for the server spawn-to-merged-plan boundary.
+    friend class FSFExtendServerPowerPlanTest;
     // Post-build wiring (E-chain / built-child / manifold / JSON) lives in USFExtendWiringService
     // but operates on this service's shared registry maps + StoredCloneTopology in place (slice E2).
     friend class USFExtendWiringService;
@@ -140,6 +143,9 @@ public:
     /** Get the current extend row count (Y counter) */
     UFUNCTION(BlueprintCallable, Category = "Smart|Extend")
     int32 GetExtendRowCount() const;
+
+    /** Number of vertical layers, including the source layer. */
+    int32 GetExtendLayerCount() const;
 
     /** Check if Scaled Extend is active (extend mode + clone count > 1 or row count > 1) */
     UFUNCTION(BlueprintCallable, Category = "Smart|Extend")
@@ -320,6 +326,10 @@ public:
     void TickRestoredCloneTopology(float DeltaTime);
     void OnRestoredCloneTopologyStateChanged();
     bool IsRestoredCloneTopologyActive() const { return bRestoredCloneTopologyActive; }
+    bool OwnsRestoredPreview(const AFGHologram* Hologram) const
+    {
+        return Hologram && bRestoredCloneTopologyActive && RestoredCloneParentHologram.Get() == Hologram;
+    }
     bool IsHologramCompatibleWithRestoredCloneTopology(AFGHologram* ParentHologram) const;
     void ClearRestoredCloneTopologySession(const TCHAR* Reason);
 
@@ -416,6 +426,9 @@ public:
      * @return Number of connections successfully wired
      */
     int32 GenerateAndExecuteWiring(AFGBuildableFactory* NewFactory);
+
+    /** Re-evaluate exact native power sockets/capacity before native affordability/construction. */
+    bool ValidatePowerPlanForConstruction(AFGHologram* Parent, FString& OutReason) const;
 
     /**
      * Register a built conveyor (belt or lift) with its chain ID and index for later wiring.

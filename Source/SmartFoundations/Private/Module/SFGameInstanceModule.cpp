@@ -26,6 +26,7 @@
 #include "Services/SFChainActorService.h"  // [CHAIN-FIX] post-construct chain-hygiene sweep
 #include "Features/AutoConnect/SFAutoConnectService.h"
 #include "Features/Extend/SFExtendService.h"
+#include "Features/Scaling/SFWallOutletPlacement.h"
 
 // #513: all-mode construct payload guard
 #include "Equipment/FGBuildGunBuild.h"        // UFGBuildGunStateBuild::InternalConstructHologram / GetHologram
@@ -116,6 +117,7 @@ void USFGameInstanceModule::DispatchLifecycleEvent(ELifecyclePhase Phase)
 		// MP spec-based scaling construction (class-agnostic hook path - covers ALL scalable
 		// buildables including BP hologram wrappers, no hologram swap). See the method comment.
 		RegisterSpecConstructionHooks();
+		FSFWallOutletPlacement::RegisterHooks();
 
 		// [#368/#279] Wire the orphaned holster cleanup to the real build-gun unequip event.
 		RegisterBuildGunUnequipHook();
@@ -654,8 +656,17 @@ void USFGameInstanceModule::RegisterManagedHologramValidationHook()
 					// left some) so a stale flag cannot survive indefinitely once we cancel.
 					self->ResetConstructDisqualifiers();
 					scope.Cancel();
+					return;
 				}
 			}
+			scope(self);
+			// Restore can keep a native factory root. Its placement virtual must
+			// reflect the owned Restore plan's validity just like SFFactoryHologram.
+			// Exact parent identity keeps another player's preview out of this gate.
+			USFSubsystem* Subsystem = USFSubsystem::Get(self->GetWorld());
+			USFExtendService* Extend = Subsystem ? Subsystem->GetExtendService() : nullptr;
+			if (Extend && Extend->OwnsRestoredPreview(self) && !Extend->IsScaledExtendValid())
+				self->AddConstructDisqualifier(UFGCDInvalidPlacement::StaticClass());
 		});
 
 	UE_LOG(LogSmartFoundations, Verbose,

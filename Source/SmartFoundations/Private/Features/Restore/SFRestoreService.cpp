@@ -407,15 +407,32 @@ namespace
 		Obj->SetBoolField(TEXT("constructible"), Holo.bConstructible);
 		Obj->SetBoolField(TEXT("previewOnly"), Holo.bPreviewOnly);
 		Obj->SetNumberField(TEXT("thickness"), Holo.Thickness);
+		Obj->SetBoolField(TEXT("hasPassthroughLinks"), Holo.bHasPassthroughLinks);
+		Obj->SetObjectField(TEXT("passthroughTop"), ConnectionRefToJson(Holo.PassthroughTop));
+		Obj->SetObjectField(TEXT("passthroughBottom"), ConnectionRefToJson(Holo.PassthroughBottom));
 		Obj->SetNumberField(TEXT("userFlowLimit"), Holo.UserFlowLimit);
 		Obj->SetStringField(TEXT("connectedPowerPoleHologramId"), Holo.ConnectedPowerPoleHologramId);
 		Obj->SetNumberField(TEXT("powerPoleMaxConnections"), Holo.PowerPoleMaxConnections);
+		Obj->SetStringField(TEXT("powerConnectorName"), Holo.PowerConnectorName);
+		Obj->SetStringField(TEXT("connectedPowerPoleConnectorName"), Holo.ConnectedPowerPoleConnectorName);
+		Obj->SetStringField(TEXT("factoryPowerConnectorName"), Holo.FactoryPowerConnectorName);
+		Obj->SetObjectField(TEXT("powerFrom"), ConnectionRefToJson(Holo.PowerFrom));
+		Obj->SetNumberField(TEXT("powerFromCapacity"), Holo.PowerFromCapacity);
+		Obj->SetNumberField(TEXT("powerMaxLength"), Holo.PowerMaxLength);
+		Obj->SetNumberField(TEXT("powerToCapacity"), Holo.PowerToCapacity);
+		Obj->SetObjectField(TEXT("powerTo"), ConnectionRefToJson(Holo.PowerTo));
+		Obj->SetBoolField(TEXT("isSourceToCloneWire"), Holo.bIsSourceToCloneWire);
+		TSharedPtr<FJsonObject> PowerCaps = MakeShared<FJsonObject>();
+		for (const auto& Port : Holo.PowerPortCapacities) PowerCaps->SetNumberField(Port.Key, Port.Value);
+		Obj->SetObjectField(TEXT("powerPortCapacities"), PowerCaps);
 		Obj->SetBoolField(TEXT("isLaneSegment"), Holo.bIsLaneSegment);
 		Obj->SetStringField(TEXT("laneFromDistributorId"), Holo.LaneFromDistributorId);
 		Obj->SetStringField(TEXT("laneFromConnector"), Holo.LaneFromConnector);
 		Obj->SetStringField(TEXT("laneToDistributorId"), Holo.LaneToDistributorId);
 		Obj->SetStringField(TEXT("laneToConnector"), Holo.LaneToConnector);
 		Obj->SetStringField(TEXT("laneSegmentType"), Holo.LaneSegmentType);
+		Obj->SetBoolField(TEXT("laneStartNormalVerified"), Holo.bLaneStartNormalVerified);
+		Obj->SetBoolField(TEXT("laneEndNormalVerified"), Holo.bLaneEndNormalVerified);
 		Obj->SetObjectField(TEXT("laneStartNormal"), VecToJson(Holo.LaneStartNormal));
 		Obj->SetObjectField(TEXT("laneEndNormal"), VecToJson(Holo.LaneEndNormal));
 		// [#477] Captured appearance - written only when captured: uncaptured children emit no
@@ -463,12 +480,36 @@ namespace
 		if (Obj->TryGetNumberField(TEXT("userFlowLimit"), Val)) OutHolo.UserFlowLimit = static_cast<float>(Val);
 		Obj->TryGetStringField(TEXT("connectedPowerPoleHologramId"), OutHolo.ConnectedPowerPoleHologramId);
 		if (Obj->TryGetNumberField(TEXT("powerPoleMaxConnections"), Val)) OutHolo.PowerPoleMaxConnections = static_cast<int32>(Val);
+		Obj->TryGetStringField(TEXT("powerConnectorName"), OutHolo.PowerConnectorName);
+		if (Obj->TryGetNumberField(TEXT("powerMaxLength"), Val) && FMath::IsFinite(Val) && Val > 0) OutHolo.PowerMaxLength = FMath::Min(Val, static_cast<double>(MAX_flt));
+		if (Obj->TryGetNumberField(TEXT("powerFromCapacity"), Val) && FMath::IsFinite(Val)) OutHolo.PowerFromCapacity = FMath::Clamp(Val, -1.0, static_cast<double>(MAX_int32));
+		if (Obj->TryGetNumberField(TEXT("powerToCapacity"), Val) && FMath::IsFinite(Val)) OutHolo.PowerToCapacity = FMath::Clamp(Val, -1.0, static_cast<double>(MAX_int32));
+		Obj->TryGetStringField(TEXT("connectedPowerPoleConnectorName"), OutHolo.ConnectedPowerPoleConnectorName);
+		Obj->TryGetStringField(TEXT("factoryPowerConnectorName"), OutHolo.FactoryPowerConnectorName);
+		Obj->TryGetBoolField(TEXT("hasPassthroughLinks"), OutHolo.bHasPassthroughLinks);
+		if (Obj->TryGetObjectField(TEXT("passthroughTop"), Child) && Child) JsonToConnectionRef(*Child, OutHolo.PassthroughTop);
+		if (Obj->TryGetObjectField(TEXT("passthroughBottom"), Child) && Child) JsonToConnectionRef(*Child, OutHolo.PassthroughBottom);
+		if (Obj->TryGetObjectField(TEXT("powerFrom"), Child) && Child) JsonToConnectionRef(*Child, OutHolo.PowerFrom);
+		if (Obj->TryGetObjectField(TEXT("powerTo"), Child) && Child) JsonToConnectionRef(*Child, OutHolo.PowerTo);
+		Obj->TryGetBoolField(TEXT("isSourceToCloneWire"), OutHolo.bIsSourceToCloneWire);
+		if (Obj->TryGetObjectField(TEXT("powerPortCapacities"), Child) && Child)
+		{
+			for (const auto& Port : (*Child)->Values)
+			{
+				double Capacity = 0;
+				if (Port.Value.IsValid() && Port.Value->TryGetNumber(Capacity) && FMath::IsFinite(Capacity)
+					&& Capacity >= 0 && Capacity <= MAX_int32)
+					OutHolo.PowerPortCapacities.Add(Port.Key, static_cast<int32>(Capacity));
+			}
+		}
 		Obj->TryGetBoolField(TEXT("isLaneSegment"), OutHolo.bIsLaneSegment);
 		Obj->TryGetStringField(TEXT("laneFromDistributorId"), OutHolo.LaneFromDistributorId);
 		Obj->TryGetStringField(TEXT("laneFromConnector"), OutHolo.LaneFromConnector);
 		Obj->TryGetStringField(TEXT("laneToDistributorId"), OutHolo.LaneToDistributorId);
 		Obj->TryGetStringField(TEXT("laneToConnector"), OutHolo.LaneToConnector);
 		Obj->TryGetStringField(TEXT("laneSegmentType"), OutHolo.LaneSegmentType);
+		Obj->TryGetBoolField(TEXT("laneStartNormalVerified"), OutHolo.bLaneStartNormalVerified);
+		Obj->TryGetBoolField(TEXT("laneEndNormalVerified"), OutHolo.bLaneEndNormalVerified);
 		if (Obj->TryGetObjectField(TEXT("laneStartNormal"), Child) && Child) JsonToVec(*Child, OutHolo.LaneStartNormal);
 		if (Obj->TryGetObjectField(TEXT("laneEndNormal"), Child) && Child) JsonToVec(*Child, OutHolo.LaneEndNormal);
 		// [#477] Captured appearance - absent in pre-#477 presets, leaving bCaptured=false (the
@@ -496,6 +537,16 @@ namespace
 		Obj->SetStringField(TEXT("sourceFactoryId"), Topology.SourceFactoryId);
 		Obj->SetStringField(TEXT("parentBuildClass"), Topology.ParentBuildClass);
 		Obj->SetObjectField(TEXT("parentTransform"), TransformToJson(Topology.ParentTransform));
+        TSharedPtr<FJsonObject> Power = MakeShared<FJsonObject>();
+        Power->SetStringField(TEXT("connector"), Topology.FactoryPower.Connector);
+        Power->SetObjectField(TEXT("localPosition"), VecToJson(Topology.FactoryPower.LocalPosition));
+        Power->SetNumberField(TEXT("capacity"), Topology.FactoryPower.Capacity);
+        Power->SetNumberField(TEXT("sourceFreeConnections"), Topology.FactoryPower.SourceFreeConnections);
+        Power->SetNumberField(TEXT("maxWireLength"), Topology.FactoryPower.MaxWireLength);
+        Power->SetBoolField(TEXT("hasWire"), Topology.FactoryPower.bHasWire);
+        Power->SetBoolField(TEXT("continuesChain"), Topology.FactoryPower.bContinuesChain);
+        Power->SetBoolField(TEXT("requested"), Topology.FactoryPower.bRequested);
+        Obj->SetObjectField(TEXT("factoryPower"), Power);
 		TArray<TSharedPtr<FJsonValue>> Children;
 		for (const FSFCloneHologram& Holo : Topology.ChildHolograms)
 		{
@@ -515,6 +566,20 @@ namespace
 		const TSharedPtr<FJsonObject>* Child = nullptr;
 		if (Obj->TryGetObjectField(TEXT("worldOffset"), Child) && Child) JsonToVec(*Child, OutTopology.WorldOffset);
 		if (Obj->TryGetObjectField(TEXT("parentTransform"), Child) && Child) JsonToTransform(*Child, OutTopology.ParentTransform);
+        const TSharedPtr<FJsonObject>* Power = nullptr;
+        if (Obj->TryGetObjectField(TEXT("factoryPower"), Power) && Power && Power->IsValid())
+        {
+            (*Power)->TryGetStringField(TEXT("connector"), OutTopology.FactoryPower.Connector);
+            const TSharedPtr<FJsonObject>* Position = nullptr;
+            if ((*Power)->TryGetObjectField(TEXT("localPosition"), Position) && Position)
+                JsonToVec(*Position, OutTopology.FactoryPower.LocalPosition);
+            (*Power)->TryGetNumberField(TEXT("capacity"), OutTopology.FactoryPower.Capacity);
+            (*Power)->TryGetNumberField(TEXT("sourceFreeConnections"), OutTopology.FactoryPower.SourceFreeConnections);
+            (*Power)->TryGetNumberField(TEXT("maxWireLength"), OutTopology.FactoryPower.MaxWireLength);
+            (*Power)->TryGetBoolField(TEXT("hasWire"), OutTopology.FactoryPower.bHasWire);
+            (*Power)->TryGetBoolField(TEXT("continuesChain"), OutTopology.FactoryPower.bContinuesChain);
+            (*Power)->TryGetBoolField(TEXT("requested"), OutTopology.FactoryPower.bRequested);
+        }
 		const TArray<TSharedPtr<FJsonValue>>* Children = nullptr;
 		if (Obj->TryGetArrayField(TEXT("childHolograms"), Children) && Children)
 		{

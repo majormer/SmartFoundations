@@ -1,14 +1,15 @@
 # Controls
 
-Smart! controls are available in Satisfactory's controls menu under Mods, so you can rebind them.
+Smart! controls are available in **Options > Keybindings > "Smart! Mod Controls"**, so you can rebind them. (Smart! Camera's keys are in the adjacent **"Smart! Camera Controls"** section.)
 
-> Screenshot placeholder: Satisfactory Options > Controls > Mods showing Smart! keybinds.
+> Screenshot placeholder: Satisfactory Options > Keybindings > "Smart! Mod Controls" showing Smart! keybinds.
 
 ## Default Keys
 
 | Key | What it does |
 |-----|--------------|
 | `K` | Open or close the Smart Panel |
+| `Num Decimal` | Toggle Smart building assistance for this session |
 | `Num 8` | Increase the active value |
 | `Num 5` | Decrease the active value |
 | `Num 6` | Increase Y grid count |
@@ -23,9 +24,17 @@ Smart! controls are available in Satisfactory's controls menu under Mods, so you
 | `Y` | Hold Stagger mode |
 | `,` | Hold Rotation mode |
 | `Num 0` | Cycle the active mode's axis |
-| `U` | Recipe mode / clear selected recipe |
+| `U` | Recipe mode on a factory (clears the selected recipe); Auto-Connect settings on other buildables |
 | `Num 1` | Toggle direction arrows |
 | `Mouse Wheel` | Adjust the active Smart mode, or vanilla rotate when no Smart mode is active |
+
+## Temporarily Disable Smart
+
+Press **Num Decimal** to toggle Smart building assistance for your current session. Disabling cancels the active Smart preview. Select a recipe again to place normally, including vanilla blueprints too large for a Smart placement. Press the same key to re-enable assistance.
+
+Your saved mod settings stay intact. The choice survives recipe changes and holstering, and each multiplayer player controls their own assistance. Rebind **Toggle Smart (Session)** in Options if your keyboard has no numpad. This is separate from the double-tap Num 0 shortcut below.
+
+See [Smart Assistance](Smart-Assistance) for the full workflow.
 
 ## Basic Scaling
 
@@ -77,3 +86,7 @@ Hold `U` and press `Num 9` to step through the Smart Restore presets you've appl
 ## Double-Tap Num 0
 
 Double-tapping `Num 0` with no mode key held toggles Smart Auto-Connect and Extend for the current session. This is useful when Smart! is trying to help but you want one normal placement.
+
+---
+
+_Last updated: 2026-10-06 · Smart! v34.4.0_

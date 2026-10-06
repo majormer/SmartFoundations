@@ -29,10 +29,25 @@ void FSFInputHandler::Initialize(USFSubsystem* InOwnerSubsystem)
 
 void FSFInputHandler::Shutdown()
 {
+	if (OwnerSubsystem.IsValid())
+		if (UWorld* World = OwnerSubsystem->GetWorld()) World->GetTimerManager().ClearTimer(DeferredRebindTimer);
+	if (AFGPlayerController* PC = LastController.Get())
+	{
+		if (PC->InputComponent && OwnerSubsystem.IsValid()) PC->InputComponent->ClearBindingsForObject(OwnerSubsystem.Get());
+		if (ULocalPlayer* LocalPlayer = PC->GetLocalPlayer())
+		{
+			if (auto* InputSubsystem = LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>())
+			{
+				if (UFGInputMappingContext* Context = USFInputRegistry::GetSmartSessionMappingContext())
+				{
+					InputSubsystem->RemoveMappingContext(Context);
+				}
+			}
+		}
+	}
 	// [#358] Leave no Smart! context behind in the Enhanced Input stack
 	SetSmartContextActive(false);
 
-	// TODO: Unbind all input actions
 	OwnerSubsystem.Reset();
 	LastController.Reset();
 	bInputSetupCompleted = false;
@@ -42,6 +57,7 @@ void FSFInputHandler::Shutdown()
 
 void FSFInputHandler::SetSmartContextActive(bool bActive)
 {
+	bActive = bActive && OwnerSubsystem.IsValid() && OwnerSubsystem->IsSmartEnabledForSession();
 	if (bActive == bSmartContextActive)
 	{
 		return;
@@ -76,7 +92,7 @@ void FSFInputHandler::SetSmartContextActive(bool bActive)
 
 void FSFInputHandler::SetupPlayerInput(AFGPlayerController* PlayerController)
 {
-	if (!PlayerController || !IsValid(PlayerController))
+	if (!PlayerController || !IsValid(PlayerController) || !PlayerController->IsLocalController())
 	{
 		UE_LOG(LogSmartFoundations, Verbose, TEXT("InputHandler::SetupPlayerInput: Invalid player controller"));
 		return;
@@ -95,6 +111,17 @@ void FSFInputHandler::SetupPlayerInput(AFGPlayerController* PlayerController)
 	// Ensure input is enabled on the controller (some contexts require this for non-actor receivers)
 	PlayerController->EnableInput(PlayerController);
 
+	// A replacement controller must not inherit an active-context flag from the old stack.
+	if (LastController.IsValid() && LastController != PlayerController)
+	{
+		SetSmartContextActive(false);
+		if (LastController->InputComponent) LastController->InputComponent->ClearBindingsForObject(Subsystem);
+		if (ULocalPlayer* OldLocalPlayer = LastController->GetLocalPlayer())
+			if (auto* OldInput = OldLocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>())
+				if (auto* SessionContext = USFInputRegistry::GetSmartSessionMappingContext()) OldInput->RemoveMappingContext(SessionContext);
+	}
+	if (LastController != PlayerController) bSmartContextActive = false;
+
 	// Remember controller and set a short delay to ensure post-initialization state
 	LastController = PlayerController;
 	if (UWorld* WorldForDelay = Subsystem->GetWorld())
@@ -110,6 +137,16 @@ void FSFInputHandler::SetupPlayerInput(AFGPlayerController* PlayerController)
 	{
 		// Bind our input actions to subsystem methods using the modern SML approach
 		USFInputRegistry::BindInputActionsToSubsystem(Subsystem, EnhancedInputComp);
+		if (ULocalPlayer* LocalPlayer = PlayerController->GetLocalPlayer())
+		{
+			if (auto* InputSubsystem = LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>())
+			{
+				if (UFGInputMappingContext* SessionContext = USFInputRegistry::GetSmartSessionMappingContext())
+				{
+					InputSubsystem->AddMappingContext(SessionContext, 100);
+				}
+			}
+		}
 
 		// Load our input mapping context
 		// BUG FIX (Issue #148): Cache is cleared during world cleanup, ensuring fresh load for new worlds
@@ -192,6 +229,12 @@ bool FSFInputHandler::IsAnyModalFeatureActive() const
 {
 	return bModifierScaleXActive || bModifierScaleYActive ||
 	       bSpacingModeActive || bStepsModeActive || bStaggerModeActive || bRotationModeActive;
+}
+
+void FSFInputHandler::ResetModeState()
+{
+	bModifierScaleXActive = bModifierScaleYActive = false;
+	bSpacingModeActive = bStepsModeActive = bStaggerModeActive = bRotationModeActive = false;
 }
 
 // ========================================

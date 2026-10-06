@@ -15,3 +15,7 @@ You can also support Smart! without donating:
 - Contribute fixes or documentation through pull requests.
 
 No pressure. Every kind of support helps.
+
+---
+
+_Last updated: 2026-05-22 · Smart! v30.0.0_

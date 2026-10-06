@@ -44,4 +44,10 @@ Smart! works best with standard buildables that have a known size and normal pla
 
 Pole-style buildables scale too — Conveyor Poles, Pipeline Supports, and Pipeline Wall Supports — and Smart! carries their height (and a pipeline support's top angle) across the whole line. When you scale a line of supports, Smart! can also build the belt or pipe run between them; see [Auto-Connect](Auto-Connect).
 
+Single- and double-sided Wall Outlets Mk.1-Mk.3 support grid scaling with a 1 m default interval. Their power previews respect each outlet face's connection capacity.
+
 If a buildable does not scale correctly, try a smaller test first and report the buildable name in an issue.
+
+---
+
+_Last updated: 2026-10-06 · Smart! v34.4.0_

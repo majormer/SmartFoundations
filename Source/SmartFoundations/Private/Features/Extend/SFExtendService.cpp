@@ -10,10 +10,20 @@
 //  1. Topology walk     — [MP-CLIENT] a client cannot walk the connection graph locally
 //                         (mConnectedComponent is null on clients); [MP-SEAM] it requests the
 //                         walk over Server_RequestExtendTopology (SFRCO) and the server pushes the
-//                         authoritative topology back for preset capture.
+//                         complete, bounded source values back for previews and preset capture.
+//                         Conveyor-chain actors may not replicate; exact owner aliases adapt IDs
+//                         without re-reading client connections or guessing nearby ports.
 //  2. Commit reconstruct— [MP-AUTH] the server reconstructs the FULL commit from its own graph walk
 //                         (ReconstructCommitOnServer / ReconstructScaledCommitOnServer); topology is
 //                         NEVER shipped from the client (client GetConnection() is null → poisoned wiring).
+//                         Scaled cells carry XYZ identity and world offsets through the commit.
+//                         After spawning, their topologies merge onto the fresh first-copy base;
+//                         validation and cable materialization must see the same complete plan.
+//                         Only the root may consume the staged request. Request-time validation prepares
+//                         the children once; local scaling power handlers must not intercept that plan.
+//                         FSFExtendAuthorityScope keeps remote request services/counters/settings separate
+//                         through native validation, construction, wiring and material payment. Topology
+//                         queries use an independent walker and cannot replace the host's preview cache.
 //  3. Cost charge       — [MP-AUTH] the childless server parent would charge the bare factory only, so
 //                         GetCost is overridden with the client-captured preview cost. (Net seam: Hook A,
 //                         Core/Net/SFGameInstanceModule_SpecHooks.cpp)
@@ -24,7 +34,10 @@
 //                         and runs the wiring pass synchronously. (Net seam: Hook B)
 
 #include "Features/Extend/SFExtendService.h"
+#include "Features/Extend/Net/SFExtendAuthorityScope.h"
+#include "Features/Extend/Net/SFExtendSourceSnapshot.h"
 #include "Engine/OverlapResult.h"
+#include "Misc/ScopeExit.h"
 #include "Features/Extend/SFExtendControlFrame.h"
 #include "Features/Extend/SFExtendDetectionService.h"
 #include "Features/Extend/SFExtendTopologyService.h"
@@ -424,8 +437,9 @@ FVector USFExtendService::GetFurthestRestoredCloneWorldPosition(const FVector& F
     const FSFCounterState& State = Subsystem->GetCounterState();
     const int32 FurthestX = FMath::Max(1, FMath::Abs(State.GridCounters.X)) - 1;
     const int32 FurthestY = FMath::Max(1, FMath::Abs(State.GridCounters.Y)) - 1;
+    const int32 FurthestZ = FMath::Max(1, FMath::Abs(State.GridCounters.Z)) - 1;
     const FRestoredScaledClonePlacement Placement = CalculateRestoredScaledClonePlacement(
-        Parent, RestoredCloneTopologyTemplate.Get(), State, FurthestX, FurthestY);
+        Parent, RestoredCloneTopologyTemplate.Get(), State, FurthestX, FurthestY, FurthestZ);
     return Parent->GetActorLocation() + Placement.WorldOffset;
 }
 
@@ -828,6 +842,7 @@ void USFExtendService::GetScaledClonePlanForCommit(TArray<FSFExtendCommitScaledC
         Entry.RotationOffset = Clone.RotationOffset;
         Entry.GridX = Clone.GridX;
         Entry.GridY = Clone.GridY;
+        Entry.GridZ = Clone.GridZ;
         Entry.bIsSeed = Clone.bIsSeed;
         OutClones.Add(Entry);
     }
@@ -836,6 +851,19 @@ void USFExtendService::GetScaledClonePlanForCommit(TArray<FSFExtendCommitScaledC
 bool USFExtendService::BuildCommitSpecForMP(AFGHologram* ParentHologram, FSFExtendCommitSpec& OutSpec) const
 {
     OutSpec = FSFExtendCommitSpec();
+    if (Subsystem.IsValid())
+    {
+        // [MP-CLIENT] Both live Extend and Restore re-route lanes during authority
+        // reconstruction, so both commits carry the requesting player's panel options.
+        const auto& Settings = Subsystem->GetAutoConnectRuntimeSettings();
+        OutSpec.bExtendDaisyChain = Settings.bExtendDaisyChain;
+        OutSpec.bExtendDaisyChainPoleless = Settings.bExtendDaisyChainPoleless;
+        OutSpec.BeltRoutingMode = Settings.BeltRoutingMode;
+        OutSpec.PipeRoutingMode = Settings.PipeRoutingMode;
+        OutSpec.BeltTierMain = Settings.BeltTierMain;
+        OutSpec.PipeTierMain = Settings.PipeTierMain;
+        OutSpec.bPipeIndicator = Settings.bPipeIndicator;
+    }
     if (!ParentHologram)
     {
         return false;
@@ -853,10 +881,20 @@ bool USFExtendService::BuildCommitSpecForMP(AFGHologram* ParentHologram, FSFExte
         // Reliable-RPC ceiling guard (same rationale as the conduit-plan guard): a preset
         // template is normally one clone's infrastructure, but refuse anything that could
         // overflow the staging RPC before the previews are destroyed.
-        int32 BytesEstimate = 0;
+        int64 BytesEstimate = 128LL + 2LL * Template.FactoryPower.Connector.Len();
         for (const FSFCloneHologram& Holo : Template.ChildHolograms)
         {
-            BytesEstimate += 400 + Holo.SplineData.Points.Num() * 80;
+            BytesEstimate += 400LL + static_cast<int64>(Holo.SplineData.Points.Num()) * 80;
+            // Exact endpoint identities/capacity maps were added to the reflected template.
+            // Account for them as well as their serialization overhead before staging an RPC.
+            BytesEstimate += 128LL + 2LL * (static_cast<int64>(Holo.PowerConnectorName.Len())
+                + Holo.ConnectedPowerPoleConnectorName.Len() + Holo.FactoryPowerConnectorName.Len()
+                + Holo.PowerFrom.Target.Len() + Holo.PowerFrom.Connector.Len()
+                + Holo.PowerTo.Target.Len() + Holo.PowerTo.Connector.Len()
+                + Holo.PassthroughTop.Target.Len() + Holo.PassthroughTop.Connector.Len()
+                + Holo.PassthroughBottom.Target.Len() + Holo.PassthroughBottom.Connector.Len());
+            for (const auto& Capacity : Holo.PowerPortCapacities)
+                BytesEstimate += 12LL + 2LL * Capacity.Key.Len();
             // [#477] Captured customization rides the same reliable RPC: five class-path strings
             // (UTF-16 on the wire) + colors/rotation/flags. Model it so a richly customized
             // template can't pass this guard yet overflow the actual payload.
@@ -872,7 +910,7 @@ bool USFExtendService::BuildCommitSpecForMP(AFGHologram* ParentHologram, FSFExte
         if (BytesEstimate > 45000)
         {
             UE_LOG(LogSmartExtend, Verbose,
-                TEXT("[EXTEND-MP] Restore commit refused: preset template too large to stage reliably (%d children, ~%d bytes)."),
+                TEXT("[EXTEND-MP] Restore commit refused: preset template too large to stage reliably (%d children, ~%lld bytes)."),
                 Template.ChildHolograms.Num(), BytesEstimate);
             return false;
         }
@@ -913,16 +951,10 @@ bool USFExtendService::BuildCommitSpecForMP(AFGHologram* ParentHologram, FSFExte
     OutSpec.Cost = ParentHologram->GetCost(true); // parent + preview children, exact preview cost
     OutSpec.BuildClass = ParentHologram->GetBuildClass();
     OutSpec.SourceBuilding = Topo.SourceBuilding.Get();
-    // [#380] Ship the client's belt routing mode; the server re-derives lanes with its own (default) settings.
     // [#382] Ship the counter state too - cross-clone lane math (e.g. PrevCloneRotation for the first
     // child's manifold lane to the parent distributor) reads CounterState.RotationZ directly server-side.
     if (Subsystem.IsValid())
     {
-        OutSpec.BeltRoutingMode = Subsystem->GetAutoConnectRuntimeSettings().BeltRoutingMode;
-        OutSpec.PipeRoutingMode = Subsystem->GetAutoConnectRuntimeSettings().PipeRoutingMode;
-        OutSpec.BeltTierMain = Subsystem->GetAutoConnectRuntimeSettings().BeltTierMain;
-        OutSpec.PipeTierMain = Subsystem->GetAutoConnectRuntimeSettings().PipeTierMain;
-        OutSpec.bPipeIndicator = Subsystem->GetAutoConnectRuntimeSettings().bPipeIndicator;
         OutSpec.CounterState = Subsystem->GetCounterState();
         // [#484] Ship the captured factory settings with LIVE commits too. The dedi never ran the
         // client's MMB sample, so its recipe service was empty and every scaled clone built
@@ -943,6 +975,9 @@ bool USFExtendService::BuildCommitSpecForMP(AFGHologram* ParentHologram, FSFExte
 // (Net: Hook B). Derives topology from the server's own graph walk - NEVER from client-shipped data.
 int32 USFExtendService::ReconstructCommitOnServer(AFGHologram* ParentHologram, const FSFExtendCommitSpec& Spec)
 {
+    FSFExtendAuthorityScope::BeginReconstruction(Subsystem.Get(), ParentHologram);
+    bScaledExtendValid = false;
+    ScaledExtendInvalidReason = TEXT("Extend commit reconstruction did not complete");
     if (!ParentHologram || !TopologyService)
     {
         return 0;
@@ -966,8 +1001,36 @@ int32 USFExtendService::ReconstructCommitOnServer(AFGHologram* ParentHologram, c
         {
             RecipeSvc->InstallFactorySettingsSnapshot(Spec.FactorySettings, Spec.BuildClass);
         }
+        // [MP-AUTH] Restore also regenerates lane geometry and resolves its tiers.
+        // Install the same request options before either reconstruction branch.
+        Subsystem->SetAutoConnectBeltRoutingMode(Spec.BeltRoutingMode);
+        Subsystem->SetAutoConnectPipeRoutingMode(Spec.PipeRoutingMode);
+        Subsystem->SetAutoConnectBeltTierMain(Spec.BeltTierMain);
+        Subsystem->SetAutoConnectPipeTierMain(Spec.PipeTierMain);
+        Subsystem->SetAutoConnectPipeIndicator(Spec.bPipeIndicator);
     }
 
+    // [MP-SEAM] Planner options belong to the requesting player, not the server defaults.
+    // On a listen server these are also the HOST's live settings, so install the client's
+    // values only for this reconstruction: factory power is captured and priced inside this
+    // call (post-build wiring consumes the priced plan), and a leaked value would change the
+    // host's own Extend daisy-chaining until their config next reloads.
+    TWeakObjectPtr<USFSubsystem> SettingsOwner = Subsystem;
+    const bool bHostDaisyChain = SettingsOwner.IsValid() && SettingsOwner->AutoConnectRuntimeSettings.bExtendDaisyChain;
+    const bool bHostDaisyChainPoleless = SettingsOwner.IsValid() && SettingsOwner->AutoConnectRuntimeSettings.bExtendDaisyChainPoleless;
+    if (SettingsOwner.IsValid())
+    {
+        SettingsOwner->AutoConnectRuntimeSettings.bExtendDaisyChain = Spec.bExtendDaisyChain;
+        SettingsOwner->AutoConnectRuntimeSettings.bExtendDaisyChainPoleless = Spec.bExtendDaisyChainPoleless;
+    }
+    ON_SCOPE_EXIT
+    {
+        if (SettingsOwner.IsValid())
+        {
+            SettingsOwner->AutoConnectRuntimeSettings.bExtendDaisyChain = bHostDaisyChain;
+            SettingsOwner->AutoConnectRuntimeSettings.bExtendDaisyChainPoleless = bHostDaisyChainPoleless;
+        }
+    };
     if (Spec.bIsRestore)
     {
         if (Subsystem.IsValid())
@@ -982,24 +1045,18 @@ int32 USFExtendService::ReconstructCommitOnServer(AFGHologram* ParentHologram, c
             *ParentHologram->GetName(), bReplayed ? 1 : 0, NumChildren,
             Spec.RestoreTemplate.ChildHolograms.Num(),
             Spec.RestoreCounterState.GridCounters.X, Spec.RestoreCounterState.GridCounters.Y);
+        bScaledExtendValid = bReplayed && ValidatePowerCapacity();
+        if (!bReplayed) ScaledExtendInvalidReason = TEXT("Restore commit reconstruction failed");
         return bReplayed ? NumChildren : 0;
     }
 
     SetStoredCloneTopologyForServerCommit(FSFCloneTopology()); // replaced below; keep state coherent
     SetServerCommitSourceBuilding(Spec.SourceBuilding);
 
-    // [#380] Apply the client's belt routing mode before re-deriving lanes (covers both the parent
-    // path below and ReconstructScaledCommitOnServer). The server's own runtime settings default to
-    // 0/Default, so without this MP lane belts ignore Curve/Straight even when the client set them.
     // [#382] Install the client's counter state too, so cross-clone lane math (PrevCloneRotation for
     // the first child's manifold lane to the parent distributor) reads the real RotationZ, not 0.
     if (Subsystem.IsValid())
     {
-        Subsystem->SetAutoConnectBeltRoutingMode(Spec.BeltRoutingMode);
-        Subsystem->SetAutoConnectPipeRoutingMode(Spec.PipeRoutingMode);
-        Subsystem->SetAutoConnectBeltTierMain(Spec.BeltTierMain);
-        Subsystem->SetAutoConnectPipeTierMain(Spec.PipeTierMain);
-        Subsystem->SetAutoConnectPipeIndicator(Spec.bPipeIndicator);
         Subsystem->UpdateCounterState(Spec.CounterState);
     }
 
@@ -1065,7 +1122,7 @@ int32 USFExtendService::ReconstructCommitOnServer(AFGHologram* ParentHologram, c
     // Scaled clone sets ride the same server-derived topology (SpawnScaledExtendPreviews
     // re-captures from the topology service's CurrentTopology, walked above).
     ReconstructScaledCommitOnServer(ParentHologram, Spec.ScaledClones);
-
+    bScaledExtendValid = NumSpawned > 0 && ValidatePowerCapacity();
     return NumSpawned;
 }
 
@@ -1156,6 +1213,7 @@ int32 USFExtendService::ReconstructScaledCommitOnServer(AFGHologram* ParentHolog
         FSFScaledExtendClone Entry;
         Entry.GridX = C.GridX;
         Entry.GridY = C.GridY;
+        Entry.GridZ = C.GridZ;
         Entry.bIsSeed = C.bIsSeed;
         Entry.WorldOffset = C.WorldOffset;
         Entry.RotationOffset = C.RotationOffset;
@@ -1182,6 +1240,11 @@ void USFExtendService::ReceiveServerCloneTopology(const FSFCloneTopology& Topolo
 void USFExtendService::ReceiveServerTopology(const FSFExtendTopology& Topology)
 {
     CachedServerTopology = Topology;
+    if (CachedServerTopology.bIsValid && !SFExtendSourceSnapshot::ResolveReply(CachedServerTopology))
+    {
+        CachedServerTopology.Reset();
+        CachedServerTopology.SourceBuilding = Topology.SourceBuilding;
+    }
     CachedServerTopologyBuilding = Topology.SourceBuilding;
     CachedServerTopologyTime = FPlatformTime::Seconds();
 
@@ -1236,6 +1299,14 @@ TSharedPtr<FSFCloneTopology> USFExtendService::GetLastCloneTopology() const
             TEXT("[SmartRestore][Extend] GetLastCloneTopology: returning SERVER-derived topology children=%d"),
             ServerDerivedCloneTopology->ChildHolograms.Num());
         return MakeShared<FSFCloneTopology>(*ServerDerivedCloneTopology);
+    }
+
+    // Module capture stores one unit. The construction plan also contains the additional
+    // scaled units, whose factory owners are not part of this unit's child topology.
+    // Preserve the post-rotation base, including its exact connector and capacity metadata.
+    if (ScaledExtendBaseTopology.IsValid())
+    {
+        return MakeShared<FSFCloneTopology>(*ScaledExtendBaseTopology);
     }
 
     if (StoredCloneTopology.IsValid())
@@ -1383,6 +1454,14 @@ bool USFExtendService::TryExtendFromBuilding(AFGBuildable* HitBuilding, AFGHolog
             SourceHologram ? *SourceHologram->GetName() : TEXT("NULL"),
             bHasValidTarget ? 1 : 0);
         LastEntryLog = EntryNow;
+    }
+
+    // Native construction can destroy the root before the subsystem poll unregisters
+    // it. An expired preview cannot keep a committed/manual hold on another building.
+    if (bHasValidTarget && !CurrentExtendHologram.IsValid())
+    {
+        LastBuiltFromBuilding = CurrentExtendTarget;
+        ClearExtendState();
     }
 
     // STICKY EXTEND: Once committed (first scale action), Extend stays active when looking away.
@@ -2692,9 +2771,14 @@ int32 USFExtendService::GetExtendRowCount() const
     return FMath::Max(1, FMath::Abs(State.GridCounters.Y));
 }
 
+int32 USFExtendService::GetExtendLayerCount() const
+{
+    return Subsystem.IsValid() ? FMath::Max(1, FMath::Abs(Subsystem->GetCounterState().GridCounters.Z)) : 1;
+}
+
 bool USFExtendService::IsScaledExtendActive() const
 {
-    return bHasValidTarget && (GetExtendCloneCount() > 1 || GetExtendRowCount() > 1);
+    return bHasValidTarget && (GetExtendCloneCount() > 1 || GetExtendRowCount() > 1 || GetExtendLayerCount() > 1);
 }
 
 void USFExtendService::OnScaledExtendStateChanged()

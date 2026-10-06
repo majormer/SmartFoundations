@@ -50,7 +50,7 @@ Controls:
 
 - Hold `Y`.
 - Use `Num 8`, `Num 5`, or mouse wheel.
-- Press `Num 0` to cycle X, Y, ZX, and ZY.
+- Press `Num 0` to toggle between the **Stack** and **Flat** stagger families; re-tap `Y` to switch direction within a family (`Num 9` / `Num 3` jump straight to Stack or Flat).
 
 ## Rotation
 
@@ -71,3 +71,7 @@ Controls:
   - **Y** — the rotation accumulates along the rows, so the **rows** fan out around the vertical instead.
 
 Either way it stays a flat, upright arc — nothing ever tilts or flips. (Smart! rotates around the vertical/yaw axis only; vertical arch rotation is not currently an active feature.)
+
+---
+
+_Last updated: 2026-10-06 · Smart! v34.4.0_

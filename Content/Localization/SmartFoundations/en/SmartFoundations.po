@@ -2512,9 +2512,9 @@ msgctxt "SmartFoundations,Upgrade_AllTiersRow"
 msgid "All tiers"
 msgstr "All tiers"
 
-msgctxt "SmartFoundations,Upgrade_AllTiersTooltip"
-msgid "Upgrade every tier below the chosen target"
-msgstr "Upgrade every tier below the chosen target"
+msgctxt "SmartFoundations,Upgrade_AllTiersTooltip_Logistics"
+msgid "Change differing logistics tiers to the target. Power poles and wall outlets only upgrade."
+msgstr "Change differing logistics tiers to the target. Power poles and wall outlets only upgrade."
 
 msgctxt "SmartFoundations,Upgrade_NearestTier"
 msgid "Nearest Mk.{0}: {1}m {2}"
@@ -2695,3 +2695,51 @@ msgstr "Controls connections between adjacent copies of scaled blueprints."
 msgctxt "SmartFoundations,Notice_ConstructPayloadTooLarge"
 msgid "Placement too large ({0} KB). Build in smaller sections."
 msgstr "Placement too large ({0} KB). Build in smaller sections."
+
+msgctxt "SmartFoundations,P.BlueprintSpacingX"
+msgid "Blueprint Default X Spacing (m)"
+msgstr "Blueprint Default X Spacing (m)"
+
+msgctxt "SmartFoundations,P.BlueprintSpacingX.TT"
+msgid "Starting X gap for a new blueprint build session (0-100 m). Zero tiles flush; short gaps may leave no room for seam connections. Panel changes override this for the current session."
+msgstr "Starting X gap for a new blueprint build session (0-100 m). Zero tiles flush; short gaps may leave no room for seam connections. Panel changes override this for the current session."
+
+msgctxt "SmartFoundations,P.BlueprintSpacingY"
+msgid "Blueprint Default Y Spacing (m)"
+msgstr "Blueprint Default Y Spacing (m)"
+
+msgctxt "SmartFoundations,P.BlueprintSpacingY.TT"
+msgid "Starting Y gap for a new blueprint build session (0-100 m). Zero tiles flush; short gaps may leave no room for seam connections. Panel changes override this for the current session."
+msgstr "Starting Y gap for a new blueprint build session (0-100 m). Zero tiles flush; short gaps may leave no room for seam connections. Panel changes override this for the current session."
+
+msgctxt "SmartFoundations,P.BlueprintSpacingZ"
+msgid "Blueprint Default Z Spacing (m)"
+msgstr "Blueprint Default Z Spacing (m)"
+
+msgctxt "SmartFoundations,P.BlueprintSpacingZ.TT"
+msgid "Starting Z gap for a new blueprint build session (0-100 m). Zero tiles flush; short gaps may leave no room for seam connections. Panel changes override this for the current session."
+msgstr "Starting Z gap for a new blueprint build session (0-100 m). Zero tiles flush; short gaps may leave no room for seam connections. Panel changes override this for the current session."
+
+msgctxt "SmartFoundations,P.bPlayerRelativeControls"
+msgid "Player Relative Controls"
+msgstr "Player Relative Controls"
+
+msgctxt "SmartFoundations,P.bPlayerRelativeControls.TT"
+msgid "Interpret building controls relative to the direction you are facing. The Smart Panel continues to show absolute axes."
+msgstr "Interpret building controls relative to the direction you are facing. The Smart Panel continues to show absolute axes."
+
+msgctxt "SmartSession,Enabled"
+msgid "Smart! building assistance enabled for this session."
+msgstr "Smart! building assistance enabled for this session."
+
+msgctxt "SmartSession,Disabled"
+msgid "Smart! building assistance disabled. Select a recipe to build normally; use Toggle Smart (Session) to re-enable."
+msgstr "Smart! building assistance disabled. Select a recipe to build normally; use Toggle Smart (Session) to re-enable."
+
+msgctxt "SmartFoundations,Upgrade_TraversalEmpty"
+msgid "No matching traversal buildables remain; scan again"
+msgstr "No matching traversal buildables remain; scan again"
+
+msgctxt "SmartFoundations,Upgrade_TraversalExpired"
+msgid "Traversal results are no longer valid; scan again"
+msgstr "Traversal results are no longer valid; scan again"

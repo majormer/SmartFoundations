@@ -179,6 +179,7 @@ public:
 	void OnRecentCycleHoldReleased();
 
 private:
+	friend class FSFExtendPowerPersistenceTest;
 	TWeakObjectPtr<USFSubsystem> Subsystem;
 	bool bRestoreSessionActive = false;
 	FString ActiveRestorePresetName;

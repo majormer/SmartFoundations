@@ -2686,4 +2686,56 @@ msgstr "A méretezett tervrajzok szomszédos másolatai közötti kapcsolatokat 
 
 msgctxt "SmartFoundations,Notice_ConstructPayloadTooLarge"
 msgid "Placement too large ({0} KB). Build in smaller sections."
-msgstr ""
+msgstr "Az elhelyezés túl nagy ({0} KB). Építs kisebb részletekben."
+
+msgctxt "SmartSession,Disabled"
+msgid "Smart! building assistance disabled. Select a recipe to build normally; use Toggle Smart (Session) to re-enable."
+msgstr "A Smart! építési segítség kikapcsolva. Válassz receptet a normál építéshez; az újbóli bekapcsoláshoz használd a „Toggle Smart (Session)” vezérlőt."
+
+msgctxt "SmartSession,Enabled"
+msgid "Smart! building assistance enabled for this session."
+msgstr "A Smart! építési segítség bekapcsolva ebben a munkamenetben."
+
+msgctxt "SmartFoundations,P.BlueprintSpacingX"
+msgid "Blueprint Default X Spacing (m)"
+msgstr "Tervrajz alapértelmezett X térköze (m)"
+
+msgctxt "SmartFoundations,P.BlueprintSpacingX.TT"
+msgid "Starting X gap for a new blueprint build session (0-100 m). Zero tiles flush; short gaps may leave no room for seam connections. Panel changes override this for the current session."
+msgstr "Kezdő X térköz egy új tervrajz-építési munkamenethez (0-100 m). Nullánál a másolatok hézag nélkül illeszkednek; kis térköznél nem biztos, hogy marad hely a varratok összekötéséhez. A Smart Panelen végzett módosítások felülírják ezt az aktuális munkamenetben."
+
+msgctxt "SmartFoundations,P.BlueprintSpacingY"
+msgid "Blueprint Default Y Spacing (m)"
+msgstr "Tervrajz alapértelmezett Y térköze (m)"
+
+msgctxt "SmartFoundations,P.BlueprintSpacingY.TT"
+msgid "Starting Y gap for a new blueprint build session (0-100 m). Zero tiles flush; short gaps may leave no room for seam connections. Panel changes override this for the current session."
+msgstr "Kezdő Y térköz egy új tervrajz-építési munkamenethez (0-100 m). Nullánál a másolatok hézag nélkül illeszkednek; kis térköznél nem biztos, hogy marad hely a varratok összekötéséhez. A Smart Panelen végzett módosítások felülírják ezt az aktuális munkamenetben."
+
+msgctxt "SmartFoundations,P.BlueprintSpacingZ"
+msgid "Blueprint Default Z Spacing (m)"
+msgstr "Tervrajz alapértelmezett Z térköze (m)"
+
+msgctxt "SmartFoundations,P.BlueprintSpacingZ.TT"
+msgid "Starting Z gap for a new blueprint build session (0-100 m). Zero tiles flush; short gaps may leave no room for seam connections. Panel changes override this for the current session."
+msgstr "Kezdő Z térköz egy új tervrajz-építési munkamenethez (0-100 m). Nullánál a másolatok hézag nélkül illeszkednek; kis térköznél nem biztos, hogy marad hely a varratok összekötéséhez. A Smart Panelen végzett módosítások felülírják ezt az aktuális munkamenetben."
+
+msgctxt "SmartFoundations,P.bPlayerRelativeControls"
+msgid "Player Relative Controls"
+msgstr "Játékoshoz viszonyított vezérlés"
+
+msgctxt "SmartFoundations,P.bPlayerRelativeControls.TT"
+msgid "Interpret building controls relative to the direction you are facing. The Smart Panel continues to show absolute axes."
+msgstr "Az építési vezérlők értelmezése a nézési irányodhoz képest. A Smart Panel továbbra is az abszolút tengelyeket mutatja."
+
+msgctxt "SmartFoundations,Upgrade_AllTiersTooltip_Logistics"
+msgid "Change differing logistics tiers to the target. Power poles and wall outlets only upgrade."
+msgstr "Az eltérő logisztikai szintek módosítása a célszintre. A villanypóznák és a fali elosztók csak fejleszthetők."
+
+msgctxt "SmartFoundations,Upgrade_TraversalEmpty"
+msgid "No matching traversal buildables remain; scan again"
+msgstr "Nem maradt megfelelő elem a hálózatban; szkennelj újra"
+
+msgctxt "SmartFoundations,Upgrade_TraversalExpired"
+msgid "Traversal results are no longer valid; scan again"
+msgstr "A hálózat szkennelési eredményei már nem érvényesek; szkennelj újra"

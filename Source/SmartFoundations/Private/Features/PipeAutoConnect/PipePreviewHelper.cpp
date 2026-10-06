@@ -132,6 +132,7 @@ void FPipePreviewHelper::SetupSplineRouting(AFGSplineHologram* SpawnedHologram)
 	}
 
 	PipeHologram->SetSnappedConnections(Start, End);
+	FSFPipeColorSnapshot::Inherit(PipeHologram, Start, End);
 
 	FVector StartPos = Start->GetConnectorLocation();
 	FVector EndPos = End->GetConnectorLocation();
@@ -174,6 +175,8 @@ void FPipePreviewHelper::UpdateSplineEndpoints(UFGPipeConnectionComponent* Start
 	}
 
 	UE_LOG(LogPipePreview, VeryVerbose, TEXT("Updating pipe spline endpoints"));
+	PipeHologram->SetSnappedConnections(Start, End);
+	FSFPipeColorSnapshot::Inherit(PipeHologram, Start, End);
 
 	const FVector StartLoc = Start->GetConnectorLocation();
 	const FVector EndLoc = End->GetConnectorLocation();

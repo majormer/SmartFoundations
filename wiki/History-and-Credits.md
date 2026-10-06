@@ -44,3 +44,6 @@ Huge thanks to Marcio for help from the beginning of Alex's path as a mod creato
 
 Smart! is shaped by players who report bugs, share layouts, test prerelease builds, translate text, make videos, and explain confusing edge cases. That feedback is a large part of why the current rebuild exists.
 
+---
+
+_Last updated: 2026-05-22 · Smart! v30.0.0_

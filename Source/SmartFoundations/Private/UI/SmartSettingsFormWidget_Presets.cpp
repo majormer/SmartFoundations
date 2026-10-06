@@ -882,6 +882,12 @@ void USmartSettingsFormWidget::ApplyCurrentValues()
     if (!CachedSubsystem->IsExtendModeActive())
     {
         CachedSubsystem->RegenerateChildHologramGrid();
+        // Apply also commits pending Auto-Connect choices. An unchanged grid must
+        // still rebuild routes for a new tier, style, or routing mode.
+        if (!bApplyImmediately)
+        {
+            CachedSubsystem->TriggerAutoConnectRefresh();
+        }
     }
 
     // Refresh recipe details to update grid totals with new grid size
@@ -1133,6 +1139,13 @@ void USmartSettingsFormWidget::PopulateRecipeDetails(TSubclassOf<UFGRecipe> Reci
         GridTotal = FMath::Max(1, FMath::Abs(CounterState.GridCounters.X)) *
                     FMath::Max(1, FMath::Abs(CounterState.GridCounters.Y)) *
                     FMath::Max(1, FMath::Abs(CounterState.GridCounters.Z));
+        if (bIsExtendMode)
+        {
+            const int64 X = FMath::Max(1, FMath::Abs(CounterState.GridCounters.X));
+            const int64 Y = FMath::Max(1, FMath::Abs(CounterState.GridCounters.Y));
+            const int64 Z = FMath::Max(1, FMath::Abs(CounterState.GridCounters.Z));
+            GridTotal = static_cast<int32>(FMath::Min<int64>((X + 1) * Y * Z - 1, MAX_int32));
+        }
     }
 
     // No header row needed - the ComboBox provides recipe selection

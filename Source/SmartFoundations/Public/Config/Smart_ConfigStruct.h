@@ -88,6 +88,9 @@ struct FSmart_BuildingBehaviorConfigSection {
     UPROPERTY(BlueprintReadWrite) bool bToggleTransformModes{};      // [#482] tap-to-toggle (latch) transform modes for controller/accessibility; default OFF
     // [#217 / AV-FP fix] Scroll increments folded in here - no new USTRUCT, keeps config reflection under the AV threshold.
     UPROPERTY(BlueprintReadWrite) float SpacingIncrement{0.5f};
+    UPROPERTY(BlueprintReadWrite) float BlueprintSpacingX{1.0f};
+    UPROPERTY(BlueprintReadWrite) float BlueprintSpacingY{1.0f};
+    UPROPERTY(BlueprintReadWrite) float BlueprintSpacingZ{1.0f};
     UPROPERTY(BlueprintReadWrite) float StepsIncrement{0.5f};
     UPROPERTY(BlueprintReadWrite) float StaggerIncrement{0.5f};
     UPROPERTY(BlueprintReadWrite) float RotationIncrement{5.0f};
@@ -283,6 +286,13 @@ public:
     float SpacingIncrement{0.5f};
 
     UPROPERTY(BlueprintReadWrite)
+    float BlueprintSpacingX{1.0f};
+    UPROPERTY(BlueprintReadWrite)
+    float BlueprintSpacingY{1.0f};
+    UPROPERTY(BlueprintReadWrite)
+    float BlueprintSpacingZ{1.0f};
+
+    UPROPERTY(BlueprintReadWrite)
     float StepsIncrement{0.5f};
 
     UPROPERTY(BlueprintReadWrite)
@@ -377,6 +387,9 @@ public:
 
         // Scaling Settings (#217 scroll increments) - filled from the BuildingBehavior section [AV-FP fix].
         ConfigStruct.SpacingIncrement         = Sections.BuildingBehavior.SpacingIncrement;
+        ConfigStruct.BlueprintSpacingX        = Sections.BuildingBehavior.BlueprintSpacingX;
+        ConfigStruct.BlueprintSpacingY        = Sections.BuildingBehavior.BlueprintSpacingY;
+        ConfigStruct.BlueprintSpacingZ        = Sections.BuildingBehavior.BlueprintSpacingZ;
         ConfigStruct.StepsIncrement           = Sections.BuildingBehavior.StepsIncrement;
         ConfigStruct.StaggerIncrement         = Sections.BuildingBehavior.StaggerIncrement;
         ConfigStruct.RotationIncrement        = Sections.BuildingBehavior.RotationIncrement;

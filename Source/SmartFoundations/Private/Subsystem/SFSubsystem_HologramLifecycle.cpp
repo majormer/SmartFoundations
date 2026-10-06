@@ -10,11 +10,30 @@
 #include "Holograms/Logistics/SFPipelinePoleChildHologram.h"
 #include "Features/Walk/SFWalkService.h"   // GetSeedHologram() for the held-buildable-changed walk cancel
 #include "Shared/Conduits/SFConveyanceConstants.h"
+#include "Features/Spacing/SFBlueprintSpacingDefaults.h"
 
+namespace
+{
+void ResetHologramTransitionCounters(USFSubsystem& Subsystem, bool bPreserveBlueprintSpacing)
+{
+	const FSFCounterState PreviousState = Subsystem.GetCounterState();
+	Subsystem.ResetCounters();
+	if (bPreserveBlueprintSpacing)
+	{
+		// A placement replaces the hologram, but continues the same Blueprint spacing session.
+		FSFCounterState NewState = Subsystem.GetCounterState();
+		NewState.SpacingX = PreviousState.SpacingX;
+		NewState.SpacingY = PreviousState.SpacingY;
+		NewState.SpacingZ = PreviousState.SpacingZ;
+		Subsystem.UpdateCounterState(NewState);
+	}
+}
+}
 
 // Hologram management with enhanced logging
 void USFSubsystem::RegisterActiveHologram(AFGHologram* Hologram)
 {
+	if (!IsSmartEnabledForSession()) return;
 	if (!Hologram)
 	{
 		UE_LOG(LogSmartFoundations, Verbose, TEXT("HOLOGRAM REGISTRATION FAILED: Null hologram pointer"));
@@ -204,7 +223,10 @@ void USFSubsystem::RegisterActiveHologram(AFGHologram* Hologram)
 	// signed transform state across identity-preserving registrations.
 	if (!bPreserveExtendStateAtRegister)
 	{
-		ResetCounters();
+		const AFGBlueprintHologram* Blueprint = Cast<AFGBlueprintHologram>(Hologram);
+		const bool bSameBlueprintSession = Blueprint && !BlueprintSpacingDefaultAppliedFor.IsEmpty()
+			&& Blueprint->mBlueprintDescName == BlueprintSpacingDefaultAppliedFor;
+		ResetHologramTransitionCounters(*this, bSameBlueprintSession);
 	}
 	else
 	{
@@ -457,7 +479,7 @@ void USFSubsystem::RegisterActiveHologram(AFGHologram* Hologram)
 
 		// [#168] Smart! Blueprints spacing default: seam belts/pipes need a physical GAP to
 		// exist (a conduit under ~0.5m can't be built, and flush tiling leaves no room), so
-		// picking up a blueprint defaults spacing to 1m on every axis. This is only a
+		// picking up a blueprint uses configurable spacing (1m per axis by default). This is only a
 		// STARTING POINT for the build session: keyed on the blueprint's identity
 		// (mBlueprintDescName), it never re-applies while the SAME blueprint stays in play
 		// (post-fire respawns, build-menu round trips), so an explicit player override -
@@ -472,16 +494,17 @@ void USFSubsystem::RegisterActiveHologram(AFGHologram* Hologram)
 			if (BlueprintId != BlueprintSpacingDefaultAppliedFor)
 			{
 				BlueprintSpacingDefaultAppliedFor = BlueprintId;
-				CounterState.SpacingX = 100;
-				CounterState.SpacingY = 100;
-				CounterState.SpacingZ = 100;
+				const FSmart_ConfigStruct SpacingConfig = FSmart_ConfigStruct::GetActiveConfig(Hologram);
+				CounterState.SpacingX = SFBlueprintSpacingDefaults::ToCentimeters(SpacingConfig.BlueprintSpacingX);
+				CounterState.SpacingY = SFBlueprintSpacingDefaults::ToCentimeters(SpacingConfig.BlueprintSpacingY);
+				CounterState.SpacingZ = SFBlueprintSpacingDefaults::ToCentimeters(SpacingConfig.BlueprintSpacingZ);
 				if (GridStateService)
 				{
 					GridStateService->UpdateCounterState(CounterState);
 				}
 				UpdateCounterDisplay();
-				UE_LOG(LogSmartFoundations, Verbose, TEXT("[#168] Blueprint '%s' pickup: spacing defaulted to 1m/1m/1m (room for seam conduits; override sticks for this build session)"),
-					*BlueprintId);
+				UE_LOG(LogSmartFoundations, Verbose, TEXT("Blueprint '%s' pickup: spacing defaults %d/%d/%d cm (override sticks for this build session)"),
+					*BlueprintId, CounterState.SpacingX, CounterState.SpacingY, CounterState.SpacingZ);
 			}
 		}
 		else
@@ -794,7 +817,7 @@ void USFSubsystem::UnregisterActiveHologram(AFGHologram* Hologram)
 		// restored Extend topology is staged for editing across transient aim gaps.
 		if (!IsRestoredExtendModeActive())
 		{
-			ResetCounters();
+			ResetHologramTransitionCounters(*this, !BlueprintSpacingDefaultAppliedFor.IsEmpty());
 		}
 		else
 		{
@@ -847,6 +870,17 @@ void USFSubsystem::PollForActiveHologram()
 		{
 			return; // Still no controller - early return
 		}
+	}
+
+	SyncSmartSessionStateToAuthority(PC);
+	if (!IsSmartEnabledForSession()) return;
+	// On a dedicated server the tracked controller is a REMOTE client's: the server's own
+	// session switch is always on, so honor that client's per-player switch instead of
+	// running Smart registration and previews on the server copy of their hologram.
+	if (!PC->IsLocalController() && !IsSmartEnabledForPlayer(PC))
+	{
+		if (ActiveHologram.IsValid()) UnregisterActiveHologram(ActiveHologram.Get());
+		return;
 	}
 
 	// Get the player character
@@ -1470,8 +1504,8 @@ void USFSubsystem::OnParentHologramDestroyed(AActor* DestroyedActor)
 
 		CurrentAdapter.Reset();
 
-		// Reset all counters (fixes persistence bug - Task 51)
-		ResetCounters();
+		// Reset placement counters while retaining the current Blueprint session's spacing override.
+		ResetHologramTransitionCounters(*this, !BlueprintSpacingDefaultAppliedFor.IsEmpty());
 	}
 }
 

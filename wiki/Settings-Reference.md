@@ -2,6 +2,8 @@
 
 This page explains what the Smart! settings are for. Names may vary slightly between versions.
 
+Find them from the **Main Menu → Mods → Smart!**. Changes made here **persist between saves and between sessions**. (Keybinds are separate — see [Controls](Controls).)
+
 > Screenshot placeholder: Smart Settings Form showing the major settings sections.
 
 ## Belt Auto-Connect
@@ -25,6 +27,15 @@ Use these settings to control pipe previews.
 - Choose routing style: auto, 2D auto, straight, curve, noodle, or horizontal-to-vertical.
 - Choose pipe indicator style where available.
 
+With **Apply Immediately** off, press **Apply** to rebuild the preview using the selected pipe tier, style, and routing. Toggling Pipe Auto-Connect off and back on restores its previews at the current placement.
+
+## Hypertube Auto-Connect
+
+A separate switch for hypertube previews, independent of Pipe Auto-Connect.
+
+- **Hypertube Auto-Connect** — enable or disable auto-connecting hypertubes. **On by default.** (Added in 33.1.0.)
+- Choose hypertube routing mode.
+
 ## Power Auto-Connect
 
 Use these settings to control power cable previews.
@@ -33,6 +44,25 @@ Use these settings to control power cable previews.
 - Choose connection mode.
 - Set connection range.
 - Reserve pole connections so Smart! does not fill every slot.
+- **Daisy-Chain Power When Scaling** — when Upgraded Power Connectors are unlocked, scaling a factory or generator along Smart's X axis wires each copy directly to the next one instead of running a pole to each, matching the common manifold layout without a separate Extend pass. The Smart Panel can override it for the current build, and the HUD reports the effective choice. It respects each connector's available capacity. **On by default.** (Added in 34.2.0.)
+
+## Blueprint Auto-Connect
+
+A separate switch for the seams between scaled copies of your **own** blueprints — independent of Belt and Pipe Auto-Connect above, so blueprint copies can keep wiring together even when regular auto-connect is off.
+
+- **Blueprint Seam Auto-Connect** — enable or disable auto-connecting the belts, pipes, and eligible power connections between scaled blueprint copies. **On by default.** (Added in 34.2.0.)
+
+Power seam connections additionally require **Power Auto-Connect**. Each cable uses a matching power-pole socket with available capacity; internal wires and the two faces of a wall outlet count separately.
+
+## Blueprint Spacing Defaults
+
+Under **Building Behavior**, **Blueprint Default X/Y/Z Spacing (m)** choose the starting gap for each axis of a new blueprint build session. Each defaults to **1 m** and accepts **0-100 m**. Zero allows flush tiling; very short gaps may leave no room for belt or pipe seams.
+
+Panel spacing overrides last for the current blueprint session, including repeated placements. Selecting a different blueprint or holstering starts a fresh session with your defaults. Settings are read live; no world reload is needed.
+
+## Auto-Connect Behavior
+
+- **Nearby Logistics Range** — how far splitters, mergers, pipe junctions, and pipe floor holes reach toward factory ports when auto-connecting. Lower it to keep Auto-Connect from reaching into neighboring factory groups. **Defaults to 25 m** (the previous fixed behavior). (Added in 34.2.0.)
 
 ## Extend
 
@@ -45,6 +75,7 @@ Use these settings to control power cable previews.
 
 - Auto-Hold on grid change locks the hologram after you modify the grid, so a large preview doesn't move accidentally. **On by default** (as of 32.1.2) — turn it off here if you'd rather the hologram stay free to reposition, and the vanilla Hold key releases any individual lock.
 - **Player Relative Controls** — makes building follow the direction you're looking instead of fixed compass axes: the mouse wheel grows the build toward wherever you're facing, and the numpad becomes a compass (away/toward, right/left, up/down). Applies to scaling, spacing, steps, stagger, and rotation. **Off by default** — your classic controls are unchanged until you turn it on, and the Smart Panel always stays on fixed X/Y/Z. See [Controls](Controls) for the full breakdown. (Added in 34.1.0.)
+- **Tap to Toggle Transform Modes** — tap a transform key (Spacing, Steps, Stagger, Rotation, or Recipe on a factory) to switch that mode on; tap it again to switch it off; tap a different one to change modes. Made for controllers, the Steam Deck, and accessibility setups — Steam Input radial/touch menus send quick taps and cannot hold a key. Holstering, changing buildings, or opening a panel always releases the mode. **Off by default** — the classic hold-to-use behavior is untouched until you turn it on, and turning it back off restores it instantly. See [Controller & Steam Deck](Controller-and-Steam-Deck) for radial-menu setups. (Added in 34.2.0.)
 
 ## Scroll Increments
 
@@ -73,3 +104,7 @@ Defaults are 0.5 m and 5°. The distance increments accept 0.1–8 m; rotation a
 - Show or hide direction arrows.
 - Enable orbit animation.
 - Show or hide X/Y/Z labels.
+
+---
+
+_Last updated: 2026-10-06 · Smart! v34.4.0_

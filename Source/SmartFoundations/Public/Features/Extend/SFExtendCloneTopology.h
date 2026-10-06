@@ -14,6 +14,7 @@ class AFGBuildablePipeline;
 class AFGBuildableConveyorAttachment;
 class UFGFactoryConnectionComponent;
 class UFGPipeConnectionComponent;
+class UPackageMap;
 
 /**
  * Lightweight vector value used by clone topology structs.
@@ -244,6 +245,10 @@ struct FSFSourceSegment
     
     // Issue #260: Foundation thickness for passthrough floor holes
     UPROPERTY() float Thickness = 0.0f;
+    // Exact external pipe endpoints; empty captured faces remain intentionally unattached.
+    UPROPERTY() bool bHasPassthroughLinks = false;
+    UPROPERTY() FSFConnectionRef PassthroughTop;
+    UPROPERTY() FSFConnectionRef PassthroughBottom;
     
     // Issue #288: User-configured flow limit for pipe attachments (valves, pumps).
     // -1.0 = unlimited (vanilla default, i.e. fully-open valve). Ignored for other types.
@@ -257,6 +262,14 @@ struct FSFSourceSegment
     // source pump's directly-connected pole is itself inside the manifold (i.e. also
     // present in FSFSourceTopology::PowerPoles); out-of-manifold poles are ignored.
     UPROPERTY() FString ConnectedPowerPoleSourceId;
+    UPROPERTY() FString PowerConnectorName;
+    UPROPERTY() FString ConnectedPowerPoleConnectorName;
+    UPROPERTY() FSFVec3 PowerConnectorWorld;
+    UPROPERTY() FSFVec3 ConnectedPowerPoleConnectorWorld;
+    UPROPERTY() bool bHasPowerConnectorWorld = false;
+    UPROPERTY() int32 PowerConnectorCapacity = -1;
+    UPROPERTY() float PowerMaxLength = 0;
+    UPROPERTY() int32 ConnectedPowerPoleConnectorCapacity = -1;
 
     // [#477] Appearance captured while the source actor is alive.
     UPROPERTY() FSFCapturedCustomization Customization;
@@ -301,6 +314,21 @@ struct FSFSourceChain
     UPROPERTY() TArray<FSFSourceSegment> Segments;
 };
 
+/** Native factory socket and source-chain intent; socket position is actor-local. */
+USTRUCT()
+struct FSFExtendFactoryPower
+{
+    GENERATED_BODY()
+    UPROPERTY() FString Connector;
+    UPROPERTY() FSFVec3 LocalPosition;
+    UPROPERTY() int32 Capacity = 0;
+    UPROPERTY() int32 SourceFreeConnections = 0;
+    UPROPERTY() float MaxWireLength = 0;
+    UPROPERTY() bool bHasWire = false;
+    UPROPERTY() bool bContinuesChain = false;
+    UPROPERTY() bool bRequested = false;
+};
+
 /**
  * Source factory building
  */
@@ -312,6 +340,7 @@ struct FSFSourceFactory
     UPROPERTY() FString Id;
     UPROPERTY() FString Class;
     UPROPERTY() FSFTransform Transform;
+    UPROPERTY() FSFExtendFactoryPower Power;
 };
 
 /**
@@ -335,6 +364,12 @@ struct FSFSourcePowerPole
     UPROPERTY() FSFVec3 PoleConnectorWorld;              // Source pole's power connector world location
     UPROPERTY() FSFVec3 FactoryConnectorWorld;          // Source factory's power connector world location
     UPROPERTY() bool bHasConnectorWorld = false;        // True when both connector positions were captured
+    UPROPERTY() FString PoleConnectorName;
+    UPROPERTY() FString FactoryConnectorName;
+    UPROPERTY() int32 FactoryMaxConnections = -1;
+    UPROPERTY() float PowerMaxLength = 0;
+    // Independent external-wire budgets; hidden bridges do not consume these slots.
+    UPROPERTY() TMap<FString, int32> PortCapacities;
 
     // [#477] Appearance captured while the source actor is alive.
     UPROPERTY() FSFCapturedCustomization Customization;
@@ -362,6 +397,10 @@ struct FSFSourceTopology
     
     /** Capture topology from existing CachedTopology struct */
     static FSFSourceTopology CaptureFromTopology(const struct FSFExtendTopology& Topology);
+
+    // [MP-REPL] Explicit bounded value serialization retains maps (socket positions
+    // and independent power-face budgets) which default RPC property layout omits.
+    bool NetSerialize(FArchive& Ar, UPackageMap* Map, bool& bOutSuccess);
     
     /** Check if topology has any chains */
     bool IsValid() const 
@@ -369,6 +408,12 @@ struct FSFSourceTopology
         return BeltInputChains.Num() > 0 || BeltOutputChains.Num() > 0 || 
                PipeInputChains.Num() > 0 || PipeOutputChains.Num() > 0; 
     }
+};
+
+template<>
+struct TStructOpsTypeTraits<FSFSourceTopology> : TStructOpsTypeTraitsBase2<FSFSourceTopology>
+{
+    enum { WithNetSerializer = true };
 };
 
 // ============================================================================
@@ -417,6 +462,10 @@ struct FSFCloneHologram
     
     // Issue #260: Foundation thickness for passthrough floor holes
     UPROPERTY() float Thickness = 0.0f;
+    // Exact external pipe endpoints; empty captured faces remain intentionally unattached.
+    UPROPERTY() bool bHasPassthroughLinks = false;
+    UPROPERTY() FSFConnectionRef PassthroughTop;
+    UPROPERTY() FSFConnectionRef PassthroughBottom;
     
     // Issue #288: User-configured flow limit for pipe attachments (valves, pumps).
     // -1.0 = unlimited. Only applied when Role == "pipe_attachment".
@@ -428,6 +477,20 @@ struct FSFCloneHologram
     // pole was outside the manifold). Resolved from the source segment's
     // ConnectedPowerPoleSourceId via SourceIdToHologramId at emit time.
     UPROPERTY() FString ConnectedPowerPoleHologramId;
+    UPROPERTY() FString PowerConnectorName;
+    UPROPERTY() FString ConnectedPowerPoleConnectorName;
+    UPROPERTY() FString FactoryPowerConnectorName;
+    // Saved reference metadata uses the explicit Restore JSON codec. RPC cable
+    // records below carry their exact endpoint capacities; native RPC property
+    // serialization does not support TMap and must not traverse this local map.
+    TMap<FString, int32> PowerPortCapacities;
+    // Exact endpoints of wire_cost entries. Targets are scoped construction IDs,
+    // or source:<actor-id> for an existing source. Never a nearest-port query.
+    UPROPERTY() FSFConnectionRef PowerFrom;
+    UPROPERTY() FSFConnectionRef PowerTo;
+    UPROPERTY() int32 PowerFromCapacity = -1;
+    UPROPERTY() float PowerMaxLength = 0;
+    UPROPERTY() int32 PowerToCapacity = -1;
     
     // Issue #288: Tier cap of this clone pole (Mk1=4, Mk2=7, Mk3=10). Mirrored
     // from FSFSourcePowerPole.MaxConnections at emit time. Only populated when
@@ -446,6 +509,10 @@ struct FSFCloneHologram
     // Connector normals for proper spline routing (belt/pipe lanes only)
     UPROPERTY() FSFVec3 LaneStartNormal;         // World-space connector facing direction at start
     UPROPERTY() FSFVec3 LaneEndNormal;           // World-space connector facing direction at end
+    // Established from named socket geometry, not the lane chord. Rotation keeps
+    // these world normals in the corresponding endpoint owner's coordinate frame.
+    UPROPERTY() bool bLaneStartNormalVerified = false;
+    UPROPERTY() bool bLaneEndNormalVerified = false;
 
     // Issue #345: source-pole -> clone-pole power cable. Behaves like a lane segment for Scaled Extend:
     // its source-side endpoint must chain to the previous clone (not the source) and only its clone-side
@@ -469,9 +536,13 @@ struct FSFCloneTopology
     // Parent hologram (factory)
     UPROPERTY() FString ParentBuildClass;
     UPROPERTY() FSFTransform ParentTransform;
+    UPROPERTY() FSFExtendFactoryPower FactoryPower;
     
     // Child holograms
     UPROPERTY() TArray<FSFCloneHologram> ChildHolograms;
+
+    // Derived during Restore planning, never trusted from a serialized/client template.
+    FString PowerPlanError;
     
     /** Generate from source topology with offset.
      *  PrincipalAxisWorld (#384): the extend's rotation-STABLE forward direction in world space. When

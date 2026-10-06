@@ -108,6 +108,8 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSFHologramLifecycleEvent, class A
 UCLASS(BlueprintType, Blueprintable)
 class SMARTFOUNDATIONS_API USFSubsystem : public UWorldSubsystem, public FTickableGameObject
 {
+    friend class FSFExtendAuthorityScope;
+    friend class FSFExtendAuthorityIsolationTest;
 	GENERATED_BODY()
 
 public:
@@ -1014,6 +1016,20 @@ public:
     /** Server: stage (or clear, when !Spec.bValid) the pending scaling spec for a player. */
     void StageScalingSpecForPlayer(class APlayerController* PC, const FSFScalingSpec& Spec);
 
+    /** Local build-assistance switch. Survives recipes and holstering, not world changes. */
+    UFUNCTION(BlueprintPure, Category = "Smart! Input")
+    bool IsSmartEnabledForSession() const { return bSmartSessionEnabled; }
+
+    UFUNCTION(BlueprintCallable, Category = "Smart! Input")
+    void ToggleSmartForSession();
+
+    void SetSmartEnabledForSession(bool bEnabled);
+    void SyncSmartSessionStateToAuthority(AFGPlayerController* PC);
+
+    /** Authority opt-out is per requesting player, never a server-wide switch. */
+    void SetSmartEnabledForPlayer(APlayerController* PC, bool bEnabled);
+    bool IsSmartEnabledForPlayer(APlayerController* PC) const;
+
     /** Server: peek the staged spec for a construct instigator if it matches the build class. */
     bool PeekScalingSpecForInstigator(class APawn* Instigator, UClass* BuildClass, FSFScalingSpec& OutSpec) const;
 
@@ -1047,6 +1063,11 @@ public:
 
 private:
     /** Server-only: pending scaling spec per player controller (transient, never saved). */
+    bool bSmartSessionEnabled = true;
+    bool bSmartSessionStatePending = false;
+    TWeakObjectPtr<AFGPlayerController> SessionStateController;
+    TSet<TWeakObjectPtr<APlayerController>> SmartDisabledPlayers;
+
     TMap<TWeakObjectPtr<APlayerController>, FSFScalingSpec> StagedScalingSpecs;
 
     /** Server-only: pending Extend commit per player controller (transient, never saved). */
@@ -1518,7 +1539,7 @@ public:
 	static constexpr double DoubleTapWindow = 1.0;
 	
 	/** Check if Smart is temporarily disabled for current action */
-	bool IsSmartDisabledForCurrentAction() const { return bDisableSmartForNextAction; }
+	bool IsSmartDisabledForCurrentAction() const { return !bSmartSessionEnabled || bDisableSmartForNextAction; }
 	
 	/** Reset the one-shot disable flags (auto-connect and Extend) */
 	void ResetSmartDisableFlag();
@@ -1538,7 +1559,7 @@ public:
 	bool bExtendEnabledByConfig = true;
 	
 	/** Check if Extend is currently disabled (session OR config) */
-	bool IsExtendDisabled() const { return bExtendDisabledForSession || !bExtendEnabledByConfig; }
+	bool IsExtendDisabled() const { return !bSmartSessionEnabled || bExtendDisabledForSession || !bExtendEnabledByConfig; }
 	
 	// === Belt Auto-Connect Setters (for Settings Form) ===
 	

@@ -6,6 +6,7 @@
  */
 
 #include "Features/Extend/SFExtendWiringServiceImpl.h"
+#include "Features/Extend/SFExtendPowerConnections.h"
 #include "Core/Helpers/SFBuildEffectHelper.h"
 #include "FGDismantleInterface.h"
 #include "Shared/Power/SFWireDesignerRegistration.h"  // [#421] designer containment for direct-spawned wires
@@ -413,120 +414,13 @@ void USFExtendWiringService::WireBuiltChildConnections(AFGBuildableFactory* NewF
             AttachmentsWired, ExtendService->JsonBuiltActors.Num());
     }
 
-    // ==================== PUMP POWER WIRING (Issue #288, Phase 3.8b) ====================
-    // Source-linked pump → pole wiring: for each pipe_attachment clone whose source
-    // pump was directly connected to an in-manifold power pole, we spawn a power
-    // line from the clone pump's PowerInput to the clone pole's power connector.
-    // Runs BEFORE GenerateAndExecuteWiring because that function resets
-    // ExtendService->StoredCloneTopology and empties ExtendService->JsonBuiltActors at its end.
-    if (ExtendService->StoredCloneTopology.IsValid())
-    {
-        UClass* PumpWireClass = LoadClass<AFGBuildableWire>(nullptr, SFAssetPaths::PowerLineBuildClass);
-        int32 PumpsWired = 0;
-        int32 PumpsSkipped = 0;
-
-        int32 AttachmentTotal = 0;
-        int32 AttachmentLinked = 0;
-        for (const FSFCloneHologram& Holo : ExtendService->StoredCloneTopology->ChildHolograms)
-        {
-            if (Holo.Role == TEXT("pipe_attachment"))
-            {
-                AttachmentTotal++;
-                if (!Holo.ConnectedPowerPoleHologramId.IsEmpty()) AttachmentLinked++;
-                UE_LOG(LogSmartExtend, VeryVerbose,
-                    TEXT("⚡ EXTEND Phase 3.8b (#288) inventory: %s class=%s PowerPoleClone=%s"),
-                    *Holo.HologramId, *Holo.BuildClass,
-                    Holo.ConnectedPowerPoleHologramId.IsEmpty() ? TEXT("<none>") : *Holo.ConnectedPowerPoleHologramId);
-            }
-        }
-        UE_LOG(LogSmartExtend, VeryVerbose,
-            TEXT("⚡ EXTEND Phase 3.8b (#288) start: %d pipe_attachment(s), %d with pole linkage, JsonBuiltActors=%d"),
-            AttachmentTotal, AttachmentLinked, ExtendService->JsonBuiltActors.Num());
-
-        for (const FSFCloneHologram& Holo : ExtendService->StoredCloneTopology->ChildHolograms)
-        {
-            if (Holo.Role != TEXT("pipe_attachment")) continue;
-            if (Holo.ConnectedPowerPoleHologramId.IsEmpty()) continue;  // valve or unpowered pump
-
-            const TObjectPtr<AActor>* PumpActorPtr = ExtendService->JsonBuiltActors.Find(Holo.HologramId);
-            const TObjectPtr<AActor>* PoleActorPtr = ExtendService->JsonBuiltActors.Find(Holo.ConnectedPowerPoleHologramId);
-            if (!PumpActorPtr || !*PumpActorPtr || !PoleActorPtr || !*PoleActorPtr)
-            {
-                continue;
-            }
-
-            AFGBuildablePipelinePump* ClonePump = Cast<AFGBuildablePipelinePump>(*PumpActorPtr);
-            AFGBuildablePowerPole* ClonePole = Cast<AFGBuildablePowerPole>(*PoleActorPtr);
-            if (!ClonePump || !ClonePole) continue;  // Valve (no PowerInput) or non-pole
-
-            UFGPowerConnectionComponent* PumpPowerConn = ClonePump->FindComponentByClass<UFGPowerConnectionComponent>();
-            if (!PumpPowerConn) continue;
-            if (PumpPowerConn->IsConnected()) continue;
-
-            TArray<UFGCircuitConnectionComponent*> PoleCircuitConns;
-            ClonePole->GetComponents<UFGCircuitConnectionComponent>(PoleCircuitConns);
-            if (PoleCircuitConns.Num() == 0) { ++PumpsSkipped; continue; }
-            UFGCircuitConnectionComponent* PoleConn = PoleCircuitConns[0];
-
-            if (PoleConn->GetNumConnections() >= PoleConn->GetMaxNumConnections())
-            {
-                ++PumpsSkipped;
-                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Warning,
-                    TEXT("⚡ EXTEND Phase 3.8b (#288): clone pole %s reached capacity (%d/%d) — skipping pump %s"),
-                    *ClonePole->GetName(), PoleConn->GetNumConnections(), PoleConn->GetMaxNumConnections(),
-                    *ClonePump->GetName());
-                continue;
-            }
-
-            if (!PumpWireClass)
-            {
-                ++PumpsSkipped;
-                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Warning, TEXT("⚡ EXTEND Phase 3.8b (#288): Build_PowerLine_C class not loadable — skipping pump %s"), *ClonePump->GetName());
-                continue;
-            }
-
-            FActorSpawnParameters WireSpawnParams;
-            WireSpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-            AFGBuildableWire* NewWire = SFWireDesigner::SpawnWireForEndpoints(  // [#421] designer-aware spawn
-                GetWorld(), PumpWireClass, ClonePump->GetActorLocation(), PumpPowerConn, PoleConn);
-            if (!NewWire)
-            {
-                ++PumpsSkipped;
-                continue;
-            }
-
-            if (NewWire->Connect(PumpPowerConn, PoleConn))
-            {
-                ++PumpsWired;
-                UE_LOG(LogSmartExtend, VeryVerbose, TEXT("⚡ EXTEND Phase 3.8b (#288): wired pump %s → pole %s (pole now at %d/%d)"),
-                    *ClonePump->GetName(), *ClonePole->GetName(),
-                    PoleConn->GetNumConnections(), PoleConn->GetMaxNumConnections());
-            }
-            else
-            {
-                ++PumpsSkipped;
-                // [NULL-WIRE GUARD] Dismantle, not Destroy: a failed Connect may still have
-				// registered one side; bare Destroy leaves a dead entry in that connection's
-				// SaveGame'd wire list (asserts on the owner's next dismantle / after reload).
-				IFGDismantleInterface::Execute_Dismantle(NewWire);
-                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Warning, TEXT("⚡ EXTEND Phase 3.8b (#288): Wire->Connect() failed for pump %s → pole %s"),
-                    *ClonePump->GetName(), *ClonePole->GetName());
-            }
-        }
-
-        UE_LOG(LogSmartExtend, VeryVerbose, TEXT("⚡ EXTEND Phase 3.8b (#288): pump power wiring complete — wired %d, skipped %d"),
-            PumpsWired, PumpsSkipped);
-    }
-    else
-    {
-        UE_LOG(LogSmartExtend, VeryVerbose, TEXT("⚡ EXTEND Phase 3.8b (#288): StoredCloneTopology invalid at pre-wire checkpoint — skipping pump power wiring"));
-    }
+    // Pump cables are part of the priced endpoint plan consumed by JSON wiring.
 
     // ==================== PHASE 5/6: JSON-Based Wiring ====================
     // Try JSON-based wiring first (for JSON-spawned holograms)
     // This runs regardless of whether chain-based wiring has data
     // NOTE: GenerateAndExecuteWiring resets ExtendService->StoredCloneTopology and ExtendService->JsonBuiltActors
-    // at its end — phases 3.8a/3.8b above must run before ExtendService call.
+    // at its end — phase 3.8a above must run before this call.
     int32 JsonWiredCount = GenerateAndExecuteWiring(NewFactory);
     if (ExtendService->bRestoredScaledWiringDeferred)
     {
@@ -1586,4 +1480,3 @@ void USFExtendWiringService::WireBuiltChildConnections(AFGBuildableFactory* NewF
 }
 
 // ==================== Manifold Connections ====================
-

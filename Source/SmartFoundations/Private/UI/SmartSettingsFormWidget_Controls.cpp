@@ -1116,7 +1116,11 @@ int32 USmartSettingsFormWidget::CalculateGridTotal() const
     int32 GridY = GridYInput ? FMath::Max(1, FMath::RoundToInt(GridYInput->GetValue())) : 1;
     int32 GridZ = GridZInput ? FMath::Max(1, FMath::RoundToInt(GridZInput->GetValue())) : 1;
 
-    return GridX * GridY * GridZ;
+    // New rows/layers include their own seed; the original source is not constructed.
+    const int64 Total = bIsExtendMode
+        ? (static_cast<int64>(GridX) + 1) * GridY * GridZ - 1
+        : static_cast<int64>(GridX) * GridY * GridZ;
+    return static_cast<int32>(FMath::Min<int64>(Total, MAX_int32));
 }
 
 void USmartSettingsFormWidget::UpdateGridWarningDisplay()

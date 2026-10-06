@@ -5,9 +5,11 @@
 
 #include "CoreMinimal.h"
 #include "Core/Construction/SFFactorySettingsSnapshot.h"
+#include "Core/Construction/SFPipeColorSnapshot.h"
 #include "HUD/SFHUDTypes.h"   // FSFCounterState (grid + transform counters)
 #include "Components/SplineComponent.h"   // FSplinePointData (CSS engine addition)
 #include "ItemAmount.h"                    // FItemAmount (belt plan cost)
+#include "Features/PowerAutoConnect/Net/SFPowerWireEndpoint.h"
 #include "SFScalingSpec.generated.h"
 
 /**
@@ -42,10 +44,10 @@ enum class ESFConduitPlanKind : uint8
  * the complete, real plan (server-side re-derivation and aim-time-preview reuse both failed live;
  * see PLAN_MP_AutoConnect_334.md). The server replays each entry as a fresh tagged child hologram
  * appended AFTER the grid cells, so the vanilla child-construct loop builds it and the family's
- * existing post-build wiring path connects it geometrically against BUILT actors - no connector
- * names or replicated component refs need to cross the wire. Wires are the exception: their two
- * endpoint connection components are resolved by WORLD LOCATION against the pre-construct hologram
- * set (vanilla remaps hologram connections to built poles during construct, the SP mechanism).
+ * existing post-build wiring path connects it against BUILT actors. Wires are materialized after
+ * the grid: legacy entries resolve world connector positions, while port-aware entries carry an
+ * exact component name and owner identity. Existing owners use actor references; new owners must
+ * match the constructed class and grid position. A missing face never falls back to a nearby port.
  */
 USTRUCT()
 struct SMARTFOUNDATIONS_API FSFConduitPlanEntry
@@ -81,10 +83,24 @@ struct SMARTFOUNDATIONS_API FSFConduitPlanEntry
 	UPROPERTY()
 	FVector WireEnd = FVector::ZeroVector;
 
+	/** Port-aware power plans retain exact endpoint identity across SP/MP construction. */
+	UPROPERTY()
+	bool bExactPowerEndpoints = false;
+
+	UPROPERTY()
+	FSFPowerWireEndpoint PowerStart;
+
+	UPROPERTY()
+	FSFPowerWireEndpoint PowerEnd;
+
 	/** Pipe only: floor-hole (passthrough) pipe - replay leaves the junction-connector registry
 	 *  field null so the floor-hole Construct branch (passthrough snap registration) runs. */
 	UPROPERTY()
 	bool bFloorHolePipe = false;
+
+	/** Pipe paint captured from the priced preview, preserved during authority reconstruction. */
+	UPROPERTY()
+	FSFPipeColorSnapshot PipeColor;
 
 	/** Stackable kinds: position in the run (registry StackableBeltIndex / StackablePipeIndex). */
 	UPROPERTY()

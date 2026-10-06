@@ -101,7 +101,8 @@ def main():
             print(f"  {lang}: up to date")
             continue
         missing.sort()
-        with open(po_path, "a", encoding="utf-8") as f:
+        # .po files are LF (.gitattributes); text mode on Windows would append CRLF.
+        with open(po_path, "a", encoding="utf-8", newline="\n") as f:
             for key, ns, src in missing:
                 ctx = f"{ns},{key}" if ns else key
                 f.write("\n")

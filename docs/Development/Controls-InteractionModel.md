@@ -49,8 +49,26 @@ without exposing those storage axes in the runtime HUD. So:
 | **Runtime HUD state** | In-memory, per session | Until build-gun clear / recipe change | current target/axis selection, arrows toggle |
 | **Per-build Panel edits** | Panel session | One build, then revert to global | spacing/scale entered in the Panel (#371) |
 
-Only **global config** persists between builds. Runtime and Panel state reset — mirror that when
+Only **global config** persists between game sessions. Runtime and Panel state reset between builds — mirror that when
 adding PR state (e.g. the stagger family selector is runtime, not global).
+
+### Session-wide opt-out
+
+**Toggle Smart (Session)** defaults to **Num Decimal** and is rebindable under Options > Controls > Mods.
+It uses a separate, single-action `UFGInputMappingContext` that remains installed while the
+hologram-scoped building context is removed. This preserves a re-enable route, including for a
+keyboard without a numpad after rebinding. Classic and Player Relative modes share this action.
+
+Disabling closes Smart panels, clears preview assistance, cancels the current native placement,
+and shows a confirmation notification. Selecting a recipe then starts vanilla placement. The
+opt-out survives recipe changes and holstering, but resets on world load; it changes no saved config.
+The owning player's authority state rejects and clears staged Smart grid, Extend, and Walk plans;
+it does not disable other players. Re-enabling does not restore an abandoned plan. A vanilla
+blueprint can be placed while opted out without relaxing the safety limits on Smart payloads.
+
+`SFSubsystem_Session.cpp` owns the transition and controller-keyed synchronization. The independent
+session input context must never be removed by ordinary hologram cleanup. Regression coverage:
+`SmartFoundations.Session.PlayerIsolation` checks stale-plan rejection and independent players.
 
 ## 4. The PR fork, per surface
 
@@ -190,10 +208,12 @@ composes with the classic Y-negation — **feel-verify** remains the gate for st
 ### 5.5 Context-specific controls
 
 - **Extend** direction cycling stays building-relative (manifold alignment) — PR never forks it.
-  While Extend is active, runtime transform targets are **Chain/Rows**, backed by signed X/Y state.
+  While Extend is active, horizontal runtime transform targets are **Chain/Rows**, backed by signed X/Y state.
   The Left/Right selector owns the Chain sign, and every live/Restore placement path consumes that
-  same signed state. Spacing, Steps, and Rotation cycle only Chain ↔ Rows; Vertical is unavailable.
-  The Smart Panel remains the absolute X/Y editor. This exception is implemented by **#478**.
+  same signed state. Spacing cycles Chain → Rows → Vertical; Steps and Rotation cycle only Chain ↔ Rows.
+  Grid Z repeats layers in world vertical, reachable with both scale modifiers plus wheel or Num9/3.
+  The Smart Panel remains the absolute X/Y/Z editor. The horizontal exception is implemented by **#478**;
+  layer scaling and vertical spacing are added by **#540**. Stagger remains unavailable in live Extend.
 - **Smart Walking** is segment-relative, and that isolation is **enforced in code** (2026-07-09):
   `SF_ComputePlayerRelativeAxes` returns classic axes whenever a walk is active — one choke point
   disabling PR resolution wholesale (scaling, modal targets, HUD highlight, tick refresh) — plus

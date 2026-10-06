@@ -12,6 +12,7 @@
 
 #include "SFGameInstanceModule.h"
 #include "SmartFoundations.h"
+#include "SFSpecConstructionOwnership.h"
 #include "Hologram/FGHologram.h"
 #include "Hologram/FGConveyorBeltHologram.h"
 #include "Hologram/FGConveyorAttachmentHologram.h"
@@ -25,6 +26,8 @@
 #include "Hologram/FGStandaloneSignHologram.h"    // [MP-SPEC] multi-step gate: sign height step
 #include "Holograms/Logistics/SFConveyorBeltHologram.h"  // #341: DrainStackBuiltConveyors
 #include "FGConstructDisqualifier.h"
+#include "FGRecipe.h"
+#include "Resources/FGBuildingDescriptor.h"
 #include "FGCentralStorageSubsystem.h"
 #include "FGGameState.h"
 #include "Core/SF_ATAnchor.h"
@@ -35,10 +38,15 @@
 #include "Services/SFRecipeManagementService.h"  // [CHAIN-FIX] post-construct chain-hygiene sweep
 #include "Features/AutoConnect/SFAutoConnectService.h"
 #include "Features/Extend/SFExtendService.h"
+#include "Features/Extend/SFExtendBuiltActors.h"
+#include "Features/Extend/Net/SFExtendCommitValidation.h"
+#include "Features/Extend/Net/SFExtendAuthorityScope.h"
+#include "Features/Extend/SFExtendWirePreviewScope.h"
 #include "Features/Walk/SFWalkService.h"   // Smart Walking (#356 Slice 3) server-side commit reconstruction
 #include "Equipment/FGBuildGunBuild.h"        // UFGBuildGunStateBuild::InternalConstructHologram / GetHologram
 #include "Core/Net/SFNetworkHelper.h"     // FSFNetworkHelper::IsClient
 #include "Core/Net/SFRainOcclusionRemovalPolicy.h"  // #514: fail-closed CL 502094 rain ISM removals
+#include "Core/Net/SFRainOcclusionAdditionPolicy.h" // #523: fail-closed duplicate-registration guard
 #include "Engine/Engine.h"                     // GEngine on-screen message
 #include "Holograms/Core/SFScalingSpecExpansion.h"
 #include "Data/SFBuildableSizeRegistry.h"
@@ -56,6 +64,8 @@
 #include "FGBuildableSubsystem.h"
 #include "FGConveyorChainActor.h"
 #include "Hologram/FGWallAttachmentHologram.h"        // [#364-MP] wall-support server re-validation
+#include "Hologram/FGPillarHologram.h"                // [#522] pillar server re-validation (dedi floor snap)
+#include "Hologram/FGPassthroughHologram.h"           // [#522] floor-hole server re-validation (dedi foundation snap)
 #include "Buildables/FGBuildableBlueprintDesigner.h"  // [#365-MP] designer containment re-derive
 #include "EngineUtils.h"                              // [#365-MP] TActorIterator over designers
 #include "FGRainOcclusionActor.h"               // #514: box/mesh rain-removal lifecycle guards
@@ -222,11 +232,27 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 	// that unusable hash entry and do not forward the opaque private call. This is intentionally
 	// independent of Smart Dismantle attribution: the reporter had a large mod set and Smart's
 	// EndPlay hook appears in the stack because it invokes vanilla before its own cleanup.
+	// [#523] Synchronous mirror of every rain-occlusion hash Smart has forwarded to the private
+	// add siblings, per subsystem instance. The proprietary bodies defer their ISM/octree work
+	// (ProcessAddsAndRemovals), so no vanilla structure is guaranteed to observe an add at call
+	// time; this mirror is updated inside the add/remove hooks themselves and is therefore exact
+	// at every hook entry regardless of vanilla's internal batching. FObjectKey keeps recycled
+	// subsystem allocations from aliasing; dead worlds are purged when a new subsystem first adds.
+	static TMap<FObjectKey, TSet<FRainHashKey>> RegisteredRainHashes;
+
 	static const auto GuardRainOcclusionRemoval = [](
 		URainOcclusionWorldSubsystem* self,
 		const FRainHashKey Hash,
 		const ESFRainOcclusionRemovalPath Path) -> bool
 	{
+		// #514: CL 502094 RemoveBoxSprite waits at RVA 0x968F23 before any
+		// lookup access; RemoveMeshShape delegates to it. A pre-hook otherwise
+		// reads/mutates the lookup before vanilla's worker-completion barrier.
+		// Preserve that boundary even when the guard cancels the original call.
+		if (self)
+		{
+			self->EnsureWTTaskComplete();
+		}
 		FLookupData* Lookup = self ? self->mLookupTable.Find(Hash) : nullptr;
 		const bool bHasLookup = Lookup != nullptr;
 		UInstancedStaticMeshComponent* Owner = bHasLookup ? Lookup->Owner : nullptr;
@@ -237,6 +263,15 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 			Path, bHasLookup, bHasOwner, LookupIndex, InstanceCount)
 			== ESFRainOcclusionRemovalDecision::Forward)
 		{
+			// Only a forwarded removal unregisters the shape. A fail-closed discard below erases
+			// just the lookup entry: the shape itself stays in vanilla's octree, so the #523 mirror
+			// must keep the hash. Erasing it there let a later rebuild at the same spot re-add the
+			// hash and trip vanilla's bDEBUGIsAddedTwice assertion (#523 reports on 34.3.1 follow
+			// dismantles, not zoop); keeping it makes that re-add a discarded duplicate instead.
+			if (TSet<FRainHashKey>* Registered = RegisteredRainHashes.Find(FObjectKey(self)))
+			{
+				Registered->Remove(Hash);
+			}
 			return false;
 		}
 
@@ -266,6 +301,68 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 		[](auto& scope, URainOcclusionWorldSubsystem* self, const FRainHashKey Hash)
 		{
 			if (GuardRainOcclusionRemoval(self, Hash, ESFRainOcclusionRemovalPath::MeshShape))
+			{
+				scope.Cancel();
+			}
+		});
+
+	// [#523 / CL 502094] The add-side counterpart of the #514 removal guard. Zooping ramp walls
+	// can reach the private add siblings twice with the same FRainHashKey and trip vanilla's
+	// bDEBUGIsAddedTwice assertion (FGRainOcclusionActor.cpp:502). A duplicate add that survived
+	// would also clobber the hash's mLookupTable owner/index entry, which is exactly the
+	// inconsistent state the #514 removal guard keeps rejecting, so the two guards close one loop:
+	// nothing registers twice, and nothing inconsistent is removed. The class log line is the
+	// attribution probe for the root cause hunt: it names which buildable produced the duplicate.
+	static const auto GuardRainOcclusionAddition = [](
+		URainOcclusionWorldSubsystem* self,
+		const AFGBuildable* Buildable,
+		const FRainHashKey Hash,
+		const TCHAR* PathName) -> bool
+	{
+		if (!self)
+		{
+			return false;
+		}
+		TSet<FRainHashKey>* Registered = RegisteredRainHashes.Find(FObjectKey(self));
+		if (!Registered)
+		{
+			for (auto It = RegisteredRainHashes.CreateIterator(); It; ++It)
+			{
+				if (!It.Key().ResolveObjectPtr())
+				{
+					It.RemoveCurrent();
+				}
+			}
+			Registered = &RegisteredRainHashes.Add(FObjectKey(self));
+		}
+		if (SFRainOcclusionAdditionPolicy::Decide(Registered->Contains(Hash))
+			== ESFRainOcclusionAdditionDecision::Forward)
+		{
+			Registered->Add(Hash);
+			return false;
+		}
+		UE_LOG(LogSmartFoundations, Warning,
+			TEXT("[#523] Rejected duplicate rain-occlusion registration (path=%s hash=%llu buildable=%d class=%s); private add was not forwarded."),
+			PathName, static_cast<unsigned long long>(Hash.Hash), Hash.bIsFromBuildable ? 1 : 0,
+			Buildable ? *Buildable->GetClass()->GetName() : TEXT("<null>"));
+		return true;
+	};
+
+	SUBSCRIBE_METHOD(URainOcclusionWorldSubsystem::AddBoxSprite,
+		[](auto& scope, URainOcclusionWorldSubsystem* self, const AFGBuildable* Buildable,
+			const FTransform& ActorTransform, FRainHashKey Hash)
+		{
+			if (GuardRainOcclusionAddition(self, Buildable, Hash, TEXT("box")))
+			{
+				scope.Cancel();
+			}
+		});
+
+	SUBSCRIBE_METHOD(URainOcclusionWorldSubsystem::AddMeshShape,
+		[](auto& scope, URainOcclusionWorldSubsystem* self, const AFGBuildable* Buildable,
+			const FSimpleOcclusionData& InstanceData, FRainHashKey Hash)
+		{
+			if (GuardRainOcclusionAddition(self, Buildable, Hash, TEXT("mesh")))
 			{
 				scope.Cancel();
 			}
@@ -345,6 +442,7 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 	// Resolve the staged spec for a constructing/costing hologram (server side).
 	auto FindStagedSpec = [](const AFGHologram* Holo, FSFScalingSpec& OutSpec, bool bConsume) -> bool
 	{
+		if (!SFSpecConstructionOwnership::CanOwnStagedRequest(Holo)) return false;
 		AFGHologram* MutableHolo = const_cast<AFGHologram*>(Holo);
 		USFSubsystem* SS = USFSubsystem::Get(MutableHolo->GetWorld());
 		if (!SS)
@@ -361,6 +459,7 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 	// [EXTEND-MP] Resolve the staged Extend commit for a constructing/costing hologram.
 	auto FindStagedExtendCommit = [](const AFGHologram* Holo, FSFExtendCommitSpec& OutSpec, bool bConsume) -> bool
 	{
+		if (!SFSpecConstructionOwnership::CanOwnStagedRequest(Holo)) return false;
 		AFGHologram* MutableHolo = const_cast<AFGHologram*>(Holo);
 		USFSubsystem* SS = USFSubsystem::Get(MutableHolo->GetWorld());
 		if (!SS)
@@ -374,9 +473,151 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 			: SS->PeekExtendCommitForInstigator(Instigator, BuildClass, OutSpec);
 	};
 
+    auto IsExtendConstructionRequest = [=](AFGHologram* Holo) -> bool
+    {
+        if (!IsValid(Holo) || !Holo->HasAuthority() || Holo->GetParentHologram()
+            || !SFScalingSpecExpansion::IsSpecConstructionEnabled()) return false;
+        const AFGBuildableHologram* Buildable = Cast<AFGBuildableHologram>(Holo);
+        if (Buildable && Buildable->GetZoopInstanceTransforms().Num() > 0) return false;
+        USFSubsystem* SS = USFSubsystem::Get(Holo->GetWorld());
+        USFExtendService* Extend = SS ? SS->GetExtendService() : nullptr;
+        if (!Extend) return false;
+        FSFWalkCommitSpec WalkCommit;
+        if (SS->PeekWalkCommitForInstigator(Holo->GetConstructionInstigator(), Holo->GetBuildClass(), WalkCommit)) return false;
+        const bool Local = SS->GetActiveHologram() == Holo;
+        if (Local && SS->GetWalkService() && SS->GetWalkService()->IsActive()) return false;
+        FSFExtendCommitSpec Commit;
+        return FindStagedExtendCommit(Holo, Commit, false)
+            || (Local && (SS->IsExtendModeActive() || Extend->IsRestoredCloneTopologyActive()));
+    };
+
+    // [MP-AUTH] These envelopes distinguish an actual build request from aiming's
+    // per-frame ValidatePlacementAndCost calls. Nested native calls share one plan.
+    SUBSCRIBE_METHOD(UFGBuildGunStateBuild::InternalConstructHologram,
+        [=](auto& scope, UFGBuildGunStateBuild* self, FNetConstructionID Id)
+        {
+            USFSubsystem* SS = USFSubsystem::Get(self->GetWorld());
+            AFGHologram* Root = self->GetHologram();
+            TUniquePtr<FSFExtendAuthorityScope> Authority;
+            if (!FSFExtendAuthorityScope::IsActive(SS)
+                && Root && !Root->GetParentHologram()
+                && FSFExtendAuthorityScope::ShouldIsolate(SS, Root->GetConstructionInstigator(), Root->GetBuildClass()))
+                Authority = MakeUnique<FSFExtendAuthorityScope>(SS, Root);
+            SFExtendCommitValidation::FRequestScope Request;
+            AFGHologram* Holo = self->GetHologram();
+            if (IsExtendConstructionRequest(Holo))
+            {
+                // CL 502094's InternalConstructHologram calls Construct before paying,
+                // and never calls ValidatePlacementAndCost itself. The server RPC has
+                // already validated; the local path needs an explicit request-time check.
+                if (!SFExtendCommitValidation::FindPrepared(Holo))
+                {
+                    AFGCharacterPlayer* Player = Cast<AFGCharacterPlayer>(Holo->GetConstructionInstigator());
+                    Holo->ValidatePlacementAndCost(Player ? Player->GetInventory() : nullptr);
+                }
+                const bool* Prepared = SFExtendCommitValidation::FindPrepared(Holo);
+                if (!Prepared || !*Prepared || !Holo->CanConstruct())
+                {
+                    scope.Cancel(); // no native Construct, material removal, or upgrade side effects
+                    return;
+                }
+            }
+            scope(self, Id);
+        });
+    UFGBuildGunStateBuild* BuildStateCDO = GetMutableDefault<UFGBuildGunStateBuild>();
+    SUBSCRIBE_METHOD_VIRTUAL(UFGBuildGunStateBuild::Server_ConstructHologram_Implementation, BuildStateCDO,
+        [](auto& scope, UFGBuildGunStateBuild* self, FNetConstructionID Id, FConstructHologramMessage Data)
+        {
+            // [MP-AUTH] Vanilla deserializes the root inside this RPC. Isolate by
+            // its owning pawn through validation, wiring and post-Construct payment.
+            USFSubsystem* SS = USFSubsystem::Get(self->GetWorld());
+            AFGBuildGun* Gun = self->GetBuildGun();
+            UClass* BuildClass = nullptr;
+            if (Data.Recipe)
+            {
+                const TArray<FItemAmount>& Products = Data.Recipe->GetDefaultObject<UFGRecipe>()->GetProducts();
+                if (Products.Num() == 1 && Products[0].ItemClass
+                    && Products[0].ItemClass->IsChildOf(UFGBuildingDescriptor::StaticClass()))
+                    BuildClass = UFGBuildingDescriptor::GetBuildableClass(Products[0].ItemClass.Get());
+            }
+            TUniquePtr<FSFExtendAuthorityScope> Authority;
+            // A recent staged Extend cannot classify a later different recipe's build.
+            // Unknown message classes wait for the exact deserialized-root fallback.
+            if (!FSFExtendAuthorityScope::IsActive(SS)
+                && FSFExtendAuthorityScope::ShouldIsolate(SS, Gun ? Gun->GetInstigator() : nullptr, BuildClass))
+                Authority = MakeUnique<FSFExtendAuthorityScope>(SS);
+            SFExtendCommitValidation::FRequestScope Request;
+            scope(self, Id, Data);
+        });
+    SUBSCRIBE_METHOD(AFGHologram::ValidatePlacementAndCost,
+        [=](auto& scope, AFGHologram* self, UFGInventoryComponent* Inventory)
+        {
+            // Equipment can temporarily have no instigator during server deserialization.
+            // The validated root supplies the exact player/class; retain its authority
+            // scope on the outer request through construction and material payment.
+            SFExtendCommitValidation::IsolateAuthority(USFSubsystem::Get(self->GetWorld()), self);
+            if (!SFExtendCommitValidation::IsRequestActive() || !IsExtendConstructionRequest(self))
+            {
+                scope(self, Inventory);
+                return;
+            }
+            USFSubsystem* SS = USFSubsystem::Get(self->GetWorld());
+            USFExtendService* Extend = SS ? SS->GetExtendService() : nullptr;
+            FSFExtendCommitSpec Commit;
+            const bool Staged = FindStagedExtendCommit(self, Commit, false);
+            const bool Local = SS && Extend && SS->GetActiveHologram() == self
+                && (SS->IsExtendModeActive() || Extend->IsRestoredCloneTopologyActive());
+            if (!Extend || (!Staged && !Local))
+            {
+                scope(self, Inventory);
+                return;
+            }
+
+            FString Reason;
+            if (!SFExtendCommitValidation::FindPrepared(self))
+            {
+                SFExtendCommitValidation::SetPrepared(self, false); // recursive validation cannot reconstruct twice
+                bool Valid = true;
+                if (Staged) Valid = Extend->ReconstructCommitOnServer(self, Commit) > 0 && Extend->IsScaledExtendValid();
+                Valid = Valid && Extend->ValidatePowerPlanForConstruction(self, Reason);
+                const TArray<FItemAmount> AuthorityCost = Valid && Staged ? self->GetCost(true) : TArray<FItemAmount>();
+                if (Valid && Staged && !SFExtendCommitValidation::SameCost(Commit.Cost, AuthorityCost))
+                {
+                    Valid = false;
+                    Reason = TEXT("The source layout or cable quote changed. Re-select the source before building.");
+                    const auto DescribeCost = [](const TArray<FItemAmount>& Cost)
+                    {
+                        FString Result;
+                        for (const FItemAmount& Item : Cost)
+                            Result += FString::Printf(TEXT("%s%s=%d"), Result.IsEmpty() ? TEXT("") : TEXT(","), *GetNameSafe(Item.ItemClass.Get()), Item.Amount);
+                        return Result;
+                    };
+                    UE_LOG(LogSmartFoundations, Warning,
+                        TEXT("Extend quote mismatch: preview=[%s] authority=[%s] children=%d restore=%d"),
+                        *DescribeCost(Commit.Cost), *DescribeCost(AuthorityCost), self->GetHologramChildren().Num(), Commit.bIsRestore);
+                }
+                SFExtendCommitValidation::SetPrepared(self, Valid);
+                if (!Valid)
+                {
+                    UE_LOG(LogSmartFoundations, Warning, TEXT("Extend pre-construction validation refused %s: %s"),
+                        *GetNameSafe(self), *Reason);
+                    if (APawn* Pawn = self->GetConstructionInstigator())
+                        if (APlayerController* PC = Cast<APlayerController>(Pawn->GetController()))
+                            PC->ClientMessage(Reason.IsEmpty() ? TEXT("Smart could not reconstruct this Extend layout.") : Reason);
+                }
+            }
+
+            scope(self, Inventory);
+            // Hook D clears native placement disqualifiers for Extend *inside* the
+            // call above. Add our hard failure afterwards, before native construction.
+            const bool* Valid = SFExtendCommitValidation::FindPrepared(self);
+            if (!Valid || !*Valid) self->AddConstructDisqualifier(UFGCDInvalidPlacement::StaticClass());
+        });
+
 	// Smart Walking (#356 Slice 3): resolve the staged walk commit for a constructing/costing seed hologram.
 	auto FindStagedWalkCommit = [](const AFGHologram* Holo, FSFWalkCommitSpec& OutSpec, bool bConsume) -> bool
 	{
+		if (!SFSpecConstructionOwnership::CanOwnStagedRequest(Holo)) return false;
 		AFGHologram* MutableHolo = const_cast<AFGHologram*>(Holo);
 		USFSubsystem* SS = USFSubsystem::Get(MutableHolo->GetWorld());
 		if (!SS)
@@ -388,6 +629,24 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 		return bConsume
 			? SS->ConsumeWalkCommitForInstigator(Instigator, BuildClass, OutSpec)
 			: SS->PeekWalkCommitForInstigator(Instigator, BuildClass, OutSpec);
+	};
+
+	// [MP-AUTH] ActiveHologram also tracks the remote build gun on a dedicated server.
+	// It is not proof of local ownership. Prepared Extend children must reach the staged
+	// branch; otherwise a local power wrapper can leave the commit for a factory child.
+	auto CanUseLocalPowerPlan = [=](AFGHologram* Holo, USFSubsystem* SS) -> bool
+	{
+		if (!SS || !SFSpecConstructionOwnership::CanOwnStagedRequest(Holo)) return false;
+		const APawn* Instigator = Holo->GetConstructionInstigator();
+		FSFScalingSpec Scaling;
+		FSFExtendCommitSpec Extend;
+		FSFWalkCommitSpec Walk;
+		const bool HasStaged = FindStagedSpec(Holo, Scaling, false)
+			|| FindStagedExtendCommit(Holo, Extend, false) || FindStagedWalkCommit(Holo, Walk, false)
+			|| SFExtendCommitValidation::FindPrepared(Holo) != nullptr;
+		return SFSpecConstructionOwnership::CanUseLocalPowerPlan(true,
+			Instigator && Instigator->IsLocallyControlled(), SS->GetActiveHologram() == Holo,
+			SS->ShouldSuppressNormalGridChildren(), HasStaged);
 	};
 
 	// ── [#364-MP] Wall-attachment re-validation for staged client fires. The server re-runs
@@ -426,6 +685,84 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 				UE_LOG(LogSmartFoundations, Verbose,
 					TEXT("[MP-SPEC] %s: cleared server-side FGCDMustSnapWall for a staged client fire (client validated the wall snap; %d other disqualifier(s) kept)."),
 					*self->GetName(), Disqualifiers.Num());
+			}
+		});
+
+	// ── [#522] Pillar re-validation for staged client fires - the same disease #364-MP fixed for
+	// wall attachments, in a second family. A pillar snapped onto a foundation references the
+	// CLIENT's temporary actor for that lightweight instance (the dedi log shows the server
+	// failing to resolve exactly that GUID: "Unable to resolve default guid from client:
+	// Build_Foundation_..."), so the deserialized server-side hologram loses its snap target and
+	// the CheckValidFloor re-run reports FGCDInvalidFloor - every Smart-scaled pillar over a
+	// foundation is refused, dedi only (SP resolves the actor trivially; against rock/terrain no
+	// actor reference is needed, which is why those placements work). Same trust model as #364:
+	// the client's build gun will not fire a red preview, and a staged spec exists ONLY for a
+	// Smart client fire. Clear exactly FGCDInvalidFloor; every other server check stays.
+	SUBSCRIBE_METHOD_VIRTUAL(AFGBuildableHologram::CheckValidPlacement, BuildableHologramCDO,
+		[=](auto& scope, AFGBuildableHologram* self)
+		{
+			scope(self);
+			if (!self || !self->HasAuthority() || !self->IsA<AFGPillarHologram>())
+			{
+				return;
+			}
+			FSFScalingSpec StagedSpec;
+			if (!FindStagedSpec(self, StagedSpec, /*bConsume=*/false))
+			{
+				return; // not a staged Smart client fire - vanilla/SP validation untouched
+			}
+			TArray<TSubclassOf<UFGConstructDisqualifier>> Disqualifiers;
+			self->GetConstructDisqualifiers(Disqualifiers);
+			if (Disqualifiers.Remove(UFGCDInvalidFloor::StaticClass()) > 0)
+			{
+				self->ResetConstructDisqualifiers();
+				for (const TSubclassOf<UFGConstructDisqualifier>& Disqualifier : Disqualifiers)
+				{
+					self->AddConstructDisqualifier(Disqualifier);
+				}
+				UE_LOG(LogSmartFoundations, Verbose,
+					TEXT("[#522] %s: cleared server-side FGCDInvalidFloor for a staged client fire (client validated the floor snap; %d other disqualifier(s) kept)."),
+					*self->GetName(), Disqualifiers.Num());
+			}
+		});
+
+	// ── [#522] Passthrough (hypertube/pipe floor hole) re-validation for staged client fires.
+	// The passthrough's entire placement contract is the foundation it pierces, and that
+	// reference is the same client-side lightweight temporary that cannot resolve on the server
+	// - the dedi log shows all three snap-shaped refusals (FGCDInvalidFloor / FGCDMustSnap /
+	// FGCDEncroachingSoftClearance, the last because without the resolved foundation the
+	// server clearance-tests the hole against the very slab it should be embedded in). Clear
+	// those three for staged fires; overlap/affordability and every other check stays.
+	AFGPassthroughHologram* PassthroughCDO = GetMutableDefault<AFGPassthroughHologram>();
+	SUBSCRIBE_METHOD_VIRTUAL(AFGPassthroughHologram::CheckValidPlacement, PassthroughCDO,
+		[=](auto& scope, AFGPassthroughHologram* self)
+		{
+			scope(self);
+			if (!self || !self->HasAuthority())
+			{
+				return;
+			}
+			FSFScalingSpec StagedSpec;
+			if (!FindStagedSpec(self, StagedSpec, /*bConsume=*/false))
+			{
+				return; // not a staged Smart client fire - vanilla/SP validation untouched
+			}
+			TArray<TSubclassOf<UFGConstructDisqualifier>> Disqualifiers;
+			self->GetConstructDisqualifiers(Disqualifiers);
+			int32 Cleared = 0;
+			Cleared += Disqualifiers.Remove(UFGCDInvalidFloor::StaticClass());
+			Cleared += Disqualifiers.Remove(UFGCDMustSnap::StaticClass());
+			Cleared += Disqualifiers.Remove(UFGCDEncroachingSoftClearance::StaticClass());
+			if (Cleared > 0)
+			{
+				self->ResetConstructDisqualifiers();
+				for (const TSubclassOf<UFGConstructDisqualifier>& Disqualifier : Disqualifiers)
+				{
+					self->AddConstructDisqualifier(Disqualifier);
+				}
+				UE_LOG(LogSmartFoundations, Verbose,
+					TEXT("[#522] %s: cleared %d server-side snap-shaped disqualifier(s) for a staged client fire (client validated the foundation snap; %d other disqualifier(s) kept)."),
+					*self->GetName(), Cleared, Disqualifiers.Num());
 			}
 		});
 
@@ -507,7 +844,8 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 			{
 				if (USFSubsystem* SS = USFSubsystem::Get(self->GetWorld()))
 				{
-					if (USFWalkService* Walk = SS->GetWalkService(); Walk && Walk->IsActive())
+					if (USFWalkService* Walk = SS->GetWalkService();
+                        !FSFExtendAuthorityScope::IsActive(SS) && Walk && Walk->IsActive())
 					{
 						WalkSpec = Walk->BuildCommitSpec();
 						bHaveWalkCost = WalkSpec.bValid;
@@ -542,7 +880,7 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 			// FGFactoryHologram, so charge the subsystem-owned daisy-chain spans here rather than
 			// relying on the Extend-only ASFFactoryHologram replacement.
 			if (USFSubsystem* SS = USFSubsystem::Get(self->GetWorld());
-				SS && SS->GetActiveHologram() == MutableSelf && !SS->IsExtendModeActive())
+				CanUseLocalPowerPlan(MutableSelf, SS))
 			{
 				const TArray<FItemAmount> DaisyCost = SFScalingSpecExpansion::GetScaleDaisyChainPowerCost(MutableSelf);
 				if (!DaisyCost.IsEmpty())
@@ -672,14 +1010,78 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 				}
 			}
 
+			// [#523] Zoop stand-down at the commit seam. The tick-time guard (#160) detects vanilla
+			// zoop and destroys Smart's preview children, but it runs one subsystem tick behind
+			// player input: a build click landing between the zoop drag and Smart's next tick
+			// constructs BOTH vanilla's zoop instances AND Smart's grid children at overlapping
+			// transforms - the "duplicate buildings at the same location" the #160 guard exists to
+			// prevent, and the leading suspect for the duplicated rain-occlusion hash behind
+			// #523/#514. The commit point cannot race input: with zoop live on the constructing
+			// hologram, strip Smart's grid children here, before vanilla's child-construct loop.
+			if (self && self->HasAuthority() && self->GetZoopInstanceTransforms().Num() > 0)
+			{
+				static const FName ZoopStripGridChildTag(TEXT("SF_GridChild"));
+				TArray<AFGHologram*> GridChildrenToStrip;
+				for (AFGHologram* Child : self->GetHologramChildren())
+				{
+					if (Child && Child->Tags.Contains(ZoopStripGridChildTag))
+					{
+						GridChildrenToStrip.Add(Child);
+					}
+				}
+				if (GridChildrenToStrip.Num() > 0)
+				{
+					for (AFGHologram* Child : GridChildrenToStrip)
+					{
+						self->mChildren.Remove(Child);
+						Child->Destroy();
+					}
+					UE_LOG(LogSmartFoundations, Warning,
+						TEXT("[#523] Zoop live at construct on %s: stripped %d Smart grid children before the child-construct loop (tick-time stand-down raced the build click)."),
+						*self->GetName(), GridChildrenToStrip.Num());
+				}
+			}
+
+			// [MP-AUTH] Port-aware power uses the same post-construct plan in standalone/listen
+			// and dedicated play. Local previews already contributed their cost; remove only those
+			// wire children while vanilla builds the grid, avoiding transient unconnected wires.
+			if (self && self->HasAuthority() && self->GetZoopInstanceTransforms().Num() == 0)
+			{
+				if (USFSubsystem* SS = USFSubsystem::Get(self->GetWorld());
+					CanUseLocalPowerPlan(self, SS))
+				{
+					TArray<AFGHologram*> ExactWireChildren;
+					for (AFGHologram* Child : self->GetHologramChildren())
+						if (IsValid(Child) && Child->Tags.Contains(TEXT("SF_ExactPowerPlan"))) ExactWireChildren.Add(Child);
+					if (!ExactWireChildren.IsEmpty())
+					{
+						FSFScalingSpec LocalPowerPlan;
+						SFScalingSpecExpansion::CaptureConduitPlan(self, LocalPowerPlan);
+						LocalPowerPlan.ConduitPlan.RemoveAll([](const FSFConduitPlanEntry& Entry) { return !Entry.bExactPowerEndpoints; });
+						for (AFGHologram* Child : ExactWireChildren) self->mChildren.Remove(Child);
+						AActor* BuiltParent = scope(self, out_children, constructionID);
+						AFGBuildable* Buildable = Cast<AFGBuildable>(BuiltParent);
+						SFScalingSpecExpansion::SpawnWirePlanPostConstruct(BuiltParent, out_children, LocalPowerPlan,
+							Buildable ? Buildable->GetBlueprintProxy() : nullptr);
+						for (AFGHologram* Child : ExactWireChildren)
+							if (IsValid(Child)) self->mChildren.AddUnique(Child);
+						scope.Override(BuiltParent);
+						return;
+					}
+				}
+			}
+
 			// #487 standalone/listen-host construction has no staged network spec. Wrap the normal
 			// vanilla parent construct while its Smart grid children and counters still exist, then
 			// use the same post-construct primitive as the authoritative staged path below.
-			if (self && self->HasAuthority())
+			if (self && self->HasAuthority() && self->GetZoopInstanceTransforms().Num() == 0)
 			{
 				if (USFSubsystem* SS = USFSubsystem::Get(self->GetWorld());
-					SS && SS->GetActiveHologram() == self && !SS->IsExtendModeActive())
+					CanUseLocalPowerPlan(self, SS))
 				{
+					// [#523] Gated on zoop being inactive: with zoop live the counters can be stale
+					// (tick-time stand-down raced the click) and daisy-chain power for a grid that
+					// zoop, not Smart, is placing would wire against buildings that don't exist.
 					const FSFCounterState Counters = SS->GetCounterState();
 					const bool bDaisyEnabled = SS->GetAutoConnectRuntimeSettings().bScaleDaisyChainPower;
 					if (bDaisyEnabled && FMath::Abs(Counters.GridCounters.X) >= 2)
@@ -711,6 +1113,21 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 			const bool bHasWalk = FindStagedWalkCommit(self, WalkSpec, /*bConsume=*/true);
 			// A committed WALK supersedes the incidental scaling/Extend spec a stackable pole also stages.
 			if (bHasWalk) { bHasScaling = false; bHasExtend = false; }
+			// Native zoop owns this placement, including a stale Extend request captured
+			// before the tick-time stand-down. It was consumed above and cannot leak.
+			if (self->GetZoopInstanceTransforms().Num() > 0) bHasExtend = false;
+			// [#523] With zoop live on the constructing hologram, zoop owns placement: a staged
+			// scaling spec is a stale capture from before the client's tick-time stand-down could
+			// reset the counters. Expanding it would build Smart's grid on top of vanilla's zoop
+			// instances at overlapping transforms. The spec is already consumed above, so it
+			// cannot leak into a later construct; discard it here.
+			if (bHasScaling && self->GetZoopInstanceTransforms().Num() > 0)
+			{
+				UE_LOG(LogSmartFoundations, Warning,
+					TEXT("[#523] Zoop live at construct seam on %s: discarded a stale %d-cell staged scaling spec (zoop owns this placement)."),
+					*self->GetName(), Spec.CellCount());
+				bHasScaling = false;
+			}
 			if (!bHasScaling && !bHasExtend && !bHasWalk)
 			{
 				return; // nothing staged for this instigator/class (e.g. a child in the loop)
@@ -767,7 +1184,18 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 				{
 					if (USFExtendService* Extend = SS->GetExtendService())
 					{
-						Extend->ReconstructCommitOnServer(self, ExtendSpec);
+
+                        if (const bool* Prepared = SFExtendCommitValidation::FindPrepared(self))
+                        {
+                            if (!*Prepared)
+                            {
+                                UE_LOG(LogSmartFoundations, Error, TEXT("Native construction reached an invalid Extend plan after validation."));
+                                scope.Override(nullptr);
+                                return;
+                            }
+                            // Reuse the exact children/cost validated earlier in this native request.
+                        }
+                        else Extend->ReconstructCommitOnServer(self, ExtendSpec);
 					}
 				}
 			}
@@ -806,9 +1234,29 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 			}
 			GSFActiveSpecGroupProxy = GroupProxy;
 
+			int32 ExpectedFactories = 1;
+			if (bHasExtend)
+			{
+				for (AFGHologram* Child : self->GetHologramChildren())
+					if (IsValid(Child) && Child->GetBuildClass() == self->GetBuildClass()) ++ExpectedFactories;
+			}
 			AActor* BuiltParent = scope(self, out_children, constructionID);
 
 			GSFActiveSpecGroupProxy.Reset();
+
+			if (bHasExtend)
+			{
+				TSet<AActor*> BuiltFactories;
+				if (IsValid(BuiltParent) && BuiltParent->GetClass() == self->GetBuildClass()) BuiltFactories.Add(BuiltParent);
+				for (AActor* Child : out_children)
+					if (IsValid(Child) && Child->GetClass() == self->GetBuildClass()) BuiltFactories.Add(Child);
+				UE_LOG(LogSmartFoundations, Log,
+					TEXT("Extend construction: root=%s prepared=%d expectedFactories=%d builtFactories=%d builtChildren=%d restore=%d"),
+					*GetNameSafe(BuiltParent), SFExtendCommitValidation::FindPrepared(self) != nullptr,
+					ExpectedFactories, BuiltFactories.Num(), out_children.Num(), ExtendSpec.bIsRestore);
+				if (BuiltFactories.Num() != ExpectedFactories)
+					UE_LOG(LogSmartFoundations, Error, TEXT("Extend construction result does not match its prepared factory count."));
+			}
 
 			// [#515-#517] Hand the exact staged value contract to every built factory. The
 			// service-owned queue waits for BeginPlay/inventories and consumes from this instigator.
@@ -834,58 +1282,16 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 				}
 			}
 
-			// [EXTEND-MP] Register the clone-id -> built-actor anchors for the wiring pass. In SP
-			// this lives in ASFFactoryHologram::Construct (the swapped parent): it position-matches
-			// every child hologram carrying a JsonCloneId (the scaled clone FACTORIES,
-			// "sc{i}_factory" - vanilla holograms whose own Construct knows nothing of clone ids)
-			// to its built actor. The server constructs through the VANILLA hologram, so those
-			// anchors never registered and the deferred wiring resolved NOTHING - a scaled run
-			// built geometrically perfect but fully unwired (live 2026-06-10). Same seam, same
-			// position-match, with the self-registered skip (#288).
+			// [MP-AUTH] ConfigureActor registers exact clone identity. Native subclasses
+            // that bypass that callback use the same unique class/transform match as SP,
+            // restricted to this Construct's output. No existing world actor is a candidate.
 			if (bHasExtend)
 			{
 				if (USFSubsystem* SS = USFSubsystem::Get(self->GetWorld()))
 				{
 					if (USFExtendService* Extend = SS->GetExtendService())
 					{
-						int32 RegisteredAnchors = 0;
-						for (AFGHologram* ChildHolo : self->mChildren)
-						{
-							if (!ChildHolo)
-							{
-								continue;
-							}
-							FSFHologramData* ChildData = USFHologramDataRegistry::GetData(ChildHolo);
-							if (!ChildData || ChildData->JsonCloneId.IsEmpty())
-							{
-								continue;
-							}
-							if (Extend->GetBuiltActorByCloneId(ChildData->JsonCloneId) != nullptr)
-							{
-								continue; // self-registered during its own Construct (exact match)
-							}
-							const FVector ChildPos = ChildHolo->GetActorLocation();
-							AActor* BestMatch = nullptr;
-							float BestDist = 200.0f;
-							for (AActor* ChildActor : out_children)
-							{
-								if (!ChildActor)
-								{
-									continue;
-								}
-								const float Dist = FVector::Dist(ChildActor->GetActorLocation(), ChildPos);
-								if (Dist < BestDist)
-								{
-									BestDist = Dist;
-									BestMatch = ChildActor;
-								}
-							}
-							if (BestMatch)
-							{
-								Extend->RegisterJsonBuiltActor(ChildData->JsonCloneId, BestMatch);
-								++RegisteredAnchors;
-							}
-						}
+						const int32 RegisteredAnchors = SFExtendBuiltActors::RegisterChildren(Extend, self, out_children);
 						UE_LOG(LogSmartFoundations, Verbose,
 							TEXT("[EXTEND-MP] Registered %d clone-id wiring anchor(s) post-construct for %s."),
 							RegisteredAnchors, *GetNameSafe(BuiltParent));
@@ -979,6 +1385,17 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 
 			scope.Override(BuiltParent);
 		});
+
+    // The explicit plan is the sole wire materializer. The native child loop must
+    // not spawn the old unconnected raw wire as well. Wrap scope() explicitly so
+    // early-returning handlers still enter this wrapper before native construction.
+    SUBSCRIBE_METHOD_VIRTUAL(AFGBuildableHologram::Construct, BuildableHologramCDO,
+        [](auto& scope, AFGBuildableHologram* self, TArray<AActor*>& Children, FNetConstructionID Id)
+        {
+            FSFExtendWirePreviewScope PreviewScope(self->mChildren);
+            AActor* Built = scope(self, Children, Id);
+            scope.Override(Built);
+        });
 
 	// ── Hook D: server-side placement leniency for staged Extend commits. SP's swapped parent
 	// (ASFFactoryHologram) SKIPS clearance checks during Extend - the clone is deliberately placed
@@ -1075,6 +1492,12 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 			static const FName BlueprintGridChildTag(TEXT("SF_GridChild"));
 			static const FName SeamBeltTag(TEXT("SF_BeltAutoConnectChild"));
 			static const FName SeamPipeTag(TEXT("SF_PipeAutoConnectChild"));
+			FSFScalingSpec BlueprintPowerPlan;
+			if (self && self->HasAuthority())
+			{
+				SFScalingSpecExpansion::CaptureConduitPlan(self, BlueprintPowerPlan);
+				BlueprintPowerPlan.ConduitPlan.RemoveAll([](const FSFConduitPlanEntry& Entry) { return Entry.Kind != ESFConduitPlanKind::Wire || !Entry.bExactPowerEndpoints; });
+			}
 
 			// ── [#168-MP] SERVER-SIDE RE-EXPANSION for blueprint parents. A network client's fire
 			// strips the SF_GridChild copies + seam conduits and stages the spec (the standard
@@ -1121,6 +1544,8 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 								Entry.Location += PlanShift;
 								Entry.WireStart += PlanShift;
 								Entry.WireEnd += PlanShift;
+								if (!Entry.PowerStart.bExisting) Entry.PowerStart.OwnerLocation += PlanShift;
+								if (!Entry.PowerEnd.bExisting) Entry.PowerEnd.OwnerLocation += PlanShift;
 							}
 						}
 						UE_LOG(LogSmartFoundations, Verbose,
@@ -1129,6 +1554,8 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 							*ServerParentAnchor.ToCompactString(), *BlueprintSpec.ClientParentAnchorRel.ToCompactString());
 					}
 					const int32 Conduits = SFScalingSpecExpansion::SpawnConduitPlanChildren(self, BlueprintSpec);
+					BlueprintPowerPlan = BlueprintSpec;
+					BlueprintPowerPlan.ConduitPlan.RemoveAll([](const FSFConduitPlanEntry& Entry) { return Entry.Kind != ESFConduitPlanKind::Wire || !Entry.bExactPowerEndpoints; });
 					if (Conduits > 0)
 					{
 						UE_LOG(LogSmartFoundations, Verbose,
@@ -1167,7 +1594,7 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 				}
 			}
 
-			scope(self, out_children, constructionID);
+			AActor* BuiltBlueprint = scope(self, out_children, constructionID);
 
 			for (AFGBlueprintHologram* BlueprintChild : BlueprintChildren)
 			{
@@ -1186,6 +1613,10 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 					TEXT("[#168] Constructed blueprint grid child %s -> %s (+%d actors)"),
 					*BlueprintChild->GetName(), *GetNameSafe(BuiltMain), ChildBuilt.Num());
 			}
+
+			// [MP-AUTH] Power is also built only now, including each copy's internal cables.
+			if (!BlueprintPowerPlan.ConduitPlan.IsEmpty())
+				SFScalingSpecExpansion::SpawnWirePlanPostConstruct(BuiltBlueprint, out_children, BlueprintPowerPlan, nullptr);
 
 			// [#168] Seam conduits fire AFTER every blueprint copy so their SF-tagged Construct
 			// paths wire geometrically against just-BUILT actors (the same ordering contract the
@@ -1218,6 +1649,18 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 	SUBSCRIBE_METHOD_VIRTUAL_AFTER(AFGBuildableHologram::ConfigureActor, BuildableHologramCDO,
 		[](const AFGBuildableHologram* self, AFGBuildable* inBuildable)
 		{
+			// Exact hologram-to-buildable identity is available before native BeginPlay.
+            // Registration is independent of group proxies, including Designer builds.
+            if (self && IsValid(inBuildable) && inBuildable->HasAuthority())
+            {
+                const FSFHologramData* Data = USFHologramDataRegistry::GetData(self);
+                if (Data && !Data->JsonCloneId.IsEmpty() && self->GetBuildClass() == inBuildable->GetClass())
+                {
+                    if (USFSubsystem* SS = USFSubsystem::Get(self->GetWorld()))
+                        if (USFExtendService* Extend = SS->GetExtendService())
+                            Extend->RegisterJsonBuiltActor(Data->JsonCloneId, inBuildable);
+                }
+            }
 			AFGBlueprintProxy* GroupProxy = GSFActiveSpecGroupProxy.Get();
 			if (!GroupProxy || !inBuildable)
 			{

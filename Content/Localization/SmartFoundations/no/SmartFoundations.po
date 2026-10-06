@@ -2686,4 +2686,56 @@ msgstr "Styrer koblingene mellom tilstøtende kopier av skalerte blåkopier."
 
 msgctxt "SmartFoundations,Notice_ConstructPayloadTooLarge"
 msgid "Placement too large ({0} KB). Build in smaller sections."
-msgstr ""
+msgstr "Plasseringen er for stor ({0} KB). Bygg i mindre deler."
+
+msgctxt "SmartSession,Disabled"
+msgid "Smart! building assistance disabled. Select a recipe to build normally; use Toggle Smart (Session) to re-enable."
+msgstr "Smart! byggehjelp deaktivert. Velg en oppskrift for å bygge normalt; bruk «Toggle Smart (Session)» for å aktivere igjen."
+
+msgctxt "SmartSession,Enabled"
+msgid "Smart! building assistance enabled for this session."
+msgstr "Smart! byggehjelp aktivert for denne økten."
+
+msgctxt "SmartFoundations,P.BlueprintSpacingX"
+msgid "Blueprint Default X Spacing (m)"
+msgstr "Standard X-avstand for blåkopi (m)"
+
+msgctxt "SmartFoundations,P.BlueprintSpacingX.TT"
+msgid "Starting X gap for a new blueprint build session (0-100 m). Zero tiles flush; short gaps may leave no room for seam connections. Panel changes override this for the current session."
+msgstr "Start-X-avstand for en ny byggeøkt med blåkopi (0-100 m). Null plasserer kopiene kant i kant; korte avstander kan gi for lite plass til skjøtkoblinger. Endringer i panelet overstyrer dette for gjeldende økt."
+
+msgctxt "SmartFoundations,P.BlueprintSpacingY"
+msgid "Blueprint Default Y Spacing (m)"
+msgstr "Standard Y-avstand for blåkopi (m)"
+
+msgctxt "SmartFoundations,P.BlueprintSpacingY.TT"
+msgid "Starting Y gap for a new blueprint build session (0-100 m). Zero tiles flush; short gaps may leave no room for seam connections. Panel changes override this for the current session."
+msgstr "Start-Y-avstand for en ny byggeøkt med blåkopi (0-100 m). Null plasserer kopiene kant i kant; korte avstander kan gi for lite plass til skjøtkoblinger. Endringer i panelet overstyrer dette for gjeldende økt."
+
+msgctxt "SmartFoundations,P.BlueprintSpacingZ"
+msgid "Blueprint Default Z Spacing (m)"
+msgstr "Standard Z-avstand for blåkopi (m)"
+
+msgctxt "SmartFoundations,P.BlueprintSpacingZ.TT"
+msgid "Starting Z gap for a new blueprint build session (0-100 m). Zero tiles flush; short gaps may leave no room for seam connections. Panel changes override this for the current session."
+msgstr "Start-Z-avstand for en ny byggeøkt med blåkopi (0-100 m). Null plasserer kopiene kant i kant; korte avstander kan gi for lite plass til skjøtkoblinger. Endringer i panelet overstyrer dette for gjeldende økt."
+
+msgctxt "SmartFoundations,P.bPlayerRelativeControls"
+msgid "Player Relative Controls"
+msgstr "Spillerrelative kontroller"
+
+msgctxt "SmartFoundations,P.bPlayerRelativeControls.TT"
+msgid "Interpret building controls relative to the direction you are facing. The Smart Panel continues to show absolute axes."
+msgstr "Tolker byggekontrollene i forhold til retningen du ser. Smart Panel viser fortsatt absolutte akser."
+
+msgctxt "SmartFoundations,Upgrade_AllTiersTooltip_Logistics"
+msgid "Change differing logistics tiers to the target. Power poles and wall outlets only upgrade."
+msgstr "Endre avvikende logistikknivåer til målet. Strømstolper og vegguttak kan bare oppgraderes."
+
+msgctxt "SmartFoundations,Upgrade_TraversalEmpty"
+msgid "No matching traversal buildables remain; scan again"
+msgstr "Ingen samsvarende bygninger fra skanningen gjenstår; skann igjen"
+
+msgctxt "SmartFoundations,Upgrade_TraversalExpired"
+msgid "Traversal results are no longer valid; scan again"
+msgstr "Skanneresultatene er ikke lenger gyldige; skann igjen"

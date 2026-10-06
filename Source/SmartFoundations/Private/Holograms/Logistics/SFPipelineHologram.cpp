@@ -24,6 +24,7 @@
 #include "Hologram/HologramHelpers.h"                // [#383] FHologramAStarNode for Noodle (PathFindingRouteSpline)
 #include "FGRecipeManager.h"
 #include "FGRecipe.h"
+#include "Resources/FGBuildingDescriptor.h"
 #include "EngineUtils.h"
 
 ASFPipelineHologram::ASFPipelineHologram()
@@ -123,6 +124,14 @@ AActor* ASFPipelineHologram::Construct(TArray<AActor*>& out_children, FNetConstr
 	
 	if (bIsExtendChild || bIsStackableChild || bIsPipeAutoConnectChild)
 	{
+		// #526: refresh the owning parent's designer at the pipe's own commit boundary.
+		// Previews may have been created before the parent entered (or left) a designer;
+		// the direct pipe spawners do not go through the generic conduit helper.
+		// Propagate null as well, so moving out never leaves a stale designer reference.
+		if (AFGHologram* Parent = GetParentHologram())
+		{
+			SetInsideBlueprintDesigner(Parent->GetBlueprintDesigner());
+		}
 		UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 %s: Pipe hologram %s Construct() called - building as child"), 
 			bIsPipeAutoConnectChild ? TEXT("PIPE AUTO-CONNECT") : (bIsStackableChild ? TEXT("STACKABLE") : TEXT("EXTEND")), *GetName());
 		
@@ -1793,107 +1802,35 @@ TArray<FItemAmount> ASFPipelineHologram::GetCost(bool includeChildren) const
 		
 		UE_LOG(LogSmartHologram, VeryVerbose, TEXT("💰 PIPE: Spline length = %.1f cm (%.1f m)"), PipeLengthCm, LengthInMeters);
 		
-		// Get pipe class and determine tier
-		if (mBuildClass)
+		// Recipes produce item descriptors, not buildable actors. Prefer the assigned recipe;
+		// if vanilla lost it, resolve the pipe's building descriptor through the recipe manager.
+		TSubclassOf<UFGRecipe> PipeRecipe = GetRecipe();
+		if (!PipeRecipe && mBuildClass && mBuildClass->IsChildOf(AFGBuildable::StaticClass()))
 		{
-			// Extract tier from class name (e.g., Build_PipelineMK2_C -> tier 2)
-			FString ClassName = mBuildClass->GetName();
-			int32 PipeTier = 1; // Default Mk1
-			
-			// Parse tier from class name
-			if (ClassName.Contains(TEXT("MK1")) || ClassName.Contains(TEXT("Mk1")) || ClassName.Contains(TEXT("Pipeline_C")))
+			if (AFGRecipeManager* RecipeManager = AFGRecipeManager::Get(GetWorld()))
 			{
-				PipeTier = 1;
-			}
-			else if (ClassName.Contains(TEXT("MK2")) || ClassName.Contains(TEXT("Mk2")))
-			{
-				PipeTier = 2;
-			}
-			
-			UE_LOG(LogSmartHologram, VeryVerbose, TEXT("💰 PIPE: Class = %s, Tier = Mk%d"), *ClassName, PipeTier);
-			
-			// Get recipe for this pipe class
-			UWorld* World = GetWorld();
-			if (World)
-			{
-				AFGRecipeManager* RecipeManager = AFGRecipeManager::Get(World);
-				if (RecipeManager)
+				const TSubclassOf<AFGBuildable> PipeBuildableClass = mBuildClass.Get();
+				const TSubclassOf<UFGBuildingDescriptor> Descriptor =
+					RecipeManager->FindBuildingDescriptorByClass(PipeBuildableClass);
+				if (Descriptor)
 				{
-					UClass* BuildClass = mBuildClass;
-					TSubclassOf<AFGBuildable> PipeBuildableClass;
-					if (BuildClass && BuildClass->IsChildOf(AFGBuildable::StaticClass()))
-					{
-						PipeBuildableClass = TSubclassOf<AFGBuildable>(BuildClass);
-					}
-					
-					if (PipeBuildableClass)
-					{
-						// Get all recipes that produce this pipe
-						TArray<TSubclassOf<UFGRecipe>> AvailableRecipes;
-						RecipeManager->GetAllAvailableRecipes(AvailableRecipes);
-						
-						TSubclassOf<UFGRecipe> PipeRecipe = nullptr;
-						for (const TSubclassOf<UFGRecipe>& Recipe : AvailableRecipes)
-						{
-							if (Recipe)
-							{
-								for (const FItemAmount& Product : UFGRecipe::GetProducts(Recipe))
-								{
-									if (Product.ItemClass && Product.ItemClass->IsChildOf(AFGBuildable::StaticClass()))
-									{
-										TSubclassOf<AFGBuildable> ProductBuildable = TSubclassOf<AFGBuildable>(Product.ItemClass);
-										if (ProductBuildable == PipeBuildableClass)
-										{
-											PipeRecipe = Recipe;
-											break;
-										}
-									}
-								}
-								if (PipeRecipe) break;
-							}
-						}
-						
-						if (PipeRecipe)
-						{
-							// Get recipe ingredients (cost per meter) - iterate directly to avoid copy
-							const TArray<FItemAmount> Ingredients = UFGRecipe::GetIngredients(this, PipeRecipe);
+					const TArray<TSubclassOf<UFGRecipe>> Recipes =
+						RecipeManager->FindRecipesByProduct(Descriptor, false, true);
+					if (!Recipes.IsEmpty()) PipeRecipe = Recipes[0];
+				}
+			}
+		}
 
-							UE_LOG(LogSmartHologram, VeryVerbose, TEXT("💰 PIPE: Found recipe with %d ingredients"), Ingredients.Num());
-
-							// Calculate total cost based on pipe length
-							for (const FItemAmount& Ingredient : Ingredients)
-							{
-								if (Ingredient.ItemClass)
-								{
-									// Calculate amount needed for this pipe length
-									int32 AmountNeeded = FMath::CeilToInt(Ingredient.Amount * LengthInMeters);
-									
-									UE_LOG(LogSmartHologram, VeryVerbose, TEXT("💰 PIPE:   %s: %.1f per meter × %.1f meters = %d total"),
-										*Ingredient.ItemClass->GetName(), (double)Ingredient.Amount, LengthInMeters, AmountNeeded);
-									
-									// Add to total cost
-									bool bFound = false;
-									for (FItemAmount& ExistingCost : TotalCost)
-									{
-										if (ExistingCost.ItemClass == Ingredient.ItemClass)
-										{
-											ExistingCost.Amount += AmountNeeded;
-											bFound = true;
-											break;
-										}
-									}
-									if (!bFound)
-									{
-										TotalCost.Add(FItemAmount(Ingredient.ItemClass, AmountNeeded));
-									}
-								}
-							}
-						}
-						else
-						{
-							UE_LOG(LogSmartHologram, Verbose, TEXT("💰 PIPE: No recipe found for pipe class %s"), *ClassName);
-						}
-					}
+		if (PipeRecipe)
+		{
+			// Use vanilla's segment multiplier, including its rounding, rather than pricing
+			// ingredients per metre. GetIngredients also honors the world's build-cost setting.
+			const int32 CostMultiplier = GetBaseCostMultiplier();
+			for (const FItemAmount& Ingredient : UFGRecipe::GetIngredients(this, PipeRecipe))
+			{
+				if (Ingredient.ItemClass && Ingredient.Amount > 0 && CostMultiplier > 0)
+				{
+					TotalCost.Add(FItemAmount(Ingredient.ItemClass, Ingredient.Amount * CostMultiplier));
 				}
 			}
 		}
@@ -1901,9 +1838,9 @@ TArray<FItemAmount> ASFPipelineHologram::GetCost(bool includeChildren) const
 	
 	UE_LOG(LogSmartHologram, VeryVerbose, TEXT("💰 PIPE GetCost() RETURNING %d item types"), TotalCost.Num());
 
-	// #497: cache the computed fallback cost while the spline is healthy (a zero-length spline
+	// #497: cache a resolved fallback cost while the spline is healthy (a zero-length spline
 	// leaves the cache invalid so the restoration path gets another chance next call).
-	if (mSplineComponent && mSplineComponent->GetSplineLength() > KINDA_SMALL_NUMBER)
+	if (!TotalCost.IsEmpty() && mSplineComponent && mSplineComponent->GetSplineLength() > KINDA_SMALL_NUMBER)
 	{
 		CachedSelfCost = TotalCost;
 		bSelfCostCacheValid = true;

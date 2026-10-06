@@ -8,7 +8,7 @@ Check:
 
 - You are holding the build gun.
 - You have an active buildable hologram.
-- Smart! controls are still bound under Options > Controls > Mods.
+- Smart! controls are still bound under Options > Keybindings > "Smart! Mod Controls".
 - You are not typing in a search box or another UI.
 - The Smart! mod is enabled.
 
@@ -81,3 +81,7 @@ When reporting an issue, include:
 - Whether Auto-Connect or Extend was involved.
 - Single-player or multiplayer.
 - Host or client, if multiplayer.
+
+---
+
+_Last updated: 2026-10-06 · Smart! v34.4.0_

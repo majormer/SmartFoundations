@@ -93,6 +93,28 @@ records the model, the experiments, and the analysis in full.
 - Geometry: `mSplineData : TArray<FSplinePointData>`; `GetSplinePointData()` / `GetMutableSplinePointData()` (`FGBuildableConveyorBelt.h:108-109`), `GetSplineComponent()` (`:112`), `GetMeshLength()` (`:110`), `GetLength()`/`mLength` on the base (`FGBuildableConveyorBase.h:159,374`). **[H]**
 - Chain back-pointer: `GetConveyorChainActor()` → `mConveyorChainActor` (`FGBuildableConveyorBase.h:184`). A belt "knows" its chain via this pointer; it is null when unchained. **[H]**
 
+#### Existing belts and the rotated-belt insertion bug (#504)
+
+Existing belts should continue working and do not need wholesale replacement. Some belts created
+by older Smart! versions can turn sideways or form an unexpected fork when a splitter or merger
+is inserted. If this happens, dismantle the affected belt sections and rebuild them, either
+manually or with the updated Smart! tools. The fix prevents the problem on newly created belts;
+it does not rewrite belts already stored in a save.
+
+**Construction contract [H/C]:** `FGBuildableConveyorBelt.h` explicitly assumes zero actor rotation.
+`ASFConveyorBeltHologram::ConfigureActor` now bakes rotation into the new belt's local spline
+points and tangents, preserving the world-space route while setting actor rotation to zero,
+before connection setup and registration. This geometry requirement is separate from the
+connect-then-register requirement below.
+
+**Evidence [E, CL 502094]:** a near-matched 8 m Mk.2 comparison reproduced the sideways split on
+an Extend belt with -90-degree actor yaw, but not on a manually rebuilt zero-rotation belt. The
+affected downstream half retained local-axis geometry with zero yaw and missed its merger by
+544.02 cm. After the fix, insertion into a fresh single-Extend lane left both halves at zero
+rotation with 0 cm error at the outer merger endpoints. This verifies that reproduction, not
+every curve, Scaled Extend/Restore layout, or multiplayer case. Native split implementation
+details remain opaque; the observed geometry and header contract establish the fix boundary.
+
 ### 2.2 The public belt-topology primitives (the mod-facing API)
 Static factory operations on `AFGBuildableConveyorBelt` — the **sanctioned** way to change belt topology: **[H]**
 - `Split(belt, offset, connectNewConveyors) → TArray<belt>` (`:92`)

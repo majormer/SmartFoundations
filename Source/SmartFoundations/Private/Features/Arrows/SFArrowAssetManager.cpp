@@ -91,7 +91,6 @@ bool FSFArrowAssetManager::IsStaticMeshFullyReady(UStaticMesh* Mesh)
 {
 	if (!Mesh)
 	{
-		SF_LOG_ARROWS(VeryVerbose, TEXT("🔍 Readiness Check: Mesh is null"));
 		return false;
 	}
 
@@ -114,31 +113,26 @@ bool FSFArrowAssetManager::IsStaticMeshFullyReady(UStaticMesh* Mesh)
 
 	if (!RenderData)
 	{
-		SF_LOG_ARROWS(VeryVerbose, TEXT("🔍 Readiness Check: RenderData is null"));
 		return false;
 	}
 
 	if (!RenderData->IsInitialized())
 	{
-		SF_LOG_ARROWS(Verbose, TEXT("🔍 Readiness Check: RenderData exists but NOT initialized yet"));
 		return false;
 	}
 
 	// Validate all materials
 	const TArray<FStaticMaterial>& StaticMaterials = Mesh->GetStaticMaterials();
-	SF_LOG_ARROWS(VeryVerbose, TEXT("🔍 Readiness Check: Validating %d materials"), StaticMaterials.Num());
 	
 	for (int32 i = 0; i < StaticMaterials.Num(); ++i)
 	{
 		UMaterialInterface* Material = StaticMaterials[i].MaterialInterface;
 		if (!IsMaterialFullyReady(Material))
 		{
-			SF_LOG_ARROWS(Verbose, TEXT("🔍 Readiness Check: Material[%d] NOT ready"), i);
 			return false;
 		}
 	}
 	
-	SF_LOG_ARROWS(VeryVerbose, TEXT("✅ Readiness Check: Mesh FULLY READY (RenderData initialized, all materials valid)"));
 
 	return true;
 }

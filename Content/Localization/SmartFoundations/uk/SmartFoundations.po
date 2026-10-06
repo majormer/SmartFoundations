@@ -2686,4 +2686,56 @@ msgstr "Керує з'єднаннями між сусідніми копіям�
 
 msgctxt "SmartFoundations,Notice_ConstructPayloadTooLarge"
 msgid "Placement too large ({0} KB). Build in smaller sections."
-msgstr ""
+msgstr "Розміщення завелике ({0} КБ). Будуйте меншими частинами."
+
+msgctxt "SmartSession,Disabled"
+msgid "Smart! building assistance disabled. Select a recipe to build normally; use Toggle Smart (Session) to re-enable."
+msgstr "Будівельну допомогу Smart! вимкнено. Виберіть рецепт, щоб будувати звичайно; використайте «Toggle Smart (Session)», щоб увімкнути її знову."
+
+msgctxt "SmartSession,Enabled"
+msgid "Smart! building assistance enabled for this session."
+msgstr "Будівельну допомогу Smart! увімкнено для цієї сесії."
+
+msgctxt "SmartFoundations,P.BlueprintSpacingX"
+msgid "Blueprint Default X Spacing (m)"
+msgstr "Відстань креслення за замовчуванням X (м)"
+
+msgctxt "SmartFoundations,P.BlueprintSpacingX.TT"
+msgid "Starting X gap for a new blueprint build session (0-100 m). Zero tiles flush; short gaps may leave no room for seam connections. Panel changes override this for the current session."
+msgstr "Початкова відстань по X для нової сесії будівництва креслення (0-100 м). За нуля копії стикуються впритул; мала відстань може не залишити місця для з'єднань на швах. Зміни в Smart Панелі мають пріоритет у поточній сесії."
+
+msgctxt "SmartFoundations,P.BlueprintSpacingY"
+msgid "Blueprint Default Y Spacing (m)"
+msgstr "Відстань креслення за замовчуванням Y (м)"
+
+msgctxt "SmartFoundations,P.BlueprintSpacingY.TT"
+msgid "Starting Y gap for a new blueprint build session (0-100 m). Zero tiles flush; short gaps may leave no room for seam connections. Panel changes override this for the current session."
+msgstr "Початкова відстань по Y для нової сесії будівництва креслення (0-100 м). За нуля копії стикуються впритул; мала відстань може не залишити місця для з'єднань на швах. Зміни в Smart Панелі мають пріоритет у поточній сесії."
+
+msgctxt "SmartFoundations,P.BlueprintSpacingZ"
+msgid "Blueprint Default Z Spacing (m)"
+msgstr "Відстань креслення за замовчуванням Z (м)"
+
+msgctxt "SmartFoundations,P.BlueprintSpacingZ.TT"
+msgid "Starting Z gap for a new blueprint build session (0-100 m). Zero tiles flush; short gaps may leave no room for seam connections. Panel changes override this for the current session."
+msgstr "Початкова відстань по Z для нової сесії будівництва креслення (0-100 м). За нуля копії стикуються впритул; мала відстань може не залишити місця для з'єднань на швах. Зміни в Smart Панелі мають пріоритет у поточній сесії."
+
+msgctxt "SmartFoundations,P.bPlayerRelativeControls"
+msgid "Player Relative Controls"
+msgstr "Керування відносно гравця"
+
+msgctxt "SmartFoundations,P.bPlayerRelativeControls.TT"
+msgid "Interpret building controls relative to the direction you are facing. The Smart Panel continues to show absolute axes."
+msgstr "Інтерпретувати керування будівництвом відносно напрямку вашого погляду. Smart Панель і надалі показує абсолютні осі."
+
+msgctxt "SmartFoundations,Upgrade_AllTiersTooltip_Logistics"
+msgid "Change differing logistics tiers to the target. Power poles and wall outlets only upgrade."
+msgstr "Змінити відмінні рівні логістики на цільовий. Електростовпи та настінні розетки лише оновлюються."
+
+msgctxt "SmartFoundations,Upgrade_TraversalEmpty"
+msgid "No matching traversal buildables remain; scan again"
+msgstr "Відповідних об'єктів у мережі не залишилося; проскануйте знову"
+
+msgctxt "SmartFoundations,Upgrade_TraversalExpired"
+msgid "Traversal results are no longer valid; scan again"
+msgstr "Результати сканування мережі застаріли; проскануйте знову"

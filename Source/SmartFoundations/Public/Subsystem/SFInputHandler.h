@@ -59,6 +59,7 @@ public:
 	 * shadow vanilla keys while the player is actually building - Satisfactory 1.2 bound the
 	 * Customizer to X, and an always-on context consumed it everywhere. */
 	void SetSmartContextActive(bool bActive);
+	void ResetModeState();
 
 	// ========================================
 	// Input State Queries

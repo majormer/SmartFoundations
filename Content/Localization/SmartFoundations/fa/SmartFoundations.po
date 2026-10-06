@@ -2621,4 +2621,56 @@ msgstr "اتصالات میان نسخه‌های مجاور نقشه‌های �
 
 msgctxt "SmartFoundations,Notice_ConstructPayloadTooLarge"
 msgid "Placement too large ({0} KB). Build in smaller sections."
-msgstr ""
+msgstr "جای‌گذاری بیش از حد بزرگ است ({0} کیلوبایت). در بخش‌های کوچک‌تر بسازید."
+
+msgctxt "SmartSession,Disabled"
+msgid "Smart! building assistance disabled. Select a recipe to build normally; use Toggle Smart (Session) to re-enable."
+msgstr "کمک ساخت Smart! غیرفعال شد. برای ساخت عادی یک دستور ساخت انتخاب کنید؛ برای فعال‌سازی دوباره از «Toggle Smart (Session)» استفاده کنید."
+
+msgctxt "SmartSession,Enabled"
+msgid "Smart! building assistance enabled for this session."
+msgstr "کمک ساخت Smart! برای این نشست فعال شد."
+
+msgctxt "SmartFoundations,P.BlueprintSpacingX"
+msgid "Blueprint Default X Spacing (m)"
+msgstr "فاصله پیش‌فرض X نقشه (متر)"
+
+msgctxt "SmartFoundations,P.BlueprintSpacingX.TT"
+msgid "Starting X gap for a new blueprint build session (0-100 m). Zero tiles flush; short gaps may leave no room for seam connections. Panel changes override this for the current session."
+msgstr "فاصله اولیه X برای یک نشست ساخت نقشه جدید (0-100 متر). صفر نسخه‌ها را بدون فاصله کنار هم می‌چیند؛ فاصله‌های کوتاه ممکن است جایی برای اتصال‌های درز باقی نگذارند. تغییرات پنل برای نشست فعلی بر این مقدار اولویت دارند."
+
+msgctxt "SmartFoundations,P.BlueprintSpacingY"
+msgid "Blueprint Default Y Spacing (m)"
+msgstr "فاصله پیش‌فرض Y نقشه (متر)"
+
+msgctxt "SmartFoundations,P.BlueprintSpacingY.TT"
+msgid "Starting Y gap for a new blueprint build session (0-100 m). Zero tiles flush; short gaps may leave no room for seam connections. Panel changes override this for the current session."
+msgstr "فاصله اولیه Y برای یک نشست ساخت نقشه جدید (0-100 متر). صفر نسخه‌ها را بدون فاصله کنار هم می‌چیند؛ فاصله‌های کوتاه ممکن است جایی برای اتصال‌های درز باقی نگذارند. تغییرات پنل برای نشست فعلی بر این مقدار اولویت دارند."
+
+msgctxt "SmartFoundations,P.BlueprintSpacingZ"
+msgid "Blueprint Default Z Spacing (m)"
+msgstr "فاصله پیش‌فرض Z نقشه (متر)"
+
+msgctxt "SmartFoundations,P.BlueprintSpacingZ.TT"
+msgid "Starting Z gap for a new blueprint build session (0-100 m). Zero tiles flush; short gaps may leave no room for seam connections. Panel changes override this for the current session."
+msgstr "فاصله اولیه Z برای یک نشست ساخت نقشه جدید (0-100 متر). صفر نسخه‌ها را بدون فاصله کنار هم می‌چیند؛ فاصله‌های کوتاه ممکن است جایی برای اتصال‌های درز باقی نگذارند. تغییرات پنل برای نشست فعلی بر این مقدار اولویت دارند."
+
+msgctxt "SmartFoundations,P.bPlayerRelativeControls"
+msgid "Player Relative Controls"
+msgstr "کنترل‌های نسبی بازیکن"
+
+msgctxt "SmartFoundations,P.bPlayerRelativeControls.TT"
+msgid "Interpret building controls relative to the direction you are facing. The Smart Panel continues to show absolute axes."
+msgstr "کنترل‌های ساخت را نسبت به جهتی که به آن نگاه می‌کنید تفسیر می‌کند. پنل Smart همچنان محورهای مطلق را نشان می‌دهد."
+
+msgctxt "SmartFoundations,Upgrade_AllTiersTooltip_Logistics"
+msgid "Change differing logistics tiers to the target. Power poles and wall outlets only upgrade."
+msgstr "سطح‌های لجستیک متفاوت را به هدف تغییر دهید. تیرهای برق و پریزهای دیواری فقط ارتقا می‌یابند."
+
+msgctxt "SmartFoundations,Upgrade_TraversalEmpty"
+msgid "No matching traversal buildables remain; scan again"
+msgstr "هیچ سازه منطبقی از اسکن باقی نمانده است؛ دوباره اسکن کنید"
+
+msgctxt "SmartFoundations,Upgrade_TraversalExpired"
+msgid "Traversal results are no longer valid; scan again"
+msgstr "نتایج اسکن دیگر معتبر نیستند؛ دوباره اسکن کنید"

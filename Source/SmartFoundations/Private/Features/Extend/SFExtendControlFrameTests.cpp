@@ -8,7 +8,7 @@
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	FSFExtendControlFrameTest,
-	"Smart.Extend.ControlFrame.SignedPlacement",
+	"SmartFoundations.Extend.ControlFrame.SignedPlacement",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
 bool FSFExtendControlFrameTest::RunTest(const FString& Parameters)
@@ -54,7 +54,11 @@ bool FSFExtendControlFrameTest::RunTest(const FString& Parameters)
 		RotatedState,
 		1,
 		0);
-	TestTrue(TEXT("Yaw 90 negative Chain has no world X drift"), FMath::IsNearlyZero(RotatedPlacement.WorldOffset.X));
+	// RotateVector uses the engine's SIMD trigonometry; its residual at 90 degrees is
+	// larger than the default double near-zero epsilon. One micron is well below gameplay
+	// placement precision while still rejecting an incorrect axis or a visible offset.
+	TestTrue(FString::Printf(TEXT("Yaw 90 negative Chain has no world X drift (X=%.12f cm)"),
+		RotatedPlacement.WorldOffset.X), FMath::IsNearlyZero(RotatedPlacement.WorldOffset.X, 0.0001));
 	TestEqual(TEXT("Yaw 90 negative Chain maps to world -Y"), RotatedPlacement.WorldOffset.Y, -800.0);
 
 	return true;

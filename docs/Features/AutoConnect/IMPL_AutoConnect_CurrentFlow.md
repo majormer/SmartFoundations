@@ -97,6 +97,15 @@ Important behavior:
 - Junction chains are evaluated with connector pairing logic rather than only nearest-distance matching.
 - Pipe network rebuilds are required after built connections so fluid simulation sees the final topology.
 
+The direct junction/floor-hole spawners in `SFPipeAutoConnectManager_Spawn.cpp` bypass
+`FConduitPreviewHelper::EnsureSpawned`, including its Blueprint Designer stamp. They
+must set the child's designer before `FinishSpawning`. `ASFPipelineHologram::Construct`
+also refreshes recognized Smart children's designer from their immediate parent at
+commit, including clearing a stale reference when the parent moves outside. Without
+that context, a pipe can build without joining the designer's save/clear ownership
+(#526). This concerns Blueprint Designer contents, not placed-blueprint dismantle
+membership for tier-upgraded replacements (#533, deliberately unchanged).
+
 ## Power AutoConnect
 
 Power AutoConnect is handled by `FSFPowerAutoConnectManager`. It processes scaled poles, connects poles to neighbor poles, and optionally wires powered buildings to available pole capacity.
@@ -107,6 +116,18 @@ Important behavior:
 - Pole capacity and reserved slots are tracked so one preview path does not overbook a connection.
 - Cable cost is derived from line length.
 - Power grid axis and reserved connection settings are exposed through Smart Settings.
+
+Wall outlets use a port-aware planner: Auto forms one continuous grid chain, including vertical
+rows, while the two faces retain independent external-wire budgets. Exact named endpoints are
+captured for authority-side construction rather than resolved by the nearest port. Native wall
+post-placement must preserve the authored wire transforms. Ground poles retain their legacy
+grid planner. See [Power Connector Construction Contracts](../../Reference/BuildableContracts/PowerConnectors.md).
+
+Both planners filter unavailable or already-connected consumers before reserving slots. Ceiling
+lights are ordinary power consumers here, regardless of their non-factory class hierarchy.
+Preview and committed building-wire acceptance use socket positions, not building centers, and
+native free-connection getters respect research-dependent capacity. This does not enable light
+scale daisy-chaining or add a reverse light-placement-to-existing-pole feature.
 
 ## SmartPanel Integration
 

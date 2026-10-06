@@ -65,4 +65,14 @@ namespace FSFFactorySettingsApplyPolicy
     {
         return FMath::Max(0, StackCount - FMath::Max(0, AddedCount));
     }
+
+    /** Native slot filling assumes the caller has already bounded the target by supply. */
+    constexpr int32 GetAffordableShardTarget(const int32 RequestedCount,
+        const int32 ExistingCount, const int32 AvailableCount)
+    {
+        const int32 Requested = FMath::Max(0, RequestedCount);
+        const int32 Existing = FMath::Clamp(ExistingCount, 0, Requested);
+        // Subtract before adding so even a large inventory cannot overflow the budget.
+        return Existing + FMath::Min(Requested - Existing, FMath::Max(0, AvailableCount));
+    }
 }

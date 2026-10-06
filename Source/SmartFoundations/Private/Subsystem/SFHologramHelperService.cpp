@@ -618,6 +618,7 @@ void FSFHologramHelperService::RegenerateChildHologramGrid(
 						PassthroughChild->SetRecipe(Recipe);
 
 						PassthroughChild->FinishSpawning(FTransform(FRotator::ZeroRotator, SpawnLocation));
+						PassthroughChild->CopyBlueprintPlacementPermissionFrom(ParentHologram);
 
 						// Add as child IMMEDIATELY after FinishSpawning (matches working EXTEND code)
 						ParentHologram->AddChild(PassthroughChild, ChildName);

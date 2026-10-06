@@ -39,6 +39,7 @@ public:
 	/** Get Smart! Input Mapping Context (Blueprint asset) */
 	UFUNCTION(BlueprintCallable, Category = "Smart! Input")
 	static class UFGInputMappingContext* GetSmartInputMappingContext();
+	static class UFGInputMappingContext* GetSmartSessionMappingContext();
 
 	/** Bind subsystem methods to input actions using gameplay tags */
 	UFUNCTION(BlueprintCallable, Category = "Smart! Input")

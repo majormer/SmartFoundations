@@ -120,7 +120,7 @@ void USmartUpgradePanel::OnRowSelected(ESFUpgradeFamily Family, int32 Tier)
 	// Enable upgrade button now that a row is selected
 	if (SharedUpgradeButton)
 	{
-		SharedUpgradeButton->SetIsEnabled(true);
+		SharedUpgradeButton->SetIsEnabled(CachedTargetTier > 0);
 	}
 
 	UE_LOG(LogSmartUI, VeryVerbose, TEXT("Upgrade Panel: Nearest %s is %.0fm %s at %s"),
@@ -236,6 +236,7 @@ void USmartUpgradePanel::OnTargetTierChanged(FString SelectedItem, ESelectInfo::
 
 void USmartUpgradePanel::PopulateTargetTierDropdown()
 {
+	CachedTargetTier = 0;
 	// Use appropriate dropdown based on active tab
 	UComboBoxString* ActiveComboBox = nullptr;
 
@@ -257,11 +258,9 @@ void USmartUpgradePanel::PopulateTargetTierDropdown()
 	// Clear existing options
 	ActiveComboBox->ClearOptions();
 
-	// In traversal mode, SelectedTier == 0 is the "All tiers" sweep row (multiple tiers in
-	// network) - offer every target from Mk.2 up. [#456] A specific selected source tier
-	// floors the target options above it, exactly like radius mode.
+	// The network's "All tiers" row offers every unlocked target. A specific source
+	// row offers every other unlocked tier, including lower tiers, in either mode.
 	bool bIsTraversalMode = (ActiveTab == ESmartUpgradeTab::Traversal);
-	int32 MinSourceTier = (bIsTraversalMode && SelectedTier == 0) ? 1 : SelectedTier;
 
 	if (SelectedFamily == ESFUpgradeFamily::None)
 	{
@@ -316,11 +315,11 @@ void USmartUpgradePanel::PopulateTargetTierDropdown()
 		}
 	}
 
-	// Add options for tiers above source tier up to max unlocked
-	// In traversal mode, MinSourceTier is 1 (show all tiers from Mk.2 up)
+	// Same-tier replacements are no-ops; all other unlocked tiers are valid targets.
 	bool bHasOptions = false;
-	for (int32 Tier = MinSourceTier + 1; Tier <= MaxTier; ++Tier)
+	for (int32 Tier = 1; Tier <= MaxTier; ++Tier)
 	{
+		if (!SFUpgradeTierPolicy::IsValidRequest(SelectedTier, Tier, true, SFUpgradeTierPolicy::AllowsDowngrade(SelectedFamily))) continue;
 		FString Option = FString::Printf(TEXT("Mk.%d"), Tier);
 		ActiveComboBox->AddOption(Option);
 		bHasOptions = true;
@@ -329,9 +328,10 @@ void USmartUpgradePanel::PopulateTargetTierDropdown()
 	if (bHasOptions)
 	{
 		// Default to max tier
-		FString DefaultOption = FString::Printf(TEXT("Mk.%d"), MaxTier);
+		const int32 DefaultTier = MaxTier == SelectedTier ? MaxTier - 1 : MaxTier;
+		FString DefaultOption = FString::Printf(TEXT("Mk.%d"), DefaultTier);
 		ActiveComboBox->SetSelectedOption(DefaultOption);
-		CachedTargetTier = MaxTier;
+		CachedTargetTier = DefaultTier;
 		ActiveComboBox->SetVisibility(ESlateVisibility::Visible);
 	}
 	else
@@ -340,7 +340,7 @@ void USmartUpgradePanel::PopulateTargetTierDropdown()
 	}
 
 	UE_LOG(LogSmartUI, VeryVerbose, TEXT("Upgrade Panel: Populated tier dropdown - Source=%d Max=%d Options=%d"),
-		SelectedTier, MaxTier, bHasOptions ? (MaxTier - SelectedTier) : 0);
+		SelectedTier, MaxTier, ActiveComboBox->GetOptionCount());
 }
 
 void USmartUpgradePanel::UpdateCostDisplay()
@@ -378,9 +378,7 @@ void USmartUpgradePanel::UpdateCostDisplay()
 		for (const FSFUpgradeAuditEntry& Entry : CachedTraversalResult.Entries)
 		{
 			// [#456] SelectedTier > 0 = cost only the picked source tier; 0 = the legacy sweep.
-			const bool bTierMatch = (SelectedTier > 0)
-				? (Entry.CurrentTier == SelectedTier && Entry.CurrentTier < CachedTargetTier)
-				: (Entry.CurrentTier < CachedTargetTier && Entry.CurrentTier > 0);
+			const bool bTierMatch = SFUpgradeTierPolicy::Matches(Entry.CurrentTier, SelectedTier, CachedTargetTier, SFUpgradeTierPolicy::AllowsDowngrade(SelectedFamily));
 			if (bTierMatch)
 			{
 				ESFUpgradeFamily EntryFamily = USFUpgradeTraversalService::GetUpgradeFamily(Entry.Buildable.Get());
@@ -1253,10 +1251,10 @@ void USmartUpgradePanel::UpdateTraversalUI(const FSFTraversalResult& Result)
 			RowDataMap.Add(RowBorder, FRowData{Result.Family, Tier, TierLabel});
 		};
 
-		// Sweep row first (Tier 0 = legacy "everything below the chosen target"; stays the default).
+		// Sweep row first: normalize all differing tiers to the chosen target.
 		AddTraversalRow(0, Result.TotalCount,
 			LOCTEXT("Upgrade_AllTiersRow", "All tiers").ToString(),
-			LOCTEXT("Upgrade_AllTiersTooltip", "Upgrade every tier below the chosen target").ToString());
+			LOCTEXT("Upgrade_AllTiersTooltip_Logistics", "Change differing logistics tiers to the target. Power poles and wall outlets only upgrade.").ToString());
 
 		// One selectable row per tier present in the network, ascending.
 		TArray<int32> Tiers;
@@ -1311,11 +1309,13 @@ void USmartUpgradePanel::OnTraversalRowSelected(int32 Tier)
 		}
 	}
 
-	// Gate the upgrade button on the selection actually containing upgradeable members.
+	// A max-tier network can still be downgraded. The audit's IsUpgradeable count
+	// intentionally measures upward upgrades only, so it cannot gate tier replacement.
 	bool bHasUpgradeable = false;
 	for (const FSFUpgradeAuditEntry& Entry : CachedTraversalResult.Entries)
 	{
-		if (Entry.IsUpgradeable() && (Tier == 0 || Entry.CurrentTier == Tier))
+		if (SFUpgradeTierPolicy::HasAlternativeTier(Entry.CurrentTier, Entry.MaxAvailableTier, SFUpgradeTierPolicy::AllowsDowngrade(SelectedFamily))
+			&& (Tier == 0 || Entry.CurrentTier == Tier))
 		{
 			bHasUpgradeable = true;
 			break;
@@ -1363,9 +1363,13 @@ void USmartUpgradePanel::OnTraversalRowSelected(int32 Tier)
 	PopulateTargetTierDropdown();
 	UpdateCostDisplay();
 
+	if (SharedUpgradeButton)
+	{
+		SharedUpgradeButton->SetIsEnabled(bHasUpgradeable && CachedTargetTier > 0);
+	}
+
 	UE_LOG(LogSmartUI, VeryVerbose, TEXT("Upgrade Panel: Traversal row selected - Tier=%d upgradeable=%d"),
 		Tier, bHasUpgradeable ? 1 : 0);
 }
 
 #undef LOCTEXT_NAMESPACE
-

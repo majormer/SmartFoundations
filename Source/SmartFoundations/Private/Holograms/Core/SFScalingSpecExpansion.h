@@ -12,6 +12,8 @@
 #include "Features/Scaling/SFScalingSpec.h"
 
 class AFGHologram;
+class AFGBlueprintHologram;
+class AFGBlueprintProxy;
 class UFGRecipe;
 struct FNetConstructionID;
 
@@ -105,7 +107,7 @@ namespace SFScalingSpecExpansion
 	 * each wire into GroupProxy (may be null). Returns the number of wires built.
 	 */
 	int32 SpawnWirePlanPostConstruct(AActor* BuiltParent, const TArray<AActor*>& OutChildren,
-		const FSFScalingSpec& Spec, class AFGBlueprintProxy* GroupProxy);
+		const FSFScalingSpec& Spec, AFGBlueprintProxy* GroupProxy);
 
 	/**
 	 * Issue #487: after a scaled factory/generator grid exists, wire adjacent copies
@@ -113,7 +115,7 @@ namespace SFScalingSpecExpansion
 	 * connector capacity and the same designer-aware direct wire spawn as other Smart power paths.
 	 */
 	int32 SpawnScaleDaisyChainPowerPostConstruct(AActor* BuiltParent, const TArray<AActor*>& OutChildren,
-		const FSFCounterState& Counters, bool bEnabled, class AFGBlueprintProxy* GroupProxy = nullptr);
+		const FSFCounterState& Counters, bool bEnabled, AFGBlueprintProxy* GroupProxy = nullptr);
 
 	/**
 	 * [#168-MP] Measure a staged blueprint hologram's CONTENT ANCHOR: the first blueprint-world
@@ -124,5 +126,5 @@ namespace SFScalingSpecExpansion
 	 * so alignment must be MEASURED per hologram, never inferred from a carried constant.
 	 * Returns ZeroVector when unstaged/empty.
 	 */
-	FVector MeasureBlueprintContentAnchor(class AFGBlueprintHologram* Blueprint);
+	FVector MeasureBlueprintContentAnchor(AFGBlueprintHologram* Blueprint);
 }

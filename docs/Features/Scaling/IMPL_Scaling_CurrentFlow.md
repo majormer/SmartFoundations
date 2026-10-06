@@ -43,6 +43,50 @@ Scaling is active for supported single-click buildables. It uses vanilla hologra
 6. `USFGridSpawnerService::UpdateChildPositions` uses `FSFPositionCalculator` and the current transform counters to place every child.
 7. Vanilla construction builds the parent and its registered children, with costs flowing through the normal hologram child list.
 
+## Copied Factory Settings and Item Conservation
+
+Scaling, Extend, Scaled Extend, and Restore share `FSFFactorySettingsSnapshot` and
+`USFRecipeManagementService::QueueFactorySettingsApplication`. Application waits for
+the built factory and required inventories to become ready; recipe and inventory
+mutation runs only on the construction authority.
+
+Each factory must independently budget Power Shards and Somersloops at application
+time. `GetAffordableShardTarget` caps the total installed target to matching items
+already installed plus the placing player's current inventory, never above the
+requested count. A batch-wide inventory snapshot would let later copies reuse funds
+spent by earlier copies. A satisfied or unfunded target skips native inventory mutation.
+Insufficient supply permits a partially equipped machine; this is not an all-or-nothing
+placement gate and does not add Dimensional Depot support.
+
+**Native contract evidence (#524):** in the CL 502094 Windows Shipping FactoryGame
+binary, `AFGBuildableFactory::FillPotentialSlotsInternal` starts at RVA `0x4E5090`,
+adds a stack to the machine at `0x4E54F6`, then calls player inventory `Remove` at
+`0x4E552C` without first checking supply. Its reference count represents the total
+installed target, including matching items already present, not an additional debit.
+Calling it with an unfunded target creates items; adding another debit outside it
+charges twice. Displaced items still use the existing inventory-return/world-drop
+path. Do not re-test the unfunded native call on a real save.
+
+`SmartFoundations.Construction.FactorySettings.ApplyPolicy` covers empty, partial,
+existing, surplus, negative, and overflow budgets plus conservation across repeated
+copies sharing finite supply. These policy tests do not replace live inventory and
+multiplayer validation.
+
+## Passthrough Blueprint Placement Permission
+
+Scaled floor-hole previews and construction-time copies use a manually spawned
+`ASFPassthroughChildHologram`. In addition to designer ownership, they must inherit
+the spawn-initialized `mCanBePlacedInBlueprintDesigner` value from the same-build-class
+parent. `CopyBlueprintPlacementPermissionFrom` copies it after `FinishSpawning` and
+before `AddChild` in both `SFHologramHelperService` and `SFScalingSpecExpansion`.
+False remains false; this is not permission to bypass designer bounds or connection rules.
+
+Failure evidence (#526): a three-cell pipe-floor-hole preview had
+`FGCDNotAllowedInBlueprint` on both scaled holes despite valid designer references;
+all three attached pipes were valid. Reducing to one cell at unchanged coordinates
+removed that rejection from the original parent. Source inheritance is corrected;
+post-fix runtime validation remains outstanding.
+
 ## Performance Model (33.4.0, #418)
 
 Three properties keep large grids usable; see the code for the details (each site is thoroughly commented).
@@ -76,6 +120,49 @@ The size registry is the current source of truth for supported dimensions and sc
 | `bIsValidated` | Whether the profile was manually verified |
 
 Unknown/modded buildables can fall back to a conservative default profile, but docs and user-facing claims should describe only verified support unless a test has confirmed the case.
+
+## Wall outlets
+
+The six vanilla wall-outlet profiles are explicitly scalable: `Build_PowerPoleWall_C`,
+`Build_PowerPoleWall_Mk2_C`, `Build_PowerPoleWall_Mk3_C`, and the corresponding
+`Build_PowerPoleWallDouble` variants. Their 100 cm cell size is a default placement
+interval, not a claim about physical dimensions. `Validated` remains false until
+visual spacing has been verified in-game. The canonical CSV and generated registry
+must agree; regenerate with `scripts/gen_size_registry.py` after editing the CSV.
+
+Both recipe holograms (`Holo_PowerSocket_C` and `Holo_PowerSocketDouble_C`) derive
+from `AFGPowerPoleWallHologram` / `AFGWallAttachmentHologram`. The existing registry
+adapter path enables their grid controls; generic children provide previews,
+and the existing construction-spec path reconstructs recipe-native children on authority.
+No new class-wide opt-in or snap-validation bypass is introduced by #541.
+
+Wall outlets need an additional parent-side transform guard. In CL 502094 Windows
+Shipping, `AFGPowerPoleWallHologram::PostHologramPlacement` directly calls
+`SetActorLocation` on every child using the outlet's snap-connection position. This
+bypasses the generic child's `SetHologramLocationAndRotation` no-op, even when the
+post-placement recursion flag is false. Runtime evidence: the three copies in a
+1x4x1 grid all occupied the parent's connector, 80 cm ahead of the parent pivot.
+
+`FSFWallOutletPlacement` brackets that native call with a snapshot/restore of only
+direct `SF_GridChild` transforms, matching the transform-preservation pattern used
+by Extend belts. The native function still runs exactly once with its original
+arguments. Untagged wire companions, parent snap/marker state, child membership,
+validation, and construction are not modified. Restoration finishes inside the
+placement call, not on a later tick; dead children are ignored.
+
+`SmartFoundations.Scaling.WallOutletPlacement` reproduces the native connector
+write against real actor transforms in an isolated editor world, checks signed
+horizontal and vertical layouts, and retains an untagged companion as a control.
+The editor SDK's native placement function is a stub, so this controlled regression
+test does not replace Shipping gameplay and dedicated-server validation.
+
+Power Auto-Connect's `IsPowerPoleHologram` predicate intentionally excludes wall outlets;
+enabling their scaling does not enable automatic wall-outlet wiring. Wall-outlet upgrades
+and the native wire-insertion workflow remain separate from ordinary grid placement.
+The `SmartFoundations.Scaling.WallOutlets` automation checks all six real build classes,
+both native hologram families, profile eligibility, grid pitch, and pivot policy. It does
+not establish successful placement or per-cell wall attachment in SP/MP; those require
+gameplay validation.
 
 ## Transform Integration
 

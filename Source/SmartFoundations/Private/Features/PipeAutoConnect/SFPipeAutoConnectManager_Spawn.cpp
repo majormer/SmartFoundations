@@ -585,6 +585,8 @@ ASFPipelineHologram* FSFPipeAutoConnectManager::SpawnPipeChild(
 	// Mark as child hologram via data service
 	USFHologramDataService::DisableValidation(PipeChild);
 	USFHologramDataService::MarkAsChild(PipeChild, ParentJunction, ESFChildHologramType::AutoConnect);
+	// #526: this direct spawner bypasses the generic conduit helper's designer stamp.
+	PipeChild->SetInsideBlueprintDesigner(ParentJunction->GetBlueprintDesigner());
 	
 	// Store connector references for post-build wiring
 	FSFHologramData* HoloData = USFHologramDataService::GetOrCreateData(PipeChild);
@@ -693,6 +695,7 @@ ASFPipelineHologram* FSFPipeAutoConnectManager::SpawnPipeChild(
 	
 	// Add as child to parent for vanilla cost aggregation (CRITICAL - matches stackable pattern)
 	ParentJunction->AddChild(PipeChild, ChildName);
+	FSFPipeColorSnapshot::Inherit(PipeChild, JunctionConnector, TargetConnector);
 	
 	// Trigger mesh generation AFTER AddChild (matches stackable pipe pattern exactly)
 	PipeChild->TriggerMeshGeneration();
@@ -806,6 +809,7 @@ ASFPipelineHologram* FSFPipeAutoConnectManager::SpawnPipeChildAtPosition(
 	
 	USFHologramDataService::DisableValidation(PipeChild);
 	USFHologramDataService::MarkAsChild(PipeChild, ParentHologram, ESFChildHologramType::AutoConnect);
+	PipeChild->SetInsideBlueprintDesigner(ParentHologram->GetBlueprintDesigner());
 	
 	FSFHologramData* HoloData = USFHologramDataService::GetOrCreateData(PipeChild);
 	if (HoloData)
@@ -905,6 +909,7 @@ ASFPipelineHologram* FSFPipeAutoConnectManager::SpawnPipeChildAtPosition(
 	}
 	
 	ParentHologram->AddChild(PipeChild, ChildName);
+	FSFPipeColorSnapshot::Inherit(PipeChild, nullptr, TargetConnector);
 	PipeChild->TriggerMeshGeneration();
 	PipeChild->ForceApplyHologramMaterial();
 	

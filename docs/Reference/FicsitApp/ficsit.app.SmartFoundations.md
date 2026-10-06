@@ -1,6 +1,6 @@
 # <img src="https://github.com/majormer/SmartFoundations/blob/main/images/Smart-Logo.png?raw=true" width="150" alt="Smart! Logo"> Smart! Mod
 
-![Status](https://img.shields.io/badge/Status-Released-brightgreen) ![Version](https://img.shields.io/badge/Version-34.3.1-blue) ![Satisfactory](https://img.shields.io/badge/Satisfactory-1.2-blue) ![Engine](https://img.shields.io/badge/Engine-UE%205.6-blue) ![SML](https://img.shields.io/badge/SML-3.12-blue) ![Multiplayer](https://img.shields.io/badge/Multiplayer-Supported-brightgreen) ![AI Assisted Development Used](https://img.shields.io/badge/AI%20Assisted%20Development%20Used-Disclosure%20Below-blue)
+![Status](https://img.shields.io/badge/Status-Released-brightgreen) ![Version](https://img.shields.io/badge/Version-34.4.0-blue) ![Satisfactory](https://img.shields.io/badge/Satisfactory-1.2.4%2B-blue) ![Engine](https://img.shields.io/badge/Engine-UE%205.6-blue) ![SML](https://img.shields.io/badge/SML-3.12-blue) ![Multiplayer](https://img.shields.io/badge/Multiplayer-Supported-brightgreen) ![AI Assisted Development Used](https://img.shields.io/badge/AI%20Assisted%20Development%20Used-Disclosure%20Below-blue)
 
 > **Multiplayer note:** As of v32.0.0, every Smart! feature works in multiplayer on dedicated servers (Windows and Linux) — including **Smart Walking** and the new-in-v33.1.0 **hypertube** support. If you hit something odd in a multiplayer session, please report it on [GitHub](https://github.com/majormer/SmartFoundations/issues) or [Discord](https://discord.gg/SgXY4CwXYw).
 
@@ -52,12 +52,13 @@ What each feature does at a glance — follow a **Guide** link for the full how-
 
 | Feature | What it does | Guide |
 |---|---|---|
+| **Session Assistance Toggle** | Turn Smart building assistance off temporarily without changing saved settings. | [Smart Assistance](https://github.com/majormer/SmartFoundations/wiki/Smart-Assistance) |
 | **Grid Scaling** | Place a whole grid of a buildable in one action, scaled on X, Y, and Z. | [Grid Scaling](https://github.com/majormer/SmartFoundations/wiki/Grid-Scaling) |
 | **Spacing, Steps, Stagger, Rotation** | Shape the grid: add gaps, step heights for stairs, offset rows, or curve it into arcs. | [Transforms](https://github.com/majormer/SmartFoundations/wiki/Transforms) |
 | **Auto-Connect** | Preview the belts, pipes, and power between what you place, when Smart! can infer it safely. | [Auto-Connect](https://github.com/majormer/SmartFoundations/wiki/Auto-Connect) |
-| **Smart! Blueprints** | Scale your own blueprint into a grid with the seams between copies auto-wired. | [Blueprints](https://github.com/majormer/SmartFoundations/wiki/Blueprints) |
+| **Smart! Blueprints** | Scale your own blueprint into a grid with belt, pipe, and eligible power connections between copies; choose X/Y/Z spacing defaults. | [Blueprints](https://github.com/majormer/SmartFoundations/wiki/Blueprints) |
 | **Extend** | Copy an existing factory module — building, logistics, power, recipe — and continue the pattern. | [Extend](https://github.com/majormer/SmartFoundations/wiki/Extend) |
-| **Smart Upgrade** | Batch-upgrade belts, lifts, pipes, and poles after you unlock better tiers. | [Smart Upgrade](https://github.com/majormer/SmartFoundations/wiki/Smart-Upgrade) |
+| **Smart Upgrade** | Upgrade or downgrade belts, lifts, and pipes in batches; upgrade power poles and wall outlets. | [Smart Upgrade](https://github.com/majormer/SmartFoundations/wiki/Smart-Upgrade) |
 | **Smart Restore** | Save, share, and replay panel setups and whole factory modules. | [Smart Restore](https://github.com/majormer/SmartFoundations/wiki/Smart-Restore) |
 | **Smart Walking** | Lay a single connected run that turns, climbs, and routes to a destination. | [Smart Walking](https://github.com/majormer/SmartFoundations/wiki/Smart-Walking) |
 | **Smart Dismantle** | Remove Smart-built groups in one action with the game's Blueprint Dismantle. | [Smart Dismantle](https://github.com/majormer/SmartFoundations/wiki/Smart-Dismantle) |

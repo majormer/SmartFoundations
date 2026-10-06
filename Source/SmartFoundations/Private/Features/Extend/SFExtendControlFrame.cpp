@@ -50,7 +50,8 @@ FSFExtendCellPlacement CalculateExtendCellPlacement(
     int32 ChainIndex,
     int32 RowIndex,
     int32 OriginChainIndex,
-    int32 OriginRowIndex)
+    int32 OriginRowIndex,
+    int32 LayerIndex)
 {
     const FSFExtendControlFrame Frame = FSFExtendControlFrame::FromState(State);
     const float ChainDistance = FMath::Max(1.0f, BuildingSize.X + static_cast<float>(State.SpacingX));
@@ -113,6 +114,9 @@ FSFExtendCellPlacement CalculateExtendCellPlacement(
     FSFExtendCellPlacement Placement;
     Placement.WorldOffset = BaseRotation.RotateVector(FVector(LocalDelta.X, LocalDelta.Y, 0.0f));
     Placement.WorldOffset.Z += LocalDelta.Z;
+    // Layers are world vertical and independent of the horizontal run's rotation/steps.
+    Placement.WorldOffset.Z += static_cast<double>(LayerIndex)
+        * (State.GridCounters.Z < 0 ? -1.0 : 1.0) * (BuildingSize.Z + State.SpacingZ);
     Placement.RotationOffset = FRotator(0.0f, TargetYaw - OriginYaw, 0.0f);
     return Placement;
 }

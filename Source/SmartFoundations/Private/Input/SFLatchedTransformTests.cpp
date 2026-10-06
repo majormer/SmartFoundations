@@ -12,7 +12,7 @@
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	FSFLatchedTransformTransitionTest,
-	"Smart.Input.LatchedTransform.Transition",
+	"SmartFoundations.Input.LatchedTransform.Transition",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
 bool FSFLatchedTransformTransitionTest::RunTest(const FString& Parameters)
@@ -55,7 +55,7 @@ bool FSFLatchedTransformTransitionTest::RunTest(const FString& Parameters)
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	FSFLatchedTransformDecideInputTest,
-	"Smart.Input.LatchedTransform.DecideInput",
+	"SmartFoundations.Input.LatchedTransform.DecideInput",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
 bool FSFLatchedTransformDecideInputTest::RunTest(const FString& Parameters)

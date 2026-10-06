@@ -66,6 +66,13 @@ def main():
 
     for r in rows:
         name = esc(r["ClassName"].strip())
+        if name == "Build_PipelineSupport_C":
+            lines.extend([
+                '\t// #291/#292/#293 (Torkeug): pipeline supports scale like their conveyor-pole analogs',
+                '\t// (Build_ConveyorPole_C / Build_ConveyorPoleWall_C). Scaling/grid placement only - pipe',
+                '\t// auto-connect between scaled supports (full Stackable parity) is a tracked follow-up,',
+                '\t// the same split #354 made for conveyor poles. Dims mirror the family siblings.',
+            ])
         sx, sy, sz = cpp_float(r["SizeX"]), cpp_float(r["SizeY"]), cpp_float(r["SizeZ"])
         swap = "true" if r["SwapXYOnRotation"].strip() == "1" else "false"
         scaling = "true" if r["SupportsScaling"].strip() == "1" else "false"

@@ -112,6 +112,8 @@ USmartFoundationsModConfiguration::USmartFoundationsModConfiguration()
 	Building->SectionProperties.Add(TEXT("bApplyImmediately"),     CreateBoolProperty(TEXT("bApplyImmediately"),     LOCTEXT("P.bApplyImmediately", "Apply Immediately"),
 		LOCTEXT("P.bApplyImmediately.TT", "Apply Smart Panel changes instantly instead of clicking the Apply button."), false));
 	// [#482] Controller/accessibility: latch transform modes on a tap instead of requiring a hold.
+	Building->SectionProperties.Add(TEXT("bPlayerRelativeControls"), CreateBoolProperty(TEXT("bPlayerRelativeControls"), LOCTEXT("P.bPlayerRelativeControls", "Player Relative Controls"),
+		LOCTEXT("P.bPlayerRelativeControls.TT", "Interpret building controls relative to the direction you are facing. The Smart Panel continues to show absolute axes."), false));
 	Building->SectionProperties.Add(TEXT("bToggleTransformModes"), CreateBoolProperty(TEXT("bToggleTransformModes"), LOCTEXT("P.bToggleTransformModes", "Tap to Toggle Transform Modes"),
 		LOCTEXT("P.bToggleTransformModes.TT", "Tap a transform key (Spacing, Steps, Stagger, Rotation, or Recipe on a factory) to switch the mode on; tap it again to switch it off. Made for controllers and Steam Input radial menus, which cannot hold a key. Off keeps the normal hold-to-use behavior."), false));
 	// [#217 / AV-FP fix] Scroll increments (formerly their own "Scaling Settings" section). Keys/defaults unchanged.
@@ -123,6 +125,12 @@ USmartFoundationsModConfiguration::USmartFoundationsModConfiguration()
 		LOCTEXT("P.StaggerIncrement.TT", "Meters of stagger added per scroll notch (also walk segment shift)."), 0.5f));
 	Building->SectionProperties.Add(TEXT("RotationIncrement"), CreateFloatProperty(TEXT("RotationIncrement"), LOCTEXT("P.RotationIncrement", "Rotation Increment (deg)"),
 		LOCTEXT("P.RotationIncrement.TT", "Degrees of rotation added per scroll notch (also walk segment turn)."), 5.0f));
+	Building->SectionProperties.Add(TEXT("BlueprintSpacingX"), CreateFloatProperty(TEXT("BlueprintSpacingX"), LOCTEXT("P.BlueprintSpacingX", "Blueprint Default X Spacing (m)"),
+		LOCTEXT("P.BlueprintSpacingX.TT", "Starting X gap for a new blueprint build session (0-100 m). Zero tiles flush; short gaps may leave no room for seam connections. Panel changes override this for the current session."), 1.0f));
+	Building->SectionProperties.Add(TEXT("BlueprintSpacingY"), CreateFloatProperty(TEXT("BlueprintSpacingY"), LOCTEXT("P.BlueprintSpacingY", "Blueprint Default Y Spacing (m)"),
+		LOCTEXT("P.BlueprintSpacingY.TT", "Starting Y gap for a new blueprint build session (0-100 m). Zero tiles flush; short gaps may leave no room for seam connections. Panel changes override this for the current session."), 1.0f));
+	Building->SectionProperties.Add(TEXT("BlueprintSpacingZ"), CreateFloatProperty(TEXT("BlueprintSpacingZ"), LOCTEXT("P.BlueprintSpacingZ", "Blueprint Default Z Spacing (m)"),
+		LOCTEXT("P.BlueprintSpacingZ.TT", "Starting Z gap for a new blueprint build session (0-100 m). Zero tiles flush; short gaps may leave no room for seam connections. Panel changes override this for the current session."), 1.0f));
 	RootSection->SectionProperties.Add(TEXT("BuildingBehavior"), Building);
 
 	// ── HUD ──

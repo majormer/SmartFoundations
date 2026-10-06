@@ -35,7 +35,7 @@ struct FRestoredScaledClonePlacement
 };
 
 /**
- * Compute the world offset + rotation for restored scaled clone (GridX, GridY) relative
+ * Compute the world offset + rotation for restored scaled clone (GridX, GridY, GridZ) relative
  * to the parent hologram. Shared between the restore-replay path and the post-build
  * wiring path in SFExtendService (hence a free function, not a private helper).
  */
@@ -44,7 +44,8 @@ FRestoredScaledClonePlacement CalculateRestoredScaledClonePlacement(
     const FSFCloneTopology* TemplateTopology,
     const FSFCounterState& State,
     int32 GridX,
-    int32 GridY);
+    int32 GridY,
+    int32 GridZ = 0);
 
 /**
  * Service implementing Smart Restore's Extend clone-topology replay. Holds a back-pointer

@@ -379,16 +379,13 @@ void USFHintBarService::InjectSmartHints()
 
 	if (!bNowUpgrade)
 	{
-		// Smart! hint set — Scale Z and Stagger are hidden during Scaled Extend
+		// Smart! hint set — only Stagger is hidden during Scaled Extend
 		SmartHints.Add({ NSLOCTEXT("SmartFoundations", "Hint_ScaleX", "Scale X"),
 			FText::FromString(FString::Printf(TEXT("%s + Scroll"), *KeyX.ToString())) });
 		SmartHints.Add({ NSLOCTEXT("SmartFoundations", "Hint_ScaleY", "Scale Y"),
 			FText::FromString(FString::Printf(TEXT("%s + Scroll"), *KeyY.ToString())) });
-		if (!bNowExtend)
-		{
-			SmartHints.Add({ NSLOCTEXT("SmartFoundations", "Hint_ScaleZ", "Scale Z"),
-				FText::FromString(ScaleZKeyStr) });
-		}
+		SmartHints.Add({ NSLOCTEXT("SmartFoundations", "Hint_ScaleZ", "Scale Z"),
+            FText::FromString(ScaleZKeyStr) });
 		SmartHints.Add({ NSLOCTEXT("SmartFoundations", "Hint_Spacing", "Spacing"),
 			FText::FromString(FString::Printf(TEXT("%s + Scroll"), *ResolveKeyText(IA_SpacingMode).ToString())) });
 		SmartHints.Add({ NSLOCTEXT("SmartFoundations", "Hint_Steps", "Steps"),

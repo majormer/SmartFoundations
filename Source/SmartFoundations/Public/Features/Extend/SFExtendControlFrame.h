@@ -31,6 +31,7 @@ SMARTFOUNDATIONS_API float CalculateExtendEffectiveRowHeight(
 /**
  * Canonical Extend placement used by live scaling, Restore replay, and post-build lookup.
  * ChainIndex/RowIndex and OriginChainIndex/OriginRowIndex are absolute cell coordinates.
+ * LayerIndex is relative to the source layer and adds signed world-vertical height/spacing.
  */
 SMARTFOUNDATIONS_API FSFExtendCellPlacement CalculateExtendCellPlacement(
     const FRotator& BaseRotation,
@@ -40,4 +41,5 @@ SMARTFOUNDATIONS_API FSFExtendCellPlacement CalculateExtendCellPlacement(
     int32 ChainIndex,
     int32 RowIndex,
     int32 OriginChainIndex = 0,
-    int32 OriginRowIndex = 0);
+    int32 OriginRowIndex = 0,
+    int32 LayerIndex = 0);

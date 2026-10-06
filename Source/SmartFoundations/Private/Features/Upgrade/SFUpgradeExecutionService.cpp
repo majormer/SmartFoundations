@@ -2,6 +2,8 @@
 
 #include "Features/Upgrade/SFUpgradeExecutionService.h"
 #include "Features/Upgrade/SFUpgradeExecutionServiceImpl.h"
+#include "Features/Upgrade/SFUpgradeTierPolicy.h"
+#include "FGRecipeManager.h"
 
 namespace
 {
@@ -398,10 +400,10 @@ void USFUpgradeExecutionService::StartUpgrade(const FSFUpgradeExecutionParams& P
 		return;
 	}
 
-	// For radius mode, target must be greater than source
-	if (!bIsTraversalMode && Params.TargetTier <= Params.SourceTier)
+	// Both upgrades and downgrades use the same replacement transaction.
+	if (!SFUpgradeTierPolicy::IsValidRequest(Params.SourceTier, Params.TargetTier, bIsTraversalMode, SFUpgradeTierPolicy::AllowsDowngrade(Params.Family)))
 	{
-		UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: Target tier must be greater than source tier"));
+		UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: Invalid source/target tier selection"));
 		return;
 	}
 
@@ -550,16 +552,15 @@ void USFUpgradeExecutionService::GatherUpgradeTargets()
 			if (AFGBuildable* Buildable = WeakBuildable.Get())
 			{
 				// [#456] SourceTier > 0 = the user picked a specific tier row in the network scan:
-				// upgrade ONLY that tier. SourceTier == 0 keeps the legacy sweep (everything below
-				// the target tier).
+				// replace ONLY that tier. SourceTier == 0 normalizes every differing tier.
 				const int32 BuildableTier = USFUpgradeTraversalService::GetBuildableTier(Buildable);
 				if (BuildableTier <= 0)
 				{
 					continue;
 				}
-				const bool bMatch = (CurrentParams.SourceTier > 0)
-					? (BuildableTier == CurrentParams.SourceTier)
-					: (BuildableTier < CurrentParams.TargetTier);
+				const bool bMatch = SFUpgradeTierPolicy::Matches(
+					BuildableTier, CurrentParams.SourceTier, CurrentParams.TargetTier,
+					SFUpgradeTierPolicy::AllowsDowngrade(USFUpgradeTraversalService::GetUpgradeFamily(Buildable)));
 				if (bMatch)
 				{
 					PendingUpgrades.Add(Buildable);
@@ -776,7 +777,7 @@ void USFUpgradeExecutionService::NormalizeConveyorUpgradeTargets(bool bRespectRa
 		{
 			if (!IsValid(Conveyor)) continue;
 			const int32 Tier = USFUpgradeTraversalService::GetBuildableTier(Conveyor);
-			if (Tier <= 0 || Tier >= CurrentParams.TargetTier) continue;
+			if (!SFUpgradeTierPolicy::Matches(Tier, CurrentParams.SourceTier, CurrentParams.TargetTier)) continue;
 
 			// [#456] Honor SourceTier in BOTH radius and network modes. The cohort re-expansion
 			// above pulls in every connected conveyor regardless of tier, so this filter is what
@@ -966,6 +967,11 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 		return 0;
 	}
 
+	// Validate the actual actor as well as the requested family: an All tiers selection
+	// or a crafted mixed-family request must never lower a power pole/outlet.
+	if (!SFUpgradeTierPolicy::Matches(USFUpgradeTraversalService::GetBuildableTier(Buildable),
+		CurrentParams.SourceTier, CurrentParams.TargetTier, SFUpgradeTierPolicy::AllowsDowngrade(ActualFamily))) return 0;
+
 	// Get the correct recipe for this buildable's actual family
 	TSubclassOf<UFGRecipe> ActualTargetRecipe = TargetRecipe;
 	if (ActualFamily != CurrentParams.Family)
@@ -978,6 +984,14 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 				static_cast<int32>(ActualFamily), CurrentParams.TargetTier);
 			return 0;
 		}
+	}
+
+	// The panel filters unlocks, but the authoritative replacement must independently
+	// reject a stale or crafted request before touching inventory or existing actors.
+	AFGRecipeManager* RecipeManager = AFGRecipeManager::Get(World);
+	if (!RecipeManager || !ActualTargetRecipe || !RecipeManager->IsRecipeAvailable(ActualTargetRecipe))
+	{
+		return 0;
 	}
 
 	// Get the buildable class for this buildable's actual family

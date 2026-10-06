@@ -2689,4 +2689,56 @@ msgstr "Ölçeklenmiş taslakların bitişik kopyaları arasındaki bağlantıla
 
 msgctxt "SmartFoundations,Notice_ConstructPayloadTooLarge"
 msgid "Placement too large ({0} KB). Build in smaller sections."
-msgstr ""
+msgstr "Yerleştirme çok büyük ({0} KB). Daha küçük bölümler halinde inşa et."
+
+msgctxt "SmartSession,Disabled"
+msgid "Smart! building assistance disabled. Select a recipe to build normally; use Toggle Smart (Session) to re-enable."
+msgstr "Smart! inşa yardımı devre dışı. Normal inşa etmek için bir tarif seçin; yeniden etkinleştirmek için \"Toggle Smart (Session)\" kullanın."
+
+msgctxt "SmartSession,Enabled"
+msgid "Smart! building assistance enabled for this session."
+msgstr "Smart! inşa yardımı bu oturum için etkinleştirildi."
+
+msgctxt "SmartFoundations,P.BlueprintSpacingX"
+msgid "Blueprint Default X Spacing (m)"
+msgstr "Taslak Varsayılan X Aralığı (m)"
+
+msgctxt "SmartFoundations,P.BlueprintSpacingX.TT"
+msgid "Starting X gap for a new blueprint build session (0-100 m). Zero tiles flush; short gaps may leave no room for seam connections. Panel changes override this for the current session."
+msgstr "Yeni bir taslak inşa oturumu için başlangıç X aralığı (0-100 m). Sıfır, kopyaları boşluksuz yan yana dizer; kısa aralıklar dikiş bağlantıları için yer bırakmayabilir. Panel değişiklikleri mevcut oturum için bunu geçersiz kılar."
+
+msgctxt "SmartFoundations,P.BlueprintSpacingY"
+msgid "Blueprint Default Y Spacing (m)"
+msgstr "Taslak Varsayılan Y Aralığı (m)"
+
+msgctxt "SmartFoundations,P.BlueprintSpacingY.TT"
+msgid "Starting Y gap for a new blueprint build session (0-100 m). Zero tiles flush; short gaps may leave no room for seam connections. Panel changes override this for the current session."
+msgstr "Yeni bir taslak inşa oturumu için başlangıç Y aralığı (0-100 m). Sıfır, kopyaları boşluksuz yan yana dizer; kısa aralıklar dikiş bağlantıları için yer bırakmayabilir. Panel değişiklikleri mevcut oturum için bunu geçersiz kılar."
+
+msgctxt "SmartFoundations,P.BlueprintSpacingZ"
+msgid "Blueprint Default Z Spacing (m)"
+msgstr "Taslak Varsayılan Z Aralığı (m)"
+
+msgctxt "SmartFoundations,P.BlueprintSpacingZ.TT"
+msgid "Starting Z gap for a new blueprint build session (0-100 m). Zero tiles flush; short gaps may leave no room for seam connections. Panel changes override this for the current session."
+msgstr "Yeni bir taslak inşa oturumu için başlangıç Z aralığı (0-100 m). Sıfır, kopyaları boşluksuz yan yana dizer; kısa aralıklar dikiş bağlantıları için yer bırakmayabilir. Panel değişiklikleri mevcut oturum için bunu geçersiz kılar."
+
+msgctxt "SmartFoundations,P.bPlayerRelativeControls"
+msgid "Player Relative Controls"
+msgstr "Oyuncuya Göre Kontroller"
+
+msgctxt "SmartFoundations,P.bPlayerRelativeControls.TT"
+msgid "Interpret building controls relative to the direction you are facing. The Smart Panel continues to show absolute axes."
+msgstr "İnşa kontrollerini baktığınız yöne göre yorumlar. Smart Panel mutlak eksenleri göstermeye devam eder."
+
+msgctxt "SmartFoundations,Upgrade_AllTiersTooltip_Logistics"
+msgid "Change differing logistics tiers to the target. Power poles and wall outlets only upgrade."
+msgstr "Farklı lojistik seviyelerini hedefe değiştir. Elektrik direkleri ve duvar prizleri yalnızca yükseltilir."
+
+msgctxt "SmartFoundations,Upgrade_TraversalEmpty"
+msgid "No matching traversal buildables remain; scan again"
+msgstr "Eşleşen tarama yapısı kalmadı; tekrar tarayın"
+
+msgctxt "SmartFoundations,Upgrade_TraversalExpired"
+msgid "Traversal results are no longer valid; scan again"
+msgstr "Tarama sonuçları artık geçerli değil; tekrar tarayın"

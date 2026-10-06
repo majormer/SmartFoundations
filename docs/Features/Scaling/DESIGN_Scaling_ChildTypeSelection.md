@@ -106,7 +106,10 @@ aggregates, it *is* Tier 1. Only escalate to Tier 2 when a concrete behavior is 
 
 ### Critical caveat: drift-proof ≠ auto-connect
 
-The three generic overrides fix **positioning for every type**. They do **not** by themselves give a
+The three generic overrides block **virtual child-placement propagation**. They cannot block a
+parent that directly calls `SetActorLocation` on its children: wall outlets require the parent-side
+post-placement transform guard described in [Scaling Current Flow](./IMPL_Scaling_CurrentFlow.md#wall-outlets).
+They do **not** by themselves give a
 type **auto-connect**. AC *preview* for the conduit families (belts / pipes / hypertubes) requires the
 specialized hologram to expose connectors/splines while previewing — that is Tier 2's job. For
 non-conduit buildables (foundations, walls, machines — the bulk of scaling), Tier 1 is sufficient

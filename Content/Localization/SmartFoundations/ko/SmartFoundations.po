@@ -2689,4 +2689,56 @@ msgstr "확장된 청사진의 인접한 복사본 사이의 연결을 제어합
 
 msgctxt "SmartFoundations,Notice_ConstructPayloadTooLarge"
 msgid "Placement too large ({0} KB). Build in smaller sections."
-msgstr ""
+msgstr "배치가 너무 큽니다({0} KB). 더 작은 구역으로 나누어 건설하세요."
+
+msgctxt "SmartSession,Disabled"
+msgid "Smart! building assistance disabled. Select a recipe to build normally; use Toggle Smart (Session) to re-enable."
+msgstr "Smart! 건설 보조가 비활성화되었습니다. 일반적으로 건설하려면 레시피를 선택하세요. 다시 활성화하려면 \"Toggle Smart (Session)\"을(를) 사용하세요."
+
+msgctxt "SmartSession,Enabled"
+msgid "Smart! building assistance enabled for this session."
+msgstr "이 세션에서 Smart! 건설 보조가 활성화되었습니다."
+
+msgctxt "SmartFoundations,P.BlueprintSpacingX"
+msgid "Blueprint Default X Spacing (m)"
+msgstr "청사진 기본 X 간격 (m)"
+
+msgctxt "SmartFoundations,P.BlueprintSpacingX.TT"
+msgid "Starting X gap for a new blueprint build session (0-100 m). Zero tiles flush; short gaps may leave no room for seam connections. Panel changes override this for the current session."
+msgstr "새 청사진 건설 세션의 시작 X 간격입니다(0-100 m). 0이면 빈틈없이 맞붙여 배치됩니다. 간격이 짧으면 이음새 연결을 할 공간이 없을 수 있습니다. Smart 패널에서 변경한 값이 현재 세션 동안 이 설정보다 우선합니다."
+
+msgctxt "SmartFoundations,P.BlueprintSpacingY"
+msgid "Blueprint Default Y Spacing (m)"
+msgstr "청사진 기본 Y 간격 (m)"
+
+msgctxt "SmartFoundations,P.BlueprintSpacingY.TT"
+msgid "Starting Y gap for a new blueprint build session (0-100 m). Zero tiles flush; short gaps may leave no room for seam connections. Panel changes override this for the current session."
+msgstr "새 청사진 건설 세션의 시작 Y 간격입니다(0-100 m). 0이면 빈틈없이 맞붙여 배치됩니다. 간격이 짧으면 이음새 연결을 할 공간이 없을 수 있습니다. Smart 패널에서 변경한 값이 현재 세션 동안 이 설정보다 우선합니다."
+
+msgctxt "SmartFoundations,P.BlueprintSpacingZ"
+msgid "Blueprint Default Z Spacing (m)"
+msgstr "청사진 기본 Z 간격 (m)"
+
+msgctxt "SmartFoundations,P.BlueprintSpacingZ.TT"
+msgid "Starting Z gap for a new blueprint build session (0-100 m). Zero tiles flush; short gaps may leave no room for seam connections. Panel changes override this for the current session."
+msgstr "새 청사진 건설 세션의 시작 Z 간격입니다(0-100 m). 0이면 빈틈없이 맞붙여 배치됩니다. 간격이 짧으면 이음새 연결을 할 공간이 없을 수 있습니다. Smart 패널에서 변경한 값이 현재 세션 동안 이 설정보다 우선합니다."
+
+msgctxt "SmartFoundations,P.bPlayerRelativeControls"
+msgid "Player Relative Controls"
+msgstr "플레이어 기준 조작"
+
+msgctxt "SmartFoundations,P.bPlayerRelativeControls.TT"
+msgid "Interpret building controls relative to the direction you are facing. The Smart Panel continues to show absolute axes."
+msgstr "건설 조작을 플레이어가 바라보는 방향을 기준으로 해석합니다. Smart 패널에는 계속 절대 축이 표시됩니다."
+
+msgctxt "SmartFoundations,Upgrade_AllTiersTooltip_Logistics"
+msgid "Change differing logistics tiers to the target. Power poles and wall outlets only upgrade."
+msgstr "서로 다른 물류 티어를 대상 티어로 변경합니다. 전신주와 벽 부착형 전신주는 업그레이드만 됩니다."
+
+msgctxt "SmartFoundations,Upgrade_TraversalEmpty"
+msgid "No matching traversal buildables remain; scan again"
+msgstr "일치하는 네트워크 스캔 건축물이 남아 있지 않습니다. 다시 스캔하세요"
+
+msgctxt "SmartFoundations,Upgrade_TraversalExpired"
+msgid "Traversal results are no longer valid; scan again"
+msgstr "네트워크 스캔 결과가 더 이상 유효하지 않습니다. 다시 스캔하세요"

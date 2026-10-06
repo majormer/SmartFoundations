@@ -2,7 +2,7 @@
 	"AcceptsAnyRemoteVersion": true,
 	"FileVersion": 3,
 	"Version": 34,
-	"VersionName": "34.3.1",
+	"VersionName": "34.4.0",
 	"FriendlyName": "Smart!",
 	"Description": "Advanced hologram control for precision building - Rebuilt for Satisfactory 1.2",
 	"Category": "Modding",
@@ -35,8 +35,8 @@
 			"BasePlugin": true
 		}
 	],
-	"SemVersion": "34.3.1",
-	"GameVersion": ">=491125",
+	"SemVersion": "34.4.0",
+	"GameVersion": ">=502094",
 	"LocalizationTargets": [
 		{
 			"Name": "SmartFoundations",

@@ -2621,4 +2621,56 @@ msgstr "ควบคุมการเชื่อมต่อระหว่า
 
 msgctxt "SmartFoundations,Notice_ConstructPayloadTooLarge"
 msgid "Placement too large ({0} KB). Build in smaller sections."
-msgstr ""
+msgstr "การวางมีขนาดใหญ่เกินไป ({0} KB) ให้สร้างเป็นส่วนที่เล็กลง"
+
+msgctxt "SmartSession,Disabled"
+msgid "Smart! building assistance disabled. Select a recipe to build normally; use Toggle Smart (Session) to re-enable."
+msgstr "ปิดการช่วยสร้างของ Smart! แล้ว เลือกสูตรเพื่อสร้างตามปกติ ใช้ \"Toggle Smart (Session)\" เพื่อเปิดใช้งานอีกครั้ง"
+
+msgctxt "SmartSession,Enabled"
+msgid "Smart! building assistance enabled for this session."
+msgstr "เปิดการช่วยสร้างของ Smart! สำหรับเซสชันนี้แล้ว"
+
+msgctxt "SmartFoundations,P.BlueprintSpacingX"
+msgid "Blueprint Default X Spacing (m)"
+msgstr "ระยะห่าง X เริ่มต้นของพิมพ์เขียว (ม.)"
+
+msgctxt "SmartFoundations,P.BlueprintSpacingX.TT"
+msgid "Starting X gap for a new blueprint build session (0-100 m). Zero tiles flush; short gaps may leave no room for seam connections. Panel changes override this for the current session."
+msgstr "ระยะห่าง X เริ่มต้นสำหรับเซสชันการสร้างพิมพ์เขียวใหม่ (0-100 ม.) ค่าศูนย์จะวางสำเนาชิดกันโดยไม่มีช่องว่าง ระยะห่างสั้นอาจไม่เหลือพื้นที่สำหรับการเชื่อมต่อรอยต่อ การเปลี่ยนแปลงในแผงควบคุมจะมีผลแทนค่านี้สำหรับเซสชันปัจจุบัน"
+
+msgctxt "SmartFoundations,P.BlueprintSpacingY"
+msgid "Blueprint Default Y Spacing (m)"
+msgstr "ระยะห่าง Y เริ่มต้นของพิมพ์เขียว (ม.)"
+
+msgctxt "SmartFoundations,P.BlueprintSpacingY.TT"
+msgid "Starting Y gap for a new blueprint build session (0-100 m). Zero tiles flush; short gaps may leave no room for seam connections. Panel changes override this for the current session."
+msgstr "ระยะห่าง Y เริ่มต้นสำหรับเซสชันการสร้างพิมพ์เขียวใหม่ (0-100 ม.) ค่าศูนย์จะวางสำเนาชิดกันโดยไม่มีช่องว่าง ระยะห่างสั้นอาจไม่เหลือพื้นที่สำหรับการเชื่อมต่อรอยต่อ การเปลี่ยนแปลงในแผงควบคุมจะมีผลแทนค่านี้สำหรับเซสชันปัจจุบัน"
+
+msgctxt "SmartFoundations,P.BlueprintSpacingZ"
+msgid "Blueprint Default Z Spacing (m)"
+msgstr "ระยะห่าง Z เริ่มต้นของพิมพ์เขียว (ม.)"
+
+msgctxt "SmartFoundations,P.BlueprintSpacingZ.TT"
+msgid "Starting Z gap for a new blueprint build session (0-100 m). Zero tiles flush; short gaps may leave no room for seam connections. Panel changes override this for the current session."
+msgstr "ระยะห่าง Z เริ่มต้นสำหรับเซสชันการสร้างพิมพ์เขียวใหม่ (0-100 ม.) ค่าศูนย์จะวางสำเนาชิดกันโดยไม่มีช่องว่าง ระยะห่างสั้นอาจไม่เหลือพื้นที่สำหรับการเชื่อมต่อรอยต่อ การเปลี่ยนแปลงในแผงควบคุมจะมีผลแทนค่านี้สำหรับเซสชันปัจจุบัน"
+
+msgctxt "SmartFoundations,P.bPlayerRelativeControls"
+msgid "Player Relative Controls"
+msgstr "การควบคุมสัมพันธ์กับผู้เล่น"
+
+msgctxt "SmartFoundations,P.bPlayerRelativeControls.TT"
+msgid "Interpret building controls relative to the direction you are facing. The Smart Panel continues to show absolute axes."
+msgstr "ตีความการควบคุมการสร้างตามทิศทางที่คุณหันหน้าอยู่ Smart แผงควบคุมยังคงแสดงแกนสัมบูรณ์"
+
+msgctxt "SmartFoundations,Upgrade_AllTiersTooltip_Logistics"
+msgid "Change differing logistics tiers to the target. Power poles and wall outlets only upgrade."
+msgstr "เปลี่ยนระดับโลจิสติกส์ที่แตกต่างให้เป็นเป้าหมาย เสาไฟฟ้าและเต้ารับผนังอัพเกรดได้อย่างเดียว"
+
+msgctxt "SmartFoundations,Upgrade_TraversalEmpty"
+msgid "No matching traversal buildables remain; scan again"
+msgstr "ไม่เหลือสิ่งก่อสร้างที่ตรงกันจากการสแกน กรุณาสแกนอีกครั้ง"
+
+msgctxt "SmartFoundations,Upgrade_TraversalExpired"
+msgid "Traversal results are no longer valid; scan again"
+msgstr "ผลการสแกนใช้ไม่ได้แล้ว กรุณาสแกนอีกครั้ง"

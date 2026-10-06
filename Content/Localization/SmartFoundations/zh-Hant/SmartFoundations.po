@@ -2689,4 +2689,56 @@ msgstr "控制縮放藍圖相鄰副本之間的連接。"
 
 msgctxt "SmartFoundations,Notice_ConstructPayloadTooLarge"
 msgid "Placement too large ({0} KB). Build in smaller sections."
-msgstr ""
+msgstr "放置規模過大（{0} KB）。請分成更小的部分建造。"
+
+msgctxt "SmartSession,Disabled"
+msgid "Smart! building assistance disabled. Select a recipe to build normally; use Toggle Smart (Session) to re-enable."
+msgstr "Smart! 建造輔助已停用。選擇一個配方即可正常建造；使用「Toggle Smart (Session)」重新啟用。"
+
+msgctxt "SmartSession,Enabled"
+msgid "Smart! building assistance enabled for this session."
+msgstr "已在本次工作階段中啟用 Smart! 建造輔助。"
+
+msgctxt "SmartFoundations,P.BlueprintSpacingX"
+msgid "Blueprint Default X Spacing (m)"
+msgstr "藍圖預設 X 間距 (m)"
+
+msgctxt "SmartFoundations,P.BlueprintSpacingX.TT"
+msgid "Starting X gap for a new blueprint build session (0-100 m). Zero tiles flush; short gaps may leave no room for seam connections. Panel changes override this for the current session."
+msgstr "新藍圖建造工作階段開始時的 X 間距（0-100 m）。為 0 時副本緊密相接；間距過小可能沒有空間進行接縫連接。在 Smart 面板中所做的變更會在目前工作階段中覆蓋此設定。"
+
+msgctxt "SmartFoundations,P.BlueprintSpacingY"
+msgid "Blueprint Default Y Spacing (m)"
+msgstr "藍圖預設 Y 間距 (m)"
+
+msgctxt "SmartFoundations,P.BlueprintSpacingY.TT"
+msgid "Starting Y gap for a new blueprint build session (0-100 m). Zero tiles flush; short gaps may leave no room for seam connections. Panel changes override this for the current session."
+msgstr "新藍圖建造工作階段開始時的 Y 間距（0-100 m）。為 0 時副本緊密相接；間距過小可能沒有空間進行接縫連接。在 Smart 面板中所做的變更會在目前工作階段中覆蓋此設定。"
+
+msgctxt "SmartFoundations,P.BlueprintSpacingZ"
+msgid "Blueprint Default Z Spacing (m)"
+msgstr "藍圖預設 Z 間距 (m)"
+
+msgctxt "SmartFoundations,P.BlueprintSpacingZ.TT"
+msgid "Starting Z gap for a new blueprint build session (0-100 m). Zero tiles flush; short gaps may leave no room for seam connections. Panel changes override this for the current session."
+msgstr "新藍圖建造工作階段開始時的 Z 間距（0-100 m）。為 0 時副本緊密相接；間距過小可能沒有空間進行接縫連接。在 Smart 面板中所做的變更會在目前工作階段中覆蓋此設定。"
+
+msgctxt "SmartFoundations,P.bPlayerRelativeControls"
+msgid "Player Relative Controls"
+msgstr "玩家相對操作"
+
+msgctxt "SmartFoundations,P.bPlayerRelativeControls.TT"
+msgid "Interpret building controls relative to the direction you are facing. The Smart Panel continues to show absolute axes."
+msgstr "依你面向的方向解讀建造操作。Smart 面板仍顯示絕對座標軸。"
+
+msgctxt "SmartFoundations,Upgrade_AllTiersTooltip_Logistics"
+msgid "Change differing logistics tiers to the target. Power poles and wall outlets only upgrade."
+msgstr "將不同的物流等級變更為目標等級。電線桿與牆面電接頭只會升級。"
+
+msgctxt "SmartFoundations,Upgrade_TraversalEmpty"
+msgid "No matching traversal buildables remain; scan again"
+msgstr "沒有剩餘的相符網路掃描可建造物；請重新掃描"
+
+msgctxt "SmartFoundations,Upgrade_TraversalExpired"
+msgid "Traversal results are no longer valid; scan again"
+msgstr "網路掃描結果已失效；請重新掃描"

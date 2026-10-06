@@ -27,3 +27,7 @@ The game handles highlighting, refund calculation, and dismantling through its n
 ## Caveats
 
 Some supporting objects may not be grouped if they spawn outside the active Smart build session. If a group does not dismantle exactly how you expect, dismantle the remaining pieces manually.
+
+---
+
+_Last updated: 2026-07-14 · Smart! v34.2.1_

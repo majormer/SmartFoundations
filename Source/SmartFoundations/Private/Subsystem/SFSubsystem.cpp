@@ -7,6 +7,7 @@
  */
 
 #include "Subsystem/SFSubsystem.h"
+#include "Features/Extend/Net/SFExtendAuthorityScope.h"
 #include "Subsystem/SFSubsystemImpl.h"
 #include "Features/Walk/SFWalkService.h"
 #include "UI/SFWalkPanelWidget.h"
@@ -178,6 +179,7 @@ bool USFSubsystem::ShouldSuppressNormalGridChildren() const
 
 void USFSubsystem::ClearNormalGridChildrenForExtendSuppression(const TCHAR* Context)
 {
+    if (FSFExtendAuthorityScope::IsActive(this)) return;
 	if (!HologramHelper)
 	{
 		return;
@@ -390,6 +392,9 @@ void USFSubsystem::UpdateCounterState(const FSFCounterState& NewState)
 	// Mirror GridCounters for legacy API compatibility (non-const ref accessor required)
 	GridCounters = CounterState.GridCounters;  // Sync deprecated mirror
 
+    // [MP-AUTH] Transaction counters never rebuild the host's preview or change its HUD/latch.
+    if (FSFExtendAuthorityScope::IsActive(this)) return;
+
 	// Refresh HUD immediately
 	UpdateCounterDisplay();
 
@@ -428,7 +433,7 @@ void USFSubsystem::StageScalingSpecForPlayer(APlayerController* PC, const FSFSca
 	{
 		return;
 	}
-	if (Spec.bValid)
+	if (Spec.bValid && IsSmartEnabledForPlayer(PC))
 	{
 		StagedScalingSpecs.Add(PC, Spec);
 	}
@@ -478,7 +483,7 @@ void USFSubsystem::StageExtendCommitForPlayer(APlayerController* PC, const FSFEx
 	{
 		return;
 	}
-	if (Spec.bValid)
+	if (Spec.bValid && IsSmartEnabledForPlayer(PC))
 	{
 		StagedExtendCommits.Add(PC, Spec);
 		StagedExtendCommitTimes.Add(PC, FPlatformTime::Seconds());
@@ -537,7 +542,7 @@ void USFSubsystem::StageWalkCommitForPlayer(APlayerController* PC, const FSFWalk
 	{
 		return;
 	}
-	if (Spec.bValid)
+	if (Spec.bValid && IsSmartEnabledForPlayer(PC))
 	{
 		StagedWalkCommits.Add(PC, Spec);
 		StagedWalkCommitTimes.Add(PC, FPlatformTime::Seconds());
@@ -1106,9 +1111,12 @@ void USFSubsystem::Tick(float DeltaTime)
 	// and force grid to 1x1x1 even if no Smart! scaling input occurred.
 	if (ActiveHologram.IsValid() && HologramHelper)
 	{
-		if (AFGFactoryBuildingHologram* FactoryBuildingHolo = Cast<AFGFactoryBuildingHologram>(ActiveHologram.Get()))
+		// [#523] Widened from AFGFactoryBuildingHologram for #330 parity: the zoop API lives on
+		// AFGBuildableHologram, and the narrower cast skipped zoopable non-factory holograms
+		// (signs/billboards), leaving this mid-placement detection blind to their zoop.
+		if (AFGBuildableHologram* ZoopableHolo = Cast<AFGBuildableHologram>(ActiveHologram.Get()))
 		{
-			const TArray<FTransform>& ZoopTransforms = FactoryBuildingHolo->GetZoopInstanceTransforms();
+			const TArray<FTransform>& ZoopTransforms = ZoopableHolo->GetZoopInstanceTransforms();
 			const bool bZoopNowActive = ZoopTransforms.Num() > 0;
 			const bool bWasZoopActive = HologramHelper->IsZoopActive();
 
@@ -1994,15 +2002,15 @@ bool USFSubsystem::ResolvePlayerRelativeModalTarget(bool bSelectSlot, ESFPlayerR
 	if (bSelectSlot)
 	{
 		// Only spacing has a vertical target (steps ARE vertical; rotation is yaw; stagger's
-		// vertical key selects the family instead - handled by the caller). Extend has no
-		// vertical target: its stable control frame is Chain (X) and Rows (Y).
-		if (DesiredSlot == ESFPlayerRelativeSlot::Vertical && (!bSpacingModeActive || bExtendActive))
+		// vertical key selects the family instead - handled by the caller). Extend spacing
+        // includes vertical layers alongside its stable Chain/Rows frame.
+		if (DesiredSlot == ESFPlayerRelativeSlot::Vertical && !bSpacingModeActive)
 		{
 			return false;
 		}
 		*Slot = DesiredSlot;
 	}
-	else if (bExtendActive && *Slot == ESFPlayerRelativeSlot::Vertical)
+	else if (bExtendActive && !bSpacingModeActive && *Slot == ESFPlayerRelativeSlot::Vertical)
 	{
 		// A spacing slot selected before entering Extend must not keep driving Z invisibly.
 		*Slot = ESFPlayerRelativeSlot::Forward;
@@ -2010,7 +2018,8 @@ bool USFSubsystem::ResolvePlayerRelativeModalTarget(bool bSelectSlot, ESFPlayerR
 
 	if (bExtendActive)
 	{
-		OutAxis = *Slot == ESFPlayerRelativeSlot::Side ? ESFScaleAxis::Y : ESFScaleAxis::X;
+		OutAxis = *Slot == ESFPlayerRelativeSlot::Vertical ? ESFScaleAxis::Z
+            : (*Slot == ESFPlayerRelativeSlot::Side ? ESFScaleAxis::Y : ESFScaleAxis::X);
 		if (bSpacingModeActive)
 		{
 			OutSign = +1;
@@ -2057,12 +2066,6 @@ void USFSubsystem::AdvancePlayerRelativeSlot()
 	using ESlot = ESFPlayerRelativeSlot;
 	if (bSpacingModeActive)
 	{
-		if (IsExtendModeActive())
-		{
-			PlayerRelativeSlots.Spacing =
-				PlayerRelativeSlots.Spacing == ESlot::Forward ? ESlot::Side : ESlot::Forward;
-		}
-		else
 		{
 			PlayerRelativeSlots.Spacing =
 				  (PlayerRelativeSlots.Spacing == ESlot::Forward) ? ESlot::Side
@@ -2113,9 +2116,9 @@ ESFScaleAxis USFSubsystem::GetEffectiveSpacingAxis() const
 {
 	if (IsExtendModeActive())
 	{
-		return PlayerRelativeSlots.Spacing == ESFPlayerRelativeSlot::Side
-			? ESFScaleAxis::Y
-			: ESFScaleAxis::X;
+		if (!IsPlayerRelativeEnabled()) return CounterState.SpacingAxis;
+        return PlayerRelativeSlots.Spacing == ESFPlayerRelativeSlot::Vertical ? ESFScaleAxis::Z
+            : (PlayerRelativeSlots.Spacing == ESFPlayerRelativeSlot::Side ? ESFScaleAxis::Y : ESFScaleAxis::X);
 	}
 	USFSubsystem* Self = const_cast<USFSubsystem*>(this);
 	ESFScaleAxis PrimAxis, LatAxis; int32 PrimSign, LatSign;
@@ -2236,7 +2239,8 @@ ELastAxisInput USFSubsystem::GetEffectiveArrowAxisInput(int32* OutDirectionSign)
 				  bSpacingModeActive ? PlayerRelativeSlots.Spacing
 				: bStepsModeActive   ? PlayerRelativeSlots.Steps
 				:                      PlayerRelativeSlots.Rotation;
-			ExtendAxis = Slot == ESFPlayerRelativeSlot::Side ? ESFScaleAxis::Y : ESFScaleAxis::X;
+			ExtendAxis = Slot == ESFPlayerRelativeSlot::Vertical ? ESFScaleAxis::Z
+                : (Slot == ESFPlayerRelativeSlot::Side ? ESFScaleAxis::Y : ESFScaleAxis::X);
 			bHasExtendTarget = true;
 		}
 		else if (bModifierScaleXActive || bModifierScaleYActive)
@@ -2247,7 +2251,7 @@ ELastAxisInput USFSubsystem::GetEffectiveArrowAxisInput(int32* OutDirectionSign)
 
 		if (bHasExtendTarget)
 		{
-			if (OutDirectionSign) { *OutDirectionSign = PlayerRelativeSignForAxis(ExtendAxis); }
+			if (OutDirectionSign) { *OutDirectionSign = ExtendAxis == ESFScaleAxis::Z ? 1 : PlayerRelativeSignForAxis(ExtendAxis); }
 			return ToArrowAxis(ExtendAxis);
 		}
 	}
@@ -2384,6 +2388,8 @@ void USFSubsystem::OnScaleXChanged(const FInputActionValue& Value)
 	{
 		if (bModifierScaleXActive && bModifierScaleYActive)
 		{
+            LastAxisInput = ELastAxisInput::Z;
+            ApplyAxisScaling(ESFScaleAxis::Z, Direction, TEXT("Scale Z"));
 			return;
 		}
 
@@ -2519,12 +2525,6 @@ void USFSubsystem::OnScaleYChanged(const FInputActionValue& Value)
 
 void USFSubsystem::OnScaleZChanged(const FInputActionValue& Value)
 {
-    // Block scaling while EXTEND is active
-    if (IsExtendModeActive())
-    {
-        return;
-    }
-
     // Phase 0: Delegate input processing to InputHandler (Task #61.6)
     if (InputHandler)
     {
