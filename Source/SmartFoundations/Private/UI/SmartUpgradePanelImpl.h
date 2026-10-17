@@ -20,6 +20,7 @@
 #include "Services/SFChainActorService.h"
 #include "Features/Upgrade/SFUpgradeTraversalService.h"
 #include "Features/Upgrade/SFUpgradeTierPolicy.h"
+#include "Features/Upgrade/SFUpgradeMinerFamily.h"
 #include "Components/Button.h"
 #include "Components/TextBlock.h"
 #include "Components/VerticalBox.h"

@@ -262,6 +262,7 @@ void USmartSettingsFormWidget::NativeConstruct()
     ConfigureComboBoxStyle(PowerReservedComboBox);
     ConfigureComboBoxStyle(PresetDropdown, BeltTierMainComboBox);
     ConfigureComboBoxStyle(RotationAxisComboBox, BeltTierMainComboBox);  // [#372] copy belt-combo style
+    ConfigureComboBoxStyle(Cast<UComboBoxString>(GetWidgetFromName(TEXT("WallRotationInput"))), PipeTierMainComboBox);
 
     // Bind Apply Immediately checkbox
     // NOTE: Do NOT set checkbox state here - PopulateFromCounterState() is called BEFORE NativeConstruct
@@ -542,6 +543,8 @@ void USmartSettingsFormWidget::NativeConstruct()
 
     UpdateRestoreButtonTextColors();
     UpdateExtendImportButtonState();
+    RefreshSignSupportControl();
+    RefreshWallRotationControl();
 
     // === Extend Mode Overrides ===
     // Applied AFTER default setup since PopulateFromCounterState runs before NativeConstruct.
@@ -584,6 +587,8 @@ void USmartSettingsFormWidget::PopulateFromCounterState(USFSubsystem* Subsystem)
 
     // Cache subsystem reference for apply button
     CachedSubsystem = Subsystem;
+    RefreshSignSupportControl();
+    RefreshWallRotationControl();
 
     // Initialize Apply Immediately from global config
     const FSmart_ConfigStruct& Config = Subsystem->GetCachedConfig();
@@ -741,7 +746,7 @@ void USmartSettingsFormWidget::PopulateFromCounterState(USFSubsystem* Subsystem)
             // #404: wall pipeline supports are AC-capable (they route ToBuilding like stackable
             // supports) but were the one pipe type missing from the section gate below.
             const bool bIsWallPipelineSupport = USFAutoConnectService::IsWallPipelineSupportHologram(ActiveHologram);
-            const bool bIsStackableHypertubeSupport = AutoConnectService->IsStackableHypertubeSupportHologram(ActiveHologram);
+            const bool bIsStackableHypertubeSupport = AutoConnectService->IsHypertubeAutoConnectSupportHologram(ActiveHologram);
 
             // [#494] Logistics holograms only - deliberately NOT bIsScaleDaisyAvailable, which is
             // true for recipe-bearing factories. See the flag's declaration comment.
@@ -944,7 +949,7 @@ void USmartSettingsFormWidget::PopulateFromCounterState(USFSubsystem* Subsystem)
                         AutoConnectLines += TEXT("\n");
                     }
                     AutoConnectLines += FString::Printf(
-                        TEXT("Stackable Hypertube Support: Enabled=%d Routing=%d"),
+                        TEXT("Hypertube Support: Enabled=%d Routing=%d"),
                         Settings.bHypertubeAutoConnectEnabled ? 1 : 0,
                         Settings.HypertubeRoutingMode);
                 }

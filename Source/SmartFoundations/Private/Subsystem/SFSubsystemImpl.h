@@ -95,6 +95,8 @@
 #include "Holograms/Adapters/SFResourceExtractorAdapter.h"
 #include "Holograms/Adapters/SFFactoryAdapter.h"
 #include "Holograms/Adapters/SFElevatorAdapter.h"
+#include "Holograms/Adapters/SFElevatorFloorStopAdapter.h"
+#include "Hologram/FGElevatorFloorStopHologram.h"
 #include "Holograms/Adapters/SFRampAdapter.h"
 #include "Holograms/Adapters/SFJumpPadAdapter.h"
 #include "Holograms/Adapters/SFUnsupportedAdapter.h"

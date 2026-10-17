@@ -28,10 +28,8 @@ bool FSFWallAdapter::SupportsFeature(ESFFeature Feature) const
 	{
 	case ESFFeature::ScaleX:
 	case ESFFeature::ScaleY:
-		return true; // Walls support X and Y scaling
-
 	case ESFFeature::ScaleZ:
-		return false; // Walls typically don't support Z-axis scaling
+		return true; // Repeat native-legal wall placements horizontally or vertically.
 
 	case ESFFeature::Arrows:
 	case ESFFeature::Spacing:

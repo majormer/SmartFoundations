@@ -11,6 +11,7 @@
 #include "Hologram/FGBlueprintHologram.h"
 #include "FGFactoryConnectionComponent.h"
 #include "FGPipeConnectionComponent.h"
+#include "FGPipeConnectionComponentHyper.h"
 #include "Buildables/FGBuildableConveyorBase.h"
 #include "SFLogMacros.h"
 
@@ -104,10 +105,23 @@ void FSFBlueprintSeamService::GetDuplicatedPipeConnectors(AFGBlueprintHologram* 
 	{
 		return;
 	}
-	// UFGPipeConnectionComponent = fluid pipes only; hypertube connectors are the sibling
-	// UFGPipeConnectionComponentHyper class and are deliberately not collected (v1 scope).
+	// Fluid and Hyper components are siblings with separate native topology/index spaces.
 	TInlineComponentArray<UFGPipeConnectionComponent*> Components(Blueprint);
 	for (UFGPipeConnectionComponent* Component : Components)
+	{
+		if (Component && Blueprint->mDuplicateConnectionToOriginalMap.Contains(Component))
+		{
+			OutConnectors.Add(Component);
+		}
+	}
+}
+
+void FSFBlueprintSeamService::GetDuplicatedHypertubeConnectors(AFGBlueprintHologram* Blueprint, TArray<UFGPipeConnectionComponentHyper*>& OutConnectors)
+{
+	OutConnectors.Reset();
+	if (!Blueprint) return;
+	TInlineComponentArray<UFGPipeConnectionComponentHyper*> Components(Blueprint);
+	for (UFGPipeConnectionComponentHyper* Component : Components)
 	{
 		if (Component && Blueprint->mDuplicateConnectionToOriginalMap.Contains(Component))
 		{
@@ -166,10 +180,21 @@ UFGPipeConnectionComponent* FSFBlueprintSeamService::ResolvePipeConnector(AFGBlu
 	return Connectors[Index];
 }
 
+UFGPipeConnectionComponentHyper* FSFBlueprintSeamService::ResolveHypertubeConnector(AFGBlueprintHologram* Clone, int32 Index, const FName& ExpectedOriginalName)
+{
+	TArray<UFGPipeConnectionComponentHyper*> Connectors;
+	GetDuplicatedHypertubeConnectors(Clone, Connectors);
+	return Connectors.IsValidIndex(Index) && DupNameMatchesOriginal(Connectors[Index], ExpectedOriginalName)
+		? Connectors[Index] : nullptr;
+}
+
 bool FSFBlueprintSeamService::BuildSeamTable(AFGBlueprintHologram* Blueprint, FSFBlueprintSeamTable& OutTable)
 {
 	OutTable.Pairs.Reset();
 	OutTable.bComputed = false;
+	OutTable.BeltConnectorCount = 0;
+	OutTable.PipeConnectorCount = 0;
+	OutTable.HypertubeConnectorCount = 0;
 	if (!Blueprint)
 	{
 		return false;
@@ -267,6 +292,30 @@ bool FSFBlueprintSeamService::BuildSeamTable(AFGBlueprintHologram* Blueprint, FS
 		}
 	}
 
+	// Snap-only is a native base-component type, including Hyper supports whose
+	// component names differ. Such anchors cannot participate in the transport network.
+	TArray<FSeamConnector> HypertubeConnectors;
+	{
+		TArray<UFGPipeConnectionComponentHyper*> Dups;
+		GetDuplicatedHypertubeConnectors(Blueprint, Dups);
+		OutTable.HypertubeConnectorCount = Dups.Num();
+		for (int32 Index = 0; Index < Dups.Num(); ++Index)
+		{
+			UFGPipeConnectionComponentHyper* Original = Cast<UFGPipeConnectionComponentHyper>(
+				Blueprint->mDuplicateConnectionToOriginalMap.FindRef(Dups[Index]));
+			if (!Original || Original->IsConnected() || Original->GetPipeConnectionType() == EPipeConnectionType::PCT_SNAP_ONLY) continue;
+			FSeamConnector Connector;
+			Connector.Index = Index;
+			Connector.Pos = HologramTransform.InverseTransformPosition(Dups[Index]->GetComponentLocation());
+			Connector.Normal = HologramTransform.InverseTransformVectorNoScale(Dups[Index]->GetConnectorNormal());
+			Connector.OriginalName = Original->GetFName();
+			Connector.bCanOutput = true;
+			Connector.bCanInput = true;
+			Connector.PipeType = Original->GetPipeConnectionType();
+			HypertubeConnectors.Add(Connector);
+		}
+	}
+
 	// [#168] Connector dump — face classification is read straight off these lines when a
 	// blueprint pairs unexpectedly (local pos + outward normal in the hologram/grid frame).
 	for (const FSeamConnector& C : BeltConnectors)
@@ -288,10 +337,12 @@ bool FSFBlueprintSeamService::BuildSeamTable(AFGBlueprintHologram* Blueprint, FS
 		const ESFSeamAxis Axis = static_cast<ESFSeamAxis>(AxisIndex);
 		PairAxis(BeltConnectors, Axis, /*bPipes=*/false, OutTable.Pairs);
 		PairAxis(PipeConnectors, Axis, /*bPipes=*/true, OutTable.Pairs);
+		PairAxis(HypertubeConnectors, Axis, /*bPipes=*/true, OutTable.Pairs, /*bHypertubes=*/true);
 		// Claims are per axis: a connector faces at most one axis (FACING_AXIS_MIN_DOT > cos45°),
 		// so resetting here only lets the OTHER kind's list start clean for its own axes.
 		for (FSeamConnector& Connector : BeltConnectors) { Connector.bClaimed = false; }
 		for (FSeamConnector& Connector : PipeConnectors) { Connector.bClaimed = false; }
+		for (FSeamConnector& Connector : HypertubeConnectors) { Connector.bClaimed = false; }
 	}
 
 	OutTable.bComputed = true;
@@ -313,7 +364,7 @@ bool FSFBlueprintSeamService::BuildSeamTable(AFGBlueprintHologram* Blueprint, FS
 	return true;
 }
 
-void FSFBlueprintSeamService::PairAxis(TArray<FSeamConnector>& Connectors, ESFSeamAxis Axis, bool bPipes, TArray<FSFBlueprintSeamPair>& OutPairs)
+void FSFBlueprintSeamService::PairAxis(TArray<FSeamConnector>& Connectors, ESFSeamAxis Axis, bool bPipes, TArray<FSFBlueprintSeamPair>& OutPairs, bool bHypertubes)
 {
 	// Split into +face / -face populations: outward-facing along the axis, within FACE_TOLERANCE
 	// of the outermost same-facing connector (connector-derived face planes — no bounds-space
@@ -408,6 +459,7 @@ void FSFBlueprintSeamService::PairAxis(TArray<FSeamConnector>& Connectors, ESFSe
 				FSFBlueprintSeamPair Pair;
 				Pair.Axis = Axis;
 				Pair.bIsPipe = bPipes;
+				Pair.bIsHypertube = bHypertubes;
 				Pair.FromIndex = From->Index;
 				Pair.ToIndex = Best->Index;
 				Pair.bFromOnPositiveFace = bFromOnPositiveFace;

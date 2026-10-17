@@ -20,6 +20,10 @@
 #include "Hologram/FGPoleHologram.h"              // [MP-SPEC] multi-step gate: pole height step
 #include "Hologram/FGFloodlightHologram.h"        // [MP-SPEC] multi-step gate: floodlight angle step
 #include "Hologram/FGStandaloneSignHologram.h"    // [MP-SPEC] multi-step gate: sign height step
+#include "Hologram/FGLadderHologram.h"
+#include "Features/Scaling/SFLadderHologramState.h"
+#include "Features/Scaling/SFElevatorHologramState.h"
+#include "Features/Scaling/SFHypertubeSupportHologramState.h"
 #include "Holograms/Logistics/SFConveyorBeltHologram.h"  // #341: DrainStackBuiltConveyors
 #include "FGConstructDisqualifier.h"
 #include "FGCentralStorageSubsystem.h"
@@ -36,6 +40,8 @@
 #include "Core/Net/SFConstructPayloadGuard.h"
 #include "Engine/Engine.h"                     // GEngine on-screen message
 #include "Holograms/Core/SFScalingSpecExpansion.h"
+#include "Holograms/Core/SFSignHologramState.h"
+#include "Holograms/Core/SFSignSupportMode.h"
 #include "Data/SFBuildableSizeRegistry.h"
 #include "Data/SFHologramDataRegistry.h"   // [EXTEND-MP] JsonCloneId wiring anchors post-construct
 #include "Subsystem/SFHologramHelperService.h"
@@ -186,9 +192,14 @@ static bool SF_InputWillConstruct(AFGHologram* Holo)
 		return FinalStepReached(AFGFloodlightHologram::StaticClass(),
 			static_cast<uint8>(EFloodlightHologramBuildStep::FHBS_AdjustAngle));
 	}
+	if (Holo->IsA<AFGLadderHologram>()) return SFLadderHologramState::IsFinalStep(Holo);
+	if (SFHypertubeSupportHologramState::IsSelectedPole(Holo)) return SFHypertubeSupportHologramState::IsFinalStep(Holo);
 	if (Holo->IsA<AFGStandaloneSignHologram>())
 	{
-		return FinalStepReached(AFGStandaloneSignHologram::StaticClass(),
+		// Native wall/attachment mounting constructs directly in the snap step; only
+		// supported floor/ceiling signs advance to height adjustment before staging.
+		return SFSignHologramState::IsDirectMount(Holo)
+			|| FinalStepReached(AFGStandaloneSignHologram::StaticClass(),
 			static_cast<uint8>(ESignHologramBuildStep::ESHBS_AdjustHeight));
 	}
 	return true;
@@ -262,6 +273,35 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 			// nothing may be captured, staged, stripped, or destroyed here.
 			if (!SF_InputWillConstruct(Holo))
 			{
+				return;
+			}
+			// [MP-SEAM] An existing-shaft extension is one native owner-bound placement.
+			// Keep its native child/state serialization intact: the generic scaling staging
+			// and preview teardown can reduce it to a new default-height shaft.
+			if (SFElevatorHologramState::GetSnappedElevator(Holo))
+			{
+				if (FSFNetworkHelper::IsClient(World))
+				{
+					if (APawn* Pawn = Holo->GetConstructionInstigator())
+						if (AFGPlayerController* PC = Cast<AFGPlayerController>(Pawn->GetController()))
+							if (USFRCO* RCO = PC->GetRemoteCallObjectOfClass<USFRCO>())
+							{
+								RCO->Server_StageScalingSpec(FSFScalingSpec());
+								RCO->Server_StageExtendCommit(FSFExtendCommitSpec());
+							}
+				}
+				return;
+			}
+			SFSignSupportMode::BeginConstruction(self);
+			// Final native input is shared by standalone, listen-host and network clients.
+			if (!SFSignHologramState::AreGridSupportsValid(Holo))
+			{
+				if (USFSubsystem* NoticeSS = USFSubsystem::Get(World))
+				{
+					NoticeSS->ShowSmartNotice(NSLOCTEXT("SmartFoundations", "Notice_SignSupportHeight",
+						"Sign supports must reach the mounting surface at a native pole height. Adjust height, spacing or steps.").ToString());
+				}
+				scope.Cancel();
 				return;
 			}
 
@@ -633,7 +673,16 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 			const int32 TotalCells = GridChildCount + 1;
 			if (TotalCells <= SF_MP_OVERSIZED_CELLS)
 			{
-				return; // fits one construct -> untouched vanilla path (builds fine in MP)
+				if (SFSignHologramState::IsClientGridSerialization(Holo))
+				{
+					// [MP-SEAM] The legacy tree carries AFGHologram::mIsDisabled through
+					// CustomSerialization. Scope the native fire after its final-step and
+					// payload gates so authority builds/prices the same support boundary.
+					// Native input must retain the enabled pole outside this request.
+					SFSignHologramState::FLocalConstructionScope SignConstruction(Holo);
+					scope(self, isInputFromARelease);
+				}
+				return; // fits one construct -> native child-tree serialization
 			}
 
 			// Oversized: refuse the fire BEFORE vanilla serializes/sends. The active hologram + preview stay

@@ -218,8 +218,9 @@ AActor* ASFPipelineHologram::Construct(TArray<AActor*>& out_children, FNetConstr
 							{
 								return nullptr;
 							}
-							const UFGPipeConnectionComponent* AsPipeConn = Cast<UFGPipeConnectionComponent>(Candidate);
-							const bool bSnapOnly = AsPipeConn && AsPipeConn->GetPipeConnectionType() == EPipeConnectionType::PCT_SNAP_ONLY;
+							// The native type lives on the common base: Hyper support anchors
+							// are snap-only too, without being fluid components.
+							const bool bSnapOnly = Candidate->GetPipeConnectionType() == EPipeConnectionType::PCT_SNAP_ONLY;
 							if (bSnapOnly || Candidate->IsConnected() || Candidate->GetOwner() == Pipe)
 							{
 								Ignored.Add(Candidate);
@@ -877,6 +878,11 @@ float ASFPipelineHologram::ComputeMinRoutedBendRadiusCm() const
 		MinRadius = FMath::Min(MinRadius, (SideA * SideB * SideC) / (2.0f * DoubleArea));
 	}
 	return MinRadius;
+}
+
+bool ASFPipelineHologram::ValidateCurrentSpline(bool& OutTooLong)
+{
+	return ValidateCurrentSpline(GetMaxSplineLength(), OutTooLong);
 }
 
 bool ASFPipelineHologram::ValidateCurrentSpline(float MaxSplineLengthCm, bool& OutTooLong)

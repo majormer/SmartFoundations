@@ -9,6 +9,12 @@
 #include "FGConstructDisqualifier.h"
 #include "Kismet/GameplayStatics.h"
 #include "Data/SFBuildableSizeRegistry.h"
+#include "Buildables/FGBuildableWaterPump.h"
+#include "Subsystem/SFHologramDataService.h"
+#include "Subsystem/SFSubsystem.h"
+#include "Features/Extend/SFExtendService.h"
+#include "Features/Extend/SFExtendBuiltActors.h"
+#include "Data/SFHologramDataRegistry.h"
 
 ASFWaterPumpChildHologram::ASFWaterPumpChildHologram()
 {
@@ -16,24 +22,29 @@ ASFWaterPumpChildHologram::ASFWaterPumpChildHologram()
 
 void ASFWaterPumpChildHologram::CheckValidPlacement()
 {
-	// Issue #197: Replace vanilla CheckValidPlacement() entirely for children.
-	//
-	// Why not call Super: Vanilla CheckMinimumDepth() fails for children positioned
-	// via SetActorLocation even when they ARE over valid water. The vanilla code likely
-	// depends on internal placement state set during SetHologramLocationAndRotation()
-	// which children don't go through.
-	//
-	// What we do instead: Our own water volume check using EncompassesPoint().
-	// This validates that the child is actually over water without relying on
-	// vanilla's broken depth trace for children.
-	//
-	// IMPORTANT: We MUST validate water. An unvalidated extractor over land would
-	// generate free water resources, breaking game balance.
-	
-	if (!ValidateWaterPosition())
-	{
-		AddConstructDisqualifier(UFGCDNeedsWaterVolume::StaticClass());
-	}
+    mSnappedExtractableResource = nullptr;
+    mUpgradeTarget = nullptr;
+    if (!ValidateWaterTree(this))
+    {
+        AddConstructDisqualifier(UFGCDNeedsWaterVolume::StaticClass());
+        return;
+    }
+
+    // The native server root deserializes these inherited resource fields.
+    // Resolve the destination volume, never copy the source extractor's binding.
+    TArray<AActor*> Volumes;
+    UGameplayStatics::GetAllActorsOfClass(GetWorld(), AFGWaterVolume::StaticClass(), Volumes);
+    for (AActor* Actor : Volumes)
+    {
+        AFGWaterVolume* Volume = Cast<AFGWaterVolume>(Actor);
+        if (Volume && Volume->EncompassesPoint(GetActorLocation()))
+        {
+            mSnappedExtractableResource.SetObject(Volume);
+            mSnappedExtractableResource.SetInterface(Cast<IFGExtractableResourceInterface>(Volume));
+            return;
+        }
+    }
+    AddConstructDisqualifier(UFGCDNeedsWaterVolume::StaticClass());
 }
 
 void ASFWaterPumpChildHologram::SetHologramLocationAndRotation(const FHitResult& hitResult)
@@ -50,7 +61,8 @@ void ASFWaterPumpChildHologram::SetHologramLocationAndRotation(const FHitResult&
 void ASFWaterPumpChildHologram::ConfigureActor(AFGBuildable* inBuildable) const
 {
 	// Skip AFGResourceExtractorHologram::ConfigureActor which asserts mSnappedExtractableResource.
-	// Children don't snap to resources — parent handles resource binding.
+	// Owned copies can construct without native aim state; the buildable's native
+	// missing-resource discovery binds water at its own validated destination.
 	// Call grandparent directly to get basic factory hologram configuration.
 	AFGFactoryHologram::ConfigureActor(inBuildable);
 }
@@ -59,18 +71,47 @@ AActor* ASFWaterPumpChildHologram::Construct(TArray<AActor*>& out_children, FNet
 {
 	UE_LOG(LogSmartHologram, VeryVerbose, TEXT("WaterPump Construct: %s at %s"), 
 		*GetName(), *GetActorLocation().ToString());
-	return Super::Construct(out_children, constructionID);
+    AActor* BuiltActor = Super::Construct(out_children, constructionID);
+    if (BuiltActor && !GetParentHologram())
+    {
+        // A Water Extractor can also be the live Extend root. Publish its native
+        // Construct result through the same wiring boundary as other factory roots.
+        USFSubsystem* Subsystem = USFSubsystem::Get(GetWorld());
+        USFExtendService* Extend = Subsystem ? Subsystem->GetExtendService() : nullptr;
+        if (Extend)
+        {
+            if (const FSFHologramData* Data = USFHologramDataRegistry::GetData(this))
+            {
+                if (!Data->JsonCloneId.IsEmpty()) Extend->RegisterJsonBuiltActor(Data->JsonCloneId, BuiltActor);
+            }
+            SFExtendBuiltActors::RegisterChildren(Extend, this, out_children);
+            if (Extend->HasPendingPostBuildWiring()) Extend->RegisterJsonBuiltActor(TEXT("parent"), BuiltActor);
+        }
+    }
+    return BuiltActor;
 }
 
 bool ASFWaterPumpChildHologram::ValidateWaterPosition() const
 {
-	UWorld* World = GetWorld();
+	return ValidateWaterPosition(this);
+}
+
+bool ASFWaterPumpChildHologram::IsVanillaWaterExtractor(const UClass* BuildClass)
+{
+	return BuildClass && BuildClass->IsChildOf(AFGBuildableWaterPump::StaticClass())
+		&& BuildClass->GetName() == TEXT("Build_WaterPump_C")
+		&& BuildClass->GetOutermost()->GetName().StartsWith(TEXT("/Game/FactoryGame/"));
+}
+
+bool ASFWaterPumpChildHologram::ValidateWaterPosition(const AFGHologram* Hologram)
+{
+	UWorld* World = IsValid(Hologram) ? Hologram->GetWorld() : nullptr;
 	if (!World)
 	{
 		return false;
 	}
 	
-	const FVector ChildLocation = GetActorLocation();
+	const FVector ChildLocation = Hologram->GetActorLocation();
 	
 	// ========================================================================
 	// THREE-PHASE WATER VALIDATION
@@ -96,7 +137,7 @@ bool ASFWaterPumpChildHologram::ValidateWaterPosition() const
 	static constexpr float SkyAccessTolerance = 50.0f;     // Allow terrain within 50cm of top (waterline tolerance)
 	
 	FCollisionQueryParams BaseTraceParams(SCENE_QUERY_STAT(WaterPumpValidation), false);
-	BaseTraceParams.AddIgnoredActor(this);
+	BaseTraceParams.AddIgnoredActor(Hologram);
 	
 	// ---- Phase 1: Sky Access Check (5-point bounding box) ----
 	// Trace from the top of the building's bounding box at 5 points (center + 4 corners)
@@ -106,9 +147,9 @@ bool ASFWaterPumpChildHologram::ValidateWaterPosition() const
 	{
 		// Get building half-extents from registry
 		FVector BuildingSize = FVector(2000.0f, 1800.0f, 2400.0f);  // Default water extractor size
-		if (mBuildClass)
+		if (Hologram->GetBuildClass())
 		{
-			FSFBuildableSizeProfile Profile = USFBuildableSizeRegistry::GetProfile(mBuildClass);
+			FSFBuildableSizeProfile Profile = USFBuildableSizeRegistry::GetProfile(Hologram->GetBuildClass());
 			if (!Profile.DefaultSize.IsNearlyZero())
 			{
 				BuildingSize = Profile.DefaultSize;
@@ -129,7 +170,7 @@ bool ASFWaterPumpChildHologram::ValidateWaterPosition() const
 		};
 		
 		// Rotate offsets by hologram rotation to get world-space positions
-		const FRotator ActorRotation = GetActorRotation();
+		const FRotator ActorRotation = Hologram->GetActorRotation();
 		
 		for (const FVector2D& Offset : TraceOffsets)
 		{
@@ -151,7 +192,7 @@ bool ASFWaterPumpChildHologram::ValidateWaterPosition() const
 				if (SkyHit.ImpactPoint.Z > ChildLocation.Z + SkyAccessTolerance)
 				{
 					UE_LOG(LogSmartHologram, VeryVerbose, TEXT("WaterPump %s: Sky access blocked at offset (%.0f,%.0f) — terrain Z=%.1f above waterline Z=%.1f"),
-						*GetName(), Offset.X, Offset.Y, SkyHit.ImpactPoint.Z, ChildLocation.Z);
+						*Hologram->GetName(), Offset.X, Offset.Y, SkyHit.ImpactPoint.Z, ChildLocation.Z);
 					return false;
 				}
 			}
@@ -177,7 +218,7 @@ bool ASFWaterPumpChildHologram::ValidateWaterPosition() const
 	if (!ContainingVolume)
 	{
 		UE_LOG(LogSmartHologram, VeryVerbose, TEXT("WaterPump %s: Position %s is NOT in any water volume"),
-			*GetName(), *ChildLocation.ToString());
+			*Hologram->GetName(), *ChildLocation.ToString());
 		return false;
 	}
 	
@@ -202,7 +243,7 @@ bool ASFWaterPumpChildHologram::ValidateWaterPosition() const
 		if (DepthBelowChild < MinimumWaterDepth)
 		{
 			UE_LOG(LogSmartHologram, VeryVerbose, TEXT("WaterPump %s: Too shallow %.1f cm at %s"),
-				*GetName(), DepthBelowChild, *ChildLocation.ToString());
+				*Hologram->GetName(), DepthBelowChild, *ChildLocation.ToString());
 			return false;
 		}
 		
@@ -210,16 +251,75 @@ bool ASFWaterPumpChildHologram::ValidateWaterPosition() const
 		if (!ContainingVolume->EncompassesPoint(TerrainPoint))
 		{
 			UE_LOG(LogSmartHologram, VeryVerbose, TEXT("WaterPump %s: Terrain hit outside water volume at %s — bank/cliff edge"),
-				*GetName(), *ChildLocation.ToString());
+				*Hologram->GetName(), *ChildLocation.ToString());
 			return false;
 		}
 		
 		UE_LOG(LogSmartHologram, VeryVerbose, TEXT("WaterPump %s: All 3 phases passed — depth %.1f cm, sky clear, in water volume"),
-			*GetName(), DepthBelowChild);
+			*Hologram->GetName(), DepthBelowChild);
 	}
 	// No terrain hit within trace distance = very deep water = valid
 	
 	return true;
+}
+
+bool ASFWaterPumpChildHologram::ValidateWaterTree(AFGHologram* Parent)
+{
+	return ValidateWaterTree(Parent, [](const AFGHologram* Cell) { return ValidateWaterPosition(Cell); });
+}
+
+bool ASFWaterPumpChildHologram::ValidateWaterTree(AFGHologram* Parent, TFunctionRef<bool(const AFGHologram*)> ValidateCell)
+{
+	if (!IsValid(Parent)) return false;
+	if (!IsVanillaWaterExtractor(Parent->GetBuildClass())) return true;
+	TArray<AFGHologram*> Pending{Parent};
+	TSet<AFGHologram*> Visited;
+	while (!Pending.IsEmpty())
+	{
+		AFGHologram* Cell = Pending.Pop(EAllowShrinking::No);
+		if (!IsValid(Cell) || Visited.Contains(Cell)) continue;
+		Visited.Add(Cell);
+		if (IsVanillaWaterExtractor(Cell->GetBuildClass()))
+		{
+			// Horizontal-only family: stale/imported vertical grids cannot bypass the controls.
+			if (!FMath::IsNearlyEqual(Cell->GetActorLocation().Z, Parent->GetActorLocation().Z, 1.0)
+				|| !Cell->GetActorUpVector().Equals(FVector::UpVector, 0.001)
+				|| !ValidateCell(Cell)) return false;
+		}
+		Pending.Append(Cell->GetHologramChildren());
+	}
+	return true;
+}
+
+ASFWaterPumpChildHologram* ASFWaterPumpChildHologram::SpawnPreview(AFGHologram* Parent, FName Name, const FVector& Location)
+{
+	if (!IsValid(Parent) || !Parent->GetWorld() || !IsVanillaWaterExtractor(Parent->GetBuildClass())) return nullptr;
+	FActorSpawnParameters Params;
+	// Actor names must remain unique across repeated requests; AddChild owns the stable key.
+	Params.Owner = Parent->GetOwner();
+	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	Params.bDeferConstruction = true;
+	ASFWaterPumpChildHologram* Child = Parent->GetWorld()->SpawnActor<ASFWaterPumpChildHologram>(
+		StaticClass(), Location, FRotator::ZeroRotator, Params);
+	if (!Child) return nullptr;
+	Child->SetChildBuildClass(Parent->GetBuildClass());
+	Child->SetRecipe(Parent->GetRecipe());
+	Child->FinishSpawning(FTransform(FRotator::ZeroRotator, Location));
+	Parent->AddChild(Child, Name);
+	// Native holograms start hidden, which ValidatePlacementAndCost reports as an
+	// invalid aim. This positioned child must be visible before that validation;
+	// do not depend on a later Extend material-state change to reveal new cells.
+	Child->SetActorHiddenInGame(false);
+	Child->SetActorLocation(Location);
+	Child->SetInsideBlueprintDesigner(Parent->GetBlueprintDesigner());
+	USFHologramDataService::MarkAsChild(Child, Parent, ESFChildHologramType::ScalingGrid);
+	USFHologramDataService::EnableValidation(Child);
+	Child->SetActorEnableCollision(false);
+	TArray<UPrimitiveComponent*> Primitives;
+	Child->GetComponents(Primitives);
+	for (UPrimitiveComponent* Primitive : Primitives) Primitive->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	Child->Tags.AddUnique(TEXT("SF_GridChild"));
+	return Child;
 }
 
 void ASFWaterPumpChildHologram::SetHologramNudgeLocation()

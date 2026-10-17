@@ -5,6 +5,9 @@
 #include "Features/Extend/SFExtendPowerConnections.h"
 #include "Features/Extend/SFExtendFactoryPower.h"
 #include "Features/Extend/SFExtendService.h"
+#include "Features/Extend/SFExtendRouteSupports.h"
+#include "Buildables/FGBuildablePole.h"
+#include "Holograms/Logistics/SFSelectedPoleState.h"
 #include "FGFactoryColoringTypes.h"  // [#477] FFactoryCustomizationData capture
 #include "Misc/DateTime.h"
 
@@ -22,6 +25,7 @@
 #include "Constants/SFAssetPaths.h"
 #include "FGPowerConnectionComponent.h"  // Issue #288: capture pump's power-pole linkage
 #include "FGFactoryConnectionComponent.h"
+#include "FGConnectionComponent.h"
 #include "FGPipeConnectionComponent.h"
 #include "FGConveyorChainActor.h"
 #include "FGRecipe.h"
@@ -465,6 +469,29 @@ FSFCloneTopology FSFCloneTopology::FromSource(const FSFSourceTopology& Source, c
     }
     
     // ========================================================================
+    // Route supports have no transport peers. Emit once only when a related route survives.
+    for (const FSFSourceSegment& Support : Source.RouteSupports)
+    {
+        const bool bKept = Support.RelatedSourceIds.ContainsByPredicate([&](const FString& Id)
+        {
+            return SourceIdToHologramId.Contains(Id) && !ExcludedSegmentIds.Contains(Id);
+        });
+        if (!bKept || (!Support.SelectedPole.bCaptured && !SFExtendRouteSupports::IsFixedSupport(FName(*Support.Class))) || SourceIdToHologramId.Contains(Support.Id)) continue;
+        FSFCloneHologram Holo;
+        Holo.HologramId = FString::Printf(TEXT("route_support_%d"), Result.ChildHolograms.Num());
+        Holo.Role = TEXT("route_support");
+        Holo.SourceId = Support.Id;
+        Holo.SourceClass = Support.Class;
+        Holo.BuildClass = Support.Class;
+        Holo.RecipeClass = Support.RecipeClass;
+        Holo.Customization = Support.Customization;
+        Holo.Transform = Support.Transform.WithOffset(FSFVec3(Offset));
+        Holo.SelectedPole = Support.SelectedPole;
+        Holo.bConstructible = true;
+        SourceIdToHologramId.Add(Support.Id, Holo.HologramId);
+        Result.ChildHolograms.Add(Holo);
+    }
+
     // PHASE 2.5: Generate Power Pole Clone Holograms (Issue #229)
     // ========================================================================
     // [#498] Clone-space pole connector positions by pole HologramId, recorded while the poles are
@@ -1843,6 +1870,43 @@ FSFSourceTopology FSFSourceTopology::CaptureFromTopology(const FSFExtendTopology
         Result.PowerPoles.Add(SourcePole);
     }
     
+    auto CaptureSupports = [&](const auto& Groups, auto Routes)
+    {
+        for (const auto& Chain : Groups)
+            for (const auto& Weak : Chain.SupportPoles)
+            {
+                AFGBuildable* Pole = Weak.Get();
+                UFGConnectionComponent* Anchor = SFExtendRouteSupports::GetAnchor(Pole);
+                FSFSelectedPoleState State;
+                if (!Anchor || (!SFExtendRouteSupports::IsFixedSupport(Pole->GetClass()->GetFName()) && !SFSelectedPoleState::Capture(Pole, State))) continue;
+                FSFSourceSegment* Record = Result.RouteSupports.FindByPredicate([&](const FSFSourceSegment& Existing) { return Existing.Id == GetActorId(Pole); });
+                if (!Record)
+                {
+                    Record = &Result.RouteSupports.AddDefaulted_GetRef();
+                    Record->Id = GetActorId(Pole);
+                    Record->Type = TEXT("route_support");
+                    Record->Class = Pole->GetClass()->GetName();
+                    Record->RecipeClass = GetRecipeClassName(Pole->GetBuiltWithRecipe());
+                    Record->Transform = FSFTransform(Pole->GetActorLocation(), Pole->GetActorRotation());
+                    Record->Customization.CaptureFrom(Pole->GetCustomizationData_Implementation());
+                    Record->SelectedPole = State;
+                }
+                for (const auto& Route : Routes(Chain))
+                    if (AFGBuildable* Actor = Route.Get())
+                    {
+                        TInlineComponentArray<UFGConnectionComponent*> Connections;
+                        Actor->GetComponents(Connections);
+                        for (UFGConnectionComponent* Connection : Connections)
+                            if (FVector::DistSquared(Connection->GetComponentLocation(), Anchor->GetComponentLocation()) <= 1.0f)
+                                Record->RelatedSourceIds.AddUnique(GetActorId(Actor));
+                    }
+            }
+    };
+    CaptureSupports(Topology.InputChains, [](const FSFConnectionChainNode& Chain) -> const auto& { return Chain.Conveyors; });
+    CaptureSupports(Topology.OutputChains, [](const FSFConnectionChainNode& Chain) -> const auto& { return Chain.Conveyors; });
+    CaptureSupports(Topology.PipeInputChains, [](const FSFPipeConnectionChainNode& Chain) -> const auto& { return Chain.Pipelines; });
+    CaptureSupports(Topology.PipeOutputChains, [](const FSFPipeConnectionChainNode& Chain) -> const auto& { return Chain.Pipelines; });
+
     // Issue #260: Passthroughs (spatially discovered — both pipe and lift floor holes)
     for (int32 i = 0; i < Topology.PipePassthroughs.Num(); i++)
     {

@@ -586,7 +586,7 @@ public:
 	 * path never does.
 	 * @return number of endpoints wired (0-2).
 	 */
-	int32 WireBlueprintSeamPipe(class AFGBuildablePipeline* Pipe);
+	int32 WireBlueprintSeamPipe(class AFGBuildablePipeBase* Pipe);
 
 	/**
 	 * Planned building connections from preview phase (for build-time execution)

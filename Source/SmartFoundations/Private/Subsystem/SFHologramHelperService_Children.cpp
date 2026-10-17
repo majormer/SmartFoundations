@@ -1,3 +1,5 @@
+#include "Hologram/FGConveyorLiftHologram.h"
+#include "Holograms/Logistics/SFWaterPumpChildHologram.h"
 // Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
 /**
@@ -468,7 +470,7 @@ TSharedPtr<ISFHologramAdapter> FSFHologramHelperService::CreateHologramAdapter(A
 	{
 		return TSharedPtr<ISFHologramAdapter>(MakeShared<FSFGenericAdapter>(Hologram, TEXT("Storage")));
 	}
-	else if (Cast<AFGWaterPumpHologram>(Hologram))
+	else if (Cast<AFGWaterPumpHologram>(Hologram) || ASFWaterPumpChildHologram::IsVanillaWaterExtractor(Hologram->GetBuildClass()))
 	{
 		return TSharedPtr<ISFHologramAdapter>(MakeShared<FSFWaterExtractorAdapter>(Hologram));
 	}
@@ -483,6 +485,10 @@ TSharedPtr<ISFHologramAdapter> FSFHologramHelperService::CreateHologramAdapter(A
 	else if (Cast<AFGPipeHyperAttachmentHologram>(Hologram))
 	{
 		return TSharedPtr<ISFHologramAdapter>(MakeShared<FSFGenericAdapter>(Hologram, TEXT("HypertubeAttachment")));
+	}
+	else if (Cast<AFGConveyorLiftHologram>(Hologram))
+	{
+		return MakeShared<FSFGenericAdapter>(Hologram, TEXT("ConveyorLift"));
 	}
 	else if (Cast<AFGFactoryHologram>(Hologram))
 	{
@@ -500,6 +506,10 @@ TSharedPtr<ISFHologramAdapter> FSFHologramHelperService::CreateHologramAdapter(A
 		}
 		// Registry allows scaling or no profile - use Factory adapter
 		return TSharedPtr<ISFHologramAdapter>(MakeShared<FSFFactoryAdapter>(Hologram));
+	}
+	else if (Cast<AFGElevatorFloorStopHologram>(Hologram))
+	{
+		return TSharedPtr<ISFHologramAdapter>(MakeShared<FSFElevatorFloorStopAdapter>(Hologram));
 	}
 	else if (Cast<AFGElevatorHologram>(Hologram))
 	{
@@ -1034,42 +1044,19 @@ AFGHologram* FSFHologramHelperService::SpawnBuildableChildHologram(
 		return nullptr;
 	}
 
-	TSubclassOf<UFGRecipe> Recipe = ParentHologram->GetRecipe();
-	if (!Recipe)
+	if (ASFWaterPumpChildHologram::IsVanillaWaterExtractor(ParentHologram->GetBuildClass()))
 	{
-		return nullptr;
+		return ASFWaterPumpChildHologram::SpawnPreview(ParentHologram, ChildName, SpawnLocation);
 	}
 
-	UWorld* SpawnWorld = WorldContext.Get();
-	if (!SpawnWorld)
-	{
-		return nullptr;
-	}
-
-	FActorSpawnParameters SpawnParams;
-	SpawnParams.Name = ChildName;
-	SpawnParams.Owner = ParentHologram->GetOwner();
-	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-	SpawnParams.bDeferConstruction = true;
-
-	ASFBuildableChildHologram* BuildableChild = SpawnWorld->SpawnActor<ASFBuildableChildHologram>(
-		ASFBuildableChildHologram::StaticClass(),
-		SpawnLocation,
-		FRotator::ZeroRotator,
-		SpawnParams);
-
+	const TSubclassOf<UFGRecipe> Recipe = ParentHologram->GetRecipe();
+	ASFBuildableChildHologram* BuildableChild = ASFBuildableChildHologram::SpawnPreview(
+		ParentHologram, FTransform(FRotator::ZeroRotator, SpawnLocation),
+		ESFChildHologramType::ScalingGrid, ChildName);
 	if (!BuildableChild)
 	{
 		return nullptr;
 	}
-
-	BuildableChild->SetChildBuildClass(ParentHologram->GetBuildClass());
-	BuildableChild->SetRecipe(Recipe);
-	BuildableChild->FinishSpawning(FTransform(FRotator::ZeroRotator, SpawnLocation));
-	ParentHologram->AddChild(BuildableChild, ChildName);
-
-	USFHologramDataService::DisableValidation(BuildableChild);
-	USFHologramDataService::MarkAsChild(BuildableChild, ParentHologram, ESFChildHologramType::ScalingGrid);
 
 	// Carry the parent's STORED production recipe (machines scaled after the player picked a
 	// recipe) so the built child gets it too; fall back to the build recipe. Mirrors the
@@ -1085,40 +1072,7 @@ AFGHologram* FSFHologramHelperService::SpawnBuildableChildHologram(
 		USFHologramDataService::StoreRecipe(BuildableChild, Recipe);
 	}
 
-	if (BuildableChild->IsHologramLocked())
-	{
-		BuildableChild->LockHologramPosition(false);
-	}
-	BuildableChild->SetActorHiddenInGame(false);
-	BuildableChild->SetActorEnableCollision(false);
-
-	TArray<UPrimitiveComponent*> Primitives;
-	BuildableChild->GetComponents<UPrimitiveComponent>(Primitives);
-	for (UPrimitiveComponent* PrimComp : Primitives)
-	{
-		PrimComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	}
-
-	BuildableChild->SetActorTickEnabled(false);
-	BuildableChild->RegisterAllComponents();
-	BuildableChild->SetPlacementMaterialState(EHologramMaterialState::HMS_OK);
 	BuildableChild->Tags.AddUnique(FName(TEXT("SF_GridChild")));
-
-	// #418: hide vanilla's ClearanceBox visualization mesh (the "white lines" peppering scaled
-	// grids; confirmed via in-game component inspection - each child renders exactly the build
-	// mesh + a ClearanceBox static mesh). Matched by mesh asset name so the build mesh is never
-	// touched; a harmless no-op for types without a clearance mesh.
-	TArray<UStaticMeshComponent*> ChildMeshes;
-	BuildableChild->GetComponents<UStaticMeshComponent>(ChildMeshes);
-	for (UStaticMeshComponent* MeshComp : ChildMeshes)
-	{
-		const UStaticMesh* Mesh = MeshComp ? MeshComp->GetStaticMesh() : nullptr;
-		if (Mesh && Mesh->GetName().Equals(TEXT("ClearanceBox")))
-		{
-			MeshComp->SetVisibility(false);
-			MeshComp->SetHiddenInGame(true);
-		}
-	}
 
 	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("SpawnBuildableChildHologram: %s for parent %s (recipe=%s, buildClass=%s)"),
 		*ChildName.ToString(), *ParentHologram->GetName(),

@@ -21,6 +21,7 @@ enum class ESFUpgradeFamily : uint8
 	WallOutletSingle,  // Wall outlets single-sided Mk1-Mk3
 	WallOutletDouble,  // Wall outlets double-sided Mk1-Mk3
 	Tower,             // Power towers (audit-only, no upgrade)
+	Miner,             // Native node-bound Miner Mk1-Mk3 replacements
 	MAX
 };
 

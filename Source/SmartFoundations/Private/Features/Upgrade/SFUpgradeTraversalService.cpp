@@ -1,6 +1,7 @@
 // Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
 #include "Features/Upgrade/SFUpgradeTraversalService.h"
+#include "Features/Upgrade/SFUpgradeMinerFamily.h"
 #include "SmartFoundations.h"
 #include "SFLogMacros.h"
 #include "Subsystem/SFSubsystem.h"
@@ -74,6 +75,11 @@ FSFTraversalResult USFUpgradeTraversalService::TraverseNetwork(
 	// Traverse based on family type
 	switch (Result.Family)
 	{
+	case ESFUpgradeFamily::Miner:
+		// A node-bound replacement selects this Miner, not unrelated factory/network objects.
+		VisitedSet.Add(AnchorBuildable);
+		FoundBuildables.Add(AnchorBuildable);
+		break;
 	case ESFUpgradeFamily::Belt:
 	case ESFUpgradeFamily::Lift:
 		if (AFGBuildableConveyorBase* Conveyor = Cast<AFGBuildableConveyorBase>(AnchorBuildable))
@@ -185,6 +191,9 @@ FSFTraversalResult USFUpgradeTraversalService::TraverseNetwork(
 		{
 			switch (Entry.Family)
 			{
+			case ESFUpgradeFamily::Miner:
+				Entry.MaxAvailableTier = SFUpgradeMinerFamily::GetHighestUnlockedTier(AnchorBuildable->GetWorld());
+				break;
 			case ESFUpgradeFamily::Belt:
 			case ESFUpgradeFamily::Lift:
 				Entry.MaxAvailableTier = Subsystem->GetHighestUnlockedBeltTier(PlayerController);
@@ -238,6 +247,7 @@ ESFUpgradeFamily USFUpgradeTraversalService::GetUpgradeFamily(AFGBuildable* Buil
 	}
 
 	FString ClassName = Buildable->GetClass()->GetName();
+	if (SFUpgradeMinerFamily::IsMinerClass(Buildable->GetClass())) return ESFUpgradeFamily::Miner;
 
 	// Conveyor belts
 	if (ClassName.Contains(TEXT("ConveyorBeltMk")))

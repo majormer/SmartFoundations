@@ -1,6 +1,7 @@
 // Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
 #include "Services/SFHudService.h"
+#include "Holograms/Core/SFSignSupportMode.h"
 // NOTE: SFDeferredCostService removed - child holograms automatically aggregate costs via GetCost()
 #include "Subsystem/SFSubsystem.h"
 #include "Features/AutoConnect/SFAutoConnectService.h"
@@ -271,8 +272,12 @@ TPair<FString, FString> USFHudService::BuildCounterDisplayLines() const
 
 	// Header
 	Lines.Add(LOCTEXT("HUD_Header", "SMART!").ToString());
+	if (SFSignSupportMode::IsAvailable(Subsystem->GetActiveHologram()))
+	{
+		Lines.Add(SFSignSupportMode::GetLabel(Subsystem->GetActiveHologram()).ToString());
+	}
 
-	// Issue #160: Zoop warning display
+    // Issue #160: Zoop warning display
 	if (FSFHologramHelperService* Helper = Subsystem->GetHologramHelper())
 	{
 		if (Helper->IsZoopActive())
@@ -349,6 +354,24 @@ TPair<FString, FString> USFHudService::BuildCounterDisplayLines() const
 			}
 			Lines.Add(FString(SFHud::WarningLinePrefix) + FText::Format(LOCTEXT("HUD_PipesSkipped", "*{0} pipe connection(s) skipped: {1}"),
 				Skips.PipeTotal(), FText::FromString(FString::Join(Reasons, TEXT(", ")))).ToString());
+		}
+	}
+
+	if (USFAutoConnectService* AutoConnectService = Subsystem->IsCurrentHologramAutoConnectCapable()
+		? Subsystem->GetAutoConnectService() : nullptr)
+	{
+		const FSFAutoConnectSkipSummary& Skips = AutoConnectService->GetSkipSummary();
+		if (Skips.HypertubeTotal() > 0)
+		{
+			TArray<FString> Reasons;
+			if (Skips.HypertubesInvalidShape > 0)
+				Reasons.Add(FText::Format(LOCTEXT("HUD_SkipReason_InvalidShape", "invalid shape ({0})"), Skips.HypertubesInvalidShape).ToString());
+			if (Skips.HypertubesTooFar > 0)
+				Reasons.Add(FText::Format(LOCTEXT("HUD_SkipReason_TooFar", "too far ({0})"), Skips.HypertubesTooFar).ToString());
+			if (Skips.HypertubesTooClose > 0)
+				Reasons.Add(FText::Format(LOCTEXT("HUD_SkipReason_TooClose", "too close ({0})"), Skips.HypertubesTooClose).ToString());
+			Lines.Add(FString(SFHud::WarningLinePrefix) + FText::Format(LOCTEXT("HUD_HypertubesSkipped", "*{0} Hypertube connection(s) skipped: {1}"),
+				Skips.HypertubeTotal(), FText::FromString(FString::Join(Reasons, TEXT(", ")))).ToString());
 		}
 	}
 
@@ -453,7 +476,10 @@ TPair<FString, FString> USFHudService::BuildCounterDisplayLines() const
 			bWalkActive = true;
 			const TArray<FSFWalkSegmentView> Views = Walk->GetSegmentViews();
 			const float HeadDeg = Views.Num() > 0 ? Views.Last().ExitHeadingDeg : 0.0f;
-			const FText Conveyance = (Walk->GetConveyanceType() == ESFWalkConveyanceType::Pipe) ? LOCTEXT("HUD_Walk_Pipe", "pipe") : LOCTEXT("HUD_Walk_Belt", "belt");
+			const FText Conveyance = Walk->GetConveyanceType() == ESFWalkConveyanceType::VehiclePath
+                ? LOCTEXT("HUD_Walk_VehiclePath", "vehicle path") : Walk->GetConveyanceType() == ESFWalkConveyanceType::Railroad
+                ? LOCTEXT("HUD_Walk_Rail", "rail") : (Walk->GetConveyanceType() == ESFWalkConveyanceType::Pipe)
+                ? LOCTEXT("HUD_Walk_Pipe", "pipe") : LOCTEXT("HUD_Walk_Belt", "belt");
 			// Compact one-line badge — heading now shows the 16-point compass + degrees, and the per-segment detail
 			// lives in the Walk panel, not the HUD (this used to be two verbose lines that cluttered the screen).
 			if (!Subsystem->IsWalkPanelVisible())   // panel shows this readout itself; HUD draws over it (badge returns when the panel is hidden via K)

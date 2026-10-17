@@ -55,6 +55,7 @@ bool FSFPassthroughAdapter::SupportsFeature(ESFFeature Feature) const
 	case ESFFeature::ScaleZ:
 		return true;  // Grid placement - children snap to foundations independently
 	case ESFFeature::Spacing:
+	case ESFFeature::Arrows:
 		return true;  // Custom spacing between floor holes
 	default:
 		return false;  // Nudge, Steps, Stagger, Rotation - disabled (snapping controls position)

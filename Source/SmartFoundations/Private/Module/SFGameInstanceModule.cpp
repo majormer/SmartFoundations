@@ -27,6 +27,9 @@
 #include "Features/AutoConnect/SFAutoConnectService.h"
 #include "Features/Extend/SFExtendService.h"
 #include "Features/Scaling/SFWallOutletPlacement.h"
+#include "Features/Dismantle/SFLightweightGroupRefund.h"
+#include "Features/Dismantle/Net/SFActorGroupRefundPreview.h"
+#include "Features/Dismantle/Net/SFBlueprintGroupReplication.h"
 
 // #513: all-mode construct payload guard
 #include "Equipment/FGBuildGunBuild.h"        // UFGBuildGunStateBuild::InternalConstructHologram / GetHologram
@@ -118,6 +121,9 @@ void USFGameInstanceModule::DispatchLifecycleEvent(ELifecyclePhase Phase)
 		// buildables including BP hologram wrappers, no hologram swap). See the method comment.
 		RegisterSpecConstructionHooks();
 		FSFWallOutletPlacement::RegisterHooks();
+		FSFLightweightGroupRefund::RegisterHooks();
+		FSFActorGroupRefundPreview::RegisterHooks();
+		FSFBlueprintGroupReplication::RegisterHooks();
 
 		// [#368/#279] Wire the orphaned holster cleanup to the real build-gun unequip event.
 		RegisterBuildGunUnequipHook();

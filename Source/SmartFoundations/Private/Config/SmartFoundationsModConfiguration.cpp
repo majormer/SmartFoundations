@@ -99,6 +99,9 @@ USmartFoundationsModConfiguration::USmartFoundationsModConfiguration()
 	// ── Building Behavior ──
 	UConfigPropertySection* Building = CreateSection(TEXT("BuildingBehavior"), LOCTEXT("Sec.Building", "Building Behavior"),
 		LOCTEXT("Sec.Building.TT", "How Extend, auto-hold, and Apply behave while building."));
+	Building->SectionProperties.Add(TEXT("bPreserveUpgradeDismantleGroups"), CreateBoolProperty(TEXT("bPreserveUpgradeDismantleGroups"),
+		LOCTEXT("P.bPreserveUpgradeDismantleGroups", "Preserve Upgrade Dismantle Groups"),
+		LOCTEXT("P.bPreserveUpgradeDismantleGroups.TT", "Default for preserving existing dismantle-group membership during Smart upgrades and supported downgrades. Can be overridden in the Upgrade panel."), true));
 	Building->SectionProperties.Add(TEXT("bExtendEnabled"),        CreateBoolProperty(TEXT("bExtendEnabled"),        LOCTEXT("P.bExtendEnabled", "Extend Enabled"),
 		LOCTEXT("P.bExtendEnabled.TT", "Enable Extend - repeat a building or grid outward in one direction."), true));
 	Building->SectionProperties.Add(TEXT("bExtendPowerEnabled"),   CreateBoolProperty(TEXT("bExtendPowerEnabled"),   LOCTEXT("P.bExtendPowerEnabled", "Extend Power Poles"),

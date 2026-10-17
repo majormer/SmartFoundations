@@ -7,6 +7,8 @@
  */
 
 #include "UI/SmartUpgradePanelImpl.h"
+#include "FGRecipeManager.h"
+#include "Core/SFNativeHit.h"
 
 #define LOCTEXT_NAMESPACE "SmartFoundations"
 
@@ -258,8 +260,8 @@ void USmartUpgradePanel::PopulateTargetTierDropdown()
 	// Clear existing options
 	ActiveComboBox->ClearOptions();
 
-	// The network's "All tiers" row offers every unlocked target. A specific source
-	// row offers every other unlocked tier, including lower tiers, in either mode.
+	// Logistics can normalize in either direction. Other families only offer
+	// higher targets, including when the network's All tiers row is selected.
 	bool bIsTraversalMode = (ActiveTab == ESmartUpgradeTab::Traversal);
 
 	if (SelectedFamily == ESFUpgradeFamily::None)
@@ -283,7 +285,7 @@ void USmartUpgradePanel::PopulateTargetTierDropdown()
 	}
 	else if (SelectedFamily == ESFUpgradeFamily::PowerPole ||
 	         SelectedFamily == ESFUpgradeFamily::WallOutletSingle ||
-	         SelectedFamily == ESFUpgradeFamily::WallOutletDouble)
+	         SelectedFamily == ESFUpgradeFamily::WallOutletDouble || SelectedFamily == ESFUpgradeFamily::Miner)
 	{
 		MaxTier = 3;
 	}
@@ -293,6 +295,10 @@ void USmartUpgradePanel::PopulateTargetTierDropdown()
 	AFGPlayerController* PC = Cast<AFGPlayerController>(GetOwningPlayer());
 	if (Subsystem && PC)
 	{
+		if (SelectedFamily == ESFUpgradeFamily::Miner)
+		{
+			MaxTier = SFUpgradeMinerFamily::GetHighestUnlockedTier(GetWorld());
+		}
 		if (SelectedFamily == ESFUpgradeFamily::Belt || SelectedFamily == ESFUpgradeFamily::Lift)
 		{
 			MaxTier = FMath::Min(MaxTier, Subsystem->GetHighestUnlockedBeltTier(PC));
@@ -315,11 +321,22 @@ void USmartUpgradePanel::PopulateTargetTierDropdown()
 		}
 	}
 
-	// Same-tier replacements are no-ops; all other unlocked tiers are valid targets.
+	// Offer only unlocked targets allowed by the selected family's direction policy.
 	bool bHasOptions = false;
 	for (int32 Tier = 1; Tier <= MaxTier; ++Tier)
 	{
+		if (SelectedFamily == ESFUpgradeFamily::Miner)
+		{
+			AFGRecipeManager* Recipes = AFGRecipeManager::Get(GetWorld());
+			const TSubclassOf<UFGRecipe> Recipe = SFUpgradeMinerFamily::GetRecipe(Tier);
+			if (!Recipes || !Recipe || !Recipes->IsRecipeAvailable(Recipe)) continue;
+		}
 		if (!SFUpgradeTierPolicy::IsValidRequest(SelectedTier, Tier, true, SFUpgradeTierPolicy::AllowsDowngrade(SelectedFamily))) continue;
+		if (bIsTraversalMode && SelectedTier == 0 && !SFUpgradeTierPolicy::AllowsDowngrade(SelectedFamily)
+			&& !CachedTraversalResult.Entries.ContainsByPredicate([Tier](const FSFUpgradeAuditEntry& Entry)
+			{
+				return Entry.Buildable.IsValid() && SFUpgradeTierPolicy::Matches(Entry.CurrentTier, 0, Tier, false);
+			})) continue;
 		FString Option = FString::Printf(TEXT("Mk.%d"), Tier);
 		ActiveComboBox->AddOption(Option);
 		bHasOptions = true;
@@ -378,7 +395,7 @@ void USmartUpgradePanel::UpdateCostDisplay()
 		for (const FSFUpgradeAuditEntry& Entry : CachedTraversalResult.Entries)
 		{
 			// [#456] SelectedTier > 0 = cost only the picked source tier; 0 = the legacy sweep.
-			const bool bTierMatch = SFUpgradeTierPolicy::Matches(Entry.CurrentTier, SelectedTier, CachedTargetTier, SFUpgradeTierPolicy::AllowsDowngrade(SelectedFamily));
+			const bool bTierMatch = SFUpgradeTierPolicy::Matches(Entry.CurrentTier, SelectedTier, CachedTargetTier, SFUpgradeTierPolicy::AllowsDowngrade(Entry.Family));
 			if (bTierMatch)
 			{
 				ESFUpgradeFamily EntryFamily = USFUpgradeTraversalService::GetUpgradeFamily(Entry.Buildable.Get());
@@ -601,6 +618,10 @@ bool USmartUpgradePanel::CalculateUpgradeCost(ESFUpgradeFamily Family, int32 Sou
 
 	switch (Family)
 	{
+		case ESFUpgradeFamily::Miner:
+			SourceRecipe = SFUpgradeMinerFamily::GetRecipe(SourceTier);
+			TargetRecipe = SFUpgradeMinerFamily::GetRecipe(TargetTier);
+			break;
 		case ESFUpgradeFamily::Belt:
 			SourceRecipe = Subsystem->GetBeltRecipeForTier(SourceTier);
 			TargetRecipe = Subsystem->GetBeltRecipeForTier(TargetTier);
@@ -905,20 +926,13 @@ void USmartUpgradePanel::OnTraversalScanClicked()
 			// (the same mechanism the game's dismantle aim uses - exact, no distance guessing).
 			if (!AnchorBuildable)
 			{
-				if (AAbstractInstanceManager* InstanceManager = AAbstractInstanceManager::GetInstanceManager(this))
+				if (AFGBuildable* ResolvedBuildable = Cast<AFGBuildable>(SFNativeHit::ResolveActor(HitResult)))
 				{
-					FInstanceHandle Handle;
-					if (InstanceManager->ResolveHit(HitResult, Handle))
+					if (USFUpgradeTraversalService::GetUpgradeFamily(ResolvedBuildable) != ESFUpgradeFamily::None)
 					{
-						if (AFGBuildable* ResolvedBuildable = Cast<AFGBuildable>(AAbstractInstanceManager::GetOwnerByHandle(Handle)))
-						{
-							if (USFUpgradeTraversalService::GetUpgradeFamily(ResolvedBuildable) != ESFUpgradeFamily::None)
-							{
-								AnchorBuildable = ResolvedBuildable;
-								UE_LOG(LogSmartUI, VeryVerbose, TEXT("Upgrade Panel: Resolved aim to buildable via instance manager: %s"),
-									*AnchorBuildable->GetClass()->GetName());
-							}
-						}
+						AnchorBuildable = ResolvedBuildable;
+						UE_LOG(LogSmartUI, VeryVerbose, TEXT("Upgrade Panel: Resolved aim to buildable via instance manager: %s"),
+							*AnchorBuildable->GetClass()->GetName());
 					}
 				}
 			}

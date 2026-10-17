@@ -6,7 +6,13 @@
  */
 
 #include "Subsystem/SFSubsystemImpl.h"
+#include "Shared/SFSupportGridFrame.h"
+#include "Hologram/FGPipelineHologram.h"
+#include "Hologram/FGConveyorLiftHologram.h"
+#include "Buildables/FGBuildableConveyorLift.h"
 #include "Features/Walk/SFWalkService.h"
+#include "Features/Upgrade/SFUpgradeMinerFamily.h"
+#include "Hologram/FGBuildableHologram.h"
 
 // [#209] Re-tap window: a mode-key press this soon after its own release advances the transform
 // target (stagger: flips the family) - the numpad-free "next axis" gesture. Hold semantics are
@@ -57,6 +63,12 @@ bool USFSubsystem::ShouldSuppressBuildGunScroll(const AFGHologram* BuildGunHolog
 {
     // Only speak for the hologram Smart! is actively managing.
     if (!BuildGunHologram || ActiveHologram.Get() != BuildGunHologram)
+    {
+        return false;
+    }
+
+    if (SFSupportGridFrame::IsNativeRotationRequest(BuildGunHologram)
+        && SFSupportGridFrame::UsesParentRotation(BuildGunHologram->GetBuildClass()))
     {
         return false;
     }
@@ -202,7 +214,8 @@ FVector USFSubsystem::GetFurthestTopHologramPosition() const
             ItemSize,
             GetCounterState(),
             0, // Grid index not needed for position calculation
-            FVector::ZeroVector // No anchor offset for position query
+            FVector::ZeroVector, // No anchor offset for position query
+            ActiveHologram->GetBuildClass()
         );
     }
 
@@ -777,7 +790,7 @@ void USFSubsystem::OnToggleSettingsForm()
 		return;
 	}
 
-	// Route to Upgrade Panel if holding an upgrade-capable hologram (belt/lift/pipe/pump/power pole/wall outlet)
+	// Route upgrade-capable belt, lift, pipe and wire placement to the Upgrade Panel.
 	if (IsUpgradeCapableContext())
 	{
 		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Routing to Upgrade Panel (upgrade-capable context)"));
@@ -862,6 +875,7 @@ void USFSubsystem::OnToggleSettingsForm()
 bool USFSubsystem::IsUpgradeCapableContext() const
 {
     AFGHologram* Hologram = ActiveHologram.Get();
+    AActor* NativeHitActor = nullptr;
 
     // The live build gun owns panel context. A still-valid cached hologram can belong to
     // the previous recipe until the 100ms poll runs; it must not override the new selection.
@@ -876,6 +890,7 @@ bool USFSubsystem::IsUpgradeCapableContext() const
                 Hologram = nullptr;
                 if (BuildGun->IsInState(EBuildGunState::BGS_BUILD))
                 {
+                    NativeHitActor = BuildGun->GetHitResult().GetActor();
                     if (UFGBuildGunStateBuild* BuildState = Cast<UFGBuildGunStateBuild>(BuildGun->GetCurrentState()))
                     {
                         Hologram = BuildState->GetHologram();
@@ -891,6 +906,11 @@ bool USFSubsystem::IsUpgradeCapableContext() const
     }
 
     FString ClassName = Hologram->GetClass()->GetName();
+	// Miners cannot form free grids. Their existing Panel key opens native tier replacement.
+	if (const AFGBuildableHologram* BuildableHologram = Cast<AFGBuildableHologram>(Hologram))
+	{
+		if (SFUpgradeMinerFamily::IsMinerClass(BuildableHologram->GetBuildClass())) return true;
+	}
     UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("IsUpgradeCapableContext: Checking hologram class: %s"), *ClassName);
 
     // Belt holograms (conveyor belts) - e.g. Holo_ConveyorBelt_C
@@ -899,19 +919,27 @@ bool USFSubsystem::IsUpgradeCapableContext() const
         return true;
     }
 
-    // Lift holograms (conveyor lifts) - e.g. Holo_ConveyorLift_C
+    // Ordinary multi-step lift placement uses the scaling Panel and its matching HUD hint.
+    // Existing lifts keep Smart Upgrade accessible even at the currently selected tier,
+    // where vanilla has no replacement binding yet. Read the gun's native hit; do not trace again.
+    if (Hologram->IsA<AFGConveyorLiftHologram>())
+    {
+        const FIntProperty* Step = FindFProperty<FIntProperty>(AFGConveyorLiftHologram::StaticClass(), TEXT("mActivePointIdx"));
+        const bool bSelectingInitialEnd = !Step || Step->GetPropertyValue_InContainer(Hologram) == 0;
+        return Hologram->GetUpgradedActor() != nullptr
+            || (bSelectingInitialEnd && IsValid(NativeHitActor) && NativeHitActor->IsA<AFGBuildableConveyorLift>());
+    }
+
+    // Other lift-related holograms retain their existing upgrade context.
     if (ClassName.Contains(TEXT("ConveyorLift")) || ClassName.Contains(TEXT("Lift")))
     {
         return true;
     }
 
-    // Pipeline holograms (pipes)
-    // [#390] Exclude "Stackable": the Stackable Pipeline Support's hologram is named
-    // Holo_PipelineStackable_C — it contains "Pipeline" but NOT "Support", so without this
-    // exclusion it was misclassified as upgrade-capable and opened the Upgrade panel on K
-    // instead of the Smart! Panel. It's a scaling target (like the stackable conveyor pole,
-    // which similarly isn't caught by the ConveyorBelt check above), not a pipe to upgrade.
-    if (ClassName.Contains(TEXT("Pipeline")) && !ClassName.Contains(TEXT("Junction")) && !ClassName.Contains(TEXT("Pump")) && !ClassName.Contains(TEXT("Support")) && !ClassName.Contains(TEXT("Stackable")))
+    // Only actual pipeline placement opens pipe upgrades. Pipeline attachments (including
+    // valves), pumps and stackable supports retain the Smart Panel for grid controls.
+    // Their hologram names can contain "Pipeline" without being a pipeline hologram.
+    if (Cast<AFGPipelineHologram>(Hologram))
     {
         return true;
     }

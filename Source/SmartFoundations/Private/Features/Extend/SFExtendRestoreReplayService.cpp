@@ -9,6 +9,7 @@
  */
 
 #include "Features/Extend/SFExtendRestoreReplayService.h"
+#include "Holograms/Logistics/SFWaterPumpChildHologram.h"
 #include "Features/Extend/SFExtendLaneNormals.h"
 #include "Features/Extend/SFExtendPowerConnections.h"
 #include "Features/Extend/SFExtendFactoryPower.h"
@@ -446,6 +447,13 @@ void USFExtendRestoreReplayService::TickRestoredCloneTopology(float DeltaTime)
     }
 
     Owner->HologramService->RefreshChildPositions();
+    if (ASFWaterPumpChildHologram::IsVanillaWaterExtractor(ParentHologram->GetBuildClass()) && Owner->StoredCloneTopology.IsValid())
+    {
+        Owner->bScaledExtendValid = SFExtendPowerConnections::ValidateCapacity(*Owner->StoredCloneTopology, Owner->ScaledExtendInvalidReason)
+            && ASFWaterPumpChildHologram::ValidateWaterTree(ParentHologram);
+        if (!Owner->bScaledExtendValid) ParentHologram->AddConstructDisqualifier(UFGCDNeedsWaterVolume::StaticClass());
+        ParentHologram->SetPlacementMaterialState(Owner->bScaledExtendValid ? EHologramMaterialState::HMS_OK : EHologramMaterialState::HMS_ERROR);
+    }
 
     // [EXTEND-MP] Pre-stage the RESTORE commit continuously while the replay session is live
     // (client-only + 250ms-throttled inside; BuildCommitSpecForMP builds the restore variant when

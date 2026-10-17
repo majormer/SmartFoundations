@@ -33,6 +33,12 @@
 			"Name": "AbstractInstance",
 			"Enabled": true,
 			"BasePlugin": true
+		},
+		{
+			"Name": "SmartCamera",
+			"Enabled": true,
+			"Optional": true,
+			"SemVersion": ">=1.3.0"
 		}
 	],
 	"SemVersion": "34.4.0",

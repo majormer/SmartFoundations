@@ -2,11 +2,36 @@
 
 #include "Subsystem/SFHologramHelperService.h"
 #include "SmartFoundations.h"
+#include "Holograms/Core/SFSignHologramState.h"
 #include "Subsystem/SFHologramHelperServiceImpl.h"
 #include "Holograms/Logistics/SFPipelinePoleChildHologram.h"
 #include "Features/Scaling/SFGridCoordComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/StaticMesh.h"
+#include "Features/Scaling/Holograms/SFBeamChildHologram.h"
+#include "Features/Scaling/Holograms/SFBeamPreviewHologram.h"
+#include "Features/Scaling/SFBeamHologramState.h"
+#include "Features/Scaling/SFConveyorLiftHologramState.h"
+#include "Features/Scaling/Holograms/SFConveyorLiftPreviewHologram.h"
+#include "Features/Scaling/SFLadderHologramState.h"
+#include "Features/Scaling/SFHypertubeSupportHologramState.h"
+#include "Features/Scaling/SFFoundationPassthroughState.h"
+#include "Features/Scaling/SFFloodlightHologramState.h"
+#include "Features/Scaling/SFJumpPadHologramState.h"
+#include "Features/Scaling/SFSnowCannonHologramState.h"
+#include "Features/Scaling/SFElevatorHologramState.h"
+#include "Features/Scaling/SFRailroadAttachmentHologramState.h"
+#include "Features/Scaling/Holograms/SFRailroadAttachmentPreviewHologram.h"
+#include "Features/Scaling/Holograms/SFFloodlightPreviewHologram.h"
+#include "Features/Scaling/Holograms/SFJumpPadPreviewHologram.h"
+#include "Features/Scaling/Holograms/SFSnowCannonPreviewHologram.h"
+#include "Features/Scaling/Holograms/SFElevatorPreviewHologram.h"
+#include "Features/Scaling/Holograms/SFFoundationPassthroughPreviewHologram.h"
+#include "Holograms/Logistics/SFHypertubeSupportPreviewHologram.h"
+#include "Features/Scaling/Holograms/SFLadderPreviewHologram.h"
+#include "Hologram/FGLadderHologram.h"
+#include "Features/Scaling/Holograms/SFSignPreviewHologram.h"
+#include "Holograms/Core/SFScalingSpecExpansion.h"
 
 namespace
 {
@@ -254,7 +279,7 @@ void FSFHologramHelperService::RegenerateChildHologramGrid(
 	}
 
 	// Check if hologram supports grid features before regenerating
-	if (CurrentAdapter && !CurrentAdapter->SupportsFeature(ESFFeature::ScaleX))
+	if (CurrentAdapter && !CurrentAdapter->SupportsAnyScaling())
 	{
 		// Clear any existing children if features disabled
 		if (SpawnedChildren.Num() > 0)
@@ -279,14 +304,8 @@ void FSFHologramHelperService::RegenerateChildHologramGrid(
 	// Task 38: Log parent lock state during grid regeneration
 	const bool bParentLocked = ParentHologram->IsHologramLocked();
 
-	// #418 Tier true-up: decide the child spawn strategy once per regen. STACKABLE
-	// conveyor/pipe/hypertube supports are the only family left on vanilla child holograms
-	// (Tier 3 vanilla-delegate) - their vanilla holograms carry the stack/connection behavior
-	// the stackable AC preview builds against (#341/#354/#364). Build-class-based check, same
-	// predicate family the stackable AC uses. Every parent type not caught by an explicit
-	// Tier-2 branch below goes through the generic drift-proof ASFBuildableChildHologram
-	// (Tier 1, docs/Features/Scaling/DESIGN_Scaling_ChildTypeSelection.md).
-	const bool bVanillaDelegateChildren = USFAutoConnectService::IsStackableSupportHologram(ParentHologram);
+	// Fixed stackable supports use the generic proxy: authored meshes and snap connectors
+	// come from the build class; native support hologram behavior is needed only by the root.
 
 	// Phase 0: Forward grid size validation to ValidationService (Task #61.6)
 	int32 ChildrenNeeded = 0;
@@ -593,7 +612,14 @@ void FSFHologramHelperService::RegenerateChildHologramGrid(
 			// 1. SpawnActor (deferred) → 2. SetBuildClass + SetRecipe → 3. FinishSpawning
 			// → 4. AddChild → 5. DisableValidation + MarkAsChild → 6. Disable collision/tick
 			AFGHologram* ChildHologram = nullptr;
-			if (ParentHologram->IsA(AFGPassthroughHologram::StaticClass()))
+			if (SFFoundationPassthroughState::IsHandled(ParentHologram))
+			{
+				ChildHologram = ASFBuildableChildHologram::SpawnPreview(ParentHologram,
+					FTransform(ParentHologram->GetActorRotation(), SpawnLocation), ESFChildHologramType::ScalingGrid,
+					ChildName, ASFFoundationPassthroughPreviewHologram::StaticClass());
+				SFFoundationPassthroughState::Sync(ParentHologram, ChildHologram);
+			}
+			else if (ParentHologram->IsA(AFGPassthroughHologram::StaticClass()))
 			{
 				UWorld* SpawnWorld = WorldContext.Get();
 				if (SpawnWorld)
@@ -790,6 +816,131 @@ void FSFHologramHelperService::RegenerateChildHologramGrid(
 					ChildHologram = BlueprintChild;
 				}
 			}
+			else if (SFHypertubeSupportHologramState::IsSelectedPole(ParentHologram))
+			{
+				ChildHologram = ASFBuildableChildHologram::SpawnPreview(ParentHologram,
+					FTransform(ParentHologram->GetActorRotation(), SpawnLocation),
+					ESFChildHologramType::ScalingGrid, ChildName, ASFHypertubeSupportPreviewHologram::StaticClass());
+				if (ChildHologram)
+				{
+					SFHypertubeSupportHologramState::Sync(ParentHologram, ChildHologram);
+					ChildHologram->Tags.AddUnique(FName(TEXT("SF_GridChild")));
+				}
+			}
+			else if (ParentHologram->IsA<AFGLadderHologram>())
+			{
+				ChildHologram = ASFBuildableChildHologram::SpawnPreview(ParentHologram,
+					FTransform(ParentHologram->GetActorRotation(), SpawnLocation),
+					ESFChildHologramType::ScalingGrid, ChildName, ASFLadderPreviewHologram::StaticClass());
+				if (ChildHologram)
+				{
+					SFLadderHologramState::Sync(ParentHologram, ChildHologram);
+					ChildHologram->Tags.AddUnique(FName(TEXT("SF_GridChild")));
+				}
+			}
+            else if (SFConveyorLiftHologramState::IsHandled(ParentHologram))
+            {
+                ChildHologram = ASFBuildableChildHologram::SpawnPreview(ParentHologram,
+                    FTransform(ParentHologram->GetActorRotation(), SpawnLocation), ESFChildHologramType::ScalingGrid,
+                    ChildName, ASFConveyorLiftPreviewHologram::StaticClass());
+                if (ChildHologram) { SFConveyorLiftHologramState::Sync(ParentHologram, ChildHologram); ChildHologram->Tags.AddUnique(TEXT("SF_GridChild")); }
+            }
+			else if (ParentHologram->IsA<AFGBeamHologram>()
+				&& (ParentHologram->GetWorld()->GetNetMode() != NM_Client
+					|| SFScalingSpecExpansion::IsSpecConstructionEnabled()))
+			{
+				// [MP-CLIENT|MP-AUTH] Mesh-only preview; native length/configuration at commit.
+				ChildHologram = ASFBuildableChildHologram::SpawnPreview(ParentHologram,
+					FTransform(ParentHologram->GetActorRotation(), SpawnLocation),
+					ESFChildHologramType::ScalingGrid, ChildName, ASFBeamPreviewHologram::StaticClass());
+				if (ChildHologram)
+				{
+					SFBeamHologramState::Sync(ParentHologram, ChildHologram);
+					ChildHologram->Tags.AddUnique(FName(TEXT("SF_GridChild")));
+				}
+			}
+			else if (ParentHologram->IsA<AFGBeamHologram>())
+			{
+				if (UWorld* SpawnWorld = WorldContext.Get())
+				{
+					FActorSpawnParameters SpawnParams;
+					SpawnParams.Owner = ParentHologram->GetOwner();
+					SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+					SpawnParams.bDeferConstruction = true;
+					ASFBeamChildHologram* BeamChild = SpawnWorld->SpawnActor<ASFBeamChildHologram>(
+						ASFBeamChildHologram::StaticClass(), SpawnLocation, FRotator::ZeroRotator, SpawnParams);
+					if (BeamChild)
+					{
+						BeamChild->SetChildBuildClass(ParentHologram->GetBuildClass());
+						BeamChild->SetRecipe(Recipe);
+						BeamChild->FinishSpawning(FTransform(FRotator::ZeroRotator, SpawnLocation));
+						SFBeamHologramState::Sync(ParentHologram, BeamChild);
+						ParentHologram->AddChild(BeamChild, ChildName);
+						USFHologramDataService::DisableValidation(BeamChild);
+						USFHologramDataService::MarkAsChild(BeamChild, ParentHologram, ESFChildHologramType::ScalingGrid);
+						BeamChild->SetActorEnableCollision(false);
+						BeamChild->SetActorTickEnabled(false);
+						BeamChild->SetPlacementMaterialState(EHologramMaterialState::HMS_OK);
+						BeamChild->Tags.AddUnique(TEXT("SF_GridChild"));
+					}
+					ChildHologram = BeamChild;
+				}
+			}
+            else if (SFRailroadAttachmentHologramState::IsHandled(ParentHologram))
+            {
+                ChildHologram = ASFBuildableChildHologram::SpawnPreview(ParentHologram,
+                    FTransform(ParentHologram->GetActorRotation(), SpawnLocation),
+                    ESFChildHologramType::ScalingGrid, ChildName, ASFRailroadAttachmentPreviewHologram::StaticClass());
+                if (ChildHologram)
+                {
+                    USFHologramDataService::EnableValidation(ChildHologram);
+                    ChildHologram->Tags.AddUnique(FName(TEXT("SF_GridChild")));
+                }
+            }
+			else if (SFElevatorHologramState::IsHandled(ParentHologram))
+            {
+                ChildHologram = ASFBuildableChildHologram::SpawnPreview(ParentHologram,
+                    FTransform(ParentHologram->GetActorRotation(), SpawnLocation),
+                    ESFChildHologramType::ScalingGrid, ChildName, ASFElevatorPreviewHologram::StaticClass());
+                if (ChildHologram)
+                {
+                    SFElevatorHologramState::Sync(ParentHologram, ChildHologram);
+                    ChildHologram->Tags.AddUnique(FName(TEXT("SF_GridChild")));
+                }
+            }
+            else if (SFSnowCannonHologramState::IsHandled(ParentHologram))
+			{
+				ChildHologram = ASFBuildableChildHologram::SpawnPreview(ParentHologram,
+					FTransform(ParentHologram->GetActorRotation(), SpawnLocation),
+					ESFChildHologramType::ScalingGrid, ChildName, ASFSnowCannonPreviewHologram::StaticClass());
+				if (ChildHologram)
+				{
+					SFSnowCannonHologramState::Sync(ParentHologram, ChildHologram);
+					ChildHologram->Tags.AddUnique(FName(TEXT("SF_GridChild")));
+				}
+			}
+			            else if (SFJumpPadHologramState::IsHandled(ParentHologram))
+			{
+				ChildHologram = ASFBuildableChildHologram::SpawnPreview(ParentHologram,
+					FTransform(ParentHologram->GetActorRotation(), SpawnLocation),
+					ESFChildHologramType::ScalingGrid, ChildName, ASFJumpPadPreviewHologram::StaticClass());
+				if (ChildHologram)
+				{
+					SFJumpPadHologramState::Sync(ParentHologram, ChildHologram);
+					ChildHologram->Tags.AddUnique(FName(TEXT("SF_GridChild")));
+				}
+			}
+			else if (SFFloodlightHologramState::IsHandled(ParentHologram))
+			{
+				ChildHologram = ASFBuildableChildHologram::SpawnPreview(ParentHologram,
+					FTransform(ParentHologram->GetActorRotation(), SpawnLocation),
+					ESFChildHologramType::ScalingGrid, ChildName, ASFFloodlightPreviewHologram::StaticClass());
+				if (ChildHologram)
+				{
+					SFFloodlightHologramState::Sync(ParentHologram, ChildHologram);
+					ChildHologram->Tags.AddUnique(FName(TEXT("SF_GridChild")));
+				}
+			}
 			else if (ParentHologram->IsA(AFGFloodlightHologram::StaticClass()))
 			{
 				// Issue #200: Wall floodlights check wall snapping in CheckValidPlacement.
@@ -961,11 +1112,26 @@ void FSFHologramHelperService::RegenerateChildHologramGrid(
 					ChildHologram = PipePoleChild;
 				}
 			}
+			else if (ParentHologram->IsA<AFGStandaloneSignHologram>()
+				&& (ParentHologram->GetWorld()->GetNetMode() != NM_Client
+					|| SFScalingSpecExpansion::IsSpecConstructionEnabled()))
+			{
+				// [MP-CLIENT|MP-AUTH] Default preview uses recipe meshes; authority commits
+				// native signs/poles. Legacy network payloads retain their native child tree.
+				ChildHologram = ASFBuildableChildHologram::SpawnPreview(ParentHologram,
+					FTransform(ParentHologram->GetActorRotation(), SpawnLocation),
+					ESFChildHologramType::ScalingGrid, ChildName, ASFSignPreviewHologram::StaticClass());
+				if (ChildHologram)
+				{
+					ChildHologram->Tags.AddUnique(FName(TEXT("SF_GridChild")));
+					ChildHologram->Tags.AddUnique(FName(TEXT("SF_SignGridSupportInvalid")));
+				}
+			}
 			else if (ParentHologram->IsA(AFGStandaloneSignHologram::StaticClass()))
 			{
 				// Issue #192: Standalone signs/billboards have multi-step builds (pole height).
 				// Use ASFStandaloneSignChildHologram (extends AFGStandaloneSignHologram) so
-				// mBuildStep sync works. Children skip pole creation (SpawnChildren override).
+				// selected state and owned supports can follow the parent's placement template.
 				UWorld* SpawnWorld = WorldContext.Get();
 				if (SpawnWorld)
 				{
@@ -987,24 +1153,10 @@ void FSFHologramHelperService::RegenerateChildHologramGrid(
 						SignChild->SetRecipe(Recipe);
 						SignChild->FinishSpawning(FTransform(FRotator::ZeroRotator, SpawnLocation));
 
-						// Issue #192: Sign pole/stand for children — KNOWN LIMITATION
-						// Children do not get pole holograms. Built buildings also don't get poles
-						// from vanilla's construction system for grid children.
-						//
-						// Approaches attempted:
-						// 1. Let vanilla SpawnChildren run (removed override) — vanilla's internal
-						//    snap-state checks prevent pole creation on grid children
-						// 2. Copy mDefaultSignSupportRecipe + call SpawnChildren manually — recipe
-						//    copies correctly but vanilla still skips pole creation (internal state)
-						// 3. Manually spawn FGSignPoleHologram with deferred construction, copy
-						//    mBuildClass/mRecipe from parent's pole — pole spawns but:
-						//    a. AddChild causes vanilla positioning to fight Smart!'s grid (children hop)
-						//    b. AttachToActor doesn't resolve positioning
-						//    c. Built buildings still don't get poles from construction system
-						//
-						// Future fix: may require a custom sign pole child hologram class
-						// (like ASFFloodlightChildHologram) or post-construction pole spawning
-						// via OnActorSpawned hook.
+						// Each sign owns a native support child, with the parent's selected
+						// pole state and relative pose. A transform-controlled support avoids
+						// native aim/nudge placement fighting the grid during preview.
+						SFSignHologramState::Sync(ParentHologram, SignChild);
 
 						ParentHologram->AddChild(SignChild, ChildName);
 
@@ -1095,15 +1247,6 @@ void FSFHologramHelperService::RegenerateChildHologramGrid(
 					ChildHologram = WaterPumpChild;
 				}
 			}
-			else if (bVanillaDelegateChildren)
-			{
-				// Tier 3 vanilla-delegate: STACKABLE conveyor/pipe/hypertube supports keep the
-				// recipe's own vanilla child hologram - it carries the stack/connection behavior
-				// the stackable AC preview builds against (#341/#354/#364). Routing these through
-				// the generic Tier-1 child is possible future work, gated on validating series-run
-				// wiring against ASFBuildableChildHologram children.
-				ChildHologram = SpawnChildHologram(ParentHologram, ChildName, SpawnLocation, FRotator::ZeroRotator);
-			}
 			else
 			{
 				// #418 Tier 1: every remaining parent type gets the generic drift-proof child
@@ -1116,51 +1259,6 @@ void FSFHologramHelperService::RegenerateChildHologramGrid(
 
 			if (ChildHologram)
 			{
-				// #418 Tier true-up: every Smart child class is fully configured during its spawn
-				// branch (tag, collision, validation, data service, tick). Only vanilla-delegate
-				// children (stackable supports) still need the legacy generic setup here — the
-				// Smart branches must NOT get it (it would re-enable collision and override
-				// material state).
-				if (bVanillaDelegateChildren)
-				{
-					// Tag for Smart! ownership to aid future resync/cleanup
-					ChildHologram->Tags.AddUnique(FName(TEXT("SF_GridChild")));
-					// Ensure visibility and initial material state immediately after spawn
-					ChildHologram->SetActorHiddenInGame(false);
-					ChildHologram->SetActorEnableCollision(true);
-					ChildHologram->SetPlacementMaterialState(ParentHologram->GetHologramMaterialState());
-					// Force components to register and become visible
-					ChildHologram->RegisterAllComponents();
-
-					// [#497] Strip the child's clearance records. Vanilla CheckClearance on the
-					// ROOT builds a COMBINED clearance volume including every child's records —
-					// with thousands of vanilla-delegate children ringed across hundreds of
-					// meters, the single per-frame overlap query spans the whole ring and visits
-					// most of the physics tree (captures 6-10: root clearance = 10-second
-					// frames; diag round 3 proved the burner is the root, validated with a
-					// combined volume). #418 Tier-1/2 placeholder children carry NO clearance
-					// data, which is exactly why foundation grids never showed this — mirror
-					// that contract for the vanilla delegates. Their build-time collision and
-					// connectors are untouched; grid members overlapping each other is intended.
-					{
-						static FArrayProperty* ClearanceProp = FindFProperty<FArrayProperty>(
-							AFGHologram::StaticClass(), TEXT("mClearanceData"));
-						if (ClearanceProp)
-						{
-							FScriptArrayHelper ClearanceHelper(ClearanceProp,
-								ClearanceProp->ContainerPtrToValuePtr<void>(ChildHologram));
-							ClearanceHelper.EmptyValues();
-						}
-					}
-
-					// [#497] Also kill the clearance-DETECTOR overlap box (BeginPlay created it
-					// before the strip above could run): thousands of detectors form a quadratic
-					// overlap-pair database that every spawn and collision toggle pays linear
-					// scans over (capture 13). The delegate's MESH collision stays on for the
-					// stackable AC; only the detector's overlap events die.
-					USFHologramDataService::DisableClearanceDetector(ChildHologram);
-				}
-
 				// Phase 4 CRITICAL FIX: Disable ticking for locked children to eliminate per-frame validation overhead
 				// With 3000+ children, per-frame Tick() causes FPS to drop from 60 to 3-4 FPS
 				// Locked holograms don't need validation, so we can safely disable their tick
@@ -1339,9 +1437,8 @@ void FSFHologramHelperService::RegenerateChildHologramGrid(
 		// #418 Tier true-up: Smart child classes stub validation (or, for water pumps, run their
 		// own) — ticking them buys nothing and cost real frame time at 40K+ children. Keep tick
 		// OFF for everything except water pump children (their per-frame water-volume check needs
-		// tick) and vanilla-delegate stackable children (preserve vanilla dynamic validation).
-		const bool bKeepTickDisabled = !bVanillaDelegateChildren
-			&& !ParentHologram->IsA(AFGWaterPumpHologram::StaticClass());
+		// tick). Fixed stackable support proxies need neither native placement nor validation ticks.
+		const bool bKeepTickDisabled = !ParentHologram->IsA(AFGWaterPumpHologram::StaticClass());
 		for (const TWeakObjectPtr<AFGHologram>& ChildPtr : SpawnedChildren)
 		{
 			if (ChildPtr.IsValid())

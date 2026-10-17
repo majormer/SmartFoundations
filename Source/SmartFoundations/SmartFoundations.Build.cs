@@ -9,6 +9,12 @@ public class SmartFoundations : ModuleRules
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 		CppStandard = CppStandardVersion.Cpp20;
 
+        // The optional Camera SDK is header-only: no Camera DLL import is linked.
+        bool HasCameraSDK = Directory.Exists(Path.Combine(PluginDirectory, "../SmartCamera/Source/SmartCamera/Public"));
+        PublicDefinitions.Add("SF_CAMERA_PROVIDER_AVAILABLE=" + (HasCameraSDK ? "1" : "0"));
+        if (HasCameraSDK) { PrivateIncludePathModuleNames.Add("SmartCamera"); }
+
+
 		// UE 5.6 defaults these off (IWYU-strict). Smart's source bare-includes its own Public
 		// subdir headers (e.g. "SFSubsystem.h"), which relied on the legacy flat include paths.
 		// Restore them so the mod compiles without rewriting every internal include. (FactoryGame
@@ -21,7 +27,7 @@ public class SmartFoundations : ModuleRules
 		// Some entries are commented out to avoid compile-time warnings about depending on a module that you don't explicitly depend on.
 		// You can uncomment these as necessary when your code actually needs to use them.
 		PublicDependencyModuleNames.AddRange(new string[] {
-			"Core", "CoreUObject",
+			"Core", "CoreUObject", "FieldNotification",
 			"Engine",
 			"DeveloperSettings",
 			"ApplicationCore",

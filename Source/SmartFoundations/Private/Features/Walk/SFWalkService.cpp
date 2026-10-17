@@ -2,8 +2,13 @@
 
 #include "Features/Walk/SFWalkService.h"
 #include "Features/Walk/SFWalkConveyance.h"
+#include "Features/Walk/SFWalkNativeSpanAdapter.h"
+#include "Features/Walk/SFWalkVehiclePathAdapter.h"
+#include "Hologram/FGRailroadTrackHologram.h"
+#include "Hologram/FGVehiclePathSegmentHologram.h"
 #include "Features/AutoConnect/SFAutoConnectService.h"   // IsStackablePipelineSupportHologram (seed-type -> conveyance adapter)
 #include "Holograms/Logistics/SFPipelineHologram.h"
+#include "Holograms/Core/SFBuildableChildHologram.h"
 #include "Shared/Conduits/SFConveyanceShape.h"            // shared span shape-validity rules (walk + hypertube AC)
 #include "Subsystem/SFSubsystem.h"
 #include "Subsystem/SFHologramDataService.h"
@@ -91,6 +96,7 @@ static void SF_LogPlacement(const TCHAR* Tag, int32 Index, AFGHologram* Holo, co
 void USFWalkService::Initialize(USFSubsystem* InSubsystem)
 {
     Subsystem = InSubsystem;
+    FSFWalkNativeSpanAdapter::InstallConstructionHooks();
     UE_LOG(LogSmartWalk, Verbose, TEXT("Initialize: subsystem=%s"), *GetNameSafe(InSubsystem));
 }
 
@@ -132,7 +138,14 @@ bool USFWalkService::EnterWalk(AFGHologram* InSeedHologram)
     // spec so the server reconstructs the matching span. NOTE ORDER: the hypertube support SHARES the
     // Holo_PipelineStackable_C hologram with the pipe support, so IsStackablePipelineSupportHologram also fires on it
     // — the hypertube test MUST come first or pipe would win and lay pipes for a held hypertube support. (#405)
-    if (USFAutoConnectService::IsStackableHypertubeSupportHologram(InSeedHologram))
+    if (FSFWalkNativeSpanAdapter::IsSupported(InSeedHologram))
+    {
+        ConveyanceType = Cast<AFGRailroadTrackHologram>(InSeedHologram)
+            ? ESFWalkConveyanceType::Railroad : ESFWalkConveyanceType::VehiclePath;
+        Conveyance = nullptr;
+        OriginFrame = FSFWalkNativeSpanAdapter::StartFrame(InSeedHologram);
+    }
+    else if (USFAutoConnectService::IsStackableHypertubeSupportHologram(InSeedHologram))
     {
         ConveyanceType = ESFWalkConveyanceType::Hypertube;
         USFWalkHypertubeConveyance* HyperConveyance = NewObject<USFWalkHypertubeConveyance>(this);
@@ -245,9 +258,9 @@ FSFWalkCommitSpec USFWalkService::BuildCommitSpec() const
 
     // Cost = every walk-spawned preview hologram (origin extras + each segment's poles + belts). The seed itself
     // (origin cell 0,0) is charged by vanilla as the build-gun's own hologram, so it is excluded here.
-    auto AddCost = [&Spec](AFGHologram* Holo, const TCHAR* Kind)
+    auto AddCost = [&Spec, Seed](AFGHologram* Holo, const TCHAR* Kind)
     {
-        if (!IsValid(Holo)) { return; }
+        if (!IsValid(Holo) || Holo == Seed) { return; }
         const TArray<FItemAmount> C = Holo->GetCost(/*includeChildren=*/false);
         // [cost-diag] one line per costed hologram (Verbose: BuildCommitSpec runs every preview frame now).
         UE_LOG(LogSmartWalk, Verbose, TEXT("  [cost] %s %s recipe=%s -> %d item type(s)%s"),
@@ -280,8 +293,20 @@ FSFWalkCommitSpec USFWalkService::BuildCommitSpec() const
     return Spec;
 }
 
+float USFWalkService::GetMaximumAdvance() const
+{
+    if (FSFWalkNativeSpanAdapter::IsSpanType(ConveyanceType))
+    {
+        return FSFWalkNativeSpanAdapter::MaximumAdvance(SeedHologram.Get());
+    }
+    return ConveyanceType == ESFWalkConveyanceType::Hypertube
+        ? USFAutoConnectService::MAX_HYPERTUBE_POLE_SPACING
+        : SFConveyanceConstants::DefaultBeltPipeSupportIntervalCm;
+}
+
 int32 USFWalkService::ReconstructWalkCommitOnServer(AFGHologram* Seed, const FSFWalkCommitSpec& Spec)
 {
+    if (FSFWalkNativeSpanAdapter::IsSpanType(Spec.ConveyanceType)) { return ReconstructNativeSpanCommit(Seed, Spec); }
     UE_LOG(LogSmartWalk, Verbose, TEXT(">>> ReconstructWalkCommitOnServer ENTER: seed=%s segments=%d"),
         *GetNameSafe(Seed), Spec.Segments.Num());
     if (!IsValid(Seed) || Spec.Segments.Num() == 0)
@@ -604,6 +629,7 @@ void USFWalkService::RebuildHolograms()
 
 void USFWalkService::RebuildOriginHolograms()
 {
+    if (FSFWalkNativeSpanAdapter::IsSpanType(ConveyanceType)) { OriginHolograms.Reset(); return; }
     AFGHologram* Seed = SeedHologram.Get();
 
     // #497: origin cell set changes — cost totals need a re-sum and the cells need a fresh paint.
@@ -780,7 +806,7 @@ void USFWalkService::RecreateSpans()
     {
         for (const TWeakObjectPtr<AFGHologram>& WeakSpan : Seg.Spans)
         {
-            SF_SafeDestroyHologram(WeakSpan.Get());
+            if (WeakSpan.Get() != SeedHologram.Get()) { SF_SafeDestroyHologram(WeakSpan.Get()); }
         }
         Seg.Spans.Reset();
     }
@@ -826,7 +852,7 @@ bool USFWalkService::CanAffordWalk() const
         CachedWalkCostTotals.Reset();
         auto AddCost = [this](AFGHologram* H)
         {
-            if (!IsValid(H)) { return; }
+            if (!IsValid(H) || H == SeedHologram.Get()) { return; }
             for (const FItemAmount& IA : H->GetCost(/*includeChildren=*/false))
             {
                 if (IA.ItemClass && IA.Amount > 0)
@@ -902,6 +928,17 @@ void USFWalkService::SyncToSeedTransform()
 FString USFWalkService::GetSegmentShapeError(int32 Index) const
 {
     if (!Segments.IsValidIndex(Index)) { return FString(); }
+    if (FSFWalkNativeSpanAdapter::IsSpanType(ConveyanceType))
+    {
+        const auto& Seg = Segments[Index];
+        if (Seg.Spans.Num() != FMath::Abs(Seg.NumLanes) * FMath::Abs(Seg.NumStacks)) { return TEXT("Native segment preview is incomplete"); }
+        for (const auto& Span : Seg.Spans)
+        {
+            const FString Reason = FSFWalkNativeSpanAdapter::Validate(Span.Get());
+            if (!Reason.IsEmpty()) { return Reason; }
+        }
+        return FString();
+    }
     const TArray<TWeakObjectPtr<AFGHologram>>& Prev = (Index == 0) ? OriginHolograms : Segments[Index - 1].Holograms;
     const TArray<TWeakObjectPtr<AFGHologram>>& Cur  = Segments[Index].Holograms;
     if (!Prev.IsValidIndex(0) || !Cur.IsValidIndex(0)) { return FString(); }   // no center cell to measure -> can't flag
@@ -1019,6 +1056,12 @@ void USFWalkService::RefreshWalkValidity()
     }
 
     SyncToSeedTransform();   // nudge-the-parent: keep the run anchored to the (possibly nudged) seed
+    if (ConveyanceType == ESFWalkConveyanceType::VehiclePath && !Segments.IsEmpty()
+        && FSFWalkVehiclePathAdapter::RefreshPreview(Cast<AFGVehiclePathSegmentHologram>(SeedHologram.Get()), OriginFrame, FrameAtIndex(0)))
+    {
+        bWalkCostDirty = true;
+        Segments[0].LastAppliedSegState = -1;
+    }
     // Standalone walk holograms aren't build-gun-ticked, so the FGCDInitializing disqualifier added during init is never
     // cleared and they'd render RED. Clear it every frame, THEN set the material state by AFFORDABILITY: HMS_OK (cyan)
     // if the player can afford the whole walk, HMS_ERROR (red) if not — so a broke walk shows red instead of silently
@@ -1093,6 +1136,7 @@ void USFWalkService::RefreshWalkValidity()
 
 void USFWalkService::SpawnSegmentHologram(int32 Index)
 {
+    if (FSFWalkNativeSpanAdapter::IsSpanType(ConveyanceType)) { RebuildNativeSpans(Index); return; }
     if (!Segments.IsValidIndex(Index))
     {
         return;
@@ -1143,19 +1187,15 @@ AFGHologram* USFWalkService::SpawnOnePole(const FTransform& Pose, int32 Index, i
     {
         return nullptr;
     }
-    TSubclassOf<UFGRecipe> Recipe = Seed->GetRecipe();
-    AActor* BuildGunOwner = Seed->GetOwner();
-    APawn* HologramInstigator = Cast<APawn>(Seed->GetInstigator());
-
-    // Standalone spawn (NOT a grid child, NOT AddChild'd) — world-anchored, WalkSegment-tagged so the grid sweep
-    // skips it; kept cyan by the per-frame RefreshWalkValidity (the build gun never ticks it). AddChild is avoided
-    // deliberately: it re-bases the pole to the far seed (horizon) AND the build gun's ResetConstructDisqualifiers
-    // recursion crashes on the stale mChildren entry when the pole is Destroy()'d (no public RemoveChild).
-    AFGHologram* Holo = AFGHologram::SpawnHologramFromRecipe(
-        Recipe, BuildGunOwner ? BuildGunOwner : Seed, Pose.GetLocation(), HologramInstigator);
+    // Standalone fixed-support proxy: no native placement tick, clearance detector, or
+    // support-specific snap state. Meshes/connectors/cost still come from the native recipe.
+    // Do not AddChild: it rebases a world anchor to the horizon seed and leaves stale
+    // recursive entries on teardown. Authority commit still reconstructs native supports.
+    AFGHologram* Holo = ASFBuildableChildHologram::SpawnPreview(
+        Seed, Pose, ESFChildHologramType::WalkSegment);
     if (!IsValid(Holo))
     {
-        UE_LOG(LogSmartWalk, Verbose, TEXT("  SpawnOnePole seg%d L%d S%d: SpawnHologramFromRecipe returned null"), Index, Lane, Stack);
+        UE_LOG(LogSmartWalk, Verbose, TEXT("  SpawnOnePole seg%d L%d S%d: support proxy spawn returned null"), Index, Lane, Stack);
         return nullptr;
     }
 
@@ -1175,6 +1215,10 @@ AFGHologram* USFWalkService::SpawnOnePole(const FTransform& Pose, int32 Index, i
 
 FTransform USFWalkService::CrossSectionPose(const FTransform& Center, int32 SignedLane, int32 SignedStack) const
 {
+    if (FSFWalkNativeSpanAdapter::IsSpanType(ConveyanceType))
+    {
+        return FSFWalkNativeSpanAdapter::CrossSectionPose(Center, SignedLane, SignedStack);
+    }
     // SignedLane/SignedStack are DIRECTIONAL indices (the caller derives them from the segment's signed counter):
     // +N = N lanes to the right of center, -N = N to the left — exactly the grid's signed-axis convention, so
     // Scale-Y grows ONE side per scroll (no forced mirror). Cell (0,0) = the seed's line (path centerline).
@@ -1248,6 +1292,7 @@ void USFWalkService::UpdateSegmentSpans(int32 Index)
 
 void USFWalkService::RepositionFrom(int32 StartIndex)
 {
+    if (FSFWalkNativeSpanAdapter::IsSpanType(ConveyanceType)) { RebuildNativeSpans(StartIndex); return; }
     const int32 From = FMath::Max(0, StartIndex);
     UE_LOG(LogSmartWalk, Verbose, TEXT(">>> RepositionFrom ENTER: startIndex=%d (clamped=%d) segments=%d"),
         StartIndex, From, Segments.Num());
@@ -1282,7 +1327,7 @@ void USFWalkService::DestroySegmentHolograms(FSFWalkSegment& Segment)
         Segment.Spans.Num(), Segment.Holograms.Num());
     for (const TWeakObjectPtr<AFGHologram>& WeakBelt : Segment.Spans)
     {
-        SF_SafeDestroyHologram(WeakBelt.Get());   // reflection-unlink then Destroy (mirror grid's safe teardown)
+        if (WeakBelt.Get() != SeedHologram.Get()) { SF_SafeDestroyHologram(WeakBelt.Get()); }
     }
     Segment.Spans.Reset();
 

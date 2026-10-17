@@ -563,6 +563,13 @@ private:
     UFUNCTION()
     void OnResetButtonClicked();
 
+    UFUNCTION()
+    void OnSignSupportButtonClicked();
+    void RefreshSignSupportControl();
+    void RefreshWallRotationControl();
+    UFUNCTION()
+    void OnWallRotationChanged(FString SelectedItem, ESelectInfo::Type SelectionType);
+
     // #356 Smart Walking: toggle Walk mode on the held buildable, then close the panel to steer.
     UFUNCTION()
     void OnWalkPathButtonClicked();

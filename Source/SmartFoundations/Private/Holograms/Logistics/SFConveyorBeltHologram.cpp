@@ -243,10 +243,12 @@ void ASFConveyorBeltHologram::CheckValidPlacement()
         // Mirror the Extend preview's authoritative state (frame-order independent), so the
         // child turns red on insufficient materials and back to cyan when affordable again.
         // Reading the parent directly can still see HMS_OK before the build gun applies the
-        // parent's red this frame. Keep a parent-ERROR fallback for non-Extend parented previews.
+        // parent's red this frame. For other parented previews, read only the parent's own
+        // state: the aggregate getter includes this child and can feed its previous error
+        // back into itself after the parent's placement or affordability has recovered.
         EHologramMaterialState DesiredState = USFExtendService::ResolveChildPreviewMaterialState(this);
         if (DesiredState != EHologramMaterialState::HMS_ERROR
-            && GetParentHologram()->GetHologramMaterialState() == EHologramMaterialState::HMS_ERROR)
+            && USFHologramDataService::GetRawPlacementMaterialState(GetParentHologram()) == EHologramMaterialState::HMS_ERROR)
         {
             DesiredState = EHologramMaterialState::HMS_ERROR;
         }

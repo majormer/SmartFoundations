@@ -64,6 +64,23 @@ public:
 	 */
 	virtual bool SupportsFeature(ESFFeature Feature) const = 0;
 
+	bool SupportsScalingAxis(ESFScaleAxis Axis) const
+	{
+		switch (Axis)
+		{
+		case ESFScaleAxis::X: return SupportsFeature(ESFFeature::ScaleX);
+		case ESFScaleAxis::Y: return SupportsFeature(ESFFeature::ScaleY);
+		case ESFScaleAxis::Z: return SupportsFeature(ESFFeature::ScaleZ);
+		default: return false;
+		}
+	}
+
+	bool SupportsAnyScaling() const
+	{
+		return SupportsScalingAxis(ESFScaleAxis::X) || SupportsScalingAxis(ESFScaleAxis::Y)
+			|| SupportsScalingAxis(ESFScaleAxis::Z);
+	}
+
 	/**
 	 * Get the underlying hologram actor (weak pointer for safety)
 	 * 

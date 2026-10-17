@@ -53,7 +53,8 @@ public:
 		const FVector& ItemSize,
 		const FSFCounterState& CounterState,
 		int32 GridIndex = 0,
-		const FVector& AnchorOffset = FVector::ZeroVector
+		const FVector& AnchorOffset = FVector::ZeroVector,
+		const UClass* GridBuildClass = nullptr
 	) const;
 
 	// #418: the array-walking UpdateChildPositions / UpdateChildrenForCurrentTransform pair was

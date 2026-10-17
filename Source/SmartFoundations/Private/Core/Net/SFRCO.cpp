@@ -417,6 +417,7 @@ void USFRCO::Server_StageWalkCommit_Implementation(FSFWalkCommitSpec Spec)
 
 bool USFRCO::Server_StageWalkCommit_Validate(FSFWalkCommitSpec Spec)
 {
+	if (static_cast<uint8>(Spec.ConveyanceType) > static_cast<uint8>(ESFWalkConveyanceType::VehiclePath)) { return false; }
 	// Sanity-bound the commit so a forged/buggy commit cannot demand absurd server-side spawning.
 	// The world frames are re-derived SERVER-side from these deltas, never shipped.
 	if (Spec.Segments.Num() > 4096 || Spec.OriginFrame.GetLocation().Size() > 1.0e7)

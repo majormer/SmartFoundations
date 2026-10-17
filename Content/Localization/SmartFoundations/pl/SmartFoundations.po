@@ -2742,3 +2742,67 @@ msgstr "Nie pozostały żadne pasujące elementy sieci; zeskanuj ponownie"
 msgctxt "SmartFoundations,Upgrade_TraversalExpired"
 msgid "Traversal results are no longer valid; scan again"
 msgstr "Wyniki skanowania sieci są już nieaktualne; zeskanuj ponownie"
+
+msgctxt "Smart,CameraConsumer"
+msgid "Smart"
+msgstr ""
+
+msgctxt "Smart,CameraView"
+msgid "Build Preview"
+msgstr ""
+
+msgctxt "SmartFoundations,Family_Miner"
+msgid "Miners"
+msgstr ""
+
+msgctxt "SmartFoundations,HUD_HypertubesSkipped"
+msgid "*{0} Hypertube connection(s) skipped: {1}"
+msgstr ""
+
+msgctxt "SmartFoundations,HUD_Walk_Rail"
+msgid "rail"
+msgstr ""
+
+msgctxt "SmartFoundations,HUD_Walk_VehiclePath"
+msgid "vehicle path"
+msgstr ""
+
+msgctxt "SmartFoundations,Hint_SignSupports"
+msgid "Sign supports"
+msgstr ""
+
+msgctxt "SmartFoundations,Notice_SignSupportHeight"
+msgid "Sign supports must reach the mounting surface at a native pole height. Adjust height, spacing or steps."
+msgstr ""
+
+msgctxt "SmartFoundations,P.bPreserveUpgradeDismantleGroups"
+msgid "Preserve Upgrade Dismantle Groups"
+msgstr ""
+
+msgctxt "SmartFoundations,P.bPreserveUpgradeDismantleGroups.TT"
+msgid "Default for preserving existing dismantle-group membership during Smart upgrades and supported downgrades. Can be overridden in the Upgrade panel."
+msgstr ""
+
+msgctxt "SmartFoundations,SignSupportValue_Auto"
+msgid "Auto"
+msgstr ""
+
+msgctxt "SmartFoundations,SignSupportValue_None"
+msgid "None"
+msgstr ""
+
+msgctxt "SmartFoundations,SignSupports_Auto"
+msgid "Sign supports: Auto"
+msgstr ""
+
+msgctxt "SmartFoundations,SignSupports_None"
+msgid "Sign supports: None"
+msgstr ""
+
+msgctxt "SmartFoundations,Walk_Conveyance_Rail"
+msgid "Railway track"
+msgstr ""
+
+msgctxt "SmartFoundations,Walk_Conveyance_VehiclePath"
+msgid "Vehicle path"
+msgstr ""

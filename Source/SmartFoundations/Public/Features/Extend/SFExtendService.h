@@ -84,6 +84,7 @@ UCLASS()
 class SMARTFOUNDATIONS_API USFExtendService : public UObject
 {
     friend class FSFExtendAuthorityIsolationTest;
+    friend class FSFRestorePreviewFrameTest;
     GENERATED_BODY()
 
     // Restore-replay logic lives in USFExtendRestoreReplayService but operates on this
@@ -169,6 +170,9 @@ public:
      * so the focus can never disagree with the placement. Returns FallbackLocation if no restore is active.
      */
     FVector GetFurthestRestoredCloneWorldPosition(const FVector& FallbackLocation) const;
+
+    /** Existing run focus plus its actual directed final step; false outside a usable Extend/Restore. */
+    bool TryGetCameraRunFrame(const AFGHologram* Hologram, FTransform& OutFrame) const;
 
     /**
      * Get the invalidation reason if the current scaled extend configuration is invalid.
@@ -375,7 +379,7 @@ public:
      *  vanilla's ToggleHologramPositionLock unlocked it. TOGGLES the manual pin per the Extend
      *  intent model: pin ON = deliberate commit of a non-scaled Extend (sticky, inspect from any
      *  angle); pin OFF = back to transient (look-away releases). The positional lock is always
-     *  re-asserted — Extend owns placement while active. Never touches bExtendCommitted, so H can
+     *  re-asserted â€” Extend owns placement while active. Never touches bExtendCommitted, so H can
      *  never un-stick a scaled Extend. Returns true when the press was consumed for Extend. */
     bool HandleHologramLockToggle(AFGHologram* Hologram);
 
@@ -410,7 +414,7 @@ public:
     void ConnectAllChainElements(AFGBuildableFactory* NewFactory);
 
     /**
-     * Wire connections between built child holograms using hologram→buildable mapping from registry.
+     * Wire connections between built child holograms using hologramâ†’buildable mapping from registry.
      * Must be called AFTER all child holograms are built via AddChild mechanism.
      * @param NewFactory The newly constructed factory building
      */
@@ -577,7 +581,8 @@ public:
      *        Extend service into "swapped" state.
      * @return The swapped custom hologram, or nullptr if swap failed
      */
-    ASFFactoryHologram* SwapToSmartFactoryHologram(AFGHologram* VanillaHologram, bool bTrackAsExtendSwap = true);
+    AFGHologram* SwapToSmartFactoryHologram(AFGHologram* VanillaHologram, bool bTrackAsExtendSwap = true);
+    static UClass* GetExtendRootHologramClass(const UClass* BuildClass);
 
     /**
      * Restore the original hologram when EXTEND mode ends.
@@ -638,7 +643,7 @@ private:
 
     /** Our custom hologram that replaced the vanilla one (for cleanup) */
     UPROPERTY()
-    TWeakObjectPtr<ASFFactoryHologram> SwappedHologram;
+    TWeakObjectPtr<AFGHologram> SwappedHologram;
 
     /** Whether we've swapped the vanilla hologram for our custom one */
     UPROPERTY()
@@ -680,19 +685,19 @@ private:
 
     // ==================== Hologram Connection Wiring (prevents child pole spawning) ====================
 
-    /** Per-chain tracking of pipe holograms in spawn order (ChainId → array of pipe holograms) */
+    /** Per-chain tracking of pipe holograms in spawn order (ChainId â†’ array of pipe holograms) */
     TMap<int32, TArray<ASFPipelineHologram*>> PipeChainHologramMap;
 
-    /** Junction hologram for each pipe chain (ChainId → junction hologram) */
+    /** Junction hologram for each pipe chain (ChainId â†’ junction hologram) */
     TMap<int32, class ASFPipelineJunctionChildHologram*> PipeChainJunctionMap;
 
-    /** Unified chain map for all conveyors (belts + lifts) indexed by position (ChainId → ChainIndex → Hologram) */
+    /** Unified chain map for all conveyors (belts + lifts) indexed by position (ChainId â†’ ChainIndex â†’ Hologram) */
     TMap<int32, TMap<int32, AFGHologram*>> UnifiedConveyorChainMap;
 
-    /** Distributor hologram for each belt chain (ChainId → distributor hologram) */
+    /** Distributor hologram for each belt chain (ChainId â†’ distributor hologram) */
     TMap<int32, AFGHologram*> BeltChainDistributorMap;
 
-    /** Built conveyor buildables per chain, indexed by position (ChainId → (Index → Conveyor)) */
+    /** Built conveyor buildables per chain, indexed by position (ChainId â†’ (Index â†’ Conveyor)) */
     TMap<int32, TMap<int32, AFGBuildableConveyorBase*>> BuiltConveyorsByChain;
 
     /** Built distributor buildables per chain (populated during Construct(), used by WireBuiltChildConnections) */
@@ -701,7 +706,7 @@ private:
     /** Built junction buildables per pipe chain (populated during Construct(), used by WireBuiltChildConnections) */
     TMap<int32, AFGBuildable*> BuiltJunctionsByChain;
 
-    /** Built pipe buildables per chain, indexed by position (ChainId → (Index → Pipe)) */
+    /** Built pipe buildables per chain, indexed by position (ChainId â†’ (Index â†’ Pipe)) */
     TMap<int32, TMap<int32, AFGBuildablePipeline*>> BuiltPipesByChain;
 
     /** Track chain direction for built chains (true = input chain, false = output chain) */
@@ -710,13 +715,13 @@ private:
     /** Track pipe chain direction separately (true = input chain, false = output chain) */
     TMap<int32, bool> BuiltPipeChainIsInputMap;
 
-    /** Source (original) distributors per chain - for manifold connections (ChainId → source distributor) */
+    /** Source (original) distributors per chain - for manifold connections (ChainId â†’ source distributor) */
     TMap<int32, AFGBuildable*> SourceDistributorsByChain;
 
-    /** Source (original) junctions per pipe chain - for manifold connections (ChainId → source junction) */
+    /** Source (original) junctions per pipe chain - for manifold connections (ChainId â†’ source junction) */
     TMap<int32, AFGBuildable*> SourceJunctionsByChain;
 
-    /** Distributor connector name per chain (ChainId → ConnectorName like "Output1", "Output2") */
+    /** Distributor connector name per chain (ChainId â†’ ConnectorName like "Output1", "Output2") */
     /** Used during Construct() to find the correct output on the cloned distributor */
     TMap<int32, FName> DistributorConnectorNameByChain;
 
@@ -768,7 +773,7 @@ private:
     EHologramMaterialState ExtendChildMaterialState = EHologramMaterialState::HMS_OK;
 
     /** #497 set-once: last state swept across the child previews by RefreshExtension. The sweep now
-     *  runs only when this changes — children are painted at spawn, so re-sweeping an unchanged state
+     *  runs only when this changes â€” children are painted at spawn, so re-sweeping an unchanged state
      *  every frame only churned render proxies (the Extend GPU lag). */
     EHologramMaterialState LastSyncedExtendChildMaterialState = EHologramMaterialState::HMS_OK;
     bool bExtendChildMaterialStateSynced = false;
@@ -778,9 +783,9 @@ private:
      *  copy of this base, so incremental (count-only) rebuilds can re-merge without re-deriving. */
     TSharedPtr<FSFCloneTopology> ScaledExtendBaseTopology;
 
-    /** #497 (77×1 = 3 fps profile): frame-memo for CanAffordExtendCost. Vanilla's per-frame
+    /** #497 (77Ã—1 = 3 fps profile): frame-memo for CanAffordExtendCost. Vanilla's per-frame
      *  ValidatePlacementAndCost (via our CheckCanAfford) and RefreshExtension each ran the FULL
-     *  GetCost(includeChildren) child walk — the single walk per frame is kept (its #357 preview
+     *  GetCost(includeChildren) child walk â€” the single walk per frame is kept (its #357 preview
      *  keep-alive side effect is load-bearing), the duplicates return this memo. */
     mutable uint64 LastAffordabilityFrame = MAX_uint64;
     mutable bool bLastAffordabilityResult = true;
@@ -821,7 +826,7 @@ private:
 
     /** [#478] SynchronizeChainCounterToDirection writes the signed Chain counter through
      *  UpdateCounterState, which is indistinguishable from a user scale action at the scaled
-     *  service's commit site — without this latch, activating Extend on the side whose sign
+     *  service's commit site â€” without this latch, activating Extend on the side whose sign
      *  differs from the pre-Extend counter silently commits (sticky), so look-away never
      *  releases the locked preview. Set just before the programmatic counter write; consumed
      *  by the next scaled rebuild instead of committing. */
@@ -829,7 +834,7 @@ private:
 
     /** #342: true when the player deliberately pinned the current Extend with the vanilla Hold key (H).
      *  Independent of bExtendCommitted; either makes Extend sticky. Kept separate so toggling the manual
-     *  pin can never un-stick a scale-committed (scaled) Extend. Default false — never auto-set on
+     *  pin can never un-stick a scale-committed (scaled) Extend. Default false â€” never auto-set on
      *  engagement, so free-form placement and look-away teardown stay unchanged. */
     bool bExtendManualHold = false;
 
@@ -851,7 +856,7 @@ private:
     TMap<FString, TObjectPtr<AFGHologram>> JsonSpawnedHolograms;
 
     /** Map of clone_id -> built actor (populated during Construct(), used for wiring).
-     *  UPROPERTY for GC tracking — collected/demolished actors become null rather than dangling. */
+     *  UPROPERTY for GC tracking â€” collected/demolished actors become null rather than dangling. */
     UPROPERTY()
     TMap<FString, TObjectPtr<AActor>> JsonBuiltActors;
 

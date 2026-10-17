@@ -1,6 +1,7 @@
 // Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
 #include "Services/SFHintBarService.h"
+#include "Holograms/Core/SFSignSupportMode.h"
 #include "SmartFoundations.h"
 #include "SFSubsystem.h"
 #include "Blueprint/UserWidget.h"
@@ -310,7 +311,7 @@ void USFHintBarService::InjectSmartHints()
 	static const TSet<FString> SmartHintKeys = {
 		TEXT("Hint_ScaleX"), TEXT("Hint_ScaleY"), TEXT("Hint_ScaleZ"),
 		TEXT("Hint_Spacing"), TEXT("Hint_Steps"), TEXT("Hint_Stagger"), TEXT("Hint_Rotation"),
-		TEXT("Hint_CycleMode"), TEXT("Hint_StaggerFamily"), TEXT("Hint_Recipe"),
+		TEXT("Hint_CycleMode"), TEXT("Hint_StaggerFamily"), TEXT("Hint_Recipe"), TEXT("Hint_SignSupports"),
 		TEXT("Hint_SmartPanel"), TEXT("Hint_UpgradePanel")
 	};
 	auto IsSmartHint = [](const FText& ActionText) -> bool
@@ -341,7 +342,8 @@ void USFHintBarService::InjectSmartHints()
 	// reflects that. Held-mode is part of the rebuild fingerprint so the label swaps on Y down/up.
 	const bool bNowStagger = Subsystem.IsValid() && Subsystem->IsStaggerModeActive();
 
-	const uint32 ContextFingerprint = (bNowUpgrade ? 1 : 0) | (bNowExtend ? 2 : 0) | (bNowStagger ? 4 : 0);
+	const bool bNowSign = Subsystem.IsValid() && SFSignSupportMode::IsAvailable(Subsystem->GetActiveHologram());
+	const uint32 ContextFingerprint = (bNowUpgrade ? 1 : 0) | (bNowExtend ? 2 : 0) | (bNowStagger ? 4 : 0) | (bNowSign ? 8 : 0);
 	const bool bContextChanged = (ContextFingerprint != LastContextFingerprint);
 
 	if (bAlreadyPresent && !bContextChanged)
@@ -409,7 +411,8 @@ void USFHintBarService::InjectSmartHints()
 			SmartHints.Add({ NSLOCTEXT("SmartFoundations", "Hint_CycleMode", "Cycle Mode"),
 				ResolveKeyText(IA_CycleAxis) });
 		}
-		SmartHints.Add({ NSLOCTEXT("SmartFoundations", "Hint_Recipe", "Recipe"),
+		SmartHints.Add({ bNowSign ? NSLOCTEXT("SmartFoundations", "Hint_SignSupports", "Sign supports")
+			: NSLOCTEXT("SmartFoundations", "Hint_Recipe", "Recipe"),
 			ResolveKeyText(IA_RecipeMode) });
 		SmartHints.Add({ NSLOCTEXT("SmartFoundations", "Hint_SmartPanel", "Smart Panel"),
 			ResolveKeyText(IA_ToggleSettingsForm) });

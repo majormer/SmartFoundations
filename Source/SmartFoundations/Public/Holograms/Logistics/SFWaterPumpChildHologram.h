@@ -56,6 +56,14 @@ public:
 	 */
 	bool ValidateWaterPosition() const;
 
+	/** Shared scaling/Extend/Restore contract; never infer validity from the source extractor. */
+	static bool ValidateWaterPosition(const AFGHologram* Hologram);
+	static bool IsVanillaWaterExtractor(const UClass* BuildClass);
+	static bool ValidateWaterTree(AFGHologram* Parent);
+	/** Environment-query seam; production uses the shared water/depth/terrain validator above. */
+	static bool ValidateWaterTree(AFGHologram* Parent, TFunctionRef<bool(const AFGHologram*)> ValidateCell);
+	static ASFWaterPumpChildHologram* SpawnPreview(AFGHologram* Parent, FName Name, const FVector& Location);
+
 public:
 	/** [#497] Block vanilla's locked-parent nudge cascade — it bypasses SetHologramLocationAndRotation
 	 *  and dragged every extend child to world origin each tick (see the .cpp override). */

@@ -18,6 +18,8 @@ enum class ESFWalkConveyanceType : uint8
 	Belt = 0,
 	Pipe = 1,
 	Hypertube = 2,
+	Railroad = 3,
+	VehiclePath = 4,
 };
 
 /**

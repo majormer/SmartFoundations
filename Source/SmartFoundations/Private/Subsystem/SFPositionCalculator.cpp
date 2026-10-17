@@ -1,5 +1,7 @@
 // Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
+#include "Shared/SFSupportGridFrame.h"
+#include "Shared/SFPillarGridFrame.h"
 #include "Subsystem/SFPositionCalculator.h"
 #include "SmartFoundations.h"
 #include "Hologram/FGHologram.h"
@@ -19,7 +21,8 @@ FVector FSFPositionCalculator::CalculateChildPosition(
 	const FVector& ItemSize,
 	const FSFCounterState& CounterState,
 	int32 GridIndex,
-	const FVector& AnchorOffset
+	const FVector& AnchorOffset,
+	const UClass* GridBuildClass
 ) const
 {
 	// Original Smart! logic from SFHologramHelper.cpp lines 1682-1771
@@ -114,7 +117,17 @@ FVector FSFPositionCalculator::CalculateChildPosition(
 	// ATTACHMENT TYPE FIX: Apply anchor offset compensation
 	// For attachment types (conveyor/pipeline/hypertube), parent pivot is elevated above visual bottom
 	// AnchorOffset.Z (typically negative) lowers children to align with parent's visual bottom
-	NewLocation += AnchorOffset;
+	if (SFSupportGridFrame::UsesParentRotation(GridBuildClass))
+	{
+		NewLocation = ParentLocation + SFSupportGridFrame::RotateYawOffset(NewLocation - ParentLocation, ParentRotation);
+	}
+    if (SFPillarGridFrame::Applies(GridBuildClass))
+    {
+        // Grid/spacing/stagger follow the pillar; Steps retains its world-vertical contract.
+        const FVector Steps(0, 0, CalculateStepsOffset(X, Y, CounterState));
+        NewLocation = ParentLocation + SFPillarGridFrame::RotateYawOffset(NewLocation - ParentLocation - Steps, ParentRotation) + Steps;
+    }
+    NewLocation += AnchorOffset;
 	
 	return NewLocation;
 }

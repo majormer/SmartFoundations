@@ -2,6 +2,8 @@
 
 #include "UI/SmartUpgradePanel.h"
 #include "UI/SmartUpgradePanelImpl.h"
+#include "Blueprint/WidgetTree.h"
+#include "Config/Smart_ConfigStruct.h"
 
 #define LOCTEXT_NAMESPACE "SmartFoundations"
 
@@ -30,6 +32,12 @@ void USmartUpgradePanel::NativeConstruct()
 	// Switch designer-placed (and localized) labels to the in-game multi-script font so
 	// Arabic/Persian/Thai/CJK render correctly. Runtime-built rows route through SFFont::Get below.
 	SFFont::ApplyToWidgetTree(WidgetTree);
+
+	PreserveDismantleGroupCheckBox = Cast<UCheckBox>(GetWidgetFromName(TEXT("PreserveDismantleGroupCheckBox")));
+	if (PreserveDismantleGroupCheckBox)
+	{
+		PreserveDismantleGroupCheckBox->SetIsChecked(FSmart_ConfigStruct::GetActiveConfig(this).bPreserveUpgradeDismantleGroups);
+	}
 
 	// ========== BACKGROUND & HEADER LAYOUT ==========
 
@@ -494,6 +502,9 @@ void USmartUpgradePanel::OnUpgradeButtonClicked()
 	Params.TargetTier = TargetTier;
 	Params.PlayerController = Cast<AFGPlayerController>(PC);  // For cost deduction
 	Params.MaxItems = 0;  // No limit
+	Params.bPreserveDismantleGroupMembership = PreserveDismantleGroupCheckBox
+		? PreserveDismantleGroupCheckBox->IsChecked()
+		: FSmart_ConfigStruct::GetActiveConfig(this).bPreserveUpgradeDismantleGroups;
 
 	// Preserve traversal intent independently of the filtered actor count. An empty or stale
 	// traversal result must never collapse into radius=0 (save-wide) mode.
@@ -514,7 +525,7 @@ void USmartUpgradePanel::OnUpgradeButtonClicked()
 		// relevant actors - execution re-filters by SourceTier anyway (defense in depth).
 		for (const FSFUpgradeAuditEntry& Entry : CachedTraversalResult.Entries)
 		{
-			if (Entry.Buildable.IsValid() && SFUpgradeTierPolicy::Matches(Entry.CurrentTier, SelectedTier, TargetTier, SFUpgradeTierPolicy::AllowsDowngrade(SelectedFamily)))
+			if (Entry.Buildable.IsValid() && SFUpgradeTierPolicy::Matches(Entry.CurrentTier, SelectedTier, TargetTier, SFUpgradeTierPolicy::AllowsDowngrade(Entry.Family)))
 			{
 				Params.SpecificBuildables.Add(Entry.Buildable);
 			}

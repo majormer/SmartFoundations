@@ -62,7 +62,7 @@ bool SFExtendSourceSnapshot::FitsReply(const FSFSourceTopology& Source)
     };
     // The two decorator arrays were counted above; check their variable geometry too.
     Parts -= Source.PipePassthroughs.Num() + Source.WallHoles.Num();
-    if (!CheckSegments(Source.PipePassthroughs) || !CheckSegments(Source.WallHoles)) return false;
+    if (!CheckSegments(Source.PipePassthroughs) || !CheckSegments(Source.WallHoles) || !CheckSegments(Source.RouteSupports)) return false;
     for (const TArray<FSFSourceChain>* Group : {&Source.BeltInputChains, &Source.BeltOutputChains,
         &Source.PipeInputChains, &Source.PipeOutputChains})
     {
@@ -112,6 +112,7 @@ void SFExtendSourceSnapshot::RemapOwners(FSFSourceTopology& Source, const TMap<F
     for (FSFSourcePowerPole& Pole : Source.PowerPoles) Id(Pole.Id);
     for (FSFSourceSegment& Value : Source.PipePassthroughs) Segment(Value);
     for (FSFSourceSegment& Value : Source.WallHoles) Segment(Value);
+    for (FSFSourceSegment& Value : Source.RouteSupports) Segment(Value);
 }
 
 bool SFExtendSourceSnapshot::ResolveReply(FSFExtendTopology& Reply)

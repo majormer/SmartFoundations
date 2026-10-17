@@ -3,6 +3,8 @@
 
 #include "Features/Arrows/SFArrowModule_StaticMesh.h"
 #include "SmartFoundations.h"
+#include "Shared/SFSupportGridFrame.h"
+#include "Shared/SFPillarGridFrame.h"
 #include "Logging/SFLogMacros.h"
 #include "Core/Net/SFNetworkHelper.h"
 #include "Materials/MaterialInstanceDynamic.h"
@@ -12,6 +14,7 @@
 #include "Engine/World.h"
 #include "Hologram/FGHologram.h"
 #include "Subsystem/SFSubsystem.h"
+#include "Holograms/Adapters/ISFHologramAdapter.h"
 #include "Data/SFBuildableSizeRegistry.h"
 #include "GameFramework/PlayerController.h"
 
@@ -552,12 +555,15 @@ void FSFArrowModule_StaticMesh::UpdateArrows(UWorld* World, const FTransform& Ba
 	// Y-axis: Roll -90 — point along +Y
 	// Z-axis: No rotation — point up
 	
+	const AFGHologram* FrameHologram = SubsystemRef.IsValid() ? SubsystemRef->GetActiveHologram() : nullptr;
+	const bool bPillarFrame = FrameHologram && SFPillarGridFrame::Applies(FrameHologram->GetBuildClass());
 	FRotator RotationX = FRotator(-90.0f, 180.0f, 0.0f);
 	if (HighlightedAxis == ELastAxisInput::X && DirectionSign != 0)
 	{
 		RotationX = FQuat::FindBetweenNormals(FVector::UpVector,
 			-FVector::ForwardVector * DirectionSign).Rotator();
 	}
+	if (bPillarFrame) RotationX = SFPillarGridFrame::ArrowRotation(0, HighlightedAxis == ELastAxisInput::X && DirectionSign != 0 ? DirectionSign : 1);
 	UpdateSingleArrow(ArrowX.Get(), ShaftX.Get(), RelativeLocation, RotationX, ELastAxisInput::X, HighlightedAxis);
 	
 	FRotator RotationY = FRotator(0.0f, 0.0f, -90.0f);
@@ -566,11 +572,19 @@ void FSFArrowModule_StaticMesh::UpdateArrows(UWorld* World, const FTransform& Ba
 		RotationY = FQuat::FindBetweenNormals(FVector::UpVector,
 			-FVector::RightVector * DirectionSign).Rotator();
 	}
+	if (bPillarFrame) RotationY = SFPillarGridFrame::ArrowRotation(1, HighlightedAxis == ELastAxisInput::Y && DirectionSign != 0 ? DirectionSign : 1);
 	UpdateSingleArrow(ArrowY.Get(), ShaftY.Get(), RelativeLocation, RotationY, ELastAxisInput::Y, HighlightedAxis);
 	
 	// Vertical is view-invariant. Keep the legacy orientation, which visibly points up, even when
 	// both scaling modifiers are held under Player Relative controls.
 	FRotator RotationZ = FRotator::ZeroRotator;
+ if (HighlightedAxis == ELastAxisInput::Z && DirectionSign < 0 && SubsystemRef.IsValid())
+ {
+  const AFGHologram* Holo = SubsystemRef->GetActiveHologram();
+  if (Holo && SFSupportGridFrame::UsesParentRotation(Holo->GetBuildClass()))
+   RotationZ.Roll = 180.0f;
+ }
+	if (bPillarFrame) RotationZ = SFPillarGridFrame::ArrowRotation(2, HighlightedAxis == ELastAxisInput::Z && DirectionSign != 0 ? DirectionSign : 1);
 	UpdateSingleArrow(ArrowZ.Get(), ShaftZ.Get(), RelativeLocation, RotationZ, ELastAxisInput::Z, HighlightedAxis);
 
 	// Issue #213: Cache shaft midpoints for per-frame orbit tick
@@ -603,17 +617,22 @@ void FSFArrowModule_StaticMesh::UpdateArrows(UWorld* World, const FTransform& Ba
 		if (Label.IsValid()) Label.Get()->SetVisibility(bShow);
 	};
 
+	const auto Adapter = SubsystemRef.IsValid() && !SubsystemRef->IsExtendModeActive()
+		&& !SubsystemRef->IsWalkModeActive() ? SubsystemRef->GetCurrentAdapter() : nullptr;
+	const bool bX = !Adapter || Adapter->SupportsScalingAxis(ESFScaleAxis::X);
+	const bool bY = !Adapter || Adapter->SupportsScalingAxis(ESFScaleAxis::Y);
+	const bool bZ = !Adapter || Adapter->SupportsScalingAxis(ESFScaleAxis::Z);
 	if (bModifierPressed)
 	{
-		SetAxisVisibility(HighlightedAxis == ELastAxisInput::X, ArrowX, ShaftX, LabelX);
-		SetAxisVisibility(HighlightedAxis == ELastAxisInput::Y, ArrowY, ShaftY, LabelY);
-		SetAxisVisibility(HighlightedAxis == ELastAxisInput::Z, ArrowZ, ShaftZ, LabelZ);
+		SetAxisVisibility(bX && HighlightedAxis == ELastAxisInput::X, ArrowX, ShaftX, LabelX);
+		SetAxisVisibility(bY && HighlightedAxis == ELastAxisInput::Y, ArrowY, ShaftY, LabelY);
+		SetAxisVisibility(bZ && HighlightedAxis == ELastAxisInput::Z, ArrowZ, ShaftZ, LabelZ);
 	}
 	else
 	{
-		SetAxisVisibility(true, ArrowX, ShaftX, LabelX);
-		SetAxisVisibility(true, ArrowY, ShaftY, LabelY);
-		SetAxisVisibility(true, ArrowZ, ShaftZ, LabelZ);
+		SetAxisVisibility(bX, ArrowX, ShaftX, LabelX);
+		SetAxisVisibility(bY, ArrowY, ShaftY, LabelY);
+		SetAxisVisibility(bZ, ArrowZ, ShaftZ, LabelZ);
 	}
 	
 	// Force render update when grid structure changes
@@ -625,15 +644,15 @@ void FSFArrowModule_StaticMesh::UpdateArrows(UWorld* World, const FTransform& Ba
 		
 		if (bModifierPressed)
 		{
-			SetAxisVisibility(HighlightedAxis == ELastAxisInput::X, ArrowX, ShaftX, LabelX);
-			SetAxisVisibility(HighlightedAxis == ELastAxisInput::Y, ArrowY, ShaftY, LabelY);
-			SetAxisVisibility(HighlightedAxis == ELastAxisInput::Z, ArrowZ, ShaftZ, LabelZ);
+			SetAxisVisibility(bX && HighlightedAxis == ELastAxisInput::X, ArrowX, ShaftX, LabelX);
+			SetAxisVisibility(bY && HighlightedAxis == ELastAxisInput::Y, ArrowY, ShaftY, LabelY);
+			SetAxisVisibility(bZ && HighlightedAxis == ELastAxisInput::Z, ArrowZ, ShaftZ, LabelZ);
 		}
 		else
 		{
-			SetAxisVisibility(true, ArrowX, ShaftX, LabelX);
-			SetAxisVisibility(true, ArrowY, ShaftY, LabelY);
-			SetAxisVisibility(true, ArrowZ, ShaftZ, LabelZ);
+			SetAxisVisibility(bX, ArrowX, ShaftX, LabelX);
+			SetAxisVisibility(bY, ArrowY, ShaftY, LabelY);
+			SetAxisVisibility(bZ, ArrowZ, ShaftZ, LabelZ);
 		}
 	}
 }

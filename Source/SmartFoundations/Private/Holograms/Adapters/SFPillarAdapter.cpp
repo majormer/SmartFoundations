@@ -1,8 +1,9 @@
 // Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 // Smart! Mod - Pillar Hologram Adapter Implementation
 
-#include "SFPillarAdapter.h"
 #include "SmartFoundations.h"
+#include "SFPillarAdapter.h"
+#include "Data/SFBuildableSizeRegistry.h"
 
 FSFPillarAdapter::FSFPillarAdapter(AFGHologram* InHologram)
 	: FSFHologramAdapterBase(InHologram)
@@ -11,9 +12,14 @@ FSFPillarAdapter::FSFPillarAdapter(AFGHologram* InHologram)
 
 FBoxSphereBounds FSFPillarAdapter::GetBuildingBounds() const
 {
-	// Standard pillar: 2m x 2m x 4m tall
-	// (200cm x 200cm x 400cm)
-	FVector PillarSize(200.0f, 200.0f, 400.0f);
+	// Bases and bodies have different native clearance dimensions. Known profiles
+	// preserve those snapping dimensions; modded pillars use the registry fallback.
+	FVector PillarSize = USFBuildableSizeRegistry::GetDefaultSize();
+	if (AFGHologram* Hologram = HologramPtr.Get())
+	{
+		FString SizeSource;
+		USFBuildableSizeRegistry::GetSizeWithFallback(Hologram->GetBuildClass(), PillarSize, SizeSource);
+	}
 	
 	FBox BoundingBox(
 		-PillarSize * 0.5f,
@@ -25,7 +31,9 @@ FBoxSphereBounds FSFPillarAdapter::GetBuildingBounds() const
 
 bool FSFPillarAdapter::SupportsFeature(ESFFeature Feature) const
 {
-	// Pillars support all features
+	AFGHologram* Hologram = HologramPtr.Get();
+	if (!Hologram || !Hologram->GetBuildClass()) return false;
+	const bool bSupportsScaling = USFBuildableSizeRegistry::GetProfile(Hologram->GetBuildClass()).bSupportsScaling;
 	switch (Feature)
 	{
 	case ESFFeature::ScaleX:
@@ -33,7 +41,7 @@ bool FSFPillarAdapter::SupportsFeature(ESFFeature Feature) const
 	case ESFFeature::ScaleZ:
 	case ESFFeature::Arrows:
 	case ESFFeature::Spacing:
-		return true;
+		return bSupportsScaling;
 	default:
 		return false;
 	}

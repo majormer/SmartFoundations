@@ -6,16 +6,16 @@
  * See SFExtendService.h for architecture overview and documentation.
  */
 
-// SP/MP DIVERGENCE MAP — Extend   (entry point for an Extend multiplayer-only bug; see CodeOrganization.md §5)
-//  1. Topology walk     — [MP-CLIENT] a client cannot walk the connection graph locally
+// SP/MP DIVERGENCE MAP â€” Extend   (entry point for an Extend multiplayer-only bug; see CodeOrganization.md Â§5)
+//  1. Topology walk     â€” [MP-CLIENT] a client cannot walk the connection graph locally
 //                         (mConnectedComponent is null on clients); [MP-SEAM] it requests the
 //                         walk over Server_RequestExtendTopology (SFRCO) and the server pushes the
 //                         complete, bounded source values back for previews and preset capture.
 //                         Conveyor-chain actors may not replicate; exact owner aliases adapt IDs
 //                         without re-reading client connections or guessing nearby ports.
-//  2. Commit reconstruct— [MP-AUTH] the server reconstructs the FULL commit from its own graph walk
+//  2. Commit reconstructâ€” [MP-AUTH] the server reconstructs the FULL commit from its own graph walk
 //                         (ReconstructCommitOnServer / ReconstructScaledCommitOnServer); topology is
-//                         NEVER shipped from the client (client GetConnection() is null → poisoned wiring).
+//                         NEVER shipped from the client (client GetConnection() is null â†’ poisoned wiring).
 //                         Scaled cells carry XYZ identity and world offsets through the commit.
 //                         After spawning, their topologies merge onto the fresh first-copy base;
 //                         validation and cable materialization must see the same complete plan.
@@ -24,21 +24,24 @@
 //                         FSFExtendAuthorityScope keeps remote request services/counters/settings separate
 //                         through native validation, construction, wiring and material payment. Topology
 //                         queries use an independent walker and cannot replace the host's preview cache.
-//  3. Cost charge       — [MP-AUTH] the childless server parent would charge the bare factory only, so
+//  3. Cost charge       â€” [MP-AUTH] the childless server parent would charge the bare factory only, so
 //                         GetCost is overridden with the client-captured preview cost. (Net seam: Hook A,
 //                         Core/Net/SFGameInstanceModule_SpecHooks.cpp)
-//  4. Designer context  — [MP-REPL] mBlueprintDesigner does not cross the construct message; re-derived
+//  4. Designer context  â€” [MP-REPL] mBlueprintDesigner does not cross the construct message; re-derived
 //                         authoritatively from containment at the construct seam. (Net seam: Hook B)
-//  5. Clone-id wiring   — [MP-AUTH] the SP swapped-parent (ASFFactoryHologram) does not exist server-side,
+//  5. Clone-id wiring   â€” [MP-AUTH] the SP swapped-parent (ASFFactoryHologram) does not exist server-side,
 //                         so the server position-matches clone-id children to built actors post-construct
 //                         and runs the wiring pass synchronously. (Net seam: Hook B)
 
 #include "Features/Extend/SFExtendService.h"
+#include "Holograms/Logistics/SFWaterPumpChildHologram.h"
 #include "Features/Extend/Net/SFExtendAuthorityScope.h"
 #include "Features/Extend/Net/SFExtendSourceSnapshot.h"
 #include "Engine/OverlapResult.h"
 #include "Misc/ScopeExit.h"
 #include "Features/Extend/SFExtendControlFrame.h"
+#include "Features/Extend/SFExtendRunFrame.h"
+#include "Features/Extend/SFRestoreGrid.h"
 #include "Features/Extend/SFExtendDetectionService.h"
 #include "Features/Extend/SFExtendTopologyService.h"
 #include "Features/Extend/SFExtendHologramService.h"
@@ -163,12 +166,12 @@ void USFExtendService::ClearExtendState()
         StageCommitClearForMP();
 
         // CRITICAL: Unlock the extend hologram BEFORE any cleanup.
-        // This is the hologram that was locked at activation — must be unlocked
+        // This is the hologram that was locked at activation â€” must be unlocked
         // so the build gun can reposition it when the player aims elsewhere.
         if (CurrentExtendHologram.IsValid())
         {
             CurrentExtendHologram->LockHologramPosition(false);
-            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("🔄 EXTEND: Unlocked CurrentExtendHologram"));
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("ðŸ”„ EXTEND: Unlocked CurrentExtendHologram"));
         }
 
         // Restore the original hologram (cleans up swapped hologram tracking)
@@ -185,7 +188,7 @@ void USFExtendService::ClearExtendState()
 
         // CRITICAL: Clear extend flags BEFORE restoring counters.
         // UpdateCounterState triggers OnScaledExtendStateChanged when IsExtendModeActive() is true,
-        // which calls RefreshExtension → repositions and re-locks the hologram.
+        // which calls RefreshExtension â†’ repositions and re-locks the hologram.
         // By clearing flags first, the counter restore won't trigger extend state changes.
         bHasValidTarget = false;
         bExtendCommitted = false;
@@ -195,7 +198,7 @@ void USFExtendService::ClearExtendState()
         // Now safe to restore pre-Extend counter snapshot
         if (bHasCounterSnapshot && Subsystem.IsValid())
         {
-            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("🔄 EXTEND: Restoring pre-Extend counters (X=%d, Y=%d, Spacing=%d)"),
+            SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("ðŸ”„ EXTEND: Restoring pre-Extend counters (X=%d, Y=%d, Spacing=%d)"),
                 PreExtendCounterSnapshot.GridCounters.X, PreExtendCounterSnapshot.GridCounters.Y,
                 PreExtendCounterSnapshot.SpacingX);
             Subsystem->UpdateCounterState(PreExtendCounterSnapshot);
@@ -401,19 +404,48 @@ FVector USFExtendService::GetFurthestScaledCloneWorldPosition(const FVector& Fal
     }
 
     const FVector SourceLocation = Source->GetActorLocation();
-    const FVector* FurthestOffset = nullptr;
-    float BestDistSq = -1.0f;
-    for (const FSFScaledExtendClone& Clone : ScaledExtendClones)
+    const FSFScaledExtendClone* Focus = SFExtendRunFrame::FindFocus(ScaledExtendClones);
+    return Focus ? (SourceLocation + Focus->WorldOffset) : FallbackLocation;
+}
+
+bool USFExtendService::TryGetCameraRunFrame(const AFGHologram* Hologram, FTransform& OutFrame) const
+{
+    if (bRestoredCloneTopologyActive && RestoredCloneTopologyTemplate.IsValid() && Subsystem.IsValid())
     {
-        const float DistSq = Clone.WorldOffset.SizeSquared();
-        if (DistSq > BestDistSq)
+        const AFGHologram* Parent = RestoredCloneParentHologram.Get();
+        if (!Parent || Parent != Hologram) return false;
+        const FSFCounterState& State = Subsystem->GetCounterState();
+        const FIntVector LastCell(FMath::Max(1, FMath::Abs(State.GridCounters.X)) - 1,
+            FMath::Max(1, FMath::Abs(State.GridCounters.Y)) - 1,
+            FMath::Max(1, FMath::Abs(State.GridCounters.Z)) - 1);
+        // Replay can rotate/reposition the parent while materializing the base module.
+        // Read the resulting previews instead of applying the layout to that parent again.
+        bool bCompletePreview = true;
+        FTransform PreviewFrame;
+        const bool bHasFrame = SFExtendRunFrame::TryFromRestoredGrid(LastCell, [&](const FIntVector& Cell)
         {
-            BestDistSq = DistSq;
-            FurthestOffset = &Clone.WorldOffset;
+            if (Cell == FIntVector::ZeroValue) return Parent->GetActorLocation();
+            const FString Id = SFRestoreGrid::Prefix(Cell.X, Cell.Y, Cell.Z) + TEXT("factory");
+            const TObjectPtr<AFGHologram>* Preview = JsonSpawnedHolograms.Find(Id);
+            if (Preview && IsValid(Preview->Get())) return (*Preview)->GetActorLocation();
+            bCompletePreview = false;
+            return FVector::ZeroVector;
+        }, PreviewFrame);
+        if (bCompletePreview && bHasFrame)
+        {
+            OutFrame = PreviewFrame;
+            return true;
         }
+        // Applying a module while aiming at a factory can leave live Extend active.
+        // If Restore has no complete factory preview, use that visible live layout below.
     }
 
-    return FurthestOffset ? (SourceLocation + *FurthestOffset) : FallbackLocation;
+    const AFGBuildable* Source = CurrentExtendTarget.Get();
+    const AFGHologram* Parent = CurrentExtendHologram.Get();
+    if (!bHasValidTarget || !Source || !Parent || Parent != Hologram) return false;
+    if (IsScaledExtendActive())
+        return SFExtendRunFrame::TryFromClones(Source->GetActorLocation(), Parent->GetActorLocation(), ScaledExtendClones, OutFrame);
+    return SFExtendRunFrame::TryMake(Parent->GetActorLocation(), Source->GetActorLocation(), OutFrame);
 }
 
 FVector USFExtendService::GetFurthestRestoredCloneWorldPosition(const FVector& FallbackLocation) const
@@ -665,7 +697,7 @@ bool USFExtendService::IsDirectionValid(ESFExtendDirection Direction) const
     // extent is clamped to a thin slab: overlap is allowed (vanilla allows it), and a manifold
     // stacked a few walls above/below was never "the wrong side". Previously HalfExtent scaled
     // with full building height, so the box reached onto other floors and blocked a legitimate
-    // stacked manifold (a 3-wall gap failed while a 4-wall gap worked — reporter @maxstudy).
+    // stacked manifold (a 3-wall gap failed while a 4-wall gap worked â€” reporter @maxstudy).
     FVector HalfExtent = BuildingSize * 0.45f; // horizontal: stays within the next cell
     HalfExtent.Z = 50.0f;                       // vertical: same level only, ignore stacked neighbours
 
@@ -750,7 +782,7 @@ TArray<ESFExtendDirection> USFExtendService::GetValidDirections() const
 
 bool USFExtendService::WalkTopology(AFGBuildable* SourceBuilding)
 {
-    // [MP-CLIENT][MP-SEAM] (Extend §1) A network client cannot walk the graph locally:
+    // [MP-CLIENT][MP-SEAM] (Extend Â§1) A network client cannot walk the graph locally:
     // mConnectedComponent is UPROPERTY(SaveGame) - server-only, NOT replicated - so GetConnection()
     // is null on clients by design (live-diagnosed 2026-06-08: "2 factory connectors, 0 with resolved
     // GetConnection()"). Ask the SERVER to walk via the USFRCO topology request and consume the
@@ -971,7 +1003,7 @@ bool USFExtendService::BuildCommitSpecForMP(AFGHologram* ParentHologram, FSFExte
     return true;
 }
 
-// [MP-AUTH] (Extend §2) Server-authoritative commit reconstruction. Called from the construct seam
+// [MP-AUTH] (Extend Â§2) Server-authoritative commit reconstruction. Called from the construct seam
 // (Net: Hook B). Derives topology from the server's own graph walk - NEVER from client-shipped data.
 int32 USFExtendService::ReconstructCommitOnServer(AFGHologram* ParentHologram, const FSFExtendCommitSpec& Spec)
 {
@@ -1126,7 +1158,7 @@ int32 USFExtendService::ReconstructCommitOnServer(AFGHologram* ParentHologram, c
     return NumSpawned;
 }
 
-// [MP-CLIENT][MP-SEAM] (Extend §2) Client-only: stage the commit to the server over USFRCO so the
+// [MP-CLIENT][MP-SEAM] (Extend Â§2) Client-only: stage the commit to the server over USFRCO so the
 // server can reconstruct it authoritatively (ReconstructCommitOnServer). No-op on authority.
 void USFExtendService::MaybeStageCommitForMP(AFGHologram* ParentHologram)
 {
@@ -1386,9 +1418,11 @@ bool USFExtendService::IsValidExtendTarget(AFGBuildable* Building) const
         return false;
     }
 
-    // Explicitly reject all resource extractors (miners, oil extractors, resource well extractors, water extractors)
-    // NOTE: We may revisit re-enabling water extractors (AFGBuildableWaterPump) in the future.
+    // Reject node-bound extractors; vanilla Water Extractors use destination validation.
+    // Water Extractors alone use the per-destination water contract below.
     // EXCEPTION: Allow FICSMAS Gift Trees (Build_TreeGiftProducer_C) which are technically resource extractors but work with Extend
+    if (ASFWaterPumpChildHologram::IsVanillaWaterExtractor(Building->GetClass())) return true;
+
     if (Building->IsA(AFGBuildableResourceExtractorBase::StaticClass()))
     {
         // check if it's a gift tree
@@ -1449,7 +1483,7 @@ bool USFExtendService::TryExtendFromBuilding(AFGBuildable* HitBuilding, AFGHolog
     double EntryNow = FPlatformTime::Seconds();
     if (EntryNow - LastEntryLog > 1.0)
     {
-        UE_LOG(LogSmartExtend, VeryVerbose, TEXT("🔄 EXTEND: TryExtend called - Building=%s, Hologram=%s, bHasValidTarget=%d"),
+        UE_LOG(LogSmartExtend, VeryVerbose, TEXT("ðŸ”„ EXTEND: TryExtend called - Building=%s, Hologram=%s, bHasValidTarget=%d"),
             HitBuilding ? *HitBuilding->GetName() : TEXT("NULL"),
             SourceHologram ? *SourceHologram->GetName() : TEXT("NULL"),
             bHasValidTarget ? 1 : 0);
@@ -1478,7 +1512,7 @@ bool USFExtendService::TryExtendFromBuilding(AFGBuildable* HitBuilding, AFGHolog
         {
             if (bExtendCommitted || bExtendManualHold)
             {
-                // Committed (scale action) or manually pinned (Hold key, #342) — keep Extend alive, maintain preview
+                // Committed (scale action) or manually pinned (Hold key, #342) â€” keep Extend alive, maintain preview
                 if (CurrentExtendHologram.IsValid())
                 {
                     RefreshExtension(CurrentExtendHologram.Get());
@@ -1487,8 +1521,8 @@ bool USFExtendService::TryExtendFromBuilding(AFGBuildable* HitBuilding, AFGHolog
             }
             else
             {
-                // Not committed — deactivate Extend so user can sample/build elsewhere
-                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("🔄 EXTEND: Deactivating (not committed, looked away)"));
+                // Not committed â€” deactivate Extend so user can sample/build elsewhere
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("ðŸ”„ EXTEND: Deactivating (not committed, looked away)"));
                 ClearExtendState();
                 return false;
             }
@@ -1496,7 +1530,7 @@ bool USFExtendService::TryExtendFromBuilding(AFGBuildable* HitBuilding, AFGHolog
     }
     else
     {
-        // Not yet activated — validate normally before first activation
+        // Not yet activated â€” validate normally before first activation
         if (!IsValid(HitBuilding) || !IsValid(SourceHologram))
         {
             return false; // no target/hologram (handled/logged upstream)
@@ -1545,7 +1579,7 @@ bool USFExtendService::TryExtendFromBuilding(AFGBuildable* HitBuilding, AFGHolog
     // #342: a manual Hold-key pin gets the same protection.
     if ((bExtendCommitted || bExtendManualHold) && CurrentExtendTarget.IsValid() && CurrentExtendTarget.Get() != HitBuilding)
     {
-        // Still committed to the original target — just maintain the current preview
+        // Still committed to the original target â€” just maintain the current preview
         if (CurrentExtendHologram.IsValid())
         {
             RefreshExtension(CurrentExtendHologram.Get());
@@ -1563,7 +1597,7 @@ bool USFExtendService::TryExtendFromBuilding(AFGBuildable* HitBuilding, AFGHolog
         {
             // Hologram changed (likely after a build) - clean up and reset EXTEND state
             // User must re-aim at target to reactivate EXTEND
-            UE_LOG(LogSmartExtend, VeryVerbose, TEXT("🔄 EXTEND: Hologram changed (build completed?) - resetting EXTEND state"));
+            UE_LOG(LogSmartExtend, VeryVerbose, TEXT("ðŸ”„ EXTEND: Hologram changed (build completed?) - resetting EXTEND state"));
 
             // CRITICAL: Remember which building we just built from to prevent immediate re-activation
             // User must look away first before extending from the same building again
@@ -1589,7 +1623,7 @@ bool USFExtendService::TryExtendFromBuilding(AFGBuildable* HitBuilding, AFGHolog
         double RefreshNow = FPlatformTime::Seconds();
         if (RefreshNow - LastRefreshLog > 2.0)
         {
-            UE_LOG(LogSmartExtend, VeryVerbose, TEXT("🔄 EXTEND: Already extending from %s, refreshing"), *HitBuilding->GetName());
+            UE_LOG(LogSmartExtend, VeryVerbose, TEXT("ðŸ”„ EXTEND: Already extending from %s, refreshing"), *HitBuilding->GetName());
             LastRefreshLog = RefreshNow;
         }
 
@@ -1609,15 +1643,15 @@ bool USFExtendService::TryExtendFromBuilding(AFGBuildable* HitBuilding, AFGHolog
     // User is pointing at a different building - clear the cooldown
     if (LastBuiltFromBuilding.IsValid() && LastBuiltFromBuilding.Get() != HitBuilding)
     {
-        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("🔄 EXTEND: User looked away from last built building - cooldown cleared"));
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("ðŸ”„ EXTEND: User looked away from last built building - cooldown cleared"));
         LastBuiltFromBuilding.Reset();
     }
 
     // New target - walk topology
-    UE_LOG(LogSmartExtend, VeryVerbose, TEXT("🔄 EXTEND: Checks passed! Walking topology for %s"), *HitBuilding->GetName());
+    UE_LOG(LogSmartExtend, VeryVerbose, TEXT("ðŸ”„ EXTEND: Checks passed! Walking topology for %s"), *HitBuilding->GetName());
 
     // NOTE: Orphaned pending builds will be cleared at the start of CreateBeltPreviews().
-    // No need to clear here - the flow is: WalkTopology → CreateBeltPreviews (clears all → spawns new).
+    // No need to clear here - the flow is: WalkTopology â†’ CreateBeltPreviews (clears all â†’ spawns new).
 
     const bool bWalked = WalkTopology(HitBuilding);
     {
@@ -1656,7 +1690,7 @@ bool USFExtendService::TryExtendFromBuilding(AFGBuildable* HitBuilding, AFGHolog
     bHasValidTarget = true;  // EXTEND is now active!
     bExtendCommitted = false;  // Not committed until first scale action (allows middle-click sampling)
     bExtendManualHold = false;  // #342: fresh Extend starts un-pinned; a deliberate Hold-key press toggles it on
-    bSuppressCommitOnCounterSync = false;  // fresh session — never inherit a stale latch
+    bSuppressCommitOnCounterSync = false;  // fresh session â€” never inherit a stale latch
 
     // Snapshot the current grid counters so we can restore them when Extend deactivates.
     // This prevents normal scaling from inheriting Extend's counter values (X=3, spacing=200, etc.)
@@ -1664,7 +1698,7 @@ bool USFExtendService::TryExtendFromBuilding(AFGBuildable* HitBuilding, AFGHolog
     {
         PreExtendCounterSnapshot = Subsystem->GetCounterState();
         bHasCounterSnapshot = true;
-        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("🔄 EXTEND: Snapshot pre-Extend counters (X=%d, Y=%d, Spacing=%d)"),
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("ðŸ”„ EXTEND: Snapshot pre-Extend counters (X=%d, Y=%d, Spacing=%d)"),
             PreExtendCounterSnapshot.GridCounters.X, PreExtendCounterSnapshot.GridCounters.Y,
             PreExtendCounterSnapshot.SpacingX);
     }
@@ -1674,7 +1708,7 @@ bool USFExtendService::TryExtendFromBuilding(AFGBuildable* HitBuilding, AFGHolog
     if (ValidDirs.Num() == 0)
     {
         // No valid directions - both sides blocked, can't extend
-        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Warning, TEXT("🔄 EXTEND: Cannot activate - both directions blocked by existing buildings"));
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Warning, TEXT("ðŸ”„ EXTEND: Cannot activate - both directions blocked by existing buildings"));
         CurrentExtendTarget.Reset();
         bHasValidTarget = false;
         return false;
@@ -1689,11 +1723,11 @@ bool USFExtendService::TryExtendFromBuilding(AFGBuildable* HitBuilding, AFGHolog
         {
             DetectionService->SetExtendDirection(CurrentDir);
         }
-        UE_LOG(LogSmartExtend, VeryVerbose, TEXT("🔄 EXTEND: Auto-selected direction %s (other side blocked)"),
+        UE_LOG(LogSmartExtend, VeryVerbose, TEXT("ðŸ”„ EXTEND: Auto-selected direction %s (other side blocked)"),
             CurrentDir == ESFExtendDirection::Right ? TEXT("Right") : TEXT("Left"));
     }
 
-    UE_LOG(LogSmartExtend, VeryVerbose, TEXT("🔄 EXTEND: ✅ ACTIVATED - pointing at %s (direction: %s, valid dirs: %d)"),
+    UE_LOG(LogSmartExtend, VeryVerbose, TEXT("ðŸ”„ EXTEND: âœ… ACTIVATED - pointing at %s (direction: %s, valid dirs: %d)"),
         *HitBuilding->GetName(),
         CurrentDir == ESFExtendDirection::Right ? TEXT("Right") : TEXT("Left"),
         ValidDirs.Num());
@@ -1706,22 +1740,22 @@ bool USFExtendService::TryExtendFromBuilding(AFGBuildable* HitBuilding, AFGHolog
     AFGHologram* ActiveHologram = SwapToSmartFactoryHologram(SourceHologram);
     if (!ActiveHologram)
     {
-        // Swap failed — fall back to vanilla hologram
+        // Swap failed â€” fall back to vanilla hologram
         ActiveHologram = SourceHologram;
-        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Warning, TEXT("🔄 EXTEND: Hologram swap failed, using vanilla hologram"));
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Warning, TEXT("ðŸ”„ EXTEND: Hologram swap failed, using vanilla hologram"));
     }
 
     // Track which hologram we've set up for EXTEND
     CurrentExtendHologram = ActiveHologram;
 
     // Lock the hologram BEFORE the signed-counter sync below. That sync triggers a scaled
-    // rebuild whose RefreshExtension runs REENTRANTLY, mid-activation — and RefreshExtension
+    // rebuild whose RefreshExtension runs REENTRANTLY, mid-activation â€” and RefreshExtension
     // treats an unlocked active hologram as a player Hold press (#342 pin). Locking first means
     // the reentrant pass finds a locked hologram; otherwise the side of the chain whose Chain
     // sign differs from the prior counter silently engaged the pin at activation, making Extend
     // sticky on that one side ("auto-lock") while the other side released on look-away normally.
     ActiveHologram->LockHologramPosition(true);
-    UE_LOG(LogSmartExtend, VeryVerbose, TEXT("🔄 EXTEND: Locked hologram %s"), *ActiveHologram->GetClass()->GetName());
+    UE_LOG(LogSmartExtend, VeryVerbose, TEXT("ðŸ”„ EXTEND: Locked hologram %s"), *ActiveHologram->GetClass()->GetName());
 
     // Swapping the hologram can publish the pre-Extend counter state through the subsystem and
     // temporarily drive the selector from its stale X sign. Preserve the side selected above and
@@ -1751,10 +1785,10 @@ bool USFExtendService::CanAffordExtendCost(AFGHologram* Hologram, UFGInventoryCo
         return true;  // Can't evaluate -> never block.
     }
 
-    // #497 frame-memo: this runs up to three times per frame (vanilla ValidatePlacementAndCost →
+    // #497 frame-memo: this runs up to three times per frame (vanilla ValidatePlacementAndCost â†’
     // our CheckCanAfford, RefreshExtension's own ValidatePlacementAndCost, and RefreshExtension's
     // direct call), each triggering the FULL GetCost(includeChildren) walk over every preview
-    // child — measured as the dominant game-thread cost at 77×1. One real walk per frame keeps
+    // child â€” measured as the dominant game-thread cost at 77Ã—1. One real walk per frame keeps
     // the #357 side effect below; the repeats return the memo.
     if (LastAffordabilityFrame == GFrameCounter)
     {
@@ -1923,7 +1957,7 @@ void USFExtendService::RefreshExtension(AFGHologram* SourceHologram, bool bForce
         ActiveHologram->SetHologramLocationAndRotation(FloorHit);
     }
 
-    // Extend owns placement while active, so re-assert the lock defensively — but NEVER treat an
+    // Extend owns placement while active, so re-assert the lock defensively â€” but NEVER treat an
     // unlocked frame as player intent here. Poll-based Hold detection was aim/tick-order dependent
     // and mid-activation refreshes (the Chain-sign sync rebuild) reach this line before activation
     // has locked the hologram, which silently pinned Extend on exactly one side of a chain. The
@@ -1953,9 +1987,11 @@ void USFExtendService::RefreshExtension(AFGHologram* SourceHologram, bool bForce
     // Our ASFFactoryHologram::CheckValidPlacement override skips vanilla's clearance
     // checks during extend mode, so no encroachment disqualifiers get added.
     EHologramMaterialState ExtendMaterialState = EHologramMaterialState::HMS_OK;
-    if (!bScaledExtendValid)
+    const bool bWaterValid = ASFWaterPumpChildHologram::ValidateWaterTree(ActiveHologram);
+    if (!bScaledExtendValid || !bWaterValid)
     {
-        // Lane segment validation failed — keep hologram red and block building
+        if (!bWaterValid) ActiveHologram->AddConstructDisqualifier(UFGCDNeedsWaterVolume::StaticClass());
+        // Lane segment validation failed â€” keep hologram red and block building
         ActiveHologram->SetPlacementMaterialState(EHologramMaterialState::HMS_ERROR);
         ExtendMaterialState = EHologramMaterialState::HMS_ERROR;
     }
@@ -1991,7 +2027,7 @@ void USFExtendService::RefreshExtension(AFGHologram* SourceHologram, bool bForce
         // feedback loop that latches red and never recovers once it has gone red, even after the
         // build becomes affordable again. In extend mode the only real gates are geometry/power
         // (bScaledExtendValid, handled in the !bScaledExtendValid branch above) and depot-aware
-        // affordability — so derive purely from those.
+        // affordability â€” so derive purely from those.
         const bool bCanAffordExtend = CanAffordExtendCost(ActiveHologram, PlayerInventory);
         ExtendMaterialState = bCanAffordExtend
             ? EHologramMaterialState::HMS_OK
@@ -2012,15 +2048,15 @@ void USFExtendService::RefreshExtension(AFGHologram* SourceHologram, bool bForce
     // so the build gun's per-frame validation cascade can no longer reset them to cyan.
     ExtendChildMaterialState = ExtendMaterialState;
 
-    // #497: this per-frame reapply is LOAD-BEARING — do not remove it again. Removing it (Item 6,
+    // #497: this per-frame reapply is LOAD-BEARING â€” do not remove it again. Removing it (Item 6,
     // first attempt) left EVERY extend child at world origin (live inspection: 67/68 holograms at exactly
     // 0,0,0; only wires still rendered because their catenary meshes draw from stored endpoints).
     // Something in vanilla resets AddChild'd extend children to origin after the rebuild even though
-    // every child class no-ops SetHologramLocationAndRotation and the parent blocks propagation —
+    // every child class no-ops SetHologramLocationAndRotation and the parent blocks propagation â€”
     // the same unidentified mover the belt Tick's origin-snap correction and the old "continuous
     // position correction" timer were built to fight. Until that mover is found and blocked at the
     // source, this drift-check (cheap when nothing moved: compare + skip) is the repair that keeps
-    // previews placed — and it must run every frame, not once per rebuild.
+    // previews placed â€” and it must run every frame, not once per rebuild.
     if (HologramService)
     {
         HologramService->RefreshChildPositions();
@@ -2028,7 +2064,7 @@ void USFExtendService::RefreshExtension(AFGHologram* SourceHologram, bool bForce
 
     // #497 set-once: sweep the child previews only when the authoritative state actually CHANGES.
     // Children are painted at spawn (clone spawner / CreateBeltPreviews), so re-sweeping an unchanged
-    // state every frame only re-dirtied every spline-mesh render proxy — the render-thread/GPU churn
+    // state every frame only re-dirtied every spline-mesh render proxy â€” the render-thread/GPU churn
     // behind the Extend frame loss. The per-hologram set-once guards (belt/pipe/lift/factory) are the
     // second layer; this gate removes even the per-child Super::SetPlacementMaterialState calls.
     if (!bExtendChildMaterialStateSynced || ExtendMaterialState != LastSyncedExtendChildMaterialState)
@@ -2118,7 +2154,7 @@ void USFExtendService::RefreshExtension(AFGHologram* SourceHologram, bool bForce
             }
         }
 
-        UE_LOG(LogSmartExtend, VeryVerbose, TEXT("🔄 EXTEND: Pos=(%.0f,%.0f,%.0f) Scale=%.2f Visible=%d Hidden=%d Mat=%s"),
+        UE_LOG(LogSmartExtend, VeryVerbose, TEXT("ðŸ”„ EXTEND: Pos=(%.0f,%.0f,%.0f) Scale=%.2f Visible=%d Hidden=%d Mat=%s"),
             MeshWorldPos.X, MeshWorldPos.Y, MeshWorldPos.Z,
             MeshScale.X,
             bCompVisible ? 1 : 0,
@@ -2134,14 +2170,14 @@ void USFExtendService::RefreshExtension(AFGHologram* SourceHologram, bool bForce
                 // #497: this block is diagnostics only now. The former material/visibility re-apply
                 // ("vanilla may reset material state") is superseded by the set-once contract:
                 // children are painted at spawn + mesh generation, and re-swept only on state change.
-                UE_LOG(LogSmartExtend, VeryVerbose, TEXT("🔄 EXTEND Child[%d]: Pos=%s Hidden=%d MatState=%d"),
+                UE_LOG(LogSmartExtend, VeryVerbose, TEXT("ðŸ”„ EXTEND Child[%d]: Pos=%s Hidden=%d MatState=%d"),
                     i, *Child->GetActorLocation().ToString(),
                     Child->IsHidden() ? 1 : 0,
                     (int32)USFHologramDataService::GetRawPlacementMaterialState(Child));
             }
             else
             {
-                UE_LOG(LogSmartExtend, VeryVerbose, TEXT("🔄 EXTEND Child[%d]: INVALID/DESTROYED"), i);
+                UE_LOG(LogSmartExtend, VeryVerbose, TEXT("ðŸ”„ EXTEND Child[%d]: INVALID/DESTROYED"), i);
             }
         }
 
@@ -2151,7 +2187,7 @@ void USFExtendService::RefreshExtension(AFGHologram* SourceHologram, bool bForce
 
 void USFExtendService::CleanupExtension(AFGHologram* SourceHologram)
 {
-    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("🔧 EXTEND: CleanupExtension called for %s"),
+    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("ðŸ”§ EXTEND: CleanupExtension called for %s"),
         SourceHologram ? *SourceHologram->GetName() : TEXT("nullptr"));
 
     if (bRestoredCloneTopologyActive)
@@ -2172,7 +2208,7 @@ void USFExtendService::CleanupExtension(AFGHologram* SourceHologram)
     // Restore pre-Extend counter snapshot so normal scaling isn't polluted
     if (bHasCounterSnapshot && Subsystem.IsValid())
     {
-        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("🔧 EXTEND: Restoring pre-Extend counters (X=%d, Y=%d, Spacing=%d)"),
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("ðŸ”§ EXTEND: Restoring pre-Extend counters (X=%d, Y=%d, Spacing=%d)"),
             PreExtendCounterSnapshot.GridCounters.X, PreExtendCounterSnapshot.GridCounters.Y,
             PreExtendCounterSnapshot.SpacingX);
         Subsystem->UpdateCounterState(PreExtendCounterSnapshot);
@@ -2195,7 +2231,7 @@ void USFExtendService::CleanupExtension(AFGHologram* SourceHologram)
     if (CurrentExtendTarget.IsValid())
     {
         LastBuiltFromBuilding = CurrentExtendTarget.Get();
-        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("🔧 EXTEND: Set cooldown on %s to prevent immediate re-activation"),
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("ðŸ”§ EXTEND: Set cooldown on %s to prevent immediate re-activation"),
             *CurrentExtendTarget->GetName());
     }
 
@@ -2207,7 +2243,7 @@ void USFExtendService::CleanupExtension(AFGHologram* SourceHologram)
     bHasValidTarget = false;
     bExtendCommitted = false;
 
-    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("🔧 EXTEND: State fully cleared (bHasValidTarget=false, pending belts preserved for deferred build)"));
+    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("ðŸ”§ EXTEND: State fully cleared (bHasValidTarget=false, pending belts preserved for deferred build)"));
 }
 
 void USFExtendService::CheckAndPerformFinalCleanup()
@@ -2217,7 +2253,7 @@ void USFExtendService::CheckAndPerformFinalCleanup()
         return;
     }
 
-    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("🔧 EXTEND: Performing final cleanup (build gun left build mode)"));
+    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("ðŸ”§ EXTEND: Performing final cleanup (build gun left build mode)"));
 
     // Force destroy any remaining preview holograms
     ClearScaledExtendClones();  // Issue #265: Clean up scaled extend clones
@@ -2233,7 +2269,7 @@ void USFExtendService::CheckAndPerformFinalCleanup()
     // Clear the flag
     bNeedsFinalCleanup = false;
 
-    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("🔧 EXTEND: Final cleanup complete"));
+    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("ðŸ”§ EXTEND: Final cleanup complete"));
 }
 
 // ==================== Build Gun Hologram Swapping ====================
@@ -2280,11 +2316,17 @@ UFGBuildGunStateBuild* USFExtendService::GetBuildGunBuildState(AFGBuildGun* Buil
     return Cast<UFGBuildGunStateBuild>(BuildGun->GetBuildGunStateFor(EBuildGunState::BGS_BUILD));
 }
 
-ASFFactoryHologram* USFExtendService::SwapToSmartFactoryHologram(AFGHologram* VanillaHologram, bool bTrackAsExtendSwap)
+UClass* USFExtendService::GetExtendRootHologramClass(const UClass* BuildClass)
+{
+    return ASFWaterPumpChildHologram::IsVanillaWaterExtractor(BuildClass)
+        ? ASFWaterPumpChildHologram::StaticClass() : ASFFactoryHologram::StaticClass();
+}
+
+AFGHologram* USFExtendService::SwapToSmartFactoryHologram(AFGHologram* VanillaHologram, bool bTrackAsExtendSwap)
 {
     if (!VanillaHologram || !VanillaHologram->IsValidLowLevel())
     {
-        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Warning, TEXT("🔄 EXTEND SWAP: Invalid vanilla hologram"));
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Warning, TEXT("ðŸ”„ EXTEND SWAP: Invalid vanilla hologram"));
         return nullptr;
     }
 
@@ -2292,7 +2334,7 @@ ASFFactoryHologram* USFExtendService::SwapToSmartFactoryHologram(AFGHologram* Va
     AFGFactoryHologram* FactoryHolo = Cast<AFGFactoryHologram>(VanillaHologram);
     if (!FactoryHolo)
     {
-        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Warning, TEXT("🔄 EXTEND SWAP: Not a factory hologram - %s"),
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Warning, TEXT("ðŸ”„ EXTEND SWAP: Not a factory hologram - %s"),
             *VanillaHologram->GetClass()->GetName());
         return nullptr;
     }
@@ -2301,14 +2343,14 @@ ASFFactoryHologram* USFExtendService::SwapToSmartFactoryHologram(AFGHologram* Va
     AFGBuildGun* BuildGun = GetPlayerBuildGun();
     if (!BuildGun)
     {
-        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Warning, TEXT("🔄 EXTEND SWAP: Could not get build gun"));
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Warning, TEXT("ðŸ”„ EXTEND SWAP: Could not get build gun"));
         return nullptr;
     }
 
     UFGBuildGunStateBuild* BuildState = GetBuildGunBuildState(BuildGun);
     if (!BuildState)
     {
-        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Warning, TEXT("🔄 EXTEND SWAP: Could not get build state"));
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Warning, TEXT("ðŸ”„ EXTEND SWAP: Could not get build state"));
         return nullptr;
     }
 
@@ -2316,20 +2358,20 @@ ASFFactoryHologram* USFExtendService::SwapToSmartFactoryHologram(AFGHologram* Va
     UWorld* World = VanillaHologram->GetWorld();
     if (!World)
     {
-        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Warning, TEXT("🔄 EXTEND SWAP: No world"));
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Warning, TEXT("ðŸ”„ EXTEND SWAP: No world"));
         return nullptr;
     }
 
     // Verify the vanilla hologram has a build class
     if (!VanillaHologram->GetBuildClass())
     {
-        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Error, TEXT("🔄 EXTEND SWAP: Vanilla hologram has no BuildClass"));
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Error, TEXT("ðŸ”„ EXTEND SWAP: Vanilla hologram has no BuildClass"));
         return nullptr;
     }
 
     // Use SpawnActorDeferred so we can initialize BEFORE BeginPlay is called
-    ASFFactoryHologram* CustomHologram = World->SpawnActorDeferred<ASFFactoryHologram>(
-        ASFFactoryHologram::StaticClass(),
+    AFGHologram* CustomHologram = World->SpawnActorDeferred<AFGHologram>(
+        GetExtendRootHologramClass(VanillaHologram->GetBuildClass()),
         FTransform(VanillaHologram->GetActorRotation(), VanillaHologram->GetActorLocation()),
         BuildGun,
         nullptr,
@@ -2338,13 +2380,22 @@ ASFFactoryHologram* USFExtendService::SwapToSmartFactoryHologram(AFGHologram* Va
 
     if (!CustomHologram)
     {
-        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Error, TEXT("🔄 EXTEND SWAP: Failed to spawn deferred custom hologram"));
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Error, TEXT("ðŸ”„ EXTEND SWAP: Failed to spawn deferred custom hologram"));
         return nullptr;
     }
 
     // CRITICAL: Initialize from the vanilla hologram BEFORE BeginPlay
     // This copies mBuildClass, mRecipe, etc. which are required for BeginPlay
-    CustomHologram->InitializeFromHologram(VanillaHologram);
+    if (ASFWaterPumpChildHologram* Water = Cast<ASFWaterPumpChildHologram>(CustomHologram))
+    {
+        // Keep the native resource-extractor serialization fields on the root.
+        Water->SetChildBuildClass(VanillaHologram->GetBuildClass());
+        Water->SetRecipe(VanillaHologram->GetRecipe());
+    }
+    else
+    {
+        CastChecked<ASFFactoryHologram>(CustomHologram)->InitializeFromHologram(VanillaHologram);
+    }
 
     // [#331] Carry the Blueprint Designer context across the swap (vanilla copies it onto
     // every constructed buildable; dropping it makes builds invisible to the designer).
@@ -2353,7 +2404,7 @@ ASFFactoryHologram* USFExtendService::SwapToSmartFactoryHologram(AFGHologram* Va
         CustomHologram->SetInsideBlueprintDesigner(Designer);
     }
 
-    // Copy mConstructionInstigator (private) via reflection — needed for build FX
+    // Copy mConstructionInstigator (private) via reflection â€” needed for build FX
     FProperty* InstigatorProp = AFGHologram::StaticClass()->FindPropertyByName(TEXT("mConstructionInstigator"));
     if (InstigatorProp)
     {
@@ -2395,13 +2446,13 @@ ASFFactoryHologram* USFExtendService::SwapToSmartFactoryHologram(AFGHologram* Va
             if (ObjProp)
             {
                 ObjProp->SetObjectPropertyValue(ValuePtr, CustomHologram);
-                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("🔄 EXTEND SWAP: ✅ Set mHologram via reflection"));
+                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("ðŸ”„ EXTEND SWAP: âœ… Set mHologram via reflection"));
             }
         }
     }
     else
     {
-        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Error, TEXT("🔄 EXTEND SWAP: Could not find mHologram property"));
+        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Error, TEXT("ðŸ”„ EXTEND SWAP: Could not find mHologram property"));
         CustomHologram->Destroy();
         return nullptr;
     }
@@ -2418,7 +2469,7 @@ ASFFactoryHologram* USFExtendService::SwapToSmartFactoryHologram(AFGHologram* Va
         bHasSwappedHologram = true;
     }
 
-    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("🔄 EXTEND SWAP: ✅ Successfully swapped to ASFFactoryHologram"));
+    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("ðŸ”„ EXTEND SWAP: âœ… Successfully swapped to ASFFactoryHologram"));
 
     return CustomHologram;
 }
@@ -2444,6 +2495,27 @@ void USFExtendService::RestoreOriginalHologram()
         SwappedHologram->LockHologramPosition(false);
     }
 
+    // Water's Extend root deliberately blocks native aiming. Return to the native
+    // recipe hologram after this teardown finishes, before ordinary placement or Restore.
+    // Defer replacement because callers can still hold the current hologram this tick.
+    if (ASFWaterPumpChildHologram* Water = Cast<ASFWaterPumpChildHologram>(SwappedHologram.Get()))
+    {
+        TWeakObjectPtr<AFGHologram> Previous = Water;
+        TWeakObjectPtr<UFGBuildGunStateBuild> BuildState = GetBuildGunBuildState(GetPlayerBuildGun());
+        TSubclassOf<UFGRecipe> Recipe = Water->GetRecipe();
+        if (UWorld* World = Water->GetWorld())
+        {
+            World->GetTimerManager().SetTimerForNextTick([Previous, BuildState, Recipe]()
+            {
+                if (Previous.IsValid() && BuildState.IsValid() && BuildState->GetHologram() == Previous.Get())
+                {
+                    BuildState->SetActiveRecipe(nullptr);
+                    BuildState->SetActiveRecipe(Recipe);
+                }
+            });
+        }
+    }
+
     SwappedHologram.Reset();
     bHasSwappedHologram = false;
 
@@ -2453,7 +2525,7 @@ void USFExtendService::RestoreOriginalHologram()
         HologramService->RestoreOriginalHologram();
     }
 
-    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("🔄 EXTEND SWAP: Hologram swap state cleared"));
+    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("ðŸ”„ EXTEND SWAP: Hologram swap state cleared"));
 }
 
 // ==================== Phase 2: Infrastructure Cloning (delegates to HologramService) ====================
@@ -2532,7 +2604,7 @@ void USFExtendService::CreateBeltPreviews(AFGHologram* ParentHologram)
                     WiringData.MaxConnections = PowerNode.MaxConnections;
                     PowerPoleWiringData.Add(CloneId, WiringData);
 
-                    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("⚡ EXTEND: Stored power pole wiring data for %s (source=%s, free=%d)"),
+                    SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("âš¡ EXTEND: Stored power pole wiring data for %s (source=%s, free=%d)"),
                         *CloneId, *PowerNode.PowerPole->GetName(), PowerNode.SourceFreeConnections);
                 }
             }
@@ -2756,7 +2828,7 @@ int32 USFExtendService::GetExtendCloneCount() const
     // X=2 means 2 clones (parent + 1 additional), X=3 means 3, etc.
     const FSFCounterState& State = Subsystem->GetCounterState();
     int32 XCount = FMath::Abs(State.GridCounters.X);
-    return FMath::Max(0, XCount);  // Direct: X=2 → 2 clones
+    return FMath::Max(0, XCount);  // Direct: X=2 â†’ 2 clones
 }
 
 int32 USFExtendService::GetExtendRowCount() const

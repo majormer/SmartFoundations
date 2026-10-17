@@ -9,6 +9,8 @@ namespace SFUpgradeTierPolicy
 {
 	inline bool AllowsDowngrade(ESFUpgradeFamily Family)
 	{
+		// Lower logistics throughput is useful for routing and balancing. Capacity
+		// replacements are upgrade-only, even if vanilla permits a lower tier.
 		return Family == ESFUpgradeFamily::Belt || Family == ESFUpgradeFamily::Lift || Family == ESFUpgradeFamily::Pipe;
 	}
 

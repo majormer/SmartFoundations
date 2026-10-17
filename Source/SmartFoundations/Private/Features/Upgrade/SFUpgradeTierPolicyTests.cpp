@@ -10,17 +10,25 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSFUpgradeTierPolicyTest, "SmartFoundations.Upg
 bool FSFUpgradeTierPolicyTest::RunTest(const FString& Parameters)
 {
 	using namespace SFUpgradeTierPolicy;
-	for (ESFUpgradeFamily Family : {ESFUpgradeFamily::PowerPole, ESFUpgradeFamily::WallOutletSingle, ESFUpgradeFamily::WallOutletDouble})
+	for (ESFUpgradeFamily Family : {ESFUpgradeFamily::PowerPole, ESFUpgradeFamily::WallOutletSingle,
+		ESFUpgradeFamily::WallOutletDouble, ESFUpgradeFamily::Miner, ESFUpgradeFamily::Pump, ESFUpgradeFamily::Tower})
 	{
 		const bool bDown = AllowsDowngrade(Family);
-		TestFalse(TEXT("Power families remain upgrade-only"), bDown);
-		TestFalse(TEXT("Maximum-tier power row has no targets"), HasAlternativeTier(3, 3, bDown));
-		TestFalse(TEXT("Power downgrade request rejected"), IsValidRequest(3, 1, false, bDown));
-		TestFalse(TEXT("All tiers cannot downgrade a power port"), Matches(3, 0, 2, bDown));
-		TestTrue(TEXT("All tiers still upgrades a lower power port"), Matches(1, 0, 2, bDown));
+		TestFalse(TEXT("Capacity families never offer downgrades"), bDown);
+		TestFalse(TEXT("Maximum-tier capacity row has no lower targets"), HasAlternativeTier(3, 3, bDown));
+		TestFalse(TEXT("Capacity downgrade request rejected"), IsValidRequest(3, 1, false, bDown));
+		TestFalse(TEXT("Network cannot lower a higher capacity actor"), Matches(3, 0, 2, bDown));
+		TestTrue(TEXT("Lower capacity tier can still upgrade"), HasAlternativeTier(1, 3, bDown));
+		TestTrue(TEXT("Upward direction remains eligible"), IsValidRequest(1, 3, false, bDown));
+		TestTrue(TEXT("Network still upgrades a lower capacity actor"), Matches(1, 0, 2, bDown));
 	}
 	for (ESFUpgradeFamily Family : {ESFUpgradeFamily::Belt, ESFUpgradeFamily::Lift, ESFUpgradeFamily::Pipe})
+	{
 		TestTrue(TEXT("Logistics downgrade remains enabled"), AllowsDowngrade(Family));
+		TestTrue(TEXT("Logistics lower target request remains accepted"), IsValidRequest(2, 1, false, AllowsDowngrade(Family)));
+		TestTrue(TEXT("Logistics network can lower a higher actor"), Matches(2, 0, 1, AllowsDowngrade(Family)));
+	}
+	TestFalse(TEXT("Unknown family cannot downgrade"), AllowsDowngrade(ESFUpgradeFamily::None));
 	TestTrue(TEXT("Maximum-tier rows still permit downgrades"), HasAlternativeTier(6, 6));
 	TestTrue(TEXT("Existing higher tier can return to unlocked Mk1"), HasAlternativeTier(3, 1));
 	TestFalse(TEXT("Mk1-only research has no alternate for Mk1"), HasAlternativeTier(1, 1));

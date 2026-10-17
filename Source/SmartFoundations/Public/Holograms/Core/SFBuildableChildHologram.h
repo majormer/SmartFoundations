@@ -31,6 +31,12 @@ class SMARTFOUNDATIONS_API ASFBuildableChildHologram : public AFGBuildableHologr
 public:
 	ASFBuildableChildHologram();
 
+	/** Spawn a fixed-buildable proxy with native meshes, connectors and recipe cost.
+	 * NAME_None leaves it standalone (Walking); a name attaches it to the scaling parent. */
+	static ASFBuildableChildHologram* SpawnPreview(AFGHologram* Seed, const FTransform& Pose,
+		ESFChildHologramType ChildType, FName ChildName = NAME_None,
+		TSubclassOf<ASFBuildableChildHologram> PreviewClass = nullptr);
+
 	/** Always-valid placement — children are positioned by Smart!, not vanilla snapping */
 	virtual void CheckValidPlacement() override;
 

@@ -39,6 +39,7 @@ public:
 
     /** Which conveyance the active walk is laying (belt vs pipe) - for the HUD badge + panel labels. */
     ESFWalkConveyanceType GetConveyanceType() const { return ConveyanceType; }
+    float GetMaximumAdvance() const;
 
     /** The first invalid-segment reason (e.g. "segment 2 too steep (83deg > 30deg)"), or empty if every segment shape is
      *  valid. Shown appended to the HUD walk badge — mirrors Extend's [INVALID]/[reason] pattern. */
@@ -65,6 +66,9 @@ public:
      *  USFExtendService::ReconstructCommitOnServer). Re-derives every frame from the deltas via AccumulateFrame -
      *  uses LOCAL state only, never the live member session. Returns the number of child holograms spawned. */
     int32 ReconstructWalkCommitOnServer(AFGHologram* SeedHologram, const FSFWalkCommitSpec& Spec);
+    static bool IsNativeSpanCommitPrepared(AFGHologram* SeedHologram);
+    static bool GetPreparedNativeSpanCost(const AFGHologram* SeedHologram, TArray<FItemAmount>& Cost);
+    void DiscardNativeSpanCommit(AFGHologram* SeedHologram);
 
     /** Commit-on-scale: lock the active segment and start a new active one inheriting the heading. */
     void CommitActiveAndAdvance();
@@ -136,6 +140,10 @@ public:
     static FString RunSelfTest();
 
 private:
+    /** Rails and vehicle paths are spans themselves: no support-anchor actors or support costs. */
+    void RebuildNativeSpans(int32 StartIndex);
+    int32 ReconstructNativeSpanCommit(AFGHologram* Seed, const FSFWalkCommitSpec& Spec);
+
     /** Spawn the full NumLanes×NumStacks cross-section of pole holograms for a segment at its derived frame, then
      *  link their belts. Poles are flat-indexed (lane * NumStacks + stack). */
     void SpawnSegmentHologram(int32 Index);

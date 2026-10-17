@@ -407,6 +407,14 @@ namespace
 		Obj->SetBoolField(TEXT("constructible"), Holo.bConstructible);
 		Obj->SetBoolField(TEXT("previewOnly"), Holo.bPreviewOnly);
 		Obj->SetNumberField(TEXT("thickness"), Holo.Thickness);
+        if (Holo.SelectedPole.bCaptured)
+        {
+            TSharedPtr<FJsonObject> Pole = MakeShared<FJsonObject>();
+            Pole->SetNumberField(TEXT("height"), Holo.SelectedPole.Height);
+            Pole->SetNumberField(TEXT("variation"), Holo.SelectedPole.Variation);
+            Pole->SetNumberField(TEXT("verticalAngle"), Holo.SelectedPole.VerticalAngle);
+            Obj->SetObjectField(TEXT("selectedPole"), Pole);
+        }
 		Obj->SetBoolField(TEXT("hasPassthroughLinks"), Holo.bHasPassthroughLinks);
 		Obj->SetObjectField(TEXT("passthroughTop"), ConnectionRefToJson(Holo.PassthroughTop));
 		Obj->SetObjectField(TEXT("passthroughBottom"), ConnectionRefToJson(Holo.PassthroughBottom));
@@ -477,6 +485,22 @@ namespace
 		Obj->TryGetBoolField(TEXT("constructible"), OutHolo.bConstructible);
 		Obj->TryGetBoolField(TEXT("previewOnly"), OutHolo.bPreviewOnly);
 		if (Obj->TryGetNumberField(TEXT("thickness"), Val)) OutHolo.Thickness = static_cast<float>(Val);
+		const TSharedPtr<FJsonObject>* Pole = nullptr;
+		if (Obj->TryGetObjectField(TEXT("selectedPole"), Pole) && Pole && Pole->IsValid())
+		{
+			double Height = 0, Variation = -1, Angle = 0;
+			if ((*Pole)->TryGetNumberField(TEXT("height"), Height)
+				&& (*Pole)->TryGetNumberField(TEXT("variation"), Variation)
+				&& (*Pole)->TryGetNumberField(TEXT("verticalAngle"), Angle)
+				&& FMath::IsFinite(Height) && FMath::IsFinite(Variation) && FMath::IsFinite(Angle)
+				&& Height > 0 && Variation >= 0 && Variation < 128 && Variation == FMath::FloorToDouble(Variation))
+			{
+				OutHolo.SelectedPole.bCaptured = true;
+				OutHolo.SelectedPole.Height = static_cast<float>(Height);
+				OutHolo.SelectedPole.Variation = static_cast<int32>(Variation);
+				OutHolo.SelectedPole.VerticalAngle = static_cast<float>(Angle);
+			}
+		}
 		if (Obj->TryGetNumberField(TEXT("userFlowLimit"), Val)) OutHolo.UserFlowLimit = static_cast<float>(Val);
 		Obj->TryGetStringField(TEXT("connectedPowerPoleHologramId"), OutHolo.ConnectedPowerPoleHologramId);
 		if (Obj->TryGetNumberField(TEXT("powerPoleMaxConnections"), Val)) OutHolo.PowerPoleMaxConnections = static_cast<int32>(Val);

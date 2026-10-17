@@ -6,10 +6,13 @@
  */
 
 #include "Subsystem/SFSubsystemImpl.h"
+#include "Holograms/Core/SFSignSupportMode.h"
 #include "Features/Extend/Net/SFExtendAuthorityScope.h"
 #include "Features/Walk/SFWalkService.h"
 #include "Buildables/FGBuildableFactory.h"
 #include "FGUnlockSubsystem.h"
+#include "Hologram/FGRailroadTrackHologram.h"
+#include "Hologram/FGVehiclePathSegmentHologram.h"
 
 
 // ========================================
@@ -522,6 +525,11 @@ void USFSubsystem::ClearStoredProductionRecipe()
 void USFSubsystem::OnRecipeModeChanged(const FInputActionValue& Value)
 {
 	bool bPressed = Value.Get<bool>();
+	if (SFSignSupportMode::IsAvailable(ActiveHologram.Get()))
+	{
+		if (bPressed) SFSignSupportMode::Toggle(ActiveHologram.Get());
+		return;
+	}
 
 	// Context-aware mode switching: U button behaves differently based on hologram type
 	// - Distributors: Auto-Connect Settings Mode (navigate belt settings)
@@ -539,7 +547,7 @@ void USFSubsystem::OnRecipeModeChanged(const FInputActionValue& Value)
 		bool bIsStackableBelt = USFAutoConnectService::IsBeltSupportHologram(ActiveHologram.Get());
 		bool bIsPowerPole = AutoConnectService->IsPowerPoleHologram(ActiveHologram.Get());
 		bool bIsPassthroughPipe = USFAutoConnectService::IsPassthroughPipeHologram(ActiveHologram.Get());
-		bIsStackableHypertube = USFAutoConnectService::IsStackableHypertubeSupportHologram(ActiveHologram.Get());
+		bIsStackableHypertube = USFAutoConnectService::IsHypertubeAutoConnectSupportHologram(ActiveHologram.Get());
 
 		bIsAutoConnectHologram = bIsDistributor || bIsPipeJunction || bIsStackablePipe || bIsStackableBelt || bIsPowerPole || bIsPassthroughPipe || bIsStackableHypertube;
 
@@ -1165,7 +1173,7 @@ void USFSubsystem::CycleAutoConnectSetting()
         bIsStackablePipe = AutoConnectService->IsPipeSupportHologram(ActiveHologram.Get());
         bIsStackableBelt = USFAutoConnectService::IsBeltSupportHologram(ActiveHologram.Get());
         bIsPowerPole = AutoConnectService->IsPowerPoleHologram(ActiveHologram.Get());
-        bIsStackableHypertube = USFAutoConnectService::IsStackableHypertubeSupportHologram(ActiveHologram.Get());
+        bIsStackableHypertube = USFAutoConnectService::IsHypertubeAutoConnectSupportHologram(ActiveHologram.Get());
     }
 
     if (bIsPowerPole)
@@ -1518,7 +1526,7 @@ void USFSubsystem::AdjustAutoConnectSetting(int32 Delta)
             AutoConnectService->ProcessStackablePipelineSupports(ActiveHologram.Get());
             UE_LOG(LogSmartFoundations, Verbose, TEXT("[AC-HUD] reprocess -> stackable PIPE supports (pipeMode=%d)"), AutoConnectRuntimeSettings.PipeRoutingMode);
         }
-        else if (USFAutoConnectService::IsStackableHypertubeSupportHologram(ActiveHologram.Get()))
+        else if (USFAutoConnectService::IsHypertubeAutoConnectSupportHologram(ActiveHologram.Get()))
         {
             // #405: Stackable hypertube supports — re-process preview tubes on settings change
             AutoConnectService->ProcessStackableHypertubeSupports(ActiveHologram.Get());
@@ -1805,7 +1813,7 @@ bool USFSubsystem::IsCurrentHologramAutoConnectCapable() const
 	       USFAutoConnectService::IsPassthroughPipeHologram(Hologram) ||
 	       Cast<AFGBlueprintHologram>(Hologram) != nullptr ||                     // [#168] blueprint seam auto-connect:
 	                                                                              //   HUD shows AC settings + seam skips
-	       USFAutoConnectService::IsStackableHypertubeSupportHologram(Hologram);  // #405: hypertube supports were
+	       USFAutoConnectService::IsHypertubeAutoConnectSupportHologram(Hologram);  // #405: hypertube supports were
 	                                                                              //   missing here too, so the HUD
 	                                                                              //   suppressed the settings overlay
 }
@@ -1832,6 +1840,8 @@ bool USFSubsystem::IsScaleDaisyChainPowerOverrideDirty() const
 
 bool USFSubsystem::IsCurrentHologramWalkable() const
 {
+	if (Cast<AFGRailroadTrackHologram>(ActiveHologram.Get())) { return true; }
+	if (Cast<AFGVehiclePathSegmentHologram>(ActiveHologram.Get())) { return true; }
 	// Smart Walking seeds from a stackable belt, pipe, OR hypertube support — matches the walk's conveyance adapters
 	// (belt/pipe/hypertube). The hypertube support keys off its own build class, not IsStackableSupportHologram, so OR
 	// it in explicitly — else the Walk Path button never appears on a held tube pole. #405
@@ -1866,7 +1876,7 @@ TArray<FString> USFSubsystem::GetDirtyAutoConnectSettings() const
 		bIsStackableSupport = USFAutoConnectService::IsBeltSupportHologram(Hologram);
 		bIsPipeSupport = AutoConnectService->IsPipeSupportHologram(Hologram);
 		bIsPassthroughPipe = USFAutoConnectService::IsPassthroughPipeHologram(Hologram);
-		bIsStackableHypertube = USFAutoConnectService::IsStackableHypertubeSupportHologram(Hologram);
+		bIsStackableHypertube = USFAutoConnectService::IsHypertubeAutoConnectSupportHologram(Hologram);
 	}
 
 	// CRITICAL FIX: Only show settings relevant to current hologram type

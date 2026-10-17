@@ -78,6 +78,7 @@ struct FSmart_PowerConfigSection {
 USTRUCT(BlueprintType)
 struct FSmart_BuildingBehaviorConfigSection {
     GENERATED_BODY()
+    UPROPERTY(BlueprintReadWrite) bool bPreserveUpgradeDismantleGroups{true};
     UPROPERTY(BlueprintReadWrite) bool bExtendEnabled{true};
     UPROPERTY(BlueprintReadWrite) bool bExtendPowerEnabled{};
     UPROPERTY(BlueprintReadWrite) bool bExtendDaisyChainPower{true};
@@ -169,6 +170,9 @@ public:
 
     UPROPERTY(BlueprintReadWrite)
     bool bStackableBeltEnabled{};
+
+    UPROPERTY(BlueprintReadWrite)
+    bool bPreserveUpgradeDismantleGroups{true};
 
     // ── Pipe Auto-Connect ──
 
@@ -395,6 +399,7 @@ public:
         ConfigStruct.RotationIncrement        = Sections.BuildingBehavior.RotationIncrement;
 
         // Building Behavior (Extend + Scaling + Smart Panel)
+        ConfigStruct.bPreserveUpgradeDismantleGroups = Sections.BuildingBehavior.bPreserveUpgradeDismantleGroups;
         ConfigStruct.bExtendEnabled           = Sections.BuildingBehavior.bExtendEnabled;
         ConfigStruct.bExtendPowerEnabled      = Sections.BuildingBehavior.bExtendPowerEnabled;
         ConfigStruct.bExtendDaisyChainPower   = Sections.BuildingBehavior.bExtendDaisyChainPower;

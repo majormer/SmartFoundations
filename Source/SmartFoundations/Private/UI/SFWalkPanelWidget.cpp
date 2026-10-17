@@ -239,12 +239,12 @@ void USFWalkPanelWidget::Refresh()
 
     const TArray<FSFWalkSegmentView> Views = W->GetSegmentViews();
     const bool bPipe = W->GetConveyanceType() == ESFWalkConveyanceType::Pipe;
+    const bool bRail = W->GetConveyanceType() == ESFWalkConveyanceType::Railroad;
+    const bool bVehiclePath = W->GetConveyanceType() == ESFWalkConveyanceType::VehiclePath;
     const bool bHyper = W->GetConveyanceType() == ESFWalkConveyanceType::Hypertube;   // #405: 3rd conveyance — routing only, no tier/direction
     // #405: per-conveyance Advance cap for the segment spinboxes — hypertube reaches 95 m
     // (MAX_HYPERTUBE_POLE_SPACING), belts/pipes the seven-foundation 56 m support interval.
-    const float MaxAdvanceM = (W->GetConveyanceType() == ESFWalkConveyanceType::Hypertube)
-        ? (USFAutoConnectService::MAX_HYPERTUBE_POLE_SPACING / 100.0f)
-        : (SFConveyanceConstants::DefaultBeltPipeSupportIntervalCm / 100.0f);
+    const float MaxAdvanceM = W->GetMaximumAdvance() / 100.0f;
     const auto& AC = S->GetAutoConnectRuntimeSettings();
     const int32 Tier = bPipe ? AC.PipeTierMain : AC.BeltTierMain;
     const int32 RouteMode = bHyper ? AC.HypertubeRoutingMode : (bPipe ? AC.PipeRoutingMode : AC.BeltRoutingMode);
@@ -320,7 +320,7 @@ void USFWalkPanelWidget::Refresh()
         SummaryArgs.Add(Views.Num());                                       // {0} segment count + plural selector
         SummaryArgs.Add(FText::FromString(SFHeadingToCompass16(HeadDeg)));  // {1} compass (intentionally untranslated)
         SummaryArgs.Add(FMath::RoundToInt(HeadDeg));                        // {2} head heading, degrees
-        SummaryArgs.Add(bHyper ? LOCTEXT("Walk_Conveyance_Hypertube", "Hypertube")
+        SummaryArgs.Add(bVehiclePath ? LOCTEXT("Walk_Conveyance_VehiclePath", "Vehicle path") : bRail ? LOCTEXT("Walk_Conveyance_Rail", "Railway track") : bHyper ? LOCTEXT("Walk_Conveyance_Hypertube", "Hypertube")
                                : (bPipe ? LOCTEXT("Walk_Conveyance_Pipe", "Pipe")
                                         : LOCTEXT("Walk_Conveyance_Belt", "Belt")));   // {3} conveyance word
         const FText SummaryText = FText::Format(
@@ -330,6 +330,7 @@ void USFWalkPanelWidget::Refresh()
     }
 
     // Pinned setting dropdowns (mirror the Smart Panel) — apply live to the walk's spans via the auto-connect setters.
+    if (!bRail && !bVehiclePath)
     {
         AFGPlayerController* PC = Cast<AFGPlayerController>(GetOwningPlayer());
         if (!bHyper)   // hypertube has no tiers (a single tube class) — skip the Tier dropdown

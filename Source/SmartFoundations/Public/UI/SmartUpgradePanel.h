@@ -161,6 +161,10 @@ protected:
 	UPROPERTY(meta = (BindWidgetOptional))
 	TObjectPtr<class UCheckBox> CrossTrainPlatformsCheckBox;
 
+	/** Request-local override, initialized from Mod Settings whenever the panel opens. */
+	UPROPERTY()
+	TObjectPtr<UCheckBox> PreserveDismantleGroupCheckBox;
+
 	/** Shared bottom widgets */
 	UPROPERTY(meta = (BindWidgetOptional))
 	TObjectPtr<class UTextBlock> SharedStatusText;

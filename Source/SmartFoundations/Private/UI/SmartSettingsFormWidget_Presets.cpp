@@ -7,6 +7,7 @@
  */
 
 #include "UI/SmartSettingsFormWidgetImpl.h"
+#include "Holograms/Adapters/ISFHologramAdapter.h"
 #include "Framework/Application/SlateApplication.h"
 
 #define LOCTEXT_NAMESPACE "SmartFoundations"
@@ -538,6 +539,24 @@ void USmartSettingsFormWidget::PopulateCounterInputsFromState(const FSFCounterSt
     const bool bWasApplyImmediately = bApplyImmediately;
     bApplyImmediately = false;
 
+    // Extend/Walking axes describe their own module/lane workflow. Only ordinary
+    // grids use the active native buildable's per-axis capability declarations.
+    const auto Adapter = CachedSubsystem.IsValid() && CachedSubsystem->GetActiveHologram()
+        && !CachedSubsystem->IsExtendModeActive() && !CachedSubsystem->IsWalkModeActive()
+        ? CachedSubsystem->GetCurrentAdapter() : nullptr;
+    const bool bX = !Adapter || Adapter->SupportsScalingAxis(ESFScaleAxis::X);
+    const bool bY = !Adapter || Adapter->SupportsScalingAxis(ESFScaleAxis::Y);
+    const bool bZ = !Adapter || Adapter->SupportsScalingAxis(ESFScaleAxis::Z);
+    if (GridXInput) GridXInput->SetIsEnabled(bX);
+    if (GridYInput) GridYInput->SetIsEnabled(bY);
+    if (GridZInput) GridZInput->SetIsEnabled(bZ);
+    if (GridXDirToggle) GridXDirToggle->SetIsEnabled(bX);
+    if (GridYDirToggle) GridYDirToggle->SetIsEnabled(bY);
+    if (GridZDirToggle) GridZDirToggle->SetIsEnabled(bZ);
+    if (SpacingXInput) SpacingXInput->SetIsEnabled(bX);
+    if (SpacingYInput) SpacingYInput->SetIsEnabled(bY);
+    if (SpacingZInput) SpacingZInput->SetIsEnabled(bZ);
+
     bGridXPositive = State.GridCounters.X >= 0;
     bGridYPositive = State.GridCounters.Y >= 0;
     bGridZPositive = State.GridCounters.Z >= 0;
@@ -852,6 +871,16 @@ FSFCounterState USmartSettingsFormWidget::ReadPanelCounterState() const
         NewState.RotationAxis = RotationAxisComboBox->GetSelectedIndex() == 1 ? ESFScaleAxis::Y : ESFScaleAxis::X;
     }
 
+    // Presets and programmatic widget edits must obey the same axis contract as
+    // keyboard/wheel input; a disabled axis cannot introduce hidden grid cells.
+    if (CachedSubsystem.IsValid() && CachedSubsystem->GetActiveHologram()
+        && !CachedSubsystem->IsExtendModeActive() && !CachedSubsystem->IsWalkModeActive())
+        if (const auto Adapter = CachedSubsystem->GetCurrentAdapter())
+        {
+            if (!Adapter->SupportsScalingAxis(ESFScaleAxis::X)) NewState.GridCounters.X = 1;
+            if (!Adapter->SupportsScalingAxis(ESFScaleAxis::Y)) NewState.GridCounters.Y = 1;
+            if (!Adapter->SupportsScalingAxis(ESFScaleAxis::Z)) NewState.GridCounters.Z = 1;
+        }
     return NewState;
 }
 
@@ -876,6 +905,7 @@ void USmartSettingsFormWidget::ApplyCurrentValues()
 
     // Apply the new state (updates GridStateService, local CounterState, and triggers HUD refresh)
     CachedSubsystem->UpdateCounterState(NewState);
+    PopulateCounterInputsFromState(NewState);
 
     // Regenerate child holograms to reflect new grid counts and reposition with new spacing/steps/stagger
     // During Extend mode, UpdateCounterState already triggers OnScaledExtendStateChanged which handles regeneration

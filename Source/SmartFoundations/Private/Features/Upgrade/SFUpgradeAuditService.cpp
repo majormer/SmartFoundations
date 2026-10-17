@@ -2,6 +2,7 @@
 
 #include "Features/Upgrade/SFUpgradeAuditService.h"
 #include "Features/Upgrade/SFUpgradeTraversalService.h"
+#include "Features/Upgrade/SFUpgradeMinerFamily.h"
 #include "SmartFoundations.h"
 #include "SFLogMacros.h"
 #include "Subsystem/SFSubsystem.h"
@@ -190,6 +191,7 @@ ESFUpgradeFamily USFUpgradeAuditService::GetUpgradeFamily(AFGBuildable* Buildabl
 	}
 
 	FString ClassName = Buildable->GetClass()->GetName();
+	if (SFUpgradeMinerFamily::IsMinerClass(Buildable->GetClass())) return ESFUpgradeFamily::Miner;
 
 	// Conveyor belts
 	if (Cast<AFGBuildableConveyorBelt>(Buildable))
@@ -318,6 +320,10 @@ int32 USFUpgradeAuditService::GetBuildableTier(AFGBuildable* Buildable)
 
 int32 USFUpgradeAuditService::GetMaxAvailableTier(ESFUpgradeFamily Family) const
 {
+	if (Family == ESFUpgradeFamily::Miner)
+	{
+		return SFUpgradeMinerFamily::GetHighestUnlockedTier(Subsystem ? Subsystem->GetWorld() : nullptr);
+	}
 	// Check actual unlocks via subsystem's unlock detection
 	if (Subsystem)
 	{
@@ -385,6 +391,8 @@ FString USFUpgradeAuditService::GetFamilyDisplayName(ESFUpgradeFamily Family)
 			return LOCTEXT("Family_WallOutletDouble", "Wall Outlets (Double)").ToString();
 		case ESFUpgradeFamily::Tower:
 			return LOCTEXT("Family_Tower", "Power Towers").ToString();
+		case ESFUpgradeFamily::Miner:
+			return LOCTEXT("Family_Miner", "Miners").ToString();
 		default:
 			return LOCTEXT("Family_Unknown", "Unknown").ToString();
 	}

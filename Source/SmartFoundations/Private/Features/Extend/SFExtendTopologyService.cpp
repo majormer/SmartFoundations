@@ -216,6 +216,7 @@ bool USFExtendTopologyService::WalkTopology(AFGBuildable* SourceBuilding)
     {
         DiscoverPipePassthroughs(SourceBuilding);
         DiscoverWallPassthroughs(SourceBuilding);
+        DiscoverRouteSupports();
     }
 
     SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("Smart!: Topology walk complete. Belt Inputs: %d, Belt Outputs: %d, Pipe Inputs: %d, Pipe Outputs: %d, Power Poles: %d, Pipe Passthroughs: %d, Wall Passthroughs: %d, Valid: %s"),
