@@ -41,6 +41,14 @@ without exposing those storage axes in the runtime HUD. So:
 - The Panel keeps absolute **X/Y/Z** labels everywhere (one vocabulary, no translation).
 - PR only changes *what your scroll/keys do*, never *what the HUD calls things*.
 
+### Rotatable conduit wall supports
+
+Pipeline and Hypertube wall supports use their native full rotation as the grid frame. Local Y follows the conduit run; local Z is the other axis in the wall plane. Conveyor wall supports retain their existing frame.
+
+The Panel keeps these local X/Y/Z labels and offers a separate **Wall rotation** selector in native 45-degree steps. This uses native build-gun rotation, including its placement restrictions. The existing **Rotation** field still controls progressive grid curvature; it is not the wall-support angle.
+
+With Player Relative enabled, scaling and spacing choose whichever in-wall axis is closest to world up for the vertical target. At a 45-degree tie, local Z remains the vertical target. The other in-wall axis serves the horizontal target, with its direction resolved against the unrolled parent frame and player facing. Thus a vertical conduit run uses local Y for X+Z+wheel and Num9/3, while the side target uses local Z. Arrow highlights and signs use the same resolution. Walking, Extend and the steps/stagger/curvature target models keep their existing rules.
+
 ## 3. Three kinds of "settings" (don't conflate them)
 
 | Layer | Lives in | Lifetime | Examples |
@@ -206,6 +214,14 @@ composes with the classic Y-negation — **feel-verify** remains the gate for st
   refresh, only while a mode key is down).
 
 ### 5.5 Context-specific controls
+
+- **Native pillars** use their full accepted parent rotation for grid X/Y/Z and spacing. The Panel
+  retains absolute axis fields; their directions are the pillar's local axes. In Player Relative,
+  the most vertical pillar axis serves Up/Down, and the remaining two axes serve Forward/Lateral
+  according to view yaw. A diagonal tie keeps local Z as vertical. The HUD highlights the resolved
+  axis and the arrows follow the same tilted frame. Profile dimensions remain local, avoiding a
+  second tilt projection. Steps retains its world-vertical rise. This does not enable conduit-wall
+  rotation controls for pillars or change externally tilted Blueprint behavior.
 
 - **Extend** direction cycling stays building-relative (manifold alignment) — PR never forks it.
   While Extend is active, horizontal runtime transform targets are **Chain/Rows**, backed by signed X/Y state.

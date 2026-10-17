@@ -130,6 +130,23 @@ captured after construction.
 - Compact network data remains available when individual actors are not replicated to a client.
 - Server actor state is required for mutation, validation, reservation, and lifecycle operations.
 
+### Construction Order And Shared Nodes
+
+`AFGVehiclePathSegmentHologram::PreConfigureActor` supplies the initial endpoint pointers, but
+missing native nodes are created during `AFGVehiclePathSegment::BeginPlay`. A constructed child
+can reach BeginPlay before its parent. Looking for the parent's node during PreConfigureActor
+therefore does not establish that adjacent segments will share a node.
+
+Walking records the exact staged hologram-to-segment associations and resolves an already initialized
+adjacent endpoint immediately before the segment's native BeginPlay. It retains native endpoint
+assignments and checks the shared endpoint's position, world, Designer and native compatibility.
+Native BeginPlay then creates and registers any remaining endpoints. This is not a mechanism for
+retargeting an already registered segment or merging unrelated built networks.
+
+Native routed spline points are stored in graph direction, including reversed segments. Endpoint
+comparisons must use graph start/end consistently; applying placement reversal a second time selects
+the wrong endpoint. The implementation is in `SFWalkVehiclePathAdapter.cpp`.
+
 ## Hologram Routing Modes
 
 Vehicle profile and routing mode are independent dimensions. A captured Explorer hologram retained
@@ -225,9 +242,27 @@ subsystem's topology, validation, traversability, or replication paths. In parti
 
 ## Smart Compatibility
 
-Smart does not currently construct vehicle paths. Future support should treat an entire selected path
-or connected subgraph as the operation boundary. Scaling or cloning one rendered marker independently
-would not produce a valid vanilla-equivalent path.
+Smart Walking constructs consecutive vehicle-path spans through native registration and validation.
+Adjacent spans must share the native meeting node; copying a rendered marker alone does not create
+a connected path.
+
+Native backward extension has a valid new-start-first workflow: for an existing `A -> B`, select a
+new point `X` behind `A`, then snap the second endpoint to `A`. The resulting network is `X -> A -> B`.
+A Universal-path control with Smart unloaded on both peers confirmed the shared node, all three
+vehicle presets and native zero material cost.
+
+Selecting the existing starting node first also supports native backward extension. After confirming
+that node and drawing backward, use the native rotation wheel to align the free endpoint with the
+drawn segment. In a straight westward control, the default free-end orientation produced a sharp
+turn; rotating it 180 degrees made the preview valid and construction extended the same directed
+network. The hologram retained `mIsSegmentReversed=true`; no native validation was bypassed.
+Smart Walking preserves that selected node when entering from the completed native preview.
+For reversed paths, the selected node is the last graph-ordered spline point. Walking's frame
+points in graph direction so its existing position calculator advances backward; the native
+start direction follows that frame and the free-end direction opposes it. Forward paths retain
+the opposite frame convention. The frame regression covers actual Walking displacement as well
+as the directions supplied to native routing. Native traversal validation remains separate from
+actually driving a vehicle through the route.
 
 ## Evidence
 

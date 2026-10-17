@@ -16,7 +16,7 @@ Scaling is Smart!'s grid placement system. It lets the active build-gun hologram
 
 ## Current Status
 
-Scaling is active for supported single-click buildables. It uses vanilla holograms and child holograms rather than swapping the active hologram class. This avoids registration loops and lets vanilla cost aggregation work through `AddChild`.
+Scaling supports eligible single-click and multi-step buildables. It retains the native active hologram and uses lightweight child previews where their construction contract permits it. Selected state and owned companions must survive native materialization; preview actor counts alone do not establish a frame-time improvement. Normal costs aggregate through the registered child list.
 
 ## Primary Code Files
 
@@ -42,6 +42,34 @@ Scaling is active for supported single-click buildables. It uses vanilla hologra
 5. `USFGridSpawnerService::RegenerateChildHologramGrid` adds or removes child holograms to match the requested grid.
 6. `USFGridSpawnerService::UpdateChildPositions` uses `FSFPositionCalculator` and the current transform counters to place every child.
 7. Vanilla construction builds the parent and its registered children, with costs flowing through the normal hologram child list.
+
+## Conveyor Lift Grids
+
+`SFConveyorLiftHologramState` and `ASFConveyorLiftPreviewHologram` handle Mk.1–Mk.6.
+The native parent selects the first endpoint, height, independent top rotation and flow;
+mesh-only children follow that selected state. One hidden native recipe hologram is reused
+for cell validation, while native materialization creates ordinary vanilla lifts.
+
+Each cell replays native placement against actual world hits and resolves its own peers
+and passthrough faces. Copying selected geometry never authorizes copying the parent's
+connection pointers. Native floor snapping may quantize a requested grid position; the
+resolved pose is shown in the preview and used for construction. Native nudge step size,
+range, placement disqualifiers and Designer containment remain authoritative. A vertical
+cell's floor search includes the original mounting level, so a legal native nudge is not
+rejected merely because the requested cell starts above a short trace.
+
+All requested poses, connector slots and passthrough faces are reserved before payment.
+Conflicting or unresolved cells reject the batch. Designer containment must be established
+before native placement validation on authority, including reconstructed multiplayer
+requests. Designer-owned lifts use native ownership rather than an additional Smart group.
+
+Internal validation cells must not publish player map/compass markers: repeatedly calling
+the player's `LockHologramPosition` operation for those cells exhausts widgets. The tagged
+internal lock helper preserves native local state and then calls native nudge/range checks.
+Reusing a cell also requires clearing its accumulated nudge and previous bindings.
+
+See [Conveyor Lift Construction Contract](../../Reference/BuildableContracts/ConveyorLifts.md)
+for the native state, ownership and lifecycle requirements.
 
 ## Copied Factory Settings and Item Conservation
 
