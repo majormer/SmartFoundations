@@ -1,74 +1,75 @@
 # Smart Walking
 
-Smart Walking lays one connected run — belts, pipes, or hyper tubes on stackable poles and supports — that turns corners, climbs slopes, and routes exactly where you want it. Instead of a straight, uniform grid, you steer the run forward one segment at a time and build it all in a single click.
+Walking creates a connected route one segment at a time. Use it for conveyor buses, pipes, Hypertubes, railway tracks and Vehicle Paths. It previews the route before building and charges normal materials for new construction.
 
-> Screenshot placeholder: a belt run walking around a corner and up a slope, with the Smart Walking panel open.
+![Three-lane pipe walk with a turn and rise on a clear platform](https://raw.githubusercontent.com/wiki/majormer/SmartFoundations/images/v35/walking-bus.png)
 
-## When To Use Smart Walking
+## Start a fresh route
 
-Use it when a straight run will not do:
+1. Equip a **Stackable Conveyor Pole**, **Stackable Pipeline Support** or **Stackable Hypertube Support** for that family. For rails or Vehicle Paths, select the corresponding native buildable.
+2. Aim at a valid starting placement, then open **K → Walking**. Route-only buildables open this task directly.
+3. Add and steer segments. Review the whole preview, then fire the build gun to construct it.
 
-- Route a belt bus around a corner or a cliff.
-- Climb a slope with a continuous pipe run.
-- Lay a long conveyor line that bends to follow your factory's layout.
-- Reach a far-off destination while you stay put and watch through the Smart! Camera.
-- Run a hyper tube up a steep climb to a distant platform or outpost.
+## Resume an existing bus
 
-## How To Start
+Holding a pipe or belt alone is not the entry point. **Equip the matching stackable support**, even when you want to continue from an existing pipe or belt.
 
-1. Hold a **stackable conveyor pole** (for belts), a **stackable pipeline support** (for pipes), or a **stackable hyper tube support** (for hyper tubes) in the build gun.
-2. Press `K` to open the Smart! Panel.
-3. Click **Smart Walking**. (The button only appears for buildables that can be walked.)
+1. Close the Panel and equip that support.
+2. Aim at an **open endpoint** of the existing line, or its compatible stackable support at the endpoint.
+3. Open **K → Walking** without placing a new starting support.
+4. Check the **Resume** summary: lanes, levels and spacing should describe the bus you intended to continue.
+5. Advance the new route and inspect the connections before building.
 
-The first segment starts at the pole you are aiming, and the run grows forward from there.
+Smart can recognize a regular cross-section such as four side-by-side lines, a 3×3 bus, or a compatible manually placed grid. The start must be horizontal and the endpoints must be open and unambiguous. Wall/floor attachments are excluded. An occupied endpoint or irregular arrangement is not a valid resume target. The continuation can climb after the horizontal start.
 
-## Steering The Run
+Existing lines and supports remain in place; only new construction is charged.
 
-Smart Walking reuses the controls you already know from grid scaling — they just apply to the **active segment** (the leading edge) instead of a whole grid. Everything behind the active segment stays locked.
+## Add lanes and work backward
 
-| To do this | Use the control |
+Increase the resumed bus's lane or level count to add more lines. For example, resume four lanes and grow to six: the original four stay intact, while Smart supplies the missing starting supports and new route pieces for the added lanes. Expansion is not limited to two additional lanes.
+
+After building, resume from the open start of an added lane and walk backward toward its source. Conveyor flow is preserved per lane, including buses whose belts run in opposite directions. Inspect the flow arrows; reversing the direction you walk must not reverse an existing belt's transport direction.
+
+## Steer and edit
+
+| Control | Walking operation |
 |---|---|
-| Advance a segment / back up | Mouse wheel (up advances, down undoes the last segment), `Num 8` / `Num 5`, or your Scale-X keybind |
-| Turn a corner | **Rotation** |
-| Set the gap to the next pole | **Spacing** |
-| Climb or descend a slope | **Steps** (rise) |
-| Shift sideways | **Stagger** |
+| Advance / Scale X | Add a segment; decrease to remove the last segment |
+| Scale Y / Z | Adjust bus lanes / levels where supported |
+| Spacing | Segment advance distance |
+| Rotation | Turn |
+| Steps | Rise or descend |
+| Stagger | Shift sideways |
 
-See [Controls](Controls) for the exact keys. You stay free to move the whole time — walk alongside the run, or stand still and steer it from a distance using the [Smart Camera](Smart-Camera) picture-in-picture, which follows the head of the run.
+See [Controls](Controls) for defaults. Walking is **segment-relative**; Player Relative scaling does not change these route meanings. Smart Camera can follow the leading segment while you remain at the start.
 
-## The Smart Walking Panel
+The Walking tab lists each segment's **Advance, Turn, Rise, Shift** and **Preview exit** heading. Edit an earlier segment to reshape the rest of the preview. With **Apply segment edits immediately** off, the visible values remain staged until Apply. Connection options such as tier, routing and supported flow/style preferences are live and labeled separately.
 
-Press `K` while walking to open the Smart Walking panel — an editable list of every segment:
+![Walking segment table, preview heading and live connection options](https://raw.githubusercontent.com/wiki/majormer/SmartFoundations/images/v35/walking-segments.png)
 
-- Each row shows a segment's advance, turn, rise, and shift, plus its **exit heading** as a compass bearing.
-- Edit any segment and the run rebuilds from there forward.
-- Choose the run's **tier**, **routing**, belt **flow direction**, or pipe **style** for the whole path.
+## Family rules
 
-## Belts, Pipes, And Hyper Tubes
+- Belts keep native flow, span and slope restrictions. Use lifts separately where a belt cannot make a climb.
+- Pipes and Hypertubes follow their own native routing restrictions. They do not have conveyor-style item flow direction.
+- Railway curves use native-style routing and the **100 m maximum applies to the full curved track**, not just the straight distance between endpoints. Shorten a turn or split it into more segments when needed. Separate lines retain separate buffer stops.
+- Vehicle Paths are directed routes. Join the appropriate free endpoint and use the correct travel direction. To test a finished route with a vehicle, provide the native station connections, fuel, power and schedule it needs; a visible path alone is not a running transport service.
 
-- **Belts** carry a tier, a routing mode, and a flow direction (forward or backward).
-- **Pipes** carry a tier and a routing mode, and flow either way once connected, so they have no direction.
-- **Hyper tubes** carry a routing mode and, like pipes, have no direction. Because a hyper tube doesn't sag, its run can climb far more steeply than a belt, and there is a single hyper tube buildable, so there is no tier to choose.
+## Build or cancel
 
-The whole run uses one tier and one routing — mixing belt tiers on a single line would just bottleneck it at the slowest belt. Add splitters, mergers, or valves to the finished run the normal way.
+Fire to commit the new route. Missing materials, stale endpoints or a native-invalid segment prevent construction; correct the preview before trying again. Cancel or holster to discard an unbuilt route. Switching tasks warns when it would lose that route.
 
-## Finishing The Run
+Walking previews locally and construction is checked by the authoritative game in multiplayer. Existing route objects remain normal Satisfactory buildings. See [Compatibility and Multiplayer](Compatibility-and-Multiplayer).
 
-- **Commit:** fire the build gun (left mouse) to build the entire run at once. You pay the normal material cost for every pole and belt or pipe.
-- **Can't afford it?** The preview turns red and the run will not commit until you can.
-- **Too long or too steep?** A segment that overshoots the maximum span, or (for belts) climbs too steeply, is flagged and blocks the commit — shorten it or split the climb.
-- **Cancel:** press `Escape` or put the build gun away to discard the run.
+## Transport preview examples
 
-## Multiplayer
+![A Railway Walking curve and its approach on a clear platform.](https://raw.githubusercontent.com/wiki/majormer/SmartFoundations/images/v35/rail-walking.png)
 
-Smart Walking works in single-player and as a client on a dedicated server (Windows and Linux). The whole run previews on your machine and builds in one server-checked action, charging the normal cost. See [Compatibility and Multiplayer](Compatibility-and-Multiplayer).
+A Railway Walking curve and its approach on a clear platform.
 
-## Tips
+![An elevated side view separates the straight Vehicle Path segment from its curved continuation.](https://raw.githubusercontent.com/wiki/majormer/SmartFoundations/images/v35/vehicle-walking.png)
 
-- Lay the straight sections first, then turn — each turn pivots the heading, and the next advance follows the new direction.
-- Back up removes segments from the end. There is no partial undo of a turn mid-run, so back up to the point you want and re-steer.
-- Use the [Smart Camera](Smart-Camera) to route long runs without walking the whole way.
+An elevated side view separates the straight Vehicle Path segment from its curved continuation.
 
 ---
 
-_Last updated: 2026-06-26 · Smart! v33.1.0_
+_Last updated: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (release draft)_

@@ -17,6 +17,7 @@ class USFSubsystem;
 class FSFPipeAutoConnectManager;
 class FSFPowerAutoConnectManager;
 class FPipePreviewHelper;
+class FSFHypertubePreviewHelper;
 class AFGBlueprintHologram;
 
 /**
@@ -68,16 +69,21 @@ struct FSFAutoConnectSkipSummary
 	int32 PipesTooFar = 0;
 	/** Pipe junction pairings that won selection but were under the min distance for their angle */
 	int32 PipesTooClose = 0;
+	int32 HypertubesInvalidShape = 0;
+	int32 HypertubesTooFar = 0;
+	int32 HypertubesTooClose = 0;
 
 	void ResetBeltBuilding() { BeltsTooSteep = 0; BeltsInvalidShape = 0; }
 	void ResetBeltManifold() { BeltLanesBlocked = 0; }
 	void ResetPipes() { PipesInvalidShape = 0; PipesTooFar = 0; PipesTooClose = 0; }
+	void ResetHypertubes() { HypertubesInvalidShape = 0; HypertubesTooFar = 0; HypertubesTooClose = 0; }
 	/** Full reset - tallies belong to ONE hologram's evaluations. The hologram lifecycle
 	 *  clears everything on registration so a cancelled placement's skips (e.g. a Smart!
 	 *  Blueprint grid) can't bleed onto the next, unrelated buildable's HUD. */
-	void ResetAll() { ResetBeltBuilding(); ResetBeltManifold(); ResetPipes(); }
+	void ResetAll() { ResetBeltBuilding(); ResetBeltManifold(); ResetPipes(); ResetHypertubes(); }
 	int32 BeltTotal() const { return BeltsTooSteep + BeltsInvalidShape + BeltLanesBlocked; }
 	int32 PipeTotal() const { return PipesInvalidShape + PipesTooFar + PipesTooClose; }
+	int32 HypertubeTotal() const { return HypertubesInvalidShape + HypertubesTooFar + HypertubesTooClose; }
 };
 
 UCLASS()
@@ -354,6 +360,7 @@ public:
 	 * @return True if this is a stackable hypertube support hologram (Build_HyperPoleStackable_C)
 	 */
 	static bool IsStackableHypertubeSupportHologram(AFGHologram* Hologram);
+	static bool IsHypertubeAutoConnectSupportHologram(AFGHologram* Hologram);
 
 	/**
 	 * Check if a hologram is any stackable support structure (conveyor pole or pipeline support)
@@ -907,6 +914,7 @@ private:
 	{
 		TMap<FSeamKey, TSharedPtr<FBeltPreviewHelper>> BeltsBySeamKey;
 		TMap<FSeamKey, TSharedPtr<FPipePreviewHelper>> PipesBySeamKey;
+		TMap<FSeamKey, TSharedPtr<FSFHypertubePreviewHelper>> HypertubesBySeamKey;
 	};
 	TMap<TWeakObjectPtr<AFGHologram>, FBlueprintSeamState> BlueprintSeamStates;
 

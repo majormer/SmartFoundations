@@ -1,6 +1,11 @@
 // Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
 #include "Services/SFHintBarService.h"
+#include "Holograms/Core/SFSignSupportMode.h"
+#include "Holograms/Adapters/ISFHologramAdapter.h"
+#include "Features/Walk/SFWalkService.h"
+#include "Features/Walk/SFWalkTypes.h"
+#include "Hologram/FGBlueprintHologram.h"
 #include "SmartFoundations.h"
 #include "SFSubsystem.h"
 #include "Blueprint/UserWidget.h"
@@ -310,8 +315,11 @@ void USFHintBarService::InjectSmartHints()
 	static const TSet<FString> SmartHintKeys = {
 		TEXT("Hint_ScaleX"), TEXT("Hint_ScaleY"), TEXT("Hint_ScaleZ"),
 		TEXT("Hint_Spacing"), TEXT("Hint_Steps"), TEXT("Hint_Stagger"), TEXT("Hint_Rotation"),
-		TEXT("Hint_CycleMode"), TEXT("Hint_StaggerFamily"), TEXT("Hint_Recipe"),
-		TEXT("Hint_SmartPanel"), TEXT("Hint_UpgradePanel")
+		TEXT("Hint_CycleMode"), TEXT("Hint_StaggerFamily"), TEXT("Hint_Recipe"), TEXT("Hint_SignSupports"),
+		TEXT("Hint_SmartPanel"), TEXT("Hint_UpgradePanel"), TEXT("Hint_WalkPanel"), TEXT("Hint_WalkStart"),
+        TEXT("Hint_WalkAdvance"), TEXT("Hint_WalkLanes"), TEXT("Hint_WalkLevels"),
+        TEXT("Hint_WalkLength"), TEXT("Hint_WalkRise"), TEXT("Hint_WalkShift"), TEXT("Hint_WalkTurn"),
+        TEXT("Hint_AutoConnectSettings")
 	};
 	auto IsSmartHint = [](const FText& ActionText) -> bool
 	{
@@ -341,7 +349,24 @@ void USFHintBarService::InjectSmartHints()
 	// reflects that. Held-mode is part of the rebuild fingerprint so the label swaps on Y down/up.
 	const bool bNowStagger = Subsystem.IsValid() && Subsystem->IsStaggerModeActive();
 
-	const uint32 ContextFingerprint = (bNowUpgrade ? 1 : 0) | (bNowExtend ? 2 : 0) | (bNowStagger ? 4 : 0);
+	const bool bNowSign = Subsystem.IsValid() && SFSignSupportMode::IsAvailable(Subsystem->GetActiveHologram());
+    const auto* Walk = Subsystem.IsValid() ? Subsystem->GetWalkService() : nullptr;
+    const bool bNowWalk = Walk && Walk->IsActive();
+    const bool bRouteOnly = Subsystem.IsValid() && Subsystem->IsWalkingOnlyContext();
+    const bool bBus = bNowWalk && Walk->GetConveyanceType() != ESFWalkConveyanceType::Railroad
+        && Walk->GetConveyanceType() != ESFWalkConveyanceType::VehiclePath;
+    const auto Adapter = Subsystem.IsValid() ? Subsystem->GetCurrentAdapter() : nullptr;
+    const bool bScaleX = bNowExtend || !Adapter || Adapter->SupportsScalingAxis(ESFScaleAxis::X);
+    const bool bScaleY = bNowExtend || !Adapter || Adapter->SupportsScalingAxis(ESFScaleAxis::Y);
+    const bool bScaleZ = bNowExtend || !Adapter || Adapter->SupportsScalingAxis(ESFScaleAxis::Z);
+    const bool bSpacing = bNowExtend || !Adapter || Adapter->SupportsFeature(ESFFeature::Spacing);
+    // Blueprint seams have their own global preference; U does not edit that setting.
+    const bool bConnectionSettings = Subsystem.IsValid() && Subsystem->IsCurrentHologramAutoConnectCapable()
+        && !Cast<AFGBlueprintHologram>(Subsystem->GetActiveHologram());
+    const uint32 ContextFingerprint = (bNowUpgrade ? 1 : 0) | (bNowExtend ? 2 : 0) | (bNowStagger ? 4 : 0) | (bNowSign ? 8 : 0)
+        | (bNowWalk ? 16 : 0) | (bRouteOnly ? 32 : 0) | (bBus ? 64 : 0)
+        | (bScaleX ? 128 : 0) | (bScaleY ? 256 : 0) | (bScaleZ ? 512 : 0)
+        | (bSpacing ? 1024 : 0) | (bConnectionSettings ? 2048 : 0);
 	const bool bContextChanged = (ContextFingerprint != LastContextFingerprint);
 
 	if (bAlreadyPresent && !bContextChanged)
@@ -377,49 +402,48 @@ void USFHintBarService::InjectSmartHints()
 	struct FSmartHint { FText Action; FText Key; };
 	TArray<FSmartHint> SmartHints;
 
-	if (!bNowUpgrade)
-	{
-		// Smart! hint set — only Stagger is hidden during Scaled Extend
-		SmartHints.Add({ NSLOCTEXT("SmartFoundations", "Hint_ScaleX", "Scale X"),
-			FText::FromString(FString::Printf(TEXT("%s + Scroll"), *KeyX.ToString())) });
-		SmartHints.Add({ NSLOCTEXT("SmartFoundations", "Hint_ScaleY", "Scale Y"),
-			FText::FromString(FString::Printf(TEXT("%s + Scroll"), *KeyY.ToString())) });
-		SmartHints.Add({ NSLOCTEXT("SmartFoundations", "Hint_ScaleZ", "Scale Z"),
-            FText::FromString(ScaleZKeyStr) });
-		SmartHints.Add({ NSLOCTEXT("SmartFoundations", "Hint_Spacing", "Spacing"),
-			FText::FromString(FString::Printf(TEXT("%s + Scroll"), *ResolveKeyText(IA_SpacingMode).ToString())) });
-		SmartHints.Add({ NSLOCTEXT("SmartFoundations", "Hint_Steps", "Steps"),
-			FText::FromString(FString::Printf(TEXT("%s + Scroll"), *ResolveKeyText(IA_StepsMode).ToString())) });
-		if (!bNowExtend)
-		{
-			SmartHints.Add({ NSLOCTEXT("SmartFoundations", "Hint_Stagger", "Stagger"),
-				FText::FromString(FString::Printf(TEXT("%s + Scroll"), *ResolveKeyText(IA_StaggerMode).ToString())) });
-		}
-		SmartHints.Add({ NSLOCTEXT("SmartFoundations", "Hint_Rotation", "Rotation"),
-			FText::FromString(FString::Printf(TEXT("%s + Scroll"), *ResolveKeyText(IA_RotationMode).ToString())) });
-		// [#209] Num0's meaning: Stagger held -> toggle Stack/Flat family; otherwise -> cycle the
-		// axis (classic) / target direction (Player Relative).
-		if (bNowStagger)
-		{
-			SmartHints.Add({ NSLOCTEXT("SmartFoundations", "Hint_StaggerFamily", "Stack / Flat"),
-				ResolveKeyText(IA_CycleAxis) });
-		}
-		else
-		{
-			SmartHints.Add({ NSLOCTEXT("SmartFoundations", "Hint_CycleMode", "Cycle Mode"),
-				ResolveKeyText(IA_CycleAxis) });
-		}
-		SmartHints.Add({ NSLOCTEXT("SmartFoundations", "Hint_Recipe", "Recipe"),
-			ResolveKeyText(IA_RecipeMode) });
-		SmartHints.Add({ NSLOCTEXT("SmartFoundations", "Hint_SmartPanel", "Smart Panel"),
-			ResolveKeyText(IA_ToggleSettingsForm) });
-	}
-	else
-	{
-		// Upgrade-capable items (belts, lifts, pipes, wires) — only the panel hint
-		SmartHints.Add({ NSLOCTEXT("SmartFoundations", "Hint_UpgradePanel", "Upgrade Panel"),
-			ResolveKeyText(IA_ToggleSettingsForm) });
-	}
+    auto Wheel = [this](const UInputAction* Action)
+    { return FText::FromString(FString::Printf(TEXT("%s + Scroll"), *ResolveKeyText(Action).ToString())); };
+    if (bNowWalk)
+    {
+        SmartHints.Add({NSLOCTEXT("SmartFoundations", "Hint_WalkAdvance", "Next / previous segment"), Wheel(IA_ModifierScaleX)});
+        if (bBus)
+        {
+            SmartHints.Add({NSLOCTEXT("SmartFoundations", "Hint_WalkLanes", "Bus lanes"), Wheel(IA_ModifierScaleY)});
+            SmartHints.Add({NSLOCTEXT("SmartFoundations", "Hint_WalkLevels", "Bus levels"), FText::FromString(ScaleZKeyStr)});
+        }
+        SmartHints.Add({NSLOCTEXT("SmartFoundations", "Hint_WalkLength", "Segment length"), Wheel(IA_SpacingMode)});
+        SmartHints.Add({NSLOCTEXT("SmartFoundations", "Hint_WalkRise", "Segment rise"), Wheel(IA_StepsMode)});
+        SmartHints.Add({NSLOCTEXT("SmartFoundations", "Hint_WalkShift", "Segment shift"), Wheel(IA_StaggerMode)});
+        SmartHints.Add({NSLOCTEXT("SmartFoundations", "Hint_WalkTurn", "Segment turn"), Wheel(IA_RotationMode)});
+        if (bConnectionSettings)
+            SmartHints.Add({NSLOCTEXT("SmartFoundations", "Hint_AutoConnectSettings", "Connection settings"), ResolveKeyText(IA_RecipeMode)});
+        SmartHints.Add({NSLOCTEXT("SmartFoundations", "Hint_WalkPanel", "Walking Panel"), ResolveKeyText(IA_ToggleSettingsForm)});
+    }
+    else if (bRouteOnly)
+    {
+        SmartHints.Add({NSLOCTEXT("SmartFoundations", "Hint_WalkStart", "Start Walking"), ResolveKeyText(IA_ToggleSettingsForm)});
+    }
+    else if (bNowUpgrade)
+    {
+        SmartHints.Add({NSLOCTEXT("SmartFoundations", "Hint_UpgradePanel", "Upgrade Panel"), ResolveKeyText(IA_ToggleSettingsForm)});
+    }
+    else
+    {
+        if (bScaleX) SmartHints.Add({NSLOCTEXT("SmartFoundations", "Hint_ScaleX", "Scale X"), Wheel(IA_ModifierScaleX)});
+        if (bScaleY) SmartHints.Add({NSLOCTEXT("SmartFoundations", "Hint_ScaleY", "Scale Y"), Wheel(IA_ModifierScaleY)});
+        if (bScaleZ) SmartHints.Add({NSLOCTEXT("SmartFoundations", "Hint_ScaleZ", "Scale Z"), FText::FromString(ScaleZKeyStr)});
+        if (bSpacing) SmartHints.Add({NSLOCTEXT("SmartFoundations", "Hint_Spacing", "Spacing"), Wheel(IA_SpacingMode)});
+        SmartHints.Add({NSLOCTEXT("SmartFoundations", "Hint_Steps", "Steps"), Wheel(IA_StepsMode)});
+        if (!bNowExtend) SmartHints.Add({NSLOCTEXT("SmartFoundations", "Hint_Stagger", "Stagger"), Wheel(IA_StaggerMode)});
+        SmartHints.Add({NSLOCTEXT("SmartFoundations", "Hint_Rotation", "Rotation"), Wheel(IA_RotationMode)});
+        SmartHints.Add({bNowStagger ? NSLOCTEXT("SmartFoundations", "Hint_StaggerFamily", "Stack / Flat")
+            : NSLOCTEXT("SmartFoundations", "Hint_CycleMode", "Cycle Mode"), ResolveKeyText(IA_CycleAxis)});
+        SmartHints.Add({bNowSign ? NSLOCTEXT("SmartFoundations", "Hint_SignSupports", "Sign supports")
+            : bConnectionSettings ? NSLOCTEXT("SmartFoundations", "Hint_AutoConnectSettings", "Connection settings")
+            : NSLOCTEXT("SmartFoundations", "Hint_Recipe", "Recipe"), ResolveKeyText(IA_RecipeMode)});
+        SmartHints.Add({NSLOCTEXT("SmartFoundations", "Hint_SmartPanel", "Smart Panel"), ResolveKeyText(IA_ToggleSettingsForm)});
+    }
 
 	// Add Smart! hints to the array
 	for (const FSmartHint& Hint : SmartHints)

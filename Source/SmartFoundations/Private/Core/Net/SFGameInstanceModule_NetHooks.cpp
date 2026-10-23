@@ -20,6 +20,10 @@
 #include "Hologram/FGPoleHologram.h"              // [MP-SPEC] multi-step gate: pole height step
 #include "Hologram/FGFloodlightHologram.h"        // [MP-SPEC] multi-step gate: floodlight angle step
 #include "Hologram/FGStandaloneSignHologram.h"    // [MP-SPEC] multi-step gate: sign height step
+#include "Hologram/FGLadderHologram.h"
+#include "Features/Scaling/SFLadderHologramState.h"
+#include "Features/Scaling/SFElevatorHologramState.h"
+#include "Features/Scaling/SFHypertubeSupportHologramState.h"
 #include "Holograms/Logistics/SFConveyorBeltHologram.h"  // #341: DrainStackBuiltConveyors
 #include "FGConstructDisqualifier.h"
 #include "FGCentralStorageSubsystem.h"
@@ -29,6 +33,11 @@
 #include "Subsystem/SFSubsystem.h"
 #include "Services/SFChainActorService.h"  // [CHAIN-FIX] post-construct chain-hygiene sweep
 #include "Features/AutoConnect/SFAutoConnectService.h"
+#include "Features/AutoConnect/Net/SFLiftRoutePlan.h"
+#include "Features/AutoConnect/SFBlueprintRailSeams.h"
+#include "Features/AutoConnect/SFBlueprintVehicleSeams.h"
+#include "Features/AutoConnect/SFBlueprintLiftSeams.h"
+#include "Features/AutoConnect/Holograms/SFLiftRouteProxyHologram.h"
 #include "Features/Extend/SFExtendService.h"
 #include "Features/Walk/SFWalkService.h"   // Smart Walking (#356 Slice 3) commit-on-fire staging
 #include "Equipment/FGBuildGunBuild.h"        // UFGBuildGunStateBuild::InternalConstructHologram / GetHologram
@@ -36,6 +45,8 @@
 #include "Core/Net/SFConstructPayloadGuard.h"
 #include "Engine/Engine.h"                     // GEngine on-screen message
 #include "Holograms/Core/SFScalingSpecExpansion.h"
+#include "Holograms/Core/SFSignHologramState.h"
+#include "Holograms/Core/SFSignSupportMode.h"
 #include "Data/SFBuildableSizeRegistry.h"
 #include "Data/SFHologramDataRegistry.h"   // [EXTEND-MP] JsonCloneId wiring anchors post-construct
 #include "Subsystem/SFHologramHelperService.h"
@@ -186,9 +197,14 @@ static bool SF_InputWillConstruct(AFGHologram* Holo)
 		return FinalStepReached(AFGFloodlightHologram::StaticClass(),
 			static_cast<uint8>(EFloodlightHologramBuildStep::FHBS_AdjustAngle));
 	}
+	if (Holo->IsA<AFGLadderHologram>()) return SFLadderHologramState::IsFinalStep(Holo);
+	if (SFHypertubeSupportHologramState::IsSelectedPole(Holo)) return SFHypertubeSupportHologramState::IsFinalStep(Holo);
 	if (Holo->IsA<AFGStandaloneSignHologram>())
 	{
-		return FinalStepReached(AFGStandaloneSignHologram::StaticClass(),
+		// Native wall/attachment mounting constructs directly in the snap step; only
+		// supported floor/ceiling signs advance to height adjustment before staging.
+		return SFSignHologramState::IsDirectMount(Holo)
+			|| FinalStepReached(AFGStandaloneSignHologram::StaticClass(),
 			static_cast<uint8>(ESignHologramBuildStep::ESHBS_AdjustHeight));
 	}
 	return true;
@@ -264,6 +280,35 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 			{
 				return;
 			}
+			// [MP-SEAM] An existing-shaft extension is one native owner-bound placement.
+			// Keep its native child/state serialization intact: the generic scaling staging
+			// and preview teardown can reduce it to a new default-height shaft.
+			if (SFElevatorHologramState::GetSnappedElevator(Holo))
+			{
+				if (FSFNetworkHelper::IsClient(World))
+				{
+					if (APawn* Pawn = Holo->GetConstructionInstigator())
+						if (AFGPlayerController* PC = Cast<AFGPlayerController>(Pawn->GetController()))
+							if (USFRCO* RCO = PC->GetRemoteCallObjectOfClass<USFRCO>())
+							{
+								RCO->Server_StageScalingSpec(FSFScalingSpec());
+								RCO->Server_StageExtendCommit(FSFExtendCommitSpec());
+							}
+				}
+				return;
+			}
+			SFSignSupportMode::BeginConstruction(self);
+			// Final native input is shared by standalone, listen-host and network clients.
+			if (!SFSignHologramState::AreGridSupportsValid(Holo))
+			{
+				if (USFSubsystem* NoticeSS = USFSubsystem::Get(World))
+				{
+					NoticeSS->ShowSmartNotice(NSLOCTEXT("SmartFoundations", "Notice_SignSupportHeight",
+						"Sign supports must reach the mounting surface at a native pole height. Adjust height, spacing or steps.").ToString());
+				}
+				scope.Cancel();
+				return;
+			}
 
 			// Smart Walking (#356 Slice 3): commit on fire, BEFORE the network-client gate so it runs for ALL net
 			// modes - the RCO Server_ call executes locally on authority (SP / listen-host) and over the wire on a
@@ -276,6 +321,13 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 				if (USFWalkService* Walk = WalkSS->GetWalkService(); Walk && Walk->IsActive())
 				{
 					const FSFWalkCommitSpec WalkSpec = Walk->BuildCommitSpec();
+                    // Invalid resume specs are deliberately not staged. Do not let
+                    // that refusal fall through to a paid ordinary support build.
+                    if (Walk->IsResuming() && !WalkSpec.bValid)
+                    {
+                        scope.Cancel();
+                        return;
+                    }
 					if (APawn* InstigatorPawn = Holo->GetConstructionInstigator())
 					{
 						if (AFGPlayerController* WalkPC = Cast<AFGPlayerController>(InstigatorPawn->GetController()))
@@ -379,7 +431,7 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 					if (GEngine)
 					{
 						GEngine->AddOnScreenDebugMessage(-1, 6.0f, FColor::Orange,
-							TEXT("Smart!: Extend commit could not be staged - try again."));
+							NSLOCTEXT("SmartFoundations", "MP_Notice_ExtendStageFailed", "Smart!: Extend commit could not be staged - try again.").ToString());
 					}
 					scope.Cancel();
 					return;
@@ -404,6 +456,16 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 				{
 					SFScalingSpecExpansion::CaptureScalingSpec(Holo, Spec);
 					SFScalingSpecExpansion::CaptureConduitPlan(Holo, Spec);
+                    if (!SFLiftRoutePlan::ValidateTree(Holo) || !SFLiftRoutePlan::IsBounded(Spec.LiftRoutes)
+                        || !FSFBlueprintRailSeams::IsBounded(Spec.BlueprintRailSeams)
+                        || !FSFBlueprintVehicleSeams::IsBounded(Spec.BlueprintVehicleSeams)
+                        || !FSFBlueprintLiftSeams::IsBounded(Spec.BlueprintLiftSeams)
+                        || (Spec.bBlueprintLiftSeamsRequired && Spec.BlueprintLiftSeams.IsEmpty()))
+                    {
+                        scope.Cancel();
+                        return;
+                    }
+
 
 					// #428: every water-extractor grid cell must be over water. The client preview reds
 					// out land cells, but the spec path destroys those previews and fires a childless
@@ -417,7 +479,7 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 						if (GEngine)
 						{
 							GEngine->AddOnScreenDebugMessage(-1, 6.0f, FColor::Orange,
-								TEXT("Smart!: every water extractor must be placed on deep water."));
+								FString(TEXT("Smart!: ")) + NSLOCTEXT("SmartFoundations", "MP_Notice_WaterExtractorDeepWater", "Every water extractor must be placed on deep water.").ToString());
 						}
 						if (USFSubsystem* NoticeSS = USFSubsystem::Get(World))
 						{
@@ -445,6 +507,23 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 						PlanBytesEstimate += 384 + 32 + (Entry.PipeColor.bCaptured ? 256 : 0) + Entry.SplinePoints.Num() * 80
 							+ 2 * (Entry.PowerStart.ComponentName.ToString().Len() + Entry.PowerEnd.ComponentName.ToString().Len());
 					}
+                    for (const auto& Route : Spec.LiftRoutes)
+                        PlanBytesEstimate += 1536 + Route.Spline.Num() * 80 + Route.Cost.Num() * 256
+                            + 2 * (Route.From.PortName.ToString().Len() + Route.To.PortName.ToString().Len());
+                    for (const auto& Route : Spec.BlueprintLiftSeams)
+                        PlanBytesEstimate += 2048 + Route.Spline.Num() * 160 + Route.Cost.Num() * 256
+                            + 2 * (Route.From.Name.ToString().Len() + Route.To.Name.ToString().Len());
+                    for (const auto& Seam : Spec.BlueprintRailSeams)
+                    {
+                        PlanBytesEstimate += 192 + Seam.Spline.Num() * 160;
+                        auto PortBytes = [](const FSFBlueprintRailPort& P)
+                        { return 512 + 2 * (P.ComponentName.ToString().Len() + GetPathNameSafe(P.BuildClass.Get()).Len()); };
+                        PlanBytesEstimate += PortBytes(Seam.To);
+                        for (const auto& Port : Seam.From) PlanBytesEstimate += PortBytes(Port);
+                    }
+                    PlanBytesEstimate += Spec.BlueprintRailCost.Num() * 256;
+                    for (const auto& Seam : Spec.BlueprintVehicleSeams)
+                        PlanBytesEstimate += 4096 + 160 * (Seam.Incoming.Spline.Num() + Seam.Outgoing.Spline.Num() + Seam.Bridge.Num()) + 256 * Seam.Cost.Num();
 					if (PlanBytesEstimate > 45000)
 					{
 						UE_LOG(LogSmartFoundations, Verbose,
@@ -453,8 +532,8 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 						if (GEngine)
 						{
 							GEngine->AddOnScreenDebugMessage(-1, 6.0f, FColor::Orange,
-								FString::Printf(TEXT("Smart!: too many auto-connect belts/pipes/wires for one multiplayer placement (%d). Build in smaller sections."),
-									Spec.ConduitPlan.Num()));
+								FText::Format(NSLOCTEXT("SmartFoundations", "MP_Notice_TooManyConduitsDebug", "Smart!: too many auto-connect belts/pipes/wires for one multiplayer placement ({0}). Build in smaller sections."),
+									Spec.ConduitPlan.Num()).ToString());
 						}
 						if (USFSubsystem* NoticeSS = USFSubsystem::Get(World))
 						{
@@ -488,8 +567,8 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 							if (GEngine)
 							{
 								GEngine->AddOnScreenDebugMessage(-1, 6.0f, FColor::Orange,
-									FString::Printf(TEXT("Smart!: blueprint grid too large for one multiplayer placement (~%lld buildings, max ~%d). Build in smaller sections."),
-										TotalActorEstimate, SF_MP_BLUEPRINT_ACTOR_CAP));
+									FString(TEXT("Smart!: ")) + FText::Format(NSLOCTEXT("SmartFoundations", "MP_Notice_BlueprintGridTooLarge", "Blueprint grid too large for one multiplayer placement (~{0} buildings, max ~{1}). Build in smaller sections."),
+										TotalActorEstimate, SF_MP_BLUEPRINT_ACTOR_CAP).ToString());
 							}
 							if (USFSubsystem* NoticeSS = USFSubsystem::Get(World))
 							{
@@ -517,12 +596,20 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 			if (bSpecEnabled)
 			{
 				TArray<AFGHologram*> AutoConnectToStrip;
+                FSFBlueprintRailSeams::Reset(Holo);
+                FSFBlueprintVehicleSeams::Reset(Holo);
+                FSFBlueprintLiftSeams::ResetPreview(Holo);
 				for (AFGHologram* Child : Holo->mChildren)
 				{
 					if (!Child)
 					{
 						continue;
 					}
+                    if (Child->IsA<ASFLiftRouteProxyHologram>())
+                    {
+                        AutoConnectToStrip.Add(Child);
+                        continue;
+                    }
 					for (int32 TagIdx = 0; TagIdx < GSFAutoConnectChildTagCount; ++TagIdx)
 					{
 						if (Child->Tags.Contains(GSFAutoConnectChildTags[TagIdx]))
@@ -633,7 +720,16 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 			const int32 TotalCells = GridChildCount + 1;
 			if (TotalCells <= SF_MP_OVERSIZED_CELLS)
 			{
-				return; // fits one construct -> untouched vanilla path (builds fine in MP)
+				if (SFSignHologramState::IsClientGridSerialization(Holo))
+				{
+					// [MP-SEAM] The legacy tree carries AFGHologram::mIsDisabled through
+					// CustomSerialization. Scope the native fire after its final-step and
+					// payload gates so authority builds/prices the same support boundary.
+					// Native input must retain the enabled pole outside this request.
+					SFSignHologramState::FLocalConstructionScope SignConstruction(Holo);
+					scope(self, isInputFromARelease);
+				}
+				return; // fits one construct -> native child-tree serialization
 			}
 
 			// Oversized: refuse the fire BEFORE vanilla serializes/sends. The active hologram + preview stay
@@ -646,8 +742,8 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 			if (GEngine)
 			{
 				GEngine->AddOnScreenDebugMessage(-1, 6.0f, FColor::Orange,
-					FString::Printf(TEXT("Smart!: grid too large for multiplayer (%d cells, max ~%d). Build in smaller sections."),
-						TotalCells, SF_MP_OVERSIZED_CELLS));
+					FString(TEXT("Smart!: ")) + FText::Format(NSLOCTEXT("SmartFoundations", "MP_Notice_GridTooLarge", "Grid too large for multiplayer ({0} cells, max ~{1}). Build in smaller sections."),
+						TotalCells, SF_MP_OVERSIZED_CELLS).ToString());
 			}
 			if (USFSubsystem* NoticeSS = USFSubsystem::Get(World))
 			{

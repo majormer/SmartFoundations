@@ -1,6 +1,7 @@
 // Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
 #include "Features/Extend/SFExtendDetectionService.h"
+#include "Holograms/Logistics/SFWaterPumpChildHologram.h"
 #include "Engine/OverlapResult.h"
 #include "SmartFoundations.h"  // For LogSmartExtend
 #include "Subsystem/SFSubsystem.h"
@@ -51,8 +52,10 @@ bool USFExtendDetectionService::IsValidExtendTarget(AFGBuildable* Building) cons
          return true;
     }
 
-    // Explicitly reject all resource extractors (miners, oil extractors, resource well extractors, water extractors)
-    // NOTE: We may revisit re-enabling water extractors (AFGBuildableWaterPump) in the future.
+    // Reject node-bound extractors; vanilla Water Extractors use destination validation.
+    // Water Extractors alone use the per-destination water contract below.
+    if (ASFWaterPumpChildHologram::IsVanillaWaterExtractor(Building->GetClass())) return true;
+
     if (Building->IsA(AFGBuildableResourceExtractorBase::StaticClass()))
     {
         return false;

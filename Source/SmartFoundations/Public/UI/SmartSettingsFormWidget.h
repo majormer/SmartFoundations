@@ -24,6 +24,7 @@
 
 // Forward declarations
 class USFSubsystem;
+class AFGHologram;
 class UCanvasPanelSlot;
 class UWidgetSwitcher;
 struct FSFCloneTopology;
@@ -41,6 +42,10 @@ UCLASS(BlueprintType, Blueprintable)
 class SMARTFOUNDATIONS_API USmartSettingsFormWidget : public UFGInteractWidget
 {
     GENERATED_BODY()
+    friend class FSFTabbedRestoreDraftsTest;
+    friend class FSFInterfaceOwnershipTest;
+    friend class FSFPanelToggleCloseTest;
+    friend class FSFExtendPanelWorkflowTest;
 
 public:
     // Called by subsystem to populate form with current values
@@ -49,6 +54,42 @@ public:
     // Called by subsystem when toggle key pressed while form is open
     // Reverts unapplied changes and closes the form
     void CancelAndClose();
+    void ShowRestorePanel(bool bShow);
+    void ShowExtendPanel(bool bShow);
+    void CancelExtendSourceSelection();
+    void RefreshExtendPanel();
+    bool IsExtendPanelShown() const { return bShowingExtendPanel; }
+    bool IsForCurrentHologram() const;
+    bool HasPendingPresetLoad() const { return PendingPanelPreset.IsValid(); }
+    bool HasPendingConfirmation() const { return bWaitingForConfirmation; }
+
+private:
+    bool bShowingExtendPanel = false;
+    bool bSelectingExtendSource = false;
+    UPROPERTY(Transient) TObjectPtr<UVerticalBox> ExtendControls;
+    UPROPERTY(Transient) TObjectPtr<UBorder> ExtendPickLayer;
+    UPROPERTY(Transient) TObjectPtr<UTextBlock> ExtendSourceSummary;
+    UPROPERTY(Transient) TObjectPtr<UTextBlock> ExtendSourceStatus;
+    UPROPERTY(Transient) TObjectPtr<UTextBlock> ExtendSelectLabel;
+    void BuildExtendControls(UVerticalBox* Body);
+    void AcceptExtendSource(class AFGBuildable* Source);
+    class AFGBuildable* ResolveExtendSource(const FVector2D& Position);
+    void UpdateExtendHover(const FVector2D& Position);
+    void ClearExtendHover();
+    TWeakObjectPtr<class AFGBuildable> ExtendHoveredSource;
+    UFUNCTION() void OnSelectExtendSource();
+    UFUNCTION() void OnExtendDirection();
+    virtual FReply NativeOnPreviewMouseButtonDown(const FGeometry& Geometry, const FPointerEvent& Event) override;
+    TWeakObjectPtr<AFGHologram> PlacementContext;
+    FText SuspendedModuleName;
+    bool bModuleNameShowsUnavailable = false;
+    UPROPERTY(Transient) TObjectPtr<UWidgetSwitcher> TaskContentSwitcher;
+    UPROPERTY(Transient) TObjectPtr<UWidget> PlacementFooter;
+    UPROPERTY(Transient) TObjectPtr<UWidget> PlacementFooterRule;
+    UPROPERTY(Transient) TObjectPtr<UWidget> FamilySectionHeading;
+    UPROPERTY(Transient) TObjectPtr<UWidget> WallSectionHeading;
+    void RefreshContextControls();
+public:
 
 protected:
     // Core UI Components (bound from Blueprint)
@@ -230,6 +271,11 @@ protected:
     // Belt routing mode row (visibility toggled for distributors)
     UPROPERTY(meta = (BindWidgetOptional))
     TObjectPtr<UHorizontalBox> BeltRoutingModeRow;
+
+    UPROPERTY(meta = (BindWidgetOptional))
+    TObjectPtr<UHorizontalBox> LiftUsageModeRow;
+    UPROPERTY(meta = (BindWidgetOptional))
+    TObjectPtr<UComboBoxString> LiftUsageModeComboBox;
     
     // Label widgets for hiding irrelevant text
     UPROPERTY(meta = (BindWidgetOptional))
@@ -484,11 +530,12 @@ protected:
 
     // Native widget lifecycle
     virtual void NativeConstruct() override;
+    virtual void NativeTick(const FGeometry& Geometry, float DeltaTime) override;
+    virtual void NativeOnMouseCaptureLost(const FCaptureLostEvent& Event) override;
     virtual void NativeDestruct() override;
 
-    /** Auto-size the Apply/Reset/Close header buttons to their (localized) labels and re-tile
-     *  the row, so longer translations (e.g. RTL) are not clipped by the fixed designer width. */
-    void FitHeaderButtonRow();
+    /** Present the original bound controls in the shared placement/context/footer layout. */
+    void BuildPlacementMatrix();
 
     // Keyboard handling for Escape key
     virtual FReply NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent) override;
@@ -509,6 +556,7 @@ private:
     // Dragging support. [#427/Q8] The Restore side panel no longer drags independently - it is
     // DOCKED to the main panel (one draggable unit); UpdateRestoreDockPosition keeps it attached.
     bool bIsDragging = false;
+    bool bPanelPositionRestored = false;
     FVector2D DragOffset = FVector2D::ZeroVector;
 
     // Cached canvas slots for dragging. [#352 restructure] The panel is ONE canvas child
@@ -562,6 +610,13 @@ private:
     // Issue #165: Reset spacing, steps, stagger, and rotation to zero
     UFUNCTION()
     void OnResetButtonClicked();
+
+    UFUNCTION()
+    void OnSignSupportButtonClicked();
+    void RefreshSignSupportControl();
+    void RefreshWallRotationControl();
+    UFUNCTION()
+    void OnWallRotationChanged(FString SelectedItem, ESelectInfo::Type SelectionType);
 
     // #356 Smart Walking: toggle Walk mode on the held buildable, then close the panel to steer.
     UFUNCTION()
@@ -675,6 +730,10 @@ private:
 
     // Populate the main Smart Panel counter inputs from a selected Restore preset without applying them yet
     void PopulateSmartPanelFromPreset(const FSFRestorePreset& Preset);
+    void TickPendingPresetLoad();
+    TSharedPtr<const FSFRestorePreset> PendingPanelPreset;
+    int32 PresetLoadAttempts = 0;
+    int32 PresetLoadSettleTicks = 0;
 
     // Build the counter state the preset would apply, preserving current state for uncaptured groups
     FSFCounterState BuildPendingCounterStateFromPreset(const FSFRestorePreset& Preset) const;
@@ -789,6 +848,8 @@ private:
     // Belt routing mode ComboBox changed
     UFUNCTION()
     void OnBeltRoutingModeChanged(FString SelectedItem, ESelectInfo::Type SelectionType);
+    UFUNCTION()
+    void OnLiftUsageModeChanged(FString SelectedItem, ESelectInfo::Type SelectionType);
     
     // Cached list of unlocked belt tiers (0=Auto, 1-6=Mk1-Mk6)
     TArray<int32> CachedBeltTiers;

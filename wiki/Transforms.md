@@ -2,7 +2,13 @@
 
 Transforms change the shape of a scaled grid. They are what turn a plain row or rectangle into something with gaps, height changes, offsets, or arcs.
 
-> Screenshot placeholder: one comparison image showing spacing, steps, stagger, and rotation.
+![Spacing, Steps and Stagger values beside the transformed grid](https://raw.githubusercontent.com/wiki/majormer/SmartFoundations/images/v35/transforms.png)
+
+## Choose how to adjust transforms
+
+Open **K → Scaling → Placement** to enter **Spacing (m)**, **Steps (m)**, **Stagger (m)** and **Z stagger (m)** directly in the Smart Panel. Use the **Rotation** row below for the per-copy angle and its X/Y progression selector. The Panel keeps the grid's X/Y/Z axes even with Player Relative controls enabled.
+
+Alternatively, use the modifier keys with the mouse wheel or numpad described below. The runtime HUD shows the active transform, target axis and value while you adjust it; it is not a separate value-entry panel. With **Apply placement immediately** off, Panel geometry edits wait for **Apply**. Applying updates the preview; firing the build gun constructs it.
 
 ## Spacing
 
@@ -70,8 +76,8 @@ Controls:
   - **X** (default) — the rotation accumulates along the columns, so the **run** curves as it extends.
   - **Y** — the rotation accumulates along the rows, so the **rows** fan out around the vertical instead.
 
-Either way it stays a flat, upright arc — nothing ever tilts or flips. (Smart! rotates around the vertical/yaw axis only; vertical arch rotation is not currently an active feature.)
+Grid Rotation creates a horizontal yaw arc; it does not add a vertical-arch tool. **Wall rotation** on Pipeline/Hypertube wall supports is a separate native 45° control that turns the support itself, including vertical runs. Native tilted pillars also retain their selected parent frame when repeated.
 
 ---
 
-_Last updated: 2026-10-06 · Smart! v34.4.0_
+_Last updated: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (release draft)_

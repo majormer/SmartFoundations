@@ -6,6 +6,13 @@
 #include "Styling/SlateTypes.h"
 #include "Styling/SlateBrush.h"
 #include "Components/EditableTextBox.h"
+class UWidgetTree;
+class USpinBox;
+class UBorder;
+class UButton;
+class UWidget;
+class USFContextHelp;
+class SWidget;
 
 /**
  * Shared Smart! panel visual language.
@@ -13,7 +20,7 @@
  * The dark-backdrop / orange-accent / light-text scheme used by the Smart Panel and Smart Restore,
  * factored out here (2026-07-03) so every runtime-styled Smart panel (Restore, Upgrade, and future
  * ones) aligns to ONE palette + button + input style instead of drifting into per-file oranges and
- * greys. Header-only: all definitions are `inline`, no .cpp / no new translation unit.
+ * greys. Native widget behavior and localized font selection remain owned by each panel.
  *
  * Usage: `#include "UI/SFPanelStyle.h"` then `SFPanelStyle::Accent`, `SFPanelStyle::MakeButtonStyle(bAccent)`,
  * `SFPanelStyle::StyleInputLight(Box)`. Apply button styles via `UButton::SetStyle` and colors via
@@ -23,15 +30,15 @@ namespace SFPanelStyle
 {
 	// ---- Palette ------------------------------------------------------------
 	/** Smart! orange - accents, section headers, active-tab fill, selection highlight. */
-	inline const FLinearColor Accent(1.0f, 0.6f, 0.2f, 1.0f);
+	inline const FLinearColor Accent = FLinearColor::FromSRGBColor(FColor(229,148,69));
 	/** Backdrop for detail/summary panes sitting on the dark panel. */
-	inline const FLinearColor MutedPanel(0.05f, 0.05f, 0.08f, 0.95f);
+	inline const FLinearColor MutedPanel = FLinearColor::FromSRGBColor(FColor(32,32,36));
 	/** Primary readable text on the dark panel. */
 	inline const FLinearColor LightText(0.9f, 0.9f, 0.9f, 1.0f);
 	/** Secondary / section-label text on the dark panel. */
-	inline const FLinearColor DimText(0.65f, 0.65f, 0.65f, 1.0f);
+	inline const FLinearColor DimText(0.73f, 0.73f, 0.76f, 1.0f);
 	/** Label color for text sitting ON the orange accent fill (active tab / primary button). */
-	inline const FLinearColor NearBlackText(0.05f, 0.05f, 0.05f, 1.0f);
+	inline const FLinearColor NearBlackText = FLinearColor::FromSRGBColor(FColor(24,24,27));
 
 	// ---- Button -------------------------------------------------------------
 	/**
@@ -50,14 +57,35 @@ namespace SFPanelStyle
 		};
 
 		FButtonStyle Style;
-		Style.Normal = MakeBrush(bAccent ? FLinearColor(0.55f, 0.33f, 0.11f, 1.0f) : FLinearColor(0.13f, 0.13f, 0.17f, 1.0f));
-		Style.Hovered = MakeBrush(bAccent ? FLinearColor(0.75f, 0.45f, 0.15f, 1.0f) : FLinearColor(0.24f, 0.24f, 0.30f, 1.0f));
-		Style.Pressed = MakeBrush(Accent);
-		Style.Disabled = MakeBrush(FLinearColor(0.09f, 0.09f, 0.11f, 1.0f));
-		Style.NormalPadding = FMargin(6.0f, 3.0f);
-		Style.PressedPadding = FMargin(6.0f, 4.0f, 6.0f, 2.0f);
+		Style.Normal = MakeBrush(bAccent ? Accent : FLinearColor::FromSRGBColor(FColor(46,46,52)));
+		Style.Hovered = MakeBrush(bAccent ? FLinearColor::FromSRGBColor(FColor(246,174,100)) : FLinearColor::FromSRGBColor(FColor(65,65,73)));
+		Style.Pressed = MakeBrush(bAccent ? Accent : FLinearColor::FromSRGBColor(FColor(76,76,84)));
+		Style.Disabled = MakeBrush(bAccent ? FLinearColor::FromSRGBColor(FColor(174,174,180)) : FLinearColor::FromSRGBColor(FColor(46,46,52)));
+		Style.SetDisabledForeground(bAccent ? NearBlackText : DimText);
+		Style.NormalPadding = FMargin(10.0f, 6.0f);
+		Style.PressedPadding = FMargin(10.0f, 7.0f, 10.0f, 5.0f);
 		return Style;
 	}
+
+    /** Presentation only: preserve the native widget instances, fonts, ranges and delegates. */
+    void ApplyToTree(UWidgetTree* Tree);
+    void StyleSpinBox(USpinBox* Spin);
+    UBorder* MakeRule(UObject* Outer, bool bAccent = false);
+    UWidget* WrapTabButton(UButton* Button);
+    void StyleTab(UButton* Button, bool bSelected);
+    UWidget* MakeSectionHeading(UObject* Outer, FText Title, FText Scope = FText::GetEmpty());
+    inline FButtonStyle MakeHelpButtonStyle()
+    {
+        FButtonStyle Style = MakeButtonStyle(false);
+        Style.NormalPadding = FMargin(8, 3);
+        Style.PressedPadding = FMargin(8, 4, 8, 2);
+        return Style;
+    }
+    USFContextHelp* MakeHelp(UObject* Outer, FName Name, FText Title, FText Summary, FText Details);
+    UWidget* MakeHelpLabelRow(UObject* Outer, UWidget* Label, USFContextHelp* Help);
+    /** Matching compact help for native Slate settings: hover guidance, click to toggle details. */
+    TSharedRef<SWidget> MakeSlateHelp(FText Guidance, TSharedPtr<SWidget>& OutButton);
+    void ApplyControlHelp(UWidgetTree* Tree);
 
 	// ---- Input --------------------------------------------------------------
 	/**
@@ -84,9 +112,10 @@ namespace SFPanelStyle
 		Input->WidgetStyle.SetBackgroundImageFocused(MakeBrush(FLinearColor(1.0f, 1.0f, 1.0f, 1.0f)));
 		Input->WidgetStyle.SetBackgroundImageReadOnly(MakeBrush(FLinearColor(0.55f, 0.55f, 0.55f, 1.0f)));
 		Input->WidgetStyle.SetBackgroundColor(FSlateColor(FLinearColor::White));
-		Input->WidgetStyle.SetForegroundColor(FSlateColor(FLinearColor(0.05f, 0.05f, 0.05f, 1.0f)));
-		Input->WidgetStyle.SetFocusedForegroundColor(FSlateColor(FLinearColor(0.02f, 0.02f, 0.02f, 1.0f)));
-		Input->WidgetStyle.TextStyle.ColorAndOpacity = FSlateColor(FLinearColor(0.05f, 0.05f, 0.05f, 1.0f));
+		Input->WidgetStyle.SetForegroundColor(FSlateColor(NearBlackText));
+		Input->WidgetStyle.SetReadOnlyForegroundColor(FSlateColor(NearBlackText));
+		Input->WidgetStyle.SetFocusedForegroundColor(FSlateColor(NearBlackText));
+		Input->WidgetStyle.TextStyle.ColorAndOpacity = FSlateColor(NearBlackText);
 		Input->SynchronizeProperties();
 	}
 }

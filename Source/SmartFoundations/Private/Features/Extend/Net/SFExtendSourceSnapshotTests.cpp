@@ -22,6 +22,13 @@ bool FSFExtendSourceSnapshotNetworkTest::RunTest(const FString& Parameters)
     FSFSourcePowerPole& Pole = Source.PowerPoles.AddDefaulted_GetRef();
     Pole.PortCapacities.Add(TEXT("PowerConnection1"), 0);
     Pole.PortCapacities.Add(TEXT("PowerConnection2"), 3);
+    FSFSourceSegment& Support = Source.RouteSupports.AddDefaulted_GetRef();
+    Support.Id = TEXT("support");
+    Support.RelatedSourceIds = {TEXT("route")};
+    Support.SelectedPole.bCaptured = true;
+    Support.SelectedPole.Height = 275;
+    Support.SelectedPole.Variation = 1;
+    Support.SelectedPole.VerticalAngle = 22.5f;
     UScriptStruct::ICppStructOps* Ops = FSFSourceTopology::StaticStruct()->GetCppStructOps();
     if (!TestTrue(TEXT("Native RPC uses explicit snapshot serializer"), Ops && Ops->HasNetSerializer())) return false;
     FNetBitWriter Writer(nullptr, 64 * 1024 * 8);
@@ -37,6 +44,12 @@ bool FSFExtendSourceSnapshotNetworkTest::RunTest(const FString& Parameters)
     TestEqual(TEXT("Independent power faces survive RPC"), Received.PowerPoles[0].PortCapacities.Num(), 2);
     TestEqual(TEXT("Full face stays full"), Received.PowerPoles[0].PortCapacities.FindRef(TEXT("PowerConnection1")), 0);
     TestEqual(TEXT("Other face retains its capacity"), Received.PowerPoles[0].PortCapacities.FindRef(TEXT("PowerConnection2")), 3);
+    if (TestEqual(TEXT("Route support survives native RPC"), Received.RouteSupports.Num(), 1))
+    {
+        TestEqual(TEXT("Support height survives native RPC"), Received.RouteSupports[0].SelectedPole.Height, 275.f);
+        TestEqual(TEXT("Support tilt survives native RPC"), Received.RouteSupports[0].SelectedPole.VerticalAngle, 22.5f);
+        TestEqual(TEXT("Support route identity survives native RPC"), Received.RouteSupports[0].RelatedSourceIds[0], FString(TEXT("route")));
+    }
     FNetBitWriter Oversized(nullptr, 64);
     uint32 TooManyBytes = 32 * 1024 + 1;
     Oversized.SerializeIntPacked(TooManyBytes);

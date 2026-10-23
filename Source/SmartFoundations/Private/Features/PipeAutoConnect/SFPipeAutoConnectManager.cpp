@@ -468,10 +468,8 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 		TEXT("🔍 PIPE: Found %d buildings within %.0fm radius of %s"),
 		NearbyBuildings.Num(), SearchRadius / 100.0f, *ParentJunctionHologram->GetName());
 
-	if (NearbyBuildings.Num() == 0)
-	{
-		return;
-	}
+	// An empty search still needs the no-valid-connection cleanup below. Returning here
+	// retained both old pipe children (and their construction cost) after moving out of range.
 
 	int32 TotalConnectors = 0;
 	UFGPipeConnectionComponent* BestJunctionConnector = nullptr;

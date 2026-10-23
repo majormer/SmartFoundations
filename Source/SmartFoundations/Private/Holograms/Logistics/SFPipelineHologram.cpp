@@ -1,6 +1,7 @@
 // Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
 #include "Holograms/Logistics/SFPipelineHologram.h"
+#include "Features/Walk/SFWalkExistingOrigin.h"
 #include "Core/Helpers/SFBuildEffectHelper.h"
 #include "SmartFoundations.h"
 #include "Core/Net/SFVisualSplineMeshPolicy.h"
@@ -206,8 +207,10 @@ AActor* ASFPipelineHologram::Construct(TArray<AActor*>& out_children, FNetConstr
 					// exposed it. Because the finder returns a single candidate, a snap-only winner must
 					// be EXCLUDED and the search RETRIED, or a coincident real pipe end is never
 					// considered (live find: reject-without-retry left run joints unwired for fluid).
-					auto FindWireablePipeConn = [Pipe](UFGPipeConnectionComponentBase* OwnConn) -> UFGPipeConnectionComponentBase*
+					SFWalkExistingOrigin::ConnectNativeStart(this, Pipe);
+                    auto FindWireablePipeConn = [this, Pipe](UFGPipeConnectionComponentBase* OwnConn) -> UFGPipeConnectionComponentBase*
 					{
+                        if (SFWalkExistingOrigin::IsNativeStartPosition(this, OwnConn->GetComponentLocation())) { return nullptr; }
 						const FVector SearchLocation = OwnConn->GetComponentLocation();
 						TSet<UFGPipeConnectionComponentBase*> Ignored;
 						for (int32 Attempt = 0; Attempt < 4; ++Attempt)
@@ -218,8 +221,9 @@ AActor* ASFPipelineHologram::Construct(TArray<AActor*>& out_children, FNetConstr
 							{
 								return nullptr;
 							}
-							const UFGPipeConnectionComponent* AsPipeConn = Cast<UFGPipeConnectionComponent>(Candidate);
-							const bool bSnapOnly = AsPipeConn && AsPipeConn->GetPipeConnectionType() == EPipeConnectionType::PCT_SNAP_ONLY;
+							// The native type lives on the common base: Hyper support anchors
+							// are snap-only too, without being fluid components.
+							const bool bSnapOnly = Candidate->GetPipeConnectionType() == EPipeConnectionType::PCT_SNAP_ONLY;
 							if (bSnapOnly || Candidate->IsConnected() || Candidate->GetOwner() == Pipe)
 							{
 								Ignored.Add(Candidate);
@@ -877,6 +881,11 @@ float ASFPipelineHologram::ComputeMinRoutedBendRadiusCm() const
 		MinRadius = FMath::Min(MinRadius, (SideA * SideB * SideC) / (2.0f * DoubleArea));
 	}
 	return MinRadius;
+}
+
+bool ASFPipelineHologram::ValidateCurrentSpline(bool& OutTooLong)
+{
+	return ValidateCurrentSpline(GetMaxSplineLength(), OutTooLong);
 }
 
 bool ASFPipelineHologram::ValidateCurrentSpline(float MaxSplineLengthCm, bool& OutTooLong)

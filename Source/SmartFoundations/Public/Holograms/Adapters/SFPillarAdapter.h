@@ -9,9 +9,8 @@
 /**
  * FSFPillarAdapter - Adapter for pillar holograms
  * 
- * Pillars are vertical supports:
- * - Support all scaling axes
- * - Tall, thin profile
+ * Pillar bases and bodies use their registered native clearance dimensions.
+ * Scaling capability follows the same profile used by the controls and grid.
  */
 class SMARTFOUNDATIONS_API FSFPillarAdapter : public FSFHologramAdapterBase
 {

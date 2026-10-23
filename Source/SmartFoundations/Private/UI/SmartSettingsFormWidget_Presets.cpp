@@ -7,6 +7,10 @@
  */
 
 #include "UI/SmartSettingsFormWidgetImpl.h"
+#include "Components/WidgetSwitcher.h"
+#include "UI/SFInterfaceTaskStrip.h"
+#include "UI/SFInterfacePreferences.h"
+#include "Holograms/Adapters/ISFHologramAdapter.h"
 #include "Framework/Application/SlateApplication.h"
 
 #define LOCTEXT_NAMESPACE "SmartFoundations"
@@ -320,7 +324,7 @@ void USmartSettingsFormWidget::OnImportFromExtendClicked()
     FString Name = ModuleNameInput ? ModuleNameInput->GetText().ToString().TrimStartAndEnd() : FString();
     if (Name.IsEmpty())
     {
-        Name = FString::Printf(TEXT("Module %s"), *FDateTime::Now().ToString(TEXT("%Y%m%d-%H%M%S")));
+        Name = FText::Format(LOCTEXT("Module_DefaultName", "Module {0}"), FText::FromString(FDateTime::Now().ToString(TEXT("%Y%m%d-%H%M%S")))).ToString();
         if (ModuleNameInput)
         {
             ModuleNameInput->SetText(FText::FromString(Name));
@@ -364,6 +368,11 @@ void USmartSettingsFormWidget::OnPresetSelectionChanged(FString SelectedItem, ES
 
 void USmartSettingsFormWidget::OnRestoreSectionToggleClicked()
 {
+    if (TaskContentSwitcher)
+    {
+        ShowRestorePanel(TaskContentSwitcher->GetActiveWidgetIndex() != 1);
+        return;
+    }
     UWidget* RestorePanel = RestoreSidePanel ? Cast<UWidget>(RestoreSidePanel) : Cast<UWidget>(RestoreContainer);
     if (!RestorePanel)
     {
@@ -372,6 +381,10 @@ void USmartSettingsFormWidget::OnRestoreSectionToggleClicked()
 
     const bool bVisible = RestorePanel->GetVisibility() != ESlateVisibility::Collapsed;
     RestorePanel->SetVisibility(bVisible ? ESlateVisibility::Collapsed : ESlateVisibility::Visible);
+    WidgetTree->ForEachWidget([bVisible](UWidget* Widget)
+    {
+        if (auto* Tasks = Cast<USFInterfaceTaskStrip>(Widget)) Tasks->SetActiveTask(bVisible ? 0 : 3);
+    });
 
     // [#427] On open: dock to the main panel and refresh both tabs + the clipboard slot.
     if (!bVisible)
@@ -381,6 +394,37 @@ void USmartSettingsFormWidget::OnRestoreSectionToggleClicked()
         RefreshModuleDropdown();
         UpdateClipboardSlot();
     }
+}
+
+void USmartSettingsFormWidget::ShowRestorePanel(bool bShow)
+{
+    CancelExtendSourceSelection();
+    bShowingExtendPanel = false;
+    if (ExtendControls) ExtendControls->SetVisibility(ESlateVisibility::Collapsed);
+    if (TaskContentSwitcher)
+    {
+        if (bWaitingForConfirmation || HasPendingPresetLoad()) return;
+        const bool bChanged = TaskContentSwitcher->GetActiveWidgetIndex() != (bShow ? 1 : 0);
+        TaskContentSwitcher->SetActiveWidgetIndex(bShow ? 1 : 0);
+        if (PlacementFooter) PlacementFooter->SetVisibility(bShow ? ESlateVisibility::Collapsed : ESlateVisibility::Visible);
+        if (PlacementFooterRule) PlacementFooterRule->SetVisibility(bShow ? ESlateVisibility::Collapsed : ESlateVisibility::Visible);
+        if (bShow && bChanged) { RefreshPresetDropdown(); RefreshModuleDropdown(); UpdateClipboardSlot(); }
+        WidgetTree->ForEachWidget([bShow](UWidget* Widget)
+        {
+            if (auto* Tasks = Cast<USFInterfaceTaskStrip>(Widget)) Tasks->SetActiveTask(bShow ? 3 : 0);
+            if (Widget->GetFName() == TEXT("ScalingHelpButton"))
+                Widget->SetVisibility(bShow ? ESlateVisibility::Collapsed : ESlateVisibility::Visible);
+        });
+        return;
+    }
+    UWidget* Panel = RestoreSidePanel ? Cast<UWidget>(RestoreSidePanel) : Cast<UWidget>(RestoreContainer);
+    if (Panel && (Panel->GetVisibility() != ESlateVisibility::Collapsed) != bShow) OnRestoreSectionToggleClicked();
+    WidgetTree->ForEachWidget([bShow](UWidget* Widget)
+    {
+        if (auto* Tasks = Cast<USFInterfaceTaskStrip>(Widget)) Tasks->SetActiveTask(bShow ? 3 : 0);
+        if (Widget->GetFName() == TEXT("ScalingHelpButton"))
+            Widget->SetVisibility(bShow ? ESlateVisibility::Collapsed : ESlateVisibility::Visible);
+    });
 }
 
 void USmartSettingsFormWidget::RefreshPresetDropdown(const FString& PreferredSelection)
@@ -482,6 +526,10 @@ void USmartSettingsFormWidget::PopulateSmartPanelFromPreset(const FSFRestorePres
         return;
     }
 
+    // Loading can equip a different native hologram. Keep this same window and
+    // its staged controls associated with that new context before tab changes.
+    PlacementContext = CachedSubsystem->GetActiveHologram();
+    RefreshContextControls();
     const FSFCounterState PendingState = BuildPendingCounterStateFromPreset(Preset);
     PopulateCounterInputsFromState(PendingState);
     SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
@@ -537,6 +585,24 @@ void USmartSettingsFormWidget::PopulateCounterInputsFromState(const FSFCounterSt
 {
     const bool bWasApplyImmediately = bApplyImmediately;
     bApplyImmediately = false;
+
+    // Extend/Walking axes describe their own module/lane workflow. Only ordinary
+    // grids use the active native buildable's per-axis capability declarations.
+    const auto Adapter = CachedSubsystem.IsValid() && CachedSubsystem->GetActiveHologram()
+        && !CachedSubsystem->IsExtendModeActive() && !CachedSubsystem->IsWalkModeActive()
+        ? CachedSubsystem->GetCurrentAdapter() : nullptr;
+    const bool bX = !Adapter || Adapter->SupportsScalingAxis(ESFScaleAxis::X);
+    const bool bY = !Adapter || Adapter->SupportsScalingAxis(ESFScaleAxis::Y);
+    const bool bZ = !Adapter || Adapter->SupportsScalingAxis(ESFScaleAxis::Z);
+    if (GridXInput) GridXInput->SetIsEnabled(bX);
+    if (GridYInput) GridYInput->SetIsEnabled(bY);
+    if (GridZInput) GridZInput->SetIsEnabled(bZ);
+    if (GridXDirToggle) GridXDirToggle->SetIsEnabled(bX);
+    if (GridYDirToggle) GridYDirToggle->SetIsEnabled(bY);
+    if (GridZDirToggle) GridZDirToggle->SetIsEnabled(bZ);
+    if (SpacingXInput) SpacingXInput->SetIsEnabled(bX);
+    if (SpacingYInput) SpacingYInput->SetIsEnabled(bY);
+    if (SpacingZInput) SpacingZInput->SetIsEnabled(bZ);
 
     bGridXPositive = State.GridCounters.X >= 0;
     bGridYPositive = State.GridCounters.Y >= 0;
@@ -673,8 +739,8 @@ void USmartSettingsFormWidget::UpdateRestoreButtonTextColors()
     };
 
     // These two live on the MAIN panel's light-grey buttons - keep black there.
-    SetTextColor(TEXT("RestoreSectionHeader"), BlackText);
-    SetTextColor(TEXT("WalkPathLabel"), BlackText);   // #356 entry button on the main panel
+    SetTextColor(TEXT("RestoreSectionHeader"), LightText);
+    SetTextColor(TEXT("WalkPathLabel"), LightText);
 
     SetTextColor(TEXT("ApplyPresetBtnText"), LightText);   // orphaned (Apply & Build retired), harmless
     SetTextColor(TEXT("SavePresetBtnText"), LightText);
@@ -688,6 +754,8 @@ void USmartSettingsFormWidget::UpdateRestoreButtonTextColors()
 
 void USmartSettingsFormWidget::CloseForm()
 {
+    PendingPanelPreset.Reset();
+    if (CachedSubsystem.IsValid()) CachedSubsystem->CloseInactiveInterfaceTasks(this);
     // Restore HUD visibility
     if (CachedSubsystem.IsValid())
     {
@@ -852,6 +920,16 @@ FSFCounterState USmartSettingsFormWidget::ReadPanelCounterState() const
         NewState.RotationAxis = RotationAxisComboBox->GetSelectedIndex() == 1 ? ESFScaleAxis::Y : ESFScaleAxis::X;
     }
 
+    // Presets and programmatic widget edits must obey the same axis contract as
+    // keyboard/wheel input; a disabled axis cannot introduce hidden grid cells.
+    if (CachedSubsystem.IsValid() && CachedSubsystem->GetActiveHologram()
+        && !CachedSubsystem->IsExtendModeActive() && !CachedSubsystem->IsWalkModeActive())
+        if (const auto Adapter = CachedSubsystem->GetCurrentAdapter())
+        {
+            if (!Adapter->SupportsScalingAxis(ESFScaleAxis::X)) NewState.GridCounters.X = 1;
+            if (!Adapter->SupportsScalingAxis(ESFScaleAxis::Y)) NewState.GridCounters.Y = 1;
+            if (!Adapter->SupportsScalingAxis(ESFScaleAxis::Z)) NewState.GridCounters.Z = 1;
+        }
     return NewState;
 }
 
@@ -876,18 +954,14 @@ void USmartSettingsFormWidget::ApplyCurrentValues()
 
     // Apply the new state (updates GridStateService, local CounterState, and triggers HUD refresh)
     CachedSubsystem->UpdateCounterState(NewState);
+    PopulateCounterInputsFromState(NewState);
 
     // Regenerate child holograms to reflect new grid counts and reposition with new spacing/steps/stagger
     // During Extend mode, UpdateCounterState already triggers OnScaledExtendStateChanged which handles regeneration
     if (!CachedSubsystem->IsExtendModeActive())
     {
         CachedSubsystem->RegenerateChildHologramGrid();
-        // Apply also commits pending Auto-Connect choices. An unchanged grid must
-        // still rebuild routes for a new tier, style, or routing mode.
-        if (!bApplyImmediately)
-        {
-            CachedSubsystem->TriggerAutoConnectRefresh();
-        }
+        CachedSubsystem->TriggerAutoConnectRefresh();
     }
 
     // Refresh recipe details to update grid totals with new grid size
@@ -913,7 +987,9 @@ void USmartSettingsFormWidget::ApplyCurrentValues()
 
 FReply USmartSettingsFormWidget::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
 {
-    if (InMouseEvent.GetEffectingButton() == EKeys::RightMouseButton)
+    const bool bTitleDrag = InMouseEvent.GetEffectingButton() == EKeys::LeftMouseButton
+        && SFInterface::IsHeaderHit(TitleText ? TitleText->GetParent() : nullptr, InMouseEvent);
+    if (bTitleDrag || InMouseEvent.GetEffectingButton() == EKeys::RightMouseButton)
     {
         // #351: a right-click drag does not dismiss an open ComboBox popup. Its Slate menu is anchored
         // at open time, so it would stay put while the panel moves (a detached, misplaced dropdown).
@@ -931,7 +1007,7 @@ FReply USmartSettingsFormWidget::NativeOnMouseButtonDown(const FGeometry& InGeom
         {
             bIsDragging = true;
             DragOffset = LocalMouse - BackgroundPanelSlot->GetPosition();
-            return FReply::Handled();
+            return FReply::Handled().CaptureMouse(TakeWidget());
         }
     }
 
@@ -940,9 +1016,11 @@ FReply USmartSettingsFormWidget::NativeOnMouseButtonDown(const FGeometry& InGeom
 
 FReply USmartSettingsFormWidget::NativeOnMouseButtonUp(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
 {
-    if (InMouseEvent.GetEffectingButton() == EKeys::RightMouseButton)
+    if (bIsDragging && (InMouseEvent.GetEffectingButton() == EKeys::RightMouseButton || InMouseEvent.GetEffectingButton() == EKeys::LeftMouseButton))
     {
         bIsDragging = false;
+        SFInterface::SavePanel(this, BackgroundPanel, TEXT("Panel"));
+        return FReply::Handled().ReleaseMouseCapture().SetUserFocus(TakeWidget(), EFocusCause::Mouse);
     }
 
     return Super::NativeOnMouseButtonUp(InGeometry, InMouseEvent);
@@ -950,6 +1028,7 @@ FReply USmartSettingsFormWidget::NativeOnMouseButtonUp(const FGeometry& InGeomet
 
 FReply USmartSettingsFormWidget::NativeOnMouseMove(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
 {
+    if (bSelectingExtendSource) UpdateExtendHover(InMouseEvent.GetScreenSpacePosition());
     if (bIsDragging && BackgroundPanelSlot)
     {
         // [#352 restructure] The panel is one canvas child; dragging moves one slot.

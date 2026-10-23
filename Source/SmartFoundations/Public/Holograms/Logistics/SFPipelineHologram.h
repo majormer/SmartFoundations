@@ -137,7 +137,13 @@ public:
 	/** [#437] Did the last RouteWithStraightExit produce a shape vanilla would reject? */
 	bool IsRoutedShapeInvalid() const { return bRoutedShapeInvalid; }
 
-	/** Validate the currently generated spline against the shared length cap and vanilla bend radius. */
+	/** Expose the native configured ceiling, as the conveyor hologram does. */
+	float GetMaxSplineLength() const { return mMaxSplineLength; }
+
+	/** Validate the currently generated spline against its native length cap and bend radius. */
+	bool ValidateCurrentSpline(bool& OutTooLong);
+
+	/** Walking can additionally constrain a span to its own routing cap. */
 	bool ValidateCurrentSpline(float MaxSplineLengthCm, bool& OutTooLong);
     
     // Get the 6-point build spline (not the 2-point preview spline)

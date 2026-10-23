@@ -18,7 +18,7 @@ AutoConnect creates preview and child holograms that connect scaled logistics an
 
 | Area | Status | Current behavior |
 |------|--------|------------------|
-| Belt AutoConnect | Active | Creates belt previews from distributors/supports to nearby compatible connectors and between chainable logistics elements. |
+| Belt AutoConnect | Active | Creates belts and optional lift-assisted factory connections from distributors, plus belt previews between compatible supports and chainable logistics elements. |
 | Pipe AutoConnect | Active | Creates pipe previews for junctions, storage, pumps, floor holes, and compatible pipe connectors. |
 | Power AutoConnect | Active | Creates power-line previews between poles and to powered buildings while respecting connection capacity. |
 
@@ -81,6 +81,21 @@ Important behavior:
 - Stackable conveyor poles can create horizontal belt previews between adjacent supports.
 - Preview creation respects belt tier settings and belt length limits.
 - Chain actor stabilization is handled after build by the shared chain actor service where topology changes require it.
+
+### Lift-assisted factory connections
+
+`LiftUsageMode` selects Belts Only (default), Lift at Distributor, or Lift at
+Building through the existing Auto-Connect settings and Panel. Assignment and
+port scoring remain unchanged. `FSFLiftRoutePreview` creates lightweight visible
+lift/belt proxies backed by shared native validators. Direct native docking
+omits the belt; ordinary routes keep the belt level at the selected end.
+
+`SFLiftRoutePlan` captures exact geometry, named endpoints, recipes and native
+costs for authority-side preparation before payment. Invalid or stale routes
+reject the complete placement. Factory discovery inside a Blueprint Designer
+also uses its native owned-member list, and proxies carry Designer context into
+native construction. See the [Conveyor Lift Construction Contract](../../Reference/BuildableContracts/ConveyorLifts.md)
+for validation ordering, reversed endpoints and ownership requirements.
 
 ## Pipe AutoConnect
 

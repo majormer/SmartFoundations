@@ -40,6 +40,7 @@ struct FSmart_BeltConfigSection {
     UPROPERTY(BlueprintReadWrite) int32 BeltLevelMain{};
     UPROPERTY(BlueprintReadWrite) int32 BeltLevelToBuilding{};
     UPROPERTY(BlueprintReadWrite) int32 BeltRoutingMode{};
+    UPROPERTY(BlueprintReadWrite) int32 LiftUsageMode{};
     UPROPERTY(BlueprintReadWrite) bool bStackableBeltEnabled{};
 };
 
@@ -78,6 +79,7 @@ struct FSmart_PowerConfigSection {
 USTRUCT(BlueprintType)
 struct FSmart_BuildingBehaviorConfigSection {
     GENERATED_BODY()
+    UPROPERTY(BlueprintReadWrite) bool bPreserveUpgradeDismantleGroups{true};
     UPROPERTY(BlueprintReadWrite) bool bExtendEnabled{true};
     UPROPERTY(BlueprintReadWrite) bool bExtendPowerEnabled{};
     UPROPERTY(BlueprintReadWrite) bool bExtendDaisyChainPower{true};
@@ -167,8 +169,15 @@ public:
     UPROPERTY(BlueprintReadWrite)
     int32 BeltRoutingMode{};
 
+    // 0=Belts Only, 1=Lift at Distributor, 2=Lift at Building
+    UPROPERTY(BlueprintReadWrite)
+    int32 LiftUsageMode{};
+
     UPROPERTY(BlueprintReadWrite)
     bool bStackableBeltEnabled{};
+
+    UPROPERTY(BlueprintReadWrite)
+    bool bPreserveUpgradeDismantleGroups{true};
 
     // ── Pipe Auto-Connect ──
 
@@ -365,6 +374,7 @@ public:
         ConfigStruct.BeltLevelMain            = Sections.BeltAutoConnect.BeltLevelMain;
         ConfigStruct.BeltLevelToBuilding      = Sections.BeltAutoConnect.BeltLevelToBuilding;
         ConfigStruct.BeltRoutingMode          = Sections.BeltAutoConnect.BeltRoutingMode;
+        ConfigStruct.LiftUsageMode = FMath::Clamp(Sections.BeltAutoConnect.LiftUsageMode, 0, 2);
         ConfigStruct.bStackableBeltEnabled    = Sections.BeltAutoConnect.bStackableBeltEnabled;
 
         // Pipe Auto-Connect
@@ -395,6 +405,7 @@ public:
         ConfigStruct.RotationIncrement        = Sections.BuildingBehavior.RotationIncrement;
 
         // Building Behavior (Extend + Scaling + Smart Panel)
+        ConfigStruct.bPreserveUpgradeDismantleGroups = Sections.BuildingBehavior.bPreserveUpgradeDismantleGroups;
         ConfigStruct.bExtendEnabled           = Sections.BuildingBehavior.bExtendEnabled;
         ConfigStruct.bExtendPowerEnabled      = Sections.BuildingBehavior.bExtendPowerEnabled;
         ConfigStruct.bExtendDaisyChainPower   = Sections.BuildingBehavior.bExtendDaisyChainPower;

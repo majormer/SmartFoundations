@@ -44,6 +44,8 @@ public:
     // Temporarily suppress HUD drawing (e.g., when settings form is open)
     void SetHUDSuppressed(bool bSuppressed) { bHUDSuppressed = bSuppressed; }
     bool IsHUDSuppressed() const { return bHUDSuppressed; }
+    void SetLayoutEditorActive(bool bActive) { bLayoutEditorActive = bActive; }
+    bool IsLayoutEditorActive() const { return bLayoutEditorActive; }
 
     // Reset all cached HUD state (called when hologram changes)
     void ResetState();
@@ -51,6 +53,7 @@ public:
 private:
     // Runtime suppression flag (settings form, etc.)
     bool bHUDSuppressed = false;
+    bool bLayoutEditorActive = false;
     // Owner
     TWeakObjectPtr<USFSubsystem> Subsystem;
 

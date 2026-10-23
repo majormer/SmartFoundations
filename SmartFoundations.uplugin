@@ -1,8 +1,8 @@
 {
 	"AcceptsAnyRemoteVersion": true,
 	"FileVersion": 3,
-	"Version": 34,
-	"VersionName": "34.4.0",
+	"Version": 35,
+	"VersionName": "35.0.0",
 	"FriendlyName": "Smart!",
 	"Description": "Advanced hologram control for precision building - Rebuilt for Satisfactory 1.2",
 	"Category": "Modding",
@@ -33,9 +33,15 @@
 			"Name": "AbstractInstance",
 			"Enabled": true,
 			"BasePlugin": true
+		},
+		{
+			"Name": "SmartCamera",
+			"Enabled": true,
+			"Optional": true,
+			"SemVersion": ">=2.0.0"
 		}
 	],
-	"SemVersion": "34.4.0",
+	"SemVersion": "35.0.0",
 	"GameVersion": ">=502094",
 	"LocalizationTargets": [
 		{

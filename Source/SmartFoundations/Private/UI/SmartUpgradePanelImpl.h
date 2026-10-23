@@ -20,6 +20,7 @@
 #include "Services/SFChainActorService.h"
 #include "Features/Upgrade/SFUpgradeTraversalService.h"
 #include "Features/Upgrade/SFUpgradeTierPolicy.h"
+#include "Features/Upgrade/SFUpgradeMinerFamily.h"
 #include "Components/Button.h"
 #include "Components/TextBlock.h"
 #include "Components/VerticalBox.h"
@@ -56,6 +57,6 @@ inline bool IsConveyorUpgradeFamily(ESFUpgradeFamily Family)
 inline FString GetPanelFamilyDisplayName(ESFUpgradeFamily Family)
 {
 	return IsConveyorUpgradeFamily(Family)
-		? FString(TEXT("Conveyors"))
+		? NSLOCTEXT("SmartFoundations", "Family_Conveyors", "Conveyors").ToString()
 		: USFUpgradeAuditService::GetFamilyDisplayName(Family);
 }

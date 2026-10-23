@@ -36,15 +36,21 @@ UCLASS(BlueprintType, Blueprintable, Category = "SmartFoundations")
 class SMARTFOUNDATIONS_API USmartUpgradePanel : public UFGInteractWidget
 {
 	GENERATED_BODY()
+    friend class FSFUpgradeTargetSelectionTest;
+    friend class FSFUpgradeMethodStateTest;
+    friend class FSFPanelToggleCloseTest;
 
 public:
 	/** Close the panel and restore game input */
 	UFUNCTION(BlueprintCallable, Category = "SmartFoundations|Upgrade")
 	void ClosePanel();
+    void CancelTargetSelection();
 
 protected:
+    UFUNCTION() UWidget* GenerateTierItem(FString Item);
 	/** Handle keyboard input */
 	virtual FReply NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent) override;
+    virtual FReply NativeOnPreviewKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent) override;
 
 	/** Handle mouse input for dragging */
 	virtual FReply NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
@@ -53,6 +59,8 @@ protected:
 
 	/** Native construct to bind close button click */
 	virtual void NativeConstruct() override;
+    virtual void NativeTick(const FGeometry& Geometry, float DeltaTime) override;
+    virtual void NativeOnMouseCaptureLost(const FCaptureLostEvent& Event) override;
 
 	/** [UPGRADE-MP] Unbind the static traversal-result delegate */
 	virtual void NativeDestruct() override;
@@ -161,6 +169,10 @@ protected:
 	UPROPERTY(meta = (BindWidgetOptional))
 	TObjectPtr<class UCheckBox> CrossTrainPlatformsCheckBox;
 
+	/** Request-local override, initialized from Mod Settings whenever the panel opens. */
+	UPROPERTY()
+	TObjectPtr<UCheckBox> PreserveDismantleGroupCheckBox;
+
 	/** Shared bottom widgets */
 	UPROPERTY(meta = (BindWidgetOptional))
 	TObjectPtr<class UTextBlock> SharedStatusText;
@@ -244,6 +256,18 @@ private:
 	// [Track E] OnTriageDetectClicked / OnTriageRepairClicked removed (chain-repair tooling gone).
 
 	void SwitchToTab(ESmartUpgradeTab NewTab);
+    struct FMethodDraft
+    {
+        ESFUpgradeFamily Family = ESFUpgradeFamily::None;
+        int32 SourceTier = 0;
+        int32 TargetTier = 0;
+    };
+    FMethodDraft MethodDrafts[2];
+    bool bMethodInitialized = false;
+    bool bRadiusScanPending = false;
+    void CaptureMethodDraft();
+    void RestoreMethodDraft();
+    void SetRadiusScanPending(bool bPending);
 
 	/** Update traversal UI with results */
 	void UpdateTraversalUI(const FSFTraversalResult& Result);
@@ -280,6 +304,15 @@ private:
 	/** Traversal anchor buildable (set when player aims at something) */
 	UPROPERTY()
 	TWeakObjectPtr<AFGBuildable> TraversalAnchor;
+    UPROPERTY(Transient) TObjectPtr<UBorder> TargetPickLayer;
+    UPROPERTY(Transient) TObjectPtr<UButton> SelectTargetButton;
+    UPROPERTY(Transient) TObjectPtr<UTextBlock> SelectTargetLabel;
+    bool bSelectingNetworkTarget = false;
+    FText TargetSelectionPreviousStatus;
+    void InitializeTargetSelection();
+    void SetNetworkTarget(AFGBuildable* Target);
+    bool PickNetworkTarget(const FVector2D& AbsolutePosition);
+    UFUNCTION() void OnSelectTargetClicked();
 
 	/** [#456] World location of the last traversal anchor - remembered so the post-upgrade refresh
 	 *  can re-acquire a network seed even when the anchor belt was replaced by its own upgrade. */
@@ -325,6 +358,7 @@ private:
 
 	/** Dragging state */
 	bool bIsDragging = false;
+    bool bPanelPositionRestored = false;
 	FVector2D DragOffset;
 	FVector2D InitialPanelPosition;
 

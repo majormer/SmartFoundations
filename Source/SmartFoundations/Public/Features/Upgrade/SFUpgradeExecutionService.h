@@ -46,6 +46,10 @@ struct FSFUpgradeExecutionParams
 	UPROPERTY()
 	int32 MaxItems = 0;
 
+	/** Preserve the original native dismantle group for this entire request, in either tier direction. */
+	UPROPERTY()
+	bool bPreserveDismantleGroupMembership = true;
+
 	/** Player controller for inventory access (required for cost deduction) */
 	UPROPERTY()
 	TObjectPtr<AFGPlayerController> PlayerController = nullptr;
@@ -157,6 +161,9 @@ public:
 	UFUNCTION(BlueprintPure, Category = "SmartFoundations|Upgrade")
 	bool IsUpgradeInProgress() const { return bUpgradeInProgress; }
 
+	/** True only during synchronous native power replacement construction in this world. */
+	static bool IsConstructingPowerReplacement(const UWorld* World);
+
 	/** Get the last execution result */
 	UFUNCTION(BlueprintPure, Category = "SmartFoundations|Upgrade")
 	const FSFUpgradeExecutionResult& GetLastResult() const { return LastResult; }
@@ -217,6 +224,10 @@ private:
 	 * @return 1 = success, 0 = failed, -1 = out of funds (abort remaining)
 	 */
 	int32 ProcessSingleUpgrade(AFGBuildable* Buildable, TSubclassOf<class UFGRecipe> TargetRecipe);
+
+	/** Native node-bound replacement; shares settlement and pre-callback group snapshot. */
+	int32 ProcessMinerReplacement(AFGBuildable* Buildable, TSubclassOf<class UFGRecipe> TargetRecipe,
+		class AFGBuildGun* BuildGun, AFGCharacterPlayer* Player, class FSFReplacementGroupTransfer& GroupTransfer);
 
 	/** Gather buildables to upgrade based on params */
 	void GatherUpgradeTargets();

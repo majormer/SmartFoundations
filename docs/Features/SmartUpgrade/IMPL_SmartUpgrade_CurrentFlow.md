@@ -23,7 +23,9 @@ Smart Upgrade can scan and upgrade existing logistics and power infrastructure. 
 ### Tier replacement in either direction
 
 For belts, lifts, and pipes, the target dropdown permits lower and higher unlocked tiers. Power
-poles and wall outlets remain upgrade-only. A selected source row replaces only that tier;
+poles, wall outlets, miners, pumps, storage and other capacity families are upgrade-only where
+their native replacement workflow is supported. Vanilla eligibility for a lower tier does not
+make it a Smart feature. A selected source row replaces only that tier;
 the network's All tiers row normalizes differing logistics tiers, but only raises power tiers. The shared
 `SFUpgradeTierPolicy` drives UI quotes, request selection, authority gathering, and conveyor cohort
 normalization. Maximum-tier network rows remain selectable for downgrades even though audit
@@ -31,10 +33,29 @@ normalization. Maximum-tier network rows remain selectable for downgrades even t
 covers these selection boundaries.
 
 Authority checks recipe availability and the actual actor family's direction policy before
-materialization, so mixed-family or All tiers requests cannot lower a power pole or outlet.
+materialization, so mixed-family or All tiers requests cannot lower a capacity-family actor.
 The existing exact net-charge/refund transaction applies in both logistics
-directions, with refunds earned only after successful replacement. No blueprint-group membership
-transfer is added by this path.
+directions, with refunds earned only after successful replacement. Native group preservation
+is controlled separately by the live option described below.
+
+### Native dismantle-group preservation
+
+`bPreserveDismantleGroupMembership` defaults to On. The Upgrade panel reads the setting for
+each request; changing it does not require a world reload. When enabled,
+`FSFReplacementGroupTransfer` in `Core/Construction` captures the original native Blueprint proxy before construction or
+upgrade callbacks. It holds the proxy alive during the synchronous replacement, registers the
+replacement in that same proxy, and removes the original member after successful replacement.
+This preserves the group's identity and unrelated members, including when the original was its
+sole member. Pipeline flow indicators receive a separate transfer scope for their own membership.
+
+The transfer excludes Blueprint Designer-owned actors. Failed construction restores any surviving
+original's membership; an affordability failure aborts the remaining batch without replacing those
+actors. The hold ends on every exit path. `SmartFoundations.Upgrade.GroupTransfer` covers the
+transfer predicates; runtime family, material-budget, lifecycle and mode evidence is tracked in
+[issue #533](https://github.com/majormer/SmartFoundations/issues/533).
+
+When disabled, Smart does not explicitly transfer membership. Native upgrade behavior still applies;
+the option does not force a replacement out of any group assigned by vanilla construction.
 
 The chain system is the fragile part. Large conveyor upgrades can leave orphaned tick groups and slow-materializing chain state. In-game orphan bounce repair is disabled and diagnostic-only because every in-game bounce variant tested during the April 2026 investigation caused crashes. See `RESEARCH_SmartUpgrade_ChainActorInvestigation.md` in the working repository for full crash analysis and findings.
 
@@ -206,6 +227,10 @@ Older docs said execution should be throttled N items per tick. That is no longe
 
 When `SpecificBuildables` is populated, execution uses those actors directly. Each valid actor is filtered to `0 < current tier < target tier`. `SourceTier` can be zero in this mode because mixed-tier traversal is allowed.
 
+### Conveyor network selection
+
+For belts and lifts, an explicit network selection supplies seeds rather than an arbitrary final actor list. `GatherUpgradeTargets` calls `NormalizeConveyorUpgradeTargets` for explicit selections as well as radius scans. Each seed expands to its connected conveyor cohort, then the selected source tier determines which members are eligible. Selecting a lift can therefore replace connected belts of that tier too. `SourceTier == 0` uses the normal tier-policy sweep. This behavior must be included when calculating expected replacements and material costs.
+
 ### Radius and Save-Wide Mode
 
 For pipes, execution scans `AFGBuildablePipeline` actors at the source tier so indicator and no-indicator variants are both included. Pumps and junctions are excluded.
@@ -313,9 +338,18 @@ Current lift steps:
 9. Call upgrade hooks on old lift.
 10. Transfer factory connections.
 11. Capture old chain actor.
-12. Retire old lift and child actors using short lifespan.
+12. Retire the old lift and its owned child actors through native `Destroy()` before the batch chain rebuild.
 13. Track new lift in `UpgradedConveyors`.
 14. Record old-to-new maps.
+
+Retirement must finish before rebuilding a partial conveyor cohort. A short lifespan timer can
+leave both the old lift and its replacement registered for the next factory tick. In the
+limited-materials regression, the native rebuild produced 36 segments for a 35-conveyor cohort;
+the final native handoff returned one newly grabbed ore to the retiring lift's local queue after
+its upgrade callback had already transferred that queue. Synchronized `PreFactoryTick` snapshots
+measured a one-item deficit. Immediate native retirement left the old queue empty and conserved
+cargo in that regression. The raw validation scope and remaining coverage are tracked in
+[issue #533](https://github.com/majormer/SmartFoundations/issues/533).
 
 ### Power Poles and Wall Outlets
 

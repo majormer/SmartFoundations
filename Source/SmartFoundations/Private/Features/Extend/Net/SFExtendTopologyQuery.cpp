@@ -44,6 +44,7 @@ FSFExtendTopology SFExtendTopologyQuery::Capture(USFSubsystem* Subsystem, AFGBui
             {
                 AddOwner(Chain.Distributor.Get());
                 for (const auto& Conveyor : Chain.Conveyors) AddOwner(Conveyor.Get());
+                for (const auto& Support : Chain.SupportPoles) AddOwner(Support.Get());
             }
         for (const TArray<FSFPipeConnectionChainNode>* Group : {&Reply.PipeInputChains, &Reply.PipeOutputChains})
             for (const FSFPipeConnectionChainNode& Chain : *Group)

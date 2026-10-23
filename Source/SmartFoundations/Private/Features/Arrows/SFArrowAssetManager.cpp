@@ -38,10 +38,6 @@ bool FSFArrowAssetManager::LoadAssetsAsync(TFunction<void(bool, UStaticMesh*, US
 	AssetsToLoad.Add(ShaftMeshSoft.ToSoftObjectPath());
 	AssetsToLoad.Add(ArrowMaterialSoft.ToSoftObjectPath());
 
-	SF_LOG_ARROWS(Normal, TEXT("📦 Asset Manager: Starting async load of %d assets"), AssetsToLoad.Num());
-	SF_LOG_ARROWS(Verbose, TEXT("   Head Mesh: %s"), *ArrowMeshSoft.ToSoftObjectPath().ToString());
-	SF_LOG_ARROWS(Verbose, TEXT("   Shaft Mesh: %s"), *ShaftMeshSoft.ToSoftObjectPath().ToString());
-	SF_LOG_ARROWS(Verbose, TEXT("   Material: %s"), *ArrowMaterialSoft.ToSoftObjectPath().ToString());
 
 	// Get streamable manager from asset manager
 	FStreamableManager& StreamableManager = UAssetManager::GetStreamableManager();
@@ -169,7 +165,6 @@ void FSFArrowAssetManager::CancelPendingLoads()
 {
 	if (StreamableHandle.IsValid())
 	{
-		SF_LOG_ARROWS(Normal, TEXT("📦 Asset Manager: Cancelling pending asset load"));
 		StreamableHandle->CancelHandle();
 		StreamableHandle.Reset();
 	}

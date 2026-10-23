@@ -2,6 +2,9 @@
 
 #include "Features/AutoConnect/SFAutoConnectOrchestrator.h"
 #include "Features/AutoConnect/SFAutoConnectService.h"
+#include "Features/AutoConnect/Preview/SFLiftRoutePreview.h"
+#include "Buildables/FGBuildableBlueprintDesigner.h"
+#include "FGPlayerController.h"
 #include "Holograms/Logistics/SFConveyorBeltHologram.h"
 #include "SmartFoundations.h"
 #include "SFLogMacros.h"
@@ -818,7 +821,7 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 		{
 			const auto& SigSettings = SigSubsystem->GetAutoConnectRuntimeSettings();
 			BeltTierNow = SigSettings.BeltTierMain;
-			RoutingModeNow = SigSettings.BeltRoutingMode;
+			RoutingModeNow = SigSettings.BeltRoutingMode + 10 * SigSettings.LiftUsageMode;
 		}
 		const FVector FirstLoc = Distributors[0] ? Distributors[0]->GetActorLocation() : FVector::ZeroVector;
 		const FVector LastLoc = Distributors.Last() ? Distributors.Last()->GetActorLocation() : FVector::ZeroVector;
@@ -941,6 +944,7 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 	// PHASE 4: Create belt previews for assigned connections
 	// ========================================
 	int32 TotalPreviewsCreated = 0;
+	LiftRoutePreviews.Empty();
 	for (auto& Pair : AssignmentsByDistributor)
 	{
 		AFGHologram* Distributor = Pair.Key;
@@ -961,6 +965,28 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 		{
 			FPotentialConnection Conn = Assignments[AssignIdx];
 			const bool bIsSplitter = USFAutoConnectService::IsSplitterHologram(Distributor);
+
+			if (FSFLiftRoutePreview::IsEnabled(Distributor)
+				&& !FMath::IsNearlyEqual(Conn.DistributorConnector->GetComponentLocation().Z,
+					Conn.BuildingConnector->GetComponentLocation().Z, 0.1))
+			{
+				auto Route = MakeShared<FSFLiftRoutePreview>();
+				auto* Subsystem = AutoConnectService->GetSubsystem();
+				int32 Tier = Subsystem->GetAutoConnectRuntimeSettings().BeltTierToBuilding;
+				if (Tier == 0) Tier = Subsystem->GetHighestUnlockedBeltTier(GetWorld()->GetFirstPlayerController<AFGPlayerController>());
+				if (Route->Create(Distributor, Conn.DistributorConnector, Conn.BuildingConnector, Tier))
+				{
+					LiftRoutePreviews.Add(Route);
+					++TotalPreviewsCreated;
+				}
+				else
+				{
+					AssignedBuildingConnectors.Remove(Conn.BuildingConnector);
+					ReservedInputs.Remove(Conn.BuildingConnector);
+					AutoConnectService->GetSkipSummary().BeltsInvalidShape++;
+				}
+				continue;
+			}
 
 			constexpr int32 MaxPairAttempts = 3;
 			TSet<UFGFactoryConnectionComponent*> TriedBuildingConnectors;
@@ -1893,6 +1919,7 @@ void USFAutoConnectOrchestrator::LogManifoldPairings() const
 
 void USFAutoConnectOrchestrator::ClearAllPreviews()
 {
+	LiftRoutePreviews.Empty();
 	if (!AutoConnectService)
 	{
 		return;
@@ -2065,6 +2092,17 @@ void USFAutoConnectOrchestrator::CollectPotentialConnections(
 		
 		// Find compatible buildings nearby
 		TArray<AFGBuildable*> NearbyBuildings = Subsystem->FindNearbyBuildings(DistributorPos, BuildingSearchRadius);
+        // Designer-owned buildings are not guaranteed to participate in world
+        // overlap discovery. Its native member list owns those candidates; keep
+        // the same distance, type and port scoring filters as ordinary buildings.
+        if (AFGBuildableBlueprintDesigner* Designer = ParentHologram.IsValid()
+            ? ParentHologram->GetBlueprintDesigner() : nullptr)
+        {
+            for (AFGBuildable* Building : Designer->GetBuildablesInBlueprintDesigner())
+                if (IsValid(Building) && FVector::DistSquared(Building->GetActorLocation(), DistributorPos)
+                    <= FMath::Square(BuildingSearchRadius)) NearbyBuildings.AddUnique(Building);
+        }
+
 		TotalBuildingsFound += NearbyBuildings.Num();
 		
 		// Get distributor's side connectors

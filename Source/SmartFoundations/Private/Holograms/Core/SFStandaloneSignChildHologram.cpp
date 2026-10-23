@@ -36,9 +36,8 @@ void ASFStandaloneSignChildHologram::SetHologramLocationAndRotation(const FHitRe
 
 void ASFStandaloneSignChildHologram::SpawnChildren(AActor* hologramOwner, FVector spawnLocation, APawn* hologramInstigator)
 {
-	// Issue #192: Skip pole creation — known limitation.
-	// See SFHologramHelperService.cpp sign child spawner block for full documentation
-	// of approaches attempted and why they failed.
+	// The parent placement supplies the support recipe, state and relative pose.
+	// SFSignHologramState creates the owned child once that template is available.
 }
 
 bool ASFStandaloneSignChildHologram::DoMultiStepPlacement(bool isInputFromARelease)

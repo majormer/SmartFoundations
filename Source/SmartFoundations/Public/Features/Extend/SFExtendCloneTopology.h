@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Holograms/Logistics/SFSelectedPoleState.h"
 #include "SFExtendCloneTopology.generated.h"
 
 // Forward declarations
@@ -245,6 +246,7 @@ struct FSFSourceSegment
     
     // Issue #260: Foundation thickness for passthrough floor holes
     UPROPERTY() float Thickness = 0.0f;
+    UPROPERTY() FSFSelectedPoleState SelectedPole;
     // Exact external pipe endpoints; empty captured faces remain intentionally unattached.
     UPROPERTY() bool bHasPassthroughLinks = false;
     UPROPERTY() FSFConnectionRef PassthroughTop;
@@ -393,6 +395,7 @@ struct FSFSourceTopology
     UPROPERTY() TArray<FSFSourceChain> PipeOutputChains;
     UPROPERTY() TArray<FSFSourcePowerPole> PowerPoles;  // Issue #229: Power poles within manifold bounds
     UPROPERTY() TArray<FSFSourceSegment> PipePassthroughs;  // Issue #260: Spatially-discovered pipe floor holes
+    UPROPERTY() TArray<FSFSourceSegment> RouteSupports;
     UPROPERTY() TArray<FSFSourceSegment> WallHoles;          // Spatially-discovered wall holes (conveyor + pipeline)
     
     /** Capture topology from existing CachedTopology struct */
@@ -462,6 +465,7 @@ struct FSFCloneHologram
     
     // Issue #260: Foundation thickness for passthrough floor holes
     UPROPERTY() float Thickness = 0.0f;
+    UPROPERTY() FSFSelectedPoleState SelectedPole;
     // Exact external pipe endpoints; empty captured faces remain intentionally unattached.
     UPROPERTY() bool bHasPassthroughLinks = false;
     UPROPERTY() FSFConnectionRef PassthroughTop;

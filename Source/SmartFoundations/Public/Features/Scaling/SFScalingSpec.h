@@ -10,6 +10,10 @@
 #include "Components/SplineComponent.h"   // FSplinePointData (CSS engine addition)
 #include "ItemAmount.h"                    // FItemAmount (belt plan cost)
 #include "Features/PowerAutoConnect/Net/SFPowerWireEndpoint.h"
+#include "Features/AutoConnect/Net/SFLiftRoutePlan.h"
+#include "Features/AutoConnect/Net/SFBlueprintRailPlan.h"
+#include "Features/AutoConnect/Net/SFBlueprintVehiclePlan.h"
+#include "Features/AutoConnect/Net/SFBlueprintLiftPlan.h"
 #include "SFScalingSpec.generated.h"
 
 /**
@@ -112,6 +116,10 @@ struct SMARTFOUNDATIONS_API FSFScalingSpec
 {
 	GENERATED_BODY()
 
+    /** Required even for a declined route: authority must not silently omit its price. */
+    UPROPERTY() bool bBlueprintLiftSeamsRequired = false;
+    UPROPERTY() TArray<FSFBlueprintLiftPlanEntry> BlueprintLiftSeams;
+
 	/** Grid dimensions + spacing/steps/stagger/rotation. Drives FSFPositionCalculator per cell. */
 	UPROPERTY()
 	FSFCounterState Counters;
@@ -180,6 +188,17 @@ struct SMARTFOUNDATIONS_API FSFScalingSpec
 	 *  spec (a single distributor/junction/pole with previews). */
 	UPROPERTY()
 	TArray<FSFConduitPlanEntry> ConduitPlan;
+
+	/** Native lift-assisted routes captured from priced client previews. */
+	UPROPERTY()
+	TArray<FSFLiftRoutePlanEntry> LiftRoutes;
+
+    /** Exact native rail seam decisions, revalidated before authority payment. */
+    UPROPERTY()
+    TArray<FSFBlueprintRailPlanEntry> BlueprintRailSeams;
+    UPROPERTY() TArray<FSFBlueprintVehiclePlanEntry> BlueprintVehicleSeams;
+    UPROPERTY()
+    TArray<FItemAmount> BlueprintRailCost;
 
 	/** Aggregated cost of the planned conduits - the EXACT vanilla preview costs (length-based for
 	 *  belts/pipes, span-based for wires), summed client-side per item class. The server's GetCost

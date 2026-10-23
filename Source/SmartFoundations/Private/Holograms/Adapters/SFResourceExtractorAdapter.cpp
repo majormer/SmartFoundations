@@ -3,7 +3,6 @@
 
 #include "SFResourceExtractorAdapter.h"
 #include "SmartFoundations.h"
-#include "Logging/SFLogMacros.h"
 #include "Data/SFBuildableSizeRegistry.h"
 
 FSFResourceExtractorAdapter::FSFResourceExtractorAdapter(AFGHologram* InHologram)
@@ -67,8 +66,6 @@ FVector FSFResourceExtractorAdapter::CalculateExtractorSize() const
 	FString Source;
 	USFBuildableSizeRegistry::GetSizeWithFallback(BuildClass, Size, Source);
 
-	SF_LOG_ADAPTER(Normal, TEXT("FSFResourceExtractorAdapter: Size=%s Source=%s Class=%s (scaling disabled)"),
-		*Size.ToString(), *Source, *BuildClass->GetName());
 
 	return Size;
 }

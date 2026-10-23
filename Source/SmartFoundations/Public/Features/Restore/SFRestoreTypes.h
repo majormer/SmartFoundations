@@ -113,6 +113,7 @@ struct FSFRestoreAutoConnectState
 	UPROPERTY() int32 BeltTierToBuilding = 0;
 	UPROPERTY() bool bChainDistributors = true;
 	UPROPERTY() int32 BeltRoutingMode = 0;
+	UPROPERTY() int32 LiftUsageMode = 0;
 
 	// Pipe
 	UPROPERTY() bool bPipeEnabled = true;

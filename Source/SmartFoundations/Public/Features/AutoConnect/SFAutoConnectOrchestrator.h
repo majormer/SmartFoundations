@@ -10,6 +10,7 @@
 
 class USFAutoConnectService;
 class FBeltPreviewHelper;
+class FSFLiftRoutePreview;
 
 /**
  * Represents a potential connection between a distributor output and a building input.
@@ -373,6 +374,8 @@ private:
 	 * Clear all belt previews for all distributors in the grid.
 	 */
 	void ClearAllPreviews();
+
+	TArray<TSharedPtr<FSFLiftRoutePreview>> LiftRoutePreviews;
 
 	// Debounce state (Belts)
 	FTimerHandle EvalTimerHandle;

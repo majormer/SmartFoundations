@@ -107,7 +107,7 @@ namespace SFScalingSpecExpansion
 	 * each wire into GroupProxy (may be null). Returns the number of wires built.
 	 */
 	int32 SpawnWirePlanPostConstruct(AActor* BuiltParent, const TArray<AActor*>& OutChildren,
-		const FSFScalingSpec& Spec, AFGBlueprintProxy* GroupProxy);
+		const FSFScalingSpec& Spec, AFGBlueprintProxy* GroupProxy, TArray<AActor*>* OutBuiltWires = nullptr);
 
 	/**
 	 * Issue #487: after a scaled factory/generator grid exists, wire adjacent copies
@@ -115,7 +115,7 @@ namespace SFScalingSpecExpansion
 	 * connector capacity and the same designer-aware direct wire spawn as other Smart power paths.
 	 */
 	int32 SpawnScaleDaisyChainPowerPostConstruct(AActor* BuiltParent, const TArray<AActor*>& OutChildren,
-		const FSFCounterState& Counters, bool bEnabled, AFGBlueprintProxy* GroupProxy = nullptr);
+		const FSFCounterState& Counters, bool bEnabled, AFGBlueprintProxy* GroupProxy = nullptr, TArray<AActor*>* OutBuiltWires = nullptr);
 
 	/**
 	 * [#168-MP] Measure a staged blueprint hologram's CONTENT ANCHOR: the first blueprint-world

@@ -44,7 +44,7 @@ Two facts decide everything here:
    must subclass *that* class and layer the three generic overrides on top.
 
 **Corollary:** the number of child classes is bounded by the number of distinct *behavior families*
-(~6), plus one generic class, plus one default. It is **not** proportional to the number of buildable
+(~7), plus one generic class, plus one composite path. It is **not** proportional to the number of buildable
 types. A hundred machine variants all share the generic class.
 
 ## The three tiers
@@ -52,8 +52,8 @@ types. A hundred machine variants all share the generic class.
 | Tier | When it applies | Child class | Count |
 |------|-----------------|-------------|-------|
 | **1 — Generic** | Plain buildables whose vanilla hologram does no essential specialized construction (foundations, walls, ceiling lights, wall attachments, machines, storage, pillars — every type without an explicit Tier-2 branch). **This is the default.** | `ASFBuildableChildHologram` | **one class, unbounded types** |
-| **2 — Specialized family** | Buildables whose vanilla hologram does essential work the generic path cannot replicate. Each family subclasses its specific vanilla hologram + adds the three overrides. | one per family (see map) | ~6 |
-| **3 — Vanilla-delegate** | STACKABLE conveyor/pipe/hypertube supports ONLY (explicit `IsStackableSupportHologram` branch): their vanilla holograms carry the stack/connection behavior the stackable AC preview builds against (#341/#354/#364). These children have no drift override and rely on the intended-transform re-apply. | recipe's own vanilla hologram via `SpawnChildHologram` | one path, three build classes |
+| **2 — Specialized family** | Buildables whose vanilla hologram does essential work the generic path cannot replicate. Each family subclasses its specific vanilla hologram + adds the three overrides. | one per family (see map) | ~7 |
+| **3 — Native composite** | Blueprint copies require their descriptor, placement world, internal buildables and native connection behavior. A single generic buildable cannot represent that composite construction. | parent's native Blueprint hologram class, with descriptor and native placement setup | one composite path |
 
 ## Current dispatch map
 
@@ -62,22 +62,25 @@ As implemented in `RegenerateChildHologramGrid` (in evaluation order, since the 
 | Parent hologram (predicate) | Child class | Tier | Provenance |
 |---|---|---|---|
 | `AFGPassthroughHologram` | `ASFPassthroughChildHologram` | 2 | #187 |
+| `AFGBlueprintHologram` | parent's native Blueprint hologram class | 3 | descriptor, placement world and internal connections |
+| `AFGBeamHologram` | `ASFBeamChildHologram` | 2 | variable length, build mode and geometry; fixed beam attachments use Tier 1 |
 | `AFGFloodlightHologram` | `ASFFloodlightChildHologram` | 2 | aim/angle step |
 | `IsRegularConveyorPoleHologram(...)` | `ASFConveyorPoleChildHologram` | 2 | #354 (gated off the *stackable* pole) |
 | `IsRegularPipelinePoleHologram(...)` | `ASFPipelinePoleChildHologram` | 2 | #364 |
-| `AFGStandaloneSignHologram` | `ASFStandaloneSignChildHologram` | 2 | sign text |
-| `AFGWaterPumpHologram` | `ASFWaterPumpChildHologram` | 2 | #197 / #428 (water-volume validation, tick kept ON; drift override added with #418) |
-| `IsStackableSupportHologram(...)` | recipe's own vanilla hologram (`SpawnChildHologram`) | 3 | #341/#354/#364 — stackable AC preview depends on vanilla child behavior |
+| `AFGStandaloneSignHologram` | `ASFStandaloneSignChildHologram` with an owned `ASFSignPoleChildHologram` when the native parent uses a support | 2 | selected sign/pole build steps, pole variation, scale and relative pose; disabled support follows the native parent |
+| `AFGWaterPumpHologram`, or a vanilla Water Extractor build class after an Extend parent swap | `ASFWaterPumpChildHologram` | 2 | #197 / #428 / #573 (water-volume validation, tick kept ON; drift override added with #418) |
+| Fixed stackable conveyor/pipe/hypertube supports | `ASFBuildableChildHologram` | 1 | support recognition and series-run wiring use build class and grid positions; authority-side construction retains native supports |
 | *(generic `else` — everything remaining)* | `ASFBuildableChildHologram` (`SpawnBuildableChildHologram`) | 1 | #418 — consolidates the former #200 ceiling-light, #268 wall-attachment, and #418 foundation branches; replaces the raw-vanilla default that drifted |
 
-Only vanilla-delegate (Tier-3) children receive the legacy generic post-spawn setup
-(`bVanillaDelegateChildren` guard); Smart children are fully configured in their spawn paths and
-must not get it (it would re-enable collision and clobber material state).
+Each spawn path configures its own child. The shared generic `SpawnPreview` path seeds build class,
+recipe, owner and instigator before deferred spawning finishes, then registers the child and disables
+collision, validation and ticking. Specialized and composite paths retain their family setup; a
+blanket post-spawn setup must not re-enable collision or overwrite that state.
 
 **Tick policy** (same function, unlocked-parent sweep): tick stays OFF for all Smart children —
 Tier-1 stubs validation and Tier-2 mostly does too, so ticking bought nothing and cost real frame
-time at 40K+ children. Exceptions: water pump children (tick ON — per-frame water-volume check)
-and Tier-3 vanilla children (tick ON — preserve vanilla dynamic validation). A locked parent
+time at 40K+ children. Water pump children are the exception (tick ON for the per-frame
+water-volume check). Native Blueprint copies also keep tick OFF. A locked parent
 disables tick on everything.
 
 ## Decision procedure for a new buildable type
@@ -121,15 +124,15 @@ position map rather than the child's hologram class.
 **The Tier-1 widening landed with the #418 true-up** (2026-07-03): the generic `else` now routes
 through `SpawnBuildableChildHologram` — every plain buildable is drift-proof, carries the stored
 production recipe (scaled machines keep their selected recipe), and hides the ClearanceBox mesh.
-All seven Smart child classes now have the drift override (the water pump child was the last
-holdout). Remaining roadmap:
+Each Smart child family blocks vanilla hologram-setter drift. Validation boundaries:
 
-- **Stackable supports → Tier 1** (optional): the family checks are build-class-name based, so
-  Tier-1 children would still be recognized — but the stackable AC preview builds belt/pipe spans
-  against vanilla child behavior, so this move is gated on validating series-run wiring end-to-end.
-- **Retire the `ScalingChildIntendedTransforms` re-apply tax**: with drift blocked everywhere
-  except Tier-3, the N-tick refresh only earns its keep for stackables. Measure, then shrink its
-  scope or remove it.
+- **Generic preview coverage**: fixed stackable supports use Tier 1 for grid children and Walking
+  anchors. Validate native payment, spline joins, parent state, cleanup, replication, persistence and
+  actual transport operation when changing this path; connector topology alone does not establish
+  working transport.
+- **Keep the `ScalingChildIntendedTransforms` guard**: the no-op hologram setter does not prevent
+  vanilla code from writing actor/component transforms directly. Wall outlets are a known reason to
+  retain locked-parent transform repair. Removing it requires evidence that those writes remain safe.
 - **Coordinate-keyed positioning** (the Y-growth full-refresh): **implemented 2026-07-03**
   (`USFGridCoordComponent` — every grid child carries its unsigned cell; positioning batch and
   stackable-AC neighbor maps read it instead of decoding spawn order; shrink evicts vanished

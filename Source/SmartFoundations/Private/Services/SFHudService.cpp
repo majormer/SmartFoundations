@@ -1,6 +1,7 @@
 // Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
 #include "Services/SFHudService.h"
+#include "Holograms/Core/SFSignSupportMode.h"
 // NOTE: SFDeferredCostService removed - child holograms automatically aggregate costs via GetCost()
 #include "Subsystem/SFSubsystem.h"
 #include "Features/AutoConnect/SFAutoConnectService.h"
@@ -19,12 +20,18 @@
 #include "Engine/Texture2D.h"
 #include "Blueprint/UserWidget.h"
 #include "Config/Smart_ConfigStruct.h"
+#include "UI/SFInterfacePreferences.h"
+#include "Blueprint/WidgetLayoutLibrary.h"
 #include "Resources/FGItemDescriptor.h"
 #include "ItemAmount.h"
 #include "FGCentralStorageSubsystem.h"
 #include "FGPlayerController.h"
 #include "FGCharacterPlayer.h"
 #include "FGInventoryComponent.h"
+#include "EnhancedInputSubsystems.h"
+#include "InputAction.h"
+#include "Engine/LocalPlayer.h"
+#include "InputCoreTypes.h"
 
 #define LOCTEXT_NAMESPACE "SmartFoundations"
 
@@ -85,6 +92,11 @@ void USFHudService::DrawCounterToHUD(AHUD* HUD, UCanvas* Canvas)
 {
     if (!Subsystem.IsValid()) return;
 
+    // Task handoffs suspend windows, and Walking can hide without closing its draft.
+    // Reconcile against the actual windows each draw so an earlier open/close flag
+    // cannot leave the HUD hidden after control has returned to the world.
+    bHUDSuppressed = Subsystem->IsInterfaceTaskPanelVisible();
+
     // Pull config every draw (keeps code simple and up to date)
     FSmart_ConfigStruct CurrentConfig = FSmart_ConfigStruct::GetActiveConfig(Subsystem.Get());
     HUDScaleMultiplier = CurrentConfig.HUDScale;
@@ -93,7 +105,7 @@ void USFHudService::DrawCounterToHUD(AHUD* HUD, UCanvas* Canvas)
     // Determine if the widget should be visible
     const bool bShouldShow = CachedConfig.bShowHUD
         && !bHUDSuppressed
-        && !Subsystem->IsWalkPanelVisible()   // walk EDIT panel up = it shows this info itself; hide the HUD readout so it doesn't bleed through the panel
+        && !bLayoutEditorActive
         && Subsystem->GetActiveHologram() != nullptr;
 
     // Ensure widget exists
@@ -125,14 +137,15 @@ void USFHudService::DrawCounterToHUD(AHUD* HUD, UCanvas* Canvas)
     HudWidget->SetTheme(CurrentConfig.HUDTheme);
 
     // Position via viewport coordinates
-    const float ClampedPosX = FMath::Clamp(CurrentConfig.HUDPositionX, 0.0f, 0.85f);
-    const float ClampedPosY = FMath::Clamp(CurrentConfig.HUDPositionY, 0.0f, 0.85f);
+    const float ClampedPosX = FMath::Clamp(CurrentConfig.HUDPositionX, 0.0f, 1.0f);
+    const float ClampedPosY = FMath::Clamp(CurrentConfig.HUDPositionY, 0.0f, 1.0f);
     FVector2D ViewportSize = FVector2D::ZeroVector;
     if (GEngine && GEngine->GameViewport)
     {
         GEngine->GameViewport->GetViewportSize(ViewportSize);
     }
-    HudWidget->SetPositionInViewport(FVector2D(ViewportSize.X * ClampedPosX, ViewportSize.Y * ClampedPosY));
+    HudWidget->SetPositionInViewport(SFInterface::ClampPosition(FVector2D(ViewportSize.X * ClampedPosX, ViewportSize.Y * ClampedPosY),
+        HudWidget->GetDesiredSize() * UWidgetLayoutLibrary::GetViewportScale(HudWidget), ViewportSize));
 
     // Rebuild display lines every frame to capture dynamic values (lift height, etc.)
     TPair<FString, FString> DisplayLines = BuildCounterDisplayLines();
@@ -161,6 +174,7 @@ void USFHudService::DrawCounterToHUD(AHUD* HUD, UCanvas* Canvas)
     }
 
     // Update the UMG widget with current content
+    HudWidget->SetPlayerRelative(Subsystem->IsPlayerRelativeEnabled());
     HudWidget->UpdateContent(Lines, RecipeIcon);
 }
 
@@ -271,8 +285,12 @@ TPair<FString, FString> USFHudService::BuildCounterDisplayLines() const
 
 	// Header
 	Lines.Add(LOCTEXT("HUD_Header", "SMART!").ToString());
+	if (SFSignSupportMode::IsAvailable(Subsystem->GetActiveHologram()))
+	{
+		Lines.Add(SFSignSupportMode::GetLabel(Subsystem->GetActiveHologram()).ToString());
+	}
 
-	// Issue #160: Zoop warning display
+    // Issue #160: Zoop warning display
 	if (FSFHologramHelperService* Helper = Subsystem->GetHologramHelper())
 	{
 		if (Helper->IsZoopActive())
@@ -352,6 +370,24 @@ TPair<FString, FString> USFHudService::BuildCounterDisplayLines() const
 		}
 	}
 
+	if (USFAutoConnectService* AutoConnectService = Subsystem->IsCurrentHologramAutoConnectCapable()
+		? Subsystem->GetAutoConnectService() : nullptr)
+	{
+		const FSFAutoConnectSkipSummary& Skips = AutoConnectService->GetSkipSummary();
+		if (Skips.HypertubeTotal() > 0)
+		{
+			TArray<FString> Reasons;
+			if (Skips.HypertubesInvalidShape > 0)
+				Reasons.Add(FText::Format(LOCTEXT("HUD_SkipReason_InvalidShape", "invalid shape ({0})"), Skips.HypertubesInvalidShape).ToString());
+			if (Skips.HypertubesTooFar > 0)
+				Reasons.Add(FText::Format(LOCTEXT("HUD_SkipReason_TooFar", "too far ({0})"), Skips.HypertubesTooFar).ToString());
+			if (Skips.HypertubesTooClose > 0)
+				Reasons.Add(FText::Format(LOCTEXT("HUD_SkipReason_TooClose", "too close ({0})"), Skips.HypertubesTooClose).ToString());
+			Lines.Add(FString(SFHud::WarningLinePrefix) + FText::Format(LOCTEXT("HUD_HypertubesSkipped", "*{0} Hypertube connection(s) skipped: {1}"),
+				Skips.HypertubeTotal(), FText::FromString(FString::Join(Reasons, TEXT(", ")))).ToString());
+		}
+	}
+
 	// [#168-MP] Transient guard notice (e.g. a refused multiplayer fire: grid over the
 	// per-placement caps). GEngine debug messages don't render in Shipping - this HUD line is
 	// the surface players actually see; the refused grid stays live while it shows.
@@ -411,6 +447,20 @@ TPair<FString, FString> USFHudService::BuildCounterDisplayLines() const
 		USFExtendService* ExtendSvc = Subsystem->GetExtendService();
 		if (ExtendSvc)
 		{
+            if (auto* Source = ExtendSvc->GetCurrentTarget())
+            {
+                FText PanelKey = LOCTEXT("HUD_ExtendPanelAction", "Smart Panel");
+                if (auto* PC = GetWorld() ? GetWorld()->GetFirstPlayerController() : nullptr)
+                    if (auto* Player = PC->GetLocalPlayer())
+                        if (auto* Input = Player->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>())
+                        {
+                            static TWeakObjectPtr<UInputAction> Action;
+                            if (!Action.IsValid()) Action = LoadObject<UInputAction>(nullptr, TEXT("/SmartFoundations/SmartFoundations/Input/Actions/IA_Smart_ToggleSettingsForm.IA_Smart_ToggleSettingsForm"));
+                            if (Action.IsValid()) for (const FKey& Key : Input->QueryKeysMappedToAction(Action.Get()))
+                                if (!Key.IsGamepadKey()) { PanelKey = Key.GetDisplayName(); break; }
+                        }
+                Lines.Add(FText::Format(LOCTEXT("HUD_ExtendSource", "Extend from {0} · {1} → Extend"), Source->mDisplayName, PanelKey).ToString());
+            }
 			int32 CloneCount = ExtendSvc->GetExtendCloneCount();
 			int32 RowCount = ExtendSvc->GetExtendRowCount();
             const int32 LayerCount = ExtendSvc->GetExtendLayerCount();
@@ -453,7 +503,11 @@ TPair<FString, FString> USFHudService::BuildCounterDisplayLines() const
 			bWalkActive = true;
 			const TArray<FSFWalkSegmentView> Views = Walk->GetSegmentViews();
 			const float HeadDeg = Views.Num() > 0 ? Views.Last().ExitHeadingDeg : 0.0f;
-			const FText Conveyance = (Walk->GetConveyanceType() == ESFWalkConveyanceType::Pipe) ? LOCTEXT("HUD_Walk_Pipe", "pipe") : LOCTEXT("HUD_Walk_Belt", "belt");
+			const FText Conveyance = Walk->GetConveyanceType() == ESFWalkConveyanceType::VehiclePath
+                ? LOCTEXT("HUD_Walk_VehiclePath", "vehicle path") : Walk->GetConveyanceType() == ESFWalkConveyanceType::Railroad
+                ? LOCTEXT("HUD_Walk_Rail", "rail") : (Walk->GetConveyanceType() == ESFWalkConveyanceType::Pipe)
+                ? LOCTEXT("HUD_Walk_Pipe", "pipe") : Walk->GetConveyanceType() == ESFWalkConveyanceType::Hypertube
+                ? LOCTEXT("HUD_Walk_Hypertube", "Hypertube") : LOCTEXT("HUD_Walk_Belt", "belt");
 			// Compact one-line badge — heading now shows the 16-point compass + degrees, and the per-segment detail
 			// lives in the Walk panel, not the HUD (this used to be two verbose lines that cluttered the screen).
 			if (!Subsystem->IsWalkPanelVisible())   // panel shows this readout itself; HUD draws over it (badge returns when the panel is hidden via K)
@@ -467,6 +521,7 @@ TPair<FString, FString> USFHudService::BuildCounterDisplayLines() const
 				const FString InvalidReason = Walk->GetInvalidShapeReason();
 				if (!InvalidReason.IsEmpty()) { WalkLine += FString::Printf(TEXT("  [%s]"), *InvalidReason); }
 				Lines.Add(WalkLine);
+                if (Walk->IsResuming()) { Lines.Add(Walk->GetResumeSummary()); }
 			}
 		}
 	}
@@ -900,6 +955,38 @@ TPair<FString, FString> USFHudService::BuildCounterDisplayLines() const
 	}
 	}   // end else (!bWalkActive) \u2014 grid value-adjust readout
 
+	// Resolve the live input mappings, including player remaps. The HUD does not
+	// invent another keybind or duplicate Player Relative axis resolution.
+	const TCHAR* HintAction = nullptr;
+	FText HintLabel;
+	if (Subsystem->IsSpacingModeActive()) {HintAction = TEXT("Spacing_Mode"); HintLabel = LOCTEXT("HUD_Hint_Spacing", "Adjust spacing");}
+	else if (Subsystem->IsStepsModeActive()) {HintAction = TEXT("Steps_Mode"); HintLabel = LOCTEXT("HUD_Hint_Steps", "Adjust steps");}
+	else if (Subsystem->IsStaggerModeActive()) {HintAction = TEXT("Stagger_Mode"); HintLabel = LOCTEXT("HUD_Hint_Stagger", "Adjust stagger");}
+	else if (Subsystem->IsRotationModeActive()) {HintAction = TEXT("Rotation_Mode"); HintLabel = LOCTEXT("HUD_Hint_Rotation", "Adjust rotation");}
+	if (HintAction && !bWalkActive)
+	{
+		APlayerController* Controller = GetWorld() ? GetWorld()->GetFirstPlayerController() : nullptr;
+		ULocalPlayer* Player = Controller ? Controller->GetLocalPlayer() : nullptr;
+		auto* Input = Player ? Player->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>() : nullptr;
+		if (Input)
+		{
+			static TMap<FString,TWeakObjectPtr<UInputAction>> Actions;
+			auto KeyFor = [&](const FString& Name)
+			{
+				auto& Cached = Actions.FindOrAdd(Name);
+				if (!Cached.IsValid()) Cached = LoadObject<UInputAction>(nullptr, *FString::Printf(TEXT("/SmartFoundations/SmartFoundations/Input/Actions/IA_Smart_%s.IA_Smart_%s"), *Name, *Name));
+				if (Cached.IsValid()) for (const FKey& Key : Input->QueryKeysMappedToAction(Cached.Get())) if (!Key.IsGamepadKey()) return Key;
+				return FKey();
+			};
+			const FKey Modifier = KeyFor(HintAction), Adjust = KeyFor(TEXT("MouseWheel"));
+			if (Modifier.IsValid() && Adjust.IsValid())
+			{
+				const FText Adjustment = Adjust == EKeys::MouseWheelAxis ? LOCTEXT("HUD_Hint_Scroll", "Scroll") : Adjust.GetDisplayName();
+				const FText Binding = FText::Format(LOCTEXT("HUD_Hint_Chord", "{0} + {1}"), Modifier.GetDisplayName(), Adjustment);
+				Lines.Add(FString(SFHud::HintLinePrefix) + HintLabel.ToString() + TEXT("\t") + Binding.ToString());
+			}
+		}
+	}
 	const FString FirstLine = FString::Join(Lines, TEXT("\n"));
 	const FString SecondLine = TEXT("");
 	return TPair<FString, FString>(FirstLine, SecondLine);

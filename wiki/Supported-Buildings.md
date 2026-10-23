@@ -1,42 +1,38 @@
 # Supported Buildings
 
-Smart! supports many buildables. Most are placed by **scaling them into a grid**; some multi-step builds — belt, pipe, and hypertube runs, and power — are **built for you through dedicated features** instead. Coverage keeps growing, so if something isn't handled yet, it may be added in a later release.
+Smart! uses known building profiles and each buildable's supported features. A single-click vanilla placement does not guarantee Smart scaling, and an unavailable axis is deliberately unavailable through the Panel, keys and presets alike.
 
-## Scaled directly into a grid
+## Grid placement
 
-If a building places with **one click** in vanilla, Smart! can usually scale it into a grid:
+- Foundations, ramps, walls, roof families and corners, barriers, railings, walkways and catwalks.
+- Supported native production buildings, storage and fluid buffers.
+- Power poles, outlets, supported generators and power storage.
+- Distributors, junctions, pumps, valves, compatible supports and passthroughs.
+- [Conveyor Lifts Mk.1–Mk.6](Conveyor-Lift-Grids), retaining selected height, direction and flow.
+- Beams/connectors, native pillars/bases, ladders, signs, lights and Jump Pads with their applicable selected state.
+- Large Fans and Vents with native mounting; supported roof/corner details.
+- FICSMAS Candy Canes, Wreaths, Snowmen, Snow Dispensers, Giant Trees and Snow Cannons when their native seasonal recipes are available.
+- Saved [Blueprints](Blueprints), with eligible seam connections.
 
-- Foundations, ramps, walls, barriers, railings, walkways, and catwalks.
-- Production buildings such as constructors, assemblers, manufacturers, smelters, foundries, refineries, packagers, blenders, converters, quantum encoders, and particle accelerators.
-- Storage containers and fluid buffers.
-- Power poles, power towers, switches, generators, and power storage.
-- Splitters, mergers, smart splitters, programmable splitters, priority mergers, stackable supports, pipeline junctions, pumps, valves, wall holes, and floor holes.
-- Many signs, billboards, lights, and factory organization pieces.
-- Your own **blueprints**, scaled into a grid with the belt and pipe seams between copies auto-connected. See [Smart! Blueprints](Blueprints).
+Placement retains native restrictions. Wall supports and tilted pillars use their accepted rotation. New fixed-size profiles use native snapping intervals where available, or rounded-up placement intervals; vertical spacing prevents overlap on the applicable native nudge grid.
 
-## Built through other features
+## Other workflows
 
-These are multi-step or drag-based builds. You do not scale them as a direct grid item, but Smart! still builds them for you:
+| Building or family | Supported workflow |
+|---|---|
+| Belts, pipes, Hypertubes | Auto-Connect and Walking; connected parts can accompany supported Extend/Restore modules |
+| Railway tracks | Walking and compatible seams between repeated Blueprints; no ordinary track grid scaling |
+| Vehicle Paths | Directed Walking and compatible seams between repeated Blueprints |
+| [Water Extractors](Water-Extractors) | Horizontal scaling, Extend and Restore; every child validates water depth/terrain |
+| Miners | Smart Upgrade on the original resource node; no free-placement grid |
+| Elevator assemblies | Copies retain selected height and floor stops; native shaft edits retain the Smart Dismantle group. Floor stops cannot be scaled independently. |
 
-- **Belts, pipes, lifts, and power lines** — created by [Auto-Connect](Auto-Connect) between what you place, or copied along with a module by [Extend](Extend).
-- **Belt, pipe, and hypertube runs** that turn corners, climb slopes, and route to a destination — laid as one connected run by [Smart Walking](Smart-Walking).
+Train signals, train stations/platforms, Conveyor Monitor grids and Portal Potty are outside this support set. Do not infer support for every building from another mod. Smart does not maintain spacing profiles for all third-party factory buildings; manual spacing may help compatible ordinary grid placements, but does not add Extend support or change native permissions.
 
-## Not currently supported
+See [Grid Scaling](Grid-Scaling), [Auto-Connect](Auto-Connect), [Smart Walking](Smart-Walking) and [Smart Upgrade](Smart-Upgrade).
 
-- Railways and train signals.
-
-Smart!'s coverage grows over time, so this list can change between releases.
-
-## Restricted buildings
-
-A few buildables are intentionally restricted because their placement depends on world state that is not safe to clone like a normal factory building:
-
-- **Resource extractors** (miners) are tied to fixed world resource nodes.
-- **Water extractors** can scale in X/Y and spacing when the child placements still validate over water, but vertical scaling is disabled.
-- Other special buildables may be restricted when placement depends on snap points, world state, or vanilla behaviors that cannot be safely repeated.
-
-See the [FAQ](FAQ) for more on why miners and some special buildables are unsupported.
+See the [Buildable Gallery](Buildable-Gallery) for selected shapes, native mounting and buildable-specific controls.
 
 ---
 
-_Last updated: 2026-07-14 · Smart! v34.2.1_
+_Last updated: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (release draft)_

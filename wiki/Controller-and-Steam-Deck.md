@@ -25,6 +25,10 @@ The Panel is a full on-screen form you navigate with the stick + `A`, and it exp
 feature — all scaling axes, spacing, steps, stagger, rotation, recipe, restore, and toggles — with
 **no key-holding at all**. If you do nothing else, this alone makes Smart! usable on a controller.
 
+## Smart! 35 task navigation
+
+The same `K` binding now opens the shared Scaling / Walking / Upgrade / Restore window. Available tasks depend on the held building. Keep a pointer mapping available for task tabs, numeric controls and the small help buttons. Bind `F8` if you want the HUD/Camera layout editor. These additions do not replace your existing Steam Input layout; controller use remains experimental.
+
 ## Recommended Steam Deck layout
 
 | Surface | Smart! binding |
@@ -123,4 +127,4 @@ play. If you build a better layout, please share it in #help.
 
 ---
 
-_Last updated: 2026-07-14 · Smart! v34.2.1_
+_Last updated: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (release draft)_

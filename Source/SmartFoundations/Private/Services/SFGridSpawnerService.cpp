@@ -16,9 +16,13 @@
 #include "Hologram/FGCeilingLightHologram.h"
 #include "Hologram/FGFloodlightHologram.h"
 #include "Hologram/FGWallAttachmentHologram.h"
+#include "Hologram/FGStandaloneSignHologram.h"
 #include "Holograms/Logistics/SFWaterPumpChildHologram.h"
 #include "Data/SFBuildableSizeRegistry.h"
 #include "Features/Scaling/SFGridCoordComponent.h"
+#include "Features/Scaling/SFScalingSpec.h"
+#include "Holograms/Core/SFSignHologramState.h"
+#include "Holograms/Core/SFSignSupportMode.h"
 #include "SmartFoundations.h"
 #include "FGPlayerController.h"
 #include "FGCharacterPlayer.h"
@@ -75,6 +79,7 @@ void USFGridSpawnerService::RegenerateChildHologramGrid()
 
     if (AFGHologram* ParentHologram = SS->GetActiveHologram())
     {
+        SFSignSupportMode::BeforeGridUpdate(ParentHologram);
         if (FSFHologramHelperService* HologramHelper = SS->GetHologramHelper())
         {
             auto UpdateCallback = [SS]()
@@ -187,6 +192,8 @@ void USFGridSpawnerService::UpdateChildPositions()
         return;
     }
 
+    SFSignSupportMode::BeforeGridUpdate(SS->GetActiveHologram());
+
     // CRITICAL: Even if there are no children, we must trigger the orchestrator to clean up orphaned previews
     if (SpawnedChildren.Num() == 0)
     {
@@ -219,7 +226,7 @@ void USFGridSpawnerService::UpdateChildPositions()
                     Orchestrator->OnStackablePipelineSupportsChanged();
                 }
                 // #405: Stackable hypertube support auto-connect (preview)
-                if (USFAutoConnectService::IsStackableHypertubeSupportHologram(Parent))
+                if (USFAutoConnectService::IsHypertubeAutoConnectSupportHologram(Parent))
                 {
                     Orchestrator->OnStackableHypertubeSupportsChanged();
                 }
@@ -433,7 +440,8 @@ void USFGridSpawnerService::UpdateChildPositions()
                 ItemSize,
                 PositionCounterState,
                 GridIndex.ChildArrayIndex,
-                FVector::ZeroVector  // ZERO - Prevent double-compensation with the direct actor transform path
+                FVector::ZeroVector, // No anchor double-compensation.
+                ParentHologram->GetBuildClass()
             );
         }
 
@@ -594,6 +602,21 @@ void USFGridSpawnerService::UpdateChildPositions()
         // Restore lock state via HologramHelperService
         HologramHelper->RestoreChildLock(ChildHologram, bParentWasLocked);
 
+        if (ParentHologram->IsA<AFGStandaloneSignHologram>())
+        {
+            FIntVector Cell;
+            if (USFGridCoordComponent::TryGetCell(ChildHologram, Cell))
+            {
+                // Companion height and mounting offset depend on the final cell pose.
+                // Synchronizing before this progressive move uses the previous pose
+                // and can overlap poles or reject a restored height after Auto/None.
+                FSFScalingSpec Spec;
+                Spec.Counters = PositionCounterState;
+                Spec.ItemSize = USFBuildableSizeRegistry::GetProfile(ParentHologram->GetBuildClass()).DefaultSize;
+                SFSignHologramState::ApplyGridCell(ParentHologram, ChildHologram, Cell, Spec);
+            }
+        }
+
         // Special logging for water extractors
         if (ChildHologram->IsA(ASFWaterPumpChildHologram::StaticClass()))
         {
@@ -648,7 +671,7 @@ void USFGridSpawnerService::UpdateChildPositions()
                     Orchestrator->OnStackablePipelineSupportsChanged();
                 }
                 // #405: Stackable hypertube support auto-connect (preview)
-                if (USFAutoConnectService::IsStackableHypertubeSupportHologram(Parent))
+                if (USFAutoConnectService::IsHypertubeAutoConnectSupportHologram(Parent))
                 {
                     Orchestrator->OnStackableHypertubeSupportsChanged();
                 }
@@ -788,7 +811,7 @@ void USFGridSpawnerService::UpdateChildrenForCurrentTransform()
                             Orchestrator->OnStackablePipelineSupportsChanged();
                         }
                         // #405: Stackable hypertube support auto-connect (preview)
-                        if (USFAutoConnectService::IsStackableHypertubeSupportHologram(ParentLater))
+                        if (USFAutoConnectService::IsHypertubeAutoConnectSupportHologram(ParentLater))
                         {
                             Orchestrator->OnStackableHypertubeSupportsChanged();
                         }

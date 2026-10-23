@@ -1,3 +1,5 @@
+#include "Hologram/FGConveyorLiftHologram.h"
+#include "Holograms/Logistics/SFWaterPumpChildHologram.h"
 // Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
 /**
@@ -11,6 +13,19 @@
 #include "Features/Walk/SFWalkService.h"   // GetSeedHologram() for the held-buildable-changed walk cancel
 #include "Shared/Conduits/SFConveyanceConstants.h"
 #include "Features/Spacing/SFBlueprintSpacingDefaults.h"
+#include "Features/Scaling/SFBeamHologramState.h"
+#include "Features/Scaling/SFConveyorLiftHologramState.h"
+#include "Features/Scaling/SFLadderHologramState.h"
+#include "Features/Scaling/SFHypertubeSupportHologramState.h"
+#include "Features/Scaling/SFFoundationPassthroughState.h"
+#include "Features/Scaling/SFFloodlightHologramState.h"
+#include "Features/Scaling/SFJumpPadHologramState.h"
+#include "Features/Scaling/SFSnowCannonHologramState.h"
+#include "Features/Scaling/SFElevatorHologramState.h"
+#include "Features/Scaling/SFScalingFootprint.h"
+#include "Holograms/Core/SFSignHologramState.h"
+#include "Hologram/FGBeamHologram.h"
+#include "Hologram/FGLadderHologram.h"
 
 namespace
 {
@@ -364,11 +379,14 @@ void USFSubsystem::RegisterActiveHologram(AFGHologram* Hologram)
 	// belt/pipe defaults, because hypertube spans reach much farther (96m chord cap minus ~1m connector offset).
 	// Separate if (not folded into the #268 gate above) because hypertube and pipe stackable supports share a
 	// hologram class, disambiguated only by build class — the hypertube branch must own SpacingX.
-	if (USFAutoConnectService::IsStackableHypertubeSupportHologram(Hologram))
+	if (USFAutoConnectService::IsHypertubeAutoConnectSupportHologram(Hologram))
 	{
-		if (CounterState.SpacingX == 0)
+		const bool bWall = Hologram->GetBuildClass() && Hologram->GetBuildClass()->GetFName() == TEXT("Build_HyperTubeWallSupport_C");
+		int32& Spacing = bWall ? CounterState.SpacingY : CounterState.SpacingX;
+		if (Spacing == 0)
 		{
-			CounterState.SpacingX = static_cast<int32>(USFAutoConnectService::MAX_HYPERTUBE_POLE_SPACING); // 9500cm = 95m (chord cap 96m - 1m connector offset)
+			Spacing = static_cast<int32>(USFAutoConnectService::MAX_HYPERTUBE_POLE_SPACING
+                - (bWall ? GetCachedBuildingSize().Y : 0.0)); // 9500cm = 95m (chord cap 96m - 1m connector offset)
 
 			if (GridStateService)
 			{
@@ -605,6 +623,8 @@ void USFSubsystem::RegisterActiveHologram(AFGHologram* Hologram)
 			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🔒 Lock re-acquired for new hologram (modifiers still held)"));
 		}
 
+		// Selected beam geometry and fixed surface attachments follow the native snapped tilt.
+		SFScalingFootprint::TryGetDimensions(Hologram, CachedBuildingSize);
 #if SMART_ARROWS_ENABLED
 		// Issue #164: Only attach arrows to scalable buildings
 		// Non-scalable buildings (belts, pipes, extractors) should not show scaling arrows
@@ -1085,7 +1105,64 @@ void USFSubsystem::SyncMultiStepHologramProperties()
 	AFGHologram* Parent = ActiveHologram.Get();
 	if (!Parent) return;
 
+	if (SFConveyorLiftHologramState::IsHandled(Parent))
+	{
+		for (const auto& Child : HologramHelper->GetSpawnedChildren()) SFConveyorLiftHologramState::Sync(Parent, Child.Get());
+	}
+	if (SFElevatorHologramState::IsHandled(Parent))
+    {
+        for (const auto& Child : HologramHelper->GetSpawnedChildren())
+            SFElevatorHologramState::Sync(Parent, Child.Get());
+    }
+
+    const bool bVariableBeam = Parent->IsA<AFGBeamHologram>();
+	const bool bVariableLadder = Parent->IsA<AFGLadderHologram>();
+	if (bVariableBeam || bVariableLadder || SFHypertubeSupportHologramState::IsSelectedPole(Parent)
+		|| SFFoundationPassthroughState::IsHandled(Parent))
+	{
+		for (const auto& Child : HologramHelper->GetSpawnedChildren())
+		{
+			SFBeamHologramState::Sync(Parent, Child.Get());
+			SFLadderHologramState::Sync(Parent, Child.Get());
+			SFHypertubeSupportHologramState::Sync(Parent, Child.Get());
+			SFFoundationPassthroughState::Sync(Parent, Child.Get());
+		}
+	}
+	FVector FootprintDimensions;
+	if (SFScalingFootprint::TryGetDimensions(Parent, FootprintDimensions))
+	{
+		if (!CachedBuildingSize.Equals(FootprintDimensions, 0.01f))
+		{
+			CachedBuildingSize = FootprintDimensions;
+			UpdateChildPositions();
+		}
+		// Sign dimensions and support selection are independent state. The footprint
+		// fast path must still refresh support heights and the excluded parent pole.
+		if (Parent->IsA<AFGStandaloneSignHologram>())
+			SFSignHologramState::SyncGridPreview(Parent);
+		return;
+	}
+	if (bVariableBeam || bVariableLadder) return;
+
 	// === Floodlight sync (Issue #200) ===
+	if (SFSnowCannonHologramState::IsHandled(Parent))
+	{
+		for (const auto& Child : HologramHelper->GetSpawnedChildren())
+			SFSnowCannonHologramState::Sync(Parent, Child.Get());
+		return;
+	}
+	if (SFJumpPadHologramState::IsHandled(Parent))
+	{
+		for (const auto& Child : HologramHelper->GetSpawnedChildren())
+			SFJumpPadHologramState::Sync(Parent, Child.Get());
+		return;
+	}
+	if (SFFloodlightHologramState::IsHandled(Parent))
+	{
+		for (const auto& Child : HologramHelper->GetSpawnedChildren())
+			SFFloodlightHologramState::Sync(Parent, Child.Get());
+		return;
+	}
 	AFGFloodlightHologram* FloodlightParent = Cast<AFGFloodlightHologram>(Parent);
 	if (FloodlightParent)
 	{
@@ -1105,32 +1182,40 @@ void USFSubsystem::SyncMultiStepHologramProperties()
 			StepProp->CopyCompleteValue(&ParentBuildStep, StepProp->ContainerPtrToValuePtr<void>(FloodlightParent));
 		}
 
-		if (ParentAngle != CachedParentFixtureAngle || ParentBuildStep != CachedParentBuildStep)
+		// Grid growth or recreation can add default-state children while the parent stays
+		// unchanged. Reconcile each child's selected state, not only parent transitions.
+		CachedParentFixtureAngle = ParentAngle;
+		CachedParentBuildStep = ParentBuildStep;
+
+		const auto& SpawnedChildren = HologramHelper->GetSpawnedChildren();
+		int32 SyncedCount = 0;
+		for (const auto& ChildPtr : SpawnedChildren)
 		{
-			CachedParentFixtureAngle = ParentAngle;
-			CachedParentBuildStep = ParentBuildStep;
+			if (!ChildPtr.IsValid()) continue;
+			AFGFloodlightHologram* FloodlightChild = Cast<AFGFloodlightHologram>(ChildPtr.Get());
+			if (!FloodlightChild) continue;
 
-			const auto& SpawnedChildren = HologramHelper->GetSpawnedChildren();
-			int32 SyncedCount = 0;
-			for (const auto& ChildPtr : SpawnedChildren)
+			const int32 ChildAngle = AngleProp
+				? AngleProp->GetPropertyValue_InContainer(FloodlightChild) : ParentAngle;
+			uint8 ChildBuildStep = ParentBuildStep;
+			if (StepProp)
 			{
-				if (!ChildPtr.IsValid()) continue;
-				AFGFloodlightHologram* FloodlightChild = Cast<AFGFloodlightHologram>(ChildPtr.Get());
-				if (!FloodlightChild) continue;
+				StepProp->CopyCompleteValue(&ChildBuildStep, StepProp->ContainerPtrToValuePtr<void>(FloodlightChild));
+			}
+			if (ChildAngle == ParentAngle && ChildBuildStep == ParentBuildStep) continue;
 
-				if (AngleProp) AngleProp->SetPropertyValue_InContainer(FloodlightChild, ParentAngle);
-				if (StepProp) StepProp->CopyCompleteValue(StepProp->ContainerPtrToValuePtr<void>(FloodlightChild), &ParentBuildStep);
-				if (UFunction* RepFunc = FloodlightChild->FindFunction(TEXT("OnRep_FixtureAngle")))
-				{
-					FloodlightChild->ProcessEvent(RepFunc, nullptr);
-				}
-				SyncedCount++;
-			}
-			if (SyncedCount > 0)
+			if (AngleProp) AngleProp->SetPropertyValue_InContainer(FloodlightChild, ParentAngle);
+			if (StepProp) StepProp->CopyCompleteValue(StepProp->ContainerPtrToValuePtr<void>(FloodlightChild), &ParentBuildStep);
+			if (UFunction* RepFunc = FloodlightChild->FindFunction(TEXT("OnRep_FixtureAngle")))
 			{
-				UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Synced floodlight properties to %d children: Angle=%d, BuildStep=%d"),
-					SyncedCount, ParentAngle, ParentBuildStep);
+				FloodlightChild->ProcessEvent(RepFunc, nullptr);
 			}
+			SyncedCount++;
+		}
+		if (SyncedCount > 0)
+		{
+			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Synced floodlight properties to %d children: Angle=%d, BuildStep=%d"),
+				SyncedCount, ParentAngle, ParentBuildStep);
 		}
 		return;
 	}
@@ -1332,36 +1417,7 @@ void USFSubsystem::SyncMultiStepHologramProperties()
 	AFGStandaloneSignHologram* SignParent = Cast<AFGStandaloneSignHologram>(Parent);
 	if (SignParent)
 	{
-		// Read mBuildStep via reflection (protected, CustomSerialization enum)
-		uint8 ParentBuildStep = 0;
-		FProperty* StepProp = FindFProperty<FProperty>(AFGStandaloneSignHologram::StaticClass(), TEXT("mBuildStep"));
-		if (StepProp)
-		{
-			StepProp->CopyCompleteValue(&ParentBuildStep, StepProp->ContainerPtrToValuePtr<void>(SignParent));
-		}
-
-		if (ParentBuildStep != CachedParentBuildStep)
-		{
-			CachedParentBuildStep = ParentBuildStep;
-
-			const auto& SpawnedChildren = HologramHelper->GetSpawnedChildren();
-			int32 SyncedCount = 0;
-			for (const auto& ChildPtr : SpawnedChildren)
-			{
-				if (!ChildPtr.IsValid()) continue;
-				ASFStandaloneSignChildHologram* SignChild = Cast<ASFStandaloneSignChildHologram>(ChildPtr.Get());
-				if (!SignChild) continue;
-
-				// Use the public setter on our child class (no reflection needed)
-				SignChild->SetBuildStep(static_cast<ESignHologramBuildStep>(ParentBuildStep));
-				SyncedCount++;
-			}
-			if (SyncedCount > 0)
-			{
-				UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Synced sign build step to %d children: BuildStep=%d"),
-					SyncedCount, ParentBuildStep);
-			}
-		}
+		SFSignHologramState::SyncGridPreview(SignParent);
 		return;
 	}
 }
@@ -1772,6 +1828,12 @@ TSharedPtr<ISFHologramAdapter> USFSubsystem::CreateHologramAdapter(AFGHologram* 
 		return MakeShared<FSFSmartLogisticsAdapter>(LogisticsHolo);
 	}
 
+	// Water Extractor Extend parents are factory holograms; retain horizontal-only controls.
+	if (ASFWaterPumpChildHologram::IsVanillaWaterExtractor(BuildClass))
+	{
+		return MakeShared<FSFWaterExtractorAdapter>(Hologram);
+	}
+
 	// Check for custom factory holograms
 	if (ASFFactoryHologram* FactoryHolo = Cast<ASFFactoryHologram>(Hologram))
 	{
@@ -1859,6 +1921,10 @@ TSharedPtr<ISFHologramAdapter> USFSubsystem::CreateHologramAdapter(AFGHologram* 
 		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Creating Passthrough adapter for %s"), *Hologram->GetName());
 		return MakeShared<FSFPassthroughAdapter>(Hologram);
 	}
+	else if (Cast<AFGConveyorLiftHologram>(Hologram))
+	{
+		return MakeShared<FSFGenericAdapter>(Hologram, TEXT("ConveyorLift"));
+	}
 	else if (Cast<AFGFactoryHologram>(Hologram))
 	{
 		// Check registry first - some factory holograms have scaling disabled
@@ -1891,8 +1957,12 @@ TSharedPtr<ISFHologramAdapter> USFSubsystem::CreateHologramAdapter(AFGHologram* 
 	}
 	else if (Cast<AFGPillarHologram>(Hologram))
 	{
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Creating Pillar adapter for %s (features currently disabled)"), *Hologram->GetName());
+		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Creating Pillar adapter for %s"), *Hologram->GetName());
 		return MakeShared<FSFPillarAdapter>(Hologram);
+	}
+	else if (Cast<AFGElevatorFloorStopHologram>(Hologram))
+	{
+		return MakeShared<FSFElevatorFloorStopAdapter>(Hologram);
 	}
 	else if (Cast<AFGElevatorHologram>(Hologram))
 	{

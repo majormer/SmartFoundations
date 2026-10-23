@@ -2,6 +2,15 @@
 
 #include "Holograms/Core/SFScalingSpecExpansion.h"
 #include "SmartFoundations.h"
+#include "Features/Scaling/SFBeamHologramState.h"
+#include "Features/Scaling/SFLadderHologramState.h"
+#include "Features/Scaling/SFHypertubeSupportHologramState.h"
+#include "Features/Scaling/SFFoundationPassthroughState.h"
+#include "Features/Scaling/SFFloodlightHologramState.h"
+#include "Features/Scaling/SFJumpPadHologramState.h"
+#include "Features/Scaling/SFSnowCannonHologramState.h"
+#include "Features/Scaling/SFElevatorHologramState.h"
+#include "Features/Scaling/SFScalingFootprint.h"
 #include "Hologram/FGHologram.h"
 #include "Subsystem/SFSubsystem.h"
 #include "Services/SFRecipeManagementService.h"
@@ -24,10 +33,14 @@
 #include "FGBlueprintProxy.h"
 #include "Hologram/FGBlueprintHologram.h"       // [#168] Smart! Blueprints: staged blueprint grid cells
 #include "Features/Scaling/SFGridCoordComponent.h"  // [#168-MP] cell-basis capture from live preview children
+#include "Features/AutoConnect/SFBlueprintRailSeams.h"
+#include "Features/AutoConnect/SFBlueprintVehicleSeams.h"
+#include "Features/AutoConnect/SFBlueprintLiftSeams.h"
 #include "Hologram/FGPoleHologram.h"            // #354: mPoleVariationIndex / mBuildStep
 #include "Hologram/FGConveyorPoleHologram.h"
 #include "Hologram/FGFloodlightHologram.h"      // #200: mFixtureAngle / mBuildStep
 #include "Hologram/FGStandaloneSignHologram.h"  // #192: mBuildStep
+#include "Holograms/Core/SFSignHologramState.h"
 #include "Engine/World.h"
 #include "FGCharacterPlayer.h"
 #include "EngineUtils.h"
@@ -151,6 +164,8 @@ bool CaptureScalingSpec(AFGHologram* Hologram, FSFScalingSpec& OutSpec)
 
 	OutSpec.Counters = Counters;
 	OutSpec.ItemSize = Profile.DefaultSize;
+	// Preview and authority use the same selected beam geometry and surface-attachment footprint.
+	SFScalingFootprint::TryGetDimensions(Hologram, OutSpec.ItemSize);
 	OutSpec.AnchorOffset = Profile.AnchorOffset;
 	// [#168-MP] Blueprint composites have NO registry profile - the fallback 8x8x4m would hand the
 	// server a wrong grid pitch entirely. The subsystem's cached size IS what positioned the client
@@ -231,6 +246,9 @@ bool CaptureScalingSpec(AFGHologram* Hologram, FSFScalingSpec& OutSpec)
 // the child's connectors/mesh state match before ConfigureActor snapshots them into the buildable.
 static void SF_SyncMultiStepPropertiesToChild(AFGHologram* Parent, AFGHologram* Child)
 {
+	SFBeamHologramState::Sync(Parent, Child);
+	SFLadderHologramState::Sync(Parent, Child);
+	SFHypertubeSupportHologramState::Sync(Parent, Child);
 	// #354: STANDARD conveyor pole only - stackable/wall poles are also AFGConveyorPoleHologram
 	// and must not be touched (same gate as the client sync).
 	if (USFAutoConnectService::IsRegularConveyorPoleHologram(Parent) && Child->IsA<AFGConveyorPoleHologram>())
@@ -300,16 +318,8 @@ static void SF_SyncMultiStepPropertiesToChild(AFGHologram* Parent, AFGHologram* 
 		return;
 	}
 
-	// #192: standalone sign build step.
-	if (Parent->IsA<AFGStandaloneSignHologram>() && Child->IsA<AFGStandaloneSignHologram>())
-	{
-		if (FProperty* StepProp = FindFProperty<FProperty>(AFGStandaloneSignHologram::StaticClass(), TEXT("mBuildStep")))
-		{
-			StepProp->CopyCompleteValue(
-				StepProp->ContainerPtrToValuePtr<void>(Child),
-				StepProp->ContainerPtrToValuePtr<void>(Parent));
-		}
-	}
+	// [MP-AUTH] Grid signs require their own support as well as the sign step.
+	SFSignHologramState::Sync(Parent, Child);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -386,7 +396,7 @@ namespace
 		FSFPositionCalculator Calc;
 		const FVector CellLoc = Calc.CalculateChildPosition(
 			GX, GY, GZ, Job.ParentLoc, Job.ParentRot,
-			Job.Spec.ItemSize, C, Job.LinearIndex, FVector::ZeroVector);
+			Job.Spec.ItemSize, C, Job.LinearIndex, FVector::ZeroVector, Job.Spec.BuildClass);
 		++Job.LinearIndex;
 
 		// [#363]/[#372] rotation-mode yaw - identical to the inline path.
@@ -450,6 +460,11 @@ namespace
 
 		// Exact grid transform; server validation passed at fire time (same as inline).
 		Cell->SetActorLocationAndRotation(CellLoc, CellRot);
+		// Sign supports use the sign's final transform to preserve their relative pose.
+		if (AFGHologram* Template = Job.TemplateHologram.Get())
+		{
+			SFSignHologramState::ApplyGridCell(Template, Cell, FIntVector(Job.XI, Job.YI, Job.ZI), Job.Spec);
+		}
 
 		TArray<AActor*> CellChildren;
 		AActor* Built = Cell->Construct(CellChildren, Job.ConstructionID);
@@ -545,7 +560,8 @@ bool ShouldDeferSpecExpansion(AFGHologram* Parent, const FSFScalingSpec& Spec)
 {
 	return Parent
 		&& Spec.bValid
-		&& Spec.ConduitPlan.Num() == 0
+		&& Spec.ConduitPlan.Num() == 0 && Spec.LiftRoutes.IsEmpty() && Spec.BlueprintRailSeams.IsEmpty() && Spec.BlueprintVehicleSeams.IsEmpty()
+        && !Spec.bBlueprintLiftSeamsRequired
 		&& Parent->GetBlueprintDesigner() == nullptr
 		&& (Spec.CellCount() - 1) > SFSpecDeferThresholdCells;
 }
@@ -663,7 +679,7 @@ int32 ExpandScalingSpecIntoChildren(AFGHologram* Parent, const FSFScalingSpec& S
 				// grid children sank half-height while the parent sat correctly.
 				FVector CellLoc = Calc.CalculateChildPosition(
 					GX, GY, GZ, ParentLoc, ParentRot,
-					Spec.ItemSize, C, LinearIndex, FVector::ZeroVector);
+					Spec.ItemSize, C, LinearIndex, FVector::ZeroVector, Parent->GetBuildClass());
 				++LinearIndex;
 
 				// [#168-MP] Blueprint copies: RECONSTRUCT the client preview's exact cell position
@@ -751,6 +767,31 @@ int32 ExpandScalingSpecIntoChildren(AFGHologram* Parent, const FSFScalingSpec& S
 						Child = WaterPumpChild;
 					}
 				}
+				else if (SFElevatorHologramState::IsHandled(Parent))
+                {
+                    Child = SFElevatorHologramState::SpawnConstructionCell(Parent, Parent, ChildName,
+                        FTransform(CellRot, CellLoc));
+                }
+                else if (SFSnowCannonHologramState::IsHandled(Parent))
+				{
+					Child = SFSnowCannonHologramState::SpawnConstructionCell(Parent, Parent, ChildName,
+						FTransform(CellRot, CellLoc));
+				}
+				                else if (SFJumpPadHologramState::IsHandled(Parent))
+				{
+					Child = SFJumpPadHologramState::SpawnConstructionCell(Parent, Parent, ChildName,
+						FTransform(CellRot, CellLoc));
+				}
+				else if (SFFloodlightHologramState::IsHandled(Parent))
+				{
+					Child = SFFloodlightHologramState::SpawnConstructionCell(Parent, Parent, ChildName,
+						FTransform(CellRot, CellLoc));
+				}
+				else if (SFFoundationPassthroughState::IsHandled(Parent))
+				{
+					Child = SFFoundationPassthroughState::SpawnConstructionCell(Parent, Parent, ChildName,
+						FTransform(CellRot, CellLoc));
+				}
 				else if (Parent->IsA(AFGPassthroughHologram::StaticClass()) && SpawnWorld)
 				{
 					// #458: Conveyor lift/pipe FLOOR HOLES (passthroughs). SpawnChildHologramFromRecipe
@@ -818,6 +859,7 @@ int32 ExpandScalingSpecIntoChildren(AFGHologram* Parent, const FSFScalingSpec& S
 				if (Child)
 				{
 					// [#168] SMART! BLUEPRINTS - stage blueprint grid cells for CONSTRUCTION.
+                    USFGridCoordComponent::AssignCell(Child, FIntVector(XI, YI, ZI));
 					// The spec-construction model strips the staged PREVIEW children and re-expands
 					// here at fire time (authority path, SP included), so the recipe-spawned cell is
 					// an EMPTY Holo_Blueprint_C: without the descriptor + a loaded blueprint world its
@@ -830,11 +872,23 @@ int32 ExpandScalingSpecIntoChildren(AFGHologram* Parent, const FSFScalingSpec& S
 					{
 						if (AFGBlueprintHologram* BlueprintCell = Cast<AFGBlueprintHologram>(Child))
 						{
+                            // Match the existing Blueprint preview-family setup. These
+                            // copies have a captured grid pose, not their own floor aim.
+                            // The initiating Blueprint keeps native floor validation;
+                            // before-payment validation still checks full copy clearance.
+                            BlueprintCell->SetNeedsValidFloor(false);
 							if (ParentBlueprintCell->mBlueprintDescriptor)
 							{
-								BlueprintCell->SetBlueprintDescriptor(ParentBlueprintCell->mBlueprintDescriptor);
+                                const bool ExactRailReplay = !Spec.BlueprintRailSeams.IsEmpty() || !Spec.BlueprintVehicleSeams.IsEmpty() || Spec.bBlueprintLiftSeamsRequired;
+                                // A native recipe-spawned cell may already have staged the
+                                // selected Blueprint during this early validation phase.
+                                // Loading it again appends duplicate content and turns one
+                                // authored rail mouth into a fictitious junction.
+                                if (!ExactRailReplay || BlueprintCell->mBuildableToNewRoot.IsEmpty())
+                                    BlueprintCell->SetBlueprintDescriptor(ParentBlueprintCell->mBlueprintDescriptor);
 								BlueprintCell->mBlueprintDescName = ParentBlueprintCell->mBlueprintDescName;  // [#168] proxy identity (see preview spawner)
-								BlueprintCell->LoadBlueprintToOtherWorld();
+                                if (!ExactRailReplay || BlueprintCell->mBuildableToNewRoot.IsEmpty())
+                                    BlueprintCell->LoadBlueprintToOtherWorld();
 								// No AlignBuildableRootWithBounds: LoadBlueprintToOtherWorld aligns
 								// internally; a second call displaces the root off the grid (live
 								// measurement 2026-07-06).
@@ -873,6 +927,7 @@ int32 ExpandScalingSpecIntoChildren(AFGHologram* Parent, const FSFScalingSpec& S
 					// Multi-step parents (pole height / floodlight angle / sign step): copy the
 					// player's step-2 choice from the parent so the child builds with it.
 					SF_SyncMultiStepPropertiesToChild(Parent, Child);
+					SFSignHologramState::ApplyGridCell(Parent, Child, FIntVector(XI, YI, ZI), Spec);
 
 					++SpawnedChildren;
 				}
@@ -947,6 +1002,7 @@ void CaptureConduitPlan(AFGHologram* Hologram, FSFScalingSpec& InOutSpec)
 	int32 PerKind[5] = {0, 0, 0, 0, 0};
 	for (AFGHologram* Child : Descendants)
 	{
+        if (Child->ActorHasTag(TEXT("SF_BlueprintLiftSeam")) || Child->ActorHasTag(TEXT("SF_BlueprintVehicleSeam"))) continue;
 
 		FSFConduitPlanEntry Entry;
 		if (ASFConveyorBeltHologram* BeltHolo = Cast<ASFConveyorBeltHologram>(Child))
@@ -1054,6 +1110,14 @@ void CaptureConduitPlan(AFGHologram* Hologram, FSFScalingSpec& InOutSpec)
 			PerKind[0], PerKind[1], PerKind[2], PerKind[3], PerKind[4], InOutSpec.ConduitPlanCost.Num());
 	}
 
+	SFLiftRoutePlan::Capture(Hologram, InOutSpec.LiftRoutes);
+    FSFBlueprintLiftSeams::Capture(Hologram, InOutSpec);
+    for (const auto& Route : InOutSpec.BlueprintLiftSeams) SF_MergePlanCost(InOutSpec, Route.Cost);
+    FSFBlueprintRailSeams::Capture(Hologram, InOutSpec.BlueprintRailSeams, InOutSpec.BlueprintRailCost);
+    SF_MergePlanCost(InOutSpec, InOutSpec.BlueprintRailCost);
+    FSFBlueprintVehicleSeams::Capture(Hologram, InOutSpec.BlueprintVehicleSeams);
+    for (const auto& Route : InOutSpec.BlueprintVehicleSeams) SF_MergePlanCost(InOutSpec, Route.Cost);
+	for (const auto& Route : InOutSpec.LiftRoutes) SF_MergePlanCost(InOutSpec, Route.Cost);
 	SF_MergePlanCost(InOutSpec, GetScaleDaisyChainPowerCost(Hologram));
 	if (USFSubsystem* SS = Hologram ? USFSubsystem::Get(Hologram->GetWorld()) : nullptr)
 	{
@@ -1560,7 +1624,7 @@ int32 SpawnConduitPlanChildren(AFGHologram* Parent, const FSFScalingSpec& Spec)
 }
 
 int32 SpawnWirePlanPostConstruct(AActor* BuiltParent, const TArray<AActor*>& OutChildren,
-	const FSFScalingSpec& Spec, AFGBlueprintProxy* GroupProxy)
+	const FSFScalingSpec& Spec, AFGBlueprintProxy* GroupProxy, TArray<AActor*>* OutBuiltWires)
 {
 	UWorld* World = BuiltParent ? BuiltParent->GetWorld() : nullptr;
 	if (!World)
@@ -1663,6 +1727,7 @@ int32 SpawnWirePlanPostConstruct(AActor* BuiltParent, const TArray<AActor*>& Out
 			GroupProxy->RegisterBuildable(NewWire);
 		}
 
+		if (OutBuiltWires) OutBuiltWires->Add(NewWire);
 		++Built;
 	}
 
@@ -1677,7 +1742,7 @@ int32 SpawnWirePlanPostConstruct(AActor* BuiltParent, const TArray<AActor*>& Out
 }
 
 int32 SpawnScaleDaisyChainPowerPostConstruct(AActor* BuiltParent, const TArray<AActor*>& OutChildren,
-	const FSFCounterState& Counters, bool bEnabled, AFGBlueprintProxy* GroupProxy)
+	const FSFCounterState& Counters, bool bEnabled, AFGBlueprintProxy* GroupProxy, TArray<AActor*>* OutBuiltWires)
 {
 	UWorld* World = BuiltParent ? BuiltParent->GetWorld() : nullptr;
 	if (!World || !SF_IsScaleDaisyChainEnabled(BuiltParent, bEnabled) || FMath::Abs(Counters.GridCounters.X) < 2)
@@ -1762,6 +1827,7 @@ int32 SpawnScaleDaisyChainPowerPostConstruct(AActor* BuiltParent, const TArray<A
 				GroupProxy->RegisterBuildable(Wire);
 			}
 
+			if (OutBuiltWires) OutBuiltWires->Add(Wire);
 			++Built;
 		}
 	}

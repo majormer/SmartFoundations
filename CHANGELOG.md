@@ -5,7 +5,130 @@ All notable changes to Smart! will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-> **Audience note:** This changelog is read by players, not developers. Entries should describe what the user experiences — what was broken, what it felt like, and what's better now. Class names, internal APIs, and implementation details belong in code comments or design docs, not here. Unless an entry says otherwise, changes apply to both single-player and multiplayer.
+> **Audience note:** This changelog is read by players, not developers. Entries should describe what players experience — what was broken, what it felt like, and what's better now. Class names, internal APIs, and implementation details belong in code comments or design docs, not here. Unless an entry says otherwise, changes apply to both single-player and multiplayer.
+
+## [35.0.0] - 2026-10-22
+
+Broader building support, more flexible placement previews, upgrades that retain dismantle groups, and integration with Smart Camera 2.0.0. Normal material costs and vanilla construction rules still apply.
+
+### Updating Smart! and Smart Camera together
+
+If you play with both mods, update them together: use Smart! 35.0.0 or higher with Smart Camera 2.0.0 or higher. Smart Camera 2.0.0 changes how the two mods work together and is not compatible with older Smart! versions.
+
+Your extra building view still follows Smart's preview, including scaled layouts. Conveyor lifts also retain their automatic endpoint view as you choose the height and connection direction. Smart and Camera coordinate their ordinary building views so you should see one useful picture rather than two overlapping pictures of the same preview.
+
+Camera 2.0.0 lets you arrange those pictures while looking at your factory. Press **F8** for Edit Mode, drag a picture's top bar to move it, or drag a corner handle to resize it. Each camera remembers its layout, with settings for **All saves** or **This save**. Moving or resizing a picture keeps its automatic lift framing intact. Press `[` to cycle angles, or hold `]` while scrolling to change camera distance; these shortcuts and Edit Mode can be rebound.
+
+Open **Mods → Smart! Camera** to find **Smart / Build Preview** automatically, alongside Camera's own build-gun view and views supplied by other mods. Their names remain listed while inactive, so you can configure them without first finding a building to look at. Pictures hide behind the pause and interaction menus. Smart Camera can also be used without Smart!, while Smart!'s building tools remain available without Camera. See the full Camera changes and integration documentation in the [Smart Camera repository](https://github.com/majormer/SmartCamera).
+
+### Added
+
+- **Find Extend in the Panel** - Compatible factory buildings and Water Extractors now have an Extend tab with Select Source, a captured-layout summary and direction controls. Select one matching existing building outside the window; Escape cancels, misses preserve the previous preview, and replacing unbuilt work asks first. The existing hover shortcut remains available, with a source name and Panel-key hint on the HUD. Normal construction costs and restrictions still apply.
+
+- **Translations and multilingual wiki** - Smart! and Smart Camera include translations in all 20 supported non-English languages, alongside localized wiki pages.
+- **Translated connection controls** - Routing, direction and automatic-tier labels now support localization without changing the selected option. Fallback connection summaries use the game’s building names and translatable text.
+
+- **Find related Smart tools in one window** - Scaling, Walking, Upgrade and Restore share a window position and follow the selected building's supported features, with explanations for unavailable tools. Railway tracks and Vehicle Paths open Walking directly. Switching tasks retains staged edits; returning from an unbuilt walk asks before discarding its path. Upgrade keeps Radius and Network tabs, while Restore opens inside the window with Grid Presets and Modules. The configured Smart Panel key opens and closes the task window. Loading a preset for another building updates its name, controls and available tasks. Leaving Walking restores ordinary game controls. Staged values stay visible when switching tasks. Placement edits wait for Apply when immediate application is off; connection settings are labeled as live. (Issue #577)
+
+- **Get help without leaving the build preview** - Small **?** buttons beside building names and section labels provide workflow descriptions on hover. Click to show details and click again to hide them, including HUD and interface settings. Collapsed help takes no extra row, and Scaling guidance is hidden while Restore is active. Control tooltips explain units, choices, native restrictions and when actions change the preview or spend materials. Upgrade groups scope and scanning, results and target tier, then materials in order. Help stays collapsed by default to leave room for your controls. Walking help explains resuming a bus with a matching stackable support and an open endpoint. (Issue #577)
+
+- **Select a Network Upgrade target with the Panel open** - Select Target lets you click one existing building outside the Panel. Panel clicks stay in the interface, Escape cancels selection, and a miss keeps your previous target. Choosing another target clears the old results and material quote until you scan again. (Issue #577)
+
+- **Arrange the Smart! HUD** - Unlock the HUD to drag it, resize it uniformly and preview any of its six themes. The appearance window offers a scale spin box, Cancel, Done / Lock and Reset HUD Appearance. Saving updates the existing Mod Settings across saves; cancelling keeps your previous appearance. With Smart Camera installed, the HUD joins Camera's Edit Mode and uses its shared Done / Lock and Cancel actions. Without Camera, a separate rebindable Edit HUD Layout action defaults to F8. Normal play keeps the HUD locked and click-through. Existing multilingual fonts are retained. Shared layout editing saves or cancels HUD and camera changes together. The Smart! HUD returns when the task window closes or Walking ends. (Issue #576)
+
+- **Panel positions that stay where you put them** - Drag a panel's title bar with the left mouse button, or keep using right-button dragging. Scaling, Walking, Upgrade and Restore share the manually chosen window position across saves. Reset Panel Positions is available in Mod Settings. Layout preferences are separate from construction values and presets. (Issue #577)
+
+- **Lift-assisted factory connections** - Choose **Belts Only** (the default), **Lift at Distributor** or **Lift at Building** in the Smart Panel and global Auto-Connect settings. The lift options carry the height difference while keeping machine-connection belts level, including stepped and scaled splitter/merger layouts. Matching native direct docks omit the unnecessary belt and its cost. Existing port-selection rules and normal material costs still apply. Connections, dismantle groups and Blueprint Designer ownership work in single-player and multiplayer and survive saving and loading. Stale endpoints or an unaffordable full route prevent the whole placement. (Issue #505)
+
+- **Water Extractor Extend and Restore** - Extend rows and horizontal grids from vanilla Water Extractors, or restore a captured arrangement with its supported pipe connections. Every destination must meet the water-depth and terrain checks already used by scaling. Copies use normal materials, connect their pipes and retain their dismantle groups through saving and loading. Other resource extractors and vertical Water Extractor grids remain excluded. (Issue #573)
+
+- **FICSMAS building grids** - Candy Canes, Wreaths, Snowmen, Snow Dispensers, Giant Trees and Snow Cannons can be repeated with Smart. Snow Cannon copies retain the selected firing angle, including vertical layouts. Normal material costs, saved groups and native seasonal recipe availability are preserved. (Issue #318)
+
+- **Rotated pipe and Hypertube wall runs** - Grid copies now follow the wall support’s selected rotation, including inclined and vertical runs. Hypertube wall supports gain Auto-Connect along the run. The Panel offers native 45° wall rotation, and Player Relative controls keep vertical and sideways movement aligned with the rotated support. Copies retain Blueprint Designer ownership and their selected rotation after saving and loading. (Issues #503, #571)
+
+- **Keep route supports when using Extend and Restore** - Discovered belt and pipe routes retain their associated Conveyor floor, stackable, wall and ceiling supports, and Pipeline floor, stackable and wall supports. Copies preserve their pose, selected settings, normal material costs and route connections. Dismantle groups survive saving and loading, and a restored route inside the Blueprint Designer belongs to that Designer. This copies the supports belonging to the route, not every nearby object. (Issue #559)
+
+- **Build conveyor lifts in Smart grids** - Conveyor Lift Mk.1 through Mk.6 now support Smart scaling. Select the first end, choose the height and top direction, then use the usual grid, spacing and transform controls to repeat that lift. The copies follow your selected shape and flow direction, including downward lifts, and use lightweight previews. Floor holes and existing conveyor connections are resolved separately for each copy, so each lift needs its own suitable attachment. Construction uses normal materials and produces ordinary vanilla lifts, with Smart dismantle groups outside the Blueprint Designer and native Designer ownership inside it. The full grid must be affordable before any copies are constructed. (Issue #555)
+
+- **Repeat beams with the shape you selected** - Beam grids retain the selected length, orientation and build mode instead of reverting copies to a default beam. Beam connectors and supports also have dedicated placement handling. Grid intervals account for the selected dimensions, including native tilted placements, and material quotes follow the actual beam length. Selected beam lengths and native Blueprint Designer ownership also survive saving and loading. (Issues #555, #565)
+
+- **More roofs and structural details in grids** - Added scaling profiles for the orange, glass, tar and metal roof families, including their inner and outer corners, alongside corner walls, Large Fans and Large Vents. Pillar bodies and bases use their own dimensions instead of sharing one assumed size. Large Fans and Large Vents retain their floor, wall or ceiling mounting when repeated. Concave concrete corner-wall grids dismantle together with the normal material refund. These additions repeat ordinary building placements; they do not add new orientation or attachment permissions. (Issues #555, #565)
+
+- **Jump Pad copies keep their selected angle** - Repeated Jump Pads retain their launch-angle setting, orientation and dismantle group through saving and loading. (Issue #565)
+
+- **Choose whether a sign grid has supports** - The Smart Panel and HUD share a **Sign supports: Auto / None** choice, with a rebindable control. Auto retains the applicable native supports; None aligns the sign edge to its mounting surface instead of leaving it floating where its poles used to be. The choice resets to Auto after construction. For stacked floor or ceiling signs, support selection follows the appropriate outside row rather than adding floating poles to every sign. (Issues #555, #564)
+
+- **Miner tier upgrades through Smart Upgrade** - Upgrading a Miner retains its resource-node binding and the applicable machine settings, contents, connections and Smart group. Missing resources, an invalid native replacement or insufficient materials leave the original Miner in place. Miners remain upgrade-only and cannot be repeated in free-placement grids. (Issues #533, #555)
+
+- **Blueprint route connections** - Repeated Blueprint copies can connect intended railway endpoints using native railway routing and normal costs. Touching endpoints add no unnecessary track; connecting curves respect the full 100 m track limit. Compatible Vehicle Path endpoints also connect in the correct direction, including rotated copies and reverse runs with native connecting spans. Path segments replaced during a join retain their Blueprint dismantle group on both multiplayer peers. (Issues #538, #575)
+
+- **Vertical Blueprint connections from lift tails** - Repeat whole Blueprints vertically and connect compatible exposed lift endpoints using one shared Z spacing, including mixed upward/downward lanes and native-valid sloped belts. Blueprints without eligible lift tails keep their usual spacing. Ambiguous intent and layouts with no common valid pitch refuse automatic connections. The complete connection must be valid and affordable before construction. (Issue #574)
+
+- **Resume logistics Walking from existing routes** - Continue pipe, Hypertube and conveyor buses from eligible endpoints, including manually placed grids. Widen a bus with new starting supports only for added lanes, or walk those added lanes backward toward their sources. Smart preserves spacing, conveyor flow, existing objects and groups, and charges normal material costs. Ambiguous, occupied or stale endpoints are refused without changing the existing network; wall and floor-mounted supports remain excluded. (Issue #572)
+
+- **Railway and Vehicle Path Walking** - Start connected track lines from Buffer Stops and continue Vehicle Paths forward or backward. Railway curves follow native routing, and the first segment retains its chosen shape when aiming changes. Starting Vehicle Path Walking preserves the preview heading, including reversed placement. The native 100 m track limit applies to the full curve; overlong curves are rejected before spending materials. Vehicle Path spans and nodes retain Blueprint Designer ownership. Tracks use Walking rather than free-placement grids; signals and Buffer Stops retain their native attachment rules. Consecutive Vehicle Path segments share their meeting nodes and form one directed route, including when continuing backward from an existing endpoint. (Issues #561, #562)
+
+- **Hypertube connections between Blueprint copies** - Compatible exposed endpoints connect between repeated copies. Each Blueprint keeps its own dismantle group, and connecting tubes have a separate group. Unsupported gaps omit both the connecting tubes and their material cost; invalid placements are rejected without payment. (Issue #563)
+
+- **More attachment and passthrough support** - Expanded support for Conveyor Wall Holes, Pipeline Valves, Hypertube Entrances, supports, and wall and floor holes. Each copy still needs a suitable native attachment and valid connections. (Issues #555, #565)
+
+### Changed
+
+- **Clearer building controls** - The Smart Panel presents grid, spacing, steps and stagger in an aligned X/Y/Z table, with applicable connection and building options below it and actions in the footer. Walking, Upgrade and Restore share readable headings, value columns, dark surfaces and orange primary actions. Walking opens at the newest segment and uses the available panel height for its segment list. The HUD separates its current mode, active value, grid and a hint using your current bindings. All six HUD themes and the existing multilingual font family are retained. Radius and Network Upgrade retain separate selected rows and target tiers. Restore offers actions for the selected preset, and confirmation dialogs appear above the task window. (Issues #576, #577)
+
+- **Translation coverage for new controls** - Translation catalogues cover the new Panel controls and help, HUD editing and Smart Camera workflows across all 20 supported non-English languages.
+
+- **Consistent Panel controls** - Wall rotation appears in the Rotation section, sign support selection has its own contextual Supports section, and group preservation sits with the shared Upgrade actions. These controls now use the existing Panel layout and styling.
+
+- **Keep dismantle groups through Smart Upgrade replacements** - Added a default-On setting to preserve the original Smart dismantle group when a supported building is upgraded, or a belt, lift or pipe is downgraded through Smart Upgrade. This also protects groups containing only the replaced building. The setting takes effect for the next upgrade request. Turning it off leaves group handling to the game's normal replacement behavior. Buildings inside a Blueprint Designer retain their native Designer ownership. Failed replacements leave the original building in its original group. (Issues #533, #556)
+
+- **Lighter previews for adjustable buildings** - Signs, beams, lifts, ladders, adjustable supports, Flood Lights, Jump Pads, floor holes and Elevator assemblies use lighter previews where suitable. Copies retain the applicable selected height, length, angle, direction and mounting choices, and construct ordinary vanilla buildings with their associated parts. (Issues #555, #565, #568)
+
+- **Grid controls follow the buildable's supported axes** - The Smart Panel, keyboard, wheel and directional arrows use the same axis capabilities. Unsupported axes cannot silently add hidden copies through a preset or panel edit. Wall scaling includes the supported vertical axis, while pillar and support behavior follows the selected building's profile. Ordinary pillar and Hypertube floor-hole grids also retain native Blueprint Designer ownership after saving and loading. With Player Relative controls enabled, the highlighted arrow follows your facing direction while a modifier is held; the Smart Panel keeps absolute X/Y/Z values. (Issues #555, #558)
+
+- **Downgrades stay focused on logistics** - Lower tiers are offered for belts, conveyor lifts and pipelines, where throughput changes can help with routing and balancing. Miners, power poles, wall outlets, pumps, storage and other capacity families are upgrade-only. Smart does not offer lower-capability replacements for those families.
+
+- **Elevator editing and dismantle groups** - Native shaft-height edits preserve the assembly's Smart dismantle group and Blueprint Designer ownership through saving and loading. Elevators continue to use their ordinary placement and editing workflow; this does not add shaft or Floor Stop grids. (Issues #533, #555, #566)
+
+- **Adjustable-building grids follow your selected shape** - Choose the original building's height or angle, then adjust the grid without restarting that choice. Copies include the building's associated parts. (Issue #555)
+
+- **Building grids use usable default spacing** - New building profiles use native snapping distances where available, or round their footprint upward to the placement grid. Fixed-height copies also leave enough vertical space on whole native nudge steps, including floor-mounted Fans and rotated Valves. Selected heights and native ladder segments keep their own spacing rules. (Issue #318)
+
+- **Power upgrades preserve existing wiring** - Power pole and Wall Outlet replacements retain their existing connections, accounting for each socket or outlet face separately.
+
+### Fixed
+
+- **Walking Apply preserves segment edits** - Applying edits keeps each segment's chosen length, turn, rise and sideways offset in conveyor belt, Pipeline and Hypertube Walking. The new Railway and Vehicle Path Walking modes use the same corrected editor.
+
+- **Clear outdated pipe previews** - Moving a junction beyond nearby buildings now removes its previous Auto-Connect pipe previews and their material quote. (Issue #551)
+
+- **Scaling tilted native pillars** - Copies and spacing now follow the pillar's tilt instead of staying on a horizontal/vertical grid. Player Relative controls and directional arrows follow the same axes, while the Panel keeps its X/Y/Z fields. Externally tilted Blueprints are unchanged. (Issue #507)
+
+- **Camera direction on Extend and Restore** - The building camera now follows the local run direction, including reversed and curved runs, instead of keeping the original building's facing. The existing end-of-run focus is retained. This also applies when loading a stored layout while targeting an existing run. (Issue #548)
+
+- **Diagonal belt and pipe runs near maximum length** - Support Auto-Connect now uses the native length limits, including their small allowance for rounding. This prevents Smart's stricter cutoff from dropping a nominal 56 m span solely because diagonal placement calculates it slightly longer. (Issue #570)
+
+- **Restored conveyor layouts can recover from a red preview** - This fixes a fully funded route remaining red when restored inside the Blueprint Designer. Normal material costs and native placement checks still apply. (Issue #559)
+
+- **Pipe indicators rejoin their dismantle group after loading a save** - An indicator restored by the game now rejoins its pipe's existing group, so group dismantling removes the pipe and its indicator together. Existing groups and Blueprint Designer ownership are preserved. This does not force the game to create an indicator during replacement. (Issue #557)
+
+- **Lift upgrades preserve items already on the conveyor route** - Upgrading a lift in a connected conveyor chain now transfers its carried items before retiring the old lift and rebuilding the chain. This addresses items being lost when the lift is processed before neighboring belts or when only part of a request can be completed. If the existing conveyor route cannot be upgraded safely, no replacement is charged.
+
+- **More reliable multiplayer group dismantling** - Buildings no longer appear twice in a Smart dismantle group while the client loads its members. Groups built from lightweight buildings stay anchored at their placement.
+
+- **Group refund previews account for the complete selection** - Refund estimates include the group's buildings and their owned parts, using the correct recipes and selected dimensions without counting highlighted buildings twice. Normal dismantling determines the materials you receive.
+
+- **Camera focus after recipe changes** - Cancelling a scaled preview or switching recipes now clears the old grid dimensions from Smart's camera target, keeping the view aligned with the current preview and Panel values.
+
+### Compatibility
+
+- **Smart! 35.0.0 and Smart Camera 2.0.0** are compatible releases. If you use both mods, update them together.
+- The minimum supported game build remains **Satisfactory CL 502094**.
+- Smart constructs ordinary vanilla buildings with normal material costs, so saves remain usable without Smart installed.
+
+- **Native building limits remain in effect** - Independent Elevator Floor Stop grids and mirrored Extend are not included. Smart Upgrade downgrades remain limited to logistics. Supported placements still follow the game's attachment and construction rules.
+
+- **Buildings that retain ordinary placement** - Signals, Train Stations and their platforms, Conveyor Monitors and Portal Potties retain ordinary game placement; this update does not add Smart grids for them. Railway Walking works directly with track segments. Buffer Stops remain supported for starting multiple train lines.
 
 ## [34.4.0] - 2026-10-06
 
@@ -88,7 +211,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Known issues
 
 - Intermittent rain/dismantle crashes remain under investigation despite the additional protection. (Issue #514)
-- Reported overlapping or doubled pipes have not been reproduced in the failing reporter setup. The preview refresh fixes above do not establish that this case is resolved. (Issue #551)
 - Industrial Evolution buildings with custom placement behavior still need compatibility investigation. (Issue #552)
 - A broader report of free blueprint placement is not confirmed fixed by the generated-pipe cost correction. Please include Smart!/SML/game versions, session type, blueprint and save context when reporting it.
 

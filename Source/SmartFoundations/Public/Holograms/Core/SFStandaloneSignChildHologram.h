@@ -12,8 +12,8 @@
  * Extends AFGStandaloneSignHologram so the multi-step property sync
  * (mBuildStep) works via Cast<AFGStandaloneSignHologram>.
  *
- * Overrides SpawnChildren to skip pole creation (children don't need poles —
- * Smart! handles positioning via grid calculations).
+ * Support creation and selected state come from the placed parent through
+ * SFSignHologramState; the bare C++ class has no support recipe defaults.
  *
  * Overrides CheckValidPlacement/CheckValidFloor to skip snap checks that
  * children can't satisfy (they're positioned by Smart!, not vanilla snapping).
@@ -41,8 +41,10 @@ public:
 	/** Block parent from repositioning — Smart! handles positioning via SetActorLocation */
 	virtual void SetHologramLocationAndRotation(const FHitResult& hitResult) override;
 
-	/** Skip pole child creation — known limitation (Issue #192, see SFHologramHelperService.cpp) */
+	/** Support creation is deferred until the parent placement template is available. */
 	virtual void SpawnChildren(AActor* hologramOwner, FVector spawnLocation, APawn* hologramInstigator) override;
+	virtual void PreHologramPlacement(const FHitResult& HitResult, bool bCallForChildren) override {}
+	virtual void PostHologramPlacement(const FHitResult& HitResult, bool bCallForChildren) override {}
 
 	/** Skip multi-step — children are placed in one step by Smart! */
 	virtual bool DoMultiStepPlacement(bool isInputFromARelease) override;

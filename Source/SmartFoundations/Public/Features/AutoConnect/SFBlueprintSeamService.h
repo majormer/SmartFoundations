@@ -3,10 +3,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Features/AutoConnect/SFBlueprintLiftAlignment.h"
 
 class AFGBlueprintHologram;
 class UFGFactoryConnectionComponent;
 class UFGPipeConnectionComponent;
+class UFGPipeConnectionComponentHyper;
 
 /**
  * [#168] Smart! Blueprints — seam auto-connect PAIR SEARCH.
@@ -58,8 +60,11 @@ struct FSFBlueprintSeamPair
 {
 	ESFSeamAxis Axis = ESFSeamAxis::X;
 
-	/** false = belt (UFGFactoryConnectionComponent), true = pipe (UFGPipeConnectionComponent) */
+	/** false = belt; true = fluid or Hyper conduit (bIsHypertube distinguishes their index spaces). */
 	bool bIsPipe = false;
+
+	/** Hyper pipes use a separate connector index space and native tube routing. */
+	bool bIsHypertube = false;
 
 	/** Output-side connector index (belts: flow source; pipes: the +face end by convention) */
 	int32 FromIndex = INDEX_NONE;
@@ -89,6 +94,7 @@ struct FSFBlueprintSeamTable
 	/** Dup-connector counts at compute time — cheap staleness check (blueprint re-saved mid-session) */
 	int32 BeltConnectorCount = 0;
 	int32 PipeConnectorCount = 0;
+	int32 HypertubeConnectorCount = 0;
 
 	int32 NumPairsForAxis(ESFSeamAxis Axis) const
 	{
@@ -132,11 +138,23 @@ public:
 	 */
 	static bool BuildSeamTable(AFGBlueprintHologram* Blueprint, FSFBlueprintSeamTable& OutTable);
 
-	/** Duplicated belt connectors in enumeration (content) order — the belt index space. */
+	/** Native belt enumeration followed by exact-source-sorted temporary lift mouths. */
 	static void GetDuplicatedBeltConnectors(AFGBlueprintHologram* Blueprint, TArray<UFGFactoryConnectionComponent*>& OutConnectors);
+    /** Exact typed template endpoint behind a duplicated belt index. Read-only identity. */
+    static UFGFactoryConnectionComponent* GetOriginalBeltConnector(AFGBlueprintHologram* Blueprint, int32 Index);
+
+    /** Native Blueprint managers may omit lift mouths; duplicate only exact open native content endpoints. */
+    static void EnsureLiftTailConnectors(AFGBlueprintHologram* Blueprint);
+    /** Restore the native component population before serializing a clean one-copy message. */
+    static int32 ReleaseLiftTailConnectors(AFGBlueprintHologram* Blueprint);
+    static FString DescribeLiftSources(AFGBlueprintHologram* Blueprint);
+
+    /** Open vanilla lift mouths only, in the existing belt index space and parent-local frame. */
+    static void GetOpenLiftTails(AFGBlueprintHologram* Blueprint, TArray<FSFBlueprintLiftAlignment::FTail>& OutTails);
 
 	/** Duplicated fluid-pipe connectors in enumeration (content) order — the pipe index space. */
 	static void GetDuplicatedPipeConnectors(AFGBlueprintHologram* Blueprint, TArray<UFGPipeConnectionComponent*>& OutConnectors);
+	static void GetDuplicatedHypertubeConnectors(AFGBlueprintHologram* Blueprint, TArray<UFGPipeConnectionComponentHyper*>& OutConnectors);
 
 	/**
 	 * Resolve a table index to the live duplicated connector on a clone. Sanity-checks the dup
@@ -146,9 +164,10 @@ public:
 	 */
 	static UFGFactoryConnectionComponent* ResolveBeltConnector(AFGBlueprintHologram* Clone, int32 Index, const FName& ExpectedOriginalName);
 	static UFGPipeConnectionComponent* ResolvePipeConnector(AFGBlueprintHologram* Clone, int32 Index, const FName& ExpectedOriginalName);
+	static UFGPipeConnectionComponentHyper* ResolveHypertubeConnector(AFGBlueprintHologram* Clone, int32 Index, const FName& ExpectedOriginalName);
 
 private:
 	struct FSeamConnector;
-	static void PairAxis(TArray<FSeamConnector>& Connectors, ESFSeamAxis Axis, bool bPipes, TArray<FSFBlueprintSeamPair>& OutPairs);
+	static void PairAxis(TArray<FSeamConnector>& Connectors, ESFSeamAxis Axis, bool bPipes, TArray<FSFBlueprintSeamPair>& OutPairs, bool bHypertubes = false);
 	static bool DupNameMatchesOriginal(const UObject* DupComponent, const FName& ExpectedOriginalName);
 };

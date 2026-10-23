@@ -1722,6 +1722,12 @@ bool USFAutoConnectService::IsStackableHypertubeSupportHologram(AFGHologram* Hol
 	return BuildClass->GetName().Contains(TEXT("HyperPoleStackable"));
 }
 
+bool USFAutoConnectService::IsHypertubeAutoConnectSupportHologram(AFGHologram* Hologram)
+{
+ return IsStackableHypertubeSupportHologram(Hologram)
+  || (Hologram && Hologram->GetBuildClass() && Hologram->GetBuildClass()->GetFName() == TEXT("Build_HyperTubeWallSupport_C"));
+}
+
 bool USFAutoConnectService::IsStackableSupportHologram(AFGHologram* Hologram)
 {
 	return IsStackableConveyorPoleHologram(Hologram) || IsStackablePipelineSupportHologram(Hologram);

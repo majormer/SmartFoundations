@@ -14,6 +14,7 @@
  */
 
 #include "Features/HypertubeAutoConnect/SFHypertubeSpanBuilder.h"
+#include "Shared/SFSupportGridFrame.h"
 
 #include "Subsystem/SFSubsystem.h"
 #include "Subsystem/SFHologramDataService.h"                 // DisableValidation / MarkAsChild / GetOrCreateData
@@ -51,6 +52,31 @@ namespace
 		Support->GetComponents<UFGPipeConnectionComponentBase>(Connectors);
 		return Connectors.Num() > 0 ? Connectors[0] : nullptr;
 	}
+
+	bool SupportEndpoint(AFGHologram* Support, UFGPipeConnectionComponentBase* Connector, FVector& Out)
+	{
+		if (!SFSupportGridFrame::UsesParentRotation(Support->GetBuildClass()))
+		{
+			Out = Connector ? Support->GetActorLocation() + Support->GetActorRotation().RotateVector(Connector->GetRelativeLocation())
+				: Support->GetActorLocation();
+			return true;
+		}
+		// The wall socket is nested below the support mesh. Compose the complete
+		// component hierarchy without relying on stale locked world transforms.
+		USceneComponent* Root = Support->GetRootComponent();
+		if (!Connector || !Root) return false;
+		FTransform Local = FTransform::Identity;
+		USceneComponent* Part = Connector;
+		while (Part && Part != Root)
+		{
+			if (Part->GetOwner() != Support) return false;
+			Local = Local * Part->GetRelativeTransform();
+			Part = Part->GetAttachParent();
+		}
+		if (Part != Root) return false;
+		Out = Support->GetActorTransform().TransformPosition(Local.GetLocation());
+		return true;
+	}
 }
 
 namespace SFHypertube
@@ -75,12 +101,11 @@ namespace SFHypertube
 		// actor rotation — NOT GetComponentLocation(), which returns STALE component transforms while the grid supports
 		// are LOCKED during incremental scaling (the multi-pole "spans bunched at the root" bug). Mirrors the working
 		// stackable-pipe AC endpoint derivation (UpdateOrCreatePipeForPolePair). #405.
-		const FVector StartPos = FromConn
-			? FromSupport->GetActorLocation() + FromSupport->GetActorRotation().RotateVector(FromConn->GetRelativeLocation())
-			: FromSupport->GetActorLocation();
-		const FVector EndPos = ToConn
-			? ToSupport->GetActorLocation() + ToSupport->GetActorRotation().RotateVector(ToConn->GetRelativeLocation())
-			: ToSupport->GetActorLocation();
+		FVector StartPos, EndPos;
+		if (!SupportEndpoint(FromSupport, FromConn, StartPos) || !SupportEndpoint(ToSupport, ToConn, EndPos))
+		{
+			return nullptr;
+		}
 
 		// Length cap (#405): refuse an over-long pair — return null, no span. This is the SKIP policy of the
 		// existing stackable auto-connect, NOT the walk's red+reason (S3). Caller drops any stale too-long span.
@@ -108,8 +133,11 @@ namespace SFHypertube
 		// next pole's height (the Horiz→Vert shape). ResolveSupportExitNormal bakes in the chord's pitch for pipes
 		// (their #291 no-ramp rule) — for tubes that pitch is exactly the diagonal "straight at the next connector"
 		// exit we don't want, so drop the Z and keep the horizontal heading toward the run. #405.
-		StartNormal.Z = 0.0f; StartNormal = StartNormal.GetSafeNormal();
-		EndNormal.Z   = 0.0f; EndNormal   = EndNormal.GetSafeNormal();
+		if (!SFSupportGridFrame::UsesParentRotation(FromSupport->GetBuildClass()))
+		{
+			StartNormal.Z = 0.0f; StartNormal = StartNormal.GetSafeNormal();
+			EndNormal.Z = 0.0f; EndNormal = EndNormal.GetSafeNormal();
+		}
 
 		if (StartNormal.IsNearlyZero()) { StartNormal = FVector(ToTarget.X, ToTarget.Y, 0.0f).GetSafeNormal(); }
 		if (EndNormal.IsNearlyZero())   { EndNormal   = FVector(ToSource.X, ToSource.Y, 0.0f).GetSafeNormal(); }

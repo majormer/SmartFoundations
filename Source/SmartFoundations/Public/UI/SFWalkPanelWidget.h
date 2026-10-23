@@ -17,6 +17,7 @@ class USFWalkPanelWidget;
 class USpinBox;
 class UHorizontalBox;
 class UComboBoxString;
+class USFContextHelp;
 
 /**
  * Tiny per-cell binding for the editable table. A USpinBox's OnValueCommitted delegate carries only the new value,
@@ -51,10 +52,18 @@ UCLASS(BlueprintType, Blueprintable)
 class SMARTFOUNDATIONS_API USFWalkPanelWidget : public UFGInteractWidget
 {
     GENERATED_BODY()
+    friend class FSFInterfaceOwnershipTest;
+    friend class FSFWalkPanelRefreshTest;
+    friend class FSFPanelToggleCloseTest;
+    friend class USFWalkCellBinding;
 
 public:
+    /** Release modal input before removing the panel, including external Walking exits. */
+    void CloseWidget();
+
     /** Rebuild the segment list + summary from the current walk state. */
-    void Refresh();
+    void Refresh(bool bRevealLatest = false);
+    void RequestScalingReturn(int32 Task = 0);
 
     /** Apply one edited table cell to the walk: sets the field on segment Index and rebuilds downstream live.
      *  Called by USFWalkCellBinding::OnCommitted. FieldId: 0=Advance(m) 1=Turn(deg) 2=Rise(m) 3=Shift(m). */
@@ -66,9 +75,12 @@ public:
 
 protected:
     virtual void NativeConstruct() override;
+    virtual void NativeTick(const FGeometry& Geometry, float DeltaTime) override;
+    virtual void NativeOnMouseCaptureLost(const FCaptureLostEvent& Event) override;
 
     /** Modal (UIOnly) panel blocks the game K toggle, so handle K/Escape here to hide it. */
     virtual FReply NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent) override;
+    virtual FReply NativeOnPreviewKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent) override;
 
     /** Right-click-drag the panel to reposition it (render-translate the stable SegmentListBox; persists across refreshes). */
     virtual FReply NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
@@ -85,6 +97,14 @@ protected:
 
 private:
     TWeakObjectPtr<USFSubsystem> CachedSubsystem;
+    TWeakObjectPtr<class UScrollBox> TaskScrollBox;
+    TWeakObjectPtr<UWidget> PendingRevealRow;
+    int32 PendingRevealLayoutPasses = 0;
+    void UpdatePendingSegmentReveal();
+    bool bConfirmScalingReturn = false;
+    int32 ScalingReturnTask = 0;
+    UFUNCTION() void OnConfirmScalingReturn();
+    UFUNCTION() void OnKeepWalking();
 
     USFSubsystem* GetSubsystem();
 
@@ -128,8 +148,8 @@ private:
     UPROPERTY()
     TArray<TObjectPtr<USFWalkCellBinding>> CellBindings;
 
-    /** True only while MakeEditCell programmatically SetValue()s a spinbox, so the bound live OnValueChanged doesn't
-     *  apply the initial value as if the user dragged it (mirrors the Smart Panel's programmatic-set guard). */
+    /** Suppress edits throughout table teardown/rebuild and native spin-box initialization.
+     *  Programmatic value/focus callbacks must not change the route or re-enter Refresh. */
     bool bSuppressLiveEdit = false;
 
     /** #356 setting dropdowns (rebuilt each Refresh), wired to the live auto-connect settings. */
@@ -147,9 +167,10 @@ private:
     /** Right-click drag-to-move state. PanelOffset is the accumulated render-translation applied to SegmentListBox. */
     FVector2D PanelOffset = FVector2D::ZeroVector;
     bool bDraggingPanel = false;
+    bool bPanelPositionRestored = false;
+    UPROPERTY(Transient) TObjectPtr<UHorizontalBox> DragHeader;
+    UPROPERTY(Transient) TObjectPtr<USFContextHelp> WorkflowHelp;
     FVector2D DragMouseStart = FVector2D::ZeroVector;
     FVector2D DragOffsetStart = FVector2D::ZeroVector;
 
-    /** Tear down the widget (remove from viewport, restore input). */
-    void CloseWidget();
 };

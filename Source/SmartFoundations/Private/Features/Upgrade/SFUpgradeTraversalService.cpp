@@ -1,6 +1,7 @@
 // Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
 #include "Features/Upgrade/SFUpgradeTraversalService.h"
+#include "Features/Upgrade/SFUpgradeMinerFamily.h"
 #include "SmartFoundations.h"
 #include "SFLogMacros.h"
 #include "Subsystem/SFSubsystem.h"
@@ -52,7 +53,7 @@ FSFTraversalResult USFUpgradeTraversalService::TraverseNetwork(
 
 	if (!AnchorBuildable)
 	{
-		Result.ErrorMessage = TEXT("No anchor buildable provided");
+		Result.ErrorMessage = NSLOCTEXT("SmartFoundations", "Upgrade_NoAnchor", "No anchor buildable provided").ToString();
 		return Result;
 	}
 
@@ -61,7 +62,7 @@ FSFTraversalResult USFUpgradeTraversalService::TraverseNetwork(
 
 	if (Result.Family == ESFUpgradeFamily::None)
 	{
-		Result.ErrorMessage = TEXT("Anchor buildable is not upgradeable");
+		Result.ErrorMessage = NSLOCTEXT("SmartFoundations", "Upgrade_AnchorUnsupported", "Anchor buildable is not upgradeable").ToString();
 		return Result;
 	}
 
@@ -74,6 +75,11 @@ FSFTraversalResult USFUpgradeTraversalService::TraverseNetwork(
 	// Traverse based on family type
 	switch (Result.Family)
 	{
+	case ESFUpgradeFamily::Miner:
+		// A node-bound replacement selects this Miner, not unrelated factory/network objects.
+		VisitedSet.Add(AnchorBuildable);
+		FoundBuildables.Add(AnchorBuildable);
+		break;
 	case ESFUpgradeFamily::Belt:
 	case ESFUpgradeFamily::Lift:
 		if (AFGBuildableConveyorBase* Conveyor = Cast<AFGBuildableConveyorBase>(AnchorBuildable))
@@ -132,7 +138,7 @@ FSFTraversalResult USFUpgradeTraversalService::TraverseNetwork(
 			}
 			if (!bFoundPole)
 			{
-				Result.ErrorMessage = TEXT("Wire is not connected to any power poles");
+				Result.ErrorMessage = NSLOCTEXT("SmartFoundations", "Upgrade_WireHasNoPoles", "Wire is not connected to any power poles").ToString();
 				return Result;
 			}
 		}
@@ -140,13 +146,13 @@ FSFTraversalResult USFUpgradeTraversalService::TraverseNetwork(
 		{
 			UE_LOG(LogSmartUpgrade, Verbose, TEXT("TraversalService: Failed to cast %s to AFGBuildablePowerPole or AFGBuildableWire - class hierarchy: %s"),
 				*AnchorBuildable->GetName(), *AnchorBuildable->GetClass()->GetSuperClass()->GetName());
-			Result.ErrorMessage = FString::Printf(TEXT("Power pole/wire cast failed for %s"), *AnchorBuildable->GetClass()->GetName());
+			Result.ErrorMessage = FText::Format(NSLOCTEXT("SmartFoundations", "Upgrade_InvalidPowerClass", "Power pole/wire cast failed for {0}"), FText::FromString(AnchorBuildable->GetClass()->GetName())).ToString();
 			return Result;
 		}
 		break;
 
 	default:
-		Result.ErrorMessage = FString::Printf(TEXT("Unsupported family type: %d"), (int32)Result.Family);
+		Result.ErrorMessage = FText::Format(NSLOCTEXT("SmartFoundations", "Upgrade_UnsupportedFamily", "Unsupported family type: {0}"), FText::AsNumber((int32)Result.Family)).ToString();
 		return Result;
 	}
 
@@ -185,6 +191,9 @@ FSFTraversalResult USFUpgradeTraversalService::TraverseNetwork(
 		{
 			switch (Entry.Family)
 			{
+			case ESFUpgradeFamily::Miner:
+				Entry.MaxAvailableTier = SFUpgradeMinerFamily::GetHighestUnlockedTier(AnchorBuildable->GetWorld());
+				break;
 			case ESFUpgradeFamily::Belt:
 			case ESFUpgradeFamily::Lift:
 				Entry.MaxAvailableTier = Subsystem->GetHighestUnlockedBeltTier(PlayerController);
@@ -238,6 +247,7 @@ ESFUpgradeFamily USFUpgradeTraversalService::GetUpgradeFamily(AFGBuildable* Buil
 	}
 
 	FString ClassName = Buildable->GetClass()->GetName();
+	if (SFUpgradeMinerFamily::IsMinerClass(Buildable->GetClass())) return ESFUpgradeFamily::Miner;
 
 	// Conveyor belts
 	if (ClassName.Contains(TEXT("ConveyorBeltMk")))

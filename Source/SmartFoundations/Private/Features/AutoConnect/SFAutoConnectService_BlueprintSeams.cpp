@@ -9,6 +9,10 @@
  * and feeds the endpoints to the EXISTING conduit machinery:
  *   - belts: CreateOrUpdateBeltPreview (facing sanity + vanilla shape arbiter + skip flags)
  *   - pipes: FPipePreviewHelper + the #466 IsRoutedShapeInvalid arbiter (mirrors the junction path)
+ *   - Hypertubes: typed FSFHypertubePreviewHelper + native route/shape validation
+ * SP/MP DIVERGENCE MAP — Blueprint seams
+ *   [MP-SEAM] Native Hyper recipe/spline uses the shared staged StackablePipe conduit plan.
+ *   [MP-AUTH] Materialization follows Blueprint copies and resolves compatible native ports.
  * Previews are keyed (clone-pair, pair-index) for update-in-place; a pair whose geometry vanilla
  * declines is destroyed but STAYS in the table — it returns when transforms allow (FR3 dormancy).
  * Costs aggregate via AddChild (helpers parent to the blueprint parent hologram); construction is
@@ -19,7 +23,11 @@
 #include "Features/AutoConnect/SFAutoConnectServiceImpl.h"
 #include "Subsystem/SFHologramDataService.h"   // [#497 L4] O(1) raw material-state reads
 #include "Features/AutoConnect/SFBlueprintSeamService.h"
+#include "Features/AutoConnect/SFBlueprintRailSeams.h"
+#include "Features/AutoConnect/SFBlueprintVehicleSeams.h"
+#include "Features/AutoConnect/SFBlueprintLiftSeams.h"
 #include "Features/PipeAutoConnect/PipePreviewHelper.h"
+#include "Features/AutoConnect/Preview/SFHypertubePreviewHelper.h"
 #include "Features/Scaling/SFGridCoordComponent.h"
 #include "Hologram/FGBlueprintHologram.h"
 
@@ -45,9 +53,12 @@ const FSFBlueprintSeamTable* USFAutoConnectService::FindOrBuildSeamTable(AFGBlue
 		// was re-saved mid-session — recompute instead of wiring stale indices.
 		TArray<UFGFactoryConnectionComponent*> BeltDups;
 		TArray<UFGPipeConnectionComponent*> PipeDups;
+		TArray<UFGPipeConnectionComponentHyper*> HypertubeDups;
 		FSFBlueprintSeamService::GetDuplicatedBeltConnectors(ParentBlueprint, BeltDups);
 		FSFBlueprintSeamService::GetDuplicatedPipeConnectors(ParentBlueprint, PipeDups);
-		if (Existing->BeltConnectorCount == BeltDups.Num() && Existing->PipeConnectorCount == PipeDups.Num())
+		FSFBlueprintSeamService::GetDuplicatedHypertubeConnectors(ParentBlueprint, HypertubeDups);
+		if (Existing->BeltConnectorCount == BeltDups.Num() && Existing->PipeConnectorCount == PipeDups.Num()
+			&& Existing->HypertubeConnectorCount == HypertubeDups.Num())
 		{
 			return Existing;
 		}
@@ -79,12 +90,18 @@ void USFAutoConnectService::ProcessBlueprintSeams(AFGHologram* ParentHologram)
 
 	if (Subsystem->IsSmartDisabledForCurrentAction())
 	{
+        FSFBlueprintLiftSeams::ResetPreview(ParentHologram);
+        FSFBlueprintRailSeams::Reset(ParentHologram);
+        FSFBlueprintVehicleSeams::Reset(ParentHologram);
 		CleanupAllBlueprintSeams(ParentHologram);
 		return;
 	}
 	const auto& RuntimeSettings = Subsystem->GetAutoConnectRuntimeSettings();
 	if (!RuntimeSettings.bBlueprintSeamAutoConnectEnabled)
 	{
+        FSFBlueprintLiftSeams::ResetPreview(ParentHologram);
+        FSFBlueprintRailSeams::Reset(ParentHologram);
+        FSFBlueprintVehicleSeams::Reset(ParentHologram);
 		CleanupAllBlueprintSeams(ParentHologram);
 		return;
 	}
@@ -120,12 +137,19 @@ void USFAutoConnectService::ProcessBlueprintSeams(AFGHologram* ParentHologram)
 	}
 	if (GridToClone.Num() < 2)
 	{
+        FSFBlueprintLiftSeams::ResetPreview(ParentHologram);
+        FSFBlueprintRailSeams::Reset(ParentHologram);
+        FSFBlueprintVehicleSeams::Reset(ParentHologram);
 		// Grid shrank to a single copy — every seam preview is orphaned (mirror #391/#397).
 		CleanupAllBlueprintSeams(ParentHologram);
 		return;
 	}
 
 	// ---- Pair table (FR1, cached) ----
+    if (FSFBlueprintLiftSeams::Align(ParentBlueprint, Subsystem, this)) return;
+    FSFBlueprintLiftSeams::UpdatePreview(ParentBlueprint, Subsystem, this);
+    FSFBlueprintRailSeams::Update(ParentBlueprint);
+    FSFBlueprintVehicleSeams::Update(ParentBlueprint);
 	const FSFBlueprintSeamTable* Table = FindOrBuildSeamTable(ParentBlueprint);
 	if (!Table || Table->Pairs.Num() == 0)
 	{
@@ -138,6 +162,7 @@ void USFAutoConnectService::ProcessBlueprintSeams(AFGHologram* ParentHologram)
 	SkipSummary.ResetBeltBuilding();
 	SkipSummary.ResetBeltManifold();
 	SkipSummary.ResetPipes();
+	SkipSummary.ResetHypertubes();
 
 	// ---- Tier resolution (mirrors the stackable paths) ----
 	AFGPlayerController* PlayerController = nullptr;
@@ -311,6 +336,58 @@ void USFAutoConnectService::ProcessBlueprintSeams(AFGHologram* ParentHologram)
 								State.BeltsBySeamKey.Remove(Key);
 							}
 						}
+						else if (Pair.bIsHypertube)
+						{
+							UFGPipeConnectionComponentHyper* From = FSFBlueprintSeamService::ResolveHypertubeConnector(FromClone, Pair.FromIndex, Pair.FromOriginalName);
+							UFGPipeConnectionComponentHyper* To = FSFBlueprintSeamService::ResolveHypertubeConnector(ToClone, Pair.ToIndex, Pair.ToOriginalName);
+							if (!From || !To)
+							{
+								SkipResolveFail++;
+								continue;
+							}
+							const FVector FromPos = From->GetConnectorLocation();
+							const FVector ToPos = To->GetConnectorLocation();
+							const float Gap = FVector::Dist(FromPos, ToPos);
+							if (Gap < SEAM_MIN_CONDUIT_LENGTH)
+							{
+								SkipSummary.HypertubesTooClose++;
+								continue;
+							}
+							if (Gap > MAX_HYPERTUBE_LENGTH)
+							{
+								SkipSummary.HypertubesTooFar++;
+								continue;
+							}
+							const FVector Direction = (ToPos - FromPos).GetSafeNormal();
+							const float FacingCosine = FMath::Cos(FMath::DegreesToRadians(FACING_SANITY_ANGLE));
+							if (FVector::DotProduct(From->GetConnectorNormal(), Direction) < FacingCosine
+								|| FVector::DotProduct(To->GetConnectorNormal(), -Direction) < FacingCosine)
+							{
+								SkipSummary.HypertubesInvalidShape++;
+								continue;
+							}
+							TSharedPtr<FSFHypertubePreviewHelper>& Helper = State.HypertubesBySeamKey.FindOrAdd(Key);
+							if (!Helper.IsValid())
+							{
+								Helper = MakeShared<FSFHypertubePreviewHelper>(GetWorld(), ParentHologram);
+							}
+							UnlockForUpdate(Helper.Get());
+							Helper->UpdatePreview(From, To);
+							ASFPipelineHologram* Tube = Helper->GetTypedHologram();
+							if (!Tube || !Helper->IsPreviewValid())
+							{
+								SkipPreviewInvalid++;
+								continue;
+								}
+							// Native spline validation is decisive, including bends and vertical routes.
+							if (Tube->IsRoutedShapeInvalid())
+							{
+								SkipSummary.HypertubesInvalidShape++;
+								continue;
+								}
+							ActiveKeys.Add(Key);
+							PlacedByAxis[AxisIndex]++;
+						}
 						else
 						{
 							UFGPipeConnectionComponent* FromConnector = FSFBlueprintSeamService::ResolvePipeConnector(FromClone, Pair.FromIndex, Pair.FromOriginalName);
@@ -434,6 +511,15 @@ void USFAutoConnectService::ProcessBlueprintSeams(AFGHologram* ParentHologram)
 	}
 
 	// ---- Visibility / material / lock sync (mirrors the stackable finalize pass) ----
+	for (auto It = State.HypertubesBySeamKey.CreateIterator(); It; ++It)
+	{
+		if (!ActiveKeys.Contains(It.Key()))
+		{
+			if (It.Value().IsValid()) { It.Value()->DestroyPreview(); }
+			It.RemoveCurrent();
+		}
+	}
+
 	const bool bParentLocked = ParentHologram->IsHologramLocked();
 	const EHologramMaterialState ParentMaterialState = USFHologramDataService::GetRawPlacementMaterialState(ParentHologram);
 	auto FinalizeConduit = [bParentLocked, ParentMaterialState](AFGSplineHologram* Conduit)
@@ -454,6 +540,10 @@ void USFAutoConnectService::ProcessBlueprintSeams(AFGHologram* ParentHologram)
 		if (Entry.Value.IsValid()) { FinalizeConduit(Entry.Value->GetHologram()); }
 	}
 	for (const auto& Entry : State.PipesBySeamKey)
+	{
+		if (Entry.Value.IsValid()) { FinalizeConduit(Entry.Value->GetHologram()); }
+	}
+	for (const auto& Entry : State.HypertubesBySeamKey)
 	{
 		if (Entry.Value.IsValid()) { FinalizeConduit(Entry.Value->GetHologram()); }
 	}
@@ -491,6 +581,10 @@ void USFAutoConnectService::CleanupAllBlueprintSeams(AFGHologram* ParentHologram
 			Destroyed++;
 		}
 	}
+	for (auto& Entry : State->HypertubesBySeamKey)
+	{
+		if (Entry.Value.IsValid()) { Entry.Value->DestroyPreview(); Destroyed++; }
+	}
 	BlueprintSeamStates.Remove(ParentHologram);
 	if (Destroyed > 0)
 	{
@@ -500,6 +594,9 @@ void USFAutoConnectService::CleanupAllBlueprintSeams(AFGHologram* ParentHologram
 
 void USFAutoConnectService::CleanupAllBlueprintSeamsAllParents()
 {
+    FSFBlueprintLiftSeams::ResetAllPreviews();
+    FSFBlueprintRailSeams::ResetAll();
+    FSFBlueprintVehicleSeams::ResetAll();
 	for (auto& StateEntry : BlueprintSeamStates)
 	{
 		for (auto& Entry : StateEntry.Value.BeltsBySeamKey)
@@ -515,6 +612,13 @@ void USFAutoConnectService::CleanupAllBlueprintSeamsAllParents()
 			{
 				Entry.Value->DestroyPreview();
 			}
+		}
+	}
+	for (auto& StateEntry : BlueprintSeamStates)
+	{
+		for (auto& Entry : StateEntry.Value.HypertubesBySeamKey)
+		{
+			if (Entry.Value.IsValid()) { Entry.Value->DestroyPreview(); }
 		}
 	}
 	BlueprintSeamStates.Empty();

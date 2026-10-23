@@ -2,12 +2,75 @@
 
 #include "Holograms/Core/SFBuildableChildHologram.h"
 #include "SmartFoundations.h"
+#include "Components/PrimitiveComponent.h"
+#include "Components/StaticMeshComponent.h"
+#include "Engine/StaticMesh.h"
+#include "Engine/World.h"
+#include "FGRecipe.h"
 #include "Data/SFHologramDataRegistry.h"
 #include "Subsystem/SFHologramDataService.h"
+#include "Features/Scaling/SFHypertubeEntranceState.h"
 
 ASFBuildableChildHologram::ASFBuildableChildHologram()
 {
 	// Minimal constructor — configuration happens post-spawn via deferred construction
+}
+
+ASFBuildableChildHologram* ASFBuildableChildHologram::SpawnPreview(
+	AFGHologram* Seed, const FTransform& Pose, ESFChildHologramType ChildType, FName ChildName,
+	TSubclassOf<ASFBuildableChildHologram> PreviewClass)
+{
+	if (!IsValid(Seed) || !Seed->GetWorld() || !Seed->GetRecipe() || !Seed->GetBuildClass())
+	{
+		return nullptr;
+	}
+
+	FActorSpawnParameters Params;
+	Params.Name = ChildName;
+	Params.Owner = Seed->GetOwner();
+	Params.Instigator = Seed->GetInstigator();
+	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	Params.bDeferConstruction = true;
+	ASFBuildableChildHologram* Preview = Seed->GetWorld()->SpawnActor<ASFBuildableChildHologram>(
+		PreviewClass ? PreviewClass.Get() : StaticClass(), Pose.GetLocation(), Pose.Rotator(), Params);
+	if (!Preview)
+	{
+		return nullptr;
+	}
+
+	Preview->SetChildBuildClass(Seed->GetBuildClass());
+	Preview->SetRecipe(Seed->GetRecipe());
+	Preview->SetConstructionInstigator(Seed->GetConstructionInstigator());
+	Preview->FinishSpawning(Pose);
+	if (!ChildName.IsNone())
+	{
+		Seed->AddChild(Preview, ChildName);
+	}
+	USFHologramDataService::DisableValidation(Preview);
+	USFHologramDataService::MarkAsChild(Preview, Seed, ChildType);
+	Preview->SetActorHiddenInGame(false);
+	Preview->SetActorEnableCollision(false);
+	TArray<UPrimitiveComponent*> Primitives;
+	Preview->GetComponents(Primitives);
+	for (UPrimitiveComponent* Primitive : Primitives)
+	{
+		Primitive->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
+	TArray<UStaticMeshComponent*> Meshes;
+	Preview->GetComponents(Meshes);
+	for (UStaticMeshComponent* MeshComponent : Meshes)
+	{
+		const UStaticMesh* Mesh = MeshComponent->GetStaticMesh();
+		if (Mesh && Mesh->GetName().Equals(TEXT("ClearanceBox")))
+		{
+			MeshComponent->SetVisibility(false);
+			MeshComponent->SetHiddenInGame(true);
+		}
+	}
+	Preview->SetActorTickEnabled(false);
+	Preview->SetPlacementMaterialState(EHologramMaterialState::HMS_OK);
+	Preview->UpdateComponentTransforms();
+	return Preview;
 }
 
 void ASFBuildableChildHologram::CheckValidPlacement()
@@ -49,7 +112,12 @@ AActor* ASFBuildableChildHologram::Construct(TArray<AActor*>& out_children, FNet
 			*GetName(), mBuildClass ? *mBuildClass->GetName() : TEXT("NULL"), NetMode, HasAuthority() ? 1 : 0);
 	}
 
-	AActor* BuiltActor = Super::Construct(out_children, constructionID);
+	// A request-validated native entrance owns its ConfigureComponents snap handoff.
+	// Unattached cells and every other generic buildable retain their ordinary path.
+	AFGHologram* NativeCell = SFHypertubeEntranceState::FindPreparedCell(this);
+	AActor* BuiltActor = IsValid(NativeCell)
+		? NativeCell->Construct(out_children, constructionID)
+		: Super::Construct(out_children, constructionID);
 
 	if (BuiltActor)
 	{

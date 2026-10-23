@@ -9,7 +9,7 @@ Use it for:
 - Storage walls.
 - Repeated walls, ramps, barriers, and other simple buildables.
 
-> Screenshot placeholder: `5 x 3 x 1` foundation grid preview with HUD counters visible.
+![Grid counts and their corresponding foundation preview](https://raw.githubusercontent.com/wiki/majormer/SmartFoundations/images/v35/scaling.png)
 
 ## How To Use It
 
@@ -19,6 +19,14 @@ Use it for:
 4. Click once to build the whole grid.
 
 Smart! shows the full preview before you commit. Every copied buildable costs materials.
+
+## Panel, wheel and keyboard controls
+
+- **Panel:** open **K → Scaling**, enter the X/Y/Z **Grid** counts and use each axis's direction button. Press **Apply** if immediate placement edits are off.
+- **Mouse wheel:** hold `X` for X, `Z` for Y, or `X + Z` for Z, then scroll.
+- **Numpad:** use `8/5` for X, `6/4` for Y and `9/3` for Z.
+
+The runtime HUD reports the grid and active adjustment. Player Relative changes how world controls choose direction; the Panel retains grid X/Y/Z. See [Controls](Controls) and [Transforms](Transforms).
 
 ## Understanding X, Y, And Z
 
@@ -32,11 +40,19 @@ The exact direction follows the buildable's rotation. If you rotate the hologram
 
 ## Negative Values
 
-Smart! can grow a grid in the opposite direction by using negative values. This is useful when the starting point is on the far side of a layout and you want the grid to grow back toward you.
+Use the Panel's per-axis +/− direction buttons, or the corresponding directional controls, to grow a grid in the opposite direction. This is useful when the starting point is on the far side of a layout and you want the grid to grow back toward you.
+
+For the full lift placement workflow, see [Conveyor Lift Grids](Conveyor-Lift-Grids).
+
+## Selected shapes and special axes
+
+Conveyor Lift Mk.1–Mk.6 can be repeated after selecting the first end, height and top direction. Copies retain the lift's shape and flow; each needs its own suitable native attachment. Native pillars use their accepted tilt for copies and spacing. Pipeline and Hypertube wall supports follow the selected parent rotation, including vertical runs. The arrows and Player Relative controls use the same frame; the Panel keeps X/Y/Z fields.
+
+Beams retain selected length and mode, ladders retain native segment spacing, and Jump Pads retain their selected launch angle. Sign grids offer **Auto / None** supports; use ordinary nudge to position them. Native mounting and placement permissions still apply.
 
 ## Large Grids
 
-Smart! is built to scale far. Grids of many thousands of buildings stay responsive, and growing a grid only adds the new part — everything you already placed stays put instead of the whole preview redrawing. Jumping straight to a very large grid fills in progressively over a moment or two rather than freezing while everything appears at once. (Extremely large grids are still bounded by how much the game engine can hold at one time; Smart! will warn you as you approach that limit. If a placement is too large for the game to accept in one click, Smart! now refuses it with a "Placement too large" message instead of failing silently — your preview stays up, so just scale it down a step or two, place, and continue the grid from there.)
+Smart! is built to scale far. Large previews use lighter representations where supported, and growing a grid adds the new part — everything you already placed stays put instead of the whole preview redrawing. Jumping straight to a very large grid fills in progressively over a moment or two rather than freezing while everything appears at once. (Extremely large grids are still bounded by how much the game engine can hold at one time; Smart! will warn you as you approach that limit. If a placement is too large for the game to accept in one click, Smart! now refuses it with a "Placement too large" message instead of failing silently — your preview stays up, so just scale it down a step or two, place, and continue the grid from there.)
 
 ## Supported Buildables
 
@@ -50,4 +66,4 @@ If a buildable does not scale correctly, try a smaller test first and report the
 
 ---
 
-_Last updated: 2026-10-06 · Smart! v34.4.0_
+_Last updated: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (release draft)_

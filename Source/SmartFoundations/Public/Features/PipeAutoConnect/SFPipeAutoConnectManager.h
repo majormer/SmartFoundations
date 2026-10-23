@@ -100,6 +100,7 @@ public:
 	const TMap<AFGHologram*, TSharedPtr<FPipePreviewHelper>>& GetManifoldPipePreviews() const { return ManifoldPipePreviews; }
 
 private:
+	friend class FSFPipeEmptySearchCleanupTest;
 	/** [#500] Route signature of the last completed junction evaluation (#497 L1 analog) —
 	 * see the belt orchestrator's twin for the covered inputs. */
 	bool bHasLastEvalSignature = false;

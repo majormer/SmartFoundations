@@ -172,6 +172,10 @@ void USFSubsystem::ResetCounters()
         CounterState.Reset();
     }
 
+    // Legacy readers (including Camera focus) must observe the same reset as
+    // the authoritative state and HUD, just as they do in UpdateCounterState.
+    GridCounters = CounterState.GridCounters;
+
     // Trigger HUD refresh
     UpdateCounterDisplay();
 }
@@ -413,13 +417,14 @@ void USFSubsystem::ClearStackablePipeBuildCache()
 // Called from SFPipelineHologram::Construct() to register pipes for deferred wiring.
 // This bypasses OnActorSpawned timing issues where tags are added AFTER the spawn delegate fires.
 
-int32 USFSubsystem::WireBlueprintSeamPipe(AFGBuildablePipeline* Pipe)
+int32 USFSubsystem::WireBlueprintSeamPipe(AFGBuildablePipeBase* Pipe)
 {
 	if (!Pipe || !GetWorld())
 	{
 		return 0;
 	}
 
+	// Synchronous fluid and Hypertube seam wiring. Native compatibility keeps their networks separate.
 	// [#168] Synchronous seam-pipe wiring. Mirrors the belt seam path (immediate proximity scan
 	// against BUILT actors), but adds explicit network MERGE — SetConnection alone leaves the two
 	// copies' pipe networks separate, so fluid wouldn't cross without this (the deferred junction
@@ -427,7 +432,7 @@ int32 USFSubsystem::WireBlueprintSeamPipe(AFGBuildablePipeline* Pipe)
 	const float WiringRadius = 100.0f;   // 1m — matches the deferred junction tolerance
 	int32 Wired = 0;
 
-	auto WireEndpoint = [this, Pipe, WiringRadius, &Wired](UFGPipeConnectionComponent* OwnConn)
+	auto WireEndpoint = [this, Pipe, WiringRadius, &Wired](UFGPipeConnectionComponentBase* OwnConn)
 	{
 		if (!OwnConn)
 		{
@@ -455,7 +460,7 @@ int32 USFSubsystem::WireBlueprintSeamPipe(AFGBuildablePipeline* Pipe)
 			}
 		}
 		const FVector SearchLoc = OwnConn->GetComponentLocation();
-		UFGPipeConnectionComponent* BestMatch = nullptr;
+		UFGPipeConnectionComponentBase* BestMatch = nullptr;
 		float BestDist = WiringRadius;
 		for (TActorIterator<AFGBuildable> It(GetWorld()); It; ++It)
 		{
@@ -464,9 +469,9 @@ int32 USFSubsystem::WireBlueprintSeamPipe(AFGBuildablePipeline* Pipe)
 			{
 				continue;
 			}
-			TArray<UFGPipeConnectionComponent*> Connectors;
-			Buildable->GetComponents<UFGPipeConnectionComponent>(Connectors);
-			for (UFGPipeConnectionComponent* Conn : Connectors)
+			TArray<UFGPipeConnectionComponentBase*> Connectors;
+			Buildable->GetComponents<UFGPipeConnectionComponentBase>(Connectors);
+			for (UFGPipeConnectionComponentBase* Conn : Connectors)
 			{
 				if (!Conn || Conn->IsConnected())
 				{
@@ -502,11 +507,11 @@ int32 USFSubsystem::WireBlueprintSeamPipe(AFGBuildablePipeline* Pipe)
 		}
 	};
 
-	WireEndpoint(Pipe->GetPipeConnection0());
-	WireEndpoint(Pipe->GetPipeConnection1());
+	WireEndpoint(Pipe->GetConnection0());
+	WireEndpoint(Pipe->GetConnection1());
 
 	// Merge the now-joined networks so fluid actually crosses the seam.
-	if (Wired > 0)
+	if (AFGBuildablePipeline* FluidPipe = Wired > 0 ? Cast<AFGBuildablePipeline>(Pipe) : nullptr)
 	{
 		if (AFGPipeSubsystem* PipeSubsystem = AFGPipeSubsystem::Get(GetWorld()))
 		{
@@ -539,8 +544,8 @@ int32 USFSubsystem::WireBlueprintSeamPipe(AFGBuildablePipeline* Pipe)
 					NetworkA->MarkForFullRebuild();
 				}
 			};
-			MergeAt(Pipe->GetPipeConnection0());
-			MergeAt(Pipe->GetPipeConnection1());
+			MergeAt(FluidPipe->GetPipeConnection0());
+			MergeAt(FluidPipe->GetPipeConnection1());
 		}
 	}
 

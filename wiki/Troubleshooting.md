@@ -14,8 +14,6 @@ Check:
 
 Default panel key: `K`.
 
-> Screenshot placeholder: Smart! controls in the Satisfactory controls menu.
-
 ## Mouse Wheel Rotates Instead Of Scaling
 
 That is expected when no Smart mode is active. Smart! leaves mouse wheel to vanilla rotation unless you are holding a Smart modifier or mode key.
@@ -37,7 +35,7 @@ To adjust transforms with mouse wheel:
 
 Auto-Connect skips connections when it cannot safely make them.
 
-When this happens, the Smart! HUD shows a short summary while you aim — for example, *"2 belt connection(s) skipped: too steep"* — so you can see that something didn't connect and why. The rest of the grid still builds; only the connection it couldn't make is left out.
+When this happens, the Smart! HUD shows a short summary while you aim — for example, *"2 belt connection(s) skipped: too steep"* — so you can see that something didn't connect and why. Some Auto-Connect paths omit the invalid connection; workflows that require a complete validated route can block the whole placement. Read the current preview message and quote.
 
 Belts and pipes connect anywhere the game itself would let you place one by hand, so "too steep" or "invalid shape" now only appears when the conveyor or pipe genuinely can't be routed — not just because the connectors are at an awkward angle. If a connection is skipped, it usually means the same manual belt or pipe wouldn't build either.
 
@@ -70,6 +68,14 @@ For large belt and lift upgrades, wait a moment after the upgrade finishes. Conv
 
 If diagnostics still look bad after a very large upgrade, save and reload before trying more repair actions.
 
+## Walking is unavailable while holding a pipe or belt
+
+Close the Panel, equip the matching **stackable support**, aim at an open existing endpoint, then reopen **K → Walking**. Check the Resume summary. Do not place a new starting support first. Wall/floor attachments and ambiguous or occupied endpoints cannot start a resumed bus. See [Smart Walking](Smart-Walking).
+
+## Camera Enabled or layout seems unchanged
+
+Native menus hide camera pictures. Resume after changing Enabled. In Camera 2.0, an explicit **All saves** edit includes saved overrides for the current world; choose **This save** for a local exception. Menu settings save immediately, while dragged layout/HUD changes require **Done / Lock**. The shared Cancel action discards pending layout edits. No world reload is required for these settings.
+
 ## Reporting Issues
 
 When reporting an issue, include:
@@ -84,4 +90,4 @@ When reporting an issue, include:
 
 ---
 
-_Last updated: 2026-10-06 · Smart! v34.4.0_
+_Last updated: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (release draft)_

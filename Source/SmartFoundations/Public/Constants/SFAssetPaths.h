@@ -28,6 +28,12 @@ namespace SFAssetPaths
 	 */
 	namespace UpgradeRecipes
 	{
+		inline constexpr const TCHAR* Miner[] = {
+			TEXT("/Game/FactoryGame/Recipes/Buildings/Recipe_MinerMk1.Recipe_MinerMk1_C"),
+			TEXT("/Game/FactoryGame/Recipes/Buildings/Recipe_MinerMk2.Recipe_MinerMk2_C"),
+			TEXT("/Game/FactoryGame/Recipes/Buildings/Recipe_MinerMk3.Recipe_MinerMk3_C"),
+		};
+
 		inline constexpr const TCHAR* ConveyorLift[] = {
 			TEXT("/Game/FactoryGame/Recipes/Buildings/Recipe_ConveyorLiftMk1.Recipe_ConveyorLiftMk1_C"),
 			TEXT("/Game/FactoryGame/Recipes/Buildings/Recipe_ConveyorLiftMk2.Recipe_ConveyorLiftMk2_C"),

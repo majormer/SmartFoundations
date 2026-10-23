@@ -7,6 +7,10 @@
  */
 
 #include "Subsystem/SFSubsystem.h"
+#include "FGHUD.h"
+#include "UI/FGGameUI.h"
+#include "Shared/SFSupportGridFrame.h"
+#include "Shared/SFPillarGridFrame.h"
 #include "Features/Extend/Net/SFExtendAuthorityScope.h"
 #include "Subsystem/SFSubsystemImpl.h"
 #include "Features/Walk/SFWalkService.h"
@@ -852,6 +856,11 @@ void USFSubsystem::Deinitialize()
 	}
 
 	// Shutdown Smart Walking service (#356)
+	if (WalkPanelWidget.IsValid())
+	{
+		WalkPanelWidget->CloseWidget();
+		WalkPanelWidget.Reset();
+	}
 	if (WalkService)
 	{
 		WalkService->ExitWalk(false);
@@ -1359,6 +1368,13 @@ void USFSubsystem::EnterWalkMode()
 	}
 	else
 	{
+        if (WalkService && !WalkService->GetStartFailure().IsEmpty())
+        {
+            if (AFGPlayerController* PC = GetLastController())
+                if (AFGHUD* HUD = Cast<AFGHUD>(PC->GetHUD()))
+                    if (UFGGameUI* UI = HUD->GetGameUI())
+                        UI->ShowTextNotification(FText::FromString(WalkService->GetStartFailure()));
+        }
 		// Walk failed to start — undo the lock so we don't strand a locked hologram.
 		bLockedByModifier = false;
 		Seed->LockHologramPosition(false);
@@ -1369,6 +1385,12 @@ void USFSubsystem::ExitWalkMode()
 {
 	UE_LOG(LogSmartFoundations, Verbose, TEXT(">>> [Walk] ExitWalkMode ENTER: bWalkModeActive=%d active=%s"),
 		bWalkModeActive ? 1 : 0, *GetNameSafe(ActiveHologram.Get()));
+	// A stale panel still owns modal input even if the walk was already cleared.
+	if (WalkPanelWidget.IsValid())
+	{
+		WalkPanelWidget->CloseWidget();
+		WalkPanelWidget.Reset();
+	}
 	if (!bWalkModeActive)
 	{
 		return;
@@ -1377,12 +1399,6 @@ void USFSubsystem::ExitWalkMode()
 	if (WalkService)
 	{
 		WalkService->ExitWalk(false);
-	}
-	// Tear down the segment-list overlay on every exit path (holster, cancel, etc.).
-	if (WalkPanelWidget.IsValid())
-	{
-		WalkPanelWidget->RemoveFromParent();
-		WalkPanelWidget.Reset();
 	}
 	// Release the seed lock the walk took on enter, so the parent follows the cursor again.
 	if (bLockedByModifier && ActiveHologram.IsValid())
@@ -1487,6 +1503,7 @@ void USFSubsystem::ToggleWalkPanel()
 	if (!WalkPanelWidget.IsValid() || !WalkPanelWidget->IsInViewport())
 	{
 		OpenWalkPanel();
+		return; // Creation already opens edit mode; do not toggle the new panel closed.
 	}
 	if (!WalkPanelWidget.IsValid())
 	{
@@ -1507,7 +1524,7 @@ void USFSubsystem::ToggleWalkPanel()
 		// (panel-up = edit). Because UIOnly also blocks the game K action, the widget handles K/Escape itself (its
 		// NativeOnKeyDown), so it's focused here. Refresh() so it reflects any steering done while hidden.
 		WalkPanelWidget->SetVisibility(ESlateVisibility::Visible);
-		WalkPanelWidget->Refresh();
+		WalkPanelWidget->Refresh(true);
 		if (PC)
 		{
 			PC->bShowMouseCursor = true;
@@ -1631,7 +1648,7 @@ void USFSubsystem::ApplyAxisScaling(ESFScaleAxis Axis, int32 StepDelta, const TC
 	}
 
 	// Check if hologram supports scaling features
-	if (CurrentAdapter && !CurrentAdapter->SupportsFeature(ESFFeature::ScaleX))
+	if (CurrentAdapter && !CurrentAdapter->SupportsScalingAxis(Axis))
 	{
 		UE_LOG(LogSmartFoundations, Verbose,
 			TEXT("Scaling not supported for %s - ignoring input"),
@@ -1868,8 +1885,30 @@ static void SF_ResolvePlayerRelativeAxes(float ViewYawDeg, float BuildingYawDeg,
 // (or no hologram), outputs are the classic (X,+1)/(Y,+1) so callers behave exactly as before. Shared
 // by the wheel+modifier path (OnScaleXChanged) and the direct numpad paths (NumPad8/5 -> primary via
 // OnScaleXChanged's no-modifier branch; NumPad6/4 -> lateral via OnScaleYChanged).
+static ELastAxisInput SF_ArrowForAxis(ESFScaleAxis Axis)
+{
+ return Axis == ESFScaleAxis::Z ? ELastAxisInput::Z
+      : Axis == ESFScaleAxis::Y ? ELastAxisInput::Y : ELastAxisInput::X;
+}
+
+static void SF_GridVertical(AFGHologram* Holo, ESFScaleAxis& Axis, int32& Sign)
+{
+ Axis = ESFScaleAxis::Z; Sign = 1;
+ if (Holo && SFPillarGridFrame::Applies(Holo->GetBuildClass()))
+ {
+  const auto Axes = SFPillarGridFrame::Resolve(Holo->GetActorRotation(), 0);
+  Axis = static_cast<ESFScaleAxis>(Axes.Vertical); Sign = Axes.VerticalSign;
+  return;
+ }
+ if (!Holo || !SFSupportGridFrame::UsesParentRotation(Holo->GetBuildClass())) return;
+ int32 LocalAxis;
+ SFSupportGridFrame::VerticalAxis(Holo->GetActorRotation(), LocalAxis, Sign);
+ Axis = LocalAxis == 1 ? ESFScaleAxis::Y : ESFScaleAxis::Z;
+}
+
 static bool SF_ComputePlayerRelativeAxes(USFSubsystem* SS, AFGHologram* Holo,
-	ESFScaleAxis& PrimAxis, int32& PrimSign, ESFScaleAxis& LatAxis, int32& LatSign)
+	ESFScaleAxis& PrimAxis, int32& PrimSign, ESFScaleAxis& LatAxis, int32& LatSign,
+ bool bWallFrame = false)
 {
 	PrimAxis = ESFScaleAxis::X; PrimSign = +1;
 	LatAxis  = ESFScaleAxis::Y; LatSign  = +1;
@@ -1887,9 +1926,27 @@ static bool SF_ComputePlayerRelativeAxes(USFSubsystem* SS, AFGHologram* Holo,
 	}
 	if (APlayerController* PC = SS->GetWorld() ? SS->GetWorld()->GetFirstPlayerController() : nullptr)
 	{
+		if (bWallFrame && !SS->IsExtendModeActive() && SFPillarGridFrame::Applies(Holo->GetBuildClass()))
+		{
+			const auto Axes = SFPillarGridFrame::Resolve(Holo->GetActorRotation(), PC->GetControlRotation().Yaw);
+			PrimAxis = static_cast<ESFScaleAxis>(Axes.Forward); PrimSign = Axes.ForwardSign;
+			LatAxis = static_cast<ESFScaleAxis>(Axes.Side); LatSign = Axes.SideSign;
+			return true;
+		}
 		SF_ResolvePlayerRelativeAxes(PC->GetControlRotation().Yaw, Holo->GetActorRotation().Yaw,
 			PrimAxis, PrimSign, LatAxis, LatSign);
 	}
+ if (bWallFrame && !SS->IsExtendModeActive() && SFSupportGridFrame::UsesParentRotation(Holo->GetBuildClass()))
+ {
+  auto Remap = [Holo](ESFScaleAxis& Axis, int32& Sign)
+  {
+   if (Axis != ESFScaleAxis::Y) return;
+   int32 LocalAxis = 1;
+   SFSupportGridFrame::HorizontalAxis(Holo->GetActorRotation(), LocalAxis, Sign);
+   Axis = LocalAxis == 2 ? ESFScaleAxis::Z : ESFScaleAxis::Y;
+  };
+  Remap(PrimAxis, PrimSign); Remap(LatAxis, LatSign);
+ }
 	return true;
 }
 
@@ -1897,12 +1954,12 @@ static bool SF_ComputePlayerRelativeAxes(USFSubsystem* SS, AFGHologram* Holo,
 // pair. Vertical is view-invariant (up is up).
 static void SF_ResolveSlot(USFSubsystem::ESFPlayerRelativeSlot Slot,
 	ESFScaleAxis PrimAxis, int32 PrimSign, ESFScaleAxis LatAxis, int32 LatSign,
-	ESFScaleAxis& OutAxis, int32& OutSign)
+	ESFScaleAxis& OutAxis, int32& OutSign, AFGHologram* WallHologram = nullptr)
 {
 	switch (Slot)
 	{
 	case USFSubsystem::ESFPlayerRelativeSlot::Side:     OutAxis = LatAxis;           OutSign = LatSign; break;
-	case USFSubsystem::ESFPlayerRelativeSlot::Vertical: OutAxis = ESFScaleAxis::Z;   OutSign = +1;      break;
+	case USFSubsystem::ESFPlayerRelativeSlot::Vertical: SF_GridVertical(WallHologram, OutAxis, OutSign); break;
 	default:                                            OutAxis = PrimAxis;          OutSign = PrimSign; break;
 	}
 }
@@ -1951,7 +2008,7 @@ static int32 SF_GridCounterFor(const FSFCounterState& S, ESFScaleAxis Axis)
 static void SF_ResolvePlayerRelativeModalAxisAndSign(const FSFCounterState& State,
 	USFSubsystem::ESFPlayerRelativeSlot Slot, bool bSpacingMode, bool bStaggerMode,
 	ESFScaleAxis PrimAxis, int32 PrimSign, ESFScaleAxis LatAxis, int32 LatSign,
-	ESFScaleAxis& OutAxis, int32& OutSign)
+	ESFScaleAxis& OutAxis, int32& OutSign, AFGHologram* WallHologram = nullptr)
 {
 	if (bStaggerMode)
 	{
@@ -1965,7 +2022,7 @@ static void SF_ResolvePlayerRelativeModalAxisAndSign(const FSFCounterState& Stat
 		return;
 	}
 
-	SF_ResolveSlot(Slot, PrimAxis, PrimSign, LatAxis, LatSign, OutAxis, OutSign);
+	SF_ResolveSlot(Slot, PrimAxis, PrimSign, LatAxis, LatSign, OutAxis, OutSign, WallHologram);
 	if (Slot == USFSubsystem::ESFPlayerRelativeSlot::Forward)
 	{
 		OutSign *= SF_SignNonZero(SF_GridCounterFor(State, OutAxis));
@@ -1988,7 +2045,7 @@ bool USFSubsystem::ResolvePlayerRelativeModalTarget(bool bSelectSlot, ESFPlayerR
 		return false;
 	}
 	ESFScaleAxis PrimAxis, LatAxis; int32 PrimSign, LatSign;
-	if (!SF_ComputePlayerRelativeAxes(this, ActiveHologram.Get(), PrimAxis, PrimSign, LatAxis, LatSign))
+	if (!SF_ComputePlayerRelativeAxes(this, ActiveHologram.Get(), PrimAxis, PrimSign, LatAxis, LatSign, bSpacingModeActive))
 	{
 		return false;
 	}
@@ -2036,7 +2093,8 @@ bool USFSubsystem::ResolvePlayerRelativeModalTarget(bool bSelectSlot, ESFPlayerR
 	}
 
 	SF_ResolvePlayerRelativeModalAxisAndSign(CounterState, *Slot, bSpacingModeActive,
-		bStaggerModeActive, PrimAxis, PrimSign, LatAxis, LatSign, OutAxis, OutSign);
+		bStaggerModeActive, PrimAxis, PrimSign, LatAxis, LatSign, OutAxis, OutSign,
+  bSpacingModeActive ? ActiveHologram.Get() : nullptr);
 
 	if (bStaggerModeActive)
 	{
@@ -2122,12 +2180,12 @@ ESFScaleAxis USFSubsystem::GetEffectiveSpacingAxis() const
 	}
 	USFSubsystem* Self = const_cast<USFSubsystem*>(this);
 	ESFScaleAxis PrimAxis, LatAxis; int32 PrimSign, LatSign;
-	if (!SF_ComputePlayerRelativeAxes(Self, Self->ActiveHologram.Get(), PrimAxis, PrimSign, LatAxis, LatSign))
+	if (!SF_ComputePlayerRelativeAxes(Self, Self->ActiveHologram.Get(), PrimAxis, PrimSign, LatAxis, LatSign, true))
 	{
 		return CounterState.SpacingAxis;
 	}
 	ESFScaleAxis Axis; int32 Sign;
-	SF_ResolveSlot(PlayerRelativeSlots.Spacing, PrimAxis, PrimSign, LatAxis, LatSign, Axis, Sign);
+	SF_ResolveSlot(PlayerRelativeSlots.Spacing, PrimAxis, PrimSign, LatAxis, LatSign, Axis, Sign, ActiveHologram.Get());
 	return Axis;
 }
 
@@ -2193,7 +2251,7 @@ ELastAxisInput USFSubsystem::GetEffectiveArrowAxisInput(int32* OutDirectionSign)
 	// The Smart Panel is the absolute X/Y/Z surface. It must retain the same building-relative
 	// arrows regardless of the global Player Relative setting.
 	if (!IsPlayerRelativeEnabled()
-		|| (SettingsFormWidget.IsValid() && SettingsFormWidget->IsInViewport())
+		|| (SettingsFormWidget.IsValid() && SettingsFormWidget->IsInViewport() && SettingsFormWidget->IsVisible())
 		|| !ActiveHologram.IsValid())
 	{
 		return LastAxisInput;
@@ -2213,7 +2271,8 @@ ELastAxisInput USFSubsystem::GetEffectiveArrowAxisInput(int32* OutDirectionSign)
 	ESFScaleAxis PrimaryAxis, LateralAxis;
 	int32 PrimarySign, LateralSign;
 	if (!SF_ComputePlayerRelativeAxes(const_cast<USFSubsystem*>(this), ActiveHologram.Get(),
-		PrimaryAxis, PrimarySign, LateralAxis, LateralSign))
+		PrimaryAxis, PrimarySign, LateralAxis, LateralSign,
+  !(bStepsModeActive || bStaggerModeActive || bRotationModeActive)))
 	{
 		return LastAxisInput;
 	}
@@ -2270,12 +2329,12 @@ ELastAxisInput USFSubsystem::GetEffectiveArrowAxisInput(int32* OutDirectionSign)
 		int32 ModalSign;
 		SF_ResolvePlayerRelativeModalAxisAndSign(CounterState, Slot, bSpacingModeActive,
 			bStaggerModeActive, PrimaryAxis, PrimarySign, LateralAxis, LateralSign,
-			ModalAxis, ModalSign);
+			ModalAxis, ModalSign, bSpacingModeActive ? ActiveHologram.Get() : nullptr);
 		if (OutDirectionSign)
 		{
 			*OutDirectionSign =
 				  Slot == ESFPlayerRelativeSlot::Side     ? LateralSign
-				: Slot == ESFPlayerRelativeSlot::Vertical ? +1
+				: Slot == ESFPlayerRelativeSlot::Vertical ? ([this]() { ESFScaleAxis A; int32 S; SF_GridVertical(ActiveHologram.Get(), A, S); return S; })()
 				:                                           PrimarySign;
 		}
 
@@ -2296,11 +2355,10 @@ ELastAxisInput USFSubsystem::GetEffectiveArrowAxisInput(int32* OutDirectionSign)
 
 	if (bModifierScaleXActive && bModifierScaleYActive)
 	{
-		if (OutDirectionSign)
-		{
-			*OutDirectionSign = +1;
-		}
-		return ELastAxisInput::Z;
+  ESFScaleAxis Axis; int32 Sign;
+  SF_GridVertical(ActiveHologram.Get(), Axis, Sign);
+  if (OutDirectionSign) *OutDirectionSign = Sign;
+  return ToArrowAxis(Axis);
 	}
 	if (bModifierScaleXActive)
 	{
@@ -2319,6 +2377,14 @@ ELastAxisInput USFSubsystem::GetEffectiveArrowAxisInput(int32* OutDirectionSign)
 		return ToArrowAxis(LateralAxis);
 	}
 
+	// Numpad input can leave a tilted pillar's upward role on local X/Y with no modifier held.
+	if (OutDirectionSign && ActiveHologram.IsValid() && SFPillarGridFrame::Applies(ActiveHologram->GetBuildClass()))
+	{
+		ESFScaleAxis VerticalAxis; int32 VerticalSign;
+		SF_GridVertical(ActiveHologram.Get(), VerticalAxis, VerticalSign);
+		*OutDirectionSign = LastAxisInput == ToArrowAxis(VerticalAxis) ? VerticalSign
+			: LastAxisInput == ToArrowAxis(PrimaryAxis) ? PrimarySign : LateralSign;
+	}
 	return LastAxisInput;
 }
 
@@ -2378,7 +2444,7 @@ void USFSubsystem::OnScaleXChanged(const FInputActionValue& Value)
 	// with the player and never collide. Off (or no hologram) -> classic X/Y, so the branches below
 	// are non-destructive.
 	ESFScaleAxis PrimAxis, LatAxis; int32 PrimSign, LatSign;
-	const bool bPlayerRel = SF_ComputePlayerRelativeAxes(this, ActiveHologram.Get(), PrimAxis, PrimSign, LatAxis, LatSign);
+	const bool bPlayerRel = SF_ComputePlayerRelativeAxes(this, ActiveHologram.Get(), PrimAxis, PrimSign, LatAxis, LatSign, true);
 	auto PlayerRelativeSignForAxis = [PrimAxis, PrimSign, LatSign](ESFScaleAxis Axis) -> int32
 	{
 		return Axis == PrimAxis ? PrimSign : LatSign;
@@ -2408,15 +2474,15 @@ void USFSubsystem::OnScaleXChanged(const FInputActionValue& Value)
 	// MODIFIER PRIORITY: Check modifiers first to determine which axis to scale
 	else if (bModifierScaleXActive && bModifierScaleYActive)
 	{
-		// Both modifiers held → Scale Z-axis (vertical - never player-relative; up is up)
-		LastAxisInput = ELastAxisInput::Z;
-		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Scale Z: %.2f (direction: %d) [X+Z modifiers]"), AxisValue, Direction);
-		ApplyAxisScaling(ESFScaleAxis::Z, Direction, TEXT("Scale Z"));
+  ESFScaleAxis Axis = ESFScaleAxis::Z; int32 Sign = 1;
+  if (bPlayerRel) SF_GridVertical(ActiveHologram.Get(), Axis, Sign);
+  LastAxisInput = SF_ArrowForAxis(Axis);
+  ApplyAxisScaling(Axis, Direction * Sign, TEXT("Scale vertical"));
 	}
 	else if (bModifierScaleXActive)
 	{
 		// X modifier → PRIMARY (line-of-sight) axis when Player Relative is on, else classic X.
-		LastAxisInput = (PrimAxis == ESFScaleAxis::Y) ? ELastAxisInput::Y : ELastAxisInput::X;
+		LastAxisInput = SF_ArrowForAxis(PrimAxis);
 		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Scale primary: %.2f (dir: %d) [X mod] PR=%d axis=%d sign=%d"),
 			AxisValue, Direction, bPlayerRel, (int32)PrimAxis, PrimSign);
 		ApplyAxisScaling(PrimAxis, Direction * PrimSign, TEXT("Scale primary (player-relative)"));
@@ -2424,7 +2490,7 @@ void USFSubsystem::OnScaleXChanged(const FInputActionValue& Value)
 	else if (bModifierScaleYActive)
 	{
 		// Z modifier → LATERAL (side) axis when Player Relative is on, else classic Y.
-		LastAxisInput = (LatAxis == ESFScaleAxis::X) ? ELastAxisInput::X : ELastAxisInput::Y;
+		LastAxisInput = SF_ArrowForAxis(LatAxis);
 		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Scale lateral: %.2f (dir: %d) [Z mod] PR=%d axis=%d sign=%d"),
 			AxisValue, Direction, bPlayerRel, (int32)LatAxis, LatSign);
 		ApplyAxisScaling(LatAxis, Direction * LatSign, TEXT("Scale lateral (player-relative)"));
@@ -2434,7 +2500,7 @@ void USFSubsystem::OnScaleXChanged(const FInputActionValue& Value)
 		// No modifiers → classic X, OR the PRIMARY axis under Player Relative. This is the branch the
 		// direct numpad keys fire: NumPad8 (forward = wheel-up analog) / NumPad5 (backward = wheel-down),
 		// so they follow facing exactly like the X-modifier + wheel.
-		LastAxisInput = (PrimAxis == ESFScaleAxis::Y) ? ELastAxisInput::Y : ELastAxisInput::X;
+		LastAxisInput = SF_ArrowForAxis(PrimAxis);
 		UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Scale primary(nomod): %.2f (dir: %d) PR=%d axis=%d sign=%d"),
 			AxisValue, Direction, bPlayerRel, (int32)PrimAxis, PrimSign);
 		ApplyAxisScaling(PrimAxis, Direction * PrimSign, TEXT("Scale primary (nomod)"));
@@ -2509,7 +2575,7 @@ void USFSubsystem::OnScaleYChanged(const FInputActionValue& Value)
 	}
 
 	ESFScaleAxis PrimAxis, LatAxis; int32 PrimSign, LatSign;
-	const bool bPlayerRel = SF_ComputePlayerRelativeAxes(this, ActiveHologram.Get(), PrimAxis, PrimSign, LatAxis, LatSign);
+	const bool bPlayerRel = SF_ComputePlayerRelativeAxes(this, ActiveHologram.Get(), PrimAxis, PrimSign, LatAxis, LatSign, true);
 	if (IsExtendModeActive())
 	{
 		const int32 RowsSign = PrimAxis == ESFScaleAxis::Y ? PrimSign : LatSign;
@@ -2517,7 +2583,7 @@ void USFSubsystem::OnScaleYChanged(const FInputActionValue& Value)
 		ApplyAxisScaling(ESFScaleAxis::Y, Direction * -RowsSign, TEXT("Scale Rows (Extend PR)"));
 		return;
 	}
-	LastAxisInput = (LatAxis == ESFScaleAxis::X) ? ELastAxisInput::X : ELastAxisInput::Y;
+	LastAxisInput = SF_ArrowForAxis(LatAxis);
 	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Scale lateral(nomod): %.2f (dir: %d) PR=%d axis=%d sign=%d"),
 		AxisValue, Direction, bPlayerRel, (int32)LatAxis, LatSign);
 	ApplyAxisScaling(LatAxis, Direction * LatSign, TEXT("Scale lateral (nomod)"));
@@ -2542,6 +2608,7 @@ void USFSubsystem::OnScaleZChanged(const FInputActionValue& Value)
     {
         return;
     }
+
 
     // MODIFIER PRIORITY: Ignore if any modifier is active (use NumPad8/5 in modifier mode)
     if (bModifierScaleXActive || bModifierScaleYActive)
@@ -2605,9 +2672,11 @@ void USFSubsystem::OnScaleZChanged(const FInputActionValue& Value)
         return;
     }
 
-    LastAxisInput = ELastAxisInput::Z;
-    UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Scale Z: %.2f (direction: %d)"), AxisValue, Direction);
-    ApplyAxisScaling(ESFScaleAxis::Z, Direction, TEXT("Scale Z"));
+    ESFScaleAxis Axis = ESFScaleAxis::Z; int32 Sign = 1;
+    if (IsPlayerRelativeEnabled() && !IsExtendModeActive() && !(WalkService && WalkService->IsActive()))
+        SF_GridVertical(ActiveHologram.Get(), Axis, Sign);
+    LastAxisInput = SF_ArrowForAxis(Axis);
+    ApplyAxisScaling(Axis, Direction * Sign, TEXT("Scale vertical"));
 }
 
 void USFSubsystem::OnValueIncreased(const FInputActionValue& Value)
@@ -2633,6 +2702,7 @@ void USFSubsystem::OnValueIncreased(const FInputActionValue& Value)
     // Support for fast input accumulation (e.g., high-speed mouse wheels)
     const int32 AccumulatedSteps = (int32)FMath::Abs(AxisValue);
     const int32 Direction = +1; // Always increase in OnValueIncreased
+
 
     // Auto-Connect Settings Mode takes priority
     if (bAutoConnectSettingsModeActive)
@@ -2696,6 +2766,7 @@ void USFSubsystem::OnMouseWheelChanged(const FInputActionValue& Value)
     // Support for fast input accumulation (e.g., high-speed mouse wheels)
     const int32 AccumulatedSteps = (int32)FMath::Abs(AxisValue);
     const int32 Direction = AxisValue > 0.0f ? +1 : -1;
+
 
     // Auto-Connect Settings Mode takes priority
     if (bAutoConnectSettingsModeActive)
@@ -2788,6 +2859,7 @@ void USFSubsystem::OnValueDecreased(const FInputActionValue& Value)
     // Support for fast input accumulation (e.g., high-speed mouse wheels)
     const int32 AccumulatedSteps = (int32)FMath::Abs(AxisValue);
     const int32 Direction = -1; // Always decrease in OnValueDecreased
+
 
     // Auto-Connect Settings Mode takes priority
     if (bAutoConnectSettingsModeActive)

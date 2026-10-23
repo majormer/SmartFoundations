@@ -26,6 +26,14 @@ class SMARTFOUNDATIONS_API USFWalkConveyance : public UObject
 
 public:
     void SetSubsystem(USFSubsystem* InSubsystem);
+    /** Per-span binding. Null starts use the ordinary new anchor; lane flow remains independent. */
+    void SetExistingStart(class USceneComponent* Connection, bool bUseLaneFlow = false, bool bReverseFlow = false)
+    {
+        ExistingStart = Connection;
+        bHasExistingStart = Connection != nullptr;
+        bOverrideLaneFlow = bUseLaneFlow;
+        bLaneReverseFlow = bReverseFlow;
+    }
 
     /**
      * Create (if ExistingSpan is null) or update the spanning element connecting FromAnchor → ToAnchor.
@@ -40,6 +48,10 @@ public:
     }
 
 protected:
+    TWeakObjectPtr<class USceneComponent> ExistingStart;
+    bool bHasExistingStart = false;
+    bool bOverrideLaneFlow = false;
+    bool bLaneReverseFlow = false;
     UPROPERTY()
     TWeakObjectPtr<USFSubsystem> Subsystem;
 };

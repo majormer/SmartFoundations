@@ -5,6 +5,8 @@
 
 #include "Features/Extend/SFExtendCloneTopology.h"
 #include "Features/Extend/SFExtendService.h"
+#include "Features/Extend/SFExtendRouteSupports.h"
+#include "Features/Extend/Holograms/SFRouteSupportPreviewHologram.h"
 #include "Features/Extend/Net/SFExtendAuthorityScope.h"
 #include "Misc/DateTime.h"
 #include "GameFramework/Pawn.h"
@@ -43,6 +45,7 @@
 #include "Holograms/Logistics/SFPassthroughChildHologram.h"
 #include "Holograms/Logistics/SFPipeAttachmentChildHologram.h"  // Issue #288: valves/pumps
 #include "Holograms/Logistics/SFWallHoleChildHologram.h"
+#include "Holograms/Logistics/SFHypertubeSupportPreviewHologram.h"
 #include "Holograms/Power/SFPowerPoleChildHologram.h"
 #include "Holograms/Power/SFWireHologram.h"
 #include "Subsystem/SFHologramDataService.h"
@@ -320,7 +323,42 @@ int32 FSFCloneTopology::SpawnChildHolograms(
         // Find build class
         TSubclassOf<AFGBuildable> BuildClass = FindBuildClassByName(ChildData.BuildClass);
         
-        if (ChildData.Role == TEXT("distributor"))
+        if (ChildData.Role == TEXT("route_support"))
+        {
+            if (!Recipe || !BuildClass) continue;
+            const bool bFixedSupport = SFExtendRouteSupports::IsFixedSupport(BuildClass->GetFName());
+            if (!bFixedSupport && !ChildData.SelectedPole.bCaptured) continue;
+            const FName ChildName(*FString::Printf(TEXT("JsonRouteSupport_%d"), JsonSpawnCounter++));
+            FActorSpawnParameters Params;
+            Params.Name = ChildName;
+            Params.Owner = ParentHologram->GetOwner();
+            Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+            Params.bDeferConstruction = true;
+            ASFBuildableChildHologram* Preview = nullptr;
+            if (bFixedSupport)
+                Preview = World->SpawnActor<ASFRouteSupportPreviewHologram>(ASFRouteSupportPreviewHologram::StaticClass(), Location, Rotation, Params);
+            else
+                Preview = World->SpawnActor<ASFHypertubeSupportPreviewHologram>(ASFHypertubeSupportPreviewHologram::StaticClass(), Location, Rotation, Params);
+            if (!Preview) continue;
+            Preview->SetChildBuildClass(BuildClass);
+            Preview->SetRecipe(Recipe);
+            Preview->SetConstructionInstigator(ParentHologram->GetConstructionInstigator());
+            Preview->Tags.AddUnique(FName(TEXT("SF_ExtendChild")));
+            Preview->SetActorEnableCollision(false);
+            Preview->FinishSpawning(FTransform(Rotation, Location));
+            Preview->SetActorHiddenInGame(false);
+            // Keep failed selected-state previews invalid so native placement rejects the module.
+            if (!bFixedSupport) CastChecked<ASFHypertubeSupportPreviewHologram>(Preview)->InitializeRecordedState(ChildData.SelectedPole);
+            else USFHologramDataService::DisableValidation(Preview);
+            ParentHologram->AddChild(Preview, ChildName);
+            USFHologramDataService::MarkAsChild(Preview, ParentHologram, ESFChildHologramType::ExtendClone);
+            SFPropagateDesignerToClone(Preview, ParentHologram);
+            Preview->SetActorTickEnabled(false);
+            Preview->SetPlacementMaterialState(ParentMaterialState);
+            SpawnedHologram = Preview;
+            ++SpawnedCount;
+        }
+        else if (ChildData.Role == TEXT("distributor"))
         {
             // Spawn distributor child hologram
             if (!Recipe || !BuildClass)

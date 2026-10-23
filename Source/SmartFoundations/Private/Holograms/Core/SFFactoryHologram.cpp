@@ -1,6 +1,7 @@
 // Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
 #include "Holograms/Core/SFFactoryHologram.h"
+#include "Holograms/Logistics/SFWaterPumpChildHologram.h"
 #include "SmartFoundations.h"
 #include "Buildables/FGBuildableFactory.h"
 #include "FGRecipe.h"
@@ -118,6 +119,12 @@ void ASFFactoryHologram::SetHologramLocationAndRotation(const FHitResult& hitRes
 
 void ASFFactoryHologram::CheckValidPlacement()
 {
+    if (ASFWaterPumpChildHologram::IsVanillaWaterExtractor(GetBuildClass()))
+    {
+        if (!ASFWaterPumpChildHologram::ValidateWaterTree(this))
+            AddConstructDisqualifier(UFGCDNeedsWaterVolume::StaticClass());
+        return;
+    }
     // During EXTEND mode, skip vanilla's clearance checks entirely.
     // Our extend service manages placement validity — vanilla's CheckValidPlacement
     // adds encroachment disqualifiers (especially with rotation) that block building.

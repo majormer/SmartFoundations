@@ -2,6 +2,8 @@
 
 Videos are often the quickest way to understand what Smart! is trying to do. Some older videos show controls or features that have changed, but they are still useful for seeing the kinds of layouts Smart! was built to support.
 
+For Smart! 35.0 / Camera 2.0, use the written [Panel and HUD](Smart-Panel-and-HUD), [Walking](Smart-Walking) and [Camera](Smart-Camera) guides alongside older videos. The shared task tabs, resume workflow and layout editor have changed since those recordings.
+
 ## Official Tutorial Series
 
 *Smart! — The Complete Guide.* A hub-and-spoke series: a general-use primer plus a deep-dive per feature. New episodes are still being recorded — the roadmap below shows what is out and what is coming.
@@ -38,8 +40,6 @@ These are the best starting points for the rebuilt Smart! mod on current Satisfa
 | Smart! Feature Spotlight | Enderprise Architecture | https://www.youtube.com/watch?v=U5PNgasYbP8 |
 | Smart V22 Overview | RightMindGamming | https://www.youtube.com/watch?v=QZVNIQXYnNg |
 
-> Screenshot placeholder: two thumbnail-style cards for the current Smart! overview videos.
-
 ## Legacy Smart! Feature Videos
 
 These videos are from older Smart! versions. Exact keybinds, UI, and feature details may differ from the current rebuild.
@@ -73,4 +73,4 @@ These videos are from older Smart! versions. Exact keybinds, UI, and feature det
 
 ---
 
-_Last updated: 2026-07-14 · Smart! v34.2.1_
+_Last updated: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (release draft)_

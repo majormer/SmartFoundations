@@ -4,16 +4,15 @@ Smart Dismantle lets Smart-built groups work with Satisfactory's vanilla Bluepri
 
 It is not a separate Smart dismantle tool. You still use the game's dismantle system.
 
-> Screenshot placeholder: vanilla Blueprint Dismantle highlighting a Smart-built grid.
-
 ## What Gets Grouped
 
 Smart! groups:
 
 - Multi-building grid placements.
-- Extend placements.
+- Extend and restored Module placements.
+- Supported Walking routes and generated connection parts in their applicable placement groups.
 
-Single normal placements are not grouped.
+A normal single placement does not automatically become a multi-building Smart group. Supported Smart Upgrade replacements preserve an existing group by default, including an existing one-member group.
 
 ## How To Use It
 
@@ -26,8 +25,14 @@ The game handles highlighting, refund calculation, and dismantling through its n
 
 ## Caveats
 
-Some supporting objects may not be grouped if they spawn outside the active Smart build session. If a group does not dismantle exactly how you expect, dismantle the remaining pieces manually.
+Associated route supports and regenerated pipe indicators retain their applicable group membership. Inside a Blueprint Designer, native Designer ownership takes precedence rather than creating a second Smart group. If an object is unexpectedly left behind, report the buildable, workflow and whether the save was reloaded.
+
+## Native group highlighting
+
+![Native Blueprint Dismantle mode highlights the Smart-built group. This image shows selection, not a dismantle action.](https://raw.githubusercontent.com/wiki/majormer/SmartFoundations/images/v35/dismantle-group.png)
+
+Native Blueprint Dismantle mode highlights the Smart-built group. This image shows selection, not a dismantle action.
 
 ---
 
-_Last updated: 2026-07-14 · Smart! v34.2.1_
+_Last updated: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (release draft)_

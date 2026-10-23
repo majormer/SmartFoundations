@@ -6,6 +6,7 @@
  */
 
 #include "Subsystem/SFSubsystemImpl.h"
+#include "FGLightweightBuildableSubsystem.h"
 #include "Features/Extend/Net/SFExtendAuthorityScope.h"
 #include "Core/Net/SFNetworkHelper.h"  // [#334] authority gate
 
@@ -51,7 +52,11 @@ void USFSubsystem::OnActorSpawned(AActor* SpawnedActor)
 		// a world proxy makes the blueprint save chase that reference out of the designer
 		// ("saving a blueprint saves the whole world").
 		// Only group if we have an active Smart! hologram with a multi-building grid
-		if (ActiveHologram.IsValid() && Buildable->GetBlueprintDesigner() == nullptr)
+		// Actor-spawn notification precedes native ConfigureActor, so the new
+		// buildable may not have inherited its Designer yet. The placement seed
+		// already owns that context and must suppress world grouping as well.
+		if (ActiveHologram.IsValid() && ActiveHologram->GetBlueprintDesigner() == nullptr
+			&& Buildable->GetBlueprintDesigner() == nullptr)
 		{
 			const FIntVector& Grid = GetGridCounters();
 			const bool bIsMultiGrid = (FMath::Abs(Grid.X) > 1 || FMath::Abs(Grid.Y) > 1 || FMath::Abs(Grid.Z) > 1);
@@ -90,6 +95,13 @@ void USFSubsystem::OnActorSpawned(AActor* SpawnedActor)
 						FActorSpawnParameters SpawnParams;
 						SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 						FTransform ProxyTransform = Buildable->GetActorTransform();
+						// A newly allocated lightweight actor can still be at its native pool pose.
+						// Anchoring the saved group there leaves it outside client relevancy even
+						// after its members reach their intended placement. Use the placement seed.
+						if (ProxyTransform.Equals(FLightweightBuildablePool::PoolTransform))
+						{
+							ProxyTransform = ActiveHologram->GetActorTransform();
+						}
 						AFGBlueprintProxy* NewProxy = World->SpawnActor<AFGBlueprintProxy>(
 							AFGBlueprintProxy::StaticClass(),
 							ProxyTransform,
@@ -990,6 +1002,10 @@ void USFSubsystem::OnActorSpawned(AActor* SpawnedActor)
 	AFGBuildablePowerPole* PowerPole = Cast<AFGBuildablePowerPole>(SpawnedActor);
 	if (PowerPole)
 	{
+		// Replacement construction preserves the old graph through vanilla migration.
+		// A retained placement plan must not attach new wires before that transfer.
+		if (USFUpgradeExecutionService::IsConstructingPowerReplacement(GetWorld())) return;
+
 		// CRITICAL TIMING: Poles spawn BEFORE hologram destruction calls CommitBuildingConnections!
 		// So we must check PlannedBuildingConnections AND PlannedPoleConnections as fallbacks.
 		bool bHasBuildingConnections = CommittedBuildingConnections.Num() > 0;

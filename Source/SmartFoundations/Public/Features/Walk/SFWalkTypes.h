@@ -107,13 +107,17 @@ struct SMARTFOUNDATIONS_API FSFWalkSegmentView
  */
 inline FString SFHeadingToCompass16(float Yaw)
 {
-    static const TCHAR* const Names[16] = {
-        TEXT("N"),  TEXT("NNE"), TEXT("NE"), TEXT("ENE"),
-        TEXT("E"),  TEXT("ESE"), TEXT("SE"), TEXT("SSE"),
-        TEXT("S"),  TEXT("SSW"), TEXT("SW"), TEXT("WSW"),
-        TEXT("W"),  TEXT("WNW"), TEXT("NW"), TEXT("NNW") };
+    static const FText Names[16] = {
+        NSLOCTEXT("SmartCompass", "North", "N"), NSLOCTEXT("SmartCompass", "NorthNorthEast", "NNE"),
+        NSLOCTEXT("SmartCompass", "NorthEast", "NE"), NSLOCTEXT("SmartCompass", "EastNorthEast", "ENE"),
+        NSLOCTEXT("SmartCompass", "East", "E"), NSLOCTEXT("SmartCompass", "EastSouthEast", "ESE"),
+        NSLOCTEXT("SmartCompass", "SouthEast", "SE"), NSLOCTEXT("SmartCompass", "SouthSouthEast", "SSE"),
+        NSLOCTEXT("SmartCompass", "South", "S"), NSLOCTEXT("SmartCompass", "SouthSouthWest", "SSW"),
+        NSLOCTEXT("SmartCompass", "SouthWest", "SW"), NSLOCTEXT("SmartCompass", "WestSouthWest", "WSW"),
+        NSLOCTEXT("SmartCompass", "West", "W"), NSLOCTEXT("SmartCompass", "WestNorthWest", "WNW"),
+        NSLOCTEXT("SmartCompass", "NorthWest", "NW"), NSLOCTEXT("SmartCompass", "NorthNorthWest", "NNW") };
     float CompassDeg = FMath::Fmod(Yaw - 90.0f, 360.0f);
     if (CompassDeg < 0.0f) { CompassDeg += 360.0f; }
     const int32 Idx = FMath::RoundToInt(CompassDeg / 22.5f) % 16;
-    return FString(Names[Idx]);
+    return Names[Idx].ToString();
 }

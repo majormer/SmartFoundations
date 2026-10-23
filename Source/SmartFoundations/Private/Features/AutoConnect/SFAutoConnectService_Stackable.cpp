@@ -5,6 +5,8 @@
  * pure impl-split, one class across .cpp) to keep each file <2k. No behavior change.
  */
 
+#include "Shared/SFSupportGridFrame.h"
+#include "Shared/Conduits/SFConveyanceLength.h"
 #include "Features/AutoConnect/SFAutoConnectServiceImpl.h"
 #include "Features/HypertubeAutoConnect/SFHypertubeSpanBuilder.h"   // #405: SFHypertube::BuildOrUpdateSpan (new slice)
 #include "Features/Scaling/SFGridCoordComponent.h"                  // #418: children carry their own grid cell
@@ -21,7 +23,7 @@ namespace
 
 		const USplineComponent* Spline = BeltHologram->GetSplineComponent();
 		const float SplineLength = Spline ? Spline->GetSplineLength() : 0.0f;
-		if (SplineLength > USFAutoConnectService::MAX_PIPE_LENGTH)
+		if (SFConveyanceLength::ExceedsNativeLimit(SplineLength, *BeltHologram))
 		{
 			ParentHologram->AddConstructDisqualifier(UFGCDConveyorTooLong::StaticClass());
 			BeltHologram->SetPlacementMaterialState(EHologramMaterialState::HMS_ERROR);
@@ -52,7 +54,7 @@ namespace
 		}
 
 		bool bTooLong = false;
-		if (!PipeHologram->ValidateCurrentSpline(USFAutoConnectService::MAX_PIPE_LENGTH, bTooLong))
+		if (!PipeHologram->ValidateCurrentSpline(bTooLong))
 		{
 			const TSubclassOf<UFGConstructDisqualifier> Disqualifier = bTooLong
 				? UFGCDPipeTooLong::StaticClass()
@@ -77,6 +79,10 @@ namespace
 // #291 reason these were chords) + sign-flip toward the run. A straight run reduces to the chord (no spurious curve).
 FVector USFAutoConnectService::ResolveSupportExitNormal(AFGHologram* Pole, const FVector& Chord, bool bUseRightVector)
 {
+	if (Pole && SFSupportGridFrame::UsesParentRotation(Pole->GetBuildClass()))
+	{
+		return SFSupportGridFrame::RunNormal(Pole->GetActorRotation(), Chord);
+	}
 	const FVector ChordH = FVector(Chord.X, Chord.Y, 0.0f).GetSafeNormal();
 	FVector FacingH = Pole ? (bUseRightVector ? Pole->GetActorRightVector() : Pole->GetActorForwardVector()) : FVector::ZeroVector;
 	FacingH.Z = 0.0f;
@@ -305,8 +311,8 @@ void USFAutoConnectService::ProcessStackableConveyorPoles(AFGHologram* ParentHol
 				FVector Pos2 = (*TargetPtr)->GetActorLocation();
 				float Distance = FVector::Dist(Pos1, Pos2);
 				
-				// Distance restriction: >56m is too far (game engine limit)
-				if (Distance > MAX_PIPE_LENGTH)
+				// The native ceiling includes a small allowance for rotated endpoint rounding.
+				if (SFConveyanceLength::ExceedsNativeLimit(Distance, *GetDefault<ASFConveyorBeltHologram>()))
 				{
 					ParentHologram->AddConstructDisqualifier(UFGCDConveyorTooLong::StaticClass());
 					UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🚧 Belt skipped: distance %.1f cm > 56m between [%d,%d,%d] and [%d,%d,%d]"),
@@ -608,8 +614,8 @@ void USFAutoConnectService::ProcessStackablePipelineSupports(AFGHologram* Parent
 				FVector Pos2 = (*TargetPtr)->GetActorLocation();
 				float Distance = FVector::Dist(Pos1, Pos2);
 
-				// Distance restriction: >56m is too far (game engine limit)
-				if (Distance > MAX_PIPE_LENGTH)
+				// Match the native pipe ceiling rather than truncating its numerical allowance.
+				if (SFConveyanceLength::ExceedsNativeLimit(Distance, *GetDefault<ASFPipelineHologram>()))
 				{
 					ParentHologram->AddConstructDisqualifier(UFGCDPipeTooLong::StaticClass());
 					UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🔧 Pipe skipped: distance %.1f cm > 56m between [%d,%d,%d] and next along %hs"),
@@ -750,7 +756,7 @@ void USFAutoConnectService::ProcessStackableHypertubeSupports(AFGHologram* Paren
 	for (const TWeakObjectPtr<AFGHologram>& ChildPtr : SpawnedChildren)
 	{
 		FIntVector Cell;
-		if (ChildPtr.IsValid() && IsStackableHypertubeSupportHologram(ChildPtr.Get())
+		if (ChildPtr.IsValid() && IsHypertubeAutoConnectSupportHologram(ChildPtr.Get())
 			&& USFGridCoordComponent::TryGetCell(ChildPtr.Get(), Cell))
 		{
 			GridToHologram.Add(PackGridPos(Cell.X, Cell.Y, Cell.Z), ChildPtr.Get());
@@ -763,16 +769,18 @@ void USFAutoConnectService::ProcessStackableHypertubeSupports(AFGHologram* Paren
 		return;
 	}
 
-	// STACKABLE-ONLY: hypertube poles scale along X — connect X-neighbours ([X,Y,Z] -> [X+1,Y,Z]).
+	// Stackables connect X neighbours; native wall supports connect rotated Y neighbours.
+	const bool bConnectAlongY = SFSupportGridFrame::UsesParentRotation(ParentHologram->GetBuildClass());
 	FStackableHypertubeState& State = StackableHypertubeStates.FindOrAdd(ParentHologram);
 	for (int32 Z = 0; Z < ZCount; ++Z)
 	{
 		for (int32 Y = 0; Y < YCount; ++Y)
 		{
-			for (int32 X = 0; X < XCount - 1; ++X)
+			for (int32 X = 0; X < XCount; ++X)
 			{
+				if ((bConnectAlongY && Y >= YCount - 1) || (!bConnectAlongY && X >= XCount - 1)) continue;
 				AFGHologram** SourcePtr = GridToHologram.Find(PackGridPos(X, Y, Z));
-				AFGHologram** TargetPtr = GridToHologram.Find(PackGridPos(X + 1, Y, Z));
+				AFGHologram** TargetPtr = bConnectAlongY ? GridToHologram.Find(PackGridPos(X, Y + 1, Z)) : GridToHologram.Find(PackGridPos(X + 1, Y, Z));
 				if (!SourcePtr || !TargetPtr || !*SourcePtr || !*TargetPtr)
 				{
 					continue;
@@ -1047,11 +1055,11 @@ AFGHologram* USFAutoConnectService::UpdateOrCreatePipeForPolePair(
 	float Distance = FVector::Dist(StartPos, EndPos);
 	
 	// Skip if too long (game engine limit)
-	if (Distance > MAX_PIPE_LENGTH)
+	if (SFConveyanceLength::ExceedsNativeLimit(Distance, *GetDefault<ASFPipelineHologram>()))
 	{
 		ParentHologram->AddConstructDisqualifier(UFGCDPipeTooLong::StaticClass());
 		UE_LOG(LogSmartAutoConnect, VeryVerbose, TEXT("🔧 STACKABLE PIPE: Skipping pipe %d - distance %.1f exceeds max %.1f"),
-			PipeIndex, Distance, MAX_PIPE_LENGTH);
+			PipeIndex, Distance, GetDefault<ASFPipelineHologram>()->GetMaxSplineLength());
 		return nullptr;
 	}
 	

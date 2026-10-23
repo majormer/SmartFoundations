@@ -127,6 +127,9 @@ private:
      */
     void DiscoverWallPassthroughs(AFGBuildable* SourceBuilding);
 
+    /** Match native snap anchors only to endpoints of discovered transport routes. */
+    void DiscoverRouteSupports();
+
     /** Owning subsystem */
     UPROPERTY()
     TWeakObjectPtr<USFSubsystem> Subsystem;

@@ -57,7 +57,7 @@ AFGHologram* USFWalkBeltConveyance::LinkOrUpdate(AFGHologram* ExistingSpan, AFGH
 
     // #356 belt direction: Backward (StackableBeltDirection == 1) reverses flow by swapping which pole is source vs
     // target (mirrors SFAutoConnectService_Stackable). Applied here so BOTH the create and update paths below honor it.
-    const bool bBackward = (Sub->GetAutoConnectRuntimeSettings().StackableBeltDirection == 1);
+    const bool bBackward = bOverrideLaneFlow ? bLaneReverseFlow : (Sub->GetAutoConnectRuntimeSettings().StackableBeltDirection == 1);
     if (bBackward)
     {
         Swap(FromAnchor, ToAnchor);
@@ -65,6 +65,13 @@ AFGHologram* USFWalkBeltConveyance::LinkOrUpdate(AFGHologram* ExistingSpan, AFGH
 
     UFGFactoryConnectionComponent* FromConn = FirstConnector(FromAnchor);
     UFGFactoryConnectionComponent* ToConn = FirstConnector(ToAnchor);
+    if (bHasExistingStart)
+    {
+        auto* Native = Cast<UFGFactoryConnectionComponent>(ExistingStart.Get());
+        if (!Native || Native->IsConnected()) { return nullptr; }
+        if (bBackward) { ToConn = Native; } else { FromConn = Native; }
+    }
+
 
     const FVector StartPos = FromConn ? FromConn->GetComponentLocation() : FromAnchor->GetActorLocation();
     const FVector EndPos = ToConn ? ToConn->GetComponentLocation() : ToAnchor->GetActorLocation();
@@ -121,6 +128,12 @@ AFGHologram* USFWalkBeltConveyance::LinkOrUpdate(AFGHologram* ExistingSpan, AFGH
     // / wrong exit). Reverse both exits so a Backward run lays a STRAIGHT reversed belt, not a U-turn — the maintainer's
     // rule that a reverse flips every pole exit. (The DirN fallbacks below already reflect the swapped geometry.)
     if (bBackward) { StartNormal = -StartNormal; EndNormal = -EndNormal; }
+    if (bHasExistingStart)
+    {
+        if (bBackward) { EndNormal = ToConn->GetConnectorNormal(); }
+        else { StartNormal = FromConn->GetConnectorNormal(); }
+    }
+
     if (StartNormal.IsNearlyZero()) { StartNormal = DirN; }
     if (EndNormal.IsNearlyZero())   { EndNormal   = -DirN; }
 
@@ -132,7 +145,11 @@ AFGHologram* USFWalkBeltConveyance::LinkOrUpdate(AFGHologram* ExistingSpan, AFGH
     // Update path: re-route an existing belt to follow moved anchors (steering / back-up).
     if (ASFConveyorBeltHologram* Existing = Cast<ASFConveyorBeltHologram>(ExistingSpan))
     {
+        if (bOverrideLaneFlow) { Existing->Tags.AddUnique(TEXT("SF_WalkExistingOrigin")); }
+        else { Existing->Tags.Remove(TEXT("SF_WalkExistingOrigin")); }
         Existing->SetActorLocation(StartPos);
+        if (auto* Data = USFHologramDataService::GetOrCreateData(Existing))
+        { Data->StackableBeltConn0 = FromConn; Data->StackableBeltConn1 = ToConn; }
         Existing->SetSnappedConnections(FromConn, ToConn);   // #356: re-wire so a direction toggle flips flow on the existing belt, not just geometry
         Existing->ApplyBeltBuildModeRouting(RoutingMode, StartPos, StartNormal, EndPos, EndNormal);
         Existing->TriggerMeshGeneration();
@@ -193,6 +210,7 @@ AFGHologram* USFWalkBeltConveyance::LinkOrUpdate(AFGHologram* ExistingSpan, AFGH
         Belt->SetRecipe(BeltRecipe);   // length-based GetCost needs the recipe (else free belts) - mRecipe is null on a fresh spawn, so the SetRecipe !mRecipe assert is satisfied
     }
     Belt->Tags.AddUnique(FName(TEXT("SF_StackableChild")));
+    if (bOverrideLaneFlow) { Belt->Tags.AddUnique(TEXT("SF_WalkExistingOrigin")); }
 
     USFHologramDataService::DisableValidation(Belt);
     USFHologramDataService::MarkAsChild(Belt, ToAnchor, ESFChildHologramType::WalkSegment);
@@ -271,6 +289,12 @@ AFGHologram* USFWalkPipeConveyance::LinkOrUpdate(AFGHologram* ExistingSpan, AFGH
 
     UFGPipeConnectionComponentBase* FromConn = FirstPipeConnector(FromAnchor);
     UFGPipeConnectionComponentBase* ToConn = FirstPipeConnector(ToAnchor);
+    if (bHasExistingStart)
+    {
+        FromConn = Cast<UFGPipeConnectionComponentBase>(ExistingStart.Get());
+        if (!FromConn || FromConn->IsConnected() || FromConn->IsSnappingToDisallowed()) { return nullptr; }
+    }
+
 
     const FVector StartPos = FromConn ? FromConn->GetComponentLocation() : FromAnchor->GetActorLocation();
     const FVector EndPos = ToConn ? ToConn->GetComponentLocation() : ToAnchor->GetActorLocation();
@@ -300,6 +324,7 @@ AFGHologram* USFWalkPipeConveyance::LinkOrUpdate(AFGHologram* ExistingSpan, AFGH
     if (StartNormal.IsNearlyZero()) { StartNormal = DirN; }
     if (EndNormal.IsNearlyZero())   { EndNormal   = -DirN; }
 
+    if (bHasExistingStart) { StartNormal = FromConn->GetConnectorNormal(); }
     const int32 RoutingMode = Sub->GetAutoConnectRuntimeSettings().PipeRoutingMode;
     UE_LOG(LogSmartWalkBelt, Verbose, TEXT("  [Pipe] LinkOrUpdate routing: StartPos=%s EndPos=%s | StartN=%s EndN=%s | mode=%d len=%.1f turn=%.0f"),
         *StartPos.ToString(), *EndPos.ToString(), *StartNormal.ToString(), *EndNormal.ToString(),
@@ -308,7 +333,19 @@ AFGHologram* USFWalkPipeConveyance::LinkOrUpdate(AFGHologram* ExistingSpan, AFGH
     // Update path: re-route an existing pipe to follow moved anchors (steering / back-up).
     if (ASFPipelineHologram* Existing = Cast<ASFPipelineHologram>(ExistingSpan))
     {
+        if (bOverrideLaneFlow) { Existing->Tags.AddUnique(TEXT("SF_WalkExistingOrigin")); }
+        else { Existing->Tags.Remove(TEXT("SF_WalkExistingOrigin")); }
         Existing->SetActorLocation(StartPos);
+        if (auto* Data = USFHologramDataService::GetOrCreateData(Existing))
+        {
+            Data->StackablePipeConn0 = FromConn;
+            Data->StackablePipeConn1 = ToConn;
+        }
+        if (FProperty* Property = AFGPipelineHologram::StaticClass()->FindPropertyByName(TEXT("mSnappedConnectionComponents")))
+        {
+            auto** Peers = static_cast<UFGPipeConnectionComponentBase**>(Property->ContainerPtrToValuePtr<void>(Existing));
+            Peers[0] = FromConn; Peers[1] = ToConn;
+        }
         Existing->ApplyPipeBuildModeRouting(RoutingMode, StartPos, StartNormal, EndPos, EndNormal);
         Existing->TriggerMeshGeneration();
         Existing->ForceApplyHologramMaterial();
@@ -361,6 +398,7 @@ AFGHologram* USFWalkPipeConveyance::LinkOrUpdate(AFGHologram* ExistingSpan, AFGH
         Pipe->SetRecipe(PipeRecipe);   // length-based GetCost needs the recipe (else free pipes) - mRecipe null on fresh spawn satisfies the assert
     }
     Pipe->Tags.AddUnique(FName(TEXT("SF_StackableChild")));
+    if (bOverrideLaneFlow) { Pipe->Tags.AddUnique(TEXT("SF_WalkExistingOrigin")); }
 
     USFHologramDataService::DisableValidation(Pipe);
     USFHologramDataService::MarkAsChild(Pipe, ToAnchor, ESFChildHologramType::WalkSegment);
@@ -446,6 +484,12 @@ AFGHologram* USFWalkHypertubeConveyance::LinkOrUpdate(AFGHologram* ExistingSpan,
 
     UFGPipeConnectionComponentBase* FromConn = FirstPipeConnector(FromAnchor);
     UFGPipeConnectionComponentBase* ToConn = FirstPipeConnector(ToAnchor);
+    if (bHasExistingStart)
+    {
+        FromConn = Cast<UFGPipeConnectionComponentBase>(ExistingStart.Get());
+        if (!FromConn || FromConn->IsConnected() || FromConn->IsSnappingToDisallowed()) { return nullptr; }
+    }
+
 
     const FVector StartPos = FromConn ? FromConn->GetComponentLocation() : FromAnchor->GetActorLocation();
     const FVector EndPos = ToConn ? ToConn->GetComponentLocation() : ToAnchor->GetActorLocation();
@@ -473,6 +517,7 @@ AFGHologram* USFWalkHypertubeConveyance::LinkOrUpdate(AFGHologram* ExistingSpan,
     if (StartNormal.IsNearlyZero()) { StartNormal = FVector(DirN.X, DirN.Y, 0.0f).GetSafeNormal(); }
     if (EndNormal.IsNearlyZero())   { EndNormal   = FVector(-DirN.X, -DirN.Y, 0.0f).GetSafeNormal(); }
 
+    if (bHasExistingStart) { StartNormal = FromConn->GetConnectorNormal(); }
     const int32 RoutingMode = Sub->GetAutoConnectRuntimeSettings().HypertubeRoutingMode;
     UE_LOG(LogSmartWalkBelt, Verbose, TEXT("  [Hyper] LinkOrUpdate routing: StartPos=%s EndPos=%s | StartN=%s EndN=%s | mode=%d len=%.1f turn=%.0f"),
         *StartPos.ToString(), *EndPos.ToString(), *StartNormal.ToString(), *EndNormal.ToString(),
@@ -481,7 +526,19 @@ AFGHologram* USFWalkHypertubeConveyance::LinkOrUpdate(AFGHologram* ExistingSpan,
     // Update path: re-route an existing tube to follow moved anchors (steering / back-up).
     if (ASFPipelineHologram* Existing = Cast<ASFPipelineHologram>(ExistingSpan))
     {
+        if (bOverrideLaneFlow) { Existing->Tags.AddUnique(TEXT("SF_WalkExistingOrigin")); }
+        else { Existing->Tags.Remove(TEXT("SF_WalkExistingOrigin")); }
         Existing->SetActorLocation(StartPos);
+        if (auto* Data = USFHologramDataService::GetOrCreateData(Existing))
+        {
+            Data->StackablePipeConn0 = FromConn;
+            Data->StackablePipeConn1 = ToConn;
+        }
+        if (FProperty* Property = AFGPipelineHologram::StaticClass()->FindPropertyByName(TEXT("mSnappedConnectionComponents")))
+        {
+            auto** Peers = static_cast<UFGPipeConnectionComponentBase**>(Property->ContainerPtrToValuePtr<void>(Existing));
+            Peers[0] = FromConn; Peers[1] = ToConn;
+        }
         Existing->ApplyPipeBuildModeRouting(RoutingMode, StartPos, StartNormal, EndPos, EndNormal);
         Existing->TriggerMeshGeneration();
         Existing->ForceApplyHologramMaterial();
@@ -527,6 +584,7 @@ AFGHologram* USFWalkHypertubeConveyance::LinkOrUpdate(AFGHologram* ExistingSpan,
         Tube->SetRecipe(TSubclassOf<UFGRecipe>(HyperRecipeClass));   // length-based GetCost needs the recipe (else free tubes)
     }
     Tube->Tags.AddUnique(FName(TEXT("SF_StackableChild")));
+    if (bOverrideLaneFlow) { Tube->Tags.AddUnique(TEXT("SF_WalkExistingOrigin")); }
 
     USFHologramDataService::DisableValidation(Tube);
     USFHologramDataService::MarkAsChild(Tube, ToAnchor, ESFChildHologramType::WalkSegment);

@@ -3,13 +3,86 @@
 #include "Features/Upgrade/SFUpgradeExecutionService.h"
 #include "Features/Upgrade/SFUpgradeExecutionServiceImpl.h"
 #include "Features/Upgrade/SFUpgradeTierPolicy.h"
+#include "Features/Upgrade/SFUpgradeMinerFamily.h"
 #include "FGRecipeManager.h"
+#include "Core/Construction/SFReplacementGroupTransfer.h"
+#include "FGBuildablePipelineFlowIndicator.h"
+#include "Features/Upgrade/Holograms/SFUpgradePipelineHologram.h"
+#include "UObject/UnrealType.h"
+
+// SP/MP DIVERGENCE MAP — Upgrade
+//  1. Request — [MP-SEAM] panel snapshots options; SFRCO resolves the requesting player.
+//  2. Replacement — [MP-AUTH] this service owns construction, payment and group transfer.
+//  3. Result — [MP-CLIENT] Client_ReceiveUpgradeResult updates the local panel service.
 
 namespace
 {
+	thread_local const UWorld* PowerReplacementWorld = nullptr;
+
 	bool IsConveyorUpgradeFamily(ESFUpgradeFamily Family)
 	{
 		return Family == ESFUpgradeFamily::Belt || Family == ESFUpgradeFamily::Lift;
+	}
+
+	bool CanRetainPowerConnections(AFGBuildablePowerPole* OldPole, AFGHologram* TargetHologram)
+	{
+		TInlineComponentArray<UFGPowerConnectionComponent*> TargetConnections(TargetHologram);
+		const auto& OldConnections = OldPole->GetPowerConnections();
+		if (OldConnections.IsEmpty() || OldConnections.Num() != TargetConnections.Num()) return false;
+
+		// Match native port identities, not array order or pooled capacity. Each
+		// face of a double outlet has its own external-wire limit; its hidden
+		// circuit bridge does not consume an external connection slot.
+		for (UFGPowerConnectionComponent* OldConnection : OldConnections)
+		{
+			if (!IsValid(OldConnection)) return false;
+			UFGPowerConnectionComponent* TargetConnection = nullptr;
+			for (UFGPowerConnectionComponent* Candidate : TargetConnections)
+			{
+				if (IsValid(Candidate) && Candidate->GetFName() == OldConnection->GetFName())
+				{
+					if (TargetConnection) return false;
+					TargetConnection = Candidate;
+				}
+			}
+			if (!TargetConnection || TargetConnection->GetMaxNumConnections() <= 0
+				|| OldConnection->GetNumConnections() > TargetConnection->GetMaxNumConnections()) return false;
+		}
+		return true;
+	}
+
+	// Native chain migration dereferences its conveyor members and endpoints. Reject
+	// incomplete/corrupt chains before charging or constructing; upgrading must not
+	// turn pre-existing damage into an unsafe migration attempt.
+	bool TryResolveLiftUpgradeCargoChain(AFGBuildableConveyorLift* Lift, AFGConveyorChainActor*& OutChain)
+	{
+		OutChain = nullptr;
+		AFGConveyorChainActor* Chain = Lift->GetConveyorChainActor();
+		if (!Chain) return true;
+		if (!IsValid(Chain) || Chain->IsActorBeingDestroyed()) return false;
+
+		TSet<AFGBuildableConveyorBase*> Members;
+		for (const FConveyorChainSplineSegment& Segment : Chain->GetChainSegments())
+		{
+			AFGBuildableConveyorBase* Conveyor = Segment.ConveyorBase;
+			if (!IsValid(Conveyor) || Conveyor->IsActorBeingDestroyed()
+				|| Conveyor->GetConveyorChainActor() != Chain || Members.Contains(Conveyor))
+			{
+				return false;
+			}
+			Members.Add(Conveyor);
+		}
+		if (!Members.Contains(Lift)) return false;
+
+		for (const TCHAR* EndpointName : { TEXT("mFirstConveyor"), TEXT("mLastConveyor") })
+		{
+			const FObjectPropertyBase* EndpointProperty = FindFProperty<FObjectPropertyBase>(Chain->GetClass(), EndpointName);
+			AFGBuildableConveyorBase* Endpoint = EndpointProperty
+				? Cast<AFGBuildableConveyorBase>(EndpointProperty->GetObjectPropertyValue_InContainer(Chain)) : nullptr;
+			if (!IsValid(Endpoint) || !Members.Contains(Endpoint)) return false;
+		}
+		OutChain = Chain;
+		return true;
 	}
 
 	struct FSFResolvedConveyorGeometry
@@ -502,7 +575,7 @@ void USFUpgradeExecutionService::StartUpgrade(const FSFUpgradeExecutionParams& P
 
 	if (bAbortedDueToFunds)
 	{
-		WorkingResult.ErrorMessage = TEXT("Ran out of materials - partial upgrade completed");
+		WorkingResult.ErrorMessage = NSLOCTEXT("SmartFoundations", "Upgrade_PartialInsufficientMaterials", "Ran out of materials - partial upgrade completed").ToString();
 	}
 
 	// Complete immediately
@@ -524,7 +597,7 @@ void USFUpgradeExecutionService::CancelUpgrade()
 
 	bUpgradeInProgress = false;
 	WorkingResult.bCompleted = false;
-	WorkingResult.ErrorMessage = TEXT("Cancelled by user");
+	WorkingResult.ErrorMessage = NSLOCTEXT("SmartFoundations", "Upgrade_Cancelled", "Cancelled by user").ToString();
 	LastResult = WorkingResult;
 
 	PendingUpgrades.Empty();
@@ -946,6 +1019,9 @@ TSubclassOf<UFGRecipe> USFUpgradeExecutionService::GetTargetRecipeForBuildable(A
 
 int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, TSubclassOf<UFGRecipe> TargetRecipe)
 {
+	// [MP-AUTH] Snapshot membership before any native upgrade/construction callback.
+	FSFReplacementGroupTransfer GroupTransfer(Buildable, CurrentParams.bPreserveDismantleGroupMembership);
+
 	// Return codes: 1 = success, 0 = failed, -1 = out of funds (abort remaining)
 	if (!Buildable || !Subsystem)
 	{
@@ -1042,6 +1118,11 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 	}
 
 	// Handle Conveyor Belts using MassUpgrade's proven approach
+	if (ActualFamily == ESFUpgradeFamily::Miner)
+	{
+		return ProcessMinerReplacement(Buildable, ActualTargetRecipe, BuildGun, PlayerChar, GroupTransfer);
+	}
+
 	// Key: TryUpgrade + DoMultiStepPlacement + GenerateAndUpdateSpline + PreUpgrade/Upgrade_Implementation
 	if (AFGBuildableConveyorBelt* OldBelt = Cast<AFGBuildableConveyorBelt>(Buildable))
 	{
@@ -1169,7 +1250,9 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 
 		// STEP 9: Call upgrade interface method on OLD belt (critical for chain transfer!)
 		UE_LOG(LogSmartUpgrade, VeryVerbose, TEXT("⚙️ STEP 7: Calling Upgrade_Implementation..."));
+		GroupTransfer.Apply(NewBelt);
 		OldBelt->Upgrade_Implementation(NewBelt);
+		GroupTransfer.Apply(NewBelt);
 		UE_LOG(LogSmartUpgrade, VeryVerbose, TEXT("⚙️ STEP 7: Upgrade interface method complete"));
 
 		// STEP 10: Check connections. The upgrade hologram plus PreUpgrade/Upgrade should
@@ -1255,6 +1338,8 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 	// Handle Pipelines using Smart hologram with spline data copy
 	if (AFGBuildablePipeline* OldPipe = Cast<AFGBuildablePipeline>(Buildable))
 	{
+		FSFReplacementGroupTransfer IndicatorGroupTransfer(OldPipe->GetFlowIndicator(),
+			CurrentParams.bPreserveDismantleGroupMembership);
 		// Preserve indicator style across the upgrade (Issue #295/#296):
 		// Build_Pipeline_NoIndicator_C (Mk1 clean) -> Build_PipelineMK2_NoIndicator_C (Mk2 clean)
 		// Build_Pipeline_C             (Mk1)       -> Build_PipelineMK2_C             (Mk2)
@@ -1292,8 +1377,8 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 		SpawnParams.bDeferConstruction = true;
 
-		ASFPipelineHologram* SmartHolo = World->SpawnActor<ASFPipelineHologram>(
-			ASFPipelineHologram::StaticClass(),
+		ASFUpgradePipelineHologram* SmartHolo = World->SpawnActor<ASFUpgradePipelineHologram>(
+			ASFUpgradePipelineHologram::StaticClass(),
 			OldPipe->GetActorTransform(),
 			SpawnParams
 		);
@@ -1307,6 +1392,8 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 		// Set build class and recipe BEFORE FinishSpawning
 		SmartHolo->SetBuildClass(NewBuildableClass);
 		SmartHolo->SetRecipe(ActualTargetRecipe);
+		SmartHolo->SetUpgradeSource(OldPipe);
+		SmartHolo->SetInsideBlueprintDesigner(OldPipe->GetBlueprintDesigner());
 
 		// Finish spawning
 		SmartHolo->FinishSpawning(OldPipe->GetActorTransform());
@@ -1347,7 +1434,11 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 
 		// Call upgrade hooks
 		OldPipe->PreUpgrade_Implementation();
+		GroupTransfer.Apply(NewPipe);
+		IndicatorGroupTransfer.Apply(NewPipe->GetFlowIndicator());
 		OldPipe->Upgrade_Implementation(NewPipe);
+		GroupTransfer.Apply(NewPipe);
+		IndicatorGroupTransfer.Apply(NewPipe->GetFlowIndicator());
 
 		// Transfer pipe connections
 		if (UFGPipeConnectionComponentBase* Conn0Partner = OldPipe->GetPipeConnection0() ? OldPipe->GetPipeConnection0()->GetConnection() : nullptr)
@@ -1482,6 +1573,14 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 			}
 		}
 
+		AFGConveyorChainActor* LiftCargoChain = nullptr;
+		if (!TryResolveLiftUpgradeCargoChain(OldLift, LiftCargoChain))
+		{
+			UE_LOG(LogSmartUpgrade, Warning, TEXT("Upgrade rejected for %s: conveyor chain cargo cannot be migrated safely"), *OldLift->GetName());
+			LiftHologram->Destroy();
+			return 0;
+		}
+
 		// [#485] Reserve the net charge; refund waits for a successful construct.
 		ReserveUpgradeCharge(Ledger, PlayerChar);
 
@@ -1512,7 +1611,20 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 
 		// Call vanilla upgrade method (like MassUpgrade does). This handles chain transfer
 		// and other internal state after PreUpgrade prepared the old lift.
+		GroupTransfer.Apply(NewLift);
+		// Belt upgrading releases the entire native chain into its original local
+		// queues. Lift upgrading transfers only its local queue. Release chain cargo
+		// here, after successful construction and before that transfer, so a lift
+		// selected first receives its items before it is retired. Remaining conveyors
+		// keep their native local queues until their own upgrade or the batch rebuild.
+		// An empty/already-released chain needs no second migration. This preserves
+		// selection and affordability order in mixed and lift-only cohorts.
+		if (IsValid(LiftCargoChain) && LiftCargoChain->GetNumActualItems() > 0)
+		{
+			LiftCargoChain->MoveItemsFromChainToBelts();
+		}
 		OldLift->Upgrade_Implementation(NewLift);
+		GroupTransfer.Apply(NewLift);
 
 		// Check for connections the upgrade hologram did not transfer. Do not manually
 		// clear/set them in this prototype; connection mutation after Construct is one
@@ -1553,7 +1665,10 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 			}
 		}
 
-		// Destroy old lift if it still exists
+		// Retire before the batch rebuild, as the belt path does. A lifespan timer
+		// leaves the old lift registered for another factory tick: partial batches
+		// can rebuild a chain containing both lifts and feed cargo into the retiring
+		// lift after its native upgrade has already transferred its local queue.
 		if (IsValid(OldLift) && !OldLift->IsPendingKillPending())
 		{
 			TArray<AActor*> ChildDismantleActors;
@@ -1562,10 +1677,10 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 			{
 				if (ChildActor && IsValid(ChildActor))
 				{
-					ChildActor->SetLifeSpan(0.001f);
+					ChildActor->Destroy();
 				}
 			}
-			OldLift->SetLifeSpan(0.001f);
+			OldLift->Destroy();
 		}
 
 		// [#485] Replacement is live and the old lift retired - the refund is now earned.
@@ -1624,6 +1739,15 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 		// Set blueprint designer (like MassUpgrade)
 		PoleHologram->SetInsideBlueprintDesigner(OldPole->GetBlueprintDesigner());
 
+		// Reject a smaller port before vanilla migration or any charge. Preserve
+		// the original actor, wires and group when even one face cannot fit.
+		if (!CanRetainPowerConnections(OldPole, PoleHologram))
+		{
+			UE_LOG(LogSmartUpgrade, Verbose, TEXT("Power replacement rejected: target cannot retain every native port on %s"), *OldPole->GetName());
+			PoleHologram->Destroy();
+			return 0;
+		}
+
 		// Try upgrade with hit result (critical for wire transfer!)
 		FHitResult HitResult(OldPole, PoleHologram->GetComponentByClass<UPrimitiveComponent>(),
 			OldPole->GetActorLocation(), OldPole->GetActorRotation().Vector());
@@ -1642,7 +1766,13 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 		// Construct the new pole
 		TArray<AActor*> ConstructedChildren;
 		FNetConstructionID ConstructionID = BuildableSubsystem ? BuildableSubsystem->GetNewNetConstructionID() : FNetConstructionID();
-		AActor* ConstructedActor = PoleHologram->Construct(ConstructedChildren, ConstructionID);
+		AActor* ConstructedActor = nullptr;
+		{
+			// Native migration owns the existing graph. Spawn observers must not
+			// treat this replacement as a new pole for a retained Auto-Connect plan.
+			TGuardValue<const UWorld*> ReplacementScope(PowerReplacementWorld, OldPole->GetWorld());
+			ConstructedActor = PoleHologram->Construct(ConstructedChildren, ConstructionID);
+		}
 
 		PoleHologram->Destroy();
 
@@ -1656,7 +1786,9 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 
 		// Call vanilla upgrade methods (transfers wires to new pole)
 		OldPole->PreUpgrade_Implementation();
+		GroupTransfer.Apply(NewPole);
 		OldPole->Upgrade_Implementation(NewPole);
+		GroupTransfer.Apply(NewPole);
 
 		// Destroy old pole and children
 		TArray<AActor*> ChildDismantleActors;
@@ -1685,6 +1817,11 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 	UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: Unsupported buildable type: %s"),
 		*Buildable->GetClass()->GetName());
 	return 0;
+}
+
+bool USFUpgradeExecutionService::IsConstructingPowerReplacement(const UWorld* World)
+{
+	return World && PowerReplacementWorld == World;
 }
 
 void USFUpgradeExecutionService::CompleteUpgrade()
@@ -1866,6 +2003,8 @@ TSubclassOf<UFGRecipe> USFUpgradeExecutionService::GetUpgradeRecipe(ESFUpgradeFa
 	// Use subsystem's existing tier-to-recipe mappings
 	switch (Family)
 	{
+		case ESFUpgradeFamily::Miner:
+			return SFUpgradeMinerFamily::GetRecipe(TargetTier);
 		case ESFUpgradeFamily::Belt:
 			return Subsystem->GetBeltRecipeForTier(TargetTier);
 
@@ -1954,6 +2093,8 @@ TSubclassOf<AFGBuildable> USFUpgradeExecutionService::GetBuildableClass(ESFUpgra
 
 	switch (Family)
 	{
+		case ESFUpgradeFamily::Miner:
+			return SFUpgradeMinerFamily::GetBuildableClass(Tier);
 		case ESFUpgradeFamily::Belt:
 		{
 			UClass* BeltClass = Subsystem->GetBeltClassForTier(Tier);
