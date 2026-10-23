@@ -1,6 +1,6 @@
 // Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
-#include "SmartFoundations.h"
 #include "Holograms/Core/SFSignHologramState.h"
+#include "SmartFoundations.h"
 #include "Engine/World.h"
 #include "Components/StaticMeshComponent.h"
 #include "Buildables/FGBuildableSignBase.h"

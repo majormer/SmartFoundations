@@ -3,7 +3,6 @@
 
 #include "SFWaterExtractorAdapter.h"
 #include "SmartFoundations.h"
-#include "Logging/SFLogMacros.h"
 #include "Data/SFBuildableSizeRegistry.h"
 
 FSFWaterExtractorAdapter::FSFWaterExtractorAdapter(AFGHologram* InHologram)
@@ -72,8 +71,6 @@ FVector FSFWaterExtractorAdapter::CalculateWaterExtractorSize() const
 	FString Source;
 	USFBuildableSizeRegistry::GetSizeWithFallback(BuildClass, Size, Source);
 
-	SF_LOG_ADAPTER(Normal, TEXT("FSFWaterExtractorAdapter: Size=%s Source=%s Class=%s (scaling enabled - validates per-child)"),
-		*Size.ToString(), *Source, *BuildClass->GetName());
 
 	return Size;
 }

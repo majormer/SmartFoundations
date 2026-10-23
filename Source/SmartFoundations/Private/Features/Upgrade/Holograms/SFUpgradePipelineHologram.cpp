@@ -1,7 +1,7 @@
 // Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
+#include "Features/Upgrade/Holograms/SFUpgradePipelineHologram.h"
 #include "SmartFoundations.h"
 #include "Buildables/FGBuildablePipeline.h"
-#include "Features/Upgrade/Holograms/SFUpgradePipelineHologram.h"
 
 void ASFUpgradePipelineHologram::SetUpgradeSource(AFGBuildablePipeline* Source)
 {

@@ -53,15 +53,12 @@ def main():
     lines.append("// human-editable size table; this file is compiled in (no runtime/packaging risk).")
     lines.append("")
     lines.append('#include "SFBuildableSizeRegistry.h"')
-    lines.append('#include "Logging/SFLogMacros.h"')
     lines.append("")
     lines.append("extern FString CurrentSourceFile;")
     lines.append("")
     lines.append("void USFBuildableSizeRegistry::RegisterDefaultProfiles()")
     lines.append("{")
     lines.append('\tCurrentSourceFile = TEXT("BuildableSizes.csv");')
-    lines.append('\tSF_LOG_ADAPTER(Normal, TEXT("📂 Registering buildable size profiles from generated table (%d rows)"), %d);'
-                 % (len(rows), len(rows)))
     lines.append("")
 
     for r in rows:

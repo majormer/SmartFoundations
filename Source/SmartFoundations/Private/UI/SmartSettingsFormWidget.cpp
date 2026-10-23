@@ -2,6 +2,8 @@
 
 #include "UI/SmartSettingsFormWidget.h"
 #include "UI/SmartSettingsFormWidgetImpl.h"
+#include "UI/SFPanelStyle.h"
+#include "Buildables/FGBuildableManufacturer.h"
 
 #define LOCTEXT_NAMESPACE "SmartFoundations"
 
@@ -13,15 +15,10 @@ void USmartSettingsFormWidget::NativeConstruct()
 
     // Switch designer-placed (and localized) labels/fields to the in-game multi-script font.
     SFFont::ApplyToWidgetTree(WidgetTree);
+    SFPanelStyle::ApplyToTree(WidgetTree);
 
-    // The Apply/Reset/Close header buttons are fixed-width in the designer (sized for English),
-    // so longer localized labels (e.g. Arabic) get clipped. Fit them to content next tick, once
-    // the localized labels, font, and first layout pass are all in place.
-    if (UWorld* World = GetWorld())
-    {
-        World->GetTimerManager().SetTimerForNextTick(
-            FTimerDelegate::CreateUObject(this, &USmartSettingsFormWidget::FitHeaderButtonRow));
-    }
+    // Footer actions size to their localized content; the former fixed header's
+    // deferred font-shrinking pass must not run on the new natural-size layout.
 
     // Check if Blueprint widgets are bound
     if (!BackgroundPanel)
@@ -366,6 +363,9 @@ void USmartSettingsFormWidget::NativeConstruct()
         BeltRoutingModeComboBox->OnSelectionChanged.AddDynamic(this, &USmartSettingsFormWidget::OnBeltRoutingModeChanged);
     }
 
+    if (LiftUsageModeComboBox)
+        LiftUsageModeComboBox->OnSelectionChanged.AddDynamic(this, &USmartSettingsFormWidget::OnLiftUsageModeChanged);
+
     // [#372] Rotation progression-axis selector (X = yaw builds up along the run, Y = rows fan out)
     if (RotationAxisComboBox)
     {
@@ -575,10 +575,17 @@ void USmartSettingsFormWidget::NativeConstruct()
 
         UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Extend mode overrides applied - title, Stagger hidden"));
     }
+    BuildPlacementMatrix();
+}
+
+bool USmartSettingsFormWidget::IsForCurrentHologram() const
+{
+    return CachedSubsystem.IsValid() && PlacementContext.IsValid() && PlacementContext.Get() == CachedSubsystem->GetActiveHologram();
 }
 
 void USmartSettingsFormWidget::PopulateFromCounterState(USFSubsystem* Subsystem)
 {
+    PlacementContext = Subsystem ? Subsystem->GetActiveHologram() : nullptr;
     if (!Subsystem)
     {
         UE_LOG(LogSmartFoundations, Verbose, TEXT("Settings Form: Cannot populate - Subsystem is null"));
@@ -618,6 +625,15 @@ void USmartSettingsFormWidget::PopulateFromCounterState(USFSubsystem* Subsystem)
         State.StaggerX, State.StaggerY, State.StaggerZX, State.StaggerZY,
         State.RotationZ);
 
+    RefreshContextControls();
+}
+
+void USmartSettingsFormWidget::RefreshContextControls()
+{
+    USFSubsystem* Subsystem = CachedSubsystem.Get();
+    if (!Subsystem) return;
+    RefreshSignSupportControl();
+    RefreshWallRotationControl();
     // Log widget binding status
     UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Widget bindings - GridX=%d SpacingX=%d StepsX=%d StaggerX=%d"),
         GridXInput != nullptr, SpacingXInput != nullptr, StepsXInput != nullptr, StaggerXInput != nullptr);
@@ -628,6 +644,10 @@ void USmartSettingsFormWidget::PopulateFromCounterState(USFSubsystem* Subsystem)
     if (AutoConnectHeaderText)
     {
         AutoConnectHeaderText->SetVisibility(ESlateVisibility::Collapsed);
+    }
+    if (FamilySectionHeading)
+    {
+        FamilySectionHeading->SetVisibility(ESlateVisibility::Collapsed);
     }
     if (AutoConnectSummaryText)
     {
@@ -693,7 +713,7 @@ void USmartSettingsFormWidget::PopulateFromCounterState(USFSubsystem* Subsystem)
     {
         if (Tier <= 0)
         {
-            return TEXT("Auto");
+            return LOCTEXT("Walk_Opt_Auto", "Auto").ToString();
         }
         return FString::Printf(TEXT("Mk%d"), Tier);
     };
@@ -702,7 +722,7 @@ void USmartSettingsFormWidget::PopulateFromCounterState(USFSubsystem* Subsystem)
     {
         if (Tier <= 0)
         {
-            return TEXT("Auto");
+            return LOCTEXT("Walk_Opt_Auto", "Auto").ToString();
         }
         return FString::Printf(TEXT("Mk%d"), Tier);
     };
@@ -711,11 +731,20 @@ void USmartSettingsFormWidget::PopulateFromCounterState(USFSubsystem* Subsystem)
     {
         switch (AxisMode)
         {
-        case 1:  return TEXT("X only");
-        case 2:  return TEXT("Y only");
+        case 1:  return LOCTEXT("PowerAxis_XOnly", "X only").ToString();
+        case 2:  return LOCTEXT("PowerAxis_YOnly", "Y only").ToString();
         case 3:  return TEXT("X+Y");
-        default: return TEXT("Auto");
+        default: return LOCTEXT("Walk_Opt_Auto", "Auto").ToString();
         }
+    };
+
+    auto DescribeEnabled = [](bool bEnabled) -> FText
+    {
+        return bEnabled ? LOCTEXT("Value_On", "On") : LOCTEXT("Value_Off", "Off");
+    };
+    auto DescribePipeStyle = [](bool bIndicator) -> FText
+    {
+        return bIndicator ? LOCTEXT("Walk_Opt_Normal", "Normal") : LOCTEXT("Walk_Opt_Clean", "Clean");
     };
 
     FString AutoConnectLines;
@@ -735,6 +764,9 @@ void USmartSettingsFormWidget::PopulateFromCounterState(USFSubsystem* Subsystem)
         if (AFGHologram* ActiveHologram = SubsystemPtr->GetActiveHologram())
         {
             const auto& Settings = SubsystemPtr->GetAutoConnectRuntimeSettings();
+            const FText BuildableName = ActiveHologram->GetBuildClass()
+                ? ActiveHologram->GetBuildClass()->GetDefaultObject<AFGBuildable>()->mDisplayName
+                : FText::GetEmpty();
 
             const bool bIsDistributor = AutoConnectService->IsDistributorHologram(ActiveHologram);
             const bool bIsPipeJunction = AutoConnectService->IsPipelineJunctionHologram(ActiveHologram);
@@ -771,12 +803,12 @@ void USmartSettingsFormWidget::PopulateFromCounterState(USFSubsystem* Subsystem)
                 else
                 {
                     // Fallback to summary text if controls not available
-                    AutoConnectLines += FString::Printf(
-                        TEXT("Belts: %s, Main=%s, ToBuildings=%s, Chain=%s"),
-                        Settings.bEnabled ? TEXT("On") : TEXT("Off"),
-                        *DescribeBeltTier(Settings.BeltTierMain),
-                        *DescribeBeltTier(Settings.BeltTierToBuilding),
-                        Settings.bChainDistributors ? TEXT("On") : TEXT("Off"));
+                    AutoConnectLines += FText::Format(
+                        LOCTEXT("Summary_BeltConnection", "{0}: {1}, main: {2}, to buildings: {3}, chain: {4}"),
+                        BuildableName, DescribeEnabled(Settings.bEnabled),
+                        FText::FromString(DescribeBeltTier(Settings.BeltTierMain)),
+                        FText::FromString(DescribeBeltTier(Settings.BeltTierToBuilding)),
+                        DescribeEnabled(Settings.bChainDistributors)).ToString();
                 }
             }
 
@@ -798,12 +830,12 @@ void USmartSettingsFormWidget::PopulateFromCounterState(USFSubsystem* Subsystem)
                     {
                         AutoConnectLines += TEXT("\n");
                     }
-                    AutoConnectLines += FString::Printf(
-                        TEXT("Pipes: %s, Main=%s, ToBuildings=%s, Style=%s"),
-                        Settings.bPipeAutoConnectEnabled ? TEXT("On") : TEXT("Off"),
-                        *DescribePipeTier(Settings.PipeTierMain),
-                        *DescribePipeTier(Settings.PipeTierToBuilding),
-                        Settings.bPipeIndicator ? TEXT("Normal") : TEXT("Clean"));
+                    AutoConnectLines += FText::Format(
+                        LOCTEXT("Summary_PipeConnection", "{0}: {1}, main: {2}, to buildings: {3}, style: {4}"),
+                        BuildableName, DescribeEnabled(Settings.bPipeAutoConnectEnabled),
+                        FText::FromString(DescribePipeTier(Settings.PipeTierMain)),
+                        FText::FromString(DescribePipeTier(Settings.PipeTierToBuilding)),
+                        DescribePipeStyle(Settings.bPipeIndicator)).ToString();
                 }
             }
 
@@ -837,11 +869,10 @@ void USmartSettingsFormWidget::PopulateFromCounterState(USFSubsystem* Subsystem)
                     {
                         AutoConnectLines += TEXT("\n");
                     }
-                    AutoConnectLines += FString::Printf(
-                        TEXT("Power: %s, Reserved=%d, Axis=%s"),
-                        Settings.bConnectPower ? TEXT("On") : TEXT("Off"),
-                        Settings.PowerReserved,
-                        *DescribePowerAxis(Settings.PowerGridAxis));
+                    AutoConnectLines += FText::Format(
+                        LOCTEXT("Summary_PowerConnection", "{0}: {1}, reserved connections: {2}, axis: {3}"),
+                        BuildableName, DescribeEnabled(Settings.bConnectPower),
+                        FText::AsNumber(Settings.PowerReserved), FText::FromString(DescribePowerAxis(Settings.PowerGridAxis))).ToString();
                 }
             }
 
@@ -872,8 +903,8 @@ void USmartSettingsFormWidget::PopulateFromCounterState(USFSubsystem* Subsystem)
                     {
                         AutoConnectLines += TEXT("\n");
                     }
-                    AutoConnectLines += FString::Printf(TEXT("Daisy-Chain Power: %s"),
-                        Settings.bScaleDaisyChainPower ? TEXT("On") : TEXT("Off"));
+                    AutoConnectLines += FText::Format(LOCTEXT("Summary_DaisyPower", "Daisy-chain power: {0}"),
+                        DescribeEnabled(Settings.bScaleDaisyChainPower)).ToString();
                 }
             }
 
@@ -895,11 +926,11 @@ void USmartSettingsFormWidget::PopulateFromCounterState(USFSubsystem* Subsystem)
                     {
                         AutoConnectLines += TEXT("\n");
                     }
-                    AutoConnectLines += FString::Printf(
-                        TEXT("Stackable Belt Pole: %s, Tier=%s, Direction=%s"),
-                        Settings.bStackableBeltEnabled ? TEXT("On") : TEXT("Off"),
-                        *DescribeBeltTier(Settings.BeltTierMain),
-                        Settings.StackableBeltDirection == 0 ? TEXT("Forward") : TEXT("Backward"));
+                    AutoConnectLines += FText::Format(
+                        LOCTEXT("Summary_ConveyorSupport", "{0}: {1}, tier: {2}, direction: {3}"),
+                        BuildableName, DescribeEnabled(Settings.bStackableBeltEnabled),
+                        FText::FromString(DescribeBeltTier(Settings.BeltTierMain)),
+                        Settings.StackableBeltDirection == 0 ? LOCTEXT("Walk_Opt_Forward", "Forward") : LOCTEXT("Walk_Opt_Backward", "Backward")).ToString();
                 }
             }
 
@@ -922,13 +953,10 @@ void USmartSettingsFormWidget::PopulateFromCounterState(USFSubsystem* Subsystem)
                     {
                         AutoConnectLines += TEXT("\n");
                     }
-                    AutoConnectLines += FString::Printf(
-                        TEXT("%s: %s, Tier=%s, Style=%s"),
-                        bIsPassthroughPipe ? TEXT("Floor Hole Pipe")
-                            : (bIsWallPipelineSupport ? TEXT("Wall Pipe Support") : TEXT("Stackable Pipe Support")),
-                        Settings.bPipeAutoConnectEnabled ? TEXT("On") : TEXT("Off"),
-                        *DescribePipeTier(Settings.PipeTierMain),
-                        Settings.bPipeIndicator ? TEXT("Normal") : TEXT("Clean"));
+                    AutoConnectLines += FText::Format(
+                        LOCTEXT("Summary_PipeSupport", "{0}: {1}, tier: {2}, style: {3}"),
+                        BuildableName, DescribeEnabled(Settings.bPipeAutoConnectEnabled),
+                        FText::FromString(DescribePipeTier(Settings.PipeTierMain)), DescribePipeStyle(Settings.bPipeIndicator)).ToString();
                 }
             }
 
@@ -948,10 +976,9 @@ void USmartSettingsFormWidget::PopulateFromCounterState(USFSubsystem* Subsystem)
                     {
                         AutoConnectLines += TEXT("\n");
                     }
-                    AutoConnectLines += FString::Printf(
-                        TEXT("Hypertube Support: Enabled=%d Routing=%d"),
-                        Settings.bHypertubeAutoConnectEnabled ? 1 : 0,
-                        Settings.HypertubeRoutingMode);
+                    AutoConnectLines += FText::Format(
+                        LOCTEXT("Summary_HypertubeSupport", "{0}: {1}, routing: {2}"),
+                        BuildableName, DescribeEnabled(Settings.bHypertubeAutoConnectEnabled), FText::AsNumber(Settings.HypertubeRoutingMode)).ToString();
                 }
             }
         }
@@ -987,14 +1014,11 @@ void USmartSettingsFormWidget::PopulateFromCounterState(USFSubsystem* Subsystem)
     {
         if (UClass* HologramClass = ActiveHologram->GetBuildClass())
         {
-            // Check if this is a production building by checking class hierarchy
-            // BUT exclude LOGISTICS auto-connect holograms (distributors, pipe junctions, power
-            // poles, supports) which may inherit from AFGBuildableFactory but don't use recipes.
-            // [#494] Must NOT use bHasAnyAutoConnectContext here: the #487 Scale Daisy-Chain row
-            // sets it for factories/generators too, which removed the recipe selector from every
-            // production building in 34.2.0.
-            bIsProductionBuilding = HologramClass->IsChildOf(AFGBuildableFactory::StaticClass())
-                                    && !bIsLogisticsAutoConnectHologram;
+            // Recipe application calls AFGBuildableManufacturer::SetRecipe. The broader
+            // factory base also includes elevators, extractors, generators and logistics
+            // buildings that cannot accept a production recipe. Modded manufacturers inherit
+            // this capability too; power/Auto-Connect availability is independent of it.
+            bIsProductionBuilding = HologramClass->IsChildOf(AFGBuildableManufacturer::StaticClass());
             if (ActiveRecipe)
             {
                 bIsCompatible = SubsystemPtr->IsRecipeCompatibleWithHologram(ActiveRecipe, HologramClass);
@@ -1115,63 +1139,32 @@ void USmartSettingsFormWidget::PopulateFromCounterState(USFSubsystem* Subsystem)
 
     // Initialize grid warning display based on current values
     UpdateGridWarningDisplay();
-}
-
-void USmartSettingsFormWidget::FitHeaderButtonRow()
-{
-    // [#352 restructure] The header buttons live in a fixed-width row under the title now
-    // (HeaderButtonRowBox, 285px = the content column, split into equal thirds), so each
-    // button is ~93px. All that remains of the old canvas-band math is the localized label
-    // fit: shrink any label that would clip in its third.
-    const float LabelAvail = 80.0f;
-    auto FitLabel = [this, LabelAvail](const TCHAR* WidgetName)
-    {
-        UTextBlock* Label = Cast<UTextBlock>(GetWidgetFromName(FName(WidgetName)));
-        if (!Label)
-        {
-            return;
-        }
-        FSlateFontInfo Font = Label->GetFont();
-        for (int32 Guard = 0; Guard < 16; ++Guard)
-        {
-            Label->ForceLayoutPrepass();
-            if (Label->GetDesiredSize().X <= LabelAvail || Font.Size <= 9.0f)
-            {
-                break;
-            }
-            Font.Size -= 1.0f;
-            Label->SetFont(Font);
-        }
-    };
-    FitLabel(TEXT("ApplyBtnText"));
-    FitLabel(TEXT("ResetBtnText"));
-    FitLabel(TEXT("CloseButtonText"));
+    if (FamilySectionHeading && AutoConnectHeaderText) FamilySectionHeading->SetVisibility(AutoConnectHeaderText->GetVisibility());
+    if (auto* Row = GetWidgetFromName(TEXT("WallRotationRow")); WallSectionHeading && Row) WallSectionHeading->SetVisibility(Row->GetVisibility());
+    if (auto* Subtitle = Cast<UTextBlock>(GetWidgetFromName(TEXT("TaskBuildableSubtitle"))))
+        if (auto* Hologram = Subsystem->GetActiveHologram(); Hologram && Hologram->GetBuildClass())
+            Subtitle->SetText(Hologram->GetBuildClass()->GetDefaultObject<AFGBuildable>()->mDisplayName);
 }
 
 void USmartSettingsFormWidget::OnWalkPathButtonClicked()
 {
     UE_LOG(LogSmartFoundations, Verbose, TEXT("Settings Form: Walk Path button clicked"));
-    // #356: close the panel FIRST (so its input/HUD reset doesn't clobber the walk widget), then enter
-    // Smart Walking on the held buildable and open the dedicated Walk widget.
+    // Suspend this task without applying or discarding its staged controls.
     TWeakObjectPtr<USFSubsystem> Sub = CachedSubsystem;
-    CloseForm();
-    if (Sub.IsValid())
-    {
-        Sub->EnterWalkMode();
-        Sub->OpenWalkPanel();
-    }
+    if (Sub.IsValid()) Sub->NavigateInterfaceTask(1);
 }
 
 void USmartSettingsFormWidget::OnCloseButtonClicked()
 {
     UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Close button clicked"));
-    CloseForm();
+    CancelAndClose();
 }
 
 void USmartSettingsFormWidget::CancelAndClose()
 {
+    CancelExtendSourceSelection();
     UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Cancel and close (toggle key or escape)"));
-    RevertToLastAppliedState();
+    if (IsForCurrentHologram()) RevertToLastAppliedState();
     CloseForm();
 }
 

@@ -1,50 +1,39 @@
-# Screenshot Checklist
+# Screenshot Guide
 
-This page tracks the screenshots needed to replace wiki placeholders. Keep screenshots clean, current, and taken from the shipping UI where possible.
+Good Smart! screenshots explain one action or result at a time. Use a clear foundation area, small native layouts and the current interface.
 
-## General
+## Compose the view
 
-| Page | Needed screenshot |
-|------|-------------------|
-| Home | Smart! logo or clean in-game shot showing a Smart grid preview with HUD visible |
-| Quick Start | Smart Panel open on a simple foundation hologram with grid values set to `3 x 3 x 1` |
-| Videos and Tutorials | Two thumbnail-style cards for the current Smart! overview videos |
-| Controls | Satisfactory Options > Keybindings > "Smart! Mod Controls" showing Smart! keybinds |
+- Use an oblique view to reveal spacing, steps, stagger, curves and height changes. Avoid looking along a bus when its lanes overlap in the image.
+- Keep the relevant Panel values readable beside the world preview. Do not cover the connection being explained with the Panel or a camera window.
+- Include the first and last endpoints when explaining a run; include the shared boundary for Blueprint seam connections.
+- Show flow arrows for conveyors and directed Vehicle Paths. For machine lifts, show both lift ends and the flat belt.
+- Use the default theme for general examples. Use Edit Mode screenshots specifically to explain layout/theme editing.
+- Prefer raw native captures; do not redraw the UI or imply successful construction with a mockup.
 
-## UI
+## Current examples
 
-| Page | Needed screenshot |
-|------|-------------------|
-| Smart Panel and HUD | Smart Settings Form open while aiming at a buildable hologram |
-| Smart Panel and HUD | Smart Settings Form with Auto-Connect sections visible |
-| Smart Panel and HUD | Smart Upgrade Panel after a radius scan |
-| Smart Panel and HUD | HUD overlay while spacing mode is active |
-| Settings Reference | Smart Settings Form sections for Belt, Pipe, Power, HUD, and Arrows |
+- [Scaling and the shared Panel](Grid-Scaling)
+- [Transforms](Transforms)
+- [Extend entry, regular Extend and Scaled Extend](Extend)
+- [Horizontal Water Extractor controls](Water-Extractors)
+- [Walking bus and segment controls](Smart-Walking)
+- [Restore](Smart-Restore)
+- [Shared HUD and Camera editing](Smart-Panel-and-HUD)
 
-## Features
+- [Connected Water Extractor manifold](Water-Extractors#connect-the-outlets)
+- [Stacked factory Blueprint floors](Blueprints#stacked-lift-tail-example)
+- [Populated Saved Modules example](Smart-Restore#modules)
+- [Selected-height Elevator grid](Buildable-Gallery#personnel-elevator)
 
-| Page | Needed screenshot |
-|------|-------------------|
-| Grid Scaling | `5 x 3 x 1` foundation grid preview with HUD counters |
-| Transforms | Comparison image: spacing gap, stepped row, staggered row, and rotation arc |
-| Auto-Connect | Scaled splitter row preview with belts connecting into machines |
-| Auto-Connect | Pipe junction grid with preview pipes |
-| Auto-Connect | Power poles with cable previews and nearby machines connected |
-| Extend | Completed module beside a preview clone created by Extend |
-| Smart Upgrade | Upgrade Panel showing scan results for belts, lifts, pipes, and power poles |
-| Smart Upgrade | Traversal scan from a belt showing connected network results |
-| Smart Dismantle | Vanilla Blueprint Dismantle mode highlighting a Smart-placed multi-building group |
-| Smart Camera | PiP viewport showing the far end of a long Smart! foundation grid |
-| Smart Camera | Comparison strip showing Top Down, Front 45, and Periscope modes |
+- [Railway and directed Vehicle Path seams](Blueprints#railway-and-vehicle-path-seams)
+- [Wall-mounted Fans and Vents](Buildable-Gallery#wall-mounted-fans-and-vents)
+- [Floor holes](Buildable-Gallery#floor-holes)
+- [Built-in Camera view](Smart-Camera#built-in-view-with-smart-assistance-off)
+- [Independent Camera views](Smart-Camera#multiple-mods)
 
-## Capture Notes
-
-- Prefer default HUD/theme unless the screenshot is specifically about themes.
-- Avoid experimental branches or debug overlays unless the page is documenting diagnostics.
-- Use current keybinds and current UI labels.
-- Crop enough context to show the feature, not just the panel.
-- When showing material costs or upgrades, use a small test factory so the counts are readable.
+Screenshots illustrate the pictured state; they do not certify transport, save/load behavior or every supported building.
 
 ---
 
-_Last updated: 2026-07-14 · Smart! v34.2.1_
+_Last updated: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (release draft)_

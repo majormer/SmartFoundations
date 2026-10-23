@@ -15,9 +15,14 @@
 
 #include "UI/SmartSettingsFormWidgetImpl.h"
 #include "UI/SFPanelStyle.h"
+#include "UI/SFContextHelp.h"
+#include "UI/SFInterfaceTaskStrip.h"
+#include "Hologram/FGHologram.h"
 #include "Components/WidgetSwitcher.h"
 #include "Components/VerticalBoxSlot.h"
 #include "Components/SizeBox.h"
+#include "Components/ScrollBox.h"
+#include "Components/ExpandableArea.h"
 #include "Features/Extend/SFExtendService.h"
 #include "Features/Extend/SFExtendCloneTopology.h"
 #include "FGRecipeManager.h"
@@ -124,13 +129,13 @@ void USmartSettingsFormWidget::BuildRestoreTabUI()
 		return Row;
 	};
 
-	auto MakeSectionLabel = [this](UVerticalBox* Parent, const FText& Text, const FMargin& Pad)
+	auto MakeSectionLabel = [this](UVerticalBox* Parent, const FText& Text, const FMargin& Pad, USFContextHelp* Help = nullptr)
 	{
 		UTextBlock* TB = NewObject<UTextBlock>(this);
 		TB->SetText(Text);
-		TB->SetFont(SFFont::Get(10));
-		TB->SetColorAndOpacity(FSlateColor(SFRestoreDimText));
-		if (UVerticalBoxSlot* VSlot = Parent->AddChildToVerticalBox(TB))
+		TB->SetFont(SFFont::Get(16));
+		TB->SetColorAndOpacity(FSlateColor(SFRestoreLightText));
+		if (UVerticalBoxSlot* VSlot = Parent->AddChildToVerticalBox(Help ? SFPanelStyle::MakeHelpLabelRow(this, TB, Help) : TB))
 		{
 			VSlot->SetPadding(Pad);
 		}
@@ -155,15 +160,8 @@ void USmartSettingsFormWidget::BuildRestoreTabUI()
 
 	// ── Root ────────────────────────────────────────────────────────────────
 	UVerticalBox* Root = NewObject<UVerticalBox>(this);
+	Root->AddChildToVerticalBox(SFPanelStyle::MakeRule(this,true))->SetPadding(FMargin(0,0,0,12));
 
-	UTextBlock* Header = NewObject<UTextBlock>(this);
-	Header->SetText(LOCTEXT("Restore_Title", "Smart Restore"));
-	Header->SetFont(SFFont::Get(15));
-	Header->SetColorAndOpacity(FSlateColor(SFRestoreAccent));
-	if (UVerticalBoxSlot* HeaderSlot = Root->AddChildToVerticalBox(Header))
-	{
-		HeaderSlot->SetPadding(FMargin(8.0f, 8.0f, 8.0f, 4.0f));
-	}
 
 	// ── Tab bar ─────────────────────────────────────────────────────────────
 	{
@@ -182,7 +180,7 @@ void USmartSettingsFormWidget::BuildRestoreTabUI()
 		{
 			ModulesTabButton->OnClicked.AddDynamic(this, &USmartSettingsFormWidget::OnModulesTabClicked);
 		}
-		AddRow(Root, { GridPresetsTabButton, ModulesTabButton }, FMargin(6.0f, 2.0f));
+		AddRow(Root, { SFPanelStyle::WrapTabButton(GridPresetsTabButton), SFPanelStyle::WrapTabButton(ModulesTabButton) }, FMargin(6.0f, 2.0f));
 	}
 
 	// ── Switcher ────────────────────────────────────────────────────────────
@@ -197,6 +195,10 @@ void USmartSettingsFormWidget::BuildRestoreTabUI()
 	// Load to Panel stages values; Apply & Build switches the gun + stages + honors Apply
 	// Immediately. Save reads the ON-SCREEN values (flush-then-capture).
 	UVerticalBox* GridTab = NewObject<UVerticalBox>(this);
+    auto* PresetHelp = SFPanelStyle::MakeHelp(this, TEXT("PresetHelp"),
+        LOCTEXT("Help_PresetsTitle", "Grid Presets: placement settings"),
+        LOCTEXT("Help_PresetsSummary", "Save grid, spacing and placement choices. A preset is settings, not a captured building layout."),
+        LOCTEXT("Help_PresetsBody", "Select a preset to inspect it; selection alone changes nothing. Load to Panel returns to Scaling with those settings. Apply Immediately decides whether they update the preview immediately or wait for Apply.\nSave from Panel creates an entry from the current fields. Update replaces the selected entry; Delete removes it after confirmation. Export Code copies a shareable entry; Import Code reads one from the clipboard. Importing does not build anything."));
 
 	// Restyle the reparented BP buttons to the dark Smart-Panel-aligned scheme (their designer
 	// style is light-grey, which fought the dark panel).
@@ -212,6 +214,8 @@ void USmartSettingsFormWidget::BuildRestoreTabUI()
 		}
 	}
 
+	MakeSectionLabel(GridTab, LOCTEXT("Restore_SavedPresets", "Saved grid presets"), FMargin(6,12,6,6), PresetHelp);
+    GridTab->AddChildToVerticalBox(PresetHelp)->SetPadding(FMargin(6,0,6,12));
 	Reparent(PresetDropdown, GridTab, FMargin(6.0f, 4.0f));
 	GridPresetDetailsText = MakeDetailsPane(GridTab);
 
@@ -222,6 +226,7 @@ void USmartSettingsFormWidget::BuildRestoreTabUI()
 		UTextBlock* LoadLabel = nullptr;
 		LoadToPanelBtn = MakeRestoreActionButton(LOCTEXT("Restore_LoadToPanel", "Load to Panel"), nullptr, &LoadLabel);
 		LoadToPanelBtnLabel = LoadLabel;
+        if (LoadLabel) LoadLabel->SetColorAndOpacity(SFPanelStyle::NearBlackText);
 		if (LoadToPanelBtn)
 		{
 			LoadToPanelBtn->SetStyle(MakeRestoreButtonStyle(/*bAccent*/ true));
@@ -242,7 +247,9 @@ void USmartSettingsFormWidget::BuildRestoreTabUI()
 		PresetDescriptionInput->SetHintText(LOCTEXT("Restore_PresetDesc_Hint", "Description (optional)"));
 		StyleRestoreInputLight(PresetDescriptionInput);
 	}
+	MakeSectionLabel(GridTab, LOCTEXT("Restore_NameLabel", "Name"), FMargin(6,8,6,2));
 	Reparent(PresetNameInput, GridTab, FMargin(6.0f, 2.0f));
+	MakeSectionLabel(GridTab, LOCTEXT("Restore_DescriptionLabel", "Description"), FMargin(6,8,6,2));
 	Reparent(PresetDescriptionInput, GridTab, FMargin(6.0f, 2.0f));
 	AddRow(GridTab, { SavePresetBtn }, FMargin(6.0f, 2.0f));
 
@@ -256,6 +263,10 @@ void USmartSettingsFormWidget::BuildRestoreTabUI()
 	// enters the rescalable stamp session. The top slot is the "Extend clipboard" - the
 	// previously-invisible transient capture buffer, made visible (#427 capture model).
 	UVerticalBox* ModTab = NewObject<UVerticalBox>(this);
+    auto* ModuleHelp = SFPanelStyle::MakeHelp(this, TEXT("ModuleHelp"),
+        LOCTEXT("Help_ModulesTitle", "Modules: captured layouts"),
+        LOCTEXT("Help_ModulesSummary", "Save a layout captured by Extend, then load it as a new building preview."),
+        LOCTEXT("Help_ModulesBody", "Preview or build a Smart Extend to populate the Extend clipboard. Give that capture a name and choose Save as Module to add it to the library.\nSelecting a saved Module only shows its contents. Load Module confirms the recipe change and starts a scalable layout preview; it does not construct or charge materials. Aim and build normally when ready. The chosen buildings, unlocks, native restrictions and normal costs still apply. Delete and Share affect the library entry, not buildings already in the world."));
 
 	{
 		// Same muted pane + dim section-label styling as the Grid Presets tab - the earlier
@@ -268,9 +279,10 @@ void USmartSettingsFormWidget::BuildRestoreTabUI()
 
 		UTextBlock* ClipHeader = NewObject<UTextBlock>(this);
 		ClipHeader->SetText(LOCTEXT("Restore_Clipboard_Header", "Extend clipboard"));
-		ClipHeader->SetFont(SFFont::Get(10));
-		ClipHeader->SetColorAndOpacity(FSlateColor(SFRestoreDimText));
-		ClipVB->AddChildToVerticalBox(ClipHeader);
+		ClipHeader->SetFont(SFFont::Get(16));
+		ClipHeader->SetColorAndOpacity(FSlateColor(SFRestoreLightText));
+		ClipVB->AddChildToVerticalBox(SFPanelStyle::MakeHelpLabelRow(this, ClipHeader, ModuleHelp));
+        ClipVB->AddChildToVerticalBox(ModuleHelp)->SetPadding(FMargin(0,4,0,12));
 
 		ClipboardSummaryText = NewObject<UTextBlock>(this);
 		ClipboardSummaryText->SetFont(SFFont::Get(11));
@@ -289,6 +301,7 @@ void USmartSettingsFormWidget::BuildRestoreTabUI()
 		StyleRestoreInputLight(ModuleNameInput);
 		ModuleNameInput->SetHintText(LOCTEXT("Restore_ModuleName_Hint", "New Module name"));
 		ModuleNameInput->WidgetStyle.TextStyle.Font.Size = 10;
+		MakeSectionLabel(ClipVB, LOCTEXT("Restore_NameLabel", "Name"), FMargin(0,8,0,2));
 		ClipVB->AddChildToVerticalBox(ModuleNameInput);
 
 		// "Save as Module" = the repurposed Import-from-Extend button (same handler slot, new
@@ -313,6 +326,8 @@ void USmartSettingsFormWidget::BuildRestoreTabUI()
 	MakeSectionLabel(ModTab, LOCTEXT("Restore_ModuleLibrary", "Saved Modules:"), FMargin(8.0f, 6.0f, 8.0f, 0.0f));
 
 	ModuleDropdown = NewObject<UComboBoxString>(this);
+	ModuleDropdown->Font = SFFont::Get(14);
+	ModuleDropdown->ForegroundColor = FSlateColor(SFPanelStyle::NearBlackText);
 	if (PresetDropdown)
 	{
 		ModuleDropdown->SetWidgetStyle(PresetDropdown->GetWidgetStyle());
@@ -328,8 +343,9 @@ void USmartSettingsFormWidget::BuildRestoreTabUI()
 
 	{
 		UTextBlock* ModApplyLabel = nullptr;
-		ModuleApplyBtn = MakeRestoreActionButton(LOCTEXT("Restore_ModuleApply", "Apply"), ApplyPresetBtn, &ModApplyLabel);
+		ModuleApplyBtn = MakeRestoreActionButton(LOCTEXT("Restore_LoadModule", "Load Module"), ApplyPresetBtn, &ModApplyLabel);
 		ModuleApplyBtnLabel = ModApplyLabel;
+        if (ModApplyLabel) ModApplyLabel->SetColorAndOpacity(SFPanelStyle::NearBlackText);
 		if (ModuleApplyBtn)
 		{
 			// Accent = the tab's primary action, mirroring Load to Panel on the Grid tab.
@@ -355,7 +371,9 @@ void USmartSettingsFormWidget::BuildRestoreTabUI()
 			ModuleImportBtn->OnClicked.AddDynamic(this, &USmartSettingsFormWidget::OnModuleImportClicked);
 		}
 		AddRow(ModTab, { ModuleApplyBtn, ModuleDeleteBtn }, FMargin(6.0f, 2.0f));
-		AddRow(ModTab, { ModuleExportBtn, ModuleImportBtn }, FMargin(6.0f, 2.0f));
+		ModTab->AddChildToVerticalBox(SFPanelStyle::MakeRule(this))->SetPadding(FMargin(6,12));
+	MakeSectionLabel(ModTab, LOCTEXT("Restore_ShareModules", "Share"), FMargin(6,4,6,6));
+	AddRow(ModTab, { ModuleExportBtn, ModuleImportBtn }, FMargin(6.0f, 2.0f));
 	}
 
 	RestoreTabSwitcher->AddChild(ModTab);
@@ -376,6 +394,14 @@ void USmartSettingsFormWidget::BuildRestoreTabUI()
 		PanelSlot->SetAutoSize(true);
 	}
 	WidthPin->AddChild(Root);
+    WidthPin->SetWidthOverride(620);
+	RestoreSidePanel->SetPadding(FMargin(0));
+	// Keep tabs/header visible while longer descriptions and libraries scroll.
+	RestoreTabSwitcher->RemoveFromParent();
+	auto* Scroll = NewObject<UScrollBox>(this); Scroll->AddChild(RestoreTabSwitcher);
+    auto* ScrollSlot = Root->AddChildToVerticalBox(Scroll);
+    ScrollSlot->SetPadding(FMargin(0,12));
+    ScrollSlot->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
 	RestoreSidePanel->SetContent(WidthPin);
 
 	SetActiveRestoreTab(0);
@@ -404,29 +430,15 @@ void USmartSettingsFormWidget::BuildRestoreTabUI()
 
 void USmartSettingsFormWidget::SetActiveRestoreTab(int32 TabIndex)
 {
+	if (bWaitingForConfirmation || PendingPanelPreset.IsValid()) return;
 	ActiveRestoreTabIndex = FMath::Clamp(TabIndex, 0, 1);
 	if (RestoreTabSwitcher)
 	{
 		RestoreTabSwitcher->SetActiveWidgetIndex(ActiveRestoreTabIndex);
 	}
 
-	// Active tab = orange accent button + near-black label; idle = dark button + light label.
-	if (GridPresetsTabButton)
-	{
-		GridPresetsTabButton->SetStyle(MakeRestoreButtonStyle(ActiveRestoreTabIndex == 0));
-	}
-	if (ModulesTabButton)
-	{
-		ModulesTabButton->SetStyle(MakeRestoreButtonStyle(ActiveRestoreTabIndex == 1));
-	}
-	if (GridPresetsTabLabel)
-	{
-		GridPresetsTabLabel->SetColorAndOpacity(FSlateColor(ActiveRestoreTabIndex == 0 ? FLinearColor(0.05f, 0.05f, 0.05f, 1.0f) : SFRestoreLightText));
-	}
-	if (ModulesTabLabel)
-	{
-		ModulesTabLabel->SetColorAndOpacity(FSlateColor(ActiveRestoreTabIndex == 1 ? FLinearColor(0.05f, 0.05f, 0.05f, 1.0f) : SFRestoreLightText));
-	}
+    SFPanelStyle::StyleTab(GridPresetsTabButton, ActiveRestoreTabIndex == 0);
+    SFPanelStyle::StyleTab(ModulesTabButton, ActiveRestoreTabIndex == 1);
 
 	if (ActiveRestoreTabIndex == 1)
 	{
@@ -450,6 +462,7 @@ void USmartSettingsFormWidget::OnModulesTabClicked()
 
 void USmartSettingsFormWidget::UpdateRestoreDockPosition()
 {
+    if (TaskContentSwitcher) return;
 	if (!BackgroundPanelSlot || !RestoreSidePanelSlot || !BackgroundPanel)
 	{
 		return;
@@ -514,21 +527,15 @@ void USmartSettingsFormWidget::OnLoadToPanelClicked()
 
 	if (RestoreSvc->ApplyPreset(Preset, /*bIncludeCounterState*/ false))
 	{
-		PopulateSmartPanelFromPreset(Preset);
-
-		if (bApplyImmediately)
-		{
-			OnApplyButtonClicked();
-		}
-
-		if (GridPresetDetailsText)
-		{
-			GridPresetDetailsText->SetText(FText::Format(
-				bApplyImmediately
-					? LOCTEXT("Restore_LoadedApplied", "Loaded and applied '{0}'.")
-					: LOCTEXT("Restore_LoadedStaged", "Loaded '{0}' into the panel - fine-tune, then Apply."),
-				FText::FromString(Preset.Name)));
-		}
+        PendingPanelPreset = MakeShared<const FSFRestorePreset>(Preset);
+        PresetLoadAttempts = 120;
+        PresetLoadSettleTicks = 2;
+        // Build-gun recipe changes complete asynchronously. Keep the saved values
+        // staged until registration has settled on the matching native hologram.
+        if (WidgetTree) WidgetTree->ForEachWidget([](UWidget* Widget)
+        {
+            if (auto* Strip = Cast<USFInterfaceTaskStrip>(Widget)) Strip->SetActiveTask(3);
+        });
 	}
 	else if (GridPresetDetailsText)
 	{
@@ -540,6 +547,36 @@ void USmartSettingsFormWidget::OnLoadToPanelClicked()
 			FText::FromString(Preset.Name),
 			FText::FromString(Reason.IsEmpty() ? TEXT("See log for details.") : Reason)));
 	}
+}
+
+void USmartSettingsFormWidget::TickPendingPresetLoad()
+{
+    if (!PendingPanelPreset.IsValid() || !CachedSubsystem.IsValid()) return;
+    CachedSubsystem->PollForActiveHologram();
+    AFGHologram* Hologram = CachedSubsystem->GetActiveHologram();
+    const bool bReady = IsValid(Hologram) && Hologram->GetBuildClass() && Hologram->GetRecipe()
+        && Hologram->GetRecipe()->GetName() == PendingPanelPreset->BuildingClassName;
+    if (bReady && PresetLoadSettleTicks-- <= 0)
+    {
+        const FSFRestorePreset Preset = *PendingPanelPreset;
+        PendingPanelPreset.Reset();
+        if (Preset.CaptureFlags.bAutoConnect)
+            CachedSubsystem->SetAutoConnectRuntimeSettingsFromPreset(Preset.AutoConnect);
+        PopulateSmartPanelFromPreset(Preset);
+        ShowRestorePanel(false);
+        if (bApplyImmediately) OnApplyButtonClicked();
+        return;
+    }
+    if (!bReady) PresetLoadSettleTicks = 2;
+    if (--PresetLoadAttempts > 0) return;
+    PendingPanelPreset.Reset();
+    PlacementContext = Hologram;
+    RefreshContextControls();
+    if (GridPresetDetailsText) GridPresetDetailsText->SetText(LOCTEXT("Restore_PanelLoadTimeout", "The building preview did not become ready. Your saved preset is unchanged; select it again when the build gun is ready."));
+    if (WidgetTree) WidgetTree->ForEachWidget([](UWidget* Widget)
+    {
+        if (auto* Strip = Cast<USFInterfaceTaskStrip>(Widget)) Strip->SetActiveTask(3);
+    });
 }
 
 // ============================================================================
@@ -601,9 +638,9 @@ void USmartSettingsFormWidget::OnModuleApplyClicked()
 	};
 	bWaitingForConfirmation = true;
 	ShowConfirmationDialog(
-		LOCTEXT("Restore_ModuleApplyTitle", "Apply Module").ToString(),
+		LOCTEXT("Restore_LoadModule", "Load Module").ToString(),
 		FText::Format(
-			LOCTEXT("Restore_ModuleApplyMessage", "Rebuild this saved layout ({0} parts) and switch to {1}? Hold {1} to stamp it; scroll to scale."),
+			LOCTEXT("Restore_ModuleLoadMessage", "Load this saved layout ({0} parts) and switch to {1}? You can then aim, scale and build it. Normal construction costs apply."),
 			FText::AsNumber(PartCount),
 			FText::FromString(BuildingName)).ToString(),
 		FLinearColor(1.0f, 0.6f, 0.0f, 1.0f));
@@ -723,6 +760,10 @@ void USmartSettingsFormWidget::RefreshModuleDropdown(const FString& PreferredSel
 
 void USmartSettingsFormWidget::UpdateGridPresetDetails(const FString& PresetName)
 {
+    for (UButton* Button : {LoadToPanelBtn.Get(), UpdatePresetBtn.Get(), DeletePresetBtn.Get(), ExportPresetBtn.Get()})
+    {
+        if (Button) Button->SetIsEnabled(false);
+    }
 	if (!GridPresetDetailsText)
 	{
 		return;
@@ -744,6 +785,8 @@ void USmartSettingsFormWidget::UpdateGridPresetDetails(const FString& PresetName
 	}
 
 	TArray<FString> Lines;
+	for (UButton* Button : {UpdatePresetBtn.Get(), DeletePresetBtn.Get(), ExportPresetBtn.Get()})
+        if (Button) Button->SetIsEnabled(true);
 	Lines.Add(FString::Printf(TEXT("%s: %s"),
 		*LOCTEXT("Restore_Details_Building", "Building").ToString(),
 		*FriendlyBuildingNameFromRecipeName(Preset.BuildingClassName)));
@@ -810,6 +853,10 @@ void USmartSettingsFormWidget::UpdateGridPresetDetails(const FString& PresetName
 
 void USmartSettingsFormWidget::UpdateModuleDetails(const FString& ModuleName)
 {
+    for (UButton* Button : {ModuleApplyBtn.Get(), ModuleDeleteBtn.Get(), ModuleExportBtn.Get()})
+    {
+        if (Button) Button->SetIsEnabled(false);
+    }
 	if (!ModuleDetailsText)
 	{
 		return;
@@ -843,6 +890,10 @@ void USmartSettingsFormWidget::UpdateModuleDetails(const FString& ModuleName)
 		*LOCTEXT("Restore_Details_Source", "Source").ToString(),
 		*FriendlyBuildingNameFromRecipeName(Preset.BuildingClassName)));
 	// Per-UNIT composition: the topology is one clone set; the total scales when you stamp.
+    for (UButton* Button : {ModuleDeleteBtn.Get(), ModuleExportBtn.Get()})
+    {
+        if (Button) Button->SetIsEnabled(true);
+    }
 	Lines.Add(FString::Printf(TEXT("%s: %s"),
 		*LOCTEXT("Restore_Details_EachUnit", "Each unit").ToString(),
 		*SummarizeTopologyByRole(Preset.ExtendCloneTopology)));
@@ -927,7 +978,24 @@ void USmartSettingsFormWidget::UpdateClipboardSlot()
 	}
 	if (ModuleNameInput)
 	{
-		ModuleNameInput->SetIsEnabled(bAvailable);
+        // Unavailable capture is read-only, keeping its explanation readable.
+        // Save eligibility remains owned by the unchanged native capture check.
+        ModuleNameInput->SetIsEnabled(true);
+        ModuleNameInput->SetIsReadOnly(!bAvailable);
+        if (!bAvailable && !bModuleNameShowsUnavailable)
+        {
+            SuspendedModuleName = ModuleNameInput->GetText();
+            bModuleNameShowsUnavailable = true;
+            ModuleNameInput->SetText(LOCTEXT("Restore_ModuleName_NoCapture", "Capture a Smart Extend first"));
+        }
+        else if (bAvailable && bModuleNameShowsUnavailable)
+        {
+            ModuleNameInput->SetText(SuspendedModuleName);
+            bModuleNameShowsUnavailable = false;
+        }
+        ModuleNameInput->SetHintText(bAvailable
+            ? LOCTEXT("Restore_ModuleName_Hint", "New Module name")
+            : LOCTEXT("Restore_ModuleName_NoCapture", "Capture a Smart Extend first"));
 	}
 }
 
@@ -949,7 +1017,10 @@ FString USmartSettingsFormWidget::SummarizeTopologyByRole(const FSFCloneTopology
 		else if (Role == TEXT("pipe_junction")) Label = Count == 1 ? LOCTEXT("Role_Junction", "junction").ToString() : LOCTEXT("Role_Junctions", "junctions").ToString();
 		else if (Role == TEXT("power_pole"))   Label = Count == 1 ? LOCTEXT("Role_PowerPole", "power pole").ToString() : LOCTEXT("Role_PowerPoles", "power poles").ToString();
 		else if (Role == TEXT("wire"))         Label = Count == 1 ? LOCTEXT("Role_Wire", "wire").ToString() : LOCTEXT("Role_Wires", "wires").ToString();
-		else                                    Label = Role;
+		else if (Role == TEXT("lane_segment")) Label = Count == 1 ? LOCTEXT("Role_RouteSegment", "route segment").ToString() : LOCTEXT("Role_RouteSegments", "route segments").ToString();
+		else if (Role == TEXT("route_support")) Label = Count == 1 ? LOCTEXT("Role_RouteSupport", "route support").ToString() : LOCTEXT("Role_RouteSupports", "route supports").ToString();
+		else if (Role == TEXT("wire_cost")) Label = Count == 1 ? LOCTEXT("Role_CableAllowance", "cable cost allowance").ToString() : LOCTEXT("Role_CableAllowances", "cable cost allowances").ToString();
+		else Label = Count == 1 ? LOCTEXT("Role_Component", "component").ToString() : LOCTEXT("Role_Components", "components").ToString();
 		return FString::Printf(TEXT("%d %s"), Count, *Label);
 	};
 

@@ -36,6 +36,18 @@ Extend and Scaled Extend are active. The current implementation is clone-topolog
 | `Source/SmartFoundations/Public/Features/Extend/SFWiringManifest.h` | Post-build wiring manifest |
 | `Source/SmartFoundations/Private/Features/Extend/SFWiringManifest.cpp` | Belt, pipe, and power connection execution after build |
 
+## Explicit Panel source selection
+
+`Features/Extend/UI/SmartSettingsFormWidget_Extend.cpp` owns the Extend task's source summary, direction control and one-click world selection. The shared task strip exposes it only for recipes accepted by the native Extend detection contract. The existing placement controls remain the only geometry draft.
+
+`USFExtendService::SelectPanelSource` validates a live source of the held build class before changing any state, then calls `TryExtendFromBuilding` and uses the existing manual-hold lifetime. No Panel operation constructs, pays, or changes authoritative source eligibility. The normal staged construction path still owns server-side reconstruction, restrictions and charging.
+
+Explicit activation may swap the native factory root while a modal Panel is already open. Register the new `CurrentExtendHologram` through `RegisterActiveHologram` before reading capabilities or capturing `PlacementContext`. That registration recognizes the live Extend root and preserves its signed counters. Waiting for the next poll leaves the form bound to a destroyed native root and can strand its navigation disabled.
+
+World selection uses a temporary transparent hit layer behind the Panel. Only an armed left click outside its bounds is consumed as a selection; Panel clicks remain UI input, and no click is forwarded to the build gun. Escape, task switches, close and destruction remove the layer and any outline owned by selection. A miss leaves the previous source and draft intact. Replacement of another source or nontrivial placement requires the existing confirmation surface; revalidate the weak target after acceptance.
+
+The automatic hover entry below remains available. The runtime HUD identifies the source and queries the current Panel key binding rather than embedding a default key.
+
 ## Runtime Flow
 
 1. `USFSubsystem::Tick` line-traces from the player and calls `USFExtendService::TryExtendFromBuilding` when the player is aiming at a candidate source.

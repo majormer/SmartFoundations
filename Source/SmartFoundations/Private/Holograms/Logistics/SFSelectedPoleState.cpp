@@ -1,6 +1,6 @@
 // Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
-#include "SmartFoundations.h"
 #include "Holograms/Logistics/SFSelectedPoleState.h"
+#include "SmartFoundations.h"
 #include "Components/StaticMeshComponent.h"
 #include "Buildables/FGBuildablePole.h"
 #include "FGBuildablePolePipe.h"

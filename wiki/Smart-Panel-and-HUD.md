@@ -1,77 +1,55 @@
 # Smart Panel and HUD
 
-The Smart Panel is where you adjust Smart! without memorizing every keybind.
+Press **K** with a supported buildable selected. Smart's tools share one window, with the controls that apply to your current building.
 
-Open it with `K`.
+![Shared task tabs and aligned placement controls](https://raw.githubusercontent.com/wiki/majormer/SmartFoundations/images/v35/scaling.png)
 
-> Screenshot placeholder: Smart Panel open while aiming at a buildable hologram.
+## Choose a task
 
-## Smart Settings Form
+| Tab | Use it to |
+|---|---|
+| **Scaling** | Repeat the held building and edit its grid, spacing, steps, stagger and rotation |
+| **Extend** | Select an existing matching factory module, inspect captured companions and repeat it |
+| **Walking** | Steer a connected route, or resume a compatible existing bus |
+| **Upgrade** | Scan existing infrastructure, choose a tier and review replacement costs |
+| **Restore** | Save/load Grid Presets or captured Modules |
 
-Use the Smart Settings Form for:
+Available tasks follow the held building. Railway tracks and Vehicle Paths open Walking directly and do not offer ordinary Scaling. A raw pipe recipe can open Upgrade; to start or resume a pipe walk, equip the matching **stackable support** first.
 
-- Grid size.
-- Spacing, Steps, Stagger, and Rotation. The Rotation row also has an **X/Y selector** that chooses which grid axis the rotation builds up along — X curves the run, Y fans the rows out (see [Transforms](Transforms)).
-- Recipe selection.
-- Belt Auto-Connect settings.
-- Pipe Auto-Connect settings.
-- Power Auto-Connect settings.
-- HUD and arrow preferences.
+Switching to Upgrade suspends an active walk. Switching to a task that would discard an unbuilt path asks for confirmation. Read the warning before continuing; declining keeps the path.
 
-The panel has **Apply**, **Reset**, and **Close** buttons in a row under the header. Depending on your settings, changes may apply immediately or wait until you click Apply; Reset returns the settings to their defaults.
+## Placement and live settings
 
-> Screenshot placeholder: Smart Settings Form with Auto-Connect settings visible.
+Scaling keeps X/Y/Z in aligned columns. These fields stay building-relative even with Player Relative controls enabled. The colored arrows show the actual directions.
 
-With **Apply Immediately** off, **Apply** also rebuilds Auto-Connect previews using your pending choices. For blueprint placements, X/Y/Z spacing changes override the configured defaults for the current blueprint session.
+**Apply placement immediately** controls placement geometry. When off, edit the grid and transforms, then press **Apply** to update the world preview. Apply does not construct anything. Closing discards unapplied placement edits. **Reset** resets the placement controls.
 
-## Smart Walking
+Connection preferences, production recipes and the applicable native building controls are **live settings**. For example, changing pipe routing rebuilds its preview immediately; wall-support rotation changes the support itself. They are labeled separately and are not waiting for the placement Apply button. Check the preview and material quote before firing the build gun.
 
-When you are holding a stackable conveyor pole or pipeline support, the Smart Panel shows a **Smart Walking** button. Click it to start a walk and open the Smart Walking panel.
+## Help and window position
 
-The panel is an editable table of every segment in the run:
+Hover a small **?** button beside a building or section label for help. Click to keep the details expanded; click again to collapse them. Each task explains its own workflow.
 
-- Advance, turn, rise, and shift values for each segment.
-- Each segment's exit heading, shown as a compass bearing.
+Drag the title bar with the left mouse button, or use the existing right-button drag gesture. A manually moved panel remembers its position across saves. The mod settings offer a position reset.
 
-It also sets options for the whole path:
+## HUD during building
 
-- Tier.
-- Routing.
-- Belt flow direction (belts only).
-- Pipe style (pipes only).
+The HUD shows the active value, colored grid counts and relevant control hints. **Controls: Building Relative** or **Controls: Player Relative** identifies how the wheel and directional keys behave. The label describes controls, not the selected visual theme.
 
-See [Smart Walking](Smart-Walking).
+During Walking the HUD identifies the route family and current segment. Hints change to route operations such as advancing, turning and climbing. Remapped controls are reflected in the hints.
 
-> Screenshot placeholder: Smart Walking panel with the segment table open.
+![Shared HUD and Camera editor with a single Done / Lock action](https://raw.githubusercontent.com/wiki/majormer/SmartFoundations/images/v35/layout-editor.png)
 
-## HUD
+## Move, resize and theme the HUD
 
-The HUD shows your current Smart! values while building. It is useful when you are adjusting with keybinds instead of the panel.
+Enter layout **Edit Mode** with **F8** by default, or choose **Edit HUD layout after Resume** in mod settings. Drag the HUD title bar to move it and use its resize handle or Scale field to change its size. Choose from the six themes; the existing multilingual font family is retained.
 
-It can show:
+With Smart Camera installed, the same edit session includes the camera windows. **Done / Lock** saves pending HUD and camera layout edits together. **Cancel** or Escape discards the pending edits. Normal building input and the ordinary scaling HUD return when the editor closes.
 
-- Grid counts.
-- Active mode.
-- Selected axis.
-- Transform values.
+HUD appearance and panel positions apply **across all saves on your installation**. The Camera editor's All saves / This save selector applies to camera preferences only. **Reset HUD Appearance** restores the HUD defaults. Outside Edit Mode the HUD is locked and does not intercept building clicks.
 
-While you are walking a run, the HUD also shows a compact walk badge with the segment count and current heading.
-
-> Screenshot placeholder: HUD visible while Spacing mode is active.
-
-## Smart Upgrade Panel
-
-Smart Upgrade has its own panel because it works on existing buildings instead of the current placement preview.
-
-Use it for:
-
-- Scanning nearby belts, lifts, pipes, and power poles.
-- Choosing a target tier.
-- Previewing costs.
-- Running the upgrade.
-
-See [Smart Upgrade](Smart-Upgrade).
+See [Controls](Controls), [Smart Walking](Smart-Walking), [Smart Upgrade](Smart-Upgrade), [Smart Restore](Smart-Restore) and [Smart Camera](Smart-Camera).
 
 ---
 
-_Last updated: 2026-10-06 · Smart! v34.4.0_
+_Last updated: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (release draft)_

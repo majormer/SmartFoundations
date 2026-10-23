@@ -7,6 +7,8 @@
  */
 
 #include "Subsystem/SFSubsystem.h"
+#include "FGHUD.h"
+#include "UI/FGGameUI.h"
 #include "Shared/SFSupportGridFrame.h"
 #include "Shared/SFPillarGridFrame.h"
 #include "Features/Extend/Net/SFExtendAuthorityScope.h"
@@ -854,6 +856,11 @@ void USFSubsystem::Deinitialize()
 	}
 
 	// Shutdown Smart Walking service (#356)
+	if (WalkPanelWidget.IsValid())
+	{
+		WalkPanelWidget->CloseWidget();
+		WalkPanelWidget.Reset();
+	}
 	if (WalkService)
 	{
 		WalkService->ExitWalk(false);
@@ -1361,6 +1368,13 @@ void USFSubsystem::EnterWalkMode()
 	}
 	else
 	{
+        if (WalkService && !WalkService->GetStartFailure().IsEmpty())
+        {
+            if (AFGPlayerController* PC = GetLastController())
+                if (AFGHUD* HUD = Cast<AFGHUD>(PC->GetHUD()))
+                    if (UFGGameUI* UI = HUD->GetGameUI())
+                        UI->ShowTextNotification(FText::FromString(WalkService->GetStartFailure()));
+        }
 		// Walk failed to start — undo the lock so we don't strand a locked hologram.
 		bLockedByModifier = false;
 		Seed->LockHologramPosition(false);
@@ -1371,6 +1385,12 @@ void USFSubsystem::ExitWalkMode()
 {
 	UE_LOG(LogSmartFoundations, Verbose, TEXT(">>> [Walk] ExitWalkMode ENTER: bWalkModeActive=%d active=%s"),
 		bWalkModeActive ? 1 : 0, *GetNameSafe(ActiveHologram.Get()));
+	// A stale panel still owns modal input even if the walk was already cleared.
+	if (WalkPanelWidget.IsValid())
+	{
+		WalkPanelWidget->CloseWidget();
+		WalkPanelWidget.Reset();
+	}
 	if (!bWalkModeActive)
 	{
 		return;
@@ -1379,12 +1399,6 @@ void USFSubsystem::ExitWalkMode()
 	if (WalkService)
 	{
 		WalkService->ExitWalk(false);
-	}
-	// Tear down the segment-list overlay on every exit path (holster, cancel, etc.).
-	if (WalkPanelWidget.IsValid())
-	{
-		WalkPanelWidget->RemoveFromParent();
-		WalkPanelWidget.Reset();
 	}
 	// Release the seed lock the walk took on enter, so the parent follows the cursor again.
 	if (bLockedByModifier && ActiveHologram.IsValid())
@@ -1489,6 +1503,7 @@ void USFSubsystem::ToggleWalkPanel()
 	if (!WalkPanelWidget.IsValid() || !WalkPanelWidget->IsInViewport())
 	{
 		OpenWalkPanel();
+		return; // Creation already opens edit mode; do not toggle the new panel closed.
 	}
 	if (!WalkPanelWidget.IsValid())
 	{
@@ -1509,7 +1524,7 @@ void USFSubsystem::ToggleWalkPanel()
 		// (panel-up = edit). Because UIOnly also blocks the game K action, the widget handles K/Escape itself (its
 		// NativeOnKeyDown), so it's focused here. Refresh() so it reflects any steering done while hidden.
 		WalkPanelWidget->SetVisibility(ESlateVisibility::Visible);
-		WalkPanelWidget->Refresh();
+		WalkPanelWidget->Refresh(true);
 		if (PC)
 		{
 			PC->bShowMouseCursor = true;
@@ -2236,7 +2251,7 @@ ELastAxisInput USFSubsystem::GetEffectiveArrowAxisInput(int32* OutDirectionSign)
 	// The Smart Panel is the absolute X/Y/Z surface. It must retain the same building-relative
 	// arrows regardless of the global Player Relative setting.
 	if (!IsPlayerRelativeEnabled()
-		|| (SettingsFormWidget.IsValid() && SettingsFormWidget->IsInViewport())
+		|| (SettingsFormWidget.IsValid() && SettingsFormWidget->IsInViewport() && SettingsFormWidget->IsVisible())
 		|| !ActiveHologram.IsValid())
 	{
 		return LastAxisInput;

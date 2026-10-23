@@ -13,8 +13,8 @@
  * GetComponents<UFGPipeConnectionComponentBase>() catches it with no retype (same as the walk pipe adapter).
  */
 
-#include "Shared/SFSupportGridFrame.h"
 #include "Features/HypertubeAutoConnect/SFHypertubeSpanBuilder.h"
+#include "Shared/SFSupportGridFrame.h"
 
 #include "Subsystem/SFSubsystem.h"
 #include "Subsystem/SFHologramDataService.h"                 // DisableValidation / MarkAsChild / GetOrCreateData

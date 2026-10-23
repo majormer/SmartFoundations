@@ -1,6 +1,6 @@
 // Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
-#include "SmartFoundations.h"
 #include "Features/Walk/SFWalkNativeSpanAdapter.h"
+#include "SmartFoundations.h"
 #include "Features/Walk/SFWalkCommitSpec.h"
 #include "Features/Walk/SFWalkRailAdapter.h"
 #include "Features/Walk/SFWalkVehiclePathAdapter.h"
@@ -42,11 +42,18 @@ bool FSFWalkNativeSpanAdapter::Route(AFGHologram* Hologram, const FTransform& Fr
     return false;
 }
 
+bool FSFWalkNativeSpanAdapter::RefreshPreview(AFGHologram* Hologram, const FTransform& From, const FTransform& To)
+{
+    if (auto* Rail = Cast<AFGRailroadTrackHologram>(Hologram)) { return FSFWalkRailAdapter::RefreshPreview(Rail, From, To); }
+    if (auto* Path = Cast<AFGVehiclePathSegmentHologram>(Hologram)) { return FSFWalkVehiclePathAdapter::RefreshPreview(Path, From, To); }
+    return false;
+}
+
 FString FSFWalkNativeSpanAdapter::Validate(AFGHologram* Hologram)
 {
     if (auto* Rail = Cast<AFGRailroadTrackHologram>(Hologram)) { return FSFWalkRailAdapter::Validate(Rail); }
     if (auto* Path = Cast<AFGVehiclePathSegmentHologram>(Hologram)) { return FSFWalkVehiclePathAdapter::Validate(Path); }
-    return TEXT("Unsupported Walking native span");
+    return NSLOCTEXT("SmartFoundations", "Walk_UnsupportedNativeSpan", "Unsupported Walking native span").ToString();
 }
 
 float FSFWalkNativeSpanAdapter::MaximumAdvance(AFGHologram* Hologram)

@@ -9,6 +9,19 @@
 #include "SFWalkCommitSpec.generated.h"
 
 class UFGRecipe;
+class AFGBuildable;
+
+/** Stable native endpoint identity, re-resolved on authority before spending anything. */
+USTRUCT()
+struct SMARTFOUNDATIONS_API FSFWalkExistingEndpoint
+{
+	GENERATED_BODY()
+	UPROPERTY() TObjectPtr<AFGBuildable> Buildable = nullptr;
+	UPROPERTY() FName ComponentName;
+	UPROPERTY() FVector Position = FVector::ZeroVector;
+	UPROPERTY() FVector Outward = FVector::ForwardVector;
+	UPROPERTY() bool bReverseFlow = false;
+};
 
 /** Which conveyance the walk is laying. Selected from the seed buildable at EnterWalk (belt pole vs pipeline
  *  support); travels in the commit spec so the server reconstructs the matching spanning element. */
@@ -62,6 +75,14 @@ struct SMARTFOUNDATIONS_API FSFWalkCommitSpec
 
 	/** Which spanning conveyance this run lays (belt vs pipe) - the server reconstructs the matching adapter. */
 	UPROPERTY() ESFWalkConveyanceType ConveyanceType = ESFWalkConveyanceType::Belt;
+
+	/** Empty for a new walk. Existing endpoints are never added to construction/group ownership. */
+	UPROPERTY() TArray<FSFWalkExistingEndpoint> ExistingEndpoints;
+	/** Immutable dimensions of the captured endpoint rectangle; expanded segment counters may be larger. */
+	UPROPERTY() int32 ExistingLanes = 0;
+	UPROPERTY() int32 ExistingStacks = 0;
+	UPROPERTY() float LaneSpacing = 200.0f;
+	UPROPERTY() float StackSpacing = 200.0f;
 
 	/** Belt routing mode (0=Default, 1=Curve, 2=Straight) the client has set - the server re-routes the
 	 *  spanning belts with its OWN runtime default otherwise (mirrors FSFExtendCommitSpec::BeltRoutingMode). */

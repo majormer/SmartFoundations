@@ -46,7 +46,7 @@ Install the same Smart! version on the server and on every client; the Mod Manag
 
 ## Will Smart! Work With Satisfactory 1.2?
 
-Smart! 34.4.0 requires Satisfactory 1.2.4 / CL 502094 or newer with SML 3.12.x. Older game builds are unsupported; update the game and mods together.
+Smart! 35.0.0 targets Satisfactory 1.2.4 / CL 502094 or newer with SML 3.12.x. Older game builds are unsupported; update the game and mods together.
 
 ## Why Doesn't Smart! Load On My Dedicated Server After Updating To 1.2?
 
@@ -86,7 +86,7 @@ You can also use the Smart Panel with `K` if you prefer visible controls.
 
 Smart! uses `K` for panel-style controls, but the panel depends on what you are holding.
 
-When you are placing a normal Smart-supported building, `K` opens the Smart Panel. When you are holding a belt, lift, pipe, or wire/power line, `K` opens Smart Upgrade.
+K opens a shared window whose tasks follow the held buildable. A pipe, belt or wire can default to Upgrade. A lift supports Scaling as well. Railway tracks and Vehicle Paths default to Walking. Use the available tabs; unavailable tasks explain what is needed.
 
 Power poles and wall outlets intentionally keep opening the Smart Panel so you can scale them. To upgrade power poles or wall outlets, open Smart Upgrade from a wire/power line or use the panel's scan modes.
 
@@ -135,7 +135,7 @@ Some parts became supported later than Extend itself. For example, power poles, 
 
 ## Can I Scale Extend?
 
-Yes. Scaled Extend returned on February 23, 2026.
+Yes. Scaled Extend was introduced on February 23, 2026.
 
 Activate Extend on a valid source, then use X/Y scaling to add copies and rows. Z scaling adds vertical layers, and Z spacing sets the floor interval. Each layer repeats the horizontal module; Smart! does not automatically connect belts or pipes between floors.
 
@@ -143,7 +143,7 @@ Activate Extend on a valid source, then use X/Y scaling to add copies and rows. 
 
 Yes. Smart Walking lays one connected belt or pipe run that turns corners, climbs slopes, and routes to a destination, instead of a straight, uniform grid.
 
-Hold a stackable conveyor pole (for belts) or stackable pipeline support (for pipes), press `K` to open the Smart Panel, then click the **Smart Walking** button. Steer the leading segment forward one piece at a time with the existing scaling controls, then fire the build gun to build the whole run at once, at normal cost.
+Hold a stackable conveyor pole (for belts) or stackable pipeline support (for pipes), press `K` to open the Smart Panel, then choose the **Walking** tab. Steer the leading segment forward one piece at a time with the existing scaling controls, then fire the build gun to build the whole run at once, at normal cost.
 
 It works in single-player and as a client on a dedicated server. See [Smart Walking](Smart-Walking).
 
@@ -153,32 +153,37 @@ Smart! focuses on things that can be safely multiplied without changing the rule
 
 Resource extractors such as miners are restricted because their placement depends on fixed world resource nodes.
 
-Water extractors are a special case: Smart! can scale them in X/Y and spacing when the child placements still validate over water, but vertical scaling is disabled. Some other special buildables are restricted when their placement depends on snap points, world state, or vanilla behaviors that are not safe to clone like normal factory buildings.
+Water Extractors support horizontal scaling, Extend and Restore, with water-depth and terrain validation on every child. Vertical scaling remains disabled. Miners can be upgraded on their native resource nodes using Smart Upgrade. Some other special buildables are restricted when their placement depends on snap points, world state, or vanilla behaviors that are not safe to clone like normal factory buildings.
 
 ## Is Smart Upgrade Safe?
 
 Smart Upgrade is built for batch upgrades, but large conveyor networks are complicated.
 
-For belts and lifts, current versions rebuild connected conveyor runs more carefully than early Smart Upgrade releases. Still, make a save before very large upgrades, give the game a moment after the upgrade finishes, and use the Triage panel only when you are intentionally checking or repairing conveyor chain state.
+For belts and lifts, current versions rebuild connected conveyor runs more carefully than early Smart Upgrade releases. Still, make a save before very large upgrades and give the game a moment after the upgrade finishes.
+
+The Triage panel was a temporary tool in an earlier build for repairing corrupted saves. It is no longer available. Older Smart! builds that included it are incompatible with Satisfactory 1.2.
 
 If you hit a crash or stalled belt issue, include the upgrade mode you used, the approximate network size, the Smart! version, and whether the issue survives save/reload.
 
 ## What Is Smart Dismantle?
 
-Smart Dismantle groups Smart-built placements into vanilla blueprint proxies so you can remove them with Blueprint Dismantle.
+Smart Dismantle groups buildings placed together by Smart! so you can dismantle the group at once, just as you would a placed Blueprint.
 
-Use the game's Blueprint Dismantle mode, not a separate Smart-only dismantle tool.
+Use the game's Blueprint Dismantle mode to select and remove the group.
 
 ## Is Smart Camera Part Of Smart!?
 
 Smart Camera is a companion mod.
 
-It gives a picture-in-picture build camera for precision building. It currently lives separately, but it may eventually be merged into Smart! or published with its own source.
+It gives a picture-in-picture build camera for precision building. Smart Camera 2.0.0 or higher supports standalone build-gun views, multiple camera views and live layout editing. When using both mods together, use Smart! 35.0.0 or higher and Smart Camera 2.0.0 or higher.
 
 Default Smart Camera controls:
 
 - `[` cycles camera mode.
 - Hold `]` and use mouse wheel to zoom.
+- `F8` opens shared HUD/camera layout editing; Done / Lock saves pending changes.
+
+All saves camera edits include existing saved overrides for that camera; This save affects only the current world. HUD appearance is always global to your local installation. See [Smart Camera](Smart-Camera).
 
 ## What Should I Include In A Bug Report?
 
@@ -198,4 +203,4 @@ For Extend or Auto-Connect issues, include a screenshot of the source layout bef
 
 ---
 
-_Last updated: 2026-10-06 · Smart! v34.4.0_
+_Last updated: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (release draft)_

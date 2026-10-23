@@ -3,7 +3,6 @@
 
 #include "SFFactoryAdapter.h"
 #include "SmartFoundations.h"
-#include "Logging/SFLogMacros.h"
 #include "Data/SFBuildableSizeRegistry.h"
 
 FSFFactoryAdapter::FSFFactoryAdapter(AFGHologram* InHologram)
@@ -61,37 +60,11 @@ FVector FSFFactoryAdapter::CalculateFactorySize() const
 		return USFBuildableSizeRegistry::GetDefaultSize();
 	}
 
-	// DEBUG: Show both clearance box and mesh bounds
-	FVector ClearanceSize;
-	FVector MeshSize;
-	bool bHasClearance = USFBuildableSizeRegistry::TryGetSizeFromClearanceBox(BuildClass, ClearanceSize);
-	bool bHasMesh = USFBuildableSizeRegistry::TryGetSizeFromMeshBounds(BuildClass, MeshSize);
-
-	if (bHasClearance && bHasMesh)
-	{
-		SF_LOG_ADAPTER(VeryVerbose, TEXT("FSFFactoryAdapter: CLEARANCE=%s MESH=%s"),
-			*ClearanceSize.ToString(), *MeshSize.ToString());
-	}
-	else if (bHasClearance)
-	{
-		SF_LOG_ADAPTER(VeryVerbose, TEXT("FSFFactoryAdapter: CLEARANCE BOX reports: %s (no mesh bounds)"), *ClearanceSize.ToString());
-	}
-	else if (bHasMesh)
-	{
-		SF_LOG_ADAPTER(VeryVerbose, TEXT("FSFFactoryAdapter: MESH BOUNDS reports: %s (no clearance box)"), *MeshSize.ToString());
-	}
-	else
-	{
-		SF_LOG_ADAPTER(VeryVerbose, TEXT("FSFFactoryAdapter: No clearance box or mesh bounds found"));
-	}
-
 	// Use smart fallback: Registry → ClearanceBox → MeshBounds → Default
 	FVector Size;
 	FString Source;
 	USFBuildableSizeRegistry::GetSizeWithFallback(BuildClass, Size, Source);
 
-	SF_LOG_ADAPTER(Normal, TEXT("FSFFactoryAdapter: Size=%s Source=%s Class=%s"),
-		*Size.ToString(), *Source, *BuildClass->GetName());
 
 	return Size;
 }

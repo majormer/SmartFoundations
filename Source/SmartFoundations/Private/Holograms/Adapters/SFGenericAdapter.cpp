@@ -3,7 +3,6 @@
 
 #include "SFGenericAdapter.h"
 #include "SmartFoundations.h"
-#include "Logging/SFLogMacros.h"
 #include "Data/SFBuildableSizeRegistry.h"
 
 FSFGenericAdapter::FSFGenericAdapter(AFGHologram* InHologram, const FString& InTypeName)
@@ -58,8 +57,6 @@ FVector FSFGenericAdapter::CalculateSize() const
 	FString Source;
 	USFBuildableSizeRegistry::GetSizeWithFallback(BuildClass, Size, Source);
 
-	SF_LOG_ADAPTER(Normal, TEXT("FSFGenericAdapter[%s]: Size=%s Source=%s Class=%s"),
-		*TypeName, *Size.ToString(), *Source, *BuildClass->GetName());
 
 	return Size;
 }

@@ -1,6 +1,6 @@
 // Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
-#include "SmartFoundations.h"
 #include "Features/Scaling/Holograms/SFJumpPadPreviewHologram.h"
+#include "SmartFoundations.h"
 #include "Features/Scaling/SFJumpPadHologramState.h"
 #include "Components/StaticMeshComponent.h"
 

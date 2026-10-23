@@ -12,8 +12,16 @@
 #include "Components/HorizontalBoxSlot.h"
 #include "Components/TextBlock.h"
 #include "Components/Image.h"
+#include "Components/SizeBox.h"
 #include "Styling/SlateTypes.h"
 #include "Engine/Texture2D.h"
+
+#define LOCTEXT_NAMESPACE "SmartFoundations"
+
+void USFHudWidget::SetPlayerRelative(bool bEnabled)
+{
+	if (ModeLabel) ModeLabel->SetText(bEnabled ? LOCTEXT("HUD_Mode_PlayerRelative", "Controls: Player Relative") : LOCTEXT("HUD_Mode_BuildingRelative", "Controls: Building Relative"));
+}
 
 // ========================================================================
 // HUD THEME PALETTES (Issue #179)
@@ -67,7 +75,7 @@ const USFHudWidget::FHudTheme USFHudWidget::Themes[6] = {
 	// 4: Minimal (no border, semi-transparent)
 	{
 		FLinearColor(0.0f, 0.0f, 0.0f, 0.0f),          // Border: invisible
-		FLinearColor(0.0f, 0.0f, 0.0f, 0.4f),          // Background: faint
+		FLinearColor(0.0f, 0.0f, 0.0f, 0.85f),         // Borderless, readable over bright scenery
 		FLinearColor(0.937f, 0.937f, 0.937f, 1.0f),   // Header: light
 		FLinearColor(0.8f, 0.8f, 0.8f, 1.0f),          // Body: #CCC
 		FLinearColor(1.0f, 0.8f, 0.0f, 1.0f),          // Active: #FFCC00
@@ -92,10 +100,36 @@ const USFHudWidget::FHudTheme USFHudWidget::Themes[6] = {
 // LIFECYCLE
 // ========================================================================
 
+USFHudWidget::FHudTheme USFHudWidget::ToLinearTheme(const FHudTheme& Theme)
+{
+	// The palette above specifies display/sRGB colors. Slate consumes linear
+	// tints; interpreting those numbers as linear washes out the intended theme.
+	auto Linear = [](FLinearColor Color)
+	{
+		auto Result = FLinearColor::FromSRGBColor(Color.ToFColor(false));
+		Result.A = Color.A; return Result;
+	};
+	FHudTheme Result{Linear(Theme.Border),Linear(Theme.Background),Linear(Theme.HeaderText),Linear(Theme.BodyText),Linear(Theme.ActiveText),Linear(Theme.AxisRed),Linear(Theme.AxisGreen),Linear(Theme.AxisBlue)};
+	// Keep the branded foreground colors by strengthening the dark backdrops first.
+	if (Result.Background.A >= .9f) Result.Background.A = FMath::Max(Result.Background.A, .98f);
+	// Bound contrast against white scenery behind the translucent background.
+	// Lift only colors that need it, retaining each theme's hue and hierarchy.
+	auto Luminance = [](FLinearColor Color) { return .2126f * Color.R + .7152f * Color.G + .0722f * Color.B; };
+	const float Background = Luminance(Result.Background) * Result.Background.A + 1.f - Result.Background.A;
+	const float MinimumText = 4.5f * (Background + .05f) - .05f;
+	for (FLinearColor* Color : {&Result.HeaderText, &Result.BodyText, &Result.ActiveText, &Result.AxisRed, &Result.AxisGreen, &Result.AxisBlue})
+	{
+		const float Light = Luminance(*Color);
+		if (Light < MinimumText)
+			*Color = FMath::Lerp(*Color, FLinearColor::White, FMath::Clamp((MinimumText - Light) / (1.f - Light), 0.f, 1.f));
+	}
+	return Result;
+}
+
 void USFHudWidget::NativeOnInitialized()
 {
 	Super::NativeOnInitialized();
-	CurrentTheme = Themes[0];  // Default theme until config loads
+	CurrentTheme = ToLinearTheme(Themes[0]);
 	BuildWidgetTree();
 }
 
@@ -105,7 +139,7 @@ void USFHudWidget::SetTheme(int32 ThemeIndex)
 	if (ThemeIndex == CachedThemeIndex) return;
 
 	CachedThemeIndex = ThemeIndex;
-	CurrentTheme = Themes[ThemeIndex];
+	CurrentTheme = ToLinearTheme(Themes[ThemeIndex]);
 	ApplyThemeColors();
 
 	UE_LOG(LogSmartFoundations, Verbose, TEXT("SFHudWidget: Theme changed to %d"), ThemeIndex);
@@ -113,6 +147,8 @@ void USFHudWidget::SetTheme(int32 ThemeIndex)
 
 void USFHudWidget::ApplyThemeColors()
 {
+	for (const TCHAR* Name : {TEXT("HeaderDivider"),TEXT("GridDivider"),TEXT("HintDivider")})
+		if (auto* Rule = Cast<UBorder>(WidgetTree->FindWidget(Name))) Rule->SetBrushColor(CurrentTheme.BodyText.CopyWithNewOpacity(.2f));
 	if (OuterBorder)
 	{
 		OuterBorder->SetBrushColor(CurrentTheme.Border);
@@ -145,10 +181,11 @@ void USFHudWidget::SetHudScale(float InScale)
 	if (!FMath::IsNearlyEqual(CachedScale, InScale))
 	{
 		CachedScale = InScale;
+		if (auto* Width = Cast<USizeBox>(WidgetTree->RootWidget)) Width->SetMinDesiredWidth(250 * CachedScale);
 		// Update font sizes on existing widgets (don't rebuild tree — Slate representation
 		// is finalized after AddToViewport/TakeWidget, new widgets would be orphaned)
-		const int32 HeaderFontSize = FMath::RoundToInt(24.0f * CachedScale);
-		const int32 BodyFontSize = FMath::RoundToInt(19.0f * CachedScale);
+		const int32 HeaderFontSize = FMath::RoundToInt(16.0f * CachedScale);
+		const int32 BodyFontSize = FMath::RoundToInt(14.0f * CachedScale);
 
 		for (int32 i = 0; i < TextPool.Num(); ++i)
 		{
@@ -164,6 +201,9 @@ void USFHudWidget::SetHudScale(float InScale)
 				Seg->SetFont(SFFont::Get(BodyFontSize));
 			}
 		}
+		for (UTextBlock* Value : ValuePool) if (Value) Value->SetFont(SFFont::Get(BodyFontSize));
+		if (ModeLabel) ModeLabel->SetFont(SFFont::Get(FMath::RoundToInt(11 * CachedScale)));
+		for (auto* Hint : {HintLabel.Get(),HintKeys.Get()}) if (Hint) Hint->SetFont(SFFont::Get(FMath::RoundToInt(11 * CachedScale)));
 		if (RecipeIconWidget)
 		{
 			const float IconSize = 48.0f * CachedScale;
@@ -211,6 +251,7 @@ void USFHudWidget::BuildWidgetTree()
 
 	// Clear existing content
 	TextPool.Empty();
+	ValuePool.Empty(); LineFrames.Empty();
 	GridSegments.Empty();
 	OuterBorder = nullptr;
 	InnerBorder = nullptr;
@@ -218,32 +259,39 @@ void USFHudWidget::BuildWidgetTree()
 	GridLineBox = nullptr;
 	RecipeIconWidget = nullptr;
 
-	const int32 HeaderFontSize = FMath::RoundToInt(24.0f * CachedScale);
-	const int32 BodyFontSize = FMath::RoundToInt(19.0f * CachedScale);
+	const int32 HeaderFontSize = FMath::RoundToInt(16.0f * CachedScale);
+	const int32 BodyFontSize = FMath::RoundToInt(14.0f * CachedScale);
 	const FSlateFontInfo HeaderFont = MakeFont(TEXT("Bold"), HeaderFontSize);
 	const FSlateFontInfo BodyFont = MakeFont(TEXT("Regular"), BodyFontSize);
 
 	// Outer border (theme border color — acts as visible border via padding)
 	OuterBorder = WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass(), TEXT("OuterBorder"));
 	OuterBorder->SetBrushColor(CurrentTheme.Border);
-	OuterBorder->SetPadding(FMargin(2.0f));  // Border thickness
+	OuterBorder->SetPadding(FMargin(3.0f, 1.0f, 1.0f, 1.0f));
 
 	// Inner border (theme background with content padding)
 	InnerBorder = WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass(), TEXT("InnerBorder"));
 	InnerBorder->SetBrushColor(CurrentTheme.Background);
-	InnerBorder->SetPadding(FMargin(16.0f));
+	InnerBorder->SetPadding(FMargin(12.0f, 10.0f));
 
 	// Content container
 	ContentBox = WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass(), TEXT("ContentBox"));
 
 	// Build the hierarchy
-	WidgetTree->RootWidget = OuterBorder;
+	auto* Width = WidgetTree->ConstructWidget<USizeBox>(); Width->SetMinDesiredWidth(250 * CachedScale); Width->SetContent(OuterBorder);
+	WidgetTree->RootWidget = Width;
 	OuterBorder->AddChild(InnerBorder);
 	InnerBorder->AddChild(ContentBox);
 	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("SFHudWidget::BuildWidgetTree: Root=%s, ContentBox=%s"),
 		OuterBorder ? TEXT("OK") : TEXT("NULL"),
 		ContentBox ? TEXT("OK") : TEXT("NULL"));
 
+	auto Divider = [this](FName Name)
+	{
+		auto* Rule = WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass(), Name); Rule->SetBrushColor(CurrentTheme.BodyText.CopyWithNewOpacity(.2f)); Rule->SetPadding(FMargin(0));
+		auto* Height = WidgetTree->ConstructWidget<USizeBox>(); Height->SetHeightOverride(1); Rule->SetContent(Height);
+		ContentBox->AddChildToVerticalBox(Rule)->SetPadding(FMargin(0,4));
+	};
 	// Pre-allocate text line pool
 	for (int32 i = 0; i < MaxTextLines; ++i)
 	{
@@ -252,13 +300,30 @@ void USFHudWidget::BuildWidgetTree()
 		UTextBlock* Block = CreateTextBlock(Font, Color);
 		TextPool.Add(Block);
 
-		UVerticalBoxSlot* VBSlot = ContentBox->AddChildToVerticalBox(Block);
-		if (VBSlot)
+		auto* Row = WidgetTree->ConstructWidget<UHorizontalBox>();
+		auto* LabelSlot = Row->AddChildToHorizontalBox(Block);
+		LabelSlot->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+		LabelSlot->SetVerticalAlignment(VAlign_Center);
+		auto* Value = CreateTextBlock(BodyFont, CurrentTheme.BodyText);
+		ValuePool.Add(Value);
+		auto* ValueSlot = Row->AddChildToHorizontalBox(Value); ValueSlot->SetPadding(FMargin(20,0,0,0)); ValueSlot->SetVerticalAlignment(VAlign_Center);
+		auto* Frame = WidgetTree->ConstructWidget<UBorder>();
+		Frame->SetBrushColor(FLinearColor::Transparent); Frame->SetPadding(FMargin(0,4)); Frame->SetContent(Row); Frame->SetVisibility(ESlateVisibility::Collapsed);
+		LineFrames.Add(Frame); ContentBox->AddChildToVerticalBox(Frame);
+		if (i == 0)
 		{
-			VBSlot->SetPadding(FMargin(0.0f, 0.0f, 0.0f, 4.0f));
+			ModeLabel = CreateTextBlock(SFFont::Get(FMath::RoundToInt(11 * CachedScale)), CurrentTheme.BodyText);
+			ModeLabel->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
+            auto* ModeSlot = Row->AddChildToHorizontalBox(ModeLabel);
+            ModeSlot->SetVerticalAlignment(VAlign_Center);
+            ModeSlot->SetPadding(FMargin(16, 0, 0, 0));
+			SetPlayerRelative(false);
+			Frame->SetPadding(FMargin(0,0,0,10));
+			Divider(TEXT("HeaderDivider"));
 		}
 	}
 
+	Divider(TEXT("GridDivider"));
 	// Grid line (colored segments in a horizontal box)
 	GridLineBox = WidgetTree->ConstructWidget<UHorizontalBox>(UHorizontalBox::StaticClass(), TEXT("GridLineBox"));
 	GridLineBox->SetVisibility(ESlateVisibility::Collapsed);
@@ -279,8 +344,16 @@ void USFHudWidget::BuildWidgetTree()
 		UTextBlock* Seg = CreateTextBlock(BodyFont, SegColors[i]);
 		Seg->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
 		GridSegments.Add(Seg);
-		GridLineBox->AddChildToHorizontalBox(Seg);
+		auto* SegmentSlot = GridLineBox->AddChildToHorizontalBox(Seg);
+		if (i == 0) {SegmentSlot->SetSize(FSlateChildSize(ESlateSizeRule::Fill)); SegmentSlot->SetPadding(FMargin(0,0,20,0));}
 	}
+	Divider(TEXT("HintDivider"));
+	HintLineBox = WidgetTree->ConstructWidget<UHorizontalBox>();
+	HintLabel = CreateTextBlock(SFFont::Get(FMath::RoundToInt(11 * CachedScale)), CurrentTheme.BodyText);
+	HintKeys = CreateTextBlock(SFFont::Get(FMath::RoundToInt(11 * CachedScale)), CurrentTheme.BodyText);
+	HintLineBox->AddChildToHorizontalBox(HintLabel)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+	HintLineBox->AddChildToHorizontalBox(HintKeys)->SetPadding(FMargin(20,0,0,0));
+	ContentBox->AddChildToVerticalBox(HintLineBox)->SetPadding(FMargin(0,6,0,0));
 
 	// Recipe icon
 	RecipeIconWidget = WidgetTree->ConstructWidget<UImage>(UImage::StaticClass(), TEXT("RecipeIcon"));
@@ -325,10 +398,23 @@ void USFHudWidget::UpdateContent(const TArray<FString>& Lines, UTexture2D* Recip
 	int32 PoolIndex = 0;
 	bool bGridLineUsed = false;
 	bool bRecipeIconUsed = false;
+	bool bHintUsed = false;
 
 	for (int32 i = 0; i < Lines.Num() && PoolIndex < MaxTextLines; ++i)
 	{
 		FString LineText = Lines[i];
+		if (LineText.RemoveFromStart(SFHud::HintLinePrefix))
+		{
+			FString Label, Keys;
+			if (LineText.Split(TEXT("\t"), &Label, &Keys))
+			{
+				HintLabel->SetText(FText::FromString(Label)); HintKeys->SetText(FText::FromString(Keys));
+				HintLabel->SetColorAndOpacity(CurrentTheme.BodyText); HintKeys->SetColorAndOpacity(CurrentTheme.BodyText);
+				HintLabel->SetVisibility(ESlateVisibility::SelfHitTestInvisible); HintKeys->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
+				bHintUsed = true;
+			}
+			continue;
+		}
 
 		// ---- Recipe Icon ----
 		if (LineText.Equals(TEXT("[RECIPE_ICON]")))
@@ -380,15 +466,35 @@ void USFHudWidget::UpdateContent(const TArray<FString>& Lines, UTexture2D* Recip
 			PoolIndex++;
 			continue;
 		}
-		Block->SetText(FText::FromString(LineText));
+		FString LabelText = LineText, ValueText;
+		// Only split the established active counter format. Warnings and contextual
+		// messages remain intact, including localized text with different punctuation.
+		int32 Colon = INDEX_NONE;
+		if (i > 0 && !bIsWarning && LineText.FindLastChar(TEXT(':'), Colon))
+		{
+			LabelText = LineText.Left(Colon); ValueText = LineText.Mid(Colon + 1).TrimStartAndEnd();
+		}
+		Block->SetText(FText::FromString(LabelText));
+		ValuePool[PoolIndex]->SetText(FText::FromString(ValueText));
+		ValuePool[PoolIndex]->SetVisibility(ValueText.IsEmpty() ? ESlateVisibility::Collapsed : ESlateVisibility::SelfHitTestInvisible);
+		ValuePool[PoolIndex]->SetColorAndOpacity(bIsActive ? CurrentTheme.ActiveText : CurrentTheme.BodyText);
+		ValuePool[PoolIndex]->SetFont(SFFont::Get(FMath::RoundToInt((bIsActive ? 18 : 14) * CachedScale)));
+		LineFrames[PoolIndex]->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
+		if (i == 0 && ModeLabel) ModeLabel->SetColorAndOpacity(CurrentTheme.BodyText);
 
 		// Color logic
 		const bool bIsHeader = (i == 0);
+        if (auto* LineSlot = Cast<UVerticalBoxSlot>(Block->Slot))
+            LineSlot->SetPadding(FMargin(0, bIsActive ? 3.f : 0.f, 0, bIsHeader ? 8.f : bIsActive ? 5.f : 3.f));
 		if (bIsWarning)
 		{
 			// Fixed warning red, deliberately NOT from the theme palette - a skipped
 			// connection must read the same (and unmistakably) under every theme.
-			static const FLinearColor WarningRed(0.95f, 0.20f, 0.15f, 1.0f);
+			FLinearColor WarningRed(0.95f, 0.20f, 0.15f, 1.0f);
+			const float Background = (.2126f * CurrentTheme.Background.R + .7152f * CurrentTheme.Background.G + .0722f * CurrentTheme.Background.B) * CurrentTheme.Background.A + 1.f - CurrentTheme.Background.A;
+			const float Light = .2126f * WarningRed.R + .7152f * WarningRed.G + .0722f * WarningRed.B;
+			const float MinimumText = 4.5f * (Background + .05f) - .05f;
+			if (Light < MinimumText) WarningRed = FMath::Lerp(WarningRed, FLinearColor::White, FMath::Clamp((MinimumText - Light) / (1.f - Light), 0.f, 1.f));
 			Block->SetColorAndOpacity(FSlateColor(WarningRed));
 		}
 		else if (bIsHeader)
@@ -412,6 +518,7 @@ void USFHudWidget::UpdateContent(const TArray<FString>& Lines, UTexture2D* Recip
 	for (int32 i = PoolIndex; i < MaxTextLines; ++i)
 	{
 		TextPool[i]->SetVisibility(ESlateVisibility::Collapsed);
+		LineFrames[i]->SetVisibility(ESlateVisibility::Collapsed);
 	}
 
 	// Hide grid line box if not used this frame
@@ -419,6 +526,9 @@ void USFHudWidget::UpdateContent(const TArray<FString>& Lines, UTexture2D* Recip
 	{
 		GridLineBox->SetVisibility(ESlateVisibility::Collapsed);
 	}
+	if (auto* Rule = WidgetTree->FindWidget(TEXT("GridDivider"))) Rule->SetVisibility(bGridLineUsed ? ESlateVisibility::SelfHitTestInvisible : ESlateVisibility::Collapsed);
+	HintLineBox->SetVisibility(bHintUsed ? ESlateVisibility::SelfHitTestInvisible : ESlateVisibility::Collapsed);
+	if (auto* Rule = WidgetTree->FindWidget(TEXT("HintDivider"))) Rule->SetVisibility(bHintUsed ? ESlateVisibility::SelfHitTestInvisible : ESlateVisibility::Collapsed);
 
 	// Hide recipe icon if not used this frame
 	if (!bRecipeIconUsed && RecipeIconWidget)
@@ -469,3 +579,5 @@ bool USFHudWidget::TryUpdateGridLine(const FString& LineText)
 
 	return true;
 }
+
+#undef LOCTEXT_NAMESPACE

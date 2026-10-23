@@ -1,6 +1,7 @@
 // Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
 #include "Holograms/Logistics/SFConveyorBeltHologram.h"
+#include "Features/Walk/SFWalkExistingOrigin.h"
 #include "SFConveyorBeltGeometry.h"
 #include "Core/Helpers/SFBuildEffectHelper.h"
 #include "SmartFoundations.h"
@@ -153,6 +154,14 @@ void ASFConveyorBeltHologram::Tick(float DeltaSeconds)
 
 void ASFConveyorBeltHologram::CheckValidPlacement()
 {
+    // Existing-origin Walking reconstructs native spans before payment. These
+    // must run native validation, not the ordinary visual-only stackable path.
+    if (Tags.Contains(FName(TEXT("SF_WalkExistingOrigin"))))
+    {
+        Super::CheckValidPlacement();
+        return;
+    }
+
     // [#497] Stackable AC belts are Smart-routed previews between poles the parent already
     // validates; vanilla per-frame validation on them is pure cost — capture 4 (1,134-pole grid
     // at rest) showed CheckClearance Chaos overlap queries per belt per frame from the parent's
@@ -583,8 +592,15 @@ AActor* ASFConveyorBeltHologram::Construct(TArray<AActor*>& out_children, FNetCo
                 // so belts from separate build drags / abutting segments miss each other (THESIS §6.12).
                 // Post-Super::Construct our connectors have real positions, so coincidence is ground truth.
                 // Whichever belt builds second at a shared junction wires it; run-ends stay open (snappable).
-                bWired0 = SF_WireStackConnectorByCoincidence(BuiltConveyor->GetConnection0(), BuiltConveyor);
-                bWired1 = SF_WireStackConnectorByCoincidence(BuiltConveyor->GetConnection1(), BuiltConveyor);
+                SFWalkExistingOrigin::ConnectNativeStart(this, BuiltConveyor);
+                auto Wire = [&](UFGFactoryConnectionComponent* Own)
+                {
+                    // An explicitly selected origin never falls back to a nearby different belt.
+                    if (SFWalkExistingOrigin::IsNativeStartPosition(this, Own->GetComponentLocation())) { return Own->IsConnected(); }
+                    return SF_WireStackConnectorByCoincidence(Own, BuiltConveyor);
+                };
+                bWired0 = Wire(BuiltConveyor->GetConnection0());
+                bWired1 = Wire(BuiltConveyor->GetConnection1());
 
                 // Add to the flat stacked-belt list (TWeakObjectPtr) for later-built neighbours to find.
                 SF_RegisterStackBuilt(BuiltConveyor);
@@ -1672,14 +1688,14 @@ void ASFConveyorBeltHologram::ConfigureComponents(AFGBuildable* inBuildable) con
         UE_LOG(LogSmartHologram, Verbose, TEXT("⛓️ STACKABLE BELT ConfigureComponents: %s - wiring to nearby pole connectors"),
             *Conveyor->GetName());
 
-        const float SearchRadius = 100.0f;  // 1m search radius for pole connectors
+        const float PoleConnectorSearchRadius = 100.0f;  // 1m search radius for pole connectors
         
         // Connect Conn0 (belt output) to nearby pole connector
         if (Conn0 && !Conn0->IsConnected())
         {
             FVector SearchLoc = Conn0->GetComponentLocation();
             UFGFactoryConnectionComponent* NearestConn = nullptr;
-            float NearestDist = SearchRadius;
+            float NearestDist = PoleConnectorSearchRadius;
             
             // Search all buildables for factory connectors near this endpoint
             // Include stackable poles AND other conveyor belts (for belt-to-belt connections)
@@ -1726,7 +1742,7 @@ void ASFConveyorBeltHologram::ConfigureComponents(AFGBuildable* inBuildable) con
         {
             FVector SearchLoc = Conn1->GetComponentLocation();
             UFGFactoryConnectionComponent* NearestConn = nullptr;
-            float NearestDist = SearchRadius;
+            float NearestDist = PoleConnectorSearchRadius;
             
             // Search all buildables for factory connectors near this endpoint
             // Include stackable poles AND other conveyor belts (for belt-to-belt connections)

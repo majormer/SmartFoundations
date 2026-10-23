@@ -1,9 +1,11 @@
 // Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
-#include "SmartFoundations.h"
 #include "Features/Walk/SFWalkRailAdapter.h"
+#include "SmartFoundations.h"
+#include "Shared/Conduits/SFNativeRailGeometry.h"
 #include "Subsystem/SFPositionCalculator.h"
 #include "Buildables/FGBuildableRailroadTrack.h"
 #include "Hologram/FGRailroadTrackHologram.h"
+#include "Hologram/HologramHelpers.h"
 #include "FGConstructDisqualifier.h"
 #include "Patching/NativeHookManager.h"
 
@@ -46,43 +48,17 @@ FTransform FSFWalkRailAdapter::CrossSectionPose(const FTransform& Frame, int32 L
 
 bool FSFWalkRailAdapter::Route(AFGRailroadTrackHologram* Track, const FTransform& From, const FTransform& To, AFGRailroadTrackHologram* Seed)
 {
-    if (!IsValid(Track) || !IsValid(Seed) || From.ContainsNaN() || To.ContainsNaN()) { return false; }
-    Track->SetActorLocationAndRotation(From.GetLocation(), FRotator::ZeroRotator);
-    Track->mStraightMode = Seed->mStraightMode;
-    // Rails finalize from endpoint selection; they have no adjustable support pole.
-    Track->mBuildStep = ESplineHologramBuildStep::SHBS_PlacePoleOrSnapEnding;
-    Track->mActivePointIdx = 1;
-    Track->mSnappedStartLocation = From.GetLocation();
-    Track->mSnappedStartTangent = -From.GetRotation().GetForwardVector();
-    Track->mHitLocation = To.GetLocation();
-    Track->mHitTangent = -To.GetRotation().GetForwardVector();
-    Track->mUseCustomEndRotation = true;
-    Track->AutoRouteSpline(From.GetLocation(), -From.GetRotation().GetForwardVector(), To.GetLocation(), To.GetRotation().GetForwardVector());
-    Track->mFloorData.Reset();
-    Track->mFloorData.Add(FVector::ZeroVector);
-    Track->mFloorData.Add(Track->GetActorTransform().InverseTransformPosition(To.GetLocation()));
-    Track->UpdateSplineComponent();
-    Track->UpdateClearanceData();
-    Track->UpdateComponentTransforms();
-    // Spawned native holograms remain hidden until normal aim placement runs.
-    // Walking owns their routed placement; expose the completed native preview.
-    Track->SetActorHiddenInGame(false);
-    return Track->mSplineData.Num() >= 2;
+    return FSFNativeRailGeometry::Route(Track, From, To, Seed);
+}
+
+bool FSFWalkRailAdapter::RefreshPreview(AFGRailroadTrackHologram* Track, const FTransform& From, const FTransform& To)
+{
+    return FSFNativeRailGeometry::RefreshPreview(Track, From, To);
 }
 
 FString FSFWalkRailAdapter::Validate(AFGRailroadTrackHologram* Track)
 {
-    if (!IsValid(Track) || Track->mSplineData.Num() < 2) { return TEXT("Rail segment has no native spline"); }
-    Track->ResetConstructDisqualifiers();
-    Track->ValidateRailroadTrack();
-    TArray<TSubclassOf<UFGConstructDisqualifier>> Disqualifiers;
-    Track->GetConstructDisqualifiers(Disqualifiers);
-    Track->ResetConstructDisqualifiers();
-    for (const auto& Disqualifier : Disqualifiers)
-    {
-        return UFGConstructDisqualifier::GetDisqualifyingText(Disqualifier).ToString();
-    }
-    return FString();
+    return FSFNativeRailGeometry::Validate(Track);
 }
 
 float FSFWalkRailAdapter::MaximumAdvance(AFGRailroadTrackHologram* Track)

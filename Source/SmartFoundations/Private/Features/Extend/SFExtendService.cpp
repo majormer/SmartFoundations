@@ -1009,7 +1009,7 @@ int32 USFExtendService::ReconstructCommitOnServer(AFGHologram* ParentHologram, c
 {
     FSFExtendAuthorityScope::BeginReconstruction(Subsystem.Get(), ParentHologram);
     bScaledExtendValid = false;
-    ScaledExtendInvalidReason = TEXT("Extend commit reconstruction did not complete");
+    ScaledExtendInvalidReason = NSLOCTEXT("SmartFoundations", "Extend_ReconstructionIncomplete", "Extend commit reconstruction did not complete").ToString();
     if (!ParentHologram || !TopologyService)
     {
         return 0;
@@ -1078,7 +1078,7 @@ int32 USFExtendService::ReconstructCommitOnServer(AFGHologram* ParentHologram, c
             Spec.RestoreTemplate.ChildHolograms.Num(),
             Spec.RestoreCounterState.GridCounters.X, Spec.RestoreCounterState.GridCounters.Y);
         bScaledExtendValid = bReplayed && ValidatePowerCapacity();
-        if (!bReplayed) ScaledExtendInvalidReason = TEXT("Restore commit reconstruction failed");
+        if (!bReplayed) ScaledExtendInvalidReason = NSLOCTEXT("SmartFoundations", "Restore_ReconstructionFailed", "Restore commit reconstruction failed").ToString();
         return bReplayed ? NumChildren : 0;
     }
 

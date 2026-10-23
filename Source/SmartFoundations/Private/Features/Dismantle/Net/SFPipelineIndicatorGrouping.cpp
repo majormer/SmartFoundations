@@ -1,6 +1,6 @@
 // Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
-#include "SmartFoundations.h"
 #include "Features/Dismantle/Net/SFPipelineIndicatorGrouping.h"
+#include "SmartFoundations.h"
 #include "Engine/World.h"
 #include "Buildables/FGBuildablePipeline.h"
 #include "FGBuildablePipelineFlowIndicator.h"

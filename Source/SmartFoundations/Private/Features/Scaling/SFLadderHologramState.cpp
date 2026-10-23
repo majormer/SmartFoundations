@@ -1,6 +1,6 @@
 // Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
-#include "SmartFoundations.h"
 #include "Features/Scaling/SFLadderHologramState.h"
+#include "SmartFoundations.h"
 #include "Features/Scaling/SFScalingFootprint.h"
 #include "Features/Scaling/Holograms/SFLadderPreviewHologram.h"
 #include "Data/SFBuildableSizeRegistry.h"

@@ -4,8 +4,6 @@ This page explains what the Smart! settings are for. Names may vary slightly bet
 
 Find them from the **Main Menu → Mods → Smart!**. Changes made here **persist between saves and between sessions**. (Keybinds are separate — see [Controls](Controls).)
 
-> Screenshot placeholder: Smart Settings Form showing the major settings sections.
-
 ## Belt Auto-Connect
 
 Use these settings to control belt previews.
@@ -15,6 +13,7 @@ Use these settings to control belt previews.
 - Choose main belt tier.
 - Choose belt tier for machine connections.
 - Choose routing style: default, curve, or straight.
+- Choose machine connection height handling: **Belts Only**, **Lift at Distributor**, or **Lift at Building**. Belts Only is the default.
 - Enable stackable belt support behavior.
 
 ## Pipe Auto-Connect
@@ -27,7 +26,7 @@ Use these settings to control pipe previews.
 - Choose routing style: auto, 2D auto, straight, curve, noodle, or horizontal-to-vertical.
 - Choose pipe indicator style where available.
 
-With **Apply Immediately** off, press **Apply** to rebuild the preview using the selected pipe tier, style, and routing. Toggling Pipe Auto-Connect off and back on restores its previews at the current placement.
+Connection preferences are live: tier, style and routing changes refresh the preview immediately. The placement Apply option controls grid geometry separately.
 
 ## Hypertube Auto-Connect
 
@@ -50,7 +49,7 @@ Use these settings to control power cable previews.
 
 A separate switch for the seams between scaled copies of your **own** blueprints — independent of Belt and Pipe Auto-Connect above, so blueprint copies can keep wiring together even when regular auto-connect is off.
 
-- **Blueprint Seam Auto-Connect** — enable or disable auto-connecting the belts, pipes, and eligible power connections between scaled blueprint copies. **On by default.** (Added in 34.2.0.)
+- **Blueprint Seam Auto-Connect** — enable or disable auto-connecting the belts, pipes, Hypertubes, railway tracks, directed Vehicle Paths, and eligible power connections between scaled blueprint copies. **On by default.** (Added in 34.2.0.)
 
 Power seam connections additionally require **Power Auto-Connect**. Each cable uses a matching power-pole socket with available capacity; internal wires and the two faces of a wall outlet count separately.
 
@@ -58,7 +57,7 @@ Power seam connections additionally require **Power Auto-Connect**. Each cable u
 
 Under **Building Behavior**, **Blueprint Default X/Y/Z Spacing (m)** choose the starting gap for each axis of a new blueprint build session. Each defaults to **1 m** and accepts **0-100 m**. Zero allows flush tiling; very short gaps may leave no room for belt or pipe seams.
 
-Panel spacing overrides last for the current blueprint session, including repeated placements. Selecting a different blueprint or holstering starts a fresh session with your defaults. Settings are read live; no world reload is needed.
+Panel spacing overrides last for the current blueprint session, including repeated placements. Selecting a different blueprint or holstering starts a fresh session with your defaults. Eligible unresolved lift tails can align stacked copies using one shared Z spacing and native-valid belt slopes. Without those tails, default Z spacing stays in use. See [Blueprints](Blueprints). Settings are read live; no world reload is needed.
 
 ## Auto-Connect Behavior
 
@@ -90,14 +89,29 @@ Defaults are 0.5 m and 5°. The distance increments accept 0.1–8 m; rotation a
 
 ## Smart Panel
 
-- Apply Immediately controls whether panel changes take effect as you edit or wait for the Apply button.
+- **Apply placement immediately** controls grid/transform geometry. When off, Apply updates the preview; closing discards unapplied placement edits.
+- **Apply segment edits immediately** is the corresponding Walking geometry control.
+- Connection preferences, recipes and applicable native building controls remain live and are labeled separately.
+- A manually moved Panel remembers its position across saves; use the position reset to restore it.
+
+## Smart Upgrade
+
+- **Preserve dismantle groups** defaults to On. Supported replacements keep their original group; turning it off skips Smart's transfer without stripping native membership.
 
 ## HUD
 
 - Show or hide the HUD.
 - Change HUD scale.
 - Change HUD position.
-- Choose a HUD theme.
+- Choose one of the six HUD themes.
+- Enter **Edit HUD layout after Resume**, then move/resize, preview, save or cancel.
+- **Reset HUD Appearance** restores defaults. HUD appearance and Panel positions apply to all saves locally; Camera scope does not change them.
+
+## Smart Camera 2.0 scopes
+
+In **Mods → Smart! Camera**, views appear automatically under their supplying mod and camera names, including inactive views. The built-in build-gun view has an independent enable control. Per-view position is normalized 0–1, resolution is 64–2048 pixels per axis, scale is 0.1–2, capture rate is 5–60/sec and brightness is −3 to +3 EV. Applicable building-camera distances are 5–50 m. Camera settings apply immediately; views hidden by menus update when you Resume. **All saves** patches only the edited field across global and existing saved profiles for that camera, including the current world. **This save** changes only the current native save profile. Unrelated fields and other cameras remain intact.
+
+**Use mod suggestions** in All saves resets that camera across saves. **Use global settings** in This save removes only the current override. Framing/distance reset changes only those two fields. Layout edits preview until the shared **Done / Lock**; Cancel discards pending layout/HUD changes. See [Smart Camera](Smart-Camera).
 
 ## Arrows
 
@@ -107,4 +121,4 @@ Defaults are 0.5 m and 5°. The distance increments accept 0.1–8 m; rotation a
 
 ---
 
-_Last updated: 2026-10-06 · Smart! v34.4.0_
+_Last updated: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (release draft)_

@@ -84,6 +84,7 @@ class ASFWireHologram;
 class ASFLogisticsHologram;
 class ASFFoundationHologram;
 class USmartSettingsFormWidget;
+struct FSFInterfaceCapabilities;
 
 // Adapter interface forward declaration
 class ISFHologramAdapter;
@@ -110,6 +111,8 @@ class SMARTFOUNDATIONS_API USFSubsystem : public UWorldSubsystem, public FTickab
 {
     friend class FSFExtendAuthorityScope;
     friend class FSFExtendAuthorityIsolationTest;
+    friend class FSFWalkInputCleanupTest;
+    friend class FSFWalkPanelRefreshTest;
 	GENERATED_BODY()
 
 public:
@@ -335,6 +338,14 @@ public:
 	UFUNCTION()
 	void OnToggleUpgradePanel();
 
+    /** Local interface tasks: 0 placement, 1 Walking, 2 Upgrade, 3 docked Restore. */
+    bool CanNavigateInterfaceTask(int32 Task, FText* Reason = nullptr) const;
+    FSFInterfaceCapabilities GetInterfaceCapabilities() const;
+    bool IsWalkingOnlyContext() const;
+    void NavigateInterfaceTask(int32 Task);
+    void OpenSettingsPanel();
+    void CloseInactiveInterfaceTasks(UUserWidget* Closing);
+
 	/** Clear the upgrade panel widget reference (called by widget on close) */
 	void ClearUpgradePanelWidget() { UpgradePanelWidget.Reset(); }
 
@@ -520,6 +531,9 @@ public:
 	/** True while the Walk panel is up (in viewport + Visible). The HUD uses this to suppress its walk readout,
 	 *  which otherwise draws over/through the panel; it returns when the panel is hidden via K. */
 	bool IsWalkPanelVisible() const;
+
+	/** Actual visible task windows own HUD suppression; suspended/closed drafts do not. */
+	bool IsInterfaceTaskPanelVisible() const;
 
 	/** Check if Smart! is actively scaling (grid > 1x1x1) — any axis with abs > 1 */
 	bool IsSmartScalingActive() const
@@ -1352,6 +1366,7 @@ public:
 		BeltTierMain,           // Belt tier for main connections (distributor-to-distributor)
 		BeltTierToBuilding,     // Belt tier for building connections (distributor-to-building)
 		ChainDistributors,      // Enable distributor chaining (manifolds)
+		LiftUsageMode,          // Factory lift placement
 		BeltRoutingMode,        // Belt routing mode: Auto, 2D, Straight, Curve
 		PipeTierMain,           // Pipe tier for main connections (junction-to-junction)
 		PipeTierToBuilding,     // Pipe tier for building connections (junction-to-building)
@@ -1382,6 +1397,7 @@ public:
 		int32 BeltTierMain = 0;        // 0=Auto, 1-6=Mk1-Mk6
 		int32 BeltTierToBuilding = 0;  // 0=Auto, 1-6=Mk1-Mk6
 		bool bChainDistributors = true;  // Enable distributor chaining (manifolds)
+		int32 LiftUsageMode = 0;       // 0=Belts Only, 1=Lift at Distributor, 2=Lift at Building
 		int32 BeltRoutingMode = 0;     // 0=Default, 1=Curve, 2=Straight (matches vanilla belt build modes)
 		bool bPipeAutoConnectEnabled = true;  // Pipe auto-connect enabled
 		int32 PipeTierMain = 0;        // 0=Auto, 1-2=Mk1-Mk2
@@ -1417,6 +1433,7 @@ public:
 			BeltTierToBuilding = Config.BeltLevelToBuilding;
 			bChainDistributors = Config.bAutoConnectDistributors;
 			BeltRoutingMode = Config.BeltRoutingMode;
+			LiftUsageMode = FMath::Clamp(Config.LiftUsageMode, 0, 2);
 			bStackableBeltEnabled = Config.bStackableBeltEnabled;
 			bPipeAutoConnectEnabled = Config.bPipeAutoConnectEnabled;
 			PipeTierMain = Config.PipeLevelMain;
@@ -1453,6 +1470,7 @@ public:
 				&& BeltTierToBuilding == O.BeltTierToBuilding
 				&& bChainDistributors == O.bChainDistributors
 				&& BeltRoutingMode == O.BeltRoutingMode
+				&& LiftUsageMode == O.LiftUsageMode
 				&& bStackableBeltEnabled == O.bStackableBeltEnabled
 				&& bPipeAutoConnectEnabled == O.bPipeAutoConnectEnabled
 				&& PipeTierMain == O.PipeTierMain
@@ -1580,6 +1598,7 @@ public:
 	
 	/** Set belt routing mode (0=Default, 1=Curve, 2=Straight) */
 	void SetAutoConnectBeltRoutingMode(int32 Mode);
+	void SetAutoConnectLiftUsageMode(int32 Mode);
 	
 	// === Pipe Auto-Connect Setters (for Settings Form) ===
 	

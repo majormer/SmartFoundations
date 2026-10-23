@@ -33,6 +33,9 @@
 #include "FGBlueprintProxy.h"
 #include "Hologram/FGBlueprintHologram.h"       // [#168] Smart! Blueprints: staged blueprint grid cells
 #include "Features/Scaling/SFGridCoordComponent.h"  // [#168-MP] cell-basis capture from live preview children
+#include "Features/AutoConnect/SFBlueprintRailSeams.h"
+#include "Features/AutoConnect/SFBlueprintVehicleSeams.h"
+#include "Features/AutoConnect/SFBlueprintLiftSeams.h"
 #include "Hologram/FGPoleHologram.h"            // #354: mPoleVariationIndex / mBuildStep
 #include "Hologram/FGConveyorPoleHologram.h"
 #include "Hologram/FGFloodlightHologram.h"      // #200: mFixtureAngle / mBuildStep
@@ -557,7 +560,8 @@ bool ShouldDeferSpecExpansion(AFGHologram* Parent, const FSFScalingSpec& Spec)
 {
 	return Parent
 		&& Spec.bValid
-		&& Spec.ConduitPlan.Num() == 0
+		&& Spec.ConduitPlan.Num() == 0 && Spec.LiftRoutes.IsEmpty() && Spec.BlueprintRailSeams.IsEmpty() && Spec.BlueprintVehicleSeams.IsEmpty()
+        && !Spec.bBlueprintLiftSeamsRequired
 		&& Parent->GetBlueprintDesigner() == nullptr
 		&& (Spec.CellCount() - 1) > SFSpecDeferThresholdCells;
 }
@@ -855,6 +859,7 @@ int32 ExpandScalingSpecIntoChildren(AFGHologram* Parent, const FSFScalingSpec& S
 				if (Child)
 				{
 					// [#168] SMART! BLUEPRINTS - stage blueprint grid cells for CONSTRUCTION.
+                    USFGridCoordComponent::AssignCell(Child, FIntVector(XI, YI, ZI));
 					// The spec-construction model strips the staged PREVIEW children and re-expands
 					// here at fire time (authority path, SP included), so the recipe-spawned cell is
 					// an EMPTY Holo_Blueprint_C: without the descriptor + a loaded blueprint world its
@@ -867,11 +872,23 @@ int32 ExpandScalingSpecIntoChildren(AFGHologram* Parent, const FSFScalingSpec& S
 					{
 						if (AFGBlueprintHologram* BlueprintCell = Cast<AFGBlueprintHologram>(Child))
 						{
+                            // Match the existing Blueprint preview-family setup. These
+                            // copies have a captured grid pose, not their own floor aim.
+                            // The initiating Blueprint keeps native floor validation;
+                            // before-payment validation still checks full copy clearance.
+                            BlueprintCell->SetNeedsValidFloor(false);
 							if (ParentBlueprintCell->mBlueprintDescriptor)
 							{
-								BlueprintCell->SetBlueprintDescriptor(ParentBlueprintCell->mBlueprintDescriptor);
+                                const bool ExactRailReplay = !Spec.BlueprintRailSeams.IsEmpty() || !Spec.BlueprintVehicleSeams.IsEmpty() || Spec.bBlueprintLiftSeamsRequired;
+                                // A native recipe-spawned cell may already have staged the
+                                // selected Blueprint during this early validation phase.
+                                // Loading it again appends duplicate content and turns one
+                                // authored rail mouth into a fictitious junction.
+                                if (!ExactRailReplay || BlueprintCell->mBuildableToNewRoot.IsEmpty())
+                                    BlueprintCell->SetBlueprintDescriptor(ParentBlueprintCell->mBlueprintDescriptor);
 								BlueprintCell->mBlueprintDescName = ParentBlueprintCell->mBlueprintDescName;  // [#168] proxy identity (see preview spawner)
-								BlueprintCell->LoadBlueprintToOtherWorld();
+                                if (!ExactRailReplay || BlueprintCell->mBuildableToNewRoot.IsEmpty())
+                                    BlueprintCell->LoadBlueprintToOtherWorld();
 								// No AlignBuildableRootWithBounds: LoadBlueprintToOtherWorld aligns
 								// internally; a second call displaces the root off the grid (live
 								// measurement 2026-07-06).
@@ -985,6 +1002,7 @@ void CaptureConduitPlan(AFGHologram* Hologram, FSFScalingSpec& InOutSpec)
 	int32 PerKind[5] = {0, 0, 0, 0, 0};
 	for (AFGHologram* Child : Descendants)
 	{
+        if (Child->ActorHasTag(TEXT("SF_BlueprintLiftSeam")) || Child->ActorHasTag(TEXT("SF_BlueprintVehicleSeam"))) continue;
 
 		FSFConduitPlanEntry Entry;
 		if (ASFConveyorBeltHologram* BeltHolo = Cast<ASFConveyorBeltHologram>(Child))
@@ -1092,6 +1110,14 @@ void CaptureConduitPlan(AFGHologram* Hologram, FSFScalingSpec& InOutSpec)
 			PerKind[0], PerKind[1], PerKind[2], PerKind[3], PerKind[4], InOutSpec.ConduitPlanCost.Num());
 	}
 
+	SFLiftRoutePlan::Capture(Hologram, InOutSpec.LiftRoutes);
+    FSFBlueprintLiftSeams::Capture(Hologram, InOutSpec);
+    for (const auto& Route : InOutSpec.BlueprintLiftSeams) SF_MergePlanCost(InOutSpec, Route.Cost);
+    FSFBlueprintRailSeams::Capture(Hologram, InOutSpec.BlueprintRailSeams, InOutSpec.BlueprintRailCost);
+    SF_MergePlanCost(InOutSpec, InOutSpec.BlueprintRailCost);
+    FSFBlueprintVehicleSeams::Capture(Hologram, InOutSpec.BlueprintVehicleSeams);
+    for (const auto& Route : InOutSpec.BlueprintVehicleSeams) SF_MergePlanCost(InOutSpec, Route.Cost);
+	for (const auto& Route : InOutSpec.LiftRoutes) SF_MergePlanCost(InOutSpec, Route.Cost);
 	SF_MergePlanCost(InOutSpec, GetScaleDaisyChainPowerCost(Hologram));
 	if (USFSubsystem* SS = Hologram ? USFSubsystem::Get(Hologram->GetWorld()) : nullptr)
 	{

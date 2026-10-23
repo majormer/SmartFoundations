@@ -790,6 +790,8 @@ void USFSubsystem::OnToggleSettingsForm()
 		return;
 	}
 
+    // Route-only families have no scaling surface. K opens their native walk.
+    if (IsWalkingOnlyContext()) { NavigateInterfaceTask(1); return; }
 	// Route upgrade-capable belt, lift, pipe and wire placement to the Upgrade Panel.
 	if (IsUpgradeCapableContext())
 	{
@@ -798,6 +800,11 @@ void USFSubsystem::OnToggleSettingsForm()
 		return;
 	}
 
+    OpenSettingsPanel();
+}
+
+void USFSubsystem::OpenSettingsPanel()
+{
 	// Get player controller
 	AFGPlayerController* PC = GetLastController();
 	if (!PC)
@@ -815,6 +822,10 @@ void USFSubsystem::OnToggleSettingsForm()
 		return;
 	}
 
+    if (SettingsFormWidget.IsValid() && SettingsFormWidget->IsInViewport() && !SettingsFormWidget->IsForCurrentHologram())
+    { SettingsFormWidget->RemoveFromParent(); SettingsFormWidget.Reset(); }
+    if (SettingsFormWidget.IsValid() && SettingsFormWidget->IsInViewport() && !SettingsFormWidget->IsVisible())
+    { NavigateInterfaceTask(0); return; }
 	// Toggle behavior: if widget is open, close it (with cancel/revert)
 	if (SettingsFormWidget.IsValid() && SettingsFormWidget->IsInViewport())
 	{
@@ -978,6 +989,8 @@ void USFSubsystem::OnToggleUpgradePanel()
 		return;
 	}
 
+    if (UpgradePanelWidget.IsValid() && UpgradePanelWidget->IsInViewport() && !UpgradePanelWidget->IsVisible())
+    { NavigateInterfaceTask(2); return; }
 	// Toggle behavior: if widget is open, close it
 	if (UpgradePanelWidget.IsValid() && UpgradePanelWidget->IsInViewport())
 	{

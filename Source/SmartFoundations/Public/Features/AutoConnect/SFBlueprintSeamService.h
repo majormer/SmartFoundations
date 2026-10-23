@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Features/AutoConnect/SFBlueprintLiftAlignment.h"
 
 class AFGBlueprintHologram;
 class UFGFactoryConnectionComponent;
@@ -137,8 +138,19 @@ public:
 	 */
 	static bool BuildSeamTable(AFGBlueprintHologram* Blueprint, FSFBlueprintSeamTable& OutTable);
 
-	/** Duplicated belt connectors in enumeration (content) order — the belt index space. */
+	/** Native belt enumeration followed by exact-source-sorted temporary lift mouths. */
 	static void GetDuplicatedBeltConnectors(AFGBlueprintHologram* Blueprint, TArray<UFGFactoryConnectionComponent*>& OutConnectors);
+    /** Exact typed template endpoint behind a duplicated belt index. Read-only identity. */
+    static UFGFactoryConnectionComponent* GetOriginalBeltConnector(AFGBlueprintHologram* Blueprint, int32 Index);
+
+    /** Native Blueprint managers may omit lift mouths; duplicate only exact open native content endpoints. */
+    static void EnsureLiftTailConnectors(AFGBlueprintHologram* Blueprint);
+    /** Restore the native component population before serializing a clean one-copy message. */
+    static int32 ReleaseLiftTailConnectors(AFGBlueprintHologram* Blueprint);
+    static FString DescribeLiftSources(AFGBlueprintHologram* Blueprint);
+
+    /** Open vanilla lift mouths only, in the existing belt index space and parent-local frame. */
+    static void GetOpenLiftTails(AFGBlueprintHologram* Blueprint, TArray<FSFBlueprintLiftAlignment::FTail>& OutTails);
 
 	/** Duplicated fluid-pipe connectors in enumeration (content) order — the pipe index space. */
 	static void GetDuplicatedPipeConnectors(AFGBlueprintHologram* Blueprint, TArray<UFGPipeConnectionComponent*>& OutConnectors);

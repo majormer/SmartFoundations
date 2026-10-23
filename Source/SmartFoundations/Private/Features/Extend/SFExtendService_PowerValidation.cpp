@@ -13,7 +13,7 @@ bool USFExtendService::ValidatePowerPlanForConstruction(AFGHologram* Parent, FSt
 {
     if (!IsValid(Parent) || !StoredCloneTopology.IsValid())
     {
-        OutReason = TEXT("Extend construction has no reconstructed topology");
+        OutReason = NSLOCTEXT("SmartFoundations", "Extend_MissingTopology", "Extend construction has no reconstructed topology").ToString();
         return false;
     }
     FSFCloneTopology Checked = *StoredCloneTopology;
@@ -37,7 +37,7 @@ bool USFExtendService::ValidatePowerPlanForConstruction(AFGHologram* Parent, FSt
             AFGHologram* Existing = Owners.FindRef(Data->JsonCloneId);
             if (Existing && Existing != Holo)
             {
-                OutReason = TEXT("Extend construction has duplicate owner identities");
+                OutReason = NSLOCTEXT("SmartFoundations", "Extend_DuplicateOwner", "Extend construction has duplicate owner identities").ToString();
                 return false;
             }
             Owners.Add(Data->JsonCloneId, Holo);
@@ -52,7 +52,7 @@ bool USFExtendService::ValidatePowerPlanForConstruction(AFGHologram* Parent, FSt
         if (!WireClass) WireClass = LoadClass<AFGBuildableWire>(nullptr, SFAssetPaths::PowerLineBuildClass);
         if (!WireClass || Wire.SplineData.Points.Num() < 2)
         {
-            OutReason = TEXT("Extend cable plan has no native wire class or endpoints");
+            OutReason = NSLOCTEXT("SmartFoundations", "Extend_MissingCableEndpoints", "Extend cable plan has no native wire class or endpoints").ToString();
             return false;
         }
         UFGCircuitConnectionComponent* Ports[2] = {};
@@ -70,7 +70,7 @@ bool USFExtendService::ValidatePowerPlanForConstruction(AFGHologram* Parent, FSt
             const AFGBuildable* SourceOwner = Source ? Cast<AFGBuildable>(Owner) : nullptr;
             if (SourceOwner && SourceOwner->GetBlueprintDesigner() != Parent->GetBlueprintDesigner())
             {
-                OutReason = TEXT("Power cables cannot cross a Blueprint Designer boundary");
+                OutReason = NSLOCTEXT("SmartFoundations", "Extend_CableDesignerBoundary", "Power cables cannot cross a Blueprint Designer boundary").ToString();
                 return false;
             }
             Ports[End] = SFExtendPowerConnections::Resolve(Owner, Ref.Connector);
@@ -95,21 +95,21 @@ bool USFExtendService::ValidatePowerPlanForConstruction(AFGHologram* Parent, FSt
             }
             if (!Ports[End])
             {
-                OutReason = FString::Printf(TEXT("Cannot validate power socket %s.%s before construction"), *Ref.Target, *Ref.Connector);
+                OutReason = FText::Format(NSLOCTEXT("SmartFoundations", "Extend_CableSocketUnavailable", "Cannot validate power socket {0}.{1} before construction"), FText::FromString(Ref.Target), FText::FromString(Ref.Connector)).ToString();
                 return false;
             }
             *Capacities[End] = Source ? Ports[End]->GetNumFreeConnections() : Ports[End]->GetMaxNumConnections();
             const FVector Expected = (End == 0 ? Wire.SplineData.Points[0] : Wire.SplineData.Points.Last()).World.ToFVector();
             if (Positions[End].ContainsNaN() || !Positions[End].Equals(Expected, 1.0))
             {
-                OutReason = FString::Printf(TEXT("Power socket moved relative to the quoted cable %s"), *Wire.HologramId);
+                OutReason = FText::Format(NSLOCTEXT("SmartFoundations", "Extend_CableSocketMoved", "Power socket moved relative to the quoted cable {0}"), FText::FromString(Wire.HologramId)).ToString();
                 return false;
             }
         }
         Wire.PowerMaxLength = SFExtendPowerConnections::MaxWireLength(WireClass->GetDefaultObject<AFGBuildableWire>(), Ports[0], Ports[1]);
         if (!FMath::IsFinite(Wire.PowerMaxLength) || Wire.PowerMaxLength <= 0)
         {
-            OutReason = TEXT("Power cable has no valid native range");
+            OutReason = NSLOCTEXT("SmartFoundations", "Extend_CableInvalidRange", "Power cable has no valid native range").ToString();
             return false;
         }
     }

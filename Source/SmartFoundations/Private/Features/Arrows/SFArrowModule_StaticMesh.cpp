@@ -104,7 +104,6 @@ bool FSFArrowModule_StaticMesh::Initialize(UWorld* World, UObject* Outer, USFSub
 			MaterialY = Material;
 			MaterialZ = Material;
 			
-			SF_LOG_ARROWS(Normal, TEXT("✅ Initialize: Assets loaded (head + shaft + material)"));
 			
 			if (PendingAttachTarget.IsValid())
 			{
@@ -158,7 +157,6 @@ bool FSFArrowModule_StaticMesh::Initialize(UWorld* World, UObject* Outer, USFSub
 	if (LabelZ.IsValid()) LabelZ.Get()->SetVisibility(false);
 
 	bInitialized = true;
-	SF_LOG_ARROWS(Normal, TEXT("✅ Initialize: Complete (Issue #213: heads + shafts + labels ready, assets loading async)"));
 	
 	return true;
 }

@@ -40,6 +40,7 @@ struct FSmart_BeltConfigSection {
     UPROPERTY(BlueprintReadWrite) int32 BeltLevelMain{};
     UPROPERTY(BlueprintReadWrite) int32 BeltLevelToBuilding{};
     UPROPERTY(BlueprintReadWrite) int32 BeltRoutingMode{};
+    UPROPERTY(BlueprintReadWrite) int32 LiftUsageMode{};
     UPROPERTY(BlueprintReadWrite) bool bStackableBeltEnabled{};
 };
 
@@ -167,6 +168,10 @@ public:
     // Belt routing mode: 0=Default, 1=Curve, 2=Straight
     UPROPERTY(BlueprintReadWrite)
     int32 BeltRoutingMode{};
+
+    // 0=Belts Only, 1=Lift at Distributor, 2=Lift at Building
+    UPROPERTY(BlueprintReadWrite)
+    int32 LiftUsageMode{};
 
     UPROPERTY(BlueprintReadWrite)
     bool bStackableBeltEnabled{};
@@ -369,6 +374,7 @@ public:
         ConfigStruct.BeltLevelMain            = Sections.BeltAutoConnect.BeltLevelMain;
         ConfigStruct.BeltLevelToBuilding      = Sections.BeltAutoConnect.BeltLevelToBuilding;
         ConfigStruct.BeltRoutingMode          = Sections.BeltAutoConnect.BeltRoutingMode;
+        ConfigStruct.LiftUsageMode = FMath::Clamp(Sections.BeltAutoConnect.LiftUsageMode, 0, 2);
         ConfigStruct.bStackableBeltEnabled    = Sections.BeltAutoConnect.bStackableBeltEnabled;
 
         // Pipe Auto-Connect

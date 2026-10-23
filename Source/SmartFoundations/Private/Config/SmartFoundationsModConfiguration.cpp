@@ -1,6 +1,7 @@
 // Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
 #include "Config/SmartFoundationsModConfiguration.h"
+#include "UI/SFInterfaceSettingsWidget.h"
 #include "Configuration/Properties/ConfigPropertySection.h"
 #include "Configuration/Properties/ConfigPropertyBool.h"
 #include "Configuration/Properties/ConfigPropertyInteger.h"
@@ -11,6 +12,7 @@
 USmartFoundationsModConfiguration::USmartFoundationsModConfiguration()
 {
 	ConfigId.ModReference = TEXT("SmartFoundations");
+	CustomWidget = USFInterfaceSettingsWidget::StaticClass();
 	DisplayName = LOCTEXT("Config.DisplayName", "Smart!");
 	Description = LOCTEXT("Config.Description", "Smart! Foundations settings.");
 
@@ -31,6 +33,8 @@ USmartFoundationsModConfiguration::USmartFoundationsModConfiguration()
 		LOCTEXT("P.BeltLevelToBuilding.TT", "Belt tier for distributor-to-building connections. Auto uses the highest tier you've unlocked."), 0));
 	Belt->SectionProperties.Add(TEXT("BeltRoutingMode"),         CreateIntegerProperty(TEXT("BeltRoutingMode"),        LOCTEXT("P.BeltRoutingMode", "Belt Routing Mode"),
 		LOCTEXT("P.BeltRoutingMode.TT", "How auto-connected belts are shaped: Default, Curve, or Straight."), 0));
+	Belt->SectionProperties.Add(TEXT("LiftUsageMode"), CreateIntegerProperty(TEXT("LiftUsageMode"), LOCTEXT("P.LiftUsageMode", "Factory Connection"),
+		LOCTEXT("P.LiftUsageMode.TT", "Belts Only keeps ordinary belt routing. Lift at Distributor keeps the belt at machine height; Lift at Building keeps it at distributor height. Native costs and placement restrictions apply."), 0));
 	Belt->SectionProperties.Add(TEXT("bStackableBeltEnabled"),   CreateBoolProperty(TEXT("bStackableBeltEnabled"),     LOCTEXT("P.bStackableBeltEnabled", "Stackable Belt Auto-Connect"),
 		LOCTEXT("P.bStackableBeltEnabled.TT", "Allow auto-connected belts to stack vertically where they overlap."), false));
 	RootSection->SectionProperties.Add(TEXT("BeltAutoConnect"), Belt);
@@ -79,7 +83,7 @@ USmartFoundationsModConfiguration::USmartFoundationsModConfiguration()
 		LOCTEXT("Sec.BlueprintAutoConnect.TT", "Controls connections between adjacent copies of scaled blueprints."));
 	BlueprintAutoConnect->SectionProperties.Add(TEXT("bBlueprintSeamAutoConnectEnabled"), CreateBoolProperty(TEXT("bBlueprintSeamAutoConnectEnabled"),
 		LOCTEXT("P.bBlueprintSeamAutoConnectEnabled", "Blueprint Seam Auto-Connect"),
-		LOCTEXT("P.bBlueprintSeamAutoConnectEnabled.TT", "Connect belts and pipes across adjacent copies when scaling a blueprint, independently of nearby Belt and Pipe Auto-Connect."), true));
+		LOCTEXT("P.bBlueprintSeamAutoConnectEnabled.TT", "Connect compatible open belt, pipe, Hypertube, railway and vehicle-path tails between repeated Blueprints. Lift tails can align vertical belt connections. Native direction, length, slope, placement rules and normal material costs apply; unmarked building ports are not connection intent."), true));
 	RootSection->SectionProperties.Add(TEXT("BlueprintAutoConnect"), BlueprintAutoConnect);
 
 	// ── Auto-Connect Behavior ──

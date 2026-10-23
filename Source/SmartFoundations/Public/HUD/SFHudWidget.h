@@ -22,6 +22,8 @@ namespace SFHud
 	// steep") and guard notices. The sentinel is stripped before the line is displayed.
 	// Non-printing (SOH, U+0001) so it can never collide with real (localized) message text.
 	inline constexpr const TCHAR* WarningLinePrefix = TEXT("\x01");
+	// Presentation-only footer: localized label, tab, resolved current binding.
+	inline constexpr const TCHAR* HintLinePrefix = TEXT("\x02");
 }
 
 /**
@@ -35,11 +37,11 @@ namespace SFHud
  *   UBorder (FICSIT Orange border)
  *     └─ UBorder (dark background)
  *          └─ UVerticalBox
- *               ├─ UTextBlock (header)
- *               ├─ UTextBlock (line 1)
+ *               ├─ UHorizontalBox (header and current control mode)
+ *               ├─ Pooled label/value rows (warnings remain whole)
  *               ├─ UHorizontalBox (grid line with colored segments)
  *               ├─ UImage (recipe icon)
- *               └─ ... (pooled text blocks, shown/hidden as needed)
+ *               └─ UHorizontalBox (active control hint from current bindings)
  */
 UCLASS()
 class SMARTFOUNDATIONS_API USFHudWidget : public UUserWidget
@@ -47,7 +49,7 @@ class SMARTFOUNDATIONS_API USFHudWidget : public UUserWidget
 	GENERATED_BODY()
 
 public:
-	/** Configure the HUD scale (triggers widget rebuild if scale changed) */
+	/** Resize fonts and minimum width without rebuilding the live Slate tree. */
 	void SetHudScale(float InScale);
 
 	/** Apply a color theme (0=Default, 1=Dark, 2=Classic, 3=High Contrast, 4=Minimal, 5=Monochrome) */
@@ -55,6 +57,8 @@ public:
 
 	/** Update all display content from parsed lines. Called each frame by SFHudService. */
 	void UpdateContent(const TArray<FString>& Lines, UTexture2D* RecipeIcon);
+	/** Display the existing control mode; never infer axes from presentation text. */
+	void SetPlayerRelative(bool bEnabled);
 
 protected:
 	virtual void NativeOnInitialized() override;
@@ -76,6 +80,7 @@ private:
 	};
 
 	static const FHudTheme Themes[6];
+	static FHudTheme ToLinearTheme(const FHudTheme& Theme);
 	FHudTheme CurrentTheme;
 	int32 CachedThemeIndex = -1;  // Force first apply
 
@@ -97,6 +102,18 @@ private:
 
 	UPROPERTY()
 	TArray<TObjectPtr<UTextBlock>> TextPool;
+	UPROPERTY()
+	TArray<TObjectPtr<UTextBlock>> ValuePool;
+	UPROPERTY()
+	TArray<TObjectPtr<UBorder>> LineFrames;
+	UPROPERTY()
+	TObjectPtr<UTextBlock> ModeLabel;
+	UPROPERTY()
+	TObjectPtr<UHorizontalBox> HintLineBox;
+	UPROPERTY()
+	TObjectPtr<UTextBlock> HintLabel;
+	UPROPERTY()
+	TObjectPtr<UTextBlock> HintKeys;
 
 	// Colored grid line (reused when grid line is present)
 	UPROPERTY()

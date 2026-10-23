@@ -1,6 +1,6 @@
 // Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
-#include "SmartFoundations.h"
 #include "Features/Scaling/SFSnowCannonHologramState.h"
+#include "SmartFoundations.h"
 #include "Features/Scaling/Holograms/SFSnowCannonPreviewHologram.h"
 #include "Hologram/FGBuildableSnowCannonHologram.h"
 #include "Components/StaticMeshComponent.h"

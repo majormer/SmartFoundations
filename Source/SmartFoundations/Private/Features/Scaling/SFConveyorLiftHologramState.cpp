@@ -1,6 +1,6 @@
 // Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
-#include "SmartFoundations.h"
 #include "Features/Scaling/SFConveyorLiftHologramState.h"
+#include "SmartFoundations.h"
 #include "Core/SFNativeHit.h"
 #include "Features/Scaling/Holograms/SFConveyorLiftPreviewHologram.h"
 #include "Features/Scaling/SFScalingSpec.h"
@@ -531,12 +531,14 @@ bool SFConveyorLiftHologramState::Prepare(AFGHologram* Root, const FSFScalingSpe
         AcceptedPoses.Add(Cell->GetActorTransform());
         if (!ReservePassthroughFaces(Cell, ReservedHoleFaces)) return false;
         for (int32 Index = 0; Index < 2; ++Index)
+        {
             if (auto* Binding = GetBinding(Cell, Index))
             {
                 if (Reserved.Contains(Binding)) return false;
                 Reserved.Add(Binding);
             }
-            Accepted.Add(Cell);
+        }
+        Accepted.Add(Cell);
     }
     for (int32 Index = 0; Index < Accepted.Num(); ++Index)
         if (Previews.IsEmpty())

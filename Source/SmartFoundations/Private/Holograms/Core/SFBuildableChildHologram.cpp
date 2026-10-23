@@ -1,12 +1,12 @@
 // Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
+#include "Holograms/Core/SFBuildableChildHologram.h"
 #include "SmartFoundations.h"
 #include "Components/PrimitiveComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/StaticMesh.h"
 #include "Engine/World.h"
 #include "FGRecipe.h"
-#include "Holograms/Core/SFBuildableChildHologram.h"
 #include "Data/SFHologramDataRegistry.h"
 #include "Subsystem/SFHologramDataService.h"
 #include "Features/Scaling/SFHypertubeEntranceState.h"

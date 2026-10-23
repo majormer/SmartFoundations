@@ -11,6 +11,12 @@ Use **Toggle Smart (Session)** when you want to place normally for a while witho
 
 The choice survives recipe changes and holstering for the current session. It does not overwrite your saved grid, Auto-Connect, or Extend configuration. Each multiplayer player controls their own assistance.
 
+![Smart Camera’s built-in view follows a single Large Fan hologram while Smart! building assistance is switched off.](https://raw.githubusercontent.com/wiki/majormer/SmartFoundations/images/v35/camera-built-in.png)
+
+Smart Camera’s built-in view follows a single Large Fan hologram while Smart! building assistance is switched off.
+
+The normal build controls remain available with assistance off. Smart Camera can still supply its own inset view.
+
 ## Large Vanilla Blueprints
 
 Smart construction has a safe payload limit. Disabling assistance lets you select a large vanilla blueprint again and place it normally, without Smart's extra grid or seam connections. It does not increase the limit for Smart placements or provide free materials.
@@ -29,4 +35,4 @@ Double-tapping Num 0 is a separate Auto-Connect/Extend shortcut; it does not rep
 
 ---
 
-_Last updated: 2026-10-06 · Smart! v34.4.0_
+_Last updated: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (release draft)_

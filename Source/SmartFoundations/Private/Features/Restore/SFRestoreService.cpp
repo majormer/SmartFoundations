@@ -759,6 +759,7 @@ FSFRestorePreset USFRestoreService::CapturePanelState(
 		Preset.AutoConnect.BeltTierToBuilding = AC.BeltTierToBuilding;
 		Preset.AutoConnect.bChainDistributors = AC.bChainDistributors;
 		Preset.AutoConnect.BeltRoutingMode = AC.BeltRoutingMode;
+		Preset.AutoConnect.LiftUsageMode = AC.LiftUsageMode;
 		Preset.AutoConnect.bPipeEnabled = AC.bPipeAutoConnectEnabled;
 		Preset.AutoConnect.PipeTierMain = AC.PipeTierMain;
 		Preset.AutoConnect.PipeTierToBuilding = AC.PipeTierToBuilding;
@@ -1110,10 +1111,17 @@ void USFRestoreService::ApplyPresetValuesWhenHologramReady(TSharedRef<const FSFR
 bool USFRestoreService::ValidatePresetUnlocks(const FSFRestorePreset& Preset, FString& OutFailureReason) const
 {
 	OutFailureReason.Empty();
+	auto BuildableName = [](UClass* Class) -> FText
+	{
+		const AFGBuildable* Defaults = Class && Class->IsChildOf(AFGBuildable::StaticClass())
+			? Cast<AFGBuildable>(Class->GetDefaultObject()) : nullptr;
+		return Defaults && !Defaults->mDisplayName.IsEmpty()
+			? Defaults->mDisplayName : FText::FromString(GetNameSafe(Class));
+	};
 
 	if (!Subsystem.IsValid())
 	{
-		OutFailureReason = TEXT("Smart subsystem is unavailable");
+		OutFailureReason = NSLOCTEXT("SmartFoundations", "Restore_SubsystemUnavailable", "Smart subsystem is unavailable").ToString();
 		return false;
 	}
 
@@ -1121,7 +1129,7 @@ bool USFRestoreService::ValidatePresetUnlocks(const FSFRestorePreset& Preset, FS
 	AFGRecipeManager* RecipeManager = World ? AFGRecipeManager::Get(World) : nullptr;
 	if (!RecipeManager)
 	{
-		OutFailureReason = TEXT("Recipe manager is unavailable");
+		OutFailureReason = NSLOCTEXT("SmartFoundations", "Restore_RecipeManagerUnavailable", "Recipe manager is unavailable").ToString();
 		return false;
 	}
 
@@ -1158,7 +1166,7 @@ bool USFRestoreService::ValidatePresetUnlocks(const FSFRestorePreset& Preset, FS
 			return *FoundRecipe;
 		}
 
-		AddFailure(FString::Printf(TEXT("%s recipe '%s' is not unlocked"), *Context, *RecipeClassName));
+		AddFailure(FText::Format(NSLOCTEXT("SmartFoundations", "Restore_RecipeLocked", "{0} recipe '{1}' is not unlocked"), FText::FromString(Context), FText::FromString(RecipeClassName)).ToString());
 		return nullptr;
 	};
 
@@ -1181,14 +1189,14 @@ bool USFRestoreService::ValidatePresetUnlocks(const FSFRestorePreset& Preset, FS
 
 		if (!BuildClass)
 		{
-			AddFailure(FString::Printf(TEXT("%s buildable '%s' could not be resolved"), *Context, *BuildClassName));
+			AddFailure(FText::Format(NSLOCTEXT("SmartFoundations", "Restore_BuildableMissing", "{0} buildable '{1}' could not be resolved"), FText::FromString(Context), FText::FromString(BuildClassName)).ToString());
 			return;
 		}
 
 		TSubclassOf<AFGBuildable> BuildableClass(BuildClass);
 		if (!RecipeManager->IsBuildingAvailable(BuildableClass))
 		{
-			AddFailure(FString::Printf(TEXT("%s buildable '%s' is not unlocked"), *Context, *BuildClassName));
+			AddFailure(FText::Format(NSLOCTEXT("SmartFoundations", "Restore_BuildableLocked", "{0} buildable '{1}' is not unlocked"), FText::FromString(Context), BuildableName(BuildClass)).ToString());
 		}
 	};
 
@@ -1203,21 +1211,22 @@ bool USFRestoreService::ValidatePresetUnlocks(const FSFRestorePreset& Preset, FS
 		TSubclassOf<AFGBuildable> BuildableClass(BuildClass);
 		if (!RecipeManager->IsBuildingAvailable(BuildableClass))
 		{
-			AddFailure(FString::Printf(TEXT("%s buildable '%s' is not unlocked"), *Context, *BuildClass->GetName()));
+			AddFailure(FText::Format(NSLOCTEXT("SmartFoundations", "Restore_BuildableLocked", "{0} buildable '{1}' is not unlocked"), FText::FromString(Context), BuildableName(BuildClass)).ToString());
 		}
 	};
 
 	UClass* PresetBuildClass = nullptr;
 	if (!Preset.BuildingClassName.IsEmpty())
 	{
-		TSubclassOf<UFGRecipe> BuildRecipe = FindAvailableRecipe(Preset.BuildingClassName, TEXT("Preset building"));
-		ValidateRecipeProductBuildable(BuildRecipe, TEXT("Preset building"));
+		const FString Context = NSLOCTEXT("SmartFoundations", "Restore_ContextBuilding", "Preset building").ToString();
+		TSubclassOf<UFGRecipe> BuildRecipe = FindAvailableRecipe(Preset.BuildingClassName, Context);
+		ValidateRecipeProductBuildable(BuildRecipe, Context);
 		PresetBuildClass = GetFirstBuildableProductClass(BuildRecipe);
 	}
 
 	if (Preset.CaptureFlags.bRecipe && !Preset.RecipeClassName.IsEmpty())
 	{
-		TSubclassOf<UFGRecipe> ProductionRecipe = FindAvailableRecipe(Preset.RecipeClassName, TEXT("Production"));
+		TSubclassOf<UFGRecipe> ProductionRecipe = FindAvailableRecipe(Preset.RecipeClassName, NSLOCTEXT("SmartFoundations", "Restore_ContextProduction", "Production").ToString());
 		if (ProductionRecipe && PresetBuildClass)
 		{
 			UFGRecipe* RecipeCDO = ProductionRecipe->GetDefaultObject<UFGRecipe>();
@@ -1239,9 +1248,8 @@ bool USFRestoreService::ValidatePresetUnlocks(const FSFRestorePreset& Preset, FS
 
 			if (!bCompatible)
 			{
-				AddFailure(FString::Printf(TEXT("Production recipe '%s' is not valid for buildable '%s'"),
-					*Preset.RecipeClassName,
-					*PresetBuildClass->GetName()));
+				AddFailure(FText::Format(NSLOCTEXT("SmartFoundations", "Restore_RecipeIncompatible", "Production recipe '{0}' is not valid for buildable '{1}'"),
+					FText::FromString(Preset.RecipeClassName), BuildableName(PresetBuildClass)).ToString());
 			}
 		}
 	}
@@ -1258,7 +1266,7 @@ bool USFRestoreService::ValidatePresetUnlocks(const FSFRestorePreset& Preset, FS
 
 			if (!PlayerController || !Subsystem->GetBeltClassForTier(Tier, PlayerController))
 			{
-				AddFailure(FString::Printf(TEXT("Auto-connect %s belt tier Mk%d is not unlocked"), Context, Tier));
+				AddFailure(FText::Format(NSLOCTEXT("SmartFoundations", "Restore_BeltTierLocked", "Auto-connect {0} belt tier Mk{1} is not unlocked"), FText::FromString(Context), FText::AsNumber(Tier)).ToString());
 			}
 		};
 		auto ValidatePipeTier = [&](int32 Tier, const TCHAR* Context)
@@ -1270,19 +1278,19 @@ bool USFRestoreService::ValidatePresetUnlocks(const FSFRestorePreset& Preset, FS
 
 			if (!PlayerController || !Subsystem->GetPipeClassForTier(Tier, Preset.AutoConnect.bPipeIndicator, PlayerController))
 			{
-				AddFailure(FString::Printf(TEXT("Auto-connect %s pipe tier Mk%d is not unlocked"), Context, Tier));
+				AddFailure(FText::Format(NSLOCTEXT("SmartFoundations", "Restore_PipeTierLocked", "Auto-connect {0} pipe tier Mk{1} is not unlocked"), FText::FromString(Context), FText::AsNumber(Tier)).ToString());
 			}
 		};
 
 		if (Preset.AutoConnect.bBeltEnabled)
 		{
-			ValidateBeltTier(Preset.AutoConnect.BeltTierMain, TEXT("main"));
-			ValidateBeltTier(Preset.AutoConnect.BeltTierToBuilding, TEXT("to-building"));
+			ValidateBeltTier(Preset.AutoConnect.BeltTierMain, *NSLOCTEXT("SmartFoundations", "Restore_ContextMain", "main").ToString());
+			ValidateBeltTier(Preset.AutoConnect.BeltTierToBuilding, *NSLOCTEXT("SmartFoundations", "Restore_ContextToBuilding", "to-building").ToString());
 		}
 		if (Preset.AutoConnect.bPipeEnabled)
 		{
-			ValidatePipeTier(Preset.AutoConnect.PipeTierMain, TEXT("main"));
-			ValidatePipeTier(Preset.AutoConnect.PipeTierToBuilding, TEXT("to-building"));
+			ValidatePipeTier(Preset.AutoConnect.PipeTierMain, *NSLOCTEXT("SmartFoundations", "Restore_ContextMain", "main").ToString());
+			ValidatePipeTier(Preset.AutoConnect.PipeTierToBuilding, *NSLOCTEXT("SmartFoundations", "Restore_ContextToBuilding", "to-building").ToString());
 		}
 	}
 
@@ -1290,9 +1298,9 @@ bool USFRestoreService::ValidatePresetUnlocks(const FSFRestorePreset& Preset, FS
 	{
 		for (const FSFCloneHologram& Child : Preset.ExtendCloneTopology.ChildHolograms)
 		{
-			const FString Context = FString::Printf(TEXT("Extend %s '%s'"),
-				Child.Role.IsEmpty() ? TEXT("component") : *Child.Role,
-				*Child.HologramId);
+			const FString Context = FText::Format(NSLOCTEXT("SmartFoundations", "Restore_ContextExtendPart", "Extend {0} '{1}'"),
+				Child.Role.IsEmpty() ? NSLOCTEXT("SmartFoundations", "Restore_ContextComponent", "component") : FText::FromString(Child.Role),
+				FText::FromString(Child.HologramId)).ToString();
 			TSubclassOf<UFGRecipe> ChildRecipe = FindAvailableRecipe(Child.RecipeClass, Context);
 			ValidateRecipeProductBuildable(ChildRecipe, Context);
 			ValidateBuildClass(Child.BuildClass, Context, ChildRecipe);
@@ -1316,7 +1324,7 @@ bool USFRestoreService::ValidatePresetUnlocks(const FSFRestorePreset& Preset, FS
 	}
 	if (Failures.Num() > MaxReportedFailures)
 	{
-		ReportedFailures.Add(FString::Printf(TEXT("and %d more"), Failures.Num() - MaxReportedFailures));
+		ReportedFailures.Add(FText::Format(NSLOCTEXT("SmartFoundations", "Restore_MoreFailures", "and {0} more"), FText::AsNumber(Failures.Num() - MaxReportedFailures)).ToString());
 	}
 
 	OutFailureReason = FString::Join(ReportedFailures, TEXT("; "));
@@ -1551,6 +1559,7 @@ TSharedPtr<FJsonObject> USFRestoreService::PresetToJson(const FSFRestorePreset& 
 		AC->SetNumberField(TEXT("beltTierToBuilding"), Preset.AutoConnect.BeltTierToBuilding);
 		AC->SetBoolField(TEXT("chainDistributors"), Preset.AutoConnect.bChainDistributors);
 		AC->SetNumberField(TEXT("beltRoutingMode"), Preset.AutoConnect.BeltRoutingMode);
+		AC->SetNumberField(TEXT("liftUsageMode"), Preset.AutoConnect.LiftUsageMode);
 		AC->SetBoolField(TEXT("pipeEnabled"), Preset.AutoConnect.bPipeEnabled);
 		AC->SetNumberField(TEXT("pipeTierMain"), Preset.AutoConnect.PipeTierMain);
 		AC->SetNumberField(TEXT("pipeTierToBuilding"), Preset.AutoConnect.PipeTierToBuilding);
@@ -1698,6 +1707,7 @@ bool USFRestoreService::JsonToPreset(const TSharedPtr<FJsonObject>& JsonObj, FSF
 		if ((*ACObj)->TryGetNumberField(TEXT("beltTierToBuilding"), Val)) OutPreset.AutoConnect.BeltTierToBuilding = static_cast<int32>(Val);
 		(*ACObj)->TryGetBoolField(TEXT("chainDistributors"), OutPreset.AutoConnect.bChainDistributors);
 		if ((*ACObj)->TryGetNumberField(TEXT("beltRoutingMode"), Val)) OutPreset.AutoConnect.BeltRoutingMode = static_cast<int32>(Val);
+		if ((*ACObj)->TryGetNumberField(TEXT("liftUsageMode"), Val)) OutPreset.AutoConnect.LiftUsageMode = FMath::Clamp(static_cast<int32>(Val), 0, 2);
 		(*ACObj)->TryGetBoolField(TEXT("pipeEnabled"), OutPreset.AutoConnect.bPipeEnabled);
 		if ((*ACObj)->TryGetNumberField(TEXT("pipeTierMain"), Val)) OutPreset.AutoConnect.PipeTierMain = static_cast<int32>(Val);
 		if ((*ACObj)->TryGetNumberField(TEXT("pipeTierToBuilding"), Val)) OutPreset.AutoConnect.PipeTierToBuilding = static_cast<int32>(Val);

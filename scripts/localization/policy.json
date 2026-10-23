@@ -1,0 +1,58 @@
+{
+  "schema": 1,
+  "native": "en",
+  "cultures": {
+    "en": "English",
+    "de": "Deutsch",
+    "es": "Español",
+    "fr": "Français",
+    "it": "Italiano",
+    "ja": "日本語",
+    "ko": "한국어",
+    "pl": "Polski",
+    "pt-BR": "Português (Brasil)",
+    "ru": "Русский",
+    "tr": "Türkçe",
+    "zh-Hans": "简体中文",
+    "zh-Hant": "繁體中文",
+    "bg": "Български",
+    "hu": "Magyar",
+    "no": "Norsk",
+    "uk": "Українська",
+    "vi": "Tiếng Việt",
+    "ar": "العربية",
+    "fa": "فارسی",
+    "th": "ไทย"
+  },
+  "rtl": [
+    "ar",
+    "fa"
+  ],
+  "protected": [
+    "Smart!",
+    "Smart Camera",
+    "Smart",
+    "HUD",
+    "SmartFoundations",
+    "SmartCamera",
+    "SpaceElevatorCamera",
+    "sc.Camera.SaveProfile <namespace> <camera-id> save",
+    "build-preview",
+    "player-look",
+    "Smart! Foundations"
+  ],
+  "game_culture_aliases": {
+    "en": "en-US",
+    "es": "es-ES"
+  },
+  "wiki": {
+    "translation_status": [
+      "draft",
+      "reviewed"
+    ],
+    "publish_status": "reviewed",
+    "verbatim_source_hashes": {
+      "a27d09aab8c9080a331642e8b0fa87acc94cf6eeaaaa0f5554954bbc50ce57cc": "Contributor account names; retain spelling exactly"
+    }
+  }
+}

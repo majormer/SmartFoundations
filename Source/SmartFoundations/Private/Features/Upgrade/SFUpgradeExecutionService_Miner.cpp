@@ -29,12 +29,12 @@ int32 USFUpgradeExecutionService::ProcessMinerReplacement(AFGBuildable* Buildabl
 	AFGBuildableResourceExtractor* Old = Cast<AFGBuildableResourceExtractor>(Buildable);
 	if (!IsValid(Old) || !SFUpgradeMinerFamily::IsMinerClass(Old->GetClass()) || !Old->HasAuthority()
 		|| !IsValid(Old->GetExtractableResource().GetObject()) || !BuildGun || !Player)
-		return Reject(TEXT("The selected Miner is missing its native resource or construction context."));
+		return Reject(NSLOCTEXT("SmartFoundations", "Upgrade_MinerMissingContext", "The selected Miner is missing its native resource or construction context.").ToString());
 
 	AFGHologram* Preview = AFGHologram::SpawnHologramFromRecipe(TargetRecipe, BuildGun, Old->GetActorLocation(), Player);
 	ON_SCOPE_EXIT { if (IsValid(Preview)) Preview->Destroy(); };
 	AFGResourceExtractorHologram* Hologram = Cast<AFGResourceExtractorHologram>(Preview);
-	if (!Hologram) return Reject(TEXT("The native Miner replacement preview could not be created."));
+	if (!Hologram) return Reject(NSLOCTEXT("SmartFoundations", "Upgrade_MinerMissingPreview", "The native Miner replacement preview could not be created.").ToString());
 	Hologram->SetInsideBlueprintDesigner(Old->GetBlueprintDesigner());
 
 	// Obtain an ordinary blocking hit on this exact extractor. A synthetic actor hit
@@ -48,7 +48,7 @@ int32 USFUpgradeExecutionService::ProcessMinerReplacement(AFGBuildable* Buildabl
 	FHitResult Hit;
 	if (!Old->GetWorld()->LineTraceSingleByChannel(Hit, Start, Aim, ECC_Visibility, Query)
 		|| Hit.GetActor() != Old || !Hologram->IsValidHitResult(Hit))
-		return Reject(TEXT("The selected Miner has no valid native replacement aim."));
+		return Reject(NSLOCTEXT("SmartFoundations", "Upgrade_MinerInvalidAim", "The selected Miner has no valid native replacement aim.").ToString());
 
 	// Start the same fresh placement pass used by the build gun, then run the full
 	// native lifecycle and validation. Never clear disqualifiers after validation,
@@ -56,7 +56,7 @@ int32 USFUpgradeExecutionService::ProcessMinerReplacement(AFGBuildable* Buildabl
 	Hologram->ResetConstructDisqualifiers();
 	Hologram->UpdateHologramPlacement(Hit);
 	if (!Hologram->IsUpgrade() || Hologram->GetUpgradedActor() != Old)
-		return Reject(TEXT("The native Miner replacement could not bind to the selected extractor."));
+		return Reject(NSLOCTEXT("SmartFoundations", "Upgrade_MinerCannotBind", "The native Miner replacement could not bind to the selected extractor.").ToString());
 
 	// Classify exhausted materials through the shared settlement contract before
 	// native cost validation can turn them into an ordinary placement rejection.
@@ -69,17 +69,17 @@ int32 USFUpgradeExecutionService::ProcessMinerReplacement(AFGBuildable* Buildabl
 	int32 Steps = 0;
 	while (Hologram->CanTakeNextBuildStep() && !Hologram->DoMultiStepPlacement(false))
 	{
-		if (++Steps >= 8) return Reject(TEXT("The native Miner replacement placement could not finish."));
+		if (++Steps >= 8) return Reject(NSLOCTEXT("SmartFoundations", "Upgrade_MinerPlacementIncomplete", "The native Miner replacement placement could not finish.").ToString());
 	}
 	Hologram->ValidatePlacementAndCost(Player->GetInventory());
 	if (!Hologram->IsUpgrade() || Hologram->GetUpgradedActor() != Old)
-		return Reject(TEXT("The native Miner replacement lost its selected extractor during placement."));
+		return Reject(NSLOCTEXT("SmartFoundations", "Upgrade_MinerSelectionLost", "The native Miner replacement lost its selected extractor during placement.").ToString());
 	if (!Hologram->CanConstruct())
 	{
 		TArray<TSubclassOf<UFGConstructDisqualifier>> Disqualifiers;
 		Hologram->GetConstructDisqualifiers(Disqualifiers);
-		FString Message = TEXT("Native placement rejected the Miner replacement.");
-		for (const TSubclassOf<UFGConstructDisqualifier> Disqualifier : Disqualifiers)
+		FString Message = NSLOCTEXT("SmartFoundations", "Upgrade_MinerPlacementRejected", "Native placement rejected the Miner replacement.").ToString();
+		for (const TSubclassOf<UFGConstructDisqualifier>& Disqualifier : Disqualifiers)
 		{
 			if (!UFGConstructDisqualifier::GetIsSoftDisqualifier(Disqualifier))
 				Message += TEXT(" ") + UFGConstructDisqualifier::GetDisqualifyingText(Disqualifier).ToString();
@@ -92,7 +92,7 @@ int32 USFUpgradeExecutionService::ProcessMinerReplacement(AFGBuildable* Buildabl
 	UFGInventoryComponent* Output = Old->GetOutputInventory();
 	UFGInventoryComponent* Potential = Old->GetPotentialInventory();
 	if (!IsValid(Output) || !IsValid(Potential))
-		return Reject(TEXT("The selected Miner is missing its native factory inventories."));
+		return Reject(NSLOCTEXT("SmartFoundations", "Upgrade_MinerMissingInventory", "The selected Miner is missing its native factory inventories.").ToString());
 	const bool bPaused = Old->IsProductionPaused();
 	const float CurrentPotential = Old->GetCurrentPotential();
 	const float PendingPotential = Old->GetPendingPotential();
@@ -107,7 +107,7 @@ int32 USFUpgradeExecutionService::ProcessMinerReplacement(AFGBuildable* Buildabl
 	if (!IsValid(New))
 	{
 		RollbackUpgradeCharge(Ledger, Player);
-		return Reject(TEXT("The native Miner replacement could not be constructed."));
+		return Reject(NSLOCTEXT("SmartFoundations", "Upgrade_MinerConstructionFailed", "The native Miner replacement could not be constructed.").ToString());
 	}
 
 	// Leave the original intact until native construction has succeeded. Dispatch

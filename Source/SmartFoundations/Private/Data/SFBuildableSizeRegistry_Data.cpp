@@ -10,14 +10,12 @@
 // human-editable size table; this file is compiled in (no runtime/packaging risk).
 
 #include "SFBuildableSizeRegistry.h"
-#include "Logging/SFLogMacros.h"
 
 extern FString CurrentSourceFile;
 
 void USFBuildableSizeRegistry::RegisterDefaultProfiles()
 {
 	CurrentSourceFile = TEXT("BuildableSizes.csv");
-	SF_LOG_ADAPTER(Normal, TEXT("📂 Registering buildable size profiles from generated table (350 rows)"), 350);
 
 	RegisterProfile(TEXT("Build_Roof_Orange_01_C"), FVector(800.0f, 800.0f, 50.0f), false, true, TEXT(""), false);
 	RegisterProfile(TEXT("Build_Roof_Orange_02_C"), FVector(800.0f, 800.0f, 100.0f), false, true, TEXT(""), false);

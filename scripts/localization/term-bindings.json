@@ -1,0 +1,12 @@
+{
+  "SmartFoundations,Family_Belt": "Player_UI:BuildMenu/Tabs/Logistics/ConveyorBelts",
+  "SmartFoundations,Family_Lift": "Player_UI:BuildMenu/Tabs/Logistics/ConveyorLifts",
+  "SmartFoundations,Family_Pipe": "Player_UI:BuildMenu/Tabs/Logistics/Pipelines",
+  "SmartFoundations,Family_Miner": "Player_UI:BuildMenu/Tabs/Production/Miners",
+  "SmartFoundations,HUD_Walk_Hypertube": "Buildables_Data:Transport/Hyper/Hypertube",
+  "SmartFoundations,Walk_Conveyance_Hypertube": "Buildables_Data:Transport/Hyper/Hypertube",
+  "SmartCompass,North": "Player_UI:HUD/Compass/North",
+  "SmartCompass,East": "Player_UI:HUD/Compass/East",
+  "SmartCompass,South": "Player_UI:HUD/Compass/South",
+  "SmartCompass,West": "Player_UI:HUD/Compass/West"
+}

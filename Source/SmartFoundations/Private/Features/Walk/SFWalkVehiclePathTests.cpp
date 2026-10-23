@@ -8,6 +8,41 @@
 #include "Misc/AutomationTest.h"
 
 #if WITH_DEV_AUTOMATION_TESTS
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSFWalkVehiclePathFirstPointFrameTest,
+    "SmartFoundations.Walking.VehiclePathFirstPointFrame",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FSFWalkVehiclePathFirstPointFrameTest::RunTest(const FString& Parameters)
+{
+    UWorld* World = UWorld::CreateWorld(EWorldType::EditorPreview, false);
+    auto* Path = World->SpawnActor<AFGVehiclePathSegmentHologram>();
+    if (!TestNotNull(TEXT("Native path fixture"), Path)) { World->DestroyWorld(false); return false; }
+    auto* Direction = FindFProperty<FStructProperty>(Path->GetClass(), TEXT("mStartPointExitDirection"));
+    auto* Reverse = FindFProperty<FBoolProperty>(Path->GetClass(), TEXT("mIsSegmentReversed"));
+    auto* Step = FindFProperty<FProperty>(Path->GetClass(), TEXT("mBuildStep"));
+    if (!Direction || !Reverse || !Step) { World->DestroyWorld(false); return false; }
+    const FVector Location(1000, 2000, 3000);
+    Path->SetActorLocationAndRotation(Location, FRotator(0, 17, 0));
+    *Step->ContainerPtrToValuePtr<EVehiclePathBuildStep>(Path) = EVehiclePathBuildStep::StartPoint;
+    FSFWalkSegment Segment;
+    Segment.Advance = 5600.f;
+    for (const float Yaw : {0.f, 45.f, 90.f, 180.f, -90.f})
+    {
+        const FVector GraphForward = FRotator(0, Yaw, 0).Vector();
+        *Direction->ContainerPtrToValuePtr<FVector>(Path) = GraphForward;
+        for (const bool bReverse : {false, true})
+        {
+            Reverse->SetPropertyValue_InContainer(Path, bReverse);
+            const FTransform Origin = FSFWalkVehiclePathAdapter::StartFrame(Path);
+            const FVector Expected = Location + GraphForward * (bReverse ? -5600.f : 5600.f);
+            TestTrue(TEXT("First-point anchor is retained"), Origin.GetLocation().Equals(Location));
+            TestTrue(TEXT("Walking follows the native arrow, independently of actor yaw"),
+                USFWalkService::AccumulateFrame({Segment}, Origin, 0).GetLocation().Equals(Expected, 0.1f));
+        }
+    }
+    World->DestroyWorld(false);
+    return true;
+}
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSFWalkVehiclePathReversedFrameTest,
     "SmartFoundations.Walking.VehiclePathReversedFrame",
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)

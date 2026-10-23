@@ -575,7 +575,7 @@ void USFUpgradeExecutionService::StartUpgrade(const FSFUpgradeExecutionParams& P
 
 	if (bAbortedDueToFunds)
 	{
-		WorkingResult.ErrorMessage = TEXT("Ran out of materials - partial upgrade completed");
+		WorkingResult.ErrorMessage = NSLOCTEXT("SmartFoundations", "Upgrade_PartialInsufficientMaterials", "Ran out of materials - partial upgrade completed").ToString();
 	}
 
 	// Complete immediately
@@ -597,7 +597,7 @@ void USFUpgradeExecutionService::CancelUpgrade()
 
 	bUpgradeInProgress = false;
 	WorkingResult.bCompleted = false;
-	WorkingResult.ErrorMessage = TEXT("Cancelled by user");
+	WorkingResult.ErrorMessage = NSLOCTEXT("SmartFoundations", "Upgrade_Cancelled", "Cancelled by user").ToString();
 	LastResult = WorkingResult;
 
 	PendingUpgrades.Empty();

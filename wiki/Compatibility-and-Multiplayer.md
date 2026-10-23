@@ -4,7 +4,9 @@ Smart! is designed to be save-friendly. It places normal Satisfactory buildings 
 
 ## Supported Game Version
 
-Smart! 34.4.0 requires **Satisfactory 1.2.4 / CL 502094 or newer** and **SML 3.12.x**. Update the game and mod loader before installing. Older game builds are unsupported.
+Smart! 35.0.0 targets **Satisfactory 1.2.4 / CL 502094 or newer** and **SML 3.12.x**. Update the game and mod loader before installing. Older game builds are unsupported.
+
+Smart Camera 2.0 and Smart! 35.0 must be updated as a compatible pair when both are installed. Camera also works alone; Smart's building tools do not require Camera. Camera preferences and HUD appearance belong to each local player, not everyone on the server.
 
 ## Save Safety
 
@@ -37,15 +39,14 @@ Each player's session assistance toggle affects only their own building tools. R
 ## Known Reports Still Under Investigation
 
 - Intermittent rain/dismantle crashes ([#514](https://github.com/majormer/SmartFoundations/issues/514)); protection is improved, but the underlying cause is unresolved.
-- Overlapping/doubled pipes in the reporter layout ([#551](https://github.com/majormer/SmartFoundations/issues/551)); preview refresh fixes do not prove this case resolved.
-- Custom Industrial Evolution placement/scaling ([#552](https://github.com/majormer/SmartFoundations/issues/552)).
+Third-party building spacing profiles are not generally maintained. Compatible manual spacing is a workaround, not a promise of support for another mod's full building set.
 
 When reporting these, include game/Smart!/SML versions, whether you are a host or client, the layout and settings, other installed mods, and a save or blueprint that reproduces the behavior when available.
 
 ## Blueprint Designer
 
-Smart! works inside the Blueprint Designer just like it does in the open world: scale grids, Auto-Connect belts and pipes, and use Extend and Scaled Extend on buildings in the designer. Everything Smart! builds is captured into the saved blueprint, so your blueprints come out complete.
+Supported native placements retain Designer ownership so they are captured when the Blueprint is saved. Smart does not remove native Designer restrictions: a building invalid there in vanilla does not become valid through Smart. Consult [Supported Buildings](Supported-Buildings) for the applicable workflows.
 
 ---
 
-_Last updated: 2026-10-06 · Smart! v34.4.0_
+_Last updated: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (release draft)_

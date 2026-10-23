@@ -97,7 +97,7 @@ bool SFExtendPowerConnections::ValidateCapacity(const FSFCloneTopology& Topology
             const double Length = FVector::Dist(Holo.SplineData.Points[0].World.ToFVector(), Holo.SplineData.Points.Last().World.ToFVector());
             if (!FMath::IsFinite(Length) || Length > Holo.PowerMaxLength)
             {
-                OutReason = FString::Printf(TEXT("Power cable %s exceeds its native length limit"), *Holo.HologramId);
+                OutReason = FText::Format(NSLOCTEXT("SmartFoundations", "Extend_CableTooLong", "Power cable {0} exceeds its native length limit"), FText::FromString(Holo.HologramId)).ToString();
                 return false;
             }
         }
@@ -109,8 +109,8 @@ bool SFExtendPowerConnections::ValidateCapacity(const FSFCloneTopology& Topology
         const int32* Limit = Limits.Find(Reservation.Key);
         if (Limit && Reservation.Value > *Limit)
         {
-            OutReason = FString::Printf(TEXT("Power connector %s needs %d connections but has %d slots"),
-                *Reservation.Key, Reservation.Value, *Limit);
+            OutReason = FText::Format(NSLOCTEXT("SmartFoundations", "Extend_CableCapacity", "Power connector {0} needs {1} connections but has {2} slots"),
+                FText::FromString(Reservation.Key), FText::AsNumber(Reservation.Value), FText::AsNumber(*Limit)).ToString();
             return false;
         }
     }
@@ -255,8 +255,8 @@ bool SFExtendPowerConnections::PromoteLegacyRestoreWires(FSFCloneTopology& Topol
     Topology.PowerPlanError.Reset();
     auto Fail = [&](const FString& Id)
     {
-        Topology.PowerPlanError = FString::Printf(
-            TEXT("Saved power cable %s lacks unambiguous endpoint identity. Re-import this layout from its original build."), *Id);
+        Topology.PowerPlanError = FText::Format(
+            NSLOCTEXT("SmartFoundations", "Restore_CableMissingIdentity", "Saved power cable {0} lacks unambiguous endpoint identity. Re-import this layout from its original build."), FText::FromString(Id)).ToString();
         return false;
     };
     // Restore has no live source endpoint. Its adjacent-cell cables are regenerated

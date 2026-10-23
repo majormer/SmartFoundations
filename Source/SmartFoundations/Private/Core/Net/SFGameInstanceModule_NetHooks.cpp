@@ -33,6 +33,11 @@
 #include "Subsystem/SFSubsystem.h"
 #include "Services/SFChainActorService.h"  // [CHAIN-FIX] post-construct chain-hygiene sweep
 #include "Features/AutoConnect/SFAutoConnectService.h"
+#include "Features/AutoConnect/Net/SFLiftRoutePlan.h"
+#include "Features/AutoConnect/SFBlueprintRailSeams.h"
+#include "Features/AutoConnect/SFBlueprintVehicleSeams.h"
+#include "Features/AutoConnect/SFBlueprintLiftSeams.h"
+#include "Features/AutoConnect/Holograms/SFLiftRouteProxyHologram.h"
 #include "Features/Extend/SFExtendService.h"
 #include "Features/Walk/SFWalkService.h"   // Smart Walking (#356 Slice 3) commit-on-fire staging
 #include "Equipment/FGBuildGunBuild.h"        // UFGBuildGunStateBuild::InternalConstructHologram / GetHologram
@@ -316,6 +321,13 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 				if (USFWalkService* Walk = WalkSS->GetWalkService(); Walk && Walk->IsActive())
 				{
 					const FSFWalkCommitSpec WalkSpec = Walk->BuildCommitSpec();
+                    // Invalid resume specs are deliberately not staged. Do not let
+                    // that refusal fall through to a paid ordinary support build.
+                    if (Walk->IsResuming() && !WalkSpec.bValid)
+                    {
+                        scope.Cancel();
+                        return;
+                    }
 					if (APawn* InstigatorPawn = Holo->GetConstructionInstigator())
 					{
 						if (AFGPlayerController* WalkPC = Cast<AFGPlayerController>(InstigatorPawn->GetController()))
@@ -419,7 +431,7 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 					if (GEngine)
 					{
 						GEngine->AddOnScreenDebugMessage(-1, 6.0f, FColor::Orange,
-							TEXT("Smart!: Extend commit could not be staged - try again."));
+							NSLOCTEXT("SmartFoundations", "MP_Notice_ExtendStageFailed", "Smart!: Extend commit could not be staged - try again.").ToString());
 					}
 					scope.Cancel();
 					return;
@@ -444,6 +456,16 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 				{
 					SFScalingSpecExpansion::CaptureScalingSpec(Holo, Spec);
 					SFScalingSpecExpansion::CaptureConduitPlan(Holo, Spec);
+                    if (!SFLiftRoutePlan::ValidateTree(Holo) || !SFLiftRoutePlan::IsBounded(Spec.LiftRoutes)
+                        || !FSFBlueprintRailSeams::IsBounded(Spec.BlueprintRailSeams)
+                        || !FSFBlueprintVehicleSeams::IsBounded(Spec.BlueprintVehicleSeams)
+                        || !FSFBlueprintLiftSeams::IsBounded(Spec.BlueprintLiftSeams)
+                        || (Spec.bBlueprintLiftSeamsRequired && Spec.BlueprintLiftSeams.IsEmpty()))
+                    {
+                        scope.Cancel();
+                        return;
+                    }
+
 
 					// #428: every water-extractor grid cell must be over water. The client preview reds
 					// out land cells, but the spec path destroys those previews and fires a childless
@@ -457,7 +479,7 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 						if (GEngine)
 						{
 							GEngine->AddOnScreenDebugMessage(-1, 6.0f, FColor::Orange,
-								TEXT("Smart!: every water extractor must be placed on deep water."));
+								FString(TEXT("Smart!: ")) + NSLOCTEXT("SmartFoundations", "MP_Notice_WaterExtractorDeepWater", "Every water extractor must be placed on deep water.").ToString());
 						}
 						if (USFSubsystem* NoticeSS = USFSubsystem::Get(World))
 						{
@@ -485,6 +507,23 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 						PlanBytesEstimate += 384 + 32 + (Entry.PipeColor.bCaptured ? 256 : 0) + Entry.SplinePoints.Num() * 80
 							+ 2 * (Entry.PowerStart.ComponentName.ToString().Len() + Entry.PowerEnd.ComponentName.ToString().Len());
 					}
+                    for (const auto& Route : Spec.LiftRoutes)
+                        PlanBytesEstimate += 1536 + Route.Spline.Num() * 80 + Route.Cost.Num() * 256
+                            + 2 * (Route.From.PortName.ToString().Len() + Route.To.PortName.ToString().Len());
+                    for (const auto& Route : Spec.BlueprintLiftSeams)
+                        PlanBytesEstimate += 2048 + Route.Spline.Num() * 160 + Route.Cost.Num() * 256
+                            + 2 * (Route.From.Name.ToString().Len() + Route.To.Name.ToString().Len());
+                    for (const auto& Seam : Spec.BlueprintRailSeams)
+                    {
+                        PlanBytesEstimate += 192 + Seam.Spline.Num() * 160;
+                        auto PortBytes = [](const FSFBlueprintRailPort& P)
+                        { return 512 + 2 * (P.ComponentName.ToString().Len() + GetPathNameSafe(P.BuildClass.Get()).Len()); };
+                        PlanBytesEstimate += PortBytes(Seam.To);
+                        for (const auto& Port : Seam.From) PlanBytesEstimate += PortBytes(Port);
+                    }
+                    PlanBytesEstimate += Spec.BlueprintRailCost.Num() * 256;
+                    for (const auto& Seam : Spec.BlueprintVehicleSeams)
+                        PlanBytesEstimate += 4096 + 160 * (Seam.Incoming.Spline.Num() + Seam.Outgoing.Spline.Num() + Seam.Bridge.Num()) + 256 * Seam.Cost.Num();
 					if (PlanBytesEstimate > 45000)
 					{
 						UE_LOG(LogSmartFoundations, Verbose,
@@ -493,8 +532,8 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 						if (GEngine)
 						{
 							GEngine->AddOnScreenDebugMessage(-1, 6.0f, FColor::Orange,
-								FString::Printf(TEXT("Smart!: too many auto-connect belts/pipes/wires for one multiplayer placement (%d). Build in smaller sections."),
-									Spec.ConduitPlan.Num()));
+								FText::Format(NSLOCTEXT("SmartFoundations", "MP_Notice_TooManyConduitsDebug", "Smart!: too many auto-connect belts/pipes/wires for one multiplayer placement ({0}). Build in smaller sections."),
+									Spec.ConduitPlan.Num()).ToString());
 						}
 						if (USFSubsystem* NoticeSS = USFSubsystem::Get(World))
 						{
@@ -528,8 +567,8 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 							if (GEngine)
 							{
 								GEngine->AddOnScreenDebugMessage(-1, 6.0f, FColor::Orange,
-									FString::Printf(TEXT("Smart!: blueprint grid too large for one multiplayer placement (~%lld buildings, max ~%d). Build in smaller sections."),
-										TotalActorEstimate, SF_MP_BLUEPRINT_ACTOR_CAP));
+									FString(TEXT("Smart!: ")) + FText::Format(NSLOCTEXT("SmartFoundations", "MP_Notice_BlueprintGridTooLarge", "Blueprint grid too large for one multiplayer placement (~{0} buildings, max ~{1}). Build in smaller sections."),
+										TotalActorEstimate, SF_MP_BLUEPRINT_ACTOR_CAP).ToString());
 							}
 							if (USFSubsystem* NoticeSS = USFSubsystem::Get(World))
 							{
@@ -557,12 +596,20 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 			if (bSpecEnabled)
 			{
 				TArray<AFGHologram*> AutoConnectToStrip;
+                FSFBlueprintRailSeams::Reset(Holo);
+                FSFBlueprintVehicleSeams::Reset(Holo);
+                FSFBlueprintLiftSeams::ResetPreview(Holo);
 				for (AFGHologram* Child : Holo->mChildren)
 				{
 					if (!Child)
 					{
 						continue;
 					}
+                    if (Child->IsA<ASFLiftRouteProxyHologram>())
+                    {
+                        AutoConnectToStrip.Add(Child);
+                        continue;
+                    }
 					for (int32 TagIdx = 0; TagIdx < GSFAutoConnectChildTagCount; ++TagIdx)
 					{
 						if (Child->Tags.Contains(GSFAutoConnectChildTags[TagIdx]))
@@ -695,8 +742,8 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 			if (GEngine)
 			{
 				GEngine->AddOnScreenDebugMessage(-1, 6.0f, FColor::Orange,
-					FString::Printf(TEXT("Smart!: grid too large for multiplayer (%d cells, max ~%d). Build in smaller sections."),
-						TotalCells, SF_MP_OVERSIZED_CELLS));
+					FString(TEXT("Smart!: ")) + FText::Format(NSLOCTEXT("SmartFoundations", "MP_Notice_GridTooLarge", "Grid too large for multiplayer ({0} cells, max ~{1}). Build in smaller sections."),
+						TotalCells, SF_MP_OVERSIZED_CELLS).ToString());
 			}
 			if (USFSubsystem* NoticeSS = USFSubsystem::Get(World))
 			{

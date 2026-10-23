@@ -41,6 +41,26 @@ without exposing those storage axes in the runtime HUD. So:
 - The Panel keeps absolute **X/Y/Z** labels everywhere (one vocabulary, no translation).
 - PR only changes *what your scroll/keys do*, never *what the HUD calls things*.
 
+### Explicit Extend entry
+
+Compatible factory and Water Extractor recipes expose **Extend** in the task strip. **Select Source** arms one world click outside the window; matching native targets receive a temporary outline. Escape cancels selection, panel clicks stay in the interface, and a miss retains the current preview. Source acceptance uses the same eligibility, topology capture and staged authority construction as automatic hover activation. The UI never constructs or charges materials.
+
+The tab reuses the existing placement controls rather than introducing another set of counters. Merely opening it retains the current placement. Replacing a nontrivial draft or another source asks for confirmation first. Explicit source intent uses the existing manual-hold lifetime; build, cancel and recipe changes retain native teardown. The HUD identifies the source and resolves the actual rebound Panel key. Automatic matching-recipe hover remains available.
+
+### Resuming Walking from existing logistics
+
+Equip **Stackable Pipeline Support**, **Stackable Hypertube Support**, or **Stackable Conveyor Pole** for the corresponding run. Holding a pipe, tube or belt recipe alone does not enable this entry path. Close the Panel, aim at an exposed endpoint of the existing run with the stackable support equipped, then reopen the Smart Panel and select **Walking**. Do not build a new starting support first.
+
+Smart discovers aligned, unoccupied horizontal endpoints in a regular grid, including manually placed buses, and restores their lane/level counts and spacing. Check the **Resume** summary before continuing. Existing lines and supports remain in place; normal material costs apply to new construction. Wall/floor attachments, occupied ends and ambiguous or irregular endpoint grids are rejected. A vertical continuation can be authored from a horizontal starting endpoint.
+
+### Panel apply and close behavior
+
+**Apply placement immediately** controls grid geometry (counts, direction, spacing, steps, stagger and progressive rotation, including its progression axis). With it off, the displayed placement edits wait for Apply. X, Escape and the panel toggle discard unapplied grid edits; accepted task switches retain the draft. Normal construction is still a separate action.
+
+Auto-Connect preferences, production recipes, native wall rotation and Sign support mode are **live settings**. Their previews update immediately and their choices remain when the panel closes, independently of the geometry checkbox. Connection changes do not spend construction materials.
+
+Walking uses **Apply segment edits immediately** for Advance, Turn, Rise and Shift. With it off, the displayed segment drafts survive refreshes and reopening; Apply commits exactly those values. **Preview exit** describes the currently applied route. Connection tier, routing, style and belt flow remain live. Closing Walking keeps the walk and staged segment values; ending it through Scaling/Restore still requires confirmation.
+
 ### Rotatable conduit wall supports
 
 Pipeline and Hypertube wall supports use their native full rotation as the grid frame. Local Y follows the conduit run; local Z is the other axis in the wall plane. Conveyor wall supports retain their existing frame.
@@ -56,9 +76,38 @@ With Player Relative enabled, scaling and spacing choose whichever in-wall axis 
 | **Global config** | `Smart_Config` asset | Persists across sessions | Player Relative toggle, scroll increments, auto-connect modes |
 | **Runtime HUD state** | In-memory, per session | Until build-gun clear / recipe change | current target/axis selection, arrows toggle |
 | **Per-build Panel edits** | Panel session | One build, then revert to global | spacing/scale entered in the Panel (#371) |
+| **Local interface layout** | Local player preferences | Across saves on this computer | Panel positions; HUD appearance uses the existing global HUD settings |
 
-Only **global config** persists between game sessions. Runtime and Panel state reset between builds — mirror that when
+**Global config and local interface layout** persist between game sessions. Runtime and construction Panel state reset between builds — mirror that when
 adding PR state (e.g. the stagger family selector is runtime, not global).
+
+### Interface layout and edit mode
+
+Panel organization follows shared placement controls, applicable family options and building-specific controls. This is presentation, not a settings-inheritance model. The placement matrix retains the original native spin boxes, direction buttons, ranges, focus/navigation and staged/live handlers. Panel axes keep their existing absolute meanings under Player Relative.
+
+The task strip exposes Scaling, Walking, Upgrade and Restore according to the current buildable's capabilities and prerequisites. Railway tracks and Vehicle Paths open Walking by default and hide Scaling. A held belt or pipe can expose an unavailable Walking capability with the compatible-support prerequisite; the tab does not create a new native starting attachment. Upgrade keeps its Radius and Network methods, and Restore keeps Grid Presets and Modules.
+
+Task navigation belongs in the strip rather than duplicate footer shortcuts. Scaling's footer owns Apply Immediately, Reset and Apply; Walking's owns Apply Immediately and Apply. Upgrade's header X closes the panel, while Cancel Scan is shown only for a pending cancellable Radius scan. Radius and Network retain independent source-row and target-tier selections across method switches, subject to the current snapshot and available native tiers. Changing a Network target invalidates that method's saved selection too.
+
+Restore is a page inside the task window. Load to Panel loads placement settings, returns to Scaling for inspection and honors Apply Immediately. Load Module confirms the recipe/session change and starts a layout preview; construction and material charges still occur through the normal build action. Saved-entry actions are unavailable without a valid selection.
+
+Changing tasks suspends their drafts without applying, constructing, charging or executing an upgrade. A transition that ends an unbuilt walk must first identify the lost path and staged segment edits and offer **Keep Walking / End Walk**. Keep Walking and Escape dismiss that warning without closing the panel or losing work. Hidden tasks do not own modal input, change arrow resolution or revert obsolete placement state into a different hologram.
+
+Network Upgrade retains an explicitly selected target. **Select Target** arms one world click while the panel remains open: panel clicks stay UI clicks, and one left click outside attempts the exact native hit and leaves selection mode even on a miss. Escape cancels selection alone, retaining the previous target and draft. The selection click never reaches construction. Missing targets require deliberate reselection rather than a nearest-object guess. Changing targets clears the old network results, tier and materials state until an explicit Scan; delayed results for an earlier target cannot replace the current selection.
+
+Smart Panel, Walking and Upgrade accept left-button dragging on their title bars and retain right-button dragging. Close buttons retain each panel's own close/cancel behavior. The configured Smart Panel key (default K) is also handled inside the modal window: Scaling, Restore, Extend and Upgrade close through their existing cancellation path; Walking hides its editor while retaining the route. Key repeats do not repeatedly toggle the window, and editable text keeps its ordinary typing behavior. An open confirmation is dismissed before leaving Scaling or Walking. Only task windows that are both visible and mounted suppress the ordinary HUD; suspended or closed drafts cannot retain suppression. HUD layout editing and the saved Show HUD preference remain independent. All tasks share one local window position across saves. The first opened task migrates its older saved position when a shared position is absent. Restore uses the same frame and has no independent dock or close button. **Reset Panel Positions** in Mod Settings restores default positions independently of the construction **Reset** button. Restored frames are clamped to the viewport.
+
+Each task and the HUD/interface settings provide an actual small `?` button beside their context label or section title. The button uses no literal brackets and no dedicated row. Hover shows the guidance; click expands the details in the task body, and click again collapses them, removing their layout space. Topic titles remain inside the guidance. Scaling places the button beside the held building name and hides it while Restore is active; HUD appearance and Interface layout put it at the right of their title row. Walking, Upgrade and Restore pair it with the existing route summary or relevant section heading. Descriptions stay collapsed by default; control tooltips explain scope, units, restrictions and consequences. Help expansion changes neither drafts nor construction state. Grid Preset loading waits for its matching native building preview before refreshing contextual controls and returning to Scaling; Apply Immediately is honored after that handoff. Upgrade presents scope/scan, results/target tier and materials in order; execution remains explicit. Grid Presets store placement settings; Modules store captured Extend layouts. Their help distinguishes selecting, loading, saving and building. Pending library confirmations block task navigation until resolved.
+
+When Camera hosts shared Edit Mode, its single Done / Lock saves the pending camera rectangles and Smart HUD appearance. Cancel and Escape discard pending previews; pressing the edit binding again commits and exits. Forced menu/world closure cancels remaining drafts. Participants finish synchronously before host removal so normal HUD visibility does not depend on delayed widget destruction. Failed saves keep the editor open with feedback; do not silently discard remaining drafts. HUD preferences remain global while cameras keep their selected all-saves/current-save scope. An explicit All saves camera edit patches only its authored fields across that camera's global and existing saved profiles, including the current save. This save edits only the exact current-save profile. Layout commits patch position/size; enabling, frame rate, brightness, angle and distance have independent edit intent. A global camera reset removes its overrides across saves; a this-save reset removes only the current override. Other cameras remain unchanged. Smart HUD appearance and Panel positions stay global-only, independent of the camera scope chooser. Done must leave the edited rectangles visibly applied.
+
+The HUD is locked and click-through during normal play. Layout editing provides drag/resize handles, a native scale spin box, the six existing themes, temporary preview, **Cancel HUD changes**, **Done / Lock** and **Reset HUD Appearance**. Done writes the existing HUD position/scale/theme settings once; Cancel leaves them unchanged. Resizing retains the current multilingual font selection. A marked sample allows editing when no normal HUD is visible.
+
+The compact HUD separates the current Classic/Player Relative mode, active label/value and colored grid. Its active spacing, steps, stagger or rotation hint resolves the current input mappings, including player remaps; it does not define another binding or infer a second axis model. Layout handles sit outside the HUD content.
+
+With Smart Camera present, its rebindable Edit Mode action owns the shared edit session. Without Camera, **Edit HUD Layout** defaults to F8 and uses its own rebindable mod input action. The independent context is removed while Camera owns the session. Mod Settings also offers **Edit HUD layout after Resume**. Editing appearance does not alter the current construction, Player Relative mode, presets or Camera framing.
+
+Recipe controls are available only for buildings that accept a production recipe (`AFGBuildableManufacturer`, including derived modded machines). Power daisy-chaining is an independent capability; it does not imply recipe support. Elevators, resource extractors, generators, storage and logistics buildings do not expose the production-recipe selector. Native dimensions such as the selected Personnel Elevator shaft height remain part of vanilla placement; grid counts and spacing describe repeated copies, not shaft height.
 
 ### Session-wide opt-out
 

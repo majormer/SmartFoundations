@@ -59,6 +59,48 @@ tag-checked internal lock seam and retain native `CanNudgeHologram` and
 `NudgeTowardsWorldDirection` checks. Cancel, shrink and recipe changes must retire
 the validator and proxy children.
 
+## Direct Auto-Connect docks
+
+A lift can replace both the height change and the connecting belt when its remote
+mouth can dock directly to the other endpoint. Native connector markers do not
+coincide in this case: the peer's outward normal and the sum of both connector
+clearances determine the mouth position. Require that position, opposite-facing
+normals, native connector compatibility and full native lift placement validation.
+A short gap or a nearby parallel shaft is not a direct dock.
+
+The direct route records both native snapped connections. Preserve exact endpoint
+identity through construction, including the newly built distributor, and resolve
+reversed lifts by physical mouth position and flow direction rather than assuming
+preview and built connector indices match. Reusing a native validator must clear
+the previous second endpoint before preparing another route. A direct route has
+one lift preview and its native cost, with no belt child or belt charge.
+
+## Lift-assisted Auto-Connect
+
+`FSFLiftRoutePreview` retains the existing distributor-to-factory assignment and
+changes only how the chosen pair is connected. Belts Only retains ordinary belt
+routing. Lift at Distributor puts the level belt at the machine-port height;
+Lift at Building puts it at distributor height. A native direct dock omits the
+belt and its cost.
+
+Visible lift/belt proxies share native validation cells. Each committed route
+uses a fresh native construction cell, exact endpoint identity and captured
+geometry. The authority reconstructs the bounded plan before payment and checks
+current endpoint availability, pose, direction, native placement and cost. A
+failed route rejects the whole placement.
+
+Reconstruction can add children after the build gun has reset its placement
+state. Reset the complete prepared tree before validation, validate the player
+parent without asking generated children for independent aiming state, and keep
+the complete accepted quote while doing so. Restore the child tree before native
+construction. This must not clear genuine parent placement or route failures.
+
+Inside a Blueprint Designer, discover owned factories from its native member
+list as well as the ordinary overlap broad phase. Keep the same distance and
+port-selection rules. Both preview proxies and native construction cells must
+inherit the Designer context; otherwise construction can miss the Designer's
+save and clear ownership.
+
 ## Costs, ownership and lifecycle
 
 Quotes must match the selected geometry and native length-based cost multiplier.

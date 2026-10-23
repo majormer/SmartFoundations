@@ -1,6 +1,7 @@
 // Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
-#include "SmartFoundations.h"
 #include "Features/Scaling/SFHypertubeSupportHologramState.h"
+#include "SmartFoundations.h"
+#include "Data/SFBuildableSizeRegistry.h"
 #include "Holograms/Logistics/SFSelectedPoleState.h"
 #include "Features/Scaling/SFScalingFootprint.h"
 #include "Holograms/Logistics/SFHypertubeSupportPreviewHologram.h"

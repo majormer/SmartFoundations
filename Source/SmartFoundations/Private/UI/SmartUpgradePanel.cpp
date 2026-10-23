@@ -1,15 +1,23 @@
 // Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
 #include "UI/SmartUpgradePanel.h"
+#include "UI/SFContextHelp.h"
+#include "UI/SFInterfaceTaskStrip.h"
 #include "UI/SmartUpgradePanelImpl.h"
 #include "Blueprint/WidgetTree.h"
+#include "UI/SFInterfacePreferences.h"
+#include "Blueprint/WidgetLayoutLibrary.h"
 #include "Config/Smart_ConfigStruct.h"
+#include "Components/ScrollBox.h"
+#include "Components/Spacer.h"
+#include "Components/OverlaySlot.h"
 
 #define LOCTEXT_NAMESPACE "SmartFoundations"
 
 
 void USmartUpgradePanel::NativeDestruct()
 {
+    CancelTargetSelection();
 	// [UPGRADE-MP] The traversal-result delegate is static (the panel news up a throwaway
 	// traversal service per scan) - unbind so a dead widget is never broadcast to.
 	USFUpgradeTraversalService::OnClientTraversalResultReceived.RemoveAll(this);
@@ -33,6 +41,15 @@ void USmartUpgradePanel::NativeConstruct()
 	// Arabic/Persian/Thai/CJK render correctly. Runtime-built rows route through SFFont::Get below.
 	SFFont::ApplyToWidgetTree(WidgetTree);
 
+    // This designer label predates the gathered panel text. Reuse the translated setting name.
+    WidgetTree->ForEachWidget([](UWidget* Widget)
+    {
+        if (auto* Text = Cast<UTextBlock>(Widget); Text && Text->GetText().ToString() == TEXT("Preserve dismantle groups"))
+        {
+            Text->SetText(LOCTEXT("P.bPreserveUpgradeDismantleGroups", "Preserve Upgrade Dismantle Groups"));
+            Text->SetAutoWrapText(true);
+        }
+    });
 	PreserveDismantleGroupCheckBox = Cast<UCheckBox>(GetWidgetFromName(TEXT("PreserveDismantleGroupCheckBox")));
 	if (PreserveDismantleGroupCheckBox)
 	{
@@ -47,6 +64,16 @@ void USmartUpgradePanel::NativeConstruct()
 		if (UCanvasPanelSlot* BGSlot = Cast<UCanvasPanelSlot>(BackgroundBorder->Slot))
 		{
 			BGSlot->SetAutoSize(true);
+			BGSlot->SetPosition(FVector2D(100, 60));
+		}
+		BackgroundBorder->SetPadding(FMargin(16));
+		if (UWidget* Content = BackgroundBorder->GetContent())
+		{
+			BackgroundBorder->SetContent(nullptr);
+			auto* Sizing = WidgetTree->ConstructWidget<USizeBox>();
+			Sizing->SetMinDesiredWidth(520);
+			Sizing->SetContent(Content);
+			BackgroundBorder->SetContent(Sizing);
 		}
 	}
 
@@ -65,6 +92,7 @@ void USmartUpgradePanel::NativeConstruct()
 	// Set ContextHeaderText to fill available space (pushes CloseButton to the right)
 	if (ContextHeaderText)
 	{
+		ContextHeaderText->SetAutoWrapText(true);
 		if (UHorizontalBoxSlot* HeaderTextSlot = Cast<UHorizontalBoxSlot>(ContextHeaderText->Slot))
 		{
 			FSlateChildSize FillSize;
@@ -128,7 +156,7 @@ void USmartUpgradePanel::NativeConstruct()
 		{
 			SharedUpgradeButtonText->SetText(LOCTEXT("Upgrade_Btn_Upgrade", "UPGRADE"));
 		}
-		SetLabel(TEXT("SharedCancelButtonText"), LOCTEXT("Upgrade_Btn_Cancel", "Cancel"));
+		SetLabel(TEXT("SharedCancelButtonText"), LOCTEXT("Upgrade_CancelScan", "Cancel Scan"));
 		SetLabel(TEXT("SharedCloseButtonText"), LOCTEXT("Upgrade_Btn_Close", "Close"));
 		SetLabel(TEXT("CloseButtonText"), LOCTEXT("Upgrade_Btn_X", "X"));
 		// [Track E] Triage Detect/Repair button labels removed.
@@ -175,6 +203,7 @@ void USmartUpgradePanel::NativeConstruct()
 	// Bind radius target tier combo box
 	if (RadiusTargetTierComboBox)
 	{
+        RadiusTargetTierComboBox->OnGenerateWidgetEvent.BindDynamic(this, &USmartUpgradePanel::GenerateTierItem);
 		RadiusTargetTierComboBox->OnSelectionChanged.AddDynamic(this, &USmartUpgradePanel::OnTargetTierChanged);
 		RadiusTargetTierComboBox->SetVisibility(ESlateVisibility::Collapsed);
 
@@ -204,6 +233,7 @@ void USmartUpgradePanel::NativeConstruct()
 	// Bind traversal target tier combo box
 	if (TraversalTargetTierComboBox)
 	{
+        TraversalTargetTierComboBox->OnGenerateWidgetEvent.BindDynamic(this, &USmartUpgradePanel::GenerateTierItem);
 		TraversalTargetTierComboBox->OnSelectionChanged.AddDynamic(this, &USmartUpgradePanel::OnTargetTierChanged);
 		TraversalTargetTierComboBox->SetVisibility(ESlateVisibility::Collapsed);
 
@@ -302,6 +332,94 @@ void USmartUpgradePanel::NativeConstruct()
 	}
 
 	// Start with Radius tab active
+	SFPanelStyle::ApplyToTree(WidgetTree);
+	// Keep the task controls intact, with a fixed header/footer and scrollable body.
+	if (BackgroundBorder && !GetWidgetFromName(TEXT("UpgradePresentation")))
+	{
+		TMap<FName,UWidget*> OriginalWidgets;
+		WidgetTree->ForEachWidget([&](UWidget* Widget){OriginalWidgets.Add(Widget->GetFName(),Widget);});
+		auto Find = [&OriginalWidgets](const TCHAR* Name)->UWidget* {auto* Item = OriginalWidgets.Find(FName(Name)); return Item ? *Item : nullptr;};
+		auto* Root = WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass(), TEXT("UpgradePresentation"));
+		auto* Width = WidgetTree->ConstructWidget<USizeBox>(); Width->SetWidthOverride(620); Width->SetContent(Root);
+		BackgroundBorder->SetContent(Width); BackgroundBorder->SetPadding(FMargin(20,16));
+		Root->AddChildToVerticalBox(SFPanelStyle::MakeRule(this,true))->SetPadding(FMargin(0,0,0,12));
+		auto Add = [](UVerticalBox* Parent, UWidget* Child, FMargin InPadding)
+		{if (Child) {Child->RemoveFromParent(); Parent->AddChildToVerticalBox(Child)->SetPadding(InPadding);}};
+		Add(Root, Find(TEXT("HeaderRow")), FMargin(0,0,0,16));
+		if (ContextHeaderText) {ContextHeaderText->SetText(LOCTEXT("Interface_Title", "Smart!")); ContextHeaderText->SetFont(SFFont::Get(22)); ContextHeaderText->SetColorAndOpacity(SFPanelStyle::Accent);}
+        auto* Tasks = WidgetTree->ConstructWidget<USFInterfaceTaskStrip>(); Tasks->Initialize(USFSubsystem::Get(this), 2);
+        Add(Root, Tasks, FMargin(0,0,0,8));
+        if (auto* Tabs = Cast<UHorizontalBox>(Find(TEXT("TabButtonsRow"))))
+        {
+            Tabs->ClearChildren();
+            for (UButton* Button : {RadiusTabButton.Get(),TraversalTabButton.Get()})
+                if (Button) Tabs->AddChildToHorizontalBox(SFPanelStyle::WrapTabButton(Button))->SetPadding(FMargin(0,0,12,0));
+            Add(Root, Tabs, FMargin(0,0,0,12));
+        }
+        auto* Body = WidgetTree->ConstructWidget<UVerticalBox>();
+		auto* Scroll = WidgetTree->ConstructWidget<UScrollBox>(); Scroll->AddChild(Body);
+		auto* Height = WidgetTree->ConstructWidget<USizeBox>();
+		const float Available = UWidgetLayoutLibrary::GetViewportWidgetGeometry(this).GetLocalSize().Y - 330;
+		Width->SetHeightOverride(FMath::Max(448.f, UWidgetLayoutLibrary::GetViewportWidgetGeometry(this).GetLocalSize().Y - 152.f));
+		Height->SetMaxDesiredHeight(FMath::Clamp(Available,300.f,600.f)); Height->SetContent(Scroll); Add(Root, Height, FMargin(0));
+        Cast<UVerticalBoxSlot>(Height->Slot)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+        auto* UpgradeHelp = SFPanelStyle::MakeHelp(this, TEXT("UpgradeHelp"),
+            LOCTEXT("Help_UpgradeTitle", "How to use Upgrade"),
+            LOCTEXT("Help_UpgradeSummary", "1 Choose an area or Network target. 2 Scan and select results. 3 Review the target tier and materials. 4 Upgrade."),
+            LOCTEXT("Help_UpgradeBody", "Radius scans around you; Entire Map scans without a distance limit. Network follows connections from one selected target using the crossing options. Scanning spends no materials and replaces nothing.\nClick a result row, choose the target tier and read Materials: negative amounts are needed; positive amounts are returned. Upgrade executes the replacements and normal settlement. Native restrictions and available resources still apply.\nSwitching methods keeps separate row and tier choices. Selecting another Network target clears its old results and quote until you scan again. Closing the window does not undo upgrades already executed."));
+        Add(Body, SFPanelStyle::MakeHelpLabelRow(this,
+            SFPanelStyle::MakeSectionHeading(this, LOCTEXT("Upgrade_ScopeStep", "1. Scope and scan")), UpgradeHelp), FMargin(0,0,0,8));
+        Add(Body, UpgradeHelp, FMargin(0,0,0,12));
+
+		Add(Body, StatusText, FMargin(0,0,0,8));
+		Add(Body, Find(TEXT("ContentBorder")), FMargin(0));
+		if (RadiusSliderSpinBox)
+		{
+			RadiusSliderSpinBox->SetFont(SFFont::Get(14));
+			if (auto* RadiusSlot = Cast<UHorizontalBoxSlot>(RadiusSliderSpinBox->Slot)) RadiusSlot->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+		}
+		for (const TCHAR* Name : {TEXT("RadiusResultsSizeBox"), TEXT("TraversalResultsSizeBox")})
+			if (auto* Box = Cast<USizeBox>(Find(Name))) {Box->ClearWidthOverride(); Box->SetHeightOverride(230);}
+		for (const TCHAR* Name : {TEXT("RadiusContent"), TEXT("TraversalContent")})
+			if (auto* Column = Cast<UVerticalBox>(Find(Name)))
+			{
+				if (auto* OverlaySlot = Cast<UOverlaySlot>(Column->Slot)) OverlaySlot->SetHorizontalAlignment(HAlign_Fill);
+				for (UWidget* Child : Column->GetAllChildren())
+					if (auto* LayoutSlot = Cast<UVerticalBoxSlot>(Child->Slot)) {LayoutSlot->SetPadding(FMargin(0,6)); LayoutSlot->SetHorizontalAlignment(HAlign_Fill);}
+			}
+        for (const TCHAR* Prefix : {TEXT("Radius"), TEXT("Traversal")})
+        {
+            const FString Stem(Prefix);
+            if (auto* Column = Cast<UVerticalBox>(Find(*(Stem + TEXT("Content")))))
+            {
+                const auto Children = Column->GetAllChildren(); Column->ClearChildren();
+                for (UWidget* Child : Children)
+                {
+                    if (Child->GetName() == Stem + TEXT("ResultsSizeBox"))
+                    {
+                        Add(Column, SFPanelStyle::MakeRule(this), FMargin(0,12));
+                        Add(Column, SFPanelStyle::MakeSectionHeading(this, LOCTEXT("Upgrade_ResultsStep", "2. Results and target tier"), LOCTEXT("Upgrade_CountColumn", "Count")), FMargin(0,4,0,8));
+                    }
+                    if (Child->GetName() == Stem + TEXT("CostContainer"))
+                    {
+                        Add(Column, SFPanelStyle::MakeRule(this), FMargin(0,12));
+                        Add(Column, SFPanelStyle::MakeSectionHeading(this, LOCTEXT("Upgrade_MaterialsStep", "3. Review materials"), LOCTEXT("Upgrade_NetCostTitle", "Net cost")), FMargin(0,4,0,8));
+                        if (auto* OldHeader = Find(*(Stem + TEXT("CostHeaderText")))) OldHeader->SetVisibility(ESlateVisibility::Collapsed);
+                    }
+                    Add(Column, Child, FMargin(0,4));
+                }
+            }
+        }
+		Root->AddChildToVerticalBox(SFPanelStyle::MakeRule(this))->SetPadding(FMargin(0,12));
+		Add(Root, Find(TEXT("BottomActionsContainer")), FMargin(0));
+		if (auto* Buttons = Cast<UHorizontalBox>(Find(TEXT("BottomButtonsRow"))))
+		{
+			Buttons->ClearChildren(); auto* Space = WidgetTree->ConstructWidget<USpacer>();
+			Buttons->AddChildToHorizontalBox(Space)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+			for (UButton* Button : {SharedCancelButton.Get(),SharedUpgradeButton.Get()})
+				if (Button) {Button->RemoveFromParent(); Buttons->AddChildToHorizontalBox(Button)->SetPadding(FMargin(4,8,0,0));}
+		}
+	}
 	SwitchToTab(ESmartUpgradeTab::Radius);
 
 	// ========== LEGACY BINDINGS (backward compatibility) ==========
@@ -345,11 +463,15 @@ void USmartUpgradePanel::NativeConstruct()
 				}
 				if (SharedStatusText)
 				{
-					SharedStatusText->SetText(LOCTEXT("Upgrade_PressScan", "Press Scan to find upgradeable items"));
+					SharedStatusText->SetText(LOCTEXT("Upgrade_SetRadiusScan", "Set radius and press Scan to find items"));
 				}
 			}
 		}
 	}
+    if (SharedStatusText) SharedStatusText->SetAutoWrapText(true);
+    if (StatusText) StatusText->SetAutoWrapText(true);
+    InitializeTargetSelection();
+    SFPanelStyle::ApplyControlHelp(WidgetTree);
 }
 
 void USmartUpgradePanel::OnCloseButtonClicked()
@@ -626,6 +748,7 @@ void USmartUpgradePanel::RefreshAudit()
 				{
 					if (USFRCO* RCO = FGPC->GetRemoteCallObjectOfClass<USFRCO>())
 					{
+						SetRadiusScanPending(true);
 						RCO->Server_StartUpgradeAudit(Params);
 						UE_LOG(LogSmartUI, VeryVerbose, TEXT("Upgrade Panel: Sent Refresh request via SFRCO"));
 						return;
@@ -638,6 +761,7 @@ void USmartUpgradePanel::RefreshAudit()
 				// Local/Server direct call
 				if (USFUpgradeAuditService* AuditService = Subsystem->GetUpgradeAuditService())
 				{
+					SetRadiusScanPending(true);
 					AuditService->StartAudit(Params);
 				}
 			}
@@ -647,6 +771,8 @@ void USmartUpgradePanel::RefreshAudit()
 
 void USmartUpgradePanel::CancelAudit()
 {
+    if (!bRadiusScanPending || ActiveTab != ESmartUpgradeTab::Radius) return;
+    SetRadiusScanPending(false);
 	UE_LOG(LogSmartUI, VeryVerbose, TEXT("Upgrade Panel: CancelAudit() requested"));
 
 	if (USFSubsystem* Subsystem = USFSubsystem::Get(this))
@@ -683,31 +809,36 @@ void USmartUpgradePanel::CancelAudit()
 
 void USmartUpgradePanel::UpdateAuditProgress(float ProgressPercent, int32 ScannedCount)
 {
+    SetRadiusScanPending(true);
+    if (ActiveTab != ESmartUpgradeTab::Radius) return;
 	if (StatusText)
 	{
-		StatusText->SetText(FText::Format(LOCTEXT("Upgrade_AuditProgress", "Auditing world... {0}% ({1} scanned)"), FText::AsNumber(FMath::RoundToInt(ProgressPercent)), FText::AsNumber(ScannedCount)));
+		StatusText->SetText(FText::GetEmpty());
 	}
-
-	if (CancelButton)
-	{
-		CancelButton->SetVisibility(ESlateVisibility::Visible);
-	}
+    if (SharedStatusText) SharedStatusText->SetText(FText::Format(LOCTEXT("Upgrade_AuditProgress", "Auditing world... {0}% ({1} scanned)"), FText::AsNumber(FMath::RoundToInt(ProgressPercent)), FText::AsNumber(ScannedCount)));
 }
 
 void USmartUpgradePanel::UpdateAuditUI(const FSFUpgradeAuditResult& Result)
 {
+    SetRadiusScanPending(false);
+    CachedAuditResult = Result;
+    if (ActiveTab != ESmartUpgradeTab::Radius) return;
+    if (SharedStatusText)
+    {
+        SharedStatusText->SetText(Result.bSuccess
+            ? FText::Format(LOCTEXT("Upgrade_AuditComplete", "Audit Complete: {0} upgradeable found across {1} structures."), FText::AsNumber(Result.TotalUpgradeable), FText::AsNumber(Result.TotalScanned))
+            : LOCTEXT("Upgrade_AuditFailed", "Audit failed or was canceled."));
+    }
 	if (!Result.bSuccess)
 	{
-		if (StatusText)
-		{
-			StatusText->SetText(LOCTEXT("Upgrade_AuditFailed", "Audit failed or was canceled."));
-		}
+        if (StatusText) StatusText->SetText(FText::GetEmpty());
+        if (SharedUpgradeButton) SharedUpgradeButton->SetIsEnabled(false);
 		return;
 	}
 
 	if (StatusText)
 	{
-		StatusText->SetText(FText::Format(LOCTEXT("Upgrade_AuditComplete", "Audit Complete: {0} upgradeable found across {1} structures."), FText::AsNumber(Result.TotalUpgradeable), FText::AsNumber(Result.TotalScanned)));
+		StatusText->SetText(FText::GetEmpty());
 	}
 
 	if (CancelButton)
@@ -855,7 +986,7 @@ void USmartUpgradePanel::UpdateAuditUI(const FSFUpgradeAuditResult& Result)
 					// Column 1: Count (right-aligned, fixed width)
 					UTextBlock* CountText = NewObject<UTextBlock>(this);
 					CountText->SetText(FText::FromString(FString::Printf(TEXT("%d"), Bucket.Count)));
-					FSlateFontInfo RowFont = SFFont::Get(11);
+					FSlateFontInfo RowFont = SFFont::Get(14);
 					CountText->SetFont(RowFont);
 					CountText->SetColorAndOpacity(FSlateColor(RowTextColor));
 					CountText->SetJustification(ETextJustify::Right);
@@ -910,6 +1041,9 @@ void USmartUpgradePanel::UpdateAuditUI(const FSFUpgradeAuditResult& Result)
 						}
 					}
 
+					CountSizeBox->RemoveFromParent(); SepText->RemoveFromParent();
+					if (auto* LayoutSlot = Cast<UHorizontalBoxSlot>(NameText->Slot)) LayoutSlot->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+					RowHBox->AddChildToHorizontalBox(CountSizeBox)->SetVerticalAlignment(VAlign_Center);
 					RowBorder->AddChild(RowHBox);
 					ActiveResultsContainer->AddChildToVerticalBox(RowBorder);
 
@@ -923,6 +1057,7 @@ void USmartUpgradePanel::UpdateAuditUI(const FSFUpgradeAuditResult& Result)
 
 void USmartUpgradePanel::ClosePanel()
 {
+    CancelTargetSelection();
 	UE_LOG(LogSmartUI, VeryVerbose, TEXT("Upgrade Panel: ClosePanel() called"));
 
 	// Get player controller
@@ -934,6 +1069,7 @@ void USmartUpgradePanel::ClosePanel()
 		return;
 	}
 
+	if (USFSubsystem* Subsystem = USFSubsystem::Get(this)) Subsystem->CloseInactiveInterfaceTasks(this);
 	// Remove from viewport
 	RemoveFromParent();
 
@@ -972,7 +1108,13 @@ FReply USmartUpgradePanel::NativeOnKeyDown(const FGeometry& InGeometry, const FK
 
 FReply USmartUpgradePanel::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
 {
-	if (InMouseEvent.GetEffectingButton() == EKeys::RightMouseButton)
+    if (bSelectingNetworkTarget && (!BackgroundBorder || !BackgroundBorder->GetCachedGeometry().IsUnderLocation(InMouseEvent.GetScreenSpacePosition())))
+    {
+        if (InMouseEvent.GetEffectingButton() == EKeys::LeftMouseButton) PickNetworkTarget(InMouseEvent.GetScreenSpacePosition());
+        return FReply::Handled();
+    }
+	if (InMouseEvent.GetEffectingButton() == EKeys::RightMouseButton ||
+        (InMouseEvent.GetEffectingButton() == EKeys::LeftMouseButton && SFInterface::IsHeaderHit(ContextHeaderText ? ContextHeaderText->GetParent() : nullptr, InMouseEvent)))
 	{
 		bIsDragging = true;
 		DragOffset = InMouseEvent.GetScreenSpacePosition();
@@ -1024,10 +1166,11 @@ FReply USmartUpgradePanel::NativeOnMouseButtonDown(const FGeometry& InGeometry, 
 
 FReply USmartUpgradePanel::NativeOnMouseButtonUp(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
 {
-	if (InMouseEvent.GetEffectingButton() == EKeys::RightMouseButton && bIsDragging)
+	if ((InMouseEvent.GetEffectingButton() == EKeys::RightMouseButton || InMouseEvent.GetEffectingButton() == EKeys::LeftMouseButton) && bIsDragging)
 	{
 		bIsDragging = false;
-		return FReply::Handled().ReleaseMouseCapture();
+        SFInterface::SavePanel(this, BackgroundBorder, TEXT("Upgrade"));
+		return FReply::Handled().ReleaseMouseCapture().SetUserFocus(TakeWidget(), EFocusCause::Mouse);
 	}
 
 	return Super::NativeOnMouseButtonUp(InGeometry, InMouseEvent);
@@ -1041,7 +1184,7 @@ FReply USmartUpgradePanel::NativeOnMouseMove(const FGeometry& InGeometry, const 
 		FVector2D Delta = CurrentMousePos - DragOffset;
 
 		// Update widget position by adding delta to the position at drag start
-		SetRenderTranslation(InitialPanelPosition + Delta);
+		SetRenderTranslation(InitialPanelPosition + Delta / FMath::Max(.01f, UWidgetLayoutLibrary::GetViewportScale(this)));
 
 		return FReply::Handled();
 	}

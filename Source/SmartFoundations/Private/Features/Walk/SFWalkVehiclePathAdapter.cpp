@@ -1,6 +1,6 @@
 // Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
-#include "SmartFoundations.h"
 #include "Features/Walk/SFWalkVehiclePathAdapter.h"
+#include "SmartFoundations.h"
 #include "Hologram/FGVehiclePathSegmentHologram.h"
 #include "WheeledVehicles/FGVehiclePathSegment.h"
 #include "WheeledVehicles/FGVehiclePathNode.h"
@@ -27,7 +27,10 @@ namespace
 FTransform FSFWalkVehiclePathAdapter::StartFrame(AFGVehiclePathSegmentHologram* Path)
 {
     FVector Location = Path->GetActorLocation();
-    FVector Forward = Path->GetActorForwardVector();
+    // The native first-point arrow rotates independently of the actor. Its
+    // graph direction is authoritative even before a complete spline exists.
+    FVector Forward = Path->mStartPointExitDirection.GetSafeNormal();
+    if (Forward.IsNearlyZero()) { Forward = Path->GetActorForwardVector(); }
     if (Path->mBuildStep == EVehiclePathBuildStep::EndPoint && Path->mPathSplineComponent
         && Path->mPathSplineComponent->GetNumberOfSplinePoints() >= 2)
     {
@@ -100,7 +103,7 @@ bool FSFWalkVehiclePathAdapter::RefreshPreview(AFGVehiclePathSegmentHologram* Pa
 
 FString FSFWalkVehiclePathAdapter::Validate(AFGVehiclePathSegmentHologram* Path)
 {
-    if (!IsValid(Path) || Path->mSplineData.Num() < 2) { return TEXT("Vehicle path has no native routed spline"); }
+    if (!IsValid(Path) || Path->mSplineData.Num() < 2) { return NSLOCTEXT("SmartFoundations", "Walk_VehiclePathMissingRoute", "Vehicle path has no native routed spline").ToString(); }
     Path->ResetConstructDisqualifiers();
     Path->CheckValidPlacement();
     TArray<TSubclassOf<UFGConstructDisqualifier>> Disqualifiers;

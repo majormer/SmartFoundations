@@ -7,7 +7,10 @@
  */
 
 #include "UI/SmartSettingsFormWidgetImpl.h"
+#include "Input/SFPanelInput.h"
 #include "Framework/Application/SlateApplication.h"
+#include "UI/SFInterfaceTaskStrip.h"
+#include "Components/WidgetSwitcher.h"
 
 #define LOCTEXT_NAMESPACE "SmartFoundations"
 
@@ -20,27 +23,21 @@ FString USmartSettingsFormWidget::BeltTierToDisplayString(int32 Tier) const
         {
             int32 HighestTier = CachedSubsystem->GetHighestUnlockedBeltTier(
                 Cast<AFGPlayerController>(GetOwningPlayer()));
-            return FString::Printf(TEXT("Auto (Mk%d)"), HighestTier);
+            return FText::Format(LOCTEXT("Tier_AutoResolved", "Auto (Mk{0})"), FText::AsNumber(HighestTier)).ToString();
         }
-        return TEXT("Auto");
+        return LOCTEXT("Walk_Opt_Auto", "Auto").ToString();
     }
     return FString::Printf(TEXT("Mk%d"), Tier);
 }
 
 int32 USmartSettingsFormWidget::DisplayStringToBeltTier(const FString& DisplayString) const
 {
-    if (DisplayString.StartsWith(TEXT("Auto")))
+    // Display captions may be localized. Resolve against the same values used
+    // to populate the menu rather than parsing English prefixes.
+    for (const int32 Tier : CachedBeltTiers)
     {
-        return 0;
+        if (BeltTierToDisplayString(Tier) == DisplayString) return Tier;
     }
-
-    // Parse "Mk1", "Mk2", etc.
-    if (DisplayString.StartsWith(TEXT("Mk")))
-    {
-        FString TierStr = DisplayString.RightChop(2);
-        return FCString::Atoi(*TierStr);
-    }
-
     return 0;
 }
 
@@ -89,6 +86,7 @@ void USmartSettingsFormWidget::PopulateBeltTierComboBoxes()
 
 void USmartSettingsFormWidget::UpdateBeltAutoConnectControls()
 {
+    TGuardValue<bool> PopulationGuard(bRestoringSpinBoxValues, true);
     if (!CachedSubsystem.IsValid())
     {
         return;
@@ -153,13 +151,25 @@ void USmartSettingsFormWidget::UpdateBeltAutoConnectControls()
         BeltChainLabel->SetVisibility(ESlateVisibility::Visible);
     }
 
+    if (LiftUsageModeRow) LiftUsageModeRow->SetVisibility(ESlateVisibility::Visible);
+    if (LiftUsageModeComboBox)
+    {
+        LiftUsageModeComboBox->ClearOptions();
+        LiftUsageModeComboBox->AddOption(LOCTEXT("LiftMode_BeltsOnly", "Belts Only").ToString());
+        LiftUsageModeComboBox->AddOption(LOCTEXT("LiftMode_Distributor", "Lift at Distributor").ToString());
+        LiftUsageModeComboBox->AddOption(LOCTEXT("LiftMode_Building", "Lift at Building").ToString());
+        LiftUsageModeComboBox->SetSelectedIndex(FMath::Clamp(Settings.LiftUsageMode, 0, 2));
+        LiftUsageModeComboBox->SetIsEnabled(true);
+        LiftUsageModeComboBox->SetToolTipText(LOCTEXT("LiftMode_Help", "Choose where the lift absorbs the height difference. Native placement and costs apply."));
+    }
+
     // Update Routing Mode ComboBox
     if (BeltRoutingModeComboBox)
     {
         BeltRoutingModeComboBox->ClearOptions();
-        BeltRoutingModeComboBox->AddOption(TEXT("Default"));
-        BeltRoutingModeComboBox->AddOption(TEXT("Curve"));
-        BeltRoutingModeComboBox->AddOption(TEXT("Straight"));
+        BeltRoutingModeComboBox->AddOption(LOCTEXT("Walk_Opt_Default", "Default").ToString());
+        BeltRoutingModeComboBox->AddOption(LOCTEXT("Walk_Opt_Curve", "Curve").ToString());
+        BeltRoutingModeComboBox->AddOption(LOCTEXT("Walk_Opt_Straight", "Straight").ToString());
 
         int32 ModeIndex = FMath::Clamp(Settings.BeltRoutingMode, 0, 2);
         BeltRoutingModeComboBox->SetSelectedIndex(ModeIndex);
@@ -175,6 +185,7 @@ void USmartSettingsFormWidget::UpdateBeltAutoConnectControls()
 
 void USmartSettingsFormWidget::OnBeltEnabledChanged(bool bIsChecked)
 {
+    if (bRestoringSpinBoxValues) return;
     if (!CachedSubsystem.IsValid())
     {
         return;
@@ -183,10 +194,8 @@ void USmartSettingsFormWidget::OnBeltEnabledChanged(bool bIsChecked)
     CachedSubsystem->SetAutoConnectBeltEnabled(bIsChecked);
     UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Belt auto-connect enabled changed to %d"), bIsChecked);
 
-    if (bApplyImmediately)
-    {
-        CachedSubsystem->TriggerAutoConnectRefresh();
-    }
+    // Connection preferences are live; Apply Immediately controls placement geometry only.
+    CachedSubsystem->TriggerAutoConnectRefresh();
 }
 
 void USmartSettingsFormWidget::OnRotationAxisChanged(FString SelectedItem, ESelectInfo::Type SelectionType)
@@ -199,15 +208,15 @@ void USmartSettingsFormWidget::OnRotationAxisChanged(FString SelectedItem, ESele
     {
         return;
     }
-    // [#372] Always-yaw rotation; this only selects whether the yaw progresses along X-clones or Y-rows.
-    FSFCounterState NewState = CachedSubsystem->GetCounterState();
-    NewState.RotationAxis = (SelectedItem == TEXT("Y")) ? ESFScaleAxis::Y : ESFScaleAxis::X;
-    CachedSubsystem->UpdateCounterState(NewState);
+    // The progression axis is staged with the other placement inputs, including
+    // pending numeric edits. Never mutate the preview through a separate path.
+    if (bApplyImmediately) OnApplyButtonClicked();
     UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Rotation progression axis -> %s"), *SelectedItem);
 }
 
 void USmartSettingsFormWidget::OnBeltTierMainChanged(FString SelectedItem, ESelectInfo::Type SelectionType)
 {
+    if (bRestoringSpinBoxValues) return;
     if (SelectionType == ESelectInfo::Direct)
     {
         return;  // Ignore programmatic changes
@@ -222,14 +231,13 @@ void USmartSettingsFormWidget::OnBeltTierMainChanged(FString SelectedItem, ESele
     CachedSubsystem->SetAutoConnectBeltTierMain(Tier);
     UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Belt tier main changed to %d (%s)"), Tier, *SelectedItem);
 
-    if (bApplyImmediately)
-    {
-        CachedSubsystem->TriggerAutoConnectRefresh();
-    }
+    // Connection preferences are live; Apply Immediately controls placement geometry only.
+    CachedSubsystem->TriggerAutoConnectRefresh();
 }
 
 void USmartSettingsFormWidget::OnBeltTierToBuildingChanged(FString SelectedItem, ESelectInfo::Type SelectionType)
 {
+    if (bRestoringSpinBoxValues) return;
     if (SelectionType == ESelectInfo::Direct)
     {
         return;  // Ignore programmatic changes
@@ -244,14 +252,13 @@ void USmartSettingsFormWidget::OnBeltTierToBuildingChanged(FString SelectedItem,
     CachedSubsystem->SetAutoConnectBeltTierToBuilding(Tier);
     UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Belt tier to building changed to %d (%s)"), Tier, *SelectedItem);
 
-    if (bApplyImmediately)
-    {
-        CachedSubsystem->TriggerAutoConnectRefresh();
-    }
+    // Connection preferences are live; Apply Immediately controls placement geometry only.
+    CachedSubsystem->TriggerAutoConnectRefresh();
 }
 
 void USmartSettingsFormWidget::OnBeltChainChanged(bool bIsChecked)
 {
+    if (bRestoringSpinBoxValues) return;
     if (!CachedSubsystem.IsValid())
     {
         return;
@@ -263,14 +270,13 @@ void USmartSettingsFormWidget::OnBeltChainChanged(bool bIsChecked)
     // [#452] Refresh previews like every sibling belt handler - this was the lone belt-side
     // panel control that changed the setting without re-evaluating, so the Chain toggle didn't
     // apply until the next incidental re-eval (e.g. a nudge).
-    if (bApplyImmediately)
-    {
-        CachedSubsystem->TriggerAutoConnectRefresh();
-    }
+    // Connection preferences are live; Apply Immediately controls placement geometry only.
+    CachedSubsystem->TriggerAutoConnectRefresh();
 }
 
 void USmartSettingsFormWidget::OnStackableBeltDirectionChanged(FString SelectedItem, ESelectInfo::Type SelectionType)
 {
+    if (bRestoringSpinBoxValues) return;
     if (SelectionType == ESelectInfo::Direct)
     {
         return;  // Ignore programmatic changes
@@ -281,24 +287,30 @@ void USmartSettingsFormWidget::OnStackableBeltDirectionChanged(FString SelectedI
         return;
     }
 
-    // Convert "Forward"/"Backward" to 0/1
-    int32 Direction = 0;  // Default to Forward
-    if (SelectedItem == TEXT("Backward"))
-    {
-        Direction = 1;
-    }
+    const int32 Direction = StackableBeltDirectionComboBox
+        ? StackableBeltDirectionComboBox->FindOptionIndex(SelectedItem) : INDEX_NONE;
+    if (Direction < 0 || Direction > 1) return;
 
     CachedSubsystem->SetAutoConnectStackableBeltDirection(Direction);
     UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Stackable belt direction changed to %d (%s)"), Direction, *SelectedItem);
 
-    if (bApplyImmediately)
-    {
-        CachedSubsystem->TriggerAutoConnectRefresh();
-    }
+    // Connection preferences are live; Apply Immediately controls placement geometry only.
+    CachedSubsystem->TriggerAutoConnectRefresh();
+}
+
+void USmartSettingsFormWidget::OnLiftUsageModeChanged(FString SelectedItem, ESelectInfo::Type SelectionType)
+{
+    if (bRestoringSpinBoxValues) return;
+    if (SelectionType == ESelectInfo::Direct || !CachedSubsystem.IsValid()) return;
+    const int32 Mode = LiftUsageModeComboBox ? LiftUsageModeComboBox->FindOptionIndex(SelectedItem) : INDEX_NONE;
+    if (Mode < 0 || Mode > 2) return;
+    CachedSubsystem->SetAutoConnectLiftUsageMode(Mode);
+    CachedSubsystem->TriggerAutoConnectRefresh();
 }
 
 void USmartSettingsFormWidget::OnBeltRoutingModeChanged(FString SelectedItem, ESelectInfo::Type SelectionType)
 {
+    if (bRestoringSpinBoxValues) return;
     if (SelectionType == ESelectInfo::Direct)
     {
         return;  // Ignore programmatic changes
@@ -309,18 +321,15 @@ void USmartSettingsFormWidget::OnBeltRoutingModeChanged(FString SelectedItem, ES
         return;
     }
 
-    // Convert display string to routing mode index
-    int32 RoutingMode = 0;  // Default
-    if (SelectedItem == TEXT("Curve")) RoutingMode = 1;
-    else if (SelectedItem == TEXT("Straight")) RoutingMode = 2;
+    const int32 RoutingMode = BeltRoutingModeComboBox
+        ? BeltRoutingModeComboBox->FindOptionIndex(SelectedItem) : INDEX_NONE;
+    if (RoutingMode < 0 || RoutingMode > 2) return;
 
     CachedSubsystem->SetAutoConnectBeltRoutingMode(RoutingMode);
     UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Belt routing mode changed to %d (%s)"), RoutingMode, *SelectedItem);
 
-    if (bApplyImmediately)
-    {
-        CachedSubsystem->TriggerAutoConnectRefresh();
-    }
+    // Connection preferences are live; Apply Immediately controls placement geometry only.
+    CachedSubsystem->TriggerAutoConnectRefresh();
 }
 
 // ============================================================================
@@ -336,27 +345,19 @@ FString USmartSettingsFormWidget::PipeTierToDisplayString(int32 Tier) const
         {
             int32 HighestTier = CachedSubsystem->GetHighestUnlockedPipeTier(
                 Cast<AFGPlayerController>(GetOwningPlayer()));
-            return FString::Printf(TEXT("Auto (Mk%d)"), HighestTier);
+            return FText::Format(LOCTEXT("Tier_AutoResolved", "Auto (Mk{0})"), FText::AsNumber(HighestTier)).ToString();
         }
-        return TEXT("Auto");
+        return LOCTEXT("Walk_Opt_Auto", "Auto").ToString();
     }
     return FString::Printf(TEXT("Mk%d"), Tier);
 }
 
 int32 USmartSettingsFormWidget::DisplayStringToPipeTier(const FString& DisplayString) const
 {
-    if (DisplayString.StartsWith(TEXT("Auto")))
+    for (const int32 Tier : CachedPipeTiers)
     {
-        return 0;
+        if (PipeTierToDisplayString(Tier) == DisplayString) return Tier;
     }
-
-    // Parse "Mk1", "Mk2"
-    if (DisplayString.StartsWith(TEXT("Mk")))
-    {
-        FString TierStr = DisplayString.RightChop(2);
-        return FCString::Atoi(*TierStr);
-    }
-
     return 0;
 }
 
@@ -405,6 +406,7 @@ void USmartSettingsFormWidget::PopulatePipeTierComboBoxes()
 
 void USmartSettingsFormWidget::UpdatePipeAutoConnectControls()
 {
+    TGuardValue<bool> PopulationGuard(bRestoringSpinBoxValues, true);
     if (!CachedSubsystem.IsValid())
     {
         return;
@@ -467,16 +469,18 @@ void USmartSettingsFormWidget::UpdatePipeAutoConnectControls()
         }
     }
 
+    if (LiftUsageModeRow) LiftUsageModeRow->SetVisibility(ESlateVisibility::Collapsed);
+
     // Update Routing Mode ComboBox
     if (PipeRoutingModeComboBox)
     {
         PipeRoutingModeComboBox->ClearOptions();
-        PipeRoutingModeComboBox->AddOption(TEXT("Auto"));
-        PipeRoutingModeComboBox->AddOption(TEXT("Auto 2D"));
-        PipeRoutingModeComboBox->AddOption(TEXT("Straight"));
-        PipeRoutingModeComboBox->AddOption(TEXT("Curve"));
-        PipeRoutingModeComboBox->AddOption(TEXT("Noodle"));
-        PipeRoutingModeComboBox->AddOption(TEXT("Horiz→Vert"));
+        PipeRoutingModeComboBox->AddOption(LOCTEXT("Walk_Opt_Auto", "Auto").ToString());
+        PipeRoutingModeComboBox->AddOption(LOCTEXT("Walk_Opt_Auto2D", "Auto 2D").ToString());
+        PipeRoutingModeComboBox->AddOption(LOCTEXT("Walk_Opt_Straight", "Straight").ToString());
+        PipeRoutingModeComboBox->AddOption(LOCTEXT("Walk_Opt_Curve", "Curve").ToString());
+        PipeRoutingModeComboBox->AddOption(LOCTEXT("Walk_Opt_Noodle", "Noodle").ToString());
+        PipeRoutingModeComboBox->AddOption(LOCTEXT("Walk_Opt_HToV", "H->V").ToString());
 
         int32 ModeIndex = FMath::Clamp(Settings.PipeRoutingMode, 0, 5);
         PipeRoutingModeComboBox->SetSelectedIndex(ModeIndex);
@@ -488,6 +492,7 @@ void USmartSettingsFormWidget::UpdatePipeAutoConnectControls()
 
 void USmartSettingsFormWidget::OnPipeEnabledChanged(bool bIsChecked)
 {
+    if (bRestoringSpinBoxValues) return;
     if (!CachedSubsystem.IsValid())
     {
         return;
@@ -496,14 +501,13 @@ void USmartSettingsFormWidget::OnPipeEnabledChanged(bool bIsChecked)
     CachedSubsystem->SetAutoConnectPipeEnabled(bIsChecked);
     UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Pipe auto-connect enabled changed to %d"), bIsChecked);
 
-    if (bApplyImmediately)
-    {
-        CachedSubsystem->TriggerAutoConnectRefresh();
-    }
+    // Connection preferences are live; Apply Immediately controls placement geometry only.
+    CachedSubsystem->TriggerAutoConnectRefresh();
 }
 
 void USmartSettingsFormWidget::OnPipeTierMainChanged(FString SelectedItem, ESelectInfo::Type SelectionType)
 {
+    if (bRestoringSpinBoxValues) return;
     if (SelectionType == ESelectInfo::Direct)
     {
         return;  // Ignore programmatic changes
@@ -518,14 +522,13 @@ void USmartSettingsFormWidget::OnPipeTierMainChanged(FString SelectedItem, ESele
     CachedSubsystem->SetAutoConnectPipeTierMain(Tier);
     UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Pipe tier main changed to %d (%s)"), Tier, *SelectedItem);
 
-    if (bApplyImmediately)
-    {
-        CachedSubsystem->TriggerAutoConnectRefresh();
-    }
+    // Connection preferences are live; Apply Immediately controls placement geometry only.
+    CachedSubsystem->TriggerAutoConnectRefresh();
 }
 
 void USmartSettingsFormWidget::OnPipeTierToBuildingChanged(FString SelectedItem, ESelectInfo::Type SelectionType)
 {
+    if (bRestoringSpinBoxValues) return;
     if (SelectionType == ESelectInfo::Direct)
     {
         return;  // Ignore programmatic changes
@@ -540,14 +543,13 @@ void USmartSettingsFormWidget::OnPipeTierToBuildingChanged(FString SelectedItem,
     CachedSubsystem->SetAutoConnectPipeTierToBuilding(Tier);
     UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Pipe tier to building changed to %d (%s)"), Tier, *SelectedItem);
 
-    if (bApplyImmediately)
-    {
-        CachedSubsystem->TriggerAutoConnectRefresh();
-    }
+    // Connection preferences are live; Apply Immediately controls placement geometry only.
+    CachedSubsystem->TriggerAutoConnectRefresh();
 }
 
 void USmartSettingsFormWidget::OnPipeIndicatorChanged(bool bIsChecked)
 {
+    if (bRestoringSpinBoxValues) return;
     if (!CachedSubsystem.IsValid())
     {
         return;
@@ -560,14 +562,13 @@ void USmartSettingsFormWidget::OnPipeIndicatorChanged(bool bIsChecked)
     // the lone pipe-side panel control that skipped this, so a style change didn't apply until an
     // incidental re-eval. Combined with the force-recreate fix in the pipe refresh path, the new
     // style now rebuilds cleanly instead of leaving stale/mismatched previews.
-    if (bApplyImmediately)
-    {
-        CachedSubsystem->TriggerAutoConnectRefresh();
-    }
+    // Connection preferences are live; Apply Immediately controls placement geometry only.
+    CachedSubsystem->TriggerAutoConnectRefresh();
 }
 
 void USmartSettingsFormWidget::OnPipeRoutingModeChanged(FString SelectedItem, ESelectInfo::Type SelectionType)
 {
+    if (bRestoringSpinBoxValues) return;
     if (SelectionType == ESelectInfo::Direct)
     {
         return;  // Ignore programmatic changes
@@ -578,26 +579,20 @@ void USmartSettingsFormWidget::OnPipeRoutingModeChanged(FString SelectedItem, ES
         return;
     }
 
-    // Convert display string to routing mode index
-    int32 RoutingMode = 0;
-    if (SelectedItem == TEXT("Auto")) RoutingMode = 0;
-    else if (SelectedItem == TEXT("Auto 2D")) RoutingMode = 1;
-    else if (SelectedItem == TEXT("Straight")) RoutingMode = 2;
-    else if (SelectedItem == TEXT("Curve")) RoutingMode = 3;
-    else if (SelectedItem == TEXT("Noodle")) RoutingMode = 4;
-    else if (SelectedItem == TEXT("Horiz→Vert")) RoutingMode = 5;
+    const int32 RoutingMode = PipeRoutingModeComboBox
+        ? PipeRoutingModeComboBox->FindOptionIndex(SelectedItem) : INDEX_NONE;
+    if (RoutingMode < 0 || RoutingMode > 5) return;
 
     CachedSubsystem->SetAutoConnectPipeRoutingMode(RoutingMode);
     UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Pipe routing mode changed to %d (%s)"), RoutingMode, *SelectedItem);
 
-    if (bApplyImmediately)
-    {
-        CachedSubsystem->TriggerAutoConnectRefresh();
-    }
+    // Connection preferences are live; Apply Immediately controls placement geometry only.
+    CachedSubsystem->TriggerAutoConnectRefresh();
 }
 
 void USmartSettingsFormWidget::OnHypertubeEnabledChanged(bool bIsChecked)
 {
+    if (bRestoringSpinBoxValues) return;
     if (!CachedSubsystem.IsValid())
     {
         return;
@@ -606,14 +601,13 @@ void USmartSettingsFormWidget::OnHypertubeEnabledChanged(bool bIsChecked)
     CachedSubsystem->SetAutoConnectHypertubeEnabled(bIsChecked);
     UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Hypertube auto-connect enabled changed to %s"), bIsChecked ? TEXT("ON") : TEXT("OFF"));
 
-    if (bApplyImmediately)
-    {
-        CachedSubsystem->TriggerAutoConnectRefresh();
-    }
+    // Connection preferences are live; Apply Immediately controls placement geometry only.
+    CachedSubsystem->TriggerAutoConnectRefresh();
 }
 
 void USmartSettingsFormWidget::OnHypertubeRoutingModeChanged(FString SelectedItem, ESelectInfo::Type SelectionType)
 {
+    if (bRestoringSpinBoxValues) return;
     if (SelectionType == ESelectInfo::Direct)
     {
         return;  // Ignore programmatic changes
@@ -624,22 +618,15 @@ void USmartSettingsFormWidget::OnHypertubeRoutingModeChanged(FString SelectedIte
         return;
     }
 
-    // Convert display string to routing mode index
-    int32 RoutingMode = 0;
-    if (SelectedItem == TEXT("Auto")) RoutingMode = 0;
-    else if (SelectedItem == TEXT("Auto 2D")) RoutingMode = 1;
-    else if (SelectedItem == TEXT("Straight")) RoutingMode = 2;
-    else if (SelectedItem == TEXT("Curve")) RoutingMode = 3;
-    else if (SelectedItem == TEXT("Noodle")) RoutingMode = 4;
-    else if (SelectedItem == TEXT("Horiz→Vert")) RoutingMode = 5;
+    const int32 RoutingMode = HypertubeRoutingModeComboBox
+        ? HypertubeRoutingModeComboBox->FindOptionIndex(SelectedItem) : INDEX_NONE;
+    if (RoutingMode < 0 || RoutingMode > 5) return;
 
     CachedSubsystem->SetAutoConnectHypertubeRoutingMode(RoutingMode);
     UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Hypertube routing mode changed to %d (%s)"), RoutingMode, *SelectedItem);
 
-    if (bApplyImmediately)
-    {
-        CachedSubsystem->TriggerAutoConnectRefresh();
-    }
+    // Connection preferences are live; Apply Immediately controls placement geometry only.
+    CachedSubsystem->TriggerAutoConnectRefresh();
 }
 
 // ============================================================================
@@ -650,21 +637,17 @@ FString USmartSettingsFormWidget::PowerGridAxisToDisplayString(int32 Axis) const
 {
     switch (Axis)
     {
-    case 0: return TEXT("Auto");
+    case 0: return LOCTEXT("Walk_Opt_Auto", "Auto").ToString();
     case 1: return TEXT("X");
     case 2: return TEXT("Y");
     case 3: return TEXT("X+Y");
-    default: return TEXT("Auto");
+    default: return LOCTEXT("Walk_Opt_Auto", "Auto").ToString();
     }
 }
 
 int32 USmartSettingsFormWidget::DisplayStringToPowerGridAxis(const FString& DisplayString) const
 {
-    if (DisplayString == TEXT("Auto")) return 0;
-    if (DisplayString == TEXT("X")) return 1;
-    if (DisplayString == TEXT("Y")) return 2;
-    if (DisplayString == TEXT("X+Y")) return 3;
-    return 0;
+    return PowerGridAxisComboBox ? PowerGridAxisComboBox->FindOptionIndex(DisplayString) : INDEX_NONE;
 }
 
 void USmartSettingsFormWidget::PopulatePowerComboBoxes()
@@ -673,7 +656,7 @@ void USmartSettingsFormWidget::PopulatePowerComboBoxes()
     if (PowerGridAxisComboBox)
     {
         PowerGridAxisComboBox->ClearOptions();
-        PowerGridAxisComboBox->AddOption(TEXT("Auto"));
+        PowerGridAxisComboBox->AddOption(LOCTEXT("Walk_Opt_Auto", "Auto").ToString());
         PowerGridAxisComboBox->AddOption(TEXT("X"));
         PowerGridAxisComboBox->AddOption(TEXT("Y"));
         PowerGridAxisComboBox->AddOption(TEXT("X+Y"));
@@ -694,6 +677,7 @@ void USmartSettingsFormWidget::PopulatePowerComboBoxes()
 
 void USmartSettingsFormWidget::UpdatePowerAutoConnectControls()
 {
+    TGuardValue<bool> PopulationGuard(bRestoringSpinBoxValues, true);
     if (!CachedSubsystem.IsValid())
     {
         return;
@@ -730,6 +714,7 @@ void USmartSettingsFormWidget::UpdatePowerAutoConnectControls()
 
 void USmartSettingsFormWidget::OnPowerEnabledChanged(bool bIsChecked)
 {
+    if (bRestoringSpinBoxValues) return;
     if (!CachedSubsystem.IsValid())
     {
         return;
@@ -738,14 +723,13 @@ void USmartSettingsFormWidget::OnPowerEnabledChanged(bool bIsChecked)
     CachedSubsystem->SetAutoConnectPowerEnabled(bIsChecked);
     UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Power auto-connect enabled changed to %d"), bIsChecked);
 
-    if (bApplyImmediately)
-    {
-        CachedSubsystem->TriggerAutoConnectRefresh();
-    }
+    // Connection preferences are live; Apply Immediately controls placement geometry only.
+    CachedSubsystem->TriggerAutoConnectRefresh();
 }
 
 void USmartSettingsFormWidget::OnScaleDaisyChainPowerChanged(bool bIsChecked)
 {
+    if (bRestoringSpinBoxValues) return;
     if (!CachedSubsystem.IsValid())
     {
         return;
@@ -758,6 +742,7 @@ void USmartSettingsFormWidget::OnScaleDaisyChainPowerChanged(bool bIsChecked)
 
 void USmartSettingsFormWidget::OnPowerGridAxisChanged(FString SelectedItem, ESelectInfo::Type SelectionType)
 {
+    if (bRestoringSpinBoxValues) return;
     if (SelectionType == ESelectInfo::Direct)
     {
         return;  // Ignore programmatic changes
@@ -769,17 +754,17 @@ void USmartSettingsFormWidget::OnPowerGridAxisChanged(FString SelectedItem, ESel
     }
 
     int32 Axis = DisplayStringToPowerGridAxis(SelectedItem);
+    if (Axis < 0 || Axis > 3) return;
     CachedSubsystem->SetAutoConnectPowerGridAxis(Axis);
     UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Power grid axis changed to %d (%s)"), Axis, *SelectedItem);
 
-    if (bApplyImmediately)
-    {
-        CachedSubsystem->TriggerAutoConnectRefresh();
-    }
+    // Connection preferences are live; Apply Immediately controls placement geometry only.
+    CachedSubsystem->TriggerAutoConnectRefresh();
 }
 
 void USmartSettingsFormWidget::OnPowerReservedChanged(FString SelectedItem, ESelectInfo::Type SelectionType)
 {
+    if (bRestoringSpinBoxValues) return;
     if (SelectionType == ESelectInfo::Direct)
     {
         return;  // Ignore programmatic changes
@@ -794,10 +779,8 @@ void USmartSettingsFormWidget::OnPowerReservedChanged(FString SelectedItem, ESel
     CachedSubsystem->SetAutoConnectPowerReserved(Reserved);
     UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Power reserved slots changed to %d"), Reserved);
 
-    if (bApplyImmediately)
-    {
-        CachedSubsystem->TriggerAutoConnectRefresh();
-    }
+    // Connection preferences are live; Apply Immediately controls placement geometry only.
+    CachedSubsystem->TriggerAutoConnectRefresh();
 }
 
 // ========================================
@@ -839,6 +822,7 @@ void USmartSettingsFormWidget::UpdateGridDirectionLabel(UTextBlock* Label, bool 
 
 void USmartSettingsFormWidget::NativeDestruct()
 {
+    CancelExtendSourceSelection();
     // [#427] Stop the live Extend-clipboard refresh.
     if (UWorld* World = GetWorld())
     {
@@ -863,8 +847,7 @@ FReply USmartSettingsFormWidget::NativeOnKeyDown(const FGeometry& InGeometry, co
 
         // Otherwise, cancel unapplied changes and close form
         UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Settings Form: Escape pressed - reverting and closing"));
-        RevertToLastAppliedState();
-        CloseForm();
+        CancelAndClose();
         return FReply::Handled();
     }
 
@@ -931,6 +914,14 @@ FReply USmartSettingsFormWidget::NativeOnKeyDown(const FGeometry& InGeometry, co
 
 FReply USmartSettingsFormWidget::NativeOnPreviewKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent)
 {
+    if (SFPanelInput::IsToggleKey(GetOwningPlayer(), InKeyEvent))
+    {
+        if (bWaitingForConfirmation) OnConfirmNoClicked();
+        else CancelAndClose();
+        return FReply::Handled();
+    }
+    if (bSelectingExtendSource && InKeyEvent.GetKey() == EKeys::Escape)
+    { CancelExtendSourceSelection(); return FReply::Handled(); }
     // Issue #230: Up/Down stepping on a focused SpinBox.
     //
     // Engine bug: SSpinBox::OnKeyDown commits the arrowed value and calls ExitTextMode(), but
@@ -1130,7 +1121,7 @@ void USmartSettingsFormWidget::UpdateGridWarningDisplay()
     // Update Grid Total text
     if (GridTotalText)
     {
-        GridTotalText->SetText(FText::Format(LOCTEXT("Panel_GridTotal", "Grid Total: {0} holograms"), FText::AsNumber(GridTotal)));
+        GridTotalText->SetText(FText::Format(LOCTEXT("Panel_GridTotal", "Grid Total: {0}"), FText::AsNumber(GridTotal)));
 
         // Set color based on warning level
         FLinearColor TextColor;
@@ -1308,7 +1299,13 @@ void USmartSettingsFormWidget::ShowConfirmationDialog(const FString& Title, cons
     }
 
     // Show the dialog (use SizeBox for visibility control)
+    // Restore is a sibling dock in the same canvas. Its insertion order must
+    // never paint over the confirmation or its Cancel/Confirm actions.
+    if (auto* DialogSlot = Cast<UCanvasPanelSlot>(ConfirmationSizeBox->Slot))
+        DialogSlot->SetZOrder(1000);
     ConfirmationSizeBox->SetVisibility(ESlateVisibility::Visible);
+    WidgetTree->ForEachWidget([this](UWidget* Widget)
+    { if (auto* Tabs = Cast<USFInterfaceTaskStrip>(Widget)) Tabs->SetActiveTask(bShowingExtendPanel ? 4 : TaskContentSwitcher && TaskContentSwitcher->GetActiveWidgetIndex() == 1 ? 3 : 0); });
 
     // Focus the Cancel button by default (safer option)
     if (ConfirmNoButton)
@@ -1324,6 +1321,8 @@ void USmartSettingsFormWidget::HideConfirmationDialog()
         ConfirmationSizeBox->SetVisibility(ESlateVisibility::Collapsed);
     }
     bWaitingForConfirmation = false;
+    WidgetTree->ForEachWidget([this](UWidget* Widget)
+    { if (auto* Tabs = Cast<USFInterfaceTaskStrip>(Widget)) Tabs->SetActiveTask(bShowingExtendPanel ? 4 : TaskContentSwitcher && TaskContentSwitcher->GetActiveWidgetIndex() == 1 ? 3 : 0); });
 }
 
 void USmartSettingsFormWidget::OnConfirmYesClicked()
@@ -1354,6 +1353,7 @@ void USmartSettingsFormWidget::OnConfirmNoClicked()
 
 void USmartSettingsFormWidget::UpdateStackableBeltAutoConnectControls()
 {
+    TGuardValue<bool> PopulationGuard(bRestoringSpinBoxValues, true);
     if (!CachedSubsystem.IsValid())
     {
         return;
@@ -1388,8 +1388,8 @@ void USmartSettingsFormWidget::UpdateStackableBeltAutoConnectControls()
     if (StackableBeltDirectionComboBox)
     {
         StackableBeltDirectionComboBox->ClearOptions();
-        StackableBeltDirectionComboBox->AddOption(TEXT("Forward"));
-        StackableBeltDirectionComboBox->AddOption(TEXT("Backward"));
+        StackableBeltDirectionComboBox->AddOption(LOCTEXT("Walk_Opt_Forward", "Forward").ToString());
+        StackableBeltDirectionComboBox->AddOption(LOCTEXT("Walk_Opt_Backward", "Backward").ToString());
 
         int32 DirectionIndex = Settings.StackableBeltDirection;
         StackableBeltDirectionComboBox->SetSelectedIndex(DirectionIndex);
@@ -1420,12 +1420,13 @@ void USmartSettingsFormWidget::UpdateStackableBeltAutoConnectControls()
     // #351: populate the Routing combobox for stackable conveyor poles too. It was only populated in
     // the distributor path (UpdateBeltAutoConnectControls), so on a stackable pole it was empty and
     // never dropped down. Stackable belt auto-connect honors BeltRoutingMode (SFAutoConnectService_Stackable).
+    if (LiftUsageModeRow) LiftUsageModeRow->SetVisibility(ESlateVisibility::Collapsed);
     if (BeltRoutingModeComboBox)
     {
         BeltRoutingModeComboBox->ClearOptions();
-        BeltRoutingModeComboBox->AddOption(TEXT("Default"));
-        BeltRoutingModeComboBox->AddOption(TEXT("Curve"));
-        BeltRoutingModeComboBox->AddOption(TEXT("Straight"));
+        BeltRoutingModeComboBox->AddOption(LOCTEXT("Walk_Opt_Default", "Default").ToString());
+        BeltRoutingModeComboBox->AddOption(LOCTEXT("Walk_Opt_Curve", "Curve").ToString());
+        BeltRoutingModeComboBox->AddOption(LOCTEXT("Walk_Opt_Straight", "Straight").ToString());
         BeltRoutingModeComboBox->SetSelectedIndex(FMath::Clamp(Settings.BeltRoutingMode, 0, 2));
     }
     if (BeltRoutingModeRow)
@@ -1439,6 +1440,7 @@ void USmartSettingsFormWidget::UpdateStackableBeltAutoConnectControls()
 
 void USmartSettingsFormWidget::UpdateStackablePipeAutoConnectControls()
 {
+    TGuardValue<bool> PopulationGuard(bRestoringSpinBoxValues, true);
     if (!CachedSubsystem.IsValid())
     {
         return;
@@ -1490,16 +1492,18 @@ void USmartSettingsFormWidget::UpdateStackablePipeAutoConnectControls()
         }
     }
 
+    if (LiftUsageModeRow) LiftUsageModeRow->SetVisibility(ESlateVisibility::Collapsed);
+
     // Update Routing Mode ComboBox (same as regular pipe controls)
     if (PipeRoutingModeComboBox)
     {
         PipeRoutingModeComboBox->ClearOptions();
-        PipeRoutingModeComboBox->AddOption(TEXT("Auto"));
-        PipeRoutingModeComboBox->AddOption(TEXT("Auto 2D"));
-        PipeRoutingModeComboBox->AddOption(TEXT("Straight"));
-        PipeRoutingModeComboBox->AddOption(TEXT("Curve"));
-        PipeRoutingModeComboBox->AddOption(TEXT("Noodle"));
-        PipeRoutingModeComboBox->AddOption(TEXT("Horiz→Vert"));
+        PipeRoutingModeComboBox->AddOption(LOCTEXT("Walk_Opt_Auto", "Auto").ToString());
+        PipeRoutingModeComboBox->AddOption(LOCTEXT("Walk_Opt_Auto2D", "Auto 2D").ToString());
+        PipeRoutingModeComboBox->AddOption(LOCTEXT("Walk_Opt_Straight", "Straight").ToString());
+        PipeRoutingModeComboBox->AddOption(LOCTEXT("Walk_Opt_Curve", "Curve").ToString());
+        PipeRoutingModeComboBox->AddOption(LOCTEXT("Walk_Opt_Noodle", "Noodle").ToString());
+        PipeRoutingModeComboBox->AddOption(LOCTEXT("Walk_Opt_HToV", "H->V").ToString());
 
         int32 ModeIndex = FMath::Clamp(Settings.PipeRoutingMode, 0, 5);
         PipeRoutingModeComboBox->SetSelectedIndex(ModeIndex);
@@ -1511,6 +1515,7 @@ void USmartSettingsFormWidget::UpdateStackablePipeAutoConnectControls()
 
 void USmartSettingsFormWidget::UpdateHypertubeAutoConnectControls()
 {
+    TGuardValue<bool> PopulationGuard(bRestoringSpinBoxValues, true);
     if (!CachedSubsystem.IsValid())
     {
         return;
@@ -1524,16 +1529,18 @@ void USmartSettingsFormWidget::UpdateHypertubeAutoConnectControls()
         HypertubeEnabledCheckBox->SetIsChecked(Settings.bHypertubeAutoConnectEnabled);
     }
 
+    if (LiftUsageModeRow) LiftUsageModeRow->SetVisibility(ESlateVisibility::Collapsed);
+
     // Update Routing Mode ComboBox (routing style only)
     if (HypertubeRoutingModeComboBox)
     {
         HypertubeRoutingModeComboBox->ClearOptions();
-        HypertubeRoutingModeComboBox->AddOption(TEXT("Auto"));
-        HypertubeRoutingModeComboBox->AddOption(TEXT("Auto 2D"));
-        HypertubeRoutingModeComboBox->AddOption(TEXT("Straight"));
-        HypertubeRoutingModeComboBox->AddOption(TEXT("Curve"));
-        HypertubeRoutingModeComboBox->AddOption(TEXT("Noodle"));
-        HypertubeRoutingModeComboBox->AddOption(TEXT("Horiz→Vert"));
+        HypertubeRoutingModeComboBox->AddOption(LOCTEXT("Walk_Opt_Auto", "Auto").ToString());
+        HypertubeRoutingModeComboBox->AddOption(LOCTEXT("Walk_Opt_Auto2D", "Auto 2D").ToString());
+        HypertubeRoutingModeComboBox->AddOption(LOCTEXT("Walk_Opt_Straight", "Straight").ToString());
+        HypertubeRoutingModeComboBox->AddOption(LOCTEXT("Walk_Opt_Curve", "Curve").ToString());
+        HypertubeRoutingModeComboBox->AddOption(LOCTEXT("Walk_Opt_Noodle", "Noodle").ToString());
+        HypertubeRoutingModeComboBox->AddOption(LOCTEXT("Walk_Opt_HToV", "H->V").ToString());
 
         int32 ModeIndex = FMath::Clamp(Settings.HypertubeRoutingMode, 0, 5);
         HypertubeRoutingModeComboBox->SetSelectedIndex(ModeIndex);

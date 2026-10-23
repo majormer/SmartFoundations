@@ -7,13 +7,13 @@ This is the fastest way to make sure Smart! is working.
 1. Equip a 4m foundation in the build gun.
 2. Press `K` to open the Smart Panel.
 3. Set the grid to `3 x 3 x 1`.
-4. Close or apply the panel.
+4. Press **Apply** if placement edits are staged, then close the Panel.
 5. Check the preview in the world.
 6. Click once to build the full grid.
 
 Smart! will charge the normal material cost for all 9 foundations.
 
-> Screenshot placeholder: Smart Panel open with a `3 x 3 x 1` foundation grid preview.
+![Apply the nine-foundation grid before closing the Panel](https://raw.githubusercontent.com/wiki/majormer/SmartFoundations/images/v35/scaling.png)
 
 ## Try The Keyboard Flow
 
@@ -29,6 +29,12 @@ If you prefer mouse wheel control, hold a Smart modifier:
 - Hold `X` and scroll to adjust X.
 - Hold `Z` and scroll to adjust Y.
 - Hold `X + Z` and scroll to adjust Z.
+
+## Find the other tools
+
+The **Scaling / Walking / Upgrade / Restore** tabs share one window. Tasks depend on the held buildable. Hover a **?** beside the building or section for help, or click it to expand the instructions. A disabled task explains what to select first.
+
+For an existing pipe bus, hold **Stackable Pipeline Support**, aim at an open endpoint and choose Walking. Holding the pipe itself opens different tools. See [resume steps](Smart-Walking).
 
 ## Good First Experiments
 
@@ -50,4 +56,4 @@ Smart! does not create free buildings or resources. If you do not have enough ma
 
 ---
 
-_Last updated: 2026-10-06 · Smart! v34.4.0_
+_Last updated: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (release draft)_

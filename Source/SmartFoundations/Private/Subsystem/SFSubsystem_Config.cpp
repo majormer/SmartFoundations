@@ -719,6 +719,7 @@ void USFSubsystem::SetAutoConnectRuntimeSettingsFromPreset(const FSFRestoreAutoC
 	AutoConnectRuntimeSettings.BeltTierToBuilding = PresetState.BeltTierToBuilding;
 	AutoConnectRuntimeSettings.bChainDistributors = PresetState.bChainDistributors;
 	AutoConnectRuntimeSettings.BeltRoutingMode = PresetState.BeltRoutingMode;
+	AutoConnectRuntimeSettings.LiftUsageMode = FMath::Clamp(PresetState.LiftUsageMode, 0, 2);
 	AutoConnectRuntimeSettings.bPipeAutoConnectEnabled = PresetState.bPipeEnabled;
 	AutoConnectRuntimeSettings.PipeTierMain = PresetState.PipeTierMain;
 	AutoConnectRuntimeSettings.PipeTierToBuilding = PresetState.PipeTierToBuilding;
@@ -1324,6 +1325,9 @@ void USFSubsystem::CycleAutoConnectSetting()
             CurrentAutoConnectSetting = EAutoConnectSetting::BeltRoutingMode;
             break;
         case EAutoConnectSetting::BeltRoutingMode:
+            CurrentAutoConnectSetting = EAutoConnectSetting::LiftUsageMode;
+            break;
+        case EAutoConnectSetting::LiftUsageMode:
             CurrentAutoConnectSetting = EAutoConnectSetting::ChainDistributors;
             break;
         case EAutoConnectSetting::ChainDistributors:
@@ -1477,6 +1481,10 @@ void USFSubsystem::AdjustAutoConnectSetting(int32 Delta)
         AutoConnectRuntimeSettings.PowerGridAxis = FMath::Clamp(AutoConnectRuntimeSettings.PowerGridAxis + Delta, 0, 3);
         break;
 
+    case EAutoConnectSetting::LiftUsageMode:
+        AutoConnectRuntimeSettings.LiftUsageMode = (AutoConnectRuntimeSettings.LiftUsageMode + Delta % 3 + 3) % 3;
+        break;
+
     case EAutoConnectSetting::BeltRoutingMode:
         // Cycle through 0=Default, 1=Curve, 2=Straight (matches vanilla belt build modes)
         AutoConnectRuntimeSettings.BeltRoutingMode = (AutoConnectRuntimeSettings.BeltRoutingMode + Delta) % 3;
@@ -1603,21 +1611,21 @@ FString USFSubsystem::GetAutoConnectSettingDisplayString() const
              AutoConnectService->IsPipeSupportHologram(ActiveHologram.Get()) ||
              USFAutoConnectService::IsPassthroughPipeHologram(ActiveHologram.Get())))
         {
-            SettingName = TEXT("Pipe Auto-Connect");
-            SettingValue = AutoConnectRuntimeSettings.bPipeAutoConnectEnabled ? TEXT("ON") : TEXT("OFF");
+            SettingName = NSLOCTEXT("SmartFoundations", "P.bPipeAutoConnectEnabled", "Pipe Auto-Connect").ToString();
+            SettingValue = AutoConnectRuntimeSettings.bPipeAutoConnectEnabled ? NSLOCTEXT("SmartFoundations", "ACSetting_ON", "ON").ToString() : NSLOCTEXT("SmartFoundations", "ACSetting_OFF", "OFF").ToString();
         }
         else
         {
-            SettingName = TEXT("Belt Auto-Connect");
-            SettingValue = AutoConnectRuntimeSettings.bEnabled ? TEXT("ON") : TEXT("OFF");
+            SettingName = NSLOCTEXT("SmartFoundations", "P.bAutoConnectEnabled", "Belt Auto-Connect").ToString();
+            SettingValue = AutoConnectRuntimeSettings.bEnabled ? NSLOCTEXT("SmartFoundations", "ACSetting_ON", "ON").ToString() : NSLOCTEXT("SmartFoundations", "ACSetting_OFF", "OFF").ToString();
         }
         break;
 
     case EAutoConnectSetting::BeltTierMain:
-        SettingName = TEXT("Belt Tier (Main)");
+        SettingName = NSLOCTEXT("SmartFoundations", "ACSetting_BeltTierMain", "Belt Tier (Main)").ToString();
         if (AutoConnectRuntimeSettings.BeltTierMain == 0)
         {
-            SettingValue = TEXT("Auto");
+            SettingValue = NSLOCTEXT("SmartFoundations", "SignSupportValue_Auto", "Auto").ToString();
         }
         else
         {
@@ -1626,10 +1634,10 @@ FString USFSubsystem::GetAutoConnectSettingDisplayString() const
         break;
 
     case EAutoConnectSetting::BeltTierToBuilding:
-        SettingName = TEXT("Belt Tier (To Building)");
+        SettingName = NSLOCTEXT("SmartFoundations", "ACSetting_BeltTierToBuilding", "Belt Tier (To Building)").ToString();
         if (AutoConnectRuntimeSettings.BeltTierToBuilding == 0)
         {
-            SettingValue = TEXT("Auto");
+            SettingValue = NSLOCTEXT("SmartFoundations", "SignSupportValue_Auto", "Auto").ToString();
         }
         else
         {
@@ -1638,34 +1646,42 @@ FString USFSubsystem::GetAutoConnectSettingDisplayString() const
         break;
 
     case EAutoConnectSetting::ChainDistributors:
-        SettingName = TEXT("Chain Distributors");
-        SettingValue = AutoConnectRuntimeSettings.bChainDistributors ? TEXT("ON") : TEXT("OFF");
+        SettingName = NSLOCTEXT("SmartFoundations", "ACSetting_ChainDistributors", "Chain Distributors").ToString();
+        SettingValue = AutoConnectRuntimeSettings.bChainDistributors ? NSLOCTEXT("SmartFoundations", "ACSetting_ON", "ON").ToString() : NSLOCTEXT("SmartFoundations", "ACSetting_OFF", "OFF").ToString();
+        break;
+
+    case EAutoConnectSetting::LiftUsageMode:
+        SettingName = NSLOCTEXT("SmartFoundations", "P.LiftUsageMode", "Factory Connection").ToString();
+        {
+            const FString Names[] = {NSLOCTEXT("SmartFoundations", "LiftMode_BeltsOnly", "Belts Only").ToString(), NSLOCTEXT("SmartFoundations", "LiftMode_Distributor", "Lift at Distributor").ToString(), NSLOCTEXT("SmartFoundations", "LiftMode_Building", "Lift at Building").ToString()};
+            SettingValue = Names[FMath::Clamp(AutoConnectRuntimeSettings.LiftUsageMode, 0, 2)];
+        }
         break;
 
     case EAutoConnectSetting::BeltRoutingMode:
-        SettingName = TEXT("Belt Routing");
+        SettingName = NSLOCTEXT("SmartFoundations", "ACSetting_BeltRouting", "Belt Routing").ToString();
         switch (AutoConnectRuntimeSettings.BeltRoutingMode)
         {
         case 0:
-            SettingValue = TEXT("Default");
+            SettingValue = NSLOCTEXT("SmartFoundations", "Walk_Opt_Default", "Default").ToString();
             break;
         case 1:
-            SettingValue = TEXT("Curve");
+            SettingValue = NSLOCTEXT("SmartFoundations", "Walk_Opt_Curve", "Curve").ToString();
             break;
         case 2:
-            SettingValue = TEXT("Straight");
+            SettingValue = NSLOCTEXT("SmartFoundations", "Walk_Opt_Straight", "Straight").ToString();
             break;
         default:
-            SettingValue = TEXT("Default");
+            SettingValue = NSLOCTEXT("SmartFoundations", "Walk_Opt_Default", "Default").ToString();
             break;
         }
         break;
 
     case EAutoConnectSetting::PipeTierMain:
-        SettingName = TEXT("Pipe Tier (Main)");
+        SettingName = NSLOCTEXT("SmartFoundations", "ACSetting_PipeTierMain", "Pipe Tier (Main)").ToString();
         if (AutoConnectRuntimeSettings.PipeTierMain == 0)
         {
-            SettingValue = TEXT("Auto");
+            SettingValue = NSLOCTEXT("SmartFoundations", "SignSupportValue_Auto", "Auto").ToString();
         }
         else
         {
@@ -1674,10 +1690,10 @@ FString USFSubsystem::GetAutoConnectSettingDisplayString() const
         break;
 
     case EAutoConnectSetting::PipeTierToBuilding:
-        SettingName = TEXT("Pipe Tier (To Building)");
+        SettingName = NSLOCTEXT("SmartFoundations", "ACSetting_PipeTierToBuilding", "Pipe Tier (To Building)").ToString();
         if (AutoConnectRuntimeSettings.PipeTierToBuilding == 0)
         {
-            SettingValue = TEXT("Auto");
+            SettingValue = NSLOCTEXT("SmartFoundations", "SignSupportValue_Auto", "Auto").ToString();
         }
         else
         {
@@ -1686,67 +1702,67 @@ FString USFSubsystem::GetAutoConnectSettingDisplayString() const
         break;
 
     case EAutoConnectSetting::PipeIndicator:
-        SettingName = TEXT("Pipe Style");
-        SettingValue = AutoConnectRuntimeSettings.bPipeIndicator ? TEXT("Normal") : TEXT("Clean");
+        SettingName = NSLOCTEXT("SmartFoundations", "Walk_Lbl_PipeStyle", "Pipe Style").ToString();
+        SettingValue = AutoConnectRuntimeSettings.bPipeIndicator ? NSLOCTEXT("SmartFoundations", "Walk_Opt_Normal", "Normal").ToString() : NSLOCTEXT("SmartFoundations", "Walk_Opt_Clean", "Clean").ToString();
         break;
 
     case EAutoConnectSetting::PipeRoutingMode:
-        SettingName = TEXT("Pipe Routing");
+        SettingName = NSLOCTEXT("SmartFoundations", "ACSetting_PipeRouting", "Pipe Routing").ToString();
         switch (AutoConnectRuntimeSettings.PipeRoutingMode)
         {
         case 0:
-            SettingValue = TEXT("Auto");
+            SettingValue = NSLOCTEXT("SmartFoundations", "SignSupportValue_Auto", "Auto").ToString();
             break;
         case 1:
-            SettingValue = TEXT("Auto 2D");
+            SettingValue = NSLOCTEXT("SmartFoundations", "Walk_Opt_Auto2D", "Auto 2D").ToString();
             break;
         case 2:
-            SettingValue = TEXT("Straight");
+            SettingValue = NSLOCTEXT("SmartFoundations", "Walk_Opt_Straight", "Straight").ToString();
             break;
         case 3:
-            SettingValue = TEXT("Curve");
+            SettingValue = NSLOCTEXT("SmartFoundations", "Walk_Opt_Curve", "Curve").ToString();
             break;
         case 4:
-            SettingValue = TEXT("Noodle");
+            SettingValue = NSLOCTEXT("SmartFoundations", "Walk_Opt_Noodle", "Noodle").ToString();
             break;
         case 5:
-            SettingValue = TEXT("Horiz→Vert");
+            SettingValue = NSLOCTEXT("SmartFoundations", "ACSetting_HorizVert", "Horiz→Vert").ToString();
             break;
         default:
-            SettingValue = TEXT("Auto");
+            SettingValue = NSLOCTEXT("SmartFoundations", "SignSupportValue_Auto", "Auto").ToString();
             break;
         }
         break;
 
     case EAutoConnectSetting::HypertubeEnabled:
-        SettingName = TEXT("Hypertube AC");
-        SettingValue = AutoConnectRuntimeSettings.bHypertubeAutoConnectEnabled ? TEXT("ON") : TEXT("OFF");
+        SettingName = NSLOCTEXT("SmartFoundations", "ACSetting_HypertubeAC", "Hypertube AC").ToString();
+        SettingValue = AutoConnectRuntimeSettings.bHypertubeAutoConnectEnabled ? NSLOCTEXT("SmartFoundations", "ACSetting_ON", "ON").ToString() : NSLOCTEXT("SmartFoundations", "ACSetting_OFF", "OFF").ToString();
         break;
 
     case EAutoConnectSetting::HypertubeRoutingMode:
-        SettingName = TEXT("Hypertube Routing");
+        SettingName = NSLOCTEXT("SmartFoundations", "ACSetting_HypertubeRouting", "Hypertube Routing").ToString();
         switch (AutoConnectRuntimeSettings.HypertubeRoutingMode)
         {
-        case 0: SettingValue = TEXT("Auto"); break;
-        case 1: SettingValue = TEXT("Auto 2D"); break;
-        case 2: SettingValue = TEXT("Straight"); break;
-        case 3: SettingValue = TEXT("Curve"); break;
-        case 4: SettingValue = TEXT("Noodle"); break;
-        case 5: SettingValue = TEXT("Horiz→Vert"); break;
-        default: SettingValue = TEXT("Auto"); break;
+        case 0: SettingValue = NSLOCTEXT("SmartFoundations", "SignSupportValue_Auto", "Auto").ToString(); break;
+        case 1: SettingValue = NSLOCTEXT("SmartFoundations", "Walk_Opt_Auto2D", "Auto 2D").ToString(); break;
+        case 2: SettingValue = NSLOCTEXT("SmartFoundations", "Walk_Opt_Straight", "Straight").ToString(); break;
+        case 3: SettingValue = NSLOCTEXT("SmartFoundations", "Walk_Opt_Curve", "Curve").ToString(); break;
+        case 4: SettingValue = NSLOCTEXT("SmartFoundations", "Walk_Opt_Noodle", "Noodle").ToString(); break;
+        case 5: SettingValue = NSLOCTEXT("SmartFoundations", "ACSetting_HorizVert", "Horiz→Vert").ToString(); break;
+        default: SettingValue = NSLOCTEXT("SmartFoundations", "SignSupportValue_Auto", "Auto").ToString(); break;
         }
         break;
 
     case EAutoConnectSetting::StackableBeltEnabled:
-        SettingName = TEXT("Stackable Belt Auto-Connect");
-        SettingValue = AutoConnectRuntimeSettings.bStackableBeltEnabled ? TEXT("ON") : TEXT("OFF");
+        SettingName = NSLOCTEXT("SmartFoundations", "Config_StackableBelt", "Stackable Belt Auto-Connect").ToString();
+        SettingValue = AutoConnectRuntimeSettings.bStackableBeltEnabled ? NSLOCTEXT("SmartFoundations", "ACSetting_ON", "ON").ToString() : NSLOCTEXT("SmartFoundations", "ACSetting_OFF", "OFF").ToString();
         break;
 
     case EAutoConnectSetting::StackableBeltTier:
-        SettingName = TEXT("Stackable Belt Tier");
+        SettingName = NSLOCTEXT("SmartFoundations", "ACSetting_StackableBeltTier", "Stackable Belt Tier").ToString();
         if (AutoConnectRuntimeSettings.BeltTierMain == 0)
         {
-            SettingValue = TEXT("Auto");
+            SettingValue = NSLOCTEXT("SmartFoundations", "SignSupportValue_Auto", "Auto").ToString();
         }
         else
         {
@@ -1755,21 +1771,21 @@ FString USFSubsystem::GetAutoConnectSettingDisplayString() const
         break;
 
     case EAutoConnectSetting::StackableBeltDirection:
-        SettingName = TEXT("Stackable Belt Direction");
-        SettingValue = AutoConnectRuntimeSettings.StackableBeltDirection == 0 ? TEXT("Forward") : TEXT("Backward");
+        SettingName = NSLOCTEXT("SmartFoundations", "ACSetting_StackableBeltDirection", "Stackable Belt Direction").ToString();
+        SettingValue = AutoConnectRuntimeSettings.StackableBeltDirection == 0 ? NSLOCTEXT("SmartFoundations", "HUD_RoleForward", "Forward").ToString() : NSLOCTEXT("SmartFoundations", "Walk_Opt_Backward", "Backward").ToString();
         break;
 
     case EAutoConnectSetting::PowerEnabled:
-        SettingName = TEXT("Power Auto-Connect");
-        SettingValue = AutoConnectRuntimeSettings.bConnectPower ? TEXT("ON") : TEXT("OFF");
+        SettingName = NSLOCTEXT("SmartFoundations", "P.bPowerAutoConnectEnabled", "Power Auto-Connect").ToString();
+        SettingValue = AutoConnectRuntimeSettings.bConnectPower ? NSLOCTEXT("SmartFoundations", "ACSetting_ON", "ON").ToString() : NSLOCTEXT("SmartFoundations", "ACSetting_OFF", "OFF").ToString();
         break;
 
     case EAutoConnectSetting::PowerGridAxis:
-        SettingName = TEXT("Grid Axis");
+        SettingName = NSLOCTEXT("SmartFoundations", "P.PowerConnectMode", "Grid Axis").ToString();
         switch (AutoConnectRuntimeSettings.PowerGridAxis)
         {
         case 0:
-            SettingValue = TEXT("Auto");
+            SettingValue = NSLOCTEXT("SmartFoundations", "SignSupportValue_Auto", "Auto").ToString();
             break;
         case 1:
             SettingValue = TEXT("X");
@@ -1781,18 +1797,18 @@ FString USFSubsystem::GetAutoConnectSettingDisplayString() const
             SettingValue = TEXT("X+Y");
             break;
         default:
-            SettingValue = TEXT("Auto");
+            SettingValue = NSLOCTEXT("SmartFoundations", "SignSupportValue_Auto", "Auto").ToString();
             break;
         }
         break;
 
     case EAutoConnectSetting::PowerReserved:
-        SettingName = TEXT("Reserved Slots");
+        SettingName = NSLOCTEXT("SmartFoundations", "ACSetting_ReservedSlots", "Reserved Slots").ToString();
         SettingValue = FString::Printf(TEXT("%d"), AutoConnectRuntimeSettings.PowerReserved);
         break;
     }
 
-    return FString::Printf(TEXT("%s: %s"), *SettingName, *SettingValue);
+    return FText::Format(NSLOCTEXT("SmartFoundations", "ACSetting_Summary", "{0}: {1}"), FText::FromString(SettingName), FText::FromString(SettingValue)).ToString();
 }
 
 bool USFSubsystem::IsCurrentHologramAutoConnectCapable() const
@@ -1911,6 +1927,12 @@ TArray<FString> USFSubsystem::GetDirtyAutoConnectSettings() const
 				AutoConnectRuntimeSettings.bPipeIndicator ? TEXT("Normal") : TEXT("Clean")));
 		}
 
+		if (AutoConnectRuntimeSettings.LiftUsageMode != CachedConfig.LiftUsageMode)
+		{
+			const TCHAR* Names[] = { TEXT("Belts Only"), TEXT("Lift at Distributor"), TEXT("Lift at Building") };
+			DirtySettings.Add(FString::Printf(TEXT("Factory Connection: %s"), Names[FMath::Clamp(AutoConnectRuntimeSettings.LiftUsageMode, 0, 2)]));
+		}
+
 		// A non-default routing mode persists on the HUD like every other deviating setting.
 		// Strings MUST match GetAutoConnectSettingDisplayString (case PipeRoutingMode) so the
 		// active-setting '*' highlight lines up when cycling with Num0.
@@ -1957,6 +1979,12 @@ TArray<FString> USFSubsystem::GetDirtyAutoConnectSettings() const
 		{
 			DirtySettings.Add(FString::Printf(TEXT("Chain Distributors: %s"),
 				AutoConnectRuntimeSettings.bChainDistributors ? TEXT("ON") : TEXT("OFF")));
+		}
+
+		if (AutoConnectRuntimeSettings.LiftUsageMode != CachedConfig.LiftUsageMode)
+		{
+			const TCHAR* Names[] = { TEXT("Belts Only"), TEXT("Lift at Distributor"), TEXT("Lift at Building") };
+			DirtySettings.Add(FString::Printf(TEXT("Factory Connection: %s"), Names[FMath::Clamp(AutoConnectRuntimeSettings.LiftUsageMode, 0, 2)]));
 		}
 
 		// A non-default routing mode persists on the HUD like every other deviating setting.
@@ -2122,6 +2150,13 @@ void USFSubsystem::SetAutoConnectStackableBeltDirection(int32 Direction)
 	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("Stackable belt direction set to: %d (%s)"),
 		AutoConnectRuntimeSettings.StackableBeltDirection,
 		AutoConnectRuntimeSettings.StackableBeltDirection == 0 ? TEXT("Forward") : TEXT("Backward"));
+}
+
+void USFSubsystem::SetAutoConnectLiftUsageMode(int32 Mode)
+{
+	AutoConnectRuntimeSettings.LiftUsageMode = FMath::Clamp(Mode, 0, 2);
+	AutoConnectRuntimeSettings.bInitialized = true;
+	UpdateCounterDisplay();
 }
 
 void USFSubsystem::SetAutoConnectBeltRoutingMode(int32 Mode)

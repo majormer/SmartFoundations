@@ -2,6 +2,8 @@
 
 #include "Features/Walk/SFWalkService.h"
 #include "Features/Walk/SFWalkConveyance.h"
+#include "Features/Walk/SFWalkExistingOrigin.h"
+#include "Features/Walk/SFWalkBusLayout.h"
 #include "Features/Walk/SFWalkNativeSpanAdapter.h"
 #include "Features/Walk/SFWalkVehiclePathAdapter.h"
 #include "Hologram/FGRailroadTrackHologram.h"
@@ -124,6 +126,9 @@ bool USFWalkService::EnterWalk(AFGHologram* InSeedHologram)
         return false;
     }
 
+    StartFailure.Reset();
+    ExistingEndpoints.Reset();
+    ExistingLanes = ExistingStacks = 0;
     SeedHologram = InSeedHologram;
     // Seed straight from the held pole's transform. The run advances via the SAME established grid-placement
     // transform auto-connect uses (FSFPositionCalculator, in AccumulateFrame), which derives "forward" from the
@@ -173,6 +178,21 @@ bool USFWalkService::EnterWalk(AFGHologram* InSeedHologram)
     // Fresh walk starts single-lane (1×1). The cross-section persists across segments via these counters.
     CrossSectionLanes = 1;
     CrossSectionStacks = 1;
+    FSFWalkCommitSpec Origin;
+    const auto Selection = SFWalkExistingOrigin::Discover(InSeedHologram,
+        Subsystem.IsValid() ? Subsystem->GetLastController() : nullptr, ConveyanceType, Origin, StartFailure);
+    if (Selection == ESFWalkOriginSelection::Rejected) { Conveyance = nullptr; SeedHologram = nullptr; return false; }
+    if (Selection == ESFWalkOriginSelection::Existing)
+    {
+        ExistingEndpoints = Origin.ExistingEndpoints;
+        ExistingLanes = Origin.ExistingLanes;
+        ExistingStacks = Origin.ExistingStacks;
+        OriginFrame = Origin.OriginFrame;
+        ExistingLaneSpacing = Origin.LaneSpacing;
+        ExistingStackSpacing = Origin.StackSpacing;
+        CrossSectionLanes = Origin.Segments[0].NumLanes;
+        CrossSectionStacks = Origin.Segments[0].NumStacks;
+    }
 
     Segments.Reset();
     FSFWalkSegment Seg0;
@@ -182,6 +202,8 @@ bool USFWalkService::EnterWalk(AFGHologram* InSeedHologram)
     Seg0.Advance = (ConveyanceType == ESFWalkConveyanceType::Hypertube)
         ? USFAutoConnectService::MAX_HYPERTUBE_POLE_SPACING
         : SFConveyanceConstants::DefaultBeltPipeSupportIntervalCm;
+    Seg0.NumLanes = CrossSectionLanes;
+    Seg0.NumStacks = CrossSectionStacks;
     Segments.Add(Seg0);   // segment 0, the first anchor forward
     ActiveIndex = 0;
     bActive = true;
@@ -217,6 +239,11 @@ FSFWalkCommitSpec USFWalkService::BuildCommitSpec() const
     }
 
     Spec.OriginFrame = OriginFrame;
+    Spec.ExistingEndpoints = ExistingEndpoints;
+    Spec.ExistingLanes = ExistingLanes;
+    Spec.ExistingStacks = ExistingStacks;
+    Spec.LaneSpacing = IsResuming() ? ExistingLaneSpacing : WALK_LANE_SPACING;
+    Spec.StackSpacing = IsResuming() ? ExistingStackSpacing : WALK_STACK_SPACING;
     Spec.Segments.Reserve(Segments.Num());
     for (const FSFWalkSegment& Seg : Segments)
     {
@@ -276,9 +303,9 @@ FSFWalkCommitSpec USFWalkService::BuildCommitSpec() const
             if (!bMerged) { Spec.Cost.Add(Item); }
         }
     };
-    for (const TWeakObjectPtr<AFGHologram>& H : OriginHolograms)
+    for (int32 Cell = 0; Cell < OriginHolograms.Num(); ++Cell)
     {
-        if (H.Get() != Seed) { AddCost(H.Get(), TEXT("origin-pole")); }
+        if (IsNewOriginCell(Cell)) { AddCost(OriginHolograms[Cell].Get(), TEXT("origin-pole")); }
     }
     for (const FSFWalkSegment& Seg : Segments)
     {
@@ -287,7 +314,7 @@ FSFWalkCommitSpec USFWalkService::BuildCommitSpec() const
     }
 
     // Block the commit when any segment is an invalid SHAPE (too long / too steep) — the same restriction the previews red.
-    Spec.bValid = !HasInvalidSegmentShape();
+    Spec.bValid = AreExistingEndpointsValid() && !HasInvalidSegmentShape();
     UE_LOG(LogSmartWalk, Verbose, TEXT("BuildCommitSpec: %d segment(s), beltMode=%d tier=%d, %d cost item type(s) TOTAL"),
         Spec.Segments.Num(), Spec.BeltRoutingMode, Spec.BeltTier, Spec.Cost.Num());
     return Spec;
@@ -306,6 +333,7 @@ float USFWalkService::GetMaximumAdvance() const
 
 int32 USFWalkService::ReconstructWalkCommitOnServer(AFGHologram* Seed, const FSFWalkCommitSpec& Spec)
 {
+    if (!Spec.ExistingEndpoints.IsEmpty()) { return ReconstructExistingCommit(Seed, Spec); }
     if (FSFWalkNativeSpanAdapter::IsSpanType(Spec.ConveyanceType)) { return ReconstructNativeSpanCommit(Seed, Spec); }
     UE_LOG(LogSmartWalk, Verbose, TEXT(">>> ReconstructWalkCommitOnServer ENTER: seed=%s segments=%d"),
         *GetNameSafe(Seed), Spec.Segments.Num());
@@ -589,8 +617,14 @@ void USFWalkService::AdjustCrossSection(int32 DeltaLanes, int32 DeltaStacks)
     };
     const int32 OldLanes = CrossSectionLanes;
     const int32 OldStacks = CrossSectionStacks;
-    CrossSectionLanes  = GridStep(CrossSectionLanes, DeltaLanes);
-    CrossSectionStacks = GridStep(CrossSectionStacks, DeltaStacks);
+    CrossSectionLanes = IsResuming() ? SFWalkBusLayout::Step(CrossSectionLanes, DeltaLanes, ExistingLanes)
+        : GridStep(CrossSectionLanes, DeltaLanes);
+    CrossSectionStacks = IsResuming() ? SFWalkBusLayout::Step(CrossSectionStacks, DeltaStacks, ExistingStacks)
+        : GridStep(CrossSectionStacks, DeltaStacks);
+    if (IsResuming() && !SFWalkBusLayout::IsValid(CrossSectionLanes, CrossSectionStacks, ExistingLanes, ExistingStacks))
+    {
+        CrossSectionLanes = OldLanes; CrossSectionStacks = OldStacks; return;
+    }
     UE_LOG(LogSmartWalk, Verbose, TEXT(">>> AdjustCrossSection: laneCtr %d->%d  stackCtr %d->%d  (d=%d,%d) segments=%d"),
         OldLanes, CrossSectionLanes, OldStacks, CrossSectionStacks, DeltaLanes, DeltaStacks, Segments.Num());
 
@@ -662,7 +696,7 @@ void USFWalkService::RebuildOriginHolograms()
     {
         for (int32 StackRow = 0; StackRow < Stacks; ++StackRow)
         {
-            if (LaneRow == 0 && StackRow == 0)
+            if (!IsResuming() && LaneRow == 0 && StackRow == 0)
             {
                 OriginHolograms.Add(Seed);   // cell (0,0) IS the held seed pole — don't spawn or own it
                 continue;
@@ -861,9 +895,9 @@ bool USFWalkService::CanAffordWalk() const
                 }
             }
         };
-        for (int32 i = 1; i < OriginHolograms.Num(); ++i)   // skip [0] = seed
+        for (int32 i = 0; i < OriginHolograms.Num(); ++i)
         {
-            AddCost(OriginHolograms[i].Get());
+            if (IsNewOriginCell(i)) { AddCost(OriginHolograms[i].Get()); }
         }
         for (const FSFWalkSegment& Seg : Segments)
         {
@@ -891,6 +925,7 @@ bool USFWalkService::CanAffordWalk() const
 
 void USFWalkService::SyncToSeedTransform()
 {
+    if (IsResuming()) { return; }
     AFGHologram* Seed = SeedHologram.Get();
     if (!Seed)
     {
@@ -931,7 +966,7 @@ FString USFWalkService::GetSegmentShapeError(int32 Index) const
     if (FSFWalkNativeSpanAdapter::IsSpanType(ConveyanceType))
     {
         const auto& Seg = Segments[Index];
-        if (Seg.Spans.Num() != FMath::Abs(Seg.NumLanes) * FMath::Abs(Seg.NumStacks)) { return TEXT("Native segment preview is incomplete"); }
+        if (Seg.Spans.Num() != FMath::Abs(Seg.NumLanes) * FMath::Abs(Seg.NumStacks)) { return NSLOCTEXT("SmartFoundations", "Walk_IncompleteNativePreview", "Native segment preview is incomplete").ToString(); }
         for (const auto& Span : Seg.Spans)
         {
             const FString Reason = FSFWalkNativeSpanAdapter::Validate(Span.Get());
@@ -1040,6 +1075,7 @@ bool USFWalkService::HasInvalidSegmentShape() const
 
 FString USFWalkService::GetInvalidShapeReason() const
 {
+    if (!AreExistingEndpointsValid()) { return NSLOCTEXT("SmartFoundations", "Walk_ExistingEndpointChanged", "An existing endpoint moved, was removed, or is now occupied.").ToString(); }
     for (int32 i = 0; i < Segments.Num(); ++i)
     {
         const FString Err = GetSegmentShapeError(i);
@@ -1056,8 +1092,8 @@ void USFWalkService::RefreshWalkValidity()
     }
 
     SyncToSeedTransform();   // nudge-the-parent: keep the run anchored to the (possibly nudged) seed
-    if (ConveyanceType == ESFWalkConveyanceType::VehiclePath && !Segments.IsEmpty()
-        && FSFWalkVehiclePathAdapter::RefreshPreview(Cast<AFGVehiclePathSegmentHologram>(SeedHologram.Get()), OriginFrame, FrameAtIndex(0)))
+    if (FSFWalkNativeSpanAdapter::IsSpanType(ConveyanceType) && !Segments.IsEmpty()
+        && FSFWalkNativeSpanAdapter::RefreshPreview(SeedHologram.Get(), OriginFrame, FrameAtIndex(0)))
     {
         bWalkCostDirty = true;
         Segments[0].LastAppliedSegState = -1;
@@ -1066,7 +1102,7 @@ void USFWalkService::RefreshWalkValidity()
     // cleared and they'd render RED. Clear it every frame, THEN set the material state by AFFORDABILITY: HMS_OK (cyan)
     // if the player can afford the whole walk, HMS_ERROR (red) if not — so a broke walk shows red instead of silently
     // building nothing and clearing. (Order matters: clear disqualifiers FIRST, then material state.)
-    const bool bAfford = CanAffordWalk();
+    const bool bAfford = AreExistingEndpointsValid() && CanAffordWalk();
     const EHologramMaterialState State = bAfford ? EHologramMaterialState::HMS_OK : EHologramMaterialState::HMS_ERROR;
 
     bool bAnyInvalidShape = false;
@@ -1170,7 +1206,12 @@ void USFWalkService::SpawnSegmentHologram(int32 Index)
             const int32 SignedLane  = LaneRow * LaneSign;
             const int32 SignedStack = StackRow * StackSign;
             const FTransform Pose = CrossSectionPose(Center, SignedLane, SignedStack);
-            Seg.Holograms.Add(SpawnOnePole(Pose, Index, SignedLane, SignedStack));   // null kept to preserve flat indexing
+            if (IsResuming() && Index == 0 && LaneRow == 0 && StackRow == 0)
+            {
+                SFWalkExistingOrigin::SetAnchorPose(Seed, Pose);
+                Seg.Holograms.Add(Seed);
+            }
+            else { Seg.Holograms.Add(SpawnOnePole(Pose, Index, SignedLane, SignedStack)); }   // null kept to preserve flat indexing
         }
     }
 
@@ -1219,6 +1260,11 @@ FTransform USFWalkService::CrossSectionPose(const FTransform& Center, int32 Sign
     {
         return FSFWalkNativeSpanAdapter::CrossSectionPose(Center, SignedLane, SignedStack);
     }
+    if (IsResuming())
+    {
+        SignedLane = SFWalkBusLayout::Coordinate(FMath::Abs(SignedLane), CrossSectionLanes, ExistingLanes);
+        SignedStack = SFWalkBusLayout::Coordinate(FMath::Abs(SignedStack), CrossSectionStacks, ExistingStacks);
+    }
     // SignedLane/SignedStack are DIRECTIONAL indices (the caller derives them from the segment's signed counter):
     // +N = N lanes to the right of center, -N = N to the left — exactly the grid's signed-axis convention, so
     // Scale-Y grows ONE side per scroll (no forced mirror). Cell (0,0) = the seed's line (path centerline).
@@ -1231,7 +1277,7 @@ FTransform USFWalkService::CrossSectionPose(const FTransform& Center, int32 Sign
     // linear (the turn is already baked into Center). Rotation stays the segment heading so every lane faces down-path.
     FSFPositionCalculator Calc;
     FSFCounterState CS;
-    const FVector ItemSize(0.0f, WALK_LANE_SPACING, WALK_STACK_SPACING);
+    const FVector ItemSize(0.0f, IsResuming() ? ExistingLaneSpacing : WALK_LANE_SPACING, IsResuming() ? ExistingStackSpacing : WALK_STACK_SPACING);
     const FVector Loc = Calc.CalculateChildPosition(0, SignedLane, SignedStack, Center.GetLocation(), Center.Rotator(), ItemSize, CS);
     return FTransform(Center.Rotator(), Loc);
 }
@@ -1271,6 +1317,20 @@ void USFWalkService::UpdateSegmentSpans(int32 Index)
             continue;   // missing pole (e.g. a failed spawn) — skip this cell's belt this pass
         }
         AFGHologram* OldSpan = Seg.Spans[PoleIdx].Get();
+        USceneComponent* NativeStart = nullptr;
+        if (IsResuming())
+        {
+            const int32 ExistingIndex = ExistingEndpointIndex(PoleIdx);
+            if (Index == 0 && ExistingIndex != INDEX_NONE)
+            {
+                NativeStart = SFWalkExistingOrigin::Resolve(ExistingEndpoints[ExistingIndex], ConveyanceType, GetWorld());
+                if (!NativeStart) { SF_SafeDestroyHologram(OldSpan); Seg.Spans[PoleIdx] = nullptr; continue; }
+            }
+            const bool bReverse = ExistingIndex != INDEX_NONE ? ExistingEndpoints[ExistingIndex].bReverseFlow
+                : Subsystem.IsValid() && Subsystem->GetAutoConnectRuntimeSettings().StackableBeltDirection == 1;
+            Conveyance->SetExistingStart(NativeStart, true, bReverse);
+        }
+        else { Conveyance->SetExistingStart(nullptr); }
         AFGHologram* NewSpan = Conveyance->LinkOrUpdate(OldSpan, FromAnchor, ToAnchor, SeedHologram.Get(), false, Seg.TurnDegrees);
         if (!NewSpan && IsValid(OldSpan))
         {
@@ -1308,8 +1368,12 @@ void USFWalkService::RepositionFrom(int32 StartIndex)
             if (AFGHologram* Holo = Seg.Holograms[PoleIdx].Get())
             {
                 const FTransform Pose = CrossSectionPose(Center, (PoleIdx / Stacks) * LaneSign, (PoleIdx % Stacks) * StackSign);
-                Holo->SetActorLocationAndRotation(Pose.GetLocation(), Pose.Rotator());
-                Holo->UpdateComponentTransforms();   // refresh connectors after the move (no re-register here)
+                if (IsResuming() && Holo == SeedHologram.Get()) { SFWalkExistingOrigin::SetAnchorPose(Holo, Pose); }
+                else
+                {
+                    Holo->SetActorLocationAndRotation(Pose.GetLocation(), Pose.Rotator());
+                    Holo->UpdateComponentTransforms();
+                }   // refresh connectors after the move (no re-register here)
             }
         }
         // Re-route this segment's belts; iterating in order means the predecessor poles are already repositioned.
@@ -1333,7 +1397,7 @@ void USFWalkService::DestroySegmentHolograms(FSFWalkSegment& Segment)
 
     for (const TWeakObjectPtr<AFGHologram>& WeakHolo : Segment.Holograms)
     {
-        SF_SafeDestroyHologram(WeakHolo.Get());
+        if (WeakHolo.Get() != SeedHologram.Get()) { SF_SafeDestroyHologram(WeakHolo.Get()); }
     }
     Segment.Holograms.Reset();
 }
@@ -1357,6 +1421,8 @@ void USFWalkService::ClearAll()
         }
     }
     OriginHolograms.Reset();
+    ExistingEndpoints.Reset();
+    ExistingLanes = ExistingStacks = 0;
     ActiveIndex = INDEX_NONE;
     UE_LOG(LogSmartWalk, Verbose, TEXT("<<< ClearAll EXIT"));
 }

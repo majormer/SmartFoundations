@@ -1,11 +1,16 @@
 // Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
 #include "UI/SFWalkPanelWidget.h"
+#include "Input/SFPanelInput.h"
 #include "Subsystem/SFSubsystem.h"
 #include "Features/Walk/SFWalkService.h"
 #include "Features/Walk/SFWalkTypes.h"
 #include "Features/AutoConnect/SFAutoConnectService.h"  // MAX_HYPERTUBE_POLE_SPACING — the 95 m hypertube Advance cap (#405)
 #include "UI/SFFontLibrary.h"  // SFFont::Get — small multi-script font for the dense table cells
+#include "UI/SFInterfacePreferences.h"
+#include "UI/SFPanelStyle.h"
+#include "UI/SFContextHelp.h"
+#include "UI/SFInterfaceTaskStrip.h"
 #include "Blueprint/WidgetLayoutLibrary.h"  // GetViewportScale for DPI-correct drag
 #include "Components/HorizontalBoxSlot.h"
 #include "Components/VerticalBoxSlot.h"
@@ -16,6 +21,7 @@
 #include "Components/Image.h"
 #include "Components/CheckBox.h"
 #include "Components/ComboBoxString.h"
+#include "Components/Spacer.h"
 #include "Styling/SlateTypes.h"  // FTableRowStyle for the combo item style
 #include "Styling/SlateBrush.h"  // ESlateBrushDrawType
 #include "Engine/Texture2D.h"
@@ -25,30 +31,8 @@
 
 #define LOCTEXT_NAMESPACE "SmartFoundations"   // walk-panel UI strings gather into the same namespace as the rest of the mod
 
-// Dark rounded button style matching the Smart Panel's buttons (CloseButton/Apply/Reset
-// describe_widget). Without it, a built UButton falls back to the default LIGHT-GREY Slate style, which is what
-// made the gold "X" / labels read poorly. Values are the Smart Panel CloseButton's exact WidgetStyle brushes.
-static FButtonStyle SFPanelButtonStyle()
-{
-    auto MakeBrush = [](const FLinearColor& Fill)
-    {
-        FSlateBrush B;
-        B.TintColor = FSlateColor(Fill);
-        B.DrawAs = ESlateBrushDrawType::RoundedBox;
-        B.OutlineSettings.CornerRadii = FVector4(4.0f, 4.0f, 4.0f, 4.0f);
-        B.OutlineSettings.Color = FSlateColor(FLinearColor(0.695f, 0.695f, 0.695f, 1.0f));
-        B.OutlineSettings.Width = 1.0f;
-        B.OutlineSettings.RoundingType = ESlateBrushRoundingType::FixedRadius;
-        return B;
-    };
-    FButtonStyle Style;
-    Style.SetNormal(MakeBrush(FLinearColor(0.15f, 0.15f, 0.18f, 1.0f)));
-    Style.SetHovered(MakeBrush(FLinearColor(0.25f, 0.25f, 0.30f, 1.0f)));
-    Style.SetPressed(MakeBrush(FLinearColor(0.10f, 0.10f, 0.12f, 1.0f)));
-    Style.SetNormalPadding(FMargin(12.0f, 1.5f, 12.0f, 1.5f));
-    Style.SetPressedPadding(FMargin(12.0f, 1.5f, 12.0f, 1.5f));
-    return Style;
-}
+// Shared styles preserve native button behavior across task panels.
+static FButtonStyle SFPanelButtonStyle() { return SFPanelStyle::MakeButtonStyle(false); }
 
 // Display-name helpers for the conveyance tier + routing-mode selectors (mirror the auto-connect setter ranges).
 static FString SFTierName(int32 Tier)
@@ -86,6 +70,7 @@ DEFINE_LOG_CATEGORY_STATIC(LogSmartWalkUI, Log, All);
 void USFWalkPanelWidget::NativeConstruct()
 {
     Super::NativeConstruct();
+    if (WalkBackdrop) {WalkBackdrop->SetRenderTranslation(FVector2D(100, 60)); WalkBackdrop->SetPadding(FMargin(20,16));}
 
     // The entire panel — frame, backdrop, header, Tier/Routing/Direction dropdowns, editable segment table and
     // footer — is built in Refresh() into the BindWidget SegmentListBox; the BP is just that mount point. (The old
@@ -94,11 +79,26 @@ void USFWalkPanelWidget::NativeConstruct()
     Refresh();
 }
 
+FReply USFWalkPanelWidget::NativeOnPreviewKeyDown(const FGeometry& Geometry, const FKeyEvent& Event)
+{
+    if (SFPanelInput::IsToggleKey(GetOwningPlayer(), Event))
+    {
+        if (bConfirmScalingReturn) OnKeepWalking();
+        else if (USFSubsystem* S = GetSubsystem()) S->ToggleWalkPanel();
+        return FReply::Handled();
+    }
+    if (bConfirmScalingReturn && Event.GetKey() == EKeys::Escape)
+    { OnKeepWalking(); return FReply::Handled(); }
+    return Super::NativeOnPreviewKeyDown(Geometry, Event);
+}
+
 FReply USFWalkPanelWidget::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent)
 {
+    if (bConfirmScalingReturn && InKeyEvent.GetKey() == EKeys::Escape)
+    { OnKeepWalking(); return FReply::Handled(); }
     const FKey Key = InKeyEvent.GetKey();
-    // Panel is modal (UIOnly) while up, so the game K toggle can't fire — hide on K (toggle) or Escape.
-    if (Key == EKeys::K || Key == EKeys::Escape)
+    // The configured toggle is handled in preview before focused child controls.
+    if (Key == EKeys::Escape)
     {
         if (USFSubsystem* S = GetSubsystem())
         {
@@ -111,11 +111,12 @@ FReply USFWalkPanelWidget::NativeOnKeyDown(const FGeometry& InGeometry, const FK
 
 FReply USFWalkPanelWidget::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
 {
-    if (InMouseEvent.GetEffectingButton() == EKeys::RightMouseButton)
+    if (InMouseEvent.GetEffectingButton() == EKeys::RightMouseButton ||
+        (InMouseEvent.GetEffectingButton() == EKeys::LeftMouseButton && SFInterface::IsHeaderHit(DragHeader, InMouseEvent)))
     {
         bDraggingPanel = true;
         DragMouseStart = InMouseEvent.GetScreenSpacePosition();
-        DragOffsetStart = PanelOffset;
+        DragOffsetStart = WalkBackdrop ? WalkBackdrop->GetRenderTransform().Translation : PanelOffset;
         return FReply::Handled().CaptureMouse(TakeWidget());
     }
     return Super::NativeOnMouseButtonDown(InGeometry, InMouseEvent);
@@ -144,9 +145,10 @@ FReply USFWalkPanelWidget::NativeOnMouseMove(const FGeometry& InGeometry, const 
 
 FReply USFWalkPanelWidget::NativeOnMouseButtonUp(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
 {
-    if (bDraggingPanel && InMouseEvent.GetEffectingButton() == EKeys::RightMouseButton)
+    if (bDraggingPanel && (InMouseEvent.GetEffectingButton() == EKeys::RightMouseButton || InMouseEvent.GetEffectingButton() == EKeys::LeftMouseButton))
     {
         bDraggingPanel = false;
+        SFInterface::SavePanel(this, WalkBackdrop, TEXT("Walking"));
         // Return keyboard focus to the panel so K/Escape work again (the drag's mouse-capture stole it — that's why
         // closing only worked after clicking a button).
         return FReply::Handled().ReleaseMouseCapture().SetUserFocus(TakeWidget(), EFocusCause::SetDirectly);
@@ -167,13 +169,32 @@ void USFWalkPanelWidget::OnClose()     { if (USFSubsystem* S = GetSubsystem()) {
 
 void USFWalkPanelWidget::OnBackToScaling()
 {
+    RequestScalingReturn(0);
+}
+
+void USFWalkPanelWidget::RequestScalingReturn(int32 Task)
+{
+    ScalingReturnTask = Task;
+    bConfirmScalingReturn = true;
+    Refresh();
+}
+
+void USFWalkPanelWidget::OnKeepWalking()
+{
+    bConfirmScalingReturn = false;
+    Refresh();
+}
+
+void USFWalkPanelWidget::OnConfirmScalingReturn()
+{
     // Explicit exit from walk back to grid scaling: end the walk (this also tears down THIS panel), then reopen the
     // Smart Panel. ExitWalkMode must run FIRST — OnToggleSettingsForm re-routes to the walk panel while a walk is
     // active, so clearing the walk first lets it open the Smart Panel instead. Don't touch `this`/members after.
     USFSubsystem* S = GetSubsystem();
     if (!S) { return; }
+    const int32 Target = ScalingReturnTask;
     S->ExitWalkMode();
-    S->OnToggleSettingsForm();
+    S->NavigateInterfaceTask(Target);
 }
 
 void USFWalkPanelWidget::OnApply()
@@ -220,7 +241,9 @@ void USFWalkPanelWidget::CloseWidget()
 {
     // CRITICAL: restore game input + hide the cursor, or closing the panel leaves the player captured in
     // UI-only input with no widget = total loss of control (force-close). Reverse what OpenWalkPanel set.
-    if (APlayerController* PC = GetOwningPlayer())
+    const bool bWasModal = GetVisibility() != ESlateVisibility::Collapsed
+        && GetVisibility() != ESlateVisibility::Hidden;
+    if (APlayerController* PC = GetOwningPlayer(); PC && bWasModal)
     {
         PC->bShowMouseCursor = false;
         PC->SetInputMode(FInputModeGameOnly());
@@ -228,8 +251,12 @@ void USFWalkPanelWidget::CloseWidget()
     RemoveFromParent();
 }
 
-void USFWalkPanelWidget::Refresh()
+void USFWalkPanelWidget::Refresh(bool bRevealLatest)
 {
+    // Removing focused cells and materializing their replacements can dispatch native
+    // spin-box callbacks. Rendering the table must never edit the route or re-enter Refresh.
+    if (bSuppressLiveEdit) { return; }
+    TGuardValue<bool> SuppressEdits(bSuppressLiveEdit, true);
     USFSubsystem* S = GetSubsystem();
     USFWalkService* W = S ? S->GetWalkService() : nullptr;
     if (!W)
@@ -254,6 +281,9 @@ void USFWalkPanelWidget::Refresh()
     {
         return;
     }
+    const float PreviousScrollOffset = TaskScrollBox.IsValid() ? TaskScrollBox->GetScrollOffset() : 0.f;
+    PendingRevealRow.Reset();
+    PendingRevealLayoutPasses = 0;
     SegmentListBox->ClearChildren();
     CellBindings.Reset();   // drop last frame's cell bindings; the rebuilt SpinBoxes register fresh ones
 
@@ -261,8 +291,9 @@ void USFWalkPanelWidget::Refresh()
     // grow until it ate the screen. Constrain it to a SizeBox (fixed dimensions) + dark Border backdrop; keep the
     // header + selectors pinned; and put the (unbounded) segment list in a ScrollBox so it SCROLLS instead of growing.
     USizeBox* Frame = NewObject<USizeBox>(this);
-    Frame->SetWidthOverride(500.0f);
-    Frame->SetHeightOverride(600.0f);
+    Frame->SetWidthOverride(620.0f);
+    const float ViewHeight = UWidgetLayoutLibrary::GetViewportWidgetGeometry(this).GetLocalSize().Y;
+    Frame->SetHeightOverride(FMath::Max(448.f, ViewHeight - 152.f));
     if (UVerticalBoxSlot* FrameSlot = SegmentListBox->AddChildToVerticalBox(Frame))
     {
         // The VBox slot defaults to Fill, which stretches the SizeBox to full width/height and defeats the size
@@ -280,6 +311,7 @@ void USFWalkPanelWidget::Refresh()
 
     // Branded header: SMART! logo + "Smart! Walking" title — matches the Smart Panel's header.
     UHorizontalBox* HeaderRow = NewObject<UHorizontalBox>(this);
+    DragHeader = HeaderRow;
     if (UTexture2D* Logo = LoadObject<UTexture2D>(nullptr, TEXT("/SmartFoundations/SmartFoundations/UI/Smart-Logo.Smart-Logo")))
     {
         UImage* LogoImg = NewObject<UImage>(this);
@@ -292,7 +324,7 @@ void USFWalkPanelWidget::Refresh()
         }
     }
     if (UHorizontalBoxSlot* TitleSlot = HeaderRow->AddChildToHorizontalBox(
-            MakeCell(TEXT("Smart! Walking"), FLinearColor(1.0f, 0.6f, 0.2f, 1.0f), 14)))
+            MakeCell(LOCTEXT("Interface_Title", "Smart!"), FLinearColor(1.0f, 0.6f, 0.2f, 1.0f), 14)))
     {
         TitleSlot->SetVerticalAlignment(VAlign_Center);
         TitleSlot->SetSize(FSlateChildSize(ESlateSizeRule::Fill));   // push the close button to the right edge
@@ -312,13 +344,19 @@ void USFWalkPanelWidget::Refresh()
     }
     Col->AddChildToVerticalBox(HeaderRow);
 
+    if (!WorkflowHelp)
+        WorkflowHelp = SFPanelStyle::MakeHelp(this, TEXT("WalkingHelp"),
+            LOCTEXT("Help_WalkingTitle", "How to use Walking"),
+            LOCTEXT("Help_WalkingSummary", "Edit a route's segments and connections, then return to the world to continue or build it."),
+            LOCTEXT("Help_WalkingBody", "To resume an existing pipe, Hypertube or belt bus: equip its matching stackable support, aim at an open end, then open the Smart Panel and choose Walking without building the support. Smart detects a regular grid of aligned, unoccupied horizontal endpoints and keeps the existing lines. Wall and floor attachments are excluded. Check the Resume summary for the detected lanes and levels.\nAdvance is the segment length; Turn changes its heading; Rise changes its height; Shift offsets it sideways. Exit shows the resulting direction. Tier, routing, style and belt flow are live connection choices; they update the preview immediately and are kept when you close.\nApply updates the route preview without constructing. Apply segment edits immediately updates geometry as you edit; with it off, segment values wait for Apply. Closing this window keeps the walk and staged segment values active. Switching to Upgrade keeps the unbuilt path; returning to Scaling or Restore asks before ending it. Normal native placement rules and material costs apply when you build."));
+
     // Path summary (always visible above the scroll area). Fully localized via FText::Format: the count drives an ICU
     // plural (segment/segments), "head"/"deg" are part of the gathered format, the compass stays untranslated, and the
     // conveyance word is its own LOCTEXT. (Tier now lives in the Tier dropdown, so the old trailing slot is gone.)
     {
         FFormatOrderedArguments SummaryArgs;
         SummaryArgs.Add(Views.Num());                                       // {0} segment count + plural selector
-        SummaryArgs.Add(FText::FromString(SFHeadingToCompass16(HeadDeg)));  // {1} compass (intentionally untranslated)
+        SummaryArgs.Add(FText::FromString(SFHeadingToCompass16(HeadDeg)));  // {1} localized compass
         SummaryArgs.Add(FMath::RoundToInt(HeadDeg));                        // {2} head heading, degrees
         SummaryArgs.Add(bVehiclePath ? LOCTEXT("Walk_Conveyance_VehiclePath", "Vehicle path") : bRail ? LOCTEXT("Walk_Conveyance_Rail", "Railway track") : bHyper ? LOCTEXT("Walk_Conveyance_Hypertube", "Hypertube")
                                : (bPipe ? LOCTEXT("Walk_Conveyance_Pipe", "Pipe")
@@ -326,7 +364,15 @@ void USFWalkPanelWidget::Refresh()
         const FText SummaryText = FText::Format(
             LOCTEXT("Walk_Summary", "{0} {0}|plural(one=segment,other=segments)  ·  head {1} {2} deg  ·  {3}"),
             SummaryArgs);
-        Col->AddChildToVerticalBox(MakeCell(SummaryText, FLinearColor(0.9f, 0.9f, 0.9f, 1.0f), 11));   // white summary — match the Smart Panel
+        Col->AddChildToVerticalBox(SFPanelStyle::MakeHelpLabelRow(this, MakeCell(SummaryText, FLinearColor(0.9f, 0.9f, 0.9f, 1.0f), 11), WorkflowHelp));
+        if (!bRail && !bVehiclePath)
+        {
+            const FIntPoint Counts = W->GetCrossSectionCounts();
+            Col->AddChildToVerticalBox(MakeCell(FText::Format(
+                LOCTEXT("Walk_CrossSectionSummary", "{0} {0}|plural(one=lane,other=lanes) × {1} {1}|plural(one=level,other=levels)"),
+                Counts.X, Counts.Y), SFPanelStyle::DimText, 12));
+        }
+        if (W->IsResuming()) { Col->AddChildToVerticalBox(MakeCell(W->GetResumeSummary(), FLinearColor(0.9f, 0.9f, 0.9f, 1.0f), 11)); }   // white summary — match the Smart Panel
     }
 
     // Pinned setting dropdowns (mirror the Smart Panel) — apply live to the walk's spans via the auto-connect setters.
@@ -441,12 +487,116 @@ void USFWalkPanelWidget::Refresh()
         CheckSlot->SetVerticalAlignment(VAlign_Center);
     }
     if (UHorizontalBoxSlot* LblSlot = Footer->AddChildToHorizontalBox(
-            MakeCell(LOCTEXT("Walk_ApplyImmediately", "apply immediately"), FLinearColor(0.9f, 0.9f, 0.9f, 1.0f), 10)))
+            MakeCell(LOCTEXT("Panel_Check_ApplyImmediately", "Apply segment edits immediately:"), FLinearColor(0.9f, 0.9f, 0.9f, 1.0f), 10)))
     {
         LblSlot->SetVerticalAlignment(VAlign_Center);
     }
 
     Col->AddChildToVerticalBox(Footer);
+    // Present the segment table first, then the connection choices and footer.
+    const auto OriginalChildren = Col->GetAllChildren();
+    TArray<UWidget*> ConnectionRows;
+    for (UComboBoxString* Combo : {RoutingCombo.Get(),TierCombo.Get(),IndicatorCombo.Get(),DirectionCombo.Get()})
+        if (Combo)
+        {
+            UWidget* Row = Combo->GetParent();
+            while (Row && Row->GetParent() != Col) Row = Row->GetParent();
+            if (Row) ConnectionRows.AddUnique(Row);
+        }
+    Col->ClearChildren();
+    Col->AddChildToVerticalBox(SFPanelStyle::MakeRule(this,true))->SetPadding(FMargin(0,0,0,12));
+    auto* TaskScroll = NewObject<UScrollBox>(this);
+    TaskScrollBox = TaskScroll;
+    UWidget* LatestSegmentRow = nullptr;
+    auto* TaskBody = NewObject<UVerticalBox>(this);
+    TaskScroll->AddChild(TaskBody);
+    WorkflowHelp->RemoveFromParent();
+    TaskBody->AddChildToVerticalBox(WorkflowHelp)->SetPadding(FMargin(0,8,0,12));
+    auto Heading = [this,TaskBody](FText Text)
+    {
+        TaskBody->AddChildToVerticalBox(SFPanelStyle::MakeRule(this))->SetPadding(FMargin(0,8));
+        TaskBody->AddChildToVerticalBox(SFPanelStyle::MakeSectionHeading(this, Text))->SetPadding(FMargin(0,12,0,8));
+    };
+    for (UWidget* Child : OriginalChildren)
+    {
+        if (Child == Footer || ConnectionRows.Contains(Child)) continue;
+        // The table header immediately precedes the scroll region.
+        if (OriginalChildren.Find(Child) == OriginalChildren.Find(SegmentScroll)-1)
+        {
+            Col->AddChildToVerticalBox(SFPanelStyle::MakeRule(this))->SetPadding(FMargin(0,8));
+            Col->AddChildToVerticalBox(SFPanelStyle::MakeSectionHeading(this, LOCTEXT("Walk_Section_Segments", "Segments")))->SetPadding(FMargin(0,8));
+        }
+        if (Child == SegmentScroll)
+        {
+            // One scroll region uses the whole remaining panel height. No nested 260px table.
+            const auto Rows = SegmentScroll->GetAllChildren();
+            SegmentScroll->ClearChildren();
+            for (UWidget* Row : Rows)
+            {
+                TaskBody->AddChildToVerticalBox(Row);
+                LatestSegmentRow = Row;
+            }
+        }
+        else if (OriginalChildren.Find(Child) == OriginalChildren.Find(SegmentScroll)-1)
+            Col->AddChildToVerticalBox(Child)->SetPadding(FMargin(0,4));
+        else Col->AddChildToVerticalBox(Child)->SetPadding(FMargin(0,4));
+        if (Child == HeaderRow)
+        {
+            auto* Tasks = NewObject<USFInterfaceTaskStrip>(this); Tasks->Initialize(S, 1);
+            Col->AddChildToVerticalBox(Tasks)->SetPadding(FMargin(0,4,0,8));
+            if (bConfirmScalingReturn)
+            {
+                auto* Warning = NewObject<UTextBlock>(this);
+                Warning->SetFont(SFFont::Get(14)); Warning->SetColorAndOpacity(SFPanelStyle::Accent); Warning->SetAutoWrapText(true);
+                Warning->SetText(LOCTEXT("Walk_EndWarning", "End this walk? The unbuilt path and staged segment edits will be discarded."));
+                Col->AddChildToVerticalBox(Warning)->SetPadding(FMargin(0,8));
+                auto* Actions = NewObject<UHorizontalBox>(this);
+                auto AddAction = [&](const TCHAR* Name, FText Label)
+                {
+                    auto* Button = NewObject<UButton>(Actions, Name); auto* Text = NewObject<UTextBlock>(Button);
+                    Text->SetFont(SFFont::Get(14)); Text->SetText(Label); Button->SetContent(Text);
+                    Actions->AddChildToHorizontalBox(Button)->SetPadding(FMargin(0,0,8,0)); return Button;
+                };
+                AddAction(TEXT("WalkKeepButton"), LOCTEXT("Walk_Keep", "Keep Walking"))->OnClicked.AddDynamic(this, &USFWalkPanelWidget::OnKeepWalking);
+                AddAction(TEXT("WalkEndButton"), LOCTEXT("Walk_End", "End Walk"))->OnClicked.AddDynamic(this, &USFWalkPanelWidget::OnConfirmScalingReturn);
+                Col->AddChildToVerticalBox(Actions)->SetPadding(FMargin(0,0,0,8));
+            }
+        }
+    }
+    if (!ConnectionRows.IsEmpty()) Heading(LOCTEXT("Walk_Section_Connection", "Connection · live"));
+    for (UWidget* Row : ConnectionRows) TaskBody->AddChildToVerticalBox(Row)->SetPadding(FMargin(0,4));
+    Col->AddChildToVerticalBox(TaskScroll)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+    // Reorder the same actions: Scaling on the left, live toggle and Apply on the right.
+    UWidget* ImmediateLabel = Footer->GetChildAt(Footer->GetChildrenCount()-1);
+    Footer->ClearChildren();
+    if (S && S->IsWalkingOnlyContext()) ScalingBtn->SetVisibility(ESlateVisibility::Collapsed);
+    auto* Space = NewObject<USpacer>(this); Footer->AddChildToHorizontalBox(Space)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+    Footer->AddChildToHorizontalBox(ImmCheck)->SetVerticalAlignment(VAlign_Center);
+    Footer->AddChildToHorizontalBox(ImmediateLabel)->SetPadding(FMargin(6,0,10,0)); Footer->AddChildToHorizontalBox(ApplyBtn);
+    Col->AddChildToVerticalBox(SFPanelStyle::MakeRule(this))->SetPadding(FMargin(0,12));
+    Col->AddChildToVerticalBox(Footer);
+    SFPanelStyle::ApplyToTree(WidgetTree);
+    for (UWidget* Child : HeaderRow->GetAllChildren())
+        if (auto* Text = Cast<UTextBlock>(Child)) {Text->SetFont(SFFont::Get(22)); Text->SetColorAndOpacity(SFPanelStyle::Accent);}
+    ApplyBtn->SetStyle(SFPanelStyle::MakeButtonStyle(true));
+    ApplyText->SetColorAndOpacity(SFPanelStyle::NearBlackText);
+    // Reveal the newest entry only when opening. Applying edits preserves the user's scroll position.
+    if (bRevealLatest && LatestSegmentRow)
+    {
+        PendingRevealRow = LatestSegmentRow;
+        PendingRevealLayoutPasses = 2;
+    }
+    else
+        TaskScroll->SetScrollOffset(PreviousScrollOffset);
+}
+
+void USFWalkPanelWidget::UpdatePendingSegmentReveal()
+{
+    // Window fitting and wrapped headings can change the scroll viewport after Refresh.
+    // Wait for their layout passes before positioning the final row, then release the scroll.
+    if (!PendingRevealRow.IsValid() || !TaskScrollBox.IsValid() || --PendingRevealLayoutPasses > 0) return;
+    TaskScrollBox->ScrollWidgetIntoView(PendingRevealRow.Get(), false, EDescendantScrollDestination::BottomOrRight);
+    PendingRevealRow.Reset();
 }
 
 UWidget* USFWalkPanelWidget::MakeCell(const FString& Text, const FLinearColor& Color, int32 FontSize)
@@ -475,13 +625,21 @@ UWidget* USFWalkPanelWidget::MakeSegmentRow(const FSFWalkSegmentView& View, floa
     // Fixed-width columns so every row lines up with the header. Advance/Rise/Shift are edited in METERS (the view
     // stores cm); ApplyCellEdit converts back. Turn is degrees.
     AddFixedCell(Row, MakeCell(FString::Printf(TEXT("%s%d"), View.bActive ? TEXT(">") : TEXT(""), View.Index), Col), 34.0f);
-    AddFixedCell(Row, MakeEditCell(View.Index, 0, View.Advance / 100.0f, 1.0f, MaxAdvanceM, 1.0f), 84.0f);   // Advance 1–MaxAdvanceM: min 1m (no 0-length span), max = belt/pipe 56m or hypertube 95m (#405, #488); longer = add a segment
-    AddFixedCell(Row, MakeEditCell(View.Index, 1, View.TurnDegrees, -270.0f, 270.0f, 5.0f), 66.0f);   // up to ±270° — a wide loop that arcs back into itself
-    AddFixedCell(Row, MakeEditCell(View.Index, 2, View.Rise / 100.0f, -200.0f, 200.0f, 1.0f), 66.0f);
-    AddFixedCell(Row, MakeEditCell(View.Index, 3, View.Shift / 100.0f, -200.0f, 200.0f, 1.0f), 66.0f);
-    AddFixedCell(Row, MakeCell(FString::Printf(TEXT("%s %.0f"), *SFHeadingToCompass16(View.ExitHeadingDeg), View.ExitHeadingDeg), Col), 110.0f);
+    const auto DisplayValue = [this, &View](int32 Field, float LiveValue)
+    {
+        const float* Draft = PendingEdits.Find(FIntPoint(View.Index, Field));
+        return Draft ? *Draft : LiveValue;
+    };
+    AddFixedCell(Row, MakeEditCell(View.Index, 0, DisplayValue(0, View.Advance / 100.0f), 1.0f, MaxAdvanceM, 1.0f), 120.0f);   // Advance 1–MaxAdvanceM: min 1m (no 0-length span), max = belt/pipe 56m or hypertube 95m (#405, #488); longer = add a segment
+    AddFixedCell(Row, MakeEditCell(View.Index, 1, DisplayValue(1, View.TurnDegrees), -270.0f, 270.0f, 5.0f), 92.0f);   // up to ±270° — a wide loop that arcs back into itself
+    AddFixedCell(Row, MakeEditCell(View.Index, 2, DisplayValue(2, View.Rise / 100.0f), -200.0f, 200.0f, 1.0f), 92.0f);
+    AddFixedCell(Row, MakeEditCell(View.Index, 3, DisplayValue(3, View.Shift / 100.0f), -200.0f, 200.0f, 1.0f), 92.0f);
+    AddFixedCell(Row, MakeCell(FString::Printf(TEXT("%s %.0f"), *SFHeadingToCompass16(View.ExitHeadingDeg), View.ExitHeadingDeg), Col), 120.0f);
 
-    return Row;
+    auto* Highlight = NewObject<UBorder>(this);
+    Highlight->SetBrushColor(View.bActive ? FLinearColor(.14f, .10f, .055f, 1.f) : FLinearColor::Transparent);
+    Highlight->SetPadding(FMargin(0,3)); Highlight->SetContent(Row);
+    return Highlight;
 }
 
 void USFWalkPanelWidget::AddFixedCell(UHorizontalBox* Row, UWidget* Content, float Width)
@@ -502,11 +660,14 @@ UWidget* USFWalkPanelWidget::MakeHeaderRow()
     UHorizontalBox* Row = NewObject<UHorizontalBox>(this);
     const FLinearColor H(0.9f, 0.9f, 0.9f, 1.0f);   // white column headers — match the Smart Panel's light setting labels
     AddFixedCell(Row, MakeCell(TEXT("#"), H), 34.0f);   // glyph — kept untranslated
-    AddFixedCell(Row, MakeCell(LOCTEXT("Walk_Col_Advance", "Advance m"), H), 84.0f);
-    AddFixedCell(Row, MakeCell(LOCTEXT("Walk_Col_Turn",    "Turn"),      H), 66.0f);
-    AddFixedCell(Row, MakeCell(LOCTEXT("Walk_Col_Rise",    "Rise m"),    H), 66.0f);
-    AddFixedCell(Row, MakeCell(LOCTEXT("Walk_Col_Shift",   "Shift m"),   H), 66.0f);
-    AddFixedCell(Row, MakeCell(LOCTEXT("Walk_Col_Exit",    "Exit"),      H), 110.0f);
+    AddFixedCell(Row, MakeCell(LOCTEXT("Walk_Col_Advance", "Advance m"), H), 120.0f);
+    AddFixedCell(Row, MakeCell(LOCTEXT("Walk_Col_Turn",    "Turn"),      H), 92.0f);
+    AddFixedCell(Row, MakeCell(LOCTEXT("Walk_Col_Rise",    "Rise m"),    H), 92.0f);
+    AddFixedCell(Row, MakeCell(LOCTEXT("Walk_Col_Shift",   "Shift m"),   H), 92.0f);
+    AddFixedCell(Row, MakeCell(LOCTEXT("Walk_Col_Exit",    "Preview exit"),      H), 120.0f);
+    for (UWidget* Child : Row->GetAllChildren())
+        if (auto* Cell = Cast<USizeBox>(Child))
+            if (auto* Label = Cast<UTextBlock>(Cell->GetContent())) Label->SetWrapTextAt(Cell->GetWidthOverride());
     return Row;
 }
 
@@ -518,10 +679,17 @@ USpinBox* USFWalkPanelWidget::MakeEditCell(int32 SegIndex, int32 FieldId, float 
     Spin->SetMinSliderValue(MinV);
     Spin->SetMaxSliderValue(MaxV);
     Spin->SetDelta(Delta);
+    SFPanelStyle::StyleSpinBox(Spin);
     Spin->SetMinFractionalDigits(0);
     Spin->SetMaxFractionalDigits(1);
-    Spin->SetFont(SFFont::Get(10));   // match the dense table cells
+    Spin->SetFont(SFFont::Get(14));
     Spin->SetForegroundColor(FSlateColor(FLinearColor::Black));   // setter pushes to the live Slate widget (matches Smart Panel)
+    const FText Hints[] = {
+        LOCTEXT("Tip_WalkAdvance", "Length of this route segment, in metres. Native route limits still apply; use another segment for a longer route."),
+        LOCTEXT("Tip_WalkTurn", "Change of heading for this segment, in degrees. The preview shows the resulting native route."),
+        LOCTEXT("Tip_WalkRise", "Height change along this segment, in metres. Native slope and placement restrictions still apply."),
+        LOCTEXT("Tip_WalkShift", "Sideways offset along this segment, in metres. Native routing restrictions still apply.")};
+    if (FieldId >= 0 && FieldId < UE_ARRAY_COUNT(Hints)) Spin->SetToolTipText(Hints[FieldId]);
 
     USFWalkCellBinding* Binding = NewObject<USFWalkCellBinding>(this);
     Binding->Owner = this;
@@ -533,9 +701,11 @@ USpinBox* USFWalkPanelWidget::MakeEditCell(int32 SegIndex, int32 FieldId, float 
 
     // Set the initial value LAST, under the suppress guard: SetValue() fires OnValueChanged, and without the guard each
     // cell's initial set on every Refresh would apply as though the user dragged it (mirrors the Smart Panel guard).
-    bSuppressLiveEdit = true;
+    TGuardValue<bool> SuppressEdits(bSuppressLiveEdit, true);
     Spin->SetValue(DisplayValue);
-    bSuppressLiveEdit = false;
+    // USpinBox::SynchronizeProperties also broadcasts OnValueChanged. Build its
+    // Slate control while guarded, rather than deferring that first sync to attachment.
+    Spin->TakeWidget();
     return Spin;
 }
 
@@ -575,6 +745,7 @@ void USFWalkPanelWidget::ApplyCellEditLive(int32 Index, int32 FieldId, float New
 
 void USFWalkPanelWidget::ApplyCellEdit(int32 Index, int32 FieldId, float NewValue)
 {
+    if (bSuppressLiveEdit) { return; }
     // Commit path (USpinBox OnValueCommitted: focus-loss / Enter). Apply via the shared live path, then do the FULL
     // table rebuild — safe here because focus has left the spinbox — to finalize the derived Exit-heading column.
     ApplyCellEditLive(Index, FieldId, NewValue);
@@ -583,7 +754,7 @@ void USFWalkPanelWidget::ApplyCellEdit(int32 Index, int32 FieldId, float NewValu
 
 void USFWalkCellBinding::OnCommitted(float NewValue, ETextCommit::Type CommitType)
 {
-    if (Owner.IsValid())
+    if (Owner.IsValid() && Owner->CellBindings.Contains(this))
     {
         Owner->ApplyCellEdit(SegmentIndex, FieldId, NewValue);
     }
@@ -591,7 +762,7 @@ void USFWalkCellBinding::OnCommitted(float NewValue, ETextCommit::Type CommitTyp
 
 void USFWalkCellBinding::OnChanged(float NewValue)
 {
-    if (Owner.IsValid())
+    if (Owner.IsValid() && Owner->CellBindings.Contains(this))
     {
         Owner->ApplyCellEditLive(SegmentIndex, FieldId, NewValue);
     }
@@ -605,6 +776,7 @@ UWidget* USFWalkPanelWidget::MakeComboRow(const FText& Label, const TArray<FStri
     if (UHorizontalBoxSlot* LabelSlot = Row->AddChildToHorizontalBox(MakeCell(Label, FLinearColor(0.9f, 0.9f, 0.9f, 1.0f))))
     {
         LabelSlot->SetPadding(FMargin(4.0f, 2.0f));
+        LabelSlot->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
     }
 
     UComboBoxString* Combo = NewObject<UComboBoxString>(this);
@@ -626,13 +798,14 @@ UWidget* USFWalkPanelWidget::MakeComboRow(const FText& Label, const TArray<FStri
     // Closed-box selected text: black on the light combo box — matches the Smart Panel combos (which set
     // ForegroundColor=black + a bold font). Font/ForegroundColor are public UPROPERTYs; assign them before the
     // underlying widget constructs (when the panel is shown) so they take effect.
-    Combo->Font = SFFont::Get(11);
+    Combo->Font = SFFont::Get(14);
     Combo->ForegroundColor = FSlateColor(FLinearColor::Black);
 
     for (const FString& Opt : Options) { Combo->AddOption(Opt); }
     if (Options.IsValidIndex(SelectedIndex)) { Combo->SetSelectedIndex(SelectedIndex); }
 
-    if (UHorizontalBoxSlot* ComboSlot = Row->AddChildToHorizontalBox(Combo))
+    auto* ComboWidth = NewObject<USizeBox>(this); ComboWidth->SetWidthOverride(230); ComboWidth->SetContent(Combo);
+    if (UHorizontalBoxSlot* ComboSlot = Row->AddChildToHorizontalBox(ComboWidth))
     {
         ComboSlot->SetPadding(FMargin(4.0f, 2.0f));
     }
@@ -644,8 +817,8 @@ UWidget* USFWalkPanelWidget::MakeComboItemWidget(FString Item)
 {
     UTextBlock* T = NewObject<UTextBlock>(this);
     T->SetText(FText::FromString(Item));
-    T->SetFont(SFFont::Get(9));   // compact, closer to the Smart Panel combos
-    T->SetColorAndOpacity(FSlateColor(FLinearColor::Black));   // readable on the grey combo
+    T->SetFont(SFFont::Get(14));
+    T->SetColorAndOpacity(FSlateColor::UseForeground()); // Native selected/disabled foreground follows the shared dropdown style.
     return T;
 }
 

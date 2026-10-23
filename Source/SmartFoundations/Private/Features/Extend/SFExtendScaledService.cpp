@@ -1416,18 +1416,20 @@ bool USFExtendScaledService::ValidateScaledExtendConstraints()
             // Distance validation
             if (SegmentLength < MinLength)
             {
-                Owner->ScaledExtendInvalidReason = FString::Printf(
-                    TEXT("%s lane too short (%.1fm < %.1fm minimum)"),
-                    TypeName, SegmentLength / 100.0f, MinLength / 100.0f);
+                Owner->ScaledExtendInvalidReason = FText::Format(
+                    NSLOCTEXT("SmartFoundations", "Extend_LaneTooShort", "{0} lane too short ({1}m < {2}m minimum)"),
+                    bIsPipe ? NSLOCTEXT("SmartFoundations", "Extend_LanePipe", "Pipe") : NSLOCTEXT("SmartFoundations", "Extend_LaneBelt", "Belt"),
+                    FText::FromString(FString::Printf(TEXT("%.1f"), SegmentLength / 100.0f)), FText::FromString(FString::Printf(TEXT("%.1f"), MinLength / 100.0f))).ToString();
                 SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Warning, TEXT("⚡ SCALED EXTEND: INVALID - %s"), *Owner->ScaledExtendInvalidReason);
                 return false;
             }
 
             if (SegmentLength > MaxLength)
             {
-                Owner->ScaledExtendInvalidReason = FString::Printf(
-                    TEXT("%s lane too long (%.1fm > %.0fm maximum)"),
-                    TypeName, SegmentLength / 100.0f, MaxLength / 100.0f);
+                Owner->ScaledExtendInvalidReason = FText::Format(
+                    NSLOCTEXT("SmartFoundations", "Extend_LaneTooLong", "{0} lane too long ({1}m > {2}m maximum)"),
+                    bIsPipe ? NSLOCTEXT("SmartFoundations", "Extend_LanePipe", "Pipe") : NSLOCTEXT("SmartFoundations", "Extend_LaneBelt", "Belt"),
+                    FText::FromString(FString::Printf(TEXT("%.1f"), SegmentLength / 100.0f)), FText::FromString(FString::Printf(TEXT("%.0f"), MaxLength / 100.0f))).ToString();
                 SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Warning, TEXT("⚡ SCALED EXTEND: INVALID - %s"), *Owner->ScaledExtendInvalidReason);
                 return false;
             }
@@ -1446,9 +1448,11 @@ bool USFExtendScaledService::ValidateScaledExtendConstraints()
 
             if (AngleStart > MaxAngle || AngleEnd > MaxAngle)
             {
-                Owner->ScaledExtendInvalidReason = FString::Printf(
-                    TEXT("%s lane angle too steep (%.0f°/%.0f° > %.0f° max)"),
-                    TypeName, AngleStart, AngleEnd, MaxAngle);
+                Owner->ScaledExtendInvalidReason = FText::Format(
+                    NSLOCTEXT("SmartFoundations", "Extend_LaneTooSteep", "{0} lane angle too steep ({1}°/{2}° > {3}° max)"),
+                    bIsPipe ? NSLOCTEXT("SmartFoundations", "Extend_LanePipe", "Pipe") : NSLOCTEXT("SmartFoundations", "Extend_LaneBelt", "Belt"),
+                    FText::FromString(FString::Printf(TEXT("%.0f"), AngleStart)), FText::FromString(FString::Printf(TEXT("%.0f"), AngleEnd)),
+                    FText::FromString(FString::Printf(TEXT("%.0f"), MaxAngle))).ToString();
                 SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Warning, TEXT("⚡ SCALED EXTEND: INVALID - %s"), *Owner->ScaledExtendInvalidReason);
                 return false;
             }

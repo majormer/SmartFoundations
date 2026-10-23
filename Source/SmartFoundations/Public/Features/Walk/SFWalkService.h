@@ -30,6 +30,7 @@ UCLASS()
 class SMARTFOUNDATIONS_API USFWalkService : public UObject
 {
     GENERATED_BODY()
+    friend class FSFWalkPanelRefreshTest;
 
 public:
     void Initialize(USFSubsystem* InSubsystem);
@@ -50,6 +51,13 @@ public:
      * seeds the first active segment, and spawns its placeholder. Returns false if it can't start.
      */
     bool EnterWalk(AFGHologram* SeedHologram);
+    FString GetResumeSummary() const;
+    const FString& GetStartFailure() const { return StartFailure; }
+    bool IsResuming() const { return !ExistingEndpoints.IsEmpty(); }
+    static bool IsExistingCommitPrepared(AFGHologram* Seed);
+    static bool GetPreparedExistingCost(const AFGHologram* Seed, TArray<FItemAmount>& Cost);
+    static void DiscardExistingCommit(AFGHologram* Seed);
+    static void DiscardExistingForInstigator(APawn* Instigator, UClass* BuildClass);
 
     /** End the walk. bCommit just discards the local PREVIEW: the actual build is the staged commit spec the
      *  server reconstructs (BuildCommitSpec -> Server_StageWalkCommit -> ReconstructWalkCommitOnServer), so the
@@ -101,6 +109,8 @@ public:
 
     /** Number of segments currently in the Path. */
     int32 GetSegmentCount() const { return Segments.Num(); }
+    /** Read-only lane/level counts for the current Walking panel summary. */
+    FIntPoint GetCrossSectionCounts() const { return FIntPoint(FMath::Abs(CrossSectionLanes), FMath::Abs(CrossSectionStacks)); }
 
     /** Read-only per-segment snapshot for the Walk widget (authored adjusters + derived exit heading). */
     TArray<FSFWalkSegmentView> GetSegmentViews() const;
@@ -140,6 +150,18 @@ public:
     static FString RunSelfTest();
 
 private:
+    int32 ReconstructExistingCommit(AFGHologram* Seed, const FSFWalkCommitSpec& Spec);
+    bool AreExistingEndpointsValid() const;
+    FString StartFailure;
+    UPROPERTY()
+    TArray<FSFWalkExistingEndpoint> ExistingEndpoints;
+    int32 ExistingLanes = 0;
+    int32 ExistingStacks = 0;
+    int32 ExistingEndpointIndex(int32 Cell) const;
+    bool IsNewOriginCell(int32 Cell) const;
+    float ExistingLaneSpacing = 200.0f;
+    float ExistingStackSpacing = 200.0f;
+
     /** Rails and vehicle paths are spans themselves: no support-anchor actors or support costs. */
     void RebuildNativeSpans(int32 StartIndex);
     int32 ReconstructNativeSpanCommit(AFGHologram* Seed, const FSFWalkCommitSpec& Spec);

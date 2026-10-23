@@ -1,6 +1,6 @@
 // Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
-#include "SmartFoundations.h"
 #include "Features/Scaling/SFRailroadAttachmentHologramState.h"
+#include "SmartFoundations.h"
 #include "Features/Scaling/Holograms/SFRailroadAttachmentPreviewHologram.h"
 #include "Features/Scaling/SFScalingSpec.h"
 #include "Subsystem/SFPositionCalculator.h"
@@ -24,7 +24,6 @@ namespace
     TMap<TWeakObjectPtr<AFGHologram>, bool> RailroadPreparedRoots;
     TMap<TWeakObjectPtr<AFGHologram>, TWeakObjectPtr<AFGHologram>> RailroadPreparedCells;
     TArray<TWeakObjectPtr<AFGHologram>> RailroadRequestCells;
-    TSet<TWeakObjectPtr<AFGHologram>> RailroadReportedFailures;
     bool bRailroadRequestActive = false;
 
     USceneComponent* GetRailroadBinding(AFGHologram* Cell)
@@ -141,17 +140,6 @@ bool SFRailroadAttachmentHologramState::ValidatePreview(ASFRailroadAttachmentPre
     if (!Entry.IsValid()) Entry = SpawnRailroadCell(Root, Preview->GetRequestedPose());
     if (!Entry.IsValid() || !ResolveRailroadCell(Entry.Get(), Root, Preview->GetRequestedPose()))
     {
-        if (Entry.IsValid() && !RailroadReportedFailures.Contains(Root))
-        {
-            RailroadReportedFailures.Add(Root);
-            TArray<TSubclassOf<UFGConstructDisqualifier>> Disqualifiers;
-            Entry->GetConstructDisqualifiers(Disqualifiers);
-            UE_LOG(LogSmartFoundations, Log, TEXT("Rail attachment preview validation rejected: requested=%s resolved=%s poseMatch=%d disabled=%d hidden=%d canConstruct=%d disqualifiers=%d instigator=%d constructionPlayer=%d binding=%d upgraded=%d"),
-                *Preview->GetRequestedPose().GetLocation().ToString(), *Entry->GetActorLocation().ToString(),
-                Entry->GetActorTransform().Equals(Preview->GetRequestedPose(), 0.2), Entry->IsDisabled(), Entry->IsHidden(),
-                Entry->CanConstruct(), Disqualifiers.Num(), IsValid(Entry->GetInstigator()), IsValid(Entry->GetConstructionInstigator()),
-                IsValid(GetRailroadBinding(Entry.Get())), IsValid(Entry->GetUpgradedActor()));
-        }
         return false;
     }
     Preview->ApplyResolvedPose(Entry->GetActorTransform());
@@ -164,7 +152,6 @@ void SFRailroadAttachmentHologramState::ReleasePreview(ASFRailroadAttachmentPrev
         if (Child != Preview && IsValid(Child) && !Child->IsDisabled() && Child->IsA<ASFRailroadAttachmentPreviewHologram>()) return;
     TWeakObjectPtr<AFGHologram> Cell;
     if (RailroadScratchCells.RemoveAndCopyValue(Root, Cell) && Cell.IsValid()) Cell->Destroy();
-    RailroadReportedFailures.Remove(Root);
     for (auto It = RailroadScratchCells.CreateIterator(); It; ++It)
         if (!It.Key().IsValid() || !It.Value().IsValid()) It.RemoveCurrent();
 }

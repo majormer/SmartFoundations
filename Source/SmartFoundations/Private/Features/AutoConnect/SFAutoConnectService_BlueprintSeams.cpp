@@ -23,6 +23,9 @@
 #include "Features/AutoConnect/SFAutoConnectServiceImpl.h"
 #include "Subsystem/SFHologramDataService.h"   // [#497 L4] O(1) raw material-state reads
 #include "Features/AutoConnect/SFBlueprintSeamService.h"
+#include "Features/AutoConnect/SFBlueprintRailSeams.h"
+#include "Features/AutoConnect/SFBlueprintVehicleSeams.h"
+#include "Features/AutoConnect/SFBlueprintLiftSeams.h"
 #include "Features/PipeAutoConnect/PipePreviewHelper.h"
 #include "Features/AutoConnect/Preview/SFHypertubePreviewHelper.h"
 #include "Features/Scaling/SFGridCoordComponent.h"
@@ -87,12 +90,18 @@ void USFAutoConnectService::ProcessBlueprintSeams(AFGHologram* ParentHologram)
 
 	if (Subsystem->IsSmartDisabledForCurrentAction())
 	{
+        FSFBlueprintLiftSeams::ResetPreview(ParentHologram);
+        FSFBlueprintRailSeams::Reset(ParentHologram);
+        FSFBlueprintVehicleSeams::Reset(ParentHologram);
 		CleanupAllBlueprintSeams(ParentHologram);
 		return;
 	}
 	const auto& RuntimeSettings = Subsystem->GetAutoConnectRuntimeSettings();
 	if (!RuntimeSettings.bBlueprintSeamAutoConnectEnabled)
 	{
+        FSFBlueprintLiftSeams::ResetPreview(ParentHologram);
+        FSFBlueprintRailSeams::Reset(ParentHologram);
+        FSFBlueprintVehicleSeams::Reset(ParentHologram);
 		CleanupAllBlueprintSeams(ParentHologram);
 		return;
 	}
@@ -128,12 +137,19 @@ void USFAutoConnectService::ProcessBlueprintSeams(AFGHologram* ParentHologram)
 	}
 	if (GridToClone.Num() < 2)
 	{
+        FSFBlueprintLiftSeams::ResetPreview(ParentHologram);
+        FSFBlueprintRailSeams::Reset(ParentHologram);
+        FSFBlueprintVehicleSeams::Reset(ParentHologram);
 		// Grid shrank to a single copy — every seam preview is orphaned (mirror #391/#397).
 		CleanupAllBlueprintSeams(ParentHologram);
 		return;
 	}
 
 	// ---- Pair table (FR1, cached) ----
+    if (FSFBlueprintLiftSeams::Align(ParentBlueprint, Subsystem, this)) return;
+    FSFBlueprintLiftSeams::UpdatePreview(ParentBlueprint, Subsystem, this);
+    FSFBlueprintRailSeams::Update(ParentBlueprint);
+    FSFBlueprintVehicleSeams::Update(ParentBlueprint);
 	const FSFBlueprintSeamTable* Table = FindOrBuildSeamTable(ParentBlueprint);
 	if (!Table || Table->Pairs.Num() == 0)
 	{
@@ -578,6 +594,9 @@ void USFAutoConnectService::CleanupAllBlueprintSeams(AFGHologram* ParentHologram
 
 void USFAutoConnectService::CleanupAllBlueprintSeamsAllParents()
 {
+    FSFBlueprintLiftSeams::ResetAllPreviews();
+    FSFBlueprintRailSeams::ResetAll();
+    FSFBlueprintVehicleSeams::ResetAll();
 	for (auto& StateEntry : BlueprintSeamStates)
 	{
 		for (auto& Entry : StateEntry.Value.BeltsBySeamKey)

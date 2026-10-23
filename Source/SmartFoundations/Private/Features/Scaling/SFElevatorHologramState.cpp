@@ -1,7 +1,7 @@
 // Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
+#include "Features/Scaling/SFElevatorHologramState.h"
 #include "SmartFoundations.h"
 #include "Buildables/FGBuildable.h"
-#include "Features/Scaling/SFElevatorHologramState.h"
 #include "Features/Scaling/SFScalingFootprint.h"
 #include "Features/Scaling/Holograms/SFElevatorPreviewHologram.h"
 #include "Features/Scaling/Holograms/SFElevatorConstructionHologram.h"

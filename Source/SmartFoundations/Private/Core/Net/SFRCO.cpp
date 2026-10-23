@@ -2,6 +2,9 @@
 
 #include "Core/Net/SFRCO.h"
 #include "SmartFoundations.h"
+#include "Features/AutoConnect/SFBlueprintRailSeams.h"
+#include "Features/AutoConnect/SFBlueprintVehicleSeams.h"
+#include "Features/AutoConnect/SFBlueprintLiftSeams.h"
 #include "Hologram/FGHologram.h"
 #include "Subsystem/SFSubsystem.h"
 #include "Features/Extend/SFExtendService.h"   // [EXTEND-MP] topology walk RPCs
@@ -280,7 +283,11 @@ bool USFRCO::Server_StageScalingSpec_Validate(FSFScalingSpec Spec)
 	// Sanity-bound the conduit plan (#334): at most a few conduits per grid cell in practice; allow
 	// generous headroom. Spline previews route with a handful of points; 64 is far beyond any real
 	// auto-connect belt.
-	if (Spec.ConduitPlan.Num() > 4096)
+    if (Spec.ConduitPlan.Num() > 4096 || !SFLiftRoutePlan::IsBounded(Spec.LiftRoutes)
+        || !FSFBlueprintRailSeams::IsBounded(Spec.BlueprintRailSeams) || Spec.BlueprintRailCost.Num() > 4096
+        || !FSFBlueprintVehicleSeams::IsBounded(Spec.BlueprintVehicleSeams)
+        || !FSFBlueprintLiftSeams::IsBounded(Spec.BlueprintLiftSeams)
+        || (!Spec.bBlueprintLiftSeamsRequired && !Spec.BlueprintLiftSeams.IsEmpty()))
 	{
 		return false;
 	}
@@ -291,6 +298,7 @@ bool USFRCO::Server_StageScalingSpec_Validate(FSFScalingSpec Spec)
 			return false;
 		}
 	}
+    for (const auto& Item : Spec.BlueprintRailCost) if (!Item.ItemClass || Item.Amount < 0) return false;
 	return true;
 }
 
@@ -420,14 +428,19 @@ bool USFRCO::Server_StageWalkCommit_Validate(FSFWalkCommitSpec Spec)
 	if (static_cast<uint8>(Spec.ConveyanceType) > static_cast<uint8>(ESFWalkConveyanceType::VehiclePath)) { return false; }
 	// Sanity-bound the commit so a forged/buggy commit cannot demand absurd server-side spawning.
 	// The world frames are re-derived SERVER-side from these deltas, never shipped.
-	if (Spec.Segments.Num() > 4096 || Spec.OriginFrame.GetLocation().Size() > 1.0e7)
+	if (Spec.Segments.Num() > 4096 || Spec.ExistingEndpoints.Num() > 4096
+        || Spec.ExistingLanes < 0 || Spec.ExistingLanes > 256 || Spec.ExistingStacks < 0 || Spec.ExistingStacks > 256
+        || (!Spec.ExistingEndpoints.IsEmpty() && static_cast<int64>(Spec.ExistingLanes) * Spec.ExistingStacks != Spec.ExistingEndpoints.Num())
+        || Spec.OriginFrame.ContainsNaN()
+        || !FMath::IsFinite(Spec.LaneSpacing) || !FMath::IsFinite(Spec.StackSpacing)
+        || Spec.LaneSpacing <= 0.f || Spec.StackSpacing <= 0.f || Spec.OriginFrame.GetLocation().Size() > 1.0e7)
 	{
 		return false;
 	}
 	for (const FSFWalkCommitSegment& Seg : Spec.Segments)
 	{
 		// |lanes|/|stacks| are the SIGNED bus counters; a sane bus is well under a few hundred wide.
-		if (FMath::Abs(Seg.NumLanes) > 256 || FMath::Abs(Seg.NumStacks) > 256)
+		if (Seg.NumLanes < -256 || Seg.NumLanes > 256 || Seg.NumStacks < -256 || Seg.NumStacks > 256)
 		{
 			return false;
 		}

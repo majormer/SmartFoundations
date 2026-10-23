@@ -16,6 +16,7 @@ public:
     static FTransform StartFrame(AFGHologram* Hologram);
     static FTransform CrossSectionPose(const FTransform& Frame, int32 Lane, int32 Stack);
     static bool Route(AFGHologram* Hologram, const FTransform& From, const FTransform& To, AFGHologram* Seed);
+    static bool RefreshPreview(AFGHologram* Hologram, const FTransform& From, const FTransform& To);
     static FString Validate(AFGHologram* Hologram);
     static float MaximumAdvance(AFGHologram* Hologram);
     static void StageConstruction(AFGHologram* Hologram, AFGHologram* Previous);

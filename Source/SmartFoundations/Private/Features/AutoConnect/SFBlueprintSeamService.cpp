@@ -13,6 +13,8 @@
 #include "FGPipeConnectionComponent.h"
 #include "FGPipeConnectionComponentHyper.h"
 #include "Buildables/FGBuildableConveyorBase.h"
+#include "Buildables/FGBuildableConveyorLift.h"
+#include "UObject/Package.h"
 #include "SFLogMacros.h"
 
 /** Working record for one open original connector during the pair search. */
@@ -30,6 +32,7 @@ struct FSFBlueprintSeamService::FSeamConnector
 
 namespace
 {
+    const FName LiftTailComponentTag(TEXT("SF_BlueprintLiftTail"));
 	/** Quantize to 1cm buckets — deterministic tie-breaking (the #464 lesson: never tolerance-compare in sorts). */
 	FORCEINLINE int64 QuantizeCm(double V)
 	{
@@ -93,9 +96,158 @@ void FSFBlueprintSeamService::GetDuplicatedBeltConnectors(AFGBlueprintHologram* 
 	{
 		if (Component && Blueprint->mDuplicateConnectionToOriginalMap.Contains(Component))
 		{
-			OutConnectors.Add(Component);
+			if (!Component->ComponentHasTag(LiftTailComponentTag)) OutConnectors.Add(Component);
 		}
 	}
+    TArray<UFGFactoryConnectionComponent*> LiftConnectors;
+    for (auto* Component : Components)
+        if (Component && Component->ComponentHasTag(LiftTailComponentTag)
+            && Blueprint->mDuplicateConnectionToOriginalMap.Contains(Component)) LiftConnectors.Add(Component);
+    auto SourceKey = [&](const UFGFactoryConnectionComponent* Duplicate)
+    {
+        const auto* Original = Cast<UFGFactoryConnectionComponent>(Blueprint->mDuplicateConnectionToOriginalMap.FindRef(const_cast<UFGFactoryConnectionComponent*>(Duplicate)));
+        const auto* Owner = Original ? Original->GetOwner() : nullptr;
+        return Owner ? Owner->GetClass()->GetPathName() + TEXT("|") + Owner->GetActorTransform().ToString() + TEXT("|") + Original->GetName() + TEXT("|")
+            + Original->GetComponentTransform().GetRelativeTransform(Owner->GetActorTransform()).ToString()
+            + FString::FromInt(static_cast<int32>(Original->GetDirection())) : FString();
+    };
+    LiftConnectors.Sort([&](const auto& A, const auto& B) { return SourceKey(&A) < SourceKey(&B); });
+    OutConnectors.Append(LiftConnectors);
+}
+
+UFGFactoryConnectionComponent* FSFBlueprintSeamService::GetOriginalBeltConnector(AFGBlueprintHologram* Blueprint, int32 Index)
+{
+    TArray<UFGFactoryConnectionComponent*> Duplicates;
+    GetDuplicatedBeltConnectors(Blueprint, Duplicates);
+    return Blueprint && Duplicates.IsValidIndex(Index)
+        ? Cast<UFGFactoryConnectionComponent>(Blueprint->mDuplicateConnectionToOriginalMap.FindRef(Duplicates[Index])) : nullptr;
+}
+
+int32 FSFBlueprintSeamService::ReleaseLiftTailConnectors(AFGBlueprintHologram* Blueprint)
+{
+    if (!IsValid(Blueprint)) return 0;
+    int32 Removed = 0;
+    TInlineComponentArray<UFGFactoryConnectionComponent*> Components(Blueprint);
+    for (auto* Component : Components)
+        if (Component && Component->ComponentHasTag(LiftTailComponentTag))
+        {
+            Blueprint->mDuplicateConnectionToOriginalMap.Remove(Component);
+            Component->DestroyComponent();
+            ++Removed;
+        }
+    return Removed;
+}
+
+void FSFBlueprintSeamService::EnsureLiftTailConnectors(AFGBlueprintHologram* Blueprint)
+{
+    if (!IsValid(Blueprint)) return;
+    TArray<UFGFactoryConnectionComponent*> Open;
+    for (const auto& Member : Blueprint->mBuildableToNewRoot)
+    {
+        auto* Lift = Cast<AFGBuildableConveyorLift>(Member.Key.Get());
+        if (!IsValid(Lift) || !IsValid(Member.Value.Get())) continue;
+        const FString Package = Lift->GetClass()->GetPackage()->GetName();
+        if (!Package.StartsWith(TEXT("/Game/FactoryGame/")) && Package != TEXT("/Script/FactoryGame")) continue;
+        for (auto* Port : {Lift->GetConnection0(), Lift->GetConnection1()})
+            if (IsValid(Port) && !Port->IsConnected() && Port->GetDirection() != EFactoryConnectionDirection::FCD_SNAP_ONLY)
+                Open.Add(Port);
+    }
+    // Native component ownership follows the Blueprint's visual scene roots.
+    // Retire only our own stale components; leave all native/other seam data intact.
+    for (auto It = Blueprint->mDuplicateConnectionToOriginalMap.CreateIterator(); It; ++It)
+    {
+        auto* Duplicate = Cast<UFGFactoryConnectionComponent>(It.Key().Get());
+        auto* Original = Cast<UFGFactoryConnectionComponent>(It.Value().Get());
+        if (Duplicate && Duplicate->ComponentHasTag(LiftTailComponentTag) && !Open.Contains(Original))
+        {
+            It.RemoveCurrent(); Duplicate->DestroyComponent();
+        }
+    }
+    auto SourceKey = [](const UFGFactoryConnectionComponent* Port)
+    {
+        const auto* Owner = Port->GetOwner();
+        return Owner->GetClass()->GetPathName() + TEXT("|") + Owner->GetActorTransform().ToString() + TEXT("|") + Port->GetName() + TEXT("|")
+            + Port->GetComponentTransform().GetRelativeTransform(Owner->GetActorTransform()).ToString()
+            + FString::FromInt(static_cast<int32>(Port->GetDirection()));
+    };
+    Open.Sort([&](const auto& A, const auto& B) { return SourceKey(&A) < SourceKey(&B); });
+    for (auto* Port : Open)
+    {
+        bool Exists = false;
+        for (const auto& Mapping : Blueprint->mDuplicateConnectionToOriginalMap)
+            if (Mapping.Value == Port) { Exists = true; break; }
+        if (Exists) continue;
+        if (auto* Duplicate = Blueprint->DuplicateConnectionComponent(CastChecked<AFGBuildable>(Port->GetOwner()), Port))
+            Duplicate->ComponentTags.AddUnique(LiftTailComponentTag);
+    }
+}
+
+FString FSFBlueprintSeamService::DescribeLiftSources(AFGBlueprintHologram* Blueprint)
+{
+    if (!Blueprint) return TEXT("no Blueprint");
+    FString Result;
+    int32 Lifts = 0, Ports = 0, Open = 0;
+    for (const auto& Member : Blueprint->mBuildableToNewRoot)
+        if (auto* Lift = Cast<AFGBuildableConveyorLift>(Member.Key.Get()))
+        {
+            ++Lifts;
+            for (auto* Port : {Lift->GetConnection0(), Lift->GetConnection1()}) if (Port)
+            {
+                ++Ports; Open += !Port->IsConnected();
+                auto* Peer = Port->GetConnection();
+                Result += FString::Printf(TEXT(" %s:%s open=%d direction=%d peer=%s internal=%d"),
+                    *Lift->GetName(), *Port->GetName(), !Port->IsConnected(), static_cast<int32>(Port->GetDirection()),
+                    *GetNameSafe(Peer), Peer && Blueprint->mBuildableToNewRoot.Contains(Cast<AFGBuildable>(Peer->GetOwner())));
+            }
+        }
+    return FString::Printf(TEXT("native lifts=%d ports=%d open=%d"), Lifts, Ports, Open) + Result;
+}
+
+void FSFBlueprintSeamService::GetOpenLiftTails(AFGBlueprintHologram* Blueprint,
+    TArray<FSFBlueprintLiftAlignment::FTail>& OutTails)
+{
+    OutTails.Reset();
+    if (!IsValid(Blueprint)) return;
+    TArray<UFGFactoryConnectionComponent*> Duplicates;
+    GetDuplicatedBeltConnectors(Blueprint, Duplicates);
+    const FTransform Frame = Blueprint->GetActorTransform();
+    TSet<FString> ExactSources;
+    for (int32 I = 0; I < Duplicates.Num(); ++I)
+    {
+        auto* Original = Cast<UFGFactoryConnectionComponent>(Blueprint->mDuplicateConnectionToOriginalMap.FindRef(Duplicates[I]));
+        auto* Lift = Original ? Cast<AFGBuildableConveyorLift>(Original->GetOwner()) : nullptr;
+        if (!IsValid(Lift) || Original->IsConnected()) continue;
+        const FString Package = Lift->GetClass()->GetPackage()->GetName();
+        if (!Package.StartsWith(TEXT("/Game/FactoryGame/")) && Package != TEXT("/Script/FactoryGame")) continue;
+        const FString ExactSource = Lift->GetClass()->GetPathName() + Lift->GetActorTransform().ToString()
+            + Original->GetName() + Original->GetComponentTransform().GetRelativeTransform(Lift->GetActorTransform()).ToString()
+            + FString::FromInt(static_cast<int32>(Original->GetDirection()));
+        if (ExactSources.Contains(ExactSource))
+        {
+            // Identical authored identities are ambiguous, never an insertion-order choice.
+            FSFBlueprintLiftAlignment::FTail Invalid;
+            Invalid.bLift = true; Invalid.bOpen = true;
+            OutTails.Add(Invalid);
+            return;
+        }
+        ExactSources.Add(ExactSource);
+        FSFBlueprintLiftAlignment::FTail Tail;
+        Tail.Index = I; Tail.bLift = true; Tail.bOpen = true;
+        Tail.Position = Frame.InverseTransformPosition(Duplicates[I]->GetComponentLocation());
+        Tail.Normal = Frame.InverseTransformVectorNoScale(Duplicates[I]->GetConnectorNormal());
+        switch (Original->GetDirection())
+        {
+        case EFactoryConnectionDirection::FCD_INPUT: Tail.bInput = true; break;
+        case EFactoryConnectionDirection::FCD_OUTPUT: Tail.bOutput = true; break;
+        case EFactoryConnectionDirection::FCD_ANY:
+            // Entry/exit identity stays logical even when a native lift's physical ends reverse.
+            Tail.bInput = Original == Lift->GetConnection0();
+            Tail.bOutput = Original == Lift->GetConnection1();
+            break;
+        default: continue;
+        }
+        if (Tail.bInput != Tail.bOutput) OutTails.Add(Tail);
+    }
 }
 
 void FSFBlueprintSeamService::GetDuplicatedPipeConnectors(AFGBlueprintHologram* Blueprint, TArray<UFGPipeConnectionComponent*>& OutConnectors)
@@ -220,9 +372,9 @@ bool FSFBlueprintSeamService::BuildSeamTable(AFGBlueprintHologram* Blueprint, FS
 		{
 			UFGFactoryConnectionComponent* Original = Cast<UFGFactoryConnectionComponent>(
 				Blueprint->mDuplicateConnectionToOriginalMap.FindRef(Dups[Index]));
-			if (!Original || Original->IsConnected())
+			if (!Original || Original->IsConnected() || Dups[Index]->ComponentHasTag(LiftTailComponentTag))
 			{
-				continue; // FR2: only OPEN content connectors participate
+				continue; // Open ordinary belt tails only; explicit lift-tail Z pairing is separate.
 			}
 
 			FSeamConnector Connector;

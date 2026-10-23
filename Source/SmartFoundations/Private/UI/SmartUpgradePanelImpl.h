@@ -57,6 +57,6 @@ inline bool IsConveyorUpgradeFamily(ESFUpgradeFamily Family)
 inline FString GetPanelFamilyDisplayName(ESFUpgradeFamily Family)
 {
 	return IsConveyorUpgradeFamily(Family)
-		? FString(TEXT("Conveyors"))
+		? NSLOCTEXT("SmartFoundations", "Family_Conveyors", "Conveyors").ToString()
 		: USFUpgradeAuditService::GetFamilyDisplayName(Family);
 }

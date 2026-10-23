@@ -147,6 +147,34 @@ Native routed spline points are stored in graph direction, including reversed se
 comparisons must use graph start/end consistently; applying placement reversal a second time selects
 the wrong endpoint. The implementation is in `SFWalkVehiclePathAdapter.cpp`.
 
+Before selecting the first point, the native placement arrow's graph direction lives in
+`mStartPointExitDirection`, independently of the hologram actor rotation. Walking must preserve
+that direction when entering from `StartPoint`; actor forward is only a fallback when the native
+direction is unset. In `EndPoint`, the selected spline endpoint and tangent remain authoritative.
+Apply the reversal flag once when converting graph direction to Walking's negative-X frame.
+`SmartFoundations.Walking.VehiclePathFirstPointFrame` checks first-point headings independently of
+actor yaw, and `VehiclePathReversedFrame` checks both endpoint orders. The equivalent Railway
+handoff uses its native local spline tangent transformed to world space (`RailStartFrame`).
+
+### Blueprint Auto-Connect Replacement Ownership
+
+Native direct Blueprint Auto-Connect can replace a target segment through
+`AFGVehiclePathSegment::MoveConnectionToNodes`, without returning that replacement among newly
+constructed connecting spans. An old actor reference therefore cannot establish the final segment's
+ownership or even its continued existence.
+
+Capture the exact copied segment's native Blueprint proxy before migration and transfer it to the
+native replacement before its first replication. `AFGBuildable::GetLifetimeReplicatedProps` registers
+`mBlueprintProxy` with `COND_InitialOnly`; calling `ForceNetUpdate` after initial replication does not
+update a client's missing assignment. The scoped migration hook in `SFBlueprintVehicleSeams.cpp`
+preserves this assignment only for exact segments captured by the current Smart operation.
+
+After migration, verify the surviving directed endpoint identities and the actual replacement's
+group. Each live member must occur once in its assigned proxy, with stale observer registrations
+removed only when its final native ownership is confirmed. Preserve native routing, validation and
+construction costs throughout. These rules apply independently to live multiplayer agreement and
+save/load reconstruction; a clean reload does not prove the preceding live assignment was correct.
+
 ## Hologram Routing Modes
 
 Vehicle profile and routing mode are independent dimensions. A captured Explorer hologram retained

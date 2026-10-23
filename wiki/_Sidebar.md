@@ -8,12 +8,18 @@
 - [Smart Panel and HUD](Smart-Panel-and-HUD)
 - [FAQ](FAQ)
 
+- [Feature Gallery](Feature-Gallery)
+- [Buildable Gallery](Buildable-Gallery)
+
 ## Features
 
 - [Smart Assistance](Smart-Assistance)
 - [Grid Scaling](Grid-Scaling)
 - [Transforms](Transforms)
 - [Auto-Connect](Auto-Connect)
+- [Lift-assisted Auto-Connect](Lift-Assisted-Auto-Connect)
+- [Conveyor Lift Grids](Conveyor-Lift-Grids)
+- [Water Extractors](Water-Extractors)
 - [Blueprints](Blueprints)
 - [Extend](Extend)
 - [Smart Walking](Smart-Walking)
@@ -21,6 +27,7 @@
 - [Smart Upgrade](Smart-Upgrade)
 - [Smart Dismantle](Smart-Dismantle)
 - [Smart Camera](Smart-Camera)
+- [Camera Integration for Mod Authors](Smart-Camera-Integration)
 
 ## Reference
 
@@ -33,3 +40,7 @@
 - [Support Development](Support-Development)
 - [Troubleshooting](Troubleshooting)
 - [Screenshot Checklist](Screenshot-Checklist)
+
+---
+
+_Last updated: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (release draft)_

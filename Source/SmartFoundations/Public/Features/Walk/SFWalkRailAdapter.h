@@ -14,6 +14,7 @@ public:
     static FTransform StartFrame(AFGRailroadTrackHologram* Track);
     static FTransform CrossSectionPose(const FTransform& Frame, int32 Lane, int32 Stack);
     static bool Route(AFGRailroadTrackHologram* Track, const FTransform& From, const FTransform& To, AFGRailroadTrackHologram* Seed);
+    static bool RefreshPreview(AFGRailroadTrackHologram* Track, const FTransform& From, const FTransform& To);
     static FString Validate(AFGRailroadTrackHologram* Track);
     static float MaximumAdvance(AFGRailroadTrackHologram* Track);
     static void StageConstruction(AFGRailroadTrackHologram* Track, AFGRailroadTrackHologram* Previous);

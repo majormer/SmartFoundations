@@ -1,6 +1,6 @@
 // Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
-#include "SmartFoundations.h"
 #include "Features/Scaling/SFHypertubeEntranceState.h"
+#include "SmartFoundations.h"
 #include "Core/SFNativeHit.h"
 #include "Features/Scaling/SFScalingSpec.h"
 #include "Holograms/Core/SFBuildableChildHologram.h"

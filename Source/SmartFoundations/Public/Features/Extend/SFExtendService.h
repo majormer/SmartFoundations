@@ -363,6 +363,11 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Smart|Extend")
     bool TryExtendFromBuilding(AFGBuildable* HitBuilding, AFGHologram* SourceHologram);
 
+    /** Explicit local source selection shares native hover eligibility and commit handling. */
+    bool CanSelectPanelSource(AFGBuildable* Source, AFGHologram* Hologram) const;
+    bool CanOfferPanel(AFGHologram* Hologram) const;
+    bool SelectPanelSource(AFGBuildable* Source, AFGHologram* Hologram);
+
     /** Refresh extension previews (called during hologram update) */
     UFUNCTION(BlueprintCallable, Category = "Smart|Extend")
     void RefreshExtension(AFGHologram* SourceHologram, bool bForceRefresh = false);

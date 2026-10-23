@@ -32,7 +32,6 @@ void USFBuildableSizeRegistry::Initialize()
 		return;
 	}
 	
-	SF_LOG_ADAPTER(Normal, TEXT("Initializing Buildable Size Registry..."));
 	
 	// Clear any existing profiles
 	KnownProfiles.Empty();
@@ -116,7 +115,6 @@ FSFBuildableSizeProfile USFBuildableSizeRegistry::GetProfile(const UClass* Build
 	
 	if (!BuildableClass)
 	{
-		SF_LOG_ADAPTER(Normal, TEXT("GetProfile called with null BuildableClass - returning fallback"));
 		return FallbackProfile;
 	}
 	
@@ -133,15 +131,6 @@ FSFBuildableSizeProfile USFBuildableSizeRegistry::GetProfileByName(const FString
 	
 	if (FSFBuildableSizeProfile* Found = KnownProfiles.Find(ClassName))
 	{
-		// Log which source file this profile came from
-		SF_LOG_ADAPTER(Normal,
-			TEXT("PROFILE SOURCE: %s | Size: %.0fx%.0fx%.0f cm | From: %s"),
-			*ClassName,
-			Found->DefaultSize.X,
-			Found->DefaultSize.Y,
-			Found->DefaultSize.Z,
-			*Found->SourceFile
-		);
 		return *Found;
 	}
 
@@ -151,15 +140,6 @@ FSFBuildableSizeProfile USFBuildableSizeRegistry::GetProfileByName(const FString
 	{
 		if (FSFBuildableSizeProfile* BaseProfile = KnownProfiles.Find(BaseName))
 		{
-			SF_LOG_ADAPTER(Normal,
-				TEXT("🔗 VARIANT INHERITANCE: %s inherits from %s | Size: %.0fx%.0fx%.0f cm | From: %s"),
-				*ClassName,
-				*BaseName,
-				BaseProfile->DefaultSize.X,
-				BaseProfile->DefaultSize.Y,
-				BaseProfile->DefaultSize.Z,
-				*BaseProfile->SourceFile
-			);
 			return *BaseProfile;
 		}
 	}
@@ -185,7 +165,6 @@ FVector USFBuildableSizeRegistry::GetSizeForHologram(const AFGBuildableHologram*
 {
 	if (!Hologram)
 	{
-		SF_LOG_ADAPTER(Normal, TEXT("GetSizeForHologram called with null Hologram - returning fallback"));
 		return FallbackProfile.DefaultSize;
 	}
 	
