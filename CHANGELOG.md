@@ -7,19 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > **Audience note:** This changelog is read by players, not developers. Entries should describe what players experience — what was broken, what it felt like, and what's better now. Class names, internal APIs, and implementation details belong in code comments or design docs, not here. Unless an entry says otherwise, changes apply to both single-player and multiplayer.
 
-## [35.0.0] - Unreleased
+## [35.0.0] - 2026-10-22
 
-**Work in progress:** Broader building support, more flexible placement previews, upgrades that retain dismantle groups, and integration with Smart Camera 2.0.0. These changes are planned for Smart! 35.0.0 and are not released yet. Normal material costs and vanilla construction rules still apply.
+Broader building support, more flexible placement previews, upgrades that retain dismantle groups, and integration with Smart Camera 2.0.0. Normal material costs and vanilla construction rules still apply.
 
 ### Updating Smart! and Smart Camera together
 
-If you play with both mods, update Smart! and Smart Camera to their compatible releases together. Smart Camera 2.0.0 changes how the two mods work together and must not be paired with the older Smart! package currently on SMR. The coordinated releases are being held until the Smart! update is ready.
+If you play with both mods, update them together: use Smart! 35.0.0 or higher with Smart Camera 2.0.0 or higher. Smart Camera 2.0.0 changes how the two mods work together and is not compatible with older Smart! versions.
 
 Your extra building view still follows Smart's preview, including scaled layouts. Conveyor lifts also retain their automatic endpoint view as you choose the height and connection direction. Smart and Camera coordinate their ordinary building views so you should see one useful picture rather than two overlapping pictures of the same preview.
 
 Camera 2.0.0 lets you arrange those pictures while looking at your factory. Press **F8** for Edit Mode, drag a picture's top bar to move it, or drag a corner handle to resize it. Each camera remembers its layout, with settings for **All saves** or **This save**. Moving or resizing a picture keeps its automatic lift framing intact. Press `[` to cycle angles, or hold `]` while scrolling to change camera distance; these shortcuts and Edit Mode can be rebound.
 
-Open **Mods → Smart! Camera** to find **Smart / Build Preview** automatically, alongside Camera's own build-gun view and views supplied by other mods. Their names remain listed while inactive, so you can configure them without first finding a building to look at. Pictures hide behind the pause and interaction menus. Smart Camera can also be used without Smart!, while Smart!'s building tools remain available without Camera. The coordinated release will include the full Camera changes and integration documentation in the [Smart Camera repository](https://github.com/majormer/SmartCamera).
+Open **Mods → Smart! Camera** to find **Smart / Build Preview** automatically, alongside Camera's own build-gun view and views supplied by other mods. Their names remain listed while inactive, so you can configure them without first finding a building to look at. Pictures hide behind the pause and interaction menus. Smart Camera can also be used without Smart!, while Smart!'s building tools remain available without Camera. See the full Camera changes and integration documentation in the [Smart Camera repository](https://github.com/majormer/SmartCamera).
 
 ### Added
 
@@ -122,7 +122,7 @@ Open **Mods → Smart! Camera** to find **Smart / Build Preview** automatically,
 
 ### Compatibility
 
-- **Smart! 35.0.0 and Smart Camera 2.0.0** are planned as compatible releases. If you use both mods, update them together.
+- **Smart! 35.0.0 and Smart Camera 2.0.0** are compatible releases. If you use both mods, update them together.
 - The minimum supported game build remains **Satisfactory CL 502094**.
 - Smart constructs ordinary vanilla buildings with normal material costs, so saves remain usable without Smart installed.
 

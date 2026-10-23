@@ -3,6 +3,7 @@
 #include "SmartFoundations.h"
 #include "Equipment/FGBuildGunBuild.h"
 #include "Hologram/FGStandaloneSignHologram.h"
+#include "Hologram/FGSignPoleHologram.h"
 #include "Hologram/FGPoleHologram.h"
 #include "FGPlayerController.h"
 #include "GameFramework/Pawn.h"
