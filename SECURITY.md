@@ -4,14 +4,18 @@
 
 Only the latest release of Smart! published on [ficsit.app](https://ficsit.app/mod/SmartFoundations) receives security and stability fixes. Older versions are not patched.
 
-## Reporting a Vulnerability or Crash
+## Reporting Crashes and Stability Bugs
 
-**Do not report save-corrupting bugs or crashes in a public GitHub Issue.** Use a private channel so other players are not exposed before a fix is available.
+Report ordinary crashes and stability bugs, including save corruption or data loss, through [public GitHub issues](https://github.com/majormer/SmartFoundations/issues). A crash or save-related bug does not by itself require private reporting.
 
-### How to Report
+Remove sensitive information from public reports, logs, save files, and other attachments. If the information is needed to investigate the issue and cannot be safely shared publicly, use a private channel below to provide it.
 
-1. **Discord (preferred):** Send a direct message to Finalomega in the [Smart! Discord](https://discord.gg/SgXY4CwXYw). Include "security" or "crash report" in your message so it is prioritized.
-2. **GitHub:** Use [GitHub's private vulnerability reporting](https://github.com/majormer/SmartFoundations/security/advisories/new) if you prefer a tracked channel.
+## Reporting Security Vulnerabilities or Sensitive Information
+
+**Report security vulnerabilities privately.** Private reporting is also available for sensitive information needed to investigate a bug.
+
+1. **Discord:** Send a direct message to Finalomega in the [Smart! Discord](https://discord.gg/SgXY4CwXYw). Include "security" or "sensitive bug information" as appropriate.
+2. **GitHub (security vulnerabilities):** Use [GitHub's private vulnerability reporting](https://github.com/majormer/SmartFoundations/security/advisories/new) if you prefer a tracked channel.
 
 ### What to Include
 
@@ -20,6 +24,8 @@ Only the latest release of Smart! published on [ficsit.app](https://ficsit.app/m
 - Steps to reproduce, if known
 - Whether the issue affects save files (save corruption, data loss, etc.)
 - Log file from `FactoryGame/Saved/Logs/FactoryGame.log`
+
+For security vulnerabilities, also describe the security impact. Check all attachments for sensitive information before sharing them publicly.
 
 ## Response
 

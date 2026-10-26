@@ -121,7 +121,7 @@ The Smart! name, logo, and mod identity are not licensed for reuse in other proj
 
 ## Security
 
-For crashes that affect save files or other stability issues, please follow the private reporting process in [SECURITY.md](SECURITY.md) rather than opening a public issue.
+Report ordinary crashes and stability bugs, including save corruption or data loss, through [public GitHub issues](https://github.com/majormer/SmartFoundations/issues). Reserve [private reporting](SECURITY.md) for security vulnerabilities or sensitive information; remove sensitive information from any public report or attachment.
 
 ---
 
