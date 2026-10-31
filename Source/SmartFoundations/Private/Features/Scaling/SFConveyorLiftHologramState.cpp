@@ -13,6 +13,10 @@
 #include "Buildables/FGBuildableBlueprintDesigner.h"
 #include "EngineUtils.h"
 #include "Buildables/FGBuildablePassthrough.h"
+#include "Buildables/FGBuildableConveyorLift.h"
+#include "FGBuildableSubsystem.h"
+#include "Core/Construction/SFNativeConstructionContext.h"
+#include "UObject/ObjectKey.h"
 #include "FGFactoryConnectionComponent.h"
 #include "Equipment/FGBuildGunBuild.h"
 #include "FGCharacterPlayer.h"
@@ -27,6 +31,18 @@
 class FSFConveyorLiftNativePlacement
 {
 public:
+    static void RetireCell(AFGHologram* Cell, AFGHologram* Root)
+    {
+        if (!IsValid(Cell)) return;
+        if (IsValid(Root))
+        {
+            Root->mChildren.Remove(Cell);
+            for (auto It = Root->mChildrenNameLookupMap.CreateIterator(); It; ++It)
+                if (It.Value() == Cell) It.RemoveCurrent();
+        }
+        SetInternalLock(Cell, false);
+        Cell->Destroy();
+    }
     static bool SetInternalLock(AFGHologram* Cell, bool bLocked)
     {
         if (!IsValid(Cell) || !Cell->IsA<AFGConveyorLiftHologram>()
@@ -49,6 +65,50 @@ namespace
     TMap<TWeakObjectPtr<AFGHologram>, TWeakObjectPtr<AFGHologram>> LiftGridPreparedCells;
     TArray<TWeakObjectPtr<AFGHologram>> LiftGridRequestCells;
     bool bLiftGridRequestActive = false;
+    struct FCellReceipt
+    {
+        TWeakObjectPtr<AFGHologram> Root;
+        FObjectKey RootKey;
+        TWeakObjectPtr<UWorld> World;
+        FObjectKey WorldKey;
+        TWeakObjectPtr<UClass> BuildClass;
+        TWeakObjectPtr<AActor> Payer;
+        TArray<FItemAmount> Quote;
+        FTransform Pose;
+        FTransform Top;
+        FTransform NativePose;
+        FTransform NativeTop;
+        TWeakObjectPtr<AActor> ConfiguredActor;
+        TWeakObjectPtr<AFGBuildablePassthrough> NativeHoles[2];
+        bool bConfigured = false;
+        TWeakObjectPtr<UFGFactoryConnectionComponent> Bindings[2];
+        FTransform BindingPoses[2];
+        EFactoryConnectionDirection BindingDirections[2] = {};
+        float BindingClearances[2] = {};
+        TWeakObjectPtr<AFGBuildablePassthrough> Holes[2];
+        FTransform HolePoses[2];
+        float HoleThicknesses[2] = {};
+        bool TopFaces[2] = {};
+        FNetConstructionID Id;
+        TWeakObjectPtr<AActor> Built;
+        bool bClaimed = false;
+        bool bObserved = false;
+        bool bValid = false;
+    };
+    TMap<TWeakObjectPtr<AFGHologram>, FCellReceipt> LiftGridReceipts;
+    TSet<FObjectKey> FailedLiftGridRoots;
+    TMap<FGuid, TArray<FCellReceipt>> UnresolvedLiftGridReceipts;
+    void BindReceiptCleanup()
+    {
+        static const auto Handle = FWorldDelegates::OnWorldCleanup.AddLambda([](UWorld* World, bool, bool)
+        {
+            int32 Count = 0;
+            for (auto It = UnresolvedLiftGridReceipts.CreateIterator(); It; ++It)
+                if (!It.Value().IsEmpty() && It.Value()[0].WorldKey == FObjectKey(World)) { ++Count; It.RemoveCurrent(); }
+            if (Count) UE_LOG(LogSmartFoundations, Warning, TEXT("World ended with %d unresolved lift grid result receipt(s); native payment settlement was not inferred."), Count);
+        });
+        (void)Handle;
+    }
     UFGFactoryConnectionComponent* GetBinding(AFGHologram* Hologram, int32 Index);
 
     bool MatchesSelectedPose(const FTransform& Actual, const FTransform& Requested)
@@ -541,6 +601,34 @@ bool SFConveyorLiftHologramState::Prepare(AFGHologram* Root, const FSFScalingSpe
         Accepted.Add(Cell);
     }
     for (int32 Index = 0; Index < Accepted.Num(); ++Index)
+    {
+        auto* Cell = Accepted[Index];
+        const auto* Top = FindFProperty<FStructProperty>(AFGConveyorLiftHologram::StaticClass(), TEXT("mTopTransform"));
+        if (!Top) return false;
+        FCellReceipt Receipt;
+        Receipt.Root = Root; Receipt.RootKey = FObjectKey(Root); Receipt.World = Root->GetWorld();
+        Receipt.WorldKey = FObjectKey(Root->GetWorld()); Receipt.Payer = Root->GetConstructionInstigator();
+        Receipt.Quote = Cell->GetCost(false);
+        Receipt.BuildClass = Cell->GetBuildClass().Get(); Receipt.Pose = Cell->GetActorTransform();
+        Receipt.Top = *Top->ContainerPtrToValuePtr<FTransform>(Cell);
+        for (int32 Mouth = 0; Mouth < 2; ++Mouth)
+        {
+            auto* Binding = GetBinding(Cell, Mouth); auto* Hole = GetPassthrough(Cell, Mouth);
+            Receipt.Bindings[Mouth] = Binding; Receipt.Holes[Mouth] = Hole;
+            if (Binding)
+            {
+                Receipt.BindingPoses[Mouth] = Binding->GetComponentTransform();
+                Receipt.BindingDirections[Mouth] = Binding->GetDirection();
+                Receipt.BindingClearances[Mouth] = Binding->GetConnectorClearance();
+            }
+            if (Hole)
+            {
+                Receipt.HolePoses[Mouth] = Hole->GetActorTransform();
+                Receipt.HoleThicknesses[Mouth] = Hole->GetSnappedBuildingThickness();
+                Receipt.TopFaces[Mouth] = Mouth == 0 ? Receipt.Top.GetTranslation().Z > 0 : Receipt.Top.GetTranslation().Z < 0;
+            }
+        }
+        LiftGridReceipts.Add(Cell, MoveTemp(Receipt));
         if (Previews.IsEmpty())
         {
             Root->AddChild(Accepted[Index], FName(*FString::Printf(TEXT("LiftGridCell_%d"), Index)));
@@ -548,6 +636,7 @@ bool SFConveyorLiftHologramState::Prepare(AFGHologram* Root, const FSFScalingSpe
             Accepted[Index]->SetActorHiddenInGame(false);
         }
         else LiftGridPreparedCells.Add(Previews[Index], Accepted[Index]);
+    }
     LiftGridPreparedRoots[Root] = true;
     return true;
 }
@@ -557,6 +646,98 @@ AFGHologram* SFConveyorLiftHologramState::FindPreparedCell(AFGHologram* Preview)
     return bLiftGridRequestActive && Cell ? Cell->Get() : nullptr;
 }
 bool SFConveyorLiftHologramState::IsRequestActive() { return bLiftGridRequestActive; }
+bool SFConveyorLiftHologramState::ClaimPreparedCell(AFGHologram* Cell, const FNetConstructionID& Id)
+{
+    auto* Receipt = LiftGridReceipts.Find(Cell);
+    auto Reject = [&]() { if (Receipt) FailedLiftGridRoots.Add(Receipt->RootKey); return false; };
+    const auto* Ready = Receipt ? LiftGridPreparedRoots.Find(Receipt->Root) : nullptr;
+    const auto* Top = FindFProperty<FStructProperty>(AFGConveyorLiftHologram::StaticClass(), TEXT("mTopTransform"));
+    if (!IsInGameThread() || !bLiftGridRequestActive || !Receipt || !Ready || !*Ready || !Top
+        || Receipt->bClaimed || FailedLiftGridRoots.Contains(Receipt->RootKey)
+        || !IsValid(Cell) || Cell->IsActorBeingDestroyed() || !Cell->HasAuthority()
+        || !Receipt->World.IsValid() || Receipt->World->bIsTearingDown
+        || !Receipt->Payer.IsValid() || Cell->GetConstructionInstigator() != Receipt->Payer.Get()
+        || Cell->GetWorld() != Receipt->World.Get() || Cell->GetBuildClass().Get() != Receipt->BuildClass.Get()
+        || !Cell->GetActorTransform().Equals(Receipt->Pose, .01f)
+        || !Top->ContainerPtrToValuePtr<FTransform>(Cell)->Equals(Receipt->Top, .01f)
+        || !FSFNativeConstructionContext::MatchesInput(Receipt->RootKey, Id, Cell->GetWorld())) return Reject();
+    for (int32 Mouth = 0; Mouth < 2; ++Mouth)
+    {
+        auto* Binding = Receipt->Bindings[Mouth].Get(); auto* Hole = Receipt->Holes[Mouth].Get();
+        if ((!Receipt->Bindings[Mouth].IsExplicitlyNull() && !IsValid(Binding))
+            || (!Receipt->Holes[Mouth].IsExplicitlyNull() && !IsValid(Hole))
+            || GetBinding(Cell, Mouth) != Binding || GetPassthrough(Cell, Mouth) != Hole
+            || (Binding && (Binding->GetWorld() != Receipt->World.Get() || !IsValid(Binding->GetOwner())
+                || Binding->GetOwner()->IsActorBeingDestroyed() || Binding->IsConnected() || Binding->GetConnection()
+                || !Binding->GetComponentTransform().Equals(Receipt->BindingPoses[Mouth], .01f)
+                || Binding->GetDirection() != Receipt->BindingDirections[Mouth]
+                || !FMath::IsNearlyEqual(Binding->GetConnectorClearance(), Receipt->BindingClearances[Mouth], .01f)))
+            || (Hole && (Hole->GetWorld() != Receipt->World.Get() || Hole->IsActorBeingDestroyed()
+                || !Hole->GetActorTransform().Equals(Receipt->HolePoses[Mouth], .01f)
+                || !FMath::IsNearlyEqual(Hole->GetSnappedBuildingThickness(), Receipt->HoleThicknesses[Mouth], .01f)
+                || (Receipt->TopFaces[Mouth] ? Hole->GetTopSnappedConnection<UFGConnectionComponent>()
+                    : Hole->GetBottomSnappedConnection<UFGConnectionComponent>())))) return Reject();
+    }
+    Receipt->Id = Id; Receipt->bClaimed = true; return true;
+}
+void SFConveyorLiftHologramState::RecordNativeConfiguration(const AFGHologram* Cell, AActor* Built)
+{
+    auto* Receipt = LiftGridReceipts.Find(const_cast<AFGHologram*>(Cell));
+    auto* Lift = Cast<AFGBuildableConveyorLift>(Built);
+    if (!Receipt || !Receipt->bClaimed || Receipt->bConfigured || !IsValid(Lift)
+        || Lift->GetWorld() != Receipt->World.Get() || Lift->GetClass() != Receipt->BuildClass.Get()
+        || !FSFNativeConstructionContext::MatchesInput(Receipt->RootKey, Receipt->Id, Lift->GetWorld())) return;
+    // IT-L5: native ConfigureActor can swap the actor origin/top and hole slots.
+    // Retain its actual canonical output; comparing it to the raw preview pose
+    // would incorrectly reject a valid reversed placement.
+    Receipt->ConfiguredActor = Lift; Receipt->NativePose = Lift->GetActorTransform();
+    Receipt->NativeTop = Lift->GetTopTransform();
+    const auto Holes = Lift->GetSnappedPassthroughs();
+    for (int32 Index = 0; Index < 2; ++Index) Receipt->NativeHoles[Index] = Holes.IsValidIndex(Index) ? Holes[Index] : nullptr;
+    Receipt->bConfigured = true;
+}
+void SFConveyorLiftHologramState::ObservePreparedCell(AFGHologram* Cell, AActor* Built)
+{
+    auto* Receipt = LiftGridReceipts.Find(Cell);
+    if (!Receipt || !Receipt->bClaimed || Receipt->bObserved) return;
+    Receipt->bObserved = true; Receipt->Built = Built;
+    auto* Lift = Cast<AFGBuildableConveyorLift>(Built);
+    Receipt->bValid = Receipt->bConfigured && Receipt->ConfiguredActor.Get() == Lift
+        && IsValid(Lift) && !Lift->IsActorBeingDestroyed() && Lift->HasAuthority()
+        && Lift->GetWorld() == Receipt->World.Get() && Lift->GetClass() == Receipt->BuildClass.Get()
+        && Lift->GetActorTransform().Equals(Receipt->NativePose, .01f) && Lift->GetTopTransform().Equals(Receipt->NativeTop, .01f);
+    if (Receipt->bValid)
+    {
+        const auto Holes = Lift->GetSnappedPassthroughs();
+        Receipt->bValid &= Holes.Num() == 2;
+        TInlineComponentArray<UFGFactoryConnectionComponent*> Ports(Lift);
+        for (int32 Mouth = 0; Mouth < 2; ++Mouth)
+        {
+            auto* ExpectedHole = Receipt->Holes[Mouth].Get();
+            auto* ActualHole = Holes.IsValidIndex(Mouth) ? Holes[Mouth] : nullptr;
+            Receipt->bValid &= ActualHole == Receipt->NativeHoles[Mouth].Get()
+                && (Receipt->NativeHoles[Mouth].IsExplicitlyNull() || IsValid(ActualHole))
+                && (!ActualHole || ActualHole == Receipt->Holes[0].Get() || ActualHole == Receipt->Holes[1].Get())
+                && (!ExpectedHole || Holes.Contains(ExpectedHole));
+            if (IsValid(ExpectedHole))
+            {
+                auto* Face = Receipt->TopFaces[Mouth] ? ExpectedHole->GetTopSnappedConnection<UFGFactoryConnectionComponent>()
+                    : ExpectedHole->GetBottomSnappedConnection<UFGFactoryConnectionComponent>();
+                Receipt->bValid &= IsValid(Face) && Face->GetOwner() == Lift && Ports.Contains(Face);
+            }
+            auto* Binding = Receipt->Bindings[Mouth].Get();
+            if (Receipt->Bindings[Mouth].IsExplicitlyNull()) continue;
+            auto* Peer = IsValid(Binding) ? Binding->GetConnection() : nullptr;
+            Receipt->bValid &= IsValid(Peer) && Peer->GetOwner() == Lift && Ports.Contains(Peer)
+                && Peer->GetConnection() == Binding && Binding->IsConnected() && Peer->IsConnected();
+        }
+        for (auto* Port : Ports)
+            if (IsValid(Port) && Port->GetConnection())
+                Receipt->bValid &= Port->GetConnection() == Receipt->Bindings[0].Get()
+                    || Port->GetConnection() == Receipt->Bindings[1].Get();
+    }
+    if (!Receipt->bValid) FailedLiftGridRoots.Add(Receipt->RootKey);
+}
 SFConveyorLiftHologramState::FRequestScope::FRequestScope()
 {
     bOwnsRequest = !bLiftGridRequestActive;
@@ -565,10 +746,31 @@ SFConveyorLiftHologramState::FRequestScope::FRequestScope()
 SFConveyorLiftHologramState::FRequestScope::~FRequestScope()
 {
     if (!bOwnsRequest) return;
-    for (const auto& Cell : LiftGridRequestCells) if (Cell.IsValid())
-    { FSFConveyorLiftNativePlacement::SetInternalLock(Cell.Get(), false); Cell->Destroy(); }
-    LiftGridRequestCells.Reset();
+    auto Receipts = MoveTemp(LiftGridReceipts); LiftGridReceipts.Reset();
+    auto Cells = MoveTemp(LiftGridRequestCells); LiftGridRequestCells.Reset();
+    TMap<FObjectKey, TArray<FCellReceipt>> ByRoot;
+    for (const auto& Pair : Receipts)
+    {
+        const auto* Ready = LiftGridPreparedRoots.Find(Pair.Value.Root);
+        if ((Ready && *Ready) || Pair.Value.bClaimed) ByRoot.FindOrAdd(Pair.Value.RootKey).Add(Pair.Value);
+    }
+    for (auto& Pair : ByRoot)
+    {
+        bool Complete = true;
+        for (const auto& Receipt : Pair.Value) Complete &= Receipt.bValid && Receipt.Built.IsValid();
+        if (!Complete)
+        {
+            BindReceiptCleanup(); UnresolvedLiftGridReceipts.Add(FGuid::NewGuid(), MoveTemp(Pair.Value));
+            UE_LOG(LogSmartFoundations, Warning, TEXT("Lift grid retained incomplete native cell receipts; no retry, refund, or successful parent settlement inferred."));
+        }
+    }
+    FailedLiftGridRoots.Reset();
     LiftGridPreparedRoots.Reset();
     LiftGridPreparedCells.Reset();
     bLiftGridRequestActive = false;
+    for (const auto& Cell : Cells) if (Cell.IsValid())
+    {
+        const auto* Receipt = Receipts.Find(Cell);
+        FSFConveyorLiftNativePlacement::RetireCell(Cell.Get(), Receipt ? Receipt->Root.Get() : Cell->GetParentHologram());
+    }
 }

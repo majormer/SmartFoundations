@@ -89,6 +89,16 @@ geometry. The authority reconstructs the bounded plan before payment and checks
 current endpoint availability, pose, direction, native placement and cost. A
 failed route rejects the whole placement.
 
+For a generated belt, setting its snapped peers and spline does not initialize
+the native hologram's connector directions. Call the native
+`SetupSnappedConnectionDirections` after binding those peers, including when
+replacing preview peers with the actual constructed actors. Native belt
+`ConfigureComponents` copies the hologram directions onto the built connectors
+before testing compatibility and connecting them. A correctly shaped, priced
+belt can otherwise be constructed with neither endpoint connected. See the
+[native construction contract](../THESIS_Belts_ChainActors_Placement.md#native-belt-direction-initialization)
+for the binary evidence.
+
 Reconstruction can add children after the build gun has reset its placement
 state. Reset the complete prepared tree before validation, validate the player
 parent without asking generated children for independent aiming state, and keep

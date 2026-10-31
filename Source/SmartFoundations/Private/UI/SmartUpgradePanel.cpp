@@ -34,6 +34,10 @@ void USmartUpgradePanel::NativeDestruct()
 void USmartUpgradePanel::NativeConstruct()
 {
 	Super::NativeConstruct();
+	// [MP-CLIENT] Synchronize before the user captures an upgrade intent; never queue an intent here.
+	if (auto* Subsystem = USFSubsystem::Get(this))
+		if (auto* Service = Subsystem->GetUpgradeExecutionService())
+			Service->EnsureUpgradeWorldContext(Cast<AFGPlayerController>(GetOwningPlayer()));
 
 	UE_LOG(LogSmartUI, Verbose, TEXT("Upgrade Panel: NativeConstruct"));
 
@@ -618,6 +622,11 @@ void USmartUpgradePanel::OnUpgradeButtonClicked()
 	}
 
 	// Build execution params
+	if (!ExecutionService->EnsureUpgradeWorldContext(Cast<AFGPlayerController>(PC)))
+	{
+		if (StatusText) StatusText->SetText(LOCTEXT("Upgrade_SynchronizingWorld", "Connecting to the current world; try again shortly"));
+		return; // No captured selection/request is retained for automatic submission.
+	}
 	FSFUpgradeExecutionParams Params;
 	Params.Family = SelectedFamily;
 	Params.SourceTier = SelectedTier;
@@ -670,6 +679,8 @@ void USmartUpgradePanel::OnUpgradeButtonClicked()
 		Params.Radius = CurrentRadiusMeters * 100.0f;  // Convert meters to cm
 	}
 
+	if (!ExecutionService->AssignRequestIdentity(Params)) return;
+
 	// Subscribe to completion delegate
 	ExecutionService->OnUpgradeExecutionCompleted.AddDynamic(this, &USmartUpgradePanel::OnUpgradeCompleted);
 	ExecutionService->OnUpgradeProgressUpdated.AddDynamic(this, &USmartUpgradePanel::OnUpgradeProgress);
@@ -705,6 +716,7 @@ void USmartUpgradePanel::OnUpgradeButtonClicked()
 			if (USFRCO* RCO = FGPC->GetRemoteCallObjectOfClass<USFRCO>())
 			{
 				RCO->Server_StartUpgrade(Params);
+				ExecutionService->MarkUpgradeRequestSent(Params);
 				UE_LOG(LogSmartUI, Verbose, TEXT("Upgrade Panel: Sent upgrade request via SFRCO"));
 				return;
 			}

@@ -72,10 +72,7 @@ public:
     void ConnectAllChainElements(AFGBuildableFactory* NewFactory);
 
     // ==================== Manifold connections (slice E2 unit G) ====================
-    void WireManifoldConnections(AFGBuildableFactory* SourceFactory, AFGBuildableFactory* CloneFactory);
     void WireManifoldPipe(AFGBuildablePipeline* BuiltPipe, UFGPipeConnectionComponentBase* SourceConnector, int32 CloneChainId);
-    void WireManifoldBelt(AFGBuildableConveyorBelt* BuiltBelt, UFGFactoryConnectionComponent* SourceConnector, int32 CloneChainId);
-    bool CreateManifoldBelt(UFGFactoryConnectionComponent* FromConnector, UFGFactoryConnectionComponent* ToConnector);
     bool CreateManifoldPipe(UFGPipeConnectionComponentBase* FromConnector, UFGPipeConnectionComponentBase* ToConnector);
     AFGBuildableFactory* GetSourceFactory() const;
 

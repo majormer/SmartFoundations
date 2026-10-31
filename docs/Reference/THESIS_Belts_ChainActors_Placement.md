@@ -133,6 +133,21 @@ It selects a chain class, spawns it deferred, assigns first/last conveyors, fini
 The endpoint assignment, spawn completion, and conveyor association occur at `0x18068a5fb`, `0x18068a6d1`, and `0x18068a711` respectively.
 There is no guard that makes migrating an already migrated group idempotent.
 
+A non-null `ForceIntoSharedByBuildable` is scheduling affinity, not proof that
+the group has only member-local cargo. It may coexist with `ChainActor`.
+In the matching Linux migration body (`0x1881280`), the group array is read at
+`+0x8`, its count at `+0x10`, and the new chain is published at `+0x18`
+(`0x1881661`); the owner at `+0x0` is neither tested nor cleared. Evidence:
+`ev_7864beb3a33a637344d2c94639dd8dbabcbd0e3d3f59bd42735cdbc980c40d5e`,
+FactoryGame ELF SHA-256
+`637c2c70e65f6386697a6a5f5746f64b187d2fcfeee56df1aeef3f172268c0c1`.
+An independently captured, settled native programmable-splitter lift group
+contained both owner and chain before any Smart replacement. Rejecting that
+combination prevents a legal adjacent-lift upgrade. Validate unique ownership,
+chain endpoints, segment indices and cached reciprocal traversal when a chain
+exists; only a shared group without a chain may use scheduler array order
+instead of accelerated traversal order.
+
 `BuildChain` (`0x180777d40`) distinguishes authority reconstruction from other roles.
 The authority path requires both endpoints and its cached chain subsystem.
 It starts at the first conveyor and follows cached next-conveyor links, observed at `0x180777ecc`.
@@ -143,6 +158,18 @@ The traversal prepends members into a temporary list and populates final segment
 Thus, traversal order, temporary-list order, and segment-construction iteration order must not be conflated.
 The routine writes segment indices, constructs aggregate spline data, initializes item storage, moves belt items, and finally builds the lookup table.
 Key calls are segment initialization at `0x1807784f5`, item initialization at `0x18077861f`, migration at `0x180778627`, and `BuildLUT` at `0x1807786e7`.
+
+Do not equate `BuildLUT` with the SDK's `mConveyorToSplineSegment` map. In the
+matching Windows client binary, `BuildLUT` (`0x18077ce00`) samples spline positions
+and rotations and publishes them through `AFGConveyorItemSubsystem::AddLookupTable`;
+it skips that rendering work on a dedicated server. The shipped
+`GetSegmentForConveyorBase` (`0x18078a950`) searches `mChainSplineSegments` for the
+requested owner directly. Requiring the SDK map to contain every authoritative
+member is therefore an unsupported admission condition. Validate actual segment
+owners, member indices, endpoints and native group order instead. Evidence:
+`ev_decf7c96c80548f4730b359f38a350379aa50e624fd1b7236df88f59a7909b53`
+and `ev_17058fa4b91c86a096d4abfa3d1df3290c9064b3fc58bdfefe2a9ad270dd33bf`,
+client SHA-256 `3ddda3ded4b1b7dbf1aed35be461999d1ba4954f3670a8e4227bd17dcc4f8959`.
 
 The nonauthority entry path skips full reconstruction and proceeds to lookup-table construction.
 An inner alternate-role connector branch exists, but it is not evidence that ordinary client entry reconstructs authority topology.
@@ -183,6 +210,15 @@ The latter removes subsystem and pending-reference state and ultimately calls `A
 Revert therefore destroys the actor transitively; its short direct body must not be interpreted as nondestructive deregistration.
 The SDK explicitly warns that calling Revert directly while a tick group still refers to the actor leaves a dangling pointer.
 Native callers coordinate the additional group and conveyor bookkeeping around it.
+
+The segment index is conditional on an assigned chain; it is not an independent
+local-storage ownership marker. `SetConveyorChainActor` (`0x180500020`) writes the
+chain pointer and updates monitors without resetting the conveyor's cached segment
+index. Consequently, after native removal/re-registration, a local or pending group
+can retain its former index with a null chain pointer. Require the exact segment
+index when a chain is assigned; for local ownership, validate the native group and
+local cargo instead of requiring index `INDEX_NONE` or writing that value yourself.
+Evidence: `ev_468318d452d7d78e4db41048f3fe250219af28f0ac670dee3ed6e7a7138b6419`.
 
 `RemoveConveyorFromBucket` (`0x180693720`) sets the target ID to `INDEX_NONE` and removes its group membership.
 Its return value means the group was deleted, not merely that the conveyor was removed.
@@ -231,6 +267,38 @@ Historical poisoned-chain crashes remain evidence to preserve; reproducing known
 No row grants permission to reuse an actor after Revert has destroyed it.
 `SetConveyorChainActor` also updates attached monitor state and ends in a virtual notification (`0x18050004d`–`0x18050011a`).
 A raw pointer assignment bypasses that behavior and is not an equivalent replacement.
+
+### Monitor binding and registration are separate
+
+Moving a retained throughput monitor to a replacement belt requires both its
+snapped-buildable reference and its conveyor/chain registration to move.
+`AFGBuildableConveyorMonitor::SetSnappedSplineBuildable` is not that whole
+transaction. The matching Linux body (`0x16c48a0`) writes the snapped buildable
+and cached conveyor, resets sampling state on authority and dirties replicated
+data; it does not call either conveyor registration method. Evidence:
+`ev_fabb3158863eea3192263316191d8d3fa20427db0517b1fca48bc72c56284937`.
+
+`UnregisterThroughputMonitor` (`0x16b3310`) removes the conveyor's attached-array
+entry and unregisters from its current chain. `RegisterThroughputMonitor`
+(`0x16b3280`) adds the attached-array entry and registers with the current chain.
+Both also handle dormancy. Evidence:
+`ev_6578b6dd1b3268d3e51abced3e8ce6ae5df56196dfcebc1b6f469bf7bfef3ad2`
+and `ev_d3a7218a24ce8c78c9da5df8812fad9241b99ef2b762fb9922f160b3d280af71`,
+FactoryGame ELF SHA-256
+`637c2c70e65f6386697a6a5f5746f64b187d2fcfeee56df1aeef3f172268c0c1`.
+Under the owned native mutation phase, validate one old registration and no new
+registration, unregister from the old host, set the new snapped buildable, then
+register with the replacement. Verify both sides and the captured offset before
+retiring the old host. An already completed native transfer must be verified,
+not repeated.
+
+The failure is observable: a Windows standalone belt upgrade using only the
+setter changed one retained monitor's reference while leaving its old
+registration. Smart withheld retirement and the old-material refund after
+charging the replacement, and its later cohort check reported inconsistent
+physical traversal. Thus setter success alone must never certify transfer.
+The two retained native monitors' measured offsets were 1680 and 1800 cm; these
+are stored conveyor offsets, not assumed hologram snap distances.
 
 ### Pending groups and materialized ownership
 
@@ -1476,6 +1544,24 @@ These are serialized relative template positions, not observed final world geome
 Base `BeginPlay` restores saved directions in sorted component order before routing families cache inputs and outputs.
 Construction and save state must therefore be considered before assigning permanent roles to the vertical ports.
 
+The raw direction is not a replicated peer-state contract. The inspected SDK marks
+`mDirection` as `EditDefaultsOnly` and `mConnectedComponent` as `SaveGame`, while
+only `mHasConnectedComponent` is replicated. The Linux
+`UFGFactoryConnectionComponent::GetLifetimeReplicatedProps` body at `0x19e3a90`
+registers exactly that connected flag after its scene-component base; its FName
+literal at `0xf06f34` is `mHasConnectedComponent` (REA
+`ev_30d15c931477d490a334e1f304cb5dc2ba668133f65fee5268db94b5476afd9a`).
+The attachment's `mSavedDirections` array is also save-only; its `BeginPlay`
+restores directions only when that array is populated (REA
+`ev_d970019a96f45ac1c50b03dc4c3e993c161cd350814ac8d0e6be5d1550a2ceed`).
+A fresh Windows client joining the saved Linux specimen retained `FCD_ANY` on
+all five variants' vertical docks while their authority had concrete input/output
+roles; the connected flags, positions and ordinary lateral directions matched.
+Do not interpret that client raw-direction difference as damaged server topology
+or force the client to reproduce non-replicated state. Validate exact live peers
+and resolved roles on authority; client comparison must respect the native
+replication boundary. This does not authorize an ambiguous authoritative connection.
+
 Each floor variant's `mHologramOverrides` contains a FloorToLift override; each lift variant has LiftToFloor.
 The override's `mRecipeToOverrideWith` names the matching opposite-mount recipe under `/Game/FactoryGame/Recipes/Buildings/`.
 Recipe `mProduct` values point to the corresponding descriptor classes.
@@ -1584,6 +1670,10 @@ These cases establish native structural insertion and payment for the recorded e
 
 #### One floor hole with an open-ended lift
 
+Native placement queries use the configured **BuildGun** trace channel, not Visibility. In the CL513885 Linux image, `AFGBuildGun::TraceForBuilding` at `0x17a3810` loads `TC_BuildGun` at `0x17a3a2a` and passes it to `UWorld::LineTraceSingleByChannel` at `0x17a3a62` (REA evidence `ev_1da3404379fc7a452b03f4e0aabfa5cc9aa884af12c7c292d4ae0adc6bfc3572`). The shipped collision profile names this channel `BuildGun`; a replay probe must resolve that channel rather than assume an unrelated channel hits the same instances. This identifies the native channel, not an equivalence between a custom replay ray and the complete player trace.
+
+An instance-manager collision owner can be the lightweight-buildable subsystem rather than a foundation actor. Resolving that owner alone is insufficient for native foundation snapping. `AFGLightweightBuildableSubsystem::ResolveLightweightInstance` identifies the referenced lightweight; `FLightweightBuildableInstanceRef::SpawnTemporaryBuildable` checks the game thread, resolves the still-valid instance, and calls the subsystem's `FindOrSpawnBuildableForRuntimeData` pool (CL513885 Linux entries `0x1ab80c0` and `0x1aaa5f0`; REA evidence `ev_ab9bf5ad020fe6c6c26b5d6a6494f1f1101654b4a9523f493319ca2ba1162ede` and `ev_9b41400ffa0d1f7b822b87d88ccde9e6a739c4be587410df3f22c2949bcb69c4`). Use that native, unsaved and unreplicated representation for placement, preserving the original hit geometry. The subsystem owns the temporary actor's retirement; a placement consumer must not destroy it or count it as another saved foundation.
+
 A floor hole can own a lift-end reference without being a conveyor chain segment or an ordinary factory-connection peer. In the observed empty CL513885 case, a native floor hole was placed on a 400 cm foundation and then an upward Mk1 lift was constructed from the hole center to an open upper endpoint. This is a one-hole, one-lift-end case; it does not establish a connection through the floor to a second lift.
 
 `AFGPassthroughHologram::TrySnapToActor` resolves the hit actor through `FActorInstanceHandle::FetchActor`, requires a foundation subclass, and records the snapped support. Its collected foundation array contained the same support twice; uniqueness is not a valid inferred invariant. `CheckValidPlacement` runs the base check and requires a valid snapped building. `ConfigureActor` copies the selected thickness into the new passthrough before its `BeginPlay` consumes that thickness to construct components. The public setter explicitly requires this order because static-mobility components cannot move after registration. Exact client locations are `0x180adec90`, `0x180ab8b90`, `0x180ab96f0` and `0x180522180`, respectively (REA evidence `ev_661602236929d443bdf9dd785cf5da4f8ab34c74d98fb6268a3ef595cca3afe7`, `ev_23df4b486624358a3e38c5f769a1c2c7eb2b7192bdfe4eff0fd864b057d94933`, `ev_e034f3f6452e60eafb8d73ade707923dac5686114d15441b5c88e92feb669fd1`, `ev_49024976fbe125694614035d284d24ba3dc73ada29aa79db4725ca259fe14ee7`). The measured construction-component envelope was 493.6934585571289 cm tall, including caps; the stored nominal thickness remained 400 cm.
@@ -1614,6 +1704,51 @@ The three strict floating-point transform differences remain separately recorded
 
 ## Native placement input and multistep completion
 
+### Preparing an upgrade hologram's placement frame
+
+`TryUpgrade` selects and configures an upgrade target; it does not reproduce the
+complete placement frame. The matching Windows client lift implementation
+(`0x180aa10c0`) copies the old lift's top transform, actor transform and available
+passthrough slots, then updates its geometry. Its successful return does not
+establish current visibility, refreshed disqualifiers or construction eligibility.
+Evidence: `ev_e883c38fd74c5e064e540babf7c9c4b4fa1c733cb357498e3952e6e840bc3909`.
+
+The native gun's `TickState_Implementation` (`0x1805d4b30`) resets the current
+disqualifiers, invokes hologram placement update, and subsequently calls
+`ValidatePlacementAndCost`. `ResetConstructDisqualifiers` (`0x180acc530`) also
+resets child holograms. `UpdateHologramPlacement` (`0x180ae7e80`) validates the hit,
+updates visibility accordingly, and runs the applicable pre-placement,
+zoop/upgrade/snap/location and post-placement branches. The constructor-bound base
+vtable at `0x1810fcef8` binds placement update at `+0x788`, hit validation at
+`+0x790` and visibility at `+0x380`; the latter resolves to
+`SetActorHiddenInGame` (`0x180acedd0`), whose hidden-state test uses actor byte
+`+0x61`, bit 1. The subsequent validation routine (`0x180aea2e0`) reads that same
+hidden bit and adds `InvalidAimLocation` when it is set. Validation does not reset
+the existing disqualifier array. `BeginPlay` can add `Initializing`; encountering
+that entry alone is not evidence that an asynchronous wait is the missing step.
+
+Programmatic replacement must therefore prepare a live hologram with a coherent
+selected-source hit and execute the native placement-frame sequence before
+checking the exact upgrade source, target class and `CanConstruct`. Native base
+hit validation checks the blocking-hit bit and actor eligibility. Preserve the
+family's overrides and all blocking reasons produced by the refreshed validation.
+Resetting the array without the placement and validation sequence does not prove
+eligibility. This preparation does not settle payment, replacement, retirement,
+cargo or native group migration.
+
+Evidence: retained gun caller
+`ev_3b6480603326d6834f9e0dcd754616583e2f4c33f4d8f802a3448956266d3430`;
+frame update `ev_9ece451f4be71c09269cfd1afab04c475ec0354051a43247b33cbdc1b9901b40`;
+reset `ev_b306fed243e698a395a718baf5b420f2ebb61129ae365f9f73f6d2c37dbdb213`;
+visibility binding `ev_33a495cffdd0980d93c61b5494d2999d36bf9e5bcfba684f4d1b04269100b62a`;
+visibility body `ev_343ee51c5c5aa5671fab023c231b17f59a79158a192f7ee80ca9944d4d3c1062`;
+validation `ev_d1690c6f04a5424768d53729b793277457452cec25bd25d9ef13d191c7997b1b`;
+BeginPlay `ev_edf93e0118353027f64c7e60baca33bf2c09d5aad9ab7080c6c3b2d867e1c4a3`.
+These client addresses use SHA-256
+`3ddda3ded4b1b7dbf1aed35be461999d1ba4954f3670a8e4227bd17dcc4f8959`.
+
+### Input and multistep completion
+
 A build-gun input and a completed construction are different events. In the inspected CL 513885 Windows client, `PrimaryFire_Implementation` resets the hold timer, marks the input held, and normally calls `InternalExecuteDuBuildStepInput(false)`; its input-device-1 branch can return before that call. `PrimaryFireRelease_Implementation` does not simply repeat the press. Its held-input and press/release-mode branch passes `true`, while a qualifying short input-device-1 release invokes the base press handler and passes `false`. The release path then clears the held flag and timer. Consequently, an API that invokes only PrimaryFire has not reproduced a physical press/release pair. These local branches do not establish the active user's input configuration. Evidence: press `ev_dcee77a2f3e4f51e2f8e9544fb531a24852aaf9dcfb624071f3b1404cd3292ff` (`0x1805c6e20`), release `ev_7c740e55b08db860071d5d610fa2118716aa738dcf9b93ca175f5c83cccb903b` (`0x1805c6cc0`).
 
 `InternalExecuteDuBuildStepInput` validates placement and cost, calls the hologram's multistep virtual at slot `+0x7e8`, then invokes `OnMultiStepPlacement`. A false multistep result returns before this function's later pending-construction path; a nonlocal player also returns there. A true result for the local player permits pending-hologram creation and construction-data preparation, with direct or timer-delayed dispatch selected later. Neither the Boolean nor input dispatch alone proves payment, actor materialization, or downstream callback safety. Evidence: `ev_9131929cf417d0d0012ad7d9521a64327d3b2103e3c38441ab414bd6122e6c5b`, especially `0x1805bfe42`, `0x1805bfe67`, `0x1805bfe76`, `0x1805bfe97` and `0x1805bfea0`.
@@ -1623,6 +1758,44 @@ The fresh-belt path uses four SDK-named stages: `SHBS_FindStart`, `SHBS_AdjustSt
 The inspected pole body first checks its stage byte. If the initial stage's capability virtual returns true, it sets the adjustment flag and stage, then returns false; otherwise it returns true. It does not inspect its Boolean argument. This explains a conditional extra pole stage, not a universal extra click for every support variant. Evidence: `ev_9db38a751e11e90c91a3ddaff1894b3530935a02e5a4fd192bde6c3f76c4d127` (`0x180abda30`–`0x180abda6c`).
 
 `TickState_Implementation` increments the hold timer while held and performs preview, upgrade-target, placement-cost and clearance updates. Its complete retained body has no direct call to `InternalExecuteDuBuildStepInput`; material virtual calls remain. This supports observing the next native stage after each input, not assuming that waiting automatically supplies another build step or that no transitive tick path could ever do so. This build-gun tick is also distinct from conveyor factory-worker scheduling. Evidence: `ev_3b6480603326d6834f9e0dcd754616583e2f4c33f4d8f802a3448956266d3430` (`0x1805d4b30`–`0x1805d50b0`).
+
+### Preparing upgrade connection targets before construction
+
+Placement-frame preparation alone does not initialize every construction input.
+On the matching Windows client, lift `TryUpgrade` copies pose, top transform and
+passthrough references, while the family construction-message post hook derives
+the old actor's peer connection targets. Belt and lift post hooks are at
+`0x180a82420` and `0x180a826c0`, respectively. They use the selected old conveyor's
+two factory connection components, including the native ordering/direction branch.
+Lift `ConfigureComponents` (`0x180a6c8d0`) consumes those targets, clears the old
+peer connections in the upgrade branch, chooses the replacement connection
+directions, and uses native `CanConnectTo`/`SetConnection` before deferred BeginPlay.
+Missing this preparation can therefore create a replacement with the right pose
+but missing reciprocal wiring and opposing clearance.
+
+The base pre hook (`0x180acaf30`) caches the current root pose and recurses into
+children. The base post hook (`0x180aca620`) restores that cached pose, performs
+its native update/visibility work and recurses into children. A programmatically
+prepared live hologram must pair these hooks; invoking post alone can restore
+default or stale pose data. Preserve exact source, component-shape, target and
+construction-eligibility guards after preparation. Direct live-value hook calls
+are not evidence that the wire archive or a remote request was serialized.
+
+These methods dispatch through `IFGConstructionMessageInterface`. The inspected
+MSVC interface receiver is adjusted from the actor root by `0x2b0`; apparent
+decompiler offsets are relative to that receiver. Use typed C++ virtual calls,
+never raw calls with an actor-root receiver or hardcoded member offsets.
+
+Evidence, CL513885 Windows client SHA256
+`3ddda3ded4b1b7dbf1aed35be461999d1ba4954f3670a8e4227bd17dcc4f8959`:
+base pre `ev_45e9eb84db6578c6fadbd9d44afe9b85ea2d5128cf78ec4dc0c5610cccd668c7`;
+base post `ev_3bbd7e7f22028ca31d624da8b2b265c7ac6b2d2255e38078e721ca7d7ef9eadc`;
+lift post `ev_0ad021d026f8057ed2023aa0e90fb7e0dba7b7ab2a77abdf35b468ba64acd42f`;
+belt post `ev_4045541f0e474b660c4c778f302a37cffb1595f941301f70ede21ca651122a4f`;
+lift component setup
+`ev_1ababe7281a01ab449fa2765dac5718ec2fbbc28460c4b426b0d3005cc3ecc90`.
+This establishes the inspected initialization contract; it does not qualify all
+variants, cargo states, network modes, payment or persistence.
 
 ## Conveyor items, capacity, and migration
 
@@ -1680,6 +1853,18 @@ Never use modulo with zero capacity or retain a native item pointer after leavin
 Count each active chain slot once; unused preallocation is excluded.
 Segment ranges describe claims on the shared ring and require their own consistency checks; they do not create additional item ownership.
 These static accessors establish enumeration and local bounds contracts, not successful live conservation or permission for concurrent mutation.
+
+Export also has a distinct transient representation. The inspected Windows client
+`MoveItemsFromChainToBelts` (`0x1807906f0`) and Linux server body (`0x1a8bca0`) enter
+their conveyor-local writes only when **both** ring endpoints differ from `-1`.
+After export they clear the allocated item count and both endpoints, without a
+visible write to cached capacity. Zero allocated storage with the previous cached
+capacity can therefore describe an exported, unfinished transition. A repeated
+call with both empty endpoints skips the local-array writes in these bodies;
+this does not authorize invoking a retiring chain or establish a complete Upgrade
+transaction. A mixed sentinel pair remains inconsistent even though this native
+guard also skips it. Evidence: `ev_8c94575cf803caafc53d0b179fba223d467f90e214217ff2d6838ea23e888d1d`,
+`ev_854db40a22501fa1b14f874807c08cf094e37abae1d687d7160deb40660b8eab`.
 
 ### Unmigrated local arrays use their own movement and pull state machine
 
@@ -1999,6 +2184,84 @@ Conveyor-base BeginPlay calls `AFGBuildable::BeginPlay` (`0x180493fc0`) at `0x18
 
 Thus, on the normal synchronous construction path, ordinary registration and its conditional `AddConveyor` can occur before the outer Upgrade call. The relevant proof is this call chain plus the branch conditions, not simply the existence of a deferred-BeginPlay call. Designer/lightweight paths, tick eligibility, current world state and whether the new conveyor reaches the old chain’s group remain material. Conveyor-base BeginPlay recaches Connection0/1 after the buildable call (`0x1804ce91c`, `0x1804ce970`); do not silently reorder these writes ahead of registration when describing the implementation.
 
+#### Blueprint Designer templates are not ordinary factory cohorts
+
+Linux CL513885 independently establishes the Designer branch. In `AFGBuildable::BeginPlay`
+(`0x16683e0`), the authority path derives the inside-Designer flag from the Designer pointer
+at `0x1668658`–`0x1668673`. The branch at `0x16686b9` calls
+`OnDesignerBuildableSpawned` at `0x16686c8` or ordinary `AddBuildable` at `0x16686e1`.
+These are alternative paths. `OnDesignerBuildableSpawned` (`0x18849f0`) handles the pending
+construction hologram on the client; its complete body does not register a conveyor tick
+group. Evidence: `ev_6de6bd3d4b0508704c560e798ad1aa1e77923540b85d0e6dbb728a3573d09748`
+and `ev_6199a96935e24dfdc715cbf2b75ebce2e11329251d3f3d4e75dfd13a65e55191`, complete
+symbol disassemblies, native ELF SHA256
+`637c2c70e65f6386697a6a5f5746f64b187d2fcfeee56df1aeef3f172268c0c1`.
+
+Consequently, a Designer-local connection transaction must prove the exact live Designer
+and unique membership in its native buildable array, rather than demand or create an
+ordinary bucket. Reject mixed world/Designer endpoints, different Designers, retained
+bucket/chain/serial/shared-scheduler claims, and nonreciprocal graph state. Change only the
+admitted local edges at the owned mutation boundary; preserve full local item payloads,
+order, offsets and affected boundary inventories. Recheck Designer identity and membership
+when observing completion. Do not use `AddToTickGroup` to make a template pass ordinary
+factory validation. The SDK tick-eligibility bit alone does not identify this representation.
+
+This distinction has a runtime counterexample: two newly built Designer belts had bucket
+`INDEX_NONE`, no chain or cached next-conveyor, and exact unique native Designer membership;
+requiring an ordinary bucket rejected their deferred junction before topology effects,
+although native construction and payment had already completed. Such a rejected junction
+is a wiring failure, not permission to refund, replay construction or reinterpret the
+templates as registered factory conveyors.
+
+When reconstructing a Blueprint grid for an exact connection plan, preserve an already
+populated native template map. A recipe-spawned copy can have loaded its descriptor before
+Smart reaches `SFScalingSpecExpansion::ExpandScalingSpecIntoChildren`; assigning and loading
+the same descriptor again can duplicate the authored members. This rule applies to ordinary
+belt seams as well as lift, rail and vehicle seams. Exact endpoint resolution must reject
+multiple matching authored mouths rather than choose the first duplicate. The replay guard
+therefore includes `FSFConveyorBeltPlan::HasBelts`, and only loads an empty native member map.
+
+The controlled Linux comparison used a five-member template (three supports and two connected
+belts), three copies and two added seam belts. The repeated-load path failed before payment
+with `incomplete_authority_conduit_plan`; the corrected replay built exactly 17 actors for
+the quoted 64 items. Operation `3EE20990C1704B1EAE9F1FB5DD701702` completed four added
+endpoint edges, yielding one eight-belt chain with seven reciprocal links, two free ends and
+unique native scheduling. All 17 client actors retained the same geometry, connected flags
+and Blueprint ownership partitions. This is runtime evidence for the replay guard; it is
+not a claim that arbitrary Blueprint layouts or other connection families are validated by
+that one fixture.
+
+#### A build class does not supply the native material quote
+
+On Linux CL513885, `AFGHologram::GetBaseCost` (`0x1d19700`) reads the recipe reference at
+`+0x2d0` and calls `UFGRecipe::GetIngredients` (`0x1d19734`). It does not derive ingredients
+from the build class. `AFGConveyorLiftHologram::GetBaseCostMultiplier` (`0x1ce4880`) separately
+reads the signed top height, converts it to an absolute float and delegates to
+`AFGBuildable::GetCostMultiplierForLength`, using the native length unit at `+0x8f0`.
+Complete Linux disassembly evidence:
+`ev_e3a8f8180f7fb0da979db6a830a5cada72d66d48f0a7f01320ddade889d9d616` and
+`ev_a6616b19a7127c54f878949570b293fd0b1b8beb328595433424c55af3fe9b5f`, ELF SHA256
+`637c2c70e65f6386697a6a5f5746f64b187d2fcfeee56df1aeef3f172268c0c1`.
+
+Every chargeable generated lift must therefore carry the matching available native recipe
+before its parent aggregates cost, in addition to its build class and captured geometry.
+This applies to copied lifts and generated vertical lanes. Missing or mismatched recipe
+identity is an admission failure. An empty preview quote must not authorize constructing
+a lift whose built representation has a positive native material cost. As an independent
+runtime cross-check, compare the charged quote with the selected native recipe and length
+multiplier, and compare the resulting lift's native refund where applicable; agreement
+between two copies of the same incomplete preview quote is insufficient.
+
+The lift-containing Extend regression provides a concrete counterexample and correction:
+omitting the copied lift's recipe produced a 53-item quote with no lift charge, although
+the constructed 600.0096-cm Mk.2 lift returned six reinforced plates natively. With the
+recipe assigned before aggregation, the quote and charge were both 59 items; the lift's
+preview cost and native refund both contained those six plates. The two generated Mk.2
+lane belts accounted for another four reinforced plates. Operation
+`41482116465D89F499F5B3BDE5FC8848` retained the captured lift geometry, exact internal
+connections and source graph while settling complete material receipts. This check must
+remain independent of the ordinary preview-versus-charge equality assertion.
+
 Linux `AddConveyor` independently requires subsystem byte `+0x170 == 3` before proceeding. Its qualifying neighbor/group branch can revert an existing group chain. Linux `RevertChainActor_Unsafe` (ELF `0x198c3e0`) calls item export before chain removal; the export writes segment cargo into conveyor-local storage before clearing the source ring and resetting its indices. This closes the selected registration-to-export mechanism, not the runtime premise that a replacement reaches the required old group. Evidence: `ev_a73080f6f123a864259d18f57280e3142c90885f0de7519c45f4f2560fd63077`, `ev_8eb69480f2ea2ce74d03fd26ce95e33507c511468f01ea5d35af7a034a35402a`, `ev_854db40a22501fa1b14f874807c08cf094e37abae1d687d7160deb40660b8eab`. A failed state gate and a reached group without the old lift are different missing premises; neither alone proves cargo loss or successful replacement ownership.
 
 The Windows client has a materially different receiver for that byte check. Its `AddConveyor` (`0x18066ac00`) calls `GetLocalPlayerController` at `0x18066ac17`, then checks the returned controller's byte `+0x170` at `0x18066ac25`. The helper (`0x1806881c0`) enumerates world player controllers, selects a local controller and casts it to `AFGPlayerController`. A probe that reads subsystem `+0x170` would therefore observe the wrong object in this client build, even if both bytes happen to equal3 in standalone play. The actor header's `Role`/`ROLE_Authority` contract supplies the interpretation, but an instrument must independently bind the reflected property, enum and offset on the selected controller before reporting an authority check. Evidence: client registration `ev_e2aa173da26d1f79d4bbadd8a93370e88e8b18fb334ff1bf752b4b3aa4699919`, helper `ev_b14ea4fa24f5a431e21fc61a39e49a8f0c7ba10a1c7e43c37ba0c939160a8590`. These object identities must not be generalized between standalone, client and dedicated-server binaries.
@@ -2177,6 +2440,52 @@ A shared symbol alias at the predicate address is not enough to establish its fi
 These branches are not a general rollback protocol.
 Required class or spawn failures in the inspected bodies take diagnostic paths; the void configuration hooks do not return an all-components-success result.
 
+### The input dispatcher and hologram lifetime constrain deferral
+
+The inspected Windows client image provides a larger construction entry above
+`InternalConstructHologram`. `PrimaryFire_Implementation` (`0x1805c6e20`) updates
+input state, calls its base implementation, and dispatches
+`InternalExecuteDuBuildStepInput(false)` (`0x1805bfd70`). The latter validates
+placement/cost, executes the hologram's multistep placement operation, and requires
+both local control and a completed placement step before constructing. It then
+obtains a native construction ID and creates the pending construction hologram.
+An input event therefore cannot be equated with an admitted physical build.
+
+The dispatcher builds a `FConstructHologramMessage`, but its network writer is
+conditional. The branch comparing the build gun byte at `+0x170` with `3`
+(`0x1805bfffe`) skips the package-map-backed `FNetBitWriter` and message-interface
+serialization calls. The same comparison at `0x1805c00eb` selects immediate
+`Server_ConstructHologram` dispatch. The alternative can copy the message into a
+timer delegate; `OnDelayedConstructHologram` (`0x1805c4610`) copies that message
+and calls `Server_ConstructHologram`. This demonstrates a native value-message
+delay path, not a general serialization or receiver-lifetime guarantee for
+standalone authority construction.
+
+After immediate dispatch or timer installation, the dispatcher calls
+`RemoveHologram` at `0x1805c0532`, then `SpawnHologram` at `0x1805c053a`.
+`RemoveHologram` (`0x1805cb120`) removes the instance-converter instigator,
+preserves rotation bookkeeping, invokes two virtual cleanup calls, requests
+`AActor::Destroy`, and clears the supplied hologram pointer. Requesting destruction
+does not prove immediate memory reclamation. Retaining a strong object reference
+alone cannot turn that actor back into a valid queued construction receiver.
+
+Consequently, deferring an intercepted internal call or server RPC requires an
+explicit receiver and value-intent protocol. It must account for the caller's
+cleanup, the conditional payload, placement-step semantics, native pending/ACK
+identity, and the original construction/debit sequence. These static observations
+identify constraints and candidate boundaries; they do not qualify a deferred
+Smart implementation or prove equivalent dedicated-server branches.
+
+Evidence: native client SHA-256 `3ddda3ded4b1b7dbf1aed35be461999d1ba4954f3670a8e4227bd17dcc4f8959`;
+REA/Ghidra pseudocode records `ev_2cea64dc8a41222aa3bfe729e23ba7448ab134bda263bd13d9d9a667093dae41`,
+`ev_8bfec5cd1055996452acd914593673e115331ffa06329b0974f1f6aac9bf3ff6`,
+`ev_09ccd85ee32fc05c16df6cebe9b33f4be176116755fabd1a12e91ceeb84089db`,
+and `ev_58520217647531e5dc1c2993599a002f17b6820f4b120b2cd4391412612961aa`.
+Instruction record `ev_40915e6c668ffde956527cfb7d5434f86ffe504b5786bc094f6b64f7e9a1ef16`
+retains the complete contiguous dispatcher body (`0x1805bfd70`–`0x1805c057a`)
+and the branch/call locations above. Pseudocode is provider output, not original
+source; unidentified virtual cleanup targets remain unidentified.
+
 ### Authority validation and resource debit
 
 The client-image server RPC implementation is `Server_ConstructHologram_Implementation`
@@ -2271,6 +2580,27 @@ Predictions and limits:
 - The explicit DeferredBeginPlay call precedes outer Upgrade dispatch. This does not establish that replacement BeginPlay, registration or chain export already executed.
 - Conditional lift-item export through replacement registration needs an additional timing premise: replacement `AddConveyor` must actually execute before outer Upgrade and reach the group still holding the old lift and chain.
 - Native configuration and `ReceiveConfigure*` are distinct calls. Child eligibility, Blueprint event behavior, payment success, server authorization and Engine lifecycle execution remain separate contracts. No rollback guarantee is implied.
+
+### Native belt direction initialization
+
+A programmatically routed belt must initialize its hologram connector directions
+after assigning snapped peers. Assigning the peer references or spline alone
+does not perform this step. Linux
+`AFGConveyorBeltHologram::SetupSnappedConnectionDirections` at `0x1cb58c0`
+selects the applicable snapped connection, writes its compatible direction to
+the first hologram connector and its direction to the second; without a usable
+snap it writes input/output defaults. The retained complete body is evidence
+`ev_d78b15bb08764456ef168f26bddeb8eee3f28c460614d0ce348cbe80775a1170`
+for ELF SHA-256
+`637c2c70e65f6386697a6a5f5746f64b187d2fcfeee56df1aeef3f172268c0c1`.
+
+The Windows server belt `ConfigureComponents` at `0x180a64330` copies those
+hologram directions to the built connectors before calling `CanConnectTo` and
+`SetConnection` (evidence
+`ev_d7ec0e9dd3aea58b0b0dfb7a994a7b798e8739eab82cf9b183b6423649174cff`).
+Consequently, preserve this initialization when a generated route replaces
+preview endpoints with the exact returned actors. Shape, material cost and
+successful actor construction are insufficient proof of connected endpoints.
 
 ### Native slots and reflected overrides are distinct
 
@@ -2683,6 +3013,29 @@ retain that work rather than apply every removal and registration step again.
    lifecycle, register through the native topology path once. `AddConveyor` (`0x180667900`)
    appends or merges membership and is not an idempotent ensure-registered operation.
    Normal `BeginPlay → AddBuildable → AddToTickGroup` already reaches it.
+   Preserve the outer tick-registration contract as well: the inspected server
+   `AddToTickGroup` (`0x1806694e0`) marks the conveyor worker-bucket cache dirty
+   before calling `AddConveyor`; `RemoveFromTickGroup` (`0x180694370`) calls
+   `RemoveConveyor` and marks that cache dirty. Calling the inner functions alone
+   does not perform those writes. Evidence:
+   `ev_3428b4421ab5fa9ae91b9e66c504f40cea5b4bf8ec1bb343de236696c3b9a964`,
+   `ev_e67fe04f601cb4a424a0cbd6e99abe0bea1550989e77c3ffdea6eed5d56ccbfa`.
+   The matching Linux ELF wrappers independently confirm the same ordering:
+   `AddToTickGroup` at `0x1884520` writes the dirty byte before `AddConveyor`,
+   and `RemoveFromTickGroup` at `0x1886d80` writes it after `RemoveConveyor`.
+   Evidence: `ev_6d9bb33e71bd9348da60c81cd94f9613aa019749a900eeee04604e1a38b20877`,
+   `ev_4e8084b5ac952fc88bdd6a4c0fc8d39807ccc10547827fddbe94f92654169507`.
+   A coherent primary group array therefore does not certify worker scheduling.
+   A controlled failure after deferred support-belt wiring had a clear dirty flag
+   and a worker-cache group absent from all 5,805 primary groups. Its reused
+   memory supplied an invalid chain receiver to `Factory_Tick+0x13`, failing in
+   `AActor::HasActorBegunPlay`. The immediate reciprocal graph and cargo checks
+   had passed. The affected new group itself was scheduled once: allocator reuse
+   made that narrow check pass while another deleted group remained cached.
+   Wait for the native cache rebuild, reject cached pointers absent from the
+   primary owner or duplicated in the cache, and verify affected current groups
+   are scheduled before completing the operation. Equal counts alone do not
+   establish pointer identity. Do not retain or reinstall deleted group pointers.
 6. Preserve native ordering and cached links. `AssignConveyorTickOrder`
    (`0x18066af00`) writes next-conveyor links, member tick states and shared-output
    ownership. Array order and bucket IDs alone do not supply those fields.

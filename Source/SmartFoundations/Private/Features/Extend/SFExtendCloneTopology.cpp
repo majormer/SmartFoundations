@@ -346,6 +346,7 @@ FSFCloneTopology FSFCloneTopology::FromSource(const FSFSourceTopology& Source, c
         DistHolo.Role = TEXT("distributor");
         DistHolo.SourceId = Chain.Distributor.Id;
         DistHolo.Customization = Chain.Distributor.Customization;  // [#477]
+        DistHolo.DistributorSettings = Chain.Distributor.DistributorSettings;
         DistHolo.SourceClass = Chain.Distributor.Class;
         DistHolo.SourceChain = Chain.ChainId;
         DistHolo.SourceSegmentIndex = -1;
@@ -411,8 +412,7 @@ FSFCloneTopology FSFCloneTopology::FromSource(const FSFSourceTopology& Source, c
             }
             else if (Seg.Type == TEXT("passthrough"))
             {
-                // Issue #260: Pipe floor holes need explicit cloning (unlike lift floor holes
-                // which are auto-created by conveyor lift construction)
+                // Floor holes are separate native actors with explicit priced clone roles.
                 SegHolo.Role = TEXT("passthrough");
                 SegHolo.HologramClass = TEXT("ASFPassthroughChildHologram");
             }
@@ -784,6 +784,7 @@ FSFCloneTopology FSFCloneTopology::FromSource(const FSFSourceTopology& Source, c
         PassHolo.HologramClass = TEXT("ASFPassthroughChildHologram");
         PassHolo.BuildClass = PassSeg.Class;
         PassHolo.RecipeClass = PassSeg.RecipeClass;
+        PassHolo.Thickness = PassSeg.Thickness;
         PassHolo.Transform = PassSeg.Transform.WithOffset(FSFVec3(Offset));
         PassHolo.bConstructible = true;
         PassHolo.bPreviewOnly = false;
@@ -793,6 +794,14 @@ FSFCloneTopology FSFCloneTopology::FromSource(const FSFSourceTopology& Source, c
         Result.ChildHolograms.Add(PassHolo);
         PassthroughCloneIndex++;
     }
+
+    // Lift attachment slots are clone identities, never historical actor names.
+    // All hole roles exist now, including spatially captured lift floor holes.
+    for (auto& Holo : Result.ChildHolograms)
+        if (Holo.bHasLiftData)
+            for (auto& Hole : Holo.LiftData.PassthroughCloneIds)
+                if (!Hole.IsEmpty())
+                    if (const auto* Clone = SourceIdToHologramId.Find(Hole)) Hole = *Clone;
 
     // ========================================================================
     // PHASE 2.7: Generate Wall Hole Clone Holograms
@@ -1342,7 +1351,8 @@ namespace CaptureHelpers
         AFGBuildablePassthrough* Hole = Cast<AFGBuildablePassthrough>(Buildable);
         if (!Hole) return;
         Segment.Thickness = Hole->GetSnappedBuildingThickness();
-        if (Hole->GetClass()->GetName() != TEXT("Build_FoundationPassthrough_Pipe_C")) return;
+        const FName Class = Hole->GetClass()->GetFName();
+        if (Class != TEXT("Build_FoundationPassthrough_Pipe_C") && Class != TEXT("Build_FoundationPassthrough_Lift_C")) return;
         Segment.bHasPassthroughLinks = true;
         auto Capture = [&](UFGConnectionComponent* Connection, FSFConnectionRef& Ref)
         {
@@ -1429,33 +1439,14 @@ namespace CaptureHelpers
         FTransform BottomTransform = Lift->GetActorTransform();
         Result.BottomTransform = FSFTransform(BottomTransform);
         
-        // Issue #260: Capture passthrough references for half-height lift rendering
-        // Use reflection to access private mSnappedPassthroughs array
-        FProperty* SnappedProp = AFGBuildableConveyorLift::StaticClass()->FindPropertyByName(TEXT("mSnappedPassthroughs"));
-        if (SnappedProp)
-        {
-            TArray<AFGBuildablePassthrough*>* PassthroughArray = 
-                SnappedProp->ContainerPtrToValuePtr<TArray<AFGBuildablePassthrough*>>(Lift);
-            
-            if (PassthroughArray && PassthroughArray->Num() > 0)
-            {
-                Result.PassthroughCloneIds.SetNum(PassthroughArray->Num());
-                for (int32 i = 0; i < PassthroughArray->Num(); ++i)
-                {
-                    AFGBuildablePassthrough* PT = (*PassthroughArray)[i];
-                    if (PT)
-                    {
-                        // Store passthrough actor name as CloneId (will be matched during spawn)
-                        Result.PassthroughCloneIds[i] = PT->GetName();
-                    }
-                }
-                
-                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("📋 CAPTURE: Lift %s has %d passthroughs: [%s]"),
-                    *Lift->GetName(), Result.PassthroughCloneIds.Num(),
-                    *FString::Join(Result.PassthroughCloneIds, TEXT(", ")));
-            }
-        }
-        
+        // Capture native slots through the typed accessor. Names are temporary
+        // source IDs only; clone generation remaps them to exact new hole roles.
+        const auto Passthroughs = Lift->GetSnappedPassthroughs();
+        Result.PassthroughCloneIds.SetNum(Passthroughs.Num());
+        for (int32 Index = 0; Index < Passthroughs.Num(); ++Index)
+            if (auto* Hole = Passthroughs[Index])
+                Result.PassthroughCloneIds[Index] = IsValid(Hole) ? Hole->GetName() : TEXT("invalid_passthrough");
+
         return Result;
     }
     
@@ -1477,6 +1468,7 @@ namespace CaptureHelpers
             Result.Distributor.Id = GetActorId(Dist);
             Result.Distributor.Class = Dist->GetClass()->GetName();
             Result.Distributor.Customization.CaptureFrom(Dist->GetCustomizationData_Implementation());
+            Result.Distributor.DistributorSettings.Capture(Dist);
             // [#477] Lane appearance: sample the chain's first belt NOW (same source the live
             // LaneColorMap uses) - lanes are generated segments and can't be resampled later.
             if (Chain.Conveyors.Num() > 0 && Chain.Conveyors[0].IsValid())

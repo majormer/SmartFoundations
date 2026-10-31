@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "FGRemoteCallObject.h"
+#include "FGConstructionMessageInterface.h"
 #include "Features/Spacing/SFSpacingTypes.h"
 #include "Features/Scaling/SFScalingSpec.h"
 #include "Features/Extend/SFExtendTypes.h"      // FSFExtendTopology ([EXTEND-MP] topology RCO)
@@ -28,6 +29,11 @@ class SMARTFOUNDATIONS_API USFRCO : public UFGRemoteCallObject
 public:
 	UFUNCTION(Server, Reliable)
 	void Server_SetSmartSessionEnabled(bool bEnabled);
+    /** Atomic plan/native payload envelope; the authority re-derives and validates the topology. */
+    UFUNCTION(Server, Reliable, WithValidation)
+    void Server_ConstructExtendNative(FNetConstructionID Id, FConstructHologramMessage Data, FSFExtendCommitSpec Intent);
+    UFUNCTION(Client, Reliable)
+    void Client_RejectExtendNative(FNetConstructionID Id, FGuid RequestId);
 
 	//~ Begin UFGRemoteCallObject Interface
 	virtual bool ShouldRegisterRemoteCallObject(const class AFGGameMode* GameMode) const override;
@@ -196,6 +202,18 @@ public:
 	 */
 	UFUNCTION(Server, Reliable, WithValidation)
 	void Server_StartUpgrade(FSFUpgradeExecutionParams Params);
+	/** Synchronization only; never retains selection, pays or constructs. */
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_RequestUpgradeWorldContext(FGuid Challenge);
+	UFUNCTION(Client, Reliable)
+	void Client_ReceiveUpgradeWorldContext(FGuid Challenge, FGuid AuthorityWorldGeneration);
+    /** Shared construction context synchronization; never queues an action. */
+    UFUNCTION(Server, Reliable, WithValidation)
+    void Server_RequestConstructionWorldContext(FGuid Challenge);
+    UFUNCTION(Client, Reliable)
+    void Client_ReceiveConstructionWorldContext(FGuid Challenge, FGuid AuthorityWorldGeneration);
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_CancelUpgrade(FGuid RequestId, int64 RequestSequence, FGuid AuthorityWorldGeneration);
 
 	/** Server sends the execution result back; injected into the client's local execution
 	 *  service so panel delegates fire as in SP. */

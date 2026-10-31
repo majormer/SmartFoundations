@@ -97,6 +97,25 @@ bool USFSubsystem::IsSmartEnabledForPlayer(APlayerController* PC) const
 void USFSubsystem::SyncSmartSessionStateToAuthority(AFGPlayerController* PC)
 {
     if (!PC || !PC->IsLocalController()) return;
+    // [MP-SEAM] Request context while the build gun is active, before final fire.
+    // A response is bound to this subsystem/controller challenge, not an old world.
+    if (GetWorld()->GetNetMode() == NM_Client)
+    {
+        if (ConstructionContextController != PC)
+        {
+            ConstructionContextController = PC;
+            ConstructionContextChallenge = FGuid::NewGuid();
+            RemoteConstructionWorldGeneration.Invalidate();
+            LastConstructionContextRequestSeconds = -1000.0;
+        }
+        const double Now = FPlatformTime::Seconds();
+        if (!RemoteConstructionWorldGeneration.IsValid() && Now - LastConstructionContextRequestSeconds >= 1.0)
+            if (USFRCO* RCO = PC->GetRemoteCallObjectOfClass<USFRCO>())
+            {
+                LastConstructionContextRequestSeconds = Now;
+                RCO->Server_RequestConstructionWorldContext(ConstructionContextChallenge);
+            }
+    }
     if (SessionStateController != PC) bSmartSessionStatePending = true;
     if (!bSmartSessionStatePending) return;
     if (GetWorld()->GetNetMode() != NM_Client)
@@ -111,4 +130,75 @@ void USFSubsystem::SyncSmartSessionStateToAuthority(AFGPlayerController* PC)
         bSmartSessionStatePending = false;
         SessionStateController = PC;
     }
+}
+
+void USFSubsystem::AcceptConstructionWorldContext(AFGPlayerController* PC, FGuid Challenge, FGuid Generation)
+{
+    if (GetWorld() && GetWorld()->GetNetMode() == NM_Client && IsValid(PC) && PC->IsLocalController()
+        && ConstructionContextController == PC && PC->GetWorld() == GetWorld()
+        && Challenge.IsValid() && Challenge == ConstructionContextChallenge && Generation.IsValid())
+        RemoteConstructionWorldGeneration = Generation;
+}
+
+bool USFSubsystem::StampRemoteConstructionRequest(AFGPlayerController* PC, FSFExtendCommitSpec& Spec)
+{
+    SyncSmartSessionStateToAuthority(PC);
+    if (!Spec.bValid || !GetWorld() || GetWorld()->GetNetMode() != NM_Client
+        || ConstructionContextController != PC || !RemoteConstructionWorldGeneration.IsValid()) return false;
+    Spec.RequestId = FGuid::NewGuid();
+    Spec.RequestSequence = AllocateConstructionRequestSequence();
+    Spec.AuthorityWorldGeneration = RemoteConstructionWorldGeneration;
+    return Spec.RequestSequence > 0;
+}
+
+void USFSubsystem::PrepareOutgoingExtendIntent(AFGHologram* Root, const FSFExtendCommitSpec& Spec)
+{
+    for (auto It = OutgoingExtendIntents.CreateIterator(); It; ++It)
+        if (!It.Key().ResolveObjectPtr()) It.RemoveCurrent();
+    if (IsValid(Root) && Root->GetWorld() == GetWorld() && Spec.RequestId.IsValid())
+        OutgoingExtendIntents.Add(FObjectKey(Root), Spec);
+}
+
+bool USFSubsystem::BindOutgoingExtendConstructionId(AFGHologram* Root, FNetConstructionID Id)
+{
+    if (!IsValid(Root) || GetWorld()->GetNetMode() != NM_Client) return true;
+    const auto* Spec = OutgoingExtendIntents.Find(FObjectKey(Root));
+    if (!Spec) return true;
+    const FString NativeKey = Id.ToString();
+    if (const auto* Existing = SerializedExtendIntents.Find(NativeKey))
+        if (Existing->RequestId != Spec->RequestId)
+        {
+            // Never pair a wrapping native ID with the wrong operation. The
+            // wrapper consumes this explicit refusal and clears only that preview.
+            auto Refused = *Spec;
+            Refused.bValid = false;
+            SerializedExtendIntents.Add(NativeKey, Refused);
+            OutgoingExtendIntents.Remove(FObjectKey(Root));
+            return false;
+        }
+    SerializedExtendIntents.Add(NativeKey, *Spec);
+    OutgoingExtendIntents.Remove(FObjectKey(Root));
+    return true;
+}
+
+bool USFSubsystem::TakeOutgoingExtendIntent(FNetConstructionID Id, FSFExtendCommitSpec& Out)
+{
+    const FString Key = Id.ToString();
+    if (!SerializedExtendIntents.RemoveAndCopyValue(Key, Out)) return false;
+    if (Out.bValid) InFlightExtendRequests.Add(Key, Out.RequestId);
+    return true;
+}
+
+bool USFSubsystem::AcceptExtendNativeRejection(FNetConstructionID Id, FGuid RequestId)
+{
+    const FString Key = Id.ToString();
+    const auto* Expected = InFlightExtendRequests.Find(Key);
+    if (!Expected || *Expected != RequestId) return false;
+    InFlightExtendRequests.Remove(Key);
+    return true;
+}
+
+void USFSubsystem::ForgetOutgoingExtendConstructionId(FNetConstructionID Id)
+{
+    InFlightExtendRequests.Remove(Id.ToString());
 }

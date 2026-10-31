@@ -984,6 +984,10 @@ void USFExtendScaledService::SpawnScaledExtendPreviews()
             SFExtendPowerConnections::RemapCellTargets(Holo, ClonePrefix, PrevClonePrefix);
             if (!Holo.PassthroughTop.Target.IsEmpty()) Holo.PassthroughTop.Target = ClonePrefix + Holo.PassthroughTop.Target;
             if (!Holo.PassthroughBottom.Target.IsEmpty()) Holo.PassthroughBottom.Target = ClonePrefix + Holo.PassthroughBottom.Target;
+            if (Holo.bHasLiftData)
+                for (auto& Hole : Holo.LiftData.PassthroughCloneIds)
+                    if (!Hole.IsEmpty()) Hole = ClonePrefix + Hole;
+
 
             // === Conn0 target resolution ===
             if (OrigConn0Target == TEXT("parent"))

@@ -10,7 +10,7 @@ class AFGBlueprintProxy;
 class FSFReplacementGroupTransfer
 {
 public:
-	FSFReplacementGroupTransfer(AFGBuildable* Original, bool bEnabled);
+	FSFReplacementGroupTransfer(AFGBuildable* Original, bool bEnabled, bool bKeepSurvivingOriginal = false);
 	~FSFReplacementGroupTransfer();
 	FSFReplacementGroupTransfer(const FSFReplacementGroupTransfer&) = delete;
 	FSFReplacementGroupTransfer& operator=(const FSFReplacementGroupTransfer&) = delete;
@@ -22,4 +22,5 @@ private:
 	TWeakObjectPtr<AFGBuildable> Original;
 	TWeakObjectPtr<AFGBuildable> AppliedReplacement;
 	TWeakObjectPtr<AFGBlueprintProxy> Group;
+	bool bKeepOriginalOnFailure = false;
 };

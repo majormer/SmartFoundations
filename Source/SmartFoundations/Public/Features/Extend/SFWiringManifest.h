@@ -247,20 +247,6 @@ struct SMARTFOUNDATIONS_API FSFWiringManifest
      */
     int32 ExecuteWiring(UWorld* World);
     
-    /**
-     * Create chain actors for all wired conveyor belts
-     * Must be called AFTER ExecuteWiring to ensure connections are established
-     * 
-     * This walks chains from source distributors through lane segments to clone
-     * distributors and then to the factory, processing conveyors in order to
-     * ensure proper chain unification.
-     * 
-     * @param World The world context
-     * @param AdditionalActors Map of CloneId -> AActor* for lane segments and other actors
-     *                         built through ConfigureComponents (not in BuiltBuildables)
-     * @return Number of conveyors with valid chain actors
-     */
-    int32 CreateChainActors(UWorld* World, const TMap<FString, AActor*>& AdditionalActors = TMap<FString, AActor*>());
     
     /**
      * Organize belt connections into ordered chains for sequential wiring
@@ -281,14 +267,6 @@ struct SMARTFOUNDATIONS_API FSFWiringManifest
     bool WireSingleBeltAndVerify(const FSFWiringConnection& Connection, UWorld* World, 
         class AFGConveyorChainActor*& OutChainActor) const;
     
-    /**
-     * Schedule deferred chain rebuild for conveyors
-     * This runs on the next frame to avoid race conditions with factory tick
-     * 
-     * @param World The world context
-     * @param Conveyors Array of conveyors to rebuild chains for
-     */
-    static void ScheduleDeferredChainRebuild(UWorld* World, const TArray<class AFGBuildableConveyorBase*>& Conveyors);
     
     /**
      * Rebuild pipe networks for all pipes in this manifest

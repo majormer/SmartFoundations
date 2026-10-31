@@ -10,6 +10,7 @@
 
 #include "SFGameInstanceModule.h"
 #include "SmartFoundations.h"
+#include "Features/Restore/SFRestoreService.h"
 #include "Hologram/FGHologram.h"
 #include "Hologram/FGConveyorBeltHologram.h"
 #include "Hologram/FGConveyorAttachmentHologram.h"
@@ -67,8 +68,8 @@
 // MP Slice 0 (Phase 1) - construct payload guard.
 // FConstructHologramMessage stores the full hologram tree in one TArray<uint8>. The array/RPC
 // property ceiling is 65,535 bytes; refuse Smart grids above a conservative 60,000-byte margin
-// before Server_ConstructHologram executes. This applies in every net mode because standalone and
-// listen-host placements still serialize the full child tree before local authority processes it.
+// before Server_ConstructHologram executes. The inspected native authority-role branch skips
+// the network writer; a local authority payload must not be assumed to contain the child tree.
 static constexpr int32 SF_MP_CONSTRUCT_LOG_BYTES = 20000;
 
 static const TCHAR* SF_ConstructNetModeName(const ENetMode NetMode)
@@ -85,6 +86,22 @@ static const TCHAR* SF_ConstructNetModeName(const ENetMode NetMode)
 
 void USFGameInstanceModule::RegisterConstructPayloadGuardHook()
 {
+    // The native dispatcher allocates the ID and registers its pending hologram
+    // before serialization. Use this primary, non-virtual seam: the construction
+    // message interface's secondary-base virtual hooks have a retained crash boundary.
+    SUBSCRIBE_METHOD(AFGBuildableSubsystem::SpawnPendingConstructionHologram,
+        [](auto& scope, AFGBuildableSubsystem* self, FNetConstructionID Id, AFGHologram* Template, AFGBuildGun* Gun)
+        {
+            if (self && Template && self->GetWorld()->GetNetMode() == NM_Client)
+                if (auto* SS = USFSubsystem::Get(self->GetWorld())) SS->BindOutgoingExtendConstructionId(Template, Id);
+        });
+    SUBSCRIBE_METHOD_AFTER(AFGBuildableSubsystem::RemovePendingConstructionHologram,
+        [](AFGBuildableSubsystem* self, FNetConstructionID Id)
+        {
+            if (self && self->GetWorld()->GetNetMode() == NM_Client)
+                if (auto* SS = USFSubsystem::Get(self->GetWorld())) SS->ForgetOutgoingExtendConstructionId(Id);
+        });
+
 	SUBSCRIBE_METHOD(
 		UFGBuildGunStateBuild::Server_ConstructHologram,
 		[](auto& scope, UFGBuildGunStateBuild* self, FNetConstructionID clientNetConstructID, FConstructHologramMessage data)
@@ -99,6 +116,34 @@ void USFGameInstanceModule::RegisterConstructPayloadGuardHook()
 			{
 				return;
 			}
+
+            if (World->GetNetMode() == NM_Client)
+            {
+                auto* SS = USFSubsystem::Get(World);
+                FSFExtendCommitSpec Intent;
+                if (SS && SS->TakeOutgoingExtendIntent(clientNetConstructID, Intent))
+                {
+                    if (!Intent.bValid || SFConstructPayloadGuard::ShouldReject(data.SerializedHologramData.Num())
+                        || data.NumBits < 0 || data.NumBits > int64(data.SerializedHologramData.Num()) * 8)
+                    {
+                        self->Client_OnBuildableFailedConstruction_Implementation(clientNetConstructID);
+                        SS->ShowSmartNotice(NSLOCTEXT("SmartFoundations", "ExtendEnvelopeRefused", "This construction request could not be sent safely. Re-select the source and try again.").ToString());
+                        scope.Cancel();
+                        return;
+                    }
+                    auto* Pawn = self->GetBuildGun() ? self->GetBuildGun()->GetInstigator() : nullptr;
+                    auto* PC = Pawn ? Cast<AFGPlayerController>(Pawn->GetController()) : nullptr;
+                    if (auto* RCO = PC ? PC->GetRemoteCallObjectOfClass<USFRCO>() : nullptr)
+                        RCO->Server_ConstructExtendNative(clientNetConstructID, data, Intent);
+                    else
+                    {
+                        self->Client_OnBuildableFailedConstruction_Implementation(clientNetConstructID);
+                        SS->ShowSmartNotice(NSLOCTEXT("SmartFoundations", "ExtendEnvelopeUnavailable", "The server connection is unavailable. Try building again.").ToString());
+                    }
+                    scope.Cancel();
+                    return;
+                }
+            }
 
 			// Scope strictly to Smart scaled grids. Untagged vanilla single placements and
 			// unscaled blueprints retain their normal path. Smart-scaled blueprint grids are
@@ -276,7 +321,37 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 
 			// A step-advance input (multi-step holograms) is NOT a fire: nothing serializes, so
 			// nothing may be captured, staged, stripped, or destroyed here.
-			if (!SF_InputWillConstruct(Holo))
+			const bool bFinalNativeStep = SF_InputWillConstruct(Holo);
+            if (USFSubsystem* InputSS = USFSubsystem::Get(World))
+            {
+                if (USFExtendService* Extend = InputSS->GetExtendService())
+                {
+                    const auto* Pawn = Holo->GetConstructionInstigator();
+                    const auto* Restore = InputSS->GetRestoreService();
+                    if (bFinalNativeStep && Pawn && Pawn->IsLocallyControlled()
+                        && Restore && Restore->IsRestoreSessionActive() && !Extend->OwnsRestoredPreview(Holo))
+                    {
+                        // Between native parent generations a module is still armed,
+                        // but its complete preview/quote is not ready. Never let a
+                        // quick fire fall through into a lone vanilla parent build.
+                        scope.Cancel();
+                        return;
+                    }
+                    if ((!InputSS->GetWalkService() || !InputSS->GetWalkService()->IsActive())
+                        && Extend->QueueNativeBuildInput(self, isInputFromARelease, bFinalNativeStep,
+                            [](UFGBuildGunStateBuild* LiveReceiver, bool bReleased)
+                            {
+                                // Named native entry, under an exact one-use owner ticket.
+                                // The first pass returned before staging/teardown; no scope is retained.
+                                LiveReceiver->InternalExecuteDuBuildStepInput(bReleased);
+                            }))
+                    {
+                        scope.Cancel();
+                        return;
+                    }
+                }
+            }
+			if (!bFinalNativeStep)
 			{
 				return;
 			}
@@ -390,7 +465,15 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 								{
 									if (USFRCO* RCO = PC->GetRemoteCallObjectOfClass<USFRCO>())
 									{
-										RCO->Server_StageExtendCommit(ExtendSpec);
+                                        if (!SS || !SS->StampRemoteConstructionRequest(PC, ExtendSpec))
+                                        {
+                                            if (SS) SS->ShowSmartNotice(NSLOCTEXT("SmartFoundations", "ConstructionContextPending", "Synchronizing construction with the server. Try building again.").ToString());
+                                            scope.Cancel();
+                                            return;
+                                        }
+                                        SS->PrepareOutgoingExtendIntent(Holo, ExtendSpec);
+                                        // The native pending-hologram hook pairs this value
+                                        // intent with its exact native payload in one RPC.
 										// Explicit scaling CLEAR: Extend hijacks the grid counters,
 										// and a stale scaling spec must never expand a factory grid
 										// on top of the Extend commit.
@@ -497,6 +580,7 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 					// live so the player can place in smaller sections. Conservative estimate:
 					// Include the reflected endpoint fields even on non-exact entries (they still
 					// serialize), plus name payload headroom and ~80B per spline point.
+                    bool InvalidBeltEndpoints = false;
 					int32 PlanBytesEstimate = 0;
 					for (const FSFConduitPlanEntry& Entry : Spec.ConduitPlan)
 					{
@@ -504,6 +588,11 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 						// object refs (~32B). Only captured paint adds swatch/finish refs, which may
 						// resolve to full object paths on first send; charge those only when present
 						// so unpainted plans are not taxed for paint they do not carry.
+                        InvalidBeltEndpoints |= !Entry.HasBoundedConveyorIntent();
+                        // Both reflected conveyor endpoints serialize for every entry, including
+                        // unused defaults. Account for class/reference/name first-send headroom.
+                        PlanBytesEstimate += 2048 + Entry.Cost.Num() * 256
+                            + 2 * (Entry.ConveyorFrom.PortName.ToString().Len() + Entry.ConveyorTo.PortName.ToString().Len());
 						PlanBytesEstimate += 384 + 32 + (Entry.PipeColor.bCaptured ? 256 : 0) + Entry.SplinePoints.Num() * 80
 							+ 2 * (Entry.PowerStart.ComponentName.ToString().Len() + Entry.PowerEnd.ComponentName.ToString().Len());
 					}
@@ -524,6 +613,12 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
                     PlanBytesEstimate += Spec.BlueprintRailCost.Num() * 256;
                     for (const auto& Seam : Spec.BlueprintVehicleSeams)
                         PlanBytesEstimate += 4096 + 160 * (Seam.Incoming.Spline.Num() + Seam.Outgoing.Spline.Num() + Seam.Bridge.Num()) + 256 * Seam.Cost.Num();
+                    if (InvalidBeltEndpoints)
+                    {
+                        if (auto* Notice = USFSubsystem::Get(World))
+                            Notice->ShowSmartNotice(NSLOCTEXT("SmartFoundations", "MP_MissingConveyorPeers", "The selected belt endpoints could not be captured. Refresh the placement before building.").ToString());
+                        scope.Cancel(); return;
+                    }
 					if (PlanBytesEstimate > 45000)
 					{
 						UE_LOG(LogSmartFoundations, Verbose,

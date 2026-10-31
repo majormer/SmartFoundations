@@ -1,7 +1,7 @@
 ---
 title: Extend, Restore and Upgrade — Native Conveyor Compliance
 type: DESIGN
-status: Proposed implementation; not runtime certified
+status: In progress; bounded stock belt/lift Windows standalone validation; full acceptance pending
 category: Development
 tags: [conveyors, chain-actors, extend, restore, upgrade, authority, lifecycle]
 ---
@@ -73,6 +73,29 @@ Preserve historical failure receipts and do-not-retest boundaries. Reopen native
 analysis only for a concrete missing premise, changed binary or distinct branch.
 
 ## 2. Establish shared operation ownership and the mutation boundary
+
+The conveyor Upgrade entry now retains request identity and value intent through
+the UI/RPC, queues admission through the shared coordinator, expands native owner
+leases before effects, and retains correlated terminal results. Cancellation does
+not discard unresolved ownership, and stale client results cannot complete a newer
+request. The initial physical adapter now uses native replacement/retirement,
+immediate per-owner cargo comparison, measured full-target debit, earned original
+refund and overflow checks, followed by native post-phase topology/membership
+verification. It does not invoke the legacy global repair path. This source path
+has bounded Windows standalone evidence for stock belt and empty/cargo lift
+replacement, including fresh-process persistence of the cargo lift and saved
+payer. This does not certify all native lifetimes, consumers or network modes.
+Typed cargo, actual passthrough/child references,
+designer and nonordinary group shapes still reject before effects pending their
+required adapters. Those gates do not reduce the final support contract. Native
+callback execution, request delivery, resource/cargo outcomes and all required
+branches still need acceptance evidence.
+
+The request protocol now carries an authority-issued world generation rather than
+assigning the current generation only after receipt. Context synchronization is
+separate from intent capture and retains no operation. Admission, replay intent,
+cancellation and result correlation compare the supplied generation. Verify this
+over actual RPCs, including stale delivery, before treating the protocol as qualified.
 
 Introduce an operation record shared by these consumers, with value intent,
 expected graph, affected cohort, exact returned identities, resource obligations,

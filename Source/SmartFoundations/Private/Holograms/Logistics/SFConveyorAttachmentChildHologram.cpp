@@ -8,10 +8,28 @@
 #include "Subsystem/SFSubsystem.h"
 #include "FGConstructDisqualifier.h"
 #include "Logging/LogMacros.h"
+#include "FGFactoryConnectionComponent.h"
 
 ASFConveyorAttachmentChildHologram::ASFConveyorAttachmentChildHologram()
 {
     // Minimal constructor - most behavior handled by base class
+}
+
+void ASFConveyorAttachmentChildHologram::SetCapturedDistributorSettings(const FSFCapturedDistributorSettings& Values)
+{
+    CapturedDistributorSettings = Values;
+    TArray<UFGFactoryConnectionComponent*> Ports; GetComponents(Ports);
+    for (auto* Port : Ports)
+        if (IsValid(Port))
+            if (const auto* Direction = Values.FindDirection(Port->GetName()))
+                Port->SetDirection(static_cast<EFactoryConnectionDirection>(*Direction));
+}
+
+void ASFConveyorAttachmentChildHologram::ConfigureComponents(AFGBuildable* Buildable) const
+{
+    Super::ConfigureComponents(Buildable);
+    if (CapturedDistributorSettings.bCaptured && !CapturedDistributorSettings.ApplyDirectionsBeforeBeginPlay(Buildable))
+        UE_LOG(LogSmartExtend, Warning, TEXT("Distributor native port configuration does not match captured roles for %s"), *GetNameSafe(Buildable));
 }
 
 void ASFConveyorAttachmentChildHologram::SetHologramLocationAndRotation(const FHitResult& hitResult)

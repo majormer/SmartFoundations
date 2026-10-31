@@ -395,6 +395,12 @@ public:
 	/** Queue the exact value snapshot carried by one construction commit. */
 	void QueueFactorySettingsApplication(AFGBuildable* TargetBuilding, class AFGCharacterPlayer* Player,
 		const FSFFactorySettingsSnapshot& Snapshot);
+	/** Invokes the existing settings applier only at an owned native mutation
+	 * boundary and after readiness. The caller must measure values and resources;
+	 * true means invoked, not successfully settled. */
+	bool InvokeOwnedFactorySettings(class USFConstructionOperationCoordinator& Coordinator,
+		class AFGBuildableFactory* Factory, class AFGCharacterPlayer* Player,
+		const FSFFactorySettingsSnapshot& Snapshot);
 
 private:
 	void TickPendingFactorySettingsApplications();

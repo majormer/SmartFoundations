@@ -28,6 +28,7 @@
 
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
+#include "UObject/ObjectKey.h"
 #include "FGFactoryConnectionComponent.h"
 #include "FGPipeConnectionComponent.h"
 #include "Hologram/FGHologram.h"  // For EHologramMaterialState
@@ -42,6 +43,8 @@
 #include "SFExtendService.generated.h"
 
 class AFGBuildable;
+struct FSFExtendCommitSpec;
+class UFGCircuitConnectionComponent;
 class AFGBuildableConveyorBase;
 class AFGBuildableConveyorBelt;
 class AFGBuildableConveyorLift;
@@ -66,6 +69,9 @@ class USFSubsystem;
 struct FSplinePointData;
 struct FSFCloneTopology;
 struct FSFWiringManifest;
+class FSFExtendWiringInvocation;
+struct FSFExtendNativeInputOperation;
+class FSFConstructionOperationRecord;
 
 // ESFExtendDirection enum moved to SFExtendDetectionService.h
 // Topology structs (FSFConnectionChainNode, FSFPipeConnectionChainNode, FSFExtendTopology) moved to SFExtendTypes.h
@@ -104,6 +110,46 @@ public:
 
     /** Initialize with owning subsystem reference */
     void Initialize(USFSubsystem* InSubsystem);
+
+    /** Preserve native construction/debit timing while correlating its wiring callbacks.
+     * This receipt arbitrates invocation only; cohort leases and settlement are separate. */
+    TSharedPtr<FSFExtendWiringInvocation> BeginNativeWiringCapture(AFGHologram* Root, FNetConstructionID NativeId);
+    void EndNativeWiringCapture(const TSharedPtr<FSFExtendWiringInvocation>& Invocation);
+    TSharedPtr<FSFExtendWiringInvocation> CaptureNativeWiringInvocation() const;
+    void BindNativeWiringParent(AFGHologram* Root, FNetConstructionID NativeId, AActor* Parent, const TArray<AActor*>& Children);
+    bool RunNativePostBuildWiring(const TSharedPtr<FSFExtendWiringInvocation>& Invocation, AFGBuildableFactory* Parent);
+    const FSFCloneTopology* GetCapturedWiringTopology() const;
+    const TMap<FString, TObjectPtr<AActor>>* GetCapturedWiringActors() const;
+    const TArray<FSFScaledExtendClone>* GetCapturedScaledWiringPlans() const;
+    AFGBuildable* ResolveCapturedWiringSource(const FString& Name) const;
+    bool IsExecutingCapturedWiring() const;
+    /** Conveyor edges for this invocation are owned by the native-phase adapter. */
+    bool IsExecutingOwnedConveyorWiring() const;
+    /** Bracket the original native Construct-then-pay continuation. */
+    bool PrepareOwnedNativePayment(AFGHologram* Root);
+    /** Retain bounded pre-effect refusal evidence for the operation summary. */
+    void NoteOwnedNativeInputRefusal(AFGHologram* Root, const TCHAR* Stage);
+    void ObserveOwnedNativePayment();
+    bool IsExecutingOwnedNativeInput() const;
+    bool PrepareOwnedLiftAttachments(AFGHologram* Lift);
+    /** Intercepts the legacy settings timer during an owned construction only. */
+    bool CaptureOwnedFactorySettingsRequest(AFGBuildable* Target, class AFGCharacterPlayer* Player);
+    /** Validate stock classes, captured settings and native floor-hole placement before construction/payment. */
+    bool ValidateCapturedConstructionPlan(AFGHologram* Root) const;
+    /** Returns true when native input is queued/rejected; the hook must cancel its current call.
+     * Dispatch must call the named native method, never capture the hook's scope. */
+    bool QueueNativeBuildInput(UFGBuildGunStateBuild* Receiver, bool bReleased, bool bFinalStep,
+        TFunction<void(UFGBuildGunStateBuild*, bool)> Dispatch);
+    /** Own the complete remote deserialize/validate/construct/pay envelope. */
+    bool QueueRemoteBuildInput(UFGBuildGunStateBuild* Receiver, const FSFExtendCommitSpec& Intent,
+        const FString& MessageDigest, TFunction<void(UFGBuildGunStateBuild*)> Dispatch,
+        TFunction<void()> RejectBeforeDispatch);
+    bool PrepareRemoteNativeInput(AFGHologram* Root);
+    bool EnterRemoteNativeEnvelope(UFGBuildGunStateBuild* Receiver);
+    bool MarkOwnedNativeConstructionInvoked(AFGHologram* Root);
+    /** Borrow only for the synchronous authority-isolation scope; never transfer registry ownership. */
+    bool AttachNativeInputOwner(USFExtendService* Owner);
+    void DetachNativeInputOwner();
 
     // ==================== Mode Management ====================
     // EXTEND mode is AUTOMATIC - activates when pointing at a compatible building
@@ -520,21 +566,7 @@ public:
 
     // ==================== Manifold Connections ====================
 
-    /**
-     * Wire manifold connections between source and clone distributors/junctions.
-     * Creates belts/pipes between the source building's distributors and the clone's distributors.
-     * @param SourceFactory The original factory building we extended from
-     * @param CloneFactory The newly constructed clone factory
-     */
-    void WireManifoldConnections(AFGBuildableFactory* SourceFactory, AFGBuildableFactory* CloneFactory);
 
-    /**
-     * Create a belt between two distributor connectors for manifold connection.
-     * @param FromConnector The output connector on the source distributor
-     * @param ToConnector The input connector on the clone distributor
-     * @return true if belt was created successfully
-     */
-    bool CreateManifoldBelt(UFGFactoryConnectionComponent* FromConnector, UFGFactoryConnectionComponent* ToConnector);
 
     /**
      * Create a pipe between two junction connectors for manifold connection.
@@ -559,14 +591,6 @@ public:
      */
     void WireManifoldPipe(AFGBuildablePipeline* BuiltPipe, UFGPipeConnectionComponentBase* SourceConnector, int32 CloneChainId);
 
-    /**
-     * Wire a manifold belt to its source and clone distributors after building.
-     * Called from SFConveyorBeltHologram::Construct() for manifold belts.
-     * @param BuiltBelt The just-built manifold belt
-     * @param SourceConnector The connector on the source distributor
-     * @param CloneChainId The chain ID to find the clone distributor
-     */
-    void WireManifoldBelt(AFGBuildableConveyorBelt* BuiltBelt, UFGFactoryConnectionComponent* SourceConnector, int32 CloneChainId);
 
     // ==================== Utility Functions ====================
 
@@ -606,6 +630,32 @@ protected:
     UFGBuildGunStateBuild* GetBuildGunBuildState(AFGBuildGun* BuildGun) const;
 
 private:
+    TSharedPtr<FSFExtendWiringInvocation> NativeWiringInvocation;
+    TSharedPtr<FSFExtendWiringInvocation> ExecutingNativeWiringInvocation;
+    bool bNativeWiringCaptureActive = false;
+    TMap<FObjectKey, TSharedPtr<FSFExtendNativeInputOperation>> NativeBuildInputs;
+    TSharedPtr<FSFExtendNativeInputOperation> ExecutingNativeBuildInput;
+    FSFConstructionOperationRecord* NativeInputRecordInCurrentStack = nullptr;
+    FGuid GetExecutingNativeInputId(AFGHologram* Root) const;
+    const TMap<FString, FObjectKey>* GetExecutingNativeInputSources() const;
+    bool CanExecuteOwnedInputWiring(const FGuid& Id) const;
+    bool ClaimOwnedInputWiring();
+    bool ExecuteOwnedConveyorWiring();
+    bool ApplyOwnedDistributorSettings();
+    bool ValidateOwnedDistributorSettings(const TSharedPtr<FSFExtendNativeInputOperation>& Operation) const;
+    bool ExecuteOwnedPowerWire(const FSFCloneHologram& Plan, UClass* WireClass,
+        UFGCircuitConnectionComponent* From, UFGCircuitConnectionComponent* To);
+    bool ValidateOwnedPowerWiring(const TSharedPtr<FSFExtendNativeInputOperation>& Operation) const;
+    bool HasObservedOwnedNativePayment() const;
+    void ContinueOwnedFactorySettings(const TSharedPtr<FSFExtendNativeInputOperation>& Operation,
+        FSFConstructionOperationRecord& Record);
+    void ObserveOwnedInputWiring();
+    void FinishOwnedNativeInputDispatch(const TSharedPtr<FSFExtendNativeInputOperation>& Operation,
+        FSFConstructionOperationRecord& Record);
+    void ObserveOwnedNativeInput(const TSharedPtr<FSFExtendNativeInputOperation>& Operation,
+        FSFConstructionOperationRecord& Record);
+    void CaptureOwnedInputOutputs(const TSharedPtr<FSFExtendWiringInvocation>& Invocation);
+    void ShutdownNativeBuildInputs();
     /** Owning subsystem */
     UPROPERTY()
     TWeakObjectPtr<USFSubsystem> Subsystem;

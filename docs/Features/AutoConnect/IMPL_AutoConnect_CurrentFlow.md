@@ -73,9 +73,16 @@ always measured between the actual logistics connectors (or a floor-hole face an
 
 Belt AutoConnect is centered on distributors, conveyor attachments, and stackable support workflows. `USFAutoConnectService::OnDistributorHologramUpdated` is the main refresh entry point. It clears stale previews, finds compatible connection pairs, then creates or updates `FBeltPreviewHelper` instances.
 
+`USFAutoConnectOrchestrator::ClearAllPreviews` also invalidates the cached
+evaluation signature. Matching inputs permit reuse only while their preview
+objects still exist. Without this invalidation, a forced refresh destroys a valid
+belt and then skips rebuilding it because the parent pose, tier and routing mode
+have not changed. Settings refreshes at a fixed pose must therefore recreate the
+preview before its cost and construction plan can be used.
+
 Important behavior:
 
-- Distributor-to-distributor connections are preferred where they form a chain.
+- Distributor-to-distributor connections are preferred where they form a chain. Their evaluation runs even when there are no nearby factory-side assignments; an empty factory candidate set must not skip standalone manifold construction.
 - Distributor-to-building connections fill compatible nearby inputs/outputs.
 - Distributor-to-building candidates must be within Nearby Logistics Range at their actual ports.
 - Stackable conveyor poles can create horizontal belt previews between adjacent supports.

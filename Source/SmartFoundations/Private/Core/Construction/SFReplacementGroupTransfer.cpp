@@ -33,8 +33,8 @@ bool FSFReplacementGroupTransfer::IsGroupHeld(AFGBlueprintProxy* InGroup)
 	return GroupHolds.Contains(InGroup);
 }
 
-FSFReplacementGroupTransfer::FSFReplacementGroupTransfer(AFGBuildable* InOriginal, bool bEnabled)
-	: Original(InOriginal)
+FSFReplacementGroupTransfer::FSFReplacementGroupTransfer(AFGBuildable* InOriginal, bool bEnabled, bool bKeepSurvivingOriginal)
+	: Original(InOriginal), bKeepOriginalOnFailure(bKeepSurvivingOriginal)
 {
 	if (!bEnabled || !IsValid(InOriginal) || !InOriginal->HasAuthority()
 		|| InOriginal->GetBlueprintDesigner()) return;
@@ -76,7 +76,7 @@ FSFReplacementGroupTransfer::~FSFReplacementGroupTransfer()
 	// Reconcile the original after native callbacks, including lifespan-retired lifts.
 	if (AFGBuildable* Old = Original.Get(); Old && ExistingGroup)
 	{
-		if (AppliedReplacement.IsValid())
+		if (AppliedReplacement.IsValid() && !(bKeepOriginalOnFailure && !Old->GetIsDismantled() && !Old->IsActorBeingDestroyed()))
 		{
 			Old->SetBlueprintProxy(nullptr);
 			ExistingGroup->UnregisterBuildable(Old);

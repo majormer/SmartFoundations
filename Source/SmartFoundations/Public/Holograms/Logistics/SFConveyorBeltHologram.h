@@ -6,6 +6,8 @@
 #include "Hologram/FGConveyorBeltHologram.h"
 #include "SFConveyorBeltHologram.generated.h"
 
+struct FSFConveyorBeltConstructionPeers;
+
 /**
  * Smart Conveyor Belt hologram with Auto-Connect support.
  * Always validates as valid to prevent blocking parent hologram placement.
@@ -16,6 +18,8 @@ class SMARTFOUNDATIONS_API ASFConveyorBeltHologram : public AFGConveyorBeltHolog
     GENERATED_BODY()
 
 public:
+    /** Blueprint native construction can retire duplicate ports before child Construct. */
+    void CaptureConstructionPeers(const FNetConstructionID& Id);
     // Constructor ensures ticking is enabled for runtime position corrections
     ASFConveyorBeltHologram();
 
@@ -67,6 +71,10 @@ public:
      * @return Belt material cost based on length and tier
      */
     virtual TArray<FItemAmount> GetCost(bool includeChildren) const override;
+    UFGFactoryConnectionComponent* GetSelectedFactoryPeer(int32 Index) const;
+    bool ValidateNativeConstruction();
+    TArray<FItemAmount> GetNativeConstructionCost() const;
+
 
     /**
      * #497: Preview belt children frequently carry a null mRecipe (their real cost comes from spline
@@ -233,6 +241,7 @@ private:
 	 *  class changes — invalidated at every mutation point via InvalidateCostCache(). Consumed only
 	 *  for SF_ExtendChild previews with a healthy spline, so the #357 zero-spline restoration inside
 	 *  GetCost (load-bearing: it repairs previews vanilla resets) still runs when needed. */
+    TSharedPtr<FSFConveyorBeltConstructionPeers> ConstructionPeers;
 	mutable TArray<FItemAmount> CachedSelfCost;
 	mutable bool bSelfCostCacheValid = false;
 

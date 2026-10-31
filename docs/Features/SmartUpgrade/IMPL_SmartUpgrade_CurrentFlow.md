@@ -10,15 +10,111 @@ related: [SFUpgradeExecutionService.h, SFUpgradeAuditService.h, SFUpgradeTravers
 
 # Smart Upgrade — Current Implementation Flow
 
-**Last Updated:** 2026-04-27  
-**Status:** Active, shipping  
+**Last Updated:** 2026-10-28
+**Status:** Conveyor contract migration; bounded standalone and Windows dedicated RPC evidence
 **Purpose:** Canonical reference for the Smart Upgrade feature implementation
 
 ---
 
 ## Overview
 
-Smart Upgrade can scan and upgrade existing logistics and power infrastructure. The main execution path is synchronous, uses vanilla hologram construction where possible, captures expected connections before destroying actors, repairs connections after replacement, then delegates conveyor chain actor stabilization to `USFChainActorService`.
+Smart Upgrade scans logistics and power infrastructure. Nonconveyor replacement
+retains its existing execution path. Conveyor requests now carry a stable request
+ID and sequence through the UI/RPC, retain immutable intent and correlated results,
+and enter the shared native-phase operation coordinator. Admission captures the
+affected native owners and acquires their leases before effects. Replays return
+the retained result or reject expired/changed intent; cancellation retains any
+unresolved obligations. A late client result cannot complete a newer request.
+Accepted queue admission publishes the matching pending result immediately;
+pending delivery does not broadcast terminal completion. Conveyor preflight
+checks the exact selected source and requested target class, and reports native
+blocking placement reasons rather than collapsing every rejection into one error.
+Remote requests also carry the authority's world generation. The panel primes a
+context-only RCO exchange before capturing an operation; synchronization retains
+no selection, reservation or deferred submission. A local challenge binds the
+response to the current service/requester, and a late response cannot replace an
+already established context. Cleanup invalidates that challenge. Authority compares
+the supplied generation before replay lookup, selection or effects; a mismatch
+returns a correlated rejection and makes the client synchronize again. Cancellation
+and result delivery also compare the generation. The generation belongs to immutable
+replay intent rather than being replaced with the server's current value on receipt.
+Real remote delivery has bounded Windows dedicated coverage below; actual travel,
+cancellation and general lifetime behavior remain under qualification.
+Standalone protocol validation rejected one different, well-formed generation
+before effects with unchanged actor/chain/group values and payer slots. Two
+synchronous deliveries of the same valid identity then produced one replacement
+and one construction-material settlement (request
+`B0112EC5430335FB6B403799A00FB596`, sequence 1). This is direct authority-service
+delivery evidence, not remote RPC, actual travel or cancellation evidence.
+Windows dedicated coverage includes the context exchange and correlated rejection
+echo through the real RCO, followed by two identical reliable request deliveries
+producing one server replacement and one completion result (request
+`CED4EB1F4982577A36D170A3B126712A`, sequence 1). The client observed the replacement
+with the same native NetGUID as authority, and the original replica disappeared.
+Actor names differed between the two worlds: observers must establish the native
+NetGUID association rather than assume that a saved server name identifies its
+client replica. `SpecificBuildables` carries object references in the actual
+request; actor-name lookup belongs to diagnostics, not the wire contract.
+
+Payment remains a separate oracle. A depot-first preference can leave player
+construction stock unchanged, and active uploaders can refill the depot after a
+setup snapshot. The dedicated case's old player-only prediction therefore did
+not independently qualify its debit. Material validation must control or account
+for the native source preference and external writers, and observe the relevant
+debit/refund boundaries. A completion result or an earlier empty-depot snapshot
+cannot replace that evidence.
+A controlled inventory-first Windows dedicated case used existing stock for the
+native Mk3-to-Mk4 quote: encased beams decreased from 30 to 6 and steel beams
+increased from 24 to 48, with one replacement and matching client/server native
+NetGUIDs (request `5CB7407946CEBC4D461BE2AADC6935E0`, sequence 1). That qualifies
+the observed debit/refund for this case; it does not qualify the earlier depot-first
+debit. A fresh dedicated process and client also loaded the earlier upgraded world
+with reciprocal graph, geometry, twelve stateless cargo items and all 78 factual
+saved payer slots preserved. Its prior authority token/request ID was rejected
+without effects in the reloaded world. Same-process travel, cancellation and general
+teardown remain separate requirements.
+Preflight and execution share native hologram frame preparation: a live,
+source-owned blocking hit, native hit validation, reset of the previous frame's
+disqualifiers, `UpdateHologramPlacement`, and placement/cost validation. The final
+source identity, target class and `CanConstruct` guards remain mandatory.
+The prepared authority hologram also runs paired native
+`PreConstructMessageSerialization` and `PostConstructMessageDeserialization` hooks.
+The first caches the current pose; the second restores it and lets the belt/lift
+override derive connection targets from the selected original. Native
+`ConfigureComponents` consumes those targets before the replacement begins play.
+Calling the post hook alone risks restoring an uninitialized pose. This local
+live-value preparation does not qualify network archive serialization.
+
+The initial source adapter performs native belt/lift replacement for its admitted
+ordinary stock shape, compares immediate stateless cargo ownership/order/offsets,
+checks actual material settlement, and waits for native topology/membership before
+completion. It does not invoke the former global repair workflow. Uncertain effects
+retain their operation and leases; they are not retried or reported as success.
+Native callback delivery alone does not qualify physical replacement, cargo or
+payment outcomes; those outcomes remain under runtime qualification.
+Bounded Windows standalone coverage exists for stock Mk2-to-Mk3 lifts: one empty
+lift and one blocked lift carrying twelve stateless items completed with exact
+material settlement, preserved geometry and native graph checks. The cargo case
+also survived a fresh-process save/load with descriptors, counts, order, local
+offsets and the original payer's inventory preserved. Correlated native request
+IDs were `FCC266FB41F5410531333CBC5B3CD46D` and
+`BCDFE35642F855418C1DA59E814F390B`, respectively (sequence 1 in separate worlds).
+Fresh isolated profiles can create a different player; persistence checks must
+resolve the saved payer rather than compare the new character's inventory.
+These cases do not qualify typed state, other shapes, dedicated servers, request
+replay, cancellation or general callback lifetime safety.
+A stock Mk1-to-Mk3 belt case also completed with unchanged saved/effective spline
+shape, native topology checks and twelve stateless items preserved on its affected
+downstream lift. Its construction ledger charged five steel beams and refunded
+five iron plates (request `FD61CBA8429F16D5F99814B875BACA14`, sequence 1).
+This does not establish cargo-bearing belt, arbitrary spline, variant or remote
+client coverage.
+Typed payloads, actual passthrough or child references, designer state and other
+group shapes still reject before effects while their adapters are unfinished.
+These temporary limits do not define the intended final feature scope.
+See the [compliance plan](../../Development/PLAN_ConveyorContractCompliance.md).
+The legacy replacement descriptions and failure evidence below explain the old
+call graph; they do not certify the new conveyor operation owner.
 
 ### Tier replacement in either direction
 
@@ -34,8 +130,10 @@ covers these selection boundaries.
 
 Authority checks recipe availability and the actual actor family's direction policy before
 materialization, so mixed-family or All tiers requests cannot lower a capacity-family actor.
-The existing exact net-charge/refund transaction applies in both logistics
-directions, with refunds earned only after successful replacement. Native group preservation
+Successful conveyor replacement retains the same final net cost, but reserves the
+**full target construction cost before Construct** and earns the original material
+refund only after verified source retirement. A failed retirement therefore does
+not leave a replacement paid only by an unearned refund. Native group preservation
 is controlled separately by the live option described below.
 
 ### Native dismantle-group preservation
@@ -61,7 +159,7 @@ The chain system is the fragile part. Large conveyor upgrades can leave orphaned
 
 ---
 
-## Current Status
+## Legacy replacement implementation
 
 - **Active and shipping.**
 - **Synchronous execution** — all pending replacements process in one frame to prevent factory tick workers from observing partial conveyor topology.
@@ -109,8 +207,8 @@ existing panel priority and all transform controls are unchanged.
 
 | Family | Execution | Tiers | Notes |
 |--------|-----------|-------|-------|
-| Belt | Supported | Mk1–Mk6 | Uses vanilla hologram upgrade path + explicit chain stabilization |
-| Lift | Supported | Mk1–Mk6 | Uses vanilla hologram upgrade path |
+| Belt | Initial native adapter; runtime unqualified | Mk1–Mk6 | Ordinary stock shape/stateless cargo; remaining required adapters unfinished |
+| Lift | Initial native adapter; runtime unqualified | Mk1–Mk6 | Ordinary stock shape/stateless cargo; passthrough and other required branches unfinished |
 | Pipe | Supported | Mk1–Mk2 | Uses `ASFPipelineHologram` path; preserves indicator/no-indicator style |
 | Pump | Audit/traversal context only | Mk1–Mk2 | Traversal can cross pumps; execution not implemented |
 | PowerPole | Supported | Mk1–Mk3 | Vanilla hologram upgrade path |

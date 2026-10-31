@@ -865,7 +865,8 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 		AutoConnectService->GetSkipSummary().BeltsTooSteep += AngleRejectedSideConnectors.Num();
 		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("   ⚠️ No potential connections found (%d angle-only rejections)"),
 			AngleRejectedSideConnectors.Num());
-		return;
+		// Factory-side assignments may be empty while distributor-to-distributor
+		// chaining below is still valid. Keep both workflows independent.
 	}
 
 	// ========================================
@@ -1292,8 +1293,8 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 	// for "same physical lane" that broke whenever the global building assignment handed two
 	// stacked splitters swapped port indices: the cross-level member then competed for back
 	// inputs inside the wrong lane and orphaned a legitimate member (missing lane belts).
-	// Membership still requires a building reservation (same population as before); only the
-	// grouping key changed from port name to geometry.
+	// Every distributor in the scaled row participates. Factory-side reservations
+	// are independent: a missing or occupied factory port must not erase a lane member.
 	//
 	// The lateral axis is the NON-dominant parent-local axis (same dominant-axis logic the
 	// per-lane chain sort uses). CalculateDistributorLaneIndex is unsuitable here: it indexes
@@ -1349,9 +1350,8 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 	};
 
 	TMap<int32, TArray<AFGHologram*>> DistributorsByInputIndex;
-	for (const auto& Pair : ReservedInputs)
+	for (AFGHologram* Distributor : Distributors)
 	{
-		AFGHologram* Distributor = Pair.Value;
 		if (!Distributor || !USFAutoConnectService::IsSplitterHologram(Distributor))
 		{
 			continue;
@@ -1599,10 +1599,8 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 	// port-name grouping broke when the building assignment handed stacked mergers swapped
 	// output indices, contaminating a lane with a cross-level member.
 	TMap<int32, TArray<AFGHologram*>> MergersByOutputIndex;
-	for (const auto& Pair : ReservedInputs)
+	for (AFGHologram* Distributor : Distributors)
 	{
-		AFGHologram* Distributor = Pair.Value;
-
 		// Check if this is a merger (building output → merger input)
 		if (!Distributor || !AutoConnectService->IsMergerHologram(Distributor))
 			continue;
@@ -1919,6 +1917,9 @@ void USFAutoConnectOrchestrator::LogManifoldPairings() const
 
 void USFAutoConnectOrchestrator::ClearAllPreviews()
 {
+	// A matching input signature can reuse only previews that still exist.
+	// Forced refreshes destroy them before EvaluateConnections runs again.
+	bHasLastEvalSignature = false;
 	LiftRoutePreviews.Empty();
 	if (!AutoConnectService)
 	{

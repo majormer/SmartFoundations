@@ -13,5 +13,5 @@ bool GetSelectedMeshes(AFGHologram* Hologram, TArray<UStaticMeshComponent*>& Out
 void Sync(AFGHologram* Parent, AFGHologram* Child);
 bool IsLocalProxyGridConstruction(AFGHologram* Parent);
 AFGHologram* SpawnConstructionCell(AFGHologram* Seed, AFGHologram* OwnerParent,
-    FName ChildName, const FTransform& Pose);
+    FName ChildName, const FTransform& Pose, bool bAttach = true);
 }

@@ -1957,7 +1957,8 @@ AFGHologram* USFAutoConnectService::UpdateOrCreateBeltForPolePair(
 	
 	// CREATE new belt hologram
 	UClass* BeltBuildClass = Subsystem->GetBeltClassForTier(BeltTier, nullptr);
-	if (!BeltBuildClass)
+	const TSubclassOf<UFGRecipe> BeltRecipe = Subsystem->GetBeltRecipeForTier(BeltTier);
+	if (!BeltBuildClass || !BeltRecipe)
 	{
 		UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🚧 STACKABLE BELT: No belt build class for tier %d"), BeltTier);
 		return nullptr;
@@ -1994,6 +1995,9 @@ AFGHologram* USFAutoConnectService::UpdateOrCreateBeltForPolePair(
 	BeltChild->SetReplicates(false);
 	BeltChild->SetReplicateMovement(false);
 	BeltChild->SetBuildClass(BeltBuildClass);
+	// Bind the selected native recipe before quoting or validating this preview.
+	// Late binding at commit can change the price from the recipe-less fallback.
+	BeltChild->SetRecipe(BeltRecipe);
 	BeltChild->Tags.AddUnique(FName(TEXT("SF_StackableChild")));
 	// [#497] BEFORE FinishSpawning: with actor collision already off, BeginPlay registers the
 	// clearance detector inert — no overlap storm against thousands of sibling detectors (the

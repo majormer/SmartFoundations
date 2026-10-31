@@ -1,4 +1,4 @@
-// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
+﻿// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 #pragma once
 #include "CoreMinimal.h"
 #include "ItemAmount.h"
@@ -24,6 +24,8 @@ namespace SFExtendCommitValidation
         friend void IsolateAuthority(USFSubsystem*, AFGHologram*);
     };
     bool IsRequestActive();
+    /** True only for an authoritative member of this request's successfully prepared tree. */
+    bool IsAuthoritativeAdmission(const AFGHologram* Hologram);
     const bool* FindPrepared(AFGHologram* Root);
     void SetPrepared(AFGHologram* Root, bool Valid);
     void IsolateAuthority(USFSubsystem* Subsystem, AFGHologram* Root);

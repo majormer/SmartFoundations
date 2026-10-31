@@ -156,183 +156,21 @@ void USFGameInstanceModule::DispatchLifecycleEvent(ELifecyclePhase Phase)
 
 void USFGameInstanceModule::RegisterBlueprintConstructHook()
 {
-	UE_LOG(LogSmartFoundations, Verbose, TEXT("⛓️ Registering AFGBlueprintHologram::Construct hook for chain actor rebuilding"));
-
-	// ========================================
-	// SML Hook: AFGBlueprintHologram::Construct (AFTER)
-	// ========================================
-	// Like AutoLink, we hook AFTER blueprint construction completes.
-	// At this point:
-	// - All children (including conveyors) have been spawned
-	// - Conveyors are NOT YET in the subsystem's tick arrays
-	// - We can safely do Remove→Connect→Add to rebuild chains
-	//
-	// This is the SAME timing AutoLink uses, and it's safe because
-	// factory tick hasn't started on these conveyors yet.
-
-	SUBSCRIBE_METHOD_VIRTUAL_AFTER(
-		AFGBlueprintHologram::Construct,
-		GetMutableDefault<AFGBlueprintHologram>(),
-		[](AActor* returnValue, AFGBlueprintHologram* hologram, TArray<AActor*>& out_children, FNetConstructionID NetConstructionID)
-		{
-			UE_LOG(LogSmartFoundations, Verbose, TEXT("⛓️ AFGBlueprintHologram::Construct AFTER: %s with %d children"),
-				*hologram->GetName(), out_children.Num());
-
-			// Get the world and subsystems
-			UWorld* World = hologram->GetWorld();
-			if (!World)
-			{
-				return;
-			}
-
-			AFGBuildableSubsystem* BuildableSubsystem = AFGBuildableSubsystem::Get(World);
-			if (!BuildableSubsystem)
-			{
-				return;
-			}
-
-			// Collect all conveyors from children
-			TArray<AFGBuildableConveyorBase*> BuiltConveyors;
-			for (AActor* Child : out_children)
-			{
-				if (AFGBuildableConveyorBase* Conveyor = Cast<AFGBuildableConveyorBase>(Child))
-				{
-					BuiltConveyors.Add(Conveyor);
-				}
-			}
-
-			if (BuiltConveyors.Num() == 0)
-			{
-				return;  // No conveyors to process
-			}
-
-			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⛓️ HOOK: Found %d conveyors in blueprint children"), BuiltConveyors.Num());
-
-			// Check if this is a Smart EXTEND build by looking for our subsystem/service
-			USFSubsystem* SmartSubsystem = USFSubsystem::Get(World);
-			USFExtendService* ExtendService = SmartSubsystem ? SmartSubsystem->GetExtendService() : nullptr;
-
-			// For each conveyor that has connections established, do Remove→Add to rebuild chains
-			// This is the AutoLink pattern - done DURING construction, BEFORE factory tick
-			int32 RebuildCount = 0;
-			for (AFGBuildableConveyorBase* Conveyor : BuiltConveyors)
-			{
-				if (!Conveyor || !Conveyor->IsValidLowLevel())
-				{
-					continue;
-				}
-
-				// Check if this conveyor has any connections
-				UFGFactoryConnectionComponent* Conn0 = Conveyor->GetConnection0();
-				UFGFactoryConnectionComponent* Conn1 = Conveyor->GetConnection1();
-
-				bool bHasConnection = (Conn0 && Conn0->IsConnected()) || (Conn1 && Conn1->IsConnected());
-
-				if (bHasConnection)
-				{
-					// AutoLink pattern: Remove → (connections already made) → Add
-					// This triggers chain actor rebuild with proper unification
-					UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⛓️ HOOK: Rebuilding chain for %s (Conn0=%s, Conn1=%s)"),
-						*Conveyor->GetName(),
-						Conn0 && Conn0->IsConnected() ? TEXT("connected") : TEXT("open"),
-						Conn1 && Conn1->IsConnected() ? TEXT("connected") : TEXT("open"));
-
-					BuildableSubsystem->RemoveConveyor(Conveyor);
-					BuildableSubsystem->AddConveyor(Conveyor);
-					RebuildCount++;
-				}
-			}
-
-			if (RebuildCount > 0)
-			{
-				UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⛓️ HOOK: Rebuilt chains for %d conveyors"), RebuildCount);
-
-				// Log chain status after rebuild
-				TSet<AFGConveyorChainActor*> UniqueChains;
-				for (AFGBuildableConveyorBase* Conveyor : BuiltConveyors)
-				{
-					if (Conveyor && Conveyor->IsValidLowLevel())
-					{
-						AFGConveyorChainActor* Chain = Conveyor->GetConveyorChainActor();
-						if (Chain)
-						{
-							UniqueChains.Add(Chain);
-						}
-					}
-				}
-
-				UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⛓️ HOOK: %d conveyors now belong to %d unique chain actors"),
-					BuiltConveyors.Num(), UniqueChains.Num());
-
-				for (AFGConveyorChainActor* Chain : UniqueChains)
-				{
-					UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("⛓️ HOOK:   Chain %s has %d segments"),
-						*Chain->GetName(), Chain->GetNumChainSegments());
-				}
-			}
-		}
-	);
-
-	UE_LOG(LogSmartFoundations, Verbose, TEXT("✅ AFGBlueprintHologram::Construct hook registered - chain actors will rebuild during construction"));
+    // Native Blueprint construction owns its returned conveyors' registration.
+    // The former global Construct-AFTER bounce also touched vanilla Blueprints
+    // and inferred a mutation fence from a synchronous return. No hook is needed.
+    // Smart's additional conveyor edges are owned by their construction adapter.
 }
 
-// #341: shared body for the belt-support parent Construct hooks (stackable / wall / ceiling).
-// Runs at the parent hologram's Construct-AFTER: synchronous, all child belts built + wired, and BEFORE
-// the factory tick - the timing Extend relies on. Registers the run's belts in-frame so vanilla builds one
-// chain per series-run. The SAME RemoveConveyor+AddConveyor off a timer crashes Factory_Tick (THESIS 6.16);
-// only the in-frame/pre-tick timing makes it safe.
-static void SF_RegisterStackBuiltRunInFrame(AFGBuildableHologram* hologram, const TCHAR* HookLabel)
+// Drain the placement-local stack bookkeeping after native construction. Each
+// conveyor was configured before its own BeginPlay and registered natively.
+static void SF_RegisterStackBuiltRunInFrame(AFGBuildableHologram* Hologram, const TCHAR* /*HookLabel*/)
 {
-	if (!hologram)
-	{
-		return;
-	}
-
-	// Only the grid PARENT carries children; child poles built inside Super::Construct have none, so this
-	// fires once per placement (not once per child pole/support).
-	if (hologram->GetHologramChildren().Num() == 0)
-	{
-		return;
-	}
-
-	UWorld* World = hologram->GetWorld();
-	AFGBuildableSubsystem* BuildableSubsystem = World ? AFGBuildableSubsystem::Get(World) : nullptr;
-	if (!BuildableSubsystem)
-	{
-		return;
-	}
-
-	// Drain the belts this placement built + wired. Empty => not a belt-support placement.
-	TArray<AFGBuildableConveyorBase*> StackBelts;
-	ASFConveyorBeltHologram::DrainStackBuiltConveyors(StackBelts);
-	if (StackBelts.Num() == 0)
-	{
-		return;
-	}
-
-	// In-frame, pre-tick Remove->Add (Extend's AutoLink pattern). The belts are already wired
-	// (connect-by-coincidence) and registered as solo chains; Remove->Add re-registers them with
-	// connections in place so vanilla unifies each series-run into one multi-segment chain.
-	int32 Rebuilt = 0;
-	for (AFGBuildableConveyorBase* Belt : StackBelts)
-	{
-		if (!Belt || !Belt->IsValidLowLevel())
-		{
-			continue;
-		}
-		UFGFactoryConnectionComponent* Conn0 = Belt->GetConnection0();
-		UFGFactoryConnectionComponent* Conn1 = Belt->GetConnection1();
-		const bool bHasConnection = (Conn0 && Conn0->IsConnected()) || (Conn1 && Conn1->IsConnected());
-		if (bHasConnection)
-		{
-			BuildableSubsystem->RemoveConveyor(Belt);
-			BuildableSubsystem->AddConveyor(Belt);
-			++Rebuilt;
-		}
-	}
-
-	UE_LOG(LogSmartFoundations, Verbose, TEXT("⛓️ #341 %s HOOK: in-frame rebuilt %d/%d belt-support belt(s) on %s"),
-		HookLabel, Rebuilt, StackBelts.Num(), *hologram->GetName());
+    if (!Hologram || Hologram->GetHologramChildren().IsEmpty()) return;
+    TArray<AFGBuildableConveyorBase*> Built;
+    ASFConveyorBeltHologram::DrainStackBuiltConveyors(Built);
+    // Do not Remove/Add already registered belts merely because they connect.
+    // This is bookkeeping only, not a chain settlement or success claim.
 }
 
 void USFGameInstanceModule::RegisterBeltSupportConstructHook()
@@ -356,7 +194,7 @@ void USFGameInstanceModule::RegisterBeltSupportConstructHook()
 		}
 	);
 
-	UE_LOG(LogSmartFoundations, Verbose, TEXT("✅ AFGConveyorPoleHologram::Construct hook registered (#341 belt-support chain registration: stackable/wall/ceiling)"));
+	UE_LOG(LogSmartFoundations, Verbose, TEXT("✅ AFGConveyorPoleHologram::Construct hook registered (#341 belt-support construction bookkeeping: stackable/wall/ceiling)"));
 }
 
 // [#368] Sync the player's vanilla build-gun clipboard recipe so vanilla's PasteSettings applies the

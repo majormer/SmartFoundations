@@ -1,4 +1,4 @@
-// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
+﻿// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
 /**
  * USFSubsystem - RPC handlers + configuration system + recipe copying + restore-enhanced + pipe-tier + auto-connect setters.
@@ -799,17 +799,22 @@ bool USFSubsystem::SetBuildGunByRecipeName(const FString& RecipeClassName)
 		return false;
 	}
 
-	// Set the active recipe on the build gun's build state
-	UFGBuildGunStateBuild* BuildState = Cast<UFGBuildGunStateBuild>(
-		BuildGun->GetBuildGunStateFor(EBuildGunState::BGS_BUILD));
-	if (!BuildState)
-	{
-		SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Verbose,
-			TEXT("[SmartRestore] SetBuildGunByRecipeName: No build gun build state"));
-		return false;
-	}
-
-	BuildState->SetActiveRecipe(TargetRecipe);
+    // [MP-CLIENT] Restore is a local build-menu action. Setting an inactive
+    // build state's recipe does not equip the gun or create its hologram.
+    // Use the same native equip gate and transition as the normal build menu;
+    // the Restore service already defers replay until that hologram exists.
+    if (!PC->IsLocalController() || !Character->IsLocallyControlled()
+        || (!Character->IsBuildGunEquipped() && !Character->CanEquipBuildGun()))
+    {
+        return false;
+    }
+    // Preserve the same exact local requester for Restore's deferred entry owner.
+    LastController = Cast<AFGPlayerController>(PC);
+    // Native HotKeyRecipe sets the pending entry state to BUILD before equipping,
+    // then selects the recipe. Equipping through MENU races that recipe transition.
+    // Avoid its same-recipe toggle semantics when the gun is already equipped.
+    if (!Character->IsBuildGunEquipped()) Character->HotKeyRecipe(TargetRecipe);
+    else BuildGun->GotoBuildState(TargetRecipe);
 
 	SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Verbose,
 		TEXT("[SmartRestore] Switched build gun to recipe '%s'"), *RecipeClassName);

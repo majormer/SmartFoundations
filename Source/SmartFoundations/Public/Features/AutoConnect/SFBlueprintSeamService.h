@@ -6,9 +6,11 @@
 #include "Features/AutoConnect/SFBlueprintLiftAlignment.h"
 
 class AFGBlueprintHologram;
+class AActor;
 class UFGFactoryConnectionComponent;
 class UFGPipeConnectionComponent;
 class UFGPipeConnectionComponentHyper;
+struct FNetConstructionID;
 
 /**
  * [#168] Smart! Blueprints — seam auto-connect PAIR SEARCH.
@@ -117,6 +119,11 @@ struct FSFBlueprintSeamTable
 class SMARTFOUNDATIONS_API FSFBlueprintSeamService
 {
 public:
+    /** Snapshot duplicate-port provenance before native Blueprint cleanup. */
+    static void CaptureBeltConstructionBindings(AFGBlueprintHologram* Blueprint, const FNetConstructionID& Id);
+    /** Resolve only within the exact copy's native returned actors. No global search. */
+    static void RecordBeltCopyBindings(AFGBlueprintHologram* Blueprint,
+        const TArray<AActor*>& ReturnedMembers, const FNetConstructionID& Id);
 	/** How far behind the outermost same-facing connector a connector may sit and still count
 	 *  as "on the face". Excludes staggered interior stubs; ports intended to seam sit AT the
 	 *  content edge (live TestBP: exactly on it). */

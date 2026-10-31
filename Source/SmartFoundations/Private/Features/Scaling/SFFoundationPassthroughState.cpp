@@ -61,7 +61,7 @@ bool SFFoundationPassthroughState::IsLocalProxyGridConstruction(AFGHologram* Par
     return false;
 }
 AFGHologram* SFFoundationPassthroughState::SpawnConstructionCell(AFGHologram* Seed,
-    AFGHologram* OwnerParent, FName ChildName, const FTransform& Pose)
+    AFGHologram* OwnerParent, FName ChildName, const FTransform& Pose, bool bAttach)
 {
     float Thickness = 0;
     if (!ReadThickness(Seed, Thickness) || !IsValid(OwnerParent) || !Seed->GetWorld() || !Seed->GetRecipe()) return nullptr;
@@ -91,7 +91,8 @@ AFGHologram* SFFoundationPassthroughState::SpawnConstructionCell(AFGHologram* Se
     Cell->FinishSpawning(Pose);
     if (FProperty* Permission = AFGHologram::StaticClass()->FindPropertyByName(TEXT("mCanBePlacedInBlueprintDesigner")))
         Permission->CopyCompleteValue(Permission->ContainerPtrToValuePtr<void>(Cell), Permission->ContainerPtrToValuePtr<void>(Seed));
-    OwnerParent->AddChild(Cell, ChildName);
+    if (bAttach) OwnerParent->AddChild(Cell, ChildName);
+    else Cell->SetActorEnableCollision(false);
     USFHologramDataService::MarkAsChild(Cell, Seed, ESFChildHologramType::ScalingGrid);
     Cell->Tags.AddUnique(FName(TEXT("SF_GridChild")));
     if (auto* HyperCell = Cast<ASFHypertubePassthroughConstructionHologram>(Cell))

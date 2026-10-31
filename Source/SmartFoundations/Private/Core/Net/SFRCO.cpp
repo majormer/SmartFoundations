@@ -2,6 +2,7 @@
 
 #include "Core/Net/SFRCO.h"
 #include "SmartFoundations.h"
+#include "Core/Construction/SFConstructionOperationCoordinator.h"
 #include "Features/AutoConnect/SFBlueprintRailSeams.h"
 #include "Features/AutoConnect/SFBlueprintVehicleSeams.h"
 #include "Features/AutoConnect/SFBlueprintLiftSeams.h"
@@ -14,11 +15,84 @@
 #include "FGCharacterPlayer.h"   // [#368] resolve the owning pawn for the clipboard sync
 #include "Module/SFGameInstanceModule.h" // [#368] SetBuildStateClipboardRecipe (friend write helper)
 #include "FGRecipe.h"  // [#368] UFGRecipe
+#include "Resources/FGBuildingDescriptor.h"
+#include "Equipment/FGBuildGun.h"
+#include "Equipment/FGBuildGunBuild.h"
+#include "FGConstructionMessageInterface.h"
+#include "Misc/SecureHash.h"
 #include "Net/UnrealNetwork.h"
 
 // ========================================
 // UFGRemoteCallObject Interface
 // ========================================
+
+void USFRCO::Server_RequestConstructionWorldContext_Implementation(FGuid Challenge)
+{
+    auto* PC = Cast<AFGPlayerController>(GetOuter());
+    auto* SS = USFSubsystem::Get(this);
+    auto* Coordinator = SS ? SS->GetConstructionCoordinator() : nullptr;
+    if (IsValid(PC) && PC->HasAuthority() && SS && PC->GetWorld() == SS->GetWorld() && Coordinator && Challenge.IsValid())
+        Client_ReceiveConstructionWorldContext(Challenge, Coordinator->GetWorldGeneration());
+}
+
+bool USFRCO::Server_RequestConstructionWorldContext_Validate(FGuid Challenge) { return Challenge.IsValid(); }
+
+bool USFRCO::Server_ConstructExtendNative_Validate(FNetConstructionID Id, FConstructHologramMessage Data, FSFExtendCommitSpec Intent)
+{
+    return Intent.bValid && Intent.RequestId.IsValid() && Intent.RequestSequence > 0
+        && Intent.AuthorityWorldGeneration.IsValid() && Server_StageExtendCommit_Validate(Intent)
+        && Data.Recipe && !Data.IsUpgradeConstructionMessage() && !Data.LightweightUpgradeClass
+        && Data.LightweightUpgradeRuntimeIndex == INDEX_NONE && Data.SerializedHologramData.Num() <= 60000
+        && Data.NumBits >= 0 && Data.NumBits <= int64(Data.SerializedHologramData.Num()) * 8;
+}
+
+void USFRCO::Server_ConstructExtendNative_Implementation(FNetConstructionID Id, FConstructHologramMessage Data, FSFExtendCommitSpec Intent)
+{
+    if (!Server_ConstructExtendNative_Validate(Id, Data, Intent)) return;
+    auto* PC = Cast<AFGPlayerController>(GetOuter());
+    auto* SS = USFSubsystem::Get(this);
+    auto* Pawn = PC ? Cast<AFGCharacterPlayer>(PC->GetPawn()) : nullptr;
+    auto* Gun = Pawn ? Pawn->GetBuildGun() : nullptr;
+    auto* Receiver = Gun ? Cast<UFGBuildGunStateBuild>(Gun->GetCurrentState()) : nullptr;
+    auto* Extend = SS ? SS->GetExtendService() : nullptr;
+    if (!IsValid(PC) || !PC->HasAuthority() || !SS || !SS->IsSmartEnabledForPlayer(PC)
+        || !IsValid(Receiver) || !Extend || PC->GetWorld() != SS->GetWorld())
+    { Client_RejectExtendNative(Id, Intent.RequestId); return; }
+    const auto* Recipe = Data.Recipe->GetDefaultObject<UFGRecipe>();
+    if (!Recipe || Recipe->GetProducts().Num() != 1
+        || !Recipe->GetProducts()[0].ItemClass
+        || !Recipe->GetProducts()[0].ItemClass->IsChildOf(UFGBuildingDescriptor::StaticClass())
+        || UFGBuildingDescriptor::GetBuildableClass(Recipe->GetProducts()[0].ItemClass.Get()) != Intent.BuildClass)
+    { Client_RejectExtendNative(Id, Intent.RequestId); return; }
+    // Include the complete serialized native message in the replay identity.
+    FSHAHash Hash;
+    FSHA1::HashBuffer(Data.SerializedHologramData.GetData(), Data.SerializedHologramData.Num(), Hash.Hash);
+    const FString Digest = FString::Printf(TEXT("%d/%d/%d/%d/%d/%d/%lld/%s/%s"), Id.NetPlayerID, Id.Server_ID, Id.Client_ID,
+        Data.ConstructionID.NetPlayerID, Data.ConstructionID.Server_ID, Data.ConstructionID.Client_ID,
+        static_cast<long long>(Data.NumBits), *Data.Recipe->GetPathName(), *Hash.ToString());
+    const TWeakObjectPtr<USFRCO> WeakRCO(this);
+    Extend->QueueRemoteBuildInput(Receiver, Intent, Digest,
+        [Id, Data](UFGBuildGunStateBuild* LiveReceiver)
+        {
+            // Named native implementation; never retain the RPC hook continuation.
+            LiveReceiver->Server_ConstructHologram_Implementation(Id, Data);
+        },
+        [WeakRCO, Id, RequestId = Intent.RequestId]() { if (auto* RCO = WeakRCO.Get()) RCO->Client_RejectExtendNative(Id, RequestId); });
+}
+
+void USFRCO::Client_RejectExtendNative_Implementation(FNetConstructionID Id, FGuid RequestId)
+{
+    // Target only the native pending preview for this rejected request.
+    auto* SS = USFSubsystem::Get(this);
+    if (SS && SS->AcceptExtendNativeRejection(Id, RequestId))
+        if (auto* Native = AFGBuildableSubsystem::Get(SS->GetWorld())) Native->RemovePendingConstructionHologram(Id);
+}
+
+void USFRCO::Client_ReceiveConstructionWorldContext_Implementation(FGuid Challenge, FGuid AuthorityWorldGeneration)
+{
+    if (auto* SS = USFSubsystem::Get(this))
+        SS->AcceptConstructionWorldContext(Cast<AFGPlayerController>(GetOuter()), Challenge, AuthorityWorldGeneration);
+}
 
 void USFRCO::Server_SetSmartSessionEnabled_Implementation(bool bEnabled)
 {
@@ -293,6 +367,9 @@ bool USFRCO::Server_StageScalingSpec_Validate(FSFScalingSpec Spec)
 	}
 	for (const FSFConduitPlanEntry& Entry : Spec.ConduitPlan)
 	{
+        if (!Entry.HasBoundedConveyorIntent()) return false;
+        if (Entry.Cost.Num() > 16) return false;
+        for (const auto& Item : Entry.Cost) if (!Item.ItemClass || Item.Amount < 0 || Item.Amount > 100000) return false;
 		if (Entry.SplinePoints.Num() > 64)
 		{
 			return false;
@@ -354,6 +431,13 @@ void USFRCO::Server_StageExtendCommit_Implementation(FSFExtendCommitSpec Spec)
 		return;
 	}
 
+    // Preview staging is not admission. A final request is bound to the current
+    // authority generation before its native construction message can execute.
+    if (Spec.bValid && Spec.RequestId.IsValid())
+    {
+        auto* Coordinator = Subsystem->GetConstructionCoordinator();
+        if (!Coordinator || Spec.RequestSequence <= 0 || Spec.AuthorityWorldGeneration != Coordinator->GetWorldGeneration()) return;
+    }
 	Subsystem->StageExtendCommitForPlayer(OwnerPC, Spec);
 
 	if (Spec.bValid)
@@ -371,6 +455,14 @@ void USFRCO::Server_StageExtendCommit_Implementation(FSFExtendCommitSpec Spec)
 
 bool USFRCO::Server_StageExtendCommit_Validate(FSFExtendCommitSpec Spec)
 {
+    if (Spec.RequestId.IsValid() != (Spec.RequestSequence > 0)
+        || Spec.RequestId.IsValid() != Spec.AuthorityWorldGeneration.IsValid()) return false;
+    const auto& Settings = Spec.FactorySettings;
+    if ((Settings.bHasRecipe && !Settings.Recipe)
+        || (Settings.bHasPotential && (!FMath::IsFinite(Settings.Potential) || Settings.Potential <= 0.0f))
+        || (Settings.bHasProductionBoost && (!FMath::IsFinite(Settings.ProductionBoost) || Settings.ProductionBoost <= 0.0f))
+        || Settings.OverclockShardCount < 0 || Settings.OverclockShardCount > 3
+        || Settings.ProductionBoostShardCount < 0 || Settings.ProductionBoostShardCount > 2) return false;
 	// Sanity-bound the commit parameters (a forged/buggy commit cannot demand absurd spawning).
 	// For an EXTEND commit the clone topology is derived SERVER-side from these, never shipped.
 	if (Spec.ScaledClones.Num() > 1024 || Spec.ParentOffset.Size() > 1.0e7)
@@ -387,7 +479,8 @@ bool USFRCO::Server_StageExtendCommit_Validate(FSFExtendCommitSpec Spec)
 		}
 		for (const FSFCloneHologram& Holo : Spec.RestoreTemplate.ChildHolograms)
 		{
-			if (Holo.SplineData.Points.Num() > 64)
+			if (Holo.SplineData.Points.Num() > 64 || Holo.DistributorSettings.Rules.Num() > 64
+                || Holo.DistributorSettings.Priorities.Num() > 64)
 			{
 				return false;
 			}
@@ -536,14 +629,47 @@ void USFRCO::Server_StartUpgrade_Implementation(FSFUpgradeExecutionParams Params
 	ExecutionService->StartUpgrade(Params);
 }
 
+void USFRCO::Server_RequestUpgradeWorldContext_Implementation(FGuid Challenge)
+{
+	if (auto* Subsystem = USFSubsystem::Get(this))
+		if (auto* Service = Subsystem->GetUpgradeExecutionService())
+			Client_ReceiveUpgradeWorldContext(Challenge, Service->GetAuthorityWorldGeneration());
+}
+
+bool USFRCO::Server_RequestUpgradeWorldContext_Validate(FGuid Challenge)
+{
+	return Challenge.IsValid();
+}
+
+void USFRCO::Client_ReceiveUpgradeWorldContext_Implementation(FGuid Challenge, FGuid AuthorityWorldGeneration)
+{
+	if (auto* Subsystem = USFSubsystem::Get(this))
+		if (auto* Service = Subsystem->GetUpgradeExecutionService())
+			Service->AcceptUpgradeWorldContext(Challenge, AuthorityWorldGeneration);
+}
+
 bool USFRCO::Server_StartUpgrade_Validate(FSFUpgradeExecutionParams Params)
 {
 	float RadiusSq = 0.0f;
-	return Params.SourceTier >= 0 && Params.SourceTier <= 6
+	return Params.RequestId.IsValid() && Params.RequestSequence > 0 && Params.AuthorityWorldGeneration.IsValid()
+		&& Params.SourceTier >= 0 && Params.SourceTier <= 6
 		&& Params.TargetTier >= 0 && Params.TargetTier <= 6
 		&& Params.HasValidSpecificSelection()
 		&& SFConveyorGeometryPolicy::TryResolveRadiusSquared(Params.Origin, Params.Radius, RadiusSq)
 		&& Params.SpecificBuildables.Num() <= 50000;
+}
+
+void USFRCO::Server_CancelUpgrade_Implementation(FGuid RequestId, int64 RequestSequence, FGuid AuthorityWorldGeneration)
+{
+	if (auto* Subsystem = USFSubsystem::Get(this))
+		if (auto* Service = Subsystem->GetUpgradeExecutionService())
+			if (AuthorityWorldGeneration == Service->GetAuthorityWorldGeneration())
+				Service->CancelUpgradeRequest(Cast<AFGPlayerController>(GetOuter()), RequestId, RequestSequence);
+}
+
+bool USFRCO::Server_CancelUpgrade_Validate(FGuid RequestId, int64 RequestSequence, FGuid AuthorityWorldGeneration)
+{
+	return RequestId.IsValid() && RequestSequence > 0 && AuthorityWorldGeneration.IsValid();
 }
 
 void USFRCO::Client_ReceiveUpgradeResult_Implementation(FSFUpgradeExecutionResult Result)

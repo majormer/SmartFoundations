@@ -9,6 +9,9 @@
 #include "Features/Extend/Net/SFExtendAuthorityScope.h"
 #include "SmartFoundations.h"
 #include "Core/Construction/SFFactorySettingsApplyPolicy.h"
+#include "Core/Construction/SFNativeConstructionContext.h"
+#include "Core/Construction/SFConstructionOperationCoordinator.h"
+#include "Features/Extend/SFExtendService.h"
 #include "Subsystem/SFSubsystem.h"
 #include "Subsystem/SFHologramDataService.h"
 #include "Data/SFHologramDataRegistry.h"
@@ -979,8 +982,11 @@ void USFRecipeManagementService::OnActorSpawned(AActor* SpawnedActor)
 	// dedicated-server spec seam. Capture now; never let a delayed callback consult mutable service state.
 	AFGBuildableFactory* FactoryBuilding = Cast<AFGBuildableFactory>(SpawnedActor);
 	AFGHologram* ActiveHologram = Subsystem->GetActiveHologram();
-	if (FactoryBuilding && ActiveHologram)
+    if (FactoryBuilding && ActiveHologram && FSFNativeConstructionContext::GetRoot() == ActiveHologram
+        && FactoryBuilding->HasAuthority() && FactoryBuilding->GetWorld() == ActiveHologram->GetWorld())
 	{
+        // A remote/spec request supplies its own frozen settings after native
+        // construction. It cannot borrow this client's mutable active preview.
 		FSFFactorySettingsSnapshot Snapshot;
 		CaptureFactorySettingsSnapshot(Snapshot);
 		AFGCharacterPlayer* Player = Cast<AFGCharacterPlayer>(ActiveHologram->GetConstructionInstigator());
@@ -1400,6 +1406,13 @@ void USFRecipeManagementService::QueueFactorySettingsApplication(AFGBuildable* T
 	{
 		return;
 	}
+	if (USFExtendService* Extend = Subsystem->GetExtendService();
+		Extend && Extend->CaptureOwnedFactorySettingsRequest(Factory, Player))
+	{
+		// The accepted operation carries the authoritative value snapshot. Do not
+		// leave a second timer writer that can outlive its input/root generation.
+		return;
+	}
 
 	PendingFactorySettingsApplications.RemoveAllSwap([Factory](const FSFPendingFactorySettingsApplication& Pending)
 	{
@@ -1417,6 +1430,21 @@ void USFRecipeManagementService::QueueFactorySettingsApplication(AFGBuildable* T
 			&USFRecipeManagementService::TickPendingFactorySettingsApplications,
 			SF_FACTORY_SETTINGS_RETRY_INTERVAL, true, 0.0f);
 	}
+}
+
+bool USFRecipeManagementService::InvokeOwnedFactorySettings(USFConstructionOperationCoordinator& Coordinator,
+	AFGBuildableFactory* Factory, AFGCharacterPlayer* Player, const FSFFactorySettingsSnapshot& Snapshot)
+{
+	const bool bNeedsInventory = IsValid(Factory)
+		&& ((Snapshot.bHasPotential && Snapshot.Potential > 1.0f && Factory->GetCanChangePotential())
+			|| (Snapshot.bHasProductionBoost && Snapshot.ProductionBoost > 1.0f && Factory->CanChangeProductionBoost()));
+	if (!Coordinator.IsInMutationPhase() || !IsValid(Factory) || !IsValid(Player)
+		|| Factory->GetWorld() != Coordinator.GetWorld() || Player->GetWorld() != Coordinator.GetWorld()
+		|| !Factory->HasAuthority() || !Player->HasAuthority() || Player->IsActorBeingDestroyed()
+		|| Factory->IsActorBeingDestroyed() || !Factory->HasActorBegunPlay()
+		|| !Player->GetInventory() || (bNeedsInventory && !Factory->GetPotentialInventory())) return false;
+	ApplyFactorySettingsSnapshot(Factory, Player, Snapshot);
+	return true;
 }
 
 void USFRecipeManagementService::TickPendingFactorySettingsApplications()

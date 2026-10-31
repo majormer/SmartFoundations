@@ -473,49 +473,22 @@ void USFUpgradeExecutionService::ValidateAndRepairConnections()
 			// Kind-specific validation and repair
 			switch (Edge.Kind)
 			{
-				case EConnectionEdgeKind::Factory:
-				{
-					UFGFactoryConnectionComponent* LocalConn = FindFactoryConnectorByName(NewLocal, Edge.LocalConnectorName);
-					UFGFactoryConnectionComponent* PartnerConn = FindFactoryConnectorByName(PartnerNew, Edge.PartnerConnectorName);
-					if (!LocalConn || !PartnerConn)
-					{
-						Broken++;
-						UE_LOG(LogSmartUpgrade, Verbose,
-							TEXT("ValidateAndRepairConnections: factory edge %s.%s -> %s.%s connector not found on new actor"),
-							*NewLocal->GetName(), *Edge.LocalConnectorName.ToString(),
-							*PartnerNew->GetName(), *Edge.PartnerConnectorName.ToString());
-						break;
-					}
-
-					Validated++;
-					if (LocalConn->GetConnection() == PartnerConn)
-					{
-						// Edge intact
-						break;
-					}
-
-					// Missing — attempt repair
-					if (LocalConn->IsConnected()) LocalConn->ClearConnection();
-					if (PartnerConn->IsConnected()) PartnerConn->ClearConnection();
-					LocalConn->SetConnection(PartnerConn);
-					if (LocalConn->GetConnection() == PartnerConn)
-					{
-						Repaired++;
-						UE_LOG(LogSmartUpgrade, VeryVerbose,
-							TEXT("ValidateAndRepairConnections: REPAIRED factory %s.%s <-> %s.%s"),
-							*NewLocal->GetName(), *Edge.LocalConnectorName.ToString(),
-							*PartnerNew->GetName(), *Edge.PartnerConnectorName.ToString());
-					}
-					else
-					{
-						Broken++;
-						UE_LOG(LogSmartUpgrade, Verbose,
-							TEXT("ValidateAndRepairConnections: BROKEN factory %s.%s <-> %s.%s (repair failed)"),
-							*NewLocal->GetName(), *Edge.LocalConnectorName.ToString(),
-							*PartnerNew->GetName(), *Edge.PartnerConnectorName.ToString());
-					}
-					break;
-				}
+                case EConnectionEdgeKind::Factory:
+                {
+                    auto* Local = FindFactoryConnectorByName(NewLocal, Edge.LocalConnectorName);
+                    auto* Partner = FindFactoryConnectorByName(PartnerNew, Edge.PartnerConnectorName);
+                    ++Validated;
+                    if (Local && Partner && Local->IsConnected() && Partner->IsConnected()
+                        && Local->GetConnection() == Partner && Partner->GetConnection() == Local) break;
+                    // Native factory Upgrade owns this transfer. A post-replacement
+                    // Clear/Set on a live belt/lift can change physical peers without
+                    // the native cohort transaction. It is not a safe repair policy.
+                    ++Broken;
+                    WorkingResult.bUncertain = true;
+                    if (WorkingResult.ErrorMessage.IsEmpty())
+                        WorkingResult.ErrorMessage = TEXT("Native replacement left an unresolved factory/conveyor edge. Applied actors and material receipts are retained; no guessed connection or successful settlement is reported.");
+                    break;
+                }
 
 				case EConnectionEdgeKind::Pipe:
 				{
@@ -600,6 +573,11 @@ void USFUpgradeExecutionService::ValidateAndRepairConnections()
 	}
 
 	WorkingResult.ValidatedConnectionCount = Validated;
+    if (Broken > 0)
+    {
+        WorkingResult.bUncertain = true;
+        if (WorkingResult.ErrorMessage.IsEmpty()) WorkingResult.ErrorMessage = TEXT("Native replacement left unresolved connections; applied effects require reconciliation.");
+    }
 	WorkingResult.RepairedConnectionCount = Repaired;
 	WorkingResult.BrokenConnectionCount = Broken;
 

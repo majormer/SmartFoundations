@@ -60,6 +60,9 @@ struct FSFExtendAuthorityScope::FImpl
         Subsystem->RecipeManagementService->Initialize(Subsystem);
         Subsystem->ExtendService = NewObject<USFExtendService>(Subsystem);
         Subsystem->ExtendService->Initialize(Subsystem);
+        // The isolated service supplies request-local preview/topology state.
+        // Physical effects still belong to the existing coordinator operation.
+        Subsystem->ExtendService->AttachNativeInputOwner(HostExtend.Get());
     }
 
     ~FImpl()
@@ -99,6 +102,7 @@ struct FSFExtendAuthorityScope::FImpl
                 HostRecipes->QueueFactorySettingsApplication(Pending.Factory.Get(), Pending.Player.Get(), Pending.Snapshot);
             RequestRecipes->PendingFactorySettingsApplications.Empty();
         }
+        if (Subsystem->ExtendService) Subsystem->ExtendService->DetachNativeInputOwner();
         Subsystem->ExtendService = HostExtend.Get();
         Subsystem->RecipeManagementService = HostRecipes.Get();
         Subsystem->GridStateService = HostGrid.Get();

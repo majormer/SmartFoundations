@@ -13,6 +13,7 @@ class SMARTFOUNDATIONS_API ASFFoundationPassthroughPreviewHologram : public ASFB
     GENERATED_BODY()
 public:
     void SyncGeometry(AFGHologram* Parent);
+    bool IsGeometryReady() const { return bGeometryReady; }
     virtual int32 GetBaseCostMultiplier() const override;
     virtual void SetPlacementMaterialState(EHologramMaterialState MaterialState) override;
     virtual AActor* Construct(TArray<AActor*>& OutChildren, FNetConstructionID ConstructionID) override;

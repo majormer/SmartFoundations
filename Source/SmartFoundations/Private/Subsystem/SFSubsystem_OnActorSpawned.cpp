@@ -8,6 +8,7 @@
 #include "Subsystem/SFSubsystemImpl.h"
 #include "FGLightweightBuildableSubsystem.h"
 #include "Features/Extend/Net/SFExtendAuthorityScope.h"
+#include "Core/Construction/SFNativeConstructionContext.h"
 #include "Core/Net/SFNetworkHelper.h"  // [#334] authority gate
 
 
@@ -17,6 +18,8 @@ void USFSubsystem::OnActorSpawned(AActor* SpawnedActor)
     // at the synchronous Construct seam. Local preview observers must not apply
     // their sampled recipe, connection plans or next-tick wiring to this build.
     if (FSFExtendAuthorityScope::IsActive(this)) return;
+    if (USFUpgradeExecutionService::IsConstructingConveyorReplacement(GetWorld())
+        || USFUpgradeExecutionService::IsConstructingNativeFactoryReplacement(GetWorld())) return;
 	// Delegate to recipe management service
 	if (RecipeManagementService)
 	{
@@ -39,106 +42,23 @@ void USFSubsystem::OnActorSpawned(AActor* SpawnedActor)
 		return;
 	}
 
-	// ========================================
-	// Smart Dismantle: Blueprint Proxy Grouping (Issue #166, #270)
-	// When placing a grid (>1x1x1) OR using Extend, group all spawned
-	// buildings into an AFGBlueprintProxy so players can dismantle the
-	// entire placement at once using vanilla's Blueprint Dismantle (R key).
-	// ========================================
-	if (AFGBuildable* Buildable = Cast<AFGBuildable>(SpawnedActor))
-	{
-		// [#312] Buildables inside the Blueprint Designer never join Smart's world group
-		// proxies: mBlueprintProxy is SaveGame, so a designer-resident buildable pointing at
-		// a world proxy makes the blueprint save chase that reference out of the designer
-		// ("saving a blueprint saves the whole world").
-		// Only group if we have an active Smart! hologram with a multi-building grid
-		// Actor-spawn notification precedes native ConfigureActor, so the new
-		// buildable may not have inherited its Designer yet. The placement seed
-		// already owns that context and must suppress world grouping as well.
-		if (ActiveHologram.IsValid() && ActiveHologram->GetBlueprintDesigner() == nullptr
-			&& Buildable->GetBlueprintDesigner() == nullptr)
-		{
-			const FIntVector& Grid = GetGridCounters();
-			const bool bIsMultiGrid = (FMath::Abs(Grid.X) > 1 || FMath::Abs(Grid.Y) > 1 || FMath::Abs(Grid.Z) > 1);
-			const bool bIsExtendActive = ExtendService && ExtendService->IsExtendModeActive();  // Issue #270
-			// Smart Restore of a SINGLE extend clone is neither multi-grid (counters stay 1x1x1)
-			// nor extend-active (bHasValidTarget belongs to the aim-at-target flow, not the replay) —
-			// without this arm its buildables never join a proxy and R-key dismantle only takes one
-			// building. The restore session flag stays set through the commit; it is cleared on the
-			// post-build tick once the parent hologram goes invalid.
-			const bool bIsRestoreReplayActive = ExtendService && ExtendService->IsRestoredCloneTopologyActive();
+    // Group only the exact synchronous native request. The active local preview
+    // and its global counters cannot identify a remote or reentrant construction.
+    if (auto* Buildable = Cast<AFGBuildable>(SpawnedActor))
+    {
+        bool CreatedProxy = false;
+        if (auto* Proxy = FSFNativeConstructionContext::GroupBuildable(Buildable, CreatedProxy))
+        {
+            CurrentBuildProxy = Proxy; // Legacy lifecycle diagnostics only, never an ownership source.
+            CurrentProxyOwner = FSFNativeConstructionContext::GetRoot();
+        }
+        if (CreatedProxy && RecipeManagementService) RecipeManagementService->ClearBlueprintProxyFlag();
+    }
 
-			if ((bIsMultiGrid || bIsExtendActive || bIsRestoreReplayActive) && !Buildable->GetBlueprintProxy())
-			{
-				// DIAGNOSTIC: Log what type of building is spawning
-				UE_LOG(LogSmartFoundations, VeryVerbose, TEXT(" SMART DISMANTLE: Building spawned: %s (class: %s)"),
-					*Buildable->GetName(), *Buildable->GetClass()->GetName());
-
-				// CRITICAL: Detect if this is a NEW build session (different hologram)
-				// If the hologram changed, we're starting a fresh grid placement
-				const bool bNewBuildSession = !CurrentProxyOwner.IsValid() || CurrentProxyOwner.Get() != ActiveHologram.Get();
-
-				if (bNewBuildSession && CurrentBuildProxy.IsValid())
-				{
-					UE_LOG(LogSmartFoundations, VeryVerbose, TEXT(" SMART DISMANTLE: New build session detected - clearing previous proxy %s"),
-						*CurrentBuildProxy->GetName());
-					CurrentBuildProxy.Reset();
-					CurrentProxyOwner.Reset();
-				}
-
-				// Create proxy on first building of this grid session
-				if (!CurrentBuildProxy.IsValid())
-				{
-					UWorld* World = GetWorld();
-					if (World)
-					{
-						FActorSpawnParameters SpawnParams;
-						SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-						FTransform ProxyTransform = Buildable->GetActorTransform();
-						// A newly allocated lightweight actor can still be at its native pool pose.
-						// Anchoring the saved group there leaves it outside client relevancy even
-						// after its members reach their intended placement. Use the placement seed.
-						if (ProxyTransform.Equals(FLightweightBuildablePool::PoolTransform))
-						{
-							ProxyTransform = ActiveHologram->GetActorTransform();
-						}
-						AFGBlueprintProxy* NewProxy = World->SpawnActor<AFGBlueprintProxy>(
-							AFGBlueprintProxy::StaticClass(),
-							ProxyTransform,
-							SpawnParams
-						);
-
-						if (NewProxy)
-						{
-							CurrentBuildProxy = NewProxy;
-							CurrentProxyOwner = ActiveHologram.Get();
-
-							// CRITICAL FIX (Issue #264): Clear the blueprint proxy flag that was set
-							// by the nested OnActorSpawned during SpawnActor above. Smart-created
-							// proxies (for grid grouping) must NOT block recipe application.
-							// The flag is only meant to protect vanilla blueprint buildings.
-							if (RecipeManagementService)
-							{
-								RecipeManagementService->ClearBlueprintProxyFlag();
-							}
-
-							UE_LOG(LogSmartFoundations, VeryVerbose, TEXT(" SMART DISMANTLE: Created BlueprintProxy %s for grid %dx%dx%d (first building: %s)"),
-								*NewProxy->GetName(), Grid.X, Grid.Y, Grid.Z, *Buildable->GetClass()->GetName());
-						}
-					}
-				}
-
-				// Register this building with the proxy
-				if (CurrentBuildProxy.IsValid())
-				{
-					Buildable->SetBlueprintProxy(CurrentBuildProxy.Get());
-					CurrentBuildProxy->RegisterBuildable(Buildable);
-					UE_LOG(LogSmartFoundations, VeryVerbose, TEXT(" SMART DISMANTLE: Registered %s (%s) with proxy %s (total: %d buildings)"),
-						*Buildable->GetName(), *Buildable->GetClass()->GetName(), *CurrentBuildProxy->GetName(), CurrentBuildProxy->GetBuildables().Num());
-				}
-			}
-		}
-	}
+	// The owned native operation wires its complete returned tree after native
+	// payment and settles settings through the coordinator. Keep ordinary grouping
+	// above, but do not create independent auto-connect/deferred writers below.
+	if (ExtendService && ExtendService->IsExecutingOwnedNativeInput()) return;
 
 	// Phase 3/4: Build EXTEND belts, lifts and pipes when a factory building is spawned
 	// CRITICAL: Defer to next tick - factory components aren't ready at spawn time
@@ -152,11 +72,15 @@ void USFSubsystem::OnActorSpawned(AActor* SpawnedActor)
 				// Capture weak reference to factory and service
 				TWeakObjectPtr<AFGBuildableFactory> WeakFactory = Factory;
 				TWeakObjectPtr<USFExtendService> WeakExtendService = ExtendService;
+				const auto WiringInvocation = ExtendService->CaptureNativeWiringInvocation();
 
-				GetWorld()->GetTimerManager().SetTimerForNextTick([WeakFactory, WeakExtendService]()
+				GetWorld()->GetTimerManager().SetTimerForNextTick([WeakFactory, WeakExtendService, WiringInvocation]()
 				{
+					if (!WiringInvocation) return; // No immutable operation owns a legacy fallback.
 					if (WeakFactory.IsValid() && WeakExtendService.IsValid())
 					{
+						// Legacy chain writers still share these maps. Retain their eligibility
+						// guards until they too consume operation-owned inputs.
 						if (!WeakExtendService->HasPendingPostBuildWiring())
 						{
 							return;
@@ -174,12 +98,7 @@ void USFSubsystem::OnActorSpawned(AActor* SpawnedActor)
 						// NOTE: Child holograms (belts, lifts, pipes) are built by vanilla via AddChild
 						// We just need to wire their connections here
 
-						// Connect chain elements (for any that need inter-chain connections)
-						WeakExtendService->ConnectAllChainElements(WeakFactory.Get());
-
-						// Wire connections for child holograms that were built via AddChild
-						// This uses the hologram→buildable mapping from USFHologramDataRegistry
-						WeakExtendService->WireBuiltChildConnections(WeakFactory.Get());
+						if (!WeakExtendService->RunNativePostBuildWiring(WiringInvocation, WeakFactory.Get())) return;
 
 						// DIAGNOSTIC: Capture post-build snapshot and log diff
 						WeakExtendService->CapturePostBuildSnapshotAndLogDiff();
@@ -856,145 +775,12 @@ void USFSubsystem::OnActorSpawned(AActor* SpawnedActor)
 		}
 	}
 
-	// ========================================
-	// DISTRIBUTOR-CHILD BELT: Deferred manifold wiring (block below)
-	// ========================================
-	// Stacked-pole belts are wired at Construct (STACK-CHAIN handler in
-	// ASFConveyorBeltHologram::Construct) and do NOT use any deferred timer here.
-	AFGBuildableConveyorBelt* StackableBelt = Cast<AFGBuildableConveyorBelt>(SpawnedActor);
-	if (StackableBelt && SpawnedClassName.Contains(TEXT("ConveyorBelt")))
-	{
-		// ========================================
-		// AUTO-CONNECT BELT: Deferred manifold wiring
-		// ========================================
-		// Auto-Connect belts are built as children of distributor holograms.
-		// Manifold belts (Output1→Input1) are built BEFORE target distributors,
-		// so we need deferred wiring to connect them after all distributors are built.
-		if (ActiveHologram.IsValid() && AutoConnectService &&
-		    AutoConnectService->IsDistributorHologram(ActiveHologram.Get()))
-		{
-			static TArray<TWeakObjectPtr<AFGBuildableConveyorBelt>> PendingAutoConnectBelts;
-			static TWeakObjectPtr<AFGHologram> LastAutoConnectHologram;
-			static FTimerHandle AutoConnectWiringTimerHandle;
-
-			// Reset tracking when hologram changes
-			if (ActiveHologram.Get() != LastAutoConnectHologram.Get())
-			{
-				LastAutoConnectHologram = ActiveHologram;
-				PendingAutoConnectBelts.Empty();
-			}
-
-			PendingAutoConnectBelts.Add(StackableBelt);
-			UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🎯 AUTO-CONNECT BELT SPAWN: Tracking %s for deferred wiring (%d pending)"),
-				*StackableBelt->GetName(), PendingAutoConnectBelts.Num());
-
-			// Set/reset timer to wire belts on next tick (after all distributors are spawned)
-			GetWorld()->GetTimerManager().ClearTimer(AutoConnectWiringTimerHandle);
-			GetWorld()->GetTimerManager().SetTimerForNextTick([this]()
-			{
-				UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🎯 AUTO-CONNECT BELT WIRING: Processing %d belt(s)..."), PendingAutoConnectBelts.Num());
-
-				int32 ConnectionsMade = 0;
-				const float ConnectionRadius = 100.0f;
-
-				// Clean up invalid weak pointers and collect valid belts
-				TArray<AFGBuildableConveyorBelt*> ValidBelts;
-				for (const auto& WeakBelt : PendingAutoConnectBelts)
-				{
-					if (WeakBelt.IsValid())
-					{
-						ValidBelts.Add(WeakBelt.Get());
-					}
-				}
-
-				// Wire each belt's unconnected endpoints to nearby built connectors
-				for (AFGBuildableConveyorBelt* Belt : ValidBelts)
-				{
-					UFGFactoryConnectionComponent* Conn0 = Belt->GetConnection0();  // Input
-					UFGFactoryConnectionComponent* Conn1 = Belt->GetConnection1();  // Output
-
-					// Wire Conn0 (belt input) to nearby OUTPUT connector on built actors
-					if (Conn0 && !Conn0->IsConnected())
-					{
-						FVector SearchLoc = Conn0->GetComponentLocation();
-						UFGFactoryConnectionComponent* BestMatch = nullptr;
-						float BestDist = ConnectionRadius;
-
-						for (TActorIterator<AFGBuildable> It(GetWorld()); It; ++It)
-						{
-							AFGBuildable* Buildable = *It;
-							if (Buildable == Belt) continue;
-
-							TArray<UFGFactoryConnectionComponent*> Connectors;
-							Buildable->GetComponents<UFGFactoryConnectionComponent>(Connectors);
-
-							for (UFGFactoryConnectionComponent* Conn : Connectors)
-							{
-								if (!Conn || Conn->IsConnected()) continue;
-								if (Conn->GetDirection() != EFactoryConnectionDirection::FCD_OUTPUT) continue;
-
-								float Dist = FVector::Dist(SearchLoc, Conn->GetComponentLocation());
-								if (Dist < BestDist)
-								{
-									BestDist = Dist;
-									BestMatch = Conn;
-								}
-							}
-						}
-
-						if (BestMatch)
-						{
-							Conn0->SetConnection(BestMatch);
-							ConnectionsMade++;
-							UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🎯 AUTO-CONNECT BELT: ✅ Wired %s.Conn0 → %s.%s (dist=%.1f)"),
-								*Belt->GetName(), *BestMatch->GetOwner()->GetName(), *BestMatch->GetName(), BestDist);
-						}
-					}
-
-					// Wire Conn1 (belt output) to nearby INPUT connector on built actors
-					if (Conn1 && !Conn1->IsConnected())
-					{
-						FVector SearchLoc = Conn1->GetComponentLocation();
-						UFGFactoryConnectionComponent* BestMatch = nullptr;
-						float BestDist = ConnectionRadius;
-
-						for (TActorIterator<AFGBuildable> It(GetWorld()); It; ++It)
-						{
-							AFGBuildable* Buildable = *It;
-							if (Buildable == Belt) continue;
-
-							TArray<UFGFactoryConnectionComponent*> Connectors;
-							Buildable->GetComponents<UFGFactoryConnectionComponent>(Connectors);
-
-							for (UFGFactoryConnectionComponent* Conn : Connectors)
-							{
-								if (!Conn || Conn->IsConnected()) continue;
-								if (Conn->GetDirection() != EFactoryConnectionDirection::FCD_INPUT) continue;
-
-								float Dist = FVector::Dist(SearchLoc, Conn->GetComponentLocation());
-								if (Dist < BestDist)
-								{
-									BestDist = Dist;
-									BestMatch = Conn;
-								}
-							}
-						}
-
-						if (BestMatch)
-						{
-							Conn1->SetConnection(BestMatch);
-							ConnectionsMade++;
-							UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🎯 AUTO-CONNECT BELT: ✅ Wired %s.Conn1 → %s.%s (dist=%.1f)"),
-								*Belt->GetName(), *BestMatch->GetOwner()->GetName(), *BestMatch->GetName(), BestDist);
-						}
-					}
-				}
-
-				UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("🎯 AUTO-CONNECT BELT WIRING: Made %d connection(s)"), ConnectionsMade);
-				PendingAutoConnectBelts.Empty();
-			});
-		}
-	}
+    // Belt/manifold connection intent is captured by the actual constructing
+    // hologram. FSFConveyorConstructionLinks resolves exact returned actors and
+    // submits a batch to the native-phase coordinator. Actor-spawn notification
+    // is too early to own configuration, and a next-tick nearest-port search is
+    // neither an identity contract nor a factory-worker mutation fence.
+    // No conveyor topology or pending-belt timer is owned by this observer.
 
 	// Handle power pole construction for auto-connect
 	// CRITICAL: Only process power poles if we have active Smart! power line previews

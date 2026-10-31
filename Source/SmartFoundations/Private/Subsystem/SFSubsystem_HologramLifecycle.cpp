@@ -694,7 +694,8 @@ void USFSubsystem::RegisterActiveHologram(AFGHologram* Hologram)
 	}
 	ActiveHologram = Hologram;
 
-	if (bRestoredExtendActiveAtRegister && ExtendService)
+	if (bRestoredExtendActiveAtRegister && ExtendService
+		&& (!RestoreService || !RestoreService->IsRestoreSessionActive()))
 	{
 		TSharedPtr<FSFCloneTopology> RestoredTemplate = ExtendService->GetLastCloneTopology();
 		if (RestoredTemplate.IsValid() && RestoredTemplate->ChildHolograms.Num() > 0)
@@ -940,6 +941,9 @@ void USFSubsystem::PollForActiveHologram()
 	// Check if we're in build state
 	if (!BuildGun->IsInState(EBuildGunState::BGS_BUILD))
 	{
+		// Restore owns an accepted, exact-gun native entry until Build actually starts.
+		// Unequipping, selecting another mode and explicit cancellation still end the arm.
+		if (RestoreService && RestoreService->IsAwaitingBuildState(BuildGun)) return;
 		// Walk mode: tear down the preview when the build gun leaves the build state (dismantle, paint, etc.) —
 		// otherwise the walk's standalone preview holograms dangle. Guard on the flag (avoids needing the full
 		// USFWalkService type here, and avoids ExitWalkMode's enter-log firing every frame the gun is out of build).

@@ -1,4 +1,4 @@
-// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
+﻿// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
 /**
  * SFExtendRestoreReplayService Implementation
@@ -337,13 +337,9 @@ void USFExtendRestoreReplayService::TickRestoredCloneTopology(float DeltaTime)
         }
 
         ClearRestoredCloneTopologySession(TEXT("TickRestoredCloneTopology parent invalid"));
-        if (Owner->Subsystem.IsValid())
-        {
-            if (USFRestoreService* RestoreSvc = Owner->Subsystem->GetRestoreService())
-            {
-                RestoreSvc->ClearActiveRestoreSession(TEXT("Restored Extend parent invalid"));
-            }
-        }
+        // A preview parent's destruction is not cancellation of the immutable
+        // module arm. Restore will bind that arm to the next compatible parent.
+        // Explicit gun exit, recipe mismatch and session disable still cancel it.
         return;
     }
 

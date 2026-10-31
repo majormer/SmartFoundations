@@ -2,6 +2,7 @@
 #include "Features/Scaling/Holograms/SFFoundationPassthroughPreviewHologram.h"
 #include "SmartFoundations.h"
 #include "Features/Scaling/SFFoundationPassthroughState.h"
+#include "Features/Scaling/SFLiftFloorHoleGridRequest.h"
 #include "Components/StaticMeshComponent.h"
 #include "FGPipeConnectionComponent.h"
 
@@ -91,6 +92,11 @@ AActor* ASFFoundationPassthroughPreviewHologram::Construct(TArray<AActor*>& OutC
 {
     AFGHologram* Parent = GetParentHologram();
     if (!bGeometryReady || !SFFoundationPassthroughState::IsHandled(Parent)) return nullptr;
+    if (FSFLiftFloorHoleGridRequest::IsHandled(Parent))
+    {
+        auto* Prepared = FSFLiftFloorHoleGridRequest::FindCell(this);
+        return IsValid(Prepared) ? Prepared->Construct(OutChildren, ConstructionID) : nullptr;
+    }
     AFGHologram* Native = SFFoundationPassthroughState::SpawnConstructionCell(Parent, this,
         TEXT("NativeFoundationPassthroughConstruction"), GetActorTransform());
     if (!Native) return nullptr;

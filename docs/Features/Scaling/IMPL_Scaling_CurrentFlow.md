@@ -43,6 +43,23 @@ Scaling supports eligible single-click and multi-step buildables. It retains the
 6. `USFGridSpawnerService::UpdateChildPositions` uses `FSFPositionCalculator` and the current transform counters to place every child.
 7. Vanilla construction builds the parent and its registered children, with costs flowing through the normal hologram child list.
 
+### Payment after materialization
+
+Native construction can query the price after `Construct` has consumed a staged grid
+plan. Exact-endpoint power wires are built after the grid and are absent from that
+later hologram child list. Recomputing from the remaining children would therefore
+omit their cable cost. The [native construction sequence](../../Reference/THESIS_Belts_ChainActors_Placement.md#standard-construction-sequence)
+records the outer caller requesting the cost list after `Construct` returns,
+before its debit call at `0x1805bc1e2`.
+
+For a remote grid with exact-endpoint or factory daisy-chain wires, the authority retains its successfully
+validated root quote in `SFProxyGridConstructionCost::FRequestScope`. The
+`Server_ConstructHologram_Implementation` scope keeps that quote available to the
+native payment query after expansion. It expires when the request returns, uses the
+exact root identity, and does not expose an outer request's quote to a nested request.
+The existing local `FScope` serves local materialization paths. Quote retention performs
+no additional debit and does not replace placement or plan validation.
+
 ## Conveyor Lift Grids
 
 `SFConveyorLiftHologramState` and `ASFConveyorLiftPreviewHologram` handle Mk.1–Mk.6.

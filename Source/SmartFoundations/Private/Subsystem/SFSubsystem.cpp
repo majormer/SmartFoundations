@@ -1,4 +1,4 @@
-// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
+﻿// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
 /**
  * USFSubsystem - core: subsystem lifecycle (ctor/Init/Deinit), accessors, power-connection mgmt, Get() + input setup/scaling.
@@ -7,6 +7,7 @@
  */
 
 #include "Subsystem/SFSubsystem.h"
+#include "Core/Construction/SFConstructionOperationCoordinator.h"
 #include "FGHUD.h"
 #include "UI/FGGameUI.h"
 #include "Shared/SFSupportGridFrame.h"
@@ -616,6 +617,9 @@ void USFSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	}
 
 	// Initialize deterministic hologram lifecycle management (Layer 2) - bind once to prevent accumulation
+	ConstructionCoordinator = NewObject<USFConstructionOperationCoordinator>(this);
+	if (!ConstructionCoordinator->Initialize(World)) ConstructionCoordinator = nullptr;
+
 	InitializeHologramCleanup();
 
 	UE_LOG(LogSmartFoundations, Verbose, TEXT("Smart! Subsystem: World found, starting timers"));
@@ -797,6 +801,11 @@ void USFSubsystem::InitializeWidgets()
 
 void USFSubsystem::Deinitialize()
 {
+	if (ConstructionCoordinator)
+	{
+		ConstructionCoordinator->Shutdown();
+		ConstructionCoordinator = nullptr;
+	}
 	DestroyScaleDaisyChainPreviews();
 	// BUG FIX (Issue #148): Clear static input caches during world cleanup
 	// Must be done FIRST before any other cleanup to prevent accessing stale cached objects
@@ -1044,6 +1053,7 @@ void USFSubsystem::DestroyScaleDaisyChainPreviews()
 
 void USFSubsystem::Tick(float DeltaTime)
 {
+	if (ConstructionCoordinator) ConstructionCoordinator->RefreshNativeBinding();
 	RefreshScaleDaisyChainPreviews();
 
 	// Phase 4 Performance Optimization: Progressive Batch Reposition
@@ -1245,7 +1255,10 @@ void USFSubsystem::Tick(float DeltaTime)
 		}
 
 		// TryExtendFromBuilding handles the automatic activation/deactivation
-		ExtendService->TryExtendFromBuilding(LookedAtBuilding, ActiveHologram.Get());
+        // The armed module owns automatic preview acquisition even between its
+        // transient parents. Explicit Extend panel selection remains a separate action.
+        if (!RestoreService || !RestoreService->IsRestoreSessionActive())
+            ExtendService->TryExtendFromBuilding(LookedAtBuilding, ActiveHologram.Get());
 	}
 }
 

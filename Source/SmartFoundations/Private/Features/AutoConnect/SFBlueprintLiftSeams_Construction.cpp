@@ -13,7 +13,10 @@
 #include "Hologram/FGBlueprintHologram.h"
 #include "Buildables/FGBuildableConveyorLift.h"
 #include "Buildables/FGBuildableConveyorBelt.h"
-#include "Services/SFChainActorService.h"
+#include "Core/Construction/SFConstructionOperationCoordinator.h"
+#include "Core/Construction/SFConveyorConstructionLinks.h"
+#include "GameFramework/PlayerController.h"
+#include "GameFramework/Pawn.h"
 #include "FGRecipe.h"
 #include "FGRecipeManager.h"
 #include "FGCharacterPlayer.h"
@@ -267,14 +270,15 @@ bool FSFBlueprintLiftSeams::IsBounded(const TArray<FSFBlueprintLiftPlanEntry>& P
             if (!P->BuildClass || !P->BuildClass->IsChildOf(AFGBuildableConveyorLift::StaticClass()) || P->Index < 0
                 || P->Index > 65535 || P->Name.IsNone() || P->OriginalOwner.ContainsNaN() || P->OwnerPose.ContainsNaN()
                 || P->PortLocalPose.ContainsNaN() || P->Direction < 0
-                || P->Direction >= static_cast<int32>(EFactoryConnectionDirection::FCD_SNAP_ONLY)) return false;
+                || P->Direction >= static_cast<int32>(EFactoryConnectionDirection::FCD_ANY)) return false;
             if (P->Cell.X < 0 || P->Cell.Y < 0 || P->Cell.Z < 0
                 || P->Cell.X > 100000 || P->Cell.Y > 100000 || P->Cell.Z > 100000) return false;
             const FString Key = P->Cell.ToString() + TEXT("|") + FString::FromInt(P->Index);
             if (Mouths.Contains(Key)) return false;
             Mouths.Add(Key);
         }
-        if (E.From.Cell.X != E.To.Cell.X || E.From.Cell.Y != E.To.Cell.Y || FMath::Abs(E.From.Cell.Z - E.To.Cell.Z) != 1) return false;
+        if (E.From.Direction == E.To.Direction || E.From.Cell.X != E.To.Cell.X || E.From.Cell.Y != E.To.Cell.Y
+            || FMath::Abs(E.From.Cell.Z - E.To.Cell.Z) != 1) return false;
     }
     return true;
 }
@@ -351,94 +355,71 @@ void FSFBlueprintLiftSeams::Construct(AFGBlueprintHologram* Root, const TArray<A
         UFGFactoryConnectionComponent* To = nullptr;
     };
     TArray<FReady> Ready;
+    const auto Routes = State->Routes; // No map pointer/iterator survives a native callback.
+    auto Reject = [&](const TCHAR* Reason)
+    {
+        FSFConveyorConstructionLinks::RejectPrepared(Root, ID, Reason);
+    };
     // Resolve and configure every exact native mouth before creating any seam actor.
-    for (const auto& R : State->Routes)
+    for (const auto& R : Routes)
     {
         auto* From = ResolveBuiltLiftMouth(R.Entry.From, Copies); auto* To = ResolveBuiltLiftMouth(R.Entry.To, Copies);
-        auto Pool = FSFLiftRouteNativePreview::Acquire(Root, R.Entry.Tier)->CreateConstructionPreview();
+        const auto SourcePool = FSFLiftRouteNativePreview::Acquire(Root, R.Entry.Tier);
+        auto Pool = SourcePool ? SourcePool->CreateConstructionPreview() : nullptr;
         auto* Belt = Pool ? Pool->ConfigureBelt(Root, From, To) : nullptr;
         if (!Belt)
         {
-            UE_LOG(LogSmartFoundations, Error, TEXT("Prepared Blueprint lift seam could not resolve its exact constructed mouths."));
+            Reject(TEXT("prepared_lift_mouth_unavailable_after_native_copy"));
             return;
         }
         Belt->SetActorTransform(R.Entry.Pose); Belt->SetSplineDataAndUpdate(R.Entry.Spline);
         if (Belt->GetBuildClass() != R.Entry.BuildClass || Belt->GetRecipe() != R.Entry.Recipe
             || !Belt->IsNativePlacementValid() || !LiftSameCost(Belt->GetCost(false), R.Entry.Cost))
         {
-            UE_LOG(LogSmartFoundations, Error, TEXT("Prepared Blueprint lift seam changed after copy construction."));
+            Reject(TEXT("prepared_lift_seam_changed_after_native_copy"));
             return;
         }
         Ready.Add({Pool, Belt, From, To});
     }
+    const int32 ExpectedRoutes = Routes.Num();
+    State = BlueprintLiftTransactions.Find(Root);
+    if (!State || !State->bPrepared || State->bConstructed)
+    { Reject(TEXT("prepared_lift_seam_transaction_expired")); return; }
     State->bConstructed = true;
-    TArray<TPair<UFGFactoryConnectionComponent*, UFGFactoryConnectionComponent*>> Connections;
-    TArray<AFGBuildableConveyorBase*> Affected;
+    TArray<FSFConveyorConstructionEdge> Connections;
     for (auto& R : Ready)
     {
         TArray<AActor*> Children;
+        // These exact native cells retire before any new link is installed. Native
+        // BeginPlay owns initial registration; the queued adapter owns added edges.
+        R.Belt->DeferRouteConnections();
         auto* Built = R.Belt->Construct(Children, ID);
         if (Built) Seams.AddUnique(Built);
         if (auto* Belt = Cast<AFGBuildableConveyorBelt>(Built))
         {
-            Connections.Add({Belt->GetConnection0(), R.From});
-            Connections.Add({Belt->GetConnection1(), R.To});
-            Affected.AddUnique(Belt);
-            for (auto* Port : {R.From, R.To})
-                if (auto* Conveyor = Cast<AFGBuildableConveyorBase>(Port->GetOwner())) Affected.AddUnique(Conveyor);
+            for (auto* Peer : {R.From, R.To})
+            {
+                UFGFactoryConnectionComponent* Mouth = nullptr;
+                for (auto* Port : {Belt->GetConnection0(), Belt->GetConnection1()})
+                    if (IsValid(Peer) && IsValid(Port)
+                        && ((Peer->GetDirection() == EFactoryConnectionDirection::FCD_OUTPUT && Port->GetDirection() == EFactoryConnectionDirection::FCD_INPUT)
+                            || (Peer->GetDirection() == EFactoryConnectionDirection::FCD_INPUT && Port->GetDirection() == EFactoryConnectionDirection::FCD_OUTPUT)))
+                    { if (Mouth) { Mouth = nullptr; break; } Mouth = Port; }
+                if (Mouth) Connections.Add({FSFConveyorConstructionLinks::Capture(Mouth), FSFConveyorConstructionLinks::Capture(Peer)});
+            }
         }
         for (auto* A : Children) Seams.AddUnique(A);
         R.Pool->Hide();
     }
-    auto CountConnectedMouths = [&Seams]()
-    {
-        int32 Count = 0;
-        for (auto* Actor : Seams)
-        {
-            TInlineComponentArray<UFGFactoryConnectionComponent*> Ports(Actor);
-            for (auto* Port : Ports) Count += IsValid(Port) && Port->IsConnected();
-        }
-        return Count;
-    };
-    const int32 ConnectedBeforeRelease = CountConnectedMouths();
-    // Construction cells have operation-local ownership. Observe the committed
-    // connections after their normal destruction, before returning to the parent.
     Ready.Reset();
-    if (Connections.Num() != State->Routes.Num() * 2)
+    // All generated ordinary belts and lift-tail belts share the original root/ID
+    // batch, preventing competing leases on the same freshly copied native cohort.
+    const bool Retained = !Connections.IsEmpty() && FSFConveyorConstructionLinks::Defer(Root, ID, Connections);
+    if (Connections.Num() != ExpectedRoutes * 2 || !Retained)
     {
-        UE_LOG(LogSmartFoundations, Error, TEXT("Blueprint lift seam native construction returned an incomplete belt batch."));
+        Reject(TEXT("incomplete_or_unretained_lift_seam_materialization"));
         return;
     }
-    // Blueprint copies are already materialized here. Complete wiring only after
-    // native construction has initialized the new belt and its temporary cells
-    // have retired. ConfigureComponents alone does not establish these links.
-    // Check the whole exact batch before changing any remaining connection.
-    for (const auto& Pair : Connections)
-    {
-        auto* Mouth = Pair.Key;
-        auto* Peer = Pair.Value;
-        if (!IsValid(Mouth) || !IsValid(Peer)
-            || Mouth->IsConnected() != Peer->IsConnected()
-            || (Mouth->IsConnected() && Mouth->GetConnection() != Peer)
-            || (Peer->IsConnected() && Peer->GetConnection() != Mouth)
-            || (!Mouth->IsConnected() && !Peer->IsConnected() && !Mouth->CanConnectTo(Peer)))
-        {
-            UE_LOG(LogSmartFoundations, Error, TEXT("Blueprint lift seam native connection changed during materialization."));
-            return;
-        }
-    }
-    bool Changed = false;
-    for (const auto& Pair : Connections)
-        if (!Pair.Key->IsConnected() && !Pair.Value->IsConnected())
-        {
-            Pair.Key->SetConnection(Pair.Value);
-            Changed = true;
-        }
-    // Only this operation's new conveyors participate; preserve source chains.
-    if (Changed)
-        if (auto* Sub = USFSubsystem::Get(Root->GetWorld()))
-            if (auto* Chains = Sub->GetChainActorService()) Chains->InvalidateAndRebuildForBelts(Affected, {});
-    UE_LOG(LogSmartFoundations, Log,
-        TEXT("Blueprint lift seams constructed: %d expected, %d new actors, connected mouths before/after cell release=%d/%d."),
-        State->Routes.Num(), Seams.Num(), ConnectedBeforeRelease, CountConnectedMouths());
+    UE_LOG(LogSmartFoundations, Log, TEXT("Blueprint lift seams materialized: %d routes, %d actors; exact links retained for native-phase admission, parent payment separate."),
+        ExpectedRoutes, Seams.Num());
 }

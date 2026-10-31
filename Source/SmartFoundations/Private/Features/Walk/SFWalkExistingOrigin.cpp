@@ -1,5 +1,6 @@
 // Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 #include "Features/Walk/SFWalkExistingOrigin.h"
+#include "Core/Construction/SFConveyorConstructionLinks.h"
 #include "Features/Walk/SFWalkBusLayout.h"
 #include "Features/Walk/SFWalkEndpointGrid.h"
 #include "Core/SFNativeHit.h"
@@ -416,8 +417,18 @@ bool SFWalkExistingOrigin::IsNativeStartPosition(AFGHologram* Span, const FVecto
     auto* Start = NativeStart(Span);
     return Start && Start->GetComponentLocation().Equals(Position, MatchDistance);
 }
+USceneComponent* SFWalkExistingOrigin::GetSelectedStart(AFGHologram* Span)
+{
+    return IsValid(Span) ? NativeStart(Span) : nullptr;
+}
 
 bool SFWalkExistingOrigin::ConnectNativeStart(AFGHologram* Span, AFGBuildable* BuiltSpan)
+{
+    return ConnectNativeStart(Span, BuiltSpan, nullptr);
+}
+
+bool SFWalkExistingOrigin::ConnectNativeStart(AFGHologram* Span, AFGBuildable* BuiltSpan,
+    const FNetConstructionID* ConstructionId)
 {
     auto* Start = NativeStart(Span);
     if (!Start || !IsValid(BuiltSpan)) { return false; }
@@ -429,8 +440,9 @@ bool SFWalkExistingOrigin::ConnectNativeStart(AFGHologram* Span, AFGBuildable* B
             if (!Own->GetComponentLocation().Equals(Start->GetComponentLocation(), MatchDistance)) { continue; }
             if (Own->IsConnected()) { return Own->GetConnection() == BeltStart; }
             if (BeltStart->IsConnected() || !Own->CanConnectTo(BeltStart)) { return false; }
-            Own->SetConnection(BeltStart);
-            return Own->GetConnection() == BeltStart;
+            if (!ConstructionId) return false;
+            return FSFConveyorConstructionLinks::Defer(Span, *ConstructionId,
+                {{FSFConveyorConstructionLinks::Capture(Own), FSFConveyorConstructionLinks::Capture(BeltStart)}});
         }
     }
     else if (auto* PipeStart = Cast<UFGPipeConnectionComponentBase>(Start))
