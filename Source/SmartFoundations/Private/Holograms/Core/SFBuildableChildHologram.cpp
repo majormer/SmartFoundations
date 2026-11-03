@@ -9,7 +9,7 @@
 #include "FGRecipe.h"
 #include "Data/SFHologramDataRegistry.h"
 #include "Subsystem/SFHologramDataService.h"
-#include "Features/Scaling/SFHypertubeEntranceState.h"
+#include "Features/Scaling/SFNativeAttachmentGridState.h"
 
 ASFBuildableChildHologram::ASFBuildableChildHologram()
 {
@@ -114,7 +114,7 @@ AActor* ASFBuildableChildHologram::Construct(TArray<AActor*>& out_children, FNet
 
 	// A request-validated native entrance owns its ConfigureComponents snap handoff.
 	// Unattached cells and every other generic buildable retain their ordinary path.
-	AFGHologram* NativeCell = SFHypertubeEntranceState::FindPreparedCell(this);
+	AFGHologram* NativeCell = SFNativeAttachmentGridState::FindPreparedCell(this);
 	AActor* BuiltActor = IsValid(NativeCell)
 		? NativeCell->Construct(out_children, constructionID)
 		: Super::Construct(out_children, constructionID);

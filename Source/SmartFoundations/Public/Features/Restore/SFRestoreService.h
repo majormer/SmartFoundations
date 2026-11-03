@@ -1,4 +1,4 @@
-// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
+﻿// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
 /**
  * SFRestoreService - Smart Restore Enhanced Service
@@ -22,6 +22,8 @@
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
 #include "Features/Restore/SFRestoreTypes.h"
+#include "Equipment/FGBuildGun.h"
+#include "TimerManager.h"
 #include "SFRestoreService.generated.h"
 
 class USFSubsystem;
@@ -159,6 +161,10 @@ public:
 	const FString& GetActiveRestorePresetName() const { return ActiveRestorePresetName; }
 	void ClearActiveRestoreSession(const TCHAR* Reason);
 
+	/** Native equip/recipe entry is not a user exit from an already active build session. */
+	bool IsAwaitingBuildState(const AFGBuildGun* BuildGun) const;
+	virtual void BeginDestroy() override;
+
 	/** Validate that all preset recipes/buildables are unlocked in the current game state.
 	 *  Public since #427: the Restore UI's details panes show availability ("Requires X") and
 	 *  disable Apply from the same check that gates the apply itself. */
@@ -183,6 +189,12 @@ private:
 	TWeakObjectPtr<USFSubsystem> Subsystem;
 	bool bRestoreSessionActive = false;
 	FString ActiveRestorePresetName;
+	TWeakObjectPtr<AFGBuildGun> RestoreBuildGun;
+	bool bAwaitingBuildState = false;
+	FTimerHandle RestoreReplayTimer;
+
+	UFUNCTION()
+	void OnRestoreBuildGunStateChanged(EBuildGunState NewState);
 
 	// [#473] Session-only MRU of successfully applied preset names (newest first, unique, cap 8).
 	// Deliberately NOT persisted and NOT a setting - nothing survives a game restart.
@@ -208,7 +220,9 @@ private:
 	/** Get the full file path for a preset by name */
 	FString GetPresetFilePath(const FString& Name) const;
 
-	void ReplayExtendTopologyWhenHologramReady(TSharedRef<const FSFRestorePreset> Preset, int32 AttemptsRemaining, int32 SettleTicksRemaining);
+	void ReplayExtendTopologyWhenHologramReady(TSharedRef<const FSFRestorePreset> Preset, uint64 ExpectedSerial,
+        TWeakObjectPtr<UWorld> ExpectedWorld, TWeakObjectPtr<AFGHologram> LastAttemptedRoot,
+        TWeakObjectPtr<AFGHologram> SettlingRoot, int32 SettleTicksRemaining);
 
 	/** [#473] Grid-preset arm from the recents gesture: the captured VALUES can't land
 	 *  synchronously - ApplyPreset's build-gun switch spawns the new hologram over the next

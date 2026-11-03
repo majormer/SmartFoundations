@@ -137,6 +137,7 @@ struct FSFLiftData
     GENERATED_BODY()
     
     UPROPERTY() float Height = 0.0f;
+    /** Historical serialized name: captured GetIsReversed() means upward flow in current native lifts. */
     UPROPERTY() bool bIsReversed = false;
     UPROPERTY() FSFTransform TopTransform;      // Local/relative to actor
     UPROPERTY() FSFTransform BottomTransform;   // World space
@@ -212,6 +213,50 @@ struct FSFCapturedCustomization
 
     /** Rebuild customization data; returns false when nothing was captured. */
     bool ApplyTo(struct FFactoryCustomizationData& Out) const;
+};
+
+/** User configuration only; inventory contents and transient routing cursors are never cloned. */
+USTRUCT()
+struct FSFCapturedDistributorRule
+{
+    GENERATED_BODY()
+    UPROPERTY() FString ItemClass;
+    UPROPERTY() int32 OutputIndex = INDEX_NONE;
+};
+
+/** Native construct-message serialization supports arrays, not reflected maps. */
+USTRUCT()
+struct FSFCapturedPortDirection
+{
+    GENERATED_BODY()
+    UPROPERTY() FString PortName;
+    UPROPERTY() uint8 Direction = 0;
+};
+
+USTRUCT()
+struct FSFCapturedDistributorSettings
+{
+    GENERATED_BODY()
+    UPROPERTY() bool bCaptured = false;
+    /** 0 ordinary attachment, 1 smart/programmable splitter, 2 priority merger. */
+    UPROPERTY() uint8 Kind = 0;
+    UPROPERTY() FString ClassPath;
+    UPROPERTY() TArray<FSFCapturedDistributorRule> Rules;
+    UPROPERTY() TArray<int32> Priorities;
+    /** Exact effective port roles, including upward/downward lift-mounted variants. */
+    UPROPERTY() TArray<FSFCapturedPortDirection> ConnectionDirections;
+
+    const uint8* FindDirection(const FString& PortName) const
+    {
+        const auto* Role = ConnectionDirections.FindByPredicate([&](const auto& Value) { return Value.PortName == PortName; });
+        return Role ? &Role->Direction : nullptr;
+    }
+
+    bool Capture(class AFGBuildable* Actor);
+    bool IsValidFor(class AFGBuildable* Actor) const;
+    bool Matches(class AFGBuildable* Actor) const;
+    bool ApplyAndVerify(class AFGBuildable* Actor) const;
+    bool ApplyDirectionsBeforeBeginPlay(class AFGBuildable* Actor) const;
 };
 
 /**
@@ -292,6 +337,7 @@ struct FSFSourceDistributor
     UPROPERTY() FString ConnectorUsed;  // Which connector connects to this chain
     UPROPERTY() TArray<FString> ConnectedConnectors;  // Connectors already connected to something (for lane selection)
     UPROPERTY() TMap<FString, FVector> ConnectorWorldPositions;  // Actual world positions of each connector
+    UPROPERTY() FSFCapturedDistributorSettings DistributorSettings;
 
     // [#477] Appearance captured while the source actor is alive.
     UPROPERTY() FSFCapturedCustomization Customization;
@@ -438,6 +484,7 @@ struct FSFCloneHologram
     UPROPERTY() FString SourceClass;        // Original build class
     UPROPERTY() FString SourceChain;        // Which chain: "belt_input_0"
     UPROPERTY() int32 SourceSegmentIndex = -1;  // Position in source chain (-1 for distributors)
+    UPROPERTY() FSFCapturedDistributorSettings DistributorSettings;
 
     // [#477] Appearance captured at topology-build time - replays without live source actors
     // (saved presets across restarts/worlds, MP). bCaptured=false = legacy live-harvest fallback.

@@ -122,211 +122,36 @@ struct SMARTFOUNDATIONS_API FSFChainRepairResult
 };
 
 /**
- * Chain Actor Service — Canonical path for invalidating and rebuilding conveyor chain actors
- * after topology changes (mass upgrade, Extend / Scaled Extend, etc.).
+ * Narrow factory/wire cleanup; no conveyor topology mutation or chain repair.
+ * Extend/Restore and conveyor Upgrade use the retained construction operation;
+ * this service is not a second settlement or world-wide recovery owner.
  *
- * BACKGROUND
- * ==========
- * A conveyor chain actor (AFGConveyorChainActor) owns a contiguous run of belts and ticks
- * them as a single unit via ParallelFor. When Smart! changes belt topology (upgrading a
- * batch, cloning a manifold), the existing chain actors no longer match the live topology
- * and must be invalidated so vanilla can rebuild fresh chains.
- *
- * The naive "RemoveConveyorChainActor(chain) and let vanilla handle it next frame" path
- * (v29.2.1) is crash-safe but leaves a one-frame window where FConveyorTickGroup::ChainActor
- * is null and the old chain actors are Destroy()-pending but not yet GC'd. If a save fires
- * in that window the save captures the transitional state and load produces SPLIT_CHAIN
- * orphans. Extensive live in-game testing confirmed the correct pattern:
- *
- *   1. Resolve each affected chain to its owning FConveyorTickGroup.
- *   2. Call RemoveChainActorFromConveyorGroup(TG) — nulls TG->ChainActor AND every
- *      belt back-pointer in the group. Does NOT call Destroy() on the chain actor
- *      (no GC race, no ParallelFor race; the old actor becomes inert and GCs naturally).
- *   3. Union the cleared groups with mConveyorGroupsPendingChainActors (pre-existing
- *      pending migrations), empty the pending list, then call
- *      MigrateConveyorGroupToChainActor(TG) synchronously for each unique group.
- *      This restores TG->ChainActor to a valid new chain BEFORE control returns — the
- *      next TickFactoryActors pass cannot see a null ChainActor, and a save captured
- *      immediately after returns a consistent state.
- *
- * THINGS THAT LOOK LIKE SHORTCUTS AND ARE NOT
- * -------------------------------------------
- *   - chain->Destroy() after RemoveConveyorChainActor — races Factory_Tick on a
- *     ParallelFor worker thread; EXCEPTION_ACCESS_VIOLATION at FGConveyorChainActor.cpp:339.
- *   - belt->SetConveyorChainActor(nullptr) before removal — bypasses the "belt removed →
- *     chain self-delete" notification path. Original chain leaks as an orphan actor,
- *     serializes on save, crashes on load via GTestRegisterComponentTickFunctions == 0.
- *   - RemoveConveyor + AddConveyor orphan bounce — every in-game variant tested after
- *     large upgrades crashed or asserted. A controlled recovery tool can still use a bounce
- *     for small settled orphan sets after save/reload, but this service's orphan path is
- *     diagnostic-only and never mutates vanilla tick-group arrays.
- *   - Calling the service's phases out of order or skipping dedup — calling Remove or
- *     Migrate twice on the same FConveyorTickGroup corrupts state.
- *
- * CRASH HISTORY: see the "HISTORY — do not regress" comment in SFUpgradeExecutionService.cpp
- * and docs/Features/SmartUpgrade/IMPL_SmartUpgrade_CurrentFlow.md.
- *
- * FRIEND ACCESS: this service is declared `Friend` on AFGBuildableSubsystem via
- * Config/AccessTransformers.ini so it can reach `mConveyorTickGroup`,
- * `mConveyorGroupsPendingChainActors`, `RemoveChainActorFromConveyorGroup`, and
- * `MigrateConveyorGroupToChainActor`. Callers should not try to reach these directly.
+ * Native retirement, worker fences and group/bucket invariants are documented in
+ * docs/Reference/THESIS_Belts_ChainActors_Placement.md. Historical failure evidence
+ * includes FGConveyorChainActor.cpp:339 and GTestRegisterComponentTickFunctions==0;
+ * do not re-test destroyed-chain reuse or reinstallation to rediscover them.
  */
 UCLASS()
 class SMARTFOUNDATIONS_API USFChainActorService : public UObject
 {
-	GENERATED_BODY()
-
+    GENERATED_BODY()
 public:
-	/** Bind to owning subsystem. */
-	void Initialize(USFSubsystem* InSubsystem);
+    void Initialize(USFSubsystem* InSubsystem);
+    void Shutdown();
 
-	/** Release references. */
-	void Shutdown();
+    /** Existing nonconveyor safety guards; not conveyor group repair. */
+    static int32 ScrubNullWireEntries(class AFGBuildable* Buildable);
+    /** Retired ABI: native lifecycle alone owns factory-array membership/caches. Returns zero. */
+    int32 RemoveBuildableFromFactoryTickArrays(class AFGBuildable* Buildable);
+    int32 ScrubFactoryTickArrays();
 
-	/**
-	 * Canonical entry point: invalidate the supplied chains, rebuild fresh chains
-	 * synchronously on the same frame, and drain any pre-existing pending migrations.
-	 *
-	 * Null and already-destroyed chain entries are tolerated. Dedup of tick groups is
-	 * performed internally — it is safe to pass overlapping chain sets.
-	 *
-	 * Returns the number of tick groups that were migrated (for logging).
-	 */
-	int32 InvalidateAndRebuildChains(
-		const TSet<AFGConveyorChainActor*>& AffectedChains,
-		const TSet<FConveyorTickGroup*>& ExplicitTickGroups = {});
-
-	/**
-	 * Convenience overload: supply a belt set; the service derives the affected chains
-	 * from (a) each belt's current chain actor and (b) each belt's connected neighbours'
-	 * chain actors. This matches the topology-change callsites in Upgrade and Extend.
-	 *
-	 * `ExtraChains` is unioned in — used by Mass Upgrade to include `PreDestroyChainActors`
-	 * captured before old belts were destroyed.
-	 */
-	int32 InvalidateAndRebuildForBelts(
-		const TArray<AFGBuildableConveyorBase*>& Belts,
-		const TSet<AFGConveyorChainActor*>& ExtraChains);
-
-	/**
-	 * Upgrade-specific prototype: invalidate affected conveyor chains and queue the
-	 * affected tick groups for vanilla's next-frame rebuild instead of synchronously
-	 * calling MigrateConveyorGroupToChainActor. This follows FactoryGame's chain-level
-	 * modification path and avoids the repeated SetStartAndEndConveyors endpoint-order
-	 * recovery loop that still leaves mass-upgrade TGs orphaned.
-	 */
-	int32 InvalidateAndQueueVanillaRebuildForBelts(
-		const TArray<AFGBuildableConveyorBase*>& Belts,
-		const TSet<AFGConveyorChainActor*>& ExtraChains);
-
-	/**
-	 * Upgrade-specific fallback: after the full replacement graph has been connected,
-	 * unregister and re-register the upgraded conveyors so FactoryGame assigns bucket
-	 * membership from the live graph instead of Smart manually coalescing tick groups.
-	 * Used after mass-upgrade endpoint repair and by explicit Triage recovery for
-	 * already-loaded bad saves with orphaned conveyor tick groups.
-	 */
-	int32 ReRegisterAndQueueVanillaRebuildForBelts(
-		const TArray<AFGBuildableConveyorBase*>& Belts,
-		const TSet<AFGConveyorChainActor*>& ExtraChains);
-
-	/**
-	 * Destroy all AFGConveyorChainActor instances with zero chain segments (NO_SEGMENTS zombies).
-	 * Safe, idempotent. Called by deferred post-upgrade cleanup and explicit repair flows.
-	 * Public so UpgradeExecutionService can invoke it directly as a safety-net after
-	 * InvalidateAndRebuildForBelts leaves zombies behind. Returns the number of actors destroyed.
-	 */
-	int32 PurgeZombieChainActors();
-
-	/** [#366-class guard] Remove null/dead entries from every circuit connection's wire list on
-	 *  a buildable. Vanilla's Dismantle_Implementation calls Execute_Dismantle on each wire in
-	 *  mWires unguarded - a null entry (wire destroyed without disconnecting, or a SaveGame wire
-	 *  reference that failed to load) is an instant assert (live SP crash 2026-06-11, dismantling
-	 *  an Extended blueprint buildable). Static + here because mWires is protected and this class
-	 *  holds the AccessTransformers friend grant. Returns entries scrubbed. */
-	static int32 ScrubNullWireEntries(class AFGBuildable* Buildable);
-
-	/** [CHAIN-FIX] Force-remove a conveyor from EVERY tick group's Conveyors array. Called by the
-	 *  RemoveConveyor after-hook: a stale mConveyorBucketID makes vanilla's removal silently fail
-	 *  in shipping, leaving a soon-to-be-freed pointer in a TG that TickFactoryActors' ParallelFor
-	 *  later calls through (the 2026-06-10 freed-pointer factory-tick AV, reproduced 3x). Lives
-	 *  here because mConveyorTickGroup is private to AFGBuildableSubsystem and this service holds
-	 *  the access grant. Returns the number of stale entries removed. */
-	int32 RemoveConveyorFromAllTickGroups(class AFGBuildableConveyorBase* Conveyor);
-
-	/** [CHAIN-FIX] Force-remove a buildable from mFactoryBuildings + mFactoryBuildingGroups.
-	 *  cdb on the 5th freed-pointer tick AV (2026-06-10) showed TickFactoryActors' lambda walking
-	 *  mFactoryBuildings (+0x3C0) and virtual-calling a freed entry near the array END (the most
-	 *  recently registered buildables) — some destruction path skips vanilla RemoveBuildable.
-	 *  Called from the AFGBuildable::EndPlay after-hook; only true leaks survive vanilla cleanup
-	 *  to be found here. Returns entries removed. */
-	int32 RemoveBuildableFromFactoryTickArrays(class AFGBuildable* Buildable);
-
-	/** [CHAIN-FIX] Pre-tick integrity scrub of mFactoryBuildings (+ groups): validate every entry
-	 *  against the UObject table (IsValidLowLevelFast + IsValid) and remove corrupt/freed ones,
-	 *  logging the index, raw pointer, and VALID NEIGHBORS' names — turning the 2026-06-10
-	 *  freed-pointer tick AV (7 repros, three falsified guards: RemoveConveyor, conveyor EndPlay,
-	 *  buildable EndPlay) into a survivable, precisely-located log line. Called from the
-	 *  TickFactory before-hook every factory tick (~2us for ~2k entries). Returns removed count. */
-	int32 ScrubFactoryTickArrays();
-
-	/**
-	 * Schedule a deferred call to PurgeZombieChainActors after a short delay, giving
-	 * vanilla one or two factory ticks to settle pending migrations before we sweep.
-	 * Used as the mass-upgrade safety net: the queued vanilla rebuild may leave inert
-	 * NO_SEGMENTS zombies, but automatic orphan/split repair is intentionally avoided
-	 * because those paths can recreate chain=NONE or backptr-null failures in live games.
-	 */
-	void ScheduleDeferredZombiePurge(float DelaySeconds);
-
-	// [Track E] DetectChainActorIssues() / RepairAllChainActorIssues() removed - they were the
-	// chain-repair triage tooling behind the (now removed) Upgrade Triage tab's Detect/Repair buttons.
-
-	/**
-	 * Diagnostic: dump a single failing tick group's topology to a timestamped JSON file
-	 * under <Saved>/Logs/ChainDiag_<timestamp>.json so we can inspect the merged array
-	 * ordering, per-belt connection neighbours, and chain-actor back-pointers offline.
-	 * The optional pre-migrate snapshot lets us compare each belt's mConveyorChainActor
-	 * back-pointer before vs after vanilla's Migrate ran — key for confirming whether
-	 * stale back-pointers are what causes BuildChain to bail.
-	 * No-op if the logs directory cannot be resolved.
-	 */
-	void DumpFailingTickGroupToJson(
-		const FConveyorTickGroup* TG,
-		const AFGConveyorChainActor* Zombie,
-		const FString& Phase,
-		const TArray<TPair<FString, FString>>& PreMigrateBackptrs = TArray<TPair<FString, FString>>()) const;
-
+    /** Read-only diagnostic for a caller-owned native group snapshot. */
+    void DumpFailingTickGroupToJson(const FConveyorTickGroup* TG,
+        const AFGConveyorChainActor* Zombie, const FString& Phase,
+        const TArray<TPair<FString, FString>>& PreMigrateBackptrs = TArray<TPair<FString, FString>>()) const;
 private:
-	/** Resolve BuildableSubsystem from the owning world. */
-	AFGBuildableSubsystem* GetBuildableSubsystem() const;
+    AFGBuildableSubsystem* GetBuildableSubsystem() const;
 
-	/**
-	 * Find the FConveyorTickGroup that owns a chain. Primary: TG->ChainActor == Chain.
-	 * Fallback: TG->Conveyors contains any segment belt from the chain (handles orphan
-	 * chains where TG->ChainActor points elsewhere but the belts still live in the group).
-	 * Returns nullptr if no owning group can be identified (chain is fully orphaned;
-	 * nothing to migrate — vanilla GC cleans it up naturally).
-	 */
-	FConveyorTickGroup* FindOwningTickGroup(
-		AFGBuildableSubsystem* BuildableSub,
-		AFGConveyorChainActor* Chain) const;
-
-	/**
-	 * Detect and repair SPLIT_CHAIN pairs world-wide.
-	 * A SPLIT_CHAIN occurs when belt A's output connects to belt B but A and B belong to
-	 * different chain actors. Calls InvalidateAndRebuildChains on all affected chains, with
-	 * Phase 2.5 merging to produce correct contiguous runs.
-	 * Returns the number of tick groups migrated.
-	 */
-	int32 RepairSplitChains();
-
-	// [Track E] RepairOrphanedBelts() removed (chain-repair triage tooling).
-
-private:
-	UPROPERTY()
-	TWeakObjectPtr<USFSubsystem> Subsystem;
-
-	/** Handle for the deferred post-upgrade zombie purge timer. */
-	FTimerHandle DeferredPurgeTimerHandle;
+    UPROPERTY()
+    TWeakObjectPtr<USFSubsystem> Subsystem;
 };

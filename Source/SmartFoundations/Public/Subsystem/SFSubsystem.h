@@ -72,6 +72,7 @@ class USFGridStateService;
 class USFGridSpawnerService;
 class USFGridTransformService;
 class USFChainActorService;
+class USFConstructionOperationCoordinator;
 class USFRestoreService;
 class USFWalkService;
 class USFWalkPanelWidget;
@@ -554,6 +555,9 @@ public:
 	/** Get restore service (Smart Restore Enhanced) */
 	USFRestoreService* GetRestoreService() const { return RestoreService; }
 
+	/** Abort Restore's logical arm and preview together, including native build-gun state changes. */
+	bool AbortRestoreSession(const TCHAR* Reason);
+
 	/** Get or create orchestrator for a parent distributor hologram */
 	USFAutoConnectOrchestrator* GetOrCreateOrchestrator(AFGHologram* ParentHologram);
 
@@ -943,6 +947,10 @@ protected:
     UPROPERTY()
     TObjectPtr<USFChainActorService> ChainActorService = nullptr;
 
+    UPROPERTY(Transient)
+    TObjectPtr<USFConstructionOperationCoordinator> ConstructionCoordinator = nullptr;
+    int64 NextConstructionRequestSequence = 0;
+
     // NOTE: DeferredCostService removed - child holograms automatically aggregate costs via GetCost()
 
     // NOTE: RecipeCostInjector removed - child holograms automatically aggregate costs via GetCost()
@@ -1005,6 +1013,12 @@ public:
 
 	/** Accessor for chain actor service (nullable if BuildableSubsystem is not yet available) */
 	USFChainActorService* GetChainActorService() const { return ChainActorService; }
+	USFConstructionOperationCoordinator* GetConstructionCoordinator() const { return ConstructionCoordinator; }
+	/** Shared by construction features for this world; never allocate again for a delivery retry. */
+	int64 AllocateConstructionRequestSequence()
+	{
+		return IsInGameThread() && NextConstructionRequestSequence < MAX_int64 ? ++NextConstructionRequestSequence : 0;
+	}
 	USFHudService* GetHudService() const { return HudService; }
 
 	/** Accessor for hint bar service */
@@ -1039,6 +1053,13 @@ public:
 
     void SetSmartEnabledForSession(bool bEnabled);
     void SyncSmartSessionStateToAuthority(AFGPlayerController* PC);
+    void AcceptConstructionWorldContext(AFGPlayerController* PC, FGuid Challenge, FGuid Generation);
+    bool StampRemoteConstructionRequest(AFGPlayerController* PC, FSFExtendCommitSpec& Spec);
+    void PrepareOutgoingExtendIntent(AFGHologram* Root, const FSFExtendCommitSpec& Spec);
+    bool BindOutgoingExtendConstructionId(AFGHologram* Root, FNetConstructionID Id);
+    bool TakeOutgoingExtendIntent(FNetConstructionID Id, FSFExtendCommitSpec& Out);
+    bool AcceptExtendNativeRejection(FNetConstructionID Id, FGuid RequestId);
+    void ForgetOutgoingExtendConstructionId(FNetConstructionID Id);
 
     /** Authority opt-out is per requesting player, never a server-wide switch. */
     void SetSmartEnabledForPlayer(APlayerController* PC, bool bEnabled);
@@ -1080,6 +1101,13 @@ private:
     bool bSmartSessionEnabled = true;
     bool bSmartSessionStatePending = false;
     TWeakObjectPtr<AFGPlayerController> SessionStateController;
+    TWeakObjectPtr<AFGPlayerController> ConstructionContextController;
+    FGuid ConstructionContextChallenge;
+    FGuid RemoteConstructionWorldGeneration;
+    double LastConstructionContextRequestSeconds = -1000.0;
+    TMap<FObjectKey, FSFExtendCommitSpec> OutgoingExtendIntents;
+    TMap<FString, FSFExtendCommitSpec> SerializedExtendIntents;
+    TMap<FString, FGuid> InFlightExtendRequests;
     TSet<TWeakObjectPtr<APlayerController>> SmartDisabledPlayers;
 
     TMap<TWeakObjectPtr<APlayerController>, FSFScalingSpec> StagedScalingSpecs;
@@ -1782,9 +1810,6 @@ private:
 
 	/** Clean up state during world transitions and save loads */
 	void CleanupStateForWorldTransition();
-
-	/** Abort any active Smart Restore topology/session without relying on hologram unregister semantics. */
-	bool AbortRestoreSession(const TCHAR* Reason);
 
 	/** Create and initialize HUD widgets */
 	void InitializeWidgets();

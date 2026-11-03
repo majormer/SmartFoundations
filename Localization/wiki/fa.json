@@ -77,11 +77,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Auto-Connect:4": {
-    "text": "**K → تکرار** را باز کنید و بخش **اتصال خودکار** مربوط به سازه در دست را به کار ببرید. روی سازه‌های لجستیکی پشتیبانی‌شده، `U` تنظیمات اتصال را باز می‌کند. پیش‌فرض‌های عمومی در **گزینه‌ها → تنظیمات مود → Smart!** و انتخاب‌های پیش‌نمایش فعلی در پنل هستند. ترجیحات اتصال فوری و مستقل از **اعمال فوری جانمایی** به‌روز می‌شوند.",
-    "source_hash": "0ef504a252dcabd3541b9ed8c7d000b31225026b5fa22aa19b6f534eadd38d6b",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Auto-Connect:56": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "0ef504a252dcabd3541b9ed8c7d000b31225026b5fa22aa19b6f534eadd38d6b"
   },
   "Auto-Connect:5": {
     "text": "با پنل، چرخ ماوس یا صفحه اعداد شبکه را شکل دهید؛ پیش از ساخت، اتصال‌های ایجادشده و پیکان‌های جهت را در جهان بررسی کنید. HUD مقادیر جانمایی را نشان می‌دهد و فرم دیگری برای اتصال‌ها نیست. برای کلیدهای پیش‌فرض و رفتار نسبی به بازیکن، [کنترل‌ها](Controls) را ببینید.",
@@ -118,6 +117,16 @@
     "source_hash": "e298b5a94ff81e994527adc768d5e9764cc98d01ecb1dd6ea12f6dca747287fd",
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  },
+  "Auto-Connect:47": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "bfcb0d7bcbf0b5b36a80dd16a2dac958a4db4fc0261b34174dd132215ae37e01"
+  },
+  "Auto-Connect:48": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "59bd907b72a7a1bd727a61b3bb63c228bae6f45d96d4267b1fa73010ed0ca1df"
   },
   "Auto-Connect:11": {
     "text": "### اتصال دستگاه‌ها با بالابر نقاله",
@@ -173,11 +182,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Auto-Connect:18": {
-    "text": "**تکرار پشتیبان‌های لوله یک خط لوله می‌سازد.** وقتی ردیفی از پشتیبان‌های خطوط لوله یا اتصال‌های دیواری خطوط لوله را تکرار می‌کنید، Smart! خطی متصل میان نسخه‌ها می‌کشد؛ همان‌طور که تکرار میله‌های نقاله‌دار خط تسمه می‌سازد. سیال در کل خط جریان می‌یابد و نقطه اتصال هر پایه آزاد می‌ماند تا دستی هم لوله وصل کنید. ارتفاع پایه زمینی و زاویه قطعه بالایی در کل خط حفظ می‌شود، پس خط شیب‌دار یکدست می‌ماند.",
-    "source_hash": "01bc78e7b2eed2e3b61e790428579385ed84d207401ce8ce691e20542ceb6c01",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Auto-Connect:57": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "01bc78e7b2eed2e3b61e790428579385ed84d207401ce8ce691e20542ceb6c01"
   },
   "Auto-Connect:19": {
     "text": "لوله‌های ساخته‌شده رنگ را از لوله منبع متصل می‌گیرند. اتصال تنها وقتی رنگ می‌گیرد که لوله‌های متصل هم‌رنگ باشند؛ انتقال پیش‌نمایش به اتصالی بدون منبع رنگ، رنگ اصلی را برمی‌گرداند.",
@@ -203,6 +211,16 @@
     "status": "reviewed",
     "review_method": "Direct AI contextual translation and fluency review; official terminology and protected Markdown checked; not human native-speaker certification."
   },
+  "Auto-Connect:50": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "a731c462366f0c155a14546a1265f77d5e93778036e1ebd4a44e669ff5112e22"
+  },
+  "Auto-Connect:51": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "0a29d3c9b8ec32dedec575d19408d9bb4da0cbb09a58b8d2ed2dc2c0f3f833c7"
+  },
   "Auto-Connect:21": {
     "text": "## اتصال خودکار هایپرتیوپ",
     "source_hash": "4bcc46f7a3e328199f2b10ea31239d134d1815f33bf0911b2c5020959c930f54",
@@ -221,17 +239,15 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Auto-Connect:24": {
-    "text": "**تکرار پایه‌های هایپرتیوپ خط هایپرتیوپ می‌سازد.** با تکرار ردیفی از پشتیبان‌های قابل جمع شدن هایپرتیوپ‌ها، Smart! خط متصلی میان نسخه‌ها می‌کشد؛ مثل خط تسمه میان میله‌های نقاله‌دار یا خط لوله میان پشتیبان‌های لوله. خط از فاصله و ارتفاع ردیف پیروی می‌کند و می‌تواند با شیب تند بالا برود. نقطه اتصال هر پایه آزاد می‌ماند تا دستی هم هایپرتیوپ وصل کنید.",
-    "source_hash": "eb2ee60a85c009c8b087b30e51ca7b4eb21ab2ca69353d8b3bce92a60256f455",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Auto-Connect:58": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "eb2ee60a85c009c8b087b30e51ca7b4eb21ab2ca69353d8b3bce92a60256f455"
   },
-  "Auto-Connect:25": {
-    "text": "اتصال خودکار هایپرتیوپ **کلید فعال‌سازی و حالت مسیریابی مستقل** از لوله دارد؛ آن‌ها را از پنل Smart، تنظیمات اتصال خودکار حین ساخت (نگه‌داشتن `U`) یا تنظیمات مود تعیین کنید. [مرجع تنظیمات](Settings-Reference) را ببینید.",
-    "source_hash": "12ed988af1c997655966e3695ec2f34cf65159be86bd53b56fa1a92c8a85b213",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Auto-Connect:59": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "12ed988af1c997655966e3695ec2f34cf65159be86bd53b56fa1a92c8a85b213"
   },
   "Auto-Connect:26": {
     "text": "## خطوط پایه دیواری چرخیده",
@@ -239,11 +255,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Auto-Connect:27": {
-    "text": "نسخه‌های فرزند پایه‌های دیواری لوله و هایپرتیوپ از چرخش کامل والد پیروی می‌کنند. **چرخش دیوار** در پنل **گام‌های 45°** بازی پایه را، شامل خط عمودی، ارائه می‌دهد. این با چرخش شبکه که توالی نسخه‌ها را خم می‌کند جداست.",
-    "source_hash": "fd7f0d71039eaac4e79da271b675c44893d3943fcbd5cfcc62fcca29fe53a2ce",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Auto-Connect:60": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "fd7f0d71039eaac4e79da271b675c44893d3943fcbd5cfcc62fcca29fe53a2ce"
   },
   "Auto-Connect:28": {
     "text": "در کنترل نسبی به سازه، Y خط دیواری چرخیده را دنبال می‌کند. در کنترل نسبی به بازیکن، ورودی عمودی از عمودی‌ترین جهت پشتیبانی‌شده پیروی می‌کند: برای خط عمودی، **X+Z + چرخ** خط را عمودی و **Z + چرخ** آن را جانبی گسترش می‌دهد. پنل ستون‌های X/Y/Z را نگه می‌دارد؛ محورها را با پیکان‌ها ببینید. اتصال‌های دیواری نقاله محدودیت جهت پایه را حفظ می‌کنند و برای انتقال عمودی از بالابر استفاده می‌کنند.",
@@ -317,11 +332,10 @@
     "status": "reviewed",
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
-  "Auto-Connect:45": {
-    "text": "_آخرین به‌روزرسانی: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (پیش‌نویس انتشار)_\n",
-    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89",
-    "status": "reviewed",
-    "review_method": "Direct AI contextual translation and fluency review; official terminology and protected Markdown checked; not human native-speaker certification."
+  "Auto-Connect:55": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
   },
   "Blueprints:0": {
     "text": "# نقشه‌های Smart!",
@@ -425,11 +439,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Blueprints:17": {
-    "text": "حد امن حجم پیام ساخت برای شبکه‌های نقشه هم برقرار است. جانمایی بیش‌ازحد بزرگ ردشده پیش‌نمایش را نگه می‌دارد: شبکه را کوچک و تکه‌تکه بسازید. برای جانمایی نقشه بزرگ پایه، [دستیار Smart](Smart-Assistance) را خاموش و دوباره انتخاب کنید.",
-    "source_hash": "540e7f14c64d49d7f11fb6b7090a1475087984b4955b0dccb93ca481787d4236",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Blueprints:34": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "60707b2c9e66e6d33812f6b75b700b1d1cfafde4fcb92a54f5847b69c82a8ac8"
   },
   "Blueprints:18": {
     "text": "چندنفره اعتبارسنجی مرجع و هزینه عادی دارد. تغییر سر اتصال یا کمبود مواد می‌تواند پیش‌نمایش قبلاً معتبر را نامعتبر کند. [اتصال خودکار](Auto-Connect) و [سازگاری و چندنفره](Compatibility-and-Multiplayer) را ببینید.",
@@ -509,11 +522,10 @@
     "status": "reviewed",
     "review_method": "Direct AI contextual translation and fluency review; official terminology and protected Markdown checked; not human native-speaker certification."
   },
-  "Blueprints:33": {
-    "text": "_آخرین به‌روزرسانی: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (پیش‌نویس انتشار)_\n",
-    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89",
-    "status": "reviewed",
-    "review_method": "Direct AI contextual translation and fluency review; official terminology and protected Markdown checked; not human native-speaker certification."
+  "Blueprints:35": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
   },
   "Buildable-Gallery:0": {
     "text": "# گالری سازه‌ها",
@@ -983,17 +995,15 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Compatibility-and-Multiplayer:3": {
-    "text": "هدف Smart! 35.0.0، **Satisfactory 1.2.4 / CL 502094 یا جدیدتر** و **SML 3.12.x** است. پیش از نصب بازی و بارگذار مود را به‌روز کنید. نسخه‌های قدیمی بازی پشتیبانی نمی‌شوند.",
-    "source_hash": "67e479ca52c59b7506d6acd2ace2bb75b701e6c7854e5b2d570aeec46f92d66e",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Compatibility-and-Multiplayer:23": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "ddb7f6d3428242b7eb2a16d6468bc1c961f041f29251922f6c6a6922bfa78751"
   },
-  "Compatibility-and-Multiplayer:4": {
-    "text": "اگر هر دو نصب‌اند، Smart Camera 2.0 و Smart! 35.0 باید به‌صورت جفت سازگار به‌روز شوند. دوربین تنها هم کار می‌کند؛ ابزار ساخت Smart به Camera نیاز ندارد. ترجیحات دوربین و ظاهر HUD متعلق به هر بازیکن محلی است، نه همه سرور.",
-    "source_hash": "d778ecad7f4a6a4eb530120898db7c258299752b3b3849ab7cb18dce25829247",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Compatibility-and-Multiplayer:24": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "52b5e96461ffcb32e45b4e4f8c6a7bb4ae65053d1b8488b28119e6c0efbcaf11"
   },
   "Compatibility-and-Multiplayer:5": {
     "text": "## امنیت ذخیره",
@@ -1037,23 +1047,20 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Compatibility-and-Multiplayer:12": {
-    "text": "Smart! در چندنفره روی سرور اختصاصی کار می‌کند. تمام قابلیت‌های Smart! — تکرار شبکه، اتصال خودکار (تسمه، لوله و برق)، نقشه‌های Smart، گسترش، ارتقای Smart، بازیابی Smart و برچیدن Smart — برای کلاینت با هزینه عادی کار می‌کنند. هرچه Smart! می‌سازد سازه استاندارد و کاملاً همگام بازی است؛ دیگران آن را می‌بینند، استفاده و برچیدن می‌کنند، درست مثل ساخت دستی.",
-    "source_hash": "274d747f094a4e138cbbfdf378bc151dedd8d3fa979722492b56173b298c75d5",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Compatibility-and-Multiplayer:29": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "274d747f094a4e138cbbfdf378bc151dedd8d3fa979722492b56173b298c75d5"
   },
-  "Compatibility-and-Multiplayer:13": {
-    "text": "- **سرور اختصاصی:** Windows و Linux هر دو پشتیبانی می‌شوند.\n- **سقف اندازه نقشه‌های Smart:** جانمایی یک شبکه نقشه روی سرور محدود است (تقریباً دو هزار سازه یا چند صد تسمه/لوله اتصال، هرکدام زودتر برسد). با عبور از حد، Smart! جانمایی را رد می‌کند؛ HUD می‌گوید بخش‌های کوچک‌تر بسازید و شبکه فعال می‌ماند. حد امن پیام ساخت برای تک‌نفره و میزبان نیز برقرار است. [دستیار Smart](Smart-Assistance) را خاموش و دستور را دوباره انتخاب کنید تا نقشه بزرگ پایه را عادی بسازید.\n- **شبکه‌های بزرگ تدریجی ساخته می‌شوند:** تأیید ساخت بسیار بزرگ آن را طی چند لحظه در پس‌زمینه می‌سازد تا سرور پاسخ‌گو بماند و کسی قطع نشود.\n- **برای مدیران سرور:** یک نسخه Smart! روی سرور و همه کلاینت‌ها نصب کنید. مدیر مود هنگام به‌روزرسانی آن‌ها را همسان نگه می‌دارد.\n- **Smart Camera** (مود همراه) در چندنفره نیز کار می‌کند.",
-    "source_hash": "e0abba477abdd815436da48e2f8957237ec0394c708deea58592e10d20ab9268",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Compatibility-and-Multiplayer:26": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "8cb40018690ab6ebe9357b170389232193d08c25eafc1fd5d631dac793751ffe"
   },
-  "Compatibility-and-Multiplayer:14": {
-    "text": "چندنفره از تک‌نفره جدیدتر است؛ پس تفاوت رفتار میان آن‌ها باگ است. در GitHub یا Discord گزارش کنید و سازه و نقش میزبان یا کلاینت را بنویسید.",
-    "source_hash": "be6a21fb0e3a5a2792dc5eaa0095af9dbd2cdc8641d29aed38e44f5a8dce7ce9",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Compatibility-and-Multiplayer:30": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "be6a21fb0e3a5a2792dc5eaa0095af9dbd2cdc8641d29aed38e44f5a8dce7ce9"
   },
   "Compatibility-and-Multiplayer:15": {
     "text": "کلید دستیار نشست هر بازیکن فقط ابزار ساخت خودش را تغییر می‌دهد. گسترش/بازیابی راه‌دور، پیش‌نمایش و تنظیمات میزبان را از عملیات کلاینت جدا نگه می‌دارد.",
@@ -1097,11 +1104,10 @@
     "status": "reviewed",
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
-  "Compatibility-and-Multiplayer:22": {
-    "text": "_آخرین به‌روزرسانی: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (پیش‌نویس انتشار)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Compatibility-and-Multiplayer:31": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
   },
   "Controller-and-Steam-Deck:0": {
     "text": "# دسته و Steam Deck (آزمایشی)",
@@ -1637,11 +1643,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Extend:8": {
-    "text": "1. یک ماژول فعال دستی بسازید و همان نوع سازه را در تفنگ بگیرید.\n2. **K → گسترش** را باز و **انتخاب منبع** را بزنید.\n3. بیرون پنل روی سازه منبع کلیک کنید. منابع سازگار هنگام انتخاب روشن می‌شوند. **Escape** لغو می‌کند؛ کلیک داخل پنل در رابط می‌ماند.\n4. نام منبع، همراهان ثبت‌شده و تعداد تکرار را ببینید. با **تغییر جهت** و کنترل جانمایی پیش‌نمایش را شکل دهید.\n5. پنل را ببندید، نسخه‌ها و هزینه را بررسی و برای ساخت عادی شلیک کنید.",
-    "source_hash": "be187544697091618ad4e7d6e1a2c2782b01ec9a0930ae4d3655eadaf437a2ca",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Extend:49": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "be187544697091618ad4e7d6e1a2c2782b01ec9a0930ae4d3655eadaf437a2ca"
   },
   "Extend:9": {
     "text": "انتخاب منبع چیزی نمی‌سازد. خطای نشانه‌گیری پیش‌نمایش قبلی را نگه می‌دارد. تعویض منبع یا جانمایی ساخته‌نشده قابل‌توجه قبل از حذف تأیید می‌خواهد. منبع تا لغو، ساخت یا تغییر دستور برای بررسی ثابت می‌ماند.",
@@ -1685,11 +1690,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Extend:16": {
-    "text": "کوره ساخته‌شده منبع موجود است. کوره فیروزه‌ای، تسمه‌ها و پایه‌ها نسخه پیشنهادی‌اند؛ HUD **گسترش 1×1** را نشان می‌دهد. این پیش‌نمایش ساخته‌نشده است.",
-    "source_hash": "e63c3cf4682d23c05eeac5028bcb9b9181dbd792603560f52b7b754522f84fbc",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Extend:50": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "e63c3cf4682d23c05eeac5028bcb9b9181dbd792603560f52b7b754522f84fbc"
   },
   "Extend:17": {
     "text": "## تغییر جهت",
@@ -1709,11 +1713,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Extend:20": {
-    "text": "از **K → گسترش → انتخاب منبع** یا میان‌بر نشانه‌گیری شروع کنید. زبانه کنترل‌های جانمایی تعداد شبکه، فاصله و تبدیل پشتیبانی‌شده را دوباره استفاده می‌کند. کنترل چرخ/اعداد [تکرار شبکه‌ای](Grid-Scaling) نیز یکسان است. بدون تعدیل‌گر، چرخ جهت گسترش را انتخاب می‌کند. HUD طول/ردیف و تنظیم فعال را مشخص می‌کند تا پیش از ساخت نتیجه را بدانید.",
-    "source_hash": "76acf531cc52c29e073f3df2f0e0d06d36121daf24e05679c1f466af9d01eb13",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Extend:51": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "76acf531cc52c29e073f3df2f0e0d06d36121daf24e05679c1f466af9d01eb13"
   },
   "Extend:21": {
     "text": "## گسترش شبکه‌ای",
@@ -1751,11 +1754,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Extend:27": {
-    "text": "همان منبع اکنون سه نسخه فیروزه‌ای با مسیرها و پایه‌های نقاله می‌سازد. HUD **گسترش 3×1** می‌گوید و هزینه با نسخه‌ها زیاد می‌شود. منبع موجود سر جایش است.",
-    "source_hash": "a818fc9f6600b845b33395c092257e5c56b6b18d277fc9a96921343bf18ea9b7",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Extend:52": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "a818fc9f6600b845b33395c092257e5c56b6b18d277fc9a96921343bf18ea9b7"
   },
   "Extend:28": {
     "text": "## استخراجگرهای آب",
@@ -1805,6 +1807,21 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
+  "Extend:45": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "54e38c7493c79d3f4bc2f71a29b70d8dd6942a4f44bee91a351b6ebd82db6819"
+  },
+  "Extend:46": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "2fc6ba5d654478f0d36a249ac28472d87d41be4029ae07a4e513561265a5f725"
+  },
+  "Extend:47": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "8d860159ae76958c5e531b7732a1d2bed5e6c39a0cc339d47fa7d866c6ab94e8"
+  },
   "Extend:36": {
     "text": "## بررسی چیدمان ثبت‌شده",
     "source_hash": "f1c2f5c6de3f53c619dc7b774e5c42c86b11c0f59d3d150537e145bb3f358680",
@@ -1829,11 +1846,10 @@
     "status": "reviewed",
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
-  "Extend:40": {
-    "text": "_آخرین به‌روزرسانی: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (پیش‌نویس انتشار)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Extend:48": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
   },
   "FAQ:0": {
     "text": "# پرسش‌های رایج",
@@ -3119,17 +3135,26 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
+  "Home:18": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1829ed863c572c2dbcafc8f78604d94faa795d58ca1d7e90494d020f49980f60"
+  },
+  "Home:19": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1bd5656d0819ad3a7d1a6861c038f59661e423c6f03bddc8b203ef1a7ffb5c8b"
+  },
   "Home:13": {
     "text": "## نسخه پوشش‌داده‌شده",
     "source_hash": "96ddfc08279c6ae35f38d5139ad21a94f1ac99c7d031fa618cb40edbe35d39a5",
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Home:14": {
-    "text": "این پیش‌نویس محلی مستندات **Smart! 35.0.0 و Smart Camera 2.0.0** است. وقتی نسخه سازگار هماهنگ منتشر شد هر دو را با هم به‌روز کنید؛ Camera 2.0 را با Smart قدیمی جفت نکنید. این صفحات پیش‌نویس اعلان انتشار نیستند.",
-    "source_hash": "c29d2ea90b7a486f22022563a690b6049c5d72c5bf1c740518bb20fa5747432d",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Home:20": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "6de3b72e72a676036d11c5f3b3679009013b370ca2cb7e8aed2d56252d3addd9"
   },
   "Home:15": {
     "text": "از [پنل و HUD](Smart-Panel-and-HUD) مشترک، [ادامه راه رفتن](Smart-Walking)، [اتصال با بالابر](Auto-Connect) و [درزهای نقشه](Blueprints) شروع کنید.",
@@ -3143,11 +3168,10 @@
     "status": "reviewed",
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
-  "Home:17": {
-    "text": "_آخرین به‌روزرسانی: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (پیش‌نویس انتشار)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Home:21": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
   },
   "Lift-Assisted-Auto-Connect:0": {
     "text": "# اتصال خودکار با بالابر نقاله",
@@ -3473,11 +3497,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Settings-Reference:2": {
-    "text": "در **منوی اصلی → مودها → Smart!** هستند. تغییرات **میان ذخیره‌ها و نشست‌ها حفظ می‌شوند**. (نگاشت کلید جداست؛ [کنترل‌ها](Controls).)",
-    "source_hash": "3f27a7251dee61f272afa2b13b0a9a7d3b5d0782f11461e43b22ec93ed6baceb",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Settings-Reference:59": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "3f27a7251dee61f272afa2b13b0a9a7d3b5d0782f11461e43b22ec93ed6baceb"
   },
   "Settings-Reference:3": {
     "text": "## اتصال خودکار تسمه",
@@ -3533,11 +3556,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Settings-Reference:12": {
-    "text": "- **اتصال خودکار هایپرتیوپ** — روشن/خاموش کردن اتصال خودکار هایپرتیوپ. **پیش‌فرض روشن.** (افزوده‌شده در 33.1.0.)\n- حالت مسیریابی هایپرتیوپ.",
-    "source_hash": "de7e8d93fbc71c12b9ce0a1c8db5fdc99380795aa7009f219fc68164294d1f29",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Settings-Reference:60": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "de7e8d93fbc71c12b9ce0a1c8db5fdc99380795aa7009f219fc68164294d1f29"
   },
   "Settings-Reference:13": {
     "text": "## اتصال خودکار برق",
@@ -3551,11 +3573,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Settings-Reference:15": {
-    "text": "- روشن/خاموش کردن اتصال خودکار برق.\n- حالت اتصال.\n- برد اتصال.\n- رزرو جایگاه تیر تا Smart! همه را پر نکند.\n- **برق زنجیره‌ای هنگام تکرار** — پس از بازشدن Upgraded Power Connectors، تکرار کارخانه یا مولد در Xِ Smart هر نسخه را مستقیم به بعدی وصل می‌کند نه با تیر جدا؛ مانیفولد عادی بدون گسترش دوباره. پنل Smart برای ساخت فعلی جایگزین می‌دهد و HUD انتخاب مؤثر را می‌گوید. ظرفیت هر اتصال رعایت می‌شود. **پیش‌فرض روشن.** (34.2.0.)",
-    "source_hash": "ec98629a469e74c7be896e64709377532daca45491fe70e1465ce14f99cffdfb",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Settings-Reference:61": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "ec98629a469e74c7be896e64709377532daca45491fe70e1465ce14f99cffdfb"
   },
   "Settings-Reference:16": {
     "text": "## اتصال خودکار نقشه",
@@ -3563,23 +3584,31 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Settings-Reference:17": {
-    "text": "کلید مستقل درز نسخه‌های تکراری نقشه **خودتان**، جدا از اتصال تسمه/لوله بالا؛ پس با خاموشی اتصال عادی هم نقشه‌ها متصل می‌مانند.",
-    "source_hash": "777a49715537ba1bf7334d6be913926f712654bb9bcb31b43455ceeff3c86b11",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Settings-Reference:62": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "777a49715537ba1bf7334d6be913926f712654bb9bcb31b43455ceeff3c86b11"
   },
-  "Settings-Reference:18": {
-    "text": "- **اتصال خودکار درز نقشه** — اتصال تسمه، لوله، هایپرتیوپ، ریل، مسیر جهت‌دار خودرو و برق واجد شرایط بین نسخه‌های نقشه. **پیش‌فرض روشن.** (34.2.0.)",
-    "source_hash": "5daf4a877774b178a7054980007283bb25a2de416f6dad2c908287768adb9db4",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Settings-Reference:63": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "5daf4a877774b178a7054980007283bb25a2de416f6dad2c908287768adb9db4"
   },
   "Settings-Reference:19": {
     "text": "درز برق به **اتصال خودکار برق** هم نیاز دارد. هر کابل سوکت همسان با ظرفیت آزاد می‌گیرد؛ سیم داخلی و دو روی پریز جدا حساب می‌شوند.",
     "source_hash": "f8e43f603399fedc12210a9d21a3d2d8108b47b7c676acc29f4f189f050416ed",
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  },
+  "Settings-Reference:51": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "d30a9c4968359ae455bcba1db55829f233cd9689baac7a41ddda2ee677c671a7"
+  },
+  "Settings-Reference:52": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "8d8d2f7ca8e8f5f5ffd32286939d718b5621954e9eb433f316520ac4e84d392b"
   },
   "Settings-Reference:20": {
     "text": "## فاصله پیش‌فرض نقشه",
@@ -3605,11 +3634,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Settings-Reference:24": {
-    "text": "- **برد لجستیک نزدیک** — فاصله دسترسی جداکننده، وصل‌کننده، انشعاب و سوراخ کف لوله به درگاه کارخانه. برای جلوگیری از اتصال به گروه مجاور کاهش دهید. **پیش‌فرض 25 m**، رفتار ثابت پیشین. (34.2.0.)",
-    "source_hash": "bb2d0aef5ebb0f05f6e0332aba3b272795cbf3d8bade162603d3521aad41d592",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Settings-Reference:64": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "bb2d0aef5ebb0f05f6e0332aba3b272795cbf3d8bade162603d3521aad41d592"
   },
   "Settings-Reference:25": {
     "text": "## گسترش",
@@ -3629,11 +3657,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Settings-Reference:28": {
-    "text": "- نگه‌داشتن خودکار پس از تغییر شبکه، هولوگرام را قفل می‌کند تا پیش‌نمایش بزرگ تصادفی حرکت نکند. **پیش‌فرض روشن** (از 32.1.2)؛ برای آزادی جابه‌جایی خاموش کنید. کلید پایه هر قفل را آزاد می‌کند.\n- **کنترل نسبی به بازیکن** — ساخت جهت نگاه را به‌جای محور قطب‌نما دنبال می‌کند: چرخ به‌سمت نگاه رشد می‌دهد و اعداد قطب‌نما می‌شوند (دور/نزدیک، راست/چپ، بالا/پایین). برای تکرار، فاصله، ارتفاع پله‌ای، جابجایی و چرخش. **پیش‌فرض خاموش**؛ کنترل کلاسیک تا فعال‌سازی تغییر نمی‌کند و پنل Smart همیشه X/Y/Z ثابت است. [کنترل‌ها](Controls) را ببینید. (34.1.0.)\n- **ضربه برای تغییر حالت تبدیل** — ضربه به فاصله، ارتفاع، جابجایی، چرخش یا دستور کارخانه حالت را روشن می‌کند؛ دوباره خاموش؛ کلید دیگر تعویض می‌کند. برای دسته، Steam Deck و دسترس‌پذیری است؛ منوی شعاعی/لمسی Steam Input ضربه می‌فرستد و کلید نگه نمی‌دارد. کنارگذاشتن، تغییر سازه یا بازکردن پنل همیشه آزاد می‌کند. **پیش‌فرض خاموش**؛ خاموشی دوباره فوراً رفتار نگه‌داشتن را برمی‌گرداند. [دسته و Steam Deck](Controller-and-Steam-Deck) را ببینید. (34.2.0.)",
-    "source_hash": "5062fcd97160abfb325d9843686928ec4e50ca66911455b5f84cd6515d2b0179",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Settings-Reference:65": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "5062fcd97160abfb325d9843686928ec4e50ca66911455b5f84cd6515d2b0179"
   },
   "Settings-Reference:29": {
     "text": "## گام چرخ",
@@ -3647,17 +3674,15 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Settings-Reference:31": {
-    "text": "- **گام فاصله** (m) — متر فاصله هر پله، شامل گسترش و پیشروی قطعه راه رفتن.\n- **گام ارتفاع** (m) — متر ارتفاع هر پله، شامل صعود قطعه.\n- **گام جابجایی** (m) — متر جابجایی هر پله، شامل انتقال قطعه.\n- **گام چرخش** (deg) — درجه هر پله، شامل پیچش قطعه.",
-    "source_hash": "89d132f31272346911aed3355f02885dd096f7bf810ca50e85be98947993996e",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Settings-Reference:66": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "89d132f31272346911aed3355f02885dd096f7bf810ca50e85be98947993996e"
   },
-  "Settings-Reference:32": {
-    "text": "پیش‌فرض 0.5 m و 5° است. گام فاصله 0.1–8 m و چرخش 0.5–90° می‌پذیرد.",
-    "source_hash": "b595cc1429fd298b95947cec85d6569724d96fed5b22b0b9424ca76f88c295da",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Settings-Reference:67": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "b595cc1429fd298b95947cec85d6569724d96fed5b22b0b9424ca76f88c295da"
   },
   "Settings-Reference:33": {
     "text": "## پنل Smart",
@@ -3701,11 +3726,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Settings-Reference:40": {
-    "text": "در **مودها → Smart! Camera** دیدها با نام مود و دوربین خودکار، حتی غیرفعال، ظاهر می‌شوند. دید داخلی تفنگ کلید مستقل دارد. موقعیت هر دید 0–1، وضوح هر محور 64–2048 پیکسل، مقیاس 0.1–2، نرخ 5–60/ثانیه و روشنایی −3 تا +3 EV است. فاصله دوربین ساخت 5–50 m است. تنظیم فوری است؛ دید پنهان‌شده با منو پس از ادامه تازه می‌شود. **همه ذخیره‌ها** فقط فیلد ویرایش‌شده را در پروفایل عمومی و موجود همان دوربین، شامل جهان فعلی، عوض می‌کند. **این ذخیره** فقط پروفایل فعلی را. فیلدها و دوربین‌های دیگر سالم می‌مانند.",
-    "source_hash": "c472d20351cba658f26ae667c4cd445f95ae5a5ca37a10e8763878b476181f29",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Settings-Reference:68": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "c472d20351cba658f26ae667c4cd445f95ae5a5ca37a10e8763878b476181f29"
   },
   "Settings-Reference:41": {
     "text": "**پیشنهاد مود** در همه ذخیره‌ها دوربین را همه‌جا بازنشانی می‌کند. **تنظیم عمومی** در این ذخیره فقط جایگزین فعلی را حذف می‌کند. بازنشانی قاب/فاصله فقط همان دو فیلد است. ویرایش چیدمان تا **انجام شد / قفل** پیش‌نمایش است؛ لغو تغییر معلق چیدمان/HUD را حذف می‌کند. [Smart Camera](Smart-Camera) را ببینید.",
@@ -3731,11 +3755,10 @@
     "status": "reviewed",
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
-  "Settings-Reference:45": {
-    "text": "_آخرین به‌روزرسانی: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (پیش‌نویس انتشار)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Settings-Reference:58": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
   },
   "Smart-Assistance:0": {
     "text": "# دستیار Smart",
@@ -4385,17 +4408,15 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Smart-Restore:1": {
-    "text": "بازیابی Smart کار Smart! شما را ذخیره می‌کند تا دوباره استفاده، اشتراک یا کل ماژول را هر بار یکسان تکرار کنید. **K → بازیابی** را در [پنل Smart](Smart-Panel-and-HUD) باز کنید. دو زیرزبانه **پیش‌تنظیم‌های شبکه** و **ماژول‌ها** هستند.",
-    "source_hash": "d30db2304eb2c337da20e09266e493bcc8c502907b34b04c692903c1c50cee35",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Smart-Restore:43": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "d30db2304eb2c337da20e09266e493bcc8c502907b34b04c692903c1c50cee35"
   },
-  "Smart-Restore:2": {
-    "text": "پاسخ «این چیدمان خیلی وقت برد؛ چطور برش گردانم؟» است.",
-    "source_hash": "3d432425c5421614e20983fcafadb764c442a1c31b834004ecbebec74df73ea2",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Smart-Restore:44": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "3d432425c5421614e20983fcafadb764c442a1c31b834004ecbebec74df73ea2"
   },
   "Smart-Restore:3": {
     "text": "![وظیفه بازیابی با زیرزبانه‌های پیش‌تنظیم شبکه و ماژول](https://raw.githubusercontent.com/wiki/majormer/SmartFoundations/images/v35/restore.png)",
@@ -4427,11 +4448,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Smart-Restore:8": {
-    "text": "- **ذخیره از پنل** — نام‌گذاری تنظیم فعلی و ذخیره پیش‌تنظیم.\n- **بارگذاری در پنل** — برای تنظیم دقیق پیش از ساخت یا اعمال مستقیم.\n- **صدور کد / ورود کد** — اشتراک پیش‌تنظیم یا بارگذاری کد دیگران.",
-    "source_hash": "7e35bb8291023e898ca5f34452152a86fb7117cb5f7cb13234c8fd2acf59ef40",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Smart-Restore:45": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "7e35bb8291023e898ca5f34452152a86fb7117cb5f7cb13234c8fd2acf59ef40"
   },
   "Smart-Restore:9": {
     "text": "هر پیش‌تنظیم خلاصه ساده سازه، شبکه، تبدیل و دستور دارد تا سریع تشخیص دهید.",
@@ -4445,17 +4465,15 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Smart-Restore:11": {
-    "text": "ماژول کل **مانیفولد گسترش** را ثبت می‌کند؛ واحد متصل سازه با تسمه، لوله، بالابر، توزیع‌کننده و برق برای ساخت مکرر.",
-    "source_hash": "15f117646c84198699764f5759ce40f588af9591576ba39e1d7f68ebbf616b8b",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Smart-Restore:46": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "15f117646c84198699764f5759ce40f588af9591576ba39e1d7f68ebbf616b8b"
   },
-  "Smart-Restore:12": {
-    "text": "- پس از پیش‌نمایش یا ساخت [گسترش](Extend) با Smart، در **حافظه گسترش** بالای زبانه می‌آید. **ذخیره به‌عنوان ماژول** چیدمان را نام‌دار و قابل استفاده مجدد می‌کند.\n- **بارگذاری ماژول** ذخیره‌شده چیدمان را بازمی‌سازد؛ سازه منبع را بگیرید تا پیش‌نمایش زنده قابل **تکرار ساخت** و **تکرار با چرخ** شود.\n- ماژول بازیابی‌شده مثل گسترش تازه به یک سمت قفل نیست؛ می‌توانید **طول را در هر دو جهت** پیش از ساخت تغییر دهید؛ چرخ هر سمت به همان سمت می‌افزاید.\n- **صدور کد / ورود کد** ماژول را مثل پیش‌تنظیم به اشتراک می‌گذارد.",
-    "source_hash": "37740d4bfda7ca76487c320d49ae9a15e2da89d1f1fe4a31862a2ad8d53f903b",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Smart-Restore:47": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "bec0ec9303e43dd7907dc7dc366c045b75ee549bfcabebb02918f256b044593e"
   },
   "Smart-Restore:13": {
     "text": "هر ماژول خلاصه تعداد تسمه، لوله، توزیع‌کننده و دیگر اجزا دارد تا بدانید چه می‌سازد.",
@@ -4517,11 +4535,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Smart-Restore:21": {
-    "text": "با **K → بازیابی** ذخیره، انتخاب، بارگذاری، ورود و صدور کنید. سپس با پنل تکرار یا چرخ/اعداد تنظیم کنید؛ HUD شبکه و تنظیم فعال را نشان می‌دهد. شلیک با هزینه نمایش‌داده‌شده می‌سازد.",
-    "source_hash": "1b1ed17e9fec531c12a9f625b3a9bfc523afdeccaf5ba0c4bca304c837f1764c",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Smart-Restore:48": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1b1ed17e9fec531c12a9f625b3a9bfc523afdeccaf5ba0c4bca304c837f1764c"
   },
   "Smart-Restore:22": {
     "text": "برای تغییر بازیابی اخیر بدون پنل، `U` را نگه دارید و `Num 9` برای بعدی یا `Num 3` برای قبلی بزنید. [کنترل‌ها](Controls) را ببینید.",
@@ -4547,17 +4564,26 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
+  "Smart-Restore:39": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "b0724fac56a114aed1905757336fc2bd16f065519872f908a56afc905e5b0d3c"
+  },
+  "Smart-Restore:40": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "81c3c2048752b95069652ecef30608748705b0ecd1930a687c49a0f383a261ad"
+  },
   "Smart-Restore:26": {
     "text": "## نیز ببینید",
     "source_hash": "0f2b43836b7db34aeb2ad65d2dc1b19495336b2a8bd81d1a4e6cc10ec180785b",
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Smart-Restore:27": {
-    "text": "- [گسترش](Extend) — مانیفولد ثبت‌شده توسط زبانه ماژول.\n- [پنل Smart و HUD](Smart-Panel-and-HUD) — جای زبانه بازیابی.\n- [تکرار شبکه‌ای](Grid-Scaling) و [تبدیل‌ها](Transforms) — محتوای پیش‌تنظیم.",
-    "source_hash": "52daff47c488c29086aa3ce6e5cea9be1d21194fb00b9e2d10a09d723d037264",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Smart-Restore:49": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "52daff47c488c29086aa3ce6e5cea9be1d21194fb00b9e2d10a09d723d037264"
   },
   "Smart-Restore:28": {
     "text": "---",
@@ -4565,11 +4591,10 @@
     "status": "reviewed",
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
-  "Smart-Restore:32": {
-    "text": "_آخرین به‌روزرسانی: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (پیش‌نویس انتشار)_\n",
-    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89",
-    "status": "reviewed",
-    "review_method": "Direct AI contextual translation and fluency review; official terminology and protected Markdown checked; not human native-speaker certification."
+  "Smart-Restore:42": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
   },
   "Smart-Upgrade:0": {
     "text": "# ارتقای Smart",
@@ -4607,11 +4632,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Smart-Upgrade:6": {
-    "text": "1. با سازه پشتیبانی‌شده **K → ارتقا** باز کنید. تسمه، لوله و سیم/برق مستقیم این وظیفه را باز می‌کنند.\n2. حالت اسکن انتخاب کنید.\n3. اطراف یا شبکه متصل را اسکن کنید.\n4. خانواده و رده هدف، و در شبکه در صورت تمایل رده منبع منفرد، انتخاب کنید.\n5. هزینه را ببینید.\n6. ارتقا را اجرا کنید.",
-    "source_hash": "32316883719d3460a5f56824a7fb92559589793f835d63f4bd04e2103217fa08",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Smart-Upgrade:38": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "32316883719d3460a5f56824a7fb92559589793f835d63f4bd04e2103217fa08"
   },
   "Smart-Upgrade:7": {
     "text": "تیر برق و پریز هنوز پنل Smart عادی برای تکرار باز می‌کنند. ارتقای Smart را از سیم/خط برق یا اسکن باز کنید.",
@@ -4655,11 +4679,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Smart-Upgrade:14": {
-    "text": "- رده خاص مثل **Mk.2** را کلیک کنید تا **فقط** آن به هدف ارتقا یابد؛ Mk.2 را Mk.3 کنید و Mk.4 دست‌نخورده بماند.\n- **همه رده‌ها** هر رده متفاوت تسمه، بالابر یا لوله را هدف می‌کند؛ ممکن است هم‌زمان برخی ارتقا و برخی کاهش یابند.",
-    "source_hash": "78e23b12048a0221986495c275897aa077ef1a3a23671637128ce9f602d2b7a8",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Smart-Upgrade:39": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "78e23b12048a0221986495c275897aa077ef1a3a23671637128ce9f602d2b7a8"
   },
   "Smart-Upgrade:15": {
     "text": "این همان کنترل رده اسکن شعاع است.",
@@ -4727,11 +4750,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Smart-Upgrade:26": {
-    "text": "ارتقای نقاله بزرگ پیچیده است چون Satisfactory تسمه و بالابر را در عامل زنجیره نقاله گروه می‌کند. Smart! پایداری و تشخیص دارد، اما اگر بازی بعداً زنجیره ناپایدار گزارش کند ارتقای عظیم شاید ذخیره/بازبارگذاری بخواهد.",
-    "source_hash": "fed328c054689b599658ab3989621c5b784f7bcaa94b5be404727f05664adba7",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Smart-Upgrade:36": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "30a1ce6a5b6dcbf3cb863b07c5181d63bc781a27d7277f739226c64c0f12936e"
   },
   "Smart-Upgrade:27": {
     "text": "## نمونه‌های داخل بازی",
@@ -4769,11 +4791,10 @@
     "status": "reviewed",
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
-  "Smart-Upgrade:33": {
-    "text": "_آخرین به‌روزرسانی: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (پیش‌نویس انتشار)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Smart-Upgrade:37": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
   },
   "Smart-Walking:0": {
     "text": "# راه رفتن Smart",
@@ -5741,65 +5762,90 @@
     "status": "reviewed",
     "review_method": "Direct AI contextual translation and fluency review; official terminology and protected Markdown checked; not human native-speaker certification."
   },
-  "Auto-Connect:38": {
+  "Blueprints:33": {
+    "text": "_آخرین به‌روزرسانی: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (پیش‌نویس انتشار)_\n",
+    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89",
+    "status": "reviewed",
+    "review_method": "Direct AI contextual translation and fluency review; official terminology and protected Markdown checked; not human native-speaker certification.",
+    "obsolete": true
+  },
+  "Controls:6": {
+    "text": "| کلید | عملکرد |\n|-----|--------------|\n| `K` | باز/بستن پنجره مشترک تکرار / راه رفتن / ارتقا / بازیابی |\n| `F8` | ویرایش چیدمان HUD؛ با Smart Camera چیدمان دوربین و HUD با هم |\n| `Num Decimal` | تغییر وضعیت دستیار ساخت Smart برای این نشست |\n| `Num 8` | افزایش مقدار فعال |\n| `Num 5` | کاهش مقدار فعال |\n| `Num 6` | افزایش تعداد شبکه Y |\n| `Num 4` | کاهش تعداد شبکه Y |\n| `Num 9` | افزایش تعداد شبکه Z |\n| `Num 3` | کاهش تعداد شبکه Z |\n| `X` | نگه‌داشتن برای تنظیم X با کنترل مشترک یا چرخ |\n| `Z` | نگه‌داشتن برای تنظیم Y با کنترل مشترک یا چرخ |\n| `X + Z` | نگه‌داشتن هر دو برای تنظیم Z |\n| `;` | نگه‌داشتن حالت فاصله |\n| `I` | نگه‌داشتن حالت ارتفاع پله‌ای |\n| `Y` | نگه‌داشتن حالت جابجایی |\n| `,` | نگه‌داشتن حالت چرخش |\n| `Num 0` | تغییر محور حالت فعال |\n| `U` | انتخاب دستور تولید؛ تنظیم اتصال یا پایه تابلو در سازه مربوط |\n| `Num 1` | تغییر وضعیت پیکان جهت |\n| `Mouse Wheel` | تنظیم حالت فعال Smart یا چرخش پایه بدون حالت فعال Smart |",
+    "source_hash": "2837292eada81d5f2f7b96ee1fa39689f1d488e0ee8b125d948d5069e407097e",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Compatibility-and-Multiplayer:27": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "2398e8d56840e229a7b387e89a3556aa24edfa217e26cf50db9e5ba6cf6ccf02",
+    "obsolete": true
+  },
+  "Settings-Reference:18": {
+    "text": "- **اتصال خودکار درز نقشه** — اتصال تسمه، لوله، هایپرتیوپ، ریل، مسیر جهت‌دار خودرو و برق واجد شرایط بین نسخه‌های نقشه. **پیش‌فرض روشن.** (34.2.0.)",
+    "source_hash": "5daf4a877774b178a7054980007283bb25a2de416f6dad2c908287768adb9db4",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Auto-Connect:25": {
+    "text": "اتصال خودکار هایپرتیوپ **کلید فعال‌سازی و حالت مسیریابی مستقل** از لوله دارد؛ آن‌ها را از پنل Smart، تنظیمات اتصال خودکار حین ساخت (نگه‌داشتن `U`) یا تنظیمات مود تعیین کنید. [مرجع تنظیمات](Settings-Reference) را ببینید.",
+    "source_hash": "12ed988af1c997655966e3695ec2f34cf65159be86bd53b56fa1a92c8a85b213",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:27": {
+    "text": "- [گسترش](Extend) — مانیفولد ثبت‌شده توسط زبانه ماژول.\n- [پنل Smart و HUD](Smart-Panel-and-HUD) — جای زبانه بازیابی.\n- [تکرار شبکه‌ای](Grid-Scaling) و [تبدیل‌ها](Transforms) — محتوای پیش‌تنظیم.",
+    "source_hash": "52daff47c488c29086aa3ce6e5cea9be1d21194fb00b9e2d10a09d723d037264",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:31": {
+    "text": "- **گام فاصله** (m) — متر فاصله هر پله، شامل گسترش و پیشروی قطعه راه رفتن.\n- **گام ارتفاع** (m) — متر ارتفاع هر پله، شامل صعود قطعه.\n- **گام جابجایی** (m) — متر جابجایی هر پله، شامل انتقال قطعه.\n- **گام چرخش** (deg) — درجه هر پله، شامل پیچش قطعه.",
+    "source_hash": "89d132f31272346911aed3355f02885dd096f7bf810ca50e85be98947993996e",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Auto-Connect:49": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "afb87f859fcc83d5e6b2266d494b6b507374c2527764492de14534b28dbafa51",
+    "obsolete": true
+  },
+  "Auto-Connect:4": {
+    "text": "**K → تکرار** را باز کنید و بخش **اتصال خودکار** مربوط به سازه در دست را به کار ببرید. روی سازه‌های لجستیکی پشتیبانی‌شده، `U` تنظیمات اتصال را باز می‌کند. پیش‌فرض‌های عمومی در **گزینه‌ها → تنظیمات مود → Smart!** و انتخاب‌های پیش‌نمایش فعلی در پنل هستند. ترجیحات اتصال فوری و مستقل از **اعمال فوری جانمایی** به‌روز می‌شوند.",
+    "source_hash": "0ef504a252dcabd3541b9ed8c7d000b31225026b5fa22aa19b6f534eadd38d6b",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:47": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "e2b8d0e432743c7bf14b5c35d055dab7c5692be89a336b3b5b8bf2922ba550f7",
+    "obsolete": true
+  },
+  "Settings-Reference:24": {
+    "text": "- **برد لجستیک نزدیک** — فاصله دسترسی جداکننده، وصل‌کننده، انشعاب و سوراخ کف لوله به درگاه کارخانه. برای جلوگیری از اتصال به گروه مجاور کاهش دهید. **پیش‌فرض 25 m**، رفتار ثابت پیشین. (34.2.0.)",
+    "source_hash": "bb2d0aef5ebb0f05f6e0332aba3b272795cbf3d8bade162603d3521aad41d592",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Compatibility-and-Multiplayer:13": {
+    "text": "- **سرور اختصاصی:** Windows و Linux هر دو پشتیبانی می‌شوند.\n- **سقف اندازه نقشه‌های Smart:** جانمایی یک شبکه نقشه روی سرور محدود است (تقریباً دو هزار سازه یا چند صد تسمه/لوله اتصال، هرکدام زودتر برسد). با عبور از حد، Smart! جانمایی را رد می‌کند؛ HUD می‌گوید بخش‌های کوچک‌تر بسازید و شبکه فعال می‌ماند. حد امن پیام ساخت برای تک‌نفره و میزبان نیز برقرار است. [دستیار Smart](Smart-Assistance) را خاموش و دستور را دوباره انتخاب کنید تا نقشه بزرگ پایه را عادی بسازید.\n- **شبکه‌های بزرگ تدریجی ساخته می‌شوند:** تأیید ساخت بسیار بزرگ آن را طی چند لحظه در پس‌زمینه می‌سازد تا سرور پاسخ‌گو بماند و کسی قطع نشود.\n- **برای مدیران سرور:** یک نسخه Smart! روی سرور و همه کلاینت‌ها نصب کنید. مدیر مود هنگام به‌روزرسانی آن‌ها را همسان نگه می‌دارد.\n- **Smart Camera** (مود همراه) در چندنفره نیز کار می‌کند.",
+    "source_hash": "e0abba477abdd815436da48e2f8957237ec0394c708deea58592e10d20ab9268",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:45": {
     "text": "_آخرین به‌روزرسانی: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (پیش‌نویس انتشار)_\n",
     "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
-    "obsolete": true
-  },
-  "Smart-Camera:30": {
-    "text": "_آخرین به‌روزرسانی: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (پیش‌نویس انتشار)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
-    "obsolete": true
-  },
-  "Smart-Restore:29": {
-    "text": "_آخرین به‌روزرسانی: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (پیش‌نویس انتشار)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
-    "obsolete": true
-  },
-  "Water-Extractors:14": {
-    "text": "_آخرین به‌روزرسانی: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (پیش‌نویس انتشار)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
-    "obsolete": true
-  },
-  "Feature-Gallery:50": {
-    "text": "_آخرین به‌روزرسانی: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (پیش‌نویس انتشار)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
-    "obsolete": true
-  },
-  "Feature-Gallery:30": {
-    "text": "\n## ارتقا",
-    "source_hash": "346a4694e55fb3881d4efb3df370eb4fa70ac8f41333fc51b5d2f136ba5ac387",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
-    "obsolete": true
-  },
-  "Lift-Assisted-Auto-Connect:11": {
-    "text": "## نمونه‌های داخل بازی",
-    "source_hash": "5eb2c1c9e3dbc39102a812af339752c7f0fe1e0b95368965e2e069a71b377898",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
-    "obsolete": true
-  },
-  "Blueprints:21": {
-    "text": "_آخرین به‌روزرسانی: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (پیش‌نویس انتشار)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
-    "obsolete": true
-  },
-  "Lift-Assisted-Auto-Connect:12": {
-    "text": "![دو جداکننده مرتفع با بالابر عمودی تا سطح اتصال دستگاه کنار کنترل تکرار.](https://raw.githubusercontent.com/wiki/majormer/SmartFoundations/images/v35/lift-connection-controls.png)",
-    "source_hash": "cc3d5dfc328bad823f169e9cfaa9f3b9faf340768f11bfc85d33f6d73e79b0fc",
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
     "obsolete": true
@@ -5811,25 +5857,89 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
     "obsolete": true
   },
-  "Lift-Assisted-Auto-Connect:15": {
-    "text": "خط ورودی ساخته‌شده دستگاه ساخت و ساز با توزیع‌کننده‌های جابجا در ارتفاع و فاصله مختلف.",
-    "source_hash": "3f031fef9aa2b08f029041b38a3ede25923654db3210c0cf2f823345bb155916",
+  "Smart-Upgrade:35": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "fef10fcd052e667d2e0e00e385c7a28cabcf51645e05f4ffe84f7b4be9302924",
+    "obsolete": true
+  },
+  "Settings-Reference:55": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "48890e9ad61621c0f5a145bbfacc031cd10dd0886932dd6ca1718305cc0ded08",
+    "obsolete": true
+  },
+  "Smart-Upgrade:6": {
+    "text": "1. با سازه پشتیبانی‌شده **K → ارتقا** باز کنید. تسمه، لوله و سیم/برق مستقیم این وظیفه را باز می‌کنند.\n2. حالت اسکن انتخاب کنید.\n3. اطراف یا شبکه متصل را اسکن کنید.\n4. خانواده و رده هدف، و در شبکه در صورت تمایل رده منبع منفرد، انتخاب کنید.\n5. هزینه را ببینید.\n6. ارتقا را اجرا کنید.",
+    "source_hash": "32316883719d3460a5f56824a7fb92559589793f835d63f4bd04e2103217fa08",
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
     "obsolete": true
   },
-  "Buildable-Gallery:60": {
+  "Compatibility-and-Multiplayer:28": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "c7aebe8ed6d349fd4710af10aa9e95555d8529fd0728f438c8a84f9ce1b54246",
+    "obsolete": true
+  },
+  "Extend:40": {
     "text": "_آخرین به‌روزرسانی: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (پیش‌نویس انتشار)_\n",
     "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
     "obsolete": true
   },
-  "Blueprints:20": {
-    "text": "\n---",
-    "source_hash": "3d0b188170e8f7ed4b0a730d3fae39933057e60ba9e030bc278c446442cbabc3",
+  "Settings-Reference:12": {
+    "text": "- **اتصال خودکار هایپرتیوپ** — روشن/خاموش کردن اتصال خودکار هایپرتیوپ. **پیش‌فرض روشن.** (افزوده‌شده در 33.1.0.)\n- حالت مسیریابی هایپرتیوپ.",
+    "source_hash": "de7e8d93fbc71c12b9ce0a1c8db5fdc99380795aa7009f219fc68164294d1f29",
     "status": "reviewed",
-    "review_method": "Language-neutral Markdown, protected brand or code; no translation required.",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:29": {
+    "text": "_آخرین به‌روزرسانی: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (پیش‌نویس انتشار)_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:41": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "6fd578d8f158dba5fa05b36f5f5e607370fc961be65776fbce3a1e7af14d1023",
+    "obsolete": true
+  },
+  "Water-Extractors:14": {
+    "text": "_آخرین به‌روزرسانی: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (پیش‌نویس انتشار)_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Upgrade:33": {
+    "text": "_آخرین به‌روزرسانی: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (پیش‌نویس انتشار)_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Compatibility-and-Multiplayer:25": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "6a23ebe76c6c81c346aa9ada46d9598977d528e278a4ec3eba624c42942cbf0a",
+    "obsolete": true
+  },
+  "Compatibility-and-Multiplayer:3": {
+    "text": "هدف Smart! 35.0.0، **Satisfactory 1.2.4 / CL 502094 یا جدیدتر** و **SML 3.12.x** است. پیش از نصب بازی و بارگذار مود را به‌روز کنید. نسخه‌های قدیمی بازی پشتیبانی نمی‌شوند.",
+    "source_hash": "67e479ca52c59b7506d6acd2ace2bb75b701e6c7854e5b2d570aeec46f92d66e",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:35": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "4ce78ba0540a46d297f12754ed09f0b5fbd3af284a7f90d4157396c30318a9dc",
     "obsolete": true
   },
   "Lift-Assisted-Auto-Connect:14": {
@@ -5839,11 +5949,24 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
     "obsolete": true
   },
-  "Feature-Gallery:38": {
-    "text": "\n## برچیدن گروهی",
-    "source_hash": "353f26b4f82a6dd84f38739c12578013748425253037044613768c788d0ac22b",
+  "Feature-Gallery:30": {
+    "text": "\n## ارتقا",
+    "source_hash": "346a4694e55fb3881d4efb3df370eb4fa70ac8f41333fc51b5d2f136ba5ac387",
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:12": {
+    "text": "- پس از پیش‌نمایش یا ساخت [گسترش](Extend) با Smart، در **حافظه گسترش** بالای زبانه می‌آید. **ذخیره به‌عنوان ماژول** چیدمان را نام‌دار و قابل استفاده مجدد می‌کند.\n- **بارگذاری ماژول** ذخیره‌شده چیدمان را بازمی‌سازد؛ سازه منبع را بگیرید تا پیش‌نمایش زنده قابل **تکرار ساخت** و **تکرار با چرخ** شود.\n- ماژول بازیابی‌شده مثل گسترش تازه به یک سمت قفل نیست؛ می‌توانید **طول را در هر دو جهت** پیش از ساخت تغییر دهید؛ چرخ هر سمت به همان سمت می‌افزاید.\n- **صدور کد / ورود کد** ماژول را مثل پیش‌تنظیم به اشتراک می‌گذارد.",
+    "source_hash": "37740d4bfda7ca76487c320d49ae9a15e2da89d1f1fe4a31862a2ad8d53f903b",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:48": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "54a959ae32a4d9f6576cccd1f8191d529cda45dd8aca777c420560710c5cfa55",
     "obsolete": true
   },
   "Smart-Camera:17": {
@@ -5853,16 +5976,16 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
     "obsolete": true
   },
-  "Lift-Assisted-Auto-Connect:13": {
-    "text": "بدنه و سر پایین بالابرها زیر هر دو جداکننده دیده می‌شود. تسمه افقی کنار دستگاه از این زاویه کوتاه دیده می‌شود؛ برای چیدمان بزرگ نمونه ساخته‌شده دستگاه ساخت و ساز پایین را ببینید.",
-    "source_hash": "461c92ebb7d0183d81d0d44c20001dd4c5d42ceaee5dc38fbc02fc6ff22afe85",
+  "Smart-Restore:21": {
+    "text": "با **K → بازیابی** ذخیره، انتخاب، بارگذاری، ورود و صدور کنید. سپس با پنل تکرار یا چرخ/اعداد تنظیم کنید؛ HUD شبکه و تنظیم فعال را نشان می‌دهد. شلیک با هزینه نمایش‌داده‌شده می‌سازد.",
+    "source_hash": "1b1ed17e9fec531c12a9f625b3a9bfc523afdeccaf5ba0c4bca304c837f1764c",
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
     "obsolete": true
   },
-  "Controls:6": {
-    "text": "| کلید | عملکرد |\n|-----|--------------|\n| `K` | باز/بستن پنجره مشترک تکرار / راه رفتن / ارتقا / بازیابی |\n| `F8` | ویرایش چیدمان HUD؛ با Smart Camera چیدمان دوربین و HUD با هم |\n| `Num Decimal` | تغییر وضعیت دستیار ساخت Smart برای این نشست |\n| `Num 8` | افزایش مقدار فعال |\n| `Num 5` | کاهش مقدار فعال |\n| `Num 6` | افزایش تعداد شبکه Y |\n| `Num 4` | کاهش تعداد شبکه Y |\n| `Num 9` | افزایش تعداد شبکه Z |\n| `Num 3` | کاهش تعداد شبکه Z |\n| `X` | نگه‌داشتن برای تنظیم X با کنترل مشترک یا چرخ |\n| `Z` | نگه‌داشتن برای تنظیم Y با کنترل مشترک یا چرخ |\n| `X + Z` | نگه‌داشتن هر دو برای تنظیم Z |\n| `;` | نگه‌داشتن حالت فاصله |\n| `I` | نگه‌داشتن حالت ارتفاع پله‌ای |\n| `Y` | نگه‌داشتن حالت جابجایی |\n| `,` | نگه‌داشتن حالت چرخش |\n| `Num 0` | تغییر محور حالت فعال |\n| `U` | انتخاب دستور تولید؛ تنظیم اتصال یا پایه تابلو در سازه مربوط |\n| `Num 1` | تغییر وضعیت پیکان جهت |\n| `Mouse Wheel` | تنظیم حالت فعال Smart یا چرخش پایه بدون حالت فعال Smart |",
-    "source_hash": "2837292eada81d5f2f7b96ee1fa39689f1d488e0ee8b125d948d5069e407097e",
+  "Settings-Reference:2": {
+    "text": "در **منوی اصلی → مودها → Smart!** هستند. تغییرات **میان ذخیره‌ها و نشست‌ها حفظ می‌شوند**. (نگاشت کلید جداست؛ [کنترل‌ها](Controls).)",
+    "source_hash": "3f27a7251dee61f272afa2b13b0a9a7d3b5d0782f11461e43b22ec93ed6baceb",
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
     "obsolete": true
@@ -5874,9 +5997,401 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
     "obsolete": true
   },
+  "Extend:20": {
+    "text": "از **K → گسترش → انتخاب منبع** یا میان‌بر نشانه‌گیری شروع کنید. زبانه کنترل‌های جانمایی تعداد شبکه، فاصله و تبدیل پشتیبانی‌شده را دوباره استفاده می‌کند. کنترل چرخ/اعداد [تکرار شبکه‌ای](Grid-Scaling) نیز یکسان است. بدون تعدیل‌گر، چرخ جهت گسترش را انتخاب می‌کند. HUD طول/ردیف و تنظیم فعال را مشخص می‌کند تا پیش از ساخت نتیجه را بدانید.",
+    "source_hash": "76acf531cc52c29e073f3df2f0e0d06d36121daf24e05679c1f466af9d01eb13",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:56": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "bdf042547add168e1b9964198625cab7539af8176045dd68d70f13a619b0b7be",
+    "obsolete": true
+  },
+  "Settings-Reference:28": {
+    "text": "- نگه‌داشتن خودکار پس از تغییر شبکه، هولوگرام را قفل می‌کند تا پیش‌نمایش بزرگ تصادفی حرکت نکند. **پیش‌فرض روشن** (از 32.1.2)؛ برای آزادی جابه‌جایی خاموش کنید. کلید پایه هر قفل را آزاد می‌کند.\n- **کنترل نسبی به بازیکن** — ساخت جهت نگاه را به‌جای محور قطب‌نما دنبال می‌کند: چرخ به‌سمت نگاه رشد می‌دهد و اعداد قطب‌نما می‌شوند (دور/نزدیک، راست/چپ، بالا/پایین). برای تکرار، فاصله، ارتفاع پله‌ای، جابجایی و چرخش. **پیش‌فرض خاموش**؛ کنترل کلاسیک تا فعال‌سازی تغییر نمی‌کند و پنل Smart همیشه X/Y/Z ثابت است. [کنترل‌ها](Controls) را ببینید. (34.1.0.)\n- **ضربه برای تغییر حالت تبدیل** — ضربه به فاصله، ارتفاع، جابجایی، چرخش یا دستور کارخانه حالت را روشن می‌کند؛ دوباره خاموش؛ کلید دیگر تعویض می‌کند. برای دسته، Steam Deck و دسترس‌پذیری است؛ منوی شعاعی/لمسی Steam Input ضربه می‌فرستد و کلید نگه نمی‌دارد. کنارگذاشتن، تغییر سازه یا بازکردن پنل همیشه آزاد می‌کند. **پیش‌فرض خاموش**؛ خاموشی دوباره فوراً رفتار نگه‌داشتن را برمی‌گرداند. [دسته و Steam Deck](Controller-and-Steam-Deck) را ببینید. (34.2.0.)",
+    "source_hash": "5062fcd97160abfb325d9843686928ec4e50ca66911455b5f84cd6515d2b0179",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:17": {
+    "text": "کلید مستقل درز نسخه‌های تکراری نقشه **خودتان**، جدا از اتصال تسمه/لوله بالا؛ پس با خاموشی اتصال عادی هم نقشه‌ها متصل می‌مانند.",
+    "source_hash": "777a49715537ba1bf7334d6be913926f712654bb9bcb31b43455ceeff3c86b11",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:32": {
+    "text": "_آخرین به‌روزرسانی: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (پیش‌نویس انتشار)_\n",
+    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89",
+    "status": "reviewed",
+    "review_method": "Direct AI contextual translation and fluency review; official terminology and protected Markdown checked; not human native-speaker certification.",
+    "obsolete": true
+  },
+  "Settings-Reference:53": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "f22daf9ba45c58f27cddf5020c4d856e4963c6b4b321e93b90506fe9200725c4",
+    "obsolete": true
+  },
+  "Home:17": {
+    "text": "_آخرین به‌روزرسانی: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (پیش‌نویس انتشار)_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:57": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "c9db8a4c70492425a227c4f600e18e314036c794ee6ecf7b72819e8c1176d985",
+    "obsolete": true
+  },
+  "Buildable-Gallery:60": {
+    "text": "_آخرین به‌روزرسانی: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (پیش‌نویس انتشار)_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Auto-Connect:24": {
+    "text": "**تکرار پایه‌های هایپرتیوپ خط هایپرتیوپ می‌سازد.** با تکرار ردیفی از پشتیبان‌های قابل جمع شدن هایپرتیوپ‌ها، Smart! خط متصلی میان نسخه‌ها می‌کشد؛ مثل خط تسمه میان میله‌های نقاله‌دار یا خط لوله میان پشتیبان‌های لوله. خط از فاصله و ارتفاع ردیف پیروی می‌کند و می‌تواند با شیب تند بالا برود. نقطه اتصال هر پایه آزاد می‌ماند تا دستی هم هایپرتیوپ وصل کنید.",
+    "source_hash": "eb2ee60a85c009c8b087b30e51ca7b4eb21ab2ca69353d8b3bce92a60256f455",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:37": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "89d7ec27427ec2dbeda612d4908225ce4ab17de581eb4e2fc4950c57aaf45e81",
+    "obsolete": true
+  },
+  "Compatibility-and-Multiplayer:14": {
+    "text": "چندنفره از تک‌نفره جدیدتر است؛ پس تفاوت رفتار میان آن‌ها باگ است. در GitHub یا Discord گزارش کنید و سازه و نقش میزبان یا کلاینت را بنویسید.",
+    "source_hash": "be6a21fb0e3a5a2792dc5eaa0095af9dbd2cdc8641d29aed38e44f5a8dce7ce9",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Extend:8": {
+    "text": "1. یک ماژول فعال دستی بسازید و همان نوع سازه را در تفنگ بگیرید.\n2. **K → گسترش** را باز و **انتخاب منبع** را بزنید.\n3. بیرون پنل روی سازه منبع کلیک کنید. منابع سازگار هنگام انتخاب روشن می‌شوند. **Escape** لغو می‌کند؛ کلیک داخل پنل در رابط می‌ماند.\n4. نام منبع، همراهان ثبت‌شده و تعداد تکرار را ببینید. با **تغییر جهت** و کنترل جانمایی پیش‌نمایش را شکل دهید.\n5. پنل را ببندید، نسخه‌ها و هزینه را بررسی و برای ساخت عادی شلیک کنید.",
+    "source_hash": "be187544697091618ad4e7d6e1a2c2782b01ec9a0930ae4d3655eadaf437a2ca",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Auto-Connect:27": {
+    "text": "نسخه‌های فرزند پایه‌های دیواری لوله و هایپرتیوپ از چرخش کامل والد پیروی می‌کنند. **چرخش دیوار** در پنل **گام‌های 45°** بازی پایه را، شامل خط عمودی، ارائه می‌دهد. این با چرخش شبکه که توالی نسخه‌ها را خم می‌کند جداست.",
+    "source_hash": "fd7f0d71039eaac4e79da271b675c44893d3943fcbd5cfcc62fcca29fe53a2ce",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Auto-Connect:18": {
+    "text": "**تکرار پشتیبان‌های لوله یک خط لوله می‌سازد.** وقتی ردیفی از پشتیبان‌های خطوط لوله یا اتصال‌های دیواری خطوط لوله را تکرار می‌کنید، Smart! خطی متصل میان نسخه‌ها می‌کشد؛ همان‌طور که تکرار میله‌های نقاله‌دار خط تسمه می‌سازد. سیال در کل خط جریان می‌یابد و نقطه اتصال هر پایه آزاد می‌ماند تا دستی هم لوله وصل کنید. ارتفاع پایه زمینی و زاویه قطعه بالایی در کل خط حفظ می‌شود، پس خط شیب‌دار یکدست می‌ماند.",
+    "source_hash": "01bc78e7b2eed2e3b61e790428579385ed84d207401ce8ce691e20542ceb6c01",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Extend:16": {
+    "text": "کوره ساخته‌شده منبع موجود است. کوره فیروزه‌ای، تسمه‌ها و پایه‌ها نسخه پیشنهادی‌اند؛ HUD **گسترش 1×1** را نشان می‌دهد. این پیش‌نمایش ساخته‌نشده است.",
+    "source_hash": "e63c3cf4682d23c05eeac5028bcb9b9181dbd792603560f52b7b754522f84fbc",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Auto-Connect:46": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "0bfbb0f456f389e1d5f74b3927ea2e671cd406c1d43a86691dbaf4cf8466f920",
+    "obsolete": true
+  },
+  "Blueprints:20": {
+    "text": "\n---",
+    "source_hash": "3d0b188170e8f7ed4b0a730d3fae39933057e60ba9e030bc278c446442cbabc3",
+    "status": "reviewed",
+    "review_method": "Language-neutral Markdown, protected brand or code; no translation required.",
+    "obsolete": true
+  },
+  "Smart-Restore:38": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "ec2177c56559237ebd837004fb2b43a250f6a29833da7919279c42a8f1cd7585",
+    "obsolete": true
+  },
+  "Extend:43": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "4a4f5c96d35df73910b2887f40ae3bae8ad2bfb9317efd89edeeee8d5cd6a225",
+    "obsolete": true
+  },
+  "Smart-Restore:1": {
+    "text": "بازیابی Smart کار Smart! شما را ذخیره می‌کند تا دوباره استفاده، اشتراک یا کل ماژول را هر بار یکسان تکرار کنید. **K → بازیابی** را در [پنل Smart](Smart-Panel-and-HUD) باز کنید. دو زیرزبانه **پیش‌تنظیم‌های شبکه** و **ماژول‌ها** هستند.",
+    "source_hash": "d30db2304eb2c337da20e09266e493bcc8c502907b34b04c692903c1c50cee35",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:11": {
+    "text": "ماژول کل **مانیفولد گسترش** را ثبت می‌کند؛ واحد متصل سازه با تسمه، لوله، بالابر، توزیع‌کننده و برق برای ساخت مکرر.",
+    "source_hash": "15f117646c84198699764f5759ce40f588af9591576ba39e1d7f68ebbf616b8b",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:34": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "4032031e869ee6cf1a85c2c77f17f1a8e1c5fdfb4d6365de941032362c26bd6b",
+    "obsolete": true
+  },
+  "Home:14": {
+    "text": "این پیش‌نویس محلی مستندات **Smart! 35.0.0 و Smart Camera 2.0.0** است. وقتی نسخه سازگار هماهنگ منتشر شد هر دو را با هم به‌روز کنید؛ Camera 2.0 را با Smart قدیمی جفت نکنید. این صفحات پیش‌نویس اعلان انتشار نیستند.",
+    "source_hash": "c29d2ea90b7a486f22022563a690b6049c5d72c5bf1c740518bb20fa5747432d",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Lift-Assisted-Auto-Connect:15": {
+    "text": "خط ورودی ساخته‌شده دستگاه ساخت و ساز با توزیع‌کننده‌های جابجا در ارتفاع و فاصله مختلف.",
+    "source_hash": "3f031fef9aa2b08f029041b38a3ede25923654db3210c0cf2f823345bb155916",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Extend:41": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "994fafc6b93774a2bf26fda7226aa7f32d9e5692801829af09b53ed4e124e1dc",
+    "obsolete": true
+  },
+  "Auto-Connect:53": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "7a7775f3971ba2543d8a862d7cb59673e80d88b7b274872a5f5197d36bd4a8cb",
+    "obsolete": true
+  },
+  "Smart-Upgrade:26": {
+    "text": "ارتقای نقاله بزرگ پیچیده است چون Satisfactory تسمه و بالابر را در عامل زنجیره نقاله گروه می‌کند. Smart! پایداری و تشخیص دارد، اما اگر بازی بعداً زنجیره ناپایدار گزارش کند ارتقای عظیم شاید ذخیره/بازبارگذاری بخواهد.",
+    "source_hash": "fed328c054689b599658ab3989621c5b784f7bcaa94b5be404727f05664adba7",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Lift-Assisted-Auto-Connect:13": {
+    "text": "بدنه و سر پایین بالابرها زیر هر دو جداکننده دیده می‌شود. تسمه افقی کنار دستگاه از این زاویه کوتاه دیده می‌شود؛ برای چیدمان بزرگ نمونه ساخته‌شده دستگاه ساخت و ساز پایین را ببینید.",
+    "source_hash": "461c92ebb7d0183d81d0d44c20001dd4c5d42ceaee5dc38fbc02fc6ff22afe85",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Auto-Connect:52": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "2f3fecc73d967c4184f0913db5a820573f49a433540b53d23d3f4b45143cea26",
+    "obsolete": true
+  },
+  "Compatibility-and-Multiplayer:4": {
+    "text": "اگر هر دو نصب‌اند، Smart Camera 2.0 و Smart! 35.0 باید به‌صورت جفت سازگار به‌روز شوند. دوربین تنها هم کار می‌کند؛ ابزار ساخت Smart به Camera نیاز ندارد. ترجیحات دوربین و ظاهر HUD متعلق به هر بازیکن محلی است، نه همه سرور.",
+    "source_hash": "d778ecad7f4a6a4eb530120898db7c258299752b3b3849ab7cb18dce25829247",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Feature-Gallery:50": {
+    "text": "_آخرین به‌روزرسانی: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (پیش‌نویس انتشار)_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Extend:42": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "16d59253ca7db5055c785ca688ef4711b48bf61b30eff0f24767d33040495694",
+    "obsolete": true
+  },
+  "Smart-Restore:2": {
+    "text": "پاسخ «این چیدمان خیلی وقت برد؛ چطور برش گردانم؟» است.",
+    "source_hash": "3d432425c5421614e20983fcafadb764c442a1c31b834004ecbebec74df73ea2",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Blueprints:17": {
+    "text": "حد امن حجم پیام ساخت برای شبکه‌های نقشه هم برقرار است. جانمایی بیش‌ازحد بزرگ ردشده پیش‌نمایش را نگه می‌دارد: شبکه را کوچک و تکه‌تکه بسازید. برای جانمایی نقشه بزرگ پایه، [دستیار Smart](Smart-Assistance) را خاموش و دوباره انتخاب کنید.",
+    "source_hash": "540e7f14c64d49d7f11fb6b7090a1475087984b4955b0dccb93ca481787d4236",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:40": {
+    "text": "در **مودها → Smart! Camera** دیدها با نام مود و دوربین خودکار، حتی غیرفعال، ظاهر می‌شوند. دید داخلی تفنگ کلید مستقل دارد. موقعیت هر دید 0–1، وضوح هر محور 64–2048 پیکسل، مقیاس 0.1–2، نرخ 5–60/ثانیه و روشنایی −3 تا +3 EV است. فاصله دوربین ساخت 5–50 m است. تنظیم فوری است؛ دید پنهان‌شده با منو پس از ادامه تازه می‌شود. **همه ذخیره‌ها** فقط فیلد ویرایش‌شده را در پروفایل عمومی و موجود همان دوربین، شامل جهان فعلی، عوض می‌کند. **این ذخیره** فقط پروفایل فعلی را. فیلدها و دوربین‌های دیگر سالم می‌مانند.",
+    "source_hash": "c472d20351cba658f26ae667c4cd445f95ae5a5ca37a10e8763878b476181f29",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:49": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "a17847f27c9d126c19f4c648fcce148a467279fc4197ecd4e932411db88929df",
+    "obsolete": true
+  },
+  "Smart-Restore:33": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "b2e1a293ae99d7ff0946f54edd6939cf17d18547e848ac895c533abe3c2e4560",
+    "obsolete": true
+  },
+  "Feature-Gallery:38": {
+    "text": "\n## برچیدن گروهی",
+    "source_hash": "353f26b4f82a6dd84f38739c12578013748425253037044613768c788d0ac22b",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:36": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "4ca209992e5cc98977db86e926e521228b74ac99cbbce1b5f642444df21d447f",
+    "obsolete": true
+  },
+  "Lift-Assisted-Auto-Connect:11": {
+    "text": "## نمونه‌های داخل بازی",
+    "source_hash": "5eb2c1c9e3dbc39102a812af339752c7f0fe1e0b95368965e2e069a71b377898",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:15": {
+    "text": "- روشن/خاموش کردن اتصال خودکار برق.\n- حالت اتصال.\n- برد اتصال.\n- رزرو جایگاه تیر تا Smart! همه را پر نکند.\n- **برق زنجیره‌ای هنگام تکرار** — پس از بازشدن Upgraded Power Connectors، تکرار کارخانه یا مولد در Xِ Smart هر نسخه را مستقیم به بعدی وصل می‌کند نه با تیر جدا؛ مانیفولد عادی بدون گسترش دوباره. پنل Smart برای ساخت فعلی جایگزین می‌دهد و HUD انتخاب مؤثر را می‌گوید. ظرفیت هر اتصال رعایت می‌شود. **پیش‌فرض روشن.** (34.2.0.)",
+    "source_hash": "ec98629a469e74c7be896e64709377532daca45491fe70e1465ce14f99cffdfb",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:54": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "8382fa1196f068239391b97c93d521c0ed3ba46266fa7254f3e6c05c842fa1d2",
+    "obsolete": true
+  },
   "Smart-Assistance:13": {
     "text": "_آخرین به‌روزرسانی: 2026-10-06 · Smart! v34.4.0_\n",
     "source_hash": "9ea842bd5dbdd752d3353ddeeeb68a3eff256015d475f2a5eb6d8e17e13b5156",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Upgrade:14": {
+    "text": "- رده خاص مثل **Mk.2** را کلیک کنید تا **فقط** آن به هدف ارتقا یابد؛ Mk.2 را Mk.3 کنید و Mk.4 دست‌نخورده بماند.\n- **همه رده‌ها** هر رده متفاوت تسمه، بالابر یا لوله را هدف می‌کند؛ ممکن است هم‌زمان برخی ارتقا و برخی کاهش یابند.",
+    "source_hash": "78e23b12048a0221986495c275897aa077ef1a3a23671637128ce9f602d2b7a8",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Compatibility-and-Multiplayer:22": {
+    "text": "_آخرین به‌روزرسانی: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (پیش‌نویس انتشار)_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Extend:27": {
+    "text": "همان منبع اکنون سه نسخه فیروزه‌ای با مسیرها و پایه‌های نقاله می‌سازد. HUD **گسترش 3×1** می‌گوید و هزینه با نسخه‌ها زیاد می‌شود. منبع موجود سر جایش است.",
+    "source_hash": "a818fc9f6600b845b33395c092257e5c56b6b18d277fc9a96921343bf18ea9b7",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Auto-Connect:54": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "92242198e922b4bdd9164d865151a7ed36c6f470ad144311ff077b3cb519dd7a",
+    "obsolete": true
+  },
+  "Auto-Connect:45": {
+    "text": "_آخرین به‌روزرسانی: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (پیش‌نویس انتشار)_\n",
+    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89",
+    "status": "reviewed",
+    "review_method": "Direct AI contextual translation and fluency review; official terminology and protected Markdown checked; not human native-speaker certification.",
+    "obsolete": true
+  },
+  "Smart-Upgrade:34": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "e26d8a251fe56b8c46900038254253f78c75d8e69ca22dce9b9e0edc797fe40e",
+    "obsolete": true
+  },
+  "Compatibility-and-Multiplayer:12": {
+    "text": "Smart! در چندنفره روی سرور اختصاصی کار می‌کند. تمام قابلیت‌های Smart! — تکرار شبکه، اتصال خودکار (تسمه، لوله و برق)، نقشه‌های Smart، گسترش، ارتقای Smart، بازیابی Smart و برچیدن Smart — برای کلاینت با هزینه عادی کار می‌کنند. هرچه Smart! می‌سازد سازه استاندارد و کاملاً همگام بازی است؛ دیگران آن را می‌بینند، استفاده و برچیدن می‌کنند، درست مثل ساخت دستی.",
+    "source_hash": "274d747f094a4e138cbbfdf378bc151dedd8d3fa979722492b56173b298c75d5",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:32": {
+    "text": "پیش‌فرض 0.5 m و 5° است. گام فاصله 0.1–8 m و چرخش 0.5–90° می‌پذیرد.",
+    "source_hash": "b595cc1429fd298b95947cec85d6569724d96fed5b22b0b9424ca76f88c295da",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Auto-Connect:38": {
+    "text": "_آخرین به‌روزرسانی: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (پیش‌نویس انتشار)_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Extend:44": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "6db2053fcc52fc7413a2cac1559df3b88f7c1446d5bc55e82fb5c2b6043c246b",
+    "obsolete": true
+  },
+  "Smart-Camera:30": {
+    "text": "_آخرین به‌روزرسانی: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (پیش‌نویس انتشار)_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:50": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "d3ecb21df5d1ff326acb297239bef36255c199f23e6b6ec35663f3996c38ec2b",
+    "obsolete": true
+  },
+  "Lift-Assisted-Auto-Connect:12": {
+    "text": "![دو جداکننده مرتفع با بالابر عمودی تا سطح اتصال دستگاه کنار کنترل تکرار.](https://raw.githubusercontent.com/wiki/majormer/SmartFoundations/images/v35/lift-connection-controls.png)",
+    "source_hash": "cc3d5dfc328bad823f169e9cfaa9f3b9faf340768f11bfc85d33f6d73e79b0fc",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:8": {
+    "text": "- **ذخیره از پنل** — نام‌گذاری تنظیم فعلی و ذخیره پیش‌تنظیم.\n- **بارگذاری در پنل** — برای تنظیم دقیق پیش از ساخت یا اعمال مستقیم.\n- **صدور کد / ورود کد** — اشتراک پیش‌تنظیم یا بارگذاری کد دیگران.",
+    "source_hash": "7e35bb8291023e898ca5f34452152a86fb7117cb5f7cb13234c8fd2acf59ef40",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:46": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "b9d7eb1bd49651f9c06691ed5350a0882a0787f099915de792867f8aa4494c27",
+    "obsolete": true
+  },
+  "Blueprints:21": {
+    "text": "_آخرین به‌روزرسانی: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (پیش‌نویس انتشار)_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
     "obsolete": true

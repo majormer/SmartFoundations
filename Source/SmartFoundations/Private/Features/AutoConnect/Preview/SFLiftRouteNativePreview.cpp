@@ -87,7 +87,6 @@ ASFLiftRouteBeltHologram* FSFLiftRouteNativePreview::ConfigureBelt(AFGHologram* 
     Belt->SetActorHiddenInGame(false);
     Belt->SetActorLocation(From->GetComponentLocation());
     Belt->SetActorRotation(FRotator::ZeroRotator);
-    Belt->SetSnappedConnections(From, To);
     Belt->SetRouteEndpoints(From, To);
     const auto& Settings = USFSubsystem::Get(Context->GetWorld())->GetAutoConnectRuntimeSettings();
     Belt->SetRoutingMode(Settings.BeltRoutingMode);

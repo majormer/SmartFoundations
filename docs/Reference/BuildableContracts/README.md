@@ -14,6 +14,11 @@ This catalog documents the runtime contracts Smart must preserve when creating, 
 connecting, cloning, restoring, or optimizing vanilla construction. It is organized by construction
 family, with concrete-class profiles inside each family.
 
+For conveyor ownership, factory ticks, replacement, persistence and replication,
+read the [native conveyor research](../THESIS_Belts_ChainActors_Placement.md).
+The [compliance plan](../../Development/PLAN_ConveyorContractCompliance.md)
+defines the implementation and acceptance work for Extend, Restore and Upgrade.
+
 A concrete class name alone is not a complete contract. Behavior may come from a shared hologram
 base, a subsystem-managed network, owned companion actors, dynamic geometry, or replicated state.
 

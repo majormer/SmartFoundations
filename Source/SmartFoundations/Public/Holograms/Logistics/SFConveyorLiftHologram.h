@@ -41,11 +41,11 @@ public:
      */
     virtual AActor* Construct(TArray<AActor*>& out_children, FNetConstructionID constructionID) override;
     
-    /**
-     * Override ConfigureComponents to establish connections and rebuild chain actors.
-     * This runs DURING construction (pre-tick) and is the safe place to do Add/Remove/Add.
-     */
+    /** Preserve native component configuration; retained operations own additional edges. */
     virtual void ConfigureComponents(AFGBuildable* inBuildable) const override;
+
+    /** Captured lifts are canonical input-origin geometry; the stored bool is upward flow, not preview reversal. */
+    bool ApplyCapturedNativeState(const FTransform& Top, bool bFlowUpwards);
     
     /** Set the top transform (relative to actor) for lift height configuration */
     void SetTopTransform(const FTransform& InTopTransform);

@@ -5,6 +5,7 @@ class AFGHologram;
 class AFGBuildableBlueprintDesigner;
 class ASFConveyorLiftPreviewHologram;
 struct FSFScalingSpec;
+struct FNetConstructionID;
 
 namespace SFConveyorLiftHologramState
 {
@@ -19,6 +20,9 @@ namespace SFConveyorLiftHologramState
     void ReleasePreview(ASFConveyorLiftPreviewHologram* Preview);
     bool Prepare(AFGHologram* Root, const FSFScalingSpec* Spec = nullptr);
     AFGHologram* FindPreparedCell(AFGHologram* Preview);
+    bool ClaimPreparedCell(AFGHologram* Cell, const FNetConstructionID& Id);
+    void RecordNativeConfiguration(const AFGHologram* Cell, AActor* Built);
+    void ObservePreparedCell(AFGHologram* Cell, AActor* Built);
     bool IsRequestActive();
     class FRequestScope
     {

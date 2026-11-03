@@ -20,6 +20,19 @@ Extend and Scaled Extend are active. The current implementation is clone-topolog
 
 ## Primary Code Files
 
+Captured post-build wiring retains an immutable plan and output identities until
+the owned operation settles. The mutable preview registries have a shorter
+lifetime: `RunNativePostBuildWiring` retires them after consuming that exact
+preview topology. `FSFExtendWiringInvocation::CanRetirePreview` compares the
+captured topology allocation, so a delayed invocation cannot clear a newer
+preview, including another application of the same module. Keeping consumed
+registries populated makes Restore's `HasPendingPostBuildWiring` readiness gate
+wait indefinitely after a successful build. Retiring the preview neither
+destroys built actors nor completes the operation; native topology, cargo,
+materials and deferred-work receipts remain required. The
+`SmartFoundations.Extend.NativeWiringInvocation` regression covers consumption,
+replacement-preview isolation and expired-preview rejection.
+
 | File | Role |
 |------|------|
 | `Source/SmartFoundations/Public/Features/Extend/SFExtendService.h` | Main Extend orchestrator and Scaled Extend state |

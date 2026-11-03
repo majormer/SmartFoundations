@@ -36,6 +36,7 @@
 #include "Features/AutoConnect/SFBlueprintRailSeams.h"
 #include "Features/AutoConnect/SFBlueprintVehicleSeams.h"
 #include "Features/AutoConnect/SFBlueprintLiftSeams.h"
+#include "Features/AutoConnect/Net/SFConveyorBeltPlan.h"
 #include "Hologram/FGPoleHologram.h"            // #354: mPoleVariationIndex / mBuildStep
 #include "Hologram/FGConveyorPoleHologram.h"
 #include "Hologram/FGFloodlightHologram.h"      // #200: mFixtureAngle / mBuildStep
@@ -47,6 +48,7 @@
 #include "TimerManager.h"   // [#418-MP] deferred time-sliced spec expansion
 #include "HAL/IConsoleManager.h"
 #include "FGDismantleInterface.h"
+#include "FGConstructDisqualifier.h"
 #include "Hologram/FGPipelinePoleHologram.h"
 #include "Hologram/FGWaterPumpHologram.h"                  // #428: MP water-extractor crash fix
 #include "Holograms/Logistics/SFWaterPumpChildHologram.h"  // #428
@@ -879,15 +881,18 @@ int32 ExpandScalingSpecIntoChildren(AFGHologram* Parent, const FSFScalingSpec& S
                             BlueprintCell->SetNeedsValidFloor(false);
 							if (ParentBlueprintCell->mBlueprintDescriptor)
 							{
-                                const bool ExactRailReplay = !Spec.BlueprintRailSeams.IsEmpty() || !Spec.BlueprintVehicleSeams.IsEmpty() || Spec.bBlueprintLiftSeamsRequired;
+                                const bool ExactConnectionReplay = !Spec.BlueprintRailSeams.IsEmpty() || !Spec.BlueprintVehicleSeams.IsEmpty()
+                                    || Spec.bBlueprintLiftSeamsRequired || FSFConveyorBeltPlan::HasBelts(Spec);
                                 // A native recipe-spawned cell may already have staged the
                                 // selected Blueprint during this early validation phase.
                                 // Loading it again appends duplicate content and turns one
-                                // authored rail mouth into a fictitious junction.
-                                if (!ExactRailReplay || BlueprintCell->mBuildableToNewRoot.IsEmpty())
+                                // authored mouth into an ambiguous endpoint. Ordinary
+                                // belt seams require the same unique native template
+                                // population as lift, rail and vehicle seams.
+                                if (!ExactConnectionReplay || BlueprintCell->mBuildableToNewRoot.IsEmpty())
                                     BlueprintCell->SetBlueprintDescriptor(ParentBlueprintCell->mBlueprintDescriptor);
 								BlueprintCell->mBlueprintDescName = ParentBlueprintCell->mBlueprintDescName;  // [#168] proxy identity (see preview spawner)
-                                if (!ExactRailReplay || BlueprintCell->mBuildableToNewRoot.IsEmpty())
+                                if (!ExactConnectionReplay || BlueprintCell->mBuildableToNewRoot.IsEmpty())
                                     BlueprintCell->LoadBlueprintToOtherWorld();
 								// No AlignBuildableRootWithBounds: LoadBlueprintToOtherWorld aligns
 								// internally; a second call displaces the root off the grid (live
@@ -1007,13 +1012,16 @@ void CaptureConduitPlan(AFGHologram* Hologram, FSFScalingSpec& InOutSpec)
 		FSFConduitPlanEntry Entry;
 		if (ASFConveyorBeltHologram* BeltHolo = Cast<ASFConveyorBeltHologram>(Child))
 		{
-			if (Child->Tags.Contains(BeltTag))
-			{
-				Entry.Kind = ESFConduitPlanKind::Belt;
-			}
-			else if (Child->Tags.Contains(StackableTag))
+			// Stackable previews also carry the generic Auto-Connect tag. Their
+			// support anchors are intentionally not materialized factory peers;
+			// preserve the specific role before testing the common tag.
+			if (Child->Tags.Contains(StackableTag))
 			{
 				Entry.Kind = ESFConduitPlanKind::StackableBelt;
+			}
+			else if (Child->Tags.Contains(BeltTag))
+			{
+				Entry.Kind = ESFConduitPlanKind::Belt;
 			}
 			else
 			{
@@ -1092,12 +1100,36 @@ void CaptureConduitPlan(AFGHologram* Hologram, FSFScalingSpec& InOutSpec)
 
 		Entry.BuildClass = Child->GetBuildClass();
 		Entry.Recipe = Child->GetRecipe();
+        if (auto* Belt = Cast<ASFConveyorBeltHologram>(Child))
+        {
+            Entry.bExactConveyorEndpoints = true;
+            auto* From = Belt->GetSelectedFactoryPeer(0);
+            auto* To = Belt->GetSelectedFactoryPeer(1);
+            if (Entry.Kind == ESFConduitPlanKind::StackableBelt)
+                if (const auto* Data = USFHologramDataRegistry::GetData(Child))
+                {
+                    if (!From) From = Data->StackableBeltConn0.Get();
+                    if (!To) To = Data->StackableBeltConn1.Get();
+                }
+            const bool bRetainSupportAnchors = Entry.Kind == ESFConduitPlanKind::StackableBelt;
+            Entry.ConveyorFrom = FSFConveyorPlanEndpoint::Capture(From, Hologram, bRetainSupportAnchors);
+            Entry.ConveyorTo = FSFConveyorPlanEndpoint::Capture(To, Hologram, bRetainSupportAnchors);
+            // Support previews historically omitted a recipe. Bind the selected
+            // native tier's recipe rather than charging a descriptor-only fallback.
+            if (!Entry.Recipe)
+                if (auto* SS = USFSubsystem::Get(Child->GetWorld()))
+                    for (int32 Tier = 1; Tier <= 6; ++Tier)
+                        if (SS->GetBeltClassForTier(Tier) == Entry.BuildClass)
+                        { Entry.Recipe = SS->GetBeltRecipeForTier(Tier); break; }
+        }
+        Entry.Cost = Child->GetCost(false);
+
 		Entry.Location = Child->GetActorLocation();
 		Entry.Rotation = Child->GetActorRotation();
 
 		// Exact vanilla preview cost, merged per item class. Charged by the server's GetCost hook
 		// alongside the cell-scaled grid cost.
-		SF_MergePlanCost(InOutSpec, Child->GetCost(false));
+		SF_MergePlanCost(InOutSpec, Entry.Cost);
 
 		++PerKind[(int32)Entry.Kind];
 		InOutSpec.ConduitPlan.Add(MoveTemp(Entry));
@@ -1483,19 +1515,16 @@ int32 SpawnConduitPlanChildren(AFGHologram* Parent, const FSFScalingSpec& Spec)
 
 			if (Entry.Kind == ESFConduitPlanKind::Belt)
 			{
-				// SF_BeltAutoConnectChild routes Construct through the auto-connect path:
-				// Super::Construct builds the belt, then it self-wires each free end to the
-				// nearest free, direction-compatible connector within 50cm among BUILT actors
-				// only - by then the parent buildable and all grid-cell distributors exist
-				// (conduits are appended LAST in mChildren). Same mechanism SP uses.
+                // Preserve the selected authority-preview peers below. Construct
+                // captures their native input identity before cleanup; additional
+                // live edges settle through the retained native-phase adapter.
 				Belt->Tags.AddUnique(FName(TEXT("SF_BeltAutoConnectChild")));
 			}
 			else
 			{
-				// SF_StackableChild + chain identity routes Construct through the stack-chain
-				// path: build fresh, then wire by geometric coincidence against the other built
-				// stacked belts and register for the #341 in-frame chain unification (which runs
-				// in the belt-support parent's Construct hook, also live server-side).
+                // Support anchors position the native belt. Exact existing peers
+                // and unique coincident newly built mouths are retained for the
+                // same native-phase adapter; this tag grants no repair exemption.
 				Belt->Tags.AddUnique(FName(TEXT("SF_StackableChild")));
 				if (FSFHologramData* Data = USFHologramDataService::GetOrCreateData(Belt))
 				{
@@ -1510,6 +1539,18 @@ int32 SpawnConduitPlanChildren(AFGHologram* Parent, const FSFScalingSpec& Spec)
 			Belt->SetActorEnableCollision(false);
 			Belt->SetSplineDataAndUpdate(Entry.SplinePoints);
 			Parent->AddChild(Belt, Belt->GetFName());
+            if (!Entry.HasBoundedConveyorIntent())
+            { Parent->AddConstructDisqualifier(UFGCDInvalidPlacement::StaticClass()); Belt->Destroy(); return -1; }
+            auto* From = Entry.ConveyorFrom.bPresent ? Entry.ConveyorFrom.Resolve(Parent) : nullptr;
+            auto* To = Entry.ConveyorTo.bPresent ? Entry.ConveyorTo.Resolve(Parent) : nullptr;
+            if ((Entry.ConveyorFrom.bPresent && !From) || (Entry.ConveyorTo.bPresent && !To)
+                || (Entry.Kind == ESFConduitPlanKind::Belt && (!From || !To)))
+            { Parent->AddConstructDisqualifier(UFGCDInvalidPlacement::StaticClass()); Belt->Destroy(); return -1; }
+            Belt->SetSnappedConnections(From, To);
+            if (Entry.Kind == ESFConduitPlanKind::StackableBelt)
+                if (auto* Data = USFHologramDataService::GetOrCreateData(Belt))
+                { Data->StackableBeltConn0 = From; Data->StackableBeltConn1 = To; }
+
 			// Defensive re-apply AFTER AddChild (Extend-proven: vanilla can reset spline data on
 			// child registration; empty mSplineData crashes OnRep_SplineData/UpdateSplineComponent).
 			Belt->SetSplineDataAndUpdate(Entry.SplinePoints);

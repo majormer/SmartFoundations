@@ -1,4 +1,4 @@
-// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
+﻿// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
 /**
  * SFExtendService Implementation
@@ -34,6 +34,8 @@
 //                         and runs the wiring pass synchronously. (Net seam: Hook B)
 
 #include "Features/Extend/SFExtendService.h"
+#include "Features/Extend/Net/SFExtendCommitValidation.h"
+#include "Features/Extend/SFExtendWiringInvocation.h"
 #include "Holograms/Logistics/SFWaterPumpChildHologram.h"
 #include "Features/Extend/Net/SFExtendAuthorityScope.h"
 #include "Features/Extend/Net/SFExtendSourceSnapshot.h"
@@ -216,6 +218,10 @@ void USFExtendService::ClearExtendState()
 
 void USFExtendService::Shutdown()
 {
+    ShutdownNativeBuildInputs();
+    bNativeWiringCaptureActive = false;
+    NativeWiringInvocation.Reset();
+    ExecutingNativeWiringInvocation.Reset();
     ClearExtendState();
 
     // Shutdown scaled-extend service
@@ -1845,6 +1851,10 @@ bool USFExtendService::CanAffordExtendCost(AFGHologram* Hologram, UFGInventoryCo
 
 EHologramMaterialState USFExtendService::ResolveChildPreviewMaterialState(const UObject* WorldContext)
 {
+    // Preview color is not an authority-side resource verdict. The prepared native
+    // request validates its actual recursive cost using its construction inventory.
+    if (SFExtendCommitValidation::IsAuthoritativeAdmission(Cast<AFGHologram>(WorldContext)))
+        return EHologramMaterialState::HMS_OK;
     if (USFSubsystem* SmartSubsystem = USFSubsystem::Get(WorldContext))
     {
         if (SmartSubsystem->IsExtendModeActive())
@@ -2744,25 +2754,12 @@ void USFExtendService::WireBuiltChildConnections(AFGBuildableFactory* NewFactory
     if (WiringService) { WiringService->WireBuiltChildConnections(NewFactory); }
 }
 
-void USFExtendService::WireManifoldConnections(AFGBuildableFactory* SourceFactory, AFGBuildableFactory* CloneFactory)
-{
-    if (WiringService) { WiringService->WireManifoldConnections(SourceFactory, CloneFactory); }
-}
-
 void USFExtendService::WireManifoldPipe(AFGBuildablePipeline* BuiltPipe, UFGPipeConnectionComponentBase* SourceConnector, int32 CloneChainId)
 {
     if (WiringService) { WiringService->WireManifoldPipe(BuiltPipe, SourceConnector, CloneChainId); }
 }
 
-void USFExtendService::WireManifoldBelt(AFGBuildableConveyorBelt* BuiltBelt, UFGFactoryConnectionComponent* SourceConnector, int32 CloneChainId)
-{
-    if (WiringService) { WiringService->WireManifoldBelt(BuiltBelt, SourceConnector, CloneChainId); }
-}
 
-bool USFExtendService::CreateManifoldBelt(UFGFactoryConnectionComponent* FromConnector, UFGFactoryConnectionComponent* ToConnector)
-{
-    return WiringService ? WiringService->CreateManifoldBelt(FromConnector, ToConnector) : false;
-}
 
 bool USFExtendService::CreateManifoldPipe(UFGPipeConnectionComponentBase* FromConnector, UFGPipeConnectionComponentBase* ToConnector)
 {
@@ -2804,6 +2801,8 @@ int32 USFExtendService::GenerateAndExecuteWiring(AFGBuildableFactory* NewFactory
 
 void USFExtendService::RegisterJsonBuiltActor(const FString& CloneId, AActor* BuiltActor)
 {
+    if (bNativeWiringCaptureActive && NativeWiringInvocation && NativeWiringInvocation->Plan && IsValid(BuiltActor))
+        NativeWiringInvocation->Plan->RegisterRole(CloneId, FObjectKey(BuiltActor));
     if (WiringService) { WiringService->RegisterJsonBuiltActor(CloneId, BuiltActor); }
 }
 

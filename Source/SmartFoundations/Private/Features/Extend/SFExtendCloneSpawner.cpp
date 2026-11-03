@@ -23,10 +23,12 @@
 #include "Buildables/FGBuildablePowerPole.h"
 #include "FGPowerConnectionComponent.h"  // Issue #288: capture pump's power-pole linkage
 #include "FGFactoryConnectionComponent.h"
+#include "FGConstructDisqualifier.h"
 #include "FGPipeConnectionComponent.h"
 #include "FGConveyorChainActor.h"
 #include "FGRecipe.h"
 #include "FGRecipeManager.h"
+#include "Resources/FGBuildingDescriptor.h"
 #include "FGCustomizationRecipe.h"  // [#477] unlock validation for captured customization
 #include "FGPlayerController.h"
 #include "Components/SplineComponent.h"
@@ -73,6 +75,31 @@ static void SFPropagateDesignerToClone(AFGHologram* Clone, AFGHologram* ParentHo
 
 namespace SpawnHelpers
 {
+    bool RecipeBuilds(TSubclassOf<UFGRecipe> Recipe, TSubclassOf<AFGBuildable> BuildClass)
+    {
+        if (!Recipe || !BuildClass) return false;
+        const auto Products = UFGRecipe::GetProducts(Recipe);
+        return Products.Num() == 1 && Products[0].ItemClass
+            && Products[0].ItemClass->IsChildOf(UFGBuildingDescriptor::StaticClass())
+            && UFGBuildingDescriptor::GetBuildableClass(Products[0].ItemClass.Get()) == BuildClass;
+    }
+
+    TSubclassOf<UFGRecipe> FindUniqueConstructionRecipe(UWorld* World, TSubclassOf<AFGBuildable> BuildClass)
+    {
+        auto* Manager = World ? AFGRecipeManager::Get(World) : nullptr;
+        if (!Manager) return nullptr;
+        TArray<TSubclassOf<UFGRecipe>> Recipes;
+        Manager->GetAllAvailableRecipes(Recipes);
+        TSubclassOf<UFGRecipe> Result;
+        for (auto Recipe : Recipes)
+            if (RecipeBuilds(Recipe, BuildClass))
+            {
+                if (Result && Result != Recipe) return nullptr;
+                Result = Recipe;
+            }
+        return Result;
+    }
+
     // Find recipe by class name
     TSubclassOf<UFGRecipe> FindRecipeByName(UWorld* World, const FString& RecipeClassName)
     {
@@ -195,6 +222,8 @@ int32 FSFCloneTopology::SpawnChildHolograms(
         if (IsLocked(Data.OverrideColorData.PaintFinish)) { Data.OverrideColorData.PaintFinish = nullptr; }
     };
 
+    // Restore source names are historical trace identities, never live actor bindings.
+    const bool bAllowLiveSourceCustomization = !ExtendService->IsRestoredCloneTopologyActive();
     // Build customization lookup from source actors so clones inherit source colors, not parent's
     TMap<FString, FFactoryCustomizationData> SourceCustomizationMap;
     const FSFExtendTopology& Topology = ExtendService->GetCurrentTopology();
@@ -309,8 +338,16 @@ int32 FSFCloneTopology::SpawnChildHolograms(
     
     // [#477] Scrapeable customization-resolution tally (Log-level summary after the loop).
     int32 CustomCaptured = 0, CustomLive = 0, CustomDefault = 0;
-    for (const FSFCloneHologram& ChildData : ChildHolograms)
+    // Native ConstructInstance visits eligible children in their stored order.
+    // Materialize exact floor-hole roles before lifts consume their attachments;
+    // keep every other child's relative order unchanged.
+    TArray<const FSFCloneHologram*> OrderedChildren;
+    for (const auto& Child : ChildHolograms) OrderedChildren.Add(&Child);
+    OrderedChildren.StableSort([](const FSFCloneHologram& A, const FSFCloneHologram& B)
+    { return A.Role == TEXT("passthrough") && B.Role != TEXT("passthrough"); });
+    for (const FSFCloneHologram* ChildPlan : OrderedChildren)
     {
+        const FSFCloneHologram& ChildData = *ChildPlan;
         AFGHologram* SpawnedHologram = nullptr;
         
         // Get transform
@@ -392,6 +429,7 @@ int32 FSFCloneTopology::SpawnChildHolograms(
                 // (the existing post-spawn disable below then finds nothing to tear down).
                 DistributorChild->SetActorEnableCollision(false);
                 DistributorChild->FinishSpawning(FTransform(Rotation, Location));
+                DistributorChild->SetCapturedDistributorSettings(ChildData.DistributorSettings);
                 
                 // Add as child IMMEDIATELY after FinishSpawning (matches working EXTEND code)
                 ParentHologram->AddChild(DistributorChild, ChildName);
@@ -543,9 +581,10 @@ int32 FSFCloneTopology::SpawnChildHolograms(
         else if (ChildData.Role == TEXT("lift_segment"))
         {
             // Spawn lift child hologram
-            if (!BuildClass)
+            if (!RecipeBuilds(Recipe, BuildClass))
             {
-                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Warning, TEXT("🔧 JSON SPAWN: Missing build class for lift %s"), *ChildData.HologramId);
+                ParentHologram->AddConstructDisqualifier(UFGCDInvalidPlacement::StaticClass());
+                UE_LOG(LogSmartExtend, Warning, TEXT("Lift clone %s has no matching available construction recipe."), *ChildData.HologramId);
                 continue;
             }
             
@@ -569,6 +608,9 @@ int32 FSFCloneTopology::SpawnChildHolograms(
                 LiftChild->SetReplicates(false);
                 LiftChild->SetReplicateMovement(false);
                 LiftChild->SetBuildClass(BuildClass);
+                // Native GetBaseCost reads mRecipe. A class and geometry alone
+                // construct the lift but omit it from the parent's paid quote.
+                LiftChild->SetRecipe(Recipe);
                 
                 // CRITICAL: Add tag BEFORE FinishSpawning so CheckValidPlacement can detect it
                 LiftChild->Tags.AddUnique(FName(TEXT("SF_ExtendChild")));
@@ -585,7 +627,8 @@ int32 FSFCloneTopology::SpawnChildHolograms(
                 if (ChildData.bHasLiftData)
                 {
                     FTransform TopTransform = ChildData.LiftData.TopTransform.ToFTransform();
-                    LiftChild->SetTopTransform(TopTransform);
+                    if (!LiftChild->ApplyCapturedNativeState(TopTransform, ChildData.LiftData.bIsReversed))
+                    { LiftChild->Destroy(); continue; }
                     
                     // Force mesh rebuild by simulating a location update.
                     // [#497] Must go through RebuildExtendPreviewMeshes: the SF_ExtendChild tag is
@@ -598,7 +641,8 @@ int32 FSFCloneTopology::SpawnChildHolograms(
                     LiftChild->RebuildExtendPreviewMeshes(DummyHit);
                     
                     // SetHologramLocationAndRotation may have reset mTopTransform - restore it
-                    LiftChild->SetTopTransform(TopTransform);
+                    if (!LiftChild->ApplyCapturedNativeState(TopTransform, ChildData.LiftData.bIsReversed))
+                    { LiftChild->Destroy(); continue; }
                     
                     // CRITICAL: SetHologramLocationAndRotation adjusts Z position - restore exact location
                     LiftChild->SetActorLocation(Location);
@@ -748,9 +792,7 @@ int32 FSFCloneTopology::SpawnChildHolograms(
         }
         else if (ChildData.Role == TEXT("passthrough"))
         {
-            // Issue #260: Spawn pipe floor hole hologram for extend cloning
-            // Pipe passthroughs need explicit spawning (unlike lift floor holes which are
-            // auto-created by conveyor lift construction)
+            // Both pipe and lift floor holes are explicit, priced clone children.
             if (!Recipe || !BuildClass)
             {
                 SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Warning, TEXT("🔧 JSON SPAWN: Missing recipe/build class for passthrough %s"), *ChildData.HologramId);
@@ -1213,6 +1255,13 @@ int32 FSFCloneTopology::SpawnChildHolograms(
                 {
                     LiftBuildClass = FindBuildClassByName(TEXT("Build_ConveyorLiftMk1_C"));
                 }
+                const auto LiftRecipe = FindUniqueConstructionRecipe(World, LiftBuildClass);
+                if (!LiftRecipe)
+                {
+                    ParentHologram->AddConstructDisqualifier(UFGCDInvalidPlacement::StaticClass());
+                    UE_LOG(LogSmartExtend, Warning, TEXT("Lift lane has no unique available construction recipe for %s."), *GetNameSafe(LiftBuildClass.Get()));
+                    continue;
+                }
                 
                 ASFConveyorLiftHologram* LiftLane = World->SpawnActor<ASFConveyorLiftHologram>(
                     ASFConveyorLiftHologram::StaticClass(),
@@ -1223,6 +1272,7 @@ int32 FSFCloneTopology::SpawnChildHolograms(
                     LiftLane->SetReplicates(false);
                     LiftLane->SetReplicateMovement(false);
                     LiftLane->SetBuildClass(LiftBuildClass);
+                    LiftLane->SetRecipe(LiftRecipe);
                     LiftLane->Tags.AddUnique(FName(TEXT("SF_ExtendChild")));
                     LiftLane->Tags.AddUnique(FName(TEXT("SF_LaneSegment")));
                     
@@ -1238,7 +1288,8 @@ int32 FSFCloneTopology::SpawnChildHolograms(
                     if (ChildData.bHasLiftData)
                     {
                         FTransform TopTransform = ChildData.LiftData.TopTransform.ToFTransform();
-                        LiftLane->SetTopTransform(TopTransform);
+                        if (!LiftLane->ApplyCapturedNativeState(TopTransform, ChildData.LiftData.bIsReversed))
+                        { LiftLane->Destroy(); continue; }
                     }
                     
                     LiftLane->SetActorHiddenInGame(false);
@@ -1444,7 +1495,7 @@ int32 FSFCloneTopology::SpawnChildHolograms(
                         SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("🎨 LANE COLOR: %s from captured record [#477]"),
                             *ChildData.HologramId);
                     }
-                    else if (const FFactoryCustomizationData* LaneCustom = LaneColorMap.Find(SourceDistName))
+                    else if (const FFactoryCustomizationData* LaneCustom = bAllowLiveSourceCustomization ? LaneColorMap.Find(SourceDistName) : nullptr)
                     {
                         BuildableHolo->SetCustomizationData(*LaneCustom);
                         ++CustomLive;
@@ -1475,7 +1526,7 @@ int32 FSFCloneTopology::SpawnChildHolograms(
                         BuildableHolo->SetCustomizationData(Captured);
                         ++CustomCaptured;
                     }
-                    else if (const FFactoryCustomizationData* SourceCustom = SourceCustomizationMap.Find(ChildData.SourceId))
+                    else if (const FFactoryCustomizationData* SourceCustom = bAllowLiveSourceCustomization ? SourceCustomizationMap.Find(ChildData.SourceId) : nullptr)
                     {
                         BuildableHolo->SetCustomizationData(*SourceCustom);
                         ++CustomLive;
@@ -1532,81 +1583,10 @@ int32 FSFCloneTopology::SpawnChildHolograms(
         SpawnedCount, ChildHolograms.Num());
     
     // ==================== SECOND PASS: Link Lifts to Passthroughs (Issue #260) ====================
-    // Now that ALL holograms are spawned (including passthroughs), we can link lifts to passthroughs.
-    // This must be done BEFORE AddChild/Construct is called on the lifts.
-    int32 LiftsLinked = 0;
-    for (const FSFCloneHologram& ChildData : ChildHolograms)
-    {
-        if (ChildData.Role == TEXT("lift_segment") && ChildData.bHasLiftData && 
-            ChildData.LiftData.PassthroughCloneIds.Num() > 0)
-        {
-            // Find the spawned lift hologram
-            AFGHologram** LiftHoloPtr = OutSpawnedHolograms.Find(ChildData.HologramId);
-            if (!LiftHoloPtr || !*LiftHoloPtr) continue;
-            
-            AFGConveyorLiftHologram* LiftHolo = Cast<AFGConveyorLiftHologram>(*LiftHoloPtr);
-            if (!LiftHolo) continue;
-            
-            // World search for passthroughs near the lift position
-            FVector LiftBottom = LiftHolo->GetActorLocation();
-            FVector LiftTop = LiftBottom + FVector(0, 0, ChildData.LiftData.Height);
-            const float SnapDistance = 100.0f;  // 1m tolerance
-            
-            TArray<AFGBuildablePassthrough*> PassthroughActors;
-            PassthroughActors.SetNum(2);  // [0]=bottom, [1]=top
-            
-            for (TActorIterator<AFGBuildablePassthrough> It(World); It; ++It)
-            {
-                AFGBuildablePassthrough* PT = *It;
-                if (!IsValid(PT)) continue;
-                
-                FVector PTLoc = PT->GetActorLocation();
-                float DistBottom = FVector::Dist(PTLoc, LiftBottom);
-                float DistTop = FVector::Dist(PTLoc, LiftTop);
-                
-                if (DistBottom < SnapDistance && !PassthroughActors[0])
-                {
-                    PassthroughActors[0] = PT;
-                }
-                if (DistTop < SnapDistance && !PassthroughActors[1])
-                {
-                    PassthroughActors[1] = PT;
-                }
-                
-                if (PassthroughActors[0] && PassthroughActors[1])
-                    break;
-            }
-            
-            // Set mSnappedPassthroughs on the hologram using reflection
-            int32 ValidCount = (PassthroughActors[0] ? 1 : 0) + (PassthroughActors[1] ? 1 : 0);
-            if (ValidCount > 0)
-            {
-                FProperty* SnappedProp = AFGConveyorLiftHologram::StaticClass()->FindPropertyByName(TEXT("mSnappedPassthroughs"));
-                if (SnappedProp)
-                {
-                    TArray<AFGBuildablePassthrough*>* HoloPassthroughs = 
-                        SnappedProp->ContainerPtrToValuePtr<TArray<AFGBuildablePassthrough*>>(LiftHolo);
-                    
-                    if (HoloPassthroughs)
-                    {
-                        *HoloPassthroughs = PassthroughActors;
-                        LiftsLinked++;
-                        
-                        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Warning, TEXT("🔗 JSON SPAWN PASS 2: Linked %d passthroughs to lift %s (bottom=%s, top=%s)"),
-                            ValidCount, *ChildData.HologramId,
-                            PassthroughActors[0] ? *PassthroughActors[0]->GetName() : TEXT("none"),
-                            PassthroughActors[1] ? *PassthroughActors[1]->GetName() : TEXT("none"));
-                    }
-                }
-            }
-        }
-    }
-    
-    if (LiftsLinked > 0)
-    {
-        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Warning, TEXT("🔗 JSON SPAWN PASS 2: Linked %d lifts to passthroughs"), LiftsLinked);
-    }
-    
+    // Floor-hole actors are resolved by immutable clone role immediately before
+    // native lift construction. Never bind a preview by searching nearby world
+    // holes: distance is neither ownership nor attachment identity.
+
     // [#477] Scrapeable Log-level summary (per spawn batch, not per child - Shipping strips
     // Verbose; the per-child lines above are Verbose diagnostic detail). "captured" = replayed from
     // the record, which works with NO live source (e.g. a saved preset after restart).

@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Hologram/FGConveyorAttachmentHologram.h"
 #include "Data/SFHologramDataRegistry.h"
+#include "Features/Extend/SFExtendCloneTopology.h"
 #include "SFConveyorAttachmentChildHologram.generated.h"
 
 /**
@@ -29,11 +30,15 @@ public:
 
     // Override Construct to register built distributor for EXTEND wiring
     virtual AActor* Construct(TArray<AActor*>& out_children, FNetConstructionID constructionID) override;
+    void SetCapturedDistributorSettings(const FSFCapturedDistributorSettings& Values);
+    virtual void ConfigureComponents(class AFGBuildable* Buildable) const override;
     
     // Cleanup data structure on destruction
     virtual void Destroyed() override;
     
 protected:
+    UPROPERTY()
+    FSFCapturedDistributorSettings CapturedDistributorSettings;
     // Check if we should skip validation based on data structure
     bool ShouldSkipValidation() const;
 

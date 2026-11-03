@@ -5,10 +5,15 @@
 #include "Features/Upgrade/SFUpgradeTierPolicy.h"
 #include "Features/Upgrade/SFUpgradeMinerFamily.h"
 #include "FGRecipeManager.h"
+#include "FGDismantleInterface.h"
 #include "Core/Construction/SFReplacementGroupTransfer.h"
 #include "FGBuildablePipelineFlowIndicator.h"
 #include "Features/Upgrade/Holograms/SFUpgradePipelineHologram.h"
 #include "UObject/UnrealType.h"
+#include "UObject/StrongObjectPtr.h"
+#include "Features/Upgrade/SFConveyorUpgradeOwner.h"
+#include "Core/Construction/SFConstructionOperationCoordinator.h"
+#include "Core/Construction/SFConstructionOperationRecord.h"
 
 // SP/MP DIVERGENCE MAP — Upgrade
 //  1. Request — [MP-SEAM] panel snapshots options; SFRCO resolves the requesting player.
@@ -48,40 +53,6 @@ namespace
 			if (!TargetConnection || TargetConnection->GetMaxNumConnections() <= 0
 				|| OldConnection->GetNumConnections() > TargetConnection->GetMaxNumConnections()) return false;
 		}
-		return true;
-	}
-
-	// Native chain migration dereferences its conveyor members and endpoints. Reject
-	// incomplete/corrupt chains before charging or constructing; upgrading must not
-	// turn pre-existing damage into an unsafe migration attempt.
-	bool TryResolveLiftUpgradeCargoChain(AFGBuildableConveyorLift* Lift, AFGConveyorChainActor*& OutChain)
-	{
-		OutChain = nullptr;
-		AFGConveyorChainActor* Chain = Lift->GetConveyorChainActor();
-		if (!Chain) return true;
-		if (!IsValid(Chain) || Chain->IsActorBeingDestroyed()) return false;
-
-		TSet<AFGBuildableConveyorBase*> Members;
-		for (const FConveyorChainSplineSegment& Segment : Chain->GetChainSegments())
-		{
-			AFGBuildableConveyorBase* Conveyor = Segment.ConveyorBase;
-			if (!IsValid(Conveyor) || Conveyor->IsActorBeingDestroyed()
-				|| Conveyor->GetConveyorChainActor() != Chain || Members.Contains(Conveyor))
-			{
-				return false;
-			}
-			Members.Add(Conveyor);
-		}
-		if (!Members.Contains(Lift)) return false;
-
-		for (const TCHAR* EndpointName : { TEXT("mFirstConveyor"), TEXT("mLastConveyor") })
-		{
-			const FObjectPropertyBase* EndpointProperty = FindFProperty<FObjectPropertyBase>(Chain->GetClass(), EndpointName);
-			AFGBuildableConveyorBase* Endpoint = EndpointProperty
-				? Cast<AFGBuildableConveyorBase>(EndpointProperty->GetObjectPropertyValue_InContainer(Chain)) : nullptr;
-			if (!IsValid(Endpoint) || !Members.Contains(Endpoint)) return false;
-		}
-		OutChain = Chain;
 		return true;
 	}
 
@@ -196,6 +167,9 @@ namespace
 void USFUpgradeExecutionService::Initialize(USFSubsystem* InSubsystem)
 {
 	Subsystem = InSubsystem;
+	UpgradeContextChallenge = FGuid::NewGuid();
+	RemoteAuthorityWorldGeneration.Invalidate();
+	UpgradeContextRequester.Reset();
 	UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: Initialized"));
 }
 
@@ -337,7 +311,12 @@ void USFUpgradeExecutionService::RollbackUpgradeCharge(const FSFUpgradeSettlemen
 		return;
 	}
 	UFGInventoryComponent* PlayerInventory = PlayerChar->GetInventory();
-	for (const auto& Entry : Ledger.NetCharge)
+    auto Operation = ConveyorOwner ? ConveyorOwner->Active : nullptr;
+    // Nonconveyor families keep their existing ledger route. Conveyor rollback
+    // returns only amounts proved removed, including a partial native debit.
+    const auto Returned = Operation ? MoveTemp(Operation->ReservedCharges) : Ledger.NetCharge;
+    if (Operation) Operation->ReservedCharges.Reset();
+	for (const auto& Entry : Returned)
 	{
 		const int32 Added = PlayerInventory ? PlayerInventory->AddStack(FInventoryStack(Entry.Value, Entry.Key), true) : 0;
 		if (Added < Entry.Value)
@@ -371,6 +350,12 @@ void USFUpgradeExecutionService::GrantUpgradeRefund(const FSFUpgradeSettlementLe
 void USFUpgradeExecutionService::Cleanup()
 {
 	CancelUpgrade();
+	UpgradeContextChallenge.Invalidate();
+	RemoteAuthorityWorldGeneration.Invalidate();
+	UpgradeContextRequester.Reset();
+	ExpectedClientRequestId.Invalidate();
+	ExpectedClientWorldGeneration.Invalidate();
+	ExpectedClientRequester.Reset();
 	Subsystem = nullptr;
 	UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: Cleaned up"));
 }
@@ -396,6 +381,7 @@ void USFUpgradeExecutionService::ProcessUpgradeTimer()
 
 		if (IsValid(Buildable))
 		{
+            TStrongObjectPtr<AFGBuildable> KeepTargetAlive(Buildable);
 			TSubclassOf<UFGRecipe> TargetRecipe = GetTargetRecipeForBuildable(Buildable, CurrentTargetRecipe);
 			if (TargetRecipe && ProcessSingleUpgrade(Buildable, TargetRecipe))
 			{
@@ -428,11 +414,46 @@ void USFUpgradeExecutionService::ProcessUpgradeTimer()
 	}
 }
 
-void USFUpgradeExecutionService::StartUpgrade(const FSFUpgradeExecutionParams& Params)
+void USFUpgradeExecutionService::StartUpgrade(const FSFUpgradeExecutionParams& Requested)
 {
+	FSFUpgradeExecutionParams Params = Requested;
+	if ((!Params.RequestId.IsValid() || Params.RequestSequence <= 0) && !AssignRequestIdentity(Params)) return;
+	const FGuid AuthorityGeneration = GetAuthorityWorldGeneration();
+	if (!AuthorityGeneration.IsValid() || Params.AuthorityWorldGeneration != AuthorityGeneration)
+	{
+		FSFUpgradeExecutionResult Rejected;
+		Rejected.RequestId = Params.RequestId; Rejected.RequestSequence = Params.RequestSequence;
+		Rejected.AuthorityWorldGeneration = Params.AuthorityWorldGeneration;
+		Rejected.bWorldContextRejected = true;
+		Rejected.ErrorMessage = TEXT("The world changed; synchronize and scan again before upgrading");
+		SendUpgradeResult(Params.PlayerController, Rejected);
+		return; // Before replay cache, selection, leases, material reservation or construction.
+	}
+	if (HandleConveyorReplay(Params)) return;
+    if (LastResult.bUncertain && !IsConveyorUpgradeFamily(CurrentParams.Family)
+        && LastResult.AuthorityWorldGeneration == AuthorityGeneration)
+    {
+        FSFUpgradeExecutionResult Blocked;
+        Blocked.RequestId = Params.RequestId; Blocked.RequestSequence = Params.RequestSequence;
+        Blocked.AuthorityWorldGeneration = Params.AuthorityWorldGeneration;
+        Blocked.bUncertain = true;
+        Blocked.ErrorMessage = TEXT("An earlier native factory replacement has unresolved effects. Reconcile that operation before starting another upgrade; its evidence has been retained.");
+        SendUpgradeResult(Params.PlayerController, Blocked);
+        return;
+    }
+
 	if (bUpgradeInProgress)
 	{
-		UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: Upgrade already in progress"));
+		FSFUpgradeExecutionResult Busy;
+		Busy.RequestId = Params.RequestId; Busy.RequestSequence = Params.RequestSequence;
+		Busy.AuthorityWorldGeneration = Params.AuthorityWorldGeneration;
+		Busy.ErrorMessage = TEXT("Another upgrade operation is still pending");
+		if (ConveyorOwner && IsValid(Params.PlayerController))
+		{
+			const FSFConstructionOperationKey Key{FObjectKey(Params.PlayerController), static_cast<uint64>(Params.RequestSequence)};
+			ConveyorOwner->Remember(Key, Params); ConveyorOwner->Settle(Key, Busy);
+		}
+		SendUpgradeResult(Params.PlayerController, Busy);
 		return;
 	}
 
@@ -491,9 +512,11 @@ void USFUpgradeExecutionService::StartUpgrade(const FSFUpgradeExecutionParams& P
 
 	// Reset working result
 	WorkingResult = FSFUpgradeExecutionResult();
+	WorkingResult.RequestId = Params.RequestId;
+	WorkingResult.RequestSequence = Params.RequestSequence;
+	WorkingResult.AuthorityWorldGeneration = Params.AuthorityWorldGeneration;
 	CurrentUpgradeIndex = 0;
 	PendingUpgrades.Empty();
-	UpgradedConveyors.Empty();
 	CachedChainConveyors.Empty();
 	bChainCached = false;
 	AccumulatedCosts.Empty();  // Reset accumulated costs
@@ -505,7 +528,6 @@ void USFUpgradeExecutionService::StartUpgrade(const FSFUpgradeExecutionParams& P
 	SavedConnectionPairs.Empty(); // Reset saved connection pairs
 	SavedPipeConnectionPairs.Empty(); // Reset saved pipe pairs (Option A)
 	ExpectedConnectionEdges.Empty(); // Reset expected connection manifest (Option B)
-	PreDestroyChainActors.Empty(); // Reset pre-destroy chain capture
 
 	// Gather targets
 	GatherUpgradeTargets();
@@ -515,9 +537,28 @@ void USFUpgradeExecutionService::StartUpgrade(const FSFUpgradeExecutionParams& P
 		UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: No targets found to upgrade"));
 		WorkingResult.bCompleted = true;
 		LastResult = WorkingResult;
-		OnUpgradeExecutionCompleted.Broadcast(LastResult);
+		if (IsConveyorUpgradeFamily(Params.Family) && IsValid(Params.PlayerController))
+		{
+			if (!ConveyorOwner) ConveyorOwner = MakeShared<FSFConveyorUpgradeOwner>();
+			const FSFConstructionOperationKey Key{FObjectKey(Params.PlayerController), static_cast<uint64>(Params.RequestSequence)};
+			ConveyorOwner->Remember(Key, Params); ConveyorOwner->Settle(Key, WorkingResult);
+		}
+		SendUpgradeResult(Params.PlayerController, LastResult);
 		return;
 	}
+
+	// Conveyor work owns the complete queued operation. Never fall back to synchronous legacy cleanup.
+	if (PendingUpgrades.ContainsByPredicate([](AFGBuildable* Target) { return Cast<AFGBuildableConveyorBase>(Target) != nullptr; }))
+	{
+		StartOwnedConveyorUpgrade();
+		return;
+	}
+
+    if (CurrentParams.Family == ESFUpgradeFamily::Miner)
+    {
+        StartOwnedFactoryUpgrade();
+        return;
+    }
 
 	bUpgradeInProgress = true;
 	UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: Starting SYNCHRONOUS upgrade of %d items from Tier %d to Tier %d"),
@@ -532,12 +573,17 @@ void USFUpgradeExecutionService::StartUpgrade(const FSFUpgradeExecutionParams& P
 	// (covers power, building-side partners, and any edge the pair-based save/fix misses)
 	CaptureExpectedConnectionManifests();
 
-	// Process ALL upgrades synchronously in a single frame, just like MassUpgrade does.
-	// This prevents the parallel factory tick from running between upgrades and accessing
-	// belts in inconsistent states (which causes crashes in Factory_UpdateRadioactivity).
+	ExecuteUpgradeTargets();
+	CompleteUpgrade();
+}
+
+void USFUpgradeExecutionService::ExecuteUpgradeTargets()
+{
 	bool bAbortedDueToFunds = false;
 	for (AFGBuildable* Buildable : PendingUpgrades)
 	{
+		auto Operation = ConveyorOwner ? ConveyorOwner->Active : nullptr;
+        if (WorkingResult.bUncertain || ShouldStopFactoryUpgrade() || (Operation && Operation->bUncertain)) break;
 		if (bAbortedDueToFunds)
 		{
 			// Ran out of funds - skip remaining items
@@ -548,8 +594,17 @@ void USFUpgradeExecutionService::StartUpgrade(const FSFUpgradeExecutionParams& P
 
 		if (IsValid(Buildable))
 		{
+			const FName Effect(*FString::Printf(TEXT("Replace_%d"), WorkingResult.TotalProcessed));
+			const FObjectKey TargetIdentity(Buildable);
+			TStrongObjectPtr<AFGBuildable> KeepTargetAlive(Buildable);
+			if (Operation && (!Operation->ExecutingRecord
+				|| !Operation->ExecutingRecord->ClaimEffect(Operation->WorldGeneration, Effect))) break;
 			TSubclassOf<UFGRecipe> TargetRecipe = GetTargetRecipeForBuildable(Buildable, CurrentTargetRecipe);
 			int32 ResultCode = TargetRecipe ? ProcessSingleUpgrade(Buildable, TargetRecipe) : 0;
+			if (Operation) Operation->ExecutingRecord->ObserveEffect(Operation->WorldGeneration, Effect,
+				Operation->bUncertain ? ESFConstructionEffectOutcome::Uncertain
+                    : Operation->Replacements.Contains(TargetIdentity) ? ESFConstructionEffectOutcome::Applied
+                    : ESFConstructionEffectOutcome::NoEffect);
 			if (ResultCode == 1)
 			{
 				WorkingResult.SuccessCount++;
@@ -578,12 +633,24 @@ void USFUpgradeExecutionService::StartUpgrade(const FSFUpgradeExecutionParams& P
 		WorkingResult.ErrorMessage = NSLOCTEXT("SmartFoundations", "Upgrade_PartialInsufficientMaterials", "Ran out of materials - partial upgrade completed").ToString();
 	}
 
-	// Complete immediately
-	CompleteUpgrade();
 }
 
 void USFUpgradeExecutionService::CancelUpgrade()
 {
+	if (Subsystem && Subsystem->GetWorld() && Subsystem->GetWorld()->GetNetMode() == NM_Client)
+	{
+		if (auto* Requester = ExpectedClientRequester.Get())
+			if (auto* RCO = Requester->GetRemoteCallObjectOfClass<USFRCO>())
+				RCO->Server_CancelUpgrade(ExpectedClientRequestId, ExpectedClientSequence, ExpectedClientWorldGeneration);
+		return;
+	}
+    if (CancelOwnedFactoryUpgrade()) return;
+	if (ConveyorOwner && ConveyorOwner->Active)
+	{
+		if (auto* Coordinator = Subsystem ? Subsystem->GetConstructionCoordinator() : nullptr)
+			Coordinator->RequestCancellation(ConveyorOwner->Active->Key);
+		return; // Earlier effects/maps/resources remain owned until settlement.
+	}
 	if (!bUpgradeInProgress)
 	{
 		return;
@@ -805,6 +872,10 @@ void USFUpgradeExecutionService::NormalizeConveyorUpgradeTargets(bool bRespectRa
 		return;
 	}
 
+    // The connected cohort defines native ownership, not additional user intent.
+    // GatherUpgradeTargets already applied the radius/traversal and tier selection.
+    TSet<AFGBuildableConveyorBase*> DeclaredTargets;
+    for (AFGBuildableConveyorBase* Seed : ConveyorSeeds) DeclaredTargets.Add(Seed);
 	TSet<AFGBuildableConveyorBase*> Visited;
 	TArray<AFGBuildable*> ExpandedTargets;
 	int32 CohortCount = 0;
@@ -848,7 +919,7 @@ void USFUpgradeExecutionService::NormalizeConveyorUpgradeTargets(bool bRespectRa
 		TArray<AFGBuildable*> EligibleInCohort;
 		for (AFGBuildableConveyorBase* Conveyor : Cohort)
 		{
-			if (!IsValid(Conveyor)) continue;
+            if (!IsValid(Conveyor) || !DeclaredTargets.Contains(Conveyor)) continue;
 			const int32 Tier = USFUpgradeTraversalService::GetBuildableTier(Conveyor);
 			if (!SFUpgradeTierPolicy::Matches(Tier, CurrentParams.SourceTier, CurrentParams.TargetTier)) continue;
 
@@ -1019,14 +1090,21 @@ TSubclassOf<UFGRecipe> USFUpgradeExecutionService::GetTargetRecipeForBuildable(A
 
 int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, TSubclassOf<UFGRecipe> TargetRecipe)
 {
+
+	if (Cast<AFGBuildableConveyorBase>(Buildable)
+		&& (!ConveyorOwner || !ConveyorOwner->Active || !ConveyorOwner->Active->bExecuting
+			|| !Subsystem || !Subsystem->GetConstructionCoordinator()
+			|| !Subsystem->GetConstructionCoordinator()->IsInMutationPhase())) return 0;
 	// [MP-AUTH] Snapshot membership before any native upgrade/construction callback.
-	FSFReplacementGroupTransfer GroupTransfer(Buildable, CurrentParams.bPreserveDismantleGroupMembership);
+	FSFReplacementGroupTransfer GroupTransfer(Buildable, CurrentParams.bPreserveDismantleGroupMembership,
+		Cast<AFGBuildableConveyorBase>(Buildable) != nullptr);
 
 	// Return codes: 1 = success, 0 = failed, -1 = out of funds (abort remaining)
 	if (!Buildable || !Subsystem)
 	{
 		return 0;
 	}
+    const FString OriginalName = Buildable->GetName();
 
 	UWorld* World = Subsystem->GetWorld();
 	if (!World)
@@ -1104,6 +1182,12 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 	}
 
 	AFGCharacterPlayer* PlayerChar = Cast<AFGCharacterPlayer>(PC->GetPawn());
+	if (ConveyorOwner && ConveyorOwner->Active && PlayerChar != ConveyorOwner->Active->Payer.Get())
+	{
+		ConveyorOwner->Active->bUncertain = true;
+		ConveyorOwner->Active->Result.ErrorMessage = TEXT("The admitted conveyor payer changed during replacement");
+		return 0;
+	}
 	if (!PlayerChar)
 	{
 		UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: No player character"));
@@ -1123,6 +1207,9 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 		return ProcessMinerReplacement(Buildable, ActualTargetRecipe, BuildGun, PlayerChar, GroupTransfer);
 	}
 
+    // This physical replacement body is invoked by the retained conveyor owner.
+    // The entry guard above requires its active native mutation phase. Preserve
+    // the qualified native construction/export/retirement and settlement sequence.
 	// Key: TryUpgrade + DoMultiStepPlacement + GenerateAndUpdateSpline + PreUpgrade/Upgrade_Implementation
 	if (AFGBuildableConveyorBelt* OldBelt = Cast<AFGBuildableConveyorBelt>(Buildable))
 	{
@@ -1159,14 +1246,16 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 		UE_LOG(LogSmartUpgrade, VeryVerbose, TEXT("⚙️ STEP 2: Calling TryUpgrade..."));
 		FHitResult HitResult(
 			OldBelt,
-			Hologram->GetComponentByClass<UPrimitiveComponent>(),
+			OldBelt->GetComponentByClass<UPrimitiveComponent>(),
 			OldBelt->GetActorLocation(),
 			OldBelt->GetActorRotation().Vector()
 		);
 
-		if (!Hologram->TryUpgrade(HitResult))
+		HitResult.bBlockingHit = true;
+		FString PreparationReason;
+		if (!PrepareConveyorUpgradeHologram(OldBelt, Hologram, PreparationReason))
 		{
-			UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: TryUpgrade failed"));
+			ConveyorOwner->Active->Result.ErrorMessage = PreparationReason;
 			Hologram->Destroy();
 			return 0;
 		}
@@ -1184,13 +1273,8 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 		}
 		UE_LOG(LogSmartUpgrade, VeryVerbose, TEXT("⚙️ STEP 3: ValidatePlacementAndCost passed, IsUpgrade=true"));
 
-		// STEP 5: Run multi-step placement loop (critical for spline buildables!)
-		UE_LOG(LogSmartUpgrade, VeryVerbose, TEXT("⚙️ STEP 4: Running DoMultiStepPlacement loop..."));
-		while (Hologram->CanTakeNextBuildStep() && !Hologram->DoMultiStepPlacement(true))
-		{
-			// Loop until placement is complete
-		}
-		UE_LOG(LogSmartUpgrade, VeryVerbose, TEXT("⚙️ STEP 4: DoMultiStepPlacement complete"));
+		// Native placement steps already completed once in shared preparation,
+		// identically to whole-plan preflight. Do not advance the state a second time.
 
 		// STEP 5.5 [#485]: Price exactly from the old belt's geometry and check affordability.
 		// The hologram's GetBaseCost is unusable here: the synthetic upgrade flow never gives it
@@ -1199,7 +1283,7 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 		// Settlement is transactional: charge reserved before Construct, refund granted after.
 		FSFUpgradeSettlementLedger Ledger;
 		{
-			const int32 PrepResult = PrepareUpgradeSettlement(OldBelt, ActualTargetRecipe, PlayerChar, Ledger);
+			const int32 PrepResult = PrepareConveyorSettlement(OldBelt, ActualTargetRecipe, PlayerChar, Ledger);
 			if (PrepResult != 1)
 			{
 				Hologram->Destroy();
@@ -1207,29 +1291,28 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 			}
 		}
 
-		// STEP 6: Generate spline for belt hologram (exactly like MassUpgrade)
-		// Friend access granted via AccessTransformers.ini
-		if (AFGConveyorBeltHologram* BeltHologram = Cast<AFGConveyorBeltHologram>(Hologram))
-		{
-			UE_LOG(LogSmartUpgrade, VeryVerbose, TEXT("⚙️ STEP 5: Calling GenerateAndUpdateSpline..."));
-			BeltHologram->GenerateAndUpdateSpline(HitResult);
-			UE_LOG(LogSmartUpgrade, VeryVerbose, TEXT("⚙️ STEP 5: GenerateAndUpdateSpline complete"));
-		}
+		// The final spline and companion quote were already prepared together.
 
-		// Capture chain actor from old belt before PreUpgrade clears upgrade-sensitive state.
-		if (AFGConveyorChainActor* OldChain = OldBelt->GetConveyorChainActor())
-		{
-			PreDestroyChainActors.Add(OldChain);
-		}
+		Hologram->ValidatePlacementAndCost(PlayerInventory);
+		if (!Hologram->CanConstruct() || Hologram->GetBuildClass() != NewBuildableClass)
+		{ Hologram->Destroy(); return 0; }
 
 		// [#485] Reserve the net charge now that all preflight passed; refund waits for success.
-		ReserveUpgradeCharge(Ledger, PlayerChar);
+		if (!ReserveConveyorCharge(Ledger, PlayerChar)) { Hologram->Destroy(); return 0; }
 
 		// STEP 7: Let vanilla prepare the old belt for upgrade before constructing the replacement.
-		// PreUpgrade is documented as the hook that clears connections/state that can interfere
-		// with upgrades; calling it after Construct leaves the replacement born into stale chain state.
+		// The stock CL513885 implementation is a no-op (see the conveyor thesis).
+		// Retain native caller order without treating this call as export or a worker fence.
 		UE_LOG(LogSmartUpgrade, VeryVerbose, TEXT("⚙️ STEP 6a: Calling PreUpgrade_Implementation before Construct..."));
-		OldBelt->PreUpgrade_Implementation();
+		IFGDismantleInterface::Execute_PreUpgrade(OldBelt);
+        if (!IsValid(OldBelt) || OldBelt->IsActorBeingDestroyed() || !IsValid(Hologram) || Hologram->IsActorBeingDestroyed())
+        {
+            ConveyorOwner->Active->bUncertain = true;
+            ConveyorOwner->Active->Result.ErrorMessage = TEXT("Native belt preparation changed the admitted lifetimes; construction was not invoked");
+            RollbackUpgradeCharge(Ledger, PlayerChar);
+            if (IsValid(Hologram) && !Hologram->IsActorBeingDestroyed()) Hologram->Destroy();
+            return 0;
+        }
 
 		// STEP 8: Construct the new belt
 		UE_LOG(LogSmartUpgrade, VeryVerbose, TEXT("⚙️ STEP 6: Calling Construct()..."));
@@ -1242,16 +1325,26 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 		AFGBuildableConveyorBelt* NewBelt = Cast<AFGBuildableConveyorBelt>(ConstructedActor);
 		if (!NewBelt)
 		{
+			if (ConstructedActor || ConstructedChildren.ContainsByPredicate([](AActor* Child) { return Child != nullptr; }))
+			{ RetainUnexpectedConveyorConstruction(ConstructedActor, ConstructedChildren); return 0; }
 			UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: Construct failed for %s"), *OldBelt->GetName());
 			RollbackUpgradeCharge(Ledger, PlayerChar);  // [#485] failed target earns no refund
 			return 0;
 		}
 		UE_LOG(LogSmartUpgrade, VeryVerbose, TEXT("⚙️ STEP 6: Construct() created new belt: %s"), *NewBelt->GetName());
+		if (!AdoptConveyorReplacement(OldBelt, NewBelt, ConstructedChildren)
+			|| !PrepareConveyorCargoTransfer(OldBelt, false)) return 0;
 
 		// STEP 9: Call upgrade interface method on OLD belt (critical for chain transfer!)
 		UE_LOG(LogSmartUpgrade, VeryVerbose, TEXT("⚙️ STEP 7: Calling Upgrade_Implementation..."));
 		GroupTransfer.Apply(NewBelt);
-		OldBelt->Upgrade_Implementation(NewBelt);
+		IFGDismantleInterface::Execute_Upgrade(OldBelt, NewBelt);
+        if (!IsValid(OldBelt) || OldBelt->IsActorBeingDestroyed() || !IsValid(NewBelt) || NewBelt->IsActorBeingDestroyed())
+        {
+            ConveyorOwner->Active->bUncertain = true;
+            ConveyorOwner->Active->Result.ErrorMessage = TEXT("Native belt upgrade changed the admitted actor lifetimes; retirement/refund withheld");
+            return 0;
+        }
 		GroupTransfer.Apply(NewBelt);
 		UE_LOG(LogSmartUpgrade, VeryVerbose, TEXT("⚙️ STEP 7: Upgrade interface method complete"));
 
@@ -1308,30 +1401,32 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 
 		// STEP 11: Destroy old belt and children
 		UE_LOG(LogSmartUpgrade, VeryVerbose, TEXT("⚙️ STEP 9: Destroying old belt..."));
-		TArray<AActor*> ChildDismantleActors;
-		OldBelt->GetChildDismantleActors_Implementation(ChildDismantleActors);
-		for (AActor* ChildActor : ChildDismantleActors)
-		{
-			if (ChildActor && IsValid(ChildActor))
-			{
-				ChildActor->Destroy();
-			}
-		}
-		OldBelt->Destroy();
+		const FObjectKey RetiringIdentity(OldBelt);
+        if (!RetireConveyorSource(OldBelt))
+        {
+            // The main refund is earned even if a separate child obligation failed.
+            if (ConveyorOwner->Active->RetiredSources.Contains(RetiringIdentity)) GrantUpgradeRefund(Ledger, PlayerChar);
+            return 0;
+        }
 		UE_LOG(LogSmartUpgrade, VeryVerbose, TEXT("⚙️ STEP 9: Old belt destroyed"));
 
 		// [#485] Replacement is live and the old belt retired - the refund is now earned.
 		GrantUpgradeRefund(Ledger, PlayerChar);
+        if (!DeliverConveyorCompanionRefunds())
+        {
+            ConveyorOwner->Active->bUncertain = true;
+            ConveyorOwner->Active->Result.ErrorMessage = TEXT("Native companion refund delivery has unresolved receipts");
+            return 0;
+        }
 
 		// Track upgraded conveyor
-		UpgradedConveyors.Add(NewBelt);
 
 		// Track old->new mapping for fixing inter-connected batch upgrades
-		OldToNewConveyorMap.Add(OldBelt, NewBelt);
-		OldToNewBuildableMap.Add(OldBelt, NewBelt);
+		// The owned operation adopted the replacement before retirement. Legacy
+		// repair maps must never reintroduce the retired conveyor as a receiver.
 
 		UE_LOG(LogSmartUpgrade, VeryVerbose, TEXT("⚙️ UPGRADE COMPLETE: %s → %s"),
-			*Buildable->GetName(), *NewBelt->GetClass()->GetName());
+			*OriginalName, *NewBelt->GetClass()->GetName());
 		return 1;
 	}
 
@@ -1511,51 +1606,13 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 		// Set blueprint designer (like MassUpgrade)
 		LiftHologram->SetInsideBlueprintDesigner(OldLift->GetBlueprintDesigner());
 
-		// #399: Copy the lift's AUTHORITATIVE top transform (mTopTransform). Its Z SIGN encodes flow
-		// direction (up vs down); |Z| is the height. Source it from OldLift->GetTopTransform(), NOT the
-		// output connector's relative transform: on a lift snapped to a floor-hole passthrough the
-		// connector is inset into the foundation, so its relative Z has the wrong magnitude and can carry
-		// the wrong SIGN, flipping the rebuilt lift. Every Extend lift site already uses GetTopTransform().
+        // Shared preparation restores signed geometry and exact floor-hole slots
+        // for both whole-plan preflight and the actual native replacement.
+		// Share the native placement-frame contract with whole-plan preflight.
+		FString PreparationReason;
+		if (!PrepareConveyorUpgradeHologram(OldLift, LiftHologram, PreparationReason))
 		{
-			FTransform TopTransform = OldLift->GetTopTransform();
-			if (FStructProperty* TopTransformProp = FindFProperty<FStructProperty>(AFGConveyorLiftHologram::StaticClass(), TEXT("mTopTransform")))
-			{
-				void* ValuePtr = TopTransformProp->ContainerPtrToValuePtr<void>(LiftHologram);
-				TopTransformProp->CopySingleValue(ValuePtr, &TopTransform);
-			}
-		}
-
-		// #399: Carry the old lift's snapped floor-hole passthroughs onto the upgrade hologram (index
-		// [0]=bottom, [1]=top). Without this, a floor-hole-through lift loses all passthrough context, so
-		// vanilla re-resolves its forced normal / mesh mode from the synthetic upgrade hit and flips the
-		// lift (and mangles the whole run). Mirrors the Extend path (SFExtendCloneSpawner.cpp:1407-1428).
-		// MP-safe: the upgrade batch is host-authoritative and this reads the OLD lift's own same-machine
-		// passthrough actors, so nothing crosses the client/server actor-id boundary.
-		{
-			TArray<AFGBuildablePassthrough*> SnappedPassthroughs = OldLift->GetSnappedPassthroughs();
-			if (SnappedPassthroughs.Num() > 0)
-			{
-				if (FProperty* SnappedProp = AFGConveyorLiftHologram::StaticClass()->FindPropertyByName(TEXT("mSnappedPassthroughs")))
-				{
-					if (TArray<AFGBuildablePassthrough*>* HoloPassthroughs = SnappedProp->ContainerPtrToValuePtr<TArray<AFGBuildablePassthrough*>>(LiftHologram))
-					{
-						*HoloPassthroughs = SnappedPassthroughs;
-					}
-				}
-			}
-		}
-
-		// Call TryUpgrade with hit result (same pattern as belts and power poles)
-		FHitResult LiftHitResult(
-			OldLift,
-			LiftHologram->GetComponentByClass<UPrimitiveComponent>(),
-			OldLift->GetActorLocation(),
-			OldLift->GetActorRotation().Vector()
-		);
-
-		if (!LiftHologram->TryUpgrade(LiftHitResult))
-		{
-			UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: TryUpgrade failed for lift"));
+			ConveyorOwner->Active->Result.ErrorMessage = PreparationReason;
 			LiftHologram->Destroy();
 			return 0;
 		}
@@ -1565,7 +1622,7 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 		// bare recipe (NOT on top of hologram GetBaseCost - that was the #432 double-charge).
 		FSFUpgradeSettlementLedger Ledger;
 		{
-			const int32 PrepResult = PrepareUpgradeSettlement(OldLift, ActualTargetRecipe, PlayerChar, Ledger);
+			const int32 PrepResult = PrepareConveyorSettlement(OldLift, ActualTargetRecipe, PlayerChar, Ledger);
 			if (PrepResult != 1)
 			{
 				LiftHologram->Destroy();
@@ -1573,26 +1630,24 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 			}
 		}
 
-		AFGConveyorChainActor* LiftCargoChain = nullptr;
-		if (!TryResolveLiftUpgradeCargoChain(OldLift, LiftCargoChain))
-		{
-			UE_LOG(LogSmartUpgrade, Warning, TEXT("Upgrade rejected for %s: conveyor chain cargo cannot be migrated safely"), *OldLift->GetName());
-			LiftHologram->Destroy();
-			return 0;
-		}
+		LiftHologram->ValidatePlacementAndCost(PlayerChar->GetInventory());
+		if (!LiftHologram->CanConstruct() || LiftHologram->GetBuildClass() != NewBuildableClass)
+		{ LiftHologram->Destroy(); return 0; }
 
-		// [#485] Reserve the net charge; refund waits for a successful construct.
-		ReserveUpgradeCharge(Ledger, PlayerChar);
-
-		// Capture chain actor from old lift before PreUpgrade clears upgrade-sensitive state.
-		if (AFGConveyorChainActor* OldChain = OldLift->GetConveyorChainActor())
-		{
-			PreDestroyChainActors.Add(OldChain);
-		}
+		// Actual debit must be proved before constructing a conveyor replacement.
+		if (!ReserveConveyorCharge(Ledger, PlayerChar)) { LiftHologram->Destroy(); return 0; }
 
 		// Let vanilla prepare the old lift for upgrade before constructing the replacement.
 		UE_LOG(LogSmartUpgrade, VeryVerbose, TEXT("UpgradeExecutionService: Calling lift PreUpgrade before Construct"));
-		OldLift->PreUpgrade_Implementation();
+		IFGDismantleInterface::Execute_PreUpgrade(OldLift);
+        if (!IsValid(OldLift) || OldLift->IsActorBeingDestroyed() || !IsValid(LiftHologram) || LiftHologram->IsActorBeingDestroyed())
+        {
+            ConveyorOwner->Active->bUncertain = true;
+            ConveyorOwner->Active->Result.ErrorMessage = TEXT("Native lift preparation changed the admitted lifetimes; construction was not invoked");
+            RollbackUpgradeCharge(Ledger, PlayerChar);
+            if (IsValid(LiftHologram) && !LiftHologram->IsActorBeingDestroyed()) LiftHologram->Destroy();
+            return 0;
+        }
 
 		// Construct the new lift
 		TArray<AActor*> ConstructedChildren;
@@ -1604,26 +1659,27 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 		AFGBuildableConveyorLift* NewLift = Cast<AFGBuildableConveyorLift>(ConstructedActor);
 		if (!NewLift)
 		{
+			if (ConstructedActor || ConstructedChildren.ContainsByPredicate([](AActor* Child) { return Child != nullptr; }))
+			{ RetainUnexpectedConveyorConstruction(ConstructedActor, ConstructedChildren); return 0; }
 			UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: Construct failed for lift %s"), *OldLift->GetName());
 			RollbackUpgradeCharge(Ledger, PlayerChar);  // [#485] failed target earns no refund
 			return 0;
 		}
+		if (!AdoptConveyorReplacement(OldLift, NewLift, ConstructedChildren)
+			|| !PrepareConveyorCargoTransfer(OldLift, true)) return 0;
 
 		// Call vanilla upgrade method (like MassUpgrade does). This handles chain transfer
 		// and other internal state after PreUpgrade prepared the old lift.
 		GroupTransfer.Apply(NewLift);
-		// Belt upgrading releases the entire native chain into its original local
-		// queues. Lift upgrading transfers only its local queue. Release chain cargo
-		// here, after successful construction and before that transfer, so a lift
-		// selected first receives its items before it is retired. Remaining conveyors
-		// keep their native local queues until their own upgrade or the batch rebuild.
-		// An empty/already-released chain needs no second migration. This preserves
-		// selection and affordability order in mixed and lift-only cohorts.
-		if (IsValid(LiftCargoChain) && LiftCargoChain->GetNumActualItems() > 0)
-		{
-			LiftCargoChain->MoveItemsFromChainToBelts();
-		}
-		OldLift->Upgrade_Implementation(NewLift);
+		// Explicit export, when required, was qualified against the CURRENT owner above.
+		// No chain receiver captured before Construct is reused here.
+		IFGDismantleInterface::Execute_Upgrade(OldLift, NewLift);
+        if (!IsValid(OldLift) || OldLift->IsActorBeingDestroyed() || !IsValid(NewLift) || NewLift->IsActorBeingDestroyed())
+        {
+            ConveyorOwner->Active->bUncertain = true;
+            ConveyorOwner->Active->Result.ErrorMessage = TEXT("Native lift upgrade changed the admitted actor lifetimes; retirement/refund withheld");
+            return 0;
+        }
 		GroupTransfer.Apply(NewLift);
 
 		// Check for connections the upgrade hologram did not transfer. Do not manually
@@ -1669,32 +1725,29 @@ int32 USFUpgradeExecutionService::ProcessSingleUpgrade(AFGBuildable* Buildable, 
 		// leaves the old lift registered for another factory tick: partial batches
 		// can rebuild a chain containing both lifts and feed cargo into the retiring
 		// lift after its native upgrade has already transferred its local queue.
-		if (IsValid(OldLift) && !OldLift->IsPendingKillPending())
-		{
-			TArray<AActor*> ChildDismantleActors;
-			OldLift->GetChildDismantleActors_Implementation(ChildDismantleActors);
-			for (AActor* ChildActor : ChildDismantleActors)
-			{
-				if (ChildActor && IsValid(ChildActor))
-				{
-					ChildActor->Destroy();
-				}
-			}
-			OldLift->Destroy();
-		}
+		const FObjectKey RetiringIdentity(OldLift);
+        if (!RetireConveyorSource(OldLift))
+        {
+            // The main refund is earned even if a separate child obligation failed.
+            if (ConveyorOwner->Active->RetiredSources.Contains(RetiringIdentity)) GrantUpgradeRefund(Ledger, PlayerChar);
+            return 0;
+        }
 
 		// [#485] Replacement is live and the old lift retired - the refund is now earned.
 		GrantUpgradeRefund(Ledger, PlayerChar);
+        if (!DeliverConveyorCompanionRefunds())
+        {
+            ConveyorOwner->Active->bUncertain = true;
+            ConveyorOwner->Active->Result.ErrorMessage = TEXT("Native companion refund delivery has unresolved receipts");
+            return 0;
+        }
 
-		// Track upgraded conveyor for chain rebuild
-		UpgradedConveyors.Add(NewLift);
 
 		// Track old->new mapping for fixing inter-connected batch upgrades
-		OldToNewConveyorMap.Add(OldLift, NewLift);
-		OldToNewBuildableMap.Add(OldLift, NewLift);
+		// Exact FObjectKey replacement ownership was recorded before retirement.
 
 		UE_LOG(LogSmartUpgrade, VeryVerbose, TEXT("UpgradeExecutionService: Successfully upgraded lift %s to %s"),
-			*Buildable->GetName(), *NewLift->GetClass()->GetName());
+			*OriginalName, *NewLift->GetClass()->GetName());
 		return 1;
 	}
 
@@ -1833,21 +1886,6 @@ void USFUpgradeExecutionService::CompleteUpgrade()
 		World->GetTimerManager().ClearTimer(UpgradeTimerHandle);
 	}
 
-	USFChainActorService* ChainService = Subsystem ? Subsystem->GetChainActorService() : nullptr;
-	int32 PreRepairQueuedGroups = 0;
-	int32 PostRepairQueuedGroups = 0;
-
-	// If this batch touched conveyors, invalidate their current chain ownership before
-	// repairing endpoints. Otherwise thousands of ClearConnection/SetConnection calls can
-	// leave old chain actors ticking stale segment/item state until the end of this frame.
-	if (UpgradedConveyors.Num() > 0 && ChainService)
-	{
-		PreRepairQueuedGroups = ChainService->InvalidateAndQueueVanillaRebuildForBelts(UpgradedConveyors, PreDestroyChainActors);
-		UE_LOG(LogSmartUpgrade, VeryVerbose,
-			TEXT("ChainActorService: pre-repair conveyor invalidation queued %d group(s) before connection repair"),
-			PreRepairQueuedGroups);
-	}
-
 	// Fix connections between conveyors that were both upgraded in this batch
 	// (e.g., two lifts connected to each other - both need to point to the new versions)
 	FixBatchConnectionReferences();
@@ -1855,32 +1893,6 @@ void USFUpgradeExecutionService::CompleteUpgrade()
 
 	// Option B: verify every expected edge exists on the post-upgrade graph and repair any that don't
 	ValidateAndRepairConnections();
-
-	// After endpoint repair, let FactoryGame re-register upgraded conveyors against the
-	// completed live graph. Manual tick-group coalescing repeatedly produced sorted,
-	// bucket-normalized groups that vanilla still rejected with NO_SEGMENTS zombies.
-	if (UpgradedConveyors.Num() > 0)
-	{
-		if (ChainService)
-		{
-			PostRepairQueuedGroups = ChainService->ReRegisterAndQueueVanillaRebuildForBelts(UpgradedConveyors, PreDestroyChainActors);
-			UE_LOG(LogSmartUpgrade, VeryVerbose,
-				TEXT("⚙️ Upgrade batch complete - %d conveyors upgraded, chain groups queued pre-repair=%d post-reregister=%d"),
-				UpgradedConveyors.Num(), PreRepairQueuedGroups, PostRepairQueuedGroups);
-
-			// Safety net: if vanilla still produces NO_SEGMENTS zombies while processing
-			// its pending rebuild queue, purge them after a few ticks. Orphaned tick
-			// groups remain diagnostic-only; we do not bounce conveyors or mutate bucket
-			// arrays from product code.
-			ChainService->ScheduleDeferredZombiePurge(3.0f);
-		}
-		else
-		{
-			UE_LOG(LogSmartUpgrade, Verbose,
-				TEXT("⚙️ Upgrade batch complete - %d conveyors upgraded (ChainActorService unavailable — chain topology may be stale until vanilla rebuilds next frame)"),
-				UpgradedConveyors.Num());
-		}
-	}
 
 	// NOTE: Cost deduction now happens per-item during ProcessSingleUpgrade
 	// This allows us to abort immediately when funds run out
@@ -1942,18 +1954,24 @@ void USFUpgradeExecutionService::CompleteUpgrade()
 	OverflowItems.Empty();
 
 	bUpgradeInProgress = false;
-	WorkingResult.bCompleted = true;
+	WorkingResult.bCompleted = !WorkingResult.bUncertain;
 	LastResult = WorkingResult;
 
-	PendingUpgrades.Empty();
-	UpgradedConveyors.Empty();
-	OldToNewConveyorMap.Empty();
-	OldToNewBuildableMap.Empty();
-	SavedConnectionPairs.Empty();
-	SavedPipeConnectionPairs.Empty();
-	ExpectedConnectionEdges.Empty();
-	PreDestroyChainActors.Empty();
-	CurrentUpgradeIndex = 0;
+    if (!WorkingResult.bUncertain)
+    {
+        PendingUpgrades.Empty();
+        OldToNewConveyorMap.Empty();
+        OldToNewBuildableMap.Empty();
+        SavedConnectionPairs.Empty();
+        SavedPipeConnectionPairs.Empty();
+        ExpectedConnectionEdges.Empty();
+        CurrentUpgradeIndex = 0;
+    }
+    else
+    {
+        UE_LOG(LogSmartUpgrade, Warning, TEXT("Native factory upgrade %s retains unresolved effects (broken edges=%d); actors/maps and settlement receipts retained, no connection repair or rollback inferred."),
+            *WorkingResult.RequestId.ToString(), WorkingResult.BrokenConnectionCount);
+    }
 
 	OnUpgradeExecutionCompleted.Broadcast(LastResult);
 	UE_LOG(LogSmartUpgrade, Verbose, TEXT("UpgradeExecutionService: Upgrade complete - Success=%d Fail=%d Skip=%d"),
@@ -1985,9 +2003,16 @@ void USFUpgradeExecutionService::CompleteUpgrade()
 
 void USFUpgradeExecutionService::InjectUpgradeResult(const FSFUpgradeExecutionResult& Result)
 {
+	if (Result.RequestId != ExpectedClientRequestId || Result.RequestSequence != ExpectedClientSequence
+		|| Result.AuthorityWorldGeneration != ExpectedClientWorldGeneration) return;
+	if (Result.bWorldContextRejected)
+	{
+		RemoteAuthorityWorldGeneration.Invalidate();
+		UpgradeContextChallenge = FGuid::NewGuid();
+	}
 	LastResult = Result;
-	bUpgradeInProgress = false;
-	OnUpgradeExecutionCompleted.Broadcast(LastResult);
+	bUpgradeInProgress = Result.bPending;
+	if (!Result.bPending) OnUpgradeExecutionCompleted.Broadcast(LastResult);
 	UE_LOG(LogSmartUpgrade, Verbose,
 		TEXT("[UPGRADE-MP] Injected server upgrade result - Success=%d Fail=%d Skip=%d"),
 		Result.SuccessCount, Result.FailCount, Result.SkipCount);

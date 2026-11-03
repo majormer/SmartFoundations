@@ -23,6 +23,7 @@ public:
     virtual AActor* Construct(TArray<AActor*>& OutChildren, FNetConstructionID ID) override;
     virtual void Destroyed() override;
     UFGFactoryConnectionComponent* ResolveBuiltPort(FName Name) const;
+    UFGFactoryConnectionComponent* ResolveBuiltPortForConstruction(FName Name, const FNetConstructionID& Id) const;
     UFGFactoryConnectionComponent* GetRouteFrom() const { return RouteFrom; }
     UFGFactoryConnectionComponent* GetRouteTo() const { return RouteTo; }
     bool ValidateCapturedRoute();
@@ -38,6 +39,9 @@ private:
     UPROPERTY() TArray<FItemAmount> NativeCost;
     UPROPERTY() TArray<TObjectPtr<UStaticMeshComponent>> Meshes;
     TWeakObjectPtr<AFGBuildable> Built;
+    int8 BuiltPlayerId = -1;
+    uint16 BuiltServerId = 0;
+    uint16 BuiltClientId = 0;
     UPROPERTY() FTransform RouteFromPose;
     UPROPERTY() FTransform RouteToPose;
     UPROPERTY() int32 FromDirection = -1;

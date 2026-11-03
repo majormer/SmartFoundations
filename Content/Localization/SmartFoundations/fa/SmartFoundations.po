@@ -837,82 +837,82 @@ msgctxt "SmartCompass,WestSouthWest"
 msgid "WSW"
 msgstr "WSW"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1662)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1667)
 msgctxt "SmartFoundations,ACSetting_BeltRouting"
 msgid "Belt Routing"
 msgstr "مسیریابی تسمه نقاله"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1625)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1630)
 msgctxt "SmartFoundations,ACSetting_BeltTierMain"
 msgid "Belt Tier (Main)"
 msgstr "مدل تسمه نقاله (اصلی)"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1637)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1642)
 msgctxt "SmartFoundations,ACSetting_BeltTierToBuilding"
 msgid "Belt Tier (To Building)"
 msgstr "مدل تسمه نقاله (به ساختمان)"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1649)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1654)
 msgctxt "SmartFoundations,ACSetting_ChainDistributors"
 msgid "Chain Distributors"
 msgstr "زنجیره جداکننده‌ها"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1729)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1734)
 msgctxt "SmartFoundations,ACSetting_HorizVert"
 msgid "Horiz→Vert"
 msgstr "افقی→عمودی"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1738)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1743)
 msgctxt "SmartFoundations,ACSetting_HypertubeAC"
 msgid "Hypertube AC"
 msgstr "هایپرتیوپ AC"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1743)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1748)
 msgctxt "SmartFoundations,ACSetting_HypertubeRouting"
 msgid "Hypertube Routing"
 msgstr "مسیریابی هایپرتیوپ"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1615)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1620)
 msgctxt "SmartFoundations,ACSetting_OFF"
 msgid "OFF"
 msgstr "خاموش"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1615)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1620)
 msgctxt "SmartFoundations,ACSetting_ON"
 msgid "ON"
 msgstr "روشن"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1710)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1715)
 msgctxt "SmartFoundations,ACSetting_PipeRouting"
 msgid "Pipe Routing"
 msgstr "مسیریابی لوله"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1681)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1686)
 msgctxt "SmartFoundations,ACSetting_PipeTierMain"
 msgid "Pipe Tier (Main)"
 msgstr "مدل خط لوله (اصلی)"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1693)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1698)
 msgctxt "SmartFoundations,ACSetting_PipeTierToBuilding"
 msgid "Pipe Tier (To Building)"
 msgstr "مدل خط لوله (به ساختمان)"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1806)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1811)
 msgctxt "SmartFoundations,ACSetting_ReservedSlots"
 msgid "Reserved Slots"
 msgstr "اسلات‌های رزرو شده"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1774)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1779)
 msgctxt "SmartFoundations,ACSetting_StackableBeltDirection"
 msgid "Stackable Belt Direction"
 msgstr "جهت تسمه نقاله قابل انباشت"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1762)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1767)
 msgctxt "SmartFoundations,ACSetting_StackableBeltTier"
 msgid "Stackable Belt Tier"
 msgstr "مدل تسمه نقاله قابل انباشت"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1811)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1816)
 msgctxt "SmartFoundations,ACSetting_Summary"
 msgid "{0}: {1}"
 msgstr "{0}: {1}"
@@ -932,7 +932,7 @@ msgctxt "SmartFoundations,ArrowLabel_Z"
 msgid "Z"
 msgstr "Z"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/AutoConnect/SFBlueprintLiftSeams_Construction.cpp(237)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/AutoConnect/SFBlueprintLiftSeams_Construction.cpp(240)
 msgctxt "SmartFoundations,BlueprintLiftConnectionUnavailable"
 msgid "Blueprint lift connections unavailable. Check endpoint direction, spacing and the selected belt tier."
 msgstr "اتصالات تسمه نقاله بالا بر در پیش‌نمایش ساخت در دسترس نیست. جهت نقطه پایانی، فاصله و مدل تسمه نقاله انتخابی را بررسی کنید."
@@ -1077,10 +1077,25 @@ msgctxt "SmartFoundations,Config_ShowHUD"
 msgid "Show HUD Overlay"
 msgstr "نمایش HUD"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1757)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1762)
 msgctxt "SmartFoundations,Config_StackableBelt"
 msgid "Stackable Belt Auto-Connect"
 msgstr "اتصال خودکار تسمه نقاله قابل انباشت"
+
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Core/Net/SFGameInstanceModule_NetHooks.cpp(471)
+msgctxt "SmartFoundations,ConstructionContextPending"
+msgid "Synchronizing construction with the server. Try building again."
+msgstr "در حال همگام‌سازی ساخت‌وساز با سرور. دوباره ساخت را امتحان کنید."
+
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Core/Net/SFGameInstanceModule_NetHooks.cpp(131)
+msgctxt "SmartFoundations,ExtendEnvelopeRefused"
+msgid "This construction request could not be sent safely. Re-select the source and try again."
+msgstr "ارسال ایمن این درخواست ساخت ممکن نشد. مبدأ را دوباره انتخاب کنید و دوباره تلاش کنید."
+
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Core/Net/SFGameInstanceModule_NetHooks.cpp(142)
+msgctxt "SmartFoundations,ExtendEnvelopeUnavailable"
+msgid "The server connection is unavailable. Try building again."
+msgstr "اتصال به سرور در دسترس نیست. دوباره ساخت را امتحان کنید."
 
 #: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Extend/UI/SmartSettingsFormWidget_Extend.cpp(106)
 msgctxt "SmartFoundations,ExtendPanel_CancelSelect"
@@ -1162,7 +1177,7 @@ msgctxt "SmartFoundations,ExtendPanel_Summary"
 msgid "Select an existing building of the same type as the one held in your build gun."
 msgstr "یک ساختمان موجود از همان نوعی که در سلاح ساخت و ساز خود نگه داشته‌اید، انتخاب کنید."
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Extend/SFExtendPowerConnections.cpp(112)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Extend/SFExtendPowerConnections.cpp(114)
 msgctxt "SmartFoundations,Extend_CableCapacity"
 msgid "Power connector {0} needs {1} connections but has {2} slots"
 msgstr "اتصال‌دهنده برق {0} به {1} اتصال نیاز دارد اما {2} اسلات دارد"
@@ -1187,12 +1202,12 @@ msgctxt "SmartFoundations,Extend_CableSocketUnavailable"
 msgid "Cannot validate power socket {0}.{1} before construction"
 msgstr "نمی‌توان پریز برق {0}.{1} را قبل از ساخت اعتبارسنجی کرد"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Extend/SFExtendPowerConnections.cpp(100)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Extend/SFExtendPowerConnections.cpp(102)
 msgctxt "SmartFoundations,Extend_CableTooLong"
 msgid "Power cable {0} exceeds its native length limit"
 msgstr "کابل برق {0} از حد طول استاندارد خود فراتر رفته است"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Core/Net/SFGameInstanceModule_SpecHooks.cpp(993)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Core/Net/SFGameInstanceModule_SpecHooks.cpp(1080)
 msgctxt "SmartFoundations,Extend_CannotReconstruct"
 msgid "Smart could not reconstruct this Extend layout."
 msgstr "Smart نتوانست این چیدمان Extend را بازسازی کند."
@@ -1202,30 +1217,35 @@ msgctxt "SmartFoundations,Extend_DuplicateOwner"
 msgid "Extend construction has duplicate owner identities"
 msgstr "ساخت‌وساز Extend دارای هویت‌های مالک تکراری است"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Extend/SFExtendScaledService.cpp(1421)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Extend/Net/SFExtendService_NativeInput.cpp(842)
+msgctxt "SmartFoundations,Extend_IncompleteConstruction"
+msgid "Smart could not finish this Extend. Inspect the partial layout before continuing; affected connections remain protected."
+msgstr "Smart نتوانست این گسترش را کامل کند. پیش از ادامه، چیدمان نیمه‌ساخته را بررسی کنید؛ اتصال‌های تحت تأثیر همچنان محافظت می‌شوند."
+
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Core/Net/SFGameInstanceModule_SpecHooks.cpp(1050)
+msgctxt "SmartFoundations,Extend_InvalidDistributorSettings"
+msgid "Distributor settings are missing or incompatible. Re-select the source or recapture the preset."
+msgstr "تنظیمات توزیع‌کننده موجود نیست یا سازگار نیست. مبدأ را دوباره انتخاب کنید یا پیش‌تنظیم را دوباره ثبت کنید."
+
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Extend/SFExtendScaledService.cpp(1452)
 msgctxt "SmartFoundations,Extend_LaneBelt"
 msgid "Belt"
 msgstr "تسمه نقاله"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Extend/SFExtendScaledService.cpp(1421)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Extend/SFExtendScaledService.cpp(1452)
 msgctxt "SmartFoundations,Extend_LanePipe"
 msgid "Pipe"
 msgstr "لوله"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Extend/SFExtendScaledService.cpp(1430)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Extend/SFExtendScaledService.cpp(1461)
 msgctxt "SmartFoundations,Extend_LaneTooLong"
 msgid "{0} lane too long ({1}m > {2}m maximum)"
 msgstr "مسیر {0} بیش از حد طولانی است ({1}م > حداکثر {2}م)"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Extend/SFExtendScaledService.cpp(1420)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Extend/SFExtendScaledService.cpp(1451)
 msgctxt "SmartFoundations,Extend_LaneTooShort"
 msgid "{0} lane too short ({1}m < {2}m minimum)"
 msgstr "مسیر {0} بیش از حد کوتاه است ({1}م < حداقل {2}م)"
-
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Extend/SFExtendScaledService.cpp(1452)
-msgctxt "SmartFoundations,Extend_LaneTooSteep"
-msgid "{0} lane angle too steep ({1}°/{2}° > {3}° max)"
-msgstr "زاویه مسیر {0} بیش از حد شیب‌دار است ({1}°/{2}° > حداکثر {3}°)"
 
 #: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Extend/SFExtendService_PowerValidation.cpp(55)
 msgctxt "SmartFoundations,Extend_MissingCableEndpoints"
@@ -1237,12 +1257,22 @@ msgctxt "SmartFoundations,Extend_MissingTopology"
 msgid "Extend construction has no reconstructed topology"
 msgstr "ساخت‌وساز Extend توپولوژی بازسازی‌شده‌ای ندارد"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Extend/SFExtendService.cpp(1012)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Extend/Net/SFExtendService_NativeInput.cpp(772)
+msgctxt "SmartFoundations,Extend_PreviousOperationIncomplete"
+msgid "Smart cannot Extend here because an earlier operation affecting these buildings is still incomplete."
+msgstr "Smart نمی‌تواند اینجا گسترش دهد، چون عملیات قبلی مربوط به این ساختمان‌ها هنوز کامل نشده است."
+
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Extend/SFExtendService.cpp(1018)
 msgctxt "SmartFoundations,Extend_ReconstructionIncomplete"
 msgid "Extend commit reconstruction did not complete"
 msgstr "بازسازی نهایی Extend کامل نشد"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Core/Net/SFGameInstanceModule_SpecHooks.cpp(974)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Extend/SFExtendScaledService.cpp(1394)
+msgctxt "SmartFoundations,Extend_RepeatedModulePose"
+msgid "Extend overlaps an earlier copy"
+msgstr "گسترش با یک نسخهٔ قبلی هم‌پوشانی دارد"
+
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Core/Net/SFGameInstanceModule_SpecHooks.cpp(1056)
 msgctxt "SmartFoundations,Extend_SourceOrCostChanged"
 msgid "The source layout or cable quote changed. Re-select the source before building."
 msgstr "چیدمان منبع یا هزینه کابل تغییر کرده است. قبل از ساخت، منبع را دوباره انتخاب کنید."
@@ -1307,12 +1337,12 @@ msgctxt "SmartFoundations,HUD_AutoConnectDisabled"
 msgid "*Auto-Connect Disabled (double-tap to re-enable)"
 msgstr "*اتصال خودکار غیرفعال (دو بار فشار دادن کلید برای فعال‌سازی مجدد)"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(346)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(349)
 msgctxt "SmartFoundations,HUD_BeltsSkipped"
 msgid "*{0} belt connection(s) skipped: {1}"
 msgstr "*{0} اتصال تسمه نقاله نادیده گرفته شد: {1}"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(487)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(490)
 msgctxt "SmartFoundations,HUD_ExtendActive"
 msgid "*Extend Active"
 msgstr "*گسترش فعال"
@@ -1322,17 +1352,17 @@ msgctxt "SmartFoundations,HUD_ExtendDisabled"
 msgid "*Extend Disabled"
 msgstr "*گسترش غیرفعال"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(452)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(455)
 msgctxt "SmartFoundations,HUD_ExtendPanelAction"
 msgid "Smart Panel"
 msgstr "پنل Smart"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(473)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(476)
 msgctxt "SmartFoundations,HUD_ExtendScaled"
 msgid "*Extend: {0}x{1}"
 msgstr "*گسترش: {0}x{1}"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(462)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(465)
 msgctxt "SmartFoundations,HUD_ExtendSource"
 msgid "Extend from {0} · {1} → Extend"
 msgstr "گسترش از {0} · {1} → Extend"
@@ -1342,7 +1372,7 @@ msgctxt "SmartFoundations,HUD_Grid"
 msgid "Grid: {0}x{1}x{2} ({3})"
 msgstr "شبکه: {0}x{1}x{2} ({3})"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(561)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(564)
 msgctxt "SmartFoundations,HUD_GridDefault"
 msgid "Grid: 1x1x1"
 msgstr "شبکه: 1x1x1"
@@ -1352,47 +1382,47 @@ msgctxt "SmartFoundations,HUD_Header"
 msgid "SMART!"
 msgstr "SMART!"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(985)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(988)
 msgctxt "SmartFoundations,HUD_Hint_Chord"
 msgid "{0} + {1}"
 msgstr "{0} + {1}"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(965)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(968)
 msgctxt "SmartFoundations,HUD_Hint_Rotation"
 msgid "Adjust rotation"
 msgstr "تنظیم چرخش"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(984)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(987)
 msgctxt "SmartFoundations,HUD_Hint_Scroll"
 msgid "Scroll"
 msgstr "اسکرول"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(962)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(965)
 msgctxt "SmartFoundations,HUD_Hint_Spacing"
 msgid "Adjust spacing"
 msgstr "تنظیم فاصله"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(964)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(967)
 msgctxt "SmartFoundations,HUD_Hint_Stagger"
 msgid "Adjust stagger"
 msgstr "تنظیم جابجایی"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(963)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(966)
 msgctxt "SmartFoundations,HUD_Hint_Steps"
 msgid "Adjust steps"
 msgstr "تنظیم پله‌ها"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(386)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(389)
 msgctxt "SmartFoundations,HUD_HypertubesSkipped"
 msgid "*{0} Hypertube connection(s) skipped: {1}"
 msgstr "*{0} اتصال هایپرتیوپ نادیده گرفته شد: {1}"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(480)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(483)
 msgctxt "SmartFoundations,HUD_Invalid"
 msgid "[INVALID]"
 msgstr "[نامعتبر]"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(439)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(442)
 msgctxt "SmartFoundations,HUD_LiftHeight"
 msgid "Lift: ↕ {0}m  ⇓ {1}m"
 msgstr "بلند کردن: ↕ {0}متر  ⇓ {1}متر"
@@ -1407,32 +1437,32 @@ msgctxt "SmartFoundations,HUD_Mode_PlayerRelative"
 msgid "Controls: Player Relative"
 msgstr "کنترل‌ها: نسبت به بازیکن"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(429)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(432)
 msgctxt "SmartFoundations,HUD_Module_HoldPrompt"
 msgid "*Module \"{0}\": equip its source building to place it"
 msgstr "*ماژول \"{0}\": ساختمان منبع آن را در دست بگیرید تا قرار داده شود"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(423)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(426)
 msgctxt "SmartFoundations,HUD_Module_Ready"
 msgid "*Module \"{0}\": scroll to scale, fire to stamp (repeatable)"
 msgstr "*ماژول \"{0}\": برای مقیاس بچرخانید، برای مهر کردن شلیک کنید (تکرارپذیر)"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(414)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(417)
 msgctxt "SmartFoundations,HUD_Module_Unnamed"
 msgid "Module"
 msgstr "ماژول"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(368)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(371)
 msgctxt "SmartFoundations,HUD_PipesSkipped"
 msgid "*{0} pipe connection(s) skipped: {1}"
 msgstr "*{0} اتصال لوله نادیده گرفته شد: {1}"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(593)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(596)
 msgctxt "SmartFoundations,HUD_Recipe"
 msgid "Recipe {0}/{1}: {2}"
 msgstr "دستور {0}/{1}: {2}"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(591)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(594)
 msgctxt "SmartFoundations,HUD_RecipeActive"
 msgid "Recipe* {0}/{1}: {2}"
 msgstr "دستور* {0}/{1}: {2}"
@@ -1462,62 +1492,67 @@ msgctxt "SmartFoundations,HUD_RoleVertical"
 msgid "Vertical"
 msgstr "عمودی"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(954)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(957)
 msgctxt "SmartFoundations,HUD_RotationDefault"
 msgid "Rotation*: 0.0°"
 msgstr "چرخش*: 0.0°"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(945)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(948)
 msgctxt "SmartFoundations,HUD_RotationZ"
 msgid "Rotation [{0}]{1}: {2}°"
 msgstr "چرخش [{0}]{1}: {2}°"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(936)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(939)
 msgctxt "SmartFoundations,HUD_RotationZFull"
 msgid "Rotation [{0}]{1}: {2}° (R={3}m, {4}/circle)"
 msgstr "چرخش [{0}]{1}: {2}° (R={3}m, {4}/دور)"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(659)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(662)
 msgctxt "SmartFoundations,HUD_ScaleDaisyChain"
 msgid "Power Chain: {0}"
 msgstr "زنجیره برق: {0}"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(642)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(645)
 msgctxt "SmartFoundations,HUD_Settings"
 msgid "Settings: {0}"
 msgstr "تنظیمات: {0}"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(626)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(629)
 msgctxt "SmartFoundations,HUD_SettingsActive"
 msgid "Settings: {0}{1}"
 msgstr "تنظیمات: {0}{1}"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(633)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(636)
 msgctxt "SmartFoundations,HUD_SettingsCurrent"
 msgid "Settings: {0}*"
 msgstr "تنظیمات: {0}*"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(338)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(341)
 msgctxt "SmartFoundations,HUD_SkipReason_InvalidShape"
 msgid "invalid shape ({0})"
 msgstr "شکل نامعتبر ({0})"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(343)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(346)
 msgctxt "SmartFoundations,HUD_SkipReason_LaneBlocked"
 msgid "lane blocked ({0})"
 msgstr "مسیر مسدود است ({0})"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(365)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(332)
+msgctxt "SmartFoundations,HUD_SkipReason_MisalignedPorts"
+msgid "misaligned ports ({0})"
+msgstr "درگاه‌های ناهم‌راستا ({0})"
+
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(368)
 msgctxt "SmartFoundations,HUD_SkipReason_TooClose"
 msgid "too close ({0})"
 msgstr "خیلی نزدیک ({0})"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(360)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(363)
 msgctxt "SmartFoundations,HUD_SkipReason_TooFar"
 msgid "too far ({0})"
 msgstr "خیلی دور ({0})"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(333)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(336)
 msgctxt "SmartFoundations,HUD_SkipReason_TooSteep"
 msgid "too steep ({0})"
 msgstr "خیلی شیب‌دار ({0})"
@@ -1527,137 +1562,137 @@ msgctxt "SmartFoundations,HUD_SmartDisabled"
 msgid "*Smart: Scaling only (double-tap to re-enable)"
 msgstr "*Smart: فقط مقیاس‌گذاری (دوبار بزنید برای فعال‌سازی)"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(771)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(774)
 msgctxt "SmartFoundations,HUD_SpacingDefault"
 msgid "Spacing*: 0.0m"
 msgstr "فاصله*: 0.0متر"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(723)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(726)
 msgctxt "SmartFoundations,HUD_SpacingRole"
 msgid "Spacing [{0}]*: {1}m"
 msgstr "فاصله [{0}]*: {1}متر"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(729)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(732)
 msgctxt "SmartFoundations,HUD_SpacingX"
 msgid "Spacing [X]{0}: {1}m"
 msgstr "فاصله [X]{0}: {1}متر"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(746)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(749)
 msgctxt "SmartFoundations,HUD_SpacingY"
 msgid "Spacing [Y]{0}: {1}m"
 msgstr "فاصله [Y]{0}: {1}متر"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(763)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(766)
 msgctxt "SmartFoundations,HUD_SpacingZ"
 msgid "Spacing [Z]{0}: {1}m"
 msgstr "فاصله [Z]{0}: {1}متر"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(905)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(908)
 msgctxt "SmartFoundations,HUD_StaggerDefault"
 msgid "Stagger*: 0.0m"
 msgstr "جابجایی*: 0.0متر"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(834)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(837)
 msgctxt "SmartFoundations,HUD_StaggerFamilyFlat"
 msgid "Flat"
 msgstr "تخت"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(833)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(836)
 msgctxt "SmartFoundations,HUD_StaggerFamilyStack"
 msgid "Stack"
 msgstr "پشته"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(840)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(843)
 msgctxt "SmartFoundations,HUD_StaggerRole"
 msgid "Stagger [{0}/{1}]*: {2}m"
 msgstr "جابجایی [{0}/{1}]*: {2}متر"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(846)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(849)
 msgctxt "SmartFoundations,HUD_StaggerX"
 msgid "Stagger [X]{0}: {1}m sideways"
 msgstr "جابجایی [X]{0}: {1}متر جانبی"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(863)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(866)
 msgctxt "SmartFoundations,HUD_StaggerY"
 msgid "Stagger [Y]{0}: {1}m forward"
 msgstr "جابجایی [Y]{0}: {1}متر جلو"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(880)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(883)
 msgctxt "SmartFoundations,HUD_StaggerZX"
 msgid "Stagger [ZX]{0}: {1}m shift forward"
 msgstr "جابجایی [ZX]{0}: {1}متر جابجایی جلو"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(897)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(900)
 msgctxt "SmartFoundations,HUD_StaggerZY"
 msgid "Stagger [ZY]{0}: {1}m shift sideways"
 msgstr "جابجایی [ZY]{0}: {1}متر جابجایی جانبی"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(817)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(820)
 msgctxt "SmartFoundations,HUD_StepsDefault"
 msgid "Steps*: 0.0m"
 msgstr "پله‌ها*: 0.0متر"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(786)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(789)
 msgctxt "SmartFoundations,HUD_StepsRole"
 msgid "Steps [{0}]*: {1}m"
 msgstr "پله‌ها [{0}]*: {1}متر"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(792)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(795)
 msgctxt "SmartFoundations,HUD_StepsX"
 msgid "Steps [X]{0}: {1}m columns"
 msgstr "پله‌ها [X]{0}: {1}متر ستون‌ها"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(809)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(812)
 msgctxt "SmartFoundations,HUD_StepsY"
 msgid "Steps [Y]{0}: {1}m rows"
 msgstr "پله‌ها [Y]{0}: {1}متر ردیف‌ها"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(515)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(518)
 msgctxt "SmartFoundations,HUD_Walk"
 msgid "*Walk  {0} seg | head {1} {2}deg | {3}"
 msgstr "*پیاده‌روی  {0} قطعه | سمت {1} {2}درجه | {3}"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(681)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(684)
 msgctxt "SmartFoundations,HUD_WalkAdvance"
 msgid "Advance{0}: {1}m"
 msgstr "پیشروی{0}: {1}متر"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(692)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(695)
 msgctxt "SmartFoundations,HUD_WalkRise"
 msgid "Rise{0}: {1}m"
 msgstr "ارتفاع{0}: {1}متر"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(698)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(701)
 msgctxt "SmartFoundations,HUD_WalkShift"
 msgid "Shift{0}: {1}m"
 msgstr "جابجایی جانبی{0}: {1}متر"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(686)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(689)
 msgctxt "SmartFoundations,HUD_WalkTurn"
 msgid "Turn{0}: {1}°"
 msgstr "چرخش{0}: {1}°"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(510)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(513)
 msgctxt "SmartFoundations,HUD_Walk_Belt"
 msgid "belt"
 msgstr "تسمه نقاله"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(510)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(513)
 msgctxt "SmartFoundations,HUD_Walk_Hypertube"
 msgid "Hypertube"
 msgstr "هایپرتیوپ"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(509)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(512)
 msgctxt "SmartFoundations,HUD_Walk_Pipe"
 msgid "pipe"
 msgstr "لوله"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(508)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(511)
 msgctxt "SmartFoundations,HUD_Walk_Rail"
 msgid "rail"
 msgstr "ریل"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(507)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(510)
 msgctxt "SmartFoundations,HUD_Walk_VehiclePath"
 msgid "vehicle path"
 msgstr "مسیر وسیله نقلیه"
@@ -1722,17 +1757,17 @@ msgctxt "SmartFoundations,Help_ScalingTitle"
 msgid "How to use Scaling"
 msgstr "نحوه استفاده از مقیاس‌دهی"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(369)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(373)
 msgctxt "SmartFoundations,Help_UpgradeBody"
 msgid "Radius scans around you; Entire Map scans without a distance limit. Network follows connections from one selected target using the crossing options. Scanning spends no materials and replaces nothing.\nClick a result row, choose the target tier and read Materials: negative amounts are needed; positive amounts are returned. Upgrade executes the replacements and normal settlement. Native restrictions and available resources still apply.\nSwitching methods keeps separate row and tier choices. Selecting another Network target clears its old results and quote until you scan again. Closing the window does not undo upgrades already executed."
 msgstr "شعاع، اطراف شما را اسکن می‌کند؛ کل نقشه، بدون محدودیت فاصله اسکن می‌کند. شبکه، اتصالات را از یک هدف انتخاب‌شده با استفاده از گزینه‌های تقاطع دنبال می‌کند. اسکن کردن، مواد مصرف نمی‌کند و چیزی را جایگزین نمی‌کند.\nروی یک ردیف نتیجه کلیک کنید، مدل هدف را انتخاب کنید و «مواد» را بخوانید: مقادیر منفی مورد نیاز هستند؛ مقادیر مثبت بازگردانده می‌شوند. ارتقا، جایگزینی‌ها و تسویه حساب معمول را اجرا می‌کند. محدودیت‌های استاندارد و منابع موجود همچنان اعمال می‌شوند.\nتغییر روش‌ها، انتخاب‌های ردیف و مدل را به‌صورت جداگانه حفظ می‌کند. انتخاب یک هدف شبکه دیگر، نتایج و برآورد قبلی آن را پاک می‌کند تا زمانی که دوباره اسکن کنید. بستن پنجره، ارتقاهای اجرا شده را لغو نمی‌کند."
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(368)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(372)
 msgctxt "SmartFoundations,Help_UpgradeSummary"
 msgid "1 Choose an area or Network target. 2 Scan and select results. 3 Review the target tier and materials. 4 Upgrade."
 msgstr "۱ یک منطقه یا هدف شبکه را انتخاب کنید. ۲ اسکن کنید و نتایج را انتخاب کنید. ۳ مدل هدف و مواد را بررسی کنید. ۴ ارتقا دهید."
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(367)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(371)
 msgctxt "SmartFoundations,Help_UpgradeTitle"
 msgid "How to use Upgrade"
 msgstr "نحوه استفاده از ارتقا"
@@ -1872,17 +1907,17 @@ msgctxt "SmartFoundations,Interface_Title"
 msgid "Smart!"
 msgstr "Smart!"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1656)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1661)
 msgctxt "SmartFoundations,LiftMode_BeltsOnly"
 msgid "Belts Only"
 msgstr "فقط تسمه‌ها"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1656)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1661)
 msgctxt "SmartFoundations,LiftMode_Building"
 msgid "Lift at Building"
 msgstr "بالابر در سازه"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1656)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1661)
 msgctxt "SmartFoundations,LiftMode_Distributor"
 msgid "Lift at Distributor"
 msgstr "تسمه نقاله بالا بر در جداکننده"
@@ -1892,32 +1927,37 @@ msgctxt "SmartFoundations,LiftMode_Help"
 msgid "Choose where the lift absorbs the height difference. Native placement and costs apply."
 msgstr "محل جذب اختلاف ارتفاع توسط بالابر را انتخاب کنید. قوانین و هزینه‌های استاندارد بازی اعمال می‌شوند."
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Core/Net/SFGameInstanceModule_NetHooks.cpp(570)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Core/Net/SFGameInstanceModule_NetHooks.cpp(620)
+msgctxt "SmartFoundations,MP_MissingConveyorPeers"
+msgid "The selected belt endpoints could not be captured. Refresh the placement before building."
+msgstr "ثبت انتهای انتخاب‌شدهٔ نوار نقاله ممکن نشد. پیش از ساخت، جای‌گذاری را تازه‌سازی کنید."
+
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Core/Net/SFGameInstanceModule_NetHooks.cpp(669)
 msgctxt "SmartFoundations,MP_Notice_BlueprintGridTooLarge"
 msgid "Blueprint grid too large for one multiplayer placement (~{0} buildings, max ~{1}). Build in smaller sections."
 msgstr "شبکهٔ نقشه برای یک قرارگیری چندنفره بیش از حد بزرگ است (~{0} ساختمان، حداکثر ~{1}). در بخش‌های کوچک‌تر بسازید."
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Core/Net/SFGameInstanceModule_NetHooks.cpp(434)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Core/Net/SFGameInstanceModule_NetHooks.cpp(518)
 msgctxt "SmartFoundations,MP_Notice_ExtendStageFailed"
 msgid "Smart!: Extend commit could not be staged - try again."
 msgstr "Smart!: آماده‌سازی ثبت گسترش ممکن نشد - دوباره تلاش کنید."
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Core/Net/SFGameInstanceModule_NetHooks.cpp(745)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Core/Net/SFGameInstanceModule_NetHooks.cpp(844)
 msgctxt "SmartFoundations,MP_Notice_GridTooLarge"
 msgid "Grid too large for multiplayer ({0} cells, max ~{1}). Build in smaller sections."
 msgstr "شبکه برای حالت چندنفره بیش از حد بزرگ است ({0} خانه، حداکثر ~{1}). در بخش‌های کوچک‌تر بسازید."
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Core/Net/SFGameInstanceModule_NetHooks.cpp(541)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Core/Net/SFGameInstanceModule_NetHooks.cpp(637)
 msgctxt "SmartFoundations,MP_Notice_TooManyConduits"
 msgid "Too many auto-connect belts/pipes for one multiplayer placement ({0}). Build in smaller sections."
 msgstr "نوارها/لوله‌های اتصال خودکار برای یک قرارگیری چندنفره بیش از حد زیاد است ({0}). در بخش‌های کوچک‌تر بسازید."
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Core/Net/SFGameInstanceModule_NetHooks.cpp(535)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Core/Net/SFGameInstanceModule_NetHooks.cpp(631)
 msgctxt "SmartFoundations,MP_Notice_TooManyConduitsDebug"
 msgid "Smart!: too many auto-connect belts/pipes/wires for one multiplayer placement ({0}). Build in smaller sections."
 msgstr "Smart!: تعداد تسمه‌ها/لوله‌ها/سیم‌های اتصال خودکار برای یک قرارگیری چندنفره بیش از حد است ({0}). در بخش‌های کوچک‌تر بسازید."
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Core/Net/SFGameInstanceModule_NetHooks.cpp(482)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Core/Net/SFGameInstanceModule_NetHooks.cpp(566)
 msgctxt "SmartFoundations,MP_Notice_WaterExtractorDeepWater"
 msgid "Every water extractor must be placed on deep water."
 msgstr "هر استخراجگر آب باید روی آب عمیق قرار گیرد."
@@ -1927,12 +1967,12 @@ msgctxt "SmartFoundations,Module_DefaultName"
 msgid "Module {0}"
 msgstr "ماژول {0}"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Core/Net/SFGameInstanceModule_NetHooks.cpp(149)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Core/Net/SFGameInstanceModule_NetHooks.cpp(195)
 msgctxt "SmartFoundations,Notice_ConstructPayloadTooLarge"
 msgid "Placement too large ({0} KB). Build in smaller sections."
 msgstr "جای‌گذاری بیش از حد بزرگ است ({0} کیلوبایت). در بخش‌های کوچک‌تر بسازید."
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Core/Net/SFGameInstanceModule_NetHooks.cpp(306)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Core/Net/SFGameInstanceModule_NetHooks.cpp(382)
 msgctxt "SmartFoundations,Notice_SignSupportHeight"
 msgid "Sign supports must reach the mounting surface at a native pole height. Adjust height, spacing or steps."
 msgstr "پایه‌های تابلو باید در ارتفاع استاندارد میله به سطح نصب برسند. ارتفاع، فاصله یا پله‌ها را تنظیم کنید."
@@ -1967,72 +2007,72 @@ msgctxt "SmartFoundations,P.BeltRoutingMode.TT"
 msgid "How auto-connected belts are shaped: Default, Curve, or Straight."
 msgstr "نحوه شکل‌گیری تسمه‌های نقاله با اتصال خودکار: پیش‌فرض، منحنی یا مستقیم."
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(135)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(137)
 msgctxt "SmartFoundations,P.BlueprintSpacingX"
 msgid "Blueprint Default X Spacing (m)"
 msgstr "فاصله پیش‌فرض X نقشه (متر)"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(136)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(138)
 msgctxt "SmartFoundations,P.BlueprintSpacingX.TT"
 msgid "Starting X gap for a new blueprint build session (0-100 m). Zero tiles flush; short gaps may leave no room for seam connections. Panel changes override this for the current session."
 msgstr "فاصله اولیه X برای یک نشست ساخت نقشه جدید (0-100 متر). صفر نسخه‌ها را بدون فاصله کنار هم می‌چیند؛ فاصله‌های کوتاه ممکن است جایی برای اتصال‌های درز باقی نگذارند. تغییرات پنل برای نشست فعلی بر این مقدار اولویت دارند."
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(137)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(139)
 msgctxt "SmartFoundations,P.BlueprintSpacingY"
 msgid "Blueprint Default Y Spacing (m)"
 msgstr "فاصله پیش‌فرض Y نقشه (متر)"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(138)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(140)
 msgctxt "SmartFoundations,P.BlueprintSpacingY.TT"
 msgid "Starting Y gap for a new blueprint build session (0-100 m). Zero tiles flush; short gaps may leave no room for seam connections. Panel changes override this for the current session."
 msgstr "فاصله اولیه Y برای یک نشست ساخت نقشه جدید (0-100 متر). صفر نسخه‌ها را بدون فاصله کنار هم می‌چیند؛ فاصله‌های کوتاه ممکن است جایی برای اتصال‌های درز باقی نگذارند. تغییرات پنل برای نشست فعلی بر این مقدار اولویت دارند."
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(139)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(141)
 msgctxt "SmartFoundations,P.BlueprintSpacingZ"
 msgid "Blueprint Default Z Spacing (m)"
 msgstr "فاصله پیش‌فرض Z نقشه (متر)"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(140)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(142)
 msgctxt "SmartFoundations,P.BlueprintSpacingZ.TT"
 msgid "Starting Z gap for a new blueprint build session (0-100 m). Zero tiles flush; short gaps may leave no room for seam connections. Panel changes override this for the current session."
 msgstr "فاصله اولیه Z برای یک نشست ساخت نقشه جدید (0-100 متر). صفر کاشی‌ها را بدون فاصله کنار هم می‌چیند؛ فاصله‌های کوتاه ممکن است جایی برای اتصال‌های درز باقی نگذارند. تغییرات پنل برای نشست فعلی بر این مقدار اولویت دارند."
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(150)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(152)
 msgctxt "SmartFoundations,P.HUDPositionX"
 msgid "HUD Position X"
 msgstr "موقعیت افقی HUD"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(151)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(153)
 msgctxt "SmartFoundations,P.HUDPositionX.TT"
 msgid "Horizontal position of the HUD on screen (0 = left edge, 1 = right edge)."
 msgstr "موقعیت افقی HUD روی صفحه (۰ = لبه چپ، ۱ = لبه راست)."
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(152)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(154)
 msgctxt "SmartFoundations,P.HUDPositionY"
 msgid "HUD Position Y"
 msgstr "موقعیت عمودی HUD"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(153)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(155)
 msgctxt "SmartFoundations,P.HUDPositionY.TT"
 msgid "Vertical position of the HUD on screen (0 = top, 1 = bottom)."
 msgstr "موقعیت عمودی HUD روی صفحه (۰ = بالا، ۱ = پایین)."
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(148)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(150)
 msgctxt "SmartFoundations,P.HUDScale"
 msgid "HUD Scale"
 msgstr "مقیاس HUD"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(149)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(151)
 msgctxt "SmartFoundations,P.HUDScale.TT"
 msgid "Size of the Smart! HUD overlay."
 msgstr "اندازه روکش HUD مربوط به Smart!."
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(154)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(156)
 msgctxt "SmartFoundations,P.HUDTheme"
 msgid "HUD Theme"
 msgstr "تم HUD"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(155)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(157)
 msgctxt "SmartFoundations,P.HUDTheme.TT"
 msgid "Color theme for the HUD: Default (FICSIT orange), Dark, Classic, High Contrast, Minimal, or Monochrome."
 msgstr "تم رنگی HUD: پیش‌فرض (نارنجی FICSIT)، تیره، کلاسیک، کنتراست بالا، حداقلی یا تک‌رنگ."
@@ -2217,6 +2257,16 @@ msgctxt "SmartFoundations,P.bAutoHoldOnGridChange.TT"
 msgid "Automatically lock the hologram in place after any grid change. Press the Hold key to release it."
 msgstr "قفل خودکار هولوگرام در جای خود پس از هر تغییر شبکه. برای آزادسازی، کلید نگه‌داشتن را بزنید."
 
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(135)
+msgctxt "SmartFoundations,P.bBlueprintPlacementSafetyLimit"
+msgid "Blueprint Placement Safety Limit"
+msgstr "محدودیت ایمنی جای‌گذاری نقشه‌ها"
+
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(136)
+msgctxt "SmartFoundations,P.bBlueprintPlacementSafetyLimit.TT"
+msgid "Client setting. Limits one multiplayer blueprint placement to approximately 2,000 buildings. Turning this off allows larger placements at your own risk: they can stall or crash the server, cause desynchronization, or disconnect players. Other placement and network safeguards still apply. Takes effect immediately."
+msgstr "تنظیم سمت کاربر. هر بار جای‌گذاری نقشه در حالت چندنفره را به حدود 2000 ساختمان محدود می‌کند. خاموش کردن آن امکان جای‌گذاری بزرگ‌تر را با مسئولیت خودتان فراهم می‌کند: ممکن است سرور متوقف شود یا از کار بیفتد، همگام‌سازی مختل شود یا اتصال بازیکنان قطع شود. سایر تدابیر ایمنی جای‌گذاری و شبکه همچنان برقرارند. بلافاصله اعمال می‌شود."
+
 #: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(85)
 msgctxt "SmartFoundations,P.bBlueprintSeamAutoConnectEnabled"
 msgid "Blueprint Seam Auto-Connect"
@@ -2327,42 +2377,42 @@ msgctxt "SmartFoundations,P.bScaleDaisyChainPower.TT"
 msgid "When Upgraded Power Connectors is unlocked, scaling factories and generators wires adjacent buildings together along the grid X axis."
 msgstr "هنگامی که Upgraded Power Connectors باز شده باشند، تکرار کارخانه‌ها و ژنراتورها ساختمان‌های مجاور را در امتداد محور X شبکه به هم سیم‌کشی می‌کند."
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(165)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(167)
 msgctxt "SmartFoundations,P.bShowArrowLabels"
 msgid "Arrow Axis Labels"
 msgstr "برچسب‌های محور فلش‌ها"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(166)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(168)
 msgctxt "SmartFoundations,P.bShowArrowLabels.TT"
 msgid "Show X/Y/Z axis labels on the direction arrows."
 msgstr "نمایش برچسب‌های محور X/Y/Z روی فلش‌های جهت."
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(163)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(165)
 msgctxt "SmartFoundations,P.bShowArrowOrbit"
 msgid "Arrow Orbit Animation"
 msgstr "انیمیشن چرخش فلش‌ها"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(164)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(166)
 msgctxt "SmartFoundations,P.bShowArrowOrbit.TT"
 msgid "Animate the arrows orbiting the hologram. Turn off for static arrows that still track you."
 msgstr "انیمیشن چرخش فلش‌ها به دور هولوگرام. برای فلش‌های ثابت که همچنان شما را دنبال می‌کنند خاموش کنید."
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(161)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(163)
 msgctxt "SmartFoundations,P.bShowArrows"
 msgid "Show Direction Arrows"
 msgstr "نمایش فلش‌های جهت"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(162)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(164)
 msgctxt "SmartFoundations,P.bShowArrows.TT"
 msgid "Show X/Y/Z direction arrows on the building hologram."
 msgstr "نمایش فلش‌های جهت X/Y/Z روی هولوگرام ساختمان."
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(146)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(148)
 msgctxt "SmartFoundations,P.bShowHUD"
 msgid "Show HUD Overlay"
 msgstr "نمایش HUD"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(147)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(149)
 msgctxt "SmartFoundations,P.bShowHUD.TT"
 msgid "Show the Smart! overlay (grid, scale, and recipe info) while building."
 msgstr "نمایش روکش Smart! (اطلاعات شبکه، مقیاس و دستور) هنگام ساخت."
@@ -2892,22 +2942,22 @@ msgctxt "SmartFoundations,Restore_ApplyAndBuild"
 msgid "Apply & Build"
 msgstr "اعمال و ساخت"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Restore/SFRestoreService.cpp(1269)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Restore/SFRestoreService.cpp(1331)
 msgctxt "SmartFoundations,Restore_BeltTierLocked"
 msgid "Auto-connect {0} belt tier Mk{1} is not unlocked"
 msgstr "سطح تسمه نقاله اتصال خودکار {0} مدل {1} باز نشده است"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Restore/SFRestoreService.cpp(1199)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Restore/SFRestoreService.cpp(1261)
 msgctxt "SmartFoundations,Restore_BuildableLocked"
 msgid "{0} buildable '{1}' is not unlocked"
 msgstr "سازه {0} '{1}' باز نشده است"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Restore/SFRestoreService.cpp(1192)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Restore/SFRestoreService.cpp(1254)
 msgctxt "SmartFoundations,Restore_BuildableMissing"
 msgid "{0} buildable '{1}' could not be resolved"
 msgstr "سازه {0} '{1}' قابل شناسایی نبود"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Extend/SFExtendPowerConnections.cpp(259)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Extend/SFExtendPowerConnections.cpp(261)
 msgctxt "SmartFoundations,Restore_CableMissingIdentity"
 msgid "Saved power cable {0} lacks unambiguous endpoint identity. Re-import this layout from its original build."
 msgstr "کابل برق ذخیره‌شده {0} هویت نقطه پایانی مبهمی دارد. این چیدمان را از ساخت اصلی خود دوباره وارد کنید."
@@ -2937,32 +2987,32 @@ msgctxt "SmartFoundations,Restore_Clipboard_UnknownSource"
 msgid "Extend"
 msgstr "گسترش"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Restore/SFRestoreService.cpp(1221)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Restore/SFRestoreService.cpp(1283)
 msgctxt "SmartFoundations,Restore_ContextBuilding"
 msgid "Preset building"
 msgstr "سازه پیش‌تنظیم"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Restore/SFRestoreService.cpp(1302)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Restore/SFRestoreService.cpp(1364)
 msgctxt "SmartFoundations,Restore_ContextComponent"
 msgid "component"
 msgstr "جزء"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Restore/SFRestoreService.cpp(1301)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Restore/SFRestoreService.cpp(1363)
 msgctxt "SmartFoundations,Restore_ContextExtendPart"
 msgid "Extend {0} '{1}'"
 msgstr "گسترش {0} '{1}'"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Restore/SFRestoreService.cpp(1287)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Restore/SFRestoreService.cpp(1349)
 msgctxt "SmartFoundations,Restore_ContextMain"
 msgid "main"
 msgstr "اصلی"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Restore/SFRestoreService.cpp(1229)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Restore/SFRestoreService.cpp(1291)
 msgctxt "SmartFoundations,Restore_ContextProduction"
 msgid "Production"
 msgstr "تولید"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Restore/SFRestoreService.cpp(1288)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Restore/SFRestoreService.cpp(1350)
 msgctxt "SmartFoundations,Restore_ContextToBuilding"
 msgid "to-building"
 msgstr "به ساختمان"
@@ -3112,7 +3162,7 @@ msgctxt "SmartFoundations,Restore_ModuleName_NoCapture"
 msgid "Capture a Smart Extend first"
 msgstr "ابتدا یک Smart گسترش‌یافته را ثبت کنید"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Restore/SFRestoreService.cpp(1327)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Restore/SFRestoreService.cpp(1389)
 msgctxt "SmartFoundations,Restore_MoreFailures"
 msgid "and {0} more"
 msgstr "و {0} مورد دیگر"
@@ -3147,7 +3197,7 @@ msgctxt "SmartFoundations,Restore_PanelLoadTimeout"
 msgid "The building preview did not become ready. Your saved preset is unchanged; select it again when the build gun is ready."
 msgstr "پیش‌نمایش ساخت آماده نشد. پیش‌تنظیم ذخیره‌شده شما تغییر نکرده است؛ زمانی که سلاح ساخت و ساز آماده شد، دوباره آن را انتخاب کنید."
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Restore/SFRestoreService.cpp(1281)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Restore/SFRestoreService.cpp(1343)
 msgctxt "SmartFoundations,Restore_PipeTierLocked"
 msgid "Auto-connect {0} pipe tier Mk{1} is not unlocked"
 msgstr "اتصال خودکار خط لوله مدل {1} ({0}) باز نشده است"
@@ -3162,42 +3212,42 @@ msgctxt "SmartFoundations,Restore_PresetName_Hint"
 msgid "New preset name"
 msgstr "نام پیش‌تنظیم جدید"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Restore/SFRestoreService.cpp(986)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Restore/SFRestoreService.cpp(1048)
 msgctxt "SmartFoundations,Restore_RecentArmed"
 msgid "Restore: {0} ({1}/{2}) - {3}"
 msgstr "بازیابی: {0} ({1}/{2}) - {3}"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Restore/SFRestoreService.cpp(981)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Restore/SFRestoreService.cpp(1043)
 msgctxt "SmartFoundations,Restore_RecentKindGrid"
 msgid "grid preset"
 msgstr "پیش‌تنظیم شبکه"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Restore/SFRestoreService.cpp(980)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Restore/SFRestoreService.cpp(1042)
 msgctxt "SmartFoundations,Restore_RecentKindModule"
 msgid "module"
 msgstr "ماژول"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Restore/SFRestoreService.cpp(1015)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Restore/SFRestoreService.cpp(1077)
 msgctxt "SmartFoundations,Restore_RecentNone"
 msgid "No recent restores this session - apply one from the Smart Panel first"
 msgstr "بازیابی اخیری در این نشست نیست - ابتدا یکی را از پنل Smart اعمال کنید"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Restore/SFRestoreService.cpp(1251)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Restore/SFRestoreService.cpp(1313)
 msgctxt "SmartFoundations,Restore_RecipeIncompatible"
 msgid "Production recipe '{0}' is not valid for buildable '{1}'"
 msgstr "دستور ساخت '{0}' برای سازه '{1}' معتبر نیست"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Restore/SFRestoreService.cpp(1169)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Restore/SFRestoreService.cpp(1231)
 msgctxt "SmartFoundations,Restore_RecipeLocked"
 msgid "{0} recipe '{1}' is not unlocked"
 msgstr "دستور ساخت {0} '{1}' باز نشده است"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Restore/SFRestoreService.cpp(1132)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Restore/SFRestoreService.cpp(1194)
 msgctxt "SmartFoundations,Restore_RecipeManagerUnavailable"
 msgid "Recipe manager is unavailable"
 msgstr "مدیر دستور ساخت در دسترس نیست"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Extend/SFExtendService.cpp(1081)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Extend/SFExtendService.cpp(1087)
 msgctxt "SmartFoundations,Restore_ReconstructionFailed"
 msgid "Restore commit reconstruction failed"
 msgstr "بازسازی ثبت بازگردانی ناموفق بود"
@@ -3247,7 +3297,7 @@ msgctxt "SmartFoundations,Restore_ShareModules"
 msgid "Share"
 msgstr "اشتراک‌گذاری"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Restore/SFRestoreService.cpp(1124)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Restore/SFRestoreService.cpp(1186)
 msgctxt "SmartFoundations,Restore_SubsystemUnavailable"
 msgid "Smart subsystem is unavailable"
 msgstr "زیرسیستم Smart در دسترس نیست"
@@ -3372,12 +3422,12 @@ msgctxt "SmartFoundations,Role_Wires"
 msgid "wires"
 msgstr "سیم‌های برق"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(159)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(161)
 msgctxt "SmartFoundations,Sec.Arrows"
 msgid "Arrows"
 msgstr "فلش‌ها"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(160)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(162)
 msgctxt "SmartFoundations,Sec.Arrows.TT"
 msgid "Directional arrows drawn on the building hologram."
 msgstr "فلش‌های جهت‌دار ترسیم‌شده روی هولوگرام ساختمان."
@@ -3422,12 +3472,12 @@ msgctxt "SmartFoundations,Sec.Building.TT"
 msgid "How Extend, auto-hold, and Apply behave while building."
 msgstr "نحوه عملکرد گسترش، نگه‌داشتن خودکار و اعمال هنگام ساخت."
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(144)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(146)
 msgctxt "SmartFoundations,Sec.HUD"
 msgid "HUD"
 msgstr "HUD"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(145)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(147)
 msgctxt "SmartFoundations,Sec.HUD.TT"
 msgid "The on-screen Smart! overlay shown while you build."
 msgstr "روکش روی صفحه Smart! که هنگام ساخت نمایش داده می‌شود."
@@ -3462,7 +3512,7 @@ msgctxt "SmartFoundations,Sec.Power.TT"
 msgid "Automatically wire power between buildings and power poles as you build."
 msgstr "سیم‌کشی خودکار برق بین ساختمان‌ها و تیرهای برق هنگام ساخت."
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1628)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1633)
 msgctxt "SmartFoundations,SignSupportValue_Auto"
 msgid "Auto"
 msgstr "خودکار"
@@ -3472,12 +3522,12 @@ msgctxt "SmartFoundations,SignSupportValue_None"
 msgid "None"
 msgstr "هیچ‌کدام"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Holograms/Core/SFSignSupportMode.cpp(194)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Holograms/Core/SFSignSupportMode.cpp(195)
 msgctxt "SmartFoundations,SignSupports_Auto"
 msgid "Sign supports: Auto"
 msgstr "پایه‌های تابلو: خودکار"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Holograms/Core/SFSignSupportMode.cpp(193)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Holograms/Core/SFSignSupportMode.cpp(194)
 msgctxt "SmartFoundations,SignSupports_None"
 msgid "Sign supports: None"
 msgstr "پایه‌های تابلو: هیچ‌کدام"
@@ -3812,12 +3862,12 @@ msgctxt "SmartFoundations,Tip_WallRotation"
 msgid "Turns this pipe or Hypertube wall support in native 45-degree steps. The grid and Auto-Connect follow the support's run direction. Native placement restrictions still apply."
 msgstr "این پشتیبان دیواری لوله یا هایپرتیوپ را در گام‌های استاندارد ۴۵ درجه می‌چرخاند. شبکه و اتصال خودکار از جهت حرکت پشتیبان پیروی می‌کنند. محدودیت‌های قرارگیری استاندارد همچنان اعمال می‌شوند."
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(965)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(977)
 msgctxt "SmartFoundations,UpgradeRow_DoubleWallOutlet"
 msgid "Double Wall Outlet Mk.{0}"
 msgstr "پریز برق دو طرفه مدل {0}"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(961)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(973)
 msgctxt "SmartFoundations,UpgradeRow_WallOutlet"
 msgid "Wall Outlet Mk.{0}"
 msgstr "پریز برق دیواری مدل {0}"
@@ -3837,52 +3887,52 @@ msgctxt "SmartFoundations,Upgrade_AnchorUnsupported"
 msgid "Anchor buildable is not upgradeable"
 msgstr "ساختمان قابل ساخت لنگر، قابل ارتقا نیست"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(829)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(841)
 msgctxt "SmartFoundations,Upgrade_AuditComplete"
 msgid "Audit Complete: {0} upgradeable found across {1} structures."
 msgstr "ممیزی کامل شد: {0} مورد قابل ارتقا در بین {1} ساختار یافت شد."
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(830)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(842)
 msgctxt "SmartFoundations,Upgrade_AuditFailed"
 msgid "Audit failed or was canceled."
 msgstr "ممیزی ناموفق بود یا لغو شد."
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(818)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(830)
 msgctxt "SmartFoundations,Upgrade_AuditProgress"
 msgid "Auditing world... {0}% ({1} scanned)"
 msgstr "ممیزی جهان... {0}% ({1} اسکن شده)"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(160)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(164)
 msgctxt "SmartFoundations,Upgrade_Btn_Close"
 msgid "Close"
 msgstr "بستن"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(142)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(146)
 msgctxt "SmartFoundations,Upgrade_Btn_EntireMap"
 msgid "Entire Map"
 msgstr "کل نقشه"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(141)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(145)
 msgctxt "SmartFoundations,Upgrade_Btn_Scan"
 msgid "Scan"
 msgstr "اسکن"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(147)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(151)
 msgctxt "SmartFoundations,Upgrade_Btn_ScanNetwork"
 msgid "Scan Network"
 msgstr "اسکن شبکه"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(157)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(161)
 msgctxt "SmartFoundations,Upgrade_Btn_Upgrade"
 msgid "UPGRADE"
 msgstr "ارتقا"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(161)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(165)
 msgctxt "SmartFoundations,Upgrade_Btn_X"
 msgid "X"
 msgstr "X"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(159)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(163)
 msgctxt "SmartFoundations,Upgrade_CancelScan"
 msgid "Cancel Scan"
 msgstr "لغو اسکن"
@@ -3892,7 +3942,7 @@ msgctxt "SmartFoundations,Upgrade_CancelTarget"
 msgid "Cancel Selection"
 msgstr "لغو انتخاب"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Upgrade/SFUpgradeExecutionService.cpp(600)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Upgrade/SFUpgradeExecutionService.cpp(667)
 msgctxt "SmartFoundations,Upgrade_Cancelled"
 msgid "Cancelled by user"
 msgstr "توسط کاربر لغو شد"
@@ -3902,7 +3952,7 @@ msgctxt "SmartFoundations,Upgrade_CancelledProgress"
 msgid "Upgrade cancelled: {0}/{1} completed"
 msgstr "ارتقا لغو شد: {0}/{1} تکمیل شد"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(981)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(993)
 msgctxt "SmartFoundations,Upgrade_ClickToSelect"
 msgid "Click to select {0} for upgrade"
 msgstr "برای انتخاب {0} جهت ارتقا کلیک کنید"
@@ -3927,32 +3977,32 @@ msgctxt "SmartFoundations,Upgrade_CostUnavailable"
 msgid "{0} × {1} Mk.{2} → Mk.{3}\n(Cost unavailable)"
 msgstr "{0} × {1} Mk.{2} → Mk.{3}\n(هزینه در دسترس نیست)"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(401)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(405)
 msgctxt "SmartFoundations,Upgrade_CountColumn"
 msgid "Count"
 msgstr "تعداد"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(150)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(154)
 msgctxt "SmartFoundations,Upgrade_CrossSplitters"
 msgid "Cross Splitters/Mergers"
 msgstr "عبور از جداکننده‌ها/وصل‌کننده‌ها"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(151)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(155)
 msgctxt "SmartFoundations,Upgrade_CrossStorage"
 msgid "Cross Storage Containers"
 msgstr "عبور از انباره‌های شخصی"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(152)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(156)
 msgctxt "SmartFoundations,Upgrade_CrossTrains"
 msgid "Cross Train Platforms"
 msgstr "عبور از سکوهای قطار"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(569)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(573)
 msgctxt "SmartFoundations,Upgrade_ErrExecution"
 msgid "Error: Execution service not available"
 msgstr "خطا: سرویس اجرا در دسترس نیست"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(715)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(727)
 msgctxt "SmartFoundations,Upgrade_ErrRCO"
 msgid "Error: server connection unavailable"
 msgstr "خطا: اتصال به سرور در دسترس نیست"
@@ -3962,12 +4012,12 @@ msgctxt "SmartFoundations,Upgrade_ErrRCOScan"
 msgid "Error: server connection unavailable"
 msgstr "خطا: اتصال به سرور در دسترس نیست"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(559)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(563)
 msgctxt "SmartFoundations,Upgrade_ErrSubsystem"
 msgid "Error: Subsystem not available"
 msgstr "خطا: زیرسیستم در دسترس نیست"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(144)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(148)
 msgctxt "SmartFoundations,Upgrade_EstimatedCost"
 msgid "Estimated Cost"
 msgstr "هزینه تخمینی"
@@ -3987,52 +4037,47 @@ msgctxt "SmartFoundations,Upgrade_InvalidPowerClass"
 msgid "Power pole/wire cast failed for {0}"
 msgstr "تبدیل تیر برق/سیم برای {0} ناموفق بود"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(406)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(410)
 msgctxt "SmartFoundations,Upgrade_MaterialsStep"
 msgid "3. Review materials"
 msgstr "۳. بررسی مواد"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Upgrade/SFUpgradeExecutionService_Miner.cpp(59)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Upgrade/SFUpgradeExecutionService_Miner.cpp(70)
 msgctxt "SmartFoundations,Upgrade_MinerCannotBind"
 msgid "The native Miner replacement could not bind to the selected extractor."
 msgstr "جایگزین استاندارد معدن روب نتوانست به استخراج‌کننده انتخاب شده متصل شود."
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Upgrade/SFUpgradeExecutionService_Miner.cpp(110)
-msgctxt "SmartFoundations,Upgrade_MinerConstructionFailed"
-msgid "The native Miner replacement could not be constructed."
-msgstr "جایگزین استاندارد معدن روب نتوانست ساخته شود."
-
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Upgrade/SFUpgradeExecutionService_Miner.cpp(51)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Upgrade/SFUpgradeExecutionService_Miner.cpp(62)
 msgctxt "SmartFoundations,Upgrade_MinerInvalidAim"
 msgid "The selected Miner has no valid native replacement aim."
 msgstr "معدن روب انتخاب شده، هدف جایگزین استاندارد معتبری ندارد."
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Upgrade/SFUpgradeExecutionService_Miner.cpp(32)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Upgrade/SFUpgradeExecutionService_Miner.cpp(43)
 msgctxt "SmartFoundations,Upgrade_MinerMissingContext"
 msgid "The selected Miner is missing its native resource or construction context."
 msgstr "معدن روب انتخاب شده، منبع استاندارد یا زمینه ساخت خود را از دست داده است."
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Upgrade/SFUpgradeExecutionService_Miner.cpp(95)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Upgrade/SFUpgradeExecutionService_Miner.cpp(106)
 msgctxt "SmartFoundations,Upgrade_MinerMissingInventory"
 msgid "The selected Miner is missing its native factory inventories."
 msgstr "معدن روب انتخاب شده، موجودی‌های استاندارد کارخانه خود را از دست داده است."
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Upgrade/SFUpgradeExecutionService_Miner.cpp(37)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Upgrade/SFUpgradeExecutionService_Miner.cpp(48)
 msgctxt "SmartFoundations,Upgrade_MinerMissingPreview"
 msgid "The native Miner replacement preview could not be created."
 msgstr "پیش‌نمایش جایگزین استاندارد معدن روب نتوانست ایجاد شود."
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Upgrade/SFUpgradeExecutionService_Miner.cpp(72)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Upgrade/SFUpgradeExecutionService_Miner.cpp(83)
 msgctxt "SmartFoundations,Upgrade_MinerPlacementIncomplete"
 msgid "The native Miner replacement placement could not finish."
 msgstr "قرارگیری جایگزین استاندارد معدن روب نتوانست به پایان برسد."
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Upgrade/SFUpgradeExecutionService_Miner.cpp(81)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Upgrade/SFUpgradeExecutionService_Miner.cpp(92)
 msgctxt "SmartFoundations,Upgrade_MinerPlacementRejected"
 msgid "Native placement rejected the Miner replacement."
 msgstr "قرارگیری استاندارد، جایگزین معدن روب را رد کرد."
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Upgrade/SFUpgradeExecutionService_Miner.cpp(76)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Upgrade/SFUpgradeExecutionService_Miner.cpp(87)
 msgctxt "SmartFoundations,Upgrade_MinerSelectionLost"
 msgid "The native Miner replacement lost its selected extractor during placement."
 msgstr "جایگزین معدن روب استاندارد، استخراج‌کننده انتخاب‌شده را در حین قرارگیری از دست داد."
@@ -4047,7 +4092,7 @@ msgctxt "SmartFoundations,Upgrade_NearestTier"
 msgid "Nearest Mk.{0}: {1}m {2}"
 msgstr "نزدیک‌ترین Mk.{0}: {1}متر {2}"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(406)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(410)
 msgctxt "SmartFoundations,Upgrade_NetCostTitle"
 msgid "Net cost"
 msgstr "هزینه خالص"
@@ -4057,12 +4102,12 @@ msgctxt "SmartFoundations,Upgrade_NoAnchor"
 msgid "No anchor buildable provided"
 msgstr "هیچ ساخت‌شدنی به‌عنوان لنگر ارائه نشده است"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(462)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(466)
 msgctxt "SmartFoundations,Upgrade_NoAudit"
 msgid "No audit snapshot. Press Scan to start."
 msgstr "عکس ممیزی موجود نیست. اسکن را بزنید."
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(538)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(542)
 msgctxt "SmartFoundations,Upgrade_NoFamily"
 msgid "No family selected - scan first"
 msgstr "خانواده‌ای انتخاب نشده - اول اسکن کنید"
@@ -4087,12 +4132,12 @@ msgctxt "SmartFoundations,Upgrade_NoPlayerLoc"
 msgid "Cannot find player location"
 msgstr "مکان بازیکن پیدا نشد"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(615)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(619)
 msgctxt "SmartFoundations,Upgrade_NoValidTarget"
 msgid "{0} Mk.{1}: No valid upgrade target selected"
 msgstr "{0} Mk.{1}: هدف ارتقای معتبری انتخاب نشده"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Upgrade/SFUpgradeExecutionService.cpp(578)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Upgrade/SFUpgradeExecutionService.cpp(633)
 msgctxt "SmartFoundations,Upgrade_PartialInsufficientMaterials"
 msgid "Ran out of materials - partial upgrade completed"
 msgstr "مواد تمام شد - ارتقای جزئی انجام شد"
@@ -4107,12 +4152,12 @@ msgctxt "SmartFoundations,Upgrade_ProgressCount"
 msgid "Upgrading... {0}/{1} ({2}%)"
 msgstr "در حال ارتقا... {0}/{1} ({2}%)"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(140)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(144)
 msgctxt "SmartFoundations,Upgrade_RadiusLabel"
 msgid "Radius (m):"
 msgstr "شعاع (متر):"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(331)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(335)
 msgctxt "SmartFoundations,Upgrade_Ready"
 msgid "Ready"
 msgstr "آماده"
@@ -4127,12 +4172,12 @@ msgctxt "SmartFoundations,Upgrade_ReselectTarget"
 msgid "Select a valid network target before scanning."
 msgstr "قبل از اسکن، یک هدف شبکه معتبر انتخاب کنید."
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(401)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(405)
 msgctxt "SmartFoundations,Upgrade_ResultsStep"
 msgid "2. Results and target tier"
 msgstr "۲. نتایج و سطح هدف"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(258)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(262)
 msgctxt "SmartFoundations,Upgrade_ScanCosts"
 msgid "Scan network to see costs"
 msgstr "شبکه را اسکن کنید تا هزینه‌ها را ببینید"
@@ -4147,7 +4192,7 @@ msgctxt "SmartFoundations,Upgrade_Scanning"
 msgid "Scanning network..."
 msgstr "در حال اسکن شبکه..."
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(371)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(375)
 msgctxt "SmartFoundations,Upgrade_ScopeStep"
 msgid "1. Scope and scan"
 msgstr "۱. دامنه و اسکن"
@@ -4157,12 +4202,12 @@ msgctxt "SmartFoundations,Upgrade_SelectAndScan"
 msgid "Select a target, then press Scan Network"
 msgstr "یک هدف را انتخاب کنید، سپس «اسکن شبکه» را بزنید"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(224)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(228)
 msgctxt "SmartFoundations,Upgrade_SelectFamily"
 msgid "Select a family to see costs"
 msgstr "یک خانواده انتخاب کنید تا هزینه‌ها را ببینید"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(548)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(552)
 msgctxt "SmartFoundations,Upgrade_SelectRow"
 msgid "Select a row first to upgrade"
 msgstr "ابتدا یک ردیف انتخاب کنید"
@@ -4182,27 +4227,32 @@ msgctxt "SmartFoundations,Upgrade_SelectTargetTier"
 msgid "Select target tier"
 msgstr "سطح هدف را انتخاب کنید"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(605)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(609)
 msgctxt "SmartFoundations,Upgrade_SelectTier"
 msgid "Select a target tier from the dropdown"
 msgstr "سطح هدف را از لیست انتخاب کنید"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(1006)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(1018)
 msgctxt "SmartFoundations,Upgrade_Separator"
 msgid " x "
 msgstr " x "
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(466)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(470)
 msgctxt "SmartFoundations,Upgrade_SetRadiusScan"
 msgid "Set radius and press Scan to find items"
 msgstr "شعاع را تنظیم کنید و اسکن را بزنید تا موارد پیدا شوند"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(136)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(627)
+msgctxt "SmartFoundations,Upgrade_SynchronizingWorld"
+msgid "Connecting to the current world; try again shortly"
+msgstr "در حال اتصال به دنیای فعلی؛ کمی بعد دوباره تلاش کنید"
+
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(140)
 msgctxt "SmartFoundations,Upgrade_Tab_Network"
 msgid "Network"
 msgstr "شبکه"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(135)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(139)
 msgctxt "SmartFoundations,Upgrade_Tab_Radius"
 msgid "Radius"
 msgstr "شعاع"
@@ -4227,7 +4277,7 @@ msgctxt "SmartFoundations,Upgrade_TargetSelected"
 msgid "Network target selected. Press Scan to inspect its network."
 msgstr "هدف شبکه انتخاب شد. برای بررسی شبکه آن، «اسکن» را بزنید."
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(143)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(147)
 msgctxt "SmartFoundations,Upgrade_TargetTier"
 msgid "Target Tier:"
 msgstr "سطح هدف:"
@@ -4237,22 +4287,22 @@ msgctxt "SmartFoundations,Upgrade_TierRowTooltip"
 msgid "Upgrade only Mk.{0} in this network"
 msgstr "ارتقای فقط Mk.{0} در این شبکه"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(131)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(135)
 msgctxt "SmartFoundations,Upgrade_Title"
 msgid "Smart! Upgrade Panel"
 msgstr "Smart! پنل ارتقا"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(661)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(670)
 msgctxt "SmartFoundations,Upgrade_TraversalEmpty"
 msgid "No matching traversal buildables remain; scan again"
 msgstr "هیچ سازه منطبقی از اسکن باقی نمانده است؛ دوباره اسکن کنید"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(640)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(649)
 msgctxt "SmartFoundations,Upgrade_TraversalExpired"
 msgid "Traversal results are no longer valid; scan again"
 msgstr "نتایج اسکن دیگر معتبر نیستند؛ دوباره اسکن کنید"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(254)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(258)
 msgctxt "SmartFoundations,Upgrade_TraversalHint"
 msgid "Aim at a belt, pipe, or pole to scan its network"
 msgstr "به نوار نقاله، لوله یا تیر نشانه بگیرید تا شبکه اسکن شود"
@@ -4262,17 +4312,17 @@ msgctxt "SmartFoundations,Upgrade_UnsupportedFamily"
 msgid "Unsupported family type: {0}"
 msgstr "نوع خانواده پشتیبانی‌نشده: {0}"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(1032)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(1044)
 msgctxt "SmartFoundations,Upgrade_UpgradeableCount"
 msgid "({0} upgradeable)"
 msgstr "({0} قابل ارتقا)"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(684)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(695)
 msgctxt "SmartFoundations,Upgrade_Upgrading"
 msgid "Upgrading {0} Mk.{1} → Mk.{2}..."
 msgstr "در حال ارتقای {0} Mk.{1} → Mk.{2}..."
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(688)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(699)
 msgctxt "SmartFoundations,Upgrade_UpgradingSweep"
 msgid "Upgrading {0} → Mk.{1}..."
 msgstr "در حال ارتقای {0} → Mk.{1}..."
@@ -4372,7 +4422,7 @@ msgctxt "SmartFoundations,Walk_EndWarning"
 msgid "End this walk? The unbuilt path and staged segment edits will be discarded."
 msgstr "این پیاده‌روی تمام شود؟ مسیر ساخته‌نشده و ویرایش‌های قطعات در انتظار اعمال، دور ریخته خواهند شد."
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Walk/SFWalkService.cpp(1078)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Walk/SFWalkService.cpp(1053)
 msgctxt "SmartFoundations,Walk_ExistingEndpointChanged"
 msgid "An existing endpoint moved, was removed, or is now occupied."
 msgstr "یک نقطه پایانی موجود جابه‌جا شد، حذف شد یا اکنون اشغال شده است."
@@ -4387,11 +4437,6 @@ msgctxt "SmartFoundations,Walk_Invalid_TooLong"
 msgid "segment {0} too long ({1}m > {2}m)"
 msgstr "قطعه {0} بیش از حد بلند است ({1}متر > {2}متر)"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Public/Shared/Conduits/SFConveyanceShape.h(53)
-msgctxt "SmartFoundations,Walk_Invalid_TooSteep"
-msgid "segment {0} too steep ({1}deg > 30deg)"
-msgstr "قطعه {0} بیش از حد شیب‌دار است ({1}درجه > 30درجه)"
-
 #: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SFWalkPanelWidget.cpp(560)
 msgctxt "SmartFoundations,Walk_Keep"
 msgid "Keep Walking"
@@ -4402,7 +4447,7 @@ msgctxt "SmartFoundations,Walk_Lbl_Direction"
 msgid "Direction"
 msgstr "جهت"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1705)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1710)
 msgctxt "SmartFoundations,Walk_Lbl_PipeStyle"
 msgid "Pipe Style"
 msgstr "سبک لوله"
@@ -4422,27 +4467,27 @@ msgctxt "SmartFoundations,Walk_Opt_Auto"
 msgid "Auto"
 msgstr "خودکار"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1717)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1722)
 msgctxt "SmartFoundations,Walk_Opt_Auto2D"
 msgid "Auto 2D"
 msgstr "خودکار دوبعدی"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1775)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1780)
 msgctxt "SmartFoundations,Walk_Opt_Backward"
 msgid "Backward"
 msgstr "عقب"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1706)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1711)
 msgctxt "SmartFoundations,Walk_Opt_Clean"
 msgid "Clean"
 msgstr "تمیز"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1669)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1674)
 msgctxt "SmartFoundations,Walk_Opt_Curve"
 msgid "Curve"
 msgstr "منحنی"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1666)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1671)
 msgctxt "SmartFoundations,Walk_Opt_Default"
 msgid "Default"
 msgstr "پیش‌فرض"
@@ -4457,62 +4502,62 @@ msgctxt "SmartFoundations,Walk_Opt_HToV"
 msgid "H->V"
 msgstr "افقی→عمودی"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1726)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1731)
 msgctxt "SmartFoundations,Walk_Opt_Noodle"
 msgid "Noodle"
 msgstr "نودل"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1706)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1711)
 msgctxt "SmartFoundations,Walk_Opt_Normal"
 msgid "Normal"
 msgstr "عادی"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1672)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1677)
 msgctxt "SmartFoundations,Walk_Opt_Straight"
 msgid "Straight"
 msgstr "مستقیم"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Walk/SFWalkExistingOrigin.cpp(274)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Walk/SFWalkExistingOrigin.cpp(275)
 msgctxt "SmartFoundations,Walk_ResumeAimEnd"
 msgid "Aim at an exposed end of the existing run."
 msgstr "روی یک انتهای باز از مسیر موجود نشانه بگیرید."
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Walk/SFWalkExistingOrigin.cpp(295)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Walk/SFWalkExistingOrigin.cpp(296)
 msgctxt "SmartFoundations,Walk_ResumeAmbiguousEnd"
 msgid "More than one endpoint matches this attachment."
 msgstr "بیش از یک نقطه پایانی با این اتصال مطابقت دارد."
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Walk/SFWalkExistingOrigin.cpp(278)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Walk/SFWalkExistingOrigin.cpp(279)
 msgctxt "SmartFoundations,Walk_ResumeExcludedAttachment"
 msgid "This endpoint belongs to an excluded wall or floor attachment."
 msgstr "این نقطه پایانی متعلق به یک اتصال دیوار یا کف مستثنی‌شده است."
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Walk/SFWalkExistingOrigin.cpp(306)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Walk/SFWalkExistingOrigin.cpp(307)
 msgctxt "SmartFoundations,Walk_ResumeHorizontalEnd"
 msgid "Select a horizontal endpoint for Walking; rise is available on the continuation."
 msgstr "برای پیاده‌روی، یک نقطه پایانی افقی انتخاب کنید؛ ارتفاع در ادامه مسیر در دسترس است."
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Walk/SFWalkExistingOrigin.cpp(319)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Walk/SFWalkExistingOrigin.cpp(320)
 msgctxt "SmartFoundations,Walk_ResumeInvalidGrid"
 msgid "The endpoint cross-section is occupied, irregular or ambiguous."
 msgstr "مقطع نقطه پایانی اشغال شده، نامنظم یا مبهم است."
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Walk/SFWalkExistingOrigin.cpp(329)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Walk/SFWalkExistingOrigin.cpp(330)
 msgctxt "SmartFoundations,Walk_ResumeMissingAnchor"
 msgid "The native support snap anchor is unavailable."
 msgstr "لنگر اتصال پشتیبان استاندارد در دسترس نیست."
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Walk/SFWalkExistingOrigin.cpp(249)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Walk/SFWalkExistingOrigin.cpp(250)
 msgctxt "SmartFoundations,Walk_ResumeNoAttachment"
 msgid "Walking cannot resume from a wall or floor attachment."
 msgstr "راه رفتن نمی‌تواند از اتصال به دیوار یا کف ادامه یابد."
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Walk/SFWalkExistingOrigin.cpp(298)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Walk/SFWalkExistingOrigin.cpp(299)
 msgctxt "SmartFoundations,Walk_ResumeTooManyEnds"
 msgid "Too many nearby endpoints; select a smaller cross-section."
 msgstr "تعداد نقاط پایانی نزدیک بیش از حد است؛ مقطع کوچکتری را انتخاب کنید."
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Walk/SFWalkExistingOrigin.cpp(302)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Walk/SFWalkExistingOrigin.cpp(303)
 msgctxt "SmartFoundations,Walk_ResumeUnoccupiedEnd"
 msgid "Select an unoccupied conduit endpoint."
 msgstr "یک نقطه پایانی خالی از مجرا را انتخاب کنید."

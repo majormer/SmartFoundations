@@ -4,9 +4,9 @@ Smart! is designed to be save-friendly. It places normal Satisfactory buildings 
 
 ## Supported Game Version
 
-Smart! 35.0.0 targets **Satisfactory 1.2.4 / CL 502094 or newer** and **SML 3.12.x**. Update the game and mod loader before installing. Older game builds are unsupported.
+Smart! 35.1.0 targets **Satisfactory 1.2.4 / CL 502094 or newer** and **SML 3.12.x**. Update the game and mod loader before installing. Older game builds are unsupported.
 
-Smart Camera 2.0 and Smart! 35.0 must be updated as a compatible pair when both are installed. Camera also works alone; Smart's building tools do not require Camera. Camera preferences and HUD appearance belong to each local player, not everyone on the server.
+Smart Camera 2.0 and Smart! 35.1 must be updated as a compatible pair when both are installed. Camera also works alone; Smart's building tools do not require Camera. Camera preferences and HUD appearance belong to each local player, not everyone on the server.
 
 ## Save Safety
 
@@ -27,8 +27,7 @@ Some modded or unusual buildables may not scale correctly until Smart! has expli
 Smart! works in multiplayer on dedicated servers. Every Smart! feature — Grid Scaling, Auto-Connect (belts, pipes, and power), Smart Blueprints, Extend, Smart Upgrade, Smart Restore, and Smart Dismantle — works when you play as a client, with normal build costs. Everything Smart! places is a standard, fully replicated game building: other players see it, can use it, and can dismantle it, just as if you had built it by hand.
 
 - **Dedicated servers:** both Windows and Linux are supported.
-- **Smart Blueprints size ceiling:** a single blueprint-grid placement on a server is capped (roughly a couple of thousand buildings, or a few hundred connecting belts/pipes, whichever comes first). Scale past it and Smart! refuses the placement — the HUD tells you to build in smaller sections, and the grid stays live so you can. The safe construction-payload limit also applies in single-player and listen-server sessions. Disable [Smart Assistance](Smart-Assistance) and select the recipe again to place a large vanilla blueprint normally.
-- **Large grids build progressively:** committing a very large scaled build constructs it in the background over a few moments, so the server stays responsive and no one is disconnected while it builds.
+- **Blueprint Placement Safety Limit** under Building Behavior is enabled by default. For a remote multiplayer client, it blocks a Blueprint grid estimated above 2,000 buildings, counting the original and all copies. You can disable this setting live to attempt a larger placement, with increased freeze, disconnect and failure risk. Normal material, placement and construction-payload checks still apply. Build in smaller sections if a placement is refused.
 - **For server admins:** install the same Smart! version on the server and on every client. The Mod Manager keeps these matched when you update.
 - **Smart Camera** (the companion mod) also works in multiplayer.
 
@@ -49,4 +48,4 @@ Supported native placements retain Designer ownership so they are captured when 
 
 ---
 
-_Last updated: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (release draft)_
+_Last updated: 2026-11-02 · Smart! v35.1.0 / Smart Camera v2.0.0 (release draft)_

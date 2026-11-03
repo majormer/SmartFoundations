@@ -29,7 +29,7 @@ bool SamePose(const FTransform& A, const FTransform& B)
         && A.GetRotation().Equals(B.GetRotation(), .0001f)
         && A.GetScale3D().Equals(B.GetScale3D(), .0001f);
 }
-bool SameCost(const TArray<FItemAmount>& A, const TArray<FItemAmount>& B)
+bool SameLiftRouteCost(const TArray<FItemAmount>& A, const TArray<FItemAmount>& B)
 {
     TMap<UClass*, int32> Totals;
     for (const auto& I : A) Totals.FindOrAdd(I.ItemClass.Get()) += I.Amount;
@@ -145,7 +145,7 @@ bool SFLiftRoutePlan::Prepare(AFGHologram* Parent, const TArray<FSFLiftRoutePlan
             if (!Belt->IsNativePlacementValid()) return false;
             Native = Belt;
         }
-        if (Native->GetBuildClass() != E.BuildClass || Native->GetRecipe() != E.Recipe || !SameCost(Native->GetCost(false), E.Cost)) return false;
+        if (Native->GetBuildClass() != E.BuildClass || Native->GetRecipe() != E.Recipe || !SameLiftRouteCost(Native->GetCost(false), E.Cost)) return false;
         auto* Proxy = Cast<ASFLiftRouteProxyHologram>(ASFBuildableChildHologram::SpawnPreview(Native, E.Pose, ESFChildHologramType::AutoConnect, NAME_None, ASFLiftRouteProxyHologram::StaticClass()));
         if (!Proxy || !Proxy->Capture(Native, Pool, From, To, E.bLift))
         {

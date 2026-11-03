@@ -1,4 +1,4 @@
-// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
+﻿// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 #if WITH_DEV_AUTOMATION_TESTS
 #include "Features/Extend/Net/SFExtendCommitValidation.h"
 #include "Hologram/FGHologram.h"
@@ -41,6 +41,7 @@ bool FSFExtendCommitScopeTest::RunTest(const FString& Parameters)
     AFGHologram* RootA = GetMutableDefault<AFGHologram>();
     AFGHologram* RootB = GetMutableDefault<AFGFactoryHologram>();
     TestFalse(TEXT("Aiming has no active request"), IsRequestActive());
+    TestFalse(TEXT("Preview has no admission privilege"), IsAuthoritativeAdmission(RootA));
     SetPrepared(RootA, true);
     TestNull(TEXT("Aiming cannot leave prepared state"), FindPrepared(RootA));
     {
@@ -48,6 +49,7 @@ bool FSFExtendCommitScopeTest::RunTest(const FString& Parameters)
         TestTrue(TEXT("Native build enters request"), IsRequestActive());
         TestNull(TEXT("New root is not prepared"), FindPrepared(RootA));
         SetPrepared(RootA, false);
+        TestFalse(TEXT("Failed preparation cannot suppress preview-derived rejection"), IsAuthoritativeAdmission(RootA));
         const bool* Failed = FindPrepared(RootA);
         TestTrue(TEXT("Failed preparation is distinct from no preparation"), Failed && !*Failed);
         TestNull(TEXT("Different root does not inherit preparation"), FindPrepared(RootB));
@@ -55,6 +57,8 @@ bool FSFExtendCommitScopeTest::RunTest(const FString& Parameters)
             FRequestScope Inner;
             TestTrue(TEXT("Nested native request shares recursion guard"), FindPrepared(RootA) == Failed);
             SetPrepared(RootA, true);
+            TestTrue(TEXT("Prepared authority uses native affordability"), IsAuthoritativeAdmission(RootA));
+            TestFalse(TEXT("Unrelated root keeps ordinary preview behavior"), IsAuthoritativeAdmission(RootB));
             SetPrepared(RootB, false);
         }
         const bool* A = FindPrepared(RootA);
@@ -63,6 +67,7 @@ bool FSFExtendCommitScopeTest::RunTest(const FString& Parameters)
         TestTrue(TEXT("Roots retain independent outcomes"), B && !*B);
     }
     TestFalse(TEXT("Request ends at native return"), IsRequestActive());
+    TestFalse(TEXT("Admission privilege ends at native return"), IsAuthoritativeAdmission(RootA));
     TestNull(TEXT("No preparation leaks into aiming"), FindPrepared(RootA));
     {
         FRequestScope Next;

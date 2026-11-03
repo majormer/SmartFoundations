@@ -1,6 +1,7 @@
-// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
+﻿// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 #include "SmartFoundations.h"
 #include "Features/Extend/SFExtendService.h"
+#include "Features/Restore/SFRestoreService.h"
 #include "Buildables/FGBuildable.h"
 #include "Subsystem/SFSubsystem.h"
 
@@ -27,6 +28,8 @@ bool USFExtendService::SelectPanelSource(AFGBuildable* Source, AFGHologram* Holo
     if (!CanSelectPanelSource(Source, Hologram)) return false;
     if (GetCurrentTarget() != Source) ClearExtendState();
     if (!TryExtendFromBuilding(Source, Hologram)) return false;
+    if (USFRestoreService* Restore = Subsystem->GetRestoreService())
+        Restore->ClearActiveRestoreSession(TEXT("Explicit Extend source selection"));
     // Explicit intent has the same lifetime as the existing Hold control.
     // Explicit selection can swap the native root while the modal panel is open.
     // Complete the normal identity-preserving registration before the form reads

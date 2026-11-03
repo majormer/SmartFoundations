@@ -8,6 +8,48 @@
 #include "Misc/AutomationTest.h"
 #include "Misc/ScopeExit.h"
 #include "UObject/CoreNet.h"
+#include "UObject/UnrealType.h"
+#include "Net/RepLayout.h"
+#include "Holograms/Logistics/SFConveyorAttachmentChildHologram.h"
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSFDistributorConstructRolesNetworkTest,
+    "SmartFoundations.Extend.DistributorRoles.NativeConstructSerialization",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FSFDistributorConstructRolesNetworkTest::RunTest(const FString& Parameters)
+{
+    auto* Property = FindFProperty<FStructProperty>(ASFConveyorAttachmentChildHologram::StaticClass(), TEXT("CapturedDistributorSettings"));
+    if (!TestNotNull(TEXT("Native child construct settings property exists"), Property)) return false;
+    FSFCapturedDistributorSettings Source;
+    Source.bCaptured = true; Source.Kind = 1; Source.ClassPath = TEXT("/Script/FactoryGame.FGBuildableSplitterSmart");
+    auto& Input = Source.ConnectionDirections.AddDefaulted_GetRef(); Input.PortName = TEXT("ConveyorBottom"); Input.Direction = 0;
+    auto& Output = Source.ConnectionDirections.AddDefaulted_GetRef(); Output.PortName = TEXT("ConveyorTop"); Output.Direction = 1;
+    auto& Rule = Source.Rules.AddDefaulted_GetRef(); Rule.ItemClass = TEXT("/Script/FactoryGame.FGItemDescriptor"); Rule.OutputIndex = 2;
+    FNetBitWriter Writer(nullptr, 64 * 1024 * 8);
+    // Ordinary reflected structs are flattened by FRepLayout. Calling the
+    // deprecated FStructProperty::NetSerializeItem path without a custom struct
+    // serializer asserts in UE5.6 and does not model the native construct path.
+    auto Layout = FRepLayout::CreateFromStruct(FSFCapturedDistributorSettings::StaticStruct());
+    if (!TestTrue(TEXT("Native replication layout exists"), Layout.IsValid())) return false;
+    bool bUnmapped = false;
+    Layout->SerializePropertiesForStruct(FSFCapturedDistributorSettings::StaticStruct(), Writer, nullptr,
+        FRepObjectDataBuffer(reinterpret_cast<uint8*>(&Source)), bUnmapped);
+    if (!TestTrue(TEXT("Reflected construct property serializes through Unreal's native network path"),
+        !Writer.IsError() && !bUnmapped)) return false;
+    FSFCapturedDistributorSettings Received;
+    FNetBitReader Reader(nullptr, Writer.GetData(), Writer.GetNumBits());
+    Layout->SerializePropertiesForStruct(FSFCapturedDistributorSettings::StaticStruct(), Reader, nullptr,
+        FRepObjectDataBuffer(reinterpret_cast<uint8*>(&Received)), bUnmapped);
+    if (!TestTrue(TEXT("Native construct property decodes without reflected maps"),
+        !Reader.IsError() && !bUnmapped)) return false;
+    TestTrue(TEXT("Captured settings identity survives"), Received.bCaptured && Received.Kind == Source.Kind && Received.ClassPath == Source.ClassPath);
+    TestEqual(TEXT("Both exact named port roles survive"), Received.ConnectionDirections.Num(), 2);
+    const auto* Bottom = Received.FindDirection(TEXT("ConveyorBottom"));
+    const auto* Top = Received.FindDirection(TEXT("ConveyorTop"));
+    TestTrue(TEXT("Opposite lift-mounted connector roles survive exactly"), Bottom && Top && *Bottom == 0 && *Top == 1);
+    if (TestEqual(TEXT("Routing rules survive alongside connector roles"), Received.Rules.Num(), 1))
+        TestTrue(TEXT("Rule descriptor and output survive"), Received.Rules[0].ItemClass == Rule.ItemClass && Received.Rules[0].OutputIndex == 2);
+    return true;
+}
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSFExtendSourceSnapshotNetworkTest,
     "SmartFoundations.Extend.TopologyReply.NativeNetworkMaps",
@@ -17,6 +59,12 @@ bool FSFExtendSourceSnapshotNetworkTest::RunTest(const FString& Parameters)
     FSFSourceTopology Source;
     FSFSourceDistributor& Distributor = Source.BeltInputChains.AddDefaulted_GetRef().Distributor;
     Distributor.Id = TEXT("source_distributor");
+    Distributor.DistributorSettings.bCaptured = true;
+    Distributor.DistributorSettings.Kind = 1;
+    Distributor.DistributorSettings.ClassPath = TEXT("/Script/FactoryGame.FGBuildableSplitterSmart");
+    auto& CapturedRule = Distributor.DistributorSettings.Rules.AddDefaulted_GetRef();
+    CapturedRule.ItemClass = TEXT("/Game/FactoryGame/Resource/Parts/IronPlate/Desc_IronPlate.Desc_IronPlate_C");
+    CapturedRule.OutputIndex = 2;
     Distributor.ConnectorWorldPositions.Add(TEXT("Output1"), FVector(302100, -215500, 6000));
     Distributor.ConnectorWorldPositions.Add(TEXT("Input1"), FVector(302100, -215300, 6000));
     FSFSourcePowerPole& Pole = Source.PowerPoles.AddDefaulted_GetRef();
@@ -40,6 +88,13 @@ bool FSFExtendSourceSnapshotNetworkTest::RunTest(const FString& Parameters)
     Ops->NetSerialize(Reader, nullptr, bSuccess, &Received);
     if (!TestTrue(TEXT("Native network reader succeeds"), bSuccess && !Reader.IsError())) return false;
     TestEqual(TEXT("Both exact socket positions survive RPC"), Received.BeltInputChains[0].Distributor.ConnectorWorldPositions.Num(), 2);
+    const auto& Settings = Received.BeltInputChains[0].Distributor.DistributorSettings;
+    TestTrue(TEXT("Distributor configuration survives RPC without source actor"), Settings.bCaptured && Settings.Kind == 1);
+    if (TestEqual(TEXT("Captured rules survive RPC"), Settings.Rules.Num(), 1))
+    {
+        TestEqual(TEXT("Exact descriptor path survives RPC"), Settings.Rules[0].ItemClass, CapturedRule.ItemClass);
+        TestEqual(TEXT("Exact output index survives RPC"), Settings.Rules[0].OutputIndex, 2);
+    }
     TestTrue(TEXT("Socket geometry is unchanged"), Received.BeltInputChains[0].Distributor.ConnectorWorldPositions.FindRef(TEXT("Output1")) == FVector(302100, -215500, 6000));
     TestEqual(TEXT("Independent power faces survive RPC"), Received.PowerPoles[0].PortCapacities.Num(), 2);
     TestEqual(TEXT("Full face stays full"), Received.PowerPoles[0].PortCapacities.FindRef(TEXT("PowerConnection1")), 0);

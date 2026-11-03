@@ -4,7 +4,7 @@
 class AFGHologram;
 struct FSFScalingSpec;
 
-namespace SFHypertubeEntranceState
+namespace SFNativeAttachmentGridState
 {
     bool IsHandled(const AFGHologram* Root);
     bool HasProxyGrid(AFGHologram* Root);

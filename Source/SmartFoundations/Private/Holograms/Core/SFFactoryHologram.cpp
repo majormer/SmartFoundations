@@ -1,4 +1,4 @@
-// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
+﻿// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
 #include "Holograms/Core/SFFactoryHologram.h"
 #include "Holograms/Logistics/SFWaterPumpChildHologram.h"
@@ -10,6 +10,7 @@
 #include "Subsystem/SFSubsystem.h"
 #include "Data/SFHologramDataRegistry.h"
 #include "Features/Extend/SFExtendService.h"
+#include "Features/Extend/Net/SFExtendCommitValidation.h"
 #include "Features/Extend/SFExtendBuiltActors.h"
 #include "Holograms/Logistics/SFConveyorBeltHologram.h"
 #include "Holograms/Logistics/SFConveyorLiftHologram.h"
@@ -162,9 +163,14 @@ void ASFFactoryHologram::CheckValidPlacement()
 
 void ASFFactoryHologram::CheckCanAfford(UFGInventoryComponent* inventory)
 {
-    // Vanilla CheckCanAfford ignores the Dimensional Depot, so an extend that is buildable only
-    // from the depot would be flagged FGCDUnaffordable (red). During extend, defer to the extend
-    // service's depot-aware affordability so the preview matches what construction will actually do.
+    // Construction admission uses the native recursive cost and actual payer.
+    // The native CL513885 implementation counts both inventory and depot stock.
+    if (SFExtendCommitValidation::IsAuthoritativeAdmission(this))
+    {
+        Super::CheckCanAfford(inventory);
+        return;
+    }
+    // Local previews use the service's complete Extend quote.
     if (USFSubsystem* SmartSubsystem = USFSubsystem::Get(this))
     {
         if (SmartSubsystem->IsExtendModeActive())

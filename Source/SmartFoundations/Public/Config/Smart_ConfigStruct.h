@@ -79,6 +79,7 @@ struct FSmart_PowerConfigSection {
 USTRUCT(BlueprintType)
 struct FSmart_BuildingBehaviorConfigSection {
     GENERATED_BODY()
+    UPROPERTY(BlueprintReadWrite) bool bBlueprintPlacementSafetyLimit{true};
     UPROPERTY(BlueprintReadWrite) bool bPreserveUpgradeDismantleGroups{true};
     UPROPERTY(BlueprintReadWrite) bool bExtendEnabled{true};
     UPROPERTY(BlueprintReadWrite) bool bExtendPowerEnabled{};
@@ -260,6 +261,10 @@ public:
 
     // ── Scaling ──
 
+    // Local placing-client safeguard only; never changes authority's other validation.
+    UPROPERTY(BlueprintReadWrite)
+    bool bBlueprintPlacementSafetyLimit{true};
+
     // Auto-Hold: automatically lock hologram position after any grid modification (Issue #273)
     // Unlike Scaled Extend, this lock can be manually released by pressing the vanilla Hold key
     // [#279] default ON - restores the pre-config-option behavior the feature replaced
@@ -364,6 +369,7 @@ public:
 
         // Blueprint Auto-Connect
         ConfigStruct.bBlueprintSeamAutoConnectEnabled = Sections.BlueprintAutoConnect.bBlueprintSeamAutoConnectEnabled;
+        ConfigStruct.bBlueprintPlacementSafetyLimit = Sections.BuildingBehavior.bBlueprintPlacementSafetyLimit;
 
         // Auto-Connect Behavior
         ConfigStruct.NearbyLogisticsRange = Sections.AutoConnectBehavior.NearbyLogisticsRange;

@@ -69,6 +69,9 @@ bool SFExtendSourceSnapshot::FitsReply(const FSFSourceTopology& Source)
         for (const FSFSourceChain& Chain : *Group)
         {
             if (++Parts > 64 || Chain.Distributor.ConnectedConnectors.Num() > 32
+                || Chain.Distributor.DistributorSettings.Rules.Num() > 64
+                || Chain.Distributor.DistributorSettings.Priorities.Num() > 64
+                || Chain.Distributor.DistributorSettings.ConnectionDirections.Num() > 32
                 || Chain.Distributor.ConnectorWorldPositions.Num() > 32 || !CheckSegments(Chain.Segments))
                 return false;
         }

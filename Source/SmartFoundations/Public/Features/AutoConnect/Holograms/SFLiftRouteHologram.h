@@ -20,7 +20,9 @@ public:
     UFGFactoryConnectionComponent* GetMouth(int32 Index) const;
     UFGFactoryConnectionComponent* ResolveAnchor() const;
     static UFGFactoryConnectionComponent* ResolveEndpoint(UFGFactoryConnectionComponent* Source);
+    static UFGFactoryConnectionComponent* ResolveEndpointForConstruction(UFGFactoryConnectionComponent* Source, const FNetConstructionID& Id);
     class AFGBuildableConveyorLift* GetBuiltLift() const { return BuiltLift.Get(); }
+    class AFGBuildableConveyorLift* GetBuiltLiftForConstruction(const FNetConstructionID& Id) const;
     bool IsNativePlacementValid();
     // The owner supplies placement input; native CheckValidPlacement still judges geometry.
     virtual void UpdateHologramPlacement(const FHitResult&) override {}
@@ -35,5 +37,8 @@ private:
     UPROPERTY() TObjectPtr<UFGFactoryConnectionComponent> Anchor;
     UPROPERTY() TObjectPtr<UFGFactoryConnectionComponent> DirectPeer;
     mutable TWeakObjectPtr<class AFGBuildableConveyorLift> BuiltLift;
+    int8 BuiltPlayerId = -1;
+    uint16 BuiltServerId = 0;
+    uint16 BuiltClientId = 0;
 };
 

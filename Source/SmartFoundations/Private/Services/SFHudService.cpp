@@ -328,6 +328,9 @@ TPair<FString, FString> USFHudService::BuildCounterDisplayLines() const
 		if (Skips.BeltTotal() > 0)
 		{
 			TArray<FString> Reasons;
+            if (Skips.BeltsMisalignedPorts > 0)
+                Reasons.Add(FText::Format(LOCTEXT("HUD_SkipReason_MisalignedPorts", "misaligned ports ({0})"),
+                    Skips.BeltsMisalignedPorts).ToString());
 			if (Skips.BeltsTooSteep > 0)
 			{
 				Reasons.Add(FText::Format(LOCTEXT("HUD_SkipReason_TooSteep", "too steep ({0})"),

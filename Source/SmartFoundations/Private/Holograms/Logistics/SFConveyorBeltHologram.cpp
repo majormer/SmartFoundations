@@ -2,6 +2,7 @@
 
 #include "Holograms/Logistics/SFConveyorBeltHologram.h"
 #include "Features/Walk/SFWalkExistingOrigin.h"
+#include "Core/Construction/SFConveyorConstructionLinks.h"
 #include "SFConveyorBeltGeometry.h"
 #include "Core/Helpers/SFBuildEffectHelper.h"
 #include "SmartFoundations.h"
@@ -20,15 +21,53 @@
 #include "Hologram/FGHologram.h"
 #include "FGConstructDisqualifier.h"
 #include "Features/Extend/SFExtendService.h"
+#include "Features/Extend/Net/SFExtendCommitValidation.h"
 #include "Subsystem/SFSubsystem.h"
 #include "FGConstructDisqualifier.h"
 #include "FGBuildableSubsystem.h"
 #include "FGConveyorChainActor.h"
 #include "EngineUtils.h"  // For TActorIterator
+#include "UObject/UnrealType.h"
+#include "UObject/StrongObjectPtr.h"
 #include "Core/Helpers/SFExtendChainHelper.h"
 #if !UE_BUILD_SHIPPING
 #include "HAL/PlatformStackWalk.h"
 #endif
+
+struct FSFConveyorBeltConstructionPeers
+{
+    FNetConstructionID Id;
+    FSFConveyorConstructionEndpoint From;
+    FSFConveyorConstructionEndpoint To;
+    bool bInvalidSelectedPeer = false;
+};
+
+void ASFConveyorBeltHologram::CaptureConstructionPeers(const FNetConstructionID& Id)
+{
+    FSFConveyorConstructionLinks::Prepare(this, Id);
+    if (ConstructionPeers && ConstructionPeers->Id.NetPlayerID == Id.NetPlayerID
+        && ConstructionPeers->Id.Server_ID == Id.Server_ID && ConstructionPeers->Id.Client_ID == Id.Client_ID) return;
+    ConstructionPeers = MakeShared<FSFConveyorBeltConstructionPeers>();
+    ConstructionPeers->Id = Id;
+    const auto* Property = FindFProperty<FObjectPropertyBase>(
+        AFGConveyorBeltHologram::StaticClass(), TEXT("mSnappedConnectionComponents"));
+    auto Capture = [&](int32 Index)
+    {
+        auto* Port = Property && Property->ArrayDim > Index
+            ? Cast<UFGFactoryConnectionComponent>(Property->GetObjectPropertyValue(
+                Property->ContainerPtrToValuePtr<void>(this, Index))) : nullptr;
+        if (Port && Port->GetDirection() == EFactoryConnectionDirection::FCD_SNAP_ONLY)
+            return FSFConveyorConstructionEndpoint(); // Placement anchor, no transport edge.
+        const auto Intent = FSFConveyorConstructionLinks::Capture(Port, &Id);
+        ConstructionPeers->bInvalidSelectedPeer |= Port && (!Intent.bValid
+            || Port->GetDirection() >= EFactoryConnectionDirection::FCD_ANY);
+        return Intent;
+    };
+    ConstructionPeers->bInvalidSelectedPeer = !Property || Property->ArrayDim != 2;
+    ConstructionPeers->From = Capture(0); ConstructionPeers->To = Capture(1);
+    ConstructionPeers->bInvalidSelectedPeer |= ConstructionPeers->From.bValid && ConstructionPeers->To.bValid
+        && ConstructionPeers->From.Direction == ConstructionPeers->To.Direction;
+}
 
 ASFConveyorBeltHologram::ASFConveyorBeltHologram()
 {
@@ -256,14 +295,22 @@ void ASFConveyorBeltHologram::CheckValidPlacement()
         // state: the aggregate getter includes this child and can feed its previous error
         // back into itself after the parent's placement or affordability has recovered.
         EHologramMaterialState DesiredState = USFExtendService::ResolveChildPreviewMaterialState(this);
-        if (DesiredState != EHologramMaterialState::HMS_ERROR
+        const bool bOwnerRejectedPreview = DesiredState == EHologramMaterialState::HMS_ERROR;
+        if (!SFExtendCommitValidation::IsAuthoritativeAdmission(this)
+            && DesiredState != EHologramMaterialState::HMS_ERROR
             && USFHologramDataService::GetRawPlacementMaterialState(GetParentHologram()) == EHologramMaterialState::HMS_ERROR)
         {
             DesiredState = EHologramMaterialState::HMS_ERROR;
         }
         // The build gun paints previews from construct disqualifiers, not SetPlacementMaterialState.
         ResetConstructDisqualifiers();
-        if (DesiredState == EHologramMaterialState::HMS_ERROR)
+        // Only the independently evaluated operation state may add a blocking
+        // child verdict. The parent's raw color can already include last frame's
+        // child disqualifiers: converting that inherited color into a new
+        // unaffordable verdict latches Restore red after materials are supplied.
+        // Native parent placement/cost validation remains responsible for its
+        // own rejection; inherited color is visual feedback, not another gate.
+        if (bOwnerRejectedPreview)
         {
             AddConstructDisqualifier(UFGCDUnaffordable::StaticClass());
         }
@@ -504,50 +551,49 @@ void ASFConveyorBeltHologram::DrainStackBuiltConveyors(TArray<AFGBuildableConvey
     GStackBuiltConveyors.Empty();
 }
 
-// Connect `Ours` to the coincident (<=tol), free, CanConnectTo-compatible connector on any OTHER
-// built stacked belt. Returns true if a connection was made. Safe on live belts (SetConnection is
-// topology only — THESIS §2.6) and against dead belts (TWeakObjectPtr::Get()).
-static bool SF_WireStackConnectorByCoincidence(UFGFactoryConnectionComponent* Ours, AFGBuildableConveyorBase* Self)
+// Capture one unambiguous physical neighbor in the current constructed run.
+// Acceptance only retains intent; native-phase settlement owns the live edge.
+static bool SF_QueueStackConnectorByCoincidence(AFGHologram* Context, const FNetConstructionID& Id,
+    UFGFactoryConnectionComponent* Ours, AFGBuildableConveyorBase* Self)
 {
-    if (!IsValid(Ours) || Ours->IsConnected())
+    if (!IsValid(Ours) || !IsValid(Self) || !Self->HasAuthority()) return false; // [MP-AUTH]
+    if (Ours->IsConnected() || Ours->GetConnection())
     {
-        return false;
-    }
-    const FVector OursLoc = Ours->GetComponentLocation();
-    UFGFactoryConnectionComponent* Best = nullptr;
-    float BestSq = FMath::Square(150.0f);  // junction connectors are ~coincident; belts are >= 2m long
-    for (const TWeakObjectPtr<AFGBuildableConveyorBase>& Weak : GStackBuiltConveyors)
-    {
-        AFGBuildableConveyorBase* Other = Weak.Get();
-        if (!Other || Other == Self)
+        auto* Peer = Ours->GetConnection();
+        if (!IsValid(Peer) || !Ours->IsConnected() || !Peer->IsConnected() || Peer->GetConnection() != Ours)
         {
-            continue;
+            FSFConveyorConstructionLinks::RejectPrepared(Context, Id, TEXT("native_stack_edge_nonreciprocal"));
+            return false;
         }
-        UFGFactoryConnectionComponent* OtherConns[2] = { Other->GetConnection0(), Other->GetConnection1() };
-        for (UFGFactoryConnectionComponent* Cand : OtherConns)
+        return FSFConveyorConstructionLinks::Defer(Context, Id,
+            {{FSFConveyorConstructionLinks::Capture(Ours), FSFConveyorConstructionLinks::Capture(Peer)}});
+    }
+    UFGFactoryConnectionComponent* Match = nullptr;
+    for (const auto& Weak : GStackBuiltConveyors)
+    {
+        auto* Other = Weak.Get();
+        if (!IsValid(Other) || Other == Self || Other->IsActorBeingDestroyed()
+            || Other->GetWorld() != Self->GetWorld() || !Other->HasAuthority()) continue;
+        for (auto* Candidate : {Other->GetConnection0(), Other->GetConnection1()})
         {
-            if (!IsValid(Cand) || Cand->IsConnected())
-            {
-                continue;
-            }
-            const float DSq = FVector::DistSquared(Cand->GetComponentLocation(), OursLoc);
-            if (DSq <= BestSq && Ours->CanConnectTo(Cand))
-            {
-                Best = Cand;
-                BestSq = DSq;
-            }
+            if (!IsValid(Candidate) || Candidate->IsConnected() || !Ours->CanConnectTo(Candidate)
+                || !Candidate->GetComponentLocation().Equals(Ours->GetComponentLocation(), 2.0)) continue;
+            if (Match && Match != Candidate) return false; // Never select by iteration order.
+            Match = Candidate;
         }
     }
-    if (Best)
-    {
-        Ours->SetConnection(Best);
-        return Ours->IsConnected();
-    }
-    return false;
+    return Match && FSFConveyorConstructionLinks::Defer(Context, Id,
+        {{FSFConveyorConstructionLinks::Capture(Ours), FSFConveyorConstructionLinks::Capture(Match)}});
 }
 
 AActor* ASFConveyorBeltHologram::Construct(TArray<AActor*>& out_children, FNetConstructionID constructionID)
 {
+    TStrongObjectPtr<ASFConveyorBeltHologram> KeepPreview(this);
+    if (!Tags.Contains(FName(TEXT("SF_ExtendChild"))) && !FSFConveyorConstructionLinks::Prepare(this, constructionID))
+    {
+        UE_LOG(LogSmartHologram, Warning, TEXT("Conveyor construction has no retained authoritative connection context; native construction not invoked."));
+        return nullptr;
+    }
     // CRITICAL DIAGNOSTIC: Log spline data BEFORE Construct
     UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 BELT Construct: %s - BEFORE Super::Construct, mSplineData has %d points"), 
         *GetName(), mSplineData.Num());
@@ -561,19 +607,30 @@ AActor* ASFConveyorBeltHologram::Construct(TArray<AActor*>& out_children, FNetCo
     // STACKABLE CHAIN MEMBER — build fresh, then wire by coincidence (THESIS §6.9–§6.12)
     // ============================================================
     // A run of stacked-pole belts is a chain. Build a REAL belt (so cost aggregates and the build gun
-    // never sees a null return), then AFTER Super::Construct connect each of its connectors to the
+    // never sees a null return), then AFTER Super::Construct retain exact connection intent to the
     // physically-coincident, free, compatible connector on any other built stacked belt
-    // (SF_WireStackConnectorByCoincidence). Geometry — not StackChainId/Index — is the basis: the
+    // (SF_QueueStackConnectorByCoincidence). Geometry — not StackChainId/Index — is the basis: the
     // index is placement-relative, so multi-drag/abutting segments miss each other (THESIS §6.12).
     // Order-agnostic: the first belt at a junction registers open; whichever neighbour builds second
-    // wires it. Run-ends stay open and snappable. We never touch the Extend registry.
+    // queues it for native-phase settlement. Run-ends stay open and snappable. We never touch the Extend registry.
     {
         FSFHologramData* StackHolo = USFHologramDataRegistry::GetData(this);
-        if (Tags.Contains(FName(TEXT("SF_StackableChild"))) && StackHolo &&
-            StackHolo->StackChainId >= 0 && StackHolo->StackChainIndex >= 0)
+        if (Tags.Contains(FName(TEXT("SF_StackableChild"))) && !Tags.Contains(FName(TEXT("SF_ExtendChild")))
+            && StackHolo && StackHolo->bIsStackableBelt)
         {
             const int32 ChainId = StackHolo->StackChainId;
             const int32 Index = StackHolo->StackChainIndex;
+            const auto ExplicitFrom = FSFConveyorConstructionLinks::Capture(StackHolo->StackableBeltConn0.Get(), &constructionID);
+            const auto ExplicitTo = FSFConveyorConstructionLinks::Capture(StackHolo->StackableBeltConn1.Get(), &constructionID);
+            const bool bSelectedWalkOrigin = ActorHasTag(TEXT("SF_WalkExistingOrigin"));
+            const auto WalkOrigin = FSFConveyorConstructionLinks::Capture(
+                Cast<UFGFactoryConnectionComponent>(SFWalkExistingOrigin::GetSelectedStart(this)), &constructionID);
+            if (bSelectedWalkOrigin && (!WalkOrigin.bValid || WalkOrigin.bPreview
+                || WalkOrigin.Direction < 0 || WalkOrigin.Direction >= static_cast<int32>(EFactoryConnectionDirection::FCD_ANY)))
+            {
+                FSFConveyorConstructionLinks::RejectPrepared(this, constructionID, TEXT("selected_walk_origin_expired_before_construction"));
+                return nullptr;
+            }
 
             // Do NOT pre-snap to a specific connector index. A REVERSED belt has Connection0/Connection1
             // swapped relative to position, so an index-based pairing wires non-coincident connectors
@@ -592,21 +649,56 @@ AActor* ASFConveyorBeltHologram::Construct(TArray<AActor*>& out_children, FNetCo
                 // so belts from separate build drags / abutting segments miss each other (THESIS §6.12).
                 // Post-Super::Construct our connectors have real positions, so coincidence is ground truth.
                 // Whichever belt builds second at a shared junction wires it; run-ends stay open (snappable).
-                SFWalkExistingOrigin::ConnectNativeStart(this, BuiltConveyor);
+                bool OriginRetained = !bSelectedWalkOrigin;
+                bool FromRetained = !ExplicitFrom.bValid || ExplicitFrom.Direction >= static_cast<int32>(EFactoryConnectionDirection::FCD_ANY);
+                bool ToRetained = !ExplicitTo.bValid || ExplicitTo.Direction >= static_cast<int32>(EFactoryConnectionDirection::FCD_ANY);
                 auto Wire = [&](UFGFactoryConnectionComponent* Own)
                 {
+                    if (!IsValid(Own)) return false;
                     // An explicitly selected origin never falls back to a nearby different belt.
-                    if (SFWalkExistingOrigin::IsNativeStartPosition(this, Own->GetComponentLocation())) { return Own->IsConnected(); }
-                    return SF_WireStackConnectorByCoincidence(Own, BuiltConveyor);
+                    if (bSelectedWalkOrigin && WalkOrigin.Position.Equals(Own->GetComponentLocation(), 2.0))
+                    {
+                        OriginRetained = FSFConveyorConstructionLinks::Defer(this, constructionID,
+                            {{FSFConveyorConstructionLinks::Capture(Own), WalkOrigin}});
+                        if (!ExplicitFrom.bPreview && ExplicitFrom.ExistingPort == WalkOrigin.ExistingPort) FromRetained = OriginRetained;
+                        if (!ExplicitTo.bPreview && ExplicitTo.ExistingPort == WalkOrigin.ExistingPort) ToRetained = OriginRetained;
+                        return OriginRetained;
+                    }
+                    const FSFConveyorConstructionEndpoint* Explicit = nullptr;
+                    for (const auto* Candidate : {&ExplicitFrom, &ExplicitTo})
+                    {
+                        // Pole preview connectors are positioning anchors, not
+                        // ports on the materialized pole. Genuine transport
+                        // previews resolve through their native identity receipt.
+                        if (!Candidate->bValid
+                            || Candidate->Direction < 0 || Candidate->Direction >= static_cast<int32>(EFactoryConnectionDirection::FCD_ANY)
+                            || !Candidate->Position.Equals(Own->GetComponentLocation(), 2.0)) continue;
+                        if (Explicit && (Explicit->bPreview != Candidate->bPreview
+                            || Explicit->ExistingPort != Candidate->ExistingPort || Explicit->PreviewOwner != Candidate->PreviewOwner
+                            || Explicit->PortName != Candidate->PortName)) return false;
+                        Explicit = Candidate;
+                    }
+                    if (Explicit)
+                    {
+                        const bool Retained = FSFConveyorConstructionLinks::Defer(this, constructionID,
+                            {{FSFConveyorConstructionLinks::Capture(Own), *Explicit}});
+                        if (Explicit == &ExplicitFrom) FromRetained = Retained;
+                        if (Explicit == &ExplicitTo) ToRetained = Retained;
+                        return Retained;
+                    }
+                    return SF_QueueStackConnectorByCoincidence(this, constructionID, Own, BuiltConveyor);
                 };
                 bWired0 = Wire(BuiltConveyor->GetConnection0());
                 bWired1 = Wire(BuiltConveyor->GetConnection1());
+                if (!OriginRetained || !FromRetained || !ToRetained)
+                    FSFConveyorConstructionLinks::RejectPrepared(this, constructionID, TEXT("selected_stack_or_walk_origin_links_not_retained"));
 
                 // Add to the flat stacked-belt list (TWeakObjectPtr) for later-built neighbours to find.
                 SF_RegisterStackBuilt(BuiltConveyor);
             }
+            else FSFConveyorConstructionLinks::RejectPrepared(this, constructionID, TEXT("native_stack_belt_materialization_failed"));
 
-            UE_LOG(LogSmartHologram, Verbose, TEXT("🚧 STACK-CHAIN: %s built [chain=%d idx=%d] wired c0=%s c1=%s"),
+            UE_LOG(LogSmartHologram, Verbose, TEXT("🚧 STACK-CHAIN: %s built [chain=%d idx=%d] native-connected or queued c0=%s c1=%s"),
                 *GetName(), ChainId, Index,
                 bWired0 ? TEXT("Y") : TEXT("-"), bWired1 ? TEXT("Y") : TEXT("-"));
 
@@ -623,36 +715,17 @@ AActor* ASFConveyorBeltHologram::Construct(TArray<AActor*>& out_children, FNetCo
         UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 EXTEND: Belt hologram %s Construct() called - building as child"), 
             *GetName());
         
-        // ============================================================
-        // SNAPPED CONNECTIONS: Update to point to BUILT buildables
-        // ============================================================
-        // Use FSFExtendChainHelper to resolve chain connections.
-        // This implements the "reverse build order" strategy where conveyors
-        // are built from highest to lowest index, allowing each to connect
-        // to already-built neighbors.
-
         FSFHologramData* HoloData = USFHologramDataRegistry::GetData(this);
-        USFExtendService* ExtendService = nullptr;
-
-        if (FSFExtendChainHelper::IsExtendChainMember(HoloData))
+        auto* Smart = USFSubsystem::Get(GetWorld());
+        auto* ExtendService = Smart ? Smart->GetExtendService() : nullptr;
+        if (!ExtendService || !ExtendService->IsExecutingOwnedNativeInput())
         {
-            if (USFSubsystem* SmartSubsystem = USFSubsystem::Get(GetWorld()))
-            {
-                ExtendService = SmartSubsystem->GetExtendService();
-                if (ExtendService)
-                {
-                    auto Targets = FSFExtendChainHelper::ResolveChainConnections(HoloData, ExtendService, TEXT("Belt"));
-                    if (Targets.bHasValidTargets())
-                    {
-                        SetSnappedConnections(Targets.Conn0Target, Targets.Conn1Target);
-                        UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 EXTEND Chain: Updated %s snapped connections → Conn0=%s, Conn1=%s"),
-                            *GetName(),
-                            Targets.Conn0Target ? *FString::Printf(TEXT("%s on %s"), *Targets.Conn0Target->GetName(), *Targets.Conn0Target->GetOwner()->GetName()) : TEXT("nullptr"),
-                            Targets.Conn1Target ? *FString::Printf(TEXT("%s on %s"), *Targets.Conn1Target->GetName(), *Targets.Conn1Target->GetOwner()->GetName()) : TEXT("nullptr"));
-                    }
-                }
-            }
+            UE_LOG(LogSmartHologram, Warning, TEXT("Extend belt construction rejected without its retained native operation."));
+            return nullptr;
         }
+        // The complete immutable role graph is connected by the owned mutation
+        // adapter after native materialization. Never replace it with chain indices.
+        SetSnappedConnections(nullptr, nullptr);
 
         // PHASE 2: Build the belt! Vanilla will handle it as a child.
         AActor* BuiltActor = Super::Construct(out_children, constructionID);
@@ -753,111 +826,49 @@ AActor* ASFConveyorBeltHologram::Construct(TArray<AActor*>& out_children, FNetCo
         return BuiltActor;
     }
     
-    // For Auto-Connect belts: Build and then wire connections
-    UE_LOG(LogSmartHologram, Verbose, TEXT("🔧 AUTO-CONNECT: Belt hologram %s Construct() called - building belt"),
-        *GetName());
-    
-    // Build the belt
-    AActor* BuiltActor = Super::Construct(out_children, constructionID);
-    
-    // Check if this is a stackable belt - skip wiring in Construct() for stackable belts
-    // Stackable belts are named "StackableBelt_N" and use deferred wiring in SFSubsystem
-    bool bIsStackableBelt = GetName().Contains(TEXT("StackableBelt_"));
-    
-    // Post-build wiring for Auto-Connect belts (but NOT stackable belts)
-    // The belt is built but not wired - we need to find nearby connectors and wire them
-    AFGBuildableConveyorBelt* BuiltBelt = Cast<AFGBuildableConveyorBelt>(BuiltActor);
-    if (!bIsStackableBelt && BuiltBelt)
+    // Capture the exact selected peer values BEFORE native Construct resets the
+    // preview tree. A future timer must not rediscover a nearby free connector.
+    if (!ConstructionPeers || ConstructionPeers->Id.NetPlayerID != constructionID.NetPlayerID
+        || ConstructionPeers->Id.Server_ID != constructionID.Server_ID || ConstructionPeers->Id.Client_ID != constructionID.Client_ID)
+        CaptureConstructionPeers(constructionID);
+    if (ConstructionPeers->bInvalidSelectedPeer)
     {
-        UFGFactoryConnectionComponent* BeltConn0 = BuiltBelt->GetConnection0();  // Input end
-        UFGFactoryConnectionComponent* BeltConn1 = BuiltBelt->GetConnection1();  // Output end
-        
-        if (BeltConn0 && BeltConn1)
-        {
-            const float WiringRadius = 50.0f;  // 50cm tolerance for finding nearby connectors
-            
-            // Find and wire Conn0 (belt input) to nearby OUTPUT connector
-            if (!BeltConn0->IsConnected())
-            {
-                FVector Conn0Loc = BeltConn0->GetComponentLocation();
-                UFGFactoryConnectionComponent* BestMatch = nullptr;
-                float BestDist = WiringRadius;
-                
-                // Search all factory connection components in range
-                // CRITICAL: Only wire to BUILT actors (AFGBuildable), not holograms!
-                for (TActorIterator<AFGBuildable> It(GetWorld()); It; ++It)
-                {
-                    AFGBuildable* Buildable = *It;
-                    if (Buildable == BuiltBelt) continue;
-                    
-                    TArray<UFGFactoryConnectionComponent*> Connectors;
-                    Buildable->GetComponents<UFGFactoryConnectionComponent>(Connectors);
-                    
-                    for (UFGFactoryConnectionComponent* Conn : Connectors)
-                    {
-                        if (!Conn || Conn->IsConnected()) continue;
-                        // Conn0 is INPUT, so we need an OUTPUT to connect to
-                        if (Conn->GetDirection() != EFactoryConnectionDirection::FCD_OUTPUT) continue;
-                        
-                        float Dist = FVector::Dist(Conn0Loc, Conn->GetComponentLocation());
-                        if (Dist < BestDist)
-                        {
-                            BestDist = Dist;
-                            BestMatch = Conn;
-                        }
-                    }
-                }
-                
-                if (BestMatch)
-                {
-                    BeltConn0->SetConnection(BestMatch);
-                    UE_LOG(LogSmartHologram, Verbose, TEXT("🔧 AUTO-CONNECT WIRING: %s.Conn0 → %s.%s (dist=%.1f)"),
-                        *BuiltBelt->GetName(), *BestMatch->GetOwner()->GetName(), *BestMatch->GetName(), BestDist);
-                }
-            }
-            
-            // Find and wire Conn1 (belt output) to nearby INPUT connector
-            if (!BeltConn1->IsConnected())
-            {
-                FVector Conn1Loc = BeltConn1->GetComponentLocation();
-                UFGFactoryConnectionComponent* BestMatch = nullptr;
-                float BestDist = WiringRadius;
-                
-                // Search all factory connection components in range
-                // CRITICAL: Only wire to BUILT actors (AFGBuildable), not holograms!
-                for (TActorIterator<AFGBuildable> It(GetWorld()); It; ++It)
-                {
-                    AFGBuildable* Buildable = *It;
-                    if (Buildable == BuiltBelt) continue;
-                    
-                    TArray<UFGFactoryConnectionComponent*> Connectors;
-                    Buildable->GetComponents<UFGFactoryConnectionComponent>(Connectors);
-                    
-                    for (UFGFactoryConnectionComponent* Conn : Connectors)
-                    {
-                        if (!Conn || Conn->IsConnected()) continue;
-                        // Conn1 is OUTPUT, so we need an INPUT to connect to
-                        if (Conn->GetDirection() != EFactoryConnectionDirection::FCD_INPUT) continue;
-                        
-                        float Dist = FVector::Dist(Conn1Loc, Conn->GetComponentLocation());
-                        if (Dist < BestDist)
-                        {
-                            BestDist = Dist;
-                            BestMatch = Conn;
-                        }
-                    }
-                }
-                
-                if (BestMatch)
-                {
-                    BeltConn1->SetConnection(BestMatch);
-                    UE_LOG(LogSmartHologram, Verbose, TEXT("🔧 AUTO-CONNECT WIRING: %s.Conn1 → %s.%s (dist=%.1f)"),
-                        *BuiltBelt->GetName(), *BestMatch->GetOwner()->GetName(), *BestMatch->GetName(), BestDist);
-                }
-            }
-        }
+        FSFConveyorConstructionLinks::RejectPrepared(this, constructionID, TEXT("selected_native_belt_peer_or_schema_unavailable"));
+        return nullptr;
     }
-    
+    const auto From = ConstructionPeers->From;
+    const auto To = ConstructionPeers->To;
+    ConstructionPeers.Reset();
+    // A preview component cannot become a live belt's peer. Its actual built
+    // owner will be resolved through ConfigureActor's identity receipt instead.
+    if (From.bPreview || To.bPreview) SetSnappedConnections(nullptr, nullptr);
+    AActor* BuiltActor = Super::Construct(out_children, constructionID);
+    if (auto* Belt = Cast<AFGBuildableConveyorBelt>(BuiltActor))
+    {
+        TArray<FSFConveyorConstructionEdge> Edges;
+        auto AddPeer = [&](const FSFConveyorConstructionEndpoint& Peer)
+        {
+            if (!Peer.bValid) return true;
+            UFGFactoryConnectionComponent* Mouth = nullptr;
+            for (auto* Port : {Belt->GetConnection0(), Belt->GetConnection1()})
+                if (IsValid(Port) && ((Peer.Direction == static_cast<int32>(EFactoryConnectionDirection::FCD_OUTPUT)
+                        && Port->GetDirection() == EFactoryConnectionDirection::FCD_INPUT)
+                    || (Peer.Direction == static_cast<int32>(EFactoryConnectionDirection::FCD_INPUT)
+                        && Port->GetDirection() == EFactoryConnectionDirection::FCD_OUTPUT)))
+                { if (Mouth) return false; Mouth = Port; }
+            if (!Mouth) return false;
+            Edges.Add({FSFConveyorConstructionLinks::Capture(Mouth), Peer});
+            return true;
+        };
+        if (!AddPeer(From) || !AddPeer(To))
+        {
+            FSFConveyorConstructionLinks::RejectPrepared(this, constructionID, TEXT("native_belt_flow_mouth_unresolved"));
+            return BuiltActor;
+        }
+        if (!Edges.IsEmpty() && !FSFConveyorConstructionLinks::Defer(this, constructionID, Edges))
+            FSFConveyorConstructionLinks::RejectPrepared(this, constructionID, TEXT("native_belt_links_not_retained"));
+    }
+    else FSFConveyorConstructionLinks::RejectPrepared(this, constructionID, TEXT("native_belt_materialization_failed"));
     return BuiltActor;
 }
 
@@ -1426,7 +1437,8 @@ void ASFConveyorBeltHologram::ConfigureActor(class AFGBuildable* inBuildable) co
         // Check if vanilla reversed the spline by comparing Point[0]
         // If the buildable's Point[0] doesn't match our expected Point[0], but the LAST point does,
         // then vanilla reversed the spline and we need to reverse it back
-        if (BeltSplineData.Num() == ExpectedNumPoints && ExpectedNumPoints >= 2)
+        if (Tags.Contains(FName(TEXT("SF_ExtendChild")))
+            && BeltSplineData.Num() == ExpectedNumPoints && ExpectedNumPoints >= 2)
         {
             FVector ActualPoint0 = BeltSplineData[0].Location;
             FVector ActualPointN = BeltSplineData[ExpectedNumPoints - 1].Location;
@@ -1498,496 +1510,15 @@ void ASFConveyorBeltHologram::ConfigureActor(class AFGBuildable* inBuildable) co
         }
     }
 
-    // CRITICAL: Establish connections directly in ConfigureActor
-    // ============================================================
-    // Snapped connections don't work for belt-to-belt or belt-to-distributor
-    // connections (they work for lifts but not belts). We need to call
-    // SetConnection() directly here to establish the actual connections
-    // AND ensure proper chain actor creation.
-    //
-    // This is called DURING Construct(), so the belt is being built and
-    // can be properly integrated into the conveyor chain system.
-    
-    // Check for EXTEND child via registry (more reliable than Tags in const method)
-    FSFHologramData* HoloData = USFHologramDataRegistry::GetData(const_cast<ASFConveyorBeltHologram*>(this));
-    bool bIsExtendChild = HoloData && HoloData->ExtendChainId >= 0 && HoloData->ExtendChainIndex >= 0;
-    
-    UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 BELT ConfigureActor: Chain connection check - HoloData=%s, ChainId=%d, ChainIndex=%d, bIsExtendChild=%d"),
-        HoloData ? TEXT("valid") : TEXT("null"),
-        HoloData ? HoloData->ExtendChainId : -999,
-        HoloData ? HoloData->ExtendChainIndex : -999,
-        bIsExtendChild ? 1 : 0);
-    
-    if (bIsExtendChild && HoloData)
-    {
-        AFGBuildableConveyorBelt* Belt = Cast<AFGBuildableConveyorBelt>(inBuildable);
-        USFSubsystem* SmartSubsystem = USFSubsystem::Get(GetWorld());
-        USFExtendService* ExtendService = SmartSubsystem ? SmartSubsystem->GetExtendService() : nullptr;
-        
-        UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 BELT ConfigureActor: EXTEND child - Belt=%s, ExtendService=%s"),
-            Belt ? *Belt->GetName() : TEXT("null"),
-            ExtendService ? TEXT("valid") : TEXT("null"));
-        
-        if (Belt && ExtendService)
-        {
-            UFGFactoryConnectionComponent* BeltConn0 = Belt->GetConnection0();
-            
-            if (HoloData->ExtendChainIndex > 0)
-            {
-                // Connect to previous conveyor
-                AFGBuildableConveyorBase* PrevConveyor = ExtendService->GetBuiltConveyor(
-                    HoloData->ExtendChainId, HoloData->ExtendChainIndex - 1);
-                
-                UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 BELT ConfigureActor: Looking for prev conveyor chain %d index %d → %s"),
-                    HoloData->ExtendChainId, HoloData->ExtendChainIndex - 1,
-                    PrevConveyor ? *PrevConveyor->GetName() : TEXT("NOT FOUND"));
-                
-                if (PrevConveyor && BeltConn0)
-                {
-                    UFGFactoryConnectionComponent* PrevConn1 = PrevConveyor->GetConnection1();
-                    UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 BELT ConfigureActor: PrevConn1=%s (connected=%d), BeltConn0=%s (connected=%d)"),
-                        PrevConn1 ? *PrevConn1->GetName() : TEXT("null"),
-                        PrevConn1 ? PrevConn1->IsConnected() : -1,
-                        BeltConn0 ? *BeltConn0->GetName() : TEXT("null"),
-                        BeltConn0 ? BeltConn0->IsConnected() : -1);
-                    
-                    if (PrevConn1 && !PrevConn1->IsConnected() && !BeltConn0->IsConnected())
-                    {
-                        PrevConn1->SetConnection(BeltConn0);
-                        UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 BELT ConfigureActor: ✅ Connected %s.Conn1 → %s.Conn0 (CHAIN LINK)"),
-                            *PrevConveyor->GetName(), *Belt->GetName());
-                    }
-                    else
-                    {
-                        UE_LOG(LogSmartHologram, Verbose, TEXT("🔧 BELT ConfigureActor: ⚠️ Cannot connect - already connected or null"));
-                    }
-                }
-            }
-            else
-            {
-                // First belt - connect to distributor
-                AFGBuildable* Distributor = ExtendService->GetBuiltDistributor(HoloData->ExtendChainId);
-                
-                UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 BELT ConfigureActor: First belt (index 0) - Distributor=%s, BeltConn0=%s (connected=%d)"),
-                    Distributor ? *Distributor->GetName() : TEXT("NOT FOUND"),
-                    BeltConn0 ? *BeltConn0->GetName() : TEXT("null"),
-                    BeltConn0 ? BeltConn0->IsConnected() : -1);
-                
-                if (Distributor && BeltConn0 && !BeltConn0->IsConnected())
-                {
-                    TArray<UFGFactoryConnectionComponent*> DistConns;
-                    Distributor->GetComponents<UFGFactoryConnectionComponent>(DistConns);
-                    
-                    // Find the appropriate distributor connection
-                    EFactoryConnectionDirection NeededDir = HoloData->bIsInputChain ? 
-                        EFactoryConnectionDirection::FCD_OUTPUT : EFactoryConnectionDirection::FCD_INPUT;
-                    
-                    UFGFactoryConnectionComponent* BestDistConn = nullptr;
-                    float BestDist = FLT_MAX;
-                    
-                    for (UFGFactoryConnectionComponent* DistConn : DistConns)
-                    {
-                        if (DistConn && !DistConn->IsConnected() && DistConn->GetDirection() == NeededDir)
-                        {
-                            float Dist = FVector::Dist(BeltConn0->GetComponentLocation(), DistConn->GetComponentLocation());
-                            if (Dist < BestDist)
-                            {
-                                BestDist = Dist;
-                                BestDistConn = DistConn;
-                            }
-                        }
-                    }
-                    
-                    if (BestDistConn)
-                    {
-                        BestDistConn->SetConnection(BeltConn0);
-                        UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 BELT ConfigureActor: ✅ Connected %s.%s → %s.Conn0 (DISTRIBUTOR LINK)"),
-                            *Distributor->GetName(), *BestDistConn->GetName(), *Belt->GetName());
-                    }
-                    else
-                    {
-                        UE_LOG(LogSmartHologram, Verbose, TEXT("🔧 BELT ConfigureActor: ⚠️ No suitable distributor connection found (needed dir=%d)"),
-                            (int32)NeededDir);
-                    }
-                }
-            }
-        }
-    }
-    
-    // ============================================================
-    // STACKABLE BELT: Wiring handled in OnActorSpawned (deferred)
-    // ============================================================
-    // ConfigureActor runs too early - neighbor belts aren't registered yet.
-    // Belt-to-belt wiring is done in USFSubsystem::OnActorSpawned after
-    // all belts are built, same pattern as pipes.
-    bool bIsStackableChild = Tags.Contains(FName(TEXT("SF_StackableChild")));
-    if (bIsStackableChild && HoloData && HoloData->bIsStackableBelt)
-    {
-        AFGBuildableConveyorBelt* Belt = Cast<AFGBuildableConveyorBelt>(inBuildable);
-        if (Belt)
-        {
-            UE_LOG(LogSmartHologram, Verbose, TEXT("🚧 STACKABLE BELT: Built %s (index %d) - wiring deferred to OnActorSpawned"),
-                *Belt->GetName(), HoloData->StackableBeltIndex);
-        }
-    }
+    // ConfigureActor owns geometry only. The retained construction owner wires
+    // exact roles after all native actors exist; no chain-index/nearest fallback.
 }
 
 void ASFConveyorBeltHologram::ConfigureComponents(AFGBuildable* inBuildable) const
 {
-    // Call parent first
+    // Preserve native pre-BeginPlay configuration and its one initial registration.
+    // Additional ordinary edges use ConstructionLinks; Extend uses its owned cohort.
     Super::ConfigureComponents(inBuildable);
-    
-    // ========================================================================
-    // PRE-TICK WIRING: Make connections and rebuild chain DURING construction
-    // 
-    // This runs DURING construction, AFTER ConfigureActor but BEFORE the
-    // buildable is fully registered with the subsystem's tick arrays.
-    // This is the SAME timing AutoLink uses - safe from parallel factory tick.
-    // 
-    // We use connection target info stored in FSFHologramData (from JSON manifest)
-    // to find already-built targets and establish connections.
-    // ========================================================================
-    
-    AFGBuildableConveyorBase* Conveyor = Cast<AFGBuildableConveyorBase>(inBuildable);
-    if (!Conveyor)
-    {
-        return;
-    }
-    
-    // Get hologram data for connection targets
-    FSFHologramData* HoloData = USFHologramDataRegistry::GetData(const_cast<ASFConveyorBeltHologram*>(this));
-    if (!HoloData)
-    {
-        UE_LOG(LogSmartHologram, VeryVerbose, TEXT("⛓️ BELT ConfigureComponents: %s - no HoloData, skipping pre-tick wiring"),
-            *Conveyor->GetName());
-        return;
-    }
-    
-    // Get services for looking up built actors
-    USFSubsystem* SmartSubsystem = USFSubsystem::Get(GetWorld());
-    USFExtendService* ExtendService = SmartSubsystem ? SmartSubsystem->GetExtendService() : nullptr;
-    
-    if (!ExtendService)
-    {
-        UE_LOG(LogSmartHologram, VeryVerbose, TEXT("⛓️ BELT ConfigureComponents: %s - no ExtendService, skipping pre-tick wiring"),
-            *Conveyor->GetName());
-        return;
-    }
-    
-    UFGFactoryConnectionComponent* Conn0 = Conveyor->GetConnection0();
-    UFGFactoryConnectionComponent* Conn1 = Conveyor->GetConnection1();
-    bool bMadeConnection = false;
-    
-    // ========================================================================
-    // STACKABLE BELT WIRING (Issue #220)
-    // ========================================================================
-    // For stackable pole belts, we search for nearby built pole connectors
-    // and wire to them. This is similar to how stackable pipes work.
-    if (HoloData->bIsStackableBelt)
-    {
-        UE_LOG(LogSmartHologram, Verbose, TEXT("⛓️ STACKABLE BELT ConfigureComponents: %s - wiring to nearby pole connectors"),
-            *Conveyor->GetName());
-
-        const float PoleConnectorSearchRadius = 100.0f;  // 1m search radius for pole connectors
-        
-        // Connect Conn0 (belt output) to nearby pole connector
-        if (Conn0 && !Conn0->IsConnected())
-        {
-            FVector SearchLoc = Conn0->GetComponentLocation();
-            UFGFactoryConnectionComponent* NearestConn = nullptr;
-            float NearestDist = PoleConnectorSearchRadius;
-            
-            // Search all buildables for factory connectors near this endpoint
-            // Include stackable poles AND other conveyor belts (for belt-to-belt connections)
-            for (TActorIterator<AFGBuildable> It(GetWorld()); It; ++It)
-            {
-                AFGBuildable* Buildable = *It;
-                if (Buildable == Conveyor) continue;
-                
-                // Search stackable poles and conveyor belts
-                FString BuildableName = Buildable->GetClass()->GetName();
-                bool bIsStackablePole = BuildableName.Contains(TEXT("ConveyorPoleStackable"));
-                bool bIsConveyorBelt = BuildableName.Contains(TEXT("ConveyorBelt"));
-                if (!bIsStackablePole && !bIsConveyorBelt) continue;
-                
-                TArray<UFGFactoryConnectionComponent*> Connectors;
-                Buildable->GetComponents<UFGFactoryConnectionComponent>(Connectors);
-                
-                for (UFGFactoryConnectionComponent* Conn : Connectors)
-                {
-                    if (!Conn || Conn->IsConnected()) continue;
-                    // For belt-to-belt: Conn0 is INPUT, so we need to find an OUTPUT
-                    if (bIsConveyorBelt && Conn->GetDirection() != EFactoryConnectionDirection::FCD_OUTPUT) continue;
-                    
-                    float Dist = FVector::Dist(SearchLoc, Conn->GetComponentLocation());
-                    if (Dist < NearestDist)
-                    {
-                        NearestDist = Dist;
-                        NearestConn = Conn;
-                    }
-                }
-            }
-            
-            if (NearestConn)
-            {
-                Conn0->SetConnection(NearestConn);
-                bMadeConnection = true;
-                UE_LOG(LogSmartHologram, Verbose, TEXT("⛓️ STACKABLE BELT: ✅ Wired %s.Conn0 → %s.%s (dist=%.1f)"),
-                    *Conveyor->GetName(), *NearestConn->GetOwner()->GetName(), *NearestConn->GetName(), NearestDist);
-            }
-        }
-        
-        // Connect Conn1 (belt output) to nearby pole connector or other belt input
-        if (Conn1 && !Conn1->IsConnected())
-        {
-            FVector SearchLoc = Conn1->GetComponentLocation();
-            UFGFactoryConnectionComponent* NearestConn = nullptr;
-            float NearestDist = PoleConnectorSearchRadius;
-            
-            // Search all buildables for factory connectors near this endpoint
-            // Include stackable poles AND other conveyor belts (for belt-to-belt connections)
-            for (TActorIterator<AFGBuildable> It(GetWorld()); It; ++It)
-            {
-                AFGBuildable* Buildable = *It;
-                if (Buildable == Conveyor) continue;
-                
-                // Search stackable poles and conveyor belts
-                FString BuildableName = Buildable->GetClass()->GetName();
-                bool bIsStackablePole = BuildableName.Contains(TEXT("ConveyorPoleStackable"));
-                bool bIsConveyorBelt = BuildableName.Contains(TEXT("ConveyorBelt"));
-                if (!bIsStackablePole && !bIsConveyorBelt) continue;
-                
-                TArray<UFGFactoryConnectionComponent*> Connectors;
-                Buildable->GetComponents<UFGFactoryConnectionComponent>(Connectors);
-                
-                for (UFGFactoryConnectionComponent* Conn : Connectors)
-                {
-                    if (!Conn || Conn->IsConnected()) continue;
-                    // For belt-to-belt: Conn1 is OUTPUT, so we need to find an INPUT
-                    if (bIsConveyorBelt && Conn->GetDirection() != EFactoryConnectionDirection::FCD_INPUT) continue;
-                    
-                    float Dist = FVector::Dist(SearchLoc, Conn->GetComponentLocation());
-                    if (Dist < NearestDist)
-                    {
-                        NearestDist = Dist;
-                        NearestConn = Conn;
-                    }
-                }
-            }
-            
-            if (NearestConn)
-            {
-                Conn1->SetConnection(NearestConn);
-                bMadeConnection = true;
-                UE_LOG(LogSmartHologram, Verbose, TEXT("⛓️ STACKABLE BELT: ✅ Wired %s.Conn1 → %s.%s (dist=%.1f)"),
-                    *Conveyor->GetName(), *NearestConn->GetOwner()->GetName(), *NearestConn->GetName(), NearestDist);
-            }
-        }
-        
-        // Do NOT call AddConveyor here — chain creation is deferred to the
-        // SFSubsystem timer which uses Respline (same pattern as Extend).
-        // Calling AddConveyor during ConfigureComponents risks double-add:
-        // vanilla's initialization may have already registered the belt,
-        // causing chain mismatch → crash in TickFactoryActors.
-        UE_LOG(LogSmartHologram, Verbose, TEXT("⛓️ STACKABLE BELT: %s wiring complete (connections=%s) - chain creation deferred to Respline"),
-            *Conveyor->GetName(), bMadeConnection ? TEXT("YES") : TEXT("NO"));
-        
-        // Early return for stackable belts - they don't use the clone ID system
-        return;
-    }
-    
-    UE_LOG(LogSmartHologram, VeryVerbose, TEXT("⛓️ BELT ConfigureComponents: %s (CloneId=%s) checking targets: Conn0→%s.%s, Conn1→%s.%s"),
-        *Conveyor->GetName(),
-        *HoloData->JsonCloneId,
-        *HoloData->Conn0TargetCloneId, *HoloData->Conn0TargetConnectorName.ToString(),
-        *HoloData->Conn1TargetCloneId, *HoloData->Conn1TargetConnectorName.ToString());
-    
-    // === CONN0 CONNECTION (EXTEND belts) ===
-    if (Conn0 && !Conn0->IsConnected() && !HoloData->Conn0TargetCloneId.IsEmpty())
-    {
-        // Look up the target buildable - either by clone ID or by source actor name
-        AFGBuildable* TargetBuildable = nullptr;
-        
-        // Check for "source:" prefix (lane segments connecting to existing buildables)
-        if (HoloData->Conn0TargetCloneId.StartsWith(TEXT("source:")))
-        {
-            // Extract the actor name after "source:"
-            FString SourceActorName = HoloData->Conn0TargetCloneId.Mid(7);  // Skip "source:"
-            TargetBuildable = ExtendService->GetSourceBuildableByName(SourceActorName);
-            
-            UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🛤️ LANE ConfigureComponents: Looking up source buildable '%s' → %s"),
-                *SourceActorName, TargetBuildable ? *TargetBuildable->GetName() : TEXT("NOT FOUND"));
-        }
-        else
-        {
-            TargetBuildable = ExtendService->GetBuiltActorByCloneId(HoloData->Conn0TargetCloneId);
-        }
-        
-        if (TargetBuildable)
-        {
-            // Find the target connector by name
-            UFGFactoryConnectionComponent* TargetConn = nullptr;
-            TArray<UFGFactoryConnectionComponent*> TargetConns;
-            TargetBuildable->GetComponents<UFGFactoryConnectionComponent>(TargetConns);
-            
-            for (UFGFactoryConnectionComponent* TC : TargetConns)
-            {
-                if (TC && TC->GetFName() == HoloData->Conn0TargetConnectorName)
-                {
-                    TargetConn = TC;
-                    break;
-                }
-            }
-            
-            if (TargetConn && !TargetConn->IsConnected())
-            {
-                Conn0->SetConnection(TargetConn);
-                bMadeConnection = true;
-                UE_LOG(LogSmartHologram, VeryVerbose, TEXT("⛓️ BELT ConfigureComponents: ✅ Connected %s.Conn0 → %s.%s"),
-                    *Conveyor->GetName(), *TargetBuildable->GetName(), *TargetConn->GetName());
-            }
-            else
-            {
-                UE_LOG(LogSmartHologram, VeryVerbose, TEXT("⛓️ BELT ConfigureComponents: Conn0 target %s.%s not found or already connected"),
-                    *TargetBuildable->GetName(), *HoloData->Conn0TargetConnectorName.ToString());
-            }
-        }
-        else
-        {
-            UE_LOG(LogSmartHologram, VeryVerbose, TEXT("⛓️ BELT ConfigureComponents: Conn0 target buildable '%s' not yet built"),
-                *HoloData->Conn0TargetCloneId);
-        }
-    }
-    
-    // === CONN1 CONNECTION ===
-    if (Conn1 && !Conn1->IsConnected() && !HoloData->Conn1TargetCloneId.IsEmpty())
-    {
-        // Look up the target buildable - either by clone ID or by source actor name
-        AFGBuildable* TargetBuildable = nullptr;
-        
-        // Check for "source:" prefix (lane segments connecting to existing buildables)
-        if (HoloData->Conn1TargetCloneId.StartsWith(TEXT("source:")))
-        {
-            // Extract the actor name after "source:"
-            FString SourceActorName = HoloData->Conn1TargetCloneId.Mid(7);  // Skip "source:"
-            TargetBuildable = ExtendService->GetSourceBuildableByName(SourceActorName);
-            
-            UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🛤️ LANE ConfigureComponents: Looking up source buildable '%s' → %s"),
-                *SourceActorName, TargetBuildable ? *TargetBuildable->GetName() : TEXT("NOT FOUND"));
-        }
-        else
-        {
-            TargetBuildable = ExtendService->GetBuiltActorByCloneId(HoloData->Conn1TargetCloneId);
-        }
-        
-        if (TargetBuildable)
-        {
-            // Find the target connector by name
-            UFGFactoryConnectionComponent* TargetConn = nullptr;
-            TArray<UFGFactoryConnectionComponent*> TargetConns;
-            TargetBuildable->GetComponents<UFGFactoryConnectionComponent>(TargetConns);
-            
-            for (UFGFactoryConnectionComponent* TC : TargetConns)
-            {
-                if (TC && TC->GetFName() == HoloData->Conn1TargetConnectorName)
-                {
-                    TargetConn = TC;
-                    break;
-                }
-            }
-            
-            if (TargetConn && !TargetConn->IsConnected())
-            {
-                Conn1->SetConnection(TargetConn);
-                bMadeConnection = true;
-                UE_LOG(LogSmartHologram, VeryVerbose, TEXT("⛓️ BELT ConfigureComponents: ✅ Connected %s.Conn1 → %s.%s"),
-                    *Conveyor->GetName(), *TargetBuildable->GetName(), *TargetConn->GetName());
-            }
-            else
-            {
-                UE_LOG(LogSmartHologram, VeryVerbose, TEXT("⛓️ BELT ConfigureComponents: Conn1 target %s.%s not found or already connected"),
-                    *TargetBuildable->GetName(), *HoloData->Conn1TargetConnectorName.ToString());
-            }
-        }
-        else
-        {
-            UE_LOG(LogSmartHologram, VeryVerbose, TEXT("⛓️ BELT ConfigureComponents: Conn1 target buildable '%s' not yet built"),
-                *HoloData->Conn1TargetCloneId);
-        }
-    }
-    
-    // === CHAIN REBUILD ===
-    // If we made any connections, manually add to subsystem then Remove→Add to rebuild
-    // The conveyor isn't in the subsystem yet during ConfigureComponents, so we:
-    // 1. Add it to subsystem (creates initial chain)
-    // 2. Remove it (clears chain)
-    // 3. Add it again (rebuilds chain with connections considered)
-    // This happens BEFORE factory tick starts, so it's safe.
-    //
-    // For LANE SEGMENTS connecting to source distributors:
-    // We need to walk from the clone distributor through all conveyors to the factory,
-    // then process them in order (Remove all, Add all) to build a unified chain.
-    if (bMadeConnection)
-    {
-        // NOTE: Chain actors may be NULL at this point because connected conveyors
-        // may not have chains yet. CreateChainActors() in SFWiringManifest will
-        // rebuild all chains after all wiring is complete.
-        AFGBuildableSubsystem* BuildableSubsystem = AFGBuildableSubsystem::Get(GetWorld());
-        if (BuildableSubsystem)
-        {
-            // Check if this is an EXTEND child belt (has HoloData from JSON with wiring targets)
-            // Stackable belts also have HoloData but should NOT skip AddConveyor
-            // EXTEND belts have Conn0TargetCloneId or Conn1TargetCloneId set for deferred wiring
-            bool bIsExtendBelt = HoloData != nullptr && 
-                (!HoloData->Conn0TargetCloneId.IsEmpty() || !HoloData->Conn1TargetCloneId.IsEmpty());
-            
-            if (bIsExtendBelt)
-            {
-                // Check if this is a lane segment (connects to source distributor)
-                bool bIsLaneSegment = HoloData->Conn0TargetCloneId.StartsWith(TEXT("source:")) ||
-                    HoloData->Conn1TargetCloneId.StartsWith(TEXT("source:"));
-                
-                UE_LOG(LogSmartHologram, VeryVerbose, TEXT("⛓️ BELT ConfigureComponents: %s - EXTEND %s (skipping AddConveyor - Respline handles chain creation better)"),
-                    *Conveyor->GetName(),
-                    bIsLaneSegment ? TEXT("LANE SEGMENT") : TEXT("BELT SEGMENT"));
-                // DON'T add EXTEND belts to subsystem here - CreateChainActors will use Respline
-            }
-            else
-            {
-                // Check if this is a stackable pole belt (deferred chain registration)
-                // Stackable belts are named "StackableBelt_N" and need to wait for all belts
-                // to be wired together before calling AddConveyor to create unified chains
-                FString BeltName = Conveyor->GetName();
-                bool bIsStackableBelt = BeltName.Contains(TEXT("StackableBelt_"));
-                
-                if (bIsStackableBelt)
-                {
-                    UE_LOG(LogSmartHologram, Verbose, TEXT("⛓️ BELT ConfigureComponents: %s - STACKABLE BELT - deferring AddConveyor until all connections made"),
-                        *Conveyor->GetName());
-                    // Don't call AddConveyor yet - SFSubsystem will call it after all belts are wired
-                }
-                else
-                {
-                    // Non-EXTEND, non-stackable belts - add to subsystem normally
-                    UE_LOG(LogSmartHologram, VeryVerbose, TEXT("⛓️ BELT ConfigureComponents: %s - adding to subsystem"),
-                        *Conveyor->GetName());
-                    
-                    BuildableSubsystem->AddConveyor(Conveyor);
-                    
-                    AFGConveyorChainActor* ChainActor = Conveyor->GetConveyorChainActor();
-                    UE_LOG(LogSmartHologram, VeryVerbose, TEXT("⛓️ BELT ConfigureComponents: %s - initial chain: %s (%d segments)"),
-                        *Conveyor->GetName(),
-                        ChainActor ? *ChainActor->GetName() : TEXT("NULL"),
-                        ChainActor ? ChainActor->GetNumChainSegments() : 0);
-                }
-            }
-        }
-    }
-    else
-    {
-        UE_LOG(LogSmartHologram, VeryVerbose, TEXT("⛓️ BELT ConfigureComponents: %s - no connections made (targets not yet built)"),
-            *Conveyor->GetName());
-    }
 }
 
 bool ASFConveyorBeltHologram::SetupUpgradeTarget(AFGBuildableConveyorBelt* InUpgradeTarget)
@@ -2012,31 +1543,17 @@ bool ASFConveyorBeltHologram::SetupUpgradeTarget(AFGBuildableConveyorBelt* InUpg
 
 void ASFConveyorBeltHologram::SetSnappedConnections(UFGFactoryConnectionComponent* Connection0, UFGFactoryConnectionComponent* Connection1)
 {
-    // Use reflection to access the private mSnappedConnectionComponents array
-    // This tells the vanilla system that the belt is already connected, preventing child pole spawning
-    
-    FProperty* SnappedProp = AFGConveyorBeltHologram::StaticClass()->FindPropertyByName(TEXT("mSnappedConnectionComponents"));
-    if (SnappedProp)
+    const auto* Property = FindFProperty<FObjectPropertyBase>(
+        AFGConveyorBeltHologram::StaticClass(), TEXT("mSnappedConnectionComponents"));
+    if (!Property || Property->ArrayDim != 2)
     {
-        // mSnappedConnectionComponents is a C-style array of 2 UFGFactoryConnectionComponent*
-        void* PropAddr = SnappedProp->ContainerPtrToValuePtr<void>(this);
-        UFGFactoryConnectionComponent** SnappedArray = static_cast<UFGFactoryConnectionComponent**>(PropAddr);
-        
-        if (SnappedArray)
-        {
-            SnappedArray[0] = Connection0;
-            SnappedArray[1] = Connection1;
-            
-            UE_LOG(LogSmartHologram, VeryVerbose, TEXT("🔧 EXTEND Belt: Set snapped connections on %s: [0]=%s, [1]=%s"),
-                *GetName(),
-                Connection0 ? *Connection0->GetName() : TEXT("nullptr"),
-                Connection1 ? *Connection1->GetName() : TEXT("nullptr"));
-        }
+        UE_LOG(LogSmartHologram, Warning, TEXT("Native belt snapped-connection schema is unavailable; selected peers were not modified."));
+        return;
     }
-    else
-    {
-        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartHologram, Warning, TEXT("🔧 EXTEND Belt: Failed to find mSnappedConnectionComponents property on %s"), *GetName());
-    }
+    // Respect reflected TObjectPtr storage in every target; raw-pointer array
+    // aliasing is not a valid native property assignment contract.
+    Property->SetObjectPropertyValue(Property->ContainerPtrToValuePtr<void>(this, 0), Connection0);
+    Property->SetObjectPropertyValue(Property->ContainerPtrToValuePtr<void>(this, 1), Connection1);
 }
 
 void ASFConveyorBeltHologram::SetHologramNudgeLocation()

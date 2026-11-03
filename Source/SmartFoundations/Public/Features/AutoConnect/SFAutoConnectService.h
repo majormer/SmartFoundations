@@ -58,6 +58,7 @@ struct FSFAutoConnectSkipSummary
 	 *  whose every in-range option failed even the generous facing filter while still pointing at
 	 *  the port */
 	int32 BeltsTooSteep = 0;
+	int32 BeltsMisalignedPorts = 0;
 	/** Belt connections vanilla rejected as an invalid routed shape (FGCDConveyorInvalidShape) */
 	int32 BeltsInvalidShape = 0;
 	/** Belt manifold links where a same-level continuation existed but the link failed (shape/ports taken) */
@@ -73,7 +74,7 @@ struct FSFAutoConnectSkipSummary
 	int32 HypertubesTooFar = 0;
 	int32 HypertubesTooClose = 0;
 
-	void ResetBeltBuilding() { BeltsTooSteep = 0; BeltsInvalidShape = 0; }
+	void ResetBeltBuilding() { BeltsTooSteep = 0; BeltsMisalignedPorts = 0; BeltsInvalidShape = 0; }
 	void ResetBeltManifold() { BeltLanesBlocked = 0; }
 	void ResetPipes() { PipesInvalidShape = 0; PipesTooFar = 0; PipesTooClose = 0; }
 	void ResetHypertubes() { HypertubesInvalidShape = 0; HypertubesTooFar = 0; HypertubesTooClose = 0; }
@@ -81,7 +82,7 @@ struct FSFAutoConnectSkipSummary
 	 *  clears everything on registration so a cancelled placement's skips (e.g. a Smart!
 	 *  Blueprint grid) can't bleed onto the next, unrelated buildable's HUD. */
 	void ResetAll() { ResetBeltBuilding(); ResetBeltManifold(); ResetPipes(); ResetHypertubes(); }
-	int32 BeltTotal() const { return BeltsTooSteep + BeltsInvalidShape + BeltLanesBlocked; }
+	int32 BeltTotal() const { return BeltsTooSteep + BeltsMisalignedPorts + BeltsInvalidShape + BeltLanesBlocked; }
 	int32 PipeTotal() const { return PipesInvalidShape + PipesTooFar + PipesTooClose; }
 	int32 HypertubeTotal() const { return HypertubesInvalidShape + HypertubesTooFar + HypertubesTooClose; }
 };

@@ -23,8 +23,8 @@ namespace SFConveyanceShape
 
 	/**
 	 * @return empty if span A->B is a valid shape for Kind under MaxLenCm; otherwise a localized,
-	 *         player-facing reason. Only BELTS get the 30-degree slope gate - pipes route at any
-	 *         angle and hypertubes climb steeply by design.
+	 *         player-facing reason. Inclination and curvature must be validated on the native routed spline,
+	 *         not inferred from the straight line between anchors.
 	 */
 	inline FString EvaluateSpan(const FVector& A, const FVector& B, EKind Kind, float MaxLenCm, int32 OneBasedIndex)
 	{
@@ -41,18 +41,7 @@ namespace SFConveyanceShape
 			Args.Add(FMath::RoundToInt(MaxLenCm / 100.0f));
 			return FText::Format(NSLOCTEXT("SmartFoundations", "Walk_Invalid_TooLong", "segment {0} too long ({1}m > {2}m)"), Args).ToString();
 		}
-		if (Kind == EKind::Belt)
-		{
-			const FVector Dir = (B - A).GetSafeNormal();
-			const float SlopeDeg = FMath::RadiansToDegrees(FMath::Asin(FMath::Abs(Dir.Z)));
-			if (SlopeDeg > 30.0f)
-			{
-				FFormatOrderedArguments Args;
-				Args.Add(OneBasedIndex);
-				Args.Add(FMath::RoundToInt(SlopeDeg));
-				return FText::Format(NSLOCTEXT("SmartFoundations", "Walk_Invalid_TooSteep", "segment {0} too steep ({1}deg > 30deg)"), Args).ToString();
-			}
-		}
+
 		return FString();
 	}
 }

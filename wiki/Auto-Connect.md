@@ -23,6 +23,10 @@ Smart! can preview belts between compatible distributors and from distributors t
 
 See the step-by-step [Lift-assisted Auto-Connect](Lift-Assisted-Auto-Connect) guide.
 
+### Distributor branches
+
+A splitter or merger branch must face the machine connection it serves. Smart! permits one branch per factory and does not send two branches toward the same side of a machine row. Opposed machine rows can use opposed branches. These rules also apply to Smart, Programmable and Priority variants. Rotate or reposition the distributor if the desired port faces away; an unused port facing away is normal and does not itself produce a warning.
+
 ### Lift-assisted machine connections
 
 Choose **Belts Only** (default), **Lift at Distributor** or **Lift at Building** in the Panel or global Belt Auto-Connect settings. The lift options handle the height difference while keeping the flat belt level at the machine connection. Use stagger and Z scaling to place splitters or mergers at different heights and distances along a Manufacturer line.
@@ -53,6 +57,10 @@ Connection settings are live: changing pipe tier, style or routing refreshes the
 ![A rotated Pipeline Wall Support grid with its connecting pipe preview.](https://raw.githubusercontent.com/wiki/majormer/SmartFoundations/images/v35/pipe-wall-rotation.png)
 
 A rotated Pipeline Wall Support grid with its connecting pipe preview.
+
+### Pipe junction branches
+
+Pipe junction branches follow the same facing and machine-side rules. T-junction and cross-junction ports retain their actual directions when rotated. Smart! skips an unsuitable branch while retaining valid connections. Route length and conveyor slope checks use the applicable native construction limits, rather than a universal 25 m pipe or 30-degree belt limit.
 
 ## Hyper Tube Auto-Connect
 
@@ -99,4 +107,4 @@ Some layouts still need a manual connection afterward. That is normal.
 
 ---
 
-_Last updated: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (release draft)_
+_Last updated: 2026-11-02 · Smart! v35.1.0 / Smart Camera v2.0.0 (release draft)_

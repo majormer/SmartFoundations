@@ -53,6 +53,10 @@ A separate switch for the seams between scaled copies of your **own** blueprints
 
 Power seam connections additionally require **Power Auto-Connect**. Each cable uses a matching power-pole socket with available capacity; internal wires and the two faces of a wall outlet count separately.
 
+## Blueprint Placement Safety Limit
+
+**Blueprint Placement Safety Limit** under Building Behavior is enabled by default. For a remote multiplayer client, it blocks a Blueprint grid estimated above 2,000 buildings, counting the original and all copies. You can disable this setting live to attempt a larger placement, with increased freeze, disconnect and failure risk. Normal material, placement and construction-payload checks still apply. Build in smaller sections if a placement is refused. No world reload is required.
+
 ## Blueprint Spacing Defaults
 
 Under **Building Behavior**, **Blueprint Default X/Y/Z Spacing (m)** choose the starting gap for each axis of a new blueprint build session. Each defaults to **1 m** and accepts **0-100 m**. Zero allows flush tiling; very short gaps may leave no room for belt or pipe seams.
@@ -121,4 +125,4 @@ In **Mods → Smart! Camera**, views appear automatically under their supplying 
 
 ---
 
-_Last updated: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (release draft)_
+_Last updated: 2026-11-02 · Smart! v35.1.0 / Smart Camera v2.0.0 (release draft)_

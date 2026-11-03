@@ -1,6 +1,7 @@
-// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
+﻿// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
 #include "Features/Restore/SFRestoreService.h"
+#include "JsonObjectConverter.h"
 #include "Features/Restore/SFRestoreTypes.h"
 #include "Subsystem/SFSubsystem.h"
 #include "Services/SFGridStateService.h"
@@ -12,6 +13,7 @@
 // Satisfactory includes
 #include "FGRecipe.h"
 #include "FGRecipeManager.h"
+#include "FGConstructDisqualifier.h"
 #include "Resources/FGBuildDescriptor.h"
 #include "Buildables/FGBuildableFactory.h"
 #include "Buildables/FGBuildableManufacturer.h"
@@ -22,6 +24,7 @@
 #include "Equipment/FGBuildGunBuild.h"
 
 // Engine includes
+#include "Engine/World.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
 #include "Misc/Base64.h"
@@ -458,6 +461,12 @@ namespace
 			Custom->SetNumberField(TEXT("patternRotation"), Holo.Customization.PatternRotation);
 			Obj->SetObjectField(TEXT("customization"), Custom);
 		}
+		if (Holo.DistributorSettings.bCaptured)
+		{
+			TSharedPtr<FJsonObject> Settings = MakeShared<FJsonObject>();
+			FJsonObjectConverter::UStructToJsonObject(FSFCapturedDistributorSettings::StaticStruct(), &Holo.DistributorSettings, Settings.ToSharedRef(), 0, 0);
+			Obj->SetObjectField(TEXT("distributorSettings"), Settings);
+		}
 		return Obj;
 	}
 
@@ -550,6 +559,11 @@ namespace
 			if ((*Child)->TryGetStringField(TEXT("overridePrimary"), ColorStr)) { OutHolo.Customization.OverridePrimary.InitFromString(ColorStr); }
 			if ((*Child)->TryGetStringField(TEXT("overrideSecondary"), ColorStr)) { OutHolo.Customization.OverrideSecondary.InitFromString(ColorStr); }
 			if ((*Child)->TryGetNumberField(TEXT("patternRotation"), Val)) OutHolo.Customization.PatternRotation = static_cast<uint8>(Val);
+		}
+		if (Obj->TryGetObjectField(TEXT("distributorSettings"), Child) && Child
+			&& !FJsonObjectConverter::JsonObjectToUStruct((*Child).ToSharedRef(), FSFCapturedDistributorSettings::StaticStruct(), &OutHolo.DistributorSettings, 0, 0))
+		{
+			OutHolo.DistributorSettings = FSFCapturedDistributorSettings();
 		}
 	}
 
@@ -816,9 +830,17 @@ bool USFRestoreService::ApplyPreset(const FSFRestorePreset& Preset, bool bInclud
 			*UnlockFailureReason);
 		return false;
 	}
+    if (Preset.bHasExtendTopology)
+    {
+        auto* Controller = Subsystem->GetLastController();
+        if (!Controller && Subsystem->GetWorld()) Controller = Cast<AFGPlayerController>(Subsystem->GetWorld()->GetFirstPlayerController());
+        auto* Character = Controller ? Cast<AFGCharacterPlayer>(Controller->GetPawn()) : nullptr;
+        if (!Controller || !Controller->IsLocalController() || !Character || !Character->IsLocallyControlled()) return false;
+    }
 
-	ActiveRestorePresetName = Preset.Name;
-	bRestoreSessionActive = Preset.bHasExtendTopology;
+	const FString PreviousPresetName = ActiveRestorePresetName;
+	const bool bPreviousSessionActive = bRestoreSessionActive;
+	const uint64 PreviousArmSerial = ArmSerial;
 	++ArmSerial;  // [#473] supersede any pending deferred value-apply from an earlier arm
 
 	// 1. Switch build gun to the preset's building
@@ -829,9 +851,37 @@ bool USFRestoreService::ApplyPreset(const FSFRestorePreset& Preset, bool bInclud
 			SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Warning,
 				TEXT("[SmartRestore] ApplyPreset: Failed to switch build gun to '%s'"),
 				*Preset.BuildingClassName);
+			ActiveRestorePresetName = PreviousPresetName;
+			bRestoreSessionActive = bPreviousSessionActive;
+			ArmSerial = PreviousArmSerial; // a refused selection does not cancel the previous arm
 			return false;
 		}
 	}
+
+    // Native equip transitions through the menu and can synchronously retire the
+    // previous build state. Publish the new arm only after that transition accepts.
+    ActiveRestorePresetName = Preset.Name;
+    bRestoreSessionActive = Preset.bHasExtendTopology;
+    if (auto* PreviousGun = RestoreBuildGun.Get())
+        PreviousGun->mOnStateChanged.RemoveDynamic(this, &USFRestoreService::OnRestoreBuildGunStateChanged);
+    if (auto* World = Subsystem->GetWorld()) World->GetTimerManager().ClearTimer(RestoreReplayTimer);
+    RestoreBuildGun.Reset();
+    bAwaitingBuildState = false;
+    if (bRestoreSessionActive)
+    {
+        auto* Controller = Subsystem->GetLastController();
+        if (!Controller && Subsystem->GetWorld()) Controller = Cast<AFGPlayerController>(Subsystem->GetWorld()->GetFirstPlayerController());
+        auto* Character = Controller ? Cast<AFGCharacterPlayer>(Controller->GetPawn()) : nullptr;
+        auto* Gun = Character ? Character->GetBuildGun() : nullptr;
+        if (!IsValid(Gun))
+        {
+            ClearActiveRestoreSession(TEXT("Restore build gun unavailable after recipe selection"));
+            return false;
+        }
+        RestoreBuildGun = Gun;
+        bAwaitingBuildState = !Gun->IsInState(EBuildGunState::BGS_BUILD);
+        Gun->mOnStateChanged.AddUniqueDynamic(this, &USFRestoreService::OnRestoreBuildGunStateChanged);
+    }
 
 	// 2. Apply counter state fields (only those with capture flag set). #427: the Grid Preset
 	// panel flow passes bIncludeCounterState=false - values go to the PANEL as pending and the
@@ -911,7 +961,19 @@ bool USFRestoreService::ApplyPreset(const FSFRestorePreset& Preset, bool bInclud
 	if (Preset.bHasExtendTopology)
 	{
 		TSharedRef<const FSFRestorePreset> PresetRef = MakeShared<FSFRestorePreset>(Preset);
-		ReplayExtendTopologyWhenHologramReady(PresetRef, 12, 2);
+        // Native equip/state entry completes after this UI callback. Polling here
+        // observes the old state and cancels the very arm ApplyPreset just accepted.
+        TWeakObjectPtr<USFRestoreService> WeakThis(this);
+        TWeakObjectPtr<UWorld> ExpectedWorld(Subsystem->GetWorld());
+        const uint64 ExpectedSerial = ArmSerial;
+        FTimerDelegate BeginReplay;
+        BeginReplay.BindLambda([WeakThis, PresetRef, ExpectedWorld, ExpectedSerial]()
+        {
+            if (WeakThis.IsValid())
+                WeakThis->ReplayExtendTopologyWhenHologramReady(PresetRef, ExpectedSerial,
+                    ExpectedWorld, nullptr, nullptr, 2);
+        });
+        if (ExpectedWorld.IsValid()) RestoreReplayTimer = ExpectedWorld->GetTimerManager().SetTimerForNextTick(BeginReplay);
 	}
 
 	SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Log, TEXT("[SmartRestore] Applied preset '%s'"), *Preset.Name);
@@ -1337,6 +1399,12 @@ bool USFRestoreService::ValidatePresetUnlocks(const FSFRestorePreset& Preset, FS
 
 void USFRestoreService::ClearActiveRestoreSession(const TCHAR* Reason)
 {
+	if (auto* Gun = RestoreBuildGun.Get())
+		Gun->mOnStateChanged.RemoveDynamic(this, &USFRestoreService::OnRestoreBuildGunStateChanged);
+	RestoreBuildGun.Reset();
+	bAwaitingBuildState = false;
+	if (Subsystem.IsValid())
+		if (auto* World = Subsystem->GetWorld()) World->GetTimerManager().ClearTimer(RestoreReplayTimer);
 	if (!bRestoreSessionActive && ActiveRestorePresetName.IsEmpty())
 	{
 		return;
@@ -1351,111 +1419,124 @@ void USFRestoreService::ClearActiveRestoreSession(const TCHAR* Reason)
 	ActiveRestorePresetName.Empty();
 }
 
-void USFRestoreService::ReplayExtendTopologyWhenHologramReady(TSharedRef<const FSFRestorePreset> Preset, int32 AttemptsRemaining, int32 SettleTicksRemaining)
+bool USFRestoreService::IsAwaitingBuildState(const AFGBuildGun* BuildGun) const
 {
-	if (!bRestoreSessionActive || ActiveRestorePresetName != Preset->Name)
-	{
-		SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
-			TEXT("[SmartRestore] ReplayExtendTopologyWhenHologramReady aborted: preset='%s' activePreset='%s' active=%d"),
-			*Preset->Name,
-			*ActiveRestorePresetName,
-			bRestoreSessionActive ? 1 : 0);
-		return;
-	}
+    return bRestoreSessionActive && bAwaitingBuildState && IsValid(BuildGun)
+        && RestoreBuildGun.Get() == BuildGun && Subsystem.IsValid()
+        && BuildGun->GetWorld() == Subsystem->GetWorld();
+}
 
-	if (!Subsystem.IsValid())
-	{
-		SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Warning,
-			TEXT("[SmartRestore] ReplayExtendTopologyWhenHologramReady: Subsystem invalid for preset '%s'"),
-			*Preset->Name);
-		return;
-	}
+void USFRestoreService::OnRestoreBuildGunStateChanged(EBuildGunState NewState)
+{
+    if (!bRestoreSessionActive) return;
+    if (NewState == EBuildGunState::BGS_BUILD) bAwaitingBuildState = false;
+    else if (Subsystem.IsValid()) Subsystem->AbortRestoreSession(TEXT("Native build gun changed state"));
+}
 
-	Subsystem->PollForActiveHologram();
+void USFRestoreService::BeginDestroy()
+{
+    if (auto* Gun = RestoreBuildGun.Get())
+        Gun->mOnStateChanged.RemoveDynamic(this, &USFRestoreService::OnRestoreBuildGunStateChanged);
+    if (Subsystem.IsValid())
+        if (auto* World = Subsystem->GetWorld(); World && !World->bIsTearingDown)
+            World->GetTimerManager().ClearTimer(RestoreReplayTimer);
+    RestoreBuildGun.Reset();
+    Super::BeginDestroy();
+}
 
-	USFExtendService* ExtendSvc = Subsystem->GetExtendService();
-	AFGHologram* ActiveHologram = Subsystem->GetActiveHologram();
-	if (ExtendSvc && IsActiveHologramReadyForPreset(ActiveHologram, *Preset))
-	{
-		if (SettleTicksRemaining > 0)
-		{
-			UWorld* World = Subsystem->GetWorld();
-			if (!World)
-			{
-				SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Warning,
-					TEXT("[SmartRestore] ReplayExtendTopologyWhenHologramReady: World null while settling preset '%s'"),
-					*Preset->Name);
-				return;
-			}
+void USFRestoreService::ReplayExtendTopologyWhenHologramReady(
+    TSharedRef<const FSFRestorePreset> Preset, uint64 ExpectedSerial,
+    TWeakObjectPtr<UWorld> ExpectedWorld, TWeakObjectPtr<AFGHologram> LastAttemptedRoot,
+    TWeakObjectPtr<AFGHologram> SettlingRoot, int32 SettleTicksRemaining)
+{
+    // One watcher belongs to the immutable module arm, not to a transient vanilla
+    // preview actor. A new arm (including the same preset name) supersedes it.
+    const auto IsCurrentArm = [&]()
+    {
+        return Subsystem.IsValid() && ExpectedWorld.IsValid()
+            && Subsystem->GetWorld() == ExpectedWorld.Get() && ArmSerial == ExpectedSerial
+            && bRestoreSessionActive && ActiveRestorePresetName == Preset->Name;
+    };
+    if (!IsCurrentArm()) return;
+    auto* Gun = RestoreBuildGun.Get();
+    if (!IsValid(Gun) || Gun->GetWorld() != ExpectedWorld.Get())
+    {
+        ClearActiveRestoreSession(TEXT("Restore build gun generation changed"));
+        return;
+    }
+    if (Gun->IsInState(EBuildGunState::BGS_BUILD)) bAwaitingBuildState = false;
+    // A delayed native equip is still entering Build, rather than leaving it.
+    // Explicit native state changes and Unequipped cancel through their own callbacks.
+    if (!bAwaitingBuildState) Subsystem->PollForActiveHologram();
+    if (!IsCurrentArm()) return; // registration can end an incompatible module session
 
-			TWeakObjectPtr<USFRestoreService> WeakThis(this);
-			FTimerDelegate SettleDelegate;
-			SettleDelegate.BindLambda([WeakThis, Preset, AttemptsRemaining, SettleTicksRemaining]()
-			{
-				if (WeakThis.IsValid())
-				{
-					WeakThis->ReplayExtendTopologyWhenHologramReady(Preset, AttemptsRemaining, SettleTicksRemaining - 1);
-				}
-			});
-			World->GetTimerManager().SetTimerForNextTick(SettleDelegate);
-			SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
-				TEXT("[SmartRestore] ReplayExtendTopologyWhenHologramReady: Settling active hologram for preset '%s' ticksRemaining=%d activeHologram=%s recipe=%s"),
-				*Preset->Name,
-				SettleTicksRemaining,
-				*GetNameSafe(ActiveHologram),
-				*GetNameSafe(ActiveHologram ? ActiveHologram->GetRecipe() : nullptr));
-			return;
-		}
+    AFGHologram* Root = Subsystem->GetActiveHologram();
+    USFExtendService* Extend = Subsystem->GetExtendService();
+    TArray<TSubclassOf<UFGConstructDisqualifier>> Disqualifiers;
+    if (IsValid(Root)) Root->GetConstructDisqualifiers(Disqualifiers);
+    const bool NativeFrameReady = !Disqualifiers.Contains(UFGCDInitializing::StaticClass())
+        && !Disqualifiers.Contains(UFGCDInvalidAimLocation::StaticClass());
+    const bool Ready = !bAwaitingBuildState && Extend && !Extend->HasPendingPostBuildWiring()
+        && IsActiveHologramReadyForPreset(Root, *Preset)
+        && Root->HasActorBegunPlay() && !Root->IsActorBeingDestroyed()
+        && Root->GetWorld() == ExpectedWorld.Get() && !Root->IsHidden() && NativeFrameReady;
+    bool Settling = false;
+    if (Ready && Root != LastAttemptedRoot.Get())
+    {
+        if (Root != SettlingRoot.Get())
+        {
+            SettlingRoot = Root;
+            SettleTicksRemaining = 2;
+        }
+        if (SettleTicksRemaining > 0)
+        {
+            --SettleTicksRemaining;
+            Settling = true;
+        }
+        else
+        {
+            Subsystem->UpdateCounterState(BuildCounterStateFromPreset(Subsystem->GetCounterState(), *Preset));
+            if (!IsCurrentArm()) return;
+            // RegisterActiveHologram resets these per-build values during cold entry.
+            if (Preset->CaptureFlags.bAutoConnect)
+                Subsystem->SetAutoConnectRuntimeSettingsFromPreset(Preset->AutoConnect);
+            const bool Applied = Extend->ReplayRestoreCloneTopology(Root, Preset->ExtendCloneTopology);
+            if (!IsCurrentArm()) return; // Native spawn callbacks can supersede this arm.
+            if (!Applied)
+            {
+                Extend->ClearRestoredCloneTopologySession(TEXT("Restore preview could not materialize the complete topology"));
+                ClearActiveRestoreSession(TEXT("Restore preview materialization failed"));
+                UE_LOG(LogSmartFoundations, Warning, TEXT("Restore preset '%s' could not create its preview; no construction was submitted"), *Preset->Name);
+                return;
+            }
+            LastAttemptedRoot = Root;
+            SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
+                TEXT("[SmartRestore] Module preview arm=%llu parent=%s applied=%d"),
+                ExpectedSerial, *GetNameSafe(Root), Applied ? 1 : 0);
+        }
+    }
+    else if (!Ready)
+    {
+        SettlingRoot.Reset();
+        SettleTicksRemaining = 2;
+    }
 
-		Subsystem->UpdateCounterState(BuildCounterStateFromPreset(Subsystem->GetCounterState(), *Preset));
-		const bool bReplaySucceeded = ExtendSvc->ReplayRestoreCloneTopology(ActiveHologram, Preset->ExtendCloneTopology);
-		SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
-			TEXT("[SmartRestore] ReplayExtendTopologyWhenHologramReady: preset='%s' success=%d activeHologram=%s recipe=%s childHolograms=%d"),
-			*Preset->Name,
-			bReplaySucceeded ? 1 : 0,
-			*GetNameSafe(ActiveHologram),
-			*GetNameSafe(ActiveHologram ? ActiveHologram->GetRecipe() : nullptr),
-			Preset->ExtendCloneTopology.ChildHolograms.Num());
-		return;
-	}
-
-	if (AttemptsRemaining <= 0)
-	{
-		SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Warning,
-			TEXT("[SmartRestore] ReplayExtendTopologyWhenHologramReady: Gave up for preset '%s' (ExtendSvc=%s, ActiveHologram=%s)"),
-			*Preset->Name,
-			ExtendSvc ? TEXT("valid") : TEXT("null"),
-			ActiveHologram ? TEXT("valid") : TEXT("null"));
-		return;
-	}
-
-	UWorld* World = Subsystem->GetWorld();
-	if (!World)
-	{
-		SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Warning,
-			TEXT("[SmartRestore] ReplayExtendTopologyWhenHologramReady: World null for preset '%s'"),
-			*Preset->Name);
-		return;
-	}
-
-	SF_RESTORE_DIAGNOSTIC_LOG(LogSmartFoundations, Log,
-		TEXT("[SmartRestore] ReplayExtendTopologyWhenHologramReady: Waiting for matching active hologram for preset '%s' attemptsRemaining=%d activeHologram=%s recipe=%s expectedRecipe=%s"),
-		*Preset->Name,
-		AttemptsRemaining,
-		*GetNameSafe(ActiveHologram),
-		*GetNameSafe(ActiveHologram ? ActiveHologram->GetRecipe() : nullptr),
-		*Preset->BuildingClassName);
-
-	TWeakObjectPtr<USFRestoreService> WeakThis(this);
-	FTimerDelegate RetryDelegate;
-	RetryDelegate.BindLambda([WeakThis, Preset, AttemptsRemaining, SettleTicksRemaining]()
-	{
-		if (WeakThis.IsValid())
-		{
-			WeakThis->ReplayExtendTopologyWhenHologramReady(Preset, AttemptsRemaining - 1, SettleTicksRemaining);
-		}
-	});
-	World->GetTimerManager().SetTimerForNextTick(RetryDelegate);
+    if (!IsCurrentArm()) return;
+    TWeakObjectPtr<USFRestoreService> WeakThis(this);
+    FTimerDelegate Next;
+    Next.BindLambda([WeakThis, Preset, ExpectedSerial, ExpectedWorld, LastAttemptedRoot, SettlingRoot, SettleTicksRemaining]()
+    {
+        if (WeakThis.IsValid())
+            WeakThis->ReplayExtendTopologyWhenHologramReady(Preset, ExpectedSerial, ExpectedWorld,
+                LastAttemptedRoot, SettlingRoot, SettleTicksRemaining);
+    });
+    // Native aim may remain invalid for an arbitrary time. Keep the arm alive
+    // without a per-frame retry loop; only a newly observed parent settles at tick rate.
+    if (Settling) RestoreReplayTimer = ExpectedWorld->GetTimerManager().SetTimerForNextTick(Next);
+    else
+    {
+        ExpectedWorld->GetTimerManager().SetTimer(RestoreReplayTimer, Next, 0.1f, false);
+    }
 }
 
 // ============================================================================

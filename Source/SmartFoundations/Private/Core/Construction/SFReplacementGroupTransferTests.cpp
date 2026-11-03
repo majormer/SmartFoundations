@@ -62,6 +62,14 @@ bool FSFReplacementGroupTransferTest::RunTest(const FString& Parameters)
 	}
 	TestFalse(TEXT("Success releases lifetime hold"), FSFReplacementGroupTransfer::IsGroupHeld(Group));
 	TestNull(TEXT("Lifespan-retired original no longer belongs to group"), Old->GetBlueprintProxy());
+	Old->SetBlueprintProxy(Group);
+	{
+		FSFReplacementGroupTransfer FailedRetirement(Old, true, true);
+		FailedRetirement.Apply(New);
+	}
+	TestTrue(TEXT("Conveyor failed retirement retains a live original in its exact group"), Old->GetBlueprintProxy() == Group);
+	TestTrue(TEXT("Paid replacement remains in that group after partial application"), New->GetBlueprintProxy() == Group);
+	TestFalse(TEXT("Partial application releases only the scoped group hold"), FSFReplacementGroupTransfer::IsGroupHeld(Group));
 	Old->SetBlueprintProxy(nullptr);
 	New->SetBlueprintProxy(nullptr);
 	{

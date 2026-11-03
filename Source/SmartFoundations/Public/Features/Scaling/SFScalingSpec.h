@@ -11,6 +11,7 @@
 #include "ItemAmount.h"                    // FItemAmount (belt plan cost)
 #include "Features/PowerAutoConnect/Net/SFPowerWireEndpoint.h"
 #include "Features/AutoConnect/Net/SFLiftRoutePlan.h"
+#include "Features/AutoConnect/Net/SFConveyorPlanEndpoint.h"
 #include "Features/AutoConnect/Net/SFBlueprintRailPlan.h"
 #include "Features/AutoConnect/Net/SFBlueprintVehiclePlan.h"
 #include "Features/AutoConnect/Net/SFBlueprintLiftPlan.h"
@@ -97,6 +98,13 @@ struct SMARTFOUNDATIONS_API FSFConduitPlanEntry
 	UPROPERTY()
 	FSFPowerWireEndpoint PowerEnd;
 
+    /** Belt peers survive client preview stripping and native Blueprint duplicate cleanup. */
+    UPROPERTY() bool bExactConveyorEndpoints = false;
+    UPROPERTY() FSFConveyorPlanEndpoint ConveyorFrom;
+    UPROPERTY() FSFConveyorPlanEndpoint ConveyorTo;
+    /** Native per-entry quote; authority independently recomputes generated belt price. */
+    UPROPERTY() TArray<FItemAmount> Cost;
+
 	/** Pipe only: floor-hole (passthrough) pipe - replay leaves the junction-connector registry
 	 *  field null so the floor-hole Construct branch (passthrough snap registration) runs. */
 	UPROPERTY()
@@ -109,6 +117,20 @@ struct SMARTFOUNDATIONS_API FSFConduitPlanEntry
 	/** Stackable kinds: position in the run (registry StackableBeltIndex / StackablePipeIndex). */
 	UPROPERTY()
 	int32 StackIndex = -1;
+
+    bool HasBoundedConveyorIntent() const
+    {
+        if (Kind != ESFConduitPlanKind::Belt && Kind != ESFConduitPlanKind::StackableBelt) return true;
+        if (!bExactConveyorEndpoints || !BuildClass || !Recipe || !ConveyorFrom.IsBounded() || !ConveyorTo.IsBounded()
+            || (Kind == ESFConduitPlanKind::Belt && (!ConveyorFrom.bPresent || !ConveyorTo.bPresent
+                || ConveyorFrom.IsPlacementAnchor() || ConveyorTo.IsPlacementAnchor()))
+            || Location.ContainsNaN() || Rotation.ContainsNaN() || SplinePoints.Num() < 2 || SplinePoints.Num() > 64
+            || Cost.IsEmpty() || Cost.Num() > 16) return false;
+        for (const auto& Point : SplinePoints)
+            if (Point.Location.ContainsNaN() || Point.ArriveTangent.ContainsNaN() || Point.LeaveTangent.ContainsNaN()) return false;
+        for (const auto& Item : Cost) if (!Item.ItemClass || Item.Amount < 0 || Item.Amount > 100000) return false;
+        return true;
+    }
 };
 
 USTRUCT()

@@ -6,6 +6,7 @@
 class AFGHologram;
 class AController;
 class USceneComponent;
+struct FNetConstructionID;
 
 enum class ESFWalkOriginSelection : uint8 { NewWalk, Existing, Rejected };
 
@@ -18,7 +19,12 @@ namespace SFWalkExistingOrigin
         ESFWalkConveyanceType Type, UWorld* World);
     SMARTFOUNDATIONS_API void SetAnchorPose(AFGHologram* Hologram, const FTransform& Pose);
     SMARTFOUNDATIONS_API bool IsNativeStartPosition(AFGHologram* Span, const FVector& Position);
+    /** Read before native construction can retire the preview registry. */
+    SMARTFOUNDATIONS_API USceneComponent* GetSelectedStart(AFGHologram* Span);
     SMARTFOUNDATIONS_API bool ConnectNativeStart(AFGHologram* Span, AFGBuildable* BuiltSpan);
+    /** Belt success means exact links retained for native-phase settlement, not connected yet. */
+    SMARTFOUNDATIONS_API bool ConnectNativeStart(AFGHologram* Span, AFGBuildable* BuiltSpan,
+        const FNetConstructionID* ConstructionId);
     SMARTFOUNDATIONS_API bool ValidateGeometry(const FSFWalkCommitSpec& Spec, const FVector& ConnectorOffset);
     SMARTFOUNDATIONS_API bool Validate(const FSFWalkCommitSpec& Spec, UWorld* World);
     SMARTFOUNDATIONS_API bool TryConnectorOffset(AFGHologram* Seed, ESFWalkConveyanceType Type, FVector& Offset);

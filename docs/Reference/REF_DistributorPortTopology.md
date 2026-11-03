@@ -18,6 +18,26 @@ Port identity is the component's stable asset name, such as `Input1` or `Connect
 
 Actor rotation changes each port's world transform but does not change its name or actor-local role.
 
+## Auto-Connect branch ownership
+
+Each splitter or merger may have at most one generated building branch to a particular factory actor.
+Different input/output components on that same factory do not make separate branch destinations.
+Apply this rule during initial assignment and route fallback, alongside exclusive connector ownership.
+Both lateral sides may serve different factories on opposing banks, preserving two-sided manifolds.
+Factory-branch selection compares the actual connector normals as well as each endpoint's direction
+of travel. Sideways port pairs are excluded even if a native curve could connect them. A second
+branch must lie across both destination-facing planes from the first; different factories on the
+same side do not qualify. Belt bank classification uses the horizontal plane so vertical stacking
+cannot manufacture another side. Pipe branches retain their three-dimensional connection frame.
+Cross-junction Side B also excludes Side A's factory actor; T-junctions retain their named-port map
+and do not gain a nonexistent opposite branch. These are automatic pairing rules, not restrictions
+on manually routed native belts or pipes. Distributor-to-distributor
+continuations remain separate from building branches.
+
+The assignment and retry reservations are maintained in `SFAutoConnectOrchestrator::EvaluateConnections`.
+Without the actor-pair reservation, two free factory ports can consume both distributor sides even though
+connector exclusivity passes, leaving an unsuitable manifold layout.
+
 ## Coordinate Convention
 
 All positions below are relative to the distributor actor's root transform:
@@ -42,6 +62,27 @@ World-facing labels are intentionally omitted. A rotated distributor retains the
 | Priority Merger | `Input1` | `Output1` | `Input2` | `Input3` |
 
 Every listed connector is 100 cm from the actor origin on its listed local axis.
+
+### Lift-mounted conveyor splitters
+
+The floor-mounted port table does not describe the lift-mounted variants. On CL 513885,
+`Build_ConveyorAttachmentSplitterLift_C` exposes `Output1`, `Output2`, `BottomConnection`, and
+`TopConnection`. Its hologram/template has two output roles and two unresolved `FCD_ANY` roles.
+Native `AFGConveyorAttachmentHologram::ConfigureComponents` resolves the vertical roles from its
+own snapped conveyor and offset before the built actor enters `BeginPlay`.
+
+Copying the build class, recipe, transform, and visible components into a generic factory hologram
+does not preserve that construction contract. A generic scaled child was observed to reach
+`AFGBuildableAttachmentSplitter::BeginPlay` with no input, triggering the assertion
+`mInputs.Num() >= 1` at `FGBuildableAttachmentSplitter.cpp:33`. This failure is established; do not
+repeat the known crashing construction path to verify it again.
+
+Each attached copy must resolve and validate its own native attachment context before construction
+and payment, then use native component configuration and transport splitting. A copy must not inherit
+the parent's live snapped-conveyor pointer, invent a vertical input direction, or become a freestanding
+lift-mounted splitter when its destination has no suitable lift. Reject a batch whose native contexts
+cannot be preserved. Other lift-mounted distributor variants likewise require their own native roles;
+the floor-mounted table is not a fallback for them.
 
 ### Important T-Junction Difference
 

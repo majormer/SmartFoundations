@@ -9,6 +9,7 @@
 #include "Features/AutoConnect/SFAutoConnectService.h"
 #include "Features/PipeAutoConnect/SFPipeConnectorFinder.h"
 #include "Shared/Conduits/SFDistributorTopology.h"
+#include "Shared/Conduits/SFFactoryBranchPolicy.h"
 #include "Data/SFBuildableSizeRegistry.h"
 #include "Buildables/FGBuildable.h"
 #include "Buildables/FGBuildableFactory.h"
@@ -701,7 +702,7 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 					}
 					if (JunctionDistSq < BestJunctionDistSq)
 					{
-						// ANGLE VALIDATION: Check both junction and building connector angles (30° max)
+						// Pair selection checks facing; native routing decides physical curve validity.
 						FVector JunctionPos = JunctionConn->GetComponentLocation();
 						FVector BuildingConnPos = BuildingConn->GetComponentLocation();
 						FVector JunctionToBuildingDir = (BuildingConnPos - JunctionPos).GetSafeNormal();
@@ -712,7 +713,8 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 						FVector JunctionNormal = JunctionConn->GetConnectorNormal();
 						FVector BuildingNormal = BuildingConn->GetConnectorNormal();
 						float NormalDotProduct = FVector::DotProduct(JunctionNormal, BuildingNormal);
-						bool bNormalsOpposite = (NormalDotProduct < 0.0f);
+						bool bNormalsOpposite = SFFactoryBranchPolicy::FacesOpposite(JunctionNormal, BuildingNormal,
+                            USFAutoConnectService::FACING_SANITY_ANGLE, false);
 						
 						// DIRECTION CHECK: Building connector must face TOWARD the junction (not away)
 						// The building connector's normal should point toward the junction location
@@ -1228,6 +1230,17 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 								AFGHologram** Claim = SharedReservedConnectors->Find(BuildingConn);
 								if (Claim && *Claim != ParentJunctionHologram) continue;
 							}
+                            // Side B must serve another factory on the opposing bank. A second
+                            // free socket on Side A's factory is not a second destination.
+                            if (Building->IsA<AFGBuildableFactory>() && BestBuildingConnector->GetOwner()->IsA<AFGBuildableFactory>())
+                            {
+                                if (Building == BestBuildingConnector->GetOwner()
+                                    || !SFFactoryBranchPolicy::OpposingBanks(ParentJunctionHologram->GetActorLocation(),
+                                        BestBuildingConnector->GetComponentLocation(), BestBuildingConnector->GetConnectorNormal(),
+                                        BuildingConn->GetComponentLocation(), BuildingConn->GetConnectorNormal(), false))
+                                    continue;
+                            }
+
 							// Skip the Side A building connector
 							if (BuildingConn == BestBuildingConnector) continue;
 							
@@ -1262,7 +1275,8 @@ void FSFPipeAutoConnectManager::ProcessPipeJunctions(
 								FVector JNorm = OppositeJunctionConn->GetConnectorNormal();
 								FVector BNorm = BuildingConn->GetConnectorNormal();
 								
-								bool bNormalsOpp = (FVector::DotProduct(JNorm, BNorm) < 0.0f);
+								bool bNormalsOpp = SFFactoryBranchPolicy::FacesOpposite(JNorm, BNorm,
+                                    USFAutoConnectService::FACING_SANITY_ANGLE, false);
 								bool bBFaces = (FVector::DotProduct(BNorm, (OppositeConnPos - BuildingConnPos).GetSafeNormal()) > 0.5f);
 								bool bJFaces = (FVector::DotProduct(JNorm, J2B) > 0.5f);
 								bool bJAngle = FSFPipeConnectorFinder::IsConnectionAngleValid(OppositeJunctionConn, J2B, USFAutoConnectService::FACING_SANITY_ANGLE);

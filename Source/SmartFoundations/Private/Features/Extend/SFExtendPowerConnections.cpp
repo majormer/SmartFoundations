@@ -37,8 +37,9 @@ float SFExtendPowerConnections::MaxWireLength(const AFGBuildableWire* Wire,
 }
 
 bool SFExtendPowerConnections::Connect(UWorld* World, UClass* WireClass,
-    UFGCircuitConnectionComponent* From, UFGCircuitConnectionComponent* To)
+    UFGCircuitConnectionComponent* From, UFGCircuitConnectionComponent* To, AFGBuildableWire** OutAttemptedWire)
 {
+    if (OutAttemptedWire) *OutAttemptedWire = nullptr;
     if (!World || !WireClass || !IsValid(From) || !IsValid(To) || From == To
         || !From->GetOwner()->HasAuthority() || !To->GetOwner()->HasAuthority()) return false;
     if (!WireClass->IsChildOf(AFGBuildableWire::StaticClass())) return false;
@@ -50,6 +51,7 @@ bool SFExtendPowerConnections::Connect(UWorld* World, UClass* WireClass,
     if (Peers.Contains(To) || From->GetNumFreeConnections() <= 0 || To->GetNumFreeConnections() <= 0) return false;
     AFGBuildableWire* Wire = SFWireDesigner::SpawnWireForEndpoints(
         World, WireClass, From->GetComponentLocation(), From, To);
+    if (OutAttemptedWire) *OutAttemptedWire = Wire;
     if (!Wire) return false;
     if (Wire->Connect(From, To)) return true;
     // Connect can register one end before failing. Destroy alone leaves a saved dangling wire.

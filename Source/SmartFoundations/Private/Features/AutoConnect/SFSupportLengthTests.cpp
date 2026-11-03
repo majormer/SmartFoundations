@@ -1,6 +1,7 @@
 // Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
 #include "Shared/Conduits/SFConveyanceLength.h"
+#include "Shared/Conduits/SFConveyanceShape.h"
 #include "Holograms/Logistics/SFConveyorBeltHologram.h"
 #include "Holograms/Logistics/SFPipelineHologram.h"
 #include "Subsystem/SFPositionCalculator.h"
@@ -49,6 +50,18 @@ bool FSFSupportNativeLengthTest::RunTest(const FString& Parameters)
 	TestTrue(TEXT("Lower native configuration is preserved"), SFConveyanceLength::ExceedsNativeLimit(5600.0, FConfiguredHologram{5500.0f}));
 	TestFalse(TEXT("Higher native configuration is preserved"), SFConveyanceLength::ExceedsNativeLimit(5650.0, FConfiguredHologram{5700.0f}));
 	TestTrue(TEXT("No tolerance is added above a configured limit"), SFConveyanceLength::ExceedsNativeLimit(5700.001, FConfiguredHologram{5700.0f}));
+    // The chord filter must leave slope/curvature to the native routed spline.
+    for (float Degrees : {31.0f, 35.0f, 60.0f})
+    {
+        const float Radians = FMath::DegreesToRadians(Degrees);
+        const FVector End(1000.0f * FMath::Cos(Radians), 0, 1000.0f * FMath::Sin(Radians));
+        TestTrue(TEXT("Chord slope does not override native routing"),
+            SFConveyanceShape::EvaluateSpan(FVector::ZeroVector, End,
+                SFConveyanceShape::EKind::Belt, Belt.GetMaxSplineLength(), 1).IsEmpty());
+    }
+    TestFalse(TEXT("Chord filter still rejects a native overlength"),
+        SFConveyanceShape::EvaluateSpan(FVector::ZeroVector, FVector(Belt.GetMaxSplineLength() + 1, 0, 0),
+            SFConveyanceShape::EKind::Belt, Belt.GetMaxSplineLength(), 1).IsEmpty());
 	return true;
 }
 #endif

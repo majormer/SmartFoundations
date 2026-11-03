@@ -9,10 +9,13 @@
 #include "FGConstructDisqualifier.h"
 #include "FGFactoryConnectionComponent.h"
 #include "UObject/UnrealType.h"
+#include "UObject/StrongObjectPtr.h"
+#include "Core/Construction/SFConveyorConstructionLinks.h"
 
 bool ASFLiftRouteProxyHologram::Capture(AFGHologram* Native, TSharedPtr<FSFLiftRouteNativePreview> InNativePreview,
     UFGFactoryConnectionComponent* From, UFGFactoryConnectionComponent* To, bool bLift)
 {
+    Built.Reset();
     NativePreview = InNativePreview;
     if (NativePreview) NativePreview->RegisterProxy(this);
     RouteFrom = From;
@@ -147,17 +150,41 @@ TArray<FItemAmount> ASFLiftRouteProxyHologram::GetCost(bool IncludeChildren) con
 
 AActor* ASFLiftRouteProxyHologram::Construct(TArray<AActor*>& OutChildren, FNetConstructionID ID)
 {
+    TStrongObjectPtr<ASFLiftRouteProxyHologram> KeepPreview(this);
+    if (!FSFConveyorConstructionLinks::Prepare(this, ID)) return nullptr;
+    const auto Preview = NativePreview;
+    TArray<TWeakObjectPtr<AFGHologram>> RouteChildren;
+    for (auto* Child : GetHologramChildren()) if (IsValid(Child) && !Child->IsDisabled()) RouteChildren.Add(Child);
     // Preview validators are reusable. Native construction gets a fresh cell so
     // per-construction state cannot leak into another route or future preview.
-    auto Construction = bReady && NativePreview ? NativePreview->CreateConstructionPreview() : nullptr;
+    auto Construction = bReady && Preview ? Preview->CreateConstructionPreview() : nullptr;
     AFGHologram* Native = Construction ? Construction->Prepare(this) : nullptr;
-    if (!Native) { if (NativePreview) NativePreview->Hide(); return nullptr; }
+    if (!Native)
+    {
+        FSFConveyorConstructionLinks::RejectPrepared(this, ID, TEXT("native_lift_route_cell_preparation_failed"));
+        if (Preview) Preview->Hide(); return nullptr;
+    }
     AActor* Result = Native->Construct(OutChildren, ID);
     Built = Cast<AFGBuildable>(Result);
-    if (Result) for (auto* Child : GetHologramChildren()) if (IsValid(Child) && !Child->IsDisabled())
-        if (auto* BuiltChild = Child->Construct(OutChildren, ID)) OutChildren.Add(BuiltChild);
-    NativePreview->Hide();
+    BuiltPlayerId = ID.NetPlayerID; BuiltServerId = ID.Server_ID; BuiltClientId = ID.Client_ID;
+    bool Complete = Result != nullptr;
+    if (Result) for (const auto& Weak : RouteChildren)
+    {
+        auto* Child = Weak.Get();
+        auto* BuiltChild = IsValid(Child) && !Child->IsActorBeingDestroyed() && !Child->IsDisabled()
+            ? Child->Construct(OutChildren, ID) : nullptr;
+        if (!BuiltChild) { Complete = false; break; }
+        OutChildren.Add(BuiltChild);
+    }
+    if (!Complete) FSFConveyorConstructionLinks::RejectPrepared(this, ID, TEXT("native_lift_route_partial_materialization"));
+    if (Preview) Preview->Hide();
     return Result;
+}
+
+UFGFactoryConnectionComponent* ASFLiftRouteProxyHologram::ResolveBuiltPortForConstruction(FName Name, const FNetConstructionID& Id) const
+{
+    return Id.NetPlayerID == BuiltPlayerId && Id.Server_ID == BuiltServerId && Id.Client_ID == BuiltClientId
+        ? ResolveBuiltPort(Name) : nullptr;
 }
 
 UFGFactoryConnectionComponent* ASFLiftRouteProxyHologram::ResolveBuiltPort(FName Name) const

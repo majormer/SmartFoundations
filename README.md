@@ -111,6 +111,8 @@ See [LICENSE.md](LICENSE.md) for the full terms.
 
 Bug fixes, building support, localization, and other improvements are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) before submitting a pull request, especially the contribution license terms.
 
+Developer references, native conveyor research, and implementation plans are indexed in [the repository documentation](docs/README.md).
+
 ## Governance
 
 Smart! is maintained by **Finalomega**. The maintainer has final authority over roadmap, design, and release decisions. See [GOVERNANCE.md](GOVERNANCE.md).

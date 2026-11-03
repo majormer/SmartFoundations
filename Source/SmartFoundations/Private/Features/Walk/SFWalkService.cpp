@@ -980,13 +980,9 @@ FString USFWalkService::GetSegmentShapeError(int32 Index) const
     AFGHologram* A = Prev[0].Get();
     AFGHologram* B = Cur[0].Get();
     if (!IsValid(A) || !IsValid(B)) { return FString(); }
-    // Shared span SHAPE rules (belt/pipe/hyper). Walk POLICY: any invalid segment blocks the commit
-    // (see HasInvalidSegmentShape). Belt gets the 30deg slope gate; pipe is exempt (routes at any angle).
-    // Map the active conveyance to its shared SHAPE kind + its OWN length cap. Hypertube uses the 96 m chord cap
-    // (MAX_HYPERTUBE_LENGTH), not the 56 m pipe/belt cap; the validator skips the belt-only 30deg slope gate for
-    // both pipe and hypertube (tubes climb steeply by design). #405
+    // Chord length is an early rejection only; native routed geometry decides slope and curvature.
     SFConveyanceShape::EKind Kind = SFConveyanceShape::EKind::Belt;
-    float MaxLenCm = USFAutoConnectService::MAX_PIPE_LENGTH;
+    float MaxLenCm = GetDefault<ASFConveyorBeltHologram>()->GetMaxSplineLength();
     switch (GetConveyanceType())
     {
     case ESFWalkConveyanceType::Hypertube:
@@ -995,6 +991,7 @@ FString USFWalkService::GetSegmentShapeError(int32 Index) const
         break;
     case ESFWalkConveyanceType::Pipe:
         Kind = SFConveyanceShape::EKind::Pipe;
+        MaxLenCm = GetDefault<ASFPipelineHologram>()->GetMaxSplineLength();
         break;
     default:
         break;
@@ -1012,30 +1009,8 @@ FString USFWalkService::GetSegmentShapeError(int32 Index) const
             ASFConveyorBeltHologram* Belt = Cast<ASFConveyorBeltHologram>(WeakSpan.Get());
             if (!Belt) { continue; }
 
-            if (const USplineComponent* Spline = Belt->GetSplineComponent())
-            {
-                if (Spline->GetSplineLength() > MaxLenCm)
-                {
-                    return UFGConstructDisqualifier::GetDisqualifyingText(UFGCDConveyorTooLong::StaticClass()).ToString();
-                }
-            }
-
-            USFHologramDataService::EnableValidation(Belt);
-            Belt->CheckValidPlacement();
-            TArray<TSubclassOf<UFGConstructDisqualifier>> Disqualifiers;
-            Belt->GetConstructDisqualifiers(Disqualifiers);
-            USFHologramDataService::DisableValidation(Belt);
-            Belt->ResetConstructDisqualifiers();
-
-            for (const TSubclassOf<UFGConstructDisqualifier>& Disqualifier : Disqualifiers)
-            {
-                if (Disqualifier == UFGCDConveyorTooLong::StaticClass()
-                    || Disqualifier == UFGCDConveyorTooSteep::StaticClass()
-                    || Disqualifier == UFGCDConveyorInvalidShape::StaticClass())
-                {
-                    return UFGConstructDisqualifier::GetDisqualifyingText(Disqualifier).ToString();
-                }
-            }
+            if (const auto Reason = Belt->GetNativeSplineDisqualifier())
+                return UFGConstructDisqualifier::GetDisqualifyingText(Reason).ToString();
         }
     }
 	else if (Kind == SFConveyanceShape::EKind::Pipe)
@@ -1046,7 +1021,7 @@ FString USFWalkService::GetSegmentShapeError(int32 Index) const
 			if (!Pipe) { continue; }
 
 			bool bTooLong = false;
-			if (!Pipe->ValidateCurrentSpline(MaxLenCm, bTooLong))
+			if (!Pipe->ValidateCurrentSpline(bTooLong))
 			{
 				const TSubclassOf<UFGConstructDisqualifier> Disqualifier = bTooLong
 					? UFGCDPipeTooLong::StaticClass()
@@ -1109,7 +1084,7 @@ void USFWalkService::RefreshWalkValidity()
     for (int32 SegIdx = 0; SegIdx < Segments.Num(); ++SegIdx)
     {
         FSFWalkSegment& Seg = Segments[SegIdx];
-        // Invalid SHAPE = span too long (>56m) or, for belts, too steep (>30deg from horizontal). Red that segment's
+        // Invalid SHAPE = a native length, incline or curvature rejection. Red that segment's
         // poles AND span (mirrors the auto-connect length/slope restrictions; pipes skip the slope cap). A too-long
         // segment has no span (LinkOrUpdate skips it), but its poles still red so the gap reads as invalid, not missing.
         const bool bShapeValid = IsSegmentShapeValid(SegIdx);

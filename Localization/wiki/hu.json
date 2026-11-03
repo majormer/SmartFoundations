@@ -77,11 +77,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Auto-Connect:4": {
-    "text": "Nyisd meg a **K → Ismétlés** lapot, és használd a kiválasztott építményhez tartozó **Automatikus csatlakozás** szakaszt. Támogatott logisztikai építményeknél az `U` nyitja meg a csatlakozási beállításokat. A globális alapértékek a **Beállítások → Modbeállítások → Smart!** alatt találhatók; az aktuális előnézet választásai a panelen vannak. A csatlakozási beállítások élőben frissülnek, az **Elhelyezés azonnali alkalmazása** beállítástól függetlenül.",
-    "source_hash": "0ef504a252dcabd3541b9ed8c7d000b31225026b5fa22aa19b6f534eadd38d6b",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Auto-Connect:56": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "0ef504a252dcabd3541b9ed8c7d000b31225026b5fa22aa19b6f534eadd38d6b"
   },
   "Auto-Connect:5": {
     "text": "A panellel, görgővel vagy numerikus billentyűzettel formázd a rácsot; építés előtt vizsgáld meg a létrehozott kapcsolatokat és az iránynyilakat a világban. A HUD elhelyezési értékeket jelez, nem kínál újabb csatlakozási beállítóűrlapot. Az alapértelmezett billentyűket és a játékoshoz viszonyított működést lásd az [Irányítás](Controls) oldalon.",
@@ -118,6 +117,16 @@
     "source_hash": "e298b5a94ff81e994527adc768d5e9764cc98d01ecb1dd6ea12f6dca747287fd",
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  },
+  "Auto-Connect:47": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "bfcb0d7bcbf0b5b36a80dd16a2dac958a4db4fc0261b34174dd132215ae37e01"
+  },
+  "Auto-Connect:48": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "59bd907b72a7a1bd727a61b3bb63c228bae6f45d96d4267b1fa73010ed0ca1df"
   },
   "Auto-Connect:11": {
     "text": "### Teherliftes gépcsatlakozások",
@@ -173,11 +182,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Auto-Connect:18": {
-    "text": "**Az ismételt csővezeték-tartók csőszakaszt építenek.** Ha Csővezeték tartóoszlopok vagy Csővezeték fali tartóállványok sorát ismétled, a Smart! összefüggő csőszakaszt köt a példányok közé — ugyanúgy, ahogyan a Futószalag tartóoszlopok ismételt sora futószalagot épít. A folyadék végigáramlik a teljes szakaszon, és minden tartó saját illesztési pontja szabad marad, így kézzel továbbra is csatlakoztathatsz hozzá csövet. A talajtartó magassága és felső részének szöge az egész soron megmarad, így a lejtős szakasz egységes marad.",
-    "source_hash": "01bc78e7b2eed2e3b61e790428579385ed84d207401ce8ce691e20542ceb6c01",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Auto-Connect:57": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "01bc78e7b2eed2e3b61e790428579385ed84d207401ce8ce691e20542ceb6c01"
   },
   "Auto-Connect:19": {
     "text": "A létrehozott csövek a csatlakoztatott forráscsőtől öröklik a festést. Egy idom csak akkor örökli a festést, ha csatlakozó csövei megegyeznek; ha az előnézetet festésforrás nélküli csatlakozáshoz mozgatod, visszaáll az eredeti festése.",
@@ -203,6 +211,16 @@
     "status": "reviewed",
     "review_method": "Direct AI contextual translation and fluency review; official terminology and protected Markdown checked; not human native-speaker certification."
   },
+  "Auto-Connect:50": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "a731c462366f0c155a14546a1265f77d5e93778036e1ebd4a44e669ff5112e22"
+  },
+  "Auto-Connect:51": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "0a29d3c9b8ec32dedec575d19408d9bb4da0cbb09a58b8d2ed2dc2c0f3f833c7"
+  },
   "Auto-Connect:21": {
     "text": "## Hipertranszport csövek automatikus csatlakozása",
     "source_hash": "4bcc46f7a3e328199f2b10ea31239d134d1815f33bf0911b2c5020959c930f54",
@@ -221,17 +239,15 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Auto-Connect:24": {
-    "text": "**Az ismételt hipertranszport-tartók hipertranszport-útvonalat építenek.** Ha Egymásra rakható hipertranszport cső állványok sorát ismétled, a Smart! összefüggő hipertranszport csövet fektet a példányok közé — ugyanúgy, ahogyan a Futószalag tartóoszlopok ismételt sora szalagot, a Csővezeték tartóoszlopok pedig csőszakaszt építenek. Az útvonal követi a sor térközét és magasságát, és meredeken is emelkedhet, miközben minden tartó saját illesztési pontja szabad marad, így kézzel továbbra is csatlakoztathatsz hozzá hipertranszport csövet.",
-    "source_hash": "eb2ee60a85c009c8b087b30e51ca7b4eb21ab2ca69353d8b3bce92a60256f455",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Auto-Connect:58": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "eb2ee60a85c009c8b087b30e51ca7b4eb21ab2ca69353d8b3bce92a60256f455"
   },
-  "Auto-Connect:25": {
-    "text": "A hipertranszport csövek automatikus csatlakozásának **saját engedélyező kapcsolója és útvonalválasztási módja van**, a csővezetékektől függetlenül — ezeket a Smart panelen, az építés közbeni Automatikus csatlakozás beállításainál (`U` nyomva tartása), vagy a mod beállításaiban állíthatod. Lásd a [Beállítások kézikönyvét](Settings-Reference).",
-    "source_hash": "12ed988af1c997655966e3695ec2f34cf65159be86bd53b56fa1a92c8a85b213",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Auto-Connect:59": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "12ed988af1c997655966e3695ec2f34cf65159be86bd53b56fa1a92c8a85b213"
   },
   "Auto-Connect:26": {
     "text": "## Elforgatott fali tartósorok",
@@ -239,11 +255,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Auto-Connect:27": {
-    "text": "A csővezeték és hipertranszport fali tartók gyermekpéldányai követik a szülő teljes elforgatását. A panel **Fal forgatása** vezérlője az alapjáték **45°-os lépéseit** kínálja, függőleges útvonallal együtt. Ez különbözik a rács Forgatásától, amely a példányok sorozatát hajlítja.",
-    "source_hash": "fd7f0d71039eaac4e79da271b675c44893d3943fcbd5cfcc62fcca29fe53a2ce",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Auto-Connect:60": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "fd7f0d71039eaac4e79da271b675c44893d3943fcbd5cfcc62fcca29fe53a2ce"
   },
   "Auto-Connect:28": {
     "text": "Épülethez viszonyított irányításnál az Y az elforgatott fali sort követi. Játékoshoz viszonyított irányításnál a függőleges bemenet a leginkább függőleges támogatott irányt követi: függőleges fali sornál az **X+Z + görgő** függőlegesen növeli a sort, míg a **Z + görgő** oldalirányban. A panel megőrzi X/Y/Z oszlopait; a nyilakkal azonosíthatod ezeket a tengelyeket. A fali futószalag-csatlakozók megtartják alapjátékbeli tájolási korlátaikat, és függőleges szállításhoz teherlifteket használnak.",
@@ -317,11 +332,10 @@
     "status": "reviewed",
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
-  "Auto-Connect:45": {
-    "text": "_Utolsó frissítés: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (kiadási tervezet)_\n",
-    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89",
-    "status": "reviewed",
-    "review_method": "Direct AI contextual translation and fluency review; official terminology and protected Markdown checked; not human native-speaker certification."
+  "Auto-Connect:55": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
   },
   "Blueprints:0": {
     "text": "# Smart! tervrajzok",
@@ -425,11 +439,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Blueprints:17": {
-    "text": "A biztonságos építési adatméretkorlát a tervrajzrácsokra is érvényes. Az elutasított, túl nagy elhelyezés megtartja előnézetét: csökkentsd a rácsot, és építs szakaszonként. Nagy alapjátékbeli tervrajz elhelyezéséhez kapcsold ki a [Smart segítséget](Smart-Assistance), és válaszd ki újra.",
-    "source_hash": "540e7f14c64d49d7f11fb6b7090a1475087984b4955b0dccb93ca481787d4236",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Blueprints:34": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "60707b2c9e66e6d33812f6b75b700b1d1cfafde4fcb92a54f5847b69c82a8ac8"
   },
   "Blueprints:18": {
     "text": "A többjátékos mód hiteles oldali ellenőrzést és normál költségeket használ. Egy megváltozott végpont vagy elégtelen erőforrás érvénytelenné teheti a korábban érvényes előnézetet. Lásd az [Automatikus csatlakozás](Auto-Connect) és [Kompatibilitás és többjátékos mód](Compatibility-and-Multiplayer) oldalakat.",
@@ -509,11 +522,10 @@
     "status": "reviewed",
     "review_method": "Direct AI contextual translation and fluency review; official terminology and protected Markdown checked; not human native-speaker certification."
   },
-  "Blueprints:33": {
-    "text": "_Utolsó frissítés: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (kiadási tervezet)_\n",
-    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89",
-    "status": "reviewed",
-    "review_method": "Direct AI contextual translation and fluency review; official terminology and protected Markdown checked; not human native-speaker certification."
+  "Blueprints:35": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
   },
   "Buildable-Gallery:0": {
     "text": "# Építménygaléria",
@@ -983,17 +995,15 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Compatibility-and-Multiplayer:3": {
-    "text": "A Smart! 35.0.0 **Satisfactory 1.2.4 / CL 502094 vagy újabb** és **SML 3.12.x** verzióhoz készült. Telepítés előtt frissítsd a játékot és a modbetöltőt. Régebbi játékverziók nem támogatottak.",
-    "source_hash": "67e479ca52c59b7506d6acd2ace2bb75b701e6c7854e5b2d570aeec46f92d66e",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Compatibility-and-Multiplayer:23": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "ddb7f6d3428242b7eb2a16d6468bc1c961f041f29251922f6c6a6922bfa78751"
   },
-  "Compatibility-and-Multiplayer:4": {
-    "text": "Ha mindkettő telepítve van, a Smart Camera 2.0 és Smart! 35.0 kompatibilis párként frissítendő. A Camera önállóan is működik; a Smart építőeszközeihez nem szükséges Camera. A Camera beállításai és a HUD megjelenése minden helyi játékoshoz tartoznak, nem a szerver egészéhez.",
-    "source_hash": "d778ecad7f4a6a4eb530120898db7c258299752b3b3849ab7cb18dce25829247",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Compatibility-and-Multiplayer:24": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "52b5e96461ffcb32e45b4e4f8c6a7bb4ae65053d1b8488b28119e6c0efbcaf11"
   },
   "Compatibility-and-Multiplayer:5": {
     "text": "## Mentésbiztonság",
@@ -1037,23 +1047,20 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Compatibility-and-Multiplayer:12": {
-    "text": "A Smart! dedikált szervereken is működik többjátékos módban. Minden Smart!-funkció — Rácsos ismétlés, Automatikus csatlakozás (szalagok, csövek és áram), Smart tervrajzok, Kiterjesztés, Smart fejlesztés, Smart Visszaállítás és Smart bontás — kliensként is működik, normál építési költségekkel. Minden, amit a Smart! elhelyez, szokásos, teljesen szinkronizált játéképület: mások látják, használhatják és bonthatják, mintha kézzel építetted volna.",
-    "source_hash": "274d747f094a4e138cbbfdf378bc151dedd8d3fa979722492b56173b298c75d5",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Compatibility-and-Multiplayer:29": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "274d747f094a4e138cbbfdf378bc151dedd8d3fa979722492b56173b298c75d5"
   },
-  "Compatibility-and-Multiplayer:13": {
-    "text": "- **Dedikált szerverek:** Windows és Linux is támogatott.\n- **Smart tervrajzok méretkorlátja:** egyetlen szerveres tervrajzrács-elhelyezés korlátozott (nagyjából pár ezer épület vagy pár száz összekötő szalag/cső, amelyik előbb eléri a határt). Ezen túl a Smart! elutasítja az elhelyezést — a HUD kisebb szakaszok építését kéri, és a rács élő marad, hogy megtehesd. A biztonságos építési adatkorlát egyjátékos és játékos által hosztolt szerveren is érvényes. Kapcsold ki a [Smart segítséget](Smart-Assistance), és válaszd újra a receptet nagy alapjátékbeli tervrajz szokásos elhelyezéséhez.\n- **A nagy rácsok fokozatosan épülnek:** nagyon nagy ismételt építés megerősítése után néhány pillanatig a háttérben épülnek, így a szerver válaszkész marad, és senki nem szakad le.\n- **Szerveradminisztrátoroknak:** ugyanazt a Smart!-verziót telepítsd a szerverre és minden kliensre. A modkezelő frissítéskor egyezteti őket.\n- A **Smart Camera** kiegészítő mod többjátékos módban is működik.",
-    "source_hash": "e0abba477abdd815436da48e2f8957237ec0394c708deea58592e10d20ab9268",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Compatibility-and-Multiplayer:26": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "8cb40018690ab6ebe9357b170389232193d08c25eafc1fd5d631dac793751ffe"
   },
-  "Compatibility-and-Multiplayer:14": {
-    "text": "A többjátékos támogatás újabb az egyjátékosnál, ezért ha valami eltérően működik többjátékos munkamenetben, az hiba — jelentsd GitHubon vagy Discordon, és írd le, mit építettél, illetve házigazda vagy kliens voltál-e.",
-    "source_hash": "be6a21fb0e3a5a2792dc5eaa0095af9dbd2cdc8641d29aed38e44f5a8dce7ce9",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Compatibility-and-Multiplayer:30": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "be6a21fb0e3a5a2792dc5eaa0095af9dbd2cdc8641d29aed38e44f5a8dce7ce9"
   },
   "Compatibility-and-Multiplayer:15": {
     "text": "A játékos saját játékmenet-segítségkapcsolója csak a saját építőeszközeit érinti. A távoli Kiterjesztés/Visszaállítás elkülöníti a házigazda előnézetét és beállításait a kliens műveletétől.",
@@ -1097,11 +1104,10 @@
     "status": "reviewed",
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
-  "Compatibility-and-Multiplayer:22": {
-    "text": "_Utolsó frissítés: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (kiadási tervezet)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Compatibility-and-Multiplayer:31": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
   },
   "Controller-and-Steam-Deck:0": {
     "text": "# Kontroller és Steam Deck (kísérleti)",
@@ -1637,11 +1643,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Extend:8": {
-    "text": "1. Építs kézzel egy működő modult, és válaszd ugyanazt az épülettípust az építőfegyverben.\n2. Nyisd meg a **K → Kiterjesztés** lapot, és nyomd meg a **Forrás kiválasztása** gombot.\n3. Kattints a meglévő forrásépületre a világban, a panelen kívül. Kiválasztáskor a kompatibilis források kiemelést kapnak. Az **Escape** megszakítja a kijelölést; a panelen belüli kattintások a kezelőfelületen maradnak.\n4. Ellenőrizd a forrás nevét, a rögzített kísérőelemeket és az ismétlések számát. Az **Irányváltás** és az elhelyezési vezérlők segítségével formázd az előnézetet.\n5. Zárd be a panelt, vizsgáld meg a javasolt példányokat és az anyagköltséget, majd az építőfegyverrel építsd meg szokásosan.",
-    "source_hash": "be187544697091618ad4e7d6e1a2c2782b01ec9a0930ae4d3655eadaf437a2ca",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Extend:49": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "be187544697091618ad4e7d6e1a2c2782b01ec9a0930ae4d3655eadaf437a2ca"
   },
   "Extend:9": {
     "text": "A forrás kiválasztása nem épít semmit. Mellékattintáskor megmarad az előző előnézet. Forrás vagy jelentősebb meg nem épített elhelyezés cseréje megerősítést kér annak eldobása előtt. A kiválasztott forrás ellenőrzésre rögzítve marad az elhelyezés megszakításáig, megépítéséig vagy a receptváltásig.",
@@ -1685,11 +1690,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Extend:16": {
-    "text": "A megépített Kohó a meglévő forrás. A cián Kohó, futószalagok és tartók a javasolt példányt jelentik; a HUD felirata **Kiterjesztés 1×1**. Ez meg nem épített előnézet.",
-    "source_hash": "e63c3cf4682d23c05eeac5028bcb9b9181dbd792603560f52b7b754522f84fbc",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Extend:50": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "e63c3cf4682d23c05eeac5028bcb9b9181dbd792603560f52b7b754522f84fbc"
   },
   "Extend:17": {
     "text": "## Irányváltás",
@@ -1709,11 +1713,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Extend:20": {
-    "text": "Indítsd kifejezetten a **K → Kiterjesztés → Forrás kiválasztása** paranccsal, vagy használd a rámutatásos gyorsutat. A Kiterjesztés fül az elhelyezési vezérlőket használja a rácsdarabszámokhoz, térközhöz és támogatott transzformációkhoz. A [Rácsos ismétlés](Grid-Scaling) görgős/numerikus vezérlőit is használhatod. Módosító nélkül a görgő a Kiterjesztés irányát választja. A játék közbeni HUD jelzi a sorozatot/sorokat és az aktív állítást, így építés előtt ellenőrizheted, mi változik.",
-    "source_hash": "76acf531cc52c29e073f3df2f0e0d06d36121daf24e05679c1f466af9d01eb13",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Extend:51": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "76acf531cc52c29e073f3df2f0e0d06d36121daf24e05679c1f466af9d01eb13"
   },
   "Extend:21": {
     "text": "## Rácsos Kiterjesztés",
@@ -1751,11 +1754,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Extend:27": {
-    "text": "Ugyanaz a forrás most három cián modulpéldányt hoz létre, szalagútvonalaikkal és tartóikkal együtt. A HUD felirata **Kiterjesztés 3×1**, az anyagköltség pedig a példányokkal nő. A megépített forrás helyben marad.",
-    "source_hash": "a818fc9f6600b845b33395c092257e5c56b6b18d277fc9a96921343bf18ea9b7",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Extend:52": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "a818fc9f6600b845b33395c092257e5c56b6b18d277fc9a96921343bf18ea9b7"
   },
   "Extend:28": {
     "text": "## Szivattyúk",
@@ -1805,6 +1807,21 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
+  "Extend:45": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "54e38c7493c79d3f4bc2f71a29b70d8dd6942a4f44bee91a351b6ebd82db6819"
+  },
+  "Extend:46": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "2fc6ba5d654478f0d36a249ac28472d87d41be4029ae07a4e513561265a5f725"
+  },
+  "Extend:47": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "8d860159ae76958c5e531b7732a1d2bed5e6c39a0cc339d47fa7d866c6ab94e8"
+  },
   "Extend:36": {
     "text": "## A rögzített elrendezés ellenőrzése",
     "source_hash": "f1c2f5c6de3f53c619dc7b774e5c42c86b11c0f59d3d150537e145bb3f358680",
@@ -1829,11 +1846,10 @@
     "status": "reviewed",
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
-  "Extend:40": {
-    "text": "_Utolsó frissítés: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (kiadási tervezet)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Extend:48": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
   },
   "FAQ:0": {
     "text": "# Gyakran ismételt kérdések",
@@ -3119,17 +3135,26 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
+  "Home:18": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1829ed863c572c2dbcafc8f78604d94faa795d58ca1d7e90494d020f49980f60"
+  },
+  "Home:19": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1bd5656d0819ad3a7d1a6861c038f59661e423c6f03bddc8b203ef1a7ffb5c8b"
+  },
   "Home:13": {
     "text": "## Dokumentált verzió",
     "source_hash": "96ddfc08279c6ae35f38d5139ad21a94f1ac99c7d031fa618cb40edbe35d39a5",
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Home:14": {
-    "text": "Ez a **Smart! 35.0.0 és Smart Camera 2.0.0** helyi dokumentációtervezete. A két modot együtt frissítsd, amikor az összehangolt, kompatibilis kiadásaik elérhetővé válnak; ne párosítsd a Camera 2.0-t régebbi Smart csomaggal. Ezek a tervezetoldalak nem jelentenek közzétételt.",
-    "source_hash": "c29d2ea90b7a486f22022563a690b6049c5d72c5bf1c740518bb20fa5747432d",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Home:20": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "6de3b72e72a676036d11c5f3b3679009013b370ca2cb7e8aed2d56252d3addd9"
   },
   "Home:15": {
     "text": "Kezdd a közös [Panel és HUD](Smart-Panel-and-HUD), a [Séta folytatása](Smart-Walking), a [teherliftes automatikus csatlakozás](Auto-Connect) és a [tervrajzok közötti kapcsolatok](Blueprints) útmutatóival.",
@@ -3143,11 +3168,10 @@
     "status": "reviewed",
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
-  "Home:17": {
-    "text": "_Utolsó frissítés: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (kiadási tervezet)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Home:21": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
   },
   "Lift-Assisted-Auto-Connect:0": {
     "text": "# Teherliftes automatikus csatlakozás",
@@ -3473,11 +3497,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Settings-Reference:2": {
-    "text": "A **Főmenü → Modok → Smart!** alatt találod őket. Az itt végzett változtatások **mentések és játékmenetek között is megmaradnak**. (A billentyűk külön vannak — lásd az [Irányítást](Controls).)",
-    "source_hash": "3f27a7251dee61f272afa2b13b0a9a7d3b5d0782f11461e43b22ec93ed6baceb",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Settings-Reference:59": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "3f27a7251dee61f272afa2b13b0a9a7d3b5d0782f11461e43b22ec93ed6baceb"
   },
   "Settings-Reference:3": {
     "text": "## Futószalagok automatikus csatlakozása",
@@ -3533,11 +3556,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Settings-Reference:12": {
-    "text": "- **Hipertranszport automatikus csatlakozás** — a hipertranszport csövek automatikus összekötése. **Alapértelmezetten bekapcsolva.** (Hozzáadva: 33.1.0.)\n- Hipertranszport útvonalvezetési mód kiválasztása.",
-    "source_hash": "de7e8d93fbc71c12b9ce0a1c8db5fdc99380795aa7009f219fc68164294d1f29",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Settings-Reference:60": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "de7e8d93fbc71c12b9ce0a1c8db5fdc99380795aa7009f219fc68164294d1f29"
   },
   "Settings-Reference:13": {
     "text": "## Elektromos automatikus csatlakozás",
@@ -3551,11 +3573,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Settings-Reference:15": {
-    "text": "- Elektromos automatikus csatlakozás engedélyezése vagy tiltása.\n- Csatlakozási mód kiválasztása.\n- Csatlakozási hatótáv beállítása.\n- Oszlopcsatlakozók lefoglalása, hogy a Smart! ne töltsön meg minden helyet.\n- **Elektromos lánckapcsolás ismétléskor** — a Fejlesztett hálózati csatlakozók feloldása után gyár vagy generátor Smart X tengelye menti ismétlésekor minden példány közvetlenül a következőhöz csatlakozik külön oszlop helyett; így külön Kiterjesztés nélkül készül szokásos elosztósor. A Smart panel felülírhatja az aktuális építéshez, és a HUD mutatja a tényleges választást. Betartja az egyes csatlakozók szabad kapacitását. **Alapértelmezetten bekapcsolva.** (Hozzáadva: 34.2.0.)",
-    "source_hash": "ec98629a469e74c7be896e64709377532daca45491fe70e1465ce14f99cffdfb",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Settings-Reference:61": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "ec98629a469e74c7be896e64709377532daca45491fe70e1465ce14f99cffdfb"
   },
   "Settings-Reference:16": {
     "text": "## Tervrajzok automatikus csatlakozása",
@@ -3563,23 +3584,31 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Settings-Reference:17": {
-    "text": "Külön kapcsoló a **saját** tervrajzaid ismételt példányai közötti kapcsolatokhoz — a fenti futószalag- és csővezeték-csatlakozástól függetlenül, így a tervrajzpéldányok hagyományos automatikus csatlakozás nélkül is összeköthetők.",
-    "source_hash": "777a49715537ba1bf7334d6be913926f712654bb9bcb31b43455ceeff3c86b11",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Settings-Reference:62": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "777a49715537ba1bf7334d6be913926f712654bb9bcb31b43455ceeff3c86b11"
   },
-  "Settings-Reference:18": {
-    "text": "- **Tervrajzok példányközi automatikus csatlakozása** — az ismételt tervrajzok közötti futószalagok, csővezetékek, hipertranszport csövek, sínek, irányított járműútvonalak és megfelelő elektromos kapcsolatok automatikus összekötése. **Alapértelmezetten bekapcsolva.** (Hozzáadva: 34.2.0.)",
-    "source_hash": "5daf4a877774b178a7054980007283bb25a2de416f6dad2c908287768adb9db4",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Settings-Reference:63": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "5daf4a877774b178a7054980007283bb25a2de416f6dad2c908287768adb9db4"
   },
   "Settings-Reference:19": {
     "text": "Az elektromos példányközi kapcsolatokhoz **Elektromos automatikus csatlakozás** is kell. Minden kábel megfelelő, szabad kapacitású oszlopcsatlakozót használ; a belső vezetékek és a fali csatlakozó két oldala külön számítanak.",
     "source_hash": "f8e43f603399fedc12210a9d21a3d2d8108b47b7c676acc29f4f189f050416ed",
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  },
+  "Settings-Reference:51": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "d30a9c4968359ae455bcba1db55829f233cd9689baac7a41ddda2ee677c671a7"
+  },
+  "Settings-Reference:52": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "8d8d2f7ca8e8f5f5ffd32286939d718b5621954e9eb433f316520ac4e84d392b"
   },
   "Settings-Reference:20": {
     "text": "## Tervrajzok alapértelmezett térközei",
@@ -3605,11 +3634,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Settings-Reference:24": {
-    "text": "- **Közeli logisztika hatótávja** — milyen messzire érnek el az elosztók, egyesítők, csőkereszteződések és csőpadlónyílások a gyárcsatlakozók felé automatikus kapcsolódáskor. Csökkentsd, hogy az Automatikus csatlakozás ne érjen át szomszédos gyárcsoportokba. **Alapérték 25 m** (a korábbi rögzített működés). (Hozzáadva: 34.2.0.)",
-    "source_hash": "bb2d0aef5ebb0f05f6e0332aba3b272795cbf3d8bade162603d3521aad41d592",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Settings-Reference:64": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "bb2d0aef5ebb0f05f6e0332aba3b272795cbf3d8bade162603d3521aad41d592"
   },
   "Settings-Reference:25": {
     "text": "## Kiterjesztés",
@@ -3629,11 +3657,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Settings-Reference:28": {
-    "text": "- Az automatikus rögzítés rácsváltoztatáskor lezárja a hologramot, hogy a nagy előnézet ne mozduljon el véletlenül. **Alapértelmezetten bekapcsolva** (32.1.2 óta) — kapcsold ki, ha szabadon mozgatnád a hologramot; az alapjáték rögzítőbillentyűje feloldja az egyes rögzítéseket.\n- **Játékoshoz viszonyított irányítás** — a nézésed irányát követi fix égtájtengelyek helyett: a görgő arra növeli az építést, amerre nézel, a numerikus billentyűzet iránytűvé válik (távolabb/közelebb, jobbra/balra, fel/le). Ismétlésre, térközre, lépcsőzésre, eltolásra és forgatásra vonatkozik. **Alapértelmezetten kikapcsolva** — a klasszikus vezérlőid változatlanok, amíg be nem kapcsolod, és a Smart panel mindig fix X/Y/Z rendszert használ. Teljes leírás: [Irányítás](Controls). (Hozzáadva: 34.1.0.)\n- **Transzformációs módok kapcsolása megnyomással** — egy transzformációs billentyű (Térköz, Lépcsők, Eltolás, Forgatás vagy gyáron Recept) megnyomása bekapcsolja, újabb megnyomása kikapcsolja, másik billentyű módot vált. Kontrollerekhez, Steam Deckhez és akadálymentes konfigurációkhoz készült — a Steam Input radiális/érintőmenüi rövid megnyomást küldenek, tartást nem. Elrakás, épületváltás és panelnyitás mindig elengedi a módot. **Alapértelmezetten kikapcsolva** — bekapcsolásig érintetlen a hagyományos nyomva tartás, ismét kikapcsolva azonnal visszatér. Radiális menükhöz lásd a [Kontroller és Steam Deck](Controller-and-Steam-Deck) oldalt. (Hozzáadva: 34.2.0.)",
-    "source_hash": "5062fcd97160abfb325d9843686928ec4e50ca66911455b5f84cd6515d2b0179",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Settings-Reference:65": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "5062fcd97160abfb325d9843686928ec4e50ca66911455b5f84cd6515d2b0179"
   },
   "Settings-Reference:29": {
     "text": "## Görgetési lépésközök",
@@ -3647,17 +3674,15 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Settings-Reference:31": {
-    "text": "- **Térközlépés** (m) — fokozatonként hozzáadott méter térköz (Kiterjesztés-térköz és Séta-szakasz előrehaladás is).\n- **Lépcsőzéslépés** (m) — fokozatonkénti magassági lépés méterben (Séta-szakasz emelkedése is).\n- **Eltoláslépés** (m) — fokozatonkénti eltolás méterben (Séta-szakasz oldaleltolása is).\n- **Forgatáslépés** (fok) — fokozatonkénti forgatás (Séta-szakasz fordulása is).",
-    "source_hash": "89d132f31272346911aed3355f02885dd096f7bf810ca50e85be98947993996e",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Settings-Reference:66": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "89d132f31272346911aed3355f02885dd096f7bf810ca50e85be98947993996e"
   },
-  "Settings-Reference:32": {
-    "text": "Az alapértékek 0.5 m és 5°. A távolságlépések 0.1–8 m, a forgatás 0.5–90° között állítható.",
-    "source_hash": "b595cc1429fd298b95947cec85d6569724d96fed5b22b0b9424ca76f88c295da",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Settings-Reference:67": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "b595cc1429fd298b95947cec85d6569724d96fed5b22b0b9424ca76f88c295da"
   },
   "Settings-Reference:33": {
     "text": "## Smart panel",
@@ -3701,11 +3726,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Settings-Reference:40": {
-    "text": "A **Modok → Smart! Camera** alatt a nézetek automatikusan megjelennek szolgáltató modjuk és kameranevük szerint, az inaktív nézetek is. A beépített építőfegyver-nézetnek független engedélyező vezérlője van. Nézetenként a pozíció normalizált 0–1, a felbontás 64–2048 képpont tengelyenként, a méret 0.1–2, a felvételi sebesség 5–60/mp, a fényerő −3 és +3 EV közötti. Az alkalmazható építési kameratávolságok 5–50 m. A Camera beállításai azonnal érvényesülnek; a menük által elrejtett nézetek Folytatáskor frissülnek. Az **Összes mentés** csak a szerkesztett mezőt módosítja a kamera globális és meglévő mentett profiljaiban, az aktuális világban is. Az **Ez a mentés** csak az aktuális alapjátékbeli mentési profilt módosítja. Független mezők és más kamerák érintetlenek maradnak.",
-    "source_hash": "c472d20351cba658f26ae667c4cd445f95ae5a5ca37a10e8763878b476181f29",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Settings-Reference:68": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "c472d20351cba658f26ae667c4cd445f95ae5a5ca37a10e8763878b476181f29"
   },
   "Settings-Reference:41": {
     "text": "Az **A mod javaslatainak használata** az Összes mentés alatt minden mentésben visszaállítja a kamerát. A **Globális beállítások használata** az Ez a mentés alatt csak az aktuális felülírást törli. A képkivágás/távolság visszaállítása csak ezt a két mezőt változtatja. Az elrendezésszerkesztés a közös **Kész / Rögzítés** műveletig előnézet; a Mégse eldobja a függő elrendezés-/HUD-változásokat. Lásd a [Smart Camera](Smart-Camera) oldalt.",
@@ -3731,11 +3755,10 @@
     "status": "reviewed",
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
-  "Settings-Reference:45": {
-    "text": "_Utolsó frissítés: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (kiadási tervezet)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Settings-Reference:58": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
   },
   "Smart-Assistance:0": {
     "text": "# Smart segítség",
@@ -4385,17 +4408,15 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Smart-Restore:1": {
-    "text": "A Smart Visszaállítás elmenti a Smart!-tal végzett munkádat későbbi használathoz, megosztáshoz vagy egy teljes gyármodul azonos módon történő ismételt elhelyezéséhez. Nyisd meg a **K → Visszaállítás** lapot a közös [Smart panelen](Smart-Panel-and-HUD). Két alfüle a **Rácsbeállítások** és a **Modulok**.",
-    "source_hash": "d30db2304eb2c337da20e09266e493bcc8c502907b34b04c692903c1c50cee35",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Smart-Restore:43": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "d30db2304eb2c337da20e09266e493bcc8c502907b34b04c692903c1c50cee35"
   },
-  "Smart-Restore:2": {
-    "text": "Ez a válasz arra, hogy „Rengeteg időt töltöttem ennek az elrendezésnek a beállításával — hogyan kaphatom vissza?”",
-    "source_hash": "3d432425c5421614e20983fcafadb764c442a1c31b834004ecbebec74df73ea2",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Smart-Restore:44": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "3d432425c5421614e20983fcafadb764c442a1c31b834004ecbebec74df73ea2"
   },
   "Smart-Restore:3": {
     "text": "![Visszaállítás feladat Rácsbeállítások és Modulok alfülekkel](https://raw.githubusercontent.com/wiki/majormer/SmartFoundations/images/v35/restore.png)",
@@ -4427,11 +4448,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Smart-Restore:8": {
-    "text": "- **Mentés a panelről** — nevezd el az aktuális panelbeállítást, és mentsd el készletként.\n- **Betöltés a panelre** — tölts vissza egy mentett készletet finomhangoláshoz az építés előtt, vagy alkalmazd változatlanul.\n- **Kód exportálása / Kód importálása** — ossz meg egy készletet kódként, vagy tölts be más által megosztott készletet.",
-    "source_hash": "7e35bb8291023e898ca5f34452152a86fb7117cb5f7cb13234c8fd2acf59ef40",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Smart-Restore:45": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "7e35bb8291023e898ca5f34452152a86fb7117cb5f7cb13234c8fd2acf59ef40"
   },
   "Smart-Restore:9": {
     "text": "Minden készlet közérthető összefoglalót mutat tartalmáról (épület, rács, transzformációk, recept), így egy pillantással megkülönböztetheted őket.",
@@ -4445,17 +4465,15 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Smart-Restore:11": {
-    "text": "A Modul egy teljes **Kiterjesztés-elosztórendszert** rögzít — épületek összekötött egységét szalagokkal, csövekkel, liftekkel, elosztóépületekkel és árammal —, amelyet ismételten elhelyezhetsz.",
-    "source_hash": "15f117646c84198699764f5759ce40f588af9591576ba39e1d7f68ebbf616b8b",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Smart-Restore:46": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "15f117646c84198699764f5759ce40f588af9591576ba39e1d7f68ebbf616b8b"
   },
-  "Smart-Restore:12": {
-    "text": "- Miután előnézetben megjelenítettél vagy megépítettél egy Smart [Kiterjesztést](Extend), az a fül tetején lévő **Kiterjesztés-vágólapra** kerül. A **Mentés modulként** ezt a rögzített elrendezést elnevezett, újrahasználható Modullá alakítja.\n- Egy mentett Modulnál a **Modul betöltése** újra létrehozza az elrendezést: válaszd ki forrásépületét, és élő előnézet lesz, amelyet **ismételten elhelyezhetsz** (többszöri lövéssel) és menet közben **görgetéssel méretezhetsz**.\n- Mivel a visszaállított Modul nincs egy oldalhoz kötve, mint egy friss Rácsos Kiterjesztés, elhelyezés előtt **mindkét irányban átméretezheted a sorozatot** a tengelye mentén — egyik irányba görgetve arra nő, a másikba görgetve ellenkezőleg.\n- A **Kód exportálása / Kód importálása** ugyanúgy megosztja a Modulokat, mint a készleteket.",
-    "source_hash": "37740d4bfda7ca76487c320d49ae9a15e2da89d1f1fe4a31862a2ad8d53f903b",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Smart-Restore:47": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "bec0ec9303e43dd7907dc7dc366c045b75ee549bfcabebb02918f256b044593e"
   },
   "Smart-Restore:13": {
     "text": "Minden Modul összefoglalja részeit (hány szalag, cső, elosztóépület stb.), így tudod, mit épít újra.",
@@ -4517,11 +4535,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Smart-Restore:21": {
-    "text": "A **K → Visszaállítás** alatt menthetsz, választhatsz, tölthetsz be, importálhatsz vagy exportálhatsz elrendezéseket. Betöltés után az Ismétlés panellel vagy a görgős/numerikus vezérlőkkel állítsd az elhelyezést; a HUD mutatja az eredményül kapott rácsot és aktív beállítást. Az építőfegyverrel a kijelzett költségen építheted meg.",
-    "source_hash": "1b1ed17e9fec531c12a9f625b3a9bfc523afdeccaf5ba0c4bca304c837f1764c",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Smart-Restore:48": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1b1ed17e9fec531c12a9f625b3a9bfc523afdeccaf5ba0c4bca304c837f1764c"
   },
   "Smart-Restore:22": {
     "text": "A legutóbb alkalmazott visszaállítások közötti váltáshoz a panel újranyitása nélkül tartsd az `U` billentyűt, és nyomj `Num 9`-et a következő készlethez vagy `Num 3`-at a visszalépéshez. Lásd az [Irányítás](Controls) oldalt.",
@@ -4547,17 +4564,26 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
+  "Smart-Restore:39": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "b0724fac56a114aed1905757336fc2bd16f065519872f908a56afc905e5b0d3c"
+  },
+  "Smart-Restore:40": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "81c3c2048752b95069652ecef30608748705b0ecd1930a687c49a0f383a261ad"
+  },
   "Smart-Restore:26": {
     "text": "## Lásd még",
     "source_hash": "0f2b43836b7db34aeb2ad65d2dc1b19495336b2a8bd81d1a4e6cc10ec180785b",
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Smart-Restore:27": {
-    "text": "- [Kiterjesztés](Extend) — ennek elosztórendszereit rögzíti a Modulok fül.\n- [Smart panel és HUD](Smart-Panel-and-HUD) — itt található a Visszaállítás fül.\n- [Rácsos ismétlés](Grid-Scaling) és [Transzformációk](Transforms) — ezeket menti a Rácsbeállítás.",
-    "source_hash": "52daff47c488c29086aa3ce6e5cea9be1d21194fb00b9e2d10a09d723d037264",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Smart-Restore:49": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "52daff47c488c29086aa3ce6e5cea9be1d21194fb00b9e2d10a09d723d037264"
   },
   "Smart-Restore:28": {
     "text": "---",
@@ -4565,11 +4591,10 @@
     "status": "reviewed",
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
-  "Smart-Restore:32": {
-    "text": "_Utolsó frissítés: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (kiadási tervezet)_\n",
-    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89",
-    "status": "reviewed",
-    "review_method": "Direct AI contextual translation and fluency review; official terminology and protected Markdown checked; not human native-speaker certification."
+  "Smart-Restore:42": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
   },
   "Smart-Upgrade:0": {
     "text": "# Smart fejlesztés",
@@ -4607,11 +4632,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Smart-Upgrade:6": {
-    "text": "1. Támogatott épület kiválasztásával nyisd meg a **K → Fejlesztés** lapot. Szalagok, csövek és elektromos vezetékek közvetlenül megnyithatják ezt a feladatot.\n2. Válassz keresési módot.\n3. Keress közeli elemeket vagy összekapcsolt hálózatot.\n4. Válaszd ki a típust és a célszintet — hálózati keresésnél opcionálisan egy forrásszintet is, hogy csak azt fejleszd.\n5. Ellenőrizd az anyagköltséget.\n6. Indítsd el a fejlesztést.",
-    "source_hash": "32316883719d3460a5f56824a7fb92559589793f835d63f4bd04e2103217fa08",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Smart-Upgrade:38": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "32316883719d3460a5f56824a7fb92559589793f835d63f4bd04e2103217fa08"
   },
   "Smart-Upgrade:7": {
     "text": "A villanypóznák és fali csatlakozók kiválasztva továbbra is a normál Smart panelt nyitják meg, hogy ismételhetők legyenek. Fejlesztésükhöz elektromos vezetékről nyisd meg a Smart fejlesztést, vagy használd a keresési módokat.",
@@ -4655,11 +4679,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Smart-Upgrade:14": {
-    "text": "- Kattints egy adott szintre — például **Mk.2** —, hogy **csak** azt fejleszd a célszintre. Emeld az Mk.2 szalagokat Mk.3-ra, az Mk.4-ek érintetlenül maradnak.\n- Válaszd az **Összes szint** lehetőséget minden eltérő szalag-, lift- vagy csőszint célszintre hozásához. Ez egy menetben egyes szinteket fejleszthet, másokat visszaminősíthet.",
-    "source_hash": "78e23b12048a0221986495c275897aa077ef1a3a23671637128ce9f602d2b7a8",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Smart-Upgrade:39": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "78e23b12048a0221986495c275897aa077ef1a3a23671637128ce9f602d2b7a8"
   },
   "Smart-Upgrade:15": {
     "text": "Ez megfelel a sugaras keresésnél már meglévő szintválasztásnak.",
@@ -4727,11 +4750,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Smart-Upgrade:26": {
-    "text": "A nagy futószalag-fejlesztések összetettek, mert a Satisfactory belsőleg láncaktorokba csoportosítja a szalagokat és lifteket. A Smart! tartalmaz stabilizálást és diagnosztikát, de nagyon nagy fejlesztések után továbbra is szükség lehet mentésre/újratöltésre, ha a játék rendezetlen láncállapotot jelez.",
-    "source_hash": "fed328c054689b599658ab3989621c5b784f7bcaa94b5be404727f05664adba7",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Smart-Upgrade:36": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "30a1ce6a5b6dcbf3cb863b07c5181d63bc781a27d7277f739226c64c0f12936e"
   },
   "Smart-Upgrade:27": {
     "text": "## Játékbeli példák",
@@ -4769,11 +4791,10 @@
     "status": "reviewed",
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
-  "Smart-Upgrade:33": {
-    "text": "_Utolsó frissítés: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (kiadási tervezet)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Smart-Upgrade:37": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
   },
   "Smart-Walking:0": {
     "text": "# Smart Séta",
@@ -5741,65 +5762,90 @@
     "status": "reviewed",
     "review_method": "Direct AI contextual translation and fluency review; official terminology and protected Markdown checked; not human native-speaker certification."
   },
-  "Auto-Connect:38": {
+  "Blueprints:33": {
+    "text": "_Utolsó frissítés: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (kiadási tervezet)_\n",
+    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89",
+    "status": "reviewed",
+    "review_method": "Direct AI contextual translation and fluency review; official terminology and protected Markdown checked; not human native-speaker certification.",
+    "obsolete": true
+  },
+  "Controls:6": {
+    "text": "| Billentyű | Művelet |\n|-----|--------------|\n| `K` | A közös Ismétlés / Séta / Fejlesztés / Visszaállítás ablak megnyitása vagy bezárása |\n| `F8` | HUD-elrendezés szerkesztése; telepített Smart Camera esetén a HUD és kamerák közös szerkesztése |\n| `Num Decimal` | A Smart építési segítség kapcsolása erre a játékmenetre |\n| `Num 8` | Az aktív érték növelése |\n| `Num 5` | Az aktív érték csökkentése |\n| `Num 6` | Az Y rácsdarabszám növelése |\n| `Num 4` | Az Y rácsdarabszám csökkentése |\n| `Num 9` | A Z rácsdarabszám növelése |\n| `Num 3` | A Z rácsdarabszám csökkentése |\n| `X` | Nyomva tartva az X állítása a közös vezérlőkkel vagy egérgörgővel |\n| `Z` | Nyomva tartva az Y állítása a közös vezérlőkkel vagy egérgörgővel |\n| `X + Z` | Mindkettőt nyomva tartva a Z állítása a közös vezérlőkkel vagy egérgörgővel |\n| `;` | Térköz mód nyomva tartása |\n| `I` | Lépcsők mód nyomva tartása |\n| `Y` | Eltolás mód nyomva tartása |\n| `,` | Forgatás mód nyomva tartása |\n| `Num 0` | Az aktív mód tengelyének váltása |\n| `U` | Receptválasztás termelőépületeknél; kapcsolati beállítások vagy táblatartók a megfelelő építményeknél |\n| `Num 1` | Iránynyilak kapcsolása |\n| `Mouse Wheel` | Az aktív Smart mód állítása, vagy alapjátékbeli forgatás, ha nincs aktív Smart mód |",
+    "source_hash": "2837292eada81d5f2f7b96ee1fa39689f1d488e0ee8b125d948d5069e407097e",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Compatibility-and-Multiplayer:27": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "2398e8d56840e229a7b387e89a3556aa24edfa217e26cf50db9e5ba6cf6ccf02",
+    "obsolete": true
+  },
+  "Settings-Reference:18": {
+    "text": "- **Tervrajzok példányközi automatikus csatlakozása** — az ismételt tervrajzok közötti futószalagok, csővezetékek, hipertranszport csövek, sínek, irányított járműútvonalak és megfelelő elektromos kapcsolatok automatikus összekötése. **Alapértelmezetten bekapcsolva.** (Hozzáadva: 34.2.0.)",
+    "source_hash": "5daf4a877774b178a7054980007283bb25a2de416f6dad2c908287768adb9db4",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Auto-Connect:25": {
+    "text": "A hipertranszport csövek automatikus csatlakozásának **saját engedélyező kapcsolója és útvonalválasztási módja van**, a csővezetékektől függetlenül — ezeket a Smart panelen, az építés közbeni Automatikus csatlakozás beállításainál (`U` nyomva tartása), vagy a mod beállításaiban állíthatod. Lásd a [Beállítások kézikönyvét](Settings-Reference).",
+    "source_hash": "12ed988af1c997655966e3695ec2f34cf65159be86bd53b56fa1a92c8a85b213",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:27": {
+    "text": "- [Kiterjesztés](Extend) — ennek elosztórendszereit rögzíti a Modulok fül.\n- [Smart panel és HUD](Smart-Panel-and-HUD) — itt található a Visszaállítás fül.\n- [Rácsos ismétlés](Grid-Scaling) és [Transzformációk](Transforms) — ezeket menti a Rácsbeállítás.",
+    "source_hash": "52daff47c488c29086aa3ce6e5cea9be1d21194fb00b9e2d10a09d723d037264",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:31": {
+    "text": "- **Térközlépés** (m) — fokozatonként hozzáadott méter térköz (Kiterjesztés-térköz és Séta-szakasz előrehaladás is).\n- **Lépcsőzéslépés** (m) — fokozatonkénti magassági lépés méterben (Séta-szakasz emelkedése is).\n- **Eltoláslépés** (m) — fokozatonkénti eltolás méterben (Séta-szakasz oldaleltolása is).\n- **Forgatáslépés** (fok) — fokozatonkénti forgatás (Séta-szakasz fordulása is).",
+    "source_hash": "89d132f31272346911aed3355f02885dd096f7bf810ca50e85be98947993996e",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Auto-Connect:49": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "afb87f859fcc83d5e6b2266d494b6b507374c2527764492de14534b28dbafa51",
+    "obsolete": true
+  },
+  "Auto-Connect:4": {
+    "text": "Nyisd meg a **K → Ismétlés** lapot, és használd a kiválasztott építményhez tartozó **Automatikus csatlakozás** szakaszt. Támogatott logisztikai építményeknél az `U` nyitja meg a csatlakozási beállításokat. A globális alapértékek a **Beállítások → Modbeállítások → Smart!** alatt találhatók; az aktuális előnézet választásai a panelen vannak. A csatlakozási beállítások élőben frissülnek, az **Elhelyezés azonnali alkalmazása** beállítástól függetlenül.",
+    "source_hash": "0ef504a252dcabd3541b9ed8c7d000b31225026b5fa22aa19b6f534eadd38d6b",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:47": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "e2b8d0e432743c7bf14b5c35d055dab7c5692be89a336b3b5b8bf2922ba550f7",
+    "obsolete": true
+  },
+  "Settings-Reference:24": {
+    "text": "- **Közeli logisztika hatótávja** — milyen messzire érnek el az elosztók, egyesítők, csőkereszteződések és csőpadlónyílások a gyárcsatlakozók felé automatikus kapcsolódáskor. Csökkentsd, hogy az Automatikus csatlakozás ne érjen át szomszédos gyárcsoportokba. **Alapérték 25 m** (a korábbi rögzített működés). (Hozzáadva: 34.2.0.)",
+    "source_hash": "bb2d0aef5ebb0f05f6e0332aba3b272795cbf3d8bade162603d3521aad41d592",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Compatibility-and-Multiplayer:13": {
+    "text": "- **Dedikált szerverek:** Windows és Linux is támogatott.\n- **Smart tervrajzok méretkorlátja:** egyetlen szerveres tervrajzrács-elhelyezés korlátozott (nagyjából pár ezer épület vagy pár száz összekötő szalag/cső, amelyik előbb eléri a határt). Ezen túl a Smart! elutasítja az elhelyezést — a HUD kisebb szakaszok építését kéri, és a rács élő marad, hogy megtehesd. A biztonságos építési adatkorlát egyjátékos és játékos által hosztolt szerveren is érvényes. Kapcsold ki a [Smart segítséget](Smart-Assistance), és válaszd újra a receptet nagy alapjátékbeli tervrajz szokásos elhelyezéséhez.\n- **A nagy rácsok fokozatosan épülnek:** nagyon nagy ismételt építés megerősítése után néhány pillanatig a háttérben épülnek, így a szerver válaszkész marad, és senki nem szakad le.\n- **Szerveradminisztrátoroknak:** ugyanazt a Smart!-verziót telepítsd a szerverre és minden kliensre. A modkezelő frissítéskor egyezteti őket.\n- A **Smart Camera** kiegészítő mod többjátékos módban is működik.",
+    "source_hash": "e0abba477abdd815436da48e2f8957237ec0394c708deea58592e10d20ab9268",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:45": {
     "text": "_Utolsó frissítés: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (kiadási tervezet)_\n",
     "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
-    "obsolete": true
-  },
-  "Smart-Camera:30": {
-    "text": "_Utolsó frissítés: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (kiadási tervezet)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
-    "obsolete": true
-  },
-  "Smart-Restore:29": {
-    "text": "_Utolsó frissítés: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (kiadási tervezet)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
-    "obsolete": true
-  },
-  "Water-Extractors:14": {
-    "text": "_Utolsó frissítés: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (kiadási tervezet)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
-    "obsolete": true
-  },
-  "Feature-Gallery:50": {
-    "text": "_Utolsó frissítés: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (kiadási tervezet)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
-    "obsolete": true
-  },
-  "Feature-Gallery:30": {
-    "text": "\n## Fejlesztés",
-    "source_hash": "346a4694e55fb3881d4efb3df370eb4fa70ac8f41333fc51b5d2f136ba5ac387",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
-    "obsolete": true
-  },
-  "Lift-Assisted-Auto-Connect:11": {
-    "text": "## Játékbeli példák",
-    "source_hash": "5eb2c1c9e3dbc39102a812af339752c7f0fe1e0b95368965e2e069a71b377898",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
-    "obsolete": true
-  },
-  "Blueprints:21": {
-    "text": "_Utolsó frissítés: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (kiadási tervezet)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
-    "obsolete": true
-  },
-  "Lift-Assisted-Auto-Connect:12": {
-    "text": "![Két megemelt elosztóelőnézet, látható függőleges liftekkel lefelé a gépcsatlakozások szintjéig, az Ismétlés vezérlői mellett.](https://raw.githubusercontent.com/wiki/majormer/SmartFoundations/images/v35/lift-connection-controls.png)",
-    "source_hash": "cc3d5dfc328bad823f169e9cfaa9f3b9faf340768f11bfc85d33f6d73e79b0fc",
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
     "obsolete": true
@@ -5811,25 +5857,89 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
     "obsolete": true
   },
-  "Lift-Assisted-Auto-Connect:15": {
-    "text": "Megépített Gyártócsarnok-bemeneti sor különböző magasságokra és távolságokra eltolt elosztóépületekkel.",
-    "source_hash": "3f031fef9aa2b08f029041b38a3ede25923654db3210c0cf2f823345bb155916",
+  "Smart-Upgrade:35": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "fef10fcd052e667d2e0e00e385c7a28cabcf51645e05f4ffe84f7b4be9302924",
+    "obsolete": true
+  },
+  "Settings-Reference:55": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "48890e9ad61621c0f5a145bbfacc031cd10dd0886932dd6ca1718305cc0ded08",
+    "obsolete": true
+  },
+  "Smart-Upgrade:6": {
+    "text": "1. Támogatott épület kiválasztásával nyisd meg a **K → Fejlesztés** lapot. Szalagok, csövek és elektromos vezetékek közvetlenül megnyithatják ezt a feladatot.\n2. Válassz keresési módot.\n3. Keress közeli elemeket vagy összekapcsolt hálózatot.\n4. Válaszd ki a típust és a célszintet — hálózati keresésnél opcionálisan egy forrásszintet is, hogy csak azt fejleszd.\n5. Ellenőrizd az anyagköltséget.\n6. Indítsd el a fejlesztést.",
+    "source_hash": "32316883719d3460a5f56824a7fb92559589793f835d63f4bd04e2103217fa08",
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
     "obsolete": true
   },
-  "Buildable-Gallery:60": {
+  "Compatibility-and-Multiplayer:28": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "c7aebe8ed6d349fd4710af10aa9e95555d8529fd0728f438c8a84f9ce1b54246",
+    "obsolete": true
+  },
+  "Extend:40": {
     "text": "_Utolsó frissítés: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (kiadási tervezet)_\n",
     "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
     "obsolete": true
   },
-  "Blueprints:20": {
-    "text": "\n---",
-    "source_hash": "3d0b188170e8f7ed4b0a730d3fae39933057e60ba9e030bc278c446442cbabc3",
+  "Settings-Reference:12": {
+    "text": "- **Hipertranszport automatikus csatlakozás** — a hipertranszport csövek automatikus összekötése. **Alapértelmezetten bekapcsolva.** (Hozzáadva: 33.1.0.)\n- Hipertranszport útvonalvezetési mód kiválasztása.",
+    "source_hash": "de7e8d93fbc71c12b9ce0a1c8db5fdc99380795aa7009f219fc68164294d1f29",
     "status": "reviewed",
-    "review_method": "Language-neutral Markdown, protected brand or code; no translation required.",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:29": {
+    "text": "_Utolsó frissítés: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (kiadási tervezet)_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:41": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "6fd578d8f158dba5fa05b36f5f5e607370fc961be65776fbce3a1e7af14d1023",
+    "obsolete": true
+  },
+  "Water-Extractors:14": {
+    "text": "_Utolsó frissítés: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (kiadási tervezet)_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Upgrade:33": {
+    "text": "_Utolsó frissítés: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (kiadási tervezet)_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Compatibility-and-Multiplayer:25": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "6a23ebe76c6c81c346aa9ada46d9598977d528e278a4ec3eba624c42942cbf0a",
+    "obsolete": true
+  },
+  "Compatibility-and-Multiplayer:3": {
+    "text": "A Smart! 35.0.0 **Satisfactory 1.2.4 / CL 502094 vagy újabb** és **SML 3.12.x** verzióhoz készült. Telepítés előtt frissítsd a játékot és a modbetöltőt. Régebbi játékverziók nem támogatottak.",
+    "source_hash": "67e479ca52c59b7506d6acd2ace2bb75b701e6c7854e5b2d570aeec46f92d66e",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:35": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "4ce78ba0540a46d297f12754ed09f0b5fbd3af284a7f90d4157396c30318a9dc",
     "obsolete": true
   },
   "Lift-Assisted-Auto-Connect:14": {
@@ -5839,11 +5949,24 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
     "obsolete": true
   },
-  "Feature-Gallery:38": {
-    "text": "\n## Csoportos bontás",
-    "source_hash": "353f26b4f82a6dd84f38739c12578013748425253037044613768c788d0ac22b",
+  "Feature-Gallery:30": {
+    "text": "\n## Fejlesztés",
+    "source_hash": "346a4694e55fb3881d4efb3df370eb4fa70ac8f41333fc51b5d2f136ba5ac387",
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:12": {
+    "text": "- Miután előnézetben megjelenítettél vagy megépítettél egy Smart [Kiterjesztést](Extend), az a fül tetején lévő **Kiterjesztés-vágólapra** kerül. A **Mentés modulként** ezt a rögzített elrendezést elnevezett, újrahasználható Modullá alakítja.\n- Egy mentett Modulnál a **Modul betöltése** újra létrehozza az elrendezést: válaszd ki forrásépületét, és élő előnézet lesz, amelyet **ismételten elhelyezhetsz** (többszöri lövéssel) és menet közben **görgetéssel méretezhetsz**.\n- Mivel a visszaállított Modul nincs egy oldalhoz kötve, mint egy friss Rácsos Kiterjesztés, elhelyezés előtt **mindkét irányban átméretezheted a sorozatot** a tengelye mentén — egyik irányba görgetve arra nő, a másikba görgetve ellenkezőleg.\n- A **Kód exportálása / Kód importálása** ugyanúgy megosztja a Modulokat, mint a készleteket.",
+    "source_hash": "37740d4bfda7ca76487c320d49ae9a15e2da89d1f1fe4a31862a2ad8d53f903b",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:48": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "54a959ae32a4d9f6576cccd1f8191d529cda45dd8aca777c420560710c5cfa55",
     "obsolete": true
   },
   "Smart-Camera:17": {
@@ -5853,16 +5976,16 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
     "obsolete": true
   },
-  "Lift-Assisted-Auto-Connect:13": {
-    "text": "A függőleges lifttestek és alsó végeik mindkét elosztó alatt láthatók. A gépoldali vízszintes szalagok ebben a nézetben rövidültnek látszanak; a nagyobb elrendezést az alábbi megépített Gyártócsarnok-példán nézd meg.",
-    "source_hash": "461c92ebb7d0183d81d0d44c20001dd4c5d42ceaee5dc38fbc02fc6ff22afe85",
+  "Smart-Restore:21": {
+    "text": "A **K → Visszaállítás** alatt menthetsz, választhatsz, tölthetsz be, importálhatsz vagy exportálhatsz elrendezéseket. Betöltés után az Ismétlés panellel vagy a görgős/numerikus vezérlőkkel állítsd az elhelyezést; a HUD mutatja az eredményül kapott rácsot és aktív beállítást. Az építőfegyverrel a kijelzett költségen építheted meg.",
+    "source_hash": "1b1ed17e9fec531c12a9f625b3a9bfc523afdeccaf5ba0c4bca304c837f1764c",
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
     "obsolete": true
   },
-  "Controls:6": {
-    "text": "| Billentyű | Művelet |\n|-----|--------------|\n| `K` | A közös Ismétlés / Séta / Fejlesztés / Visszaállítás ablak megnyitása vagy bezárása |\n| `F8` | HUD-elrendezés szerkesztése; telepített Smart Camera esetén a HUD és kamerák közös szerkesztése |\n| `Num Decimal` | A Smart építési segítség kapcsolása erre a játékmenetre |\n| `Num 8` | Az aktív érték növelése |\n| `Num 5` | Az aktív érték csökkentése |\n| `Num 6` | Az Y rácsdarabszám növelése |\n| `Num 4` | Az Y rácsdarabszám csökkentése |\n| `Num 9` | A Z rácsdarabszám növelése |\n| `Num 3` | A Z rácsdarabszám csökkentése |\n| `X` | Nyomva tartva az X állítása a közös vezérlőkkel vagy egérgörgővel |\n| `Z` | Nyomva tartva az Y állítása a közös vezérlőkkel vagy egérgörgővel |\n| `X + Z` | Mindkettőt nyomva tartva a Z állítása a közös vezérlőkkel vagy egérgörgővel |\n| `;` | Térköz mód nyomva tartása |\n| `I` | Lépcsők mód nyomva tartása |\n| `Y` | Eltolás mód nyomva tartása |\n| `,` | Forgatás mód nyomva tartása |\n| `Num 0` | Az aktív mód tengelyének váltása |\n| `U` | Receptválasztás termelőépületeknél; kapcsolati beállítások vagy táblatartók a megfelelő építményeknél |\n| `Num 1` | Iránynyilak kapcsolása |\n| `Mouse Wheel` | Az aktív Smart mód állítása, vagy alapjátékbeli forgatás, ha nincs aktív Smart mód |",
-    "source_hash": "2837292eada81d5f2f7b96ee1fa39689f1d488e0ee8b125d948d5069e407097e",
+  "Settings-Reference:2": {
+    "text": "A **Főmenü → Modok → Smart!** alatt találod őket. Az itt végzett változtatások **mentések és játékmenetek között is megmaradnak**. (A billentyűk külön vannak — lásd az [Irányítást](Controls).)",
+    "source_hash": "3f27a7251dee61f272afa2b13b0a9a7d3b5d0782f11461e43b22ec93ed6baceb",
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
     "obsolete": true
@@ -5874,9 +5997,401 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
     "obsolete": true
   },
+  "Extend:20": {
+    "text": "Indítsd kifejezetten a **K → Kiterjesztés → Forrás kiválasztása** paranccsal, vagy használd a rámutatásos gyorsutat. A Kiterjesztés fül az elhelyezési vezérlőket használja a rácsdarabszámokhoz, térközhöz és támogatott transzformációkhoz. A [Rácsos ismétlés](Grid-Scaling) görgős/numerikus vezérlőit is használhatod. Módosító nélkül a görgő a Kiterjesztés irányát választja. A játék közbeni HUD jelzi a sorozatot/sorokat és az aktív állítást, így építés előtt ellenőrizheted, mi változik.",
+    "source_hash": "76acf531cc52c29e073f3df2f0e0d06d36121daf24e05679c1f466af9d01eb13",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:56": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "bdf042547add168e1b9964198625cab7539af8176045dd68d70f13a619b0b7be",
+    "obsolete": true
+  },
+  "Settings-Reference:28": {
+    "text": "- Az automatikus rögzítés rácsváltoztatáskor lezárja a hologramot, hogy a nagy előnézet ne mozduljon el véletlenül. **Alapértelmezetten bekapcsolva** (32.1.2 óta) — kapcsold ki, ha szabadon mozgatnád a hologramot; az alapjáték rögzítőbillentyűje feloldja az egyes rögzítéseket.\n- **Játékoshoz viszonyított irányítás** — a nézésed irányát követi fix égtájtengelyek helyett: a görgő arra növeli az építést, amerre nézel, a numerikus billentyűzet iránytűvé válik (távolabb/közelebb, jobbra/balra, fel/le). Ismétlésre, térközre, lépcsőzésre, eltolásra és forgatásra vonatkozik. **Alapértelmezetten kikapcsolva** — a klasszikus vezérlőid változatlanok, amíg be nem kapcsolod, és a Smart panel mindig fix X/Y/Z rendszert használ. Teljes leírás: [Irányítás](Controls). (Hozzáadva: 34.1.0.)\n- **Transzformációs módok kapcsolása megnyomással** — egy transzformációs billentyű (Térköz, Lépcsők, Eltolás, Forgatás vagy gyáron Recept) megnyomása bekapcsolja, újabb megnyomása kikapcsolja, másik billentyű módot vált. Kontrollerekhez, Steam Deckhez és akadálymentes konfigurációkhoz készült — a Steam Input radiális/érintőmenüi rövid megnyomást küldenek, tartást nem. Elrakás, épületváltás és panelnyitás mindig elengedi a módot. **Alapértelmezetten kikapcsolva** — bekapcsolásig érintetlen a hagyományos nyomva tartás, ismét kikapcsolva azonnal visszatér. Radiális menükhöz lásd a [Kontroller és Steam Deck](Controller-and-Steam-Deck) oldalt. (Hozzáadva: 34.2.0.)",
+    "source_hash": "5062fcd97160abfb325d9843686928ec4e50ca66911455b5f84cd6515d2b0179",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:17": {
+    "text": "Külön kapcsoló a **saját** tervrajzaid ismételt példányai közötti kapcsolatokhoz — a fenti futószalag- és csővezeték-csatlakozástól függetlenül, így a tervrajzpéldányok hagyományos automatikus csatlakozás nélkül is összeköthetők.",
+    "source_hash": "777a49715537ba1bf7334d6be913926f712654bb9bcb31b43455ceeff3c86b11",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:32": {
+    "text": "_Utolsó frissítés: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (kiadási tervezet)_\n",
+    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89",
+    "status": "reviewed",
+    "review_method": "Direct AI contextual translation and fluency review; official terminology and protected Markdown checked; not human native-speaker certification.",
+    "obsolete": true
+  },
+  "Settings-Reference:53": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "f22daf9ba45c58f27cddf5020c4d856e4963c6b4b321e93b90506fe9200725c4",
+    "obsolete": true
+  },
+  "Home:17": {
+    "text": "_Utolsó frissítés: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (kiadási tervezet)_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:57": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "c9db8a4c70492425a227c4f600e18e314036c794ee6ecf7b72819e8c1176d985",
+    "obsolete": true
+  },
+  "Buildable-Gallery:60": {
+    "text": "_Utolsó frissítés: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (kiadási tervezet)_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Auto-Connect:24": {
+    "text": "**Az ismételt hipertranszport-tartók hipertranszport-útvonalat építenek.** Ha Egymásra rakható hipertranszport cső állványok sorát ismétled, a Smart! összefüggő hipertranszport csövet fektet a példányok közé — ugyanúgy, ahogyan a Futószalag tartóoszlopok ismételt sora szalagot, a Csővezeték tartóoszlopok pedig csőszakaszt építenek. Az útvonal követi a sor térközét és magasságát, és meredeken is emelkedhet, miközben minden tartó saját illesztési pontja szabad marad, így kézzel továbbra is csatlakoztathatsz hozzá hipertranszport csövet.",
+    "source_hash": "eb2ee60a85c009c8b087b30e51ca7b4eb21ab2ca69353d8b3bce92a60256f455",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:37": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "89d7ec27427ec2dbeda612d4908225ce4ab17de581eb4e2fc4950c57aaf45e81",
+    "obsolete": true
+  },
+  "Compatibility-and-Multiplayer:14": {
+    "text": "A többjátékos támogatás újabb az egyjátékosnál, ezért ha valami eltérően működik többjátékos munkamenetben, az hiba — jelentsd GitHubon vagy Discordon, és írd le, mit építettél, illetve házigazda vagy kliens voltál-e.",
+    "source_hash": "be6a21fb0e3a5a2792dc5eaa0095af9dbd2cdc8641d29aed38e44f5a8dce7ce9",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Extend:8": {
+    "text": "1. Építs kézzel egy működő modult, és válaszd ugyanazt az épülettípust az építőfegyverben.\n2. Nyisd meg a **K → Kiterjesztés** lapot, és nyomd meg a **Forrás kiválasztása** gombot.\n3. Kattints a meglévő forrásépületre a világban, a panelen kívül. Kiválasztáskor a kompatibilis források kiemelést kapnak. Az **Escape** megszakítja a kijelölést; a panelen belüli kattintások a kezelőfelületen maradnak.\n4. Ellenőrizd a forrás nevét, a rögzített kísérőelemeket és az ismétlések számát. Az **Irányváltás** és az elhelyezési vezérlők segítségével formázd az előnézetet.\n5. Zárd be a panelt, vizsgáld meg a javasolt példányokat és az anyagköltséget, majd az építőfegyverrel építsd meg szokásosan.",
+    "source_hash": "be187544697091618ad4e7d6e1a2c2782b01ec9a0930ae4d3655eadaf437a2ca",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Auto-Connect:27": {
+    "text": "A csővezeték és hipertranszport fali tartók gyermekpéldányai követik a szülő teljes elforgatását. A panel **Fal forgatása** vezérlője az alapjáték **45°-os lépéseit** kínálja, függőleges útvonallal együtt. Ez különbözik a rács Forgatásától, amely a példányok sorozatát hajlítja.",
+    "source_hash": "fd7f0d71039eaac4e79da271b675c44893d3943fcbd5cfcc62fcca29fe53a2ce",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Auto-Connect:18": {
+    "text": "**Az ismételt csővezeték-tartók csőszakaszt építenek.** Ha Csővezeték tartóoszlopok vagy Csővezeték fali tartóállványok sorát ismétled, a Smart! összefüggő csőszakaszt köt a példányok közé — ugyanúgy, ahogyan a Futószalag tartóoszlopok ismételt sora futószalagot épít. A folyadék végigáramlik a teljes szakaszon, és minden tartó saját illesztési pontja szabad marad, így kézzel továbbra is csatlakoztathatsz hozzá csövet. A talajtartó magassága és felső részének szöge az egész soron megmarad, így a lejtős szakasz egységes marad.",
+    "source_hash": "01bc78e7b2eed2e3b61e790428579385ed84d207401ce8ce691e20542ceb6c01",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Extend:16": {
+    "text": "A megépített Kohó a meglévő forrás. A cián Kohó, futószalagok és tartók a javasolt példányt jelentik; a HUD felirata **Kiterjesztés 1×1**. Ez meg nem épített előnézet.",
+    "source_hash": "e63c3cf4682d23c05eeac5028bcb9b9181dbd792603560f52b7b754522f84fbc",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Auto-Connect:46": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "0bfbb0f456f389e1d5f74b3927ea2e671cd406c1d43a86691dbaf4cf8466f920",
+    "obsolete": true
+  },
+  "Blueprints:20": {
+    "text": "\n---",
+    "source_hash": "3d0b188170e8f7ed4b0a730d3fae39933057e60ba9e030bc278c446442cbabc3",
+    "status": "reviewed",
+    "review_method": "Language-neutral Markdown, protected brand or code; no translation required.",
+    "obsolete": true
+  },
+  "Smart-Restore:38": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "ec2177c56559237ebd837004fb2b43a250f6a29833da7919279c42a8f1cd7585",
+    "obsolete": true
+  },
+  "Extend:43": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "4a4f5c96d35df73910b2887f40ae3bae8ad2bfb9317efd89edeeee8d5cd6a225",
+    "obsolete": true
+  },
+  "Smart-Restore:1": {
+    "text": "A Smart Visszaállítás elmenti a Smart!-tal végzett munkádat későbbi használathoz, megosztáshoz vagy egy teljes gyármodul azonos módon történő ismételt elhelyezéséhez. Nyisd meg a **K → Visszaállítás** lapot a közös [Smart panelen](Smart-Panel-and-HUD). Két alfüle a **Rácsbeállítások** és a **Modulok**.",
+    "source_hash": "d30db2304eb2c337da20e09266e493bcc8c502907b34b04c692903c1c50cee35",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:11": {
+    "text": "A Modul egy teljes **Kiterjesztés-elosztórendszert** rögzít — épületek összekötött egységét szalagokkal, csövekkel, liftekkel, elosztóépületekkel és árammal —, amelyet ismételten elhelyezhetsz.",
+    "source_hash": "15f117646c84198699764f5759ce40f588af9591576ba39e1d7f68ebbf616b8b",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:34": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "4032031e869ee6cf1a85c2c77f17f1a8e1c5fdfb4d6365de941032362c26bd6b",
+    "obsolete": true
+  },
+  "Home:14": {
+    "text": "Ez a **Smart! 35.0.0 és Smart Camera 2.0.0** helyi dokumentációtervezete. A két modot együtt frissítsd, amikor az összehangolt, kompatibilis kiadásaik elérhetővé válnak; ne párosítsd a Camera 2.0-t régebbi Smart csomaggal. Ezek a tervezetoldalak nem jelentenek közzétételt.",
+    "source_hash": "c29d2ea90b7a486f22022563a690b6049c5d72c5bf1c740518bb20fa5747432d",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Lift-Assisted-Auto-Connect:15": {
+    "text": "Megépített Gyártócsarnok-bemeneti sor különböző magasságokra és távolságokra eltolt elosztóépületekkel.",
+    "source_hash": "3f031fef9aa2b08f029041b38a3ede25923654db3210c0cf2f823345bb155916",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Extend:41": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "994fafc6b93774a2bf26fda7226aa7f32d9e5692801829af09b53ed4e124e1dc",
+    "obsolete": true
+  },
+  "Auto-Connect:53": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "7a7775f3971ba2543d8a862d7cb59673e80d88b7b274872a5f5197d36bd4a8cb",
+    "obsolete": true
+  },
+  "Smart-Upgrade:26": {
+    "text": "A nagy futószalag-fejlesztések összetettek, mert a Satisfactory belsőleg láncaktorokba csoportosítja a szalagokat és lifteket. A Smart! tartalmaz stabilizálást és diagnosztikát, de nagyon nagy fejlesztések után továbbra is szükség lehet mentésre/újratöltésre, ha a játék rendezetlen láncállapotot jelez.",
+    "source_hash": "fed328c054689b599658ab3989621c5b784f7bcaa94b5be404727f05664adba7",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Lift-Assisted-Auto-Connect:13": {
+    "text": "A függőleges lifttestek és alsó végeik mindkét elosztó alatt láthatók. A gépoldali vízszintes szalagok ebben a nézetben rövidültnek látszanak; a nagyobb elrendezést az alábbi megépített Gyártócsarnok-példán nézd meg.",
+    "source_hash": "461c92ebb7d0183d81d0d44c20001dd4c5d42ceaee5dc38fbc02fc6ff22afe85",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Auto-Connect:52": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "2f3fecc73d967c4184f0913db5a820573f49a433540b53d23d3f4b45143cea26",
+    "obsolete": true
+  },
+  "Compatibility-and-Multiplayer:4": {
+    "text": "Ha mindkettő telepítve van, a Smart Camera 2.0 és Smart! 35.0 kompatibilis párként frissítendő. A Camera önállóan is működik; a Smart építőeszközeihez nem szükséges Camera. A Camera beállításai és a HUD megjelenése minden helyi játékoshoz tartoznak, nem a szerver egészéhez.",
+    "source_hash": "d778ecad7f4a6a4eb530120898db7c258299752b3b3849ab7cb18dce25829247",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Feature-Gallery:50": {
+    "text": "_Utolsó frissítés: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (kiadási tervezet)_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Extend:42": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "16d59253ca7db5055c785ca688ef4711b48bf61b30eff0f24767d33040495694",
+    "obsolete": true
+  },
+  "Smart-Restore:2": {
+    "text": "Ez a válasz arra, hogy „Rengeteg időt töltöttem ennek az elrendezésnek a beállításával — hogyan kaphatom vissza?”",
+    "source_hash": "3d432425c5421614e20983fcafadb764c442a1c31b834004ecbebec74df73ea2",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Blueprints:17": {
+    "text": "A biztonságos építési adatméretkorlát a tervrajzrácsokra is érvényes. Az elutasított, túl nagy elhelyezés megtartja előnézetét: csökkentsd a rácsot, és építs szakaszonként. Nagy alapjátékbeli tervrajz elhelyezéséhez kapcsold ki a [Smart segítséget](Smart-Assistance), és válaszd ki újra.",
+    "source_hash": "540e7f14c64d49d7f11fb6b7090a1475087984b4955b0dccb93ca481787d4236",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:40": {
+    "text": "A **Modok → Smart! Camera** alatt a nézetek automatikusan megjelennek szolgáltató modjuk és kameranevük szerint, az inaktív nézetek is. A beépített építőfegyver-nézetnek független engedélyező vezérlője van. Nézetenként a pozíció normalizált 0–1, a felbontás 64–2048 képpont tengelyenként, a méret 0.1–2, a felvételi sebesség 5–60/mp, a fényerő −3 és +3 EV közötti. Az alkalmazható építési kameratávolságok 5–50 m. A Camera beállításai azonnal érvényesülnek; a menük által elrejtett nézetek Folytatáskor frissülnek. Az **Összes mentés** csak a szerkesztett mezőt módosítja a kamera globális és meglévő mentett profiljaiban, az aktuális világban is. Az **Ez a mentés** csak az aktuális alapjátékbeli mentési profilt módosítja. Független mezők és más kamerák érintetlenek maradnak.",
+    "source_hash": "c472d20351cba658f26ae667c4cd445f95ae5a5ca37a10e8763878b476181f29",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:49": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "a17847f27c9d126c19f4c648fcce148a467279fc4197ecd4e932411db88929df",
+    "obsolete": true
+  },
+  "Smart-Restore:33": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "b2e1a293ae99d7ff0946f54edd6939cf17d18547e848ac895c533abe3c2e4560",
+    "obsolete": true
+  },
+  "Feature-Gallery:38": {
+    "text": "\n## Csoportos bontás",
+    "source_hash": "353f26b4f82a6dd84f38739c12578013748425253037044613768c788d0ac22b",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:36": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "4ca209992e5cc98977db86e926e521228b74ac99cbbce1b5f642444df21d447f",
+    "obsolete": true
+  },
+  "Lift-Assisted-Auto-Connect:11": {
+    "text": "## Játékbeli példák",
+    "source_hash": "5eb2c1c9e3dbc39102a812af339752c7f0fe1e0b95368965e2e069a71b377898",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:15": {
+    "text": "- Elektromos automatikus csatlakozás engedélyezése vagy tiltása.\n- Csatlakozási mód kiválasztása.\n- Csatlakozási hatótáv beállítása.\n- Oszlopcsatlakozók lefoglalása, hogy a Smart! ne töltsön meg minden helyet.\n- **Elektromos lánckapcsolás ismétléskor** — a Fejlesztett hálózati csatlakozók feloldása után gyár vagy generátor Smart X tengelye menti ismétlésekor minden példány közvetlenül a következőhöz csatlakozik külön oszlop helyett; így külön Kiterjesztés nélkül készül szokásos elosztósor. A Smart panel felülírhatja az aktuális építéshez, és a HUD mutatja a tényleges választást. Betartja az egyes csatlakozók szabad kapacitását. **Alapértelmezetten bekapcsolva.** (Hozzáadva: 34.2.0.)",
+    "source_hash": "ec98629a469e74c7be896e64709377532daca45491fe70e1465ce14f99cffdfb",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:54": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "8382fa1196f068239391b97c93d521c0ed3ba46266fa7254f3e6c05c842fa1d2",
+    "obsolete": true
+  },
   "Smart-Assistance:13": {
     "text": "_Utolsó frissítés: 2026-10-06 · Smart! v34.4.0_\n",
     "source_hash": "9ea842bd5dbdd752d3353ddeeeb68a3eff256015d475f2a5eb6d8e17e13b5156",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Upgrade:14": {
+    "text": "- Kattints egy adott szintre — például **Mk.2** —, hogy **csak** azt fejleszd a célszintre. Emeld az Mk.2 szalagokat Mk.3-ra, az Mk.4-ek érintetlenül maradnak.\n- Válaszd az **Összes szint** lehetőséget minden eltérő szalag-, lift- vagy csőszint célszintre hozásához. Ez egy menetben egyes szinteket fejleszthet, másokat visszaminősíthet.",
+    "source_hash": "78e23b12048a0221986495c275897aa077ef1a3a23671637128ce9f602d2b7a8",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Compatibility-and-Multiplayer:22": {
+    "text": "_Utolsó frissítés: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (kiadási tervezet)_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Extend:27": {
+    "text": "Ugyanaz a forrás most három cián modulpéldányt hoz létre, szalagútvonalaikkal és tartóikkal együtt. A HUD felirata **Kiterjesztés 3×1**, az anyagköltség pedig a példányokkal nő. A megépített forrás helyben marad.",
+    "source_hash": "a818fc9f6600b845b33395c092257e5c56b6b18d277fc9a96921343bf18ea9b7",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Auto-Connect:54": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "92242198e922b4bdd9164d865151a7ed36c6f470ad144311ff077b3cb519dd7a",
+    "obsolete": true
+  },
+  "Auto-Connect:45": {
+    "text": "_Utolsó frissítés: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (kiadási tervezet)_\n",
+    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89",
+    "status": "reviewed",
+    "review_method": "Direct AI contextual translation and fluency review; official terminology and protected Markdown checked; not human native-speaker certification.",
+    "obsolete": true
+  },
+  "Smart-Upgrade:34": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "e26d8a251fe56b8c46900038254253f78c75d8e69ca22dce9b9e0edc797fe40e",
+    "obsolete": true
+  },
+  "Compatibility-and-Multiplayer:12": {
+    "text": "A Smart! dedikált szervereken is működik többjátékos módban. Minden Smart!-funkció — Rácsos ismétlés, Automatikus csatlakozás (szalagok, csövek és áram), Smart tervrajzok, Kiterjesztés, Smart fejlesztés, Smart Visszaállítás és Smart bontás — kliensként is működik, normál építési költségekkel. Minden, amit a Smart! elhelyez, szokásos, teljesen szinkronizált játéképület: mások látják, használhatják és bonthatják, mintha kézzel építetted volna.",
+    "source_hash": "274d747f094a4e138cbbfdf378bc151dedd8d3fa979722492b56173b298c75d5",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:32": {
+    "text": "Az alapértékek 0.5 m és 5°. A távolságlépések 0.1–8 m, a forgatás 0.5–90° között állítható.",
+    "source_hash": "b595cc1429fd298b95947cec85d6569724d96fed5b22b0b9424ca76f88c295da",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Auto-Connect:38": {
+    "text": "_Utolsó frissítés: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (kiadási tervezet)_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Extend:44": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "6db2053fcc52fc7413a2cac1559df3b88f7c1446d5bc55e82fb5c2b6043c246b",
+    "obsolete": true
+  },
+  "Smart-Camera:30": {
+    "text": "_Utolsó frissítés: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (kiadási tervezet)_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:50": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "d3ecb21df5d1ff326acb297239bef36255c199f23e6b6ec35663f3996c38ec2b",
+    "obsolete": true
+  },
+  "Lift-Assisted-Auto-Connect:12": {
+    "text": "![Két megemelt elosztóelőnézet, látható függőleges liftekkel lefelé a gépcsatlakozások szintjéig, az Ismétlés vezérlői mellett.](https://raw.githubusercontent.com/wiki/majormer/SmartFoundations/images/v35/lift-connection-controls.png)",
+    "source_hash": "cc3d5dfc328bad823f169e9cfaa9f3b9faf340768f11bfc85d33f6d73e79b0fc",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:8": {
+    "text": "- **Mentés a panelről** — nevezd el az aktuális panelbeállítást, és mentsd el készletként.\n- **Betöltés a panelre** — tölts vissza egy mentett készletet finomhangoláshoz az építés előtt, vagy alkalmazd változatlanul.\n- **Kód exportálása / Kód importálása** — ossz meg egy készletet kódként, vagy tölts be más által megosztott készletet.",
+    "source_hash": "7e35bb8291023e898ca5f34452152a86fb7117cb5f7cb13234c8fd2acf59ef40",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:46": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "b9d7eb1bd49651f9c06691ed5350a0882a0787f099915de792867f8aa4494c27",
+    "obsolete": true
+  },
+  "Blueprints:21": {
+    "text": "_Utolsó frissítés: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (kiadási tervezet)_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
     "obsolete": true

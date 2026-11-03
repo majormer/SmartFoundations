@@ -77,11 +77,10 @@
     "status": "reviewed",
     "review_method": "Retained independent review; primary agent rejected duplicate next-block text assigned to the Features heading. All links/tokens checked; no native-speaker certification"
   },
-  "Auto-Connect:4": {
-    "text": "Öffne **K → Skalierung** und nutze den entsprechenden Abschnitt **Auto-Connect** für das ausgewählte Bauobjekt. Bei unterstützten Logistik-Bauobjekten öffnet `U` die Verbindungseinstellungen. Globale Standardwerte findest du unter **Optionen → Mod-Einstellungen → Smart!**; die aktuellen Vorschauauswahlen sind im Panel. Verbindungseinstellungen werden live aktualisiert, unabhängig von **Platzierung sofort anwenden**.",
-    "source_hash": "0ef504a252dcabd3541b9ed8c7d000b31225026b5fa22aa19b6f534eadd38d6b",
-    "status": "reviewed",
-    "review_method": "Retained independent review; primary agent rejected duplicate next-block text assigned to the Features heading. All links/tokens checked; no native-speaker certification"
+  "Auto-Connect:56": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "0ef504a252dcabd3541b9ed8c7d000b31225026b5fa22aa19b6f534eadd38d6b"
   },
   "Auto-Connect:5": {
     "text": "Nutze das Panel, das Mausrad oder den Ziffernblock, um das Raster zu gestalten; inspiziere die generierten Verbindungen und Richtungspfeile in der Welt, bevor du baust. HUD meldet Platzierungswerte, anstatt ein weiteres Formular für Verbindungseinstellungen bereitzustellen. Siehe [Steuerung](Controls) für Standardtasten und Spieler-relatives Verhalten.",
@@ -118,6 +117,16 @@
     "source_hash": "e298b5a94ff81e994527adc768d5e9764cc98d01ecb1dd6ea12f6dca747287fd",
     "status": "reviewed",
     "review_method": "Retained independent review; primary agent rejected duplicate next-block text assigned to the Features heading. All links/tokens checked; no native-speaker certification"
+  },
+  "Auto-Connect:47": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "bfcb0d7bcbf0b5b36a80dd16a2dac958a4db4fc0261b34174dd132215ae37e01"
+  },
+  "Auto-Connect:48": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "59bd907b72a7a1bd727a61b3bb63c228bae6f45d96d4267b1fa73010ed0ca1df"
   },
   "Auto-Connect:11": {
     "text": "### Lift-gestützte Maschinenverbindungen",
@@ -173,11 +182,10 @@
     "status": "reviewed",
     "review_method": "Retained independent review; primary agent rejected duplicate next-block text assigned to the Features heading. All links/tokens checked; no native-speaker certification"
   },
-  "Auto-Connect:18": {
-    "text": "**Skalierte Pipeline-Stützen bauen eine Pipeline-Strecke.** Wenn du eine Reihe von Pipeline-Stützen oder Pipeline-Wandhalterungen skalierst, verlegt Smart! eine verbundene Pipeline-Strecke zwischen den Kopien – genau wie eine skalierte Reihe von Förderbandstützen eine Förderbandstrecke baut. Die Flüssigkeit fließt durch die gesamte Strecke, und der eigene Einrastpunkt jeder Stütze bleibt frei, sodass du weiterhin manuell eine Pipeline daran anschließen kannst. Die Höhe der Bodenstütze und der Winkel des Oberteils werden über die gesamte Linie übernommen, sodass eine geneigte Strecke konsistent bleibt.",
-    "source_hash": "01bc78e7b2eed2e3b61e790428579385ed84d207401ce8ce691e20542ceb6c01",
-    "status": "reviewed",
-    "review_method": "Retained independent review; primary agent rejected duplicate next-block text assigned to the Features heading. All links/tokens checked; no native-speaker certification"
+  "Auto-Connect:57": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "01bc78e7b2eed2e3b61e790428579385ed84d207401ce8ce691e20542ceb6c01"
   },
   "Auto-Connect:19": {
     "text": "Generierte Pipelines erben die Farbe von einer verbundenen Quell-Pipeline. Ein Verbinder erbt die Farbe nur, wenn die Farben der verbundenen Pipelines übereinstimmen; das Verschieben einer Vorschau zu einer Verbindung ohne Farbquelle stellt die ursprüngliche Farbe wieder her.",
@@ -203,6 +211,16 @@
     "status": "reviewed",
     "review_method": "Contextual language review with official game terminology; not native-speaker certification."
   },
+  "Auto-Connect:50": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "a731c462366f0c155a14546a1265f77d5e93778036e1ebd4a44e669ff5112e22"
+  },
+  "Auto-Connect:51": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "0a29d3c9b8ec32dedec575d19408d9bb4da0cbb09a58b8d2ed2dc2c0f3f833c7"
+  },
   "Auto-Connect:21": {
     "text": "## Hypertube-Auto-Connect",
     "source_hash": "4bcc46f7a3e328199f2b10ea31239d134d1815f33bf0911b2c5020959c930f54",
@@ -221,17 +239,15 @@
     "status": "reviewed",
     "review_method": "Retained independent review; primary agent rejected duplicate next-block text assigned to the Features heading. All links/tokens checked; no native-speaker certification"
   },
-  "Auto-Connect:24": {
-    "text": "**Skalierte Hypertube-Stützen bauen eine Hypertube-Strecke.** Wenn du eine Reihe aus Stützen des Typs Modulare Hypertubestütze skalierst, verlegt Smart! eine verbundene Hypertube-Strecke zwischen den Kopien – genau wie eine skalierte Reihe von Förderbandstützen eine Förderbandstrecke oder Pipeline-Stützen eine Pipeline-Strecke bauen. Die Strecke folgt dem Abstand und der Höhe der Linie und kann steil ansteigen, und der eigene Einrastpunkt jeder Stütze bleibt frei, sodass du weiterhin manuell eine Hypertube daran anschließen kannst.",
-    "source_hash": "eb2ee60a85c009c8b087b30e51ca7b4eb21ab2ca69353d8b3bce92a60256f455",
-    "status": "reviewed",
-    "review_method": "Retained independent review; primary agent rejected duplicate next-block text assigned to the Features heading. All links/tokens checked; no native-speaker certification"
+  "Auto-Connect:58": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "eb2ee60a85c009c8b087b30e51ca7b4eb21ab2ca69353d8b3bce92a60256f455"
   },
-  "Auto-Connect:25": {
-    "text": "Hypertube-Auto-Connect hat seinen **eigenen Aktivierungsschalter und Routing-Modus**, unabhängig von Pipelines – stelle sie im Smart-Panel, in den Auto-Connect-Einstellungen während des Bauens (halte `U` gedrückt) oder in der Mod-Konfiguration ein. Siehe [Einstellungen-Referenz](Settings-Reference).",
-    "source_hash": "12ed988af1c997655966e3695ec2f34cf65159be86bd53b56fa1a92c8a85b213",
-    "status": "reviewed",
-    "review_method": "Retained independent review; primary agent rejected duplicate next-block text assigned to the Features heading. All links/tokens checked; no native-speaker certification"
+  "Auto-Connect:59": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "12ed988af1c997655966e3695ec2f34cf65159be86bd53b56fa1a92c8a85b213"
   },
   "Auto-Connect:26": {
     "text": "## Gedrehte Wandstützen-Strecken",
@@ -239,11 +255,10 @@
     "status": "reviewed",
     "review_method": "Retained independent review; primary agent rejected duplicate next-block text assigned to the Features heading. All links/tokens checked; no native-speaker certification"
   },
-  "Auto-Connect:27": {
-    "text": "Kopien von Pipeline- und Hypertube-Wandstützen folgen der vollständigen Drehung des Elternobjekts. Die **Wanddrehung** im Panel bietet native **45°-Schritte**, einschließlich einer vertikalen Strecke. Dies ist getrennt von der Raster-Drehung, die eine Sequenz von Kopien biegt.",
-    "source_hash": "fd7f0d71039eaac4e79da271b675c44893d3943fcbd5cfcc62fcca29fe53a2ce",
-    "status": "reviewed",
-    "review_method": "Retained independent review; primary agent rejected duplicate next-block text assigned to the Features heading. All links/tokens checked; no native-speaker certification"
+  "Auto-Connect:60": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "fd7f0d71039eaac4e79da271b675c44893d3943fcbd5cfcc62fcca29fe53a2ce"
   },
   "Auto-Connect:28": {
     "text": "In den Steuerungsoptionen „Gebäude relativ“ folgt Y der gedrehten Wandlinie. In den Steuerungsoptionen „Spieler relativ“ folgt die vertikale Eingabe der am stärksten vertikalen unterstützten Richtung: Bei einer vertikalen Wandlinie vergrößert **X+Z + Mausrad** die Linie vertikal, während **Z + Mausrad** sie seitlich vergrößert. Das Panel behält seine X/Y/Z-Spalten bei; nutze die Pfeile, um diese Achsen anzuzeigen. Förderband-Wandanschlüsse behalten ihre Standard-Orientierungsbeschränkungen bei und nutzen Förderlifte für den vertikalen Transport.",
@@ -317,11 +332,10 @@
     "status": "reviewed",
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
-  "Auto-Connect:45": {
-    "text": "_Zuletzt aktualisiert: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (Entwurfsfassung)_\n",
-    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89",
-    "status": "reviewed",
-    "review_method": "Contextual language review with official game terminology; not native-speaker certification."
+  "Auto-Connect:55": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
   },
   "Blueprints:0": {
     "text": "# Smart! Baupläne",
@@ -425,11 +439,10 @@
     "status": "reviewed",
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
-  "Blueprints:17": {
-    "text": "Das sichere Konstruktions-Nutzlastlimit gilt auch für Bauplan-Raster. Eine abgelehnte übergroße Platzierung behält ihre Bauvorschau: Reduziere das Raster und baue in Abschnitten. Deaktiviere für eine große Vanilla-Bauplan-Platzierung [Smart Assistance](Smart-Assistance) und wähle sie erneut aus.",
-    "source_hash": "540e7f14c64d49d7f11fb6b7090a1475087984b4955b0dccb93ca481787d4236",
-    "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+  "Blueprints:34": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "60707b2c9e66e6d33812f6b75b700b1d1cfafde4fcb92a54f5847b69c82a8ac8"
   },
   "Blueprints:18": {
     "text": "Im Mehrspielermodus prüft die zuständige Spielinstanz die Konstruktion; es gelten normale Kosten. Ein geänderter Endpunkt oder unzureichende Ressourcen können eine zuvor gültige Bauvorschau ungültig machen. Siehe [Auto-Verbindung](Auto-Connect) und [Kompatibilität und Mehrspieler](Compatibility-and-Multiplayer).",
@@ -509,11 +522,10 @@
     "status": "reviewed",
     "review_method": "Reused identical source hash from previously reviewed translation."
   },
-  "Blueprints:33": {
-    "text": "_Zuletzt aktualisiert: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (Entwurfsfassung)_\n",
-    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89",
-    "status": "reviewed",
-    "review_method": "Contextual language review with official game terminology; not native-speaker certification."
+  "Blueprints:35": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
   },
   "Buildable-Gallery:0": {
     "text": "# Gebäude-Galerie",
@@ -983,17 +995,15 @@
     "status": "reviewed",
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
-  "Compatibility-and-Multiplayer:3": {
-    "text": "Smart! 35.0.0 zielt auf **Satisfactory 1.2.4 / CL 502094 oder neuer** und **SML 3.12.x**. Aktualisiere das Spiel und den Mod-Loader vor der Installation. Ältere Spielversionen werden nicht unterstützt.",
-    "source_hash": "67e479ca52c59b7506d6acd2ace2bb75b701e6c7854e5b2d570aeec46f92d66e",
-    "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+  "Compatibility-and-Multiplayer:23": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "ddb7f6d3428242b7eb2a16d6468bc1c961f041f29251922f6c6a6922bfa78751"
   },
-  "Compatibility-and-Multiplayer:4": {
-    "text": "Smart Camera 2.0 und Smart! 35.0 müssen als kompatibles Paar aktualisiert werden, wenn beide installiert sind. Camera funktioniert auch allein; die Bauwerkzeuge von Smart erfordern Camera nicht. Camera-Einstellungen und das Aussehen von HUD gehören zu jedem lokalen Spieler, nicht zu allen auf dem Server.",
-    "source_hash": "d778ecad7f4a6a4eb530120898db7c258299752b3b3849ab7cb18dce25829247",
-    "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+  "Compatibility-and-Multiplayer:24": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "52b5e96461ffcb32e45b4e4f8c6a7bb4ae65053d1b8488b28119e6c0efbcaf11"
   },
   "Compatibility-and-Multiplayer:5": {
     "text": "## Speichersicherheit",
@@ -1037,23 +1047,20 @@
     "status": "reviewed",
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
-  "Compatibility-and-Multiplayer:12": {
-    "text": "Smart! funktioniert im Mehrspielermodus auf dedizierten Servern. Jede Smart!-Funktion – Skalierung des Rasters, Auto-Verbinden (Förderbänder, Rohre und Strom), Smart-Baupläne, Erweitern, Smart-Upgrade, Smart-Wiederherstellen und Smart-Demontieren – funktioniert, wenn du als Client spielst, mit normalen Baukosten. Alles, was Smart! platziert, ist ein standardmäßiges, vollständig repliziertes Spielgebäude: Andere Spieler sehen es, können es nutzen und es demontieren, so als hättest du es von Hand gebaut.",
-    "source_hash": "274d747f094a4e138cbbfdf378bc151dedd8d3fa979722492b56173b298c75d5",
-    "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+  "Compatibility-and-Multiplayer:29": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "274d747f094a4e138cbbfdf378bc151dedd8d3fa979722492b56173b298c75d5"
   },
-  "Compatibility-and-Multiplayer:13": {
-    "text": "- **Dedizierte Server:** Sowohl Windows als auch Linux werden unterstützt.\n- **Obergrenze für die Größe von Smart-Bauplänen:** Eine einzelne Platzierung eines Bauplan-Rasters auf einem Server ist begrenzt (etwa ein paar tausend Gebäude oder ein paar hundert verbindende Förderbänder/Rohre, je nachdem, was zuerst erreicht wird). Wenn du darüber hinaus skalierst, verweigert Smart! die Platzierung – das HUD weist dich an, in kleineren Abschnitten zu bauen, und das Raster bleibt aktiv, damit du das kannst. Das sichere Limit für die Konstruktions-Nutzlast gilt auch in Einzelspieler- und Listen-Server-Sitzungen. Deaktiviere [Smart Unterstützung](Smart-Assistance) und wähle das Rezept erneut aus, um einen großen Vanilla-Bauplan normal zu platzieren.\n- **Große Raster werden schrittweise gebaut:** Das Bestätigen eines sehr großen skalierten Baus konstruiert ihn im Hintergrund über einige Momente, sodass der Server reaktionsfähig bleibt und niemand während des Baus getrennt wird.\n- **Für Server-Administratoren:** Installiere dieselbe Smart!-Version auf dem Server und auf jedem Client. Der Mod-Manager hält diese bei Updates synchron.\n- **Smart Camera** (die Begleit-Mod) funktioniert ebenfalls im Mehrspielermodus.",
-    "source_hash": "e0abba477abdd815436da48e2f8957237ec0394c708deea58592e10d20ab9268",
-    "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+  "Compatibility-and-Multiplayer:26": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "8cb40018690ab6ebe9357b170389232193d08c25eafc1fd5d631dac793751ffe"
   },
-  "Compatibility-and-Multiplayer:14": {
-    "text": "Der Mehrspielermodus ist neuer als der Einzelspielermodus. Wenn sich also etwas in einer Mehrspielersitzung anders verhält als im Einzelspielermodus, ist das ein Fehler – bitte melde ihn auf GitHub oder Discord und erwähne, was du gebaut hast und ob du Host oder Client warst.",
-    "source_hash": "be6a21fb0e3a5a2792dc5eaa0095af9dbd2cdc8641d29aed38e44f5a8dce7ce9",
-    "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+  "Compatibility-and-Multiplayer:30": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "be6a21fb0e3a5a2792dc5eaa0095af9dbd2cdc8641d29aed38e44f5a8dce7ce9"
   },
   "Compatibility-and-Multiplayer:15": {
     "text": "Die Unterstützungseinstellung jeder Spielersitzung betrifft nur deren eigene Bauwerkzeuge. Remote Erweitern/Wiederherstellen hält die Vorschau und Einstellungen des Listen-Server-Hosts getrennt von der Client-Operation.",
@@ -1097,11 +1104,10 @@
     "status": "reviewed",
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
-  "Compatibility-and-Multiplayer:22": {
-    "text": "_Zuletzt aktualisiert: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (Entwurfsfassung)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+  "Compatibility-and-Multiplayer:31": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
   },
   "Controller-and-Steam-Deck:0": {
     "text": "# Controller & Steam Deck (Experimentell)",
@@ -1637,11 +1643,10 @@
     "status": "reviewed",
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
-  "Extend:8": {
-    "text": "1. Baue ein funktionierendes Modul manuell und rüste denselben Gebäudetyp im FICSIT-Bauwerkzeug aus.\n2. Öffne **K → Erweitern** und drücke **Quelle auswählen**.\n3. Klicke auf das bestehende Quellengebäude in der Welt außerhalb des Panels. Kompatible Quellen werden während der Auswahl hervorgehoben. **Escape** bricht die Auswahl ab; Klicks innerhalb des Panels bleiben in der Oberfläche.\n4. Überprüfe den Quellennamen, die erfassten verbundenen Objekte und die Wiederholungszähler. Verwende **Richtung ändern** und die Platzierungssteuerungen, um die Vorschau zu gestalten.\n5. Schließe das Panel, inspiziere die vorgeschlagenen Kopien und die Materialkosten, und feuere dann das FICSIT-Bauwerkzeug ab, um normal zu bauen.",
-    "source_hash": "be187544697091618ad4e7d6e1a2c2782b01ec9a0930ae4d3655eadaf437a2ca",
-    "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+  "Extend:49": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "be187544697091618ad4e7d6e1a2c2782b01ec9a0930ae4d3655eadaf437a2ca"
   },
   "Extend:9": {
     "text": "Das Auswählen einer Quelle konstruiert nichts. Ein Fehlklick behält die vorherige Vorschau bei. Das Ersetzen einer Quelle oder einer nicht trivialen, nicht gebauten Platzierung erfordert eine Bestätigung, bevor sie verworfen wird. Die ausgewählte Quelle bleibt zur Inspektion angeheftet, bis die Platzierung abgebrochen, gebaut oder das Rezept geändert wird.",
@@ -1685,11 +1690,10 @@
     "status": "reviewed",
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
-  "Extend:16": {
-    "text": "Der feste Schmelzofen ist die bestehende Quelle. Der cyanfarbene Schmelzofen, die Förderbänder und die Stützen sind die vorgeschlagene Kopie; das HUD zeigt **Erweitern 1×1**. Dies ist eine nicht gebaute Vorschau.",
-    "source_hash": "e63c3cf4682d23c05eeac5028bcb9b9181dbd792603560f52b7b754522f84fbc",
-    "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+  "Extend:50": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "e63c3cf4682d23c05eeac5028bcb9b9181dbd792603560f52b7b754522f84fbc"
   },
   "Extend:17": {
     "text": "## Richtung ändern",
@@ -1709,11 +1713,10 @@
     "status": "reviewed",
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
-  "Extend:20": {
-    "text": "Starte explizit über **K → Erweitern → Quelle auswählen** oder verwende die Hover-Verknüpfung. Der Erweitern-Reiter nutzt die Platzierungssteuerungen für Rasteranzahlen, Abstand und unterstützte Transformationen. Du kannst auch dieselben Rad-/Ziffernblock-Steuerungen wie bei [Raster-Skalierung](Grid-Scaling) verwenden. Ohne gedrückte Modifikatortaste wählt das Rad die Erweitern-Richtung. Das Laufzeit-HUD identifiziert die Zeilen/Reihen und die aktive Anpassung, damit du prüfen kannst, was sich ändern wird, bevor du baust.",
-    "source_hash": "76acf531cc52c29e073f3df2f0e0d06d36121daf24e05679c1f466af9d01eb13",
-    "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+  "Extend:51": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "76acf531cc52c29e073f3df2f0e0d06d36121daf24e05679c1f466af9d01eb13"
   },
   "Extend:21": {
     "text": "## Skaliertes Erweitern",
@@ -1751,11 +1754,10 @@
     "status": "reviewed",
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
-  "Extend:27": {
-    "text": "Dieselbe Quelle erzeugt nun drei cyanfarbene Modulkopien, einschließlich ihrer Förderbandrouten und Stützen. Das HUD zeigt **Erweitern 3×1** und die Materialkosten steigen mit den Kopien. Die feste Quelle bleibt an ihrem Platz.",
-    "source_hash": "a818fc9f6600b845b33395c092257e5c56b6b18d277fc9a96921343bf18ea9b7",
-    "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+  "Extend:52": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "a818fc9f6600b845b33395c092257e5c56b6b18d277fc9a96921343bf18ea9b7"
   },
   "Extend:28": {
     "text": "## Wasserextraktoren",
@@ -1805,6 +1807,21 @@
     "status": "reviewed",
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
+  "Extend:45": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "54e38c7493c79d3f4bc2f71a29b70d8dd6942a4f44bee91a351b6ebd82db6819"
+  },
+  "Extend:46": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "2fc6ba5d654478f0d36a249ac28472d87d41be4029ae07a4e513561265a5f725"
+  },
+  "Extend:47": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "8d860159ae76958c5e531b7732a1d2bed5e6c39a0cc339d47fa7d866c6ab94e8"
+  },
   "Extend:36": {
     "text": "## Überprüfe das erfasste Layout",
     "source_hash": "f1c2f5c6de3f53c619dc7b774e5c42c86b11c0f59d3d150537e145bb3f358680",
@@ -1829,11 +1846,10 @@
     "status": "reviewed",
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
-  "Extend:40": {
-    "text": "_Zuletzt aktualisiert: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (Entwurfsfassung)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+  "Extend:48": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
   },
   "FAQ:0": {
     "text": "# Häufig gestellte Fragen",
@@ -3119,17 +3135,26 @@
     "status": "reviewed",
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
+  "Home:18": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1829ed863c572c2dbcafc8f78604d94faa795d58ca1d7e90494d020f49980f60"
+  },
+  "Home:19": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1bd5656d0819ad3a7d1a6861c038f59661e423c6f03bddc8b203ef1a7ffb5c8b"
+  },
   "Home:13": {
     "text": "## Abgedeckte Version",
     "source_hash": "96ddfc08279c6ae35f38d5139ad21a94f1ac99c7d031fa618cb40edbe35d39a5",
     "status": "reviewed",
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
-  "Home:14": {
-    "text": "Dies ist der lokale Dokumentationsentwurf für **Smart! 35.0.0 und Smart Camera 2.0.0**. Aktualisiere beide Mods zusammen, wenn ihre koordinierten kompatiblen Veröffentlichungen verfügbar sind; kombiniere Camera 2.0 nicht mit einem älteren Smart-Paket. Diese Entwurfsseiten kündigen keine Veröffentlichung an.",
-    "source_hash": "c29d2ea90b7a486f22022563a690b6049c5d72c5bf1c740518bb20fa5747432d",
-    "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+  "Home:20": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "6de3b72e72a676036d11c5f3b3679009013b370ca2cb7e8aed2d56252d3addd9"
   },
   "Home:15": {
     "text": "Beginne mit dem gemeinsamen [Panel und HUD](Smart-Panel-and-HUD), [Gehen fortsetzen](Smart-Walking), [Förderlift-gestützte Auto-Verbindung](Auto-Connect) und [Bauplan-Nahtverbindungen](Blueprints).",
@@ -3143,11 +3168,10 @@
     "status": "reviewed",
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
-  "Home:17": {
-    "text": "_Zuletzt aktualisiert: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (Entwurfsfassung)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+  "Home:21": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
   },
   "Lift-Assisted-Auto-Connect:0": {
     "text": "# Förderlift-gestützte Auto-Verbindung",
@@ -3473,11 +3497,10 @@
     "status": "reviewed",
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
-  "Settings-Reference:2": {
-    "text": "Finde sie im **Hauptmenü → Mods → Smart!**. Änderungen hier **bleiben zwischen Spielständen und Sitzungen erhalten**. (Tastaturbelegungen sind separat — siehe [Steuerung](Controls).)",
-    "source_hash": "3f27a7251dee61f272afa2b13b0a9a7d3b5d0782f11461e43b22ec93ed6baceb",
-    "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+  "Settings-Reference:59": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "3f27a7251dee61f272afa2b13b0a9a7d3b5d0782f11461e43b22ec93ed6baceb"
   },
   "Settings-Reference:3": {
     "text": "## Förderband Auto-Verbinden",
@@ -3533,11 +3556,10 @@
     "status": "reviewed",
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
-  "Settings-Reference:12": {
-    "text": "- **Hypertube Auto-Verbinden** — Hypertube Auto-Verbinden aktivieren oder deaktivieren. **Standardmäßig aktiviert.** (Hinzugefügt in 33.1.0.)\n- Hypertube-Routing-Modus wählen.",
-    "source_hash": "de7e8d93fbc71c12b9ce0a1c8db5fdc99380795aa7009f219fc68164294d1f29",
-    "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+  "Settings-Reference:60": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "de7e8d93fbc71c12b9ce0a1c8db5fdc99380795aa7009f219fc68164294d1f29"
   },
   "Settings-Reference:13": {
     "text": "## Strom-Auto-Verbindung",
@@ -3551,11 +3573,10 @@
     "status": "reviewed",
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
-  "Settings-Reference:15": {
-    "text": "- Strom Auto-Verbinden aktivieren oder deaktivieren.\n- Verbindungsmodus wählen.\n- Verbindungsbereich festlegen.\n- Mastverbindungen reservieren, damit Smart! nicht jeden Slot füllt.\n- **Strom daisy-chainen beim Skalieren** — wenn Verbesserte Stromanschlüsse freigeschaltet sind, verdrahtet das Skalieren einer Fabrik oder eines Generators entlang der X-Achse von Smart jede Kopie direkt mit der nächsten, anstatt einen Mast zu jeder zu führen, was dem üblichen Verteiler-Layout ohne separaten Erweitern-Durchgang entspricht. Das Smart Panel kann dies für den aktuellen Bau überschreiben, und das HUD meldet die effektive Wahl. Es respektiert die verfügbare Kapazität jedes Verbinders. **Standardmäßig aktiviert.** (Hinzugefügt in 34.2.0.)",
-    "source_hash": "ec98629a469e74c7be896e64709377532daca45491fe70e1465ce14f99cffdfb",
-    "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+  "Settings-Reference:61": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "ec98629a469e74c7be896e64709377532daca45491fe70e1465ce14f99cffdfb"
   },
   "Settings-Reference:16": {
     "text": "## Bauplan-Auto-Verbindung",
@@ -3563,23 +3584,31 @@
     "status": "reviewed",
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
-  "Settings-Reference:17": {
-    "text": "Ein separater Schalter für die Nähte zwischen skalierten Kopien deiner **eigenen** Baupläne – unabhängig von der oben genannten Förderband- und Rohr-Auto-Verbindung, sodass Kopien von Bauplänen ihre Verkabelung beibehalten können, auch wenn die reguläre Auto-Verbindung deaktiviert ist.",
-    "source_hash": "777a49715537ba1bf7334d6be913926f712654bb9bcb31b43455ceeff3c86b11",
-    "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+  "Settings-Reference:62": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "777a49715537ba1bf7334d6be913926f712654bb9bcb31b43455ceeff3c86b11"
   },
-  "Settings-Reference:18": {
-    "text": "- **Bauplan-Naht-Auto-Verbindung** – Aktiviere oder deaktiviere die automatische Verbindung von Förderbändern, Rohren, Hypertubes, Schienen, gerichteten Fahrzeugpfaden und zulässigen Stromverbindungen zwischen skalierten Bauplan-Kopien. **Standardmäßig aktiviert.** (Hinzugefügt in 34.2.0.)",
-    "source_hash": "5daf4a877774b178a7054980007283bb25a2de416f6dad2c908287768adb9db4",
-    "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+  "Settings-Reference:63": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "5daf4a877774b178a7054980007283bb25a2de416f6dad2c908287768adb9db4"
   },
   "Settings-Reference:19": {
     "text": "Strom-Nahtverbindungen erfordern zusätzlich **Strom-Auto-Verbindung**. Jedes Kabel verwendet eine passende Steckdose an einem Strommast mit verfügbarer Kapazität; interne Drähte und die beiden Seiten eines Wandstromverteilers zählen separat.",
     "source_hash": "f8e43f603399fedc12210a9d21a3d2d8108b47b7c676acc29f4f189f050416ed",
     "status": "reviewed",
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+  },
+  "Settings-Reference:51": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "d30a9c4968359ae455bcba1db55829f233cd9689baac7a41ddda2ee677c671a7"
+  },
+  "Settings-Reference:52": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "8d8d2f7ca8e8f5f5ffd32286939d718b5621954e9eb433f316520ac4e84d392b"
   },
   "Settings-Reference:20": {
     "text": "## Standardwerte für Bauplan-Abstände",
@@ -3605,11 +3634,10 @@
     "status": "reviewed",
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
-  "Settings-Reference:24": {
-    "text": "- **Reichweite für nahe Logistik** – Wie weit Splitter, Fusionatoren, Rohr-Kreuzungen und Rohr-Bodenöffnungen bei der Auto-Verbindung in Richtung Fabrikanschlüsse reichen. Verringere diesen Wert, um zu verhindern, dass die Auto-Verbindung in benachbarte Fabrikgruppen reicht. **Standardmäßig 25 m** (das vorherige feste Verhalten). (Hinzugefügt in 34.2.0.)",
-    "source_hash": "bb2d0aef5ebb0f05f6e0332aba3b272795cbf3d8bade162603d3521aad41d592",
-    "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+  "Settings-Reference:64": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "bb2d0aef5ebb0f05f6e0332aba3b272795cbf3d8bade162603d3521aad41d592"
   },
   "Settings-Reference:25": {
     "text": "## Erweitern",
@@ -3629,11 +3657,10 @@
     "status": "reviewed",
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
-  "Settings-Reference:28": {
-    "text": "- Auto-Halten bei Rasteränderung sperrt die Hologramm-Vorschau, nachdem du das Raster geändert hast, damit eine große Vorschau nicht versehentlich verschoben wird. **Standardmäßig aktiviert** (seit 32.1.2) – deaktiviere dies hier, wenn du möchtest, dass die Hologramm-Vorschau frei positionierbar bleibt; die native Halten-Taste hebt einzelne Sperren auf.\n- **Steuerung relativ zum Spieler** – lässt das Gebäude der Blickrichtung folgen, anstatt festen Kompassachsen: Das Mausrad vergrößert den Bau in die Richtung, in die du schaust, und der Ziffernblock wird zum Kompass (weg/zum, rechts/links, hoch/runter). Gilt für Skalierung, Abstand, Stufen, Versatz und Drehung. **Standardmäßig deaktiviert** – deine klassischen Steuerungen bleiben unverändert, bis du dies aktivierst, und das Smart-Panel bleibt immer auf festen X/Y/Z-Achsen. Siehe [Steuerung](Controls) für die vollständige Aufschlüsselung. (Hinzugefügt in 34.1.0.)\n- **Tippen zum Umschalten der Transformationsmodi** – Tippe eine Transformations-Taste (Abstand, Stufen, Versatz, Drehung oder Rezept bei einer Fabrik), um diesen Modus zu aktivieren; tippe erneut, um ihn zu deaktivieren; tippe eine andere Taste, um den Modus zu wechseln. Entwickelt für Controller, Steam Deck und Barrierefreiheits-Einstellungen – Steam Input Radial-/Touch-Menüs senden schnelle Tipps und können keine Taste halten. Das Einstecken des Werkzeugs, das Ändern von Gebäuden oder das Öffnen eines Panels hebt den Modus immer auf. **Standardmäßig deaktiviert** – das klassische Halten-zum-Verwenden-Verhalten bleibt unberührt, bis du dies aktivierst, und das Deaktivieren stellt es sofort wieder her. Siehe [Controller & Steam Deck](Controller-and-Steam-Deck) für Radial-Menü-Einstellungen. (Hinzugefügt in 34.2.0.)",
-    "source_hash": "5062fcd97160abfb325d9843686928ec4e50ca66911455b5f84cd6515d2b0179",
-    "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+  "Settings-Reference:65": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "5062fcd97160abfb325d9843686928ec4e50ca66911455b5f84cd6515d2b0179"
   },
   "Settings-Reference:29": {
     "text": "## Scroll-Schritte",
@@ -3647,17 +3674,15 @@
     "status": "reviewed",
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
-  "Settings-Reference:31": {
-    "text": "- **Abstandsschritt** (m) – Meter an Abstand, die pro Scroll-Klick hinzugefügt werden (auch Erweitern-Abstand und Vorrücken eines Gehen-Segments).\n- **Stufenschritt** (m) – Meter an Stufen pro Klick (auch Anstieg eines Gehen-Segments).\n- **Versatzschritt** (m) – Meter an Versatz pro Klick (auch Verschiebung eines Gehen-Segments).\n- **Drehungsschritt** (Grad) – Grad an Drehung pro Klick (auch Wendung eines Gehen-Segments).",
-    "source_hash": "89d132f31272346911aed3355f02885dd096f7bf810ca50e85be98947993996e",
-    "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+  "Settings-Reference:66": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "89d132f31272346911aed3355f02885dd096f7bf810ca50e85be98947993996e"
   },
-  "Settings-Reference:32": {
-    "text": "Die Standardwerte sind 0,5 m und 5°. Die Abstandsschritte akzeptieren 0,1–8 m; die Drehung akzeptiert 0,5–90°.",
-    "source_hash": "b595cc1429fd298b95947cec85d6569724d96fed5b22b0b9424ca76f88c295da",
-    "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+  "Settings-Reference:67": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "b595cc1429fd298b95947cec85d6569724d96fed5b22b0b9424ca76f88c295da"
   },
   "Settings-Reference:33": {
     "text": "## Smart-Panel",
@@ -3701,11 +3726,10 @@
     "status": "reviewed",
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
-  "Settings-Reference:40": {
-    "text": "In **Mods → Smart! Camera** erscheinen Ansichten automatisch unter den Namen des liefernden Mods und der Kamera, einschließlich inaktiver Ansichten. Die integrierte FICSIT-Bauwerkzeug-Ansicht verfügt über eine unabhängige Aktivierungskontrolle. Die Position pro Ansicht ist normalisiert auf 0–1, die Auflösung beträgt 64–2048 Pixel pro Achse, die Skalierung 0,1–2, die Aufnahmerate 5–60/sec und die Helligkeit −3 bis +3 EV. Die anwendbaren Gebäudekamera-Abstände betragen 5–50 m. Kameraeinstellungen werden sofort angewendet; Ansichten, die durch Menüs ausgeblendet sind, werden aktualisiert, wenn du fortsetzt. **Alle Spielstände** patcht nur das bearbeitete Feld über globale und vorhandene gespeicherte Profile für diese Kamera hinweg, einschließlich der aktuellen Welt. **Dieser Spielstand** ändert nur das aktuelle native Speicherprofil. Unverwandte Felder und andere Kameras bleiben intakt.",
-    "source_hash": "c472d20351cba658f26ae667c4cd445f95ae5a5ca37a10e8763878b476181f29",
-    "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+  "Settings-Reference:68": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "c472d20351cba658f26ae667c4cd445f95ae5a5ca37a10e8763878b476181f29"
   },
   "Settings-Reference:41": {
     "text": "**Mod-Vorschläge verwenden** in Alle Spielstände setzt diese Kamera über Spielstände hinweg zurück. **Globale Einstellungen verwenden** in Dieser Spielstand entfernt nur die aktuelle Überschreibung. Das Zurücksetzen von Rahmen/Abstand ändert nur diese beiden Felder. Layout-Bearbeitungen werden als Vorschau angezeigt, bis das gemeinsame **Fertig / Sperren** aktiviert wird; Abbrechen verwirft ausstehende Layout-/HUD-Änderungen. Siehe [Smart Camera](Smart-Camera).",
@@ -3731,11 +3755,10 @@
     "status": "reviewed",
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
-  "Settings-Reference:45": {
-    "text": "_Zuletzt aktualisiert: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (Entwurfsfassung)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+  "Settings-Reference:58": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
   },
   "Smart-Assistance:0": {
     "text": "# Smart-Unterstützung",
@@ -4385,17 +4408,15 @@
     "status": "reviewed",
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
-  "Smart-Restore:1": {
-    "text": "Smart Wiederherstellen speichert deine Smart!-Arbeit, damit du sie später wiederverwenden, teilen oder eine ganze Fabrikmodul-Struktur jedes Mal auf dieselbe Weise erneut platzieren kannst. Öffne **K → Wiederherstellen** im gemeinsamen [Smart Panel](Smart-Panel-and-HUD). Die beiden Unterregisterkarten sind **Raster-Presets** und **Module**.",
-    "source_hash": "d30db2304eb2c337da20e09266e493bcc8c502907b34b04c692903c1c50cee35",
-    "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+  "Smart-Restore:43": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "d30db2304eb2c337da20e09266e493bcc8c502907b34b04c692903c1c50cee35"
   },
-  "Smart-Restore:2": {
-    "text": "Es ist die Antwort auf: „Ich habe ewig an diesem Layout gefeilt – wie bekomme ich es zurück?“",
-    "source_hash": "3d432425c5421614e20983fcafadb764c442a1c31b834004ecbebec74df73ea2",
-    "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+  "Smart-Restore:44": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "3d432425c5421614e20983fcafadb764c442a1c31b834004ecbebec74df73ea2"
   },
   "Smart-Restore:3": {
     "text": "![Wiederherstellen-Aufgabe mit den Unterregisterkarten Raster-Presets und Module](https://raw.githubusercontent.com/wiki/majormer/SmartFoundations/images/v35/restore.png)",
@@ -4427,11 +4448,10 @@
     "status": "reviewed",
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
-  "Smart-Restore:8": {
-    "text": "- **Aus Panel speichern** – benenne deine aktuelle Panel-Einrichtung und speichere sie als Preset.\n- **In Panel laden** – lade ein gespeichertes Preset zurück in das Panel, um es vor dem Bauen fein abzustimmen, oder wende es direkt an.\n- **Code exportieren / Code importieren** – teile ein Preset als Code oder lade einen Code, den jemand mit dir geteilt hat.",
-    "source_hash": "7e35bb8291023e898ca5f34452152a86fb7117cb5f7cb13234c8fd2acf59ef40",
-    "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+  "Smart-Restore:45": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "7e35bb8291023e898ca5f34452152a86fb7117cb5f7cb13234c8fd2acf59ef40"
   },
   "Smart-Restore:9": {
     "text": "Jedes Preset zeigt eine verständliche Zusammenfassung dessen, was es enthält (Gebäude, Raster, Transformationen, Rezept), damit du sie auf einen Blick unterscheiden kannst.",
@@ -4445,17 +4465,15 @@
     "status": "reviewed",
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
-  "Smart-Restore:11": {
-    "text": "Ein Modul erfasst eine gesamte **Erweitern-Verzweigung** – eine verdrahtete Einheit aus Gebäuden mit ihren Förderbändern, Rohren, Förderliften, Verteilern und Stromversorgung –, die du wiederholt platzieren kannst.",
-    "source_hash": "15f117646c84198699764f5759ce40f588af9591576ba39e1d7f68ebbf616b8b",
-    "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+  "Smart-Restore:46": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "15f117646c84198699764f5759ce40f588af9591576ba39e1d7f68ebbf616b8b"
   },
-  "Smart-Restore:12": {
-    "text": "- Nachdem du eine Smart [Erweitern](Extend) Vorschau erstellt oder gebaut hast, landet sie in der **Erweitern-Zwischenablage** oben im Register. **Als Modul speichern** wandelt das erfasste Layout in ein benanntes, wiederverwendbares Modul um.\n- **Modul laden** für ein gespeichertes Modul, um das Layout neu aufzubauen: Rüste das Quellengebäude aus und es wird zu einer Live-Vorschau, die du **stempeln** (feuern zum Platzieren, wiederholt) und **durch Scrollen skalieren** kannst.\n- Da ein wiederhergestelltes Modul nicht wie ein frisch skaliertes Erweitern auf eine Seite festgelegt ist, kannst du die **Strecke in beide Richtungen** entlang ihrer Achse vor dem Platzieren neu skalieren – scrolle in eine Richtung, um sie in diese Richtung zu vergrößern, und in die andere Richtung, um sie in die andere Richtung zu vergrößern.\n- **Code exportieren / Code importieren** teilt Module auf dieselbe Weise wie Presets.",
-    "source_hash": "37740d4bfda7ca76487c320d49ae9a15e2da89d1f1fe4a31862a2ad8d53f903b",
-    "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+  "Smart-Restore:47": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "bec0ec9303e43dd7907dc7dc366c045b75ee549bfcabebb02918f256b044593e"
   },
   "Smart-Restore:13": {
     "text": "Jedes Modul zeigt eine Zusammenfassung seiner Teile (wie viele Förderbänder, Rohre, Verteiler usw.), damit du weißt, was es neu aufbaut.",
@@ -4517,11 +4535,10 @@
     "status": "reviewed",
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
-  "Smart-Restore:21": {
-    "text": "Nutze **K → Wiederherstellen**, um Layouts zu speichern, auszuwählen, zu laden, zu importieren oder zu exportieren. Nach dem Laden nutze das Skalierungs-Panel oder die Steuerungen über Mausrad/Ziffernblock, um die Platzierung anzupassen; das HUD meldet das resultierende Raster und die aktive Anpassung. Betätige das FICSIT-Bauwerkzeug, um es zu den angezeigten Kosten zu bauen.",
-    "source_hash": "1b1ed17e9fec531c12a9f625b3a9bfc523afdeccaf5ba0c4bca304c837f1764c",
-    "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+  "Smart-Restore:48": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1b1ed17e9fec531c12a9f625b3a9bfc523afdeccaf5ba0c4bca304c837f1764c"
   },
   "Smart-Restore:22": {
     "text": "Um zuletzt angewendete Wiederherstellungen durchzuschalten, ohne das Panel erneut zu öffnen, halte `U` gedrückt und drücke `Num 9` für das nächste aktuelle Preset oder `Num 3`, um einen Schritt zurückzugehen. Siehe [Steuerungen](Controls).",
@@ -4547,17 +4564,26 @@
     "status": "reviewed",
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
+  "Smart-Restore:39": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "b0724fac56a114aed1905757336fc2bd16f065519872f908a56afc905e5b0d3c"
+  },
+  "Smart-Restore:40": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "81c3c2048752b95069652ecef30608748705b0ecd1930a687c49a0f383a261ad"
+  },
   "Smart-Restore:26": {
     "text": "## Siehe auch",
     "source_hash": "0f2b43836b7db34aeb2ad65d2dc1b19495336b2a8bd81d1a4e6cc10ec180785b",
     "status": "reviewed",
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
-  "Smart-Restore:27": {
-    "text": "- [Erweitern](Extend) — die Funktion, deren Verteiler das Modul-Tab erfasst.\n- [Smart Panel und HUD](Smart-Panel-and-HUD) — wo sich das Wiederherstellen-Tab befindet.\n- [Raster-Skalierung](Grid-Scaling) und [Transformationen](Transforms) — was ein Raster-Preset speichert.",
-    "source_hash": "52daff47c488c29086aa3ce6e5cea9be1d21194fb00b9e2d10a09d723d037264",
-    "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+  "Smart-Restore:49": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "52daff47c488c29086aa3ce6e5cea9be1d21194fb00b9e2d10a09d723d037264"
   },
   "Smart-Restore:28": {
     "text": "---",
@@ -4565,11 +4591,10 @@
     "status": "reviewed",
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
-  "Smart-Restore:32": {
-    "text": "_Zuletzt aktualisiert: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (Entwurfsfassung)_\n",
-    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89",
-    "status": "reviewed",
-    "review_method": "Contextual language review with official game terminology; not native-speaker certification."
+  "Smart-Restore:42": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
   },
   "Smart-Upgrade:0": {
     "text": "# Smart Upgrade",
@@ -4607,11 +4632,10 @@
     "status": "reviewed",
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
-  "Smart-Upgrade:6": {
-    "text": "1. Öffne **K → Upgrade**, während ein unterstütztes Gebäude ausgewählt ist. Förderbänder, Pipelines und Drähte/Stromleitungen können diese Aufgabe direkt öffnen.\n2. Wähle einen Scan-Modus.\n3. Scanne nahe Objekte oder ein verbundenes Netzwerk.\n4. Wähle die Familie und die Zielstufe — und bei einem Netzwerk-Scan optional eine einzelne Quellstufe, um nur diese Stufe zu upgraden.\n5. Prüfe die Materialkosten.\n6. Führe das Upgrade aus.",
-    "source_hash": "32316883719d3460a5f56824a7fb92559589793f835d63f4bd04e2103217fa08",
-    "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+  "Smart-Upgrade:38": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "32316883719d3460a5f56824a7fb92559589793f835d63f4bd04e2103217fa08"
   },
   "Smart-Upgrade:7": {
     "text": "Strommasten und Wandstromverteiler öffnen weiterhin das normale Smart Panel, wenn sie ausgewählt sind, damit sie skaliert werden können. Um sie zu upgraden, öffne Smart Upgrade von einem Draht/einer Stromleitung aus oder nutze Scan-Modi.",
@@ -4655,11 +4679,10 @@
     "status": "reviewed",
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
-  "Smart-Upgrade:14": {
-    "text": "- Klicke auf eine bestimmte Stufe — zum Beispiel **Mk.2** — um **nur** diese Stufe auf dein Ziel upzugraden. Erhöhe deine Mk.2-Förderbänder auf Mk.3 und lasse die Mk.4-Förderbänder unberührt.\n- Wähle **Alle Stufen**, um jede unterschiedliche Förderband-, Förderlift- oder Pipeline-Stufe auf das ausgewählte Ziel zu bringen. Dies kann einige Stufen upgraden und andere im selben Verlauf downgraden.",
-    "source_hash": "78e23b12048a0221986495c275897aa077ef1a3a23671637128ce9f602d2b7a8",
-    "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+  "Smart-Upgrade:39": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "78e23b12048a0221986495c275897aa077ef1a3a23671637128ce9f602d2b7a8"
   },
   "Smart-Upgrade:15": {
     "text": "Dies entspricht der Stufensteuerung, die der Radius-Scan bereits hatte.",
@@ -4727,11 +4750,10 @@
     "status": "reviewed",
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
-  "Smart-Upgrade:26": {
-    "text": "Große Förderband-Upgrades sind kompliziert, da Satisfactory Förderbänder und Förderlifte intern zu Förderketten-Akteuren gruppiert. Smart! enthält Stabilisierungs- und Diagnosefunktionen, aber sehr große Upgrades erfordern möglicherweise dennoch ein Speichern/Neuladen, wenn das Spiel danach einen unklaren Kettenzustand meldet.",
-    "source_hash": "fed328c054689b599658ab3989621c5b784f7bcaa94b5be404727f05664adba7",
-    "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+  "Smart-Upgrade:36": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "30a1ce6a5b6dcbf3cb863b07c5181d63bc781a27d7277f739226c64c0f12936e"
   },
   "Smart-Upgrade:27": {
     "text": "## Beispiele im Spiel",
@@ -4769,11 +4791,10 @@
     "status": "reviewed",
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
-  "Smart-Upgrade:33": {
-    "text": "_Zuletzt aktualisiert: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (Entwurfsfassung)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+  "Smart-Upgrade:37": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
   },
   "Smart-Walking:0": {
     "text": "# Smart Gehen",
@@ -5741,65 +5762,90 @@
     "status": "reviewed",
     "review_method": "Contextual language review with official game terminology; not native-speaker certification."
   },
-  "Auto-Connect:38": {
+  "Blueprints:33": {
+    "text": "_Zuletzt aktualisiert: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (Entwurfsfassung)_\n",
+    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89",
+    "status": "reviewed",
+    "review_method": "Contextual language review with official game terminology; not native-speaker certification.",
+    "obsolete": true
+  },
+  "Controls:6": {
+    "text": "| Taste | Was sie tut |\n|-----|--------------|\n| `K` | Öffnet oder schließt das gemeinsame Fenster für Skalierung / Gehen / Upgrade / Wiederherstellen |\n| `F8` | Bearbeitet HUD-Layout; mit installiertem Smart Camera werden HUD- und Kamera-Layouts gemeinsam bearbeitet |\n| `Num Decimal` | Schaltet die Smart-Baueingabeunterstützung für diese Sitzung um |\n| `Num 8` | Erhöht den aktiven Wert |\n| `Num 5` | Verringert den aktiven Wert |\n| `Num 6` | Erhöht die Y-Rasteranzahl |\n| `Num 4` | Verringert die Y-Rasteranzahl |\n| `Num 9` | Erhöht die Z-Rasteranzahl |\n| `Num 3` | Verringert die Z-Rasteranzahl |\n| `X` | Halten, um X mit den gemeinsamen Steuerungen oder dem Mausrad anzupassen |\n| `Z` | Halten, um Y mit den gemeinsamen Steuerungen oder dem Mausrad anzupassen |\n| `X + Z` | Halte beide, um Z mit den gemeinsamen Steuerungen oder dem Mausrad anzupassen |\n| `;` | Halten für den Abstandsmodus |\n| `I` | Halten für den Stufenmodus |\n| `Y` | Halten für den Versatzmodus |\n| `,` | Halten für den Drehungsmodus |\n| `Num 0` | Wechselt die Achse des aktiven Modus |\n| `U` | Rezeptauswahl bei Produktionsgebäuden; Verbindungseinstellungen oder Schildstützen bei anwendbaren Bauteilen |\n| `Num 1` | Schaltet Richtungspfeile um |\n| `Mouse Wheel` | Passt den aktiven Smart-Modus an, oder vanilla Drehung, wenn kein Smart-Modus aktiv ist |",
+    "source_hash": "2837292eada81d5f2f7b96ee1fa39689f1d488e0ee8b125d948d5069e407097e",
+    "status": "reviewed",
+    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
+    "obsolete": true
+  },
+  "Compatibility-and-Multiplayer:27": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "2398e8d56840e229a7b387e89a3556aa24edfa217e26cf50db9e5ba6cf6ccf02",
+    "obsolete": true
+  },
+  "Settings-Reference:18": {
+    "text": "- **Bauplan-Naht-Auto-Verbindung** – Aktiviere oder deaktiviere die automatische Verbindung von Förderbändern, Rohren, Hypertubes, Schienen, gerichteten Fahrzeugpfaden und zulässigen Stromverbindungen zwischen skalierten Bauplan-Kopien. **Standardmäßig aktiviert.** (Hinzugefügt in 34.2.0.)",
+    "source_hash": "5daf4a877774b178a7054980007283bb25a2de416f6dad2c908287768adb9db4",
+    "status": "reviewed",
+    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
+    "obsolete": true
+  },
+  "Auto-Connect:25": {
+    "text": "Hypertube-Auto-Connect hat seinen **eigenen Aktivierungsschalter und Routing-Modus**, unabhängig von Pipelines – stelle sie im Smart-Panel, in den Auto-Connect-Einstellungen während des Bauens (halte `U` gedrückt) oder in der Mod-Konfiguration ein. Siehe [Einstellungen-Referenz](Settings-Reference).",
+    "source_hash": "12ed988af1c997655966e3695ec2f34cf65159be86bd53b56fa1a92c8a85b213",
+    "status": "reviewed",
+    "review_method": "Retained independent review; primary agent rejected duplicate next-block text assigned to the Features heading. All links/tokens checked; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:27": {
+    "text": "- [Erweitern](Extend) — die Funktion, deren Verteiler das Modul-Tab erfasst.\n- [Smart Panel und HUD](Smart-Panel-and-HUD) — wo sich das Wiederherstellen-Tab befindet.\n- [Raster-Skalierung](Grid-Scaling) und [Transformationen](Transforms) — was ein Raster-Preset speichert.",
+    "source_hash": "52daff47c488c29086aa3ce6e5cea9be1d21194fb00b9e2d10a09d723d037264",
+    "status": "reviewed",
+    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:31": {
+    "text": "- **Abstandsschritt** (m) – Meter an Abstand, die pro Scroll-Klick hinzugefügt werden (auch Erweitern-Abstand und Vorrücken eines Gehen-Segments).\n- **Stufenschritt** (m) – Meter an Stufen pro Klick (auch Anstieg eines Gehen-Segments).\n- **Versatzschritt** (m) – Meter an Versatz pro Klick (auch Verschiebung eines Gehen-Segments).\n- **Drehungsschritt** (Grad) – Grad an Drehung pro Klick (auch Wendung eines Gehen-Segments).",
+    "source_hash": "89d132f31272346911aed3355f02885dd096f7bf810ca50e85be98947993996e",
+    "status": "reviewed",
+    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
+    "obsolete": true
+  },
+  "Auto-Connect:49": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "afb87f859fcc83d5e6b2266d494b6b507374c2527764492de14534b28dbafa51",
+    "obsolete": true
+  },
+  "Auto-Connect:4": {
+    "text": "Öffne **K → Skalierung** und nutze den entsprechenden Abschnitt **Auto-Connect** für das ausgewählte Bauobjekt. Bei unterstützten Logistik-Bauobjekten öffnet `U` die Verbindungseinstellungen. Globale Standardwerte findest du unter **Optionen → Mod-Einstellungen → Smart!**; die aktuellen Vorschauauswahlen sind im Panel. Verbindungseinstellungen werden live aktualisiert, unabhängig von **Platzierung sofort anwenden**.",
+    "source_hash": "0ef504a252dcabd3541b9ed8c7d000b31225026b5fa22aa19b6f534eadd38d6b",
+    "status": "reviewed",
+    "review_method": "Retained independent review; primary agent rejected duplicate next-block text assigned to the Features heading. All links/tokens checked; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:47": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "e2b8d0e432743c7bf14b5c35d055dab7c5692be89a336b3b5b8bf2922ba550f7",
+    "obsolete": true
+  },
+  "Settings-Reference:24": {
+    "text": "- **Reichweite für nahe Logistik** – Wie weit Splitter, Fusionatoren, Rohr-Kreuzungen und Rohr-Bodenöffnungen bei der Auto-Verbindung in Richtung Fabrikanschlüsse reichen. Verringere diesen Wert, um zu verhindern, dass die Auto-Verbindung in benachbarte Fabrikgruppen reicht. **Standardmäßig 25 m** (das vorherige feste Verhalten). (Hinzugefügt in 34.2.0.)",
+    "source_hash": "bb2d0aef5ebb0f05f6e0332aba3b272795cbf3d8bade162603d3521aad41d592",
+    "status": "reviewed",
+    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
+    "obsolete": true
+  },
+  "Compatibility-and-Multiplayer:13": {
+    "text": "- **Dedizierte Server:** Sowohl Windows als auch Linux werden unterstützt.\n- **Obergrenze für die Größe von Smart-Bauplänen:** Eine einzelne Platzierung eines Bauplan-Rasters auf einem Server ist begrenzt (etwa ein paar tausend Gebäude oder ein paar hundert verbindende Förderbänder/Rohre, je nachdem, was zuerst erreicht wird). Wenn du darüber hinaus skalierst, verweigert Smart! die Platzierung – das HUD weist dich an, in kleineren Abschnitten zu bauen, und das Raster bleibt aktiv, damit du das kannst. Das sichere Limit für die Konstruktions-Nutzlast gilt auch in Einzelspieler- und Listen-Server-Sitzungen. Deaktiviere [Smart Unterstützung](Smart-Assistance) und wähle das Rezept erneut aus, um einen großen Vanilla-Bauplan normal zu platzieren.\n- **Große Raster werden schrittweise gebaut:** Das Bestätigen eines sehr großen skalierten Baus konstruiert ihn im Hintergrund über einige Momente, sodass der Server reaktionsfähig bleibt und niemand während des Baus getrennt wird.\n- **Für Server-Administratoren:** Installiere dieselbe Smart!-Version auf dem Server und auf jedem Client. Der Mod-Manager hält diese bei Updates synchron.\n- **Smart Camera** (die Begleit-Mod) funktioniert ebenfalls im Mehrspielermodus.",
+    "source_hash": "e0abba477abdd815436da48e2f8957237ec0394c708deea58592e10d20ab9268",
+    "status": "reviewed",
+    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:45": {
     "text": "_Zuletzt aktualisiert: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (Entwurfsfassung)_\n",
     "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
-    "obsolete": true
-  },
-  "Smart-Camera:30": {
-    "text": "_Zuletzt aktualisiert: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (Entwurfsfassung)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
-    "obsolete": true
-  },
-  "Smart-Restore:29": {
-    "text": "_Zuletzt aktualisiert: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (Entwurfsfassung)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
-    "obsolete": true
-  },
-  "Water-Extractors:14": {
-    "text": "_Zuletzt aktualisiert: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (Entwurfsfassung)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
-    "obsolete": true
-  },
-  "Feature-Gallery:50": {
-    "text": "_Zuletzt aktualisiert: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (Entwurfsfassung)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
-    "obsolete": true
-  },
-  "Feature-Gallery:30": {
-    "text": "\n## Upgrade",
-    "source_hash": "346a4694e55fb3881d4efb3df370eb4fa70ac8f41333fc51b5d2f136ba5ac387",
-    "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
-    "obsolete": true
-  },
-  "Lift-Assisted-Auto-Connect:11": {
-    "text": "## Beispiele im Spiel",
-    "source_hash": "5eb2c1c9e3dbc39102a812af339752c7f0fe1e0b95368965e2e069a71b377898",
-    "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
-    "obsolete": true
-  },
-  "Blueprints:21": {
-    "text": "_Zuletzt aktualisiert: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (Entwurfsfassung)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
-    "obsolete": true
-  },
-  "Lift-Assisted-Auto-Connect:12": {
-    "text": "![Zwei angehobene Splitter-Vorschauen mit sichtbaren vertikalen Förderliften hinab zum Niveau der Maschinenverbindung, neben den Skalierungssteuerungen.](https://raw.githubusercontent.com/wiki/majormer/SmartFoundations/images/v35/lift-connection-controls.png)",
-    "source_hash": "cc3d5dfc328bad823f169e9cfaa9f3b9faf340768f11bfc85d33f6d73e79b0fc",
     "status": "reviewed",
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
     "obsolete": true
@@ -5811,25 +5857,89 @@
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
     "obsolete": true
   },
-  "Lift-Assisted-Auto-Connect:15": {
-    "text": "Eine gebaute Manufaktor-Eingabeleitung mit Verteilern, die auf unterschiedlichen Höhen und Abständen versetzt sind.",
-    "source_hash": "3f031fef9aa2b08f029041b38a3ede25923654db3210c0cf2f823345bb155916",
+  "Smart-Upgrade:35": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "fef10fcd052e667d2e0e00e385c7a28cabcf51645e05f4ffe84f7b4be9302924",
+    "obsolete": true
+  },
+  "Settings-Reference:55": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "48890e9ad61621c0f5a145bbfacc031cd10dd0886932dd6ca1718305cc0ded08",
+    "obsolete": true
+  },
+  "Smart-Upgrade:6": {
+    "text": "1. Öffne **K → Upgrade**, während ein unterstütztes Gebäude ausgewählt ist. Förderbänder, Pipelines und Drähte/Stromleitungen können diese Aufgabe direkt öffnen.\n2. Wähle einen Scan-Modus.\n3. Scanne nahe Objekte oder ein verbundenes Netzwerk.\n4. Wähle die Familie und die Zielstufe — und bei einem Netzwerk-Scan optional eine einzelne Quellstufe, um nur diese Stufe zu upgraden.\n5. Prüfe die Materialkosten.\n6. Führe das Upgrade aus.",
+    "source_hash": "32316883719d3460a5f56824a7fb92559589793f835d63f4bd04e2103217fa08",
     "status": "reviewed",
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
     "obsolete": true
   },
-  "Buildable-Gallery:60": {
+  "Compatibility-and-Multiplayer:28": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "c7aebe8ed6d349fd4710af10aa9e95555d8529fd0728f438c8a84f9ce1b54246",
+    "obsolete": true
+  },
+  "Extend:40": {
     "text": "_Zuletzt aktualisiert: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (Entwurfsfassung)_\n",
     "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
     "status": "reviewed",
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
     "obsolete": true
   },
-  "Blueprints:20": {
-    "text": "\n---",
-    "source_hash": "3d0b188170e8f7ed4b0a730d3fae39933057e60ba9e030bc278c446442cbabc3",
+  "Settings-Reference:12": {
+    "text": "- **Hypertube Auto-Verbinden** — Hypertube Auto-Verbinden aktivieren oder deaktivieren. **Standardmäßig aktiviert.** (Hinzugefügt in 33.1.0.)\n- Hypertube-Routing-Modus wählen.",
+    "source_hash": "de7e8d93fbc71c12b9ce0a1c8db5fdc99380795aa7009f219fc68164294d1f29",
     "status": "reviewed",
-    "review_method": "Language-neutral Markdown, protected brand or code; no translation required.",
+    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:29": {
+    "text": "_Zuletzt aktualisiert: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (Entwurfsfassung)_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "status": "reviewed",
+    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:41": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "6fd578d8f158dba5fa05b36f5f5e607370fc961be65776fbce3a1e7af14d1023",
+    "obsolete": true
+  },
+  "Water-Extractors:14": {
+    "text": "_Zuletzt aktualisiert: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (Entwurfsfassung)_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "status": "reviewed",
+    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Upgrade:33": {
+    "text": "_Zuletzt aktualisiert: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (Entwurfsfassung)_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "status": "reviewed",
+    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
+    "obsolete": true
+  },
+  "Compatibility-and-Multiplayer:25": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "6a23ebe76c6c81c346aa9ada46d9598977d528e278a4ec3eba624c42942cbf0a",
+    "obsolete": true
+  },
+  "Compatibility-and-Multiplayer:3": {
+    "text": "Smart! 35.0.0 zielt auf **Satisfactory 1.2.4 / CL 502094 oder neuer** und **SML 3.12.x**. Aktualisiere das Spiel und den Mod-Loader vor der Installation. Ältere Spielversionen werden nicht unterstützt.",
+    "source_hash": "67e479ca52c59b7506d6acd2ace2bb75b701e6c7854e5b2d570aeec46f92d66e",
+    "status": "reviewed",
+    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:35": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "4ce78ba0540a46d297f12754ed09f0b5fbd3af284a7f90d4157396c30318a9dc",
     "obsolete": true
   },
   "Lift-Assisted-Auto-Connect:14": {
@@ -5839,11 +5949,24 @@
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
     "obsolete": true
   },
-  "Feature-Gallery:38": {
-    "text": "\n## Gruppen-Demontage",
-    "source_hash": "353f26b4f82a6dd84f38739c12578013748425253037044613768c788d0ac22b",
+  "Feature-Gallery:30": {
+    "text": "\n## Upgrade",
+    "source_hash": "346a4694e55fb3881d4efb3df370eb4fa70ac8f41333fc51b5d2f136ba5ac387",
     "status": "reviewed",
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:12": {
+    "text": "- Nachdem du eine Smart [Erweitern](Extend) Vorschau erstellt oder gebaut hast, landet sie in der **Erweitern-Zwischenablage** oben im Register. **Als Modul speichern** wandelt das erfasste Layout in ein benanntes, wiederverwendbares Modul um.\n- **Modul laden** für ein gespeichertes Modul, um das Layout neu aufzubauen: Rüste das Quellengebäude aus und es wird zu einer Live-Vorschau, die du **stempeln** (feuern zum Platzieren, wiederholt) und **durch Scrollen skalieren** kannst.\n- Da ein wiederhergestelltes Modul nicht wie ein frisch skaliertes Erweitern auf eine Seite festgelegt ist, kannst du die **Strecke in beide Richtungen** entlang ihrer Achse vor dem Platzieren neu skalieren – scrolle in eine Richtung, um sie in diese Richtung zu vergrößern, und in die andere Richtung, um sie in die andere Richtung zu vergrößern.\n- **Code exportieren / Code importieren** teilt Module auf dieselbe Weise wie Presets.",
+    "source_hash": "37740d4bfda7ca76487c320d49ae9a15e2da89d1f1fe4a31862a2ad8d53f903b",
+    "status": "reviewed",
+    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:48": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "54a959ae32a4d9f6576cccd1f8191d529cda45dd8aca777c420560710c5cfa55",
     "obsolete": true
   },
   "Smart-Camera:17": {
@@ -5853,16 +5976,16 @@
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
     "obsolete": true
   },
-  "Lift-Assisted-Auto-Connect:13": {
-    "text": "Die vertikalen Förderlift-Körper und unteren Enden sind unter beiden Splittern sichtbar. Die horizontalen Förderbänder auf der Maschinenseite sind in dieser Ansicht verkürzt dargestellt; verwende das unten stehende gebaute Manufaktor-Beispiel, um das größere Layout zu sehen.",
-    "source_hash": "461c92ebb7d0183d81d0d44c20001dd4c5d42ceaee5dc38fbc02fc6ff22afe85",
+  "Smart-Restore:21": {
+    "text": "Nutze **K → Wiederherstellen**, um Layouts zu speichern, auszuwählen, zu laden, zu importieren oder zu exportieren. Nach dem Laden nutze das Skalierungs-Panel oder die Steuerungen über Mausrad/Ziffernblock, um die Platzierung anzupassen; das HUD meldet das resultierende Raster und die aktive Anpassung. Betätige das FICSIT-Bauwerkzeug, um es zu den angezeigten Kosten zu bauen.",
+    "source_hash": "1b1ed17e9fec531c12a9f625b3a9bfc523afdeccaf5ba0c4bca304c837f1764c",
     "status": "reviewed",
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
     "obsolete": true
   },
-  "Controls:6": {
-    "text": "| Taste | Was sie tut |\n|-----|--------------|\n| `K` | Öffnet oder schließt das gemeinsame Fenster für Skalierung / Gehen / Upgrade / Wiederherstellen |\n| `F8` | Bearbeitet HUD-Layout; mit installiertem Smart Camera werden HUD- und Kamera-Layouts gemeinsam bearbeitet |\n| `Num Decimal` | Schaltet die Smart-Baueingabeunterstützung für diese Sitzung um |\n| `Num 8` | Erhöht den aktiven Wert |\n| `Num 5` | Verringert den aktiven Wert |\n| `Num 6` | Erhöht die Y-Rasteranzahl |\n| `Num 4` | Verringert die Y-Rasteranzahl |\n| `Num 9` | Erhöht die Z-Rasteranzahl |\n| `Num 3` | Verringert die Z-Rasteranzahl |\n| `X` | Halten, um X mit den gemeinsamen Steuerungen oder dem Mausrad anzupassen |\n| `Z` | Halten, um Y mit den gemeinsamen Steuerungen oder dem Mausrad anzupassen |\n| `X + Z` | Halte beide, um Z mit den gemeinsamen Steuerungen oder dem Mausrad anzupassen |\n| `;` | Halten für den Abstandsmodus |\n| `I` | Halten für den Stufenmodus |\n| `Y` | Halten für den Versatzmodus |\n| `,` | Halten für den Drehungsmodus |\n| `Num 0` | Wechselt die Achse des aktiven Modus |\n| `U` | Rezeptauswahl bei Produktionsgebäuden; Verbindungseinstellungen oder Schildstützen bei anwendbaren Bauteilen |\n| `Num 1` | Schaltet Richtungspfeile um |\n| `Mouse Wheel` | Passt den aktiven Smart-Modus an, oder vanilla Drehung, wenn kein Smart-Modus aktiv ist |",
-    "source_hash": "2837292eada81d5f2f7b96ee1fa39689f1d488e0ee8b125d948d5069e407097e",
+  "Settings-Reference:2": {
+    "text": "Finde sie im **Hauptmenü → Mods → Smart!**. Änderungen hier **bleiben zwischen Spielständen und Sitzungen erhalten**. (Tastaturbelegungen sind separat — siehe [Steuerung](Controls).)",
+    "source_hash": "3f27a7251dee61f272afa2b13b0a9a7d3b5d0782f11461e43b22ec93ed6baceb",
     "status": "reviewed",
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
     "obsolete": true
@@ -5874,9 +5997,401 @@
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
     "obsolete": true
   },
+  "Extend:20": {
+    "text": "Starte explizit über **K → Erweitern → Quelle auswählen** oder verwende die Hover-Verknüpfung. Der Erweitern-Reiter nutzt die Platzierungssteuerungen für Rasteranzahlen, Abstand und unterstützte Transformationen. Du kannst auch dieselben Rad-/Ziffernblock-Steuerungen wie bei [Raster-Skalierung](Grid-Scaling) verwenden. Ohne gedrückte Modifikatortaste wählt das Rad die Erweitern-Richtung. Das Laufzeit-HUD identifiziert die Zeilen/Reihen und die aktive Anpassung, damit du prüfen kannst, was sich ändern wird, bevor du baust.",
+    "source_hash": "76acf531cc52c29e073f3df2f0e0d06d36121daf24e05679c1f466af9d01eb13",
+    "status": "reviewed",
+    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:56": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "bdf042547add168e1b9964198625cab7539af8176045dd68d70f13a619b0b7be",
+    "obsolete": true
+  },
+  "Settings-Reference:28": {
+    "text": "- Auto-Halten bei Rasteränderung sperrt die Hologramm-Vorschau, nachdem du das Raster geändert hast, damit eine große Vorschau nicht versehentlich verschoben wird. **Standardmäßig aktiviert** (seit 32.1.2) – deaktiviere dies hier, wenn du möchtest, dass die Hologramm-Vorschau frei positionierbar bleibt; die native Halten-Taste hebt einzelne Sperren auf.\n- **Steuerung relativ zum Spieler** – lässt das Gebäude der Blickrichtung folgen, anstatt festen Kompassachsen: Das Mausrad vergrößert den Bau in die Richtung, in die du schaust, und der Ziffernblock wird zum Kompass (weg/zum, rechts/links, hoch/runter). Gilt für Skalierung, Abstand, Stufen, Versatz und Drehung. **Standardmäßig deaktiviert** – deine klassischen Steuerungen bleiben unverändert, bis du dies aktivierst, und das Smart-Panel bleibt immer auf festen X/Y/Z-Achsen. Siehe [Steuerung](Controls) für die vollständige Aufschlüsselung. (Hinzugefügt in 34.1.0.)\n- **Tippen zum Umschalten der Transformationsmodi** – Tippe eine Transformations-Taste (Abstand, Stufen, Versatz, Drehung oder Rezept bei einer Fabrik), um diesen Modus zu aktivieren; tippe erneut, um ihn zu deaktivieren; tippe eine andere Taste, um den Modus zu wechseln. Entwickelt für Controller, Steam Deck und Barrierefreiheits-Einstellungen – Steam Input Radial-/Touch-Menüs senden schnelle Tipps und können keine Taste halten. Das Einstecken des Werkzeugs, das Ändern von Gebäuden oder das Öffnen eines Panels hebt den Modus immer auf. **Standardmäßig deaktiviert** – das klassische Halten-zum-Verwenden-Verhalten bleibt unberührt, bis du dies aktivierst, und das Deaktivieren stellt es sofort wieder her. Siehe [Controller & Steam Deck](Controller-and-Steam-Deck) für Radial-Menü-Einstellungen. (Hinzugefügt in 34.2.0.)",
+    "source_hash": "5062fcd97160abfb325d9843686928ec4e50ca66911455b5f84cd6515d2b0179",
+    "status": "reviewed",
+    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:17": {
+    "text": "Ein separater Schalter für die Nähte zwischen skalierten Kopien deiner **eigenen** Baupläne – unabhängig von der oben genannten Förderband- und Rohr-Auto-Verbindung, sodass Kopien von Bauplänen ihre Verkabelung beibehalten können, auch wenn die reguläre Auto-Verbindung deaktiviert ist.",
+    "source_hash": "777a49715537ba1bf7334d6be913926f712654bb9bcb31b43455ceeff3c86b11",
+    "status": "reviewed",
+    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:32": {
+    "text": "_Zuletzt aktualisiert: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (Entwurfsfassung)_\n",
+    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89",
+    "status": "reviewed",
+    "review_method": "Contextual language review with official game terminology; not native-speaker certification.",
+    "obsolete": true
+  },
+  "Settings-Reference:53": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "f22daf9ba45c58f27cddf5020c4d856e4963c6b4b321e93b90506fe9200725c4",
+    "obsolete": true
+  },
+  "Home:17": {
+    "text": "_Zuletzt aktualisiert: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (Entwurfsfassung)_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "status": "reviewed",
+    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:57": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "c9db8a4c70492425a227c4f600e18e314036c794ee6ecf7b72819e8c1176d985",
+    "obsolete": true
+  },
+  "Buildable-Gallery:60": {
+    "text": "_Zuletzt aktualisiert: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (Entwurfsfassung)_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "status": "reviewed",
+    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
+    "obsolete": true
+  },
+  "Auto-Connect:24": {
+    "text": "**Skalierte Hypertube-Stützen bauen eine Hypertube-Strecke.** Wenn du eine Reihe aus Stützen des Typs Modulare Hypertubestütze skalierst, verlegt Smart! eine verbundene Hypertube-Strecke zwischen den Kopien – genau wie eine skalierte Reihe von Förderbandstützen eine Förderbandstrecke oder Pipeline-Stützen eine Pipeline-Strecke bauen. Die Strecke folgt dem Abstand und der Höhe der Linie und kann steil ansteigen, und der eigene Einrastpunkt jeder Stütze bleibt frei, sodass du weiterhin manuell eine Hypertube daran anschließen kannst.",
+    "source_hash": "eb2ee60a85c009c8b087b30e51ca7b4eb21ab2ca69353d8b3bce92a60256f455",
+    "status": "reviewed",
+    "review_method": "Retained independent review; primary agent rejected duplicate next-block text assigned to the Features heading. All links/tokens checked; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:37": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "89d7ec27427ec2dbeda612d4908225ce4ab17de581eb4e2fc4950c57aaf45e81",
+    "obsolete": true
+  },
+  "Compatibility-and-Multiplayer:14": {
+    "text": "Der Mehrspielermodus ist neuer als der Einzelspielermodus. Wenn sich also etwas in einer Mehrspielersitzung anders verhält als im Einzelspielermodus, ist das ein Fehler – bitte melde ihn auf GitHub oder Discord und erwähne, was du gebaut hast und ob du Host oder Client warst.",
+    "source_hash": "be6a21fb0e3a5a2792dc5eaa0095af9dbd2cdc8641d29aed38e44f5a8dce7ce9",
+    "status": "reviewed",
+    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
+    "obsolete": true
+  },
+  "Extend:8": {
+    "text": "1. Baue ein funktionierendes Modul manuell und rüste denselben Gebäudetyp im FICSIT-Bauwerkzeug aus.\n2. Öffne **K → Erweitern** und drücke **Quelle auswählen**.\n3. Klicke auf das bestehende Quellengebäude in der Welt außerhalb des Panels. Kompatible Quellen werden während der Auswahl hervorgehoben. **Escape** bricht die Auswahl ab; Klicks innerhalb des Panels bleiben in der Oberfläche.\n4. Überprüfe den Quellennamen, die erfassten verbundenen Objekte und die Wiederholungszähler. Verwende **Richtung ändern** und die Platzierungssteuerungen, um die Vorschau zu gestalten.\n5. Schließe das Panel, inspiziere die vorgeschlagenen Kopien und die Materialkosten, und feuere dann das FICSIT-Bauwerkzeug ab, um normal zu bauen.",
+    "source_hash": "be187544697091618ad4e7d6e1a2c2782b01ec9a0930ae4d3655eadaf437a2ca",
+    "status": "reviewed",
+    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
+    "obsolete": true
+  },
+  "Auto-Connect:27": {
+    "text": "Kopien von Pipeline- und Hypertube-Wandstützen folgen der vollständigen Drehung des Elternobjekts. Die **Wanddrehung** im Panel bietet native **45°-Schritte**, einschließlich einer vertikalen Strecke. Dies ist getrennt von der Raster-Drehung, die eine Sequenz von Kopien biegt.",
+    "source_hash": "fd7f0d71039eaac4e79da271b675c44893d3943fcbd5cfcc62fcca29fe53a2ce",
+    "status": "reviewed",
+    "review_method": "Retained independent review; primary agent rejected duplicate next-block text assigned to the Features heading. All links/tokens checked; no native-speaker certification",
+    "obsolete": true
+  },
+  "Auto-Connect:18": {
+    "text": "**Skalierte Pipeline-Stützen bauen eine Pipeline-Strecke.** Wenn du eine Reihe von Pipeline-Stützen oder Pipeline-Wandhalterungen skalierst, verlegt Smart! eine verbundene Pipeline-Strecke zwischen den Kopien – genau wie eine skalierte Reihe von Förderbandstützen eine Förderbandstrecke baut. Die Flüssigkeit fließt durch die gesamte Strecke, und der eigene Einrastpunkt jeder Stütze bleibt frei, sodass du weiterhin manuell eine Pipeline daran anschließen kannst. Die Höhe der Bodenstütze und der Winkel des Oberteils werden über die gesamte Linie übernommen, sodass eine geneigte Strecke konsistent bleibt.",
+    "source_hash": "01bc78e7b2eed2e3b61e790428579385ed84d207401ce8ce691e20542ceb6c01",
+    "status": "reviewed",
+    "review_method": "Retained independent review; primary agent rejected duplicate next-block text assigned to the Features heading. All links/tokens checked; no native-speaker certification",
+    "obsolete": true
+  },
+  "Extend:16": {
+    "text": "Der feste Schmelzofen ist die bestehende Quelle. Der cyanfarbene Schmelzofen, die Förderbänder und die Stützen sind die vorgeschlagene Kopie; das HUD zeigt **Erweitern 1×1**. Dies ist eine nicht gebaute Vorschau.",
+    "source_hash": "e63c3cf4682d23c05eeac5028bcb9b9181dbd792603560f52b7b754522f84fbc",
+    "status": "reviewed",
+    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
+    "obsolete": true
+  },
+  "Auto-Connect:46": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "0bfbb0f456f389e1d5f74b3927ea2e671cd406c1d43a86691dbaf4cf8466f920",
+    "obsolete": true
+  },
+  "Blueprints:20": {
+    "text": "\n---",
+    "source_hash": "3d0b188170e8f7ed4b0a730d3fae39933057e60ba9e030bc278c446442cbabc3",
+    "status": "reviewed",
+    "review_method": "Language-neutral Markdown, protected brand or code; no translation required.",
+    "obsolete": true
+  },
+  "Smart-Restore:38": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "ec2177c56559237ebd837004fb2b43a250f6a29833da7919279c42a8f1cd7585",
+    "obsolete": true
+  },
+  "Extend:43": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "4a4f5c96d35df73910b2887f40ae3bae8ad2bfb9317efd89edeeee8d5cd6a225",
+    "obsolete": true
+  },
+  "Smart-Restore:1": {
+    "text": "Smart Wiederherstellen speichert deine Smart!-Arbeit, damit du sie später wiederverwenden, teilen oder eine ganze Fabrikmodul-Struktur jedes Mal auf dieselbe Weise erneut platzieren kannst. Öffne **K → Wiederherstellen** im gemeinsamen [Smart Panel](Smart-Panel-and-HUD). Die beiden Unterregisterkarten sind **Raster-Presets** und **Module**.",
+    "source_hash": "d30db2304eb2c337da20e09266e493bcc8c502907b34b04c692903c1c50cee35",
+    "status": "reviewed",
+    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:11": {
+    "text": "Ein Modul erfasst eine gesamte **Erweitern-Verzweigung** – eine verdrahtete Einheit aus Gebäuden mit ihren Förderbändern, Rohren, Förderliften, Verteilern und Stromversorgung –, die du wiederholt platzieren kannst.",
+    "source_hash": "15f117646c84198699764f5759ce40f588af9591576ba39e1d7f68ebbf616b8b",
+    "status": "reviewed",
+    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:34": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "4032031e869ee6cf1a85c2c77f17f1a8e1c5fdfb4d6365de941032362c26bd6b",
+    "obsolete": true
+  },
+  "Home:14": {
+    "text": "Dies ist der lokale Dokumentationsentwurf für **Smart! 35.0.0 und Smart Camera 2.0.0**. Aktualisiere beide Mods zusammen, wenn ihre koordinierten kompatiblen Veröffentlichungen verfügbar sind; kombiniere Camera 2.0 nicht mit einem älteren Smart-Paket. Diese Entwurfsseiten kündigen keine Veröffentlichung an.",
+    "source_hash": "c29d2ea90b7a486f22022563a690b6049c5d72c5bf1c740518bb20fa5747432d",
+    "status": "reviewed",
+    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
+    "obsolete": true
+  },
+  "Lift-Assisted-Auto-Connect:15": {
+    "text": "Eine gebaute Manufaktor-Eingabeleitung mit Verteilern, die auf unterschiedlichen Höhen und Abständen versetzt sind.",
+    "source_hash": "3f031fef9aa2b08f029041b38a3ede25923654db3210c0cf2f823345bb155916",
+    "status": "reviewed",
+    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
+    "obsolete": true
+  },
+  "Extend:41": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "994fafc6b93774a2bf26fda7226aa7f32d9e5692801829af09b53ed4e124e1dc",
+    "obsolete": true
+  },
+  "Auto-Connect:53": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "7a7775f3971ba2543d8a862d7cb59673e80d88b7b274872a5f5197d36bd4a8cb",
+    "obsolete": true
+  },
+  "Smart-Upgrade:26": {
+    "text": "Große Förderband-Upgrades sind kompliziert, da Satisfactory Förderbänder und Förderlifte intern zu Förderketten-Akteuren gruppiert. Smart! enthält Stabilisierungs- und Diagnosefunktionen, aber sehr große Upgrades erfordern möglicherweise dennoch ein Speichern/Neuladen, wenn das Spiel danach einen unklaren Kettenzustand meldet.",
+    "source_hash": "fed328c054689b599658ab3989621c5b784f7bcaa94b5be404727f05664adba7",
+    "status": "reviewed",
+    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
+    "obsolete": true
+  },
+  "Lift-Assisted-Auto-Connect:13": {
+    "text": "Die vertikalen Förderlift-Körper und unteren Enden sind unter beiden Splittern sichtbar. Die horizontalen Förderbänder auf der Maschinenseite sind in dieser Ansicht verkürzt dargestellt; verwende das unten stehende gebaute Manufaktor-Beispiel, um das größere Layout zu sehen.",
+    "source_hash": "461c92ebb7d0183d81d0d44c20001dd4c5d42ceaee5dc38fbc02fc6ff22afe85",
+    "status": "reviewed",
+    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
+    "obsolete": true
+  },
+  "Auto-Connect:52": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "2f3fecc73d967c4184f0913db5a820573f49a433540b53d23d3f4b45143cea26",
+    "obsolete": true
+  },
+  "Compatibility-and-Multiplayer:4": {
+    "text": "Smart Camera 2.0 und Smart! 35.0 müssen als kompatibles Paar aktualisiert werden, wenn beide installiert sind. Camera funktioniert auch allein; die Bauwerkzeuge von Smart erfordern Camera nicht. Camera-Einstellungen und das Aussehen von HUD gehören zu jedem lokalen Spieler, nicht zu allen auf dem Server.",
+    "source_hash": "d778ecad7f4a6a4eb530120898db7c258299752b3b3849ab7cb18dce25829247",
+    "status": "reviewed",
+    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
+    "obsolete": true
+  },
+  "Feature-Gallery:50": {
+    "text": "_Zuletzt aktualisiert: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (Entwurfsfassung)_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "status": "reviewed",
+    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
+    "obsolete": true
+  },
+  "Extend:42": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "16d59253ca7db5055c785ca688ef4711b48bf61b30eff0f24767d33040495694",
+    "obsolete": true
+  },
+  "Smart-Restore:2": {
+    "text": "Es ist die Antwort auf: „Ich habe ewig an diesem Layout gefeilt – wie bekomme ich es zurück?“",
+    "source_hash": "3d432425c5421614e20983fcafadb764c442a1c31b834004ecbebec74df73ea2",
+    "status": "reviewed",
+    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
+    "obsolete": true
+  },
+  "Blueprints:17": {
+    "text": "Das sichere Konstruktions-Nutzlastlimit gilt auch für Bauplan-Raster. Eine abgelehnte übergroße Platzierung behält ihre Bauvorschau: Reduziere das Raster und baue in Abschnitten. Deaktiviere für eine große Vanilla-Bauplan-Platzierung [Smart Assistance](Smart-Assistance) und wähle sie erneut aus.",
+    "source_hash": "540e7f14c64d49d7f11fb6b7090a1475087984b4955b0dccb93ca481787d4236",
+    "status": "reviewed",
+    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:40": {
+    "text": "In **Mods → Smart! Camera** erscheinen Ansichten automatisch unter den Namen des liefernden Mods und der Kamera, einschließlich inaktiver Ansichten. Die integrierte FICSIT-Bauwerkzeug-Ansicht verfügt über eine unabhängige Aktivierungskontrolle. Die Position pro Ansicht ist normalisiert auf 0–1, die Auflösung beträgt 64–2048 Pixel pro Achse, die Skalierung 0,1–2, die Aufnahmerate 5–60/sec und die Helligkeit −3 bis +3 EV. Die anwendbaren Gebäudekamera-Abstände betragen 5–50 m. Kameraeinstellungen werden sofort angewendet; Ansichten, die durch Menüs ausgeblendet sind, werden aktualisiert, wenn du fortsetzt. **Alle Spielstände** patcht nur das bearbeitete Feld über globale und vorhandene gespeicherte Profile für diese Kamera hinweg, einschließlich der aktuellen Welt. **Dieser Spielstand** ändert nur das aktuelle native Speicherprofil. Unverwandte Felder und andere Kameras bleiben intakt.",
+    "source_hash": "c472d20351cba658f26ae667c4cd445f95ae5a5ca37a10e8763878b476181f29",
+    "status": "reviewed",
+    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:49": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "a17847f27c9d126c19f4c648fcce148a467279fc4197ecd4e932411db88929df",
+    "obsolete": true
+  },
+  "Smart-Restore:33": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "b2e1a293ae99d7ff0946f54edd6939cf17d18547e848ac895c533abe3c2e4560",
+    "obsolete": true
+  },
+  "Feature-Gallery:38": {
+    "text": "\n## Gruppen-Demontage",
+    "source_hash": "353f26b4f82a6dd84f38739c12578013748425253037044613768c788d0ac22b",
+    "status": "reviewed",
+    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:36": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "4ca209992e5cc98977db86e926e521228b74ac99cbbce1b5f642444df21d447f",
+    "obsolete": true
+  },
+  "Lift-Assisted-Auto-Connect:11": {
+    "text": "## Beispiele im Spiel",
+    "source_hash": "5eb2c1c9e3dbc39102a812af339752c7f0fe1e0b95368965e2e069a71b377898",
+    "status": "reviewed",
+    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:15": {
+    "text": "- Strom Auto-Verbinden aktivieren oder deaktivieren.\n- Verbindungsmodus wählen.\n- Verbindungsbereich festlegen.\n- Mastverbindungen reservieren, damit Smart! nicht jeden Slot füllt.\n- **Strom daisy-chainen beim Skalieren** — wenn Verbesserte Stromanschlüsse freigeschaltet sind, verdrahtet das Skalieren einer Fabrik oder eines Generators entlang der X-Achse von Smart jede Kopie direkt mit der nächsten, anstatt einen Mast zu jeder zu führen, was dem üblichen Verteiler-Layout ohne separaten Erweitern-Durchgang entspricht. Das Smart Panel kann dies für den aktuellen Bau überschreiben, und das HUD meldet die effektive Wahl. Es respektiert die verfügbare Kapazität jedes Verbinders. **Standardmäßig aktiviert.** (Hinzugefügt in 34.2.0.)",
+    "source_hash": "ec98629a469e74c7be896e64709377532daca45491fe70e1465ce14f99cffdfb",
+    "status": "reviewed",
+    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:54": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "8382fa1196f068239391b97c93d521c0ed3ba46266fa7254f3e6c05c842fa1d2",
+    "obsolete": true
+  },
   "Smart-Assistance:13": {
     "text": "_Zuletzt aktualisiert: 2026-10-06 · Smart! v34.4.0_\n",
     "source_hash": "9ea842bd5dbdd752d3353ddeeeb68a3eff256015d475f2a5eb6d8e17e13b5156",
+    "status": "reviewed",
+    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Upgrade:14": {
+    "text": "- Klicke auf eine bestimmte Stufe — zum Beispiel **Mk.2** — um **nur** diese Stufe auf dein Ziel upzugraden. Erhöhe deine Mk.2-Förderbänder auf Mk.3 und lasse die Mk.4-Förderbänder unberührt.\n- Wähle **Alle Stufen**, um jede unterschiedliche Förderband-, Förderlift- oder Pipeline-Stufe auf das ausgewählte Ziel zu bringen. Dies kann einige Stufen upgraden und andere im selben Verlauf downgraden.",
+    "source_hash": "78e23b12048a0221986495c275897aa077ef1a3a23671637128ce9f602d2b7a8",
+    "status": "reviewed",
+    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
+    "obsolete": true
+  },
+  "Compatibility-and-Multiplayer:22": {
+    "text": "_Zuletzt aktualisiert: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (Entwurfsfassung)_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "status": "reviewed",
+    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
+    "obsolete": true
+  },
+  "Extend:27": {
+    "text": "Dieselbe Quelle erzeugt nun drei cyanfarbene Modulkopien, einschließlich ihrer Förderbandrouten und Stützen. Das HUD zeigt **Erweitern 3×1** und die Materialkosten steigen mit den Kopien. Die feste Quelle bleibt an ihrem Platz.",
+    "source_hash": "a818fc9f6600b845b33395c092257e5c56b6b18d277fc9a96921343bf18ea9b7",
+    "status": "reviewed",
+    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
+    "obsolete": true
+  },
+  "Auto-Connect:54": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "92242198e922b4bdd9164d865151a7ed36c6f470ad144311ff077b3cb519dd7a",
+    "obsolete": true
+  },
+  "Auto-Connect:45": {
+    "text": "_Zuletzt aktualisiert: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (Entwurfsfassung)_\n",
+    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89",
+    "status": "reviewed",
+    "review_method": "Contextual language review with official game terminology; not native-speaker certification.",
+    "obsolete": true
+  },
+  "Smart-Upgrade:34": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "e26d8a251fe56b8c46900038254253f78c75d8e69ca22dce9b9e0edc797fe40e",
+    "obsolete": true
+  },
+  "Compatibility-and-Multiplayer:12": {
+    "text": "Smart! funktioniert im Mehrspielermodus auf dedizierten Servern. Jede Smart!-Funktion – Skalierung des Rasters, Auto-Verbinden (Förderbänder, Rohre und Strom), Smart-Baupläne, Erweitern, Smart-Upgrade, Smart-Wiederherstellen und Smart-Demontieren – funktioniert, wenn du als Client spielst, mit normalen Baukosten. Alles, was Smart! platziert, ist ein standardmäßiges, vollständig repliziertes Spielgebäude: Andere Spieler sehen es, können es nutzen und es demontieren, so als hättest du es von Hand gebaut.",
+    "source_hash": "274d747f094a4e138cbbfdf378bc151dedd8d3fa979722492b56173b298c75d5",
+    "status": "reviewed",
+    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:32": {
+    "text": "Die Standardwerte sind 0,5 m und 5°. Die Abstandsschritte akzeptieren 0,1–8 m; die Drehung akzeptiert 0,5–90°.",
+    "source_hash": "b595cc1429fd298b95947cec85d6569724d96fed5b22b0b9424ca76f88c295da",
+    "status": "reviewed",
+    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
+    "obsolete": true
+  },
+  "Auto-Connect:38": {
+    "text": "_Zuletzt aktualisiert: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (Entwurfsfassung)_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "status": "reviewed",
+    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
+    "obsolete": true
+  },
+  "Extend:44": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "6db2053fcc52fc7413a2cac1559df3b88f7c1446d5bc55e82fb5c2b6043c246b",
+    "obsolete": true
+  },
+  "Smart-Camera:30": {
+    "text": "_Zuletzt aktualisiert: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (Entwurfsfassung)_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "status": "reviewed",
+    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:50": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "d3ecb21df5d1ff326acb297239bef36255c199f23e6b6ec35663f3996c38ec2b",
+    "obsolete": true
+  },
+  "Lift-Assisted-Auto-Connect:12": {
+    "text": "![Zwei angehobene Splitter-Vorschauen mit sichtbaren vertikalen Förderliften hinab zum Niveau der Maschinenverbindung, neben den Skalierungssteuerungen.](https://raw.githubusercontent.com/wiki/majormer/SmartFoundations/images/v35/lift-connection-controls.png)",
+    "source_hash": "cc3d5dfc328bad823f169e9cfaa9f3b9faf340768f11bfc85d33f6d73e79b0fc",
+    "status": "reviewed",
+    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:8": {
+    "text": "- **Aus Panel speichern** – benenne deine aktuelle Panel-Einrichtung und speichere sie als Preset.\n- **In Panel laden** – lade ein gespeichertes Preset zurück in das Panel, um es vor dem Bauen fein abzustimmen, oder wende es direkt an.\n- **Code exportieren / Code importieren** – teile ein Preset als Code oder lade einen Code, den jemand mit dir geteilt hat.",
+    "source_hash": "7e35bb8291023e898ca5f34452152a86fb7117cb5f7cb13234c8fd2acf59ef40",
+    "status": "reviewed",
+    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:46": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "b9d7eb1bd49651f9c06691ed5350a0882a0787f099915de792867f8aa4494c27",
+    "obsolete": true
+  },
+  "Blueprints:21": {
+    "text": "_Zuletzt aktualisiert: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (Entwurfsfassung)_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
     "status": "reviewed",
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
     "obsolete": true

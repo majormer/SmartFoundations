@@ -1,5 +1,5 @@
 // Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
-#include "Features/Scaling/SFHypertubeEntranceState.h"
+#include "Features/Scaling/SFNativeAttachmentGridState.h"
 #include "SmartFoundations.h"
 #include "Core/SFNativeHit.h"
 #include "Features/Scaling/SFScalingSpec.h"
@@ -9,15 +9,19 @@
 #include "Components/PrimitiveComponent.h"
 #include "Engine/World.h"
 #include "Hologram/FGPipePartHologram.h"
+#include "Hologram/FGConveyorAttachmentHologram.h"
 #include "Buildables/FGBuildablePipeHyper.h"
+#include "Buildables/FGBuildableConveyorBase.h"
+#include "Buildables/FGBuildableConveyorLift.h"
+#include "FGFactoryConnectionComponent.h"
 #include "FGCharacterPlayer.h"
 #include "Misc/ScopeExit.h"
 #include "UObject/UnrealType.h"
 
-// SP/MP DIVERGENCE MAP — scaled entrance endpoint binding
-//  1. Preview remains lightweight; unattached entrance grids retain their ordinary workflow.
+// SP/MP DIVERGENCE MAP — native attachment grid construction
+//  1. Preview remains lightweight; ordinary freestanding entrance/distributor grids remain supported.
 //  2. [MP-AUTH] Resolve prospective endpoint snaps and native legality before local construction/payment.
-//  3. [MP-SEAM] Resolve staged poses against authority-owned tubes, never a client-supplied peer pointer.
+//  3. [MP-SEAM] Resolve staged poses against authority-owned transports, never client-supplied peers.
 // Native recipe holograms exist only during one request. Native ConfigureComponents owns the links.
 namespace
 {
@@ -26,8 +30,14 @@ namespace
     TMap<TWeakObjectPtr<AFGHologram>, TWeakObjectPtr<AFGHologram>> EntrancePreparedCells;
     TArray<TWeakObjectPtr<AFGHologram>> EntranceRequestCells;
 
-    UFGPipeConnectionComponentBase* GetEntranceBinding(AFGHologram* Hologram)
+    UObject* GetEntranceBinding(AFGHologram* Hologram)
     {
+        if (Hologram->IsA<AFGConveyorAttachmentHologram>())
+        {
+            const FObjectPropertyBase* Conveyor = FindFProperty<FObjectPropertyBase>(
+                AFGConveyorAttachmentHologram::StaticClass(), TEXT("mSnappedConveyor"));
+            return Conveyor ? Conveyor->GetObjectPropertyValue_InContainer(Hologram) : nullptr;
+        }
         const FObjectPropertyBase* Binding = FindFProperty<FObjectPropertyBase>(
             AFGPipePartHologram::StaticClass(), TEXT("mSnappedConnectionComponent"));
         return Binding ? Cast<UFGPipeConnectionComponentBase>(Binding->GetObjectPropertyValue_InContainer(Hologram)) : nullptr;
@@ -57,8 +67,64 @@ namespace
     }
 
     enum class EEntranceResolution { Unattached, Accepted, Rejected };
+    bool NeedsConveyorBinding(AFGHologram* Root)
+    {
+        if (!Root->IsA<AFGConveyorAttachmentHologram>()) return false;
+        TArray<UFGFactoryConnectionComponent*> Ports;
+        Root->GetComponents(Ports);
+        // Lift attachment templates have unresolved top/bottom roles. Native ConfigureComponents
+        // resolves them from the snapped lift before BeginPlay builds the input/output caches.
+        for (const auto* Port : Ports)
+            if (IsValid(Port) && Port->GetDirection() == EFactoryConnectionDirection::FCD_ANY) return true;
+        return false;
+    }
+
+    EEntranceResolution ResolveConveyorCell(AFGHologram* Cell, AFGHologram* Root, const FTransform& Pose)
+    {
+        auto* Source = Cast<AFGBuildableConveyorBase>(GetEntranceBinding(Root));
+        const FObjectPropertyBase* Parent = FindFProperty<FObjectPropertyBase>(AFGHologram::StaticClass(), TEXT("mParent"));
+        if (!Source || !Parent) return EEntranceResolution::Rejected;
+        ON_SCOPE_EXIT { if (IsValid(Cell)) Cell->SetActorHiddenInGame(true); };
+        FCollisionQueryParams Query(SCENE_QUERY_STAT(SmartDistributorGridCell), false, Cell);
+        Query.AddIgnoredActor(Root);
+        if (Root->GetConstructionInstigator()) Query.AddIgnoredActor(Root->GetConstructionInstigator());
+        const FVector Directions[] = {Pose.GetUnitAxis(EAxis::X), Pose.GetUnitAxis(EAxis::Y), FVector::UpVector};
+        for (const FVector& Direction : Directions)
+        {
+            TArray<FHitResult> Hits;
+            Root->GetWorld()->LineTraceMultiByChannel(Hits, Pose.GetLocation() + Direction * 250,
+                Pose.GetLocation() - Direction * 250, ECC_WorldStatic, Query);
+            for (FHitResult Hit : Hits)
+            {
+                SFNativeHit::ResolveForPlacement(Hit);
+                auto* Conveyor = Cast<AFGBuildableConveyorBase>(Hit.GetActor());
+                if (!IsValid(Conveyor) || Conveyor->IsA<AFGBuildableConveyorLift>() != Source->IsA<AFGBuildableConveyorLift>()
+                    || !Cell->IsValidHitResult(Hit)) continue;
+                Cell->SetActorTransform(Pose);
+                Cell->SetScrollRotateValue(Root->GetScrollRotateValue());
+                Cell->ResetConstructDisqualifiers();
+                Parent->SetObjectPropertyValue_InContainer(Cell, nullptr);
+                Cell->UpdateHologramPlacement(Hit);
+                Parent->SetObjectPropertyValue_InContainer(Cell, Root);
+                const FTransform Resolved = Cell->GetActorTransform();
+                if (GetEntranceBinding(Cell) != Conveyor || Cell->GetBuildClass() != Root->GetBuildClass()
+                    || FVector::Dist(Resolved.GetLocation(), Pose.GetLocation()) > 1.0
+                    || !Resolved.GetRotation().Equals(Pose.GetRotation(), 0.001)
+                    || !Resolved.GetScale3D().Equals(Pose.GetScale3D(), 0.001)) continue;
+                if (Cell->GetUpgradedActor()) return EEntranceResolution::Rejected;
+                if (Root->GetBlueprintDesigner()) Cell->SetInsideBlueprintDesigner(Root->GetBlueprintDesigner());
+                auto* Player = Cast<AFGCharacterPlayer>(Root->GetConstructionInstigator());
+                Cell->SetActorHiddenInGame(false);
+                Cell->ValidatePlacementAndCost(Player ? Player->GetInventory() : nullptr);
+                return Cell->CanConstruct() ? EEntranceResolution::Accepted : EEntranceResolution::Rejected;
+            }
+        }
+        return EEntranceResolution::Unattached;
+    }
+
     EEntranceResolution ResolveEntranceCell(AFGHologram* Cell, AFGHologram* Root, const FTransform& Pose)
     {
+        if (Root->IsA<AFGConveyorAttachmentHologram>()) return ResolveConveyorCell(Cell, Root, Pose);
         // Scaling a snapped entrance must resolve a different native endpoint for each cell.
         // A grid cell without an endpoint stays an ordinary freestanding entrance; snapping
         // the parent does not turn free placement into an endpoint-only player mode.
@@ -89,7 +155,7 @@ namespace
                 Parent->SetObjectPropertyValue_InContainer(Cell, nullptr);
                 Cell->UpdateHologramPlacement(Hit);
                 Parent->SetObjectPropertyValue_InContainer(Cell, Root);
-                UFGPipeConnectionComponentBase* Binding = GetEntranceBinding(Cell);
+                auto* Binding = Cast<UFGPipeConnectionComponentBase>(GetEntranceBinding(Cell));
                 const FTransform Resolved = Cell->GetActorTransform();
                 // This bound is a snap correction, not extra placement permission. The native
                 // resolver selects the peer, orientation and pose; never reposition its result.
@@ -109,27 +175,32 @@ namespace
     }
 }
 
-bool SFHypertubeEntranceState::IsHandled(const AFGHologram* Root)
+bool SFNativeAttachmentGridState::IsHandled(const AFGHologram* Root)
 {
-    return IsValid(Root) && Root->IsA<AFGPipePartHologram>() && Root->GetBuildClass()
-        && Root->GetBuildClass()->GetFName() == TEXT("Build_PipeHyperStart_C")
+    return IsValid(Root) && Root->GetBuildClass()
+        && (Root->IsA<AFGConveyorAttachmentHologram>() || (Root->IsA<AFGPipePartHologram>()
+            && Root->GetBuildClass()->GetFName() == TEXT("Build_PipeHyperStart_C")))
         && !Root->ActorHasTag(TEXT("SF_EntranceConstructionCell"));
 }
-bool SFHypertubeEntranceState::HasProxyGrid(AFGHologram* Root)
+bool SFNativeAttachmentGridState::HasProxyGrid(AFGHologram* Root)
 {
     if (!IsHandled(Root) || Root->GetParentHologram()) return false;
     for (AFGHologram* Child : Root->GetHologramChildren())
         if (IsValid(Child) && !Child->IsDisabled() && Child->IsA<ASFBuildableChildHologram>()) return true;
     return false;
 }
-bool SFHypertubeEntranceState::Prepare(AFGHologram* Root, const FSFScalingSpec* Spec)
+bool SFNativeAttachmentGridState::Prepare(AFGHologram* Root, const FSFScalingSpec* Spec)
 {
     if (!bEntranceRequestActive || !IsHandled(Root) || Root->GetParentHologram() || !Root->HasAuthority()) return false;
     if (const bool* Existing = EntrancePreparedRoots.Find(Root)) return *Existing;
     EntrancePreparedRoots.Add(Root, false);
     // The selected state addressed here is an ordinary native endpoint snap. Existing
     // freestanding grids have no peer to inherit and keep their generic construction path.
-    if (!GetEntranceBinding(Root)) { EntrancePreparedRoots[Root] = true; return true; }
+    if (!GetEntranceBinding(Root))
+    {
+        EntrancePreparedRoots[Root] = !NeedsConveyorBinding(Root);
+        return EntrancePreparedRoots[Root];
+    }
     TArray<AFGHologram*> Previews;
     TArray<FTransform> Poses;
     for (AFGHologram* Child : Root->GetHologramChildren())
@@ -154,7 +225,7 @@ bool SFHypertubeEntranceState::Prepare(AFGHologram* Root, const FSFScalingSpec* 
                     Poses.Emplace(Rotation, Location);
                 }
     }
-    TSet<UFGPipeConnectionComponentBase*> UsedEndpoints;
+    TSet<UObject*> UsedEndpoints;
     UsedEndpoints.Add(GetEntranceBinding(Root));
     TArray<AFGHologram*> Accepted;
     for (const FTransform& Pose : Poses)
@@ -163,9 +234,10 @@ bool SFHypertubeEntranceState::Prepare(AFGHologram* Root, const FSFScalingSpec* 
         if (!Cell) return false;
         const EEntranceResolution Resolution = ResolveEntranceCell(Cell, Root, Pose);
         if (Resolution == EEntranceResolution::Rejected) return false;
+        if (Resolution == EEntranceResolution::Unattached && NeedsConveyorBinding(Root)) return false;
         if (Resolution == EEntranceResolution::Accepted)
         {
-            UFGPipeConnectionComponentBase* Endpoint = GetEntranceBinding(Cell);
+            UObject* Endpoint = GetEntranceBinding(Cell);
             if (UsedEndpoints.Contains(Endpoint)) return false;
             UsedEndpoints.Add(Endpoint);
             Accepted.Add(Cell);
@@ -196,18 +268,18 @@ bool SFHypertubeEntranceState::Prepare(AFGHologram* Root, const FSFScalingSpec* 
     EntrancePreparedRoots[Root] = true;
     return true;
 }
-AFGHologram* SFHypertubeEntranceState::FindPreparedCell(AFGHologram* Preview)
+AFGHologram* SFNativeAttachmentGridState::FindPreparedCell(AFGHologram* Preview)
 {
     const auto* Cell = EntrancePreparedCells.Find(Preview);
     return bEntranceRequestActive && Cell ? Cell->Get() : nullptr;
 }
-bool SFHypertubeEntranceState::IsRequestActive() { return bEntranceRequestActive; }
-SFHypertubeEntranceState::FRequestScope::FRequestScope()
+bool SFNativeAttachmentGridState::IsRequestActive() { return bEntranceRequestActive; }
+SFNativeAttachmentGridState::FRequestScope::FRequestScope()
 {
     bOwnsRequest = !bEntranceRequestActive;
     bEntranceRequestActive = true;
 }
-SFHypertubeEntranceState::FRequestScope::~FRequestScope()
+SFNativeAttachmentGridState::FRequestScope::~FRequestScope()
 {
     if (!bOwnsRequest) return;
     for (const auto& Cell : EntranceRequestCells) if (Cell.IsValid()) Cell->Destroy();

@@ -1,4 +1,4 @@
-// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
+﻿// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 #include "Features/Extend/Net/SFExtendCommitValidation.h"
 #include "Features/Extend/Net/SFExtendAuthorityScope.h"
 #include "Subsystem/SFSubsystem.h"
@@ -22,6 +22,21 @@ bool SFExtendCommitValidation::IsRequestActive() { return ActiveRequest != nullp
 const bool* SFExtendCommitValidation::FindPrepared(AFGHologram* Root)
 {
     return ActiveRequest ? ActiveRequest->Prepared.Find(Root) : nullptr;
+}
+bool SFExtendCommitValidation::IsAuthoritativeAdmission(const AFGHologram* Hologram)
+{
+    if (!ActiveRequest || !IsValid(Hologram) || !Hologram->HasAuthority()) return false;
+    const AFGHologram* Root = Hologram;
+    TSet<const AFGHologram*> Seen;
+    while (Root->GetParentHologram())
+    {
+        if (Seen.Contains(Root)) return false;
+        Seen.Add(Root);
+        Root = Root->GetParentHologram();
+        if (!IsValid(Root)) return false;
+    }
+    const bool* Prepared = FindPrepared(const_cast<AFGHologram*>(Root));
+    return Prepared && *Prepared;
 }
 void SFExtendCommitValidation::SetPrepared(AFGHologram* Root, bool Valid)
 {

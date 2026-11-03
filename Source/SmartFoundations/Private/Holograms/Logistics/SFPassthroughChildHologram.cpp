@@ -8,6 +8,8 @@
 #include "Subsystem/SFSubsystem.h"
 #include "Features/Extend/SFExtendService.h"
 #include "UObject/UnrealType.h"
+#include "UObject/StrongObjectPtr.h"
+#include "Features/Scaling/SFLiftFloorHoleGridRequest.h"
 
 ASFPassthroughChildHologram::ASFPassthroughChildHologram()
 {
@@ -58,8 +60,20 @@ AActor* ASFPassthroughChildHologram::Construct(TArray<AActor*>& out_children, FN
 {
     UE_LOG(LogSmartHologram, Verbose, TEXT("PASSTHROUGH CHILD: Construct() called for %s"), *GetName());
     
+    TStrongObjectPtr<ASFPassthroughChildHologram> KeepCell(this);
+    const bool LiftHole = GetBuildClass() && GetBuildClass()->GetFName() == TEXT("Build_FoundationPassthrough_Lift_C");
+    const bool ExtendChild = ActorHasTag(TEXT("SF_ExtendChild"));
+    if (LiftHole && ExtendChild)
+    {
+        auto* SS = USFSubsystem::Get(GetWorld());
+        auto* Extend = SS ? SS->GetExtendService() : nullptr;
+        if (!Extend || !Extend->IsExecutingOwnedNativeInput()) return nullptr;
+    }
+    const bool GridCell = LiftHole && !ExtendChild && ActorHasTag(TEXT("SF_GridChild"));
+    if (GridCell && !FSFLiftFloorHoleGridRequest::ClaimCell(this, constructionID)) return nullptr;
     // Delegate to vanilla passthrough construction — handles floor hole building creation
     AActor* BuiltActor = Super::Construct(out_children, constructionID);
+    if (GridCell) FSFLiftFloorHoleGridRequest::ObserveCell(this, BuiltActor);
     
     if (BuiltActor)
     {

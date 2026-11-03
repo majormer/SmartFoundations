@@ -42,7 +42,7 @@ public:
     ESFWalkConveyanceType GetConveyanceType() const { return ConveyanceType; }
     float GetMaximumAdvance() const;
 
-    /** The first invalid-segment reason (e.g. "segment 2 too steep (83deg > 30deg)"), or empty if every segment shape is
+    /** The first invalid-segment reason (e.g. "Conveyor belt is too steep"), or empty if every segment shape is
      *  valid. Shown appended to the HUD walk badge — mirrors Extend's [INVALID]/[reason] pattern. */
     FString GetInvalidShapeReason() const;
 
@@ -206,8 +206,8 @@ private:
      *  always true under No Build Cost). Drives the red/cyan preview state in RefreshWalkValidity. */
     bool CanAffordWalk() const;
 
-    /** Reason string if segment Index's span is an invalid SHAPE — too long (>56m) or, for belts, too steep (>30deg;
-     *  pipes exempt). Empty = valid. Geometry mirrors the stackable auto-connect length/slope caps. */
+    /** Reason string if segment Index's span is an invalid SHAPE — outside the native length, incline or curvature constraints;
+     *  Empty = valid. Belts and pipes use their own native routed geometry rules. */
     FString GetSegmentShapeError(int32 Index) const;
 
     /** Convenience: GetSegmentShapeError(Index).IsEmpty(). */

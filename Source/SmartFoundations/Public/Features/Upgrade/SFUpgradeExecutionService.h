@@ -1,4 +1,4 @@
-// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
+﻿// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
 #pragma once
 
@@ -13,6 +13,8 @@ class USFSubsystem;
 class AFGBuildable;
 class AFGPlayerController;
 class AFGCharacterPlayer;
+struct FSFConveyorUpgradeOwner;
+struct FSFNativeFactoryUpgradeWork;
 
 /**
  * Parameters for upgrade execution
@@ -21,6 +23,15 @@ USTRUCT(BlueprintType)
 struct FSFUpgradeExecutionParams
 {
 	GENERATED_BODY()
+
+	/** Stable across delivery retries; assigned by the requesting world's shared sequence owner. */
+	UPROPERTY()
+	FGuid RequestId;
+	UPROPERTY()
+	int64 RequestSequence = 0;
+	/** Authority-issued world context obtained before capturing remote intent. */
+	UPROPERTY()
+	FGuid AuthorityWorldGeneration;
 
 	/** Family to upgrade */
 	UPROPERTY()
@@ -76,6 +87,21 @@ USTRUCT(BlueprintType)
 struct FSFUpgradeExecutionResult
 {
 	GENERATED_BODY()
+
+	UPROPERTY()
+	FGuid RequestId;
+	UPROPERTY()
+	int64 RequestSequence = 0;
+	UPROPERTY()
+	FGuid AuthorityWorldGeneration;
+	/** Admission rejected this context before selection or effects; client must synchronize again. */
+	UPROPERTY()
+	bool bWorldContextRejected = false;
+	/** Pending or uncertain work must not be interpreted as settled completion. */
+	UPROPERTY()
+	bool bPending = false;
+	UPROPERTY()
+	bool bUncertain = false;
 
 	/** Number of items successfully upgraded */
 	UPROPERTY()
@@ -147,10 +173,23 @@ public:
 	/** Start upgrade execution */
 	UFUNCTION(BlueprintCallable, Category = "SmartFoundations|Upgrade")
 	void StartUpgrade(const FSFUpgradeExecutionParams& Params);
+	/** Allocate once before sending an RPC; a resend retains the same identity. */
+	bool AssignRequestIdentity(FSFUpgradeExecutionParams& Params);
+	/** No intent is retained while synchronizing. Call before capturing a remote selection. */
+	bool EnsureUpgradeWorldContext(AFGPlayerController* Requester);
+	void AcceptUpgradeWorldContext(const FGuid& Challenge, const FGuid& Generation);
+	FGuid GetAuthorityWorldGeneration() const;
+	void MarkUpgradeRequestSent(const FSFUpgradeExecutionParams& Params)
+	{
+		if (Params.RequestId == ExpectedClientRequestId && Params.RequestSequence == ExpectedClientSequence
+			&& Params.AuthorityWorldGeneration == ExpectedClientWorldGeneration)
+			bUpgradeInProgress = true;
+	}
 
 	/** Cancel in-progress upgrade */
 	UFUNCTION(BlueprintCallable, Category = "SmartFoundations|Upgrade")
 	void CancelUpgrade();
+	void CancelUpgradeRequest(AFGPlayerController* Requester, const FGuid& RequestId, int64 Sequence);
 
 	/** [UPGRADE-MP] Client-side: install a server-executed result and broadcast completion, so
 	 *  panel delegates bound to this (local) service fire exactly as in SP. Mirrors
@@ -163,6 +202,9 @@ public:
 
 	/** True only during synchronous native power replacement construction in this world. */
 	static bool IsConstructingPowerReplacement(const UWorld* World);
+	/** Synthetic native conveyor holograms must not consume a player's unrelated preview/commit. */
+	static bool IsConstructingConveyorReplacement(const UWorld* World);
+    static bool IsConstructingNativeFactoryReplacement(const UWorld* World);
 
 	/** Get the last execution result */
 	UFUNCTION(BlueprintPure, Category = "SmartFoundations|Upgrade")
@@ -195,6 +237,47 @@ public:
 		TMap<TSubclassOf<class UFGItemDescriptor>, int32>& OutRefund) const;
 
 private:
+	struct FSFUpgradeSettlementLedger;
+	TSharedPtr<FSFConveyorUpgradeOwner> ConveyorOwner;
+	FGuid ExpectedClientRequestId;
+	FGuid ExpectedClientWorldGeneration;
+	FGuid UpgradeContextChallenge;
+	FGuid RemoteAuthorityWorldGeneration;
+	TWeakObjectPtr<AFGPlayerController> UpgradeContextRequester;
+	int64 ExpectedClientSequence = 0;
+	TWeakObjectPtr<AFGPlayerController> ExpectedClientRequester;
+	bool HandleConveyorReplay(const FSFUpgradeExecutionParams& Params);
+    TSharedPtr<FSFNativeFactoryUpgradeWork> NativeFactoryUpgrade;
+    void StartOwnedFactoryUpgrade();
+    void RunOwnedFactoryUpgrade(class FSFConstructionOperationRecord& Record);
+    void ObserveOwnedFactoryUpgrade(class FSFConstructionOperationRecord& Record);
+    void FinishOwnedFactoryUpgrade(uint8 State);
+    bool CancelOwnedFactoryUpgrade();
+    bool ShouldStopFactoryUpgrade() const;
+    bool IsExecutingFactoryUpgrade(AFGCharacterPlayer* Player) const;
+    bool AdoptFactoryOutputs(AActor* Main, const TArray<AActor*>& Children);
+    bool ReserveFactoryCharge(const FSFUpgradeSettlementLedger& Ledger, AFGCharacterPlayer* Player);
+    void RollbackFactoryCharge(const FSFUpgradeSettlementLedger& Ledger, AFGCharacterPlayer* Player);
+    bool SettleFactoryResources();
+    void CommitFactoryCharge();
+	void StartOwnedConveyorUpgrade();
+	void ExecuteUpgradeTargets();
+	void RunOwnedConveyorUpgrade(class FSFConstructionOperationRecord& Record);
+	void ObserveOwnedConveyorUpgrade(class FSFConstructionOperationRecord& Record);
+	void FinishOwnedConveyorUpgrade(uint8 State);
+	void SendUpgradeResult(class AFGPlayerController* Requester, const FSFUpgradeExecutionResult& Result);
+	bool ReserveConveyorCharge(const FSFUpgradeSettlementLedger& Ledger, class AFGCharacterPlayer* PlayerChar);
+	bool AdoptConveyorReplacement(class AFGBuildableConveyorBase* Old, class AFGBuildableConveyorBase* Replacement,
+		const TArray<AActor*>& Children);
+	bool PrepareConveyorCargoTransfer(class AFGBuildableConveyorBase* Old, bool bExplicitExport);
+	bool RetireConveyorSource(class AFGBuildableConveyorBase* Old);
+	bool PreflightConveyorUpgrade(class AFGBuildableConveyorBase* Old, TSubclassOf<class UFGRecipe> Recipe, FString& Reason);
+	bool PrepareConveyorUpgradeHologram(class AFGBuildableConveyorBase* Old, class AFGHologram* Hologram, FString& Reason);
+	bool SettleConveyorResources();
+	bool DeliverConveyorCompanionRefunds();
+	int32 PrepareConveyorSettlement(AFGBuildable* Old, TSubclassOf<class UFGRecipe> Recipe,
+		AFGCharacterPlayer* Player, FSFUpgradeSettlementLedger& Ledger) const;
+	void RetainUnexpectedConveyorConstruction(AActor* Main, const TArray<AActor*>& Children);
 	/** [#485] One target's inventory settlement, split for transactional ordering:
 	 *  net-positive items are reserved (deducted) BEFORE Construct and rolled back if it fails;
 	 *  net-negative items (refunds) are granted only AFTER the replacement is built and the old
@@ -232,7 +315,7 @@ private:
 	/** Gather buildables to upgrade based on params */
 	void GatherUpgradeTargets();
 
-	/** Expand belt/lift targets to safe connected conveyor cohorts. */
+	/** Validate/deduplicate selected belt/lift targets using the affected cohort without adding targets. */
 	void NormalizeConveyorUpgradeTargets(bool bRespectRadius);
 
 	/** Whether a conveyor intersects the current radius selection. */
@@ -283,9 +366,6 @@ private:
 	/** Timer callback for processing upgrades outside parallel tick */
 	void ProcessUpgradeTimer();
 
-	/** Conveyors that were upgraded (for chain rebuild) */
-	UPROPERTY()
-	TArray<TObjectPtr<class AFGBuildableConveyorBase>> UpgradedConveyors;
 
 	/** All conveyors in the original chain (cached at first upgrade) */
 	UPROPERTY()
@@ -313,8 +393,6 @@ private:
 	/** General map of old buildable -> new buildable (all families). Used by Option B validation and pipe batch repair. */
 	TMap<class AFGBuildable*, class AFGBuildable*> OldToNewBuildableMap;
 	
-	/** Chain actors captured from old belts BEFORE destruction (ensures stale chains are removed even if new belts haven't joined a chain yet) */
-	TSet<class AFGConveyorChainActor*> PreDestroyChainActors;
 	
 	/** Saved connection pairs: [OldConveyor, ConnectionIndex] -> [PartnerOldConveyor, PartnerConnectionIndex] */
 	TMap<TPair<class AFGBuildableConveyorBase*, int32>, TPair<class AFGBuildableConveyorBase*, int32>> SavedConnectionPairs;

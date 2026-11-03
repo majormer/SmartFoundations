@@ -132,6 +132,8 @@ USmartFoundationsModConfiguration::USmartFoundationsModConfiguration()
 		LOCTEXT("P.StaggerIncrement.TT", "Meters of stagger added per scroll notch (also walk segment shift)."), 0.5f));
 	Building->SectionProperties.Add(TEXT("RotationIncrement"), CreateFloatProperty(TEXT("RotationIncrement"), LOCTEXT("P.RotationIncrement", "Rotation Increment (deg)"),
 		LOCTEXT("P.RotationIncrement.TT", "Degrees of rotation added per scroll notch (also walk segment turn)."), 5.0f));
+	Building->SectionProperties.Add(TEXT("bBlueprintPlacementSafetyLimit"), CreateBoolProperty(TEXT("bBlueprintPlacementSafetyLimit"), LOCTEXT("P.bBlueprintPlacementSafetyLimit", "Blueprint Placement Safety Limit"),
+		LOCTEXT("P.bBlueprintPlacementSafetyLimit.TT", "Client setting. Limits one multiplayer blueprint placement to approximately 2,000 buildings. Turning this off allows larger placements at your own risk: they can stall or crash the server, cause desynchronization, or disconnect players. Other placement and network safeguards still apply. Takes effect immediately."), true));
 	Building->SectionProperties.Add(TEXT("BlueprintSpacingX"), CreateFloatProperty(TEXT("BlueprintSpacingX"), LOCTEXT("P.BlueprintSpacingX", "Blueprint Default X Spacing (m)"),
 		LOCTEXT("P.BlueprintSpacingX.TT", "Starting X gap for a new blueprint build session (0-100 m). Zero tiles flush; short gaps may leave no room for seam connections. Panel changes override this for the current session."), 1.0f));
 	Building->SectionProperties.Add(TEXT("BlueprintSpacingY"), CreateFloatProperty(TEXT("BlueprintSpacingY"), LOCTEXT("P.BlueprintSpacingY", "Blueprint Default Y Spacing (m)"),

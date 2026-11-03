@@ -55,6 +55,11 @@ struct SMARTFOUNDATIONS_API FSFExtendCommitSpec
 {
 	GENERATED_BODY()
 
+    /** Final fire identity. Preview staging leaves these empty and cannot authorize construction. */
+    UPROPERTY() FGuid RequestId;
+    UPROPERTY() int64 RequestSequence = 0;
+    UPROPERTY() FGuid AuthorityWorldGeneration;
+
 	/** Final fire-position offset of the parent clone from the SOURCE building. The server runs
 	 *  FromSource(serverWalkedTopology, ParentOffset) to derive the clone topology itself. */
 	UPROPERTY()

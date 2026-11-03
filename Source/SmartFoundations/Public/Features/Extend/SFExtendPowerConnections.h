@@ -16,7 +16,8 @@ namespace SFExtendPowerConnections
     float MaxWireLength(const AFGBuildableWire* Wire,
         UFGCircuitConnectionComponent* From, UFGCircuitConnectionComponent* To);
     bool Connect(UWorld* World, UClass* WireClass,
-        UFGCircuitConnectionComponent* From, UFGCircuitConnectionComponent* To);
+        UFGCircuitConnectionComponent* From, UFGCircuitConnectionComponent* To,
+        AFGBuildableWire** OutAttemptedWire = nullptr);
     const FSFCloneHologram* Find(const FSFCloneTopology* Topology, const FString& Id);
     void RefreshPreview(ASFWireHologram* Wire, const FSFCloneHologram& Plan);
     bool ValidateCapacity(const FSFCloneTopology& Topology, FString& OutReason);

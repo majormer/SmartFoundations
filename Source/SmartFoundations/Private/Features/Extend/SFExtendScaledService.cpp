@@ -61,6 +61,7 @@
 #include "FGCircuitConnectionComponent.h"
 #include "Buildables/FGBuildableResourceExtractorBase.h"
 #include "FGFactoryConnectionComponent.h"
+#include "FGConstructDisqualifier.h"
 #include "FGPipeConnectionComponent.h"
 #include "FGPipeSubsystem.h"
 #include "FGPipeNetwork.h"
@@ -381,7 +382,7 @@ void USFExtendScaledService::RebuildScaledExtendNow()
             // actually be built; otherwise a 1x1 rotated Extend can preview green and then be
             // refused by the construct-time check (or preview red when the rotated plan is fine).
             // Multi-copy grids re-validate again after the merge below.
-            Owner->bScaledExtendValid = ValidatePowerCapacity();
+            Owner->bScaledExtendValid = ValidateScaledExtendConstraints() && ValidatePowerCapacity();
         }
     }
 
@@ -441,7 +442,7 @@ void USFExtendScaledService::RebuildScaledExtendNow()
             CalculateScaledExtendPositions();
         }
 
-        // Validate constraints (belt/pipe lengths, angles, and Issue #288 pole capacity)
+        // Validate early length constraints before creating routed previews
         Owner->bScaledExtendValid = ValidateScaledExtendConstraints();
 
         if (Owner->bScaledExtendValid)
@@ -453,7 +454,7 @@ void USFExtendScaledService::RebuildScaledExtendNow()
             // Phase 6: merge all clone topologies onto the clone-1 base (non-destructive re-merge;
             // the wiring system reads Owner->StoredCloneTopology to generate wiring manifests).
             RemergeScaledTopologyFromBase();
-            Owner->bScaledExtendValid = ValidatePowerCapacity();
+            Owner->bScaledExtendValid = ValidateScaledExtendConstraints() && ValidatePowerCapacity();
         }
         else
         {
@@ -480,7 +481,7 @@ void USFExtendScaledService::RebuildScaledExtendNow()
         // Shrunk back to a single clone: all previews were torn down by the diff; the stored
         // topology returns to the clone-1 base.
         RemergeScaledTopologyFromBase();
-        Owner->bScaledExtendValid = ValidatePowerCapacity();
+        Owner->bScaledExtendValid = ValidateScaledExtendConstraints() && ValidatePowerCapacity();
     }
 
     // #497: immediate position assert now that the preview set is (re)built, so children are
@@ -984,6 +985,10 @@ void USFExtendScaledService::SpawnScaledExtendPreviews()
             SFExtendPowerConnections::RemapCellTargets(Holo, ClonePrefix, PrevClonePrefix);
             if (!Holo.PassthroughTop.Target.IsEmpty()) Holo.PassthroughTop.Target = ClonePrefix + Holo.PassthroughTop.Target;
             if (!Holo.PassthroughBottom.Target.IsEmpty()) Holo.PassthroughBottom.Target = ClonePrefix + Holo.PassthroughBottom.Target;
+            if (Holo.bHasLiftData)
+                for (auto& Hole : Holo.LiftData.PassthroughCloneIds)
+                    if (!Hole.IsEmpty()) Hole = ClonePrefix + Hole;
+
 
             // === Conn0 target resolution ===
             if (OrigConn0Target == TEXT("parent"))
@@ -1371,6 +1376,27 @@ bool USFExtendScaledService::ValidateScaledExtendConstraints()
         return true;  // No clones = no constraints to check
     }
 
+    // Curved grids can wrap back to the source or an earlier copy. Distinct logical
+    // actor/port IDs do not make coincident modules safe to build.
+    if (Owner->CurrentExtendTarget.IsValid() && Owner->CurrentExtendHologram.IsValid())
+    {
+        SFScaledExtendGrid::FPlacementReservations Placements;
+        Placements.TryAdd(Owner->CurrentExtendTarget->GetActorTransform());
+        bool bDistinct = Placements.TryAdd(Owner->CurrentExtendHologram->GetActorTransform());
+        for (const auto& Clone : Owner->ScaledExtendClones)
+        {
+            const FTransform Pose(Owner->CurrentExtendTarget->GetActorRotation() + Clone.RotationOffset,
+                Owner->CurrentExtendTarget->GetActorLocation() + Clone.WorldOffset);
+            bDistinct = Placements.TryAdd(Pose) && bDistinct;
+        }
+        if (!bDistinct)
+        {
+            Owner->ScaledExtendInvalidReason = NSLOCTEXT("SmartFoundations", "Extend_RepeatedModulePose",
+                "Extend overlaps an earlier copy").ToString();
+            return false;
+        }
+    }
+
     // ========================================================================
     // Lane Segment Validation (Phase 8)
     // ========================================================================
@@ -1385,13 +1411,11 @@ bool USFExtendScaledService::ValidateScaledExtendConstraints()
 
     // Belt constraints (matching CreateOrUpdateBeltPreview in SFAutoConnectService)
     constexpr float MinBeltLength = 50.0f;       // 0.5m minimum
-    constexpr float MaxBeltLength = 5600.0f;     // 56m maximum
-    constexpr float MaxBeltAngleDeg = 30.0f;     // 30° max at each connector
+    const float MaxBeltLength = GetDefault<ASFConveyorBeltHologram>()->GetMaxSplineLength();
 
-    // Pipe constraints (matching ProcessPipeJunctions in SFPipeAutoConnectManager)
+    // Native limits include their configured numerical allowance.
     constexpr float MinPipeLength = 50.0f;       // 0.5m minimum (straight)
-    constexpr float MaxPipeLength = 2500.0f;     // 25m maximum
-    constexpr float MaxPipeAngleDeg = 30.0f;     // 30° max at each connector
+    const float MaxPipeLength = GetDefault<ASFPipelineHologram>()->GetMaxSplineLength();
 
     if (Owner->StoredCloneTopology.IsValid())
     {
@@ -1402,16 +1426,23 @@ bool USFExtendScaledService::ValidateScaledExtendConstraints()
 
             FVector StartPos = Holo.SplineData.Points[0].World.ToFVector();
             FVector EndPos = Holo.SplineData.Points.Last().World.ToFVector();
-            FVector StartNormal = Holo.LaneStartNormal.ToFVector();
-            FVector EndNormal = Holo.LaneEndNormal.ToFVector();
 
             float SegmentLength = FVector::Dist(StartPos, EndPos);
             bool bIsPipe = (Holo.LaneSegmentType == TEXT("pipe"));
 
             float MinLength = bIsPipe ? MinPipeLength : MinBeltLength;
             float MaxLength = bIsPipe ? MaxPipeLength : MaxBeltLength;
-            float MaxAngle = bIsPipe ? MaxPipeAngleDeg : MaxBeltAngleDeg;
-            const TCHAR* TypeName = bIsPipe ? TEXT("Pipe") : TEXT("Belt");
+            AFGHologram* Routed = Owner->JsonSpawnedHolograms.FindRef(Holo.HologramId);
+            if (!Routed)
+            {
+                for (const auto& Clone : Owner->ScaledExtendClones)
+                    if (auto* Candidate = Clone.SpawnedHolograms.FindRef(Holo.HologramId).Get())
+                    { Routed = Candidate; break; }
+            }
+            auto* Belt = Cast<ASFConveyorBeltHologram>(Routed);
+            auto* Pipe = Cast<ASFPipelineHologram>(Routed);
+            if (Belt) MaxLength = Belt->GetMaxSplineLength();
+            if (Pipe) MaxLength = Pipe->GetMaxSplineLength();
 
             // Distance validation
             if (SegmentLength < MinLength)
@@ -1434,31 +1465,21 @@ bool USFExtendScaledService::ValidateScaledExtendConstraints()
                 return false;
             }
 
-            // Angle validation — check departure angle at start and arrival angle at end
-            // Same dual-angle check as CreateOrUpdateBeltPreview
-            FVector SegmentDir = (EndPos - StartPos).GetSafeNormal();
-
-            // Start connector: angle between connector normal and segment direction
-            float DotStart = FVector::DotProduct(StartNormal, SegmentDir);
-            float AngleStart = FMath::RadiansToDegrees(FMath::Acos(FMath::Clamp(DotStart, -1.0f, 1.0f)));
-
-            // End connector: angle between connector normal and reverse segment direction
-            float DotEnd = FVector::DotProduct(EndNormal, -SegmentDir);
-            float AngleEnd = FMath::RadiansToDegrees(FMath::Acos(FMath::Clamp(DotEnd, -1.0f, 1.0f)));
-
-            if (AngleStart > MaxAngle || AngleEnd > MaxAngle)
+            // Before spawning, reject impossible lengths. After spawning, let the native
+            // routed spline decide inclination and curvature, not connector-to-chord angles.
+            TSubclassOf<UFGConstructDisqualifier> Reason;
+            if (Belt) Reason = Belt->GetNativeSplineDisqualifier();
+            if (Pipe)
             {
-                Owner->ScaledExtendInvalidReason = FText::Format(
-                    NSLOCTEXT("SmartFoundations", "Extend_LaneTooSteep", "{0} lane angle too steep ({1}°/{2}° > {3}° max)"),
-                    bIsPipe ? NSLOCTEXT("SmartFoundations", "Extend_LanePipe", "Pipe") : NSLOCTEXT("SmartFoundations", "Extend_LaneBelt", "Belt"),
-                    FText::FromString(FString::Printf(TEXT("%.0f"), AngleStart)), FText::FromString(FString::Printf(TEXT("%.0f"), AngleEnd)),
-                    FText::FromString(FString::Printf(TEXT("%.0f"), MaxAngle))).ToString();
-                SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Warning, TEXT("⚡ SCALED EXTEND: INVALID - %s"), *Owner->ScaledExtendInvalidReason);
+                bool bTooLong = false;
+                if (!Pipe->ValidateCurrentSpline(bTooLong))
+                    Reason = bTooLong ? UFGCDPipeTooLong::StaticClass() : UFGCDPipeInvalidShape::StaticClass();
+            }
+            if (Reason)
+            {
+                Owner->ScaledExtendInvalidReason = UFGConstructDisqualifier::GetDisqualifyingText(Reason).ToString();
                 return false;
             }
-
-            UE_LOG(LogSmartExtend, VeryVerbose, TEXT("⚡ VALIDATE: %s lane OK — length %.1fm, angles %.0f°/%.0f°"),
-                TypeName, SegmentLength / 100.0f, AngleStart, AngleEnd);
         }
     }
 
