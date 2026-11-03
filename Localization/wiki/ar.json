@@ -48,10 +48,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "_Sidebar:8": {
-    "text": "_آخر تحديث: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (مسودة الإصدار)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "text": "_آخر تحديث: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "90cb2f4ec0a877789160414441d87af9660480498e3243f7517711c84cc354bf",
     "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Auto-Connect:0": {
     "text": "# التوصيل التلقائي",
@@ -78,9 +78,10 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Auto-Connect:56": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "0ef504a252dcabd3541b9ed8c7d000b31225026b5fa22aa19b6f534eadd38d6b"
+    "text": "افتح **K → التحجيم** واستخدم قسم **التوصيل التلقائي** المناسب للمبنى المحدد. يفتح `U` إعدادات الاتصال للمباني اللوجستية المدعومة. تجد القيم الافتراضية العامة ضمن **الخيارات → إعدادات التعديلات → Smart!**؛ أما اختيارات المعاينة الحالية ففي اللوحة. تتحدث تفضيلات الاتصال فورًا، بصورة مستقلة عن **تطبيق الموضع فورًا**.",
+    "source_hash": "0ef504a252dcabd3541b9ed8c7d000b31225026b5fa22aa19b6f534eadd38d6b",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Auto-Connect:5": {
     "text": "استخدم اللوحة أو العجلة أو لوحة الأرقام لتشكيل الشبكة؛ افحص الاتصالات المتولدة وأسهم الاتجاه في العالم قبل البناء. يعرض HUD قيم الموضع بدلًا من تقديم نموذج آخر لإعدادات الاتصال. انظر [عناصر التحكم](Controls) للمفاتيح الافتراضية وسلوك التحكم بالنسبة للاعب.",
@@ -119,14 +120,16 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Auto-Connect:47": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "bfcb0d7bcbf0b5b36a80dd16a2dac958a4db4fc0261b34174dd132215ae37e01"
+    "text": "### فروع الموزع",
+    "source_hash": "bfcb0d7bcbf0b5b36a80dd16a2dac958a4db4fc0261b34174dd132215ae37e01",
+    "status": "reviewed",
+    "review_method": "Local-model contextual translation and separate semantic review; structural validation. No human native-speaker certification."
   },
   "Auto-Connect:48": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "59bd907b72a7a1bd727a61b3bb63c228bae6f45d96d4267b1fa73010ed0ca1df"
+    "text": "يجب أن تواجه فرع الفاصل أو المجمع منفذ الاتصال الخاص بالآلة التي يخدمها. يسمح Smart! بفرع واحد لكل مصنع ولا يرسل فرعين نحو نفس الجانب من صف الآلات. يمكن لصفوف الآلات المتقابلة استخدام فروع متقابلة. تنطبق هذه القواعد أيضًا على متغيرات Smart، والبرمجي، والأولوية. قم بتدوير أو إعادة وضع الموزع إذا كان المنفذ المطلوب يواجه الاتجاه المعاكس؛ فإن وجود منفذ غير مستخدم يواجه الاتجاه المعاكس أمر طبيعي ولا ينتج تحذيرًا بحد ذاته.",
+    "source_hash": "59bd907b72a7a1bd727a61b3bb63c228bae6f45d96d4267b1fa73010ed0ca1df",
+    "status": "reviewed",
+    "review_method": "Local-model contextual translation and separate semantic review; structural validation. No human native-speaker certification."
   },
   "Auto-Connect:11": {
     "text": "### اتصالات الآلات بمساعدة رافعات السير",
@@ -183,9 +186,10 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Auto-Connect:57": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "01bc78e7b2eed2e3b61e790428579385ed84d207401ce8ce691e20542ceb6c01"
+    "text": "**تحجيم دعامات الأنابيب ينشئ خط أنابيب.** عند تحجيم صف من دعامات الأنابيب أو الحوامل الجدارية للأنبوب، يصل Smart! النسخ بخط أنابيب متصل، تمامًا كما ينشئ تحجيم صف من دعامات السير الناقل خط سيور. يتدفق السائل عبر الخط كله، وتظل نقطة الالتقاط الخاصة بكل دعامة حرة لتتمكن من توصيل أنبوب يدويًا. ينتقل ارتفاع الدعامة الأرضية وزاوية قطعتها العلوية إلى الصف كله، فيبقى الخط المائل متناسقًا.",
+    "source_hash": "01bc78e7b2eed2e3b61e790428579385ed84d207401ce8ce691e20542ceb6c01",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Auto-Connect:19": {
     "text": "ترث الأنابيب المتولدة الطلاء من أنبوب مصدر متصل. ولا ترث الوصلة الطلاء إلا إذا اتفقت الأنابيب المتصلة بها؛ نقل المعاينة إلى اتصال بلا مصدر طلاء يعيد طلائها الأصلي.",
@@ -212,14 +216,16 @@
     "review_method": "Direct AI contextual translation and fluency review; official terminology and protected Markdown checked; not human native-speaker certification."
   },
   "Auto-Connect:50": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "a731c462366f0c155a14546a1265f77d5e93778036e1ebd4a44e669ff5112e22"
+    "text": "### فروع وصلات الأنابيب",
+    "source_hash": "a731c462366f0c155a14546a1265f77d5e93778036e1ebd4a44e669ff5112e22",
+    "status": "reviewed",
+    "review_method": "Local-model contextual translation and separate semantic review; structural validation. No human native-speaker certification."
   },
   "Auto-Connect:51": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "0a29d3c9b8ec32dedec575d19408d9bb4da0cbb09a58b8d2ed2dc2c0f3f833c7"
+    "text": "تتبع فروع وصلات الأنابيب نفس قواعد التوجيه وجانب الآلة. تحتفظ منافذ وصلات T ووصلات التقاطع بالاتجاهات الفعلية عند التدوير. يتخطى Smart! الفرع غير المناسب مع الاحتفاظ بالاتصالات الصالحة. تستخدم فحوصات طول المسار وميل السير الناقل حدود البناء الأصلية المطبقة، بدلاً من حد موحد 25 مترًا للأنابيب أو 30 درجة للسير الناقل.",
+    "source_hash": "0a29d3c9b8ec32dedec575d19408d9bb4da0cbb09a58b8d2ed2dc2c0f3f833c7",
+    "status": "reviewed",
+    "review_method": "Local-model contextual translation and separate semantic review; structural validation. No human native-speaker certification."
   },
   "Auto-Connect:21": {
     "text": "## التوصيل التلقائي لأنابيب النقل الفائق",
@@ -240,14 +246,16 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Auto-Connect:58": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "eb2ee60a85c009c8b087b30e51ca7b4eb21ab2ca69353d8b3bce92a60256f455"
+    "text": "**تحجيم دعامات أنابيب النقل الفائق ينشئ خطًا من هذه الأنابيب.** عند تحجيم صف من دعاماتها القابلة للتكديس، ينشئ Smart! خطًا متصلًا بين النسخ، كما ينشئ تحجيم دعامات السير الناقل خط سيور أو دعامات الأنابيب خط أنابيب. يتبع الخط تباعد الصف وارتفاعه ويمكنه الصعود بميل حاد، وتظل نقطة الالتقاط الخاصة بكل دعامة حرة لتتمكن من توصيل أنبوب نقل فائق يدويًا.",
+    "source_hash": "eb2ee60a85c009c8b087b30e51ca7b4eb21ab2ca69353d8b3bce92a60256f455",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Auto-Connect:59": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "12ed988af1c997655966e3695ec2f34cf65159be86bd53b56fa1a92c8a85b213"
+    "text": "للتوصيل التلقائي لأنابيب النقل الفائق **مفتاح تفعيل ووضع توجيه خاصان به** مستقلان عن الأنابيب؛ اضبطهما من لوحة Smart أو إعدادات التوصيل التلقائي أثناء البناء (اضغط باستمرار على `U`) أو إعدادات التعديل. انظر [مرجع الإعدادات](Settings-Reference).",
+    "source_hash": "12ed988af1c997655966e3695ec2f34cf65159be86bd53b56fa1a92c8a85b213",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Auto-Connect:26": {
     "text": "## خطوط الدعامات الجدارية المدارة",
@@ -256,9 +264,10 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Auto-Connect:60": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "fd7f0d71039eaac4e79da271b675c44893d3943fcbd5cfcc62fcca29fe53a2ce"
+    "text": "تتبع النسخ الفرعية من دعامات الأنابيب وأنابيب النقل الفائق الجدارية دوران العنصر الأصلي كاملًا. يوفر **دوران الجدار** في اللوحة **زيادات 45°** من اللعبة الأساسية، بما يشمل خطًا عموديًا. وهو منفصل عن دوران الشبكة الذي يحني تسلسل النسخ.",
+    "source_hash": "fd7f0d71039eaac4e79da271b675c44893d3943fcbd5cfcc62fcca29fe53a2ce",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Auto-Connect:28": {
     "text": "في التحكم بالنسبة للمبنى، يتبع Y خط الجدار المدار. وفي التحكم بالنسبة للاعب، يتبع الإدخال العمودي أكثر الاتجاهات المدعومة عموديةً: لخط جدار عمودي، يزيد **X+Z + العجلة** الخط عموديًا بينما يزيده **Z + العجلة** جانبيًا. تحتفظ اللوحة بأعمدة X/Y/Z؛ استخدم الأسهم لرؤية هذه المحاور. تحتفظ موصلات السير الجدارية بقيود اتجاهها الأساسية وتستخدم رافعات السير للنقل العمودي.",
@@ -333,9 +342,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Auto-Connect:55": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
+    "text": "_آخر تحديث: 2026-11-02 · Smart! v35.1.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "738986e1276ad98403f2e483d1e397f7061c2af5e93202af6d82ce474d5d7eeb",
+    "status": "reviewed",
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Blueprints:0": {
     "text": "# مخططات Smart!",
@@ -440,9 +450,10 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Blueprints:34": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "60707b2c9e66e6d33812f6b75b700b1d1cfafde4fcb92a54f5847b69c82a8ac8"
+    "text": "يتم تفعيل **حد الأمان لوضع المخططات** ضمن سلوك البناء افتراضيًا. بالنسبة لعميل متعدد اللاعبين عن بُعد، يمنع شبكة مخططات تُقدر بأكثر من 2,000 مبنى، مع احتساب الأصل وجميع النسخ. يمكنك تعطيل هذا الإعداد مباشرة لمحاولة وضع أكبر، مع زيادة خطر التجمد، وانقطاع الاتصال، والفشل. لا تزال فحوصات المواد، والوضع، وحمولة البناء العادية تنطبق. قم بالبناء في أقسام أصغر إذا تم رفض الوضع.",
+    "source_hash": "60707b2c9e66e6d33812f6b75b700b1d1cfafde4fcb92a54f5847b69c82a8ac8",
+    "status": "reviewed",
+    "review_method": "Local-model draft and semantic review, followed by direct contextual correction; no human native-speaker certification."
   },
   "Blueprints:18": {
     "text": "يستخدم اللعب الجماعي التحقق لدى الجهة المخولة والتكاليف العادية. يمكن أن يبطل تغير نهاية أو نقص الموارد معاينة كانت صالحة. انظر [التوصيل التلقائي](Auto-Connect) و[التوافق واللعب الجماعي](Compatibility-and-Multiplayer).",
@@ -523,9 +534,10 @@
     "review_method": "Direct AI contextual translation and fluency review; official terminology and protected Markdown checked; not human native-speaker certification."
   },
   "Blueprints:35": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
+    "text": "_آخر تحديث: 2026-11-02 · Smart! v35.1.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "738986e1276ad98403f2e483d1e397f7061c2af5e93202af6d82ce474d5d7eeb",
+    "status": "reviewed",
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Buildable-Gallery:0": {
     "text": "# معرض المباني",
@@ -972,10 +984,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Buildable-Gallery:75": {
-    "text": "_آخر تحديث: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (مسودة الإصدار)_\n",
-    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89",
+    "text": "_آخر تحديث: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "8d8ca2bf47cdd1190ffc8d7e3c35f31c2a04adf92a128713a384de42b66ce426",
     "status": "reviewed",
-    "review_method": "Direct AI contextual translation and fluency review; official terminology and protected Markdown checked; not human native-speaker certification."
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Compatibility-and-Multiplayer:0": {
     "text": "# التوافق واللعب الجماعي",
@@ -996,14 +1008,16 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Compatibility-and-Multiplayer:23": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "ddb7f6d3428242b7eb2a16d6468bc1c961f041f29251922f6c6a6922bfa78751"
+    "text": "يستهدف Smart! 35.1.0 **Satisfactory 1.2.4 / CL 502094 أو أحدث** و **SML 3.12.x**. قم بتحديث اللعبة ومحمّل التعديلات قبل التثبيت. إصدارات اللعبة الأقدم غير مدعومة.",
+    "source_hash": "ddb7f6d3428242b7eb2a16d6468bc1c961f041f29251922f6c6a6922bfa78751",
+    "status": "reviewed",
+    "review_method": "Local-model contextual translation and separate semantic review; structural validation. No human native-speaker certification."
   },
   "Compatibility-and-Multiplayer:24": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "52b5e96461ffcb32e45b4e4f8c6a7bb4ae65053d1b8488b28119e6c0efbcaf11"
+    "text": "يجب تحديث Smart Camera 2.0 و Smart! 35.1 كزوج متوافق عندما يكون كلاهما مثبتًا. يعمل الكاميرا أيضًا بشكل منفرد؛ لا تتطلب أدوات البناء في Smart الكاميرا. تنتمي تفضيلات الكاميرا ومظهر HUD إلى كل لاعب محلي، وليس لجميع اللاعبين على الخادم.",
+    "source_hash": "52b5e96461ffcb32e45b4e4f8c6a7bb4ae65053d1b8488b28119e6c0efbcaf11",
+    "status": "reviewed",
+    "review_method": "Local-model contextual translation and separate semantic review; structural validation. No human native-speaker certification."
   },
   "Compatibility-and-Multiplayer:5": {
     "text": "## سلامة ملفات الحفظ",
@@ -1048,19 +1062,22 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Compatibility-and-Multiplayer:29": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "274d747f094a4e138cbbfdf378bc151dedd8d3fa979722492b56173b298c75d5"
+    "text": "يعمل Smart! في اللعب الجماعي على الخوادم المخصصة. تعمل كل ميزات Smart! — تحجيم الشبكة والتوصيل التلقائي (السيور والأنابيب والطاقة) ومخططات Smart والتمديد وترقية Smart واستعادة Smart وتفكيك Smart — عند اللعب كعميل، بتكاليف البناء العادية. كل ما يضعه Smart! مبنى قياسي من اللعبة تتم مزامنته بالكامل: يراه اللاعبون الآخرون ويمكنهم استخدامه وتفكيكه كما لو بنيته يدويًا.",
+    "source_hash": "274d747f094a4e138cbbfdf378bc151dedd8d3fa979722492b56173b298c75d5",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Compatibility-and-Multiplayer:26": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "8cb40018690ab6ebe9357b170389232193d08c25eafc1fd5d631dac793751ffe"
+    "text": "- **الخوادم المخصصة:** يتم دعم كل من Windows و Linux.\n- يتم تفعيل **حد الأمان لوضع المخططات** ضمن سلوك البناء افتراضيًا. بالنسبة لعميل متعدد اللاعبين عن بُعد، يمنع شبكة مخططات تُقدر بأكثر من 2,000 مبنى، مع احتساب الأصل وجميع النسخ. يمكنك تعطيل هذا الإعداد مباشرة لمحاولة وضع أكبر، مع زيادة خطر التجمد، وانقطاع الاتصال، والفشل. لا تزال فحوصات المواد، والوضع، وحمولة البناء العادية تنطبق. قم بالبناء في أقسام أصغر إذا تم رفض الوضع.\n- **لمدراء الخوادم:** قم بتثبيت نفس إصدار Smart! على الخادم وعلى كل عميل. يحافظ مدير التعديلات على تطابقها عند التحديث.\n- يعمل **Smart Camera** (التعديل المرافق) أيضًا في وضع متعدد اللاعبين.",
+    "source_hash": "8cb40018690ab6ebe9357b170389232193d08c25eafc1fd5d631dac793751ffe",
+    "status": "reviewed",
+    "review_method": "Local-model draft and semantic review, followed by direct contextual correction; no human native-speaker certification."
   },
   "Compatibility-and-Multiplayer:30": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "be6a21fb0e3a5a2792dc5eaa0095af9dbd2cdc8641d29aed38e44f5a8dce7ce9"
+    "text": "دعم اللعب الجماعي أحدث من الفردي؛ لذا إذا اختلف سلوك شيء في جلسة جماعية عنه في الفردي فهذا خلل — أبلغ عنه على GitHub أو Discord، واذكر ما كنت تبنيه وهل كنت المستضيف أم عميلًا.",
+    "source_hash": "be6a21fb0e3a5a2792dc5eaa0095af9dbd2cdc8641d29aed38e44f5a8dce7ce9",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Compatibility-and-Multiplayer:15": {
     "text": "يؤثر مفتاح مساعدة الجلسة لكل لاعب في أدوات بنائه فقط. يبقي التمديد/الاستعادة عن بعد معاينة المستضيف وإعداداته منفصلة عن عملية العميل.",
@@ -1105,9 +1122,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Compatibility-and-Multiplayer:31": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
+    "text": "_آخر تحديث: 2026-11-02 · Smart! v35.1.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "738986e1276ad98403f2e483d1e397f7061c2af5e93202af6d82ce474d5d7eeb",
+    "status": "reviewed",
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Controller-and-Steam-Deck:0": {
     "text": "# وحدة التحكم وSteam Deck (تجريبي)",
@@ -1290,10 +1308,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Controller-and-Steam-Deck:30": {
-    "text": "_آخر تحديث: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (مسودة الإصدار)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "text": "_آخر تحديث: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "90cb2f4ec0a877789160414441d87af9660480498e3243f7517711c84cc354bf",
     "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Controls:0": {
     "text": "# عناصر التحكم",
@@ -1524,10 +1542,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Controls:40": {
-    "text": "_آخر تحديث: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (مسودة الإصدار)_\n",
-    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89",
+    "text": "_آخر تحديث: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "8d8ca2bf47cdd1190ffc8d7e3c35f31c2a04adf92a128713a384de42b66ce426",
     "status": "reviewed",
-    "review_method": "Direct AI contextual translation and fluency review; official terminology and protected Markdown checked; not human native-speaker certification."
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Conveyor-Lift-Grids:0": {
     "text": "# شبكات رافعات السير الناقل",
@@ -1590,10 +1608,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Conveyor-Lift-Grids:10": {
-    "text": "_آخر تحديث: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (مسودة الإصدار)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "text": "_آخر تحديث: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "90cb2f4ec0a877789160414441d87af9660480498e3243f7517711c84cc354bf",
     "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Extend:0": {
     "text": "# التمديد",
@@ -1644,9 +1662,10 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Extend:49": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "be187544697091618ad4e7d6e1a2c2782b01ec9a0930ae4d3655eadaf437a2ca"
+    "text": "1. ابنِ وحدة عاملة يدويًا وجهّز نوع المبنى نفسه في مسدس البناء.\n2. افتح **K → تمديد** واضغط **تحديد المصدر**.\n3. انقر المبنى المصدر الموجود في العالم خارج اللوحة. تُبرز المصادر المتوافقة أثناء الاختيار. يلغي **Escape** الاختيار؛ وتبقى النقرات داخل اللوحة في الواجهة.\n4. افحص اسم المصدر والعناصر الملتقطة المرافقة وأعداد التكرار. استخدم **تغيير الاتجاه** وعناصر الموضع لتشكيل المعاينة.\n5. أغلق اللوحة وافحص النسخ المقترحة وتقدير المواد، ثم أطلق مسدس البناء للبناء كالمعتاد.",
+    "source_hash": "be187544697091618ad4e7d6e1a2c2782b01ec9a0930ae4d3655eadaf437a2ca",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Extend:9": {
     "text": "لا يبني اختيار المصدر شيئًا. تحتفظ النقرة غير المصيبة بالمعاينة السابقة. يطلب استبدال مصدر أو موضع غير مبني مهم تأكيدًا قبل التخلص منه. يبقى المصدر المختار مثبتًا للفحص حتى إلغاء الموضع أو بنائه أو تغيير الوصفة.",
@@ -1691,9 +1710,10 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Extend:50": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "e63c3cf4682d23c05eeac5028bcb9b9181dbd792603560f52b7b754522f84fbc"
+    "text": "المصهر الصلب هو المصدر الموجود. والمصهر السماوي والسيور والدعامات هي النسخة المقترحة؛ ويعرض HUD **تمديد 1×1**. هذه معاينة غير مبنية.",
+    "source_hash": "e63c3cf4682d23c05eeac5028bcb9b9181dbd792603560f52b7b754522f84fbc",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Extend:17": {
     "text": "## تغيير الاتجاه",
@@ -1714,9 +1734,10 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Extend:51": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "76acf531cc52c29e073f3df2f0e0d06d36121daf24e05679c1f466af9d01eb13"
+    "text": "ابدأ صراحة عبر **K → تمديد → تحديد المصدر**، أو استخدم اختصار المرور بالمؤشر. يعيد تبويب التمديد استخدام عناصر الموضع لأعداد الشبكة والتباعد والتحويلات المدعومة. يمكنك أيضًا استخدام عناصر العجلة/لوحة الأرقام نفسها في [تحجيم الشبكة](Grid-Scaling). تختار العجلة اتجاه التمديد دون معدّل مضغوط. يحدد HUD أثناء اللعب الامتداد/الصفوف والضبط النشط لتعرف ما سيتغير قبل البناء.",
+    "source_hash": "76acf531cc52c29e073f3df2f0e0d06d36121daf24e05679c1f466af9d01eb13",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Extend:21": {
     "text": "## التمديد المحجّم",
@@ -1755,9 +1776,10 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Extend:52": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "a818fc9f6600b845b33395c092257e5c56b6b18d277fc9a96921343bf18ea9b7"
+    "text": "ينتج المصدر نفسه الآن ثلاث نسخ سماوية للوحدة، تشمل مسارات السيور ودعاماتها. يعرض HUD **تمديد 3×1** ويزداد تقدير المواد مع النسخ. يبقى المصدر الصلب في مكانه.",
+    "source_hash": "a818fc9f6600b845b33395c092257e5c56b6b18d277fc9a96921343bf18ea9b7",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Extend:28": {
     "text": "## مستخرجات المياه",
@@ -1808,19 +1830,22 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Extend:45": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "54e38c7493c79d3f4bc2f71a29b70d8dd6942a4f44bee91a351b6ebd82db6819"
+    "text": "## المنحنيات والعمليات غير المكتملة",
+    "source_hash": "54e38c7493c79d3f4bc2f71a29b70d8dd6942a4f44bee91a351b6ebd82db6819",
+    "status": "reviewed",
+    "review_method": "Local-model contextual translation and separate semantic review; structural validation. No human native-speaker certification."
   },
   "Extend:46": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "2fc6ba5d654478f0d36a249ac28472d87d41be4029ae07a4e513561265a5f725"
+    "text": "لا يمكن للتمديد المنحني وضع وحدة على المصدر أو نسخة سابقة. إذا أبلغ HUD عن تداخل مع نسخة سابقة، قلل العدد أو غيّر الدوران، أو التباعد، أو الخطوات. يمنع هذا الفحص تكرار وضع الوحدات؛ وليس كاشف تصادم عام.",
+    "source_hash": "2fc6ba5d654478f0d36a249ac28472d87d41be4029ae07a4e513561265a5f725",
+    "status": "reviewed",
+    "review_method": "Local-model contextual translation and separate semantic review; structural validation. No human native-speaker certification."
   },
   "Extend:47": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "8d860159ae76958c5e531b7732a1d2bed5e6c39a0cc339d47fa7d866c6ab94e8"
+    "text": "لا تنسخ النسخ الشحنات من السيور الناقلة الموجودة. افحص المواد المذكورة والاتصالات الناتجة. إذا أبلغت عملية عن عملية غير مكتملة، افحص العالم قبل تكرارها؛ فقد يبقى جزء مكتمل بالفعل.",
+    "source_hash": "8d860159ae76958c5e531b7732a1d2bed5e6c39a0cc339d47fa7d866c6ab94e8",
+    "status": "reviewed",
+    "review_method": "Local-model draft and semantic review, followed by direct contextual correction; no human native-speaker certification."
   },
   "Extend:36": {
     "text": "## فحص التخطيط الملتقط",
@@ -1847,9 +1872,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Extend:48": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
+    "text": "_آخر تحديث: 2026-11-02 · Smart! v35.1.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "738986e1276ad98403f2e483d1e397f7061c2af5e93202af6d82ce474d5d7eeb",
+    "status": "reviewed",
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "FAQ:0": {
     "text": "# الأسئلة الشائعة",
@@ -2356,10 +2382,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "FAQ:84": {
-    "text": "_آخر تحديث: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (مسودة الإصدار)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "text": "_آخر تحديث: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "90cb2f4ec0a877789160414441d87af9660480498e3243f7517711c84cc354bf",
     "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Feature-Gallery:0": {
     "text": "# معرض الميزات",
@@ -2728,10 +2754,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Feature-Gallery:64": {
-    "text": "_آخر تحديث: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (مسودة الإصدار)_\n",
-    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89",
+    "text": "_آخر تحديث: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "8d8ca2bf47cdd1190ffc8d7e3c35f31c2a04adf92a128713a384de42b66ce426",
     "status": "reviewed",
-    "review_method": "Direct AI contextual translation and fluency review; official terminology and protected Markdown checked; not human native-speaker certification."
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Glossary:0": {
     "text": "# المصطلحات",
@@ -2758,10 +2784,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Glossary:4": {
-    "text": "_آخر تحديث: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (مسودة الإصدار)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "text": "_آخر تحديث: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "90cb2f4ec0a877789160414441d87af9660480498e3243f7517711c84cc354bf",
     "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Grid-Scaling:0": {
     "text": "# تحجيم الشبكة",
@@ -2932,10 +2958,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Grid-Scaling:28": {
-    "text": "_آخر تحديث: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (مسودة الإصدار)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "text": "_آخر تحديث: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "90cb2f4ec0a877789160414441d87af9660480498e3243f7517711c84cc354bf",
     "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "History-and-Credits:0": {
     "text": "# التاريخ والشكر",
@@ -3136,14 +3162,16 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Home:18": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "1829ed863c572c2dbcafc8f78604d94faa795d58ca1d7e90494d020f49980f60"
+    "text": "## Smart! 35.1.0",
+    "source_hash": "c51b192a3da9407b55bb694e43e758aef296d6f982f8ea1d3c9544572184a93f",
+    "status": "reviewed",
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Home:19": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "1bd5656d0819ad3a7d1a6861c038f59661e423c6f03bddc8b203ef1a7ffb5c8b"
+    "text": "يحسن هذا الإصدار معالجة السيور الناقلة والرافعات في Extend، و Restore، و Upgrade، ويصحح حدود المسارات الأصلية، ويجعل Auto-Connect يختار فروع الموزع المناسبة. تحصل شبكات المخططات الكبيرة على حد أمان اختياري للعميل. راجع [Auto-Connect](Auto-Connect)، و [Blueprints](Blueprints)، و [Smart Upgrade](Smart-Upgrade) للسلوك والحدود.",
+    "source_hash": "1bd5656d0819ad3a7d1a6861c038f59661e423c6f03bddc8b203ef1a7ffb5c8b",
+    "status": "reviewed",
+    "review_method": "Local-model contextual translation and separate semantic review; structural validation. No human native-speaker certification."
   },
   "Home:13": {
     "text": "## الإصدار المشمول",
@@ -3152,9 +3180,10 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Home:20": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "6de3b72e72a676036d11c5f3b3679009013b370ca2cb7e8aed2d56252d3addd9"
+    "text": "يدعم **Smart! 35.1.0** إصدار **Smart Camera 2.0.0**. حدّث كلا التعديلين عند استخدامهما معًا.",
+    "source_hash": "332a69d5007a0b672628c30eca7cb0b652928cddad228f06e6d4186a52c9b3f8",
+    "status": "reviewed",
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Home:15": {
     "text": "ابدأ بـ[اللوحة وHUD](Smart-Panel-and-HUD) المشتركين و[استئناف المشي](Smart-Walking) و[التوصيل التلقائي بمساعدة الرافعات](Auto-Connect) و[وصلات فواصل المخططات](Blueprints).",
@@ -3169,9 +3198,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Home:21": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
+    "text": "_آخر تحديث: 2026-11-02 · Smart! v35.1.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "738986e1276ad98403f2e483d1e397f7061c2af5e93202af6d82ce474d5d7eeb",
+    "status": "reviewed",
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Lift-Assisted-Auto-Connect:0": {
     "text": "# التوصيل التلقائي بمساعدة رافعات السير",
@@ -3282,10 +3312,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Lift-Assisted-Auto-Connect:17": {
-    "text": "_آخر تحديث: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (مسودة الإصدار)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "text": "_آخر تحديث: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "90cb2f4ec0a877789160414441d87af9660480498e3243f7517711c84cc354bf",
     "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Quick-Start:0": {
     "text": "# البدء السريع",
@@ -3414,10 +3444,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Quick-Start:21": {
-    "text": "_آخر تحديث: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (مسودة الإصدار)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "text": "_آخر تحديث: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "90cb2f4ec0a877789160414441d87af9660480498e3243f7517711c84cc354bf",
     "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Screenshot-Checklist:0": {
     "text": "# دليل لقطات الشاشة",
@@ -3480,10 +3510,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Screenshot-Checklist:11": {
-    "text": "_آخر تحديث: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (مسودة الإصدار)_\n",
-    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89",
+    "text": "_آخر تحديث: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "8d8ca2bf47cdd1190ffc8d7e3c35f31c2a04adf92a128713a384de42b66ce426",
     "status": "reviewed",
-    "review_method": "Direct AI contextual translation and fluency review; official terminology and protected Markdown checked; not human native-speaker certification."
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Settings-Reference:0": {
     "text": "# مرجع الإعدادات",
@@ -3498,9 +3528,10 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Settings-Reference:59": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "3f27a7251dee61f272afa2b13b0a9a7d3b5d0782f11461e43b22ec93ed6baceb"
+    "text": "تجدها في **القائمة الرئيسية → التعديلات → Smart!**. **تستمر التغييرات بين ملفات الحفظ وبين الجلسات**. (تعيينات المفاتيح منفصلة — انظر [عناصر التحكم](Controls).)",
+    "source_hash": "3f27a7251dee61f272afa2b13b0a9a7d3b5d0782f11461e43b22ec93ed6baceb",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Settings-Reference:3": {
     "text": "## التوصيل التلقائي للسيور",
@@ -3557,9 +3588,10 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Settings-Reference:60": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "de7e8d93fbc71c12b9ce0a1c8db5fdc99380795aa7009f219fc68164294d1f29"
+    "text": "- **التوصيل التلقائي لأنبوب النقل الفائق** — تفعيل أو تعطيل توصيل أنابيب النقل الفائق تلقائيًا. **مفعّل افتراضيًا.** (أُضيف في 33.1.0.)\n- اختر وضع توجيه أنبوب النقل الفائق.",
+    "source_hash": "de7e8d93fbc71c12b9ce0a1c8db5fdc99380795aa7009f219fc68164294d1f29",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Settings-Reference:13": {
     "text": "## التوصيل التلقائي للطاقة",
@@ -3574,9 +3606,10 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Settings-Reference:61": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "ec98629a469e74c7be896e64709377532daca45491fe70e1465ce14f99cffdfb"
+    "text": "- فعّل التوصيل التلقائي للطاقة أو عطّله.\n- اختر وضع الاتصال.\n- حدد مدى الاتصال.\n- احجز اتصالات الأعمدة حتى لا يملأ Smart! كل المنافذ.\n- **تسلسل الطاقة عند التحجيم** — عند فتح موصلات الطاقة المحسنة، يصل تحجيم مصنع أو مولد على محور X في Smart كل نسخة مباشرة بالتالية بدل مد عمود إلى كل منها، ليطابق تخطيط التوزيع المعتاد دون تمديد منفصل. تستطيع لوحة Smart تجاوزه للبناء الحالي، ويعرض HUD الاختيار الفعلي. يحترم السعة المتاحة لكل موصل. **مفعّل افتراضيًا.** (أُضيف في 34.2.0.)",
+    "source_hash": "ec98629a469e74c7be896e64709377532daca45491fe70e1465ce14f99cffdfb",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Settings-Reference:16": {
     "text": "## التوصيل التلقائي للمخططات",
@@ -3585,14 +3618,16 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Settings-Reference:62": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "777a49715537ba1bf7334d6be913926f712654bb9bcb31b43455ceeff3c86b11"
+    "text": "مفتاح مستقل للفواصل بين نسخ مخططاتك **الخاصة** المحجّمة، مستقل عن توصيل السيور والأنابيب أعلاه، لتستمر النسخ بالاتصال حتى عند تعطيل التوصيل التلقائي العادي.",
+    "source_hash": "777a49715537ba1bf7334d6be913926f712654bb9bcb31b43455ceeff3c86b11",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Settings-Reference:63": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "5daf4a877774b178a7054980007283bb25a2de416f6dad2c908287768adb9db4"
+    "text": "- **الاتصال التلقائي لفواصل المخططات** — فعّل أو عطّل التوصيل التلقائي للسيور والأنابيب وأنابيب النقل الفائق والسكك الحديدية ومسارات المركبات الموجهة واتصالات الطاقة المؤهلة بين نسخ المخططات المحجّمة. **مفعّل افتراضيًا.** (أُضيف في 34.2.0.)",
+    "source_hash": "5daf4a877774b178a7054980007283bb25a2de416f6dad2c908287768adb9db4",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Settings-Reference:19": {
     "text": "تتطلب وصلات الطاقة أيضًا **التوصيل التلقائي للطاقة**. يستخدم كل كابل مقبس عمود مطابقًا ذا سعة متاحة؛ وتُحتسب الأسلاك الداخلية ووجها مقبس الجدار كل على حدة.",
@@ -3601,14 +3636,16 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Settings-Reference:51": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "d30a9c4968359ae455bcba1db55829f233cd9689baac7a41ddda2ee677c671a7"
+    "text": "## حد الأمان لوضع المخططات",
+    "source_hash": "d30a9c4968359ae455bcba1db55829f233cd9689baac7a41ddda2ee677c671a7",
+    "status": "reviewed",
+    "review_method": "Local-model draft and semantic review, followed by direct contextual correction; no human native-speaker certification."
   },
   "Settings-Reference:52": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "8d8d2f7ca8e8f5f5ffd32286939d718b5621954e9eb433f316520ac4e84d392b"
+    "text": "يتم تفعيل **حد الأمان لوضع المخططات** ضمن سلوك البناء افتراضيًا. بالنسبة لعميل متعدد اللاعبين عن بُعد، يمنع شبكة مخططات تُقدر بأكثر من 2,000 مبنى، مع احتساب الأصل وجميع النسخ. يمكنك تعطيل هذا الإعداد مباشرة لمحاولة وضع أكبر، مع زيادة خطر التجمد، وانقطاع الاتصال، والفشل. لا تزال فحوصات المواد، والوضع، وحمولة البناء العادية تنطبق. قم بالبناء في أقسام أصغر إذا تم رفض الوضع. لا يلزم إعادة تحميل العالم.",
+    "source_hash": "8d8d2f7ca8e8f5f5ffd32286939d718b5621954e9eb433f316520ac4e84d392b",
+    "status": "reviewed",
+    "review_method": "Local-model draft and semantic review, followed by direct contextual correction; no human native-speaker certification."
   },
   "Settings-Reference:20": {
     "text": "## افتراضيات تباعد المخططات",
@@ -3635,9 +3672,10 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Settings-Reference:64": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "bb2d0aef5ebb0f05f6e0332aba3b272795cbf3d8bade162603d3521aad41d592"
+    "text": "- **نطاق الخدمات اللوجستية القريبة** — مدى وصول الفواصل والمجمعات ووصلات الأنابيب وفتحاتها الأرضية إلى منافذ المصنع عند التوصيل التلقائي. قلله لمنع الوصول لمجموعات المصانع المجاورة. **الافتراضي 25 m** (السلوك الثابت السابق). (أُضيف في 34.2.0.)",
+    "source_hash": "bb2d0aef5ebb0f05f6e0332aba3b272795cbf3d8bade162603d3521aad41d592",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Settings-Reference:25": {
     "text": "## التمديد",
@@ -3658,9 +3696,10 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Settings-Reference:65": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "5062fcd97160abfb325d9843686928ec4e50ca66911455b5f84cd6515d2b0179"
+    "text": "- يثبت التثبيت التلقائي عند تغيير الشبكة الهولوغرام بعد تعديلها لمنع تحرك معاينة كبيرة خطأً. **مفعّل افتراضيًا** (منذ 32.1.2)؛ عطّله هنا لتبقى المعاينة حرة النقل، ويحرر مفتاح التثبيت الأساسي أي تثبيت منفرد.\n- **عناصر تحكم نسبية للاعب** — تجعل البناء يتبع اتجاه نظرك بدل محاور البوصلة الثابتة: تزيد العجلة البناء نحو مواجهتك، وتصبح لوحة الأرقام بوصلة (بعيدًا/نحوك، يمين/يسار، أعلى/أسفل). ينطبق على التحجيم والتباعد وخطوات الارتفاع والتداخل والدوران. **معطّل افتراضيًا**؛ تبقى العناصر الكلاسيكية كما هي حتى تفعّله، وتبقى لوحة Smart دائمًا على X/Y/Z الثابتة. انظر [عناصر التحكم](Controls) للتفاصيل. (أُضيف في 34.1.0.)\n- **اضغط للتبديل بين أوضاع التحويل** — اضغط مفتاح تحويل (التباعد أو خطوات الارتفاع أو التداخل أو الدوران أو الوصفة على مصنع) لتفعيل الوضع؛ اضغطه مجددًا لتعطيله؛ واضغط آخر لتغيير الوضع. مخصص للوحدات وSteam Deck وإعدادات تسهيل الاستخدام؛ ترسل قوائم Steam Input الشعاعية/اللمسية ضغطات قصيرة ولا تستطيع تثبيت مفتاح. يُحرر الوضع دائمًا عند إخفاء المسدس أو تغيير المبنى أو فتح لوحة. **معطّل افتراضيًا**؛ يظل الضغط المستمر المعتاد حتى تفعّله، ويعود فور تعطيله. انظر [وحدة التحكم وSteam Deck](Controller-and-Steam-Deck) لإعداد القوائم الشعاعية. (أُضيف في 34.2.0.)",
+    "source_hash": "5062fcd97160abfb325d9843686928ec4e50ca66911455b5f84cd6515d2b0179",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Settings-Reference:29": {
     "text": "## زيادات التمرير",
@@ -3675,14 +3714,16 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Settings-Reference:66": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "89d132f31272346911aed3355f02885dd096f7bf810ca50e85be98947993996e"
+    "text": "- **زيادة التباعد** (m) — أمتار التباعد المضافة لكل نقرة (وتباعد التمديد وتقدم مقطع المشي).\n- **زيادة خطوات الارتفاع** (m) — أمتار الارتفاع لكل نقرة (وارتفاع مقطع المشي).\n- **زيادة التداخل** (m) — أمتار التداخل لكل نقرة (وإزاحة مقطع المشي).\n- **زيادة الدوران** (deg) — درجات الدوران لكل نقرة (وانعطاف مقطع المشي).",
+    "source_hash": "89d132f31272346911aed3355f02885dd096f7bf810ca50e85be98947993996e",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Settings-Reference:67": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "b595cc1429fd298b95947cec85d6569724d96fed5b22b0b9424ca76f88c295da"
+    "text": "الافتراضيات 0.5 m و5°. تقبل زيادات المسافة 0.1–8 m؛ ويقبل الدوران 0.5–90°.",
+    "source_hash": "b595cc1429fd298b95947cec85d6569724d96fed5b22b0b9424ca76f88c295da",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Settings-Reference:33": {
     "text": "## لوحة Smart",
@@ -3727,9 +3768,10 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Settings-Reference:68": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "c472d20351cba658f26ae667c4cd445f95ae5a5ca37a10e8763878b476181f29"
+    "text": "ضمن **التعديلات → Smart! Camera**، تظهر المشاهد تلقائيًا تحت أسماء تعديلاتها وكاميراتها، حتى غير النشطة. لمشهد مسدس البناء المدمج مفتاح مستقل. موضع كل مشهد مطبّع 0–1، والدقة 64–2048 بكسل لكل محور، والمقياس 0.1–2، ومعدل الالتقاط 5–60/ثانية، والسطوع −3 إلى +3 EV. مسافات كاميرا البناء المعنية 5–50 m. تُطبق الإعدادات فورًا؛ والمشاهد المخفية بالقوائم تتحدث عند الاستئناف. يحدّث **كل ملفات الحفظ** الحقل المعدل فقط في الملف العام وملفات الكاميرا المحفوظة الموجودة، بما فيها العالم الحالي. يغيّر **هذا الحفظ** ملف الحفظ الأساسي الحالي فقط. تبقى الحقول والكاميرات الأخرى كما هي.",
+    "source_hash": "c472d20351cba658f26ae667c4cd445f95ae5a5ca37a10e8763878b476181f29",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Settings-Reference:41": {
     "text": "يعيد **استخدام اقتراحات التعديل** ضمن كل ملفات الحفظ ضبط الكاميرا عبر الملفات. يزيل **استخدام الإعدادات العامة** ضمن هذا الحفظ التجاوز الحالي فقط. تغيّر إعادة ضبط التأطير/المسافة هذين الحقلين فقط. تبقى تعديلات التخطيط معاينة حتى **تم / قفل** المشترك؛ ويلغي زر إلغاء تعديلات التخطيط/HUD المعلقة. انظر [Smart Camera](Smart-Camera).",
@@ -3756,9 +3798,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Settings-Reference:58": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
+    "text": "_آخر تحديث: 2026-11-02 · Smart! v35.1.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "738986e1276ad98403f2e483d1e397f7061c2af5e93202af6d82ce474d5d7eeb",
+    "status": "reviewed",
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Smart-Assistance:0": {
     "text": "# مساعدة Smart",
@@ -3857,10 +3900,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Smart-Assistance:17": {
-    "text": "_آخر تحديث: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (مسودة الإصدار)_\n",
-    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89",
+    "text": "_آخر تحديث: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "8d8ca2bf47cdd1190ffc8d7e3c35f31c2a04adf92a128713a384de42b66ce426",
     "status": "reviewed",
-    "review_method": "Direct AI contextual translation and fluency review; official terminology and protected Markdown checked; not human native-speaker certification."
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Smart-Blueprints:0": {
     "text": "# مخططات Smart!",
@@ -4145,10 +4188,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Smart-Camera:39": {
-    "text": "_آخر تحديث: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (مسودة الإصدار)_\n",
-    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89",
+    "text": "_آخر تحديث: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "8d8ca2bf47cdd1190ffc8d7e3c35f31c2a04adf92a128713a384de42b66ce426",
     "status": "reviewed",
-    "review_method": "Direct AI contextual translation and fluency review; official terminology and protected Markdown checked; not human native-speaker certification."
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Smart-Dismantle:0": {
     "text": "# تفكيك Smart",
@@ -4247,10 +4290,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Smart-Dismantle:16": {
-    "text": "_آخر تحديث: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (مسودة الإصدار)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "text": "_آخر تحديث: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "90cb2f4ec0a877789160414441d87af9660480498e3243f7517711c84cc354bf",
     "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Smart-Panel-and-HUD:0": {
     "text": "# لوحة Smart وHUD",
@@ -4397,10 +4440,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Smart-Panel-and-HUD:24": {
-    "text": "_آخر تحديث: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (مسودة الإصدار)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "text": "_آخر تحديث: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "90cb2f4ec0a877789160414441d87af9660480498e3243f7517711c84cc354bf",
     "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Smart-Restore:0": {
     "text": "# استعادة Smart",
@@ -4409,14 +4452,16 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Smart-Restore:43": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "d30db2304eb2c337da20e09266e493bcc8c502907b34b04c692903c1c50cee35"
+    "text": "تحفظ استعادة Smart عملك في Smart! لإعادة استخدامه لاحقًا أو مشاركته أو تكرار وحدة مصنع كاملة بالطريقة نفسها كل مرة. افتح **K → استعادة** في [لوحة Smart](Smart-Panel-and-HUD) المشتركة. تبويباها الفرعيان **إعدادات الشبكة المسبقة** و**الوحدات**.",
+    "source_hash": "d30db2304eb2c337da20e09266e493bcc8c502907b34b04c692903c1c50cee35",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Smart-Restore:44": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "3d432425c5421614e20983fcafadb764c442a1c31b834004ecbebec74df73ea2"
+    "text": "هي الإجابة عن «قضيت وقتًا طويلًا في ضبط التخطيط؛ كيف أستعيده؟»",
+    "source_hash": "3d432425c5421614e20983fcafadb764c442a1c31b834004ecbebec74df73ea2",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Smart-Restore:3": {
     "text": "![مهمة الاستعادة بتبويبي إعدادات الشبكة المسبقة والوحدات](https://raw.githubusercontent.com/wiki/majormer/SmartFoundations/images/v35/restore.png)",
@@ -4449,9 +4494,10 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Smart-Restore:45": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "7e35bb8291023e898ca5f34452152a86fb7117cb5f7cb13234c8fd2acf59ef40"
+    "text": "- **حفظ من اللوحة** — سمِّ إعداد اللوحة الحالي واحفظه كإعداد مسبق.\n- **تحميل إلى اللوحة** — أعد تحميل إعداد محفوظ لتعديله قبل البناء أو تطبيقه كما هو.\n- **تصدير الكود / استيراد الكود** — شارك إعدادًا كرمز أو حمّل إعدادًا شاركه معك أحد.",
+    "source_hash": "7e35bb8291023e898ca5f34452152a86fb7117cb5f7cb13234c8fd2acf59ef40",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Smart-Restore:9": {
     "text": "يعرض كل إعداد ملخصًا واضحًا لمحتواه (المبنى والشبكة والتحويلات والوصفة) لتمييزه سريعًا.",
@@ -4466,14 +4512,16 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Smart-Restore:46": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "15f117646c84198699764f5759ce40f588af9591576ba39e1d7f68ebbf616b8b"
+    "text": "تلتقط الوحدة **خط توزيع تمديد** كاملًا — وحدة مبانٍ موصلة مع السيور والأنابيب والرافعات والموزعات والطاقة — لتكرار وضعها.",
+    "source_hash": "15f117646c84198699764f5759ce40f588af9591576ba39e1d7f68ebbf616b8b",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Smart-Restore:47": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "bec0ec9303e43dd7907dc7dc366c045b75ee549bfcabebb02918f256b044593e"
+    "text": "- بعد معاينة أو بناء [Extend](Extend) الخاص بـ Smart، يتم وضعه في **حافظة Extend** في أعلى التبويب. يحول **حفظ كوحدة** هذا التخطيط الملتقط إلى وحدة معاد استخدامها ومسمّاة.\n- استخدم **تحميل الوحدة** لوحدة محفوظة لإعادة بناء ذلك التخطيط: يمكن لمسدس البناء فتح المبنى المصدر تلقائيًا وعرض معاينة حية يمكنك **ختمها** (إطلاق النار للوضع، بشكل متكرر) و **التكبير/التصغير بالتمرير** أثناء الطيران.\n- نظرًا لأن الوحدة المستعادة غير مقيدة بجانب واحد كما هو الحال مع Extend المقياس الجديد، يمكنك **إعادة تحجيم التشغيل في أي اتجاه** على طول محوره قبل الوضع — مرر في اتجاه واحد لتكبيره في اتجاه، والاتجاه الآخر لتكبيره في الاتجاه الآخر.\n- تشارك **تصدير الكود / استيراد الكود** الوحدات بنفس طريقة مشاركة الإعدادات المسبقة.",
+    "source_hash": "bec0ec9303e43dd7907dc7dc366c045b75ee549bfcabebb02918f256b044593e",
+    "status": "reviewed",
+    "review_method": "Local-model contextual translation and separate semantic review; structural validation. No human native-speaker certification."
   },
   "Smart-Restore:13": {
     "text": "تعرض كل وحدة ملخص أجزائها (أعداد السيور والأنابيب والموزعات وغيرها) لتعرف ما تعيد بناءه.",
@@ -4536,9 +4584,10 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Smart-Restore:48": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "1b1ed17e9fec531c12a9f625b3a9bfc523afdeccaf5ba0c4bca304c837f1764c"
+    "text": "استخدم **K → استعادة** لحفظ التخطيطات واختيارها وتحميلها واستيرادها وتصديرها. بعد التحميل استخدم لوحة التحجيم أو العجلة/لوحة الأرقام لضبط الموضع؛ يعرض HUD الشبكة الناتجة والضبط النشط. أطلق مسدس البناء لإنشائها بالتكلفة المعروضة.",
+    "source_hash": "1b1ed17e9fec531c12a9f625b3a9bfc523afdeccaf5ba0c4bca304c837f1764c",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Smart-Restore:22": {
     "text": "للتنقل بين الاستعادات الأخيرة دون فتح اللوحة، اضغط `U` باستمرار و`Num 9` للإعداد الحديث التالي أو `Num 3` للعودة. انظر [عناصر التحكم](Controls).",
@@ -4565,14 +4614,16 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Smart-Restore:39": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "b0724fac56a114aed1905757336fc2bd16f065519872f908a56afc905e5b0d3c"
+    "text": "## محتويات السير الناقل والإكمال",
+    "source_hash": "b0724fac56a114aed1905757336fc2bd16f065519872f908a56afc905e5b0d3c",
+    "status": "reviewed",
+    "review_method": "Local-model contextual translation and separate semantic review; structural validation. No human native-speaker certification."
   },
   "Smart-Restore:40": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "81c3c2048752b95069652ecef30608748705b0ecd1930a687c49a0f383a261ad"
+    "text": "تصف الوحدات المحفوظة البناء والإعدادات؛ فهي لا تنسخ شحنات السير الناقل الحية. راجع عرض السعر الكامل للمواد قبل الوضع. إذا أبلغت عملية عن عملية غير مكتملة، افحص ما تم وضعه قبل المحاولة مرة أخرى؛ لا يعد الإلغاء بالتراجع عن البناء الذي تم تنفيذه بالفعل.",
+    "source_hash": "81c3c2048752b95069652ecef30608748705b0ecd1930a687c49a0f383a261ad",
+    "status": "reviewed",
+    "review_method": "Local-model draft and semantic review, followed by direct contextual correction; no human native-speaker certification."
   },
   "Smart-Restore:26": {
     "text": "## انظر أيضًا",
@@ -4581,9 +4632,10 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Smart-Restore:49": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "52daff47c488c29086aa3ce6e5cea9be1d21194fb00b9e2d10a09d723d037264"
+    "text": "- [التمديد](Extend) — الميزة التي يلتقط تبويب الوحدات خطوط توزيعها.\n- [لوحة Smart وHUD](Smart-Panel-and-HUD) — موضع تبويب الاستعادة.\n- [تحجيم الشبكة](Grid-Scaling) و[التحويلات](Transforms) — ما يحفظه إعداد الشبكة المسبق.",
+    "source_hash": "52daff47c488c29086aa3ce6e5cea9be1d21194fb00b9e2d10a09d723d037264",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Smart-Restore:28": {
     "text": "---",
@@ -4592,9 +4644,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Smart-Restore:42": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
+    "text": "_آخر تحديث: 2026-11-02 · Smart! v35.1.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "738986e1276ad98403f2e483d1e397f7061c2af5e93202af6d82ce474d5d7eeb",
+    "status": "reviewed",
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Smart-Upgrade:0": {
     "text": "# ترقية Smart",
@@ -4633,9 +4686,10 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Smart-Upgrade:38": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "32316883719d3460a5f56824a7fb92559589793f835d63f4bd04e2103217fa08"
+    "text": "1. افتح **K → ترقية** مع مبنى مدعوم محمول. يمكن للسيور والأنابيب والأسلاك/خطوط الطاقة فتح المهمة مباشرة.\n2. اختر وضع مسح.\n3. امسح العناصر القريبة أو شبكة متصلة.\n4. اختر الفئة والمستوى المستهدف؛ وفي مسح شبكة يمكنك اختيار مستوى مصدر واحد لترقيته وحده.\n5. راجع تكلفة المواد.\n6. نفّذ الترقية.",
+    "source_hash": "32316883719d3460a5f56824a7fb92559589793f835d63f4bd04e2103217fa08",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Smart-Upgrade:7": {
     "text": "تظل أعمدة الطاقة ومقابس الجدار تفتح لوحة Smart العادية عند حملها لتحجيمها. لترقيتها افتح ترقية Smart من سلك/خط طاقة أو استخدم أوضاع المسح.",
@@ -4680,9 +4734,10 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Smart-Upgrade:39": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "78e23b12048a0221986495c275897aa077ef1a3a23671637128ce9f602d2b7a8"
+    "text": "- انقر مستوى معينًا — مثل **Mk.2** — لترقية هذا المستوى **فقط** إلى هدفك. ارفع سيور Mk.2 إلى Mk.3 واترك Mk.4 دون تغيير.\n- اختر **كل المستويات** لجعل كل مستوى مختلف من السيور والرافعات والأنابيب مطابقًا للهدف. قد يرفع بعضها ويخفض بعضها في العملية نفسها.",
+    "source_hash": "78e23b12048a0221986495c275897aa077ef1a3a23671637128ce9f602d2b7a8",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Smart-Upgrade:15": {
     "text": "يطابق ذلك تحكم المستوى الموجود مسبقًا في مسح نصف القطر.",
@@ -4751,9 +4806,10 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Smart-Upgrade:36": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "30a1ce6a5b6dcbf3cb863b07c5181d63bc781a27d7277f739226c64c0f12936e"
+    "text": "ينسق Smart! استبدال السير الناقل والرافعة مع ملكية السير الناقل الأصلية ونقل العناصر. تنتمي الشحنات الموجودة إلى عملية الاستبدال؛ يجب ألا يتم تكرارها أو التخلص منها. يترك الفحص القبلي الفاشل الأصل دون مساس. بمجرد بدء البناء، لا تعد العملية غير المكتملة أو الملغاة وعدًا بالتراجع الكامل. إذا أبلغ Smart! عن عملية غير مكتملة، افحص النتيجة واحتفظ بسجل اللعبة قبل إعادة المحاولة. لا يعد الحفظ/إعادة التحميل إصلاحًا مضمونًا.",
+    "source_hash": "30a1ce6a5b6dcbf3cb863b07c5181d63bc781a27d7277f739226c64c0f12936e",
+    "status": "reviewed",
+    "review_method": "Local-model draft and semantic review, followed by direct contextual correction; no human native-speaker certification."
   },
   "Smart-Upgrade:27": {
     "text": "## أمثلة داخل اللعبة",
@@ -4792,9 +4848,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Smart-Upgrade:37": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
+    "text": "_آخر تحديث: 2026-11-02 · Smart! v35.1.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "738986e1276ad98403f2e483d1e397f7061c2af5e93202af6d82ce474d5d7eeb",
+    "status": "reviewed",
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Smart-Walking:0": {
     "text": "# المشي باستخدام Smart",
@@ -4971,10 +5028,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Smart-Walking:29": {
-    "text": "_آخر تحديث: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (مسودة الإصدار)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "text": "_آخر تحديث: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "90cb2f4ec0a877789160414441d87af9660480498e3243f7517711c84cc354bf",
     "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Support-Development:0": {
     "text": "# دعم التطوير",
@@ -5097,10 +5154,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Supported-Buildings:11": {
-    "text": "_آخر تحديث: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (مسودة الإصدار)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "text": "_آخر تحديث: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "90cb2f4ec0a877789160414441d87af9660480498e3243f7517711c84cc354bf",
     "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Transforms:0": {
     "text": "# التحويلات",
@@ -5295,10 +5352,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Transforms:32": {
-    "text": "_آخر تحديث: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (مسودة الإصدار)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "text": "_آخر تحديث: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "90cb2f4ec0a877789160414441d87af9660480498e3243f7517711c84cc354bf",
     "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Troubleshooting:0": {
     "text": "# استكشاف المشكلات",
@@ -5499,10 +5556,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Troubleshooting:33": {
-    "text": "_آخر تحديث: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (مسودة الإصدار)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "text": "_آخر تحديث: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "90cb2f4ec0a877789160414441d87af9660480498e3243f7517711c84cc354bf",
     "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Videos-and-Tutorials:0": {
     "text": "# الفيديوهات والشروحات",
@@ -5637,10 +5694,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Videos-and-Tutorials:22": {
-    "text": "_آخر تحديث: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (مسودة الإصدار)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "text": "_آخر تحديث: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "90cb2f4ec0a877789160414441d87af9660480498e3243f7517711c84cc354bf",
     "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Water-Extractors:0": {
     "text": "# مستخرجات المياه",
@@ -5757,10 +5814,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Water-Extractors:20": {
-    "text": "_آخر تحديث: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (مسودة الإصدار)_\n",
-    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89",
+    "text": "_آخر تحديث: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "8d8ca2bf47cdd1190ffc8d7e3c35f31c2a04adf92a128713a384de42b66ce426",
     "status": "reviewed",
-    "review_method": "Direct AI contextual translation and fluency review; official terminology and protected Markdown checked; not human native-speaker certification."
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Blueprints:33": {
     "text": "_آخر تحديث: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (مسودة الإصدار)_\n",

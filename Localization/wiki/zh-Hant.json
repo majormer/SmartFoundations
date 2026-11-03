@@ -48,10 +48,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "_Sidebar:8": {
-    "text": "_最後更新：2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0（發布草稿）_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "text": "_最後更新：2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "90cb2f4ec0a877789160414441d87af9660480498e3243f7517711c84cc354bf",
     "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Auto-Connect:0": {
     "text": "# 自動連接",
@@ -78,9 +78,10 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Auto-Connect:56": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "0ef504a252dcabd3541b9ed8c7d000b31225026b5fa22aa19b6f534eadd38d6b"
+    "text": "打開 **K → 縮放**，使用目前手持建築對應的**自動連接**區域。對於支持的物流建築，`U` 可打開連接設定。全域預設值位於**選項 → 模組設定 → Smart!**；目前預覽的選項位於面板中。連接偏好會即時更新，不受**立即套用放置**影響。",
+    "source_hash": "0ef504a252dcabd3541b9ed8c7d000b31225026b5fa22aa19b6f534eadd38d6b",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Auto-Connect:5": {
     "text": "使用面板、滾輪或數字鍵盤調整網格；建造前在世界中檢查生成的連接和方向箭頭。HUD 顯示放置數值，並不提供另一個連接設定表單。預設按鍵及相對於玩家的控制方式請參閱[控制](Controls)。",
@@ -119,14 +120,16 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Auto-Connect:47": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "bfcb0d7bcbf0b5b36a80dd16a2dac958a4db4fc0261b34174dd132215ae37e01"
+    "text": "### 分流器分支",
+    "source_hash": "bfcb0d7bcbf0b5b36a80dd16a2dac958a4db4fc0261b34174dd132215ae37e01",
+    "status": "reviewed",
+    "review_method": "Local-model contextual translation and separate semantic review; structural validation. No human native-speaker certification."
   },
   "Auto-Connect:48": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "59bd907b72a7a1bd727a61b3bb63c228bae6f45d96d4267b1fa73010ed0ca1df"
+    "text": "分流器或匯流器的分支必須面向其服務的機器連接點。Smart! 允許每個工廠僅有一個分支，且不會將兩個分支發送至機器排的同一側。相對的機器排可以使用相對的分支。這些規則同樣適用於 Smart、可程式化及優先級變體。如果目標端口朝向相反方向，請旋轉或重新定位分流器；未使用的端口朝向相反方向是正常的，本身不會產生警告。",
+    "source_hash": "59bd907b72a7a1bd727a61b3bb63c228bae6f45d96d4267b1fa73010ed0ca1df",
+    "status": "reviewed",
+    "review_method": "Local-model contextual translation and separate semantic review; structural validation. No human native-speaker certification."
   },
   "Auto-Connect:11": {
     "text": "### 輸送梯輔助機器連接",
@@ -183,9 +186,10 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Auto-Connect:57": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "01bc78e7b2eed2e3b61e790428579385ed84d207401ce8ce691e20542ceb6c01"
+    "text": "**縮放管線支架會建成連續管路。**縮放一排管線支架或管線壁掛架時，Smart! 會在各副本之間鋪設相連的管線，就像縮放一排輸送帶支架會生成連續輸送帶一樣。液體可流經整條管路，各支架本身的吸附點仍保持空閒，方便手動連接管線。地面支架的高度和頂部角度會套用到整排，使傾斜管路保持一致。",
+    "source_hash": "01bc78e7b2eed2e3b61e790428579385ed84d207401ce8ce691e20542ceb6c01",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Auto-Connect:19": {
     "text": "生成的管線繼承相連源管線的塗裝。只有相連管線的塗裝一致時，管件才會繼承塗裝；將預覽移到沒有塗裝來源的連接處會還原原來的塗裝。",
@@ -212,14 +216,16 @@
     "review_method": "Contextual multilingual review with official game terminology; no native-speaker certification."
   },
   "Auto-Connect:50": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "a731c462366f0c155a14546a1265f77d5e93778036e1ebd4a44e669ff5112e22"
+    "text": "### 管線接頭分支",
+    "source_hash": "a731c462366f0c155a14546a1265f77d5e93778036e1ebd4a44e669ff5112e22",
+    "status": "reviewed",
+    "review_method": "Local-model contextual translation and separate semantic review; structural validation. No human native-speaker certification."
   },
   "Auto-Connect:51": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "0a29d3c9b8ec32dedec575d19408d9bb4da0cbb09a58b8d2ed2dc2c0f3f833c7"
+    "text": "管線接頭分支遵循相同的面向和機器側規則。T 型接頭和十字接頭端口在旋轉時保留其實際方向。Smart! 會跳過不適合的分支，同時保留有效的連接。路由長度和輸送帶坡度檢查使用適用的原生建造限制，而非通用的 25 公尺管線或 30 度輸送帶限制。",
+    "source_hash": "0a29d3c9b8ec32dedec575d19408d9bb4da0cbb09a58b8d2ed2dc2c0f3f833c7",
+    "status": "reviewed",
+    "review_method": "Local-model contextual translation and separate semantic review; structural validation. No human native-speaker certification."
   },
   "Auto-Connect:21": {
     "text": "## 超疾管道自動連接",
@@ -240,14 +246,16 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Auto-Connect:58": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "eb2ee60a85c009c8b087b30e51ca7b4eb21ab2ca69353d8b3bce92a60256f455"
+    "text": "**縮放超疾管道支架會建成連續的超疾管道。**縮放一排可疊式超疾管支架時，Smart! 會在各副本之間鋪設相連的超疾管道，就像縮放一排輸送帶支架會生成輸送帶、縮放管線支架會生成管線一樣。管路遵循該行的間距和高度，能夠大幅爬升。各支架本身的吸附點保持空閒，方便手動連接超疾管道。",
+    "source_hash": "eb2ee60a85c009c8b087b30e51ca7b4eb21ab2ca69353d8b3bce92a60256f455",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Auto-Connect:59": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "12ed988af1c997655966e3695ec2f34cf65159be86bd53b56fa1a92c8a85b213"
+    "text": "超疾管道自動連接具有獨立於管線的**啟用開關和路由模式**，可從 Smart 面板、建造中的自動連接設定（按住 `U`）或模組配置中設定。請參閱[設定參考](Settings-Reference)。",
+    "source_hash": "12ed988af1c997655966e3695ec2f34cf65159be86bd53b56fa1a92c8a85b213",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Auto-Connect:26": {
     "text": "## 旋轉後的壁架管路",
@@ -256,9 +264,10 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Auto-Connect:60": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "fd7f0d71039eaac4e79da271b675c44893d3943fcbd5cfcc62fcca29fe53a2ce"
+    "text": "管線和超疾管道壁掛架的子項完整跟隨父項旋轉。面板中的**牆面旋轉**提供原版的 **45° 步進**，包括垂直管路。它與使一串副本彎曲的網格旋轉不同。",
+    "source_hash": "fd7f0d71039eaac4e79da271b675c44893d3943fcbd5cfcc62fcca29fe53a2ce",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Auto-Connect:28": {
     "text": "在相對於建築的控制方式中，Y 軸沿旋轉後的牆面管路方向。在相對於玩家的控制方式中，垂直輸入沿支持方向中最接近垂直的方向：對於垂直牆面管路，**X+Z + 滾輪**縱向增加管路，**Z + 滾輪**則橫向增加。面板保留 X/Y/Z 列；可通過箭頭查看這些軸。輸送帶牆面接口保留原版朝向限制，使用輸送梯進行垂直運輸。",
@@ -333,9 +342,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Auto-Connect:55": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
+    "text": "_最後更新：2026-11-02 · Smart! v35.1.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "738986e1276ad98403f2e483d1e397f7061c2af5e93202af6d82ce474d5d7eeb",
+    "status": "reviewed",
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Blueprints:0": {
     "text": "# Smart! 藍圖",
@@ -440,9 +450,10 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Blueprints:34": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "60707b2c9e66e6d33812f6b75b700b1d1cfafde4fcb92a54f5847b69c82a8ac8"
+    "text": "「建築行為」下的「藍圖放置安全限制」預設為啟用。對於遠端多人遊戲客戶端，它會阻擋估計超過 2,000 個建築物的藍圖網格，計算時包含原始物件及所有副本。您可以即時停用此設定以嘗試更大的放置，但會增加凍結、斷線和失敗的風險。正常的材料、放置和建造負載檢查仍然適用。如果放置被拒絕，請分小段進行建造。",
+    "source_hash": "60707b2c9e66e6d33812f6b75b700b1d1cfafde4fcb92a54f5847b69c82a8ac8",
+    "status": "reviewed",
+    "review_method": "Local-model contextual translation and separate semantic review; structural validation. No human native-speaker certification."
   },
   "Blueprints:18": {
     "text": "多人遊戲採用伺服器權威驗證，並按正常成本建造。端點變化或資源不足可能使原先有效的預覽失效。請參閱[自動連接](Auto-Connect)和[相容性與多人遊戲](Compatibility-and-Multiplayer)。",
@@ -523,9 +534,10 @@
     "review_method": "Contextual multilingual review with official game terminology; no native-speaker certification."
   },
   "Blueprints:35": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
+    "text": "_最後更新：2026-11-02 · Smart! v35.1.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "738986e1276ad98403f2e483d1e397f7061c2af5e93202af6d82ce474d5d7eeb",
+    "status": "reviewed",
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Buildable-Gallery:0": {
     "text": "# 建築圖集",
@@ -972,10 +984,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Buildable-Gallery:75": {
-    "text": "_最後更新：2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0（發布草稿）_\n",
-    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89",
+    "text": "_最後更新：2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "8d8ca2bf47cdd1190ffc8d7e3c35f31c2a04adf92a128713a384de42b66ce426",
     "status": "reviewed",
-    "review_method": "Reviewed existing footer with mechanical source date update."
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Compatibility-and-Multiplayer:0": {
     "text": "# 相容性與多人遊戲",
@@ -996,14 +1008,16 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Compatibility-and-Multiplayer:23": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "ddb7f6d3428242b7eb2a16d6468bc1c961f041f29251922f6c6a6922bfa78751"
+    "text": "Smart! 35.1.0 目標為 **Satisfactory 1.2.4 / CL 502094 或更新版本** 以及 **SML 3.12.x**。安裝前請更新遊戲和模組載入器。舊版遊戲建置不受支援。",
+    "source_hash": "ddb7f6d3428242b7eb2a16d6468bc1c961f041f29251922f6c6a6922bfa78751",
+    "status": "reviewed",
+    "review_method": "Local-model contextual translation and separate semantic review; structural validation. No human native-speaker certification."
   },
   "Compatibility-and-Multiplayer:24": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "52b5e96461ffcb32e45b4e4f8c6a7bb4ae65053d1b8488b28119e6c0efbcaf11"
+    "text": "當同時安裝時，Smart Camera 2.0 和 Smart! 35.1 必須作為相容配對進行更新。Camera 也可單獨運作；Smart 的建築工具不需要 Camera。Camera 偏好設定和 HUD 外觀屬於每個本地玩家，而非伺服器上的所有人。",
+    "source_hash": "52b5e96461ffcb32e45b4e4f8c6a7bb4ae65053d1b8488b28119e6c0efbcaf11",
+    "status": "reviewed",
+    "review_method": "Local-model contextual translation and separate semantic review; structural validation. No human native-speaker certification."
   },
   "Compatibility-and-Multiplayer:5": {
     "text": "## 存檔安全",
@@ -1048,19 +1062,22 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Compatibility-and-Multiplayer:29": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "274d747f094a4e138cbbfdf378bc151dedd8d3fa979722492b56173b298c75d5"
+    "text": "Smart! 可在專用伺服器的多人遊戲中使用。所有 Smart! 功能——網格縮放、自動連接（輸送帶、管線和電力）、Smart 藍圖、延伸、Smart 升級、Smart 還原和 Smart 拆除——均可在客戶端使用，並按正常成本建造。Smart! 放置的一切都是標準且完整同步的遊戲建築：其他玩家能看到、使用和拆除它們，與手動建造的建築一樣。",
+    "source_hash": "274d747f094a4e138cbbfdf378bc151dedd8d3fa979722492b56173b298c75d5",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Compatibility-and-Multiplayer:26": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "8cb40018690ab6ebe9357b170389232193d08c25eafc1fd5d631dac793751ffe"
+    "text": "- **專用伺服器：** 支援 Windows 和 Linux。\n- 「建築行為」下的「藍圖放置安全限制」預設為啟用。對於遠端多人遊戲客戶端，它會阻擋估計超過 2,000 個建築物的藍圖網格，計算時包含原始物件及所有副本。您可以即時停用此設定以嘗試更大的放置，但會增加凍結、斷線和失敗的風險。正常的材料、放置和建造負載檢查仍然適用。如果放置被拒絕，請分小段進行建造。\n- **對於伺服器管理員：** 在伺服器和每個客戶端上安裝相同版本的 Smart!。當您更新時，Mod Manager 會保持這些版本匹配。\n- **Smart Camera**（配套模組）也支援多人遊戲。",
+    "source_hash": "8cb40018690ab6ebe9357b170389232193d08c25eafc1fd5d631dac793751ffe",
+    "status": "reviewed",
+    "review_method": "Local-model contextual translation and separate semantic review; structural validation. No human native-speaker certification."
   },
   "Compatibility-and-Multiplayer:30": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "be6a21fb0e3a5a2792dc5eaa0095af9dbd2cdc8641d29aed38e44f5a8dce7ce9"
+    "text": "多人遊戲支持比單人遊戲更新，因此如果某項功能在多人會話中的表現與單人不同，那就是缺陷。請在 GitHub 或 Discord 報告，並說明建造內容以及你是主機還是客戶端。",
+    "source_hash": "be6a21fb0e3a5a2792dc5eaa0095af9dbd2cdc8641d29aed38e44f5a8dce7ce9",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Compatibility-and-Multiplayer:15": {
     "text": "每位玩家的會話輔助開關只影響自己的建造工具。遠程延伸/還原會將監聽伺服器主機的預覽和設定與客戶端操作分開處理。",
@@ -1105,9 +1122,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Compatibility-and-Multiplayer:31": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
+    "text": "_最後更新：2026-11-02 · Smart! v35.1.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "738986e1276ad98403f2e483d1e397f7061c2af5e93202af6d82ce474d5d7eeb",
+    "status": "reviewed",
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Controller-and-Steam-Deck:0": {
     "text": "# 手柄與 Steam Deck（實驗性）",
@@ -1290,10 +1308,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Controller-and-Steam-Deck:30": {
-    "text": "_最後更新：2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0（發布草稿）_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "text": "_最後更新：2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "90cb2f4ec0a877789160414441d87af9660480498e3243f7517711c84cc354bf",
     "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Controls:0": {
     "text": "# 控制",
@@ -1524,10 +1542,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Controls:40": {
-    "text": "_最後更新：2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0（發布草稿）_\n",
-    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89",
+    "text": "_最後更新：2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "8d8ca2bf47cdd1190ffc8d7e3c35f31c2a04adf92a128713a384de42b66ce426",
     "status": "reviewed",
-    "review_method": "Reviewed existing footer with mechanical source date update."
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Conveyor-Lift-Grids:0": {
     "text": "# 輸送梯網格",
@@ -1590,10 +1608,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Conveyor-Lift-Grids:10": {
-    "text": "_最後更新：2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0（發布草稿）_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "text": "_最後更新：2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "90cb2f4ec0a877789160414441d87af9660480498e3243f7517711c84cc354bf",
     "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Extend:0": {
     "text": "# 延伸",
@@ -1644,9 +1662,10 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Extend:49": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "be187544697091618ad4e7d6e1a2c2782b01ec9a0930ae4d3655eadaf437a2ca"
+    "text": "1. 手動建造一個可用模組，並在建造槍中裝備相同建築類型。\n2. 打開 **K → 延伸**並按**選擇來源**。\n3. 在面板之外點擊世界中的現有來源建築。選擇期間，相容來源會高亮。**Escape** 取消選擇；面板內點擊仍操作介面。\n4. 檢查來源名稱、捕獲的附屬對象和重複數量。用**更改方向**及放置控制調整預覽。\n5. 關閉面板，檢查擬建副本與材料報價，然後使用建造槍正常建造。",
+    "source_hash": "be187544697091618ad4e7d6e1a2c2782b01ec9a0930ae4d3655eadaf437a2ca",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Extend:9": {
     "text": "選擇來源不會建造任何東西。未命中時保留之前的預覽。替換來源或較復雜的未建造佈局時，丟棄前會要求確認。所選來源保持固定以便檢查，直到取消放置、完成建造或更換配方。",
@@ -1691,9 +1710,10 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Extend:50": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "e63c3cf4682d23c05eeac5028bcb9b9181dbd792603560f52b7b754522f84fbc"
+    "text": "實體冶煉機是現有來源。青色冶煉機、輸送帶和支架為擬建副本；HUD 顯示**延伸 1×1**。這是尚未建造的預覽。",
+    "source_hash": "e63c3cf4682d23c05eeac5028bcb9b9181dbd792603560f52b7b754522f84fbc",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Extend:17": {
     "text": "## 更改方向",
@@ -1714,9 +1734,10 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Extend:51": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "76acf531cc52c29e073f3df2f0e0d06d36121daf24e05679c1f466af9d01eb13"
+    "text": "通過 **K → 延伸 → 選擇來源**明確啟動，或使用懸停快捷方式。延伸標籤頁重複使用放置控制來調整網格數量、間距和支持的變換。也可使用與[網格縮放](Grid-Scaling)相同的滾輪／數字鍵盤控制。未按住修飾鍵時，滾輪選擇延伸方向。運作時 HUD 標明長度／行數和目前調整項，便於建造前確認將發生的變化。",
+    "source_hash": "76acf531cc52c29e073f3df2f0e0d06d36121daf24e05679c1f466af9d01eb13",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Extend:21": {
     "text": "## 縮放延伸",
@@ -1755,9 +1776,10 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Extend:52": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "a818fc9f6600b845b33395c092257e5c56b6b18d277fc9a96921343bf18ea9b7"
+    "text": "同一來源現在生成三個青色模組副本，包含其傳送路線和支架。HUD 顯示**延伸 3×1**，材料報價隨副本數增加。實體來源保持原位。",
+    "source_hash": "a818fc9f6600b845b33395c092257e5c56b6b18d277fc9a96921343bf18ea9b7",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Extend:28": {
     "text": "## 抽水機",
@@ -1808,19 +1830,22 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Extend:45": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "54e38c7493c79d3f4bc2f71a29b70d8dd6942a4f44bee91a351b6ebd82db6819"
+    "text": "## 曲線與未完成操作",
+    "source_hash": "54e38c7493c79d3f4bc2f71a29b70d8dd6942a4f44bee91a351b6ebd82db6819",
+    "status": "reviewed",
+    "review_method": "Local-model contextual translation and separate semantic review; structural validation. No human native-speaker certification."
   },
   "Extend:46": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "2fc6ba5d654478f0d36a249ac28472d87d41be4029ae07a4e513561265a5f725"
+    "text": "曲線 Extend 無法將模組放置回來源或較早的副本上。如果 HUD 報告與較早副本重疊，請減少數量或更改旋轉、間距或台階。此檢查可防止重複放置模組；它不是通用的碰撞偵測器。",
+    "source_hash": "2fc6ba5d654478f0d36a249ac28472d87d41be4029ae07a4e513561265a5f725",
+    "status": "reviewed",
+    "review_method": "Local-model contextual translation and separate semantic review; structural validation. No human native-speaker certification."
   },
   "Extend:47": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "8d860159ae76958c5e531b7732a1d2bed5e6c39a0cc339d47fa7d866c6ab94e8"
+    "text": "副本不會複製現有輸送帶上的貨物。檢查報價的材料和產生的連接。如果操作報告操作尚未完成，請在重複操作前檢查世界；已完成的部件可能會保留。",
+    "source_hash": "8d860159ae76958c5e531b7732a1d2bed5e6c39a0cc339d47fa7d866c6ab94e8",
+    "status": "reviewed",
+    "review_method": "Local-model draft and semantic review, followed by direct contextual correction; no human native-speaker certification."
   },
   "Extend:36": {
     "text": "## 檢查捕獲的佈局",
@@ -1847,9 +1872,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Extend:48": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
+    "text": "_最後更新：2026-11-02 · Smart! v35.1.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "738986e1276ad98403f2e483d1e397f7061c2af5e93202af6d82ce474d5d7eeb",
+    "status": "reviewed",
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "FAQ:0": {
     "text": "# 常見問題",
@@ -2356,10 +2382,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "FAQ:84": {
-    "text": "_最後更新：2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0（發布草稿）_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "text": "_最後更新：2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "90cb2f4ec0a877789160414441d87af9660480498e3243f7517711c84cc354bf",
     "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Feature-Gallery:0": {
     "text": "# 功能圖集",
@@ -2728,10 +2754,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Feature-Gallery:64": {
-    "text": "_最後更新：2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0（發布草稿）_\n",
-    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89",
+    "text": "_最後更新：2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "8d8ca2bf47cdd1190ffc8d7e3c35f31c2a04adf92a128713a384de42b66ce426",
     "status": "reviewed",
-    "review_method": "Reviewed existing footer with mechanical source date update."
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Glossary:0": {
     "text": "# 術語表",
@@ -2758,10 +2784,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Glossary:4": {
-    "text": "_最後更新：2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0（發布草稿）_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "text": "_最後更新：2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "90cb2f4ec0a877789160414441d87af9660480498e3243f7517711c84cc354bf",
     "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Grid-Scaling:0": {
     "text": "# 網格縮放",
@@ -2932,10 +2958,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Grid-Scaling:28": {
-    "text": "_最後更新：2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0（發布草稿）_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "text": "_最後更新：2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "90cb2f4ec0a877789160414441d87af9660480498e3243f7517711c84cc354bf",
     "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "History-and-Credits:0": {
     "text": "# 歷史與致謝",
@@ -3136,14 +3162,16 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Home:18": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "1829ed863c572c2dbcafc8f78604d94faa795d58ca1d7e90494d020f49980f60"
+    "text": "## Smart! 35.1.0",
+    "source_hash": "c51b192a3da9407b55bb694e43e758aef296d6f982f8ea1d3c9544572184a93f",
+    "status": "reviewed",
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Home:19": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "1bd5656d0819ad3a7d1a6861c038f59661e423c6f03bddc8b203ef1a7ffb5c8b"
+    "text": "此版本改進了 Extend、Restore 和 Upgrade 中的輸送帶和輸送梯處理，修正了原生路由限制，並使 Auto-Connect 選擇合適的分流器分支。大型藍圖網格新增了可選的客戶端安全限制。請參閱 [Auto-Connect](Auto-Connect)、[Blueprints](Blueprints) 和 [Smart Upgrade](Smart-Upgrade) 以了解行為和限制。",
+    "source_hash": "1bd5656d0819ad3a7d1a6861c038f59661e423c6f03bddc8b203ef1a7ffb5c8b",
+    "status": "reviewed",
+    "review_method": "Local-model contextual translation and separate semantic review; structural validation. No human native-speaker certification."
   },
   "Home:13": {
     "text": "## 文檔對應版本",
@@ -3152,9 +3180,10 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Home:20": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "6de3b72e72a676036d11c5f3b3679009013b370ca2cb7e8aed2d56252d3addd9"
+    "text": "**Smart! 35.1.0** 支援 **Smart Camera 2.0.0**。如果一起使用，請同時更新這兩個模組。",
+    "source_hash": "332a69d5007a0b672628c30eca7cb0b652928cddad228f06e6d4186a52c9b3f8",
+    "status": "reviewed",
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Home:15": {
     "text": "先了解共用[面板與 HUD](Smart-Panel-and-HUD)、[繼續行走](Smart-Walking)、[輸送梯輔助自動連接](Auto-Connect)和[藍圖接縫連接](Blueprints)。",
@@ -3169,9 +3198,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Home:21": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
+    "text": "_最後更新：2026-11-02 · Smart! v35.1.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "738986e1276ad98403f2e483d1e397f7061c2af5e93202af6d82ce474d5d7eeb",
+    "status": "reviewed",
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Lift-Assisted-Auto-Connect:0": {
     "text": "# 輸送梯輔助自動連接",
@@ -3282,10 +3312,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Lift-Assisted-Auto-Connect:17": {
-    "text": "_最後更新：2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0（發布草稿）_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "text": "_最後更新：2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "90cb2f4ec0a877789160414441d87af9660480498e3243f7517711c84cc354bf",
     "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Quick-Start:0": {
     "text": "# 快速入門",
@@ -3414,10 +3444,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Quick-Start:21": {
-    "text": "_最後更新：2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0（發布草稿）_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "text": "_最後更新：2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "90cb2f4ec0a877789160414441d87af9660480498e3243f7517711c84cc354bf",
     "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Screenshot-Checklist:0": {
     "text": "# 截圖指南",
@@ -3480,10 +3510,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Screenshot-Checklist:11": {
-    "text": "_最後更新：2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0（發布草稿）_\n",
-    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89",
+    "text": "_最後更新：2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "8d8ca2bf47cdd1190ffc8d7e3c35f31c2a04adf92a128713a384de42b66ce426",
     "status": "reviewed",
-    "review_method": "Reviewed existing footer with mechanical source date update."
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Settings-Reference:0": {
     "text": "# 設定參考",
@@ -3498,9 +3528,10 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Settings-Reference:59": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "3f27a7251dee61f272afa2b13b0a9a7d3b5d0782f11461e43b22ec93ed6baceb"
+    "text": "從**主選單 → 模組 → Smart!** 查找。此處的更改會**跨存檔、跨會話保留**。（按鍵綁定單獨設定，見[控制](Controls)。）",
+    "source_hash": "3f27a7251dee61f272afa2b13b0a9a7d3b5d0782f11461e43b22ec93ed6baceb",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Settings-Reference:3": {
     "text": "## 輸送帶自動連接",
@@ -3557,9 +3588,10 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Settings-Reference:60": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "de7e8d93fbc71c12b9ce0a1c8db5fdc99380795aa7009f219fc68164294d1f29"
+    "text": "- **超疾管道自動連接**——啟用或禁用超疾管道自動連接。**預設開啟。**（於 33.1.0 加入。）\n- 選擇超疾管道路由模式。",
+    "source_hash": "de7e8d93fbc71c12b9ce0a1c8db5fdc99380795aa7009f219fc68164294d1f29",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Settings-Reference:13": {
     "text": "## 電力自動連接",
@@ -3574,9 +3606,10 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Settings-Reference:61": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "ec98629a469e74c7be896e64709377532daca45491fe70e1465ce14f99cffdfb"
+    "text": "- 啟用或禁用電力自動連接。\n- 選擇連接模式。\n- 設定連接範圍。\n- 預留電線桿接口，避免 Smart! 占滿所有插槽。\n- **縮放時電力鏈式連接**——解鎖升級版電力連接器後，沿 Smart X 軸縮放工廠或發電機時，直接將相鄰副本連接，而非逐個連接電線桿，無需單獨延伸即可匹配常見匯流佈局。Smart 面板可覆蓋目前建造設定，HUD 顯示實際選項。遵守各接口可用容量。**預設開啟。**（於 34.2.0 加入。）",
+    "source_hash": "ec98629a469e74c7be896e64709377532daca45491fe70e1465ce14f99cffdfb",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Settings-Reference:16": {
     "text": "## 藍圖自動連接",
@@ -3585,14 +3618,16 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Settings-Reference:62": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "777a49715537ba1bf7334d6be913926f712654bb9bcb31b43455ceeff3c86b11"
+    "text": "針對**自己的**藍圖縮放副本之間接縫的獨立開關，與上述輸送帶和管線自動連接獨立，因此關閉普通自動連接後，藍圖副本仍可互相連接。",
+    "source_hash": "777a49715537ba1bf7334d6be913926f712654bb9bcb31b43455ceeff3c86b11",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Settings-Reference:63": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "5daf4a877774b178a7054980007283bb25a2de416f6dad2c908287768adb9db4"
+    "text": "- **藍圖接縫自動連接**——啟用或禁用縮放藍圖副本間的輸送帶、管線、超疾管道、鐵軌、有向車輛路徑及符合條件的電力連接。**預設開啟。**（於 34.2.0 加入。）",
+    "source_hash": "5daf4a877774b178a7054980007283bb25a2de416f6dad2c908287768adb9db4",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Settings-Reference:19": {
     "text": "電力接縫連接還要求啟用**電力自動連接**。每條電線使用匹配且仍有容量的電線桿接口；內部電線和牆面電接頭的兩個表面分別計數。",
@@ -3601,14 +3636,16 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Settings-Reference:51": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "d30a9c4968359ae455bcba1db55829f233cd9689baac7a41ddda2ee677c671a7"
+    "text": "## 藍圖放置安全限制",
+    "source_hash": "d30a9c4968359ae455bcba1db55829f233cd9689baac7a41ddda2ee677c671a7",
+    "status": "reviewed",
+    "review_method": "Local-model contextual translation and separate semantic review; structural validation. No human native-speaker certification."
   },
   "Settings-Reference:52": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "8d8d2f7ca8e8f5f5ffd32286939d718b5621954e9eb433f316520ac4e84d392b"
+    "text": "「建築行為」下的「藍圖放置安全限制」預設為啟用。對於遠端多人遊戲客戶端，它會阻擋估計超過 2,000 個建築物的藍圖網格，計算時包含原始物件及所有副本。您可以即時停用此設定以嘗試更大的放置，但會增加凍結、斷線和失敗的風險。正常的材料、放置和建造負載檢查仍然適用。如果放置被拒絕，請分小段進行建造。無需重新載入世界。",
+    "source_hash": "8d8d2f7ca8e8f5f5ffd32286939d718b5621954e9eb433f316520ac4e84d392b",
+    "status": "reviewed",
+    "review_method": "Local-model contextual translation and separate semantic review; structural validation. No human native-speaker certification."
   },
   "Settings-Reference:20": {
     "text": "## 藍圖預設間距",
@@ -3635,9 +3672,10 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Settings-Reference:64": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "bb2d0aef5ebb0f05f6e0332aba3b272795cbf3d8bade162603d3521aad41d592"
+    "text": "- **附近物流範圍**——自動連接時，輸送帶分流器、輸送帶匯流器、管線交叉接頭和管線地板孔尋找工廠端口的距離。降低可防止自動連接伸入相鄰工廠組。**預設 25 m**（先前的固定行為）。（於 34.2.0 加入。）",
+    "source_hash": "bb2d0aef5ebb0f05f6e0332aba3b272795cbf3d8bade162603d3521aad41d592",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Settings-Reference:25": {
     "text": "## 延伸",
@@ -3658,9 +3696,10 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Settings-Reference:65": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "5062fcd97160abfb325d9843686928ec4e50ca66911455b5f84cd6515d2b0179"
+    "text": "- 網格改變時自動鎖定會在修改網格後鎖住全息預覽，防止大型預覽意外移動。**預設開啟**（自 32.1.2 起）；若希望預覽保持自由定位，可在此關閉。原版鎖定鍵可解除單次鎖定。\n- **相對於玩家的控制**——使建造跟隨視線而非固定方位軸：滑鼠滾輪朝你面對的方向擴展，數字鍵盤成為方位控制（遠離／靠近、右／左、上／下）。適用於縮放、間距、臺階、交錯和旋轉。**預設關閉**；開啟前經典控制不變，Smart 面板始終保留固定 X/Y/Z。完整說明見[控制](Controls)。（於 34.1.0 加入。）\n- **點按切換變換模式**——點按變換鍵（間距、臺階、交錯、旋轉或工廠配方）開啟模式，再次點按關閉，點按另一鍵切換模式。面向手柄、Steam Deck 和無障礙配置：Steam Input 徑向／觸摸選單只能快速點按，無法保持按鍵。收起建造槍、切換建築或打開面板總會釋放模式。**預設關閉**；開啟前經典按住行為不變，關閉即刻還原。徑向選單設定見[手柄與 Steam Deck](Controller-and-Steam-Deck)。（於 34.2.0 加入。）",
+    "source_hash": "5062fcd97160abfb325d9843686928ec4e50ca66911455b5f84cd6515d2b0179",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Settings-Reference:29": {
     "text": "## 滾輪步長",
@@ -3675,14 +3714,16 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Settings-Reference:66": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "89d132f31272346911aed3355f02885dd096f7bf810ca50e85be98947993996e"
+    "text": "- **間距步長**（m）——每格增加的間距米數（也用於延伸間距和行走區段前進量）。\n- **臺階步長**（m）——每格增加的高度偏移米數（也用於行走區段抬升量）。\n- **交錯步長**（m）——每格增加的交錯米數（也用於行走區段偏移量）。\n- **旋轉步長**（度）——每格增加的旋轉角度（也用於行走區段轉彎）。",
+    "source_hash": "89d132f31272346911aed3355f02885dd096f7bf810ca50e85be98947993996e",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Settings-Reference:67": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "b595cc1429fd298b95947cec85d6569724d96fed5b22b0b9424ca76f88c295da"
+    "text": "預設為 0.5 m 和 5°。距離步長接受 0.1–8 m；旋轉接受 0.5–90°。",
+    "source_hash": "b595cc1429fd298b95947cec85d6569724d96fed5b22b0b9424ca76f88c295da",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Settings-Reference:33": {
     "text": "## Smart 面板",
@@ -3727,9 +3768,10 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Settings-Reference:68": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "c472d20351cba658f26ae667c4cd445f95ae5a5ca37a10e8763878b476181f29"
+    "text": "在**模組 → Smart! Camera** 中，視圖自動顯示在提供它們的模組和鏡頭名稱下，包括未啟用的視圖。內置建造槍視圖有獨立啟用控制。各視圖位置採用 0–1 歸一化坐標，每軸解析度為 64–2048 像素，縮放為 0.1–2，擷取頻率為每秒 5–60 次，亮度為 −3 至 +3 EV。適用的建造鏡頭距離為 5–50 m。鏡頭設定立即生效；被選單隱藏的視圖在繼續遊戲時更新。**所有存檔**只更新該鏡頭全域和現有已存配置中的所編輯欄位，包括目前世界。**此存檔**只修改目前原版存檔配置。無關欄位和其他鏡頭保持不變。",
+    "source_hash": "c472d20351cba658f26ae667c4cd445f95ae5a5ca37a10e8763878b476181f29",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Settings-Reference:41": {
     "text": "在所有存檔中選擇**使用模組建議**會跨存檔重置該鏡頭。在此存檔中選擇**使用全域設定**只移除目前覆蓋。取景／距離重置僅修改這兩個欄位。佈局編輯會預覽到共用的**完成／鎖定**；取消會丟棄未提交佈局／HUD 更改。見 [Smart Camera](Smart-Camera)。",
@@ -3756,9 +3798,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Settings-Reference:58": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
+    "text": "_最後更新：2026-11-02 · Smart! v35.1.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "738986e1276ad98403f2e483d1e397f7061c2af5e93202af6d82ce474d5d7eeb",
+    "status": "reviewed",
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Smart-Assistance:0": {
     "text": "# Smart 輔助",
@@ -3857,10 +3900,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Smart-Assistance:17": {
-    "text": "_最後更新：2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0（發布草稿）_\n",
-    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89",
+    "text": "_最後更新：2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "8d8ca2bf47cdd1190ffc8d7e3c35f31c2a04adf92a128713a384de42b66ce426",
     "status": "reviewed",
-    "review_method": "Reviewed existing footer with mechanical source date update."
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Smart-Blueprints:0": {
     "text": "# Smart! 藍圖",
@@ -4145,10 +4188,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Smart-Camera:39": {
-    "text": "_最後更新：2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0（發布草稿）_\n",
-    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89",
+    "text": "_最後更新：2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "8d8ca2bf47cdd1190ffc8d7e3c35f31c2a04adf92a128713a384de42b66ce426",
     "status": "reviewed",
-    "review_method": "Reviewed existing footer with mechanical source date update."
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Smart-Dismantle:0": {
     "text": "# Smart 拆除",
@@ -4247,10 +4290,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Smart-Dismantle:16": {
-    "text": "_最後更新：2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0（發布草稿）_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "text": "_最後更新：2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "90cb2f4ec0a877789160414441d87af9660480498e3243f7517711c84cc354bf",
     "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Smart-Panel-and-HUD:0": {
     "text": "# Smart 面板與 HUD",
@@ -4397,10 +4440,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Smart-Panel-and-HUD:24": {
-    "text": "_最後更新：2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0（發布草稿）_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "text": "_最後更新：2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "90cb2f4ec0a877789160414441d87af9660480498e3243f7517711c84cc354bf",
     "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Smart-Restore:0": {
     "text": "# Smart 還原",
@@ -4409,14 +4452,16 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Smart-Restore:43": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "d30db2304eb2c337da20e09266e493bcc8c502907b34b04c692903c1c50cee35"
+    "text": "Smart 還原儲存你的 Smart! 設定，供以後重複使用、分享，或每次以相同方式再次放置整套工廠模組。在共用的 [Smart 面板](Smart-Panel-and-HUD)中打開 **K → 還原**。其兩個子標籤為**網格預設**和**模組**。",
+    "source_hash": "d30db2304eb2c337da20e09266e493bcc8c502907b34b04c692903c1c50cee35",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Smart-Restore:44": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "3d432425c5421614e20983fcafadb764c442a1c31b834004ecbebec74df73ea2"
+    "text": "它回答了“我花了很久調好這個佈局，怎麼找回來？”這個問題。",
+    "source_hash": "3d432425c5421614e20983fcafadb764c442a1c31b834004ecbebec74df73ea2",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Smart-Restore:3": {
     "text": "![還原任務中的網格預設和模組子標籤](https://raw.githubusercontent.com/wiki/majormer/SmartFoundations/images/v35/restore.png)",
@@ -4449,9 +4494,10 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Smart-Restore:45": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "7e35bb8291023e898ca5f34452152a86fb7117cb5f7cb13234c8fd2acf59ef40"
+    "text": "- **從面板儲存**——為目前面板設定命名並儲存為預設。\n- **載入到面板**——把已儲存預設載入回面板，建造前微調或直接套用。\n- **匯出代碼／匯入代碼**——以代碼形式分享預設，或載入別人分享的預設。",
+    "source_hash": "7e35bb8291023e898ca5f34452152a86fb7117cb5f7cb13234c8fd2acf59ef40",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Smart-Restore:9": {
     "text": "每個預設都顯示易懂的內容摘要（建築、網格、變換、配方），方便一眼區分。",
@@ -4466,14 +4512,16 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Smart-Restore:46": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "15f117646c84198699764f5759ce40f588af9591576ba39e1d7f68ebbf616b8b"
+    "text": "模組捕獲整個**延伸匯流佈局**：一套相連的建築及其輸送帶、管線、輸送梯、分配器和電力，可重複放置。",
+    "source_hash": "15f117646c84198699764f5759ce40f588af9591576ba39e1d7f68ebbf616b8b",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Smart-Restore:47": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "bec0ec9303e43dd7907dc7dc366c045b75ee549bfcabebb02918f256b044593e"
+    "text": "- 當您預覽或建造 Smart [Extend](Extend) 後，它會進入標籤頂部的 **Extend 剪貼簿**。**儲存為模組** 會將該捕獲的佈局轉換為命名的、可重複使用的模組。\n- 使用 **載入模組** 來重建已儲存的模組佈局：建造槍可以自動開啟其來源建築，並顯示即時預覽，您可以 **蓋印**（發射以放置，可重複）並 **滾動縮放** 即時調整。\n- 由於還原的模組不像新的縮放 Extend 那樣鎖定在一側，您可以在放置前沿其軸 **向任一方向重新縮放運行** — 向一個方向滾動以向該方向增長，向另一個方向滾動以向另一方向增長。\n- **匯出代碼 / 匯入代碼** 以與預設相同的方式共享模組。",
+    "source_hash": "bec0ec9303e43dd7907dc7dc366c045b75ee549bfcabebb02918f256b044593e",
+    "status": "reviewed",
+    "review_method": "Local-model contextual translation and separate semantic review; structural validation. No human native-speaker certification."
   },
   "Smart-Restore:13": {
     "text": "每個模組顯示部件摘要（輸送帶、管線、分配器等數量），讓你了解將重建什麼。",
@@ -4536,9 +4584,10 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Smart-Restore:48": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "1b1ed17e9fec531c12a9f625b3a9bfc523afdeccaf5ba0c4bca304c837f1764c"
+    "text": "使用 **K → 還原**儲存、選擇、載入、導入或導出佈局。載入後，用縮放面板或滾輪／數字鍵盤控制調整放置；HUD 顯示結果網格與目前調整項。使用建造槍按顯示成本建造。",
+    "source_hash": "1b1ed17e9fec531c12a9f625b3a9bfc523afdeccaf5ba0c4bca304c837f1764c",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Smart-Restore:22": {
     "text": "若不重新打開面板就切換最近套用的還原項，請按住 `U`，按 `Num 9` 選擇下一個最近預設，或按 `Num 3` 返回。參閱[控制](Controls)。",
@@ -4565,14 +4614,16 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Smart-Restore:39": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "b0724fac56a114aed1905757336fc2bd16f065519872f908a56afc905e5b0d3c"
+    "text": "## 輸送帶內容與完成度",
+    "source_hash": "b0724fac56a114aed1905757336fc2bd16f065519872f908a56afc905e5b0d3c",
+    "status": "reviewed",
+    "review_method": "Local-model contextual translation and separate semantic review; structural validation. No human native-speaker certification."
   },
   "Smart-Restore:40": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "81c3c2048752b95069652ecef30608748705b0ecd1930a687c49a0f383a261ad"
+    "text": "儲存的模組描述建造和設定；它們不會複製即時輸送帶貨物。在放置前審查完整的材料報價。如果操作報告操作尚未完成，請在重試前檢查已放置的內容；取消操作並不保證撤銷已執行的建造。",
+    "source_hash": "81c3c2048752b95069652ecef30608748705b0ecd1930a687c49a0f383a261ad",
+    "status": "reviewed",
+    "review_method": "Local-model draft and semantic review, followed by direct contextual correction; no human native-speaker certification."
   },
   "Smart-Restore:26": {
     "text": "## 另請參閱",
@@ -4581,9 +4632,10 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Smart-Restore:49": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "52daff47c488c29086aa3ce6e5cea9be1d21194fb00b9e2d10a09d723d037264"
+    "text": "- [延伸](Extend)——模組標籤捕獲其匯流佈局的功能。\n- [Smart 面板與 HUD](Smart-Panel-and-HUD)——還原標籤所在位置。\n- [網格縮放](Grid-Scaling)與[變換](Transforms)——網格預設儲存的內容。",
+    "source_hash": "52daff47c488c29086aa3ce6e5cea9be1d21194fb00b9e2d10a09d723d037264",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Smart-Restore:28": {
     "text": "---",
@@ -4592,9 +4644,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Smart-Restore:42": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
+    "text": "_最後更新：2026-11-02 · Smart! v35.1.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "738986e1276ad98403f2e483d1e397f7061c2af5e93202af6d82ce474d5d7eeb",
+    "status": "reviewed",
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Smart-Upgrade:0": {
     "text": "# Smart 升級",
@@ -4633,9 +4686,10 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Smart-Upgrade:38": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "32316883719d3460a5f56824a7fb92559589793f835d63f4bd04e2103217fa08"
+    "text": "1. 手持支持的建築打開 **K → 升級**。輸送帶、管線和電線可直接打開此任務。\n2. 選擇掃描模式。\n3. 掃描附近物體或相連網路。\n4. 選擇類別和目標等級；網路掃描時還可選擇單一來源等級，只升級該等級。\n5. 檢查材料成本。\n6. 執行升級。",
+    "source_hash": "32316883719d3460a5f56824a7fb92559589793f835d63f4bd04e2103217fa08",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Smart-Upgrade:7": {
     "text": "手持電線桿和牆面電接頭仍打開普通 Smart 面板，以便縮放。升級它們時，請手持電線打開 Smart 升級，或使用掃描模式。",
@@ -4680,9 +4734,10 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Smart-Upgrade:39": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "78e23b12048a0221986495c275897aa077ef1a3a23671637128ce9f602d2b7a8"
+    "text": "- 點擊具體等級，例如 **Mk.2**，只將**該等級**升級到目標。可把 Mk.2 輸送帶升為 Mk.3，而不動 Mk.4。\n- 選擇**所有等級**，將所有與目標不同的輸送帶、輸送梯或管線變為所選等級。這可在同一線路中同時升級某些等級並降級另一些等級。",
+    "source_hash": "78e23b12048a0221986495c275897aa077ef1a3a23671637128ce9f602d2b7a8",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Smart-Upgrade:15": {
     "text": "這與半徑掃描已有的等級控制一致。",
@@ -4751,9 +4806,10 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Smart-Upgrade:36": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "30a1ce6a5b6dcbf3cb863b07c5181d63bc781a27d7277f739226c64c0f12936e"
+    "text": "Smart! 協調輸送帶和輸送梯的替換，涉及原生輸送帶所有權和物品傳輸。現有貨物屬於替換操作；不得重複或丟棄。預檢失敗會使原始物件保持不變。一旦建造開始，未完成或取消的操作並不保證完全回滾。如果 Smart! 報告操作尚未完成，請檢查結果並在重試前保留遊戲日誌。存檔/重載並非保證的修復方法。",
+    "source_hash": "30a1ce6a5b6dcbf3cb863b07c5181d63bc781a27d7277f739226c64c0f12936e",
+    "status": "reviewed",
+    "review_method": "Local-model draft and semantic review, followed by direct contextual correction; no human native-speaker certification."
   },
   "Smart-Upgrade:27": {
     "text": "## 遊戲內示例",
@@ -4792,9 +4848,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Smart-Upgrade:37": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
+    "text": "_最後更新：2026-11-02 · Smart! v35.1.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "738986e1276ad98403f2e483d1e397f7061c2af5e93202af6d82ce474d5d7eeb",
+    "status": "reviewed",
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Smart-Walking:0": {
     "text": "# Smart 行走",
@@ -4971,10 +5028,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Smart-Walking:29": {
-    "text": "_最後更新：2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0（發布草稿）_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "text": "_最後更新：2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "90cb2f4ec0a877789160414441d87af9660480498e3243f7517711c84cc354bf",
     "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Support-Development:0": {
     "text": "# 支持開發",
@@ -5097,10 +5154,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Supported-Buildings:11": {
-    "text": "_最後更新：2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0（發布草稿）_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "text": "_最後更新：2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "90cb2f4ec0a877789160414441d87af9660480498e3243f7517711c84cc354bf",
     "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Transforms:0": {
     "text": "# 變換",
@@ -5295,10 +5352,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Transforms:32": {
-    "text": "_最後更新：2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0（發布草稿）_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "text": "_最後更新：2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "90cb2f4ec0a877789160414441d87af9660480498e3243f7517711c84cc354bf",
     "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Troubleshooting:0": {
     "text": "# 故障排查",
@@ -5499,10 +5556,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Troubleshooting:33": {
-    "text": "_最後更新：2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0（發布草稿）_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "text": "_最後更新：2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "90cb2f4ec0a877789160414441d87af9660480498e3243f7517711c84cc354bf",
     "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Videos-and-Tutorials:0": {
     "text": "# 影片與教程",
@@ -5637,10 +5694,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Videos-and-Tutorials:22": {
-    "text": "_最後更新：2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0（發布草稿）_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "text": "_最後更新：2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "90cb2f4ec0a877789160414441d87af9660480498e3243f7517711c84cc354bf",
     "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Water-Extractors:0": {
     "text": "# 抽水機",
@@ -5757,10 +5814,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Water-Extractors:20": {
-    "text": "_最後更新：2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0（發布草稿）_\n",
-    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89",
+    "text": "_最後更新：2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "8d8ca2bf47cdd1190ffc8d7e3c35f31c2a04adf92a128713a384de42b66ce426",
     "status": "reviewed",
-    "review_method": "Reviewed existing footer with mechanical source date update."
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Blueprints:33": {
     "text": "_最後更新：2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0（發布草稿）_\n",

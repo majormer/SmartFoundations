@@ -1,6 +1,6 @@
 # <img src="https://github.com/majormer/SmartFoundations/blob/main/images/Smart-Logo.png?raw=true" width="150" alt="Smart! Logo"> Smart! Mod
 
-![Status](https://img.shields.io/badge/Status-Release%20candidate-orange) ![Version](https://img.shields.io/badge/Version-35.1.0-blue) ![Satisfactory](https://img.shields.io/badge/Satisfactory-1.2.4%2B-blue) ![Engine](https://img.shields.io/badge/Engine-UE%205.6-blue) ![SML](https://img.shields.io/badge/SML-3.12-blue) ![Multiplayer](https://img.shields.io/badge/Multiplayer-Supported-brightgreen) ![AI Assisted Development Used](https://img.shields.io/badge/AI%20Assisted%20Development%20Used-Disclosure%20Below-blue)
+![Status](https://img.shields.io/badge/Status-Released-brightgreen) ![Version](https://img.shields.io/badge/Version-35.1.0-blue) ![Satisfactory](https://img.shields.io/badge/Satisfactory-1.2.4%2B-blue) ![Engine](https://img.shields.io/badge/Engine-UE%205.6-blue) ![SML](https://img.shields.io/badge/SML-3.12-blue) ![Multiplayer](https://img.shields.io/badge/Multiplayer-Supported-brightgreen) ![AI Assisted Development Used](https://img.shields.io/badge/AI%20Assisted%20Development%20Used-Disclosure%20Below-blue)
 
 > **Multiplayer note:** As of v32.0.0, every Smart! feature works in multiplayer on dedicated servers (Windows and Linux) — including **Smart Walking** and the new-in-v33.1.0 **hypertube** support. If you hit something odd in a multiplayer session, please report it on [GitHub](https://github.com/majormer/SmartFoundations/issues) or [Discord](https://discord.gg/SgXY4CwXYw).
 
@@ -8,16 +8,7 @@
 
 ---
 
-## Preparing 35.1.0
-
-This is the listing draft for the unreleased 35.1.0 candidate.
-
-- Conveyor and lift handling improvements for Extend, Restore and Upgrade, including native attachments, settings and cargo preservation during replacement.
-- Corrected route-length and slope checks, plus protection against curved Extend placing a copy over the source or an earlier copy.
-- Auto-Connect branches respect port facing and machine sides across splitter, merger and pipe-junction variants.
-- An optional Blueprint placement safety limit for remote multiplayer clients, enabled by default at 2,000 buildings. Disabling it permits larger attempts with increased failure risk; ordinary resource and payload checks remain.
-
-See the [changelog](https://github.com/majormer/SmartFoundations/blob/main/CHANGELOG.md) for the full release notes. Publication and release qualification are separate from this draft.
+Release notes: [Smart! 35.1.0](https://github.com/majormer/SmartFoundations/blob/v35.1.0/CHANGELOG.md).
 
 ## 🚀 What is Smart!?
 
@@ -67,7 +58,7 @@ What each feature does at a glance — follow a **Guide** link for the full how-
 | **Grid Scaling** | Place a whole grid of a buildable in one action, scaled on X, Y, and Z. | [Grid Scaling](https://github.com/majormer/SmartFoundations/wiki/Grid-Scaling) |
 | **Spacing, Steps, Stagger, Rotation** | Shape the grid: add gaps, step heights for stairs, offset rows, or curve it into arcs. | [Transforms](https://github.com/majormer/SmartFoundations/wiki/Transforms) |
 | **Auto-Connect** | Preview the belts, pipes, and power between what you place, when Smart! can infer it safely. | [Auto-Connect](https://github.com/majormer/SmartFoundations/wiki/Auto-Connect) |
-| **Smart! Blueprints** | Scale your own blueprint into a grid with belt, pipe, and eligible power connections between copies; choose X/Y/Z spacing defaults. | [Blueprints](https://github.com/majormer/SmartFoundations/wiki/Blueprints) |
+| **Smart! Blueprints** | Scale your own blueprint into a grid with belt, pipe, and eligible power connections between copies; choose X/Y/Z spacing defaults. An optional client safety limit is enabled by default for large multiplayer placements. | [Blueprints](https://github.com/majormer/SmartFoundations/wiki/Blueprints) |
 | **Extend** | Copy an existing factory module — building, logistics, power, recipe — and continue the pattern. | [Extend](https://github.com/majormer/SmartFoundations/wiki/Extend) |
 | **Smart Upgrade** | Upgrade or downgrade belts, lifts, and pipes in batches; upgrade power poles and wall outlets. | [Smart Upgrade](https://github.com/majormer/SmartFoundations/wiki/Smart-Upgrade) |
 | **Smart Restore** | Save, share, and replay panel setups and whole factory modules. | [Smart Restore](https://github.com/majormer/SmartFoundations/wiki/Smart-Restore) |

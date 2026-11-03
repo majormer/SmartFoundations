@@ -107,4 +107,4 @@ Some layouts still need a manual connection afterward. That is normal.
 
 ---
 
-_Last updated: 2026-11-02 · Smart! v35.1.0 / Smart Camera v2.0.0 (release draft)_
+_Last updated: 2026-11-02 · Smart! v35.1.0 / Smart Camera v2.0.0_

@@ -48,10 +48,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "_Sidebar:8": {
-    "text": "_最終更新: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (リリースドラフト)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "text": "_最終更新: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "90cb2f4ec0a877789160414441d87af9660480498e3243f7517711c84cc354bf",
     "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Auto-Connect:0": {
     "text": "# 自動接続",
@@ -78,9 +78,10 @@
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
   "Auto-Connect:56": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "0ef504a252dcabd3541b9ed8c7d000b31225026b5fa22aa19b6f534eadd38d6b"
+    "text": "**K → スケーリング** を開き、選択中の建築可能物に応じた **自動接続** セクションを使用します。対応するロジスティクス建築可能物では、`U` が接続設定を開きます。グローバルデフォルトは **オプション → Mod設定 → Smart!** にあり、現在のプレビューの選択はパネルにあります。接続設定は **即時適用** とは独立してライブで更新されます。",
+    "source_hash": "0ef504a252dcabd3541b9ed8c7d000b31225026b5fa22aa19b6f534eadd38d6b",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Auto-Connect:5": {
     "text": "パネル、ホイール、またはテンキーを使用してグリッドを形状付けし、建築前に生成された接続と方向矢印をワールド内で確認してください。HUD は別の接続設定フォームを提供する代わりに、配置値を報告します。デフォルトキーとプレイヤー基準の動作については [操作](Controls) を参照してください。",
@@ -119,14 +120,16 @@
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
   "Auto-Connect:47": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "bfcb0d7bcbf0b5b36a80dd16a2dac958a4db4fc0261b34174dd132215ae37e01"
+    "text": "### ディストリビューター分岐",
+    "source_hash": "bfcb0d7bcbf0b5b36a80dd16a2dac958a4db4fc0261b34174dd132215ae37e01",
+    "status": "reviewed",
+    "review_method": "Local-model contextual translation and separate semantic review; structural validation. No human native-speaker certification."
   },
   "Auto-Connect:48": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "59bd907b72a7a1bd727a61b3bb63c228bae6f45d96d4267b1fa73010ed0ca1df"
+    "text": "スプリッターまたはマージャーの分岐は、接続する機械のポートに向いていなければなりません。Smart! は工場ごとに1つの分岐のみを許可し、機械列の同じ側へ2つの分岐を送り込みません。向かい合う機械列には、向かい合う分岐を使用できます。これらのルールは Smart、プログラマブル、およびプライオリティの各バリアントにも適用されます。目的のポートが反対側を向いている場合は、ディストリビューターを回転または再配置してください。未使用のポートが反対側を向いているのは正常であり、それ自体が警告を引き起こすわけではありません。",
+    "source_hash": "59bd907b72a7a1bd727a61b3bb63c228bae6f45d96d4267b1fa73010ed0ca1df",
+    "status": "reviewed",
+    "review_method": "Local-model contextual translation and separate semantic review; structural validation. No human native-speaker certification."
   },
   "Auto-Connect:11": {
     "text": "### リフト支援付き機械接続",
@@ -183,9 +186,10 @@
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
   "Auto-Connect:57": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "01bc78e7b2eed2e3b61e790428579385ed84d207401ce8ce691e20542ceb6c01"
+    "text": "**スケーリングされたパイプライン支柱はパイプラインを構築します。** パイプライン支柱または壁用パイプライン支柱の列をスケーリングすると、Smart! はコピー間で接続されたパイプラインを配管します — スケーリングされたコンベア・ポールの列がベルトラインを構築するのと同じ方法です。液体は全ラインを流れますが、各支柱自身のスナップポイントは解放されたままなので、手動でパイプを接続できます。地面用支柱の高さとその上部パーツの角度は全ラインにわたって引き継がれるため、傾斜したラインは一貫性を保ちます。",
+    "source_hash": "01bc78e7b2eed2e3b61e790428579385ed84d207401ce8ce691e20542ceb6c01",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Auto-Connect:19": {
     "text": "生成されたパイプは、接続されたソースパイプからペイントを引き継ぎます。フィッティングは、接続されたパイプのペイントが一致する場合のみペイントを引き継ぎます。ペイントソースのない接続にプレビューを移動すると、元のペイントが復元されます。",
@@ -212,14 +216,16 @@
     "review_method": "Contextual multilingual review with official game terminology; no native-speaker certification."
   },
   "Auto-Connect:50": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "a731c462366f0c155a14546a1265f77d5e93778036e1ebd4a44e669ff5112e22"
+    "text": "### パイプジャンクション分岐",
+    "source_hash": "a731c462366f0c155a14546a1265f77d5e93778036e1ebd4a44e669ff5112e22",
+    "status": "reviewed",
+    "review_method": "Local-model contextual translation and separate semantic review; structural validation. No human native-speaker certification."
   },
   "Auto-Connect:51": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "0a29d3c9b8ec32dedec575d19408d9bb4da0cbb09a58b8d2ed2dc2c0f3f833c7"
+    "text": "パイプジャンクションの分岐も、同じ向きおよび機械側のルールに従います。T字ジャンクションおよび十字ジャンクションのポートは、回転しても実際の方向を保持します。Smart! は、有効な接続を維持しながら、不適切な分岐をスキップします。ルート長およびコンベアの傾斜チェックには、一律の25mパイプ制限や30度ベルト制限ではなく、適用されるネイティブな建設制限が使用されます。",
+    "source_hash": "0a29d3c9b8ec32dedec575d19408d9bb4da0cbb09a58b8d2ed2dc2c0f3f833c7",
+    "status": "reviewed",
+    "review_method": "Local-model contextual translation and separate semantic review; structural validation. No human native-speaker certification."
   },
   "Auto-Connect:21": {
     "text": "## ハイパーチューブ自動接続",
@@ -240,14 +246,16 @@
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
   "Auto-Connect:58": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "eb2ee60a85c009c8b087b30e51ca7b4eb21ab2ca69353d8b3bce92a60256f455"
+    "text": "**スケーリングされたハイパーチューブ支柱はハイパーチューブラインを構築します。** ハイパーチューブ支柱 (スタック可能) の列をスケーリングすると、Smart! はコピー間で接続されたハイパーチューブラインを敷設します — スケーリングされたコンベア・ポールの列がベルトラインを構築したり、パイプライン支柱がパイプラインを構築するのと同じ方法です。ラインは列の間隔と高さに従い、急勾配で上昇することもできますが、各支柱自身のスナップポイントは解放されたままなので、手動でハイパーチューブを接続できます。",
+    "source_hash": "eb2ee60a85c009c8b087b30e51ca7b4eb21ab2ca69353d8b3bce92a60256f455",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Auto-Connect:59": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "12ed988af1c997655966e3695ec2f34cf65159be86bd53b56fa1a92c8a85b213"
+    "text": "ハイパーチューブ自動接続には、パイプとは独立した **独自の有効化トグルとルーティングモード** があります。これらは Smart パネル、建築中の自動接続設定（`U` を長押し）、またはMod設定から設定します。[設定リファレンス](Settings-Reference) を参照してください。",
+    "source_hash": "12ed988af1c997655966e3695ec2f34cf65159be86bd53b56fa1a92c8a85b213",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Auto-Connect:26": {
     "text": "## 回転した壁用支柱のライン",
@@ -256,9 +264,10 @@
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
   "Auto-Connect:60": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "fd7f0d71039eaac4e79da271b675c44893d3943fcbd5cfcc62fcca29fe53a2ce"
+    "text": "パイプラインおよびハイパーチューブの壁用支柱の子要素は、親の完全な回転に従います。パネルの **壁の回転** は、垂直ラインを含むネイティブの **45°ステップ** を提供します。これは、コピーのシーケンスを曲げるグリッドの回転とは別物です。",
+    "source_hash": "fd7f0d71039eaac4e79da271b675c44893d3943fcbd5cfcc62fcca29fe53a2ce",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Auto-Connect:28": {
     "text": "建物基準のコントロールでは、Yは回転した壁の配線経路に沿います。プレイヤー基準のコントロールでは、垂直入力は最も垂直に近い対応方向に従います。垂直な壁の配線経路の場合、**X+Z + ホイール**で経路を垂直に伸ばし、**Z + ホイール**で横方向に伸ばします。パネルにはX/Y/Zの列が保持されます。矢印を使用してこれらの軸を確認してください。コンベア壁コネクタは標準の方向制限を保持し、垂直輸送にはリフトを使用します。",
@@ -333,9 +342,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Auto-Connect:55": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
+    "text": "_最終更新: 2026-11-02 · Smart! v35.1.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "738986e1276ad98403f2e483d1e397f7061c2af5e93202af6d82ce474d5d7eeb",
+    "status": "reviewed",
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Blueprints:0": {
     "text": "# Smart! ブループリント",
@@ -440,9 +450,10 @@
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
   "Blueprints:34": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "60707b2c9e66e6d33812f6b75b700b1d1cfafde4fcb92a54f5847b69c82a8ac8"
+    "text": "Building Behavior の下にある **ブループリント配置の安全上限** は、デフォルトで有効になっています。リモートマルチプレイクライアントの場合、オリジナルとすべてのコピーを含めて2,000棟以上と推定されるブループリントグリッドをブロックします。フリーズ、切断、失敗のリスクが増加しますが、この設定をライブで無効にしてより大きな設置を試行できます。通常の素材、設置、および建設ペイロードのチェックは引き続き適用されます。設置が拒否された場合は、より小さなセクションに分けて建設してください。",
+    "source_hash": "60707b2c9e66e6d33812f6b75b700b1d1cfafde4fcb92a54f5847b69c82a8ac8",
+    "status": "reviewed",
+    "review_method": "Local-model draft and semantic review, followed by direct contextual correction; no human native-speaker certification."
   },
   "Blueprints:18": {
     "text": "マルチプレイヤーはサーバー側の検証と通常のコストを使用します。変更されたエンドポイントやリソース不足により、以前は有効だったプレビューが無効になることがあります。[自動接続](Auto-Connect) および [互換性とマルチプレイヤー](Compatibility-and-Multiplayer) を参照してください。",
@@ -523,9 +534,10 @@
     "review_method": "Contextual multilingual review with official game terminology; no native-speaker certification."
   },
   "Blueprints:35": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
+    "text": "_最終更新: 2026-11-02 · Smart! v35.1.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "738986e1276ad98403f2e483d1e397f7061c2af5e93202af6d82ce474d5d7eeb",
+    "status": "reviewed",
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Buildable-Gallery:0": {
     "text": "# 建設可能物ギャラリー",
@@ -972,10 +984,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Buildable-Gallery:75": {
-    "text": "_最終更新: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (リリースドラフト)_\n",
-    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89",
+    "text": "_最終更新: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "8d8ca2bf47cdd1190ffc8d7e3c35f31c2a04adf92a128713a384de42b66ce426",
     "status": "reviewed",
-    "review_method": "Reviewed existing footer with mechanical source date update."
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Compatibility-and-Multiplayer:0": {
     "text": "# 互換性とマルチプレイヤー",
@@ -996,14 +1008,16 @@
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
   "Compatibility-and-Multiplayer:23": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "ddb7f6d3428242b7eb2a16d6468bc1c961f041f29251922f6c6a6922bfa78751"
+    "text": "Smart! 35.1.0 は **Satisfactory 1.2.4 / CL 502094 以降** および **SML 3.12.x** を対象としています。インストール前にゲームとMODローダーを更新してください。古いゲームビルドはサポートされていません。",
+    "source_hash": "ddb7f6d3428242b7eb2a16d6468bc1c961f041f29251922f6c6a6922bfa78751",
+    "status": "reviewed",
+    "review_method": "Local-model contextual translation and separate semantic review; structural validation. No human native-speaker certification."
   },
   "Compatibility-and-Multiplayer:24": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "52b5e96461ffcb32e45b4e4f8c6a7bb4ae65053d1b8488b28119e6c0efbcaf11"
+    "text": "Smart Camera 2.0 と Smart! 35.1 は、両方がインストールされている場合、互換性のあるペアとして同時に更新する必要があります。Camera は単体でも動作します。Smart のビルドツールは Camera を必要としません。Camera の設定と HUD の外観は、サーバー上の全員ではなく、各ローカルプレイヤーに属します。",
+    "source_hash": "52b5e96461ffcb32e45b4e4f8c6a7bb4ae65053d1b8488b28119e6c0efbcaf11",
+    "status": "reviewed",
+    "review_method": "Local-model contextual translation and separate semantic review; structural validation. No human native-speaker certification."
   },
   "Compatibility-and-Multiplayer:5": {
     "text": "## セーブデータの安全性",
@@ -1048,19 +1062,22 @@
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
   "Compatibility-and-Multiplayer:29": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "274d747f094a4e138cbbfdf378bc151dedd8d3fa979722492b56173b298c75d5"
+    "text": "Smart! は専用サーバーでのマルチプレイヤーに対応しています。グリッドスケーリング、自動接続（ベルト、パイプ、電力）、Smart ブループリント、拡張、Smart アップグレード、Smart 復元、Smart 解体など、Smart! のすべての機能は、通常の建設コストでクライアントとしてプレイしている場合でも動作します。Smart! が設置するものはすべて、標準的で完全に同期されたゲーム内の建物です。他のプレイヤーもそれを見ることができ、使用でき、手動で建設したのと同じように解体できます。",
+    "source_hash": "274d747f094a4e138cbbfdf378bc151dedd8d3fa979722492b56173b298c75d5",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Compatibility-and-Multiplayer:26": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "8cb40018690ab6ebe9357b170389232193d08c25eafc1fd5d631dac793751ffe"
+    "text": "- **専用サーバー:** Windows と Linux の両方がサポートされています。\n- Building Behavior の下にある **ブループリント配置の安全上限** は、デフォルトで有効になっています。リモートマルチプレイクライアントの場合、オリジナルとすべてのコピーを含めて2,000棟以上と推定されるブループリントグリッドをブロックします。フリーズ、切断、失敗のリスクが増加しますが、この設定をライブで無効にしてより大きな設置を試行できます。通常の素材、設置、および建設ペイロードのチェックは引き続き適用されます。設置が拒否された場合は、より小さなセクションに分けて建設してください。\n- **サーバー管理者向け:** サーバーとすべてのクライアントに同じ Smart! バージョンをインストールしてください。Mod Manager は更新時にこれらを一致させます。\n- **Smart Camera** (コンパニオンMOD) もマルチプレイで動作します。",
+    "source_hash": "8cb40018690ab6ebe9357b170389232193d08c25eafc1fd5d631dac793751ffe",
+    "status": "reviewed",
+    "review_method": "Local-model draft and semantic review, followed by direct contextual correction; no human native-speaker certification."
   },
   "Compatibility-and-Multiplayer:30": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "be6a21fb0e3a5a2792dc5eaa0095af9dbd2cdc8641d29aed38e44f5a8dce7ce9"
+    "text": "マルチプレイヤーはシングルプレイヤーよりも新しいため、マルチプレイヤーセッションでの挙動がシングルプレイヤーと異なる場合はバグです。GitHub または Discord で報告し、何を建設していたか、ホストまたはクライアントのどちらだったかを記載してください。",
+    "source_hash": "be6a21fb0e3a5a2792dc5eaa0095af9dbd2cdc8641d29aed38e44f5a8dce7ce9",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Compatibility-and-Multiplayer:15": {
     "text": "各プレイヤーのセッションアシスタント切り替えは、そのプレイヤー自身の建設ツールにのみ影響します。リモート拡張/復元では、リスンサーバーホストのプレビューと設定が、クライアントの操作から分離されたまま維持されます。",
@@ -1105,9 +1122,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Compatibility-and-Multiplayer:31": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
+    "text": "_最終更新: 2026-11-02 · Smart! v35.1.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "738986e1276ad98403f2e483d1e397f7061c2af5e93202af6d82ce474d5d7eeb",
+    "status": "reviewed",
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Controller-and-Steam-Deck:0": {
     "text": "# コントローラー & Steam Deck (実験的)",
@@ -1290,10 +1308,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Controller-and-Steam-Deck:30": {
-    "text": "_最終更新: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (リリースドラフト)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "text": "_最終更新: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "90cb2f4ec0a877789160414441d87af9660480498e3243f7517711c84cc354bf",
     "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Controls:0": {
     "text": "# コントロール",
@@ -1524,10 +1542,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Controls:40": {
-    "text": "_最終更新: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (リリースドラフト)_\n",
-    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89",
+    "text": "_最終更新: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "8d8ca2bf47cdd1190ffc8d7e3c35f31c2a04adf92a128713a384de42b66ce426",
     "status": "reviewed",
-    "review_method": "Reviewed existing footer with mechanical source date update."
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Conveyor-Lift-Grids:0": {
     "text": "# コンベア・リフト グリッド",
@@ -1590,10 +1608,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Conveyor-Lift-Grids:10": {
-    "text": "_最終更新: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (リリースドラフト)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "text": "_最終更新: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "90cb2f4ec0a877789160414441d87af9660480498e3243f7517711c84cc354bf",
     "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Extend:0": {
     "text": "# 拡張",
@@ -1644,9 +1662,10 @@
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
   "Extend:49": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "be187544697091618ad4e7d6e1a2c2782b01ec9a0930ae4d3655eadaf437a2ca"
+    "text": "1. 機能するモジュールを1つ手動で建設し、FICSIT ビルドガンで同じ建物タイプを装備します。\n2. **K → 拡張**を開き、**ソースを選択**を押します。\n3. パネル外のワールドにある既存のソース建物をクリックします。選択中は互換性のあるソースがハイライト表示されます。**Esc**で選択をキャンセルできます。パネル内のクリックはインターフェースとして扱われます。\n4. ソース名、関連付けられた接続オブジェクト、および繰り返し回数を確認します。**方向を変更**と配置コントロールを使用してプレビューを調整します。\n5. パネルを閉じ、提案されたコピーと材料コストを確認してから、FICSIT ビルドガンを発射して通常通り建設します。",
+    "source_hash": "be187544697091618ad4e7d6e1a2c2782b01ec9a0930ae4d3655eadaf437a2ca",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Extend:9": {
     "text": "ソースを選択しても何も建設されません。ミスをした場合は、以前のプレビューが保持されます。ソースを置き換える場合や、未建設の複雑な配置を置き換える場合は、破棄する前に確認を求められます。選択したソースは、配置がキャンセルされるか、建設されるか、レシピが変更されるまで、確認のために固定されたままになります。",
@@ -1691,9 +1710,10 @@
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
   "Extend:50": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "e63c3cf4682d23c05eeac5028bcb9b9181dbd792603560f52b7b754522f84fbc"
+    "text": "実体の製錬炉は既存のソースです。シアン色の製錬炉、ベルト、支柱は提案されたコピーであり、HUDには**拡張 1×1**と表示されます。これは未建設のプレビューです。",
+    "source_hash": "e63c3cf4682d23c05eeac5028bcb9b9181dbd792603560f52b7b754522f84fbc",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Extend:17": {
     "text": "## 方向の変更",
@@ -1714,9 +1734,10 @@
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
   "Extend:51": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "76acf531cc52c29e073f3df2f0e0d06d36121daf24e05679c1f466af9d01eb13"
+    "text": "**K → 拡張 → ソースを選択**で明示的に開始するか、ホバーショートカットを使用します。拡張タブは、グリッド数、間隔、対応する変換のための配置コントロールを再利用します。[グリッドスケーリング](Grid-Scaling)と同じホイール/テンキーコントロールも使用できます。修飾キーを押していない場合、ホイールは拡張方向を選択します。実行中のHUDは、ルート/行とアクティブな調整を示すため、建設前に何が変わるかを確認できます。",
+    "source_hash": "76acf531cc52c29e073f3df2f0e0d06d36121daf24e05679c1f466af9d01eb13",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Extend:21": {
     "text": "## スケールされた拡張",
@@ -1755,9 +1776,10 @@
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
   "Extend:52": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "a818fc9f6600b845b33395c092257e5c56b6b18d277fc9a96921343bf18ea9b7"
+    "text": "同じソースから、コンベアルートと支柱を含む3つのシアン色のモジュールコピーが生成されます。HUDには**拡張 3×1**と表示され、コピーの数に応じて材料コストが増加します。実体のソースはそのまま残ります。",
+    "source_hash": "a818fc9f6600b845b33395c092257e5c56b6b18d277fc9a96921343bf18ea9b7",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Extend:28": {
     "text": "## 揚水ポンプ",
@@ -1808,19 +1830,22 @@
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
   "Extend:45": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "54e38c7493c79d3f4bc2f71a29b70d8dd6942a4f44bee91a351b6ebd82db6819"
+    "text": "## カーブと不完全な操作",
+    "source_hash": "54e38c7493c79d3f4bc2f71a29b70d8dd6942a4f44bee91a351b6ebd82db6819",
+    "status": "reviewed",
+    "review_method": "Local-model contextual translation and separate semantic review; structural validation. No human native-speaker certification."
   },
   "Extend:46": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "2fc6ba5d654478f0d36a249ac28472d87d41be4029ae07a4e513561265a5f725"
+    "text": "カーブした Extend は、ソースまたは以前のコピーの上にモジュールを配置できません。HUD が以前のコピーとの重複を報告した場合は、カウントを減らすか、回転、間隔、またはステップを変更してください。このチェックはモジュールの重複配置を防ぐものであり、一般的な衝突検出器ではありません。",
+    "source_hash": "2fc6ba5d654478f0d36a249ac28472d87d41be4029ae07a4e513561265a5f725",
+    "status": "reviewed",
+    "review_method": "Local-model contextual translation and separate semantic review; structural validation. No human native-speaker certification."
   },
   "Extend:47": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "8d860159ae76958c5e531b7732a1d2bed5e6c39a0cc339d47fa7d866c6ab94e8"
+    "text": "コピーによって既存のコンベア上の貨物が複製されることはありません。表示された資材費と作成される接続を確認してください。操作が未完了と報告された場合は、再試行する前にワールド内の結果を確認してください。すでに完成した部分が残っている場合があります。",
+    "source_hash": "8d860159ae76958c5e531b7732a1d2bed5e6c39a0cc339d47fa7d866c6ab94e8",
+    "status": "reviewed",
+    "review_method": "Local-model draft and semantic review, followed by direct contextual correction; no human native-speaker certification."
   },
   "Extend:36": {
     "text": "## キャプチャされたレイアウトを確認する",
@@ -1847,9 +1872,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Extend:48": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
+    "text": "_最終更新: 2026-11-02 · Smart! v35.1.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "738986e1276ad98403f2e483d1e397f7061c2af5e93202af6d82ce474d5d7eeb",
+    "status": "reviewed",
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "FAQ:0": {
     "text": "# よくある質問",
@@ -2356,10 +2382,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "FAQ:84": {
-    "text": "_最終更新: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (リリースドラフト)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "text": "_最終更新: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "90cb2f4ec0a877789160414441d87af9660480498e3243f7517711c84cc354bf",
     "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Feature-Gallery:0": {
     "text": "# 機能ギャラリー",
@@ -2728,10 +2754,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Feature-Gallery:64": {
-    "text": "_最終更新: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (リリースドラフト)_\n",
-    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89",
+    "text": "_最終更新: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "8d8ca2bf47cdd1190ffc8d7e3c35f31c2a04adf92a128713a384de42b66ce426",
     "status": "reviewed",
-    "review_method": "Reviewed existing footer with mechanical source date update."
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Glossary:0": {
     "text": "# 用語集",
@@ -2758,10 +2784,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Glossary:4": {
-    "text": "_最終更新: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (リリースドラフト)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "text": "_最終更新: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "90cb2f4ec0a877789160414441d87af9660480498e3243f7517711c84cc354bf",
     "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Grid-Scaling:0": {
     "text": "# グリッドスケーリング",
@@ -2932,10 +2958,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Grid-Scaling:28": {
-    "text": "_最終更新: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (リリースドラフト)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "text": "_最終更新: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "90cb2f4ec0a877789160414441d87af9660480498e3243f7517711c84cc354bf",
     "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "History-and-Credits:0": {
     "text": "# 履歴とクレジット",
@@ -3136,14 +3162,16 @@
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
   "Home:18": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "1829ed863c572c2dbcafc8f78604d94faa795d58ca1d7e90494d020f49980f60"
+    "text": "## Smart! 35.1.0",
+    "source_hash": "c51b192a3da9407b55bb694e43e758aef296d6f982f8ea1d3c9544572184a93f",
+    "status": "reviewed",
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Home:19": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "1bd5656d0819ad3a7d1a6861c038f59661e423c6f03bddc8b203ef1a7ffb5c8b"
+    "text": "このリリースでは、Extend、Restore、および Upgrade におけるコンベアとリフトの処理が改善され、ネイティブなルート制限が修正され、Auto-Connect が適切なディストリビューター分岐を選択するようになりました。大規模なブループリントグリッドには、オプションのクライアント安全制限が追加されました。動作と制限については、[Auto-Connect](Auto-Connect)、[Blueprints](Blueprints)、および [Smart Upgrade](Smart-Upgrade) を参照してください。",
+    "source_hash": "1bd5656d0819ad3a7d1a6861c038f59661e423c6f03bddc8b203ef1a7ffb5c8b",
+    "status": "reviewed",
+    "review_method": "Local-model contextual translation and separate semantic review; structural validation. No human native-speaker certification."
   },
   "Home:13": {
     "text": "## 対応バージョン",
@@ -3152,9 +3180,10 @@
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
   "Home:20": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "6de3b72e72a676036d11c5f3b3679009013b370ca2cb7e8aed2d56252d3addd9"
+    "text": "**Smart! 35.1.0**は**Smart Camera 2.0.0**に対応しています。併用する場合は両方のModを更新してください。",
+    "source_hash": "332a69d5007a0b672628c30eca7cb0b652928cddad228f06e6d4186a52c9b3f8",
+    "status": "reviewed",
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Home:15": {
     "text": "共有の [パネルと HUD](Smart-Panel-and-HUD)、[ウォーク再開](Smart-Walking)、[リフト支援付き自動接続](Auto-Connect)、および [ブループリント継ぎ目接続](Blueprints) から始めてください。",
@@ -3169,9 +3198,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Home:21": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
+    "text": "_最終更新: 2026-11-02 · Smart! v35.1.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "738986e1276ad98403f2e483d1e397f7061c2af5e93202af6d82ce474d5d7eeb",
+    "status": "reviewed",
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Lift-Assisted-Auto-Connect:0": {
     "text": "# リフト支援付き自動接続",
@@ -3282,10 +3312,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Lift-Assisted-Auto-Connect:17": {
-    "text": "_最終更新: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (リリースドラフト)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "text": "_最終更新: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "90cb2f4ec0a877789160414441d87af9660480498e3243f7517711c84cc354bf",
     "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Quick-Start:0": {
     "text": "# クイックスタート",
@@ -3414,10 +3444,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Quick-Start:21": {
-    "text": "_最終更新: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (リリースドラフト)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "text": "_最終更新: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "90cb2f4ec0a877789160414441d87af9660480498e3243f7517711c84cc354bf",
     "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Screenshot-Checklist:0": {
     "text": "# スクリーンショットガイド",
@@ -3480,10 +3510,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Screenshot-Checklist:11": {
-    "text": "_最終更新: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (リリースドラフト)_\n",
-    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89",
+    "text": "_最終更新: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "8d8ca2bf47cdd1190ffc8d7e3c35f31c2a04adf92a128713a384de42b66ce426",
     "status": "reviewed",
-    "review_method": "Reviewed existing footer with mechanical source date update."
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Settings-Reference:0": {
     "text": "# 設定リファレンス",
@@ -3498,9 +3528,10 @@
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
   "Settings-Reference:59": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "3f27a7251dee61f272afa2b13b0a9a7d3b5d0782f11461e43b22ec93ed6baceb"
+    "text": "**メインメニュー → MOD → Smart!** から見つけます。ここでの変更は**セーブ間およびセッション間で永続化されます**。（キーバインドは別です — [コントロール](Controls)を参照してください。）",
+    "source_hash": "3f27a7251dee61f272afa2b13b0a9a7d3b5d0782f11461e43b22ec93ed6baceb",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Settings-Reference:3": {
     "text": "## ベルト自動接続",
@@ -3557,9 +3588,10 @@
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
   "Settings-Reference:60": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "de7e8d93fbc71c12b9ce0a1c8db5fdc99380795aa7009f219fc68164294d1f29"
+    "text": "- **ハイパーチューブ オート接続** — ハイパーチューブの自動接続を有効または無効にします。**デフォルトでオン。**（33.1.0で追加。）\n- ハイパーチューブのルーティングモードを選択します。",
+    "source_hash": "de7e8d93fbc71c12b9ce0a1c8db5fdc99380795aa7009f219fc68164294d1f29",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Settings-Reference:13": {
     "text": "## 電力の自動接続",
@@ -3574,9 +3606,10 @@
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
   "Settings-Reference:61": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "ec98629a469e74c7be896e64709377532daca45491fe70e1465ce14f99cffdfb"
+    "text": "- 電力のオート接続を有効または無効にします。\n- 接続モードを選択します。\n- 接続範囲を設定します。\n- 電柱接続を予約し、Smart! がすべてのスロットを埋めないようにします。\n- **スケーリング時に電力をデイジーチェーン接続** — 「アップグレード済み電力コネクタ」がアンロックされている場合、Smart のX軸に沿って工場や発電機をスケーリングすると、各コピーを電柱経由ではなく次のコピーに直接配線します。これにより、個別の「拡張」パスなしで一般的なマニホールドレイアウトに一致します。Smart パネルは現在のビルドに対してこれを上書きでき、HUD は有効な選択を報告します。各コネクタの利用可能な容量を尊重します。**デフォルトでオン。**（34.2.0で追加。）",
+    "source_hash": "ec98629a469e74c7be896e64709377532daca45491fe70e1465ce14f99cffdfb",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Settings-Reference:16": {
     "text": "## ブループリント オート接続",
@@ -3585,14 +3618,16 @@
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
   "Settings-Reference:62": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "777a49715537ba1bf7334d6be913926f712654bb9bcb31b43455ceeff3c86b11"
+    "text": "スケーリングされた**自分の**ブループリントのコピー間の継ぎ目用の個別スイッチです。上記のベルトおよびパイプの自動接続とは独立して動作するため、通常の自動接続がオフの場合でも、ブループリントのコピー間の配線を維持できます。",
+    "source_hash": "777a49715537ba1bf7334d6be913926f712654bb9bcb31b43455ceeff3c86b11",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Settings-Reference:63": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "5daf4a877774b178a7054980007283bb25a2de416f6dad2c908287768adb9db4"
+    "text": "- **ブループリント継ぎ目自動接続** — スケーリングされたブループリントのコピー間で、ベルト、パイプ、ハイパーチューブ、線路、指定された車両経路、および対象となる電力接続を自動的に接続するかどうかを有効/無効にします。**デフォルトでオンです。** (34.2.0で追加)",
+    "source_hash": "5daf4a877774b178a7054980007283bb25a2de416f6dad2c908287768adb9db4",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Settings-Reference:19": {
     "text": "電力の継ぎ目接続にはさらに**電力自動接続**が必要です。各ケーブルは、空き容量のある対応する電柱ソケットを使用します。内部ワイヤーと壁用電源差込口の両面は個別にカウントされます。",
@@ -3601,14 +3636,16 @@
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
   "Settings-Reference:51": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "d30a9c4968359ae455bcba1db55829f233cd9689baac7a41ddda2ee677c671a7"
+    "text": "## ブループリント配置の安全上限",
+    "source_hash": "d30a9c4968359ae455bcba1db55829f233cd9689baac7a41ddda2ee677c671a7",
+    "status": "reviewed",
+    "review_method": "Local-model contextual translation and separate semantic review; structural validation. No human native-speaker certification."
   },
   "Settings-Reference:52": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "8d8d2f7ca8e8f5f5ffd32286939d718b5621954e9eb433f316520ac4e84d392b"
+    "text": "Building Behavior の下にある **ブループリント配置の安全上限** は、デフォルトで有効になっています。リモートマルチプレイクライアントの場合、オリジナルとすべてのコピーを含めて2,000棟以上と推定されるブループリントグリッドをブロックします。フリーズ、切断、失敗のリスクが増加しますが、この設定をライブで無効にしてより大きな設置を試行できます。通常の素材、設置、および建設ペイロードのチェックは引き続き適用されます。設置が拒否された場合は、より小さなセクションに分けて建設してください。ワールドの再読み込みは不要です。",
+    "source_hash": "8d8d2f7ca8e8f5f5ffd32286939d718b5621954e9eb433f316520ac4e84d392b",
+    "status": "reviewed",
+    "review_method": "Local-model draft and semantic review, followed by direct contextual correction; no human native-speaker certification."
   },
   "Settings-Reference:20": {
     "text": "## ブループリント間隔のデフォルト",
@@ -3635,9 +3672,10 @@
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
   "Settings-Reference:64": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "bb2d0aef5ebb0f05f6e0332aba3b272795cbf3d8bade162603d3521aad41d592"
+    "text": "- **近隣ロジスティクス範囲** — 自動接続時に、コンベア分岐機、コンベア合流機、パイプラインジャンクション、およびパイプ用床穴が工場ポートに向かって到達する距離です。これを下げると、自動接続が隣接する工場グループにまで及ぶのを防げます。**デフォルトは25 m**（以前の固定動作）。 (34.2.0で追加)",
+    "source_hash": "bb2d0aef5ebb0f05f6e0332aba3b272795cbf3d8bade162603d3521aad41d592",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Settings-Reference:25": {
     "text": "## 拡張",
@@ -3658,9 +3696,10 @@
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
   "Settings-Reference:65": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "5062fcd97160abfb325d9843686928ec4e50ca66911455b5f84cd6515d2b0179"
+    "text": "- グリッド変更時の自動ホールドは、グリッドを変更した後にホログラムをロックするため、大きなプレビューが誤って移動しません。**デフォルトでオンです**（32.1.2時点）— ホログラムを自由に再配置できるようにしたい場合はここでオフにしてください。バニラのホールドキーで個々のロックを解除できます。\n- **プレイヤー基準の操作** — 建物が固定のコンパス軸ではなく、見ている方向に従うようになります：マウスホイールで向いている方向に設置範囲が広がり、テンキーがコンパス（前方/後方、右/左、上/下）として機能します。スケーリング、間隔、ステップ、スタガー、回転に適用されます。**デフォルトでオフです** — オンにするまでクラシックな操作は変更されず、Smart パネルは常に固定のX/Y/Zのままです。詳細については[コントロール](Controls)を参照してください。 (34.1.0で追加)\n- **タップで変換モード切り替え** — 変換キー（間隔、ステップ、スタガー、回転、または工場でのレシピ）をタップするとそのモードがオンになり、再度タップするとオフになります。別のキーをタップするとモードが切り替わります。コントローラー、Steam Deck、アクセシビリティ設定向けに設計されており、Steam Inputのラジアル/タッチメニューはクイックタップを送信し、キーを押し続けることはできません。ツールを収納したり、建物を変更したり、パネルを開いたりすると、常にモードが解除されます。**デフォルトでオフです** — オンにするまでクラシックな押し続け動作は影響を受けず、オフに戻すと即座に復元されます。ラジアルメニューの設定については[コントローラー & Steam Deck](Controller-and-Steam-Deck)を参照してください。 (34.2.0で追加)",
+    "source_hash": "5062fcd97160abfb325d9843686928ec4e50ca66911455b5f84cd6515d2b0179",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Settings-Reference:29": {
     "text": "## スクロール増分",
@@ -3675,14 +3714,16 @@
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
   "Settings-Reference:66": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "89d132f31272346911aed3355f02885dd096f7bf810ca50e85be98947993996e"
+    "text": "- **間隔増分** (m) — スクロールノッチごとに追加される間隔のメートル数（拡張の間隔やウォークセグメントの前進にも適用）。\n- **ステップ増分** (m) — ノッチごとのステップのメートル数（ウォークセグメントの上昇にも適用）。\n- **スタガー増分** (m) — ノッチごとのスタガーのメートル数（ウォークセグメントのシフトにも適用）。\n- **回転増分** (deg) — ノッチごとの回転の度数（ウォークセグメントの旋回にも適用）。",
+    "source_hash": "89d132f31272346911aed3355f02885dd096f7bf810ca50e85be98947993996e",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Settings-Reference:67": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "b595cc1429fd298b95947cec85d6569724d96fed5b22b0b9424ca76f88c295da"
+    "text": "デフォルトは0.5 mと5°です。距離増分は0.1–8 mを受け付けます。回転は0.5–90°を受け付けます。",
+    "source_hash": "b595cc1429fd298b95947cec85d6569724d96fed5b22b0b9424ca76f88c295da",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Settings-Reference:33": {
     "text": "## Smart パネル",
@@ -3727,9 +3768,10 @@
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
   "Settings-Reference:68": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "c472d20351cba658f26ae667c4cd445f95ae5a5ca37a10e8763878b476181f29"
+    "text": "**Mod → Smart! Camera**では、ビューは供給元のMod名とカメラ名の下に自動的に表示され、非アクティブなビューも含まれます。ビルドガンの内蔵ビューには有効化の独立したコントロールがあります。ビューごとの位置は0～1に正規化され、解像度は軸あたり64～2048ピクセル、スケールは0.1～2、キャプチャレートは5～60/秒、明るさは−3～+3 EVです。適用可能なビルドカメラの距離は5～50 mです。カメラ設定は即時に適用されます。メニューによって非表示になっているビューは、再開時に更新されます。**すべてのセーブデータ**は、そのカメラのグローバルおよび既存の保存済みプロファイル（現在のワールドを含む）において、編集されたフィールドのみをパッチ適用します。**このセーブデータ**は、現在のバニラのセーブプロファイルのみを変更します。無関係なフィールドや他のカメラはそのまま維持されます。",
+    "source_hash": "c472d20351cba658f26ae667c4cd445f95ae5a5ca37a10e8763878b476181f29",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Settings-Reference:41": {
     "text": "すべてのセーブデータで**Modの提案を使用**すると、そのカメラがセーブデータ間でリセットされます。このセーブデータで**グローバル設定を使用**すると、現在のオーバーライドのみが削除されます。フレーミング/距離のリセットは、その2つのフィールドのみを変更します。レイアウトの編集は、共有の**完了 / ロック**までプレビューされます。キャンセルすると、保留中のレイアウト/HUDの変更が破棄されます。[Smart Camera](Smart-Camera)を参照してください。",
@@ -3756,9 +3798,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Settings-Reference:58": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
+    "text": "_最終更新: 2026-11-02 · Smart! v35.1.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "738986e1276ad98403f2e483d1e397f7061c2af5e93202af6d82ce474d5d7eeb",
+    "status": "reviewed",
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Smart-Assistance:0": {
     "text": "# Smart アシスタンス",
@@ -3857,10 +3900,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Smart-Assistance:17": {
-    "text": "_最終更新: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (リリースドラフト)_\n",
-    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89",
+    "text": "_最終更新: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "8d8ca2bf47cdd1190ffc8d7e3c35f31c2a04adf92a128713a384de42b66ce426",
     "status": "reviewed",
-    "review_method": "Reviewed existing footer with mechanical source date update."
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Smart-Blueprints:0": {
     "text": "# Smart! ブループリント",
@@ -4145,10 +4188,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Smart-Camera:39": {
-    "text": "_最終更新: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (リリースドラフト)_\n",
-    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89",
+    "text": "_最終更新: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "8d8ca2bf47cdd1190ffc8d7e3c35f31c2a04adf92a128713a384de42b66ce426",
     "status": "reviewed",
-    "review_method": "Reviewed existing footer with mechanical source date update."
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Smart-Dismantle:0": {
     "text": "# Smart 解体",
@@ -4247,10 +4290,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Smart-Dismantle:16": {
-    "text": "_最終更新: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (リリースドラフト)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "text": "_最終更新: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "90cb2f4ec0a877789160414441d87af9660480498e3243f7517711c84cc354bf",
     "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Smart-Panel-and-HUD:0": {
     "text": "# Smart パネルと HUD",
@@ -4397,10 +4440,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Smart-Panel-and-HUD:24": {
-    "text": "_最終更新: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (リリースドラフト)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "text": "_最終更新: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "90cb2f4ec0a877789160414441d87af9660480498e3243f7517711c84cc354bf",
     "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Smart-Restore:0": {
     "text": "# Smart 復元",
@@ -4409,14 +4452,16 @@
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
   "Smart-Restore:43": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "d30db2304eb2c337da20e09266e493bcc8c502907b34b04c692903c1c50cee35"
+    "text": "Smart 復元を使用すると、Smart!の作業を保存して、後で再利用したり、共有したり、工場モジュール全体を毎回同じようにスタンプ（配置）したりできます。共有[Smartパネル](Smart-Panel-and-HUD)で**K → 復元**を開きます。その2つのサブタブは**グリッドプリセット**と**モジュール**です。",
+    "source_hash": "d30db2304eb2c337da20e09266e493bcc8c502907b34b04c692903c1c50cee35",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Smart-Restore:44": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "3d432425c5421614e20983fcafadb764c442a1c31b834004ecbebec74df73ea2"
+    "text": "これは「このレイアウトを調整するのに長い時間がかかった — どうすれば元に戻せるのか？」という疑問への答えです。",
+    "source_hash": "3d432425c5421614e20983fcafadb764c442a1c31b834004ecbebec74df73ea2",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Smart-Restore:3": {
     "text": "![グリッドプリセットとモジュールのサブタブを含む復元タスク](https://raw.githubusercontent.com/wiki/majormer/SmartFoundations/images/v35/restore.png)",
@@ -4449,9 +4494,10 @@
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
   "Smart-Restore:45": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "7e35bb8291023e898ca5f34452152a86fb7117cb5f7cb13234c8fd2acf59ef40"
+    "text": "- **パネルから保存** — 現在のパネル設定に名前を付けて、プリセットとして保存します。\n- **パネルに読み込み** — 保存されたプリセットをパネルに読み込み、設置前に微調整するか、そのまま適用します。\n- **コードをエクスポート / コードをインポート** — プリセットをコードとして共有するか、誰かが共有したコードを読み込みます。",
+    "source_hash": "7e35bb8291023e898ca5f34452152a86fb7117cb5f7cb13234c8fd2acf59ef40",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Smart-Restore:9": {
     "text": "各プリセットには、含まれている内容（建物、グリッド、変換、レシピ）の平易な言語による要約が表示されるため、一目で区別できます。",
@@ -4466,14 +4512,16 @@
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
   "Smart-Restore:46": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "15f117646c84198699764f5759ce40f588af9591576ba39e1d7f68ebbf616b8b"
+    "text": "モジュールは、**拡張マニホールド**全体 — ベルト、パイプ、リフト、ディストリビューター、電力を含む配線された建物のユニット — をキャプチャし、繰り返しスタンプ（配置）できるようにします。",
+    "source_hash": "15f117646c84198699764f5759ce40f588af9591576ba39e1d7f68ebbf616b8b",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Smart-Restore:47": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "bec0ec9303e43dd7907dc7dc366c045b75ee549bfcabebb02918f256b044593e"
+    "text": "- Smart [Extend](Extend) をプレビューまたは建設した後、それはタブの上部にある **Extend クリップボード** に格納されます。**Save as Module** を使用すると、そのキャプチャされたレイアウトを名前付きの再利用可能な Module に変換できます。\n- 保存された Module に対して **Load Module** を実行すると、そのレイアウトを再構築できます。ビルドガンはソースビルディングを自動的に開き、**stamp**（発射して配置、繰り返し）および **scroll to scale**（スケーリング）が可能なライブプレビューを表示できます。\n- 復元された Module は、新しい Scaled Extend のように片側に固定されていないため、配置前に軸に沿って**どちらの方向にも実行を再スケーリング**できます。一方方向にスクロールすると一方に成長し、他方方向にスクロールすると他方に成長します。\n- **Export Code / Import Code** は、プリセットと同じ方法で Module を共有します。",
+    "source_hash": "bec0ec9303e43dd7907dc7dc366c045b75ee549bfcabebb02918f256b044593e",
+    "status": "reviewed",
+    "review_method": "Local-model contextual translation and separate semantic review; structural validation. No human native-speaker certification."
   },
   "Smart-Restore:13": {
     "text": "各モジュールには、その部品（ベルト、パイプ、ディストリビューターなどの数）の要約が表示されるため、何を再構築するかを知ることができます。",
@@ -4536,9 +4584,10 @@
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
   "Smart-Restore:48": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "1b1ed17e9fec531c12a9f625b3a9bfc523afdeccaf5ba0c4bca304c837f1764c"
+    "text": "**K → 復元**を使用して、レイアウトの保存、選択、読み込み、インポート、エクスポートを行います。読み込み後、スケーリングパネルまたはホイール/テンキーのコントロールで配置を調整します。HUDは結果のグリッドとアクティブな調整を表示します。ビルドガンでクリックして、表示されたコストで構築します。",
+    "source_hash": "1b1ed17e9fec531c12a9f625b3a9bfc523afdeccaf5ba0c4bca304c837f1764c",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Smart-Restore:22": {
     "text": "パネルを開き直さずに最近適用した復元を切り替えるには、`U`を押しながら`Num 9`を押して次の最近のプリセットへ、または`Num 3`を押して1つ前に戻します。[コントロール](Controls)を参照してください。",
@@ -4565,14 +4614,16 @@
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
   "Smart-Restore:39": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "b0724fac56a114aed1905757336fc2bd16f065519872f908a56afc905e5b0d3c"
+    "text": "## コンベアの内容と完了",
+    "source_hash": "b0724fac56a114aed1905757336fc2bd16f065519872f908a56afc905e5b0d3c",
+    "status": "reviewed",
+    "review_method": "Local-model contextual translation and separate semantic review; structural validation. No human native-speaker certification."
   },
   "Smart-Restore:40": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "81c3c2048752b95069652ecef30608748705b0ecd1930a687c49a0f383a261ad"
+    "text": "保存されたモジュールには建設内容と設定が記録されます。既存のコンベア上の貨物は複製されません。配置前に資材費の全額を確認してください。操作が未完了と報告された場合は、再試行する前に配置済みのものを確認してください。キャンセルしても、すでに行われた建設が元に戻るとは限りません。",
+    "source_hash": "81c3c2048752b95069652ecef30608748705b0ecd1930a687c49a0f383a261ad",
+    "status": "reviewed",
+    "review_method": "Local-model draft and semantic review, followed by direct contextual correction; no human native-speaker certification."
   },
   "Smart-Restore:26": {
     "text": "## 関連項目",
@@ -4581,9 +4632,10 @@
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
   "Smart-Restore:49": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "52daff47c488c29086aa3ce6e5cea9be1d21194fb00b9e2d10a09d723d037264"
+    "text": "- [拡張](Extend) — モジュールタブがキャプチャするマニホールドの機能。\n- [SmartパネルとHUD](Smart-Panel-and-HUD) — 復元タブがある場所。\n- [グリッドスケーリング](Grid-Scaling)と[変換](Transforms) — グリッドプリセットが保存するもの。",
+    "source_hash": "52daff47c488c29086aa3ce6e5cea9be1d21194fb00b9e2d10a09d723d037264",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Smart-Restore:28": {
     "text": "---",
@@ -4592,9 +4644,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Smart-Restore:42": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
+    "text": "_最終更新: 2026-11-02 · Smart! v35.1.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "738986e1276ad98403f2e483d1e397f7061c2af5e93202af6d82ce474d5d7eeb",
+    "status": "reviewed",
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Smart-Upgrade:0": {
     "text": "# Smart アップグレード",
@@ -4633,9 +4686,10 @@
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
   "Smart-Upgrade:38": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "32316883719d3460a5f56824a7fb92559589793f835d63f4bd04e2103217fa08"
+    "text": "1. 対応する建物を選択した状態で**K → アップグレード**を開きます。ベルト、パイプ、ワイヤー/電線はこのタスクを直接開くことができます。\n2. スキャンモードを選択します。\n3. 近くのアイテムまたは接続されたネットワークをスキャンします。\n4. ファミリーとターゲットティアを選択します。ネットワークスキャンの場合、オプションで単一のソースティアを選択してそのティアのみをアップグレードすることもできます。\n5. 材料コストを確認します。\n6. アップグレードを実行します。",
+    "source_hash": "32316883719d3460a5f56824a7fb92559589793f835d63f4bd04e2103217fa08",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Smart-Upgrade:7": {
     "text": "電柱と壁用電源差込口は、スケーリングできるように選択した状態で通常のSmartパネルを開きます。これらをアップグレードするには、ワイヤー/電線からSmartアップグレードを開くか、スキャンモードを使用します。",
@@ -4680,9 +4734,10 @@
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
   "Smart-Upgrade:39": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "78e23b12048a0221986495c275897aa077ef1a3a23671637128ce9f602d2b7a8"
+    "text": "- 特定のティア（例: **Mk.2**）をクリックすると、そのティア**のみ**がターゲットにアップグレードされます。Mk.2ベルトをMk.3に引き上げ、Mk.4はそのままにします。\n- **すべてのティア**を選択すると、異なるすべてのベルト、リフト、またはパイプのティアを選択したターゲットに変更します。これにより、同じ経路内で一部のティアはアップグレードされ、他はダウングレードされる場合があります。",
+    "source_hash": "78e23b12048a0221986495c275897aa077ef1a3a23671637128ce9f602d2b7a8",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Smart-Upgrade:15": {
     "text": "これは半径スキャンで既にあったティアコントロールと一致します。",
@@ -4751,9 +4806,10 @@
     "review_method": "Primary source-by-source semantic review of all25 Walking/Upgrade units; fixed duplicated link token, aligned Walking and official Vehicle Path terms, advance and material-cost meaning; no native-speaker certification"
   },
   "Smart-Upgrade:36": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "30a1ce6a5b6dcbf3cb863b07c5181d63bc781a27d7277f739226c64c0f12936e"
+    "text": "Smart!は、ゲーム本来のコンベアの所有関係とアイテム転送に合わせて、ベルトとリフトの交換を調整します。既存の貨物は交換処理の対象であり、複製や破棄をしてはいけません。事前検証に失敗した場合、元の建物は変更されません。建設が始まった後は、操作が未完了になったりキャンセルされたりしても、すべて元に戻るとは限りません。Smart!が操作の未完了を報告した場合は、再試行する前に結果を確認し、ゲームログを保存してください。セーブして再読み込みしても、必ず修復されるわけではありません。",
+    "source_hash": "30a1ce6a5b6dcbf3cb863b07c5181d63bc781a27d7277f739226c64c0f12936e",
+    "status": "reviewed",
+    "review_method": "Local-model draft and semantic review, followed by direct contextual correction; no human native-speaker certification."
   },
   "Smart-Upgrade:27": {
     "text": "## ゲーム内例",
@@ -4792,9 +4848,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Smart-Upgrade:37": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
+    "text": "_最終更新: 2026-11-02 · Smart! v35.1.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "738986e1276ad98403f2e483d1e397f7061c2af5e93202af6d82ce474d5d7eeb",
+    "status": "reviewed",
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Smart-Walking:0": {
     "text": "# Smart ウォーク",
@@ -4971,10 +5028,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Smart-Walking:29": {
-    "text": "_最終更新: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (リリースドラフト)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "text": "_最終更新: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "90cb2f4ec0a877789160414441d87af9660480498e3243f7517711c84cc354bf",
     "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Support-Development:0": {
     "text": "# 開発支援",
@@ -5097,10 +5154,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Supported-Buildings:11": {
-    "text": "_最終更新: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (リリースドラフト)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "text": "_最終更新: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "90cb2f4ec0a877789160414441d87af9660480498e3243f7517711c84cc354bf",
     "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Transforms:0": {
     "text": "# 変換",
@@ -5295,10 +5352,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Transforms:32": {
-    "text": "_最終更新: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (リリースドラフト)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "text": "_最終更新: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "90cb2f4ec0a877789160414441d87af9660480498e3243f7517711c84cc354bf",
     "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Troubleshooting:0": {
     "text": "# トラブルシューティング",
@@ -5499,10 +5556,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Troubleshooting:33": {
-    "text": "_最終更新: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (リリースドラフト)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "text": "_最終更新: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "90cb2f4ec0a877789160414441d87af9660480498e3243f7517711c84cc354bf",
     "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Videos-and-Tutorials:0": {
     "text": "# 動画とチュートリアル",
@@ -5637,10 +5694,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Videos-and-Tutorials:22": {
-    "text": "_最終更新: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (リリースドラフト)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "text": "_最終更新: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "90cb2f4ec0a877789160414441d87af9660480498e3243f7517711c84cc354bf",
     "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Water-Extractors:0": {
     "text": "# 揚水ポンプ",
@@ -5757,10 +5814,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Water-Extractors:20": {
-    "text": "_最終更新: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (リリースドラフト)_\n",
-    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89",
+    "text": "_最終更新: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "8d8ca2bf47cdd1190ffc8d7e3c35f31c2a04adf92a128713a384de42b66ce426",
     "status": "reviewed",
-    "review_method": "Reviewed existing footer with mechanical source date update."
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Blueprints:33": {
     "text": "_最終更新: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (リリースドラフト)_\n",

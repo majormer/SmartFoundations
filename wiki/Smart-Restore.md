@@ -74,4 +74,4 @@ Saved Modules describe construction and settings; they do not duplicate live con
 
 ---
 
-_Last updated: 2026-11-02 · Smart! v35.1.0 / Smart Camera v2.0.0 (release draft)_
+_Last updated: 2026-11-02 · Smart! v35.1.0 / Smart Camera v2.0.0_

@@ -44,16 +44,16 @@ Browse the [Feature Gallery](Feature-Gallery) and [Buildable Gallery](Buildable-
 - [Support Development](Support-Development)
 - [Screenshot Checklist](Screenshot-Checklist)
 
-## Preparing 35.1.0
+## Smart! 35.1.0
 
 This release improves conveyor and lift handling in Extend, Restore and Upgrade, corrects native route limits, and makes Auto-Connect choose suitable distributor branches. Large Blueprint grids gain an optional client safety limit. See [Auto-Connect](Auto-Connect), [Blueprints](Blueprints) and [Smart Upgrade](Smart-Upgrade) for the behavior and limits.
 
 ## Version covered
 
-This is the local documentation draft for **Smart! 35.1.0 and Smart Camera 2.0.0**. Update the two mods together when their coordinated compatible releases become available; do not pair Camera 2.0 with an older Smart package. These draft pages do not announce publication.
+**Smart! 35.1.0** supports **Smart Camera 2.0.0**. Update both mods when using them together.
 
 Start with the shared [Panel and HUD](Smart-Panel-and-HUD), [Walking resume](Smart-Walking), [lift-assisted Auto-Connect](Auto-Connect) and [Blueprint seam connections](Blueprints).
 
 ---
 
-_Last updated: 2026-11-02 · Smart! v35.1.0 / Smart Camera v2.0.0 (release draft)_
+_Last updated: 2026-11-02 · Smart! v35.1.0 / Smart Camera v2.0.0_

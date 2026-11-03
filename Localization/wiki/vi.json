@@ -48,10 +48,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "_Sidebar:8": {
-    "text": "_Cập nhật: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (bản nháp phát hành)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "text": "_Cập nhật: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "90cb2f4ec0a877789160414441d87af9660480498e3243f7517711c84cc354bf",
     "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Auto-Connect:0": {
     "text": "# Tự động kết nối",
@@ -78,9 +78,10 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Auto-Connect:56": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "0ef504a252dcabd3541b9ed8c7d000b31225026b5fa22aa19b6f534eadd38d6b"
+    "text": "Mở **K → Nhân bản** và dùng mục **Tự động kết nối** phù hợp với công trình đang cầm. Trên công trình vận tải được hỗ trợ, `U` mở cài đặt kết nối. Mặc định chung nằm trong **Tùy chọn → Cài đặt mod → Smart!**; lựa chọn cho bản xem trước hiện tại nằm trong Bảng. Tùy chọn kết nối cập nhật trực tiếp, độc lập với **Áp dụng vị trí ngay**.",
+    "source_hash": "0ef504a252dcabd3541b9ed8c7d000b31225026b5fa22aa19b6f534eadd38d6b",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Auto-Connect:5": {
     "text": "Dùng Bảng, con lăn hoặc bàn phím số để tạo lưới; kiểm tra kết nối và mũi tên hướng trong thế giới trước khi xây. HUD báo giá trị vị trí chứ không cung cấp thêm bảng cài đặt kết nối. Xem [Điều khiển](Controls) về phím mặc định và hành vi theo hướng người chơi.",
@@ -119,14 +120,16 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Auto-Connect:47": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "bfcb0d7bcbf0b5b36a80dd16a2dac958a4db4fc0261b34174dd132215ae37e01"
+    "text": "### Nhánh bộ Chia/Kết Hợp",
+    "source_hash": "bfcb0d7bcbf0b5b36a80dd16a2dac958a4db4fc0261b34174dd132215ae37e01",
+    "status": "reviewed",
+    "review_method": "Local-model contextual translation and separate semantic review; structural validation. No human native-speaker certification."
   },
   "Auto-Connect:48": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "59bd907b72a7a1bd727a61b3bb63c228bae6f45d96d4267b1fa73010ed0ca1df"
+    "text": "Nhánh của bộ Chia (Splitter) hoặc bộ Kết Hợp (Merger) phải hướng về phía cổng kết nối của máy mà nó phục vụ. Smart! cho phép mỗi nhà máy có một nhánh và không gửi hai nhánh về cùng một phía của hàng máy. Các hàng máy đối diện có thể sử dụng các nhánh đối diện. Các quy tắc này cũng áp dụng cho các biến thể Smart, Lập trình được (Programmable) và Ưu tiên (Priority). Hãy xoay hoặc định vị lại bộ Chia/Kết Hợp nếu cổng mong muốn quay ra ngoài; một cổng không sử dụng quay ra ngoài là bình thường và bản thân nó không tạo ra cảnh báo.",
+    "source_hash": "59bd907b72a7a1bd727a61b3bb63c228bae6f45d96d4267b1fa73010ed0ca1df",
+    "status": "reviewed",
+    "review_method": "Local-model contextual translation and separate semantic review; structural validation. No human native-speaker certification."
   },
   "Auto-Connect:11": {
     "text": "### Kết nối máy bằng thang máy băng chuyền",
@@ -183,9 +186,10 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Auto-Connect:57": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "01bc78e7b2eed2e3b61e790428579385ed84d207401ce8ce691e20542ceb6c01"
+    "text": "**Co giãn giá đỡ ống sẽ xây một tuyến ống.** Khi co giãn hàng Hỗ Trợ Ống Dẫn hoặc Hỗ Trợ Tường Ống Dẫn, Smart! nối ống giữa các bản sao, tương tự hàng Cột Băng Chuyền tạo tuyến băng chuyền. Chất lỏng chảy suốt tuyến, điểm khớp riêng của mỗi giá đỡ vẫn trống để nối ống bằng tay. Độ cao giá đỡ đất và góc phần đầu áp dụng cho toàn hàng, giữ tuyến dốc nhất quán.",
+    "source_hash": "01bc78e7b2eed2e3b61e790428579385ed84d207401ce8ce691e20542ceb6c01",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Auto-Connect:19": {
     "text": "Ống được tạo kế thừa sơn từ ống nguồn đã nối. Phụ kiện chỉ kế thừa khi các ống kết nối có cùng sơn; chuyển bản xem trước đến mối nối không có nguồn sơn sẽ khôi phục sơn ban đầu.",
@@ -212,14 +216,16 @@
     "review_method": "Contextual multilingual review with official game terminology; no native-speaker certification."
   },
   "Auto-Connect:50": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "a731c462366f0c155a14546a1265f77d5e93778036e1ebd4a44e669ff5112e22"
+    "text": "### Nhánh ngã ba/ngã tư ống dẫn",
+    "source_hash": "a731c462366f0c155a14546a1265f77d5e93778036e1ebd4a44e669ff5112e22",
+    "status": "reviewed",
+    "review_method": "Local-model contextual translation and separate semantic review; structural validation. No human native-speaker certification."
   },
   "Auto-Connect:51": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "0a29d3c9b8ec32dedec575d19408d9bb4da0cbb09a58b8d2ed2dc2c0f3f833c7"
+    "text": "Các nhánh ngã ba/ngã tư ống dẫn tuân theo cùng các quy tắc về hướng và phía máy. Các cổng ngã ba và ngã tư giữ nguyên hướng thực tế của chúng khi được xoay. Smart! bỏ qua một nhánh không phù hợp trong khi vẫn giữ lại các kết nối hợp lệ. Kiểm tra độ dài tuyến đường và độ dốc băng chuyền sử dụng các giới hạn xây dựng gốc tương ứng, thay vì giới hạn chung là ống 25 m hoặc băng chuyền 30 độ.",
+    "source_hash": "0a29d3c9b8ec32dedec575d19408d9bb4da0cbb09a58b8d2ed2dc2c0f3f833c7",
+    "status": "reviewed",
+    "review_method": "Local-model contextual translation and separate semantic review; structural validation. No human native-speaker certification."
   },
   "Auto-Connect:21": {
     "text": "## Tự động kết nối đường ống siêu dẫn",
@@ -240,14 +246,16 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Auto-Connect:58": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "eb2ee60a85c009c8b087b30e51ca7b4eb21ab2ca69353d8b3bce92a60256f455"
+    "text": "**Co giãn giá đỡ đường ống siêu dẫn sẽ xây một tuyến liên tục.** Khi co giãn một hàng giá đỡ xếp chồng, Smart! nối đường ống siêu dẫn giữa các bản sao, tương tự Cột Băng Chuyền tạo băng chuyền hay giá đỡ ống tạo ống. Tuyến theo khoảng cách và độ cao của hàng, có thể leo dốc đứng; điểm khớp riêng của từng giá đỡ vẫn trống để nối thủ công.",
+    "source_hash": "eb2ee60a85c009c8b087b30e51ca7b4eb21ab2ca69353d8b3bce92a60256f455",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Auto-Connect:59": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "12ed988af1c997655966e3695ec2f34cf65159be86bd53b56fa1a92c8a85b213"
+    "text": "Tự động kết nối đường ống siêu dẫn có **công tắc bật và chế độ định tuyến riêng**, độc lập với ống dẫn. Đặt chúng trong Bảng Smart, cài đặt tự động kết nối lúc xây (giữ `U`) hoặc cấu hình mod. Xem [Tham khảo cài đặt](Settings-Reference).",
+    "source_hash": "12ed988af1c997655966e3695ec2f34cf65159be86bd53b56fa1a92c8a85b213",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Auto-Connect:26": {
     "text": "## Tuyến giá đỡ tường đã xoay",
@@ -256,9 +264,10 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Auto-Connect:60": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "fd7f0d71039eaac4e79da271b675c44893d3943fcbd5cfcc62fcca29fe53a2ce"
+    "text": "Giá đỡ tường con của ống và đường ống siêu dẫn theo toàn bộ góc xoay của phần cha. **Xoay tường** trong Bảng có **bước 45°** của trò chơi gốc, kể cả tuyến thẳng đứng. Nó khác Xoay lưới, vốn uốn một chuỗi bản sao.",
+    "source_hash": "fd7f0d71039eaac4e79da271b675c44893d3943fcbd5cfcc62fcca29fe53a2ce",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Auto-Connect:28": {
     "text": "Trong điều khiển theo công trình, Y theo tuyến tường đã xoay. Trong điều khiển theo người chơi, thao tác dọc theo hướng được hỗ trợ gần thẳng đứng nhất: với tuyến tường đứng, **X+Z + con lăn** mở rộng dọc, còn **Z + con lăn** mở rộng ngang. Bảng giữ các cột X/Y/Z; xem mũi tên để biết hướng trục. Đầu nối tường băng chuyền giữ hạn chế hướng gốc và dùng thang máy băng chuyền để vận chuyển dọc.",
@@ -333,9 +342,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Auto-Connect:55": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
+    "text": "_Cập nhật lần cuối: 2026-11-02 · Smart! v35.1.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "738986e1276ad98403f2e483d1e397f7061c2af5e93202af6d82ce474d5d7eeb",
+    "status": "reviewed",
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Blueprints:0": {
     "text": "# Bản Thiết Kế Smart!",
@@ -440,9 +450,10 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Blueprints:34": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "60707b2c9e66e6d33812f6b75b700b1d1cfafde4fcb92a54f5847b69c82a8ac8"
+    "text": "**Giới hạn an toàn khi đặt bản thiết kế** trong mục Hành vi Xây dựng được bật theo mặc định. Đối với máy khách nhiều người chơi từ xa, nó chặn một lưới Bản Thiết Kế được ước tính có hơn 2.000 công trình, bao gồm cả bản gốc và tất cả các bản sao. Bạn có thể tắt cài đặt này trực tiếp để thử đặt một lưới lớn hơn, với rủi ro tăng về việc đóng băng, mất kết nối và thất bại. Các kiểm tra vật liệu, vị trí đặt và tải trọng xây dựng thông thường vẫn được áp dụng. Hãy xây dựng theo từng phần nhỏ hơn nếu một lần đặt bị từ chối.",
+    "source_hash": "60707b2c9e66e6d33812f6b75b700b1d1cfafde4fcb92a54f5847b69c82a8ac8",
+    "status": "reviewed",
+    "review_method": "Local-model draft and semantic review, followed by direct contextual correction; no human native-speaker certification."
   },
   "Blueprints:18": {
     "text": "Nhiều người chơi dùng xác thực có thẩm quyền và chi phí bình thường. Đầu nối đổi hoặc thiếu tài nguyên có thể làm xem trước từng hợp lệ trở nên không hợp lệ. Xem [Tự động kết nối](Auto-Connect) và [Tương thích và nhiều người chơi](Compatibility-and-Multiplayer).",
@@ -523,9 +534,10 @@
     "review_method": "Contextual multilingual review with official game terminology; no native-speaker certification."
   },
   "Blueprints:35": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
+    "text": "_Cập nhật lần cuối: 2026-11-02 · Smart! v35.1.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "738986e1276ad98403f2e483d1e397f7061c2af5e93202af6d82ce474d5d7eeb",
+    "status": "reviewed",
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Buildable-Gallery:0": {
     "text": "# Thư viện công trình",
@@ -972,10 +984,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Buildable-Gallery:75": {
-    "text": "_Cập nhật: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (bản nháp phát hành)_\n",
-    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89",
+    "text": "_Cập nhật: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "8d8ca2bf47cdd1190ffc8d7e3c35f31c2a04adf92a128713a384de42b66ce426",
     "status": "reviewed",
-    "review_method": "Reviewed existing footer with mechanical source date update."
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Compatibility-and-Multiplayer:0": {
     "text": "# Tương thích và nhiều người chơi",
@@ -996,14 +1008,16 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Compatibility-and-Multiplayer:23": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "ddb7f6d3428242b7eb2a16d6468bc1c961f041f29251922f6c6a6922bfa78751"
+    "text": "Smart! 35.1.0 nhắm mục tiêu **Satisfactory 1.2.4 / CL 502094 trở lên** và **SML 3.12.x**. Hãy cập nhật trò chơi và trình tải mod trước khi cài đặt. Các bản dựng trò chơi cũ hơn không được hỗ trợ.",
+    "source_hash": "ddb7f6d3428242b7eb2a16d6468bc1c961f041f29251922f6c6a6922bfa78751",
+    "status": "reviewed",
+    "review_method": "Local-model contextual translation and separate semantic review; structural validation. No human native-speaker certification."
   },
   "Compatibility-and-Multiplayer:24": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "52b5e96461ffcb32e45b4e4f8c6a7bb4ae65053d1b8488b28119e6c0efbcaf11"
+    "text": "Smart Camera 2.0 và Smart! 35.1 phải được cập nhật như một cặp tương thích khi cả hai đều được cài đặt. Camera cũng hoạt động độc lập; các công cụ xây dựng của Smart không yêu cầu Camera. Tùy chọn Camera và giao diện của HUD thuộc về từng người chơi cục bộ, không phải tất cả mọi người trên máy chủ.",
+    "source_hash": "52b5e96461ffcb32e45b4e4f8c6a7bb4ae65053d1b8488b28119e6c0efbcaf11",
+    "status": "reviewed",
+    "review_method": "Local-model contextual translation and separate semantic review; structural validation. No human native-speaker certification."
   },
   "Compatibility-and-Multiplayer:5": {
     "text": "## An toàn bản lưu",
@@ -1048,19 +1062,22 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Compatibility-and-Multiplayer:29": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "274d747f094a4e138cbbfdf378bc151dedd8d3fa979722492b56173b298c75d5"
+    "text": "Smart! hoạt động nhiều người trên máy chủ chuyên dụng. Mọi tính năng Smart! — Co giãn lưới, Tự động kết nối (băng chuyền, ống, điện), Bản Thiết Kế Smart, Mở rộng, Smart Nâng cấp, Smart Khôi phục và Smart Tháo dỡ — dùng được trên máy khách với chi phí bình thường. Mọi thứ Smart! đặt đều là công trình tiêu chuẩn được đồng bộ đầy đủ: người khác thấy, dùng và tháo dỡ như bạn xây bằng tay.",
+    "source_hash": "274d747f094a4e138cbbfdf378bc151dedd8d3fa979722492b56173b298c75d5",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Compatibility-and-Multiplayer:26": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "8cb40018690ab6ebe9357b170389232193d08c25eafc1fd5d631dac793751ffe"
+    "text": "- **Máy chủ chuyên dụng:** cả Windows và Linux đều được hỗ trợ.\n- **Giới hạn an toàn khi đặt bản thiết kế** trong mục Hành vi Xây dựng được bật theo mặc định. Đối với máy khách nhiều người chơi từ xa, nó chặn một lưới Bản Thiết Kế được ước tính có hơn 2.000 công trình, bao gồm cả bản gốc và tất cả các bản sao. Bạn có thể tắt cài đặt này trực tiếp để thử đặt một lưới lớn hơn, với rủi ro tăng về việc đóng băng, mất kết nối và thất bại. Các kiểm tra vật liệu, vị trí đặt và tải trọng xây dựng thông thường vẫn được áp dụng. Hãy xây dựng theo từng phần nhỏ hơn nếu một lần đặt bị từ chối.\n- **Đối với quản trị viên máy chủ:** cài đặt cùng phiên bản Smart! trên máy chủ và trên mọi máy khách. Mod Manager giữ cho chúng khớp nhau khi bạn cập nhật.\n- **Smart Camera** (mod đồng hành) cũng hoạt động trong chế độ nhiều người chơi.",
+    "source_hash": "8cb40018690ab6ebe9357b170389232193d08c25eafc1fd5d631dac793751ffe",
+    "status": "reviewed",
+    "review_method": "Local-model draft and semantic review, followed by direct contextual correction; no human native-speaker certification."
   },
   "Compatibility-and-Multiplayer:30": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "be6a21fb0e3a5a2792dc5eaa0095af9dbd2cdc8641d29aed38e44f5a8dce7ce9"
+    "text": "Hỗ trợ nhiều người mới hơn chơi đơn. Nếu hành vi trong phiên nhiều người khác chơi đơn, đó là lỗi: hãy báo trên GitHub hoặc Discord, nói rõ đang xây gì và bạn là chủ hay khách.",
+    "source_hash": "be6a21fb0e3a5a2792dc5eaa0095af9dbd2cdc8641d29aed38e44f5a8dce7ce9",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Compatibility-and-Multiplayer:15": {
     "text": "Công tắc hỗ trợ phiên của từng người chỉ ảnh hưởng công cụ xây của họ. Mở rộng/Khôi phục từ xa giữ xem trước và cài đặt của chủ máy riêng với thao tác máy khách.",
@@ -1105,9 +1122,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Compatibility-and-Multiplayer:31": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
+    "text": "_Cập nhật lần cuối: 2026-11-02 · Smart! v35.1.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "738986e1276ad98403f2e483d1e397f7061c2af5e93202af6d82ce474d5d7eeb",
+    "status": "reviewed",
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Controller-and-Steam-Deck:0": {
     "text": "# Tay cầm và Steam Deck (Thử nghiệm)",
@@ -1290,10 +1308,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Controller-and-Steam-Deck:30": {
-    "text": "_Cập nhật: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (bản nháp phát hành)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "text": "_Cập nhật: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "90cb2f4ec0a877789160414441d87af9660480498e3243f7517711c84cc354bf",
     "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Controls:0": {
     "text": "# Điều khiển",
@@ -1524,10 +1542,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Controls:40": {
-    "text": "_Cập nhật: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (bản nháp phát hành)_\n",
-    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89",
+    "text": "_Cập nhật: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "8d8ca2bf47cdd1190ffc8d7e3c35f31c2a04adf92a128713a384de42b66ce426",
     "status": "reviewed",
-    "review_method": "Reviewed existing footer with mechanical source date update."
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Conveyor-Lift-Grids:0": {
     "text": "# Lưới thang máy băng chuyền",
@@ -1590,10 +1608,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Conveyor-Lift-Grids:10": {
-    "text": "_Cập nhật: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (bản nháp phát hành)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "text": "_Cập nhật: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "90cb2f4ec0a877789160414441d87af9660480498e3243f7517711c84cc354bf",
     "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Extend:0": {
     "text": "# Mở rộng",
@@ -1644,9 +1662,10 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Extend:49": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "be187544697091618ad4e7d6e1a2c2782b01ec9a0930ae4d3655eadaf437a2ca"
+    "text": "1. Xây thủ công một mô-đun hoạt động và trang bị cùng loại công trình trong súng xây.\n2. Mở **K → Mở rộng**, nhấn **Chọn nguồn**.\n3. Nhấp công trình nguồn trong thế giới ngoài Bảng. Nguồn tương thích sáng lên khi chọn. **Escape** hủy chọn; nhấp trong Bảng vẫn thao tác giao diện.\n4. Kiểm tra tên nguồn, phần đi kèm đã thu và số lần lặp. Dùng **Đổi hướng** và điều khiển đặt để tạo hình xem trước.\n5. Đóng Bảng, kiểm tra bản sao và báo giá rồi bắn súng để xây bình thường.",
+    "source_hash": "be187544697091618ad4e7d6e1a2c2782b01ec9a0930ae4d3655eadaf437a2ca",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Extend:9": {
     "text": "Chọn nguồn không xây gì. Nhấp trượt giữ xem trước cũ. Thay nguồn hoặc bố cục chưa xây đáng kể yêu cầu xác nhận trước khi bỏ. Nguồn đã chọn được ghim để kiểm tra đến khi hủy, xây hoặc đổi công thức.",
@@ -1691,9 +1710,10 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Extend:50": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "e63c3cf4682d23c05eeac5028bcb9b9181dbd792603560f52b7b754522f84fbc"
+    "text": "Lò Luyện Kim đã xây là nguồn có sẵn. Lò, băng chuyền và giá đỡ màu lam là bản sao đề xuất; HUD ghi **Mở rộng 1×1**. Đây là xem trước chưa xây.",
+    "source_hash": "e63c3cf4682d23c05eeac5028bcb9b9181dbd792603560f52b7b754522f84fbc",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Extend:17": {
     "text": "## Đổi hướng",
@@ -1714,9 +1734,10 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Extend:51": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "76acf531cc52c29e073f3df2f0e0d06d36121daf24e05679c1f466af9d01eb13"
+    "text": "Bắt đầu rõ ràng bằng **K → Mở rộng → Chọn nguồn** hoặc lối tắt trỏ. Thẻ Mở rộng dùng lại số lưới, khoảng cách và biến đổi hỗ trợ. Cũng có thể dùng con lăn/bàn số như [Co giãn lưới](Grid-Scaling). Không giữ phím bổ trợ thì con lăn chọn hướng. HUD báo chiều dài/hàng và mục chỉnh để kiểm tra trước khi xây.",
+    "source_hash": "76acf531cc52c29e073f3df2f0e0d06d36121daf24e05679c1f466af9d01eb13",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Extend:21": {
     "text": "## Mở rộng có co giãn",
@@ -1755,9 +1776,10 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Extend:52": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "a818fc9f6600b845b33395c092257e5c56b6b18d277fc9a96921343bf18ea9b7"
+    "text": "Cùng nguồn giờ tạo ba mô-đun lam với tuyến băng chuyền và giá đỡ. HUD ghi **Mở rộng 3×1**, vật liệu tăng theo bản sao. Nguồn đã xây giữ nguyên.",
+    "source_hash": "a818fc9f6600b845b33395c092257e5c56b6b18d277fc9a96921343bf18ea9b7",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Extend:28": {
     "text": "## Máy Chiết Xuất Nước",
@@ -1808,19 +1830,22 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Extend:45": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "54e38c7493c79d3f4bc2f71a29b70d8dd6942a4f44bee91a351b6ebd82db6819"
+    "text": "## Đường cong và các thao tác chưa hoàn tất",
+    "source_hash": "54e38c7493c79d3f4bc2f71a29b70d8dd6942a4f44bee91a351b6ebd82db6819",
+    "status": "reviewed",
+    "review_method": "Local-model contextual translation and separate semantic review; structural validation. No human native-speaker certification."
   },
   "Extend:46": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "2fc6ba5d654478f0d36a249ac28472d87d41be4029ae07a4e513561265a5f725"
+    "text": "Một Mở rộng (Extend) dạng cong không thể đặt một mô-đun trở lại nguồn hoặc một bản sao trước đó. Nếu HUD báo cáo sự chồng chéo với một bản sao trước đó, hãy giảm số lượng hoặc thay đổi độ xoay, khoảng cách hoặc bậc (Steps). Kiểm tra này ngăn chặn việc đặt mô-đun lặp đi lặp lại; nó không phải là một trình phát hiện va chạm chung.",
+    "source_hash": "2fc6ba5d654478f0d36a249ac28472d87d41be4029ae07a4e513561265a5f725",
+    "status": "reviewed",
+    "review_method": "Local-model contextual translation and separate semantic review; structural validation. No human native-speaker certification."
   },
   "Extend:47": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "8d860159ae76958c5e531b7732a1d2bed5e6c39a0cc339d47fa7d866c6ab94e8"
+    "text": "Các bản sao không nhân bản hàng hóa từ các băng chuyền hiện có. Hãy kiểm tra các vật liệu được báo giá và các kết nối kết quả. Nếu một thao tác báo cáo thao tác chưa hoàn tất, hãy kiểm tra thế giới trước khi lặp lại nó; một phần đã hoàn thành có thể vẫn còn.",
+    "source_hash": "8d860159ae76958c5e531b7732a1d2bed5e6c39a0cc339d47fa7d866c6ab94e8",
+    "status": "reviewed",
+    "review_method": "Local-model draft and semantic review, followed by direct contextual correction; no human native-speaker certification."
   },
   "Extend:36": {
     "text": "## Kiểm tra bố cục đã thu",
@@ -1847,9 +1872,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Extend:48": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
+    "text": "_Cập nhật lần cuối: 2026-11-02 · Smart! v35.1.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "738986e1276ad98403f2e483d1e397f7061c2af5e93202af6d82ce474d5d7eeb",
+    "status": "reviewed",
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "FAQ:0": {
     "text": "# Câu hỏi thường gặp",
@@ -2356,10 +2382,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "FAQ:84": {
-    "text": "_Cập nhật: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (bản nháp phát hành)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "text": "_Cập nhật: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "90cb2f4ec0a877789160414441d87af9660480498e3243f7517711c84cc354bf",
     "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Feature-Gallery:0": {
     "text": "# Thư viện tính năng",
@@ -2728,10 +2754,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Feature-Gallery:64": {
-    "text": "_Cập nhật: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (bản nháp phát hành)_\n",
-    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89",
+    "text": "_Cập nhật: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "8d8ca2bf47cdd1190ffc8d7e3c35f31c2a04adf92a128713a384de42b66ce426",
     "status": "reviewed",
-    "review_method": "Reviewed existing footer with mechanical source date update."
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Glossary:0": {
     "text": "# Thuật ngữ",
@@ -2758,10 +2784,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Glossary:4": {
-    "text": "_Cập nhật: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (bản nháp phát hành)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "text": "_Cập nhật: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "90cb2f4ec0a877789160414441d87af9660480498e3243f7517711c84cc354bf",
     "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Grid-Scaling:0": {
     "text": "# Co giãn lưới",
@@ -2932,10 +2958,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Grid-Scaling:28": {
-    "text": "_Cập nhật: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (bản nháp phát hành)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "text": "_Cập nhật: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "90cb2f4ec0a877789160414441d87af9660480498e3243f7517711c84cc354bf",
     "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "History-and-Credits:0": {
     "text": "# Lịch sử và ghi công",
@@ -3136,14 +3162,16 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Home:18": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "1829ed863c572c2dbcafc8f78604d94faa795d58ca1d7e90494d020f49980f60"
+    "text": "## Smart! 35.1.0",
+    "source_hash": "c51b192a3da9407b55bb694e43e758aef296d6f982f8ea1d3c9544572184a93f",
+    "status": "reviewed",
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Home:19": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "1bd5656d0819ad3a7d1a6861c038f59661e423c6f03bddc8b203ef1a7ffb5c8b"
+    "text": "Bản phát hành này cải thiện việc xử lý băng chuyền và thang máy trong Mở rộng (Extend), Khôi phục (Restore) và Nâng cấp (Upgrade), sửa các giới hạn tuyến đường gốc và làm cho Auto-Connect chọn các nhánh bộ Chia/Kết Hợp phù hợp. Các lưới Bản Thiết Kế lớn có thêm một giới hạn an toàn máy khách tùy chọn. Xem [Auto-Connect](Auto-Connect), [Bản Thiết Kế](Blueprints) và [Nâng cấp Smart](Smart-Upgrade) để biết hành vi và giới hạn.",
+    "source_hash": "1bd5656d0819ad3a7d1a6861c038f59661e423c6f03bddc8b203ef1a7ffb5c8b",
+    "status": "reviewed",
+    "review_method": "Local-model contextual translation and separate semantic review; structural validation. No human native-speaker certification."
   },
   "Home:13": {
     "text": "## Phiên bản áp dụng",
@@ -3152,9 +3180,10 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Home:20": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "6de3b72e72a676036d11c5f3b3679009013b370ca2cb7e8aed2d56252d3addd9"
+    "text": "**Smart! 35.1.0** hỗ trợ **Smart Camera 2.0.0**. Hãy cập nhật cả hai mod nếu sử dụng cùng nhau.",
+    "source_hash": "332a69d5007a0b672628c30eca7cb0b652928cddad228f06e6d4186a52c9b3f8",
+    "status": "reviewed",
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Home:15": {
     "text": "Bắt đầu với [Bảng và HUD](Smart-Panel-and-HUD) chung, [Tiếp tục Đi tuyến](Smart-Walking), [Tự nối bằng thang máy](Auto-Connect) và [Kết nối mối ghép Bản Thiết Kế](Blueprints).",
@@ -3169,9 +3198,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Home:21": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
+    "text": "_Cập nhật lần cuối: 2026-11-02 · Smart! v35.1.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "738986e1276ad98403f2e483d1e397f7061c2af5e93202af6d82ce474d5d7eeb",
+    "status": "reviewed",
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Lift-Assisted-Auto-Connect:0": {
     "text": "# Tự động kết nối bằng thang máy băng chuyền",
@@ -3282,10 +3312,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Lift-Assisted-Auto-Connect:17": {
-    "text": "_Cập nhật: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (bản nháp phát hành)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "text": "_Cập nhật: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "90cb2f4ec0a877789160414441d87af9660480498e3243f7517711c84cc354bf",
     "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Quick-Start:0": {
     "text": "# Bắt đầu nhanh",
@@ -3414,10 +3444,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Quick-Start:21": {
-    "text": "_Cập nhật: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (bản nháp phát hành)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "text": "_Cập nhật: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "90cb2f4ec0a877789160414441d87af9660480498e3243f7517711c84cc354bf",
     "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Screenshot-Checklist:0": {
     "text": "# Hướng dẫn chụp ảnh",
@@ -3480,10 +3510,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Screenshot-Checklist:11": {
-    "text": "_Cập nhật: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (bản nháp phát hành)_\n",
-    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89",
+    "text": "_Cập nhật: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "8d8ca2bf47cdd1190ffc8d7e3c35f31c2a04adf92a128713a384de42b66ce426",
     "status": "reviewed",
-    "review_method": "Reviewed existing footer with mechanical source date update."
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Settings-Reference:0": {
     "text": "# Tham khảo cài đặt",
@@ -3498,9 +3528,10 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Settings-Reference:59": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "3f27a7251dee61f272afa2b13b0a9a7d3b5d0782f11461e43b22ec93ed6baceb"
+    "text": "Tìm tại **Menu chính → Mod → Smart!**. Thay đổi tại đây **giữ qua bản lưu và phiên chơi**. (Gán phím riêng, xem [Điều khiển](Controls).)",
+    "source_hash": "3f27a7251dee61f272afa2b13b0a9a7d3b5d0782f11461e43b22ec93ed6baceb",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Settings-Reference:3": {
     "text": "## Tự động kết nối băng chuyền",
@@ -3557,9 +3588,10 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Settings-Reference:60": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "de7e8d93fbc71c12b9ce0a1c8db5fdc99380795aa7009f219fc68164294d1f29"
+    "text": "- **Tự động kết nối đường ống siêu dẫn** — bật/tắt tự nối. **Mặc định bật.** (Thêm ở 33.1.0.)\n- Chọn định tuyến đường ống siêu dẫn.",
+    "source_hash": "de7e8d93fbc71c12b9ce0a1c8db5fdc99380795aa7009f219fc68164294d1f29",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Settings-Reference:13": {
     "text": "## Tự động kết nối điện",
@@ -3574,9 +3606,10 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Settings-Reference:61": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "ec98629a469e74c7be896e64709377532daca45491fe70e1465ce14f99cffdfb"
+    "text": "- Bật/tắt tự nối điện.\n- Chọn chế độ nối.\n- Đặt tầm nối.\n- Dành cổng cột để Smart! không lấp đầy.\n- **Nối điện chuỗi khi co giãn** — khi mở khóa Upgraded Power Connectors, co giãn nhà máy/máy phát theo X của Smart nối trực tiếp từng bản sao kế tiếp thay vì dùng cột cho từng máy, hợp bố cục hệ góp mà không cần Mở rộng riêng. Bảng Smart có thể ghi đè cho lần xây, HUD báo lựa chọn thực tế. Tôn trọng dung lượng từng cổng. **Mặc định bật.** (Thêm ở 34.2.0.)",
+    "source_hash": "ec98629a469e74c7be896e64709377532daca45491fe70e1465ce14f99cffdfb",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Settings-Reference:16": {
     "text": "## Tự động kết nối Bản Thiết Kế",
@@ -3585,14 +3618,16 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Settings-Reference:62": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "777a49715537ba1bf7334d6be913926f712654bb9bcb31b43455ceeff3c86b11"
+    "text": "Công tắc riêng cho mối ghép giữa bản sao **bản thiết kế của bạn**, độc lập Tự động kết nối băng/ống ở trên, để chúng vẫn nối nhau khi tự nối thường tắt.",
+    "source_hash": "777a49715537ba1bf7334d6be913926f712654bb9bcb31b43455ceeff3c86b11",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Settings-Reference:63": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "5daf4a877774b178a7054980007283bb25a2de416f6dad2c908287768adb9db4"
+    "text": "- **Tự nối mối ghép Bản Thiết Kế** — bật/tắt nối băng, ống, đường ống siêu dẫn, ray, Lộ Trình Phương Tiện có hướng và điện hợp lệ giữa bản sao co giãn. **Mặc định bật.** (Thêm ở 34.2.0.)",
+    "source_hash": "5daf4a877774b178a7054980007283bb25a2de416f6dad2c908287768adb9db4",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Settings-Reference:19": {
     "text": "Mối ghép điện còn cần **Tự động kết nối điện**. Mỗi dây dùng cổng cột phù hợp còn chỗ; dây nội bộ và hai mặt ổ tường tính riêng.",
@@ -3601,14 +3636,16 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Settings-Reference:51": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "d30a9c4968359ae455bcba1db55829f233cd9689baac7a41ddda2ee677c671a7"
+    "text": "## Giới hạn an toàn khi đặt bản thiết kế",
+    "source_hash": "d30a9c4968359ae455bcba1db55829f233cd9689baac7a41ddda2ee677c671a7",
+    "status": "reviewed",
+    "review_method": "Local-model draft and semantic review, followed by direct contextual correction; no human native-speaker certification."
   },
   "Settings-Reference:52": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "8d8d2f7ca8e8f5f5ffd32286939d718b5621954e9eb433f316520ac4e84d392b"
+    "text": "**Giới hạn an toàn khi đặt bản thiết kế** trong mục Hành vi Xây dựng được bật theo mặc định. Đối với máy khách nhiều người chơi từ xa, nó chặn một lưới Bản Thiết Kế được ước tính có hơn 2.000 công trình, bao gồm cả bản gốc và tất cả các bản sao. Bạn có thể tắt cài đặt này trực tiếp để thử đặt một lưới lớn hơn, với rủi ro tăng về việc đóng băng, mất kết nối và thất bại. Các kiểm tra vật liệu, vị trí đặt và tải trọng xây dựng thông thường vẫn được áp dụng. Hãy xây dựng theo từng phần nhỏ hơn nếu một lần đặt bị từ chối. Không cần tải lại thế giới.",
+    "source_hash": "8d8d2f7ca8e8f5f5ffd32286939d718b5621954e9eb433f316520ac4e84d392b",
+    "status": "reviewed",
+    "review_method": "Local-model draft and semantic review, followed by direct contextual correction; no human native-speaker certification."
   },
   "Settings-Reference:20": {
     "text": "## Khoảng cách mặc định Bản Thiết Kế",
@@ -3635,9 +3672,10 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Settings-Reference:64": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "bb2d0aef5ebb0f05f6e0332aba3b272795cbf3d8bade162603d3521aad41d592"
+    "text": "- **Tầm vận tải gần** — khoảng bộ chia, kết hợp, ngã tư ống và lỗ ống sàn tìm cổng máy khi tự nối. Giảm để tránh vươn sang nhóm nhà máy bên cạnh. **Mặc định 25 m**, tương đương hành vi cố định trước đây. (Thêm ở 34.2.0.)",
+    "source_hash": "bb2d0aef5ebb0f05f6e0332aba3b272795cbf3d8bade162603d3521aad41d592",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Settings-Reference:25": {
     "text": "## Mở rộng",
@@ -3658,9 +3696,10 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Settings-Reference:65": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "5062fcd97160abfb325d9843686928ec4e50ca66911455b5f84cd6515d2b0179"
+    "text": "- Tự giữ khi đổi lưới khóa ảnh sau khi chỉnh để tránh xem trước lớn di chuyển nhầm. **Mặc định bật** từ 32.1.2; tắt tại đây nếu muốn ảnh tự do đổi vị trí. Phím Giữ gốc thả từng khóa.\n- **Điều khiển theo hướng người chơi** — xây theo hướng nhìn thay vì trục la bàn: con lăn mở rộng về hướng nhìn, bàn số thành la bàn (xa/gần, phải/trái, lên/xuống). Áp dụng co giãn, khoảng cách, bậc, lệch, xoay. **Mặc định tắt**; điều khiển cũ không đổi đến khi bật, Bảng Smart luôn X/Y/Z cố định. Xem [Điều khiển](Controls). (Thêm ở 34.1.0.)\n- **Chạm để bật/tắt chế độ biến đổi** — chạm phím Khoảng cách, Bậc, Lệch, Xoay hoặc Công thức trên máy để bật; chạm lại tắt; chạm khác đổi chế độ. Dành cho tay cầm, Steam Deck, hỗ trợ tiếp cận: menu vòng/chạm Steam Input không giữ phím được. Cất súng, đổi công trình, mở bảng luôn thả chế độ. **Mặc định tắt**; giữ để dùng vẫn nguyên đến khi bật, tắt lại khôi phục ngay. Xem [Tay cầm và Steam Deck](Controller-and-Steam-Deck) về menu vòng. (Thêm ở 34.2.0.)",
+    "source_hash": "5062fcd97160abfb325d9843686928ec4e50ca66911455b5f84cd6515d2b0179",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Settings-Reference:29": {
     "text": "## Bước con lăn",
@@ -3675,14 +3714,16 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Settings-Reference:66": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "89d132f31272346911aed3355f02885dd096f7bf810ca50e85be98947993996e"
+    "text": "- **Bước Khoảng cách** (m) — mét thêm mỗi nấc, cũng là khoảng Mở rộng và tiến đoạn Đi tuyến.\n- **Bước Bậc** (m) — mét đổi độ cao mỗi nấc, cũng là nâng đoạn Đi tuyến.\n- **Bước Lệch** (m) — mét lệch mỗi nấc, cũng là dịch đoạn Đi tuyến.\n- **Bước Xoay** (độ) — độ xoay mỗi nấc, cũng là rẽ đoạn Đi tuyến.",
+    "source_hash": "89d132f31272346911aed3355f02885dd096f7bf810ca50e85be98947993996e",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Settings-Reference:67": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "b595cc1429fd298b95947cec85d6569724d96fed5b22b0b9424ca76f88c295da"
+    "text": "Mặc định 0,5 m và 5°. Bước khoảng cách nhận 0,1–8 m; xoay 0,5–90°.",
+    "source_hash": "b595cc1429fd298b95947cec85d6569724d96fed5b22b0b9424ca76f88c295da",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Settings-Reference:33": {
     "text": "## Bảng Smart",
@@ -3727,9 +3768,10 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Settings-Reference:68": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "c472d20351cba658f26ae667c4cd445f95ae5a5ca37a10e8763878b476181f29"
+    "text": "Trong **Mod → Smart! Camera**, góc nhìn tự hiện dưới tên mod và camera cung cấp, kể cả góc không hoạt động. Góc súng xây có công tắc riêng. Vị trí chuẩn hóa 0–1, phân giải 64–2048 pixel mỗi trục, tỷ lệ 0,1–2, tần suất 5–60/giây, sáng −3 đến +3 EV. Khoảng cách camera xây thích hợp 5–50 m. Cài đặt áp dụng ngay; góc ẩn bởi menu cập nhật khi Tiếp tục. **Mọi bản lưu** chỉ cập nhật trường đã sửa ở cấu hình toàn cục và đã lưu của camera, gồm thế giới hiện tại. **Bản lưu này** chỉ đổi hồ sơ bản lưu gốc hiện tại. Trường không liên quan và camera khác giữ nguyên.",
+    "source_hash": "c472d20351cba658f26ae667c4cd445f95ae5a5ca37a10e8763878b476181f29",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Settings-Reference:41": {
     "text": "**Dùng đề nghị mod** trong Mọi bản lưu đặt lại camera qua các bản lưu. **Dùng cài đặt chung** trong Bản lưu này chỉ xóa ghi đè hiện tại. Đặt lại khung/khoảng cách chỉ đổi hai trường đó. Bố cục xem trước tới **Xong / Khóa** chung; Hủy bỏ thay đổi bố cục/HUD đang chờ. Xem [Smart Camera](Smart-Camera).",
@@ -3756,9 +3798,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Settings-Reference:58": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
+    "text": "_Cập nhật lần cuối: 2026-11-02 · Smart! v35.1.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "738986e1276ad98403f2e483d1e397f7061c2af5e93202af6d82ce474d5d7eeb",
+    "status": "reviewed",
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Smart-Assistance:0": {
     "text": "# Hỗ trợ Smart",
@@ -3857,10 +3900,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Smart-Assistance:17": {
-    "text": "_Cập nhật: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (bản nháp phát hành)_\n",
-    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89",
+    "text": "_Cập nhật: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "8d8ca2bf47cdd1190ffc8d7e3c35f31c2a04adf92a128713a384de42b66ce426",
     "status": "reviewed",
-    "review_method": "Reviewed existing footer with mechanical source date update."
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Smart-Blueprints:0": {
     "text": "# Bản Thiết Kế Smart!",
@@ -4145,10 +4188,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Smart-Camera:39": {
-    "text": "_Cập nhật: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (bản nháp phát hành)_\n",
-    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89",
+    "text": "_Cập nhật: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "8d8ca2bf47cdd1190ffc8d7e3c35f31c2a04adf92a128713a384de42b66ce426",
     "status": "reviewed",
-    "review_method": "Reviewed existing footer with mechanical source date update."
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Smart-Dismantle:0": {
     "text": "# Smart Tháo dỡ",
@@ -4247,10 +4290,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Smart-Dismantle:16": {
-    "text": "_Cập nhật: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (bản nháp phát hành)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "text": "_Cập nhật: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "90cb2f4ec0a877789160414441d87af9660480498e3243f7517711c84cc354bf",
     "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Smart-Panel-and-HUD:0": {
     "text": "# Bảng Smart và HUD",
@@ -4397,10 +4440,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Smart-Panel-and-HUD:24": {
-    "text": "_Cập nhật: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (bản nháp phát hành)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "text": "_Cập nhật: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "90cb2f4ec0a877789160414441d87af9660480498e3243f7517711c84cc354bf",
     "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Smart-Restore:0": {
     "text": "# Smart Khôi phục",
@@ -4409,14 +4452,16 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Smart-Restore:43": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "d30db2304eb2c337da20e09266e493bcc8c502907b34b04c692903c1c50cee35"
+    "text": "Smart Khôi phục lưu công việc Smart! để dùng lại, chia sẻ hoặc in lại toàn mô-đun máy theo cùng cách. Mở **K → Khôi phục** trong [Bảng Smart](Smart-Panel-and-HUD) chung. Hai thẻ con là **Mẫu lưới** và **Mô-đun**.",
+    "source_hash": "d30db2304eb2c337da20e09266e493bcc8c502907b34b04c692903c1c50cee35",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Smart-Restore:44": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "3d432425c5421614e20983fcafadb764c442a1c31b834004ecbebec74df73ea2"
+    "text": "Nó trả lời câu “Tôi mất rất lâu chỉnh bố cục này — làm sao lấy lại?”",
+    "source_hash": "3d432425c5421614e20983fcafadb764c442a1c31b834004ecbebec74df73ea2",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Smart-Restore:3": {
     "text": "![Tác vụ Khôi phục với thẻ Mẫu lưới và Mô-đun](https://raw.githubusercontent.com/wiki/majormer/SmartFoundations/images/v35/restore.png)",
@@ -4449,9 +4494,10 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Smart-Restore:45": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "7e35bb8291023e898ca5f34452152a86fb7117cb5f7cb13234c8fd2acf59ef40"
+    "text": "- **Lưu từ Bảng** — đặt tên thiết lập Bảng hiện tại và lưu mẫu.\n- **Tải vào Bảng** — tải mẫu để chỉnh trước xây hoặc áp dụng nguyên trạng.\n- **Xuất mã / Nhập mã** — chia sẻ mẫu bằng mã hoặc tải mã người khác gửi.",
+    "source_hash": "7e35bb8291023e898ca5f34452152a86fb7117cb5f7cb13234c8fd2acf59ef40",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Smart-Restore:9": {
     "text": "Mỗi mẫu hiện tóm tắt dễ hiểu (công trình, lưới, biến đổi, công thức) để phân biệt ngay.",
@@ -4466,14 +4512,16 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Smart-Restore:46": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "15f117646c84198699764f5759ce40f588af9591576ba39e1d7f68ebbf616b8b"
+    "text": "Mô-đun thu toàn **hệ góp Mở rộng**: cụm nối công trình với băng, ống, thang máy, bộ phân phối và điện, có thể đặt lặp.",
+    "source_hash": "15f117646c84198699764f5759ce40f588af9591576ba39e1d7f68ebbf616b8b",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Smart-Restore:47": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "bec0ec9303e43dd7907dc7dc366c045b75ee549bfcabebb02918f256b044593e"
+    "text": "- Sau khi bạn xem trước hoặc xây dựng một [Mở rộng](Extend) Smart, nó sẽ nằm trong **bảng tạm Mở rộng** ở đầu tab. **Lưu thành Module** biến bố cục đã chụp đó thành một Module có tên, có thể tái sử dụng.\n- **Tải Module** cho một Module đã lưu để xây dựng lại bố cục đó: súng xây dựng có thể tự động mở công trình nguồn của nó và hiển thị bản xem trước trực tiếp mà bạn có thể **đóng dấu** (bắn để đặt, lặp đi lặp lại) và **cuộn để thay đổi tỷ lệ** ngay lập tức.\n- Vì một Module được khôi phục không bị khóa vào một phía theo cách mà một Mở rộng Tỷ lệ mới bị khóa, bạn có thể **thay đổi tỷ lệ của chuỗi theo cả hai hướng** dọc theo trục của nó trước khi đặt — cuộn theo một hướng để mở rộng theo hướng đó, cuộn theo hướng kia để mở rộng theo hướng kia.\n- **Xuất Mã / Nhập Mã** chia sẻ các Module theo cách giống như các cài đặt sẵn (presets).",
+    "source_hash": "bec0ec9303e43dd7907dc7dc366c045b75ee549bfcabebb02918f256b044593e",
+    "status": "reviewed",
+    "review_method": "Local-model contextual translation and separate semantic review; structural validation. No human native-speaker certification."
   },
   "Smart-Restore:13": {
     "text": "Mỗi mô-đun tóm tắt số băng, ống, bộ phân phối… để biết nó dựng lại gì.",
@@ -4536,9 +4584,10 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Smart-Restore:48": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "1b1ed17e9fec531c12a9f625b3a9bfc523afdeccaf5ba0c4bca304c837f1764c"
+    "text": "Dùng **K → Khôi phục** lưu, chọn, tải, nhập, xuất bố cục. Sau tải, dùng Bảng Co giãn hoặc con lăn/bàn số chỉnh vị trí; HUD báo lưới kết quả và mục chỉnh. Bắn súng để xây theo chi phí hiện.",
+    "source_hash": "1b1ed17e9fec531c12a9f625b3a9bfc523afdeccaf5ba0c4bca304c837f1764c",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Smart-Restore:22": {
     "text": "Để duyệt khôi phục mới áp dụng mà không mở Bảng, giữ `U`, nhấn `Num 9` tới mẫu gần tiếp theo hoặc `Num 3` lùi. Xem [Điều khiển](Controls).",
@@ -4565,14 +4614,16 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Smart-Restore:39": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "b0724fac56a114aed1905757336fc2bd16f065519872f908a56afc905e5b0d3c"
+    "text": "## Nội dung băng chuyền và sự hoàn tất",
+    "source_hash": "b0724fac56a114aed1905757336fc2bd16f065519872f908a56afc905e5b0d3c",
+    "status": "reviewed",
+    "review_method": "Local-model contextual translation and separate semantic review; structural validation. No human native-speaker certification."
   },
   "Smart-Restore:40": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "81c3c2048752b95069652ecef30608748705b0ecd1930a687c49a0f383a261ad"
+    "text": "Các Module đã lưu mô tả việc xây dựng và các cài đặt; chúng không nhân bản hàng hóa đang hoạt động trên băng chuyền. Hãy xem xét toàn bộ báo giá vật liệu trước khi đặt. Nếu một thao tác báo cáo thao tác chưa hoàn tất, hãy kiểm tra những gì đã được đặt trước khi thử lại; việc hủy bỏ không hứa hẹn sẽ hoàn tác việc xây dựng đã thực hiện.",
+    "source_hash": "81c3c2048752b95069652ecef30608748705b0ecd1930a687c49a0f383a261ad",
+    "status": "reviewed",
+    "review_method": "Local-model draft and semantic review, followed by direct contextual correction; no human native-speaker certification."
   },
   "Smart-Restore:26": {
     "text": "## Xem thêm",
@@ -4581,9 +4632,10 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Smart-Restore:49": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "52daff47c488c29086aa3ce6e5cea9be1d21194fb00b9e2d10a09d723d037264"
+    "text": "- [Mở rộng](Extend) — tính năng có hệ góp được thẻ Mô-đun thu.\n- [Bảng Smart và HUD](Smart-Panel-and-HUD) — nơi có thẻ Khôi phục.\n- [Co giãn lưới](Grid-Scaling) và [Biến đổi](Transforms) — nội dung Mẫu lưới lưu.",
+    "source_hash": "52daff47c488c29086aa3ce6e5cea9be1d21194fb00b9e2d10a09d723d037264",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Smart-Restore:28": {
     "text": "---",
@@ -4592,9 +4644,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Smart-Restore:42": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
+    "text": "_Cập nhật lần cuối: 2026-11-02 · Smart! v35.1.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "738986e1276ad98403f2e483d1e397f7061c2af5e93202af6d82ce474d5d7eeb",
+    "status": "reviewed",
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Smart-Upgrade:0": {
     "text": "# Smart Nâng cấp",
@@ -4633,9 +4686,10 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Smart-Upgrade:38": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "32316883719d3460a5f56824a7fb92559589793f835d63f4bd04e2103217fa08"
+    "text": "1. Mở **K → Nâng cấp** khi cầm loại hỗ trợ. Băng, ống và dây điện mở trực tiếp.\n2. Chọn chế độ quét.\n3. Quét vật gần hoặc mạng nối.\n4. Chọn nhóm và cấp đích; với mạng có thể chọn riêng một cấp nguồn để chỉ nâng cấp đó.\n5. Xem chi phí vật liệu.\n6. Chạy nâng cấp.",
+    "source_hash": "32316883719d3460a5f56824a7fb92559589793f835d63f4bd04e2103217fa08",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Smart-Upgrade:7": {
     "text": "Cột điện và ổ tường vẫn mở Bảng Smart thường để co giãn. Muốn nâng, mở Smart Nâng cấp từ dây điện hoặc dùng chế độ quét.",
@@ -4680,9 +4734,10 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Smart-Upgrade:39": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "78e23b12048a0221986495c275897aa077ef1a3a23671637128ce9f602d2b7a8"
+    "text": "- Nhấp cấp cụ thể như **Mk.2** để **chỉ** nâng cấp đó tới đích. Đổi băng Mk.2 thành Mk.3 và giữ Mk.4.\n- Chọn **Mọi cấp** để đổi mọi băng, thang, ống khác cấp đích thành cấp chọn. Có thể vừa nâng vừa hạ cấp trong một tuyến.",
+    "source_hash": "78e23b12048a0221986495c275897aa077ef1a3a23671637128ce9f602d2b7a8",
+    "status": "reviewed",
+    "review_method": "Exact-source reuse of previously reviewed translation; link and formatting checks repeated."
   },
   "Smart-Upgrade:15": {
     "text": "Tương ứng điều khiển cấp đã có trong quét bán kính.",
@@ -4751,9 +4806,10 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
   "Smart-Upgrade:36": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "30a1ce6a5b6dcbf3cb863b07c5181d63bc781a27d7277f739226c64c0f12936e"
+    "text": "Smart! phối hợp việc thay thế băng chuyền và thang máy băng chuyền với quyền sở hữu băng chuyền gốc và việc chuyển hàng hóa. Hàng hóa hiện có thuộc về thao tác thay thế; nó không được nhân bản hoặc loại bỏ. Một kiểm tra trước (preflight) thất bại sẽ để nguyên bản gốc. Một khi việc xây dựng đã bắt đầu, một thao tác chưa hoàn tất hoặc bị hủy không phải là lời hứa về việc hoàn tác đầy đủ. Nếu Smart! báo cáo thao tác chưa hoàn tất, hãy kiểm tra kết quả và giữ lại nhật ký trò chơi trước khi thử lại. Việc lưu/tải lại không phải là một cách sửa chữa được đảm bảo.",
+    "source_hash": "30a1ce6a5b6dcbf3cb863b07c5181d63bc781a27d7277f739226c64c0f12936e",
+    "status": "reviewed",
+    "review_method": "Local-model draft and semantic review, followed by direct contextual correction; no human native-speaker certification."
   },
   "Smart-Upgrade:27": {
     "text": "## Ví dụ trong trò chơi",
@@ -4792,9 +4848,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Smart-Upgrade:37": {
-    "text": "",
-    "status": "draft",
-    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
+    "text": "_Cập nhật lần cuối: 2026-11-02 · Smart! v35.1.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "738986e1276ad98403f2e483d1e397f7061c2af5e93202af6d82ce474d5d7eeb",
+    "status": "reviewed",
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Smart-Walking:0": {
     "text": "# Smart Đi tuyến",
@@ -4971,10 +5028,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Smart-Walking:29": {
-    "text": "_Cập nhật: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (bản nháp phát hành)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "text": "_Cập nhật: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "90cb2f4ec0a877789160414441d87af9660480498e3243f7517711c84cc354bf",
     "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Support-Development:0": {
     "text": "# Ủng hộ phát triển",
@@ -5097,10 +5154,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Supported-Buildings:11": {
-    "text": "_Cập nhật: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (bản nháp phát hành)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "text": "_Cập nhật: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "90cb2f4ec0a877789160414441d87af9660480498e3243f7517711c84cc354bf",
     "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Transforms:0": {
     "text": "# Biến đổi",
@@ -5295,10 +5352,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Transforms:32": {
-    "text": "_Cập nhật: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (bản nháp phát hành)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "text": "_Cập nhật: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "90cb2f4ec0a877789160414441d87af9660480498e3243f7517711c84cc354bf",
     "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Troubleshooting:0": {
     "text": "# Khắc phục sự cố",
@@ -5499,10 +5556,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Troubleshooting:33": {
-    "text": "_Cập nhật: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (bản nháp phát hành)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "text": "_Cập nhật: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "90cb2f4ec0a877789160414441d87af9660480498e3243f7517711c84cc354bf",
     "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Videos-and-Tutorials:0": {
     "text": "# Video và hướng dẫn",
@@ -5637,10 +5694,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Videos-and-Tutorials:22": {
-    "text": "_Cập nhật: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (bản nháp phát hành)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "text": "_Cập nhật: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "90cb2f4ec0a877789160414441d87af9660480498e3243f7517711c84cc354bf",
     "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Water-Extractors:0": {
     "text": "# Máy Chiết Xuất Nước",
@@ -5757,10 +5814,10 @@
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
   "Water-Extractors:20": {
-    "text": "_Cập nhật: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (bản nháp phát hành)_\n",
-    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89",
+    "text": "_Cập nhật: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "8d8ca2bf47cdd1190ffc8d7e3c35f31c2a04adf92a128713a384de42b66ce426",
     "status": "reviewed",
-    "review_method": "Reviewed existing footer with mechanical source date update."
+    "review_method": "Direct release-status wording review; date/version retained, draft notice removed."
   },
   "Blueprints:33": {
     "text": "_Cập nhật: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (bản nháp phát hành)_\n",

@@ -114,4 +114,4 @@ Double-tapping `Num 0` with no mode key held toggles Smart Auto-Connect and Exte
 
 ---
 
-_Last updated: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (release draft)_
+_Last updated: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0_

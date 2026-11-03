@@ -50,8 +50,8 @@
   "_Sidebar:8": {
     "page": "_Sidebar",
     "position": 16,
-    "source": "_Last updated: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (release draft)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659"
+    "source": "_Last updated: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "90cb2f4ec0a877789160414441d87af9660480498e3243f7517711c84cc354bf"
   },
   "Auto-Connect:0": {
     "page": "Auto-Connect",
@@ -344,8 +344,8 @@
   "Auto-Connect:55": {
     "page": "Auto-Connect",
     "position": 96,
-    "source": "_Last updated: 2026-11-02 · Smart! v35.1.0 / Smart Camera v2.0.0 (release draft)_\n",
-    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
+    "source": "_Last updated: 2026-11-02 · Smart! v35.1.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "738986e1276ad98403f2e483d1e397f7061c2af5e93202af6d82ce474d5d7eeb"
   },
   "Blueprints:0": {
     "page": "Blueprints",
@@ -536,8 +536,8 @@
   "Blueprints:35": {
     "page": "Blueprints",
     "position": 62,
-    "source": "_Last updated: 2026-11-02 · Smart! v35.1.0 / Smart Camera v2.0.0 (release draft)_\n",
-    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
+    "source": "_Last updated: 2026-11-02 · Smart! v35.1.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "738986e1276ad98403f2e483d1e397f7061c2af5e93202af6d82ce474d5d7eeb"
   },
   "Buildable-Gallery:0": {
     "page": "Buildable-Gallery",
@@ -986,8 +986,8 @@
   "Buildable-Gallery:75": {
     "page": "Buildable-Gallery",
     "position": 148,
-    "source": "_Last updated: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (release draft)_\n",
-    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89"
+    "source": "_Last updated: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "8d8ca2bf47cdd1190ffc8d7e3c35f31c2a04adf92a128713a384de42b66ce426"
   },
   "Compatibility-and-Multiplayer:0": {
     "page": "Compatibility-and-Multiplayer",
@@ -1124,8 +1124,8 @@
   "Compatibility-and-Multiplayer:31": {
     "page": "Compatibility-and-Multiplayer",
     "position": 44,
-    "source": "_Last updated: 2026-11-02 · Smart! v35.1.0 / Smart Camera v2.0.0 (release draft)_\n",
-    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
+    "source": "_Last updated: 2026-11-02 · Smart! v35.1.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "738986e1276ad98403f2e483d1e397f7061c2af5e93202af6d82ce474d5d7eeb"
   },
   "Controller-and-Steam-Deck:0": {
     "page": "Controller-and-Steam-Deck",
@@ -1310,8 +1310,8 @@
   "Controller-and-Steam-Deck:30": {
     "page": "Controller-and-Steam-Deck",
     "position": 60,
-    "source": "_Last updated: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (release draft)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659"
+    "source": "_Last updated: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "90cb2f4ec0a877789160414441d87af9660480498e3243f7517711c84cc354bf"
   },
   "Controls:0": {
     "page": "Controls",
@@ -1544,8 +1544,8 @@
   "Controls:40": {
     "page": "Controls",
     "position": 76,
-    "source": "_Last updated: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (release draft)_\n",
-    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89"
+    "source": "_Last updated: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "8d8ca2bf47cdd1190ffc8d7e3c35f31c2a04adf92a128713a384de42b66ce426"
   },
   "Conveyor-Lift-Grids:0": {
     "page": "Conveyor-Lift-Grids",
@@ -1610,8 +1610,8 @@
   "Conveyor-Lift-Grids:10": {
     "page": "Conveyor-Lift-Grids",
     "position": 20,
-    "source": "_Last updated: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (release draft)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659"
+    "source": "_Last updated: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "90cb2f4ec0a877789160414441d87af9660480498e3243f7517711c84cc354bf"
   },
   "Extend:0": {
     "page": "Extend",
@@ -1874,8 +1874,8 @@
   "Extend:48": {
     "page": "Extend",
     "position": 86,
-    "source": "_Last updated: 2026-11-02 · Smart! v35.1.0 / Smart Camera v2.0.0 (release draft)_\n",
-    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
+    "source": "_Last updated: 2026-11-02 · Smart! v35.1.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "738986e1276ad98403f2e483d1e397f7061c2af5e93202af6d82ce474d5d7eeb"
   },
   "FAQ:0": {
     "page": "FAQ",
@@ -2384,8 +2384,8 @@
   "FAQ:84": {
     "page": "FAQ",
     "position": 168,
-    "source": "_Last updated: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (release draft)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659"
+    "source": "_Last updated: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "90cb2f4ec0a877789160414441d87af9660480498e3243f7517711c84cc354bf"
   },
   "Feature-Gallery:0": {
     "page": "Feature-Gallery",
@@ -2756,8 +2756,8 @@
   "Feature-Gallery:64": {
     "page": "Feature-Gallery",
     "position": 122,
-    "source": "_Last updated: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (release draft)_\n",
-    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89"
+    "source": "_Last updated: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "8d8ca2bf47cdd1190ffc8d7e3c35f31c2a04adf92a128713a384de42b66ce426"
   },
   "Glossary:0": {
     "page": "Glossary",
@@ -2786,8 +2786,8 @@
   "Glossary:4": {
     "page": "Glossary",
     "position": 8,
-    "source": "_Last updated: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (release draft)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659"
+    "source": "_Last updated: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "90cb2f4ec0a877789160414441d87af9660480498e3243f7517711c84cc354bf"
   },
   "Grid-Scaling:0": {
     "page": "Grid-Scaling",
@@ -2960,8 +2960,8 @@
   "Grid-Scaling:28": {
     "page": "Grid-Scaling",
     "position": 56,
-    "source": "_Last updated: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (release draft)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659"
+    "source": "_Last updated: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "90cb2f4ec0a877789160414441d87af9660480498e3243f7517711c84cc354bf"
   },
   "History-and-Credits:0": {
     "page": "History-and-Credits",
@@ -3164,8 +3164,8 @@
   "Home:18": {
     "page": "Home",
     "position": 26,
-    "source": "## Preparing 35.1.0",
-    "source_hash": "1829ed863c572c2dbcafc8f78604d94faa795d58ca1d7e90494d020f49980f60"
+    "source": "## Smart! 35.1.0",
+    "source_hash": "c51b192a3da9407b55bb694e43e758aef296d6f982f8ea1d3c9544572184a93f"
   },
   "Home:19": {
     "page": "Home",
@@ -3182,8 +3182,8 @@
   "Home:20": {
     "page": "Home",
     "position": 32,
-    "source": "This is the local documentation draft for **Smart! 35.1.0 and Smart Camera 2.0.0**. Update the two mods together when their coordinated compatible releases become available; do not pair Camera 2.0 with an older Smart package. These draft pages do not announce publication.",
-    "source_hash": "6de3b72e72a676036d11c5f3b3679009013b370ca2cb7e8aed2d56252d3addd9"
+    "source": "**Smart! 35.1.0** supports **Smart Camera 2.0.0**. Update both mods when using them together.",
+    "source_hash": "332a69d5007a0b672628c30eca7cb0b652928cddad228f06e6d4186a52c9b3f8"
   },
   "Home:15": {
     "page": "Home",
@@ -3200,8 +3200,8 @@
   "Home:21": {
     "page": "Home",
     "position": 38,
-    "source": "_Last updated: 2026-11-02 · Smart! v35.1.0 / Smart Camera v2.0.0 (release draft)_\n",
-    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
+    "source": "_Last updated: 2026-11-02 · Smart! v35.1.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "738986e1276ad98403f2e483d1e397f7061c2af5e93202af6d82ce474d5d7eeb"
   },
   "Lift-Assisted-Auto-Connect:0": {
     "page": "Lift-Assisted-Auto-Connect",
@@ -3314,8 +3314,8 @@
   "Lift-Assisted-Auto-Connect:17": {
     "page": "Lift-Assisted-Auto-Connect",
     "position": 36,
-    "source": "_Last updated: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (release draft)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659"
+    "source": "_Last updated: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "90cb2f4ec0a877789160414441d87af9660480498e3243f7517711c84cc354bf"
   },
   "Quick-Start:0": {
     "page": "Quick-Start",
@@ -3446,8 +3446,8 @@
   "Quick-Start:21": {
     "page": "Quick-Start",
     "position": 42,
-    "source": "_Last updated: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (release draft)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659"
+    "source": "_Last updated: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "90cb2f4ec0a877789160414441d87af9660480498e3243f7517711c84cc354bf"
   },
   "Screenshot-Checklist:0": {
     "page": "Screenshot-Checklist",
@@ -3512,8 +3512,8 @@
   "Screenshot-Checklist:11": {
     "page": "Screenshot-Checklist",
     "position": 20,
-    "source": "_Last updated: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (release draft)_\n",
-    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89"
+    "source": "_Last updated: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "8d8ca2bf47cdd1190ffc8d7e3c35f31c2a04adf92a128713a384de42b66ce426"
   },
   "Settings-Reference:0": {
     "page": "Settings-Reference",
@@ -3800,8 +3800,8 @@
   "Settings-Reference:58": {
     "page": "Settings-Reference",
     "position": 94,
-    "source": "_Last updated: 2026-11-02 · Smart! v35.1.0 / Smart Camera v2.0.0 (release draft)_\n",
-    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
+    "source": "_Last updated: 2026-11-02 · Smart! v35.1.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "738986e1276ad98403f2e483d1e397f7061c2af5e93202af6d82ce474d5d7eeb"
   },
   "Smart-Assistance:0": {
     "page": "Smart-Assistance",
@@ -3902,8 +3902,8 @@
   "Smart-Assistance:17": {
     "page": "Smart-Assistance",
     "position": 32,
-    "source": "_Last updated: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (release draft)_\n",
-    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89"
+    "source": "_Last updated: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "8d8ca2bf47cdd1190ffc8d7e3c35f31c2a04adf92a128713a384de42b66ce426"
   },
   "Smart-Blueprints:0": {
     "page": "Smart-Blueprints",
@@ -4190,8 +4190,8 @@
   "Smart-Camera:39": {
     "page": "Smart-Camera",
     "position": 74,
-    "source": "_Last updated: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (release draft)_\n",
-    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89"
+    "source": "_Last updated: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "8d8ca2bf47cdd1190ffc8d7e3c35f31c2a04adf92a128713a384de42b66ce426"
   },
   "Smart-Dismantle:0": {
     "page": "Smart-Dismantle",
@@ -4292,8 +4292,8 @@
   "Smart-Dismantle:16": {
     "page": "Smart-Dismantle",
     "position": 32,
-    "source": "_Last updated: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (release draft)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659"
+    "source": "_Last updated: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "90cb2f4ec0a877789160414441d87af9660480498e3243f7517711c84cc354bf"
   },
   "Smart-Panel-and-HUD:0": {
     "page": "Smart-Panel-and-HUD",
@@ -4442,8 +4442,8 @@
   "Smart-Panel-and-HUD:24": {
     "page": "Smart-Panel-and-HUD",
     "position": 48,
-    "source": "_Last updated: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (release draft)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659"
+    "source": "_Last updated: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "90cb2f4ec0a877789160414441d87af9660480498e3243f7517711c84cc354bf"
   },
   "Smart-Restore:0": {
     "page": "Smart-Restore",
@@ -4646,8 +4646,8 @@
   "Smart-Restore:42": {
     "page": "Smart-Restore",
     "position": 66,
-    "source": "_Last updated: 2026-11-02 · Smart! v35.1.0 / Smart Camera v2.0.0 (release draft)_\n",
-    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
+    "source": "_Last updated: 2026-11-02 · Smart! v35.1.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "738986e1276ad98403f2e483d1e397f7061c2af5e93202af6d82ce474d5d7eeb"
   },
   "Smart-Upgrade:0": {
     "page": "Smart-Upgrade",
@@ -4850,8 +4850,8 @@
   "Smart-Upgrade:37": {
     "page": "Smart-Upgrade",
     "position": 66,
-    "source": "_Last updated: 2026-11-02 · Smart! v35.1.0 / Smart Camera v2.0.0 (release draft)_\n",
-    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
+    "source": "_Last updated: 2026-11-02 · Smart! v35.1.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "738986e1276ad98403f2e483d1e397f7061c2af5e93202af6d82ce474d5d7eeb"
   },
   "Smart-Walking:0": {
     "page": "Smart-Walking",
@@ -5030,8 +5030,8 @@
   "Smart-Walking:29": {
     "page": "Smart-Walking",
     "position": 58,
-    "source": "_Last updated: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (release draft)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659"
+    "source": "_Last updated: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "90cb2f4ec0a877789160414441d87af9660480498e3243f7517711c84cc354bf"
   },
   "Support-Development:0": {
     "page": "Support-Development",
@@ -5156,8 +5156,8 @@
   "Supported-Buildings:11": {
     "page": "Supported-Buildings",
     "position": 22,
-    "source": "_Last updated: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (release draft)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659"
+    "source": "_Last updated: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "90cb2f4ec0a877789160414441d87af9660480498e3243f7517711c84cc354bf"
   },
   "Transforms:0": {
     "page": "Transforms",
@@ -5354,8 +5354,8 @@
   "Transforms:32": {
     "page": "Transforms",
     "position": 64,
-    "source": "_Last updated: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (release draft)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659"
+    "source": "_Last updated: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "90cb2f4ec0a877789160414441d87af9660480498e3243f7517711c84cc354bf"
   },
   "Troubleshooting:0": {
     "page": "Troubleshooting",
@@ -5558,8 +5558,8 @@
   "Troubleshooting:33": {
     "page": "Troubleshooting",
     "position": 66,
-    "source": "_Last updated: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (release draft)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659"
+    "source": "_Last updated: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "90cb2f4ec0a877789160414441d87af9660480498e3243f7517711c84cc354bf"
   },
   "Videos-and-Tutorials:0": {
     "page": "Videos-and-Tutorials",
@@ -5696,8 +5696,8 @@
   "Videos-and-Tutorials:22": {
     "page": "Videos-and-Tutorials",
     "position": 44,
-    "source": "_Last updated: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (release draft)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659"
+    "source": "_Last updated: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "90cb2f4ec0a877789160414441d87af9660480498e3243f7517711c84cc354bf"
   },
   "Water-Extractors:0": {
     "page": "Water-Extractors",
@@ -5816,7 +5816,7 @@
   "Water-Extractors:20": {
     "page": "Water-Extractors",
     "position": 38,
-    "source": "_Last updated: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (release draft)_\n",
-    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89"
+    "source": "_Last updated: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0_\n",
+    "source_hash": "8d8ca2bf47cdd1190ffc8d7e3c35f31c2a04adf92a128713a384de42b66ce426"
   }
 }

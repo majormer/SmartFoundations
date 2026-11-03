@@ -203,4 +203,4 @@ For Extend or Auto-Connect issues, include a screenshot of the source layout bef
 
 ---
 
-_Last updated: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (release draft)_
+_Last updated: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_

@@ -72,4 +72,4 @@ An elevated side view separates the straight Vehicle Path segment from its curve
 
 ---
 
-_Last updated: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (release draft)_
+_Last updated: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0_
