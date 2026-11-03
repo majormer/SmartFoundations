@@ -7,6 +7,7 @@
 #include "UObject/UnrealType.h"
 #include "Hologram/FGPassthroughHologram.h"
 #include "FGCharacterPlayer.h"
+#include "FGConstructDisqualifier.h"
 #include "Core/SFNativeHit.h"
 #include "Misc/ScopeExit.h"
 
